@@ -1909,7 +1909,7 @@ async function restoreFromEmail(){
   if(!S.url){toast('Configure l\'URL Google Sheets dans Connexion','error');return;}
   toast('Restauration en cours…','info');
   try{
-    const resp=await fetch(S.url+'?action=getProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
+    const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
     const data=await resp.json();
     if(!data||data.error){toast(data&&data.error?data.error:'Aucune donnée trouvée pour cet email','error');return;}
     if(data.bw)S.bw=parseFloat(data.bw)||S.bw;
@@ -1928,7 +1928,7 @@ async function restoreFromEmail(){
     renderNutrition();
     toast('Profil restauré avec succès ✅','success');
   }catch(e){
-    toast('Impossible de restaurer — vérifie la connexion','error');
+    toast('Erreur : '+e.message,'error');
   }
 }
 
