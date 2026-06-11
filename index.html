@@ -1789,7 +1789,7 @@ function calcRM(){
 
 // ─── SETUP ───────────────────────────────────────────────────
 function setGender(g){
-  S.gender=g;
+  S.gender=g;persist();
   document.getElementById('gt-h').classList.toggle('active',g==='H');
   document.getElementById('gt-f').classList.toggle('active',g==='F');
   const cs=document.getElementById('cycle-section');
@@ -1799,11 +1799,11 @@ function setGender(g){
   renderBFCard();
 }
 function setWorkType(t){
-  S.workType=t;
+  S.workType=t;persist();
   ['bureau','debout','physique'].forEach(x=>{const el=document.getElementById('wt-'+x);if(el)el.classList.toggle('active',x===t);});
 }
 function setSmoker(v){
-  S.smoker=v;
+  S.smoker=v;persist();
   const n=document.getElementById('sm-non'),o=document.getElementById('sm-oui');
   if(n)n.classList.toggle('active',!v);
   if(o)o.classList.toggle('active',v);
@@ -1860,7 +1860,7 @@ const GOAL_DESCS={
   endurance:'Surplus modéré +100 kcal · Protéines 1.7 g/kg · Glucides élevés pour le glycogène musculaire.',
 };
 function setGoal(g){
-  S.goal=g;
+  S.goal=g;persist();
   ['muscle','perte','force','equilibre','endurance'].forEach(x=>{
     const el=document.getElementById('g-'+x);if(el)el.classList.toggle('active',x===g);
   });
@@ -1909,9 +1909,9 @@ function saveProfile(){
   const act=actEl?parseFloat(actEl.value):S.activityLevel;
   const bar=barEl?parseFloat(barEl.value):S.barW;
   const rest=restEl?parseInt(restEl.value):S.defRest;
-  if(age&&age>13&&age<100) S.age=age;
-  if(ht&&ht>140&&ht<230) S.height=ht;
-  if(bw&&bw>30&&bw<300) S.bw=bw;
+  if(age){if(age>13&&age<100)S.age=age;else{toast('Âge invalide (14–99 ans)','error');return;}}
+  if(ht){if(ht>100&&ht<230)S.height=ht;else{toast('Taille invalide (100–229 cm)','error');return;}}
+  if(bw){if(bw>20&&bw<300)S.bw=bw;else{toast('Poids invalide (20–299 kg)','error');return;}}
   if(act) S.activityLevel=act;
   if(bar&&bar>0) S.barW=bar;
   if(rest) S.defRest=rest;
