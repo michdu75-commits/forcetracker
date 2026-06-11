@@ -620,7 +620,6 @@ html.ob-done #onboarding{display:none;}
   <div class="card cp" id="strength-levels"></div>
   <div class="sec">Records personnels</div>
   <div class="card" id="pr-list"></div>
-  <div class="status-row"><div class="sdot" id="h-sdot"></div><span id="h-stxt">Non connecté</span></div>
   <div style="text-align:center;padding:8px 0 2px;font-size:13px;color:var(--t3);line-height:1.8;border-top:1px solid var(--sep);margin-top:2px;">
     Développé par Michel — Force Tracker 2026<br><a href="mailto:forcetracker.app@gmail.com" style="color:var(--blue);text-decoration:none;">forcetracker.app@gmail.com</a>
   </div>
@@ -1349,9 +1348,6 @@ function renderHome(){
     return`<div class="pr-row"><span class="pr-name">${ex}</span><div class="pr-right">${p?`<div class="pr-kg">${p.kg}×${p.reps}</div><div class="pr-rm1">~${fmt(p.rm1)} kg 1RM</div>`:'<span style="color:var(--t3);font-size:13px;">—</span>'}</div></div>`;
   }).join('');
 
-  const sdot=document.getElementById('h-sdot'),stxt=document.getElementById('h-stxt');
-  sdot.className='sdot '+(S.connected?'g':'r');
-  stxt.textContent=S.connected?'Google Sheets connecté ✓':'Non connecté — configure dans Setup';
   updatePill();
   renderCycleHomeCard();
   renderRecoveryCard();
