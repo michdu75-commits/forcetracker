@@ -2982,8 +2982,8 @@ async function obDoRestore(){
     if(data.bw)S.bw=parseFloat(data.bw)||S.bw;
     if(data.age)S.age=parseInt(data.age)||S.age;
     if(data.height)S.height=parseFloat(data.height)||S.height;
-    if(data.gender)S.gender=data.gender;
-    if(data.goal)S.goal=data.goal;
+    if(data.gender){S.gender=data.gender;_obGender=data.gender;}
+    if(data.goal){S.goal=data.goal;_obGoal=data.goal;}
     if(data.activityLevel)S.activityLevel=parseFloat(data.activityLevel)||S.activityLevel;
     if(data.prs&&Object.keys(data.prs).length)S.prs=data.prs;
     if(data.sessions&&data.sessions.length)S.sessions=data.sessions;
