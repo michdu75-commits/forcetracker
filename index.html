@@ -136,6 +136,10 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .gender-toggle{display:flex;background:var(--bg3);border-radius:var(--r-sm);padding:4px;gap:4px;border:1px solid var(--sep);}
 .gtbtn{flex:1;padding:10px;border:none;border-radius:8px;background:transparent;color:var(--t2);font-size:15px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;letter-spacing:.3px;}
 .gtbtn.active{background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;box-shadow:0 3px 12px rgba(255,45,85,.3);}
+.work-toggle{display:flex;background:var(--bg3);border-radius:var(--r-sm);padding:4px;gap:4px;border:1px solid var(--sep);}
+.wtbtn{flex:1;padding:9px 4px;border:none;border-radius:8px;background:transparent;color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;text-align:center;}
+.wtbtn.active{background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;box-shadow:0 3px 12px rgba(255,45,85,.3);}
+.cycle-phase-banner{border-radius:var(--r);padding:12px 14px;display:flex;gap:12px;align-items:flex-start;}
 
 /* WORKOUT */
 .ex-block{background:var(--bg2);border-radius:var(--r);overflow:hidden;border:1px solid var(--sep);}
@@ -472,6 +476,7 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 
   <!-- MACROS -->
   <div id="nu-macros" style="display:flex;flex-direction:column;gap:12px;">
+    <div id="nu-cycle-banner" style="display:none;"></div>
     <div class="sec">Dépense énergétique</div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:8px;">
       <div class="nu-stat"><span class="nu-stat-lbl">BMR</span><span class="nu-stat-val" id="nu-bmr">— kcal</span></div>
@@ -612,6 +617,32 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
             <option value="300">300s</option>
           </select>
         </div>
+      </div>
+      <div class="fg">
+        <label>Type de travail</label>
+        <div class="work-toggle">
+          <button class="wtbtn" id="wt-bureau" onclick="setWorkType('bureau')">💼 Bureau</button>
+          <button class="wtbtn" id="wt-debout" onclick="setWorkType('debout')">🚶 Debout</button>
+          <button class="wtbtn" id="wt-physique" onclick="setWorkType('physique')">⚒️ Physique</button>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:4px;">Bureau +0 kcal · Debout +200 kcal · Physique +450 kcal/j sur le TDEE</div>
+      </div>
+      <div class="fg">
+        <label>Tabac</label>
+        <div class="gender-toggle">
+          <button class="gtbtn" id="sm-non" onclick="setSmoker(false)">🚭 Non-fumeur</button>
+          <button class="gtbtn" id="sm-oui" onclick="setSmoker(true)">🚬 Fumeur</button>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:4px;">Fumeur : BMR +7% (effet thermogène de la nicotine)</div>
+      </div>
+      <div id="cycle-section" style="display:none;flex-direction:column;gap:10px;">
+        <div style="height:1px;background:var(--sep);"></div>
+        <div style="font-size:12px;color:var(--purp);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">🌙 Cycle menstruel</div>
+        <div class="two-col">
+          <div class="fg"><label>Dernières règles</label><input type="date" id="cycle-start-inp" oninput="renderCycleProfileCard()"></div>
+          <div class="fg"><label>Durée cycle (j)</label><input type="number" id="cycle-dur-inp" placeholder="28" min="18" max="45" inputmode="numeric" oninput="renderCycleProfileCard()"></div>
+        </div>
+        <div id="cycle-phase-card"></div>
       </div>
       <button class="btn btn-red" onclick="saveProfile()" style="padding:14px;font-size:16px;">💾 Enregistrer le profil</button>
     </div>
@@ -806,6 +837,8 @@ let _chartPts=[];
 let S={
   bw:80,barW:20,defRest:120,
   gender:'H',age:30,height:175,activityLevel:1.55,
+  workType:'bureau',smoker:false,
+  mensCycleStart:'',mensCycleDur:28,
   sessions:[],prs:{},wkt:null,
   url:DEFAULT_URL,email:'',connected:false,
   nutritionPhase:'charge'
@@ -820,6 +853,10 @@ function load(){
     S.age=parseInt(localStorage.getItem('ft4_age')||'0')||0;
     S.height=parseFloat(localStorage.getItem('ft4_ht')||'0')||0;
     S.activityLevel=parseFloat(localStorage.getItem('ft4_act')||'1.55')||1.55;
+    S.workType=localStorage.getItem('ft4_work')||'bureau';
+    S.smoker=localStorage.getItem('ft4_smoker')==='1';
+    S.mensCycleStart=localStorage.getItem('ft4_mcstart')||'';
+    S.mensCycleDur=parseInt(localStorage.getItem('ft4_mcdur')||'28')||28;
     S.sessions=JSON.parse(localStorage.getItem('ft4_sessions')||'[]');
     S.prs=JSON.parse(localStorage.getItem('ft4_prs')||'{}');
     S.wkt=JSON.parse(localStorage.getItem('ft4_wkt')||'null');
@@ -841,6 +878,10 @@ function persist(){
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
     localStorage.setItem('ft4_email',S.email);localStorage.setItem('ft4_ok',S.connected?'1':'0');
     localStorage.setItem('ft4_nphase',S.nutritionPhase);
+    localStorage.setItem('ft4_work',S.workType);
+    localStorage.setItem('ft4_smoker',S.smoker?'1':'0');
+    localStorage.setItem('ft4_mcstart',S.mensCycleStart);
+    localStorage.setItem('ft4_mcdur',S.mensCycleDur);
   }catch(e){}
 }
 
@@ -854,15 +895,38 @@ const fmtD=d=>d?new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'sho
 function calcBMR(){
   if(!S.bw||!S.height||!S.age) return 0;
   const base=10*S.bw+6.25*S.height-5*S.age;
-  return Math.round(S.gender==='H'?base+5:base-161);
+  const bmr=Math.round(S.gender==='H'?base+5:base-161);
+  return S.smoker?Math.round(bmr*1.07):bmr;
 }
-function calcTDEE(){ return Math.round(calcBMR()*S.activityLevel); }
+function calcWorkExtra(){return{bureau:0,debout:200,physique:450}[S.workType]||0;}
+function calcTDEE(){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra());}
+
+function getMensCyclePhase(){
+  if(S.gender!=='F'||!S.mensCycleStart)return null;
+  const elapsed=Math.floor((new Date()-new Date(S.mensCycleStart+'T12:00:00'))/864e5);
+  if(elapsed<0)return null;
+  const day=(elapsed%S.mensCycleDur)+1;
+  if(day<=5) return{phase:'Menstruation',day,icon:'🔴',color:'var(--red)',
+    nutrition:'Privilégie le fer (viande rouge, légumineuses), magnésium et oméga-3 anti-inflammatoires. Réduis légèrement les glucides.',
+    training:'Repos actif ou séances légères. Yoga, marche, mobilité. Évite les charges maximales et le surentraînement.'};
+  if(day<=13) return{phase:'Folliculaire',day,icon:'🌱',color:'var(--green)',
+    nutrition:'Phase anabolique optimale. Augmente glucides complexes et protéines pour soutenir la progression musculaire.',
+    training:'Période idéale pour les records et la progression. Corps en phase anabolique, récupération accélérée — pousse les charges.'};
+  if(day<=16) return{phase:'Ovulation',day,icon:'⚡',color:'var(--gold)',
+    nutrition:'Pic de performance. Maintiens les macros habituelles. Hydratation renforcée (+0.5L/j).',
+    training:'Énergie et force au maximum. Séances intensives recommandées — c\'est le meilleur moment pour tenter des PRs.'};
+  return{phase:'Lutéale',day,icon:'🌙',color:'var(--purp)',
+    nutrition:'+150 kcal/j appliqués automatiquement. Augmente protéines et magnésium pour réduire les symptômes prémenstruels.',
+    training:'Fatigue accrue est normale. Privilégie volume modéré, exercices familiers et bonne récupération entre les séances.'};
+}
 
 function calcMacros(phase){
   const tdee=calcTDEE();
   const isCharge=phase==='charge';
-  const calories=isCharge?tdee+400:tdee-400;
-  const prot_g =Math.round(S.bw*(isCharge?2.2:2.5));
+  const cp=getMensCyclePhase();
+  const lutealBonus=cp&&cp.phase==='Lutéale'?150:0;
+  const calories=(isCharge?tdee+400:tdee-400)+lutealBonus;
+  const prot_g=Math.round(S.bw*((isCharge?2.2:2.5)+(cp&&cp.phase==='Lutéale'?0.2:0)));
   const fat_g  =Math.round(S.bw*(isCharge?0.9:0.8));
   const prot_k =prot_g*4, fat_k=fat_g*9;
   const carbs_g=Math.max(0,Math.round((calories-prot_k-fat_k)/4));
@@ -994,6 +1058,23 @@ function renderNutrition(){
   document.getElementById('m-prot').textContent=macros.prot_g;
   document.getElementById('m-carbs').textContent=macros.carbs_g;
   document.getElementById('m-fat').textContent=macros.fat_g;
+
+  // Cycle menstruel banner
+  const nuCycleBanner=document.getElementById('nu-cycle-banner');
+  if(nuCycleBanner){
+    const cp=getMensCyclePhase();
+    if(cp){
+      nuCycleBanner.style.display='block';
+      nuCycleBanner.innerHTML=`<div class="cycle-phase-banner" style="background:rgba(170,0,255,.08);border:1px solid rgba(170,0,255,.2);">
+        <span style="font-size:26px;flex-shrink:0;">${cp.icon}</span>
+        <div style="flex:1;">
+          <div style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:${cp.color};">${cp.phase} — Jour ${cp.day}/${S.mensCycleDur}</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:4px;line-height:1.5;"><strong style="color:var(--t1);">Nutrition :</strong> ${cp.nutrition}</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:3px;line-height:1.5;"><strong style="color:var(--t1);">Entraînement :</strong> ${cp.training}</div>
+        </div>
+      </div>`;
+    } else { nuCycleBanner.style.display='none'; }
+  }
 
   // Meal plan
   const meals=getMeals(macros,S.nutritionPhase);
@@ -1274,6 +1355,28 @@ function setGender(g){
   S.gender=g;
   document.getElementById('gt-h').classList.toggle('active',g==='H');
   document.getElementById('gt-f').classList.toggle('active',g==='F');
+  const cs=document.getElementById('cycle-section');
+  if(cs)cs.style.display=g==='F'?'flex':'none';
+}
+function setWorkType(t){
+  S.workType=t;
+  ['bureau','debout','physique'].forEach(x=>{const el=document.getElementById('wt-'+x);if(el)el.classList.toggle('active',x===t);});
+}
+function setSmoker(v){
+  S.smoker=v;
+  const n=document.getElementById('sm-non'),o=document.getElementById('sm-oui');
+  if(n)n.classList.toggle('active',!v);
+  if(o)o.classList.toggle('active',v);
+}
+function renderCycleProfileCard(){
+  const el=document.getElementById('cycle-phase-card');if(!el)return;
+  const cp=getMensCyclePhase();
+  if(!cp){el.innerHTML='';return;}
+  el.innerHTML=`<div style="background:rgba(170,0,255,.08);border:1px solid rgba(170,0,255,.2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:4px;">
+    <span style="font-size:22px;">${cp.icon}</span>
+    <div><div style="font-size:13px;font-weight:800;color:${cp.color};">${cp.phase} — Jour ${cp.day}/${S.mensCycleDur}</div>
+    <div style="font-size:11px;color:var(--t2);margin-top:2px;line-height:1.4;">${cp.training}</div></div>
+  </div>`;
 }
 function renderSetup(){
   setGender(S.gender);
@@ -1284,6 +1387,11 @@ function renderSetup(){
   const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
   const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
   const emailEl=document.getElementById('email-inp');if(emailEl)emailEl.value=S.email||'';
+  setWorkType(S.workType);
+  setSmoker(S.smoker);
+  const csEl=document.getElementById('cycle-start-inp');if(csEl)csEl.value=S.mensCycleStart||'';
+  const cdEl=document.getElementById('cycle-dur-inp');if(cdEl)cdEl.value=S.mensCycleDur||28;
+  renderCycleProfileCard();
   updSetup();
 }
 function updSetup(){
@@ -1312,7 +1420,12 @@ function saveProfile(){
   if(act) S.activityLevel=act;
   if(bar&&bar>0) S.barW=bar;
   if(rest) S.defRest=rest;
+  const csEl=document.getElementById('cycle-start-inp');
+  const cdEl=document.getElementById('cycle-dur-inp');
+  if(csEl&&csEl.value)S.mensCycleStart=csEl.value;
+  if(cdEl&&cdEl.value){const d=parseInt(cdEl.value);if(d>=18&&d<=45)S.mensCycleDur=d;}
   persist();renderHome();renderNutrition();
+  renderCycleProfileCard();
   toast('Profil enregistré !','success');
 }
 
@@ -1578,9 +1691,11 @@ function buildCoachContext() {
 PROFIL ATHLÈTE:
 - Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal
-- Niveau activité: ${S.activityLevel}
+- Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Marchant',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
+- Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
 - Phase nutrition: ${S.nutritionPhase === 'charge' ? 'Charge (surplus)' : 'Décharge (déficit)'}
 - Calories: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
+${(()=>{const cp=getMensCyclePhase();return cp?`- Phase cycle menstruel: ${cp.phase} (Jour ${cp.day}/${S.mensCycleDur}) — ${cp.nutrition}`:'';})()}
 
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}
