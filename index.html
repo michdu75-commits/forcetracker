@@ -562,30 +562,13 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 
   <!-- CONNEXION -->
   <div id="setup-connexion">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-      <div class="sec" style="margin-bottom:0;">Google Sheets</div>
-      <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">
-        ☀️ Mode Jour
-      </button>
-    </div>
-    <div class="sec">Google Sheets</div>
-    <div class="card cp">
-      <div class="step-row">
-        <div class="sn done">1</div>
-        <div class="sb"><div class="st">Google Sheet créé</div></div>
+    <div class="sec">Synchronisation Google Sheets</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="fg">
+        <label>Email Google</label>
+        <input type="email" id="email-inp" placeholder="ton@email.com" inputmode="email" oninput="S.email=this.value.trim();persist();">
       </div>
-      <div class="step-row">
-        <div class="sn done" id="sn2">2</div>
-        <div class="sb"><div class="st">Script Apps Script déployé</div></div>
-      </div>
-      <div class="step-row" style="border-bottom:none;">
-        <div class="sn" id="sn3">3</div>
-        <div class="sb">
-          <div class="st">URL de déploiement</div>
-          <input class="url-inp" id="wh-url" type="text" placeholder="https://script.google.com/macros/s/..." oninput="validateURL()" style="margin-top:6px;">
-          <button class="btn btn-red" onclick="testConn()" style="margin-top:8px;padding:13px;font-size:15px;">🔌 Tester la connexion</button>
-        </div>
-      </div>
+      <button class="btn btn-red" onclick="testConn()" style="padding:13px;font-size:15px;">🔌 Tester la connexion</button>
     </div>
     <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
     <p style="font-size:11px;color:var(--t3);text-align:center;line-height:1.6;">Force Tracker v2.8 — Juin 2026</p>
@@ -593,7 +576,10 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 
   <!-- PROFIL -->
   <div id="setup-profil" style="display:none;">
-    <div class="sec">Profil athlète</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div class="sec" style="margin-bottom:0;">Profil athlète</div>
+      <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">☀️ Mode Jour</button>
+    </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
       <div class="fg">
         <label>Sexe</label>
@@ -777,6 +763,7 @@ const EXLIB=[
 const BIG3=['Squat','Développé Couché','Soulevé de Terre'];
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
+const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxPvDqeMv6qt9kctpOn3cXpyVCw_OC82eZrIDckTRk4G5v_lL5VdS3QIkIhhIji_nsU/exec';
 const SET_TYPES=['N','W','E','D'];
 
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────
@@ -819,7 +806,7 @@ let S={
   bw:80,barW:20,defRest:120,
   gender:'H',age:30,height:175,activityLevel:1.55,
   sessions:[],prs:{},wkt:null,
-  url:'',connected:false,
+  url:DEFAULT_URL,email:'',connected:false,
   nutritionPhase:'charge'
 };
 
@@ -835,7 +822,8 @@ function load(){
     S.sessions=JSON.parse(localStorage.getItem('ft4_sessions')||'[]');
     S.prs=JSON.parse(localStorage.getItem('ft4_prs')||'{}');
     S.wkt=JSON.parse(localStorage.getItem('ft4_wkt')||'null');
-    S.url=localStorage.getItem('ft4_url')||'';
+    S.url=DEFAULT_URL;
+    S.email=localStorage.getItem('ft4_email')||'';
     S.connected=localStorage.getItem('ft4_ok')==='1';
     S.cycle=JSON.parse(localStorage.getItem('ft4_cycle')||'null');
     S.nutritionPhase=localStorage.getItem('ft4_nphase')||'charge';
@@ -850,7 +838,7 @@ function persist(){
     localStorage.setItem('ft4_sessions',JSON.stringify(S.sessions));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
-    localStorage.setItem('ft4_url',S.url);localStorage.setItem('ft4_ok',S.connected?'1':'0');
+    localStorage.setItem('ft4_email',S.email);localStorage.setItem('ft4_ok',S.connected?'1':'0');
     localStorage.setItem('ft4_nphase',S.nutritionPhase);
   }catch(e){}
 }
@@ -1240,24 +1228,18 @@ function renderSetup(){
   const actEl=document.getElementById('act-sel');if(actEl)actEl.value=S.activityLevel;
   const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
   const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
-  const urlEl=document.getElementById('wh-url');if(urlEl)urlEl.value=S.url||'';
+  const emailEl=document.getElementById('email-inp');if(emailEl)emailEl.value=S.email||'';
   updSetup();
-  if(S.url)document.getElementById('sn2').className='sn done';
-  if(S.connected)document.getElementById('sn3').className='sn done';
 }
 function updSetup(){
   const d=document.getElementById('setup-dot'),t=document.getElementById('setup-txt');if(!d)return;
   if(S.connected){d.className='sdot g';t.textContent='Connecté — sync automatique active ✓';}
-  else if(S.url){d.className='sdot a';t.textContent='URL configurée — teste la connexion';}
-  else{d.className='sdot';t.textContent='En attente de configuration';}
+  else{d.className='sdot';t.textContent='Non connecté — clique Tester la connexion';}
 }
-function validateURL(){const v=document.getElementById('wh-url').value.trim();if(v.startsWith('https://script.google.com')){S.url=v;persist();updSetup();}}
 async function testConn(){
-  const url=document.getElementById('wh-url').value.trim();
-  if(!url||!url.startsWith('https://script.google.com')){toast('URL invalide','error');return;}
-  S.url=url;document.getElementById('setup-dot').className='sdot a';document.getElementById('setup-txt').textContent='Test…';toast('Test…','info');
-  try{await fetch(url+'?test=1',{mode:'no-cors'});S.connected=true;persist();document.getElementById('sn3').className='sn done';updSetup();updatePill();toast('Connexion réussie ! ✅','success');}
-  catch(e){S.connected=false;persist();updSetup();toast('Erreur — vérifie l\'URL','error');}
+  document.getElementById('setup-dot').className='sdot a';document.getElementById('setup-txt').textContent='Test…';toast('Test…','info');
+  try{await fetch(S.url+'?test=1',{mode:'no-cors'});S.connected=true;persist();updSetup();updatePill();toast('Connexion réussie ! ✅','success');}
+  catch(e){S.connected=false;persist();updSetup();toast('Erreur de connexion','error');}
 }
 function saveProfile(){
   const age=parseInt(document.getElementById('age-inp').value);
