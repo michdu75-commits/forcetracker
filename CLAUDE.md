@@ -6,8 +6,8 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 
 - **Repo GitHub** : https://github.com/michdu75-commits/forcetracker
 - **App live** : https://michdu75-commits.github.io/forcetracker/
-- **Apps Script** : https://script.google.com/macros/s/AKfycbxPvDqeMv6qt9kctpOn3cXpyVCw_OC82eZrIDckTRk4G5v_lL5VdS3QIkIhhIji_nsU/exec
-- **Fichier Apps Script local** : `appsscript.gs` (à coller dans script.google.com)
+- **Apps Script URL (v3.1 — active)** : https://script.google.com/macros/s/AKfycbw52oQ9grdgeXQcnWaP3t-3C50oNUAzkn5lBTuXbEbCi_61vE8Aml8Pb6vwjw02CM1OHA/exec
+- **Fichier Apps Script local** : `appsscript.gs` (référence — déjà déployé)
 - **Auteur** : Michel — michdu75@gmail.com
 
 ## Architecture
@@ -40,7 +40,7 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 ## Fonctionnalités implémentées
 
 ### Entraînement
-- Suivi de séances (exercices, séries, reps, poids, type de série : Normal/Warm-up/Eccentrique/Drop)
+- Suivi de séances (exercices, séries, reps, poids, type : Normal/Warm-up/Eccentrique/Drop)
 - Timer de repos configurable (60/90/120/180/300 s) avec barre de progression
 - Calculateur de plaques (visualisation disques sur barre)
 - PRs automatiques (calcul 1RM Brzycki) par exercice
@@ -82,26 +82,20 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - `logSession` POST → log séance dans Google Sheets (analytics)
 - `coach` POST → appel Claude Haiku API pour le Coach IA
 
-## État du cloud sync
+## État du cloud sync — fixes appliqués (2026-06-12)
 
-### Bugs corrigés (commit 64e6520 — 2026-06-12)
+### Bugs corrigés côté app (commit 64e6520)
 
-| Bug | Cause | Fix appliqué |
+| Bug | Cause | Fix |
 |---|---|---|
-| `saveProfile` ne sauvegarde jamais | `mode:'no-cors'` empêchait le suivi du redirect Apps Script | Remplacé par `redirect:'follow'` + `Content-Type: text/plain` |
-| Restauration échoue même si profil existe | App lisait `data.name` au lieu de `data.profile.name` (format serveur `{status, profile:{}, prs:{}}`) | `_applyRestoreData` gère les deux formats |
-| `finishOnboarding` ne sync pas le cloud | Manquait un appel `saveProfile` cloud après le onboarding | Ajouté |
-| `testConn` toujours OK même URL fausse | `no-cors` = réponse opaque, jamais d'erreur | Lit maintenant vraiment `{status:'online'}` |
+| `saveProfile` ne sauvegardait jamais | `mode:'no-cors'` bloquait le redirect Apps Script | `redirect:'follow'` + `Content-Type: text/plain` |
+| Restauration échouait même si profil existait | App lisait `data.name` au lieu de `data.profile.name` | `_applyRestoreData` gère le format `{status, profile:{}, prs:{}}` |
+| `finishOnboarding` ne synchait pas le cloud | Manquait l'appel `saveProfile` cloud après onboarding | Ajouté |
+| `testConn` toujours OK même URL fausse | `no-cors` = réponse opaque | Lit vraiment `{status:'online'}` |
 
-### Action en attente (côté Apps Script)
-
-Le fichier `appsscript.gs` contient le code v3.1 corrigé. **L'Apps Script doit être mis à jour manuellement** :
-1. Ouvrir script.google.com → projet Force Tracker
-2. Remplacer tout le code par le contenu de `appsscript.gs`
-3. Déployer → "Gérer les déploiements" → modifier → Nouvelle version → Déployer
-4. L'URL reste la même
-
-L'Apps Script actuel (avant update) sauvegarde le profil dans une mauvaise structure : le `doPost` retourne `{"status":"ok"}` mais ne persiste pas les champs (`name`, `bw`, etc.) dans `PropertiesService`.
+### Nouvelle URL Apps Script déployée (2026-06-12)
+L'ancienne URL (`AKfycbxPvDqe...`) a été remplacée par la nouvelle (`AKfycbw52oQ9...`).  
+`DEFAULT_URL` dans `index.html` est à jour. App poussée sur GitHub Pages.
 
 ### Format de réponse Apps Script (v3.1)
 
@@ -113,7 +107,7 @@ GET ?action=loadProfile&email=...
 → {"status":"not_found"}
 → {"status":"ok","profile":{name,bw,age,height,gender,goal,activityLevel},"prs":{},"sessions":[],"weightLog":[],"sleepLog":[],"cycle":null,"nutritionPhase":"charge"}
 
-POST body JSON (Content-Type: text/plain)
+POST body JSON (Content-Type: text/plain;charset=utf-8)
 {action:"saveProfile", email, name, bw, age, height, gender, goal, activityLevel}
 → {"status":"ok"}
 
@@ -132,12 +126,12 @@ POST {action:"coach", message, context, history}
 - Navigation : `goScreen(id, navBtn)`
 - Modals : `.overlay` + `.modal` + classe `.open`
 - Toast : `toast(message, 'success'|'error'|'info')`
-- Tous les appels réseau vers Apps Script utilisent `Content-Type: text/plain;charset=utf-8` + `redirect:'follow'` (jamais `mode:'no-cors'`)
+- **Tous les appels réseau vers Apps Script** : `Content-Type: text/plain;charset=utf-8` + `redirect:'follow'` — jamais `mode:'no-cors'`
 
 ## Variables clés
 
 ```javascript
-const DEFAULT_URL = 'https://script.google.com/macros/s/.../exec'; // Apps Script URL
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbw52oQ9.../exec';
 S.url             // = DEFAULT_URL (jamais null)
 S.email           // email utilisateur (stocké ft4_email)
 S.connected       // bool (stocké ft4_ok)
