@@ -1,0 +1,150 @@
+# Force Tracker — Contexte projet pour Claude
+
+## Présentation
+
+PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-width 430 px). Single-page app HTML/CSS/JS pur, sans framework ni build step. Déployée sur GitHub Pages.
+
+- **Repo GitHub** : https://github.com/michdu75-commits/forcetracker
+- **App live** : https://michdu75-commits.github.io/forcetracker/
+- **Apps Script** : https://script.google.com/macros/s/AKfycbxPvDqeMv6qt9kctpOn3cXpyVCw_OC82eZrIDckTRk4G5v_lL5VdS3QIkIhhIji_nsU/exec
+- **Fichier Apps Script local** : `appsscript.gs` (à coller dans script.google.com)
+- **Auteur** : Michel — michdu75@gmail.com
+
+## Architecture
+
+| Fichier | Rôle |
+|---|---|
+| `index.html` | App complète (HTML + CSS + JS inline, ~3 200 lignes) |
+| `appsscript.gs` | Backend Google Apps Script v3.1 (sync cloud) |
+| `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
+| `logo.png` | Icône app |
+
+**État persistant** : `localStorage` — clés préfixées `ft4_*`  
+**Objet global** : `S` (state) — chargé par `load()`, sauvé par `persist()`  
+**URL Apps Script** : codée en dur dans `DEFAULT_URL` (ligne ~1084), jamais saisie par l'utilisateur
+
+## Écrans (navigation bas de page)
+
+| ID | Onglet | Contenu |
+|---|---|---|
+| `s-home` | 🏠 Accueil | Stats du mois, bouton séance, récupération, cycle de force, niveau de force, PRs |
+| `s-log` | ⚡ Séance | Exercices actifs, sets/reps/kg, repos, calculateur de plaques |
+| `s-progress` | 📈 Progrès | Graphique 1RM par exercice, suivi du poids de corps, corrélations |
+| `s-nutrition` | 🍽️ Nutrition | Macros TDEE adaptatif, plan de repas, suppléments (créatine, whey), calories brûlées |
+| `s-setup` | 👤 Profil | Profil athlète (âge/taille/poids/sexe/objectif/activité), composition corporelle |
+| `s-coach` | 🤖 Coach IA | Chat Claude Haiku via Apps Script, contexte profil injecté |
+| `s-cycle` | — | Cycle de force (config + vue active), accès depuis s-home |
+
+**Mode admin** : 5 taps sur le logo → onglet "Admin" caché dans Setup (email, test connexion, restaurer, voir réponse brute API). Masqué aux utilisateurs normaux.
+
+## Fonctionnalités implémentées
+
+### Entraînement
+- Suivi de séances (exercices, séries, reps, poids, type de série : Normal/Warm-up/Eccentrique/Drop)
+- Timer de repos configurable (60/90/120/180/300 s) avec barre de progression
+- Calculateur de plaques (visualisation disques sur barre)
+- PRs automatiques (calcul 1RM Brzycki) par exercice
+- Niveaux de force (Débutant/Novice/Intermédiaire/Avancé/Élite) par genre/âge
+
+### Suivi physique
+- Journal de poids de corps avec graphique (courbes bézier)
+- Calcul IMC, corrélations poids/volume
+- Composition corporelle — méthode US Navy (tour de cou/taille/hanches)
+- Check-in post-séance (sommeil, énergie) → score de récupération
+- Suivi sommeil avec graphique
+
+### Nutrition
+- TDEE adaptatif (Harris-Benedict révisé) : âge, taille, poids, sexe, activité, type de travail, tabac
+- Phases charge/décharge (macros différentes)
+- Adaptation par objectif (muscle / perte / force / rééquilibrage / endurance)
+- Adaptation par phase du cycle menstruel (femmes)
+- Plan de repas détaillé (5 repas)
+- Calculateur suppléments : créatine (phases charge/entretien), whey (objectif protéines journalier)
+- Calories brûlées à la séance
+
+### Cycle de force
+- Planification 8-20 semaines avec phases auto (Accumulation → Intensification → Peak → Décharge)
+- Projections 1RM fin de cycle (taux selon niveau et âge)
+- Vue semaine par semaine avec charges recommandées (%1RM)
+
+### UX / PWA
+- Onboarding 5 étapes (nom → compte existant? → profil → objectif → email)
+- Restauration depuis email à l'onboarding
+- Mode jour/nuit (toggle dans Setup)
+- Animation logo (pulsation rouge)
+- Ripple effect sur tous les boutons
+- Install prompt PWA (iOS : instructions, Android : prompt natif)
+- Toast notifications (succès/erreur/info)
+
+### Cloud sync (Google Apps Script)
+- `saveProfile` POST → sauvegarde profil (email, nom, poids, âge, taille, sexe, objectif, activité)
+- `loadProfile` GET → restaure le profil depuis l'email
+- `logSession` POST → log séance dans Google Sheets (analytics)
+- `coach` POST → appel Claude Haiku API pour le Coach IA
+
+## État du cloud sync
+
+### Bugs corrigés (commit 64e6520 — 2026-06-12)
+
+| Bug | Cause | Fix appliqué |
+|---|---|---|
+| `saveProfile` ne sauvegarde jamais | `mode:'no-cors'` empêchait le suivi du redirect Apps Script | Remplacé par `redirect:'follow'` + `Content-Type: text/plain` |
+| Restauration échoue même si profil existe | App lisait `data.name` au lieu de `data.profile.name` (format serveur `{status, profile:{}, prs:{}}`) | `_applyRestoreData` gère les deux formats |
+| `finishOnboarding` ne sync pas le cloud | Manquait un appel `saveProfile` cloud après le onboarding | Ajouté |
+| `testConn` toujours OK même URL fausse | `no-cors` = réponse opaque, jamais d'erreur | Lit maintenant vraiment `{status:'online'}` |
+
+### Action en attente (côté Apps Script)
+
+Le fichier `appsscript.gs` contient le code v3.1 corrigé. **L'Apps Script doit être mis à jour manuellement** :
+1. Ouvrir script.google.com → projet Force Tracker
+2. Remplacer tout le code par le contenu de `appsscript.gs`
+3. Déployer → "Gérer les déploiements" → modifier → Nouvelle version → Déployer
+4. L'URL reste la même
+
+L'Apps Script actuel (avant update) sauvegarde le profil dans une mauvaise structure : le `doPost` retourne `{"status":"ok"}` mais ne persiste pas les champs (`name`, `bw`, etc.) dans `PropertiesService`.
+
+### Format de réponse Apps Script (v3.1)
+
+```
+GET ?test=1
+→ {"status":"online","version":"3.1"}
+
+GET ?action=loadProfile&email=...
+→ {"status":"not_found"}
+→ {"status":"ok","profile":{name,bw,age,height,gender,goal,activityLevel},"prs":{},"sessions":[],"weightLog":[],"sleepLog":[],"cycle":null,"nutritionPhase":"charge"}
+
+POST body JSON (Content-Type: text/plain)
+{action:"saveProfile", email, name, bw, age, height, gender, goal, activityLevel}
+→ {"status":"ok"}
+
+POST {action:"logSession", rows:[...], bw, date, gender, age}
+→ {"status":"ok","count":N}
+
+POST {action:"coach", message, context, history}
+→ {"reply":"..."}
+```
+
+## Conventions de code
+
+- Pas de framework, pas de bundler — JS vanilla inline dans `index.html`
+- State global `S` avec `persist()` / `load()` pour le localStorage
+- Fonctions de rendu : `renderHome()`, `renderNutrition()`, `renderLog()`, etc.
+- Navigation : `goScreen(id, navBtn)`
+- Modals : `.overlay` + `.modal` + classe `.open`
+- Toast : `toast(message, 'success'|'error'|'info')`
+- Tous les appels réseau vers Apps Script utilisent `Content-Type: text/plain;charset=utf-8` + `redirect:'follow'` (jamais `mode:'no-cors'`)
+
+## Variables clés
+
+```javascript
+const DEFAULT_URL = 'https://script.google.com/macros/s/.../exec'; // Apps Script URL
+S.url             // = DEFAULT_URL (jamais null)
+S.email           // email utilisateur (stocké ft4_email)
+S.connected       // bool (stocké ft4_ok)
+S.bw              // poids corps kg
+S.prs             // {exerciceName: {rm1, kg, reps, date}}
+S.sessions        // [{date, exs:[{name, sets:[{kg,reps,done,type,rm1}]}], vol}]
+S.weightLog       // [{date, bw}]
+S.sleepLog        // [{date, hours, energy}]
+S.cycle           // {startDate, weeks, rm1s:{...}} ou null
+```
