@@ -1916,8 +1916,12 @@ function updSetup(){
 }
 async function testConn(){
   document.getElementById('setup-dot').className='sdot a';document.getElementById('setup-txt').textContent='Test…';toast('Test…','info');
-  try{await fetch(S.url+'?test=1',{mode:'no-cors'});S.connected=true;persist();updSetup();updatePill();toast('Connexion réussie ! ✅','success');}
-  catch(e){S.connected=false;persist();updSetup();toast('Erreur de connexion','error');}
+  try{
+    const r=await fetch(S.url+'?test=1',{redirect:'follow'});
+    const d=await r.json();
+    if(d.status==='online'){S.connected=true;persist();updSetup();updatePill();toast('Connexion réussie ! ✅','success');}
+    else{S.connected=false;persist();updSetup();toast('Réponse inattendue du serveur','error');}
+  }catch(e){S.connected=false;persist();updSetup();toast('Erreur de connexion : '+e.message,'error');}
 }
 function saveProfile(){
   const age=parseInt(document.getElementById('age-inp').value);
@@ -1951,24 +1955,40 @@ function saveProfile(){
   if(saveBtn){saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML='💾 Enregistrer le profil';saveBtn.disabled=false;},2000);}
   if(S.email&&S.url){
     const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel};
-    fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).catch(()=>{});
+    fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }
 }
 
-function _applyRestoreData(data){
-  const hasProfile=data.name||data.bw||data.age||data.gender||data.goal;
+function _applyRestoreData(raw){
+  // Le serveur retourne {status:'ok', profile:{name,bw,...}, prs:{}, sessions:[], ...}
+  // ou un ancien format plat {name, bw, ...}
+  let d, prs, sessions, weightLog, sleepLog;
+  if(raw&&typeof raw.profile==='object'){
+    d=raw.profile||{};
+    prs=raw.prs||{};
+    sessions=raw.sessions||[];
+    weightLog=raw.weightLog||[];
+    sleepLog=raw.sleepLog||[];
+  }else{
+    d=raw||{};
+    prs=d.prs||{};
+    sessions=d.sessions||[];
+    weightLog=d.weightLog||[];
+    sleepLog=d.sleepLog||[];
+  }
+  const hasProfile=d.name||d.bw||d.age||d.gender||d.goal;
   if(!hasProfile)throw new Error('Aucun profil trouvé sur le serveur pour cet email. Enregistre d\'abord ton profil depuis l\'appli.');
-  if(data.name)S.name=data.name;
-  if(data.bw)S.bw=parseFloat(data.bw)||S.bw;
-  if(data.age)S.age=parseInt(data.age)||S.age;
-  if(data.height)S.height=parseFloat(data.height)||S.height;
-  if(data.gender){S.gender=data.gender;_obGender=data.gender;}
-  if(data.goal){S.goal=data.goal;_obGoal=data.goal;}
-  if(data.activityLevel)S.activityLevel=parseFloat(data.activityLevel)||S.activityLevel;
-  if(data.prs&&Object.keys(data.prs).length)S.prs=data.prs;
-  if(data.sessions&&data.sessions.length)S.sessions=data.sessions;
-  if(data.weightLog&&data.weightLog.length)S.weightLog=data.weightLog;
-  if(data.sleepLog&&data.sleepLog.length)S.sleepLog=data.sleepLog;
+  if(d.name)S.name=d.name;
+  if(d.bw)S.bw=parseFloat(d.bw)||S.bw;
+  if(d.age)S.age=parseInt(d.age)||S.age;
+  if(d.height)S.height=parseFloat(d.height)||S.height;
+  if(d.gender){S.gender=d.gender;_obGender=d.gender;}
+  if(d.goal){S.goal=d.goal;_obGoal=d.goal;}
+  if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;
+  if(prs&&Object.keys(prs).length)S.prs=prs;
+  if(sessions&&sessions.length)S.sessions=sessions;
+  if(weightLog&&weightLog.length)S.weightLog=weightLog;
+  if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;
   persist();
 }
 
@@ -1986,7 +2006,7 @@ async function restoreFromEmail(){
   toast('Restauration en cours…','info');
   try{
     const data=await _fetchRestoreRaw(S.email);
-    if(!data||data.error){toast(data&&data.error?data.error:'Aucune donnée trouvée pour cet email','error');return;}
+    if(!data||data.error||data.status==='not_found'){toast(data&&data.error?data.error:'Aucun profil trouvé pour cet email.','error');return;}
     _applyRestoreData(data);
     renderSetup();renderHome();renderNutrition();
     toast('Profil restauré ✅','success');
@@ -2013,7 +2033,7 @@ async function syncSheets(sess){
       if(!s.done)return;
       rows.push({date:sess.date,exercise:ex.name,set_num:i+1,type:s.type||'N',kg:s.kg,reps:s.reps,volume:(s.kg||0)*(s.reps||0),rm1:s.rm1?fmt(s.rm1):'',bw:S.bw,gender:S.gender,age:S.age});
     }));
-    await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age})});
+    await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age})});
     return true;
   }catch(e){return false;}
 }
@@ -3024,7 +3044,7 @@ async function obDoRestore(){
   toast('Restauration en cours…','info');
   try{
     const data=await _fetchRestoreRaw(email);
-    if(!data||data.error){toast(data&&data.error?data.error:'Aucune donnée trouvée pour cet email','error');return;}
+    if(!data||data.error||data.status==='not_found'){toast(data&&data.error?data.error:'Aucun profil trouvé pour cet email. Enregistre d\'abord ton profil depuis l\'appli.','error');return;}
     _applyRestoreData(data);
     const cta=document.getElementById('ob-cta-title');
     if(cta)cta.textContent=S.name?'Content de te revoir, '+S.name+' ! 💪':'Content de te revoir ! 💪';
@@ -3038,7 +3058,12 @@ function finishOnboarding(){
   S.gender=_obGender;
   const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
   if(emailFinal&&!S.email){S.email=emailFinal.trim();}
+  else if(emailFinal){S.email=emailFinal.trim();}
   persist();
+  if(S.email&&S.url){
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel};
+    fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
+  }
   localStorage.setItem('ft4_ob2','1');
   document.documentElement.classList.add('ob-done');
   const ob=document.getElementById('onboarding');
