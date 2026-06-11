@@ -1398,17 +1398,12 @@ function renderNutrition(){
   const hydra=fmt((S.bw*0.035)+0.5);
   document.getElementById('nu-bmr').textContent=bmr.toLocaleString('fr-FR')+' kcal';
   document.getElementById('nu-tdee').textContent=tdee.toLocaleString('fr-FR')+' kcal';
-  const nuSesEl=document.getElementById('nu-session-cal');
-  const nuTotEl=document.getElementById('nu-total-cal');
-  if(nuSesEl)nuSesEl.textContent=sessCals>0?sessCals+' kcal':'— (pas de séance)';
-  if(nuTotEl)nuTotEl.textContent=(tdee+(sessCals||0)).toLocaleString('fr-FR')+' kcal';
-  // Today's session calories
-  const todayStr = today();
-  const todaySess = S.sessions.find(s => s.date === todayStr);
-  const sessCals = todaySess && todaySess.calories ? todaySess.calories : 0;
-  const totalCals = tdee + sessCals;
-  document.getElementById('nu-session-cal').textContent = sessCals > 0 ? sessCals.toLocaleString('fr-FR') + ' kcal' : '— (pas de séance)';
-  document.getElementById('nu-total-cal').textContent = sessCals > 0 ? totalCals.toLocaleString('fr-FR') + ' kcal' : tdee.toLocaleString('fr-FR') + ' kcal';
+  const todayStr=today();
+  const todaySess=S.sessions.find(s=>s.date===todayStr);
+  const sessCals=todaySess&&todaySess.calories?todaySess.calories:0;
+  const totalCals=tdee+sessCals;
+  document.getElementById('nu-session-cal').textContent=sessCals>0?sessCals.toLocaleString('fr-FR')+' kcal':'— (pas de séance)';
+  document.getElementById('nu-total-cal').textContent=(sessCals>0?totalCals:tdee).toLocaleString('fr-FR')+' kcal';
   document.getElementById('nu-hydra').textContent=hydra+' L/jour';
 
   const macros=calcMacros(S.nutritionPhase);
