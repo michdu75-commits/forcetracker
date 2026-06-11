@@ -789,7 +789,11 @@ html.ob-done #onboarding{display:none;}
     <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
       <div class="fg">
         <label>Sexe</label>
-        <div class="gender-toggle">
+        <div id="gender-ro" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--sep);border-radius:var(--r-sm);padding:12px 14px;">
+          <span id="gender-ro-txt" style="font-size:15px;font-weight:700;color:var(--t1);">♂ Homme</span>
+          <button onclick="genderEditMode()" style="background:none;border:none;font-size:17px;padding:0 2px;cursor:pointer;line-height:1;" title="Modifier">✏️</button>
+        </div>
+        <div class="gender-toggle" id="gender-edit" style="display:none;">
           <button class="gtbtn" id="gt-h" onclick="setGender('H')">♂ Homme</button>
           <button class="gtbtn" id="gt-f" onclick="setGender('F')">♀ Femme</button>
         </div>
@@ -1788,10 +1792,23 @@ function calcRM(){
 }
 
 // ─── SETUP ───────────────────────────────────────────────────
+function genderEditMode(){
+  document.getElementById('gender-ro').style.display='none';
+  document.getElementById('gender-edit').style.display='flex';
+}
+function _updateGenderRO(g){
+  const ro=document.getElementById('gender-ro-txt');
+  if(ro)ro.textContent=g==='H'?'♂ Homme':'♀ Femme';
+}
 function setGender(g){
   S.gender=g;persist();
-  document.getElementById('gt-h').classList.toggle('active',g==='H');
-  document.getElementById('gt-f').classList.toggle('active',g==='F');
+  _updateGenderRO(g);
+  if(!_adminMode){
+    document.getElementById('gender-edit').style.display='none';
+    document.getElementById('gender-ro').style.display='flex';
+  }
+  const gtH=document.getElementById('gt-h');if(gtH)gtH.classList.toggle('active',g==='H');
+  const gtF=document.getElementById('gt-f');if(gtF)gtF.classList.toggle('active',g==='F');
   const cs=document.getElementById('cycle-section');
   if(cs)cs.style.display=g==='F'?'flex':'none';
   const hf=document.getElementById('hip-fg');
@@ -1869,6 +1886,11 @@ function setGoal(g){
 }
 
 function renderSetup(){
+  _updateGenderRO(S.gender);
+  const ro=document.getElementById('gender-ro');
+  const ed=document.getElementById('gender-edit');
+  if(ro)ro.style.display=_adminMode?'none':'flex';
+  if(ed)ed.style.display=_adminMode?'flex':'none';
   setGender(S.gender);
   const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
   const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';
