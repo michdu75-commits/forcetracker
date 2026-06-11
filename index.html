@@ -140,6 +140,10 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .wtbtn{flex:1;padding:9px 4px;border:none;border-radius:8px;background:transparent;color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;text-align:center;}
 .wtbtn.active{background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;box-shadow:0 3px 12px rgba(255,45,85,.3);}
 .cycle-phase-banner{border-radius:var(--r);padding:12px 14px;display:flex;gap:12px;align-items:flex-start;}
+.goal-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
+.goal-btn{display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;font-family:var(--font);cursor:pointer;gap:5px;transition:all .2s;touch-action:manipulation;text-align:center;line-height:1.3;}
+.goal-btn span{font-size:10px;font-weight:600;}
+.goal-btn.active{background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border-color:transparent;box-shadow:0 3px 12px rgba(255,45,85,.3);}
 
 /* WORKOUT */
 .ex-block{background:var(--bg2);border-radius:var(--r);overflow:hidden;border:1px solid var(--sep);}
@@ -486,9 +490,10 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
       <div class="nu-stat"><span class="nu-stat-lbl">💧 Hydratation</span><span class="nu-stat-val" id="nu-hydra">— L</span></div>
     </div>
     <div class="sec">Phase nutritionnelle</div>
+    <div id="nu-goal-info" style="display:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;text-align:center;margin-bottom:2px;"></div>
     <div class="phase-row">
-      <button class="phase-btn charge" id="pb-charge" onclick="setNuPhase('charge')">⚡ Charge<br><span style="font-size:10px;font-weight:400;">Surplus calorique</span></button>
-      <button class="phase-btn decharge" id="pb-decharge" onclick="setNuPhase('decharge')">🔄 Décharge<br><span style="font-size:10px;font-weight:400;">Déficit calorique</span></button>
+      <button class="phase-btn charge" id="pb-charge" onclick="setNuPhase('charge')">⚡ Charge<br><span style="font-size:10px;font-weight:400;" id="pb-charge-lbl">Surplus calorique</span></button>
+      <button class="phase-btn decharge" id="pb-decharge" onclick="setNuPhase('decharge')">🔄 Décharge<br><span style="font-size:10px;font-weight:400;" id="pb-decharge-lbl">Déficit calorique</span></button>
     </div>
     <div class="sec">Macronutriments</div>
     <div class="macro-grid">
@@ -644,6 +649,28 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
         </div>
         <div id="cycle-phase-card"></div>
       </div>
+      <!-- COMPOSITION CORPORELLE -->
+      <div style="height:1px;background:var(--sep);"></div>
+      <div style="font-size:12px;color:var(--blue);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">📐 Composition corporelle — Méthode Marine US</div>
+      <div class="two-col">
+        <div class="fg"><label>Tour de cou (cm)</label><input type="number" id="neck-inp" placeholder="37" step="0.5" inputmode="decimal" oninput="renderBFCard()"></div>
+        <div class="fg"><label>Tour de taille (cm)</label><input type="number" id="waist-inp" placeholder="85" step="0.5" inputmode="decimal" oninput="renderBFCard()"></div>
+      </div>
+      <div class="fg" id="hip-fg" style="display:none;">
+        <label>Tour de hanches (cm)</label><input type="number" id="hip-inp" placeholder="95" step="0.5" inputmode="decimal" oninput="renderBFCard()">
+      </div>
+      <div id="bf-result-card"></div>
+      <!-- OBJECTIF -->
+      <div style="height:1px;background:var(--sep);"></div>
+      <div style="font-size:12px;color:var(--red);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">🎯 Objectif</div>
+      <div class="goal-grid">
+        <button class="goal-btn" id="g-muscle" onclick="setGoal('muscle')">💪<br><span>Prise de muscle</span></button>
+        <button class="goal-btn" id="g-perte" onclick="setGoal('perte')">🔥<br><span>Perte de poids</span></button>
+        <button class="goal-btn" id="g-force" onclick="setGoal('force')">🏋️<br><span>Force max</span></button>
+        <button class="goal-btn" id="g-equilibre" onclick="setGoal('equilibre')">⚖️<br><span>Rééquilibrage</span></button>
+        <button class="goal-btn" id="g-endurance" onclick="setGoal('endurance')">🏃<br><span>Endurance</span></button>
+      </div>
+      <div id="goal-desc" style="font-size:12px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:10px 12px;line-height:1.5;min-height:36px;"></div>
       <button class="btn btn-red" onclick="saveProfile()" style="padding:14px;font-size:16px;">💾 Enregistrer le profil</button>
     </div>
   </div>
@@ -865,7 +892,9 @@ let S={
   sessions:[],prs:{},wkt:null,
   url:DEFAULT_URL,email:'',connected:false,
   nutritionPhase:'charge',
-  customExercises:[]
+  customExercises:[],
+  neck:0,waist:0,hip:0,
+  goal:'muscle'
 };
 
 function load(){
@@ -890,6 +919,10 @@ function load(){
     S.cycle=JSON.parse(localStorage.getItem('ft4_cycle')||'null');
     S.nutritionPhase=localStorage.getItem('ft4_nphase')||'charge';
     S.customExercises=JSON.parse(localStorage.getItem('ft4_cuex')||'[]');
+    S.neck=parseFloat(localStorage.getItem('ft4_neck')||'0')||0;
+    S.waist=parseFloat(localStorage.getItem('ft4_waist')||'0')||0;
+    S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
+    S.goal=localStorage.getItem('ft4_goal')||'muscle';
   }catch(e){}
 }
 function persist(){
@@ -908,6 +941,10 @@ function persist(){
     localStorage.setItem('ft4_mcstart',S.mensCycleStart);
     localStorage.setItem('ft4_mcdur',S.mensCycleDur);
     localStorage.setItem('ft4_cuex',JSON.stringify(S.customExercises||[]));
+    localStorage.setItem('ft4_neck',S.neck||0);
+    localStorage.setItem('ft4_waist',S.waist||0);
+    localStorage.setItem('ft4_hip',S.hip||0);
+    localStorage.setItem('ft4_goal',S.goal||'muscle');
   }catch(e){}
 }
 
@@ -948,33 +985,63 @@ function getMensCyclePhase(){
 
 function calcMacros(phase){
   const tdee=calcTDEE();
+  const goal=S.goal||'muscle';
   const isCharge=phase==='charge';
   const cp=getMensCyclePhase();
   const lutealBonus=cp&&cp.phase==='Lutéale'?150:0;
-  const calories=(isCharge?tdee+400:tdee-400)+lutealBonus;
-  const prot_g=Math.round(S.bw*((isCharge?2.2:2.5)+(cp&&cp.phase==='Lutéale'?0.2:0)));
-  const fat_g  =Math.round(S.bw*(isCharge?0.9:0.8));
-  const prot_k =prot_g*4, fat_k=fat_g*9;
+  const goalDelta={muscle:350,perte:-450,force:200,equilibre:0,endurance:100}[goal]||350;
+  const phaseAdj=isCharge?100:-100;
+  const calories=tdee+goalDelta+phaseAdj+lutealBonus;
+  const lutealProt=cp&&cp.phase==='Lutéale'?0.2:0;
+  const protRatio=({muscle:2.2,perte:2.5,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
+  const fatRatio={muscle:0.9,perte:0.8,force:1.0,equilibre:0.85,endurance:0.75}[goal]||0.9;
+  const prot_g=Math.round(S.bw*protRatio);
+  const fat_g=Math.round(S.bw*fatRatio);
+  const prot_k=prot_g*4,fat_k=fat_g*9;
   const carbs_g=Math.max(0,Math.round((calories-prot_k-fat_k)/4));
   return{calories,prot_g,fat_g,carbs_g};
 }
 
 function getMeals(macros,phase){
-  const isCharge=phase==='charge';
-  // distribution %: [%kcal, name, description]
-  const plan=isCharge?[
-    [0.20,'🌅 Petit-déjeuner','Avoine + œufs + fruit — Focus glucides complexes'],
-    [0.10,'🍎 Collation matin','Yaourt grec + noix — Protéines rapides'],
-    [0.25,'🍽️ Déjeuner','Riz + poulet + légumes — Repas complet'],
-    [0.15,'⚡ Pré-entraînement',"Banane + flocons d\'avoine — Énergie rapide"],
-    [0.20,'💪 Post-entraînement','Whey + riz + banane — Récupération maximale'],
-    [0.10,'🌙 Dîner','Poisson/bœuf + légumes + patate douce'],
-  ]:[
-    [0.25,'🌅 Petit-déjeuner','Œufs + légumes + pain complet — Rassasiant'],
-    [0.30,'🍽️ Déjeuner','Protéine maigre + légumes + légumineuses'],
-    [0.15,'🍎 Collation','Fromage blanc + légumes crus'],
-    [0.30,'🌙 Dîner','Poisson + légumes vapeur + quinoa'],
-  ];
+  const goal=S.goal||'muscle';
+  const plans={
+    muscle:[
+      [0.20,'🌅 Petit-déjeuner','Avoine + œufs + fruit — Glucides complexes'],
+      [0.10,'🍎 Collation matin','Yaourt grec + noix — Protéines rapides'],
+      [0.25,'🍽️ Déjeuner','Riz + poulet + légumes — Repas complet'],
+      [0.15,'⚡ Pré-entraînement',"Banane + flocons d'avoine — Énergie maximale"],
+      [0.20,'💪 Post-entraînement','Whey + riz + banane — Récupération anabolique'],
+      [0.10,'🌙 Dîner','Saumon/bœuf + légumes + patate douce'],
+    ],
+    perte:[
+      [0.25,'🌅 Petit-déjeuner','Œufs entiers + épinards + pain complet — Rassasiant, riche en protéines'],
+      [0.10,'🍎 Collation','Fromage blanc 0% + concombre — Volume sans calories'],
+      [0.30,'🍽️ Déjeuner','Poulet/thon + légumes vapeur + légumineuses — Satiété maximale'],
+      [0.10,'🍎 Collation 2','Amandes (20g) + whey shake — Anti-fringales'],
+      [0.25,'🌙 Dîner','Poisson maigre + légumes rôtis + quinoa — Faible IG'],
+    ],
+    force:[
+      [0.20,'🌅 Petit-déjeuner','Avoine + œufs + lait entier — Base énergétique dense'],
+      [0.15,'⚡ Pré-entraînement','Riz blanc + bœuf + banane — Charge glycogène maximale'],
+      [0.25,'🍽️ Déjeuner','Pâtes + poulet + huile olive — Carburant pour les charges lourdes'],
+      [0.25,'💪 Post-entraînement','Whey + riz blanc + dattes — Récupération rapide'],
+      [0.15,'🌙 Dîner','Œufs + patate douce + légumes — Récupération nocturne'],
+    ],
+    equilibre:[
+      [0.25,'🌅 Petit-déjeuner','Œufs + avoine + fruits — Équilibre parfait macro/micro'],
+      [0.30,'🍽️ Déjeuner','Protéine + céréale complète + légumes variés — Coloré et complet'],
+      [0.15,'🍎 Collation','Yaourt grec + noix ou fruit de saison'],
+      [0.30,'🌙 Dîner','Poisson + légumes + riz complet ou lentilles'],
+    ],
+    endurance:[
+      [0.25,'🌅 Petit-déjeuner','Porridge + miel + banane + fruit sec — Réserve glycogène'],
+      [0.15,'⚡ Pré-entraînement','Barre céréale maison + jus de fruit — Énergie rapide'],
+      [0.25,'🍽️ Déjeuner','Pâtes complètes + thon + légumes — Glucides dominants'],
+      [0.20,'💪 Post-entraînement','Boisson récup + banane + pain complet — Réhydratation'],
+      [0.15,'🌙 Dîner','Riz + poulet + légumes — Reconstruction musculaire nocturne'],
+    ],
+  };
+  const plan=plans[goal]||plans.muscle;
   return plan.map(([pct,name,desc])=>{
     const kcal=Math.round(macros.calories*pct);
     const prot=Math.round(macros.prot_g*pct);
@@ -1061,6 +1128,24 @@ function renderNutrition(){
   // Phase buttons
   document.getElementById('pb-charge').classList.toggle('active',S.nutritionPhase==='charge');
   document.getElementById('pb-decharge').classList.toggle('active',S.nutritionPhase==='decharge');
+  // Goal banner
+  const goal=S.goal||'muscle';
+  const goalDelta={muscle:350,perte:-450,force:200,equilibre:0,endurance:100}[goal]||350;
+  const goalColors={muscle:'rgba(255,45,85,.1)',perte:'rgba(255,149,0,.1)',force:'rgba(41,121,255,.1)',equilibre:'rgba(52,199,89,.1)',endurance:'rgba(170,0,255,.1)'};
+  const goalBorderColors={muscle:'rgba(255,45,85,.3)',perte:'rgba(255,149,0,.3)',force:'rgba(41,121,255,.3)',equilibre:'rgba(52,199,89,.3)',endurance:'rgba(170,0,255,.3)'};
+  const goalIcons={muscle:'💪',perte:'🔥',force:'🏋️',equilibre:'⚖️',endurance:'🏃'};
+  const nuGoal=document.getElementById('nu-goal-info');
+  if(nuGoal){
+    nuGoal.style.display='block';
+    nuGoal.style.background=goalColors[goal]||goalColors.muscle;
+    nuGoal.style.border=`1px solid ${goalBorderColors[goal]||goalBorderColors.muscle}`;
+    nuGoal.textContent=`${goalIcons[goal]||'💪'} ${GOAL_LABELS[goal]||'Prise de muscle'} — Base ${goalDelta>=0?'+'+goalDelta:goalDelta} kcal`;
+  }
+  // Dynamic phase labels
+  const lc=document.getElementById('pb-charge-lbl'),ld=document.getElementById('pb-decharge-lbl');
+  const cv=goalDelta+100,dv=goalDelta-100;
+  if(lc)lc.textContent=`${cv>=0?'+':''}${cv} kcal / TDEE`;
+  if(ld)ld.textContent=`${dv>=0?'+':''}${dv} kcal / TDEE`;
 
   const bmr=calcBMR(), tdee=calcTDEE();
   const hydra=fmt((S.bw*0.035)+0.5);
@@ -1455,6 +1540,9 @@ function setGender(g){
   document.getElementById('gt-f').classList.toggle('active',g==='F');
   const cs=document.getElementById('cycle-section');
   if(cs)cs.style.display=g==='F'?'flex':'none';
+  const hf=document.getElementById('hip-fg');
+  if(hf)hf.style.display=g==='F'?'':'none';
+  renderBFCard();
 }
 function setWorkType(t){
   S.workType=t;
@@ -1476,11 +1564,61 @@ function renderCycleProfileCard(){
     <div style="font-size:11px;color:var(--t2);margin-top:2px;line-height:1.4;">${cp.training}</div></div>
   </div>`;
 }
+
+function renderBFCard(){
+  const el=document.getElementById('bf-result-card');if(!el)return;
+  const neck=parseFloat((document.getElementById('neck-inp')||{}).value)||S.neck||0;
+  const waist=parseFloat((document.getElementById('waist-inp')||{}).value)||S.waist||0;
+  const hip=parseFloat((document.getElementById('hip-inp')||{}).value)||S.hip||0;
+  const ht=parseFloat((document.getElementById('ht-inp')||{}).value)||S.height||0;
+  const bw=parseFloat((document.getElementById('bw-inp')||{}).value)||S.bw||0;
+  if(!ht||!neck||!waist){el.innerHTML='';return;}
+  let bf;
+  if(S.gender==='H'){
+    if(waist<=neck){el.innerHTML='';return;}
+    bf=495/(1.0324-0.19077*Math.log10(waist-neck)+0.15456*Math.log10(ht))-450;
+  }else{
+    if(!hip||waist+hip<=neck){el.innerHTML='';return;}
+    bf=495/(1.29579-0.35004*Math.log10(waist+hip-neck)+0.22100*Math.log10(ht))-450;
+  }
+  bf=Math.max(2,Math.round(bf*10)/10);
+  const cats=S.gender==='H'
+    ?[[6,'Essentiel','var(--purp)'],[14,'Athlète','var(--green)'],[18,'Fitness','var(--blue)'],[25,'Moyen','var(--gold)'],[99,'Élevé','var(--red)']]
+    :[[11,'Essentiel','var(--purp)'],[21,'Athlète','var(--green)'],[25,'Fitness','var(--blue)'],[32,'Moyen','var(--gold)'],[99,'Élevé','var(--red)']];
+  const cat=cats.find(c=>bf<c[0])||cats[cats.length-1];
+  const grasse=bw?Math.round(bw*bf/100):0;
+  const maigre=bw?Math.round(bw*(1-bf/100)):0;
+  el.innerHTML=`<div style="background:rgba(41,121,255,.08);border:1px solid rgba(41,121,255,.2);border-radius:10px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+    <div><div style="font-size:28px;font-weight:900;font-family:var(--font-cond);color:${cat[2]};">${bf}%</div>
+    <div style="font-size:11px;color:var(--t3);margin-top:1px;">Masse grasse (Marine US)</div></div>
+    <div style="text-align:right;"><span style="background:${cat[2]};color:#fff;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:800;">${cat[1]}</span>
+    ${bw?`<div style="font-size:11px;color:var(--t3);margin-top:6px;">${grasse} kg gras · ${maigre} kg maigre</div>`:''}
+    </div>
+  </div>`;
+}
+
+const GOAL_LABELS={muscle:'Prise de muscle',perte:'Perte de poids',force:'Force maximale',equilibre:'Rééquilibrage',endurance:'Endurance'};
+const GOAL_DESCS={
+  muscle:'Surplus de +350 kcal · Protéines 2.2 g/kg · Macros orientées hypertrophie avec charge glucidique.',
+  perte:'Déficit de −450 kcal · Protéines 2.5 g/kg (préservation musculaire) · Glucides réduits, satiété maximale.',
+  force:'Surplus léger +200 kcal · Protéines 2.0 g/kg · Lipides élevés pour le support hormonal, énergie maximale.',
+  equilibre:'Maintenance calorique · Protéines 2.0 g/kg · Améliorer la composition corporelle sans prise/perte de masse.',
+  endurance:'Surplus modéré +100 kcal · Protéines 1.7 g/kg · Glucides élevés pour le glycogène musculaire.',
+};
+function setGoal(g){
+  S.goal=g;
+  ['muscle','perte','force','equilibre','endurance'].forEach(x=>{
+    const el=document.getElementById('g-'+x);if(el)el.classList.toggle('active',x===g);
+  });
+  const el=document.getElementById('goal-desc');
+  if(el)el.textContent=GOAL_DESCS[g]||'';
+}
+
 function renderSetup(){
   setGender(S.gender);
-  const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age;
-  const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height;
-  const bwEl=document.getElementById('bw-inp');if(bwEl)bwEl.value=S.bw;
+  const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
+  const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';
+  const bwEl=document.getElementById('bw-inp');if(bwEl)bwEl.value=S.bw||'';
   const actEl=document.getElementById('act-sel');if(actEl)actEl.value=S.activityLevel;
   const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
   const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
@@ -1489,7 +1627,12 @@ function renderSetup(){
   setSmoker(S.smoker);
   const csEl=document.getElementById('cycle-start-inp');if(csEl)csEl.value=S.mensCycleStart||'';
   const cdEl=document.getElementById('cycle-dur-inp');if(cdEl)cdEl.value=S.mensCycleDur||28;
+  const neckEl=document.getElementById('neck-inp');if(neckEl)neckEl.value=S.neck||'';
+  const waistEl=document.getElementById('waist-inp');if(waistEl)waistEl.value=S.waist||'';
+  const hipEl=document.getElementById('hip-inp');if(hipEl)hipEl.value=S.hip||'';
   renderCycleProfileCard();
+  setGoal(S.goal||'muscle');
+  renderBFCard();
   updSetup();
 }
 function updSetup(){
@@ -1522,8 +1665,14 @@ function saveProfile(){
   const cdEl=document.getElementById('cycle-dur-inp');
   if(csEl&&csEl.value)S.mensCycleStart=csEl.value;
   if(cdEl&&cdEl.value){const d=parseInt(cdEl.value);if(d>=18&&d<=45)S.mensCycleDur=d;}
+  const neckEl=document.getElementById('neck-inp');
+  const waistEl=document.getElementById('waist-inp');
+  const hipEl=document.getElementById('hip-inp');
+  if(neckEl&&neckEl.value){const v=parseFloat(neckEl.value);if(v>20&&v<60)S.neck=v;}
+  if(waistEl&&waistEl.value){const v=parseFloat(waistEl.value);if(v>40&&v<200)S.waist=v;}
+  if(hipEl&&hipEl.value){const v=parseFloat(hipEl.value);if(v>40&&v<200)S.hip=v;}
   persist();renderHome();renderNutrition();
-  renderCycleProfileCard();
+  renderCycleProfileCard();renderBFCard();
   toast('Profil enregistré !','success');
 }
 
@@ -1791,8 +1940,21 @@ PROFIL ATHLÈTE:
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal
 - Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Marchant',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
-- Phase nutrition: ${S.nutritionPhase === 'charge' ? 'Charge (surplus)' : 'Décharge (déficit)'}
-- Calories: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
+- Objectif: ${GOAL_LABELS[S.goal||'muscle']} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
+- Calories cible: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
+${(()=>{
+  const bf_n=S.neck,bf_w=S.waist,bf_h=S.hip,bf_ht=S.height;
+  let bf=null;
+  if(bf_ht&&bf_n&&bf_w){
+    try{if(S.gender==='H'&&bf_w>bf_n){bf=Math.round((495/(1.0324-0.19077*Math.log10(bf_w-bf_n)+0.15456*Math.log10(bf_ht))-450)*10)/10;}
+    else if(S.gender==='F'&&bf_h&&bf_w+bf_h>bf_n){bf=Math.round((495/(1.29579-0.35004*Math.log10(bf_w+bf_h-bf_n)+0.22100*Math.log10(bf_ht))-450)*10)/10;}
+    }catch(e){}
+  }
+  if(bf===null)return '';
+  const cats=S.gender==='H'?[[6,'Essentiel'],[14,'Athlète'],[18,'Fitness'],[25,'Moyen'],[99,'Élevé']]:[[11,'Essentiel'],[21,'Athlète'],[25,'Fitness'],[32,'Moyen'],[99,'Élevé']];
+  const cat=(cats.find(c=>bf<c[0])||cats[cats.length-1])[1];
+  return `- Masse grasse: ${Math.max(2,bf)}% (${cat}, Méthode Marine US) — Masse maigre ~${Math.round(S.bw*(1-Math.max(2,bf)/100))}kg`;
+})()}
 ${(()=>{const cp=getMensCyclePhase();return cp?`- Phase cycle menstruel: ${cp.phase} (Jour ${cp.day}/${S.mensCycleDur}) — ${cp.nutrition}`:'';})()}
 
 RECORDS PERSONNELS (1RM estimés):
