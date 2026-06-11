@@ -435,6 +435,8 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
     <div class="sbox"><div class="lbl">Big 3 (1RM)</div><div class="val" id="h-big3">—</div><div class="unit">kg</div></div>
   </div>
   <button class="btn btn-red" id="start-btn" onclick="startWorkout()">⚡ Commencer une séance</button>
+  <div class="sec" style="margin-bottom:0;">😴 Récupération</div>
+  <div class="card cp" id="recovery-card" style="display:flex;flex-direction:column;gap:10px;"></div>
   <div class="cycle-card" onclick="goScreen('cycle',null)" id="cycle-home-card">
     <div class="cycle-left">
       <div class="cycle-title" id="cycle-home-title">📊 Cycle de Force</div>
@@ -447,6 +449,9 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
   <div class="sec">Records personnels</div>
   <div class="card" id="pr-list"></div>
   <div class="status-row"><div class="sdot" id="h-sdot"></div><span id="h-stxt">Non connecté</span></div>
+  <div style="text-align:center;padding:8px 0 2px;font-size:11px;color:var(--t3);line-height:1.8;border-top:1px solid var(--sep);margin-top:2px;">
+    Développé par Michel — Force Tracker 2026<br><a href="mailto:forcetracker.app@gmail.com" style="color:var(--blue);text-decoration:none;">forcetracker.app@gmail.com</a>
+  </div>
 </div>
 
 <!-- SÉANCE -->
@@ -581,7 +586,7 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
       <button class="btn btn-red" onclick="testConn()" style="padding:13px;font-size:15px;">🔌 Tester la connexion</button>
     </div>
     <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
-    <p style="font-size:11px;color:var(--t3);text-align:center;line-height:1.6;">Force Tracker v2.8 — Juin 2026</p>
+    <p style="font-size:11px;color:var(--t3);text-align:center;line-height:1.8;">Force Tracker v2.8 — 2026<br>Développé par Michel · <a href="mailto:forcetracker.app@gmail.com" style="color:var(--blue);text-decoration:none;">forcetracker.app@gmail.com</a></p>
   </div>
 
   <!-- PROFIL -->
@@ -894,7 +899,8 @@ let S={
   nutritionPhase:'charge',
   customExercises:[],
   neck:0,waist:0,hip:0,
-  goal:'muscle'
+  goal:'muscle',
+  sleepLog:[]
 };
 
 function load(){
@@ -923,6 +929,7 @@ function load(){
     S.waist=parseFloat(localStorage.getItem('ft4_waist')||'0')||0;
     S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
+    S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
   }catch(e){}
 }
 function persist(){
@@ -945,6 +952,7 @@ function persist(){
     localStorage.setItem('ft4_waist',S.waist||0);
     localStorage.setItem('ft4_hip',S.hip||0);
     localStorage.setItem('ft4_goal',S.goal||'muscle');
+    localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
   }catch(e){}
 }
 
@@ -1107,6 +1115,7 @@ function renderHome(){
   stxt.textContent=S.connected?'Google Sheets connecté ✓':'Non connecté — configure dans Setup';
   updatePill();
   renderCycleHomeCard();
+  renderRecoveryCard();
 }
 
 function updatePill(){
@@ -1913,6 +1922,110 @@ function renderCycleHomeCard() {
 }
 
 
+// ─── SLEEP & RECOVERY ─────────────────────────────────────────
+let _sleepQual=3;
+
+function calcRecoveryScore(){
+  if(!S.sleepLog||!S.sleepLog.length)return null;
+  const sorted=S.sleepLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  const scores=sorted.map(e=>{
+    const h=e.hours||0;
+    const hScore=h<4?5:h<6?35:h<7?60:h<=9?100:85;
+    const qScore=((e.quality||2)/4)*100;
+    return Math.round(hScore*0.6+qScore*0.4);
+  });
+  const weights=[0.6,0.3,0.1].slice(0,scores.length);
+  const wTotal=weights.reduce((a,b)=>a+b,0);
+  const wScore=scores.reduce((a,s,i)=>a+s*weights[i],0)/wTotal;
+  const lastSess=S.sessions[0];
+  let restBonus=0;
+  if(lastSess){const d=Math.floor((new Date()-new Date(lastSess.date+'T12:00:00'))/864e5);restBonus=Math.min(d,3)*3;}
+  return Math.min(100,Math.round(wScore+restBonus));
+}
+function getRecoveryInfo(score){
+  if(score===null)return{label:'—',color:'var(--t3)',icon:'❓',rec:'Enregistre ton sommeil pour obtenir ton score de récupération.'};
+  if(score<40)return{label:'Fatigué',color:'var(--red)',icon:'🔴',rec:'Récupération insuffisante — séance légère ou repos complet recommandé. Priorise le sommeil ce soir.'};
+  if(score<60)return{label:'Modéré',color:'var(--orange)',icon:'🟠',rec:'Récupération partielle — évite les charges maximales. Séance technique ou volume modéré.'};
+  if(score<80)return{label:'Bon',color:'var(--gold)',icon:'🟡',rec:'Bonne récupération — séance normale possible. Pas le moment idéal pour des PRs.'};
+  return{label:'Optimal',color:'var(--green)',icon:'🟢',rec:'Récupération excellente ! Corps prêt pour une séance intensive — idéal pour tenter des records.'};
+}
+
+function renderRecoveryCard(){
+  const el=document.getElementById('recovery-card');if(!el)return;
+  const score=calcRecoveryScore();
+  const info=getRecoveryInfo(score);
+  const todayStr=today();
+  const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===todayStr);
+  const qLabels={1:'😴 Mauvais',2:'😐 Moyen',3:'😊 Bon',4:'⚡ Excellent'};
+  const scoreDisp=score!==null?score:'—';
+  el.innerHTML=`
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div style="width:56px;height:56px;border-radius:50%;border:3px solid ${info.color};display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;background:${info.color}1a;">
+      <div style="font-family:var(--font-cond);font-size:17px;font-weight:900;color:${info.color};line-height:1;">${scoreDisp}</div>
+      ${score!==null?`<div style="font-size:9px;color:${info.color};font-weight:700;">/100</div>`:''}
+    </div>
+    <div style="flex:1;">
+      <div style="font-size:15px;font-weight:800;color:${info.color};">${info.icon} ${info.label}</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:3px;line-height:1.4;">${info.rec}</div>
+    </div>
+  </div>
+  ${ts?`
+  <div style="background:var(--bg3);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
+    <div style="font-size:12px;color:var(--t2);">🌙 Cette nuit : <strong style="color:var(--t1);">${ts.hours}h</strong> · <strong style="color:var(--t1);">${qLabels[ts.quality||2]}</strong></div>
+    <button style="font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="editSleepToday()">Modifier</button>
+  </div>`:`
+  <button class="btn btn-bg2" onclick="showSleepForm()" style="margin-top:0;">😴 Saisir mon sommeil</button>`}
+  <div id="sleep-form" style="display:none;flex-direction:column;gap:8px;">
+    <div class="two-col">
+      <div class="fg"><label>Heures dormies</label><input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" style="font-size:16px;"></div>
+      <div class="fg"><label>Qualité du sommeil</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+          <button class="wtbtn" id="sq-1" onclick="setSleepQual(1)">😴<br><span style="font-size:9px;">Mauvais</span></button>
+          <button class="wtbtn" id="sq-2" onclick="setSleepQual(2)">😐<br><span style="font-size:9px;">Moyen</span></button>
+          <button class="wtbtn" id="sq-3" onclick="setSleepQual(3)">😊<br><span style="font-size:9px;">Bon</span></button>
+          <button class="wtbtn" id="sq-4" onclick="setSleepQual(4)">⚡<br><span style="font-size:9px;">Excellent</span></button>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-bg2" style="flex:1;" onclick="hideSleepForm()">Annuler</button>
+      <button class="btn btn-red" style="flex:1;" onclick="saveSleepEntry()">Enregistrer</button>
+    </div>
+  </div>`;
+  if(ts)updateSleepQualBtns();
+}
+function showSleepForm(){
+  _sleepQual=3;
+  const f=document.getElementById('sleep-form');
+  if(f){f.style.display='flex';updateSleepQualBtns();}
+}
+function hideSleepForm(){
+  const f=document.getElementById('sleep-form');if(f)f.style.display='none';
+}
+function editSleepToday(){
+  const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===today());
+  if(ts){_sleepQual=ts.quality||3;const h=document.getElementById('sleep-hours');if(h)h.value=ts.hours||'';}
+  else _sleepQual=3;
+  const f=document.getElementById('sleep-form');if(f){f.style.display='flex';updateSleepQualBtns();}
+}
+function setSleepQual(q){_sleepQual=q;updateSleepQualBtns();}
+function updateSleepQualBtns(){
+  [1,2,3,4].forEach(q=>{const el=document.getElementById('sq-'+q);if(el)el.classList.toggle('active',q===_sleepQual);});
+}
+function saveSleepEntry(){
+  const hEl=document.getElementById('sleep-hours');
+  const hours=parseFloat(hEl?hEl.value:0)||0;
+  if(!hours||hours<2||hours>14){toast('Heures invalides (entre 2 et 14h)','error');return;}
+  if(!S.sleepLog)S.sleepLog=[];
+  const todayStr=today();
+  const idx=S.sleepLog.findIndex(e=>e.date===todayStr);
+  const entry={date:todayStr,hours,quality:_sleepQual};
+  if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
+  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
+  persist();renderRecoveryCard();
+  toast('Sommeil enregistré !','success');
+}
+
 // ─── COACH IA ─────────────────────────────────────────────────
 let coachHistory = [];
 let coachBusy = false;
@@ -1965,6 +2078,22 @@ ${S.cycle && S.cycle.active ? `Actif - Semaine ${curWeek}/${S.cycle.weeks} - Pha
 
 DERNIÈRES SÉANCES:
 ${recentSessions}
+
+RÉCUPÉRATION & SOMMEIL:
+${(()=>{
+  const score=calcRecoveryScore();
+  const info=getRecoveryInfo(score);
+  const todayStr=today();
+  const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===todayStr);
+  const qLabels={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
+  const last3=S.sleepLog&&S.sleepLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  const avgH=last3&&last3.length?Math.round(last3.reduce((a,e)=>a+e.hours,0)/last3.length*10)/10:null;
+  return `- Score récupération: ${score!==null?score+'/100 ('+info.label+')':'Non renseigné — données de sommeil manquantes'}
+- Sommeil cette nuit: ${ts?ts.hours+'h | Qualité: '+qLabels[ts.quality||2]:'Non enregistré'}
+${avgH?'- Moyenne sommeil (3j): '+avgH+'h':''}
+- Conseil récupération: ${info.rec}
+- Implication entraînement: ${score===null?'Demander les données de sommeil à l\'athlète':score<40?'Proposer UNIQUEMENT repos actif, étirements ou séance très légère. Déconseiller fortement tout effort maximal.':score<60?'Séance possible mais pas de records. Volume modéré, technique, pas de maxima.':score<80?'Séance normale. Peut progresser mais réserver les PRs pour les jours optimal.':'JOUR IDÉAL pour PRs et séances intensives. Corps en pleine capacité de récupération.'}`;
+})()}
 
 Utilise ces données pour personnaliser tes réponses. Sois direct et pratique.`;
 }
