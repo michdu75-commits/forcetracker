@@ -471,7 +471,25 @@ html.ob-done #onboarding{display:none;}
         <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" style="margin-top:8px;">
       </div>
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="obNext(2)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-red" onclick="obNext('1b')" style="font-size:17px;padding:16px;">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 1b : Compte existant ? -->
+    <div class="ob-step" id="ob-1b">
+      <div class="ob-hero ob-top">
+        <div style="font-size:48px;line-height:1;">☁️</div>
+        <div class="ob-title">Tu as déjà un<br>compte Force Tracker ?</div>
+        <div class="ob-sub">Récupère ton historique, tes perfs et ton profil en un tap.</div>
+      </div>
+      <div class="ob-footer" id="ob-1b-choice" style="display:flex;">
+        <button class="btn btn-red" onclick="obShowRestore()" style="font-size:17px;padding:16px;">✅ Oui, je restaure mes données</button>
+        <button class="btn btn-bg2" onclick="obGoTo(2)" style="font-size:15px;padding:14px;">Non, je crée mon profil →</button>
+      </div>
+      <div class="ob-footer" id="ob-1b-restore" style="display:none;">
+        <input class="ob-inp" id="ob-email" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
+        <button class="btn btn-red" onclick="obDoRestore()" style="font-size:17px;padding:16px;">☁️ Restaurer mes données</button>
+        <button class="btn btn-bg2" onclick="obHideRestore()" style="font-size:15px;padding:13px;">← Retour</button>
       </div>
     </div>
 
@@ -2885,7 +2903,9 @@ const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',force:'ob-gf',equilibre:'ob-ge',en
 function initOnboarding(){
   if(document.documentElement.classList.contains('ob-done'))return;
   const nameInp=document.getElementById('ob-name');
-  if(nameInp)nameInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext(2);}});
+  if(nameInp)nameInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext('1b');}});
+  const emailInp=document.getElementById('ob-email');
+  if(emailInp)emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});
   ['ob-age','ob-ht','ob-bw'].forEach(id=>{
     const inp=document.getElementById(id);
     if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext(3);}});
@@ -2899,7 +2919,8 @@ function obGoTo(step){
   const next=document.getElementById('ob-'+step);
   if(next){next.classList.add('ob-active');}
   _obStep=step;
-  for(let i=1;i<=4;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',i===step);}
+  const dotNum=step==='1b'?1:+step;
+  for(let i=1;i<=4;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',i===dotNum);}
 }
 
 function obNext(step){
@@ -2934,6 +2955,48 @@ function obSetGoal(g){
   _obGoal=g;
   Object.values(_OB_GOALS).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('ob-sel');});
   const el=document.getElementById(_OB_GOALS[g]);if(el)el.classList.add('ob-sel');
+}
+
+function obShowRestore(){
+  document.getElementById('ob-1b-choice').style.display='none';
+  const r=document.getElementById('ob-1b-restore');
+  r.style.display='flex';
+  setTimeout(()=>{const e=document.getElementById('ob-email');if(e)e.focus();},120);
+}
+
+function obHideRestore(){
+  document.getElementById('ob-1b-restore').style.display='none';
+  document.getElementById('ob-1b-choice').style.display='flex';
+}
+
+async function obDoRestore(){
+  const email=(document.getElementById('ob-email').value||'').trim();
+  if(!email){toast('Entre ton adresse email','error');return;}
+  S.email=email;
+  persist();
+  toast('Restauration en cours…','info');
+  try{
+    const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(email),{redirect:'follow'});
+    const data=await resp.json();
+    if(!data||data.error){toast(data&&data.error?data.error:'Aucune donnée trouvée pour cet email','error');return;}
+    if(data.bw)S.bw=parseFloat(data.bw)||S.bw;
+    if(data.age)S.age=parseInt(data.age)||S.age;
+    if(data.height)S.height=parseFloat(data.height)||S.height;
+    if(data.gender)S.gender=data.gender;
+    if(data.goal)S.goal=data.goal;
+    if(data.activityLevel)S.activityLevel=parseFloat(data.activityLevel)||S.activityLevel;
+    if(data.prs&&Object.keys(data.prs).length)S.prs=data.prs;
+    if(data.sessions&&data.sessions.length)S.sessions=data.sessions;
+    if(data.weightLog&&data.weightLog.length)S.weightLog=data.weightLog;
+    if(data.sleepLog&&data.sleepLog.length)S.sleepLog=data.sleepLog;
+    persist();
+    const cta=document.getElementById('ob-cta-title');
+    if(cta)cta.textContent=S.name?'Bienvenue de retour, '+S.name+' !':'Bienvenue de retour !';
+    obGoTo(4);
+    toast('Profil restauré ✅','success');
+  }catch(e){
+    toast('Erreur : '+e.message,'error');
+  }
 }
 
 function finishOnboarding(){
