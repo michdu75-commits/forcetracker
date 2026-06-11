@@ -378,6 +378,9 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .msg-coach li{margin-bottom:3px;}
 
 /* SETUP MINI TABS */
+.setup-tabs{display:flex;background:var(--bg3);border-radius:var(--r-sm);padding:4px;gap:4px;border:1px solid var(--sep);margin-bottom:2px;}
+.setup-tab{flex:1;padding:10px;border:none;border-radius:8px;background:transparent;color:var(--t2);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;}
+.setup-tab.active{background:var(--bg2);color:var(--t1);box-shadow:0 2px 8px rgba(0,0,0,.3);}
 
 /* SUPPLEMENTS & PROTEIN TRACKER */
 .protein-bar-wrap{height:10px;background:var(--sep);border-radius:5px;overflow:hidden;margin:10px 0;}
@@ -578,7 +581,7 @@ html.ob-done #onboarding{display:none;}
 
 <div id="root">
 <div class="topbar">
-  <div style="display:flex;align-items:center;gap:10px;"><img src="logo.png" alt="" style="height:32px;width:32px;border-radius:8px;object-fit:cover;flex-shrink:0;"><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
+  <div style="display:flex;align-items:center;gap:10px;"><img src="logo.png" alt="" onclick="onLogoTap()" style="height:32px;width:32px;border-radius:8px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;"><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
   <button class="sync-pill" id="sync-pill" onclick="goScreen('setup',document.getElementById('nb-setup'))">
     <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;"></span>
     <span id="sync-lbl">Sheets</span>
@@ -755,6 +758,27 @@ html.ob-done #onboarding{display:none;}
 
 <!-- SETUP -->
 <div class="screen" id="s-setup">
+
+  <!-- TABS (mode admin uniquement) -->
+  <div class="setup-tabs" id="setup-tabs-bar" style="display:none;">
+    <button class="setup-tab active" id="stab-profil" onclick="switchSetupTab('profil',this)">👤 Profil</button>
+    <button class="setup-tab" id="stab-connexion" onclick="switchSetupTab('connexion',this)">🔧 Admin</button>
+  </div>
+
+  <!-- CONNEXION (admin) -->
+  <div id="setup-connexion" style="display:none;">
+    <div class="sec">⚙️ Administration</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="fg">
+        <label>Email Admin</label>
+        <input type="email" id="email-inp" placeholder="ton@email.com" inputmode="email" oninput="S.email=this.value.trim();persist();">
+      </div>
+      <button class="btn btn-bg2" onclick="restoreFromEmail()" style="padding:13px;font-size:15px;">☁️ Restaurer depuis mon email</button>
+      <button class="btn btn-red" onclick="testConn()" style="padding:13px;font-size:15px;">🔌 Tester la connexion</button>
+    </div>
+    <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
+    <p style="font-size:13px;color:var(--t3);text-align:center;line-height:1.8;">Force Tracker v2.8 — 2026<br>Développé par Michel · <a href="mailto:forcetracker.app@gmail.com" style="color:var(--blue);text-decoration:none;">forcetracker.app@gmail.com</a></p>
+  </div>
 
   <!-- PROFIL -->
   <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;">
@@ -2995,6 +3019,40 @@ function showInstallPrompt(){
 function closeInstall(){
   const el=document.getElementById('install-popup');
   if(el){el.style.transition='opacity .3s';el.style.opacity='0';setTimeout(()=>{el.classList.add('hidden');el.style.opacity='';el.style.transition='';},300);}
+}
+
+// ─── ADMIN MODE ──────────────────────────────────────────────
+let _adminTaps=0,_adminTimer=null,_adminMode=false;
+function onLogoTap(){
+  _adminTaps++;
+  clearTimeout(_adminTimer);
+  if(_adminTaps>=5){
+    _adminTaps=0;
+    _adminMode=!_adminMode;
+    const bar=document.getElementById('setup-tabs-bar');
+    if(bar)bar.style.display=_adminMode?'flex':'none';
+    if(_adminMode){
+      if(!S.email){S.email='michdu75@gmail.com';persist();}
+      const eInp=document.getElementById('email-inp');
+      if(eInp)eInp.value=S.email||'michdu75@gmail.com';
+      goScreen('setup',document.getElementById('nb-setup'));
+      switchSetupTab('connexion',document.getElementById('stab-connexion'));
+    }else{
+      switchSetupTab('profil',document.getElementById('stab-profil'));
+    }
+    toast(_adminMode?'🔧 Mode admin activé':'Mode admin désactivé','info');
+    return;
+  }
+  _adminTimer=setTimeout(()=>{_adminTaps=0;},1500);
+}
+
+function switchSetupTab(tab,btn){
+  const cx=document.getElementById('setup-connexion');
+  const pr=document.getElementById('setup-profil');
+  if(cx){cx.style.display=tab==='connexion'?'flex':'none';if(tab==='connexion'){cx.style.flexDirection='column';cx.style.gap='12px';}}
+  if(pr){pr.style.display=tab==='profil'?'flex':'none';if(tab==='profil'){pr.style.flexDirection='column';pr.style.gap='12px';}}
+  document.querySelectorAll('.setup-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
 }
 
 // ─── INIT ────────────────────────────────────────────────────
