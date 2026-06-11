@@ -1922,7 +1922,8 @@ function saveProfile(){
   if(hipEl&&hipEl.value){const v=parseFloat(hipEl.value);if(v>40&&v<200)S.hip=v;}
   persist();renderHome();renderNutrition();
   renderCycleProfileCard();renderBFCard();
-  toast('Profil enregistré !','success');
+  const saveBtn=document.querySelector('[onclick="saveProfile()"]');
+  if(saveBtn){saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML='💾 Enregistrer le profil';saveBtn.disabled=false;},2000);}
 }
 
 async function restoreFromEmail(){
