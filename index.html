@@ -1930,6 +1930,20 @@ function saveProfile(){
   if(saveBtn){saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML='💾 Enregistrer le profil';saveBtn.disabled=false;},2000);}
 }
 
+function _applyRestoreData(data){
+  if(data.bw)S.bw=parseFloat(data.bw)||S.bw;
+  if(data.age)S.age=parseInt(data.age)||S.age;
+  if(data.height)S.height=parseFloat(data.height)||S.height;
+  if(data.gender){S.gender=data.gender;_obGender=data.gender;}
+  if(data.goal){S.goal=data.goal;_obGoal=data.goal;}
+  if(data.activityLevel)S.activityLevel=parseFloat(data.activityLevel)||S.activityLevel;
+  if(data.prs&&Object.keys(data.prs).length)S.prs=data.prs;
+  if(data.sessions&&data.sessions.length)S.sessions=data.sessions;
+  if(data.weightLog&&data.weightLog.length)S.weightLog=data.weightLog;
+  if(data.sleepLog&&data.sleepLog.length)S.sleepLog=data.sleepLog;
+  persist();
+}
+
 async function restoreFromEmail(){
   if(!S.email){toast('Configure ton email dans Setup → Connexion','error');return;}
   if(!S.url){toast('Configure l\'URL Google Sheets dans Connexion','error');return;}
@@ -1938,24 +1952,10 @@ async function restoreFromEmail(){
     const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
     const data=await resp.json();
     if(!data||data.error){toast(data&&data.error?data.error:'Aucune donnée trouvée pour cet email','error');return;}
-    if(data.bw)S.bw=parseFloat(data.bw)||S.bw;
-    if(data.age)S.age=parseInt(data.age)||S.age;
-    if(data.height)S.height=parseFloat(data.height)||S.height;
-    if(data.gender)S.gender=data.gender;
-    if(data.goal)S.goal=data.goal;
-    if(data.activityLevel)S.activityLevel=parseFloat(data.activityLevel)||S.activityLevel;
-    if(data.prs&&Object.keys(data.prs).length)S.prs=data.prs;
-    if(data.sessions&&data.sessions.length)S.sessions=data.sessions;
-    if(data.weightLog&&data.weightLog.length)S.weightLog=data.weightLog;
-    if(data.sleepLog&&data.sleepLog.length)S.sleepLog=data.sleepLog;
-    persist();
-    renderSetup();
-    renderHome();
-    renderNutrition();
+    _applyRestoreData(data);
+    renderSetup();renderHome();renderNutrition();
     toast('Profil restauré avec succès ✅','success');
-  }catch(e){
-    toast('Erreur : '+e.message,'error');
-  }
+  }catch(e){toast('Erreur : '+e.message,'error');}
 }
 
 // ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
@@ -2982,31 +2982,19 @@ function obHideRestore(){
 async function obDoRestore(){
   const email=(document.getElementById('ob-email').value||'').trim();
   if(!email){toast('Entre ton adresse email','error');return;}
-  S.email=email;
-  persist();
+  if(!S.url){toast('URL Google Sheets manquante','error');return;}
+  S.email=email;persist();
   toast('Restauration en cours…','info');
   try{
     const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(email),{redirect:'follow'});
     const data=await resp.json();
     if(!data||data.error){toast(data&&data.error?data.error:'Aucune donnée trouvée pour cet email','error');return;}
-    if(data.bw)S.bw=parseFloat(data.bw)||S.bw;
-    if(data.age)S.age=parseInt(data.age)||S.age;
-    if(data.height)S.height=parseFloat(data.height)||S.height;
-    if(data.gender){S.gender=data.gender;_obGender=data.gender;}
-    if(data.goal){S.goal=data.goal;_obGoal=data.goal;}
-    if(data.activityLevel)S.activityLevel=parseFloat(data.activityLevel)||S.activityLevel;
-    if(data.prs&&Object.keys(data.prs).length)S.prs=data.prs;
-    if(data.sessions&&data.sessions.length)S.sessions=data.sessions;
-    if(data.weightLog&&data.weightLog.length)S.weightLog=data.weightLog;
-    if(data.sleepLog&&data.sleepLog.length)S.sleepLog=data.sleepLog;
-    persist();
+    _applyRestoreData(data);
     const cta=document.getElementById('ob-cta-title');
     if(cta)cta.textContent=S.name?'Content de te revoir, '+S.name+' ! 💪':'Content de te revoir ! 💪';
     obGoTo(5);
     toast('Profil restauré ✅','success');
-  }catch(e){
-    toast('Erreur : '+e.message,'error');
-  }
+  }catch(e){toast('Erreur : '+e.message,'error');}
 }
 
 function finishOnboarding(){
