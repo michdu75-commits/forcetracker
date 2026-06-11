@@ -771,7 +771,28 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
     <h2>Choisir un exercice</h2>
     <input type="text" id="ex-search" placeholder="Rechercher…" oninput="filterEx()" style="margin-bottom:10px;">
     <div id="ex-list"></div>
-    <div class="modal-btns"><button class="btn btn-bg2" onclick="closeExPicker()">Annuler</button></div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--sep);">
+      <button class="btn btn-bg2" style="width:100%;margin-bottom:0;" id="custom-ex-add-btn" onclick="showCustomExForm()">+ Créer un exercice</button>
+      <div id="custom-ex-form" style="display:none;flex-direction:column;gap:8px;margin-top:10px;">
+        <input type="text" id="custom-ex-name" placeholder="Nom de l'exercice">
+        <select id="custom-ex-grp" style="padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:14px;">
+          <option value="Jambes">Jambes</option>
+          <option value="Pectoraux">Pectoraux</option>
+          <option value="Dos">Dos</option>
+          <option value="Épaules">Épaules</option>
+          <option value="Biceps">Biceps</option>
+          <option value="Triceps">Triceps</option>
+          <option value="Fessiers">Fessiers</option>
+          <option value="Abdominaux">Abdominaux</option>
+          <option value="Trapèzes">Trapèzes</option>
+        </select>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-bg2" style="flex:1;" onclick="hideCustomExForm()">Annuler</button>
+          <button class="btn btn-red" style="flex:1;" onclick="saveCustomEx()">Créer</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-btns" style="margin-top:10px;"><button class="btn btn-bg2" onclick="closeExPicker()">Fermer</button></div>
   </div>
 </div>
 
@@ -783,13 +804,15 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 const EXLIB=[
   {n:'Squat',g:'Jambes'},{n:'Développé Couché',g:'Pectoraux'},{n:'Soulevé de Terre',g:'Dos'},
   {n:'Développé Militaire',g:'Épaules'},{n:'Rowing Barre',g:'Dos'},{n:'Traction Lestée',g:'Dos'},
-  {n:'Squat Avant',g:'Jambes'},{n:'Romanian Deadlift',g:'Jambes'},{n:'Hip Thrust',g:'Fessiers'},
+  {n:'Squat Avant',g:'Jambes'},{n:'Soulevé de Terre Roumain',g:'Jambes'},{n:'Soulevé de Terre Sumo',g:'Jambes'},
+  {n:'Squat Bulgare',g:'Jambes'},{n:'Hip Thrust',g:'Fessiers'},
   {n:'Leg Press',g:'Jambes'},{n:'Leg Curl',g:'Jambes'},{n:'Leg Extension',g:'Jambes'},
-  {n:'Curl Barre',g:'Biceps'},{n:'Curl Haltères',g:'Biceps'},{n:'Marteau',g:'Biceps'},
-  {n:'Extension Triceps',g:'Triceps'},{n:'Dips Lestés',g:'Triceps'},{n:'Barre au Front',g:'Triceps'},
+  {n:'Hack Squat',g:'Jambes'},{n:'Curl Barre',g:'Biceps'},{n:'Curl Haltères',g:'Biceps'},{n:'Marteau',g:'Biceps'},
+  {n:'Extension Triceps',g:'Triceps'},{n:'Dips Lestés',g:'Triceps'},{n:'Barre au Front',g:'Triceps'},{n:'Triceps Poulie',g:'Triceps'},
   {n:'Développé Incliné',g:'Pectoraux'},{n:'Écarté Haltères',g:'Pectoraux'},
-  {n:'Rowing Cable',g:'Dos'},{n:'Tirage Poulie Haute',g:'Dos'},{n:'Face Pull',g:'Épaules'},
-  {n:'Élévations Latérales',g:'Épaules'},{n:'Hack Squat',g:'Jambes'},{n:'Gainage',g:'Abdominaux'},
+  {n:'Rowing Cable',g:'Dos'},{n:'Rowing Haltère',g:'Dos'},{n:'Tirage Poulie Haute',g:'Dos'},{n:'Tirage Nuque',g:'Dos'},
+  {n:'Face Pull',g:'Épaules'},{n:'Élévations Latérales',g:'Épaules'},
+  {n:'Shrugs',g:'Trapèzes'},{n:'Gainage',g:'Abdominaux'},
 ];
 const BIG3=['Squat','Développé Couché','Soulevé de Terre'];
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
@@ -841,7 +864,8 @@ let S={
   mensCycleStart:'',mensCycleDur:28,
   sessions:[],prs:{},wkt:null,
   url:DEFAULT_URL,email:'',connected:false,
-  nutritionPhase:'charge'
+  nutritionPhase:'charge',
+  customExercises:[]
 };
 
 function load(){
@@ -865,6 +889,7 @@ function load(){
     S.connected=localStorage.getItem('ft4_ok')==='1';
     S.cycle=JSON.parse(localStorage.getItem('ft4_cycle')||'null');
     S.nutritionPhase=localStorage.getItem('ft4_nphase')||'charge';
+    S.customExercises=JSON.parse(localStorage.getItem('ft4_cuex')||'[]');
   }catch(e){}
 }
 function persist(){
@@ -882,6 +907,7 @@ function persist(){
     localStorage.setItem('ft4_smoker',S.smoker?'1':'0');
     localStorage.setItem('ft4_mcstart',S.mensCycleStart);
     localStorage.setItem('ft4_mcdur',S.mensCycleDur);
+    localStorage.setItem('ft4_cuex',JSON.stringify(S.customExercises||[]));
   }catch(e){}
 }
 
@@ -1132,10 +1158,12 @@ function renderExBlocks(){
           <div class="ex-meta">${doneSets.length}/${ex.sets.length} séries${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>
         </div>
         <div class="ex-hdr-btns">
+          <button class="btn-xs" onclick="toggleExGif(${ei},'${ex.name.replace(/'/g,"\\'")}')" title="Voir le mouvement">🎬</button>
           <button class="btn-xs" onclick="openPlateCalc(null,${ei})">🔢</button>
           <button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button>
         </div>
       </div>
+      <div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>
       <div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>
       ${rows}
       <div class="ex-foot">
@@ -1215,8 +1243,77 @@ function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext
 
 // ─── EXERCISE PICKER ─────────────────────────────────────────
 function openExPicker(){filterEx();document.getElementById('mod-ex').classList.add('open');setTimeout(()=>document.getElementById('ex-search').focus(),100);}
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');}
-function filterEx(){const q=(document.getElementById('ex-search').value||'').toLowerCase();const f=EXLIB.filter(e=>e.n.toLowerCase().includes(q)||e.g.toLowerCase().includes(q));document.getElementById('ex-list').innerHTML=f.map(e=>`<div class="ex-pick" onclick="addExercise('${e.n}')"><span class="ex-pick-name">${e.n}</span><span class="ex-pick-grp">${e.g}</span></div>`).join('');}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();}
+function filterEx(){
+  const q=(document.getElementById('ex-search').value||'').toLowerCase();
+  const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));
+  const f=all.filter(e=>e.n.toLowerCase().includes(q)||e.g.toLowerCase().includes(q));
+  document.getElementById('ex-list').innerHTML=f.map(e=>`<div class="ex-pick" onclick="addExercise('${e.n.replace(/'/g,"\\'")}')"><span class="ex-pick-name">${e.n}${e.custom?' <span style="font-size:10px;color:var(--purp);">✎</span>':''}</span><span class="ex-pick-grp">${e.g}</span></div>`).join('');
+}
+function showCustomExForm(){document.getElementById('custom-ex-form').style.display='flex';document.getElementById('custom-ex-add-btn').style.display='none';}
+function hideCustomExForm(){document.getElementById('custom-ex-form').style.display='none';document.getElementById('custom-ex-add-btn').style.display='';const n=document.getElementById('custom-ex-name');if(n)n.value='';}
+function saveCustomEx(){
+  const name=(document.getElementById('custom-ex-name').value||'').trim();
+  const grp=document.getElementById('custom-ex-grp').value;
+  if(!name){toast("Entre un nom d'exercice",'error');return;}
+  const all=[...EXLIB,...(S.customExercises||[])];
+  if(all.find(e=>e.n.toLowerCase()===name.toLowerCase())){toast('Exercice déjà existant','error');return;}
+  if(!S.customExercises)S.customExercises=[];
+  S.customExercises.push({n:name,g:grp,custom:true});
+  persist();hideCustomExForm();filterEx();toast(name+' créé !','success');
+}
+
+// ─── EXERCISE GIF (wger.de) ───────────────────────────────────
+const gifCache={};
+const EX_EN={
+  'Squat':'squat barbell','Développé Couché':'bench press','Soulevé de Terre':'deadlift',
+  'Soulevé de Terre Sumo':'sumo deadlift','Soulevé de Terre Roumain':'romanian deadlift',
+  'Développé Militaire':'overhead press','Rowing Barre':'barbell row','Traction Lestée':'pull-up',
+  'Squat Avant':'front squat','Squat Bulgare':'bulgarian split squat','Hip Thrust':'hip thrust',
+  'Leg Press':'leg press','Leg Curl':'leg curl','Leg Extension':'leg extension',
+  'Hack Squat':'hack squat','Curl Barre':'barbell curl','Curl Haltères':'dumbbell curl',
+  'Marteau':'hammer curl','Extension Triceps':'triceps extension','Dips Lestés':'dips',
+  'Barre au Front':'skull crusher','Triceps Poulie':'triceps pushdown',
+  'Développé Incliné':'incline bench press','Écarté Haltères':'dumbbell fly',
+  'Rowing Cable':'cable row','Rowing Haltère':'dumbbell row',
+  'Tirage Poulie Haute':'lat pulldown','Tirage Nuque':'behind neck pulldown',
+  'Face Pull':'face pull','Élévations Latérales':'lateral raise',
+  'Shrugs':'shrug','Gainage':'plank'
+};
+async function fetchExGif(name){
+  if(gifCache[name]!==undefined)return gifCache[name];
+  gifCache[name]=null;
+  const term=EX_EN[name]||name;
+  try{
+    const r=await fetch(`https://wger.de/api/v2/exercisesearch/?term=${encodeURIComponent(term)}&language=2&format=json`);
+    if(!r.ok)return null;
+    const d=await r.json();
+    const first=d.suggestions&&d.suggestions[0];
+    if(!first)return null;
+    const baseId=first.data.base_id;
+    const r2=await fetch(`https://wger.de/api/v2/exerciseimage/?exercise_base=${baseId}&format=json`);
+    if(!r2.ok)return null;
+    const d2=await r2.json();
+    const img=d2.results&&d2.results[0];
+    if(img){gifCache[name]=img.image;return img.image;}
+    return null;
+  }catch(e){return null;}
+}
+async function toggleExGif(ei,name){
+  const panel=document.getElementById(`ex-gif-${ei}`);
+  if(!panel)return;
+  if(panel.dataset.open==='1'){panel.style.display='none';panel.dataset.open='0';return;}
+  panel.style.display='block';panel.dataset.open='1';
+  if(panel.dataset.loaded==='1')return;
+  panel.innerHTML='<div style="text-align:center;padding:12px;color:var(--t3);font-size:13px;">Chargement...</div>';
+  const url=await fetchExGif(name);
+  panel.dataset.loaded='1';
+  if(url){
+    panel.innerHTML=`<div style="padding:10px;text-align:center;background:var(--bg3);"><img src="${url}" style="max-width:100%;border-radius:8px;max-height:220px;" loading="lazy" onerror="this.parentElement.innerHTML='<div style=padding:10px;text-align:center;font-size:12px;color:var(--t3)>Pas d\\'image disponible</div>'"></div>`;
+  }else{
+    panel.innerHTML='<div style="padding:10px;text-align:center;font-size:12px;color:var(--t3);">Pas d\'image disponible</div>';
+  }
+}
 
 // ─── PLATE CALCULATOR ────────────────────────────────────────
 let plateExIdx=null;
@@ -1239,7 +1336,8 @@ function applyPlate(){if(plateExIdx===null)return;const t=parseFloat(document.ge
 // ─── PROGRESS SCREEN ─────────────────────────────────────────
 function renderProgress(){
   const sel=document.getElementById('prog-sel');
-  sel.innerHTML=[...new Set([...BIG3,...EXLIB.map(e=>e.n)])].map(n=>`<option value="${n}">${n}</option>`).join('');
+  const all=[...new Set([...BIG3,...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])];
+  sel.innerHTML=all.map(n=>`<option value="${n}">${n}</option>`).join('');
   renderChart();renderSessions();
 }
 function renderChart(){
