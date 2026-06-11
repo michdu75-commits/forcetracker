@@ -378,9 +378,6 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .msg-coach li{margin-bottom:3px;}
 
 /* SETUP MINI TABS */
-.setup-tabs{display:flex;background:var(--bg3);border-radius:var(--r-sm);padding:4px;gap:4px;border:1px solid var(--sep);margin-bottom:2px;}
-.setup-tab{flex:1;padding:10px;border:none;border-radius:8px;background:transparent;color:var(--t2);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;}
-.setup-tab.active{background:var(--bg2);color:var(--t1);box-shadow:0 2px 8px rgba(0,0,0,.3);}
 
 /* SUPPLEMENTS & PROTEIN TRACKER */
 .protein-bar-wrap{height:10px;background:var(--sep);border-radius:5px;overflow:hidden;margin:10px 0;}
@@ -758,27 +755,9 @@ html.ob-done #onboarding{display:none;}
 
 <!-- SETUP -->
 <div class="screen" id="s-setup">
-  <div class="setup-tabs">
-    <button class="setup-tab active" id="stab-profil" onclick="switchSetupTab('profil',this)">👤 Profil</button>
-    <button class="setup-tab" id="stab-connexion" onclick="switchSetupTab('connexion',this)">🔗 Connexion</button>
-  </div>
-
-  <!-- CONNEXION -->
-  <div id="setup-connexion" style="display:none;">
-    <div class="sec">Synchronisation Google Sheets</div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
-      <div class="fg">
-        <label>Email Google</label>
-        <input type="email" id="email-inp" placeholder="ton@email.com" inputmode="email" oninput="S.email=this.value.trim();persist();">
-      </div>
-      <button class="btn btn-red" onclick="testConn()" style="padding:13px;font-size:15px;">🔌 Tester la connexion</button>
-    </div>
-    <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
-    <p style="font-size:13px;color:var(--t3);text-align:center;line-height:1.8;">Force Tracker v2.8 — 2026<br>Développé par Michel · <a href="mailto:forcetracker.app@gmail.com" style="color:var(--blue);text-decoration:none;">forcetracker.app@gmail.com</a></p>
-  </div>
 
   <!-- PROFIL -->
-  <div id="setup-profil">
+  <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
       <div class="sec" style="margin-bottom:0;">Profil athlète</div>
       <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">☀️ Mode Jour</button>
@@ -1866,7 +1845,6 @@ function setGoal(g){
 }
 
 function renderSetup(){
-  switchSetupTab('profil',document.getElementById('stab-profil'));
   setGender(S.gender);
   const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
   const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';
@@ -2669,16 +2647,6 @@ function initCoachInput() {
 }
 
 
-function switchSetupTab(tab, btn) {
-  document.getElementById('setup-connexion').style.display = tab === 'connexion' ? 'flex' : 'none';
-  document.getElementById('setup-connexion').style.flexDirection = 'column';
-  document.getElementById('setup-connexion').style.gap = '12px';
-  document.getElementById('setup-profil').style.display = tab === 'profil' ? 'flex' : 'none';
-  document.getElementById('setup-profil').style.flexDirection = 'column';
-  document.getElementById('setup-profil').style.gap = '12px';
-  document.querySelectorAll('.setup-tab').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-}
 
 
 // ─── SUPPLÉMENTS & PROTÉINES ──────────────────────────────────
