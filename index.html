@@ -140,6 +140,10 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .wtbtn{flex:1;padding:9px 4px;border:none;border-radius:8px;background:transparent;color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;text-align:center;}
 .wtbtn.active{background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;box-shadow:0 3px 12px rgba(255,45,85,.3);}
 .cycle-phase-banner{border-radius:var(--r);padding:12px 14px;display:flex;gap:12px;align-items:flex-start;}
+.ci-btn{display:flex;flex-direction:column;align-items:center;padding:14px 6px;border-radius:12px;border:2px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:22px;cursor:pointer;gap:5px;transition:all .15s;touch-action:manipulation;flex:1;}
+.ci-btn span{font-size:10px;font-weight:700;color:var(--t3);line-height:1;}
+.ci-btn.active{border-color:var(--red);background:rgba(255,45,85,.12);transform:scale(1.06);}
+.corr-card{background:var(--bg2);border-radius:var(--r);padding:12px 14px;border:1px solid var(--sep);display:flex;gap:10px;align-items:flex-start;}
 .goal-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;}
 .goal-btn{display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:11px;font-weight:700;font-family:var(--font);cursor:pointer;gap:5px;transition:all .2s;touch-action:manipulation;text-align:center;line-height:1.3;}
 .goal-btn span{font-size:10px;font-weight:600;}
@@ -429,7 +433,7 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 <div class="screen active" id="s-home">
   <div class="sec">Ce mois</div>
   <div class="stat-grid">
-    <div class="sbox"><div class="lbl">Poids de corps</div><div class="val" id="h-bw">—</div><div class="unit">kg</div></div>
+    <div class="sbox" onclick="goWeightTab()" style="cursor:pointer;"><div class="lbl">Poids de corps</div><div class="val" id="h-bw">—</div><div class="unit" id="h-bw-unit">kg</div></div>
     <div class="sbox"><div class="lbl">Séances</div><div class="val" id="h-sess">0</div><div class="unit">sessions</div></div>
     <div class="sbox"><div class="lbl">Volume total</div><div class="val" id="h-vol">0</div><div class="unit">kg</div></div>
     <div class="sbox"><div class="lbl">Big 3 (1RM)</div><div class="val" id="h-big3">—</div><div class="unit">kg</div></div>
@@ -468,11 +472,27 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 
 <!-- PROGRÈS -->
 <div class="screen" id="s-progress">
-  <div class="sec">Progression</div>
-  <select id="prog-sel" onchange="renderChart()" style="font-size:14px;padding:10px 13px;"></select>
-  <div class="chart-box" id="chart-box"><div class="empty">Sélectionne un exercice</div></div>
-  <div class="sec">Historique séances</div>
-  <div id="sess-list"></div>
+  <div class="nu-tabs">
+    <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">🏋️ Exercices</button>
+    <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">⚖️ Poids</button>
+  </div>
+
+  <!-- TAB: Exercices -->
+  <div id="prog-exo" style="display:flex;flex-direction:column;gap:10px;">
+    <div class="sec">Progression</div>
+    <select id="prog-sel" onchange="renderChart()" style="font-size:14px;padding:10px 13px;"></select>
+    <div class="chart-box" id="chart-box"><div class="empty">Sélectionne un exercice</div></div>
+    <div class="sec">Historique séances</div>
+    <div id="sess-list"></div>
+  </div>
+
+  <!-- TAB: Poids -->
+  <div id="prog-poids" style="display:none;flex-direction:column;gap:10px;">
+    <div class="card cp" id="weight-entry-card" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div class="chart-box" id="weight-chart-box"><div class="empty">Ajoute au moins 2 pesées pour voir le graphique</div></div>
+    <div class="sec">Corrélations & tendances</div>
+    <div id="weight-correlations" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
 </div>
 
 <!-- NUTRITION -->
@@ -780,6 +800,37 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
   </button>
 </nav>
 
+<!-- MODAL: Post-workout check-in -->
+<div class="overlay" id="mod-checkin">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-handle"></div>
+    <div style="font-size:36px;margin-bottom:6px;">🏁</div>
+    <h2 style="margin-bottom:2px;">Séance terminée !</h2>
+    <p style="font-size:12px;color:var(--t3);margin-bottom:16px;" id="ci-subtitle">2 questions rapides</p>
+    <!-- STEP 1: Sommeil -->
+    <div id="ci-step-sleep">
+      <div style="font-size:14px;font-weight:700;color:var(--t2);margin-bottom:10px;">😴 Sommeil cette nuit ?</div>
+      <div style="display:flex;gap:8px;">
+        <button class="ci-btn" id="ci-s1" onclick="ciPickSleep(1)">😴<br><span>Mauvais</span></button>
+        <button class="ci-btn" id="ci-s2" onclick="ciPickSleep(2)">😐<br><span>Moyen</span></button>
+        <button class="ci-btn" id="ci-s3" onclick="ciPickSleep(3)">😊<br><span>Bon</span></button>
+        <button class="ci-btn" id="ci-s4" onclick="ciPickSleep(4)">⚡<br><span>Excellent</span></button>
+      </div>
+    </div>
+    <!-- STEP 2: Énergie -->
+    <div id="ci-step-energy" style="display:none;">
+      <div style="font-size:14px;font-weight:700;color:var(--t2);margin-bottom:10px;">⚡ Énergie pendant la séance ?</div>
+      <div style="display:flex;gap:8px;">
+        <button class="ci-btn" id="ci-e1" onclick="ciPickEnergy(1)">😩<br><span>Épuisé</span></button>
+        <button class="ci-btn" id="ci-e2" onclick="ciPickEnergy(2)">😐<br><span>Moyen</span></button>
+        <button class="ci-btn" id="ci-e3" onclick="ciPickEnergy(3)">😊<br><span>Bien</span></button>
+        <button class="ci-btn" id="ci-e4" onclick="ciPickEnergy(4)">⚡<br><span>Optimal</span></button>
+      </div>
+    </div>
+    <button class="btn btn-bg2" onclick="skipCheckin()" style="margin-top:14px;font-size:13px;padding:10px;">Passer →</button>
+  </div>
+</div>
+
 <!-- MODAL: Plate Calculator -->
 <div class="overlay" id="mod-plate">
   <div class="modal">
@@ -900,7 +951,8 @@ let S={
   customExercises:[],
   neck:0,waist:0,hip:0,
   goal:'muscle',
-  sleepLog:[]
+  sleepLog:[],
+  weightLog:[]
 };
 
 function load(){
@@ -930,6 +982,7 @@ function load(){
     S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
     S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
+    S.weightLog=JSON.parse(localStorage.getItem('ft4_wlog')||'[]');
   }catch(e){}
 }
 function persist(){
@@ -953,6 +1006,7 @@ function persist(){
     localStorage.setItem('ft4_hip',S.hip||0);
     localStorage.setItem('ft4_goal',S.goal||'muscle');
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
+    localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
   }catch(e){}
 }
 
@@ -1077,7 +1131,11 @@ function goScreen(id,btn){
 
 // ─── HOME ────────────────────────────────────────────────────
 function renderHome(){
-  document.getElementById('h-bw').textContent=fmt(S.bw);
+  const latestW=S.weightLog&&S.weightLog.length?S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
+  const bwDisp=latestW?latestW.kg:(S.bw||'—');
+  document.getElementById('h-bw').textContent=fmt(bwDisp);
+  const bwUnit=document.getElementById('h-bw-unit');
+  if(bwUnit)bwUnit.textContent=latestW?'kg · ⊕':'kg · log';
   const now=new Date();
   const mo=S.sessions.filter(s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
   document.getElementById('h-sess').textContent=mo.length;
@@ -1323,7 +1381,7 @@ async function finishWorkout(){
     toast(`Séance terminée ! 🔥 ${calData.total} kcal brûlées`,'success');
   }
   S.wkt=null;persist();
-  setTimeout(()=>goScreen('progress',document.getElementById('nb-progress')),1000);
+  setTimeout(()=>openCheckin(sess),600);
 }
 
 // ─── REST TIMER ──────────────────────────────────────────────
@@ -1429,11 +1487,21 @@ function applyPlate(){if(plateExIdx===null)return;const t=parseFloat(document.ge
 
 // ─── PROGRESS SCREEN ─────────────────────────────────────────
 function renderProgress(){
+  switchProgTab('exo',document.getElementById('ptab-exo'));
   const sel=document.getElementById('prog-sel');
   const all=[...new Set([...BIG3,...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])];
   sel.innerHTML=all.map(n=>`<option value="${n}">${n}</option>`).join('');
   renderChart();renderSessions();
 }
+function switchProgTab(tab,btn){
+  const exo=document.getElementById('prog-exo'),pw=document.getElementById('prog-poids');
+  if(exo){exo.style.display=tab==='exo'?'flex':'none';exo.style.flexDirection='column';exo.style.gap='10px';}
+  if(pw){pw.style.display=tab==='poids'?'flex':'none';pw.style.flexDirection='column';pw.style.gap='10px';}
+  document.getElementById('ptab-exo').classList.toggle('active',tab==='exo');
+  document.getElementById('ptab-poids').classList.toggle('active',tab==='poids');
+  if(tab==='poids')renderWeightTab();
+}
+function goWeightTab(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>switchProgTab('poids',document.getElementById('ptab-poids')),80);}
 function renderChart(){
   const name=document.getElementById('prog-sel').value,box=document.getElementById('chart-box');
   const pts=[];
@@ -1923,6 +1991,182 @@ function renderCycleHomeCard() {
 }
 
 
+// ─── POST-WORKOUT CHECK-IN ───────────────────────────────────
+let _ciSessId=null,_ciSleepVal=null;
+function openCheckin(sess){
+  _ciSessId=sess?sess.id:null;_ciSleepVal=null;
+  document.getElementById('ci-step-sleep').style.display='block';
+  document.getElementById('ci-step-energy').style.display='none';
+  document.getElementById('ci-subtitle').textContent='2 questions rapides';
+  document.querySelectorAll('.ci-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mod-checkin').classList.add('open');
+}
+function skipCheckin(){
+  document.getElementById('mod-checkin').classList.remove('open');
+  goScreen('progress',document.getElementById('nb-progress'));
+}
+function ciPickSleep(q){
+  _ciSleepVal=q;
+  // Update sleep log (quality, default 7.5h if not yet logged)
+  if(!S.sleepLog)S.sleepLog=[];
+  const d=today();const idx=S.sleepLog.findIndex(e=>e.date===d);
+  const hours=(S.sleepLog.find(e=>e.date===d)||{}).hours||7.5;
+  const entry={date:d,hours,quality:q};
+  if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
+  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
+  // Mark sleep step as answered, show energy step
+  document.getElementById('ci-step-sleep').style.display='none';
+  document.getElementById('ci-step-energy').style.display='block';
+  document.getElementById('ci-subtitle').textContent='Dernière question';
+}
+function ciPickEnergy(e){
+  // Save checkin on session
+  if(_ciSessId){
+    const si=S.sessions.findIndex(s=>s.id===_ciSessId);
+    if(si>=0)S.sessions[si].checkin={sleep:_ciSleepVal,energy:e};
+  }
+  persist();
+  document.getElementById('mod-checkin').classList.remove('open');
+  toast('Check-in enregistré ✓','success');
+  setTimeout(()=>goScreen('progress',document.getElementById('nb-progress')),400);
+}
+
+// ─── WEIGHT TRACKER ──────────────────────────────────────────
+function linearRegression(pts){
+  const n=pts.length;if(n<2)return{slope:0,intercept:pts[0]?pts[0].y:0};
+  const sx=pts.reduce((a,p)=>a+p.x,0),sy=pts.reduce((a,p)=>a+p.y,0);
+  const sxy=pts.reduce((a,p)=>a+p.x*p.y,0),sx2=pts.reduce((a,p)=>a+p.x*p.x,0);
+  const slope=(n*sxy-sx*sy)/(n*sx2-sx*sx)||0;
+  return{slope,intercept:(sy-slope*sx)/n};
+}
+function saveWeightEntry(){
+  const inp=document.getElementById('wentry-inp');
+  const kg=parseFloat(inp?inp.value:0);
+  if(!kg||kg<20||kg>300){toast('Poids invalide (20–300 kg)','error');return;}
+  if(!S.weightLog)S.weightLog=[];
+  const d=today();const idx=S.weightLog.findIndex(w=>w.date===d);
+  if(idx>=0)S.weightLog[idx].kg=kg;else S.weightLog.unshift({date:d,kg});
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
+  S.bw=kg;persist();
+  renderWeightTab();renderHome();
+  toast('Poids enregistré !','success');
+}
+function renderWeightTab(){
+  const entryEl=document.getElementById('weight-entry-card');
+  const chartEl=document.getElementById('weight-chart-box');
+  const corrEl=document.getElementById('weight-correlations');
+  if(!entryEl)return;
+  const d=today();
+  const todayW=S.weightLog&&S.weightLog.find(w=>w.date===d);
+  const lastW=S.weightLog&&S.weightLog.length?S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
+  const prefill=todayW?todayW.kg:(lastW?lastW.kg:(S.bw||''));
+  entryEl.innerHTML=`
+  <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">
+    <div>
+      <div style="font-size:14px;font-weight:800;color:var(--t1);">Pesée du jour</div>
+      <div style="font-size:11px;color:var(--t3);margin-top:2px;">${todayW?'✓ Enregistré : '+todayW.kg+' kg':'Pas encore saisie aujourd\'hui'}</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+      <input type="number" id="wentry-inp" value="${prefill}" placeholder="${S.bw||80}" step="0.1" min="20" max="300" inputmode="decimal" style="width:76px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">
+      <button class="btn-xs btn-red" onclick="saveWeightEntry()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>
+    </div>
+  </div>`;
+  const sorted=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
+  const pts=sorted.slice(-60);
+  if(pts.length<2){
+    if(chartEl)chartEl.innerHTML='<div class="empty" style="padding:20px 0;">Ajoute au moins 2 pesées pour voir le graphique 📊</div>';
+    if(corrEl)corrEl.innerHTML='';
+    return;
+  }
+  if(chartEl)renderWeightChart(pts,chartEl);
+  if(corrEl)renderWeightCorrelations(corrEl,pts);
+}
+function renderWeightChart(pts,box){
+  const W=340,H=160,pad={t:18,r:14,b:32,l:44},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  const vals=pts.map(p=>p.kg);
+  const span=Math.max(...vals)-Math.min(...vals)||1;
+  const minY=Math.min(...vals)-span*.08,maxY=Math.max(...vals)+span*.08,rY=maxY-minY||1;
+  const xS=pts.length>1?iW/(pts.length-1):0;
+  const toX=i=>pad.l+(pts.length>1?i*xS:iW/2);
+  const toY=v=>pad.t+iH-((v-minY)/rY)*iH;
+  // Catmull-Rom bezier
+  const P=pts.map((p,i)=>({x:toX(i),y:toY(p.kg)}));
+  let path='M'+P[0].x+' '+P[0].y;
+  for(let i=0;i<P.length-1;i++){
+    const p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(P.length-1,i+2)];
+    const t=0.35;
+    const cp1x=p1.x+(p2.x-p0.x)*t/2,cp1y=p1.y+(p2.y-p0.y)*t/2;
+    const cp2x=p2.x-(p3.x-p1.x)*t/2,cp2y=p2.y-(p3.y-p1.y)*t/2;
+    path+=` C${cp1x} ${cp1y} ${cp2x} ${cp2y} ${p2.x} ${p2.y}`;
+  }
+  const area=path+` L${toX(pts.length-1)} ${pad.t+iH} L${toX(0)} ${pad.t+iH} Z`;
+  // Linear regression trend
+  const reg=linearRegression(pts.map((p,i)=>({x:i,y:p.kg})));
+  const weeklyChange=Math.round(reg.slope*7*100)/100;
+  const tY0=toY(reg.intercept),tY1=toY(reg.intercept+reg.slope*(pts.length-1));
+  // Y-axis ticks
+  const ticks=4;const tickStep=(maxY-minY)/ticks;
+  const yTicks=Array.from({length:ticks+1},(_,i)=>minY+tickStep*i);
+  // X-axis labels (first, mid, last)
+  const xLabels=[0,Math.floor((pts.length-1)/2),pts.length-1].map(i=>({i,d:pts[i].date}));
+  const fmtW=d=>{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});};
+  const trendColor=weeklyChange>0.1?'var(--red)':weeklyChange<-0.1?'var(--green)':'var(--blue)';
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;overflow:visible;">
+    <defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--blue)" stop-opacity=".25"/><stop offset="100%" stop-color="var(--blue)" stop-opacity=".02"/></linearGradient></defs>
+    ${yTicks.map(v=>`<line x1="${pad.l}" y1="${toY(v)}" x2="${W-pad.r}" y2="${toY(v)}" stroke="var(--sep)" stroke-width=".5"/><text x="${pad.l-4}" y="${toY(v)+4}" text-anchor="end" font-size="9" style="fill:var(--t3)">${Math.round(v*10)/10}</text>`).join('')}
+    ${xLabels.map(({i,d})=>`<text x="${toX(i)}" y="${H-4}" text-anchor="middle" font-size="9" style="fill:var(--t3)">${fmtW(d)}</text>`).join('')}
+    <path d="${area}" fill="url(#wg)"/>
+    <path d="${path}" fill="none" style="stroke:var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="${pad.l}" y1="${tY0}" x2="${W-pad.r}" y2="${tY1}" stroke="${trendColor}" stroke-width="1.5" stroke-dasharray="5 3" opacity=".6"/>
+    ${P.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="3" style="fill:var(--blue)" opacity=".7"/>`).join('')}
+  </svg>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11px;color:var(--t3);">
+    <span>${pts.length} pesées · min ${Math.min(...vals).toFixed(1)} kg · max ${Math.max(...vals).toFixed(1)} kg</span>
+    <span style="color:${trendColor};font-weight:800;">${weeklyChange>=0?'+':''}${weeklyChange} kg/sem</span>
+  </div>`;
+}
+function renderWeightCorrelations(el,pts){
+  if(!pts||pts.length<3){el.innerHTML='';return;}
+  const cards=[];
+  const vals=pts.map(p=>p.kg);
+  const avg=arr=>arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0;
+  // 1. Trend card
+  const reg=linearRegression(pts.map((p,i)=>({x:i,y:p.kg})));
+  const weeklyChange=Math.round(reg.slope*7*100)/100;
+  const goal=S.goal||'muscle';
+  const goalDir={muscle:'légèrement positive (+0.1–0.3 kg/sem)',perte:'négative (−0.3–0.7 kg/sem)',force:'légèrement positive',equilibre:'stable (±0.1 kg/sem)',endurance:'stable ou légèrement positive'};
+  const trendColor=goal==='perte'&&weeklyChange<0?'var(--green)':goal==='muscle'&&weeklyChange>0?'var(--green)':Math.abs(weeklyChange)>0.8?'var(--orange)':'var(--t2)';
+  cards.push({icon:'📈',title:`${weeklyChange>=0?'+':''}${weeklyChange} kg / semaine`,text:`Tendance sur ${pts.length} mesures. Pour ton objectif "${GOAL_LABELS[goal]}", l'évolution attendue est ${goalDir[goal]||'variable'}.`,color:trendColor});
+  // 2. Training days correlation
+  const sessDates=new Set(S.sessions.map(s=>s.date));
+  const afterSess=pts.filter(w=>{const prev=new Date(w.date+'T12:00:00');prev.setDate(prev.getDate()-1);return sessDates.has(prev.toISOString().split('T')[0]);});
+  const noSess=pts.filter(w=>{const prev=new Date(w.date+'T12:00:00');prev.setDate(prev.getDate()-1);return !sessDates.has(prev.toISOString().split('T')[0]);});
+  if(afterSess.length>=2&&noSess.length>=2){
+    const diff=Math.round((avg(afterSess.map(w=>w.kg))-avg(noSess.map(w=>w.kg)))*100)/100;
+    if(Math.abs(diff)>=0.1)cards.push({icon:'💪',title:`${diff>=0?'+':''}${diff} kg le lendemain d'une séance`,text:`Tu pèses en moyenne ${Math.abs(diff)} kg ${diff>0?'de plus':'de moins'} après une séance d'entraînement. ${diff>0?'Rétention d\'eau musculaire normale — pas de vraie prise de masse.':'Bonne hydratation et récupération rapide.'}`,color:'var(--blue)'});
+  }
+  // 3. Sleep correlation
+  const goodSl=new Set((S.sleepLog||[]).filter(e=>e.hours>=7||e.quality>=3).map(e=>e.date));
+  const badSl=new Set((S.sleepLog||[]).filter(e=>e.hours<7&&e.quality<3).map(e=>e.date));
+  const wGood=pts.filter(w=>goodSl.has(w.date)),wBad=pts.filter(w=>badSl.has(w.date));
+  if(wGood.length>=2&&wBad.length>=2){
+    const diff=Math.round((avg(wBad.map(w=>w.kg))-avg(wGood.map(w=>w.kg)))*100)/100;
+    if(Math.abs(diff)>=0.1)cards.push({icon:'😴',title:`Sommeil & rétention d'eau`,text:`Après une bonne nuit : ${avg(wGood.map(w=>w.kg)).toFixed(1)} kg · Après mauvaise nuit : ${avg(wBad.map(w=>w.kg)).toFixed(1)} kg (${diff>=0?'+':''}${diff} kg). ${diff>0.2?'Le manque de sommeil élève le cortisol et favorise la rétention d\'eau.':'Ton corps régule bien le poids indépendamment du sommeil.'}`,color:diff>0.3?'var(--orange)':'var(--t3)'});
+  }
+  // 4. Energy from check-ins
+  const sessWithCI=S.sessions.filter(s=>s.checkin&&s.checkin.energy);
+  const highEnergySess=new Set(sessWithCI.filter(s=>s.checkin.energy>=3).map(s=>s.date));
+  const lowEnergySess=new Set(sessWithCI.filter(s=>s.checkin.energy<=2).map(s=>s.date));
+  if(highEnergySess.size>=2&&lowEnergySess.size>=2){
+    const wHigh=pts.filter(w=>highEnergySess.has(w.date)),wLow=pts.filter(w=>lowEnergySess.has(w.date));
+    if(wHigh.length>=1&&wLow.length>=1){const diff=Math.round((avg(wHigh.map(w=>w.kg))-avg(wLow.map(w=>w.kg)))*100)/100;if(Math.abs(diff)>=0.1)cards.push({icon:'⚡',title:`Énergie séance & poids`,text:`Les jours où tu te sens en forme : ${avg(wHigh.map(w=>w.kg)).toFixed(1)} kg · Jours fatigués : ${avg(wLow.map(w=>w.kg)).toFixed(1)} kg. ${diff<0?'Tu performes mieux avec un poids légèrement bas.':'Le surplus calorique te donne de l\'énergie mais pèse un peu plus.'}`,color:'var(--purp)'});}
+  }
+  // 5. Range
+  const range=Math.round((Math.max(...vals)-Math.min(...vals))*10)/10;
+  cards.push({icon:'📊',title:`Plage : ${Math.min(...vals).toFixed(1)} – ${Math.max(...vals).toFixed(1)} kg (${range} kg)`,text:range>4?'Variation importante — pèse-toi toujours le matin à jeun pour des données fiables.':range>1.5?'Variation normale selon hydratation et repas.':'Poids très stable — excellente régularité nutritionnelle.',color:range>4?'var(--orange)':'var(--t3)'});
+  el.innerHTML=cards.map(c=>`<div class="corr-card"><span style="font-size:20px;flex-shrink:0;">${c.icon}</span><div><div style="font-size:13px;font-weight:800;color:${c.color};margin-bottom:3px;">${c.title}</div><div style="font-size:12px;color:var(--t2);line-height:1.5;">${c.text}</div></div></div>`).join('');
+}
+
 // ─── SLEEP & RECOVERY ─────────────────────────────────────────
 let _sleepQual=3;
 
@@ -2094,6 +2338,28 @@ ${(()=>{
 ${avgH?'- Moyenne sommeil (3j): '+avgH+'h':''}
 - Conseil récupération: ${info.rec}
 - Implication entraînement: ${score===null?'Demander les données de sommeil à l\'athlète':score<40?'Proposer UNIQUEMENT repos actif, étirements ou séance très légère. Déconseiller fortement tout effort maximal.':score<60?'Séance possible mais pas de records. Volume modéré, technique, pas de maxima.':score<80?'Séance normale. Peut progresser mais réserver les PRs pour les jours optimal.':'JOUR IDÉAL pour PRs et séances intensives. Corps en pleine capacité de récupération.'}`;
+})()}
+
+POIDS & COMPOSITION:
+${(()=>{
+  const wlog=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
+  if(wlog.length<2)return '- Suivi de poids: Pas assez de données';
+  const reg=linearRegression(wlog.map((p,i)=>({x:i,y:p.kg})));
+  const weeklyChange=Math.round(reg.slope*7*100)/100;
+  const latest=wlog[wlog.length-1];
+  const goal=S.goal||'muscle';
+  const onTrack=goal==='perte'&&weeklyChange<-0.1?true:goal==='muscle'&&weeklyChange>0.05?true:Math.abs(weeklyChange)<0.2;
+  return `- Poids actuel: ${latest.kg} kg (${wlog.length} mesures)
+- Tendance: ${weeklyChange>=0?'+':''}${weeklyChange} kg/semaine — ${onTrack?'✓ dans la bonne direction':'⚠ à ajuster selon objectif'}`;
+})()}
+
+CHECK-IN SÉANCES RÉCENTES:
+${(()=>{
+  const qE={1:'Épuisé',2:'Moyen',3:'Bien',4:'Optimal'};
+  const qS={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
+  const recent=S.sessions.filter(s=>s.checkin).slice(0,3);
+  if(!recent.length)return '- Aucun check-in enregistré pour l\'instant';
+  return recent.map(s=>`- ${s.date}: Énergie ${qE[s.checkin.energy]||'?'} · Sommeil ${qS[s.checkin.sleep]||'?'}`).join('\n');
 })()}
 
 Utilise ces données pour personnaliser tes réponses. Sois direct et pratique.`;
