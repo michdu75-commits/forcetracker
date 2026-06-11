@@ -471,30 +471,30 @@ html.ob-done #onboarding{display:none;}
         <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" style="margin-top:8px;">
       </div>
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="obNext('1b')" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-red" onclick="obNext(2)" style="font-size:17px;padding:16px;">Continuer →</button>
       </div>
     </div>
 
-    <!-- ÉTAPE 1b : Compte existant ? -->
-    <div class="ob-step" id="ob-1b">
+    <!-- ÉTAPE 2 : Compte existant ? -->
+    <div class="ob-step" id="ob-2">
       <div class="ob-hero ob-top">
         <div style="font-size:48px;line-height:1;">☁️</div>
         <div class="ob-title">Tu as déjà un<br>compte Force Tracker ?</div>
         <div class="ob-sub">Récupère ton historique, tes perfs et ton profil en un tap.</div>
       </div>
-      <div class="ob-footer" id="ob-1b-choice" style="display:flex;">
+      <div id="ob-2-choice" style="display:flex;flex-direction:column;gap:10px;padding:12px 0 max(calc(env(safe-area-inset-bottom)+16px),24px);">
         <button class="btn btn-red" onclick="obShowRestore()" style="font-size:17px;padding:16px;">✅ Oui, je restaure mes données</button>
-        <button class="btn btn-bg2" onclick="obGoTo(2)" style="font-size:15px;padding:14px;">Non, je crée mon profil →</button>
+        <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:15px;padding:14px;">Non, je crée mon profil →</button>
       </div>
-      <div class="ob-footer" id="ob-1b-restore" style="display:none;">
+      <div id="ob-2-restore" style="display:none;flex-direction:column;gap:10px;padding:12px 0 max(calc(env(safe-area-inset-bottom)+16px),24px);">
         <input class="ob-inp" id="ob-email" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
         <button class="btn btn-red" onclick="obDoRestore()" style="font-size:17px;padding:16px;">☁️ Restaurer mes données</button>
         <button class="btn btn-bg2" onclick="obHideRestore()" style="font-size:15px;padding:13px;">← Retour</button>
       </div>
     </div>
 
-    <!-- ÉTAPE 2 : Profil -->
-    <div class="ob-step" id="ob-2">
+    <!-- ÉTAPE 3 : Profil -->
+    <div class="ob-step" id="ob-3">
       <div class="ob-hero ob-top">
         <div style="font-size:44px;line-height:1;">👤</div>
         <div class="ob-title">Ton profil</div>
@@ -510,13 +510,13 @@ html.ob-done #onboarding{display:none;}
         </div>
       </div>
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="obNext(3)" style="font-size:17px;padding:16px;">Continuer →</button>
-        <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:15px;">Passer cette étape</button>
+        <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-bg2" onclick="obGoTo(4)" style="font-size:15px;">Passer cette étape</button>
       </div>
     </div>
 
-    <!-- ÉTAPE 3 : Objectif -->
-    <div class="ob-step" id="ob-3">
+    <!-- ÉTAPE 4 : Objectif -->
+    <div class="ob-step" id="ob-4">
       <div class="ob-hero ob-top">
         <div style="font-size:44px;line-height:1;">🎯</div>
         <div class="ob-title">Ton objectif</div>
@@ -530,12 +530,12 @@ html.ob-done #onboarding{display:none;}
         </div>
       </div>
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-red" onclick="obNext(5)" style="font-size:17px;padding:16px;">Continuer →</button>
       </div>
     </div>
 
-    <!-- ÉTAPE 4 : C'est parti ! -->
-    <div class="ob-step" id="ob-4">
+    <!-- ÉTAPE 5 : C'est parti ! -->
+    <div class="ob-step" id="ob-5">
       <div class="ob-hero">
         <div style="font-size:80px;line-height:1;">🚀</div>
         <div class="ob-title" id="ob-cta-title">C'est parti !</div>
@@ -2903,12 +2903,12 @@ const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',force:'ob-gf',equilibre:'ob-ge',en
 function initOnboarding(){
   if(document.documentElement.classList.contains('ob-done'))return;
   const nameInp=document.getElementById('ob-name');
-  if(nameInp)nameInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext('1b');}});
+  if(nameInp)nameInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext(2);}});
   const emailInp=document.getElementById('ob-email');
   if(emailInp)emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});
   ['ob-age','ob-ht','ob-bw'].forEach(id=>{
     const inp=document.getElementById(id);
-    if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext(3);}});
+    if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext(4);}});
   });
 }
 
@@ -2919,7 +2919,9 @@ function obGoTo(step){
   const next=document.getElementById('ob-'+step);
   if(next){next.classList.add('ob-active');}
   _obStep=step;
-  const dotNum=step==='1b'?1:+step;
+  // dots: steps 1-2 → dot 1, step 3 → dot 2, step 4 → dot 3, step 5 → dot 4
+  const dotMap={1:1,2:1,3:2,4:3,5:4};
+  const dotNum=dotMap[step]||1;
   for(let i=1;i<=4;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',i===dotNum);}
 }
 
@@ -2931,7 +2933,7 @@ function obNext(step){
       const cta=document.getElementById('ob-cta-title');
       if(cta)cta.textContent='C\'est parti, '+name+' !';
     }
-  }else if(_obStep===2){
+  }else if(_obStep===3){
     const age=parseInt(document.getElementById('ob-age').value)||0;
     const ht=parseFloat(document.getElementById('ob-ht').value)||0;
     const bw=parseFloat(document.getElementById('ob-bw').value)||0;
@@ -2939,7 +2941,7 @@ function obNext(step){
     if(age>=14&&age<=80)S.age=age;
     if(ht>=100&&ht<=250)S.height=ht;
     if(bw>=20&&bw<=300){S.bw=bw;}
-  }else if(_obStep===3){
+  }else if(_obStep===4){
     S.goal=_obGoal;
   }
   obGoTo(step);
@@ -2958,15 +2960,15 @@ function obSetGoal(g){
 }
 
 function obShowRestore(){
-  document.getElementById('ob-1b-choice').style.display='none';
-  const r=document.getElementById('ob-1b-restore');
+  document.getElementById('ob-2-choice').style.display='none';
+  const r=document.getElementById('ob-2-restore');
   r.style.display='flex';
   setTimeout(()=>{const e=document.getElementById('ob-email');if(e)e.focus();},120);
 }
 
 function obHideRestore(){
-  document.getElementById('ob-1b-restore').style.display='none';
-  document.getElementById('ob-1b-choice').style.display='flex';
+  document.getElementById('ob-2-restore').style.display='none';
+  document.getElementById('ob-2-choice').style.display='flex';
 }
 
 async function obDoRestore(){
@@ -2992,7 +2994,7 @@ async function obDoRestore(){
     persist();
     const cta=document.getElementById('ob-cta-title');
     if(cta)cta.textContent=S.name?'Bienvenue de retour, '+S.name+' !':'Bienvenue de retour !';
-    obGoTo(4);
+    obGoTo(5);
     toast('Profil restauré ✅','success');
   }catch(e){
     toast('Erreur : '+e.message,'error');
