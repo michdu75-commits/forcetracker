@@ -88,6 +88,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:12px 14px 90px;display:none;flex-direction:column;gap:10px;background:var(--bg);}
 .screen.active{display:flex;}
+.screen>*{flex-shrink:0;}
 ::-webkit-scrollbar{display:none;}
 
 /* TYPOGRAPHY */
@@ -892,12 +893,9 @@ function renderHome(){
     const pr=S.prs[ex];
     const rm=pr?pr.rm1:0;
     const lv=(S.bw&&S.age&&rm)?getLevel(ex,rm,S.bw,S.gender,S.age):{name:'—',cls:'lvl-D'};
-    const badgeStyle=lv.name==='—'?'background:var(--bg3);color:var(--t2);border:1px solid var(--sep);font-size:15px;':'';
     return `<div class="lvl-box">
       <div class="lvl-ex">${ex.split(' ')[0].toUpperCase()}</div>
-      <div style="margin-top:8px;">
-        <span class="lvl-badge ${lv.cls}" style="${badgeStyle}">${lv.name}</span>
-      </div>
+      <div style="margin-top:8px;"><span class="lvl-badge ${lv.cls}">${lv.name}</span></div>
     </div>`;
   }).join('')+'</div>';
 
