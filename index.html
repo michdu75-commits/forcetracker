@@ -127,6 +127,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 button{position:relative;overflow:hidden;-webkit-tap-highlight-color:transparent;}
 button:active{transform:scale(.95);}
 @keyframes btn-ripple{0%{transform:scale(0);opacity:.45;}100%{transform:scale(5);opacity:0;}}
+@keyframes logo-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,45,85,0);}50%{transform:scale(1.06);box-shadow:0 0 14px 4px rgba(255,45,85,.28);}}
+#tb-logo{animation:logo-pulse 3.5s ease-in-out infinite;}
 .btn-ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.35);width:60px;height:60px;margin:-30px 0 0 -30px;pointer-events:none;animation:btn-ripple .5s ease-out forwards;}
 .btn{width:100%;padding:15px;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;transition:transform .15s,opacity .15s,background .15s,box-shadow .15s;letter-spacing:.3px;}
 .btn:active{transform:scale(.95);opacity:.9;}
@@ -581,7 +583,7 @@ html.ob-done #onboarding{display:none;}
 
 <div id="root">
 <div class="topbar">
-  <div style="display:flex;align-items:center;gap:10px;"><img src="logo.png" alt="" onclick="onLogoTap()" style="height:32px;width:32px;border-radius:8px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;"><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
+  <div style="display:flex;align-items:center;gap:10px;"><img src="logo.png" alt="" id="tb-logo" onclick="onLogoTap()" style="height:32px;width:32px;border-radius:8px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;"><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
   <button class="sync-pill" id="sync-pill" onclick="goScreen('setup',document.getElementById('nb-setup'))">
     <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;"></span>
     <span id="sync-lbl">Sheets</span>
