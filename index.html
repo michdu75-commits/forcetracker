@@ -549,6 +549,10 @@ html.ob-done #onboarding{display:none;}
         <img src="logo.png" alt="Force Tracker" style="width:110px;height:110px;border-radius:24px;object-fit:cover;margin-bottom:4px;">
         <div class="ob-title" id="ob-cta-title">C'est parti !</div>
         <div class="ob-sub">Commence ta première séance et trace ta progression vers tes objectifs.</div>
+        <div style="width:100%;margin-top:16px;">
+          <label style="font-size:13px;color:var(--t2);display:block;margin-bottom:6px;text-align:left;">📧 Email (pour sauvegarder tes données)</label>
+          <input class="ob-inp" id="ob-email-final" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:16px;">
+        </div>
       </div>
       <div class="ob-footer">
         <button class="btn btn-red" onclick="finishOnboarding()" style="font-size:18px;padding:18px;letter-spacing:.5px;">⚡ COMMENCER</button>
@@ -1945,9 +1949,15 @@ function saveProfile(){
   renderCycleProfileCard();renderBFCard();
   const saveBtn=document.querySelector('[onclick="saveProfile()"]');
   if(saveBtn){saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML='💾 Enregistrer le profil';saveBtn.disabled=false;},2000);}
+  if(S.email&&S.url){
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel};
+    fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}).catch(()=>{});
+  }
 }
 
 function _applyRestoreData(data){
+  const hasProfile=data.name||data.bw||data.age||data.gender||data.goal;
+  if(!hasProfile)throw new Error('Aucun profil trouvé sur le serveur pour cet email. Enregistre d\'abord ton profil depuis l\'appli.');
   if(data.name)S.name=data.name;
   if(data.bw)S.bw=parseFloat(data.bw)||S.bw;
   if(data.age)S.age=parseInt(data.age)||S.age;
@@ -2952,6 +2962,7 @@ function obGoTo(step){
   setTimeout(()=>{if(prev)prev.classList.remove('ob-prev');},400);
   const next=document.getElementById('ob-'+step);
   if(next){next.classList.add('ob-active');}
+  if(step===5){const ef=document.getElementById('ob-email-final');if(ef&&S.email)ef.value=S.email;}
   _obStep=step;
   // dots: steps 1-2 → dot 1, step 3 → dot 2, step 4 → dot 3, step 5 → dot 4
   const dotMap={1:1,2:1,3:2,4:3,5:4};
@@ -3025,6 +3036,8 @@ async function obDoRestore(){
 function finishOnboarding(){
   S.goal=_obGoal;
   S.gender=_obGender;
+  const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
+  if(emailFinal&&!S.email){S.email=emailFinal.trim();}
   persist();
   localStorage.setItem('ft4_ob2','1');
   document.documentElement.classList.add('ob-done');
