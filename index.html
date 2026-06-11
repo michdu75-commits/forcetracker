@@ -571,12 +571,12 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 <!-- SETUP -->
 <div class="screen" id="s-setup">
   <div class="setup-tabs">
-    <button class="setup-tab active" id="stab-connexion" onclick="switchSetupTab('connexion',this)">🔗 Connexion</button>
-    <button class="setup-tab" id="stab-profil" onclick="switchSetupTab('profil',this)">👤 Profil</button>
+    <button class="setup-tab active" id="stab-profil" onclick="switchSetupTab('profil',this)">👤 Profil</button>
+    <button class="setup-tab" id="stab-connexion" onclick="switchSetupTab('connexion',this)">🔗 Connexion</button>
   </div>
 
   <!-- CONNEXION -->
-  <div id="setup-connexion">
+  <div id="setup-connexion" style="display:none;">
     <div class="sec">Synchronisation Google Sheets</div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
       <div class="fg">
@@ -590,7 +590,7 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
   </div>
 
   <!-- PROFIL -->
-  <div id="setup-profil" style="display:none;">
+  <div id="setup-profil">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
       <div class="sec" style="margin-bottom:0;">Profil athlète</div>
       <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">☀️ Mode Jour</button>
@@ -1624,6 +1624,7 @@ function setGoal(g){
 }
 
 function renderSetup(){
+  switchSetupTab('profil',document.getElementById('stab-profil'));
   setGender(S.gender);
   const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
   const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';
