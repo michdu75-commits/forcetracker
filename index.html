@@ -659,6 +659,55 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 </div>
 
 
+<!-- CYCLE DE FORCE -->
+<div class="screen" id="s-cycle">
+  <button class="back-btn" onclick="goScreen('home',document.getElementById('nb-home'))">‹ Accueil</button>
+
+  <!-- VUE CONFIGURATION -->
+  <div id="cycle-setup-view" style="display:flex;flex-direction:column;gap:12px;">
+    <div class="sec">Nouveau cycle de force</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="fg">
+        <label>Durée du cycle</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+          <input type="range" id="cycle-weeks-slider" min="8" max="20" value="12" step="1" style="flex:1;accent-color:var(--red);" oninput="updCycleWeeks(this.value)">
+          <span style="font-family:var(--font-cond);font-size:24px;font-weight:900;color:var(--red);min-width:28px;text-align:right;" id="cycle-weeks-disp">12</span>
+          <span style="font-size:12px;color:var(--t2);font-weight:600;">sem.</span>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:6px;line-height:1.5;" id="cycle-phase-preview">Accumulation: 5s · Intensification: 4s · Peak: 2s · Décharge: 1s</div>
+      </div>
+    </div>
+    <div class="sec">1RM actuels</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;" id="cycle-rm-inputs"></div>
+    <div class="sec">Projections fin de cycle</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:8px;" id="cycle-projections"></div>
+    <button class="btn btn-red" onclick="startCycle()">🚀 Démarrer le cycle</button>
+  </div>
+
+  <!-- VUE CYCLE ACTIF -->
+  <div id="cycle-active-view" style="display:none;flex-direction:column;gap:12px;">
+    <div class="card cp">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-family:var(--font-cond);font-size:18px;font-weight:900;" id="cyc-week-title">—</div>
+        <div id="cyc-phase-chip"></div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="cyc-prog-fill" style="width:0%;"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-top:6px;">
+        <span id="cyc-prog-label">—</span>
+        <span><strong id="cyc-pct-label" style="color:var(--red);">—</strong> · <span id="cyc-sets-label">—</span></span>
+      </div>
+    </div>
+    <div class="sec">Charges de la semaine</div>
+    <div class="card cp" id="cyc-week-loads"></div>
+    <div class="sec">Plan semaine par semaine</div>
+    <div class="week-tabs" id="week-tabs-bar"></div>
+    <div class="card cp" id="cyc-selected-week-plan"></div>
+    <div class="sec">Projections fin de cycle</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:8px;" id="cyc-projections"></div>
+    <button class="btn btn-bg2" onclick="endCycle()" style="margin-top:4px;">⏹ Terminer le cycle</button>
+  </div>
+</div>
+
 </div><!-- /screens -->
 
 <nav class="nav">
@@ -1325,7 +1374,7 @@ function renderCycleSetup() {
       <span style="font-size:12px;color:var(--t3);">kg</span>
     </div>`;
   }).join('');
-  renderCycleProjections(parseInt(document.getElementById('cycle-weeks-slider')?.value || 12));
+  updCycleWeeks(parseInt(document.getElementById('cycle-weeks-slider')?.value || 12));
 }
 
 function getCycleInputRM(ex) {
