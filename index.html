@@ -776,6 +776,7 @@ html.ob-done #onboarding{display:none;}
       </div>
       <button class="btn btn-bg2" onclick="restoreFromEmail()" style="padding:13px;font-size:15px;">☁️ Restaurer depuis mon email</button>
       <button class="btn btn-red" onclick="testConn()" style="padding:13px;font-size:15px;">🔌 Tester la connexion</button>
+      <button class="btn btn-bg2" onclick="debugRestore()" style="padding:11px;font-size:14px;color:var(--t3);">🔍 Voir réponse brute API</button>
     </div>
     <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
     <p style="font-size:13px;color:var(--t3);text-align:center;line-height:1.8;">Force Tracker v2.8 — 2026<br>Développé par Michel · <a href="mailto:forcetracker.app@gmail.com" style="color:var(--blue);text-decoration:none;">forcetracker.app@gmail.com</a></p>
@@ -1952,6 +1953,7 @@ function saveProfile(){
 }
 
 function _applyRestoreData(data){
+  if(data.name)S.name=data.name;
   if(data.bw)S.bw=parseFloat(data.bw)||S.bw;
   if(data.age)S.age=parseInt(data.age)||S.age;
   if(data.height)S.height=parseFloat(data.height)||S.height;
@@ -1965,18 +1967,36 @@ function _applyRestoreData(data){
   persist();
 }
 
+async function _fetchRestoreRaw(email){
+  const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(email),{redirect:'follow'});
+  const txt=await resp.text();
+  let data;
+  try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON : '+txt.substring(0,120));}
+  return data;
+}
+
 async function restoreFromEmail(){
-  if(!S.email){toast('Configure ton email dans Setup → Connexion','error');return;}
-  if(!S.url){toast('Configure l\'URL Google Sheets dans Connexion','error');return;}
+  if(!S.email){toast('Entre ton email dans le champ Email Admin','error');return;}
+  if(!S.url){toast('URL Apps Script manquante','error');return;}
   toast('Restauration en cours…','info');
   try{
-    const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
-    const data=await resp.json();
+    const data=await _fetchRestoreRaw(S.email);
     if(!data||data.error){toast(data&&data.error?data.error:'Aucune donnée trouvée pour cet email','error');return;}
     _applyRestoreData(data);
     renderSetup();renderHome();renderNutrition();
-    toast('Profil restauré avec succès ✅','success');
-  }catch(e){toast('Erreur : '+e.message,'error');}
+    toast('Profil restauré ✅','success');
+  }catch(e){toast(e.message,'error');}
+}
+
+async function debugRestore(){
+  if(!S.email){toast('Pas d\'email configuré','error');return;}
+  toast('Test API en cours…','info');
+  try{
+    const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
+    const txt=await resp.text();
+    console.log('[FT debug restore]',txt);
+    toast('Réponse API : '+txt.substring(0,80),'info');
+  }catch(e){toast('Erreur réseau : '+e.message,'error');}
 }
 
 // ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
@@ -2997,15 +3017,14 @@ async function obDoRestore(){
   S.email=email;persist();
   toast('Restauration en cours…','info');
   try{
-    const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(email),{redirect:'follow'});
-    const data=await resp.json();
+    const data=await _fetchRestoreRaw(email);
     if(!data||data.error){toast(data&&data.error?data.error:'Aucune donnée trouvée pour cet email','error');return;}
     _applyRestoreData(data);
     const cta=document.getElementById('ob-cta-title');
     if(cta)cta.textContent=S.name?'Content de te revoir, '+S.name+' ! 💪':'Content de te revoir ! 💪';
     obGoTo(5);
     toast('Profil restauré ✅','success');
-  }catch(e){toast('Erreur : '+e.message,'error');}
+  }catch(e){toast(e.message,'error');}
 }
 
 function finishOnboarding(){
