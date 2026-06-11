@@ -6,7 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Force Tracker">
-<meta name="theme-color" content="#0C0C0E">
+<meta name="theme-color" content="#FF2D55">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
 <title>Force Tracker v2.8</title>
 <script>
 window._deferredInstall=null;
@@ -465,7 +468,7 @@ html.ob-done #onboarding{display:none;}
     <!-- ÉTAPE 1 : Prénom -->
     <div class="ob-step ob-active" id="ob-1">
       <div class="ob-hero">
-        <div class="ob-logo">⚡ FT</div>
+        <img src="logo.png" alt="Force Tracker" style="width:100px;height:100px;border-radius:22px;object-fit:cover;margin-bottom:4px;">
         <div class="ob-title">Bienvenue sur<br>Force Tracker</div>
         <div class="ob-sub">Ton coach de force personnel. Commence par te présenter.</div>
         <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" style="margin-top:8px;">
@@ -574,7 +577,7 @@ html.ob-done #onboarding{display:none;}
 
 <div id="root">
 <div class="topbar">
-  <div><div class="tb-title">⚡ Force Tracker</div><div class="tb-sub" id="tb-date"></div></div>
+  <div style="display:flex;align-items:center;gap:10px;"><img src="logo.png" alt="" style="height:32px;width:32px;border-radius:8px;object-fit:cover;flex-shrink:0;"><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
   <button class="sync-pill" id="sync-pill" onclick="goScreen('setup',document.getElementById('nb-setup'))">
     <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;"></span>
     <span id="sync-lbl">Sheets</span>
@@ -2993,7 +2996,7 @@ async function obDoRestore(){
     if(data.sleepLog&&data.sleepLog.length)S.sleepLog=data.sleepLog;
     persist();
     const cta=document.getElementById('ob-cta-title');
-    if(cta)cta.textContent=S.name?'Bienvenue de retour, '+S.name+' !':'Bienvenue de retour !';
+    if(cta)cta.textContent=S.name?'Content de te revoir, '+S.name+' ! 💪':'Content de te revoir ! 💪';
     obGoTo(5);
     toast('Profil restauré ✅','success');
   }catch(e){
