@@ -3135,6 +3135,15 @@ filterEx();
 goScreen('home', document.getElementById('nb-home'));
 initCoachInput();
 initOnboarding();
+// Test connexion silencieux au démarrage — met le pill en vert sans action admin
+(async function autoConnect(){
+  if(!S.url)return;
+  try{
+    const r=await fetch(S.url+'?test=1',{redirect:'follow'});
+    const d=await r.json();
+    if(d.status==='online'&&!S.connected){S.connected=true;persist();updatePill();}
+  }catch(e){}
+})();
 document.addEventListener('pointerdown',function(e){
   const btn=e.target.closest('button');
   if(!btn||btn.disabled)return;
