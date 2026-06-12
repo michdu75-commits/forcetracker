@@ -395,6 +395,24 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .msg-coach strong{color:var(--red);}
 .msg-coach ul{padding-left:16px;margin-top:4px;}
 .msg-coach li{margin-bottom:3px;}
+/* COACH PREMIUM */
+.coach-quota{font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;background:rgba(255,45,85,.1);color:var(--red);border:1px solid rgba(255,45,85,.25);white-space:nowrap;}
+.coach-quota.is-premium{background:linear-gradient(135deg,rgba(255,185,0,.15),rgba(255,120,0,.12));color:#FFB800;border-color:rgba(255,185,0,.4);}
+.coach-wall{position:absolute;inset:0;z-index:15;display:none;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--bg);padding:20px 20px 100px;overflow-y:auto;gap:12px;}
+.coach-wall-icon{font-size:52px;line-height:1;margin-top:8px;}
+.coach-wall-title{font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FFB800,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;}
+.coach-wall-sub{font-size:13px;color:var(--t3);font-weight:600;text-align:center;margin-top:-4px;}
+.coach-wall-price{font-family:var(--font-cond);font-size:42px;font-weight:900;color:var(--t1);text-align:center;}
+.coach-wall-price span{font-size:16px;color:var(--t3);font-weight:600;}
+.coach-wall-card{width:100%;background:var(--bg2);border:1px solid var(--sep);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.coach-wall-perk{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:600;color:var(--t2);}
+.coach-wall-perk .pi{font-size:18px;flex-shrink:0;}
+.coach-wall-perk .soon{font-size:10px;font-weight:700;color:var(--t3);border:1px solid var(--sep);border-radius:6px;padding:1px 5px;margin-left:auto;}
+.coach-code-row{display:flex;gap:8px;width:100%;}
+.coach-code-inp{flex:1;padding:11px 14px;font-size:14px;border:1.5px solid var(--sep);border-radius:12px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;text-transform:uppercase;letter-spacing:1px;}
+.coach-code-inp::placeholder{text-transform:none;letter-spacing:0;}
+.coach-code-inp:focus{border-color:#FFB800;}
+.coach-wall-or{font-size:12px;color:var(--t3);font-weight:700;text-align:center;}
 
 /* SETUP MINI TABS */
 .setup-tabs{display:flex;background:var(--bg3);border-radius:var(--r-sm);padding:4px;gap:4px;border:1px solid var(--sep);margin-bottom:2px;}
@@ -907,10 +925,37 @@ html.ob-done #onboarding{display:none;}
 
 <!-- COACH IA -->
 <div class="screen coach-screen" id="s-coach">
-  <div class="coach-header">
-    <div class="coach-header-title">🤖 Coach IA</div>
-    <div class="coach-header-sub">Analyse tes données · Conseils personnalisés · En français</div>
+  <div class="coach-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <div>
+      <div class="coach-header-title">🤖 Coach IA</div>
+      <div class="coach-header-sub">Personnalisé · En français</div>
+    </div>
+    <div id="coach-quota-badge"></div>
   </div>
+
+  <!-- MURAL PREMIUM (affiché quand quota atteint) -->
+  <div class="coach-wall" id="coach-wall">
+    <div class="coach-wall-icon">⭐</div>
+    <div class="coach-wall-title">Coach IA Premium</div>
+    <div class="coach-wall-sub">Tu as utilisé tes 10 questions gratuites</div>
+    <div class="coach-wall-price">4,99€ <span>/ 2 mois</span></div>
+    <div class="coach-wall-card">
+      <div class="coach-wall-perk"><span class="pi">♾️</span> Questions illimitées</div>
+      <div class="coach-wall-perk"><span class="pi">🧠</span> Contexte complet : profil, PRs, cycle, nutrition</div>
+      <div class="coach-wall-perk"><span class="pi">💪</span> Programme sur mesure généré par l'IA</div>
+      <div class="coach-wall-perk"><span class="pi">📊</span> Analyse de progression personnalisée</div>
+      <div class="coach-wall-perk"><span class="pi">📸</span> Analyse photo corps &amp; technique <span class="soon">bientôt</span></div>
+    </div>
+    <a href="https://ko-fi.com/forcetracker" target="_blank" rel="noopener" style="width:100%;text-decoration:none;">
+      <button class="btn btn-red" style="width:100%;padding:15px;font-size:16px;">⭐ Passer au Premium — 4,99€</button>
+    </a>
+    <div class="coach-wall-or">— Tu as déjà un code d'accès ? —</div>
+    <div class="coach-code-row">
+      <input class="coach-code-inp" id="premium-code-inp" type="text" placeholder="Entre ton code..." maxlength="24" autocomplete="off">
+      <button class="btn btn-bg2" style="padding:0 18px;border-radius:12px;font-size:14px;white-space:nowrap;" onclick="activatePremium()">Activer</button>
+    </div>
+  </div>
+
   <div class="coach-messages" id="coach-msgs">
     <div class="msg-bubble msg-coach">
       Salut ! Je suis ton coach IA. J'ai accès à tout ton profil, tes PRs, ton cycle et ta nutrition. Pose-moi n'importe quelle question sur ton entraînement ! 💪
@@ -1205,7 +1250,9 @@ let S={
   goal:'muscle',
   sleepLog:[],
   weightLog:[],
-  name:''
+  name:'',
+  coachFree:0,
+  premium:false
 };
 
 function load(){
@@ -1238,6 +1285,8 @@ function load(){
     S.weightLog=JSON.parse(localStorage.getItem('ft4_wlog')||'[]');
     S.name=localStorage.getItem('ft4_name')||'';
     S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
+    S.coachFree=parseInt(localStorage.getItem('ft4_coachFree')||'0')||0;
+    S.premium=localStorage.getItem('ft4_premium')==='1';
   }catch(e){}
 }
 function persist(){
@@ -1264,6 +1313,8 @@ function persist(){
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
     localStorage.setItem('ft4_name',S.name||'');
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
+    localStorage.setItem('ft4_coachFree',S.coachFree||0);
+    localStorage.setItem('ft4_premium',S.premium?'1':'0');
   }catch(e){}
 }
 
@@ -1383,7 +1434,7 @@ function goScreen(id,btn){
   if(id==='setup')renderSetup();
   if(id==='cycle')renderCycleScreen();
   if(id==='nutrition'){switchNuTab('macros',document.getElementById('ntab-macros'));}
-  if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';}
+  if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();}
 }
 
 // ─── HOME ────────────────────────────────────────────────────
@@ -2768,8 +2819,48 @@ function saveSleepEntry(){
 }
 
 // ─── COACH IA ─────────────────────────────────────────────────
+const COACH_FREE_LIMIT = 10;
 let coachHistory = [];
 let coachBusy = false;
+
+function updateCoachHeader() {
+  const badge = document.getElementById('coach-quota-badge');
+  if (!badge) return;
+  if (S.premium) {
+    badge.innerHTML = '<div class="coach-quota is-premium">⭐ Premium</div>';
+  } else {
+    const left = Math.max(0, COACH_FREE_LIMIT - (S.coachFree || 0));
+    badge.innerHTML = `<div class="coach-quota">${left} question${left!==1?'s':''} gratuite${left!==1?'s':''}</div>`;
+  }
+}
+
+function showPremiumWall() {
+  const wall = document.getElementById('coach-wall');
+  if (wall) wall.style.display = 'flex';
+}
+
+async function activatePremium() {
+  const inp = document.getElementById('premium-code-inp');
+  const code = (inp ? inp.value.trim() : '').toUpperCase();
+  if (!code) { toast('Entre un code d\'accès', 'error'); return; }
+  try {
+    const resp = await fetch(S.url, {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'validateCode', code, email: S.email })
+    });
+    const data = await resp.json();
+    if (data.status === 'ok') {
+      S.premium = true; persist();
+      const wall = document.getElementById('coach-wall');
+      if (wall) wall.style.display = 'none';
+      updateCoachHeader();
+      toast('🎉 Premium activé ! Coach IA illimité débloqué.', 'success');
+    } else {
+      toast('Code invalide ou expiré.', 'error');
+    }
+  } catch(e) { toast('Erreur de connexion', 'error'); }
+}
 
 function buildCoachContext() {
   const bmr = calcBMR ? calcBMR() : '—';
@@ -2900,6 +2991,12 @@ function hideTyping() {
 
 async function sendToCoach(customMsg) {
   if (coachBusy) return;
+
+  // Vérifier quota avant d'ouvrir l'input
+  if (!S.premium && (S.coachFree || 0) >= COACH_FREE_LIMIT) {
+    showPremiumWall(); return;
+  }
+
   const inp = document.getElementById('coach-inp');
   const msg = customMsg || (inp ? inp.value.trim() : '');
   if (!msg) return;
@@ -2909,7 +3006,6 @@ async function sendToCoach(customMsg) {
   const sendBtn = document.getElementById('coach-send-btn');
   if (sendBtn) sendBtn.disabled = true;
 
-  // Hide suggestions after first message
   const suggs = document.getElementById('coach-suggs');
   if (suggs && coachHistory.length === 0) suggs.style.display = 'none';
 
@@ -2941,6 +3037,16 @@ async function sendToCoach(customMsg) {
     renderCoachMsg('coach', reply);
     coachHistory.push({ role: 'assistant', content: reply });
     if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
+
+    // Incrémenter compteur (seulement sur réponse réussie)
+    if (!S.premium) {
+      S.coachFree = (S.coachFree || 0) + 1;
+      persist();
+      updateCoachHeader();
+      if (S.coachFree >= COACH_FREE_LIMIT) {
+        setTimeout(showPremiumWall, 1200);
+      }
+    }
   } catch(e) {
     hideTyping();
     renderCoachMsg('coach', 'Erreur de connexion. Vérifie ta connexion internet et réessaie.');

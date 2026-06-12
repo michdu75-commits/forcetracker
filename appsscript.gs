@@ -70,6 +70,7 @@ function doPost(e) {
   if (body.action === 'saveProfile')  return handleSaveProfile_(body);
   if (body.action === 'logSession')   return handleLogSession_(body);
   if (body.action === 'coach')        return handleCoach_(body);
+  if (body.action === 'validateCode') return handleValidateCode_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -123,6 +124,27 @@ function handleLogSession_(body) {
     ]));
 
     return json_({status:'ok', count: rows.length});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+// Codes Premium stockés dans Script Properties : PREMIUM_CODES = "CODE1,CODE2,..."
+// Ajoute/supprime des codes via Projet > Paramètres > Propriétés du script
+function handleValidateCode_(body) {
+  try {
+    const code = (body.code || '').trim().toUpperCase();
+    if (!code) return json_({status:'error', error:'Code requis'});
+
+    const raw = PropertiesService.getScriptProperties().getProperty('PREMIUM_CODES') || '';
+    const codes = raw.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
+
+    if (codes.includes(code)) {
+      // Marquer le code comme utilisé en le suffixant (optionnel — simple validation)
+      return json_({status:'ok', type:'monthly'});
+    }
+    return json_({status:'invalid'});
   } catch(err) {
     return json_({status:'error', error: err.message});
   }
