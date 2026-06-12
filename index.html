@@ -324,6 +324,15 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .ex-pick:active{background:var(--bg3);margin:0 -8px;padding:14px 10px;}
 .ex-pick-name{font-size:15px;font-weight:600;}
 .ex-pick-grp{font-size:12px;color:var(--t3);font-weight:600;}
+.ex-grp-tile{display:flex;align-items:center;gap:12px;padding:13px 10px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);cursor:pointer;margin-bottom:8px;transition:background .15s;}
+.ex-grp-tile:active{background:var(--bg2);}
+.ex-grp-icon{font-size:22px;flex-shrink:0;width:32px;text-align:center;}
+.ex-grp-info{flex:1;}
+.ex-grp-label{font-size:15px;font-weight:700;color:var(--t1);}
+.ex-grp-count{font-size:12px;color:var(--t3);margin-top:2px;font-weight:600;}
+.ex-grp-arrow{font-size:20px;color:var(--t3);font-weight:700;}
+.ex-grp-back{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--t2);font-size:14px;font-family:var(--font);cursor:pointer;padding:0 0 12px;font-weight:700;touch-action:manipulation;}
+.ex-grp-header{font-family:var(--font-cond);font-size:17px;font-weight:900;color:var(--red);margin-bottom:10px;letter-spacing:.3px;}
 
 
 
@@ -1040,15 +1049,16 @@ html.ob-done #onboarding{display:none;}
       <div id="custom-ex-form" style="display:none;flex-direction:column;gap:8px;margin-top:10px;">
         <input type="text" id="custom-ex-name" placeholder="Nom de l'exercice">
         <select id="custom-ex-grp" style="padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:14px;">
-          <option value="Jambes">Jambes</option>
           <option value="Pectoraux">Pectoraux</option>
           <option value="Dos">Dos</option>
+          <option value="Trapèzes">Trapèzes</option>
           <option value="Épaules">Épaules</option>
           <option value="Biceps">Biceps</option>
           <option value="Triceps">Triceps</option>
+          <option value="Jambes">Jambes</option>
           <option value="Fessiers">Fessiers</option>
           <option value="Abdominaux">Abdominaux</option>
-          <option value="Trapèzes">Trapèzes</option>
+          <option value="Mollets">Mollets</option>
         </select>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-bg2" style="flex:1;" onclick="hideCustomExForm()">Annuler</button>
@@ -1077,6 +1087,11 @@ const EXLIB=[
   {n:'Rowing Cable',g:'Dos'},{n:'Rowing Haltère',g:'Dos'},{n:'Tirage Poulie Haute',g:'Dos'},{n:'Tirage Nuque',g:'Dos'},
   {n:'Face Pull',g:'Épaules'},{n:'Élévations Latérales',g:'Épaules'},
   {n:'Shrugs',g:'Trapèzes'},{n:'Gainage',g:'Abdominaux'},
+  {n:'Crunch',g:'Abdominaux'},{n:'Relevé de Jambes',g:'Abdominaux'},{n:'Ab Wheel',g:'Abdominaux'},
+  {n:'Élévations Mollets Debout',g:'Mollets'},{n:'Élévations Mollets Assis',g:'Mollets'},
+  {n:'Développé Couché Haltères',g:'Pectoraux'},{n:'Pompes Lestées',g:'Pectoraux'},
+  {n:'Traction Prise Neutre',g:'Dos'},{n:'Rowing Chest Supported',g:'Dos'},
+  {n:'Curl Poulie',g:'Biceps'},{n:'Développé Militaire Haltères',g:'Épaules'},
 ];
 const BIG3=['Squat','Développé Couché','Soulevé de Terre'];
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
@@ -1573,13 +1588,57 @@ function skipRest(){stopRest();}
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
 
 // ─── EXERCISE PICKER ─────────────────────────────────────────
-function openExPicker(){filterEx();document.getElementById('mod-ex').classList.add('open');setTimeout(()=>document.getElementById('ex-search').focus(),100);}
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();}
+const EX_GROUPS=[
+  {label:'Pectoraux',            icon:'🏋️', tags:['Pectoraux']},
+  {label:'Dos / Dorsaux',        icon:'🔗',  tags:['Dos','Trapèzes']},
+  {label:'Épaules',              icon:'🎯',  tags:['Épaules']},
+  {label:'Bras — Biceps / Triceps', icon:'💪', tags:['Biceps','Triceps']},
+  {label:'Jambes',               icon:'🦵',  tags:['Jambes','Fessiers']},
+  {label:'Abdominaux',           icon:'⚡',  tags:['Abdominaux']},
+  {label:'Mollets',              icon:'🦶',  tags:['Mollets']},
+];
+let _exGrp=null;
+
+function _exPickRow(e){
+  return `<div class="ex-pick" onclick="addExercise('${e.n.replace(/'/g,"\\'")}')"><span class="ex-pick-name">${e.n}${e.custom?' <span style="font-size:10px;color:var(--purp);">✎</span>':''}</span><span class="ex-pick-grp">${e.g}</span></div>`;
+}
+function openExPicker(){
+  _exGrp=null;
+  const s=document.getElementById('ex-search');if(s)s.value='';
+  filterEx();
+  document.getElementById('mod-ex').classList.add('open');
+}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;}
 function filterEx(){
-  const q=(document.getElementById('ex-search').value||'').toLowerCase();
+  const q=(document.getElementById('ex-search').value||'').toLowerCase().trim();
   const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));
-  const f=all.filter(e=>e.n.toLowerCase().includes(q)||e.g.toLowerCase().includes(q));
-  document.getElementById('ex-list').innerHTML=f.map(e=>`<div class="ex-pick" onclick="addExercise('${e.n.replace(/'/g,"\\'")}')"><span class="ex-pick-name">${e.n}${e.custom?' <span style="font-size:10px;color:var(--purp);">✎</span>':''}</span><span class="ex-pick-grp">${e.g}</span></div>`).join('');
+  const list=document.getElementById('ex-list');
+  // Recherche active → liste plate
+  if(q){
+    _exGrp=null;
+    const f=all.filter(e=>e.n.toLowerCase().includes(q)||e.g.toLowerCase().includes(q));
+    list.innerHTML=f.length?f.map(_exPickRow).join(''):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
+    return;
+  }
+  // Groupe sélectionné → exercices du groupe
+  if(_exGrp!==null){
+    const grp=EX_GROUPS[_exGrp];
+    const f=all.filter(e=>grp.tags.includes(e.g));
+    list.innerHTML=
+      `<button class="ex-grp-back" onclick="_exGrp=null;filterEx();">‹ Groupes musculaires</button>`+
+      `<div class="ex-grp-header">${grp.icon} ${grp.label}</div>`+
+      (f.length?f.map(_exPickRow).join(''):'<div style="padding:16px;text-align:center;color:var(--t3);">Aucun exercice — utilise "+ Créer"</div>');
+    return;
+  }
+  // Vue par défaut → tuiles des groupes
+  list.innerHTML=EX_GROUPS.map((grp,i)=>{
+    const count=all.filter(e=>grp.tags.includes(e.g)).length;
+    return `<div class="ex-grp-tile" onclick="_exGrp=${i};filterEx();">
+      <span class="ex-grp-icon">${grp.icon}</span>
+      <div class="ex-grp-info"><div class="ex-grp-label">${grp.label}</div><div class="ex-grp-count">${count} exercice${count>1?'s':''}</div></div>
+      <span class="ex-grp-arrow">›</span>
+    </div>`;
+  }).join('');
 }
 function showCustomExForm(){document.getElementById('custom-ex-form').style.display='flex';document.getElementById('custom-ex-add-btn').style.display='none';}
 function hideCustomExForm(){document.getElementById('custom-ex-form').style.display='none';document.getElementById('custom-ex-add-btn').style.display='';const n=document.getElementById('custom-ex-name');if(n)n.value='';}
