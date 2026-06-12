@@ -333,6 +333,9 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .ex-grp-arrow{font-size:20px;color:var(--t3);font-weight:700;}
 .ex-grp-back{display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--t2);font-size:14px;font-family:var(--font);cursor:pointer;padding:0 0 12px;font-weight:700;touch-action:manipulation;}
 .ex-grp-header{font-family:var(--font-cond);font-size:17px;font-weight:900;color:var(--red);margin-bottom:10px;letter-spacing:.3px;}
+.prog-card{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);margin-bottom:8px;}
+.prog-card-name{font-size:15px;font-weight:700;}
+.prog-card-detail{font-size:12px;color:var(--t3);margin-top:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 
 
@@ -647,7 +650,10 @@ html.ob-done #onboarding{display:none;}
     <button class="btn btn-bg2 btn-sm" onclick="resetToday()">Aujourd'hui</button>
   </div>
   <div id="wkt-exs"></div>
-  <button class="btn btn-bg2" onclick="openExPicker()">+ Ajouter un exercice</button>
+  <div style="display:flex;gap:8px;">
+    <button class="btn btn-bg2" style="flex:1;" onclick="openProgModal()">📋 Programmes</button>
+    <button class="btn btn-bg2" style="flex:2;" onclick="openExPicker()">+ Exercice</button>
+  </div>
   <button class="btn btn-green" onclick="finishWorkout()">✓ Terminer la séance</button>
   <p style="font-size:13px;color:var(--t3);text-align:center;">✓ pour valider une série → chrono de repos automatique</p>
 </div>
@@ -1070,29 +1076,69 @@ html.ob-done #onboarding{display:none;}
   </div>
 </div>
 
+<!-- MODAL: Programmes -->
+<div class="overlay" id="mod-prog">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📋 Mes Programmes</h2>
+    <div id="prog-list-modal" style="margin-bottom:4px;"></div>
+    <div id="prog-save-section" style="border-top:1px solid var(--sep);padding-top:14px;margin-top:6px;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:13px;color:var(--t2);font-weight:700;">Sauvegarder la séance actuelle :</div>
+      <input type="text" id="prog-name-inp" placeholder="Nom du programme (ex: Push A, Séance Jambes…)" maxlength="40">
+      <button class="btn btn-red" onclick="saveAsProg()" style="padding:13px;">💾 Sauvegarder comme programme</button>
+    </div>
+    <div class="modal-btns" style="margin-top:10px;"><button class="btn btn-bg2" onclick="closeProgModal()">Fermer</button></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </div>
 
 <script>
 // ─── EXERCISE LIBRARY ────────────────────────────────────────
 const EXLIB=[
-  {n:'Squat',g:'Jambes'},{n:'Développé Couché',g:'Pectoraux'},{n:'Soulevé de Terre',g:'Dos'},
-  {n:'Développé Militaire',g:'Épaules'},{n:'Rowing Barre',g:'Dos'},{n:'Traction Lestée',g:'Dos'},
-  {n:'Squat Avant',g:'Jambes'},{n:'Soulevé de Terre Roumain',g:'Jambes'},{n:'Soulevé de Terre Sumo',g:'Jambes'},
-  {n:'Squat Bulgare',g:'Jambes'},{n:'Hip Thrust',g:'Fessiers'},
-  {n:'Leg Press',g:'Jambes'},{n:'Leg Curl',g:'Jambes'},{n:'Leg Extension',g:'Jambes'},
-  {n:'Hack Squat',g:'Jambes'},{n:'Curl Barre',g:'Biceps'},{n:'Curl Haltères',g:'Biceps'},{n:'Marteau',g:'Biceps'},
-  {n:'Extension Triceps',g:'Triceps'},{n:'Dips Lestés',g:'Triceps'},{n:'Barre au Front',g:'Triceps'},{n:'Triceps Poulie',g:'Triceps'},
-  {n:'Développé Incliné',g:'Pectoraux'},{n:'Écarté Haltères',g:'Pectoraux'},
-  {n:'Rowing Cable',g:'Dos'},{n:'Rowing Haltère',g:'Dos'},{n:'Tirage Poulie Haute',g:'Dos'},{n:'Tirage Nuque',g:'Dos'},
-  {n:'Face Pull',g:'Épaules'},{n:'Élévations Latérales',g:'Épaules'},
-  {n:'Shrugs',g:'Trapèzes'},{n:'Gainage',g:'Abdominaux'},
-  {n:'Crunch',g:'Abdominaux'},{n:'Relevé de Jambes',g:'Abdominaux'},{n:'Ab Wheel',g:'Abdominaux'},
+  // ── Pectoraux ──────────────────────────────────────────────
+  {n:'Développé Couché',g:'Pectoraux'},{n:'Développé Couché Haltères',g:'Pectoraux'},
+  {n:'Développé Incliné',g:'Pectoraux'},{n:'Développé Incliné Haltères',g:'Pectoraux'},
+  {n:'Développé Décliné',g:'Pectoraux'},{n:'Développé Décliné Haltères',g:'Pectoraux'},
+  {n:'Écarté Haltères',g:'Pectoraux'},{n:'Écarté Poulie',g:'Pectoraux'},
+  {n:'Pec Deck',g:'Pectoraux'},{n:'Dips',g:'Pectoraux'},{n:'Pompes Lestées',g:'Pectoraux'},
+  // ── Dos / Dorsaux ──────────────────────────────────────────
+  {n:'Soulevé de Terre',g:'Dos'},{n:'Rack Pull',g:'Dos'},{n:'Good Morning',g:'Dos'},
+  {n:'Rowing Barre',g:'Dos'},{n:'Rowing Haltère',g:'Dos'},{n:'Rowing Cable',g:'Dos'},
+  {n:'Rowing Chest Supported',g:'Dos'},{n:'Tirage Poulie Haute',g:'Dos'},{n:'Tirage Nuque',g:'Dos'},
+  {n:'Traction Lestée',g:'Dos'},{n:'Traction Prise Neutre',g:'Dos'},{n:'Pull-over',g:'Dos'},
+  {n:'Shrugs',g:'Trapèzes'},{n:'Tirage Menton',g:'Trapèzes'},
+  // ── Épaules ────────────────────────────────────────────────
+  {n:'Développé Militaire',g:'Épaules'},{n:'Développé Militaire Haltères',g:'Épaules'},
+  {n:'Arnold Press',g:'Épaules'},{n:'Élévations Latérales',g:'Épaules'},
+  {n:'Élévations Frontales',g:'Épaules'},{n:'Oiseau',g:'Épaules'},{n:'Face Pull',g:'Épaules'},
+  {n:'Upright Row',g:'Épaules'},
+  // ── Biceps ─────────────────────────────────────────────────
+  {n:'Curl Barre',g:'Biceps'},{n:'Curl Haltères',g:'Biceps'},{n:'Curl Poulie',g:'Biceps'},
+  {n:'Curl EZ',g:'Biceps'},{n:'Curl Incliné',g:'Biceps'},{n:'Curl Concentré',g:'Biceps'},
+  {n:'Marteau',g:'Biceps'},
+  // ── Triceps ────────────────────────────────────────────────
+  {n:'Dips Lestés',g:'Triceps'},{n:'Barre au Front',g:'Triceps'},
+  {n:'Extension Triceps',g:'Triceps'},{n:'Triceps Poulie',g:'Triceps'},
+  {n:'Kickback Triceps',g:'Triceps'},{n:'Triceps Haltère',g:'Triceps'},
+  // ── Jambes ─────────────────────────────────────────────────
+  {n:'Squat',g:'Jambes'},{n:'Squat Avant',g:'Jambes'},{n:'Squat Bulgare',g:'Jambes'},
+  {n:'Hack Squat',g:'Jambes'},{n:'Leg Press',g:'Jambes'},
+  {n:'Soulevé de Terre Roumain',g:'Jambes'},{n:'Soulevé de Terre Sumo',g:'Jambes'},
+  {n:'Leg Curl',g:'Jambes'},{n:'Leg Extension',g:'Jambes'},
+  {n:'Fentes',g:'Jambes'},{n:'Fentes Marchées',g:'Jambes'},{n:'Step-up',g:'Jambes'},
+  {n:'Leg Abduction',g:'Jambes'},{n:'Leg Adduction',g:'Jambes'},
+  {n:'Hip Thrust',g:'Fessiers'},{n:'Glute Bridge',g:'Fessiers'},{n:'Kickback Fessiers',g:'Fessiers'},
+  // ── Abdominaux ─────────────────────────────────────────────
+  {n:'Gainage',g:'Abdominaux'},{n:'Side Plank',g:'Abdominaux'},
+  {n:'Crunch',g:'Abdominaux'},{n:'Crunch Poulie',g:'Abdominaux'},
+  {n:'Relevé de Jambes',g:'Abdominaux'},{n:'Ab Wheel',g:'Abdominaux'},
+  {n:'Russian Twist',g:'Abdominaux'},{n:'Dragon Flag',g:'Abdominaux'},
+  {n:'Mountain Climber',g:'Abdominaux'},
+  // ── Mollets ────────────────────────────────────────────────
   {n:'Élévations Mollets Debout',g:'Mollets'},{n:'Élévations Mollets Assis',g:'Mollets'},
-  {n:'Développé Couché Haltères',g:'Pectoraux'},{n:'Pompes Lestées',g:'Pectoraux'},
-  {n:'Développé Décliné',g:'Pectoraux'},{n:'Dips',g:'Pectoraux'},
-  {n:'Traction Prise Neutre',g:'Dos'},{n:'Rowing Chest Supported',g:'Dos'},
-  {n:'Curl Poulie',g:'Biceps'},{n:'Développé Militaire Haltères',g:'Épaules'},
+  {n:'Leg Press Mollets',g:'Mollets'},{n:'Donkey Calf Raise',g:'Mollets'},
 ];
 const BIG3=['Squat','Développé Couché','Soulevé de Terre'];
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
@@ -1142,7 +1188,7 @@ let S={
   gender:'H',age:30,height:175,activityLevel:1.55,
   workType:'bureau',smoker:false,
   mensCycleStart:'',mensCycleDur:28,
-  sessions:[],prs:{},wkt:null,
+  sessions:[],prs:{},wkt:null,programmes:[],
   url:DEFAULT_URL,email:'',connected:false,
   nutritionPhase:'charge',
   customExercises:[],
@@ -1182,6 +1228,7 @@ function load(){
     S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
     S.weightLog=JSON.parse(localStorage.getItem('ft4_wlog')||'[]');
     S.name=localStorage.getItem('ft4_name')||'';
+    S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
   }catch(e){}
 }
 function persist(){
@@ -1207,6 +1254,7 @@ function persist(){
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
     localStorage.setItem('ft4_name',S.name||'');
+    localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
   }catch(e){}
 }
 
@@ -1567,15 +1615,14 @@ async function finishWorkout(){
   sess.calories = calData.total;
   sess.calData = calData;
 
+  S.wkt=null;persist(); // sauvegarde locale immédiate avant toute tentative réseau
   if(S.connected&&S.url){
-    toast('Synchronisation…','info');
     const ok=await syncSheets(sess);
-    if(ok){S.sessions[0].synced=true;toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');}
-    else toast(`Sauvée localement — 🔥 ${calData.total} kcal`,'error');
+    if(ok){S.sessions[0].synced=true;persist();toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');}
+    else toast(`Séance sauvegardée ! 🔥 ${calData.total} kcal`,'success');
   } else {
     toast(`Séance terminée ! 🔥 ${calData.total} kcal brûlées`,'success');
   }
-  S.wkt=null;persist();
   setTimeout(()=>openCheckin(sess),600);
 }
 
@@ -1652,6 +1699,90 @@ function saveCustomEx(){
   if(!S.customExercises)S.customExercises=[];
   S.customExercises.push({n:name,g:grp,custom:true});
   persist();hideCustomExForm();filterEx();toast(name+' créé !','success');
+}
+
+// ─── PROGRAMMES ──────────────────────────────────────────────
+function openProgModal(){
+  renderProgModal();
+  document.getElementById('mod-prog').classList.add('open');
+}
+function closeProgModal(){
+  document.getElementById('mod-prog').classList.remove('open');
+}
+function renderProgModal(){
+  if(!S.programmes)S.programmes=[];
+  const progs=S.programmes;
+  const list=document.getElementById('prog-list-modal');
+  if(!progs.length){
+    list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme sauvegardé.<br>Crée une séance et utilise "Sauvegarder" !</div>';
+  }else{
+    list.innerHTML=progs.map((p,i)=>{
+      const exNames=(p.exs||[]).slice(0,3).map(e=>e.name).join(', ')+(p.exs.length>3?' +'+( p.exs.length-3):'');
+      return `<div class="prog-card">
+        <div style="flex:1;min-width:0;">
+          <div class="prog-card-name">${p.name}</div>
+          <div class="prog-card-detail">${p.exs.length} exercice${p.exs.length>1?'s':''} · ${exNames}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
+          <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  // Affiche la section "Sauvegarder" seulement si une séance est en cours
+  const saveSection=document.getElementById('prog-save-section');
+  if(saveSection){
+    const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
+    saveSection.style.display=hasExs?'flex':'none';
+    const inp=document.getElementById('prog-name-inp');
+    if(inp&&!inp.value)inp.value='';
+  }
+}
+function saveAsProg(){
+  const name=(document.getElementById('prog-name-inp').value||'').trim();
+  if(!name){toast('Donne un nom au programme','error');return;}
+  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Aucun exercice dans la séance','error');return;}
+  if(!S.programmes)S.programmes=[];
+  const prog={
+    id:'p'+Date.now(),name,
+    exs:S.wkt.exs.map(ex=>({
+      name:ex.name,
+      sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,type:s.type||'N'}))
+    }))
+  };
+  const idx=S.programmes.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
+  if(idx>=0){S.programmes[idx]=prog;toast('"'+name+'" mis à jour ✅','success');}
+  else{S.programmes.push(prog);toast('"'+name+'" sauvegardé ✅','success');}
+  persist();
+  renderProgModal();
+}
+function loadProg(idx){
+  const prog=(S.programmes||[])[idx];
+  if(!prog)return;
+  S.wkt={
+    date:today(),
+    exs:prog.exs.map(e=>{
+      const prev=getPrev(e.name);
+      return{name:e.name,sets:e.sets.map(s=>({
+        kg:prev.length?prev[0].kg:(s.kg||0),
+        reps:prev.length?prev[0].reps:(s.reps||5),
+        type:s.type||'N',done:false,rm1:0
+      }))};
+    })
+  };
+  persist();
+  closeProgModal();
+  goScreen('log',document.getElementById('nb-log'));
+  renderExBlocks();
+  toast('"'+prog.name+'" chargé ! 💪','success');
+}
+function deleteProg(idx){
+  if(!S.programmes)return;
+  const name=S.programmes[idx].name;
+  S.programmes.splice(idx,1);
+  persist();renderProgModal();
+  toast('"'+name+'" supprimé','info');
 }
 
 // ─── EXERCISE GIF (wger.de) ───────────────────────────────────
