@@ -2266,7 +2266,9 @@ function _applyRestoreData(raw){
   if(sessions&&sessions.length)S.sessions=sessions;
   if(weightLog&&weightLog.length)S.weightLog=weightLog;
   if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;
+  if(raw&&raw.premium===true&&!S.premium){S.premium=true;}
   persist();
+  updateCoachHeader();
 }
 
 async function _fetchRestoreRaw(email){
@@ -3467,7 +3469,7 @@ filterEx();
 goScreen('home', document.getElementById('nb-home'));
 initCoachInput();
 initOnboarding();
-// Test connexion silencieux au démarrage — met le pill en vert sans action admin
+// Test connexion silencieux + vérif premium par email whitelist
 (async function autoConnect(){
   if(!S.url)return;
   try{
@@ -3475,6 +3477,14 @@ initOnboarding();
     const d=await r.json();
     if(d.status==='online'&&!S.connected){S.connected=true;persist();updatePill();}
   }catch(e){}
+  // Si email connu et pas encore premium → vérifier whitelist côté serveur
+  if(S.email&&!S.premium){
+    try{
+      const r2=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
+      const d2=await r2.json();
+      if(d2.premium===true){S.premium=true;persist();updateCoachHeader();}
+    }catch(e){}
+  }
 })();
 document.addEventListener('pointerdown',function(e){
   const btn=e.target.closest('button');

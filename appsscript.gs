@@ -43,8 +43,11 @@ function doGet(e) {
     const email = (p.email || '').toLowerCase().trim();
     const data = loadUserData_(email);
     if (!data) return json_({status:'not_found'});
+    const premiumEmails = (PropertiesService.getScriptProperties().getProperty('PREMIUM_EMAILS') || '')
+      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
     return json_({
       status:        'ok',
+      premium:       premiumEmails.includes(email),
       profile:       data.profile       || {},
       prs:           data.prs           || {},
       sessions:      data.sessions      || [],
