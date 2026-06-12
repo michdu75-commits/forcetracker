@@ -668,7 +668,10 @@ html.ob-done #onboarding{display:none;}
   <!-- TAB: Exercices -->
   <div id="prog-exo" style="display:flex;flex-direction:column;gap:10px;">
     <div class="sec">Progression</div>
-    <select id="prog-sel" onchange="renderChart()" style="font-size:14px;padding:10px 13px;"></select>
+    <div id="big4-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    <select id="prog-sel" onchange="selectProgEx(this.value)" style="font-size:14px;padding:10px 13px;">
+      <option value="">— Autre exercice… —</option>
+    </select>
     <div class="chart-box" id="chart-box"><div class="empty">Sélectionne un exercice</div></div>
     <div class="sec">Historique séances</div>
     <div id="sess-list"></div>
@@ -1141,6 +1144,7 @@ const EXLIB=[
   {n:'Leg Press Mollets',g:'Mollets'},{n:'Donkey Calf Raise',g:'Mollets'},
 ];
 const BIG3=['Squat','Développé Couché','Soulevé de Terre'];
+const BIG4=['Squat','Soulevé de Terre','Développé Couché','Développé Militaire'];
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbw52oQ9grdgeXQcnWaP3t-3C50oNUAzkn5lBTuXbEbCi_61vE8Aml8Pb6vwjw02CM1OHA/exec';
@@ -1856,12 +1860,37 @@ function renderPlates(){
 function applyPlate(){if(plateExIdx===null)return;const t=parseFloat(document.getElementById('plate-kg').value);if(!t)return;S.wkt.exs[plateExIdx].sets.forEach(s=>{if(!s.done)s.kg=t;});persist();closePlate();renderExBlocks();toast('Charge appliquée !','success');}
 
 // ─── PROGRESS SCREEN ─────────────────────────────────────────
+let _progEx=BIG4[0];
 function renderProgress(){
   switchProgTab('exo',document.getElementById('ptab-exo'));
+  // Chips BIG4
+  const chips=document.getElementById('big4-chips');
+  if(chips){
+    chips.innerHTML=BIG4.map(n=>`<button onclick="selectProgEx('${n}')" id="chip-${n.replace(/ /g,'_')}" style="flex:1;min-width:0;padding:9px 6px;border-radius:20px;font-size:13px;font-weight:800;font-family:var(--font);border:1.5px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n}</button>`).join('');
+  }
+  // Dropdown tous les autres exercices
   const sel=document.getElementById('prog-sel');
-  const all=[...new Set([...BIG3,...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])];
-  sel.innerHTML=all.map(n=>`<option value="${n}">${n}</option>`).join('');
-  renderChart();renderSessions();
+  const others=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].filter(n=>!BIG4.includes(n)).sort((a,b)=>a.localeCompare(b,'fr'));
+  sel.innerHTML=`<option value="">— Autre exercice… —</option>`+others.map(n=>`<option value="${n}">${n}</option>`).join('');
+  selectProgEx(_progEx);
+  renderSessions();
+}
+function selectProgEx(name){
+  if(!name)return;
+  _progEx=name;
+  // Mettre à jour les chips
+  BIG4.forEach(n=>{
+    const c=document.getElementById('chip-'+n.replace(/ /g,'_'));
+    if(!c)return;
+    const active=n===name;
+    c.style.background=active?'linear-gradient(135deg,#FF2D55,#FF4D6D)':'var(--bg3)';
+    c.style.color=active?'#fff':'var(--t2)';
+    c.style.borderColor=active?'transparent':'var(--sep)';
+  });
+  // Réinitialiser le dropdown si on vient d'une chip
+  const sel=document.getElementById('prog-sel');
+  if(sel&&BIG4.includes(name))sel.value='';
+  renderChart();
 }
 function switchProgTab(tab,btn){
   const exo=document.getElementById('prog-exo'),pw=document.getElementById('prog-poids');
@@ -1873,7 +1902,8 @@ function switchProgTab(tab,btn){
 }
 function goWeightTab(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>switchProgTab('poids',document.getElementById('ptab-poids')),80);}
 function renderChart(){
-  const name=document.getElementById('prog-sel').value,box=document.getElementById('chart-box');
+  const name=_progEx,box=document.getElementById('chart-box');
+  if(!name){box.innerHTML='<div class="empty">Sélectionne un exercice</div>';return;}
   const pts=[];
   [...S.sessions].reverse().forEach(s=>{
     const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
