@@ -95,7 +95,8 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 
 ### Nouvelle URL Apps Script déployée (2026-06-12)
 L'ancienne URL (`AKfycbxPvDqe...`) a été remplacée par la nouvelle (`AKfycbw52oQ9...`).  
-`DEFAULT_URL` dans `index.html` est à jour. App poussée sur GitHub Pages.
+`DEFAULT_URL` dans `index.html` est à jour. App poussée sur GitHub Pages.  
+**✅ Restauration confirmée fonctionnelle le 2026-06-12 — saveProfile + loadProfile opérationnels.**
 
 ### Format de réponse Apps Script (v3.1)
 
