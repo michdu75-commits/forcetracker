@@ -577,7 +577,7 @@ html.ob-done #onboarding{display:none;}
         <img src="logo.png" alt="Force Tracker" style="width:110px;height:110px;border-radius:24px;object-fit:cover;margin-bottom:4px;">
         <div class="ob-title" id="ob-cta-title">C'est parti !</div>
         <div class="ob-sub">Commence ta première séance et trace ta progression vers tes objectifs.</div>
-        <div style="width:100%;margin-top:16px;">
+        <div id="ob-email-section" style="width:100%;margin-top:16px;">
           <label style="font-size:13px;color:var(--t2);display:block;margin-bottom:6px;text-align:left;">📧 Email (pour sauvegarder tes données)</label>
           <input class="ob-inp" id="ob-email-final" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:16px;">
         </div>
@@ -3452,6 +3452,10 @@ function obNext(step){
   }else if(_obStep===4){
     S.goal=_obGoal;
   }
+  if(step===5){
+    const emailSec=document.getElementById('ob-email-section');
+    if(emailSec)emailSec.style.display='';
+  }
   obGoTo(step);
 }
 
@@ -3492,6 +3496,8 @@ async function obDoRestore(){
     _applyRestoreData(data);
     const cta=document.getElementById('ob-cta-title');
     if(cta)cta.textContent=S.name?'Content de te revoir, '+S.name+' ! 💪':'Content de te revoir ! 💪';
+    const emailSec=document.getElementById('ob-email-section');
+    if(emailSec)emailSec.style.display='none';
     obGoTo(5);
     toast('Profil restauré ✅','success');
   }catch(e){toast(e.message,'error');}
