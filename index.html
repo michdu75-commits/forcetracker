@@ -471,7 +471,7 @@ html.ob-done #onboarding{display:none;}
 .ob-step{position:absolute;inset:0;display:flex;flex-direction:column;padding:0 24px;transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .38s;transform:translateX(100%);opacity:0;pointer-events:none;}
 .ob-step.ob-active{transform:translateX(0);opacity:1;pointer-events:all;}
 .ob-step.ob-prev{transform:translateX(-60px);opacity:0;}
-.ob-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;}
+.ob-hero{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;}
 .ob-hero.ob-top{justify-content:flex-start;padding-top:20px;}
 .ob-logo{font-family:var(--font-cond);font-size:56px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;}
 .ob-title{font-family:var(--font-cond);font-size:32px;font-weight:900;line-height:1.1;}
@@ -549,7 +549,10 @@ html.ob-done #onboarding{display:none;}
       </div>
       <div class="ob-footer">
         <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
-        <button class="btn btn-bg2" onclick="obGoTo(4)" style="font-size:15px;">Passer cette étape</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-bg2" onclick="obGoTo(1)" style="font-size:14px;flex:1;">← Retour</button>
+          <button class="btn btn-bg2" onclick="obGoTo(4)" style="font-size:14px;flex:2;">Passer cette étape</button>
+        </div>
       </div>
     </div>
 
@@ -569,6 +572,7 @@ html.ob-done #onboarding{display:none;}
       </div>
       <div class="ob-footer">
         <button class="btn btn-red" onclick="obNext(5)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:14px;">← Retour</button>
       </div>
     </div>
 
@@ -592,6 +596,7 @@ html.ob-done #onboarding{display:none;}
           <button class="btn btn-bg2" onclick="finishOnboarding(true)" style="margin-top:8px;width:100%;padding:12px;font-size:14px;">Continuer quand même (écraser)</button>
         </div>
         <button class="btn btn-red" id="ob-start-btn" onclick="obCheckEmailAndFinish()" style="font-size:20px;padding:20px;letter-spacing:.5px;">⚡ COMMENCER</button>
+        <button class="btn btn-bg2" onclick="obGoTo(4)" style="font-size:14px;">← Retour</button>
       </div>
     </div>
 
