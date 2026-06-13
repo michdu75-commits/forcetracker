@@ -583,7 +583,12 @@ html.ob-done #onboarding{display:none;}
         </div>
       </div>
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="finishOnboarding()" style="font-size:18px;padding:18px;letter-spacing:.5px;">⚡ COMMENCER</button>
+        <div id="ob-email-warn" style="display:none;background:var(--bg2);border-radius:12px;padding:14px;margin-top:8px;text-align:left;font-size:14px;color:var(--t1);">
+          ⚠️ Un compte existe déjà avec cet email.<br>
+          <button class="btn btn-red" onclick="obRestoreFromWarn()" style="margin-top:10px;width:100%;padding:13px;">☁️ Restaurer mes données</button>
+          <button class="btn btn-bg2" onclick="finishOnboarding(true)" style="margin-top:8px;width:100%;padding:12px;font-size:13px;">Continuer quand même (écraser)</button>
+        </div>
+        <button class="btn btn-red" id="ob-start-btn" onclick="obCheckEmailAndFinish()" style="font-size:18px;padding:18px;letter-spacing:.5px;">⚡ COMMENCER</button>
       </div>
     </div>
 
@@ -3412,7 +3417,7 @@ function initOnboarding(){
     });
   });
   const emailFinal=document.getElementById('ob-email-final');
-  if(emailFinal){emailFinal.setAttribute('enterkeyhint','done');emailFinal.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();finishOnboarding();}});}
+  if(emailFinal){emailFinal.setAttribute('enterkeyhint','done');emailFinal.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obCheckEmailAndFinish();}});}
 }
 
 function obGoTo(step){
@@ -3492,7 +3497,39 @@ async function obDoRestore(){
   }catch(e){toast(e.message,'error');}
 }
 
-function finishOnboarding(){
+function obCheckEmailAndFinish(){
+  const emailFinal=(document.getElementById('ob-email-final')||{}).value.trim();
+  if(!emailFinal){finishOnboarding();return;}
+  const warn=document.getElementById('ob-email-warn');
+  const btn=document.getElementById('ob-start-btn');
+  btn.disabled=true;btn.textContent='Vérification…';
+  fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(emailFinal),{redirect:'follow'})
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.status==='ok'){
+        if(warn)warn.style.display='block';
+        btn.style.display='none';
+      } else {
+        finishOnboarding();
+      }
+    })
+    .catch(()=>{finishOnboarding();})
+    .finally(()=>{btn.disabled=false;btn.textContent='⚡ COMMENCER';});
+}
+
+function obRestoreFromWarn(){
+  const emailFinal=(document.getElementById('ob-email-final')||{}).value.trim();
+  if(emailFinal)document.getElementById('ob-email').value=emailFinal;
+  document.getElementById('ob-email-warn').style.display='none';
+  document.getElementById('ob-start-btn').style.display='';
+  obDoRestore();
+}
+
+function finishOnboarding(force){
+  const warn=document.getElementById('ob-email-warn');
+  if(warn)warn.style.display='none';
+  const btn=document.getElementById('ob-start-btn');
+  if(btn){btn.style.display='';btn.disabled=false;btn.textContent='⚡ COMMENCER';}
   S.goal=_obGoal;
   S.gender=_obGender;
   const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
