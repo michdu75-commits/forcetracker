@@ -6,7 +6,7 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 
 - **Repo GitHub** : https://github.com/michdu75-commits/forcetracker
 - **App live** : https://michdu75-commits.github.io/forcetracker/
-- **Apps Script URL (v3.1 — active)** : https://script.google.com/macros/s/AKfycbw52oQ9grdgeXQcnWaP3t-3C50oNUAzkn5lBTuXbEbCi_61vE8Aml8Pb6vwjw02CM1OHA/exec
+- **Apps Script URL (v3.2 — active)** : https://script.google.com/macros/s/AKfycbweEvXxPFJXjG1ogaKc9k_RDYA-2g4zjj8QpKcD5RPFr6G1l_ClST7Ado9iLXPDEJ-T/exec
 - **Fichier Apps Script local** : `appsscript.gs` (référence — déjà déployé)
 - **Auteur** : Michel — michdu75@gmail.com
 
