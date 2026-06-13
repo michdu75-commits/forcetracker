@@ -744,7 +744,7 @@ html.ob-done #onboarding{display:none;}
       <div class="macro-box"><div class="macro-lbl">Lipides</div><div class="macro-val" id="m-fat">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--gold);"></div></div>
     </div>
     <div class="sec">Plan alimentaire journalier</div>
-    <div class="card cp" id="meal-plan"><div style="text-align:center;color:var(--t3);font-size:13px;padding:16px;">Remplis ton profil dans Setup pour voir le plan 🍽️</div></div>
+    <div class="card cp" id="meal-plan"><div style="text-align:center;color:var(--t3);font-size:13px;padding:16px;">Remplis ton profil pour voir le plan 🍽️</div></div>
   </div>
 
   <!-- SUPPLÉMENTS -->
@@ -1047,7 +1047,7 @@ html.ob-done #onboarding{display:none;}
     <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Coach
   </button>
   <button class="nb" id="nb-setup" onclick="goScreen('setup',this)">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>Setup
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil
   </button>
 </nav>
 
@@ -3042,7 +3042,7 @@ async function sendToCoach(customMsg) {
   try {
     let reply = '';
     if (!S.url) {
-      reply = '⚙️ Configure ton URL Google Apps Script dans Setup pour activer le Coach IA.';
+      reply = '⚙️ Configure ton URL Google Apps Script dans Profil (Admin) pour activer le Coach IA.';
     } else {
       const resp = await fetch(S.url, {
         method: 'POST',
