@@ -671,7 +671,7 @@ html.ob-done #onboarding{display:none;}
 <!-- SÉANCE -->
 <div class="screen" id="s-log">
   <div style="display:flex;gap:8px;align-items:center;">
-    <div style="flex:1;"><input type="date" id="s-date" style="font-size:14px;padding:9px 12px;"></div>
+    <div style="flex:1;padding:9px 12px;font-size:14px;color:var(--t2);background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);" id="s-date-lbl"></div>
     <button class="btn btn-bg2 btn-sm" onclick="resetToday()">Aujourd'hui</button>
   </div>
   <div id="log-sleep"></div>
@@ -1582,14 +1582,18 @@ function startWorkout(){
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[]};
   persist(); goScreen('log',document.getElementById('nb-log'));
 }
+function _fmtWktDate(d){
+  const dt=new Date(d+'T12:00:00');
+  return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+}
 function resetToday(){
-  const el=document.getElementById('s-date'); if(el)el.value=today();
   if(S.wkt){S.wkt.date=today();persist();}
+  const lbl=document.getElementById('s-date-lbl');if(lbl)lbl.textContent=_fmtWktDate(today());
 }
 function renderLog(){
   if(!S.wkt) S.wkt={date:today(),exs:[]};
-  const dateEl=document.getElementById('s-date');
-  if(dateEl){dateEl.value=S.wkt.date||today();dateEl.onchange=()=>{S.wkt.date=dateEl.value;persist();};}
+  const lbl=document.getElementById('s-date-lbl');
+  if(lbl)lbl.textContent=_fmtWktDate(S.wkt.date||today());
   renderLogSleep();
   renderExBlocks();
 }
