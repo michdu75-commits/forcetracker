@@ -573,26 +573,25 @@ html.ob-done #onboarding{display:none;}
     </div>
 
     <!-- ÉTAPE 5 : C'est parti ! -->
-    <div class="ob-step" id="ob-5">
-      <div class="ob-hero">
-        <img src="logo.png" alt="Force Tracker" style="width:110px;height:110px;border-radius:24px;object-fit:cover;margin-bottom:4px;">
-        <div class="ob-title" id="ob-cta-title">C'est parti !</div>
-        <div class="ob-sub">Commence ta première séance et trace ta progression vers tes objectifs.</div>
-        <div id="ob-email-section" style="width:100%;margin-top:16px;">
-          <label style="font-size:13px;color:var(--t2);display:block;margin-bottom:6px;text-align:left;">📧 Email (pour sauvegarder tes données)</label>
-          <input class="ob-inp" id="ob-email-final" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:16px;">
-          <div style="margin-top:12px;background:var(--bg2);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--t2);line-height:1.5;text-align:left;">
-            💡 Une fois dans l'app, complète ton profil dans l'onglet <strong style="color:var(--t1);">Profil</strong> et clique <strong style="color:var(--t1);">Enregistrer</strong> pour que toutes tes données soient sauvegardées dans le cloud.
+    <div class="ob-step" id="ob-5" style="display:flex;flex-direction:column;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;overflow-y:auto;padding-bottom:8px;">
+        <img src="logo.png" alt="Force Tracker" style="width:140px;height:140px;border-radius:32px;object-fit:cover;animation:logo-pulse 3.5s ease-in-out infinite;flex-shrink:0;">
+        <div class="ob-title" id="ob-cta-title" style="font-size:38px;">C'est parti !</div>
+        <div id="ob-email-section" style="width:100%;margin-top:4px;">
+          <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Email (pour sauvegarder tes données)</label>
+          <input class="ob-inp" id="ob-email-final" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
+          <div style="margin-top:10px;background:var(--bg2);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--t2);line-height:1.5;text-align:left;">
+            💡 Complète ton profil dans l'onglet <strong style="color:var(--t1);">Profil</strong> et clique <strong style="color:var(--t1);">Enregistrer</strong> pour tout sauvegarder dans le cloud.
           </div>
         </div>
       </div>
       <div class="ob-footer">
-        <div id="ob-email-warn" style="display:none;background:var(--bg2);border-radius:12px;padding:14px;margin-top:8px;text-align:left;font-size:14px;color:var(--t1);">
+        <div id="ob-email-warn" style="display:none;background:var(--bg2);border-radius:12px;padding:14px;margin-top:8px;text-align:left;font-size:15px;color:var(--t1);">
           ⚠️ Un compte existe déjà avec cet email.<br>
           <button class="btn btn-red" onclick="obRestoreFromWarn()" style="margin-top:10px;width:100%;padding:13px;">☁️ Restaurer mes données</button>
-          <button class="btn btn-bg2" onclick="finishOnboarding(true)" style="margin-top:8px;width:100%;padding:12px;font-size:13px;">Continuer quand même (écraser)</button>
+          <button class="btn btn-bg2" onclick="finishOnboarding(true)" style="margin-top:8px;width:100%;padding:12px;font-size:14px;">Continuer quand même (écraser)</button>
         </div>
-        <button class="btn btn-red" id="ob-start-btn" onclick="obCheckEmailAndFinish()" style="font-size:18px;padding:18px;letter-spacing:.5px;">⚡ COMMENCER</button>
+        <button class="btn btn-red" id="ob-start-btn" onclick="obCheckEmailAndFinish()" style="font-size:20px;padding:20px;letter-spacing:.5px;">⚡ COMMENCER</button>
       </div>
     </div>
 
