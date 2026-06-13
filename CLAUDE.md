@@ -1,5 +1,18 @@
 # Force Tracker — Contexte projet pour Claude
 
+## ⚠️ PRIORITÉ ABSOLUE — Prochaine session
+
+### Sauvegarde cloud des séances (URGENT)
+Michel a perdu une séance à cause d'une suppression de PWA. Les séances ne sont sauvegardées que dans le localStorage — si l'utilisateur supprime l'app, tout est perdu.
+
+**À implémenter en premier :**
+- `finishWorkout()` → envoyer la séance complète au cloud (Apps Script)
+- `handleSaveProfile_` → accepter et stocker `sessions[]` dans les données utilisateur
+- `loadProfile` retourne déjà `sessions[]` — il faut juste les alimenter
+- À la restauration, `_applyRestoreData` restaure déjà les sessions si présentes
+
+**Comportement cible :** après chaque séance terminée, la session est sauvegardée dans le cloud. Si l'utilisateur supprime l'app et la réinstalle, il retrouve toutes ses séances via la restauration par email.
+
 ## Présentation
 
 PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-width 430 px). Single-page app HTML/CSS/JS pur, sans framework ni build step. Déployée sur GitHub Pages.
