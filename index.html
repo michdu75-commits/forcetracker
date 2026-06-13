@@ -671,7 +671,11 @@ html.ob-done #onboarding{display:none;}
 <!-- SÉANCE -->
 <div class="screen" id="s-log">
   <div style="display:flex;gap:8px;align-items:center;">
-    <div style="flex:1;padding:9px 12px;font-size:14px;color:var(--t2);background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);" id="s-date-lbl"></div>
+    <div style="flex:1;padding:9px 12px;font-size:14px;color:var(--t2);background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);display:flex;align-items:center;justify-content:space-between;" id="s-date-lbl">
+      <span id="s-date-txt"></span>
+      <label for="s-date" style="font-size:16px;cursor:pointer;padding:0 2px;" title="Modifier la date">✏️</label>
+    </div>
+    <input type="date" id="s-date" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
     <button class="btn btn-bg2 btn-sm" onclick="resetToday()">Aujourd'hui</button>
   </div>
   <div id="log-sleep"></div>
@@ -1586,14 +1590,18 @@ function _fmtWktDate(d){
   const dt=new Date(d+'T12:00:00');
   return dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 }
-function resetToday(){
-  if(S.wkt){S.wkt.date=today();persist();}
-  const lbl=document.getElementById('s-date-lbl');if(lbl)lbl.textContent=_fmtWktDate(today());
+function _setLogDate(d){
+  if(S.wkt){S.wkt.date=d;persist();}
+  const txt=document.getElementById('s-date-txt');if(txt)txt.textContent=_fmtWktDate(d);
+  const inp=document.getElementById('s-date');if(inp)inp.value=d;
 }
+function resetToday(){_setLogDate(today());}
 function renderLog(){
   if(!S.wkt) S.wkt={date:today(),exs:[]};
-  const lbl=document.getElementById('s-date-lbl');
-  if(lbl)lbl.textContent=_fmtWktDate(S.wkt.date||today());
+  const d=S.wkt.date||today();
+  const txt=document.getElementById('s-date-txt');if(txt)txt.textContent=_fmtWktDate(d);
+  const inp=document.getElementById('s-date');
+  if(inp){inp.value=d;inp.onchange=()=>{if(inp.value)_setLogDate(inp.value);};}
   renderLogSleep();
   renderExBlocks();
 }
