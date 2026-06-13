@@ -3506,7 +3506,7 @@ initOnboarding();
     try{
       const r2=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
       const d2=await r2.json();
-      if(d2.status==='ok'){
+      if(d2.status==='ok'||d2.status==='not_found'){
         const wasPremium=S.premium;
         S.premium=d2.premium===true;
         S.premiumExpiry=d2.premiumExpiry||'';
