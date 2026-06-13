@@ -76,11 +76,65 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - Install prompt PWA (iOS : instructions, Android : prompt natif)
 - Toast notifications (succès/erreur/info)
 
+### Navigation bas de page (v2 — 2026-06-13)
+- Ordre : Accueil · Progrès · **Séance** (centre) · Nutrition · Coach · Setup
+- Bouton Séance : FAB surélevé, cercle rouge 54px, icône + blanche — classe `.nb-ctr`
+- `.nav` a `align-items:flex-end` + `overflow:visible` pour l'élévation
+
+### Onglet Progrès
+- 4 chips cliquables : Squat · Soulevé de Terre · Développé Couché · Développé Militaire
+- Variable globale `_progEx` (défaut : `BIG4[0]`)
+- Fonction `selectProgEx(name)` — met à jour chip actif + appelle `renderChart()`
+- Dropdown "Autre exercice" pour tous les autres exercices
+
+### Programmes (séances sauvegardées)
+- `S.programmes` — tableau de templates (`ft4_progs`)
+- Modal `#mod-prog` : sauvegarder séance en cours, charger avec poids précédents, supprimer
+
 ### Cloud sync (Google Apps Script)
 - `saveProfile` POST → sauvegarde profil (email, nom, poids, âge, taille, sexe, objectif, activité)
-- `loadProfile` GET → restaure le profil depuis l'email
+- `loadProfile` GET → restaure le profil depuis l'email + retourne `premium:true` si email whitelisté
 - `logSession` POST → log séance dans Google Sheets (analytics)
 - `coach` POST → appel Claude Haiku API pour le Coach IA
+- `validateCode` POST → vérifie un code premium (liste dans `PREMIUM_CODES`)
+- **Webhook Ko-fi** : doPost détecte `e.parameter.data` → ajoute email dans `PREMIUM_EMAILS` automatiquement
+
+## Coach IA Premium (implémenté 2026-06-13)
+
+### Modèle freemium
+- **Gratuit** : 10 questions (compteur `S.coachFree`, persisté `ft4_coachFree`)
+- **Premium** : 4,99€ / 2 mois via Ko-fi — `S.premium` (persisté `ft4_premium`)
+- `COACH_FREE_LIMIT = 10` (constante JS)
+
+### Mur Premium
+- Affiché après la 10ème réponse (délai 1,2s pour lire la réponse)
+- Div `#coach-wall` — position absolute sur toute la zone coach
+- Bouton Ko-fi → https://ko-fi.com/michel2176
+- Champ code + bouton Activer → `activatePremium()`
+
+### Activation Premium — 3 méthodes
+1. **Email whitelist** (gratuit/test) : ajouter l'email dans `PREMIUM_EMAILS` (Script Properties)
+2. **Code payant** : ajouter le code dans `PREMIUM_CODES` (Script Properties), l'utilisateur saisit le code dans l'app
+3. **Webhook Ko-fi automatique** : à chaque paiement Ko-fi → Apps Script → email ajouté dans `PREMIUM_EMAILS`
+
+### Config Apps Script (Script Properties)
+| Propriété | Usage |
+|---|---|
+| `PREMIUM_EMAILS` | Emails premium gratuits, séparés par `,` |
+| `PREMIUM_CODES` | Codes d'accès payants, séparés par `,` |
+| `KOFI_TOKEN` | Token de vérification webhook Ko-fi (optionnel) |
+| `ANTHROPIC_API_KEY` | Clé API Claude pour le Coach IA |
+
+### Webhook Ko-fi
+- Ko-fi → Settings → API → **Webhook URL** = URL du Apps Script déployé
+- Chaque paiement → Ko-fi POST `data={"email":"...","amount":"4.99",...}` → email ajouté automatiquement
+- Log dans Google Sheets onglet `Premium`
+- **Après toute modif Apps Script : redéployer** (nouveau déploiement)
+
+### Vérification premium au démarrage
+- `autoConnect()` vérifie `loadProfile` si email connu + pas encore premium
+- `_applyRestoreData()` applique `premium:true` si la réponse serveur le contient
+- Badge header : `#coach-quota-badge` — rouge (X questions) ou or (⭐ Premium)
 
 ## État du cloud sync — fixes appliqués (2026-06-12)
 
@@ -98,7 +152,7 @@ L'ancienne URL (`AKfycbxPvDqe...`) a été remplacée par la nouvelle (`AKfycbw5
 `DEFAULT_URL` dans `index.html` est à jour. App poussée sur GitHub Pages.  
 **✅ Restauration confirmée fonctionnelle le 2026-06-12 — saveProfile + loadProfile opérationnels.**
 
-### Format de réponse Apps Script (v3.1)
+### Format de réponse Apps Script (v3.2)
 
 ```
 GET ?test=1
@@ -106,7 +160,7 @@ GET ?test=1
 
 GET ?action=loadProfile&email=...
 → {"status":"not_found"}
-→ {"status":"ok","profile":{name,bw,age,height,gender,goal,activityLevel},"prs":{},"sessions":[],"weightLog":[],"sleepLog":[],"cycle":null,"nutritionPhase":"charge"}
+→ {"status":"ok","premium":bool,"profile":{name,bw,age,height,gender,goal,activityLevel},"prs":{},"sessions":[],"weightLog":[],"sleepLog":[],"cycle":null,"nutritionPhase":"charge"}
 
 POST body JSON (Content-Type: text/plain;charset=utf-8)
 {action:"saveProfile", email, name, bw, age, height, gender, goal, activityLevel}
@@ -117,6 +171,12 @@ POST {action:"logSession", rows:[...], bw, date, gender, age}
 
 POST {action:"coach", message, context, history}
 → {"reply":"..."}
+
+POST {action:"validateCode", code, email}
+→ {"status":"ok","type":"monthly"} | {"status":"invalid"}
+
+POST x-www-form-urlencoded data={"email":"...","amount":"4.99","verification_token":"...",...}  ← Webhook Ko-fi
+→ "OK"
 ```
 
 ## Conventions de code
@@ -142,4 +202,7 @@ S.sessions        // [{date, exs:[{name, sets:[{kg,reps,done,type,rm1}]}], vol}]
 S.weightLog       // [{date, bw}]
 S.sleepLog        // [{date, hours, energy}]
 S.cycle           // {startDate, weeks, rm1s:{...}} ou null
+S.coachFree       // nb questions gratuites utilisées (ft4_coachFree)
+S.premium         // bool — accès premium (ft4_premium)
+S.programmes      // [{name, date, exs:[...]}] — templates séances (ft4_progs)
 ```
