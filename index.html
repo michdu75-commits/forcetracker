@@ -921,7 +921,9 @@ html.ob-done #onboarding{display:none;}
         <button class="goal-btn" id="g-endurance" onclick="setGoal('endurance')">🏃<br><span>Endurance</span></button>
       </div>
       <div id="goal-desc" style="font-size:14px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:10px 12px;line-height:1.5;min-height:36px;"></div>
-      <button class="btn btn-red" onclick="saveProfile()" style="padding:14px;font-size:16px;">💾 Enregistrer le profil</button>
+      <div style="position:sticky;bottom:0;background:var(--bg);padding:10px 0 2px;">
+        <button class="btn btn-red" onclick="saveProfile()" style="padding:14px;font-size:16px;width:100%;">💾 Enregistrer le profil</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3536,8 +3538,7 @@ function finishOnboarding(force){
   if(warn)warn.style.display='none';
   const btn=document.getElementById('ob-start-btn');
   if(btn){btn.style.display='';btn.disabled=false;btn.textContent='⚡ COMMENCER';}
-  S.goal=_obGoal;
-  S.gender=_obGender;
+  if(!_obDataRestored){S.goal=_obGoal;S.gender=_obGender;}
   const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
   if(emailFinal&&!S.email){S.email=emailFinal.trim();}
   else if(emailFinal){S.email=emailFinal.trim();}
@@ -3551,7 +3552,7 @@ function finishOnboarding(force){
   document.documentElement.classList.add('ob-done');
   const ob=document.getElementById('onboarding');
   if(ob){ob.style.transition='opacity .4s';ob.style.opacity='0';setTimeout(()=>{ob.style.display='none';ob.style.opacity='';ob.style.transition='';},400);}
-  renderHome();renderNutrition();
+  renderHome();renderNutrition();renderSetup();
   setTimeout(showInstallPrompt,1400);
 }
 
