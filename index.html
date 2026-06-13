@@ -1254,7 +1254,8 @@ let S={
   weightLog:[],
   name:'',
   coachFree:0,
-  premium:false
+  premium:false,
+  premiumExpiry:''
 };
 
 function load(){
@@ -1289,6 +1290,7 @@ function load(){
     S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
     S.coachFree=parseInt(localStorage.getItem('ft4_coachFree')||'0')||0;
     S.premium=localStorage.getItem('ft4_premium')==='1';
+    S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
   }catch(e){}
 }
 function persist(){
@@ -1317,6 +1319,7 @@ function persist(){
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
     localStorage.setItem('ft4_coachFree',S.coachFree||0);
     localStorage.setItem('ft4_premium',S.premium?'1':'0');
+    localStorage.setItem('ft4_premiumExp',S.premiumExpiry||'');
   }catch(e){}
 }
 
@@ -2268,7 +2271,8 @@ function _applyRestoreData(raw){
   if(sessions&&sessions.length)S.sessions=sessions;
   if(weightLog&&weightLog.length)S.weightLog=weightLog;
   if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;
-  if(raw&&raw.premium===true&&!S.premium){S.premium=true;}
+  if(raw&&raw.premium===true){S.premium=true;}
+  if(raw&&raw.premiumExpiry){S.premiumExpiry=raw.premiumExpiry;}
   persist();
   updateCoachHeader();
 }
@@ -2831,10 +2835,28 @@ function updateCoachHeader() {
   const badge = document.getElementById('coach-quota-badge');
   if (!badge) return;
   if (S.premium) {
-    badge.innerHTML = '<div class="coach-quota is-premium">⭐ Premium</div>';
+    if (S.premiumExpiry) {
+      const msLeft = new Date(S.premiumExpiry) - new Date();
+      const daysLeft = Math.ceil(msLeft / 86400000);
+      badge.innerHTML = `<div class="coach-quota is-premium">⭐ Premium · ${daysLeft}j</div>`;
+    } else {
+      badge.innerHTML = '<div class="coach-quota is-premium">⭐ Premium</div>';
+    }
   } else {
     const left = Math.max(0, COACH_FREE_LIMIT - (S.coachFree || 0));
     badge.innerHTML = `<div class="coach-quota">${left} question${left!==1?'s':''} gratuite${left!==1?'s':''}</div>`;
+  }
+}
+
+function checkPremiumExpiry() {
+  if (!S.premium || !S.premiumExpiry) return;
+  const todayStr = new Date().toISOString().split('T')[0];
+  if (S.premiumExpiry < todayStr) {
+    S.premium = false;
+    S.premiumExpiry = '';
+    persist();
+    updateCoachHeader();
+    toast('Ton accès Premium a expiré. Renouvelle sur Ko-fi pour continuer.', 'info');
   }
 }
 
@@ -3471,7 +3493,7 @@ filterEx();
 goScreen('home', document.getElementById('nb-home'));
 initCoachInput();
 initOnboarding();
-// Test connexion silencieux + vérif premium par email whitelist
+// Test connexion silencieux + vérif premium depuis le serveur
 (async function autoConnect(){
   if(!S.url)return;
   try{
@@ -3479,13 +3501,22 @@ initOnboarding();
     const d=await r.json();
     if(d.status==='online'&&!S.connected){S.connected=true;persist();updatePill();}
   }catch(e){}
-  // Si email connu et pas encore premium → vérifier whitelist côté serveur
-  if(S.email&&!S.premium){
+  // Vérif premium : si email connu ET (pas premium OU premium daté) → refresh serveur
+  if(S.email&&(!S.premium||S.premiumExpiry)){
     try{
       const r2=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
       const d2=await r2.json();
-      if(d2.premium===true){S.premium=true;persist();updateCoachHeader();}
-    }catch(e){}
+      if(d2.status==='ok'){
+        const wasPremium=S.premium;
+        S.premium=d2.premium===true;
+        S.premiumExpiry=d2.premiumExpiry||'';
+        if(wasPremium!==S.premium||d2.premiumExpiry){persist();updateCoachHeader();}
+      }
+    }catch(e){
+      checkPremiumExpiry(); // fallback local si réseau indisponible
+    }
+  } else {
+    checkPremiumExpiry(); // vérif locale si premium indéfini
   }
 })();
 document.addEventListener('pointerdown',function(e){

@@ -1,15 +1,16 @@
 // ═══════════════════════════════════════════════════════════
-// Force Tracker — Google Apps Script v3.1
+// Force Tracker — Google Apps Script v3.2
 // Colle ce code dans script.google.com, remplace tout,
 // puis clique "Déployer > Nouveau déploiement" (web app,
 // "Tout le monde" pour l'accès), et copie la nouvelle URL.
 // ═══════════════════════════════════════════════════════════
 
-// Clé API Anthropic pour le Coach IA (optionnel)
-// Va dans Projet > Paramètres > Propriétés du script
-// et ajoute : ANTHROPIC_API_KEY = sk-ant-...
-// OU mets-la directement ici (moins sécurisé) :
-// const ANTHROPIC_API_KEY = 'sk-ant-...';
+// Script Properties utilisées :
+//   ANTHROPIC_API_KEY  — clé API Claude
+//   KOFI_TOKEN         — token de vérification webhook Ko-fi (optionnel)
+//   PREMIUM_EMAILS     — emails whitelist gratuits, séparés par virgule (accès indéfini)
+//   PREMIUM_CODES      — codes payants, séparés par virgule (accès indéfini)
+//   prem_{email}       — JSON {expiry:"YYYY-MM-DD", tier:"trial"|"monthly"} (accès daté)
 
 // ───────────────────────────────────────────────────────────
 function json_(obj) {
@@ -31,30 +32,64 @@ function saveUserData_(email, data) {
   PropertiesService.getScriptProperties().setProperty(userKey_(email), JSON.stringify(data));
 }
 
+function loadPremiumData_(email) {
+  const raw = PropertiesService.getScriptProperties().getProperty('prem_' + email);
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch(e) { return null; }
+}
+
+function savePremiumData_(email, data) {
+  PropertiesService.getScriptProperties().setProperty('prem_' + email, JSON.stringify(data));
+}
+
+function todayStr_() {
+  return new Date().toISOString().split('T')[0];
+}
+
+// Calcule le statut premium d'un email — retourne {premium, expiry}
+function getPremiumStatus_(email) {
+  const props = PropertiesService.getScriptProperties();
+
+  // 1. Whitelist indéfinie (PREMIUM_EMAILS)
+  const whitelist = (props.getProperty('PREMIUM_EMAILS') || '')
+    .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  if (whitelist.includes(email)) {
+    return { premium: true, expiry: null };
+  }
+
+  // 2. Accès daté (prem_{email})
+  const prem = loadPremiumData_(email);
+  if (prem && prem.expiry && prem.expiry >= todayStr_()) {
+    return { premium: true, expiry: prem.expiry };
+  }
+
+  return { premium: false, expiry: null };
+}
+
 // ───────────────────────────────────────────────────────────
 function doGet(e) {
   const p = e.parameter || {};
 
   if (p.test) {
-    return json_({status:'online', version:'3.1'});
+    return json_({status:'online', version:'3.2'});
   }
 
   if (p.action === 'loadProfile' && p.email) {
     const email = (p.email || '').toLowerCase().trim();
     const data = loadUserData_(email);
     if (!data) return json_({status:'not_found'});
-    const premiumEmails = (PropertiesService.getScriptProperties().getProperty('PREMIUM_EMAILS') || '')
-      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    const prem = getPremiumStatus_(email);
     return json_({
-      status:        'ok',
-      premium:       premiumEmails.includes(email),
-      profile:       data.profile       || {},
-      prs:           data.prs           || {},
-      sessions:      data.sessions      || [],
-      weightLog:     data.weightLog     || [],
-      sleepLog:      data.sleepLog      || [],
-      cycle:         data.cycle         || null,
-      nutritionPhase:data.nutritionPhase || 'charge'
+      status:         'ok',
+      premium:        prem.premium,
+      premiumExpiry:  prem.expiry,
+      profile:        data.profile        || {},
+      prs:            data.prs            || {},
+      sessions:       data.sessions       || [],
+      weightLog:      data.weightLog      || [],
+      sleepLog:       data.sleepLog       || [],
+      cycle:          data.cycle          || null,
+      nutritionPhase: data.nutritionPhase || 'charge'
     });
   }
 
@@ -85,13 +120,13 @@ function doPost(e) {
 
 // ───────────────────────────────────────────────────────────
 // Webhook Ko-fi — déclenché automatiquement à chaque paiement
-// Ko-fi > Settings > API > Webhook URL = URL de ce script
-// Propriété optionnelle : KOFI_TOKEN = token de vérification Ko-fi
+// 0.99€ → 3 jours (essai)  |  4.99€ → 61 jours (~2 mois)
+// Ko-fi > Settings > API > Webhook URL = URL de ce script déployé
 function handleKofiWebhook_(dataStr) {
   try {
     const data = JSON.parse(dataStr);
 
-    // Vérification du token Ko-fi (optionnel mais recommandé)
+    // Vérification token Ko-fi
     const expectedToken = PropertiesService.getScriptProperties().getProperty('KOFI_TOKEN') || '';
     if (expectedToken && data.verification_token !== expectedToken) {
       return ContentService.createTextOutput('Unauthorized').setMimeType(ContentService.MimeType.TEXT);
@@ -100,22 +135,33 @@ function handleKofiWebhook_(dataStr) {
     const email = (data.email || '').toLowerCase().trim();
     if (!email) return ContentService.createTextOutput('No email').setMimeType(ContentService.MimeType.TEXT);
 
-    // Ajouter l'email à PREMIUM_EMAILS s'il n'y est pas déjà
-    const props = PropertiesService.getScriptProperties();
-    const existing = (props.getProperty('PREMIUM_EMAILS') || '')
-      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
-    if (!existing.includes(email)) {
-      existing.push(email);
-      props.setProperty('PREMIUM_EMAILS', existing.join(','));
+    // Durée selon le montant
+    const amount = parseFloat(data.amount || '0');
+    let days = 0;
+    let tier = '';
+    if (amount >= 4.0)      { days = 61; tier = 'monthly'; }  // 4.99€ → ~2 mois
+    else if (amount >= 0.9) { days = 3;  tier = 'trial';   }  // 0.99€ → 3 jours
+
+    let expiryStr = '';
+    if (days > 0) {
+      // Si déjà premium et pas expiré → prolonger depuis l'expiry actuel
+      const existing = loadPremiumData_(email);
+      let base = new Date();
+      if (existing && existing.expiry && existing.expiry >= todayStr_()) {
+        base = new Date(existing.expiry);
+      }
+      base.setDate(base.getDate() + days);
+      expiryStr = base.toISOString().split('T')[0];
+      savePremiumData_(email, { expiry: expiryStr, tier: tier, updatedAt: new Date().toISOString() });
     }
 
-    // Logger dans Google Sheets (onglet Premium)
+    // Logger dans Google Sheets onglet Premium
     try {
       const ss = SpreadsheetApp.getActiveSpreadsheet();
       let sheet = ss.getSheetByName('Premium');
       if (!sheet) {
         sheet = ss.insertSheet('Premium');
-        sheet.appendRow(['date','email','nom','montant','devise','transaction_id']);
+        sheet.appendRow(['date','email','nom','montant','devise','tier','expiration','transaction_id']);
       }
       sheet.appendRow([
         new Date().toISOString(),
@@ -123,6 +169,8 @@ function handleKofiWebhook_(dataStr) {
         data.from_name || '',
         data.amount || '',
         data.currency || '',
+        tier,
+        expiryStr,
         data.kofi_transaction_id || ''
       ]);
     } catch(e) {}
@@ -142,18 +190,17 @@ function handleSaveProfile_(body) {
     const existing = loadUserData_(email) || {};
     const profile = existing.profile || {};
 
-    // Met à jour uniquement les champs envoyés
-    if (body.name         !== undefined) profile.name          = body.name;
-    if (body.bw           !== undefined) profile.bw            = body.bw;
-    if (body.age          !== undefined) profile.age           = body.age;
-    if (body.height       !== undefined) profile.height        = body.height;
-    if (body.gender       !== undefined) profile.gender        = body.gender;
-    if (body.goal         !== undefined) profile.goal          = body.goal;
-    if (body.activityLevel!== undefined) profile.activityLevel = body.activityLevel;
+    if (body.name          !== undefined) profile.name          = body.name;
+    if (body.bw            !== undefined) profile.bw            = body.bw;
+    if (body.age           !== undefined) profile.age           = body.age;
+    if (body.height        !== undefined) profile.height        = body.height;
+    if (body.gender        !== undefined) profile.gender        = body.gender;
+    if (body.goal          !== undefined) profile.goal          = body.goal;
+    if (body.activityLevel !== undefined) profile.activityLevel = body.activityLevel;
 
-    existing.profile    = profile;
-    existing.email      = email;
-    existing.updatedAt  = new Date().toISOString();
+    existing.profile   = profile;
+    existing.email     = email;
+    existing.updatedAt = new Date().toISOString();
 
     saveUserData_(email, existing);
     return json_({status:'ok'});
@@ -168,7 +215,6 @@ function handleLogSession_(body) {
     const rows = body.rows || [];
     if (!rows.length) return json_({status:'ok', count:0});
 
-    // Log dans la feuille "Sessions" pour analytics
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName('Sessions');
     if (!sheet) {
@@ -188,8 +234,7 @@ function handleLogSession_(body) {
 }
 
 // ───────────────────────────────────────────────────────────
-// Codes Premium stockés dans Script Properties : PREMIUM_CODES = "CODE1,CODE2,..."
-// Ajoute/supprime des codes via Projet > Paramètres > Propriétés du script
+// Codes Premium : PREMIUM_CODES = "CODE1,CODE2,..." → accès indéfini
 function handleValidateCode_(body) {
   try {
     const code = (body.code || '').trim().toUpperCase();
@@ -199,8 +244,18 @@ function handleValidateCode_(body) {
     const codes = raw.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
 
     if (codes.includes(code)) {
-      // Marquer le code comme utilisé en le suffixant (optionnel — simple validation)
-      return json_({status:'ok', type:'monthly'});
+      // Enregistrer l'email dans la whitelist indéfinie
+      const email = (body.email || '').toLowerCase().trim();
+      if (email) {
+        const props = PropertiesService.getScriptProperties();
+        const existing = (props.getProperty('PREMIUM_EMAILS') || '')
+          .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+        if (!existing.includes(email)) {
+          existing.push(email);
+          props.setProperty('PREMIUM_EMAILS', existing.join(','));
+        }
+      }
+      return json_({status:'ok', type:'lifetime'});
     }
     return json_({status:'invalid'});
   } catch(err) {
