@@ -63,6 +63,11 @@ function doGet(e) {
 
 // ───────────────────────────────────────────────────────────
 function doPost(e) {
+  // Ko-fi envoie application/x-www-form-urlencoded avec un champ "data" JSON
+  if (e.parameter && e.parameter.data) {
+    return handleKofiWebhook_(e.parameter.data);
+  }
+
   let body;
   try {
     body = JSON.parse(e.postData.contents);
@@ -76,6 +81,56 @@ function doPost(e) {
   if (body.action === 'validateCode') return handleValidateCode_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
+}
+
+// ───────────────────────────────────────────────────────────
+// Webhook Ko-fi — déclenché automatiquement à chaque paiement
+// Ko-fi > Settings > API > Webhook URL = URL de ce script
+// Propriété optionnelle : KOFI_TOKEN = token de vérification Ko-fi
+function handleKofiWebhook_(dataStr) {
+  try {
+    const data = JSON.parse(dataStr);
+
+    // Vérification du token Ko-fi (optionnel mais recommandé)
+    const expectedToken = PropertiesService.getScriptProperties().getProperty('KOFI_TOKEN') || '';
+    if (expectedToken && data.verification_token !== expectedToken) {
+      return ContentService.createTextOutput('Unauthorized').setMimeType(ContentService.MimeType.TEXT);
+    }
+
+    const email = (data.email || '').toLowerCase().trim();
+    if (!email) return ContentService.createTextOutput('No email').setMimeType(ContentService.MimeType.TEXT);
+
+    // Ajouter l'email à PREMIUM_EMAILS s'il n'y est pas déjà
+    const props = PropertiesService.getScriptProperties();
+    const existing = (props.getProperty('PREMIUM_EMAILS') || '')
+      .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    if (!existing.includes(email)) {
+      existing.push(email);
+      props.setProperty('PREMIUM_EMAILS', existing.join(','));
+    }
+
+    // Logger dans Google Sheets (onglet Premium)
+    try {
+      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      let sheet = ss.getSheetByName('Premium');
+      if (!sheet) {
+        sheet = ss.insertSheet('Premium');
+        sheet.appendRow(['date','email','nom','montant','devise','transaction_id']);
+      }
+      sheet.appendRow([
+        new Date().toISOString(),
+        email,
+        data.from_name || '',
+        data.amount || '',
+        data.currency || '',
+        data.kofi_transaction_id || ''
+      ]);
+    } catch(e) {}
+
+    return ContentService.createTextOutput('OK').setMimeType(ContentService.MimeType.TEXT);
+  } catch(err) {
+    return ContentService.createTextOutput('Error: ' + err.message).setMimeType(ContentService.MimeType.TEXT);
+  }
 }
 
 // ───────────────────────────────────────────────────────────
