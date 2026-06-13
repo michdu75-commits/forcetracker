@@ -187,6 +187,7 @@ function handleSaveProfile_(body) {
     const email = (body.email || '').toLowerCase().trim();
     if (!email) return json_({status:'error', error:'Email requis'});
 
+    const isNewUser = !loadUserData_(email);
     const existing = loadUserData_(email) || {};
     const profile = existing.profile || {};
 
@@ -203,6 +204,26 @@ function handleSaveProfile_(body) {
     existing.updatedAt = new Date().toISOString();
 
     saveUserData_(email, existing);
+
+    // Email de bienvenue pour les nouveaux utilisateurs
+    if (body.welcome && isNewUser) {
+      try {
+        const prenom = body.name ? body.name : 'Athlète';
+        MailApp.sendEmail(
+          email,
+          '🏋️ Bienvenue sur Force Tracker !',
+          'Bonjour ' + prenom + ' !\n\n' +
+          'Ton compte Force Tracker a bien été créé.\n\n' +
+          '📧 Ton email de connexion : ' + email + '\n\n' +
+          'Conserve cet email — il te permettra de restaurer toutes tes données ' +
+          '(séances, records, profil) si tu réinstalles l\'application.\n\n' +
+          'Bonne séance ! 💪\n\n' +
+          '— L\'équipe Force Tracker\n' +
+          'forcetracker.app@gmail.com'
+        );
+      } catch(mailErr) {}
+    }
+
     return json_({status:'ok'});
   } catch(err) {
     return json_({status:'error', error: err.message});

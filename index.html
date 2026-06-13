@@ -508,36 +508,26 @@ html.ob-done #onboarding{display:none;}
   </div>
   <div class="ob-wrap">
 
-    <!-- ÉTAPE 1 : Prénom -->
+    <!-- ÉTAPE 1 : As-tu déjà un compte ? -->
     <div class="ob-step ob-active" id="ob-1">
       <div class="ob-hero">
-        <img src="logo.png" alt="Force Tracker" style="width:100px;height:100px;border-radius:22px;object-fit:cover;margin-bottom:4px;">
+        <img src="logo.png" alt="Force Tracker" style="width:90px;height:90px;border-radius:20px;object-fit:cover;">
         <div class="ob-title">Bienvenue sur<br>Force Tracker</div>
-        <div class="ob-sub">Ton coach de force personnel. Commence par te présenter.</div>
-        <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" style="margin-top:8px;">
-      </div>
-      <div class="ob-footer">
-        <button class="btn btn-red" onclick="obNext(2)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <div class="ob-sub">Tu as déjà un compte Force Tracker ?</div>
+        <div id="ob-1-choice" style="width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+          <button class="btn btn-red" onclick="obShowRestore()" style="font-size:17px;padding:16px;">✅ Oui, je restaure mes données</button>
+          <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:15px;padding:14px;">Non, je crée mon profil →</button>
+        </div>
+        <div id="ob-1-restore" style="display:none;width:100%;flex-direction:column;gap:10px;margin-top:8px;">
+          <input class="ob-inp" id="ob-email" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
+          <button class="btn btn-red" onclick="obDoRestore()" style="font-size:17px;padding:16px;">☁️ Restaurer mes données</button>
+          <button class="btn btn-bg2" onclick="obHideRestore()" style="font-size:15px;padding:13px;">← Retour</button>
+        </div>
       </div>
     </div>
 
-    <!-- ÉTAPE 2 : Compte existant ? -->
-    <div class="ob-step" id="ob-2">
-      <div class="ob-hero ob-top">
-        <div style="font-size:48px;line-height:1;">☁️</div>
-        <div class="ob-title">Tu as déjà un<br>compte Force Tracker ?</div>
-        <div class="ob-sub">Récupère ton historique, tes perfs et ton profil en un tap.</div>
-      </div>
-      <div id="ob-2-choice" style="display:flex;flex-direction:column;gap:10px;padding:12px 0 max(calc(env(safe-area-inset-bottom)+16px),24px);">
-        <button class="btn btn-red" onclick="obShowRestore()" style="font-size:17px;padding:16px;">✅ Oui, je restaure mes données</button>
-        <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:15px;padding:14px;">Non, je crée mon profil →</button>
-      </div>
-      <div id="ob-2-restore" style="display:none;flex-direction:column;gap:10px;padding:12px 0 max(calc(env(safe-area-inset-bottom)+16px),24px);">
-        <input class="ob-inp" id="ob-email" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
-        <button class="btn btn-red" onclick="obDoRestore()" style="font-size:17px;padding:16px;">☁️ Restaurer mes données</button>
-        <button class="btn btn-bg2" onclick="obHideRestore()" style="font-size:15px;padding:13px;">← Retour</button>
-      </div>
-    </div>
+    <!-- ÉTAPE 2 : (non utilisée — fusion dans ob-1) -->
+    <div class="ob-step" id="ob-2" style="display:none;"></div>
 
     <!-- ÉTAPE 3 : Profil -->
     <div class="ob-step" id="ob-3">
@@ -545,6 +535,7 @@ html.ob-done #onboarding{display:none;}
         <div style="font-size:44px;line-height:1;">👤</div>
         <div class="ob-title">Ton profil</div>
         <div class="ob-sub">Pour calculer tes calories et macros personnalisées.</div>
+        <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" enterkeyhint="next" style="margin-top:4px;">
         <div class="ob-gbrow">
           <button class="ob-gbtn ob-sel" id="ob-gt-h" onclick="obSetGender('H')">♂ Homme</button>
           <button class="ob-gbtn" id="ob-gt-f" onclick="obSetGender('F')">♀ Femme</button>
@@ -3400,17 +3391,15 @@ function updateProteinBar() {
 }
 
 // ─── ONBOARDING ──────────────────────────────────────────────
-let _obStep=1,_obGender='H',_obGoal='muscle';
+let _obStep=1,_obGender='H',_obGoal='muscle',_obDataRestored=false;
 const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',force:'ob-gf',equilibre:'ob-ge',endurance:'ob-gen'};
 
 function initOnboarding(){
   if(document.documentElement.classList.contains('ob-done'))return;
-  const nameInp=document.getElementById('ob-name');
-  if(nameInp){nameInp.setAttribute('enterkeyhint','next');nameInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext(2);}});}
   const emailInp=document.getElementById('ob-email');
   if(emailInp){emailInp.setAttribute('enterkeyhint','done');emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});}
-  // step 3 : age → taille → poids en chaîne
-  const ob3=[['ob-age','ob-ht'],['ob-ht','ob-bw'],['ob-bw',null]];
+  // step 3 : prénom → age → taille → poids en chaîne
+  const ob3=[['ob-name','ob-age'],['ob-age','ob-ht'],['ob-ht','ob-bw'],['ob-bw',null]];
   ob3.forEach(([id,nextId])=>{
     const inp=document.getElementById(id);
     if(!inp)return;
@@ -3434,21 +3423,20 @@ function obGoTo(step){
   if(next){next.classList.add('ob-active');}
   if(step===5){const ef=document.getElementById('ob-email-final');if(ef&&S.email)ef.value=S.email;}
   _obStep=step;
-  // dots: steps 1-2 → dot 1, step 3 → dot 2, step 4 → dot 3, step 5 → dot 4
-  const dotMap={1:1,2:1,3:2,4:3,5:4};
+  // ob-1 → dot1, ob-3 → dot2, ob-4 → dot3, ob-5 → dot4
+  const dotMap={1:1,3:2,4:3,5:4};
   const dotNum=dotMap[step]||1;
   for(let i=1;i<=4;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',i===dotNum);}
 }
 
 function obNext(step){
-  if(_obStep===1){
+  if(_obStep===3){
     const name=(document.getElementById('ob-name').value||'').trim();
     if(name){
       S.name=name;
       const cta=document.getElementById('ob-cta-title');
       if(cta)cta.textContent='C\'est parti, '+name+' !';
     }
-  }else if(_obStep===3){
     const age=parseInt(document.getElementById('ob-age').value)||0;
     const ht=parseFloat(document.getElementById('ob-ht').value)||0;
     const bw=parseFloat(document.getElementById('ob-bw').value)||0;
@@ -3475,15 +3463,15 @@ function obSetGoal(g){
 }
 
 function obShowRestore(){
-  document.getElementById('ob-2-choice').style.display='none';
-  const r=document.getElementById('ob-2-restore');
+  document.getElementById('ob-1-choice').style.display='none';
+  const r=document.getElementById('ob-1-restore');
   r.style.display='flex';
   setTimeout(()=>{const e=document.getElementById('ob-email');if(e)e.focus();},120);
 }
 
 function obHideRestore(){
-  document.getElementById('ob-2-restore').style.display='none';
-  document.getElementById('ob-2-choice').style.display='flex';
+  document.getElementById('ob-1-restore').style.display='none';
+  document.getElementById('ob-1-choice').style.display='flex';
 }
 
 async function obDoRestore(){
@@ -3495,6 +3483,7 @@ async function obDoRestore(){
   try{
     const data=await _fetchRestoreRaw(email);
     if(!data||data.error||data.status==='not_found'){toast(data&&data.error?data.error:'Aucun profil trouvé pour cet email. Enregistre d\'abord ton profil depuis l\'appli.','error');return;}
+    _obDataRestored=true;
     _applyRestoreData(data);
     const cta=document.getElementById('ob-cta-title');
     if(cta)cta.textContent=S.name?'Content de te revoir, '+S.name+' ! 💪':'Content de te revoir ! 💪';
@@ -3512,6 +3501,7 @@ function finishOnboarding(){
   persist();
   if(S.email&&S.url){
     const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel};
+    if(!_obDataRestored)p.welcome=true;
     fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }
   localStorage.setItem('ft4_ob2','1');
