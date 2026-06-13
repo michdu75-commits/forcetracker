@@ -468,7 +468,7 @@ html.ob-done #onboarding{display:none;}
 .ob-dot{width:8px;height:8px;border-radius:50%;background:var(--sep);transition:all .35s;}
 .ob-dot.ob-active{width:28px;border-radius:4px;background:var(--red);}
 .ob-wrap{flex:1;overflow:hidden;position:relative;}
-.ob-step{position:absolute;inset:0;display:flex;flex-direction:column;padding:0 24px;transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .38s;transform:translateX(100%);opacity:0;pointer-events:none;}
+.ob-step{position:absolute;inset:0;display:flex;flex-direction:column;padding:0 24px;overflow:hidden;transition:transform .38s cubic-bezier(.4,0,.2,1),opacity .38s;transform:translateX(100%);opacity:0;pointer-events:none;}
 .ob-step.ob-active{transform:translateX(0);opacity:1;pointer-events:all;}
 .ob-step.ob-prev{transform:translateX(-60px);opacity:0;}
 .ob-hero{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;}
@@ -532,12 +532,14 @@ html.ob-done #onboarding{display:none;}
 
     <!-- ÉTAPE 3 : Profil -->
     <div class="ob-step" id="ob-3">
-      <div class="ob-hero ob-top">
-        <div style="font-size:44px;line-height:1;">👤</div>
-        <div class="ob-title">Ton profil</div>
-        <div class="ob-sub">Pour calculer tes calories et macros personnalisées.</div>
-        <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" enterkeyhint="next" style="margin-top:4px;">
-        <div class="ob-gbrow">
+      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding-top:16px;text-align:center;">
+        <div style="display:flex;align-items:center;gap:10px;width:100%;">
+          <span style="font-size:32px;line-height:1;">👤</span>
+          <div class="ob-title" style="font-size:28px;text-align:left;">Ton profil</div>
+        </div>
+        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Pour calculer tes calories et macros personnalisées.</div>
+        <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" enterkeyhint="next" style="width:100%;">
+        <div class="ob-gbrow" style="width:100%;">
           <button class="ob-gbtn ob-sel" id="ob-gt-h" onclick="obSetGender('H')">♂ Homme</button>
           <button class="ob-gbtn" id="ob-gt-f" onclick="obSetGender('F')">♀ Femme</button>
         </div>
@@ -558,16 +560,18 @@ html.ob-done #onboarding{display:none;}
 
     <!-- ÉTAPE 4 : Objectif -->
     <div class="ob-step" id="ob-4">
-      <div class="ob-hero ob-top">
-        <div style="font-size:44px;line-height:1;">🎯</div>
-        <div class="ob-title">Ton objectif</div>
-        <div class="ob-sub">Macros et conseils Coach IA adaptés automatiquement.</div>
-        <div class="ob-goal-grid">
-          <button class="ob-goal-btn ob-sel" id="ob-gm" onclick="obSetGoal('muscle')"><span style="font-size:28px;">💪</span>Prise de muscle</button>
-          <button class="ob-goal-btn" id="ob-gp" onclick="obSetGoal('perte')"><span style="font-size:28px;">🔥</span>Perte de poids</button>
-          <button class="ob-goal-btn" id="ob-gf" onclick="obSetGoal('force')"><span style="font-size:28px;">🏋️</span>Force max</button>
-          <button class="ob-goal-btn" id="ob-ge" onclick="obSetGoal('equilibre')"><span style="font-size:28px;">⚖️</span>Rééquilibrage</button>
-          <button class="ob-goal-btn" id="ob-gen" onclick="obSetGoal('endurance')"><span style="font-size:28px;">🏃</span>Endurance</button>
+      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding-top:16px;text-align:center;">
+        <div style="display:flex;align-items:center;gap:10px;width:100%;">
+          <span style="font-size:32px;line-height:1;">🎯</span>
+          <div class="ob-title" style="font-size:28px;text-align:left;">Ton objectif</div>
+        </div>
+        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Macros et conseils Coach IA adaptés automatiquement.</div>
+        <div class="ob-goal-grid" style="width:100%;">
+          <button class="ob-goal-btn ob-sel" id="ob-gm" onclick="obSetGoal('muscle')"><span style="font-size:26px;">💪</span>Prise de muscle</button>
+          <button class="ob-goal-btn" id="ob-gp" onclick="obSetGoal('perte')"><span style="font-size:26px;">🔥</span>Perte de poids</button>
+          <button class="ob-goal-btn" id="ob-gf" onclick="obSetGoal('force')"><span style="font-size:26px;">🏋️</span>Force max</button>
+          <button class="ob-goal-btn" id="ob-ge" onclick="obSetGoal('equilibre')"><span style="font-size:26px;">⚖️</span>Rééquilibrage</button>
+          <button class="ob-goal-btn" id="ob-gen" onclick="obSetGoal('endurance')"><span style="font-size:26px;">🏃</span>Endurance</button>
         </div>
       </div>
       <div class="ob-footer">
