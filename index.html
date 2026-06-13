@@ -752,7 +752,7 @@ html.ob-done #onboarding{display:none;}
     <div class="sec">Protéines du jour</div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="display:flex;align-items:center;gap:12px;">
-        <div class="fg" style="flex:1;"><label>Protéines mangées (g)</label><input type="number" id="prot-eaten" placeholder="0" min="0" max="500" inputmode="numeric" oninput="updateProteinBar()"></div>
+        <div class="fg" style="flex:1;"><label>Protéines mangées (g)</label><input type="number" id="prot-eaten" placeholder="0" min="0" max="500" inputmode="numeric" enterkeyhint="done" oninput="updateProteinBar()"></div>
         <div style="text-align:center;"><div style="font-family:var(--font-cond);font-size:26px;font-weight:900;color:var(--green);" id="prot-pct-disp">0%</div><div style="font-size:12px;color:var(--t2);">objectif</div></div>
       </div>
       <div class="protein-bar-wrap"><div class="protein-bar-fill" id="prot-bar" style="width:0%;background:var(--green);"></div></div>
@@ -1573,6 +1573,7 @@ function renderNutrition(){
       </div>
       <div class="meal-kcal">${m.kcal} kcal</div>
     </div>`).join('');
+  chainInputs(['rm-kg','rm-reps']);
 }
 
 // ─── WORKOUT ─────────────────────────────────────────────────
@@ -1605,8 +1606,8 @@ function renderExBlocks(){
       return`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">
         <div class="snum">${si+1}</div>
         <div class="sprev">${p?`${p.kg}×${p.reps}`:'—'}</div>
-        <input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" onfocus="this.select()">
-        <input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" onfocus="this.select()">
+        <input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();const n=this.nextElementSibling;n.focus();n.select&&n.select();}">
+        <input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">
         <button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})">${set.type}</button>
         <button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>
       </div>`;
@@ -1649,6 +1650,36 @@ function toggleSet(ei,si){
   renderExBlocks();
 }
 function cycleType(ei,si){const s=S.wkt.exs[ei].sets[si];s.type=SET_TYPES[(SET_TYPES.indexOf(s.type)+1)%SET_TYPES.length];persist();renderExBlocks();}
+// Valide le set et focus automatiquement le kg du prochain set non-done
+function confirmSetAndNext(ei,si){
+  toggleSet(ei,si);
+  const exs=S.wkt.exs;
+  for(let e=ei;e<exs.length;e++){
+    for(let s=(e===ei?si+1:0);s<exs[e].sets.length;s++){
+      if(!exs[e].sets[s].done){
+        const row=document.getElementById(`sr-${e}-${s}`);
+        const inp=row&&row.querySelector('.sinp');
+        if(inp){inp.focus();inp.select&&inp.select();}
+        return;
+      }
+    }
+  }
+}
+// Enchaîne la touche Entrée entre une liste d'inputs
+function chainInputs(ids,lastFn){
+  ids.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    const isLast=i===ids.length-1;
+    el.setAttribute('enterkeyhint',isLast?'done':'next');
+    el.onkeydown=(e)=>{
+      if(e.key!=='Enter')return;
+      e.preventDefault();
+      if(!isLast){const n=document.getElementById(ids[i+1]);if(n){n.focus();if(n.select)n.select();}}
+      else if(lastFn)lastFn();
+    };
+  });
+}
 function addSet(ei){const ex=S.wkt.exs[ei];const l=ex.sets[ex.sets.length-1];ex.sets.push({kg:l?l.kg:0,reps:l?l.reps:5,type:'N',done:false,rm1:0});persist();renderExBlocks();}
 function rmLastSet(ei){const ex=S.wkt.exs[ei];if(ex.sets.length>1){ex.sets.pop();persist();renderExBlocks();}}
 function rmEx(ei){S.wkt.exs.splice(ei,1);persist();renderExBlocks();}
@@ -2190,6 +2221,9 @@ function renderSetup(){
   setGoal(S.goal||'muscle');
   renderBFCard();
   updSetup();
+  chainInputs(['age-inp','ht-inp','bw-inp'],saveProfile);
+  const bfIds=S.gender==='F'?['neck-inp','waist-inp','hip-inp']:['neck-inp','waist-inp'];
+  chainInputs(bfIds,saveProfile);
 }
 function updSetup(){
   const d=document.getElementById('setup-dot'),t=document.getElementById('setup-txt');if(!d)return;
@@ -2622,7 +2656,7 @@ function renderWeightTab(){
       <div style="font-size:13px;color:var(--t3);margin-top:2px;">${todayW?'✓ Enregistré : '+todayW.kg+' kg':'Pas encore saisie aujourd\'hui'}</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-      <input type="number" id="wentry-inp" value="${prefill}" placeholder="${S.bw||80}" step="0.1" min="20" max="300" inputmode="decimal" style="width:76px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">
+      <input type="number" id="wentry-inp" value="${prefill}" placeholder="${S.bw||80}" step="0.1" min="20" max="300" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();saveWeightEntry();}" style="width:76px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">
       <button class="btn-xs btn-red" onclick="saveWeightEntry()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>
     </div>
   </div>`;
@@ -2777,7 +2811,7 @@ function renderRecoveryCard(){
   <button class="btn btn-bg2" onclick="showSleepForm()" style="margin-top:0;">😴 Saisir mon sommeil</button>`}
   <div id="sleep-form" style="display:none;flex-direction:column;gap:8px;">
     <div class="two-col">
-      <div class="fg"><label>Heures dormies</label><input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" style="font-size:16px;"></div>
+      <div class="fg"><label>Heures dormies</label><input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();saveSleepEntry();}" style="font-size:16px;"></div>
       <div class="fg"><label>Qualité du sommeil</label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
           <button class="wtbtn" id="sq-1" onclick="setSleepQual(1)">😴<br><span style="font-size:12px;">Mauvais</span></button>
@@ -3325,13 +3359,24 @@ const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',force:'ob-gf',equilibre:'ob-ge',en
 function initOnboarding(){
   if(document.documentElement.classList.contains('ob-done'))return;
   const nameInp=document.getElementById('ob-name');
-  if(nameInp)nameInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext(2);}});
+  if(nameInp){nameInp.setAttribute('enterkeyhint','next');nameInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext(2);}});}
   const emailInp=document.getElementById('ob-email');
-  if(emailInp)emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});
-  ['ob-age','ob-ht','ob-bw'].forEach(id=>{
+  if(emailInp){emailInp.setAttribute('enterkeyhint','done');emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});}
+  // step 3 : age → taille → poids en chaîne
+  const ob3=[['ob-age','ob-ht'],['ob-ht','ob-bw'],['ob-bw',null]];
+  ob3.forEach(([id,nextId])=>{
     const inp=document.getElementById(id);
-    if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obNext(4);}});
+    if(!inp)return;
+    inp.setAttribute('enterkeyhint',nextId?'next':'done');
+    inp.addEventListener('keydown',e=>{
+      if(e.key!=='Enter')return;
+      e.preventDefault();
+      if(nextId){const n=document.getElementById(nextId);if(n){n.focus();n.select&&n.select();}}
+      else obNext(4);
+    });
   });
+  const emailFinal=document.getElementById('ob-email-final');
+  if(emailFinal){emailFinal.setAttribute('enterkeyhint','done');emailFinal.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();finishOnboarding();}});}
 }
 
 function obGoTo(step){
