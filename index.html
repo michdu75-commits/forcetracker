@@ -674,13 +674,14 @@ html.ob-done #onboarding{display:none;}
     <div style="flex:1;"><input type="date" id="s-date" style="font-size:14px;padding:9px 12px;"></div>
     <button class="btn btn-bg2 btn-sm" onclick="resetToday()">Aujourd'hui</button>
   </div>
+  <div id="log-sleep"></div>
   <div id="wkt-exs"></div>
   <div style="display:flex;gap:8px;">
     <button class="btn btn-bg2" style="flex:1;" onclick="openProgModal()">📋 Programmes</button>
     <button class="btn btn-bg2" style="flex:2;" onclick="openExPicker()">+ Exercice</button>
   </div>
-  <button class="btn btn-green" onclick="finishWorkout()">✓ Terminer la séance</button>
-  <p style="font-size:13px;color:var(--t3);text-align:center;">✓ pour valider une série → chrono de repos automatique</p>
+  <div id="log-finish"></div>
+  <p style="font-size:13px;color:var(--t3);text-align:center;padding-bottom:4px;">✓ pour valider une série → chrono de repos automatique</p>
 </div>
 
 <!-- PROGRÈS -->
@@ -1589,6 +1590,7 @@ function renderLog(){
   if(!S.wkt) S.wkt={date:today(),exs:[]};
   const dateEl=document.getElementById('s-date');
   if(dateEl){dateEl.value=S.wkt.date||today();dateEl.onchange=()=>{S.wkt.date=dateEl.value;persist();};}
+  renderLogSleep();
   renderExBlocks();
 }
 function renderExBlocks(){
@@ -1633,6 +1635,7 @@ function renderExBlocks(){
       </div>
     </div>`;
   }).join('');
+  renderLogFinish();
 }
 function getPrev(name){
   for(const s of S.sessions){
@@ -2584,9 +2587,10 @@ function renderCycleHomeCard() {
 let _ciSessId=null,_ciSleepVal=null;
 function openCheckin(sess){
   _ciSessId=sess?sess.id:null;_ciSleepVal=null;
-  document.getElementById('ci-step-sleep').style.display='block';
-  document.getElementById('ci-step-energy').style.display='none';
-  document.getElementById('ci-subtitle').textContent='2 questions rapides';
+  const hasSleepToday=!!(S.sleepLog&&S.sleepLog.find(e=>e.date===today()));
+  document.getElementById('ci-step-sleep').style.display=hasSleepToday?'none':'block';
+  document.getElementById('ci-step-energy').style.display=hasSleepToday?'block':'none';
+  document.getElementById('ci-subtitle').textContent=hasSleepToday?'1 question rapide':'2 questions rapides';
   document.querySelectorAll('.ci-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('mod-checkin').classList.add('open');
 }
@@ -2758,6 +2762,52 @@ function renderWeightCorrelations(el,pts){
 
 // ─── SLEEP & RECOVERY ─────────────────────────────────────────
 let _sleepQual=3;
+let _sleepEditLog=false;
+
+function renderLogSleep(){
+  const el=document.getElementById('log-sleep');if(!el)return;
+  const todayStr=today();
+  const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===todayStr);
+  const qLabels={1:'😴 Mauvais',2:'😐 Moyen',3:'😊 Bon',4:'⚡ Excellent'};
+  if(ts&&!_sleepEditLog){
+    el.innerHTML=`<div style="background:var(--bg3);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:13px;color:var(--t2);">🌙 Sommeil : <strong style="color:var(--t1);">${ts.hours}h</strong> · <strong style="color:var(--t1);">${qLabels[ts.quality||2]}</strong></div>
+      <button style="font-size:13px;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditLog=true;renderLogSleep()">Modifier</button>
+    </div>`;
+  }else{
+    _sleepQual=(ts&&ts.quality)||3;
+    el.innerHTML=`<div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:8px;">🌙 Sommeil de cette nuit</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">
+        <button class="ci-btn" id="sq-1" onclick="setSleepQual(1)">😴<br><span>Mauvais</span></button>
+        <button class="ci-btn" id="sq-2" onclick="setSleepQual(2)">😐<br><span>Moyen</span></button>
+        <button class="ci-btn" id="sq-3" onclick="setSleepQual(3)">😊<br><span>Bon</span></button>
+        <button class="ci-btn" id="sq-4" onclick="setSleepQual(4)">⚡<br><span>Excellent</span></button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:16px;" value="${ts?ts.hours:''}">
+        <span style="font-size:14px;color:var(--t2);white-space:nowrap;">h de sommeil</span>
+        ${ts?`<button class="btn btn-bg2 btn-sm" onclick="_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;">Annuler</button>`:''}
+      </div>
+      <button class="btn btn-red" onclick="saveSleepEntry()" style="margin-top:10px;padding:12px;">Enregistrer</button>
+    </div>`;
+    updateSleepQualBtns();
+  }
+}
+
+function renderLogFinish(){
+  const el=document.getElementById('log-finish');if(!el)return;
+  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){el.innerHTML='';return;}
+  const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
+  if(!hasDone){el.innerHTML='';return;}
+  const nEx=S.wkt.exs.filter(ex=>ex.sets.some(s=>s.done)).length;
+  const nSets=S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
+  const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
+  el.innerHTML=`<div style="border-top:1px solid var(--sep);padding-top:14px;margin-top:4px;">
+    <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${nEx} exercice${nEx>1?'s':''} · ${nSets} série${nSets>1?'s':''} · ${vol} kg de volume</div>
+    <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">🏁 Terminer la séance</button>
+  </div>`;
+}
 
 function calcRecoveryScore(){
   if(!S.sleepLog||!S.sleepLog.length)return null;
@@ -2806,26 +2856,9 @@ function renderRecoveryCard(){
   ${ts?`
   <div style="background:var(--bg3);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;">
     <div style="font-size:13px;color:var(--t2);">🌙 Cette nuit : <strong style="color:var(--t1);">${ts.hours}h</strong> · <strong style="color:var(--t1);">${qLabels[ts.quality||2]}</strong></div>
-    <button style="font-size:13px;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="editSleepToday()">Modifier</button>
+    <button style="font-size:13px;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="goScreen('log',document.getElementById('nb-log'));_sleepEditLog=true;setTimeout(renderLogSleep,80);">Modifier</button>
   </div>`:`
-  <button class="btn btn-bg2" onclick="showSleepForm()" style="margin-top:0;">😴 Saisir mon sommeil</button>`}
-  <div id="sleep-form" style="display:none;flex-direction:column;gap:8px;">
-    <div class="two-col">
-      <div class="fg"><label>Heures dormies</label><input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();saveSleepEntry();}" style="font-size:16px;"></div>
-      <div class="fg"><label>Qualité du sommeil</label>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
-          <button class="wtbtn" id="sq-1" onclick="setSleepQual(1)">😴<br><span style="font-size:12px;">Mauvais</span></button>
-          <button class="wtbtn" id="sq-2" onclick="setSleepQual(2)">😐<br><span style="font-size:12px;">Moyen</span></button>
-          <button class="wtbtn" id="sq-3" onclick="setSleepQual(3)">😊<br><span style="font-size:12px;">Bon</span></button>
-          <button class="wtbtn" id="sq-4" onclick="setSleepQual(4)">⚡<br><span style="font-size:12px;">Excellent</span></button>
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-bg2" style="flex:1;" onclick="hideSleepForm()">Annuler</button>
-      <button class="btn btn-red" style="flex:1;" onclick="saveSleepEntry()">Enregistrer</button>
-    </div>
-  </div>`;
+  <button class="btn btn-bg2" onclick="goScreen('log',document.getElementById('nb-log'))" style="margin-top:0;">😴 Enregistrer mon sommeil →</button>`}`;
   if(ts)updateSleepQualBtns();
 }
 function showSleepForm(){
@@ -2856,7 +2889,9 @@ function saveSleepEntry(){
   const entry={date:todayStr,hours,quality:_sleepQual};
   if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
   S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
-  persist();renderRecoveryCard();
+  _sleepEditLog=false;
+  persist();
+  renderLogSleep();renderRecoveryCard();
   toast('Sommeil enregistré !','success');
 }
 
