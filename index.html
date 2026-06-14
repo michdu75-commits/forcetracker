@@ -1300,13 +1300,14 @@ html.ob-done #onboarding{display:none;}
 <!-- MODAL: Détail / Édition séance -->
 <div class="overlay" id="ov-sess-detail" onclick="if(event.target===this)closeSessDetail()">
   <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <div>
         <div style="font-weight:700;font-size:17px" id="sd-title">Séance</div>
         <div style="font-size:13px;color:var(--t2)" id="sd-sub"></div>
       </div>
       <button class="btn btn-bg2" style="padding:6px 12px;font-size:15px" onclick="closeSessDetail()">✕</button>
     </div>
+    <div id="sd-muscles" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 0;border-bottom:1px solid var(--sep)"></div>
     <div id="sd-content"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn" id="sd-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none" onclick="deleteSessOrConfirm()">🗑️ Supprimer</button>
@@ -2679,6 +2680,26 @@ function openSessDetail(id){
   document.getElementById('sd-title').textContent=fmtD(sess.date);
   const cals=sess.calories?` · 🔥 ${sess.calories} kcal`:'';
   document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${cals}`;
+
+  // Silhouettes musculaires travaillées
+  const exNames=(sess.exs||sess.exercises||[]).map(e=>e.name);
+  const grpMap={};
+  EXLIB.forEach(e=>{if(exNames.includes(e.n))grpMap[e.g]=true;});
+  const workedGroups=Object.keys(grpMap);
+  const muscleEl=document.getElementById('sd-muscles');
+  if(muscleEl){
+    if(workedGroups.length===0){muscleEl.style.display='none';}
+    else{
+      muscleEl.style.display='flex';
+      muscleEl.innerHTML=EX_GROUPS
+        .filter(g=>g.tags.some(t=>workedGroups.includes(t)))
+        .map(g=>`<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          ${g.icon.replace('height:46px','height:56px')}
+          <span style="font-size:10px;color:var(--t2);text-align:center;max-width:56px;line-height:1.2">${g.label.replace(' / ','\n').split('\n')[0]}</span>
+        </div>`).join('');
+    }
+  }
+
   _renderSessDetailContent();
   document.getElementById('ov-sess-detail').classList.add('open');
 }
