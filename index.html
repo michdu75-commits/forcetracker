@@ -33,8 +33,13 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   }
   if(needsOverlay){
     document.addEventListener('DOMContentLoaded',function(){
-      var el=document.getElementById('ov-inapp');
-      if(el)el.classList.remove('hidden');
+      if(typeof _showInAppOverlay==='function'){
+        if(isIOS) _showInAppOverlay('🧭','Ouvre dans Safari','Pour installer Force Tracker, ce lien doit s\'ouvrir dans <strong style="color:var(--t1)">Safari</strong>.','Essayer d\'ouvrir Safari',tryOpenSafari,'safari');
+        else _showInAppOverlay('🤖','Ouvre dans Chrome','Pour installer Force Tracker, ce lien doit s\'ouvrir dans <strong style="color:var(--t1)">Chrome</strong>.','Essayer d\'ouvrir Chrome',tryOpenChrome,'chrome');
+      } else {
+        var el=document.getElementById('ov-inapp');
+        if(el)el.classList.remove('hidden');
+      }
     });
   }
 })();
@@ -631,15 +636,26 @@ html.ob-done #onboarding{display:none;}
   </div><!-- .ob-wrap -->
 </div><!-- #onboarding -->
 
-<!-- ═══ IN-APP BROWSER (iOS) ══════════════════════════════════ -->
+<!-- ═══ IN-APP BROWSER (iOS / Android) ════════════════════════ -->
 <div id="ov-inapp" class="hidden">
   <div class="inapp-card">
-    <div class="inapp-icon" style="font-size:56px;margin-bottom:14px;">🧭</div>
-    <div class="inapp-title" style="font-family:var(--font-cond);font-size:26px;font-weight:900;margin-bottom:8px;">Ouvre dans Safari</div>
-    <div class="inapp-desc" style="font-size:15px;color:var(--t2);line-height:1.55;margin-bottom:22px;">Pour installer Force Tracker sur ton iPhone, ce lien doit s'ouvrir dans <strong style="color:var(--t1)">Safari</strong>.</div>
-    <button class="btn inapp-btn-open" style="background:var(--red);color:#fff;width:100%;font-size:16px;font-weight:700;padding:14px;border-radius:14px;margin-bottom:10px;">Ouvrir dans Safari</button>
-    <button class="btn btn-bg2 inapp-btn-copy" style="width:100%;font-size:15px;padding:13px;border-radius:14px;margin-bottom:18px;">Copier le lien</button>
-    <div style="font-size:13px;color:var(--t3);line-height:1.6;margin-bottom:18px;">Si le bouton ne fonctionne pas, copie le lien et colle-le dans la barre d'adresse.</div>
+    <div class="inapp-icon" style="font-size:48px;margin-bottom:10px;">🧭</div>
+    <div class="inapp-title" style="font-family:var(--font-cond);font-size:24px;font-weight:900;margin-bottom:6px;">Ouvre dans Safari</div>
+    <div class="inapp-desc" style="font-size:14px;color:var(--t2);line-height:1.5;margin-bottom:16px;">Pour installer Force Tracker, ouvre ce lien dans <strong style="color:var(--t1)">Safari</strong>.</div>
+
+    <!-- QR code — scannable depuis Safari -->
+    <div style="background:#fff;border-radius:12px;padding:10px;display:inline-block;margin-bottom:14px;">
+      <img id="inapp-qr" src="" alt="QR Code" style="width:140px;height:140px;display:block;">
+    </div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:16px;">Scanne ce QR code avec l'appareil photo ou Safari</div>
+
+    <!-- URL visible et sélectionnable -->
+    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+      <input id="inapp-url-input" type="text" readonly value="https://michdu75-commits.github.io/forcetracker/" style="flex:1;background:none;border:none;color:var(--t1);font-size:12px;outline:none;min-width:0;" onclick="this.select()">
+      <button class="inapp-btn-copy" onclick="copyAppLink('safari')" style="background:var(--red);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Copier</button>
+    </div>
+
+    <button class="btn inapp-btn-open" style="background:var(--bg3);color:var(--t1);width:100%;font-size:14px;font-weight:600;padding:12px;border-radius:12px;margin-bottom:10px;">Essayer d'ouvrir Safari</button>
     <button onclick="document.getElementById('ov-inapp').classList.add('hidden')" style="background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:6px;">Continuer sans installer</button>
   </div>
 </div>
@@ -4225,7 +4241,14 @@ function _showInAppOverlay(icon, title, desc, btnLabel, btnAction, copyTarget){
   const btn = el.querySelector('.inapp-btn-open');
   btn.textContent = btnLabel;
   btn.onclick = btnAction;
-  el.querySelector('.inapp-btn-copy').onclick = ()=>copyAppLink(copyTarget);
+  // QR code via API publique (pas de clé requise)
+  const qr = document.getElementById('inapp-qr');
+  if(qr && !qr.src.includes('qr-code')) {
+    qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(APP_URL);
+  }
+  // URL dans le champ texte
+  const inp = document.getElementById('inapp-url-input');
+  if(inp) inp.value = APP_URL;
   el.classList.remove('hidden');
 }
 
