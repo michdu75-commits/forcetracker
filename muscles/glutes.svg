@@ -6,11 +6,12 @@
   <path d="M5 28 L3 38 L7 39 L9 34 L9 29Z" fill="#bababa"/>
   <path d="M45 28 L47 38 L43 39 L41 34 L41 29Z" fill="#bababa"/>
   <path d="M12 14 Q25 11 38 14 L39 46 L11 46Z" fill="#bababa"/>
-  <path d="M11 46 L10 52 Q25 56 40 52 L39 46Z" fill="#bababa"/>
+  <path d="M10 52 L8 63 L13 64 L16 54Z" fill="#bababa"/>
+  <path d="M40 52 L42 63 L37 64 L34 54Z" fill="#bababa"/>
   <path d="M8 63 L7 72 L12 72 L13 64Z" fill="#bababa"/>
   <path d="M42 63 L43 72 L38 72 L37 64Z" fill="#bababa"/>
-  <!-- Quadriceps gauche -->
-  <path d="M10 52 L8 63 L13 64 L16 54Z" fill="#FF2D55"/>
-  <!-- Quadriceps droit -->
-  <path d="M40 52 L42 63 L37 64 L34 54Z" fill="#FF2D55"/>
+  <!-- Fessiers gauche -->
+  <path d="M11 46 L10 52 Q17 57 25 56 L25 44 L11 46Z" fill="#FF2D55"/>
+  <!-- Fessiers droit -->
+  <path d="M39 46 L40 52 Q33 57 25 56 L25 44 L39 46Z" fill="#FF2D55"/>
 </svg>
