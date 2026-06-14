@@ -185,11 +185,11 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .set-row.done-row{opacity:.45;}
 .snum{font-size:12px;color:var(--t3);font-weight:800;text-align:center;}
 .sprev{font-size:12px;color:var(--t3);text-align:center;overflow:hidden;line-height:1.3;}
-.rm-live-hint{display:flex;align-items:center;gap:8px;padding:1px 16px 5px;font-size:12px;color:var(--t2);}
 #rest-label{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sinp{background:var(--bg3);border:1px solid var(--sep);border-radius:8px;padding:8px 4px;font-size:16px;font-weight:800;font-family:var(--font);color:var(--t1);text-align:center;width:100%;outline:none;transition:border-color .15s;}
 .sinp:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(255,45,85,.15);}
-.tbtn{font-size:12px;font-weight:800;border:1px solid var(--sep);border-radius:6px;padding:6px 2px;cursor:pointer;text-align:center;background:var(--bg3);color:var(--t2);width:100%;font-family:var(--font);touch-action:manipulation;letter-spacing:.05em;}
+.tbtn{font-size:12px;font-weight:800;border:1px solid var(--sep);border-radius:6px;padding:4px 2px;cursor:pointer;text-align:center;background:var(--bg3);color:var(--t2);width:100%;font-family:var(--font);touch-action:manipulation;letter-spacing:.05em;display:flex;flex-direction:column;align-items:center;gap:1px;}
+.tbtn-rm{font-size:8.5px;font-weight:700;opacity:.8;line-height:1;letter-spacing:0;}
 .tbtn.N{border-color:rgba(240,240,255,.3);color:var(--t1);}
 .tbtn.W{border-color:rgba(41,121,255,.5);color:var(--blue);background:rgba(41,121,255,.1);}
 .tbtn.E{border-color:rgba(255,45,85,.5);color:var(--red);background:rgba(255,45,85,.1);}
@@ -1182,20 +1182,23 @@ html.ob-done #onboarding{display:none;}
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:var(--bg3);border:1px solid rgba(240,240,255,.3);color:var(--t1);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">N</span>
-        <div><div style="font-weight:700;font-size:14px">Normal</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série de travail classique. À utiliser la plupart du temps.</div></div>
+        <div><div style="font-weight:700;font-size:14px">Normal</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série de travail classique. <strong>Compte dans le volume et le 1RM estimé.</strong></div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:rgba(41,121,255,.1);border:1px solid rgba(41,121,255,.5);color:var(--blue);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">W</span>
-        <div><div style="font-weight:700;font-size:14px">Warm-up</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série d'échauffement. <strong>Exclue du volume total</strong> pour ne pas fausser les stats.</div></div>
+        <div><div style="font-weight:700;font-size:14px">Warm-up</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Échauffement. <strong>Exclu du volume et des PRs</strong> — ne fausse pas tes stats.</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.5);color:var(--red);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">E</span>
-        <div><div style="font-weight:700;font-size:14px">Échec</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Tu as poussé jusqu'à l'échec musculaire. Le Coach IA l'utilise pour adapter tes conseils de récupération.</div></div>
+        <div><div style="font-weight:700;font-size:14px">Échec</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Poussé à l'échec musculaire. <strong>Compte pour le 1RM</strong> — repos 4 min automatique. Le Coach IA adapte ta récupération.</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.5);color:var(--gold);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">D</span>
-        <div><div style="font-weight:700;font-size:14px">Drop set</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Réduction de charge sans repos. Technique d'intensification avancée visible dans tes stats.</div></div>
+        <div><div style="font-weight:700;font-size:14px">Drop set</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Réduction de charge sans repos. <strong>Compte pour le volume</strong> — repos 20s automatique.</div></div>
       </div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.6">
+      💡 Le <strong>1RM estimé</strong> s'affiche en temps réel sous chaque série dès que tu saisis le poids et les reps. Il compare automatiquement avec ton PR actuel.
     </div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px">Tape sur le badge coloré en séance pour changer le type</div>
     <button class="btn btn-red" onclick="closeTypeHelp()" style="width:100%;padding:13px">OK</button>
@@ -1731,12 +1734,11 @@ function renderExBlocks(){
           <div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>${prevRM?`<div style="font-size:10px">~${prevRM}kg</div>`:''}`:'<div>—</div>'}</div>
           <input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">
           <input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">
-          <button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}">${set.type}</button>
+          <button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}" id="tbtn-${ei}-${si}">
+            <span>${set.type}</span>
+            <span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span>
+          </button>
           <button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>
-        </div>
-        <div id="rm-live-${ei}-${si}" class="rm-live-hint" style="display:${liveRM?'flex':'none'}">
-          <span>~<strong id="rm-val-${ei}-${si}">${liveRM||'—'}</strong> kg 1RM</span>
-          ${pr?`<span style="color:var(--t3)">· PR : ${fmt(pr.rm1)} kg</span>`:''}
         </div>
       </div>`;
     }).join('');
@@ -2113,11 +2115,8 @@ function updateRMLive(ei,si){
   const inps=row.querySelectorAll('.sinp');
   const kg=parseFloat(inps[0]&&(inps[0].value||inps[0].placeholder))||0;
   const reps=parseInt(inps[1]&&(inps[1].value||inps[1].placeholder))||0;
-  const div=document.getElementById(`rm-live-${ei}-${si}`);
-  const val=document.getElementById(`rm-val-${ei}-${si}`);
-  if(!div||!val)return;
-  if(kg&&reps){val.textContent=fmt(bz(kg,reps));div.style.display='flex';}
-  else div.style.display='none';
+  const trmEl=document.getElementById(`trm-${ei}-${si}`);
+  if(trmEl)trmEl.textContent=kg&&reps?'~'+fmt(bz(kg,reps)):'';
 }
 function addRT(s){restLeft=Math.max(5,Math.min(restLeft+s,600));updRest();}
 function skipRest(){stopRest();}
