@@ -17,6 +17,20 @@
 window._deferredInstall=null;
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._deferredInstall=e;});
 if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add('ob-done');
+// Détection in-app browser iOS au plus tôt
+(function(){
+  var ua=navigator.userAgent;
+  var isIOS=/iPhone|iPad|iPod/i.test(ua)&&!window.MSStream;
+  if(!isIOS)return;
+  var isInApp=/FBAN|FBAV|Instagram|Twitter|Snapchat|TikTok|Musical\.ly|Line\/|LinkedIn|Pinterest|Threads|CriOS|FxiOS|OPiOS|EdgiOS|GSA/.test(ua)||!/Safari/i.test(ua);
+  var isStandalone=!!navigator.standalone||window.matchMedia('(display-mode:standalone)').matches;
+  if(isInApp&&!isStandalone){
+    document.addEventListener('DOMContentLoaded',function(){
+      var el=document.getElementById('ov-inapp');
+      if(el)el.classList.remove('hidden');
+    });
+  }
+})();
 </script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;900&family=Barlow+Condensed:wght@700;900&display=swap');
@@ -498,6 +512,11 @@ html.ob-done #onboarding{display:none;}
 .install-arrow{font-size:36px;text-align:center;display:block;animation:iBounce .9s ease-in-out infinite;}
 @keyframes iBounce{0%,100%{transform:translateY(-5px)}50%{transform:translateY(5px)}}
 @keyframes iSlideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* ─── IN-APP BROWSER (iOS) ──────────────────────────────────── */
+#ov-inapp{position:fixed;inset:0;z-index:9999;background:var(--bg1);display:flex;align-items:center;justify-content:center;padding:28px 20px;}
+#ov-inapp.hidden{display:none;}
+.inapp-card{background:var(--bg2);border-radius:24px;padding:28px 22px;border:1px solid var(--sep);width:100%;max-width:390px;text-align:center;}
 </style>
 </head>
 <body>
@@ -604,6 +623,19 @@ html.ob-done #onboarding{display:none;}
 
   </div><!-- .ob-wrap -->
 </div><!-- #onboarding -->
+
+<!-- ═══ IN-APP BROWSER (iOS) ══════════════════════════════════ -->
+<div id="ov-inapp" class="hidden">
+  <div class="inapp-card">
+    <div style="font-size:56px;margin-bottom:14px;">🧭</div>
+    <div style="font-family:var(--font-cond);font-size:26px;font-weight:900;margin-bottom:8px;">Ouvre dans Safari</div>
+    <div style="font-size:15px;color:var(--t2);line-height:1.55;margin-bottom:22px;">Pour installer Force Tracker sur ton iPhone, ce lien doit s'ouvrir dans <strong style="color:var(--t1)">Safari</strong>.</div>
+    <button class="btn" onclick="tryOpenSafari()" style="background:var(--red);color:#fff;width:100%;font-size:16px;font-weight:700;padding:14px;border-radius:14px;margin-bottom:10px;">Ouvrir dans Safari</button>
+    <button class="btn btn-bg2" onclick="copyAppLink()" style="width:100%;font-size:15px;padding:13px;border-radius:14px;margin-bottom:18px;">Copier le lien</button>
+    <div style="font-size:13px;color:var(--t3);line-height:1.6;margin-bottom:18px;">Si le bouton ne fonctionne pas, copie le lien et colle-le dans la barre d'adresse de Safari.</div>
+    <button onclick="document.getElementById('ov-inapp').classList.add('hidden')" style="background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:6px;">Continuer sans installer</button>
+  </div>
+</div>
 
 <!-- ═══ PWA INSTALL (iOS) — hors de #root ══════════════════════ -->
 <div id="install-popup" class="hidden">
@@ -4076,9 +4108,41 @@ function finishOnboarding(){
 // ─── PWA INSTALL ─────────────────────────────────────────────
 function _isStandalone(){return window.matchMedia('(display-mode:standalone)').matches||!!navigator.standalone;}
 function _isIOS(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)&&!window.MSStream;}
+function _isIOSInApp(){
+  if(!_isIOS()) return false;
+  const ua = navigator.userAgent;
+  // Navigateurs in-app connus sur iOS
+  if(/FBAN|FBAV|Instagram|Twitter|Snapchat|TikTok|Musical\.ly|Line\/|LinkedIn|Pinterest|Threads/.test(ua)) return true;
+  // Chrome iOS, Firefox iOS, Edge iOS, Google App — ne supportent pas l'install PWA
+  if(/CriOS|FxiOS|OPiOS|EdgiOS|GSA/.test(ua)) return true;
+  // WebView générique iOS : pas de "Safari" dans le UA
+  if(!/Safari/i.test(ua)) return true;
+  return false;
+}
+
+function tryOpenSafari(){
+  // Trick qui fonctionne dans Facebook, Instagram, WhatsApp iOS
+  const url = 'https://michdu75-commits.github.io/forcetracker/';
+  window.location.href = 'safari-' + url;
+  // Fallback : copie le lien après 1s si le redirect ne marche pas
+  setTimeout(()=>copyAppLink(), 1200);
+}
+
+function copyAppLink(){
+  const url = 'https://michdu75-commits.github.io/forcetracker/';
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(()=>toast('Lien copié — colle-le dans Safari','success'));
+  } else {
+    try{const t=document.createElement('textarea');t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('Lien copié — colle-le dans Safari','success');}catch(e){}
+  }
+}
 
 function showInstallPrompt(){
   if(_isStandalone())return;
+  if(_isIOSInApp()){
+    document.getElementById('ov-inapp').classList.remove('hidden');
+    return;
+  }
   if(_isIOS()){
     document.getElementById('install-popup').classList.remove('hidden');
     return;
