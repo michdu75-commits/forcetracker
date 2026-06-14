@@ -2794,16 +2794,22 @@ function _mscSVGmini(sc){
   const pt=([id,d])=>{const c=id?(pd[id]||{f:'#e4e4e4',k:'#ccc'}):{f:'#d8d8d8',k:'#b8b8b8'};return `<path d="${d}" fill="${c.f}" stroke="${c.k}" stroke-width="${id?'0.3':'0.22'}"/>`;};
   return `<svg viewBox="-1 0 72 90" xmlns="http://www.w3.org/2000/svg" style="width:60px;height:auto;display:block;flex-shrink:0">${_FP.map(pt).join('')}${_BP.map(pt).join('')}</svg>`;
 }
+function showSessMuscleMap(i,ev){
+  ev&&ev.stopPropagation();
+  const s=S.sessions[i];
+  if(!s)return;
+  showMuscleMap(s.exs||s.exercises||[],null);
+}
 function renderSessions(){
   const el=document.getElementById('sess-list');
   if(!S.sessions.length){el.innerHTML='<div class="empty">Aucune séance encore</div>';return;}
-  el.innerHTML=S.sessions.slice(0,20).map(s=>{
+  el.innerHTML=S.sessions.slice(0,20).map((s,i)=>{
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
     const sync=s.synced?'<span class="synced-pill">☁️ Sheets</span>':'';
     const cals = s.calories ? ` · 🔥${s.calories}kcal` : '';
     const sc=_mscScores(s.exs||s.exercises||[]);
     const mini=_mscSVGmini(sc);
-    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div><div style="display:flex;align-items:center;gap:8px;padding:0 10px 10px 0"><div class="sess-exs" style="flex:1;min-width:0">${exs||'—'}</div>${mini}</div></div>`;
+    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div><div style="display:flex;align-items:center;gap:8px;padding:0 10px 10px 0"><div class="sess-exs" style="flex:1;min-width:0">${exs||'—'}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
   }).join('');
 }
 
