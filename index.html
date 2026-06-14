@@ -684,10 +684,13 @@ html.ob-done #onboarding{display:none;}
 <div id="root">
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:10px;"><img src="logo.png" alt="" id="tb-logo" onclick="onLogoTap()" style="height:32px;width:32px;border-radius:8px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;"><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
-  <button class="sync-pill" id="sync-pill" onclick="goScreen('setup',document.getElementById('nb-setup'))">
-    <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;"></span>
-    <span id="sync-lbl">Sheets</span>
-  </button>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button onclick="openShareModal()" style="width:34px;height:34px;border-radius:50%;border:1px solid var(--sep);background:rgba(255,255,255,.04);color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;" title="Partager l'app">📲</button>
+    <button class="sync-pill" id="sync-pill" onclick="goScreen('setup',document.getElementById('nb-setup'))">
+      <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;"></span>
+      <span id="sync-lbl">Sheets</span>
+    </button>
+  </div>
 </div>
 
 <div class="screens">
