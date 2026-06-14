@@ -1141,6 +1141,21 @@ html.ob-done #onboarding{display:none;}
   </div>
 </div>
 
+<!-- MODAL: Muscle Map -->
+<div class="overlay" id="ov-mm" onclick="if(event.target===this)closeMuscleMap()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 20px">
+    <div style="font-weight:700;font-size:17px;margin-bottom:10px;text-align:center">💪 Muscles travaillés</div>
+    <div id="mm-svg" style="width:100%"></div>
+    <div style="display:flex;gap:14px;justify-content:center;margin-top:10px;font-size:12px;flex-wrap:wrap;color:var(--t2)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;background:#FF2D55;border-radius:2px;display:inline-block;flex-shrink:0"></span>Primaire</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;background:#FF9500;border-radius:2px;display:inline-block;flex-shrink:0"></span>Secondaire</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;background:#e2e2e2;border:1px solid #c8c8c8;border-radius:2px;display:inline-block;flex-shrink:0"></span>Non travaillé</span>
+    </div>
+    <div id="mm-list" style="margin-top:8px;font-size:13px;line-height:1.7;text-align:center"></div>
+    <button class="btn btn-red" onclick="closeMuscleMap()" style="width:100%;margin-top:14px;padding:14px;font-size:16px">Continuer →</button>
+  </div>
+</div>
+
 <!-- MODAL: Programmes -->
 <div class="overlay" id="mod-prog">
   <div class="modal">
@@ -1710,6 +1725,171 @@ function addExercise(name){
   S.wkt.exs.push({name,sets});persist();closeExPicker();renderExBlocks();
   toast(name+' ajouté !','info');
 }
+// ─── MUSCLE MAP ──────────────────────────────────────────────
+const _MEX=[
+  {re:/développé couché|bench press|écarté couché|pec dec/i,                   p:['pec'],                              s:['front-delt','triceps']},
+  {re:/développé incliné|incline bench|incline press/i,                         p:['pec'],                              s:['front-delt','triceps']},
+  {re:/développé militaire|overhead press|press militaire|ohp|presse épaule/i,  p:['front-delt','side-delt','triceps'], s:['traps']},
+  {re:/squat|front squat|back squat|goblet squat/i,                             p:['quads','glutes'],                   s:['hamstrings','calves','lower-back']},
+  {re:/soulevé de terre|deadlift/i,                                             p:['glutes','hamstrings','lower-back'], s:['quads','traps','lats','forearms']},
+  {re:/traction|pull.?up|chin.?up/i,                                            p:['lats','biceps'],                    s:['traps','rear-delt','forearms']},
+  {re:/rowing|row barre|t.?bar|tirage horizontal/i,                             p:['lats','traps','rear-delt'],         s:['biceps','lower-back','forearms']},
+  {re:/tirage vertical|lat pulldown|tirage poulie/i,                            p:['lats','biceps'],                    s:['traps','rear-delt']},
+  {re:/curl bicep|bicep curl|curl haltère|preacher|curl marteau|hammer curl/i,  p:['biceps'],                           s:['forearms']},
+  {re:/tricep|skull crusher|extension tricep|barre front/i,                     p:['triceps'],                          s:['front-delt']},
+  {re:/leg press|presse cuisse/i,                                               p:['quads','glutes'],                   s:['hamstrings','calves']},
+  {re:/fente|lunge|split squat/i,                                               p:['quads','glutes'],                   s:['hamstrings']},
+  {re:/hip thrust|glute bridge|fessier|hip extension/i,                         p:['glutes'],                           s:['hamstrings','lower-back']},
+  {re:/romanian deadlift|rdl|good morning|leg curl|nordic/i,                    p:['hamstrings','glutes'],              s:['lower-back','calves']},
+  {re:/dips/i,                                                                  p:['triceps','pec'],                    s:['front-delt']},
+  {re:/shrug|hausse|haussement|trapèze iso/i,                                   p:['traps'],                            s:['forearms']},
+  {re:/gainage|plank|superman|bird.?dog/i,                                      p:['abs','lower-back'],                 s:['obliques','front-delt','glutes']},
+  {re:/crunch|abdos|sit.?up|hanging leg|relevé de jambe/i,                      p:['abs'],                              s:['obliques','hip-flexors']},
+  {re:/mollet|calf raise|talon|standing calf/i,                                 p:['calves'],                           s:[]},
+  {re:/leg extension|extension quadricep/i,                                     p:['quads'],                            s:[]},
+  {re:/élévation latérale|lateral raise|face pull|rear delt|oiseau/i,           p:['side-delt','rear-delt'],            s:['traps']},
+  {re:/écarté incliné|cable fly|fly/i,                                          p:['pec'],                              s:['front-delt']},
+  {re:/farmers?|portés|carry/i,                                                 p:['forearms','traps'],                 s:['quads','glutes']},
+  {re:/leg raise|abduction|adduction|gainage latéral/i,                         p:['hip-flexors','abs'],                s:['quads']},
+];
+const _MG={
+  pec:           {paths:['chest-upper-left','chest-upper-right','chest-lower-left','chest-lower-right'],                                                                                          label:'Pectoraux'},
+  'front-delt':  {paths:['shoulder-front-left','shoulder-front-right'],                                                                                                                           label:'Deltoïdes ant.'},
+  'side-delt':   {paths:['shoulder-side-left','shoulder-side-right'],                                                                                                                             label:'Deltoïdes lat.'},
+  biceps:        {paths:['biceps-left','biceps-right'],                                                                                                                                           label:'Biceps'},
+  forearms:      {paths:['forearm-left','forearm-right','forearm-flexors-left','forearm-flexors-right','forearm-extensors-left','forearm-extensors-right'],                                       label:'Avant-bras'},
+  abs:           {paths:['abs-upper-left','abs-upper-right','abs-lower-left','abs-lower-right'],                                                                                                  label:'Abdominaux'},
+  obliques:      {paths:['obliques-left','obliques-right','serratus-anterior-left','serratus-anterior-right'],                                                                                   label:'Obliques'},
+  quads:         {paths:['quads-left','quads-right'],                                                                                                                                            label:'Quadriceps'},
+  'hip-flexors': {paths:['hip-flexor-left','hip-flexor-right','adductors-left','adductors-right'],                                                                                               label:'Fléchisseurs'},
+  tibialis:      {paths:['tibialis-anterior-left','tibialis-anterior-right'],                                                                                                                    label:'Tibialis'},
+  traps:         {paths:['traps-upper-left','traps-mid-left','traps-lower-left','traps-upper-right','traps-mid-right','traps-lower-right'],                                                      label:'Trapèzes'},
+  lats:          {paths:['lats-upper-left','lats-mid-left','lats-lower-left','lats-upper-right','lats-mid-right','lats-lower-right'],                                                            label:'Grand dorsal'},
+  'rear-delt':   {paths:['deltoid-rear-left','deltoid-rear-right'],                                                                                                                              label:'Deltoïdes post.'},
+  triceps:       {paths:['triceps-long-left','triceps-lateral-left','triceps-long-right','triceps-lateral-right'],                                                                               label:'Triceps'},
+  'lower-back':  {paths:['lower-back-erectors-left','lower-back-ql-left','lower-back-erectors-right','lower-back-ql-right'],                                                                    label:'Bas du dos'},
+  glutes:        {paths:['gluteus-maximus-left','gluteus-maximus-right','gluteus-medius-left','gluteus-medius-right'],                                                                           label:'Fessiers'},
+  hamstrings:    {paths:['hamstrings-medial-left','hamstrings-lateral-left','hamstrings-medial-right','hamstrings-lateral-right'],                                                               label:'Ischio-jambiers'},
+  calves:        {paths:['calves-gastroc-medial-left','calves-gastroc-lateral-left','calves-soleus-left','calves-gastroc-medial-right','calves-gastroc-lateral-right','calves-soleus-right'],   label:'Mollets'},
+};
+const _FP=[
+  ['','m 11.671635,6.3585449 -0.0482,-2.59085 4.20648,-2.46806 4.42769,2.95361 -0.0405,1.94408 0.24197,-3.34467 -2.03129,-2.31103 -2.84508,-0.51629 -2.20423,0.52915 -1.9363,2.63077 z'],
+  ['','m 19.748825,6.7034949 0.0203,-2.20747 -3.96689,-2.7637 -3.74099,2.23559 -0.006,2.63528 -0.60741,0.0403 0.27408,1.82447 0.97635,0.33932 0.44244,2.18029 1.82222,2.06556 2.03518,-0.0607 1.79223,-1.94408 0.35957,-2.24066 0.97616,-0.33932 0.25159,-1.78416 z'],
+  ['','m 13.304665,11.910505 1.64975,2.35202 0.74426,2.62159 -1.73486,-1.38354 -0.86649,-2.97104 z'],
+  ['','m 18.385135,11.910505 -1.64975,2.35202 -0.74538,2.62234 1.73486,-1.38354 0.86649,-2.97104 z'],
+  ['','m 21.404635,64.784375 0.1243,1.12295 -0.87118,1.08171 -0.29058,1.70599 -0.58116,0.24933 -0.49774,-2.57866 -0.33182,-0.91486 0.29058,-0.58247 z m -3.85853,0.0832 0.6224,1.74685 1.3273,2.57867 -0.33182,2.37095 -0.95423,-2.66209 -0.78738,-1.49734 z m 4.97811,-2.37039 -0.95423,5.11609 0.62241,-0.33295 0.49773,1.66381 z'],
+  ['','m 10.284405,64.784375 -0.12448,1.12295 0.87118,1.08171 0.29058,1.70599 0.58116,0.24933 0.49774,-2.57866 0.33182,-0.91486 -0.29058,-0.58247 z m 3.85854,0.0832 -0.62241,1.74685 -1.32767,2.57867 0.33182,2.37095 0.95423,-2.66209 0.78832,-1.4964 z m -4.9786799,-2.37058 0.9542299,5.11609 -0.6223999,-0.33313 -0.49793,1.6638 z'],
+  ['','m 17.255895,87.868445 0.1243,3.45228 0.28983,1.20638 h 0.87136 l 0.24897,-0.83181 0.29058,-0.0416 -0.0624,0.83181 1.09914,-0.33332 0.29058,-0.16629 1.24444,-0.27033 0.0416,-0.97748 -1.20319,-2.03743 -0.82974,-1.0399 -2.03294,-0.83181 z'],
+  ['','m 14.433335,87.868265 -0.12448,3.45228 -0.29058,1.20637 h -0.87118 l -0.24877,-0.83181 -0.29059,-0.0416 0.0623,0.83181 -1.09934,-0.33333 -0.29058,-0.16629 -1.2448,-0.27033 -0.0412,-0.97747 1.2031899,-2.03781 0.82975,-1.04009 2.03294,-0.83181 z'],
+  ['chest-upper-left','m 20.337455,17.085495 1.72942,3.09103 1.890,0.94 -0.5,0.3 -6.8,-2.1 z'],
+  ['chest-lower-left','m 16.66,19.72 6.8,2.1 -0.65,0.5 -0.90604,2.63773 -2.09968,0.86537 -3.34524,-1.655 0.2,-3.8 z'],
+  ['chest-upper-right','m 11.351215,17.085495 -1.7294199,3.09103 -1.890,0.94 0.5,0.3 6.8,-2.1 z'],
+  ['chest-lower-right','m 15.03,19.72 -6.8,2.1 0.65,0.5 0.90586,2.63773 2.0996699,0.86537 3.34636,-1.655 -0.2,-3.8 z'],
+  ['shoulder-front-left','m 19.047795,13.248365 3.55748,1.97916 0.72653,-0.35074 z m -0.107,0.43288 -0.37119,1.73073 2.1846,0.53561 1.40116,-0.49436 z'],
+  ['shoulder-side-left','m 22.922305,15.657195 0.75814,-0.41 2.40806,1.66799 1.17364,1.50707 0.62662,1.5626 -0.0464,3.70194 -1.3284,-1.72153 0.0407,-2.59376 -0.48842,-0.50049 c 0,0 -3.09778,-3.19058 -3.14371,-3.21401 z m -0.2409,0.10873 c -0.001,0.0525 3.32987,3.54733 3.32987,3.54733 l 0.10067,3.10396 -1.15426,-1.97782 -2.22547,-0.94804 -1.56576,-2.88481 z'],
+  ['shoulder-front-right','m 12.624785,13.248365 -3.5574599,1.97916 -0.72653,-0.35074 z m 0.107,0.43288 0.37119,1.73073 -2.18459,0.53561 -1.4011499,-0.49436 z'],
+  ['shoulder-side-right','m 8.7502951,15.657195 -0.75814,-0.41 -2.40806,1.66799 -1.17364,1.50707 -0.62662,1.56259 0.0464,3.70195 1.3284,-1.72153 -0.0407,-2.59376 0.48843,-0.5005 c 0,0 3.09777,-3.19057 3.1437,-3.214 z m 0.2409,0.10873 c 0.002,0.0525 -3.32987,3.54733 -3.32987,3.54733 l -0.10067,3.10396 1.15426,-1.97782 2.22547,-0.94804 1.5657499,-2.88481 z'],
+  ['biceps-left','m 27.621665,30.814715 -0.33838,1.70499 -1.81932,-2.54418 -0.6629,-1.26895 z m -2.85271,-2.6096 c -0.0259,-0.0144 -0.0536,-0.0254 -0.0824,-0.0324 l -1.48333,-4.95503 1.00456,-2.08428 1.65511,1.74532 2.23034,6.67667 0.0415,0.93739 c -1.06528,-0.84215 -2.18962,-1.60679 -3.36434,-2.28803 z m 1.6945,-5.75654 1.64893,6.43421 -0.36469,-4.92266 z'],
+  ['biceps-right','m 4.0746451,30.814715 0.33838,1.70499 1.81931,-2.54418 0.66289,-1.26895 z m 2.8527,-2.6096 c 0.0259,-0.0144 0.0536,-0.0254 0.0824,-0.0324 l 1.48332,-4.95503 -1.00455,-2.08428 -1.65509,1.74532 -2.23034,6.67667 -0.0415,0.93739 c 1.06528,-0.84215 2.18961,-1.60679 3.36433,-2.28803 z m -1.6945,-5.75654 -1.64891,6.43421 0.36468,-4.92266 z'],
+  ['forearm-left','m 26.955425,32.969125 1.30083,10.28927 -1.10778,0.01 -1.89387,-7.99609 0.19174,-4.53719 z m 1.21978,-1.94971 -0.58729,2.58635 1.11876,9.15614 0.55849,-0.21663 0.2304,-6.77018 z'],
+  ['forearm-right','m 4.5752651,32.969125 -1.30083,10.28927 1.10778,0.01 1.89387,-7.99609 -0.19174,-4.53719 z m -1.21978,-1.94971 0.58728,2.58635 -1.11875,9.15614 -0.55849,-0.21663 -0.2304,-6.77018 z'],
+  ['abs-upper-left','m 19.641935,34.707615 1.81341,-1.36479 0.15748,1.83347 1.28642,2.37338 -1.98044,2.73652 -1.03109,0.16554 -0.37026,-3.88816 z'],
+  ['abs-upper-right','m 12.045985,34.707615 -1.81341,-1.36479 -0.15748,1.83347 -1.2856799,2.37432 1.9804499,2.73595 1.03109,0.16554 0.37119,-3.88721 z'],
+  ['abs-lower-left','m 16.051865,44.919165 0.60628,-5.91209 0.0154,-3.84915 2.18404,-1.07515 0.24746,7.03017 z'],
+  ['abs-lower-right','m 15.636055,44.919735 -0.60647,-5.91209 -0.015,-3.84879 -2.18479,-1.07533 -0.24746,7.03017 z'],
+  ['obliques-left','M 18.791,29.025 l -0.0622,1.62387 -2.30308,-0.49961 -0.12448,-2.21722 z M 18.635,31.429 l 0.0311,1.99844 -2.20953,0.59391 -0.0311,-3.1227 z M 21.290,30.444 l -1.48383,1.03372 -0.20622,2.10905 1.64862,-1.32355 z'],
+  ['obliques-right','M 12.897,29.025 l 0.0623,1.62387 2.30327,-0.49961 0.12448,-2.21703 z M 13.053,31.430 l -0.0309,1.99844 2.20973,0.59353 0.0311,-3.1227 z M 10.398,30.445 l 1.48384,1.0339 0.20622,2.10905 -1.64975,-1.32355 z'],
+  ['serratus-anterior-left','M 19.289,26.152 l -3.11202,-1.40604 0.0937,2.27965 2.80119,1.43603 z M 21.224,27.820 l -1.29355,0.7212 0.14997,-1.70898 z M 20.171,26.183 l 2.47968,-1.03241 -0.9336,2.52093 z M 21.702,27.921 l -1.69005,1.03372 -0.28871,2.0678 1.64975,-1.07533 z'],
+  ['serratus-anterior-right','m 12.399365,26.152365 3.11202,-1.40603 -0.0937,2.27965 -2.80138,1.4364 z m -1.93508,1.6685 1.29355,0.72139 -0.14997,-1.70899 z m 1.05303,-1.637 -2.4793099,-1.03259 0.93361,2.52148 z m -1.5316399,1.73729 1.6900499,1.03372 0.28871,2.06743 -1.64881,-1.07515 z'],
+  ['hip-flexor-left','m 17.284025,45.040455 -0.0221,-0.0281 0.14867,-0.37926 3.10171,-3.40449 0.23246,-0.0825 -2.05843,5.3199 z m 1.17263,2.01795 -1.27706,3.29948 -0.42631,-4.04843 0.25197,-0.64303 z'],
+  ['hip-flexor-right','m 14.404465,45.040075 0.0221,-0.0277 -0.14866,-0.37945 -3.10172,-3.40449 -0.23283,-0.0825 2.05918,5.32009 z m -1.17263,2.01833 1.27705,3.29948 0.42631,-4.04862 -0.25196,-0.64303 z'],
+  ['adductors-left','m 22.063225,39.369605 v 4.21363 l -2.94574,5.82511 -1.86027,5.78349 0.19365,-4.0072 z m -3.24944,13.42596 -0.0649,0.15467 -1.21294,2.90207 0.78325,7.18803 1.23619,-0.66122 -1.0714,-6.69272 z'],
+  ['adductors-right','m 9.6258251,39.369415 v 4.21363 l 2.9451699,5.8253 1.86028,5.78349 -0.19366,-4.0072 z m 3.2488699,13.42559 0.0647,0.15485 1.21294,2.90207 -0.78307,7.18803 -1.23618,-0.66102 1.0714,-6.69273 z'],
+  ['quads-left','m 23.419015,50.399125 -0.15504,4.75091 -2.40263,6.60949 0.7362,1.90021 2.36401,-8.34435 z m -0.58154,-11.60825 -0.15485,4.00722 1.31793,7.93154 0.61977,-6.40308 z m -0.38731,5.12268 -2.75152,6.07258 -0.62015,4.87425 1.16232,6.85771 2.51886,-6.98144 0.15504,-7.18764 z'],
+  ['quads-right','m 8.2694651,50.399125 0.15504,4.75053 2.4026299,6.60968 -0.73638,1.90021 -2.3640099,-8.34435 z m 0.58117,-11.60768 0.15503,4.00684 -1.31754,7.93154 -0.61978,-6.40308 z m 0.38769,5.1223 2.7515099,6.07239 0.61997,4.87425 -1.16232,6.85771 -2.5190499,-6.98163 -0.15504,-7.18801 z'],
+  ['tibialis-anterior-left','m 18.251375,70.441125 0.29058,0.91486 0.6224,3.8681 0.0829,5.15733 -0.87136,5.03304 0.0412,-6.44714 -0.91242,-2.57848 -0.12561,-2.82837 z m 1.9915,2.32915 -0.20753,7.73637 -1.65949,6.23904 1.80478,-0.853 3.00816,-10.83583 -1.03727,-6.82095 z'],
+  ['tibialis-anterior-right','m 13.437675,70.440945 -0.29058,0.91486 -0.62241,3.86828 -0.0829,5.15733 0.87174,5.03304 -0.0418,-6.44714 0.91298,-2.57848 0.1243,-2.82837 z m -1.99151,2.32914 0.20735,7.73637 1.65968,6.23904 -1.80497,-0.85299 -3.0079799,-10.83584 1.03728,-6.82095 z'],
+];
+const _BP=[
+  ['','m 48.157455,6.3585449 0.44208,-0.14964 0.16111,0.16427 1.48163,4.04751 2.32401,1.45118 2.39971,-1.52387 0.97577,-3.68969 0.52752,-0.55908 0.23367,0.0981 0.24198,-3.34467 -2.03129,-2.31103 -2.84509,-0.51629 -2.20422,0.52915 -1.93631,2.63077 z'],
+  ['','m 52.369695,12.105075 -2.35767,-1.55045 -1.47119,-3.95143 -0.60741,0.0403 0.27409,1.82447 0.97635,0.33932 0.7613,2.21572 0.33017,1.06849 0.0895,2.14894 1.16448,0.008 0.10563,-0.70833 0.54716,-0.0606 z m 1.01793,1.47595 0.23768,0.64982 1.38107,-0.004 0.01,-2.38784 0.25971,-0.79061 0.57215,-2.1698 0.76359,-0.41018 0.25158,-1.78416 -0.62859,0.0193 -1.08488,3.89981 -2.39725,1.46684 0.2768,1.48507 z'],
+  ['','m 51.733705,14.788555 0.53876,25.33066 0.48967,-0.0297 0.65658,-25.3387 -0.28147,-0.84188 -1.25059,-0.00049 z'],
+  ['','m 51.176145,64.073985 -1.20605,3.01461 0.70738,0.26558 0.89754,3.51771 -0.55801,-4.01191 z m -5.08496,-3.15003 0.63355,1.8609 0.16813,2.03261 0.61314,1.93117 -0.90585,-0.0851 -0.28534,2.15982 z'],
+  ['','m 54.019305,64.073985 1.20605,3.01461 -0.70737,0.26558 -0.89755,3.51771 0.55802,-4.01191 z m 5.08496,-3.15003 -0.63355,1.8609 -0.16813,2.03261 -0.61313,1.93117 0.90584,-0.0851 0.28534,2.15982 z'],
+  ['','M 50.933115,88.340995 l 0.85194,1.3581 0.37189,0.79238 -0.15588,1.21774 -0.76984,0.74446 -1.51185,0.12543 -1.1299,-0.29192 -0.24225,-0.95894 0.80765,-1.30405 -0.22562,-0.85987 0.29679,-0.84153 -0.0194,-1.81524 1.53568,-0.54817 z'],
+  ['','M 54.262335,88.340995 l -0.85194,1.3581 -0.37189,0.79238 0.15589,1.21774 0.76983,0.74446 1.51186,0.12543 1.12989,-0.29192 0.24225,-0.95894 -0.80765,-1.30405 0.22563,-0.85987 -0.29679,-0.84153 0.0194,-1.81524 -1.53568,-0.54817 z'],
+  ['traps-upper-left','M 49.625,14.629 L 49.688,12.005 L 48.974,13.157 L 44.594,14.654 L 45.945,16.925 L 51.222,16.925 L 51.183,14.550 Z'],
+  ['traps-mid-left','M 46.034,17.075 L 48.920,21.925 L 51.303,21.925 L 51.224,17.075 Z'],
+  ['traps-lower-left','M 49.009,22.075 L 49.572,23.022 L 51.403,28.104 L 51.305,22.075 Z'],
+  ['traps-upper-right','M 55.439,14.729 L 55.376,12.104 L 56.090,13.256 L 60.470,14.754 L 59.179,16.925 L 53.844,16.925 L 53.881,14.649 Z'],
+  ['traps-mid-right','M 59.089,17.075 L 56.204,21.925 L 53.763,21.925 L 53.842,17.075 Z'],
+  ['traps-lower-right','M 56.114,22.075 L 55.492,23.121 L 53.661,28.203 L 53.761,22.075 Z'],
+  ['lats-upper-left','M 44.144,15.285 L 39.888,20.286 L 39.426,22.749 L 41.263,21.510 L 44.025,20.355 L 45.663,23.400 L 49.103,23.400 Z'],
+  ['lats-mid-left','M 45.771,23.600 L 45.872,23.789 L 47.009,29.286 L 47.023,30.400 L 51.080,30.400 L 51.053,28.314 L 49.185,23.600 Z'],
+  ['lats-lower-left','M 47.026,30.600 L 47.086,35.145 L 51.156,36.255 L 51.082,30.600 Z'],
+  ['lats-upper-right','M 60.921,15.384 L 65.176,20.385 L 65.290,22.849 L 63.801,21.609 L 61.039,20.454 L 59.455,23.400 L 56.022,23.400 Z'],
+  ['lats-mid-right','M 59.347,23.600 L 59.192,23.888 L 58.055,29.385 L 58.042,30.400 L 53.986,30.400 L 54.012,28.413 L 55.918,23.600 Z'],
+  ['lats-lower-right','M 58.039,30.600 L 57.979,35.245 L 53.908,36.354 L 53.983,30.600 Z'],
+  ['deltoid-rear-left','M 42.201,16.586 L 40.626,18.152 L 39.736,20.156 L 43.992,15.155 Z'],
+  ['deltoid-rear-right','M 62.863,16.686 L 64.438,18.251 L 65.328,20.255 L 61.073,15.254 Z'],
+  ['triceps-long-left','M 43.593,21.039 L 44.920,23.967 L 43.615,25.653 L 43.186,27.069 L 39.209,29.802 Z'],
+  ['triceps-lateral-left','M 43.459,20.972 L 39.075,29.735 L 38.871,25.461 L 39.407,23.674 L 41.242,21.927 Z'],
+  ['triceps-long-right','M 61.376,21.213 L 60.056,24.145 L 61.330,26.199 L 61.657,27.251 L 65.780,29.966 Z'],
+  ['triceps-lateral-right','M 61.510,21.146 L 65.914,29.899 L 66.108,25.624 L 65.568,23.839 L 63.729,22.096 Z'],
+  ['forearm-flexors-left','M 40.775,29.006 L 42.870,27.644 L 42.187,29.635 L 42.603,34.383 L 40.799,42.081 L 39.814,42.253 Z'],
+  ['forearm-extensors-left','M 39.665,42.242 L 38.305,41.501 L 37.998,34.491 L 38.635,31.429 L 39.245,30.209 L 40.625,28.994 Z'],
+  ['forearm-flexors-right','M 65.204,42.420 L 63.925,29.007 L 61.764,27.798 L 62.786,29.733 L 62.397,34.555 L 64.219,42.248 Z'],
+  ['forearm-extensors-right','M 64.075,28.993 L 65.353,42.405 L 66.712,41.663 L 67.002,34.653 L 66.358,31.591 L 65.745,30.373 Z'],
+  ['lower-back-erectors-left','M 52.100,37.310 L 49.537,36.465 L 50.244,40.788 L 52.200,42.030 L 52.200,40.270 L 52.150,40.280 Z'],
+  ['lower-back-ql-left','M 49.389,36.490 L 46.240,35.460 L 44.720,39.420 L 50.096,40.812 Z'],
+  ['lower-back-erectors-right','M 52.800,42.030 L 52.800,40.270 L 52.850,40.260 L 52.900,37.290 L 55.289,36.625 L 54.805,40.801 Z'],
+  ['lower-back-ql-right','M 55.439,36.643 L 55.980,36.470 L 58.320,35.720 L 59.660,39.450 L 54.955,40.819 Z'],
+  ['gluteus-medius-left','M 50.191,41.481 L 44.740,39.690 L 43.830,41.580 L 43.431,44.301 Z'],
+  ['gluteus-maximus-left','M 50.249,41.619 L 43.489,44.439 L 44.410,50.520 L 47.180,51.030 L 51.620,49.090 L 52.200,49.480 L 52.200,42.880 Z'],
+  ['gluteus-medius-right','M 55.274,41.079 L 61.354,45.519 L 60.640,42.150 L 59.740,39.860 Z'],
+  ['gluteus-maximus-right','M 55.186,41.201 L 52.800,42.880 L 52.800,49.480 L 53.570,49.090 L 57.680,50.760 L 60.500,50.600 L 61.266,45.641 Z'],
+  ['hamstrings-medial-left','M 49.550,50.504 L 51.751,49.461 L 52.389,49.692 L 52.424,51.499 L 52.499,56.145 L 50.521,62.188 L 50.997,63.602 L 49.569,66.897 L 48.755,66.754 Z'],
+  ['hamstrings-lateral-left','M 49.400,50.496 L 48.605,66.746 L 47.803,66.596 L 47.302,64.480 L 47.133,62.723 L 44.712,54.565 L 44.369,50.918 L 47.200,51.500 Z'],
+  ['hamstrings-medial-right','M 57.425,51.196 L 56.565,66.806 L 55.759,66.965 L 54.331,63.670 L 54.807,62.256 L 52.829,56.213 L 52.904,51.567 L 52.956,49.769 L 53.520,49.498 Z'],
+  ['hamstrings-lateral-right','M 57.575,51.204 L 60.625,50.950 L 60.616,54.633 L 58.195,62.791 L 58.026,64.547 L 57.525,66.663 L 56.715,66.814 Z'],
+  ['calves-gastroc-medial-left','M 50.568,67.512 L 51.669,72.509 L 51.379,75.532 L 51.292,76.825 L 48.983,76.825 Z'],
+  ['calves-gastroc-lateral-left','M 50.218,67.512 L 48.633,76.825 L 46.283,76.825 L 45.533,74.263 L 46.783,67.088 Z'],
+  ['calves-soleus-left','M 46.386,77.175 L 51.269,77.175 L 50.701,85.598 L 49.037,86.233 Z'],
+  ['calves-gastroc-medial-right','M 54.628,67.512 L 53.526,72.509 L 53.816,75.532 L 53.903,76.825 L 56.213,76.825 Z'],
+  ['calves-gastroc-lateral-right','M 54.978,67.512 L 56.563,76.825 L 58.912,76.825 L 59.662,74.263 L 58.412,67.088 Z'],
+  ['calves-soleus-right','M 53.927,77.175 L 58.810,77.175 L 56.158,86.233 L 54.495,85.598 Z'],
+];
+function _mscScores(exs){
+  const sc={};
+  (exs||[]).forEach(ex=>{
+    if(!(ex.sets||[]).some(s=>s.done))return;
+    for(const r of _MEX){if(r.re.test(ex.name||'')){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});break;}}
+  });
+  return sc;
+}
+function _mscSVG(sc){
+  const pd={};
+  Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const[f,k]=v>=2?['#FF2D55','#cc0020']:v===1?['#FF9500','#cc7500']:['#e4e4e4','#ccc'];d.paths.forEach(id=>{pd[id]={f,k};});});
+  const pt=([id,d])=>{const c=id?(pd[id]||{f:'#e4e4e4',k:'#ccc'}):{f:'#d8d8d8',k:'#b8b8b8'};return `<path d="${d}" fill="${c.f}" stroke="${c.k}" stroke-width="${id?'0.25':'0.18'}"/>`;};
+  return `<svg viewBox="-1 0 72 96" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">${_FP.map(pt).join('')}${_BP.map(pt).join('')}<text x="17" y="94.5" text-anchor="middle" font-size="2.2" fill="#aaa" font-family="system-ui,sans-serif">VUE AVANT</text><text x="52" y="94.5" text-anchor="middle" font-size="2.2" fill="#aaa" font-family="system-ui,sans-serif">VUE ARRIÈRE</text></svg>`;
+}
+let _mmCb=null;
+function showMuscleMap(exs,cb){
+  const sc=_mscScores(exs);
+  document.getElementById('mm-svg').innerHTML=_mscSVG(sc);
+  const pri=Object.entries(_MG).filter(([g])=>(sc[g]||0)>=2).map(([,d])=>d.label);
+  const sec=Object.entries(_MG).filter(([g])=>(sc[g]||0)===1).map(([,d])=>d.label);
+  const li=document.getElementById('mm-list');
+  li.innerHTML=(pri.length?`<div><span style="color:#FF2D55;font-weight:600">● Primaires : </span>${pri.join(', ')}</div>`:'')+
+               (sec.length?`<div style="margin-top:3px"><span style="color:#FF9500;font-weight:600">● Secondaires : </span>${sec.join(', ')}</div>`:'');
+  _mmCb=cb||null;
+  document.getElementById('ov-mm').classList.add('open');
+}
+function closeMuscleMap(){
+  document.getElementById('ov-mm').classList.remove('open');
+  if(_mmCb){_mmCb();_mmCb=null;}
+}
+
 async function finishWorkout(){
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Ajoute un exercice !','error');return;}
   const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
@@ -1739,7 +1919,7 @@ async function finishWorkout(){
   } else {
     toast(`Séance terminée ! 🔥 ${calData.total} kcal brûlées`,'success');
   }
-  setTimeout(()=>openCheckin(sess),600);
+  setTimeout(()=>showMuscleMap(sess.exs,()=>openCheckin(sess)),800);
 }
 
 // ─── REST TIMER ──────────────────────────────────────────────
