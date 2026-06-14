@@ -747,8 +747,8 @@ html.ob-done #onboarding{display:none;}
       <div id="rest-label"></div>
     </div>
     <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
-    <button class="rbtn" onclick="addRT(-15)">−15s</button>
-    <button class="rbtn" onclick="addRT(15)">+15s</button>
+    <button class="rbtn" id="rest-btn-minus" onclick="addRT(-_restStep)">−15s</button>
+    <button class="rbtn" id="rest-btn-plus" onclick="addRT(_restStep)">+15s</button>
     <button class="rbtn" onclick="skipRest()">Skip</button>
   </div>
   <div id="wkt-exs"></div>
@@ -1878,11 +1878,17 @@ function toggleSet(ei,si){
   if(row){const inps=row.querySelectorAll('.sinp');if(!set.kg&&inps[0])set.kg=parseFloat(inps[0].value||inps[0].placeholder)||0;if(!set.reps&&inps[1])set.reps=parseInt(inps[1].value||inps[1].placeholder)||0;}
   set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);persist();
   if(set.done){
-    const restByType={N:S.defRest,W:45,E:240,D:20};
+    const exName=S.wkt.exs[ei].name;
+    const isAbdo=EXLIB.some(e=>e.n===exName&&e.g==='Abdominaux');
+    const defForEx=isAbdo?30:S.defRest;
+    const restByType={N:defForEx,W:45,E:240,D:20};
     const restLabels={W:'Échauffement',E:'Récup. complète',D:'Drop set'};
     const lbl=document.getElementById('rest-label');
-    if(lbl)lbl.textContent=restLabels[set.type]||'';
-    startRest(restByType[set.type]||S.defRest);
+    if(lbl)lbl.textContent=restLabels[set.type]||(isAbdo?'Abdos':'');
+    _restStep=isAbdo?5:15;
+    const mb=document.getElementById('rest-btn-minus');const pb=document.getElementById('rest-btn-plus');
+    if(mb)mb.textContent=`−${_restStep}s`;if(pb)pb.textContent=`+${_restStep}s`;
+    startRest(restByType[set.type]||defForEx);
     if(navigator.vibrate)navigator.vibrate([50]);
   }
   renderExBlocks();
@@ -2219,6 +2225,7 @@ function updateRMLive(ei,si){
   const trmEl=document.getElementById(`trm-${ei}-${si}`);
   if(trmEl)trmEl.textContent=kg&&reps?'~'+fmt(bz(kg,reps)):'';
 }
+let _restStep=15;
 function addRT(s){restLeft=Math.max(5,Math.min(restLeft+s,600));updRest();}
 function skipRest(){stopRest();}
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
