@@ -1156,6 +1156,19 @@ html.ob-done #onboarding{display:none;}
   </div>
 </div>
 
+<!-- MODAL: Confirmation générique -->
+<div class="overlay" id="ov-confirm" onclick="if(event.target===this)closeConfirm()">
+  <div class="modal" style="max-width:340px;padding:24px 20px">
+    <div style="font-size:36px;text-align:center;margin-bottom:12px">⚠️</div>
+    <div style="font-weight:800;font-size:16px;text-align:center;margin-bottom:8px" id="confirm-title"></div>
+    <div style="font-size:14px;color:var(--t2);text-align:center;margin-bottom:22px" id="confirm-msg"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-bg2" onclick="closeConfirm()" style="flex:1;padding:13px;font-size:15px">Annuler</button>
+      <button class="btn btn-red" id="confirm-ok" onclick="confirmOk()" style="flex:1;padding:13px;font-size:15px">Supprimer</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Types de séries -->
 <div class="overlay" id="ov-type-help" onclick="if(event.target===this)closeTypeHelp()">
   <div class="modal" style="max-width:380px;padding:20px">
@@ -1733,6 +1746,15 @@ function toggleSet(ei,si){
 function cycleType(ei,si){const s=S.wkt.exs[ei].sets[si];s.type=SET_TYPES[(SET_TYPES.indexOf(s.type)+1)%SET_TYPES.length];persist();renderExBlocks();}
 function openTypeHelp(){document.getElementById('ov-type-help').classList.add('open');}
 function closeTypeHelp(){document.getElementById('ov-type-help').classList.remove('open');}
+let _confirmCb=null;
+function showConfirm(title,msg,cb){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  _confirmCb=cb;
+  document.getElementById('ov-confirm').classList.add('open');
+}
+function closeConfirm(){document.getElementById('ov-confirm').classList.remove('open');_confirmCb=null;}
+function confirmOk(){const cb=_confirmCb;closeConfirm();if(cb)cb();}
 // Valide le set et focus automatiquement le kg du prochain set non-done
 function confirmSetAndNext(ei,si){
   toggleSet(ei,si);
@@ -1765,7 +1787,10 @@ function chainInputs(ids,lastFn){
 }
 function addSet(ei){const ex=S.wkt.exs[ei];const l=ex.sets[ex.sets.length-1];ex.sets.push({kg:l?l.kg:0,reps:l?l.reps:5,type:'N',done:false,rm1:0});persist();renderExBlocks();}
 function rmLastSet(ei){const ex=S.wkt.exs[ei];if(ex.sets.length>1){ex.sets.pop();persist();renderExBlocks();}}
-function rmEx(ei){S.wkt.exs.splice(ei,1);persist();renderExBlocks();}
+function rmEx(ei){
+  const name=S.wkt.exs[ei]&&S.wkt.exs[ei].name||'cet exercice';
+  showConfirm('Supprimer l\'exercice ?',`"${name}" et toutes ses séries seront supprimés de la séance.`,()=>{S.wkt.exs.splice(ei,1);persist();renderExBlocks();});
+}
 function addExercise(name){
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
@@ -2397,8 +2422,8 @@ function deleteSessSet(ei,si){
 }
 function deleteSessEx(ei){
   if(!_sessEdits)return;
-  _sessEdits.exs.splice(ei,1);
-  _renderSessDetailContent();
+  const name=_sessEdits.exs[ei]&&_sessEdits.exs[ei].name||'cet exercice';
+  showConfirm('Supprimer l\'exercice ?',`"${name}" sera retiré de cette séance.`,()=>{_sessEdits.exs.splice(ei,1);_renderSessDetailContent();});
 }
 
 function deleteSessOrConfirm(){
