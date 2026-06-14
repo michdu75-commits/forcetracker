@@ -1728,7 +1728,7 @@ function renderExBlocks(){
         <div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">
           <div class="snum">${si+1}</div>
           <div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>${prevRM?`<div style="font-size:10px">~${prevRM}kg</div>`:''}`:'<div>—</div>'}</div>
-          <input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();const n=this.nextElementSibling;n.focus();n.select&&n.select();}">
+          <input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">
           <input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">
           <button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}">${set.type}</button>
           <button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>
@@ -2056,6 +2056,19 @@ let restIv=null,restTot=120,restLeft=0;
 function startRest(sec){stopRest();restTot=sec;restLeft=sec;document.getElementById('rest-bar').classList.add('show');updRest();restIv=setInterval(()=>{restLeft--;updRest();if(restLeft<=0){stopRest();beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);}},1000);}
 function updRest(){const m=Math.floor(restLeft/60),s=restLeft%60;document.getElementById('rest-time').textContent=`${m}:${s.toString().padStart(2,'0')}`;const p=restLeft/restTot*100;document.getElementById('rest-fill').style.width=p+'%';const c=restLeft<10?'var(--red)':restLeft<30?'var(--gold)':'var(--green)';document.getElementById('rest-time').style.color=c;document.getElementById('rest-fill').style.background=c;}
 function stopRest(){clearInterval(restIv);document.getElementById('rest-bar').classList.remove('show');const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';}
+let _afTimer=null;
+function _onKgInput(el,ei,si){
+  updateRMLive(ei,si);
+  clearTimeout(_afTimer);
+  if(!el.value)return;
+  _afTimer=setTimeout(()=>{
+    if(document.activeElement!==el)return;
+    const row=document.getElementById(`sr-${ei}-${si}`);
+    if(!row)return;
+    const repsInp=row.querySelectorAll('.sinp')[1];
+    if(repsInp){repsInp.focus();repsInp.select&&repsInp.select();}
+  },700);
+}
 function updateRMLive(ei,si){
   const row=document.getElementById(`sr-${ei}-${si}`);
   if(!row)return;
