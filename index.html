@@ -4245,9 +4245,12 @@ function tryOpenSafari(){
 }
 
 function tryOpenChrome(){
-  // Android intent pour ouvrir dans Chrome
-  window.location.href = 'intent://' + APP_URL.replace('https://','') + '#Intent;scheme=https;package=com.android.chrome;end';
-  setTimeout(()=>copyAppLink('chrome'), 1200);
+  if(navigator.share){
+    navigator.share({title:'Force Tracker',url:APP_URL}).catch(()=>{});
+  } else {
+    copyAppLink('chrome');
+    toast('Lien copié — ouvre Chrome et colle dans la barre d\'adresse','info');
+  }
 }
 
 function copyAppLink(target){
