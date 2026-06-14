@@ -416,9 +416,14 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .coach-suggestions::-webkit-scrollbar{display:none;}
 .sugg-chip{flex-shrink:0;padding:8px 14px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid rgba(255,45,85,.4);background:rgba(255,45,85,.08);color:var(--red);cursor:pointer;font-family:var(--font);white-space:nowrap;touch-action:manipulation;transition:all .15s;}
 .sugg-chip:active{background:rgba(255,45,85,.2);}
-.coach-input-row{display:flex;gap:8px;padding:10px 14px 12px;border-top:1px solid var(--sep);background:var(--bg);flex-shrink:0;}
+.coach-input-row{display:flex;flex-direction:column;gap:8px;padding:8px 14px 12px;border-top:1px solid var(--sep);background:var(--bg);flex-shrink:0;}
+.coach-input-inner{display:flex;gap:8px;align-items:center;}
 .coach-input{flex:1;padding:11px 14px;font-size:15px;border:1.5px solid var(--sep);border-radius:24px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;}
 .coach-input:focus{border-color:var(--red);}
+.coach-cam-btn{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+#coach-img-preview{display:none;position:relative;align-self:flex-start;}
+#coach-img-preview img{width:64px;height:64px;border-radius:10px;object-fit:cover;border:2px solid var(--red);}
+#coach-img-preview button{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;}
 .coach-send{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#FF2D55,#FF4D6D);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;box-shadow:0 3px 12px rgba(255,45,85,.3);}
 .coach-send svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;}
 .coach-send:disabled{opacity:.4;cursor:not-allowed;}
@@ -1047,10 +1052,18 @@ html.ob-done #onboarding{display:none;}
     <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">🎯 Objectif réaliste ?</button>
   </div>
   <div class="coach-input-row">
-    <input class="coach-input" id="coach-inp" type="text" placeholder="Pose ta question au coach..." maxlength="500">
-    <button class="coach-send" id="coach-send-btn" onclick="sendToCoach()">
-      <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-    </button>
+    <div id="coach-img-preview">
+      <img id="coach-img-thumb" src="" alt="photo">
+      <button onclick="clearCoachImg()">×</button>
+    </div>
+    <div class="coach-input-inner">
+      <button class="coach-cam-btn" onclick="openCoachCamera()" title="Prendre une photo">📷</button>
+      <input class="coach-input" id="coach-inp" type="text" placeholder="Pose ta question au coach..." maxlength="500">
+      <button class="coach-send" id="coach-send-btn" onclick="sendToCoach()">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <input type="file" id="coach-cam-input" accept="image/*" capture="environment" style="display:none;" onchange="onCoachImgSelected(this)">
   </div>
 </div>
 
@@ -3761,6 +3774,55 @@ function hideTyping() {
   if (el) el.remove();
 }
 
+let _coachImg = null;
+let _coachImgType = 'image/jpeg';
+
+function openCoachCamera() {
+  document.getElementById('coach-cam-input').click();
+}
+
+function clearCoachImg() {
+  _coachImg = null;
+  const prev = document.getElementById('coach-img-preview');
+  if (prev) prev.style.display = 'none';
+  const inp = document.getElementById('coach-cam-input');
+  if (inp) inp.value = '';
+}
+
+async function _resizeImageBase64(file, maxSize) {
+  maxSize = maxSize || 800;
+  return new Promise(function(resolve) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h / w * maxSize); w = maxSize; }
+          else { w = Math.round(w / h * maxSize); h = maxSize; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function onCoachImgSelected(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  _coachImgType = file.type || 'image/jpeg';
+  _coachImg = await _resizeImageBase64(file);
+  const thumb = document.getElementById('coach-img-thumb');
+  const prev = document.getElementById('coach-img-preview');
+  if (thumb) thumb.src = 'data:' + _coachImgType + ';base64,' + _coachImg;
+  if (prev) prev.style.display = 'block';
+}
+
 async function sendToCoach(customMsg) {
   if (coachBusy) return;
 
@@ -3771,18 +3833,42 @@ async function sendToCoach(customMsg) {
 
   const inp = document.getElementById('coach-inp');
   const msg = customMsg || (inp ? inp.value.trim() : '');
-  if (!msg) return;
+  const hasImg = !!_coachImg;
+  if (!msg && !hasImg) return;
+
+  // Capturer l'image avant de la vider
+  const imgData = _coachImg;
+  const imgType = _coachImgType;
 
   coachBusy = true;
   if (inp) inp.value = '';
+  clearCoachImg();
   const sendBtn = document.getElementById('coach-send-btn');
   if (sendBtn) sendBtn.disabled = true;
 
   const suggs = document.getElementById('coach-suggs');
   if (suggs && coachHistory.length === 0) suggs.style.display = 'none';
 
-  renderCoachMsg('user', msg);
-  coachHistory.push({ role: 'user', content: msg });
+  // Bulle utilisateur avec image optionnelle
+  if (hasImg) {
+    const msgs = document.getElementById('coach-msgs');
+    if (msgs) {
+      const div = document.createElement('div');
+      div.className = 'msg-bubble msg-user';
+      div.innerHTML = (msg ? '<p style="margin:0 0 6px">' + msg.replace(/</g,'&lt;') + '</p>' : '') +
+        '<img src="data:' + imgType + ';base64,' + imgData + '" style="max-width:180px;border-radius:8px;display:block;">';
+      msgs.appendChild(div);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+  } else {
+    renderCoachMsg('user', msg);
+  }
+
+  const userHistContent = hasImg
+    ? [{ type: 'image', source: { type: 'base64', media_type: imgType, data: imgData } },
+       { type: 'text', text: msg || 'Analyse cette photo.' }]
+    : msg;
+  coachHistory.push({ role: 'user', content: userHistContent });
   showTyping();
 
   try {
@@ -3790,16 +3876,18 @@ async function sendToCoach(customMsg) {
     if (!S.url) {
       reply = '⚙️ Configure ton URL Google Apps Script dans Profil (Admin) pour activer le Coach IA.';
     } else {
+      const payload = {
+        action: 'coach',
+        message: msg || 'Analyse cette photo de mon corps.',
+        context: buildCoachContext(),
+        history: coachHistory.slice(-8)
+      };
+      if (hasImg) { payload.image = imgData; payload.imageType = imgType; }
       const resp = await fetch(S.url, {
         method: 'POST',
         redirect: 'follow',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'coach',
-          message: msg,
-          context: buildCoachContext(),
-          history: coachHistory.slice(-8)
-        })
+        body: JSON.stringify(payload)
       });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const data = await resp.json();
