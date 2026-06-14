@@ -525,10 +525,14 @@ html.ob-done #onboarding{display:none;}
 @keyframes iBounce{0%,100%{transform:translateY(-5px)}50%{transform:translateY(5px)}}
 @keyframes iSlideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
 
-/* ─── IN-APP BROWSER (iOS) ──────────────────────────────────── */
-#ov-inapp{position:fixed;inset:0;z-index:9999;background:var(--bg1);display:flex;align-items:center;justify-content:center;padding:28px 20px;}
-#ov-inapp.hidden{display:none;}
-.inapp-card{background:var(--bg2);border-radius:24px;padding:28px 22px;border:1px solid var(--sep);width:100%;max-width:390px;text-align:center;}
+/* ─── BANNIÈRE INSTALLATION ──────────────────────────────────── */
+#install-banner{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:9000;padding:12px 16px max(calc(env(safe-area-inset-bottom)+12px),20px);background:var(--bg2);border-top:1px solid var(--sep);box-shadow:0 -4px 24px rgba(0,0,0,.18);transition:transform .3s ease;}
+#install-banner.hidden{transform:translateX(-50%) translateY(110%);}
+.ib-row{display:flex;align-items:center;gap:10px;}
+.ib-qr{background:#fff;border-radius:8px;padding:4px;flex-shrink:0;}
+.ib-qr img{width:60px;height:60px;display:block;}
+.ib-text{flex:1;min-width:0;}
+.ib-close{background:none;border:none;color:var(--t3);font-size:22px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;}
 </style>
 </head>
 <body>
@@ -636,27 +640,21 @@ html.ob-done #onboarding{display:none;}
   </div><!-- .ob-wrap -->
 </div><!-- #onboarding -->
 
-<!-- ═══ IN-APP BROWSER (iOS / Android) ════════════════════════ -->
-<div id="ov-inapp" class="hidden">
-  <div class="inapp-card">
-    <div class="inapp-icon" style="font-size:48px;margin-bottom:10px;">🧭</div>
-    <div class="inapp-title" style="font-family:var(--font-cond);font-size:24px;font-weight:900;margin-bottom:6px;">Ouvre dans Safari</div>
-    <div class="inapp-desc" style="font-size:14px;color:var(--t2);line-height:1.5;margin-bottom:16px;">Pour installer Force Tracker, ouvre ce lien dans <strong style="color:var(--t1)">Safari</strong>.</div>
-
-    <!-- QR code — scannable depuis Safari -->
-    <div style="background:#fff;border-radius:12px;padding:10px;display:inline-block;margin-bottom:14px;">
-      <img id="inapp-qr" src="" alt="QR Code" style="width:140px;height:140px;display:block;">
+<!-- ═══ BANNIÈRE INSTALLATION (tous navigateurs) ═══════════════ -->
+<div id="install-banner" class="hidden">
+  <div class="ib-row">
+    <div class="ib-qr">
+      <img id="ib-qr-img" src="" alt="QR" loading="lazy">
     </div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:16px;">Scanne ce QR code avec l'appareil photo ou Safari</div>
-
-    <!-- URL visible et sélectionnable -->
-    <div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
-      <input id="inapp-url-input" type="text" readonly value="https://michdu75-commits.github.io/forcetracker/" style="flex:1;background:none;border:none;color:var(--t1);font-size:12px;outline:none;min-width:0;" onclick="this.select()">
-      <button class="inapp-btn-copy" onclick="copyAppLink('safari')" style="background:var(--red);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;">Copier</button>
+    <div class="ib-text">
+      <div id="ib-title" style="font-weight:700;font-size:14px;margin-bottom:2px;">Installer Force Tracker</div>
+      <div id="ib-desc" style="font-size:12px;color:var(--t2);line-height:1.4;">Scanne le QR code avec Safari, ou copie le lien.</div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button id="ib-btn-open" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;">Ouvrir</button>
+        <button id="ib-btn-copy" style="flex:1;background:var(--bg3);color:var(--t1);border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer;">Copier le lien</button>
+      </div>
     </div>
-
-    <button class="btn inapp-btn-open" style="background:var(--bg3);color:var(--t1);width:100%;font-size:14px;font-weight:600;padding:12px;border-radius:12px;margin-bottom:10px;">Essayer d'ouvrir Safari</button>
-    <button onclick="document.getElementById('ov-inapp').classList.add('hidden')" style="background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:6px;">Continuer sans installer</button>
+    <button class="ib-close" onclick="closeBanner()">×</button>
   </div>
 </div>
 
@@ -4233,31 +4231,38 @@ function copyAppLink(target){
   }
 }
 
-function _showInAppOverlay(icon, title, desc, btnLabel, btnAction, copyTarget){
-  const el = document.getElementById('ov-inapp');
-  el.querySelector('.inapp-icon').textContent = icon;
-  el.querySelector('.inapp-title').textContent = title;
-  el.querySelector('.inapp-desc').innerHTML = desc;
-  const btn = el.querySelector('.inapp-btn-open');
-  btn.textContent = btnLabel;
-  btn.onclick = btnAction;
-  // QR code via API publique (pas de clé requise)
-  const qr = document.getElementById('inapp-qr');
-  if(qr && !qr.src.includes('qr-code')) {
-    qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(APP_URL);
+function closeBanner(){
+  const b=document.getElementById('install-banner');
+  if(b)b.classList.add('hidden');
+}
+
+function _showInstallBanner(title, desc, openAction, copyTarget){
+  const b=document.getElementById('install-banner');
+  if(!b)return;
+  document.getElementById('ib-title').textContent=title;
+  document.getElementById('ib-desc').textContent=desc;
+  document.getElementById('ib-btn-open').onclick=openAction;
+  document.getElementById('ib-btn-copy').onclick=()=>copyAppLink(copyTarget);
+  const qr=document.getElementById('ib-qr-img');
+  if(qr&&!qr.src.includes('qrserver')){
+    qr.src='https://api.qrserver.com/v1/create-qr-code/?size=60x60&data='+encodeURIComponent(APP_URL);
   }
-  // URL dans le champ texte
-  const inp = document.getElementById('inapp-url-input');
-  if(inp) inp.value = APP_URL;
-  el.classList.remove('hidden');
+  b.classList.remove('hidden');
+}
+
+// Alias maintenu pour compatibilité avec le code de détection précoce
+function _showInAppOverlay(icon, title, desc, btnLabel, btnAction, copyTarget){
+  const descPlain=desc.replace(/<[^>]+>/g,'');
+  _showInstallBanner(title, descPlain, btnAction, copyTarget);
 }
 
 function showInstallPrompt(){
   if(_isStandalone())return;
   if(_isIOSInApp()){
-    _showInAppOverlay('🧭','Ouvre dans Safari',
-      'Pour installer Force Tracker sur ton iPhone, ce lien doit s\'ouvrir dans <strong style="color:var(--t1)">Safari</strong>.',
-      'Ouvrir dans Safari', tryOpenSafari, 'safari');
+    _showInstallBanner(
+      'Installer sur iPhone',
+      'Scanne le QR avec l\'appareil photo, ou copie le lien et ouvre Safari.',
+      tryOpenSafari, 'safari');
     return;
   }
   if(_isIOS()){
@@ -4265,9 +4270,10 @@ function showInstallPrompt(){
     return;
   }
   if(_isFirefoxAndroid()){
-    _showInAppOverlay('🤖','Ouvre dans Chrome',
-      'Pour installer Force Tracker sur ton Android, ce lien doit s\'ouvrir dans <strong style="color:var(--t1)">Chrome</strong>.',
-      'Ouvrir dans Chrome', tryOpenChrome, 'chrome');
+    _showInstallBanner(
+      'Installer sur Android',
+      'Scanne le QR ou copie le lien et ouvre Chrome.',
+      tryOpenChrome, 'chrome');
     return;
   }
   if(window._deferredInstall){
