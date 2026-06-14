@@ -2523,6 +2523,7 @@ function _renderSessDetailContent(){
                style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'reps',+this.value)">
         <span style="color:var(--t2);font-size:12px">reps</span>
+        ${s.kg&&s.reps?`<span style="font-size:11px;color:var(--t3);margin-left:2px">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
         <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
       </div>`).join('')}
       ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série</div>':''}
