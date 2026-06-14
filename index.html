@@ -2325,7 +2325,8 @@ const EX_YT={
   'Développé Militaire':{id:'NQ-JJYay1TM',s:false},
   'Développé Incliné':{id:'tN3SLXtS-5E',s:false},
   'Pull-over':{id:'JdzaVp3zEAM',s:false},
-  'Soulevé de Terre':{id:'4TnASXqXKeQ',s:false}
+  'Soulevé de Terre':{id:'4TnASXqXKeQ',s:false},
+  'Glute Bridge':{img:'exercises/glute-bridge.webp'}
 };
 
 const EX_EN={
@@ -2376,7 +2377,14 @@ function _ytSearchUrl(name){
 
 function _exVideoHtml(name){
   const v=EX_YT[name];
-  if(v){
+  if(v&&v.img){
+    // Image locale
+    return `<div>
+      <img src="${v.img}" style="width:100%;border-radius:8px;display:block;margin-bottom:8px;" loading="lazy">
+      <a href="${_ytSearchUrl(name)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#FF0000;color:#fff;border-radius:8px;padding:10px 14px;font-size:14px;font-weight:700;text-decoration:none;-webkit-tap-highlight-color:transparent;">▶&nbsp;Voir le tutoriel</a>
+    </div>`;
+  }
+  if(v&&v.id){
     const watchUrl=v.s?'https://www.youtube.com/shorts/'+v.id:'https://www.youtube.com/watch?v='+v.id;
     const thumb='https://img.youtube.com/vi/'+v.id+'/mqdefault.jpg';
     return `<a href="${watchUrl}" target="_blank" rel="noopener" style="display:block;position:relative;border-radius:10px;overflow:hidden;text-decoration:none;-webkit-tap-highlight-color:transparent;">
