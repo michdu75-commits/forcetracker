@@ -2313,56 +2313,69 @@ function deleteProg(idx){
   toast('"'+name+'" supprimé','info');
 }
 
-// ─── EXERCISE GIF (wger.de) ───────────────────────────────────
+// ─── EXERCISE VIDEO / IMAGE ───────────────────────────────────
 const gifCache={};
 const EX_EN={
-  'Squat':'squat barbell','Développé Couché':'bench press','Soulevé de Terre':'deadlift',
+  'Squat':'squat barbell','Développé Couché':'bench press barbell','Soulevé de Terre':'deadlift conventional',
   'Soulevé de Terre Sumo':'sumo deadlift','Soulevé de Terre Roumain':'romanian deadlift',
-  'Développé Militaire':'overhead press','Rowing Barre':'barbell row','Traction Lestée':'pull-up',
-  'Squat Avant':'front squat','Squat Bulgare':'bulgarian split squat','Hip Thrust':'hip thrust',
-  'Leg Press':'leg press','Leg Curl':'leg curl','Leg Extension':'leg extension',
-  'Hack Squat':'hack squat','Curl Barre':'barbell curl','Curl Haltères':'dumbbell curl',
-  'Marteau':'hammer curl','Extension Triceps':'triceps extension','Dips Lestés':'dips',
-  'Barre au Front':'skull crusher','Triceps Poulie':'triceps pushdown',
-  'Développé Incliné':'incline bench press','Écarté Haltères':'dumbbell fly',
-  'Rowing Cable':'cable row','Rowing Haltère':'dumbbell row',
-  'Tirage Poulie Haute':'lat pulldown','Tirage Nuque':'behind neck pulldown',
-  'Face Pull':'face pull','Élévations Latérales':'lateral raise',
-  'Shrugs':'shrug','Gainage':'plank'
+  'Développé Militaire':'overhead press barbell','Rowing Barre':'barbell row bent over','Traction Lestée':'pull-up weighted',
+  'Squat Avant':'front squat','Squat Bulgare':'bulgarian split squat','Hip Thrust':'hip thrust barbell',
+  'Leg Press':'leg press machine','Leg Curl':'leg curl machine','Leg Extension':'leg extension machine',
+  'Hack Squat':'hack squat','Curl Barre':'barbell bicep curl','Curl Haltères':'dumbbell bicep curl',
+  'Marteau':'hammer curl','Extension Triceps':'triceps extension overhead','Dips Lestés':'dips weighted',
+  'Barre au Front':'skull crusher','Triceps Poulie':'triceps pushdown cable',
+  'Développé Incliné':'incline bench press','Écarté Haltères':'dumbbell fly chest',
+  'Rowing Cable':'cable row seated','Rowing Haltère':'dumbbell row one arm',
+  'Tirage Poulie Haute':'lat pulldown cable','Tirage Nuque':'behind neck pulldown',
+  'Face Pull':'face pull cable','Élévations Latérales':'lateral raise dumbbell',
+  'Shrugs':'barbell shrug','Gainage':'plank core'
 };
-async function fetchExGif(name){
+
+async function fetchExImage(name){
   if(gifCache[name]!==undefined)return gifCache[name];
   gifCache[name]=null;
   const term=EX_EN[name]||name;
   try{
-    const r=await fetch(`https://wger.de/api/v2/exercisesearch/?term=${encodeURIComponent(term)}&language=2&format=json`);
+    const r=await fetch(`https://wger.de/api/v2/exercisesearch/?term=${encodeURIComponent(term)}&language=2&format=json`,{signal:AbortSignal.timeout(5000)});
     if(!r.ok)return null;
     const d=await r.json();
     const first=d.suggestions&&d.suggestions[0];
-    if(!first)return null;
+    if(!first||!first.data)return null;
     const baseId=first.data.base_id;
-    const r2=await fetch(`https://wger.de/api/v2/exerciseimage/?exercise_base=${baseId}&format=json`);
+    if(!baseId)return null;
+    const r2=await fetch(`https://wger.de/api/v2/exerciseimage/?exercise_base=${baseId}&format=json`,{signal:AbortSignal.timeout(5000)});
     if(!r2.ok)return null;
     const d2=await r2.json();
-    const img=d2.results&&d2.results[0];
-    if(img){gifCache[name]=img.image;return img.image;}
-    return null;
-  }catch(e){return null;}
+    const imgs=d2.results||[];
+    // Préférer l'image principale
+    const main=imgs.find(i=>i.is_main)||imgs[0];
+    if(main&&main.image){gifCache[name]=main.image;return main.image;}
+  }catch(e){}
+  return null;
 }
+
+function _ytUrl(name){
+  const term=(EX_EN[name]||name)+' technique form tutorial';
+  return 'https://www.youtube.com/results?search_query='+encodeURIComponent(term);
+}
+
 async function toggleExGif(ei,name){
   const panel=document.getElementById(`ex-gif-${ei}`);
   if(!panel)return;
   if(panel.dataset.open==='1'){panel.style.display='none';panel.dataset.open='0';return;}
   panel.style.display='block';panel.dataset.open='1';
   if(panel.dataset.loaded==='1')return;
-  panel.innerHTML='<div style="text-align:center;padding:12px;color:var(--t3);font-size:13px;">Chargement...</div>';
-  const url=await fetchExGif(name);
+  panel.innerHTML='<div style="text-align:center;padding:14px;color:var(--t3);font-size:13px;">⏳ Chargement…</div>';
+  const imgUrl=await fetchExImage(name);
   panel.dataset.loaded='1';
-  if(url){
-    panel.innerHTML=`<div style="padding:10px;text-align:center;background:var(--bg3);"><img src="${url}" style="max-width:100%;border-radius:8px;max-height:220px;" loading="lazy" onerror="this.parentElement.innerHTML='<div style=padding:10px;text-align:center;font-size:12px;color:var(--t3)>Pas d\\'image disponible</div>'"></div>`;
-  }else{
-    panel.innerHTML='<div style="padding:10px;text-align:center;font-size:12px;color:var(--t3);">Pas d\'image disponible</div>';
+  const yt=_ytUrl(name);
+  let html='<div style="padding:10px;background:var(--bg3);border-radius:10px;">';
+  if(imgUrl){
+    html+=`<img src="${imgUrl}" style="width:100%;border-radius:8px;max-height:220px;object-fit:cover;display:block;margin-bottom:8px;" loading="lazy" onerror="this.style.display='none'">`;
   }
+  html+=`<a href="${yt}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#FF0000;color:#fff;border-radius:8px;padding:10px 14px;font-size:14px;font-weight:700;text-decoration:none;-webkit-tap-highlight-color:transparent;">▶&nbsp;Voir le tutoriel</a>`;
+  html+='</div>';
+  panel.innerHTML=html;
 }
 
 // ─── PLATE CALCULATOR ────────────────────────────────────────
