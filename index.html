@@ -248,7 +248,7 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .sess-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;}
 .sess-date{font-size:14px;font-weight:700;}
 .sess-vol{font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--red);}
-.sess-exs{padding:0 16px 12px;font-size:14px;color:var(--t2);line-height:1.5;}
+.sess-exs{padding:0 0 0 16px;font-size:14px;color:var(--t2);line-height:1.5;overflow:hidden;}
 .synced-pill{display:inline-flex;align-items:center;gap:3px;font-size:12px;background:rgba(0,230,118,.12);color:var(--green);padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:700;}
 
 /* CHART */
@@ -2788,6 +2788,12 @@ function closeSessDetail(){
   if(_sdDelTimer){clearTimeout(_sdDelTimer);_sdDelTimer=null;}
 }
 
+function _mscSVGmini(sc){
+  const pd={};
+  Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const[f,k]=v>=2?['#FF2D55','#cc0020']:v===1?['#FF9500','#cc7500']:['#e4e4e4','#ccc'];d.paths.forEach(id=>{pd[id]={f,k};});});
+  const pt=([id,d])=>{const c=id?(pd[id]||{f:'#e4e4e4',k:'#ccc'}):{f:'#d8d8d8',k:'#b8b8b8'};return `<path d="${d}" fill="${c.f}" stroke="${c.k}" stroke-width="${id?'0.3':'0.22'}"/>`;};
+  return `<svg viewBox="-1 0 72 90" xmlns="http://www.w3.org/2000/svg" style="width:60px;height:auto;display:block;flex-shrink:0">${_FP.map(pt).join('')}${_BP.map(pt).join('')}</svg>`;
+}
 function renderSessions(){
   const el=document.getElementById('sess-list');
   if(!S.sessions.length){el.innerHTML='<div class="empty">Aucune séance encore</div>';return;}
@@ -2795,7 +2801,9 @@ function renderSessions(){
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
     const sync=s.synced?'<span class="synced-pill">☁️ Sheets</span>':'';
     const cals = s.calories ? ` · 🔥${s.calories}kcal` : '';
-    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div><div class="sess-exs">${exs||'—'}</div></div>`;
+    const sc=_mscScores(s.exs||s.exercises||[]);
+    const mini=_mscSVGmini(sc);
+    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div><div style="display:flex;align-items:center;gap:8px;padding:0 10px 10px 0"><div class="sess-exs" style="flex:1;min-width:0">${exs||'—'}</div>${mini}</div></div>`;
   }).join('');
 }
 
