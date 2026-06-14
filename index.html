@@ -2290,7 +2290,7 @@ function saveProfile(){
   const saveBtn=document.querySelector('[onclick="saveProfile()"]');
   if(saveBtn){saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML='💾 Enregistrer le profil';saveBtn.disabled=false;},2000);}
   if(S.email&&S.url){
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase};
     fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }
 }
@@ -2321,6 +2321,12 @@ function _applyRestoreData(raw){
   if(d.gender){S.gender=d.gender;_obGender=d.gender;}
   if(d.goal){S.goal=d.goal;_obGoal=d.goal;}
   if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;
+  if(d.workType)S.workType=d.workType;
+  if(d.smoker!==undefined)S.smoker=!!d.smoker;
+  if(d.neck)S.neck=parseFloat(d.neck)||0;
+  if(d.waist)S.waist=parseFloat(d.waist)||0;
+  if(d.hip)S.hip=parseFloat(d.hip)||0;
+  if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;
   if(prs&&Object.keys(prs).length)S.prs=prs;
   if(sessions&&sessions.length)S.sessions=sessions;
   if(weightLog&&weightLog.length)S.weightLog=weightLog;
@@ -3543,7 +3549,7 @@ function finishOnboarding(){
   else if(emailFinal){S.email=emailFinal.trim();}
   persist();
   if(S.email&&S.url){
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase};
     if(!_obDataRestored)p.welcome=true;
     fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }
