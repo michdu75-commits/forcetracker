@@ -212,6 +212,10 @@ function handleSaveProfile_(body) {
 
     existing.profile   = profile;
     if (body.sessions  !== undefined) existing.sessions  = body.sessions;
+    if (body.prs       !== undefined) existing.prs       = body.prs;
+    if (body.weightLog !== undefined) existing.weightLog = body.weightLog;
+    if (body.sleepLog  !== undefined) existing.sleepLog  = body.sleepLog;
+    if (body.cycle     !== undefined) existing.cycle     = body.cycle;
     existing.email     = email;
     existing.updatedAt = new Date().toISOString();
 

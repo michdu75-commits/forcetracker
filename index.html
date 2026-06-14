@@ -1414,6 +1414,7 @@ function persist(){
     localStorage.setItem('ft4_premium',S.premium?'1':'0');
     localStorage.setItem('ft4_premiumExp',S.premiumExpiry||'');
   }catch(e){}
+  _cloudSyncDebounced();
 }
 
 // ─── UTILS ───────────────────────────────────────────────────
@@ -2477,13 +2478,29 @@ function showChartTooltip(i){
 // ─── SESSION DETAIL / EDIT ───────────────────────────────────
 let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
 
-function _cloudSyncSessions(){
+function _cloudSync(){
   if(!S.email||!S.url)return;
   fetch(S.url,{method:'POST',redirect:'follow',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({action:'saveProfile',email:S.email,sessions:S.sessions.slice(0,100)})
+    body:JSON.stringify({
+      action:'saveProfile',email:S.email,
+      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,
+      activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
+      neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,
+      barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,
+      customExercises:S.customExercises||[],
+      sessions:(S.sessions||[]).slice(0,100),
+      prs:S.prs||{},
+      weightLog:(S.weightLog||[]).slice(-365),
+      sleepLog:(S.sleepLog||[]).slice(-365),
+      cycle:S.cycle||null
+    })
   }).catch(()=>{});
 }
+// Alias pour compatibilité
+function _cloudSyncSessions(){_cloudSync();}
+let _syncTimer=null;
+function _cloudSyncDebounced(){clearTimeout(_syncTimer);_syncTimer=setTimeout(_cloudSync,4000);}
 
 function openSessDetail(id){
   const sess=S.sessions.find(s=>(s.ts||s.id)===id);
@@ -2770,10 +2787,7 @@ function saveProfile(){
   renderCycleProfileCard();renderBFCard();
   const saveBtn=document.querySelector('[onclick="saveProfile()"]');
   if(saveBtn){saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML='💾 Enregistrer le profil';saveBtn.disabled=false;},2000);}
-  if(S.email&&S.url){
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,customExercises:S.customExercises};
-    fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
-  }
+  _cloudSync();
 }
 
 function _applyRestoreData(raw){
@@ -2817,6 +2831,7 @@ function _applyRestoreData(raw){
   if(sessions&&sessions.length)S.sessions=sessions;
   if(weightLog&&weightLog.length)S.weightLog=weightLog;
   if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;
+  if(raw&&raw.cycle)S.cycle=raw.cycle;
   if(raw&&raw.premium===true){S.premium=true;}
   if(raw&&raw.premiumExpiry){S.premiumExpiry=raw.premiumExpiry;}
   persist();
