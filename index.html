@@ -113,7 +113,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 #rest-time{font-family:var(--font-cond);font-size:26px;font-weight:900;min-width:62px;font-variant-numeric:tabular-nums;color:var(--green);transition:color .4s;}
 #rest-wrap{flex:1;height:6px;background:var(--sep);border-radius:3px;overflow:hidden;}
 #rest-fill{height:100%;background:var(--green);border-radius:3px;transition:width 1s linear,background .4s;}
-.rbtn{font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--sep);background:rgba(255,255,255,.06);color:var(--t1);cursor:pointer;font-family:var(--font);font-weight:600;}
+.rbtn{font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--sep);background:rgba(255,255,255,.06);color:var(--t1);cursor:pointer;font-family:var(--font);font-weight:600;}
+.rbtn.rp-active{background:var(--red);color:#fff;border-color:var(--red);}
 
 /* NAV */
 .nav{display:flex;align-items:flex-end;overflow:visible;background:rgba(10,10,15,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--sep);padding-bottom:max(env(safe-area-inset-bottom),0px);position:absolute;bottom:0;left:0;right:0;z-index:20;}
@@ -742,14 +743,21 @@ html.ob-done #onboarding{display:none;}
   </div>
   <div id="log-sleep"></div>
   <div id="rest-bar">
-    <div style="display:flex;flex-direction:column;align-items:center;min-width:62px">
-      <div id="rest-time">2:00</div>
-      <div id="rest-label"></div>
+    <div style="display:flex;flex-direction:column;align-items:center;min-width:58px">
+      <div id="rest-time">1:30</div>
+      <div id="rest-label" style="font-size:11px;color:var(--t2);margin-top:1px;"></div>
     </div>
-    <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
-    <button class="rbtn" id="rest-btn-minus" onclick="addRT(-_restStep)">−15s</button>
-    <button class="rbtn" id="rest-btn-plus" onclick="addRT(_restStep)">+15s</button>
-    <button class="rbtn" onclick="skipRest()">Skip</button>
+    <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+      <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
+      <div style="display:flex;gap:4px;align-items:center">
+        <button class="rbtn" id="rp-60" onclick="setRestPreset(60)">1:00</button>
+        <button class="rbtn" id="rp-90" onclick="setRestPreset(90)">1:30</button>
+        <button class="rbtn" id="rp-120" onclick="setRestPreset(120)">2:00</button>
+        <button class="rbtn" id="rest-btn-minus" onclick="addRT(-_restStep)" style="margin-left:2px">−15s</button>
+        <button class="rbtn" id="rest-btn-plus" onclick="addRT(_restStep)">+15s</button>
+        <button class="rbtn" onclick="skipRest()">Skip</button>
+      </div>
+    </div>
   </div>
   <div id="wkt-exs"></div>
   <div style="display:flex;gap:8px;">
@@ -1447,7 +1455,8 @@ let S={
   name:'',
   coachFree:0,
   premium:false,
-  premiumExpiry:''
+  premiumExpiry:'',
+  exRestPref:{}
 };
 
 function load(){
@@ -1483,6 +1492,7 @@ function load(){
     S.coachFree=parseInt(localStorage.getItem('ft4_coachFree')||'0')||0;
     S.premium=localStorage.getItem('ft4_premium')==='1';
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
+    S.exRestPref=JSON.parse(localStorage.getItem('ft4_exRp')||'{}');
   }catch(e){}
 }
 function persist(){
@@ -1510,6 +1520,7 @@ function persist(){
     localStorage.setItem('ft4_name',S.name||'');
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
     localStorage.setItem('ft4_coachFree',S.coachFree||0);
+    localStorage.setItem('ft4_exRp',JSON.stringify(S.exRestPref||{}));
     localStorage.setItem('ft4_premium',S.premium?'1':'0');
     localStorage.setItem('ft4_premiumExp',S.premiumExpiry||'');
   }catch(e){}
@@ -1880,15 +1891,19 @@ function toggleSet(ei,si){
   if(set.done){
     const exName=S.wkt.exs[ei].name;
     const isAbdo=EXLIB.some(e=>e.n===exName&&e.g==='Abdominaux');
-    const defForEx=isAbdo?30:S.defRest;
+    const savedPref=(S.exRestPref||{})[exName];
+    const defForEx=isAbdo?30:(savedPref||90);
     const restByType={N:defForEx,W:45,E:240,D:20};
     const restLabels={W:'Échauffement',E:'Récup. complète',D:'Drop set'};
     const lbl=document.getElementById('rest-label');
     if(lbl)lbl.textContent=restLabels[set.type]||(isAbdo?'Abdos':'');
     _restStep=isAbdo?5:15;
+    _restEx=isAbdo?null:exName;
     const mb=document.getElementById('rest-btn-minus');const pb=document.getElementById('rest-btn-plus');
     if(mb)mb.textContent=`−${_restStep}s`;if(pb)pb.textContent=`+${_restStep}s`;
-    startRest(restByType[set.type]||defForEx);
+    const sec=restByType[set.type]||defForEx;
+    startRest(sec);
+    if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
     if(navigator.vibrate)navigator.vibrate([50]);
   }
   renderExBlocks();
@@ -2226,6 +2241,16 @@ function updateRMLive(ei,si){
   if(trmEl)trmEl.textContent=kg&&reps?'~'+fmt(bz(kg,reps)):'';
 }
 let _restStep=15;
+let _restEx=null;
+function _highlightRestPreset(sec){
+  [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
+}
+function setRestPreset(sec){
+  restLeft=sec;restTot=sec;restOvertime=false;
+  const bar=document.getElementById('rest-bar');if(bar)bar.classList.remove('overtime');
+  if(_restEx){S.exRestPref=S.exRestPref||{};S.exRestPref[_restEx]=sec;persist();}
+  _highlightRestPreset(sec);updRest();
+}
 function addRT(s){restLeft=Math.max(5,Math.min(restLeft+s,600));updRest();}
 function skipRest(){stopRest();}
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
