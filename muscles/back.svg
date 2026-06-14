@@ -1,0 +1,22 @@
+<svg viewBox="0 0 50 72" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="25" cy="6" r="5" fill="#bababa"/>
+  <rect x="22.5" y="11" width="5" height="3.5" rx="1" fill="#bababa"/>
+  <path d="M12 14 L8 13 L5 28 L9 29 L13 19Z" fill="#bababa"/>
+  <path d="M38 14 L42 13 L45 28 L41 29 L37 19Z" fill="#bababa"/>
+  <path d="M5 28 L3 38 L7 39 L9 34 L9 29Z" fill="#bababa"/>
+  <path d="M45 28 L47 38 L43 39 L41 34 L41 29Z" fill="#bababa"/>
+  <path d="M12 14 Q25 11 38 14 L39 46 L11 46Z" fill="#bababa"/>
+  <path d="M11 46 L10 52 Q25 56 40 52 L39 46Z" fill="#bababa"/>
+  <path d="M10 52 L8 63 L13 64 L16 54Z" fill="#bababa"/>
+  <path d="M40 52 L42 63 L37 64 L34 54Z" fill="#bababa"/>
+  <path d="M8 63 L7 72 L12 72 L13 64Z" fill="#bababa"/>
+  <path d="M42 63 L43 72 L38 72 L37 64Z" fill="#bababa"/>
+  <!-- Trapèze -->
+  <path d="M13 14 Q25 11 37 14 L33 26 Q25 29 17 26Z" fill="#FF2D55"/>
+  <!-- Lats gauche -->
+  <path d="M12 16 L10 36 L15 43 L17 28Z" fill="#FF2D55"/>
+  <!-- Lats droit -->
+  <path d="M38 16 L40 36 L35 43 L33 28Z" fill="#FF2D55"/>
+  <!-- Spine indicator -->
+  <line x1="25" y1="15" x2="25" y2="45" stroke="#d0d0d0" stroke-width="1" opacity="0.6"/>
+</svg>
