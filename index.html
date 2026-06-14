@@ -526,8 +526,8 @@ html.ob-done #onboarding{display:none;}
 @keyframes iSlideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 /* ─── BANNIÈRE INSTALLATION ──────────────────────────────────── */
-#install-banner{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:9000;padding:12px 16px max(calc(env(safe-area-inset-bottom)+12px),20px);background:var(--bg2);border-top:1px solid var(--sep);box-shadow:0 -4px 24px rgba(0,0,0,.18);transition:transform .3s ease;}
-#install-banner.hidden{transform:translateX(-50%) translateY(110%);}
+#install-banner{position:fixed;bottom:calc(68px + max(env(safe-area-inset-bottom),0px));left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:410px;z-index:9000;padding:12px 14px;background:var(--bg2);border:1px solid var(--sep);border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.28);transition:transform .3s ease,opacity .3s ease;}
+#install-banner.hidden{transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;}
 .ib-row{display:flex;align-items:center;gap:10px;}
 .ib-qr{background:#fff;border-radius:8px;padding:4px;flex-shrink:0;}
 .ib-qr img{width:60px;height:60px;display:block;}
@@ -650,7 +650,7 @@ html.ob-done #onboarding{display:none;}
       <div id="ib-title" style="font-weight:700;font-size:14px;margin-bottom:2px;">Installer Force Tracker</div>
       <div id="ib-desc" style="font-size:12px;color:var(--t2);line-height:1.4;">Scanne le QR code avec Safari, ou copie le lien.</div>
       <div style="display:flex;gap:6px;margin-top:8px;">
-        <button id="ib-btn-open" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;">Ouvrir</button>
+        <button id="ib-btn-open" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;">Partager</button>
         <button id="ib-btn-copy" style="flex:1;background:var(--bg3);color:var(--t1);border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer;">Copier le lien</button>
       </div>
     </div>
@@ -4234,8 +4234,14 @@ function _isFirefoxAndroid(){
 const APP_URL = 'https://michdu75-commits.github.io/forcetracker/';
 
 function tryOpenSafari(){
-  window.location.href = 'safari-' + APP_URL;
-  setTimeout(()=>copyAppLink('safari'), 1200);
+  // La seule méthode fiable : Web Share API → feuille de partage iOS → "Ouvrir dans Safari"
+  if(navigator.share){
+    navigator.share({title:'Force Tracker',url:APP_URL}).catch(()=>{});
+  } else {
+    // Fallback : copier le lien + instruction
+    copyAppLink('safari');
+    toast('Lien copié — ouvre Safari et colle dans la barre d\'adresse','info');
+  }
 }
 
 function tryOpenChrome(){
