@@ -3520,16 +3520,12 @@ async function obCheckEmailAndFinish(){
   try{
     const data=await _fetchRestoreRaw(emailFinal);
     if(data&&data.status==='ok'){
-      // Compte existant → restauration automatique
+      // Compte existant → restauration automatique + entrée directe
       S.email=emailFinal;persist();
       _obDataRestored=true;
       _applyRestoreData(data);
-      const cta=document.getElementById('ob-cta-title');
-      if(cta)cta.textContent=S.name?'Content de te revoir, '+S.name+' ! 💪':'Content de te revoir ! 💪';
-      const emailSec=document.getElementById('ob-email-section');
-      if(emailSec)emailSec.style.display='none';
-      btn.disabled=false;btn.textContent='⚡ COMMENCER';
       toast('Profil restauré ✅','success');
+      finishOnboarding();
     }else{
       finishOnboarding();
     }
