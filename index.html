@@ -183,7 +183,9 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .set-row{display:grid;grid-template-columns:24px 1fr 66px 54px 38px 32px;gap:5px;padding:9px 16px;border-top:1px solid var(--sep);align-items:center;transition:opacity .2s;}
 .set-row.done-row{opacity:.45;}
 .snum{font-size:12px;color:var(--t3);font-weight:800;text-align:center;}
-.sprev{font-size:12px;color:var(--t3);text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sprev{font-size:12px;color:var(--t3);text-align:center;overflow:hidden;line-height:1.3;}
+.rm-live-hint{display:flex;align-items:center;gap:8px;padding:1px 16px 5px;font-size:12px;color:var(--t2);}
+#rest-label{font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sinp{background:var(--bg3);border:1px solid var(--sep);border-radius:8px;padding:8px 4px;font-size:16px;font-weight:800;font-family:var(--font);color:var(--t1);text-align:center;width:100%;outline:none;transition:border-color .15s;}
 .sinp:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(255,45,85,.15);}
 .tbtn{font-size:12px;font-weight:800;border:1px solid var(--sep);border-radius:6px;padding:6px 2px;cursor:pointer;text-align:center;background:var(--bg3);color:var(--t2);width:100%;font-family:var(--font);touch-action:manipulation;letter-spacing:.05em;}
@@ -635,7 +637,10 @@ html.ob-done #onboarding{display:none;}
 </div>
 
 <div id="rest-bar">
-  <div id="rest-time">2:00</div>
+  <div style="display:flex;flex-direction:column;align-items:center;min-width:56px">
+    <div id="rest-time">2:00</div>
+    <div id="rest-label"></div>
+  </div>
   <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
   <button class="rbtn" onclick="addRT(30)">+30s</button>
   <button class="rbtn" onclick="skipRest()">Skip</button>
@@ -1694,15 +1699,24 @@ function renderExBlocks(){
     const doneSets=ex.sets.filter(s=>s.done);
     const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
     const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
+    const pr=S.prs[ex.name];
     const rows=ex.sets.map((set,si)=>{
       const p=prev[si]||prev[Math.max(0,prev.length-1)];
-      return`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">
-        <div class="snum">${si+1}</div>
-        <div class="sprev">${p?`${p.kg}×${p.reps}`:'—'}</div>
-        <input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();const n=this.nextElementSibling;n.focus();n.select&&n.select();}">
-        <input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">
-        <button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}">${set.type}</button>
-        <button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>
+      const prevRM=p&&p.kg&&p.reps?fmt(bz(p.kg,p.reps)):null;
+      const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
+      return`<div id="sr-wrap-${ei}-${si}">
+        <div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">
+          <div class="snum">${si+1}</div>
+          <div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>${prevRM?`<div style="font-size:10px">~${prevRM}kg</div>`:''}`:'<div>—</div>'}</div>
+          <input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();const n=this.nextElementSibling;n.focus();n.select&&n.select();}">
+          <input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">
+          <button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}">${set.type}</button>
+          <button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>
+        </div>
+        <div id="rm-live-${ei}-${si}" class="rm-live-hint" style="display:${liveRM?'flex':'none'}">
+          <span>~<strong id="rm-val-${ei}-${si}">${liveRM||'—'}</strong> kg 1RM</span>
+          ${pr?`<span style="color:var(--t3)">· PR : ${fmt(pr.rm1)} kg</span>`:''}
+        </div>
       </div>`;
     }).join('');
     return`<div class="ex-block">
@@ -1740,7 +1754,14 @@ function toggleSet(ei,si){
   const row=document.getElementById(`sr-${ei}-${si}`);
   if(row){const inps=row.querySelectorAll('.sinp');if(!set.kg&&inps[0])set.kg=parseFloat(inps[0].value||inps[0].placeholder)||0;if(!set.reps&&inps[1])set.reps=parseInt(inps[1].value||inps[1].placeholder)||0;}
   set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);persist();
-  if(set.done){startRest(S.defRest);if(navigator.vibrate)navigator.vibrate([50]);}
+  if(set.done){
+    const restByType={N:S.defRest,W:45,E:240,D:20};
+    const restLabels={W:'Échauffement',E:'Récup. complète',D:'Drop set'};
+    const lbl=document.getElementById('rest-label');
+    if(lbl)lbl.textContent=restLabels[set.type]||'';
+    startRest(restByType[set.type]||S.defRest);
+    if(navigator.vibrate)navigator.vibrate([50]);
+  }
   renderExBlocks();
 }
 function cycleType(ei,si){const s=S.wkt.exs[ei].sets[si];s.type=SET_TYPES[(SET_TYPES.indexOf(s.type)+1)%SET_TYPES.length];persist();renderExBlocks();}
@@ -2000,7 +2021,19 @@ async function finishWorkout(){
 let restIv=null,restTot=120,restLeft=0;
 function startRest(sec){stopRest();restTot=sec;restLeft=sec;document.getElementById('rest-bar').classList.add('show');updRest();restIv=setInterval(()=>{restLeft--;updRest();if(restLeft<=0){stopRest();beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);}},1000);}
 function updRest(){const m=Math.floor(restLeft/60),s=restLeft%60;document.getElementById('rest-time').textContent=`${m}:${s.toString().padStart(2,'0')}`;const p=restLeft/restTot*100;document.getElementById('rest-fill').style.width=p+'%';const c=restLeft<10?'var(--red)':restLeft<30?'var(--gold)':'var(--green)';document.getElementById('rest-time').style.color=c;document.getElementById('rest-fill').style.background=c;}
-function stopRest(){clearInterval(restIv);document.getElementById('rest-bar').classList.remove('show');}
+function stopRest(){clearInterval(restIv);document.getElementById('rest-bar').classList.remove('show');const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';}
+function updateRMLive(ei,si){
+  const row=document.getElementById(`sr-${ei}-${si}`);
+  if(!row)return;
+  const inps=row.querySelectorAll('.sinp');
+  const kg=parseFloat(inps[0]&&(inps[0].value||inps[0].placeholder))||0;
+  const reps=parseInt(inps[1]&&(inps[1].value||inps[1].placeholder))||0;
+  const div=document.getElementById(`rm-live-${ei}-${si}`);
+  const val=document.getElementById(`rm-val-${ei}-${si}`);
+  if(!div||!val)return;
+  if(kg&&reps){val.textContent=fmt(bz(kg,reps));div.style.display='flex';}
+  else div.style.display='none';
+}
 function addRT(s){restLeft=Math.min(restLeft+s,600);updRest();}
 function skipRest(){stopRest();}
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
