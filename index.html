@@ -2290,7 +2290,7 @@ function saveProfile(){
   const saveBtn=document.querySelector('[onclick="saveProfile()"]');
   if(saveBtn){saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML='💾 Enregistrer le profil';saveBtn.disabled=false;},2000);}
   if(S.email&&S.url){
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,customExercises:S.customExercises};
     fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }
 }
@@ -2327,6 +2327,11 @@ function _applyRestoreData(raw){
   if(d.waist)S.waist=parseFloat(d.waist)||0;
   if(d.hip)S.hip=parseFloat(d.hip)||0;
   if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;
+  if(d.barW)S.barW=parseFloat(d.barW)||20;
+  if(d.defRest)S.defRest=parseInt(d.defRest)||120;
+  if(d.mensCycleStart)S.mensCycleStart=d.mensCycleStart;
+  if(d.mensCycleDur)S.mensCycleDur=parseInt(d.mensCycleDur)||28;
+  if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;
   if(prs&&Object.keys(prs).length)S.prs=prs;
   if(sessions&&sessions.length)S.sessions=sessions;
   if(weightLog&&weightLog.length)S.weightLog=weightLog;
@@ -3549,7 +3554,7 @@ function finishOnboarding(){
   else if(emailFinal){S.email=emailFinal.trim();}
   persist();
   if(S.email&&S.url){
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,customExercises:S.customExercises};
     if(!_obDataRestored)p.welcome=true;
     fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }

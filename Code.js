@@ -198,12 +198,17 @@ function handleSaveProfile_(body) {
     if (body.gender        !== undefined) profile.gender        = body.gender;
     if (body.goal          !== undefined) profile.goal          = body.goal;
     if (body.activityLevel !== undefined) profile.activityLevel = body.activityLevel;
-    if (body.workType      !== undefined) profile.workType      = body.workType;
-    if (body.smoker        !== undefined) profile.smoker        = body.smoker;
-    if (body.neck          !== undefined) profile.neck          = body.neck;
-    if (body.waist         !== undefined) profile.waist         = body.waist;
-    if (body.hip           !== undefined) profile.hip           = body.hip;
-    if (body.nutritionPhase!== undefined) profile.nutritionPhase= body.nutritionPhase;
+    if (body.workType       !== undefined) profile.workType       = body.workType;
+    if (body.smoker         !== undefined) profile.smoker         = body.smoker;
+    if (body.neck           !== undefined) profile.neck           = body.neck;
+    if (body.waist          !== undefined) profile.waist          = body.waist;
+    if (body.hip            !== undefined) profile.hip            = body.hip;
+    if (body.nutritionPhase !== undefined) profile.nutritionPhase = body.nutritionPhase;
+    if (body.barW           !== undefined) profile.barW           = body.barW;
+    if (body.defRest        !== undefined) profile.defRest        = body.defRest;
+    if (body.mensCycleStart !== undefined) profile.mensCycleStart = body.mensCycleStart;
+    if (body.mensCycleDur   !== undefined) profile.mensCycleDur   = body.mensCycleDur;
+    if (body.customExercises!== undefined) profile.customExercises= body.customExercises;
 
     existing.profile   = profile;
     existing.email     = email;
