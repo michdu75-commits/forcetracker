@@ -1694,12 +1694,32 @@ function renderExBlocks(){
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
     c.innerHTML=`<div class="empty">Appuie sur "+ Ajouter un exercice"<br>pour démarrer ta séance 💪</div>`;return;
   }
+  const exCount=S.wkt.exs.length;
+  if(_expandedEx===null||_expandedEx>=exCount)_expandedEx=exCount-1;
   c.innerHTML=S.wkt.exs.map((ex,ei)=>{
     const prev=getPrev(ex.name);
     const doneSets=ex.sets.filter(s=>s.done);
-    const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
+    const vol=doneSets.filter(s=>s.type!=='W').reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
     const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
     const pr=S.prs[ex.name];
+    const isExpanded=ei===_expandedEx||exCount===1;
+
+    // Vue réduite
+    if(!isExpanded){
+      const summary=`${doneSets.length}/${ex.sets.length} série${ex.sets.length>1?'s':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
+      return`<div class="ex-block" id="ex-block-${ei}" onclick="toggleExBlock(${ei})" style="cursor:pointer;opacity:.75">
+        <div class="ex-hdr" style="pointer-events:none">
+          <div>
+            <div class="ex-name" style="font-size:14px">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▸</span></div>
+            <div class="ex-meta">${summary||'0 série'}</div>
+          </div>
+          <div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">
+            <button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button>
+          </div>
+        </div>
+      </div>`;
+    }
+
     const rows=ex.sets.map((set,si)=>{
       const p=prev[si]||prev[Math.max(0,prev.length-1)];
       const prevRM=p&&p.kg&&p.reps?fmt(bz(p.kg,p.reps)):null;
@@ -1719,10 +1739,10 @@ function renderExBlocks(){
         </div>
       </div>`;
     }).join('');
-    return`<div class="ex-block">
+    return`<div class="ex-block" id="ex-block-${ei}">
       <div class="ex-hdr">
         <div>
-          <div class="ex-name">${ex.name}</div>
+          <div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>
           <div class="ex-meta">${doneSets.length}/${ex.sets.length} séries${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>
         </div>
         <div class="ex-hdr-btns">
@@ -1810,14 +1830,28 @@ function addSet(ei){const ex=S.wkt.exs[ei];const l=ex.sets[ex.sets.length-1];ex.
 function rmLastSet(ei){const ex=S.wkt.exs[ei];if(ex.sets.length>1){ex.sets.pop();persist();renderExBlocks();}}
 function rmEx(ei){
   const name=S.wkt.exs[ei]&&S.wkt.exs[ei].name||'cet exercice';
-  showConfirm('Supprimer l\'exercice ?',`"${name}" et toutes ses séries seront supprimés de la séance.`,()=>{S.wkt.exs.splice(ei,1);persist();renderExBlocks();});
+  showConfirm('Supprimer l\'exercice ?',`"${name}" et toutes ses séries seront supprimés de la séance.`,()=>{
+    S.wkt.exs.splice(ei,1);
+    if(_expandedEx>=S.wkt.exs.length)_expandedEx=Math.max(0,S.wkt.exs.length-1);
+    persist();renderExBlocks();
+  });
 }
+let _expandedEx=null;
 function addExercise(name){
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
   const sets=[0,1,2].map((_,i)=>({kg:prev.length?prev[0].kg:0,reps:prev.length?prev[0].reps:5,type:i===0&&prev.length?'W':'N',done:false,rm1:0}));
-  S.wkt.exs.push({name,sets});persist();closeExPicker();renderExBlocks();
+  S.wkt.exs.push({name,sets});
+  _expandedEx=S.wkt.exs.length-1;
+  persist();closeExPicker();renderExBlocks();
   toast(name+' ajouté !','info');
+}
+function toggleExBlock(ei){
+  _expandedEx=(_expandedEx===ei)?ei:ei;
+  _expandedEx=ei;
+  renderExBlocks();
+  // Scroll vers le bloc ouvert
+  setTimeout(()=>{const el=document.getElementById('ex-block-'+ei);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},80);
 }
 // ─── MUSCLE MAP ──────────────────────────────────────────────
 const _MEX=[
