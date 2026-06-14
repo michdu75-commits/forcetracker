@@ -900,7 +900,10 @@ html.ob-done #onboarding{display:none;}
   <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
       <div class="sec" style="margin-bottom:0;">Profil athlète</div>
-      <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">☀️ Mode Jour</button>
+      <div style="display:flex;gap:8px;">
+        <button onclick="openShareModal()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:20px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">📲 Partager</button>
+        <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;">☀️ Mode Jour</button>
+      </div>
     </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
       <div class="fg">
@@ -1152,6 +1155,25 @@ html.ob-done #onboarding{display:none;}
 </div>
 
 <!-- MODAL: Plate Calculator -->
+<!-- ═══ MODAL PARTAGE QR ══════════════════════════════════════ -->
+<div class="overlay" id="mod-share" onclick="if(event.target===this)closeShareModal()">
+  <div class="modal" style="text-align:center;padding:28px 24px;">
+    <div class="modal-handle"></div>
+    <div style="font-size:36px;margin-bottom:8px;">📲</div>
+    <div style="font-family:var(--font-cond);font-size:26px;font-weight:900;margin-bottom:6px;">Partager Force Tracker</div>
+    <div style="font-size:14px;color:var(--t2);margin-bottom:20px;line-height:1.5;">Montre ce QR code à tes amis — ils scannent avec leur appareil photo et l'app s'ouvre directement.</div>
+    <div style="background:#fff;border-radius:16px;padding:14px;display:inline-block;margin-bottom:16px;">
+      <img id="share-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https%3A%2F%2Fmichdu75-commits.github.io%2Fforcetracker%2F" style="width:200px;height:200px;display:block;">
+    </div>
+    <div style="font-size:12px;color:var(--t3);margin-bottom:20px;">michdu75-commits.github.io/forcetracker</div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="shareAppNative()" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;">Envoyer le lien</button>
+      <button onclick="copyAppLink('share')" style="flex:1;background:var(--bg3);color:var(--t1);border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;">Copier</button>
+    </div>
+    <button onclick="closeShareModal()" style="margin-top:14px;background:none;border:none;color:var(--t3);font-size:14px;cursor:pointer;">Fermer</button>
+  </div>
+</div>
+
 <div class="overlay" id="mod-plate">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -4223,7 +4245,7 @@ function tryOpenChrome(){
 }
 
 function copyAppLink(target){
-  const msg = target==='safari' ? 'Lien copié — colle-le dans Safari' : 'Lien copié — colle-le dans Chrome';
+  const msg = target==='safari' ? 'Lien copié — colle-le dans Safari' : target==='chrome' ? 'Lien copié — colle-le dans Chrome' : 'Lien copié !';
   if(navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(APP_URL).then(()=>toast(msg,'success'));
   } else {
@@ -4234,6 +4256,20 @@ function copyAppLink(target){
 function closeBanner(){
   const b=document.getElementById('install-banner');
   if(b)b.classList.add('hidden');
+}
+
+function openShareModal(){
+  document.getElementById('mod-share').classList.add('open');
+}
+function closeShareModal(){
+  document.getElementById('mod-share').classList.remove('open');
+}
+function shareAppNative(){
+  if(navigator.share){
+    navigator.share({title:'Force Tracker',text:'Suis ta progression en musculation 💪',url:APP_URL}).catch(()=>{});
+  } else {
+    copyAppLink('share');
+  }
 }
 
 function _showInstallBanner(title, desc, openAction, copyTarget){
