@@ -78,15 +78,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .sync-pill.ok{border-color:rgba(0,230,118,.4);color:var(--green);background:rgba(0,230,118,.08);}
 
 /* REST BAR */
-#rest-bar{position:fixed;bottom:max(env(safe-area-inset-bottom),0px);left:50%;transform:translateX(-50%);max-width:430px;width:100%;
-  background:linear-gradient(90deg,var(--bg2),var(--bg3));
-  border-top:1px solid rgba(255,45,85,.3);
-  padding:10px 16px max(calc(env(safe-area-inset-bottom)+56px),56px);display:none;align-items:center;gap:10px;z-index:50;}
+#rest-bar{position:sticky;top:0;z-index:10;display:none;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--bg2);border:1px solid rgba(0,230,118,.3);border-radius:12px;
+  transition:border-color .4s;}
 #rest-bar.show{display:flex;}
-#rest-time{font-family:var(--font-cond);font-size:26px;font-weight:900;min-width:56px;font-variant-numeric:tabular-nums;color:var(--green);}
-#rest-wrap{flex:1;height:5px;background:var(--sep);border-radius:3px;overflow:hidden;}
-#rest-fill{height:100%;background:var(--green);border-radius:3px;transition:width 1s linear;}
-.rbtn{font-size:13px;padding:8px 14px;border-radius:8px;border:1px solid var(--sep);background:rgba(255,255,255,.06);color:var(--t1);cursor:pointer;font-family:var(--font);font-weight:600;}
+@keyframes rest-blink{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
+#rest-bar.overtime{animation:rest-blink .7s ease-in-out infinite;border-color:rgba(255,45,85,.6)!important;}
+#rest-time{font-family:var(--font-cond);font-size:26px;font-weight:900;min-width:62px;font-variant-numeric:tabular-nums;color:var(--green);transition:color .4s;}
+#rest-wrap{flex:1;height:6px;background:var(--sep);border-radius:3px;overflow:hidden;}
+#rest-fill{height:100%;background:var(--green);border-radius:3px;transition:width 1s linear,background .4s;}
+.rbtn{font-size:13px;padding:8px 12px;border-radius:8px;border:1px solid var(--sep);background:rgba(255,255,255,.06);color:var(--t1);cursor:pointer;font-family:var(--font);font-weight:600;}
 
 /* NAV */
 .nav{display:flex;align-items:flex-end;overflow:visible;background:rgba(10,10,15,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--sep);padding-bottom:max(env(safe-area-inset-bottom),0px);position:absolute;bottom:0;left:0;right:0;z-index:20;}
@@ -636,16 +637,6 @@ html.ob-done #onboarding{display:none;}
   </button>
 </div>
 
-<div id="rest-bar">
-  <div style="display:flex;flex-direction:column;align-items:center;min-width:56px">
-    <div id="rest-time">2:00</div>
-    <div id="rest-label"></div>
-  </div>
-  <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
-  <button class="rbtn" onclick="addRT(30)">+30s</button>
-  <button class="rbtn" onclick="skipRest()">Skip</button>
-</div>
-
 <div class="screens">
 
 <!-- ACCUEIL -->
@@ -687,6 +678,15 @@ html.ob-done #onboarding{display:none;}
     <button class="btn btn-bg2 btn-sm" onclick="resetToday()">Aujourd'hui</button>
   </div>
   <div id="log-sleep"></div>
+  <div id="rest-bar">
+    <div style="display:flex;flex-direction:column;align-items:center;min-width:62px">
+      <div id="rest-time">2:00</div>
+      <div id="rest-label"></div>
+    </div>
+    <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
+    <button class="rbtn" onclick="addRT(30)">+30s</button>
+    <button class="rbtn" onclick="skipRest()">Skip</button>
+  </div>
   <div id="wkt-exs"></div>
   <div style="display:flex;gap:8px;">
     <button class="btn btn-bg2" style="flex:1;" onclick="openProgModal()">📋 Programmes</button>
@@ -2053,9 +2053,46 @@ async function finishWorkout(){
 
 // ─── REST TIMER ──────────────────────────────────────────────
 let restIv=null,restTot=120,restLeft=0;
-function startRest(sec){stopRest();restTot=sec;restLeft=sec;document.getElementById('rest-bar').classList.add('show');updRest();restIv=setInterval(()=>{restLeft--;updRest();if(restLeft<=0){stopRest();beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);}},1000);}
-function updRest(){const m=Math.floor(restLeft/60),s=restLeft%60;document.getElementById('rest-time').textContent=`${m}:${s.toString().padStart(2,'0')}`;const p=restLeft/restTot*100;document.getElementById('rest-fill').style.width=p+'%';const c=restLeft<10?'var(--red)':restLeft<30?'var(--gold)':'var(--green)';document.getElementById('rest-time').style.color=c;document.getElementById('rest-fill').style.background=c;}
-function stopRest(){clearInterval(restIv);document.getElementById('rest-bar').classList.remove('show');const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';}
+let restOvertime=false;
+function startRest(sec){
+  stopRest();restTot=sec;restLeft=sec;restOvertime=false;
+  const bar=document.getElementById('rest-bar');
+  bar.classList.add('show');bar.classList.remove('overtime');
+  updRest();
+  restIv=setInterval(()=>{
+    restLeft--;
+    if(restLeft===0){
+      beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);
+      restOvertime=true;bar.classList.add('overtime');
+    }
+    updRest();
+  },1000);
+}
+function updRest(){
+  const bar=document.getElementById('rest-bar');
+  const timeEl=document.getElementById('rest-time');
+  const fillEl=document.getElementById('rest-fill');
+  if(restLeft>=0){
+    const m=Math.floor(restLeft/60),s=restLeft%60;
+    timeEl.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    const pct=restLeft/restTot*100;
+    fillEl.style.width=pct+'%';
+    const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
+    const bc=pct>50?'rgba(0,230,118,.3)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
+    timeEl.style.color=c;fillEl.style.background=c;if(bar)bar.style.borderColor=bc;
+  } else {
+    const ot=-restLeft,m=Math.floor(ot/60),s=ot%60;
+    timeEl.textContent=`+${m}:${s.toString().padStart(2,'0')}`;
+    fillEl.style.width='0%';
+    timeEl.style.color='var(--red)';fillEl.style.background='var(--red)';
+  }
+}
+function stopRest(){
+  clearInterval(restIv);restOvertime=false;
+  const bar=document.getElementById('rest-bar');
+  if(bar){bar.classList.remove('show','overtime');bar.style.borderColor='';}
+  const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';
+}
 let _afTimer=null;
 function _onKgInput(el,ei,si){
   updateRMLive(ei,si);
