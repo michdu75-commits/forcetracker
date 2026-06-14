@@ -1244,6 +1244,7 @@ const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbweEvXxPFJXjG1ogaKc9k_RDYA-2g4zjj8QpKcD5RPFr6G1l_ClST7Ado9iLXPDEJ-T/exec';
 const SET_TYPES=['N','W','E','D'];
+const SET_TYPE_LABELS={N:'Normal',W:'Warm-up',E:'Échec',D:'Drop set'};
 
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────
 // [Débutant, Novice, Intermédiaire, Avancé] seuils
@@ -1660,7 +1661,7 @@ function renderExBlocks(){
         <div class="sprev">${p?`${p.kg}×${p.reps}`:'—'}</div>
         <input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();const n=this.nextElementSibling;n.focus();n.select&&n.select();}">
         <input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">
-        <button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})">${set.type}</button>
+        <button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}">${set.type}</button>
         <button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>
       </div>`;
     }).join('');
@@ -1913,7 +1914,7 @@ async function finishWorkout(){
   const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
   if(!hasDone){toast('Valide au moins une série !','error');return;}
   let vol=0;
-  S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done)vol+=(s.kg||0)*(s.reps||0);}));
+  S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
   const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now()};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
   S.sessions.unshift(sess);
@@ -2390,7 +2391,7 @@ function saveSessEdits(){
   const idx=S.sessions.findIndex(s=>(s.ts||s.id)===_sessId);
   if(idx===-1)return;
   let vol=0;
-  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done)vol+=(s.kg||0)*(s.reps||0);}));
+  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
   _sessEdits.volume=Math.round(vol);
   _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{
     if(s.done&&s.kg&&s.reps){
@@ -3305,8 +3306,19 @@ function buildCoachContext() {
     : 'Aucun PR enregistré';
 
   const recentSessions = S.sessions.slice(0, 3).map(s => {
-    const exs = (s.exs || s.exercises || []).map(e => e.name).join(', ');
-    return `${s.date}: ${exs} (${s.volume}kg volume)`;
+    const exStr = (s.exs||s.exercises||[]).map(e => {
+      const ds = e.sets.filter(x => x.done);
+      const nNorm = ds.filter(x => x.type==='N'||!x.type).length;
+      const nFail = ds.filter(x => x.type==='E').length;
+      const nDrop = ds.filter(x => x.type==='D').length;
+      const nWarm = ds.filter(x => x.type==='W').length;
+      let tech = nNorm ? `${nNorm}s` : '';
+      if (nWarm) tech += `+${nWarm}W`;
+      if (nFail) tech += `+${nFail}échec`;
+      if (nDrop) tech += `+${nDrop}drop`;
+      return `${e.name}(${tech})`;
+    }).join(', ');
+    return `${s.date}: ${exStr} — ${s.volume}kg vol`;
   }).join(' | ') || 'Aucune séance';
 
   return `Tu es un coach expert en force athlétique et musculation. Tu réponds TOUJOURS en français, de façon directe, précise et motivante. Maximum 200 mots sauf si l'athlète demande plus de détails.
