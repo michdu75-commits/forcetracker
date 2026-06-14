@@ -684,7 +684,8 @@ html.ob-done #onboarding{display:none;}
       <div id="rest-label"></div>
     </div>
     <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
-    <button class="rbtn" onclick="addRT(30)">+30s</button>
+    <button class="rbtn" onclick="addRT(-15)">−15s</button>
+    <button class="rbtn" onclick="addRT(15)">+15s</button>
     <button class="rbtn" onclick="skipRest()">Skip</button>
   </div>
   <div id="wkt-exs"></div>
@@ -1329,7 +1330,7 @@ function getLevel(exercise, rm1, bw, gender, age){
 // ─── STATE ───────────────────────────────────────────────────
 let _chartPts=[];
 let S={
-  bw:80,barW:20,defRest:120,
+  bw:80,barW:20,defRest:130,
   gender:'H',age:30,height:175,activityLevel:1.55,
   workType:'bureau',smoker:false,
   mensCycleStart:'',mensCycleDur:28,
@@ -1351,7 +1352,7 @@ function load(){
   try{
     S.bw=parseFloat(localStorage.getItem('ft4_bw')||'0')||0;
     S.barW=parseFloat(localStorage.getItem('ft4_bar')||'20')||20;
-    S.defRest=parseInt(localStorage.getItem('ft4_rest')||'120')||120;
+    S.defRest=parseInt(localStorage.getItem('ft4_rest')||'130')||130;
     S.gender=localStorage.getItem('ft4_gender')||'H';
     S.age=parseInt(localStorage.getItem('ft4_age')||'0')||0;
     S.height=parseFloat(localStorage.getItem('ft4_ht')||'0')||0;
@@ -2118,7 +2119,7 @@ function updateRMLive(ei,si){
   if(kg&&reps){val.textContent=fmt(bz(kg,reps));div.style.display='flex';}
   else div.style.display='none';
 }
-function addRT(s){restLeft=Math.min(restLeft+s,600);updRest();}
+function addRT(s){restLeft=Math.max(5,Math.min(restLeft+s,600));updRest();}
 function skipRest(){stopRest();}
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
 
