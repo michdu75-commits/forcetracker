@@ -211,6 +211,7 @@ function handleSaveProfile_(body) {
     if (body.customExercises!== undefined) profile.customExercises= body.customExercises;
 
     existing.profile   = profile;
+    if (body.sessions  !== undefined) existing.sessions  = body.sessions;
     existing.email     = email;
     existing.updatedAt = new Date().toISOString();
 

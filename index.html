@@ -1156,6 +1156,24 @@ html.ob-done #onboarding{display:none;}
   </div>
 </div>
 
+<!-- MODAL: Détail / Édition séance -->
+<div class="overlay" id="ov-sess-detail" onclick="if(event.target===this)closeSessDetail()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div>
+        <div style="font-weight:700;font-size:17px" id="sd-title">Séance</div>
+        <div style="font-size:13px;color:var(--t2)" id="sd-sub"></div>
+      </div>
+      <button class="btn btn-bg2" style="padding:6px 12px;font-size:15px" onclick="closeSessDetail()">✕</button>
+    </div>
+    <div id="sd-content"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn" id="sd-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none" onclick="deleteSessOrConfirm()">🗑️ Supprimer</button>
+      <button class="btn btn-red" style="flex:2;padding:12px" onclick="saveSessEdits()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Programmes -->
 <div class="overlay" id="mod-prog">
   <div class="modal">
@@ -1912,6 +1930,7 @@ async function finishWorkout(){
   sess.calData = calData;
 
   S.wkt=null;persist(); // sauvegarde locale immédiate avant toute tentative réseau
+  _cloudSyncSessions(); // sauvegarde séances dans le cloud profile
   if(S.connected&&S.url){
     const ok=await syncSheets(sess);
     if(ok){S.sessions[0].synced=true;persist();toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');}
@@ -2283,6 +2302,114 @@ function showChartTooltip(i){
   if(set)set.textContent=p.kg+' kg × '+p.reps+' reps';
   if(vals)vals.style.display='block';
 }
+// ─── SESSION DETAIL / EDIT ───────────────────────────────────
+let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
+
+function _cloudSyncSessions(){
+  if(!S.email||!S.url)return;
+  fetch(S.url,{method:'POST',redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'saveProfile',email:S.email,sessions:S.sessions.slice(0,100)})
+  }).catch(()=>{});
+}
+
+function openSessDetail(id){
+  const sess=S.sessions.find(s=>(s.ts||s.id)===id);
+  if(!sess)return;
+  _sessId=id;
+  _sessEdits=JSON.parse(JSON.stringify(sess));
+  _sdDelConfirm=false;
+  if(_sdDelTimer)clearTimeout(_sdDelTimer);
+  const db=document.getElementById('sd-del-btn');
+  if(db){db.textContent='🗑️ Supprimer';db.style.color='var(--red)';}
+  document.getElementById('sd-title').textContent=fmtD(sess.date);
+  const cals=sess.calories?` · 🔥 ${sess.calories} kcal`:'';
+  document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${cals}`;
+  _renderSessDetailContent();
+  document.getElementById('ov-sess-detail').classList.add('open');
+}
+
+function _renderSessDetailContent(){
+  const el=document.getElementById('sd-content');
+  if(!_sessEdits||!el)return;
+  el.innerHTML=(_sessEdits.exs||[]).map((ex,ei)=>{
+    const done=ex.sets.filter(s=>s.done);
+    return`<div class="card" style="margin-bottom:8px;padding:10px 12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700;font-size:14px">${ex.name}</div>
+        <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
+      </div>
+      ${ex.sets.map((s,si)=>!s.done?'':`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--t3);min-width:14px">${si+1}</span>
+        <span style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
+        <input type="number" step="0.5" min="0" inputmode="decimal" value="${s.kg}"
+               style="width:58px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
+               onchange="updateSessSet(${ei},${si},'kg',+this.value)">
+        <span style="color:var(--t2);font-size:12px">kg ×</span>
+        <input type="number" min="1" inputmode="numeric" value="${s.reps}"
+               style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
+               onchange="updateSessSet(${ei},${si},'reps',+this.value)">
+        <span style="color:var(--t2);font-size:12px">reps</span>
+        <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
+      </div>`).join('')}
+      ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série</div>':''}
+    </div>`;
+  }).join('');
+}
+
+function updateSessSet(ei,si,field,val){
+  if(_sessEdits&&_sessEdits.exs[ei]&&_sessEdits.exs[ei].sets[si])_sessEdits.exs[ei].sets[si][field]=val;
+}
+function deleteSessSet(ei,si){
+  if(!_sessEdits)return;
+  _sessEdits.exs[ei].sets.splice(si,1);
+  _renderSessDetailContent();
+}
+function deleteSessEx(ei){
+  if(!_sessEdits)return;
+  _sessEdits.exs.splice(ei,1);
+  _renderSessDetailContent();
+}
+
+function deleteSessOrConfirm(){
+  if(!_sdDelConfirm){
+    _sdDelConfirm=true;
+    const btn=document.getElementById('sd-del-btn');
+    btn.textContent='⚠️ Confirmer ?';btn.style.color='#FF9500';
+    _sdDelTimer=setTimeout(()=>{_sdDelConfirm=false;btn.textContent='🗑️ Supprimer';btn.style.color='var(--red)';},3000);
+    return;
+  }
+  if(_sdDelTimer)clearTimeout(_sdDelTimer);
+  S.sessions=S.sessions.filter(s=>(s.ts||s.id)!==_sessId);
+  persist();_cloudSyncSessions();renderSessions();closeSessDetail();
+  toast('Séance supprimée','info');
+}
+
+function saveSessEdits(){
+  if(!_sessEdits||_sessId===null)return;
+  const idx=S.sessions.findIndex(s=>(s.ts||s.id)===_sessId);
+  if(idx===-1)return;
+  let vol=0;
+  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done)vol+=(s.kg||0)*(s.reps||0);}));
+  _sessEdits.volume=Math.round(vol);
+  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{
+    if(s.done&&s.kg&&s.reps){
+      s.rm1=bz(s.kg,s.reps);
+      const cur=S.prs[ex.name];
+      if(!cur||s.rm1>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:s.rm1,date:_sessEdits.date};
+    }
+  }));
+  S.sessions[idx]=_sessEdits;
+  persist();_cloudSyncSessions();renderSessions();closeSessDetail();
+  toast('Séance mise à jour ✓','success');
+}
+
+function closeSessDetail(){
+  document.getElementById('ov-sess-detail').classList.remove('open');
+  _sessId=null;_sessEdits=null;_sdDelConfirm=false;
+  if(_sdDelTimer){clearTimeout(_sdDelTimer);_sdDelTimer=null;}
+}
+
 function renderSessions(){
   const el=document.getElementById('sess-list');
   if(!S.sessions.length){el.innerHTML='<div class="empty">Aucune séance encore</div>';return;}
@@ -2290,7 +2417,7 @@ function renderSessions(){
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
     const sync=s.synced?'<span class="synced-pill">☁️ Sheets</span>':'';
     const cals = s.calories ? ` · 🔥${s.calories}kcal` : '';
-    return`<div class="sess-card"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div><div class="sess-exs">${exs||'—'}</div></div>`;
+    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div><div class="sess-exs">${exs||'—'}</div></div>`;
   }).join('');
 }
 
