@@ -17,14 +17,21 @@
 window._deferredInstall=null;
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._deferredInstall=e;});
 if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add('ob-done');
-// Détection in-app browser iOS au plus tôt
+// Détection navigateur non compatible PWA — au plus tôt
 (function(){
   var ua=navigator.userAgent;
-  var isIOS=/iPhone|iPad|iPod/i.test(ua)&&!window.MSStream;
-  if(!isIOS)return;
-  var isInApp=/FBAN|FBAV|Instagram|Twitter|Snapchat|TikTok|Musical\.ly|Line\/|LinkedIn|Pinterest|Threads|CriOS|FxiOS|OPiOS|EdgiOS|GSA/.test(ua)||!/Safari/i.test(ua);
   var isStandalone=!!navigator.standalone||window.matchMedia('(display-mode:standalone)').matches;
-  if(isInApp&&!isStandalone){
+  if(isStandalone)return;
+  var isIOS=/iPhone|iPad|iPod/i.test(ua)&&!window.MSStream;
+  var isAndroid=/Android/i.test(ua);
+  var needsOverlay=false;
+  if(isIOS){
+    var isInApp=/FBAN|FBAV|Instagram|Twitter|Snapchat|TikTok|Musical\.ly|Line\/|LinkedIn|Pinterest|Threads|CriOS|FxiOS|OPiOS|EdgiOS|GSA/.test(ua)||!/Safari/i.test(ua);
+    needsOverlay=isInApp;
+  } else if(isAndroid && /Firefox/i.test(ua)){
+    needsOverlay=true;
+  }
+  if(needsOverlay){
     document.addEventListener('DOMContentLoaded',function(){
       var el=document.getElementById('ov-inapp');
       if(el)el.classList.remove('hidden');
@@ -627,12 +634,12 @@ html.ob-done #onboarding{display:none;}
 <!-- ═══ IN-APP BROWSER (iOS) ══════════════════════════════════ -->
 <div id="ov-inapp" class="hidden">
   <div class="inapp-card">
-    <div style="font-size:56px;margin-bottom:14px;">🧭</div>
-    <div style="font-family:var(--font-cond);font-size:26px;font-weight:900;margin-bottom:8px;">Ouvre dans Safari</div>
-    <div style="font-size:15px;color:var(--t2);line-height:1.55;margin-bottom:22px;">Pour installer Force Tracker sur ton iPhone, ce lien doit s'ouvrir dans <strong style="color:var(--t1)">Safari</strong>.</div>
-    <button class="btn" onclick="tryOpenSafari()" style="background:var(--red);color:#fff;width:100%;font-size:16px;font-weight:700;padding:14px;border-radius:14px;margin-bottom:10px;">Ouvrir dans Safari</button>
-    <button class="btn btn-bg2" onclick="copyAppLink()" style="width:100%;font-size:15px;padding:13px;border-radius:14px;margin-bottom:18px;">Copier le lien</button>
-    <div style="font-size:13px;color:var(--t3);line-height:1.6;margin-bottom:18px;">Si le bouton ne fonctionne pas, copie le lien et colle-le dans la barre d'adresse de Safari.</div>
+    <div class="inapp-icon" style="font-size:56px;margin-bottom:14px;">🧭</div>
+    <div class="inapp-title" style="font-family:var(--font-cond);font-size:26px;font-weight:900;margin-bottom:8px;">Ouvre dans Safari</div>
+    <div class="inapp-desc" style="font-size:15px;color:var(--t2);line-height:1.55;margin-bottom:22px;">Pour installer Force Tracker sur ton iPhone, ce lien doit s'ouvrir dans <strong style="color:var(--t1)">Safari</strong>.</div>
+    <button class="btn inapp-btn-open" style="background:var(--red);color:#fff;width:100%;font-size:16px;font-weight:700;padding:14px;border-radius:14px;margin-bottom:10px;">Ouvrir dans Safari</button>
+    <button class="btn btn-bg2 inapp-btn-copy" style="width:100%;font-size:15px;padding:13px;border-radius:14px;margin-bottom:18px;">Copier le lien</button>
+    <div style="font-size:13px;color:var(--t3);line-height:1.6;margin-bottom:18px;">Si le bouton ne fonctionne pas, copie le lien et colle-le dans la barre d'adresse.</div>
     <button onclick="document.getElementById('ov-inapp').classList.add('hidden')" style="background:none;border:none;color:var(--t3);font-size:13px;cursor:pointer;padding:6px;">Continuer sans installer</button>
   </div>
 </div>
@@ -4120,31 +4127,61 @@ function _isIOSInApp(){
   return false;
 }
 
-function tryOpenSafari(){
-  // Trick qui fonctionne dans Facebook, Instagram, WhatsApp iOS
-  const url = 'https://michdu75-commits.github.io/forcetracker/';
-  window.location.href = 'safari-' + url;
-  // Fallback : copie le lien après 1s si le redirect ne marche pas
-  setTimeout(()=>copyAppLink(), 1200);
+function _isFirefoxAndroid(){
+  const ua = navigator.userAgent;
+  return /Android/i.test(ua) && /Firefox/i.test(ua);
 }
 
-function copyAppLink(){
-  const url = 'https://michdu75-commits.github.io/forcetracker/';
+const APP_URL = 'https://michdu75-commits.github.io/forcetracker/';
+
+function tryOpenSafari(){
+  window.location.href = 'safari-' + APP_URL;
+  setTimeout(()=>copyAppLink('safari'), 1200);
+}
+
+function tryOpenChrome(){
+  // Android intent pour ouvrir dans Chrome
+  window.location.href = 'intent://' + APP_URL.replace('https://','') + '#Intent;scheme=https;package=com.android.chrome;end';
+  setTimeout(()=>copyAppLink('chrome'), 1200);
+}
+
+function copyAppLink(target){
+  const msg = target==='safari' ? 'Lien copié — colle-le dans Safari' : 'Lien copié — colle-le dans Chrome';
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(url).then(()=>toast('Lien copié — colle-le dans Safari','success'));
+    navigator.clipboard.writeText(APP_URL).then(()=>toast(msg,'success'));
   } else {
-    try{const t=document.createElement('textarea');t.value=url;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast('Lien copié — colle-le dans Safari','success');}catch(e){}
+    try{const t=document.createElement('textarea');t.value=APP_URL;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast(msg,'success');}catch(e){}
   }
+}
+
+function _showInAppOverlay(icon, title, desc, btnLabel, btnAction, copyTarget){
+  const el = document.getElementById('ov-inapp');
+  el.querySelector('.inapp-icon').textContent = icon;
+  el.querySelector('.inapp-title').textContent = title;
+  el.querySelector('.inapp-desc').innerHTML = desc;
+  const btn = el.querySelector('.inapp-btn-open');
+  btn.textContent = btnLabel;
+  btn.onclick = btnAction;
+  el.querySelector('.inapp-btn-copy').onclick = ()=>copyAppLink(copyTarget);
+  el.classList.remove('hidden');
 }
 
 function showInstallPrompt(){
   if(_isStandalone())return;
   if(_isIOSInApp()){
-    document.getElementById('ov-inapp').classList.remove('hidden');
+    _showInAppOverlay('🧭','Ouvre dans Safari',
+      'Pour installer Force Tracker sur ton iPhone, ce lien doit s\'ouvrir dans <strong style="color:var(--t1)">Safari</strong>.',
+      'Ouvrir dans Safari', tryOpenSafari, 'safari');
     return;
   }
   if(_isIOS()){
     document.getElementById('install-popup').classList.remove('hidden');
+    return;
+  }
+  if(_isFirefoxAndroid()){
+    _showInAppOverlay('🤖','Ouvre dans Chrome',
+      'Pour installer Force Tracker sur ton Android, ce lien doit s\'ouvrir dans <strong style="color:var(--t1)">Chrome</strong>.',
+      'Ouvrir dans Chrome', tryOpenChrome, 'chrome');
     return;
   }
   if(window._deferredInstall){
