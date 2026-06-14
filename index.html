@@ -332,9 +332,9 @@ label{font-size:14px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .ex-pick:active{background:var(--bg3);margin:0 -8px;padding:14px 10px;}
 .ex-pick-name{font-size:15px;font-weight:600;}
 .ex-pick-grp{font-size:12px;color:var(--t3);font-weight:600;}
-.ex-grp-tile{display:flex;align-items:center;gap:12px;padding:13px 10px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);cursor:pointer;margin-bottom:8px;transition:background .15s;}
+.ex-grp-tile{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);cursor:pointer;margin-bottom:8px;transition:background .15s;}
 .ex-grp-tile:active{background:var(--bg2);}
-.ex-grp-icon{font-size:22px;flex-shrink:0;width:32px;text-align:center;}
+.ex-grp-icon{flex-shrink:0;width:52px;height:52px;border-radius:12px;background:rgba(255,45,85,.12);display:flex;align-items:center;justify-content:center;}
 .ex-grp-info{flex:1;}
 .ex-grp-label{font-size:15px;font-weight:700;color:var(--t1);}
 .ex-grp-count{font-size:12px;color:var(--t3);margin-top:2px;font-weight:600;}
@@ -1752,14 +1752,41 @@ function skipRest(){stopRest();}
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
 
 // ─── EXERCISE PICKER ─────────────────────────────────────────
+const _MI=(p,s='')=>`<svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" width="34" height="34">${p}${s}</svg>`;
 const EX_GROUPS=[
-  {label:'Pectoraux',            icon:'🏋️', tags:['Pectoraux']},
-  {label:'Dos / Dorsaux',        icon:'🔗',  tags:['Dos','Trapèzes']},
-  {label:'Épaules',              icon:'🎯',  tags:['Épaules']},
-  {label:'Bras — Biceps / Triceps', icon:'💪', tags:['Biceps','Triceps']},
-  {label:'Jambes',               icon:'🦵',  tags:['Jambes','Fessiers']},
-  {label:'Abdominaux',           icon:'⚡',  tags:['Abdominaux']},
-  {label:'Mollets',              icon:'🦶',  tags:['Mollets']},
+  {label:'Pectoraux', tags:['Pectoraux'], icon:_MI(
+    `<path d="M22 34C13 34 5 27 5 18C5 11 12 7 22 9C32 7 39 11 39 18C39 27 31 34 22 34Z" fill="rgba(255,45,85,.18)"/>
+     <path d="M22 9C12 7 5 11 5 18C5 27 13 34 22 34" stroke="#FF2D55" stroke-width="2.5" stroke-linecap="round"/>
+     <path d="M22 9C32 7 39 11 39 18C39 27 31 34 22 34" stroke="#FF2D55" stroke-width="2.5" stroke-linecap="round"/>
+     <line x1="22" y1="9" x2="22" y2="34" stroke="#FF2D55" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.5"/>`)},
+  {label:'Dos / Dorsaux', tags:['Dos','Trapèzes'], icon:_MI(
+    `<path d="M8 10 Q22 6 36 10 L32 28 Q22 34 12 28 Z" fill="rgba(255,45,85,.18)"/>
+     <path d="M8 10 Q22 6 36 10 L32 28 Q22 34 12 28 Z" stroke="#FF2D55" stroke-width="2.5" stroke-linejoin="round"/>
+     <path d="M13 12 Q22 10 31 12" stroke="#FF2D55" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+     <path d="M14 18 Q22 15 30 18" stroke="#FF2D55" stroke-width="1.2" stroke-linecap="round" opacity="0.4"/>`)},
+  {label:'Épaules', tags:['Épaules'], icon:_MI(
+    `<ellipse cx="10" cy="20" rx="8" ry="9" fill="rgba(255,45,85,.18)" stroke="#FF2D55" stroke-width="2.5"/>
+     <ellipse cx="34" cy="20" rx="8" ry="9" fill="rgba(255,45,85,.18)" stroke="#FF2D55" stroke-width="2.5"/>
+     <path d="M18 16 Q22 12 26 16" stroke="#FF2D55" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>`)},
+  {label:'Bras — Biceps / Triceps', tags:['Biceps','Triceps'], icon:_MI(
+    `<path d="M10 36 Q8 22 14 14 Q18 8 22 10 Q28 12 30 20 Q31 28 26 34" fill="rgba(255,45,85,.18)" stroke="#FF2D55" stroke-width="2.5" stroke-linecap="round"/>
+     <path d="M14 18 Q18 10 24 14 Q28 18 26 24" fill="rgba(255,45,85,.3)" stroke="#FF2D55" stroke-width="1.5" stroke-linecap="round"/>`)},
+  {label:'Jambes', tags:['Jambes','Fessiers'], icon:_MI(
+    `<path d="M12 8 Q10 6 10 4 Q14 2 22 2 Q30 2 34 4 Q34 6 32 8 L30 36 Q26 40 22 40 Q18 40 14 36 Z" fill="rgba(255,45,85,.18)"/>
+     <path d="M12 8 Q10 6 10 4 Q14 2 22 2 Q30 2 34 4 Q34 6 32 8 L30 36 Q26 40 22 40 Q18 40 14 36 Z" stroke="#FF2D55" stroke-width="2.5" stroke-linejoin="round"/>
+     <line x1="22" y1="2" x2="22" y2="40" stroke="#FF2D55" stroke-width="1.2" stroke-dasharray="2 2" opacity="0.4"/>`)},
+  {label:'Abdominaux', tags:['Abdominaux'], icon:_MI(
+    `<rect x="7"  y="6"  width="12" height="9" rx="2" fill="rgba(255,45,85,.25)" stroke="#FF2D55" stroke-width="2"/>
+     <rect x="25" y="6"  width="12" height="9" rx="2" fill="rgba(255,45,85,.25)" stroke="#FF2D55" stroke-width="2"/>
+     <rect x="7"  y="18" width="12" height="9" rx="2" fill="rgba(255,45,85,.25)" stroke="#FF2D55" stroke-width="2"/>
+     <rect x="25" y="18" width="12" height="9" rx="2" fill="rgba(255,45,85,.25)" stroke="#FF2D55" stroke-width="2"/>
+     <rect x="7"  y="30" width="12" height="9" rx="2" fill="rgba(255,45,85,.25)" stroke="#FF2D55" stroke-width="2"/>
+     <rect x="25" y="30" width="12" height="9" rx="2" fill="rgba(255,45,85,.25)" stroke="#FF2D55" stroke-width="2"/>`)},
+  {label:'Mollets', tags:['Mollets'], icon:_MI(
+    `<path d="M16 4 Q10 12 10 20 Q10 32 16 40 L28 40 Q34 32 34 20 Q34 12 28 4 Z" fill="rgba(255,45,85,.18)"/>
+     <path d="M16 4 Q10 12 10 20 Q10 32 16 40" stroke="#FF2D55" stroke-width="2.5" stroke-linecap="round"/>
+     <path d="M28 4 Q34 12 34 20 Q34 32 28 40" stroke="#FF2D55" stroke-width="2.5" stroke-linecap="round"/>
+     <path d="M14 20 Q22 26 30 20" stroke="#FF2D55" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>`)},
 ];
 let _exGrp=null;
 
