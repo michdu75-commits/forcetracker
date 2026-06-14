@@ -128,7 +128,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 
 /* SCREENS */
 .screens{flex:1;overflow:hidden;position:relative;}
-.screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:12px 14px 90px;display:none;flex-direction:column;gap:10px;background:var(--bg);}
+.screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:12px 14px 110px;display:none;flex-direction:column;gap:10px;background:var(--bg);}
 .screen.active{display:flex;}
 .screen>*{flex-shrink:0;}
 ::-webkit-scrollbar{display:none;}
@@ -531,8 +531,9 @@ html.ob-done #onboarding{display:none;}
 @keyframes iSlideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
 
 /* ─── BANNIÈRE INSTALLATION ──────────────────────────────────── */
-#install-banner{position:fixed;bottom:calc(68px + max(env(safe-area-inset-bottom),0px));left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:410px;z-index:9000;padding:12px 14px;background:var(--bg2);border:1px solid var(--sep);border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.28);transition:transform .3s ease,opacity .3s ease;}
-#install-banner.hidden{transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;}
+#install-banner{position:fixed;bottom:calc(68px + max(env(safe-area-inset-bottom),0px));left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:410px;z-index:9000;padding:12px 14px;background:var(--bg2);border:1px solid var(--sep);border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.28);transition:transform .3s ease,opacity .3s ease;pointer-events:none;}
+#install-banner button,#install-banner a{pointer-events:auto;}
+#install-banner.hidden{transform:translateX(-50%) translateY(20px);opacity:0;}
 .ib-row{display:flex;align-items:center;gap:10px;}
 .ib-qr{background:#fff;border-radius:8px;padding:4px;flex-shrink:0;}
 .ib-qr img{width:60px;height:60px;display:block;}
