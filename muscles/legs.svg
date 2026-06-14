@@ -9,8 +9,8 @@
   <path d="M11 46 L10 52 Q25 56 40 52 L39 46Z" fill="#bababa"/>
   <path d="M8 63 L7 72 L12 72 L13 64Z" fill="#bababa"/>
   <path d="M42 63 L43 72 L38 72 L37 64Z" fill="#bababa"/>
-  <!-- Quadriceps gauche -->
+  <!-- Quadriceps gauche (avant cuisse) -->
   <path d="M10 52 L8 63 L13 64 L16 54Z" fill="#FF2D55"/>
-  <!-- Quadriceps droit -->
+  <!-- Quadriceps droit (avant cuisse) -->
   <path d="M40 52 L42 63 L37 64 L34 54Z" fill="#FF2D55"/>
 </svg>
