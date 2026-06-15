@@ -5225,6 +5225,13 @@ document.addEventListener('pointerdown',function(e){
   btn.appendChild(w);
   setTimeout(()=>w.remove(),520);
 });
+
+// ─── SERVICE WORKER ──────────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
 </script>
 </body>
 </html>
