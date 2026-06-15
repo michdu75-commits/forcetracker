@@ -8,7 +8,7 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **App live** : https://michdu75-commits.github.io/forcetracker/
 - **Auteur** : Michel — michdu75@gmail.com
 
-## Backend Apps Script (v3.2 — actif)
+## Backend Apps Script (v3.5 @9 — actif)
 
 - **Compte Google** : forcetracker.app@gmail.com
 - **URL déployée** : `https://script.google.com/macros/s/AKfycbyXlNWFvidB9n8ptaP9m8zWyWr5hfJ-WbE7zrkQwCPbBjdUbf5H37GDthQkMl8ETmNv0g/exec`
@@ -135,28 +135,21 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 - Backend `handleCoach_` : construit `userContent` multimodal (`{type:'image',...},{type:'text',...}`)
 - Système prompt inclut : "Quand une photo est fournie, analyse la composition corporelle visible..."
 
-### Morphologie (à implémenter dans Profil)
-Infographie source : `C:\Users\atzla\Downloads\Morphologies-Homme-Infographie-EOLE-PARIS.png.webp`
+### Morphologie (✅ implémenté 2026-06-15)
 
-**5 morphologies hommes** (forme du corps) :
-| Code | Nom | Description |
-|---|---|---|
-| `A` | Triangle | Taille et hanches légèrement plus grosses que le buste |
-| `H` | Rectangle | Épaules d'une largeur identique à la taille et aux hanches |
-| `T` | Trapèze | Hanches légèrement plus petites que les épaules |
-| `V` | Triangle inversé | Épaules beaucoup plus larges que hanches et taille |
-| `O` | Ovale | Ventre et bas du torse plus larges que épaules et taille |
+**Hommes** : H (Rectangle) · A (Triangle) · T (Trapèze) · V (Triangle inversé) · O (Ovale)  
+**Femmes** : H (Rectangle) · A (Poire) · V (Triangle inversé) · X (Sablier) · O (Ronde)  
+**Morphotypes** : `ecto` (mince) · `meso` (athlétique) · `endo` (rond)
 
-**3 morphotypes** (métabolisme/constitution) :
-| Code | Nom | Caractéristiques |
-|---|---|---|
-| `ecto` | Ectomorphe | Ossature légère, métabolisme rapide, mince, peu de masse musculaire, difficultés à prendre du poids |
-| `meso` | Mésomorphe | Muscles bien dessinés, athlétique/fort, gagne et perd du muscle facilement |
-| `endo` | Endomorphe | Corps rond, métabolisme lent, gagne et perd du muscle facilement, grossit aisément, difficultés à perdre du poids |
-
-Champs à ajouter dans `S` (state) : `S.morpho` (A/H/T/V/O) et `S.morphotype` (ecto/meso/endo)  
-À sauvegarder dans le profil cloud via `handleSaveProfile_` (champs `morpho` et `morphotype`)  
-À utiliser par le Coach IA dans `buildCoachContext()` pour des conseils personnalisés
+- `S.morpho` (ft4_morpho) + `S.morphotype` (ft4_morphot) — persistés + sync cloud
+- Section 🧬 Morphologie dans s-setup : `_renderMorphoSection()` (genre-aware)
+- `setMorphotype(val)` / `setMorpho(val)` — mise à jour immédiate
+- `buildCoachContext()` intègre morpho/morphotype
+- Coach IA Premium : bouton 📸 "Analyser ma morphologie" → overlay `#ov-morpho-analysis`
+  - 3 slots photo guidés (Face/Dos/Profil), resize 800px JPEG 0.8
+  - `analyzeMorphoPhotos()` → Apps Script `morphoAnalysis` → Claude Haiku Vision
+  - `applyMorphoResult(d)` → auto-update S.morpho + S.morphotype
+- Code.js @9 : `handleMorphoAnalysis_` + champs morpho/morphotype dans `handleSaveProfile_`
 
 ### Coach IA Premium
 - **Gratuit** : 10 questions (`S.coachFree`, persisté `ft4_coachFree`, constante `COACH_FREE_LIMIT=10`)
