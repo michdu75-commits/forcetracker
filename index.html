@@ -2749,30 +2749,29 @@ function openSessDetail(id){
   const cals=sess.calories?` · 🔥 ${sess.calories} kcal`:'';
   document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${cals}`;
 
-  // Silhouettes musculaires travaillées
+  _updateSdMuscles(sess);
+  _renderSessDetailContent();
+  document.getElementById('ov-sess-detail').classList.add('open');
+}
+
+function _updateSdMuscles(sess){
   const exNames=(sess.exs||sess.exercises||[]).map(e=>e.name);
   const grpMap={};
   EXLIB.forEach(e=>{if(exNames.includes(e.n))grpMap[e.g]=true;});
   const workedGroups=Object.keys(grpMap);
   const muscleEl=document.getElementById('sd-muscles');
-  if(muscleEl){
-    if(workedGroups.length===0){muscleEl.style.display='none';}
-    else{
-      muscleEl.style.display='flex';
-      muscleEl.style.cursor='pointer';
-      muscleEl.title='Voir la carte musculaire';
-      muscleEl.onclick=()=>showMuscleMap(sess.exs||sess.exercises||[],null);
-      muscleEl.innerHTML=EX_GROUPS
-        .filter(g=>g.tags.some(t=>workedGroups.includes(t)))
-        .map(g=>`<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
-          ${g.icon.replace('height:46px','height:56px')}
-          <span style="font-size:10px;color:var(--t2);text-align:center;max-width:56px;line-height:1.2">${g.label.replace(' / ','\n').split('\n')[0]}</span>
-        </div>`).join('');
-    }
-  }
-
-  _renderSessDetailContent();
-  document.getElementById('ov-sess-detail').classList.add('open');
+  if(!muscleEl)return;
+  if(workedGroups.length===0){muscleEl.style.display='none';return;}
+  muscleEl.style.display='flex';
+  muscleEl.style.cursor='pointer';
+  muscleEl.title='Voir la carte musculaire';
+  muscleEl.onclick=()=>showMuscleMap(sess.exs||sess.exercises||[],null);
+  muscleEl.innerHTML=EX_GROUPS
+    .filter(g=>g.tags.some(t=>workedGroups.includes(t)))
+    .map(g=>`<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+      ${g.icon.replace('height:46px','height:56px')}
+      <span style="font-size:10px;color:var(--t2);text-align:center;max-width:56px;line-height:1.2">${g.label.replace(' / ','\n').split('\n')[0]}</span>
+    </div>`).join('');
 }
 
 function _renderSessDetailContent(){
@@ -2815,7 +2814,7 @@ function deleteSessSet(ei,si){
 function deleteSessEx(ei){
   if(!_sessEdits)return;
   const name=_sessEdits.exs[ei]&&_sessEdits.exs[ei].name||'cet exercice';
-  showConfirm('Supprimer l\'exercice ?',`"${name}" sera retiré de cette séance.`,()=>{_sessEdits.exs.splice(ei,1);_renderSessDetailContent();});
+  showConfirm('Supprimer l\'exercice ?',`"${name}" sera retiré de cette séance.`,()=>{_sessEdits.exs.splice(ei,1);_renderSessDetailContent();_updateSdMuscles(_sessEdits);});
 }
 
 function deleteSessOrConfirm(){
@@ -2846,6 +2845,9 @@ function saveSessEdits(){
       if(!cur||s.rm1>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:s.rm1,date:_sessEdits.date};
     }
   }));
+  const calData=calcSessionCalories(_sessEdits);
+  _sessEdits.calories=calData.total;
+  _sessEdits.calData=calData;
   S.sessions[idx]=_sessEdits;
   persist();_cloudSyncSessions();renderSessions();closeSessDetail();
   toast('Séance mise à jour ✓','success');
