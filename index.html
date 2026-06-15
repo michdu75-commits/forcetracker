@@ -1375,7 +1375,7 @@ const EXLIB=[
   {n:'Extension Triceps',g:'Triceps'},{n:'Triceps Poulie',g:'Triceps'},
   {n:'Kickback Triceps',g:'Triceps'},{n:'Triceps Haltère',g:'Triceps'},
   // ── Jambes ─────────────────────────────────────────────────
-  {n:'Squat',g:'Jambes'},{n:'Squat Avant',g:'Jambes'},{n:'Squat Bulgare',g:'Jambes'},
+  {n:'Squat à la Barre',g:'Jambes'},{n:'Squat Avant',g:'Jambes'},{n:'Squat Bulgare',g:'Jambes'},
   {n:'Hack Squat',g:'Jambes'},
   {n:'Press Jambes 45°',g:'Jambes'},{n:'Press Jambes Horizontale',g:'Jambes'},
   {n:'Press Jambes Verticale',g:'Jambes'},{n:'Press Jambes Inclinée',g:'Jambes'},
@@ -1397,8 +1397,8 @@ const EXLIB=[
   {n:'Élévations Mollets Debout',g:'Mollets'},{n:'Élévations Mollets Assis',g:'Mollets'},
   {n:'Leg Press Mollets',g:'Mollets'},{n:'Donkey Calf Raise',g:'Mollets'},
 ];
-const BIG3=['Squat','Développé Couché','Soulevé de Terre'];
-const BIG4=['Squat','Soulevé de Terre','Développé Couché','Développé Militaire'];
+const BIG3=['Squat à la Barre','Développé Couché','Soulevé de Terre'];
+const BIG4=['Squat à la Barre','Soulevé de Terre','Développé Couché','Développé Militaire'];
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbyXlNWFvidB9n8ptaP9m8zWyWr5hfJ-WbE7zrkQwCPbBjdUbf5H37GDthQkMl8ETmNv0g/exec';
@@ -1409,12 +1409,12 @@ const SET_TYPE_LABELS={N:'Normal',W:'Warm-up',E:'Échec',D:'Drop set'};
 // [Débutant, Novice, Intermédiaire, Avancé] seuils
 const STD={
   H:{
-    'Squat':            [0.75,1.00,1.25,1.50],
+    'Squat à la Barre':            [0.75,1.00,1.25,1.50],
     'Développé Couché': [0.50,0.65,0.85,1.05],
     'Soulevé de Terre': [1.00,1.25,1.50,1.75],
   },
   F:{
-    'Squat':            [0.50,0.70,0.90,1.10],
+    'Squat à la Barre':            [0.50,0.70,0.90,1.10],
     'Développé Couché': [0.30,0.40,0.55,0.70],
     'Soulevé de Terre': [0.65,0.85,1.10,1.35],
   }
@@ -2447,7 +2447,7 @@ const gifCache={};
 // Vidéos YouTube Demic — {id, s:true si Short, s:false si vidéo normale}
 const EX_YT={
   'Développé Couché':{id:'sRuKSZLcmWM',s:true},
-  'Squat':{id:'Bjfefk24UXM',s:false},
+  'Squat à la Barre':{id:'Bjfefk24UXM',s:false},
   'Développé Militaire':{id:'NQ-JJYay1TM',s:false},
   'Développé Incliné':{id:'tN3SLXtS-5E',s:false},
   'Pull-over':{id:'JdzaVp3zEAM',s:false},
@@ -2462,7 +2462,7 @@ const EX_YT={
 };
 
 const EX_EN={
-  'Squat':'squat barbell','Développé Couché':'bench press barbell','Soulevé de Terre':'deadlift conventional',
+  'Squat à la Barre':'squat barbell','Développé Couché':'bench press barbell','Soulevé de Terre':'deadlift conventional',
   'Soulevé de Terre Sumo':'sumo deadlift',
   'Soulevé de Terre Roumain Barre':'romanian deadlift barbell',
   'Soulevé de Terre Roumain Haltères':'romanian deadlift dumbbell',
@@ -3161,7 +3161,7 @@ function toast(msg,type='info'){const t=document.getElementById('toast');t.textC
 
 
 // ─── CYCLE DE FORCE ──────────────────────────────────────────
-const CYCLE_EXS = ['Squat','Développé Couché','Soulevé de Terre','Développé Militaire'];
+const CYCLE_EXS = ['Squat à la Barre','Développé Couché','Soulevé de Terre','Développé Militaire'];
 
 function phaseDistrib(totalWeeks) {
   const del  = Math.max(1, Math.round(totalWeeks * 0.08));
@@ -3198,7 +3198,7 @@ function round25(kg) { return Math.round(kg / 2.5) * 2.5; }
 function projectRM(rm1, totalWeeks) {
   const age = S.age || 30;
   const lvlIdx = Math.min(4, Math.max(0,
-    S.prs['Squat'] ? (S.prs['Squat'].rm1 / (S.bw||80) > 1.5 ? 3 : S.prs['Squat'].rm1 / (S.bw||80) > 1.25 ? 2 : S.prs['Squat'].rm1 / (S.bw||80) > 1.0 ? 1 : 0) : 0
+    S.prs['Squat à la Barre'] ? (S.prs['Squat à la Barre'].rm1 / (S.bw||80) > 1.5 ? 3 : S.prs['Squat à la Barre'].rm1 / (S.bw||80) > 1.25 ? 2 : S.prs['Squat à la Barre'].rm1 / (S.bw||80) > 1.0 ? 1 : 0) : 0
   ));
   const baseRate = [0.009, 0.007, 0.005, 0.003, 0.002][lvlIdx];
   const ageMult  = age < 30 ? 1.1 : age < 40 ? 1.0 : age < 50 ? 0.80 : age < 60 ? 0.65 : 0.50;
@@ -3229,7 +3229,7 @@ function renderCycleSetup() {
   inp.innerHTML = CYCLE_EXS.map(ex => {
     const pr = S.prs[ex];
     const rm = pr ? fmt(pr.rm1) : '';
-    const ph = ex === 'Squat' ? '120' : ex === 'Développé Couché' ? '90' : ex === 'Soulevé de Terre' ? '140' : '65';
+    const ph = ex === 'Squat à la Barre' ? '120' : ex === 'Développé Couché' ? '90' : ex === 'Soulevé de Terre' ? '140' : '65';
     return `<div style="display:flex;align-items:center;gap:10px;">
       <span style="font-size:13px;font-weight:600;flex:1;">${ex}</span>
       <input type="number" id="rm-inp-${ex.replace(/ /g,'_')}" value="${rm}" placeholder="${ph}" inputmode="decimal" step="0.5" style="width:90px;text-align:center;padding:8px;" oninput="renderCycleProjections()">
