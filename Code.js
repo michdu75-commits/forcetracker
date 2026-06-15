@@ -209,6 +209,7 @@ function handleSaveProfile_(body) {
     if (body.defRest        !== undefined) profile.defRest        = body.defRest;
     if (body.mensCycleStart !== undefined) profile.mensCycleStart = body.mensCycleStart;
     if (body.mensCycleDur   !== undefined) profile.mensCycleDur   = body.mensCycleDur;
+    if (body.contraception  !== undefined) profile.contraception  = body.contraception;
     if (body.customExercises!== undefined) profile.customExercises= body.customExercises;
 
     existing.profile   = profile;
