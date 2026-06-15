@@ -115,6 +115,7 @@ function doPost(e) {
   if (body.action === 'coach')             return handleCoach_(body);
   if (body.action === 'validateCode')      return handleValidateCode_(body);
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
+  if (body.action === 'importProgram')     return handleImportProgram_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -320,6 +321,56 @@ function handleLogCustomExercise_(body) {
       (body.musclesS || []).join(', ')
     ]);
     return json_({status:'ok'});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+function handleImportProgram_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+
+  try {
+    const images = body.images || [];
+    if (!images.length) return json_({status:'error', error:'Aucune image reçue'});
+
+    const userContent = images.map(img => ({
+      type: 'image',
+      source: { type: 'base64', media_type: img.type || 'image/jpeg', data: img.data }
+    }));
+
+    userContent.push({
+      type: 'text',
+      text: 'Analyse ces images et extrait le programme d\'entraînement complet.\n\nRetourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, avec cette structure exacte :\n{"name":"nom du programme si visible sinon Programme","days":[{"label":"Jour 1 - Push","exercises":[{"name":"nom de l\'exercice","sets":4,"reps":10,"kg":0}]}]}\n\nRègles importantes :\n- Si les charges ne sont pas indiquées, mets kg:0\n- sets = nombre de séries (entier), reps = répétitions par série (entier)\n- Si c\'est "4x8" ou "4×8" → sets:4, reps:8\n- Si le programme est sur un seul jour, crée un seul élément dans days\n- Utilise les noms d\'exercices en français si possible\n- Le label du jour peut être "Jour 1", "Lundi", "Push A", etc. selon ce qui est écrit\n- Inclus TOUS les exercices visibles sur toutes les pages'
+    });
+
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      payload: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        messages: [{role: 'user', content: userContent}]
+      }),
+      muteHttpExceptions: true
+    });
+
+    const result = JSON.parse(resp.getContentText());
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+
+    // Extraire le JSON de la réponse (Claude peut ajouter du texte autour)
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Le programme n\'a pas pu être extrait. Essaie avec une photo plus nette.'});
+
+    const data = JSON.parse(match[0]);
+    if (!data.days || !data.days.length) return json_({status:'error', error:'Aucun exercice trouvé dans les images.'});
+
+    return json_({status:'ok', data});
   } catch(err) {
     return json_({status:'error', error: err.message});
   }

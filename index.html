@@ -115,6 +115,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 #rest-fill{height:100%;background:var(--green);border-radius:3px;transition:width 1s linear,background .4s;}
 .rbtn{font-size:13px;padding:8px 10px;border-radius:8px;border:1px solid var(--sep);background:rgba(255,255,255,.06);color:var(--t1);cursor:pointer;font-family:var(--font);font-weight:600;}
 .rbtn.rp-active{background:var(--red);color:#fff;border-color:var(--red);}
+.imp-dot{width:8px;height:8px;border-radius:4px;background:var(--sep);transition:all .3s;}
+.imp-dot.active{width:24px;background:var(--red);}
+.imp-spinner{width:36px;height:36px;border:3px solid var(--sep);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
 /* NAV */
 .nav{display:flex;align-items:flex-end;overflow:visible;background:rgba(10,10,15,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--sep);padding-bottom:max(env(safe-area-inset-bottom),0px);position:absolute;bottom:0;left:0;right:0;z-index:20;}
@@ -762,7 +766,8 @@ html.ob-done #onboarding{display:none;}
   <div id="wkt-exs"></div>
   <div style="display:flex;gap:8px;">
     <button class="btn btn-bg2" style="flex:1;" onclick="openProgModal()">📋 Programmes</button>
-    <button class="btn btn-bg2" style="flex:2;" onclick="openExPicker()">+ Ajouter un exercice</button>
+    <button class="btn btn-bg2" style="padding:13px 15px;" onclick="openImportProg()" title="Importer un programme par photo">📸</button>
+    <button class="btn btn-bg2" style="flex:2;" onclick="openExPicker()">+ Exercice</button>
   </div>
   <div id="log-finish"></div>
   <p style="font-size:13px;color:var(--t3);text-align:center;padding-bottom:4px;">✓ pour valider une série → chrono de repos automatique</p>
@@ -1344,6 +1349,69 @@ html.ob-done #onboarding{display:none;}
       <button class="btn" id="sd-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none" onclick="deleteSessOrConfirm()">🗑️ Supprimer</button>
       <button class="btn btn-red" style="flex:2;padding:12px" onclick="saveSessEdits()">💾 Enregistrer</button>
     </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Import programme par photo -->
+<div class="overlay" id="ov-import-prog" onclick="if(event.target===this)closeImportProg()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px;">
+      <div class="imp-dot active" id="imp-dot-1"></div>
+      <div class="imp-dot" id="imp-dot-2"></div>
+      <div class="imp-dot" id="imp-dot-3"></div>
+      <div class="imp-dot" id="imp-dot-4"></div>
+    </div>
+    <!-- Étape 1 : Source -->
+    <div id="imp-s1">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;margin-bottom:8px;">📸</div>
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px;">Importer un programme</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.5;">Prends en photo ton programme ou sélectionne les images depuis ta galerie.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-cam-inp').click()">📷 Prendre une photo</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-gal-inp').click()">🖼️ Choisir depuis la galerie</button>
+      </div>
+      <input type="file" id="imp-cam-inp" accept="image/*" capture="environment" style="display:none" onchange="addImportPhoto(this)">
+      <input type="file" id="imp-gal-inp" accept="image/*" multiple style="display:none" onchange="addImportPhoto(this)">
+      <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="closeImportProg()">Annuler</button>
+    </div>
+    <!-- Étape 2 : Pages -->
+    <div id="imp-s2" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:16px;">Pages ajoutées</div>
+      <div id="imp-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;min-height:80px;"></div>
+      <button class="btn btn-bg2" onclick="document.getElementById('imp-more-inp').click()">+ Ajouter une page</button>
+      <input type="file" id="imp-more-inp" accept="image/*" multiple style="display:none" onchange="addImportPhoto(this)">
+      <button class="btn btn-red" style="margin-top:4px;" onclick="analyzeImportPhotos()">🤖 Analyser avec IA →</button>
+      <button class="btn btn-bg2" onclick="impGoStep(1)">← Retour</button>
+    </div>
+    <!-- Étape 3 : Analyse -->
+    <div id="imp-s3" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:32px 0;">
+      <div style="font-size:40px;">🤖</div>
+      <div style="font-weight:700;font-size:16px;">Analyse en cours…</div>
+      <div style="font-size:13px;color:var(--t2);text-align:center;">Claude analyse tes photos et extrait le programme</div>
+      <div class="imp-spinner"></div>
+    </div>
+    <!-- Étape 4 : Confirmation -->
+    <div id="imp-s4" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:17px;" id="imp-prog-name"></div>
+      <div style="font-size:13px;color:var(--t2);">Vérifie les exercices extraits. Appuie sur ✕ pour retirer un exercice.</div>
+      <div id="imp-preview" style="display:flex;flex-direction:column;gap:10px;max-height:55vh;overflow-y:auto;"></div>
+      <button class="btn btn-red" style="margin-top:4px;" onclick="finalImportProg()">✅ Importer ce programme</button>
+      <button class="btn btn-bg2" onclick="impGoStep(2)">← Modifier les photos</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Sélection du jour -->
+<div class="overlay" id="ov-day-sel" onclick="if(event.target===this)closeDaySel()">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:17px;margin-bottom:4px;text-align:center;">Quel jour aujourd'hui ?</div>
+    <div id="day-sel-prog-name" style="font-size:13px;color:var(--t2);text-align:center;margin-bottom:16px;"></div>
+    <div id="day-sel-btns" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeDaySel()">Annuler</button>
   </div>
 </div>
 
@@ -2437,6 +2505,180 @@ function saveCustomEx(){
   hideCustomExForm();filterEx();toast(name+' créé !','success');
 }
 
+// ─── IMPORT PROGRAMME PAR PHOTO ──────────────────────────────
+let _impPhotos=[],_impExtracted=null;
+
+function openImportProg(){
+  _impPhotos=[];_impExtracted=null;
+  impGoStep(1);
+  document.getElementById('ov-import-prog').classList.add('open');
+}
+function closeImportProg(){document.getElementById('ov-import-prog').classList.remove('open');}
+
+function impGoStep(n){
+  [1,2,3,4].forEach(i=>{
+    const s=document.getElementById('imp-s'+i);
+    if(s)s.style.display='none';
+    const dot=document.getElementById('imp-dot-'+i);
+    if(dot)dot.classList.toggle('active',i===n);
+  });
+  const s=document.getElementById('imp-s'+n);
+  if(s)s.style.display=(n===1||n===4)?'block':'flex';
+  if(n===1)['imp-cam-inp','imp-gal-inp','imp-more-inp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+function addImportPhoto(input){
+  const files=[...input.files];if(!files.length)return;
+  const loadFile=f=>new Promise(res=>{
+    const img=new Image(),url=URL.createObjectURL(f);
+    img.onload=()=>{
+      const max=1200,canvas=document.createElement('canvas');
+      let w=img.width,h=img.height;
+      if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res({data:canvas.toDataURL('image/jpeg',0.82).split(',')[1],type:'image/jpeg'});
+    };
+    img.src=url;
+  });
+  Promise.all(files.map(loadFile)).then(results=>{
+    _impPhotos.push(...results);
+    _renderImpThumbs();
+    impGoStep(2);
+  });
+}
+
+function _renderImpThumbs(){
+  const el=document.getElementById('imp-thumbs');if(!el)return;
+  el.innerHTML=_impPhotos.map((p,i)=>`<div style="position:relative;display:inline-block;">
+    <img src="data:${p.type};base64,${p.data}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--sep);">
+    <button onclick="removeImpPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;font-family:var(--font);">✕</button>
+  </div>`).join('');
+}
+
+function removeImpPhoto(i){
+  _impPhotos.splice(i,1);
+  if(!_impPhotos.length){impGoStep(1);return;}
+  _renderImpThumbs();
+}
+
+async function analyzeImportPhotos(){
+  if(!_impPhotos.length){toast('Ajoute au moins une photo','error');return;}
+  if(!S.url){toast('Connexion Apps Script requise','error');return;}
+  impGoStep(3);
+  try{
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'importProgram',images:_impPhotos})});
+    const d=await r.json();
+    if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
+    _impExtracted=d.data;
+    _renderImpConfirm();
+    impGoStep(4);
+  }catch(e){
+    impGoStep(2);
+    toast('Erreur analyse : '+e.message,'error');
+  }
+}
+
+function _renderImpConfirm(){
+  const d=_impExtracted;if(!d)return;
+  const nameEl=document.getElementById('imp-prog-name');
+  if(nameEl)nameEl.textContent=d.name||'Programme importé';
+  const el=document.getElementById('imp-preview');if(!el)return;
+  el.innerHTML=(d.days||[]).map((day,di)=>`
+    <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
+      <div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">${day.label||'Jour '+(di+1)}</div>
+      <div id="imp-day-${di}">
+        ${(day.exercises||[]).map((ex,ei)=>`
+          <div id="imp-ex-${di}-${ei}" style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border-radius:8px;margin-bottom:5px;">
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:600;">${ex.name}</div>
+              <div style="font-size:12px;color:var(--t2);">${ex.sets}×${ex.reps} reps${ex.kg?' · '+ex.kg+' kg':''}</div>
+            </div>
+            <button onclick="removeImpEx(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function removeImpEx(di,ei){
+  if(!_impExtracted||!_impExtracted.days[di])return;
+  _impExtracted.days[di].exercises.splice(ei,1);
+  if(!_impExtracted.days[di].exercises.length)_impExtracted.days.splice(di,1);
+  if(!_impExtracted.days.length){toast('Plus aucun exercice','info');impGoStep(2);return;}
+  _renderImpConfirm();
+}
+
+function finalImportProg(){
+  if(!_impExtracted||!(_impExtracted.days||[]).length){toast('Aucun programme à importer','error');return;}
+  if(!S.programmes)S.programmes=[];
+  const name=(_impExtracted.name||'Programme '+new Date().toLocaleDateString('fr-FR')).trim();
+  const allEx=[...EXLIB,...(S.customExercises||[])].map(e=>e.n.toLowerCase());
+  const toCreate=[];
+  _impExtracted.days.forEach(day=>(day.exercises||[]).forEach(ex=>{
+    const low=ex.name.toLowerCase();
+    if(!allEx.includes(low)&&!toCreate.find(n=>n.toLowerCase()===low))toCreate.push(ex.name);
+  }));
+  if(toCreate.length){
+    if(!S.customExercises)S.customExercises=[];
+    toCreate.forEach(n=>S.customExercises.push({n,g:'Autres',custom:true}));
+    toast(toCreate.length+' exercice'+(toCreate.length>1?'s':'')+" créé"+(toCreate.length>1?'s':'')+" automatiquement",'info');
+  }
+  const prog={id:'p'+Date.now(),name,
+    days:_impExtracted.days.map((day,di)=>({
+      label:day.label||'Jour '+(di+1),
+      exs:(day.exercises||[]).map(ex=>({
+        name:ex.name,
+        sets:Array.from({length:Math.max(1,ex.sets||3)},()=>({kg:ex.kg||0,reps:ex.reps||10,type:'N'}))
+      }))
+    }))
+  };
+  S.programmes.push(prog);
+  persist();
+  closeImportProg();
+  toast('"'+name+'" importé ! 💪','success');
+  openProgModal();
+}
+
+// ─── SÉLECTION DU JOUR ────────────────────────────────────────
+let _daySelProgIdx=-1;
+
+function openDaySel(progIdx){
+  const prog=(S.programmes||[])[progIdx];if(!prog||!prog.days)return;
+  _daySelProgIdx=progIdx;
+  const nameEl=document.getElementById('day-sel-prog-name');
+  if(nameEl)nameEl.textContent=prog.name;
+  const btns=document.getElementById('day-sel-btns');
+  if(btns)btns.innerHTML=(prog.days||[]).map((d,i)=>`
+    <button class="btn btn-bg2" style="padding:14px 16px;text-align:left;" onclick="loadProgDay(${progIdx},${i})">
+      <div style="font-weight:700;font-size:14px;">${d.label}</div>
+      <div style="font-size:12px;color:var(--t2);margin-top:3px;">${(d.exs||[]).slice(0,3).map(e=>e.name).join(', ')}${(d.exs||[]).length>3?' +'+((d.exs||[]).length-3):''}</div>
+    </button>`).join('');
+  document.getElementById('ov-day-sel').classList.add('open');
+}
+
+function closeDaySel(){document.getElementById('ov-day-sel').classList.remove('open');}
+
+function loadProgDay(progIdx,dayIdx){
+  const prog=(S.programmes||[])[progIdx];
+  if(!prog||!prog.days||!prog.days[dayIdx])return;
+  const day=prog.days[dayIdx];
+  S.wkt={date:today(),exs:(day.exs||[]).map(e=>{
+    const prev=getPrev(e.name);
+    return{name:e.name,sets:(e.sets||[]).map(s=>({
+      kg:prev.length?prev[0].kg:(s.kg||0),
+      reps:prev.length?prev[0].reps:(s.reps||10),
+      type:s.type||'N',done:false,rm1:0
+    }))};
+  })};
+  persist();closeDaySel();closeProgModal();
+  goScreen('log',document.getElementById('nb-log'));
+  renderExBlocks();
+  toast('"'+prog.name+' — '+day.label+'" chargé ! 💪','success');
+}
+
 // ─── PROGRAMMES ──────────────────────────────────────────────
 function openProgModal(){
   renderProgModal();
@@ -2453,11 +2695,19 @@ function renderProgModal(){
     list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme sauvegardé.<br>Crée une séance et utilise "Sauvegarder" !</div>';
   }else{
     list.innerHTML=progs.map((p,i)=>{
-      const exNames=(p.exs||[]).slice(0,3).map(e=>e.name).join(', ')+(p.exs.length>3?' +'+( p.exs.length-3):'');
+      const isMulti=p.days&&p.days.length;
+      let detail='';
+      if(isMulti){
+        detail=p.days.length+' jour'+(p.days.length>1?'s':'')+' · '+p.days.map(d=>d.label).join(' / ');
+      }else{
+        const exs=p.exs||[];
+        const exNames=exs.slice(0,3).map(e=>e.name).join(', ')+(exs.length>3?' +'+(exs.length-3):'');
+        detail=exs.length+' exercice'+(exs.length>1?'s':'')+' · '+exNames;
+      }
       return `<div class="prog-card">
         <div style="flex:1;min-width:0;">
-          <div class="prog-card-name">${p.name}</div>
-          <div class="prog-card-detail">${p.exs.length} exercice${p.exs.length>1?'s':''} · ${exNames}</div>
+          <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${p.name}</div>
+          <div class="prog-card-detail">${detail}</div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
@@ -2496,11 +2746,12 @@ function saveAsProg(){
 function loadProg(idx){
   const prog=(S.programmes||[])[idx];
   if(!prog)return;
+  if(prog.days&&prog.days.length){openDaySel(idx);return;}
   S.wkt={
     date:today(),
-    exs:prog.exs.map(e=>{
+    exs:(prog.exs||[]).map(e=>{
       const prev=getPrev(e.name);
-      return{name:e.name,sets:e.sets.map(s=>({
+      return{name:e.name,sets:(e.sets||[]).map(s=>({
         kg:prev.length?prev[0].kg:(s.kg||0),
         reps:prev.length?prev[0].reps:(s.reps||5),
         type:s.type||'N',done:false,rm1:0
