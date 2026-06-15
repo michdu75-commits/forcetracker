@@ -1,40 +1,50 @@
 # Force Tracker — Contexte projet pour Claude
 
-## ⚠️ PRIORITÉ ABSOLUE — Prochaine session
-
-### Sauvegarde cloud des séances (URGENT)
-Michel a perdu une séance à cause d'une suppression de PWA. Les séances ne sont sauvegardées que dans le localStorage — si l'utilisateur supprime l'app, tout est perdu.
-
-**À implémenter en premier :**
-- `finishWorkout()` → envoyer la séance complète au cloud (Apps Script)
-- `handleSaveProfile_` → accepter et stocker `sessions[]` dans les données utilisateur
-- `loadProfile` retourne déjà `sessions[]` — il faut juste les alimenter
-- À la restauration, `_applyRestoreData` restaure déjà les sessions si présentes
-
-**Comportement cible :** après chaque séance terminée, la session est sauvegardée dans le cloud. Si l'utilisateur supprime l'app et la réinstalle, il retrouve toutes ses séances via la restauration par email.
-
 ## Présentation
 
 PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-width 430 px). Single-page app HTML/CSS/JS pur, sans framework ni build step. Déployée sur GitHub Pages.
 
 - **Repo GitHub** : https://github.com/michdu75-commits/forcetracker
 - **App live** : https://michdu75-commits.github.io/forcetracker/
-- **Apps Script URL (v3.2 — active)** : https://script.google.com/macros/s/AKfycbw52oQ9grdgeXQcnWaP3t-3C50oNUAzkn5lBTuXbEbCi_61vE8Aml8Pb6vwjw02CM1OHA/exec
-- **Fichier Apps Script local** : `appsscript.gs` (référence — déjà déployé)
 - **Auteur** : Michel — michdu75@gmail.com
+
+## Backend Apps Script (v3.2 — actif)
+
+- **Compte Google** : forcetracker.app@gmail.com
+- **URL déployée** : `https://script.google.com/macros/s/AKfycbyXlNWFvidB9n8ptaP9m8zWyWr5hfJ-WbE7zrkQwCPbBjdUbf5H37GDthQkMl8ETmNv0g/exec`
+- **Script ID** : `1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw`
+- **Fichier local** : `Code.js` (géré via clasp)
+- **clasp** : toujours préfixer avec `NODE_TLS_REJECT_UNAUTHORIZED=0` (SSL Windows)
+- **Déploiement web app** : Execute as = Me, Who has access = Anyone — ⚠️ à vérifier après chaque redéploiement UI
+
+### Config Script Properties (script.google.com → Paramètres du projet)
+| Propriété | Usage |
+|---|---|
+| `ANTHROPIC_API_KEY` | Clé API Claude pour le Coach IA |
+| `PREMIUM_EMAILS` | Emails whitelist indéfinis, séparés par `,` |
+| `PREMIUM_CODES` | Codes d'accès payants, séparés par `,` |
+| `KOFI_TOKEN` | Token webhook Ko-fi (optionnel) |
+
+### Commandes clasp utiles
+```bash
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp push --force   # pousser Code.js
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp deploy          # nouveau déploiement
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
+```
 
 ## Architecture
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` | App complète (HTML + CSS + JS inline, ~3 200 lignes) |
-| `appsscript.gs` | Backend Google Apps Script v3.1 (sync cloud) |
+| `index.html` | App complète (HTML + CSS + JS inline, ~4 200 lignes) |
+| `Code.js` | Backend Google Apps Script v3.2 (sync cloud) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `logo.png` | Icône app |
 
 **État persistant** : `localStorage` — clés préfixées `ft4_*`  
 **Objet global** : `S` (state) — chargé par `load()`, sauvé par `persist()`  
-**URL Apps Script** : codée en dur dans `DEFAULT_URL` (ligne ~1084), jamais saisie par l'utilisateur
+**URL Apps Script** : codée en dur dans `DEFAULT_URL` (ligne ~1246), jamais saisie par l'utilisateur  
+⚠️ **Ne jamais changer DEFAULT_URL sans la mettre à jour dans index.html ET redéployer**
 
 ## Écrans (navigation bas de page)
 
@@ -48,16 +58,42 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 | `s-coach` | 🤖 Coach IA | Chat Claude Haiku via Apps Script, contexte profil injecté |
 | `s-cycle` | — | Cycle de force (config + vue active), accès depuis s-home |
 
-**Mode admin** : 5 taps sur le logo → onglet "Admin" caché dans Setup (email, test connexion, restaurer, voir réponse brute API). Masqué aux utilisateurs normaux.
+**Navigation** : Accueil · Progrès · **Séance** (centre, FAB rouge 54px) · Nutrition · Coach · Setup  
+**Mode admin** : 5 taps sur le logo → onglet "Admin" caché dans Setup (email, test connexion, restaurer, réponse brute API)
 
 ## Fonctionnalités implémentées
 
-### Entraînement
-- Suivi de séances (exercices, séries, reps, poids, type : Normal/Warm-up/Eccentrique/Drop)
-- Timer de repos configurable (60/90/120/180/300 s) avec barre de progression
-- Calculateur de plaques (visualisation disques sur barre)
+### Entraînement (session 2026-06-13/14)
+- Suivi de séances (exercices, séries, reps, poids)
+- **Types de série** : N (Normal) / W (Warm-up, exclu du volume) / E (Échec) / D (Drop set)
+  - Couleurs : N=gris, W=bleu, E=rouge, D=violet
+  - Timer adaptatif par type : N=defRest, W=45s, E=240s, D=20s
+  - **Popup d'aide** ℹ️ (icône dans l'en-tête exercice) → `openTypeHelp()` / modal `#ov-type-help`
+- **1RM live** affiché dans le badge de type (sous la lettre), formule Brzycki `bz(kg,reps)`
+- **Auto-focus** : après saisie du poids → focus auto sur reps (700ms debounce, `_onKgInput`)
+- **Timer de repos sticky** : entre log-sleep et exercices, `position:sticky;top:0;z-index:10`
+  - Couleur : >50% vert → >20% or → rouge — overtime : clignotement `@keyframes rest-blink`
+  - Durée par défaut : **130s**, boutons −15s / +15s
+- **Collapse/expand exercices** : un seul exercice ouvert à la fois (`_expandedEx`)
+  - Ajout exercice → le dernier s'ouvre, les autres se replient
+  - **Auto-scroll** : `addExercise()` appelle `scrollIntoView({block:'start'})` 80ms après `renderExBlocks()` — nécessaire car `#log-sleep` (~200px) pousse le bloc hors de la vue sur petits écrans
+  - Vue repliée : ligne compacte avec nom + sets
+- **Confirmation suppression** : modal `#ov-confirm` avant `rmEx(ei)` → `showConfirm(title,msg,cb)`
 - PRs automatiques (calcul 1RM Brzycki) par exercice
 - Niveaux de force (Débutant/Novice/Intermédiaire/Avancé/Élite) par genre/âge
+- Calculateur de plaques (visualisation disques sur barre)
+
+### Visualisation des séances passées
+- Modal `#ov-sess-detail` : voir + modifier les kg/reps de chaque set d'une séance passée
+- Affiche 1RM calculé `~Xkg` pour chaque set
+- `_renderSessDetailContent()` / `openSessDetail(i)` / `saveSessDetail()`
+
+### Cloud sync — ✅ COMPLET (2026-06-13)
+- **`_cloudSync()`** : envoie TOUT au cloud — profil + sessions(100) + prs + weightLog(365) + sleepLog(365) + cycle
+- **`_cloudSyncDebounced()`** : appelé par `persist()` — debounce 4s → pas de spam réseau
+- **`finishWorkout()`** : appelle `_cloudSyncSessions()` (alias de `_cloudSync()`) après chaque séance
+- **Restauration** : `_applyRestoreData()` restaure sessions, prs, weightLog, sleepLog, cycle depuis le cloud
+- **Stockage** : `PropertiesService.getScriptProperties()` — clé `u_{email}` — limite 9MB total
 
 ### Suivi physique
 - Journal de poids de corps avec graphique (courbes bézier)
@@ -88,95 +124,84 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - Ripple effect sur tous les boutons
 - Install prompt PWA (iOS : instructions, Android : prompt natif)
 - Toast notifications (succès/erreur/info)
+- **`#install-banner`** : `pointer-events:none` sur le container, `pointer-events:auto` sur boutons/liens — empêche le banner fixe de bloquer le scroll et les touches dans `s-log`
+- **`.screen` padding-bottom** : 110px (était 90px) — espace suffisant pour "Terminer la séance" sous le banner
 
-### Navigation bas de page (v2 — 2026-06-13)
-- Ordre : Accueil · Progrès · **Séance** (centre) · Nutrition · Coach · Setup
-- Bouton Séance : FAB surélevé, cercle rouge 54px, icône + blanche — classe `.nb-ctr`
-- `.nav` a `align-items:flex-end` + `overflow:visible` pour l'élévation
+### Coach IA — Photo corporelle (2026-06-13)
+- Bouton 📷 dans `s-coach` → `openCoachCamera()` → `<input type=file accept=image/*>`
+- `onCoachImgSelected(input)` : redimensionne via canvas (max 800px, JPEG 0.8) → `_coachImg` (base64)
+- `sendToCoach()` : si `_coachImg` présent, payload inclut `image` + `imageType` → envoyé à Apps Script
+- `clearCoachImg()` : réinitialise après envoi
+- Backend `handleCoach_` : construit `userContent` multimodal (`{type:'image',...},{type:'text',...}`)
+- Système prompt inclut : "Quand une photo est fournie, analyse la composition corporelle visible..."
+
+### Morphologie (à implémenter dans Profil)
+Infographie source : `C:\Users\atzla\Downloads\Morphologies-Homme-Infographie-EOLE-PARIS.png.webp`
+
+**5 morphologies hommes** (forme du corps) :
+| Code | Nom | Description |
+|---|---|---|
+| `A` | Triangle | Taille et hanches légèrement plus grosses que le buste |
+| `H` | Rectangle | Épaules d'une largeur identique à la taille et aux hanches |
+| `T` | Trapèze | Hanches légèrement plus petites que les épaules |
+| `V` | Triangle inversé | Épaules beaucoup plus larges que hanches et taille |
+| `O` | Ovale | Ventre et bas du torse plus larges que épaules et taille |
+
+**3 morphotypes** (métabolisme/constitution) :
+| Code | Nom | Caractéristiques |
+|---|---|---|
+| `ecto` | Ectomorphe | Ossature légère, métabolisme rapide, mince, peu de masse musculaire, difficultés à prendre du poids |
+| `meso` | Mésomorphe | Muscles bien dessinés, athlétique/fort, gagne et perd du muscle facilement |
+| `endo` | Endomorphe | Corps rond, métabolisme lent, gagne et perd du muscle facilement, grossit aisément, difficultés à perdre du poids |
+
+Champs à ajouter dans `S` (state) : `S.morpho` (A/H/T/V/O) et `S.morphotype` (ecto/meso/endo)  
+À sauvegarder dans le profil cloud via `handleSaveProfile_` (champs `morpho` et `morphotype`)  
+À utiliser par le Coach IA dans `buildCoachContext()` pour des conseils personnalisés
+
+### Coach IA Premium
+- **Gratuit** : 10 questions (`S.coachFree`, persisté `ft4_coachFree`, constante `COACH_FREE_LIMIT=10`)
+- **Premium** : 4,99€ / 2 mois via Ko-fi (`S.premium`, persisté `ft4_premium`)
+- Mur premium `#coach-wall` après la 10ème réponse (délai 1,2s)
+- Bouton Ko-fi → https://ko-fi.com/michel2176
+- 3 méthodes d'activation : whitelist email / code payant / webhook Ko-fi automatique
+- Badge header `#coach-quota-badge` : rouge (X questions) ou or (⭐ Premium)
+- Webhook Ko-fi : chaque paiement → email ajouté dans `PREMIUM_EMAILS` + log onglet `Premium`
 
 ### Onglet Progrès
 - 4 chips cliquables : Squat · Soulevé de Terre · Développé Couché · Développé Militaire
 - Variable globale `_progEx` (défaut : `BIG4[0]`)
-- Fonction `selectProgEx(name)` — met à jour chip actif + appelle `renderChart()`
+- `selectProgEx(name)` — met à jour chip actif + appelle `renderChart()`
 - Dropdown "Autre exercice" pour tous les autres exercices
+
+### Visualisation muscles dans séances passées (2026-06-13)
+- `#ov-sess-detail` contient `<div id="sd-muscles">` avant `#sd-content`
+- `openSessDetail(i)` : calcule les groupes travaillés via `EXLIB`, filtre `EX_GROUPS`, affiche silhouettes SVG
+- Si aucun groupe → `sd-muscles` masqué
+
+### Exercices — Press Jambes (2026-06-13)
+- 6 variantes dans EXLIB (`g:'Jambes'`) : Hack Squat, Press Jambes 45°, Horizontale, Verticale, Inclinée, Levier
+- Images locales dans `exercises/press-jambes-{1-6}.jpg` et `exercises/press-jambes-5.jpg` (Hack Squat)
+- `EX_YT` mappé avec `{img:'exercises/press-jambes-X.png|jpg'}` pour chaque variante
+- Soulevé de Terre présent dans **deux** groupes : `g:'Dos'` (original) ET `g:'Fessiers'` (ajouté)
 
 ### Programmes (séances sauvegardées)
 - `S.programmes` — tableau de templates (`ft4_progs`)
 - Modal `#mod-prog` : sauvegarder séance en cours, charger avec poids précédents, supprimer
 
-### Cloud sync (Google Apps Script)
-- `saveProfile` POST → sauvegarde profil (email, nom, poids, âge, taille, sexe, objectif, activité)
-- `loadProfile` GET → restaure le profil depuis l'email + retourne `premium:true` si email whitelisté
-- `logSession` POST → log séance dans Google Sheets (analytics)
-- `coach` POST → appel Claude Haiku API pour le Coach IA
-- `validateCode` POST → vérifie un code premium (liste dans `PREMIUM_CODES`)
-- **Webhook Ko-fi** : doPost détecte `e.parameter.data` → ajoute email dans `PREMIUM_EMAILS` automatiquement
-
-## Coach IA Premium (implémenté 2026-06-13)
-
-### Modèle freemium
-- **Gratuit** : 10 questions (compteur `S.coachFree`, persisté `ft4_coachFree`)
-- **Premium** : 4,99€ / 2 mois via Ko-fi — `S.premium` (persisté `ft4_premium`)
-- `COACH_FREE_LIMIT = 10` (constante JS)
-
-### Mur Premium
-- Affiché après la 10ème réponse (délai 1,2s pour lire la réponse)
-- Div `#coach-wall` — position absolute sur toute la zone coach
-- Bouton Ko-fi → https://ko-fi.com/michel2176
-- Champ code + bouton Activer → `activatePremium()`
-
-### Activation Premium — 3 méthodes
-1. **Email whitelist** (gratuit/test) : ajouter l'email dans `PREMIUM_EMAILS` (Script Properties)
-2. **Code payant** : ajouter le code dans `PREMIUM_CODES` (Script Properties), l'utilisateur saisit le code dans l'app
-3. **Webhook Ko-fi automatique** : à chaque paiement Ko-fi → Apps Script → email ajouté dans `PREMIUM_EMAILS`
-
-### Config Apps Script (Script Properties)
-| Propriété | Usage |
-|---|---|
-| `PREMIUM_EMAILS` | Emails premium gratuits, séparés par `,` |
-| `PREMIUM_CODES` | Codes d'accès payants, séparés par `,` |
-| `KOFI_TOKEN` | Token de vérification webhook Ko-fi (optionnel) |
-| `ANTHROPIC_API_KEY` | Clé API Claude pour le Coach IA |
-
-### Webhook Ko-fi
-- Ko-fi → Settings → API → **Webhook URL** = URL du Apps Script déployé
-- Chaque paiement → Ko-fi POST `data={"email":"...","amount":"4.99",...}` → email ajouté automatiquement
-- Log dans Google Sheets onglet `Premium`
-- **Après toute modif Apps Script : redéployer** (nouveau déploiement)
-
-### Vérification premium au démarrage
-- `autoConnect()` vérifie `loadProfile` si email connu + pas encore premium
-- `_applyRestoreData()` applique `premium:true` si la réponse serveur le contient
-- Badge header : `#coach-quota-badge` — rouge (X questions) ou or (⭐ Premium)
-
-## État du cloud sync — fixes appliqués (2026-06-12)
-
-### Bugs corrigés côté app (commit 64e6520)
-
-| Bug | Cause | Fix |
-|---|---|---|
-| `saveProfile` ne sauvegardait jamais | `mode:'no-cors'` bloquait le redirect Apps Script | `redirect:'follow'` + `Content-Type: text/plain` |
-| Restauration échouait même si profil existait | App lisait `data.name` au lieu de `data.profile.name` | `_applyRestoreData` gère le format `{status, profile:{}, prs:{}}` |
-| `finishOnboarding` ne synchait pas le cloud | Manquait l'appel `saveProfile` cloud après onboarding | Ajouté |
-| `testConn` toujours OK même URL fausse | `no-cors` = réponse opaque | Lit vraiment `{status:'online'}` |
-
-### Nouvelle URL Apps Script déployée (2026-06-12)
-L'ancienne URL (`AKfycbxPvDqe...`) a été remplacée par la nouvelle (`AKfycbw52oQ9...`).  
-`DEFAULT_URL` dans `index.html` est à jour. App poussée sur GitHub Pages.  
-**✅ Restauration confirmée fonctionnelle le 2026-06-12 — saveProfile + loadProfile opérationnels.**
-
-### Format de réponse Apps Script (v3.2)
+## Format de réponse Apps Script (v3.2)
 
 ```
 GET ?test=1
-→ {"status":"online","version":"3.1"}
+→ {"status":"online","version":"3.2"}
 
 GET ?action=loadProfile&email=...
 → {"status":"not_found"}
-→ {"status":"ok","premium":bool,"profile":{name,bw,age,height,gender,goal,activityLevel},"prs":{},"sessions":[],"weightLog":[],"sleepLog":[],"cycle":null,"nutritionPhase":"charge"}
+→ {"status":"ok","premium":bool,"premiumExpiry":"YYYY-MM-DD"|null,
+   "profile":{name,bw,age,height,gender,goal,activityLevel,...},
+   "prs":{},"sessions":[],"weightLog":[],"sleepLog":[],"cycle":null}
 
 POST body JSON (Content-Type: text/plain;charset=utf-8)
-{action:"saveProfile", email, name, bw, age, height, gender, goal, activityLevel}
+{action:"saveProfile", email, name, bw, age, ..., sessions[], prs{}, weightLog[], sleepLog[], cycle}
 → {"status":"ok"}
 
 POST {action:"logSession", rows:[...], bw, date, gender, age}
@@ -186,9 +211,9 @@ POST {action:"coach", message, context, history}
 → {"reply":"..."}
 
 POST {action:"validateCode", code, email}
-→ {"status":"ok","type":"monthly"} | {"status":"invalid"}
+→ {"status":"ok","type":"lifetime"} | {"status":"invalid"}
 
-POST x-www-form-urlencoded data={"email":"...","amount":"4.99","verification_token":"...",...}  ← Webhook Ko-fi
+POST x-www-form-urlencoded data={"email":"...","amount":"4.99",...}  ← Webhook Ko-fi
 → "OK"
 ```
 
@@ -205,7 +230,7 @@ POST x-www-form-urlencoded data={"email":"...","amount":"4.99","verification_tok
 ## Variables clés
 
 ```javascript
-const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbw52oQ9.../exec';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbyXlNWFvidB9n8ptaP9m8zWyWr5hfJ-WbE7zrkQwCPbBjdUbf5H37GDthQkMl8ETmNv0g/exec';
 S.url             // = DEFAULT_URL (jamais null)
 S.email           // email utilisateur (stocké ft4_email)
 S.connected       // bool (stocké ft4_ok)
@@ -218,4 +243,7 @@ S.cycle           // {startDate, weeks, rm1s:{...}} ou null
 S.coachFree       // nb questions gratuites utilisées (ft4_coachFree)
 S.premium         // bool — accès premium (ft4_premium)
 S.programmes      // [{name, date, exs:[...]}] — templates séances (ft4_progs)
+S.defRest         // durée repos par défaut en secondes (130)
+_expandedEx       // index exercice ouvert dans s-log (ou -1)
+_syncTimer        // handle setTimeout pour _cloudSyncDebounced
 ```
