@@ -116,6 +116,7 @@ function doPost(e) {
   if (body.action === 'validateCode')      return handleValidateCode_(body);
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
+  if (body.action === 'morphoAnalysis')   return handleMorphoAnalysis_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -211,6 +212,8 @@ function handleSaveProfile_(body) {
     if (body.mensCycleStart !== undefined) profile.mensCycleStart = body.mensCycleStart;
     if (body.mensCycleDur   !== undefined) profile.mensCycleDur   = body.mensCycleDur;
     if (body.contraception  !== undefined) profile.contraception  = body.contraception;
+    if (body.morpho         !== undefined) profile.morpho         = body.morpho;
+    if (body.morphotype     !== undefined) profile.morphotype     = body.morphotype;
     if (body.customExercises!== undefined) profile.customExercises= body.customExercises;
 
     existing.profile   = profile;
@@ -370,6 +373,58 @@ function handleImportProgram_(body) {
     const data = JSON.parse(match[0]);
     if (!data.days || !data.days.length) return json_({status:'error', error:'Aucun exercice trouvé dans les images.'});
 
+    return json_({status:'ok', data});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+function handleMorphoAnalysis_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+
+  try {
+    const images = body.images || [];
+    if (!images.length) return json_({status:'error', error:'Aucune image reçue'});
+    const gender = body.gender || 'H';
+    const gLabel = gender === 'F' ? 'femme' : 'homme';
+
+    const userContent = images.map(img => ({
+      type: 'image',
+      source: { type: 'base64', media_type: img.type || 'image/jpeg', data: img.data }
+    }));
+
+    userContent.push({
+      type: 'text',
+      text: `Analyse les photos de cet(te) ${gLabel} et détermine sa morphologie.\n\nRetourne UNIQUEMENT un objet JSON valide sans texte avant ou après :\n${gender === 'F'
+        ? '{"morpho":"H|A|V|X|O","morphotype":"ecto|meso|endo","bodyComp":"description courte de la composition corporelle estimée","strengths":"points forts morphologiques en 1-2 phrases","advice":"conseils nutrition et entraînement personnalisés selon la morphologie en 2-3 phrases"}'
+        : '{"morpho":"H|A|T|V|O","morphotype":"ecto|meso|endo","bodyComp":"description courte de la composition corporelle estimée","strengths":"points forts morphologiques en 1-2 phrases","advice":"conseils nutrition et entraînement personnalisés selon la morphologie en 2-3 phrases"}'}\n\nMorphologies ${gender === 'F' ? 'femme' : 'homme'} :\n${gender === 'F'
+        ? '- H: Rectangle (épaules/taille/hanches similaires)\n- A: Poire (hanches plus larges)\n- V: Triangle inversé (épaules plus larges)\n- X: Sablier (taille très marquée)\n- O: Ronde (ventre proéminent)'
+        : '- H: Rectangle\n- A: Triangle (hanches plus larges)\n- T: Trapèze (épaules légèrement plus larges)\n- V: Triangle inversé (épaules beaucoup plus larges)\n- O: Ovale (ventre proéminent)'}\nMorphotypes : ecto=mince/métabolisme rapide, meso=athlétique, endo=rond/métabolisme lent`
+    });
+
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      payload: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{role: 'user', content: userContent}]
+      }),
+      muteHttpExceptions: true
+    });
+
+    const result = JSON.parse(resp.getContentText());
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Analyse impossible. Réessaie avec des photos plus nettes.'});
+
+    const data = JSON.parse(match[0]);
     return json_({status:'ok', data});
   } catch(err) {
     return json_({status:'error', error: err.message});
