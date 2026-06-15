@@ -5332,8 +5332,8 @@ function _checkBadgeCond(badge){
     case 'streak_7':return _getMaxStreak()>=7;
     case 'streak_30':return _getMaxStreak()>=30;
     case 'streak_90':return _getMaxStreak()>=90;
-    case 'early_bird':return (S.sessions||[]).some(s=>typeof s.startHour==='number'&&s.startHour<7);
-    case 'night_owl':return (S.sessions||[]).some(s=>typeof s.startHour==='number'&&s.startHour>=22);
+    case 'early_bird':return (S.sessions||[]).some(s=>{const h=typeof s.startHour==='number'?s.startHour:(s.ts||s.id?new Date(s.ts||s.id).getHours():-1);return h>=0&&h<7;});
+    case 'night_owl':return (S.sessions||[]).some(s=>{const h=typeof s.startHour==='number'?s.startHour:(s.ts||s.id?new Date(s.ts||s.id).getHours():-1);return h>=22;});
     case 'birthday':{
       if(!S.bday)return false;
       const parts=(S.bday||'').split('/');if(parts.length<2)return false;
