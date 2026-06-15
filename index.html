@@ -545,6 +545,35 @@ html.ob-done #onboarding{display:none;}
 .ib-qr img{width:60px;height:60px;display:block;}
 .ib-text{flex:1;min-width:0;}
 .ib-close{background:none;border:none;color:var(--t3);font-size:22px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;}
+/* BADGES */
+.badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.badge-card{background:var(--bg2);border-radius:var(--r);padding:14px;border:1px solid var(--sep);display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s;}
+.badge-card.unlocked{border-color:rgba(255,214,0,.45);background:linear-gradient(135deg,rgba(255,214,0,.05),var(--bg2));}
+.badge-card.locked{opacity:.4;}
+.badge-icon{font-size:34px;line-height:1;}
+.badge-name{font-size:13px;font-weight:800;color:var(--t1);line-height:1.2;}
+.badge-desc{font-size:11px;color:var(--t3);line-height:1.35;}
+.badge-date{font-size:10px;color:var(--gold);font-weight:700;margin-top:1px;}
+.badge-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(255,214,0,.1),transparent 65%);pointer-events:none;}
+/* PR CONGRATS */
+#ov-pr-congrats{align-items:center;justify-content:center;background:rgba(0,0,0,.88);}
+.pr-card{background:var(--bg2);border-radius:24px;padding:28px 20px;width:calc(100% - 48px);max-width:360px;text-align:center;border:1px solid rgba(255,214,0,.4);box-shadow:0 0 40px rgba(255,214,0,.12);animation:prPop .38s cubic-bezier(.25,.46,.45,.94);}
+@keyframes prPop{from{transform:scale(.82) translateY(24px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.pr-card-emoji{font-size:52px;line-height:1;margin-bottom:6px;}
+.pr-card-title{font-family:var(--font-cond);font-size:26px;font-weight:900;background:linear-gradient(135deg,#FFB800,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;}
+.pr-card-ex{font-size:15px;color:var(--t2);font-weight:600;margin-bottom:14px;}
+.pr-rm-row{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:4px;}
+.pr-rm-old{font-family:var(--font-cond);font-size:24px;font-weight:900;color:var(--t3);text-decoration:line-through;}
+.pr-rm-arr{font-size:18px;color:var(--gold);}
+.pr-rm-new{font-family:var(--font-cond);font-size:40px;font-weight:900;color:var(--gold);}
+.pr-rm-unit{font-size:13px;color:var(--t2);margin-bottom:14px;}
+.pr-lvl-chip{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--green);font-weight:700;margin-bottom:14px;}
+/* WEEKLY SUMMARY */
+.week-sum-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--sep);}
+.week-sum-row:last-child{border-bottom:none;}
+.week-sum-lbl{font-size:15px;color:var(--t2);font-weight:600;}
+.week-sum-val{font-family:var(--font-cond);font-size:22px;font-weight:900;}
+.week-badge-pill{background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.3);border-radius:10px;padding:8px 12px;font-size:14px;color:var(--gold);font-weight:700;text-align:center;margin:4px 0;}
 </style>
 </head>
 <body>
@@ -779,6 +808,7 @@ html.ob-done #onboarding{display:none;}
   <div class="nu-tabs">
     <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">🏋️ Exercices</button>
     <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">⚖️ Poids</button>
+    <button class="nu-tab" id="ptab-badges" onclick="switchProgTab('badges',this)">🏅 Badges</button>
   </div>
 
   <!-- TAB: Exercices -->
@@ -792,6 +822,12 @@ html.ob-done #onboarding{display:none;}
     <div id="prog-cycle-banner" style="display:none;"></div>
     <div class="sec">Historique séances</div>
     <div id="sess-list"></div>
+  </div>
+
+  <!-- TAB: Badges -->
+  <div id="prog-badges" style="display:none;flex-direction:column;gap:12px;">
+    <div class="sec">Mes Récompenses</div>
+    <div id="badge-grid" class="badge-grid"></div>
   </div>
 
   <!-- TAB: Poids -->
@@ -947,6 +983,7 @@ html.ob-done #onboarding{display:none;}
         <div class="fg"><label>Taille (cm)</label><input type="number" id="ht-inp" placeholder="175" inputmode="numeric"></div>
         <div class="fg"><label>Poids (kg)</label><input type="number" id="bw-inp" placeholder="80" step="0.1" inputmode="decimal"></div>
       </div>
+      <div class="fg"><label>Date d'anniversaire</label><input type="text" id="bday-inp" placeholder="JJ/MM (ex: 14/07)" inputmode="numeric" maxlength="5" style="text-align:center;letter-spacing:2px;" oninput="saveBday(this.value)"></div>
       <div class="two-col">
         <div class="fg"><label>Activité</label>
           <select id="act-sel">
@@ -1493,6 +1530,36 @@ html.ob-done #onboarding{display:none;}
   </div>
 </div>
 
+<!-- OVERLAY: Félicitations PR -->
+<div class="overlay" id="ov-pr-congrats">
+  <div class="pr-card">
+    <div class="pr-card-emoji">🎉</div>
+    <div class="pr-card-title">Bravo <span id="pr-name-txt"></span> !</div>
+    <div class="pr-card-ex" id="pr-ex-txt"></div>
+    <div class="pr-rm-row">
+      <div class="pr-rm-old" id="pr-old-txt"></div>
+      <div class="pr-rm-arr">→</div>
+      <div class="pr-rm-new" id="pr-new-txt"></div>
+    </div>
+    <div class="pr-rm-unit" id="pr-delta-txt"></div>
+    <div class="pr-lvl-chip" id="pr-lvl-txt" style="display:none;"></div>
+    <button class="btn btn-red" onclick="document.getElementById('ov-pr-congrats').classList.remove('open')" style="margin-top:4px;">Continuer 💪</button>
+  </div>
+</div>
+
+<!-- OVERLAY: Résumé hebdomadaire -->
+<div class="overlay" id="ov-week-summary" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📅 Ta semaine passée</h2>
+    <div id="week-sum-content" style="display:flex;flex-direction:column;gap:4px;"></div>
+    <div class="modal-btns" style="margin-top:14px;">
+      <button class="btn btn-bg2" onclick="copyWeekSummary()">📋 Partager</button>
+      <button class="btn btn-red" onclick="document.getElementById('ov-week-summary').classList.remove('open')">Fermer</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </div>
 
@@ -1649,6 +1716,9 @@ function load(){
     S.premium=localStorage.getItem('ft4_premium')==='1';
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
     S.exRestPref=JSON.parse(localStorage.getItem('ft4_exRp')||'{}');
+    S.badges=JSON.parse(localStorage.getItem('ft4_badges')||'{}');
+    S.bday=localStorage.getItem('ft4_bday')||'';
+    S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
   }catch(e){}
 }
 function persist(){
@@ -1682,6 +1752,9 @@ function persist(){
     localStorage.setItem('ft4_exRp',JSON.stringify(S.exRestPref||{}));
     localStorage.setItem('ft4_premium',S.premium?'1':'0');
     localStorage.setItem('ft4_premiumExp',S.premiumExpiry||'');
+    localStorage.setItem('ft4_badges',JSON.stringify(S.badges||{}));
+    localStorage.setItem('ft4_bday',S.bday||'');
+    localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
   }catch(e){}
   _cloudSyncDebounced();
 }
@@ -1952,7 +2025,7 @@ function renderNutrition(){
 
 // ─── WORKOUT ─────────────────────────────────────────────────
 function startWorkout(){
-  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[]};
+  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};
   persist(); goScreen('log',document.getElementById('nb-log'));
 }
 function _fmtWktDate(d){
@@ -2358,13 +2431,25 @@ async function finishWorkout(){
   if(!hasDone){toast('Valide au moins une série !','error');return;}
   let vol=0;
   S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
-  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now()};
+  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
   S.sessions.unshift(sess);
+  // Capturer les PRs avant mise à jour pour détecter les améliorations
+  const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
     if(!s.done||!s.kg||!s.reps)return;
     const rm=bz(s.kg,s.reps),cur=S.prs[ex.name];
     if(!cur||rm>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:rm,date:sess.date};
+  }));
+  // Trouver le meilleur PR amélioré de la séance
+  let _bestPr=null;
+  sess.exs.forEach(ex=>ex.sets.forEach(s=>{
+    if(!s.done||!s.kg||!s.reps)return;
+    const rm=bz(s.kg,s.reps),old=_oldPrs[ex.name];
+    if(!old||rm>old.rm1){
+      const gain=rm-(old?old.rm1:0);
+      if(!_bestPr||gain>(_bestPr.newRm-(_bestPr.oldRm||0)))_bestPr={ex:ex.name,newRm:rm,oldRm:old?old.rm1:0};
+    }
   }));
   stopRest();
 
@@ -2374,6 +2459,7 @@ async function finishWorkout(){
   sess.calData = calData;
 
   S.wkt=null;persist(); // sauvegarde locale immédiate avant toute tentative réseau
+  checkBadges();
   _cloudSyncSessions(); // sauvegarde séances dans le cloud profile
   if(S.connected&&S.url){
     const ok=await syncSheets(sess);
@@ -2383,6 +2469,7 @@ async function finishWorkout(){
     toast(`Séance terminée ! 🔥 ${calData.total} kcal brûlées`,'success');
   }
   setTimeout(()=>showMuscleMap(sess.exs,()=>openCheckin(sess)),800);
+  if(_bestPr)setTimeout(()=>showPrCongrats(_bestPr),2400);
 }
 
 // ─── REST TIMER ──────────────────────────────────────────────
@@ -3011,12 +3098,15 @@ function selectProgEx(name){
   renderChart();
 }
 function switchProgTab(tab,btn){
-  const exo=document.getElementById('prog-exo'),pw=document.getElementById('prog-poids');
+  const exo=document.getElementById('prog-exo'),pw=document.getElementById('prog-poids'),bg=document.getElementById('prog-badges');
   if(exo){exo.style.display=tab==='exo'?'flex':'none';exo.style.flexDirection='column';exo.style.gap='10px';}
   if(pw){pw.style.display=tab==='poids'?'flex':'none';pw.style.flexDirection='column';pw.style.gap='10px';}
+  if(bg){bg.style.display=tab==='badges'?'flex':'none';bg.style.flexDirection='column';bg.style.gap='12px';}
   document.getElementById('ptab-exo').classList.toggle('active',tab==='exo');
   document.getElementById('ptab-poids').classList.toggle('active',tab==='poids');
+  const ptBadges=document.getElementById('ptab-badges');if(ptBadges)ptBadges.classList.toggle('active',tab==='badges');
   if(tab==='poids')renderWeightTab();
+  if(tab==='badges')renderBadges();
 }
 function goWeightTab(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>switchProgTab('poids',document.getElementById('ptab-poids')),80);}
 function renderChart(){
@@ -3122,6 +3212,7 @@ function _cloudSync(){
       neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
       morpho:S.morpho||'',morphotype:S.morphotype||'',
+      bday:S.bday||'',badges:S.badges||{},
       customExercises:S.customExercises||[],
       sessions:(S.sessions||[]).slice(0,100),
       prs:S.prs||{},
@@ -3593,6 +3684,7 @@ function renderSetup(){
   const neckEl=document.getElementById('neck-inp');if(neckEl)neckEl.value=S.neck||'';
   const waistEl=document.getElementById('waist-inp');if(waistEl)waistEl.value=S.waist||'';
   const hipEl=document.getElementById('hip-inp');if(hipEl)hipEl.value=S.hip||'';
+  const bdayEl=document.getElementById('bday-inp');if(bdayEl)bdayEl.value=S.bday||'';
   renderCycleProfileCard();
   setGoal(S.goal||'muscle');
   renderBFCard();
@@ -3690,6 +3782,8 @@ function _applyRestoreData(raw){
   if(d.contraception!==undefined)S.contraception=d.contraception||'';
   if(d.morpho)S.morpho=d.morpho;
   if(d.morphotype)S.morphotype=d.morphotype;
+  if(d.bday)S.bday=d.bday;
+  if(d.badges&&Object.keys(d.badges).length)S.badges=d.badges;
   if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;
   if(prs&&Object.keys(prs).length)S.prs=prs;
   if(sessions&&sessions.length)S.sessions=sessions;
@@ -5176,12 +5270,179 @@ function switchSetupTab(tab,btn){
   if(btn)btn.classList.add('active');
 }
 
+// ─── BADGES ──────────────────────────────────────────────────
+const BADGES=[
+  {id:'first_session',icon:'🏋️',name:'Premier soulevé',desc:'Première séance enregistrée',cat:'evolution'},
+  {id:'fire',icon:'🔥',name:'En feu',desc:'3 séances dans la même semaine',cat:'evolution'},
+  {id:'regular_10',icon:'💪',name:'Régulier',desc:'10 séances au total',cat:'evolution'},
+  {id:'assidu_25',icon:'⚡',name:'Assidu',desc:'25 séances au total',cat:'evolution'},
+  {id:'veteran_50',icon:'🏆',name:'Vétéran',desc:'50 séances au total',cat:'evolution'},
+  {id:'legend_100',icon:'💎',name:'Légende',desc:'100 séances au total',cat:'evolution'},
+  {id:'first_pr',icon:'🎯',name:'Premier PR',desc:'Premier record personnel battu',cat:'perf'},
+  {id:'prog_5',icon:'📈',name:'En progression',desc:'5 PRs battus',cat:'perf'},
+  {id:'machine_20',icon:'🚀',name:'Machine',desc:'20 PRs battus',cat:'perf'},
+  {id:'club_100',icon:'💯',name:'Club des 100kg',desc:'Squat ou Développé Couché à 100kg',cat:'perf'},
+  {id:'club_140',icon:'🔱',name:'Club des 140kg',desc:'Soulevé de Terre à 140kg',cat:'perf'},
+  {id:'streak_7',icon:'📅',name:'Streak 7 jours',desc:'7 jours consécutifs d\'entraînement',cat:'streak'},
+  {id:'streak_30',icon:'🌟',name:'Streak 30 jours',desc:'30 jours consécutifs',cat:'streak'},
+  {id:'streak_90',icon:'🎖️',name:'Streak 90 jours',desc:'90 jours consécutifs',cat:'streak'},
+  {id:'early_bird',icon:'🌅',name:'Lève-tôt',desc:'Séance avant 7h du matin',cat:'special'},
+  {id:'night_owl',icon:'🌙',name:'Noctambule',desc:'Séance après 22h',cat:'special'},
+  {id:'birthday',icon:'🎂',name:'Bon anniversaire',desc:'Séance le jour de ton anniversaire',cat:'special'},
+  {id:'premium_badge',icon:'👑',name:'Premium',desc:'Badge doré pour les utilisateurs Premium',cat:'special'},
+];
+
+function _getMaxStreak(){
+  if(!S.sessions||!S.sessions.length)return 0;
+  const dates=[...new Set(S.sessions.map(s=>s.date).filter(Boolean))].sort();
+  if(!dates.length)return 0;
+  let max=1,cur=1;
+  for(let i=1;i<dates.length;i++){
+    const diff=(new Date(dates[i]+'T12:00:00')-new Date(dates[i-1]+'T12:00:00'))/(864e5);
+    if(Math.round(diff)===1){cur++;if(cur>max)max=cur;}else if(diff>1)cur=1;
+  }
+  return max;
+}
+
+function _checkBadgeCond(badge){
+  const prCount=Object.keys(S.prs||{}).length;
+  switch(badge.id){
+    case 'first_session':return (S.sessions||[]).length>=1;
+    case 'fire':{
+      const wk={};
+      (S.sessions||[]).forEach(sess=>{
+        const d=new Date((sess.date||'')+'T12:00:00');if(isNaN(d))return;
+        const m=new Date(d);m.setDate(d.getDate()-((d.getDay()+6)%7));
+        const k=m.toISOString().slice(0,10);wk[k]=(wk[k]||0)+1;
+      });
+      return Object.values(wk).some(c=>c>=3);
+    }
+    case 'regular_10':return (S.sessions||[]).length>=10;
+    case 'assidu_25':return (S.sessions||[]).length>=25;
+    case 'veteran_50':return (S.sessions||[]).length>=50;
+    case 'legend_100':return (S.sessions||[]).length>=100;
+    case 'first_pr':return prCount>=1;
+    case 'prog_5':return prCount>=5;
+    case 'machine_20':return prCount>=20;
+    case 'club_100':{
+      const sq=S.prs['Squat à la Barre'],bp=S.prs['Développé Couché'];
+      return !!(sq&&sq.kg>=100)||(bp&&bp.kg>=100);
+    }
+    case 'club_140':{const dl=S.prs['Soulevé de Terre'];return !!(dl&&dl.kg>=140);}
+    case 'streak_7':return _getMaxStreak()>=7;
+    case 'streak_30':return _getMaxStreak()>=30;
+    case 'streak_90':return _getMaxStreak()>=90;
+    case 'early_bird':return (S.sessions||[]).some(s=>typeof s.startHour==='number'&&s.startHour<7);
+    case 'night_owl':return (S.sessions||[]).some(s=>typeof s.startHour==='number'&&s.startHour>=22);
+    case 'birthday':{
+      if(!S.bday)return false;
+      const parts=(S.bday||'').split('/');if(parts.length<2)return false;
+      const bd=parseInt(parts[0]),bm=parseInt(parts[1]);
+      return (S.sessions||[]).some(sess=>{
+        if(!sess.date)return false;
+        const dt=new Date(sess.date+'T12:00:00');
+        return dt.getDate()===bd&&(dt.getMonth()+1)===bm;
+      });
+    }
+    case 'premium_badge':return !!S.premium;
+    default:return false;
+  }
+}
+
+function checkBadges(silent){
+  if(!S.badges)S.badges={};
+  const newOnes=[];
+  BADGES.forEach(b=>{
+    if(S.badges[b.id])return;
+    try{if(_checkBadgeCond(b)){S.badges[b.id]={unlockedAt:today()};newOnes.push(b);}}catch(e){}
+  });
+  if(newOnes.length)persist();
+  if(!silent&&newOnes.length){
+    newOnes.forEach((b,i)=>setTimeout(()=>toast(`${b.icon} Badge débloqué : ${b.name} !`,'success'),i*1000));
+  }
+}
+
+function renderBadges(){
+  const grid=document.getElementById('badge-grid');
+  if(!grid)return;
+  if(!S.badges)S.badges={};
+  grid.innerHTML=BADGES.map(b=>{
+    const unlocked=!!S.badges[b.id];
+    const d=unlocked?S.badges[b.id].unlockedAt:'';
+    return `<div class="badge-card ${unlocked?'unlocked':'locked'}">
+      ${unlocked?'<div class="badge-glow"></div>':''}
+      <div class="badge-icon">${b.icon}</div>
+      <div class="badge-name">${b.name}</div>
+      <div class="badge-desc">${b.desc}</div>
+      ${d?`<div class="badge-date">${fmtD(d)}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function showPrCongrats(pr){
+  if(!pr||!pr.newRm)return;
+  document.getElementById('pr-name-txt').textContent=S.name||'Champion';
+  document.getElementById('pr-ex-txt').textContent='Nouveau record sur '+pr.ex+' !';
+  document.getElementById('pr-old-txt').textContent=pr.oldRm>0?fmt(pr.oldRm)+'kg':'–';
+  document.getElementById('pr-new-txt').textContent=fmt(pr.newRm)+'kg';
+  const delta=pr.oldRm>0?' (+'+fmt(pr.newRm-pr.oldRm)+'kg)':'';
+  document.getElementById('pr-delta-txt').textContent='1RM estimé'+delta;
+  const lvlEl=document.getElementById('pr-lvl-txt');if(lvlEl)lvlEl.style.display='none';
+  document.getElementById('ov-pr-congrats').classList.add('open');
+}
+
+function saveBday(val){
+  // Format JJ/MM
+  const clean=val.replace(/[^0-9/]/g,'');
+  S.bday=clean;persist();
+  checkBadges();
+}
+
+let _weekSumText='';
+function checkWeeklySummary(){
+  const now=new Date();
+  if(now.getDay()!==1)return; // lundi seulement
+  const thisMonday=today();
+  if(S.lastWeekSummary===thisMonday)return;
+  // Semaine précédente : lundi-dimanche
+  const prevMon=new Date(now);prevMon.setDate(now.getDate()-7);
+  const prevSun=new Date(now);prevSun.setDate(now.getDate()-1);
+  const ws=prevMon.toISOString().slice(0,10);
+  const we=prevSun.toISOString().slice(0,10);
+  const lastWeekSess=(S.sessions||[]).filter(s=>s.date&&s.date>=ws&&s.date<=we);
+  if(!lastWeekSess.length)return;
+  S.lastWeekSummary=thisMonday;persist();
+  const sessCount=lastWeekSess.length;
+  const totalVol=lastWeekSess.reduce((a,s)=>a+(s.volume||0),0);
+  const totalCal=lastWeekSess.reduce((a,s)=>a+(s.calories||0),0);
+  const newBadges=Object.entries(S.badges||{})
+    .filter(([,v])=>v.unlockedAt&&v.unlockedAt>=ws&&v.unlockedAt<=we)
+    .map(([id])=>BADGES.find(b=>b.id===id)).filter(Boolean);
+  const el=document.getElementById('week-sum-content');if(!el)return;
+  el.innerHTML=`
+    <div style="font-size:13px;color:var(--t3);font-weight:700;margin-bottom:4px;">Semaine du ${fmtD(ws)} au ${fmtD(we)}</div>
+    <div class="week-sum-row"><span class="week-sum-lbl">🏋️ Séances</span><span class="week-sum-val">${sessCount}</span></div>
+    <div class="week-sum-row"><span class="week-sum-lbl">📦 Volume total</span><span class="week-sum-val">${Math.round(totalVol)} kg</span></div>
+    ${totalCal?`<div class="week-sum-row"><span class="week-sum-lbl">🔥 Calories</span><span class="week-sum-val">${totalCal} kcal</span></div>`:''}
+    ${newBadges.length?`<div class="week-badge-pill">🏅 ${newBadges.map(b=>b.icon+' '+b.name).join(' · ')}</div>`:''}
+  `;
+  _weekSumText=`Force Tracker — Semaine du ${fmtD(ws)}\n🏋️ ${sessCount} séance${sessCount>1?'s':''}\n📦 Volume : ${Math.round(totalVol)} kg\n${totalCal?'🔥 Calories : '+totalCal+' kcal\n':''}${newBadges.length?'🏅 Badges : '+newBadges.map(b=>b.icon+' '+b.name).join(', ')+'\n':''}💪 Force Tracker`;
+  setTimeout(()=>document.getElementById('ov-week-summary').classList.add('open'),1500);
+}
+
+function copyWeekSummary(){
+  navigator.clipboard.writeText(_weekSumText).then(()=>toast('Résumé copié !','success')).catch(()=>toast('Copie impossible','error'));
+  document.getElementById('ov-week-summary').classList.remove('open');
+}
+
 // ─── INIT ────────────────────────────────────────────────────
 load();
 document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 applyTheme();
 filterEx();
 goScreen('home', document.getElementById('nb-home'));
+checkBadges(true); // check silencieux au démarrage
+checkWeeklySummary(); // résumé lundi matin
 initCoachInput();
 initOnboarding();
 // Test connexion silencieux + vérif premium depuis le serveur
