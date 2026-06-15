@@ -981,28 +981,25 @@ html.ob-done #onboarding{display:none;}
       <div id="cycle-section" style="display:none;flex-direction:column;gap:10px;">
         <div style="height:1px;background:var(--sep);"></div>
         <div style="font-size:14px;color:var(--purp);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">🌙 Cycle menstruel</div>
-        <div class="fg">
-          <label>Contraception</label>
-          <select id="contra-sel" onchange="setContraception(this.value)" style="padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:14px;width:100%;">
-            <option value="">Aucune</option>
-            <option value="pill-combo">Pilule combinée</option>
-            <option value="pill-prog">Pilule progestative</option>
-            <option value="implant">Implant</option>
-            <option value="iud-hormonal">DIU hormonal</option>
-            <option value="iud-copper">DIU cuivre</option>
-          </select>
-        </div>
-        <div id="cycle-tracking-section" style="display:flex;flex-direction:column;gap:8px;">
-          <div style="font-size:12px;color:var(--t3);line-height:1.5;">📅 Entre le <strong>1er jour de tes dernières règles</strong> pour un suivi précis de ton cycle.</div>
-          <div class="two-col">
-            <div class="fg"><label>1er jour des règles</label><input type="date" id="cycle-start-inp" oninput="saveProfile();renderCycleProfileCard()"></div>
-            <div class="fg"><label>Durée cycle (j)</label><input type="number" id="cycle-dur-inp" placeholder="28" min="18" max="45" inputmode="numeric" oninput="renderCycleProfileCard()"></div>
+        <div class="two-col">
+          <div class="fg">
+            <label>Contraception</label>
+            <select id="contra-sel" onchange="setContraception(this.value)" style="padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:14px;width:100%;">
+              <option value="">Aucune</option>
+              <option value="pill-combo">Pilule combinée</option>
+              <option value="pill-prog">Pilule progestative</option>
+              <option value="implant">Implant</option>
+              <option value="iud-hormonal">DIU hormonal</option>
+              <option value="iud-copper">DIU cuivre</option>
+            </select>
           </div>
-          <div id="cycle-phase-card"></div>
+          <div class="fg" id="cycle-tracking-section">
+            <label>1er jour des règles</label>
+            <input type="date" id="cycle-start-inp" oninput="saveProfile()">
+          </div>
         </div>
-        <div id="cycle-hormonal-msg" style="display:none;background:rgba(170,0,255,.08);border:1px solid rgba(170,0,255,.2);border-radius:10px;padding:10px 12px;font-size:13px;color:var(--t2);line-height:1.6;">
-          💊 <strong style="color:var(--t1);">Contraception hormonale</strong><br>Le cycle naturel est modifié — le suivi de phases (folliculaire, ovulation, lutéale) n'est pas applicable. Les recommandations nutritionnelles et d'entraînement sont adaptées en conséquence.
-        </div>
+        <input type="hidden" id="cycle-dur-inp" value="28">
+        <div id="cycle-phase-card"></div>
       </div>
       <!-- COMPOSITION CORPORELLE -->
       <div style="height:1px;background:var(--sep);"></div>
@@ -3015,21 +3012,10 @@ function setContraception(val){
   S.contraception=val;persist();
   const hormonal=['pill-combo','pill-prog','implant','iud-hormonal'].includes(val);
   const trackEl=document.getElementById('cycle-tracking-section');
-  const msgEl=document.getElementById('cycle-hormonal-msg');
-  if(trackEl)trackEl.style.display=hormonal?'none':'flex';
-  if(msgEl)msgEl.style.display=hormonal?'block':'none';
+  if(trackEl)trackEl.style.display=hormonal?'none':'';
   renderCycleProfileCard();
   renderHome();renderNutrition();
-  const pcb=document.getElementById('prog-cycle-banner');if(pcb)_updateProgCycleBanner();
-}
-
-function _cycleRanges(dur,ovDay){
-  return [
-    {phase:'Menstruation',start:1,end:5,icon:'🔴',color:'#FF2D55',perf:'▼ Basse'},
-    {phase:'Folliculaire',start:6,end:ovDay-1,icon:'🌱',color:'#30D158',perf:'↗ Montante'},
-    {phase:'Ovulation',start:ovDay,end:ovDay+2,icon:'⚡',color:'#FFD60A',perf:'▲ Maximale'},
-    {phase:'Lutéale',start:ovDay+3,end:dur,icon:'🌙',color:'#BF5AF2',perf:'↘ Déclinante'},
-  ];
+  _updateProgCycleBanner();
 }
 
 function _updateProgCycleBanner(){
@@ -3037,51 +3023,22 @@ function _updateProgCycleBanner(){
   const cp=getMensCyclePhase();
   if(!cp||S.gender!=='F'){el.style.display='none';return;}
   el.style.display='block';
-  if(cp.hormonal){
-    el.innerHTML=`<div class="card" style="display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:4px;">
-      <span style="font-size:22px;">💊</span>
-      <div style="font-size:13px;color:var(--t2);line-height:1.5;"><strong style="color:var(--t1);">Contraception hormonale</strong><br>Suivi de phases désactivé. Entraîne-toi selon ta forme du jour.</div>
-    </div>`;
-    return;
-  }
-  const {dur,day,ovDay}=cp;
-  const ranges=_cycleRanges(dur,ovDay);
-  const markerPct=((day-0.5)/dur*100).toFixed(1);
-  const daysToOv=ovDay-day;
-  const daysToLuteal=(ovDay+3)-day;
-  const daysToEnd=dur-day;
-  let nextMsg='';
-  if(daysToOv>0)nextMsg+=`<div style="font-size:12px;color:#30D158;margin-top:4px;">⚡ Performance max dans <strong>${daysToOv} j</strong> (Ovulation, jour ${ovDay})</div>`;
-  if(daysToLuteal>0)nextMsg+=`<div style="font-size:12px;color:#BF5AF2;margin-top:2px;">🌙 Baisse de forme dans <strong>${daysToLuteal} j</strong> (Lutéale, jour ${ovDay+3})</div>`;
-  else if(daysToEnd>0)nextMsg+=`<div style="font-size:12px;color:#FF2D55;margin-top:2px;">🔴 Prochaines règles dans <strong>${daysToEnd} j</strong></div>`;
-  const perfLabel={low:'▼ Basse',rising:'↗ Montante',peak:'▲ Maximale',declining:'↘ Déclinante'}[cp.perf]||'';
-  const perfColor={low:'var(--red)',rising:'var(--green)',peak:'var(--gold)',declining:'var(--purp)'}[cp.perf]||'var(--t2)';
-  el.innerHTML=`<div class="card" style="padding:12px 14px;margin-bottom:4px;">
-    <div style="font-weight:700;font-size:14px;margin-bottom:8px;color:${cp.color};">${cp.icon} ${cp.phase} — Jour ${day}/${dur}</div>
-    <div style="position:relative;height:22px;border-radius:11px;overflow:hidden;display:flex;margin-bottom:3px;">
-      ${ranges.map(r=>`<div style="flex:${r.end-r.start+1};background:${r.color};opacity:.8;"></div>`).join('')}
-      <div style="position:absolute;left:${markerPct}%;top:0;bottom:0;width:3px;background:#fff;box-shadow:0 0 4px rgba(0,0,0,.6);border-radius:2px;transform:translateX(-50%);"></div>
+  const advice=cp.hormonal?'Entraîne-toi selon ta forme du jour.':cp.training;
+  const label=cp.hormonal?'Contraception hormonale':`${cp.icon} ${cp.phase} — Jour ${cp.day}/${cp.dur}`;
+  el.innerHTML=`<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(170,0,255,.07);border:1px solid rgba(170,0,255,.15);margin-bottom:2px;">
+    <div style="flex:1;min-width:0;">
+      <span style="font-size:12px;font-weight:700;color:${cp.color};">${label}</span>
+      <span style="font-size:12px;color:var(--t2);"> · ${advice}</span>
     </div>
-    <div style="display:flex;font-size:10px;color:var(--t3);margin-bottom:8px;">
-      ${ranges.map(r=>`<div style="flex:${r.end-r.start+1};white-space:nowrap;overflow:hidden;">${r.icon}</div>`).join('')}
-    </div>
-    <div style="font-size:13px;font-weight:700;color:${perfColor};margin-bottom:3px;">Performance : ${perfLabel}</div>
-    <div style="font-size:12px;color:var(--t2);">${cp.training}</div>
-    ${nextMsg}
   </div>`;
 }
 
 function renderCycleProfileCard(){
   const el=document.getElementById('cycle-phase-card');
-  const hormonal=['pill-combo','pill-prog','implant','iud-hormonal'].includes(S.contraception||'');
   if(!el)return;
   const cp=getMensCyclePhase();
   if(!cp||cp.hormonal){el.innerHTML='';return;}
-  el.innerHTML=`<div style="background:rgba(170,0,255,.08);border:1px solid rgba(170,0,255,.2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-top:4px;">
-    <span style="font-size:22px;">${cp.icon}</span>
-    <div><div style="font-size:13px;font-weight:800;color:${cp.color};">${cp.phase} — Jour ${cp.day}/${cp.dur}</div>
-    <div style="font-size:13px;color:var(--t2);margin-top:2px;line-height:1.4;">${cp.training}</div></div>
-  </div>`;
+  el.innerHTML=`<div style="font-size:12px;color:${cp.color};font-weight:700;margin-top:2px;">${cp.icon} ${cp.phase} — Jour ${cp.day}/${cp.dur}</div>`;
 }
 
 function renderBFCard(){
@@ -3153,9 +3110,8 @@ function renderSetup(){
   const cdEl=document.getElementById('cycle-dur-inp');if(cdEl)cdEl.value=S.mensCycleDur||28;
   const contraEl=document.getElementById('contra-sel');if(contraEl)contraEl.value=S.contraception||'';
   const _hormonal=['pill-combo','pill-prog','implant','iud-hormonal'].includes(S.contraception||'');
-  const _trackEl=document.getElementById('cycle-tracking-section');const _msgEl=document.getElementById('cycle-hormonal-msg');
-  if(_trackEl)_trackEl.style.display=_hormonal?'none':'flex';
-  if(_msgEl)_msgEl.style.display=_hormonal?'block':'none';
+  const _trackEl=document.getElementById('cycle-tracking-section');
+  if(_trackEl)_trackEl.style.display=_hormonal?'none':'';
   const neckEl=document.getElementById('neck-inp');if(neckEl)neckEl.value=S.neck||'';
   const waistEl=document.getElementById('waist-inp');if(waistEl)waistEl.value=S.waist||'';
   const hipEl=document.getElementById('hip-inp');if(hipEl)hipEl.value=S.hip||'';
