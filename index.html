@@ -125,11 +125,11 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px 6px;background:none;border:none;cursor:pointer;font-family:var(--font);color:var(--t3);font-size:12px;font-weight:600;transition:color .15s;touch-action:manipulation;}
 .nb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
 .nb.active{color:var(--red);}
-.nb-ctr{padding:8px 2px 6px;}
+.nb-ctr{position:relative;top:-16px;padding-top:0;}
+.nb-ctr .nb-ic{background:var(--red);border-radius:50%;width:54px;height:54px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 22px rgba(220,38,38,.55);margin-bottom:4px;transition:box-shadow .2s,transform .15s;}
+.nb-ctr svg{width:28px;height:28px;stroke:#fff;stroke-width:2.4;}
+.nb-ctr.active .nb-ic{box-shadow:0 4px 28px rgba(220,38,38,.85);transform:scale(1.05);}
 .nb-ctr.active{color:var(--red);}
-#fab-log{position:fixed;bottom:calc(36px + max(env(safe-area-inset-bottom),0px));left:50%;transform:translateX(-50%);width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FF2D55,#FF4D6D);border:none;cursor:pointer;z-index:30;box-shadow:0 4px 22px rgba(220,38,38,.55);display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:box-shadow .2s,transform .15s;}
-#fab-log svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
-#fab-log:active{transform:translateX(-50%) scale(.95);box-shadow:0 4px 28px rgba(220,38,38,.85);}
 
 /* SCREENS */
 .screens{flex:1;overflow:hidden;position:relative;}
@@ -539,6 +539,7 @@ html.ob-done #onboarding{display:none;}
 #install-banner{position:fixed;bottom:calc(68px + max(env(safe-area-inset-bottom),0px));left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:410px;z-index:9000;padding:12px 14px;background:var(--bg2);border:1px solid var(--sep);border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.28);transition:transform .3s ease,opacity .3s ease;pointer-events:none;}
 #install-banner button,#install-banner a{pointer-events:auto;}
 #install-banner.hidden{transform:translateX(-50%) translateY(20px);opacity:0;}
+#install-banner.hidden button,#install-banner.hidden a{pointer-events:none;}
 .ib-row{display:flex;align-items:center;gap:10px;}
 .ib-qr{background:#fff;border-radius:8px;padding:4px;flex-shrink:0;}
 .ib-qr img{width:60px;height:60px;display:block;}
@@ -1169,7 +1170,7 @@ html.ob-done #onboarding{display:none;}
     <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Progrès
   </button>
   <button class="nb nb-ctr" id="nb-log" onclick="startWorkout()">
-    <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;opacity:0;"></svg>Séance
+    <div class="nb-ic"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>Séance
   </button>
   <button class="nb" id="nb-nutrition" onclick="goScreen('nutrition',this)">
     <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>Nutrition
@@ -1181,11 +1182,6 @@ html.ob-done #onboarding{display:none;}
     <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil
   </button>
 </nav>
-
-<!-- FAB Séance (position:fixed, z-index:30 — ne peut pas être bloqué par l'écran scrollable) -->
-<button id="fab-log" onclick="startWorkout()" title="Commencer une séance">
-  <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-</button>
 
 <!-- MODAL: Post-workout check-in -->
 <div class="overlay" id="mod-checkin">
