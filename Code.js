@@ -110,10 +110,11 @@ function doPost(e) {
     return json_({status:'error', error:'JSON parse error: ' + err.message});
   }
 
-  if (body.action === 'saveProfile')  return handleSaveProfile_(body);
-  if (body.action === 'logSession')   return handleLogSession_(body);
-  if (body.action === 'coach')        return handleCoach_(body);
-  if (body.action === 'validateCode') return handleValidateCode_(body);
+  if (body.action === 'saveProfile')       return handleSaveProfile_(body);
+  if (body.action === 'logSession')        return handleLogSession_(body);
+  if (body.action === 'coach')             return handleCoach_(body);
+  if (body.action === 'validateCode')      return handleValidateCode_(body);
+  if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -301,6 +302,29 @@ function handleValidateCode_(body) {
 }
 
 // ───────────────────────────────────────────────────────────
+function handleLogCustomExercise_(body) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName('CustomExercises');
+    if (!sheet) {
+      sheet = ss.insertSheet('CustomExercises');
+      sheet.appendRow(['date','email','name','group','muscles_primary','muscles_secondary']);
+    }
+    sheet.appendRow([
+      new Date().toISOString(),
+      (body.email || '').toLowerCase().trim(),
+      body.name || '',
+      body.group || '',
+      (body.musclesP || []).join(', '),
+      (body.musclesS || []).join(', ')
+    ]);
+    return json_({status:'ok'});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ───────────────────────────────────────────────────────────
 function handleCoach_(body) {
   const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
   if (!apiKey) {
@@ -309,11 +333,24 @@ function handleCoach_(body) {
 
   try {
     const history = (body.history || []).slice(-8);
-    const messages = history.concat([{role:'user', content: String(body.message || '')}]);
     const ctx = body.context || {};
+
+    // Construire le contenu du dernier message (texte + image optionnelle)
+    let userContent;
+    if (body.image) {
+      userContent = [
+        { type: 'image', source: { type: 'base64', media_type: body.imageType || 'image/jpeg', data: body.image } },
+        { type: 'text', text: String(body.message || 'Analyse cette photo de mon corps.') }
+      ];
+    } else {
+      userContent = String(body.message || '');
+    }
+
+    const messages = history.concat([{role:'user', content: userContent}]);
 
     const systemPrompt =
       'Tu es un coach de musculation expert. Tu réponds toujours en français, de façon concise et pratique. ' +
+      'Quand une photo est fournie, analyse la composition corporelle visible, le développement musculaire, la posture, et donne des conseils personnalisés adaptés au profil. ' +
       'Profil athlète : ' + JSON.stringify(ctx);
 
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
@@ -339,3 +376,4 @@ function handleCoach_(body) {
     return json_({reply: 'Erreur Coach IA : ' + err.message});
   }
 }
+

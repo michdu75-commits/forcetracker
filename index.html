@@ -1238,7 +1238,11 @@ html.ob-done #onboarding{display:none;}
           <option value="Abdominaux">Abdominaux</option>
           <option value="Mollets">Mollets</option>
         </select>
-        <div style="display:flex;gap:8px;">
+        <div style="font-size:12px;color:var(--t2);font-weight:600;margin-top:2px;">💪 Muscles principaux <span style="font-weight:400;color:var(--t3)">(optionnel)</span></div>
+        <div id="cex-muscles-p" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        <div style="font-size:12px;color:var(--t2);font-weight:600;">Muscles secondaires</div>
+        <div id="cex-muscles-s" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
           <button class="btn btn-bg2" style="flex:1;" onclick="hideCustomExForm()">Annuler</button>
           <button class="btn btn-red" style="flex:1;" onclick="saveCustomEx()">Créer</button>
         </div>
@@ -2119,7 +2123,15 @@ function _mscScores(exs){
   const sc={},ind={};
   (exs||[]).forEach(ex=>{
     if(!(ex.sets||[]).some(s=>s.done))return;
-    for(const r of _MEX){if(r.re.test(ex.name||'')){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});(r.i||[]).forEach(m=>{ind[m]=true;});break;}}
+    let matched=false;
+    for(const r of _MEX){if(r.re.test(ex.name||'')){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});(r.i||[]).forEach(m=>{ind[m]=true;});matched=true;break;}}
+    if(!matched){
+      const cex=(S.customExercises||[]).find(e=>e.n===ex.name);
+      if(cex&&cex.muscles){
+        (cex.muscles.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;});
+        (cex.muscles.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});
+      }
+    }
   });
   return {sc,ind};
 }
@@ -2276,6 +2288,7 @@ function updateRMLive(ei,si){
 }
 let _restStep=15;
 let _restEx=null;
+let _cexMusclesP=[],_cexMusclesS=[];
 function _highlightRestPreset(sec){
   [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
 }
@@ -2344,8 +2357,42 @@ function filterEx(){
     </div>`;
   }).join('');
 }
-function showCustomExForm(){document.getElementById('custom-ex-form').style.display='flex';document.getElementById('custom-ex-add-btn').style.display='none';}
-function hideCustomExForm(){document.getElementById('custom-ex-form').style.display='none';document.getElementById('custom-ex-add-btn').style.display='';const n=document.getElementById('custom-ex-name');if(n)n.value='';}
+function _renderCexChips(){
+  const muscles=Object.entries(_MG).map(([k,d])=>({k,l:d.label}));
+  ['p','s'].forEach(type=>{
+    const el=document.getElementById('cex-muscles-'+type);
+    if(!el)return;
+    const arr=type==='p'?_cexMusclesP:_cexMusclesS;
+    el.innerHTML=muscles.map(({k,l})=>{
+      const active=arr.includes(k);
+      const col=type==='p'?'var(--red)':'var(--orange)';
+      const bg=active?(type==='p'?'rgba(255,45,85,.85)':'rgba(255,149,0,.85)'):'rgba(255,255,255,.06)';
+      return `<button onclick="toggleMuscleChip('${k}','${type}')" style="font-size:11px;padding:4px 8px;border-radius:12px;border:1px solid ${active?col:'var(--sep)'};background:${bg};color:${active?'#fff':'var(--t2)'};cursor:pointer;font-family:var(--font);font-weight:${active?700:400};transition:all .15s;">${l}</button>`;
+    }).join('');
+  });
+}
+function toggleMuscleChip(key,type){
+  const other=type==='p'?'s':'p';
+  const arrP=_cexMusclesP,arrS=_cexMusclesS;
+  const arr=type==='p'?arrP:arrS;
+  const arrOth=type==='p'?arrS:arrP;
+  const othIdx=arrOth.indexOf(key);if(othIdx>-1)arrOth.splice(othIdx,1);
+  const idx=arr.indexOf(key);
+  if(idx>-1)arr.splice(idx,1);else arr.push(key);
+  _renderCexChips();
+}
+function showCustomExForm(){
+  _cexMusclesP=[];_cexMusclesS=[];
+  document.getElementById('custom-ex-form').style.display='flex';
+  document.getElementById('custom-ex-add-btn').style.display='none';
+  _renderCexChips();
+}
+function hideCustomExForm(){
+  document.getElementById('custom-ex-form').style.display='none';
+  document.getElementById('custom-ex-add-btn').style.display='';
+  const n=document.getElementById('custom-ex-name');if(n)n.value='';
+  _cexMusclesP=[];_cexMusclesS=[];
+}
 function saveCustomEx(){
   const name=(document.getElementById('custom-ex-name').value||'').trim();
   const grp=document.getElementById('custom-ex-grp').value;
@@ -2353,8 +2400,13 @@ function saveCustomEx(){
   const all=[...EXLIB,...(S.customExercises||[])];
   if(all.find(e=>e.n.toLowerCase()===name.toLowerCase())){toast('Exercice déjà existant','error');return;}
   if(!S.customExercises)S.customExercises=[];
-  S.customExercises.push({n:name,g:grp,custom:true});
-  persist();hideCustomExForm();filterEx();toast(name+' créé !','success');
+  const muscles=(_cexMusclesP.length||_cexMusclesS.length)?{p:[..._cexMusclesP],s:[..._cexMusclesS]}:null;
+  S.customExercises.push({n:name,g:grp,custom:true,...(muscles&&{muscles})});
+  persist();
+  if(S.email&&S.url&&muscles){
+    fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logCustomExercise',email:S.email,name,group:grp,musclesP:muscles.p,musclesS:muscles.s})}).catch(()=>{});
+  }
+  hideCustomExForm();filterEx();toast(name+' créé !','success');
 }
 
 // ─── PROGRAMMES ──────────────────────────────────────────────
