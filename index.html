@@ -1552,8 +1552,16 @@ html.ob-done #onboarding{display:none;}
     <div id="imp-s4" style="display:none;flex-direction:column;gap:12px;">
       <div style="font-weight:800;font-size:17px;" id="imp-prog-name"></div>
       <div style="font-size:13px;color:var(--t2);">Vérifie les exercices extraits. Appuie sur ✕ pour retirer un exercice.</div>
-      <div id="imp-preview" style="display:flex;flex-direction:column;gap:10px;max-height:55vh;overflow-y:auto;"></div>
-      <button class="btn btn-red" style="margin-top:4px;" onclick="finalImportProg()">✅ Importer ce programme</button>
+      <div id="imp-preview" style="display:flex;flex-direction:column;gap:10px;max-height:40vh;overflow-y:auto;"></div>
+      <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Enregistrer comme</div>
+        <div style="display:flex;gap:8px;margin-bottom:0;" id="imp-mode-btns">
+          <button id="imp-mode-new" class="btn btn-red" style="flex:1;padding:10px;font-size:13px;" onclick="_setImpMode('new')">➕ Nouveau</button>
+          <button id="imp-mode-replace" class="btn btn-bg2" style="flex:1;padding:10px;font-size:13px;" onclick="_setImpMode('replace')">🔄 Remplacer</button>
+        </div>
+        <select id="imp-replace-sel" style="display:none;width:100%;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:14px;font-family:var(--font);"></select>
+      </div>
+      <button class="btn btn-red" onclick="finalImportProg()">✅ Importer ce programme</button>
       <button class="btn btn-bg2" onclick="impGoStep(2)">← Modifier les photos</button>
     </div>
   </div>
@@ -2936,10 +2944,10 @@ function saveCustomEx(){
 }
 
 // ─── IMPORT PROGRAMME PAR PHOTO ──────────────────────────────
-let _impPhotos=[],_impExtracted=null;
+let _impPhotos=[],_impExtracted=null,_impMode='new';
 
 function openImportProg(){
-  _impPhotos=[];_impExtracted=null;
+  _impPhotos=[];_impExtracted=null;_impMode='new';
   impGoStep(1);
   document.getElementById('ov-import-prog').classList.add('open');
 }
@@ -3060,6 +3068,25 @@ function removeImpEx(di,ei){
   _renderImpConfirm();
 }
 
+function _setImpMode(mode){
+  _impMode=mode;
+  const btnN=document.getElementById('imp-mode-new');
+  const btnR=document.getElementById('imp-mode-replace');
+  const sel=document.getElementById('imp-replace-sel');
+  if(mode==='replace'){
+    const progs=S.programmes||[];
+    if(!progs.length){toast('Aucun programme existant à remplacer','info');_setImpMode('new');return;}
+    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${p.name}</option>`).join('');
+    sel.style.display='block';
+    if(btnN)btnN.className='btn btn-bg2';
+    if(btnR)btnR.className='btn btn-red';
+  } else {
+    sel.style.display='none';
+    if(btnN)btnN.className='btn btn-red';
+    if(btnR)btnR.className='btn btn-bg2';
+  }
+}
+
 function finalImportProg(){
   if(!_impExtracted||!(_impExtracted.days||[]).length){toast('Aucun programme à importer','error');return;}
   if(!S.programmes)S.programmes=[];
@@ -3084,6 +3111,17 @@ function finalImportProg(){
       }))
     }))
   };
+  if(_impMode==='replace'){
+    const idx=parseInt((document.getElementById('imp-replace-sel')||{}).value);
+    if(!isNaN(idx)&&S.programmes[idx]){
+      const oldName=S.programmes[idx].name;
+      prog.name=prog.name||oldName;
+      S.programmes[idx]=prog;
+      persist();closeImportProg();
+      toast('"'+oldName+'" mis à jour ✅','success');
+      openProgModal();return;
+    }
+  }
   S.programmes.push(prog);
   persist();
   closeImportProg();
