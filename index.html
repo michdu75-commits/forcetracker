@@ -2811,7 +2811,6 @@ function _mscSVG({sc,ind}){
     const click=p.label?` onclick="showMuscleName('${p.label}',event)" style="cursor:pointer"`:'';
     return `<path id="${id}" d="${d}" fill="url(#${p.gid})" stroke="${p.sk}" stroke-width="0.22" stroke-linejoin="round"${p.filt}${click}/>`;
   };
-  if(S&&S.gender==='F')return _mscSVG_F({sc,ind});
   return `<svg viewBox="-1 0 72 96" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block" stroke-linecap="round">${defs}${_FP.map(pt).join('')}${_BP.map(pt).join('')}<text x="17" y="94.5" text-anchor="middle" font-size="2.2" fill="#999" font-family="system-ui,sans-serif">VUE AVANT</text><text x="52" y="94.5" text-anchor="middle" font-size="2.2" fill="#999" font-family="system-ui,sans-serif">VUE ARRIÈRE</text></svg>`;
 }
 let _mmCb=null;
