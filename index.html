@@ -1459,19 +1459,21 @@ html.ob-done #onboarding{display:none;}
 
 <!-- MODAL: Détail / Édition séance -->
 <div class="overlay" id="ov-sess-detail" onclick="if(event.target===this)closeSessDetail()">
-  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+  <div class="modal" style="max-width:420px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:14px 16px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--sep);flex-shrink:0">
       <div>
         <div style="font-weight:700;font-size:17px" id="sd-title">Séance</div>
         <div style="font-size:13px;color:var(--t2)" id="sd-sub"></div>
       </div>
-      <button class="btn btn-bg2" style="padding:6px 12px;font-size:15px" onclick="closeSessDetail()">✕</button>
+      <button onclick="closeSessDetail()" style="width:36px;height:36px;border-radius:50%;background:var(--bg3);border:none;font-size:18px;font-weight:700;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation">✕</button>
     </div>
-    <div id="sd-muscles" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding:10px 0;border-bottom:1px solid var(--sep)"></div>
-    <div id="sd-content"></div>
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button class="btn" id="sd-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none" onclick="deleteSessOrConfirm()">🗑️ Supprimer</button>
-      <button class="btn btn-red" style="flex:2;padding:12px" onclick="saveSessEdits()">💾 Enregistrer</button>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px 16px">
+      <div id="sd-muscles" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--sep)"></div>
+      <div id="sd-content"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn" id="sd-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none" onclick="deleteSessOrConfirm()">🗑️ Supprimer</button>
+        <button class="btn btn-red" style="flex:2;padding:12px" onclick="saveSessEdits()">💾 Enregistrer</button>
+      </div>
     </div>
   </div>
 </div>
@@ -3671,7 +3673,7 @@ function _mscSVGmini({sc,ind}){
   const pd={};
   Object.entries(_MG).forEach(([g,d])=>{const v=sc[g]||0;const isI=ind[g]&&!v;const[f,k]=v>=2?['#FF5555','#AA0010']:v>=1?['#FF9500','#AA5500']:isI?['#4488FF','#0030AA']:['#C07060','#7A3828'];d.paths.forEach(id=>{pd[id]={f,k};});});
   const pt=([id,d])=>{const c=id?(pd[id]||{f:'#C07060',k:'#7A3828'}):{f:'#D89070',k:'#A86040'};return `<path d="${d}" fill="${c.f}" stroke="${c.k}" stroke-width="${id?'0.28':'0.18'}" stroke-linejoin="round"/>`;};
-  return `<svg viewBox="-1 0 72 90" xmlns="http://www.w3.org/2000/svg" style="width:60px;height:auto;display:block;flex-shrink:0" stroke-linecap="round">${_FP.map(pt).join('')}${_BP.map(pt).join('')}</svg>`;
+  return `<svg viewBox="1 0 32 94" xmlns="http://www.w3.org/2000/svg" style="width:32px;height:auto;display:block;flex-shrink:0" stroke-linecap="round">${_FP.map(pt).join('')}</svg>`;
 }
 function showSessMuscleMap(i,ev){
   ev&&ev.stopPropagation();
