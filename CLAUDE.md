@@ -130,6 +130,9 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 - **`#install-banner.hidden button, #install-banner.hidden a`** : `pointer-events:none` — empêche les boutons du banner caché de capturer les taps sur le FAB
 - **`.screen` padding-bottom** : 110px (était 90px) — espace suffisant pour "Terminer la séance" sous le banner
 - **Service Worker** `sw.js` : HTML network-first (toujours la dernière version), assets cache-first (offline OK)
+  - Cache actuel : `ft-v3`
+  - ⚠️ À chaque modif d'asset (logo, images) : bumper `CACHE = 'ft-vN'` dans `sw.js`
+  - `controllerchange` listener dans `index.html` → rechargement auto quand nouveau SW prend le contrôle (pas besoin que les users vident le cache manuellement)
 
 ### Coach IA — Photo corporelle (2026-06-13)
 - Bouton 📷 dans `s-coach` → `openCoachCamera()` → `<input type=file accept=image/*>`
