@@ -1196,12 +1196,14 @@ html.ob-done #onboarding{display:none;}
     </div>
     <div class="coach-input-inner">
       <button class="coach-cam-btn" onclick="openCoachCamera()" title="Prendre une photo">📷</button>
+      <button class="coach-cam-btn" onclick="openCoachGallery()" title="Importer depuis la galerie">🖼️</button>
       <input class="coach-input" id="coach-inp" type="text" placeholder="Pose ta question au coach..." maxlength="500">
       <button class="coach-send" id="coach-send-btn" onclick="sendToCoach()">
         <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
       </button>
     </div>
     <input type="file" id="coach-cam-input" accept="image/*" capture="environment" style="display:none;" onchange="onCoachImgSelected(this)">
+    <input type="file" id="coach-gallery-input" accept="image/*" style="display:none;" onchange="onCoachImgSelected(this)">
   </div>
 </div>
 
@@ -5045,6 +5047,9 @@ let _coachImgType = 'image/jpeg';
 function openCoachCamera() {
   document.getElementById('coach-cam-input').click();
 }
+function openCoachGallery() {
+  document.getElementById('coach-gallery-input').click();
+}
 
 function clearCoachImg() {
   _coachImg = null;
@@ -5052,6 +5057,8 @@ function clearCoachImg() {
   if (prev) prev.style.display = 'none';
   const inp = document.getElementById('coach-cam-input');
   if (inp) inp.value = '';
+  const inp2 = document.getElementById('coach-gallery-input');
+  if (inp2) inp2.value = '';
 }
 
 async function _resizeImageBase64(file, maxSize) {
