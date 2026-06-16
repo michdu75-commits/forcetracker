@@ -702,24 +702,33 @@ html.ob-done #onboarding{display:none;}
 <!-- ═══ PWA INSTALL (iOS) — hors de #root ══════════════════════ -->
 <div id="install-popup" class="hidden">
   <div class="install-card">
-    <div style="text-align:center;margin-bottom:18px;">
-      <div style="font-size:48px;line-height:1.1;">📲</div>
-      <div style="font-family:var(--font-cond);font-size:26px;font-weight:900;margin-top:10px;">Installer Force Tracker</div>
-      <div style="font-size:15px;color:var(--t2);margin-top:6px;line-height:1.5;">Accès instantané depuis ton écran d'accueil, comme une vraie app.</div>
-    </div>
-    <div style="background:var(--bg3);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:14px;">
-      <div style="display:flex;align-items:center;gap:14px;">
-        <span style="font-size:28px;">1️⃣</span>
-        <div style="font-size:16px;font-weight:600;">Appuie sur <strong>Partager</strong> <span style="font-size:20px;">⬆️</span> en bas de Safari</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:14px;">
-        <span style="font-size:28px;">2️⃣</span>
-        <div style="font-size:16px;font-weight:600;">Puis <strong>"Sur l'écran d'accueil"</strong> ➕</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <img src="logo.png" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
+      <div>
+        <div style="font-family:var(--font-cond);font-size:21px;font-weight:900;line-height:1.1;">Installer Force Tracker</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:2px;line-height:1.4;">Accès depuis ton écran d'accueil, sans navigateur.</div>
       </div>
     </div>
-    <span class="install-arrow" style="margin-top:14px;">⬇️</span>
-    <button class="btn btn-bg2" onclick="closeInstall()" style="margin-top:14px;font-size:15px;">Pas maintenant</button>
+    <div style="background:var(--bg3);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:24px;flex-shrink:0;">1️⃣</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Appuie sur <strong>Partager</strong> en bas</div>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#007AFF;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;">⬆️&nbsp;Partager</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:24px;flex-shrink:0;">2️⃣</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Fais défiler et appuie sur</div>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;">➕&nbsp;Sur l'écran d'accueil</span>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-bg2" onclick="closeInstall()" style="margin-top:12px;font-size:14px;color:var(--t3);">Plus tard</button>
   </div>
+  <!-- Flèche flottante entre la card et la barre Safari -->
+  <span class="install-arrow" style="margin-top:10px;">⬇️</span>
 </div>
 
 <div id="root">
@@ -1254,18 +1263,40 @@ html.ob-done #onboarding{display:none;}
 <!-- MODAL: Plate Calculator -->
 <!-- ═══ MODAL PARTAGE QR ══════════════════════════════════════ -->
 <div class="overlay" id="mod-share" onclick="if(event.target===this)closeShareModal()">
-  <div class="modal" style="text-align:center;padding:28px 24px;">
+  <div class="modal" style="text-align:center;padding:24px 20px;">
     <div class="modal-handle"></div>
-    <div style="font-size:36px;margin-bottom:8px;">📲</div>
-    <div style="font-family:var(--font-cond);font-size:26px;font-weight:900;margin-bottom:6px;">Partager Force Tracker</div>
-    <div style="font-size:14px;color:var(--t2);margin-bottom:20px;line-height:1.5;">Montre ce QR code à tes amis — ils scannent avec leur appareil photo et l'app s'ouvre directement.</div>
-    <div style="background:#fff;border-radius:16px;padding:14px;display:inline-block;margin-bottom:16px;">
-      <img id="share-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https%3A%2F%2Fmichdu75-commits.github.io%2Fforcetracker%2F" style="width:200px;height:200px;display:block;">
+    <div style="font-size:32px;margin-bottom:6px;">📲</div>
+    <div style="font-family:var(--font-cond);font-size:24px;font-weight:900;margin-bottom:4px;">Partager Force Tracker</div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5;">Montre ce QR code — ton ami le scanne et l'app s'ouvre directement.</div>
+    <div style="background:#fff;border-radius:14px;padding:12px;display:inline-block;margin-bottom:10px;">
+      <img id="share-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fmichdu75-commits.github.io%2Fforcetracker%2F" style="width:180px;height:180px;display:block;">
     </div>
-    <div style="font-size:12px;color:var(--t3);margin-bottom:20px;">michdu75-commits.github.io/forcetracker</div>
-    <div style="display:flex;gap:10px;">
-      <button onclick="shareAppNative()" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;">Envoyer le lien</button>
-      <button onclick="copyAppLink('share')" style="flex:1;background:var(--bg3);color:var(--t1);border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;">Copier</button>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:14px;">michdu75-commits.github.io/forcetracker</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button onclick="shareAppNative()" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;">Envoyer le lien</button>
+      <button onclick="copyAppLink('share')" style="flex:1;background:var(--bg3);color:var(--t1);border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;">Copier</button>
+    </div>
+    <!-- Instructions installation pour le destinataire -->
+    <div style="border-top:1px solid var(--sep);padding-top:14px;text-align:left;">
+      <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📥 Comment installer l'app</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;flex-shrink:0;">🍎</span>
+          <div style="font-size:13px;color:var(--t2);line-height:1.5;">
+            <strong style="color:var(--t1);">iPhone</strong> : Safari →
+            <span style="background:#007AFF;color:#fff;padding:1px 6px;border-radius:5px;font-size:11px;font-weight:700;">⬆️ Partager</span>
+            → <strong style="color:var(--t1);">Sur l'écran d'accueil</strong>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;flex-shrink:0;">🤖</span>
+          <div style="font-size:13px;color:var(--t2);line-height:1.5;">
+            <strong style="color:var(--t1);">Android</strong> : Chrome →
+            <span style="background:var(--bg3);border:1px solid var(--sep);padding:1px 6px;border-radius:5px;font-size:11px;font-weight:700;">⋮</span>
+            → <strong style="color:var(--t1);">Ajouter à l'écran d'accueil</strong>
+          </div>
+        </div>
+      </div>
     </div>
     <button onclick="closeShareModal()" style="margin-top:14px;background:none;border:none;color:var(--t3);font-size:14px;cursor:pointer;">Fermer</button>
   </div>
@@ -5419,7 +5450,7 @@ function showInstallPrompt(){
   if(_isIOSInApp()){
     _showInstallBanner(
       'Installer sur iPhone',
-      'Scanne le QR avec l\'appareil photo, ou copie le lien et ouvre Safari.',
+      'Ouvre dans Safari → ⬆️ Partager → Sur l\'écran d\'accueil',
       tryOpenSafari, 'safari');
     return;
   }
@@ -5430,7 +5461,7 @@ function showInstallPrompt(){
   if(_isFirefoxAndroid()){
     _showInstallBanner(
       'Installer sur Android',
-      'Scanne le QR ou copie le lien et ouvre Chrome.',
+      'Ouvre dans Chrome → ⋮ Menu → Ajouter à l\'écran d\'accueil',
       tryOpenChrome, 'chrome');
     return;
   }
