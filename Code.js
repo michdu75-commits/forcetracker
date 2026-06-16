@@ -339,11 +339,15 @@ function handleImportProgram_(body) {
     if (!images.length) return json_({status:'error', error:'Aucun fichier reçu'});
 
     const hasPdf = images.some(img => img.isPdf || img.type === 'application/pdf');
-    const model = hasPdf ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
+    const hasText = images.some(img => img.isText || img.type === 'text/plain');
+    const model = (hasPdf || hasText) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
 
     const userContent = images.map(img => {
       if (img.isPdf || img.type === 'application/pdf') {
         return {type:'document', source:{type:'base64', media_type:'application/pdf', data:img.data}};
+      }
+      if (img.isText || img.type === 'text/plain') {
+        return {type:'text', text:'[Fichier Word : '+(img.name||'document')+']\n\n'+img.data};
       }
       return {type:'image', source:{type:'base64', media_type:img.type||'image/jpeg', data:img.data}};
     });
