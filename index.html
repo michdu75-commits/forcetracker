@@ -2744,21 +2744,24 @@ function _mscSVG_F({sc,ind}){
   let hlF='',hlB='';
   Object.entries(_MG_F_SHAPES).forEach(([g,s])=>{
     const v=sc[g]||0,isI=ind[g]&&!v;
-    let c=null,op='0.55';
-    if(v>=2){c='#FF2D55';op='0.65';}else if(v>=1){c='#FF9500';op='0.55';}else if(isI){c='#0A84FF';op='0.4';}
+    let c=null,op='0.42';
+    if(v>=2){c='#FF2D55';op='0.50';}else if(v>=1){c='#FF9500';op='0.42';}else if(isI){c='#0A84FF';op='0.30';}
     if(!c)return;
     if(s.f)hlF+=`<g fill="${c}" opacity="${op}">${s.f}</g>`;
     if(s.b)hlB+=`<g fill="${c}" opacity="${op}">${s.b}</g>`;
   });
-  const bg=isLight?'#fff':'#1C1C1E';
-  const imgStyle=isLight?'':'filter:invert(1)';
-  return `<svg viewBox="0 0 200 272" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
-    <rect width="200" height="272" fill="${bg}"/>
-    <image href="female-body.png" x="0" y="0" width="300" height="269" style="${imgStyle}" preserveAspectRatio="xMidYMid meet"/>
-    ${hlF}<g transform="translate(100,0)">${hlB}</g>
-    <text x="50" y="270" text-anchor="middle" font-size="7" fill="#999" font-family="system-ui,sans-serif">VUE AVANT</text>
-    <text x="150" y="270" text-anchor="middle" font-size="7" fill="#999" font-family="system-ui,sans-serif">VUE ARRIÈRE</text>
-  </svg>`;
+  // <img> tag pour que filter:invert fonctionne sur iOS/WebKit (SVG <image> ne supporte pas CSS filter)
+  // width:150% + overflow:hidden = montre 2/3 de l'image (avant+arrière, cache profil)
+  // padding-bottom:134.5% = ratio 1187/(1325*2/3) pour hauteur responsive
+  const imgF=isLight?'':'filter:invert(1)';
+  return `<div style="position:relative;overflow:hidden;padding-bottom:134.5%;width:100%">
+    <img src="female-body.png" style="position:absolute;top:0;left:0;width:150%;height:auto;${imgF}"/>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 269" style="position:absolute;top:0;left:0;width:100%;height:100%">
+      ${hlF}<g transform="translate(100,0)">${hlB}</g>
+      <text x="50" y="267" text-anchor="middle" font-size="7" fill="#888" font-family="system-ui,sans-serif">VUE AVANT</text>
+      <text x="150" y="267" text-anchor="middle" font-size="7" fill="#888" font-family="system-ui,sans-serif">VUE ARRIÈRE</text>
+    </svg>
+  </div>`;
 }
 function _mscScores(exs){
   const sc={},ind={};
