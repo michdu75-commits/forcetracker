@@ -204,6 +204,26 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 - `startWorkout()` : sauvegarde `S.wkt.startHour = new Date().getHours()` pour badges lève-tôt/noctambule
 - Badges lève-tôt/noctambule : fallback sur `new Date(s.ts||s.id).getHours()` pour anciennes séances sans `startHour`
 
+### EXLIB — Bibliothèque d'exercices (✅ 2026-06-16)
+- **172 exercices** au total, **12 groupes** : Pectoraux · Dos · Trapèzes · Épaules · Biceps · Triceps · Jambes · Fessiers · Abdominaux · Mollets · **Avant-bras** · **Full Body**
+- Groupes Avant-bras et Full Body créés lors de cette session
+- Soulevé de Terre présent dans Dos ET Fessiers (intentionnel)
+- Soulevé de Terre Sumo présent dans Dos ET Fessiers (intentionnel)
+
+### Visuels exercices — SVG templates + EX_EN (✅ 2026-06-16)
+- **`_MUSCLE_SVG`** : objet IIFE avec 12 clés (un SVG par groupe musculaire)
+  - Silhouette corps humain (vue avant, 100×202 viewBox, dark theme `var(--bg3)`)
+  - Groupe cible en rouge `#FF2D55` opacity 0.85
+  - Note `(vue dos)` pour Dos / Trapèzes / Triceps / Fessiers
+- **`_groupTemplateSvg(name)`** : lookup groupe EXLIB → retourne `<div>` avec le SVG
+- **`toggleExGif(ei, name)`** — ordre de priorité :
+  1. `EX_YT[name]` → image locale ou vidéo YouTube (immédiat, 0 réseau)
+  2. `fetchExImage(name)` via wger.de → image trouvée → affiche + lien YT
+  3. Rien trouvé → `_groupTemplateSvg(name)` + lien YT (fallback garanti)
+- **`EX_EN`** étendu : ~150 termes anglais couvrant les 172 exercices (wger.de search)
+- **`gifCache`** : cache en mémoire par nom d'exercice (évite les doublons réseau)
+- **Tag git sauvegarde** : `v-svg-templates-2026-06-16` — restauration possible si besoin
+
 ### Programmes (séances sauvegardées)
 - `S.programmes` — tableau de templates (`ft4_progs`)
 - Modal `#mod-prog` : sauvegarder séance en cours, charger avec poids précédents, supprimer
