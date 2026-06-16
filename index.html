@@ -1680,8 +1680,26 @@ html.ob-done #onboarding{display:none;}
       <button onclick="closeProgEdit()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
     <div style="overflow-y:auto;flex:1;padding:14px 16px;" id="prog-edit-content"></div>
-    <div style="padding:12px 16px;border-top:1px solid var(--sep);flex-shrink:0;">
-      <button class="btn btn-red" onclick="saveProgEdit()" style="width:100%;padding:14px;">💾 Enregistrer</button>
+    <div style="padding:12px 16px;border-top:1px solid var(--sep);flex-shrink:0;display:flex;gap:8px;">
+      <button class="btn btn-bg2" onclick="analyzeProgIa(_editProgIdx)" style="flex:1;padding:14px;">🤖 Coach IA</button>
+      <button class="btn btn-red" onclick="saveProgEdit()" style="flex:2;padding:14px;">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Analyse IA d'un programme -->
+<div class="overlay" id="ov-prog-analysis" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:420px;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:14px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--sep);flex-shrink:0;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:900;font-size:16px;">🤖 Analyse du programme</div>
+        <div style="font-size:12px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="prog-analysis-title"></div>
+      </div>
+      <button onclick="document.getElementById('ov-prog-analysis').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px;" id="prog-analysis-content"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--sep);flex-shrink:0;display:none;" id="prog-analysis-footer">
+      <button class="btn btn-bg2" onclick="continueInCoach()" style="width:100%;padding:12px;">💬 Continuer dans le Coach IA</button>
     </div>
   </div>
 </div>
@@ -3221,6 +3239,7 @@ function renderProgModal(){
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
           <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})">✏️</button>
+          ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
           <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
         </div>
       </div>`;
@@ -3352,6 +3371,82 @@ function saveProgEdit(){
 function closeProgEdit(){
   document.getElementById('ov-prog-edit').classList.remove('open');
   _editProgIdx=-1;_editProgData=null;
+}
+let _lastProgAnalysisProg=null,_lastProgAnalysisReply='';
+function _formatProgForAnalysis(prog){
+  if(prog.days&&prog.days.length){
+    return prog.days.map(day=>{
+      const exs=(day.exs||[]).map(ex=>{
+        const sets=ex.sets?ex.sets.length:3;
+        const reps=ex.sets&&ex.sets[0]?ex.sets[0].reps:10;
+        const kg=ex.sets&&ex.sets[0]&&ex.sets[0].kg?' × '+ex.sets[0].kg+'kg':'';
+        return '  - '+ex.name+' : '+sets+'×'+reps+kg;
+      }).join('\n');
+      return '📅 '+day.label+'\n'+exs;
+    }).join('\n\n');
+  }
+  return (prog.exs||[]).map(ex=>{
+    const sets=ex.sets?ex.sets.length:3;
+    const reps=ex.sets&&ex.sets[0]?ex.sets[0].reps:10;
+    const kg=ex.sets&&ex.sets[0]&&ex.sets[0].kg?' × '+ex.sets[0].kg+'kg':'';
+    return '  - '+ex.name+' : '+sets+'×'+reps+kg;
+  }).join('\n');
+}
+function _coachFmtHtml(text){
+  let html=text
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/s,'<ul>$1</ul>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,'<br>');
+  if(!html.includes('<p>')&&!html.includes('<ul>'))html='<p>'+html+'</p>';
+  return html;
+}
+async function analyzeProgIa(idx){
+  if(!S.premium){toast('Fonctionnalité Premium ⭐','info');return;}
+  const prog=(S.programmes||[])[idx];
+  if(!prog){toast('Programme introuvable','error');return;}
+  if(!S.url){toast('Configure ton URL Apps Script dans Profil','error');return;}
+  const ov=document.getElementById('ov-prog-analysis');
+  const content=document.getElementById('prog-analysis-content');
+  const footer=document.getElementById('prog-analysis-footer');
+  const titleEl=document.getElementById('prog-analysis-title');
+  if(!ov||!content)return;
+  if(titleEl)titleEl.textContent=prog.name;
+  content.innerHTML='<div style="text-align:center;padding:32px 0;"><div style="font-size:32px;margin-bottom:12px;">🤖</div><div style="color:var(--t2);font-size:14px;">Analyse en cours…</div></div>';
+  if(footer)footer.style.display='none';
+  ov.classList.add('open');
+  const progText=_formatProgForAnalysis(prog);
+  const message='Analyse ce programme d\'entraînement en tant que coach expert. Réponds en 4 parties :\n\n🎯 VERDICT GLOBAL (1 phrase directe et honnête)\n✅ POINTS FORTS\n⚠️ POINTS À AMÉLIORER\n💡 RECOMMANDATIONS CONCRÈTES (actions à faire)\n\nSois direct, concret et personnalisé selon mon profil.\n\nProgramme : "'+prog.name+'"\n'+progText;
+  try{
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'coach',message,context:buildCoachContext(),history:[]})});
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    const reply=data.reply||'Erreur lors de l\'analyse.';
+    _lastProgAnalysisReply=reply;_lastProgAnalysisProg=prog;
+    content.innerHTML='<div style="font-size:14px;line-height:1.7;color:var(--t1);">'+_coachFmtHtml(reply)+'</div>';
+    if(footer)footer.style.display='block';
+  }catch(e){
+    content.innerHTML='<div style="color:var(--red);padding:20px;text-align:center;">Erreur de connexion. Vérifie ta connexion et réessaie.</div>';
+  }
+}
+function continueInCoach(){
+  document.getElementById('ov-prog-analysis').classList.remove('open');
+  if(_lastProgAnalysisReply&&_lastProgAnalysisProg){
+    coachHistory=[
+      {role:'user',content:'Analyse mon programme "'+_lastProgAnalysisProg.name+'".'},
+      {role:'assistant',content:_lastProgAnalysisReply}
+    ];
+    const msgs=document.getElementById('coach-msgs');
+    if(msgs){
+      msgs.innerHTML='';
+      renderCoachMsg('user','Analyse mon programme "'+_lastProgAnalysisProg.name+'".');
+      renderCoachMsg('coach',_lastProgAnalysisReply);
+    }
+    const suggs=document.getElementById('coach-suggs');
+    if(suggs)suggs.style.display='none';
+  }
+  goScreen('coach',document.getElementById('nb-coach'));
 }
 
 // ─── EXERCISE VIDEO / IMAGE ───────────────────────────────────
