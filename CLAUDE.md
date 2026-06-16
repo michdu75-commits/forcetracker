@@ -36,8 +36,9 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` | App complète (HTML + CSS + JS inline, ~4 200 lignes) |
-| `Code.js` | Backend Google Apps Script v3.2 (sync cloud) |
+| `index.html` | App complète (HTML + CSS + JS inline, ~5 600 lignes) |
+| `Code.js` | Backend Google Apps Script v3.5 @9 (sync cloud) |
+| `sw.js` | Service Worker (network-first HTML, cache-first assets) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `logo.png` | Icône app |
 
@@ -125,7 +126,9 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 - Install prompt PWA (iOS : instructions, Android : prompt natif)
 - Toast notifications (succès/erreur/info)
 - **`#install-banner`** : `pointer-events:none` sur le container, `pointer-events:auto` sur boutons/liens — empêche le banner fixe de bloquer le scroll et les touches dans `s-log`
+- **`#install-banner.hidden button, #install-banner.hidden a`** : `pointer-events:none` — empêche les boutons du banner caché de capturer les taps sur le FAB
 - **`.screen` padding-bottom** : 110px (était 90px) — espace suffisant pour "Terminer la séance" sous le banner
+- **Service Worker** `sw.js` : HTML network-first (toujours la dernière version), assets cache-first (offline OK)
 
 ### Coach IA — Photo corporelle (2026-06-13)
 - Bouton 📷 dans `s-coach` → `openCoachCamera()` → `<input type=file accept=image/*>`
@@ -172,10 +175,34 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 - Si aucun groupe → `sd-muscles` masqué
 
 ### Exercices — Press Jambes (2026-06-13)
-- 6 variantes dans EXLIB (`g:'Jambes'`) : Hack Squat, Press Jambes 45°, Horizontale, Verticale, Inclinée, Levier
-- Images locales dans `exercises/press-jambes-{1-6}.jpg` et `exercises/press-jambes-5.jpg` (Hack Squat)
+- 6 variantes dans EXLIB (`g:'Jambes'`) : Squat Hack (Hack Squat), Press Jambes 45°, Horizontale, Verticale, Inclinée, Levier
+- Images locales dans `exercises/press-jambes-{1-6}.jpg` et `exercises/press-jambes-5.jpg` (Squat Hack)
 - `EX_YT` mappé avec `{img:'exercises/press-jambes-X.png|jpg'}` pour chaque variante
 - Soulevé de Terre présent dans **deux** groupes : `g:'Dos'` (original) ET `g:'Fessiers'` (ajouté)
+
+### Traduction exercices EN→FR (✅ 2026-06-16)
+- 24 exercices renommés : nom français + anglais entre parenthèses (ex. `Leg Curl` → `Curl Ischio-jambiers (Leg Curl)`)
+- `LOWER_KW` / `UPPER_KW` / `_MEX` regex : inchangés — les mots anglais restant entre parenthèses, tous les matchs partiels fonctionnent encore
+- `EX_YT` et `EX_EN` : clés mises à jour pour `Pont Fessier (Glute Bridge)`, `Squat Hack (Hack Squat)`, `Poussée de Hanche (Hip Thrust)`, `Curl Ischio-jambiers (Leg Curl)`, `Extension Quadriceps (Leg Extension)`, `Tirage Visage (Face Pull)`, `Haussements d'Épaules (Shrugs)`
+- **Migration one-time** dans `load()` : flag `ft4_exmig2` — renomme les anciennes clés dans `S.prs` et `S.sessions[].exs[].name` sans perte de données
+
+### Badges & Récompenses (✅ 2026-06-15/16)
+- **18 badges** en 4 catégories : évolution (1re séance, 10/25/50/100 séances…), performance (PRs, club 100kg/140kg), streak (7/30/90 jours), spécial (lève-tôt, noctambule, anniversaire, premium)
+- `S.badges` = `{badgeId: {unlockedAt:'YYYY-MM-DD'}}` — persisté `ft4_badges`, sync cloud
+- `BADGES` : tableau const (18 entrées `{id, icon, name, desc, cat}`)
+- `checkBadges(silent)` : vérifie toutes les conditions, débloque + toast si nouveaux
+- `_checkBadgeCond(badge)` : switch sur badge.id — logique par badge
+- `_getMaxStreak()` : calcule streak max depuis `S.sessions` (dates uniques triées)
+- **Popup PR** `#ov-pr-congrats` : s'affiche 2,4s après `finishWorkout()` si nouveau PR détecté
+  - `showPrCongrats({ex, newRm, oldRm})` — affiche gain, comparaison old→new, niveau atteint
+- **Résumé hebdomadaire** `#ov-week-summary` : affiché le lundi au démarrage (`checkWeeklySummary()`)
+  - Contenu : séances, volume, PRs, badges débloqués la semaine passée
+  - Bouton 📋 Partager → `copyWeekSummary()` (clipboard)
+- **Date anniversaire** `S.bday` (ft4_bday) : champ `JJ/MM` dans s-setup → `saveBday(val)`
+  - Badge `birthday` : séance le jour de l'anniversaire
+- Onglet **🏅 Badges** dans `s-progress` (3e tab) → `renderBadges()` / `switchProgTab('badges')`
+- `startWorkout()` : sauvegarde `S.wkt.startHour = new Date().getHours()` pour badges lève-tôt/noctambule
+- Badges lève-tôt/noctambule : fallback sur `new Date(s.ts||s.id).getHours()` pour anciennes séances sans `startHour`
 
 ### Programmes (séances sauvegardées)
 - `S.programmes` — tableau de templates (`ft4_progs`)
@@ -237,6 +264,9 @@ S.coachFree       // nb questions gratuites utilisées (ft4_coachFree)
 S.premium         // bool — accès premium (ft4_premium)
 S.programmes      // [{name, date, exs:[...]}] — templates séances (ft4_progs)
 S.defRest         // durée repos par défaut en secondes (130)
+S.badges          // {badgeId: {unlockedAt:'YYYY-MM-DD'}} (ft4_badges)
+S.bday            // date anniversaire 'JJ/MM' (ft4_bday)
+S.lastWeekSummary // date du dernier résumé hebdo affiché (ft4_lws)
 _expandedEx       // index exercice ouvert dans s-log (ou -1)
 _syncTimer        // handle setTimeout pour _cloudSyncDebounced
 ```
