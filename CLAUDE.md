@@ -8,10 +8,10 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **App live** : https://michdu75-commits.github.io/forcetracker/
 - **Auteur** : Michel — michdu75@gmail.com
 
-## Backend Apps Script (v3.5 @9 — actif)
+## Backend Apps Script (v3.5 @11 — actif)
 
 - **Compte Google** : forcetracker.app@gmail.com
-- **URL déployée** : `https://script.google.com/macros/s/AKfycbyXlNWFvidB9n8ptaP9m8zWyWr5hfJ-WbE7zrkQwCPbBjdUbf5H37GDthQkMl8ETmNv0g/exec`
+- **URL déployée** : `https://script.google.com/macros/s/AKfycbyUjGbhmp65Gx1mILY-V_dxuuRa8JXbRCi3GvG_CS9bXzWyatS5TsGaY5TbyXjh5aZw/exec`
 - **Script ID** : `1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw`
 - **Fichier local** : `Code.js` (géré via clasp)
 - **clasp** : toujours préfixer avec `NODE_TLS_REJECT_UNAUTHORIZED=0` (SSL Windows)
@@ -36,8 +36,9 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` | App complète (HTML + CSS + JS inline, ~5 600 lignes) |
-| `Code.js` | Backend Google Apps Script v3.5 @9 (sync cloud) |
+| `index.html` | App complète (HTML + CSS + JS inline, ~6 000 lignes) |
+| `Code.js` | Backend Google Apps Script v3.5 @11 (sync cloud) |
+| `female-body.png` | Silhouette féminine (ChatGPT, 1325×1187, 3 vues) — présent mais non utilisé |
 | `sw.js` | Service Worker (network-first HTML, cache-first assets) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `logo.png` | Icône app |
@@ -224,9 +225,36 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 - **`gifCache`** : cache en mémoire par nom d'exercice (évite les doublons réseau)
 - **Tag git sauvegarde** : `v-svg-templates-2026-06-16` — restauration possible si besoin
 
-### Programmes (séances sauvegardées)
+### Programmes (séances sauvegardées) (✅ 2026-06-16)
 - `S.programmes` — tableau de templates (`ft4_progs`)
 - Modal `#mod-prog` : sauvegarder séance en cours, charger avec poids précédents, supprimer
+- **Éditeur de programme** overlay `#ov-prog-edit` : modifier nom + ajouter/supprimer exercices
+  - `editProg(idx)` → ouvre l'overlay avec deep copy du programme
+  - `_renderProgEdit()` : rendu des jours/exercices avec boutons × et "+" par jour
+  - `_openExPickerForProg(dayIdx)` : positionne `_exPickerMode='prog'` + `_editDayIdx` puis ouvre picker
+  - `addExercise(name)` : intercepté si `_exPickerMode==='prog'` → route vers `_addExToProgEdit(name)`
+  - `_addExToProgEdit(name)` : push exercice (3 sets N par défaut), re-render
+  - `_removeExFromProgEdit(dayIdx, exIdx)` : splice + re-render
+  - `saveProgEdit()` : écrase `S.programmes[idx]`, persist, referme et rouvre `#mod-prog`
+  - Variables : `_exPickerMode` (workout|prog), `_editProgIdx`, `_editProgData`, `_editDayIdx`
+- **Analyse IA de programme** (Premium) overlay `#ov-prog-analysis`
+  - Bouton 🤖 sur chaque programme dans `#mod-prog` → `analyzeProgIa(idx)`
+  - `_formatProgForAnalysis(prog)` : formate le programme en texte structuré
+  - Appel `action:'coach'` avec prompt structuré en 4 parties
+  - `continueInCoach()` : injecte l'analyse dans `coachHistory` et navigue vers s-coach
+  - `_coachFmtHtml(text)` : même rendu markdown que le chat coach
+
+### Import programme — Fichiers Word et Excel (✅ 2026-06-16)
+- Bouton 📸 dans s-log → flow import → accept étendu à `.docx` et `.xlsx/.xls`
+- **Word (.docx)** : chargement dynamique mammoth.js (CDN cdnjs, ~150KB) → `extractRawText` → texte brut
+  - `_loadMammoth()` : charge la lib si absente, retourne Promise
+- **Excel (.xlsx/.xls)** : chargement dynamique SheetJS (CDN jsdelivr, ~800KB) → CSV par feuille
+  - `_loadXLSX()` : charge la lib si absente, retourne Promise
+  - Format : `[Feuille : NomFeuille]\n` + CSV, toutes les feuilles concaténées
+- `addImportFile(input)` : async, limite 15MB par fichier, gère les 3 types (image/docx/xlsx) en parallèle
+- Miniature : icône 📊 pour Excel, 📝 pour Word/texte, 📄 pour PDF
+- Backend @11 : `handleImportProgram_` gère `isText:true` → `{type:'text', text:'[Fichier Word : ...]'}` envoyé à Claude
+- Modèle utilisé : claude-sonnet-4-6 si fichier texte/PDF, claude-haiku si images seulement
 
 ## Format de réponse Apps Script (v3.2)
 
@@ -270,7 +298,7 @@ POST x-www-form-urlencoded data={"email":"...","amount":"4.99",...}  ← Webhook
 ## Variables clés
 
 ```javascript
-const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbyXlNWFvidB9n8ptaP9m8zWyWr5hfJ-WbE7zrkQwCPbBjdUbf5H37GDthQkMl8ETmNv0g/exec';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbyUjGbhmp65Gx1mILY-V_dxuuRa8JXbRCi3GvG_CS9bXzWyatS5TsGaY5TbyXjh5aZw/exec';
 S.url             // = DEFAULT_URL (jamais null)
 S.email           // email utilisateur (stocké ft4_email)
 S.connected       // bool (stocké ft4_ok)
@@ -289,4 +317,23 @@ S.bday            // date anniversaire 'JJ/MM' (ft4_bday)
 S.lastWeekSummary // date du dernier résumé hebdo affiché (ft4_lws)
 _expandedEx       // index exercice ouvert dans s-log (ou -1)
 _syncTimer        // handle setTimeout pour _cloudSyncDebounced
+_exPickerMode     // 'workout' | 'prog' — intercept addExercise() pour éditeur programme
+_editProgIdx      // index du programme en cours d'édition
+_editProgData     // deep copy du programme en cours d'édition
+_editDayIdx       // index du jour cible pour ajout d'exercice
+_lastProgAnalysisProg // dernier programme analysé par IA
+_lastProgAnalysisReply // dernière réponse IA analyse programme
 ```
+
+## Notes techniques importantes
+
+### Silhouette musculaire féminine
+- `_mscSVG` et `_mscSVGmini` utilisent la **même silhouette masculine** pour les deux genres (décision 2026-06-16)
+- `female-body.png` est présent dans le projet mais **non utilisé** — tentatives d'intégration échouées (SVG `<image>` ne supporte pas CSS filter sur iOS WebKit, overlays difficiles à positionner)
+- Dead code présent dans index.html : `_MG_F_SHAPES`, `_BDY_F`, `_BDY_F_MINI`, `_fHl`, `_mscSVG_F` — inoffensif, utilisable pour une future implémentation
+
+### Dark mode
+- Dark mode = **défaut** (pas de classe sur `#root`)
+- Light mode = classe `light-mode` sur `document.getElementById('root')`
+- Détection JS : `document.getElementById('root')?.classList.contains('light-mode')`
+- Persisté : `localStorage.getItem('ft4_theme')` = `'light'` ou `'dark'`
