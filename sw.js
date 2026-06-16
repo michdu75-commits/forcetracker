@@ -1,4 +1,4 @@
-const CACHE = 'ft-v1';
+const CACHE = 'ft-v2';
 const PRECACHE = ['./', './index.html', './manifest.json', './logo.png'];
 
 self.addEventListener('install', e => {
