@@ -522,6 +522,7 @@ html.ob-done #onboarding{display:none;}
 .ob-gbtn{flex:1;padding:14px;border-radius:var(--r);border:2px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;}
 .ob-gbtn.ob-sel{border-color:var(--red);color:var(--t1);background:rgba(255,45,85,.12);}
 .ob-goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
+@keyframes ob0-bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(8px);}}
 .ob-goal-btn{display:flex;flex-direction:column;align-items:center;padding:16px 8px;border-radius:var(--r);border:2px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:15px;font-weight:700;font-family:var(--font);cursor:pointer;gap:8px;transition:all .2s;touch-action:manipulation;}
 .ob-goal-btn.ob-sel{background:rgba(255,45,85,.12);border-color:var(--red);color:var(--t1);}
 .ob-mini-inp{width:100%;font-size:18px;font-weight:700;font-family:var(--font);background:var(--bg3);border:2px solid var(--sep);border-radius:12px;color:var(--t1);padding:10px 10px;outline:none;text-align:center;transition:border-color .2s;}
@@ -590,49 +591,42 @@ html.ob-done #onboarding{display:none;}
 
     <!-- ÉTAPE 0 : Installer l'app (affichée si pas déjà installée) -->
     <div class="ob-step" id="ob-0">
-      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;padding-top:20px;">
-        <div style="display:flex;align-items:center;gap:14px;width:100%;">
-          <img src="logo.png" style="width:52px;height:52px;border-radius:14px;flex-shrink:0;object-fit:cover;">
+
+      <!-- iOS layout -->
+      <div id="ob0-ios" style="flex:1;display:flex;flex-direction:column;padding:20px 0 0;display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
+          <img src="logo.png" style="width:44px;height:44px;border-radius:11px;object-fit:cover;flex-shrink:0;">
           <div>
-            <div style="font-family:var(--font-cond);font-size:22px;font-weight:900;line-height:1.1;">Force Tracker</div>
-            <div style="font-size:12px;color:var(--t2);margin-top:2px;">Ton coach de force personnel</div>
+            <div style="font-family:var(--font-cond);font-size:19px;font-weight:900;">Force Tracker</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:1px;">Installe sur ton iPhone</div>
           </div>
         </div>
-        <div class="ob-title" style="font-size:26px;text-align:left;width:100%;">📲 Installe l'app</div>
-        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Ajoute Force Tracker à ton écran d'accueil pour un accès instantané — sans passer par le navigateur.</div>
-        <!-- iOS -->
-        <div id="ob0-ios" style="width:100%;background:var(--bg3);border-radius:14px;padding:14px;">
-          <div style="font-size:14px;font-weight:700;margin-bottom:12px;">📱 iPhone — Safari</div>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <span style="font-size:22px;flex-shrink:0;">1️⃣</span>
-              <div>
-                <div style="font-size:14px;font-weight:600;margin-bottom:5px;">Appuie sur Partager en bas</div>
-                <span style="display:inline-flex;align-items:center;gap:4px;background:#007AFF;color:#fff;border-radius:7px;padding:3px 9px;font-size:12px;font-weight:700;">⬆️&nbsp;Partager</span>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px;">
-              <span style="font-size:22px;flex-shrink:0;">2️⃣</span>
-              <div>
-                <div style="font-size:14px;font-weight:600;margin-bottom:5px;">Fais défiler et appuie sur</div>
-                <span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg2);border:1px solid var(--sep);border-radius:7px;padding:3px 9px;font-size:12px;font-weight:700;">➕&nbsp;Sur l'écran d'accueil</span>
-              </div>
-            </div>
-          </div>
+        <div style="background:var(--bg3);border-radius:14px;padding:16px;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Étape 1</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:12px;">Appuie sur Partager en bas ↓</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:#007AFF;color:#fff;border-radius:9px;padding:8px 16px;font-size:14px;font-weight:700;">⬆️ Partager</span>
         </div>
-        <!-- Android -->
-        <div id="ob0-android" style="width:100%;background:var(--bg3);border-radius:14px;padding:14px;">
-          <div style="font-size:14px;font-weight:700;margin-bottom:10px;">🤖 Android — Chrome</div>
-          <div style="display:flex;align-items:flex-start;gap:10px;">
-            <span style="font-size:20px;flex-shrink:0;">✅</span>
-            <div style="font-size:13px;color:var(--t2);line-height:1.55;">Un <strong style="color:var(--t1);">popup d'installation</strong> va apparaître automatiquement — appuie sur <strong style="color:var(--t1);">Installer</strong>.</div>
-          </div>
-          <div style="margin-top:8px;font-size:11px;color:var(--t3);">Ou : Chrome ⋮ → Ajouter à l'écran d'accueil</div>
+        <div style="background:var(--bg3);border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Étape 2</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:12px;">Fais défiler et appuie sur</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1.5px solid var(--sep);border-radius:9px;padding:8px 16px;font-size:14px;font-weight:700;">➕ Sur l'écran d'accueil</span>
+        </div>
+        <div style="flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;">
+          <span style="font-size:32px;display:block;animation:ob0-bounce .85s infinite ease-in-out;">⬇️</span>
         </div>
       </div>
+
+      <!-- Android layout -->
+      <div id="ob0-android" style="flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px 0;">
+        <img src="logo.png" style="width:72px;height:72px;border-radius:18px;object-fit:cover;margin-bottom:20px;">
+        <div style="font-family:var(--font-cond);font-size:26px;font-weight:900;text-align:center;margin-bottom:6px;">Installe Force Tracker</div>
+        <div style="font-size:14px;color:var(--t2);text-align:center;margin-bottom:28px;line-height:1.45;">Accès instantané depuis ton écran d'accueil</div>
+        <button id="ob0-install-btn" class="btn btn-red" onclick="ob0Install()" style="font-size:17px;padding:17px;width:100%;">📲 Installer l'app</button>
+        <div id="ob0-android-fallback" style="display:none;margin-top:16px;background:var(--bg3);border-radius:12px;padding:12px 16px;width:100%;font-size:13px;color:var(--t2);text-align:center;line-height:1.55;">Chrome <strong style="color:var(--t1);">⋮</strong> → <strong style="color:var(--t1);">Ajouter à l'écran d'accueil</strong></div>
+      </div>
+
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="obGoTo(1)" style="font-size:17px;padding:16px;">J'ai compris →</button>
-        <button class="btn btn-bg2" onclick="obGoTo(1)" style="font-size:14px;color:var(--t3);">Passer</button>
+        <button class="btn btn-bg2" onclick="obGoTo(1)" style="font-size:14px;color:var(--t3);">Continuer sans installer</button>
       </div>
     </div>
 
@@ -5257,19 +5251,35 @@ let _obStep=1,_obGender='H',_obGoal='muscle',_obDataRestored=false;
 const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',force:'ob-gf',equilibre:'ob-ge',endurance:'ob-gen'};
 
 function _initOb0(){
-  if(_isStandalone())return; // déjà installée → pas besoin
+  if(_isStandalone())return;
+  if(_isIOSInApp())return; // navigateur in-app → géré par le banner
+  if(_isFirefoxAndroid())return; // pas de prompt disponible
+  const isIOS=_isIOS();
   const ios=document.getElementById('ob0-ios');
   const android=document.getElementById('ob0-android');
-  if(ios)ios.style.display=_isIOS()?'block':'none';
-  if(android)android.style.display=_isIOS()?'none':'block';
-  // Désactive ob-1 et active ob-0
+  if(ios)ios.style.display=isIOS?'flex':'none';
+  if(android)android.style.display=isIOS?'none':'flex';
   const ob1=document.getElementById('ob-1');
-  if(ob1){ob1.classList.remove('ob-active');}
+  if(ob1)ob1.classList.remove('ob-active');
   const ob0=document.getElementById('ob-0');
-  if(ob0){ob0.classList.add('ob-active');}
+  if(ob0)ob0.classList.add('ob-active');
   _obStep=0;
-  // Tous les dots inactifs à l'étape 0
   for(let i=1;i<=4;i++){const d=document.getElementById('od-'+i);if(d)d.classList.remove('ob-active');}
+}
+
+function ob0Install(){
+  if(window._deferredInstall){
+    window._deferredInstall.prompt();
+    window._deferredInstall.userChoice.then(r=>{
+      window._deferredInstall=null;
+      if(r&&r.outcome==='accepted')obGoTo(1);
+    });
+  } else {
+    const fb=document.getElementById('ob0-android-fallback');
+    if(fb)fb.style.display='block';
+    const btn=document.getElementById('ob0-install-btn');
+    if(btn){btn.textContent='Voir les instructions ↑';btn.disabled=true;btn.style.opacity='.5';}
+  }
 }
 
 function initOnboarding(){
