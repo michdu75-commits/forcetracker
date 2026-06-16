@@ -136,6 +136,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:12px 14px 110px;display:none;flex-direction:column;gap:10px;background:var(--bg);}
 .screen.active{display:flex;}
 .screen>*{flex-shrink:0;}
+.help-fab{position:fixed;top:calc(max(env(safe-area-inset-top,0px),10px) + 8px);right:14px;z-index:90;width:34px;height:34px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--sep);color:var(--t3);font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation;box-shadow:0 2px 10px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;font-family:var(--font);}
+.help-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--sep);}
+.help-item:last-child{border-bottom:none;}
+.help-item-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.help-item-text{font-size:14px;color:var(--t2);line-height:1.5;}
+.help-female-block{background:rgba(255,45,85,.07);border:1px solid rgba(255,45,85,.18);border-radius:12px;padding:12px 14px;margin-bottom:14px;}
+.help-female-hdr{font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;}
 ::-webkit-scrollbar{display:none;}
 
 /* TYPOGRAPHY */
@@ -1271,6 +1278,20 @@ html.ob-done #onboarding{display:none;}
   </button>
 </nav>
 
+<!-- Bouton aide contextuel -->
+<button class="help-fab" id="help-fab" onclick="showHelp()">?</button>
+
+<!-- OVERLAY: Aide contextuelle -->
+<div class="overlay" id="ov-help" onclick="if(event.target===this)closeHelp()">
+  <div class="modal" style="max-width:420px;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--sep);flex-shrink:0">
+      <div style="font-weight:800;font-size:18px" id="help-title">Aide</div>
+      <button onclick="closeHelp()" style="width:36px;height:36px;border-radius:50%;background:var(--bg3);border:none;font-size:18px;font-weight:700;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px 20px" id="help-content"></div>
+  </div>
+</div>
+
 <!-- MODAL: Post-workout check-in -->
 <div class="overlay" id="mod-checkin">
   <div class="modal" style="text-align:center;">
@@ -2019,7 +2040,9 @@ function getMeals(macros,phase){
 }
 
 // ─── NAVIGATION ──────────────────────────────────────────────
+let _curScreen='home';
 function goScreen(id,btn){
+  _curScreen=id;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   document.getElementById('s-'+id).classList.add('active');
@@ -2033,6 +2056,106 @@ function goScreen(id,btn){
   if(id==='nutrition'){switchNuTab('macros',document.getElementById('ntab-macros'));}
   if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();}
 }
+
+// ─── AIDE CONTEXTUELLE ───────────────────────────────────────
+const _HELP_DATA={
+  home:{
+    title:'🏠 Accueil',
+    tips:[
+      {i:'📊',t:'Les stats du mois se calculent depuis tes séances enregistrées et ton poids loggé.'},
+      {i:'😴',t:'Le score de récupération vient du check-in post-séance (sommeil + énergie subjective).'},
+      {i:'🏆',t:'Les PRs (records personnels) se mettent à jour automatiquement après chaque séance.'},
+      {i:'🔄',t:'Le cycle de force (Accumulation → Peak → Décharge) se configure dans Profil → Cycle.'},
+    ],
+    female:[
+      {i:'🌙',t:'La carte de ton cycle menstruel s\'affiche ici — remplis la date de tes règles dans Profil pour l\'activer.'},
+      {i:'💡',t:'Tes performances varient naturellement selon ta phase. C\'est normal, pas un signe de régression.'},
+    ]
+  },
+  setup:{
+    title:'👤 Profil — bien le remplir',
+    tips:[
+      {i:'⚖️',t:'Ton poids, taille et âge sont essentiels : ils servent à calculer tes besoins caloriques (TDEE) dans Nutrition.'},
+      {i:'🎯',t:'L\'objectif (muscle, perte de poids, force...) détermine la répartition de tes macronutriments.'},
+      {i:'🏃',t:'Le niveau d\'activité est crucial — sous-estimer revient à manger trop. Sois honnête.'},
+      {i:'📏',t:'Tour de cou + taille (+ hanches pour les femmes) → calcul automatique de ta composition corporelle (% graisse, masse maigre).'},
+    ],
+    female:[
+      {i:'🌸',t:'La date de tes premières règles permet à l\'app d\'adapter tes macros et conseils selon ta phase de cycle. C\'est la donnée la plus importante pour un suivi féminin précis.'},
+      {i:'💊',t:'Si tu prends une contraception hormonale (pilule, implant, DIU hormonal), coche-le — le suivi de phase est désactivé car les fluctuations naturelles sont masquées.'},
+      {i:'📐',t:'Pour les femmes, les hanches sont indispensables au calcul du % de graisse (méthode US Navy). Sans elles, la formule est moins précise.'},
+      {i:'🧬',t:'Remplis ta morphologie (forme du corps) pour que le Coach IA te donne des conseils vraiment adaptés à ta silhouette.'},
+    ]
+  },
+  nutrition:{
+    title:'🍽️ Nutrition',
+    tips:[
+      {i:'⚠️',t:'Les macros ne s\'affichent correctement que si ton Profil est complet (âge, poids, taille, niveau d\'activité).'},
+      {i:'📈',t:'Phase Charge = surplus calorique pour prendre du muscle. Phase Décharge = déficit pour perdre du gras. Alterne selon tes objectifs.'},
+      {i:'💪',t:'Les suppléments (créatine, whey) sont dosés automatiquement selon ton poids et ton objectif.'},
+      {i:'🔥',t:'Les calories brûlées à la séance sont estimées et ajoutées à ton TDEE du jour.'},
+    ],
+    female:[
+      {i:'🌙',t:'Tes macros s\'adaptent automatiquement selon ta phase de cycle : plus de glucides en phase folliculaire (énergie haute), légère augmentation des calories en phase lutéale.'},
+      {i:'🔥',t:'En phase lutéale (avant les règles), ton métabolisme est naturellement plus élevé (+100 à 200 kcal/jour). L\'app en tient compte.'},
+      {i:'💧',t:'Les envies de sucre et la rétention d\'eau en fin de cycle sont normales. Adapte tes portions sans culpabilité.'},
+    ]
+  },
+  progress:{
+    title:'📈 Progrès',
+    tips:[
+      {i:'💪',t:'Le graphique montre ton 1RM estimé (formule Brzycki) calculé depuis tes séances — pas besoin de tester à l\'échec.'},
+      {i:'⚖️',t:'Log ton poids régulièrement (idéalement le matin à jeun) pour voir une courbe fiable sur la durée.'},
+      {i:'🏅',t:'Les badges se débloquent automatiquement : régularité, PRs, streaks... vérifie l\'onglet Badges.'},
+      {i:'📉',t:'Un plateau sur plusieurs semaines est normal — le progrès n\'est pas linéaire.'},
+    ],
+    female:[
+      {i:'⚖️',t:'Les variations de poids de ±1 à 3 kg en cours de cycle sont normales. C\'est de la rétention d\'eau, pas de la graisse. Compare ton poids à la même phase du cycle précédent.'},
+      {i:'📊',t:'Tes performances (force, endurance) peuvent varier selon la phase. Pour comparer objectivement, rapproche les séances de la même phase entre elles.'},
+    ]
+  },
+  log:{
+    title:'⚡ Séance',
+    tips:[
+      {i:'🔤',t:'Types de série : N = Normal · W = Échauffement (exclu du volume total) · E = Échec · D = Drop set'},
+      {i:'⏱️',t:'Le timer s\'adapte au type : Échauffement 45s · Normal 130s · Échec 4min · Drop 20s'},
+      {i:'🏆',t:'Le 1RM s\'affiche en temps réel sous le type de série — utilise-le pour calibrer tes charges.'},
+      {i:'📷',t:'Bouton 📸 pour importer un programme depuis une photo (planning, tableau...).'},
+    ],
+    female:[]
+  },
+  coach:{
+    title:'🤖 Coach IA',
+    tips:[
+      {i:'💬',t:'Donne un maximum de contexte dans tes messages : exercices actuels, douleurs, objectif précis, plateau.'},
+      {i:'📸',t:'Envoie une photo (Premium) pour une analyse de composition corporelle ou de ta morphologie.'},
+      {i:'🔓',t:'10 questions gratuites puis abonnement Premium pour un accès illimité.'},
+    ],
+    female:[
+      {i:'🌸',t:'Mentionne ta phase de cycle dans ton message ("je suis en phase lutéale") pour des conseils nutrition et entraînement vraiment adaptés à ton moment.'},
+      {i:'🧬',t:'L\'analyse de morphologie (Premium, bouton 📸 dans le chat) te donne un profil personnalisé : silhouette, forces, axes de progression spécifiques.'},
+    ]
+  }
+};
+
+function showHelp(){
+  const screen=_curScreen==='cycle'?'home':(_curScreen||'home');
+  const data=_HELP_DATA[screen];
+  if(!data)return;
+  const isFemale=S&&S.gender==='F';
+  document.getElementById('help-title').textContent=data.title;
+  let html='';
+  if(isFemale&&data.female&&data.female.length){
+    html+=`<div class="help-female-block">
+      <div class="help-female-hdr">♀ Spécial femmes</div>
+      ${data.female.map(t=>`<div class="help-item"><span class="help-item-icon">${t.i}</span><span class="help-item-text">${t.t}</span></div>`).join('')}
+    </div>`;
+  }
+  html+=`<div>${data.tips.map(t=>`<div class="help-item"><span class="help-item-icon">${t.i}</span><span class="help-item-text">${t.t}</span></div>`).join('')}</div>`;
+  document.getElementById('help-content').innerHTML=html;
+  document.getElementById('ov-help').classList.add('open');
+}
+function closeHelp(){document.getElementById('ov-help').classList.remove('open');}
 
 // ─── HOME ────────────────────────────────────────────────────
 function renderHome(){
