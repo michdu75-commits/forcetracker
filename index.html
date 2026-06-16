@@ -2999,6 +2999,46 @@ function deleteProg(idx){
 // ─── EXERCISE VIDEO / IMAGE ───────────────────────────────────
 const gifCache={};
 
+// ─── MUSCLE GROUP SVG TEMPLATES (fallback si aucune image trouvée) ───
+const _MUSCLE_SVG=(function(){
+  // Silhouette corps entier, vue avant — paths partagés entre tous les templates
+  const BDY=`<g fill="var(--bg3)" stroke="var(--sep)" stroke-width="1.2">
+<circle cx="50" cy="14" r="11"/>
+<path d="M44 25 L56 25 L58 34 L42 34Z"/>
+<path d="M24 38 Q50 33 76 38 L76 98 Q50 102 24 98Z"/>
+<path d="M24 38 L16 40 L10 86 L22 88 L24 38Z"/>
+<path d="M76 38 L84 40 L90 86 L78 88 L76 38Z"/>
+<path d="M10 86 L22 88 L21 114 L9 112Z"/>
+<path d="M90 86 L78 88 L79 114 L91 112Z"/>
+<rect x="27" y="99" width="19" height="52" rx="6"/>
+<rect x="54" y="99" width="19" height="52" rx="6"/>
+<rect x="28" y="153" width="17" height="38" rx="6"/>
+<rect x="55" y="153" width="17" height="38" rx="6"/>
+</g>`;
+  function t(hl,lbl,note){
+    return `<svg viewBox="0 0 100 202" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:158px;display:block;margin:0 auto">${BDY}<g fill="#FF2D55" opacity="0.85">${hl}</g><text x="50" y="196" text-anchor="middle" font-size="10" fill="var(--t1)" font-weight="700" font-family="sans-serif">${lbl}</text>${note?`<text x="50" y="201" text-anchor="middle" font-size="7" fill="var(--t3)" font-family="sans-serif">${note}</text>`:''}</svg>`;
+  }
+  return {
+    'Pectoraux': t(`<ellipse cx="37" cy="56" rx="13" ry="11"/><ellipse cx="63" cy="56" rx="13" ry="11"/>`,'Pectoraux'),
+    'Dos':       t(`<ellipse cx="37" cy="64" rx="12" ry="14"/><ellipse cx="63" cy="64" rx="12" ry="14"/>`,'Dos','(vue dos)'),
+    'Trapèzes':  t(`<path d="M34 29 Q50 23 66 29 L63 50 Q50 54 37 50Z"/>`,'Trapèzes','(vue dos)'),
+    'Épaules':   t(`<ellipse cx="20" cy="45" rx="9" ry="8"/><ellipse cx="80" cy="45" rx="9" ry="8"/>`,'Épaules'),
+    'Biceps':    t(`<rect x="13" y="46" width="10" height="22" rx="4"/><rect x="77" y="46" width="10" height="22" rx="4"/>`,'Biceps'),
+    'Triceps':   t(`<rect x="13" y="46" width="10" height="22" rx="4"/><rect x="77" y="46" width="10" height="22" rx="4"/>`,'Triceps','(vue dos)'),
+    'Avant-bras':t(`<rect x="11" y="70" width="10" height="26" rx="4"/><rect x="79" y="70" width="10" height="26" rx="4"/>`,'Avant-bras'),
+    'Abdominaux':t(`<rect x="35" y="68" width="30" height="28" rx="5"/>`,'Abdominaux'),
+    'Jambes':    t(`<rect x="28" y="100" width="18" height="50" rx="6"/><rect x="54" y="100" width="18" height="50" rx="6"/>`,'Jambes'),
+    'Fessiers':  t(`<ellipse cx="38" cy="104" rx="14" ry="12"/><ellipse cx="62" cy="104" rx="14" ry="12"/>`,'Fessiers','(vue dos)'),
+    'Mollets':   t(`<rect x="29" y="154" width="16" height="36" rx="5"/><rect x="55" y="154" width="16" height="36" rx="5"/>`,'Mollets'),
+    'Full Body': t(`<ellipse cx="37" cy="56" rx="13" ry="11" opacity="0.55"/><ellipse cx="63" cy="56" rx="13" ry="11" opacity="0.55"/><ellipse cx="20" cy="45" rx="9" ry="8" opacity="0.55"/><ellipse cx="80" cy="45" rx="9" ry="8" opacity="0.55"/><rect x="28" y="100" width="18" height="50" rx="6" opacity="0.55"/><rect x="54" y="100" width="18" height="50" rx="6" opacity="0.55"/><rect x="13" y="46" width="10" height="22" rx="4" opacity="0.55"/><rect x="77" y="46" width="10" height="22" rx="4" opacity="0.55"/>`,'Full Body'),
+  };
+})();
+function _groupTemplateSvg(name){
+  const ex=EXLIB.find(e=>e.n===name);
+  const svg=ex&&_MUSCLE_SVG[ex.g];
+  return svg?`<div style="padding:6px 24px 6px;text-align:center">${svg}</div>`:'';
+}
+
 // Vidéos YouTube Demic — {id, s:true si Short, s:false si vidéo normale}
 const EX_YT={
   'Développé Couché':{id:'sRuKSZLcmWM',s:true},
@@ -3017,21 +3057,118 @@ const EX_YT={
 };
 
 const EX_EN={
-  'Squat à la Barre':'squat barbell','Développé Couché':'bench press barbell','Soulevé de Terre':'deadlift conventional',
-  'Soulevé de Terre Sumo':'sumo deadlift',
+  // Pectoraux
+  'Développé Couché':'bench press barbell','Développé Couché Haltères':'bench press dumbbell',
+  'Développé Incliné':'incline bench press','Développé Incliné Haltères':'incline bench press dumbbell',
+  'Développé Décliné':'decline bench press','Développé Décliné Haltères':'decline bench press dumbbell',
+  'Écarté Haltères':'dumbbell fly chest','Écarté Poulie':'cable fly chest',
+  'Croisé Poulie (Cable Crossover)':'cable crossover',
+  'Pec Deck':'pec deck fly','Chest Press Machine Horizontale':'chest press machine',
+  'Chest Press Machine Inclinée':'incline chest press machine','Chest Press Machine Déclinée':'decline chest press machine',
+  'Dips':'chest dips','Dips Parallèles':'parallel bar dip',
+  'Dips Machine Assistée':'assisted dip machine',
+  'Pompes Lestées':'push up weighted','Pompes Déficit (Deficit Push-up)':'deficit push up','Pompes Diamant':'diamond push up',
+  'Smith Machine Développé Couché':'smith machine bench press','Smith Machine Développé Incliné':'smith machine incline bench press',
+  // Dos
+  'Soulevé de Terre':'deadlift conventional','Soulevé de Terre Sumo':'sumo deadlift',
+  'Tirage en Rack (Rack Pull)':'rack pull barbell',
+  'Inclinaison Lombaire (Good Morning)':'good morning barbell',
+  'Rowing Barre':'barbell row bent over','Rowing Haltère':'dumbbell row one arm','Rowing Cable':'cable row seated',
+  'Rowing Yates (Supination)':'yates row barbell',
+  'Rowing Poitrine Appuyée (Chest Supported)':'chest supported row',
+  'Rowing Machine':'seated row machine','Rowing Hammer Strength':'hammer strength row',
+  'Tirage Poulie Haute':'lat pulldown cable','Tirage Poulie Haute Prise Serrée':'lat pulldown close grip',
+  'Tirage Nuque':'behind neck pulldown',
+  'Tirage Poulie Basse Prise Large':'seated cable row wide grip','Tirage Poulie Basse Prise Serrée':'seated cable row close grip',
+  'Traction Lestée':'pull-up weighted','Traction Assistée':'assisted pull up machine','Traction Prise Neutre':'neutral grip pull up',
+  'Pull-over':'pullover barbell','Pull-over Haltère':'pullover dumbbell','Pullover Machine':'pullover machine',
+  // Trapèzes
+  'Haussements d\'Épaules (Shrugs)':'barbell shrug',
+  'Haussements d\'Épaules Barre':'barbell shrug','Haussements d\'Épaules Haltères':'dumbbell shrug',
+  'Haussements d\'Épaules Câble':'cable shrug','Tirage Menton':'upright row barbell',
+  'Farmer\'s Walk':'farmers walk',
+  // Épaules
+  'Développé Militaire':'overhead press barbell','Développé Militaire Haltères':'overhead press dumbbell',
+  'Développé Haltères Assis':'seated dumbbell press',
+  'Développé Arnold (Arnold Press)':'arnold press','Développé Épaules Machine':'shoulder press machine',
+  'Smith Machine Développé Militaire':'smith machine overhead press',
+  'Élévations Latérales':'lateral raise dumbbell','Élévations Latérales Câble':'cable lateral raise',
+  'Élévations Latérales Machine':'machine lateral raise',
+  'Élévations Frontales':'front raise dumbbell','Élévations Frontales Câble':'cable front raise',
+  'Élévations Frontales Machine':'machine front raise',
+  'Oiseau':'rear delt fly dumbbell','Machine Oiseau':'rear delt fly machine',
+  'Tirage Visage (Face Pull)':'face pull cable','Tirage Vertical (Upright Row)':'upright row barbell',
+  'Y Raise / W Raise':'y raise band',
+  // Biceps
+  'Curl Barre':'barbell bicep curl','Curl Haltères':'dumbbell bicep curl',
+  'Curl Poulie':'cable bicep curl','Curl EZ':'ez bar curl',
+  'Curl Barre EZ Prise Large':'ez bar curl wide grip',
+  'Curl Incliné':'incline dumbbell curl','Curl Concentré':'concentration curl',
+  'Curl Câble en Croix (Bayesian Curl)':'bayesian curl cable','Curl Araignée (Spider Curl)':'spider curl',
+  'Curl Zottman':'zottman curl','Marteau':'hammer curl',
+  'Curl Machine':'bicep curl machine','Curl Pupitre Machine':'preacher curl machine',
+  // Triceps
+  'Dips Lestés':'dips weighted','Bench Dips':'bench dip',
+  'Barre au Front':'skull crusher','Skull Crusher Barre EZ':'skull crusher ez bar',
+  'Extension Triceps':'triceps extension overhead','Extension Triceps Couché Haltères':'lying triceps extension dumbbell',
+  'Extension Nuque Haltère':'overhead triceps extension dumbbell',
+  'Extension Nuque Poulie Haute':'overhead cable triceps extension',
+  'Triceps Poulie':'triceps pushdown cable','Triceps Corde Poulie':'triceps rope pushdown',
+  'Triceps Poulie Basse':'low cable triceps extension',
+  'Extension Triceps Arrière (Kickback)':'triceps kickback dumbbell',
+  'Triceps Haltère':'triceps overhead extension dumbbell','Triceps Machine':'triceps machine',
+  // Jambes
+  'Squat à la Barre':'squat barbell','Squat Avant':'front squat','Squat Bulgare':'bulgarian split squat',
+  'Squat Gobelet (Goblet Squat)':'goblet squat','Squat Sumo':'sumo squat',
+  'Smith Machine Squat':'smith machine squat','Squat Hack (Hack Squat)':'hack squat',
+  'Leg Press':'leg press machine',
+  'Extension Quadriceps (Leg Extension)':'leg extension machine',
+  'Leg Curl Couché Machine':'lying leg curl machine','Leg Curl Assis Machine':'seated leg curl machine',
+  'Fentes':'lunge barbell','Fentes Marchées':'walking lunge',
+  'Fentes Arrière':'reverse lunge','Fentes Latérales':'lateral lunge',
+  'Smith Machine Fentes':'smith machine lunge',
+  'Montée sur Box (Step-up)':'box step up','Montée sur Box Haltères':'step up dumbbell',
+  'Abduction Cuisses (Leg Abduction)':'hip abduction machine',
+  'Adduction Cuisses (Leg Adduction)':'hip adduction machine',
+  // Fessiers
+  'Poussée de Hanche (Hip Thrust)':'hip thrust barbell','Poussée de Hanche Haltère':'hip thrust dumbbell',
+  'Poussée de Hanche Machine':'hip thrust machine',
+  'Pont Fessier (Glute Bridge)':'glute bridge',
+  'Extension Fessiers Arrière (Kickback)':'glute kickback cable',
+  'Kickback Machine':'glute kickback machine','Kickback Cable':'cable glute kickback',
   'Soulevé de Terre Roumain Barre':'romanian deadlift barbell',
   'Soulevé de Terre Roumain Haltères':'romanian deadlift dumbbell',
-  'Développé Militaire':'overhead press barbell','Rowing Barre':'barbell row bent over','Traction Lestée':'pull-up weighted',
-  'Squat Avant':'front squat','Squat Bulgare':'bulgarian split squat','Poussée de Hanche (Hip Thrust)':'hip thrust barbell',
-  'Leg Press':'leg press machine','Curl Ischio-jambiers (Leg Curl)':'leg curl machine','Extension Quadriceps (Leg Extension)':'leg extension machine',
-  'Squat Hack (Hack Squat)':'hack squat','Curl Barre':'barbell bicep curl','Curl Haltères':'dumbbell bicep curl',
-  'Marteau':'hammer curl','Extension Triceps':'triceps extension overhead','Dips Lestés':'dips weighted',
-  'Barre au Front':'skull crusher','Triceps Poulie':'triceps pushdown cable',
-  'Développé Incliné':'incline bench press','Écarté Haltères':'dumbbell fly chest',
-  'Rowing Cable':'cable row seated','Rowing Haltère':'dumbbell row one arm',
-  'Tirage Poulie Haute':'lat pulldown cable','Tirage Nuque':'behind neck pulldown',
-  'Tirage Visage (Face Pull)':'face pull cable','Élévations Latérales':'lateral raise dumbbell',
-  'Haussements d\'Épaules (Shrugs)':'barbell shrug','Gainage':'plank core'
+  'Soulevé de Terre Roumain Unilatéral':'single leg romanian deadlift',
+  'Tirage Cable Fessiers (Cable Pull Through)':'cable pull through glute',
+  'Curl Ischio-jambiers (Leg Curl)':'leg curl machine',
+  'Abducteurs Machine Debout':'standing hip abduction machine',
+  // Abdominaux
+  'Gainage':'plank core','Planche Latérale (Side Plank)':'side plank',
+  'Hollow Body':'hollow body hold','L-Sit':'l-sit',
+  'Windshield Wiper':'windshield wiper ab',
+  'Crunch':'crunch abdominal','Crunch Poulie':'cable crunch','Crunch Oblique':'oblique crunch',
+  'Crunch Machine':'crunch machine','Câble Crunch':'cable crunch abdominal',
+  'Rotation Machine Obliques':'oblique twist machine',
+  'Relevé de Jambes':'hanging leg raise','Relevé de Buste (Sit-up)':'sit up',
+  'Chaise Romaine':'captain chair leg raise',
+  'Roue Abdominale (Ab Wheel)':'ab wheel rollout',
+  'Rotation Russe (Russian Twist)':'russian twist','Drapeau (Dragon Flag)':'dragon flag',
+  'Grimpeur (Mountain Climber)':'mountain climber',
+  // Mollets
+  'Élévations Mollets Debout':'standing calf raise','Élévations Mollets Assis':'seated calf raise',
+  'Élévations Mollets Unilatéral':'single leg calf raise',
+  'Presse Mollets (Leg Press)':'calf press leg press','Élévations Mollets Penché (Donkey Calf Raise)':'donkey calf raise',
+  'Mollets Machine Debout':'standing calf raise machine','Mollets Machine Assise':'seated calf raise machine',
+  'Sauts à la Corde':'jump rope',
+  // Avant-bras
+  'Curl Poignet Barre':'wrist curl barbell','Extension Poignet Barre':'wrist extension barbell',
+  'Pronation Supination Haltère':'forearm rotation dumbbell',
+  'Farmer\'s Walk (Grip)':'farmers walk','Planche de Préhension':'dead hang grip',
+  // Full Body
+  'Burpees':'burpee','Kettlebell Swing':'kettlebell swing',
+  'Arraché Haltère (Dumbbell Snatch)':'dumbbell snatch','Thrusters Haltères':'dumbbell thruster',
+  'Clean & Jerk':'clean and jerk','Turkish Get-Up':'turkish get up',
+  'Battle Rope':'battle rope waves','Box Jump':'box jump plyometric',
 };
 
 async function fetchExImage(name){
@@ -3109,6 +3246,8 @@ async function toggleExGif(ei,name){
   const imgUrl=await fetchExImage(name);
   if(imgUrl){
     html+=`<img src="${imgUrl}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;display:block;margin-bottom:8px;" loading="lazy" onerror="this.style.display='none'">`;
+  } else {
+    html+=_groupTemplateSvg(name);
   }
   html+=_exVideoHtml(name);
   html+='</div>';
