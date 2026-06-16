@@ -1521,11 +1521,11 @@ html.ob-done #onboarding{display:none;}
       <div style="display:flex;flex-direction:column;gap:10px;">
         <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-cam-inp').click()">📷 Prendre une photo</button>
         <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-gal-inp').click()">🖼️ Choisir depuis la galerie</button>
-        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-file-inp').click()">📄 Importer un fichier (PDF ou Word)</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-file-inp').click()">📄 Importer un fichier (PDF, Word ou Excel)</button>
       </div>
       <input type="file" id="imp-cam-inp" accept="image/*" capture="environment" style="display:none" onchange="addImportPhoto(this)">
       <input type="file" id="imp-gal-inp" accept="image/*" multiple style="display:none" onchange="addImportPhoto(this)">
-      <input type="file" id="imp-file-inp" accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none" onchange="addImportFile(this)">
+      <input type="file" id="imp-file-inp" accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none" onchange="addImportFile(this)">
       <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="closeImportProg()">Annuler</button>
     </div>
     <!-- Étape 2 : Pages -->
@@ -3036,12 +3036,23 @@ function _loadMammoth(){
     document.head.appendChild(s);
   });
 }
+function _loadXLSX(){
+  return new Promise((res,rej)=>{
+    if(window.XLSX){res();return;}
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
+    s.onload=res;s.onerror=()=>rej('Impossible de charger le lecteur Excel');
+    document.head.appendChild(s);
+  });
+}
 async function addImportFile(input){
   const files=[...input.files];if(!files.length)return;
   const MAX_MB=15;
   const loadFile=async f=>{
     if(f.size>MAX_MB*1024*1024)throw 'Fichier trop volumineux (max '+MAX_MB+' MB) : '+f.name;
-    const isDocx=f.name.toLowerCase().endsWith('.docx')||f.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const name=f.name.toLowerCase();
+    const isDocx=name.endsWith('.docx')||f.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const isXlsx=name.endsWith('.xlsx')||name.endsWith('.xls')||f.type==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'||f.type==='application/vnd.ms-excel';
     if(isDocx){
       await _loadMammoth();
       const buf=await f.arrayBuffer();
@@ -3049,8 +3060,16 @@ async function addImportFile(input){
       if(!result.value||!result.value.trim())throw 'Impossible d\'extraire le texte de '+f.name;
       return{data:result.value,type:'text/plain',name:f.name,isText:true};
     }
+    if(isXlsx){
+      await _loadXLSX();
+      const buf=await f.arrayBuffer();
+      const wb=XLSX.read(buf,{type:'array'});
+      const sheets=wb.SheetNames.map(sn=>'[Feuille : '+sn+']\n'+XLSX.utils.sheet_to_csv(wb.Sheets[sn])).join('\n\n');
+      if(!sheets.trim())throw 'Impossible d\'extraire les données de '+f.name;
+      return{data:sheets,type:'text/plain',name:f.name,isText:true,isXlsx:true};
+    }
     return new Promise((res,rej)=>{
-      const isPdf=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
+      const isPdf=f.type==='application/pdf'||name.endsWith('.pdf');
       const reader=new FileReader();
       reader.onload=e=>res(isPdf
         ?{data:e.target.result.split(',')[1],type:'application/pdf',name:f.name,isPdf:true}
@@ -3070,8 +3089,9 @@ async function addImportFile(input){
 function _renderImpThumbs(){
   const el=document.getElementById('imp-thumbs');if(!el)return;
   el.innerHTML=_impPhotos.map((p,i)=>{
+    const fileIcon=p.isXlsx?'📊':p.isText?'📝':'📄';
     const thumb=(p.isPdf||p.isText)
-      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">${p.isText?'📝':'📄'}</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name||'Fichier'}</span></div>`
+      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">${fileIcon}</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name||'Fichier'}</span></div>`
       :`<img src="data:${p.type};base64,${p.data}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--sep);">`;
     return`<div style="position:relative;display:inline-block;">${thumb}<button onclick="removeImpPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;font-family:var(--font);">✕</button></div>`;
   }).join('');
