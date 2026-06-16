@@ -336,12 +336,17 @@ function handleImportProgram_(body) {
 
   try {
     const images = body.images || [];
-    if (!images.length) return json_({status:'error', error:'Aucune image reçue'});
+    if (!images.length) return json_({status:'error', error:'Aucun fichier reçu'});
 
-    const userContent = images.map(img => ({
-      type: 'image',
-      source: { type: 'base64', media_type: img.type || 'image/jpeg', data: img.data }
-    }));
+    const hasPdf = images.some(img => img.isPdf || img.type === 'application/pdf');
+    const model = hasPdf ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
+
+    const userContent = images.map(img => {
+      if (img.isPdf || img.type === 'application/pdf') {
+        return {type:'document', source:{type:'base64', media_type:'application/pdf', data:img.data}};
+      }
+      return {type:'image', source:{type:'base64', media_type:img.type||'image/jpeg', data:img.data}};
+    });
 
     userContent.push({
       type: 'text',
@@ -356,7 +361,7 @@ function handleImportProgram_(body) {
         'anthropic-version': '2023-06-01'
       },
       payload: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
+        model: model,
         max_tokens: 2048,
         messages: [{role: 'user', content: userContent}]
       }),
