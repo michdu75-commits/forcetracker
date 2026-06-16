@@ -1672,6 +1672,20 @@ html.ob-done #onboarding{display:none;}
   </div>
 </div>
 
+<!-- OVERLAY: Éditeur de programme -->
+<div class="overlay" id="ov-prog-edit" onclick="if(event.target===this)closeProgEdit()">
+  <div class="modal" style="max-width:420px;max-height:90vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:14px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--sep);flex-shrink:0;">
+      <input id="prog-edit-name" placeholder="Nom du programme" style="flex:1;font-weight:800;font-size:16px;background:none;border:none;color:var(--t1);outline:none;min-width:0;">
+      <button onclick="closeProgEdit()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px;" id="prog-edit-content"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--sep);flex-shrink:0;">
+      <button class="btn btn-red" onclick="saveProgEdit()" style="width:100%;padding:14px;">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 </div>
 
@@ -2488,7 +2502,15 @@ function rmEx(ei){
   });
 }
 let _expandedEx=null;
+let _exPickerMode='workout';
+let _editProgIdx=-1,_editProgData=null,_editDayIdx=0;
 function addExercise(name){
+  if(_exPickerMode==='prog'){
+    closeExPicker();
+    _addExToProgEdit(name);
+    _exPickerMode='workout';
+    return;
+  }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
   const sets=[0,1,2].map((_,i)=>({kg:prev.length?prev[0].kg:0,reps:prev.length?prev[0].reps:5,type:i===0&&prev.length?'W':'N',done:false,rm1:0}));
@@ -3198,6 +3220,7 @@ function renderProgModal(){
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
+          <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})">✏️</button>
           <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
         </div>
       </div>`;
@@ -3257,6 +3280,78 @@ function deleteProg(idx){
   S.programmes.splice(idx,1);
   persist();renderProgModal();
   toast('"'+name+'" supprimé','info');
+}
+function editProg(idx){
+  const prog=(S.programmes||[])[idx];
+  if(!prog)return;
+  _editProgIdx=idx;
+  _editProgData=JSON.parse(JSON.stringify(prog));
+  _renderProgEdit();
+  document.getElementById('ov-prog-edit').classList.add('open');
+}
+function _renderProgEdit(){
+  const d=_editProgData;if(!d)return;
+  const nameInp=document.getElementById('prog-edit-name');
+  if(nameInp)nameInp.value=d.name;
+  const el=document.getElementById('prog-edit-content');if(!el)return;
+  const isMulti=d.days&&d.days.length;
+  const exCard=(ex,di,ei)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:10px;margin-bottom:5px;">
+    <div style="flex:1;min-width:0;overflow:hidden;">
+      <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
+      <div style="font-size:12px;color:var(--t2);">${ex.sets?ex.sets.length:0} série${(ex.sets&&ex.sets.length>1)?'s':''} · ${ex.sets&&ex.sets[0]?ex.sets[0].reps:10} reps</div>
+    </div>
+    <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:4px;">×</button>
+  </div>`;
+  const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
+  if(isMulti){
+    el.innerHTML=d.days.map((day,di)=>`<div style="margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">${day.label}</div>
+      ${(day.exs||[]).map((ex,ei)=>exCard(ex,di,ei)).join('')}
+      ${addBtn(di)}
+    </div>${di<d.days.length-1?'<hr style="border:none;border-top:1px solid var(--sep);margin:0 0 16px;">':''}`).join('');
+  }else{
+    el.innerHTML=(d.exs||[]).map((ex,ei)=>exCard(ex,0,ei)).join('')+addBtn(0);
+  }
+}
+function _openExPickerForProg(dayIdx){
+  _editDayIdx=dayIdx;
+  _exPickerMode='prog';
+  openExPicker();
+}
+function _removeExFromProgEdit(dayIdx,exIdx){
+  const d=_editProgData;if(!d)return;
+  if(d.days&&d.days.length)(d.days[dayIdx].exs||[]).splice(exIdx,1);
+  else(d.exs||[]).splice(exIdx,1);
+  _renderProgEdit();
+}
+function _addExToProgEdit(name){
+  const d=_editProgData;if(!d)return;
+  const newEx={name,sets:[{kg:0,reps:10,type:'N'},{kg:0,reps:10,type:'N'},{kg:0,reps:10,type:'N'}]};
+  if(d.days&&d.days.length){
+    if(!d.days[_editDayIdx])return;
+    if(!d.days[_editDayIdx].exs)d.days[_editDayIdx].exs=[];
+    d.days[_editDayIdx].exs.push(newEx);
+  }else{
+    if(!d.exs)d.exs=[];
+    d.exs.push(newEx);
+  }
+  _renderProgEdit();
+  document.getElementById('ov-prog-edit').classList.add('open');
+  toast(name+' ajouté !','info');
+}
+function saveProgEdit(){
+  if(!_editProgData||_editProgIdx<0)return;
+  const nameInp=document.getElementById('prog-edit-name');
+  if(nameInp&&nameInp.value.trim())_editProgData.name=nameInp.value.trim();
+  S.programmes[_editProgIdx]=_editProgData;
+  persist();
+  closeProgEdit();
+  toast('Programme mis à jour ✅','success');
+  openProgModal();
+}
+function closeProgEdit(){
+  document.getElementById('ov-prog-edit').classList.remove('open');
+  _editProgIdx=-1;_editProgData=null;
 }
 
 // ─── EXERCISE VIDEO / IMAGE ───────────────────────────────────
