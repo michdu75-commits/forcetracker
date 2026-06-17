@@ -3649,9 +3649,8 @@ const _MUSCLE_SVG_F=(function(){
 })();
 function _groupTemplateSvg(name){
   const ex=EXLIB.find(e=>e.n===name);
-  const svgSet=(S&&S.gender==='F')?_MUSCLE_SVG_F:_MUSCLE_SVG;
-  const svg=ex&&svgSet[ex.g];
-  return svg?`<div style="padding:6px 24px 6px;text-align:center">${svg}</div>`:'';
+  const file=_MUSCLE_FILE[ex?.g]||'muscles/chest.svg';
+  return `<div style="text-align:center;padding:6px 0;"><img src="${file}" style="width:140px;height:auto;display:block;margin:0 auto;"></div>`;
 }
 function _genderGroupSvg(groupName){
   const svgSet=(S&&S.gender==='F')?_MUSCLE_SVG_F:_MUSCLE_SVG;
@@ -3663,20 +3662,30 @@ function _genderGroupSvg(groupName){
 }
 
 // Vidéos YouTube Demic — {id, s:true si Short, s:false si vidéo normale}
+// Images locales d'exercices (GIF/webp/png) — disponibles hors connexion
 const EX_YT={
-  'Développé Couché':{id:'sRuKSZLcmWM',s:true},
-  'Squat à la Barre':{id:'Bjfefk24UXM',s:false},
-  'Développé Militaire':{id:'NQ-JJYay1TM',s:false},
-  'Développé Incliné':{id:'tN3SLXtS-5E',s:false},
-  'Pull-over':{id:'JdzaVp3zEAM',s:false},
-  'Soulevé de Terre':{id:'4TnASXqXKeQ',s:false},
-  'Pont Fessier (Glute Bridge)':{img:'exercises/glute-bridge.webp'},
-  'Press Jambes 45°':{img:'exercises/press-jambes-1.png'},
-  'Press Jambes Horizontale':{img:'exercises/press-jambes-2.jpg'},
-  'Press Jambes Verticale':{img:'exercises/press-jambes-3.jpg'},
-  'Press Jambes Inclinée':{img:'exercises/press-jambes-4.jpg'},
-  'Squat Hack (Hack Squat)':{img:'exercises/press-jambes-5.jpg'},
-  'Press Jambes Levier':{img:'exercises/press-jambes-6.jpg'}
+  'Développé Couché':              {img:'exercises/developpe-couche.gif'},
+  'Développé Couché Haltères':     {img:'exercises/developpe-couche-halteres-exercice-musculation.gif'},
+  'Smith Machine Développé Couché':{img:'exercises/developpe-couche-smith-machine.gif'},
+  'Développé Décliné':             {img:'exercises/developpe-decline-barre.gif'},
+  'Développé Incliné':             {img:'exercises/developpe-incline-barre.gif'},
+  'Écarté Poulie':                 {img:'exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.gif'},
+  'Écarté Haltères':               {img:'exercises/ecartes-decline-avec-halteres.gif'},
+  'Pec Deck':                      {img:'exercises/pec-deck-butterfly-exercice-musculation.gif'},
+  'Pont Fessier (Glute Bridge)':   {img:'exercises/glute-bridge.webp'},
+  'Press Jambes 45°':              {img:'machine/press-jambes-1.png'},
+  'Press Jambes Horizontale':      {img:'machine/press-jambes-2.jpg'},
+  'Press Jambes Verticale':        {img:'machine/press-jambes-3.jpg'},
+  'Press Jambes Inclinée':         {img:'machine/press-jambes-4.jpg'},
+  'Squat Hack (Hack Squat)':       {img:'machine/press-jambes-5.jpg'},
+  'Press Jambes Levier':           {img:'machine/press-jambes-6.jpg'},
+};
+// Mapping groupe musculaire → SVG local (hors connexion)
+const _MUSCLE_FILE={
+  'Pectoraux':'muscles/chest.svg','Dos':'muscles/back.svg','Trapèzes':'muscles/back.svg',
+  'Épaules':'muscles/shoulders.svg','Biceps':'muscles/arms.svg','Triceps':'muscles/arms.svg',
+  'Avant-bras':'muscles/arms.svg','Jambes':'muscles/legs.svg','Fessiers':'muscles/glutes.svg',
+  'Abdominaux':'muscles/abs.svg','Mollets':'muscles/calves.svg','Full Body':'muscles/chest.svg',
 };
 
 const EX_EN={
@@ -3846,7 +3855,7 @@ function _exVideoHtml(name){
   return `<a href="${_ytSearchUrl(name)}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#FF0000;color:#fff;border-radius:8px;padding:11px 14px;font-size:14px;font-weight:700;text-decoration:none;-webkit-tap-highlight-color:transparent;">▶&nbsp;Voir le tutoriel</a>`;
 }
 
-async function toggleExGif(ei,name){
+function toggleExGif(ei,name){
   const panel=document.getElementById(`ex-gif-${ei}`);
   if(!panel)return;
   if(panel.dataset.open==='1'){panel.style.display='none';panel.dataset.open='0';return;}
@@ -3854,25 +3863,16 @@ async function toggleExGif(ei,name){
   if(panel.dataset.loaded==='1')return;
   panel.dataset.loaded='1';
 
+  const local=EX_YT[name]?.img;
   let html='<div style="padding:10px;background:var(--bg3);border-radius:10px;">';
-
-  // Si on a un ID YouTube → afficher directement sans attendre wger
-  if(EX_YT[name]){
-    html+=_exVideoHtml(name);
-    html+='</div>';
-    panel.innerHTML=html;
-    return;
-  }
-
-  // Sinon essayer wger.de pour une image
-  panel.innerHTML='<div style="text-align:center;padding:14px;color:var(--t3);font-size:13px;">⏳ Chargement…</div>';
-  const imgUrl=await fetchExImage(name);
-  if(imgUrl){
-    html+=`<img src="${imgUrl}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;display:block;margin-bottom:8px;" loading="lazy" onerror="this.style.display='none'">`;
+  if(local){
+    html+=`<img src="${local}" style="width:100%;border-radius:8px;max-height:240px;object-fit:cover;display:block;" loading="lazy">`;
   } else {
-    html+=_groupTemplateSvg(name);
+    const ex=EXLIB.find(e=>e.n===name);
+    const file=_MUSCLE_FILE[ex?.g]||'muscles/chest.svg';
+    html+=`<div style="text-align:center;padding:8px 0;"><img src="${file}" style="width:160px;height:auto;display:block;margin:0 auto;"></div>`;
+    html+=`<div style="text-align:center;font-size:12px;color:var(--t3);margin-top:2px;">${ex?.g||''}</div>`;
   }
-  html+=_exVideoHtml(name);
   html+='</div>';
   panel.innerHTML=html;
 }

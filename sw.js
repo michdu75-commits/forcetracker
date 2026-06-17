@@ -1,5 +1,23 @@
-const CACHE = 'ft-v4';
-const PRECACHE = ['./', './index.html', './manifest.json', './logo.png', './female-body.png'];
+const CACHE = 'ft-v5';
+const PRECACHE = [
+  './', './index.html', './manifest.json', './logo.png', './female-body.png',
+  // Muscles SVG
+  './muscles/abs.svg','./muscles/arms.svg','./muscles/back.svg','./muscles/calves.svg',
+  './muscles/chest.svg','./muscles/glutes.svg','./muscles/legs.svg','./muscles/shoulders.svg',
+  // GIFs exercices pectoraux + fessiers
+  './exercises/developpe-couche.gif',
+  './exercises/developpe-couche-halteres-exercice-musculation.gif',
+  './exercises/developpe-couche-smith-machine.gif',
+  './exercises/developpe-decline-barre.gif',
+  './exercises/developpe-incline-barre.gif',
+  './exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.gif',
+  './exercises/ecartes-decline-avec-halteres.gif',
+  './exercises/pec-deck-butterfly-exercice-musculation.gif',
+  './exercises/glute-bridge.webp',
+  // Images machines press jambes
+  './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
+  './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(
