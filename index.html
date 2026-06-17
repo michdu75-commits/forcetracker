@@ -1461,7 +1461,7 @@ html.ob-done #onboarding{display:none;}
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:rgba(41,121,255,.1);border:1px solid rgba(41,121,255,.5);color:var(--blue);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">W</span>
-        <div><div style="font-weight:700;font-size:14px">Warm-up</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Échauffement. <strong>Exclu du volume et des PRs</strong> — ne fausse pas tes stats.</div></div>
+        <div><div style="font-weight:700;font-size:14px">Warm-up</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Échauffement. <strong>Exclu des PRs</strong> — compté dans le volume total.</div></div>
       </div>
       <div style="display:flex;align-items:flex-start;gap:12px">
         <span style="font-size:13px;font-weight:800;background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.5);color:var(--red);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">E</span>
@@ -2165,7 +2165,7 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
-      {i:'🔤',t:'Types de série : N = Normal · W = Échauffement (exclu du volume total) · E = Échec · D = Drop set'},
+      {i:'🔤',t:'Types de série : N = Normal · W = Échauffement (exclu des PRs, compté dans le volume) · E = Échec · D = Drop set'},
       {i:'⏱️',t:'Le timer s\'adapte au type : Échauffement 45s · Normal 130s · Échec 4min · Drop 20s'},
       {i:'🏆',t:'Le 1RM s\'affiche en temps réel sous le type de série — utilise-le pour calibrer tes charges.'},
       {i:'📷',t:'Bouton 📸 pour importer un programme depuis une photo (planning, tableau...).'},
@@ -2373,7 +2373,7 @@ function renderExBlocks(){
   c.innerHTML=S.wkt.exs.map((ex,ei)=>{
     const prev=getPrev(ex.name);
     const doneSets=ex.sets.filter(s=>s.done);
-    const vol=doneSets.filter(s=>s.type!=='W').reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
+    const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
     const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
     const pr=S.prs[ex.name];
     const isExpanded=ei===_expandedEx||exCount===1;
@@ -2838,7 +2838,7 @@ async function finishWorkout(){
   const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
   if(!hasDone){toast('Valide au moins une série !','error');return;}
   let vol=0;
-  S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
+  S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done)vol+=(s.kg||0)*(s.reps||0);}));
   const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
   S.sessions.unshift(sess);
@@ -4162,7 +4162,7 @@ function saveSessEdits(){
   const idx=S.sessions.findIndex(s=>(s.ts||s.id)===_sessId);
   if(idx===-1)return;
   let vol=0;
-  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
+  _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done)vol+=(s.kg||0)*(s.reps||0);}));
   _sessEdits.volume=Math.round(vol);
   _sessEdits.exs.forEach(ex=>ex.sets.forEach(s=>{
     if(s.done&&s.kg&&s.reps){
