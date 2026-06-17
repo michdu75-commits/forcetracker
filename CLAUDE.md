@@ -8,10 +8,10 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **App live** : https://michdu75-commits.github.io/forcetracker/
 - **Auteur** : Michel — michdu75@gmail.com
 
-## Backend Apps Script (v3.5 @13 — actif)
+## Backend Apps Script (v3.5 @14 — actif)
 
 - **Compte Google** : forcetracker.app@gmail.com
-- **URL déployée** : `https://script.google.com/macros/s/AKfycbxyAcOBXE_zBYZWYZMJgKaX7BbwzD8XHGdQ7aYils2Fau26eWe9pT809q6xrCMGNVFT3Q/exec`
+- **URL déployée** : `https://script.google.com/macros/s/AKfycbzva-CQZxOG03spjh9SwuFJ7UQNyVBQIWlzyacisrmvEfAr6DfMr-LiooZjb9vLGe-Omw/exec`
 - **Script ID** : `1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw`
 - **Fichier local** : `Code.js` (géré via clasp)
 - **clasp** : toujours préfixer avec `NODE_TLS_REJECT_UNAUTHORIZED=0` (SSL Windows)
