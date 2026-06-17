@@ -834,6 +834,7 @@ html.ob-done #onboarding{display:none;}
     <button onclick="openShareModal()" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">📲</button>
   </div>
   <div id="log-sleep"></div>
+  <div id="log-cardio"></div>
   <div id="rest-bar">
     <div style="display:flex;flex-direction:column;align-items:center;min-width:58px">
       <div id="rest-time">1:30</div>
@@ -2361,6 +2362,7 @@ function renderLog(){
   const inp=document.getElementById('s-date');
   if(inp){inp.value=d;inp.onchange=()=>{if(inp.value)_setLogDate(inp.value);};}
   renderLogSleep();
+  renderCardioBlock();
   renderExBlocks();
 }
 function renderExBlocks(){
@@ -2862,7 +2864,10 @@ async function finishWorkout(){
   stopRest();
 
   // Calcul calories — toujours, connexion ou pas
+  if(S.wkt?.cardio?.duration) sess.cardio={...S.wkt.cardio};
   const calData = calcSessionCalories(sess);
+  const cardioKcal=calcCardioKcal(sess.cardio||null);
+  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
   sess.calories = calData.total;
   sess.calData = calData;
 
@@ -5656,6 +5661,54 @@ function renderWhey() {
     <div class="tip-box">🥤 <strong>${dose}g de whey</strong> dans 300ml d'eau ou lait écrémé, dans l'heure qui suit ta séance. Ajoute une banane pour les glucides rapides en phase de charge.</div>`;
 }
 
+
+// ─── CARDIO ───────────────────────────────────────────────────
+const CARDIO_MET={
+  elliptique:{leger:4.0,modere:6.0,intense:8.5},
+  tapis:     {leger:3.5,modere:5.5,intense:9.5},
+  velo:      {leger:4.0,modere:6.8,intense:10.0},
+  rameur:    {leger:4.5,modere:7.0,intense:10.5},
+  corde:     {leger:6.0,modere:9.0,intense:12.0},
+  autre:     {leger:3.5,modere:5.5,intense:8.0},
+};
+const CARDIO_LABELS={elliptique:'Elliptique',tapis:'Tapis',velo:'Vélo',rameur:'Rameur',corde:'Corde',autre:'Autre'};
+
+function calcCardioKcal(c){
+  if(!c||!c.duration)return 0;
+  const met=(CARDIO_MET[c.type||'elliptique']||CARDIO_MET.autre)[c.intensity||'modere'];
+  return Math.round(met*(S.bw||80)*(c.duration/60));
+}
+function setCardioField(field,val){
+  if(!S.wkt)return;
+  if(!S.wkt.cardio)S.wkt.cardio={type:'elliptique',intensity:'modere',duration:0};
+  S.wkt.cardio[field]=field==='duration'?Math.max(0,Math.min(120,parseInt(val)||0)):val;
+  persist();renderCardioBlock();
+}
+function renderCardioBlock(){
+  const el=document.getElementById('log-cardio');if(!el)return;
+  if(!S.wkt){el.innerHTML='';return;}
+  if(!S.wkt.cardio)S.wkt.cardio={type:'elliptique',intensity:'modere',duration:0};
+  const c=S.wkt.cardio;
+  const kcal=calcCardioKcal(c);
+  const types=Object.keys(CARDIO_LABELS);
+  el.innerHTML=`<div style="background:var(--bg3);border-radius:12px;padding:10px 12px;margin-bottom:0;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <span style="font-weight:800;font-size:14px;">🏃 Cardio</span>
+    ${kcal?`<span style="font-size:12px;color:var(--green);font-weight:700;">~${kcal} kcal</span>`:'<span style="font-size:11px;color:var(--t3);">optionnel — 0 min</span>'}
+  </div>
+  <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+    ${types.map(t=>`<button onclick="setCardioField('type','${t}')" style="flex-shrink:0;padding:5px 11px;border-radius:20px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.type===t?'var(--red)':'var(--bg2)'};color:${c.type===t?'#fff':'var(--t2)'};">${CARDIO_LABELS[t]}</button>`).join('')}
+  </div>
+  <div style="display:flex;gap:5px;align-items:center;margin-top:7px;">
+    ${['leger','modere','intense'].map((iv,i)=>{const lbl=['Léger','Modéré','Intense'][i];return`<button onclick="setCardioField('intensity','${iv}')" style="flex:1;padding:6px 0;border-radius:8px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.intensity===iv?'var(--red)':'var(--bg2)'};color:${c.intensity===iv?'#fff':'var(--t2)'};">${lbl}</button>`;}).join('')}
+    <div style="display:flex;align-items:center;gap:3px;margin-left:6px;">
+      <button onclick="setCardioField('duration',${(c.duration||0)-5})" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg2);color:var(--t1);font-size:18px;line-height:1;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+      <span style="min-width:36px;text-align:center;font-size:14px;font-weight:700;">${c.duration||0}<span style="font-size:10px;color:var(--t3);">min</span></span>
+      <button onclick="setCardioField('duration',${(c.duration||0)+5})" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg2);color:var(--t1);font-size:18px;line-height:1;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+    </div>
+  </div>
+</div>`;
+}
 
 // ─── CALORIES BRÛLÉES ─────────────────────────────────────────
 const MET_LOWER = 6.5;  // Squat, Deadlift, Hip Thrust, Leg Press
