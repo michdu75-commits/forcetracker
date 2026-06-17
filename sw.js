@@ -1,4 +1,4 @@
-const CACHE = 'ft-v7';
+const CACHE = 'ft-v8';
 const PRECACHE = [
   './', './index.html', './manifest.json', './logo.png', './female-body.png',
   // Muscles SVG
