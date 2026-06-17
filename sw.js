@@ -1,4 +1,4 @@
-const CACHE = 'ft-v3';
+const CACHE = 'ft-v4';
 const PRECACHE = ['./', './index.html', './manifest.json', './logo.png', './female-body.png'];
 
 self.addEventListener('install', e => {
@@ -34,7 +34,18 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Assets locaux (images, etc.) : cache d'abord, réseau en fallback
+  // logo.png : réseau d'abord (toujours à jour), cache en fallback offline
+  if (url.pathname.endsWith('/logo.png')) {
+    e.respondWith(
+      fetch(e.request).then(r => {
+        if (r && r.status === 200) caches.open(CACHE).then(c => c.put(e.request, r.clone()));
+        return r;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Autres assets locaux : cache d'abord, réseau en fallback
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
