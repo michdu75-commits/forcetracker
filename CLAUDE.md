@@ -8,10 +8,10 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **App live** : https://michdu75-commits.github.io/forcetracker/
 - **Auteur** : Michel — michdu75@gmail.com
 
-## Backend Apps Script (v3.5 @11 — actif)
+## Backend Apps Script (v3.5 @12 — actif)
 
 - **Compte Google** : forcetracker.app@gmail.com
-- **URL déployée** : `https://script.google.com/macros/s/AKfycbyUjGbhmp65Gx1mILY-V_dxuuRa8JXbRCi3GvG_CS9bXzWyatS5TsGaY5TbyXjh5aZw/exec`
+- **URL déployée** : `https://script.google.com/macros/s/AKfycbw1Wi0Jz0NeSKrlgBVHmknFkon_VcdWw8oFZdNaxn42kth-fxm7Asd96eOBmSJf7lpCWw/exec`
 - **Script ID** : `1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw`
 - **Fichier local** : `Code.js` (géré via clasp)
 - **clasp** : toujours préfixer avec `NODE_TLS_REJECT_UNAUTHORIZED=0` (SSL Windows)
@@ -301,7 +301,7 @@ POST x-www-form-urlencoded data={"email":"...","amount":"4.99",...}  ← Webhook
 ## Variables clés
 
 ```javascript
-const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbyUjGbhmp65Gx1mILY-V_dxuuRa8JXbRCi3GvG_CS9bXzWyatS5TsGaY5TbyXjh5aZw/exec';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbw1Wi0Jz0NeSKrlgBVHmknFkon_VcdWw8oFZdNaxn42kth-fxm7Asd96eOBmSJf7lpCWw/exec';
 S.url             // = DEFAULT_URL (jamais null)
 S.email           // email utilisateur (stocké ft4_email)
 S.connected       // bool (stocké ft4_ok)
