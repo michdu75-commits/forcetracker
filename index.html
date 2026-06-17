@@ -424,6 +424,10 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .typing-dot:nth-child(2){animation-delay:.15s;}
 .typing-dot:nth-child(3){animation-delay:.3s;}
 @keyframes typing-bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+@keyframes ml-scan{0%{top:0%}100%{top:calc(100% - 3px)}}
+@keyframes ml-pulse{0%,100%{opacity:.25;transform:scale(.65)}50%{opacity:1;transform:scale(1)}}
+.ml-dot{width:11px;height:11px;border-radius:50%;background:var(--red);animation:ml-pulse 1.3s ease-in-out infinite}
+.ml-dot:nth-child(2){animation-delay:.25s}.ml-dot:nth-child(3){animation-delay:.5s}
 .coach-suggestions{padding:8px 14px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0;border-top:1px solid var(--sep);}
 .coach-suggestions::-webkit-scrollbar{display:none;}
 .sugg-chip{flex-shrink:0;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:700;border:1px solid rgba(255,45,85,.4);background:rgba(255,45,85,.08);color:var(--red);cursor:pointer;font-family:var(--font);white-space:nowrap;touch-action:manipulation;transition:all .15s;}
@@ -1628,6 +1632,25 @@ html.ob-done #onboarding{display:none;}
   </div>
 </div>
 
+<!-- OVERLAY: Morpho loading -->
+<div class="overlay" id="ov-morpho-loading" style="background:rgba(0,0,0,.97);z-index:300;align-items:center;justify-content:center;">
+  <div style="width:100%;max-width:380px;padding:0 24px;display:flex;flex-direction:column;align-items:center;gap:22px;">
+    <div style="font-family:var(--font-cond);font-size:20px;font-weight:900;color:#fff;letter-spacing:2px;text-align:center;">ANALYSE IA</div>
+    <div style="position:relative;display:flex;gap:8px;width:100%;justify-content:center;border-radius:10px;overflow:hidden;" id="ml-photos">
+      <div id="ml-scan-line" style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent 0%,var(--red) 40%,#fff 50%,var(--red) 60%,transparent 100%);box-shadow:0 0 14px 4px rgba(255,45,85,.7);animation:ml-scan 1.8s linear infinite;pointer-events:none;z-index:2;"></div>
+    </div>
+    <div id="ml-msg" style="font-size:13px;font-weight:700;color:rgba(255,255,255,.85);text-align:center;min-height:18px;transition:opacity .25s;letter-spacing:.3px;"></div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="ml-dot"></div>
+      <div class="ml-dot"></div>
+      <div class="ml-dot"></div>
+    </div>
+    <div style="width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;">
+      <div id="ml-bar" style="height:100%;background:linear-gradient(90deg,var(--red),#ff6b6b);border-radius:2px;width:5%;transition:width .9s ease;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Programmes -->
 <div class="overlay" id="mod-prog">
   <div class="modal">
@@ -1812,7 +1835,7 @@ const BIG3=['Squat à la Barre','Développé Couché','Soulevé de Terre'];
 const BIG4=['Squat à la Barre','Soulevé de Terre','Développé Couché','Développé Militaire'];
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
-const DEFAULT_URL='https://script.google.com/macros/s/AKfycbzva-CQZxOG03spjh9SwuFJ7UQNyVBQIWlzyacisrmvEfAr6DfMr-LiooZjb9vLGe-Omw/exec';
+const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec';
 const SET_TYPES=['N','W','E','D'];
 const SET_TYPE_LABELS={N:'Normal',W:'Warm-up',E:'Échec',D:'Drop set'};
 
@@ -1907,6 +1930,7 @@ function load(){
     S.name=localStorage.getItem('ft4_name')||'';
     S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
     S.coachFree=parseInt(localStorage.getItem('ft4_coachFree')||'0')||0;
+    S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
     S.premium=localStorage.getItem('ft4_premium')==='1';
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
     S.exRestPref=JSON.parse(localStorage.getItem('ft4_exRp')||'{}');
@@ -1964,6 +1988,7 @@ function persist(){
     localStorage.setItem('ft4_name',S.name||'');
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
     localStorage.setItem('ft4_coachFree',S.coachFree||0);
+    localStorage.setItem('ft4_coach_mem',S.coachMemory||'');
     localStorage.setItem('ft4_exRp',JSON.stringify(S.exRestPref||{}));
     localStorage.setItem('ft4_premium',S.premium?'1':'0');
     localStorage.setItem('ft4_premiumExp',S.premiumExpiry||'');
@@ -4050,6 +4075,7 @@ function _cloudSync(){
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
+      coachMemory:S.coachMemory||'',
       customExercises:S.customExercises||[],
       sessions:(S.sessions||[]).slice(0,100),
       prs:S.prs||{},
@@ -4378,7 +4404,8 @@ async function analyzeMorphoPhotos(){
   const btn=document.getElementById('morpho-analyze-btn');
   if(btn){btn.textContent='⏳ Analyse…';btn.disabled=true;}
   const res=document.getElementById('morpho-result');
-  if(res){res.style.display='block';res.innerHTML='<div style="text-align:center;color:var(--t3);">Analyse en cours…</div>';}
+  if(res){res.style.display='none';res.innerHTML='';}
+  showMorphoLoading(_morphoPhotos);
   try{
     const labels=['face','dos','profil'];
     const images=_morphoPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:labels[i]}:null).filter(Boolean);
@@ -4402,10 +4429,13 @@ async function analyzeMorphoPhotos(){
         <button class="btn btn-red" style="width:100%;padding:11px;" onclick="applyMorphoResult(${JSON.stringify(d).replace(/"/g,'&quot;')})">✅ Mettre à jour mon profil</button>`;
     }
   }catch(e){
-    if(res)res.innerHTML=`<div style="color:var(--red);">Erreur : ${e.message}</div>`;
+    hideMorphoLoading();
+    if(res){res.style.display='block';res.innerHTML=`<div style="color:var(--red);">Erreur : ${e.message}</div>`;}
     toast('Erreur analyse: '+e.message,'error');
+  }finally{
+    hideMorphoLoading();
+    if(btn){btn.textContent='🔍 Analyser';btn.disabled=false;}
   }
-  if(btn){btn.textContent='🔍 Analyser';btn.disabled=false;}
 }
 
 function applyMorphoResult(d){
@@ -4424,7 +4454,13 @@ function applyMorphoResult(d){
 
 function _updateCoachMorphoBtn(){
   const w=document.getElementById('coach-morpho-btn-wrap');
-  if(w)w.style.display=S.premium?'block':'none';
+  if(!w)return;
+  w.style.display='block';
+  if(S.premium){
+    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;" onclick="openMorphoAnalysis()">📸 Analyser ma morphologie (3 photos)</button>`;
+  }else{
+    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;opacity:.45;cursor:default;" onclick="showPremiumWall()">🔒 Analyser ma morphologie (3 photos) <span style="font-size:11px;background:rgba(255,184,0,.15);color:#FFB800;border-radius:6px;padding:1px 6px;margin-left:4px;">Premium</span></button>`;
+  }
 }
 
 function _updateProgCycleBanner(){
@@ -4632,6 +4668,7 @@ function _applyRestoreData(raw){
   if(raw&&raw.cycle)S.cycle=raw.cycle;
   if(raw&&raw.premium===true){S.premium=true;}
   if(raw&&raw.premiumExpiry){S.premiumExpiry=raw.premiumExpiry;}
+  if(raw&&raw.coachMemory)S.coachMemory=raw.coachMemory;
   persist();
   updateCoachHeader();
 }
@@ -5386,6 +5423,7 @@ ${(()=>{
   return recent.map(s=>`- ${s.date}: Énergie ${qE[s.checkin.energy]||'?'} · Sommeil ${qS[s.checkin.sleep]||'?'}`).join('\n');
 })()}
 
+${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
 Utilise ces données pour personnaliser tes réponses. Sois direct et pratique.`;
 }
 
@@ -5537,7 +5575,8 @@ async function sendToCoach(customMsg) {
         action: 'coach',
         message: msg || 'Analyse cette photo de mon corps.',
         context: buildCoachContext(),
-        history: coachHistory.slice(-8)
+        history: coachHistory.slice(-8),
+        coachMemory: S.premium ? (S.coachMemory||'') : ''
       };
       if (hasImg) { payload.image = imgData; payload.imageType = imgType; }
       const resp = await fetch(S.url, {
@@ -5554,6 +5593,9 @@ async function sendToCoach(customMsg) {
     renderCoachMsg('coach', reply);
     coachHistory.push({ role: 'assistant', content: reply });
     if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
+
+    // Sauvegarde mémoire intelligente (Premium, fire-and-forget)
+    if (S.premium && coachHistory.length >= 4 && S.url && S.email) _saveCoachMemory();
 
     // Incrémenter compteur (seulement sur réponse réussie)
     if (!S.premium) {
@@ -5574,6 +5616,53 @@ async function sendToCoach(customMsg) {
 }
 
 function sendSuggestion(text) { sendToCoach(text); }
+
+async function _saveCoachMemory(){
+  if(!S.premium||!S.url||!S.email)return;
+  try{
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'summarizeCoach',email:S.email,
+        history:coachHistory.slice(-16),existingMemory:S.coachMemory||''})
+    });
+    const data=await resp.json();
+    if(data.summary){S.coachMemory=data.summary;localStorage.setItem('ft4_coach_mem',data.summary);}
+  }catch(e){}
+}
+
+const _ML_MSGS=['Analyse de ta morphologie en cours...','Détection des groupes musculaires...','Calcul de la composition corporelle...','Génération de tes recommandations...'];
+let _mlTimer=null,_mlBarTimer=null;
+
+function showMorphoLoading(photos){
+  const ov=document.getElementById('ov-morpho-loading');if(!ov)return;
+  const ph=document.getElementById('ml-photos');
+  const scan=document.getElementById('ml-scan-line');
+  if(ph){
+    ph.innerHTML=photos.filter(Boolean).map(b64=>`<img src="data:image/jpeg;base64,${b64}" style="flex:1;height:88px;object-fit:cover;border-radius:8px;max-width:108px;">`).join('');
+    if(scan)ph.appendChild(scan);
+  }
+  const msgEl=document.getElementById('ml-msg');
+  const bar=document.getElementById('ml-bar');
+  let msgIdx=0;
+  const barPct=[5,20,38,55,70,82,90,95];
+  let barIdx=0;
+  if(msgEl)msgEl.textContent=_ML_MSGS[0];
+  if(bar)bar.style.width=(barPct[barIdx++]||5)+'%';
+  _mlTimer=setInterval(()=>{
+    msgIdx=(msgIdx+1)%_ML_MSGS.length;
+    if(msgEl){msgEl.style.opacity='0';setTimeout(()=>{msgEl.textContent=_ML_MSGS[msgIdx];msgEl.style.opacity='1';},200);}
+    if(bar&&barIdx<barPct.length)bar.style.width=barPct[barIdx++]+'%';
+  },2000);
+  ov.classList.add('open');
+}
+
+function hideMorphoLoading(){
+  clearInterval(_mlTimer);_mlTimer=null;
+  const ov=document.getElementById('ov-morpho-loading');
+  const bar=document.getElementById('ml-bar');
+  if(bar)bar.style.width='5%';
+  if(ov)ov.classList.remove('open');
+}
 
 function initCoachInput() {
   const inp = document.getElementById('coach-inp');

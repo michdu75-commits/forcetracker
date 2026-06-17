@@ -89,7 +89,8 @@ function doGet(e) {
       weightLog:      data.weightLog      || [],
       sleepLog:       data.sleepLog       || [],
       cycle:          data.cycle          || null,
-      nutritionPhase: data.nutritionPhase || 'charge'
+      nutritionPhase: data.nutritionPhase || 'charge',
+      coachMemory:    (data.profile && data.profile.coachMemory) || ''
     });
   }
 
@@ -117,6 +118,7 @@ function doPost(e) {
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
   if (body.action === 'morphoAnalysis')   return handleMorphoAnalysis_(body);
+  if (body.action === 'summarizeCoach')   return handleSummarizeCoach_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -215,6 +217,7 @@ function handleSaveProfile_(body) {
     if (body.morpho         !== undefined) profile.morpho         = body.morpho;
     if (body.morphotype     !== undefined) profile.morphotype     = body.morphotype;
     if (body.customExercises!== undefined) profile.customExercises= body.customExercises;
+    if (body.coachMemory    !== undefined) profile.coachMemory    = body.coachMemory;
 
     existing.profile   = profile;
     if (body.sessions  !== undefined) existing.sessions  = body.sessions;
@@ -449,7 +452,8 @@ function handleCoach_(body) {
 
   try {
     const history = (body.history || []).slice(-8);
-    const ctx = body.context || {};
+    const ctx = body.context || '';
+    const memory = body.coachMemory || '';
 
     // Construire le contenu du dernier message (texte + image optionnelle)
     let userContent;
@@ -464,10 +468,8 @@ function handleCoach_(body) {
 
     const messages = history.concat([{role:'user', content: userContent}]);
 
-    const systemPrompt =
-      'Tu es un coach de musculation expert. Tu réponds toujours en français, de façon concise et pratique. ' +
-      'Quand une photo est fournie, analyse la composition corporelle visible, le développement musculaire, la posture, et donne des conseils personnalisés adaptés au profil. ' +
-      'Profil athlète : ' + JSON.stringify(ctx);
+    const systemPrompt = String(ctx) +
+      (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory : '');
 
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
       method: 'post',
@@ -490,6 +492,42 @@ function handleCoach_(body) {
     return json_({reply});
   } catch(err) {
     return json_({reply: 'Erreur Coach IA : ' + err.message});
+  }
+}
+
+function handleSummarizeCoach_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({summary: ''});
+  try {
+    const email = (body.email || '').toLowerCase().trim();
+    const history = (body.history || []).slice(-16);
+    const existing = body.existingMemory || '';
+    const histText = history.map(function(m) {
+      var role = m.role === 'user' ? 'Utilisateur' : 'Coach';
+      var content = typeof m.content === 'string' ? m.content :
+        (Array.isArray(m.content) ? m.content.filter(function(c){return c.type==='text';}).map(function(c){return c.text;}).join(' ') : '');
+      return role + ': ' + content.substring(0, 400);
+    }).join('\n');
+    const prompt = (existing ? 'Mémoire existante : ' + existing + '\n\n' : '') +
+      'Résume cette conversation coach/athlète en 2-3 phrases max (garde : objectifs, conseils clés, décisions, problèmes identifiés). Français uniquement.\n\nConversation :\n' + histText + '\n\nRésumé :';
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+      payload: JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:250,messages:[{role:'user',content:prompt}]}),
+      muteHttpExceptions: true
+    });
+    const result = JSON.parse(resp.getContentText());
+    const summary = (result.content && result.content[0] && result.content[0].text) || '';
+    if (email && summary) {
+      const userData = loadUserData_(email) || {};
+      if (!userData.profile) userData.profile = {};
+      userData.profile.coachMemory = summary;
+      userData.updatedAt = new Date().toISOString();
+      saveUserData_(email, userData);
+    }
+    return json_({summary});
+  } catch(err) {
+    return json_({summary: '', error: err.message});
   }
 }
 
