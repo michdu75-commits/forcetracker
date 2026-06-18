@@ -3052,7 +3052,7 @@ function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext
 // ─── EXERCISE PICKER ─────────────────────────────────────────
 const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
 const EX_GROUPS=[
-  {label:'Pectoraux',               tags:['Pectoraux'],          icon:_IMG('chest')},
+  {label:'Pectoraux',               tags:['Pectoraux'],          icon:`<img src="muscles/muscle pectoreaux.png" style="height:46px;width:auto;object-fit:contain;">`},
   {label:'Dos / Dorsaux',           tags:['Dos','Trapèzes'],     icon:_IMG('back')},
   {label:'Épaules',                 tags:['Épaules'],            icon:_IMG('shoulders')},
   {label:'Bras — Biceps / Triceps', tags:['Biceps','Triceps'],   icon:_IMG('arms')},
@@ -3099,7 +3099,7 @@ function filterEx(){
     const count=all.filter(e=>grp.tags.includes(e.g)).length;
     return `<div class="ex-grp-tile" onclick="_exGrp=${i};filterEx();">
       <span class="ex-grp-icon">${grp.icon}</span>
-      <div class="ex-grp-info"><div class="ex-grp-label">${grp.label}</div><div class="ex-grp-count">${count} exercice${count>1?'s':''}</div></div>
+      <div class="ex-grp-info"><div class="ex-grp-label">${grp.label}</div></div>
       <span class="ex-grp-arrow">›</span>
     </div>`;
   }).join('');

@@ -1,9 +1,10 @@
-const CACHE = 'ft-v20';
+const CACHE = 'ft-v21';
 const PRECACHE = [
   './', './index.html', './manifest.json', './logo.png', './female-body.png',
-  // Muscles SVG
+  // Muscles SVG + PNG
   './muscles/abs.svg','./muscles/arms.svg','./muscles/back.svg','./muscles/calves.svg',
   './muscles/chest.svg','./muscles/glutes.svg','./muscles/legs.svg','./muscles/shoulders.svg',
+  './muscles/muscle pectoreaux.png',
   // GIFs exercices pectoraux + fessiers
   './exercises/developpe-couche.gif',
   './exercises/developpe-couche-halteres-exercice-musculation.gif',
