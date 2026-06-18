@@ -1,4 +1,4 @@
-const CACHE = 'ft-v17';
+const CACHE = 'ft-v18';
 const PRECACHE = [
   './', './index.html', './manifest.json', './logo.png', './female-body.png',
   // Muscles SVG
@@ -17,6 +17,15 @@ const PRECACHE = [
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
   './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
+  // Anatomie
+  './anatomy/corps entier/schema homme entier face avant arriere et côté.png',
+  './anatomy/pectoreaux/schema pectoreaux.png',
+  './anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png',
+  './anatomy/epaules/schéma epaule arriere.png',
+  './anatomy/bras biceps triceps/schema muscles bras et avant bras.png',
+  './anatomy/abdominaux/schema abdominaux.png',
+  './anatomy/jambes/jambes avant/schema jambes face.png',
+  './anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png',
 ];
 
 self.addEventListener('install', e => {

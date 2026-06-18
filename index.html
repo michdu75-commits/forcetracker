@@ -836,6 +836,12 @@ html.ob-done #onboarding{display:none;}
     <div id="drawer-cnt-body"></div>
   </div>
 </div>
+<!-- ANATOMY IMAGE LIGHTBOX -->
+<div id="ov-anatomy-img" onclick="this.classList.remove('open')" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:600;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;">
+  <div id="anatomy-full-title" style="color:#fff;font-weight:800;font-size:15px;text-align:center;"></div>
+  <img id="anatomy-full-img" src="" style="max-width:100%;max-height:78vh;object-fit:contain;border-radius:8px;">
+  <div style="font-size:12px;color:rgba(255,255,255,.35);">Touche pour fermer</div>
+</div>
 
 <div class="screens">
 
@@ -5680,17 +5686,28 @@ function closeDrawer(){
 const _DRAWER_CONTENT = {
   anatomy: {
     title:'🫀 Anatomie du corps humain',
-    html:`<div style="padding:0 4px 8px;">
-      <p style="font-size:13px;color:var(--t3);margin-bottom:14px;">Clique sur un groupe musculaire pour voir l'anatomie détaillée.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="anatomy-grid">
-        ${['Pectoraux','Dos','Épaules','Biceps','Triceps','Avant-bras','Abdominaux','Jambes','Fessiers','Mollets'].map(g=>`
-        <div onclick="openAnatomyGroup('${g}')" style="background:var(--bg3);border-radius:10px;padding:14px 10px;text-align:center;cursor:pointer;border:1px solid var(--sep);">
-          <div style="font-size:24px;margin-bottom:4px;">${{Pectoraux:'💪',Dos:'🦾',Épaules:'🏋️',Biceps:'💪',Triceps:'💪','Avant-bras':'🤜',Abdominaux:'🎯',Jambes:'🦵',Fessiers:'🍑',Mollets:'🦵'}[g]||'💪'}</div>
-          <div style="font-size:12px;font-weight:700;color:var(--t1);">${g}</div>
-        </div>`).join('')}
-      </div>
-      <div id="anatomy-detail" style="display:none;margin-top:16px;"></div>
-    </div>`
+    html:(()=>{
+      const groups=[
+        {name:'Corps entier',    img:'anatomy/corps entier/schema homme entier face avant arriere et côté.png', full:true},
+        {name:'Pectoraux',       img:'anatomy/pectoreaux/schema pectoreaux.png'},
+        {name:'Dos & Trapèzes',  img:'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png'},
+        {name:'Épaules',         img:'anatomy/epaules/schéma epaule arriere.png'},
+        {name:'Bras & Avant-bras',img:'anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
+        {name:'Abdominaux',      img:'anatomy/abdominaux/schema abdominaux.png'},
+        {name:'Jambes (avant)',  img:'anatomy/jambes/jambes avant/schema jambes face.png'},
+        {name:'Jambes & Mollets',img:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
+        {name:'Fessiers & Ischios', img:null},
+      ];
+      const card=(g)=>g.img
+        ?`<div onclick="openAnatomyImg('${g.img.replace(/'/g,"\\'")}','${g.name}')" style="background:var(--bg3);border-radius:12px;overflow:hidden;cursor:pointer;border:1px solid var(--sep);${g.full?'grid-column:span 2;':''}" >
+            <img src="${g.img}" style="width:100%;${g.full?'max-height:260px;':'max-height:160px;'}object-fit:contain;display:block;background:#0a0a14;" loading="lazy">
+            <div style="padding:8px 10px;font-size:12px;font-weight:700;color:var(--t2);">${g.name} <span style="color:var(--t3);font-weight:400;">— tap pour agrandir</span></div>
+          </div>`
+        :`<div style="background:var(--bg3);border-radius:12px;padding:20px 10px;text-align:center;border:1px solid var(--sep);color:var(--t3);font-size:12px;${g.full?'grid-column:span 2;':''}">
+            <div style="font-size:22px;margin-bottom:6px;">🚧</div>${g.name}<br>Image à venir
+          </div>`;
+      return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 2px 8px;">${groups.map(card).join('')}</div>`;
+    })()
   },
   proteins: {
     title:'🥛 Protéines en poudre',
@@ -5778,15 +5795,15 @@ function openDrawerContent(key){
   document.getElementById('ov-drawer-cnt').classList.add('open');
 }
 function closeDrawerContent(){document.getElementById('ov-drawer-cnt').classList.remove('open');}
-function openAnatomyGroup(group){
-  const det=document.getElementById('anatomy-detail');if(!det)return;
-  det.style.display='block';
-  det.innerHTML=`<div style="font-weight:800;font-size:15px;margin-bottom:10px;">${group}</div>
-  <div style="background:var(--bg3);border-radius:10px;padding:16px;text-align:center;color:var(--t3);font-size:13px;">
-    📁 Images anatomiques à venir.<br>Place tes images dans le dossier <code>anatomy/${group.toLowerCase()}/</code>
-  </div>`;
-  det.scrollIntoView({behavior:'smooth',block:'start'});
+function openAnatomyImg(path, title){
+  const ov=document.getElementById('ov-anatomy-img');
+  const img=document.getElementById('anatomy-full-img');
+  const ttl=document.getElementById('anatomy-full-title');
+  if(img)img.src=path;
+  if(ttl)ttl.textContent=title;
+  if(ov){ov.style.display='flex';requestAnimationFrame(()=>ov.style.opacity='1');}
 }
+document.getElementById('ov-anatomy-img')&&(document.getElementById('ov-anatomy-img').style.opacity='1');
 
 function exportData(){
   closeDrawer();
