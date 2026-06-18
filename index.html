@@ -5834,7 +5834,7 @@ function _addSwipeClose(el,closeFn,scrollEl,canClose){
     if(!go)return;go=false;
     if(canClose&&!canClose()){el.style.transition='';el.style.transform='';return;}
     const dy=e.changedTouches[0].clientY-y0;
-    if(dy>90){
+    if(dy>160){
       el.style.transition='transform .22s ease';
       el.style.transform='translateY(100vh)';
       setTimeout(()=>{el.style.transition='';el.style.transform='';closeFn();},220);
