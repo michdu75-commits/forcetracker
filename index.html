@@ -829,12 +829,13 @@ html.ob-done #onboarding{display:none;}
 <!-- SÉANCE -->
 <div class="screen" id="s-log">
   <div style="display:flex;gap:8px;align-items:center;">
-    <div style="flex:1;padding:9px 12px;font-size:14px;color:var(--t2);background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);display:flex;align-items:center;justify-content:space-between;" id="s-date-lbl">
-      <span id="s-date-txt"></span>
-      <label for="s-date" style="font-size:16px;cursor:pointer;padding:0 2px;" title="Modifier la date">✏️</label>
-    </div>
+    <label for="s-date" style="flex:1;padding:9px 12px;font-size:14px;color:var(--t1);background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="s-date-lbl">
+      <span style="display:flex;align-items:center;gap:6px;"><span style="font-size:15px;">📅</span><span id="s-date-txt"></span></span>
+      <span style="font-size:11px;color:var(--t3);">▼</span>
+    </label>
     <input type="date" id="s-date" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
-    <button class="btn btn-bg2 btn-sm" onclick="resetToday()">Aujourd'hui</button>
+    <button class="btn btn-bg2 btn-sm" onclick="setLogYesterday()">Hier</button>
+    <button class="btn btn-bg2 btn-sm" onclick="resetToday()">Auj.</button>
     <button onclick="openShareModal()" style="width:36px;height:36px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">📲</button>
   </div>
   <div id="log-sleep"></div>
@@ -857,10 +858,15 @@ html.ob-done #onboarding{display:none;}
     </div>
   </div>
   <div id="wkt-exs"></div>
-  <div style="display:flex;gap:8px;">
-    <button class="btn btn-bg2" style="flex:1;" onclick="openProgModal()">📋 Programmes</button>
-    <button class="btn btn-bg2" style="width:auto;flex:0 0 auto;padding:13px 15px;" onclick="openImportProg()" title="Importer un programme par photo">📸</button>
-    <button class="btn btn-bg2" style="flex:2;" onclick="openExPicker()">+ Exercice</button>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-bg2" style="flex:1;" onclick="openProgModal()">📋 Programme</button>
+      <button class="btn btn-bg2" style="flex:1;" onclick="openExPicker()">+ Ajouter un exercice</button>
+    </div>
+    <button class="btn btn-bg2" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px;" onclick="openImportProg()">
+      <span style="font-size:14px;font-weight:700;">📸 Scanner ton programme</span>
+      <span style="font-size:11px;color:var(--t3);font-weight:400;">Prends en photo ton programme — il s'ajoute automatiquement</span>
+    </button>
   </div>
   <div id="log-finish"></div>
   <p style="font-size:13px;color:var(--t3);text-align:center;padding-bottom:4px;">✓ pour valider une série → chrono de repos automatique</p>
@@ -2380,6 +2386,7 @@ function _setLogDate(d){
   const inp=document.getElementById('s-date');if(inp)inp.value=d;
 }
 function resetToday(){_setLogDate(today());}
+function setLogYesterday(){const d=new Date();d.setDate(d.getDate()-1);_setLogDate(d.toISOString().split('T')[0]);}
 function renderLog(){
   if(!S.wkt) S.wkt={date:today(),exs:[]};
   const d=S.wkt.date||today();
