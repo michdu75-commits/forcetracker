@@ -1649,36 +1649,51 @@ html.ob-done #onboarding{display:none;}
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px;">🔒 Photos non stockées — analysées puis supprimées immédiatement</div>
     <div style="display:flex;flex-direction:column;gap:12px;" id="morpho-slots">
       <!-- Slot Face -->
-      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;">
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
         <label id="morpho-slot-0" for="morpho-file-0" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
           <span style="font-size:22px;">📷</span>
         </label>
         <div style="flex:1;">
           <div style="font-weight:800;font-size:14px;margin-bottom:2px;">Face</div>
-          <div style="font-size:12px;color:var(--t3);line-height:1.4;">Debout, bras légèrement écartés, face à la caméra. Tenue ajustée ou torse nu.</div>
+          <div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">Debout, bras légèrement écartés, face à la caméra. Tenue ajustée ou torse nu.</div>
+          <div style="display:flex;gap:6px;">
+            <label for="morpho-cam-0" style="flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 4px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📷 Photo</label>
+            <label for="morpho-file-0" style="flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 4px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Galerie</label>
+          </div>
         </div>
+        <input type="file" id="morpho-cam-0" accept="image/*" capture="environment" style="display:none;" onchange="addMorphoPhoto(this,0)">
         <input type="file" id="morpho-file-0" accept="image/*" style="display:none;" onchange="addMorphoPhoto(this,0)">
       </div>
       <!-- Slot Dos -->
-      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;">
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
         <label id="morpho-slot-1" for="morpho-file-1" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
           <span style="font-size:22px;">📷</span>
         </label>
         <div style="flex:1;">
           <div style="font-weight:800;font-size:14px;margin-bottom:2px;">Dos</div>
-          <div style="font-size:12px;color:var(--t3);line-height:1.4;">Même position, dos tourné à la caméra. Bras légèrement écartés.</div>
+          <div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">Même position, dos tourné à la caméra. Bras légèrement écartés.</div>
+          <div style="display:flex;gap:6px;">
+            <label for="morpho-cam-1" style="flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 4px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📷 Photo</label>
+            <label for="morpho-file-1" style="flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 4px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Galerie</label>
+          </div>
         </div>
+        <input type="file" id="morpho-cam-1" accept="image/*" capture="environment" style="display:none;" onchange="addMorphoPhoto(this,1)">
         <input type="file" id="morpho-file-1" accept="image/*" style="display:none;" onchange="addMorphoPhoto(this,1)">
       </div>
       <!-- Slot Profil -->
-      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:center;">
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
         <label id="morpho-slot-2" for="morpho-file-2" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
           <span style="font-size:22px;">📷</span>
         </label>
         <div style="flex:1;">
           <div style="font-weight:800;font-size:14px;margin-bottom:2px;">Profil</div>
-          <div style="font-size:12px;color:var(--t3);line-height:1.4;">De côté (profil gauche ou droit), bras le long du corps.</div>
+          <div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">De côté (profil gauche ou droit), bras le long du corps.</div>
+          <div style="display:flex;gap:6px;">
+            <label for="morpho-cam-2" style="flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 4px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📷 Photo</label>
+            <label for="morpho-file-2" style="flex:1;text-align:center;font-size:11px;font-weight:700;padding:6px 4px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Galerie</label>
+          </div>
         </div>
+        <input type="file" id="morpho-cam-2" accept="image/*" capture="environment" style="display:none;" onchange="addMorphoPhoto(this,2)">
         <input type="file" id="morpho-file-2" accept="image/*" style="display:none;" onchange="addMorphoPhoto(this,2)">
       </div>
     </div>
