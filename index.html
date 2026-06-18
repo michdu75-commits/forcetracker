@@ -3094,17 +3094,22 @@ function filterEx(){
   if(_exGrp!==null){
     const grp=EX_GROUPS[_exGrp];
     const f=all.filter(e=>grp.tags.includes(e.g));
+    const anatBtn=grp.anatomy
+      ?`<button onclick="openAnatomyImg('${grp.anatomy.replace(/'/g,"\\'")}','${grp.label}')" style="background:rgba(255,45,85,.12);border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--red);cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;">🫀 Anatomie</button>`
+      :'';
     list.innerHTML=
       `<button class="ex-grp-back" onclick="_exGrp=null;filterEx();">‹ Groupes musculaires</button>`+
-      `<div class="ex-grp-header">${grp.icon} ${grp.label}</div>`+
+      `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="ex-grp-header" style="margin-bottom:0;">${grp.icon} ${grp.label}</div>
+        ${anatBtn}
+      </div>`+
       (f.length?f.map(_exPickRow).join(''):'<div style="padding:16px;text-align:center;color:var(--t3);">Aucun exercice — utilise "+ Créer"</div>');
     return;
   }
   // Vue par défaut → tuiles des groupes
   list.innerHTML=EX_GROUPS.map((grp,i)=>{
-    const anat=grp.anatomy?`onclick="event.stopPropagation();openAnatomyImg('${grp.anatomy.replace(/'/g,"\\'")}','${grp.label}')"` :'';
     return `<div class="ex-grp-tile" onclick="_exGrp=${i};filterEx();">
-      <span class="ex-grp-icon" ${anat} title="Voir l'anatomie">${grp.icon}</span>
+      <span class="ex-grp-icon">${grp.icon}</span>
       <div class="ex-grp-info"><div class="ex-grp-label">${grp.label}</div></div>
       <span class="ex-grp-arrow">›</span>
     </div>`;
