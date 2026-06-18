@@ -3059,12 +3059,12 @@ function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext
 const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
 const EX_GROUPS=[
   {label:'Pectoraux',               tags:['Pectoraux'],           icon:`<img src="muscles/muscle pectoreaux.png" style="width:64px;height:64px;object-fit:cover;">`,        anatomy:'anatomy/pectoreaux/schema pectoreaux.png'},
-  {label:'Dos / Dorsaux',           tags:['Dos'],                 icon:_IMG('back'),       anatomy:'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png'},
-  {label:'Épaules / Trapèzes',      tags:['Épaules','Trapèzes'],  icon:_IMG('shoulders'),  anatomy:'anatomy/epaules/schéma epaule arriere.png'},
-  {label:'Bras — Biceps / Triceps', tags:['Biceps','Triceps'],    icon:_IMG('arms'),       anatomy:'anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
+  {label:'Dos / Dorsaux',           tags:['Dos'],                 icon:`<img src="muscles/muscles dorsaux trapeze.png" style="height:80px;width:auto;object-fit:contain;">`,  anatomy:'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png'},
+  {label:'Épaules / Trapèzes',      tags:['Épaules','Trapèzes'],  icon:`<img src="muscles/epaule trapeze.png" style="width:64px;height:64px;object-fit:cover;">`,              anatomy:'anatomy/epaules/schéma epaule arriere.png'},
+  {label:'Bras — Biceps / Triceps', tags:['Biceps','Triceps'],    icon:`<img src="muscles/muscle bras.png" style="height:80px;width:auto;object-fit:contain;">`,               anatomy:'anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
   {label:'Jambes',                  tags:['Jambes'],              icon:_IMG('legs'),       anatomy:'anatomy/jambes/jambes avant/jambes face avant.png'},
   {label:'Fessiers / Ischios / Lombaires', tags:['Fessiers','Lombaires'], icon:`<img src="muscles/fessiers ischios.png" style="height:80px;width:auto;object-fit:contain;">`, anatomy:'anatomy/fessiers lombaires/schema lombaires fessiers.png'},
-  {label:'Abdominaux',              tags:['Abdominaux'],          icon:_IMG('abs'),        anatomy:'anatomy/abdominaux/schema abdominaux.png'},
+  {label:'Abdominaux',              tags:['Abdominaux'],          icon:`<img src="muscles/muscle abdominaux.png" style="width:64px;height:64px;object-fit:cover;">`,         anatomy:'anatomy/abdominaux/schema abdominaux.png'},
   {label:'Mollets',                 tags:['Mollets'],             icon:_IMG('calves'),     anatomy:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
 ];
 let _exGrp=null;
