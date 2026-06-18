@@ -5678,9 +5678,11 @@ function sendSuggestion(text) { sendToCoach(text); }
 
 // ─── DRAWER ───────────────────────────────────────────────────
 function openDrawer(){
-  document.getElementById('drawer').classList.add('open');
+  const dr=document.getElementById('drawer');
+  dr.classList.add('open');
   document.getElementById('drawer-backdrop').classList.add('open');
   document.body.style.overflow='hidden';
+  _addSwipeClose(dr,closeDrawer,dr);
 }
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');
@@ -5797,9 +5799,43 @@ function openDrawerContent(key){
   closeDrawer();
   const body=document.getElementById('drawer-cnt-body');
   if(body)body.innerHTML=`<div style="font-weight:900;font-size:17px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--sep);">${cnt.title}</div>${cnt.html}`;
-  document.getElementById('ov-drawer-cnt').classList.add('open');
+  const ov=document.getElementById('ov-drawer-cnt');
+  ov.classList.add('open');
+  const modal=ov.querySelector('.modal');
+  if(modal)_addSwipeClose(modal,closeDrawerContent,modal);
 }
 function closeDrawerContent(){document.getElementById('ov-drawer-cnt').classList.remove('open');}
+
+/* ── Swipe-down pour fermer (drawer / modales / lightbox) ── */
+function _addSwipeClose(el,closeFn,scrollEl,canClose){
+  if(!el||el._scd)return;el._scd=true;
+  let y0=0,go=false;
+  el.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1)return;
+    y0=e.touches[0].clientY;go=true;
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    if(!go||e.touches.length!==1)return;
+    if(canClose&&!canClose())return;
+    const dy=e.touches[0].clientY-y0;
+    const st=(scrollEl||el).scrollTop||0;
+    if(dy>0&&st<=2){
+      e.preventDefault();
+      el.style.transition='none';
+      el.style.transform=`translateY(${Math.min(dy*.55,200)}px)`;
+    }
+  },{passive:false});
+  el.addEventListener('touchend',e=>{
+    if(!go)return;go=false;
+    if(canClose&&!canClose()){el.style.transition='';el.style.transform='';return;}
+    const dy=e.changedTouches[0].clientY-y0;
+    if(dy>90){
+      el.style.transition='transform .22s ease';
+      el.style.transform='translateY(100vh)';
+      setTimeout(()=>{el.style.transition='';el.style.transform='';closeFn();},220);
+    }else{el.style.transition='';el.style.transform='';}
+  },{passive:true});
+}
 let _aZoom=1,_aTx=0,_aTy=0,_aLastDist=0,_aTsX=0,_aTsY=0,_aTsTx=0,_aTsTy=0,_aTapT=0;
 function openAnatomyImg(path,title){
   const ov=document.getElementById('ov-anatomy-img');
@@ -5808,7 +5844,7 @@ function openAnatomyImg(path,title){
   if(img){img.src=path;img.style.transform='';}
   if(ttl)ttl.textContent=title;
   _aZoom=1;_aTx=0;_aTy=0;
-  if(ov)ov.style.display='flex';
+  if(ov){ov.style.display='flex';_addSwipeClose(ov,closeAnatomyImg,null,()=>_aZoom<=1.05);}
   _aInitZoom();
 }
 function closeAnatomyImg(){const ov=document.getElementById('ov-anatomy-img');if(ov)ov.style.display='none';}
