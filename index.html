@@ -355,7 +355,7 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
 .overlay.open{display:flex;}
 .modal{background:var(--bg2);border-radius:24px 24px 0 0;padding:22px;width:100%;max-width:430px;max-height:85dvh;overflow-y:auto;border-top:1px solid var(--sep);}
-.modal-handle{width:40px;height:4px;background:var(--sep);border-radius:2px;margin:0 auto 18px;}
+.modal-handle{width:40px;height:4px;background:var(--t3);border-radius:2px;margin:0 auto 10px;cursor:grab;padding:14px 60px;background-clip:content-box;box-sizing:content-box;}
 .modal h2{font-family:var(--font-cond);font-size:20px;font-weight:900;margin-bottom:16px;letter-spacing:.3px;}
 .modal-btns{display:flex;gap:10px;margin-top:16px;}
 .plate-bar{display:flex;align-items:center;gap:3px;justify-content:center;flex-wrap:nowrap;overflow-x:auto;padding:10px 0;}
@@ -5685,7 +5685,7 @@ function openDrawer(){
   dr.classList.add('open');
   document.getElementById('drawer-backdrop').classList.add('open');
   document.body.style.overflow='hidden';
-  _addSwipeClose(dr,closeDrawer,dr);
+  _addSwipeClose(dr,closeDrawer,dr,null,dr.querySelector('.drawer-hd'),120);
 }
 function closeDrawer(){
   document.getElementById('drawer').classList.remove('open');
@@ -5807,15 +5807,17 @@ function openDrawerContent(key){
   const ov=document.getElementById('ov-drawer-cnt');
   ov.classList.add('open');
   const modal=ov.querySelector('.modal');
-  if(modal)_addSwipeClose(modal,closeDrawerContent,modal);
+  if(modal)_addSwipeClose(modal,closeDrawerContent,modal,null,modal.querySelector('.modal-handle'),120);
 }
 function closeDrawerContent(){document.getElementById('ov-drawer-cnt').classList.remove('open');}
 
 /* ── Swipe-down pour fermer (drawer / modales / lightbox) ── */
-function _addSwipeClose(el,closeFn,scrollEl,canClose){
+function _addSwipeClose(el,closeFn,scrollEl,canClose,handleEl,threshold){
   if(!el||el._scd)return;el._scd=true;
+  threshold=threshold||160;
   let y0=0,go=false;
-  el.addEventListener('touchstart',e=>{
+  const trigger=handleEl||el;
+  trigger.addEventListener('touchstart',e=>{
     if(e.touches.length!==1)return;
     y0=e.touches[0].clientY;go=true;
   },{passive:true});
@@ -5834,7 +5836,7 @@ function _addSwipeClose(el,closeFn,scrollEl,canClose){
     if(!go)return;go=false;
     if(canClose&&!canClose()){el.style.transition='';el.style.transform='';return;}
     const dy=e.changedTouches[0].clientY-y0;
-    if(dy>160){
+    if(dy>threshold){
       el.style.transition='transform .22s ease';
       el.style.transform='translateY(100vh)';
       setTimeout(()=>{el.style.transition='';el.style.transform='';closeFn();},220);
