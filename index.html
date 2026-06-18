@@ -428,6 +428,19 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 @keyframes ml-pulse{0%,100%{opacity:.25;transform:scale(.65)}50%{opacity:1;transform:scale(1)}}
 .ml-dot{width:11px;height:11px;border-radius:50%;background:var(--red);animation:ml-pulse 1.3s ease-in-out infinite}
 .ml-dot:nth-child(2){animation-delay:.25s}.ml-dot:nth-child(3){animation-delay:.5s}
+/* ─── DRAWER ─── */
+.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;opacity:0;pointer-events:none;transition:opacity .3s;}
+.drawer-backdrop.open{opacity:1;pointer-events:all;}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:290px;max-width:90vw;background:var(--bg2);z-index:401;transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-6px 0 32px rgba(0,0,0,.55);}
+.drawer.open{transform:translateX(0);}
+.drawer-hd{padding:max(env(safe-area-inset-top),44px) 16px 14px;border-bottom:1px solid var(--sep);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#0D0D1A,#12121F);}
+.drawer-item{display:flex;align-items:center;gap:14px;padding:15px 20px;border-bottom:1px solid rgba(255,255,255,.045);cursor:pointer;color:var(--t1);font-size:15px;font-weight:600;-webkit-tap-highlight-color:transparent;transition:background .12s;}
+.drawer-item:active,.drawer-item:hover{background:var(--bg3);}
+.drawer-item .di-ic{font-size:22px;width:30px;text-align:center;flex-shrink:0;}
+.drawer-item .di-arr{margin-left:auto;font-size:11px;color:var(--t3);}
+/* ─── DRAWER CONTENT OVERLAY ─── */
+#ov-drawer-cnt{background:var(--bg);}
+#ov-drawer-cnt .modal{max-width:460px;max-height:88vh;overflow-y:auto;}
 .coach-suggestions{padding:8px 14px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0;border-top:1px solid var(--sep);}
 .coach-suggestions::-webkit-scrollbar{display:none;}
 .sugg-chip{flex-shrink:0;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:700;border:1px solid rgba(255,45,85,.4);background:rgba(255,45,85,.08);color:var(--red);cursor:pointer;font-family:var(--font);white-space:nowrap;touch-action:manipulation;transition:all .15s;}
@@ -793,6 +806,34 @@ html.ob-done #onboarding{display:none;}
       <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;"></span>
       <span id="sync-lbl">Sheets</span>
     </button>
+    <button onclick="openDrawer()" style="width:36px;height:36px;border-radius:10px;border:1px solid var(--sep);background:rgba(255,255,255,.04);color:var(--t2);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;font-weight:300;letter-spacing:-1px;" title="Menu">☰</button>
+  </div>
+</div>
+
+<!-- DRAWER BACKDROP -->
+<div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
+<!-- DRAWER MENU -->
+<div class="drawer" id="drawer">
+  <div class="drawer-hd">
+    <span style="font-family:var(--font-cond);font-size:19px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Force Tracker</span>
+    <button onclick="closeDrawer()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;">
+    <div class="drawer-item" onclick="openDrawerContent('anatomy')"><span class="di-ic">🫀</span><span>Anatomie du corps humain</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="openDrawerContent('proteins')"><span class="di-ic">🥛</span><span>Protéines en poudre</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="openDrawerContent('supplements')"><span class="di-ic">💊</span><span>Compléments alimentaires</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="exportData()"><span class="di-ic">📤</span><span>Exporter mes données</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="closeDrawer();goScreen('setup',document.getElementById('nb-setup'))"><span class="di-ic">👤</span><span>Mon profil</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="openDrawerContent('help')"><span class="di-ic">❓</span><span>Aide détaillée</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" style="border-bottom:none;" onclick="openDrawerContent('about')"><span class="di-ic">ℹ️</span><span>À propos</span><span class="di-arr">▶</span></div>
+  </div>
+  <div style="padding:14px 20px;font-size:11px;color:var(--t3);text-align:center;border-top:1px solid var(--sep);">Force Tracker v3.5 · michdu75@gmail.com</div>
+</div>
+<!-- DRAWER CONTENT OVERLAY -->
+<div class="overlay" id="ov-drawer-cnt" onclick="if(event.target===this)closeDrawerContent()">
+  <div class="modal" style="max-width:460px;max-height:88vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div id="drawer-cnt-body"></div>
   </div>
 </div>
 
@@ -5623,6 +5664,152 @@ async function sendToCoach(customMsg) {
 }
 
 function sendSuggestion(text) { sendToCoach(text); }
+
+// ─── DRAWER ───────────────────────────────────────────────────
+function openDrawer(){
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-backdrop').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-backdrop').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+const _DRAWER_CONTENT = {
+  anatomy: {
+    title:'🫀 Anatomie du corps humain',
+    html:`<div style="padding:0 4px 8px;">
+      <p style="font-size:13px;color:var(--t3);margin-bottom:14px;">Clique sur un groupe musculaire pour voir l'anatomie détaillée.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="anatomy-grid">
+        ${['Pectoraux','Dos','Épaules','Biceps','Triceps','Avant-bras','Abdominaux','Jambes','Fessiers','Mollets'].map(g=>`
+        <div onclick="openAnatomyGroup('${g}')" style="background:var(--bg3);border-radius:10px;padding:14px 10px;text-align:center;cursor:pointer;border:1px solid var(--sep);">
+          <div style="font-size:24px;margin-bottom:4px;">${{Pectoraux:'💪',Dos:'🦾',Épaules:'🏋️',Biceps:'💪',Triceps:'💪','Avant-bras':'🤜',Abdominaux:'🎯',Jambes:'🦵',Fessiers:'🍑',Mollets:'🦵'}[g]||'💪'}</div>
+          <div style="font-size:12px;font-weight:700;color:var(--t1);">${g}</div>
+        </div>`).join('')}
+      </div>
+      <div id="anatomy-detail" style="display:none;margin-top:16px;"></div>
+    </div>`
+  },
+  proteins: {
+    title:'🥛 Protéines en poudre',
+    html:`<div style="display:flex;flex-direction:column;gap:12px;padding:0 2px 8px;">
+      ${[
+        {n:'Whey Concentrate',ic:'🥛',desc:'La plus commune. 70-80% de protéines. Absorption rapide (1-2h). Idéale post-workout. Contient lactose.',pros:'Prix abordable · Large choix de goûts',cons:'Moins bien tolérée si intolérance lactose'},
+        {n:'Whey Isolate',ic:'⚡',desc:'90%+ de protéines, très peu de glucides/lipides. Absorption ultra-rapide. Convient aux intolérants au lactose.',pros:'Macros optimales · Digestion facile',cons:'Plus chère que le concentrate'},
+        {n:'Caséine',ic:'🌙',desc:'Protéine lente (6-8h d\'absorption). Parfaite avant le coucher pour limiter le catabolisme nocturne.',pros:'Satiété prolongée · Anti-catabolisme nuit',cons:'Texture épaisse · Moins appétissante'},
+        {n:'Whey Hydrolysate',ic:'🚀',desc:'Whey pré-digérée, absorption la plus rapide. Idéale pour récupération immédiate post-entraînement intensif.',pros:'Absorption maximale · Récupération rapide',cons:'Goût amer · Prix élevé'},
+        {n:'Protéine Végétale',ic:'🌱',desc:'Pois, riz, soja, chanvre. Sans lactose, vegan-friendly. Profil d\'acides aminés variable selon la source.',pros:'Vegan · Sans lactose · Durable',cons:'Profil AA incomplet seul (combiner pois+riz)'},
+      ].map(p=>`<div style="background:var(--bg3);border-radius:12px;padding:14px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <span style="font-size:24px;">${p.ic}</span>
+          <span style="font-weight:800;font-size:15px;">${p.n}</span>
+        </div>
+        <p style="font-size:13px;color:var(--t2);margin-bottom:8px;line-height:1.5;">${p.desc}</p>
+        <div style="font-size:12px;color:var(--green);">✓ ${p.pros}</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:3px;">✗ ${p.cons}</div>
+      </div>`).join('')}
+    </div>`
+  },
+  supplements: {
+    title:'💊 Compléments alimentaires',
+    html:`<div style="display:flex;flex-direction:column;gap:12px;padding:0 2px 8px;">
+      ${[
+        {n:'Créatine Monohydrate',ic:'⚡',cat:'Force & Puissance',desc:'Le complément le plus étudié et efficace. Augmente les réserves de phosphocréatine → plus d\'ATP disponible pour les efforts courts et intenses.',dose:'3-5g/jour (phase entretien). Phase de charge optionnelle : 20g/j pendant 5 jours.'},
+        {n:'BCAA (Leucine/Isoleucine/Valine)',ic:'🔗',cat:'Récupération',desc:'Acides aminés ramifiés. Limitent le catabolisme musculaire en période de restriction calorique. Moins utiles si apport protéique suffisant.',dose:'5-10g avant/pendant l\'entraînement si à jeun.'},
+        {n:'Caféine',ic:'☕',cat:'Performance & Concentration',desc:'Stimulant éprouvé : réduit la perception de l\'effort, améliore focus et endurance. Tolérance développée rapidement.',dose:'3-6mg/kg, 30-60 min avant l\'entraînement. Cycler pour éviter la tolérance.'},
+        {n:'Bêta-Alanine',ic:'🌊',cat:'Endurance musculaire',desc:'Précurseur de la carnosine. Tampon contre l\'acidose musculaire → retarde la fatigue sur des efforts de 1-4 minutes. Picotements normaux.',dose:'3,2-6,4g/jour. Fractionner les prises pour réduire les picotements.'},
+        {n:'Magnésium',ic:'🪨',cat:'Récupération & Sommeil',desc:'Cofacteur de +300 réactions enzymatiques. Souvent déficitaire chez les sportifs (pertes sudorales). Améliore la qualité du sommeil et réduit les crampes.',dose:'300-400mg/jour le soir. Préférer le bisglycinate (mieux absorbé).'},
+        {n:'Vitamine D3 + K2',ic:'☀️',cat:'Santé générale & Force',desc:'La D3 est essentielle à la santé osseuse, à la testostérone et à la force musculaire. K2 oriente le calcium vers les os et non les artères.',dose:'2000-5000 UI D3 + 100-200µg K2 MK-7 par jour, avec un repas gras.'},
+        {n:'Oméga-3 (EPA+DHA)',ic:'🐟',cat:'Anti-inflammatoire',desc:'Réduisent l\'inflammation chronique liée à l\'entraînement intensif. Améliorent la sensibilité à l\'insuline et la santé cardiovasculaire.',dose:'2-4g EPA+DHA/jour avec les repas. Préférer l\'huile de poisson concentrée.'},
+      ].map(p=>`<div style="background:var(--bg3);border-radius:12px;padding:14px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <span style="font-size:22px;">${p.ic}</span>
+          <div><div style="font-weight:800;font-size:14px;">${p.n}</div><div style="font-size:11px;color:var(--red);font-weight:700;">${p.cat}</div></div>
+        </div>
+        <p style="font-size:12px;color:var(--t2);margin:8px 0 6px;line-height:1.5;">${p.desc}</p>
+        <div style="font-size:12px;color:var(--t3);"><strong style="color:var(--t2);">Dose :</strong> ${p.dose}</div>
+      </div>`).join('')}
+    </div>`
+  },
+  help: {
+    title:'❓ Aide détaillée',
+    html:`<div style="display:flex;flex-direction:column;gap:10px;padding:0 2px 8px;">
+      ${[
+        {ic:'⚡',t:'Démarrer une séance',d:'Appuie sur le bouton rouge central ⚡ ou sur "Commencer une séance" depuis l\'accueil. Choisis tes exercices, saisis les séries (kg × reps), valide avec ✓. Le chrono de repos se lance automatiquement.'},
+        {ic:'🏋️',t:'Types de séries',d:'N = Normal · W = Échauffement (exclu des PRs) · E = Échec musculaire · D = Drop set. Cycle sur la lettre pour changer. Chaque type adapte le temps de repos.'},
+        {ic:'📋',t:'Programmes',d:'Sauvegarde ta séance comme programme réutilisable. Charge un programme pour retrouver les exercices avec les poids de la dernière fois. Utilise 📸 pour scanner un programme papier.'},
+        {ic:'📈',t:'Progrès & PRs',d:'Les PRs sont calculés automatiquement via la formule Brzycki (1RM estimé). Consulte l\'onglet Progrès pour voir les courbes par exercice.'},
+        {ic:'🤖',t:'Coach IA',d:'Pose n\'importe quelle question sur la musculation, la nutrition ou ta progression. Le coach connaît ton profil complet. 10 questions gratuites, illimité en Premium.'},
+        {ic:'☁️',t:'Synchronisation',d:'Tes données sont sauvegardées localement ET sur Google Sheets (si connecté). Restaure sur un nouvel appareil avec ton email depuis l\'onboarding.'},
+        {ic:'💡',t:'Astuce PR',d:'Un PR n\'est déclenché que par un set N, E ou D — jamais par un échauffement (W). La formule Brzycki estime ton 1RM théorique même si tu ne fais pas de maxima.'},
+      ].map(h=>`<div style="background:var(--bg3);border-radius:12px;padding:14px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:20px;">${h.ic}</span><strong style="font-size:14px;">${h.t}</strong></div>
+        <p style="font-size:13px;color:var(--t2);line-height:1.5;margin:0;">${h.d}</p>
+      </div>`).join('')}
+    </div>`
+  },
+  about: {
+    title:'ℹ️ À propos',
+    html:`<div style="text-align:center;padding:10px 0 20px;">
+      <img src="logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
+      <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Force Tracker</div>
+      <div style="font-size:13px;color:var(--t3);margin-bottom:20px;">Version 3.5 · PWA Mobile</div>
+      <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--t2);">
+        Application de suivi de musculation Progressive Web App.<br>
+        Fonctionne hors connexion · Synchronisation Google Sheets<br>
+        Coach IA propulsé par Claude (Anthropic)
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;font-size:13px;color:var(--t2);">
+        <div style="margin-bottom:6px;">✉️ <strong>Contact :</strong> michdu75@gmail.com</div>
+        <div style="margin-bottom:6px;">⭐ <strong>Premium :</strong> ko-fi.com/michel2176</div>
+        <div>🐛 <strong>Bugs / suggestions :</strong> par email</div>
+      </div>
+    </div>`
+  }
+};
+
+function openDrawerContent(key){
+  const cnt=_DRAWER_CONTENT[key];if(!cnt)return;
+  closeDrawer();
+  const body=document.getElementById('drawer-cnt-body');
+  if(body)body.innerHTML=`<div style="font-weight:900;font-size:17px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--sep);">${cnt.title}</div>${cnt.html}`;
+  document.getElementById('ov-drawer-cnt').classList.add('open');
+}
+function closeDrawerContent(){document.getElementById('ov-drawer-cnt').classList.remove('open');}
+function openAnatomyGroup(group){
+  const det=document.getElementById('anatomy-detail');if(!det)return;
+  det.style.display='block';
+  det.innerHTML=`<div style="font-weight:800;font-size:15px;margin-bottom:10px;">${group}</div>
+  <div style="background:var(--bg3);border-radius:10px;padding:16px;text-align:center;color:var(--t3);font-size:13px;">
+    📁 Images anatomiques à venir.<br>Place tes images dans le dossier <code>anatomy/${group.toLowerCase()}/</code>
+  </div>`;
+  det.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function exportData(){
+  closeDrawer();
+  try{
+    const payload={
+      exportDate:new Date().toISOString(),
+      profile:{name:S.name,email:S.email,age:S.age,height:S.height,bw:S.bw,gender:S.gender,goal:S.goal},
+      sessions:S.sessions||[],
+      prs:S.prs||{},
+      weightLog:S.weightLog||[],
+      sleepLog:S.sleepLog||[],
+      badges:S.badges||{}
+    };
+    const json=JSON.stringify(payload,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='forcetracker_'+today()+'.json';
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
+    toast('Données exportées en JSON ✓','success');
+  }catch(e){toast('Erreur export : '+e.message,'error');}
+}
 
 async function _saveCoachMemory(){
   if(!S.premium||!S.url||!S.email)return;
