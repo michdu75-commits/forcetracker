@@ -5884,7 +5884,7 @@ function exportData(){
   try{
     const payload={
       exportDate:new Date().toISOString(),
-      profile:{name:S.name,email:S.email,age:S.age,height:S.height,bw:S.bw,gender:S.gender,goal:S.goal},
+      profile:{name:S.name,age:S.age,height:S.height,bw:S.bw,gender:S.gender,goal:S.goal,contact:'forcetracker.app@gmail.com'},
       sessions:S.sessions||[],
       prs:S.prs||{},
       weightLog:S.weightLog||[],
