@@ -5718,7 +5718,10 @@ const _DRAWER_CONTENT = {
         :`<div style="background:var(--bg3);border-radius:12px;padding:20px 10px;text-align:center;border:1px solid var(--sep);color:var(--t3);font-size:12px;${g.full?'grid-column:span 2;':''}">
             <div style="font-size:22px;margin-bottom:6px;">🚧</div>${g.name}<br>Image à venir
           </div>`;
-      return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 2px 8px;">${groups.map(card).join('')}</div>`;
+      return`<div style="background:rgba(255,184,0,.08);border:1px solid rgba(255,184,0,.25);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--t2);line-height:1.5;">
+        ⚠️ <strong>À titre informatif uniquement.</strong> Ces schémas anatomiques sont des références éducatives et ne remplacent pas l'avis d'un professionnel de santé.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 2px 8px;">${groups.map(card).join('')}</div>`;
     })()
   },
   proteins: {
