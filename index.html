@@ -837,10 +837,15 @@ html.ob-done #onboarding{display:none;}
   </div>
 </div>
 <!-- ANATOMY IMAGE LIGHTBOX -->
-<div id="ov-anatomy-img" onclick="this.classList.remove('open')" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:600;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;">
-  <div id="anatomy-full-title" style="color:#fff;font-weight:800;font-size:15px;text-align:center;"></div>
-  <img id="anatomy-full-img" src="" style="max-width:100%;max-height:78vh;object-fit:contain;border-radius:8px;">
-  <div style="font-size:12px;color:rgba(255,255,255,.35);">Touche pour fermer</div>
+<div id="ov-anatomy-img" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:600;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;flex-shrink:0;">
+    <div id="anatomy-full-title" style="color:#fff;font-weight:800;font-size:15px;"></div>
+    <button onclick="closeAnatomyImg()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+  </div>
+  <div id="anatomy-zoom-wrap" onclick="if(_aZoom<=1.05)closeAnatomyImg();" style="flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;">
+    <img id="anatomy-full-img" src="" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;touch-action:none;will-change:transform;user-select:none;-webkit-user-select:none;transform-origin:center center;">
+  </div>
+  <div style="font-size:12px;color:rgba(255,255,255,.35);text-align:center;padding:10px 16px;flex-shrink:0;">Pince pour zoomer · Double-tap pour réinitialiser · Tap fond pour fermer</div>
 </div>
 
 <div class="screens">
@@ -5694,9 +5699,9 @@ const _DRAWER_CONTENT = {
         {name:'Épaules',         img:'anatomy/epaules/schéma epaule arriere.png'},
         {name:'Bras & Avant-bras',img:'anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
         {name:'Abdominaux',      img:'anatomy/abdominaux/schema abdominaux.png'},
-        {name:'Jambes (avant)',  img:'anatomy/jambes/jambes avant/schema jambes face.png'},
+        {name:'Jambes (avant)',  img:'anatomy/jambes/jambes avant/jambes face avant.png'},
         {name:'Jambes & Mollets',img:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
-        {name:'Fessiers & Ischios', img:null},
+        {name:'Fessiers & Lombaires',img:'anatomy/fessiers lombaires/schema lombaires fessiers.png'},
       ];
       const card=(g)=>g.img
         ?`<div onclick="openAnatomyImg('${g.img.replace(/'/g,"\\'")}','${g.name}')" style="background:var(--bg3);border-radius:12px;overflow:hidden;cursor:pointer;border:1px solid var(--sep);${g.full?'grid-column:span 2;':''}" >
@@ -5795,15 +5800,48 @@ function openDrawerContent(key){
   document.getElementById('ov-drawer-cnt').classList.add('open');
 }
 function closeDrawerContent(){document.getElementById('ov-drawer-cnt').classList.remove('open');}
-function openAnatomyImg(path, title){
+let _aZoom=1,_aTx=0,_aTy=0,_aLastDist=0,_aTsX=0,_aTsY=0,_aTsTx=0,_aTsTy=0,_aTapT=0;
+function openAnatomyImg(path,title){
   const ov=document.getElementById('ov-anatomy-img');
   const img=document.getElementById('anatomy-full-img');
   const ttl=document.getElementById('anatomy-full-title');
-  if(img)img.src=path;
+  if(img){img.src=path;img.style.transform='';}
   if(ttl)ttl.textContent=title;
-  if(ov){ov.style.display='flex';requestAnimationFrame(()=>ov.style.opacity='1');}
+  _aZoom=1;_aTx=0;_aTy=0;
+  if(ov)ov.style.display='flex';
+  _aInitZoom();
 }
-document.getElementById('ov-anatomy-img')&&(document.getElementById('ov-anatomy-img').style.opacity='1');
+function closeAnatomyImg(){const ov=document.getElementById('ov-anatomy-img');if(ov)ov.style.display='none';}
+function _aApply(){const img=document.getElementById('anatomy-full-img');if(img)img.style.transform=`translate(${_aTx}px,${_aTy}px) scale(${_aZoom})`;}
+function _aReset(){_aZoom=1;_aTx=0;_aTy=0;_aApply();}
+function _aInitZoom(){
+  const img=document.getElementById('anatomy-full-img');
+  if(!img||img._zi)return;img._zi=true;
+  img.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){
+      e.preventDefault();
+      _aLastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    } else if(e.touches.length===1){
+      const now=Date.now();
+      if(now-_aTapT<300){_aReset();_aTapT=0;}
+      else{_aTapT=now;_aTsX=e.touches[0].clientX;_aTsY=e.touches[0].clientY;_aTsTx=_aTx;_aTsTy=_aTy;}
+    }
+  },{passive:false});
+  img.addEventListener('touchmove',e=>{
+    if(e.touches.length===2){
+      e.preventDefault();
+      const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      if(_aLastDist>0)_aZoom=Math.max(1,Math.min(6,_aZoom*(d/_aLastDist)));
+      _aLastDist=d;_aApply();
+    } else if(e.touches.length===1&&_aZoom>1.05){
+      e.preventDefault();
+      _aTx=_aTsTx+(e.touches[0].clientX-_aTsX);
+      _aTy=_aTsTy+(e.touches[0].clientY-_aTsY);
+      _aApply();
+    }
+  },{passive:false});
+  img.addEventListener('touchend',()=>{_aLastDist=0;if(_aZoom<1.05)_aReset();});
+}
 
 function exportData(){
   closeDrawer();

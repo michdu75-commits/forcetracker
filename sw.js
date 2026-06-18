@@ -1,4 +1,4 @@
-const CACHE = 'ft-v18';
+const CACHE = 'ft-v19';
 const PRECACHE = [
   './', './index.html', './manifest.json', './logo.png', './female-body.png',
   // Muscles SVG
@@ -24,8 +24,9 @@ const PRECACHE = [
   './anatomy/epaules/schéma epaule arriere.png',
   './anatomy/bras biceps triceps/schema muscles bras et avant bras.png',
   './anatomy/abdominaux/schema abdominaux.png',
-  './anatomy/jambes/jambes avant/schema jambes face.png',
+  './anatomy/jambes/jambes avant/jambes face avant.png',
   './anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png',
+  './anatomy/fessiers lombaires/schema lombaires fessiers.png',
 ];
 
 self.addEventListener('install', e => {
