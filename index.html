@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Force Tracker">
@@ -5759,14 +5759,14 @@ const _DRAWER_CONTENT = {
         {n:'Caséine',ic:'🌙',desc:'Protéine lente (6-8h d\'absorption). Parfaite avant le coucher pour limiter le catabolisme nocturne.',pros:'Satiété prolongée · Anti-catabolisme nuit',cons:'Texture épaisse · Moins appétissante'},
         {n:'Whey Hydrolysate',ic:'🚀',desc:'Whey pré-digérée, absorption la plus rapide. Idéale pour récupération immédiate post-entraînement intensif.',pros:'Absorption maximale · Récupération rapide',cons:'Goût amer · Prix élevé'},
         {n:'Protéine Végétale',ic:'🌱',desc:'Pois, riz, soja, chanvre. Sans lactose, vegan-friendly. Profil d\'acides aminés variable selon la source.',pros:'Vegan · Sans lactose · Durable',cons:'Profil AA incomplet seul (combiner pois+riz)'},
-      ].map(p=>`<div style="background:var(--bg3);border-radius:12px;padding:14px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <span style="font-size:24px;">${p.ic}</span>
-          <span style="font-weight:800;font-size:15px;">${p.n}</span>
+      ].map(p=>`<div style="background:var(--bg3);border-radius:12px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:26px;">${p.ic}</span>
+          <span style="font-weight:800;font-size:17px;">${p.n}</span>
         </div>
-        <p style="font-size:13px;color:var(--t2);margin-bottom:8px;line-height:1.5;">${p.desc}</p>
-        <div style="font-size:12px;color:var(--green);">✓ ${p.pros}</div>
-        <div style="font-size:12px;color:var(--t3);margin-top:3px;">✗ ${p.cons}</div>
+        <p style="font-size:15px;color:var(--t2);margin-bottom:10px;line-height:1.6;">${p.desc}</p>
+        <div style="font-size:14px;color:var(--green);">✓ ${p.pros}</div>
+        <div style="font-size:14px;color:var(--t3);margin-top:4px;">✗ ${p.cons}</div>
       </div>`).join('')}
     </div>`
   },
@@ -5781,13 +5781,13 @@ const _DRAWER_CONTENT = {
         {n:'Magnésium',ic:'🪨',cat:'Récupération & Sommeil',desc:'Cofacteur de +300 réactions enzymatiques. Souvent déficitaire chez les sportifs (pertes sudorales). Améliore la qualité du sommeil et réduit les crampes.',dose:'300-400mg/jour le soir. Préférer le bisglycinate (mieux absorbé).'},
         {n:'Vitamine D3 + K2',ic:'☀️',cat:'Santé générale & Force',desc:'La D3 est essentielle à la santé osseuse, à la testostérone et à la force musculaire. K2 oriente le calcium vers les os et non les artères.',dose:'2000-5000 UI D3 + 100-200µg K2 MK-7 par jour, avec un repas gras.'},
         {n:'Oméga-3 (EPA+DHA)',ic:'🐟',cat:'Anti-inflammatoire',desc:'Réduisent l\'inflammation chronique liée à l\'entraînement intensif. Améliorent la sensibilité à l\'insuline et la santé cardiovasculaire.',dose:'2-4g EPA+DHA/jour avec les repas. Préférer l\'huile de poisson concentrée.'},
-      ].map(p=>`<div style="background:var(--bg3);border-radius:12px;padding:14px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-          <span style="font-size:22px;">${p.ic}</span>
-          <div><div style="font-weight:800;font-size:14px;">${p.n}</div><div style="font-size:11px;color:var(--red);font-weight:700;">${p.cat}</div></div>
+      ].map(p=>`<div style="background:var(--bg3);border-radius:12px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <span style="font-size:26px;">${p.ic}</span>
+          <div><div style="font-weight:800;font-size:17px;">${p.n}</div><div style="font-size:13px;color:var(--red);font-weight:700;">${p.cat}</div></div>
         </div>
-        <p style="font-size:12px;color:var(--t2);margin:8px 0 6px;line-height:1.5;">${p.desc}</p>
-        <div style="font-size:12px;color:var(--t3);"><strong style="color:var(--t2);">Dose :</strong> ${p.dose}</div>
+        <p style="font-size:15px;color:var(--t2);margin:10px 0 8px;line-height:1.6;">${p.desc}</p>
+        <div style="font-size:14px;color:var(--t3);"><strong style="color:var(--t2);">Dose :</strong> ${p.dose}</div>
       </div>`).join('')}
     </div>`
   },
