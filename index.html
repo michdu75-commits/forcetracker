@@ -96,12 +96,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .topbar{
   background:var(--bg);
   border-bottom:none;
-  padding:max(env(safe-area-inset-top),48px) 22px 0;
+  padding:max(calc(env(safe-area-inset-top) + 10px),20px) 18px 12px;
   display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
   position:relative;
 }
 .topbar::after{display:none;}
-.tb-logo{height:58px;width:58px;border-radius:17px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);}
+.tb-logo{height:46px;width:46px;border-radius:14px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);}
 .tb-logo-sm{height:40px;width:40px;border-radius:12px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);}
 .tb-title{font-family:var(--font-num);font-size:18px;font-weight:700;color:#FF5A64;letter-spacing:.005em;white-space:nowrap;}
 .tb-title-screen{font-family:var(--font);font-size:21px;font-weight:800;color:var(--t1);letter-spacing:-.02em;}
@@ -813,7 +813,7 @@ html.ob-done #onboarding{display:none;}
 </div>
 
 <div id="root">
-<div class="topbar" id="topbar" style="padding-bottom:14px;">
+<div class="topbar" id="topbar">
   <div style="display:flex;align-items:center;gap:13px;" id="tb-left">
     <img src="logo.png" alt="" id="tb-logo" onclick="onLogoTap()" class="tb-logo" style="animation:logo-pulse 3.5s ease-in-out infinite;">
     <div id="tb-text">
@@ -1255,13 +1255,7 @@ html.ob-done #onboarding{display:none;}
 
 <!-- COACH IA -->
 <div class="screen coach-screen" id="s-coach">
-  <div class="coach-header" style="display:flex;justify-content:space-between;align-items:center;">
-    <div>
-      <div class="coach-header-title">🤖 Coach IA</div>
-      <div class="coach-header-sub">Personnalisé · En français</div>
-    </div>
-    <div id="coach-quota-badge"></div>
-  </div>
+  <div id="coach-quota-badge" style="flex-shrink:0;padding:10px 16px 6px;"></div>
 
   <!-- MURAL PREMIUM (affiché quand quota atteint) -->
   <div class="coach-wall" id="coach-wall">
@@ -2243,11 +2237,11 @@ function goScreen(id,btn){
   const titleMain=document.getElementById('tb-title-main');
   const tbDate=document.getElementById('tb-date');
   if(id==='home'){
-    if(logo){logo.className='tb-logo';logo.style.animation='logo-pulse 3.5s ease-in-out infinite';}
+    if(logo){logo.className='tb-logo';}
     if(titleMain){titleMain.className='tb-title';titleMain.textContent='Force Tracker';}
     if(tbDate)tbDate.style.display='';
   } else {
-    if(logo){logo.className='tb-logo-sm';logo.style.animation='none';}
+    if(logo){logo.className='tb-logo-sm';}
     if(titleMain){titleMain.className='tb-title-screen';titleMain.textContent=_SCREEN_TITLES[id]||'';}
     if(tbDate)tbDate.style.display='none';
   }
