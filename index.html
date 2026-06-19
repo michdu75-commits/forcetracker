@@ -6099,10 +6099,10 @@ function renderCardioBlock(){
     </div>
     <div style="display:flex;gap:5px;align-items:center;margin-top:8px;">
       ${['leger','modere','intense'].map((iv,i)=>{const lbl=['Léger','Modéré','Intense'][i];return`<button onclick="setCardioField('intensity','${iv}')" style="flex:1;padding:6px 0;border-radius:8px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.intensity===iv?'var(--red)':'var(--bg2)'};color:${c.intensity===iv?'#fff':'var(--t2)'};">${lbl}</button>`;}).join('')}
-      <div style="display:flex;align-items:center;gap:3px;margin-left:6px;">
-        <button onclick="setCardioField('duration',${(c.duration||0)-5})" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg2);color:var(--t1);font-size:18px;line-height:1;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
-        <span style="min-width:36px;text-align:center;font-size:14px;font-weight:700;">${c.duration||0}<span style="font-size:10px;color:var(--t3);">min</span></span>
-        <button onclick="setCardioField('duration',${(c.duration||0)+5})" style="width:28px;height:28px;border-radius:8px;border:none;background:var(--bg2);color:var(--t1);font-size:18px;line-height:1;font-family:var(--font);cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+      <div style="display:flex;align-items:center;gap:4px;margin-left:6px;">
+        <button onclick="setCardioField('duration',${(c.duration||0)-5})" style="padding:5px 9px;border-radius:8px;border:none;background:var(--bg2);color:var(--t1);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">−5 min</button>
+        <span style="min-width:36px;text-align:center;font-size:14px;font-weight:700;">${c.duration||0}<span style="font-size:10px;color:var(--t3);"> min</span></span>
+        <button onclick="setCardioField('duration',${(c.duration||0)+5})" style="padding:5px 9px;border-radius:8px;border:none;background:var(--bg2);color:var(--t1);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">+5 min</button>
       </div>
     </div>
   </div>`:''}
