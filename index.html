@@ -408,6 +408,23 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .ptbtn.active{background:var(--blue);color:#fff;}
 .protein-bar-wrap{height:8px;background:var(--sep);border-radius:4px;overflow:hidden;margin:6px 0;}
 .protein-bar-fill{height:100%;border-radius:4px;transition:width .4s;}
+.combo-gate{background:var(--bg2);border-radius:var(--r);border:1px solid var(--sep);padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;position:relative;overflow:hidden;}
+.combo-gate-blur{filter:blur(4px);pointer-events:none;opacity:.45;margin-bottom:4px;width:100%;}
+.combo-card{background:var(--bg2);border-radius:var(--r);border:1px solid var(--sep);overflow:hidden;}
+.combo-card-hdr{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;touch-action:manipulation;user-select:none;}
+.combo-card-hdr:active{background:rgba(255,255,255,.03);}
+.combo-card-icon{font-size:22px;flex-shrink:0;}
+.combo-card-title{font-family:var(--font-cond);font-size:15px;font-weight:900;flex:1;}
+.combo-card-chev{font-size:18px;color:var(--t3);transition:transform .2s;flex-shrink:0;}
+.combo-card-chev.open{transform:rotate(180deg);}
+.combo-card-body{padding:0 16px 14px;display:none;flex-direction:column;gap:0;}
+.combo-card-body.open{display:flex;}
+.combo-item{display:flex;flex-direction:column;gap:3px;padding:10px 0;border-bottom:.5px solid var(--sep);}
+.combo-item:last-child{border-bottom:none;}
+.combo-item-name{font-size:14px;font-weight:700;color:var(--t1);}
+.combo-item-dose{font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--orange);}
+.combo-item-info{font-size:12.5px;color:var(--t2);line-height:1.5;}
+.combo-warn{margin-top:10px;background:rgba(255,45,85,.07);border:1px solid rgba(255,45,85,.2);border-radius:8px;padding:9px 12px;font-size:12.5px;color:#ff8a99;line-height:1.5;}
 
 /* COACH IA */
 .coach-screen{flex-direction:column;padding:0 0 calc(96px + env(safe-area-inset-bottom)) 0!important;gap:0!important;}
@@ -1023,6 +1040,7 @@ html.ob-done #onboarding{display:none;}
       <div class="suppl-header"><div class="suppl-icon">🥤</div><div><div class="suppl-name">Whey</div><div class="suppl-sub">Protéines rapides post-workout</div></div></div>
       <div class="suppl-body" id="whey-content"></div>
     </div>
+    <div id="suppl-combos"></div>
   </div>
 
   <!-- 1RM -->
@@ -6210,7 +6228,109 @@ function switchNuTab(tab, btn) {
 }
 
 function renderSupplements() {
-  renderCreatine(); renderWhey(); updateProteinBar();
+  renderCreatine(); renderWhey(); updateProteinBar(); renderSupplCombos();
+}
+
+function renderSupplCombos() {
+  const el = document.getElementById('suppl-combos');
+  if (!el) return;
+
+  const sectionTitle = '<div class="sec" style="margin-top:6px;">Combinaisons Premium</div>';
+
+  if (!S.premium) {
+    el.innerHTML = sectionTitle + `
+    <div class="combo-gate">
+      <div class="combo-gate-blur">
+        <div style="display:flex;flex-direction:column;gap:8px;pointer-events:none;">
+          <div class="combo-card" style="opacity:.7;"><div class="combo-card-hdr"><span class="combo-card-icon">💪</span><span class="combo-card-title">Prise de muscle</span></div></div>
+          <div class="combo-card" style="opacity:.5;"><div class="combo-card-hdr"><span class="combo-card-icon">🏋️</span><span class="combo-card-title">Force maximale</span></div></div>
+          <div class="combo-card" style="opacity:.3;"><div class="combo-card-hdr"><span class="combo-card-icon">🏃</span><span class="combo-card-title">Cardio / Endurance</span></div></div>
+        </div>
+      </div>
+      <div style="font-size:28px;margin-bottom:2px;">🔒</div>
+      <div style="font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--t1);">Combinaisons réservées aux membres Premium</div>
+      <div style="font-size:13px;color:var(--t2);line-height:1.5;max-width:280px;">Stacks sur-mesure par objectif : dosages précis, timing optimal, synergies et contre-indications.</div>
+      <button class="btn" style="background:linear-gradient(135deg,#FFB800,#FF6D00);color:#fff;font-weight:800;font-size:15px;padding:13px 26px;border-radius:14px;margin-top:4px;box-shadow:0 8px 22px -8px rgba(255,109,0,.5);" onclick="showPremiumWall()">⭐ Débloquer Premium — 4,99€ / 2 mois</button>
+    </div>`;
+    return;
+  }
+
+  const COMBOS = [
+    {
+      id:'muscle', icon:'💪', title:'Prise de muscle',
+      items:[
+        {name:'Créatine Monohydrate', dose:'3–5 g / jour', info:'Post-workout avec des glucides. Augmente la force de 5–15 % et le volume musculaire sur la durée. Incontournable.'},
+        {name:'Whey Protéine', dose:'25–40 g post-workout', info:'Dans les 60 min après la séance. Comble les besoins protéiques si l\'alimentation est insuffisante. Vise 1,6–2 g de protéines/kg/jour au total.'},
+        {name:'Caféine', dose:'200–400 mg pré-workout', info:'30–45 min avant la séance. Améliore la force, la puissance et la concentration. Effet ergogène prouvé.'},
+        {name:'BCAA (ratio 2:1:1)', dose:'5–10 g inter-séance', info:'Utile si séance > 90 min à jeun. Limite le catabolisme musculaire. Superflu si apport protéique total suffisant.'},
+        {name:'Magnésium glycinate', dose:'300–400 mg le soir', info:'Favorise la récupération musculaire, réduit les crampes et améliore la qualité du sommeil. Forme glycinate = meilleure absorption.'},
+      ],
+      warn:'⚠️ Évite de prendre créatine et caféine en même temps : la caféine peut réduire l\'absorption de la créatine. Espace-les de 2h minimum.'
+    },
+    {
+      id:'force', icon:'🏋️', title:'Force maximale',
+      items:[
+        {name:'Créatine Monohydrate', dose:'5 g / jour', info:'Phase maintenance quotidienne. Principal complément validé scientifiquement pour augmenter la force maximale sur les lifts lourds.'},
+        {name:'Caféine', dose:'200–400 mg pré-workout', info:'30–45 min avant. Améliore la force maximale de 5–8 % et le seuil de douleur. Particulièrement efficace pour les efforts courts et intenses.'},
+        {name:'Bêta-Alanine', dose:'3,2–6,4 g / jour', info:'Fractionné en 4 prises pour limiter les fourmillements (paresthésie). Augmente les niveaux de carnosine musculaire, retarde la fatigue sur les séries longues.'},
+        {name:'ZMA (Zinc + Magnésium + Vit B6)', dose:'1 dose le soir à jeun', info:'Alternative au magnésium seul. Soutient la production hormonale, la récupération nerveuse et la qualité du sommeil. Essentiel si déficit alimentaire en zinc.'},
+        {name:'Vitamine D3 + K2', dose:'2 000–5 000 UI D3 + 100 µg K2', info:'Soutient la santé osseuse et tendineuse — critique sous charge lourde. Souvent carencé en Europe. La K2 oriente le calcium vers les os, pas les artères.'},
+      ],
+      warn:'⚠️ La caféine prise après 14h peut perturber ton sommeil et nuire à la récupération. Adapte l\'heure selon ta sensibilité.'
+    },
+    {
+      id:'cardio', icon:'🏃', title:'Cardio / Endurance',
+      items:[
+        {name:'Caféine', dose:'200–300 mg pré-effort', info:'30–45 min avant. Améliore l\'endurance de 10–15 %, diminue la perception de l\'effort. Particulièrement efficace pour les efforts > 30 min.'},
+        {name:'Bêta-Alanine', dose:'3,2 g / jour', info:'Retarde l\'acidose musculaire lors des efforts intenses de durée moyenne (1–4 min). Utile pour le HIIT, le trail et les courses à allure soutenue.'},
+        {name:'BCAA', dose:'5–10 g pendant l\'effort', info:'Pour les efforts > 90 min. Préserve la masse musculaire et fournit un carburant d\'appoint en endurance prolongée. Mélange à ta boisson isotonique.'},
+        {name:'Électrolytes', dose:'Sodium + Potassium + Magnésium', info:'Indispensable si sueur abondante ou effort > 60 min. Prévient les crampes et maintient la performance. Pertes estimées : 800–1 500 mg sodium/heure.'},
+        {name:'Créatine', dose:'3–5 g / jour', info:'Moins efficace pour l\'endurance pure mais très utile si entraînement intermittent (HIIT, trail, natation). Améliore la récupération entre les sprints.'},
+      ],
+      warn:'⚠️ Ne teste jamais un nouveau complément le jour d\'une compétition ou d\'un test de performance. Introduis chaque nouveau produit séparément pour identifier d\'éventuelles intolérances.'
+    },
+    {
+      id:'poids', icon:'🔥', title:'Perte de poids',
+      items:[
+        {name:'Whey Protéine', dose:'25–40 g post-workout', info:'Priorité absolue en déficit calorique. Préserve la masse musculaire et augmente la satiété. Un gramme de protéine = 4 kcal, fort effet thermique (25–30 %).'},
+        {name:'Créatine', dose:'3–5 g / jour', info:'Maintient la force et la masse musculaire pendant la restriction calorique. Contre l\'effet catabolique du déficit. Peut causer une légère rétention d\'eau initiale (1–2 kg).'},
+        {name:'Caféine', dose:'200–400 mg pré-workout', info:'Thermogenèse légère (+3–5 % métabolisme), lipolyse accrue et coupe-faim modéré. Améliore aussi les performances à l\'entraînement sous déficit.'},
+        {name:'L-Carnitine', dose:'1–2 g avant cardio', info:'Facilite le transport des acides gras vers les mitochondries pour la production d\'énergie. Effet modeste mais synergique avec le cardio modéré. À jeun = meilleure efficacité.'},
+        {name:'Oméga-3 (EPA + DHA)', dose:'2–3 g / jour', info:'Réduit l\'inflammation, améliore la sensibilité à l\'insuline et soutient la lipolyse. Anti-catabolique. 3 g d\'EPA+DHA minimum pour un effet métabolique significatif.'},
+      ],
+      warn:'⚠️ Aucun complément ne remplace un déficit calorique bien géré. L\'alimentation représente 90 % du résultat en perte de poids. Les compléments sont des alliés, pas des raccourcis.'
+    }
+  ];
+
+  const cardsHtml = COMBOS.map(c => `
+    <div class="combo-card" id="combo-${c.id}">
+      <div class="combo-card-hdr" onclick="toggleComboCard('${c.id}')">
+        <span class="combo-card-icon">${c.icon}</span>
+        <span class="combo-card-title">${c.title}</span>
+        <span class="combo-card-chev" id="combo-chev-${c.id}">▾</span>
+      </div>
+      <div class="combo-card-body" id="combo-body-${c.id}">
+        ${c.items.map(it => `<div class="combo-item">
+          <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+            <span class="combo-item-name">${it.name}</span>
+            <span class="combo-item-dose">${it.dose}</span>
+          </div>
+          <div class="combo-item-info">${it.info}</div>
+        </div>`).join('')}
+        <div class="combo-warn">${c.warn}</div>
+      </div>
+    </div>`).join('');
+
+  el.innerHTML = sectionTitle + `<div style="display:flex;flex-direction:column;gap:8px;">${cardsHtml}</div>`;
+}
+
+function toggleComboCard(id) {
+  const body = document.getElementById('combo-body-' + id);
+  const chev = document.getElementById('combo-chev-' + id);
+  if (!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (chev) chev.classList.toggle('open', !isOpen);
 }
 
 function renderCreatine() {
