@@ -899,19 +899,19 @@ html.ob-done #onboarding{display:none;}
     <div class="home-row ft-press" onclick="goScreen('cycle',null)">
       <div class="home-row-ic" style="background:rgba(239,62,87,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6A73" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>
       <div style="flex:1;"><div class="home-row-title" id="cycle-home-title">Cycle de Force</div><div class="home-row-sub" id="cycle-home-sub">Planifie ta progression sur mesure</div></div>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5A5F69" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
     </div>
     <div class="home-sep"></div>
     <div class="home-row ft-press" onclick="goScreen('progress',document.getElementById('nb-progress'))">
-      <div class="home-row-ic" style="background:rgba(234,179,8,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3Z"/></svg></div>
+      <div class="home-row-ic" style="background:rgba(234,179,8,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3Z"/></svg></div>
       <div style="flex:1;"><div class="home-row-title">Niveau de force</div><div class="home-row-sub" id="home-strength-sub">—</div></div>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5A5F69" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
     </div>
     <div class="home-sep"></div>
     <div class="home-row ft-press" onclick="goScreen('progress',document.getElementById('nb-progress'))">
-      <div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 22l4-2.5L16 22l-1-8.5"/></svg></div>
+      <div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 22l4-2.5L16 22l-1-8.5"/></svg></div>
       <div style="flex:1;"><div class="home-row-title">Records personnels</div><div class="home-row-sub" id="home-pr-sub">—</div></div>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#5A5F69" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>
     </div>
   </div>
   <!-- hidden IDs for JS compat -->
@@ -2390,9 +2390,11 @@ function renderHome(){
     }
   }
 
-  // Hero ring + récupération
+  // Hero ring + récupération — couleurs hex (CSS vars non supportées en SVG)
   const score=calcRecoveryScore();
   const info=getRecoveryInfo(score);
+  const _rcHex=score===null?'#5A5F69':score>=80?'#34D399':score>=60?'#EAB308':score>=40?'#FF8A72':'#FF6A73';
+  const _rcLabel=score===null?'Pas de données':score>=80?'Récup optimale':score>=60?'Bonne récup':score>=40?'Récup modérée':'Récup faible';
   const ringEl=document.getElementById('home-ring');
   const titleEl=document.getElementById('home-recup-title');
   const subEl=document.getElementById('home-recup-sub');
@@ -2400,15 +2402,12 @@ function renderHome(){
   if(ringEl){
     const pct=score!==null?score/100:0;
     const r=30,circ=2*Math.PI*r,offset=circ*(1-pct);
-    const col=info.color||'var(--green)';
-    ringEl.innerHTML=`<svg width="72" height="72" viewBox="0 0 72 72" style="transform:rotate(-90deg)"><circle cx="36" cy="36" r="${r}" fill="none" stroke="#23262e" stroke-width="6"/><circle cx="36" cy="36" r="${r}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"/></svg><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;"><span style="font-family:var(--font-num);font-size:24px;font-weight:600;color:var(--t1);line-height:1;">${score!==null?score:'—'}</span><span style="font-size:9px;color:var(--t3);font-weight:600;">/100</span></div>`;
+    ringEl.innerHTML=`<svg width="72" height="72" viewBox="0 0 72 72" style="transform:rotate(-90deg)"><circle cx="36" cy="36" r="${r}" fill="none" stroke="#1E2130" stroke-width="6"/><circle cx="36" cy="36" r="${r}" fill="none" stroke="${_rcHex}" stroke-width="6" stroke-linecap="round" stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${offset.toFixed(1)}"/></svg><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;"><span style="font-family:var(--font-num);font-size:22px;font-weight:600;color:var(--t1);line-height:1;">${score!==null?score:'😴'}</span>${score!==null?`<span style="font-size:9px;color:var(--t3);font-weight:600;">/100</span>`:''}</div>`;
   }
-  if(titleEl)titleEl.textContent=info.label||(score!==null?info.icon+' '+info.label:'—');
-  if(subEl)subEl.textContent=info.rec||'Enregistre ton sommeil pour un score de récupération';
+  if(titleEl)titleEl.textContent=score!==null?info.label:'Enregistre ton sommeil';
+  if(subEl)subEl.textContent=score!==null?info.rec:'Ajoute tes heures de sommeil pour voir ton score de récupération.';
   if(badgeEl){
-    const col=info.color||'var(--green)';
-    const label=score!==null?(score>=80?'Récup optimale':score>=60?'Bonne récup':score>=40?'Récup modérée':'Récup faible'):'Pas de données';
-    badgeEl.innerHTML=`<span style="width:7px;height:7px;border-radius:50%;background:${col};box-shadow:0 0 8px ${col};"></span><span style="font-size:12px;font-weight:700;color:${col};">${label}</span>`;
+    badgeEl.innerHTML=`<span style="width:7px;height:7px;border-radius:50%;background:${_rcHex};box-shadow:0 0 8px ${_rcHex};"></span><span style="font-size:12px;font-weight:700;color:${_rcHex};">${_rcLabel}</span>`;
   }
 
   // Subtitle rows
