@@ -877,7 +877,6 @@ html.ob-done #onboarding{display:none;}
     <div class="sbox"><div class="lbl">Volume total</div><div class="val" id="h-vol">0</div><div class="unit">kg</div></div>
     <div class="sbox"><div class="lbl">Big 3 (1RM)</div><div class="val" id="h-big3">—</div><div class="unit">kg</div></div>
   </div>
-  <button class="btn btn-red" id="start-btn" onclick="startWorkout()">⚡ Commencer une séance</button>
   <div class="sec" style="margin-bottom:0;">😴 Récupération</div>
   <div class="card cp" id="recovery-card" style="display:flex;flex-direction:column;gap:10px;"></div>
   <div class="cycle-card" onclick="goScreen('cycle',null)" id="cycle-home-card">
@@ -2331,10 +2330,6 @@ function renderHome(){
   document.getElementById('h-vol').textContent=vol>9999?Math.round(vol/100)/10+'k':Math.round(vol);
   const b3=BIG3.map(e=>S.prs[e]?S.prs[e].rm1:0).reduce((a,b)=>a+b,0);
   document.getElementById('h-big3').textContent=b3>0?Math.round(b3):'—';
-
-  const startBtn=document.getElementById('start-btn');
-  if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){startBtn.textContent='↩ Reprendre la séance';startBtn.className='btn btn-bg2';}
-  else{startBtn.textContent='⚡ Commencer une séance';startBtn.className='btn btn-red';}
 
   // Strength levels
   const slEl=document.getElementById('strength-levels');
