@@ -104,7 +104,15 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .sync-pill{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;border:none;background:rgba(255,255,255,.06);color:var(--t2);font-size:12px;cursor:pointer;font-family:var(--font);font-weight:600;transition:all .2s;}
 .sync-pill.ok{color:#5be3b4;background:rgba(52,211,153,.1);}
 #root.on-home .topbar{display:none;}
+#root.on-log .topbar{display:none;}
 #s-home{padding:0 0 110px;gap:0;}
+#s-log{padding:0 0 110px;gap:0;}
+.slq-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;background:var(--bg3);border:1.5px solid transparent;border-radius:10px;cursor:pointer;font-size:11px;font-weight:600;color:var(--t2);font-family:var(--font);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:border-color .15s,background .15s,color .15s;}
+.slq-btn.active{border-color:var(--green);background:rgba(52,211,153,.1);color:#5be3b4;}
+.slq-bars{display:flex;gap:3px;align-items:flex-end;height:16px;}
+.slq-bar{width:5px;border-radius:3px;background:var(--t3);}
+.slq-btn.active .slq-bar{background:var(--green);}
+.slq-bar-off{background:rgba(255,255,255,.1)!important;}
 
 /* REST BAR */
 #rest-bar{position:sticky;top:0;z-index:10;display:none;align-items:center;gap:10px;padding:10px 14px;
@@ -900,45 +908,47 @@ html.ob-done #onboarding{display:none;}
 
 <!-- SÉANCE -->
 <div class="screen" id="s-log">
-  <div style="display:flex;gap:8px;align-items:center;">
-    <label for="s-date" style="flex:1;padding:9px 12px;font-size:14px;color:var(--t1);background:var(--bg3);border-radius:var(--r-sm);border:1px solid var(--sep);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="s-date-lbl">
-      <span style="display:flex;align-items:center;gap:6px;"><span style="font-size:15px;">📅</span><span id="s-date-txt"></span></span>
-      <span style="font-size:11px;color:var(--t3);">▼</span>
-    </label>
-    <input type="date" id="s-date" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
-  </div>
-  <div id="log-sleep"></div>
-  <div id="log-cardio"></div>
-  <div id="rest-bar">
-    <div style="display:flex;flex-direction:column;align-items:center;min-width:58px">
-      <div id="rest-time">1:30</div>
-      <div id="rest-label" style="font-size:11px;color:var(--t2);margin-top:1px;"></div>
+  <div id="log-hdr" style="padding:max(env(safe-area-inset-top),44px) 22px 0;"></div>
+  <div style="padding:10px 14px 0;display:flex;flex-direction:column;gap:10px;">
+    <div style="display:flex;gap:8px;align-items:center;">
+      <label for="s-date" style="flex:1;height:46px;padding:0 16px;background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="s-date-lbl">
+        <span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t2);flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="s-date-txt" style="font-size:14px;font-weight:600;color:var(--t1);"></span></span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);"><polyline points="6 9 12 15 18 9"/></svg>
+      </label>
+      <input type="date" id="s-date" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
     </div>
-    <div style="flex:1;display:flex;flex-direction:column;gap:5px">
-      <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
-      <div style="display:flex;gap:4px;align-items:center">
-        <button class="rbtn" id="rp-60" onclick="setRestPreset(60)">1:00</button>
-        <button class="rbtn" id="rp-90" onclick="setRestPreset(90)">1:30</button>
-        <button class="rbtn" id="rp-120" onclick="setRestPreset(120)">2:00</button>
-        <button class="rbtn" id="rest-btn-minus" onclick="addRT(-_restStep)" style="margin-left:2px">−15s</button>
-        <button class="rbtn" id="rest-btn-plus" onclick="addRT(_restStep)">+15s</button>
-        <button class="rbtn" onclick="skipRest()">Skip</button>
+    <div id="log-sleep"></div>
+    <div id="log-cardio"></div>
+    <div id="rest-bar">
+      <div style="display:flex;flex-direction:column;align-items:center;min-width:58px">
+        <div id="rest-time">1:30</div>
+        <div id="rest-label" style="font-size:11px;color:var(--t2);margin-top:1px;"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+        <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <button class="rbtn" id="rp-60" onclick="setRestPreset(60)">1:00</button>
+          <button class="rbtn" id="rp-90" onclick="setRestPreset(90)">1:30</button>
+          <button class="rbtn" id="rp-120" onclick="setRestPreset(120)">2:00</button>
+          <button class="rbtn" id="rest-btn-minus" onclick="addRT(-_restStep)" style="margin-left:2px">−15s</button>
+          <button class="rbtn" id="rest-btn-plus" onclick="addRT(_restStep)">+15s</button>
+          <button class="rbtn" onclick="skipRest()">Skip</button>
+        </div>
       </div>
     </div>
-  </div>
-  <div id="wkt-exs"></div>
-  <div style="display:flex;flex-direction:column;gap:8px;">
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-bg2" style="flex:1;" onclick="openProgModal()">📋 Programme</button>
-      <button class="btn btn-bg2" style="flex:1;" onclick="openExPicker()">+ Ajouter un exercice</button>
+    <div id="wkt-exs"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-bg2 ft-press" style="flex:1;" onclick="openProgModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:5px;margin-bottom:1px;"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>Programme</button>
+        <button class="btn ft-press" style="flex:1;border:1.5px solid var(--red2);background:transparent;color:var(--red);" onclick="openExPicker()">+ Ajouter</button>
+      </div>
+      <button class="btn btn-bg2 ft-press" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px;" onclick="openImportProg()">
+        <span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Scanner ton programme</span>
+        <span style="font-size:11px;color:var(--t3);font-weight:400;">Prends en photo ton programme — il s'ajoute automatiquement</span>
+      </button>
     </div>
-    <button class="btn btn-bg2" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px;" onclick="openImportProg()">
-      <span style="font-size:14px;font-weight:700;">📸 Scanner ton programme</span>
-      <span style="font-size:11px;color:var(--t3);font-weight:400;">Prends en photo ton programme — il s'ajoute automatiquement</span>
-    </button>
+    <div id="log-finish"></div>
   </div>
-  <div id="log-finish"></div>
-  <p style="font-size:13px;color:var(--t3);text-align:center;padding-bottom:4px;">✓ pour valider une série → chrono de repos automatique</p>
 </div>
 
 <!-- PROGRÈS -->
@@ -2207,6 +2217,7 @@ function goScreen(id,btn){
   document.getElementById('s-'+id).classList.add('active');
   if(btn)btn.classList.add('active');
   document.getElementById('root').classList.toggle('on-home',id==='home');
+  document.getElementById('root').classList.toggle('on-log',id==='log');
   if(id==='home')renderHome();
   if(id==='log')renderLog();
   if(id==='progress')renderProgress();
@@ -2542,6 +2553,11 @@ function renderLog(){
   const txt=document.getElementById('s-date-txt');if(txt)txt.textContent=_fmtWktDate(d);
   const inp=document.getElementById('s-date');
   if(inp){inp.value=d;inp.onchange=()=>{if(inp.value)_setLogDate(inp.value);};}
+  const hdr=document.getElementById('log-hdr');
+  if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;">'
+    +'<img src="logo.png" style="width:40px;height:40px;border-radius:12px;object-fit:cover;flex-shrink:0;">'
+    +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
+    +'</div>';
   renderLogSleep();
   renderCardioBlock();
   renderExBlocks();
@@ -5288,29 +5304,39 @@ function renderLogSleep(){
   const el=document.getElementById('log-sleep');if(!el)return;
   const todayStr=today();
   const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===todayStr);
-  const qLabels={1:'😴 Mauvais',2:'😐 Moyen',3:'😊 Bon',4:'⚡ Excellent'};
+  const qLabels={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
+  const moonSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purp);flex-shrink:0;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   if(ts&&!_sleepEditLog){
-    el.innerHTML=`<div style="background:var(--bg3);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <div style="font-size:13px;color:var(--t2);">🌙 Sommeil : <strong style="color:var(--t1);">${ts.hours}h</strong> · <strong style="color:var(--t1);">${qLabels[ts.quality||2]}</strong></div>
-      <button style="font-size:13px;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditLog=true;renderLogSleep()">Modifier</button>
-    </div>`;
+    el.innerHTML='<div style="background:var(--bg2);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">'
+      +'<div style="display:flex;align-items:center;gap:9px;">'
+      +moonSvg
+      +'<div><div style="font-size:13px;font-weight:600;color:var(--t1);">'+ts.hours+'h · '+qLabels[ts.quality||2]+'</div>'
+      +'<div style="font-size:11.5px;color:var(--t3);margin-top:1px;">Sommeil de cette nuit</div></div>'
+      +'</div>'
+      +'<button style="font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditLog=true;renderLogSleep()">Modifier</button>'
+      +'</div>';
   }else{
     _sleepQual=(ts&&ts.quality)||3;
-    el.innerHTML=`<div style="background:var(--bg3);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
-      <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:8px;">🌙 Sommeil de cette nuit</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;">
-        <button class="ci-btn" id="sq-1" onclick="setSleepQual(1)">😴<br><span>Mauvais</span></button>
-        <button class="ci-btn" id="sq-2" onclick="setSleepQual(2)">😐<br><span>Moyen</span></button>
-        <button class="ci-btn" id="sq-3" onclick="setSleepQual(3)">😊<br><span>Bon</span></button>
-        <button class="ci-btn" id="sq-4" onclick="setSleepQual(4)">⚡<br><span>Excellent</span></button>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key==='Enter'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:16px;" value="${ts?ts.hours:''}">
-        <span style="font-size:14px;color:var(--t2);white-space:nowrap;">h de sommeil</span>
-        ${ts?`<button class="btn btn-bg2 btn-sm" onclick="_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;">Annuler</button>`:''}
-      </div>
-      <button class="btn btn-red" onclick="saveSleepEntry()" style="margin-top:10px;padding:12px;">Enregistrer</button>
-    </div>`;
+    const bars=function(n){
+      const h=[6,9,12,15];
+      return '<div class="slq-bars">'+h.map(function(height,i){return'<div class="slq-bar'+(i>=n?' slq-bar-off':'')+'" style="height:'+height+'px;"></div>';}).join('')+'</div>';
+    };
+    el.innerHTML='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:16px;">'
+      +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">'+moonSvg
+      +'<span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);">Sommeil de cette nuit</span></div>'
+      +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
+      +'<button class="slq-btn" id="sq-1" onclick="setSleepQual(1)">'+bars(1)+'Mauvais</button>'
+      +'<button class="slq-btn" id="sq-2" onclick="setSleepQual(2)">'+bars(2)+'Moyen</button>'
+      +'<button class="slq-btn" id="sq-3" onclick="setSleepQual(3)">'+bars(3)+'Bon</button>'
+      +'<button class="slq-btn" id="sq-4" onclick="setSleepQual(4)">'+bars(4)+'Excellent</button>'
+      +'</div>'
+      +'<div style="display:flex;gap:8px;align-items:center;">'
+      +'<input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?ts.hours:'')+'">'
+      +'<span style="font-size:13px;color:var(--t2);white-space:nowrap;">h de sommeil</span>'
+      +(ts?'<button class="btn btn-bg2 btn-sm" onclick="_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;font-size:12px;padding:8px 12px;">Annuler</button>':'')
+      +'</div>'
+      +'<button class="btn btn-red ft-press" onclick="saveSleepEntry()" style="margin-top:10px;padding:14px;">Enregistrer</button>'
+      +'</div>';
     updateSleepQualBtns();
   }
 }
@@ -6180,12 +6206,12 @@ function renderCardioBlock(){
   const kcal=calcCardioKcal(c);
   const types=Object.keys(CARDIO_LABELS);
   const summary=c.duration?`${CARDIO_LABELS[c.type||'elliptique']} · ${c.duration}min · ~${kcal}kcal`:'optionnel';
-  el.innerHTML=`<div style="background:var(--bg3);border-radius:12px;overflow:hidden;">
-  <div onclick="toggleCardio()" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;">
-    <span style="font-size:14px;">🏃</span>
-    <span style="font-weight:700;font-size:13px;flex:1;">Cardio</span>
+  el.innerHTML=`<div style="background:var(--bg2);border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
+  <div onclick="toggleCardio()" style="display:flex;align-items:center;gap:9px;padding:12px 16px;cursor:pointer;touch-action:manipulation;">
+    <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,138,114,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M10 12L8 20"/><path d="M10 12L13 17L16 12"/><path d="M6 12L8 10L12 12L16 10L18 12"/></svg></div>
+    <span style="font-weight:700;font-size:13px;flex:1;color:var(--t1);">Cardio</span>
     <span style="font-size:12px;color:${kcal?'var(--green)':'var(--t3)'};">${summary}</span>
-    <span style="font-size:11px;color:var(--t3);transition:transform .2s;display:inline-block;transform:rotate(${_cardioOpen?90:0}deg);">▶</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);transition:transform .2s;transform:rotate(${_cardioOpen?-90:0}deg);flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
   </div>
   ${_cardioOpen?`<div style="padding:0 12px 12px;border-top:1px solid var(--sep);padding-top:10px;">
     <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
