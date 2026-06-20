@@ -168,7 +168,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 ::-webkit-scrollbar{display:none;}
 
 /* TYPOGRAPHY */
-.sec{font-family:var(--font-cond);font-size:15px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;}
+.sec{font-family:var(--font);font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;}
 .empty{text-align:center;padding:32px 20px;color:var(--t3);font-size:15px;line-height:1.7;}
 
 /* CARDS */
@@ -278,15 +278,15 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .lvl-ex{font-size:13px;color:var(--t3);margin-bottom:5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
 
 /* SESSIONS */
-.sess-card{background:var(--bg2);border-radius:var(--r);overflow:hidden;margin-bottom:10px;border:1px solid var(--sep);}
-.sess-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;}
-.sess-date{font-size:15px;font-weight:700;}
-.sess-vol{font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--red);}
-.sess-exs{padding:0 0 0 16px;font-size:15px;color:var(--t2);line-height:1.5;overflow:hidden;}
+.sess-card{background:var(--bg2);border-radius:16px;overflow:hidden;margin-bottom:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
+.sess-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 8px;}
+.sess-date{font-size:13px;font-weight:600;color:var(--t2);}
+.sess-vol{font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--red);}
+.sess-exs{padding:0 0 12px 16px;font-size:13px;color:var(--t3);line-height:1.5;overflow:hidden;}
 .synced-pill{display:inline-flex;align-items:center;gap:3px;font-size:13px;background:rgba(0,230,118,.12);color:var(--green);padding:2px 8px;border-radius:10px;margin-left:8px;font-weight:700;}
 
 /* CHART */
-.chart-box{background:var(--bg2);border-radius:var(--r);padding:16px;border:1px solid var(--sep);}
+.chart-box{background:var(--bg2);border-radius:16px;padding:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
 .chart-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
 .chart-title{font-family:var(--font-cond);font-size:17px;font-weight:800;}
 .badge-gold{background:rgba(255,214,0,.15);color:var(--gold);font-size:14px;font-weight:800;padding:4px 10px;border-radius:20px;letter-spacing:.05em;}
@@ -410,9 +410,9 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 
 
 
-.nu-tabs{display:flex;background:var(--bg3);border-radius:var(--r-sm);padding:3px;gap:3px;border:1px solid var(--sep);}
-.nu-tab{flex:1;padding:9px 4px;border:none;border-radius:7px;background:transparent;color:var(--t2);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;text-align:center;}
-.nu-tab.active{background:var(--bg2);color:var(--t1);box-shadow:0 2px 6px rgba(0,0,0,.3);}
+.nu-tabs{display:flex;background:var(--bg3);border-radius:13px;padding:4px;gap:3px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
+.nu-tab{flex:1;padding:10px 4px;border:none;border-radius:10px;background:transparent;color:var(--t3);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .2s;touch-action:manipulation;text-align:center;-webkit-tap-highlight-color:transparent;}
+.nu-tab.active{background:linear-gradient(135deg,#FF6A73,#EF3E57);color:#fff;box-shadow:0 4px 12px -4px rgba(239,62,87,.5);}
 .suppl-card{background:var(--bg2);border-radius:var(--r);border:1px solid var(--sep);overflow:hidden;margin-top:2px;}
 .suppl-header{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--sep);}
 .suppl-icon{font-size:22px;flex-shrink:0;}
@@ -954,9 +954,9 @@ html.ob-done #onboarding{display:none;}
 <!-- PROGRÈS -->
 <div class="screen" id="s-progress">
   <div class="nu-tabs">
-    <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">🏋️ Exercices</button>
-    <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">⚖️ Poids</button>
-    <button class="nu-tab" id="ptab-badges" onclick="switchProgTab('badges',this)">🏅 Badges</button>
+    <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
+    <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Poids</button>
+    <button class="nu-tab" id="ptab-badges" onclick="switchProgTab('badges',this)">Badges</button>
   </div>
 
   <!-- TAB: Exercices -->
@@ -990,9 +990,9 @@ html.ob-done #onboarding{display:none;}
 <!-- NUTRITION -->
 <div class="screen" id="s-nutrition">
   <div class="nu-tabs">
-    <button class="nu-tab active" id="ntab-macros" onclick="switchNuTab('macros',this)">📊 Macros</button>
-    <button class="nu-tab" id="ntab-suppl" onclick="switchNuTab('suppl',this)">💊 Suppléments</button>
-    <button class="nu-tab" id="ntab-rm" onclick="switchNuTab('rm',this)">🔢 1RM</button>
+    <button class="nu-tab active" id="ntab-macros" onclick="switchNuTab('macros',this)">Macros</button>
+    <button class="nu-tab" id="ntab-suppl" onclick="switchNuTab('suppl',this)">Suppléments</button>
+    <button class="nu-tab" id="ntab-rm" onclick="switchNuTab('rm',this)">1RM</button>
   </div>
 
   <!-- MACROS -->
@@ -4109,7 +4109,7 @@ function renderProgress(){
   // Chips BIG4
   const chips=document.getElementById('big4-chips');
   if(chips){
-    chips.innerHTML=BIG4.map(n=>`<button onclick="selectProgEx('${n}')" id="chip-${n.replace(/ /g,'_')}" style="flex:1;min-width:0;padding:9px 6px;border-radius:20px;font-size:13px;font-weight:800;font-family:var(--font);border:1.5px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;transition:all .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n}</button>`).join('');
+    chips.innerHTML=BIG4.map(n=>`<button onclick="selectProgEx('${n}')" id="chip-${n.replace(/ /g,'_')}" style="flex:1;min-width:0;padding:9px 6px;border-radius:14px;font-size:12px;font-weight:700;font-family:var(--font);border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t3);cursor:pointer;touch-action:manipulation;transition:all .18s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent;">${n}</button>`).join('');
   }
   // Dropdown tous les autres exercices
   const sel=document.getElementById('prog-sel');
@@ -4127,9 +4127,9 @@ function selectProgEx(name){
     const c=document.getElementById('chip-'+n.replace(/ /g,'_'));
     if(!c)return;
     const active=n===name;
-    c.style.background=active?'linear-gradient(135deg,#FF2D55,#FF4D6D)':'var(--bg3)';
-    c.style.color=active?'#fff':'var(--t2)';
-    c.style.borderColor=active?'transparent':'var(--sep)';
+    c.style.background=active?'linear-gradient(135deg,#FF6A73,#EF3E57)':'var(--bg3)';
+    c.style.color=active?'#fff':'var(--t3)';
+    c.style.boxShadow=active?'0 4px 12px -4px rgba(239,62,87,.5)':'inset 0 0 0 1px rgba(255,255,255,.08)';
   });
   // Réinitialiser le dropdown si on vient d'une chip
   const sel=document.getElementById('prog-sel');
