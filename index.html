@@ -841,6 +841,7 @@ html.ob-done #onboarding{display:none;}
     <div class="drawer-item" onclick="openDrawerContent('supplements')"><span class="di-ic">💊</span><span>Compléments alimentaires</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="exportData()"><span class="di-ic">📤</span><span>Exporter mes données</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="closeDrawer();goScreen('setup',document.getElementById('nb-setup'))"><span class="di-ic">👤</span><span>Mon profil</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="openDrawerContent('advancedProfile')"><span class="di-ic">🧬</span><span>Profil avancé</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="openDrawerContent('help')"><span class="di-ic">❓</span><span>Aide détaillée</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" style="border-bottom:none;" onclick="openDrawerContent('about')"><span class="di-ic">ℹ️</span><span>À propos</span><span class="di-arr">▶</span></div>
   </div>
@@ -5790,6 +5791,33 @@ const _DRAWER_CONTENT = {
         <div style="font-size:14px;color:var(--t3);"><strong style="color:var(--t2);">Dose :</strong> ${p.dose}</div>
       </div>`).join('')}
     </div>`
+  },
+  advancedProfile: {
+    title:'🧬 Profil avancé',
+    html:(()=>{
+      const sections=[
+        {id:'ap-injuries', ic:'🩹', title:'Blessures', content:''},
+        {id:'ap-health',   ic:'🏥', title:'Santé',     content:''},
+        {id:'ap-measures', ic:'📏', title:'Mensurations', content:''},
+        {id:'ap-diet',     ic:'🍽️', title:'Alimentation', content:''},
+        {id:'ap-recovery', ic:'😴', title:'Récupération', content:''},
+        {id:'ap-compet',   ic:'🏆', title:'Compétition', content:''},
+        {id:'ap-women',    ic:'♀️', title:'Spécifique femmes', content:''},
+      ];
+      return `<div style="display:flex;flex-direction:column;gap:8px;padding:0 2px 8px;">
+        ${sections.map(s=>`
+        <div class="combo-card" id="${s.id}">
+          <div class="combo-card-hdr" onclick="toggleComboCard('${s.id}')">
+            <span class="combo-card-icon">${s.ic}</span>
+            <span class="combo-card-title" style="font-size:16px;">${s.title}</span>
+            <span class="combo-card-chev" id="combo-chev-${s.id}">▾</span>
+          </div>
+          <div class="combo-card-body" id="combo-body-${s.id}" style="padding:14px 16px;color:var(--t3);font-size:14px;">
+            — à compléter —
+          </div>
+        </div>`).join('')}
+      </div>`;
+    })()
   },
   help: {
     title:'❓ Aide détaillée',
