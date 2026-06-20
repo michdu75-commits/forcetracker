@@ -408,19 +408,7 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .ptbtn.active{background:var(--blue);color:#fff;}
 .protein-bar-wrap{height:8px;background:var(--sep);border-radius:4px;overflow:hidden;margin:6px 0;}
 .protein-bar-fill{height:100%;border-radius:4px;transition:width .4s;}
-.ms-btn{flex-shrink:0;padding:7px 14px;border-radius:20px;border:none;font-size:13.5px;font-weight:600;font-family:var(--font);cursor:pointer;background:var(--bg3);color:var(--t2);transition:all .15s;touch-action:manipulation;}
-.ms-btn.active{background:rgba(255,45,85,.15);color:var(--red);box-shadow:inset 0 0 0 1.5px var(--red);}
-.adv-lbl{font-size:11.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px;margin-top:14px;}
-.adv-lbl:first-child{margin-top:0;}
-.adv-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;background:var(--bg3);outline:none;cursor:pointer;}
-.adv-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;border-radius:50%;background:var(--red);cursor:pointer;box-shadow:0 2px 8px rgba(255,45,85,.4);}
-.adv-note{width:100%;border:1px solid var(--sep);border-radius:10px;background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:14px;padding:10px 12px;resize:none;box-sizing:border-box;min-height:72px;line-height:1.5;}
-.adv-note:focus{outline:none;border-color:var(--red);}
-.adv-num{width:100%;border:1px solid var(--sep);border-radius:10px;background:var(--bg3);color:var(--t1);font-family:var(--font-cond);font-size:20px;font-weight:700;padding:10px 12px;box-sizing:border-box;text-align:center;}
-.adv-num:focus{outline:none;border-color:var(--red);}
-.adv-txt{width:100%;border:1px solid var(--sep);border-radius:10px;background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:15px;padding:10px 12px;box-sizing:border-box;}
-.adv-txt:focus{outline:none;border-color:var(--red);}
-.adv-date{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:15px;box-sizing:border-box;font-family:var(--font);}
+
 .combo-gate{background:var(--bg2);border-radius:var(--r);border:1px solid var(--sep);padding:22px 18px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;position:relative;overflow:hidden;}
 .combo-gate-blur{filter:blur(4px);pointer-events:none;opacity:.45;margin-bottom:4px;width:100%;}
 .combo-card{background:var(--bg2);border-radius:var(--r);border:1px solid var(--sep);overflow:hidden;}
@@ -854,7 +842,6 @@ html.ob-done #onboarding{display:none;}
     <div class="drawer-item" onclick="openDrawerContent('supplements')"><span class="di-ic">💊</span><span>Compléments alimentaires</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="exportData()"><span class="di-ic">📤</span><span>Exporter mes données</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="closeDrawer();goScreen('setup',document.getElementById('nb-setup'))"><span class="di-ic">👤</span><span>Mon profil</span><span class="di-arr">▶</span></div>
-    <div class="drawer-item" onclick="openDrawerContent('advancedProfile')"><span class="di-ic">🧬</span><span>Profil avancé</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="openDrawerContent('help')"><span class="di-ic">❓</span><span>Aide détaillée</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" style="border-bottom:none;" onclick="openDrawerContent('about')"><span class="di-ic">ℹ️</span><span>À propos</span><span class="di-arr">▶</span></div>
   </div>
@@ -2033,7 +2020,6 @@ function load(){
     S.badges=JSON.parse(localStorage.getItem('ft4_badges')||'{}');
     S.bday=localStorage.getItem('ft4_bday')||'';
     S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
-    S.advProfile=JSON.parse(localStorage.getItem('ft4_advp')||'null')||_defaultAdvProfile();
     // Migration one-time : exercices EN → FR
     if(!localStorage.getItem('ft4_exmig2')){
       const _REN={'Rack Pull':'Tirage en Rack (Rack Pull)','Good Morning':'Inclinaison Lombaire (Good Morning)',
@@ -2092,7 +2078,6 @@ function persist(){
     localStorage.setItem('ft4_badges',JSON.stringify(S.badges||{}));
     localStorage.setItem('ft4_bday',S.bday||'');
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
-    localStorage.setItem('ft4_advp',JSON.stringify(S.advProfile||{}));
   }catch(e){}
   _cloudSyncDebounced();
 }
@@ -5807,10 +5792,6 @@ const _DRAWER_CONTENT = {
       </div>`).join('')}
     </div>`
   },
-  advancedProfile: {
-    title:'🧬 Profil avancé',
-    html:()=>_renderAdvProfileHtml()
-  },
   help: {
     title:'❓ Aide détaillée',
     html:`<div style="display:flex;flex-direction:column;gap:10px;padding:0 2px 8px;">
@@ -5861,157 +5842,6 @@ function openDrawerContent(key){
 }
 function closeDrawerContent(){document.getElementById('ov-drawer-cnt').classList.remove('open');}
 
-// ─── PROFIL AVANCÉ ───────────────────────────────────────────
-function _defaultAdvProfile(){
-  return{injuries:[],injuriesNote:'',health:[],healthNote:'',
-    measures:{waist:null,hips:null,arms:null,thighs:null},
-    diet:{kcal:2000,protein:150,type:'standard',supplements:''},
-    recovery:{sleep:7,stress:5},
-    competition:{type:'none',date:'',weightCat:'',objective:''},
-    women:{status:'none',deliveryDate:''}};
-}
-
-function _renderAdvProfileHtml(){
-  if(!S.advProfile)S.advProfile=_defaultAdvProfile();
-  const ap=S.advProfile;
-  const sec=(id,ic,title,body)=>`
-    <div class="combo-card" id="${id}">
-      <div class="combo-card-hdr" onclick="toggleComboCard('${id}')">
-        <span class="combo-card-icon">${ic}</span>
-        <span class="combo-card-title" style="font-size:16px;">${title}</span>
-        <span class="combo-card-chev" id="combo-chev-${id}">▾</span>
-      </div>
-      <div class="combo-card-body" id="combo-body-${id}" style="padding:14px 16px;">${body}</div>
-    </div>`;
-  const msBtn=(cat,val,label)=>`<button class="ms-btn${(ap[cat]||[]).includes(val)?' active':''}" onclick="toggleAdvItem('${cat}','${val}')">${label}</button>`;
-
-  // 1. Blessures
-  const injHtml=`
-    <div class="adv-lbl">Zones blessées</div>
-    <div style="display:flex;flex-wrap:wrap;gap:7px;">
-      ${[['epaules','Épaules'],['coude','Coude'],['poignet','Poignet'],['dos','Dos'],['hanche','Hanche'],['genou','Genou'],['cheville','Cheville']].map(([k,l])=>msBtn('injuries',k,l)).join('')}
-    </div>
-    <div class="adv-lbl">Notes</div>
-    <textarea class="adv-note" placeholder="Décris tes blessures, zones sensibles, limitations..." oninput="saveAdvField('injuriesNote',this.value)">${ap.injuriesNote||''}</textarea>`;
-
-  // 2. Santé
-  const hlthHtml=`
-    <div class="adv-lbl">Conditions médicales</div>
-    <div style="display:flex;flex-wrap:wrap;gap:7px;">
-      ${[['diabeteT1','Diabète T1'],['diabeteT2','Diabète T2'],['hypertension','Hypertension'],['cardio','Maladie cardio'],['asthme','Asthme'],['osteoporose','Ostéoporose'],['epilepsie','Épilepsie']].map(([k,l])=>msBtn('health',k,l)).join('')}
-    </div>
-    <div class="adv-lbl">Notes</div>
-    <textarea class="adv-note" placeholder="Traitements, contre-indications, infos pour le coach..." oninput="saveAdvField('healthNote',this.value)">${ap.healthNote||''}</textarea>`;
-
-  // 3. Mensurations
-  const measHtml=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div><div class="adv-lbl">Tour de taille</div><div style="display:flex;align-items:center;gap:6px;"><input class="adv-num" type="number" inputmode="decimal" min="40" max="200" placeholder="—" value="${ap.measures?.waist||''}" oninput="saveAdvField('measures.waist',parseFloat(this.value)||null)"><span style="color:var(--t3);font-size:13px;">cm</span></div></div>
-      <div><div class="adv-lbl">Hanches</div><div style="display:flex;align-items:center;gap:6px;"><input class="adv-num" type="number" inputmode="decimal" min="40" max="200" placeholder="—" value="${ap.measures?.hips||''}" oninput="saveAdvField('measures.hips',parseFloat(this.value)||null)"><span style="color:var(--t3);font-size:13px;">cm</span></div></div>
-      <div><div class="adv-lbl">Bras</div><div style="display:flex;align-items:center;gap:6px;"><input class="adv-num" type="number" inputmode="decimal" min="10" max="80" placeholder="—" value="${ap.measures?.arms||''}" oninput="saveAdvField('measures.arms',parseFloat(this.value)||null)"><span style="color:var(--t3);font-size:13px;">cm</span></div></div>
-      <div><div class="adv-lbl">Cuisses</div><div style="display:flex;align-items:center;gap:6px;"><input class="adv-num" type="number" inputmode="decimal" min="20" max="120" placeholder="—" value="${ap.measures?.thighs||''}" oninput="saveAdvField('measures.thighs',parseFloat(this.value)||null)"><span style="color:var(--t3);font-size:13px;">cm</span></div></div>
-    </div>`;
-
-  // 4. Alimentation
-  const dk=ap.diet?.kcal||2000,dp=ap.diet?.protein||150;
-  const dietHtml=`
-    <div class="adv-lbl">Calories cibles — <span id="adv-kcal-val" style="color:var(--orange);font-weight:700;">${dk} kcal</span></div>
-    <input type="range" class="adv-slider" min="1200" max="5000" step="50" value="${dk}" oninput="document.getElementById('adv-kcal-val').textContent=this.value+' kcal';saveAdvField('diet.kcal',parseInt(this.value))">
-    <div class="adv-lbl">Protéines cibles — <span id="adv-prot-val" style="color:var(--green);font-weight:700;">${dp} g</span></div>
-    <input type="range" class="adv-slider" min="50" max="300" step="5" value="${dp}" oninput="document.getElementById('adv-prot-val').textContent=this.value+' g';saveAdvField('diet.protein',parseInt(this.value))">
-    <div class="adv-lbl">Régime alimentaire</div>
-    <div style="display:flex;flex-wrap:wrap;gap:7px;">
-      ${[['standard','Standard'],['vegetarien','Végétarien'],['vegan','Vegan'],['sansgluten','Sans gluten']].map(([k,l])=>`<button class="ms-btn${ap.diet?.type===k?' active':''}" onclick="saveAdvSingle('diet','type','${k}','saveAdvDietType')">${l}</button>`).join('')}
-    </div>
-    <div class="adv-lbl">Compléments actuels</div>
-    <textarea class="adv-note" placeholder="Créatine, whey, vitamines..." oninput="saveAdvField('diet.supplements',this.value)">${ap.diet?.supplements||''}</textarea>`;
-
-  // 5. Récupération
-  const rs=ap.recovery?.sleep||7,rst=ap.recovery?.stress||5;
-  const recHtml=`
-    <div class="adv-lbl">Sommeil cible — <span id="adv-sleep-val" style="color:var(--blue);font-weight:700;">${rs}h</span></div>
-    <input type="range" class="adv-slider" min="4" max="12" step="0.5" value="${rs}" oninput="document.getElementById('adv-sleep-val').textContent=this.value+'h';saveAdvField('recovery.sleep',parseFloat(this.value))">
-    <div class="adv-lbl">Niveau de stress quotidien — <span id="adv-stress-val" style="color:${rst>6?'var(--red)':rst>3?'var(--gold)':'var(--green)'};font-weight:700;">${rst}/10</span></div>
-    <input type="range" class="adv-slider" min="1" max="10" step="1" value="${rst}" oninput="const c=parseInt(this.value);document.getElementById('adv-stress-val').textContent=c+'/10';document.getElementById('adv-stress-val').style.color=c>6?'var(--red)':c>3?'var(--gold)':'var(--green)';saveAdvField('recovery.stress',c)">`;
-
-  // 6. Compétition
-  const ct=ap.competition?.type||'none';
-  const compHtml=`
-    <div class="adv-lbl">Discipline</div>
-    <div style="display:flex;flex-wrap:wrap;gap:7px;">
-      ${[['powerlifting','Powerlifting'],['bodybuilding','Bodybuilding'],['both','Les deux'],['none','Aucune']].map(([k,l])=>`<button class="ms-btn${ct===k?' active':''}" onclick="saveAdvSingle('competition','type','${k}','saveAdvCompType')">${l}</button>`).join('')}
-    </div>
-    <div class="adv-lbl">Date de compétition</div>
-    <input type="date" class="adv-date" value="${ap.competition?.date||''}" onchange="saveAdvField('competition.date',this.value)">
-    <div class="adv-lbl">Catégorie de poids</div>
-    <input type="text" class="adv-txt" placeholder="ex. −83 kg, +120 kg..." value="${ap.competition?.weightCat||''}" oninput="saveAdvField('competition.weightCat',this.value)">
-    <div class="adv-lbl">Objectif</div>
-    <textarea class="adv-note" placeholder="Podium, qualification, première compétition..." oninput="saveAdvField('competition.objective',this.value)">${ap.competition?.objective||''}</textarea>`;
-
-  // 7. Spécifique femmes
-  let womenHtml;
-  if(S.gender!=='F'){
-    womenHtml=`<div style="color:var(--t3);font-size:14px;text-align:center;padding:6px 0;">Disponible uniquement si le genre est défini sur <strong style="color:var(--t2);">Femme</strong> dans ton profil.</div>`;
-  } else {
-    const ws=ap.women?.status||'none';
-    womenHtml=`
-      <div class="adv-lbl">Situation</div>
-      <div style="display:flex;flex-wrap:wrap;gap:7px;">
-        ${[['enceinte','Enceinte'],['postpartum','Post-partum'],['none','Aucune']].map(([k,l])=>`<button class="ms-btn${ws===k?' active':''}" onclick="saveAdvWomenStatus('${k}')">${l}</button>`).join('')}
-      </div>
-      ${ws==='postpartum'?`<div class="adv-lbl">Date d'accouchement</div><input type="date" class="adv-date" value="${ap.women?.deliveryDate||''}" onchange="saveAdvField('women.deliveryDate',this.value)">` : ''}`;
-  }
-
-  return`<div style="display:flex;flex-direction:column;gap:8px;padding:0 2px 8px;">
-    ${sec('ap-injuries','🩹','Blessures',injHtml)}
-    ${sec('ap-health','🏥','Santé',hlthHtml)}
-    ${sec('ap-measures','📏','Mensurations',measHtml)}
-    ${sec('ap-diet','🍽️','Alimentation',dietHtml)}
-    ${sec('ap-recovery','😴','Récupération',recHtml)}
-    ${sec('ap-compet','🏆','Compétition',compHtml)}
-    ${sec('ap-women','♀️','Spécifique femmes',womenHtml)}
-  </div>`;
-}
-
-function toggleAdvItem(cat,val){
-  if(!S.advProfile)S.advProfile=_defaultAdvProfile();
-  const arr=S.advProfile[cat]||[];
-  const idx=arr.indexOf(val);
-  if(idx===-1)arr.push(val);else arr.splice(idx,1);
-  S.advProfile[cat]=arr;
-  persist();
-  document.querySelectorAll(`[onclick*="toggleAdvItem('${cat}'"]`).forEach(btn=>{
-    const m=btn.getAttribute('onclick').match(/'([^']+)'\)$/);
-    if(m)btn.classList.toggle('active',S.advProfile[cat].includes(m[1]));
-  });
-}
-
-function saveAdvField(path,val){
-  if(!S.advProfile)S.advProfile=_defaultAdvProfile();
-  const p=path.split('.');
-  if(p.length===1){S.advProfile[p[0]]=val;}
-  else{if(!S.advProfile[p[0]])S.advProfile[p[0]]={};S.advProfile[p[0]][p[1]]=val;}
-  persist();
-}
-
-function saveAdvSingle(cat,field,val,_fn){
-  if(!S.advProfile)S.advProfile=_defaultAdvProfile();
-  if(!S.advProfile[cat])S.advProfile[cat]={};
-  S.advProfile[cat][field]=val;
-  persist();
-  document.querySelectorAll(`[onclick*="${_fn}"]`).forEach(btn=>{
-    const m=btn.getAttribute('onclick').match(/'([^']+)'\)$/);
-    if(m)btn.classList.toggle('active',m[1]===val);
-  });
-}
-
-function saveAdvWomenStatus(val){
-  if(!S.advProfile)S.advProfile=_defaultAdvProfile();
-  if(!S.advProfile.women)S.advProfile.women={};
-  S.advProfile.women.status=val;
-  persist();
-  openDrawerContent('advancedProfile');
-}
 
 /* ── Swipe-down pour fermer (drawer / modales / lightbox) ── */
 function _addSwipeClose(el,closeFn,scrollEl,canClose,handleEl,threshold){
