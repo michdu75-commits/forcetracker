@@ -4708,15 +4708,20 @@ async function analyzeMorphoPhotos(){
     try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON: '+txt.substring(0,120));}
     if(data.status!=='ok'||!data.data)throw new Error(data.error||'Erreur analyse');
     const d=data.data;
+    applyMorphoResult(d);
     if(res){
-      res.innerHTML=`
-        <div style="font-weight:800;font-size:15px;margin-bottom:8px;">Résultat de l'analyse</div>
-        ${d.morphotype?`<div style="margin-bottom:6px;"><b>Morphotype :</b> ${d.morphotype}</div>`:''}
-        ${d.morpho?`<div style="margin-bottom:6px;"><b>Silhouette :</b> ${d.morpho}</div>`:''}
-        ${d.bodyComp?`<div style="margin-bottom:6px;"><b>Composition estimée :</b> ${d.bodyComp}</div>`:''}
-        ${d.strengths?`<div style="margin-bottom:6px;"><b>Points forts :</b> ${d.strengths}</div>`:''}
-        ${d.advice?`<div style="margin-bottom:10px;"><b>Conseils :</b> ${d.advice}</div>`:''}
-        <button class="btn btn-red" style="width:100%;padding:11px;" onclick="applyMorphoResult(${JSON.stringify(d).replace(/"/g,'&quot;')})">✅ Mettre à jour mon profil</button>`;
+      res.innerHTML=''
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+          +'<div style="width:28px;height:28px;border-radius:50%;background:rgba(52,211,153,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">'
+            +'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          +'</div>'
+          +'<span style="font-weight:700;font-size:14px;color:#5be3b4;">Profil morphologique mis à jour</span>'
+        +'</div>'
+        +(d.morphotype?'<div style="margin-bottom:6px;font-size:14px;"><b>Morphotype :</b> '+d.morphotype+'</div>':'')
+        +(d.morpho?'<div style="margin-bottom:6px;font-size:14px;"><b>Silhouette :</b> '+d.morpho+'</div>':'')
+        +(d.bodyComp?'<div style="margin-bottom:6px;font-size:14px;"><b>Composition estimée :</b> '+d.bodyComp+'</div>':'')
+        +(d.strengths?'<div style="margin-bottom:6px;font-size:14px;"><b>Points forts :</b> '+d.strengths+'</div>':'')
+        +(d.advice?'<div style="font-size:14px;"><b>Conseils :</b> '+d.advice+'</div>':'');
     }
   }catch(e){
     hideMorphoLoading();
@@ -4730,16 +4735,12 @@ async function analyzeMorphoPhotos(){
 
 function applyMorphoResult(d){
   const morphoData=S.gender==='F'?_MORPHO_DATA_F:_MORPHO_DATA_H;
-  // Try to match detected morphotype
   const mtMap={'ecto':'ecto','ectomorphe':'ecto','meso':'meso','mésomorphe':'meso','endo':'endo','endomorphe':'endo'};
   const moMap={...Object.fromEntries(Object.keys(morphoData).map(k=>[k.toLowerCase(),k]))};
   if(d.morphotype){const k=mtMap[(d.morphotype+'').toLowerCase().split(' ')[0]];if(k)S.morphotype=k;}
   if(d.morpho){const k=moMap[(d.morpho+'').toLowerCase().trim()];if(k)S.morpho=k;}
   persist();_cloudSyncDebounced();
-  closeMorphoAnalysis();
-  // Show in setup
   _renderMorphoSection();
-  toast('Profil morphologique mis à jour ! 🧬','success');
 }
 
 function _updateCoachMorphoBtn(){
