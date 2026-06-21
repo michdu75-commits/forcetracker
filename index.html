@@ -6030,7 +6030,8 @@ async function sendToCoach(customMsg) {
     }
   } catch(e) {
     hideTyping();
-    renderCoachMsg('coach', 'Erreur de connexion. Vérifie ta connexion internet et réessaie.');
+    console.error('[Coach] fetch error:', e.message, e);
+    renderCoachMsg('coach', 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
   }
 
   coachBusy = false;
