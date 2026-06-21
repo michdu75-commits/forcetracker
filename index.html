@@ -2751,12 +2751,10 @@ function renderExBlocks(){
           <div class="ex-meta">${doneSets.length}/${ex.sets.length} séries${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>
         </div>
         <div class="ex-hdr-btns">
-          <button class="btn-xs" onclick="toggleExGif(${ei},'${ex.name.replace(/'/g,"\\'")}')" title="Voir le mouvement">🎬</button>
           <button class="btn-xs" onclick="openTypeHelp()" title="Types de séries">ℹ️</button>
           <button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button>
         </div>
       </div>
-      <div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>
       <div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>
       ${rows}
       <div class="ex-foot">
