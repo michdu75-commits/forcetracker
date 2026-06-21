@@ -3528,16 +3528,20 @@ async function analyzeImportPhotos(){
   if(!_impPhotos.length){toast('Ajoute au moins une photo','error');return;}
   if(!S.url){toast('Connexion Apps Script requise','error');return;}
   impGoStep(3);
+  let _rawResp='';
   try{
     const r=await fetch(S.url,{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'importProgram',images:_impPhotos})});
-    const d=await r.json();
+    _rawResp=await r.text();
+    console.log('[Import] Réponse brute Apps Script :', _rawResp);
+    const d=JSON.parse(_rawResp);
     if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
     _impExtracted=d.data;
     _renderImpConfirm();
     impGoStep(4);
   }catch(e){
+    console.error('[Import] Erreur :', e.message, '| Réponse brute :', _rawResp);
     impGoStep(2);
     toast('Erreur analyse : '+e.message,'error');
   }

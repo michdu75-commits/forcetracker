@@ -341,23 +341,20 @@ function handleImportProgram_(body) {
     const images = body.images || [];
     if (!images.length) return json_({status:'error', error:'Aucun fichier reçu'});
 
-    const hasPdf = images.some(img => img.isPdf || img.type === 'application/pdf');
+    // Sonnet si plusieurs images (PDF multi-pages) ou texte, Haiku sinon
     const hasText = images.some(img => img.isText || img.type === 'text/plain');
-    const model = (hasPdf || hasText) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
+    const model = (images.length > 1 || hasText) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
 
     const userContent = images.map(img => {
-      if (img.isPdf || img.type === 'application/pdf') {
-        return {type:'document', source:{type:'base64', media_type:'application/pdf', data:img.data}};
-      }
       if (img.isText || img.type === 'text/plain') {
-        return {type:'text', text:'[Fichier Word : '+(img.name||'document')+']\n\n'+img.data};
+        return {type:'text', text:'[Fichier : '+(img.name||'document')+']\n\n'+img.data};
       }
       return {type:'image', source:{type:'base64', media_type:img.type||'image/jpeg', data:img.data}};
     });
 
     userContent.push({
       type: 'text',
-      text: 'Analyse ces images et extrait le programme d\'entraînement complet.\n\nRetourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, avec cette structure exacte :\n{"name":"nom du programme si visible sinon Programme","days":[{"label":"Jour 1 - Push","exercises":[{"name":"nom de l\'exercice","sets":4,"reps":10,"kg":0}]}]}\n\nRègles importantes :\n- Si les charges ne sont pas indiquées, mets kg:0\n- sets = nombre de séries (entier), reps = répétitions par série (entier)\n- Si c\'est "4x8" ou "4×8" → sets:4, reps:8\n- Si le programme est sur un seul jour, crée un seul élément dans days\n- Utilise les noms d\'exercices en français si possible\n- Le label du jour peut être "Jour 1", "Lundi", "Push A", etc. selon ce qui est écrit\n- Inclus TOUS les exercices visibles sur toutes les pages'
+      text: 'Analyse ces images et extrait le programme d\'entraînement complet.\n\nRetourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans balises markdown, avec cette structure exacte :\n{"name":"nom du programme si visible sinon Programme","days":[{"label":"Jour 1 - Push","exercises":[{"name":"nom de l\'exercice","sets":4,"reps":10,"kg":0}]}]}\n\nRègles importantes :\n- Si les charges ne sont pas indiquées, mets kg:0\n- sets = nombre de séries (entier), reps = répétitions par série (entier, prend la valeur haute si fourchette ex 8-12 → 12)\n- Si c\'est "4x8" ou "4×8" → sets:4, reps:8\n- Si le programme est sur un seul jour, crée un seul élément dans days\n- Utilise les noms d\'exercices en français si possible\n- Le label du jour peut être "Jour 1", "Lundi", "Push A", etc. selon ce qui est écrit\n- Inclus TOUS les exercices visibles sur toutes les pages\n- Réponds UNIQUEMENT avec le JSON, aucun autre texte'
     });
 
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
@@ -369,20 +366,32 @@ function handleImportProgram_(body) {
       },
       payload: JSON.stringify({
         model: model,
-        max_tokens: 2048,
+        max_tokens: 4096,
         messages: [{role: 'user', content: userContent}]
       }),
       muteHttpExceptions: true
     });
 
-    const result = JSON.parse(resp.getContentText());
-    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    const rawText = resp.getContentText();
+    console.log('[importProgram] Réponse brute Claude :', rawText.substring(0, 3000));
 
-    // Extraire le JSON de la réponse (Claude peut ajouter du texte autour)
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return json_({status:'error', error:'Le programme n\'a pas pu être extrait. Essaie avec une photo plus nette.'});
+    const result = JSON.parse(rawText);
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    console.log('[importProgram] Texte Claude :', text.substring(0, 2000));
+
+    // Extraire le JSON — supprimer les balises markdown si présentes
+    const stripped = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Extraction échouée. Réponse IA : '+text.substring(0,300)});
 
     const data = JSON.parse(match[0]);
+    // Normaliser reps/sets en entiers
+    if (data.days) data.days.forEach(day => (day.exercises||[]).forEach(ex => {
+      ex.sets = parseInt(ex.sets)||3;
+      const r = String(ex.reps||'10');
+      ex.reps = parseInt(r.split('-').pop()) || 10;
+      ex.kg = parseFloat(ex.kg)||0;
+    }));
     if (!data.days || !data.days.length) return json_({status:'error', error:'Aucun exercice trouvé dans les images.'});
 
     return json_({status:'ok', data});
