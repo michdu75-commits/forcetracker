@@ -116,6 +116,12 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .menu-row-ic{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px;}
 .menu-row-lbl{flex:1;font-size:15px;font-weight:600;color:var(--t1);}
 .menu-row-arr{color:var(--t3);flex-shrink:0;}
+/* MENU DRAWER */
+#menu-drawer-bd{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:499;opacity:0;pointer-events:none;transition:opacity 250ms cubic-bezier(.4,0,.2,1);}
+#menu-drawer-bd.open{opacity:1;pointer-events:all;}
+#menu-drawer{position:fixed;top:0;right:0;bottom:0;width:82%;max-width:360px;background:var(--bg);z-index:500;transform:translateX(110%);transition:transform 250ms cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;overflow:hidden;box-shadow:-12px 0 40px rgba(0,0,0,.45);}
+#menu-drawer.open{transform:translateX(0);}
+#menu-drawer-body{flex:1;overflow-y:auto;padding:0 16px 32px;display:flex;flex-direction:column;gap:8px;}
 .slq-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 6px;background:var(--bg3);border:1.5px solid transparent;border-radius:10px;cursor:pointer;font-size:11px;font-weight:600;color:var(--t2);font-family:var(--font);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:border-color .15s,background .15s,color .15s;}
 .slq-btn.active{border-color:var(--green);background:rgba(52,211,153,.1);color:#5be3b4;}
 .slq-bars{display:flex;gap:3px;align-items:flex-end;height:16px;}
@@ -1105,107 +1111,6 @@ html.ob-done #onboarding{display:none;}
 <!-- PROFIL -->
 <div class="screen" id="s-setup">
 
-  <!-- MENU HEADER -->
-  <div id="menu-hdr" style="padding:max(env(safe-area-inset-top),44px) 16px 0;flex-shrink:0;">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;">
-      <span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);">Menu</span>
-      <div style="display:flex;gap:8px;">
-        <button onclick="openShareModal()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Partager
-        </button>
-        <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-          Mode Jour
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MENU CONTENT (hub) -->
-  <div id="menu-hub" style="padding:0 16px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
-
-    <!-- PROFILE CARD -->
-    <div onclick="openProfil()" style="display:flex;align-items:center;gap:14px;background:var(--bg2);border-radius:18px;padding:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;-webkit-tap-highlight-color:transparent;" class="ft-press">
-      <div class="menu-avatar" id="menu-avatar">M</div>
-      <div style="flex:1;min-width:0;">
-        <div id="menu-name-lbl" style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Michel</div>
-        <div id="menu-profile-sub" style="font-size:13px;color:var(--t2);font-weight:500;">Profil non configuré</div>
-      </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>
-
-    <!-- PREMIUM BANNER -->
-    <div id="menu-premium-banner" onclick="goScreen('coach',document.getElementById('nb-coach'))" style="display:flex;align-items:center;gap:12px;background:rgba(234,179,8,.08);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 1px rgba(234,179,8,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;" class="ft-press">
-      <div style="width:34px;height:34px;border-radius:10px;background:rgba(234,179,8,.15);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⭐</div>
-      <div style="flex:1;">
-        <div style="font-size:14px;font-weight:700;color:#F2D472;margin-bottom:1px;">Coach IA Premium</div>
-        <div style="font-size:12px;color:rgba(234,179,8,.65);font-weight:500;">4,99€ / 2 mois · Questions illimitées</div>
-      </div>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2D472" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>
-
-    <!-- OUTILS -->
-    <div class="sec" style="margin-top:10px;">Outils</div>
-    <div style="background:var(--bg2);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">
-      <div class="menu-row" onclick="openDrawerContent('anatomy')">
-        <div class="menu-row-ic" style="background:rgba(255,106,115,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6A73" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
-        <span class="menu-row-lbl">Anatomie du corps humain</span>
-        <svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-      <div class="menu-row" onclick="openDrawerContent('proteins')">
-        <div class="menu-row-ic" style="background:rgba(52,211,153,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H2v15h7c1.7 0 3 1.3 3 3V7c0-2.2-1.8-4-4-4zm8 0h6v15h-7c-1.7 0-3 1.3-3 3V7c0-2.2 1.8-4 4-4z"/></svg></div>
-        <span class="menu-row-lbl">Protéines en poudre</span>
-        <svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-      <div class="menu-row" onclick="openDrawerContent('supplements')">
-        <div class="menu-row-ic" style="background:rgba(168,85,247,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></div>
-        <span class="menu-row-lbl">Compléments alimentaires</span>
-        <svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-      <div class="menu-row" onclick="openDrawerContent('rm1calc')">
-        <div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div>
-        <span class="menu-row-lbl">Calculateur 1RM</span>
-        <svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    </div>
-
-    <!-- COMPTE -->
-    <div class="sec" style="margin-top:10px;">Compte</div>
-    <div style="background:var(--bg2);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">
-      <div class="menu-row" onclick="openProfil()">
-        <div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-        <span class="menu-row-lbl">Mon profil</span>
-        <svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-      <div class="menu-row" onclick="exportData()">
-        <div class="menu-row-ic" style="background:rgba(234,179,8,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-        <span class="menu-row-lbl">Exporter mes données</span>
-        <svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-      <div class="menu-row" onclick="openDrawerContent('help')">
-        <div class="menu-row-ic" style="background:rgba(52,211,153,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
-        <span class="menu-row-lbl">Aide détaillée</span>
-        <svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-      <div class="menu-row" onclick="openDrawerContent('about')">
-        <div class="menu-row-ic" style="background:rgba(255,255,255,.06);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-        <span class="menu-row-lbl">À propos</span>
-        <svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    </div>
-
-    <!-- FOOTER -->
-    <div style="text-align:center;padding:12px 0 18px;font-size:12px;color:var(--t3);line-height:1.8;font-weight:500;">
-      Force Tracker v2.8 · 2026<br>
-      <a href="mailto:michdu75@gmail.com" style="color:var(--t3);text-decoration:none;">michdu75@gmail.com</a>
-    </div>
-
-    <!-- SÉPARATEUR VERS FORMULAIRE -->
-    <div style="height:1px;background:rgba(255,255,255,.06);margin-bottom:4px;"></div>
-
-  </div>
-
   <!-- TABS (mode admin uniquement) -->
   <div class="setup-tabs" id="setup-tabs-bar" style="display:none;flex-shrink:0;padding:0 16px;">
     <button class="setup-tab active" id="stab-profil" onclick="switchSetupTab('profil',this)">👤 Profil</button>
@@ -1227,8 +1132,8 @@ html.ob-done #onboarding{display:none;}
     <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
   </div>
 
-  <!-- PROFIL (vue séparée, visible uniquement via openProfil()) -->
-  <div id="setup-profil" style="display:none;flex-direction:column;gap:12px;padding:0 16px;">
+  <!-- PROFIL -->
+  <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;padding:0 16px;">
     <!-- EN-TÊTE RETOUR -->
     <div style="padding:max(env(safe-area-inset-top),44px) 0 4px;display:flex;align-items:center;gap:10px;">
       <button onclick="closeProfil()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:var(--bg2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);border:none;color:var(--t1);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">
@@ -1525,10 +1430,72 @@ html.ob-done #onboarding{display:none;}
   <button class="nb" id="nb-coach" onclick="goScreen('coach',this)">
     <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Coach
   </button>
-  <button class="nb" id="nb-setup" onclick="goScreen('setup',this)">
+  <button class="nb" id="nb-setup" onclick="toggleMenuDrawer()">
     <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>Menu
   </button>
 </nav>
+
+<!-- MENU DRAWER -->
+<div id="menu-drawer-bd" onclick="closeMenuDrawer()"></div>
+<div id="menu-drawer">
+  <!-- Header -->
+  <div style="padding:max(env(safe-area-inset-top),44px) 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.05);">
+    <span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);">Menu</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="openShareModal()" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Partager
+      </button>
+      <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        Mode Jour
+      </button>
+      <button onclick="closeMenuDrawer()" style="width:32px;height:32px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);border:none;color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+    </div>
+  </div>
+  <!-- Body -->
+  <div id="menu-drawer-body">
+    <!-- PROFILE CARD -->
+    <div onclick="closeMenuDrawer();openProfil()" style="display:flex;align-items:center;gap:14px;background:var(--bg2);border-radius:18px;padding:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;-webkit-tap-highlight-color:transparent;margin-top:12px;" class="ft-press">
+      <div class="menu-avatar" id="menu-avatar">M</div>
+      <div style="flex:1;min-width:0;">
+        <div id="menu-name-lbl" style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Michel</div>
+        <div id="menu-profile-sub" style="font-size:13px;color:var(--t2);font-weight:500;">Profil non configuré</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <!-- PREMIUM BANNER -->
+    <div id="menu-premium-banner" onclick="closeMenuDrawer();goScreen('coach',document.getElementById('nb-coach'))" style="display:flex;align-items:center;gap:12px;background:rgba(234,179,8,.08);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 1px rgba(234,179,8,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;" class="ft-press">
+      <div style="width:34px;height:34px;border-radius:10px;background:rgba(234,179,8,.15);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⭐</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:700;color:#F2D472;margin-bottom:1px;">Coach IA Premium</div>
+        <div style="font-size:12px;color:rgba(234,179,8,.65);font-weight:500;">4,99€ / 2 mois · Questions illimitées</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2D472" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <!-- OUTILS -->
+    <div class="sec" style="margin-top:10px;">Outils</div>
+    <div style="background:var(--bg2);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">
+      <div class="menu-row" onclick="openDrawerContent('anatomy')"><div class="menu-row-ic" style="background:rgba(255,106,115,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6A73" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><span class="menu-row-lbl">Anatomie du corps humain</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('proteins')"><div class="menu-row-ic" style="background:rgba(52,211,153,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H2v15h7c1.7 0 3 1.3 3 3V7c0-2.2-1.8-4-4-4zm8 0h6v15h-7c-1.7 0-3 1.3-3 3V7c0-2.2 1.8-4 4-4z"/></svg></div><span class="menu-row-lbl">Protéines en poudre</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('supplements')"><div class="menu-row-ic" style="background:rgba(168,85,247,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></div><span class="menu-row-lbl">Compléments alimentaires</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('rm1calc')"><div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div><span class="menu-row-lbl">Calculateur 1RM</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+    <!-- COMPTE -->
+    <div class="sec" style="margin-top:10px;">Compte</div>
+    <div style="background:var(--bg2);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">
+      <div class="menu-row" onclick="closeMenuDrawer();openProfil()"><div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><span class="menu-row-lbl">Mon profil</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="exportData()"><div class="menu-row-ic" style="background:rgba(234,179,8,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><span class="menu-row-lbl">Exporter mes données</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('help')"><div class="menu-row-ic" style="background:rgba(52,211,153,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span class="menu-row-lbl">Aide détaillée</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('about')"><div class="menu-row-ic" style="background:rgba(255,255,255,.06);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><span class="menu-row-lbl">À propos</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+    <!-- FOOTER -->
+    <div style="text-align:center;padding:16px 0 8px;font-size:12px;color:var(--t3);line-height:1.8;font-weight:500;">
+      Force Tracker v2.8 · 2026<br>
+      <a href="mailto:michdu75@gmail.com" style="color:var(--t3);text-decoration:none;">michdu75@gmail.com</a>
+    </div>
+  </div>
+</div>
 
 <!-- Bouton aide contextuel -->
 <button class="help-fab" id="help-fab" onclick="showHelp()">?</button>
@@ -4873,33 +4840,48 @@ function setGoal(g){
   if(el)el.textContent=GOAL_DESCS[g]||'';
 }
 
-function _resetMenuView(){
-  const hub=document.getElementById('menu-hub');
-  const hdr=document.getElementById('menu-hdr');
-  const prof=document.getElementById('setup-profil');
-  const tabs=document.getElementById('setup-tabs-bar');
-  const cx=document.getElementById('setup-connexion');
-  if(hub)hub.style.display='flex';
-  if(hdr)hdr.style.display='';
-  if(prof){prof.style.display='none';}
-  if(tabs)tabs.style.display='none';
-  if(cx)cx.style.display='none';
-  const scr=document.getElementById('s-setup');
-  if(scr)scr.scrollTop=0;
+let _prevScreen='home';
+function openMenuDrawer(){
+  document.getElementById('menu-drawer').classList.add('open');
+  document.getElementById('menu-drawer-bd').classList.add('open');
+  document.getElementById('nb-setup').classList.add('active');
+  // Mettre à jour la carte profil dans le drawer
+  const _mn=document.getElementById('menu-name-lbl');
+  const _ms=document.getElementById('menu-profile-sub');
+  const _ma=document.getElementById('menu-avatar');
+  const _mpb=document.getElementById('menu-premium-banner');
+  if(_mn)_mn.textContent=S.name||'Athlète';
+  if(_ma)_ma.textContent=(S.name||'A').charAt(0).toUpperCase();
+  if(_ms){
+    const GOAL_SHORT={muscle:'💪 Prise de muscle',perte:'🔥 Perte de poids',force:'🏋️ Force max',equilibre:'⚖️ Rééquilibrage',endurance:'🏃 Endurance'};
+    const parts=[];
+    if(S.goal)parts.push(GOAL_SHORT[S.goal]||'');
+    if(S.bw)parts.push(S.bw+' kg');
+    if(S.height)parts.push(S.height+' cm');
+    _ms.textContent=parts.length?parts.join(' · '):'Profil non configuré';
+  }
+  if(_mpb)_mpb.style.display=S.premium?'none':'flex';
 }
+function closeMenuDrawer(){
+  document.getElementById('menu-drawer').classList.remove('open');
+  document.getElementById('menu-drawer-bd').classList.remove('open');
+  if(_curScreen!=='setup')document.getElementById('nb-setup').classList.remove('active');
+}
+function toggleMenuDrawer(){
+  const d=document.getElementById('menu-drawer');
+  if(d.classList.contains('open'))closeMenuDrawer();
+  else openMenuDrawer();
+}
+function _resetMenuView(){}
 function openProfil(){
-  const hub=document.getElementById('menu-hub');
-  const hdr=document.getElementById('menu-hdr');
-  const prof=document.getElementById('setup-profil');
-  if(hub)hub.style.display='none';
-  if(hdr)hdr.style.display='none';
-  if(prof){prof.style.display='flex';prof.style.flexDirection='column';prof.style.gap='12px';}
+  closeMenuDrawer();
+  _prevScreen=_curScreen||'home';
+  goScreen('setup',null);
   const scr=document.getElementById('s-setup');
   if(scr)scr.scrollTop=0;
-  renderSetup();
 }
 function closeProfil(){
-  _resetMenuView();
+  goScreen(_prevScreen||'home',document.getElementById('nb-'+(_prevScreen||'home')));
 }
 function renderSetup(){
   // Update menu profile card
@@ -7076,17 +7058,14 @@ function onLogoTap(){
 }
 
 function switchSetupTab(tab,btn){
-  const hub=document.getElementById('menu-hub');
-  const hdr=document.getElementById('menu-hdr');
   const cx=document.getElementById('setup-connexion');
   const pr=document.getElementById('setup-profil');
   if(tab==='connexion'){
-    if(hub)hub.style.display='none';
-    if(hdr)hdr.style.display='none';
     if(pr)pr.style.display='none';
     if(cx){cx.style.display='flex';cx.style.flexDirection='column';cx.style.gap='12px';}
   } else {
-    openProfil();
+    if(cx)cx.style.display='none';
+    if(pr){pr.style.display='flex';pr.style.flexDirection='column';}
   }
   document.querySelectorAll('.setup-tab').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
