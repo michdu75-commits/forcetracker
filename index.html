@@ -271,6 +271,11 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .tbtn.E{border-color:rgba(255,45,85,.5);color:var(--red);background:rgba(255,45,85,.1);}
 .tbtn.D{border-color:rgba(255,214,0,.5);color:var(--gold);background:rgba(255,214,0,.1);}
 .tbtn.M{border-color:rgba(255,109,0,.5);color:var(--orange);background:rgba(255,109,0,.1);}
+.ss-group{border-left:3px solid var(--orange);border-radius:var(--r);overflow:hidden;background:var(--bg2);border:1px solid rgba(255,109,0,.25);margin-bottom:10px;}
+.ss-grp-hdr{display:flex;align-items:center;justify-content:space-between;padding:7px 12px 6px;background:rgba(255,109,0,.06);border-bottom:1px solid rgba(255,109,0,.12);}
+.ss-group .ex-block{border:none;border-radius:0;background:transparent;}
+.ss-group .ex-block.ss-active{background:rgba(255,109,0,.05);}
+.ex-block.ss-selected{box-shadow:inset 0 0 0 2px var(--orange);}
 .chk{width:30px;height:30px;border-radius:50%;border:2px solid var(--sep);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-family:var(--font);padding:0;transition:all .2s;touch-action:manipulation;}
 .chk.done{background:var(--green);border-color:var(--green);color:#000;box-shadow:0 2px 8px rgba(0,230,118,.3);}
 .ex-foot{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--sep);}
@@ -2694,6 +2699,106 @@ function renderLog(){
   renderCardioBlock();
   renderExBlocks();
 }
+// ─── SUPERSETS ────────────────────────────────────────────────
+function _ssMembers(gid){return S.wkt.exs.map((e,i)=>({e,i})).filter(({e})=>e.group===gid).sort((a,b)=>a.i-b.i);}
+function _nextInGroup(ei){const ex=S.wkt.exs[ei];if(!ex||!ex.group)return null;const m=_ssMembers(ex.group);const pos=m.findIndex(({i})=>i===ei);return(pos>=0&&pos<m.length-1)?m[pos+1].i:null;}
+function toggleGroupMode(){_groupMode=!_groupMode;_selectedGroupExs.clear();renderExBlocks();}
+function toggleGroupSelect(ei){if(!_groupMode)return;if(_selectedGroupExs.has(ei))_selectedGroupExs.delete(ei);else _selectedGroupExs.add(ei);renderExBlocks();}
+function createSuperset(){
+  if(_selectedGroupExs.size<2)return;
+  const gid='ss'+Date.now();
+  _selectedGroupExs.forEach(ei=>{S.wkt.exs[ei].group=gid;});
+  _groupMode=false;_selectedGroupExs.clear();
+  persist();renderExBlocks();toast('Supersérie créée ⚡','success');
+}
+function dissolveGroup(gid){
+  S.wkt.exs.forEach(ex=>{if(ex.group===gid)delete ex.group;});
+  persist();renderExBlocks();toast('Groupe dissous','info');
+}
+function _renderGroupHtml(gid,members){
+  const count=members.length;
+  const label=count===2?'Supersérie':count===3?'Tri-set':'Circuit ('+count+')';
+  const body=members.map(({e,i},pos)=>{
+    const conn=pos<members.length-1
+      ?`<div style="height:12px;display:flex;align-items:center;padding:0 20px;"><div style="flex:1;border-top:1px dashed rgba(255,109,0,.3);"></div><span style="margin:0 6px;font-size:11px;color:rgba(255,109,0,.5);line-height:1;">↓</span><div style="flex:1;border-top:1px dashed rgba(255,109,0,.3);"></div></div>`:`` ;
+    return _renderExHtml(i,true)+conn;
+  }).join('');
+  return`<div class="ss-group"><div class="ss-grp-hdr"><span style="font-size:11px;font-weight:800;color:var(--orange);letter-spacing:.05em;text-transform:uppercase;">⚡ ${label}</span><button class="btn-xs" style="color:var(--t3);font-size:11px;" onclick="dissolveGroup('${gid}')">Dégrouper</button></div><div style="padding:6px 6px 6px;">${body}</div></div>`;
+}
+function _renderExHtml(ei,inGroup){
+  const ex=S.wkt.exs[ei];
+  const exCount=S.wkt.exs.length;
+  const prev=getPrev(ex.name);
+  const doneSets=ex.sets.filter(s=>s.done);
+  const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
+  const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
+  // En mode sélection, tout apparaît replié pour faciliter les taps
+  const isExpanded=!_groupMode&&(ei===_expandedEx||exCount===1);
+  const isSelected=_groupMode&&_selectedGroupExs.has(ei);
+  const nextEi=ex.group?_nextInGroup(ei):null;
+  const nextExName=nextEi!==null?S.wkt.exs[nextEi].name:null;
+
+  // Vue réduite
+  if(!isExpanded){
+    const summary=`${doneSets.length}/${ex.sets.length} série${ex.sets.length>1?'s':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
+    const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':(!_groupMode?'opacity:.75':'');
+    const clickAttr=_groupMode
+      ?` onclick="toggleGroupSelect(${ei})" style="cursor:pointer;${selStyle}"`
+      :` onclick="toggleExBlock(${ei})" style="cursor:pointer;${selStyle}"`;
+    return`<div class="ex-block${inGroup?(isExpanded?' ss-active':' ss-inactive'):''}" id="ex-block-${ei}"${clickAttr}>`
+      +`<div class="ex-hdr" style="pointer-events:${_groupMode||inGroup?'none':'all'}">`
+      +`<div style="flex:1;min-width:0;">`
+      +`<div class="ex-name" style="font-size:14px">${ex.name} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
+      +`<div class="ex-meta">${summary||'0 série'}</div>`
+      +`</div>`
+      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button></div>`:'')
+      +`</div></div>`;
+  }
+
+  // Vue développée
+  const _exyt=EX_YT[ex.name];const hasLocalGif=!!(_exyt&&_exyt.img);
+  const rows=ex.sets.map((set,si)=>{
+    const p=prev[si]||prev[Math.max(0,prev.length-1)];
+    const prevRM=p&&p.kg&&p.reps?fmt(bz(p.kg,p.reps)):null;
+    const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
+    return`<div id="sr-wrap-${ei}-${si}">`
+      +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
+      +`<div class="snum">${si+1}</div>`
+      +`<div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>${prevRM?`<div style="font-size:10px">~${prevRM}kg</div>`:''}`:'<div>—</div>'}</div>`
+      +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
+      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
+      +`<button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}" id="tbtn-${ei}-${si}"><span>${set.type}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
+      +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
+      +`</div></div>`;
+  }).join('');
+
+  // Bandeau "Suite" pour les exos dans un groupe
+  const suiteBanner=ex.group
+    ?`<div style="display:flex;align-items:center;gap:6px;padding:5px 10px 2px;font-size:12px;font-weight:700;color:var(--orange);">`
+     +`<span>Suite :</span>`
+     +(nextExName?`<span>→ ${nextExName.length>22?nextExName.slice(0,20)+'…':nextExName}</span>`:`<span>→ Repos ⏱️</span>`)
+     +`</div>`:`` ;
+
+  return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
+    +`<div class="ex-hdr">`
+    +`${hasLocalGif?'<img src="'+_exyt.img+'" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
+    +`<div style="flex:1;min-width:0;">`
+    +`<div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
+    +`${ex.note?`<div style="font-size:11px;color:var(--gold);margin:1px 0 3px;font-style:italic;line-height:1.3;">📋 ${ex.note}</div>`:''}`
+    +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} séries${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
+    +`</div>`
+    +`<div class="ex-hdr-btns">`
+    +`${hasLocalGif?'<button class="btn-xs" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\')">🎬</button>':''}`
+    +`<button class="btn-xs" onclick="openTypeHelp()">ℹ️</button>`
+    +`<button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button>`
+    +`</div></div>`
+    +`<div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>`
+    +`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>`
+    +rows
+    +suiteBanner
+    +`<div class="ex-foot"><button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="addSet(${ei})">+ Série</button>${ex.sets.length>1?`<button class="btn-xs" onclick="rmLastSet(${ei})" style="color:var(--t3);">−</button>`:''}</div>`
+    +`</div>`;
+}
 function renderExBlocks(){
   const c=document.getElementById('wkt-exs');
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
@@ -2701,71 +2806,38 @@ function renderExBlocks(){
   }
   const exCount=S.wkt.exs.length;
   if(_expandedEx===null||_expandedEx>=exCount)_expandedEx=exCount-1;
-  c.innerHTML=S.wkt.exs.map((ex,ei)=>{
-    const prev=getPrev(ex.name);
-    const doneSets=ex.sets.filter(s=>s.done);
-    const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
-    const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
-    const pr=S.prs[ex.name];
-    const isExpanded=ei===_expandedEx||exCount===1;
 
-    // Vue réduite
-    if(!isExpanded){
-      const summary=`${doneSets.length}/${ex.sets.length} série${ex.sets.length>1?'s':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
-      return`<div class="ex-block" id="ex-block-${ei}" onclick="toggleExBlock(${ei})" style="cursor:pointer;opacity:.75">
-        <div class="ex-hdr" style="pointer-events:none">
-          <div>
-            <div class="ex-name" style="font-size:14px">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▸</span></div>
-            <div class="ex-meta">${summary||'0 série'}</div>
-          </div>
-          <div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">
-            <button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button>
-          </div>
-        </div>
-      </div>`;
-    }
+  // Construire l'ordre de rendu (groupes = un seul bloc)
+  const seen=new Set();
+  const parts=[];
+  S.wkt.exs.forEach((ex,ei)=>{
+    if(seen.has(ei))return;
+    if(ex.group){
+      const members=_ssMembers(ex.group);
+      members.forEach(({i})=>seen.add(i));
+      parts.push({type:'group',gid:ex.group,members});
+    }else{seen.add(ei);parts.push({type:'single',ei});}
+  });
 
-    const _exyt=EX_YT[ex.name];const hasLocalGif=!!(_exyt&&_exyt.img);
-    const rows=ex.sets.map((set,si)=>{
-      const p=prev[si]||prev[Math.max(0,prev.length-1)];
-      const prevRM=p&&p.kg&&p.reps?fmt(bz(p.kg,p.reps)):null;
-      const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
-      return`<div id="sr-wrap-${ei}-${si}">
-        <div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">
-          <div class="snum">${si+1}</div>
-          <div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>${prevRM?`<div style="font-size:10px">~${prevRM}kg</div>`:''}`:'<div>—</div>'}</div>
-          <input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">
-          <input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">
-          <button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}" id="tbtn-${ei}-${si}">
-            <span>${set.type}</span>
-            <span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span>
-          </button>
-          <button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>
-        </div>
-      </div>`;
-    }).join('');
-    return`<div class="ex-block" id="ex-block-${ei}">
-      <div class="ex-hdr">
-        ${hasLocalGif?'<img src="'+_exyt.img+'" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}
-        <div style="flex:1;min-width:0;">
-          <div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>
-          ${ex.note?`<div style="font-size:11px;color:var(--gold);margin:1px 0 3px;font-style:italic;line-height:1.3;">📋 ${ex.note}</div>`:''}
-          <div class="ex-meta">${doneSets.length}/${ex.sets.length} séries${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>
-        </div>
-        <div class="ex-hdr-btns">
-          ${hasLocalGif?'<button class="btn-xs" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\')" title="Voir le mouvement">🎬</button>':''}
-          <button class="btn-xs" onclick="openTypeHelp()" title="Types de séries">ℹ️</button>
-          <button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button>
-        </div>
-      </div>
-      <div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>
-      <div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>
-      ${rows}
-      <div class="ex-foot">
-        <button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="addSet(${ei})">+ Série</button>
-        ${ex.sets.length>1?`<button class="btn-xs" onclick="rmLastSet(${ei})" style="color:var(--t3);">−</button>`:''}
-      </div>
-    </div>`;
+  // Barre de contrôle
+  const selCount=_selectedGroupExs.size;
+  let topBar='';
+  if(_groupMode){
+    topBar=`<div style="display:flex;gap:8px;padding:0 0 10px;">`
+      +`<button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="toggleGroupMode()">Annuler</button>`
+      +(selCount>=2
+        ?`<button class="btn btn-sm ft-press" style="flex:2;background:var(--orange);border-color:var(--orange);color:#fff;" onclick="createSuperset()">⚡ Lier en supersérie (${selCount})</button>`
+        :`<button class="btn btn-bg2 btn-sm" style="flex:2;opacity:.45;" disabled>Sélectionne 2+ exos</button>`)
+      +`</div>`;
+  } else if(exCount>=2){
+    topBar=`<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">`
+      +`<button class="btn-xs" style="color:var(--orange);border-color:rgba(255,109,0,.4);font-size:12px;padding:4px 10px;" onclick="toggleGroupMode()">⚡ Grouper</button>`
+      +`</div>`;
+  }
+
+  c.innerHTML=topBar+parts.map(part=>{
+    if(part.type==='single') return _renderExHtml(part.ei,false);
+    return _renderGroupHtml(part.gid,part.members);
   }).join('');
   renderLogFinish();
 }
@@ -2795,6 +2867,15 @@ function toggleSet(ei,si){
     const mb=document.getElementById('rest-btn-minus');const pb=document.getElementById('rest-btn-plus');
     if(mb)mb.textContent=`−${_restStep}s`;if(pb)pb.textContent=`+${_restStep}s`;
     const sec=restByType[set.type]||defForEx;
+    // Supersérie : passe à l'exo suivant sans lancer le repos
+    const _ssNext=_nextInGroup(ei);
+    if(_ssNext!==null){
+      _expandedEx=_ssNext;
+      if(navigator.vibrate)navigator.vibrate([30]);
+      renderExBlocks();
+      setTimeout(()=>{const el=document.getElementById('ex-block-'+_ssNext);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},60);
+      return;
+    }
     startRest(sec);
     if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
     if(navigator.vibrate)navigator.vibrate([50]);
@@ -2848,12 +2929,15 @@ function rmLastSet(ei){const ex=S.wkt.exs[ei];if(ex.sets.length>1){ex.sets.pop()
 function rmEx(ei){
   const name=S.wkt.exs[ei]&&S.wkt.exs[ei].name||'cet exercice';
   showConfirm('Supprimer l\'exercice ?',`"${name}" et toutes ses séries seront supprimés de la séance.`,()=>{
+    const gid=S.wkt.exs[ei]&&S.wkt.exs[ei].group;
+    if(gid){const rem=S.wkt.exs.filter((e,i)=>i!==ei&&e.group===gid);if(rem.length<=1)rem.forEach(e=>delete e.group);}
     S.wkt.exs.splice(ei,1);
     if(_expandedEx>=S.wkt.exs.length)_expandedEx=Math.max(0,S.wkt.exs.length-1);
     persist();renderExBlocks();
   });
 }
 let _expandedEx=null;
+let _groupMode=false;let _selectedGroupExs=new Set();
 let _exPickerMode='workout';
 let _editProgIdx=-1,_editProgData=null,_editDayIdx=0;
 function addExercise(name){
