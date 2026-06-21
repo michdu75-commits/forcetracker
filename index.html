@@ -294,23 +294,23 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 
 /* NUTRITION */
 .phase-row{display:flex;gap:10px;}
-.phase-btn{flex:1;padding:14px;border:1.5px solid var(--sep);border-radius:var(--r-sm);background:var(--bg3);color:var(--t2);font-size:15px;font-weight:700;font-family:var(--font);cursor:pointer;text-align:center;transition:all .2s;touch-action:manipulation;}
-.phase-btn.charge.active{border-color:rgba(41,121,255,.6);background:rgba(41,121,255,.12);color:var(--blue);box-shadow:0 4px 16px rgba(41,121,255,.2);}
-.phase-btn.decharge.active{border-color:rgba(255,109,0,.6);background:rgba(255,109,0,.12);color:var(--orange);box-shadow:0 4px 16px rgba(255,109,0,.2);}
+.phase-btn{flex:1;padding:13px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.08);border:none;border-radius:12px;background:var(--bg3);color:var(--t2);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;text-align:center;transition:all .2s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+.phase-btn.charge.active{box-shadow:inset 0 0 0 1.5px rgba(91,168,255,.5);background:rgba(91,168,255,.1);color:var(--blue);}
+.phase-btn.decharge.active{box-shadow:inset 0 0 0 1.5px rgba(255,138,114,.5);background:rgba(255,138,114,.1);color:var(--orange);}
 .macro-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-.macro-box{background:var(--bg2);border-radius:var(--r-sm);padding:14px;text-align:center;border:1px solid var(--sep);position:relative;overflow:hidden;}
-.macro-lbl{font-size:13px;color:var(--t2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.1em;font-weight:700;}
-.macro-val{font-family:var(--font-cond);font-size:28px;font-weight:900;letter-spacing:-.5px;}
-.macro-unit{font-size:14px;color:var(--t2);font-weight:600;}
-.macro-bar{height:4px;border-radius:2px;margin-top:8px;opacity:.7;}
+.macro-box{background:var(--bg2);border-radius:14px;padding:14px;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);position:relative;overflow:hidden;}
+.macro-lbl{font-size:11px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.12em;font-weight:700;}
+.macro-val{font-family:var(--font-cond);font-size:26px;font-weight:900;letter-spacing:-.5px;}
+.macro-unit{font-size:12px;color:var(--t3);font-weight:600;}
+.macro-bar{height:3px;border-radius:2px;margin-top:8px;opacity:.6;}
 .meal-row{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--sep);}
 .meal-row:last-child{border-bottom:none;}
 .meal-name{font-size:15px;font-weight:700;margin-bottom:2px;}
 .meal-detail{font-size:13px;color:var(--t2);line-height:1.5;}
 .meal-kcal{font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--red);white-space:nowrap;margin-left:10px;}
-.nu-stat{background:var(--bg3);border-radius:var(--r-sm);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--sep);}
-.nu-stat-lbl{font-size:15px;color:var(--t2);font-weight:600;}
-.nu-stat-val{font-family:var(--font-cond);font-size:17px;font-weight:800;}
+.nu-stat{background:var(--bg2);border-radius:12px;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
+.nu-stat-lbl{font-size:13px;color:var(--t2);font-weight:600;}
+.nu-stat-val{font-family:var(--font-cond);font-size:15px;font-weight:800;}
 .rm-hero{background:linear-gradient(135deg,#0D0D1A,#1A0D20);border-radius:var(--r);padding:28px;text-align:center;border:1px solid rgba(255,45,85,.2);position:relative;overflow:hidden;}
 .rm-hero::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(255,45,85,.1),transparent 70%);border-radius:50%;}
 .rm-hero .lbl{font-size:14px;color:var(--t2);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;}
@@ -998,27 +998,47 @@ html.ob-done #onboarding{display:none;}
   <!-- MACROS -->
   <div id="nu-macros" style="display:flex;flex-direction:column;gap:12px;">
     <div id="nu-cycle-banner" style="display:none;"></div>
-    <div class="sec">Dépense énergétique</div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:8px;">
-      <div class="nu-stat"><span class="nu-stat-lbl">BMR</span><span class="nu-stat-val" id="nu-bmr">— kcal</span></div>
-      <div class="nu-stat"><span class="nu-stat-lbl">TDEE (dépense totale)</span><span class="nu-stat-val" id="nu-tdee">— kcal</span></div>
-      <div class="nu-stat"><span class="nu-stat-lbl">🔥 Séance du jour</span><span class="nu-stat-val" id="nu-session-cal" style="color:var(--red);">—</span></div>
-      <div class="nu-stat"><span class="nu-stat-lbl">⚡ Total dépensé</span><span class="nu-stat-val" id="nu-total-cal" style="color:var(--orange);">—</span></div>
-      <div class="nu-stat"><span class="nu-stat-lbl">💧 Hydratation</span><span class="nu-stat-val" id="nu-hydra">— L</span></div>
+    <!-- Hero calories -->
+    <div style="background:var(--bg2);border-radius:20px;padding:18px 20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
+      <div id="nu-goal-info" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t3);margin-bottom:10px;"></div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px;">
+        <span style="font-family:var(--font-cond);font-size:42px;font-weight:900;color:var(--t1);line-height:1;" id="m-kcal">—</span>
+        <span style="font-size:14px;color:var(--t2);font-weight:600;">kcal / jour</span>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <div style="flex:1;background:var(--bg3);border-radius:10px;padding:8px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:4px;">BMR</div>
+          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t1);" id="nu-bmr">—</div>
+        </div>
+        <div style="flex:1;background:var(--bg3);border-radius:10px;padding:8px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:4px;">TDEE</div>
+          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t1);" id="nu-tdee">—</div>
+        </div>
+        <div style="flex:1;background:var(--bg3);border-radius:10px;padding:8px;text-align:center;" id="nu-delta-chip">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--t3);margin-bottom:4px;" id="nu-delta-lbl">Delta</div>
+          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t2);" id="nu-delta-val">—</div>
+        </div>
+      </div>
     </div>
-    <div class="sec">Phase nutritionnelle</div>
-    <div id="nu-goal-info" style="display:none;border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700;text-align:center;margin-bottom:2px;"></div>
+    <!-- Phase toggle -->
     <div class="phase-row">
-      <button class="phase-btn charge" id="pb-charge" onclick="setNuPhase('charge')">⚡ Charge<br><span style="font-size:12px;font-weight:400;" id="pb-charge-lbl">Surplus calorique</span></button>
-      <button class="phase-btn decharge" id="pb-decharge" onclick="setNuPhase('decharge')">🔄 Décharge<br><span style="font-size:12px;font-weight:400;" id="pb-decharge-lbl">Déficit calorique</span></button>
+      <button class="phase-btn charge" id="pb-charge" onclick="setNuPhase('charge')">⚡ Charge<br><span style="font-size:11px;font-weight:500;opacity:.75;" id="pb-charge-lbl">Surplus</span></button>
+      <button class="phase-btn decharge" id="pb-decharge" onclick="setNuPhase('decharge')">🔄 Décharge<br><span style="font-size:11px;font-weight:500;opacity:.75;" id="pb-decharge-lbl">Déficit</span></button>
     </div>
+    <!-- Macros -->
     <div class="sec">Macronutriments</div>
     <div class="macro-grid">
-      <div class="macro-box"><div class="macro-lbl">Calories</div><div class="macro-val" id="m-kcal">—</div><div class="macro-unit">kcal/jour</div></div>
-      <div class="macro-box"><div class="macro-lbl">Protéines</div><div class="macro-val" id="m-prot">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--red);"></div></div>
-      <div class="macro-box"><div class="macro-lbl">Glucides</div><div class="macro-val" id="m-carbs">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--blue);"></div></div>
-      <div class="macro-box"><div class="macro-lbl">Lipides</div><div class="macro-val" id="m-fat">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--gold);"></div></div>
+      <div class="macro-box"><div class="macro-lbl">Protéines</div><div class="macro-val" id="m-prot" style="color:var(--green);">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--green);"></div></div>
+      <div class="macro-box"><div class="macro-lbl">Glucides</div><div class="macro-val" id="m-carbs" style="color:var(--orange);">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--orange);"></div></div>
+      <div class="macro-box"><div class="macro-lbl">Lipides</div><div class="macro-val" id="m-fat" style="color:var(--gold);">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--gold);"></div></div>
+      <div class="macro-box"><div class="macro-lbl">Hydratation</div><div class="macro-val" id="nu-hydra" style="color:var(--blue);">—</div><div class="macro-unit">L/jour</div><div class="macro-bar" style="background:var(--blue);"></div></div>
     </div>
+    <!-- Session / Total dépensé -->
+    <div style="display:flex;gap:8px;">
+      <div class="nu-stat" style="flex:1;"><span class="nu-stat-lbl">🔥 Séance</span><span class="nu-stat-val" id="nu-session-cal" style="color:var(--red);">—</span></div>
+      <div class="nu-stat" style="flex:1;"><span class="nu-stat-lbl">⚡ Total</span><span class="nu-stat-val" id="nu-total-cal" style="color:var(--orange);">—</span></div>
+    </div>
+    <!-- Meal plan -->
     <div class="sec">Plan alimentaire journalier</div>
     <div class="card cp" id="meal-plan"><div style="text-align:center;color:var(--t3);font-size:13px;padding:16px;">Remplis ton profil pour voir le plan 🍽️</div></div>
   </div>
@@ -2449,29 +2469,30 @@ function renderNutrition(){
   const goalBorderColors={muscle:'rgba(255,45,85,.3)',perte:'rgba(255,149,0,.3)',force:'rgba(41,121,255,.3)',equilibre:'rgba(52,199,89,.3)',endurance:'rgba(170,0,255,.3)'};
   const goalIcons={muscle:'💪',perte:'🔥',force:'🏋️',equilibre:'⚖️',endurance:'🏃'};
   const nuGoal=document.getElementById('nu-goal-info');
-  if(nuGoal){
-    nuGoal.style.display='block';
-    nuGoal.style.background=goalColors[goal]||goalColors.muscle;
-    nuGoal.style.border=`1px solid ${goalBorderColors[goal]||goalBorderColors.muscle}`;
-    nuGoal.textContent=`${goalIcons[goal]||'💪'} ${GOAL_LABELS[goal]||'Prise de muscle'} — Base ${goalDelta>=0?'+'+goalDelta:goalDelta} kcal`;
-  }
-  // Dynamic phase labels
+  if(nuGoal)nuGoal.textContent=`${goalIcons[goal]||'💪'} ${GOAL_LABELS[goal]||'Prise de muscle'}`;
+  // Dynamic phase labels + delta chip
   const lc=document.getElementById('pb-charge-lbl'),ld=document.getElementById('pb-decharge-lbl');
   const cv=goalDelta+100,dv=goalDelta-100;
-  if(lc)lc.textContent=`${cv>=0?'+':''}${cv} kcal / TDEE`;
-  if(ld)ld.textContent=`${dv>=0?'+':''}${dv} kcal / TDEE`;
+  if(lc)lc.textContent=`${cv>=0?'+':''}${cv} kcal`;
+  if(ld)ld.textContent=`${dv>=0?'+':''}${dv} kcal`;
+  const currentDelta=S.nutritionPhase==='charge'?cv:dv;
+  const isPos=currentDelta>=0;
+  const dChip=document.getElementById('nu-delta-chip'),dVal=document.getElementById('nu-delta-val'),dLbl=document.getElementById('nu-delta-lbl');
+  if(dChip){dChip.style.background=isPos?'rgba(255,106,115,.1)':'rgba(52,211,153,.1)';dChip.style.boxShadow=isPos?'inset 0 0 0 1px rgba(255,106,115,.2)':'inset 0 0 0 1px rgba(52,211,153,.2)';}
+  if(dVal){dVal.style.color=isPos?'var(--red)':'var(--green)';dVal.textContent=(isPos?'+':'')+currentDelta;}
+  if(dLbl)dLbl.textContent=isPos?'Surplus':'Déficit';
 
   const bmr=calcBMR(), tdee=calcTDEE();
   const hydra=fmt((S.bw*0.035)+0.5);
-  document.getElementById('nu-bmr').textContent=bmr.toLocaleString('fr-FR')+' kcal';
-  document.getElementById('nu-tdee').textContent=tdee.toLocaleString('fr-FR')+' kcal';
+  document.getElementById('nu-bmr').textContent=bmr.toLocaleString('fr-FR');
+  document.getElementById('nu-tdee').textContent=tdee.toLocaleString('fr-FR');
   const todayStr=today();
   const todaySess=S.sessions.find(s=>s.date===todayStr);
   const sessCals=todaySess&&todaySess.calories?todaySess.calories:0;
   const totalCals=tdee+sessCals;
   document.getElementById('nu-session-cal').textContent=sessCals>0?sessCals.toLocaleString('fr-FR')+' kcal':'— (pas de séance)';
   document.getElementById('nu-total-cal').textContent=(sessCals>0?totalCals:tdee).toLocaleString('fr-FR')+' kcal';
-  document.getElementById('nu-hydra').textContent=hydra+' L/jour';
+  document.getElementById('nu-hydra').textContent=hydra;
 
   const macros=calcMacros(S.nutritionPhase);
   document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');
@@ -2507,7 +2528,6 @@ function renderNutrition(){
       </div>
       <div class="meal-kcal">${m.kcal} kcal</div>
     </div>`).join('');
-  chainInputs(['rm-kg','rm-reps']);
 }
 
 // ─── WORKOUT ─────────────────────────────────────────────────
