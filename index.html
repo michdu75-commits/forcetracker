@@ -3616,6 +3616,8 @@ function finalImportProg(){
     toast(toCreate.length+' exercice'+(toCreate.length>1?'s':'')+" créé"+(toCreate.length>1?'s':'')+" automatiquement",'info');
   }
   const prog={id:'p'+Date.now(),name,
+    weeks:_impExtracted.weeks||0,
+    startDate:_impExtracted.startDate||'',
     days:_impExtracted.days.map((day,di)=>({
       label:day.label||'Jour '+(di+1),
       exs:(day.exercises||[]).map(ex=>({
@@ -3707,17 +3709,36 @@ function renderProgModal(){
         const exNames=exs.slice(0,3).map(e=>e.name).join(', ')+(exs.length>3?' +'+(exs.length-3):'');
         detail=exs.length+' exercice'+(exs.length>1?'s':'')+' · '+exNames;
       }
-      return `<div class="prog-card">
-        <div style="flex:1;min-width:0;">
-          <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${p.name}</div>
-          <div class="prog-card-detail">${detail}</div>
+      const hasCycle=p.weeks>0;
+      const curW=hasCycle?getProgCurrentWeek(p):0;
+      const pct=hasCycle?Math.round(curW/p.weeks*100):0;
+      const fmt_d=s=>s?new Date(s).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'';
+      const endDate=p.startDate&&p.weeks?new Date(new Date(p.startDate).getTime()+p.weeks*7*86400000):null;
+      const cycleHtml=hasCycle?`<div style="margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:12px;font-weight:700;color:var(--t1);">Semaine ${curW} / ${p.weeks}</span>
+          <div style="display:flex;align-items:center;gap:5px;">
+            ${p.startDate?`<span style="font-size:11px;color:var(--t3);">${fmt_d(p.startDate)}${endDate?' → '+fmt_d(endDate.toISOString().split('T')[0]):''}</span>`:''}
+            <button onclick="event.stopPropagation();shiftProgStart(${i},-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:13px;cursor:pointer;padding:0;line-height:1;font-family:var(--font);">−</button>
+            <button onclick="event.stopPropagation();shiftProgStart(${i},1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:13px;cursor:pointer;padding:0;line-height:1;font-family:var(--font);">+</button>
+          </div>
         </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;">
-          <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
-          <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})">✏️</button>
-          ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
-          <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
+        <div style="height:5px;background:var(--sep);border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--red);border-radius:3px;"></div></div>
+      </div>`:'';
+      return `<div class="prog-card" style="flex-direction:column;align-items:stretch;">
+        <div style="display:flex;align-items:flex-start;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${p.name}</div>
+            <div class="prog-card-detail">${detail}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
+            <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})">✏️</button>
+            ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
+            <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
+          </div>
         </div>
+        ${cycleHtml}
       </div>`;
     }).join('');
   }
@@ -3790,6 +3811,19 @@ function _renderProgEdit(){
   if(nameInp)nameInp.value=d.name;
   const el=document.getElementById('prog-edit-content');if(!el)return;
   const isMulti=d.days&&d.days.length;
+  const cycleSection=`<div style="background:var(--bg3);border-radius:12px;padding:12px;margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:800;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📅 Cycle</div>
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1;">
+        <div style="font-size:12px;color:var(--t3);margin-bottom:4px;">Durée (sem.)</div>
+        <input id="prog-edit-weeks" type="number" min="1" max="52" value="${d.weeks||''}" placeholder="ex: 7" style="width:100%;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:9px 6px;color:var(--t1);font-size:15px;font-weight:700;font-family:var(--font);outline:none;text-align:center;box-sizing:border-box;">
+      </div>
+      <div style="flex:2;">
+        <div style="font-size:12px;color:var(--t3);margin-bottom:4px;">Date de début</div>
+        <input id="prog-edit-start" type="date" value="${d.startDate||''}" style="width:100%;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:9px 8px;color:var(--t1);font-size:14px;font-family:var(--font);outline:none;box-sizing:border-box;-webkit-appearance:none;">
+      </div>
+    </div>
+  </div>`;
   const exCard=(ex,di,ei)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:10px;margin-bottom:5px;">
     <div style="flex:1;min-width:0;overflow:hidden;">
       <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
@@ -3799,13 +3833,13 @@ function _renderProgEdit(){
   </div>`;
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
   if(isMulti){
-    el.innerHTML=d.days.map((day,di)=>`<div style="margin-bottom:16px;">
+    el.innerHTML=cycleSection+d.days.map((day,di)=>`<div style="margin-bottom:16px;">
       <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">${day.label}</div>
       ${(day.exs||[]).map((ex,ei)=>exCard(ex,di,ei)).join('')}
       ${addBtn(di)}
     </div>${di<d.days.length-1?'<hr style="border:none;border-top:1px solid var(--sep);margin:0 0 16px;">':''}`).join('');
   }else{
-    el.innerHTML=(d.exs||[]).map((ex,ei)=>exCard(ex,0,ei)).join('')+addBtn(0);
+    el.innerHTML=cycleSection+(d.exs||[]).map((ex,ei)=>exCard(ex,0,ei)).join('')+addBtn(0);
   }
 }
 function _openExPickerForProg(dayIdx){
@@ -3838,6 +3872,10 @@ function saveProgEdit(){
   if(!_editProgData||_editProgIdx<0)return;
   const nameInp=document.getElementById('prog-edit-name');
   if(nameInp&&nameInp.value.trim())_editProgData.name=nameInp.value.trim();
+  const weeksInp=document.getElementById('prog-edit-weeks');
+  const startInp=document.getElementById('prog-edit-start');
+  if(weeksInp)_editProgData.weeks=parseInt(weeksInp.value)||0;
+  if(startInp)_editProgData.startDate=startInp.value||'';
   S.programmes[_editProgIdx]=_editProgData;
   persist();
   closeProgEdit();
@@ -3847,6 +3885,19 @@ function saveProgEdit(){
 function closeProgEdit(){
   document.getElementById('ov-prog-edit').classList.remove('open');
   _editProgIdx=-1;_editProgData=null;
+}
+function getProgCurrentWeek(prog){
+  if(!prog.startDate||!prog.weeks)return 1;
+  const days=Math.floor((new Date()-new Date(prog.startDate))/(86400000));
+  return Math.max(1,Math.min(prog.weeks,Math.ceil((days+1)/7)));
+}
+function shiftProgStart(idx,delta){
+  const prog=(S.programmes||[])[idx];if(!prog)return;
+  if(!prog.startDate)prog.startDate=today();
+  const d=new Date(prog.startDate);
+  d.setDate(d.getDate()+delta*7);
+  prog.startDate=d.toISOString().split('T')[0];
+  persist();renderProgModal();
 }
 let _lastProgAnalysisProg=null,_lastProgAnalysisReply='';
 function _formatProgForAnalysis(prog){
