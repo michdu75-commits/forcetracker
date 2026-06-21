@@ -2708,6 +2708,8 @@ function createSuperset(){
   if(_selectedGroupExs.size<2)return;
   const gid='ss'+Date.now();
   _selectedGroupExs.forEach(ei=>{S.wkt.exs[ei].group=gid;});
+  const members=_ssMembers(gid);
+  if(members.length)_expandedEx=members[0].i;
   _groupMode=false;_selectedGroupExs.clear();
   persist();renderExBlocks();toast('Supersérie créée ⚡','success');
 }
