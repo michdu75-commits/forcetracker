@@ -2725,7 +2725,7 @@ function renderExBlocks(){
       </div>`;
     }
 
-    const hasLocalGif=!!(EX_YT[ex.name]&&EX_YT[ex.name].img);
+    const hasLocalGif=ex.name==='Développé Couché';
     const rows=ex.sets.map((set,si)=>{
       const p=prev[si]||prev[Math.max(0,prev.length-1)];
       const prevRM=p&&p.kg&&p.reps?fmt(bz(p.kg,p.reps)):null;
