@@ -1141,7 +1141,8 @@ html.ob-done #onboarding{display:none;}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         Retour
       </button>
-      <span style="font-family:var(--font-cond);font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--t1);">Profil athlète</span>
+      <span style="font-family:var(--font-cond);font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--t1);flex:1;">Profil athlète</span>
+      <img src="force-tracker-logo-topbar.gif" onclick="onLogoTap()" style="height:36px;width:36px;border-radius:10px;object-fit:cover;cursor:pointer;opacity:.5;-webkit-tap-highlight-color:transparent;" title="Admin">
     </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
       <div class="fg">
@@ -4950,10 +4951,8 @@ function updSetup(){
 async function testConn(){
   document.getElementById('setup-dot').className='sdot a';document.getElementById('setup-txt').textContent='Test…';toast('Test…','info');
   try{
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})});
-    const d=await r.json();
-    if(d.status==='online'){S.connected=true;persist();updSetup();updatePill();toast('Connexion réussie ! ✅','success');}
-    else{S.connected=false;persist();updSetup();toast('Réponse inattendue du serveur','error');}
+    await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})});
+    S.connected=true;persist();updSetup();updatePill();toast('Serveur joignable ✅','success');
   }catch(e){S.connected=false;persist();updSetup();toast('Erreur de connexion : '+e.message,'error');}
 }
 function saveProfile(){
