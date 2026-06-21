@@ -513,6 +513,19 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 /* COACH PREMIUM */
 .coach-quota{font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(255,106,115,.1);color:var(--red);box-shadow:inset 0 0 0 1px rgba(255,106,115,.25);white-space:nowrap;}
 .coach-quota.is-premium{background:rgba(234,179,8,.12);color:#F2D472;box-shadow:inset 0 0 0 1px rgba(234,179,8,.35);}
+/* COACH ACCUEIL */
+.coach-home{display:flex;flex-direction:column;gap:14px;padding:12px 14px 8px;overflow-y:auto;flex:1;}
+.coach-ctx-card{background:var(--bg2);border-radius:16px;padding:14px 16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
+.coach-ctx-title{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:10px;}
+.coach-ctx-tags{display:flex;flex-wrap:wrap;gap:7px;}
+.coach-ctx-tag{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:600;background:var(--bg3);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);color:var(--t2);}
+.coach-ctx-tag svg{flex-shrink:0;}
+.coach-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.coach-action-card{background:var(--bg2);border-radius:16px;padding:16px 14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);border:none;cursor:pointer;text-align:left;font-family:var(--font);display:flex;flex-direction:column;gap:8px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .15s;}
+.coach-action-card:active{background:var(--bg3);}
+.coach-action-ic{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.coach-action-lbl{font-size:13px;font-weight:700;color:var(--t1);line-height:1.3;}
+.coach-action-sub{font-size:11px;color:var(--t3);font-weight:500;line-height:1.4;}
 .coach-wall{position:absolute;inset:0;z-index:15;display:none;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--bg);padding:20px 20px 100px;overflow-y:auto;gap:12px;}
 .coach-wall-icon{font-size:52px;line-height:1;margin-top:8px;}
 .coach-wall-title{font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FFB800,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;}
@@ -1377,15 +1390,49 @@ html.ob-done #onboarding{display:none;}
     </div>
   </div>
 
-  <div class="coach-messages" id="coach-msgs">
-    <div class="msg-bubble msg-coach">
-      Salut ! Je suis ton coach IA. J'ai accès à tout ton profil, tes PRs, ton cycle et ta nutrition. Pose-moi n'importe quelle question sur ton entraînement ! 💪
+  <!-- ACCUEIL COACH (masqué dès le 1er échange) -->
+  <div class="coach-home" id="coach-home">
+    <!-- Carte contexte connecté -->
+    <div class="coach-ctx-card">
+      <div class="coach-ctx-title">Ce que je connais de toi</div>
+      <div class="coach-ctx-tags" id="coach-ctx-tags">
+        <span class="coach-ctx-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil</span>
+        <span class="coach-ctx-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>PRs &amp; 1RM</span>
+        <span class="coach-ctx-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>Nutrition</span>
+        <span class="coach-ctx-tag" id="coach-ctx-morpho" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 8v4l3 3"/></svg>Morpho</span>
+        <span class="coach-ctx-tag" id="coach-ctx-cycle" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Cycle</span>
+      </div>
+    </div>
+    <!-- Grille 4 actions -->
+    <div class="coach-action-grid">
+      <button class="coach-action-card" onclick="coachAction('programme')">
+        <div class="coach-action-ic" style="background:rgba(255,106,115,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div class="coach-action-lbl">Programme perso</div>
+        <div class="coach-action-sub">Basé sur tes 1RM et ton niveau</div>
+      </button>
+      <button class="coach-action-card" onclick="coachAction('analyse')">
+        <div class="coach-action-ic" style="background:rgba(52,211,153,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <div class="coach-action-lbl">Analyse mes stats</div>
+        <div class="coach-action-sub">Progression, tendances, surcharge</div>
+      </button>
+      <button class="coach-action-card" onclick="coachAction('nutrition')">
+        <div class="coach-action-ic" style="background:rgba(91,168,255,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg></div>
+        <div class="coach-action-lbl">Conseil nutrition</div>
+        <div class="coach-action-sub">Macros, timing, phase actuelle</div>
+      </button>
+      <button class="coach-action-card" onclick="coachAction('morpho')" id="coach-action-morpho">
+        <div class="coach-action-ic" style="background:rgba(234,179,8,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        <div class="coach-action-lbl">Analyse morpho</div>
+        <div class="coach-action-sub">3 photos · IA visuelle</div>
+      </button>
     </div>
   </div>
+
+  <div class="coach-messages" id="coach-msgs" style="display:none;"></div>
   <div id="coach-morpho-btn-wrap" style="display:none;padding:0 12px 8px;">
     <button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;" onclick="openMorphoAnalysis()">📸 Analyser ma morphologie (3 photos)</button>
   </div>
-  <div class="coach-suggestions" id="coach-suggs">
+  <div class="coach-suggestions" id="coach-suggs" style="display:none;">
     <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">📊 Analyse ma progression</button>
     <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">🍽️ Que manger ce soir ?</button>
     <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">💪 Programme cette semaine</button>
@@ -5605,8 +5652,47 @@ const COACH_FREE_LIMIT = 10;
 let coachHistory = [];
 let coachBusy = false;
 
+function _showCoachChat(){
+  const home=document.getElementById('coach-home');
+  const msgs=document.getElementById('coach-msgs');
+  const suggs=document.getElementById('coach-suggs');
+  if(home)home.style.display='none';
+  if(msgs){msgs.style.display='flex';msgs.style.flexDirection='column';}
+  if(suggs)suggs.style.display='flex';
+}
+function _updateCoachCtxTags(){
+  const morphoTag=document.getElementById('coach-ctx-morpho');
+  const cycleTag=document.getElementById('coach-ctx-cycle');
+  if(morphoTag)morphoTag.style.display=(S.morpho||S.morphotype)?'':'none';
+  if(cycleTag)cycleTag.style.display=(S.gender==='F'&&S.mensCycleStart)?'':'none';
+}
+function coachAction(type){
+  const prompts={
+    programme:'Génère-moi un programme d\'entraînement personnalisé basé sur mes 1RM actuels, mon niveau et mon objectif. Donne-moi les exercices, séries×reps et %1RM pour chaque séance.',
+    analyse:'Analyse ma progression sur les 4 dernières semaines : volume total, tendances 1RM, points forts et points à améliorer. Donne des recommandations concrètes.',
+    nutrition:'Conseille mes macros en fonction de ma phase actuelle (charge/décharge), mon TDEE et mon objectif. Donne le timing optimal des repas autour de l\'entraînement.',
+    morpho:null
+  };
+  if(type==='morpho'){openMorphoAnalysis();return;}
+  if(!S.premium&&(S.coachFree||0)>=COACH_FREE_LIMIT){showPremiumWall();return;}
+  _showCoachChat();
+  sendToCoach(prompts[type]);
+}
+
 function updateCoachHeader() {
   _updateCoachMorphoBtn();
+  _updateCoachCtxTags();
+  // Afficher accueil ou chat selon l'historique
+  if(coachHistory.length===0){
+    const home=document.getElementById('coach-home');
+    const msgs=document.getElementById('coach-msgs');
+    const suggs=document.getElementById('coach-suggs');
+    if(home)home.style.display='flex';
+    if(msgs)msgs.style.display='none';
+    if(suggs)suggs.style.display='none';
+  } else {
+    _showCoachChat();
+  }
   const badge = document.getElementById('coach-quota-badge');
   if (!badge) return;
   if (S.premium) {
@@ -5887,8 +5973,9 @@ async function sendToCoach(customMsg) {
   const sendBtn = document.getElementById('coach-send-btn');
   if (sendBtn) sendBtn.disabled = true;
 
+  // Passer de l'accueil au chat au 1er envoi
+  if(coachHistory.length===0)_showCoachChat();
   const suggs = document.getElementById('coach-suggs');
-  if (suggs && coachHistory.length === 0) suggs.style.display = 'none';
 
   // Bulle utilisateur avec image optionnelle
   if (hasImg) {
