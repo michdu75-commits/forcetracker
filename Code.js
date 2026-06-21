@@ -389,7 +389,7 @@ function handleImportProgram_(body) {
       },
       payload: JSON.stringify({
         model: model,
-        max_tokens: 4096,
+        max_tokens: 8192,
         messages: [{role: 'user', content: userContent}]
       }),
       muteHttpExceptions: true
@@ -407,7 +407,20 @@ function handleImportProgram_(body) {
     const match = stripped.match(/\{[\s\S]*\}/);
     if (!match) return json_({status:'error', error:'Extraction échouée. Réponse IA : '+text.substring(0,300)});
 
-    const data = JSON.parse(match[0]);
+    // Nettoyer les caractères qui cassent le JSON : '' (pouces) → ", guillemets typographiques → "
+    const cleaned = match[0]
+      .replace(/‘|’/g, "'")   // guillemets courbes simples → apostrophe droite
+      .replace(/“|”/g, '"')   // guillemets courbes doubles → guillemet droit
+      .replace(/\r\n|\r/g, '\\n')       // retours chariot dans les chaînes
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, ''); // caractères de contrôle
+
+    let data;
+    try {
+      data = JSON.parse(cleaned);
+    } catch(parseErr) {
+      console.error('[importProgram] JSON invalide :', parseErr.message, '| Extrait :', cleaned.substring(0,500));
+      return json_({status:'error', error:'JSON invalide : '+parseErr.message+'. Réponse IA (début) : '+text.substring(0,200)});
+    }
     // Normaliser reps/sets/repsPerSet en entiers
     if (data.days) data.days.forEach(day => (day.exercises||[]).forEach(ex => {
       if (ex.repsPerSet && Array.isArray(ex.repsPerSet) && ex.repsPerSet.length > 0) {
