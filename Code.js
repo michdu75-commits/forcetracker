@@ -377,7 +377,7 @@ function handleImportProgram_(body) {
 
     userContent.push({
       type: 'text',
-      text: 'Analyse ces images et extrait le programme d\'entraînement complet.\n\nRetourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans balises markdown, avec cette structure exacte :\n{"name":"nom du programme si visible sinon Programme","days":[{"label":"Jour 1 - Push","exercises":[{"name":"nom de l\'exercice","sets":4,"reps":10,"kg":0}]}]}\n\nRègles importantes :\n- Si les charges ne sont pas indiquées, mets kg:0\n- sets = nombre de séries (entier), reps = répétitions par série (entier, prend la valeur haute si fourchette ex 8-12 → 12)\n- Si c\'est "4x8" ou "4×8" → sets:4, reps:8\n- Si le programme est sur un seul jour, crée un seul élément dans days\n- Utilise les noms d\'exercices en français si possible\n- Le label du jour peut être "Jour 1", "Lundi", "Push A", etc. selon ce qui est écrit\n- Inclus TOUS les exercices visibles sur toutes les pages\n- Réponds UNIQUEMENT avec le JSON, aucun autre texte'
+      text: 'Analyse ces images et extrait le programme d\'entraînement complet.\n\nRetourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans balises markdown, avec cette structure exacte :\n{"name":"nom du programme","days":[{"label":"Séance 1 - Dorsaux Triceps","exercises":[{"name":"nom complet de l\'exercice","sets":5,"reps":8,"repsPerSet":[20,15,12,8,8],"kg":0,"note":"méthode et instructions"}]}]}\n\nRègles STRICTES :\n\n1. REPS PAR SÉRIE (repsPerSet) :\n- Si chaque série a des reps différentes (ex: 20/15/12/8/8 sur 5 séries) → repsPerSet:[20,15,12,8,8] et sets:5\n- Si toutes les séries ont les mêmes reps → repsPerSet:[] et sets=nombre de séries\n- "reps" = valeur numérique principale de la dernière/plus basse série\n- Reps complexes : "5\'\'+8" → reps:8 (noter la méthode dans note) | "8+10" → reps:10 | "15+(3-5 reps)x5" → reps:15 | "10x2" ou "bras/bras" → reps:10 (noter "unilatéral bras/bras" dans note)\n- "4x8" ou "4×8" → sets:4, reps:8, repsPerSet:[]\n\n2. NOTE (OBLIGATOIRE — ne rien omettre) :\n- Capture TOUT le texte en rouge/couleur = méthodes spéciales (Isométrie, Excentrique, Myo-Reps, Lourd/Léger, complète/partielle, Série unique, etc.) avec leur explication complète\n- Ajoute les instructions d\'exécution normales (texte sous le nom de l\'exercice)\n- Sépare les éléments par " | "\n- Ces méthodes sont cruciales pour l\'athlète, ne les perds JAMAIS\n\n3. STRUCTURE :\n- label du jour = nom complet de la séance (ex: "Séance 1 - Dorsaux Triceps Abdos")\n- kg:0 si charge non indiquée\n- Inclus ABSOLUMENT TOUS les exercices de toutes les pages\n- Réponds UNIQUEMENT avec le JSON, aucun autre texte'
     });
 
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
@@ -408,12 +408,20 @@ function handleImportProgram_(body) {
     if (!match) return json_({status:'error', error:'Extraction échouée. Réponse IA : '+text.substring(0,300)});
 
     const data = JSON.parse(match[0]);
-    // Normaliser reps/sets en entiers
+    // Normaliser reps/sets/repsPerSet en entiers
     if (data.days) data.days.forEach(day => (day.exercises||[]).forEach(ex => {
-      ex.sets = parseInt(ex.sets)||3;
-      const r = String(ex.reps||'10');
-      ex.reps = parseInt(r.split('-').pop()) || 10;
+      if (ex.repsPerSet && Array.isArray(ex.repsPerSet) && ex.repsPerSet.length > 0) {
+        ex.repsPerSet = ex.repsPerSet.map(r => parseInt(String(r).replace(/[^0-9]/g,'')) || 10);
+        ex.sets = ex.repsPerSet.length;
+        ex.reps = ex.repsPerSet[ex.repsPerSet.length - 1];
+      } else {
+        ex.repsPerSet = [];
+        ex.sets = parseInt(ex.sets)||3;
+        const r = String(ex.reps||'10');
+        ex.reps = parseInt(r.replace(/[^0-9]/g,'').slice(-2)||r) || 10;
+      }
       ex.kg = parseFloat(ex.kg)||0;
+      ex.note = ex.note||'';
     }));
     if (!data.days || !data.days.length) return json_({status:'error', error:'Aucun exercice trouvé dans les images.'});
 

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v31';
+const CACHE = 'ft-v32';
 const PRECACHE = [
   './', './index.html', './manifest.json', './logo.png', './female-body.png',
   './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',
@@ -57,7 +57,7 @@ self.addEventListener('fetch', e => {
     e.respondWith(
       fetch(e.request)
         .then(r => {
-          if (r && r.status === 200) caches.open(CACHE).then(c => c.put(e.request, r.clone()));
+          if (r && r.status === 200) { const cl=r.clone(); caches.open(CACHE).then(c => c.put(e.request, cl)); }
           return r;
         })
         .catch(() => caches.match(e.request).then(c => c || caches.match('./')))
@@ -69,7 +69,7 @@ self.addEventListener('fetch', e => {
   if (url.pathname.endsWith('/logo.png')) {
     e.respondWith(
       fetch(e.request).then(r => {
-        if (r && r.status === 200) caches.open(CACHE).then(c => c.put(e.request, r.clone()));
+        if (r && r.status === 200) { const cl=r.clone(); caches.open(CACHE).then(c => c.put(e.request, cl)); }
         return r;
       }).catch(() => caches.match(e.request))
     );
@@ -81,7 +81,7 @@ self.addEventListener('fetch', e => {
     caches.match(e.request).then(cached => {
       if (cached) return cached;
       return fetch(e.request).then(r => {
-        if (r && r.status === 200) caches.open(CACHE).then(c => c.put(e.request, r.clone()));
+        if (r && r.status === 200) { const cl=r.clone(); caches.open(CACHE).then(c => c.put(e.request, cl)); }
         return r;
       });
     })
