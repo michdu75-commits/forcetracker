@@ -3679,6 +3679,7 @@ function loadProgDay(progIdx,dayIdx){
     }))};
   })};
   persist();closeDaySel();closeProgModal();
+  _expandedEx=0;
   goScreen('log',document.getElementById('nb-log'));
   renderExBlocks();
   toast('"'+prog.name+' — '+day.label+'" chargé ! 💪','success');
