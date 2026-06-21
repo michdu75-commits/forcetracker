@@ -1,4 +1,4 @@
-const CACHE = 'ft-v27';
+const CACHE = 'ft-v28';
 const PRECACHE = [
   './', './index.html', './manifest.json', './logo.png', './female-body.png',
   './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',

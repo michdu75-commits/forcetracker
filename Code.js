@@ -97,6 +97,27 @@ function doGet(e) {
   return json_({status:'error', error:'Unknown GET action'});
 }
 
+function handleLoadProfilePost_(body) {
+  const email = (body.email || '').toLowerCase().trim();
+  if (!email) return json_({status:'error', error:'email required'});
+  const data = loadUserData_(email);
+  const prem = getPremiumStatus_(email);
+  if (!data) return json_({status:'not_found', premium: prem.premium, premiumExpiry: prem.expiry});
+  return json_({
+    status:         'ok',
+    premium:        prem.premium,
+    premiumExpiry:  prem.expiry,
+    profile:        data.profile        || {},
+    prs:            data.prs            || {},
+    sessions:       data.sessions       || [],
+    weightLog:      data.weightLog      || [],
+    sleepLog:       data.sleepLog       || [],
+    cycle:          data.cycle          || null,
+    nutritionPhase: data.nutritionPhase || 'charge',
+    coachMemory:    (data.profile && data.profile.coachMemory) || ''
+  });
+}
+
 // ───────────────────────────────────────────────────────────
 function doPost(e) {
   // Ko-fi envoie application/x-www-form-urlencoded avec un champ "data" JSON
@@ -111,6 +132,8 @@ function doPost(e) {
     return json_({status:'error', error:'JSON parse error: ' + err.message});
   }
 
+  if (body.action === 'test')              return json_({status:'online', version:'3.5'});
+  if (body.action === 'loadProfile')       return handleLoadProfilePost_(body);
   if (body.action === 'saveProfile')       return handleSaveProfile_(body);
   if (body.action === 'logSession')        return handleLogSession_(body);
   if (body.action === 'coach')             return handleCoach_(body);

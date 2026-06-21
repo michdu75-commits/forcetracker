@@ -4949,7 +4949,7 @@ function updSetup(){
 async function testConn(){
   document.getElementById('setup-dot').className='sdot a';document.getElementById('setup-txt').textContent='Test…';toast('Test…','info');
   try{
-    const r=await fetch(S.url+'?test=1',{redirect:'follow'});
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})});
     const d=await r.json();
     if(d.status==='online'){S.connected=true;persist();updSetup();updatePill();toast('Connexion réussie ! ✅','success');}
     else{S.connected=false;persist();updSetup();toast('Réponse inattendue du serveur','error');}
@@ -5045,7 +5045,7 @@ function _applyRestoreData(raw){
 }
 
 async function _fetchRestoreRaw(email){
-  const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(email),{redirect:'follow'});
+  const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email})});
   const txt=await resp.text();
   let data;
   try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON : '+txt.substring(0,120));}
@@ -5069,7 +5069,7 @@ async function debugRestore(){
   if(!S.email){toast('Pas d\'email configuré','error');return;}
   toast('Test API en cours…','info');
   try{
-    const resp=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
     const txt=await resp.text();
     console.log('[FT debug restore]',txt);
     toast('Réponse API : '+txt.substring(0,80),'info');
@@ -7264,14 +7264,14 @@ initOnboarding();
 (async function autoConnect(){
   if(!S.url)return;
   try{
-    const r=await fetch(S.url+'?test=1',{redirect:'follow'});
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})});
     const d=await r.json();
     if(d.status==='online'&&!S.connected){S.connected=true;persist();updatePill();}
   }catch(e){}
   // Vérif premium : si email connu ET (pas premium OU premium daté) → refresh serveur
   if(S.email&&(!S.premium||S.premiumExpiry)){
     try{
-      const r2=await fetch(S.url+'?action=loadProfile&email='+encodeURIComponent(S.email),{redirect:'follow'});
+      const r2=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
       const d2=await r2.json();
       if(d2.status==='ok'||d2.status==='not_found'){
         const wasPremium=S.premium;
