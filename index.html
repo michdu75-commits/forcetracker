@@ -3739,7 +3739,7 @@ function saveAsProg(){
 function loadProg(idx){
   const prog=(S.programmes||[])[idx];
   if(!prog)return;
-  if(prog.days&&prog.days.length){openDaySel(idx);return;}
+  if(prog.days&&prog.days.length){closeProgModal();openDaySel(idx);return;}
   S.wkt={
     date:today(),
     exs:(prog.exs||[]).map(e=>{
