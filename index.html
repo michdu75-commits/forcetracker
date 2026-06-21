@@ -270,6 +270,7 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .tbtn.W{border-color:rgba(41,121,255,.5);color:var(--blue);background:rgba(41,121,255,.1);}
 .tbtn.E{border-color:rgba(255,45,85,.5);color:var(--red);background:rgba(255,45,85,.1);}
 .tbtn.D{border-color:rgba(255,214,0,.5);color:var(--gold);background:rgba(255,214,0,.1);}
+.tbtn.M{border-color:rgba(255,109,0,.5);color:var(--orange);background:rgba(255,109,0,.1);}
 .chk{width:30px;height:30px;border-radius:50%;border:2px solid var(--sep);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;font-family:var(--font);padding:0;transition:all .2s;touch-action:manipulation;}
 .chk.done{background:var(--green);border-color:var(--green);color:#000;box-shadow:0 2px 8px rgba(0,230,118,.3);}
 .ex-foot{display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--sep);}
@@ -2059,8 +2060,8 @@ const BIG4=['Squat à la Barre','Soulevé de Terre','Développé Couché','Déve
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec';
-const SET_TYPES=['N','W','E','D'];
-const SET_TYPE_LABELS={N:'Normal',W:'Warm-up',E:'Échec',D:'Drop set'};
+const SET_TYPES=['N','W','E','D','M'];
+const SET_TYPE_LABELS={N:'Normal',W:'Warm-up',E:'Échec',D:'Drop set',M:'Méthode'};
 
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────
 // [Débutant, Novice, Intermédiaire, Avancé] seuils
@@ -2781,8 +2782,8 @@ function toggleSet(ei,si){
     const isAbdo=EXLIB.some(e=>e.n===exName&&e.g==='Abdominaux');
     const savedPref=(S.exRestPref||{})[exName];
     const defForEx=isAbdo?30:(savedPref||90);
-    const restByType={N:defForEx,W:45,E:240,D:20};
-    const restLabels={W:'Échauffement',E:'Récup. complète',D:'Drop set'};
+    const restByType={N:defForEx,W:45,E:240,D:20,M:defForEx};
+    const restLabels={W:'Échauffement',E:'Récup. complète',D:'Drop set',M:'Méthode spéciale'};
     const lbl=document.getElementById('rest-label');
     if(lbl)lbl.textContent=restLabels[set.type]||(isAbdo?'Abdos':'');
     _restStep=isAbdo?5:15;
@@ -3621,8 +3622,8 @@ function finalImportProg(){
         name:ex.name,
         note:ex.note||'',
         sets:(ex.repsPerSet&&ex.repsPerSet.length>0)
-          ?ex.repsPerSet.map(r=>({kg:ex.kg||0,reps:parseInt(r)||10,type:'N'}))
-          :Array.from({length:Math.max(1,ex.sets||3)},()=>({kg:ex.kg||0,reps:ex.reps||10,type:'N'}))
+          ?ex.repsPerSet.map((r,si)=>({kg:ex.kg||0,reps:parseInt(r)||10,type:(ex.specialSets&&ex.specialSets.includes(si))?'M':'N'}))
+          :Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({kg:ex.kg||0,reps:ex.reps||10,type:(ex.specialSets&&ex.specialSets.includes(si))?'M':'N'}))
       }))
     }))
   };
