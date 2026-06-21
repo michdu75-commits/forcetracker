@@ -1738,11 +1738,11 @@ html.ob-done #onboarding{display:none;}
       <div style="display:flex;flex-direction:column;gap:10px;">
         <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-cam-inp').click()">📷 Prendre une photo</button>
         <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-gal-inp').click()">🖼️ Choisir depuis la galerie</button>
-        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-file-inp').click()">📄 Importer un fichier (PDF, Word ou Excel)</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-file-inp').click()">📄 Importer un PDF</button>
       </div>
       <input type="file" id="imp-cam-inp" accept="image/*" capture="environment" style="display:none" onchange="addImportPhoto(this)">
       <input type="file" id="imp-gal-inp" accept="image/*" multiple style="display:none" onchange="addImportPhoto(this)">
-      <input type="file" id="imp-file-inp" accept=".pdf,application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none" onchange="addImportFile(this)">
+      <input type="file" id="imp-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addImportFile(this)">
       <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="closeImportProg()">Annuler</button>
     </div>
     <!-- Étape 2 : Pages -->
@@ -3445,63 +3445,66 @@ function addImportPhoto(input){
   });
 }
 
-function _loadMammoth(){
+function _loadPDFJS(){
   return new Promise((res,rej)=>{
-    if(window.mammoth){res();return;}
+    if(window.pdfjsLib){res();return;}
     const s=document.createElement('script');
-    s.src='https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
-    s.onload=res;s.onerror=()=>rej('Impossible de charger le lecteur Word');
+    s.src='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js';
+    s.onload=()=>{
+      pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      res();
+    };
+    s.onerror=()=>rej(new Error('Impossible de charger PDF.js'));
     document.head.appendChild(s);
   });
 }
-function _loadXLSX(){
-  return new Promise((res,rej)=>{
-    if(window.XLSX){res();return;}
-    const s=document.createElement('script');
-    s.src='https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js';
-    s.onload=res;s.onerror=()=>rej('Impossible de charger le lecteur Excel');
-    document.head.appendChild(s);
-  });
+async function _pdfToImages(f){
+  await _loadPDFJS();
+  const buf=await f.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  const MAX_PAGES=8,MAX_DIM=1200;
+  const pages=[];
+  for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){
+    const page=await pdf.getPage(i);
+    const vp0=page.getViewport({scale:1});
+    const scale=Math.min(MAX_DIM/vp0.width,MAX_DIM/vp0.height,2);
+    const vp=page.getViewport({scale});
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.round(vp.width);
+    canvas.height=Math.round(vp.height);
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    await page.render({canvasContext:ctx,viewport:vp}).promise;
+    pages.push({
+      data:canvas.toDataURL('image/jpeg',0.85).split(',')[1],
+      type:'image/jpeg',
+      name:f.name+(pdf.numPages>1?' p.'+i:'')
+    });
+  }
+  return pages;
 }
 async function addImportFile(input){
   const files=[...input.files];if(!files.length)return;
   const MAX_MB=15;
-  const loadFile=async f=>{
-    if(f.size>MAX_MB*1024*1024)throw 'Fichier trop volumineux (max '+MAX_MB+' MB) : '+f.name;
+  const results=[];
+  for(const f of files){
+    if(f.size>MAX_MB*1024*1024){toast('Fichier trop volumineux (max '+MAX_MB+' MB)','error');continue;}
     const name=f.name.toLowerCase();
-    const isDocx=name.endsWith('.docx')||f.type==='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-    const isXlsx=name.endsWith('.xlsx')||name.endsWith('.xls')||f.type==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'||f.type==='application/vnd.ms-excel';
-    if(isDocx){
-      await _loadMammoth();
-      const buf=await f.arrayBuffer();
-      const result=await mammoth.extractRawText({arrayBuffer:buf});
-      if(!result.value||!result.value.trim())throw 'Impossible d\'extraire le texte de '+f.name;
-      return{data:result.value,type:'text/plain',name:f.name,isText:true};
+    if(f.type==='application/pdf'||name.endsWith('.pdf')){
+      try{
+        toast('Lecture du PDF…','info');
+        const pages=await _pdfToImages(f);
+        if(!pages.length){toast('PDF vide ou illisible','error');continue;}
+        results.push(...pages);
+      }catch(e){toast('Erreur PDF : '+(e.message||e),'error');}
     }
-    if(isXlsx){
-      await _loadXLSX();
-      const buf=await f.arrayBuffer();
-      const wb=XLSX.read(buf,{type:'array'});
-      const sheets=wb.SheetNames.map(sn=>'[Feuille : '+sn+']\n'+XLSX.utils.sheet_to_csv(wb.Sheets[sn])).join('\n\n');
-      if(!sheets.trim())throw 'Impossible d\'extraire les données de '+f.name;
-      return{data:sheets,type:'text/plain',name:f.name,isText:true,isXlsx:true};
-    }
-    return new Promise((res,rej)=>{
-      const isPdf=f.type==='application/pdf'||name.endsWith('.pdf');
-      const reader=new FileReader();
-      reader.onload=e=>res(isPdf
-        ?{data:e.target.result.split(',')[1],type:'application/pdf',name:f.name,isPdf:true}
-        :{data:e.target.result.split(',')[1],type:f.type||'image/jpeg',name:f.name});
-      reader.onerror=()=>rej('Erreur de lecture : '+f.name);
-      reader.readAsDataURL(f);
-    });
-  };
-  try{
-    const results=await Promise.all(files.map(loadFile));
+  }
+  if(results.length){
     _impPhotos.push(...results);
     _renderImpThumbs();
     impGoStep(2);
-  }catch(err){toast(err,'error');}
+  }
 }
 
 function _renderImpThumbs(){
