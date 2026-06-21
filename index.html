@@ -1109,11 +1109,11 @@ html.ob-done #onboarding{display:none;}
     </div>
   </div>
 
-  <!-- MENU CONTENT -->
-  <div style="padding:0 16px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+  <!-- MENU CONTENT (hub) -->
+  <div id="menu-hub" style="padding:0 16px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
 
     <!-- PROFILE CARD -->
-    <div onclick="document.getElementById('setup-profil').scrollIntoView({behavior:'smooth',block:'start'})" style="display:flex;align-items:center;gap:14px;background:var(--bg2);border-radius:18px;padding:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;-webkit-tap-highlight-color:transparent;" class="ft-press">
+    <div onclick="openProfil()" style="display:flex;align-items:center;gap:14px;background:var(--bg2);border-radius:18px;padding:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;-webkit-tap-highlight-color:transparent;" class="ft-press">
       <div class="menu-avatar" id="menu-avatar">M</div>
       <div style="flex:1;min-width:0;">
         <div id="menu-name-lbl" style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Michel</div>
@@ -1160,7 +1160,7 @@ html.ob-done #onboarding{display:none;}
     <!-- COMPTE -->
     <div class="sec" style="margin-top:10px;">Compte</div>
     <div style="background:var(--bg2);border-radius:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">
-      <div class="menu-row" onclick="document.getElementById('setup-profil').scrollIntoView({behavior:'smooth',block:'start'})">
+      <div class="menu-row" onclick="openProfil()">
         <div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
         <span class="menu-row-lbl">Mon profil</span>
         <svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -1214,10 +1214,15 @@ html.ob-done #onboarding{display:none;}
     <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
   </div>
 
-  <!-- PROFIL (formulaire complet, accessible via scroll) -->
-  <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;padding:0 16px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-      <div class="sec" style="margin-bottom:0;">Profil athlète</div>
+  <!-- PROFIL (vue séparée, visible uniquement via openProfil()) -->
+  <div id="setup-profil" style="display:none;flex-direction:column;gap:12px;padding:0 16px;">
+    <!-- EN-TÊTE RETOUR -->
+    <div style="padding:max(env(safe-area-inset-top),44px) 0 4px;display:flex;align-items:center;gap:10px;">
+      <button onclick="closeProfil()" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:var(--bg2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);border:none;color:var(--t1);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Retour
+      </button>
+      <span style="font-family:var(--font-cond);font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--t1);">Profil athlète</span>
     </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
       <div class="fg">
@@ -2330,7 +2335,7 @@ function goScreen(id,btn){
   if(id==='log')renderLog();
   if(id==='progress')renderProgress();
   if(id==='nutrition')renderNutrition();
-  if(id==='setup')renderSetup();
+  if(id==='setup'){_resetMenuView();renderSetup();}
   if(id==='cycle')renderCycleScreen();
   if(id==='nutrition'){switchNuTab('macros',document.getElementById('ntab-macros'));}
   if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();}
@@ -4820,6 +4825,34 @@ function setGoal(g){
   if(el)el.textContent=GOAL_DESCS[g]||'';
 }
 
+function _resetMenuView(){
+  const hub=document.getElementById('menu-hub');
+  const hdr=document.getElementById('menu-hdr');
+  const prof=document.getElementById('setup-profil');
+  const tabs=document.getElementById('setup-tabs-bar');
+  const cx=document.getElementById('setup-connexion');
+  if(hub)hub.style.display='flex';
+  if(hdr)hdr.style.display='';
+  if(prof){prof.style.display='none';}
+  if(tabs)tabs.style.display='none';
+  if(cx)cx.style.display='none';
+  const scr=document.getElementById('s-setup');
+  if(scr)scr.scrollTop=0;
+}
+function openProfil(){
+  const hub=document.getElementById('menu-hub');
+  const hdr=document.getElementById('menu-hdr');
+  const prof=document.getElementById('setup-profil');
+  if(hub)hub.style.display='none';
+  if(hdr)hdr.style.display='none';
+  if(prof){prof.style.display='flex';prof.style.flexDirection='column';prof.style.gap='12px';}
+  const scr=document.getElementById('s-setup');
+  if(scr)scr.scrollTop=0;
+  renderSetup();
+}
+function closeProfil(){
+  _resetMenuView();
+}
 function renderSetup(){
   // Update menu profile card
   const _mn=document.getElementById('menu-name-lbl');
@@ -6955,10 +6988,18 @@ function onLogoTap(){
 }
 
 function switchSetupTab(tab,btn){
+  const hub=document.getElementById('menu-hub');
+  const hdr=document.getElementById('menu-hdr');
   const cx=document.getElementById('setup-connexion');
   const pr=document.getElementById('setup-profil');
-  if(cx){cx.style.display=tab==='connexion'?'flex':'none';if(tab==='connexion'){cx.style.flexDirection='column';cx.style.gap='12px';}}
-  if(pr){pr.style.display=tab==='profil'?'flex':'none';if(tab==='profil'){pr.style.flexDirection='column';pr.style.gap='12px';}}
+  if(tab==='connexion'){
+    if(hub)hub.style.display='none';
+    if(hdr)hdr.style.display='none';
+    if(pr)pr.style.display='none';
+    if(cx){cx.style.display='flex';cx.style.flexDirection='column';cx.style.gap='12px';}
+  } else {
+    openProfil();
+  }
   document.querySelectorAll('.setup-tab').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
 }
