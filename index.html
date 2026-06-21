@@ -862,6 +862,7 @@ html.ob-done #onboarding{display:none;}
     <div class="drawer-item" onclick="openDrawerContent('anatomy')"><span class="di-ic">🫀</span><span>Anatomie du corps humain</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="openDrawerContent('proteins')"><span class="di-ic">🥛</span><span>Protéines en poudre</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="openDrawerContent('supplements')"><span class="di-ic">💊</span><span>Compléments alimentaires</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="openDrawerContent('rm1calc')"><span class="di-ic">🔢</span><span>Calculateur 1RM</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="exportData()"><span class="di-ic">📤</span><span>Exporter mes données</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="closeDrawer();goScreen('setup',document.getElementById('nb-setup'))"><span class="di-ic">👤</span><span>Mon profil</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" onclick="openDrawerContent('help')"><span class="di-ic">❓</span><span>Aide détaillée</span><span class="di-arr">▶</span></div>
@@ -1205,28 +1206,6 @@ html.ob-done #onboarding{display:none;}
       <div id="goal-desc" style="font-size:14px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:10px 12px;line-height:1.5;min-height:36px;"></div>
       <div style="position:sticky;bottom:0;background:var(--bg);padding:10px 0 2px;">
         <button class="btn btn-red" onclick="saveProfile()" style="padding:14px;font-size:16px;width:100%;">💾 Enregistrer le profil</button>
-      </div>
-    </div>
-
-    <!-- OUTILS -->
-    <div class="sec" style="margin-top:4px;">Outils</div>
-    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
-      <div style="font-size:13px;font-weight:700;color:var(--t2);">Calculateur 1RM — Formule Brzycki</div>
-      <div class="two-col">
-        <div class="fg"><label>Charge (kg)</label><input type="number" id="rm-kg" placeholder="100" step="0.5" inputmode="decimal" oninput="calcRM()"></div>
-        <div class="fg"><label>Reps</label><input type="number" id="rm-reps" placeholder="5" min="1" max="20" inputmode="numeric" oninput="calcRM()"></div>
-      </div>
-      <div class="rm-hero"><div class="lbl">1RM ESTIMÉ</div><div class="val" id="rm-out">— kg</div></div>
-      <div class="sec">Pourcentages</div>
-      <div class="pct-grid">
-        <div class="pct-item"><span class="pct-lbl">100% — 1 rep</span><span class="pct-val" id="p100">—</span></div>
-        <div class="pct-item"><span class="pct-lbl">95% — 2 reps</span><span class="pct-val" id="p95">—</span></div>
-        <div class="pct-item"><span class="pct-lbl">90% — 3 reps</span><span class="pct-val" id="p90">—</span></div>
-        <div class="pct-item"><span class="pct-lbl">85% — 5 reps</span><span class="pct-val" id="p85">—</span></div>
-        <div class="pct-item"><span class="pct-lbl">80% — 6 reps</span><span class="pct-val" id="p80">—</span></div>
-        <div class="pct-item"><span class="pct-lbl">75% — 8 reps</span><span class="pct-val" id="p75">—</span></div>
-        <div class="pct-item"><span class="pct-lbl">70% — 10 reps</span><span class="pct-val" id="p70">—</span></div>
-        <div class="pct-item"><span class="pct-lbl">60% — 15 reps</span><span class="pct-val" id="p60">—</span></div>
       </div>
     </div>
   </div>
@@ -5906,6 +5885,28 @@ const _DRAWER_CONTENT = {
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:20px;">${h.ic}</span><strong style="font-size:14px;">${h.t}</strong></div>
         <p style="font-size:13px;color:var(--t2);line-height:1.5;margin:0;">${h.d}</p>
       </div>`).join('')}
+    </div>`
+  },
+  rm1calc: {
+    title:'🔢 Calculateur 1RM',
+    html:()=>`<div style="display:flex;flex-direction:column;gap:14px;padding:4px 0;">
+      <div style="font-size:13px;color:var(--t2);line-height:1.5;">Formule de Brzycki — entre ta charge et tes reps pour estimer ton max sur 1 répétition.</div>
+      <div class="two-col">
+        <div class="fg"><label>Charge (kg)</label><input type="number" id="rm-kg" placeholder="100" step="0.5" inputmode="decimal" oninput="calcRM()"></div>
+        <div class="fg"><label>Reps</label><input type="number" id="rm-reps" placeholder="5" min="1" max="20" inputmode="numeric" oninput="calcRM()"></div>
+      </div>
+      <div class="rm-hero"><div class="lbl">1RM ESTIMÉ</div><div class="val" id="rm-out">— kg</div></div>
+      <div class="sec">Pourcentages</div>
+      <div class="pct-grid">
+        <div class="pct-item"><span class="pct-lbl">100% — 1 rep</span><span class="pct-val" id="p100">—</span></div>
+        <div class="pct-item"><span class="pct-lbl">95% — 2 reps</span><span class="pct-val" id="p95">—</span></div>
+        <div class="pct-item"><span class="pct-lbl">90% — 3 reps</span><span class="pct-val" id="p90">—</span></div>
+        <div class="pct-item"><span class="pct-lbl">85% — 5 reps</span><span class="pct-val" id="p85">—</span></div>
+        <div class="pct-item"><span class="pct-lbl">80% — 6 reps</span><span class="pct-val" id="p80">—</span></div>
+        <div class="pct-item"><span class="pct-lbl">75% — 8 reps</span><span class="pct-val" id="p75">—</span></div>
+        <div class="pct-item"><span class="pct-lbl">70% — 10 reps</span><span class="pct-val" id="p70">—</span></div>
+        <div class="pct-item"><span class="pct-lbl">60% — 15 reps</span><span class="pct-val" id="p60">—</span></div>
+      </div>
     </div>`
   },
   about: {
