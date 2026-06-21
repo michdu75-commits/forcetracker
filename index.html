@@ -2725,6 +2725,7 @@ function renderExBlocks(){
       </div>`;
     }
 
+    const hasLocalGif=!!(EX_YT[ex.name]&&EX_YT[ex.name].img);
     const rows=ex.sets.map((set,si)=>{
       const p=prev[si]||prev[Math.max(0,prev.length-1)];
       const prevRM=p&&p.kg&&p.reps?fmt(bz(p.kg,p.reps)):null;
@@ -2751,7 +2752,7 @@ function renderExBlocks(){
           <div class="ex-meta">${doneSets.length}/${ex.sets.length} séries${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>
         </div>
         <div class="ex-hdr-btns">
-          ${EX_YT[ex.name]?`<button class="btn-xs" onclick="toggleExGif(${ei},'${ex.name.replace(/'/g,"\\'")}')" title="Voir le mouvement">🎬</button>`:''}
+          ${hasLocalGif?'<button class="btn-xs" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\')" title="Voir le mouvement">🎬</button>':''}
           <button class="btn-xs" onclick="openTypeHelp()" title="Types de séries">ℹ️</button>
           <button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button>
         </div>
