@@ -5,6 +5,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Force Tracker">
@@ -7260,13 +7261,13 @@ checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 initCoachInput();
 initOnboarding();
-// Test connexion silencieux + vérif premium depuis le serveur
+// Ping silencieux — mode no-cors car la redirection AS strip Origin sur le ping
 (async function autoConnect(){
   if(!S.url)return;
   try{
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})});
-    const d=await r.json();
-    if(d.status==='online'&&!S.connected){S.connected=true;persist();updatePill();}
+    // no-cors : réponse opaque (status 0) mais aucune erreur console CORS
+    await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})});
+    if(!S.connected){S.connected=true;persist();updatePill();}
   }catch(e){}
   // Vérif premium : si email connu ET (pas premium OU premium daté) → refresh serveur
   if(S.email&&(!S.premium||S.premiumExpiry)){
