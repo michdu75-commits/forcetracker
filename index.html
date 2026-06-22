@@ -3709,19 +3709,45 @@ function finalImportProg(){
     toCreate.forEach(n=>S.customExercises.push({n,g:'Autres',custom:true}));
     toast(toCreate.length+' exercice'+(toCreate.length>1?'s':'')+" créé"+(toCreate.length>1?'s':'')+" automatiquement",'info');
   }
+  // Construire le programme avec groupes supersets et dropsets
+  const _buildProgDay=(day,di)=>{
+    const groupMap={};const gSeed=Date.now()+di;
+    return{
+      label:day.label||'Jour '+(di+1),
+      exs:(day.exercises||[]).map(ex=>{
+        // Groupe superset/tri-set
+        let group;
+        if(ex.supersetGroup){
+          if(!groupMap[ex.supersetGroup])groupMap[ex.supersetGroup]='ss'+gSeed+'_'+ex.supersetGroup;
+          group=groupMap[ex.supersetGroup];
+        }
+        // Type de série (dropset D, méthode M, etc.)
+        const baseType=ex.setType||'N';
+        // Séries avec reps+kg par palier (dropsets) ou repsPerSet
+        let sets;
+        if(ex.repsPerSet&&ex.repsPerSet.length>0){
+          sets=ex.repsPerSet.map((r,si)=>({
+            kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
+            reps:parseInt(r)||10,
+            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'M':'N'):baseType
+          }));
+        }else{
+          sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
+            kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
+            reps:ex.reps||10,
+            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'M':'N'):baseType
+          }));
+        }
+        const obj={name:ex.name,note:ex.note||'',sets};
+        if(group)obj.group=group;
+        return obj;
+      })
+    };
+  };
   const prog={id:'p'+Date.now(),name,
     weeks:_impExtracted.weeks||0,
     startDate:_impExtracted.startDate||'',
-    days:_impExtracted.days.map((day,di)=>({
-      label:day.label||'Jour '+(di+1),
-      exs:(day.exercises||[]).map(ex=>({
-        name:ex.name,
-        note:ex.note||'',
-        sets:(ex.repsPerSet&&ex.repsPerSet.length>0)
-          ?ex.repsPerSet.map((r,si)=>({kg:ex.kg||0,reps:parseInt(r)||10,type:(ex.specialSets&&ex.specialSets.includes(si))?'M':'N'}))
-          :Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({kg:ex.kg||0,reps:ex.reps||10,type:(ex.specialSets&&ex.specialSets.includes(si))?'M':'N'}))
-      }))
-    }))
+    days:_impExtracted.days.map((day,di)=>_buildProgDay(day,di))
   };
   if(_impMode==='replace'){
     const idx=parseInt((document.getElementById('imp-replace-sel')||{}).value);
@@ -3766,11 +3792,13 @@ function loadProgDay(progIdx,dayIdx){
   const day=prog.days[dayIdx];
   S.wkt={date:today(),exs:(day.exs||[]).map(e=>{
     const prev=getPrev(e.name);
-    return{name:e.name,note:e.note||'',sets:(e.sets||[]).map(s=>({
+    const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map(s=>({
       kg:prev.length?prev[0].kg:(s.kg||0),
       reps:prev.length?prev[0].reps:(s.reps||10),
       type:s.type||'N',done:false,rm1:0
     }))};
+    if(e.group)obj.group=e.group; // propage le groupe superset
+    return obj;
   })};
   persist();closeDaySel();closeProgModal();
   _expandedEx=0;
