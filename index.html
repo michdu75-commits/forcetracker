@@ -131,7 +131,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .slq-bar-off{background:rgba(255,255,255,.1)!important;}
 
 /* REST BAR */
-#rest-bar{position:sticky;top:0;z-index:10;display:none;align-items:center;gap:10px;padding:10px 14px;
+#rest-bar{display:none;align-items:center;gap:10px;padding:10px 14px;
   background:var(--bg2);border:1px solid rgba(52,211,153,.3);border-radius:12px;
   transition:border-color .4s;}
 #rest-bar.show{display:flex;}
@@ -943,9 +943,10 @@ html.ob-done #onboarding{display:none;}
 </div>
 
 <!-- SÉANCE -->
-<div class="screen" id="s-log">
-  <div id="log-hdr" style="padding:max(env(safe-area-inset-top),44px) 22px 0;"></div>
-  <div style="padding:10px 14px 0;display:flex;flex-direction:column;gap:10px;">
+<div class="screen" id="s-log" style="overflow:hidden;padding:0;gap:0;">
+  <!-- Entête fixe : date, sommeil, cardio, chrono -->
+  <div id="s-log-top" style="flex-shrink:0;padding:max(env(safe-area-inset-top),44px) 14px 8px;display:flex;flex-direction:column;gap:8px;background:var(--bg);">
+    <div id="log-hdr"></div>
     <div style="display:flex;gap:8px;align-items:center;">
       <label for="s-date" style="flex:1;height:46px;padding:0 16px;background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="s-date-lbl">
         <span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t2);flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="s-date-txt" style="font-size:14px;font-weight:600;color:var(--t1);"></span></span>
@@ -972,6 +973,9 @@ html.ob-done #onboarding{display:none;}
         </div>
       </div>
     </div>
+  </div>
+  <!-- Zone scrollable : exercices uniquement -->
+  <div id="s-log-body" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:8px 14px 110px;display:flex;flex-direction:column;gap:10px;">
     <div id="wkt-exs"></div>
     <div style="display:flex;flex-direction:column;gap:8px;">
       <div style="display:flex;gap:8px;">
