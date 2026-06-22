@@ -108,7 +108,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 #root.on-log .topbar{display:none;}
 #root.on-setup .topbar{display:none;}
 #s-home{padding:0 0 110px;gap:0;}
-#s-log{padding:0 0 110px;gap:0;}
+#s-log{padding:0;gap:0;}
+#s-log.active{display:grid;grid-template-rows:auto 1fr;overflow:hidden;}
 #s-setup{padding:0 0 110px;gap:0;}
 .menu-avatar{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#FF6A73,#EF3E57);display:flex;align-items:center;justify-content:center;font-family:var(--font-cond);font-size:23px;font-weight:900;color:#fff;flex-shrink:0;box-shadow:0 4px 14px -4px rgba(239,62,87,.45);}
 .menu-row{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .12s;touch-action:manipulation;}
@@ -943,7 +944,7 @@ html.ob-done #onboarding{display:none;}
 </div>
 
 <!-- SÉANCE -->
-<div class="screen" id="s-log" style="overflow:hidden;padding:0;gap:0;">
+<div class="screen" id="s-log">
   <!-- Entête fixe : date, sommeil, cardio, chrono -->
   <div id="s-log-top" style="flex-shrink:0;padding:max(env(safe-area-inset-top),44px) 14px 8px;display:flex;flex-direction:column;gap:8px;background:var(--bg);">
     <div id="log-hdr"></div>
@@ -975,7 +976,7 @@ html.ob-done #onboarding{display:none;}
     </div>
   </div>
   <!-- Zone scrollable : exercices uniquement -->
-  <div id="s-log-body" style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:8px 14px 110px;display:flex;flex-direction:column;gap:10px;">
+  <div id="s-log-body" style="overflow-y:auto;overscroll-behavior-y:contain;padding:8px 14px 110px;display:flex;flex-direction:column;gap:10px;min-height:0;">
     <div id="wkt-exs"></div>
     <div style="display:flex;flex-direction:column;gap:8px;">
       <div style="display:flex;gap:8px;">
