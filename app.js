@@ -950,9 +950,9 @@ if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('portrai
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('./sw.js');
-    // Quand un nouveau SW prend le contrôle → rechargement auto (assets mis à jour)
-    navigator.serviceWorker.addEventListener('controllerchange',()=>{
-      window.location.reload();
+    navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
+    navigator.serviceWorker.addEventListener('message',e=>{
+      if(e.data&&e.data.type==='SW_UPDATED')window.location.reload();
     });
   });
 }
