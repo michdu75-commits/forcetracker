@@ -600,7 +600,7 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 #toast.info{background:var(--bg3);border:1px solid var(--sep);}
 
 /* ─── ONBOARDING ─────────────────────────────────────────────── */
-#onboarding{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:9000;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;}
+#onboarding{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:9999;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;}
 html.ob-done #onboarding{display:none;}
 .ob-progress{display:flex;gap:8px;justify-content:center;padding:max(env(safe-area-inset-top),48px) 0 8px;}
 .ob-dot{width:8px;height:8px;border-radius:50%;background:var(--sep);transition:all .35s;}
@@ -720,7 +720,7 @@ html.ob-done #onboarding{display:none;}
         <img src="logo.png" style="width:72px;height:72px;border-radius:18px;object-fit:cover;margin-bottom:20px;">
         <div style="font-family:var(--font-cond);font-size:26px;font-weight:900;text-align:center;margin-bottom:6px;">Installe Force Tracker</div>
         <div style="font-size:14px;color:var(--t2);text-align:center;margin-bottom:28px;line-height:1.45;">Accès instantané depuis ton écran d'accueil</div>
-        <button id="ob0-install-btn" class="btn btn-red" onclick="ob0Install()" style="font-size:17px;padding:17px;width:100%;">📲 Installer l'app</button>
+        <button id="ob0-install-btn" class="btn btn-red" onclick="ob0Install()" style="font-size:17px;padding:17px;width:100%;display:flex;align-items:center;justify-content:center;gap:9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="7" x2="12" y2="14"/><polyline points="9 11 12 14 15 11"/></svg> Installer l'app</button>
         <div id="ob0-android-fallback" style="display:none;margin-top:16px;background:var(--bg3);border-radius:12px;padding:12px 16px;width:100%;font-size:13px;color:var(--t2);text-align:center;line-height:1.55;">Chrome <strong style="color:var(--t1);">⋮</strong> → <strong style="color:var(--t1);">Ajouter à l'écran d'accueil</strong></div>
       </div>
 
@@ -5046,6 +5046,7 @@ function setGoal(g){
 
 let _screenHistory=['home'];
 function openMenuDrawer(){
+  if(!document.documentElement.classList.contains('ob-done'))return;
   document.getElementById('menu-drawer').classList.add('open');
   document.getElementById('menu-drawer-bd').classList.add('open');
   document.getElementById('nb-setup').classList.add('active');
