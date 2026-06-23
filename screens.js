@@ -16,6 +16,10 @@ function _applyScreen(id,btn){
   document.getElementById('root').classList.toggle('on-home',id==='home');
   document.getElementById('root').classList.toggle('on-log',id==='log');
   document.getElementById('root').classList.toggle('on-setup',id==='setup');
+  document.getElementById('root').classList.toggle('on-coach',id==='coach');
+  const _TB_TITLES={home:'Force Tracker',log:'Séance',progress:'Progrès',nutrition:'Nutrition',setup:'Profil',coach:'Coach IA',cycle:'Cycle de force'};
+  const _tbTitle=document.querySelector('.tb-title');
+  if(_tbTitle)_tbTitle.textContent=_TB_TITLES[id]||'Force Tracker';
   if(id==='home')renderHome();
   if(id==='log')renderLog();
   if(id==='progress')renderProgress();

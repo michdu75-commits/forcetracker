@@ -59,6 +59,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 #root.on-home .topbar{display:none;}
 #root.on-log .topbar{display:none;}
 #root.on-setup .topbar{display:none;}
+#root.on-coach .topbar{display:none;}
 #s-home{padding:0 0 110px;gap:0;}
 #s-log{padding:0 14px 110px;gap:10px;}
 #s-setup{padding:0 0 110px;gap:0;}
