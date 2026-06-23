@@ -299,7 +299,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 
 <!-- ACCUEIL -->
 <div class="screen active" id="s-home">
-  <div id="home-hdr" style="padding:max(env(safe-area-inset-top),44px) 22px 0;"></div>
+  <div id="home-hdr" style="padding:0;"></div>
   <div id="home-hero" style="padding:14px 14px 0;"></div>
   <div id="home-stats" style="padding:10px 14px 0;"></div>
   <div id="home-secondary" style="padding:10px 14px 0;"></div>
@@ -315,7 +315,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 
 <!-- SÉANCE -->
 <div class="screen" id="s-log">
-  <div id="log-hdr" style="padding:max(env(safe-area-inset-top),44px) 0 0;"></div>
+  <div id="log-hdr" style="padding:0;"></div>
   <div style="display:flex;gap:8px;align-items:center;">
     <label for="s-date" style="flex:1;height:46px;padding:0 16px;background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="s-date-lbl">
       <span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t2);flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="s-date-txt" style="font-size:14px;font-weight:600;color:var(--t1);"></span></span>
@@ -511,7 +511,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <!-- PROFIL -->
   <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;padding:0 16px;">
     <!-- EN-TÊTE RETOUR -->
-    <div style="padding:max(env(safe-area-inset-top),44px) 16px 4px;margin:0 -16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;background:var(--bg);">
+    <div style="padding:10px 16px 4px;margin:0 -16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;background:var(--bg);">
       <span style="font-family:var(--font-cond);font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--t1);">Profil athlète</span>
       <button onclick="closeProfil()" style="width:32px;height:32px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);border:none;color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">✕</button>
     </div>

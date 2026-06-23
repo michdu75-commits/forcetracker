@@ -16,10 +16,6 @@ function _applyScreen(id,btn){
   document.getElementById('root').classList.toggle('on-home',id==='home');
   document.getElementById('root').classList.toggle('on-log',id==='log');
   document.getElementById('root').classList.toggle('on-setup',id==='setup');
-  document.getElementById('root').classList.toggle('on-coach',id==='coach');
-  const _TB_TITLES={home:'Force Tracker',log:'Séance',progress:'Progrès',nutrition:'Nutrition',setup:'Profil',coach:'Coach IA',cycle:'Cycle de force'};
-  const _tbTitle=document.querySelector('.tb-title');
-  if(_tbTitle)_tbTitle.textContent=_TB_TITLES[id]||'Force Tracker';
   if(id==='home')renderHome();
   if(id==='log')renderLog();
   if(id==='progress')renderProgress();
@@ -153,11 +149,8 @@ function _renderHomeHdr(){
   const dotShadow=isConn?'0 0 8px #34d399':'none';
   const lbl=isConn?'Sheets ✓':'Sheets';
   const lblColor=isConn?'#5be3b4':'var(--t2)';
-  el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;">'
-    +'<div style="display:flex;align-items:center;gap:13px;">'
-    +'<img src="force-tracker-logo-topbar.gif" onclick="onLogoTap()" style="width:58px;height:58px;border-radius:17px;object-fit:cover;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);flex:none;cursor:pointer;-webkit-tap-highlight-color:transparent;">'
-    +'<div><div style="font-family:var(--font-cond);font-size:18px;font-weight:700;color:var(--red);letter-spacing:.005em;white-space:nowrap;">Force Tracker</div>'
-    +'<div style="font-size:13.5px;font-weight:500;color:var(--t2);margin-top:1px;">'+(S.name?'Bonjour '+S.name:'Bonjour')+'</div></div></div>'
+  el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px 10px;">'
+    +'<div style="font-size:16px;font-weight:600;color:var(--t1);">'+(S.name?'Bonjour '+S.name:'Bonjour')+'</div>'
     +'<button onclick="goScreen(\'setup\',document.getElementById(\'nb-setup\'))" id="home-sheets-pill" style="display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:'+pillBg+';box-shadow:inset 0 0 0 1px '+pillBorder+';border:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
     +'<span id="home-sync-dot" style="width:6px;height:6px;border-radius:50%;background:'+dotBg+';box-shadow:'+dotShadow+';flex:none;display:inline-block;"></span>'
     +'<span id="home-sync-lbl" style="font-size:12px;font-weight:600;color:'+lblColor+';">'+lbl+'</span></button></div>';

@@ -23,7 +23,6 @@ function renderLog(){
   const hdr=document.getElementById('log-hdr');
   const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
   if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;">'
-    +'<img src="force-tracker-logo-topbar.gif" style="width:40px;height:40px;border-radius:12px;object-fit:cover;flex-shrink:0;">'
     +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
     +(hasExs?'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>':'')
     +'</div>';
