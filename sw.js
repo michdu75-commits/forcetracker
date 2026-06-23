@@ -1,4 +1,4 @@
-const CACHE = 'ft-v50';
+const CACHE = 'ft-v51';
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
