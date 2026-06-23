@@ -1,6 +1,6 @@
-const CACHE = 'ft-v42';
+const CACHE = 'ft-v43';
 const PRECACHE = [
-  './', './index.html', './manifest.json', './logo.png', './female-body.png',
+  './', './index.html', './style.css', './app.js', './manifest.json', './logo.png', './female-body.png',
   './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',
   // Muscles SVG + PNG
   './muscles/abs.svg','./muscles/arms.svg','./muscles/back.svg','./muscles/calves.svg',
