@@ -142,18 +142,7 @@ function closeHelp(){document.getElementById('ov-help').classList.remove('open')
 // ─── HOME ────────────────────────────────────────────────────
 function _renderHomeHdr(){
   const el=document.getElementById('home-hdr');if(!el)return;
-  const isConn=S.connected;
-  const pillBg=isConn?'rgba(52,211,153,.1)':'rgba(255,255,255,.06)';
-  const pillBorder=isConn?'rgba(52,211,153,.22)':'rgba(255,255,255,.08)';
-  const dotBg=isConn?'#34d399':'var(--t3)';
-  const dotShadow=isConn?'0 0 8px #34d399':'none';
-  const lbl=isConn?'Sheets ✓':'Sheets';
-  const lblColor=isConn?'#5be3b4':'var(--t2)';
-  el.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 14px 10px;">'
-    +'<div style="font-size:16px;font-weight:600;color:var(--t1);">'+(S.name?'Bonjour '+S.name:'Bonjour')+'</div>'
-    +'<button onclick="goScreen(\'setup\',document.getElementById(\'nb-setup\'))" id="home-sheets-pill" style="display:flex;align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:'+pillBg+';box-shadow:inset 0 0 0 1px '+pillBorder+';border:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
-    +'<span id="home-sync-dot" style="width:6px;height:6px;border-radius:50%;background:'+dotBg+';box-shadow:'+dotShadow+';flex:none;display:inline-block;"></span>'
-    +'<span id="home-sync-lbl" style="font-size:12px;font-weight:600;color:'+lblColor+';">'+lbl+'</span></button></div>';
+  el.innerHTML='<div style="padding:6px 14px 10px;font-size:16px;font-weight:600;color:var(--t1);">'+(S.name?'Bonjour '+S.name:'Bonjour')+'</div>';
 }
 
 function _renderHomeHero(){
