@@ -952,7 +952,7 @@ if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('portrai
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('./sw.js').then(reg=>{
-      // Forcer la vérification à chaque retour sur l'app (rouvrir depuis multitâche)
+      reg.update(); // vérification immédiate à chaque ouverture (PWA standalone inclus)
       document.addEventListener('visibilitychange',()=>{
         if(document.visibilityState==='visible')reg.update();
       });
