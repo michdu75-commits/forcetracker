@@ -485,7 +485,7 @@ function handleImportProgram_(body) {
       ex.note = ex.note||'';
       ex.specialSets = Array.isArray(ex.specialSets) ? ex.specialSets.map(i=>parseInt(i)).filter(i=>!isNaN(i)) : [];
       ex.supersetGroup = String(ex.supersetGroup||'').toUpperCase().replace(/[^A-Z]/g,'').slice(0,2);
-      ex.setType = ['D','M','W','E'].includes(String(ex.setType||'').toUpperCase()) ? String(ex.setType).toUpperCase() : '';
+      ex.setType = ['D','W','E'].includes(String(ex.setType||'').toUpperCase()) ? String(ex.setType).toUpperCase() : '';
       ex.kgPerSet = Array.isArray(ex.kgPerSet) ? ex.kgPerSet.map(k=>Math.round((parseFloat(k)||0)*2)/2) : [];
     }));
     if (!data.days || !data.days.length) return json_({status:'error', error:'Aucun exercice trouvé dans les images.'});

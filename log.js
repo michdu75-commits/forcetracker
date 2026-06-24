@@ -284,8 +284,8 @@ function toggleSet(ei,si){
     const isAbdo=EXLIB.some(e=>e.n===exName&&e.g==='Abdominaux');
     const savedPref=(S.exRestPref||{})[exName];
     const defForEx=isAbdo?30:(savedPref||90);
-    const restByType={N:defForEx,W:45,E:240,D:20,M:defForEx};
-    const restLabels={W:'Échauffement',E:'Récup. complète',D:'Drop set',M:'Méthode spéciale'};
+    const restByType={N:defForEx,W:45,E:240,D:20};
+    const restLabels={W:'Échauffement',E:'Récup. complète',D:'Drop set'};
     const lbl=document.getElementById('rest-label');
     if(lbl)lbl.textContent=restLabels[set.type]||(isAbdo?'Abdos':'');
     _restStep=isAbdo?5:15;
@@ -1193,13 +1193,13 @@ function finalImportProg(){
           sets=ex.repsPerSet.map((r,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:parseInt(r)||10,
-            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'M':'N'):baseType
+            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType
           }));
         }else{
           sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:ex.reps||10,
-            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'M':'N'):baseType
+            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType
           }));
         }
         const obj={name:ex.name,note:ex.note||'',sets};
