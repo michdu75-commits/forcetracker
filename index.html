@@ -1010,7 +1010,29 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.6">
       💡 Le <strong>1RM estimé</strong> s'affiche en temps réel sous chaque série dès que tu saisis le poids et les reps. Il compare automatiquement avec ton PR actuel.
     </div>
-    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px">Tape sur le badge coloré en séance pour changer le type</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:16px">Tape sur le badge coloré en séance pour changer le type</div>
+    <div style="border-top:1px solid var(--sep);padding-top:16px;margin-bottom:12px">
+      <div style="font-weight:800;font-size:15px;margin-bottom:12px;text-align:center">Chaînes d'exercices</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.5">Dans le footer d'un exercice, des boutons permettent d'enchaîner automatiquement plusieurs exercices ou séries :</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:12px;font-weight:800;background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.4);color:var(--orange);border-radius:6px;padding:4px 8px;white-space:nowrap">⚡ Super Set</span>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5">Enchaîne 2+ exercices <strong>sans repos</strong>. Le timer se déclenche après le dernier exercice du tour, puis repart au 1er automatiquement.</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:12px;font-weight:800;background:rgba(191,90,242,.1);border:1px solid rgba(191,90,242,.4);color:#BF5AF2;border-radius:6px;padding:4px 8px;white-space:nowrap">📉 Drop</span>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5">Réduit le poids de <strong>~10%</strong> sans pause. Repos 20s automatique entre chaque palier. Crée autant de paliers que tu veux.</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:12px;font-weight:800;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.4);color:var(--green);border-radius:6px;padding:4px 8px;white-space:nowrap">📈 +10%</span>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5"><strong>Pyramide montante</strong> : crée 2 séries à +10% et +21%. Poids pré-rempli, ajustable.</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:12px;font-weight:800;background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.4);color:var(--gold);border-radius:6px;padding:4px 8px;white-space:nowrap">📉 −10%</span>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5"><strong>Pyramide descendante</strong> : crée 2 séries à −10% et −19%. Poids pré-rempli, ajustable.</div>
+        </div>
+      </div>
+    </div>
     <button class="btn btn-red" onclick="closeTypeHelp()" style="width:100%;padding:13px">OK</button>
   </div>
 </div>
