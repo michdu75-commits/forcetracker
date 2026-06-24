@@ -952,10 +952,12 @@ if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('portrai
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('./sw.js').then(reg=>{
-      reg.update(); // vérification immédiate à chaque ouverture (PWA standalone inclus)
+      reg.update(); // vérification immédiate au démarrage (PWA standalone inclus)
+      setInterval(()=>reg.update(), 5*60*1000); // re-vérif toutes les 5 min
       document.addEventListener('visibilitychange',()=>{
         if(document.visibilityState==='visible')reg.update();
       });
+      window.addEventListener('online',()=>reg.update()); // retour réseau
     });
     navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
     navigator.serviceWorker.addEventListener('message',e=>{
