@@ -492,13 +492,18 @@ const _DRAWER_CONTENT = {
     title:'❓ Aide détaillée',
     html:`<div style="display:flex;flex-direction:column;gap:10px;padding:0 2px 8px;">
       ${[
-        {ic:'⚡',t:'Démarrer une séance',d:'Appuie sur le bouton rouge central ⚡ ou sur "Commencer une séance" depuis l\'accueil. Choisis tes exercices, saisis les séries (kg × reps), valide avec ✓. Le chrono de repos se lance automatiquement.'},
-        {ic:'🏋️',t:'Types de séries',d:'N = Normal · W = Échauffement (exclu des PRs) · E = Échec musculaire · D = Drop set. Cycle sur la lettre pour changer. Chaque type adapte le temps de repos.'},
-        {ic:'📋',t:'Programmes',d:'Sauvegarde ta séance comme programme réutilisable. Charge un programme pour retrouver les exercices avec les poids de la dernière fois. Utilise 📸 pour scanner un programme papier.'},
-        {ic:'📈',t:'Progrès & PRs',d:'Les PRs sont calculés automatiquement via la formule Brzycki (1RM estimé). Consulte l\'onglet Progrès pour voir les courbes par exercice.'},
-        {ic:'🤖',t:'Coach IA',d:'Pose n\'importe quelle question sur la musculation, la nutrition ou ta progression. Le coach connaît ton profil complet. 10 questions gratuites, illimité en Premium.'},
-        {ic:'☁️',t:'Synchronisation',d:'Tes données sont sauvegardées localement ET sur Google Sheets (si connecté). Restaure sur un nouvel appareil avec ton email depuis l\'onboarding.'},
-        {ic:'💡',t:'Astuce PR',d:'Un PR n\'est déclenché que par un set N, E ou D — jamais par un échauffement (W). La formule Brzycki estime ton 1RM théorique même si tu ne fais pas de maxima.'},
+        {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central ⚡ ou "Commencer une séance" depuis l\'accueil. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries.'},
+        {ic:'🏋️',t:'Types de séries',d:'N = Normal · W = Échauffement (exclu des PRs, compté dans le volume) · E = Échec musculaire · D = Drop set. Appuie sur la lettre pour changer. Timer adaptatif : W 45s · N 2:10 · E 4min · D 20s.'},
+        {ic:'🏃',t:'Cardio en séance',d:'Bloc cardio en haut de séance (replié par défaut). Choisis le type (elliptique, tapis, vélo, rameur, corde...), l\'intensité (léger/modéré/intense) et la durée. Les calories brûlées sont calculées et ajoutées à ton TDEE.'},
+        {ic:'📋',t:'Programmes',d:'Sauvegarde ta séance en cours comme programme réutilisable. Charge-le pour retrouver les exercices avec les poids de la dernière fois. Bouton 🤖 pour une analyse IA de ton programme. Bouton ✏️ pour modifier les exercices.'},
+        {ic:'📸',t:'Import de programme',d:'Bouton 📸 dans la séance pour importer depuis une photo, un fichier Word (.docx) ou Excel (.xlsx). Le Coach IA extrait automatiquement les exercices, séries et charges.'},
+        {ic:'📈',t:'Progrès & PRs',d:'Les PRs se calculent automatiquement via Brzycki (1RM estimé). Onglet Progrès → graphique par exercice · Onglet Poids → courbe de poids · Onglet Badges → 18 récompenses à débloquer. Tap sur une séance pour voir/modifier les séries.'},
+        {ic:'🏅',t:'Badges & Streaks',d:'18 badges en 4 catégories : évolution (1re séance, 10/25/50/100 séances), performance (PRs, clubs 100/140 kg), streak (7/30/90 jours), spécial (lève-tôt, noctambule, anniversaire, premium). Un résumé hebdomadaire s\'affiche le lundi.'},
+        {ic:'🍽️',t:'Nutrition',d:'TDEE adaptatif (Harris-Benedict) calculé depuis ton profil. Phase Charge = surplus · Phase Décharge = déficit. Plan 5 repas détaillé. Créatine et whey dosés selon ton poids. Combinaisons Premium : 4 stacks (muscle, force, cardio, perte de poids).'},
+        {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
+        {ic:'🤖',t:'Coach IA',d:'Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
+        {ic:'☁️',t:'Synchronisation cloud',d:'Données sauvegardées localement (localStorage) ET sur Google Sheets. Sync automatique après chaque séance. Restauration complète sur un nouvel appareil : entre ton email à l\'onboarding ou dans Profil → Admin.'},
+        {ic:'💡',t:'Astuces',d:'• PR = uniquement sets N/E/D, jamais W · • 1RM Brzycki = kg × (36 / (37 − reps)) · • Tap sur l\'historique pour corriger des séries · • Menu ☰ → Anatomie pour visualiser les muscles · • Calculateur 1RM disponible depuis Menu ☰'},
       ].map(h=>`<div style="background:var(--bg3);border-radius:12px;padding:14px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:20px;">${h.ic}</span><strong style="font-size:14px;">${h.t}</strong></div>
         <p style="font-size:13px;color:var(--t2);line-height:1.5;margin:0;">${h.d}</p>

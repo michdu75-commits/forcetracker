@@ -45,10 +45,11 @@ const _HELP_DATA={
   home:{
     title:'🏠 Accueil',
     tips:[
-      {i:'📊',t:'Les stats du mois se calculent depuis tes séances enregistrées et ton poids loggé.'},
-      {i:'😴',t:'Le score de récupération vient du check-in post-séance (sommeil + énergie subjective).'},
-      {i:'🏆',t:'Les PRs (records personnels) se mettent à jour automatiquement après chaque séance.'},
-      {i:'🔄',t:'Le cycle de force (Accumulation → Peak → Décharge) se configure dans Profil → Cycle.'},
+      {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
+      {i:'😴',t:'Le score de récupération vient du check-in post-séance (sommeil + énergie). Remplis-le après chaque séance pour un suivi fiable.'},
+      {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
+      {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
+      {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Consulte l\'onglet Badges dans Progrès pour tout voir.'},
     ],
     female:[
       {i:'🌙',t:'La carte de ton cycle menstruel s\'affiche ici — remplis la date de tes règles dans Profil pour l\'activer.'},
@@ -56,67 +57,74 @@ const _HELP_DATA={
     ]
   },
   setup:{
-    title:'👤 Profil — bien le remplir',
+    title:'👤 Profil',
     tips:[
-      {i:'⚖️',t:'Ton poids, taille et âge sont essentiels : ils servent à calculer tes besoins caloriques (TDEE) dans Nutrition.'},
-      {i:'🎯',t:'L\'objectif (muscle, perte de poids, force...) détermine la répartition de tes macronutriments.'},
-      {i:'🏃',t:'Le niveau d\'activité est crucial — sous-estimer revient à manger trop. Sois honnête.'},
-      {i:'📏',t:'Tour de cou + taille (+ hanches pour les femmes) → calcul automatique de ta composition corporelle (% graisse, masse maigre).'},
+      {i:'⚖️',t:'Poids, taille et âge sont indispensables pour calculer ton TDEE (besoins caloriques) dans Nutrition.'},
+      {i:'🎯',t:'L\'objectif (muscle, perte de poids, force, rééquilibrage...) adapte tes macros et les conseils du Coach IA.'},
+      {i:'🏃',t:'Niveau d\'activité : sois honnête — le sous-estimer te fera manger trop peu, le surestimer trop.'},
+      {i:'📏',t:'Tour de cou + taille (+ hanches) → composition corporelle automatique (% graisse, masse maigre, méthode US Navy).'},
+      {i:'🧬',t:'Remplis ta morphologie (H/A/V/X/O) et ton morphotype (ecto/méso/endo) pour des conseils Coach IA vraiment personnalisés. Bouton 📸 pour analyse IA sur 3 photos.'},
+      {i:'🎂',t:'Renseigne ta date d\'anniversaire (JJ/MM) pour débloquer le badge spécial si tu t\'entraînes le jour J.'},
     ],
     female:[
-      {i:'🌸',t:'La date de tes premières règles permet à l\'app d\'adapter tes macros et conseils selon ta phase de cycle. C\'est la donnée la plus importante pour un suivi féminin précis.'},
-      {i:'💊',t:'Si tu prends une contraception hormonale (pilule, implant, DIU hormonal), coche-le — le suivi de phase est désactivé car les fluctuations naturelles sont masquées.'},
-      {i:'📐',t:'Pour les femmes, les hanches sont indispensables au calcul du % de graisse (méthode US Navy). Sans elles, la formule est moins précise.'},
-      {i:'🧬',t:'Remplis ta morphologie (forme du corps) pour que le Coach IA te donne des conseils vraiment adaptés à ta silhouette.'},
+      {i:'🌸',t:'La date de tes premières règles permet à l\'app d\'adapter tes macros et conseils selon ta phase de cycle.'},
+      {i:'💊',t:'Si tu prends une contraception hormonale, coche-le — le suivi de phase est désactivé car les fluctuations naturelles sont masquées.'},
+      {i:'📐',t:'Les hanches sont indispensables au calcul du % de graisse pour les femmes (méthode US Navy).'},
+      {i:'🧬',t:'La morphologie féminine (Poire/Sablier/Rectangle/Triangle inv./Ronde) affine les recommandations d\'exercices et de nutrition du Coach IA.'},
     ]
   },
   nutrition:{
     title:'🍽️ Nutrition',
     tips:[
-      {i:'⚠️',t:'Les macros ne s\'affichent correctement que si ton Profil est complet (âge, poids, taille, niveau d\'activité).'},
-      {i:'📈',t:'Phase Charge = surplus calorique pour prendre du muscle. Phase Décharge = déficit pour perdre du gras. Alterne selon tes objectifs.'},
-      {i:'💪',t:'Les suppléments (créatine, whey) sont dosés automatiquement selon ton poids et ton objectif.'},
-      {i:'🔥',t:'Les calories brûlées à la séance sont estimées et ajoutées à ton TDEE du jour.'},
+      {i:'⚠️',t:'Les macros s\'affichent correctement uniquement si le Profil est complet (âge, poids, taille, activité, objectif).'},
+      {i:'📈',t:'Phase Charge = surplus calorique pour prendre du muscle. Phase Décharge = déficit pour perdre du gras. Alterne selon tes cycles.'},
+      {i:'💊',t:'Suppléments : créatine (phases charge/entretien) et whey dosés selon ton poids. Combinaisons Premium : 4 stacks complets (muscle, force, cardio, perte de poids).'},
+      {i:'🔥',t:'Les calories brûlées au cardio (bloc cardio dans ta séance) s\'ajoutent à ton TDEE estimé du jour.'},
+      {i:'🍽️',t:'Le plan de repas détaillé (5 repas) est généré depuis tes macros — adapté à ta phase et ton objectif.'},
     ],
     female:[
-      {i:'🌙',t:'Tes macros s\'adaptent automatiquement selon ta phase de cycle : plus de glucides en phase folliculaire (énergie haute), légère augmentation des calories en phase lutéale.'},
-      {i:'🔥',t:'En phase lutéale (avant les règles), ton métabolisme est naturellement plus élevé (+100 à 200 kcal/jour). L\'app en tient compte.'},
-      {i:'💧',t:'Les envies de sucre et la rétention d\'eau en fin de cycle sont normales. Adapte tes portions sans culpabilité.'},
+      {i:'🌙',t:'Tes macros s\'adaptent automatiquement : plus de glucides en folliculaire (énergie haute), légère hausse en lutéale.'},
+      {i:'🔥',t:'En phase lutéale, ton métabolisme est naturellement plus élevé (+100 à 200 kcal/j). L\'app en tient compte.'},
+      {i:'💧',t:'Envies de sucre et rétention d\'eau en fin de cycle sont normales. Adapte tes portions sans culpabilité.'},
     ]
   },
   progress:{
     title:'📈 Progrès',
     tips:[
-      {i:'💪',t:'Le graphique montre ton 1RM estimé (formule Brzycki) calculé depuis tes séances — pas besoin de tester à l\'échec.'},
-      {i:'⚖️',t:'Log ton poids régulièrement (idéalement le matin à jeun) pour voir une courbe fiable sur la durée.'},
-      {i:'🏅',t:'Les badges se débloquent automatiquement : régularité, PRs, streaks... vérifie l\'onglet Badges.'},
-      {i:'📉',t:'Un plateau sur plusieurs semaines est normal — le progrès n\'est pas linéaire.'},
+      {i:'💪',t:'Le graphique affiche ton 1RM estimé (Brzycki) par exercice — sans avoir besoin de tester à l\'échec.'},
+      {i:'⚖️',t:'Log ton poids régulièrement (idéalement le matin à jeun) pour une courbe fiable. Tap sur une entrée pour la corriger.'},
+      {i:'🏅',t:'18 badges en 4 catégories : évolution, performance, streak, spécial. Vérifie l\'onglet Badges pour les débloquer.'},
+      {i:'📋',t:'Tap sur une séance passée dans l\'historique pour voir et modifier les kg/reps de chaque série.'},
+      {i:'📉',t:'Un plateau sur plusieurs semaines est normal — le progrès n\'est jamais linéaire. Varie les charges et les volumes.'},
     ],
     female:[
-      {i:'⚖️',t:'Les variations de poids de ±1 à 3 kg en cours de cycle sont normales. C\'est de la rétention d\'eau, pas de la graisse. Compare ton poids à la même phase du cycle précédent.'},
-      {i:'📊',t:'Tes performances (force, endurance) peuvent varier selon la phase. Pour comparer objectivement, rapproche les séances de la même phase entre elles.'},
+      {i:'⚖️',t:'Variations de poids ±1 à 3 kg en cours de cycle = rétention d\'eau, pas de la graisse. Compare la même phase entre cycles.'},
+      {i:'📊',t:'Pour comparer tes performances objectivement, rapproche les séances de la même phase de cycle entre elles.'},
     ]
   },
   log:{
     title:'⚡ Séance',
     tips:[
-      {i:'🔤',t:'Types de série : N = Normal · W = Échauffement (exclu des PRs, compté dans le volume) · E = Échec · D = Drop set'},
-      {i:'⏱️',t:'Le timer s\'adapte au type : Échauffement 45s · Normal 130s · Échec 4min · Drop 20s'},
-      {i:'🏆',t:'Le 1RM s\'affiche en temps réel sous le type de série — utilise-le pour calibrer tes charges.'},
-      {i:'📷',t:'Bouton 📸 pour importer un programme depuis une photo (planning, tableau...).'},
+      {i:'🔤',t:'Types de série : N = Normal · W = Échauffement (exclu PRs, compté volume) · E = Échec musculaire · D = Drop set. Appuie sur la lettre pour changer.'},
+      {i:'⏱️',t:'Timer adaptatif : W = 45s · N = 2:10 · E = 4min · D = 20s. Boutons −15s/+15s et presets 1:00/1:30/2:00.'},
+      {i:'🏋️',t:'Le 1RM (Brzycki) s\'affiche en temps réel sous le type — utilise-le pour calibrer tes charges. Appuie sur ℹ️ pour l\'aide sur les types.'},
+      {i:'🏃',t:'Bloc cardio en haut de séance : type (elliptique, tapis, vélo...) × intensité × durée → calories brûlées calculées automatiquement.'},
+      {i:'📸',t:'Bouton 📸 pour importer un programme depuis une photo, un fichier Word ou Excel — l\'IA le convertit en séance automatiquement.'},
     ],
     female:[]
   },
   coach:{
     title:'🤖 Coach IA',
     tips:[
-      {i:'💬',t:'Donne un maximum de contexte dans tes messages : exercices actuels, douleurs, objectif précis, plateau.'},
-      {i:'📸',t:'Envoie une photo (Premium) pour une analyse de composition corporelle ou de ta morphologie.'},
-      {i:'🔓',t:'10 questions gratuites puis abonnement Premium pour un accès illimité.'},
+      {i:'💬',t:'Ton profil complet (poids, objectif, PRs, morphologie) est injecté automatiquement — pas besoin de te présenter à chaque fois.'},
+      {i:'🧠',t:'Mémoire intelligente (Premium) : le Coach résume et retient le fil de vos échanges entre sessions.'},
+      {i:'📸',t:'Bouton 📷 pour envoyer une photo (analyse corpo ou morphologie). Bouton 📸 "Analyser ma morphologie" pour l\'analyse 3 angles (Premium).'},
+      {i:'📋',t:'Analyse de programme IA (bouton 🤖 dans Programmes) : le Coach évalue ton programme et propose des améliorations.'},
+      {i:'🔓',t:'10 questions gratuites, puis Premium illimité (4,99 € / 2 mois via Ko-fi).'},
     ],
     female:[
-      {i:'🌸',t:'Mentionne ta phase de cycle dans ton message ("je suis en phase lutéale") pour des conseils nutrition et entraînement vraiment adaptés à ton moment.'},
-      {i:'🧬',t:'L\'analyse de morphologie (Premium, bouton 📸 dans le chat) te donne un profil personnalisé : silhouette, forces, axes de progression spécifiques.'},
+      {i:'🌸',t:'Mentionne ta phase de cycle ("je suis en phase lutéale") pour des conseils nutrition et entraînement adaptés à ton moment.'},
+      {i:'🧬',t:'L\'analyse de morphologie 3 photos (Premium) te donne un profil silhouette détaillé avec axes de progression spécifiques.'},
     ]
   }
 };
