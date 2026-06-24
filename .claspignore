@@ -1,22 +1,40 @@
-appsscript.gs
+# Frontend JS (ne pas pousser dans Apps Script)
+app.js
+screens.js
+log.js
+coach.js
+constants.js
+state.js
+setup.js
+tracking.js
+style.css
 index.html
-manifest.json
-logo.png
 sw.js
-*.md
-*.xlsx
+manifest.json
+
+# Assets
+logo.png
+female-body.png
 *.png
 *.jpg
 *.gif
 *.webp
 *.svg
+
+# Docs & divers
+*.md
+*.xlsx
 *.docx
-.git/**
-node_modules/**
+appsscript.gs
+
+# Dossiers assets
 exercises/**
 machine/**
 muscles/**
-female-body.png
+anatomy/**
+
+# Dossiers dev
+.git/**
+node_modules/**
 design_handoff_coach_ia/**
 design_handoff_force_tracker/**
-anatomy/**
