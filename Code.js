@@ -35,7 +35,7 @@ function saveUserData_(email, data) {
 // ─── Mirror Sheets — best-effort, jamais bloquant ───────────
 function _mirrorUserToSheet_(email, data) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = _getSheet_();
     let sheet = ss.getSheetByName('Utilisateurs');
     if (!sheet) {
       sheet = ss.insertSheet('Utilisateurs');
@@ -86,6 +86,9 @@ function savePremiumData_(email, data) {
 function todayStr_() {
   return new Date().toISOString().split('T')[0];
 }
+
+var SHEET_ID_ = '1b0kuCk6kuNi26hMJq5Q5R6-mKFeXEexfm2P9SryJ-eg';
+function _getSheet_() { return SpreadsheetApp.openById(SHEET_ID_); }
 
 // Calcule le statut premium d'un email — retourne {premium, expiry}
 function getPremiumStatus_(email) {
@@ -226,7 +229,7 @@ function handleKofiWebhook_(dataStr) {
 
     // Logger dans Google Sheets onglet Premium
     try {
-      const ss = SpreadsheetApp.getActiveSpreadsheet();
+      const ss = _getSheet_();
       let sheet = ss.getSheetByName('Premium');
       if (!sheet) {
         sheet = ss.insertSheet('Premium');
@@ -326,7 +329,7 @@ function handleLogSession_(body) {
     const rows = body.rows || [];
     if (!rows.length) return json_({status:'ok', count:0});
 
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = _getSheet_();
     let sheet = ss.getSheetByName('Sessions');
     if (!sheet) {
       sheet = ss.insertSheet('Sessions');
@@ -377,7 +380,7 @@ function handleValidateCode_(body) {
 // ───────────────────────────────────────────────────────────
 function handleLogCustomExercise_(body) {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = _getSheet_();
     let sheet = ss.getSheetByName('CustomExercises');
     if (!sheet) {
       sheet = ss.insertSheet('CustomExercises');
