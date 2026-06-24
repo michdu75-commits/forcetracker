@@ -52,25 +52,91 @@ function toggleGroupSelect(ei){if(!_groupMode)return;if(_selectedGroupExs.has(ei
 function createSuperset(){
   if(_selectedGroupExs.size<2)return;
   const gid='ss'+Date.now();
-  _selectedGroupExs.forEach(ei=>{S.wkt.exs[ei].group=gid;});
+  _selectedGroupExs.forEach(ei=>{S.wkt.exs[ei].group=gid;S.wkt.exs[ei].groupType='super';});
   const members=_ssMembers(gid);
   if(members.length)_expandedEx=members[0].i;
   _groupMode=false;_selectedGroupExs.clear();
-  persist();renderExBlocks();toast('Supersérie créée ⚡','success');
+  persist();renderExBlocks();toast('Super Set créé ⚡','success');
 }
 function dissolveGroup(gid){
-  S.wkt.exs.forEach(ex=>{if(ex.group===gid)delete ex.group;});
+  S.wkt.exs.forEach(ex=>{if(ex.group===gid){delete ex.group;delete ex.groupType;}});
   persist();renderExBlocks();toast('Groupe dissous','info');
 }
+function _roundToGym(kg){return Math.round(kg/2.5)*2.5;}
+let _addToGroupGid=null;
+function createDropSet(ei){
+  const gid='ds'+Date.now();
+  const ex=S.wkt.exs[ei];
+  ex.group=gid;ex.groupType='drop';
+  const baseKg=ex.sets.filter(s=>s.done).slice(-1)[0]?.kg||ex.sets[0]?.kg||0;
+  const sugKg=baseKg?_roundToGym(baseKg*0.9):0;
+  const clone={name:ex.name,sets:[{kg:sugKg,reps:ex.sets[0]?.reps||8,done:false,type:'D'}],group:gid,groupType:'drop'};
+  S.wkt.exs.splice(ei+1,0,clone);
+  _expandedEx=ei;persist();renderExBlocks();toast('Drop Set créé 📉','success');
+}
+function createPyramidSet(ei,dir){
+  const gt='pyramid-'+dir;
+  const gid='py'+Date.now();
+  const ex=S.wkt.exs[ei];
+  ex.group=gid;ex.groupType=gt;
+  const baseKg=ex.sets[0]?.kg||(getPrev(ex.name)[0]?.kg)||0;
+  const factor=dir==='up'?1.1:0.9;
+  for(let n=1;n<=2;n++){
+    const newKg=baseKg?_roundToGym(baseKg*Math.pow(factor,n)):0;
+    const clone={name:ex.name,sets:[{kg:newKg,reps:ex.sets[0]?.reps||8,done:false,type:'N'}],group:gid,groupType:gt};
+    S.wkt.exs.splice(ei+n,0,clone);
+  }
+  _expandedEx=ei;persist();renderExBlocks();
+  toast(dir==='up'?'Pyramide + créée 📈':'Pyramide − créée 📉','success');
+}
+function removeFromGroup(ei){
+  const gid=S.wkt.exs[ei]?.group;if(!gid)return;
+  delete S.wkt.exs[ei].group;delete S.wkt.exs[ei].groupType;
+  const left=S.wkt.exs.filter(e=>e.group===gid);
+  if(left.length<2)left.forEach(e=>{delete e.group;delete e.groupType;});
+  persist();renderExBlocks();toast('Retiré du groupe','info');
+}
+function addToGroup(gid){
+  const members=_ssMembers(gid);if(!members.length)return;
+  const gt=members[0].e.groupType||'super';
+  if(gt==='super'){_exPickerMode='addToGroup';_addToGroupGid=gid;openExPicker();return;}
+  const last=members[members.length-1];
+  const lastKg=last.e.sets.slice(-1)[0]?.kg||0;
+  const factor=(gt==='drop'||gt==='pyramid-down')?0.9:1.1;
+  const newKg=lastKg?_roundToGym(lastKg*factor):0;
+  const t=gt==='drop'?'D':'N';
+  const clone={name:last.e.name,sets:[{kg:newKg,reps:last.e.sets[0]?.reps||8,done:false,type:t}],group:gid,groupType:gt};
+  S.wkt.exs.splice(last.i+1,0,clone);
+  persist();renderExBlocks();
+}
+function _doAddToGroup(name){
+  const gid=_addToGroupGid;_addToGroupGid=null;
+  const members=_ssMembers(gid);if(!members.length)return;
+  const last=members[members.length-1];
+  const newEx={name,sets:[{kg:0,reps:5,done:false,type:'N'}],group:gid,groupType:'super'};
+  S.wkt.exs.splice(last.i+1,0,newEx);
+  persist();renderExBlocks();toast(name+' ajouté à la supersérie','success');
+}
 function _renderGroupHtml(gid,members){
+  const gt=members[0]?.e?.groupType||'super';
   const count=members.length;
-  const label=count===2?'Supersérie':count===3?'Tri-set':'Circuit ('+count+')';
+  let label,icon,color,connColor;
+  if(gt==='drop'){
+    icon='📉';label='Drop Set';color='#BF5AF2';connColor='rgba(191,90,242,.35)';
+  }else if(gt==='pyramid-up'){
+    icon='📈';label='Pyramide +';color='var(--green)';connColor='rgba(0,230,118,.3)';
+  }else if(gt==='pyramid-down'){
+    icon='📉';label='Pyramide −';color='var(--gold)';connColor='rgba(255,214,0,.3)';
+  }else{
+    icon='⚡';label=count===2?'Super Set':count===3?'Tri-set':'Circuit ('+count+')';color='var(--orange)';connColor='rgba(255,109,0,.3)';
+  }
   const body=members.map(({e,i},pos)=>{
     const conn=pos<members.length-1
-      ?`<div style="height:12px;display:flex;align-items:center;padding:0 20px;"><div style="flex:1;border-top:1px dashed rgba(255,109,0,.3);"></div><span style="margin:0 6px;font-size:11px;color:rgba(255,109,0,.5);line-height:1;">↓</span><div style="flex:1;border-top:1px dashed rgba(255,109,0,.3);"></div></div>`:`` ;
+      ?`<div style="height:12px;display:flex;align-items:center;padding:0 20px;"><div style="flex:1;border-top:1px dashed ${connColor};"></div><span style="margin:0 6px;font-size:11px;color:${connColor};line-height:1;">↓</span><div style="flex:1;border-top:1px dashed ${connColor};"></div></div>`:`` ;
     return _renderExHtml(i,true)+conn;
   }).join('');
-  return`<div class="ss-group"><div class="ss-grp-hdr"><span style="font-size:11px;font-weight:800;color:var(--orange);letter-spacing:.05em;text-transform:uppercase;">⚡ ${label}</span><button class="btn-xs" style="color:var(--t3);font-size:11px;" onclick="dissolveGroup('${gid}')">Dégrouper</button></div><div style="padding:6px 6px 6px;">${body}</div></div>`;
+  const addLabel=gt==='super'?'+ Exo':'+ Step';
+  return`<div class="ss-group"><div class="ss-grp-hdr"><span style="font-size:11px;font-weight:800;color:${color};letter-spacing:.05em;text-transform:uppercase;">${icon} ${label}</span><button class="btn-xs" style="color:${color};font-size:11px;" onclick="addToGroup('${gid}')">${addLabel}</button><button class="btn-xs" style="color:var(--t3);font-size:11px;" onclick="dissolveGroup('${gid}')">Dégrouper</button></div><div style="padding:6px 6px 6px;">${body}</div></div>`;
 }
 function _renderExHtml(ei,inGroup){
   const ex=S.wkt.exs[ei];
@@ -120,10 +186,12 @@ function _renderExHtml(ei,inGroup){
   }).join('');
 
   // Bandeau "Suite" pour les exos dans un groupe
-  const suiteBanner=ex.group
-    ?`<div style="display:flex;align-items:center;gap:6px;padding:5px 10px 2px;font-size:12px;font-weight:700;color:var(--orange);">`
-     +`<span>Suite :</span>`
-     +(nextExName?`<span>→ ${nextExName.length>22?nextExName.slice(0,20)+'…':nextExName}</span>`:`<span>→ Repos ⏱️</span>`)
+  const gt=ex.groupType||'super';
+  const suiteColor=gt==='drop'?'#BF5AF2':gt==='pyramid-up'?'var(--green)':gt==='pyramid-down'?'var(--gold)':'var(--orange)';
+  const suiteIcon=gt==='drop'?'📉':gt==='pyramid-up'?'📈':'→';
+  const suiteBanner=(ex.group&&nextExName)
+    ?`<div style="display:flex;align-items:center;gap:6px;padding:5px 10px 2px;font-size:12px;font-weight:700;color:${suiteColor};">`
+     +`<span>${suiteIcon} ${nextExName.length>24?nextExName.slice(0,22)+'…':nextExName}</span>`
      +`</div>`:`` ;
 
   return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
@@ -144,6 +212,12 @@ function _renderExHtml(ei,inGroup){
     +rows
     +suiteBanner
     +`<div class="ex-foot"><button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="addSet(${ei})">+ Série</button>${ex.sets.length>1?`<button class="btn-xs" onclick="rmLastSet(${ei})" style="color:var(--t3);">−</button>`:''}</div>`
+    +(!inGroup?`<div style="display:flex;gap:5px;padding:2px 8px 8px;">`
+      +`<button class="btn-xs" style="font-size:10.5px;color:#BF5AF2;border-color:rgba(191,90,242,.3);padding:3px 8px;" onclick="createDropSet(${ei})">📉 Drop</button>`
+      +`<button class="btn-xs" style="font-size:10.5px;color:var(--green);border-color:rgba(0,230,118,.3);padding:3px 8px;" onclick="createPyramidSet(${ei},'up')">📈 +10%</button>`
+      +`<button class="btn-xs" style="font-size:10.5px;color:var(--gold);border-color:rgba(255,214,0,.3);padding:3px 8px;" onclick="createPyramidSet(${ei},'down')">📉 −10%</button>`
+      +`</div>`
+      :`<div style="padding:2px 8px 8px;"><button class="btn-xs" style="font-size:10.5px;color:var(--t3);padding:3px 8px;" onclick="removeFromGroup(${ei})">↩ Retirer</button></div>`)
     +`</div>`;
 }
 function renderExBlocks(){
@@ -214,13 +288,35 @@ function toggleSet(ei,si){
     const mb=document.getElementById('rest-btn-minus');const pb=document.getElementById('rest-btn-plus');
     if(mb)mb.textContent=`−${_restStep}s`;if(pb)pb.textContent=`+${_restStep}s`;
     const sec=restByType[set.type]||defForEx;
-    // Supersérie : passe à l'exo suivant sans lancer le repos
+    // Groupe (super set / drop set / pyramide)
     const _ssNext=_nextInGroup(ei);
     if(_ssNext!==null){
-      _expandedEx=_ssNext;
+      const groupType=S.wkt.exs[ei].groupType||'super';
       if(navigator.vibrate)navigator.vibrate([30]);
-      renderExBlocks();
-      setTimeout(()=>{const el=document.getElementById('ex-block-'+_ssNext);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},60);
+      // Pre-fill poids suivant pour drop/pyramide
+      if(groupType!=='super'){
+        const lastKg=S.wkt.exs[ei].sets.filter(s=>s.done).slice(-1)[0]?.kg||0;
+        if(lastKg&&S.wkt.exs[_ssNext]){
+          const factor=groupType==='pyramid-up'?1.1:0.9;
+          const newKg=_roundToGym(lastKg*factor);
+          S.wkt.exs[_ssNext].sets.forEach(s=>{if(!s.done)s.kg=newKg;});
+          persist();
+        }
+      }
+      if(groupType==='super'){
+        _expandedEx=_ssNext;
+        renderExBlocks();
+        setTimeout(()=>{const el=document.getElementById('ex-block-'+_ssNext);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},60);
+        return;
+      }
+      // Drop (20s) ou Pyramide (repos normal) : timer + auto-avance
+      const restSec=groupType==='drop'?20:sec;
+      _restDoneCb=()=>{_expandedEx=_ssNext;renderExBlocks();setTimeout(()=>{const el=document.getElementById('ex-block-'+_ssNext);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},60);};
+      startRest(restSec);
+      const lbl=document.getElementById('rest-label');
+      if(lbl)lbl.textContent=groupType==='drop'?'📉 Drop Set':groupType==='pyramid-up'?'📈 Pyramide +':'📉 Pyramide −';
+      if(!isAbdo&&[60,90,120].includes(restSec))_highlightRestPreset(restSec);else _highlightRestPreset(-1);
+      if(navigator.vibrate)navigator.vibrate([50]);
       return;
     }
     startRest(sec);
@@ -291,6 +387,12 @@ function addExercise(name){
   if(_exPickerMode==='prog'){
     closeExPicker();
     _addExToProgEdit(name);
+    _exPickerMode='workout';
+    return;
+  }
+  if(_exPickerMode==='addToGroup'){
+    closeExPicker();
+    _doAddToGroup(name);
     _exPickerMode='workout';
     return;
   }
@@ -652,6 +754,7 @@ async function finishWorkout(){
 // ─── REST TIMER ──────────────────────────────────────────────
 let restIv=null,restTot=120,restLeft=0;
 let restOvertime=false;
+let _restDoneCb=null;
 function startRest(sec){
   stopRest();restTot=sec;restLeft=sec;restOvertime=false;
   const bar=document.getElementById('rest-bar');
@@ -661,6 +764,7 @@ function startRest(sec){
     restLeft--;
     if(restLeft===0){
       beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);
+      if(_restDoneCb){const cb=_restDoneCb;_restDoneCb=null;setTimeout(()=>{stopRest();cb();},400);return;}
       restOvertime=true;bar.classList.add('overtime');
     }
     updRest();
@@ -686,7 +790,7 @@ function updRest(){
   }
 }
 function stopRest(){
-  clearInterval(restIv);restOvertime=false;
+  clearInterval(restIv);restOvertime=false;_restDoneCb=null;
   const bar=document.getElementById('rest-bar');
   if(bar){bar.classList.remove('show','overtime');bar.style.borderColor='';}
   const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';
