@@ -1,7 +1,21 @@
 // ─── WORKOUT ─────────────────────────────────────────────────
+let _wakeLock=null;
+async function _acquireWakeLock(){
+  if(!('wakeLock' in navigator))return;
+  try{_wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
+}
+function _releaseWakeLock(){
+  if(_wakeLock){_wakeLock.release();_wakeLock=null;}
+}
+// Ré-acquérir si l'app revient au premier plan
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&_curScreen==='log')_acquireWakeLock();
+});
+
 function startWorkout(){
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};
   persist(); goScreen('log',document.getElementById('nb-log'));
+  _acquireWakeLock();
 }
 function _fmtWktDate(d){
   const dt=new Date(d+'T12:00:00');
@@ -585,6 +599,7 @@ function closeMuscleMap(){
 }
 
 async function finishWorkout(){
+  _releaseWakeLock();
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Ajoute un exercice !','error');return;}
   const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
   if(!hasDone){toast('Valide au moins une série !','error');return;}
