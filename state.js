@@ -5,7 +5,7 @@ let S={
   gender:'H',age:30,height:175,activityLevel:1.55,
   workType:'bureau',smoker:false,
   mensCycleStart:'',mensCycleDur:28,contraception:'',morpho:'',morphotype:'',
-  sessions:[],prs:{},wkt:null,programmes:[],
+  sessions:[],prs:{},wkt:null,programmes:[],progExos:null,
   url:DEFAULT_URL,email:'',connected:false,
   nutritionPhase:'charge',
   customExercises:[],
@@ -53,6 +53,7 @@ function load(){
     S.weightLog=JSON.parse(localStorage.getItem('ft4_wlog')||'[]');
     S.name=localStorage.getItem('ft4_name')||'';
     S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
+    S.progExos=JSON.parse(localStorage.getItem('ft4_progexos')||'null')||[...BIG4];
     S.coachFree=parseInt(localStorage.getItem('ft4_coachFree')||'0')||0;
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
     S.premium=localStorage.getItem('ft4_premium')==='1';
@@ -111,6 +112,7 @@ function persist(){
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
     localStorage.setItem('ft4_name',S.name||'');
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
+    localStorage.setItem('ft4_progexos',JSON.stringify(S.progExos||BIG4));
     localStorage.setItem('ft4_coachFree',S.coachFree||0);
     localStorage.setItem('ft4_coach_mem',S.coachMemory||'');
     localStorage.setItem('ft4_exRp',JSON.stringify(S.exRestPref||{}));

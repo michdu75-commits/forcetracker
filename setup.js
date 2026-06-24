@@ -1,36 +1,84 @@
 // ─── PROGRESS SCREEN ─────────────────────────────────────────
 let _progEx=BIG4[0];
+
+function _renderProgChips(chips){
+  const exos=S.progExos||BIG4;
+  chips.innerHTML=exos.map((n,i)=>`<button onclick="selectProgEx('${n.replace(/'/g,"\\'")}',${i})" id="pchip-${i}" style="flex:1;min-width:0;padding:9px 6px;border-radius:14px;font-size:12px;font-weight:700;font-family:var(--font);border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t3);cursor:pointer;touch-action:manipulation;transition:all .18s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent;">${n}</button>`).join('')
+  +`<button onclick="openProgExoEditor()" title="Personnaliser" style="flex-shrink:0;width:36px;border-radius:14px;border:none;background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);-webkit-tap-highlight-color:transparent;">✏️</button>`;
+}
+
 function renderProgress(){
   switchProgTab('exo',document.getElementById('ptab-exo'));
-  // Chips BIG4
   const chips=document.getElementById('big4-chips');
-  if(chips){
-    chips.innerHTML=BIG4.map(n=>`<button onclick="selectProgEx('${n}')" id="chip-${n.replace(/ /g,'_')}" style="flex:1;min-width:0;padding:9px 6px;border-radius:14px;font-size:12px;font-weight:700;font-family:var(--font);border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t3);cursor:pointer;touch-action:manipulation;transition:all .18s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent;">${n}</button>`).join('');
-  }
+  if(chips)_renderProgChips(chips);
   // Dropdown tous les autres exercices
   const sel=document.getElementById('prog-sel');
-  const others=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].filter(n=>!BIG4.includes(n)).sort((a,b)=>a.localeCompare(b,'fr'));
+  const exos=S.progExos||BIG4;
+  const others=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].filter(n=>!exos.includes(n)).sort((a,b)=>a.localeCompare(b,'fr'));
   sel.innerHTML=`<option value="">— Autre exercice… —</option>`+others.map(n=>`<option value="${n}">${n}</option>`).join('');
   selectProgEx(_progEx);
   renderSessions();
   _updateProgCycleBanner();
 }
+
 function selectProgEx(name){
   if(!name)return;
   _progEx=name;
-  // Mettre à jour les chips
-  BIG4.forEach(n=>{
-    const c=document.getElementById('chip-'+n.replace(/ /g,'_'));
-    if(!c)return;
+  const exos=S.progExos||BIG4;
+  exos.forEach((n,i)=>{
+    const c=document.getElementById('pchip-'+i);if(!c)return;
     const active=n===name;
     c.style.background=active?'linear-gradient(135deg,#FF6A73,#EF3E57)':'var(--bg3)';
     c.style.color=active?'#fff':'var(--t3)';
     c.style.boxShadow=active?'0 4px 12px -4px rgba(239,62,87,.5)':'inset 0 0 0 1px rgba(255,255,255,.08)';
   });
-  // Réinitialiser le dropdown si on vient d'une chip
   const sel=document.getElementById('prog-sel');
-  if(sel&&BIG4.includes(name))sel.value='';
+  if(sel&&exos.includes(name))sel.value='';
   renderChart();
+}
+
+function openProgExoEditor(){
+  const exos=S.progExos||BIG4;
+  const all=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].sort((a,b)=>a.localeCompare(b,'fr'));
+  let el=document.getElementById('ov-progexo-edit');
+  if(!el){
+    el=document.createElement('div');el.className='overlay';el.id='ov-progexo-edit';
+    el.style.alignItems='flex-end';
+    el.onclick=e=>{if(e.target===el)el.classList.remove('open');};
+    document.body.appendChild(el);
+  }
+  const opts=all.map(n=>`<option value="${n}">${n}</option>`).join('');
+  el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 28px;box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
+    +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">`
+    +`<div style="font-weight:800;font-size:15px;color:var(--t1);">Personnaliser les 4 exercices</div>`
+    +`<button onclick="document.getElementById('ov-progexo-edit').classList.remove('open')" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:none;font-size:15px;color:var(--t2);cursor:pointer;touch-action:manipulation;">✕</button>`
+    +`</div>`
+    +exos.map((n,i)=>`<div style="margin-bottom:12px;">`
+      +`<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Emplacement ${i+1}</div>`
+      +`<select onchange="_saveProgExoSlot(${i},this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:14px;font-family:var(--font);">${opts.replace(`value="${n}"`,`value="${n}" selected`)}</select>`
+      +`</div>`).join('')
+    +`</div>`;
+  el.classList.add('open');
+}
+
+function _saveProgExoSlot(idx,name){
+  if(!name)return;
+  const old=S.progExos[idx];
+  S.progExos[idx]=name;
+  localStorage.setItem('ft4_progexos',JSON.stringify(S.progExos));
+  // Re-render chips
+  const chips=document.getElementById('big4-chips');
+  if(chips)_renderProgChips(chips);
+  // Mettre à jour le dropdown (exclure les nouvelles chips)
+  const sel=document.getElementById('prog-sel');
+  if(sel){
+    const others=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].filter(n=>!S.progExos.includes(n)).sort((a,b)=>a.localeCompare(b,'fr'));
+    sel.innerHTML=`<option value="">— Autre exercice… —</option>`+others.map(n=>`<option value="${n}">${n}</option>`).join('');
+    if(!S.progExos.includes(_progEx))sel.value=_progEx;
+  }
+  // Si l'exercice affiché était dans ce slot, switcher vers le nouveau
+  if(_progEx===old)selectProgEx(name);
+  else selectProgEx(_progEx);
 }
 function switchProgTab(tab,btn){
   const exo=document.getElementById('prog-exo'),pw=document.getElementById('prog-poids'),bg=document.getElementById('prog-badges');
