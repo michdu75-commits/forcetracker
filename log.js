@@ -165,7 +165,7 @@ function _renderExHtml(ei,inGroup){
       +`<div class="ex-name" style="font-size:14px">${ex.name} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${summary||'0 série'}</div>`
       +`</div>`
-      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button></div>`:'')
+      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button></div>`:'')
       +`</div></div>`;
   }
 
@@ -173,12 +173,11 @@ function _renderExHtml(ei,inGroup){
   const _exyt=EX_YT[ex.name];const hasLocalGif=!!(_exyt&&_exyt.img);
   const rows=ex.sets.map((set,si)=>{
     const p=prev[si]||prev[Math.max(0,prev.length-1)];
-    const prevRM=p&&p.kg&&p.reps?fmt(bz(p.kg,p.reps)):null;
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
-      +`<div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>${prevRM?`<div style="font-size:10px">~${prevRM}kg</div>`:''}`:'<div>—</div>'}</div>`
+      +`<div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}</div>`
       +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}" id="tbtn-${ei}-${si}"><span>${set.type}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
@@ -209,6 +208,7 @@ function _renderExHtml(ei,inGroup){
     +`</div>`
     +`<div class="ex-hdr-btns">`
     +`${hasLocalGif?'<button class="btn-xs" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\')">🎬</button>':''}`
+    +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button>`
     +`<button class="btn-xs" onclick="openTypeHelp()">ℹ️</button>`
     +`<button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button>`
     +`</div></div>`
@@ -225,6 +225,67 @@ function _renderExHtml(ei,inGroup){
       :`<div style="padding:2px 8px 8px;"><button class="btn-xs" style="font-size:10.5px;color:var(--t3);padding:3px 8px;" onclick="removeFromGroup(${ei})">↩ Retirer</button></div>`)
     +`</div>`;
 }
+// ─── HISTORIQUE EXERCICE ─────────────────────────────────────
+function _getExHistory(name,n){
+  const out=[];
+  for(const sess of S.sessions){
+    const ex=(sess.exs||sess.exercises||[]).find(e=>e.name===name);
+    if(!ex)continue;
+    const done=(ex.sets||[]).filter(s=>s.done!==false&&(s.kg||0)>0);
+    if(!done.length)continue;
+    out.push({date:sess.date||'',kg:Math.max(...done.map(s=>s.kg||0))});
+    if(out.length>=n)break;
+  }
+  return out.reverse();
+}
+function _buildExHistChart(data){
+  const W=320,H=110,PX=24,PT=22,PB=20;
+  const kgs=data.map(d=>d.kg);
+  const lo=Math.min(...kgs),hi=Math.max(...kgs);
+  const range=hi===lo?Math.max(hi*0.1,5):hi-lo;
+  const loAdj=hi===lo?lo-range/2:lo;
+  const n=data.length;
+  const px=i=>PX+(n>1?i*(W-2*PX)/(n-1):W/2-PX);
+  const py=k=>PT+(1-(k-loAdj)/range)*(H-PT-PB);
+  let s=`<svg width="100%" viewBox="0 0 ${W} ${H}" style="display:block;overflow:visible;">`;
+  if(n>1){
+    const area=`M${px(0)},${py(data[0].kg)} `+data.slice(1).map((d,i)=>`L${px(i+1)},${py(d.kg)}`).join(' ')+` L${px(n-1)},${H-PB} L${px(0)},${H-PB} Z`;
+    s+=`<path d="${area}" fill="rgba(255,45,85,.08)"/>`;
+    const line=data.map((d,i)=>`${i===0?'M':'L'}${px(i)},${py(d.kg)}`).join(' ');
+    s+=`<path d="${line}" fill="none" stroke="var(--red)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  data.forEach((d,i)=>{
+    const cx=px(i),cy=py(d.kg);
+    s+=`<circle cx="${cx}" cy="${cy}" r="4" fill="var(--red)" stroke="var(--bg2)" stroke-width="2"/>`;
+    const above=cy>PT+16;
+    s+=`<text x="${cx}" y="${above?cy-9:cy+16}" text-anchor="middle" font-size="11" fill="var(--t1)" font-weight="700" font-family="system-ui,sans-serif">${d.kg}kg</text>`;
+    const dl=d.date?d.date.split('-').slice(1).reverse().join('/'):'';
+    s+=`<text x="${cx}" y="${H-3}" text-anchor="middle" font-size="10" fill="var(--t3)" font-family="system-ui,sans-serif">${dl}</text>`;
+  });
+  return s+'</svg>';
+}
+function openExHistory(name){
+  const data=_getExHistory(name,5);
+  let el=document.getElementById('ov-ex-hist');
+  if(!el){
+    el=document.createElement('div');el.className='overlay';el.id='ov-ex-hist';
+    el.style.alignItems='flex-end';
+    el.onclick=e=>{if(e.target===el)closeExHistory();};
+    document.body.appendChild(el);
+  }
+  const inner=data.length>=2?_buildExHistChart(data)
+    :`<div style="text-align:center;padding:20px 0;color:var(--t3);font-size:13px;">Pas encore assez d'historique —<br>reviens après 2 séances !</div>`;
+  el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 18px;box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
+    +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`
+    +`<div style="font-weight:800;font-size:15px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">${name}</div>`
+    +`<button onclick="closeExHistory()" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:none;font-size:15px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>`
+    +`</div>${inner}`
+    +`<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px;">Poids max · 5 dernières séances</div>`
+    +`</div>`;
+  el.classList.add('open');
+}
+function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)el.classList.remove('open');}
+
 function renderExBlocks(){
   const c=document.getElementById('wkt-exs');
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
