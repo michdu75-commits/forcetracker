@@ -901,6 +901,7 @@ document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr
 applyTheme();
 filterEx();
 goScreen('home', document.getElementById('nb-home'));
+_initSwipe();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 initCoachInput();

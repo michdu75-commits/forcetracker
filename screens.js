@@ -148,6 +148,47 @@ function showHelp(){
 }
 function closeHelp(){document.getElementById('ov-help').classList.remove('open');}
 
+// ─── SWIPE ENTRE ONGLETS ─────────────────────────────────────
+const _SWIPE_ORDER=['home','progress','log','nutrition','coach'];
+
+function _hScrollParent(el){
+  while(el&&el!==document.body){
+    if(el.scrollWidth>el.clientWidth+4){
+      const ox=getComputedStyle(el).overflowX;
+      if(ox==='auto'||ox==='scroll')return true;
+    }
+    el=el.parentElement;
+  }
+  return false;
+}
+
+function _initSwipe(){
+  let _sx=null,_sy=null,_sel=null;
+  const root=document.getElementById('root');
+  if(!root)return;
+  root.addEventListener('touchstart',e=>{
+    const t=e.touches[0];_sx=t.clientX;_sy=t.clientY;_sel=e.target;
+  },{passive:true});
+  root.addEventListener('touchend',e=>{
+    if(_sx===null)return;
+    const dx=e.changedTouches[0].clientX-_sx;
+    const dy=e.changedTouches[0].clientY-_sy;
+    _sx=_sy=_sel=null;
+    if(Math.abs(dx)<55)return;
+    if(Math.abs(dy)>Math.abs(dx)*0.65)return;
+    if(_hScrollParent(_sel))return;
+    const idx=_SWIPE_ORDER.indexOf(_curScreen);
+    if(idx<0)return;
+    if(dx<0&&idx<_SWIPE_ORDER.length-1){
+      const next=_SWIPE_ORDER[idx+1];
+      goScreen(next,document.getElementById('nb-'+next));
+    }else if(dx>0&&idx>0){
+      const prev=_SWIPE_ORDER[idx-1];
+      goScreen(prev,document.getElementById('nb-'+prev));
+    }
+  },{passive:true});
+}
+
 // ─── HOME ────────────────────────────────────────────────────
 function _renderHomeHdr(){
   const el=document.getElementById('home-hdr');if(!el)return;
