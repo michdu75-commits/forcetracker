@@ -973,7 +973,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 </div>
 
 <!-- MODAL: Confirmation générique -->
-<div class="overlay" id="ov-confirm" onclick="if(event.target===this)closeConfirm()">
+<div class="overlay" id="ov-confirm" data-no-dismiss onclick="if(event.target===this)closeConfirm()">
   <div class="modal" style="max-width:340px;padding:24px 20px">
     <div style="font-size:36px;text-align:center;margin-bottom:12px">⚠️</div>
     <div style="font-weight:800;font-size:16px;text-align:center;margin-bottom:8px" id="confirm-title"></div>
@@ -1188,7 +1188,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 </div>
 
 <!-- OVERLAY: Morpho loading -->
-<div class="overlay" id="ov-morpho-loading" style="background:rgba(0,0,0,.97);z-index:300;align-items:center;justify-content:center;">
+<div class="overlay" id="ov-morpho-loading" data-no-dismiss style="background:rgba(0,0,0,.97);z-index:300;align-items:center;justify-content:center;">
   <div style="width:100%;max-width:380px;padding:0 24px;display:flex;flex-direction:column;align-items:center;gap:22px;">
     <div style="font-family:var(--font-cond);font-size:20px;font-weight:900;color:#fff;letter-spacing:2px;text-align:center;">ANALYSE IA</div>
     <div style="position:relative;display:flex;gap:8px;width:100%;justify-content:center;border-radius:10px;overflow:hidden;" id="ml-photos">

@@ -174,6 +174,7 @@ function _initSwipe(){
     const dx=e.changedTouches[0].clientX-_sx;
     const dy=e.changedTouches[0].clientY-_sy;
     _sx=_sy=_sel=null;
+    if(document.querySelector('.overlay.open'))return; // overlay ouvert → pas de navigation
     if(Math.abs(dx)<55)return;
     if(Math.abs(dy)>Math.abs(dx)*0.65)return;
     if(_hScrollParent(_sel))return;
@@ -185,6 +186,54 @@ function _initSwipe(){
     }else if(dx>0&&idx>0){
       const prev=_SWIPE_ORDER[idx-1];
       goScreen(prev,document.getElementById('nb-'+prev));
+    }
+  },{passive:true});
+}
+
+// ─── PULL-TO-DISMISS ─────────────────────────────────────────
+function _initPullToDismiss(){
+  let _p0y=null,_p0x=null,_pOv=null,_pCnt=null,_pLocked=false;
+
+  document.addEventListener('touchstart',e=>{
+    const ov=e.target.closest('.overlay.open');
+    if(!ov||ov.hasAttribute('data-no-dismiss')){_p0y=null;return;}
+    // Annule si le scroll interne est déjà descendu
+    let el=e.target;
+    while(el&&el!==ov){if(el.scrollTop>4){_p0y=null;return;}el=el.parentElement;}
+    _p0y=e.touches[0].clientY;_p0x=e.touches[0].clientX;
+    _pOv=ov;_pCnt=ov.firstElementChild;_pLocked=false;
+  },{passive:true});
+
+  document.addEventListener('touchmove',e=>{
+    if(_p0y===null||!_pCnt)return;
+    const dy=e.touches[0].clientY-_p0y;
+    const dx=e.touches[0].clientX-_p0x;
+    if(!_pLocked){
+      if(Math.abs(dy)<8&&Math.abs(dx)<8)return;
+      if(dy<=0||Math.abs(dx)>dy*0.8){_p0y=null;return;} // vers le haut ou trop horizontal
+      _pLocked=true;
+    }
+    if(dy<=0)return;
+    e.preventDefault();
+    const t=Math.pow(dy,0.78);
+    _pCnt.style.transform='translateY('+t+'px)';
+    _pCnt.style.transition='none';
+    _pCnt.style.opacity=Math.max(0.3,1-dy/350).toFixed(2);
+  },{passive:false});
+
+  document.addEventListener('touchend',e=>{
+    if(_p0y===null||!_pCnt){_p0y=null;return;}
+    const dy=e.changedTouches[0].clientY-_p0y;
+    const ov=_pOv,cnt=_pCnt;
+    _p0y=_p0x=_pOv=_pCnt=null;_pLocked=false;
+    cnt.style.transition='transform .25s cubic-bezier(.3,0,.2,1),opacity .25s';
+    if(dy>100){
+      cnt.style.transform='translateY('+window.innerHeight+'px)';
+      cnt.style.opacity='0';
+      setTimeout(()=>{ov.classList.remove('open');cnt.style.transform='';cnt.style.opacity='';cnt.style.transition='';},260);
+    }else{
+      cnt.style.transform='';cnt.style.opacity='';
+      setTimeout(()=>{cnt.style.transition='';},260);
     }
   },{passive:true});
 }
