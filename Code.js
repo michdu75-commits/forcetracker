@@ -32,6 +32,47 @@ function saveUserData_(email, data) {
   PropertiesService.getScriptProperties().setProperty(userKey_(email), JSON.stringify(data));
 }
 
+// ─── Mirror Sheets — best-effort, jamais bloquant ───────────
+function _mirrorUserToSheet_(email, data) {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName('Utilisateurs');
+    if (!sheet) {
+      sheet = ss.insertSheet('Utilisateurs');
+      const hdrRange = sheet.getRange(1, 1, 1, 11);
+      hdrRange.setValues([['email','nom','genre','age_ans','taille_cm','poids_kg','objectif','activite','premium','nb_seances','derniere_sync']]);
+      hdrRange.setFontWeight('bold').setBackground('#f3f3f3');
+    }
+    const p = data.profile || {};
+    const prem = getPremiumStatus_(email);
+    const premLabel = prem.premium ? (prem.expiry ? 'premium→' + prem.expiry : 'lifetime') : 'gratuit';
+    const row = [
+      email,
+      p.name          || '',
+      p.gender        || '',
+      p.age           || '',
+      p.height        || '',
+      p.bw            || '',
+      p.goal          || '',
+      p.activityLevel || '',
+      premLabel,
+      (data.sessions  || []).length,
+      new Date().toISOString()
+    ];
+    // UPSERT : chercher la ligne existante par email (colonne 1)
+    const allVals = sheet.getDataRange().getValues();
+    let rowIdx = -1;
+    for (let i = 1; i < allVals.length; i++) {
+      if (String(allVals[i][0]).toLowerCase() === email) { rowIdx = i + 1; break; }
+    }
+    if (rowIdx > 0) {
+      sheet.getRange(rowIdx, 1, 1, row.length).setValues([row]);
+    } else {
+      sheet.appendRow(row);
+    }
+  } catch(e) {} // Silencieux — jamais bloquant
+}
+
 function loadPremiumData_(email) {
   const raw = PropertiesService.getScriptProperties().getProperty('prem_' + email);
   if (!raw) return null;
@@ -252,6 +293,7 @@ function handleSaveProfile_(body) {
     existing.updatedAt = new Date().toISOString();
 
     saveUserData_(email, existing);
+    _mirrorUserToSheet_(email, existing); // best-effort, silencieux
 
     // Email de bienvenue pour les nouveaux utilisateurs
     if (body.welcome && isNewUser) {
