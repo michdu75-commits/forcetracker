@@ -7,6 +7,24 @@ function _closeAllPanels(){
   document.getElementById('drawer')?.classList.remove('open');
   document.getElementById('drawer-backdrop')?.classList.remove('open');
 }
+function _markScreenSeen(screen){
+  const unseen=NEW_FEATURES.filter(f=>f.screen===screen&&!(S.seenFeatures||[]).includes(f.id));
+  if(!unseen.length)return;
+  S.seenFeatures=[...(S.seenFeatures||[]),...unseen.map(f=>f.id)];
+  localStorage.setItem('ft4_seen_ft',JSON.stringify(S.seenFeatures));
+  _updateNewBadges();
+}
+function _updateNewBadges(){
+  const seen=S.seenFeatures||[];
+  ['home','progress','log','nutrition','coach'].forEach(sc=>{
+    const btn=document.getElementById('nb-'+sc);if(!btn)return;
+    const hasNew=NEW_FEATURES.some(f=>f.screen===sc&&!seen.includes(f.id));
+    let dot=btn.querySelector('.new-dot');
+    if(hasNew&&!dot){dot=document.createElement('span');dot.className='new-dot';btn.appendChild(dot);}
+    else if(!hasNew&&dot)dot.remove();
+  });
+}
+
 function _applyScreen(id,btn){
   _curScreen=id;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -24,6 +42,7 @@ function _applyScreen(id,btn){
   if(id==='setup'){_resetMenuView();renderSetup();}
   if(id==='cycle')renderCycleScreen();
   if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();}
+  _markScreenSeen(id);
 }
 function goScreen(id,btn){
   _closeAllPanels();

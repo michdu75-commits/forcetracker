@@ -903,6 +903,7 @@ filterEx();
 goScreen('home', document.getElementById('nb-home'));
 _initSwipe();
 _initPullToDismiss();
+_updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 initCoachInput();

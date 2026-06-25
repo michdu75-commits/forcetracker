@@ -111,6 +111,13 @@ const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEk
 const SET_TYPES=['N','W','E','D'];
 const SET_TYPE_LABELS={N:'Normal',W:'Warm-up',E:'Échec',D:'Drop set'};
 
+// ─── NOUVELLES FONCTIONNALITÉS (indicateur pastille) ─────────
+// Ajouter ici chaque nouvelle feature avec un id unique + l'écran concerné
+const NEW_FEATURES=[
+  {id:'ex-history',  screen:'log',      desc:'Mini graphique historique par exercice (📊)'},
+  {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
+];
+
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────
 // [Débutant, Novice, Intermédiaire, Avancé] seuils
 const STD={
