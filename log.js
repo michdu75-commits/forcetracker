@@ -1009,12 +1009,12 @@ function hideCustomExForm(){
   _cexMusclesP=[];_cexMusclesS=[];
 }
 function _reportCustomEx(name,grp,muscles){
-  if(!S.email||!S.url)return;
+  if(!S.url)return;
   if(!S.reportedCustomEx)S.reportedCustomEx=[];
   if(S.reportedCustomEx.includes(name))return;
   S.reportedCustomEx.push(name);
   localStorage.setItem('ft4_rep_cex',JSON.stringify(S.reportedCustomEx));
-  const body={action:'logCustomExercise',email:S.email,name,group:grp||'Autres'};
+  const body={action:'logCustomExercise',anonId:S.anonId||'anon',name,group:grp||'Autres'};
   if(muscles){body.musclesP=muscles.p||[];body.musclesS=muscles.s||[];}
   fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).catch(()=>{});
 }

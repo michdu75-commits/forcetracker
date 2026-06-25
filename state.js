@@ -56,6 +56,8 @@ function load(){
     S.progExos=JSON.parse(localStorage.getItem('ft4_progexos')||'null')||[...BIG4];
     S.seenFeatures=JSON.parse(localStorage.getItem('ft4_seen_ft')||'[]');
     S.reportedCustomEx=JSON.parse(localStorage.getItem('ft4_rep_cex')||'[]');
+    // ID anonyme persistant — jamais lié à l'email
+    S.anonId=localStorage.getItem('ft4_auid')||(()=>{const id='u_'+Math.random().toString(36).slice(2,11);localStorage.setItem('ft4_auid',id);return id;})();
     S.coachFree=parseInt(localStorage.getItem('ft4_coachFree')||'0')||0;
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
     S.premium=localStorage.getItem('ft4_premium')==='1';

@@ -380,18 +380,18 @@ function handleValidateCode_(body) {
 // ───────────────────────────────────────────────────────────
 function handleLogCustomExercise_(body) {
   try {
-    const name = (body.name || '').trim();
+    const name   = (body.name || '').trim();
     if (!name) return json_({status:'ok'});
-    const email = (body.email || '').toLowerCase().trim();
-    const grp   = body.group || 'Autres';
-    const ss    = _getSheet_();
-    const today = new Date().toISOString().slice(0, 10);
+    const anonId = (body.anonId || 'anon').trim();
+    const grp    = body.group || 'Autres';
+    const ss     = _getSheet_();
+    const today  = new Date().toISOString().slice(0, 10);
 
     // Feuille agrégée "Exercices manquants"
     let sheet = ss.getSheetByName('Exercices manquants');
     if (!sheet) {
       sheet = ss.insertSheet('Exercices manquants');
-      sheet.appendRow(['Exercice','Groupe','Signalements','Emails','Première date','Dernière date']);
+      sheet.appendRow(['Exercice','Groupe','Signalements','IDs anonymes','Première date','Dernière date']);
       sheet.setFrozenRows(1);
       sheet.getRange(1,1,1,6).setFontWeight('bold');
     }
@@ -405,11 +405,11 @@ function handleLogCustomExercise_(body) {
     if (rowIdx > 0) {
       const row = data[rowIdx - 1];
       const count = (row[2] || 0) + 1;
-      const emails = (row[3] || '').split(', ').filter(Boolean);
-      if (email && !emails.includes(email)) emails.push(email);
-      sheet.getRange(rowIdx, 3, 1, 4).setValues([[count, emails.join(', '), row[4]||today, today]]);
+      const ids = (row[3] || '').split(', ').filter(Boolean);
+      if (anonId && !ids.includes(anonId)) ids.push(anonId);
+      sheet.getRange(rowIdx, 3, 1, 4).setValues([[count, ids.join(', '), row[4]||today, today]]);
     } else {
-      sheet.appendRow([name, grp, 1, email, today, today]);
+      sheet.appendRow([name, grp, 1, anonId, today, today]);
     }
 
     return json_({status:'ok'});
