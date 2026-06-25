@@ -899,9 +899,8 @@ function detectDuplicates(){
       if(na===nb){pairs.push([arr[i],arr[j],0]);continue;}
       const minL=Math.min(na.length,nb.length);
       if(minL<5)continue;
-      const thr=Math.max(1,Math.min(3,Math.floor(Math.max(na.length,nb.length)*0.15)));
       const d=_lev(na,nb);
-      if(d<=thr)pairs.push([arr[i],arr[j],d]);
+      if(d<=1)pairs.push([arr[i],arr[j],d]);
     }
   }
   const el=document.getElementById('admin-dupes');

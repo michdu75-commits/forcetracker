@@ -422,7 +422,7 @@ function confirmCancel(){const cb=_confirmAltCb;closeConfirm();if(cb)cb();}
 // Fuzzy matching pour la détection de doublons d'exercices
 function _normEx(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();}
 function _lev(a,b){if(a===b)return 0;const la=a.length,lb=b.length;if(!la)return lb;if(!lb)return la;let row=[...Array(lb+1).keys()];for(let i=1;i<=la;i++){let prev=row[0];row[0]=i;for(let j=1;j<=lb;j++){const t=row[j];row[j]=a[i-1]===b[j-1]?prev:1+Math.min(prev,row[j],row[j-1]);prev=t;}}return row[lb];}
-function _findSimilar(name,all){const na=_normEx(name);let best=null,bestD=Infinity;all.forEach(ex=>{const nb=_normEx(ex.n);if(nb===na){best=ex.n;bestD=0;return;}const minL=Math.min(na.length,nb.length);if(minL<5)return;const thr=Math.max(1,Math.min(3,Math.floor(Math.max(na.length,nb.length)*0.15)));const d=_lev(na,nb);if(d<=thr&&d<bestD){best=ex.n;bestD=d;}});return best;}
+function _findSimilar(name,all){const na=_normEx(name);let best=null,bestD=Infinity;all.forEach(ex=>{const nb=_normEx(ex.n);if(nb===na){best=ex.n;bestD=0;return;}const minL=Math.min(na.length,nb.length);if(minL<5)return;const d=_lev(na,nb);if(d<=1&&d<bestD){best=ex.n;bestD=d;}});return best;}
 // Valide le set et focus automatiquement le kg du prochain set non-done
 function confirmSetAndNext(ei,si){
   toggleSet(ei,si);
