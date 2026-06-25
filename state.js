@@ -99,7 +99,7 @@ function persist(){
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_gender',S.gender);
     localStorage.setItem('ft4_age',S.age);localStorage.setItem('ft4_ht',S.height);
     localStorage.setItem('ft4_act',S.activityLevel);
-    localStorage.setItem('ft4_sessions',JSON.stringify(S.sessions));
+    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
     localStorage.setItem('ft4_email',S.email);localStorage.setItem('ft4_ok',S.connected?'1':'0');
@@ -131,7 +131,17 @@ function persist(){
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
     localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
-  }catch(e){}
+  }catch(e){
+    if(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22)){
+      try{
+        // Fallback : allège les sessions à 50 et réessaie les clés critiques
+        localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
+        localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
+        localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+        if(typeof toast==='function')toast('Stockage presque plein — données allégées automatiquement','info');
+      }catch(e2){}
+    }
+  }
   _cloudSyncDebounced();
 }
 

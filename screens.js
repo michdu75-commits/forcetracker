@@ -300,7 +300,7 @@ function _renderHomeHero(){
     +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
 }
 
-function renderHome(){
+function renderHome(){try{
   _renderHomeHdr();
   _renderHomeHero();
   const now=new Date();
@@ -347,7 +347,7 @@ function renderHome(){
     +'<div class="home-row-cnt"><div class="home-row-ttl">Records personnels</div><div class="home-row-sub">'+prSub+'</div></div>'+chevSvg+'</div></div>';
   renderCycleHomeCard();
   updatePill();
-}
+}catch(e){console.error('[FT] renderHome:',e);}}
 
 function updatePill(){
   const p=document.getElementById('sync-pill'),d=document.getElementById('sync-dot'),l=document.getElementById('sync-lbl');
@@ -374,7 +374,7 @@ function setNuPhase(phase){
   renderNutrition();
 }
 
-function renderNutrition(){
+function renderNutrition(){try{
   renderSupplements();
   // Phase buttons
   document.getElementById('pb-charge').classList.toggle('active',S.nutritionPhase==='charge');
@@ -446,7 +446,7 @@ function renderNutrition(){
       <div class="meal-kcal">${m.kcal} kcal</div>
     </div>`).join('');
   renderMealPlanIA();
-}
+}catch(e){console.error('[FT] renderNutrition:',e);}}
 
 // ─── PLAN DE REPAS IA ────────────────────────────────────────
 let _mpDay=0;

@@ -992,6 +992,17 @@ document.addEventListener('pointerdown',function(e){
 // ─── ORIENTATION ─────────────────────────────────────────────
 if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('portrait').catch(()=>{});}
 
+// ─── GESTIONNAIRE D'ERREURS GLOBAL ───────────────────────────
+window.addEventListener('error',e=>{
+  // Ignore les erreurs d'assets externes (images, scripts tiers)
+  if(e.filename&&!e.filename.includes(location.hostname))return;
+  console.error('[FT] Erreur JS non rattrapée:',e.message,'@',e.filename,e.lineno);
+  if(typeof toast==='function')toast('Erreur — si l\'appli ne répond plus, rechargez la page','error');
+});
+window.addEventListener('unhandledrejection',e=>{
+  console.error('[FT] Promise rejetée:',e.reason);
+});
+
 // ─── SERVICE WORKER ──────────────────────────────────────────
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{

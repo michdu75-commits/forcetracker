@@ -1085,14 +1085,16 @@ function addImportPhoto(input){
       let w=img.width,h=img.height;
       if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
       canvas.width=w;canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const _c2d=canvas.getContext('2d');
+      if(!_c2d){URL.revokeObjectURL(url);res(null);return;}
+      _c2d.drawImage(img,0,0,w,h);
       URL.revokeObjectURL(url);
       res({data:canvas.toDataURL('image/jpeg',0.82).split(',')[1],type:'image/jpeg'});
     };
     img.src=url;
   });
   Promise.all(files.map(loadFile)).then(results=>{
-    _impPhotos.push(...results);
+    _impPhotos.push(...results.filter(Boolean));
     _renderImpThumbs();
     impGoStep(2);
   });

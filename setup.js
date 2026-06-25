@@ -94,6 +94,7 @@ function switchProgTab(tab,btn){
 function goWeightTab(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>switchProgTab('poids',document.getElementById('ptab-poids')),80);}
 function renderChart(){
   const name=_progEx,box=document.getElementById('chart-box');
+  if(!box)return;
   if(!name){box.innerHTML='<div class="empty">Sélectionne un exercice</div>';return;}
   const pts=[];
   [...S.sessions].reverse().forEach(s=>{
@@ -602,7 +603,8 @@ function addMorphoPhoto(input,slot){
       const scale=Math.min(1,MAX/Math.max(img.width,img.height));
       const c=document.createElement('canvas');
       c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
-      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      const _mc2d=c.getContext('2d');if(!_mc2d)return;
+      _mc2d.drawImage(img,0,0,c.width,c.height);
       const b64=c.toDataURL('image/jpeg',0.8).split(',')[1];
       _morphoPhotos[slot]=b64;
       const slotEl=document.getElementById('morpho-slot-'+slot);

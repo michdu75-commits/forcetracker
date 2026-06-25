@@ -293,7 +293,9 @@ async function _resizeImageBase64(file, maxSize) {
           else { w = Math.round(w / h * maxSize); h = maxSize; }
         }
         canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const ctx2d=canvas.getContext('2d');
+        if(!ctx2d){reject(new Error('Canvas indisponible'));return;}
+        ctx2d.drawImage(img, 0, 0, w, h);
         resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
       };
       img.src = e.target.result;
