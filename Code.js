@@ -288,6 +288,7 @@ function handleSaveProfile_(body) {
     if (body.coachMemory    !== undefined) profile.coachMemory    = body.coachMemory;
     if (body.healthProfile  !== undefined) profile.healthProfile  = body.healthProfile;
     if (body.a11y           !== undefined) profile.a11y           = body.a11y;
+    if (body.colorblind     !== undefined) profile.colorblind     = body.colorblind;
 
     existing.profile   = profile;
     if (body.sessions  !== undefined) existing.sessions  = body.sessions;

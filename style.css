@@ -677,3 +677,20 @@ html.ob-done #onboarding{display:none;}
 /* Contraste renforcé — boutons & séparateurs */
 #root.a11y-lv .btn-red             { background: #FF1035 !important; box-shadow: 0 4px 18px rgba(255,16,53,.4) !important; }
 #root.a11y-lv .card                { border-width: 1.5px !important; }
+
+/* ─── DALTONISME ─────────────────────────────────────────── */
+/* Deutéranopie — rouge→orange, vert→bleu */
+#root.cb-deut{--red:#E8610A;--red2:#C94D00;--green:#1A78C2;}
+#root.cb-deut.light-mode{--red:#B84500;--red2:#903400;--green:#005FA3;}
+#root.cb-deut .tbtn.E{border-color:rgba(232,97,10,.5)!important;background:rgba(232,97,10,.1)!important;}
+#root.cb-deut .chk.done{box-shadow:0 2px 8px rgba(26,120,194,.3)!important;}
+/* Protanopie — rouge→orange-brun, vert→bleu */
+#root.cb-prot{--red:#D46000;--red2:#B04D00;--green:#0077BB;}
+#root.cb-prot.light-mode{--red:#A04000;--red2:#7A3000;--green:#005899;}
+#root.cb-prot .tbtn.E{border-color:rgba(212,96,0,.5)!important;background:rgba(212,96,0,.1)!important;}
+#root.cb-prot .chk.done{box-shadow:0 2px 8px rgba(0,119,187,.3)!important;}
+/* Tritanopie — bleu→rose, or→émeraude, violet→orange */
+#root.cb-trit{--blue:#E8477A;--gold:#009B77;--purp:#C8500A;}
+#root.cb-trit.light-mode{--blue:#C2195A;--gold:#007A5C;--purp:#A04000;}
+#root.cb-trit .tbtn.W{border-color:rgba(232,71,122,.5)!important;background:rgba(232,71,122,.1)!important;}
+#root.cb-trit .tbtn.D{border-color:rgba(0,155,119,.5)!important;background:rgba(0,155,119,.1)!important;}

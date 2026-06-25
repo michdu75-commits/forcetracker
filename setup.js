@@ -205,7 +205,8 @@ function _cloudSync(){
       sleepLog:(S.sleepLog||[]).slice(-365),
       cycle:S.cycle||null,
       healthProfile:S.healthProfile||null,
-      a11y:S.a11y||false
+      a11y:S.a11y||false,
+      colorblind:S.colorblind||''
     })
   }).catch(()=>{});
 }
@@ -437,6 +438,34 @@ const _MORPHO_DATA_F={
   X:{label:'Sablier',icon:'⏳',desc:'Épaules et hanches équilibrées, taille très marquée. Silhouette idéale — entretenir les proportions.'},
   O:{label:'Ronde',icon:'⬭',desc:'Poids concentré autour du ventre et du torse. Cardio régulier + musculation full body.'}
 };
+
+// ── Daltonisme ────────────────────────────────────────────────
+const _CB_DESC={
+  deut:'Deutéranopie — confusion rouge/vert (8% des hommes). Rouge → orange, vert → bleu.',
+  prot:'Protanopie — cécité au rouge (1% des hommes). Rouge → orange-brun, vert → bleu.',
+  trit:'Tritanopie — confusion bleu/jaune (rare). Bleu → rose, or/jaune → émeraude.'
+};
+function _applyColorblind(){
+  const r=document.getElementById('root');
+  if(!r)return;
+  ['cb-deut','cb-prot','cb-trit'].forEach(c=>r.classList.remove(c));
+  if(S.colorblind)r.classList.add('cb-'+S.colorblind);
+  const active='padding:8px 4px;border-radius:8px;border:1.5px solid var(--red);background:rgba(255,45,85,.1);font-size:11px;font-weight:700;cursor:pointer;color:var(--red);font-family:var(--font);';
+  const idle='padding:8px 4px;border-radius:8px;border:1.5px solid var(--sep);background:var(--bg2);font-size:11px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);';
+  [['cb-none',''],['cb-deut-btn','deut'],['cb-prot-btn','prot'],['cb-trit-btn','trit']].forEach(([id,v])=>{
+    const b=document.getElementById(id);if(b)b.style.cssText=S.colorblind===v?active:idle;
+  });
+  const desc=document.getElementById('cb-desc');
+  if(desc){
+    if(S.colorblind&&_CB_DESC[S.colorblind]){desc.textContent=_CB_DESC[S.colorblind];desc.style.display='';}
+    else desc.style.display='none';
+  }
+}
+function setColorblind(type){
+  S.colorblind=type;persist();_applyColorblind();
+  const label={deut:'Deutéranopie',prot:'Protanopie',trit:'Tritanopie'}[type];
+  toast(label?`Mode ${label} activé 🎨`:'Couleurs normales rétablies','info');
+}
 
 // ── Accessibilité ─────────────────────────────────────────────
 function _applyA11y(){
@@ -869,6 +898,7 @@ function renderSetup(){
   _renderMorphoSection();
   _renderHealthSection();
   _applyA11y();
+  _applyColorblind();
   updSetup();
   chainInputs(['age-inp','ht-inp','bw-inp'],saveProfile);
   const bfIds=S.gender==='F'?['neck-inp','waist-inp','hip-inp']:['neck-inp','waist-inp'];
@@ -973,8 +1003,10 @@ function _applyRestoreData(raw){
   if(raw&&raw.coachMemory)S.coachMemory=raw.coachMemory;
   if(d.healthProfile)S.healthProfile=d.healthProfile;
   if(d.a11y!==undefined)S.a11y=!!d.a11y;
+  if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';
   persist();
   _applyA11y();
+  _applyColorblind();
   updateCoachHeader();
 }
 
