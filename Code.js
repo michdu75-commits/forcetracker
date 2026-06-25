@@ -286,6 +286,7 @@ function handleSaveProfile_(body) {
     if (body.morphotype     !== undefined) profile.morphotype     = body.morphotype;
     if (body.customExercises!== undefined) profile.customExercises= body.customExercises;
     if (body.coachMemory    !== undefined) profile.coachMemory    = body.coachMemory;
+    if (body.healthProfile  !== undefined) profile.healthProfile  = body.healthProfile;
 
     existing.profile   = profile;
     if (body.sessions  !== undefined) existing.sessions  = body.sessions;
