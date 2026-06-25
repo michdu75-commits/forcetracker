@@ -895,6 +895,49 @@ function copyWeekSummary(){
   document.getElementById('ov-week-summary').classList.remove('open');
 }
 
+// ─── PLAN DE REPAS IA ────────────────────────────────────────
+async function generateMealPlan(regenDay,regenMeal){
+  if(!S.url){toast('Connexion requise','error');return;}
+  if(!S.bw||!S.age||!S.height){toast('Complète ton profil d\'abord (âge, taille, poids)','error');return;}
+  const isPrem=S.premium,td=today();
+  const isRegen=!!(regenDay&&regenMeal);
+  if(isRegen&&!isPrem){
+    if(S.mealPlan&&S.mealPlan.regenDate===td&&(S.mealPlan.regenCount||0)>=1){
+      toast('1 régénération/jour en gratuit · Premium = illimité ⭐','info');return;
+    }
+  }
+  const btn=isRegen?null:document.getElementById('mp-gen-btn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Génération...';}
+  const macros=calcMacros(S.nutritionPhase);
+  const cp=getMensCyclePhase();
+  const ctx=`Profil: ${S.gender==='H'?'Homme':'Femme'}, ${S.age} ans, ${S.bw}kg, objectif: ${GOAL_LABELS[S.goal]||S.goal}, phase: ${S.nutritionPhase}`
+    +`\nMacros/jour: ${macros.calories} kcal · P ${macros.prot_g}g · G ${macros.carbs_g}g · L ${macros.fat_g}g`
+    +(cp&&cp.phase?`\nCycle: phase ${cp.phase} (jour ${cp.day}/${S.mensCycleDur})`:'')
+    +(S.morphotype?` · Morphotype: ${S.morphotype}`:'');
+  try{
+    const body={action:'generateMealPlan',context:ctx,scope:isPrem?'week':'day',startDate:td};
+    if(isRegen){body.regenDay=regenDay;body.regenMeal=regenMeal;}
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+    const data=await resp.json();
+    if(!data||data.status!=='ok'||!data.plan){toast('Erreur IA : '+(data&&data.message||'réessaie'),'error');return;}
+    if(isRegen){
+      if(!S.mealPlan)S.mealPlan={days:[],generatedAt:td,regenDate:null,regenCount:0};
+      const newDay=data.plan.days&&data.plan.days[0];
+      if(newDay){
+        const ex=S.mealPlan.days.find(d=>d.date===regenDay);
+        if(ex){const nm=newDay.meals&&newDay.meals[0];if(nm){const idx=ex.meals.findIndex(m=>m.name===regenMeal);if(idx>=0)ex.meals[idx]=nm;else ex.meals.push(nm);}}
+      }
+      if(!isPrem){if(S.mealPlan.regenDate!==td){S.mealPlan.regenDate=td;S.mealPlan.regenCount=0;}S.mealPlan.regenCount=(S.mealPlan.regenCount||0)+1;}
+      toast('Repas régénéré ✅','success');
+    }else{
+      S.mealPlan={days:data.plan.days||[],generatedAt:td,regenDate:null,regenCount:0};
+      toast(isPrem?'Semaine générée ✅':'Repas du jour généré ✅','success');
+    }
+    persist();renderMealPlanIA();
+  }catch(e){toast('Erreur réseau : '+e.message,'error');}
+  finally{if(btn){btn.disabled=false;btn.textContent='🍽️ Générer'+(isPrem?' ma semaine':' mon repas du jour');}}
+}
+
 // ─── INIT ────────────────────────────────────────────────────
 load();
 document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});

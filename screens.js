@@ -434,7 +434,7 @@ function renderNutrition(){
     } else { nuCycleBanner.style.display='none'; }
   }
 
-  // Meal plan
+  // Meal plan statique
   const meals=getMeals(macros,S.nutritionPhase);
   document.getElementById('meal-plan').innerHTML=meals.map(m=>`
     <div class="meal-row">
@@ -445,5 +445,69 @@ function renderNutrition(){
       </div>
       <div class="meal-kcal">${m.kcal} kcal</div>
     </div>`).join('');
+  renderMealPlanIA();
+}
+
+// ─── PLAN DE REPAS IA ────────────────────────────────────────
+let _mpDay=0;
+function setMpDay(i){_mpDay=i;renderMealPlanIA();}
+function renderMealPlanIA(){
+  const el=document.getElementById('meal-plan-ia');if(!el)return;
+  const isPrem=S.premium,plan=S.mealPlan,td=today();
+  const DAY=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  if(!plan||!plan.days||!plan.days.length){
+    el.innerHTML=`<div style="background:var(--bg2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:inset 0 0 0 1px var(--sep);">`
+      +`<div style="font-size:13px;color:var(--t2);line-height:1.5;text-align:center;">Plan de repas personnalisé par l'IA, adapté à tes macros et ton objectif.</div>`
+      +`<button class="btn btn-red" id="mp-gen-btn" onclick="generateMealPlan()" style="padding:14px;font-size:15px;">🍽️ Générer${isPrem?' ma semaine':' mon repas du jour'}</button>`
+      +(!isPrem?`<div style="font-size:11px;color:var(--t3);text-align:center;">🆓 Gratuit : repas du jour · 1 régénération/j &nbsp;·&nbsp; ⭐ Premium : semaine + illimité</div>`:'')
+      +`</div>`;
+    return;
+  }
+  const days=isPrem?plan.days:plan.days.slice(0,1);
+  const canRegen=isPrem||(plan.regenDate!==td||(plan.regenCount||0)<1);
+  let html=`<div style="display:flex;flex-direction:column;gap:8px;">`;
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:11px;color:var(--t3);">Généré le ${fmtD(plan.generatedAt)}</span>
+    <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="generateMealPlan()">🔄 Tout régénérer</button>
+  </div>`;
+  if(isPrem&&days.length>1){
+    if(_mpDay>=days.length)_mpDay=0;
+    html+=`<div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;">`;
+    days.forEach((d,i)=>{
+      const wd=new Date(d.date+'T12:00:00').getDay(),isT=d.date===td,sel=i===_mpDay;
+      html+=`<button onclick="setMpDay(${i})" style="flex-shrink:0;padding:5px 10px;border-radius:20px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg3)'};color:${sel?'var(--red)':isT?'var(--t1)':'var(--t2)'};font-size:12px;font-weight:${sel||isT?700:500};cursor:pointer;touch-action:manipulation;">${DAY[wd]}${isT?'·':''}</button>`;
+    });
+    html+=`</div>`;
+    html+=_renderMealDay(days[_mpDay],isPrem,true);
+  }else{
+    html+=_renderMealDay(days[0],isPrem,canRegen);
+  }
+  if(!isPrem){
+    html+=`<div style="background:rgba(255,214,0,.07);border:1px solid rgba(255,214,0,.15);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:18px;">⭐</span>
+      <div style="font-size:12px;color:var(--t2);">Premium : semaine complète + régénérations illimitées — <strong style="color:var(--gold);">4,99€/2 mois</strong></div>
+    </div>`;
+  }
+  el.innerHTML=html+`</div>`;
+}
+function _renderMealDay(day,isPrem,canRegen){
+  if(!day)return'';
+  let h=`<div style="display:flex;flex-direction:column;gap:6px;">`;
+  (day.meals||[]).forEach(m=>{
+    const enc=m.name.replace(/'/g,"\\'");
+    h+=`<div style="background:var(--bg2);border-radius:12px;padding:12px 14px;box-shadow:inset 0 0 0 1px var(--sep);">`
+      +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">`
+      +`<div style="font-weight:700;font-size:13px;color:var(--t1);">${m.name}</div>`
+      +`<div style="display:flex;align-items:center;gap:6px;">`
+      +`<span style="font-size:12px;font-weight:700;color:var(--red);">${m.kcal||0} kcal</span>`
+      +(canRegen?`<button onclick="generateMealPlan('${day.date}','${enc}')" style="background:none;border:none;padding:2px 6px;color:var(--t3);cursor:pointer;font-size:14px;touch-action:manipulation;" title="Régénérer ce repas">🔄</button>`:'')
+      +`</div></div>`
+      +`<ul style="margin:0;padding:0 0 0 14px;display:flex;flex-direction:column;gap:1px;">`
+      +(m.foods||[]).map(f=>`<li style="font-size:12px;color:var(--t2);">${f}</li>`).join('')
+      +`</ul>`
+      +`<div style="font-size:11px;color:var(--t3);margin-top:5px;">P ${m.prot||0}g · G ${m.carbs||0}g · L ${m.fat||0}g</div>`
+      +`</div>`;
+  });
+  return h+`</div>`;
 }
 
