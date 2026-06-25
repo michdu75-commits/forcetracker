@@ -124,10 +124,11 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
-      {i:'🔤',t:'Types de série : N = Normal · W = Échauffement (exclu PRs, compté volume) · E = Échec musculaire · D = Drop set. Appuie sur la lettre pour changer.'},
+      {i:'🔤',t:'Types de série : N = Normal · W = Échauffement (compté dans le volume, exclu des PRs en pratique) · E = Échec musculaire · D = Drop set. Appuie sur la lettre pour changer.'},
       {i:'⏱️',t:'Timer adaptatif : W = 45s · N = 2:10 · E = 4min · D = 20s. Boutons −15s/+15s et presets 1:00/1:30/2:00.'},
+      {i:'⚡',t:'Super-séries : bouton "⚡ Grouper" dès 2 exercices → sélectionne-les → "Lier en supersérie". Enchaînement automatique sans repos. Boutons 📉 Drop / 📈 +10% / 📉 −10% pour pyramides et drop sets.'},
+      {i:'📊',t:'Bouton 📊 sur chaque exercice → graphique du poids max sur les 5 dernières séances.'},
       {i:'🏋️',t:'Le 1RM (Brzycki) s\'affiche en temps réel sous le type — utilise-le pour calibrer tes charges. Appuie sur ℹ️ pour l\'aide sur les types.'},
-      {i:'🏃',t:'Bloc cardio en haut de séance : type (elliptique, tapis, vélo...) × intensité × durée → calories brûlées calculées automatiquement.'},
       {i:'📸',t:'Bouton 📸 pour importer un programme depuis une photo, un fichier Word ou Excel — l\'IA le convertit en séance automatiquement.'},
     ],
     female:[]

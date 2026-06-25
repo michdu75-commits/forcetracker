@@ -493,7 +493,9 @@ const _DRAWER_CONTENT = {
     html:`<div style="display:flex;flex-direction:column;gap:10px;padding:0 2px 8px;">
       ${[
         {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central ⚡ ou "Commencer une séance" depuis l\'accueil. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries.'},
-        {ic:'🏋️',t:'Types de séries',d:'N = Normal · W = Échauffement (exclu des PRs, compté dans le volume) · E = Échec musculaire · D = Drop set. Appuie sur la lettre pour changer. Timer adaptatif : W 45s · N 2:10 · E 4min · D 20s.'},
+        {ic:'🏋️',t:'Types de séries',d:'N = Normal · W = Échauffement (compté dans le volume) · E = Échec musculaire · D = Drop set. Appuie sur la lettre pour changer. Timer adaptatif : W 45s · N 2:10 · E 4min · D 20s.'},
+        {ic:'⚡',t:'Super-séries & Pyramides',d:'Bouton "⚡ Grouper" (dès 2 exercices) → sélectionne les exercices → "Lier en supersérie" : enchaînement sans repos entre eux. Sous chaque exercice : 📉 Drop set (−10% auto) · 📈 Pyramide + (+10%) · 📉 Pyramide − (−10%). Avance automatique et vibration entre les blocs.'},
+        {ic:'📊',t:'Historique par exercice',d:'Bouton 📊 sur chaque exercice en séance → graphique du poids max sur les 5 dernières séances. Pratique pour calibrer sa charge du jour.'},
         {ic:'🏃',t:'Cardio en séance',d:'Bloc cardio en haut de séance (replié par défaut). Choisis le type (elliptique, tapis, vélo, rameur, corde...), l\'intensité (léger/modéré/intense) et la durée. Les calories brûlées sont calculées et ajoutées à ton TDEE.'},
         {ic:'📋',t:'Programmes',d:'Sauvegarde ta séance en cours comme programme réutilisable. Charge-le pour retrouver les exercices avec les poids de la dernière fois. Bouton 🤖 pour une analyse IA de ton programme. Bouton ✏️ pour modifier les exercices.'},
         {ic:'📸',t:'Import de programme',d:'Bouton 📸 dans la séance pour importer depuis une photo, un fichier Word (.docx) ou Excel (.xlsx). Le Coach IA extrait automatiquement les exercices, séries et charges.'},
@@ -503,7 +505,7 @@ const _DRAWER_CONTENT = {
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
         {ic:'🤖',t:'Coach IA',d:'Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
         {ic:'☁️',t:'Synchronisation cloud',d:'Données sauvegardées localement (localStorage) ET sur Google Sheets. Sync automatique après chaque séance. Restauration complète sur un nouvel appareil : entre ton email à l\'onboarding ou dans Profil → Admin.'},
-        {ic:'💡',t:'Astuces',d:'• PR = uniquement sets N/E/D, jamais W · • 1RM Brzycki = kg × (36 / (37 − reps)) · • Tap sur l\'historique pour corriger des séries · • Menu ☰ → Anatomie pour visualiser les muscles · • Calculateur 1RM disponible depuis Menu ☰'},
+        {ic:'💡',t:'Astuces',d:'• 1RM Brzycki = kg × (36 / (37 − reps)) · • Swipe gauche/droite pour changer d\'onglet · • Tap sur une séance passée pour corriger des séries · • Menu ☰ → Anatomie pour visualiser les muscles · • Calculateur 1RM disponible depuis Menu ☰'},
       ].map(h=>`<div style="background:var(--bg3);border-radius:12px;padding:14px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:20px;">${h.ic}</span><strong style="font-size:14px;">${h.t}</strong></div>
         <p style="font-size:13px;color:var(--t2);line-height:1.5;margin:0;">${h.d}</p>
