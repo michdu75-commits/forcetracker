@@ -158,6 +158,18 @@ ${(()=>{
   const mm=S.morpho?`- Silhouette: ${(S.gender==='F'?MF:MH)[S.morpho]||S.morpho} (type ${S.morpho})`:'';
   return [mt,mm].filter(Boolean).join('\n');
 })()}
+${(()=>{
+  const hp=S.healthProfile;
+  if(!hp||(!(hp.conditions||[]).length&&!(hp.injuries||[]).length&&!(hp.notes||'').trim()))return '';
+  const cL={cardio:'Cardiologie/HTA',diabete:'Diabète',hernie:'Hernie discale',asthme:'Asthme',arthrite:'Arthrose/Arthrite',osteo:'Ostéoporose',epilepsie:'Épilepsie'};
+  const zL={epaule_d:'Épaule D',epaule_g:'Épaule G',genou_d:'Genou D',genou_g:'Genou G',dos_bas:'Lombaires',dos_haut:'Dorsaux',hanche_d:'Hanche D',hanche_g:'Hanche G',cheville_d:'Cheville D',cheville_g:'Cheville G',coude_d:'Coude D',coude_g:'Coude G',poignet_d:'Poignet D',poignet_g:'Poignet G',cou:'Cou/Cervicales',autre:'Autre'};
+  const sL={active:'active ⚠️',recente:'récente',ancienne:'ancienne/guérie'};
+  const parts=[];
+  if((hp.conditions||[]).length)parts.push('Conditions: '+(hp.conditions||[]).map(c=>cL[c]||c).join(', '));
+  if((hp.injuries||[]).length)parts.push('Blessures: '+(hp.injuries||[]).map(i=>`${zL[i.zone]||i.zone} (${sL[i.status]||i.status})`).join(', '));
+  if((hp.notes||'').trim())parts.push('Notes: '+hp.notes.trim());
+  return '\n⚠️ PROFIL SANTÉ — adapter les conseils en conséquence:\n- '+parts.join('\n- ');
+})()}
 
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}

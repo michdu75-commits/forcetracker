@@ -202,7 +202,8 @@ function _cloudSync(){
       prs:S.prs||{},
       weightLog:(S.weightLog||[]).slice(-365),
       sleepLog:(S.sleepLog||[]).slice(-365),
-      cycle:S.cycle||null
+      cycle:S.cycle||null,
+      healthProfile:S.healthProfile||null
     })
   }).catch(()=>{});
 }
@@ -434,6 +435,102 @@ const _MORPHO_DATA_F={
   X:{label:'Sablier',icon:'⏳',desc:'Épaules et hanches équilibrées, taille très marquée. Silhouette idéale — entretenir les proportions.'},
   O:{label:'Ronde',icon:'⬭',desc:'Poids concentré autour du ventre et du torse. Cardio régulier + musculation full body.'}
 };
+
+// ── Profil Santé ──────────────────────────────────────────────
+const _HC=[
+  {id:'cardio',label:'Cardio/HTA',icon:'❤️'},
+  {id:'diabete',label:'Diabète',icon:'🩸'},
+  {id:'hernie',label:'Hernie discale',icon:'🦴'},
+  {id:'asthme',label:'Asthme',icon:'🫁'},
+  {id:'arthrite',label:'Arthrose',icon:'🦵'},
+  {id:'osteo',label:'Ostéoporose',icon:'💀'},
+  {id:'epilepsie',label:'Épilepsie',icon:'⚡'},
+];
+const _HIZ=[
+  {id:'epaule_d',label:'Épaule droite'},{id:'epaule_g',label:'Épaule gauche'},
+  {id:'genou_d',label:'Genou droit'},{id:'genou_g',label:'Genou gauche'},
+  {id:'dos_bas',label:'Bas du dos (lombaires)'},{id:'dos_haut',label:'Haut du dos'},
+  {id:'hanche_d',label:'Hanche droite'},{id:'hanche_g',label:'Hanche gauche'},
+  {id:'cheville_d',label:'Cheville droite'},{id:'cheville_g',label:'Cheville gauche'},
+  {id:'coude_d',label:'Coude droit'},{id:'coude_g',label:'Coude gauche'},
+  {id:'poignet_d',label:'Poignet droit'},{id:'poignet_g',label:'Poignet gauche'},
+  {id:'cou',label:'Cou/Cervicales'},{id:'autre',label:'Autre zone'},
+];
+const _HIS=[
+  {id:'active',label:'Active',bg:'rgba(255,45,85,.15)',color:'#FF2D55'},
+  {id:'recente',label:'Récente',bg:'rgba(255,149,0,.15)',color:'#FF9500'},
+  {id:'ancienne',label:'Ancienne',bg:'rgba(48,209,88,.15)',color:'#30D158'},
+];
+let _addingInjury=false;
+
+function _getHP(){if(!S.healthProfile)S.healthProfile={conditions:[],injuries:[],notes:''};return S.healthProfile;}
+
+function _renderHealthSection(){
+  const el=document.getElementById('health-section');
+  if(!el)return;
+  const hp=_getHP();
+  const conds=hp.conditions||[];
+  const injs=hp.injuries||[];
+
+  const condHtml=_HC.map(c=>{
+    const on=conds.includes(c.id);
+    return `<button onclick="toggleHC('${c.id}')" style="padding:6px 10px;border-radius:20px;border:1.5px solid ${on?'#FF2D55':'var(--sep)'};background:${on?'rgba(255,45,85,.12)':'var(--bg3)'};font-size:12px;font-weight:600;cursor:pointer;color:${on?'#FF2D55':'var(--t2)'};display:inline-flex;align-items:center;gap:4px;">${c.icon} ${c.label}</button>`;
+  }).join('');
+
+  const injHtml=injs.length?injs.map((inj,i)=>{
+    const z=_HIZ.find(x=>x.id===inj.zone);
+    const s=_HIS.find(x=>x.id===inj.status);
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:8px;">
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--t1);">${z?z.label:inj.zone}</span>
+      <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${s?s.bg:'rgba(120,120,120,.15)'};color:${s?s.color:'var(--t3)'};">${s?s.label:inj.status}</span>
+      <button onclick="removeHI(${i})" style="background:none;border:none;color:var(--t3);font-size:18px;line-height:1;cursor:pointer;padding:0 2px;">×</button>
+    </div>`;
+  }).join(''):'<div style="font-size:12px;color:var(--t3);padding:4px 0;">Aucune blessure renseignée</div>';
+
+  const addFormHtml=_addingInjury?`<div style="background:var(--bg3);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;">
+    <select id="hi-zone-sel" style="padding:8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:13px;">
+      ${_HIZ.map(z=>`<option value="${z.id}">${z.label}</option>`).join('')}
+    </select>
+    <select id="hi-status-sel" style="padding:8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:13px;">
+      ${_HIS.map(s=>`<option value="${s.id}">${s.label}</option>`).join('')}
+    </select>
+    <div style="display:flex;gap:8px;">
+      <button onclick="saveHI()" style="flex:1;padding:8px;border-radius:8px;background:#FF2D55;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Ajouter</button>
+      <button onclick="cancelHI()" style="flex:1;padding:8px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t2);font-size:13px;cursor:pointer;">Annuler</button>
+    </div>
+  </div>`:`<button onclick="openHI()" style="padding:8px 14px;border-radius:8px;border:1.5px dashed var(--sep);background:var(--bg3);font-size:13px;font-weight:600;cursor:pointer;color:var(--t2);width:100%;">+ Ajouter une blessure</button>`;
+
+  el.innerHTML=`
+    <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:6px;">Conditions médicales</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">${condHtml}</div>
+    <div style="font-size:13px;font-weight:700;color:var(--t2);margin-top:14px;margin-bottom:6px;">Blessures & douleurs</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">${injHtml}</div>
+    <div style="margin-top:8px;">${addFormHtml}</div>
+    <div style="font-size:13px;font-weight:700;color:var(--t2);margin-top:14px;margin-bottom:4px;">Notes santé libres</div>
+    <textarea id="health-notes-ta" rows="2" style="width:100%;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);padding:8px 10px;font-size:13px;resize:none;box-sizing:border-box;" placeholder="Ex: allergie au lactose, prise de statines, glycémie à surveiller..." oninput="saveHN()">${hp.notes||''}</textarea>
+  `;
+}
+
+function toggleHC(id){
+  const hp=_getHP();const idx=(hp.conditions||[]).indexOf(id);
+  if(idx>=0)hp.conditions.splice(idx,1);else(hp.conditions=hp.conditions||[]).push(id);
+  persist();_renderHealthSection();
+}
+function openHI(){_addingInjury=true;_renderHealthSection();}
+function cancelHI(){_addingInjury=false;_renderHealthSection();}
+function saveHI(){
+  const zone=(document.getElementById('hi-zone-sel')||{}).value;
+  const status=(document.getElementById('hi-status-sel')||{}).value;
+  if(!zone)return;
+  const hp=_getHP();(hp.injuries=hp.injuries||[]).push({zone,status,since:today()});
+  _addingInjury=false;persist();_renderHealthSection();
+}
+function removeHI(i){
+  const hp=_getHP();if(!hp.injuries)return;hp.injuries.splice(i,1);persist();_renderHealthSection();
+}
+function saveHN(){
+  const ta=document.getElementById('health-notes-ta');if(!ta)return;_getHP().notes=ta.value;persist();
+}
 
 function _renderMorphoSection(){
   const mtEl=document.getElementById('morphotype-btns');
@@ -746,6 +843,7 @@ function renderSetup(){
   setGoal(S.goal||'muscle');
   renderBFCard();
   _renderMorphoSection();
+  _renderHealthSection();
   updSetup();
   chainInputs(['age-inp','ht-inp','bw-inp'],saveProfile);
   const bfIds=S.gender==='F'?['neck-inp','waist-inp','hip-inp']:['neck-inp','waist-inp'];
@@ -848,6 +946,7 @@ function _applyRestoreData(raw){
   if(raw&&raw.premium===true){S.premium=true;}
   if(raw&&raw.premiumExpiry){S.premiumExpiry=raw.premiumExpiry;}
   if(raw&&raw.coachMemory)S.coachMemory=raw.coachMemory;
+  if(d.healthProfile)S.healthProfile=d.healthProfile;
   persist();
   updateCoachHeader();
 }

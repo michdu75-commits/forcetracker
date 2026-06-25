@@ -18,7 +18,8 @@ let S={
   premium:false,
   premiumExpiry:'',
   exRestPref:{},
-  mealPlan:null
+  mealPlan:null,
+  healthProfile:null
 };
 
 function load(){
@@ -68,6 +69,7 @@ function load(){
     S.bday=localStorage.getItem('ft4_bday')||'';
     S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
     S.mealPlan=JSON.parse(localStorage.getItem('ft4_mealplan')||'null');
+    S.healthProfile=JSON.parse(localStorage.getItem('ft4_health')||'null');
     // Migration one-time : exercices EN → FR
     if(!localStorage.getItem('ft4_exmig2')){
       const _REN={'Rack Pull':'Tirage en Rack (Rack Pull)','Good Morning':'Inclinaison Lombaire (Good Morning)',
@@ -128,6 +130,7 @@ function persist(){
     localStorage.setItem('ft4_bday',S.bday||'');
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
     localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
+    localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
   }catch(e){}
   _cloudSyncDebounced();
 }
