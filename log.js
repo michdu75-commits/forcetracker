@@ -950,7 +950,7 @@ function filterEx(){
   // Recherche active → liste plate
   if(q){
     _exGrp=null;
-    const f=all.filter(e=>e.n.toLowerCase().includes(q)||e.g.toLowerCase().includes(q));
+    const qn=_normEx(q);const f=all.filter(e=>e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q));
     list.innerHTML=f.length?f.map(_exPickRow).join(''):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
     return;
   }
