@@ -184,8 +184,9 @@ function doPost(e) {
   if (body.action === 'validateCode')      return handleValidateCode_(body);
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
-  if (body.action === 'morphoAnalysis')   return handleMorphoAnalysis_(body);
-  if (body.action === 'summarizeCoach')   return handleSummarizeCoach_(body);
+  if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
+  if (body.action === 'summarizeCoach')    return handleSummarizeCoach_(body);
+  if (body.action === 'generateMealPlan')  return handleGenerateMealPlan_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -616,6 +617,73 @@ function handleCoach_(body) {
   } catch(err) {
     return json_({reply: 'Erreur Coach IA : ' + err.message});
   }
+}
+
+function handleGenerateMealPlan_(body) {
+  var apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', message:'Clé API manquante'});
+  try {
+    var ctx = String(body.context || '');
+    var scope = body.scope || 'day';
+    var startDate = body.startDate || new Date().toISOString().split('T')[0];
+    var regenDay = body.regenDay || null;
+    var regenMeal = body.regenMeal || null;
+    var userMsg, maxTokens;
+    if (regenMeal && regenDay) {
+      userMsg = 'Régénère UNIQUEMENT le repas "' + regenMeal + '" pour la date ' + regenDay + '.\n'
+        + 'Retourne UNIQUEMENT ce JSON (un seul repas) :\n'
+        + '{"days":[{"date":"' + regenDay + '","meals":[{"name":"' + regenMeal + '","foods":["Aliment 1","Aliment 2"],"kcal":0,"prot":0,"carbs":0,"fat":0}]}]}';
+      maxTokens = 512;
+    } else {
+      var days = scope === 'week' ? 7 : 1;
+      var dates = [];
+      var d0 = new Date(startDate + 'T12:00:00');
+      for (var i = 0; i < days; i++) {
+        var di = new Date(d0.getTime()); di.setDate(d0.getDate() + i);
+        dates.push(di.toISOString().split('T')[0]);
+      }
+      userMsg = 'Génère un plan de repas pour ' + (days === 1 ? '1 jour' : '7 jours') + '.\n'
+        + 'Dates exactes : ' + dates.join(', ') + '\n'
+        + 'Retourne UNIQUEMENT le JSON, sans texte avant ou après.';
+      maxTokens = scope === 'week' ? 3500 : 900;
+    }
+    var systemPrompt = 'Tu es un diététicien sportif. Génère un plan de repas adapté au profil fourni.\n\n'
+      + 'RÈGLE ABSOLUE : réponds UNIQUEMENT avec du JSON valide, sans aucun texte avant ou après.\n\n'
+      + 'Format exact (respecte les emojis dans "name") :\n'
+      + '{"days":[{"date":"YYYY-MM-DD","meals":['
+      + '{"name":"🌅 Petit-déjeuner","foods":["Avoine 80g","Œufs brouillés (3)","Lait 200ml"],"kcal":420,"prot":28,"carbs":55,"fat":12},'
+      + '{"name":"🍽️ Déjeuner","foods":["Poulet grillé 150g","Riz basmati 100g","Brocolis 100g"],"kcal":580,"prot":45,"carbs":65,"fat":14},'
+      + '{"name":"🌙 Dîner","foods":["Saumon 130g","Patate douce 150g","Haricots verts"],"kcal":480,"prot":38,"carbs":40,"fat":18},'
+      + '{"name":"🍎 Collation","foods":["Yaourt grec 200g","Noix 20g"],"kcal":220,"prot":16,"carbs":12,"fat":11}'
+      + ']}]}\n\n'
+      + 'Règles :\n'
+      + '- Exactement 4 repas par jour (Petit-déjeuner, Déjeuner, Dîner, Collation)\n'
+      + '- 2 à 4 aliments par repas avec quantités précises (en grammes ou unités)\n'
+      + '- Macros cohérentes avec le profil fourni, s\'additionnant proches des cibles\n'
+      + '- Aliments réalistes et disponibles en France\n'
+      + '- Sur 7 jours : varie les plats (pas le même dîner deux jours consécutifs)';
+    var payload = {
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: maxTokens,
+      system: systemPrompt,
+      messages: [{role:'user', content: ctx + '\n\n' + userMsg}]
+    };
+    var resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      headers: {'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    });
+    var result = JSON.parse(resp.getContentText());
+    if (result.error) return json_({status:'error', message: result.error.message});
+    var raw = (result.content && result.content[0] && result.content[0].text || '').trim();
+    var parsed;
+    try {
+      var m = raw.match(/\{[\s\S]*\}/);
+      parsed = JSON.parse(m ? m[0] : raw);
+    } catch(pe) { return json_({status:'error', message:'Format JSON invalide : '+raw.substring(0,100)}); }
+    return json_({status:'ok', plan: parsed});
+  } catch(err) { return json_({status:'error', message: err.message}); }
 }
 
 function handleSummarizeCoach_(body) {
