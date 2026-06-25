@@ -339,7 +339,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     </div>
     <div style="flex:1;display:flex;flex-direction:column;gap:5px">
       <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
-      <div style="display:flex;gap:4px;align-items:center">
+      <div style="display:flex;gap:4px;align-items:center" id="rest-btns">
         <button class="rbtn" id="rp-60" onclick="setRestPreset(60)">1:00</button>
         <button class="rbtn" id="rp-90" onclick="setRestPreset(90)">1:30</button>
         <button class="rbtn" id="rp-120" onclick="setRestPreset(120)">2:00</button>
@@ -654,6 +654,16 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
           <div style="font-size:12px;color:var(--t3);margin-top:3px;">Gros texte · Contraste renforcé</div>
         </div>
         <button id="a11y-btn" onclick="toggleA11y()" style="padding:8px 16px;border-radius:20px;border:2px solid var(--sep);background:var(--bg2);color:var(--t3);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;min-width:80px;">Désactivé</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--bg3);border-radius:12px;border:1px solid var(--sep);">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1);">Main dominante</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:3px;">Adapte la position des boutons</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button id="lh-right-btn" onclick="setHandedness('right')" style="padding:8px 12px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg2);font-size:13px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);">Droitier</button>
+          <button id="lh-left-btn" onclick="setHandedness('left')" style="padding:8px 12px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg2);font-size:13px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);">Gaucher</button>
+        </div>
       </div>
       <div style="padding:14px;background:var(--bg3);border-radius:12px;border:1px solid var(--sep);display:flex;flex-direction:column;gap:8px;">
         <div style="font-size:13px;font-weight:700;color:var(--t2);">Mode daltonien</div>

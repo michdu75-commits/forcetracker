@@ -21,7 +21,8 @@ let S={
   mealPlan:null,
   healthProfile:null,
   a11y:false,
-  colorblind:''
+  colorblind:'',
+  leftHand:false
 };
 
 function load(){
@@ -74,6 +75,7 @@ function load(){
     S.healthProfile=JSON.parse(localStorage.getItem('ft4_health')||'null');
     S.a11y=localStorage.getItem('ft4_a11y')==='1';
     S.colorblind=localStorage.getItem('ft4_cb')||'';
+    S.leftHand=localStorage.getItem('ft4_lh')==='1';
     // Migration one-time : exercices EN → FR
     if(!localStorage.getItem('ft4_exmig2')){
       const _REN={'Rack Pull':'Tirage en Rack (Rack Pull)','Good Morning':'Inclinaison Lombaire (Good Morning)',
@@ -137,6 +139,7 @@ function persist(){
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
     localStorage.setItem('ft4_a11y',S.a11y?'1':'0');
     localStorage.setItem('ft4_cb',S.colorblind||'');
+    localStorage.setItem('ft4_lh',S.leftHand?'1':'0');
   }catch(e){
     if(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22)){
       try{

@@ -289,6 +289,7 @@ function handleSaveProfile_(body) {
     if (body.healthProfile  !== undefined) profile.healthProfile  = body.healthProfile;
     if (body.a11y           !== undefined) profile.a11y           = body.a11y;
     if (body.colorblind     !== undefined) profile.colorblind     = body.colorblind;
+    if (body.leftHand       !== undefined) profile.leftHand       = body.leftHand;
 
     existing.profile   = profile;
     if (body.sessions  !== undefined) existing.sessions  = body.sessions;

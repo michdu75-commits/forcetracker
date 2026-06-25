@@ -206,7 +206,8 @@ function _cloudSync(){
       cycle:S.cycle||null,
       healthProfile:S.healthProfile||null,
       a11y:S.a11y||false,
-      colorblind:S.colorblind||''
+      colorblind:S.colorblind||'',
+      leftHand:S.leftHand||false
     })
   }).catch(()=>{});
 }
@@ -438,6 +439,23 @@ const _MORPHO_DATA_F={
   X:{label:'Sablier',icon:'⏳',desc:'Épaules et hanches équilibrées, taille très marquée. Silhouette idéale — entretenir les proportions.'},
   O:{label:'Ronde',icon:'⬭',desc:'Poids concentré autour du ventre et du torse. Cardio régulier + musculation full body.'}
 };
+
+// ── Main dominante ────────────────────────────────────────────
+function _applyLeftHand(){
+  const r=document.getElementById('root');
+  if(!r)return;
+  if(S.leftHand)r.classList.add('lh');else r.classList.remove('lh');
+  const on='padding:8px 12px;border-radius:10px;border:1.5px solid var(--purp);background:rgba(170,0,255,.1);font-size:13px;font-weight:700;cursor:pointer;color:var(--purp);font-family:var(--font);';
+  const off='padding:8px 12px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg2);font-size:13px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);';
+  const rBtn=document.getElementById('lh-right-btn');
+  const lBtn=document.getElementById('lh-left-btn');
+  if(rBtn)rBtn.style.cssText=!S.leftHand?on:off;
+  if(lBtn)lBtn.style.cssText=S.leftHand?on:off;
+}
+function setHandedness(side){
+  S.leftHand=side==='left';persist();_applyLeftHand();
+  toast(S.leftHand?'Mode gaucher activé 🤛':'Mode droitier activé 🤜','info');
+}
 
 // ── Daltonisme ────────────────────────────────────────────────
 const _CB_DESC={
@@ -899,6 +917,7 @@ function renderSetup(){
   _renderHealthSection();
   _applyA11y();
   _applyColorblind();
+  _applyLeftHand();
   updSetup();
   chainInputs(['age-inp','ht-inp','bw-inp'],saveProfile);
   const bfIds=S.gender==='F'?['neck-inp','waist-inp','hip-inp']:['neck-inp','waist-inp'];
@@ -1004,9 +1023,11 @@ function _applyRestoreData(raw){
   if(d.healthProfile)S.healthProfile=d.healthProfile;
   if(d.a11y!==undefined)S.a11y=!!d.a11y;
   if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';
+  if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;
   persist();
   _applyA11y();
   _applyColorblind();
+  _applyLeftHand();
   updateCoachHeader();
 }
 

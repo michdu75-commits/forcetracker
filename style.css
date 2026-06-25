@@ -694,3 +694,9 @@ html.ob-done #onboarding{display:none;}
 #root.cb-trit.light-mode{--blue:#C2195A;--gold:#007A5C;--purp:#A04000;}
 #root.cb-trit .tbtn.W{border-color:rgba(232,71,122,.5)!important;background:rgba(232,71,122,.1)!important;}
 #root.cb-trit .tbtn.D{border-color:rgba(0,155,119,.5)!important;background:rgba(0,155,119,.1)!important;}
+
+/* ─── GAUCHER ────────────────────────────────────────────── */
+#root.lh .help-fab          { right:auto; left:14px; }
+#root.lh #rest-bar          { flex-direction:row-reverse; }
+#root.lh #rest-btns         { flex-direction:row-reverse; }
+#root.lh .ex-hdr-btns       { order:-1; }
