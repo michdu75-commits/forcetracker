@@ -16,7 +16,7 @@ function _markScreenSeen(screen){
 }
 function _updateNewBadges(){
   const seen=S.seenFeatures||[];
-  ['home','progress','log','nutrition','coach'].forEach(sc=>{
+  ['home','progress','log','nutrition','coach','setup'].forEach(sc=>{
     const btn=document.getElementById('nb-'+sc);if(!btn)return;
     const hasNew=NEW_FEATURES.some(f=>f.screen===sc&&!seen.includes(f.id));
     let dot=btn.querySelector('.new-dot');

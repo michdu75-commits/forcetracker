@@ -112,10 +112,20 @@ const SET_TYPES=['N','W','E','D'];
 const SET_TYPE_LABELS={N:'Normal',W:'Warm-up',E:'Échec',D:'Drop set'};
 
 // ─── NOUVELLES FONCTIONNALITÉS (indicateur pastille) ─────────
-// Ajouter ici chaque nouvelle feature avec un id unique + l'écran concerné
+// Ajouter ici chaque nouvelle feature avec un id unique + l'écran concerné.
+// La pastille disparaît au premier accès à l'écran.
 const NEW_FEATURES=[
-  {id:'ex-history',  screen:'log',      desc:'Mini graphique historique par exercice (📊)'},
+  // Séance
+  {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
+  {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
+  // Progrès
   {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
+  {id:'prog-badges', screen:'progress', desc:'Onglet Badges (🏅)'},
+  // Coach
+  {id:'coach-photo', screen:'coach',    desc:'Envoi de photo au Coach IA (📷)'},
+  {id:'coach-morpho',screen:'coach',    desc:'Analyse morphologie 3 photos (📸 Premium)'},
+  // Profil (setup)
+  {id:'morpho-setup',screen:'setup',    desc:'Section morphologie dans Profil'},
 ];
 
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────
