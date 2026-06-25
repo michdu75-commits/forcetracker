@@ -5,7 +5,7 @@ let S={
   gender:'H',age:30,height:175,activityLevel:1.55,
   workType:'bureau',smoker:false,
   mensCycleStart:'',mensCycleDur:28,contraception:'',morpho:'',morphotype:'',
-  sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],
+  sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
   url:DEFAULT_URL,email:'',connected:false,
   nutritionPhase:'charge',
   customExercises:[],
@@ -55,6 +55,7 @@ function load(){
     S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
     S.progExos=JSON.parse(localStorage.getItem('ft4_progexos')||'null')||[...BIG4];
     S.seenFeatures=JSON.parse(localStorage.getItem('ft4_seen_ft')||'[]');
+    S.reportedCustomEx=JSON.parse(localStorage.getItem('ft4_rep_cex')||'[]');
     S.coachFree=parseInt(localStorage.getItem('ft4_coachFree')||'0')||0;
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
     S.premium=localStorage.getItem('ft4_premium')==='1';

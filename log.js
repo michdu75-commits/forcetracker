@@ -1008,6 +1008,17 @@ function hideCustomExForm(){
   const n=document.getElementById('custom-ex-name');if(n)n.value='';
   _cexMusclesP=[];_cexMusclesS=[];
 }
+function _reportCustomEx(name,grp,muscles){
+  if(!S.email||!S.url)return;
+  if(!S.reportedCustomEx)S.reportedCustomEx=[];
+  if(S.reportedCustomEx.includes(name))return;
+  S.reportedCustomEx.push(name);
+  localStorage.setItem('ft4_rep_cex',JSON.stringify(S.reportedCustomEx));
+  const body={action:'logCustomExercise',email:S.email,name,group:grp||'Autres'};
+  if(muscles){body.musclesP=muscles.p||[];body.musclesS=muscles.s||[];}
+  fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)}).catch(()=>{});
+}
+
 function saveCustomEx(){
   const name=(document.getElementById('custom-ex-name').value||'').trim();
   const grp=document.getElementById('custom-ex-grp').value;
@@ -1018,9 +1029,7 @@ function saveCustomEx(){
   const muscles=(_cexMusclesP.length||_cexMusclesS.length)?{p:[..._cexMusclesP],s:[..._cexMusclesS]}:null;
   S.customExercises.push({n:name,g:grp,custom:true,...(muscles&&{muscles})});
   persist();
-  if(S.email&&S.url&&muscles){
-    fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logCustomExercise',email:S.email,name,group:grp,musclesP:muscles.p,musclesS:muscles.s})}).catch(()=>{});
-  }
+  _reportCustomEx(name,grp,muscles);
   hideCustomExForm();filterEx();toast(name+' créé !','success');
 }
 
@@ -1231,7 +1240,7 @@ function finalImportProg(){
   }));
   if(toCreate.length){
     if(!S.customExercises)S.customExercises=[];
-    toCreate.forEach(n=>S.customExercises.push({n,g:'Autres',custom:true}));
+    toCreate.forEach(n=>{S.customExercises.push({n,g:'Autres',custom:true});_reportCustomEx(n,'Autres',null);});
     toast(toCreate.length+' exercice'+(toCreate.length>1?'s':'')+" créé"+(toCreate.length>1?'s':'')+" automatiquement",'info');
   }
   // Construire le programme avec groupes supersets et dropsets

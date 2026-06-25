@@ -380,20 +380,38 @@ function handleValidateCode_(body) {
 // ───────────────────────────────────────────────────────────
 function handleLogCustomExercise_(body) {
   try {
-    const ss = _getSheet_();
-    let sheet = ss.getSheetByName('CustomExercises');
+    const name = (body.name || '').trim();
+    if (!name) return json_({status:'ok'});
+    const email = (body.email || '').toLowerCase().trim();
+    const grp   = body.group || 'Autres';
+    const ss    = _getSheet_();
+    const today = new Date().toISOString().slice(0, 10);
+
+    // Feuille agrégée "Exercices manquants"
+    let sheet = ss.getSheetByName('Exercices manquants');
     if (!sheet) {
-      sheet = ss.insertSheet('CustomExercises');
-      sheet.appendRow(['date','email','name','group','muscles_primary','muscles_secondary']);
+      sheet = ss.insertSheet('Exercices manquants');
+      sheet.appendRow(['Exercice','Groupe','Signalements','Emails','Première date','Dernière date']);
+      sheet.setFrozenRows(1);
+      sheet.getRange(1,1,1,6).setFontWeight('bold');
     }
-    sheet.appendRow([
-      new Date().toISOString(),
-      (body.email || '').toLowerCase().trim(),
-      body.name || '',
-      body.group || '',
-      (body.musclesP || []).join(', '),
-      (body.musclesS || []).join(', ')
-    ]);
+
+    const data = sheet.getDataRange().getValues();
+    let rowIdx = -1;
+    for (let i = 1; i < data.length; i++) {
+      if ((data[i][0]||'').toLowerCase() === name.toLowerCase()) { rowIdx = i + 1; break; }
+    }
+
+    if (rowIdx > 0) {
+      const row = data[rowIdx - 1];
+      const count = (row[2] || 0) + 1;
+      const emails = (row[3] || '').split(', ').filter(Boolean);
+      if (email && !emails.includes(email)) emails.push(email);
+      sheet.getRange(rowIdx, 3, 1, 4).setValues([[count, emails.join(', '), row[4]||today, today]]);
+    } else {
+      sheet.appendRow([name, grp, 1, email, today, today]);
+    }
+
     return json_({status:'ok'});
   } catch(err) {
     return json_({status:'error', error: err.message});
