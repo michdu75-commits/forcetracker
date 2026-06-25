@@ -884,3 +884,63 @@ async function debugRestore(){
   }catch(e){toast('Erreur réseau : '+e.message,'error');}
 }
 
+function detectDuplicates(){
+  const seen=new Map();
+  (S.sessions||[]).forEach(s=>(s.exs||[]).forEach(ex=>{if(ex.name)seen.set(ex.name,ex.name);}));
+  Object.keys(S.prs||{}).forEach(n=>seen.set(n,n));
+  (S.customExercises||[]).forEach(e=>seen.set(e.n,e.n));
+  EXLIB.forEach(e=>seen.set(e.n,e.n));
+  const arr=[...seen.values()];
+  const pairs=[];
+  for(let i=0;i<arr.length;i++){
+    const na=_normEx(arr[i]);
+    for(let j=i+1;j<arr.length;j++){
+      const nb=_normEx(arr[j]);
+      if(na===nb){pairs.push([arr[i],arr[j],0]);continue;}
+      const minL=Math.min(na.length,nb.length);
+      if(minL<5)continue;
+      const thr=Math.max(1,Math.min(3,Math.floor(Math.max(na.length,nb.length)*0.15)));
+      const d=_lev(na,nb);
+      if(d<=thr)pairs.push([arr[i],arr[j],d]);
+    }
+  }
+  const el=document.getElementById('admin-dupes');
+  el.style.display='flex';
+  if(!pairs.length){el.innerHTML='<div style="color:var(--t3);padding:8px 0;">Aucun doublon détecté ✅</div>';return;}
+  el.innerHTML=pairs.map(([a,b,d])=>{
+    const la=a.length>18?a.slice(0,18)+'…':a;
+    const lb=b.length>18?b.slice(0,18)+'…':b;
+    return '<div style="background:var(--bg3);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;">'
+      +'<div style="color:var(--t3);font-size:11px;">dist.'+d+'</div>'
+      +'<div style="color:var(--t1);font-weight:600;font-size:13px;">'+a+' <span style="color:var(--t3);font-weight:400;">≈</span> '+b+'</div>'
+      +'<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      +'<button class="btn btn-bg2" onclick="mergeExercises('+JSON.stringify(a)+','+JSON.stringify(b)+')" style="padding:7px 10px;font-size:12px;flex:1;">Garder "'+la+'"</button>'
+      +'<button class="btn btn-bg2" onclick="mergeExercises('+JSON.stringify(b)+','+JSON.stringify(a)+')" style="padding:7px 10px;font-size:12px;flex:1;">Garder "'+lb+'"</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function mergeExercises(keep,remove){
+  const sessCount=(S.sessions||[]).reduce((n,s)=>n+(s.exs||[]).filter(e=>e.name===remove).length,0);
+  const hasPr=!!(S.prs||{})[remove];
+  const details=[];
+  if(sessCount)details.push(sessCount+' séance'+(sessCount>1?'s':''));
+  if(hasPr)details.push('1 PR');
+  const desc=details.length?' ('+details.join(', ')+')':'';
+  showConfirm(
+    'Fusionner les exercices',
+    'Renommer "'+remove+'"'+desc+' en "'+keep+'" ? Cette action est irréversible.',
+    ()=>{
+      (S.sessions||[]).forEach(s=>(s.exs||[]).forEach(ex=>{if(ex.name===remove)ex.name=keep;}));
+      if((S.prs||{})[remove]){
+        const pr=S.prs[remove];
+        if(!S.prs[keep]||pr.rm1>(S.prs[keep].rm1||0))S.prs[keep]=pr;
+        delete S.prs[remove];
+      }
+      S.customExercises=(S.customExercises||[]).filter(e=>e.n!==remove);
+      persist();
+      toast('"'+remove+'" fusionné dans "'+keep+'" ✅','success');
+      detectDuplicates();
+    }
+  );
+}

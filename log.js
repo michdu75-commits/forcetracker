@@ -407,15 +407,22 @@ function toggleSet(ei,si){
 function cycleType(ei,si){const s=S.wkt.exs[ei].sets[si];s.type=SET_TYPES[(SET_TYPES.indexOf(s.type)+1)%SET_TYPES.length];persist();renderExBlocks();}
 function openTypeHelp(){document.getElementById('ov-type-help').classList.add('open');}
 function closeTypeHelp(){document.getElementById('ov-type-help').classList.remove('open');}
-let _confirmCb=null;
-function showConfirm(title,msg,cb){
+let _confirmCb=null,_confirmAltCb=null;
+function showConfirm(title,msg,cb,okLabel,altLabel,altCb){
   document.getElementById('confirm-title').textContent=title;
   document.getElementById('confirm-msg').textContent=msg;
-  _confirmCb=cb;
+  _confirmCb=cb;_confirmAltCb=altCb||null;
+  document.getElementById('confirm-ok').textContent=okLabel||'Supprimer';
+  document.getElementById('confirm-cancel').textContent=altLabel||'Annuler';
   document.getElementById('ov-confirm').classList.add('open');
 }
-function closeConfirm(){document.getElementById('ov-confirm').classList.remove('open');_confirmCb=null;}
+function closeConfirm(){document.getElementById('ov-confirm').classList.remove('open');_confirmCb=null;_confirmAltCb=null;document.getElementById('confirm-ok').textContent='Supprimer';document.getElementById('confirm-cancel').textContent='Annuler';}
 function confirmOk(){const cb=_confirmCb;closeConfirm();if(cb)cb();}
+function confirmCancel(){const cb=_confirmAltCb;closeConfirm();if(cb)cb();}
+// Fuzzy matching pour la détection de doublons d'exercices
+function _normEx(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();}
+function _lev(a,b){if(a===b)return 0;const la=a.length,lb=b.length;if(!la)return lb;if(!lb)return la;let row=[...Array(lb+1).keys()];for(let i=1;i<=la;i++){let prev=row[0];row[0]=i;for(let j=1;j<=lb;j++){const t=row[j];row[j]=a[i-1]===b[j-1]?prev:1+Math.min(prev,row[j],row[j-1]);prev=t;}}return row[lb];}
+function _findSimilar(name,all){const na=_normEx(name);let best=null,bestD=Infinity;all.forEach(ex=>{const nb=_normEx(ex.n);if(nb===na){best=ex.n;bestD=0;return;}const minL=Math.min(na.length,nb.length);if(minL<5)return;const thr=Math.max(1,Math.min(3,Math.floor(Math.max(na.length,nb.length)*0.15)));const d=_lev(na,nb);if(d<=thr&&d<bestD){best=ex.n;bestD=d;}});return best;}
 // Valide le set et focus automatiquement le kg du prochain set non-done
 function confirmSetAndNext(ei,si){
   toggleSet(ei,si);
@@ -1025,12 +1032,26 @@ function saveCustomEx(){
   if(!name){toast("Entre un nom d'exercice",'error');return;}
   const all=[...EXLIB,...(S.customExercises||[])];
   if(all.find(e=>e.n.toLowerCase()===name.toLowerCase())){toast('Exercice déjà existant','error');return;}
+  const similar=_findSimilar(name,all);
+  if(similar){
+    const lbl=similar.length>22?similar.slice(0,22)+'…':similar;
+    showConfirm(
+      'Exercice similaire trouvé',
+      '"'+similar+'" ressemble à "'+name+'". Utiliser l\'exercice existant ?',
+      ()=>{hideCustomExForm();addExercise(similar);},
+      'Utiliser "'+lbl+'"',
+      'Créer quand même',
+      ()=>_doCreateCustomEx(name,grp)
+    );
+    return;
+  }
+  _doCreateCustomEx(name,grp);
+}
+function _doCreateCustomEx(name,grp){
   if(!S.customExercises)S.customExercises=[];
   const muscles=(_cexMusclesP.length||_cexMusclesS.length)?{p:[..._cexMusclesP],s:[..._cexMusclesS]}:null;
   S.customExercises.push({n:name,g:grp,custom:true,...(muscles&&{muscles})});
-  persist();
-  _reportCustomEx(name,grp,muscles);
-  hideCustomExForm();filterEx();toast(name+' créé !','success');
+  persist();_reportCustomEx(name,grp,muscles);hideCustomExForm();filterEx();toast(name+' créé !','success');
 }
 
 // ─── IMPORT PROGRAMME PAR PHOTO ──────────────────────────────
