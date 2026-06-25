@@ -627,3 +627,53 @@ html.ob-done #onboarding{display:none;}
 .week-sum-lbl{font-size:15px;color:var(--t2);font-weight:600;}
 .week-sum-val{font-family:var(--font-cond);font-size:22px;font-weight:900;}
 .week-badge-pill{background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.3);border-radius:10px;padding:8px 12px;font-size:14px;color:var(--gold);font-weight:700;text-align:center;margin:4px 0;}
+
+/* ─── ACCESSIBILITÉ — Mode basse vision ──────────────────── */
+#root.a11y-lv {
+  --t1: #FFFFFF;
+  --t2: #D2D5DE;
+  --t3: #A4A9B8;
+  --sep: rgba(255,255,255,.20);
+  --bg: #060710;
+  --bg2: #0E1018;
+  --bg3: #161921;
+}
+#root.a11y-lv.light-mode {
+  --t1: #000000;
+  --t2: #18182E;
+  --t3: #38385A;
+  --sep: #A4A4C0;
+  --bg: #FFFFFF;
+  --bg2: #F4F4F8;
+  --bg3: #E8E8EF;
+}
+/* Gros texte — classes CSS principales */
+#root.a11y-lv label                { font-size: 17px !important; }
+#root.a11y-lv .btn                 { font-size: 18px !important; }
+#root.a11y-lv .btn-sm              { font-size: 16px !important; }
+#root.a11y-lv input,
+#root.a11y-lv select,
+#root.a11y-lv textarea             { font-size: 18px !important; border-width: 2px !important; }
+#root.a11y-lv .ex-name             { font-size: 21px !important; }
+#root.a11y-lv .ex-meta             { font-size: 15px !important; }
+#root.a11y-lv .sinp                { font-size: 19px !important; font-weight: 900 !important; }
+#root.a11y-lv .snum                { font-size: 15px !important; font-weight: 900 !important; }
+#root.a11y-lv .sprev               { font-size: 14px !important; }
+#root.a11y-lv .tbtn                { font-size: 14px !important; font-weight: 900 !important; }
+#root.a11y-lv .sets-hdr span       { font-size: 13px !important; }
+#root.a11y-lv .rbtn                { font-size: 16px !important; }
+#root.a11y-lv .home-row-ttl        { font-size: 16px !important; font-weight: 700 !important; }
+#root.a11y-lv .home-row-sub        { font-size: 13px !important; }
+#root.a11y-lv .sbox .lbl           { font-size: 16px !important; }
+#root.a11y-lv .sbox .val           { font-size: 24px !important; }
+#root.a11y-lv .sbox .unit          { font-size: 15px !important; }
+#root.a11y-lv .sec                 { font-size: 13px !important; }
+#root.a11y-lv .empty               { font-size: 17px !important; }
+#root.a11y-lv .help-item-text      { font-size: 16px !important; }
+#root.a11y-lv .menu-row-lbl        { font-size: 17px !important; }
+#root.a11y-lv .nb                  { font-size: 12px !important; }
+#root.a11y-lv .slq-btn             { font-size: 13px !important; }
+#root.a11y-lv .week-sum-lbl        { font-size: 17px !important; }
+/* Contraste renforcé — boutons & séparateurs */
+#root.a11y-lv .btn-red             { background: #FF1035 !important; box-shadow: 0 4px 18px rgba(255,16,53,.4) !important; }
+#root.a11y-lv .card                { border-width: 1.5px !important; }

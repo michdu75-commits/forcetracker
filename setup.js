@@ -204,7 +204,8 @@ function _cloudSync(){
       weightLog:(S.weightLog||[]).slice(-365),
       sleepLog:(S.sleepLog||[]).slice(-365),
       cycle:S.cycle||null,
-      healthProfile:S.healthProfile||null
+      healthProfile:S.healthProfile||null,
+      a11y:S.a11y||false
     })
   }).catch(()=>{});
 }
@@ -436,6 +437,27 @@ const _MORPHO_DATA_F={
   X:{label:'Sablier',icon:'⏳',desc:'Épaules et hanches équilibrées, taille très marquée. Silhouette idéale — entretenir les proportions.'},
   O:{label:'Ronde',icon:'⬭',desc:'Poids concentré autour du ventre et du torse. Cardio régulier + musculation full body.'}
 };
+
+// ── Accessibilité ─────────────────────────────────────────────
+function _applyA11y(){
+  const r=document.getElementById('root');
+  if(!r)return;
+  if(S.a11y)r.classList.add('a11y-lv');
+  else r.classList.remove('a11y-lv');
+  const btn=document.getElementById('a11y-btn');
+  if(!btn)return;
+  if(S.a11y){
+    btn.textContent='Activé ✓';
+    btn.style.cssText='padding:8px 16px;border-radius:20px;border:2px solid var(--purp);background:rgba(170,0,255,.12);color:var(--purp);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;min-width:80px;';
+  }else{
+    btn.textContent='Désactivé';
+    btn.style.cssText='padding:8px 16px;border-radius:20px;border:2px solid var(--sep);background:var(--bg2);color:var(--t3);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;min-width:80px;';
+  }
+}
+function toggleA11y(){
+  S.a11y=!S.a11y;persist();_applyA11y();
+  toast(S.a11y?'Affichage agrandi activé ♿':'Affichage normal rétabli','info');
+}
 
 // ── Profil Santé ──────────────────────────────────────────────
 const _HC=[
@@ -846,6 +868,7 @@ function renderSetup(){
   renderBFCard();
   _renderMorphoSection();
   _renderHealthSection();
+  _applyA11y();
   updSetup();
   chainInputs(['age-inp','ht-inp','bw-inp'],saveProfile);
   const bfIds=S.gender==='F'?['neck-inp','waist-inp','hip-inp']:['neck-inp','waist-inp'];
@@ -949,7 +972,9 @@ function _applyRestoreData(raw){
   if(raw&&raw.premiumExpiry){S.premiumExpiry=raw.premiumExpiry;}
   if(raw&&raw.coachMemory)S.coachMemory=raw.coachMemory;
   if(d.healthProfile)S.healthProfile=d.healthProfile;
+  if(d.a11y!==undefined)S.a11y=!!d.a11y;
   persist();
+  _applyA11y();
   updateCoachHeader();
 }
 

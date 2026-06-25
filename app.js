@@ -942,6 +942,7 @@ async function generateMealPlan(regenDay,regenMeal){
 load();
 document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 applyTheme();
+if(typeof _applyA11y==='function')_applyA11y();
 filterEx();
 goScreen('home', document.getElementById('nb-home'));
 _initSwipe();
