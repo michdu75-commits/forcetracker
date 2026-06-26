@@ -569,7 +569,7 @@ const _DRAWER_CONTENT = {
         Coach IA propulsé par Claude (Anthropic)
       </div>
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;font-size:13px;color:var(--t2);">
-        <div style="margin-bottom:6px;">✉️ <strong>Contact :</strong> michdu75@gmail.com</div>
+        <div style="margin-bottom:6px;">✉️ <strong>Contact :</strong> forcetracker.app@gmail.com</div>
         <div style="margin-bottom:6px;">⭐ <strong>Premium :</strong> ko-fi.com/michel2176</div>
         <div>🐛 <strong>Bugs / suggestions :</strong> par email</div>
       </div>
