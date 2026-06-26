@@ -1073,7 +1073,7 @@ function _positionFab(){
   const nr=seance.closest('nav').getBoundingClientRect();
   const sr=seance.getBoundingClientRect();
   if(!sr.width||!nr.width)return;
-  const cx=sr.left-nr.left+sr.width/2;
+  const cx=sr.left-nr.left+sr.width/2+8;
   fab.style.left=cx+'px';
   fab.style.transform='translateX(-50%)';
 }
