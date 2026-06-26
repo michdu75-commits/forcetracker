@@ -864,6 +864,9 @@ function toggleMenuDrawer(){
 }
 function _resetMenuView(){}
 function openProfil(){
+  closeMenuDrawer();
+  closeDrawer();
+  closeDrawerContent();
   goScreen('setup',null);
   document.getElementById('s-setup')?.scrollTo(0,0);
 }

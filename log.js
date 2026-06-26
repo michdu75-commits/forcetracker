@@ -165,7 +165,7 @@ function _renderExHtml(ei,inGroup){
       +`<div class="ex-name" style="font-size:14px">${ex.name} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${summary||'0 série'}</div>`
       +`</div>`
-      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button></div>`:'')
+      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div></div>`;
   }
 
@@ -210,7 +210,7 @@ function _renderExHtml(ei,inGroup){
     +`${hasLocalGif?'<button class="btn-xs" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\')">🎬</button>':''}`
     +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button>`
     +`<button class="btn-xs" onclick="openTypeHelp()">ℹ️</button>`
-    +`<button class="btn-xs" style="color:var(--red);" onclick="rmEx(${ei})">✕</button>`
+    +`<button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button>`
     +`</div></div>`
     +`<div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>`
     +`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>`
@@ -464,6 +464,17 @@ function rmEx(ei){
     if(_expandedEx>=S.wkt.exs.length)_expandedEx=Math.max(0,S.wkt.exs.length-1);
     persist();renderExBlocks();
   });
+}
+// Appui maintenu 400ms requis pour déclencher la suppression (anti-effleurement)
+let _rmHoldTimer=null;
+function _rmHoldStart(btn,ei){
+  _rmHoldTimer=setTimeout(()=>{_rmHoldTimer=null;btn.style.opacity='';rmEx(ei);},400);
+  btn.style.opacity='0.4';
+  btn.style.transform='scale(0.88)';
+}
+function _rmHoldEnd(btn){
+  if(_rmHoldTimer){clearTimeout(_rmHoldTimer);_rmHoldTimer=null;}
+  btn.style.opacity='';btn.style.transform='';
 }
 let _expandedEx=null;
 let _groupMode=false;let _selectedGroupExs=new Set();

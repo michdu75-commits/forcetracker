@@ -527,9 +527,9 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <!-- PROFIL -->
   <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;padding:0 16px;">
     <!-- EN-TÊTE RETOUR -->
-    <div style="padding:10px 16px 4px;margin:0 -16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;background:var(--bg);">
+    <div style="padding:8px 16px 8px;margin:0 -16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--sep);">
+      <button onclick="closeProfil()" style="width:36px;height:36px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);border:none;color:var(--t2);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">✕</button>
       <span style="font-family:var(--font-cond);font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--t1);">Profil athlète</span>
-      <button onclick="closeProfil()" style="width:32px;height:32px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);border:none;color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">✕</button>
     </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
       <div class="fg">
@@ -1333,18 +1333,18 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 <div id="menu-drawer-bd" onclick="closeMenuDrawer()"></div>
 <div id="menu-drawer">
   <!-- Header -->
-  <div style="padding:max(env(safe-area-inset-top),44px) 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.05);">
+  <div style="padding:max(env(safe-area-inset-top),44px) 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--sep);">
     <span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);">Menu</span>
     <div style="display:flex;align-items:center;gap:8px;">
-      <button onclick="openShareModal()" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
+      <button onclick="openShareModal()" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         Partager
       </button>
-      <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
+      <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         Mode Jour
       </button>
-      <button onclick="closeMenuDrawer()" style="width:32px;height:32px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);border:none;color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+      <button onclick="closeMenuDrawer()" style="width:32px;height:32px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);border:none;color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
   </div>
   <!-- Body scrollable -->

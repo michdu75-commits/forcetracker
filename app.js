@@ -975,6 +975,21 @@ if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
 }
 _initSwipe();
 _initPullToDismiss();
+// Bouton retour Android / navigateur → ferme overlay ou revient à l'écran précédent
+history.pushState(null,'',location.href);
+window.addEventListener('popstate',()=>{
+  // Blur l'input actif avant tout — évite le dialog iOS "annuler la saisie ?"
+  if(document.activeElement&&(document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA'))document.activeElement.blur();
+  history.pushState(null,'',location.href);
+  const ov=[...document.querySelectorAll('.overlay.open')].pop();
+  if(ov){ov.classList.remove('open');return;}
+  if(_curScreen!=='home')navBack();
+});
+// Trick iOS Safari : garde les inputs "propres" → plus de dialog "Voulez-vous annuler la saisie ?"
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.tagName==='INPUT'||el.tagName==='TEXTAREA')el.defaultValue=el.value;
+},true);
 _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin

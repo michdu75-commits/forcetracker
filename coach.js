@@ -550,10 +550,19 @@ const _DRAWER_CONTENT = {
   },
   about: {
     title:'ℹ️ À propos',
-    html:`<div style="text-align:center;padding:10px 0 20px;">
+    html:()=>{
+      // Lit le cache SW actif → version réelle chargée sur ce téléphone
+      if('caches' in window){
+        caches.keys().then(keys=>{
+          const ft=keys.find(k=>k.startsWith('ft-v'));
+          const el=document.getElementById('_about-ver');
+          if(el&&ft)el.textContent=ft;
+        });
+      }
+      return`<div style="text-align:center;padding:10px 0 20px;">
       <img src="logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
-      <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;">Force Tracker</div>
-      <div style="font-size:13px;color:var(--t3);margin-bottom:20px;">Version 3.5 · PWA Mobile</div>
+      <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;">Force Tracker</div>
+      <div id="_about-ver" style="display:inline-block;background:rgba(255,45,85,.12);color:var(--red);font-family:var(--font-cond);font-size:15px;font-weight:800;padding:5px 16px;border-radius:20px;letter-spacing:.05em;border:1px solid rgba(255,45,85,.22);margin-bottom:20px;">…</div>
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--t2);">
         Application de suivi de musculation Progressive Web App.<br>
         Fonctionne hors connexion · Synchronisation Google Sheets<br>
@@ -564,7 +573,8 @@ const _DRAWER_CONTENT = {
         <div style="margin-bottom:6px;">⭐ <strong>Premium :</strong> ko-fi.com/michel2176</div>
         <div>🐛 <strong>Bugs / suggestions :</strong> par email</div>
       </div>
-    </div>`
+    </div>`;
+    }
   }
 };
 
