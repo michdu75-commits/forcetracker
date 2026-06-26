@@ -786,16 +786,18 @@ function closeMuscleMap(){
   if(_mmCb){_mmCb();_mmCb=null;}
 }
 
+let _finishing=false;
 async function finishWorkout(){
+  if(_finishing)return;
+  _finishing=true;
   _releaseWakeLock();
-  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Ajoute un exercice !','error');return;}
+  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Ajoute un exercice !','error');_finishing=false;return;}
   const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
-  if(!hasDone){toast('Valide au moins une série !','error');return;}
+  if(!hasDone){toast('Valide au moins une série !','error');_finishing=false;return;}
   let vol=0;
   S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done)vol+=(s.kg||0)*(s.reps||0);}));
   const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
-  S.sessions.unshift(sess);
   // Capturer les PRs avant mise à jour pour détecter les améliorations
   const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
@@ -803,7 +805,6 @@ async function finishWorkout(){
     const rm=bz(s.kg,s.reps),cur=S.prs[ex.name];
     if(!cur||rm>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:rm,date:sess.date};
   }));
-  // Trouver le meilleur PR amélioré de la séance
   let _bestPr=null;
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
     if(!s.done||!s.kg||!s.reps)return;
@@ -814,27 +815,68 @@ async function finishWorkout(){
     }
   }));
   stopRest();
-
-  // Calcul calories — toujours, connexion ou pas
   if(S.wkt?.cardio?.duration) sess.cardio={...S.wkt.cardio};
-  const calData = calcSessionCalories(sess);
+  const calData=calcSessionCalories(sess);
   const cardioKcal=calcCardioKcal(sess.cardio||null);
   if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
-  sess.calories = calData.total;
-  sess.calData = calData;
+  sess.calories=calData.total;sess.calData=calData;
 
-  S.wkt=null;persist(); // sauvegarde locale immédiate avant toute tentative réseau
+  // ── SAUVEGARDE LOCALE : séances d'abord, wkt effacé après confirmation ──
+  S.sessions.unshift(sess);
+  let _savedOk=false;
+  try{
+    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));
+    localStorage.setItem('ft4_prs',JSON.stringify(S.prs||{}));
+    _savedOk=true;
+  }catch(e){
+    try{
+      localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
+      localStorage.setItem('ft4_prs',JSON.stringify(S.prs||{}));
+      _savedOk=true;
+      toast('Stockage quasi-plein — historique allégé à 50 séances','info');
+    }catch(e2){_savedOk=false;}
+  }
+  if(!_savedOk){
+    // Annuler les mutations en mémoire et proposer le retry
+    S.sessions.shift();
+    S.prs=_oldPrs;
+    _finishing=false;
+    _showSaveError();
+    return;
+  }
+  // Séance confirmée en localStorage — on peut effacer le brouillon
+  S.wkt=null;
+  try{localStorage.setItem('ft4_wkt','null');localStorage.removeItem('ft4_wkt_draft');}catch(e){}
+  persist();
+
+  // Quitter l'écran séance immédiatement (évite double-tap sur DOM stale)
+  goScreen('home',document.getElementById('nb-home'));
+  renderLog();
+
   checkBadges();
-  _cloudSyncSessions(); // sauvegarde séances dans le cloud profile
+  _cloudSyncSessions();
   if(S.connected&&S.url){
     const ok=await syncSheets(sess);
-    if(ok){S.sessions[0].synced=true;persist();toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');}
-    else toast(`Séance sauvegardée ! 🔥 ${calData.total} kcal`,'success');
-  } else {
+    if(ok){
+      if(S.sessions.length)S.sessions[0].synced=true;
+      try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));}catch(e){}
+      toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');
+    }else toast(`Séance sauvegardée ! 🔥 ${calData.total} kcal`,'success');
+  }else{
     toast(`Séance terminée ! 🔥 ${calData.total} kcal brûlées`,'success');
   }
   setTimeout(()=>showMuscleMap(sess.exs,()=>openCheckin(sess)),800);
   if(_bestPr)setTimeout(()=>showPrCongrats(_bestPr),2400);
+  _finishing=false;
+}
+function _showSaveError(){
+  const el=document.getElementById('log-finish');if(!el)return;
+  el.innerHTML=`<div style="margin-top:12px;background:rgba(255,45,85,.10);border:1.5px solid var(--red);border-radius:14px;padding:16px;">
+    <div style="font-weight:700;color:var(--red);margin-bottom:6px;">⚠️ Impossible d'enregistrer la séance</div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:12px;">Stockage plein. Ta séance est <strong>toujours là</strong> — libère de l'espace puis réessaie, ou note tes données avant de fermer.</div>
+    <button class="btn btn-red" onclick="finishWorkout()" style="width:100%;">🔄 Réessayer</button>
+    <button class="btn btn-bg2" onclick="this.closest('div[style]').remove();" style="width:100%;margin-top:8px;">Continuer la séance</button>
+  </div>`;
 }
 
 // ─── REST TIMER ──────────────────────────────────────────────

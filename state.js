@@ -108,6 +108,8 @@ function persist(){
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+    // Brouillon de secours — effacé uniquement après sauvegarde confirmée dans finishWorkout()
+    if(S.wkt&&S.wkt.exs&&S.wkt.exs.length)localStorage.setItem('ft4_wkt_draft',JSON.stringify(S.wkt));
     localStorage.setItem('ft4_email',S.email);localStorage.setItem('ft4_ok',S.connected?'1':'0');
     localStorage.setItem('ft4_nphase',S.nutritionPhase);
     localStorage.setItem('ft4_work',S.workType);

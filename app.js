@@ -940,6 +940,26 @@ async function generateMealPlan(regenDay,regenMeal){
 
 // ─── INIT ────────────────────────────────────────────────────
 load();
+// ─ Récupération brouillon après crash de finishWorkout ────────
+(function _recoverDraft(){
+  try{
+    const draftStr=localStorage.getItem('ft4_wkt_draft');
+    if(!draftStr||draftStr==='null')return;
+    const draft=JSON.parse(draftStr);
+    if(!draft||!draft.exs||!draft.exs.length)return;
+    // Si S.wkt est null mais que le brouillon existe → finishWorkout a crashé
+    // Vérifier que la séance n'est pas déjà enregistrée (même date + volume proche)
+    const lastSess=S.sessions&&S.sessions[0];
+    const draftDate=draft.date||today();
+    const alreadySaved=lastSess&&lastSess.date===draftDate&&lastSess.exs&&lastSess.exs.length>=draft.exs.length;
+    if(alreadySaved){localStorage.removeItem('ft4_wkt_draft');return;}
+    // Restaurer S.wkt depuis le brouillon si pas déjà actif
+    if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
+      S.wkt=draft;
+      try{localStorage.setItem('ft4_wkt',draftStr);}catch(e){}
+    }
+  }catch(e){}
+})();
 document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 applyTheme();
 if(typeof _applyA11y==='function')_applyA11y();
@@ -947,6 +967,12 @@ if(typeof _applyColorblind==='function')_applyColorblind();
 if(typeof _applyLeftHand==='function')_applyLeftHand();
 filterEx();
 goScreen('home', document.getElementById('nb-home'));
+// Notifier l'utilisateur s'il y a une séance en cours non terminée
+if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
+  const nEx=S.wkt.exs.length;
+  const nDone=S.wkt.exs.reduce((a,ex)=>a+(ex.sets||[]).filter(s=>s.done).length,0);
+  setTimeout(()=>toast('Séance en cours — '+nEx+' exercice'+(nEx>1?'s':'')+(nDone?' · '+nDone+' séries validées':'')+' · Appuie sur Reprendre','info'),1000);
+}
 _initSwipe();
 _initPullToDismiss();
 _updateNewBadges();
