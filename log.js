@@ -206,7 +206,7 @@ function _renderExHtml(ei,inGroup){
     +`${ex.note?`<div style="font-size:11px;color:var(--gold);margin:1px 0 3px;font-style:italic;line-height:1.3;">📋 ${ex.note}</div>`:''}`
     +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} séries${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
     +`</div>`
-    +`<div class="ex-hdr-btns">`
+    +`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
     +`${hasLocalGif?'<button class="btn-xs" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\')">🎬</button>':''}`
     +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button>`
     +`<button class="btn-xs" onclick="openTypeHelp()">ℹ️</button>`
