@@ -1065,3 +1065,16 @@ if('serviceWorker' in navigator){
   });
 }
 
+// ─── POSITION FAB ────────────────────────────────────────────
+// Cale le FAB exactement au-dessus du bouton Séance (#nb-log) au runtime
+function _positionFab(){
+  const seance=document.getElementById('nb-log');
+  const fab=document.getElementById('fab-session');
+  if(!seance||!fab)return;
+  const nr=seance.closest('nav').getBoundingClientRect();
+  const sr=seance.getBoundingClientRect();
+  fab.style.left=(sr.left-nr.left+sr.width/2)+'px';
+}
+window.addEventListener('load',_positionFab);
+window.addEventListener('resize',_positionFab);
+
