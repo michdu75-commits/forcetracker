@@ -122,7 +122,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .nb.active{color:var(--red);}
 .nb-ctr{color:var(--t3);}
 .nb-ctr.active{color:var(--red);}
-#fab-session{position:absolute;bottom:calc(max(env(safe-area-inset-bottom,0px),8px) + 32px);left:27%;transform:translateX(-50%);width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,#FF6A73,#EF3E57);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -8px rgba(239,62,87,.6);z-index:21;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:box-shadow .2s,transform .15s;}
+#fab-session{position:absolute;bottom:calc(max(env(safe-area-inset-bottom,0px),8px) + 20px);left:27%;transform:translateX(-50%);width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,#FF6A73,#EF3E57);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px -8px rgba(239,62,87,.6);z-index:21;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:box-shadow .2s,transform .15s;}
 #fab-session svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;}
 #root.on-log #fab-session{box-shadow:0 14px 28px -8px rgba(239,62,87,.8);transform:translateX(-50%) scale(1.05);}
 
