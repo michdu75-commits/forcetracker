@@ -1066,15 +1066,20 @@ if('serviceWorker' in navigator){
 }
 
 // ─── POSITION FAB ────────────────────────────────────────────
-// Cale le FAB exactement au-dessus du bouton Séance (#nb-log) au runtime
 function _positionFab(){
   const seance=document.getElementById('nb-log');
   const fab=document.getElementById('fab-session');
   if(!seance||!fab)return;
   const nr=seance.closest('nav').getBoundingClientRect();
   const sr=seance.getBoundingClientRect();
-  fab.style.left=(sr.left-nr.left+sr.width/2)+'px';
+  if(!sr.width||!nr.width)return;
+  const cx=sr.left-nr.left+sr.width/2;
+  fab.style.left=cx+'px';
+  fab.style.transform='translateX(-50%)';
 }
+// Appels multiples pour garantir un layout stable sur iOS PWA
+document.addEventListener('DOMContentLoaded',_positionFab);
 window.addEventListener('load',_positionFab);
+window.addEventListener('load',()=>{setTimeout(_positionFab,300);});
 window.addEventListener('resize',_positionFab);
 
