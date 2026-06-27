@@ -7,13 +7,37 @@ async function _acquireWakeLock(){
 function _releaseWakeLock(){
   if(_wakeLock){_wakeLock.release();_wakeLock=null;}
 }
+
+// ─── CHRONO DURÉE SÉANCE ─────────────────────────────────────
+let _wktChronoIv=null;
+function _fmtElapsed(){
+  if(!S.wkt||!S.wkt.startTs)return'0:00';
+  const sec=Math.floor((Date.now()-S.wkt.startTs)/1000);
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  if(h>0)return h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+  return m+':'+(s<10?'0':'')+s;
+}
+function _startWktChrono(){
+  if(_wktChronoIv)clearInterval(_wktChronoIv);
+  _wktChronoIv=setInterval(()=>{
+    const el=document.getElementById('wkt-chrono');
+    if(!el){clearInterval(_wktChronoIv);_wktChronoIv=null;return;}
+    el.textContent=_fmtElapsed();
+  },1000);
+}
+function _stopWktChrono(){if(_wktChronoIv){clearInterval(_wktChronoIv);_wktChronoIv=null;}}
+
 // Ré-acquérir si l'app revient au premier plan
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&_curScreen==='log')_acquireWakeLock();
+  if(document.visibilityState==='visible'&&_curScreen==='log'){
+    _acquireWakeLock();
+    _startWktChrono();
+  }
 });
 
 function startWorkout(){
-  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};
+  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[],startHour:new Date().getHours(),startTs:Date.now()};
+  if(!S.wkt.startTs)S.wkt.startTs=Date.now();
   persist(); goScreen('log',document.getElementById('nb-log'));
   _acquireWakeLock();
 }
@@ -38,8 +62,10 @@ function renderLog(){
   const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
   if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;">'
     +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
+    +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:var(--t3);letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
     +(hasExs?'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>':'')
     +'</div>';
+  _startWktChrono();
   renderLogSleep();
   renderCardioBlock();
   renderExBlocks();
@@ -216,7 +242,7 @@ function _renderExHtml(ei,inGroup){
     +`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>`
     +rows
     +suiteBanner
-    +`<div class="ex-foot"><button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="addSet(${ei})">+ Série</button>${ex.sets.length>1?`<button class="btn-xs" onclick="rmLastSet(${ei})" style="color:var(--t3);">−</button>`:''}</div>`
+    +`<div class="ex-foot"><button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="addSet(${ei})">+ Série</button>${ex.sets.length>1?`<button class="btn-xs" style="color:var(--t3);transition:opacity .1s,transform .1s;" ontouchstart="_rmSetHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmSetHoldEnd(this)" ontouchcancel="_rmSetHoldEnd(this)" onmousedown="_rmSetHoldStart(this,${ei})" onmouseup="_rmSetHoldEnd(this)" onmouseleave="_rmSetHoldEnd(this)">−</button>`:''}</div>`
     +(!inGroup?`<div style="display:flex;gap:5px;padding:2px 8px 8px;">`
       +`<button class="btn-xs" style="font-size:10.5px;color:#BF5AF2;border-color:rgba(191,90,242,.3);padding:3px 8px;" onclick="createDropSet(${ei})">📉 Drop</button>`
       +`<button class="btn-xs" style="font-size:10.5px;color:var(--green);border-color:rgba(0,230,118,.3);padding:3px 8px;" onclick="createPyramidSet(${ei},'up')">📈 +10%</button>`
@@ -468,12 +494,21 @@ function rmEx(ei){
 // Appui maintenu 400ms requis pour déclencher la suppression (anti-effleurement)
 let _rmHoldTimer=null;
 function _rmHoldStart(btn,ei){
-  _rmHoldTimer=setTimeout(()=>{_rmHoldTimer=null;btn.style.opacity='';rmEx(ei);},400);
+  _rmHoldTimer=setTimeout(()=>{_rmHoldTimer=null;btn.style.opacity='';btn.style.transform='';rmEx(ei);},400);
   btn.style.opacity='0.4';
   btn.style.transform='scale(0.88)';
 }
 function _rmHoldEnd(btn){
   if(_rmHoldTimer){clearTimeout(_rmHoldTimer);_rmHoldTimer=null;}
+  btn.style.opacity='';btn.style.transform='';
+}
+let _rmSetHoldTimer=null;
+function _rmSetHoldStart(btn,ei){
+  _rmSetHoldTimer=setTimeout(()=>{_rmSetHoldTimer=null;btn.style.opacity='';btn.style.transform='';rmLastSet(ei);},400);
+  btn.style.opacity='0.4';btn.style.transform='scale(0.88)';
+}
+function _rmSetHoldEnd(btn){
+  if(_rmSetHoldTimer){clearTimeout(_rmSetHoldTimer);_rmSetHoldTimer=null;}
   btn.style.opacity='';btn.style.transform='';
 }
 let _expandedEx=null;
@@ -802,12 +837,14 @@ async function finishWorkout(){
   if(_finishing)return;
   _finishing=true;
   _releaseWakeLock();
+  _stopWktChrono();
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Ajoute un exercice !','error');_finishing=false;return;}
   const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
   if(!hasDone){toast('Valide au moins une série !','error');_finishing=false;return;}
+  const duration=S.wkt.startTs?Math.floor((Date.now()-S.wkt.startTs)/1000):0;
   let vol=0;
   S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done)vol+=(s.kg||0)*(s.reps||0);}));
-  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour};
+  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
   // Capturer les PRs avant mise à jour pour détecter les améliorations
   const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
