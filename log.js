@@ -90,6 +90,14 @@ function dissolveGroup(gid){
   persist();renderExBlocks();toast('Groupe dissous','info');
 }
 function _roundToGym(kg){return Math.round(kg/2.5)*2.5;}
+function createSupersetFrom(ei){
+  const gid='ss'+Date.now();
+  S.wkt.exs[ei].group=gid;S.wkt.exs[ei].groupType='super';
+  _expandedEx=ei;persist();
+  _exPickerMode='addToGroup';_addToGroupGid=gid;
+  openExPicker();
+  toast('Choisis le 2ᵉ exercice de la supersérie','info');
+}
 let _addToGroupGid=null;
 function createDropSet(ei){
   const gid='ds'+Date.now();
@@ -336,6 +344,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
     +suiteBanner
     +`<div class="ex-foot"><button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="addSet(${ei})">+ Série</button>${ex.sets.length>1?`<button class="btn-xs" style="color:var(--t3);transition:opacity .1s,transform .1s;" ontouchstart="_rmSetHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmSetHoldEnd(this)" ontouchcancel="_rmSetHoldEnd(this)" onmousedown="_rmSetHoldStart(this,${ei})" onmouseup="_rmSetHoldEnd(this)" onmouseleave="_rmSetHoldEnd(this)">−</button>`:''}</div>`
     +(!inGroup?`<div style="display:flex;gap:5px;padding:2px 8px 8px;">`
+      +`<button class="btn-xs" style="font-size:10.5px;color:var(--orange);border-color:rgba(255,109,0,.3);padding:3px 8px;" onclick="createSupersetFrom(${ei})">⚡ Super</button>`
       +`<button class="btn-xs" style="font-size:10.5px;color:#BF5AF2;border-color:rgba(191,90,242,.3);padding:3px 8px;" onclick="createDropSet(${ei})">📉 Drop</button>`
       +`<button class="btn-xs" style="font-size:10.5px;color:var(--green);border-color:rgba(0,230,118,.3);padding:3px 8px;" onclick="createPyramidSet(${ei},'up')">📈 +10%</button>`
       +`<button class="btn-xs" style="font-size:10.5px;color:var(--gold);border-color:rgba(255,214,0,.3);padding:3px 8px;" onclick="createPyramidSet(${ei},'down')">📉 −10%</button>`
@@ -513,7 +522,9 @@ function toggleSet(ei,si){
       const loopTarget=_firstUndoneMember(S.wkt.exs[ei].group);
       if(loopTarget!==null&&loopTarget!==ei){
         if(navigator.vibrate)navigator.vibrate([30]);
-        _restDoneCb=()=>{_expandedEx=loopTarget;renderExBlocks();_scrollTo(loopTarget);};
+        // Revenir immédiatement au 1er exo du groupe dès le démarrage du repos
+        _expandedEx=loopTarget;renderExBlocks();_scrollTo(loopTarget);
+        _restDoneCb=()=>{_scrollTo(loopTarget);};
         startRest(sec);
         const lbl=document.getElementById('rest-label');
         if(lbl)lbl.textContent='⚡ Tour suivant';
