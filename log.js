@@ -120,8 +120,38 @@ function removeFromGroup(ei){
   const gid=S.wkt.exs[ei]?.group;if(!gid)return;
   delete S.wkt.exs[ei].group;delete S.wkt.exs[ei].groupType;
   const left=S.wkt.exs.filter(e=>e.group===gid);
-  if(left.length<2)left.forEach(e=>{delete e.group;delete e.groupType;});
+  if(left.length<1)left.forEach(e=>{delete e.group;delete e.groupType;});
   persist();renderExBlocks();toast('Retiré du groupe','info');
+}
+function moveInGroup(ei,dir){
+  const gid=S.wkt.exs[ei]?.group;if(!gid)return;
+  const members=_ssMembers(gid);
+  const pos=members.findIndex(({i})=>i===ei);
+  const swapPos=pos+dir;
+  if(swapPos<0||swapPos>=members.length)return;
+  const swapEi=members[swapPos].i;
+  [S.wkt.exs[ei],S.wkt.exs[swapEi]]=[S.wkt.exs[swapEi],S.wkt.exs[ei]];
+  persist();renderExBlocks();
+}
+function _groupStatusMeta(ex,pos,total){
+  const gt=ex.groupType||'super';
+  const done=ex.sets.filter(s=>s.done).length;
+  const all=ex.sets.length;
+  if(gt==='drop'){
+    const stepLbl=pos===0?'Charge de départ':'Drop −20 %';
+    let status;
+    if(done>=all)status='✓';
+    else if(done>0)status='En cours';
+    else status=pos<total-1?'À suivre · sans repos':'À suivre';
+    const kg=ex.sets[0]?.kg||null;
+    return stepLbl+' · '+status+(kg?' · '+kg+'kg':'');
+  }
+  let status;
+  if(done>=all)status='✓ Terminé';
+  else if(done>0)status='En cours ('+done+'/'+all+')';
+  else status='À suivre';
+  const kg=ex.sets[0]?.kg,reps=ex.sets[0]?.reps;
+  return status+(kg&&reps?' · '+kg+'×'+reps:'');
 }
 function addToGroup(gid){
   const members=_ssMembers(gid);if(!members.length)return;
@@ -147,25 +177,87 @@ function _doAddToGroup(name){
 function _renderGroupHtml(gid,members){
   const gt=members[0]?.e?.groupType||'super';
   const count=members.length;
-  let label,icon,color,connColor;
+  let label,icon,color,connColor,bgColor;
   if(gt==='drop'){
-    icon='📉';label='Drop Set';color='#BF5AF2';connColor='rgba(191,90,242,.35)';
+    icon='📉';label='Série Dégressive';color='#BF5AF2';connColor='rgba(191,90,242,.35)';bgColor='rgba(191,90,242,.07)';
   }else if(gt==='pyramid-up'){
-    icon='📈';label='Pyramide +';color='var(--green)';connColor='rgba(0,230,118,.3)';
+    icon='📈';label='Pyramide +';color='var(--green)';connColor='rgba(0,230,118,.3)';bgColor='rgba(0,230,118,.06)';
   }else if(gt==='pyramid-down'){
-    icon='📉';label='Pyramide −';color='var(--gold)';connColor='rgba(255,214,0,.3)';
+    icon='📉';label='Pyramide −';color='var(--gold)';connColor='rgba(255,214,0,.3)';bgColor='rgba(255,214,0,.06)';
   }else{
-    icon='⚡';label=count===2?'Super Set':count===3?'Tri-set':'Circuit ('+count+')';color='var(--orange)';connColor='rgba(255,109,0,.3)';
+    icon='⚡';label=count===2?'Super Set':count===3?'Tri-set':'Circuit ('+count+')';color='var(--orange)';connColor='rgba(255,109,0,.3)';bgColor='rgba(255,109,0,.07)';
   }
+
+  // ── Progression / tour ───────────────────────────────────────
+  let tourInfo='',dotHtml='',bannerHtml='';
+  if(gt==='super'){
+    const totalTours=Math.max(...members.map(({e})=>e.sets.length),1);
+    let completedTours=0;
+    for(let t=0;t<totalTours;t++){
+      if(members.every(({e})=>e.sets[t]?.done))completedTours=t+1; else break;
+    }
+    const curTour=Math.min(completedTours+1,totalTours);
+    const doneThisTour=members.filter(({e})=>e.sets[completedTours]?.done).length;
+    const dotsMax=Math.min(totalTours,10);
+    let dots='';
+    for(let t=0;t<dotsMax;t++){
+      if(t<completedTours)dots+=`<span style="color:#34D399;font-size:7px;line-height:1;">●</span>`;
+      else if(t===completedTours)dots+=`<span style="color:${color};font-size:7px;line-height:1;">●</span>`;
+      else dots+=`<span style="color:var(--sep);font-size:7px;line-height:1;">●</span>`;
+    }
+    if(totalTours>10)dots+=`<span style="font-size:9px;color:var(--t3);">+${totalTours-10}</span>`;
+    dotHtml=`<div style="display:flex;align-items:center;gap:2px;">${dots}</div>`;
+    tourInfo=`<div style="font-size:12px;color:var(--t2);margin-top:2px;">Tour ${curTour} sur ${totalTours} · ${count} exercice${count>1?'s':''}${doneThisTour>0?' · '+doneThisTour+'/'+count+' fait ce tour':''}</div>`;
+    const lastName=members[members.length-1].e.name;
+    const shortLast=lastName.length>22?lastName.slice(0,20)+'…':lastName;
+    bannerHtml=`<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:${bgColor};border-top:1px solid ${connColor};border-radius:0 0 10px 10px;">`
+      +`<span style="font-size:13px;flex-shrink:0;">⚡</span>`
+      +`<span style="font-size:12px;color:var(--t2);line-height:1.4;">Enchaîne les ${count} sans repos — le chrono démarre après <strong style="color:var(--t1);">${shortLast}</strong>.</span>`
+      +`</div>`;
+  }else if(gt==='drop'){
+    const doneSteps=members.filter(({e})=>e.sets.some(s=>s.done)).length;
+    let dots='';
+    members.forEach(({e},i)=>{
+      const done=e.sets.some(s=>s.done);
+      const isCur=!done&&members.slice(0,i).every(({e:pe})=>pe.sets.some(s=>s.done));
+      if(done)dots+=`<span style="color:#34D399;font-size:7px;line-height:1;">●</span>`;
+      else if(isCur)dots+=`<span style="color:${color};font-size:7px;line-height:1;">●</span>`;
+      else dots+=`<span style="color:var(--sep);font-size:7px;line-height:1;">●</span>`;
+    });
+    dotHtml=`<div style="display:flex;align-items:center;gap:2px;">${dots}</div>`;
+    tourInfo=`<div style="font-size:12px;color:var(--t2);margin-top:2px;">Palier ${Math.min(doneSteps+1,count)} sur ${count}</div>`;
+    bannerHtml=`<div style="display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:${bgColor};border-top:1px solid ${connColor};border-radius:0 0 10px 10px;">`
+      +`<span style="font-size:13px;flex-shrink:0;">⬇️</span>`
+      +`<span style="font-size:12px;color:var(--t2);line-height:1.4;">Baisse le poids sans repos — le chrono démarre après le <strong style="color:var(--t1);">dernier drop</strong>.</span>`
+      +`</div>`;
+  }
+
   const body=members.map(({e,i},pos)=>{
     const conn=pos<members.length-1
       ?`<div style="height:12px;display:flex;align-items:center;padding:0 20px;"><div style="flex:1;border-top:1px dashed ${connColor};"></div><span style="margin:0 6px;font-size:11px;color:${connColor};line-height:1;">↓</span><div style="flex:1;border-top:1px dashed ${connColor};"></div></div>`:`` ;
-    return _renderExHtml(i,true)+conn;
+    return _renderExHtml(i,true,pos,members.length)+conn;
   }).join('');
+
   const addLabel=gt==='super'?'+ Exo':'+ Step';
-  return`<div class="ss-group"><div class="ss-grp-hdr"><span style="font-size:11px;font-weight:800;color:${color};letter-spacing:.05em;text-transform:uppercase;">${icon} ${label}</span><button class="btn-xs" style="color:${color};font-size:11px;" onclick="addToGroup('${gid}')">${addLabel}</button><button class="btn-xs" style="color:var(--t3);font-size:11px;" onclick="dissolveGroup('${gid}')">Dégrouper</button></div><div style="padding:6px 6px 6px;">${body}</div></div>`;
+  return`<div class="ss-group">`
+    +`<div class="ss-grp-hdr">`
+    +`<div style="flex:1;min-width:0;">`
+    +`<div style="display:flex;align-items:center;gap:6px;">`
+    +`<span style="font-size:11px;font-weight:800;color:${color};letter-spacing:.05em;text-transform:uppercase;">${icon} ${label}</span>`
+    +dotHtml
+    +`</div>`+tourInfo
+    +`</div>`
+    +`<div style="display:flex;gap:4px;flex-shrink:0;">`
+    +`<button class="btn-xs" style="color:${color};font-size:11px;" onclick="addToGroup('${gid}')">${addLabel}</button>`
+    +`<button class="btn-xs" style="color:var(--t3);font-size:11px;" onclick="dissolveGroup('${gid}')">Dégrouper</button>`
+    +`</div></div>`
+    +`<div style="padding:6px 6px 0;">${body}</div>`
+    +bannerHtml
+    +`</div>`;
 }
-function _renderExHtml(ei,inGroup){
+function _renderExHtml(ei,inGroup,posInGroup,groupSize){
+  if(posInGroup===undefined)posInGroup=0;
+  if(groupSize===undefined)groupSize=1;
   const ex=S.wkt.exs[ei];
   const exCount=S.wkt.exs.length;
   const prev=getPrev(ex.name);
@@ -189,7 +281,7 @@ function _renderExHtml(ei,inGroup){
       +`<div class="ex-hdr" style="pointer-events:${_groupMode||inGroup?'none':'all'}">`
       +`<div style="flex:1;min-width:0;">`
       +`<div class="ex-name" style="font-size:14px">${ex.name} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
-      +`<div class="ex-meta">${summary||'0 série'}</div>`
+      +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
       +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div></div>`;
@@ -248,7 +340,11 @@ function _renderExHtml(ei,inGroup){
       +`<button class="btn-xs" style="font-size:10.5px;color:var(--green);border-color:rgba(0,230,118,.3);padding:3px 8px;" onclick="createPyramidSet(${ei},'up')">📈 +10%</button>`
       +`<button class="btn-xs" style="font-size:10.5px;color:var(--gold);border-color:rgba(255,214,0,.3);padding:3px 8px;" onclick="createPyramidSet(${ei},'down')">📉 −10%</button>`
       +`</div>`
-      :`<div style="padding:2px 8px 8px;"><button class="btn-xs" style="font-size:10.5px;color:var(--t3);padding:3px 8px;" onclick="removeFromGroup(${ei})">↩ Retirer</button></div>`)
+      :`<div style="display:flex;align-items:center;gap:4px;padding:2px 8px 8px;">`
+        +`<button class="btn-xs" style="font-size:11px;padding:3px 7px;${posInGroup===0?'opacity:.3;':''}" onclick="if(${posInGroup}>0)moveInGroup(${ei},-1)">↑</button>`
+        +`<button class="btn-xs" style="font-size:11px;padding:3px 7px;${posInGroup===groupSize-1?'opacity:.3;':''}" onclick="if(${posInGroup}<${groupSize-1})moveInGroup(${ei},1)">↓</button>`
+        +`<button class="btn-xs" style="font-size:10.5px;color:var(--t3);padding:3px 8px;" onclick="removeFromGroup(${ei})">↩ Retirer</button>`
+        +`</div>`)
     +`</div>`;
 }
 // ─── HISTORIQUE EXERCICE ─────────────────────────────────────
@@ -396,19 +492,22 @@ function toggleSet(ei,si){
           persist();
         }
       }
-      if(groupType==='super'){
-        // Même tour : avance immédiate sans repos
+      if(groupType==='super'||groupType==='drop'){
+        // Avance immédiate sans repos (super : tour suivant, drop : palier suivant)
         _expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;
       }
-      // Drop/Pyramide : repos + auto-avance
-      const restSec=groupType==='drop'?20:sec;
+      // Pyramide : repos + auto-avance
       _restDoneCb=()=>{_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);};
-      startRest(restSec);
+      startRest(sec);
       const lbl=document.getElementById('rest-label');
-      if(lbl)lbl.textContent=groupType==='drop'?'📉 Drop Set':groupType==='pyramid-up'?'📈 Pyramide +':'📉 Pyramide −';
-      if(!isAbdo&&[60,90,120].includes(restSec))_highlightRestPreset(restSec);else _highlightRestPreset(-1);
+      if(lbl)lbl.textContent=groupType==='pyramid-up'?'📈 Pyramide +':'📉 Pyramide −';
+      if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
       if(navigator.vibrate)navigator.vibrate([50]);
       return;
+    } else if(groupType==='drop'&&S.wkt.exs[ei].group){
+      // Dernier palier : repos complet
+      const lbl=document.getElementById('rest-label');
+      if(lbl)lbl.textContent='📉 Série dégressive terminée';
     } else if(groupType==='super'&&S.wkt.exs[ei].group){
       // Dernier exo du tour : boucle si des sets restent dans le groupe
       const loopTarget=_firstUndoneMember(S.wkt.exs[ei].group);
