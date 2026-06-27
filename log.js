@@ -99,30 +99,59 @@ function createSupersetFrom(ei){
   toast('Choisis le 2ᵉ exercice de la supersérie','info');
 }
 let _addToGroupGid=null;
-function createDropSet(ei){
-  const gid='ds'+Date.now();
-  const ex=S.wkt.exs[ei];
-  ex.group=gid;ex.groupType='drop';
-  const baseKg=ex.sets.filter(s=>s.done).slice(-1)[0]?.kg||ex.sets[0]?.kg||0;
-  const sugKg=baseKg?_roundToGym(baseKg*0.9):0;
-  const clone={name:ex.name,sets:[{kg:sugKg,reps:ex.sets[0]?.reps||8,done:false,type:'D'}],group:gid,groupType:'drop'};
-  S.wkt.exs.splice(ei+1,0,clone);
-  _expandedEx=ei;persist();renderExBlocks();toast('Drop Set créé 📉','success');
+// ─── DROPSET / PYRAMIDE ─────────────────────────────────────────────────────
+let _dropCfgEi=null,_dropCfgPaliers=3,_dropCfgPct=20,_dropCfgDir='down';
+function openDropsetConfig(ei,dir){
+  dir=dir||'down';
+  _dropCfgEi=ei;_dropCfgDir=dir;_dropCfgPaliers=3;_dropCfgPct=dir==='up'?10:20;
+  let ov=document.getElementById('ov-drop-cfg');
+  if(!ov){ov=document.createElement('div');ov.className='overlay';ov.id='ov-drop-cfg';ov.onclick=function(e){if(e.target===ov)closeDropCfg();};document.body.appendChild(ov);}
+  _renderDropCfg(ov);ov.classList.add('open');
 }
-function createPyramidSet(ei,dir){
-  const gt='pyramid-'+dir;
-  const gid='py'+Date.now();
+function _renderDropCfg(ov){
+  const isDown=_dropCfgDir==='down';
+  const pctOpts=isDown?[10,15,20,25,30]:[5,10,15,20];
+  const bStyle=(sel)=>`flex:1;padding:10px 2px;border-radius:10px;border:2px solid ${sel?'var(--orange)':'var(--sep)'};background:${sel?'rgba(255,109,0,.12)':'var(--bg3)'};color:${sel?'var(--orange)':'var(--t2)'};font-weight:800;font-size:14px;cursor:pointer;transition:.1s;touch-action:manipulation;`;
+  ov.innerHTML=`<div class="modal" style="width:min(400px,94vw);padding:20px 16px;">`
+    +`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">`
+    +`<span style="font-weight:800;font-size:16px;color:var(--t1);">${isDown?'📉 Dropset':'📈 Pyramide +'}</span>`
+    +`<button onclick="closeDropCfg()" style="background:var(--bg3);border:none;width:30px;height:30px;border-radius:50%;font-size:15px;cursor:pointer;color:var(--t2);display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>`
+    +`</div>`
+    +`<div style="font-size:12px;color:var(--t2);margin-bottom:14px;line-height:1.5;">${isDown?'Baisse le poids à chaque palier sans repos — repos unique après le dernier drop.':'Monte le poids à chaque palier avec repos normal entre les séries.'}</div>`
+    +`<div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:8px;">Nombre de paliers</div>`
+    +`<div style="display:flex;gap:8px;margin-bottom:16px;">`
+    +[2,3,4,5].map(n=>`<button style="${bStyle(_dropCfgPaliers===n)}" onclick="_dropCfgPaliers=${n};_renderDropCfg(document.getElementById('ov-drop-cfg'))">${n}</button>`).join('')
+    +`</div>`
+    +`<div style="font-size:13px;font-weight:700;color:var(--t1);margin-bottom:8px;">${isDown?'Baisse par palier':'Hausse par palier'}</div>`
+    +`<div style="display:flex;gap:6px;margin-bottom:20px;">`
+    +pctOpts.map(p=>`<button style="${bStyle(_dropCfgPct===p)}" onclick="_dropCfgPct=${p};_renderDropCfg(document.getElementById('ov-drop-cfg'))">${isDown?'−':'+'}${p}%</button>`).join('')
+    +`</div>`
+    +`<button onclick="applyDropset()" style="width:100%;padding:14px;border-radius:12px;background:var(--red);border:none;color:#fff;font-size:15px;font-weight:800;cursor:pointer;touch-action:manipulation;">Créer le ${isDown?'dropset':'pyramide'}</button>`
+    +`</div>`;
+}
+function closeDropCfg(){const ov=document.getElementById('ov-drop-cfg');if(ov)ov.classList.remove('open');}
+function applyDropset(){
+  closeDropCfg();
+  const ei=_dropCfgEi;
+  if(ei===null||!S.wkt?.exs[ei])return;
   const ex=S.wkt.exs[ei];
-  ex.group=gid;ex.groupType=gt;
   const baseKg=ex.sets[0]?.kg||(getPrev(ex.name)[0]?.kg)||0;
-  const factor=dir==='up'?1.1:0.9;
-  for(let n=1;n<=2;n++){
-    const newKg=baseKg?_roundToGym(baseKg*Math.pow(factor,n)):0;
-    const clone={name:ex.name,sets:[{kg:newKg,reps:ex.sets[0]?.reps||8,done:false,type:'N'}],group:gid,groupType:gt};
-    S.wkt.exs.splice(ei+n,0,clone);
+  const baseReps=ex.sets[0]?.reps||(getPrev(ex.name)[0]?.reps)||8;
+  const f=_dropCfgPct/100;const dir=_dropCfgDir;
+  const newSets=[];let kg=baseKg;
+  for(let i=0;i<_dropCfgPaliers;i++){
+    if(i>0)kg=_roundToGym(dir==='down'?kg*(1-f):kg*(1+f));
+    newSets.push({kg:kg||0,reps:baseReps,done:false,type:i===0?'N':'D'});
   }
+  ex.sets=newSets;ex.dropset={paliers:_dropCfgPaliers,pct:_dropCfgPct,direction:dir};
+  delete ex.group;delete ex.groupType;
   _expandedEx=ei;persist();renderExBlocks();
-  toast(dir==='up'?'Pyramide + créée 📈':'Pyramide − créée 📉','success');
+  toast((dir==='down'?'Dropset':'Pyramide')+' créé ✓','success');
+}
+function removeDropset(ei){
+  const ex=S.wkt.exs[ei];if(!ex||!ex.dropset)return;
+  ex.sets=[{kg:ex.sets[0]?.kg||0,reps:ex.sets[0]?.reps||8,done:false,type:'N'}];
+  delete ex.dropset;persist();renderExBlocks();toast('Dropset supprimé','info');
 }
 function removeFromGroup(ei){
   const gid=S.wkt.exs[ei]?.group;if(!gid)return;
@@ -280,7 +309,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
 
   // Vue réduite
   if(!isExpanded){
-    const summary=`${doneSets.length}/${ex.sets.length} série${ex.sets.length>1?'s':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
+    const _dsLbl=ex.dropset?'palier':'série';
+    const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
     const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':(!_groupMode?'opacity:.75':'');
     const clickAttr=_groupMode
       ?` onclick="toggleGroupSelect(${ei})" style="cursor:pointer;${selStyle}"`
@@ -311,6 +341,48 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`</div></div>`;
   }).join('');
 
+  // ─── Override rendu si dropset actif ───────────────────────────────────────
+  let useSetsHdr,useRows,useDropBanner='';
+  if(ex.dropset){
+    const {pct,direction}=ex.dropset;
+    const isDown=direction==='down';
+    const curPi=ex.sets.findIndex(s=>!s.done);
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Palier</span><span>KG</span><span>Reps</span><span></span><span>✓</span></div>`;
+    useRows=ex.sets.map((set,si)=>{
+      const isDone=set.done;
+      const isCur=!isDone&&si===curPi;
+      const label=si===0?'Charge de départ':(isDown?`Drop −${pct}%`:`+${pct}%`);
+      const isLast=si===ex.sets.length-1;
+      const p=prev[si]||prev[Math.max(0,prev.length-1)];
+      if(isCur){
+        return`<div id="sr-wrap-${ei}-${si}"><div class="set-row" id="sr-${ei}-${si}" style="background:rgba(255,109,0,.06);">`
+          +`<div class="snum" style="color:var(--orange);font-weight:900;">${si+1}</div>`
+          +`<div style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
+          +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
+          +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" onfocus="this.select()">`
+          +`<div></div>`
+          +`<button class="chk" onclick="toggleSet(${ei},${si})"></button>`
+          +`</div></div>`;
+      }else{
+        return`<div id="sr-wrap-${ei}-${si}"><div class="set-row${isDone?' done-row':''}" id="sr-${ei}-${si}" style="${!isDone?'opacity:.55;':''}">`
+          +`<div class="snum">${si+1}</div>`
+          +`<div style="font-size:10px;color:${isDone?'#34D399':'var(--t3)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
+          +`<div style="text-align:center;font-size:14px;font-weight:700;color:${isDone?'var(--t1)':'var(--t3)'};">${set.kg||'—'}</div>`
+          +`<div style="text-align:center;font-size:13px;color:${isDone?'var(--t2)':'var(--t3)'};">${set.reps||'?'}</div>`
+          +`<div></div>`
+          +`<div style="text-align:center;font-size:${isDone?'14':'10'}px;color:${isDone?'#34D399':'var(--t3)'};">${isDone?'✓':(isLast?'repos':'')}</div>`
+          +`</div></div>`;
+      }
+    }).join('');
+    useDropBanner=`<div style="display:flex;align-items:flex-start;gap:6px;padding:8px 10px;background:${isDown?'rgba(191,90,242,.07)':'rgba(0,230,118,.06)'};border-top:1px solid ${isDown?'rgba(191,90,242,.18)':'rgba(0,230,118,.18)'};">`
+      +`<span style="font-size:12px;flex-shrink:0;">${isDown?'⬇️':'⬆️'}</span>`
+      +`<span style="font-size:11px;color:var(--t2);line-height:1.4;">${isDown?'Baisse le poids sans repos — repos unique après le dernier drop.':'Monte le poids — repos normal entre les séries.'}</span>`
+      +`</div>`;
+  }else{
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>`;
+    useRows=rows;
+  }
+
   // Bandeau "Suite" pour les exos dans un groupe
   const gt=ex.groupType||'super';
   const suiteColor=gt==='drop'?'#BF5AF2':gt==='pyramid-up'?'var(--green)':gt==='pyramid-down'?'var(--gold)':'var(--orange)';
@@ -330,7 +402,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +`${ex.note?`<div style="font-size:11px;color:var(--gold);margin:1px 0 3px;font-style:italic;line-height:1.3;">📋 ${ex.note}</div>`:''}`
-    +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} séries${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
+    +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${ex.dropset?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
     +`</div>`
     +`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
     +`${hasLocalGif?'<button class="btn-xs" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\')">🎬</button>':''}`
@@ -339,16 +411,24 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
     +`<button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button>`
     +`</div></div>`
     +`<div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>`
-    +`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>`
-    +rows
-    +suiteBanner
-    +`<div class="ex-foot"><button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="addSet(${ei})">+ Série</button>${ex.sets.length>1?`<button class="btn-xs" style="color:var(--t3);transition:opacity .1s,transform .1s;" ontouchstart="_rmSetHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmSetHoldEnd(this)" ontouchcancel="_rmSetHoldEnd(this)" onmousedown="_rmSetHoldStart(this,${ei})" onmouseup="_rmSetHoldEnd(this)" onmouseleave="_rmSetHoldEnd(this)">−</button>`:''}</div>`
-    +(!inGroup?`<div style="display:flex;gap:5px;padding:2px 8px 8px;">`
-      +`<button class="btn-xs" style="font-size:10.5px;color:var(--orange);border-color:rgba(255,109,0,.3);padding:3px 8px;" onclick="createSupersetFrom(${ei})">⚡ Super</button>`
-      +`<button class="btn-xs" style="font-size:10.5px;color:#BF5AF2;border-color:rgba(191,90,242,.3);padding:3px 8px;" onclick="createDropSet(${ei})">📉 Drop</button>`
-      +`<button class="btn-xs" style="font-size:10.5px;color:var(--green);border-color:rgba(0,230,118,.3);padding:3px 8px;" onclick="createPyramidSet(${ei},'up')">📈 +10%</button>`
-      +`<button class="btn-xs" style="font-size:10.5px;color:var(--gold);border-color:rgba(255,214,0,.3);padding:3px 8px;" onclick="createPyramidSet(${ei},'down')">📉 −10%</button>`
-      +`</div>`
+    +useSetsHdr
+    +useRows
+    +suiteBanner+useDropBanner
+    +(()=>{
+      const footBtn=ex.dropset
+        ?`<button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="openDropsetConfig(${ei},'${ex.dropset.direction}')">⚙️ Modifier paliers</button>`
+        :`<button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="addSet(${ei})">+ Série</button>${ex.sets.length>1?`<button class="btn-xs" style="color:var(--t3);transition:opacity .1s,transform .1s;" ontouchstart="_rmSetHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmSetHoldEnd(this)" ontouchcancel="_rmSetHoldEnd(this)" onmousedown="_rmSetHoldStart(this,${ei})" onmouseup="_rmSetHoldEnd(this)" onmouseleave="_rmSetHoldEnd(this)">−</button>`:''}`;
+      return`<div class="ex-foot">${footBtn}</div>`;
+    })()
+    +(!inGroup?(ex.dropset
+      ?`<div style="display:flex;gap:5px;padding:2px 8px 8px;">`
+        +`<button class="btn-xs" style="font-size:10.5px;color:var(--t3);border-color:var(--sep);padding:3px 8px;" onclick="removeDropset(${ei})">✕ Retirer dropset</button>`
+        +`</div>`
+      :`<div style="display:flex;gap:5px;padding:2px 8px 8px;">`
+        +`<button class="btn-xs" style="font-size:10.5px;color:var(--orange);border-color:rgba(255,109,0,.3);padding:3px 8px;" onclick="createSupersetFrom(${ei})">⚡ Super</button>`
+        +`<button class="btn-xs" style="font-size:10.5px;color:#BF5AF2;border-color:rgba(191,90,242,.3);padding:3px 8px;" onclick="openDropsetConfig(${ei},'down')">📉 Drop</button>`
+        +`<button class="btn-xs" style="font-size:10.5px;color:var(--green);border-color:rgba(0,230,118,.3);padding:3px 8px;" onclick="openDropsetConfig(${ei},'up')">📈 +%</button>`
+        +`</div>`)
       :`<div style="display:flex;align-items:center;gap:4px;padding:2px 8px 8px;">`
         +`<button class="btn-xs" style="font-size:11px;padding:3px 7px;${posInGroup===0?'opacity:.3;':''}" onclick="if(${posInGroup}>0)moveInGroup(${ei},-1)">↑</button>`
         +`<button class="btn-xs" style="font-size:11px;padding:3px 7px;${posInGroup===groupSize-1?'opacity:.3;':''}" onclick="if(${posInGroup}<${groupSize-1})moveInGroup(${ei},1)">↓</button>`
@@ -430,7 +510,7 @@ function renderExBlocks(){
   const parts=[];
   S.wkt.exs.forEach((ex,ei)=>{
     if(seen.has(ei))return;
-    if(ex.group){
+    if(ex.group && ex.groupType==='super'){
       const members=_ssMembers(ex.group);
       members.forEach(({i})=>seen.add(i));
       parts.push({type:'group',gid:ex.group,members});
@@ -485,7 +565,28 @@ function toggleSet(ei,si){
     const mb=document.getElementById('rest-btn-minus');const pb=document.getElementById('rest-btn-plus');
     if(mb)mb.textContent=`−${_restStep}s`;if(pb)pb.textContent=`+${_restStep}s`;
     const sec=restByType[set.type]||defForEx;
-    // Groupe (super set / drop set / pyramide)
+    // ─── Dropset : avance entre paliers ─────────────────────────────────────
+    if(S.wkt.exs[ei].dropset){
+      const ds=S.wkt.exs[ei].dropset;
+      if(ds.direction==='down'){
+        // Pas de repos entre paliers : on passe direct au suivant
+        const nextSi=S.wkt.exs[ei].sets.findIndex((s,i)=>i>si&&!s.done);
+        if(nextSi!==-1){
+          if(navigator.vibrate)navigator.vibrate([30]);
+          renderExBlocks();
+          setTimeout(()=>{const row=document.getElementById(`sr-${ei}-${nextSi}`);const inp=row&&row.querySelector('.sinp');if(inp){inp.focus();inp.select&&inp.select();}},100);
+          return;
+        }
+        // Dernier palier → repos
+        if(lbl)lbl.textContent='📉 Série dégressive terminée';
+        startRest(sec);
+        if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
+        if(navigator.vibrate)navigator.vibrate([50]);
+        renderExBlocks();return;
+      }
+      // Pyramide ↑ : repos normal (fall-through vers logique standard ci-dessous)
+    }
+    // Groupe (super set)
     const groupType=S.wkt.exs[ei].groupType||'super';
     const _ssNext=_nextInGroup(ei);
     const _scrollTo=idx=>setTimeout(()=>{const el=document.getElementById('ex-block-'+idx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},60);
