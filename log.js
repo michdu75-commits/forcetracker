@@ -226,7 +226,7 @@ function _renderGroupHtml(gid,members){
   }
 
   // ── Progression / tour ───────────────────────────────────────
-  let tourInfo='',dotHtml='',bannerHtml='';
+  let tourInfo='',dotHtml='',bannerHtml='',progressBarHtml='';
   if(gt==='super'){
     const totalTours=Math.max(...members.map(({e})=>e.sets.length),1);
     let completedTours=0;
@@ -251,6 +251,22 @@ function _renderGroupHtml(gid,members){
       +`<span style="font-size:13px;flex-shrink:0;">⚡</span>`
       +`<span style="font-size:12px;color:var(--t2);line-height:1.4;">Enchaîne les ${count} sans repos — le chrono démarre après <strong style="color:var(--t1);">${shortLast}</strong>.</span>`
       +`</div>`;
+    // ── Barre de progression à segments ─────────────────────────
+    const nbSegs=Math.min(totalTours,20);
+    let segs='';
+    for(let t=0;t<nbSegs;t++){
+      if(t<completedTours){
+        segs+=`<div style="flex:1;height:6px;border-radius:3px;background:#35D08A;"></div>`;
+      }else if(t===completedTours){
+        const pct=count>0?Math.round(doneThisTour/count*100):0;
+        segs+=`<div style="flex:1;height:6px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,.10);">`
+          +`<div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#35D08A,var(--red));"></div>`
+          +`</div>`;
+      }else{
+        segs+=`<div style="flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.10);"></div>`;
+      }
+    }
+    progressBarHtml=`<div style="display:flex;gap:3px;padding:5px 10px 4px;background:rgba(255,109,0,.04);">${segs}</div>`;
   }else if(gt==='drop'){
     const doneSteps=members.filter(({e})=>e.sets.some(s=>s.done)).length;
     let dots='';
@@ -288,6 +304,7 @@ function _renderGroupHtml(gid,members){
     +`<button class="btn-xs" style="color:${color};font-size:11px;" onclick="addToGroup('${gid}')">${addLabel}</button>`
     +`<button class="btn-xs" style="color:var(--t3);font-size:11px;" onclick="dissolveGroup('${gid}')">Dégrouper</button>`
     +`</div></div>`
+    +progressBarHtml
     +`<div style="padding:6px 6px 0;">${body}</div>`
     +bannerHtml
     +`</div>`;
