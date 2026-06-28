@@ -429,11 +429,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
     +`${ex.note?`<div style="font-size:11px;color:var(--gold);margin:1px 0 3px;font-style:italic;line-height:1.3;">📋 ${ex.note}</div>`:''}`
     +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${ex.dropset?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
     +`</div>`
-    +`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
-    +`${hasLocalGif?'<button class="btn-xs" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\')">🎬</button>':''}`
-    +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button>`
-    +`<button class="btn-xs" onclick="openTypeHelp()">ℹ️</button>`
-    +`<button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button>`
+    +`<div style="pointer-events:auto;flex-shrink:0;" onclick="event.stopPropagation()">`
+    +`<button onclick="openExMenu(${ei},${hasLocalGif})" style="width:34px;height:34px;border-radius:10px;background:var(--bg3);border:1px solid var(--sep);font-size:18px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;letter-spacing:2px;line-height:1;">⋯</button>`
     +`</div></div>`
     +`<div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>`
     +useSetsHdr
@@ -500,6 +497,39 @@ function _buildExHistChart(data){
   });
   return s+'</svg>';
 }
+// ─── MENU CONTEXTUEL EXERCICE (⋯) ────────────────────────────────────────────
+let _exMenuCtx=null;
+function openExMenu(ei,hasGif){
+  const ex=S.wkt.exs[ei];if(!ex)return;
+  _exMenuCtx={ei,nm:ex.name,hasGif:!!hasGif};
+  let ov=document.getElementById('ov-ex-menu');
+  if(!ov){
+    ov=document.createElement('div');ov.className='overlay';ov.id='ov-ex-menu';
+    ov.style.alignItems='flex-end';
+    ov.onclick=e=>{if(e.target===ov)closeExMenu();};
+    document.body.appendChild(ov);
+  }
+  const {nm}=_exMenuCtx;
+  const safeNm=nm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const mRow=(icon,lbl,action)=>`<button onclick="${action}" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:manipulation;">`
+    +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">${icon}</span>`
+    +`<span style="font-size:15px;color:var(--t1);font-weight:500;">${lbl}</span>`
+    +`</button>`;
+  ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
+    +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
+    +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
+    +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
+    +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
+    +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:manipulation;">`
+    +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">🗑️</span>`
+    +`<div style="flex:1;"><div style="font-size:15px;color:var(--red);font-weight:500;">Supprimer l'exercice</div><div style="font-size:11px;color:var(--t3);margin-top:2px;">Maintenir appuyé pour confirmer</div></div>`
+    +`</button>`
+    +`<button onclick="closeExMenu()" style="display:flex;align-items:center;justify-content:center;width:calc(100% - 32px);margin:10px 16px 0;padding:12px;border-radius:12px;background:var(--bg3);border:none;font-size:15px;font-weight:700;color:var(--t2);cursor:pointer;touch-action:manipulation;">Annuler</button>`
+    +`</div>`;
+  ov.classList.add('open');
+}
+function closeExMenu(){const ov=document.getElementById('ov-ex-menu');if(ov)ov.classList.remove('open');}
+
 function openExHistory(name){
   const data=_getExHistory(name,5);
   let el=document.getElementById('ov-ex-hist');
@@ -719,6 +749,7 @@ function chainInputs(ids,lastFn){
 function addSet(ei){const ex=S.wkt.exs[ei];const l=ex.sets[ex.sets.length-1];ex.sets.push({kg:l?l.kg:0,reps:l?l.reps:5,type:'N',done:false,rm1:0});persist();renderExBlocks();}
 function rmLastSet(ei){const ex=S.wkt.exs[ei];if(ex.sets.length>1){ex.sets.pop();persist();renderExBlocks();}}
 function rmEx(ei){
+  closeExMenu();
   const name=S.wkt.exs[ei]&&S.wkt.exs[ei].name||'cet exercice';
   showConfirm('Supprimer l\'exercice ?',`"${name}" et toutes ses séries seront supprimés de la séance.`,()=>{
     const gid=S.wkt.exs[ei]&&S.wkt.exs[ei].group;
