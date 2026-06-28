@@ -339,7 +339,15 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
       +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
-      +`</div></div>`;
+      +`</div>`
+      +(!_groupMode&&!inGroup&&!ex.group&&!ex.dropset
+        ?`<div style="display:flex;gap:4px;padding:2px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
+          +`<button class="btn-xs" style="font-size:10px;color:var(--orange);border-color:rgba(255,109,0,.2);padding:2px 7px;" onclick="createSupersetFrom(${ei})">⚡ Super</button>`
+          +`<button class="btn-xs" style="font-size:10px;color:#BF5AF2;border-color:rgba(191,90,242,.2);padding:2px 7px;" onclick="openDropsetConfig(${ei},'down')">📉 Drop</button>`
+          +`<button class="btn-xs" style="font-size:10px;color:var(--green);border-color:rgba(0,230,118,.2);padding:2px 7px;" onclick="openDropsetConfig(${ei},'up')">📈 +%</button>`
+          +`</div>`
+        :'')
+      +`</div>`;
   }
 
   // Vue développée
@@ -636,15 +644,16 @@ function toggleSet(ei,si){
       const lbl=document.getElementById('rest-label');
       if(lbl)lbl.textContent='📉 Série dégressive terminée';
     } else if(groupType==='super'&&S.wkt.exs[ei].group){
-      // Dernier exo du tour : boucle si des sets restent dans le groupe
-      const loopTarget=_firstUndoneMember(S.wkt.exs[ei].group);
-      if(loopTarget!==null&&loopTarget!==ei){
+      // Dernier exo du tour → retour au 1er exercice du groupe pour le tour suivant
+      const gMembers=_ssMembers(S.wkt.exs[ei].group);
+      const firstIdx=gMembers[0]?.i??null;
+      const hasMore=gMembers.some(({e})=>e.sets.some(s=>!s.done));
+      if(firstIdx!==null&&hasMore){
         if(navigator.vibrate)navigator.vibrate([30]);
-        // Revenir immédiatement au 1er exo du groupe dès le démarrage du repos
-        _expandedEx=loopTarget;renderExBlocks();_scrollTo(loopTarget);
-        _restDoneCb=()=>{_scrollTo(loopTarget);};
+        _expandedEx=firstIdx;renderExBlocks();
+        setTimeout(()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
+        _restDoneCb=()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
         startRest(sec);
-        const lbl=document.getElementById('rest-label');
         if(lbl)lbl.textContent='⚡ Tour suivant';
         if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
         if(navigator.vibrate)navigator.vibrate([50]);
