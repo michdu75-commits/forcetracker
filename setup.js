@@ -1072,6 +1072,62 @@ async function debugRestore(){
   }catch(e){toast('Erreur réseau : '+e.message,'error');}
 }
 
+function _showAdminPremiumStatic(){
+  const el=document.getElementById('admin-premium-info');
+  if(!el)return;
+  const urlEnd=(S.url||'').slice(-28);
+  el.innerHTML=
+    `Email&nbsp;app : <b>${S.email||'<span style="color:var(--red)">(vide — premium impossible)</span>'}</b><br>`+
+    `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
+    `URL (fin) : <b style="font-size:10px;">…${urlEnd}</b><br>`+
+    `<span style="color:var(--t3);">← Tap "Vérifier" pour check serveur</span>`;
+}
+
+async function debugPremiumCheck(){
+  const el=document.getElementById('admin-premium-info');
+  if(!el)return;
+  const urlEnd=(S.url||'').slice(-28);
+  const emailDisp=S.email||'<span style="color:var(--red)">(vide)</span>';
+  el.innerHTML=
+    `Email&nbsp;app : <b>${emailDisp}</b><br>`+
+    `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
+    `URL (fin) : <b style="font-size:10px;">…${urlEnd}</b><br>`+
+    `<i style="color:var(--t3);">Vérification serveur…</i>`;
+  if(!S.email){
+    el.innerHTML+=`<br><b style="color:var(--red)">Email vide — impossible de vérifier.</b>`;
+    return;
+  }
+  try{
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+    const txt=await r.text();
+    let d=null;try{d=JSON.parse(txt);}catch(_){}
+    const srvPrem=d&&d.premium===true;
+    const srvStatus=d&&d.status||'?';
+    el.innerHTML=
+      `Email&nbsp;app : <b>${S.email}</b><br>`+
+      `URL (fin) : <b style="font-size:10px;">…${urlEnd}</b><br>`+
+      `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
+      `Statut serveur : <b>${srvStatus}</b><br>`+
+      `Premium serveur : <b style="color:${srvPrem?'var(--green)':'var(--red)'}">${srvPrem?'OUI ✅':'NON ❌'}</b><br>`+
+      `Expiry : <b>${(d&&d.premiumExpiry)||'—'}</b><br>`+
+      `<span style="color:var(--t3);font-size:10px;">${txt.slice(0,150)}</span>`;
+    if(d&&(d.status==='ok'||d.status==='not_found')){
+      const was=S.premium;
+      S.premium=d.premium===true;
+      S.premiumExpiry=d.premiumExpiry||'';
+      persist();
+      if(was!==S.premium){
+        updateCoachHeader();
+        toast(S.premium?'✅ Premium activé !':'Premium désactivé','info');
+      } else {
+        toast(S.premium?'Premium déjà actif ✅':'Toujours non-premium','info');
+      }
+    }
+  }catch(e){
+    el.innerHTML+=`<br><b style="color:var(--red)">Erreur réseau : ${e.message}</b>`;
+  }
+}
+
 function detectDuplicates(){
   const seen=new Map();
   (S.sessions||[]).forEach(s=>(s.exs||[]).forEach(ex=>{if(ex.name)seen.set(ex.name,ex.name);}));

@@ -715,6 +715,7 @@ function switchSetupTab(tab,btn){
   if(tab==='connexion'){
     if(pr)pr.style.display='none';
     if(cx){cx.style.display='flex';cx.style.flexDirection='column';cx.style.gap='12px';}
+    if(typeof _showAdminPremiumStatic==='function')_showAdminPremiumStatic();
   } else {
     if(cx)cx.style.display='none';
     if(pr){pr.style.display='flex';pr.style.flexDirection='column';}

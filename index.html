@@ -521,6 +521,12 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <button class="btn btn-bg2" onclick="debugRestore()" style="padding:11px;font-size:14px;color:var(--t3);">🔍 Voir réponse brute API</button>
     </div>
     <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
+    <!-- CARTE DEBUG PREMIUM -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔑 Statut Premium</div>
+      <div id="admin-premium-info" style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;word-break:break-all;min-height:48px;">—</div>
+      <button class="btn btn-bg2" onclick="debugPremiumCheck()" style="padding:11px;font-size:14px;">🔑 Vérifier premium (serveur)</button>
+    </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🔍 Doublons d'exercices</div>
       <button class="btn btn-bg2" onclick="detectDuplicates()" style="padding:11px;font-size:14px;">🔍 Analyser les doublons</button>
