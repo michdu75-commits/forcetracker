@@ -43,6 +43,8 @@ function _applyScreen(id,btn){
   if(id==='cycle')renderCycleScreen();
   if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();}
   _markScreenSeen(id);
+  // Pill chrono flottante : show hors log, hide sur log
+  if(typeof _updPill==='function')_updPill();
 }
 function goScreen(id,btn){
   _closeAllPanels();

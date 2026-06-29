@@ -1221,34 +1221,129 @@ function _showSaveError(){
 
 // ─── REST TIMER ──────────────────────────────────────────────
 // Source de vérité : restStartTs (timestamp) + restTot (durée)
-// restLeft n'est JAMAIS décrémenté — toujours calculé depuis Date.now()
 let restIv=null,restTot=120,restStartTs=0;
 let restOvertime=false,_restBeeped=false;
 let _restDoneCb=null;
+let _countdownSecs=new Set(); // secondes 5..1 déjà bippées
 
 function _restLeft(){
   if(!restStartTs)return 0;
   return restTot-Math.floor((Date.now()-restStartTs)/1000);
 }
 
+// ─── SONS ────────────────────────────────────────────────────
+function _beepTick(){
+  // Petit bip de décompte (5..1s) : perçant et court
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type='square';o.frequency.value=900;
+    g.gain.setValueAtTime(0,ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.7,ctx.currentTime+.01);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.1);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+.12);
+  }catch(e){}
+}
+
+function beep(){
+  // Alarme finale : 3 tons simultanés, fort, square wave (passe mieux la musique)
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [[880,0],[1109,.04],[1320,.08]].forEach(([freq,delay])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='square';o.frequency.value=freq;
+      g.gain.setValueAtTime(0,ctx.currentTime+delay);
+      g.gain.linearRampToValueAtTime(1.0,ctx.currentTime+delay+.02);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+.35);
+      o.start(ctx.currentTime+delay);o.stop(ctx.currentTime+delay+.4);
+    });
+    // 2e salve 600ms plus tard
+    setTimeout(()=>{
+      try{
+        const c2=new(window.AudioContext||window.webkitAudioContext)();
+        const o2=c2.createOscillator(),g2=c2.createGain();
+        o2.connect(g2);g2.connect(c2.destination);
+        o2.type='square';o2.frequency.value=1109;
+        g2.gain.setValueAtTime(0,c2.currentTime);
+        g2.gain.linearRampToValueAtTime(1.0,c2.currentTime+.02);
+        g2.gain.exponentialRampToValueAtTime(0.001,c2.currentTime+.4);
+        o2.start(c2.currentTime);o2.stop(c2.currentTime+.45);
+      }catch(e){}
+    },600);
+  }catch(e){}
+}
+
+// ─── PILL FLOTTANTE ──────────────────────────────────────────
+function _updPill(){
+  const pill=document.getElementById('rest-pill');
+  if(!pill)return;
+  const active=!!restIv&&_curScreen!=='log';
+  pill.classList.toggle('show',active);
+  if(!active){pill.classList.remove('overtime');return;}
+  // Position juste sous la topbar (calculée une fois, cachée dans dataset)
+  if(!pill.dataset.positioned){
+    const tb=document.querySelector('.topbar');
+    const root=document.getElementById('root');
+    if(tb&&root){
+      const tbH=tb.getBoundingClientRect().height-root.getBoundingClientRect().top+tb.getBoundingClientRect().top;
+      pill.style.top=Math.round(tbH+4)+'px';
+    }else{pill.style.top='60px';}
+    pill.dataset.positioned='1';
+  }
+  const left=_restLeft();
+  const pillTime=document.getElementById('rest-pill-time');
+  const pillFill=document.getElementById('rest-pill-fill');
+  if(!pillTime||!pillFill)return;
+  if(left>=0){
+    const m=Math.floor(left/60),s=left%60;
+    pillTime.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    const pct=left/restTot*100;
+    pillFill.style.width=pct+'%';
+    const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
+    pillFill.style.background=c;
+    pill.style.borderColor=pct>50?'rgba(52,211,153,.5)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
+    pill.classList.remove('overtime');
+  } else {
+    const ot=-left,m=Math.floor(ot/60),s=ot%60;
+    pillTime.textContent=`+${m}:${s.toString().padStart(2,'0')}`;
+    pillFill.style.width='0%';pillFill.style.background='var(--red)';
+    pill.style.borderColor='rgba(255,106,115,.7)';
+    pill.classList.add('overtime');
+  }
+}
+
 function _restTick(){
   const left=_restLeft();
+  // Décompte 5..1 : bips courts
+  if(left>0&&left<=5&&!_countdownSecs.has(left)){
+    _countdownSecs.add(left);
+    _beepTick();
+    if(navigator.vibrate)navigator.vibrate(60);
+  }
+  // Alarme finale
   if(left<=0&&!_restBeeped){
     _restBeeped=true;
-    beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);
+    beep();
+    if(navigator.vibrate)navigator.vibrate([300,100,300,100,400]);
     if(_restDoneCb){const cb=_restDoneCb;_restDoneCb=null;setTimeout(()=>{stopRest();cb();},400);return;}
     restOvertime=true;
     const bar=document.getElementById('rest-bar');if(bar)bar.classList.add('overtime');
   }
   updRest();
+  _updPill();
 }
 
 function startRest(sec){
   stopRest();restTot=sec;restStartTs=Date.now();restOvertime=false;_restBeeped=false;
+  _countdownSecs=new Set();
   const bar=document.getElementById('rest-bar');
   bar.classList.add('show');bar.classList.remove('overtime');
-  updRest();
-  restIv=setInterval(_restTick,500);
+  // Réinitialise la position de la pill pour recalcul
+  const pill=document.getElementById('rest-pill');if(pill)delete pill.dataset.positioned;
+  updRest();_updPill();
+  restIv=setInterval(_restTick,250);
 }
 
 function updRest(){
@@ -1275,10 +1370,11 @@ function updRest(){
 
 function stopRest(){
   clearInterval(restIv);restIv=null;restStartTs=0;
-  restOvertime=false;_restBeeped=false;_restDoneCb=null;
+  restOvertime=false;_restBeeped=false;_restDoneCb=null;_countdownSecs=new Set();
   const bar=document.getElementById('rest-bar');
   if(bar){bar.classList.remove('show','overtime');bar.style.borderColor='';}
   const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';
+  _updPill();
 }
 let _afTimer=null;
 function _onKgInput(el,ei,si){

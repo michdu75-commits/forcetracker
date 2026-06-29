@@ -264,6 +264,14 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<!-- PILL CHRONO DE REPOS FLOTTANTE -->
+<div id="rest-pill" onclick="goScreen('log',document.getElementById('nb-log'))">
+  <span style="font-size:13px;flex-shrink:0;">⏱</span>
+  <span id="rest-pill-time">2:00</span>
+  <div id="rest-pill-bar"><div id="rest-pill-fill"></div></div>
+  <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.55);flex-shrink:0;white-space:nowrap;">Séance →</span>
+</div>
+
 <!-- DRAWER BACKDROP -->
 <div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
 <!-- DRAWER MENU -->
@@ -333,21 +341,17 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
   <div id="log-sleep"></div>
   <div id="log-cardio"></div>
-  <div id="rest-bar" style="margin:0 -14px;">
-    <div style="display:flex;flex-direction:column;align-items:center;min-width:58px">
-      <div id="rest-time">1:30</div>
-      <div id="rest-label" style="font-size:11px;color:var(--t2);margin-top:1px;"></div>
-    </div>
-    <div style="flex:1;display:flex;flex-direction:column;gap:5px">
-      <div id="rest-wrap"><div id="rest-fill" style="width:100%;"></div></div>
-      <div style="display:flex;gap:4px;align-items:center" id="rest-btns">
-        <button class="rbtn" id="rp-60" onclick="setRestPreset(60)">1:00</button>
-        <button class="rbtn" id="rp-90" onclick="setRestPreset(90)">1:30</button>
-        <button class="rbtn" id="rp-120" onclick="setRestPreset(120)">2:00</button>
-        <button class="rbtn" id="rest-btn-minus" onclick="addRT(-_restStep)" style="margin-left:2px">−15s</button>
-        <button class="rbtn" id="rest-btn-plus" onclick="addRT(_restStep)">+15s</button>
-        <button class="rbtn" onclick="skipRest()">Skip</button>
-      </div>
+  <div id="rest-bar">
+    <div id="rest-time">1:30</div>
+    <div id="rest-label" style="font-size:12px;color:var(--t3);min-height:15px;margin-top:-4px;"></div>
+    <div id="rest-wrap"><div id="rest-fill"></div></div>
+    <div id="rest-btns">
+      <button class="rbtn" id="rp-60" onclick="setRestPreset(60)">1:00</button>
+      <button class="rbtn" id="rp-90" onclick="setRestPreset(90)">1:30</button>
+      <button class="rbtn" id="rp-120" onclick="setRestPreset(120)">2:00</button>
+      <button class="rbtn" id="rest-btn-minus" onclick="addRT(-_restStep)">−15s</button>
+      <button class="rbtn" id="rest-btn-plus" onclick="addRT(_restStep)">+15s</button>
+      <button class="rbtn" onclick="skipRest()">Skip</button>
     </div>
   </div>
   <div id="wkt-exs" style="display:flex;flex-direction:column;gap:10px;"></div>
