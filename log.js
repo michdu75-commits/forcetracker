@@ -1283,16 +1283,6 @@ function _updPill(){
   const active=!!restIv&&_curScreen!=='log';
   pill.classList.toggle('show',active);
   if(!active){pill.classList.remove('overtime');return;}
-  // Position juste sous la topbar (calculée une fois, cachée dans dataset)
-  if(!pill.dataset.positioned){
-    const tb=document.querySelector('.topbar');
-    const root=document.getElementById('root');
-    if(tb&&root){
-      const tbH=tb.getBoundingClientRect().height-root.getBoundingClientRect().top+tb.getBoundingClientRect().top;
-      pill.style.top=Math.round(tbH+4)+'px';
-    }else{pill.style.top='60px';}
-    pill.dataset.positioned='1';
-  }
   const left=_restLeft();
   const pillTime=document.getElementById('rest-pill-time');
   const pillFill=document.getElementById('rest-pill-fill');
@@ -1335,8 +1325,6 @@ function startRest(sec){
   _countdownSecs=new Set();
   const bar=document.getElementById('rest-bar');
   bar.classList.add('show');bar.classList.remove('overtime');
-  // Réinitialise la position de la pill pour recalcul
-  const pill=document.getElementById('rest-pill');if(pill)delete pill.dataset.positioned;
   updRest();_updPill();
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
