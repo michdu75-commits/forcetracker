@@ -999,26 +999,39 @@ initOnboarding();
 (async function autoConnect(){
   if(!S.url)return;
   try{
-    // no-cors : réponse opaque (status 0) mais aucune erreur console CORS
     await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})});
     if(!S.connected){S.connected=true;persist();updatePill();}
   }catch(e){}
-  // Vérif premium : si email connu ET (pas premium OU premium daté) → refresh serveur
-  if(S.email&&(!S.premium||S.premiumExpiry)){
+  // Vérif premium : toujours re-checker depuis le serveur si email connu
+  // (couvre PREMIUM_EMAILS, PREMIUM_CODES, Ko-fi — sans que l'user ait à saisir un code)
+  if(S.email){
     try{
       const r2=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
       const d2=await r2.json();
+      console.log('[FT premium check]',{email:S.email,status:d2.status,premium:d2.premium,expiry:d2.premiumExpiry});
       if(d2.status==='ok'||d2.status==='not_found'){
         const wasPremium=S.premium;
         S.premium=d2.premium===true;
         S.premiumExpiry=d2.premiumExpiry||'';
-        if(wasPremium!==S.premium||d2.premiumExpiry){persist();updateCoachHeader();}
+        if(wasPremium!==S.premium){
+          persist();
+          updateCoachHeader();
+          if(S.premium&&!wasPremium){
+            toast('🎉 Accès Premium activé !','success');
+            const wall=document.getElementById('coach-wall');
+            if(wall)wall.style.display='none';
+          }
+          console.log('[FT premium]',S.premium?'activé':'désactivé');
+        } else if(d2.premiumExpiry){
+          persist();
+        }
       }
     }catch(e){
-      checkPremiumExpiry(); // fallback local si réseau indisponible
+      console.warn('[FT premium check] échec réseau :',e.message);
+      checkPremiumExpiry();
     }
   } else {
-    checkPremiumExpiry(); // vérif locale si premium indéfini
+    checkPremiumExpiry();
   }
 })();
 document.addEventListener('pointerdown',function(e){

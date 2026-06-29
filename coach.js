@@ -33,6 +33,8 @@ function coachAction(type){
 function updateCoachHeader() {
   _updateCoachMorphoBtn();
   _updateCoachCtxTags();
+  // Cache le mur premium si l'utilisateur est maintenant premium
+  if(S.premium){const wall=document.getElementById('coach-wall');if(wall)wall.style.display='none';}
   // Afficher accueil ou chat selon l'historique
   if(coachHistory.length===0){
     const home=document.getElementById('coach-home');

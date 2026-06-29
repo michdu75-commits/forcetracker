@@ -1026,8 +1026,8 @@ function _applyRestoreData(raw){
   if(weightLog&&weightLog.length)S.weightLog=weightLog;
   if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;
   if(raw&&raw.cycle)S.cycle=raw.cycle;
-  if(raw&&raw.premium===true){S.premium=true;}
-  if(raw&&raw.premiumExpiry){S.premiumExpiry=raw.premiumExpiry;}
+  if(raw&&raw.premium!==undefined){S.premium=raw.premium===true;}
+  if(raw&&raw.premiumExpiry!==undefined){S.premiumExpiry=raw.premiumExpiry||'';}
   if(raw&&raw.coachMemory)S.coachMemory=raw.coachMemory;
   if(d.healthProfile)S.healthProfile=d.healthProfile;
   if(d.a11y!==undefined)S.a11y=!!d.a11y;
