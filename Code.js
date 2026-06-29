@@ -95,9 +95,11 @@ function getPremiumStatus_(email) {
   const props = PropertiesService.getScriptProperties();
 
   // 1. Whitelist indéfinie (PREMIUM_EMAILS)
-  const whitelist = (props.getProperty('PREMIUM_EMAILS') || '')
-    .split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
-  if (whitelist.includes(email)) {
+  const rawList = props.getProperty('PREMIUM_EMAILS') || '';
+  const whitelist = rawList.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  const match = whitelist.includes(email);
+  Logger.log('[FT premium] email=' + email + ' | raw="' + rawList + '" | whitelist=' + JSON.stringify(whitelist) + ' | match=' + match);
+  if (match) {
     return { premium: true, expiry: null };
   }
 
@@ -122,7 +124,26 @@ function doGet(e) {
   }
 
   if (p.test) {
-    return json_({status:'online', version:'3.2'});
+    return json_({status:'online', version:'3.5'});
+  }
+
+  // Debug premium — ?debugPremium=1&email=xxx@xxx.com
+  // Retourne le contenu brut de PREMIUM_EMAILS et le résultat du match
+  if (p.debugPremium && p.email) {
+    const props2 = PropertiesService.getScriptProperties();
+    const rawList = props2.getProperty('PREMIUM_EMAILS') || '';
+    const whitelist = rawList.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+    const emailQ = (p.email || '').toLowerCase().trim();
+    const match = whitelist.includes(emailQ);
+    Logger.log('[FT debugPremium] email=' + emailQ + ' | raw="' + rawList + '" | match=' + match);
+    return json_({
+      debugPremium: true,
+      emailQueried: emailQ,
+      rawPremiumEmails: rawList,
+      parsedWhitelist: whitelist,
+      whitelistCount: whitelist.length,
+      match: match
+    });
   }
 
   if (p.action === 'loadProfile' && p.email) {

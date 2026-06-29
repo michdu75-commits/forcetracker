@@ -1098,30 +1098,42 @@ async function debugPremiumCheck(){
     return;
   }
   try{
+    // 1. check loadProfile (POST) — résultat premium
     const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
     const txt=await r.text();
     let d=null;try{d=JSON.parse(txt);}catch(_){}
     const srvPrem=d&&d.premium===true;
     const srvStatus=d&&d.status||'?';
+
+    // 2. debug GET — contenu brut de PREMIUM_EMAILS
+    let dbg=null;
+    try{
+      const r2=await fetch(S.url+'?debugPremium=1&email='+encodeURIComponent(S.email),{redirect:'follow'});
+      const txt2=await r2.text();
+      try{dbg=JSON.parse(txt2);}catch(_){}
+    }catch(_){}
+
+    const rawEmails=dbg&&dbg.rawPremiumEmails!=null?dbg.rawPremiumEmails:'(erreur GET)';
+    const wlCount=dbg&&dbg.whitelistCount!=null?dbg.whitelistCount:'?';
+    const wlMatch=dbg&&dbg.match!=null?(dbg.match?'OUI ✅':'NON ❌'):'?';
+
     el.innerHTML=
       `Email&nbsp;app : <b>${S.email}</b><br>`+
       `URL (fin) : <b style="font-size:10px;">…${urlEnd}</b><br>`+
       `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
-      `Statut serveur : <b>${srvStatus}</b><br>`+
-      `Premium serveur : <b style="color:${srvPrem?'var(--green)':'var(--red)'}">${srvPrem?'OUI ✅':'NON ❌'}</b><br>`+
+      `Premium serveur (POST) : <b style="color:${srvPrem?'var(--green)':'var(--red)'}">${srvPrem?'OUI ✅':'NON ❌'}</b> (${srvStatus})<br>`+
       `Expiry : <b>${(d&&d.premiumExpiry)||'—'}</b><br>`+
-      `<span style="color:var(--t3);font-size:10px;">${txt.slice(0,150)}</span>`;
+      `─── PREMIUM_EMAILS brut ───<br>`+
+      `<span style="font-size:10px;word-break:break-all;">"${rawEmails}"</span><br>`+
+      `Nb emails : <b>${wlCount}</b> · match email : <b>${wlMatch}</b>`;
+
     if(d&&(d.status==='ok'||d.status==='not_found')){
       const was=S.premium;
       S.premium=d.premium===true;
       S.premiumExpiry=d.premiumExpiry||'';
       persist();
-      if(was!==S.premium){
-        updateCoachHeader();
-        toast(S.premium?'✅ Premium activé !':'Premium désactivé','info');
-      } else {
-        toast(S.premium?'Premium déjà actif ✅':'Toujours non-premium','info');
-      }
+      updateCoachHeader();
+      toast(S.premium?'✅ Premium activé !':'Non-premium confirmé','info');
     }
   }catch(e){
     el.innerHTML+=`<br><b style="color:var(--red)">Erreur réseau : ${e.message}</b>`;
