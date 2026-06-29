@@ -520,7 +520,7 @@ function openExMenu(ei,hasGif){
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
-    +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:manipulation;">`
+    +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchmove="event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;">`
     +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">🗑️</span>`
     +`<div style="flex:1;"><div style="font-size:15px;color:var(--red);font-weight:500;">Supprimer l'exercice</div><div style="font-size:11px;color:var(--t3);margin-top:2px;">Maintenir appuyé pour confirmer</div></div>`
     +`</button>`
@@ -760,7 +760,8 @@ function rmEx(ei){
     const gid=S.wkt.exs[ei]&&S.wkt.exs[ei].group;
     if(gid){const rem=S.wkt.exs.filter((e,i)=>i!==ei&&e.group===gid);if(rem.length<=1)rem.forEach(e=>delete e.group);}
     S.wkt.exs.splice(ei,1);
-    if(_expandedEx>=S.wkt.exs.length)_expandedEx=Math.max(0,S.wkt.exs.length-1);
+    if(ei<_expandedEx)_expandedEx--;
+    else if(_expandedEx>=S.wkt.exs.length)_expandedEx=Math.max(0,S.wkt.exs.length-1);
     persist();renderExBlocks();
   });
 }

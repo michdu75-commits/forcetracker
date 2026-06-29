@@ -505,7 +505,7 @@ const _DRAWER_CONTENT = {
     html:`<div style="display:flex;flex-direction:column;gap:10px;padding:0 2px 8px;">
       ${[
         {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central ⚡ ou "Commencer une séance" depuis l\'accueil. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries.'},
-        {ic:'🏋️',t:'Types de séries',d:'N = Normal · W = Échauffement (compté dans le volume) · E = Échec musculaire · D = Drop set. Appuie sur la lettre pour changer. Timer adaptatif : W 45s · N 2:10 · E 4min · D 20s.'},
+        {ic:'🏋️',t:'Tags de série',d:'É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. Tape la pastille pour changer. Timer : É 45s · N 2:10 · X 4min.'},
         {ic:'⚡',t:'Super-séries & Pyramides',d:'Bouton "⚡ Grouper" (dès 2 exercices) → sélectionne les exercices → "Lier en supersérie" : enchaînement sans repos entre eux. Sous chaque exercice : 📉 Drop set (−10% auto) · 📈 Pyramide + (+10%) · 📉 Pyramide − (−10%). Avance automatique et vibration entre les blocs.'},
         {ic:'📊',t:'Historique par exercice',d:'Bouton 📊 sur chaque exercice en séance → graphique du poids max sur les 5 dernières séances. Pratique pour calibrer sa charge du jour.'},
         {ic:'🏃',t:'Cardio en séance',d:'Bloc cardio en haut de séance (replié par défaut). Choisis le type (elliptique, tapis, vélo, rameur, corde...), l\'intensité (léger/modéré/intense) et la durée. Les calories brûlées sont calculées et ajoutées à ton TDEE.'},
