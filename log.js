@@ -1222,6 +1222,7 @@ function _showSaveError(){
 // ─── REST TIMER ──────────────────────────────────────────────
 // Source de vérité : restStartTs (timestamp) + restTot (durée)
 let restIv=null,restTot=120,restStartTs=0;
+let _pillIv=null; // interval dédié pill hors écran séance
 let restOvertime=false,_restBeeped=false;
 let _restDoneCb=null;
 let _countdownSecs=new Set(); // secondes 5..1 déjà bippées
@@ -1338,6 +1339,8 @@ function startRest(sec){
   const pill=document.getElementById('rest-pill');if(pill)delete pill.dataset.positioned;
   updRest();_updPill();
   restIv=setInterval(_restTick,250);
+  if(_pillIv)clearInterval(_pillIv);
+  _pillIv=setInterval(_updPill,500);
 }
 
 function updRest(){
@@ -1363,7 +1366,9 @@ function updRest(){
 }
 
 function stopRest(){
-  clearInterval(restIv);restIv=null;restStartTs=0;
+  clearInterval(restIv);restIv=null;
+  clearInterval(_pillIv);_pillIv=null;
+  restStartTs=0;
   restOvertime=false;_restBeeped=false;_restDoneCb=null;_countdownSecs=new Set();
   const bar=document.getElementById('rest-bar');
   if(bar){bar.classList.remove('show','overtime');bar.style.borderColor='';}
@@ -1399,10 +1404,15 @@ function _highlightRestPreset(sec){
   [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
 }
 function setRestPreset(sec){
-  restTot=sec;restStartTs=Date.now();restOvertime=false;_restBeeped=false;
+  if(!restStartTs){startRest(sec);return;}
+  const elapsed=Math.floor((Date.now()-restStartTs)/1000);
+  if(elapsed>=sec){stopRest();return;}
+  // Garde restStartTs (début du repos), change seulement la cible totale
+  // → _restLeft() = sec - elapsed (temps restant = cible - déjà écoulé)
+  restTot=sec;restOvertime=false;_restBeeped=false;_countdownSecs=new Set();
   const bar=document.getElementById('rest-bar');if(bar)bar.classList.remove('overtime');
   if(_restEx){S.exRestPref=S.exRestPref||{};S.exRestPref[_restEx]=sec;persist();}
-  _highlightRestPreset(sec);updRest();
+  _highlightRestPreset(sec);updRest();_updPill();
 }
 function addRT(s){
   if(!restStartTs)return;
