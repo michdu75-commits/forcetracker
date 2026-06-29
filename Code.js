@@ -139,7 +139,9 @@ function doGet(e) {
   }
 
   // One-shot purge des triggers installables (fantôme PREMIUM_EMAILS)
-  if (!_bProps.getProperty('triggers_purged_20260630')) {
+  // Nécessite le scope https://www.googleapis.com/auth/script.scriptapp dans appsscript.json
+  const _purgeFlag = _bProps.getProperty('triggers_purged_20260630');
+  if (!_purgeFlag || _purgeFlag.startsWith('error:')) {
     try {
       const allTriggers = ScriptApp.getProjectTriggers();
       const trigLog = allTriggers.map(t => t.getHandlerFunction() + '/' + t.getEventType()).join(', ');
