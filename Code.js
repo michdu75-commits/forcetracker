@@ -866,3 +866,15 @@ function scheduleOneTimeBackup_() {
     .create();
   Logger.log('Déclencheur one-shot créé — backup dans ~1 min');
 }
+
+// Fonction utilitaire publique — exécuter UNE SEULE FOIS depuis l'IDE pour autoriser
+// le scope script.scriptapp (nécessaire pour lister/supprimer les triggers fantômes).
+// Affiche les triggers existants dans les Logs (Exécution > Journaux).
+function authorizeAndListTriggers() {
+  const triggers = ScriptApp.getProjectTriggers();
+  const info = triggers.map(t =>
+    t.getHandlerFunction() + ' | ' + t.getEventType() + ' | ' + t.getTriggerSource()
+  );
+  Logger.log('[FT] Triggers trouvés (' + triggers.length + ') : ' + (info.join(' || ') || 'AUCUN'));
+  console.log('[FT] Triggers trouvés (' + triggers.length + ') : ' + (info.join(' || ') || 'AUCUN'));
+}
