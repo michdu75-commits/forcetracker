@@ -141,7 +141,7 @@ function applyDropset(){
   const newSets=[];let kg=baseKg;
   for(let i=0;i<_dropCfgPaliers;i++){
     if(i>0)kg=_roundToGym(dir==='down'?kg*(1-f):kg*(1+f));
-    newSets.push({kg:kg||0,reps:baseReps,done:false,type:i===0?'N':'D'});
+    newSets.push({kg:kg||0,reps:baseReps,done:false,type:'N'});
   }
   ex.sets=newSets;ex.dropset={paliers:_dropCfgPaliers,pct:_dropCfgPct,direction:dir};
   delete ex.group;delete ex.groupType;
@@ -361,7 +361,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`<div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}</div>`
       +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
-      +`<button class="tbtn ${set.type}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||set.type}" id="tbtn-${ei}-${si}"><span>${set.type}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
+      +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
       +`</div></div>`;
   }).join('');
@@ -611,8 +611,8 @@ function toggleSet(ei,si){
     const isAbdo=EXLIB.some(e=>e.n===exName&&e.g==='Abdominaux');
     const savedPref=(S.exRestPref||{})[exName];
     const defForEx=isAbdo?30:(savedPref||90);
-    const restByType={N:defForEx,W:45,E:240,D:20};
-    const restLabels={W:'Échauffement',E:'Récup. complète',D:'Drop set'};
+    const restByType={N:defForEx,É:45,X:240,W:45,E:240};
+    const restLabels={É:'Échauffement',X:'Récup. à l\'échec',W:'Échauffement',E:'Récup. à l\'échec'};
     const lbl=document.getElementById('rest-label');
     if(lbl)lbl.textContent=restLabels[set.type]||(isAbdo?'Abdos':'');
     _restStep=isAbdo?5:15;
@@ -697,7 +697,12 @@ function toggleSet(ei,si){
   }
   renderExBlocks();
 }
-function cycleType(ei,si){const s=S.wkt.exs[ei].sets[si];s.type=SET_TYPES[(SET_TYPES.indexOf(s.type)+1)%SET_TYPES.length];persist();renderExBlocks();}
+function cycleType(ei,si){
+  const s=S.wkt.exs[ei].sets[si];
+  const cur=SET_TYPES.indexOf(s.type);
+  s.type=SET_TYPES[(cur===-1?0:cur+1)%SET_TYPES.length];
+  toast(SET_TYPE_LABELS[s.type],'info');persist();renderExBlocks();
+}
 function openTypeHelp(){document.getElementById('ov-type-help').classList.add('open');}
 function closeTypeHelp(){document.getElementById('ov-type-help').classList.remove('open');}
 let _confirmCb=null,_confirmAltCb=null;
@@ -798,7 +803,7 @@ function addExercise(name){
   }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
-  const sets=[0,1,2].map((_,i)=>({kg:prev.length?prev[0].kg:0,reps:prev.length?prev[0].reps:5,type:i===0&&prev.length?'W':'N',done:false,rm1:0}));
+  const sets=[0,1,2].map((_,i)=>({kg:prev.length?prev[0].kg:0,reps:prev.length?prev[0].reps:5,type:i===0&&prev.length?'É':'N',done:false,rm1:0}));
   S.wkt.exs.push({name,sets});
   _expandedEx=S.wkt.exs.length-1;
   persist();closeExPicker();renderExBlocks();
@@ -1100,6 +1105,17 @@ function closeMuscleMap(){
   if(_mmCb){_mmCb();_mmCb=null;}
 }
 
+// Volume de travail : exclut É (échauffement) et W (legacy)
+function _workVol(sess){
+  let v=0;
+  (sess.exs||sess.exercises||[]).forEach(ex=>{
+    (ex.sets||[]).forEach(s=>{
+      if(s.done&&s.type!=='É'&&s.type!=='W'&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps;
+    });
+  });
+  return v;
+}
+
 let _finishing=false;
 async function finishWorkout(){
   if(_finishing)return;
@@ -1111,19 +1127,19 @@ async function finishWorkout(){
   if(!hasDone){toast('Valide au moins une série !','error');_finishing=false;return;}
   const duration=S.wkt.startTs?Math.floor((Date.now()-S.wkt.startTs)/1000):0;
   let vol=0;
-  S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done)vol+=(s.kg||0)*(s.reps||0);}));
+  S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
   const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
   // Capturer les PRs avant mise à jour pour détecter les améliorations
   const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
-    if(!s.done||!s.kg||!s.reps)return;
+    if(!s.done||!s.kg||!s.reps||s.type==='É'||s.type==='W')return;
     const rm=bz(s.kg,s.reps),cur=S.prs[ex.name];
     if(!cur||rm>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:rm,date:sess.date};
   }));
   let _bestPr=null;
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
-    if(!s.done||!s.kg||!s.reps)return;
+    if(!s.done||!s.kg||!s.reps||s.type==='É'||s.type==='W')return;
     const rm=bz(s.kg,s.reps),old=_oldPrs[ex.name];
     if(!old||rm>old.rm1){
       const gain=rm-(old?old.rm1:0);

@@ -464,7 +464,7 @@ function renderLogFinish(){
   if(!hasDone){el.innerHTML='';return;}
   const nEx=S.wkt.exs.filter(ex=>ex.sets.some(s=>s.done)).length;
   const nSets=S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
-  const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
+  const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
   el.innerHTML=`<div style="border-top:1px solid var(--sep);padding-top:14px;margin-top:4px;">
     <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${nEx} exercice${nEx>1?'s':''} · ${nSets} série${nSets>1?'s':''} · ${vol} kg de volume</div>
     <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">🏁 Terminer la séance</button>

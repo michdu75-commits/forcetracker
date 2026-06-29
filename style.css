@@ -223,7 +223,9 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .sinp:focus{border-color:var(--red);box-shadow:0 0 0 2px rgba(255,45,85,.15);}
 .tbtn{font-size:13px;font-weight:800;border:1px solid var(--sep);border-radius:6px;padding:4px 2px;cursor:pointer;text-align:center;background:var(--bg3);color:var(--t2);width:100%;font-family:var(--font);touch-action:manipulation;letter-spacing:.05em;display:flex;flex-direction:column;align-items:center;gap:1px;}
 .tbtn-rm{font-size:8.5px;font-weight:700;opacity:.8;line-height:1;letter-spacing:0;}
-.tbtn.N{border-color:rgba(240,240,255,.3);color:var(--t1);}
+.tbtn.N{border-color:rgba(240,240,255,.12);color:var(--t3);}
+.tbtn.É{border-color:rgba(41,121,255,.5);color:var(--blue);background:rgba(41,121,255,.1);}
+.tbtn.X{border-color:rgba(255,45,85,.5);color:var(--red);background:rgba(255,45,85,.1);}
 .tbtn.W{border-color:rgba(41,121,255,.5);color:var(--blue);background:rgba(41,121,255,.1);}
 .tbtn.E{border-color:rgba(255,45,85,.5);color:var(--red);background:rgba(255,45,85,.1);}
 .tbtn.D{border-color:rgba(255,214,0,.5);color:var(--gold);background:rgba(255,214,0,.1);}
@@ -686,17 +688,17 @@ html.ob-done #onboarding{display:none;}
 /* Deutéranopie — rouge→orange, vert→bleu */
 #root.cb-deut{--red:#E8610A;--red2:#C94D00;--green:#1A78C2;}
 #root.cb-deut.light-mode{--red:#B84500;--red2:#903400;--green:#005FA3;}
-#root.cb-deut .tbtn.E{border-color:rgba(232,97,10,.5)!important;background:rgba(232,97,10,.1)!important;}
+#root.cb-deut .tbtn.E,#root.cb-deut .tbtn.X{border-color:rgba(232,97,10,.5)!important;background:rgba(232,97,10,.1)!important;}
 #root.cb-deut .chk.done{box-shadow:0 2px 8px rgba(26,120,194,.3)!important;}
 /* Protanopie — rouge→orange-brun, vert→bleu */
 #root.cb-prot{--red:#D46000;--red2:#B04D00;--green:#0077BB;}
 #root.cb-prot.light-mode{--red:#A04000;--red2:#7A3000;--green:#005899;}
-#root.cb-prot .tbtn.E{border-color:rgba(212,96,0,.5)!important;background:rgba(212,96,0,.1)!important;}
+#root.cb-prot .tbtn.E,#root.cb-prot .tbtn.X{border-color:rgba(212,96,0,.5)!important;background:rgba(212,96,0,.1)!important;}
 #root.cb-prot .chk.done{box-shadow:0 2px 8px rgba(0,119,187,.3)!important;}
 /* Tritanopie — bleu→rose, or→émeraude, violet→orange */
 #root.cb-trit{--blue:#E8477A;--gold:#009B77;--purp:#C8500A;}
 #root.cb-trit.light-mode{--blue:#C2195A;--gold:#007A5C;--purp:#A04000;}
-#root.cb-trit .tbtn.W{border-color:rgba(232,71,122,.5)!important;background:rgba(232,71,122,.1)!important;}
+#root.cb-trit .tbtn.W,#root.cb-trit .tbtn.É{border-color:rgba(232,71,122,.5)!important;background:rgba(232,71,122,.1)!important;}
 #root.cb-trit .tbtn.D{border-color:rgba(0,155,119,.5)!important;background:rgba(0,155,119,.1)!important;}
 
 /* ─── GAUCHER ────────────────────────────────────────────── */

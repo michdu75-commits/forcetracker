@@ -115,13 +115,11 @@ function buildCoachContext() {
     const exStr = (s.exs||s.exercises||[]).map(e => {
       const ds = e.sets.filter(x => x.done);
       const nNorm = ds.filter(x => x.type==='N'||!x.type).length;
-      const nFail = ds.filter(x => x.type==='E').length;
-      const nDrop = ds.filter(x => x.type==='D').length;
-      const nWarm = ds.filter(x => x.type==='W').length;
+      const nFail = ds.filter(x => x.type==='X'||x.type==='E').length;
+      const nWarm = ds.filter(x => x.type==='É'||x.type==='W').length;
       let tech = nNorm ? `${nNorm}s` : '';
-      if (nWarm) tech += `+${nWarm}W`;
-      if (nFail) tech += `+${nFail}échec`;
-      if (nDrop) tech += `+${nDrop}drop`;
+      if (nWarm) tech += `+${nWarm}É`;
+      if (nFail) tech += `+${nFail}X`;
       return `${e.name}(${tech})`;
     }).join(', ');
     return `${s.date}: ${exStr} — ${s.volume}kg vol`;
