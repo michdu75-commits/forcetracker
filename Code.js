@@ -95,7 +95,8 @@ function _getSheet_() { return SpreadsheetApp.openById(SHEET_ID_); }
 const PREMIUM_HARDCODED_ = [
   'michdu75@gmail.com',
   'elineazs32@gmail.com',
-  'christophe@famillelanglois.fr'
+  'christophe@famillelanglois.fr',
+  'apollonone75@gmail.com'
 ];
 
 // Calcule le statut premium d'un email — retourne {premium, expiry}
