@@ -1113,19 +1113,22 @@ async function debugPremiumCheck(){
       try{dbg=JSON.parse(txt2);}catch(_){}
     }catch(_){}
 
+    const fullList=dbg&&dbg.fullPremiumList||[];
+    const fullCount=dbg&&dbg.fullPremiumCount!=null?dbg.fullPremiumCount:'?';
     const rawEmails=dbg&&dbg.rawPremiumEmails!=null?dbg.rawPremiumEmails:'(erreur GET)';
-    const wlCount=dbg&&dbg.whitelistCount!=null?dbg.whitelistCount:'?';
-    const wlMatch=dbg&&dbg.match!=null?(dbg.match?'OUI ✅':'NON ❌'):'?';
+    const matchHard=dbg&&dbg.matchHardcoded;
+    const matchProp=dbg&&dbg.matchProperty;
 
     el.innerHTML=
       `Email&nbsp;app : <b>${S.email}</b><br>`+
       `URL (fin) : <b style="font-size:10px;">…${urlEnd}</b><br>`+
       `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
-      `Premium serveur (POST) : <b style="color:${srvPrem?'var(--green)':'var(--red)'}">${srvPrem?'OUI ✅':'NON ❌'}</b> (${srvStatus})<br>`+
-      `Expiry : <b>${(d&&d.premiumExpiry)||'—'}</b><br>`+
-      `─── PREMIUM_EMAILS brut ───<br>`+
-      `<span style="font-size:10px;word-break:break-all;">"${rawEmails}"</span><br>`+
-      `Nb emails : <b>${wlCount}</b> · match email : <b>${wlMatch}</b>`;
+      `Premium serveur : <b style="color:${srvPrem?'var(--green)':'var(--red)'}">${srvPrem?'OUI ✅':'NON ❌'}</b> (${srvStatus})<br>`+
+      `Source match : <b>${matchHard?'hardcodé':''}${matchHard&&matchProp?' + ':''}${matchProp?'PREMIUM_EMAILS':''||'—'}</b><br>`+
+      `──── Tous les comptes premium (${fullCount}) ────<br>`+
+      fullList.map(e=>`<span style="display:block;font-size:11px;padding:1px 0;">✅ ${e}</span>`).join('')+
+      `──── PREMIUM_EMAILS (Script Property) ────<br>`+
+      `<span style="font-size:10px;color:var(--t3);word-break:break-all;">"${rawEmails}"</span>`;
 
     if(d&&(d.status==='ok'||d.status==='not_found')){
       const was=S.premium;

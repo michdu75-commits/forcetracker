@@ -160,6 +160,8 @@ function doGet(e) {
       }));
     } catch(_) {}
     Logger.log('[FT debugPremium] email=' + emailQ + ' | raw="' + rawList + '" | matchProp=' + matchProp + ' | matchHard=' + matchHard);
+    // Liste complète = hardcodé + propriété, sans doublons
+    const fullList = Array.from(new Set([...PREMIUM_HARDCODED_, ...whitelist]));
     return json_({
       debugPremium: true,
       emailQueried: emailQ,
@@ -170,6 +172,8 @@ function doGet(e) {
       matchHardcoded: matchHard,
       premiumResult: matchProp || matchHard,
       hardcodedList: PREMIUM_HARDCODED_,
+      fullPremiumList: fullList,
+      fullPremiumCount: fullList.length,
       projectTriggers: triggers
     });
   }
