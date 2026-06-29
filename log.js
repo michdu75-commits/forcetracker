@@ -27,11 +27,16 @@ function _startWktChrono(){
 }
 function _stopWktChrono(){if(_wktChronoIv){clearInterval(_wktChronoIv);_wktChronoIv=null;}}
 
-// Ré-acquérir si l'app revient au premier plan
+// Ré-acquérir + resync des deux chronos au retour au premier plan
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&_curScreen==='log'){
     _acquireWakeLock();
+    // Wkt chrono : mise à jour immédiate (ne pas attendre le prochain tick)
+    const chronoEl=document.getElementById('wkt-chrono');
+    if(chronoEl)chronoEl.textContent=_fmtElapsed();
     _startWktChrono();
+    // Rest timer : vérification immédiate (bip + affichage)
+    if(restIv)_restTick();
   }
 });
 
@@ -1213,45 +1218,62 @@ function _showSaveError(){
 }
 
 // ─── REST TIMER ──────────────────────────────────────────────
-let restIv=null,restTot=120,restLeft=0;
-let restOvertime=false;
+// Source de vérité : restStartTs (timestamp) + restTot (durée)
+// restLeft n'est JAMAIS décrémenté — toujours calculé depuis Date.now()
+let restIv=null,restTot=120,restStartTs=0;
+let restOvertime=false,_restBeeped=false;
 let _restDoneCb=null;
+
+function _restLeft(){
+  if(!restStartTs)return 0;
+  return restTot-Math.floor((Date.now()-restStartTs)/1000);
+}
+
+function _restTick(){
+  const left=_restLeft();
+  if(left<=0&&!_restBeeped){
+    _restBeeped=true;
+    beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);
+    if(_restDoneCb){const cb=_restDoneCb;_restDoneCb=null;setTimeout(()=>{stopRest();cb();},400);return;}
+    restOvertime=true;
+    const bar=document.getElementById('rest-bar');if(bar)bar.classList.add('overtime');
+  }
+  updRest();
+}
+
 function startRest(sec){
-  stopRest();restTot=sec;restLeft=sec;restOvertime=false;
+  stopRest();restTot=sec;restStartTs=Date.now();restOvertime=false;_restBeeped=false;
   const bar=document.getElementById('rest-bar');
   bar.classList.add('show');bar.classList.remove('overtime');
   updRest();
-  restIv=setInterval(()=>{
-    restLeft--;
-    if(restLeft===0){
-      beep();if(navigator.vibrate)navigator.vibrate([200,100,200]);
-      if(_restDoneCb){const cb=_restDoneCb;_restDoneCb=null;setTimeout(()=>{stopRest();cb();},400);return;}
-      restOvertime=true;bar.classList.add('overtime');
-    }
-    updRest();
-  },1000);
+  restIv=setInterval(_restTick,500);
 }
+
 function updRest(){
   const bar=document.getElementById('rest-bar');
   const timeEl=document.getElementById('rest-time');
   const fillEl=document.getElementById('rest-fill');
-  if(restLeft>=0){
-    const m=Math.floor(restLeft/60),s=restLeft%60;
+  if(!timeEl||!fillEl)return;
+  const left=_restLeft();
+  if(left>=0){
+    const m=Math.floor(left/60),s=left%60;
     timeEl.textContent=`${m}:${s.toString().padStart(2,'0')}`;
-    const pct=restLeft/restTot*100;
+    const pct=left/restTot*100;
     fillEl.style.width=pct+'%';
     const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
     const bc=pct>50?'rgba(0,230,118,.3)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
     timeEl.style.color=c;fillEl.style.background=c;if(bar)bar.style.borderColor=bc;
   } else {
-    const ot=-restLeft,m=Math.floor(ot/60),s=ot%60;
+    const ot=-left,m=Math.floor(ot/60),s=ot%60;
     timeEl.textContent=`+${m}:${s.toString().padStart(2,'0')}`;
     fillEl.style.width='0%';
     timeEl.style.color='var(--red)';fillEl.style.background='var(--red)';
   }
 }
+
 function stopRest(){
-  clearInterval(restIv);restOvertime=false;_restDoneCb=null;
+  clearInterval(restIv);restIv=null;restStartTs=0;
+  restOvertime=false;_restBeeped=false;_restDoneCb=null;
   const bar=document.getElementById('rest-bar');
   if(bar){bar.classList.remove('show','overtime');bar.style.borderColor='';}
   const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';
@@ -1285,12 +1307,18 @@ function _highlightRestPreset(sec){
   [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
 }
 function setRestPreset(sec){
-  restLeft=sec;restTot=sec;restOvertime=false;
+  restTot=sec;restStartTs=Date.now();restOvertime=false;_restBeeped=false;
   const bar=document.getElementById('rest-bar');if(bar)bar.classList.remove('overtime');
   if(_restEx){S.exRestPref=S.exRestPref||{};S.exRestPref[_restEx]=sec;persist();}
   _highlightRestPreset(sec);updRest();
 }
-function addRT(s){restLeft=Math.max(5,Math.min(restLeft+s,600));updRest();}
+function addRT(s){
+  if(!restStartTs)return;
+  // Recalcule restStartTs pour que _restLeft() reflète la nouvelle durée
+  const newLeft=Math.max(5,Math.min(_restLeft()+s,600));
+  restStartTs=Date.now()-(restTot-newLeft)*1000;
+  updRest();
+}
 function skipRest(){stopRest();}
 function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
 
