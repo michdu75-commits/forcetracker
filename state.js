@@ -97,6 +97,15 @@ function load(){
       localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
       localStorage.setItem('ft4_sessions',JSON.stringify(S.sessions));
     }
+    // Migration set-tags : W→É, E→X, D→N (one-time)
+    if(!localStorage.getItem('ft4_stmig1')){
+      const _migSet=s=>{if(s.type==='W')s.type='É';else if(s.type==='E')s.type='X';else if(s.type==='D')s.type='N';};
+      (S.sessions||[]).forEach(sess=>(sess.exs||sess.exercises||[]).forEach(ex=>(ex.sets||[]).forEach(_migSet)));
+      if(S.wkt&&S.wkt.exs)S.wkt.exs.forEach(ex=>(ex.sets||[]).forEach(_migSet));
+      localStorage.setItem('ft4_stmig1','1');
+      localStorage.setItem('ft4_sessions',JSON.stringify(S.sessions));
+      if(S.wkt)localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+    }
   }catch(e){}
 }
 function persist(){

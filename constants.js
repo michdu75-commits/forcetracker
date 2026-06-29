@@ -108,8 +108,8 @@ const BIG4=['Squat à la Barre','Soulevé de Terre','Développé Couché','Déve
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec';
-const SET_TYPES=['N','W','E','D'];
-const SET_TYPE_LABELS={N:'Normal',W:'Warm-up',E:'Échec',D:'Drop set'};
+const SET_TYPES=['N','É','X'];
+const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
 
 // ─── NOUVELLES FONCTIONNALITÉS (indicateur pastille) ─────────
 // Ajouter ici chaque nouvelle feature avec un id unique + l'écran concerné.

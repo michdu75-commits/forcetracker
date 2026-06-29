@@ -873,7 +873,7 @@ function checkWeeklySummary(){
   if(!lastWeekSess.length)return;
   S.lastWeekSummary=thisMonday;persist();
   const sessCount=lastWeekSess.length;
-  const totalVol=lastWeekSess.reduce((a,s)=>a+(s.volume||0),0);
+  const totalVol=lastWeekSess.reduce((a,s)=>a+(_workVol(s)||s.volume||0),0);
   const totalCal=lastWeekSess.reduce((a,s)=>a+(s.calories||0),0);
   const newBadges=Object.entries(S.badges||{})
     .filter(([,v])=>v.unlockedAt&&v.unlockedAt>=ws&&v.unlockedAt<=we)

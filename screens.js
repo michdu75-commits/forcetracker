@@ -124,8 +124,8 @@ const _HELP_DATA={
   log:{
     title:'⚡ Séance',
     tips:[
-      {i:'🔤',t:'Types de série : N = Normal · W = Échauffement (compté dans le volume, exclu des PRs en pratique) · E = Échec musculaire · D = Drop set. Appuie sur la lettre pour changer.'},
-      {i:'⏱️',t:'Timer adaptatif : W = 45s · N = 2:10 · E = 4min · D = 20s. Boutons −15s/+15s et presets 1:00/1:30/2:00.'},
+      {i:'🔤',t:'Tags de série : É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. Appuie sur la pastille pour changer, le nom complet s\'affiche en toast.'},
+      {i:'⏱️',t:'Timer adaptatif : É = 45s · N = 2:10 · X = 4min. Boutons −15s/+15s et presets 1:00/1:30/2:00.'},
       {i:'⚡',t:'Super-séries : bouton "⚡ Grouper" dès 2 exercices → sélectionne-les → "Lier en supersérie". Enchaînement automatique sans repos. Boutons 📉 Drop / 📈 +10% / 📉 −10% pour pyramides et drop sets.'},
       {i:'📊',t:'Bouton 📊 sur chaque exercice → graphique du poids max sur les 5 dernières séances.'},
       {i:'🏋️',t:'Le 1RM (Brzycki) s\'affiche en temps réel sous le type — utilise-le pour calibrer tes charges. Appuie sur ℹ️ pour l\'aide sur les types.'},
@@ -305,7 +305,7 @@ function renderHome(){try{
   _renderHomeHero();
   const now=new Date();
   const mo=S.sessions.filter(s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
-  const vol=mo.reduce((a,s)=>a+(s.volume||0),0);
+  const vol=mo.reduce((a,s)=>a+(_workVol(s)||s.volume||0),0);
   const b3=BIG3.map(e=>S.prs[e]?S.prs[e].rm1:0).reduce((a,b)=>a+b,0);
   const latestW=S.weightLog&&S.weightLog.length?S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0]:null;
   const bwDisp=latestW?latestW.kg:(S.bw||'—');
@@ -314,7 +314,8 @@ function renderHome(){try{
   if(statsEl)statsEl.innerHTML='<div style="display:flex;border-radius:16px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);padding:14px 0;">'
     +'<div style="flex:1;text-align:center;cursor:pointer;" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
     +'<div id="h-vol" style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--t1);">'+volDisp+'</div>'
-    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Volume</div></div>'
+    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Volume</div>'
+    +'<div style="font-size:7.5px;color:var(--t3);opacity:.6;margin-top:1px;">hors échauffement</div></div>'
     +'<div style="width:1px;background:rgba(255,255,255,.07);"></div>'
     +'<div style="flex:1;text-align:center;cursor:pointer;" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
     +'<div id="h-big3" style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--orange);">'+(b3>0?Math.round(b3):'—')+'</div>'
