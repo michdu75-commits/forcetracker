@@ -71,6 +71,8 @@ function renderLog(){
     +(hasExs?'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>':'')
     +'</div>';
   _startWktChrono();
+  // Refresh immédiat des timers au retour sur l'écran (ne pas attendre le prochain tick)
+  if(restIv)_restTick();
   renderLogSleep();
   renderCardioBlock();
   renderExBlocks();
