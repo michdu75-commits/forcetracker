@@ -90,15 +90,29 @@ function todayStr_() {
 var SHEET_ID_ = '1b0kuCk6kuNi26hMJq5Q5R6-mKFeXEexfm2P9SryJ-eg';
 function _getSheet_() { return SpreadsheetApp.openById(SHEET_ID_); }
 
+// Liste premium codée en dur — indépendante des Script Properties
+// (résiste à tout trigger/init qui écraserait PREMIUM_EMAILS)
+const PREMIUM_HARDCODED_ = [
+  'michdu75@gmail.com',
+  'elineazs32@gmail.com',
+  'christophe@famillelanglois.fr'
+];
+
 // Calcule le statut premium d'un email — retourne {premium, expiry}
 function getPremiumStatus_(email) {
   const props = PropertiesService.getScriptProperties();
 
-  // 1. Whitelist indéfinie (PREMIUM_EMAILS)
+  // 0. Liste codée en dur (toujours prioritaire)
+  if (PREMIUM_HARDCODED_.includes(email)) {
+    Logger.log('[FT premium] email=' + email + ' | source=HARDCODED | match=true');
+    return { premium: true, expiry: null };
+  }
+
+  // 1. Whitelist Script Property PREMIUM_EMAILS
   const rawList = props.getProperty('PREMIUM_EMAILS') || '';
   const whitelist = rawList.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
   const match = whitelist.includes(email);
-  Logger.log('[FT premium] email=' + email + ' | raw="' + rawList + '" | whitelist=' + JSON.stringify(whitelist) + ' | match=' + match);
+  Logger.log('[FT premium] email=' + email + ' | source=PREMIUM_EMAILS | raw="' + rawList + '" | match=' + match);
   if (match) {
     return { premium: true, expiry: null };
   }
@@ -128,21 +142,34 @@ function doGet(e) {
   }
 
   // Debug premium — ?debugPremium=1&email=xxx@xxx.com
-  // Retourne le contenu brut de PREMIUM_EMAILS et le résultat du match
   if (p.debugPremium && p.email) {
     const props2 = PropertiesService.getScriptProperties();
     const rawList = props2.getProperty('PREMIUM_EMAILS') || '';
     const whitelist = rawList.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
     const emailQ = (p.email || '').toLowerCase().trim();
-    const match = whitelist.includes(emailQ);
-    Logger.log('[FT debugPremium] email=' + emailQ + ' | raw="' + rawList + '" | match=' + match);
+    const matchProp = whitelist.includes(emailQ);
+    const matchHard = PREMIUM_HARDCODED_.includes(emailQ);
+    // Triggers installables (peuvent écraser des properties)
+    let triggers = [];
+    try {
+      triggers = ScriptApp.getProjectTriggers().map(t => ({
+        fn: t.getHandlerFunction(),
+        type: t.getEventType().toString(),
+        src: t.getTriggerSource().toString()
+      }));
+    } catch(_) {}
+    Logger.log('[FT debugPremium] email=' + emailQ + ' | raw="' + rawList + '" | matchProp=' + matchProp + ' | matchHard=' + matchHard);
     return json_({
       debugPremium: true,
       emailQueried: emailQ,
       rawPremiumEmails: rawList,
       parsedWhitelist: whitelist,
       whitelistCount: whitelist.length,
-      match: match
+      matchProperty: matchProp,
+      matchHardcoded: matchHard,
+      premiumResult: matchProp || matchHard,
+      hardcodedList: PREMIUM_HARDCODED_,
+      projectTriggers: triggers
     });
   }
 
