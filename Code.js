@@ -138,6 +138,21 @@ function doGet(e) {
     _bProps.setProperty('backup_set_tags_2026_06_29', new Date().toISOString());
   }
 
+  // One-shot purge des triggers installables (fantôme PREMIUM_EMAILS)
+  if (!_bProps.getProperty('triggers_purged_20260630')) {
+    try {
+      const allTriggers = ScriptApp.getProjectTriggers();
+      const trigLog = allTriggers.map(t => t.getHandlerFunction() + '/' + t.getEventType()).join(', ');
+      allTriggers.forEach(t => ScriptApp.deleteTrigger(t));
+      Logger.log('[FT cleanup] Triggers supprimés : ' + trigLog);
+      _bProps.setProperty('triggers_purged_20260630', new Date().toISOString());
+      _bProps.setProperty('triggers_purged_log', trigLog || 'AUCUN');
+    } catch(err) {
+      Logger.log('[FT cleanup] Erreur suppression triggers : ' + err);
+      _bProps.setProperty('triggers_purged_20260630', 'error: ' + err);
+    }
+  }
+
   if (p.test) {
     return json_({status:'online', version:'3.5'});
   }
@@ -174,7 +189,9 @@ function doGet(e) {
       hardcodedList: PREMIUM_HARDCODED_,
       fullPremiumList: fullList,
       fullPremiumCount: fullList.length,
-      projectTriggers: triggers
+      projectTriggers: triggers,
+      triggerPurgeLog: _bProps.getProperty('triggers_purged_log') || 'pas encore purgé',
+      triggerPurgedAt: _bProps.getProperty('triggers_purged_20260630') || null
     });
   }
 
@@ -222,6 +239,19 @@ function handleLoadProfilePost_(body) {
   });
 }
 
+// Safeguard permanent : s'assure que PREMIUM_HARDCODED_ est toujours dans PREMIUM_EMAILS
+function ensurePremiumEmails_() {
+  const props = PropertiesService.getScriptProperties();
+  const raw = props.getProperty('PREMIUM_EMAILS') || '';
+  const existing = raw.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
+  const missing = PREMIUM_HARDCODED_.filter(e => !existing.includes(e));
+  if (missing.length > 0) {
+    const merged = Array.from(new Set([...PREMIUM_HARDCODED_, ...existing]));
+    props.setProperty('PREMIUM_EMAILS', merged.join(','));
+    Logger.log('[FT safeguard] PREMIUM_EMAILS corrigé : ' + merged.join(','));
+  }
+}
+
 // ───────────────────────────────────────────────────────────
 function doPost(e) {
   // Ko-fi envoie application/x-www-form-urlencoded avec un champ "data" JSON
@@ -235,6 +265,8 @@ function doPost(e) {
   } catch(err) {
     return json_({status:'error', error:'JSON parse error: ' + err.message});
   }
+
+  ensurePremiumEmails_();
 
   if (body.action === 'test')              return json_({status:'online', version:'3.5'});
   if (body.action === 'loadProfile')       return handleLoadProfilePost_(body);
