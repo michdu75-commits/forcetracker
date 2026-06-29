@@ -114,6 +114,13 @@ function getPremiumStatus_(email) {
 function doGet(e) {
   const p = e.parameter || {};
 
+  // One-shot backup avant migration set-tags — s'exécute une seule fois
+  const _bProps = PropertiesService.getScriptProperties();
+  if (!_bProps.getProperty('backup_set_tags_2026_06_29')) {
+    try { backupAllUserData_(); } catch(_e) { Logger.log('backup err: ' + _e); }
+    _bProps.setProperty('backup_set_tags_2026_06_29', new Date().toISOString());
+  }
+
   if (p.test) {
     return json_({status:'online', version:'3.2'});
   }
@@ -726,3 +733,49 @@ function handleSummarizeCoach_(body) {
   }
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// BACKUP — Sauvegarde toutes les données utilisateurs
+// Crée un onglet "Backup YYYY-MM-DD HH:MM" dans le Sheet.
+// Peut être appelé manuellement (clasp run) ou via Apps Script
+// Exécutions (déclencheur unique one-shot).
+// ═══════════════════════════════════════════════════════════
+function backupAllUserData_() {
+  const props = PropertiesService.getScriptProperties();
+  const all   = props.getProperties();
+  const now   = new Date();
+  const label = Utilities.formatDate(now, 'Europe/Paris', 'yyyy-MM-dd HH:mm');
+  const ss    = _getSheet_();
+
+  // Supprime les anciens onglets backup de plus de 30 jours
+  ss.getSheets().forEach(sh => {
+    const n = sh.getName();
+    if (!n.startsWith('Backup ')) return;
+    const d = new Date(n.replace('Backup ', '').replace(' ', 'T') + ':00');
+    if (!isNaN(d) && (now - d) > 30 * 24 * 3600 * 1000) ss.deleteSheet(sh);
+  });
+
+  // Onglet backup daté
+  let sheet = ss.getSheetByName('Backup ' + label);
+  if (!sheet) sheet = ss.insertSheet('Backup ' + label);
+  sheet.clearContents();
+  sheet.appendRow(['email', 'data_json', 'backed_up_at']);
+
+  Object.keys(all)
+    .filter(k => k.startsWith('u_'))
+    .forEach(k => {
+      const email = k.replace(/^u_/, '');
+      sheet.appendRow([email, all[k], now.toISOString()]);
+    });
+
+  Logger.log('Backup terminé : ' + sheet.getName() + ' — ' + (sheet.getLastRow() - 1) + ' utilisateurs');
+}
+
+// Lance le backup une seule fois dans les 5 prochaines minutes (one-shot trigger)
+function scheduleOneTimeBackup_() {
+  ScriptApp.newTrigger('backupAllUserData_')
+    .timeBased()
+    .after(60 * 1000) // dans 1 minute
+    .create();
+  Logger.log('Déclencheur one-shot créé — backup dans ~1 min');
+}

@@ -901,6 +901,12 @@ function renderSetup(){
   const barEl=document.getElementById('bar-inp');if(barEl)barEl.value=S.barW;
   const restEl=document.getElementById('rest-sel');if(restEl)restEl.value=S.defRest;
   const emailEl=document.getElementById('email-inp');if(emailEl)emailEl.value=S.email||'';
+  const profilEmailLbl=document.getElementById('profil-email-lbl');
+  const profilSyncDot=document.getElementById('profil-sync-dot');
+  if(profilEmailLbl){
+    profilEmailLbl.textContent=S.email||'Non connecté';
+    if(profilSyncDot)profilSyncDot.style.background=S.email&&S.connected?'#34c759':S.email?'#ff9500':'var(--t3)';
+  }
   setWorkType(S.workType);
   setSmoker(S.smoker);
   const csEl=document.getElementById('cycle-start-inp');if(csEl)csEl.value=S.mensCycleStart||'';
