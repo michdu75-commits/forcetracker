@@ -1296,22 +1296,16 @@ function _updPill(){
   const pillTime=document.getElementById('rest-pill-time');
   const pillFill=document.getElementById('rest-pill-fill');
   if(!pillTime||!pillFill)return;
-  if(left>=0){
-    const m=Math.floor(left/60),s=left%60;
-    pillTime.textContent=`${m}:${s.toString().padStart(2,'0')}`;
-    const pct=left/restTot*100;
-    pillFill.style.width=pct+'%';
-    const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
-    pillFill.style.background=c;
-    pill.style.borderColor=pct>50?'rgba(52,211,153,.5)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
-    pill.classList.remove('overtime');
-  } else {
-    const ot=-left,m=Math.floor(ot/60),s=ot%60;
-    pillTime.textContent=`+${m}:${s.toString().padStart(2,'0')}`;
-    pillFill.style.width='0%';pillFill.style.background='var(--red)';
-    pill.style.borderColor='rgba(255,106,115,.7)';
-    pill.classList.add('overtime');
-  }
+  // Disparaît quand le temps est écoulé
+  if(left<=0){pill.classList.remove('show','overtime');return;}
+  const m=Math.floor(left/60),s=left%60;
+  pillTime.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+  const pct=left/restTot*100;
+  pillFill.style.width=pct+'%';
+  const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
+  pillFill.style.background=c;
+  pill.style.borderColor=pct>50?'rgba(52,211,153,.5)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
+  pill.classList.remove('overtime');
 }
 
 function _restTick(){
