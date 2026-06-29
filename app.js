@@ -996,6 +996,8 @@ checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 initCoachInput();
 initOnboarding();
+// true tant que le check serveur n'a pas répondu — bloque le mur payant pendant ce délai
+let _premiumPending=!!S.email;
 // Ping silencieux — fire-and-forget (no-cors peut bloquer sur iOS Safari PWA)
 (async function autoConnect(){
   if(!S.url)return;
@@ -1013,21 +1015,31 @@ initOnboarding();
         const wasPremium=S.premium;
         S.premium=d2.premium===true;
         S.premiumExpiry=d2.premiumExpiry||'';
-        // Toujours persist + updateCoachHeader — pas de condition sur changement
         persist();
+        _premiumPending=false;
         updateCoachHeader();
         if(S.premium&&!wasPremium){
           toast('🎉 Accès Premium activé !','success');
           const wall=document.getElementById('coach-wall');
           if(wall)wall.style.display='none';
         }
+        // Mur différé : si non-premium confirmé et quota dépassé, afficher maintenant
+        if(!S.premium&&(S.coachFree||0)>=COACH_FREE_LIMIT){
+          if(typeof showPremiumWall==='function')showPremiumWall();
+        }
         console.log('[FT premium]',S.premium?'activé':'désactivé','(was:',wasPremium,')');
-      }
+      }else{_premiumPending=false;}
     }catch(e){
       console.warn('[FT premium check] échec réseau :',e.message);
+      _premiumPending=false;
       checkPremiumExpiry();
+      // En cas d'erreur réseau : si l'état local dit non-premium et quota dépassé, afficher le mur
+      if(!S.premium&&(S.coachFree||0)>=COACH_FREE_LIMIT){
+        if(typeof showPremiumWall==='function')showPremiumWall();
+      }
     }
   } else {
+    _premiumPending=false;
     checkPremiumExpiry();
   }
 })();
