@@ -1005,10 +1005,13 @@ let _premiumPending=!!S.email;
   fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'test'})})
     .then(()=>{if(!S.connected){S.connected=true;persist();updatePill();}})
     .catch(()=>{});
-  // Vérif premium : re-checker depuis le serveur à chaque ouverture
+  // Vérif premium + sync au démarrage — timeout 3s pour ne pas bloquer sur réseau faible
   if(S.email){
     try{
-      const r2=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+      const _ctrl=new AbortController();
+      const _tId=setTimeout(()=>_ctrl.abort(),3000);
+      const r2=await fetch(S.url,{method:'POST',redirect:'follow',signal:_ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+      clearTimeout(_tId);
       const d2=await r2.json();
       console.log('[FT premium check]',{email:S.email,status:d2.status,premium:d2.premium,expiry:d2.premiumExpiry});
       if(d2.status==='ok'||d2.status==='not_found'){
@@ -1028,9 +1031,11 @@ let _premiumPending=!!S.email;
           if(typeof showPremiumWall==='function')showPremiumWall();
         }
         console.log('[FT premium]',S.premium?'activé':'désactivé','(was:',wasPremium,')');
+        // Réseau disponible → tenter la resynchro des séances en attente
+        if(typeof _retrySheetQueue==='function')setTimeout(_retrySheetQueue,1500);
       }else{_premiumPending=false;}
     }catch(e){
-      console.warn('[FT premium check] échec réseau :',e.message);
+      console.warn('[FT premium check] échec réseau (timeout ou panne):',e.message);
       _premiumPending=false;
       checkPremiumExpiry();
       // En cas d'erreur réseau : si l'état local dit non-premium et quota dépassé, afficher le mur
@@ -1078,7 +1083,11 @@ if('serviceWorker' in navigator){
       document.addEventListener('visibilitychange',()=>{
         if(document.visibilityState==='visible')reg.update();
       });
-      window.addEventListener('online',()=>reg.update()); // retour réseau
+      window.addEventListener('online',()=>{
+        reg.update(); // vérifie si nouveau SW disponible
+        // Retour réseau → retry des séances non synchronisées (délai 1s pour stabilisation)
+        setTimeout(()=>{if(typeof _retrySheetQueue==='function')_retrySheetQueue();},1000);
+      });
     });
     navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
     navigator.serviceWorker.addEventListener('message',e=>{

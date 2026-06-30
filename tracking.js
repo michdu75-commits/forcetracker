@@ -7,9 +7,51 @@ async function syncSheets(sess){
       if(!s.done)return;
       rows.push({date:sess.date,exercise:ex.name,set_num:i+1,type:s.type||'N',kg:s.kg,reps:s.reps,volume:(s.kg||0)*(s.reps||0),rm1:s.rm1?fmt(s.rm1):'',bw:S.bw,gender:S.gender,age:S.age});
     }));
-    await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age})});
-    return true;
-  }catch(e){return false;}
+    // Utilise CORS (pas no-cors) pour confirmer la réception côté serveur
+    const ctrl=new AbortController();
+    const tId=setTimeout(()=>ctrl.abort(),8000);
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age})});
+    clearTimeout(tId);
+    const data=await resp.json();
+    console.log('[FT syncSheets]',sess.date,data);
+    return data&&data.status==='ok';
+  }catch(e){
+    console.warn('[FT syncSheets] échec:',e.message);
+    return false;
+  }
+}
+
+// ─── FILE D'ATTENTE SYNC SHEETS ──────────────────────────────
+// Resynchro des séances non confirmées (synced:false)
+// Appelé au démarrage, au retour en ligne, et via bouton Resynchroniser
+async function _retrySheetQueue(){
+  if(!S.url||!S.email)return;
+  const toSync=(S.sessions||[]).filter(s=>s.synced===false);
+  if(!toSync.length){console.log('[FT retry] File vide — tout est OK');_updateAdminSyncInfo();return;}
+  console.log('[FT retry]',toSync.length,'séance(s) en attente');
+  let synced=0,failed=0;
+  for(const sess of toSync){
+    const ok=await syncSheets(sess);
+    if(ok){sess.synced=true;synced++;}else failed++;
+  }
+  if(synced>0){
+    try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));}catch(e){}
+  }
+  _updateAdminSyncInfo();
+  if(synced>0&&failed===0)toast('☁️ '+synced+' séance'+(synced>1?'s':'')+' synchronisée'+(synced>1?'s':'')+' !','success');
+  else if(synced>0)toast('☁️ '+synced+'/'+toSync.length+' séances sync — '+(failed)+' échec(s)','info');
+}
+
+function _countUnsyncedSessions(){return(S.sessions||[]).filter(s=>s.synced===false).length;}
+
+function _updateAdminSyncInfo(){
+  const el=document.getElementById('admin-sync-info');if(!el)return;
+  const n=_countUnsyncedSessions();
+  const total=(S.sessions||[]).length;
+  el.innerHTML=(n===0
+    ?'<span style="color:var(--green)">✅ Tout synchronisé ('+total+' séance'+(total>1?'s':'')+')</span>'
+    :'<span style="color:var(--gold)">⚠️ '+n+' séance'+(n>1?'s':'')+' non synchronisée'+(n>1?'s':'')+' / '+total+'</span>')+
+    '<br><span style="color:var(--t3);font-size:11px;">Réseau requis pour synchroniser.</span>';
 }
 
 // ─── TOAST ───────────────────────────────────────────────────
