@@ -998,6 +998,9 @@ checkBirthdayDedication(); // dédicace anniversaire Eline — 2 juillet
 initCoachInput();
 initOnboarding();
 // ─── DÉDICACE ANNIVERSAIRE — Eline (2 juillet) ───────────────
+let _bdayCandlesLeft=19;
+const _bdayCandles=[];
+
 function checkBirthdayDedication(){
   if(!S.email||S.email.toLowerCase()!=='elineazs32@gmail.com')return;
   if(localStorage.getItem('ft4_bday_eline_2026'))return;
@@ -1007,6 +1010,7 @@ function checkBirthdayDedication(){
   if(!(m===7&&d>=2&&d<=5))return;
   setTimeout(showBirthdayScreen,600);
 }
+
 function showBirthdayScreen(){
   const el=document.getElementById('ov-bday');
   if(!el)return;
@@ -1015,8 +1019,12 @@ function showBirthdayScreen(){
   el.style.transition='opacity .7s ease';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.opacity='1';}));
   _spawnBdayParticles();
+  _initBdayCandles();
 }
+
 function closeBirthdayScreen(){
+  const btn=document.getElementById('bday-btn');
+  if(btn&&btn.disabled)return; // bouton verrouillé = bougies pas encore toutes soufflées
   localStorage.setItem('ft4_bday_eline_2026','1');
   const el=document.getElementById('ov-bday');
   if(!el)return;
@@ -1024,6 +1032,7 @@ function closeBirthdayScreen(){
   el.style.opacity='0';
   setTimeout(()=>{el.style.display='none';},530);
 }
+
 function _spawnBdayParticles(){
   const c=document.getElementById('bday-particles');
   if(!c)return;
@@ -1039,26 +1048,124 @@ function _spawnBdayParticles(){
   }
   // Confettis qui tombent
   const cols=['#ffd700','#ff6b9d','#00d4ff','#7bed9f','#ff4757','#a29bfe','#ff9f43','#fff','#fd79a8'];
-  for(let i=0;i<70;i++){
+  for(let i=0;i<65;i++){
     const cf=document.createElement('div');
     const w=5+Math.random()*8,h=w*(0.3+Math.random()*.35);
     cf.style.cssText='position:absolute;width:'+w+'px;height:'+h+'px;'
       +'background:'+cols[Math.floor(Math.random()*cols.length)]+';border-radius:2px;'
       +'left:'+Math.random()*100+'%;top:-20px;'
       +'animation:bday-fall '+(3.5+Math.random()*4.5)+'s '+(Math.random()*4)+'s linear infinite;'
-      +'transform:rotate('+Math.floor(Math.random()*360)+'deg);'
-      +'opacity:'+(0.55+Math.random()*0.45)+';';
+      +'transform:rotate('+Math.floor(Math.random()*360)+'deg);opacity:'+(0.55+Math.random()*0.45)+';';
     c.appendChild(cf);
   }
   // Ballons qui montent
-  const emojis=['🎈','🎈','🎈','🎀','🎊','🎉','🎈'];
-  for(let i=0;i<8;i++){
+  const emojis=['🎈','🎈','🎈','🎀','🎊','🎉'];
+  for(let i=0;i<6;i++){
     const b=document.createElement('div');
     b.textContent=emojis[Math.floor(Math.random()*emojis.length)];
-    b.style.cssText='position:absolute;font-size:'+(20+Math.random()*20)+'px;'
-      +'left:'+(4+Math.random()*92)+'%;bottom:-70px;'
+    b.style.cssText='position:absolute;font-size:'+(18+Math.random()*16)+'px;pointer-events:none;'
+      +'left:'+(4+Math.random()*92)+'%;bottom:-60px;'
       +'animation:bday-rise '+(5+Math.random()*6)+'s '+(Math.random()*5)+'s ease-in infinite;';
     c.appendChild(b);
+  }
+}
+
+function _initBdayCandles(){
+  const container=document.getElementById('bday-candles');
+  const sparkleZone=document.getElementById('bday-sparkle-zone');
+  if(!container)return;
+  container.innerHTML='';
+  if(sparkleZone)sparkleZone.innerHTML='';
+  _bdayCandlesLeft=19;
+  _bdayCandles.length=0;
+  const colors=['#ff6b6b','#ffd700','#74b9ff','#ff9f43','#7bed9f','#a29bfe','#fd79a8','#fdcb6e','#55efc4','#fd79a8','#ffd700','#6c5ce7','#f9ca24','#00cec9','#e17055','#4bcffa','#f53b57','#0be881','#fd9644'];
+  for(let i=0;i<19;i++){
+    const wrap=document.createElement('div');
+    wrap.className='bday-candle';
+    wrap.dataset.idx=String(i);
+    wrap.style.cssText='position:relative;flex:1;max-width:14px;display:flex;flex-direction:column;align-items:center;';
+    // Flamme
+    const flame=document.createElement('div');
+    flame.className='bday-flame';
+    const dur=(0.28+Math.random()*.32).toFixed(2),del=(Math.random()*.5).toFixed(2);
+    flame.style.cssText='width:10px;height:16px;flex-shrink:0;border-radius:50% 50% 35% 35%;'
+      +'background:radial-gradient(ellipse at bottom,#fffbe0 0%,#ffe566 28%,#ff9900 65%,rgba(255,60,0,.1) 100%);'
+      +'box-shadow:0 0 7px 2px rgba(255,190,0,.55);'
+      +'animation:bday-flicker '+dur+'s '+del+'s ease-in-out infinite alternate;';
+    // Corps de la bougie
+    const body=document.createElement('div');
+    const h=38+Math.round(Math.random()*18);
+    body.style.cssText='width:8px;height:'+h+'px;flex-shrink:0;border-radius:3px 3px 2px 2px;'
+      +'background:linear-gradient(to right,'+colors[i]+'cc,'+colors[i]+','+colors[i]+'cc);';
+    // Fumée (cachée tant que la bougie est allumée)
+    const smoke=document.createElement('div');
+    smoke.className='bday-smoke-el';
+    smoke.style.cssText='position:absolute;top:-4px;left:50%;transform:translateX(-50%);'
+      +'width:8px;height:24px;opacity:0;pointer-events:none;'
+      +'background:radial-gradient(ellipse at bottom,rgba(200,200,200,.65) 0%,transparent 80%);border-radius:50%;';
+    wrap.appendChild(flame);
+    wrap.appendChild(body);
+    wrap.appendChild(smoke);
+    container.appendChild(wrap);
+    // Étincelle dorée dans la zone au-dessus
+    let sparkle=null;
+    if(sparkleZone){
+      sparkle=document.createElement('div');
+      const sz=1.5+Math.random()*2.5;
+      const pct=((i+0.5)/19*100).toFixed(1);
+      sparkle.style.cssText='position:absolute;width:'+sz+'px;height:'+sz+'px;background:#ffd700;border-radius:50%;'
+        +'left:'+pct+'%;top:'+(8+Math.random()*72)+'%;pointer-events:none;'
+        +'animation:bday-sparkle '+(0.4+Math.random()*.7)+'s '+(Math.random()*.5)+'s ease-in-out infinite;';
+      sparkleZone.appendChild(sparkle);
+    }
+    _bdayCandles.push({wrap,flame,smoke,sparkle,lit:true});
+  }
+}
+
+// Détection du passage du doigt sur les bougies
+function _bdayTouch(e){
+  e.preventDefault();
+  const touches=e.changedTouches||e.touches;
+  for(let i=0;i<touches.length;i++){
+    const t=touches[i];
+    let el=document.elementFromPoint(t.clientX,t.clientY);
+    // Remonter jusqu'au conteneur .bday-candle
+    while(el&&!el.classList.contains('bday-candle'))el=el.parentElement;
+    if(!el||!el.classList.contains('bday-candle'))continue;
+    const idx=parseInt(el.dataset.idx);
+    if(isNaN(idx)||idx<0||idx>=_bdayCandles.length||!_bdayCandles[idx].lit)continue;
+    _blowCandle(idx);
+  }
+}
+
+function _blowCandle(idx){
+  const c=_bdayCandles[idx];
+  if(!c||!c.lit)return;
+  c.lit=false;
+  c.flame.style.display='none';
+  if(c.sparkle)c.sparkle.style.display='none';
+  c.smoke.style.opacity='1';
+  c.smoke.style.animation='bday-smoke 1.4s ease-out forwards';
+  _bdayCandlesLeft--;
+  if(navigator.vibrate)navigator.vibrate(18);
+  const n=document.getElementById('bday-n');
+  if(n)n.textContent=_bdayCandlesLeft;
+  if(_bdayCandlesLeft===0){
+    const instr=document.getElementById('bday-instr-txt');
+    if(instr)instr.textContent='✨ Bravo ! Toutes soufflées !';
+    const nb=document.getElementById('bday-n');if(nb)nb.style.display='none';
+    const wrap=document.getElementById('bday-instr-wrap');if(wrap)wrap.style.color='#7bed9f';
+    setTimeout(()=>{
+      const btn=document.getElementById('bday-btn');
+      if(!btn)return;
+      btn.disabled=false;
+      btn.style.cssText='width:100%;max-width:270px;padding:16px 20px;border:none;border-radius:50px;'
+        +'background:linear-gradient(135deg,#FF2D55,#ff6b8a);color:#fff;font-size:15px;font-weight:800;'
+        +'cursor:pointer;font-family:system-ui,sans-serif;touch-action:manipulation;letter-spacing:.02em;'
+        +'box-shadow:0 6px 24px rgba(255,45,85,.4);animation:bday-btn-pop .5s cubic-bezier(.25,.46,.45,.94);'
+        +'-webkit-tap-highlight-color:transparent;';
+      btn.textContent='✨ Bravo ! Entrer dans l\'appli';
+    },700);
   }
 }
 
