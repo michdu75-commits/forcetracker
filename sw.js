@@ -1,4 +1,4 @@
-const CACHE = 'ft-v127';
+const CACHE = 'ft-v128';
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -58,15 +58,24 @@ self.addEventListener('fetch', e => {
   // Requêtes externes (Apps Script, Google Fonts, etc.) : réseau uniquement
   if (url.origin !== self.location.origin) return;
 
-  // Navigation HTML : réseau d'abord → toujours la dernière version
+  // Navigation HTML : cache d'abord (instantané) + mise à jour silencieuse en fond
+  // → ouverture immédiate depuis le cache même sans réseau ou réseau lent
   if (e.request.mode === 'navigate') {
     e.respondWith(
-      fetch(e.request)
-        .then(r => {
-          if (r && r.status === 200) { const cl=r.clone(); caches.open(CACHE).then(c => c.put(e.request, cl)); }
+      caches.match(e.request).then(cached => {
+        // Revalidation en arrière-plan — met à jour le cache pour la prochaine ouverture
+        const netFetch = fetch(e.request).then(r => {
+          if (r && r.status === 200) {
+            const cl = r.clone();
+            caches.open(CACHE).then(c => c.put(e.request, cl));
+          }
           return r;
-        })
-        .catch(() => caches.match(e.request).then(c => c || caches.match('./')))
+        }).catch(() => null);
+        // Cache dispo → affiche immédiatement, réseau en fond
+        if (cached) { netFetch.catch(() => {}); return cached; }
+        // Pas de cache (1re installation) → attend le réseau
+        return netFetch.then(r => r || caches.match('./'));
+      })
     );
     return;
   }

@@ -1081,6 +1081,7 @@ function _showAdminPremiumStatic(){
     `Premium local : <b style="color:${S.premium?'var(--green)':'var(--red)'}">${S.premium?'OUI ✅':'NON ❌'}</b><br>`+
     `URL (fin) : <b style="font-size:10px;">…${urlEnd}</b><br>`+
     `<span style="color:var(--t3);">← Tap "Vérifier" pour check serveur</span>`;
+  if(typeof _updateAdminSyncInfo==='function')_updateAdminSyncInfo();
 }
 
 async function debugPremiumCheck(){
