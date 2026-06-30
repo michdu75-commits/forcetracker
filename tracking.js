@@ -1,12 +1,35 @@
+// ─── NORMALISATION AVANT SYNC ────────────────────────────────
+// Construit les rows pour handleLogSession_ en assurant que chaque champ
+// est du bon type et a une valeur par défaut valide.
+// Appliqué à TOUTE séance, quelle qu'en soit l'origine (saisie normale,
+// brouillon récupéré, import, ancienne version de l'app).
+function _buildSyncRows(sess){
+  const today_=new Date().toISOString().split('T')[0];
+  const date=typeof sess.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(sess.date)?sess.date:today_;
+  const bw=isFinite(Number(S.bw))&&Number(S.bw)>0?Number(S.bw):0;
+  const gender=S.gender==='F'?'F':'H';
+  const age=isFinite(Number(S.age))&&Number(S.age)>0?Number(S.age):25;
+  const rows=[];
+  (sess.exs||[]).forEach(ex=>{
+    const name=(typeof ex.name==='string'&&ex.name.trim()?ex.name.trim():'Exercice').substring(0,150);
+    (ex.sets||[]).forEach((s,i)=>{
+      if(!s.done)return;
+      const kg=isFinite(Number(s.kg))&&Number(s.kg)>=0?Math.round(Number(s.kg)*10)/10:0;
+      const reps=isFinite(Number(s.reps))&&Number(s.reps)>=0?Math.round(Number(s.reps)):0;
+      const type=['N','W','E','D'].includes(String(s.type||'').toUpperCase())?String(s.type).toUpperCase():'N';
+      const rm1Raw=Number(s.rm1);
+      const rm1=isFinite(rm1Raw)&&rm1Raw>0?String(fmt(rm1Raw)):'';
+      rows.push({date,exercise:name,set_num:i+1,type,kg,reps,volume:kg*reps,rm1,bw,gender,age});
+    });
+  });
+  return rows;
+}
+
 // ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
 async function syncSheets(sess){
   if(!S.url)return{ok:false,error:'URL manquante'};
   try{
-    const rows=[];
-    (sess.exs||[]).forEach(ex=>ex.sets.forEach((s,i)=>{
-      if(!s.done)return;
-      rows.push({date:sess.date,exercise:ex.name,set_num:i+1,type:s.type||'N',kg:s.kg,reps:s.reps,volume:(s.kg||0)*(s.reps||0),rm1:s.rm1?fmt(s.rm1):'',bw:S.bw,gender:S.gender,age:S.age});
-    }));
+    const rows=_buildSyncRows(sess);
     const ctrl=new AbortController();
     const tId=setTimeout(()=>ctrl.abort(),8000);
     const resp=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age})});
