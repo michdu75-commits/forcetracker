@@ -1,23 +1,26 @@
 // ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
 async function syncSheets(sess){
-  if(!S.url)return false;
+  if(!S.url)return{ok:false,error:'URL manquante'};
   try{
     const rows=[];
     (sess.exs||[]).forEach(ex=>ex.sets.forEach((s,i)=>{
       if(!s.done)return;
       rows.push({date:sess.date,exercise:ex.name,set_num:i+1,type:s.type||'N',kg:s.kg,reps:s.reps,volume:(s.kg||0)*(s.reps||0),rm1:s.rm1?fmt(s.rm1):'',bw:S.bw,gender:S.gender,age:S.age});
     }));
-    // Utilise CORS (pas no-cors) pour confirmer la réception côté serveur
     const ctrl=new AbortController();
     const tId=setTimeout(()=>ctrl.abort(),8000);
     const resp=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'logSession',rows,bw:S.bw,date:sess.date,gender:S.gender,age:S.age})});
     clearTimeout(tId);
-    const data=await resp.json();
-    console.log('[FT syncSheets]',sess.date,data);
-    return data&&data.status==='ok';
+    let rawText='';
+    try{rawText=await resp.text();}catch(_){rawText='(body illisible)';}
+    console.log('[FT syncSheets]',sess.date,'HTTP',resp.status,rawText.substring(0,300));
+    let data;
+    try{data=JSON.parse(rawText);}catch(_){return{ok:false,error:'Réponse non-JSON (HTTP '+resp.status+'): '+rawText.substring(0,80)};}
+    if(data&&data.status==='ok')return{ok:true,error:null};
+    return{ok:false,error:data&&data.error?data.error:'status='+(data&&data.status||'?')};
   }catch(e){
     console.warn('[FT syncSheets] échec:',e.message);
-    return false;
+    return{ok:false,error:e.name==='AbortError'?'Timeout (8s)':e.message};
   }
 }
 
@@ -29,29 +32,35 @@ async function _retrySheetQueue(){
   const toSync=(S.sessions||[]).filter(s=>s.synced===false);
   if(!toSync.length){console.log('[FT retry] File vide — tout est OK');_updateAdminSyncInfo();return;}
   console.log('[FT retry]',toSync.length,'séance(s) en attente');
-  let synced=0,failed=0;
+  let synced=0;const errors=[];
   for(const sess of toSync){
-    const ok=await syncSheets(sess);
-    if(ok){sess.synced=true;synced++;}else failed++;
+    const res=await syncSheets(sess);
+    if(res.ok){sess.synced=true;synced++;}
+    else errors.push({date:sess.date,error:res.error||'erreur inconnue'});
   }
   if(synced>0){
     try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));}catch(e){}
   }
-  _updateAdminSyncInfo();
-  if(synced>0&&failed===0)toast('☁️ '+synced+' séance'+(synced>1?'s':'')+' synchronisée'+(synced>1?'s':'')+' !','success');
-  else if(synced>0)toast('☁️ '+synced+'/'+toSync.length+' séances sync — '+(failed)+' échec(s)','info');
+  _updateAdminSyncInfo(errors);
+  if(synced>0&&errors.length===0)toast('☁️ '+synced+' séance'+(synced>1?'s':'')+' synchronisée'+(synced>1?'s':'')+' !','success');
+  else if(synced>0)toast('☁️ '+synced+'/'+(synced+errors.length)+' séances sync — '+errors.length+' échec(s)','info');
+  else if(errors.length>0)toast('❌ Sync : '+errors[0].error.substring(0,60),'error');
 }
 
 function _countUnsyncedSessions(){return(S.sessions||[]).filter(s=>s.synced===false).length;}
 
-function _updateAdminSyncInfo(){
+function _updateAdminSyncInfo(errors){
   const el=document.getElementById('admin-sync-info');if(!el)return;
   const n=_countUnsyncedSessions();
   const total=(S.sessions||[]).length;
-  el.innerHTML=(n===0
+  let html=n===0
     ?'<span style="color:var(--green)">✅ Tout synchronisé ('+total+' séance'+(total>1?'s':'')+')</span>'
-    :'<span style="color:var(--gold)">⚠️ '+n+' séance'+(n>1?'s':'')+' non synchronisée'+(n>1?'s':'')+' / '+total+'</span>')+
-    '<br><span style="color:var(--t3);font-size:11px;">Réseau requis pour synchroniser.</span>';
+    :'<span style="color:var(--gold)">⚠️ '+n+' séance'+(n>1?'s':'')+' non synchronisée'+(n>1?'s':'')+' / '+total+'</span>';
+  if(errors&&errors.length)
+    html+='<br><span style="color:var(--red);font-size:11px;">'+errors.map(e=>e.date+' : '+e.error).join(' | ')+'</span>';
+  else if(n>0)
+    html+='<br><span style="color:var(--t3);font-size:11px;">Appuie sur Resynchroniser pour réessayer.</span>';
+  el.innerHTML=html;
 }
 
 // ─── TOAST ───────────────────────────────────────────────────

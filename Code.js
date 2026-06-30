@@ -139,21 +139,23 @@ function doGet(e) {
   }
 
   // One-shot purge des triggers installables (fantôme PREMIUM_EMAILS)
-  // Nécessite le scope https://www.googleapis.com/auth/script.scriptapp dans appsscript.json
-  const _purgeFlag = _bProps.getProperty('triggers_purged_20260630');
-  if (!_purgeFlag || _purgeFlag.startsWith('error:')) {
-    try {
-      const allTriggers = ScriptApp.getProjectTriggers();
-      const trigLog = allTriggers.map(t => t.getHandlerFunction() + '/' + t.getEventType()).join(', ');
-      allTriggers.forEach(t => ScriptApp.deleteTrigger(t));
-      Logger.log('[FT cleanup] Triggers supprimés : ' + trigLog);
-      _bProps.setProperty('triggers_purged_20260630', new Date().toISOString());
-      _bProps.setProperty('triggers_purged_log', trigLog || 'AUCUN');
-    } catch(err) {
-      Logger.log('[FT cleanup] Erreur suppression triggers : ' + err);
-      _bProps.setProperty('triggers_purged_20260630', 'error: ' + err);
+  // Nécessite le scope script.scriptapp — si non autorisé, échoue silencieusement (jamais bloquant)
+  try {
+    const _purgeFlag = _bProps.getProperty('triggers_purged_20260630');
+    if (!_purgeFlag) {
+      try {
+        const allTriggers = ScriptApp.getProjectTriggers();
+        const trigLog = allTriggers.map(t => t.getHandlerFunction() + '/' + t.getEventType()).join(', ');
+        allTriggers.forEach(t => ScriptApp.deleteTrigger(t));
+        Logger.log('[FT cleanup] Triggers supprimés : ' + trigLog);
+        _bProps.setProperty('triggers_purged_20260630', new Date().toISOString());
+        _bProps.setProperty('triggers_purged_log', trigLog || 'AUCUN');
+      } catch(err) {
+        Logger.log('[FT cleanup] Scope non autorisé, purge ignorée : ' + err);
+        _bProps.setProperty('triggers_purged_20260630', 'skipped_auth');
+      }
     }
-  }
+  } catch(_) {} // Double filet — ne jamais bloquer la réponse GET
 
   if (p.test) {
     return json_({status:'online', version:'3.5'});
