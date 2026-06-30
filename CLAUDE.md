@@ -8,7 +8,7 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **App live** : https://michdu75-commits.github.io/forcetracker/
 - **Auteur** : Michel — michdu75@gmail.com
 
-## Backend Apps Script (v3.5 @15 — actif)
+## Backend Apps Script (v3.5 @45 — actif)
 
 - **Compte Google** : forcetracker.app@gmail.com
 - **URL déployée** : `https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec`
@@ -32,21 +32,70 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp deploy          # nouveau déploiement
 NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 ```
 
+### ⚠️ Piège déploiement Apps Script — clasp push ≠ en ligne
+
+`clasp push` met à jour le code source du projet Apps Script, mais **ne met PAS à jour la web app en production**. Le déploiement actif continue de tourner sur l'ancienne version jusqu'à la commande suivante :
+
+```bash
+# Mettre à jour le déploiement EXISTANT (obligatoire pour que l'app en prod soit à jour)
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
+```
+
+Sans `-i <deploymentId>`, `clasp deploy` crée un NOUVEAU déploiement avec une nouvelle URL — l'app ne le connaît pas. Toujours utiliser `-i` avec l'ID existant.  
+Séquence systématique après chaque modif backend : **push → deploy -i → vérifier `?test=1` retourne `{"status":"online"}`**.
+
 ## Architecture
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` | App complète (HTML + CSS + JS inline, ~6 000 lignes) |
-| `Code.js` | Backend Google Apps Script v3.5 @11 (sync cloud) |
-| `female-body.png` | Silhouette féminine (ChatGPT, 1325×1187, 3 vues) — présent mais non utilisé |
-| `sw.js` | Service Worker (network-first HTML, cache-first assets) |
+| `index.html` | Structure HTML + balises `<script src>` — pas de JS inline |
+| `style.css` | Tout le CSS (variables, composants, dark/light mode) |
+| `constants.js` | EXLIB, BIG4, DEFAULT_URL, STD (niveaux de force), EX_YT, EX_EN, _MUSCLE_SVG |
+| `state.js` | Objet `S`, `load()`, `persist()`, `calcTDEE()`, `calcMacros()`, `bz()` |
+| `app.js` | Bootstrap (`autoConnect`, `onLoad`), nutrition, cardio, pilule repos, `_premiumPending` |
+| `screens.js` | Navigation (`goScreen`, swipe), `renderHome()`, `renderNutrition()`, `updatePill()` |
+| `log.js` | Séance : `startWorkout()`, `renderLog()`, `renderExBlocks()`, timer repos, plaques |
+| `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
+| `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
+| `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
+| `sw.js` | Service Worker (network-first HTML, cache-first assets) — cache `ft-v127` |
+| `Code.js` | Backend Google Apps Script v3.5 @45 (sync cloud, coach IA, premium) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
-| `logo.png` | Icône app |
+| `appsscript.json` | Manifest Apps Script (scopes OAuth, timezone, webapp config) |
+| `female-body.png` | Silhouette féminine — présent mais non utilisé (voir Notes techniques) |
 
 **État persistant** : `localStorage` — clés préfixées `ft4_*`  
 **Objet global** : `S` (state) — chargé par `load()`, sauvé par `persist()`  
-**URL Apps Script** : codée en dur dans `DEFAULT_URL` (ligne ~1246), jamais saisie par l'utilisateur  
-⚠️ **Ne jamais changer DEFAULT_URL sans la mettre à jour dans index.html ET redéployer**
+**URL Apps Script** : `DEFAULT_URL` dans `constants.js` (ligne ~110), jamais saisie par l'utilisateur  
+⚠️ **Ne jamais changer DEFAULT_URL sans la mettre à jour dans constants.js ET redéployer**
+
+### Carte des modules — grandes fonctions
+
+| Fonction | Fichier | Rôle |
+|---|---|---|
+| `load()` / `persist()` | `state.js` | Chargement/sauvegarde localStorage |
+| `autoConnect()` | `app.js` | Ping Apps Script + chargement statut premium au démarrage |
+| `goScreen(id, btn)` | `screens.js` | Navigation entre écrans |
+| `renderHome()` | `screens.js` | Rendu écran accueil (stats, PRs, récup) |
+| `renderLog()` | `log.js` | Rendu écran séance |
+| `renderExBlocks()` | `log.js` | Rendu des blocs exercice (collapse/expand) |
+| `startWorkout()` | `log.js` | Démarrage séance + chrono |
+| `finishWorkout()` | `log.js` | Fin séance → calcul PRs → cloud sync |
+| `startRest(sec)` | `log.js` | Démarrage timer repos |
+| `renderProgress()` | `setup.js` | Rendu onglet Progrès (graphiques, badges) |
+| `renderChart()` | `setup.js` | Graphique 1RM par exercice |
+| `_cloudSync()` | `setup.js` | Sync complète vers Apps Script |
+| `renderNutrition()` | `screens.js` | Rendu onglet Nutrition |
+| `calcTDEE()` | `state.js` | Calcul TDEE (Harris-Benedict adaptatif) |
+| `calcMacros(phase)` | `state.js` | Calcul macros selon objectif + phase |
+| `buildCoachContext()` | `coach.js` | Construction du system prompt Coach IA |
+| `sendToCoach()` | `coach.js` | Envoi message + gestion quota/premium |
+| `showPremiumWall()` | `coach.js` | Affichage mur payant (vérifie `_premiumPending`) |
+| `checkBadges(silent)` | `tracking.js` | Vérification et déblocage des badges |
+| `renderCycleScreen()` | `tracking.js` | Rendu écran cycle de force |
+| `toast(msg, type)` | `tracking.js` | Notification toast (succès/erreur/info) |
+| `bz(kg, reps)` | `state.js` | Formule Brzycki → 1RM estimé |
+| `getLevel(ex, rm1, bw, gender, age)` | `constants.js` | Niveau de force (Débutant→Élite) |
 
 ## Écrans (navigation bas de page)
 
@@ -130,7 +179,7 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 - **`#install-banner.hidden button, #install-banner.hidden a`** : `pointer-events:none` — empêche les boutons du banner caché de capturer les taps sur le FAB
 - **`.screen` padding-bottom** : 110px (était 90px) — espace suffisant pour "Terminer la séance" sous le banner
 - **Service Worker** `sw.js` : HTML network-first (toujours la dernière version), assets cache-first (offline OK)
-  - Cache actuel : `ft-v3`
+  - Cache actuel : `ft-v127`
   - ⚠️ À chaque modif d'asset (logo, images) : bumper `CACHE = 'ft-vN'` dans `sw.js`
   - `controllerchange` listener dans `index.html` → rechargement auto quand nouveau SW prend le contrôle (pas besoin que les users vident le cache manuellement)
 
@@ -166,6 +215,34 @@ NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp login           # (re)connexion
 - 3 méthodes d'activation : whitelist email / code payant / webhook Ko-fi automatique
 - Badge header `#coach-quota-badge` : rouge (X questions) ou or (⭐ Premium)
 - Webhook Ko-fi : chaque paiement → email ajouté dans `PREMIUM_EMAILS` + log onglet `Premium`
+
+### Premium — mécanisme complet et pièges
+
+#### Vérification côté backend (Code.js `getPremiumStatus_`)
+Trois couches vérifiées dans l'ordre :
+1. **`PREMIUM_HARDCODED_`** (tableau const dans Code.js) — priorité absolue, immune à tout trigger
+2. **`PREMIUM_EMAILS`** Script Property — whitelist éditable, mais **peu fiable** (voir ci-dessous)
+3. **`prem_{email}`** Script Property — accès daté (Ko-fi webhook)
+
+```js
+const PREMIUM_HARDCODED_ = [
+  'michdu75@gmail.com',
+  'elineazs32@gmail.com',
+  'christophe@famillelanglois.fr',
+  'apollonone75@gmail.com'
+];
+```
+
+#### ⚠️ PREMIUM_EMAILS — trigger fantôme
+La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@gmail.com,elineazs32@gmail.com` par un **trigger installable inconnu** créé manuellement dans l'UI Apps Script (invisible depuis clasp). Pour éditer la whitelist de façon fiable, ajouter les emails dans `PREMIUM_HARDCODED_` dans Code.js.
+
+**Safeguard actif depuis @44** : `ensurePremiumEmails_()` est appelée à chaque `doPost` — si `PREMIUM_EMAILS` ne contient pas tous les hardcoded, elle les réécrit. Le trigger fantôme est ainsi rendu inoffensif.
+
+#### Côté frontend (app.js / coach.js)
+- `_premiumPending` (variable globale dans `app.js`) : `true` tant que `autoConnect()` n'a pas reçu la réponse serveur
+- `showPremiumWall()` dans `coach.js` : retourne sans rien faire si `_premiumPending === true`
+- `sendToCoach()` : affiche toast "Vérification premium en cours…" si quota dépassé mais `_premiumPending`
+- `autoConnect()` : ping no-cors fire-and-forget, puis `loadProfile` avec await → applique `S.premium` → `_premiumPending = false`
 
 ### Onglet Progrès
 - 4 chips cliquables : Squat · Soulevé de Terre · Développé Couché · Développé Militaire
@@ -301,7 +378,7 @@ POST x-www-form-urlencoded data={"email":"...","amount":"4.99",...}  ← Webhook
 ## Variables clés
 
 ```javascript
-const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbxyAcOBXE_zBYZWYZMJgKaX7BbwzD8XHGdQ7aYils2Fau26eWe9pT809q6xrCMGNVFT3Q/exec';
+const DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec'; // dans constants.js
 S.url             // = DEFAULT_URL (jamais null)
 S.email           // email utilisateur (stocké ft4_email)
 S.connected       // bool (stocké ft4_ok)
@@ -340,3 +417,25 @@ _lastProgAnalysisReply // dernière réponse IA analyse programme
 - Light mode = classe `light-mode` sur `document.getElementById('root')`
 - Détection JS : `document.getElementById('root')?.classList.contains('light-mode')`
 - Persisté : `localStorage.getItem('ft4_theme')` = `'light'` ou `'dark'`
+
+## Règles du projet
+
+### Service Worker — bump du cache obligatoire
+À chaque release (push sur master + GitHub Pages) qui modifie un asset statique (images, CSS, JS) :
+1. Ouvrir `sw.js`
+2. Incrémenter `const CACHE = 'ft-vN'` → `ft-v(N+1)`
+3. Le `controllerchange` listener dans `index.html` rechargera l'app automatiquement chez les utilisateurs — pas besoin de vider le cache manuellement
+
+Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquement).
+
+### Tests — Chrome ET Safari
+Tester toute modif UI sur **les deux navigateurs** avant de reporter la tâche comme terminée :
+- **Chrome** (DevTools > mobile, ou vrai Android) — comportement de référence
+- **Safari iOS** — différences connues : `position:fixed/sticky` dans les scroll containers, `getBoundingClientRect()` requis pour positionner des éléments flottants (CSS `%` non fiable), `<input type=file>` capture photo
+
+Les bugs iOS Safari sont souvent silencieux (pas d'erreur console) — tester impérativement.
+
+### Ordre de travail
+- Une seule fonctionnalité modifiée → testée → validée avant de passer à la suivante
+- Toujours vérifier que les écrans adjacents n'ont pas régressé (ex : modifier `s-log` → vérifier aussi `s-home` et `s-progress`)
+- Ne jamais merger sur `master` sans avoir testé sur l'app déployée (GitHub Pages) ou en local avec un serveur HTTP
