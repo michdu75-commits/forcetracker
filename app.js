@@ -1002,12 +1002,8 @@ let _bdayCandlesLeft=19;
 const _bdayCandles=[];
 
 function checkBirthdayDedication(){
-  if(!S.email||S.email.toLowerCase()!=='elineazs32@gmail.com')return;
-  if(localStorage.getItem('ft4_bday_eline_2026'))return;
-  const now=new Date();
-  const m=now.getMonth()+1,d=now.getDate();
-  // Fenêtre : 2–5 juillet (jour J + 3 jours de rattrapage si app pas ouverte le jour J)
-  if(!(m===7&&d>=2&&d<=5))return;
+  // ⚠️ MODE TEST — guards désactivés (email / date / localStorage)
+  // À REMETTRE avant le merge final
   setTimeout(showBirthdayScreen,600);
 }
 
@@ -1025,7 +1021,8 @@ function showBirthdayScreen(){
 function closeBirthdayScreen(){
   const btn=document.getElementById('bday-btn');
   if(btn&&btn.disabled)return; // bouton verrouillé = bougies pas encore toutes soufflées
-  localStorage.setItem('ft4_bday_eline_2026','1');
+  // ⚠️ MODE TEST — pas d'écriture localStorage (rechargement = réaffichage)
+  // localStorage.setItem('ft4_bday_eline_2026','1');
   const el=document.getElementById('ov-bday');
   if(!el)return;
   el.style.transition='opacity .5s ease';
