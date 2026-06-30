@@ -994,8 +994,74 @@ document.addEventListener('input',e=>{
 _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
+checkBirthdayDedication(); // dédicace anniversaire Eline — 2 juillet
 initCoachInput();
 initOnboarding();
+// ─── DÉDICACE ANNIVERSAIRE — Eline (2 juillet) ───────────────
+function checkBirthdayDedication(){
+  if(!S.email||S.email.toLowerCase()!=='elineazs32@gmail.com')return;
+  if(localStorage.getItem('ft4_bday_eline_2026'))return;
+  const now=new Date();
+  const m=now.getMonth()+1,d=now.getDate();
+  // Fenêtre : 2–5 juillet (jour J + 3 jours de rattrapage si app pas ouverte le jour J)
+  if(!(m===7&&d>=2&&d<=5))return;
+  setTimeout(showBirthdayScreen,600);
+}
+function showBirthdayScreen(){
+  const el=document.getElementById('ov-bday');
+  if(!el)return;
+  el.style.display='block';
+  el.style.opacity='0';
+  el.style.transition='opacity .7s ease';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{el.style.opacity='1';}));
+  _spawnBdayParticles();
+}
+function closeBirthdayScreen(){
+  localStorage.setItem('ft4_bday_eline_2026','1');
+  const el=document.getElementById('ov-bday');
+  if(!el)return;
+  el.style.transition='opacity .5s ease';
+  el.style.opacity='0';
+  setTimeout(()=>{el.style.display='none';},530);
+}
+function _spawnBdayParticles(){
+  const c=document.getElementById('bday-particles');
+  if(!c)return;
+  c.innerHTML='';
+  // Étoiles scintillantes
+  for(let i=0;i<55;i++){
+    const s=document.createElement('div');
+    const sz=1+Math.random()*2.5;
+    s.style.cssText='position:absolute;width:'+sz+'px;height:'+sz+'px;background:#fff;border-radius:50%;'
+      +'left:'+Math.random()*100+'%;top:'+Math.random()*100+'%;'
+      +'animation:bday-twinkle '+(1.2+Math.random()*2.4)+'s '+(Math.random()*2.5)+'s ease-in-out infinite;';
+    c.appendChild(s);
+  }
+  // Confettis qui tombent
+  const cols=['#ffd700','#ff6b9d','#00d4ff','#7bed9f','#ff4757','#a29bfe','#ff9f43','#fff','#fd79a8'];
+  for(let i=0;i<70;i++){
+    const cf=document.createElement('div');
+    const w=5+Math.random()*8,h=w*(0.3+Math.random()*.35);
+    cf.style.cssText='position:absolute;width:'+w+'px;height:'+h+'px;'
+      +'background:'+cols[Math.floor(Math.random()*cols.length)]+';border-radius:2px;'
+      +'left:'+Math.random()*100+'%;top:-20px;'
+      +'animation:bday-fall '+(3.5+Math.random()*4.5)+'s '+(Math.random()*4)+'s linear infinite;'
+      +'transform:rotate('+Math.floor(Math.random()*360)+'deg);'
+      +'opacity:'+(0.55+Math.random()*0.45)+';';
+    c.appendChild(cf);
+  }
+  // Ballons qui montent
+  const emojis=['🎈','🎈','🎈','🎀','🎊','🎉','🎈'];
+  for(let i=0;i<8;i++){
+    const b=document.createElement('div');
+    b.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    b.style.cssText='position:absolute;font-size:'+(20+Math.random()*20)+'px;'
+      +'left:'+(4+Math.random()*92)+'%;bottom:-70px;'
+      +'animation:bday-rise '+(5+Math.random()*6)+'s '+(Math.random()*5)+'s ease-in infinite;';
+    c.appendChild(b);
+  }
+}
+
 // true tant que le check serveur n'a pas répondu — bloque le mur payant pendant ce délai
 let _premiumPending=!!S.email;
 // Ping silencieux — fire-and-forget (no-cors peut bloquer sur iOS Safari PWA)
