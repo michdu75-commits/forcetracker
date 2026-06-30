@@ -1414,15 +1414,51 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
-<!-- ÉCRAN ANNIVERSAIRE — Eline (2 juillet, une seule fois) -->
-<div id="ov-bday" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(160deg,#08001a 0%,#1c0040 55%,#050010 100%);overflow:hidden;">
+<!-- ÉCRAN ANNIVERSAIRE — Eline (2 juillet, une seule fois, mini-jeu bougies) -->
+<div id="ov-bday" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(170deg,#0a0018 0%,#18002e 50%,#060010 100%);overflow:hidden;">
   <div id="bday-particles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
-  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100%;padding:40px 24px;text-align:center;box-sizing:border-box;">
-    <div style="font-size:13px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:#ffd700;margin-bottom:14px;opacity:.8;">✨ &nbsp; 2 Juillet &nbsp; ✨</div>
-    <div style="font-family:'Pacifico',cursive;font-size:clamp(20px,6vw,28px);color:#fff;line-height:1.3;margin-bottom:6px;text-shadow:0 0 30px rgba(255,215,0,.4);">JOYEUX ANNIVERSAIRE</div>
-    <div style="font-family:'Pacifico',cursive;font-size:clamp(58px,19vw,86px);color:#ffd700;line-height:1;margin-bottom:32px;text-shadow:0 0 50px rgba(255,200,0,.6),0 4px 24px rgba(0,0,0,.6);">Eline</div>
-    <div style="font-size:18px;color:rgba(255,255,255,.92);line-height:1.85;max-width:290px;margin-bottom:44px;">Ma puce, ma fille que j'aime fort.<br>Une belle année à toi 💛<br><span style="font-size:15px;color:rgba(255,255,255,.5);margin-top:8px;display:block;">— Papa</span></div>
-    <button onclick="closeBirthdayScreen()" style="background:linear-gradient(135deg,#ffd700 0%,#ff9d00 100%);color:#000;border:none;border-radius:50px;padding:17px 40px;font-family:system-ui,sans-serif;font-size:16px;font-weight:800;cursor:pointer;letter-spacing:.04em;box-shadow:0 6px 28px rgba(255,175,0,.5);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">Entrer dans l'appli ✨</button>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:max(env(safe-area-inset-top),18px) 16px max(env(safe-area-inset-bottom),18px);min-height:100%;box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+
+    <!-- GÂTEAU — zone tactile pour souffler les bougies -->
+    <div id="bday-cake-wrap" style="position:relative;width:min(90vw,310px);margin:0 auto 8px;flex-shrink:0;touch-action:none;" ontouchstart="event.preventDefault()" ontouchmove="_bdayTouch(event)" ontouchend="event.preventDefault()">
+      <!-- Étincelles dorées au-dessus des flammes -->
+      <div id="bday-sparkle-zone" style="position:relative;height:28px;width:100%;pointer-events:none;"></div>
+      <!-- Rangée de 19 bougies -->
+      <div id="bday-candles" style="display:flex;align-items:flex-end;justify-content:center;gap:1px;padding:0 6px;box-sizing:border-box;height:62px;"></div>
+      <!-- Glaçage supérieur -->
+      <div style="height:16px;background:linear-gradient(to bottom,#e87ab0,#c55c8e);border-radius:6px 6px 0 0;margin:0 2px;box-shadow:0 -1px 0 rgba(255,255,255,.15) inset;"></div>
+      <!-- Corps du gâteau -->
+      <div style="height:50px;background:linear-gradient(to bottom,#9c2e5e 0%,#6a1e40 55%,#461228 100%);border-radius:0 0 10px 10px;margin:0 2px;box-shadow:0 4px 18px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:11px;color:rgba(255,200,180,.18);letter-spacing:.3em;">✦ ✦ ✦ ✦ ✦</span>
+      </div>
+    </div>
+
+    <!-- Instruction + compteur -->
+    <div id="bday-instr-wrap" style="margin:4px 0 10px;font-size:13px;color:#ffd700;font-weight:700;display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;text-align:center;min-height:28px;">
+      <span style="opacity:.6;">➜</span>
+      <span id="bday-instr-txt">Passe ton doigt sur les bougies — encore</span>
+      <span id="bday-n" style="font-size:22px;font-weight:900;line-height:1;">19</span>
+    </div>
+
+    <!-- JOYEUX ANNIVERSAIRE -->
+    <div style="font-size:11px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,215,0,.58);margin-bottom:1px;">JOYEUX ANNIVERSAIRE</div>
+
+    <!-- Eline -->
+    <div style="font-family:'Pacifico',cursive;font-size:clamp(52px,17vw,74px);color:#ffd700;line-height:1;text-shadow:0 0 40px rgba(255,200,0,.5),0 3px 14px rgba(0,0,0,.5);margin-bottom:3px;">Eline</div>
+
+    <!-- Trait décoratif -->
+    <div style="width:54px;height:2px;background:linear-gradient(to right,transparent,#ffd700,transparent);border-radius:1px;margin-bottom:14px;"></div>
+
+    <!-- Message -->
+    <div style="font-size:17px;color:rgba(255,255,255,.9);line-height:1.8;max-width:270px;margin-bottom:22px;text-align:center;">
+      Ma puce, ma fille que j'aime fort.<br>Une belle année à toi 💛<br>
+      <span style="font-size:14px;color:rgba(255,255,255,.38);display:block;margin-top:4px;">— Papa</span>
+    </div>
+
+    <!-- Bouton — verrouillé tant qu'il reste des bougies allumées -->
+    <button id="bday-btn" disabled onclick="closeBirthdayScreen()" style="width:100%;max-width:270px;padding:16px 20px;border:none;border-radius:50px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.28);font-size:15px;font-weight:800;cursor:not-allowed;font-family:system-ui,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;letter-spacing:.02em;">
+      🔒 Souffle tes bougies pour entrer
+    </button>
   </div>
 </div>
 
