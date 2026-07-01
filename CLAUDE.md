@@ -84,7 +84,7 @@ Séquence systématique après chaque modif backend : **push → deploy -i → v
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache `ft-v136` |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache `ft-v142` |
 | `Code.js` | Backend Google Apps Script v3.5 @46 (sync cloud, coach IA, premium) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `appsscript.json` | Manifest Apps Script (scopes OAuth, timezone, webapp config) |
@@ -205,7 +205,7 @@ Séquence systématique après chaque modif backend : **push → deploy -i → v
 - **`#install-banner.hidden button, #install-banner.hidden a`** : `pointer-events:none` — empêche les boutons du banner caché de capturer les taps sur le FAB
 - **`.screen` padding-bottom** : 110px (était 90px) — espace suffisant pour "Terminer la séance" sous le banner
 - **Service Worker** `sw.js` : navigation cache-first (ouverture instantanée) + revalidation silencieuse en fond, assets cache-first (offline OK)
-  - Cache actuel : `ft-v136`
+  - Cache actuel : `ft-v142`
   - ⚠️ À chaque modif d'asset (logo, images) : bumper `CACHE = 'ft-vN'` dans `sw.js`
   - `controllerchange` listener dans `index.html` → rechargement auto quand nouveau SW prend le contrôle (pas besoin que les users vident le cache manuellement)
 
@@ -385,6 +385,16 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Séances passées** `#ov-sess-detail` → `_renderSessDetailContent()` dans `setup.js` : affiche `💬 ${ex.note}` en or italique sous le nom si présent
 - **Coach IA** `buildCoachContext()` dans `coach.js` : ajoute `[note: ...]` par exercice dans la section DERNIÈRES SÉANCES
 
+### Son décompte final — countdown.wav (✅ 2026-07-01, ft-v137→ft-v142)
+- **Fichier** : `countdown.wav` (racine du repo, ~10 s : ticks 10→4, montée 3-2-1, GO) — inclus dans le précache SW
+- **Élément audio** : `_cdownAudio` (HTMLAudioElement singleton), initialisé par `_initCdownAudio()` dans `log.js`
+- **Déblocage iOS** : `touchstart` (once) → `muted=true` → `play()` → `pause()` → `currentTime=0` → `muted=false` — silence total, débloque pour les lectures futures
+- **Lecture** : `_showRestCountdown()` → `currentTime=0; play()` — une seule lecture par overlay
+- **Arrêt net** : `_closeRestCountdown()` → `pause(); currentTime=0` (fermeture manuelle ou auto)
+- **Guards sur les oscillateurs** : `_beepTick()` et les deux `beep()` font `if(_cdownActive)return;` → aucun oscillateur WebAudio ne sonne pendant l'overlay
+- **Vibration** conservée : 80 ms sur 3-2-1, `[200,60,200,60,300]` sur GO
+- **Flash vert GO** : à 0, fond `#0e1016` → `#00e676` → `#0e1016` en 200+200 ms — filet visuel mode silencieux iPhone
+
 ### Fix chrono repos transparent (✅ 2026-06-30, ft-v134)
 - **Cause** : `@keyframes rest-blink` animait `opacity` sur `#rest-bar` et `#rest-pill` entiers → fond transparent au pulse, contenu exercice visible en dessous
 - **Fix** : animation déplacée sur `#rest-bar.overtime #rest-time` et `#rest-pill.overtime #rest-pill-time` (texte seul)
@@ -513,7 +523,13 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v133 | dédicace Eline production (guards restaurés) |
 | ft-v134 | fix chrono repos opaque |
 | ft-v135 | overlay décompte final de repos |
-| ft-v136 | notes libres par exercice ← **actuel** |
+| ft-v136 | notes libres par exercice |
+| ft-v137 | son décompte : bips synthétiques 10→1 + iOS AudioContext |
+| ft-v138 | fix double bip 5→1 (_beepTick guard) |
+| ft-v139 | fix double GO (beep() guard sur les deux déclarations) |
+| ft-v140 | son décompte → countdown.wav, suppression oscillateurs |
+| ft-v141 | flash vert 200ms au GO (mode silencieux iPhone) |
+| ft-v142 | fix déblocage iOS muet (muted=true avant play()) ← **actuel** |
 
 ### Tests — Chrome ET Safari
 Tester toute modif UI sur **les deux navigateurs** avant de reporter la tâche comme terminée :
