@@ -283,6 +283,7 @@ function doPost(e) {
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
   if (body.action === 'summarizeCoach')    return handleSummarizeCoach_(body);
   if (body.action === 'generateMealPlan')  return handleGenerateMealPlan_(body);
+  if (body.action === 'adminRestore')      return handleAdminRestore_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -388,8 +389,24 @@ function handleSaveProfile_(body) {
     if (body.leftHand       !== undefined) profile.leftHand       = body.leftHand;
 
     existing.profile   = profile;
-    if (body.sessions  !== undefined) existing.sessions  = body.sessions;
-    if (body.prs       !== undefined) existing.prs       = body.prs;
+    if (body.sessions !== undefined) {
+      const incomingSess = body.sessions || [];
+      const existingSess = existing.sessions || [];
+      if (incomingSess.length === 0 && existingSess.length > 0) {
+        Logger.log('[FT GARDE-FOU sessions] refusé : ' + existingSess.length + ' séances cloud conservées (entrante: 0)');
+      } else {
+        existing.sessions = body.sessions;
+      }
+    }
+    if (body.prs !== undefined) {
+      const incomingPrs = Object.keys(body.prs || {}).length;
+      const existingPrs = Object.keys(existing.prs || {}).length;
+      if (incomingPrs === 0 && existingPrs > 0) {
+        Logger.log('[FT GARDE-FOU prs] refusé : ' + existingPrs + ' PRs cloud conservés');
+      } else {
+        existing.prs = body.prs;
+      }
+    }
     if (body.weightLog !== undefined) existing.weightLog = body.weightLog;
     if (body.sleepLog  !== undefined) existing.sleepLog  = body.sleepLog;
     if (body.cycle     !== undefined) existing.cycle     = body.cycle;
@@ -879,4 +896,34 @@ function authorizeAndListTriggers() {
   );
   Logger.log('[FT] Triggers trouvés (' + triggers.length + ') : ' + (info.join(' || ') || 'AUCUN'));
   console.log('[FT] Triggers trouvés (' + triggers.length + ') : ' + (info.join(' || ') || 'AUCUN'));
+}
+
+// ───────────────────────────────────────────────────────────
+// Restauration admin — réimporte un backup complet depuis PC
+// Token one-time : FT_RESTORE_2026_MICHEL
+function handleAdminRestore_(body) {
+  const ADMIN_TOKEN = 'FT_RESTORE_2026_MICHEL';
+  if (body.adminToken !== ADMIN_TOKEN) {
+    return json_({status:'error', error:'unauthorized'});
+  }
+  const email = (body.email || '').toLowerCase().trim();
+  if (!email) return json_({status:'error', error:'email required'});
+  const data = body.data;
+  if (!data || !data.profile) return json_({status:'error', error:'data.profile required'});
+
+  data.email = email;
+  data.updatedAt = new Date().toISOString();
+  saveUserData_(email, data);
+
+  try { _mirrorUserToSheet_(email, data); } catch(e) {
+    Logger.log('[FT adminRestore] mirror sheet ignoré: ' + e.message);
+  }
+
+  const readBack = loadUserData_(email) || {};
+  return json_({
+    status: 'ok',
+    sessions: (readBack.sessions || []).length,
+    prs: Object.keys(readBack.prs || {}).length,
+    name: readBack.profile && readBack.profile.name
+  });
 }
