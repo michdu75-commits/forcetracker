@@ -65,9 +65,10 @@ function renderLog(){
   if(inp){inp.value=d;inp.onchange=()=>{if(inp.value)_setLogDate(inp.value);};}
   const hdr=document.getElementById('log-hdr');
   const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
-  if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;">'
+  if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;">'
     +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
     +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:var(--t3);letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
+    +(hasExs?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>':'')
     +(hasExs?'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>':'')
     +'</div>';
   _startWktChrono();
@@ -774,6 +775,16 @@ function rmEx(ei){
     if(ei<_expandedEx)_expandedEx--;
     else if(_expandedEx>=S.wkt.exs.length)_expandedEx=Math.max(0,S.wkt.exs.length-1);
     persist();renderExBlocks();
+  });
+}
+function clearWkt(){
+  showConfirm('Annuler la séance ?','Tous les exercices et séries en cours seront perdus.',()=>{
+    stopRest();
+    S.wkt=null;
+    try{localStorage.setItem('ft4_wkt','null');localStorage.removeItem('ft4_wkt_draft');}catch(e){}
+    persist();
+    renderLog();
+    toast('Séance annulée','info');
   });
 }
 // Appui maintenu 400ms requis pour déclencher la suppression (anti-effleurement)

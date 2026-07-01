@@ -961,6 +961,11 @@ load();
     }
   }catch(e){}
 })();
+// Garantie : le timer de repos ne survit jamais à un redémarrage ni à un retour au premier plan
+stopRest();
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&restStartTs&&_restLeft()<=-5)stopRest();
+});
 document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 applyTheme();
 if(typeof _applyA11y==='function')_applyA11y();
