@@ -76,7 +76,7 @@ function checkPremiumExpiry() {
 
 function showPremiumWall() {
   // Ne pas afficher avant que le check serveur ait répondu
-  if (typeof _premiumPending !== 'undefined' && _premiumPending) return;
+  if (window._premiumPending) return;
   const wall = document.getElementById('coach-wall');
   if (wall) wall.style.display = 'flex';
 }
@@ -322,7 +322,7 @@ async function sendToCoach(customMsg) {
 
   // Vérifier quota avant d'ouvrir l'input
   if (!S.premium && (S.coachFree || 0) >= COACH_FREE_LIMIT) {
-    if (typeof _premiumPending !== 'undefined' && _premiumPending) {
+    if (window._premiumPending) {
       toast('Vérification premium en cours…', 'info'); return;
     }
     showPremiumWall(); return;

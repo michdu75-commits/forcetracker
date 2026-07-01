@@ -962,7 +962,7 @@ load();
     }
   }catch(e){}
 })();
-console.log('[FT] boot ft-v152 — _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'openRestoreAccount=',typeof openRestoreAccount);
+console.log('[FT] boot ft-v153 — _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'_premiumPending=',window._premiumPending,'openRestoreAccount=',typeof openRestoreAccount);
 // Garantie : le timer de repos ne survit jamais à un redémarrage ni à un retour au premier plan
 stopRest();
 document.addEventListener('visibilitychange',()=>{
@@ -1176,8 +1176,8 @@ function _blowCandle(idx){
   }
 }
 
-// true tant que le check serveur n'a pas répondu — bloque le mur payant pendant ce délai
-let _premiumPending=!!S.email;
+// _premiumPending : initialisé sur window dans <head> de index.html — accessible depuis coach.js sans TDZ
+window._premiumPending=!!S.email;
 // Ping silencieux — fire-and-forget (no-cors peut bloquer sur iOS Safari PWA)
 (async function autoConnect(){
   if(!S.url)return;
@@ -1199,7 +1199,7 @@ let _premiumPending=!!S.email;
         S.premium=d2.premium===true;
         S.premiumExpiry=d2.premiumExpiry||'';
         persist();
-        _premiumPending=false;
+        window._premiumPending=false;
         updateCoachHeader();
         if(S.premium&&!wasPremium){
           toast('🎉 Accès Premium activé !','success');
@@ -1213,10 +1213,10 @@ let _premiumPending=!!S.email;
         console.log('[FT premium]',S.premium?'activé':'désactivé','(was:',wasPremium,')');
         // Réseau disponible → tenter la resynchro des séances en attente
         if(typeof _retrySheetQueue==='function')setTimeout(_retrySheetQueue,1500);
-      }else{_premiumPending=false;}
+      }else{window._premiumPending=false;}
     }catch(e){
       console.warn('[FT premium check] échec réseau (timeout ou panne):',e.message);
-      _premiumPending=false;
+      window._premiumPending=false;
       checkPremiumExpiry();
       // En cas d'erreur réseau : si l'état local dit non-premium et quota dépassé, afficher le mur
       if(!S.premium&&(S.coachFree||0)>=COACH_FREE_LIMIT){
@@ -1224,7 +1224,7 @@ let _premiumPending=!!S.email;
       }
     }
   } else {
-    _premiumPending=false;
+    window._premiumPending=false;
     checkPremiumExpiry();
   }
 })();

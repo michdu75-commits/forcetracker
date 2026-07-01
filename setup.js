@@ -981,64 +981,76 @@ function saveProfile(){
 }
 
 function _applyRestoreData(raw){
-  // Le serveur retourne {status:'ok', profile:{name,bw,...}, prs:{}, sessions:[], ...}
-  // ou un ancien format plat {name, bw, ...}
+  // Extrait les sous-objets selon le format reçu
   let d, prs, sessions, weightLog, sleepLog;
-  if(raw&&typeof raw.profile==='object'){
-    d=raw.profile||{};
-    prs=raw.prs||{};
-    sessions=raw.sessions||[];
-    weightLog=raw.weightLog||[];
-    sleepLog=raw.sleepLog||[];
-  }else{
-    d=raw||{};
-    prs=d.prs||{};
-    sessions=d.sessions||[];
-    weightLog=d.weightLog||[];
-    sleepLog=d.sleepLog||[];
-  }
+  try{
+    if(raw&&typeof raw.profile==='object'){
+      d=raw.profile||{};
+      prs=raw.prs||{};
+      sessions=raw.sessions||[];
+      weightLog=raw.weightLog||[];
+      sleepLog=raw.sleepLog||[];
+    }else{
+      d=raw||{};
+      prs=d.prs||{};
+      sessions=d.sessions||[];
+      weightLog=d.weightLog||[];
+      sleepLog=d.sleepLog||[];
+    }
+  }catch(e){console.error('[FT restore] parse structure',e);d={};prs={};sessions=[];weightLog=[];sleepLog=[];}
+
   const hasProfile=d.name||d.bw||d.age||d.gender||d.goal;
-  if(!hasProfile)throw new Error('Aucun profil trouvé sur le serveur pour cet email. Enregistre d\'abord ton profil depuis l\'appli.');
-  if(d.name)S.name=d.name;
-  if(d.bw)S.bw=parseFloat(d.bw)||S.bw;
-  if(d.age)S.age=parseInt(d.age)||S.age;
-  if(d.height)S.height=parseFloat(d.height)||S.height;
-  if(d.gender){S.gender=d.gender;_obGender=d.gender;}
-  if(d.goal){S.goal=d.goal;_obGoal=d.goal;}
-  if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;
-  if(d.workType)S.workType=d.workType;
-  if(d.smoker!==undefined)S.smoker=!!d.smoker;
-  if(d.neck)S.neck=parseFloat(d.neck)||0;
-  if(d.waist)S.waist=parseFloat(d.waist)||0;
-  if(d.hip)S.hip=parseFloat(d.hip)||0;
-  if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;
-  if(d.barW)S.barW=parseFloat(d.barW)||20;
-  if(d.defRest)S.defRest=parseInt(d.defRest)||120;
-  if(d.mensCycleStart)S.mensCycleStart=d.mensCycleStart;
-  if(d.mensCycleDur)S.mensCycleDur=parseInt(d.mensCycleDur)||28;
-  if(d.contraception!==undefined)S.contraception=d.contraception||'';
-  if(d.morpho)S.morpho=d.morpho;
-  if(d.morphotype)S.morphotype=d.morphotype;
-  if(d.bday)S.bday=d.bday;
-  if(d.badges&&Object.keys(d.badges).length)S.badges=d.badges;
-  if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;
-  if(prs&&Object.keys(prs).length)S.prs=prs;
-  if(sessions&&sessions.length)S.sessions=sessions;
-  if(weightLog&&weightLog.length)S.weightLog=weightLog;
-  if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;
-  if(raw&&raw.cycle)S.cycle=raw.cycle;
-  if(raw&&raw.premium!==undefined){S.premium=raw.premium===true;}
-  if(raw&&raw.premiumExpiry!==undefined){S.premiumExpiry=raw.premiumExpiry||'';}
-  if(raw&&raw.coachMemory)S.coachMemory=raw.coachMemory;
-  if(d.healthProfile)S.healthProfile=d.healthProfile;
-  if(d.a11y!==undefined)S.a11y=!!d.a11y;
-  if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';
-  if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;
-  persist();
-  _applyA11y();
-  _applyColorblind();
-  _applyLeftHand();
-  updateCoachHeader();
+  if(!hasProfile)throw new Error('Aucun profil trouvé sur le serveur pour cet email.');
+
+  // Profil de base — chaque champ isolé pour qu'une erreur n'en bloque pas d'autres
+  try{if(d.name)S.name=d.name;}catch(e){console.warn('[FT restore] name',e);}
+  try{if(d.bw)S.bw=parseFloat(d.bw)||S.bw;}catch(e){console.warn('[FT restore] bw',e);}
+  try{if(d.age)S.age=parseInt(d.age)||S.age;}catch(e){console.warn('[FT restore] age',e);}
+  try{if(d.height)S.height=parseFloat(d.height)||S.height;}catch(e){console.warn('[FT restore] height',e);}
+  // NOTE : _obGender/_obGoal sont des vars onboarding (app.js) — on n'y touche pas depuis setup.js
+  // _obDataRestored=true est déjà positionné avant l'appel, donc finishOnboarding() les ignore
+  try{if(d.gender)S.gender=d.gender;}catch(e){console.warn('[FT restore] gender',e);}
+  try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
+  try{if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;}catch(e){console.warn('[FT restore] activityLevel',e);}
+  try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
+  try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}
+  try{if(d.neck)S.neck=parseFloat(d.neck)||0;}catch(e){}
+  try{if(d.waist)S.waist=parseFloat(d.waist)||0;}catch(e){}
+  try{if(d.hip)S.hip=parseFloat(d.hip)||0;}catch(e){}
+  try{if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;}catch(e){}
+  try{if(d.barW)S.barW=parseFloat(d.barW)||20;}catch(e){}
+  try{if(d.defRest)S.defRest=parseInt(d.defRest)||120;}catch(e){}
+  try{if(d.mensCycleStart)S.mensCycleStart=d.mensCycleStart;}catch(e){}
+  try{if(d.mensCycleDur)S.mensCycleDur=parseInt(d.mensCycleDur)||28;}catch(e){}
+  try{if(d.contraception!==undefined)S.contraception=d.contraception||'';}catch(e){}
+  try{if(d.morpho)S.morpho=d.morpho;}catch(e){}
+  try{if(d.morphotype)S.morphotype=d.morphotype;}catch(e){}
+  try{if(d.bday)S.bday=d.bday;}catch(e){}
+  try{if(d.healthProfile)S.healthProfile=d.healthProfile;}catch(e){console.warn('[FT restore] healthProfile',e);}
+  try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
+  try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
+  try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}
+
+  // Données d'entraînement — les plus critiques
+  try{if(d.badges&&Object.keys(d.badges).length)S.badges=d.badges;}catch(e){console.warn('[FT restore] badges',e);}
+  try{if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;}catch(e){console.warn('[FT restore] customEx',e);}
+  try{if(prs&&Object.keys(prs).length){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
+  try{if(sessions&&sessions.length){S.sessions=sessions;console.log('[FT restore] sessions:',sessions.length);}}catch(e){console.warn('[FT restore] sessions',e);}
+  try{if(weightLog&&weightLog.length)S.weightLog=weightLog;}catch(e){}
+  try{if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;}catch(e){}
+  try{if(raw&&raw.cycle)S.cycle=raw.cycle;}catch(e){}
+
+  // Premium
+  try{if(raw&&raw.premium!==undefined)S.premium=raw.premium===true;}catch(e){}
+  try{if(raw&&raw.premiumExpiry!==undefined)S.premiumExpiry=raw.premiumExpiry||'';}catch(e){}
+  try{if(raw&&raw.coachMemory)S.coachMemory=raw.coachMemory;}catch(e){}
+
+  // Sauvegarde locale + application des préférences UI
+  try{persist();}catch(e){console.error('[FT restore] persist échoué !',e);}
+  try{_applyA11y();}catch(e){}
+  try{_applyColorblind();}catch(e){}
+  try{_applyLeftHand();}catch(e){}
+  try{updateCoachHeader();}catch(e){}
 }
 
 async function _fetchRestoreRaw(email){
