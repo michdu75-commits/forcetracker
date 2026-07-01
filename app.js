@@ -387,7 +387,7 @@ function _initOb0(){
   if(_isStandalone())return;
   if(_isIOSInApp())return; // navigateur in-app → géré par le banner
   if(_isFirefoxAndroid())return; // pas de prompt disponible
-  const isIOS=_isIOS();
+  const isIOS=_isIOS;
   const ios=document.getElementById('ob0-ios');
   const android=document.getElementById('ob0-android');
   if(ios)ios.style.display=isIOS?'flex':'none';
@@ -564,10 +564,10 @@ function finishOnboarding(){
 }
 
 // ─── PWA INSTALL ─────────────────────────────────────────────
+// _isIOS : const booléen déclaré dans log.js (top-level, partagé)
 function _isStandalone(){return window.matchMedia('(display-mode:standalone)').matches||!!navigator.standalone;}
-function _isIOS(){return /iPhone|iPad|iPod/i.test(navigator.userAgent)&&!window.MSStream;}
 function _isIOSInApp(){
-  if(!_isIOS()) return false;
+  if(!_isIOS) return false;
   const ua = navigator.userAgent;
   // Navigateurs in-app connus sur iOS
   if(/FBAN|FBAV|Instagram|Twitter|Snapchat|TikTok|Musical\.ly|Line\/|LinkedIn|Pinterest|Threads/.test(ua)) return true;
@@ -662,7 +662,7 @@ function showInstallPrompt(){
       tryOpenSafari, 'safari');
     return;
   }
-  if(_isIOS()){
+  if(_isIOS){
     document.getElementById('install-popup').classList.remove('hidden');
     return;
   }
@@ -962,7 +962,7 @@ load();
     }
   }catch(e){}
 })();
-console.log('[FT] boot ft-v151 — _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'openRestoreAccount=',typeof openRestoreAccount);
+console.log('[FT] boot ft-v152 — _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'openRestoreAccount=',typeof openRestoreAccount);
 // Garantie : le timer de repos ne survit jamais à un redémarrage ni à un retour au premier plan
 stopRest();
 document.addEventListener('visibilitychange',()=>{
