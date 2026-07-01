@@ -21,6 +21,8 @@ window._curScreen='home';
 window._premiumPending=false;
 window._deferredInstall=null;
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._deferredInstall=e;});
+// Récupération email depuis cookie si localStorage vidé par iOS Safari (synchrone, avant load())
+(function(){try{var ck={};document.cookie.split(';').forEach(function(c){var p=c.trim().indexOf('=');if(p>0)ck[c.trim().slice(0,p)]=decodeURIComponent(c.trim().slice(p+1));});if(ck.ft_email&&!localStorage.getItem('ft4_email')){localStorage.setItem('ft4_email',ck.ft_email);localStorage.setItem('ft4_ob2','1');window._emailRestoredFromCookie=true;}}catch(e){}})();
 if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add('ob-done');
 // Détection navigateur non compatible PWA — au plus tôt
 (function(){
@@ -1508,6 +1510,18 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<!-- Overlay reconnexion — affiché si localStorage vidé et cookie/IDB contient l'email -->
+<div id="ov-reconnect" class="overlay" style="z-index:9998;" onclick="if(event.target===this)closeReconnect()">
+  <div class="modal" style="max-width:380px;padding:28px 20px 24px;text-align:center;">
+    <div style="font-size:52px;margin-bottom:6px;">🔑</div>
+    <div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:8px;">Reconnecte-toi</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:20px;">Tes données sont sauvegardées dans le cloud.<br>Entre ton email pour les retrouver instantanément.</div>
+    <input id="reconnect-email-inp" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg2);color:var(--t1);font-size:15px;margin-bottom:12px;" onkeydown="if(event.key==='Enter')doReconnect()">
+    <button id="reconnect-btn" class="btn btn-red" style="width:100%;font-size:15px;padding:15px;margin-bottom:10px;" onclick="doReconnect()">🔄 Retrouver mes données</button>
+    <div style="font-size:12px;color:var(--t3);">Pas encore de compte ? <a href="#" onclick="closeReconnect();return false;" style="color:var(--red);">Commencer sans compte</a></div>
+    <div id="reconnect-status" style="margin-top:12px;font-size:13px;color:var(--t2);display:none;"></div>
+  </div>
+</div>
 <script src="constants.js"></script>
 <script src="state.js"></script>
 <script src="screens.js"></script>

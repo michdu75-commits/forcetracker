@@ -940,6 +940,65 @@ async function generateMealPlan(regenDay,regenMeal){
   finally{if(btn){btn.disabled=false;btn.textContent='🍽️ Générer'+(isPrem?' ma semaine':' mon repas du jour');}}
 }
 
+// ─── AUTO-RESTAURATION ───────────────────────────────────────
+let _lastSavedEmail='';
+function _saveEmailRedundant(email){
+  if(!email||email===_lastSavedEmail)return;
+  _lastSavedEmail=email;
+  try{document.cookie='ft_email='+encodeURIComponent(email)+';max-age=31536000;samesite=strict;path=/';}catch(e){}
+  if(S.sessions&&S.sessions.length>0){try{document.cookie='ft_had_data=1;max-age=31536000;samesite=strict;path=/';}catch(e){}}
+  try{
+    var req=indexedDB.open('ft_meta',1);
+    req.onupgradeneeded=function(e){e.target.result.createObjectStore('meta',{keyPath:'key'});};
+    req.onsuccess=function(e){try{e.target.result.transaction('meta','readwrite').objectStore('meta').put({key:'email',value:email});}catch(e2){}};
+  }catch(e){}
+}
+async function _getEmailFromIDB(){
+  return new Promise(function(resolve){
+    try{
+      var req=indexedDB.open('ft_meta',1);
+      req.onupgradeneeded=function(e){e.target.result.createObjectStore('meta',{keyPath:'key'});};
+      req.onsuccess=function(e){
+        try{var g=e.target.result.transaction('meta','readonly').objectStore('meta').get('email');g.onsuccess=function(r){resolve(r.result?r.result.value:null);};g.onerror=function(){resolve(null);};}catch(e2){resolve(null);}
+      };
+      req.onerror=function(){resolve(null);};
+      setTimeout(function(){resolve(null);},600);
+    }catch(e){resolve(null);}
+  });
+}
+async function _silentCloudRestore(email){
+  if(!S.url)return false;
+  try{
+    const ctrl=new AbortController();const tId=setTimeout(()=>ctrl.abort(),5000);
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email})});
+    clearTimeout(tId);const d=await r.json();
+    if(d.status!=='ok'||!d.sessions||d.sessions.length===0)return false;
+    S.email=email;
+    try{localStorage.setItem('ft4_email',email);localStorage.setItem('ft4_ob2','1');document.documentElement.classList.add('ob-done');}catch(e){}
+    _applyRestoreData(d);
+    _saveEmailRedundant(email);
+    try{document.getElementById('ov-reconnect')?.classList.remove('open');}catch(e){}
+    toast('✅ Données resynchronisées','success');
+    try{renderHome();}catch(e){}try{if(typeof renderSetup==='function')renderSetup();}catch(e){}
+    return true;
+  }catch(e){console.warn('[FT auto-restore]',e.message);return false;}
+}
+function _showReconnectOverlay(){
+  const ov=document.getElementById('ov-reconnect');if(ov)ov.classList.add('open');
+}
+window.doReconnect=async function(){
+  const inp=document.getElementById('reconnect-email-inp');if(!inp)return;
+  const email=inp.value.trim().toLowerCase();
+  if(!email||!email.includes('@')){toast('Email invalide','error');return;}
+  const btn=document.getElementById('reconnect-btn');const st=document.getElementById('reconnect-status');
+  if(btn){btn.disabled=true;btn.textContent='🔄 Recherche…';}
+  if(st){st.style.display='block';st.textContent='Connexion en cours…';}
+  const ok=await _silentCloudRestore(email);
+  if(!ok){if(st){st.style.display='block';st.textContent='❌ Aucun compte trouvé pour cet email.';}toast('Aucun compte trouvé','error');}
+  if(btn){btn.disabled=false;btn.textContent='🔄 Retrouver mes données';}
+};
+window.closeReconnect=function(){try{document.getElementById('ov-reconnect')?.classList.remove('open');}catch(e){}};
+
 // ─── INIT ────────────────────────────────────────────────────
 load();
 // ─ Récupération brouillon après crash de finishWorkout ────────
@@ -1211,6 +1270,13 @@ window._premiumPending=!!S.email;
           if(typeof showPremiumWall==='function')showPremiumWall();
         }
         console.log('[FT premium]',S.premium?'activé':'désactivé','(was:',wasPremium,')');
+        // Auto-restauration silencieuse — local vide mais cloud a des données
+        if(d2.status==='ok'&&d2.sessions&&d2.sessions.length>0&&(!S.sessions||S.sessions.length===0)){
+          console.log('[FT auto-restore] local vide, cloud a',d2.sessions.length,'séances — restauration');
+          _applyRestoreData(d2);_saveEmailRedundant(S.email);
+          toast('✅ Données resynchronisées','success');
+          try{renderHome();}catch(e){}try{if(typeof renderSetup==='function')renderSetup();}catch(e){}
+        }
         // Réseau disponible → tenter la resynchro des séances en attente
         if(typeof _retrySheetQueue==='function')setTimeout(_retrySheetQueue,1500);
       }else{window._premiumPending=false;}
@@ -1227,6 +1293,21 @@ window._premiumPending=!!S.email;
     window._premiumPending=false;
     checkPremiumExpiry();
   }
+})();
+// Fallback IDB — si localStorage ET cookie vidés mais IDB survit (iOS purge complète localstorage/cookie)
+(async function _autoRestoreFromIDB(){
+  if(S.email||(S.sessions&&S.sessions.length>0))return; // email dispo ou données intactes
+  const email=await _getEmailFromIDB();
+  if(!email){
+    // Aucun email nulle part — montrer overlay reconnect si on sait qu'il y avait des données
+    const hadData=document.cookie.includes('ft_had_data=1')||localStorage.getItem('ft4_had_data')==='1';
+    if(hadData)setTimeout(_showReconnectOverlay,600);
+    return;
+  }
+  console.log('[FT auto-restore] email récupéré depuis IDB:',email);
+  localStorage.setItem('ft4_email',email);S.email=email;
+  const ok=await _silentCloudRestore(email);
+  if(!ok){const hadData=document.cookie.includes('ft_had_data=1');if(hadData)_showReconnectOverlay();}
 })();
 document.addEventListener('pointerdown',function(e){
   const btn=e.target.closest('button');

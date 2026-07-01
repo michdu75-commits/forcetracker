@@ -284,6 +284,7 @@ function doPost(e) {
   if (body.action === 'summarizeCoach')    return handleSummarizeCoach_(body);
   if (body.action === 'generateMealPlan')  return handleGenerateMealPlan_(body);
   if (body.action === 'adminRestore')      return handleAdminRestore_(body);
+  if (body.action === 'listUsers')         return handleListUsers_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -926,4 +927,27 @@ function handleAdminRestore_(body) {
     prs: Object.keys(readBack.prs || {}).length,
     name: readBack.profile && readBack.profile.name
   });
+}
+
+// ───────────────────────────────────────────────────────────
+// Admin : liste tous les utilisateurs et leurs stats
+function handleListUsers_(body) {
+  const ADMIN_TOKEN = 'FT_RESTORE_2026_MICHEL';
+  if (body.adminToken !== ADMIN_TOKEN) return json_({status:'error', error:'unauthorized'});
+  const props = PropertiesService.getScriptProperties().getProperties();
+  const users = [];
+  Object.keys(props).filter(k => k.startsWith('u_')).forEach(k => {
+    try {
+      const d = JSON.parse(props[k]);
+      users.push({
+        email: d.email || k.replace(/^u_/, ''),
+        name: (d.profile && d.profile.name) || '?',
+        sessions: (d.sessions || []).length,
+        prs: Object.keys(d.prs || {}).length,
+        updatedAt: d.updatedAt || '?'
+      });
+    } catch(e) { users.push({key:k, error:e.message}); }
+  });
+  users.sort((a,b) => (b.sessions||0)-(a.sessions||0));
+  return json_({status:'ok', count:users.length, users});
 }

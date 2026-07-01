@@ -124,6 +124,10 @@ function persist(){
       localStorage.removeItem('ft4_wkt_draft');
     }
     localStorage.setItem('ft4_email',S.email);localStorage.setItem('ft4_ok',S.connected?'1':'0');
+    // Stockage redondant email (cookie + IDB) — silencieux si _saveEmailRedundant pas encore chargé
+    if(S.email&&typeof _saveEmailRedundant==='function')_saveEmailRedundant(S.email);
+    // Flag "l'utilisateur a eu des données" — survit aux purges partielles
+    if(S.sessions&&S.sessions.length>0){try{localStorage.setItem('ft4_had_data','1');}catch(e){}}
     localStorage.setItem('ft4_nphase',S.nutritionPhase);
     localStorage.setItem('ft4_work',S.workType);
     localStorage.setItem('ft4_smoker',S.smoker?'1':'0');
