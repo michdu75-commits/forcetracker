@@ -545,7 +545,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v152 | fix _isIOS doublon : supprimé de app.js, converti en boolean |
 | ft-v153 | fix _obGender TDZ dans _applyRestoreData + window._premiumPending |
 | ft-v154 | garde-fou cloud sessions/PRs + restauration backup Michel 11s·30PRs |
-| ft-v155 | réactive sync cloud (garde-fou @47 actif) ← **actuel** |
+| ft-v155 | réactive sync cloud (garde-fou @47 actif) |
+| ft-v156 | boot log dynamique via caches.keys() — fin du bug "version hardcodée" ← **actuel** |
 
 ### Tests — Chrome ET Safari
 Tester toute modif UI sur **les deux navigateurs** avant de reporter la tâche comme terminée :
