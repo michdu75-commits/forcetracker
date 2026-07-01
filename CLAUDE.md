@@ -535,7 +535,16 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v142 | fix déblocage iOS muet (muted=true avant play()) |
 | ft-v143 | désactive son iOS, volume=0 Android |
 | ft-v144 | fix séance coincée : stopRest() au boot, draft clear, bouton ✕ annuler |
-| ft-v145 | fix FAB position : _syncLogHdrBtns() + rAF _positionFab à chaque renderExBlocks ← **actuel** |
+| ft-v145 | fix FAB position : _syncLogHdrBtns() + rAF _positionFab à chaque renderExBlocks |
+| ft-v146 | fix iOS Safari : window._adminMode/_curScreen/_premiumPending (TDZ) |
+| ft-v147 | fix openRestoreAccount global + scan _isIOS doublon |
+| ft-v148 | fix SyntaxError _isIOS doublon app.js/log.js |
+| ft-v149 | fix ReferenceError _obGender TDZ + try/catch par champ _applyRestoreData |
+| ft-v150 | fix _premiumPending → window, try/catch renders dans doRestoreAccount |
+| ft-v151 | force refresh cache SW + boot log ft-v151 |
+| ft-v152 | fix _isIOS doublon : supprimé de app.js, converti en boolean |
+| ft-v153 | fix _obGender TDZ dans _applyRestoreData + window._premiumPending |
+| ft-v154 | garde-fou cloud sessions/PRs + restauration backup Michel 11s·30PRs ← **actuel** |
 
 ### Tests — Chrome ET Safari
 Tester toute modif UI sur **les deux navigateurs** avant de reporter la tâche comme terminée :
