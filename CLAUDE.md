@@ -21,6 +21,9 @@ Backend / migration / suppression → créer **branche + tag de backup** d'abord
 **7. 🎨 Garder l'identité « figurines muscles ».**
 Ne pas copier Hevy/JEFIT. Une chose à la fois, **testée avant** de passer à la suite.
 
+**8. 🔴 FAB « + » Séance — SENSIBLE, ne pas toucher sans recalculer.**
+Le bouton FAB `#fab-session` est `position:absolute` dans la nav et positionné par `_positionFab()` (via `getBoundingClientRect(#nb-log)`). **Toute modif de l'écran Séance** (ajout d'éléments dans le header, changement de layout du DOM) **doit vérifier que le FAB reste bien positionné**. `_positionFab()` est appelé via `requestAnimationFrame` à chaque `_syncLogHdrBtns()` (déclenché à chaque `renderExBlocks()`). Si le FAB se décale : appeler `_positionFab()` manuellement après le changement. Ne jamais supprimer les appels `requestAnimationFrame(_positionFab)` de `_syncLogHdrBtns()`.
+
 ---
 
 # Force Tracker — Contexte projet pour Claude
@@ -205,7 +208,7 @@ Séquence systématique après chaque modif backend : **push → deploy -i → v
 - **`#install-banner.hidden button, #install-banner.hidden a`** : `pointer-events:none` — empêche les boutons du banner caché de capturer les taps sur le FAB
 - **`.screen` padding-bottom** : 110px (était 90px) — espace suffisant pour "Terminer la séance" sous le banner
 - **Service Worker** `sw.js` : navigation cache-first (ouverture instantanée) + revalidation silencieuse en fond, assets cache-first (offline OK)
-  - Cache actuel : `ft-v142`
+  - Cache actuel : `ft-v145`
   - ⚠️ À chaque modif d'asset (logo, images) : bumper `CACHE = 'ft-vN'` dans `sw.js`
   - `controllerchange` listener dans `index.html` → rechargement auto quand nouveau SW prend le contrôle (pas besoin que les users vident le cache manuellement)
 
@@ -529,7 +532,10 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v139 | fix double GO (beep() guard sur les deux déclarations) |
 | ft-v140 | son décompte → countdown.wav, suppression oscillateurs |
 | ft-v141 | flash vert 200ms au GO (mode silencieux iPhone) |
-| ft-v142 | fix déblocage iOS muet (muted=true avant play()) ← **actuel** |
+| ft-v142 | fix déblocage iOS muet (muted=true avant play()) |
+| ft-v143 | désactive son iOS, volume=0 Android |
+| ft-v144 | fix séance coincée : stopRest() au boot, draft clear, bouton ✕ annuler |
+| ft-v145 | fix FAB position : _syncLogHdrBtns() + rAF _positionFab à chaque renderExBlocks ← **actuel** |
 
 ### Tests — Chrome ET Safari
 Tester toute modif UI sur **les deux navigateurs** avant de reporter la tâche comme terminée :

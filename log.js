@@ -68,8 +68,10 @@ function renderLog(){
   if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;">'
     +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
     +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:var(--t3);letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
+    +'<span id="log-hdr-btns" style="display:flex;gap:8px;">'
     +(hasExs?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>':'')
     +(hasExs?'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>':'')
+    +'</span>'
     +'</div>';
   _startWktChrono();
   // Refresh immédiat des timers au retour sur l'écran (ne pas attendre le prochain tick)
@@ -567,7 +569,8 @@ function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)e
 function renderExBlocks(){
   const c=document.getElementById('wkt-exs');
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
-    c.innerHTML=`<div class="empty">Appuie sur "+ Ajouter un exercice"<br>pour démarrer ta séance 💪</div>`;return;
+    c.innerHTML=`<div class="empty">Appuie sur "+ Ajouter un exercice"<br>pour démarrer ta séance 💪</div>`;
+    _syncLogHdrBtns();return;
   }
   const exCount=S.wkt.exs.length;
   if(_expandedEx===null||_expandedEx>=exCount)_expandedEx=exCount-1;
@@ -605,6 +608,7 @@ function renderExBlocks(){
     return _renderGroupHtml(part.gid,part.members);
   }).join('');
   renderLogFinish();
+  _syncLogHdrBtns();
 }
 function getPrev(name){
   for(const s of S.sessions){
@@ -786,6 +790,18 @@ function clearWkt(){
     renderLog();
     toast('Séance annulée','info');
   });
+}
+// Sync boutons ✕/Changer dans l'en-tête + repositionne le FAB
+// Appellé à chaque renderExBlocks() pour rester cohérent sans passer par renderLog() entier
+function _syncLogHdrBtns(){
+  const el=document.getElementById('log-hdr-btns');
+  if(!el)return;
+  const hasExs=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
+  el.innerHTML=hasExs
+    ?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>'
+     +'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>'
+    :'';
+  requestAnimationFrame(_positionFab);
 }
 // Appui maintenu 400ms requis pour déclencher la suppression (anti-effleurement)
 let _rmHoldTimer=null;
