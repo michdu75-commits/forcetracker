@@ -1232,7 +1232,8 @@ let _restDoneCb=null;
 let _countdownSecs=new Set(); // secondes 5..1 déjà bippées
 let _cdownActive=false,_cdownAutoClose=null; // overlay décompte final
 let _cdownBeepedSecs=new Set(),_cdownGoDone=false; // vibration overlay
-let _cdownAudio=null; // élément Audio préchargé pour le décompte
+const _isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+let _cdownAudio=null; // élément Audio préchargé pour le décompte (non-iOS uniquement)
 
 function _restLeft(){
   if(!restStartTs)return 0;
@@ -1240,9 +1241,9 @@ function _restLeft(){
 }
 
 // ─── SONS ────────────────────────────────────────────────────
-// Précharge countdown.wav une seule fois
+// Précharge countdown.wav une seule fois (non-iOS uniquement)
 function _initCdownAudio(){
-  if(_cdownAudio)return;
+  if(_isIOS||_cdownAudio)return;
   try{_cdownAudio=new Audio('countdown.wav');_cdownAudio.preload='auto';_cdownAudio.volume=1.0;}catch(e){}
 }
 function _beepTick(){
@@ -2563,12 +2564,14 @@ function renderPlates(){
 }
 function applyPlate(){if(plateExIdx===null)return;const t=parseFloat(document.getElementById('plate-kg').value);if(!t)return;S.wkt.exs[plateExIdx].sets.forEach(s=>{if(!s.done)s.kg=t;});persist();closePlate();renderExBlocks();toast('Charge appliquée !','success');}
 
-// iOS : débloque l'élément Audio dès le premier tap utilisateur (play→pause muet)
-document.addEventListener('touchstart',()=>{
-  _initCdownAudio();
-  if(_cdownAudio){
-    _cdownAudio.muted=true;
-    _cdownAudio.play().then(()=>{_cdownAudio.pause();_cdownAudio.currentTime=0;_cdownAudio.muted=false;}).catch(()=>{_cdownAudio.muted=false;});
-  }
-},{once:true,passive:true});
+// Android/desktop : débloque l'Audio au premier tap (volume=0 → silencieux → volume=1)
+if(!_isIOS){
+  document.addEventListener('touchstart',()=>{
+    _initCdownAudio();
+    if(_cdownAudio){
+      _cdownAudio.volume=0;
+      _cdownAudio.play().then(()=>{_cdownAudio.pause();_cdownAudio.currentTime=0;_cdownAudio.volume=1;}).catch(()=>{_cdownAudio.volume=1;});
+    }
+  },{once:true,passive:true});
+}
 
