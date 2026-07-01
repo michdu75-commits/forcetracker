@@ -2566,6 +2566,9 @@ function applyPlate(){if(plateExIdx===null)return;const t=parseFloat(document.ge
 // iOS : débloque l'élément Audio dès le premier tap utilisateur (play→pause muet)
 document.addEventListener('touchstart',()=>{
   _initCdownAudio();
-  if(_cdownAudio){_cdownAudio.play().then(()=>{_cdownAudio.pause();_cdownAudio.currentTime=0;}).catch(()=>{});}
+  if(_cdownAudio){
+    _cdownAudio.muted=true;
+    _cdownAudio.play().then(()=>{_cdownAudio.pause();_cdownAudio.currentTime=0;_cdownAudio.muted=false;}).catch(()=>{_cdownAudio.muted=false;});
+  }
 },{once:true,passive:true});
 
