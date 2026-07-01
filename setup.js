@@ -1033,16 +1033,17 @@ function _applyRestoreData(raw){
   try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
   try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}
 
-  // Données d'entraînement — les plus critiques
+  // Données d'entraînement — LOCAL-FIRST : n'écrase le local QUE si local est vide
+  // (règle absolue : une purge cloud ou une restauration ne doit jamais effacer du local non-vide)
   try{if(d.badges&&Object.keys(d.badges).length)S.badges=d.badges;}catch(e){console.warn('[FT restore] badges',e);}
   try{if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;}catch(e){console.warn('[FT restore] customEx',e);}
-  try{if(prs&&Object.keys(prs).length){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
-  try{if(sessions&&sessions.length){S.sessions=sessions;console.log('[FT restore] sessions:',sessions.length);}}catch(e){console.warn('[FT restore] sessions',e);}
+  try{if(prs&&Object.keys(prs).length&&(!S.prs||!Object.keys(S.prs).length)){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}else if(prs&&Object.keys(prs).length>Object.keys(S.prs||{}).length){S.prs=prs;console.log('[FT restore] prs cloud plus complet:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
+  try{if(sessions&&sessions.length&&(!S.sessions||S.sessions.length===0)){S.sessions=sessions;console.log('[FT restore] sessions:',sessions.length);}else if(sessions&&sessions.length>0&&S.sessions&&sessions.length>S.sessions.length){S.sessions=sessions;console.log('[FT restore] sessions cloud plus complet:',sessions.length);}}catch(e){console.warn('[FT restore] sessions',e);}
   try{if(weightLog&&weightLog.length)S.weightLog=weightLog;}catch(e){}
   try{if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;}catch(e){}
   try{if(raw&&raw.cycle)S.cycle=raw.cycle;}catch(e){}
-  try{if(raw&&raw.programmes&&raw.programmes.length){S.programmes=raw.programmes;console.log('[FT restore] programmes:',raw.programmes.length);}}catch(e){console.warn('[FT restore] programmes',e);}
-  try{if(raw&&raw.exRestPref&&Object.keys(raw.exRestPref).length)S.exRestPref=raw.exRestPref;}catch(e){}
+  try{if(raw&&raw.programmes&&raw.programmes.length&&(!S.programmes||!S.programmes.length)){S.programmes=raw.programmes;console.log('[FT restore] programmes:',raw.programmes.length);}}catch(e){console.warn('[FT restore] programmes',e);}
+  try{if(raw&&raw.exRestPref&&Object.keys(raw.exRestPref).length&&(!S.exRestPref||!Object.keys(S.exRestPref).length))S.exRestPref=raw.exRestPref;}catch(e){}
 
   // Premium
   try{if(raw&&raw.premium!==undefined)S.premium=raw.premium===true;}catch(e){}

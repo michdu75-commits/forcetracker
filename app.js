@@ -1270,8 +1270,10 @@ window._premiumPending=!!S.email;
           if(typeof showPremiumWall==='function')showPremiumWall();
         }
         console.log('[FT premium]',S.premium?'activé':'désactivé','(was:',wasPremium,')');
-        // Auto-restauration silencieuse — local vide mais cloud a des données
-        if(d2.status==='ok'&&d2.sessions&&d2.sessions.length>0&&(!S.sessions||S.sessions.length===0)){
+        // Auto-restauration silencieuse — local-first : ne pull que si local VRAIMENT vide
+        // (sessions + prs + programmes tous à 0 → purge totale confirmée)
+        const _localEmpty=(!S.sessions||S.sessions.length===0)&&(!S.prs||!Object.keys(S.prs).length)&&(!S.programmes||S.programmes.length===0);
+        if(d2.status==='ok'&&d2.sessions&&d2.sessions.length>0&&_localEmpty){
           console.log('[FT auto-restore] local vide, cloud a',d2.sessions.length,'séances — restauration');
           _applyRestoreData(d2);_saveEmailRedundant(S.email);
           toast('✅ Données resynchronisées','success');
