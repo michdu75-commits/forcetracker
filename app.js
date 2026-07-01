@@ -685,7 +685,7 @@ function closeInstall(){
 }
 
 // ─── ADMIN MODE ──────────────────────────────────────────────
-let _adminTaps=0,_adminTimer=null,_adminMode=false;
+var _adminTaps=0,_adminTimer=null,_adminMode=false; // var intentionnel — window._adminMode accessible depuis setup.js (let cross-script cassé sur iOS Safari)
 function onLogoTap(){
   _adminTaps++;
   clearTimeout(_adminTimer);

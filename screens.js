@@ -1,5 +1,5 @@
 // ─── NAVIGATION ──────────────────────────────────────────────
-let _curScreen='home';
+var _curScreen='home'; // var intentionnel — accessible cross-script (let cassé sur iOS Safari)
 function _closeAllPanels(){
   ['menu-drawer','menu-drawer-bd'].forEach(id=>{document.getElementById(id)?.classList.remove('open');});
   if(_curScreen!=='setup')document.getElementById('nb-setup')?.classList.remove('active');
