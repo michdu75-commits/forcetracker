@@ -1294,6 +1294,7 @@ function _beepTick(){
 }
 
 function beep(){
+  if(_cdownActive)return; // overlay actif → _cdownBeepGo() gère le GO
   // Alarme finale : 3 tons simultanés, fort, square wave (passe mieux la musique)
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
@@ -1404,7 +1405,7 @@ function _updateRestCountdown(){
     _cdownBeepedSecs.add(left);
     _cdownBeepSec(left);
   }
-  // GO final (en complément du beep() existant du timer)
+  // GO final (beep() est muselé par le guard _cdownActive → seul _cdownBeepGo() sonne)
   if(left<=0&&!_cdownGoDone){_cdownGoDone=true;_cdownBeepGo();}
   const ring=document.getElementById('rcd-ring');
   const numEl=document.getElementById('rcd-num');
@@ -1527,7 +1528,7 @@ function addRT(s){
   updRest();
 }
 function skipRest(){stopRest();}
-function beep(){try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
+function beep(){if(_cdownActive)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
 
 // ─── EXERCISE PICKER ─────────────────────────────────────────
 const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
