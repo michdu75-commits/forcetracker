@@ -1,8 +1,8 @@
 // ─── NAVIGATION ──────────────────────────────────────────────
-var _curScreen='home'; // var intentionnel — accessible cross-script (let cassé sur iOS Safari)
+// _curScreen : initialisé sur window dans <head> de index.html (window._curScreen='home')
 function _closeAllPanels(){
   ['menu-drawer','menu-drawer-bd'].forEach(id=>{document.getElementById(id)?.classList.remove('open');});
-  if(_curScreen!=='setup')document.getElementById('nb-setup')?.classList.remove('active');
+  if(window._curScreen!=='setup')document.getElementById('nb-setup')?.classList.remove('active');
   document.getElementById('ov-drawer-cnt')?.classList.remove('open');
   document.getElementById('drawer')?.classList.remove('open');
   document.getElementById('drawer-backdrop')?.classList.remove('open');
@@ -26,7 +26,7 @@ function _updateNewBadges(){
 }
 
 function _applyScreen(id,btn){
-  _curScreen=id;
+  window._curScreen=id;
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   document.getElementById('s-'+id)?.classList.add('active');
@@ -152,7 +152,7 @@ const _HELP_DATA={
 };
 
 function showHelp(){
-  const screen=_curScreen==='cycle'?'home':(_curScreen||'home');
+  const screen=window._curScreen==='cycle'?'home':(window._curScreen||'home');
   const data=_HELP_DATA[screen];
   if(!data)return;
   const isFemale=S&&S.gender==='F';
@@ -200,7 +200,7 @@ function _initSwipe(){
     if(Math.abs(dx)<55)return;
     if(Math.abs(dy)>Math.abs(dx)*0.65)return;
     if(_hScrollParent(_sel))return;
-    const idx=_SWIPE_ORDER.indexOf(_curScreen);
+    const idx=_SWIPE_ORDER.indexOf(window._curScreen);
     if(idx<0)return;
     if(dx<0&&idx<_SWIPE_ORDER.length-1){
       const next=_SWIPE_ORDER[idx+1];

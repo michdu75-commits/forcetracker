@@ -685,16 +685,17 @@ function closeInstall(){
 }
 
 // ─── ADMIN MODE ──────────────────────────────────────────────
-var _adminTaps=0,_adminTimer=null,_adminMode=false; // var intentionnel — window._adminMode accessible depuis setup.js (let cross-script cassé sur iOS Safari)
+// _adminMode : initialisé sur window dans <head> de index.html (window._adminMode=false)
+var _adminTaps=0,_adminTimer=null;
 function onLogoTap(){
   _adminTaps++;
   clearTimeout(_adminTimer);
   if(_adminTaps>=5){
     _adminTaps=0;
-    _adminMode=!_adminMode;
+    window._adminMode=!window._adminMode;
     const bar=document.getElementById('setup-tabs-bar');
-    if(bar)bar.style.display=_adminMode?'flex':'none';
-    if(_adminMode){
+    if(bar)bar.style.display=window._adminMode?'flex':'none';
+    if(window._adminMode){
       if(!S.email){S.email='michdu75@gmail.com';persist();}
       const eInp=document.getElementById('email-inp');
       if(eInp)eInp.value=S.email||'michdu75@gmail.com';
@@ -703,7 +704,7 @@ function onLogoTap(){
     }else{
       switchSetupTab('profil',document.getElementById('stab-profil'));
     }
-    toast(_adminMode?'🔧 Mode admin activé':'Mode admin désactivé','info');
+    toast(window._adminMode?'🔧 Mode admin activé':'Mode admin désactivé','info');
     return;
   }
   _adminTimer=setTimeout(()=>{_adminTaps=0;},1500);
@@ -989,7 +990,7 @@ window.addEventListener('popstate',()=>{
   history.pushState(null,'',location.href);
   const ov=[...document.querySelectorAll('.overlay.open')].pop();
   if(ov){ov.classList.remove('open');return;}
-  if(_curScreen!=='home')navBack();
+  if(window._curScreen!=='home')navBack();
 });
 // Trick iOS Safari : garde les inputs "propres" → plus de dialog "Voulez-vous annuler la saisie ?"
 document.addEventListener('input',e=>{

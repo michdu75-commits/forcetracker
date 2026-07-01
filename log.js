@@ -29,7 +29,7 @@ function _stopWktChrono(){if(_wktChronoIv){clearInterval(_wktChronoIv);_wktChron
 
 // Ré-acquérir + resync des deux chronos au retour au premier plan
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&_curScreen==='log'){
+  if(document.visibilityState==='visible'&&window._curScreen==='log'){
     _acquireWakeLock();
     // Wkt chrono : mise à jour immédiate (ne pas attendre le prochain tick)
     const chronoEl=document.getElementById('wkt-chrono');
@@ -1323,7 +1323,7 @@ function beep(){
 function _updPill(){
   const pill=document.getElementById('rest-pill');
   if(!pill)return;
-  const active=!!restIv&&_curScreen!=='log';
+  const active=!!restIv&&window._curScreen!=='log';
   pill.classList.toggle('show',active);
   if(!active){pill.classList.remove('overtime');return;}
   const left=_restLeft();
@@ -1345,7 +1345,7 @@ function _updPill(){
 function _restTick(){
   const left=_restLeft();
   // Overlay décompte final : 10 dernières secondes (seulement si repos > 10s)
-  if(left===10&&!_cdownActive&&restTot>10&&_curScreen==='log')_showRestCountdown();
+  if(left===10&&!_cdownActive&&restTot>10&&window._curScreen==='log')_showRestCountdown();
   if(_cdownActive)_updateRestCountdown();
   // Décompte 5..1 : bips courts
   if(left>0&&left<=5&&!_countdownSecs.has(left)){

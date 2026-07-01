@@ -389,7 +389,7 @@ function _updateGenderRO(g){
 function setGender(g){
   S.gender=g;persist();
   _updateGenderRO(g);
-  if(!_adminMode){
+  if(!window._adminMode){
     document.getElementById('gender-edit').style.display='none';
     document.getElementById('gender-ro').style.display='flex';
   }
@@ -856,7 +856,7 @@ function openMenuDrawer(){
 function closeMenuDrawer(){
   document.getElementById('menu-drawer').classList.remove('open');
   document.getElementById('menu-drawer-bd').classList.remove('open');
-  if(_curScreen!=='setup')document.getElementById('nb-setup').classList.remove('active');
+  if(window._curScreen!=='setup')document.getElementById('nb-setup').classList.remove('active');
 }
 function toggleMenuDrawer(){
   const d=document.getElementById('menu-drawer');
@@ -892,8 +892,8 @@ function renderSetup(){
   _updateGenderRO(S.gender);
   const ro=document.getElementById('gender-ro');
   const ed=document.getElementById('gender-edit');
-  if(ro)ro.style.display=_adminMode?'none':'flex';
-  if(ed)ed.style.display=_adminMode?'flex':'none';
+  if(ro)ro.style.display=window._adminMode?'none':'flex';
+  if(ed)ed.style.display=window._adminMode?'flex':'none';
   setGender(S.gender);
   const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
   const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';

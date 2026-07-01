@@ -15,6 +15,9 @@
 <link rel="apple-touch-icon" href="logo.png">
 <title>Force Tracker v2.8</title>
 <script>
+// Globals cross-fichiers : initialisés AVANT tout <script src> pour éviter ReferenceError sur iOS Safari
+window._adminMode=false;
+window._curScreen='home';
 window._deferredInstall=null;
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._deferredInstall=e;});
 if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add('ob-done');

@@ -571,7 +571,7 @@ function getRecoveryInfo(score){
 }
 
 function renderRecoveryCard(){
-  if(_curScreen==='home'){_renderHomeHero();return;}
+  if(window._curScreen==='home'){_renderHomeHero();return;}
   const el=document.getElementById('recovery-card');if(!el)return;
   const score=calcRecoveryScore();
   const info=getRecoveryInfo(score);
