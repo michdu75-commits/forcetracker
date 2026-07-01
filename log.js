@@ -1279,6 +1279,7 @@ function _cdownBeepGo(){
   if(navigator.vibrate)navigator.vibrate([200,60,200,60,300]);
 }
 function _beepTick(){
+  if(_cdownActive)return; // overlay actif → _cdownBeepSec() gère le son
   // Petit bip de décompte (5..1s) : perçant et court
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
