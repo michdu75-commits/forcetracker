@@ -1225,8 +1225,9 @@ async function finishWorkout(){
   renderLog();
 
   checkBadges();
-  _cloudSyncSessions();
-  if(S.connected&&S.url){
+  // SYNC DÉSACTIVÉ — urgence données 2026-07-01 — réactiver après résolution
+  // _cloudSyncSessions();
+  if(false&&S.connected&&S.url){
     const ok=await syncSheets(sess);
     if(ok){
       if(S.sessions.length)S.sessions[0].synced=true;

@@ -166,7 +166,8 @@ function persist(){
       }catch(e2){}
     }
   }
-  _cloudSyncDebounced();
+  // SYNC DÉSACTIVÉ — urgence données 2026-07-01 — réactiver après résolution
+  // _cloudSyncDebounced();
 }
 
 // ─── UTILS ───────────────────────────────────────────────────
