@@ -1,3 +1,28 @@
+# ⚡ RÈGLES D'OR — à lire à chaque session avant tout le reste
+
+**1. 🚀 Apps Script : TOUJOURS redéployer après un changement de code.**
+`clasp push` ne met à jour que le brouillon. Le `/exec` continue de servir l'ancienne version tant qu'on n'a pas **redéployé** (nouvelle version @NN). → Le bug premium venait de là.
+
+**2. 💎 Premium : ne JAMAIS écraser `PREMIUM_EMAILS`.**
+Il existe **deux** sources : la Script Property `PREMIUM_EMAILS` **et** la liste `PREMIUM_HARDCODED_` dans le code. Aucune fonction ne doit réécrire/réinitialiser `PREMIUM_EMAILS` (un bug le remettait à `michdu75 + elineazs32` et effaçait les ajouts).
+
+**3. 🛡️ Zéro perte de séance — priorité n°1 absolue.**
+Tout est **local-first** : on enregistre en local **avant** toute synchro. Le réseau ne doit **jamais** bloquer ni faire perdre une donnée. La synchro se fait en arrière-plan, avec file d'attente si hors-ligne.
+
+**4. ⚡ Ouverture instantanée à la salle (réseau faible/absent).**
+L'app doit s'ouvrir **depuis le cache, même hors-ligne** (Service Worker). Le démarrage ne doit **jamais** attendre une requête réseau.
+
+**5. 🏷️ Incrémenter `ft-vNN` à chaque déploiement.**
+Visible dans « À propos ». Sans ça, impossible de savoir quelle version tourne (cache trompeur).
+
+**6. 🔒 Avant toute opération risquée : backup + branche.**
+Backend / migration / suppression → créer **branche + tag de backup** d'abord, et faire ça **la nuit** (zéro utilisateur en séance).
+
+**7. 🎨 Garder l'identité « figurines muscles ».**
+Ne pas copier Hevy/JEFIT. Une chose à la fois, **testée avant** de passer à la suite.
+
+---
+
 # Force Tracker — Contexte projet pour Claude
 
 ## Présentation
@@ -8,11 +33,12 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **App live** : https://michdu75-commits.github.io/forcetracker/
 - **Auteur** : Michel — michdu75@gmail.com
 
-## Backend Apps Script (v3.5 @45 — actif)
+## Backend Apps Script (v3.5 @46 — actif)
 
 - **Compte Google** : forcetracker.app@gmail.com
 - **URL déployée** : `https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec`
 - **Script ID** : `1RwE46heNmZrykInYcrMgm1OZWt4NmS6NjTqttvAevZLuqo2v6EEb1Drw`
+- **Sheet Google** : `1b0kuCk6kuNi26hMJq5Q5R6-mKFeXEexfm2P9SryJ-eg` (onglets Séances, Premium, etc.)
 - **Fichier local** : `Code.js` (géré via clasp)
 - **clasp** : toujours préfixer avec `NODE_TLS_REJECT_UNAUTHORIZED=0` (SSL Windows)
 - **Déploiement web app** : Execute as = Me, Who has access = Anyone — ⚠️ à vérifier après chaque redéploiement UI
@@ -58,8 +84,8 @@ Séquence systématique après chaque modif backend : **push → deploy -i → v
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (network-first HTML, cache-first assets) — cache `ft-v127` |
-| `Code.js` | Backend Google Apps Script v3.5 @45 (sync cloud, coach IA, premium) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache `ft-v136` |
+| `Code.js` | Backend Google Apps Script v3.5 @46 (sync cloud, coach IA, premium) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `appsscript.json` | Manifest Apps Script (scopes OAuth, timezone, webapp config) |
 | `female-body.png` | Silhouette féminine — présent mais non utilisé (voir Notes techniques) |
@@ -178,8 +204,8 @@ Séquence systématique après chaque modif backend : **push → deploy -i → v
 - **`#install-banner`** : `pointer-events:none` sur le container, `pointer-events:auto` sur boutons/liens — empêche le banner fixe de bloquer le scroll et les touches dans `s-log`
 - **`#install-banner.hidden button, #install-banner.hidden a`** : `pointer-events:none` — empêche les boutons du banner caché de capturer les taps sur le FAB
 - **`.screen` padding-bottom** : 110px (était 90px) — espace suffisant pour "Terminer la séance" sous le banner
-- **Service Worker** `sw.js` : HTML network-first (toujours la dernière version), assets cache-first (offline OK)
-  - Cache actuel : `ft-v127`
+- **Service Worker** `sw.js` : navigation cache-first (ouverture instantanée) + revalidation silencieuse en fond, assets cache-first (offline OK)
+  - Cache actuel : `ft-v136`
   - ⚠️ À chaque modif d'asset (logo, images) : bumper `CACHE = 'ft-vN'` dans `sw.js`
   - `controllerchange` listener dans `index.html` → rechargement auto quand nouveau SW prend le contrôle (pas besoin que les users vident le cache manuellement)
 
@@ -324,6 +350,52 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
   - `continueInCoach()` : injecte l'analyse dans `coachHistory` et navigue vers s-coach
   - `_coachFmtHtml(text)` : même rendu markdown que le chat coach
 
+### Gym perf — réseau faible (✅ 2026-06-30)
+- **SW navigation cache-first** : app s'ouvre instantanément depuis le cache, revalidation silencieuse en fond
+- **Timeout 3s** sur `autoConnect()` / `loadProfile` — pas de blocage réseau lent au démarrage
+- **`syncSheets(sess)`** dans `tracking.js` : retourne `{ok, error}` (plus de boolean aveugle), log HTTP brut console, erreur exacte affichée par date dans le panneau Admin
+- **`_buildSyncRows(sess)`** : normalisation générale de toutes les séances avant envoi Sheets — date, exercise, type, kg, reps, rm1, bw, gender, age — fonctionne pour tout utilisateur, toute séance cassée
+- **`_retrySheetQueue()`** : relance auto au démarrage + retour en ligne pour toutes les séances `synced===false`
+- Panneau Admin : bouton "Resynchroniser" + compteur séances non-synced
+
+### Dédicace anniversaire Eline (✅ 2026-06-30, ft-v133)
+- **3 guards** : email `elineazs32@gmail.com` + date 2–5 juillet + flag `localStorage ft4_bday_eline_2026`
+- Écran plein écran `#ov-bday` (z-index 9999) : gâteau HTML/CSS, "JOYEUX ANNIVERSAIRE" + "Eline" (police Pacifico), message + "— Papa"
+- **Mini-jeu bougies** : 19 bougies colorées, `touchmove` + `elementFromPoint` + walk-up `.closest('.bday-candle')`, vibration 18ms par bougie soufflée
+- **Bouton verrouillé** (`disabled`) jusqu'à 0 bougies restantes → pop rouge animé (`bday-btn-pop`)
+- 4 keyframes CSS : `bday-flicker`, `bday-sparkle`, `bday-smoke`, `bday-btn-pop`
+- Fonctions dans `app.js` : `checkBirthdayDedication()`, `showBirthdayScreen()`, `closeBirthdayScreen()`, `_initBdayCandles()`, `_bdayTouch()`, `_blowCandle()`
+
+### Overlay décompte final de repos (✅ 2026-07-01, ft-v135)
+- **Déclenchement** : 10 dernières secondes du timer repos, uniquement si `restTot > 10` et `_curScreen === 'log'`
+- **Overlay** `#ov-rest-countdown` : fond `#0e1016` plein écran, z-index 9999
+- **Anneau SVG** : r=85, circumférence 534px, `stroke-dashoffset` piloté par `left/10` — orange `#FF6C00` → rouge `#FF2D55` sur les 3 dernières secondes
+- **Chiffre central** : 10→1 en gras 110px, même couleur que l'anneau
+- **À 0** : label `C'EST REPARTI` + `GO` en blanc + prochaine série (nom exercice, numéro, kg × reps)
+- **3 sorties** : tap overlay, bouton `Passer ▸`, auto-close 2 s après le 0
+- **`_nextSetInfo()`** : lit `S.wkt.exs[_expandedEx]`, retourne premier set non `done`
+- **Fonctions** : `_showRestCountdown()`, `_updateRestCountdown()`, `_closeRestCountdown()` dans `log.js`
+- **`stopRest()`** : appelle `_closeRestCountdown()` en tête — overlay fermé si série validée pendant repos
+- **Variables** : `_cdownActive` (bool), `_cdownAutoClose` (handle timeout)
+
+### Notes libres par exercice (✅ 2026-07-01, ft-v136)
+- **Stockage** : `S.wkt.exs[ei].note` (string) — persisté via `persist()`, voyage automatiquement dans `S.sessions[].exs[].note` lors de `finishWorkout()`, sync cloud sans modif backend
+- **UI en séance** (bloc déplié) : textarea 💬 sous le bouton `+ Série`, fond transparent, auto-extensible (`scrollHeight`), sauvegarde immédiate via `saveExNote(ei, val)` dans `log.js`
+- **Vue repliée** : indicateur `💬` ajouté à la fin du `summary` si `ex.note` non vide
+- **Séances passées** `#ov-sess-detail` → `_renderSessDetailContent()` dans `setup.js` : affiche `💬 ${ex.note}` en or italique sous le nom si présent
+- **Coach IA** `buildCoachContext()` dans `coach.js` : ajoute `[note: ...]` par exercice dans la section DERNIÈRES SÉANCES
+
+### Fix chrono repos transparent (✅ 2026-06-30, ft-v134)
+- **Cause** : `@keyframes rest-blink` animait `opacity` sur `#rest-bar` et `#rest-pill` entiers → fond transparent au pulse, contenu exercice visible en dessous
+- **Fix** : animation déplacée sur `#rest-bar.overtime #rest-time` et `#rest-pill.overtime #rest-pill-time` (texte seul)
+- `#rest-pill` fond : `rgba(14,16,22,.95)` → `#0e1016` (100% opaque) + `z-index:30`
+
+### Chasse au trigger fantôme PREMIUM_EMAILS (✅ 2026-06-30, Code.js @46)
+- **Trigger fantôme** : trigger installable inconnu dans l'UI Apps Script (invisible depuis clasp) réécrit `PREMIUM_EMAILS` — cause identifiée
+- **Double protection** : `PREMIUM_HARDCODED_` (priorité absolue) + `ensurePremiumEmails_()` appelée à chaque `doPost`
+- **Purge one-shot** dans `doGet` : supprime tous les triggers, flag `triggers_purged_20260630`, double try/catch (jamais bloquant même si scope `script.scriptapp` non autorisé)
+- ⚠️ Pour que la purge s'exécute réellement : lancer `authorizeAndListTriggers()` depuis l'IDE Apps Script pour autoriser le scope `script.scriptapp` une fois
+
 ### Import programme — Fichiers Word et Excel (✅ 2026-06-16)
 - Bouton 📸 dans s-log → flow import → accept étendu à `.docx` et `.xlsx/.xls`
 - **Word (.docx)** : chargement dynamique mammoth.js (CDN cdnjs, ~150KB) → `extractRawText` → texte brut
@@ -336,11 +408,11 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - Backend @11 : `handleImportProgram_` gère `isText:true` → `{type:'text', text:'[Fichier Word : ...]'}` envoyé à Claude
 - Modèle utilisé : claude-sonnet-4-6 si fichier texte/PDF, claude-haiku si images seulement
 
-## Format de réponse Apps Script (v3.2)
+## Format de réponse Apps Script (v3.5)
 
 ```
 GET ?test=1
-→ {"status":"online","version":"3.2"}
+→ {"status":"online","version":"3.5"}
 
 GET ?action=loadProfile&email=...
 → {"status":"not_found"}
@@ -373,7 +445,9 @@ POST x-www-form-urlencoded data={"email":"...","amount":"4.99",...}  ← Webhook
 - Navigation : `goScreen(id, navBtn)`
 - Modals : `.overlay` + `.modal` + classe `.open`
 - Toast : `toast(message, 'success'|'error'|'info')`
-- **Tous les appels réseau vers Apps Script** : `Content-Type: text/plain;charset=utf-8` + `redirect:'follow'` — jamais `mode:'no-cors'`
+- **Appels réseau vers Apps Script** :
+  - `_cloudSync()` (saveProfile) : `mode:'no-cors'` — ne pas changer, crash CORS historique
+  - `syncSheets()` (logSession) : CORS + `redirect:'follow'` + `Content-Type: text/plain;charset=utf-8` — confirmation serveur nécessaire
 
 ## Variables clés
 
@@ -427,6 +501,19 @@ _lastProgAnalysisReply // dernière réponse IA analyse programme
 3. Le `controllerchange` listener dans `index.html` rechargera l'app automatiquement chez les utilisateurs — pas besoin de vider le cache manuellement
 
 Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquement).
+
+#### Historique des caches SW (référence pour continuer la numérotation)
+| Cache | Contenu |
+|-------|---------|
+| ft-v128 | gym perf : cache-first SW navigation, timeout autoConnect, retry Sheets |
+| ft-v129 | normalisation séances `_buildSyncRows` |
+| ft-v130 | normalisation générale (fix) |
+| ft-v131 | dédicace Eline v1 simple |
+| ft-v132 | dédicace Eline v2 gâteau + mini-jeu |
+| ft-v133 | dédicace Eline production (guards restaurés) |
+| ft-v134 | fix chrono repos opaque |
+| ft-v135 | overlay décompte final de repos |
+| ft-v136 | notes libres par exercice ← **actuel** |
 
 ### Tests — Chrome ET Safari
 Tester toute modif UI sur **les deux navigateurs** avant de reporter la tâche comme terminée :
