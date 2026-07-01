@@ -1226,6 +1226,7 @@ let _pillIv=null; // interval dédié pill hors écran séance
 let restOvertime=false,_restBeeped=false;
 let _restDoneCb=null;
 let _countdownSecs=new Set(); // secondes 5..1 déjà bippées
+let _cdownActive=false,_cdownAutoClose=null; // overlay décompte final
 
 function _restLeft(){
   if(!restStartTs)return 0;
@@ -1301,6 +1302,9 @@ function _updPill(){
 
 function _restTick(){
   const left=_restLeft();
+  // Overlay décompte final : 10 dernières secondes (seulement si repos > 10s)
+  if(left===10&&!_cdownActive&&restTot>10&&_curScreen==='log')_showRestCountdown();
+  if(_cdownActive)_updateRestCountdown();
   // Décompte 5..1 : bips courts
   if(left>0&&left<=5&&!_countdownSecs.has(left)){
     _countdownSecs.add(left);
@@ -1319,6 +1323,63 @@ function _restTick(){
   updRest();
   _updPill();
 }
+
+// ── OVERLAY DÉCOMPTE FINAL ────────────────────────────────────────────
+function _nextSetInfo(){
+  const ex=S.wkt?.exs?.[_expandedEx];
+  if(!ex)return null;
+  const si=ex.sets.findIndex(s=>!s.done);
+  if(si<0)return null;
+  const set=ex.sets[si];
+  return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.reps||''};
+}
+function _showRestCountdown(){
+  if(_cdownActive)return;
+  _cdownActive=true;
+  const ov=document.getElementById('ov-rest-countdown');
+  if(!ov)return;
+  const info=_nextSetInfo();
+  const nameEl=document.getElementById('rcd-ex-name');
+  const nextNumEl=document.getElementById('rcd-next-num');
+  const nextDetailEl=document.getElementById('rcd-next-detail');
+  if(nameEl)nameEl.textContent=info?info.name:'';
+  if(nextNumEl)nextNumEl.textContent=info?'Série '+info.num:'';
+  if(nextDetailEl)nextDetailEl.textContent=info?(info.kg+' kg × '+info.reps):'';
+  ov.style.display='block';
+  _updateRestCountdown();
+}
+function _updateRestCountdown(){
+  if(!_cdownActive)return;
+  const left=_restLeft();
+  const ring=document.getElementById('rcd-ring');
+  const numEl=document.getElementById('rcd-num');
+  const labelEl=document.getElementById('rcd-label');
+  if(left<=0){
+    if(labelEl)labelEl.textContent="C'EST REPARTI";
+    if(numEl){numEl.textContent='GO';numEl.style.fontSize='80px';numEl.style.color='#fff';}
+    if(ring){ring.style.stroke='var(--red)';ring.setAttribute('stroke-dashoffset','534');}
+    if(!_cdownAutoClose)_cdownAutoClose=setTimeout(_closeRestCountdown,2000);
+    return;
+  }
+  const circ=534;
+  const offset=((10-left)/10*circ).toFixed(1);
+  const color=left<=3?'#FF2D55':'#FF6C00';
+  if(ring){ring.setAttribute('stroke-dashoffset',offset);ring.style.stroke=color;}
+  if(numEl){numEl.textContent=left;numEl.style.fontSize='110px';numEl.style.color=color;}
+}
+function _closeRestCountdown(){
+  if(!_cdownActive)return;
+  _cdownActive=false;
+  if(_cdownAutoClose){clearTimeout(_cdownAutoClose);_cdownAutoClose=null;}
+  const ov=document.getElementById('ov-rest-countdown');
+  if(ov)ov.style.display='none';
+  // reset pour la prochaine fois
+  const labelEl=document.getElementById('rcd-label');
+  const numEl=document.getElementById('rcd-num');
+  if(labelEl)labelEl.textContent='REPRISE DANS';
+  if(numEl){numEl.style.fontSize='110px';numEl.style.color='#FF6C00';}
+}
+// ─────────────────────────────────────────────────────────────────────
 
 function startRest(sec){
   stopRest();restTot=sec;restStartTs=Date.now();restOvertime=false;_restBeeped=false;
@@ -1354,6 +1415,7 @@ function updRest(){
 }
 
 function stopRest(){
+  _closeRestCountdown();
   clearInterval(restIv);restIv=null;
   clearInterval(_pillIv);_pillIv=null;
   restStartTs=0;
