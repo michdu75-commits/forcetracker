@@ -263,10 +263,11 @@ function _renderSessDetailContent(){
   el.innerHTML=(_sessEdits.exs||[]).map((ex,ei)=>{
     const done=ex.sets.filter(s=>s.done);
     return`<div class="card" style="margin-bottom:8px;padding:10px 12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${ex.note?'4':'8'}px">
         <div style="font-weight:700;font-size:14px">${ex.name}</div>
         <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
       </div>
+      ${ex.note?`<div style="font-size:12px;color:var(--gold);font-style:italic;line-height:1.4;margin-bottom:8px;">💬 ${ex.note}</div>`:''}
       ${ex.sets.map((s,si)=>!s.done?'':`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
         <span style="font-size:11px;color:var(--t3);min-width:14px">${si+1}</span>
         <span style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>

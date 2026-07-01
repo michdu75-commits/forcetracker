@@ -124,7 +124,7 @@ function buildCoachContext() {
       let tech = nNorm ? `${nNorm}s` : '';
       if (nWarm) tech += `+${nWarm}É`;
       if (nFail) tech += `+${nFail}X`;
-      return `${e.name}(${tech})`;
+      return `${e.name}(${tech})${e.note?' [note: '+e.note+']':''}`;
     }).join(', ');
     return `${s.date}: ${exStr} — ${s.volume}kg vol`;
   }).join(' | ') || 'Aucune séance';
