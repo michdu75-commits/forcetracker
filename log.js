@@ -334,7 +334,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
   // Vue réduite
   if(!isExpanded){
     const _dsLbl=ex.dropset?'palier':'série';
-    const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
+    const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}${ex.note?' 💬':''}`;
     const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':(!_groupMode?'opacity:.75':'');
     const clickAttr=_groupMode
       ?` onclick="toggleGroupSelect(${ei})" style="cursor:pointer;${selStyle}"`
@@ -433,7 +433,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
     +`${hasLocalGif?'<img src="'+_exyt.img+'" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
-    +`${ex.note?`<div style="font-size:11px;color:var(--gold);margin:1px 0 3px;font-style:italic;line-height:1.3;">📋 ${ex.note}</div>`:''}`
+    +``
     +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${ex.dropset?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
     +`</div>`
     +`<div style="pointer-events:auto;flex-shrink:0;" onclick="event.stopPropagation()">`
@@ -449,6 +449,10 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
         :`<button class="btn btn-bg2 btn-sm" style="flex:1;" onclick="addSet(${ei})">+ Série</button>${ex.sets.length>1?`<button class="btn-xs" style="color:var(--t3);transition:opacity .1s,transform .1s;" ontouchstart="_rmSetHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmSetHoldEnd(this)" ontouchcancel="_rmSetHoldEnd(this)" onmousedown="_rmSetHoldStart(this,${ei})" onmouseup="_rmSetHoldEnd(this)" onmouseleave="_rmSetHoldEnd(this)">−</button>`:''}`;
       return`<div class="ex-foot">${footBtn}</div>`;
     })()
+    +`<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
+    +`<span style="font-size:14px;color:var(--t3);padding-top:5px;flex-shrink:0;">💬</span>`
+    +`<textarea id="ex-note-${ei}" rows="1" placeholder="Note perso (trop léger, fatigue, douleur…)" oninput="saveExNote(${ei},this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="flex:1;resize:none;overflow:hidden;border:none;background:transparent;color:var(--t2);font-size:12px;font-family:inherit;padding:4px 2px;line-height:1.4;min-height:26px;outline:none;caret-color:var(--red);">${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>`
+    +`</div>`
     +(!inGroup?(ex.dropset
       ?`<div style="display:flex;gap:5px;padding:2px 8px 8px;">`
         +`<button class="btn-xs" style="font-size:10.5px;color:var(--t3);border-color:var(--sep);padding:3px 8px;" onclick="removeDropset(${ei})">✕ Retirer dropset</button>`
@@ -1323,6 +1327,8 @@ function _restTick(){
   updRest();
   _updPill();
 }
+
+function saveExNote(ei,val){if(S.wkt?.exs?.[ei]!==undefined){S.wkt.exs[ei].note=val||'';persist();}}
 
 // ── OVERLAY DÉCOMPTE FINAL ────────────────────────────────────────────
 function _nextSetInfo(){
