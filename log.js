@@ -1231,8 +1231,8 @@ let restOvertime=false,_restBeeped=false;
 let _restDoneCb=null;
 let _countdownSecs=new Set(); // secondes 5..1 déjà bippées
 let _cdownActive=false,_cdownAutoClose=null; // overlay décompte final
-let _cdownBeepedSecs=new Set(),_cdownGoDone=false; // bips overlay
-let _audioCtx=null; // contexte audio partagé (iOS-safe)
+let _cdownBeepedSecs=new Set(),_cdownGoDone=false; // vibration overlay
+let _cdownAudio=null; // élément Audio préchargé pour le décompte
 
 function _restLeft(){
   if(!restStartTs)return 0;
@@ -1240,46 +1240,13 @@ function _restLeft(){
 }
 
 // ─── SONS ────────────────────────────────────────────────────
-// Contexte audio partagé — créé une seule fois, résumé au besoin (iOS)
-function _getCtx(){
-  if(!_audioCtx)try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
-  if(_audioCtx&&_audioCtx.state==='suspended')_audioCtx.resume().catch(()=>{});
-  return _audioCtx;
-}
-// Bip de l'overlay : sec 10→4 neutre, sec 3→1 aigu/fort (double oscillateur)
-function _cdownBeepSec(left){
-  const ctx=_getCtx();if(!ctx)return;
-  const intense=left<=3;
-  const freq1=left===3?880:left===2?1050:left===1?1200:620;
-  const gain=intense?1.0:0.72;
-  const dur=intense?0.13:0.09;
-  [['square',freq1,gain],['sine',intense?freq1*1.18:freq1*1.48,gain*0.42]].forEach(([type,freq,g])=>{
-    const o=ctx.createOscillator(),gn=ctx.createGain();
-    o.type=type;o.frequency.value=freq;
-    o.connect(gn);gn.connect(ctx.destination);
-    gn.gain.setValueAtTime(0,ctx.currentTime);
-    gn.gain.linearRampToValueAtTime(g,ctx.currentTime+.006);
-    gn.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
-    o.start(ctx.currentTime);o.stop(ctx.currentTime+dur+.01);
-  });
-  if(navigator.vibrate)navigator.vibrate(intense?80:25);
-}
-// GO final : accord riche 3 oscillateurs, plus long
-function _cdownBeepGo(){
-  const ctx=_getCtx();if(!ctx)return;
-  [[880,'square',1.0,0],[1109,'sine',0.7,.02],[1320,'square',0.85,.04]].forEach(([freq,type,g,delay])=>{
-    const o=ctx.createOscillator(),gn=ctx.createGain();
-    o.type=type;o.frequency.value=freq;
-    o.connect(gn);gn.connect(ctx.destination);
-    gn.gain.setValueAtTime(0,ctx.currentTime+delay);
-    gn.gain.linearRampToValueAtTime(g,ctx.currentTime+delay+.015);
-    gn.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+.5);
-    o.start(ctx.currentTime+delay);o.stop(ctx.currentTime+delay+.55);
-  });
-  if(navigator.vibrate)navigator.vibrate([200,60,200,60,300]);
+// Précharge countdown.wav une seule fois
+function _initCdownAudio(){
+  if(_cdownAudio)return;
+  try{_cdownAudio=new Audio('countdown.wav');_cdownAudio.preload='auto';_cdownAudio.volume=1.0;}catch(e){}
 }
 function _beepTick(){
-  if(_cdownActive)return; // overlay actif → _cdownBeepSec() gère le son
+  if(_cdownActive)return; // overlay actif → countdown.wav gère le son
   // Petit bip de décompte (5..1s) : perçant et court
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
@@ -1294,7 +1261,7 @@ function _beepTick(){
 }
 
 function beep(){
-  if(_cdownActive)return; // overlay actif → _cdownBeepGo() gère le GO
+  if(_cdownActive)return; // overlay actif → countdown.wav gère le GO
   // Alarme finale : 3 tons simultanés, fort, square wave (passe mieux la musique)
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
@@ -1395,18 +1362,20 @@ function _showRestCountdown(){
   if(nextNumEl)nextNumEl.textContent=info?'Série '+info.num:'';
   if(nextDetailEl)nextDetailEl.textContent=info?(info.kg+' kg × '+info.reps):'';
   ov.style.display='block';
+  // Lecture du fichier son
+  _initCdownAudio();
+  if(_cdownAudio){_cdownAudio.currentTime=0;_cdownAudio.play().catch(()=>{});}
   _updateRestCountdown();
 }
 function _updateRestCountdown(){
   if(!_cdownActive)return;
   const left=_restLeft();
-  // Son + vibration à chaque seconde 10→1
-  if(left>0&&left<=10&&!_cdownBeepedSecs.has(left)){
+  // Vibration seule : intense sur 3-2-1, GO final
+  if(left>0&&left<=3&&!_cdownBeepedSecs.has(left)){
     _cdownBeepedSecs.add(left);
-    _cdownBeepSec(left);
+    if(navigator.vibrate)navigator.vibrate(80);
   }
-  // GO final (beep() est muselé par le guard _cdownActive → seul _cdownBeepGo() sonne)
-  if(left<=0&&!_cdownGoDone){_cdownGoDone=true;_cdownBeepGo();}
+  if(left<=0&&!_cdownGoDone){_cdownGoDone=true;if(navigator.vibrate)navigator.vibrate([200,60,200,60,300]);}
   const ring=document.getElementById('rcd-ring');
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
@@ -1427,6 +1396,8 @@ function _closeRestCountdown(){
   if(!_cdownActive)return;
   _cdownActive=false;
   if(_cdownAutoClose){clearTimeout(_cdownAutoClose);_cdownAutoClose=null;}
+  // Arrêt net du fichier son
+  if(_cdownAudio){_cdownAudio.pause();_cdownAudio.currentTime=0;}
   const ov=document.getElementById('ov-rest-countdown');
   if(ov)ov.style.display='none';
   // reset pour la prochaine fois
@@ -2586,6 +2557,9 @@ function renderPlates(){
 }
 function applyPlate(){if(plateExIdx===null)return;const t=parseFloat(document.getElementById('plate-kg').value);if(!t)return;S.wkt.exs[plateExIdx].sets.forEach(s=>{if(!s.done)s.kg=t;});persist();closePlate();renderExBlocks();toast('Charge appliquée !','success');}
 
-// iOS : débloque l'AudioContext dès le premier tap utilisateur
-document.addEventListener('touchstart',()=>{_getCtx();},{once:true,passive:true});
+// iOS : débloque l'élément Audio dès le premier tap utilisateur (play→pause muet)
+document.addEventListener('touchstart',()=>{
+  _initCdownAudio();
+  if(_cdownAudio){_cdownAudio.play().then(()=>{_cdownAudio.pause();_cdownAudio.currentTime=0;}).catch(()=>{});}
+},{once:true,passive:true});
 
