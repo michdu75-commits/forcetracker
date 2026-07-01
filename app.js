@@ -962,6 +962,7 @@ load();
     }
   }catch(e){}
 })();
+console.log('[FT] boot ft-v151 — _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'openRestoreAccount=',typeof openRestoreAccount);
 // Garantie : le timer de repos ne survit jamais à un redémarrage ni à un retour au premier plan
 stopRest();
 document.addEventListener('visibilitychange',()=>{
