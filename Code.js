@@ -354,6 +354,16 @@ function handleKofiWebhook_(dataStr) {
   }
 }
 
+// ── Helpers garde-fou : le vide ne gagne jamais sur du rempli ──────────
+// Chaîne : '' ou null n'écrase pas une valeur existante non-vide
+function _ps_(b, e){ if(b===undefined)return e; return (b&&b!=='')?b:(e||b||''); }
+// Nombre : 0 ou null n'écrase pas une valeur existante non-nulle
+function _pn_(b, e){ if(b===undefined)return e; return (b&&b!==0)?b:(e||b||0); }
+// Tableau : [] n'écrase pas un tableau existant non-vide
+function _pa_(b, e){ if(b===undefined)return e; const bi=b||[],ei=e||[]; return(bi.length>0||ei.length===0)?bi:ei; }
+// Objet  : {} n'écrase pas un objet existant non-vide
+function _po_(b, e){ if(b===undefined)return e; const bk=Object.keys(b||{}).length,ek=Object.keys(e||{}).length; return(bk>0||ek===0)?b:e; }
+
 // ───────────────────────────────────────────────────────────
 function handleSaveProfile_(body) {
   try {
@@ -364,65 +374,76 @@ function handleSaveProfile_(body) {
     const existing = loadUserData_(email) || {};
     const profile = existing.profile || {};
 
-    if (body.name          !== undefined) profile.name          = body.name;
-    if (body.bw            !== undefined) profile.bw            = body.bw;
-    if (body.age           !== undefined) profile.age           = body.age;
-    if (body.height        !== undefined) profile.height        = body.height;
-    if (body.gender        !== undefined) profile.gender        = body.gender;
-    if (body.goal          !== undefined) profile.goal          = body.goal;
-    if (body.activityLevel !== undefined) profile.activityLevel = body.activityLevel;
-    if (body.workType       !== undefined) profile.workType       = body.workType;
-    if (body.smoker         !== undefined) profile.smoker         = body.smoker;
-    if (body.neck           !== undefined) profile.neck           = body.neck;
-    if (body.waist          !== undefined) profile.waist          = body.waist;
-    if (body.hip            !== undefined) profile.hip            = body.hip;
-    if (body.nutritionPhase !== undefined) profile.nutritionPhase = body.nutritionPhase;
-    if (body.barW           !== undefined) profile.barW           = body.barW;
-    if (body.defRest        !== undefined) profile.defRest        = body.defRest;
-    if (body.mensCycleStart !== undefined) profile.mensCycleStart = body.mensCycleStart;
-    if (body.mensCycleDur   !== undefined) profile.mensCycleDur   = body.mensCycleDur;
-    if (body.contraception  !== undefined) profile.contraception  = body.contraception;
-    if (body.morpho         !== undefined) profile.morpho         = body.morpho;
-    if (body.morphotype     !== undefined) profile.morphotype     = body.morphotype;
-    if (body.customExercises!== undefined) profile.customExercises= body.customExercises;
-    if (body.coachMemory    !== undefined) profile.coachMemory    = body.coachMemory;
-    if (body.healthProfile  !== undefined) profile.healthProfile  = body.healthProfile;
-    if (body.a11y           !== undefined) profile.a11y           = body.a11y;
-    if (body.colorblind     !== undefined) profile.colorblind     = body.colorblind;
-    if (body.leftHand       !== undefined) profile.leftHand       = body.leftHand;
+    // GARDE-FOU GLOBAL : le vide ne gagne jamais sur du rempli
+    // Chaînes identité : '' n'écrase pas une valeur existante
+    if (body.name          !== undefined) profile.name          = _ps_(body.name,          profile.name);
+    if (body.gender        !== undefined) profile.gender        = _ps_(body.gender,        profile.gender);
+    if (body.goal          !== undefined) profile.goal          = _ps_(body.goal,          profile.goal);
+    if (body.workType      !== undefined) profile.workType      = _ps_(body.workType,      profile.workType);
+    if (body.nutritionPhase!== undefined) profile.nutritionPhase= _ps_(body.nutritionPhase,profile.nutritionPhase);
+    if (body.mensCycleStart!== undefined) profile.mensCycleStart= _ps_(body.mensCycleStart,profile.mensCycleStart);
+    if (body.contraception !== undefined) profile.contraception = _ps_(body.contraception, profile.contraception);
+    if (body.morpho        !== undefined) profile.morpho        = _ps_(body.morpho,        profile.morpho);
+    if (body.morphotype    !== undefined) profile.morphotype    = _ps_(body.morphotype,    profile.morphotype);
+    if (body.colorblind    !== undefined) profile.colorblind    = _ps_(body.colorblind,    profile.colorblind);
+    if (body.coachMemory   !== undefined) profile.coachMemory   = _ps_(body.coachMemory,   profile.coachMemory);
+    if (body.bday          !== undefined) profile.bday          = _ps_(body.bday,          profile.bday);
+    // Nombres physiques : 0 n'écrase pas une valeur existante
+    if (body.bw            !== undefined) profile.bw            = _pn_(body.bw,            profile.bw);
+    if (body.age           !== undefined) profile.age           = _pn_(body.age,           profile.age);
+    if (body.height        !== undefined) profile.height        = _pn_(body.height,        profile.height);
+    if (body.activityLevel !== undefined) profile.activityLevel = _pn_(body.activityLevel, profile.activityLevel);
+    if (body.barW          !== undefined) profile.barW          = _pn_(body.barW,          profile.barW);
+    if (body.defRest       !== undefined) profile.defRest       = _pn_(body.defRest,       profile.defRest);
+    if (body.mensCycleDur  !== undefined) profile.mensCycleDur  = _pn_(body.mensCycleDur,  profile.mensCycleDur);
+    if (body.neck          !== undefined) profile.neck          = _pn_(body.neck,          profile.neck);
+    if (body.waist         !== undefined) profile.waist         = _pn_(body.waist,         profile.waist);
+    if (body.hip           !== undefined) profile.hip           = _pn_(body.hip,           profile.hip);
+    // Booleans : false est une valeur valide — toujours écrire
+    if (body.smoker        !== undefined) profile.smoker        = body.smoker;
+    if (body.a11y          !== undefined) profile.a11y          = body.a11y;
+    if (body.leftHand      !== undefined) profile.leftHand      = body.leftHand;
+    // Tableaux : [] n'écrase pas un tableau existant
+    if (body.customExercises!== undefined) profile.customExercises= _pa_(body.customExercises, profile.customExercises);
+    // Objets  : {} ou null n'écrase pas un objet existant
+    if (body.healthProfile !== undefined) profile.healthProfile = body.healthProfile||profile.healthProfile||null;
+    if (body.badges        !== undefined) profile.badges        = _po_(body.badges,        profile.badges);
 
-    existing.profile   = profile;
+    existing.profile = profile;
+
+    // Tableaux entraînement : [] n'écrase pas des données existantes
     if (body.sessions !== undefined) {
-      const incomingSess = body.sessions || [];
-      const existingSess = existing.sessions || [];
-      if (incomingSess.length === 0 && existingSess.length > 0) {
-        Logger.log('[FT GARDE-FOU sessions] refusé : ' + existingSess.length + ' séances cloud conservées (entrante: 0)');
-      } else {
-        existing.sessions = body.sessions;
-      }
+      const inSess = body.sessions || [], exSess = existing.sessions || [];
+      if (inSess.length === 0 && exSess.length > 0) {
+        Logger.log('[FT GARDE-FOU sessions] refusé : ' + exSess.length + ' séances conservées');
+      } else { existing.sessions = inSess; }
     }
     if (body.prs !== undefined) {
-      const incomingPrs = Object.keys(body.prs || {}).length;
-      const existingPrs = Object.keys(existing.prs || {}).length;
-      if (incomingPrs === 0 && existingPrs > 0) {
-        Logger.log('[FT GARDE-FOU prs] refusé : ' + existingPrs + ' PRs cloud conservés');
-      } else {
-        existing.prs = body.prs;
-      }
+      const inPrs = Object.keys(body.prs||{}).length, exPrs = Object.keys(existing.prs||{}).length;
+      if (inPrs === 0 && exPrs > 0) {
+        Logger.log('[FT GARDE-FOU prs] refusé : ' + exPrs + ' PRs conservés');
+      } else { existing.prs = body.prs; }
     }
     if (body.programmes !== undefined) {
-      const inProg = body.programmes || [];
-      const exProg = existing.programmes || [];
+      const inProg = body.programmes || [], exProg = existing.programmes || [];
       if (inProg.length === 0 && exProg.length > 0) {
-        Logger.log('[FT GARDE-FOU programmes] refusé : ' + exProg.length + ' programmes cloud conservés');
-      } else {
-        existing.programmes = body.programmes;
-      }
+        Logger.log('[FT GARDE-FOU programmes] refusé : ' + exProg.length + ' programmes conservés');
+      } else { existing.programmes = inProg; }
+    }
+    if (body.weightLog !== undefined) {
+      const inWL = body.weightLog || [], exWL = existing.weightLog || [];
+      if (inWL.length === 0 && exWL.length > 0) {
+        Logger.log('[FT GARDE-FOU weightLog] refusé : ' + exWL.length + ' entrées conservées');
+      } else { existing.weightLog = inWL; }
+    }
+    if (body.sleepLog !== undefined) {
+      const inSL = body.sleepLog || [], exSL = existing.sleepLog || [];
+      if (inSL.length === 0 && exSL.length > 0) {
+        Logger.log('[FT GARDE-FOU sleepLog] refusé : ' + exSL.length + ' entrées conservées');
+      } else { existing.sleepLog = inSL; }
     }
     if (body.exRestPref !== undefined) existing.exRestPref = body.exRestPref;
-    if (body.weightLog  !== undefined) existing.weightLog  = body.weightLog;
-    if (body.sleepLog   !== undefined) existing.sleepLog   = body.sleepLog;
-    if (body.cycle      !== undefined) existing.cycle      = body.cycle;
+    if (body.cycle      !== undefined) existing.cycle      = body.cycle; // null intentionnel OK
     existing.email     = email;
     existing.updatedAt = new Date().toISOString();
 
@@ -432,7 +453,7 @@ function handleSaveProfile_(body) {
     // Email de bienvenue pour les nouveaux utilisateurs
     if (body.welcome && isNewUser) {
       try {
-        const prenom = body.name ? body.name : 'Athlète';
+        const prenom = profile.name || 'Athlète';
         MailApp.sendEmail(
           email,
           '🏋️ Bienvenue sur Force Tracker !',

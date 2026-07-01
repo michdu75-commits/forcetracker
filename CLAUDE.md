@@ -549,7 +549,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v156 | boot log dynamique via caches.keys() — fin du bug "version hardcodée" |
 | ft-v157 | auto-restauration au démarrage : cookie+IDB email redondant, overlay reconnect |
 | ft-v158 | sync cloud programmes + exRestPref + garde-fou programmes |
-| ft-v159 | local-first pull + guard auto-restore élargi + label "ce mois" séances ← **actuel** |
+| ft-v159 | local-first pull + guard auto-restore élargi + label "ce mois" séances |
+| ft-v160 | garde-fou global profil serveur (@50) : bday/badges sauvés, '' et 0 ne gagnent jamais sur rempli ; restore prénom manquant (champ inline) ; z-index overlay restore ← **actuel** |
 
 ### Tests — Chrome ET Safari
 Tester toute modif UI sur **les deux navigateurs** avant de reporter la tâche comme terminée :

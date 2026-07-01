@@ -1426,7 +1426,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 </div>
 
 <!-- OVERLAY: Restauration compte depuis le cloud -->
-<div id="ov-restore-account" class="overlay" onclick="if(event.target===this)this.classList.remove('open')">
+<div id="ov-restore-account" class="overlay" style="z-index:9999;" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal" style="max-width:390px;padding:28px 20px 24px;">
     <div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:6px;">🔄 Restaurer mon compte</div>
     <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:20px;">Entre l'email avec lequel tu as créé ton compte. Tes séances, PRs et profil seront téléchargés depuis le cloud — <strong style="color:var(--t1);">aucune donnée ne sera écrite vers le serveur</strong>.</div>

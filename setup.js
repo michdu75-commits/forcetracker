@@ -1035,20 +1035,25 @@ function _applyRestoreData(raw){
 
   // Données d'entraînement — LOCAL-FIRST : n'écrase le local QUE si local est vide
   // (règle absolue : une purge cloud ou une restauration ne doit jamais effacer du local non-vide)
-  try{if(d.badges&&Object.keys(d.badges).length)S.badges=d.badges;}catch(e){console.warn('[FT restore] badges',e);}
+  // badges + customExercises — local-first si non vide
+  try{const cb=d.badges&&Object.keys(d.badges).length;const lb=S.badges&&Object.keys(S.badges).length;if(cb&&(!lb||cb>lb))S.badges=d.badges;}catch(e){console.warn('[FT restore] badges',e);}
   try{if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;}catch(e){console.warn('[FT restore] customEx',e);}
+  // PRs — prend le plus complet
   try{if(prs&&Object.keys(prs).length&&(!S.prs||!Object.keys(S.prs).length)){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}else if(prs&&Object.keys(prs).length>Object.keys(S.prs||{}).length){S.prs=prs;console.log('[FT restore] prs cloud plus complet:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
+  // Sessions — prend le plus complet
   try{if(sessions&&sessions.length&&(!S.sessions||S.sessions.length===0)){S.sessions=sessions;console.log('[FT restore] sessions:',sessions.length);}else if(sessions&&sessions.length>0&&S.sessions&&sessions.length>S.sessions.length){S.sessions=sessions;console.log('[FT restore] sessions cloud plus complet:',sessions.length);}}catch(e){console.warn('[FT restore] sessions',e);}
   try{if(weightLog&&weightLog.length)S.weightLog=weightLog;}catch(e){}
   try{if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;}catch(e){}
   try{if(raw&&raw.cycle)S.cycle=raw.cycle;}catch(e){}
+  // Programmes — local-first
   try{if(raw&&raw.programmes&&raw.programmes.length&&(!S.programmes||!S.programmes.length)){S.programmes=raw.programmes;console.log('[FT restore] programmes:',raw.programmes.length);}}catch(e){console.warn('[FT restore] programmes',e);}
   try{if(raw&&raw.exRestPref&&Object.keys(raw.exRestPref).length&&(!S.exRestPref||!Object.keys(S.exRestPref).length))S.exRestPref=raw.exRestPref;}catch(e){}
 
   // Premium
   try{if(raw&&raw.premium!==undefined)S.premium=raw.premium===true;}catch(e){}
   try{if(raw&&raw.premiumExpiry!==undefined)S.premiumExpiry=raw.premiumExpiry||'';}catch(e){}
-  try{if(raw&&raw.coachMemory)S.coachMemory=raw.coachMemory;}catch(e){}
+  // coachMemory — top-level dans la réponse ET dans profile (double source)
+  try{const cm=raw.coachMemory||d.coachMemory||'';if(cm)S.coachMemory=cm;}catch(e){}
 
   // Sauvegarde locale + application des préférences UI
   try{persist();}catch(e){console.error('[FT restore] persist échoué !',e);}
@@ -1103,8 +1108,8 @@ async function doRestoreAccount(){
     // Afficher ce qu'on a reçu du serveur (diagnostic avant écriture)
     const srvSess=(data.sessions||[]).length;
     const srvPrs=Object.keys(data.prs||{}).length;
-    const srvName=(data.profile&&data.profile.name)||'?';
-    if(st){st.textContent='☁️ Cloud : '+srvName+' · '+srvSess+' séances · '+srvPrs+' PRs — Application…';}
+    const srvName=(data.profile&&data.profile.name)||'';
+    if(st){st.textContent='☁️ Cloud : '+(srvName||'?')+' · '+srvSess+' séances · '+srvPrs+' PRs — Application…';}
     console.log('[FT restore] server data',{sessions:srvSess,prs:srvPrs,name:srvName});
 
     // Écrire l'email dans S AVANT _applyRestoreData pour que persist() l'inclue
@@ -1115,14 +1120,42 @@ async function doRestoreAccount(){
     const nbPrs=S.prs&&Object.keys(S.prs).length||0;
     console.log('[FT restore] après apply',{sessions:nbSess,prs:nbPrs,name:S.name});
 
-    // Fermer l'overlay
-    try{document.getElementById('ov-restore-account').classList.remove('open');}catch(e){}
+    // Si le prénom n'est pas dans le cloud (effacé par ancien bug), montrer un champ de saisie
+    const noName=!S.name;
+    if(noName&&st){
+      st.style.display='block';
+      st.style.color='var(--orange)';
+      st.innerHTML='⚠️ Prénom non trouvé dans le cloud. Saisis-le&nbsp;:'
+        +'<input type="text" id="restore-name-inp2" placeholder="Ton prénom" autocomplete="given-name" '
+        +'style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--red);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:15px;">';
+      const ni=document.getElementById('restore-name-inp2');
+      if(ni){
+        setTimeout(()=>ni.focus(),100);
+        ni.addEventListener('input',function(){
+          S.name=this.value.trim();
+          if(S.name){try{persist();}catch(e){}}
+          try{const mn=document.getElementById('menu-name-lbl');if(mn)mn.textContent=S.name||'Athlète';}catch(e){}
+        });
+        ni.addEventListener('blur',function(){
+          if(S.name){try{_cloudSync();}catch(e){}};
+        });
+      }
+    }
+
+    // Fermer l'overlay uniquement si le prénom est connu
+    if(!noName){
+      try{document.getElementById('ov-restore-account').classList.remove('open');}catch(e){}
+    }
     // Rafraîchir l'UI — erreur de rendu non bloquante
     try{if(typeof renderSetup==='function')renderSetup();}catch(e){console.warn('[FT restore] renderSetup err',e);}
     try{if(typeof renderHome==='function')renderHome();}catch(e){console.warn('[FT restore] renderHome err',e);}
     try{if(typeof renderNutrition==='function')renderNutrition();}catch(e){console.warn('[FT restore] renderNutrition err',e);}
 
-    toast('✅ Restauré — '+nbSess+' séance'+(nbSess>1?'s':'')+' · '+nbPrs+' PRs','success');
+    if(!noName){
+      toast('✅ Restauré — '+nbSess+' séance'+(nbSess>1?'s':'')+' · '+nbPrs+' PRs','success');
+    }else{
+      toast('✅ '+nbSess+' séance'+(nbSess>1?'s':'')+' · '+nbPrs+' PRs restaurés. Entre ton prénom.','info');
+    }
   }catch(e){
     const msg=e.message||'Erreur réseau';
     console.error('[FT restore] ERREUR',e);
