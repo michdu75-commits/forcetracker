@@ -1375,7 +1375,13 @@ function _updateRestCountdown(){
     _cdownBeepedSecs.add(left);
     if(navigator.vibrate)navigator.vibrate(80);
   }
-  if(left<=0&&!_cdownGoDone){_cdownGoDone=true;if(navigator.vibrate)navigator.vibrate([200,60,200,60,300]);}
+  if(left<=0&&!_cdownGoDone){
+    _cdownGoDone=true;
+    if(navigator.vibrate)navigator.vibrate([200,60,200,60,300]);
+    // Flash vert — filet de sécurité mode silencieux iPhone
+    const _ov=document.getElementById('ov-rest-countdown');
+    if(_ov){_ov.style.transition='background .05s';_ov.style.background='#00e676';setTimeout(()=>{_ov.style.background='#0e1016';setTimeout(()=>{_ov.style.transition='';},200);},200);}
+  }
   const ring=document.getElementById('rcd-ring');
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
