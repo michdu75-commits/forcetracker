@@ -547,7 +547,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v154 | garde-fou cloud sessions/PRs + restauration backup Michel 11s·30PRs |
 | ft-v155 | réactive sync cloud (garde-fou @47 actif) |
 | ft-v156 | boot log dynamique via caches.keys() — fin du bug "version hardcodée" |
-| ft-v157 | auto-restauration au démarrage : cookie+IDB email redondant, overlay reconnect ← **actuel** |
+| ft-v157 | auto-restauration au démarrage : cookie+IDB email redondant, overlay reconnect |
+| ft-v158 | sync cloud programmes + exRestPref + garde-fou programmes ← **actuel** |
 
 ### Tests — Chrome ET Safari
 Tester toute modif UI sur **les deux navigateurs** avant de reporter la tâche comme terminée :

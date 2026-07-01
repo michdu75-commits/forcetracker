@@ -204,6 +204,8 @@ function _cloudSync(){
       weightLog:(S.weightLog||[]).slice(-365),
       sleepLog:(S.sleepLog||[]).slice(-365),
       cycle:S.cycle||null,
+      programmes:S.programmes||[],
+      exRestPref:S.exRestPref||{},
       healthProfile:S.healthProfile||null,
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
@@ -1039,6 +1041,8 @@ function _applyRestoreData(raw){
   try{if(weightLog&&weightLog.length)S.weightLog=weightLog;}catch(e){}
   try{if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;}catch(e){}
   try{if(raw&&raw.cycle)S.cycle=raw.cycle;}catch(e){}
+  try{if(raw&&raw.programmes&&raw.programmes.length){S.programmes=raw.programmes;console.log('[FT restore] programmes:',raw.programmes.length);}}catch(e){console.warn('[FT restore] programmes',e);}
+  try{if(raw&&raw.exRestPref&&Object.keys(raw.exRestPref).length)S.exRestPref=raw.exRestPref;}catch(e){}
 
   // Premium
   try{if(raw&&raw.premium!==undefined)S.premium=raw.premium===true;}catch(e){}

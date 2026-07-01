@@ -238,6 +238,8 @@ function handleLoadProfilePost_(body) {
     weightLog:      data.weightLog      || [],
     sleepLog:       data.sleepLog       || [],
     cycle:          data.cycle          || null,
+    programmes:     data.programmes     || [],
+    exRestPref:     data.exRestPref     || {},
     nutritionPhase: data.nutritionPhase || 'charge',
     coachMemory:    (data.profile && data.profile.coachMemory) || ''
   });
@@ -408,9 +410,19 @@ function handleSaveProfile_(body) {
         existing.prs = body.prs;
       }
     }
-    if (body.weightLog !== undefined) existing.weightLog = body.weightLog;
-    if (body.sleepLog  !== undefined) existing.sleepLog  = body.sleepLog;
-    if (body.cycle     !== undefined) existing.cycle     = body.cycle;
+    if (body.programmes !== undefined) {
+      const inProg = body.programmes || [];
+      const exProg = existing.programmes || [];
+      if (inProg.length === 0 && exProg.length > 0) {
+        Logger.log('[FT GARDE-FOU programmes] refusé : ' + exProg.length + ' programmes cloud conservés');
+      } else {
+        existing.programmes = body.programmes;
+      }
+    }
+    if (body.exRestPref !== undefined) existing.exRestPref = body.exRestPref;
+    if (body.weightLog  !== undefined) existing.weightLog  = body.weightLog;
+    if (body.sleepLog   !== undefined) existing.sleepLog   = body.sleepLog;
+    if (body.cycle      !== undefined) existing.cycle      = body.cycle;
     existing.email     = email;
     existing.updatedAt = new Date().toISOString();
 
