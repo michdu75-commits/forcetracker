@@ -1069,10 +1069,12 @@ async function doRestoreAccount(){
   const btn=document.getElementById('restore-account-btn');
   const st=document.getElementById('restore-status');
   if(btn){btn.disabled=true;btn.textContent='Restauration en cours…';}
-  if(st){st.style.display='block';st.textContent='⏳ Lecture du cloud…';}
+  if(st){st.style.display='block';st.style.color='var(--t2)';st.textContent='⏳ Lecture du cloud…';}
   try{
-    // PULL-ONLY : on lit d'abord, on ne pousse rien avant
+    // PULL-ONLY : on lit, on ne pousse rien avant
     const data=await _fetchRestoreRaw(email);
+    console.log('[FT restore] raw server response',JSON.stringify(data).substring(0,500));
+
     if(!data||data.status==='not_found'||data.error){
       const msg=data&&data.error?data.error:'Aucun profil trouvé pour cet email.';
       if(st){st.textContent='❌ '+msg;st.style.color='var(--red)';}
@@ -1080,20 +1082,33 @@ async function doRestoreAccount(){
       if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
       return;
     }
-    // Données reçues — on écrit l'email dans S AVANT _applyRestoreData
-    // pour que persist() interne inclue l'email dans localStorage
+
+    // Afficher ce qu'on a reçu du serveur (diagnostic avant écriture)
+    const srvSess=(data.sessions||[]).length;
+    const srvPrs=Object.keys(data.prs||{}).length;
+    const srvName=(data.profile&&data.profile.name)||'?';
+    if(st){st.textContent='☁️ Cloud : '+srvName+' · '+srvSess+' séances · '+srvPrs+' PRs — Application…';}
+    console.log('[FT restore] server data',{sessions:srvSess,prs:srvPrs,name:srvName});
+
+    // Écrire l'email dans S AVANT _applyRestoreData pour que persist() l'inclue
     S.email=email;
     _applyRestoreData(data); // remplit S + persist() → localStorage uniquement, sync cloud désactivé
-    document.getElementById('ov-restore-account').classList.remove('open');
-    if(typeof renderSetup==='function')renderSetup();
-    if(typeof renderHome==='function')renderHome();
-    if(typeof renderNutrition==='function')renderNutrition();
+
     const nbSess=S.sessions&&S.sessions.length||0;
     const nbPrs=S.prs&&Object.keys(S.prs).length||0;
+    console.log('[FT restore] après apply',{sessions:nbSess,prs:nbPrs,name:S.name});
+
+    // Fermer l'overlay
+    try{document.getElementById('ov-restore-account').classList.remove('open');}catch(e){}
+    // Rafraîchir l'UI — erreur de rendu non bloquante
+    try{if(typeof renderSetup==='function')renderSetup();}catch(e){console.warn('[FT restore] renderSetup err',e);}
+    try{if(typeof renderHome==='function')renderHome();}catch(e){console.warn('[FT restore] renderHome err',e);}
+    try{if(typeof renderNutrition==='function')renderNutrition();}catch(e){console.warn('[FT restore] renderNutrition err',e);}
+
     toast('✅ Restauré — '+nbSess+' séance'+(nbSess>1?'s':'')+' · '+nbPrs+' PRs','success');
-    console.log('[FT restore] OK',{email,sessions:nbSess,prs:nbPrs,name:S.name});
   }catch(e){
     const msg=e.message||'Erreur réseau';
+    console.error('[FT restore] ERREUR',e);
     if(st){st.textContent='❌ '+msg;st.style.color='var(--red)';}
     toast(msg,'error');
     if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
