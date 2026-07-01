@@ -1049,6 +1049,57 @@ async function _fetchRestoreRaw(email){
   return data;
 }
 
+function openRestoreAccount(){
+  const ov=document.getElementById('ov-restore-account');
+  if(!ov)return;
+  const inp=document.getElementById('restore-email-inp');
+  if(inp)inp.value=S.email||'';
+  const st=document.getElementById('restore-status');if(st)st.style.display='none';
+  const btn=document.getElementById('restore-account-btn');
+  if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+  ov.classList.add('open');
+  setTimeout(()=>{if(inp){inp.focus();try{inp.select();}catch(e){}}},250);
+}
+
+async function doRestoreAccount(){
+  const inp=document.getElementById('restore-email-inp');
+  const email=(inp?inp.value:'').trim().toLowerCase();
+  if(!email){toast('Entre ton adresse email','error');return;}
+  if(!S.url){toast('URL Apps Script manquante','error');return;}
+  const btn=document.getElementById('restore-account-btn');
+  const st=document.getElementById('restore-status');
+  if(btn){btn.disabled=true;btn.textContent='Restauration en cours…';}
+  if(st){st.style.display='block';st.textContent='⏳ Lecture du cloud…';}
+  try{
+    // PULL-ONLY : on lit d'abord, on ne pousse rien avant
+    const data=await _fetchRestoreRaw(email);
+    if(!data||data.status==='not_found'||data.error){
+      const msg=data&&data.error?data.error:'Aucun profil trouvé pour cet email.';
+      if(st){st.textContent='❌ '+msg;st.style.color='var(--red)';}
+      toast(msg,'error');
+      if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+      return;
+    }
+    // Données reçues — on écrit l'email dans S AVANT _applyRestoreData
+    // pour que persist() interne inclue l'email dans localStorage
+    S.email=email;
+    _applyRestoreData(data); // remplit S + persist() → localStorage uniquement, sync cloud désactivé
+    document.getElementById('ov-restore-account').classList.remove('open');
+    if(typeof renderSetup==='function')renderSetup();
+    if(typeof renderHome==='function')renderHome();
+    if(typeof renderNutrition==='function')renderNutrition();
+    const nbSess=S.sessions&&S.sessions.length||0;
+    const nbPrs=S.prs&&Object.keys(S.prs).length||0;
+    toast('✅ Restauré — '+nbSess+' séance'+(nbSess>1?'s':'')+' · '+nbPrs+' PRs','success');
+    console.log('[FT restore] OK',{email,sessions:nbSess,prs:nbPrs,name:S.name});
+  }catch(e){
+    const msg=e.message||'Erreur réseau';
+    if(st){st.textContent='❌ '+msg;st.style.color='var(--red)';}
+    toast(msg,'error');
+    if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+  }
+}
+
 async function restoreFromEmail(){
   if(!S.email){toast('Entre ton email dans le champ Email Admin','error');return;}
   if(!S.url){toast('URL Apps Script manquante','error');return;}
