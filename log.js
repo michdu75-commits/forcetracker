@@ -1231,6 +1231,8 @@ let restOvertime=false,_restBeeped=false;
 let _restDoneCb=null;
 let _countdownSecs=new Set(); // secondes 5..1 déjà bippées
 let _cdownActive=false,_cdownAutoClose=null; // overlay décompte final
+let _cdownBeepedSecs=new Set(),_cdownGoDone=false; // bips overlay
+let _audioCtx=null; // contexte audio partagé (iOS-safe)
 
 function _restLeft(){
   if(!restStartTs)return 0;
@@ -1238,6 +1240,44 @@ function _restLeft(){
 }
 
 // ─── SONS ────────────────────────────────────────────────────
+// Contexte audio partagé — créé une seule fois, résumé au besoin (iOS)
+function _getCtx(){
+  if(!_audioCtx)try{_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+  if(_audioCtx&&_audioCtx.state==='suspended')_audioCtx.resume().catch(()=>{});
+  return _audioCtx;
+}
+// Bip de l'overlay : sec 10→4 neutre, sec 3→1 aigu/fort (double oscillateur)
+function _cdownBeepSec(left){
+  const ctx=_getCtx();if(!ctx)return;
+  const intense=left<=3;
+  const freq1=left===3?880:left===2?1050:left===1?1200:620;
+  const gain=intense?1.0:0.72;
+  const dur=intense?0.13:0.09;
+  [['square',freq1,gain],['sine',intense?freq1*1.18:freq1*1.48,gain*0.42]].forEach(([type,freq,g])=>{
+    const o=ctx.createOscillator(),gn=ctx.createGain();
+    o.type=type;o.frequency.value=freq;
+    o.connect(gn);gn.connect(ctx.destination);
+    gn.gain.setValueAtTime(0,ctx.currentTime);
+    gn.gain.linearRampToValueAtTime(g,ctx.currentTime+.006);
+    gn.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+dur+.01);
+  });
+  if(navigator.vibrate)navigator.vibrate(intense?80:25);
+}
+// GO final : accord riche 3 oscillateurs, plus long
+function _cdownBeepGo(){
+  const ctx=_getCtx();if(!ctx)return;
+  [[880,'square',1.0,0],[1109,'sine',0.7,.02],[1320,'square',0.85,.04]].forEach(([freq,type,g,delay])=>{
+    const o=ctx.createOscillator(),gn=ctx.createGain();
+    o.type=type;o.frequency.value=freq;
+    o.connect(gn);gn.connect(ctx.destination);
+    gn.gain.setValueAtTime(0,ctx.currentTime+delay);
+    gn.gain.linearRampToValueAtTime(g,ctx.currentTime+delay+.015);
+    gn.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+.5);
+    o.start(ctx.currentTime+delay);o.stop(ctx.currentTime+delay+.55);
+  });
+  if(navigator.vibrate)navigator.vibrate([200,60,200,60,300]);
+}
 function _beepTick(){
   // Petit bip de décompte (5..1s) : perçant et court
   try{
@@ -1342,6 +1382,7 @@ function _nextSetInfo(){
 function _showRestCountdown(){
   if(_cdownActive)return;
   _cdownActive=true;
+  _cdownBeepedSecs=new Set();_cdownGoDone=false;
   const ov=document.getElementById('ov-rest-countdown');
   if(!ov)return;
   const info=_nextSetInfo();
@@ -1357,6 +1398,13 @@ function _showRestCountdown(){
 function _updateRestCountdown(){
   if(!_cdownActive)return;
   const left=_restLeft();
+  // Son + vibration à chaque seconde 10→1
+  if(left>0&&left<=10&&!_cdownBeepedSecs.has(left)){
+    _cdownBeepedSecs.add(left);
+    _cdownBeepSec(left);
+  }
+  // GO final (en complément du beep() existant du timer)
+  if(left<=0&&!_cdownGoDone){_cdownGoDone=true;_cdownBeepGo();}
   const ring=document.getElementById('rcd-ring');
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
@@ -2535,4 +2583,7 @@ function renderPlates(){
   res.textContent=arr.length?`Chaque côté: ${arr.map(p=>p+'kg').join('+')} = ${fmt(total)}kg total`:`Barre seule = ${S.barW}kg`;
 }
 function applyPlate(){if(plateExIdx===null)return;const t=parseFloat(document.getElementById('plate-kg').value);if(!t)return;S.wkt.exs[plateExIdx].sets.forEach(s=>{if(!s.done)s.kg=t;});persist();closePlate();renderExBlocks();toast('Charge appliquée !','success');}
+
+// iOS : débloque l'AudioContext dès le premier tap utilisateur
+document.addEventListener('touchstart',()=>{_getCtx();},{once:true,passive:true});
 
