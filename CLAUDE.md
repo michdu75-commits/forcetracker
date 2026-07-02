@@ -561,7 +561,10 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | @51 | backup quotidien auto + test garde-fou `?action=testGardeFou` |
 | @52 | suppression rétention 60j — append-only pur |
 | @53 | backups → Google Drive (DriveApp) + migration Sheet→Drive + scope `drive` |
-| @54 | warning quota Drive dans `backupAllUserData_()` — log si > 1000 fichiers ← **actuel** |
+| @54 | warning quota Drive dans `backupAllUserData_()` — log si > 1000 fichiers |
+| @55 | fix import : découpage séances (SÉANCE N only) + PDF natif + superset général |
+| @56 | import : unilatéral NxN×2, +M sur partenaire superset, setType défaut '' |
+| @57 | import : Ramping reps → repsPerSet[séquence], setType = '' ou 'D' seulement (jamais E/W) ← **actuel** |
 
 **Dossier Drive backups** : `ForceTracker-Backups/` (ID : `1iQ6xFuG10d4qCE1Jz8d8lOodrUsV36Fq`)  
 **Trigger quotidien** : `backupAllUserData_()` à 2h du matin, 1 actif  
