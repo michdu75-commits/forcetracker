@@ -476,6 +476,14 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Éléments audio** : `_tickAudio` (loop=true) + `_bellAudio`, init par `_initRestAudio()`.
 - **⚠️ Son iOS RÉACTIVÉ** (était désactivé depuis ft-v143) : déblocage au premier geste (`_unlockRestAudio` — muted+volume=0 → play → pause → restore) sur `touchstart` ET `pointerdown` (once). Si régression iOS : remettre le guard `if(!_isIOS)` autour des listeners. Rappel : le bouton silencieux physique iPhone coupe tout son web — vibration + flash vert restent.
 
+### Écran GO persistant + fix skip anticipé + audioSession (✅ 2026-07-02, ft-v164)
+- **GO persistant** : l'auto-close 2 s après le GO est supprimé — l'overlay reste affiché jusqu'au tap ou bouton « Passer ▸ » (déjà existants). L'utilisateur ferme quand il part faire sa série.
+- **`_cdownTap()`** (routé depuis `onclick` de `#ov-rest-countdown` ET du bouton Passer) :
+  - avant le 0 (`!_cdownGoDone`) → **skip anticipé** = `stopRest()` : fin immédiate du repos, timer + pastille effacés, **pas de cloche ni tic-tac** (bug corrigé : avant, tap/Passer appelaient `_closeRestCountdown()` seul → le chrono continuait en fond et la cloche sonnait au 0)
+  - après le GO (`_cdownGoDone`) → simple `_closeRestCountdown()` (timer déjà arrêté, cloche déjà jouée)
+- **La cloche ne joue QUE si le repos atteint 0 naturellement** — tout skip (overlay, bouton Passer, ✕ de la barre) reste muet.
+- **Musique de fond (iOS)** : `navigator.audioSession.type='transient'` dans `_initRestAudio()` (try/catch) — sur iOS 17+, les sons se mixent avec la musique (elle baisse puis remonte) au lieu de l'interrompre. **Limite honnête** : sur iOS < 17 (API absente), un son web interrompt la musique et iOS ne la relance pas — incontournable côté web.
+
 ### Fix reload SW pendant une séance en cours (✅ 2026-07-02, ft-v162)
 - **Cause corrigée** : `controllerchange` (et message `SW_UPDATED`) forçaient un `window.location.reload()` **immédiat et sans condition** dès qu'une nouvelle version de l'app était détectée en arrière-plan (vérif toutes les 5 min, à chaque retour au premier plan, à chaque retour réseau) — y compris en pleine séance, pendant un superset.
 - **Fix** : `_reloadForUpdate()` (`app.js`) vérifie `S.wkt` (séance active). Si séance en cours → `window._swReloadPending=true` (reload différé) + toast informatif. Sinon → reload immédiat comme avant.
@@ -619,7 +627,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v160 | garde-fou global profil serveur (@50) : bday/badges sauvés, '' et 0 ne gagnent jamais sur rempli ; restore prénom manquant (champ inline) ; z-index overlay restore |
 | ft-v161 | import historique séances (#ov-import-hist) — flow isolé, conflits date, PRs chrono |
 | ft-v162 | polices Manrope/Space Grotesk/Pacifico hébergées en local (fonts/, plus de Google Fonts) + fix reload SW différé si séance en cours |
-| ft-v163 | sons repos tick-tock.mp3 (boucle décompte) + bell-boxing.mp3 (GO), overtime supprimé, son iOS réactivé, countdown.wav retiré ← **actuel** |
+| ft-v163 | sons repos tick-tock.mp3 (boucle décompte) + bell-boxing.mp3 (GO), overtime supprimé, son iOS réactivé, countdown.wav retiré |
+| ft-v164 | GO persistant (tap/Passer pour fermer, plus d'auto-close 2s), fix skip anticipé (fin immédiate sans cloche), audioSession transient iOS 17+ ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

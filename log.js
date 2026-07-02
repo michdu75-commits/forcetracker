@@ -1271,6 +1271,10 @@ function _restLeft(){
 // Précharge tick-tock.mp3 (boucle) + bell-boxing.mp3 une seule fois
 function _initRestAudio(){
   if(_tickAudio&&_bellAudio)return;
+  // iOS 17+ : session audio 'transient' — nos sons se MIXENT avec la musique de fond
+  // (elle baisse pendant le son puis remonte) au lieu de l'interrompre définitivement.
+  // API absente ailleurs (Android/desktop/iOS<17) → try/catch, aucun effet.
+  try{if(navigator.audioSession)navigator.audioSession.type='transient';}catch(e){}
   try{
     _tickAudio=new Audio('tick-tock.mp3');_tickAudio.preload='auto';_tickAudio.loop=true;_tickAudio.volume=1.0;
     _bellAudio=new Audio('bell-boxing.mp3');_bellAudio.preload='auto';_bellAudio.volume=1.0;
@@ -1385,10 +1389,10 @@ function _updateRestCountdown(){
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
   if(left<=0){
+    // Écran GO persistant : reste affiché jusqu'au tap / bouton Passer (pas d'auto-close)
     if(labelEl)labelEl.textContent="C'EST REPARTI";
     if(numEl){numEl.textContent='GO';numEl.style.fontSize='80px';numEl.style.color='#fff';}
     if(ring){ring.style.stroke='var(--red)';ring.setAttribute('stroke-dashoffset','534');}
-    if(!_cdownAutoClose)_cdownAutoClose=setTimeout(_closeRestCountdown,2000);
     return;
   }
   const circ=534;
@@ -1396,6 +1400,14 @@ function _updateRestCountdown(){
   const color=left<=3?'#FF2D55':'#FF6C00';
   if(ring){ring.setAttribute('stroke-dashoffset',offset);ring.style.stroke=color;}
   if(numEl){numEl.textContent=left;numEl.style.fontSize='110px';numEl.style.color=color;}
+}
+// Tap sur l'overlay ou bouton Passer :
+// - pendant le décompte (avant 0) → skip anticipé = fin immédiate du repos,
+//   PAS de cloche ni tic-tac (la cloche ne joue que si le repos atteint 0 naturellement)
+// - après le GO → simple fermeture de l'écran (timer déjà arrêté, cloche déjà jouée)
+function _cdownTap(){
+  if(_cdownGoDone){_closeRestCountdown();return;}
+  stopRest();
 }
 function _closeRestCountdown(){
   if(!_cdownActive)return;
