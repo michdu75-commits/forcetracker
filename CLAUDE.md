@@ -162,8 +162,9 @@ Séquence systématique après chaque modif backend : **push → deploy -i → v
 - **1RM live** affiché dans le badge de type (sous la lettre), formule Brzycki `bz(kg,reps)`
 - **Auto-focus** : après saisie du poids → focus auto sur reps (700ms debounce, `_onKgInput`)
 - **Timer de repos sticky** : entre log-sleep et exercices, `position:sticky;top:0;z-index:10`
-  - Couleur : >50% vert → >20% or → rouge — overtime : clignotement `@keyframes rest-blink`
+  - Couleur : >50% vert → >20% or → rouge — à 0 : le timer s'arrête et disparaît (pas d'overtime, voir ft-v166)
   - Durée par défaut : **130s**, boutons −15s / +15s
+  - **100% silencieux** (vibrations + visuel seulement) — ne jamais ajouter d'audio ici (coupe la musique iPhone, ft-v166)
 - **Collapse/expand exercices** : un seul exercice ouvert à la fois (`_expandedEx`)
   - Ajout exercice → le dernier s'ouvre, les autres se replient
   - **Auto-scroll** : `addExercise()` appelle `scrollIntoView({block:'start'})` 80ms après `renderExBlocks()` — nécessaire car `#log-sleep` (~200px) pousse le bloc hors de la vue sur petits écrans
@@ -466,6 +467,14 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Timer 100% silencieux + GO persistant + fin overtime (✅ 2026-07-02, ft-v166)
+- **Cause racine ENFIN identifiée** (repro Michel : bouton −15 qui saute sous les 10 s) : les **bips synthétiques** `_beepTick()`/`beep()` (présents depuis longtemps, bien avant v163) créent un `AudioContext` dans les 5 dernières secondes et au 0 — sur iPhone, la simple **création** d'un contexte audio **coupe la musique de fond** sans la relancer. L'overlay (qui s'ouvre à `left===10` pile) posait un guard `_cdownActive` qui masquait le bug — mais −15 saute le "10 pile" → overlay jamais ouvert → bips → musique coupée.
+- **Fix : ZÉRO audio dans le timer.** `_beepTick()`, les 2 déclarations `beep()`, `_initCdownAudio`/`_cdownAudio`, le déblocage au premier tap et `countdown.wav` (repo + précache) : tous supprimés. Bloc commentaire `AUDIO : AUCUN` dans log.js — ne JAMAIS créer d'AudioContext/Audio dans le timer. Vibrations + flash vert conservés.
+- **GO persistant** (Option A) : plus d'auto-close 2 s — l'overlay reste jusqu'au tap ou bouton « Passer ▸ ».
+- **Overtime supprimé** : à 0 → vibration → timer + pastille disparaissent (plus de `+m:ss`). `_stopRestTimerOnly()` (arrêt sans fermer l'overlay) + `stopRest()` = close + stop. CSS `.overtime`/`rest-blink` supprimés.
+- **Skip anticipé** : `_cdownTap()` — avant le 0 = `stopRest()` immédiat ; après le GO = fermeture simple.
+- **Testé** (Chromium, espion sur les constructeurs Audio/AudioContext) : 0 création audio sur — ouverture+tap, scénario −15 sous 10 s, cycle complet 13 s, skip. Mode avion OK (ft-v166).
+
 ### ⛔ ROLLBACK sons du repos (2026-07-02, ft-v165) — v163/v164 ANNULÉES
 - **Test iPhone (iOS 26.5) : 4 bugs** — tic-tac joué tout haut à l'ouverture de l'app (le déblocage "muet" ne l'est pas sur iOS, même bug qu'à ft-v137→v143) ; skip cassé sur iPhone ; musique jamais relancée après un son ; **musique de fond coupée à chaque ouverture de l'app** (bug le plus grave, touchait tous les users iOS).
 - **ft-v165 = retour exact au comportement ft-v162** : `log.js`, `sw.js`, `index.html`, `style.css` restaurés depuis le tag `backup-2026-07-02-avant-sons-repos`. `tick-tock.mp3`/`bell-boxing.mp3` supprimés, `countdown.wav` restauré. Son iOS de nouveau désactivé (guard `_isIOS`), overtime de retour.
@@ -635,7 +644,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v162 | polices Manrope/Space Grotesk/Pacifico hébergées en local (fonts/, plus de Google Fonts) + fix reload SW différé si séance en cours |
 | ft-v163 | sons repos tick-tock + bell-boxing, son iOS réactivé — ⛔ annulé par ft-v165 |
 | ft-v164 | GO persistant + fix skip anticipé + audioSession — ⛔ annulé par ft-v165 |
-| ft-v165 | ROLLBACK v163/v164 → retour comportement v162 (4 bugs iOS : son à l'ouverture, skip cassé, musique coupée) ← **actuel** |
+| ft-v165 | ROLLBACK v163/v164 → retour comportement v162 (4 bugs iOS : son à l'ouverture, skip cassé, musique coupée) |
+| ft-v166 | timer 100% SILENCIEUX (bips synthétiques + countdown.wav supprimés — la création d'AudioContext coupait la musique iPhone) + GO persistant + fin overtime + fix skip anticipé ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
