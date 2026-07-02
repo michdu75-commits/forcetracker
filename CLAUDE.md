@@ -466,7 +466,13 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
-### Sons du repos — tick-tock.mp3 + bell-boxing.mp3 (✅ 2026-07-02, ft-v163)
+### ⛔ ROLLBACK sons du repos (2026-07-02, ft-v165) — v163/v164 ANNULÉES
+- **Test iPhone (iOS 26.5) : 4 bugs** — tic-tac joué tout haut à l'ouverture de l'app (le déblocage "muet" ne l'est pas sur iOS, même bug qu'à ft-v137→v143) ; skip cassé sur iPhone ; musique jamais relancée après un son ; **musique de fond coupée à chaque ouverture de l'app** (bug le plus grave, touchait tous les users iOS).
+- **ft-v165 = retour exact au comportement ft-v162** : `log.js`, `sw.js`, `index.html`, `style.css` restaurés depuis le tag `backup-2026-07-02-avant-sons-repos`. `tick-tock.mp3`/`bell-boxing.mp3` supprimés, `countdown.wav` restauré. Son iOS de nouveau désactivé (guard `_isIOS`), overtime de retour.
+- **⚠️ Leçon pour une future tentative** : le déblocage audio iOS (`muted`/`volume=0` + play au premier geste) joue le son AUDIBLE sur iOS récent, et l'activation d'une session audio web COUPE la musique de fond à l'ouverture. Ne pas retenter tel quel — il faudra une approche différente (ex. son uniquement après action explicite de l'utilisateur, jamais de play au boot, et test iPhone AVANT fusion).
+- Les sections v163/v164 ci-dessous sont conservées pour référence historique uniquement.
+
+### Sons du repos — tick-tock.mp3 + bell-boxing.mp3 (⛔ ANNULÉ par ft-v165) (2026-07-02, ft-v163)
 - **Fichiers** : `tick-tock.mp3` (~28 s, joué en **boucle**) + `bell-boxing.mp3` (~11 s avec résonance) — racine du repo, dans le PRECACHE SW. `countdown.wav` **supprimé** (repo + précache).
 - **Tic-tac** : démarre quand l'overlay décompte final s'affiche (`_showRestCountdown`), s'arrête au GO (`_stopTick()` dans `_restTick`) ou à la fermeture de l'overlay (skip/tap).
 - **Cloche** : `_playBell()` au GO (repos = 0) — **toujours**, overlay affiché ou non. La cloche finit de résonner naturellement (pas coupée par la fermeture de l'overlay).
@@ -476,7 +482,7 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Éléments audio** : `_tickAudio` (loop=true) + `_bellAudio`, init par `_initRestAudio()`.
 - **⚠️ Son iOS RÉACTIVÉ** (était désactivé depuis ft-v143) : déblocage au premier geste (`_unlockRestAudio` — muted+volume=0 → play → pause → restore) sur `touchstart` ET `pointerdown` (once). Si régression iOS : remettre le guard `if(!_isIOS)` autour des listeners. Rappel : le bouton silencieux physique iPhone coupe tout son web — vibration + flash vert restent.
 
-### Écran GO persistant + fix skip anticipé + audioSession (✅ 2026-07-02, ft-v164)
+### Écran GO persistant + fix skip anticipé + audioSession (⛔ ANNULÉ par ft-v165) (2026-07-02, ft-v164)
 - **GO persistant** : l'auto-close 2 s après le GO est supprimé — l'overlay reste affiché jusqu'au tap ou bouton « Passer ▸ » (déjà existants). L'utilisateur ferme quand il part faire sa série.
 - **`_cdownTap()`** (routé depuis `onclick` de `#ov-rest-countdown` ET du bouton Passer) :
   - avant le 0 (`!_cdownGoDone`) → **skip anticipé** = `stopRest()` : fin immédiate du repos, timer + pastille effacés, **pas de cloche ni tic-tac** (bug corrigé : avant, tap/Passer appelaient `_closeRestCountdown()` seul → le chrono continuait en fond et la cloche sonnait au 0)
@@ -627,8 +633,9 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v160 | garde-fou global profil serveur (@50) : bday/badges sauvés, '' et 0 ne gagnent jamais sur rempli ; restore prénom manquant (champ inline) ; z-index overlay restore |
 | ft-v161 | import historique séances (#ov-import-hist) — flow isolé, conflits date, PRs chrono |
 | ft-v162 | polices Manrope/Space Grotesk/Pacifico hébergées en local (fonts/, plus de Google Fonts) + fix reload SW différé si séance en cours |
-| ft-v163 | sons repos tick-tock.mp3 (boucle décompte) + bell-boxing.mp3 (GO), overtime supprimé, son iOS réactivé, countdown.wav retiré |
-| ft-v164 | GO persistant (tap/Passer pour fermer, plus d'auto-close 2s), fix skip anticipé (fin immédiate sans cloche), audioSession transient iOS 17+ ← **actuel** |
+| ft-v163 | sons repos tick-tock + bell-boxing, son iOS réactivé — ⛔ annulé par ft-v165 |
+| ft-v164 | GO persistant + fix skip anticipé + audioSession — ⛔ annulé par ft-v165 |
+| ft-v165 | ROLLBACK v163/v164 → retour comportement v162 (4 bugs iOS : son à l'ouverture, skip cassé, musique coupée) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
