@@ -1,4 +1,4 @@
-const CACHE = 'ft-v160'; // audité 2026-07-02 — règle 8 OK
+const CACHE = 'ft-v161'; // import historique séances
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

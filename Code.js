@@ -347,6 +347,7 @@ function doPost(e) {
   if (body.action === 'validateCode')      return handleValidateCode_(body);
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
+  if (body.action === 'importHistory')    return handleImportHistory_(body);
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
   if (body.action === 'summarizeCoach')    return handleSummarizeCoach_(body);
   if (body.action === 'generateMealPlan')  return handleGenerateMealPlan_(body);
@@ -728,6 +729,105 @@ function handleImportProgram_(body) {
       ex.kgPerSet = Array.isArray(ex.kgPerSet) ? ex.kgPerSet.map(k=>Math.round((parseFloat(k)||0)*2)/2) : [];
     }));
     if (!data.days || !data.days.length) return json_({status:'error', error:'Aucun exercice trouvé dans les images.'});
+
+    return json_({status:'ok', data});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+function handleImportHistory_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+
+  try {
+    const images = body.images || [];
+    if (!images.length) return json_({status:'error', error:'Aucun fichier reçu'});
+
+    const userContent = images.map(img => {
+      if (img.isText || img.type === 'text/plain') {
+        return {type:'text', text:'[Fichier : '+(img.name||'document')+']\n\n'+img.data};
+      }
+      if (img.type === 'application/pdf') {
+        return {type:'document', source:{type:'base64', media_type:'application/pdf', data:img.data}};
+      }
+      return {type:'image', source:{type:'base64', media_type:img.type||'image/jpeg', data:img.data}};
+    });
+
+    userContent.push({
+      type: 'text',
+      text: 'Analyse ce document et extrait TOUTES les séances d\'entraînement réalisées.\n\nRetourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown :\n{"sessions":[{"date":"YYYY-MM-DD","estimatedDate":false,"label":"Séance 1 (15) 23/04","exercises":[{"name":"Squat à la barre","sets":[{"kg":80,"reps":8,"type":"","note":""}],"note":""}]}]}\n\nRÈGLES STRICTES :\n\n0. EXTRACTION :\n- Extrais TOUTES les séances réalisées dans l\'ordre chronologique. Ne rate aucun exercice, ni aucune série.\n- Chaque bloc "Séance N", "Séance N (x) JJ/MM" ou titre de séance daté = une séance.\n\n1. DATES :\n- "23/04/26" → "2026-04-23"\n- "14/05" → "2026-05-14" (année 2026 si manquante)\n- "02/07/2026" → "2026-07-02"\n- Séance SANS date claire → estimatedDate:true, date estimée entre les séances datées voisines\n- label = le titre exact du bloc dans le document\n\n2. SÉRIES — "⁃ N rep Xkg" ou "N rep Xkg" ou "N rép Xkg" = une série :\n- kg = X, reps = N, type = ""\n- "vide" / "barre à vide" / "PDC" / "poids du corps" → kg = 0\n- "par bras" / "par jambe" / "unilatéral" → 2 séries identiques (une par côté)\n- "N rep Xkg N rep Ykg" ou "N rep Xkg puis Y" sur une seule ligne = DROP SET : [{kg:X,reps:N,type:"D"},{kg:Y,reps:M,type:"D"}]\n- Notes libres ("la dernière était dure", "rate de peu") → champ note de la série ou de l\'exercice\n\n3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".\n\n4. NOMS : utiliser le nom tel qu\'écrit dans le document. Corriger les fautes évidentes.\n\nRéponds UNIQUEMENT avec le JSON, aucun autre texte.'
+    });
+
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      payload: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8192,
+        messages: [{role: 'user', content: userContent}]
+      }),
+      muteHttpExceptions: true
+    });
+
+    const rawText = resp.getContentText();
+    console.log('[importHistory] Réponse brute Claude :', rawText.substring(0, 3000));
+
+    const result = JSON.parse(rawText);
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    console.log('[importHistory] Texte Claude :', text.substring(0, 2000));
+
+    const stripped = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Extraction échouée. Réponse IA : '+text.substring(0,300)});
+
+    const cleaned = match[0]
+      .replace(/'|'/g, "'")
+      .replace(/"|"/g, '"')
+      .replace(/\r\n|\r/g, '\\n')
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+
+    let data;
+    try {
+      data = JSON.parse(cleaned);
+    } catch(parseErr) {
+      console.error('[importHistory] JSON invalide :', parseErr.message, '| Extrait :', cleaned.substring(0,500));
+      return json_({status:'error', error:'JSON invalide : '+parseErr.message+'. Réponse IA : '+text.substring(0,200)});
+    }
+
+    // Normaliser
+    if (!data.sessions || !Array.isArray(data.sessions)) data.sessions = [];
+    data.sessions.forEach(sess => {
+      sess.estimatedDate = Boolean(sess.estimatedDate);
+      sess.label = String(sess.label || '');
+      // Normaliser date → YYYY-MM-DD
+      if (sess.date && !/^\d{4}-\d{2}-\d{2}$/.test(String(sess.date))) {
+        const m = String(sess.date).match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+        if (m) {
+          const y = m[3] ? (m[3].length === 2 ? '20'+m[3] : m[3]) : '2026';
+          sess.date = y+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');
+        } else { sess.date = ''; sess.estimatedDate = true; }
+      }
+      (sess.exercises || []).forEach(ex => {
+        ex.name = String(ex.name || '').trim();
+        ex.note = String(ex.note || '');
+        (ex.sets || []).forEach(s => {
+          s.kg   = Math.round((parseFloat(s.kg) || 0) * 2) / 2;
+          s.reps = parseInt(s.reps) || 0;
+          s.type = s.type === 'D' ? 'D' : '';
+          s.note = String(s.note || '');
+        });
+        ex.sets = (ex.sets || []).filter(s => s.reps > 0);
+      });
+      sess.exercises = (sess.exercises || []).filter(ex => ex.name && ex.sets && ex.sets.length > 0);
+    });
+    data.sessions = data.sessions.filter(s => s.exercises && s.exercises.length > 0);
+    if (!data.sessions.length) return json_({status:'error', error:'Aucune séance trouvée dans le document.'});
 
     return json_({status:'ok', data});
   } catch(err) {

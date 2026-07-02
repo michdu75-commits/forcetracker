@@ -372,6 +372,10 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Scanner ton programme</span>
       <span style="font-size:11px;color:var(--t3);font-weight:400;">Prends en photo ton programme — il s'ajoute automatiquement</span>
     </button>
+    <button class="btn btn-bg2 ft-press" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px;" onclick="openImportHist()">
+      <span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;">📅 Importer un journal de séances</span>
+      <span style="font-size:11px;color:var(--t3);font-weight:400;">Séances déjà réalisées → historique + stats + PRs aux bonnes dates</span>
+    </button>
   </div>
   <div id="log-finish"></div>
 </div>
@@ -1198,6 +1202,64 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       </div>
       <button class="btn btn-red" onclick="finalImportProg()">✅ Importer ce programme</button>
       <button class="btn btn-bg2" onclick="impGoStep(2)">← Modifier les photos</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Import historique séances (flow isolé) -->
+<div class="overlay" id="ov-import-hist" onclick="if(event.target===this)closeImportHist()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px;">
+      <div class="imp-dot active" id="hist-dot-1"></div>
+      <div class="imp-dot" id="hist-dot-2"></div>
+      <div class="imp-dot" id="hist-dot-3"></div>
+      <div class="imp-dot" id="hist-dot-4"></div>
+    </div>
+    <!-- Étape 1 : Source -->
+    <div id="hist-s1">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;margin-bottom:8px;">📅</div>
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px;">Importer un journal</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.5;">Photo ou PDF de ton journal de séances passées → elles s'ajoutent à l'historique aux bonnes dates.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('hist-cam-inp').click()">📷 Prendre une photo</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('hist-gal-inp').click()">🖼️ Choisir depuis la galerie</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('hist-file-inp').click()">📄 Importer un PDF</button>
+      </div>
+      <input type="file" id="hist-cam-inp" accept="image/*" capture="environment" style="display:none" onchange="addHistPhoto(this)">
+      <input type="file" id="hist-gal-inp" accept="image/*" multiple style="display:none" onchange="addHistPhoto(this)">
+      <input type="file" id="hist-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addHistFile(this)">
+      <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="closeImportHist()">Annuler</button>
+    </div>
+    <!-- Étape 2 : Pages -->
+    <div id="hist-s2" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:16px;">Pages ajoutées</div>
+      <div id="hist-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;min-height:80px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('hist-more-inp').click()">+ Photo</button>
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('hist-more-file-inp').click()">+ PDF</button>
+      </div>
+      <input type="file" id="hist-more-inp" accept="image/*" multiple style="display:none" onchange="addHistPhoto(this)">
+      <input type="file" id="hist-more-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addHistFile(this)">
+      <button class="btn btn-red" style="margin-top:4px;" onclick="analyzeHistPhotos()">🤖 Analyser avec IA →</button>
+      <button class="btn btn-bg2" onclick="histGoStep(1)">← Retour</button>
+    </div>
+    <!-- Étape 3 : Analyse -->
+    <div id="hist-s3" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:32px 0;">
+      <div style="font-size:40px;">🤖</div>
+      <div style="font-weight:700;font-size:16px;">Analyse en cours…</div>
+      <div style="font-size:13px;color:var(--t2);text-align:center;">Claude extrait les séances et leurs dates depuis tes pages</div>
+      <div class="imp-spinner"></div>
+    </div>
+    <!-- Étape 4 : Confirmation -->
+    <div id="hist-s4" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:17px;" id="hist-summary"></div>
+      <div style="font-size:13px;color:var(--t2);">Vérifie les séances extraites. Les ⚠️ indiquent un conflit avec une séance déjà enregistrée ce jour.</div>
+      <div id="hist-preview" style="display:flex;flex-direction:column;max-height:45vh;overflow-y:auto;"></div>
+      <button class="btn btn-red" onclick="finalImportHist()">✅ Importer dans l'historique</button>
+      <button class="btn btn-bg2" onclick="histGoStep(2)">← Modifier les fichiers</button>
     </div>
   </div>
 </div>

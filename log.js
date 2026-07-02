@@ -1672,6 +1672,7 @@ function _doCreateCustomEx(name,grp){
 
 // ─── IMPORT PROGRAMME PAR PHOTO ──────────────────────────────
 let _impPhotos=[],_impExtracted=null,_impMode='new';
+let _histPhotos=[],_histExtracted=null,_histConflicts=[];
 
 function openImportProg(){
   _impPhotos=[];_impExtracted=null;_impMode='new';
@@ -1938,6 +1939,277 @@ function finalImportProg(){
   closeImportProg();
   toast('"'+name+'" importé ! 💪','success');
   openProgModal();
+}
+
+// ─── IMPORT HISTORIQUE (flow isolé — ne touche pas au flow programme) ─────────
+
+function openImportHist(){
+  _histPhotos=[];_histExtracted=null;_histConflicts=[];
+  histGoStep(1);
+  document.getElementById('ov-import-hist').classList.add('open');
+}
+function closeImportHist(){document.getElementById('ov-import-hist').classList.remove('open');}
+
+function histGoStep(n){
+  [1,2,3,4].forEach(i=>{
+    const s=document.getElementById('hist-s'+i);
+    if(s)s.style.display='none';
+    const dot=document.getElementById('hist-dot-'+i);
+    if(dot)dot.classList.toggle('active',i===n);
+  });
+  const s=document.getElementById('hist-s'+n);
+  if(s)s.style.display=(n===1||n===4)?'block':'flex';
+  if(n===1)['hist-cam-inp','hist-gal-inp','hist-more-inp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+function addHistPhoto(input){
+  const files=[...input.files];if(!files.length)return;
+  const loadFile=f=>new Promise(res=>{
+    const img=new Image(),url=URL.createObjectURL(f);
+    img.onload=()=>{
+      const max=1200,canvas=document.createElement('canvas');
+      let w=img.width,h=img.height;
+      if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
+      canvas.width=w;canvas.height=h;
+      const ctx=canvas.getContext('2d');
+      if(!ctx){URL.revokeObjectURL(url);res(null);return;}
+      ctx.drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      res({data:canvas.toDataURL('image/jpeg',0.82).split(',')[1],type:'image/jpeg'});
+    };
+    img.src=url;
+  });
+  Promise.all(files.map(loadFile)).then(results=>{
+    _histPhotos.push(...results.filter(Boolean));
+    _renderHistThumbs();
+    histGoStep(2);
+  });
+}
+
+async function addHistFile(input){
+  const files=[...input.files];if(!files.length)return;
+  const MAX_MB=15;
+  const results=[];
+  for(const f of files){
+    if(f.size>MAX_MB*1024*1024){toast('Fichier trop volumineux (max '+MAX_MB+' MB)','error');continue;}
+    const name=f.name.toLowerCase();
+    if(f.type==='application/pdf'||name.endsWith('.pdf')){
+      try{
+        toast('Lecture du PDF…','info');
+        const pages=await _pdfToImages(f);
+        if(!pages.length){toast('PDF vide ou illisible','error');continue;}
+        results.push(...pages);
+      }catch(e){toast('Erreur PDF : '+(e.message||e),'error');}
+    }
+  }
+  if(results.length){
+    _histPhotos.push(...results);
+    _renderHistThumbs();
+    histGoStep(2);
+  }
+}
+
+function _renderHistThumbs(){
+  const el=document.getElementById('hist-thumbs');if(!el)return;
+  el.innerHTML=_histPhotos.map((p,i)=>{
+    const thumb=(p.isPdf||p.isText)
+      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">📄</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name||'Page'}</span></div>`
+      :`<img src="data:${p.type};base64,${p.data}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--sep);">`;
+    return`<div style="position:relative;display:inline-block;">${thumb}<button onclick="removeHistPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;font-family:var(--font);">✕</button></div>`;
+  }).join('');
+}
+
+function removeHistPhoto(i){
+  _histPhotos.splice(i,1);
+  if(!_histPhotos.length){histGoStep(1);return;}
+  _renderHistThumbs();
+}
+
+async function analyzeHistPhotos(){
+  if(!_histPhotos.length){toast('Ajoute au moins une photo ou un PDF','error');return;}
+  if(!S.url){toast('Connexion Apps Script requise','error');return;}
+  histGoStep(3);
+  let _rawResp='';
+  try{
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'importHistory',images:_histPhotos})});
+    _rawResp=await r.text();
+    console.log('[ImportHist] Réponse brute :', _rawResp.slice(0,500));
+    const d=JSON.parse(_rawResp);
+    if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
+    _histExtracted=d.data;
+    _renderHistPreview();
+    histGoStep(4);
+  }catch(e){
+    console.error('[ImportHist] Erreur :', e.message, '| Brut :', _rawResp.slice(0,300));
+    histGoStep(2);
+    toast('Erreur analyse : '+e.message,'error');
+  }
+}
+
+function _renderHistPreview(){
+  const sessions=(_histExtracted&&_histExtracted.sessions)||[];
+  if(!sessions.length)return;
+
+  // Détection conflits
+  _histConflicts=[];
+  sessions.forEach((sess,i)=>{
+    const existing=(S.sessions||[]).find(s=>s.date===sess.date);
+    if(existing)_histConflicts.push({idx:i,existing,resolution:'add'});
+  });
+
+  // Résumé
+  const dates=sessions.map(s=>s.date).filter(Boolean).sort();
+  const from=dates.length?_histFmtDate(dates[0]):'?';
+  const to=dates.length?_histFmtDate(dates[dates.length-1]):'?';
+  const summEl=document.getElementById('hist-summary');
+  if(summEl)summEl.textContent=sessions.length+' séance'+(sessions.length>1?'s':'')+' trouvée'+(sessions.length>1?'s':'')+' · '+from+' → '+to;
+
+  const el=document.getElementById('hist-preview');if(!el)return;
+  el.innerHTML=sessions.map((sess,i)=>{
+    const conflict=_histConflicts.find(c=>c.idx===i);
+    const dateLabel=sess.date?_histFmtDate(sess.date):'Date inconnue';
+    const estBadge=sess.estimatedDate?'<span style="color:var(--gold);font-size:11px;margin-left:6px;">📅 estimée</span>':'';
+    const exList=(sess.exercises||[]).slice(0,3).map(e=>e.name).join(', ')
+      +((sess.exercises||[]).length>3?' +'+((sess.exercises||[]).length-3):'');
+    const conflictHtml=conflict?`
+      <div style="background:rgba(255,45,85,.08);border:1px solid rgba(255,45,85,.25);border-radius:8px;padding:8px 10px;margin-top:6px;">
+        <div style="color:var(--red);font-weight:600;font-size:12px;margin-bottom:6px;">⚠️ Séance déjà existante ce jour</div>
+        <div style="display:flex;gap:6px;">
+          <button id="hist-cf-${i}-replace" class="btn btn-bg2" style="flex:1;padding:6px 4px;font-size:11px;" onclick="_setHistConflict(${i},'replace')">🔄 Remplacer</button>
+          <button id="hist-cf-${i}-keep"    class="btn btn-bg2" style="flex:1;padding:6px 4px;font-size:11px;" onclick="_setHistConflict(${i},'keep')">✋ Garder</button>
+          <button id="hist-cf-${i}-add"     class="btn btn-bg2" style="flex:1;padding:6px 4px;font-size:11px;" onclick="_setHistConflict(${i},'add')">➕ Les 2</button>
+        </div>
+        <div id="hist-conflict-status-${i}" style="font-size:11px;color:var(--gold);margin-top:4px;text-align:center;">➕ Ajouter les 2 (par défaut)</div>
+      </div>`:'';
+    return`<div style="background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;margin-bottom:3px;">
+        <span style="font-weight:700;font-size:14px;">${dateLabel}</span>${estBadge}
+      </div>
+      <div style="font-size:12px;color:var(--t2);">${sess.label||''}</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:2px;">${exList}</div>
+      ${conflictHtml}
+    </div>`;
+  }).join('');
+}
+
+function _histFmtDate(iso){
+  if(!iso)return'?';
+  const p=iso.split('-');
+  return(p[2]||'?')+'/'+(p[1]||'?')+'/'+(p[0]||'');
+}
+
+function _setHistConflict(sessIdx,choice){
+  const c=_histConflicts.find(x=>x.idx===sessIdx);
+  if(c)c.resolution=choice;
+  const lbl=document.getElementById('hist-conflict-status-'+sessIdx);
+  if(lbl){
+    const labels={replace:'🔄 Remplace la séance existante',keep:'✋ Séance existante conservée',add:'➕ Les 2 séances coexisteront'};
+    lbl.textContent=labels[choice]||'';
+  }
+  ['replace','keep','add'].forEach(ch=>{
+    const btn=document.getElementById('hist-cf-'+sessIdx+'-'+ch);
+    if(!btn)return;
+    btn.style.background=ch===choice?'var(--red)':'var(--bg3)';
+    btn.style.color=ch===choice?'#fff':'var(--t1)';
+  });
+}
+
+function finalImportHist(){
+  const sessions=(_histExtracted&&_histExtracted.sessions)||[];
+  if(!sessions.length){toast('Aucune séance à importer','error');return;}
+
+  // Créer les exercices personnalisés manquants
+  const allExNames=new Set([...EXLIB,...(S.customExercises||[])].map(e=>e.n.toLowerCase()));
+  const toCreate=[];
+  sessions.forEach(sess=>(sess.exercises||[]).forEach(ex=>{
+    const low=(ex.name||'').toLowerCase();
+    if(low&&!allExNames.has(low)&&!toCreate.find(n=>n.toLowerCase()===low))toCreate.push(ex.name);
+  }));
+  if(toCreate.length){
+    if(!S.customExercises)S.customExercises=[];
+    toCreate.forEach(n=>{S.customExercises.push({n,g:'Autres',custom:true});_reportCustomEx(n,'Autres',null);});
+  }
+
+  const now=Date.now();
+  let addedCount=0;
+
+  // Trier par date ASC pour insertion + calcul PRs chronologique
+  const sessionsAsc=[...sessions].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+
+  sessionsAsc.forEach((sess,si)=>{
+    const origIdx=sessions.indexOf(sess);
+    const conflict=_histConflicts.find(c=>c.idx===origIdx);
+
+    if(conflict&&conflict.resolution==='keep')return;
+    if(conflict&&conflict.resolution==='replace'){
+      const idx=(S.sessions||[]).findIndex(s=>s.date===sess.date);
+      if(idx>=0)S.sessions.splice(idx,1);
+    }
+
+    // Construire la séance au format attendu par l'app
+    let vol=0;
+    const exs=(sess.exercises||[]).map(ex=>{
+      const sets=(ex.sets||[]).map(s=>{
+        const kg=s.kg||0,reps=s.reps||0;
+        const type=s.type==='D'?'D':'';
+        // Volume : tout sauf Échauffement (W). Drop set D compte.
+        if(type!=='W'&&type!=='É')vol+=kg*reps;
+        return{kg,reps,done:true,type,rm1:bz(kg,reps),note:s.note||''};
+      });
+      return{name:ex.name,note:ex.note||'',sets};
+    });
+
+    const dateTs=sess.date?new Date(sess.date).getTime():now;
+    const sessionObj={
+      id:now+si,
+      date:sess.date||today(),
+      ts:dateTs+si,
+      exs,
+      volume:Math.round(vol),
+      synced:false,
+      startHour:null,
+      duration:0,
+      importedHistory:true
+    };
+    if(!S.sessions)S.sessions=[];
+    S.sessions.push(sessionObj);
+    addedCount++;
+  });
+
+  if(!addedCount){
+    toast('Aucune séance importée (toutes conservées)','info');
+    closeImportHist();
+    return;
+  }
+
+  // Trier S.sessions par date DESC (plus récente en tête, comme finishWorkout)
+  S.sessions.sort((a,b)=>{
+    const ta=a.ts||new Date(a.date||'').getTime()||0;
+    const tb=b.ts||new Date(b.date||'').getTime()||0;
+    return tb-ta;
+  });
+
+  // Recalculer les PRs depuis toutes les séances importées (chrono ASC, jamais écraser + élevé)
+  if(!S.prs)S.prs={};
+  const importedAsc=S.sessions.filter(s=>s.importedHistory).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  importedAsc.forEach(sess=>{
+    (sess.exs||[]).forEach(ex=>{
+      (ex.sets||[]).forEach(s=>{
+        if(!s.done||!s.kg||!s.reps)return;
+        const rm=bz(s.kg,s.reps);
+        const cur=S.prs[ex.name];
+        if(!cur||rm>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:rm,date:sess.date};
+      });
+    });
+  });
+
+  persist();
+  _cloudSyncSessions();
+  checkBadges(true);
+  closeImportHist();
+  toast(addedCount+' séance'+(addedCount>1?'s':'')+' importée'+(addedCount>1?'s':'')+' dans l\'historique ✅','success');
 }
 
 // ─── SÉLECTION DU JOUR ────────────────────────────────────────
