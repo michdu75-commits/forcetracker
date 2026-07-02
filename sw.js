@@ -1,4 +1,4 @@
-const CACHE = 'ft-v166'; // timer 100% silencieux (zéro appel audio) + GO persistant + fin overtime + fix skip
+const CACHE = 'ft-v167'; // import journal par lots de 3 pages (fix réponse IA tronquée sur gros journaux)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

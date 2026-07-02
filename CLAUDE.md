@@ -467,6 +467,14 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Import journal par lots (✅ 2026-07-02, ft-v167)
+- **Bug corrigé** : un gros journal (~18 séances) envoyé en un seul appel `importHistory` dépassait la limite de réponse de l'IA (`max_tokens: 8192` dans `handleImportHistory_`, Code.js @58) → JSON tronqué à ~20 500 caractères → « JSON invalide : Expected ',' or ']' ».
+- **Fix 100% frontend** (aucun redéploiement backend nécessaire) : `analyzeHistPhotos()` découpe `_histPhotos` en **lots de 3 pages** (`_HIST_BATCH=3`), appelle `_histAnalyzeBatch()` séquentiellement, fusionne les `sessions` de tous les lots.
+- **Séance à cheval sur 2 lots** : si la dernière séance du lot N et la première du lot N+1 ont la même date (non estimée) → fusion des exercices en une seule séance.
+- **Erreurs par lot** : lot en échec ignoré + toast « X lots non lus » (import partiel possible) ; si TOUS échouent → retour étape 2 + message « Pages trop denses… » au lieu du crash.
+- **Progression** : `#hist-s3-status` affiche « Analyse du lot X / Y » pendant l'analyse multi-lots.
+- **Option backend future** (non faite) : monter `max_tokens` dans `handleImportHistory_` — nécessite clasp push + deploy -i depuis le PC de Michel.
+
 ### Timer 100% silencieux + GO persistant + fin overtime (✅ 2026-07-02, ft-v166)
 - **Cause racine ENFIN identifiée** (repro Michel : bouton −15 qui saute sous les 10 s) : les **bips synthétiques** `_beepTick()`/`beep()` (présents depuis longtemps, bien avant v163) créent un `AudioContext` dans les 5 dernières secondes et au 0 — sur iPhone, la simple **création** d'un contexte audio **coupe la musique de fond** sans la relancer. L'overlay (qui s'ouvre à `left===10` pile) posait un guard `_cdownActive` qui masquait le bug — mais −15 saute le "10 pile" → overlay jamais ouvert → bips → musique coupée.
 - **Fix : ZÉRO audio dans le timer.** `_beepTick()`, les 2 déclarations `beep()`, `_initCdownAudio`/`_cdownAudio`, le déblocage au premier tap et `countdown.wav` (repo + précache) : tous supprimés. Bloc commentaire `AUDIO : AUCUN` dans log.js — ne JAMAIS créer d'AudioContext/Audio dans le timer. Vibrations + flash vert conservés.
@@ -645,7 +653,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v163 | sons repos tick-tock + bell-boxing, son iOS réactivé — ⛔ annulé par ft-v165 |
 | ft-v164 | GO persistant + fix skip anticipé + audioSession — ⛔ annulé par ft-v165 |
 | ft-v165 | ROLLBACK v163/v164 → retour comportement v162 (4 bugs iOS : son à l'ouverture, skip cassé, musique coupée) |
-| ft-v166 | timer 100% SILENCIEUX (bips synthétiques + countdown.wav supprimés — la création d'AudioContext coupait la musique iPhone) + GO persistant + fin overtime + fix skip anticipé ← **actuel** |
+| ft-v166 | timer 100% SILENCIEUX (bips synthétiques + countdown.wav supprimés — la création d'AudioContext coupait la musique iPhone) + GO persistant + fin overtime + fix skip anticipé |
+| ft-v167 | import journal par lots de 3 pages (fix réponse IA tronquée sur gros journaux) + import partiel si lot en échec ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
