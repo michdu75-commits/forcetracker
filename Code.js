@@ -209,17 +209,30 @@ function doGet(e) {
       installDailyBackupTrigger_();
       try { backupAllUserData_(); } catch(be) { Logger.log('[FT backup init] ' + be); }
       const cnt = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'backupAllUserData_').length;
-      return json_({status:'ok', msg:'Trigger dailyBackup installé — ' + cnt + ' trigger(s) actif(s)', firstBackupDone:true});
+      const folder = _getDriveBackupFolder_();
+      return json_({status:'ok', msg:'Trigger dailyBackup installé — ' + cnt + ' trigger(s) actif(s)', firstBackupDone:true, folderId:folder.getId()});
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
-  // Vérification état backup — ?action=checkBackup
+  // Migration onglets Sheet → Drive — ?action=migrateBackups&t=FT_BACKUP_INIT_2026
+  if (p.action === 'migrateBackups' && p.t === 'FT_BACKUP_INIT_2026') {
+    try {
+      const result = migrateSheetBackupsToDrive_();
+      const folder = _getDriveBackupFolder_();
+      return json_({status:'ok', folderId:folder.getId(), folderName:'ForceTracker-Backups', ...result});
+    } catch(err) { return json_({status:'error', error:err.message}); }
+  }
+
+  // Vérification état backup Drive — ?action=checkBackup
   if (p.action === 'checkBackup') {
     try {
       const cnt = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'backupAllUserData_').length;
-      const ss2 = _getSheet_();
-      const tabs = ss2.getSheets().map(s => s.getName()).filter(n => n.startsWith('Backup '));
-      return json_({status:'ok', triggersInstalled: cnt, backupTabs: tabs.length, lastTabs: tabs.slice(-3)});
+      const folder = _getDriveBackupFolder_();
+      const files = [];
+      const iter = folder.getFiles();
+      while (iter.hasNext()) files.push(iter.next().getName());
+      files.sort();
+      return json_({status:'ok', triggersInstalled:cnt, driveFolder:'ForceTracker-Backups', folderId:folder.getId(), fileCount:files.length, lastFiles:files.slice(-5)});
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
@@ -927,34 +940,109 @@ function handleSummarizeCoach_(body) {
 
 
 // ═══════════════════════════════════════════════════════════
-// BACKUP — Sauvegarde toutes les données utilisateurs
-// Crée un onglet "Backup YYYY-MM-DD HH:MM" dans le Sheet.
-// Peut être appelé manuellement (clasp run) ou via Apps Script
-// Exécutions (déclencheur unique one-shot).
 // ═══════════════════════════════════════════════════════════
-function backupAllUserData_() {
+// BACKUP DRIVE — 1 fichier JSON par jour dans ForceTracker-Backups/
+// Politique : JAMAIS supprimé, JAMAIS écrasé (append-only).
+// Si le trigger tourne 2× le même jour → suffixe -HH-mm dans le nom.
+// Seul le script serveur a accès au dossier Drive.
+// ═══════════════════════════════════════════════════════════
+
+function _getDriveBackupFolder_() {
   const props = PropertiesService.getScriptProperties();
-  const all   = props.getProperties();
-  const now   = new Date();
-  const label = Utilities.formatDate(now, 'Europe/Paris', 'yyyy-MM-dd HH:mm');
-  const ss    = _getSheet_();
+  const stored = props.getProperty('ft_backup_drive_folder_id');
+  if (stored) {
+    try { return DriveApp.getFolderById(stored); } catch(e) {}
+  }
+  const it = DriveApp.getFoldersByName('ForceTracker-Backups');
+  const folder = it.hasNext() ? it.next() : DriveApp.createFolder('ForceTracker-Backups');
+  props.setProperty('ft_backup_drive_folder_id', folder.getId());
+  Logger.log('[FT backup] Dossier Drive ID : ' + folder.getId());
+  return folder;
+}
 
-  // Politique : JAMAIS de suppression automatique des backups — append-only
+function backupAllUserData_() {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const all = props.getProperties();
+    const now = new Date();
+    const folder = _getDriveBackupFolder_();
 
-  // Onglet backup daté
-  let sheet = ss.getSheetByName('Backup ' + label);
-  if (!sheet) sheet = ss.insertSheet('Backup ' + label);
-  sheet.clearContents();
-  sheet.appendRow(['email', 'data_json', 'backed_up_at']);
+    const dateStr = Utilities.formatDate(now, 'Europe/Paris', 'yyyy-MM-dd');
+    const timeStr = Utilities.formatDate(now, 'Europe/Paris', 'HH-mm');
 
-  Object.keys(all)
-    .filter(k => k.startsWith('u_'))
-    .forEach(k => {
-      const email = k.replace(/^u_/, '');
-      sheet.appendRow([email, all[k], now.toISOString()]);
+    // backup-YYYY-MM-DD.json — si déjà présent (2e exécution du jour) → suffixe -HH-mm
+    let fileName = 'backup-' + dateStr + '.json';
+    if (folder.getFilesByName(fileName).hasNext()) {
+      fileName = 'backup-' + dateStr + '-' + timeStr + '.json';
+    }
+
+    const userKeys = Object.keys(all).filter(k => k.startsWith('u_'));
+    const users = [];
+    userKeys.forEach(k => {
+      try {
+        const data = JSON.parse(all[k]);
+        users.push({ email: data.email || k.slice(2), data: data });
+      } catch(e) {
+        Logger.log('[FT backup] Parse err ' + k + ' : ' + e.message);
+      }
     });
 
-  Logger.log('Backup terminé : ' + sheet.getName() + ' — ' + (sheet.getLastRow() - 1) + ' utilisateurs');
+    folder.createFile(fileName, JSON.stringify({
+      backed_up_at: now.toISOString(),
+      user_count: users.length,
+      users: users
+    }), 'application/json');
+
+    Logger.log('[FT backup Drive] ' + fileName + ' — ' + users.length + ' users');
+  } catch(err) {
+    Logger.log('[FT backup Drive] ERREUR : ' + err.message);
+  }
+}
+
+// Migre les anciens onglets "Backup ..." du Sheet → Drive (sécurité d'abord).
+// Idempotent : ne recrée pas un fichier déjà présent dans Drive.
+function migrateSheetBackupsToDrive_() {
+  const ss = _getSheet_();
+  const folder = _getDriveBackupFolder_();
+  const sheets = ss.getSheets().filter(s => s.getName().startsWith('Backup '));
+  let migrated = 0, skipped = 0;
+
+  sheets.forEach(sh => {
+    const name = sh.getName(); // "Backup YYYY-MM-DD HH:mm"
+    // → "backup-migration-YYYY-MM-DD-HHmm.json"
+    const suffix = name.replace('Backup ', '').replace(' ', '-').replace(':', '');
+    const fileName = 'backup-migration-' + suffix + '.json';
+
+    if (folder.getFilesByName(fileName).hasNext()) { skipped++; return; }
+
+    try {
+      const rows = sh.getDataRange().getValues();
+      const users = [];
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r[0]) continue;
+        try {
+          users.push({ email: r[0], data: JSON.parse(r[1]), backed_up_at: r[2] });
+        } catch(e) {
+          users.push({ email: r[0], raw_truncated: String(r[1]), backed_up_at: r[2] });
+        }
+      }
+      folder.createFile(fileName, JSON.stringify({
+        source: 'migration_from_sheet',
+        sheet_name: name,
+        migrated_at: new Date().toISOString(),
+        user_count: users.length,
+        users: users
+      }), 'application/json');
+      migrated++;
+      Logger.log('[FT migrate] ' + fileName + ' — ' + users.length + ' users');
+    } catch(e) {
+      Logger.log('[FT migrate] Erreur ' + name + ' : ' + e.message);
+    }
+  });
+
+  Logger.log('[FT migrate] Total : ' + migrated + ' migrés, ' + skipped + ' déjà présents.');
+  return { migrated: migrated, skipped: skipped, total: sheets.length };
 }
 
 // Lance le backup une seule fois dans les 5 prochaines minutes (one-shot trigger)
