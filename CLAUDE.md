@@ -398,7 +398,7 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Séances passées** `#ov-sess-detail` → `_renderSessDetailContent()` dans `setup.js` : affiche `💬 ${ex.note}` en or italique sous le nom si présent
 - **Coach IA** `buildCoachContext()` dans `coach.js` : ajoute `[note: ...]` par exercice dans la section DERNIÈRES SÉANCES
 
-### Son décompte final — countdown.wav (✅ 2026-07-01, ft-v137→ft-v142)
+### Son décompte final — countdown.wav (⚠️ OBSOLÈTE — remplacé par tick-tock/bell en ft-v163, voir plus bas) (2026-07-01, ft-v137→ft-v142)
 - **Fichier** : `countdown.wav` (racine du repo, ~10 s : ticks 10→4, montée 3-2-1, GO) — inclus dans le précache SW
 - **Élément audio** : `_cdownAudio` (HTMLAudioElement singleton), initialisé par `_initCdownAudio()` dans `log.js`
 - **Déblocage iOS** : `touchstart` (once) → `muted=true` → `play()` → `pause()` → `currentTime=0` → `muted=false` — silence total, débloque pour les lectures futures
@@ -465,6 +465,16 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Fix** : les 3 polices sont téléchargées et stockées dans `fonts/` (`manrope-variable.woff2`, `spacegrotesk-variable.woff2`, `pacifico-400.woff2` — Manrope et Space Grotesk sont des polices variables, un seul fichier couvre toutes les graisses). Déclarées en `@font-face` locales dans `style.css`. Plus aucune requête vers `fonts.googleapis.com`/`fonts.gstatic.com`.
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
+
+### Sons du repos — tick-tock.mp3 + bell-boxing.mp3 (✅ 2026-07-02, ft-v163)
+- **Fichiers** : `tick-tock.mp3` (~28 s, joué en **boucle**) + `bell-boxing.mp3` (~11 s avec résonance) — racine du repo, dans le PRECACHE SW. `countdown.wav` **supprimé** (repo + précache).
+- **Tic-tac** : démarre quand l'overlay décompte final s'affiche (`_showRestCountdown`), s'arrête au GO (`_stopTick()` dans `_restTick`) ou à la fermeture de l'overlay (skip/tap).
+- **Cloche** : `_playBell()` au GO (repos = 0) — **toujours**, overlay affiché ou non. La cloche finit de résonner naturellement (pas coupée par la fermeture de l'overlay).
+- **Overtime SUPPRIMÉ** : à 0 → cloche → arrêt + disparition du timer (barre + pastille). Plus de `+m:ss` rouge clignotant. `restOvertime`, classes CSS `.overtime`, `@keyframes rest-blink` : supprimés.
+- **`_stopRestTimerOnly()`** : arrête chrono/barre/pastille SANS fermer l'overlay — utilisé au GO pour laisser l'overlay afficher GO + flash 2 s avant l'auto-close. `stopRest()` = `_closeRestCountdown()` + `_stopRestTimerOnly()`.
+- **Bips synthétiques supprimés** : `_beepTick()` et les **deux** déclarations de `beep()` retirées (oscillateurs WebAudio). Vibrations 5→1 et GO conservées.
+- **Éléments audio** : `_tickAudio` (loop=true) + `_bellAudio`, init par `_initRestAudio()`.
+- **⚠️ Son iOS RÉACTIVÉ** (était désactivé depuis ft-v143) : déblocage au premier geste (`_unlockRestAudio` — muted+volume=0 → play → pause → restore) sur `touchstart` ET `pointerdown` (once). Si régression iOS : remettre le guard `if(!_isIOS)` autour des listeners. Rappel : le bouton silencieux physique iPhone coupe tout son web — vibration + flash vert restent.
 
 ### Fix reload SW pendant une séance en cours (✅ 2026-07-02, ft-v162)
 - **Cause corrigée** : `controllerchange` (et message `SW_UPDATED`) forçaient un `window.location.reload()` **immédiat et sans condition** dès qu'une nouvelle version de l'app était détectée en arrière-plan (vérif toutes les 5 min, à chaque retour au premier plan, à chaque retour réseau) — y compris en pleine séance, pendant un superset.
@@ -608,7 +618,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v159 | local-first pull + guard auto-restore élargi + label "ce mois" séances |
 | ft-v160 | garde-fou global profil serveur (@50) : bday/badges sauvés, '' et 0 ne gagnent jamais sur rempli ; restore prénom manquant (champ inline) ; z-index overlay restore |
 | ft-v161 | import historique séances (#ov-import-hist) — flow isolé, conflits date, PRs chrono |
-| ft-v162 | polices Manrope/Space Grotesk/Pacifico hébergées en local (fonts/, plus de Google Fonts) + fix reload SW différé si séance en cours ← **actuel** |
+| ft-v162 | polices Manrope/Space Grotesk/Pacifico hébergées en local (fonts/, plus de Google Fonts) + fix reload SW différé si séance en cours |
+| ft-v163 | sons repos tick-tock.mp3 (boucle décompte) + bell-boxing.mp3 (GO), overtime supprimé, son iOS réactivé, countdown.wav retiré ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
