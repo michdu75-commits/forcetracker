@@ -939,15 +939,7 @@ function backupAllUserData_() {
   const label = Utilities.formatDate(now, 'Europe/Paris', 'yyyy-MM-dd HH:mm');
   const ss    = _getSheet_();
 
-  // Supprime les anciens onglets backup de plus de 60 jours
-  ss.getSheets().forEach(sh => {
-    const n = sh.getName();
-    if (!n.startsWith('Backup ')) return;
-    try {
-      const d = new Date(n.replace('Backup ', '').replace(' ', 'T') + ':00');
-      if (!isNaN(d.getTime()) && (now - d) > 60 * 24 * 3600 * 1000) ss.deleteSheet(sh);
-    } catch(_) {}
-  });
+  // Politique : JAMAIS de suppression automatique des backups — append-only
 
   // Onglet backup daté
   let sheet = ss.getSheetByName('Backup ' + label);
