@@ -113,6 +113,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
   background:var(--bg2);border:1px solid rgba(52,211,153,.3);border-radius:0 0 16px 16px;
   transition:border-color .4s;}
 #rest-bar.show{display:flex;}
+/* Clignotement uniquement sur le texte — JAMAIS sur le conteneur (fond resterait opaque) */
+@keyframes rest-blink{0%,100%{opacity:1}50%{opacity:.18}}
+#rest-bar.overtime{border-color:rgba(255,106,115,.6)!important;}
+#rest-bar.overtime #rest-time{animation:rest-blink .7s ease-in-out infinite;}
 #rest-time{font-family:var(--font-cond);font-size:34px;font-weight:900;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--green);transition:color .4s;}
 #rest-wrap{width:100%;max-width:300px;height:6px;background:var(--sep);border-radius:3px;overflow:hidden;}
 #rest-fill{height:100%;background:var(--green);border-radius:3px;transition:width .5s linear,background .4s;}
@@ -125,6 +129,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
   -webkit-tap-highlight-color:transparent;transition:border-color .4s;
   position:relative;z-index:30;}
 #rest-pill.show{display:flex;}
+#rest-pill.overtime{border-bottom-color:rgba(255,106,115,.6);}
+#rest-pill.overtime #rest-pill-time{animation:rest-blink .7s ease-in-out infinite;}
 #rest-pill-time{font-family:var(--font-cond);font-size:15px;font-weight:900;
   font-variant-numeric:tabular-nums;color:#fff;letter-spacing:0;min-width:34px;}
 #rest-pill-bar{flex:1;height:3px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;}

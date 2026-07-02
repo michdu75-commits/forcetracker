@@ -1254,13 +1254,13 @@ function _showSaveError(){
 // Source de vérité : restStartTs (timestamp) + restTot (durée)
 let restIv=null,restTot=120,restStartTs=0;
 let _pillIv=null; // interval dédié pill hors écran séance
-let _restBeeped=false;
+let restOvertime=false,_restBeeped=false;
 let _restDoneCb=null;
-let _countdownSecs=new Set(); // secondes 5..1 déjà vibrées
+let _countdownSecs=new Set(); // secondes 5..1 déjà bippées
 let _cdownActive=false,_cdownAutoClose=null; // overlay décompte final
 let _cdownBeepedSecs=new Set(),_cdownGoDone=false; // vibration overlay
 const _isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-let _tickAudio=null,_bellAudio=null; // tic-tac (boucle décompte) + cloche de boxe (GO)
+let _cdownAudio=null; // élément Audio préchargé pour le décompte (non-iOS uniquement)
 
 function _restLeft(){
   if(!restStartTs)return 0;
@@ -1268,24 +1268,54 @@ function _restLeft(){
 }
 
 // ─── SONS ────────────────────────────────────────────────────
-// Précharge tick-tock.mp3 (boucle) + bell-boxing.mp3 une seule fois
-function _initRestAudio(){
-  if(_tickAudio&&_bellAudio)return;
-  // iOS 17+ : session audio 'transient' — nos sons se MIXENT avec la musique de fond
-  // (elle baisse pendant le son puis remonte) au lieu de l'interrompre définitivement.
-  // API absente ailleurs (Android/desktop/iOS<17) → try/catch, aucun effet.
-  try{if(navigator.audioSession)navigator.audioSession.type='transient';}catch(e){}
+// Précharge countdown.wav une seule fois (non-iOS uniquement)
+function _initCdownAudio(){
+  if(_isIOS||_cdownAudio)return;
+  try{_cdownAudio=new Audio('countdown.wav');_cdownAudio.preload='auto';_cdownAudio.volume=1.0;}catch(e){}
+}
+function _beepTick(){
+  if(_cdownActive)return; // overlay actif → countdown.wav gère le son
+  // Petit bip de décompte (5..1s) : perçant et court
   try{
-    _tickAudio=new Audio('tick-tock.mp3');_tickAudio.preload='auto';_tickAudio.loop=true;_tickAudio.volume=1.0;
-    _bellAudio=new Audio('bell-boxing.mp3');_bellAudio.preload='auto';_bellAudio.volume=1.0;
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type='square';o.frequency.value=900;
+    g.gain.setValueAtTime(0,ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.7,ctx.currentTime+.01);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+.1);
+    o.start(ctx.currentTime);o.stop(ctx.currentTime+.12);
   }catch(e){}
 }
-function _playBell(){
-  _initRestAudio();
-  if(_bellAudio){try{_bellAudio.currentTime=0;_bellAudio.play().catch(()=>{});}catch(e){}}
-}
-function _stopTick(){
-  if(_tickAudio){try{_tickAudio.pause();_tickAudio.currentTime=0;}catch(e){}}
+
+function beep(){
+  if(_cdownActive)return; // overlay actif → countdown.wav gère le GO
+  // Alarme finale : 3 tons simultanés, fort, square wave (passe mieux la musique)
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [[880,0],[1109,.04],[1320,.08]].forEach(([freq,delay])=>{
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='square';o.frequency.value=freq;
+      g.gain.setValueAtTime(0,ctx.currentTime+delay);
+      g.gain.linearRampToValueAtTime(1.0,ctx.currentTime+delay+.02);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+delay+.35);
+      o.start(ctx.currentTime+delay);o.stop(ctx.currentTime+delay+.4);
+    });
+    // 2e salve 600ms plus tard
+    setTimeout(()=>{
+      try{
+        const c2=new(window.AudioContext||window.webkitAudioContext)();
+        const o2=c2.createOscillator(),g2=c2.createGain();
+        o2.connect(g2);g2.connect(c2.destination);
+        o2.type='square';o2.frequency.value=1109;
+        g2.gain.setValueAtTime(0,c2.currentTime);
+        g2.gain.linearRampToValueAtTime(1.0,c2.currentTime+.02);
+        g2.gain.exponentialRampToValueAtTime(0.001,c2.currentTime+.4);
+        o2.start(c2.currentTime);o2.stop(c2.currentTime+.45);
+      }catch(e){}
+    },600);
+  }catch(e){}
 }
 
 // ─── PILL FLOTTANTE ──────────────────────────────────────────
@@ -1294,13 +1324,13 @@ function _updPill(){
   if(!pill)return;
   const active=!!restIv&&window._curScreen!=='log';
   pill.classList.toggle('show',active);
-  if(!active)return;
+  if(!active){pill.classList.remove('overtime');return;}
   const left=_restLeft();
   const pillTime=document.getElementById('rest-pill-time');
   const pillFill=document.getElementById('rest-pill-fill');
   if(!pillTime||!pillFill)return;
   // Disparaît quand le temps est écoulé
-  if(left<=0){pill.classList.remove('show');return;}
+  if(left<=0){pill.classList.remove('show','overtime');return;}
   const m=Math.floor(left/60),s=left%60;
   pillTime.textContent=`${m}:${s.toString().padStart(2,'0')}`;
   const pct=left/restTot*100;
@@ -1308,6 +1338,7 @@ function _updPill(){
   const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
   pillFill.style.background=c;
   pill.style.borderColor=pct>50?'rgba(52,211,153,.5)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
+  pill.classList.remove('overtime');
 }
 
 function _restTick(){
@@ -1315,26 +1346,20 @@ function _restTick(){
   // Overlay décompte final : 10 dernières secondes (seulement si repos > 10s)
   if(left===10&&!_cdownActive&&restTot>10&&window._curScreen==='log')_showRestCountdown();
   if(_cdownActive)_updateRestCountdown();
-  // Décompte 5..1 : vibrations courtes
+  // Décompte 5..1 : bips courts
   if(left>0&&left<=5&&!_countdownSecs.has(left)){
     _countdownSecs.add(left);
+    _beepTick();
     if(navigator.vibrate)navigator.vibrate(60);
   }
-  // GO : cloche de boxe + arrêt du timer (plus de dépassement/overtime)
+  // Alarme finale
   if(left<=0&&!_restBeeped){
     _restBeeped=true;
-    _stopTick();
-    _playBell();
+    beep();
     if(navigator.vibrate)navigator.vibrate([300,100,300,100,400]);
     if(_restDoneCb){const cb=_restDoneCb;_restDoneCb=null;setTimeout(()=>{stopRest();cb();},400);return;}
-    if(_cdownActive){
-      // Overlay GO visible : on arrête chrono + pastille mais on laisse l'overlay
-      // se fermer tout seul (2s) — _updateRestCountdown a déjà affiché GO + flash
-      _stopRestTimerOnly();
-    }else{
-      stopRest();
-    }
-    return;
+    restOvertime=true;
+    const bar=document.getElementById('rest-bar');if(bar)bar.classList.add('overtime');
   }
   updRest();
   _updPill();
@@ -1365,9 +1390,9 @@ function _showRestCountdown(){
   if(nextNumEl)nextNumEl.textContent=info?'Série '+info.num:'';
   if(nextDetailEl)nextDetailEl.textContent=info?(info.kg+' kg × '+info.reps):'';
   ov.style.display='block';
-  // Tic-tac en boucle pendant le décompte final — arrêté au GO (_stopTick dans _restTick)
-  _initRestAudio();
-  if(_tickAudio){try{_tickAudio.currentTime=0;_tickAudio.play().catch(()=>{});}catch(e){}}
+  // Lecture du fichier son
+  _initCdownAudio();
+  if(_cdownAudio){_cdownAudio.currentTime=0;_cdownAudio.play().catch(()=>{});}
   _updateRestCountdown();
 }
 function _updateRestCountdown(){
@@ -1389,10 +1414,10 @@ function _updateRestCountdown(){
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
   if(left<=0){
-    // Écran GO persistant : reste affiché jusqu'au tap / bouton Passer (pas d'auto-close)
     if(labelEl)labelEl.textContent="C'EST REPARTI";
     if(numEl){numEl.textContent='GO';numEl.style.fontSize='80px';numEl.style.color='#fff';}
     if(ring){ring.style.stroke='var(--red)';ring.setAttribute('stroke-dashoffset','534');}
+    if(!_cdownAutoClose)_cdownAutoClose=setTimeout(_closeRestCountdown,2000);
     return;
   }
   const circ=534;
@@ -1401,20 +1426,12 @@ function _updateRestCountdown(){
   if(ring){ring.setAttribute('stroke-dashoffset',offset);ring.style.stroke=color;}
   if(numEl){numEl.textContent=left;numEl.style.fontSize='110px';numEl.style.color=color;}
 }
-// Tap sur l'overlay ou bouton Passer :
-// - pendant le décompte (avant 0) → skip anticipé = fin immédiate du repos,
-//   PAS de cloche ni tic-tac (la cloche ne joue que si le repos atteint 0 naturellement)
-// - après le GO → simple fermeture de l'écran (timer déjà arrêté, cloche déjà jouée)
-function _cdownTap(){
-  if(_cdownGoDone){_closeRestCountdown();return;}
-  stopRest();
-}
 function _closeRestCountdown(){
   if(!_cdownActive)return;
   _cdownActive=false;
   if(_cdownAutoClose){clearTimeout(_cdownAutoClose);_cdownAutoClose=null;}
-  // Arrêt net du tic-tac — la cloche (si en cours) finit de résonner naturellement
-  _stopTick();
+  // Arrêt net du fichier son
+  if(_cdownAudio){_cdownAudio.pause();_cdownAudio.currentTime=0;}
   const ov=document.getElementById('ov-rest-countdown');
   if(ov)ov.style.display='none';
   // reset pour la prochaine fois
@@ -1426,10 +1443,10 @@ function _closeRestCountdown(){
 // ─────────────────────────────────────────────────────────────────────
 
 function startRest(sec){
-  stopRest();restTot=sec;restStartTs=Date.now();_restBeeped=false;
+  stopRest();restTot=sec;restStartTs=Date.now();restOvertime=false;_restBeeped=false;
   _countdownSecs=new Set();
   const bar=document.getElementById('rest-bar');
-  bar.classList.add('show');
+  bar.classList.add('show');bar.classList.remove('overtime');
   updRest();_updPill();
   restIv=setInterval(_restTick,250);
   if(_pillIv)clearInterval(_pillIv);
@@ -1441,32 +1458,33 @@ function updRest(){
   const timeEl=document.getElementById('rest-time');
   const fillEl=document.getElementById('rest-fill');
   if(!timeEl||!fillEl)return;
-  const left=Math.max(0,_restLeft());
-  const m=Math.floor(left/60),s=left%60;
-  timeEl.textContent=`${m}:${s.toString().padStart(2,'0')}`;
-  const pct=left/restTot*100;
-  fillEl.style.width=pct+'%';
-  const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
-  const bc=pct>50?'rgba(0,230,118,.3)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
-  timeEl.style.color=c;fillEl.style.background=c;if(bar)bar.style.borderColor=bc;
-}
-
-// Arrête chrono + barre + pastille SANS fermer l'overlay décompte (utilisé au GO,
-// où l'overlay doit rester 2s pour afficher GO + flash avant de se fermer seul)
-function _stopRestTimerOnly(){
-  clearInterval(restIv);restIv=null;
-  clearInterval(_pillIv);_pillIv=null;
-  restStartTs=0;
-  _restBeeped=false;_restDoneCb=null;_countdownSecs=new Set();
-  const bar=document.getElementById('rest-bar');
-  if(bar){bar.classList.remove('show');bar.style.borderColor='';}
-  const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';
-  _updPill();
+  const left=_restLeft();
+  if(left>=0){
+    const m=Math.floor(left/60),s=left%60;
+    timeEl.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+    const pct=left/restTot*100;
+    fillEl.style.width=pct+'%';
+    const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
+    const bc=pct>50?'rgba(0,230,118,.3)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
+    timeEl.style.color=c;fillEl.style.background=c;if(bar)bar.style.borderColor=bc;
+  } else {
+    const ot=-left,m=Math.floor(ot/60),s=ot%60;
+    timeEl.textContent=`+${m}:${s.toString().padStart(2,'0')}`;
+    fillEl.style.width='0%';
+    timeEl.style.color='var(--red)';fillEl.style.background='var(--red)';
+  }
 }
 
 function stopRest(){
   _closeRestCountdown();
-  _stopRestTimerOnly();
+  clearInterval(restIv);restIv=null;
+  clearInterval(_pillIv);_pillIv=null;
+  restStartTs=0;
+  restOvertime=false;_restBeeped=false;_restDoneCb=null;_countdownSecs=new Set();
+  const bar=document.getElementById('rest-bar');
+  if(bar){bar.classList.remove('show','overtime');bar.style.borderColor='';}
+  const lbl=document.getElementById('rest-label');if(lbl)lbl.textContent='';
+  _updPill();
 }
 let _afTimer=null;
 function _onKgInput(el,ei,si){
@@ -1502,7 +1520,8 @@ function setRestPreset(sec){
   if(elapsed>=sec){stopRest();return;}
   // Garde restStartTs (début du repos), change seulement la cible totale
   // → _restLeft() = sec - elapsed (temps restant = cible - déjà écoulé)
-  restTot=sec;_restBeeped=false;_countdownSecs=new Set();
+  restTot=sec;restOvertime=false;_restBeeped=false;_countdownSecs=new Set();
+  const bar=document.getElementById('rest-bar');if(bar)bar.classList.remove('overtime');
   if(_restEx){S.exRestPref=S.exRestPref||{};S.exRestPref[_restEx]=sec;persist();}
   _highlightRestPreset(sec);updRest();_updPill();
 }
@@ -1514,6 +1533,7 @@ function addRT(s){
   updRest();
 }
 function skipRest(){stopRest();}
+function beep(){if(_cdownActive)return;try{const ctx=new(window.AudioContext||window.webkitAudioContext)();[0,.15,.3].forEach(t=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=880;g.gain.setValueAtTime(0.5,ctx.currentTime+t);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+t+.1);o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.15);});}catch(e){}}
 
 // ─── EXERCISE PICKER ─────────────────────────────────────────
 const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
@@ -2843,19 +2863,14 @@ function renderPlates(){
 }
 function applyPlate(){if(plateExIdx===null)return;const t=parseFloat(document.getElementById('plate-kg').value);if(!t)return;S.wkt.exs[plateExIdx].sets.forEach(s=>{if(!s.done)s.kg=t;});persist();closePlate();renderExBlocks();toast('Charge appliquée !','success');}
 
-// Débloque les 2 éléments Audio au premier geste utilisateur (iOS + Android + desktop) :
-// play muet → pause → prêt pour les lectures futures hors geste (setInterval).
-// Réactivé sur iOS pour tick-tock/bell (ft-v163) — si régression : remettre if(!_isIOS).
-function _unlockRestAudio(){
-  _initRestAudio();
-  [_tickAudio,_bellAudio].forEach(a=>{
-    if(!a)return;
-    try{
-      a.muted=true;a.volume=0;
-      a.play().then(()=>{a.pause();a.currentTime=0;a.muted=false;a.volume=1;}).catch(()=>{a.muted=false;a.volume=1;});
-    }catch(e){}
-  });
+// Android/desktop : débloque l'Audio au premier tap (volume=0 → silencieux → volume=1)
+if(!_isIOS){
+  document.addEventListener('touchstart',()=>{
+    _initCdownAudio();
+    if(_cdownAudio){
+      _cdownAudio.volume=0;
+      _cdownAudio.play().then(()=>{_cdownAudio.pause();_cdownAudio.currentTime=0;_cdownAudio.volume=1;}).catch(()=>{_cdownAudio.volume=1;});
+    }
+  },{once:true,passive:true});
 }
-document.addEventListener('touchstart',_unlockRestAudio,{once:true,passive:true});
-document.addEventListener('pointerdown',_unlockRestAudio,{once:true,passive:true});
 
