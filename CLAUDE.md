@@ -460,6 +460,17 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Après import** : `persist()` + `_cloudSyncSessions()` + `checkBadges(true)`
 - **Flag** : `sess.importedHistory = true` — identifie l'origine dans `S.sessions`
 
+### Polices hébergées en local — 0 dépendance réseau (✅ 2026-07-02, ft-v162)
+- **Cause corrigée** : `style.css` chargeait Manrope + Space Grotesk via `@import` Google Fonts, et `index.html` chargeait Pacifico via `<link>` Google Fonts — feuilles de style externes **bloquantes pour l'affichage**, non mises en cache par le SW (`sw.js` ignore volontairement les origines externes). Sur réseau très faible/absent (ex. sous-sol de salle), ça provoquait un **écran blanc** le temps du timeout réseau.
+- **Fix** : les 3 polices sont téléchargées et stockées dans `fonts/` (`manrope-variable.woff2`, `spacegrotesk-variable.woff2`, `pacifico-400.woff2` — Manrope et Space Grotesk sont des polices variables, un seul fichier couvre toutes les graisses). Déclarées en `@font-face` locales dans `style.css`. Plus aucune requête vers `fonts.googleapis.com`/`fonts.gstatic.com`.
+- **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
+- **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
+
+### Fix reload SW pendant une séance en cours (✅ 2026-07-02, ft-v162)
+- **Cause corrigée** : `controllerchange` (et message `SW_UPDATED`) forçaient un `window.location.reload()` **immédiat et sans condition** dès qu'une nouvelle version de l'app était détectée en arrière-plan (vérif toutes les 5 min, à chaque retour au premier plan, à chaque retour réseau) — y compris en pleine séance, pendant un superset.
+- **Fix** : `_reloadForUpdate()` (`app.js`) vérifie `S.wkt` (séance active). Si séance en cours → `window._swReloadPending=true` (reload différé) + toast informatif. Sinon → reload immédiat comme avant.
+- **Déclenchement différé** : `persist()` (`state.js`), à chaque appel, vérifie si `_swReloadPending` est vrai ET que `S.wkt` est vide — déclenche alors le reload. Comme `finishWorkout()` et `clearWkt()` (annulation séance) appellent `persist()` juste après avoir vidé `S.wkt`, le reload s'applique automatiquement dès la fin ou l'annulation de la séance, jamais pendant.
+
 ## Format de réponse Apps Script (v3.5)
 
 ```
@@ -596,7 +607,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v158 | sync cloud programmes + exRestPref + garde-fou programmes |
 | ft-v159 | local-first pull + guard auto-restore élargi + label "ce mois" séances |
 | ft-v160 | garde-fou global profil serveur (@50) : bday/badges sauvés, '' et 0 ne gagnent jamais sur rempli ; restore prénom manquant (champ inline) ; z-index overlay restore |
-| ft-v161 | import historique séances (#ov-import-hist) — flow isolé, conflits date, PRs chrono ← **actuel** |
+| ft-v161 | import historique séances (#ov-import-hist) — flow isolé, conflits date, PRs chrono |
+| ft-v162 | polices Manrope/Space Grotesk/Pacifico hébergées en local (fonts/, plus de Google Fonts) + fix reload SW différé si séance en cours ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
