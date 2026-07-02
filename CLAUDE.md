@@ -426,38 +426,32 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - ⚠️ Pour que la purge s'exécute réellement : lancer `authorizeAndListTriggers()` depuis l'IDE Apps Script pour autoriser le scope `script.scriptapp` une fois
 
 ### Import programme — Fichiers Word, Excel, PDF, Images (✅ @57)
-- Bouton 📸 dans s-log → flow import → accept étendu à `.docx`, `.xlsx/.xls`, `.pdf`, images
+- Bouton 📸 dans s-log → overlay `#ov-import-prog` → accept `.docx`, `.xlsx/.xls`, `.pdf`, images
 - **Word (.docx)** : chargement dynamique mammoth.js (CDN cdnjs, ~150KB) → `extractRawText` → texte brut
-  - `_loadMammoth()` : charge la lib si absente, retourne Promise
 - **Excel (.xlsx/.xls)** : chargement dynamique SheetJS (CDN jsdelivr, ~800KB) → CSV par feuille
-  - `_loadXLSX()` : charge la lib si absente, retourne Promise
-  - Format : `[Feuille : NomFeuille]\n` + CSV, toutes les feuilles concaténées
-- **PDF** : envoyé tel quel en base64 → backend le passe à Claude comme `{type:'document', source:{type:'base64', media_type:'application/pdf', data:...}}`
-- `addImportFile(input)` : async, limite 15MB par fichier, gère tous les types en parallèle
-- Miniature : icône 📊 pour Excel, 📝 pour Word/texte, 📄 pour PDF
-- Modèle : claude-sonnet-4-6 si texte/PDF/multi-image, claude-haiku si image seule
-- **`handleImportProgram_` — règles du prompt (Code.js @57)** :
-  _(voir section dédiée ci-dessous pour les règles complètes)_
+- **PDF** : converti en JPEG via PDF.js (`_pdfToImages`) → envoyé comme images au backend
+- Modèle : claude-sonnet-4-6 si texte/PDF/multi-image, claude-haiku si image unique
+- **`handleImportProgram_` — règles prompt (@57)** :
+  - **Règle 0** : séparateur = `SÉANCE N` / `Jour N` / `Day N` / `Workout N` UNIQUEMENT. Groupes musculaires = sections internes. Ignorer SOMMAIRE + séances vides.
+  - **Règle 1** : repsPerSet. Unilatéral (`bras/bras`, `jambe/jambe`, `alterné`) → chaque ligne NxN = 2 séries. `NxN+M` → `+M` au partenaire superset. **Ramping reps** (`3+4+5+6+7 par cycle`) → `repsPerSet:[3,4,5,6,7]`, jamais `3x7`.
+  - **Règle 4** : `setType` = `""` (Normal) ou `"D"` (Dropset) UNIQUEMENT. Jamais `"E"` ni `"W"`. Mots "à l'échec/Maxi/échauffement" → NOTE.
+  - **Règle 5** : superset = `+` entre noms complets ou préfixe C1/C2. `+` dans reps (`15x2+15`, `8+2+2`) ≠ superset.
+  - **Règle 6** : dropset → `setType:"D"`, `repsPerSet`, `kgPerSet` par palier.
 
 ### Import historique — Séances passées datées (✅ ft-v161, @58)
-- **⚠️ À ne PAS confondre avec l'import de programme** : l'historique importe des séances déjà réalisées avec dates réelles → alimente `S.sessions`, stats, PRs, courbes.
-- **Bouton** : 📅 "Importer un journal de séances" dans `s-log` → `openImportHist()` → overlay `#ov-import-hist`
-- **Flow totalement isolé** : variables `_histPhotos`, `_histExtracted`, `_histConflicts` — ne touche JAMAIS `_impPhotos`/`_impExtracted`/`_impMode`
-- **Backend** : `action:'importHistory'` → `handleImportHistory_()` — toujours Sonnet, prompt orienté dates + séries réelles
+- **⚠️ ≠ import programme** : séances déjà réalisées avec dates → alimente `S.sessions`, stats, PRs, courbes.
+- **Bouton** : 📅 "Importer un journal" dans `s-log` → `openImportHist()` → overlay `#ov-import-hist`
+- **Flow totalement isolé** : `_histPhotos`, `_histExtracted`, `_histConflicts` — ne touche JAMAIS `_impPhotos`/`_impExtracted`/`_impMode`
+- **Backend** : `action:'importHistory'` → `handleImportHistory_()` — toujours Sonnet
 - **JSON retourné** : `{sessions:[{date:'YYYY-MM-DD', estimatedDate:bool, label, exercises:[{name, sets:[{kg, reps, type:''/D, note}], note}]}]}`
-- **Conflits de date** : si une séance existe déjà ce jour → 3 choix inline : Remplacer / Garder l'existante / Les 2 (défaut = Les 2)
-- **Volume** : exclut W (échauffement) uniquement. Drop set D compte dans le volume. `type!=='W' && type!=='É'`
-- **PRs** : recalculés chronologiquement (ASC) sur toutes les séances importées. Jamais écraser un PR plus élevé. `if(!cur||rm>cur.rm1)`
-- **Sort** : après insertion, `S.sessions` triées par `ts` DESC (plus récente en tête)
-- **Custom exercises** : exercices inconnus → créés dans `S.customExercises` (groupe 'Autres') via `_reportCustomEx`
+- **Dates** : `JJ/MM/AA` → `YYYY-MM-DD`, `JJ/MM` → année 2026. Séance sans date → `estimatedDate:true`
+- **Séries** : "par bras/par jambe" → 2 sets, "vide" → kg:0, "N rep Xkg N rep Ykg" sur une ligne → DROP SET
+- **Conflits de date** : 3 choix inline — Remplacer / Garder / Les 2 (défaut = Les 2)
+- **Volume** : exclut W uniquement. Drop set D **compte**. `type!=='W' && type!=='É'`
+- **PRs** : recalcul chrono ASC sur séances importées. `if(!cur||rm>cur.rm1)` — jamais écraser plus élevé.
+- **Sort final** : `S.sessions` triées par `ts` DESC (plus récente en tête)
 - **Après import** : `persist()` + `_cloudSyncSessions()` + `checkBadges(true)`
-
-### Import programme — Fichiers Word, Excel, PDF, Images (✅ @57)
-  - **Règle 0** : séparateur de séance = `SÉANCE N` / `Jour N` / `Day N` / `Workout N` UNIQUEMENT. Groupes musculaires (DORSAUX, PECTORAUX…) = sections internes, jamais une nouvelle séance. Ignorer pages SOMMAIRE et séances vides.
-  - **Règle 1** : repsPerSet. Unilatéral (`bras/bras`, `jambe/jambe`, `alterné`) → chaque ligne NxN = 2 séries. `NxN+M` → `+M` va au partenaire superset. **Méthode Ramping reps** (séquence `3+4+5+6+7 par cycle`) → `repsPerSet:[3,4,5,6,7]`, jamais `3x7`.
-  - **Règle 4** : `setType` à l'import = `""` (Normal, défaut) ou `"D"` (Dropset) UNIQUEMENT. **Jamais `"E"` ni `"W"`** même si le doc mentionne "à l'échec", "Maxi", "échauffement" — ces mots vont en NOTE.
-  - **Règle 5** : superset = `+` entre noms d'exercices complets ou préfixe C1/C2. `+` dans les reps (`15x2+15`, `8+2+2`, `7+7+7`) ≠ superset.
-  - **Règle 6** : dropset structuré → `setType:"D"`, `repsPerSet`, `kgPerSet` par palier.
+- **Flag** : `sess.importedHistory = true` — identifie l'origine dans `S.sessions`
 
 ## Format de réponse Apps Script (v3.5)
 
@@ -483,6 +477,12 @@ POST {action:"coach", message, context, history}
 
 POST {action:"validateCode", code, email}
 → {"status":"ok","type":"lifetime"} | {"status":"invalid"}
+
+POST {action:"importProgram", images:[{type, data, name?, isText?}]}
+→ {"status":"ok","data":{"name","weeks","startDate","days":[...]}}
+
+POST {action:"importHistory", images:[{type, data, name?, isText?}]}
+→ {"status":"ok","data":{"sessions":[{date,estimatedDate,label,exercises:[{name,sets:[{kg,reps,type,note}],note}]}]}}
 
 POST x-www-form-urlencoded data={"email":"...","amount":"4.99",...}  ← Webhook Ko-fi
 → "OK"
