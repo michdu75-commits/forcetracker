@@ -994,6 +994,20 @@ function backupAllUserData_() {
     }), 'application/json');
 
     Logger.log('[FT backup Drive] ' + fileName + ' — ' + users.length + ' users');
+
+    // Comptage des fichiers — alerte si le dossier grossit trop (jamais de suppression auto)
+    try {
+      let fileCount = 0;
+      const fi = folder.getFiles();
+      while (fi.hasNext()) { fi.next(); fileCount++; }
+      if (fileCount > 1000) {
+        Logger.log('[FT backup ⚠️ ALERTE DRIVE] ' + fileCount + ' fichiers dans ForceTracker-Backups/'
+          + ' — penser à archiver manuellement (NE JAMAIS supprimer automatiquement).');
+      } else {
+        Logger.log('[FT backup Drive] Dossier : ' + fileCount + ' fichier(s) au total');
+      }
+    } catch(e) { /* quota check non bloquant */ }
+
   } catch(err) {
     Logger.log('[FT backup Drive] ERREUR : ' + err.message);
   }
