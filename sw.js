@@ -1,4 +1,4 @@
-const CACHE = 'ft-v163'; // sons repos tick-tock/bell-boxing + suppression overtime
+const CACHE = 'ft-v164'; // GO persistant (tap pour fermer) + fix skip anticipé + audioSession transient
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
