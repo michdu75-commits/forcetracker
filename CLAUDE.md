@@ -39,7 +39,7 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **App live** : https://michdu75-commits.github.io/forcetracker/
 - **Auteur** : Michel — michdu75@gmail.com
 
-## Backend Apps Script (v3.5 @46 — actif)
+## Backend Apps Script (v3.5 @57 — actif)
 
 - **Compte Google** : forcetracker.app@gmail.com
 - **URL déployée** : `https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec`
@@ -90,8 +90,8 @@ Séquence systématique après chaque modif backend : **push → deploy -i → v
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache `ft-v142` |
-| `Code.js` | Backend Google Apps Script v3.5 @46 (sync cloud, coach IA, premium) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache `ft-v160` |
+| `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `appsscript.json` | Manifest Apps Script (scopes OAuth, timezone, webapp config) |
 | `female-body.png` | Silhouette féminine — présent mais non utilisé (voir Notes techniques) |
@@ -211,7 +211,7 @@ Séquence systématique après chaque modif backend : **push → deploy -i → v
 - **`#install-banner.hidden button, #install-banner.hidden a`** : `pointer-events:none` — empêche les boutons du banner caché de capturer les taps sur le FAB
 - **`.screen` padding-bottom** : 110px (était 90px) — espace suffisant pour "Terminer la séance" sous le banner
 - **Service Worker** `sw.js` : navigation cache-first (ouverture instantanée) + revalidation silencieuse en fond, assets cache-first (offline OK)
-  - Cache actuel : `ft-v145`
+  - Cache actuel : `ft-v160`
   - ⚠️ À chaque modif d'asset (logo, images) : bumper `CACHE = 'ft-vN'` dans `sw.js`
   - `controllerchange` listener dans `index.html` → rechargement auto quand nouveau SW prend le contrôle (pas besoin que les users vident le cache manuellement)
 
@@ -406,23 +406,42 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Fix** : animation déplacée sur `#rest-bar.overtime #rest-time` et `#rest-pill.overtime #rest-pill-time` (texte seul)
 - `#rest-pill` fond : `rgba(14,16,22,.95)` → `#0e1016` (100% opaque) + `z-index:30`
 
+### Backup quotidien Drive (✅ Code.js @51→@54)
+- **`backupAllUserData_()`** : dump JSON de toutes les propriétés utilisateurs (`u_{email}`) → fichier `backup-YYYY-MM-DD.json` dans Drive
+- **Dossier** : `ForceTracker-Backups/` (ID : `1iQ6xFuG10d4qCE1Jz8d8lOodrUsV36Fq`) — **append-only, jamais supprimé automatiquement**
+- **Trigger quotidien** : `dailyBackup` à 2h du matin, 1 actif (`?action=installDailyBackup&t=FT_BACKUP_INIT_2026` pour installer)
+- **Alerte quota** : si > 1000 fichiers dans le dossier → log `[FT backup ⚠️ ALERTE DRIVE]` (jamais bloquant)
+- **Migration** : ancien onglet Sheet `Backup 2026-06-29 20:03` → `backup-migration-2026-06-29-2003.json`
+- **Vérification** : `?action=checkBackup` → `{fileCount, lastFiles, driveFolder}`
+- **Garde-fou saveProfile** (`@47+`) : un push vide (0 session, profil défaut) n'écrase jamais des données remplies — pour tous les emails
+  - `_ps_(ps, key, val)` : string — garde la valeur existante si `val` est vide/null
+  - `_pn_(ps, key, val)` : number — garde si `val === 0` ou absent
+  - `_pa_(ps, key, val)` : array — garde si `val.length === 0`
+  - `_po_(ps, key, val)` : objet/JSON — garde si `val` est vide
+
 ### Chasse au trigger fantôme PREMIUM_EMAILS (✅ 2026-06-30, Code.js @46)
 - **Trigger fantôme** : trigger installable inconnu dans l'UI Apps Script (invisible depuis clasp) réécrit `PREMIUM_EMAILS` — cause identifiée
 - **Double protection** : `PREMIUM_HARDCODED_` (priorité absolue) + `ensurePremiumEmails_()` appelée à chaque `doPost`
 - **Purge one-shot** dans `doGet` : supprime tous les triggers, flag `triggers_purged_20260630`, double try/catch (jamais bloquant même si scope `script.scriptapp` non autorisé)
 - ⚠️ Pour que la purge s'exécute réellement : lancer `authorizeAndListTriggers()` depuis l'IDE Apps Script pour autoriser le scope `script.scriptapp` une fois
 
-### Import programme — Fichiers Word et Excel (✅ 2026-06-16)
-- Bouton 📸 dans s-log → flow import → accept étendu à `.docx` et `.xlsx/.xls`
+### Import programme — Fichiers Word, Excel, PDF, Images (✅ @57)
+- Bouton 📸 dans s-log → flow import → accept étendu à `.docx`, `.xlsx/.xls`, `.pdf`, images
 - **Word (.docx)** : chargement dynamique mammoth.js (CDN cdnjs, ~150KB) → `extractRawText` → texte brut
   - `_loadMammoth()` : charge la lib si absente, retourne Promise
 - **Excel (.xlsx/.xls)** : chargement dynamique SheetJS (CDN jsdelivr, ~800KB) → CSV par feuille
   - `_loadXLSX()` : charge la lib si absente, retourne Promise
   - Format : `[Feuille : NomFeuille]\n` + CSV, toutes les feuilles concaténées
-- `addImportFile(input)` : async, limite 15MB par fichier, gère les 3 types (image/docx/xlsx) en parallèle
+- **PDF** : envoyé tel quel en base64 → backend le passe à Claude comme `{type:'document', source:{type:'base64', media_type:'application/pdf', data:...}}`
+- `addImportFile(input)` : async, limite 15MB par fichier, gère tous les types en parallèle
 - Miniature : icône 📊 pour Excel, 📝 pour Word/texte, 📄 pour PDF
-- Backend @11 : `handleImportProgram_` gère `isText:true` → `{type:'text', text:'[Fichier Word : ...]'}` envoyé à Claude
-- Modèle utilisé : claude-sonnet-4-6 si fichier texte/PDF, claude-haiku si images seulement
+- Modèle : claude-sonnet-4-6 si texte/PDF/multi-image, claude-haiku si image seule
+- **`handleImportProgram_` — règles du prompt (Code.js @57)** :
+  - **Règle 0** : séparateur de séance = `SÉANCE N` / `Jour N` / `Day N` / `Workout N` UNIQUEMENT. Groupes musculaires (DORSAUX, PECTORAUX…) = sections internes, jamais une nouvelle séance. Ignorer pages SOMMAIRE et séances vides.
+  - **Règle 1** : repsPerSet. Unilatéral (`bras/bras`, `jambe/jambe`, `alterné`) → chaque ligne NxN = 2 séries. `NxN+M` → `+M` va au partenaire superset. **Méthode Ramping reps** (séquence `3+4+5+6+7 par cycle`) → `repsPerSet:[3,4,5,6,7]`, jamais `3x7`.
+  - **Règle 4** : `setType` à l'import = `""` (Normal, défaut) ou `"D"` (Dropset) UNIQUEMENT. **Jamais `"E"` ni `"W"`** même si le doc mentionne "à l'échec", "Maxi", "échauffement" — ces mots vont en NOTE.
+  - **Règle 5** : superset = `+` entre noms d'exercices complets ou préfixe C1/C2. `+` dans les reps (`15x2+15`, `8+2+2`, `7+7+7`) ≠ superset.
+  - **Règle 6** : dropset structuré → `setType:"D"`, `repsPerSet`, `kgPerSet` par palier.
 
 ## Format de réponse Apps Script (v3.5)
 
