@@ -146,7 +146,10 @@ function doGet(e) {
       try {
         const allTriggers = ScriptApp.getProjectTriggers();
         const trigLog = allTriggers.map(t => t.getHandlerFunction() + '/' + t.getEventType()).join(', ');
-        allTriggers.forEach(t => ScriptApp.deleteTrigger(t));
+        // Ne pas supprimer le trigger backup quotidien
+        allTriggers.forEach(t => {
+          if (t.getHandlerFunction() !== 'backupAllUserData_') ScriptApp.deleteTrigger(t);
+        });
         Logger.log('[FT cleanup] Triggers supprimés : ' + trigLog);
         _bProps.setProperty('triggers_purged_20260630', new Date().toISOString());
         _bProps.setProperty('triggers_purged_log', trigLog || 'AUCUN');
@@ -197,6 +200,55 @@ function doGet(e) {
       triggerPurgeLog: _bProps.getProperty('triggers_purged_log') || 'pas encore purgé',
       triggerPurgedAt: _bProps.getProperty('triggers_purged_20260630') || null
     });
+  }
+
+  // Installation trigger backup quotidien — ouvrir l'URL dans le navigateur une seule fois
+  // ?action=installDailyBackup&t=FT_BACKUP_INIT_2026
+  if (p.action === 'installDailyBackup' && p.t === 'FT_BACKUP_INIT_2026') {
+    try {
+      installDailyBackupTrigger_();
+      try { backupAllUserData_(); } catch(be) { Logger.log('[FT backup init] ' + be); }
+      const cnt = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'backupAllUserData_').length;
+      return json_({status:'ok', msg:'Trigger dailyBackup installé — ' + cnt + ' trigger(s) actif(s)', firstBackupDone:true});
+    } catch(err) { return json_({status:'error', error:err.message}); }
+  }
+
+  // Vérification état backup — ?action=checkBackup
+  if (p.action === 'checkBackup') {
+    try {
+      const cnt = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'backupAllUserData_').length;
+      const ss2 = _getSheet_();
+      const tabs = ss2.getSheets().map(s => s.getName()).filter(n => n.startsWith('Backup '));
+      return json_({status:'ok', triggersInstalled: cnt, backupTabs: tabs.length, lastTabs: tabs.slice(-3)});
+    } catch(err) { return json_({status:'error', error:err.message}); }
+  }
+
+  // Test garde-fou universel — ?action=testGardeFou
+  if (p.action === 'testGardeFou') {
+    try {
+      const te = 'ft_gf_' + Date.now() + '@test.internal';
+      saveUserData_(te, {email:te, profile:{name:'TestGardeFou', age:35, bw:80, goal:'muscle'},
+        sessions:[{id:'t1', date:'2026-07-02'}], prs:{'Squat':{rm1:100, kg:80, reps:6}}, programmes:[]});
+      // Push vide — doit être refusé
+      handleSaveProfile_({email:te, name:'', age:0, bw:0, goal:'', sessions:[], prs:{}, badges:{}});
+      const after = loadUserData_(te);
+      PropertiesService.getScriptProperties().deleteProperty(userKey_(te)); // cleanup
+      const ok = after.profile.name === 'TestGardeFou'
+               && (after.sessions||[]).length === 1
+               && Object.keys(after.prs||{}).length === 1
+               && after.profile.age === 35
+               && after.profile.bw === 80
+               && after.profile.goal === 'muscle';
+      return json_({
+        status: ok ? 'ok' : 'FAILED',
+        gardeFouUniversel: ok,
+        details: {
+          name: after.profile.name, age: after.profile.age, bw: after.profile.bw,
+          goal: after.profile.goal, sessions: (after.sessions||[]).length,
+          prs: Object.keys(after.prs||{}).length
+        }
+      });
+    } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
   if (p.action === 'loadProfile' && p.email) {
@@ -887,12 +939,14 @@ function backupAllUserData_() {
   const label = Utilities.formatDate(now, 'Europe/Paris', 'yyyy-MM-dd HH:mm');
   const ss    = _getSheet_();
 
-  // Supprime les anciens onglets backup de plus de 30 jours
+  // Supprime les anciens onglets backup de plus de 60 jours
   ss.getSheets().forEach(sh => {
     const n = sh.getName();
     if (!n.startsWith('Backup ')) return;
-    const d = new Date(n.replace('Backup ', '').replace(' ', 'T') + ':00');
-    if (!isNaN(d) && (now - d) > 30 * 24 * 3600 * 1000) ss.deleteSheet(sh);
+    try {
+      const d = new Date(n.replace('Backup ', '').replace(' ', 'T') + ':00');
+      if (!isNaN(d.getTime()) && (now - d) > 60 * 24 * 3600 * 1000) ss.deleteSheet(sh);
+    } catch(_) {}
   });
 
   // Onglet backup daté
@@ -918,6 +972,26 @@ function scheduleOneTimeBackup_() {
     .after(60 * 1000) // dans 1 minute
     .create();
   Logger.log('Déclencheur one-shot créé — backup dans ~1 min');
+}
+
+// ── Trigger backup QUOTIDIEN ─────────────────────────────────
+// Idempotent — à appeler via ?action=installDailyBackup&t=FT_BACKUP_INIT_2026
+// OU depuis l'IDE Apps Script (Run > installDailyBackupTrigger_)
+function installDailyBackupTrigger_() {
+  // Supprimer les anciens triggers backupAllUserData_ avant d'en créer un nouveau
+  ScriptApp.getProjectTriggers().forEach(t => {
+    if (t.getHandlerFunction() === 'backupAllUserData_') {
+      ScriptApp.deleteTrigger(t);
+      Logger.log('[FT backup] Ancien trigger supprimé.');
+    }
+  });
+  // Trigger journalier entre 2h et 3h UTC (≈ 4h heure de Paris en été)
+  ScriptApp.newTrigger('backupAllUserData_')
+    .timeBased()
+    .everyDays(1)
+    .atHour(2)
+    .create();
+  Logger.log('[FT backup] Trigger journalier installé — backupAllUserData_ à 2h UTC chaque nuit.');
 }
 
 // Fonction utilitaire publique — exécuter UNE SEULE FOIS depuis l'IDE pour autoriser
