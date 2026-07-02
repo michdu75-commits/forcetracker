@@ -1338,6 +1338,19 @@ window.addEventListener('unhandledrejection',e=>{
 });
 
 // ─── SERVICE WORKER ──────────────────────────────────────────
+// Ne jamais recharger l'appli en pleine séance (perte de saisie / interruption d'un superset).
+// Si une séance est en cours, on reporte le rechargement — persist() (state.js) le déclenchera
+// dès que S.wkt redevient vide (fin de séance ou annulation).
+window._swReloadPending=false;
+function _reloadForUpdate(){
+  const _wktActive=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
+  if(_wktActive){
+    window._swReloadPending=true;
+    if(typeof toast==='function')toast('Mise à jour disponible — appliquée à la fin de la séance','info');
+  }else{
+    window.location.reload();
+  }
+}
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
     navigator.serviceWorker.register('./sw.js').then(reg=>{
@@ -1352,9 +1365,9 @@ if('serviceWorker' in navigator){
         setTimeout(()=>{if(typeof _retrySheetQueue==='function')_retrySheetQueue();},1000);
       });
     });
-    navigator.serviceWorker.addEventListener('controllerchange',()=>window.location.reload());
+    navigator.serviceWorker.addEventListener('controllerchange',_reloadForUpdate);
     navigator.serviceWorker.addEventListener('message',e=>{
-      if(e.data&&e.data.type==='SW_UPDATED')window.location.reload();
+      if(e.data&&e.data.type==='SW_UPDATED')_reloadForUpdate();
     });
   });
 }

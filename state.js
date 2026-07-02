@@ -170,6 +170,11 @@ function persist(){
       }catch(e2){}
     }
   }
+  // Rechargement de mise à jour reporté pendant la séance (app.js) — la séance vient de se terminer/annuler
+  if(window._swReloadPending&&!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){
+    window._swReloadPending=false;
+    window.location.reload();
+  }
   _cloudSyncDebounced();
 }
 

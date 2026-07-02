@@ -1,10 +1,12 @@
-const CACHE = 'ft-v161'; // import historique séances
+const CACHE = 'ft-v162'; // polices hébergées en local (0 dépendance réseau) + fix reload pendant séance
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
   './setup.js', './tracking.js', './coach.js', './app.js',
   './manifest.json', './logo.png', './female-body.png',
   './countdown.wav',
+  // Polices (hébergées localement — plus de dépendance Google Fonts)
+  './fonts/manrope-variable.woff2', './fonts/spacegrotesk-variable.woff2', './fonts/pacifico-400.woff2',
   './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',
   // Muscles SVG + PNG
   './muscles/abs.svg','./muscles/arms.svg','./muscles/back.svg','./muscles/calves.svg',
