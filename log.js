@@ -1983,27 +1983,60 @@ function removeHistPhoto(i){
   _renderHistThumbs();
 }
 
+// Analyse par LOTS de 3 pages max : la réponse IA a une taille limitée (8192 tokens
+// côté backend @58) — un gros journal envoyé d'un coup rend un JSON tronqué/invalide.
+// Chaque lot est analysé séparément, puis les séances de tous les lots sont fusionnées.
+const _HIST_BATCH=3;
+async function _histAnalyzeBatch(imgs){
+  const r=await fetch(S.url,{method:'POST',redirect:'follow',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'importHistory',images:imgs})});
+  const raw=await r.text();
+  console.log('[ImportHist] Réponse brute lot :', raw.slice(0,500));
+  const d=JSON.parse(raw);
+  if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
+  return (d.data.sessions||[]);
+}
 async function analyzeHistPhotos(){
   if(!_histPhotos.length){toast('Ajoute au moins une photo ou un PDF','error');return;}
   if(!S.url){toast('Connexion Apps Script requise','error');return;}
   histGoStep(3);
-  let _rawResp='';
-  try{
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'importHistory',images:_histPhotos})});
-    _rawResp=await r.text();
-    console.log('[ImportHist] Réponse brute :', _rawResp.slice(0,500));
-    const d=JSON.parse(_rawResp);
-    if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
-    _histExtracted=d.data;
-    _renderHistPreview();
-    histGoStep(4);
-  }catch(e){
-    console.error('[ImportHist] Erreur :', e.message, '| Brut :', _rawResp.slice(0,300));
-    histGoStep(2);
-    toast('Erreur analyse : '+e.message,'error');
+  const statusEl=document.getElementById('hist-s3-status');
+  const batches=[];
+  for(let i=0;i<_histPhotos.length;i+=_HIST_BATCH)batches.push(_histPhotos.slice(i,i+_HIST_BATCH));
+  const allSessions=[];let failed=0,lastErr='';
+  for(let b=0;b<batches.length;b++){
+    if(statusEl)statusEl.textContent=batches.length>1
+      ?`Analyse du lot ${b+1} / ${batches.length} (${batches[b].length} page${batches[b].length>1?'s':''})…`
+      :'Claude extrait les séances et leurs dates depuis tes pages';
+    try{
+      const sess=await _histAnalyzeBatch(batches[b]);
+      // Coupure de séance entre 2 lots (une séance à cheval sur 2 pages) :
+      // même date en fin de lot précédent et début de lot suivant → fusion des exercices
+      if(allSessions.length&&sess.length){
+        const prev=allSessions[allSessions.length-1],next=sess[0];
+        if(prev.date&&prev.date===next.date&&!next.estimatedDate){
+          prev.exercises=(prev.exercises||[]).concat(next.exercises||[]);
+          sess.shift();
+        }
+      }
+      allSessions.push(...sess);
+    }catch(e){
+      failed++;lastErr=e.message||String(e);
+      console.error('[ImportHist] Lot',b+1,'en échec :',lastErr);
+    }
   }
+  if(statusEl)statusEl.textContent='Claude extrait les séances et leurs dates depuis tes pages';
+  if(!allSessions.length){
+    histGoStep(2);
+    const dense=/JSON invalide|tronqu/i.test(lastErr);
+    toast(dense?'Pages trop denses pour l\'analyse — réessaie avec moins de pages à la fois':'Erreur analyse : '+lastErr,'error');
+    return;
+  }
+  if(failed)toast(failed+' lot'+(failed>1?'s':'')+' non lu'+(failed>1?'s':'')+' — vérifie l\'aperçu, tu pourras réimporter les pages manquantes','info');
+  _histExtracted={sessions:allSessions};
+  _renderHistPreview();
+  histGoStep(4);
 }
 
 function _renderHistPreview(){
