@@ -21,7 +21,10 @@ Backend / migration / suppression → créer **branche + tag de backup** d'abord
 **7. 🎨 Garder l'identité « figurines muscles ».**
 Ne pas copier Hevy/JEFIT. Une chose à la fois, **testée avant** de passer à la suite.
 
-**8. 🔴 FAB « + » Séance — SENSIBLE, ne pas toucher sans recalculer.**
+**8. 💾 Commit étiqueté AVANT chaque modif + tag stable APRÈS + rollback en 1 ligne.**
+Avant toute modification importante : `git add + commit` avec message explicite (quoi + version, ex. `"avant: modif profil ft-v161"`). Ne pas mélanger plusieurs changements dans un commit. Après chaque fonctionnalité qui marche : poser un tag daté (`stable-YYYY-MM-DD-sujet-ok`). À la fin de chaque tâche : fournir la commande de rollback (`git reset --hard <tag>` ou `git checkout <tag>`). Cette règle s'applique AVANT le moindre changement de fichier.
+
+**9. 🔴 FAB « + » Séance — SENSIBLE, ne pas toucher sans recalculer.**
 Le bouton FAB `#fab-session` est `position:absolute` dans la nav et positionné par `_positionFab()` (via `getBoundingClientRect(#nb-log)`). **Toute modif de l'écran Séance** (ajout d'éléments dans le header, changement de layout du DOM) **doit vérifier que le FAB reste bien positionné**. `_positionFab()` est appelé via `requestAnimationFrame` à chaque `_syncLogHdrBtns()` (déclenché à chaque `renderExBlocks()`). Si le FAB se décale : appeler `_positionFab()` manuellement après le changement. Ne jamais supprimer les appels `requestAnimationFrame(_positionFab)` de `_syncLogHdrBtns()`.
 
 ---
