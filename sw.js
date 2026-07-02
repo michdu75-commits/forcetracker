@@ -1,10 +1,9 @@
-const CACHE = 'ft-v165'; // ROLLBACK des sons v163/v164 → retour comportement v162 (bugs iOS : son à l'ouverture, musique coupée)
+const CACHE = 'ft-v166'; // timer 100% silencieux (zéro appel audio) + GO persistant + fin overtime + fix skip
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
   './setup.js', './tracking.js', './coach.js', './app.js',
   './manifest.json', './logo.png', './female-body.png',
-  './countdown.wav',
   // Polices (hébergées localement — plus de dépendance Google Fonts)
   './fonts/manrope-variable.woff2', './fonts/spacegrotesk-variable.woff2', './fonts/pacifico-400.woff2',
   './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',
