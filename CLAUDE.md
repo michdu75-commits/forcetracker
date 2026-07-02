@@ -555,6 +555,19 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v159 | local-first pull + guard auto-restore élargi + label "ce mois" séances |
 | ft-v160 | garde-fou global profil serveur (@50) : bday/badges sauvés, '' et 0 ne gagnent jamais sur rempli ; restore prénom manquant (champ inline) ; z-index overlay restore ← **actuel** |
 
+### Backend Apps Script — historique déploiements récents
+| Version | Contenu |
+|---------|---------|
+| @51 | backup quotidien auto + test garde-fou `?action=testGardeFou` |
+| @52 | suppression rétention 60j — append-only pur |
+| @53 | backups → Google Drive (DriveApp) + migration Sheet→Drive + scope `drive` |
+| @54 | warning quota Drive dans `backupAllUserData_()` — log si > 1000 fichiers ← **actuel** |
+
+**Dossier Drive backups** : `ForceTracker-Backups/` (ID : `1iQ6xFuG10d4qCE1Jz8d8lOodrUsV36Fq`)  
+**Trigger quotidien** : `backupAllUserData_()` à 2h du matin, 1 actif  
+**Fichiers créés** : `backup-YYYY-MM-DD.json` (ou `-HH-mm` si 2e exec le même jour)  
+**Migration** : ancien onglet Sheet `Backup 2026-06-29 20:03` → `backup-migration-2026-06-29-2003.json`
+
 ### Tests — Chrome ET Safari
 Tester toute modif UI sur **les deux navigateurs** avant de reporter la tâche comme terminée :
 - **Chrome** (DevTools > mobile, ou vrai Android) — comportement de référence
