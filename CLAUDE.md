@@ -27,6 +27,13 @@ Avant toute modification importante : `git add + commit` avec message explicite 
 **9. 🔴 FAB « + » Séance — SENSIBLE, ne pas toucher sans recalculer.**
 Le bouton FAB `#fab-session` est `position:absolute` dans la nav et positionné par `_positionFab()` (via `getBoundingClientRect(#nb-log)`). **Toute modif de l'écran Séance** (ajout d'éléments dans le header, changement de layout du DOM) **doit vérifier que le FAB reste bien positionné**. `_positionFab()` est appelé via `requestAnimationFrame` à chaque `_syncLogHdrBtns()` (déclenché à chaque `renderExBlocks()`). Si le FAB se décale : appeler `_positionFab()` manuellement après le changement. Ne jamais supprimer les appels `requestAnimationFrame(_positionFab)` de `_syncLogHdrBtns()`.
 
+**10. 🗣️ Michel n'est ni développeur ni programmeur — adapter la communication.**
+Michel conçoit l'appli avec l'aide de Claude (design/réflexion/prompts), il ne code pas lui-même. Toujours :
+- **Expliquer simplement**, sans jargon technique (ou alors le traduire en une phrase claire).
+- **Prévenir avant tout truc risqué** et proposer un backup + une méthode de rollback simple, **avant** d'agir.
+- **Ne jamais supposer** qu'il sait lancer une commande — le guider pas à pas, une étape à la fois.
+- **Une chose à la fois**, testée et validée avant de passer à la suivante.
+
 ---
 
 # Force Tracker — Contexte projet pour Claude
