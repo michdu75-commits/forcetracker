@@ -437,6 +437,22 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - Miniature : icône 📊 pour Excel, 📝 pour Word/texte, 📄 pour PDF
 - Modèle : claude-sonnet-4-6 si texte/PDF/multi-image, claude-haiku si image seule
 - **`handleImportProgram_` — règles du prompt (Code.js @57)** :
+  _(voir section dédiée ci-dessous pour les règles complètes)_
+
+### Import historique — Séances passées datées (✅ ft-v161, @58)
+- **⚠️ À ne PAS confondre avec l'import de programme** : l'historique importe des séances déjà réalisées avec dates réelles → alimente `S.sessions`, stats, PRs, courbes.
+- **Bouton** : 📅 "Importer un journal de séances" dans `s-log` → `openImportHist()` → overlay `#ov-import-hist`
+- **Flow totalement isolé** : variables `_histPhotos`, `_histExtracted`, `_histConflicts` — ne touche JAMAIS `_impPhotos`/`_impExtracted`/`_impMode`
+- **Backend** : `action:'importHistory'` → `handleImportHistory_()` — toujours Sonnet, prompt orienté dates + séries réelles
+- **JSON retourné** : `{sessions:[{date:'YYYY-MM-DD', estimatedDate:bool, label, exercises:[{name, sets:[{kg, reps, type:''/D, note}], note}]}]}`
+- **Conflits de date** : si une séance existe déjà ce jour → 3 choix inline : Remplacer / Garder l'existante / Les 2 (défaut = Les 2)
+- **Volume** : exclut W (échauffement) uniquement. Drop set D compte dans le volume. `type!=='W' && type!=='É'`
+- **PRs** : recalculés chronologiquement (ASC) sur toutes les séances importées. Jamais écraser un PR plus élevé. `if(!cur||rm>cur.rm1)`
+- **Sort** : après insertion, `S.sessions` triées par `ts` DESC (plus récente en tête)
+- **Custom exercises** : exercices inconnus → créés dans `S.customExercises` (groupe 'Autres') via `_reportCustomEx`
+- **Après import** : `persist()` + `_cloudSyncSessions()` + `checkBadges(true)`
+
+### Import programme — Fichiers Word, Excel, PDF, Images (✅ @57)
   - **Règle 0** : séparateur de séance = `SÉANCE N` / `Jour N` / `Day N` / `Workout N` UNIQUEMENT. Groupes musculaires (DORSAUX, PECTORAUX…) = sections internes, jamais une nouvelle séance. Ignorer pages SOMMAIRE et séances vides.
   - **Règle 1** : repsPerSet. Unilatéral (`bras/bras`, `jambe/jambe`, `alterné`) → chaque ligne NxN = 2 séries. `NxN+M` → `+M` va au partenaire superset. **Méthode Ramping reps** (séquence `3+4+5+6+7 par cycle`) → `repsPerSet:[3,4,5,6,7]`, jamais `3x7`.
   - **Règle 4** : `setType` à l'import = `""` (Normal, défaut) ou `"D"` (Dropset) UNIQUEMENT. **Jamais `"E"` ni `"W"`** même si le doc mentionne "à l'échec", "Maxi", "échauffement" — ces mots vont en NOTE.
@@ -572,7 +588,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v157 | auto-restauration au démarrage : cookie+IDB email redondant, overlay reconnect |
 | ft-v158 | sync cloud programmes + exRestPref + garde-fou programmes |
 | ft-v159 | local-first pull + guard auto-restore élargi + label "ce mois" séances |
-| ft-v160 | garde-fou global profil serveur (@50) : bday/badges sauvés, '' et 0 ne gagnent jamais sur rempli ; restore prénom manquant (champ inline) ; z-index overlay restore ← **actuel** |
+| ft-v160 | garde-fou global profil serveur (@50) : bday/badges sauvés, '' et 0 ne gagnent jamais sur rempli ; restore prénom manquant (champ inline) ; z-index overlay restore |
+| ft-v161 | import historique séances (#ov-import-hist) — flow isolé, conflits date, PRs chrono ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
@@ -583,7 +600,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | @54 | warning quota Drive dans `backupAllUserData_()` — log si > 1000 fichiers |
 | @55 | fix import : découpage séances (SÉANCE N only) + PDF natif + superset général |
 | @56 | import : unilatéral NxN×2, +M sur partenaire superset, setType défaut '' |
-| @57 | import : Ramping reps → repsPerSet[séquence], setType = '' ou 'D' seulement (jamais E/W) ← **actuel** |
+| @57 | import : Ramping reps → repsPerSet[séquence], setType = '' ou 'D' seulement (jamais E/W) |
+| @58 | import historique : action importHistory → handleImportHistory_ (Sonnet) ← **actuel** |
 
 **Dossier Drive backups** : `ForceTracker-Backups/` (ID : `1iQ6xFuG10d4qCE1Jz8d8lOodrUsV36Fq`)  
 **Trigger quotidien** : `backupAllUserData_()` à 2h du matin, 1 actif  
