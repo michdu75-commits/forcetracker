@@ -2445,7 +2445,8 @@ function _renderProgEdit(){
   const exCard=(ex,di,ei)=>{
     const sets=ex.sets||[];
     return`<div style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:6px;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;">
+      ${_progExThumb(ex.name)}
       <div style="flex:1;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
       <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
     </div>
@@ -2718,6 +2719,14 @@ function _groupTemplateSvg(name){
   const ex=EXLIB.find(e=>e.n===name);
   const file=_MUSCLE_FILE[ex?.g]||'muscles/chest.svg';
   return `<div style="text-align:center;padding:6px 0;"><img src="${file}" style="width:140px;height:auto;display:block;margin:0 auto;"></div>`;
+}
+// Petite vignette d'exercice (photo locale si dispo, sinon figurine du muscle) — 100% hors-ligne
+function _progExThumb(name){
+  const y=EX_YT[name];
+  let src;
+  if(y&&y.img){src=y.img;}
+  else{const ex=EXLIB.find(e=>e.n===name);src=_MUSCLE_FILE[ex&&ex.g]||'muscles/chest.svg';}
+  return `<img src="${src}" onerror="this.style.visibility='hidden'" style="width:46px;height:46px;object-fit:contain;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);flex-shrink:0;padding:2px;box-sizing:border-box;">`;
 }
 function _genderGroupSvg(groupName){
   const svgSet=(S&&S.gender==='F')?_MUSCLE_SVG_F:_MUSCLE_SVG;
