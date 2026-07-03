@@ -2720,14 +2720,31 @@ function _groupTemplateSvg(name){
   const file=_MUSCLE_FILE[ex?.g]||'muscles/chest.svg';
   return `<div style="text-align:center;padding:6px 0;"><img src="${file}" style="width:140px;height:auto;display:block;margin:0 auto;"></div>`;
 }
-// Petite vignette d'exercice (photo locale si dispo, sinon figurine anatomique colorée) — 100% hors-ligne
+// Codes muscles (_MG) → image muscle réaliste (PNG anatomie de Michel)
+const _MG_IMG={
+  pec:'muscles/muscle pectoreaux.png',
+  lats:'muscles/muscles dorsaux trapeze.png',
+  traps:'muscles/epaule trapeze.png','front-delt':'muscles/epaule trapeze.png','side-delt':'muscles/epaule trapeze.png','rear-delt':'muscles/epaule trapeze.png',
+  biceps:'muscles/muscle bras.png',triceps:'muscles/muscle bras.png',forearms:'muscles/muscle bras.png',
+  quads:'muscles/muscle avant cuisse.png','hip-flexors':'muscles/muscle avant cuisse.png',
+  glutes:'muscles/fessiers ischios.png',hamstrings:'muscles/fessiers ischios.png','lower-back':'muscles/fessiers ischios.png',
+  abs:'muscles/muscle abdominaux.png',obliques:'muscles/muscle abdominaux.png',
+  calves:'muscles/muscle mollet.png',tibialis:'muscles/muscle mollet.png',
+};
+// Vignette d'exercice : photo locale > image muscle réaliste (muscle deviné du nom) > figurine — 100% hors-ligne
 function _progExThumb(name){
   const box='width:46px;height:46px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);flex-shrink:0;box-sizing:border-box;';
   const y=EX_YT[name];
-  if(y&&y.img){
-    return `<img src="${y.img}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:2px;">`;
-  }
-  // Figurine anatomique colorée — muscle deviné depuis le nom via _MEX (insensible aux accents)
+  if(y&&y.img) return `<img src="${y.img}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:2px;">`;
+  // Muscle principal deviné depuis le nom (_MEX, insensible aux accents) → image muscle réaliste
+  let src='';
+  try{
+    const {sc}=_mscScores([{name,sets:[{done:true}]}]);
+    const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0];
+    if(top)src=_MG_IMG[top[0]]||'';
+  }catch(e){}
+  if(src) return `<img src="${src}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
+  // Repli ultime : figurine anatomique colorée
   let fig='';
   try{if(typeof _mscSVGmini==='function')fig=_mscSVGmini(_mscScores([{name,sets:[{done:true}]}])).replace('width:32px','width:38px');}catch(e){}
   return `<div style="${box}display:flex;align-items:center;justify-content:center;overflow:hidden;">${fig}</div>`;

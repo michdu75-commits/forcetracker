@@ -10,6 +10,10 @@ const PRECACHE = [
   // Muscles SVG + PNG
   './muscles/abs.svg','./muscles/arms.svg','./muscles/back.svg','./muscles/calves.svg',
   './muscles/chest.svg','./muscles/glutes.svg','./muscles/legs.svg','./muscles/shoulders.svg',
+  // Icônes muscle réalistes (vignettes programme + picker)
+  './muscles/muscle pectoreaux.png','./muscles/muscles dorsaux trapeze.png','./muscles/epaule trapeze.png',
+  './muscles/muscle bras.png','./muscles/muscle avant cuisse.png','./muscles/fessiers ischios.png',
+  './muscles/muscle abdominaux.png','./muscles/muscle mollet.png',
   // GIFs exercices pectoraux + fessiers
   './exercises/developpe-couche.gif',
   './exercises/developpe-couche-halteres-exercice-musculation.gif',
