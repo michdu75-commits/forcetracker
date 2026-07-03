@@ -1,4 +1,4 @@
-const CACHE = 'ft-v179'; // uniformisation tuiles étape 1 : gabarit unique Accueil + Coach (normal + mode agrandi)
+const CACHE = 'ft-v180'; // uniformisation tuiles étape 2 : cartes Séance Sommeil + Cardio au gabarit
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
