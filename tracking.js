@@ -498,10 +498,10 @@ function renderLogSleep(){
   const moonSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purp);flex-shrink:0;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
   if(ts&&!_sleepEditLog){
     el.innerHTML='<div style="background:var(--bg2);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">'
-      +'<div style="display:flex;align-items:center;gap:9px;">'
-      +moonSvg
-      +'<div><div style="font-size:13px;font-weight:600;color:var(--t1);">'+ts.hours+'h · '+qLabels[ts.quality||2]+'</div>'
-      +'<div style="font-size:11.5px;color:var(--t3);margin-top:1px;">Sommeil de cette nuit</div></div>'
+      +'<div style="display:flex;align-items:center;gap:13px;">'
+      +'<div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>'
+      +'<div><div class="home-row-ttl">'+ts.hours+'h · '+qLabels[ts.quality||2]+'</div>'
+      +'<div class="home-row-sub">Sommeil de cette nuit</div></div>'
       +'</div>'
       +'<button style="font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditLog=true;renderLogSleep()">Modifier</button>'
       +'</div>';

@@ -467,6 +467,15 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Uniformisation visuelle — tuiles étape 2 : Séance Sommeil + Cardio (✅ 2026-07-03, ft-v180)
+- **Étape 2** du chantier uniformisation cartes : les cartes **Sommeil** (`renderLogSleep`, tracking.js) et **Cardio** (`renderCardioBlock`, app.js) de l'écran Séance adoptent le **gabarit** de l'étape 1.
+- **Fix** : leurs icône/titre/sous-titre étaient en **style inline** → ne suivaient ni le gabarit ni le mode agrandi. Rebranchés sur les **classes** `.home-row-ic` (40px), `.home-row-ttl` (15/700), `.home-row-sub` (12/t3) → cohérence auto en mode normal ET agrandi (a11y-lv).
+  - Cardio : icône 32px→`.home-row-ic`, titre 13px→`.home-row-ttl`.
+  - Sommeil (replié) : lune passée d'un icône nu 14px à une **tuile violette 40px** `.home-row-ic`, titre→`.home-row-ttl`, sous-titre→`.home-row-sub`.
+- Testé (Chromium, normal + a11y-lv) : Sommeil + Cardio alignés sur Accueil/Coach dans les deux modes, 0 erreur JS.
+- **⚠️ Reste à faire (noté avec Michel)** : **audit du mode jour (light-mode)** — signalé « c'est la cata » — à traiter comme chantier dédié.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-unif-seance`
+
 ### Uniformisation visuelle — tuiles étape 1 : Accueil + Coach (✅ 2026-07-03, ft-v179)
 - **Demande** : « l'ensemble visuel n'est pas assez uniformisé » entre les écrans. Décision testeur : commencer par les **cartes/tuiles**, une chose à la fois, **en tenant compte du mode « affichage agrandi »** (accessibilité, réglé dans le profil).
 - **⚠️ Chantier en plusieurs étapes.** Étape 1 (ft-v179) = **gabarit de tuile unique** partagé par Accueil (`.home-row`) et Coach (`.coach-action-card`). Étapes suivantes = étendre aux autres cartes (Séance Sommeil/Cardio, Nutrition, boxes de stats…).
@@ -796,7 +805,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v176 | programmes : repos par série (schéma Série/Reps/Repos éditable dans l'éditeur + appliqué au minuteur au chargement) — étape 1/2 (affichage) |
 | ft-v177 | éditeur programme : reps + nombre de séries éditables + vignette exercice à gauche (photo locale > image muscle réaliste devinée du nom > figurine) |
 | ft-v178 | bouton central « + » docké dans la barre (fini le FAB flottant `#fab-session` qui recouvrait les séries + souci swipe) — mot « Séance » retiré |
-| ft-v179 | uniformisation visuelle étape 1 : gabarit de tuile unique Accueil + Coach (icône 40px, titre 15/700, sous-titre 12/t3), cohérent en mode normal + agrandi (a11y-lv) ← **actuel** |
+| ft-v179 | uniformisation visuelle étape 1 : gabarit de tuile unique Accueil + Coach (icône 40px, titre 15/700, sous-titre 12/t3), cohérent en mode normal + agrandi (a11y-lv) |
+| ft-v180 | uniformisation visuelle étape 2 : cartes Séance Sommeil + Cardio rebranchées sur le gabarit (classes .home-row-*) — cohérent normal + agrandi ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

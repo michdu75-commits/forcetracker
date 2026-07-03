@@ -106,9 +106,9 @@ function renderCardioBlock(){
   const types=Object.keys(CARDIO_LABELS);
   const summary=c.duration?`${CARDIO_LABELS[c.type||'elliptique']} · ${c.duration}min · ~${kcal}kcal`:'optionnel';
   el.innerHTML=`<div style="background:var(--bg2);border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
-  <div onclick="toggleCardio()" style="display:flex;align-items:center;gap:9px;padding:12px 16px;cursor:pointer;touch-action:manipulation;">
-    <div style="width:32px;height:32px;border-radius:9px;background:rgba(255,138,114,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M10 12L8 20"/><path d="M10 12L13 17L16 12"/><path d="M6 12L8 10L12 12L16 10L18 12"/></svg></div>
-    <span style="font-weight:700;font-size:13px;flex:1;color:var(--t1);">Cardio</span>
+  <div onclick="toggleCardio()" style="display:flex;align-items:center;gap:13px;padding:12px 16px;cursor:pointer;touch-action:manipulation;">
+    <div class="home-row-ic" style="background:rgba(255,138,114,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M10 12L8 20"/><path d="M10 12L13 17L16 12"/><path d="M6 12L8 10L12 12L16 10L18 12"/></svg></div>
+    <span class="home-row-ttl" style="flex:1;">Cardio</span>
     <span style="font-size:12px;color:${kcal?'var(--green)':'var(--t3)'};">${summary}</span>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);transition:transform .2s;transform:rotate(${_cardioOpen?-90:0}deg);flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
   </div>
