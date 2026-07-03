@@ -635,7 +635,7 @@ function toggleSet(ei,si){
     _restEx=isAbdo?null:exName;
     const mb=document.getElementById('rest-btn-minus');const pb=document.getElementById('rest-btn-plus');
     if(mb)mb.textContent=`−${_restStep}s`;if(pb)pb.textContent=`+${_restStep}s`;
-    const sec=restByType[set.type]||defForEx;
+    const sec=(set.rest>0?set.rest:(restByType[set.type]||defForEx));
     // ─── Dropset : avance entre paliers ─────────────────────────────────────
     if(S.wkt.exs[ei].dropset){
       const ds=S.wkt.exs[ei].dropset;
@@ -1895,17 +1895,21 @@ function finalImportProg(){
         const baseType=ex.setType||'N';
         // Séries avec reps+kg par palier (dropsets) ou repsPerSet
         let sets;
+        // Repos par série : backend peut fournir restPerSet[] (secondes) ou rest unique — sinon 0 (défaut par type)
+        const _restAt=si=>(ex.restPerSet&&ex.restPerSet[si]!=null?parseInt(ex.restPerSet[si])||0:(parseInt(ex.rest)||0));
         if(ex.repsPerSet&&ex.repsPerSet.length>0){
           sets=ex.repsPerSet.map((r,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:parseInt(r)||10,
-            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType
+            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType,
+            rest:_restAt(si)
           }));
         }else{
           sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:ex.reps||10,
-            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType
+            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType,
+            rest:_restAt(si)
           }));
         }
         const obj={name:ex.name,note:ex.note||'',sets};
@@ -2284,7 +2288,7 @@ function loadProgDay(progIdx,dayIdx){
     const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map(s=>({
       kg:prev.length?prev[0].kg:(s.kg||0),
       reps:prev.length?prev[0].reps:(s.reps||10),
-      type:s.type||'N',done:false,rm1:0
+      type:s.type||'N',done:false,rm1:0,rest:s.rest||0
     }))};
     if(e.group)obj.group=e.group; // propage le groupe superset
     return obj;
@@ -2372,7 +2376,7 @@ function saveAsProg(){
     id:'p'+Date.now(),name,
     exs:S.wkt.exs.map(ex=>({
       name:ex.name,
-      sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,type:s.type||'N'}))
+      sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,type:s.type||'N',rest:s.rest||0}))
     }))
   };
   const idx=S.programmes.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
@@ -2393,7 +2397,7 @@ function loadProg(idx){
       return{name:e.name,sets:(e.sets||[]).map(s=>({
         kg:prev.length?prev[0].kg:(s.kg||0),
         reps:prev.length?prev[0].reps:(s.reps||5),
-        type:s.type||'N',done:false,rm1:0
+        type:s.type||'N',done:false,rm1:0,rest:s.rest||0
       }))};
     })
   };
@@ -2437,13 +2441,25 @@ function _renderProgEdit(){
       </div>
     </div>
   </div>`;
-  const exCard=(ex,di,ei)=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:10px;margin-bottom:5px;">
-    <div style="flex:1;min-width:0;overflow:hidden;">
-      <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
-      <div style="font-size:12px;color:var(--t2);">${ex.sets?ex.sets.length:0} série${(ex.sets&&ex.sets.length>1)?'s':''} · ${ex.sets&&ex.sets[0]?ex.sets[0].reps:10} reps</div>
+  const exCard=(ex,di,ei)=>{
+    const sets=ex.sets||[];
+    return`<div style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:6px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <div style="flex:1;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
+      <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
     </div>
-    <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:4px;">×</button>
-  </div>`;
+    <div style="display:flex;gap:8px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
+      <span style="width:46px;">Série</span><span style="flex:1;">Reps</span><span style="width:104px;text-align:right;">Repos</span>
+    </div>
+    ${sets.map((s,si)=>`<div style="display:flex;align-items:center;gap:8px;padding:2px 2px;">
+      <span style="width:46px;font-size:12px;color:var(--t2);">${si+1}</span>
+      <span style="flex:1;font-size:13px;font-weight:600;color:var(--t1);">${s.reps} reps</span>
+      <span style="width:104px;display:flex;align-items:center;justify-content:flex-end;gap:5px;">
+        <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${_defRestForType(s.type)}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;padding:5px 4px;font-size:13px;text-align:center;border:1px solid var(--sep);border-radius:6px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;">
+        <span style="font-size:11px;color:var(--t3);white-space:nowrap;">s${s.rest>0?' ('+_fmtRest(s.rest)+')':''}</span>
+      </span>
+    </div>`).join('')}
+  </div>`;};
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
   if(isMulti){
     el.innerHTML=cycleSection+d.days.map((day,di)=>`<div style="margin-bottom:16px;">
@@ -2454,6 +2470,17 @@ function _renderProgEdit(){
   }else{
     el.innerHTML=cycleSection+(d.exs||[]).map((ex,ei)=>exCard(ex,0,ei)).join('')+addBtn(0);
   }
+}
+// Repos par défaut selon le type de série (pour le placeholder de l'éditeur)
+function _defRestForType(type){return type==='É'||type==='W'?45:((type==='X'||type==='E')?240:(type==='D'?20:90));}
+// Formate des secondes en 1'30 / 45s (affichage type PDF)
+function _fmtRest(sec){sec=parseInt(sec)||0;if(sec<=0)return'';if(sec<60)return sec+'s';const m=Math.floor(sec/60),s=sec%60;return m+"'"+String(s).padStart(2,'0');}
+// Édite le repos (secondes) d'une série dans l'éditeur de programme — pas de re-render (garde le focus)
+function _setProgSetRest(di,ei,si,val){
+  const d=_editProgData;if(!d)return;
+  const exs=(d.days&&d.days.length)?(d.days[di]&&d.days[di].exs):d.exs;
+  if(!exs||!exs[ei]||!exs[ei].sets||!exs[ei].sets[si])return;
+  exs[ei].sets[si].rest=parseInt(val)||0;
 }
 function _openExPickerForProg(dayIdx){
   _editDayIdx=dayIdx;
