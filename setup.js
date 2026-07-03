@@ -158,10 +158,9 @@ function renderChart(){
     <div style="font-size:11px;color:var(--t3);">${deltaPct!==null?(deltaPct>=0?'+':'')+deltaPct+'%':'—'}</div>
   </div>
 </div>
-${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13.5px;">
-  <span style="color:var(--t2);font-weight:600;">🏋️ Charge max soulevée</span>
-  <span style="font-weight:900;color:var(--t1);font-family:var(--font-cond);font-size:16px;">${fmt(maxLoad.kg)} kg</span>
-  <span style="color:var(--t3);">× ${maxLoad.reps} reps</span>
+${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13.5px;">
+  <span style="color:var(--t2);font-weight:600;white-space:nowrap;">🏋️ Charge max soulevée</span>
+  <span style="white-space:nowrap;"><b style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--t1);">${fmt(maxLoad.kg)} kg</b> <span style="color:var(--t3);">× ${maxLoad.reps}</span> <span style="color:var(--t3);">→</span> <span style="color:var(--t2);font-weight:700;">~${fmt(bz(maxLoad.kg,maxLoad.reps))} kg 1RM</span></span>
 </div>`:''}
 <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible;">
   <defs>
