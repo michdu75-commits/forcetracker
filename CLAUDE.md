@@ -467,6 +467,15 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Bouton central « + » docké dans la barre (✅ 2026-07-03, ft-v178)
+- **Demande** : le FAB flottant `#fab-session` (« + » rouge, `position:absolute` au-dessus de la barre) recouvrait le contenu de l'écran Séance (cachait les séries) et posait un souci de swipe entre onglets quand on le touchait.
+- **Fix** : **suppression** du bouton flottant `#fab-session` ; le bouton central de la barre `#nb-log` n'affiche plus le mot « Séance » mais un **« + » rouge (`.nb-plus`) intégré à la barre** (docké, non flottant). Toujours `onclick="startWorkout()"`.
+- **CSS** : règles `#fab-session` (flottant, z-index 21, `_positionFab`) supprimées ; ajout `.nb-plus` (44px rouge dans la barre) + emphase `#root.on-log .nb-plus`.
+- **Aucune modif JS** : `_positionFab()` fait un early-return car l'élément `#fab-session` n'existe plus → devient un no-op inoffensif. Les appels `requestAnimationFrame(_positionFab)` dans `_syncLogHdrBtns` restent mais ne font rien (pas besoin de les retirer). **La règle d'or n°9 sur le positionnement du FAB flottant est donc caduque** (plus de FAB flottant).
+- **⚠️ Swipe** : à re-tester sur téléphone (le souci historique venait du calque flottant qui brouillait les touches ; maintenant c'est un simple bouton de barre).
+- Testé (Chromium) : FAB flottant absent, « + » dans la barre, tap → écran Séance (`startWorkout`), ne recouvre plus les séries, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-fix-bouton-plus`
+
 ### Éditeur de programme — reps/séries éditables + vignette exercice (✅ 2026-07-03, ft-v177)
 - **Demande** : dans l'éditeur de programme, pouvoir modifier **reps + nombre de séries** (pas juste le repos), et afficher une **vignette de l'exercice à gauche** (façon colonne « Photos » des programmes de coach).
 - **Éditeur complet** (`_renderProgEdit` / `exCard`, log.js) :
@@ -772,7 +781,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v174 | détail de séance : ligne « 🎯 Meilleur 1RM potentiel : XX kg » par exo + ~XX kg par série rendus lisibles (couleur neutre pleine, contraste jour/nuit) |
 | ft-v175 | onglet Progrès : ligne « 🏋️ Charge max soulevée : XX kg × N → ~YY kg 1RM » (poids réel, distinct du 1RM estimé), rétroactive, H/F identique |
 | ft-v176 | programmes : repos par série (schéma Série/Reps/Repos éditable dans l'éditeur + appliqué au minuteur au chargement) — étape 1/2 (affichage) |
-| ft-v177 | éditeur programme : reps + nombre de séries éditables + vignette exercice à gauche (photo locale > image muscle réaliste devinée du nom > figurine) ← **actuel** |
+| ft-v177 | éditeur programme : reps + nombre de séries éditables + vignette exercice à gauche (photo locale > image muscle réaliste devinée du nom > figurine) |
+| ft-v178 | bouton central « + » docké dans la barre (fini le FAB flottant `#fab-session` qui recouvrait les séries + souci swipe) — mot « Séance » retiré ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

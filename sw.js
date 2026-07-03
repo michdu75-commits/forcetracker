@@ -1,4 +1,4 @@
-const CACHE = 'ft-v177'; // éditeur programme : reps + nombre de séries éditables (en plus du repos)
+const CACHE = 'ft-v178'; // bouton central « + » docké dans la barre (fini le FAB flottant qui recouvrait le contenu)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
