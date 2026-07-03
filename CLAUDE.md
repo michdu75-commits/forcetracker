@@ -467,6 +467,11 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Diagramme muscles — détail de séance unifié (✅ 2026-07-03, ft-v171)
+- **Avant** : les 3 affichages muscles utilisaient 2 moteurs différents. Le détail d'une séance passée (`_updateSdMuscles`, setup.js, zone `#sd-muscles`) matchait les noms sur `EXLIB` exact → vignettes de groupes, **rien pour les exercices machines/perso « Autres »**.
+- **Fix (ft-v171)** : `_updateSdMuscles` réécrit pour utiliser **`_mscScores` (moteur `_MEX`)** comme la grande carte et le mini-bonhomme des cartes. Affiche désormais le **mini-bonhomme coloré** (front, 56px) + « 💪 Muscles travaillés — Tape pour agrandir », `onclick`→`showMuscleMap`. Les 3 affichages sont maintenant sur le **même moteur** (reconnaissance accents + vocabulaire enrichi ft-v169, bleu discret ft-v170).
+- Ne dépend plus de `EXLIB`/`EX_GROUPS`/`_genderGroupSvg` pour cet écran. Testé (Chromium) : séance de machines (chest press, décliné, peck deck…) → bonhomme coloré affiché (avant : vide), 0 erreur JS.
+
 ### Diagramme muscles — bleu indirect discret (✅ 2026-07-03, ft-v170)
 - **Demande** : le bleu « indirect » (stabilisateurs) était trop vif → il écrasait la figurine (dos/abdos/bras en bleu flashy) et volait la vedette au rouge (primaire). Rendu **discret** (gris-bleu doux) pour dire « participe un peu » sans dominer.
 - **5 endroits changés** (couleur uniquement, aucune logique touchée) :
@@ -692,7 +697,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v167 | import journal par lots de 3 pages (fix réponse IA tronquée sur gros journaux) + import partiel si lot en échec |
 | ft-v168 | limite premium import journal (1 gratuit au total, illimité premium) — compteur local+cloud, mur dédié #ov-hist-wall |
 | ft-v169 | diagramme muscles : reconnaissance insensible aux accents (_naz) + vocabulaire _MEX enrichi (chest press, peck deck, décliné…) + fix abduction→fessiers — 84/87 exos reconnus (avant 50) |
-| ft-v170 | diagramme muscles : bleu « indirect » rendu discret (gris-bleu doux, plus d'ombre portée) sur figurine + mini + légende ← **actuel** |
+| ft-v170 | diagramme muscles : bleu « indirect » rendu discret (gris-bleu doux, plus d'ombre portée) sur figurine + mini + légende |
+| ft-v171 | détail de séance unifié sur _mscScores (mini-bonhomme coloré) — muscles affichés aussi pour les exos machines/perso ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
