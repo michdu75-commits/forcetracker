@@ -467,6 +467,12 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Fix mode jour — toast .info invisible (✅ 2026-07-03, ft-v182)
+- **Bug** (Michel : « quand on active/désactive une option, le petit message en haut on ne le voit pas ») : le toast `.info` (`toast(msg,'info')`, ex. « Affichage agrandi activé ») avait `background:var(--bg3)` (gris clair en mode jour) mais héritait `color:#fff` de la base `#toast` → **texte blanc sur gris clair = invisible** en mode jour. Les toasts `.success` (vert) / `.error` (rouge) ont leur propre fond, donc OK.
+- **Fix** (`style.css`) : `#toast.info` reçoit `color:var(--t1)` → foncé en jour / clair en nuit (aucune régression nuit).
+- Testé (Chromium, jour + nuit) : toast info lisible dans les deux modes, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-fix-toast-jour`
+
 ### Mode jour — fix lisibilité + blanc adouci + anniversaire archivé (✅ 2026-07-03, ft-v181)
 - **Blanc adouci** (Michel : « le blanc pète les yeux, ça fait mal au crâne ») : le light-mode utilisait `--bg2: #FFFFFF` (blanc pur, glare). Adouci → `--bg2: #F6F6F9` (blanc cassé), `--bg: #F2F2F7→#E7E8EC` (page un peu plus soutenue pour que les cartes ressortent), `--bg3: #E8E8EE→#DCDDE4`, `--sep: #D0D0DC→#CBCCD6`. Moins de glare, plus reposant. Validé par Michel (« impec »).
 - **Anniversaire Eline archivé** (date passée) : appel `checkBirthdayDedication()` **commenté** dans `app.js` (~ligne 1063). La fonction, `showBirthdayScreen`, l'overlay `#ov-bday` et les keyframes CSS sont **conservés** (dormants) — réactivable en décommentant l'appel. « Laisser ça dans un coin ».
@@ -821,7 +827,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v178 | bouton central « + » docké dans la barre (fini le FAB flottant `#fab-session` qui recouvrait les séries + souci swipe) — mot « Séance » retiré |
 | ft-v179 | uniformisation visuelle étape 1 : gabarit de tuile unique Accueil + Coach (icône 40px, titre 15/700, sous-titre 12/t3), cohérent en mode normal + agrandi (a11y-lv) |
 | ft-v180 | uniformisation visuelle étape 2 : cartes Séance Sommeil + Cardio rebranchées sur le gabarit (classes .home-row-*) — cohérent normal + agrandi |
-| ft-v181 | mode jour : fix « Restaurer »/badge Premium (jaune en dur → var(--gold)) + blanc adouci (blanc cassé, moins de glare) + anniversaire Eline archivé ← **actuel** |
+| ft-v181 | mode jour : fix « Restaurer »/badge Premium (jaune en dur → var(--gold)) + blanc adouci (blanc cassé, moins de glare) + anniversaire Eline archivé |
+| ft-v182 | fix mode jour : toast .info (texte blanc sur gris clair → var(--t1) lisible) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
