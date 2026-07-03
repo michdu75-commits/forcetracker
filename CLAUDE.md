@@ -467,6 +467,19 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Uniformisation visuelle — tuiles étape 1 : Accueil + Coach (✅ 2026-07-03, ft-v179)
+- **Demande** : « l'ensemble visuel n'est pas assez uniformisé » entre les écrans. Décision testeur : commencer par les **cartes/tuiles**, une chose à la fois, **en tenant compte du mode « affichage agrandi »** (accessibilité, réglé dans le profil).
+- **⚠️ Chantier en plusieurs étapes.** Étape 1 (ft-v179) = **gabarit de tuile unique** partagé par Accueil (`.home-row`) et Coach (`.coach-action-card`). Étapes suivantes = étendre aux autres cartes (Séance Sommeil/Cardio, Nutrition, boxes de stats…).
+- **Étape 1 — `style.css` (CSS uniquement, aucune modif HTML/JS)** :
+  - `.home-row-ic` et `.coach-action-ic` → **40 px, radius 12** (identiques).
+  - `.home-row-ttl` et `.coach-action-lbl` → **15 px / 700 / `var(--t1)`**.
+  - `.home-row-sub` et `.coach-action-sub` → **12 px / `var(--t3)` / line 1.4**.
+  - **Mode agrandi** : règle `#root.a11y-lv` étendue à `.coach-action-lbl`/`.coach-action-sub` (16 px/700 + 13 px), alignée sur `.home-row-*` → cohérent aussi en `a11y-lv`.
+- **Disposition inchangée** : liste sur Accueil (3 items), grille sur Coach (4 items) — même brique, deux mises en page.
+- **⚠️ Règle projet (nouvelle)** : à chaque uniformisation de carte, **vérifier le rendu en mode agrandi** (`#root.a11y-lv`) — beaucoup d'éléments ont des overrides `!important` dans le bloc `a11y-lv` de `style.css` (~ligne 700), à garder cohérents.
+- Testé (Chromium, mode normal + `a11y-lv`) : tuiles Accueil et Coach identiques (icône + titre + sous-titre) dans les deux modes, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-unif-tuiles`
+
 ### Bouton central « + » docké dans la barre (✅ 2026-07-03, ft-v178)
 - **Demande** : le FAB flottant `#fab-session` (« + » rouge, `position:absolute` au-dessus de la barre) recouvrait le contenu de l'écran Séance (cachait les séries) et posait un souci de swipe entre onglets quand on le touchait.
 - **Fix** : **suppression** du bouton flottant `#fab-session` ; le bouton central de la barre `#nb-log` n'affiche plus le mot « Séance » mais un **« + » rouge (`.nb-plus`) intégré à la barre** (docké, non flottant). Toujours `onclick="startWorkout()"`.
@@ -782,7 +795,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v175 | onglet Progrès : ligne « 🏋️ Charge max soulevée : XX kg × N → ~YY kg 1RM » (poids réel, distinct du 1RM estimé), rétroactive, H/F identique |
 | ft-v176 | programmes : repos par série (schéma Série/Reps/Repos éditable dans l'éditeur + appliqué au minuteur au chargement) — étape 1/2 (affichage) |
 | ft-v177 | éditeur programme : reps + nombre de séries éditables + vignette exercice à gauche (photo locale > image muscle réaliste devinée du nom > figurine) |
-| ft-v178 | bouton central « + » docké dans la barre (fini le FAB flottant `#fab-session` qui recouvrait les séries + souci swipe) — mot « Séance » retiré ← **actuel** |
+| ft-v178 | bouton central « + » docké dans la barre (fini le FAB flottant `#fab-session` qui recouvrait les séries + souci swipe) — mot « Séance » retiré |
+| ft-v179 | uniformisation visuelle étape 1 : gabarit de tuile unique Accueil + Coach (icône 40px, titre 15/700, sous-titre 12/t3), cohérent en mode normal + agrandi (a11y-lv) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v178'; // bouton central « + » docké dans la barre (fini le FAB flottant qui recouvrait le contenu)
+const CACHE = 'ft-v179'; // uniformisation tuiles étape 1 : gabarit unique Accueil + Coach (normal + mode agrandi)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
