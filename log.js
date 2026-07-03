@@ -2720,13 +2720,17 @@ function _groupTemplateSvg(name){
   const file=_MUSCLE_FILE[ex?.g]||'muscles/chest.svg';
   return `<div style="text-align:center;padding:6px 0;"><img src="${file}" style="width:140px;height:auto;display:block;margin:0 auto;"></div>`;
 }
-// Petite vignette d'exercice (photo locale si dispo, sinon figurine du muscle) — 100% hors-ligne
+// Petite vignette d'exercice (photo locale si dispo, sinon figurine anatomique colorée) — 100% hors-ligne
 function _progExThumb(name){
+  const box='width:46px;height:46px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);flex-shrink:0;box-sizing:border-box;';
   const y=EX_YT[name];
-  let src;
-  if(y&&y.img){src=y.img;}
-  else{const ex=EXLIB.find(e=>e.n===name);src=_MUSCLE_FILE[ex&&ex.g]||'muscles/chest.svg';}
-  return `<img src="${src}" onerror="this.style.visibility='hidden'" style="width:46px;height:46px;object-fit:contain;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);flex-shrink:0;padding:2px;box-sizing:border-box;">`;
+  if(y&&y.img){
+    return `<img src="${y.img}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:2px;">`;
+  }
+  // Figurine anatomique colorée — muscle deviné depuis le nom via _MEX (insensible aux accents)
+  let fig='';
+  try{if(typeof _mscSVGmini==='function')fig=_mscSVGmini(_mscScores([{name,sets:[{done:true}]}])).replace('width:32px','width:38px');}catch(e){}
+  return `<div style="${box}display:flex;align-items:center;justify-content:center;overflow:hidden;">${fig}</div>`;
 }
 function _genderGroupSvg(groupName){
   const svgSet=(S&&S.gender==='F')?_MUSCLE_SVG_F:_MUSCLE_SVG;
