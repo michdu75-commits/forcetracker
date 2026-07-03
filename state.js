@@ -99,6 +99,30 @@ function load(){
       localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
       localStorage.setItem('ft4_sessions',JSON.stringify(S.sessions));
     }
+    // Migration one-time : « Press » (exo perso) → « Press Jambes 45° » (biblio) — sans perte de données
+    if(!localStorage.getItem('ft4_pressmig1')){
+      const _OLD='Press',_NEW='Press Jambes 45°';
+      // PR : garder le plus élevé si les deux existent (jamais écraser à la baisse)
+      if(S.prs&&S.prs[_OLD]){
+        const cur=S.prs[_NEW];
+        if(!cur||(S.prs[_OLD].rm1||0)>(cur.rm1||0))S.prs[_NEW]=S.prs[_OLD];
+        delete S.prs[_OLD];
+      }
+      // Historique des séances
+      (S.sessions||[]).forEach(sess=>(sess.exs||sess.exercises||[]).forEach(ex=>{if(ex.name===_OLD)ex.name=_NEW;}));
+      // Programmes sauvegardés (structure à jours OU exs à plat)
+      (S.programmes||[]).forEach(p=>{
+        (p.exs||[]).forEach(ex=>{if(ex.name===_OLD)ex.name=_NEW;});
+        (p.days||[]).forEach(d=>(d.exs||[]).forEach(ex=>{if(ex.name===_OLD)ex.name=_NEW;}));
+      });
+      // Retirer l'entrée perso « Press » (le nouvel exo est dans EXLIB)
+      if(S.customExercises)S.customExercises=S.customExercises.filter(e=>e.n!==_OLD);
+      localStorage.setItem('ft4_pressmig1','1');
+      localStorage.setItem('ft4_prs',JSON.stringify(S.prs||{}));
+      localStorage.setItem('ft4_sessions',JSON.stringify(S.sessions||[]));
+      localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
+      localStorage.setItem('ft4_cuex',JSON.stringify(S.customExercises||[]));
+    }
     // Migration set-tags : W→É, E→X, D→N (one-time)
     if(!localStorage.getItem('ft4_stmig1')){
       const _migSet=s=>{if(s.type==='W')s.type='É';else if(s.type==='E')s.type='X';else if(s.type==='D')s.type='N';};

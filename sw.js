@@ -1,4 +1,4 @@
-const CACHE = 'ft-v172'; // étiquette historique : nom séance programme, sinon muscle le plus travaillé
+const CACHE = 'ft-v173'; // migration « Press » → « Press Jambes 45° » (sans perte de données)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
