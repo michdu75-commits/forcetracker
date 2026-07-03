@@ -467,6 +467,12 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Mode jour — toast sombre + bouton « Restaurer » bleu (✅ 2026-07-03, ft-v183)
+- **Toast `.info`** (suite ft-v182, Michel : « pas assez foncé ») : la pastille `var(--bg3)` se fondait dans le fond clair. Passée en **pastille sombre fixe** `#23252D` + texte `#F2F3F5` + bordure `rgba(255,255,255,.14)` → ressort nettement dans **les deux modes** (comme une vraie notification).
+- **Bouton « Restaurer mon compte »** (`#btn-restore-cloud`, index.html) : le doré (`var(--gold)`) jugé « pas beau » → passé au **bleu** (`background:rgba(91,168,255,.10)`, `border:rgba(91,168,255,.38)`, `color:var(--blue)`). S'adapte au thème : bleu foncé `#1565C0` en jour / bleu clair `#5BA8FF` en nuit. Colle au « cloud ».
+- Testé (Chromium, jour + nuit) : toast sombre visible + bouton bleu lisible dans les deux modes, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-toast-sombre-restaurer-bleu`
+
 ### Fix mode jour — toast .info invisible (✅ 2026-07-03, ft-v182)
 - **Bug** (Michel : « quand on active/désactive une option, le petit message en haut on ne le voit pas ») : le toast `.info` (`toast(msg,'info')`, ex. « Affichage agrandi activé ») avait `background:var(--bg3)` (gris clair en mode jour) mais héritait `color:#fff` de la base `#toast` → **texte blanc sur gris clair = invisible** en mode jour. Les toasts `.success` (vert) / `.error` (rouge) ont leur propre fond, donc OK.
 - **Fix** (`style.css`) : `#toast.info` reçoit `color:var(--t1)` → foncé en jour / clair en nuit (aucune régression nuit).
@@ -828,7 +834,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v179 | uniformisation visuelle étape 1 : gabarit de tuile unique Accueil + Coach (icône 40px, titre 15/700, sous-titre 12/t3), cohérent en mode normal + agrandi (a11y-lv) |
 | ft-v180 | uniformisation visuelle étape 2 : cartes Séance Sommeil + Cardio rebranchées sur le gabarit (classes .home-row-*) — cohérent normal + agrandi |
 | ft-v181 | mode jour : fix « Restaurer »/badge Premium (jaune en dur → var(--gold)) + blanc adouci (blanc cassé, moins de glare) + anniversaire Eline archivé |
-| ft-v182 | fix mode jour : toast .info (texte blanc sur gris clair → var(--t1) lisible) ← **actuel** |
+| ft-v182 | fix mode jour : toast .info (texte blanc sur gris clair → var(--t1) lisible) |
+| ft-v183 | mode jour : toast .info en pastille sombre (ressort mieux) + bouton « Restaurer » jaune → bleu (var(--blue), OK jour/nuit) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v182'; // fix mode jour : toast .info (texte blanc sur gris clair → var(--t1) lisible)
+const CACHE = 'ft-v183'; // mode jour : toast .info pastille sombre (ressort mieux) + bouton « Restaurer » jaune → bleu
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
