@@ -1,4 +1,4 @@
-const CACHE = 'ft-v180'; // uniformisation tuiles étape 2 : cartes Séance Sommeil + Cardio au gabarit
+const CACHE = 'ft-v181'; // fix mode jour : bouton « Restaurer » + badge Premium (jaune en dur → var(--gold) lisible)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
