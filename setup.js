@@ -363,7 +363,11 @@ function renderSessions(){
     const cals = s.calories ? ` · 🔥${s.calories}kcal` : '';
     const sc=_mscScores(s.exs||s.exercises||[]);
     const mini=_mscSVGmini(sc);
-    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div><div style="display:flex;align-items:center;gap:8px;padding:0 10px 10px 0"><div class="sess-exs" style="flex:1;min-width:0">${exs||'—'}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
+    // Étiquette : nom de la séance du programme si dispo, sinon muscle le plus travaillé
+    let _topLbl='';{let _b='',_bv=0;const _sc=sc.sc||{};for(const g in _sc){if(_sc[g]>_bv){_bv=_sc[g];_b=g;}}if(_b&&_MG[_b])_topLbl=_MG[_b].label;}
+    const _tag=s.progLabel?('🗂️ '+s.progLabel):(_topLbl?('💪 '+_topLbl):'');
+    const tagHtml=_tag?`<div style="font-size:11px;font-weight:700;color:var(--red);margin:1px 0 7px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_tag}</div>`:'';
+    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div>${tagHtml}<div style="display:flex;align-items:center;gap:8px;padding:0 10px 10px 0"><div class="sess-exs" style="flex:1;min-width:0">${exs||'—'}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
   }).join('');
 }
 
