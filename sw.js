@@ -1,4 +1,4 @@
-const CACHE = 'ft-v171'; // détail de séance unifié sur _mscScores (muscles pour exos machines aussi)
+const CACHE = 'ft-v172'; // étiquette historique : nom séance programme, sinon muscle le plus travaillé
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

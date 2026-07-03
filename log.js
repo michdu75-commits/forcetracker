@@ -1205,7 +1205,7 @@ async function finishWorkout(){
   const duration=S.wkt.startTs?Math.floor((Date.now()-S.wkt.startTs)/1000):0;
   let vol=0;
   S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
-  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration};
+  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration,progLabel:S.wkt.progLabel||''};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
   // Capturer les PRs avant mise à jour pour détecter les améliorations
   const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
@@ -2279,7 +2279,7 @@ function loadProgDay(progIdx,dayIdx){
   const prog=(S.programmes||[])[progIdx];
   if(!prog||!prog.days||!prog.days[dayIdx])return;
   const day=prog.days[dayIdx];
-  S.wkt={date:today(),exs:(day.exs||[]).map(e=>{
+  S.wkt={date:today(),progLabel:day.label||('Jour '+(dayIdx+1)),exs:(day.exs||[]).map(e=>{
     const prev=getPrev(e.name);
     const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map(s=>({
       kg:prev.length?prev[0].kg:(s.kg||0),
@@ -2387,6 +2387,7 @@ function loadProg(idx){
   if(prog.days&&prog.days.length){closeProgModal();openDaySel(idx);return;}
   S.wkt={
     date:today(),
+    progLabel:prog.name,
     exs:(prog.exs||[]).map(e=>{
       const prev=getPrev(e.name);
       return{name:e.name,sets:(e.sets||[]).map(s=>({

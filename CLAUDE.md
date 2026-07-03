@@ -467,6 +467,13 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Étiquette historique — nom séance programme / muscle principal (✅ 2026-07-03, ft-v172)
+- **Demande testeur** : sur les cartes de l'historique, afficher **quelle séance** a été faite. Si la séance vient d'un programme → nom de la séance du programme ; sinon → **muscle le plus travaillé**.
+- **Capture du nom de programme** : `loadProgDay` stocke `S.wkt.progLabel=day.label` ; `loadProg` (programme sans jours) stocke `S.wkt.progLabel=prog.name`. `finishWorkout` recopie `progLabel` sur l'objet `sess`. Voyage en cloud via `sessions` (aucune modif backend).
+- **Carte** (`renderSessions`, setup.js) : `_tag` = `🗂️ ${progLabel}` si présent, sinon `💪 ${muscle le plus travaillé}` (plus haut score de `_mscScores`, label via `_MG[code].label`). Affiché en rouge sous la date.
+- **⚠️ Rétroactif partiel** : le nom de programme n'apparaît que sur les séances faites APRÈS ft-v172 (l'info n'était pas sauvée avant). Les anciennes séances (et celles sans programme) tombent sur le muscle le plus travaillé — calculé en direct, marche pour tout l'historique.
+- Testé (Chromium) : séance programme → « 🗂️ Push (Haut du corps) », séance jambes → « 💪 Quadriceps », séance pecs → « 💪 Pectoraux », 0 erreur JS.
+
 ### Diagramme muscles — détail de séance unifié (✅ 2026-07-03, ft-v171)
 - **Avant** : les 3 affichages muscles utilisaient 2 moteurs différents. Le détail d'une séance passée (`_updateSdMuscles`, setup.js, zone `#sd-muscles`) matchait les noms sur `EXLIB` exact → vignettes de groupes, **rien pour les exercices machines/perso « Autres »**.
 - **Fix (ft-v171)** : `_updateSdMuscles` réécrit pour utiliser **`_mscScores` (moteur `_MEX`)** comme la grande carte et le mini-bonhomme des cartes. Affiche désormais le **mini-bonhomme coloré** (front, 56px) + « 💪 Muscles travaillés — Tape pour agrandir », `onclick`→`showMuscleMap`. Les 3 affichages sont maintenant sur le **même moteur** (reconnaissance accents + vocabulaire enrichi ft-v169, bleu discret ft-v170).
@@ -698,7 +705,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v168 | limite premium import journal (1 gratuit au total, illimité premium) — compteur local+cloud, mur dédié #ov-hist-wall |
 | ft-v169 | diagramme muscles : reconnaissance insensible aux accents (_naz) + vocabulaire _MEX enrichi (chest press, peck deck, décliné…) + fix abduction→fessiers — 84/87 exos reconnus (avant 50) |
 | ft-v170 | diagramme muscles : bleu « indirect » rendu discret (gris-bleu doux, plus d'ombre portée) sur figurine + mini + légende |
-| ft-v171 | détail de séance unifié sur _mscScores (mini-bonhomme coloré) — muscles affichés aussi pour les exos machines/perso ← **actuel** |
+| ft-v171 | détail de séance unifié sur _mscScores (mini-bonhomme coloré) — muscles affichés aussi pour les exos machines/perso |
+| ft-v172 | étiquette carte historique : nom de la séance du programme (🗂️) si dispo, sinon muscle le plus travaillé (💪) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
