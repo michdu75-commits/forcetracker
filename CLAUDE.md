@@ -467,6 +467,17 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Diagramme muscles — bleu indirect discret (✅ 2026-07-03, ft-v170)
+- **Demande** : le bleu « indirect » (stabilisateurs) était trop vif → il écrasait la figurine (dos/abdos/bras en bleu flashy) et volait la vedette au rouge (primaire). Rendu **discret** (gris-bleu doux) pour dire « participe un peu » sans dominer.
+- **5 endroits changés** (couleur uniquement, aucune logique touchée) :
+  - `log.js` `_mscSVG` : dégradé `g-ind` `#60A8FF→#0040CC` → `#9DBBD6→#6E8CA8` ; indirect passe de `filter:drop-shadow` (relief) à `opacity:0.5` + stroke `#5B7C9E`.
+  - `log.js` légende texte « Indirects : » : `#007AFF` → `#8FB4D8`.
+  - `log.js` `_mscSVG_F` (femelle, dead code) : indirect `#0A84FF` → `#8FB4D8`.
+  - `setup.js` `_mscSVGmini` (mini-bonhomme cartes) : indirect `#4488FF/#0030AA` → `#8FA9C4/#5B7C9E`.
+  - `index.html` pastille légende « Indirect » : `#60A0FF/#0040CC` → `#9DBBD6/#6E8CA8`.
+- **Rouge (primaire) + orange (secondaire) inchangés.** Couverture des indirects **non étendue** (toujours le seul développé couché) — enrichissement possible plus tard.
+- Testé (Chromium, capture) : figurine + pastille + texte cohérents, 0 erreur JS.
+
 ### Diagramme muscles — reconnaissance accents + vocabulaire (✅ 2026-07-03, ft-v169)
 - **Bug** : le diagramme « Muscles travaillés » (`showMuscleMap`→`_mscScores`) ET le mini-bonhomme des cartes de séance (`_mscSVGmini`, historique) colorent les muscles en **devinant depuis le NOM** de l'exercice via une liste de motifs `_MEX` (log.js). Cette liste (24 motifs) était trop courte + sensible aux accents → sur des séances de machines (imports « Autres »), la poitrine et bien d'autres muscles restaient **non colorés ou faux** (ex. séance pecs affichant abdos/trapèzes en primaire, 0 pectoraux).
 - **Cause double** : (1) `é`≠`e` — « Développé incliné » matchait, « Développé incline » non ; (2) vocabulaire absent — pas de « chest press », « peck deck », « décliné », « presse horizontale », « abducteur »…
@@ -680,7 +691,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v166 | timer 100% SILENCIEUX (bips synthétiques + countdown.wav supprimés — la création d'AudioContext coupait la musique iPhone) + GO persistant + fin overtime + fix skip anticipé |
 | ft-v167 | import journal par lots de 3 pages (fix réponse IA tronquée sur gros journaux) + import partiel si lot en échec |
 | ft-v168 | limite premium import journal (1 gratuit au total, illimité premium) — compteur local+cloud, mur dédié #ov-hist-wall |
-| ft-v169 | diagramme muscles : reconnaissance insensible aux accents (_naz) + vocabulaire _MEX enrichi (chest press, peck deck, décliné…) + fix abduction→fessiers — 84/87 exos reconnus (avant 50) ← **actuel** |
+| ft-v169 | diagramme muscles : reconnaissance insensible aux accents (_naz) + vocabulaire _MEX enrichi (chest press, peck deck, décliné…) + fix abduction→fessiers — 84/87 exos reconnus (avant 50) |
+| ft-v170 | diagramme muscles : bleu « indirect » rendu discret (gris-bleu doux, plus d'ombre portée) sur figurine + mini + légende ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
