@@ -1997,9 +1997,21 @@ async function _histAnalyzeBatch(imgs){
   if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
   return (d.data.sessions||[]);
 }
+// Limite premium : import de journal gratuit = 1 seul au total (illimité en premium).
+// ⚠️ Ne concerne QUE l'import de journal — l'import de PROGRAMME n'est pas limité.
+const HIST_FREE_LIMIT=1;
+function showHistWall(){const el=document.getElementById('ov-hist-wall');if(el)el.classList.add('open');}
+function closeHistWall(){const el=document.getElementById('ov-hist-wall');if(el)el.classList.remove('open');}
 async function analyzeHistPhotos(){
   if(!_histPhotos.length){toast('Ajoute au moins une photo ou un PDF','error');return;}
   if(!S.url){toast('Connexion Apps Script requise','error');return;}
+  // Mur premium au 2e import d'un utilisateur gratuit → ne PAS lancer l'analyse
+  if(!S.premium&&(S.histImports||0)>=HIST_FREE_LIMIT){
+    if(window._premiumPending){toast('Vérification du statut premium…','info');return;}
+    closeImportHist();
+    showHistWall();
+    return;
+  }
   histGoStep(3);
   const statusEl=document.getElementById('hist-s3-status');
   const batches=[];
@@ -2195,6 +2207,9 @@ function finalImportHist(){
       });
     });
   });
+
+  // Compte l'import journal réussi (limite premium : 1 gratuit au total)
+  S.histImports=(S.histImports||0)+1;
 
   persist();
   _cloudSyncSessions();
