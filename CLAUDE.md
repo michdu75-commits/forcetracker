@@ -467,6 +467,18 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Limite premium — Import de journal (✅ 2026-07-03, ft-v168)
+- **Règle** : import de **journal** gratuit = **1 seul au total** (`HIST_FREE_LIMIT=1`), illimité en premium. ⚠️ **L'import de PROGRAMME n'est PAS limité** — seul le journal (`analyzeHistPhotos`/`finalImportHist`) est concerné.
+- **Compteur** : `S.histImports` (persisté `ft4_histImp`), incrémenté dans `finalImportHist()` à chaque import réussi. Sync cloud : ajouté au payload `_cloudSync` (saveProfile) + restauré dans `_applyRestoreData` avec `Math.max(local,cloud)` (ne re-gagne jamais un import gratuit après purge locale).
+- **Gate** : début de `analyzeHistPhotos()` — si `!S.premium && histImports>=1` → `closeImportHist()` + `showHistWall()` (mur `#ov-hist-wall`), analyse PAS lancée. Si `_premiumPending` (statut serveur pas encore reçu) → toast « Vérification… » sans bloquer définitivement.
+- **Mur** `#ov-hist-wall` : overlay dédié réutilisant les classes `coach-wall-*`, bouton contact mailto + bouton « Activer un code » qui renvoie vers l'onglet Coach (réutilise `showPremiumWall`/`activatePremium` existants — logique premium existante NON modifiée).
+- **Premium** vérifié comme partout (`S.premium` frontend, `PREMIUM_HARDCODED_`+serveur backend) — inchangé.
+- **⚠️ Backend à déployer (depuis le PC de Michel) pour la persistance cloud du compteur** — 1 ligne dans `handleSaveProfile_` (Code.js, à côté de `body.badges`, ~ligne 476) :
+  ```js
+  if (body.histImports !== undefined) profile.histImports = _pn_(body.histImports, profile.histImports);
+  ```
+  `loadProfile` renvoie déjà tout `profile` → aucune autre modif backend. Sans ce déploiement, le compteur reste **local uniquement** (le gate fonctionne quand même sur l'appareil, mais un utilisateur qui vide son cache regagnerait 1 import gratuit).
+
 ### Import journal par lots (✅ 2026-07-02, ft-v167)
 - **Bug corrigé** : un gros journal (~18 séances) envoyé en un seul appel `importHistory` dépassait la limite de réponse de l'IA (`max_tokens: 8192` dans `handleImportHistory_`, Code.js @58) → JSON tronqué à ~20 500 caractères → « JSON invalide : Expected ',' or ']' ».
 - **Fix 100% frontend** (aucun redéploiement backend nécessaire) : `analyzeHistPhotos()` découpe `_histPhotos` en **lots de 3 pages** (`_HIST_BATCH=3`), appelle `_histAnalyzeBatch()` séquentiellement, fusionne les `sessions` de tous les lots.
@@ -654,7 +666,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v164 | GO persistant + fix skip anticipé + audioSession — ⛔ annulé par ft-v165 |
 | ft-v165 | ROLLBACK v163/v164 → retour comportement v162 (4 bugs iOS : son à l'ouverture, skip cassé, musique coupée) |
 | ft-v166 | timer 100% SILENCIEUX (bips synthétiques + countdown.wav supprimés — la création d'AudioContext coupait la musique iPhone) + GO persistant + fin overtime + fix skip anticipé |
-| ft-v167 | import journal par lots de 3 pages (fix réponse IA tronquée sur gros journaux) + import partiel si lot en échec ← **actuel** |
+| ft-v167 | import journal par lots de 3 pages (fix réponse IA tronquée sur gros journaux) + import partiel si lot en échec |
+| ft-v168 | limite premium import journal (1 gratuit au total, illimité premium) — compteur local+cloud, mur dédié #ov-hist-wall ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

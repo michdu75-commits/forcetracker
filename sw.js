@@ -1,4 +1,4 @@
-const CACHE = 'ft-v167'; // import journal par lots de 3 pages (fix réponse IA tronquée sur gros journaux)
+const CACHE = 'ft-v168'; // limite premium import journal (1 gratuit, illimité premium)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

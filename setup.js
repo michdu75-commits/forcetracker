@@ -197,6 +197,7 @@ function _cloudSync(){
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
+      histImports:S.histImports||0,
       coachMemory:S.coachMemory||'',
       customExercises:S.customExercises||[],
       sessions:(S.sessions||[]).slice(0,100),
@@ -1037,6 +1038,8 @@ function _applyRestoreData(raw){
   // (règle absolue : une purge cloud ou une restauration ne doit jamais effacer du local non-vide)
   // badges + customExercises — local-first si non vide
   try{const cb=d.badges&&Object.keys(d.badges).length;const lb=S.badges&&Object.keys(S.badges).length;if(cb&&(!lb||cb>lb))S.badges=d.badges;}catch(e){console.warn('[FT restore] badges',e);}
+  // Import journal : garder le compteur le plus élevé (local vs cloud) — évite de re-gagner un import gratuit après purge
+  try{if(d.histImports!==undefined)S.histImports=Math.max(S.histImports||0,parseInt(d.histImports)||0);}catch(e){}
   try{if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;}catch(e){console.warn('[FT restore] customEx',e);}
   // PRs — prend le plus complet
   try{if(prs&&Object.keys(prs).length&&(!S.prs||!Object.keys(S.prs).length)){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}else if(prs&&Object.keys(prs).length>Object.keys(S.prs||{}).length){S.prs=prs;console.log('[FT restore] prs cloud plus complet:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
