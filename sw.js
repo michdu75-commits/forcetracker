@@ -1,4 +1,4 @@
-const CACHE = 'ft-v168'; // limite premium import journal (1 gratuit, illimité premium)
+const CACHE = 'ft-v169'; // diagramme muscles : reconnaissance insensible aux accents + vocabulaire enrichi
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
