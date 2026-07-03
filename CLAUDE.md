@@ -467,6 +467,14 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Uniformisation visuelle — étape 4 : arrondis de cartes (✅ 2026-07-03, ft-v185)
+- **Étape 4** (passe « discrète » demandée par Michel pendant qu'il travaille les boutons avec Claude Design) : arrondis des **cartes de contenu** ramenés au standard `--r:16px`.
+- **Corrigé** (index.html) : carte macros Nutrition `20px→16px` ; 3 cartes du menu drawer (profil + 2 sections) `18px→16px`.
+- **Non touché** (volontairement, zone boutons de Michel) : pastilles/boutons à 20px (Partager, Mode Jour, toggle a11y), label flottant `#mm-clicked-label`, logo splash (décoratif 18px).
+- Les lignes du menu drawer utilisent déjà le gabarit tuile (icône 40px + titre + sous-titre).
+- Testé (Chromium) : Nutrition + menu drawer à 16px, cohérents, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-unif-radius`
+
 ### Uniformisation visuelle — étape 3 : boxes Nutrition (✅ 2026-07-03, ft-v184)
 - **Étape 3** du chantier cartes/tuiles : les boxes **BMR / TDEE / Delta** (Nutrition, index.html) sont alignées sur les boxes **Actuel / Record / Progrès** (setup.js `renderChart`).
 - **Fix** : ajout `border:1px solid var(--sep)` + label `10px→11px` (letter-spacing .08em) + padding `8px→9px 4px` → boxes identiques d'un écran à l'autre. La box SURPLUS garde son tint rouge (comme la box Progrès garde son tint).
@@ -843,7 +851,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v181 | mode jour : fix « Restaurer »/badge Premium (jaune en dur → var(--gold)) + blanc adouci (blanc cassé, moins de glare) + anniversaire Eline archivé |
 | ft-v182 | fix mode jour : toast .info (texte blanc sur gris clair → var(--t1) lisible) |
 | ft-v183 | mode jour : toast .info en pastille sombre (ressort mieux) + bouton « Restaurer » jaune → bleu (var(--blue), OK jour/nuit) |
-| ft-v184 | uniformisation étape 3 : boxes Nutrition BMR/TDEE/Delta alignées sur les boxes Progrès (bordure + label 11px) ← **actuel** |
+| ft-v184 | uniformisation étape 3 : boxes Nutrition BMR/TDEE/Delta alignées sur les boxes Progrès (bordure + label 11px) |
+| ft-v185 | uniformisation étape 4 : arrondis de cartes ramenés à 16px (Nutrition 20, menu drawer 18 → 16) — boutons non touchés ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

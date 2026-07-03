@@ -1,4 +1,4 @@
-const CACHE = 'ft-v184'; // uniformisation : boxes Nutrition BMR/TDEE/Delta alignées sur les boxes Progrès (bordure + label)
+const CACHE = 'ft-v185'; // uniformisation : arrondis de cartes ramenés à 16px (Nutrition 20, menu drawer 18 → 16)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
