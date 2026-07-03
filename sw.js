@@ -1,4 +1,4 @@
-const CACHE = 'ft-v170'; // bleu indirect discret (figurine + légende) - moins pétant
+const CACHE = 'ft-v171'; // détail de séance unifié sur _mscScores (muscles pour exos machines aussi)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

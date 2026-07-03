@@ -238,26 +238,22 @@ function openSessDetail(id){
 }
 
 function _updateSdMuscles(sess){
-  const exNames=(sess.exs||sess.exercises||[]).map(e=>e.name);
-  const grpMap={};
-  EXLIB.forEach(e=>{if(exNames.includes(e.n))grpMap[e.g]=true;});
-  const workedGroups=Object.keys(grpMap);
+  // Unifié (ft-v171) : même moteur que la grande carte et le mini-bonhomme des cartes
+  // (_mscScores/_MEX) → reconnaît aussi les exercices machines/perso, pas seulement EXLIB.
+  const exs=sess.exs||sess.exercises||[];
   const muscleEl=document.getElementById('sd-muscles');
   if(!muscleEl)return;
-  if(workedGroups.length===0){muscleEl.style.display='none';return;}
+  const res=_mscScores(exs);
+  if(!Object.keys(res.sc).length){muscleEl.style.display='none';return;}
   muscleEl.style.display='flex';
+  muscleEl.style.alignItems='center';
+  muscleEl.style.gap='12px';
   muscleEl.style.cursor='pointer';
   muscleEl.title='Voir la carte musculaire';
-  muscleEl.onclick=()=>showMuscleMap(sess.exs||sess.exercises||[],null);
-  muscleEl.innerHTML=EX_GROUPS
-    .filter(g=>g.tags.some(t=>workedGroups.includes(t)))
-    .map(g=>{
-      const s=_genderGroupSvg(g.tags[0])||g.icon.replace('height:46px','height:56px');
-      return`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;width:44px">
-        ${s}
-        <span style="font-size:10px;color:var(--t2);text-align:center;line-height:1.2">${g.label.replace(' / ','\n').split('\n')[0]}</span>
-      </div>`;
-    }).join('');
+  muscleEl.onclick=()=>showMuscleMap(exs,null);
+  const mini=_mscSVGmini(res).replace('width:32px','width:56px');
+  muscleEl.innerHTML=`<div style="flex-shrink:0">${mini}</div>`+
+    `<div style="font-size:12px;color:var(--t2);line-height:1.4"><span style="font-weight:700;color:var(--t1)">💪 Muscles travaillés</span><br>Tape pour agrandir</div>`;
 }
 
 function _renderSessDetailContent(){
