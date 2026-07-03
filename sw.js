@@ -1,4 +1,4 @@
-const CACHE = 'ft-v174'; // détail séance : ligne « Meilleur 1RM potentiel » + ~XX kg par série lisibles
+const CACHE = 'ft-v175'; // onglet Progrès : ligne « Charge max soulevée » (poids réel) sous les 3 stats 1RM
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

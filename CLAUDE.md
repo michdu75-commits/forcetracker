@@ -467,6 +467,16 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Onglet Progrès — ligne « Charge max soulevée » (poids réel) (✅ 2026-07-03, ft-v175)
+- **Demande** : sur l'onglet Progrès, les 3 cases (Actuel / Record / Progrès) affichent **toutes le 1RM estimé** (un calcul). Il manquait la **charge maximale réellement soulevée** (le poids le plus lourd mis sur la barre, ex. `150 kg × 3`) — donnée distincte, à ne pas confondre avec le 1RM. « Si on fait 10×140 et un max 1RM de 154, ce n'est pas la même donnée. »
+- **Fix (100% affichage, `setup.js` `renderChart`)** :
+  - `maxLoad` = scan de **toutes les séances** (`S.sessions`), séries `done` avec kg&reps → set au **kg le plus élevé** (à kg égal, le plus de reps). Rétroactif (calcul en direct, marche pour tout l'historique).
+  - Ligne sous les 3 stats : `🏋️ Charge max soulevée : XX kg × N → ~YY kg 1RM` (YY = `bz(maxLoad.kg,maxLoad.reps)`, le 1RM estimé de cette charge).
+  - Partie chiffrée regroupée (`white-space:nowrap`) → retour à la ligne propre sur mobile (label ligne 1, valeurs ligne 2). Couleurs neutres (`--t1`/`--t2`/`--t3`), OK jour/nuit.
+- **Genre** : identique H/F — `bz()` (Brzycki) et `maxLoad` sont **gender-neutral**. Seul le « niveau de force » (`getLevel`, accueil) est genré, non touché.
+- Testé (Chromium, Soulevé de Terre, 4 séances, jour + nuit) : record 1RM 186.7 (depuis 140×10) vs charge max 150 kg × 3 → ~158.8 kg 1RM, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-charge-max-reelle`
+
 ### Détail de séance — « Meilleur 1RM potentiel » visible + ~XX kg lisibles (✅ 2026-07-03, ft-v174)
 - **Demande** : après une séance terminée, le « 1RM max potentiel » (1RM estimé Brzycki) n'était plus visible clairement. Pendant la séance, la ligne exo affiche « · 1RM ~XX kg » (`maxRM`, log.js) ; dans le détail de séance passée (`#ov-sess-detail`), il ne restait que les `~XX kg` gris minuscules par série (`var(--t3)`, illisibles).
 - **Fix (100% affichage, `setup.js` `_renderSessDetailContent`)** — les deux, sans toucher aux données ni aux records :
@@ -730,7 +740,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v171 | détail de séance unifié sur _mscScores (mini-bonhomme coloré) — muscles affichés aussi pour les exos machines/perso |
 | ft-v172 | étiquette carte historique : nom de la séance du programme (🗂️) si dispo, sinon muscle le plus travaillé (💪) |
 | ft-v173 | migration « Press » (exo perso) → « Press Jambes 45° » (EXLIB) — PR/séances/programmes/exos perso, garde-fou PR max, sans perte |
-| ft-v174 | détail de séance : ligne « 🎯 Meilleur 1RM potentiel : XX kg » par exo + ~XX kg par série rendus lisibles (couleur neutre pleine, contraste jour/nuit) ← **actuel** |
+| ft-v174 | détail de séance : ligne « 🎯 Meilleur 1RM potentiel : XX kg » par exo + ~XX kg par série rendus lisibles (couleur neutre pleine, contraste jour/nuit) |
+| ft-v175 | onglet Progrès : ligne « 🏋️ Charge max soulevée : XX kg × N → ~YY kg 1RM » (poids réel, distinct du 1RM estimé), rétroactive, H/F identique ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

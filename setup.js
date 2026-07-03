@@ -102,6 +102,15 @@ function renderChart(){
     const best=(ex.sets||[]).filter(s=>s.done!==false&&s.kg&&s.reps).reduce((b,s)=>{const r=bz(s.kg,s.reps);return r>(b?bz(b.kg,b.reps):0)?s:b;},null);
     if(best)pts.push({date:s.date,kg:best.kg,reps:best.reps,rm1:bz(best.kg,best.reps)});
   });
+  // Charge max RÉELLE soulevée (poids le plus lourd sur la barre) — distinct du 1RM estimé
+  let maxLoad=null;
+  S.sessions.forEach(s=>{
+    const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
+    (ex.sets||[]).forEach(set=>{
+      if(set.done===false||!set.kg||!set.reps)return;
+      if(!maxLoad||set.kg>maxLoad.kg||(set.kg===maxLoad.kg&&set.reps>maxLoad.reps))maxLoad={kg:set.kg,reps:set.reps};
+    });
+  });
   const pr=S.prs[name];const prStr=pr?fmt(pr.rm1)+' kg':'—';
   if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${name}</span><span class="badge-gold">PR: ${prStr}</span></div><div class="empty" style="padding:20px 0;">Aucune donnée — commence à logger !</div>`;return;}
   _chartPts=pts;
@@ -149,6 +158,10 @@ function renderChart(){
     <div style="font-size:11px;color:var(--t3);">${deltaPct!==null?(deltaPct>=0?'+':'')+deltaPct+'%':'—'}</div>
   </div>
 </div>
+${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13.5px;">
+  <span style="color:var(--t2);font-weight:600;white-space:nowrap;">🏋️ Charge max soulevée</span>
+  <span style="white-space:nowrap;"><b style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--t1);">${fmt(maxLoad.kg)} kg</b> <span style="color:var(--t3);">× ${maxLoad.reps}</span> <span style="color:var(--t3);">→</span> <span style="color:var(--t2);font-weight:700;">~${fmt(bz(maxLoad.kg,maxLoad.reps))} kg 1RM</span></span>
+</div>`:''}
 <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible;">
   <defs>
     <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
