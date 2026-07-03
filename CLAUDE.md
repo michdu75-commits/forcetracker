@@ -467,6 +467,18 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Diagramme muscles — reconnaissance accents + vocabulaire (✅ 2026-07-03, ft-v169)
+- **Bug** : le diagramme « Muscles travaillés » (`showMuscleMap`→`_mscScores`) ET le mini-bonhomme des cartes de séance (`_mscSVGmini`, historique) colorent les muscles en **devinant depuis le NOM** de l'exercice via une liste de motifs `_MEX` (log.js). Cette liste (24 motifs) était trop courte + sensible aux accents → sur des séances de machines (imports « Autres »), la poitrine et bien d'autres muscles restaient **non colorés ou faux** (ex. séance pecs affichant abdos/trapèzes en primaire, 0 pectoraux).
+- **Cause double** : (1) `é`≠`e` — « Développé incliné » matchait, « Développé incline » non ; (2) vocabulaire absent — pas de « chest press », « peck deck », « décliné », « presse horizontale », « abducteur »…
+- **Fix (100% frontend, `log.js`)** :
+  - `_naz(s)` = `normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()` — retire accents + minuscules. `_mscScores` normalise le nom via `_naz()` AVANT de tester `_MEX`.
+  - **`_MEX` réécrit SANS accents** (obligatoire, sinon le nom normalisé ne matcherait plus) + vocabulaire enrichi : chest press, peck deck, décliné, incliné (variantes), presse horizontale/jambe, développé épaules, élévation frontale, around the world, écarté inverse, tirage bûcheron, bras tendu, twist, relevés de genoux…
+  - **Ordre** : mollets AVANT la presse (sinon « extension mollets sur presse » → cuisses). Premier motif qui matche gagne (`break`).
+  - **Fix mapping erroné** : `abduction/abducteur` → fessiers (avant : fléchisseurs de hanche/abdos, faux). `adducteur` → fessiers/quadriceps.
+- **Résultat testé** sur les 87 exercices réels de Michel : **84/87 reconnus** (avant : 50). Les 3 restants (« Press », « Crabe », « Exercice libre ») sont volontairement non mappés (trop vagues). 0 régression sur les classiques (couché, squat, curl, deadlift…). Séance pecs réelle → pectoraux score 8 (primaire). 0 erreur JS.
+- **⚠️ `_MEX` ne doit JAMAIS contenir d'accents** (le nom testé est déjà « aplati » par `_naz`). Le Coach IA n'utilise PAS `_MEX` (il lit les noms bruts) → non impacté.
+- **Note** : le 3e affichage muscles, `_updateSdMuscles` (setup.js, détail d'une séance passée), utilise un mécanisme DIFFÉRENT (match exact sur `EXLIB`), non concerné par ce fix — les exercices « Autres » y restent non affichés (chantier séparé si besoin).
+
 ### Limite premium — Import de journal (✅ 2026-07-03, ft-v168)
 - **Règle** : import de **journal** gratuit = **1 seul au total** (`HIST_FREE_LIMIT=1`), illimité en premium. ⚠️ **L'import de PROGRAMME n'est PAS limité** — seul le journal (`analyzeHistPhotos`/`finalImportHist`) est concerné.
 - **Compteur** : `S.histImports` (persisté `ft4_histImp`), incrémenté dans `finalImportHist()` à chaque import réussi. Sync cloud : ajouté au payload `_cloudSync` (saveProfile) + restauré dans `_applyRestoreData` avec `Math.max(local,cloud)` (ne re-gagne jamais un import gratuit après purge locale).
@@ -667,7 +679,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v165 | ROLLBACK v163/v164 → retour comportement v162 (4 bugs iOS : son à l'ouverture, skip cassé, musique coupée) |
 | ft-v166 | timer 100% SILENCIEUX (bips synthétiques + countdown.wav supprimés — la création d'AudioContext coupait la musique iPhone) + GO persistant + fin overtime + fix skip anticipé |
 | ft-v167 | import journal par lots de 3 pages (fix réponse IA tronquée sur gros journaux) + import partiel si lot en échec |
-| ft-v168 | limite premium import journal (1 gratuit au total, illimité premium) — compteur local+cloud, mur dédié #ov-hist-wall ← **actuel** |
+| ft-v168 | limite premium import journal (1 gratuit au total, illimité premium) — compteur local+cloud, mur dédié #ov-hist-wall |
+| ft-v169 | diagramme muscles : reconnaissance insensible aux accents (_naz) + vocabulaire _MEX enrichi (chest press, peck deck, décliné…) + fix abduction→fessiers — 84/87 exos reconnus (avant 50) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

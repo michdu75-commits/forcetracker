@@ -857,31 +857,65 @@ function toggleExBlock(ei){
   setTimeout(()=>{const el=document.getElementById('ex-block-'+ei);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});},80);
 }
 // ─── MUSCLE MAP ──────────────────────────────────────────────
+// ⚠️ Les noms sont NORMALISÉS (accents retirés + minuscules) via _naz() dans _mscScores
+// AVANT d'être testés ici. Donc TOUS les motifs ci-dessous doivent être SANS accent
+// (developpe, ecarte, epaule, elevation, trapeze, releve…). Ne jamais remettre d'accent ici.
+// Ordre important : premier motif qui matche gagne (break). Les mollets passent AVANT
+// la presse (sinon « extension mollets sur presse » serait rangé en cuisses).
 const _MEX=[
-  {re:/développé couché|bench press|écarté couché|pec dec/i,                   p:['pec'],                              s:['front-delt','triceps'],             i:['lats','biceps','abs','lower-back']},
-  {re:/développé incliné|incline bench|incline press/i,                         p:['pec'],                              s:['front-delt','triceps']},
-  {re:/développé militaire|overhead press|press militaire|ohp|presse épaule/i,  p:['front-delt','side-delt','triceps'], s:['traps']},
-  {re:/squat|front squat|back squat|goblet squat/i,                             p:['quads','glutes'],                   s:['hamstrings','calves','lower-back']},
-  {re:/soulevé de terre|deadlift/i,                                             p:['glutes','hamstrings','lower-back'], s:['quads','traps','lats','forearms']},
-  {re:/traction|pull.?up|chin.?up/i,                                            p:['lats','biceps'],                    s:['traps','rear-delt','forearms']},
-  {re:/rowing|row barre|t.?bar|tirage horizontal/i,                             p:['lats','traps','rear-delt'],         s:['biceps','lower-back','forearms']},
-  {re:/tirage vertical|lat pulldown|tirage poulie/i,                            p:['lats','biceps'],                    s:['traps','rear-delt']},
-  {re:/curl bicep|bicep curl|curl haltère|preacher|curl marteau|hammer curl/i,  p:['biceps'],                           s:['forearms']},
+  // Mollets EN PREMIER (avant la presse, pour ne pas capter « presse mollets »)
+  {re:/mollet|calf raise|talon|standing calf|extension mollet/i,                p:['calves'],                           s:[]},
+  // Pectoraux — couché / chest press / peck deck / butterfly
+  {re:/developpe couche|bench press|chest press|ecarte couche|pec dec|peck deck|butterfly/i, p:['pec'],                  s:['front-delt','triceps'],             i:['lats','biceps','abs','lower-back']},
+  // Pectoraux — incliné (variantes d'écriture)
+  {re:/developpe incline|incline bench|incline press|incline halter|chest incline/i, p:['pec'],                          s:['front-delt','triceps']},
+  // Pectoraux — décliné (variantes d'écriture)
+  {re:/developpe decline|decline barre|decline halter|chest decline|chest press decline/i, p:['pec'],                    s:['front-delt','triceps']},
+  // Pectoraux — écartés / fly
+  {re:/ecarte incline|cable fly|\bfly\b|pec deck/i,                             p:['pec'],                              s:['front-delt']},
+  // Épaules — développé / press épaules
+  {re:/developpe militaire|overhead press|press militaire|ohp|presse epaule|developpe epaule|epaules machine/i, p:['front-delt','side-delt','triceps'], s:['traps']},
+  // Épaules — élévation frontale (front delt en priorité)
+  {re:/elevation frontale|front raise|elevations frontales/i,                   p:['front-delt'],                       s:['side-delt']},
+  // Épaules — latéral / arrière / oiseau / écarté inverse / around the world
+  {re:/elevation laterale|lateral raise|face pull|rear delt|oiseau|ecarte inverse|reverse fly|around the world/i, p:['side-delt','rear-delt'], s:['front-delt','traps']},
+  // Dos — verticaux / tractions
+  {re:/traction|pull.?up|chin.?up|tirage vertical|lat pulldown|tirage poulie haute/i, p:['lats','biceps'],             s:['traps','rear-delt','forearms']},
+  // Dos — rowings / tirages horizontaux / bûcheron
+  {re:/rowing|row barre|\brow\b|t.?bar|tirage horizontal|tirage bucheron|bucheron/i, p:['lats','traps','rear-delt'],   s:['biceps','lower-back','forearms']},
+  // Dos — bras tendu / pull-over
+  {re:/bras tendu|straight.?arm|pull.?over/i,                                   p:['lats'],                             s:['triceps','pec']},
+  // Biceps
+  {re:/curl bicep|bicep curl|curl halter|preacher|curl marteau|hammer curl|curl biceps/i, p:['biceps'],                s:['forearms']},
+  // Triceps
   {re:/tricep|skull crusher|extension tricep|barre front/i,                     p:['triceps'],                          s:['front-delt']},
-  {re:/leg press|presse cuisse/i,                                               p:['quads','glutes'],                   s:['hamstrings','calves']},
+  // Abducteurs / adducteurs (fessiers/hanche) — remplace l'ancien mapping erroné
+  {re:/abducteur|abduction/i,                                                   p:['glutes'],                           s:[]},
+  {re:/adducteur|adduction/i,                                                   p:['glutes'],                           s:['quads']},
+  // Jambes — presse (toutes variantes fr/en)
+  {re:/leg press|presse cuisse|press jambe|presse jambe|presse horizontale|presse verticale/i, p:['quads','glutes'],   s:['hamstrings','calves']},
+  // Jambes — squats (couvre hack/belt/bulgare/sauté/poulie)
+  {re:/squat/i,                                                                 p:['quads','glutes'],                   s:['hamstrings','calves','lower-back']},
+  // Jambes — fentes
   {re:/fente|lunge|split squat/i,                                               p:['quads','glutes'],                   s:['hamstrings']},
-  {re:/hip thrust|glute bridge|fessier|hip extension/i,                         p:['glutes'],                           s:['hamstrings','lower-back']},
+  // Jambes — leg extension (quadriceps)
+  {re:/leg extension|extension quadricep|extensions? de jambe/i,                p:['quads'],                            s:[]},
+  // Ischios — leg curl / RDL
   {re:/romanian deadlift|rdl|good morning|leg curl|nordic/i,                    p:['hamstrings','glutes'],              s:['lower-back','calves']},
+  // Fessiers — hip thrust / pont
+  {re:/hip thrust|glute bridge|fessier|hip extension|pont fessier/i,            p:['glutes'],                           s:['hamstrings','lower-back']},
+  // Soulevé de terre
+  {re:/souleve de terre|deadlift/i,                                             p:['glutes','hamstrings','lower-back'], s:['quads','traps','lats','forearms']},
+  // Dips
   {re:/dips/i,                                                                  p:['triceps','pec'],                    s:['front-delt']},
-  {re:/shrug|hausse|haussement|trapèze iso/i,                                   p:['traps'],                            s:['forearms']},
+  // Trapèzes — shrug
+  {re:/shrug|hausse|haussement|trapeze iso/i,                                   p:['traps'],                            s:['forearms']},
+  // Abdos — gainage
   {re:/gainage|plank|superman|bird.?dog/i,                                      p:['abs','lower-back'],                 s:['obliques','front-delt','glutes']},
-  {re:/crunch|abdos|sit.?up|hanging leg|relevé de jambe/i,                      p:['abs'],                              s:['obliques','hip-flexors']},
-  {re:/mollet|calf raise|talon|standing calf/i,                                 p:['calves'],                           s:[]},
-  {re:/leg extension|extension quadricep/i,                                     p:['quads'],                            s:[]},
-  {re:/élévation latérale|lateral raise|face pull|rear delt|oiseau/i,           p:['side-delt','rear-delt'],            s:['traps']},
-  {re:/écarté incliné|cable fly|fly/i,                                          p:['pec'],                              s:['front-delt']},
-  {re:/farmers?|portés|carry/i,                                                 p:['forearms','traps'],                 s:['quads','glutes']},
-  {re:/leg raise|abduction|adduction|gainage latéral/i,                         p:['hip-flexors','abs'],                s:['quads']},
+  // Abdos — crunch / relevés / twist
+  {re:/crunch|abdos|sit.?up|hanging leg|releves? de jambe|releves? de genou|leg raise|twist/i, p:['abs'],               s:['obliques','hip-flexors']},
+  // Avant-bras — farmers / carry
+  {re:/farmers?|portes|carry/i,                                                 p:['forearms','traps'],                 s:['quads','glutes']},
 ];
 const _MG={
   pec:           {paths:['chest-upper-left','chest-upper-right','chest-lower-left','chest-lower-right'],                                                                                          label:'Pectoraux'},
@@ -1074,12 +1108,16 @@ function _mscSVG_F({sc,ind}){
     </svg>
   </div>`;
 }
+// Normalise un nom d'exercice : retire les accents + minuscules
+// → « Développé Incliné » == « developpe incline » == « Developpe incline »
+const _naz=s=>(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function _mscScores(exs){
   const sc={},ind={};
   (exs||[]).forEach(ex=>{
     if(!(ex.sets||[]).some(s=>s.done))return;
     let matched=false;
-    for(const r of _MEX){if(r.re.test(ex.name||'')){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});(r.i||[]).forEach(m=>{ind[m]=true;});matched=true;break;}}
+    const _nm=_naz(ex.name);
+    for(const r of _MEX){if(r.re.test(_nm)){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});(r.i||[]).forEach(m=>{ind[m]=true;});matched=true;break;}}
     if(!matched){
       const cex=(S.customExercises||[]).find(e=>e.n===ex.name);
       if(cex&&cex.muscles){
