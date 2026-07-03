@@ -2441,24 +2441,28 @@ function _renderProgEdit(){
       </div>
     </div>
   </div>`;
+  const _INP='padding:5px 4px;font-size:13px;text-align:center;border:1px solid var(--sep);border-radius:6px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;';
   const exCard=(ex,di,ei)=>{
     const sets=ex.sets||[];
     return`<div style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:6px;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;">
+      ${_progExThumb(ex.name)}
       <div style="flex:1;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
       <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
     </div>
-    <div style="display:flex;gap:8px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
-      <span style="width:46px;">Série</span><span style="flex:1;">Reps</span><span style="width:104px;text-align:right;">Repos</span>
+    <div style="display:flex;gap:6px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
+      <span style="width:30px;">Série</span><span style="width:58px;text-align:center;">Reps</span><span style="flex:1;text-align:right;">Repos</span><span style="width:22px;"></span>
     </div>
-    ${sets.map((s,si)=>`<div style="display:flex;align-items:center;gap:8px;padding:2px 2px;">
-      <span style="width:46px;font-size:12px;color:var(--t2);">${si+1}</span>
-      <span style="flex:1;font-size:13px;font-weight:600;color:var(--t1);">${s.reps} reps</span>
-      <span style="width:104px;display:flex;align-items:center;justify-content:flex-end;gap:5px;">
-        <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${_defRestForType(s.type)}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;padding:5px 4px;font-size:13px;text-align:center;border:1px solid var(--sep);border-radius:6px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;">
-        <span style="font-size:11px;color:var(--t3);white-space:nowrap;">s${s.rest>0?' ('+_fmtRest(s.rest)+')':''}</span>
+    ${sets.map((s,si)=>`<div style="display:flex;align-items:center;gap:6px;padding:2px 2px;">
+      <span style="width:30px;font-size:12px;color:var(--t2);">${si+1}</span>
+      <input type="number" min="1" inputmode="numeric" value="${s.reps||''}" onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">
+      <span style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;">
+        <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${_defRestForType(s.type)}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;${_INP}">
+        <span style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:44px;">s${s.rest>0?' '+_fmtRest(s.rest):''}</span>
       </span>
+      <button onclick="_removeProgSet(${di},${ei},${si})" title="Retirer la série" style="width:22px;background:none;border:none;color:var(--t3);font-size:16px;line-height:1;cursor:pointer;padding:0;">×</button>
     </div>`).join('')}
+    <button onclick="_addProgSet(${di},${ei})" style="margin-top:5px;padding:5px 12px;background:transparent;border:1px dashed var(--sep);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;">+ série</button>
   </div>`;};
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
   if(isMulti){
@@ -2475,12 +2479,36 @@ function _renderProgEdit(){
 function _defRestForType(type){return type==='É'||type==='W'?45:((type==='X'||type==='E')?240:(type==='D'?20:90));}
 // Formate des secondes en 1'30 / 45s (affichage type PDF)
 function _fmtRest(sec){sec=parseInt(sec)||0;if(sec<=0)return'';if(sec<60)return sec+'s';const m=Math.floor(sec/60),s=sec%60;return m+"'"+String(s).padStart(2,'0');}
-// Édite le repos (secondes) d'une série dans l'éditeur de programme — pas de re-render (garde le focus)
-function _setProgSetRest(di,ei,si,val){
-  const d=_editProgData;if(!d)return;
+// Retourne l'exercice ciblé dans l'éditeur (multi-jours ou à plat)
+function _progEditEx(di,ei){
+  const d=_editProgData;if(!d)return null;
   const exs=(d.days&&d.days.length)?(d.days[di]&&d.days[di].exs):d.exs;
-  if(!exs||!exs[ei]||!exs[ei].sets||!exs[ei].sets[si])return;
-  exs[ei].sets[si].rest=parseInt(val)||0;
+  return exs&&exs[ei]?exs[ei]:null;
+}
+// Édite le repos (secondes) d'une série — pas de re-render (garde le focus)
+function _setProgSetRest(di,ei,si,val){
+  const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
+  ex.sets[si].rest=parseInt(val)||0;
+}
+// Édite les reps d'une série — pas de re-render (garde le focus)
+function _setProgSetReps(di,ei,si,val){
+  const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
+  ex.sets[si].reps=parseInt(val)||0;
+}
+// Ajoute une série (copie la dernière) puis re-render
+function _addProgSet(di,ei){
+  const ex=_progEditEx(di,ei);if(!ex)return;
+  if(!ex.sets)ex.sets=[];
+  const l=ex.sets[ex.sets.length-1];
+  ex.sets.push({kg:l?l.kg||0:0,reps:l?l.reps||10:10,type:l?l.type||'N':'N',rest:l?l.rest||0:0});
+  _renderProgEdit();
+}
+// Retire une série (garde au moins 1) puis re-render
+function _removeProgSet(di,ei,si){
+  const ex=_progEditEx(di,ei);if(!ex||!ex.sets)return;
+  if(ex.sets.length<=1){toast('Au moins 1 série','info');return;}
+  ex.sets.splice(si,1);
+  _renderProgEdit();
 }
 function _openExPickerForProg(dayIdx){
   _editDayIdx=dayIdx;
@@ -2691,6 +2719,35 @@ function _groupTemplateSvg(name){
   const ex=EXLIB.find(e=>e.n===name);
   const file=_MUSCLE_FILE[ex?.g]||'muscles/chest.svg';
   return `<div style="text-align:center;padding:6px 0;"><img src="${file}" style="width:140px;height:auto;display:block;margin:0 auto;"></div>`;
+}
+// Codes muscles (_MG) → image muscle réaliste (PNG anatomie de Michel)
+const _MG_IMG={
+  pec:'muscles/muscle pectoreaux.png',
+  lats:'muscles/muscles dorsaux trapeze.png',
+  traps:'muscles/epaule trapeze.png','front-delt':'muscles/epaule trapeze.png','side-delt':'muscles/epaule trapeze.png','rear-delt':'muscles/epaule trapeze.png',
+  biceps:'muscles/muscle bras.png',triceps:'muscles/muscle bras.png',forearms:'muscles/muscle bras.png',
+  quads:'muscles/muscle avant cuisse.png','hip-flexors':'muscles/muscle avant cuisse.png',
+  glutes:'muscles/fessiers ischios.png',hamstrings:'muscles/fessiers ischios.png','lower-back':'muscles/fessiers ischios.png',
+  abs:'muscles/muscle abdominaux.png',obliques:'muscles/muscle abdominaux.png',
+  calves:'muscles/muscle mollet.png',tibialis:'muscles/muscle mollet.png',
+};
+// Vignette d'exercice : photo locale > image muscle réaliste (muscle deviné du nom) > figurine — 100% hors-ligne
+function _progExThumb(name){
+  const box='width:46px;height:46px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);flex-shrink:0;box-sizing:border-box;';
+  const y=EX_YT[name];
+  if(y&&y.img) return `<img src="${y.img}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:2px;">`;
+  // Muscle principal deviné depuis le nom (_MEX, insensible aux accents) → image muscle réaliste
+  let src='';
+  try{
+    const {sc}=_mscScores([{name,sets:[{done:true}]}]);
+    const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0];
+    if(top)src=_MG_IMG[top[0]]||'';
+  }catch(e){}
+  if(src) return `<img src="${src}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
+  // Repli ultime : figurine anatomique colorée
+  let fig='';
+  try{if(typeof _mscSVGmini==='function')fig=_mscSVGmini(_mscScores([{name,sets:[{done:true}]}])).replace('width:32px','width:38px');}catch(e){}
+  return `<div style="${box}display:flex;align-items:center;justify-content:center;overflow:hidden;">${fig}</div>`;
 }
 function _genderGroupSvg(groupName){
   const svgSet=(S&&S.gender==='F')?_MUSCLE_SVG_F:_MUSCLE_SVG;
