@@ -1,4 +1,4 @@
-const CACHE = 'ft-v181'; // mode jour : fix « Restaurer »/badge Premium + blanc adouci (blanc cassé) + anniversaire Eline archivé
+const CACHE = 'ft-v182'; // fix mode jour : toast .info (texte blanc sur gris clair → var(--t1) lisible)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

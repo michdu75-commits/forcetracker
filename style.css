@@ -590,7 +590,7 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #toast.success{background:linear-gradient(135deg,#00C853,#00E676);color:#000;}
 #toast.error{background:linear-gradient(135deg,#FF2D55,#FF4D6D);}
-#toast.info{background:var(--bg3);border:1px solid var(--sep);}
+#toast.info{background:var(--bg3);border:1px solid var(--sep);color:var(--t1);}
 
 /* ─── ONBOARDING ─────────────────────────────────────────────── */
 #onboarding{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:9999;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;}
