@@ -467,6 +467,22 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Éditeur de programme — reps/séries éditables + vignette exercice (✅ 2026-07-03, ft-v177)
+- **Demande** : dans l'éditeur de programme, pouvoir modifier **reps + nombre de séries** (pas juste le repos), et afficher une **vignette de l'exercice à gauche** (façon colonne « Photos » des programmes de coach).
+- **Éditeur complet** (`_renderProgEdit` / `exCard`, log.js) :
+  - Reps **éditables** par série (input) → `_setProgSetReps` (pas de re-render, garde le focus).
+  - Bouton **×** par série → `_removeProgSet` (garde au moins 1 série). Bouton **« + série »** → `_addProgSet` (copie la dernière série). Helper `_progEditEx(di,ei)` (multi-jours ou à plat).
+  - Le repos reste éditable (ft-v176). `saveProgEdit` persiste tout (`_editProgData`).
+- **Vignette exercice** (`_progExThumb(name)`, à gauche du nom) — priorité, 100% hors-ligne :
+  1. **Photo locale** `EX_YT[name].img` si dispo (gif/png réel).
+  2. Sinon **image muscle réaliste** `muscles/*.png` (les PNG anatomie de Michel), choisie via le **muscle principal deviné du nom** : `_mscScores([{name,sets:[{done:true}]}])` → top code `_MG` → `_MG_IMG` (map code→PNG). Marche même pour un exo hors bibliothèque (ex. « Tirage bûcheron » → dos).
+  3. Sinon **figurine anatomique colorée** `_mscSVGmini` (repli ultime).
+  - Les 8 PNG muscle ajoutés au `PRECACHE` de `sw.js` (offline).
+  - **Choix** : icônes muscle `muscles/*.png` (nettes en 46px) et **non** les schémas `anatomy/…` (détaillés/annotés, illisibles en vignette — réservés au grand affichage Coach IA).
+- **Programmes existants** : intacts et modifiables (champ `rest` optionnel, aucune migration).
+- Testé (Chromium) : éditer reps / +série / −série (garde min 1) / sauvegarde OK ; vignettes photo (Développé Couché, Press Jambes 45°) + muscle réaliste (Tirage bûcheron → dos), 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-editeur-complet`
+
 ### Programmes — repos par série (schéma Série/Reps/Repos) (✅ 2026-07-03, ft-v176)
 - **Demande** : reproduire le schéma visuel des programmes de coach (exercice | quantité | repos) et pouvoir définir un **temps de repos par série** — à l'import comme en création perso. Décision testeur : **un repos par série** (pas un seul par exercice), car les vrais programmes varient le repos série par série (ex. Développé couché : 45s, 45s, 1min15, 1min30…).
 - **⚠️ Fait en 2 étapes.** **Étape 1 (ft-v176, frontend, ci-dessous) = affichage + édition + application au minuteur.** Étape 2 (à venir, backend Code.js, déploiement PC Michel) = import auto du repos depuis un document.
@@ -755,7 +771,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v173 | migration « Press » (exo perso) → « Press Jambes 45° » (EXLIB) — PR/séances/programmes/exos perso, garde-fou PR max, sans perte |
 | ft-v174 | détail de séance : ligne « 🎯 Meilleur 1RM potentiel : XX kg » par exo + ~XX kg par série rendus lisibles (couleur neutre pleine, contraste jour/nuit) |
 | ft-v175 | onglet Progrès : ligne « 🏋️ Charge max soulevée : XX kg × N → ~YY kg 1RM » (poids réel, distinct du 1RM estimé), rétroactive, H/F identique |
-| ft-v176 | programmes : repos par série (schéma Série/Reps/Repos éditable dans l'éditeur + appliqué au minuteur au chargement) — étape 1/2 (affichage) ← **actuel** |
+| ft-v176 | programmes : repos par série (schéma Série/Reps/Repos éditable dans l'éditeur + appliqué au minuteur au chargement) — étape 1/2 (affichage) |
+| ft-v177 | éditeur programme : reps + nombre de séries éditables + vignette exercice à gauche (photo locale > image muscle réaliste devinée du nom > figurine) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
