@@ -1,4 +1,4 @@
-const CACHE = 'ft-v181'; // fix mode jour : bouton « Restaurer » + badge Premium (jaune en dur → var(--gold) lisible)
+const CACHE = 'ft-v181'; // mode jour : fix « Restaurer »/badge Premium + blanc adouci (blanc cassé) + anniversaire Eline archivé
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
