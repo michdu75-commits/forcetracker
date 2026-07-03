@@ -467,6 +467,18 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Migration « Press » → « Press Jambes 45° » (✅ 2026-07-03, ft-v173)
+- **Demande** : l'exo perso « Press » était en fait la presse à jambes 45°. Le **supprimer** et le **remplacer** par « Press Jambes 45° » (déjà dans EXLIB, groupe Jambes) **sans perdre les données** stockées sous « Press ».
+- **Migration one-time** dans `load()` (state.js, flag `ft4_pressmig1`), placée après `ft4_exmig2`, sur le **même modèle** que les migrations existantes :
+  - **PR** (`S.prs`) : renomme la clé `Press` → `Press Jambes 45°`. **Garde-fou** : si la cible a déjà un PR plus élevé, on ne l'écrase pas à la baisse (`rm1` max conservé).
+  - **Séances** (`S.sessions[].exs[].name`) : renomme partout (couvre aussi `.exercises` par sécurité).
+  - **Programmes** (`S.programmes`) : renomme dans les deux structures — `.days[].exs[].name` (avec jours) ET `.exs[].name` (à plat).
+  - **Exo perso** (`S.customExercises`) : retire l'entrée `{n:'Press'}` (le nouvel exo vient d'EXLIB, plus besoin de l'entrée perso).
+  - Écrit tout en localStorage (`ft4_prs`, `ft4_sessions`, `ft4_progs`, `ft4_cuex`) + pose le flag.
+- **Sync cloud** : au prochain `persist()`/`_cloudSync`, les données migrées sont poussées → cloud à jour (même comportement que `ft4_exmig2`, aucune modif backend).
+- Testé (Chromium, scénario réaliste = données posées puis rechargement propre) : PR conservé (rm1 150), Squat intact, séance + programmes (jours & plat) migrés, « Press » perso retiré / « Mon Exo » intact, 0 erreur JS, 0 donnée perdue.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-migration-press`
+
 ### Étiquette historique — nom séance programme / muscle principal (✅ 2026-07-03, ft-v172)
 - **Demande testeur** : sur les cartes de l'historique, afficher **quelle séance** a été faite. Si la séance vient d'un programme → nom de la séance du programme ; sinon → **muscle le plus travaillé**.
 - **Capture du nom de programme** : `loadProgDay` stocke `S.wkt.progLabel=day.label` ; `loadProg` (programme sans jours) stocke `S.wkt.progLabel=prog.name`. `finishWorkout` recopie `progLabel` sur l'objet `sess`. Voyage en cloud via `sessions` (aucune modif backend).
@@ -706,7 +718,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v169 | diagramme muscles : reconnaissance insensible aux accents (_naz) + vocabulaire _MEX enrichi (chest press, peck deck, décliné…) + fix abduction→fessiers — 84/87 exos reconnus (avant 50) |
 | ft-v170 | diagramme muscles : bleu « indirect » rendu discret (gris-bleu doux, plus d'ombre portée) sur figurine + mini + légende |
 | ft-v171 | détail de séance unifié sur _mscScores (mini-bonhomme coloré) — muscles affichés aussi pour les exos machines/perso |
-| ft-v172 | étiquette carte historique : nom de la séance du programme (🗂️) si dispo, sinon muscle le plus travaillé (💪) ← **actuel** |
+| ft-v172 | étiquette carte historique : nom de la séance du programme (🗂️) si dispo, sinon muscle le plus travaillé (💪) |
+| ft-v173 | migration « Press » (exo perso) → « Press Jambes 45° » (EXLIB) — PR/séances/programmes/exos perso, garde-fou PR max, sans perte ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
