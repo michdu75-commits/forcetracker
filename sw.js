@@ -1,4 +1,4 @@
-const CACHE = 'ft-v175'; // onglet Progrès : ligne « Charge max soulevée » (poids réel) sous les 3 stats 1RM
+const CACHE = 'ft-v176'; // programmes : repos par série (schéma Série/Reps/Repos éditable + appliqué au minuteur)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

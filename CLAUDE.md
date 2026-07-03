@@ -467,6 +467,19 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Programmes — repos par série (schéma Série/Reps/Repos) (✅ 2026-07-03, ft-v176)
+- **Demande** : reproduire le schéma visuel des programmes de coach (exercice | quantité | repos) et pouvoir définir un **temps de repos par série** — à l'import comme en création perso. Décision testeur : **un repos par série** (pas un seul par exercice), car les vrais programmes varient le repos série par série (ex. Développé couché : 45s, 45s, 1min15, 1min30…).
+- **⚠️ Fait en 2 étapes.** **Étape 1 (ft-v176, frontend, ci-dessous) = affichage + édition + application au minuteur.** Étape 2 (à venir, backend Code.js, déploiement PC Michel) = import auto du repos depuis un document.
+- **Étape 1 — `log.js`** :
+  - **Modèle** : chaque série (programme ET séance) porte un champ optionnel `rest` (secondes). Défaut `0` = utilise le repos par type de série (N=90/exRestPref, W/É=45, E/X=240, D=20).
+  - **Minuteur** : `toggleSet` → `sec = set.rest>0 ? set.rest : (restByType[type]||defForEx)`. Le repos de la série gagne s'il est défini.
+  - **Propagation** : `loadProg` / `loadProgDay` recopient `s.rest` dans `S.wkt`. `saveAsProg` conserve `rest`. `_buildProgDay` (import) lit `ex.restPerSet[]` (par série) OU `ex.rest` (unique → recopié sur toutes les séries) — **préparé pour l'étape 2**, aucune donnée si le backend n'envoie rien.
+  - **Éditeur de programme** (`_renderProgEdit`) : mini-tableau **Série | Reps | Repos** par exercice ; repos éditable par série (input secondes + format `1'30` affiché via `_fmtRest`). Helpers `_defRestForType`, `_fmtRest`, `_setProgSetRest` (setter sans re-render → garde le focus). Placeholder = repos par défaut du type.
+- **Création perso** : même éditeur → l'utilisateur tape son repos par série. Import ou perso = même endroit.
+- **Limite (Étape 1)** : l'éditeur règle le repos + ajoute/retire des exercices, mais ne modifie pas encore reps/nombre de séries (fait pendant la séance). Extension possible.
+- Testé (Chromium) : prog type PDF (Rowing 5×90s, Tirage 60/120/120), repos propagé à la séance (90/120), minuteur correct, format `1'30`/`2'00` affiché, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-repos-par-serie`
+
 ### Onglet Progrès — ligne « Charge max soulevée » (poids réel) (✅ 2026-07-03, ft-v175)
 - **Demande** : sur l'onglet Progrès, les 3 cases (Actuel / Record / Progrès) affichent **toutes le 1RM estimé** (un calcul). Il manquait la **charge maximale réellement soulevée** (le poids le plus lourd mis sur la barre, ex. `150 kg × 3`) — donnée distincte, à ne pas confondre avec le 1RM. « Si on fait 10×140 et un max 1RM de 154, ce n'est pas la même donnée. »
 - **Fix (100% affichage, `setup.js` `renderChart`)** :
@@ -741,7 +754,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v172 | étiquette carte historique : nom de la séance du programme (🗂️) si dispo, sinon muscle le plus travaillé (💪) |
 | ft-v173 | migration « Press » (exo perso) → « Press Jambes 45° » (EXLIB) — PR/séances/programmes/exos perso, garde-fou PR max, sans perte |
 | ft-v174 | détail de séance : ligne « 🎯 Meilleur 1RM potentiel : XX kg » par exo + ~XX kg par série rendus lisibles (couleur neutre pleine, contraste jour/nuit) |
-| ft-v175 | onglet Progrès : ligne « 🏋️ Charge max soulevée : XX kg × N → ~YY kg 1RM » (poids réel, distinct du 1RM estimé), rétroactive, H/F identique ← **actuel** |
+| ft-v175 | onglet Progrès : ligne « 🏋️ Charge max soulevée : XX kg × N → ~YY kg 1RM » (poids réel, distinct du 1RM estimé), rétroactive, H/F identique |
+| ft-v176 | programmes : repos par série (schéma Série/Reps/Repos éditable dans l'éditeur + appliqué au minuteur au chargement) — étape 1/2 (affichage) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
