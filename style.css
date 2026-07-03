@@ -709,8 +709,10 @@ html.ob-done #onboarding{display:none;}
 #root.a11y-lv .tbtn                { font-size: 14px !important; font-weight: 900 !important; }
 #root.a11y-lv .sets-hdr span       { font-size: 13px !important; }
 #root.a11y-lv .rbtn                { font-size: 16px !important; }
-#root.a11y-lv .home-row-ttl        { font-size: 16px !important; font-weight: 700 !important; }
-#root.a11y-lv .home-row-sub        { font-size: 13px !important; }
+#root.a11y-lv .home-row-ttl,
+#root.a11y-lv .coach-action-lbl    { font-size: 16px !important; font-weight: 700 !important; }
+#root.a11y-lv .home-row-sub,
+#root.a11y-lv .coach-action-sub    { font-size: 13px !important; }
 #root.a11y-lv .sbox .lbl           { font-size: 16px !important; }
 #root.a11y-lv .sbox .val           { font-size: 24px !important; }
 #root.a11y-lv .sbox .unit          { font-size: 15px !important; }
