@@ -261,12 +261,14 @@ function _renderSessDetailContent(){
   if(!_sessEdits||!el)return;
   el.innerHTML=(_sessEdits.exs||[]).map((ex,ei)=>{
     const done=ex.sets.filter(s=>s.done);
+    const maxRM=done.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
     return`<div class="card" style="margin-bottom:8px;padding:10px 12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${ex.note?'4':'8'}px">
         <div style="font-weight:700;font-size:14px">${ex.name}</div>
         <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
       </div>
       ${ex.note?`<div style="font-size:12px;color:var(--gold);font-style:italic;line-height:1.4;margin-bottom:8px;">💬 ${ex.note}</div>`:''}
+      ${maxRM>0?`<div style="font-size:13px;color:var(--t1);font-weight:700;margin-bottom:8px;">🎯 Meilleur 1RM potentiel : <span style="font-weight:800">${fmt(maxRM)} kg</span></div>`:''}
       ${ex.sets.map((s,si)=>!s.done?'':`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
         <span style="font-size:11px;color:var(--t3);min-width:14px">${si+1}</span>
         <span style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
@@ -278,7 +280,7 @@ function _renderSessDetailContent(){
                style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'reps',+this.value)">
         <span style="color:var(--t2);font-size:12px">reps</span>
-        ${s.kg&&s.reps?`<span style="font-size:11px;color:var(--t3);margin-left:2px">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
+        ${s.kg&&s.reps?`<span style="font-size:12px;color:var(--t1);font-weight:600;margin-left:2px" title="1RM potentiel estimé de cette série">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
         <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
       </div>`).join('')}
       ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série</div>':''}
