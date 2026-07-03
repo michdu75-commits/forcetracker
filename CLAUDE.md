@@ -467,6 +467,16 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Détail de séance — « Meilleur 1RM potentiel » visible + ~XX kg lisibles (✅ 2026-07-03, ft-v174)
+- **Demande** : après une séance terminée, le « 1RM max potentiel » (1RM estimé Brzycki) n'était plus visible clairement. Pendant la séance, la ligne exo affiche « · 1RM ~XX kg » (`maxRM`, log.js) ; dans le détail de séance passée (`#ov-sess-detail`), il ne restait que les `~XX kg` gris minuscules par série (`var(--t3)`, illisibles).
+- **Fix (100% affichage, `setup.js` `_renderSessDetailContent`)** — les deux, sans toucher aux données ni aux records :
+  - **Ligne résumé par exercice** : `maxRM = max(bz(kg,reps))` sur les séries `done` → `🎯 Meilleur 1RM potentiel : XX kg` sous le nom de l'exo (après la note si présente).
+  - **~XX kg par série** : rendus lisibles (avant : `font-size:11px;color:var(--t3)` gris minuscule).
+- **Couleurs (après itérations avec Michel)** : le rouge (`var(--red)`) mettait « du rouge partout » → finalement **texte pleine couleur neutre** `var(--t1)` (blanc en mode nuit / noir en mode jour, font-weight 700-800) pour un bon contraste sans surcharge. Testé mode jour ET nuit.
+- **Rappel vocabulaire** : le `~XX kg` par série = 1RM estimé de la série ; le RECORD dans Progrès (`S.prs[name].rm1`) = le meilleur de tous ces `~XX kg` = « 1RM max ». Même donnée, le record est juste le max.
+- Testé (Chromium, séance réaliste 5 + 6 séries, jour + nuit) : lignes 🎯 74.5 kg / 124.2 kg affichées, `~XX kg` lisibles, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-1rm-potentiel-detail`
+
 ### Migration « Press » → « Press Jambes 45° » (✅ 2026-07-03, ft-v173)
 - **Demande** : l'exo perso « Press » était en fait la presse à jambes 45°. Le **supprimer** et le **remplacer** par « Press Jambes 45° » (déjà dans EXLIB, groupe Jambes) **sans perdre les données** stockées sous « Press ».
 - **Migration one-time** dans `load()` (state.js, flag `ft4_pressmig1`), placée après `ft4_exmig2`, sur le **même modèle** que les migrations existantes :
@@ -719,7 +729,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v170 | diagramme muscles : bleu « indirect » rendu discret (gris-bleu doux, plus d'ombre portée) sur figurine + mini + légende |
 | ft-v171 | détail de séance unifié sur _mscScores (mini-bonhomme coloré) — muscles affichés aussi pour les exos machines/perso |
 | ft-v172 | étiquette carte historique : nom de la séance du programme (🗂️) si dispo, sinon muscle le plus travaillé (💪) |
-| ft-v173 | migration « Press » (exo perso) → « Press Jambes 45° » (EXLIB) — PR/séances/programmes/exos perso, garde-fou PR max, sans perte ← **actuel** |
+| ft-v173 | migration « Press » (exo perso) → « Press Jambes 45° » (EXLIB) — PR/séances/programmes/exos perso, garde-fou PR max, sans perte |
+| ft-v174 | détail de séance : ligne « 🎯 Meilleur 1RM potentiel : XX kg » par exo + ~XX kg par série rendus lisibles (couleur neutre pleine, contraste jour/nuit) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v173'; // migration « Press » → « Press Jambes 45° » (sans perte de données)
+const CACHE = 'ft-v174'; // détail séance : ligne « Meilleur 1RM potentiel » + ~XX kg par série lisibles
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
