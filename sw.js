@@ -1,4 +1,4 @@
-const CACHE = 'ft-v169'; // diagramme muscles : reconnaissance insensible aux accents + vocabulaire enrichi
+const CACHE = 'ft-v170'; // bleu indirect discret (figurine + légende) - moins pétant
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

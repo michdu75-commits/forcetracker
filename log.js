@@ -1090,7 +1090,7 @@ function _mscSVG_F({sc,ind}){
   Object.entries(_MG_F_SHAPES).forEach(([g,s])=>{
     const v=sc[g]||0,isI=ind[g]&&!v;
     let c=null,op='0.42';
-    if(v>=2){c='#FF2D55';op='0.50';}else if(v>=1){c='#FF9500';op='0.42';}else if(isI){c='#0A84FF';op='0.30';}
+    if(v>=2){c='#FF2D55';op='0.50';}else if(v>=1){c='#FF9500';op='0.42';}else if(isI){c='#8FB4D8';op='0.32';}
     if(!c)return;
     if(s.f)hlF+=`<g fill="${c}" opacity="${op}">${s.f}</g>`;
     if(s.b)hlB+=`<g fill="${c}" opacity="${op}">${s.b}</g>`;
@@ -1141,7 +1141,7 @@ function _mscSVG({sc,ind}){
     <linearGradient id="g-base" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C87868"/><stop offset="100%" stop-color="#7A3828"/></linearGradient>
     <linearGradient id="g-prim" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6868"/><stop offset="100%" stop-color="#C00020"/></linearGradient>
     <linearGradient id="g-sec"  x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFB040"/><stop offset="100%" stop-color="#C05500"/></linearGradient>
-    <linearGradient id="g-ind"  x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#60A8FF"/><stop offset="100%" stop-color="#0040CC"/></linearGradient>
+    <linearGradient id="g-ind"  x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#9DBBD6"/><stop offset="100%" stop-color="#6E8CA8"/></linearGradient>
     <filter id="f-sh" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="0.5" stdDeviation="0.8" flood-color="rgba(0,0,0,0.55)"/></filter>
   </defs>`;
   const ps={};
@@ -1150,7 +1150,7 @@ function _mscSVG({sc,ind}){
     let gid,sk,filt='';
     if(v>=2){gid='g-prim';sk='#880010';filt=' filter="url(#f-sh)"';}
     else if(v>=1){gid='g-sec';sk='#884400';filt=' filter="url(#f-sh)"';}
-    else if(isI){gid='g-ind';sk='#002888';filt=' filter="url(#f-sh)"';}
+    else if(isI){gid='g-ind';sk='#5B7C9E';filt=' opacity="0.5"';}
     else{gid='g-base';sk='#5A2818';}
     d.paths.forEach(id=>{ps[id]={gid,sk,filt,label:d.label};});
   });
@@ -1172,7 +1172,7 @@ function showMuscleMap(exs,cb){
   const li=document.getElementById('mm-list');
   li.innerHTML=(pri.length?`<div><span style="color:#FF2D55;font-weight:600">● Primaires : </span>${pri.join(', ')}</div>`:'')+
                (sec.length?`<div style="margin-top:3px"><span style="color:#FF9500;font-weight:600">● Secondaires : </span>${sec.join(', ')}</div>`:'')+
-               (indir.length?`<div style="margin-top:3px"><span style="color:#007AFF;font-weight:600">● Indirects : </span>${indir.join(', ')}</div>`:'');
+               (indir.length?`<div style="margin-top:3px"><span style="color:#8FB4D8;font-weight:600">● Indirects : </span>${indir.join(', ')}</div>`:'');
   _mmCb=cb||null;
   const mmBtn=document.getElementById('mm-btn');if(mmBtn)mmBtn.textContent=cb?'Continuer →':'Fermer';
   document.getElementById('ov-mm').classList.add('open');
