@@ -769,7 +769,7 @@ function _updateCoachMorphoBtn(){
   if(S.premium){
     w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;" onclick="openMorphoAnalysis()">📸 Analyser ma morphologie (3 photos)</button>`;
   }else{
-    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;opacity:.45;cursor:default;" onclick="showPremiumWall()">🔒 Analyser ma morphologie (3 photos) <span style="font-size:11px;background:rgba(255,184,0,.15);color:#FFB800;border-radius:6px;padding:1px 6px;margin-left:4px;">Premium</span></button>`;
+    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;opacity:.45;cursor:default;" onclick="showPremiumWall()">🔒 Analyser ma morphologie (3 photos) <span style="font-size:11px;background:rgba(255,184,0,.15);color:var(--gold);border-radius:6px;padding:1px 6px;margin-left:4px;">Premium</span></button>`;
   }
 }
 

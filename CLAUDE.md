@@ -467,6 +467,20 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Mode jour — fix lisibilité + blanc adouci + anniversaire archivé (✅ 2026-07-03, ft-v181)
+- **Blanc adouci** (Michel : « le blanc pète les yeux, ça fait mal au crâne ») : le light-mode utilisait `--bg2: #FFFFFF` (blanc pur, glare). Adouci → `--bg2: #F6F6F9` (blanc cassé), `--bg: #F2F2F7→#E7E8EC` (page un peu plus soutenue pour que les cartes ressortent), `--bg3: #E8E8EE→#DCDDE4`, `--sep: #D0D0DC→#CBCCD6`. Moins de glare, plus reposant. Validé par Michel (« impec »).
+- **Anniversaire Eline archivé** (date passée) : appel `checkBirthdayDedication()` **commenté** dans `app.js` (~ligne 1063). La fonction, `showBirthdayScreen`, l'overlay `#ov-bday` et les keyframes CSS sont **conservés** (dormants) — réactivable en décommentant l'appel. « Laisser ça dans un coin ».
+- (voir ci-dessous le fix couleurs jaune en dur, même version)
+
+### Fix mode jour — couleurs jaune en dur illisibles (✅ 2026-07-03, ft-v181)
+- **Bug** (signalé par Michel : « le mode jour c'est la cata ») : le bouton **« 🔄 Restaurer mon compte depuis le cloud »** (Profil, index.html) avait `color:#FFD600` **écrit en dur** → jaune vif sur fond jaune pâle = **illisible en mode jour** (le hex ne s'adapte pas au thème, contrairement à `var(--gold)` qui vaut `#EAB308` en nuit / `#CC8800` en jour).
+- **Fix** : `#FFD600` → `var(--gold)` (+ id `#btn-restore-cloud`). Idem pour le petit badge « Premium » du bouton morpho (setup.js, `#FFB800` → `var(--gold)`).
+- **Vérifié OK** (jaunes en dur restants) : les `#ffd700` de l'**écran anniversaire Eline** (`#ov-bday`) sont sur un fond **plein écran toujours noir** → pas de souci en mode jour, laissés tels quels.
+- **Audit mode jour** (Chromium, light-mode) : Accueil, Progrès, Nutrition, Coach, Séance, exercice actif = lisibles. Reste le **bandeau haut `.topbar` qui reste sombre** en mode jour (chantier séparé si Michel le souhaite).
+- **⚠️ Règle projet** : ne **jamais** écrire une couleur de texte en hex « en dur » sur un fond adaptatif — utiliser `var(--gold/--red/--t1…)` pour que ça suive le thème jour/nuit.
+- Testé (Chromium, jour + nuit) : bouton Restaurer lisible dans les deux modes, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-fix-restaurer-jour`
+
 ### Uniformisation visuelle — tuiles étape 2 : Séance Sommeil + Cardio (✅ 2026-07-03, ft-v180)
 - **Étape 2** du chantier uniformisation cartes : les cartes **Sommeil** (`renderLogSleep`, tracking.js) et **Cardio** (`renderCardioBlock`, app.js) de l'écran Séance adoptent le **gabarit** de l'étape 1.
 - **Fix** : leurs icône/titre/sous-titre étaient en **style inline** → ne suivaient ni le gabarit ni le mode agrandi. Rebranchés sur les **classes** `.home-row-ic` (40px), `.home-row-ttl` (15/700), `.home-row-sub` (12/t3) → cohérence auto en mode normal ET agrandi (a11y-lv).
@@ -806,7 +820,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v177 | éditeur programme : reps + nombre de séries éditables + vignette exercice à gauche (photo locale > image muscle réaliste devinée du nom > figurine) |
 | ft-v178 | bouton central « + » docké dans la barre (fini le FAB flottant `#fab-session` qui recouvrait les séries + souci swipe) — mot « Séance » retiré |
 | ft-v179 | uniformisation visuelle étape 1 : gabarit de tuile unique Accueil + Coach (icône 40px, titre 15/700, sous-titre 12/t3), cohérent en mode normal + agrandi (a11y-lv) |
-| ft-v180 | uniformisation visuelle étape 2 : cartes Séance Sommeil + Cardio rebranchées sur le gabarit (classes .home-row-*) — cohérent normal + agrandi ← **actuel** |
+| ft-v180 | uniformisation visuelle étape 2 : cartes Séance Sommeil + Cardio rebranchées sur le gabarit (classes .home-row-*) — cohérent normal + agrandi |
+| ft-v181 | mode jour : fix « Restaurer »/badge Premium (jaune en dur → var(--gold)) + blanc adouci (blanc cassé, moins de glare) + anniversaire Eline archivé ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

@@ -570,7 +570,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       </div>
     </div>
     <!-- BOUTON RESTAURER — visible sans admin, pour récupérer ses données depuis le cloud -->
-    <button class="btn" onclick="openRestoreAccount()" style="width:100%;background:rgba(255,214,0,.10);border:1.5px solid rgba(255,214,0,.35);color:#FFD600;font-size:14px;font-weight:700;padding:14px;border-radius:14px;touch-action:manipulation;">🔄 Restaurer mon compte depuis le cloud</button>
+    <button class="btn" id="btn-restore-cloud" onclick="openRestoreAccount()" style="width:100%;background:rgba(255,214,0,.10);border:1.5px solid rgba(255,214,0,.35);color:var(--gold);font-size:14px;font-weight:700;padding:14px;border-radius:14px;touch-action:manipulation;">🔄 Restaurer mon compte depuis le cloud</button>
 
     <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
       <div class="fg">
