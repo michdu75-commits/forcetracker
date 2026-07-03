@@ -467,6 +467,13 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Uniformisation visuelle — étape 3 : boxes Nutrition (✅ 2026-07-03, ft-v184)
+- **Étape 3** du chantier cartes/tuiles : les boxes **BMR / TDEE / Delta** (Nutrition, index.html) sont alignées sur les boxes **Actuel / Record / Progrès** (setup.js `renderChart`).
+- **Fix** : ajout `border:1px solid var(--sep)` + label `10px→11px` (letter-spacing .08em) + padding `8px→9px 4px` → boxes identiques d'un écran à l'autre. La box SURPLUS garde son tint rouge (comme la box Progrès garde son tint).
+- **Note** : à ce stade Nutrition/Progrès sont déjà très cohérents ; les écarts restants sont subtils. Décision Michel : continuer soit en passes discrètes, soit en pointant des écrans précis.
+- Testé (Chromium, jour + nuit) : boxes Nutrition avec bordure, cohérentes avec Progrès, 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-unif-nutrition`
+
 ### Mode jour — toast sombre + bouton « Restaurer » bleu (✅ 2026-07-03, ft-v183)
 - **Toast `.info`** (suite ft-v182, Michel : « pas assez foncé ») : la pastille `var(--bg3)` se fondait dans le fond clair. Passée en **pastille sombre fixe** `#23252D` + texte `#F2F3F5` + bordure `rgba(255,255,255,.14)` → ressort nettement dans **les deux modes** (comme une vraie notification).
 - **Bouton « Restaurer mon compte »** (`#btn-restore-cloud`, index.html) : le doré (`var(--gold)`) jugé « pas beau » → passé au **bleu** (`background:rgba(91,168,255,.10)`, `border:rgba(91,168,255,.38)`, `color:var(--blue)`). S'adapte au thème : bleu foncé `#1565C0` en jour / bleu clair `#5BA8FF` en nuit. Colle au « cloud ».
@@ -835,7 +842,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v180 | uniformisation visuelle étape 2 : cartes Séance Sommeil + Cardio rebranchées sur le gabarit (classes .home-row-*) — cohérent normal + agrandi |
 | ft-v181 | mode jour : fix « Restaurer »/badge Premium (jaune en dur → var(--gold)) + blanc adouci (blanc cassé, moins de glare) + anniversaire Eline archivé |
 | ft-v182 | fix mode jour : toast .info (texte blanc sur gris clair → var(--t1) lisible) |
-| ft-v183 | mode jour : toast .info en pastille sombre (ressort mieux) + bouton « Restaurer » jaune → bleu (var(--blue), OK jour/nuit) ← **actuel** |
+| ft-v183 | mode jour : toast .info en pastille sombre (ressort mieux) + bouton « Restaurer » jaune → bleu (var(--blue), OK jour/nuit) |
+| ft-v184 | uniformisation étape 3 : boxes Nutrition BMR/TDEE/Delta alignées sur les boxes Progrès (bordure + label 11px) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v183'; // mode jour : toast .info pastille sombre (ressort mieux) + bouton « Restaurer » jaune → bleu
+const CACHE = 'ft-v184'; // uniformisation : boxes Nutrition BMR/TDEE/Delta alignées sur les boxes Progrès (bordure + label)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
