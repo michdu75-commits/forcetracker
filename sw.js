@@ -1,4 +1,4 @@
-const CACHE = 'ft-v176'; // programmes : repos par série (schéma Série/Reps/Repos éditable + appliqué au minuteur)
+const CACHE = 'ft-v177'; // éditeur programme : reps + nombre de séries éditables (en plus du repos)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
