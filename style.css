@@ -32,10 +32,10 @@
   --font: 'Manrope', -apple-system, sans-serif;
   --font-cond: 'Space Grotesk', sans-serif;
 }
-/* LIGHT MODE */
+/* LIGHT MODE — adouci (blanc cassé, moins de glare) */
 #root.light-mode, html.light-mode {
-  --bg: #F2F2F7; --bg2: #FFFFFF; --bg3: #E8E8EE;
-  --sep: #D0D0DC; --t1: #12121E; --t2: #4A4A6A; --t3: #8888AA;
+  --bg: #E7E8EC; --bg2: #F6F6F9; --bg3: #DCDDE4;
+  --sep: #CBCCD6; --t1: #12121E; --t2: #4A4A6A; --t3: #8888AA;
   --red: #D91843; --green: #00A856; --blue: #1565C0;
   --gold: #CC8800; --orange: #CC5200;
 }

@@ -1060,7 +1060,7 @@ document.addEventListener('input',e=>{
 _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
-checkBirthdayDedication(); // dédicace anniversaire Eline — 2 juillet
+// checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
 initCoachInput();
 initOnboarding();
 // ─── DÉDICACE ANNIVERSAIRE — Eline (2 juillet) ───────────────
