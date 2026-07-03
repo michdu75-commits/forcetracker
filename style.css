@@ -139,10 +139,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .ft-press{transition:transform .18s cubic-bezier(.22,.61,.36,1),box-shadow .25s,background .25s,border-color .25s,color .2s}
 /* HOME ROW */
 .home-row{display:flex;align-items:center;gap:13px;padding:15px 16px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
-.home-row-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none;}
+.home-row-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none;}
 .home-row-cnt{flex:1;}
-.home-row-ttl{font-size:14px;font-weight:600;color:#E8EAEE;}
-.home-row-sub{font-size:11.5px;color:var(--t3);margin-top:1px;}
+.home-row-ttl{font-size:15px;font-weight:700;color:var(--t1);}
+.home-row-sub{font-size:12px;color:var(--t3);margin-top:2px;line-height:1.4;}
 .home-row-chev{flex:none;color:var(--t3);}
 .imp-spinner{width:36px;height:36px;border:3px solid var(--sep);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -529,9 +529,9 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .coach-action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .coach-action-card{background:var(--bg2);border-radius:16px;padding:16px 14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);border:none;cursor:pointer;text-align:left;font-family:var(--font);display:flex;flex-direction:column;gap:8px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:background .15s;}
 .coach-action-card:active{background:var(--bg3);}
-.coach-action-ic{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.coach-action-lbl{font-size:13px;font-weight:700;color:var(--t1);line-height:1.3;}
-.coach-action-sub{font-size:11px;color:var(--t3);font-weight:500;line-height:1.4;}
+.coach-action-ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.coach-action-lbl{font-size:15px;font-weight:700;color:var(--t1);line-height:1.3;}
+.coach-action-sub{font-size:12px;color:var(--t3);font-weight:500;line-height:1.4;}
 .coach-wall{position:absolute;inset:0;z-index:15;display:none;flex-direction:column;align-items:center;justify-content:flex-start;background:var(--bg);padding:20px 20px 100px;overflow-y:auto;gap:12px;}
 .coach-wall-icon{font-size:52px;line-height:1;margin-top:8px;}
 .coach-wall-title{font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FFB800,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-align:center;}
