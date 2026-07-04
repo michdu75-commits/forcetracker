@@ -416,6 +416,22 @@ function renderNutrition(){try{
   document.getElementById('m-prot').textContent=macros.prot_g;
   document.getElementById('m-carbs').textContent=macros.carbs_g;
   document.getElementById('m-fat').textContent=macros.fat_g;
+  // Barres macros = part des calories (prot/glucides 4 kcal/g, lipides 9 kcal/g)
+  (function(){
+    const kP=(macros.prot_g||0)*4, kC=(macros.carbs_g||0)*4, kF=(macros.fat_g||0)*9;
+    const tot=kP+kC+kF||1;
+    const set=(barId,pctId,kcal)=>{
+      const pct=Math.round(kcal/tot*100);
+      const bar=document.getElementById(barId), lbl=document.getElementById(pctId);
+      if(bar)bar.style.width=pct+'%';
+      if(lbl)lbl.textContent='· '+pct+'%';
+    };
+    set('m-prot-bar','m-prot-pct',kP);
+    set('m-carbs-bar','m-carbs-pct',kC);
+    set('m-fat-bar','m-fat-pct',kF);
+    const hb=document.getElementById('nu-hydra-bar');
+    if(hb)hb.style.width=Math.min(100,Math.round((parseFloat(hydra)||0)/3.5*100))+'%';
+  })();
 
   // Cycle menstruel banner
   const nuCycleBanner=document.getElementById('nu-cycle-banner');
