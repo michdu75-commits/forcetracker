@@ -467,6 +467,10 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Icônes trait fin (suite) — boutons bascule + inventaire emojis (✅ 2026-07-04, ft-v193)
+- **Suite du ft-v192**. Converti : boutons **⚡ Charge / 🔄 Décharge** (Nutrition, éclair/flèches-cycle), **⚡ Charge (5-7j) / ✅ Maintenance** (Créatine, éclair/coche), **💾 Enregistrer le profil** (disquette). `stroke=currentColor` (suit la couleur du bouton, actif/inactif). Testé Nutrition jour+nuit, 0 erreur.
+- **⚠️ Inventaire complet fait** : il reste **~100 emojis** dans l'app, quasi tous **enfouis** dans modales/flux (onboarding, imports prog/journal, morpho, premium walls, drawer legacy `#drawer`, coach premium bullets, calculateur plaques…). **Décision (avec Michel)** : NE PAS tout convertir (gros balayage risqué, faible visibilité). **Gardés volontairement** : visages d'humeur du check-in (😴😐😊⚡ — expressifs), emojis de noms de repas (🌅🍎🌙 — friendly), et le fond d'emojis des flux profonds. Ne convertir au cas par cas que si un emoji « titre/bouton » visible gêne.
+
 ### Icônes de titres de section → trait fin (✅ 2026-07-04, ft-v192)
 - **Demande Michel** : « on finit les petites icônes » — remplacer les emojis des titres de section par des icônes trait fin (cohérence globale, cf. point n°1 Claude Design).
 - **Converti (index.html, emoji → SVG outline `stroke=currentColor`/couleur thème)** :
@@ -934,7 +938,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v189 | Promotion restyle clone→prod : Nutrition (anneau + barres macros), Progrès (stats plates + ⭐PR), Objectif (icônes trait fin + fix « Rééquilibrage ») |
 | ft-v190 | Accueil : 4 tuiles stats réalignées (icône à gauche, chiffre à droite, label dessous aligné) |
 | ft-v191 | fix maj iOS : `register(sw.js,{updateViaCache:'none'})` — l'app n'est plus jamais collée à l'ancienne version |
-| ft-v192 | icônes trait fin : titres de section (Profil/Nutrition/Admin/Install) + Nutrition (Hydra/Séance/Total) + Suppléments (Créatine/Whey) + import journal ← **actuel** |
+| ft-v192 | icônes trait fin : titres de section (Profil/Nutrition/Admin/Install) + Nutrition (Hydra/Séance/Total) + Suppléments (Créatine/Whey) + import journal |
+| ft-v193 | icônes trait fin (suite) : boutons bascule Charge/Décharge + Charge/Maintenance créatine + Enregistrer le profil (reste ~100 emojis enfouis gardés volontairement) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

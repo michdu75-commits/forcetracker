@@ -1,4 +1,4 @@
-const CACHE = 'ft-v192'; // icônes trait fin : titres de section (Objectif/Composition/Santé/Morpho/Cycle/Accessibilité/IA/Admin/Install) + Nutrition (Hydra/Séance/Total) + Suppléments (Créatine/Whey) + import journal
+const CACHE = 'ft-v193'; // icônes trait fin (suite) : boutons bascule Charge/Décharge (Nutrition) + Charge/Maintenance (Créatine) + Enregistrer le profil
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
