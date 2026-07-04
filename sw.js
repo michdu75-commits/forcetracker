@@ -1,4 +1,4 @@
-const CACHE = 'ft-v194'; // Profil : champ Discipline (Muscu/Bodybuilding/Force athlé/Haltéro) → nourrit le Coach IA
+const CACHE = 'ft-v195'; // Profil réorganisé en sections repliables (accordéon) + ordre logique — anti « usine à gaz »
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

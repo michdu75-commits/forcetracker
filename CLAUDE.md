@@ -467,6 +467,17 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Profil en accordéon — sections repliables + ordre logique (✅ 2026-07-04, ft-v195)
+- **Demande Michel** : « le profil va devenir une usine à gaz ». Réorganisation en **sections repliables** (`<details class="acc">`) avant d'ajouter le mode compétition.
+- **8 sections** (chacune un `<details>` indépendant, une seule ouverte au besoin) dans l'**ordre logique** : Identité *(ouverte par défaut)* · Objectif · Discipline · Composition corporelle · Morphologie · Santé · Cycle menstruel *(femmes)* · Accessibilité.
+- **Principe validé avec Michel** : l'accordéon résout le « trop long » (tout replié) → **ne PAS fusionner** les sections, garder chaque concern distinct et bien nommé (plus facile à retrouver). Réorganisation = **réordonner les blocs**, pas fusionner.
+- **CSS** (`style.css`) : `details.acc` (carte), `summary.acc-h` (titre + chevron rotatif via `::after`), `.acc-inner` (contenu), override `#root.a11y-lv`. Marqueur natif masqué.
+- **Cycle menstruel** : l'ancien `#cycle-section` (div `display:none/flex` piloté par le sexe) devient `<details id="cycle-acc">` ; `setGender` (setup.js) ajusté (`display=''`/`'none'`, plus `'flex'`).
+- **Bouton « Enregistrer le profil »** : hors accordéons, sticky en bas, toujours visible.
+- **Réorganisation faite par script** (déplacement des blocs `<details>`, zéro recopie manuelle) — balance vérifiée (8/8/8).
+- Testé (Chromium, jour + nuit) : ordre correct, Identité ouverte, cycle masqué H / affiché F, `setGoal`/`setDiscipline`/`saveProfile` OK, 0 erreur JS. Le mode compétition se logera dans une section dédiée près de Discipline.
+- **Rollback** : `git reset --hard origin/restore-2026-07-04-clone-restyle-ok`
+
 ### Profil — champ « Discipline » pratiquée (✅ 2026-07-04, ft-v194)
 - **Demande Michel** : donnée manquante — savoir si l'utilisateur fait de la muscu / bodybuilding / force athlé / haltéro, pour adapter le Coach IA (et plus tard morpho + nutrition).
 - **`S.discipline`** (ft4_discipline, défaut `muscu`) — persisté (`state.js` load/persist) + envoyé au cloud (`_cloudSync` payload) + restauré (`_applyRestoreData`).
@@ -948,7 +959,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v191 | fix maj iOS : `register(sw.js,{updateViaCache:'none'})` — l'app n'est plus jamais collée à l'ancienne version |
 | ft-v192 | icônes trait fin : titres de section (Profil/Nutrition/Admin/Install) + Nutrition (Hydra/Séance/Total) + Suppléments (Créatine/Whey) + import journal |
 | ft-v193 | icônes trait fin (suite) : boutons bascule Charge/Décharge + Charge/Maintenance créatine + Enregistrer le profil (reste ~100 emojis enfouis gardés volontairement) |
-| ft-v194 | Profil : champ « Discipline » (Muscu/Bodybuilding/Force athlé/Haltéro) → injecté dans le Coach IA (cloud persistance = 1 ligne backend à déployer) ← **actuel** |
+| ft-v194 | Profil : champ « Discipline » (Muscu/Bodybuilding/Force athlé/Haltéro) → injecté dans le Coach IA (cloud persistance = 1 ligne backend à déployer) |
+| ft-v195 | Profil réorganisé en accordéon (8 sections repliables, ordre logique, Identité ouverte) — anti « usine à gaz », prêt pour le mode compétition ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

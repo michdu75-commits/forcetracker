@@ -410,8 +410,8 @@ function setGender(g){
   }
   const gtH=document.getElementById('gt-h');if(gtH)gtH.classList.toggle('active',g==='H');
   const gtF=document.getElementById('gt-f');if(gtF)gtF.classList.toggle('active',g==='F');
-  const cs=document.getElementById('cycle-section');
-  if(cs)cs.style.display=g==='F'?'flex':'none';
+  const cs=document.getElementById('cycle-acc');
+  if(cs)cs.style.display=g==='F'?'':'none';
   const hf=document.getElementById('hip-fg');
   if(hf)hf.style.display=g==='F'?'':'none';
   renderBFCard();
