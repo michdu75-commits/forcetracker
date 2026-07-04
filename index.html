@@ -13,7 +13,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/png" href="logo.png">
 <link rel="apple-touch-icon" href="logo.png">
-<title>Force Tracker v2.8</title>
+<title>Force Tracker</title>
 <script>
 // Globals cross-fichiers : initialisés AVANT tout <script src> pour éviter ReferenceError sur iOS Safari
 window._adminMode=false;
@@ -296,7 +296,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div class="drawer-item" onclick="openDrawerContent('help')"><span class="di-ic">❓</span><span>Aide détaillée</span><span class="di-arr">▶</span></div>
     <div class="drawer-item" style="border-bottom:none;" onclick="openDrawerContent('about')"><span class="di-ic">ℹ️</span><span>À propos</span><span class="di-arr">▶</span></div>
   </div>
-  <div style="padding:14px 20px;font-size:11px;color:var(--t3);text-align:center;border-top:1px solid var(--sep);">Force Tracker v3.5 · michdu75@gmail.com</div>
+  <div style="padding:14px 20px;font-size:11px;color:var(--t3);text-align:center;border-top:1px solid var(--sep);">Force Tracker <span class="app-ver">…</span> · michdu75@gmail.com</div>
 </div>
 <!-- DRAWER CONTENT OVERLAY -->
 <div class="overlay" id="ov-drawer-cnt" onclick="if(event.target===this)closeDrawerContent()">
@@ -1548,7 +1548,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     </div>
     <!-- FOOTER -->
     <div style="text-align:center;padding:16px 0 8px;font-size:12px;color:var(--t3);line-height:1.8;font-weight:500;">
-      Force Tracker v2.8 · 2026<br>
+      Force Tracker <span class="app-ver">…</span> · 2026<br>
       <a href="mailto:michdu75@gmail.com" style="color:var(--t3);text-decoration:none;">michdu75@gmail.com</a>
     </div>
   </div>

@@ -887,6 +887,8 @@ function openMenuDrawer(){
   if(_mpb)_mpb.style.display=S.premium?'none':'flex';
   // Points rouges « nouveauté » sur les lignes concernées (ex. carte Profil) → montre OÙ est le neuf
   if(typeof _updateMenuDots==='function')_updateMenuDots();
+  // Version affichée = vrai build tournant (jamais périmé)
+  if(typeof _setAppVersionEls==='function')_setAppVersionEls();
 }
 function closeMenuDrawer(){
   document.getElementById('menu-drawer').classList.remove('open');
