@@ -1,4 +1,4 @@
-const CACHE = 'ft-v189'; // Promotion restyle clone→prod : Nutrition (anneau+barres macros), Progrès (stats plates+⭐PR), Objectif (icônes trait fin)
+const CACHE = 'ft-v190'; // Accueil : 4 tuiles stats → icône à gauche, chiffre à droite, label dessous (aligné)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
