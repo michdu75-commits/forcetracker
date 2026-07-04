@@ -120,6 +120,7 @@ const NEW_FEATURES=[
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
   {id:'wkt-pause',   screen:'log',      desc:'Mettre la séance en pause (le chrono se fige)'},
   {id:'wkt-vider',   screen:'log',      desc:'Vider la séance si mauvais programme chargé'},
+  {id:'custom-ex-photo',screen:'log',   desc:'Ajouter une photo à un exercice que tu crées (📷)'},
   // Progrès
   {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
   {id:'prog-badges', screen:'progress', desc:'Onglet Badges (🏅)'},

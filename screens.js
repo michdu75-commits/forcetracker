@@ -172,6 +172,7 @@ const _HELP_DATA={
       {i:'📸',t:'Bouton 📸 pour importer un programme depuis une photo, un fichier Word ou Excel — l\'IA le convertit en séance automatiquement.'},
       {i:'⏸️',t:'Bouton "Pause" en haut : fige le chrono de durée si tu dois t\'interrompre (appel, pause…). Le temps en pause n\'est pas compté dans la durée de la séance. Appuie sur "Reprendre" pour relancer.'},
       {i:'🗑️',t:'Bouton "Vider" : retire tous les exercices d\'un coup si tu as chargé le mauvais programme. La séance reste ouverte et ton historique n\'est pas touché. (Le "✕" à côté annule complètement la séance.)'},
+      {i:'📷',t:'Créer un exercice avec photo : dans "+ Créer un exercice", tu peux ajouter une photo de la machine (bouton 📷). Elle apparaît sur l\'exercice. Pour un exercice perso déjà créé, tape le ⋯ → "Ajouter/Changer la photo". Idéal pour reconnaître tes machines.'},
     ],
     female:[]
   },

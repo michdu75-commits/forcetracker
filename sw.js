@@ -1,4 +1,4 @@
-const CACHE = 'ft-v205'; // Bouton Partager/Exporter sous chaque réponse du Coach IA (Web Share API + fallback presse-papier)
+const CACHE = 'ft-v206'; // Exercice perso avec PHOTO : ajouter une photo de machine à un exercice créé (vignette partout, sync cloud)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

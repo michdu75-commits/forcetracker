@@ -467,6 +467,15 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Exercice perso avec photo (✅ 2026-07-04, ft-v206)
+- **Demande Michel** : pouvoir **ajouter une photo** quand on crée un exercice perso (ex. une machine de sa salle absente de la bibliothèque) — pour la reconnaître d'un coup d'œil. Contexte : discussion sur le fait qu'une machine spécifique mérite son propre exercice (stats propres) → autant y mettre sa photo.
+- **Modèle** : champ optionnel `img` (data URI JPEG) sur l'objet exercice perso (`S.customExercises[].img`). **Sync cloud automatique** (customExercises est déjà dans le payload `saveProfile` + guard `_pa_`) — **aucune modif backend**.
+- **Poids maîtrisé** : `_resizeImgFile(file,cb)` (log.js) réduit toute image à **max 420px, JPEG 0.72** via canvas → ~10-15 Ko (testé : logo → 11 Ko). Évite de saturer localStorage/cloud.
+- **Création** : formulaire « + Créer un exercice » (index.html) → bouton **📷 Ajouter une photo** (`#cex-img-input` file, `onCexImgSelected` → `_cexImg` → aperçu `_renderCexImgPreview`). `_doCreateCustomEx` enregistre `img:_cexImg`. Reset dans show/hideCustomExForm.
+- **Édition après coup** : menu ⋯ d'un exercice en séance (`openExMenu`) → « Ajouter/Changer la photo » **uniquement pour les exos perso** (`isCustom`) → `changeCustomExImg(name)` (input dynamique → resize → `c.img` → persist → renderExBlocks).
+- **Affichage unifié** : helper **`_exImg(name)`** = `EX_YT[name].img` sinon photo perso. Utilisé dans le bloc séance (vignette 48px + `toggleExGif` plein), `_progExThumb` (éditeur programme), et miniature 30px dans le sélecteur (`_exPickRow`).
+- Testé (Chromium) : resize→JPEG 11 Ko, création avec img, vignette bloc + picker + prog, ⋯ « Changer la photo », 0 erreur JS. Red dot `custom-ex-photo` (log) + aide contextuelle Séance + Aide détaillée. sw.js bump ft-v206.
+
 ### Pause de séance — chrono figé (✅ 2026-07-04, ft-v203)
 - **Demande Michel** : « le fameux chrono » — dès qu'on démarre une séance le chrono tourne ; si on s'interrompt (appel, pause…) sans « Terminer », le compteur continue et gonfle la durée. Il voulait pouvoir **mettre la séance en pause**.
 - **Modèle** (sur `S.wkt`, persisté `ft4_wkt`) : `pausedAt` (timestamp de la pause en cours ou null) + `pausedTotal` (ms de pauses cumulées). **Aucune modif backend** (voyage dans `S.wkt` puis effacé à la fin).
@@ -1016,7 +1025,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v202 | bouton « Vider » dans l'en-tête séance (`clearAllEx`) : retire tous les exos mais garde la séance ouverte (mauvais programme chargé) — distinct de ✕ Annuler |
 | ft-v203 | pause de séance : bouton Pause/Reprendre (`toggleWktPause`) fige le chrono de durée ; le temps en pause est exclu de la durée finale (`_wktElapsedMs`) |
 | ft-v204 | point rouge « nouveauté » INLINE dans le menu-drawer : sur la ligne précise (`anchor`, ex. carte Profil) → l'utilisateur voit OÙ est le neuf, pas juste sur l'onglet Menu |
-| ft-v205 | bouton Partager/Exporter sous chaque réponse du Coach IA (`shareCoachReply`) : feuille de partage native (Web Share API) + fallback presse-papier, markdown nettoyé ← **actuel** |
+| ft-v205 | bouton Partager/Exporter sous chaque réponse du Coach IA (`shareCoachReply`) : feuille de partage native (Web Share API) + fallback presse-papier, markdown nettoyé |
+| ft-v206 | exercice perso avec PHOTO (`_cexImg`/`changeCustomExImg`/`_exImg`) : ajouter une photo de machine à un exercice créé, vignette partout (bloc, picker, éditeur prog), sync cloud auto ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
