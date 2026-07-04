@@ -200,6 +200,30 @@ Pouvoir **glisser horizontalement** (swipe gauche/droite) pour passer d'un ongle
 
 # 💡 PROJETS À EXPLORER
 
+## 🎯 Exercices « ancre » vs « accessoire » (à explorer)
+
+**Origine (méthode Michel) :** Michel structure ses séances avec **1 polyarticulaire + 1 isolation** sur le muscle visé, **+ 3 exercices complémentaires** qui n'ont pas forcément à voir avec le groupe du jour — volontairement, **pour la nouveauté** (garder le cerveau stimulé, éviter la lassitude / « j'ai la flemme, c'est toujours pareil »). **Contrepartie assumée :** il ne se « spécialise » pas et ne performe pas sur ces mouvements qui tournent.
+
+**Constat :** beaucoup de pratiquants **font tourner leurs accessoires** (variété, motivation, adhérence). Résultat : la **courbe de progression** de ces exos est vide/en dents de scie (normal, ils changent) — alors que le suivi PR/1RM n'a de sens que sur les mouvements **répétés** (les « ancres »).
+
+**Idée :** permettre de **marquer un exercice comme :**
+- **🎯 Ancre** = mouvement suivi → on cherche la **surcharge progressive**, la courbe et les PRs comptent (ex. le polyarticulaire lourd du jour).
+- **🔄 Accessoire** = juste **loggé** → compte pour le **volume** et le **diagramme des muscles**, mais **pas de pression PR** (pas de « faux décrochage » quand il change).
+
+**Bénéfices :**
+- Réconcilie les deux styles : progression **là où on la veut**, variété **partout ailleurs**, sans polluer les stats.
+- L'onglet **Progrès** met en avant les **ancres** (courbes propres) ; les accessoires restent dans le volume/muscles sans encombrer.
+- Colle à l'app existante : le **volume** et la **carte des muscles** ne dépendent déjà pas de la progression d'un exo précis.
+
+**Pistes de mise en œuvre (léger) :**
+- Un simple **drapeau** par exercice (`anchor: true/false`) — réglable au tap (ex. une petite étoile/épingle sur le bloc exo, ou dans le menu ⋯).
+- Par défaut : rien n'est « ancre » → aucun changement pour l'existant. L'utilisateur épingle ses 1-2 ancres.
+- Optionnel : le **Coach IA** pourrait dire « tu tournes beaucoup, pense à garder 1-2 ancres pour progresser » (info, pas leçon).
+
+**À NE PAS faire :** imposer la distinction ou compliquer la saisie. Ça doit rester **invisible** pour qui s'en fiche, et **utile** pour qui veut suivre proprement.
+
+---
+
 ## 🤖 Coach IA — qualité, engagement & personnalité (à explorer)
 
 Objectif : augmenter la qualité **sans 2ème IA** (garder une seule IA, mieux la nourrir) et rendre le coach addictif.
