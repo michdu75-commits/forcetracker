@@ -126,6 +126,8 @@ const NEW_FEATURES=[
   {id:'coach-morpho',screen:'coach',    desc:'Analyse morphologie 3 photos (📸 Premium)'},
   // Profil (setup)
   {id:'morpho-setup',screen:'setup',    desc:'Section morphologie dans Profil'},
+  {id:'discipline',  screen:'setup',    desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
+  {id:'profil-accordion',screen:'setup',desc:'Profil réorganisé en sections repliables'},
 ];
 
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────

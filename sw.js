@@ -1,4 +1,4 @@
-const CACHE = 'ft-v196'; // Profil : toast « Profil enregistré ✅ » à la sauvegarde (confirmation claire) + fix icône bouton
+const CACHE = 'ft-v197'; // Point rouge « nouveauté » sur Menu pour la Discipline + Profil réorganisé (NEW_FEATURES)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
