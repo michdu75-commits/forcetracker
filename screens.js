@@ -263,7 +263,8 @@ function _initPullToDismiss(){
 // ─── HOME ────────────────────────────────────────────────────
 function _renderHomeHdr(){
   const el=document.getElementById('home-hdr');if(!el)return;
-  el.innerHTML='<div style="padding:6px 14px 10px;font-size:16px;font-weight:600;color:var(--t1);">'+(S.name?'Bonjour '+S.name:'Bonjour')+'</div>';
+  // « Bonjour + prénom » retiré (demande Michel) — l'écran commence direct sur « CE MOIS »
+  el.innerHTML='';
 }
 
 function _renderHomeHero(){
