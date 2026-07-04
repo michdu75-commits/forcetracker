@@ -1,4 +1,4 @@
-const CACHE = 'ft-v204'; // Point rouge « nouveauté » INLINE dans le menu : sur la ligne précise (carte Profil) → on sait OÙ est le neuf
+const CACHE = 'ft-v205'; // Bouton Partager/Exporter sous chaque réponse du Coach IA (Web Share API + fallback presse-papier)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

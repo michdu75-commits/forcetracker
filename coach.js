@@ -261,11 +261,52 @@ function renderCoachMsg(role, text) {
     if (!div.querySelector('p') && !div.querySelector('ul')) {
       div.innerHTML = '<p>' + div.innerHTML + '</p>';
     }
+    // Bouton Partager/Exporter — sauf sur un message d'erreur
+    if (!/^Erreur\s*:/.test(text)) {
+      div.dataset.raw = text;
+      const foot = document.createElement('div');
+      foot.className = 'coach-msg-foot';
+      foot.innerHTML = '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>';
+      div.appendChild(foot);
+    }
   } else {
     div.textContent = text;
   }
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
+}
+// Nettoie le markdown pour un partage texte propre
+function _coachPlain(text){
+  return String(text||'')
+    .replace(/\*\*(.*?)\*\*/g,'$1')
+    .replace(/^\s*-\s+/gm,'• ')
+    .trim();
+}
+// Partage (Web Share API sur iPhone) ou copie dans le presse-papier
+async function shareCoachReply(btn){
+  const bubble = btn.closest('.msg-coach');
+  const raw = bubble ? bubble.dataset.raw : '';
+  if(!raw) return;
+  const txt = '💬 Mon Coach IA — Force Tracker\n\n' + _coachPlain(raw) + '\n\n— via Force Tracker';
+  // 1) Partage natif (feuille de partage iOS/Android)
+  if(navigator.share){
+    try{ await navigator.share({text:txt}); return; }
+    catch(e){ if(e && e.name==='AbortError') return; } // l'utilisateur a annulé
+  }
+  // 2) Presse-papier
+  try{
+    await navigator.clipboard.writeText(txt);
+    if(typeof toast==='function') toast('Réponse copiée ✅','success');
+    return;
+  }catch(e){}
+  // 3) Dernier recours (anciens navigateurs)
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy'); ta.remove();
+    if(typeof toast==='function') toast('Réponse copiée ✅','success');
+  }catch(e){ if(typeof toast==='function') toast('Copie impossible','error'); }
 }
 
 function showTyping() {
@@ -547,7 +588,7 @@ const _DRAWER_CONTENT = {
         {ic:'👤',t:'Ton Profil',d:'Menu ☰ → Profil. Organisé en sections repliables (tape un titre pour l\'ouvrir) : Identité · Objectif · Discipline · Composition corporelle · Morphologie · Santé · Cycle menstruel (femmes) · Accessibilité. Le bouton "Enregistrer le profil" confirme par une notification verte. Ton profil nourrit le Coach IA, la nutrition et tes stats.'},
         {ic:'🎽',t:'Discipline',d:'Nouveau : dans Profil → Discipline, choisis ta pratique — Musculation · Bodybuilding/Culturisme · Force athlétique · Haltérophilie. Le Coach IA adapte ses conseils (exercices, répétitions, périodisation) à ta discipline.'},
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
-        {ic:'🤖',t:'Coach IA',d:'Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
+        {ic:'🤖',t:'Coach IA',d:'Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Nouveau : bouton "Partager" sous chaque réponse pour l\'envoyer (SMS, Notes, WhatsApp…) ou la copier. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
         {ic:'☁️',t:'Synchronisation cloud',d:'Données sauvegardées localement (localStorage) ET sur Google Sheets. Sync automatique après chaque séance. Restauration complète sur un nouvel appareil : entre ton email à l\'onboarding ou dans Profil → Admin.'},
         {ic:'💡',t:'Astuces',d:'• Texte trop petit ? Profil → Accessibilité → "Affichage agrandi" · • 1RM Brzycki = kg × (36 / (37 − reps)) · • Swipe gauche/droite pour changer d\'onglet · • Tap sur une séance passée pour corriger des séries · • Menu ☰ → Anatomie pour visualiser les muscles · • Calculateur 1RM depuis Menu ☰ · • Les points rouges signalent les nouveautés'},
       ].map(h=>`<div style="background:var(--bg3);border-radius:12px;padding:14px;">
