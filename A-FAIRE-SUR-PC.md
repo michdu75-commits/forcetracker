@@ -15,22 +15,22 @@
 
 ## ⏳ En attente
 
-### 1. Persistance cloud du champ « Discipline » (ft-v194)
-Le champ Discipline (Profil) est enregistré en local et utilisé par le Coach, mais **pas encore sauvegardé dans le cloud**. Pour qu'il survive à une réinstallation :
-
-Dans `Code.js`, fonction **`handleSaveProfile_`**, à côté de la ligne `body.badges` (~ligne 476) :
+### 1 + 2. Persistance cloud « Discipline » (ft-v194) + compteur « imports journal » (ft-v168)
+✅ **Code déjà ajouté dans `Code.js`** (fonction `handleSaveProfile_`, juste après `body.badges`) :
 ```js
-if (body.discipline !== undefined) profile.discipline = _ps_(body.discipline, profile.discipline);
+if (body.discipline    !== undefined) profile.discipline    = _ps_(body.discipline,    profile.discipline);
+if (body.histImports   !== undefined) profile.histImports   = _pn_(body.histImports,   profile.histImports);
 ```
-`loadProfile` renvoie déjà tout `profile` → **rien d'autre à changer**.
+`loadProfile` renvoie déjà tout `profile` → rien d'autre à changer.
 
-### 2. Persistance cloud du compteur « imports de journal » (ft-v168) — *si pas déjà fait*
-Même endroit (`handleSaveProfile_`), à côté de `body.badges` :
-```js
-if (body.histImports !== undefined) profile.histImports = _pn_(body.histImports, profile.histImports);
+**➡️ Il ne reste QUE le déploiement depuis ton PC** (3 commandes) :
+```bash
+git pull                                                   # récupérer le Code.js à jour
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp push --force
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
 ```
-
-> 👉 Les points 1 et 2 se déploient **ensemble** en une fois (2 lignes + 1 seul `push`/`deploy`).
+Puis vérifier dans le navigateur que `…/exec?test=1` renvoie `{"status":"online"}`.
+Une fois fait → déplacer ce point dans « ✅ Fait ».
 
 ### 3. Analyse morpho « la totale » (premium) + exploitation de la discipline — *plus gros*
 Voir le plan détaillé dans le **fichier d'idées** (section « Analyse morpho par photo — 2 niveaux + insertions musculaires + Discipline »). À cadrer ensemble le moment venu :
