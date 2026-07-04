@@ -467,6 +467,16 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Restylage maquette Claude Design — étape 1 : Accueil (✅ 2026-07-04, ft-v186)
+- **Nouveau chantier** : Claude Design a livré une maquette (9 écrans, dossier `handoff/`). Consigne stricte de Michel : **restylage UNIQUEMENT, aucune fonction touchée, écran par écran, testé jour + nuit + agrandi**.
+- **⚠️ Incompatibilités relevées (à ne PAS implémenter sans accord)** : (1) écran « En séance » de la maquette = refonte totale de la saisie (steppers au lieu du tableau) → gros changement de fonction, reporté ; (2) Nutrition = anneau « calories restantes » suppose un journal alimentaire qui **n'existe pas** (l'app calcule des objectifs, pas le consommé) → à adapter, pas à créer.
+- **Étape 1 — Accueil (`screens.js`)** :
+  - `renderHome` : stats passées d'une ligne à diviseurs → **grille 2×2 de cartes** (icône colorée 32px + chiffre font-cond + label). **Mêmes données, mêmes `onclick`** (Volume→progress, Big3→progress, Séances, Poids→goWeightTab). Ids `h-vol/h-big3/h-sess/h-bw` conservés.
+  - `_renderHomeHero` : anneau SVG → **gros chiffre `NN/100` + barre de progression** colorée par le niveau de récup (style maquette). Badge « Récup … » et bouton **« Commencer une séance » conservés** (fonction préservée). Mêmes `calcRecoveryScore`/`getRecoveryInfo`.
+  - **Volontairement omis** (zéro nouvelle fonction) : badges de tendance (▲12%… = données non calculées) ; 3 mini-stats de la carte récup (« Charge » inexistant).
+- Testé (Chromium, nuit + jour + a11y-lv) : grille + carte récup OK dans les 2 modes, écart cartes mesuré identique (10px), 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-restyle-accueil`
+
 ### Uniformisation visuelle — étape 4 : arrondis de cartes (✅ 2026-07-03, ft-v185)
 - **Étape 4** (passe « discrète » demandée par Michel pendant qu'il travaille les boutons avec Claude Design) : arrondis des **cartes de contenu** ramenés au standard `--r:16px`.
 - **Corrigé** (index.html) : carte macros Nutrition `20px→16px` ; 3 cartes du menu drawer (profil + 2 sections) `18px→16px`.
@@ -852,7 +862,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v182 | fix mode jour : toast .info (texte blanc sur gris clair → var(--t1) lisible) |
 | ft-v183 | mode jour : toast .info en pastille sombre (ressort mieux) + bouton « Restaurer » jaune → bleu (var(--blue), OK jour/nuit) |
 | ft-v184 | uniformisation étape 3 : boxes Nutrition BMR/TDEE/Delta alignées sur les boxes Progrès (bordure + label 11px) |
-| ft-v185 | uniformisation étape 4 : arrondis de cartes ramenés à 16px (Nutrition 20, menu drawer 18 → 16) — boutons non touchés ← **actuel** |
+| ft-v185 | uniformisation étape 4 : arrondis de cartes ramenés à 16px (Nutrition 20, menu drawer 18 → 16) — boutons non touchés |
+| ft-v186 | restylage maquette étape 1 : Accueil (stats grille 2×2 + carte récup chiffre/barre) — restylage only, fonctions inchangées ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

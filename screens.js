@@ -282,22 +282,21 @@ function _renderHomeHero(){
   const heroLabel=score===null?'Enregistre ton sommeil':score>=80?'Prêt à performer':score>=60?'Bonne récupération':score>=40?'Récupération modérée':'Fatigué';
   const heroDesc=score===null?'Renseigne ton sommeil ce soir pour obtenir ton score de récupération.':info.rec.length>90?info.rec.substring(0,90)+'…':info.rec;
   const pillHtml=score!==null?'<div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:'+ringColor+';box-shadow:0 0 8px '+ringColor+';"></span><span style="font-size:12px;font-weight:700;color:'+ringColor+';">Récup '+info.label+'</span></div>':'';
-  el.innerHTML='<div style="padding:20px;border-radius:22px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.10),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);" class="ft-rise">'
+  // Restylage maquette : gros chiffre + barre de progression (au lieu de l'anneau). Mêmes données, CTA conservé.
+  const barW=score!==null?score:0;
+  el.innerHTML='<div style="padding:20px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.10),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);" class="ft-rise">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;">'
     +'<div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'
     +pillHtml+'</div>'
-    +'<div style="display:flex;align-items:center;gap:16px;margin-top:16px;">'
-    +'<div style="position:relative;width:72px;height:72px;flex:none;">'
-    +'<svg width="72" height="72" viewBox="0 0 72 72" style="transform:rotate(-90deg);">'
-    +'<circle cx="36" cy="36" r="30" fill="none" stroke="#23262e" stroke-width="6"/>'
-    +'<circle cx="36" cy="36" r="30" fill="none" stroke="'+ringColor+'" stroke-width="6" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'"/>'
-    +'</svg><div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">'
-    +'<span style="font-family:var(--font-cond);font-size:'+(score!==null?24:18)+'px;font-weight:600;color:var(--t1);line-height:1;">'+(score!==null?score:'—')+'</span>'
-    +(score!==null?'<span style="font-size:9px;color:var(--t3);font-weight:600;">/100</span>':'')
-    +'</div></div>'
+    +'<div style="display:flex;align-items:flex-start;gap:16px;margin-top:14px;">'
+    +'<div style="flex:none;display:flex;align-items:baseline;gap:2px;">'
+    +'<span style="font-family:var(--font-cond);font-size:'+(score!==null?42:30)+'px;font-weight:800;color:var(--t1);line-height:.9;">'+(score!==null?score:'—')+'</span>'
+    +(score!==null?'<span style="font-size:13px;color:var(--t3);font-weight:700;">/100</span>':'')
+    +'</div>'
     +'<div style="flex:1;"><div style="font-size:16px;font-weight:700;color:var(--t1);">'+heroLabel+'</div>'
-    +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:4px;">'+heroDesc+'</div></div></div>'
-    +'<button onclick="startWorkout()" class="ft-press" style="margin-top:18px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
+    +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:3px;">'+heroDesc+'</div></div></div>'
+    +'<div style="margin-top:14px;height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;"><div style="height:100%;width:'+barW+'%;background:'+ringColor+';border-radius:4px;transition:width .4s;"></div></div>'
+    +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
     +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
     +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
 }
@@ -313,24 +312,17 @@ function renderHome(){try{
   const bwDisp=latestW?latestW.kg:(S.bw||'—');
   const volDisp=vol>9999?(Math.round(vol/100)/10)+'k':Math.round(vol);
   const statsEl=document.getElementById('home-stats');
-  if(statsEl)statsEl.innerHTML='<div style="display:flex;border-radius:16px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);padding:14px 0;">'
-    +'<div style="flex:1;text-align:center;cursor:pointer;" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
-    +'<div id="h-vol" style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--t1);">'+volDisp+'</div>'
-    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Volume</div>'
-    +'<div style="font-size:7.5px;color:var(--t3);opacity:.6;margin-top:1px;">hors échauffement</div></div>'
-    +'<div style="width:1px;background:rgba(255,255,255,.07);"></div>'
-    +'<div style="flex:1;text-align:center;cursor:pointer;" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
-    +'<div id="h-big3" style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--orange);">'+(b3>0?Math.round(b3):'—')+'</div>'
-    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Big 3</div></div>'
-    +'<div style="width:1px;background:rgba(255,255,255,.07);"></div>'
-    +'<div style="flex:1;text-align:center;">'
-    +'<div id="h-sess" style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--t1);">'+mo.length+'</div>'
-    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Séances</div>'
-    +'<div style="font-size:7.5px;color:var(--t3);opacity:.6;margin-top:1px;">ce mois</div></div>'
-    +'<div style="width:1px;background:rgba(255,255,255,.07);"></div>'
-    +'<div style="flex:1;text-align:center;cursor:pointer;" onclick="goWeightTab()">'
-    +'<div style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--t1);"><span id="h-bw">'+fmt(bwDisp)+'</span><span style="font-size:11px;color:var(--t2);font-weight:500;">kg</span></div>'
-    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Poids</div></div></div>';
+  // Restylage maquette : grille 2×2 de cartes (icône + chiffre + label) — mêmes données, mêmes clics
+  const _sc=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:13px 14px;-webkit-tap-highlight-color:transparent;">'
+    +'<div style="width:32px;height:32px;border-radius:9px;background:'+icBg+';display:flex;align-items:center;justify-content:center;margin-bottom:10px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
+    +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:800;line-height:1;">'+valHtml+'</div>'
+    +'<div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-top:6px;">'+label+'</div></div>';
+  if(statsEl)statsEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>','rgba(255,106,115,.14)','var(--red)','<span id="h-vol" style="color:var(--t1)">'+volDisp+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Volume')
+    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M6 12h12M4 9v6M8 8v8M16 8v8M20 9v6"/>','rgba(234,179,8,.14)','var(--gold)','<span id="h-big3" style="color:var(--orange)">'+(b3>0?Math.round(b3):'—')+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Big 3 · 1RM')
+    +_sc(null,'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois')
+    +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+fmt(bwDisp)+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps')
+    +'</div>';
   const b3Lvl=BIG3.map(ex=>{const pr=S.prs[ex];const rm=pr?pr.rm1:0;return(S.bw&&S.age&&rm)?getLevel(ex,rm,S.bw,S.gender,S.age).name:'—';});
   const lvlSub=b3Lvl.some(l=>l!=='—')?b3Lvl.join(' · '):'Log tes séances pour voir ton niveau';
   const prCount=Object.keys(S.prs||{}).length;

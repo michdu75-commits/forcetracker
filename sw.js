@@ -1,4 +1,4 @@
-const CACHE = 'ft-v185'; // uniformisation : arrondis de cartes ramenés à 16px (Nutrition 20, menu drawer 18 → 16)
+const CACHE = 'ft-v186'; // restylage maquette étape 1 : Accueil (stats grille 2×2 + carte récup chiffre/barre) — restylage only
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
