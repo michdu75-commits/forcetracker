@@ -1,4 +1,4 @@
-const CACHE = 'ft-v217'; // Figurines Abduction + Adduction Cuisses (les 2 dernières machines manquantes des Jambes)
+const CACHE = 'ft-v218'; // 3 figurines (Chest Press Déclinée, Dips Parallèles, Montée Box Haltères) + fusion d'un exo perso dans un exo existant (déplace l'historique)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -61,6 +61,7 @@ const PRECACHE = [
   './exercises/overhead-squat.gif','./exercises/pin-squat.gif','./exercises/sissy-squat.gif','./exercises/cossack-squat.gif','./exercises/squat-bande-elastique.gif',
   './exercises/squat-statique-contre-mur-exercice-chaise.gif','./exercises/presse-cuisse-iso-laterale-hammer-stenght.gif','./exercises/sled-push-hyrox.gif','./exercises/croix-de-fer-halteres.gif',
   './exercises/leg-abduction-machine.gif','./exercises/leg-adduction-machine.gif',
+  './exercises/chest-press-machine-declinee.gif','./exercises/dips-triceps-paralleles.gif','./exercises/montees-banc-lateral-halteres.gif',
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
   './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
