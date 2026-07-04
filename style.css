@@ -433,7 +433,7 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 .ex-pick{padding:14px 2px;border-bottom:1px solid var(--sep);cursor:pointer;display:flex;align-items:center;justify-content:space-between;}
 .ex-pick:last-child{border-bottom:none;}
 .ex-pick:active{background:var(--bg3);margin:0 -8px;padding:14px 10px;}
-.ex-pick-name{font-size:15px;font-weight:600;}
+.ex-pick-name{font-size:15px;font-weight:600;flex:1;min-width:0;}
 .ex-pick-grp{font-size:13px;color:var(--t3);font-weight:600;}
 .ex-grp-tile{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);cursor:pointer;margin-bottom:8px;transition:background .15s;}
 .ex-grp-tile:active{background:var(--bg2);}
