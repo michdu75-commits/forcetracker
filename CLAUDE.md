@@ -1056,7 +1056,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v215 | figurines dos/trapèzes/lombaires : 18 mappées + **17 nouveaux exercices** (rowings Smith/T-Bar/Meadows/Seal/Renegade, tirages, tractions, pull-overs barre/poulie, Superman, shrug overhead) — EXLIB Dos 22→37 |
 | ft-v216 | figurines cuisses/quadriceps : 7 mappées (Leg Extension, Squat Bulgare, Smith Squat, Fentes Marchées, Hip Thrust Machine, Farmer's Walk) + **14 nouveaux squats** (Sissy, Pendulum, Belt, Safety Bar, Overhead, Pin, Cossack, Wall Sit, presse iso, sled push…) — doublons ignorés — EXLIB Jambes 31→45 |
 | ft-v217 | figurines Abduction + Adduction Cuisses (2 machines) → Jambes 41/45 avec figurine |
-| ft-v218 | figurines Chest Press Machine Déclinée + Dips Parallèles + Montée Box Haltères ; **fusion d'exo** : renommer un exo perso vers un nom existant propose de fusionner (`_mergeCustomInto` → déplace séances/PRs/programmes, supprime le perso) ← **actuel** |
+| ft-v218 | figurines Chest Press Machine Déclinée + Dips Parallèles + Montée Box Haltères ; **fusion d'exo** : renommer un exo perso vers un nom existant propose de fusionner (`_mergeCustomInto` → déplace séances/PRs/programmes, supprime le perso) |
+| ft-v219 | figurine Dips Machine Assistée + nouvel exo **Développé Nuque** (Épaules) avec figurine ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
