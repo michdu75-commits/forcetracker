@@ -3125,6 +3125,8 @@ const EX_YT={
   'Chest Press Machine Déclinée':  {img:'exercises/chest-press-machine-declinee.gif'},
   'Dips Parallèles':               {img:'exercises/dips-triceps-paralleles.gif'},
   'Montée sur Box Haltères':       {img:'exercises/montees-banc-lateral-halteres.gif'},
+  'Dips Machine Assistée':         {img:'exercises/dips-assiste-machine.gif'},
+  'Développé Nuque':               {img:'exercises/developpe-nuque-barre-guidee.gif'},
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={

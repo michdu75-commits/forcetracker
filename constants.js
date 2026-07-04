@@ -39,7 +39,7 @@ const EXLIB=[
   {n:'Élévations Frontales',g:'Épaules'},{n:'Élévations Frontales Câble',g:'Épaules'},{n:'Élévations Frontales Machine',g:'Épaules'},
   {n:'Oiseau',g:'Épaules'},{n:'Machine Oiseau',g:'Épaules'},
   {n:'Tirage Visage (Face Pull)',g:'Épaules'},{n:'Tirage Vertical (Upright Row)',g:'Épaules'},
-  {n:'Y Raise / W Raise',g:'Épaules'},
+  {n:'Y Raise / W Raise',g:'Épaules'},{n:'Développé Nuque',g:'Épaules'},
   // ── Biceps ─────────────────────────────────────────────────
   {n:'Curl Barre',g:'Biceps'},{n:'Curl Haltères',g:'Biceps'},{n:'Curl Poulie',g:'Biceps'},
   {n:'Curl EZ',g:'Biceps'},{n:'Curl Barre EZ Prise Large',g:'Biceps'},
