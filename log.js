@@ -1747,7 +1747,14 @@ function _saveCustomExEdit(newName,grp){
   if(!c){_editingCustomExName=null;hideCustomExForm();return;}
   if(newName.toLowerCase()!==oldName.toLowerCase()){
     const all=[...EXLIB,...(S.customExercises||[])];
-    if(all.find(e=>e.n.toLowerCase()===newName.toLowerCase())){toast('Ce nom existe déjà','error');return;}
+    const clash=all.find(e=>e.n.toLowerCase()===newName.toLowerCase());
+    if(clash){
+      // Nom déjà pris → proposer de FUSIONNER : déplacer l'historique dans l'exercice existant + supprimer le perso
+      showConfirm('Fusionner les exercices',
+        '« '+clash.n+' » existe déjà. Déplacer l\'historique et les records de « '+oldName+' » dans « '+clash.n+' », puis supprimer « '+oldName+' » ?',
+        ()=>_mergeCustomInto(oldName,clash.n),'Fusionner');
+      return;
+    }
   }
   const muscles=(_cexMusclesP.length||_cexMusclesS.length)?{p:[..._cexMusclesP],s:[..._cexMusclesS]}:null;
   c.g=grp;
@@ -1760,6 +1767,18 @@ function _saveCustomExEdit(newName,grp){
   if(document.getElementById('mod-ex')&&document.getElementById('mod-ex').classList.contains('open'))filterEx();
   if(S.wkt)renderExBlocks();
   toast('Exercice modifié ✅','success');
+}
+// Fusionne un exercice perso dans un autre exercice existant : déplace séances/PRs/programmes, supprime le perso.
+function _mergeCustomInto(oldName,targetName){
+  _renameExEverywhere(oldName,targetName);
+  S.customExercises=(S.customExercises||[]).filter(e=>e.n!==oldName);
+  if(S.exPhotos&&S.exPhotos[oldName])delete S.exPhotos[oldName];
+  _editingCustomExName=null;
+  persist();
+  hideCustomExForm();
+  if(document.getElementById('mod-ex')&&document.getElementById('mod-ex').classList.contains('open'))filterEx();
+  if(S.wkt)renderExBlocks();
+  toast('Fusionné dans « '+targetName+' » ✅','success');
 }
 // ─── PHOTO D'EXERCICE PERSO ───────────────────────────────────
 // Réduit une image (fichier) en vignette légère (max 420px, JPEG) → data URI via callback
@@ -3103,6 +3122,9 @@ const EX_YT={
   'Croix de Fer Haltères':         {img:'exercises/croix-de-fer-halteres.gif'},
   'Abduction Cuisses (Leg Abduction)':{img:'exercises/leg-abduction-machine.gif'},
   'Adduction Cuisses (Leg Adduction)':{img:'exercises/leg-adduction-machine.gif'},
+  'Chest Press Machine Déclinée':  {img:'exercises/chest-press-machine-declinee.gif'},
+  'Dips Parallèles':               {img:'exercises/dips-triceps-paralleles.gif'},
+  'Montée sur Box Haltères':       {img:'exercises/montees-banc-lateral-halteres.gif'},
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={
