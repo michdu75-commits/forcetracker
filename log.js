@@ -1613,7 +1613,10 @@ const EX_GROUPS=[
 let _exGrp=null;
 
 function _exPickRow(e){
-  const thumb=e.img?`<img src="${e.img}" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);">`:'';
+  // Slot photo TOUJOURS réservé (30px) → toutes les lignes alignées, avec ou sans photo
+  const thumb=e.img
+    ?`<img src="${e.img}" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);">`
+    :`<span style="width:30px;flex-shrink:0;margin-right:8px;" aria-hidden="true"></span>`;
   const safe=e.n.replace(/'/g,"\\'");
   const edit=e.custom?` <span onclick="event.stopPropagation();openEditCustomEx('${safe}')" title="Modifier" style="font-size:13px;color:var(--purp);cursor:pointer;padding:2px 6px;touch-action:manipulation;">✎</span>`:'';
   return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}<span class="ex-pick-name">${e.n}${edit}</span><span class="ex-pick-grp">${e.g}</span></div>`;

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v210'; // Version affichée = vrai build tournant (ft-vNN, lu du cache) partout → fini le « v2.8 » périmé
+const CACHE = 'ft-v211'; // Sélecteur d'exercices : slot photo réservé pour toutes les lignes → alignées avec ou sans photo
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

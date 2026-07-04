@@ -1039,7 +1039,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v207 | swipe entre onglets moins sensible (`_initSwipe`) : seuil 55→110px, angle 0.65→0.5, pas de nav si le geste part d'un contrôle (input/bouton) + fix `_sel` nullé avant `_hScrollParent` |
 | ft-v208 | verrou admin (email `ADMIN_EMAILS` OU code de secours `ADMIN_CODE`) + « Modifier l'exercice » perso (`openEditCustomEx`/`_saveCustomExEdit`/`_renameExEverywhere`) : nom/groupe/muscles sans perte d'historique |
 | ft-v209 | code admin de secours → `0115` + clavier numérique sur la saisie |
-| ft-v210 | version affichée = vrai build tournant partout (`.app-ver` rempli via `_setAppVersionEls` depuis `caches.keys()`) → fini le « v2.8 » périmé (footer menu + drawer) ; titre onglet nettoyé ← **actuel** |
+| ft-v210 | version affichée = vrai build tournant partout (`.app-ver` rempli via `_setAppVersionEls` depuis `caches.keys()`) → fini le « v2.8 » périmé (footer menu + drawer) ; titre onglet nettoyé |
+| ft-v211 | sélecteur d'exercices aligné : slot photo réservé (30px) sur TOUTES les lignes + `.ex-pick-name` en `flex:1` → noms alignés à gauche (photo ou pas), groupe à droite ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
