@@ -467,6 +467,14 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Pause de séance — chrono figé (✅ 2026-07-04, ft-v203)
+- **Demande Michel** : « le fameux chrono » — dès qu'on démarre une séance le chrono tourne ; si on s'interrompt (appel, pause…) sans « Terminer », le compteur continue et gonfle la durée. Il voulait pouvoir **mettre la séance en pause**.
+- **Modèle** (sur `S.wkt`, persisté `ft4_wkt`) : `pausedAt` (timestamp de la pause en cours ou null) + `pausedTotal` (ms de pauses cumulées). **Aucune modif backend** (voyage dans `S.wkt` puis effacé à la fin).
+- **`_wktElapsedMs()`** = `(pausedAt||Date.now()) - startTs - pausedTotal` → temps réel hors pause. `_fmtElapsed()` l'utilise ; `finishWorkout` calcule `duration` dessus (le temps en pause n'est **pas** compté).
+- **`toggleWktPause()`** (`log.js`) : pause → `pausedAt=Date.now()`, stoppe le chrono, coupe un repos en cours (`stopRest()`) ; reprise → cumule dans `pausedTotal`, relance le chrono. `_startWktChrono()` fait un early-return si `_isWktPaused()` (chrono figé, 0 tick).
+- **UI** : bouton `#wkt-pause-btn` (`_pauseBtnHtml`) dans l'en-tête (`_syncLogHdrBtns` + build inline `renderLog`), visible tant que `S.wkt.startTs` existe. Pause = « ⏸ Pause » (neutre) ; en pause = « ▶ Reprendre » (orange) + chrono passe en orange. `_syncWktPauseUI()` rafraîchit sans re-render complet.
+- **Persistance** : si l'app se ferme en pause, à la réouverture le chrono reste figé (correct). Testé (Chromium) : pause fige le chrono (1:02 inchangé après 1,8 s), reprise exclut bien les ~2 s de pause de la durée, 0 erreur JS. Red dot `wkt-pause` + Aide détaillée + aide contextuelle Séance mises à jour. sw.js bump ft-v203.
+
 ### Bouton « Vider » l'en-tête séance (✅ 2026-07-04, ft-v202)
 - **Demande Michel** : « le bouton tout effacer quand on se trompe de séance d'un programme » — pouvoir retirer tous les exercices en une fois si on a chargé le mauvais programme, **sans quitter la séance**.
 - **`clearAllEx()`** (`log.js`, à côté de `clearWkt`) : `showConfirm` → `S.wkt.exs=[]` + `_expandedEx=null` + `stopRest()` + `persist()` + `renderLog()` + toast « Séance vidée ». **La séance reste ouverte** (on peut charger un autre programme). Ne touche NI l'historique NI les records. Early-return si aucun exo.
@@ -986,7 +994,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v199 | Aide contextuelle (bouton ?) mise à jour : Profil (Discipline + sections repliables) + Coach (discipline injectée) |
 | ft-v200 | Accueil : tuile « Séances ce mois » cliquable → Progrès + scroll historique des séances (`goSessionsHistory`) |
 | ft-v201 | Coach IA voit la SÉANCE EN COURS (`S.wkt` injecté dans `buildCoachContext`) → aide en direct (alternative machine, ajustement charge, ordre) |
-| ft-v202 | bouton « Vider » dans l'en-tête séance (`clearAllEx`) : retire tous les exos mais garde la séance ouverte (mauvais programme chargé) — distinct de ✕ Annuler ← **actuel** |
+| ft-v202 | bouton « Vider » dans l'en-tête séance (`clearAllEx`) : retire tous les exos mais garde la séance ouverte (mauvais programme chargé) — distinct de ✕ Annuler |
+| ft-v203 | pause de séance : bouton Pause/Reprendre (`toggleWktPause`) fige le chrono de durée ; le temps en pause est exclu de la durée finale (`_wktElapsedMs`) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

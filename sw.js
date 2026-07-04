@@ -1,4 +1,4 @@
-const CACHE = 'ft-v202'; // Bouton « Vider » dans l'en-tête séance : retire tous les exos mais garde la séance ouverte (mauvais programme chargé)
+const CACHE = 'ft-v203'; // Pause de séance : bouton Pause/Reprendre fige le chrono de durée (temps en pause exclu de la durée finale)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

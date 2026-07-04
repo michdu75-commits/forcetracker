@@ -118,6 +118,8 @@ const NEW_FEATURES=[
   // Séance
   {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
+  {id:'wkt-pause',   screen:'log',      desc:'Mettre la séance en pause (le chrono se fige)'},
+  {id:'wkt-vider',   screen:'log',      desc:'Vider la séance si mauvais programme chargé'},
   // Progrès
   {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
   {id:'prog-badges', screen:'progress', desc:'Onglet Badges (🏅)'},

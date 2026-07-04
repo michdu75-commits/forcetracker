@@ -10,15 +10,25 @@ function _releaseWakeLock(){
 
 // ─── CHRONO DURÉE SÉANCE ─────────────────────────────────────
 let _wktChronoIv=null;
+// Temps écoulé réel (ms), en retirant le temps passé EN PAUSE.
+// pausedTotal = pauses déjà cumulées ; pausedAt = timestamp de la pause en cours (ou null).
+function _wktElapsedMs(){
+  if(!S.wkt||!S.wkt.startTs)return 0;
+  const paused=S.wkt.pausedTotal||0;
+  const end=S.wkt.pausedAt||Date.now(); // en pause → on fige au moment de la pause
+  return Math.max(0,end-S.wkt.startTs-paused);
+}
+function _isWktPaused(){return!!(S.wkt&&S.wkt.pausedAt);}
 function _fmtElapsed(){
   if(!S.wkt||!S.wkt.startTs)return'0:00';
-  const sec=Math.floor((Date.now()-S.wkt.startTs)/1000);
+  const sec=Math.floor(_wktElapsedMs()/1000);
   const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
   if(h>0)return h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
   return m+':'+(s<10?'0':'')+s;
 }
 function _startWktChrono(){
   if(_wktChronoIv)clearInterval(_wktChronoIv);
+  if(_isWktPaused())return; // en pause : pas de tick (le chrono reste figé)
   _wktChronoIv=setInterval(()=>{
     const el=document.getElementById('wkt-chrono');
     if(!el){clearInterval(_wktChronoIv);_wktChronoIv=null;return;}
@@ -26,6 +36,44 @@ function _startWktChrono(){
   },1000);
 }
 function _stopWktChrono(){if(_wktChronoIv){clearInterval(_wktChronoIv);_wktChronoIv=null;}}
+// Bouton Pause/Reprendre (affiché tant que la séance tourne, avec ou sans exos)
+function _pauseBtnHtml(){
+  if(!S.wkt||!S.wkt.startTs)return'';
+  const p=_isWktPaused();
+  const ico=p
+    ?'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>'
+    :'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  return '<button id="wkt-pause-btn" onclick="toggleWktPause()" style="padding:7px 10px;border-radius:10px;border:1px solid '+(p?'rgba(255,159,10,.45)':'var(--sep)')+';background:'+(p?'rgba(255,159,10,.14)':'var(--bg3)')+';color:'+(p?'var(--orange)':'var(--t2)')+';font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;">'+ico+(p?'Reprendre':'Pause')+'</button>';
+}
+// Rafraîchit l'affichage chrono + bouton sans re-render complet
+function _syncWktPauseUI(){
+  const c=document.getElementById('wkt-chrono');
+  if(c){c.textContent=_fmtElapsed();c.style.color=_isWktPaused()?'var(--orange)':'var(--t3)';}
+  const b=document.getElementById('wkt-pause-btn');
+  if(b)b.outerHTML=_pauseBtnHtml();
+}
+// Met la séance en pause ou la reprend — fige/relance le chrono de durée.
+// Le temps en pause n'est PAS compté dans la durée finale de la séance.
+function toggleWktPause(){
+  if(!S.wkt||!S.wkt.startTs)return;
+  if(_isWktPaused()){
+    // Reprendre : cumule la pause qui vient de se terminer
+    S.wkt.pausedTotal=(S.wkt.pausedTotal||0)+(Date.now()-S.wkt.pausedAt);
+    S.wkt.pausedAt=null;
+    persist();
+    _startWktChrono();
+    _syncWktPauseUI();
+    toast('Séance reprise','info');
+  }else{
+    // Pause : fige le chrono + coupe un éventuel repos en cours
+    S.wkt.pausedAt=Date.now();
+    _stopWktChrono();
+    if(typeof stopRest==='function')stopRest();
+    persist();
+    _syncWktPauseUI();
+    toast('Séance en pause ⏸','info');
+  }
+}
 
 // Ré-acquérir + resync des deux chronos au retour au premier plan
 document.addEventListener('visibilitychange',()=>{
@@ -67,8 +115,9 @@ function renderLog(){
   const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
   if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;">'
     +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
-    +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:var(--t3);letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
+    +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:'+(_isWktPaused()?'var(--orange)':'var(--t3)')+';letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
     +'<span id="log-hdr-btns" style="display:flex;gap:8px;">'
+    +_pauseBtnHtml()
     +(hasExs?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>':'')
     +(hasExs?'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>':'')
     +'</span>'
@@ -810,11 +859,11 @@ function _syncLogHdrBtns(){
   const el=document.getElementById('log-hdr-btns');
   if(!el)return;
   const hasExs=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
-  el.innerHTML=hasExs
+  el.innerHTML=_pauseBtnHtml()+(hasExs
     ?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>'
      +'<button onclick="clearAllEx()" style="padding:7px 10px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Vider</button>'
      +'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>'
-    :'';
+    :'');
   requestAnimationFrame(_positionFab);
 }
 // Appui maintenu 400ms requis pour déclencher la suppression (anti-effleurement)
@@ -1216,7 +1265,7 @@ async function finishWorkout(){
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Ajoute un exercice !','error');_finishing=false;return;}
   const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
   if(!hasDone){toast('Valide au moins une série !','error');_finishing=false;return;}
-  const duration=S.wkt.startTs?Math.floor((Date.now()-S.wkt.startTs)/1000):0;
+  const duration=Math.floor(_wktElapsedMs()/1000); // durée réelle, hors temps en pause
   let vol=0;
   S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
   const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration,progLabel:S.wkt.progLabel||''};
