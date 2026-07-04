@@ -1,4 +1,4 @@
-const CACHE = 'ft-v188'; // Accueil : retrait « Bonjour + prénom » + Menu restylé maquette (rows en cartes séparées)
+const CACHE = 'ft-v189'; // Promotion restyle clone→prod : Nutrition (anneau+barres macros), Progrès (stats plates+⭐PR), Objectif (icônes trait fin)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -164,11 +164,11 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         </div>
         <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Macros et conseils Coach IA adaptés automatiquement.</div>
         <div class="ob-goal-grid" style="width:100%;">
-          <button class="ob-goal-btn ob-sel" id="ob-gm" onclick="obSetGoal('muscle')"><span style="font-size:26px;">💪</span>Prise de muscle</button>
-          <button class="ob-goal-btn" id="ob-gp" onclick="obSetGoal('perte')"><span style="font-size:26px;">🔥</span>Perte de poids</button>
-          <button class="ob-goal-btn" id="ob-gf" onclick="obSetGoal('force')"><span style="font-size:26px;">🏋️</span>Force max</button>
-          <button class="ob-goal-btn" id="ob-ge" onclick="obSetGoal('equilibre')"><span style="font-size:26px;">⚖️</span>Rééquilibrage</button>
-          <button class="ob-goal-btn" id="ob-gen" onclick="obSetGoal('endurance')"><span style="font-size:26px;">🏃</span>Endurance</button>
+          <button class="ob-goal-btn ob-sel" id="ob-gm" onclick="obSetGoal('muscle')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>Prise de muscle</button>
+          <button class="ob-goal-btn" id="ob-gp" onclick="obSetGoal('perte')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg>Perte de poids</button>
+          <button class="ob-goal-btn" id="ob-gf" onclick="obSetGoal('force')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="2.5" y1="12" x2="21.5" y2="12"/><rect x="2" y="8" width="2.6" height="8" rx="1"/><rect x="19.4" y="8" width="2.6" height="8" rx="1"/><rect x="5.4" y="9.6" width="2.2" height="4.8" rx="1"/><rect x="16.4" y="9.6" width="2.2" height="4.8" rx="1"/></svg>Force max</button>
+          <button class="ob-goal-btn" id="ob-ge" onclick="obSetGoal('equilibre')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>Rééquilibrage</button>
+          <button class="ob-goal-btn" id="ob-gen" onclick="obSetGoal('endurance')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Endurance</button>
         </div>
       </div>
       <div class="ob-footer">
@@ -424,25 +424,45 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <!-- MACROS -->
   <div id="nu-macros" style="display:flex;flex-direction:column;gap:12px;">
     <div id="nu-cycle-banner" style="display:none;"></div>
-    <!-- Hero calories -->
-    <div style="background:var(--bg2);border-radius:16px;padding:18px 20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
-      <div id="nu-goal-info" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t3);margin-bottom:10px;"></div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px;">
-        <span style="font-family:var(--font-cond);font-size:42px;font-weight:900;color:var(--t1);line-height:1;" id="m-kcal">—</span>
-        <span style="font-size:14px;color:var(--t2);font-weight:600;">kcal / jour</span>
+    <!-- Hero calories (anneau = objectif du jour + répartition des macros) -->
+    <div style="background:var(--bg2);border-radius:16px;padding:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
+      <div style="display:flex;align-items:center;gap:18px;">
+        <!-- Anneau : arcs = part des calories (prot/glucides/lipides) -->
+        <div style="position:relative;width:120px;height:120px;flex-shrink:0;">
+          <svg viewBox="0 0 120 120" style="width:120px;height:120px;transform:rotate(-90deg);">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg3)" stroke-width="11"/>
+            <circle id="ring-prot" cx="60" cy="60" r="52" fill="none" stroke="var(--green)" stroke-width="11" stroke-dasharray="0 327" stroke-dashoffset="0"/>
+            <circle id="ring-carb" cx="60" cy="60" r="52" fill="none" stroke="var(--orange)" stroke-width="11" stroke-dasharray="0 327" stroke-dashoffset="0"/>
+            <circle id="ring-fat" cx="60" cy="60" r="52" fill="none" stroke="var(--gold)" stroke-width="11" stroke-dasharray="0 327" stroke-dashoffset="0"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <span style="font-family:var(--font-cond);font-size:30px;font-weight:900;color:var(--t1);line-height:1;" id="m-kcal">—</span>
+            <span style="font-size:9.5px;color:var(--t3);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:2px;">kcal / jour</span>
+          </div>
+        </div>
+        <!-- Objectif + surplus/déficit + répartition -->
+        <div style="flex:1;min-width:0;">
+          <div id="nu-goal-info" style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--t2);margin-bottom:9px;line-height:1.3;"></div>
+          <div id="nu-delta-chip" style="display:inline-flex;align-items:baseline;gap:5px;border-radius:10px;padding:6px 11px;margin-bottom:10px;">
+            <span style="font-family:var(--font-cond);font-size:19px;font-weight:900;" id="nu-delta-val">—</span>
+            <span style="font-size:11px;font-weight:700;color:var(--t3);"><span id="nu-delta-lbl">Delta</span> kcal/j</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--t3);font-weight:600;">
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--green);margin-right:5px;"></span>Protéines <b style="color:var(--t2);" id="ring-lg-p">—</b></span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--orange);margin-right:5px;"></span>Glucides <b style="color:var(--t2);" id="ring-lg-c">—</b></span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--gold);margin-right:5px;"></span>Lipides <b style="color:var(--t2);" id="ring-lg-f">—</b></span>
+          </div>
+        </div>
       </div>
-      <div style="display:flex;gap:6px;">
+      <!-- BMR / TDEE conservés -->
+      <div style="display:flex;gap:8px;margin-top:14px;">
         <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">BMR</div>
-          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t1);" id="nu-bmr">—</div>
+          <div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--t1);" id="nu-bmr">—</div>
         </div>
         <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">TDEE</div>
-          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t1);" id="nu-tdee">—</div>
-        </div>
-        <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;" id="nu-delta-chip">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;" id="nu-delta-lbl">Delta</div>
-          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t2);" id="nu-delta-val">—</div>
+          <div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--t1);" id="nu-tdee">—</div>
         </div>
       </div>
     </div>
@@ -451,13 +471,27 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <button class="phase-btn charge" id="pb-charge" onclick="setNuPhase('charge')">⚡ Charge<br><span style="font-size:11px;font-weight:500;opacity:.75;" id="pb-charge-lbl">Surplus</span></button>
       <button class="phase-btn decharge" id="pb-decharge" onclick="setNuPhase('decharge')">🔄 Décharge<br><span style="font-size:11px;font-weight:500;opacity:.75;" id="pb-decharge-lbl">Déficit</span></button>
     </div>
-    <!-- Macros -->
-    <div class="sec">Macronutriments</div>
-    <div class="macro-grid">
-      <div class="macro-box"><div class="macro-lbl">Protéines</div><div class="macro-val" id="m-prot" style="color:var(--green);">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--green);"></div></div>
-      <div class="macro-box"><div class="macro-lbl">Glucides</div><div class="macro-val" id="m-carbs" style="color:var(--orange);">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--orange);"></div></div>
-      <div class="macro-box"><div class="macro-lbl">Lipides</div><div class="macro-val" id="m-fat" style="color:var(--gold);">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--gold);"></div></div>
-      <div class="macro-box"><div class="macro-lbl">Hydratation</div><div class="macro-val" id="nu-hydra" style="color:var(--blue);">—</div><div class="macro-unit">L/jour</div><div class="macro-bar" style="background:var(--blue);"></div></div>
+    <!-- Macros (maquette : lignes + barres ; barre = part des calories) -->
+    <div class="sec">Macronutriments <span style="color:var(--t3);font-weight:500;text-transform:none;letter-spacing:0;">· barre = part des calories</span></div>
+    <div class="macro-card">
+      <div class="macro-row2">
+        <div class="macro-row2-top"><span class="macro-row2-lbl">Protéines</span><span class="macro-row2-val"><b id="m-prot">—</b> g/jour<span class="pct" id="m-prot-pct"></span></span></div>
+        <div class="macro-row2-track"><div class="macro-row2-fill" id="m-prot-bar" style="background:var(--green);"></div></div>
+      </div>
+      <div class="macro-row2">
+        <div class="macro-row2-top"><span class="macro-row2-lbl">Glucides</span><span class="macro-row2-val"><b id="m-carbs">—</b> g/jour<span class="pct" id="m-carbs-pct"></span></span></div>
+        <div class="macro-row2-track"><div class="macro-row2-fill" id="m-carbs-bar" style="background:var(--orange);"></div></div>
+      </div>
+      <div class="macro-row2">
+        <div class="macro-row2-top"><span class="macro-row2-lbl">Lipides</span><span class="macro-row2-val"><b id="m-fat">—</b> g/jour<span class="pct" id="m-fat-pct"></span></span></div>
+        <div class="macro-row2-track"><div class="macro-row2-fill" id="m-fat-bar" style="background:var(--gold);"></div></div>
+      </div>
+    </div>
+    <div class="macro-card" style="padding-bottom:16px;">
+      <div class="macro-row2">
+        <div class="macro-row2-top"><span class="macro-row2-lbl">💧 Hydratation</span><span class="macro-row2-val"><b id="nu-hydra">—</b> L/jour</span></div>
+        <div class="macro-row2-track"><div class="macro-row2-fill" id="nu-hydra-bar" style="background:var(--blue);"></div></div>
+      </div>
     </div>
     <!-- Session / Total dépensé -->
     <div style="display:flex;gap:8px;">
@@ -680,11 +714,11 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <div style="height:1px;background:var(--sep);"></div>
       <div style="font-size:14px;color:var(--red);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">🎯 Objectif</div>
       <div class="goal-grid">
-        <button class="goal-btn" id="g-muscle" onclick="setGoal('muscle')">💪<br><span>Prise de muscle</span></button>
-        <button class="goal-btn" id="g-perte" onclick="setGoal('perte')">🔥<br><span>Perte de poids</span></button>
-        <button class="goal-btn" id="g-force" onclick="setGoal('force')">🏋️<br><span>Force max</span></button>
-        <button class="goal-btn" id="g-equilibre" onclick="setGoal('equilibre')">⚖️<br><span>Rééquilibrage</span></button>
-        <button class="goal-btn" id="g-endurance" onclick="setGoal('endurance')">🏃<br><span>Endurance</span></button>
+        <button class="goal-btn" id="g-muscle" onclick="setGoal('muscle')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg><span>Prise de muscle</span></button>
+        <button class="goal-btn" id="g-perte" onclick="setGoal('perte')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg><span>Perte de poids</span></button>
+        <button class="goal-btn" id="g-force" onclick="setGoal('force')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="2.5" y1="12" x2="21.5" y2="12"/><rect x="2" y="8" width="2.6" height="8" rx="1"/><rect x="19.4" y="8" width="2.6" height="8" rx="1"/><rect x="5.4" y="9.6" width="2.2" height="4.8" rx="1"/><rect x="16.4" y="9.6" width="2.2" height="4.8" rx="1"/></svg><span>Force max</span></button>
+        <button class="goal-btn" id="g-equilibre" onclick="setGoal('equilibre')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg><span>Rééquilibrage</span></button>
+        <button class="goal-btn" id="g-endurance" onclick="setGoal('endurance')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Endurance</span></button>
       </div>
       <div id="goal-desc" style="font-size:14px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:10px 12px;line-height:1.5;min-height:36px;"></div>
       <!-- ACCESSIBILITÉ -->
