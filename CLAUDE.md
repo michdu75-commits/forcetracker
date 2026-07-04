@@ -467,6 +467,14 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Profil — champ « Discipline » pratiquée (✅ 2026-07-04, ft-v194)
+- **Demande Michel** : donnée manquante — savoir si l'utilisateur fait de la muscu / bodybuilding / force athlé / haltéro, pour adapter le Coach IA (et plus tard morpho + nutrition).
+- **`S.discipline`** (ft4_discipline, défaut `muscu`) — persisté (`state.js` load/persist) + envoyé au cloud (`_cloudSync` payload) + restauré (`_applyRestoreData`).
+- **UI** : section « Discipline » dans le Profil (après Objectif), grille 2×2 de boutons `.goal-btn` (réutilisés) avec icônes trait fin : Musculation (haltère), Bodybuilding/Culturisme (trophée), Force athlétique (barre), Haltérophilie (haltérophile). `setDiscipline(d)` + `DISC_LABELS`/`DISC_DESCS` (setup.js), appelé dans `renderSetup`.
+- **Coach IA** : `buildCoachContext()` ajoute « Discipline pratiquée: … — adapte tes conseils » (via `DISC_LABELS`, accessible cross-fichier).
+- ⚠️ **Cloud persistance = 1 ligne backend à déployer (PC)** dans `handleSaveProfile_` (Code.js, comme `histImports`) : `if(body.discipline!==undefined) profile.discipline=_ps_(body.discipline,profile.discipline);` — sinon le champ reste **local uniquement** (le Coach l'utilise quand même sur l'appareil).
+- Note : bodybuilding = culturisme (une seule option). Testé Chromium jour+nuit, contexte Coach vérifié, 0 erreur JS.
+
 ### Icônes trait fin (suite) — boutons bascule + inventaire emojis (✅ 2026-07-04, ft-v193)
 - **Suite du ft-v192**. Converti : boutons **⚡ Charge / 🔄 Décharge** (Nutrition, éclair/flèches-cycle), **⚡ Charge (5-7j) / ✅ Maintenance** (Créatine, éclair/coche), **💾 Enregistrer le profil** (disquette). `stroke=currentColor` (suit la couleur du bouton, actif/inactif). Testé Nutrition jour+nuit, 0 erreur.
 - **⚠️ Inventaire complet fait** : il reste **~100 emojis** dans l'app, quasi tous **enfouis** dans modales/flux (onboarding, imports prog/journal, morpho, premium walls, drawer legacy `#drawer`, coach premium bullets, calculateur plaques…). **Décision (avec Michel)** : NE PAS tout convertir (gros balayage risqué, faible visibilité). **Gardés volontairement** : visages d'humeur du check-in (😴😐😊⚡ — expressifs), emojis de noms de repas (🌅🍎🌙 — friendly), et le fond d'emojis des flux profonds. Ne convertir au cas par cas que si un emoji « titre/bouton » visible gêne.
@@ -939,7 +947,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v190 | Accueil : 4 tuiles stats réalignées (icône à gauche, chiffre à droite, label dessous aligné) |
 | ft-v191 | fix maj iOS : `register(sw.js,{updateViaCache:'none'})` — l'app n'est plus jamais collée à l'ancienne version |
 | ft-v192 | icônes trait fin : titres de section (Profil/Nutrition/Admin/Install) + Nutrition (Hydra/Séance/Total) + Suppléments (Créatine/Whey) + import journal |
-| ft-v193 | icônes trait fin (suite) : boutons bascule Charge/Décharge + Charge/Maintenance créatine + Enregistrer le profil (reste ~100 emojis enfouis gardés volontairement) ← **actuel** |
+| ft-v193 | icônes trait fin (suite) : boutons bascule Charge/Décharge + Charge/Maintenance créatine + Enregistrer le profil (reste ~100 emojis enfouis gardés volontairement) |
+| ft-v194 | Profil : champ « Discipline » (Muscu/Bodybuilding/Force athlé/Haltéro) → injecté dans le Coach IA (cloud persistance = 1 ligne backend à déployer) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v193'; // icônes trait fin (suite) : boutons bascule Charge/Décharge (Nutrition) + Charge/Maintenance (Créatine) + Enregistrer le profil
+const CACHE = 'ft-v194'; // Profil : champ Discipline (Muscu/Bodybuilding/Force athlé/Haltéro) → nourrit le Coach IA
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
