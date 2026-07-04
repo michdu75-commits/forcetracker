@@ -21,10 +21,16 @@ const EXLIB=[
   {n:'Tirage Poulie Basse Prise Large',g:'Dos'},{n:'Tirage Poulie Basse Prise Serrée',g:'Dos'},
   {n:'Traction Lestée',g:'Dos'},{n:'Traction Assistée',g:'Dos'},{n:'Traction Prise Neutre',g:'Dos'},
   {n:'Pull-over',g:'Dos'},{n:'Pull-over Haltère',g:'Dos'},{n:'Pullover Machine',g:'Dos'},
+  {n:'Pull-over Barre',g:'Dos'},{n:'Pull-over Poulie',g:'Dos'},
+  {n:'Rowing Smith Machine',g:'Dos'},{n:'Rowing T-Bar Machine',g:'Dos'},{n:'Rowing Landmine (T-Bar)',g:'Dos'},
+  {n:'Rowing Haltères Buste Penché',g:'Dos'},{n:'Meadows Row',g:'Dos'},{n:'Seal Row',g:'Dos'},{n:'Renegade Row',g:'Dos'},
+  {n:'Tirage Iso-Latéral Hammer Strength',g:'Dos'},{n:'Tirage Incliné Poulie Haute',g:'Dos'},{n:'Tirage Poulie Haute Prise Inversée',g:'Dos'},
+  {n:'Traction Derrière la Nuque',g:'Dos'},{n:'Rocky Pull-up',g:'Dos'},{n:'Sled Pull',g:'Dos'},
   // ── Trapèzes ───────────────────────────────────────────────
   {n:'Haussements d\'Épaules (Shrugs)',g:'Trapèzes'},{n:'Haussements d\'Épaules Barre',g:'Trapèzes'},
   {n:'Haussements d\'Épaules Haltères',g:'Trapèzes'},{n:'Haussements d\'Épaules Câble',g:'Trapèzes'},
   {n:'Tirage Menton',g:'Trapèzes'},{n:'Farmer\'s Walk',g:'Trapèzes'},
+  {n:'Haussements d\'Épaules Overhead',g:'Trapèzes'},
   // ── Épaules ────────────────────────────────────────────────
   {n:'Développé Militaire',g:'Épaules'},{n:'Développé Militaire Haltères',g:'Épaules'},
   {n:'Développé Haltères Assis',g:'Épaules'},{n:'Développé Arnold (Arnold Press)',g:'Épaules'},
@@ -86,6 +92,7 @@ const EXLIB=[
   {n:'Inclinaison Lombaire (Good Morning)',g:'Lombaires'},{n:'Good Morning Haltères',g:'Lombaires'},
   {n:'Soulevé de Terre',g:'Lombaires'},{n:'Soulevé de Terre Roumain Barre',g:'Lombaires'},
   {n:'Jefferson Curl',g:'Lombaires'},{n:'Tirage en Rack (Rack Pull)',g:'Lombaires'},
+  {n:'Superman',g:'Lombaires'},
   // ── Abdominaux ─────────────────────────────────────────────
   {n:'Gainage',g:'Abdominaux'},{n:'Planche Latérale (Side Plank)',g:'Abdominaux'},{n:'Hollow Body',g:'Abdominaux'},
   {n:'L-Sit',g:'Abdominaux'},{n:'Windshield Wiper',g:'Abdominaux'},

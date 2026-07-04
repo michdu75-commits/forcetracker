@@ -1052,7 +1052,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v211 | sélecteur d'exercices aligné : slot photo réservé (30px) sur TOUTES les lignes + `.ex-pick-name` en `flex:1` → noms alignés à gauche (photo ou pas), groupe à droite |
 | ft-v212 | photo sur N'IMPORTE quel exercice (`S.exPhotos` pour la bibliothèque, `customExercises[].img` pour les perso) via ⋯ ; tap sur la vignette du sélecteur = voir en grand (`_viewExPhoto`, n'ajoute plus) ; priorité photo perso > gif EX_YT |
 | ft-v213 | figurines pectoraux : 5 nouvelles animations EX_YT (Développé Incliné Haltères, Croisé Poulie, Chest Press Machine Horizontale/Inclinée, Dips) — GIFs dans `exercises/` + PRECACHE |
-| ft-v214 | figurines fessiers/ischios/jambes : 12 mappées sur exos existants + **20 nouveaux exercices** (soulevés de terre variés, squats, leg curls, kettlebell swing, GHD…) ajoutés à EXLIB (Fessiers 15→28, Jambes 24→31) + GIFs + PRECACHE ← **actuel** |
+| ft-v214 | figurines fessiers/ischios/jambes : 12 mappées sur exos existants + **20 nouveaux exercices** (soulevés de terre variés, squats, leg curls, kettlebell swing, GHD…) ajoutés à EXLIB (Fessiers 15→28, Jambes 24→31) + GIFs + PRECACHE |
+| ft-v215 | figurines dos/trapèzes/lombaires : 18 mappées + **17 nouveaux exercices** (rowings Smith/T-Bar/Meadows/Seal/Renegade, tirages, tractions, pull-overs barre/poulie, Superman, shrug overhead) — EXLIB Dos 22→37 ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
