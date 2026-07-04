@@ -201,7 +201,7 @@ function _cloudSync(){
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
       action:'saveProfile',email:S.email,
-      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,
+      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
@@ -841,6 +841,22 @@ function setGoal(g){
   const el=document.getElementById('goal-desc');
   if(el)el.textContent=GOAL_DESCS[g]||'';
 }
+// Discipline pratiquée — nourrit le Coach IA + l'analyse morpho + la nutrition
+const DISC_LABELS={muscu:'Musculation',bodybuilding:'Bodybuilding / Culturisme',powerlifting:'Force athlétique / Powerlifting',haltero:'Haltérophilie'};
+const DISC_DESCS={
+  muscu:'Entraînement général force + esthétique, polyvalent et santé.',
+  bodybuilding:'Priorité hypertrophie, symétrie et sèche — le coach cible tes points faibles et la contraction.',
+  powerlifting:'Force maximale sur squat, développé couché et soulevé de terre (1RM).',
+  haltero:'Arraché et épaulé-jeté : explosivité, mobilité et technique olympique.',
+};
+function setDiscipline(d){
+  S.discipline=d;persist();
+  ['muscu','bodybuilding','powerlifting','haltero'].forEach(x=>{
+    const el=document.getElementById('disc-'+x);if(el)el.classList.toggle('active',x===d);
+  });
+  const el=document.getElementById('disc-desc');
+  if(el)el.textContent=DISC_DESCS[d]||'';
+}
 
 let _screenHistory=['home'];
 function openMenuDrawer(){
@@ -937,6 +953,7 @@ function renderSetup(){
   const bdayEl=document.getElementById('bday-inp');if(bdayEl)bdayEl.value=S.bday||'';
   renderCycleProfileCard();
   setGoal(S.goal||'muscle');
+  setDiscipline(S.discipline||'muscu');
   renderBFCard();
   _renderMorphoSection();
   _renderHealthSection();
@@ -1026,6 +1043,7 @@ function _applyRestoreData(raw){
   // _obDataRestored=true est déjà positionné avant l'appel, donc finishOnboarding() les ignore
   try{if(d.gender)S.gender=d.gender;}catch(e){console.warn('[FT restore] gender',e);}
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
+  try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
   try{if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;}catch(e){console.warn('[FT restore] activityLevel',e);}
   try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
   try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}

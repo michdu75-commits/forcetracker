@@ -137,6 +137,7 @@ PROFIL ATHLÈTE:
 - Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Marchant',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
 - Objectif: ${GOAL_LABELS[S.goal||'muscle']} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
+- Discipline pratiquée: ${(typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'Musculation'} — adapte tes conseils (exercices, répétitions, périodisation) à cette discipline
 - Calories cible: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
 ${(()=>{
   const bf_n=S.neck,bf_w=S.waist,bf_h=S.hip,bf_ht=S.height;

@@ -55,6 +55,7 @@ function load(){
     S.waist=parseFloat(localStorage.getItem('ft4_waist')||'0')||0;
     S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
+    S.discipline=localStorage.getItem('ft4_discipline')||'muscu';
     S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
     S.weightLog=JSON.parse(localStorage.getItem('ft4_wlog')||'[]');
     S.name=localStorage.getItem('ft4_name')||'';
@@ -167,6 +168,7 @@ function persist(){
     localStorage.setItem('ft4_waist',S.waist||0);
     localStorage.setItem('ft4_hip',S.hip||0);
     localStorage.setItem('ft4_goal',S.goal||'muscle');
+    localStorage.setItem('ft4_discipline',S.discipline||'muscu');
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
     localStorage.setItem('ft4_name',S.name||'');
