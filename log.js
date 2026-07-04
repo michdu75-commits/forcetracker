@@ -3078,6 +3078,29 @@ const EX_YT={
   'Pull-over Poulie':              {img:'exercises/pull-over-poulie.gif'},
   'Superman':                      {img:'exercises/superman.gif'},
   'Haussements d\'Épaules Overhead':{img:'exercises/overhead-shrug.gif'},
+  // ── Cuisses / Quadriceps (lot 2026-07-04) ──
+  'Squat Bulgare':                 {img:'exercises/squat-bulgare-halteres-exercice-musculation.gif'},
+  'Smith Machine Squat':           {img:'exercises/squat-smith-machine-exercice-musculation.gif'},
+  'Extension Quadriceps (Leg Extension)':{img:'exercises/leg-extension-exercice-musculation.gif'},
+  'Fentes Marchées':               {img:'exercises/fentes-marchees-avec-sandbag.gif'},
+  'Smith Machine Fentes':          {img:'exercises/split-squat-smith-machine.gif'},
+  'Poussée de Hanche Machine':     {img:'exercises/hip-thrust-a-la-machine.gif'},
+  'Farmer\'s Walk':                {img:'exercises/marche-du-fermier-avec-kettlebells.gif'},
+  // Nouveaux exercices cuisses
+  'Extension Quadriceps Unilatérale':{img:'exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.gif'},
+  'Hack Squat Inversé':            {img:'exercises/hack-squat-inverse.gif'},
+  'Pendulum Squat':                {img:'exercises/pendulum-squat.gif'},
+  'Belt Squat':                    {img:'exercises/belt-squat.gif'},
+  'Safety Bar Squat':              {img:'exercises/safety-bar-squat.gif'},
+  'Overhead Squat':                {img:'exercises/overhead-squat.gif'},
+  'Pin Squat':                     {img:'exercises/pin-squat.gif'},
+  'Sissy Squat':                   {img:'exercises/sissy-squat.gif'},
+  'Cossack Squat':                 {img:'exercises/cossack-squat.gif'},
+  'Squat Bande Élastique':         {img:'exercises/squat-bande-elastique.gif'},
+  'Chaise (Wall Sit)':             {img:'exercises/squat-statique-contre-mur-exercice-chaise.gif'},
+  'Presse à Cuisses Iso-Latérale': {img:'exercises/presse-cuisse-iso-laterale-hammer-stenght.gif'},
+  'Sled Push':                     {img:'exercises/sled-push-hyrox.gif'},
+  'Croix de Fer Haltères':         {img:'exercises/croix-de-fer-halteres.gif'},
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={

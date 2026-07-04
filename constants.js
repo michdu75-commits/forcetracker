@@ -70,6 +70,11 @@ const EXLIB=[
   {n:'Smith Machine Fentes',g:'Jambes'},
   {n:'Montée sur Box (Step-up)',g:'Jambes'},{n:'Montée sur Box Haltères',g:'Jambes'},
   {n:'Abduction Cuisses (Leg Abduction)',g:'Jambes'},{n:'Adduction Cuisses (Leg Adduction)',g:'Jambes'},
+  {n:'Extension Quadriceps Unilatérale',g:'Jambes'},{n:'Hack Squat Inversé',g:'Jambes'},
+  {n:'Pendulum Squat',g:'Jambes'},{n:'Belt Squat',g:'Jambes'},{n:'Safety Bar Squat',g:'Jambes'},
+  {n:'Overhead Squat',g:'Jambes'},{n:'Pin Squat',g:'Jambes'},{n:'Sissy Squat',g:'Jambes'},
+  {n:'Cossack Squat',g:'Jambes'},{n:'Squat Bande Élastique',g:'Jambes'},{n:'Chaise (Wall Sit)',g:'Jambes'},
+  {n:'Presse à Cuisses Iso-Latérale',g:'Jambes'},{n:'Sled Push',g:'Jambes'},{n:'Croix de Fer Haltères',g:'Jambes'},
   // ── Fessiers ───────────────────────────────────────────────
   {n:'Poussée de Hanche (Hip Thrust)',g:'Fessiers'},{n:'Poussée de Hanche Haltère',g:'Fessiers'},{n:'Poussée de Hanche Machine',g:'Fessiers'},
   {n:'Pont Fessier (Glute Bridge)',g:'Fessiers'},

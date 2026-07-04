@@ -1,4 +1,4 @@
-const CACHE = 'ft-v215'; // Figurines dos/trapèzes/lombaires : 18 mappées + 17 nouveaux exercices (rowings, tractions, tirages, pull-overs)
+const CACHE = 'ft-v216'; // Figurines cuisses/quadriceps : 7 mappées (Leg Extension, Squat Bulgare, Smith, Fentes Marchées, Hip Thrust Machine, Farmer's Walk) + 14 nouveaux squats
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -54,6 +54,12 @@ const PRECACHE = [
   './exercises/tirage-avant-iso-laterale-hammer-strength.gif','./exercises/tirage-incline-poulie-haute.gif','./exercises/tirage-vertical-prise-inversee.gif',
   './exercises/traction-barre-derriere-rear-oull-up.gif','./exercises/rocky-pull-up.gif','./exercises/sled-pull.gif',
   './exercises/pull-over-barre.gif','./exercises/pull-over-poulie.gif','./exercises/superman.gif','./exercises/overhead-shrug.gif',
+  // Cuisses / Quadriceps
+  './exercises/squat-bulgare-halteres-exercice-musculation.gif','./exercises/squat-smith-machine-exercice-musculation.gif','./exercises/leg-extension-exercice-musculation.gif',
+  './exercises/fentes-marchees-avec-sandbag.gif','./exercises/split-squat-smith-machine.gif','./exercises/hip-thrust-a-la-machine.gif','./exercises/marche-du-fermier-avec-kettlebells.gif',
+  './exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.gif','./exercises/hack-squat-inverse.gif','./exercises/pendulum-squat.gif','./exercises/belt-squat.gif','./exercises/safety-bar-squat.gif',
+  './exercises/overhead-squat.gif','./exercises/pin-squat.gif','./exercises/sissy-squat.gif','./exercises/cossack-squat.gif','./exercises/squat-bande-elastique.gif',
+  './exercises/squat-statique-contre-mur-exercice-chaise.gif','./exercises/presse-cuisse-iso-laterale-hammer-stenght.gif','./exercises/sled-push-hyrox.gif','./exercises/croix-de-fer-halteres.gif',
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
   './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
