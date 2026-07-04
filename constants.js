@@ -126,10 +126,10 @@ const NEW_FEATURES=[
   // Coach
   {id:'coach-photo', screen:'coach',    desc:'Envoi de photo au Coach IA (📷)'},
   {id:'coach-morpho',screen:'coach',    desc:'Analyse morphologie 3 photos (📸 Premium)'},
-  // Profil (setup)
-  {id:'morpho-setup',screen:'setup',    desc:'Section morphologie dans Profil'},
-  {id:'discipline',  screen:'setup',    desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
-  {id:'profil-accordion',screen:'setup',desc:'Profil réorganisé en sections repliables'},
+  // Profil (setup) — anchor = id de la ligne de menu où le point rouge s'affiche (ici la carte Profil)
+  {id:'morpho-setup',screen:'setup', anchor:'menu-row-profil', desc:'Section morphologie dans Profil'},
+  {id:'discipline',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
+  {id:'profil-accordion',screen:'setup', anchor:'menu-row-profil', desc:'Profil réorganisé en sections repliables'},
 ];
 
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────

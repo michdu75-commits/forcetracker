@@ -1,4 +1,4 @@
-const CACHE = 'ft-v203'; // Pause de séance : bouton Pause/Reprendre fige le chrono de durée (temps en pause exclu de la durée finale)
+const CACHE = 'ft-v204'; // Point rouge « nouveauté » INLINE dans le menu : sur la ligne précise (carte Profil) → on sait OÙ est le neuf
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
