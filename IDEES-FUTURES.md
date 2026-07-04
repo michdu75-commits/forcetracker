@@ -65,8 +65,8 @@ Le régler en premier corrige d'un coup plusieurs bugs ci-dessous (menu qui ne s
 - **Mettre à jour le contenu de l'aide** : après toutes les refontes (affichage, superséries, menu…), les textes d'aide contextuelle + « Aide détaillée » doivent être **réécrits pour coller à la version actuelle** des écrans (sinon l'aide décrit une ancienne UI).
 - **Profil — « ? » d'aide + petit logo (menu caché) en haut à droite** : ces deux accès sont dans la zone la plus dure à atteindre au pouce (haut-droite) → repositionner pour l'usage à une main.
 - **Écran s'éteint en séance** : l'écran s'éteint alors que l'app est ouverte → activer **Wake Lock** (garder l'écran allumé pendant la séance).
-- **L'écran pivote** : verrouiller l'app en **mode portrait** (orientation lock).
-- **Touches accidentelles (tél posé par terre)** : un popup « Voulez-vous annuler la saisie ? OK / Annuler » apparaît tout seul → protéger les actions sensibles contre les taps involontaires.
+- ✅ **L'écran pivote — FAIT** : verrouillé en portrait via `manifest.json` (`"orientation":"portrait-primary"`, app installée) + `screen.orientation.lock('portrait')` (app.js).
+- **Touches accidentelles (tél posé) — limite iOS** : on ne peut PAS empêcher iOS de détecter les touches quand l'écran touche une surface (matériel/OS, hors portée web). **Mitigation en place** : les actions destructrices sont protégées (suppression exo/série = appui long 400ms, Vider/Annuler séance = confirmation) → une touche fantôme ne peut pas détruire de données. *Si un popup précis réapparaît tout seul, identifier l'action concernée et la blinder (confirmation/appui long).*
 - **Mode jour — drawer Menu reste sombre** : en **mode jour/clair**, une **ombre apparaît à droite** et l'ouverture du **Menu s'affiche en noir** (pas adapté au thème clair). → Adapter le drawer Menu (fond + ombre) au mode jour.
 - **Logo/titre « Force Tracker » incohérent entre onglets** : l'en-tête « Force Tracker » n'est **pas identique sur tous les onglets** (taille/style/position varient), en **mode jour ET nuit**. → Uniformiser l'en-tête sur tous les écrans.
 
