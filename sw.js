@@ -1,4 +1,4 @@
-const CACHE = 'ft-v220'; // Audit : fix persistance locale du Cycle de Force (ft4_cycle était lu mais jamais écrit → perdu au reload hors-ligne)
+const CACHE = 'ft-v221'; // Coach santé (brique 1) : disclaimer médical sur le Profil Santé (profil + injection Coach déjà en place)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
