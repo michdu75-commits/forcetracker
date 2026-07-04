@@ -1,4 +1,4 @@
-const CACHE = 'ft-v191'; // fix maj iOS : register sw.js avec updateViaCache:'none' (app plus jamais collée à l'ancienne version)
+const CACHE = 'ft-v192'; // icônes trait fin : titres de section (Objectif/Composition/Santé/Morpho/Cycle/Accessibilité/IA/Admin/Install) + Nutrition (Hydra/Séance/Total) + Suppléments (Créatine/Whey) + import journal
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

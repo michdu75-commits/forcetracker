@@ -467,6 +467,17 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Icônes de titres de section → trait fin (✅ 2026-07-04, ft-v192)
+- **Demande Michel** : « on finit les petites icônes » — remplacer les emojis des titres de section par des icônes trait fin (cohérence globale, cf. point n°1 Claude Design).
+- **Converti (index.html, emoji → SVG outline `stroke=currentColor`/couleur thème)** :
+  - Profil : 🎯 Objectif (cible), 📐 Composition corporelle (silhouette), 🩺 Santé (cœur-pouls), 🧬 Morphologie (ADN), 🌙 Cycle menstruel (lune), ♿ Accessibilité (pictogramme a11y).
+  - Nutrition : 🤖 Plan de repas IA (étoiles), 💧 Hydratation (goutte bleue), 🔥 Séance (flamme rouge), ⚡ Total (éclair orange).
+  - Suppléments : 💊 Créatine (pilule bleue), 🥤 Whey (gobelet vert).
+  - Autres : ⚙️ Administration (réglages), 📥 Comment installer (download), 📅 Importer un journal (calendrier).
+- **currentColor** → chaque icône prend la couleur du titre (s'adapte jour/nuit). SVG inline, `vertical-align:-2px`.
+- **Laissés volontairement** (contenu, pas « titres ») : emojis des noms de repas (🌅🍎), du check-in (😴⚡), boutons contenu (⚡ Charge/✅ Maintenance/💡), 🗑️ Supprimer, 🔄 Resync admin.
+- Testé (Chromium, jour + nuit) : Profil + Nutrition + Suppléments, icônes nettes et alignées, 0 erreur JS.
+
 ### Fix mise à jour iOS — app collée à l'ancienne version (✅ 2026-07-04, ft-v191)
 - **Symptôme Michel** : après un déploiement, l'iPhone continuait d'afficher l'ancienne version malgré fermeture/réouverture (« pareil »). Le serveur avait bien la nouvelle version.
 - **Cause** : `navigator.serviceWorker.register('./sw.js')` sans option → le navigateur met **`sw.js` en cache HTTP** (GitHub Pages ~10 min). Les fermetures/réouvertures rapides retombaient sur le `sw.js` caché → nouvelle version non détectée.
@@ -922,7 +933,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v188 | Accueil : retrait « Bonjour + prénom » (démarre sur CE MOIS) + Menu restylé maquette 06 (rows Outils/Compte en cartes séparées `.menu-group`) |
 | ft-v189 | Promotion restyle clone→prod : Nutrition (anneau + barres macros), Progrès (stats plates + ⭐PR), Objectif (icônes trait fin + fix « Rééquilibrage ») |
 | ft-v190 | Accueil : 4 tuiles stats réalignées (icône à gauche, chiffre à droite, label dessous aligné) |
-| ft-v191 | fix maj iOS : `register(sw.js,{updateViaCache:'none'})` — l'app n'est plus jamais collée à l'ancienne version ← **actuel** |
+| ft-v191 | fix maj iOS : `register(sw.js,{updateViaCache:'none'})` — l'app n'est plus jamais collée à l'ancienne version |
+| ft-v192 | icônes trait fin : titres de section (Profil/Nutrition/Admin/Install) + Nutrition (Hydra/Séance/Total) + Suppléments (Créatine/Whey) + import journal ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
