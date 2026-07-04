@@ -467,6 +467,13 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Points rouges « nouveauté » sur nouvelles features (✅ 2026-07-04, ft-v197)
+- **Demande Michel** : mettre les petits points rouges pour signaler les nouvelles fonctionnalités.
+- **Système existant réutilisé** : `NEW_FEATURES` (constants.js) + `_updateNewBadges`/`_markScreenSeen` (screens.js) + `S.seenFeatures` (ft4_seen_ft). Un `.new-dot` rouge apparaît sur le bouton nav `nb-{screen}` tant qu'il reste une feature `{id,screen}` non vue ; à l'ouverture de l'écran (`_applyScreen`→`_markScreenSeen`), les features de cet écran passent en « vues » et le point disparaît.
+- **Ajout** (constants.js `NEW_FEATURES`) : `{id:'discipline',screen:'setup'}` + `{id:'profil-accordion',screen:'setup'}` → point rouge sur le bouton **Menu** (`nb-setup`) tant que l'utilisateur n'a pas ouvert le Profil. `openProfil()`→`goScreen('setup')`→`_markScreenSeen('setup')` le nettoie.
+- **Pour signaler une future nouveauté** : ajouter une entrée `{id:'xxx', screen:'home|progress|log|nutrition|coach|setup', desc:'...'}` dans `NEW_FEATURES`. Le point apparaît pour tous ceux qui n'ont pas l'`id` dans leur `seenFeatures`.
+- Testé (Chromium) : point rouge sur Menu pour user existant sans la feature, disparaît à l'ouverture du Profil, 0 erreur JS. sw.js bump ft-v197.
+
 ### Profil — confirmation de sauvegarde claire (✅ 2026-07-04, ft-v196)
 - **Signalé Michel** : « pas la confirmation que mon profil a bien été enregistré ». Cause : `saveProfile()` ne faisait qu'un **flash de 2 s sur le bouton** au succès (facile à rater) — alors que les **erreurs** avaient un `toast()`. Incohérent.
 - **Fix** (`setup.js` `saveProfile`) : ajout `toast('Profil enregistré ✅','success')` (grosse notif verte en haut, impossible à rater) EN PLUS du flash bouton. + fix : le reset du bouton restaure son HTML d'origine (`_orig=saveBtn.innerHTML`) au lieu de le remettre à l'ancien emoji `💾` (l'icône SVG était perdue depuis v192).
@@ -966,7 +973,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v193 | icônes trait fin (suite) : boutons bascule Charge/Décharge + Charge/Maintenance créatine + Enregistrer le profil (reste ~100 emojis enfouis gardés volontairement) |
 | ft-v194 | Profil : champ « Discipline » (Muscu/Bodybuilding/Force athlé/Haltéro) → injecté dans le Coach IA (cloud persistance = 1 ligne backend à déployer) |
 | ft-v195 | Profil réorganisé en accordéon (8 sections repliables, ordre logique, Identité ouverte) — anti « usine à gaz », prêt pour le mode compétition |
-| ft-v196 | Profil : toast « Profil enregistré ✅ » à la sauvegarde (confirmation claire, avant juste un flash bouton) + fix icône bouton ← **actuel** |
+| ft-v196 | Profil : toast « Profil enregistré ✅ » à la sauvegarde (confirmation claire, avant juste un flash bouton) + fix icône bouton |
+| ft-v197 | Point rouge « nouveauté » sur Menu pour la Discipline + Profil réorganisé (NEW_FEATURES) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
