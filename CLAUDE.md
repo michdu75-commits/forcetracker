@@ -467,6 +467,18 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Promotion restyle clone→prod (✅ 2026-07-04, ft-v189)
+- **Demande Michel** : « promeus » — après validation du clone (« je ne vois pas de bug »), on passe le restyle en prod pour tous.
+- **Méthode** : PAS de copie brute des fichiers `clone/` (ils contiennent le shim localStorage, le badge CLONE, les chemins `../`). On a **réappliqué les mêmes retouches de style** aux fichiers racine (identiques au clone hors bidouilles). Les blocs édités ne référencent aucun asset → réécriture propre.
+- **Écrans promus** :
+  - **Nutrition** (`index.html` + `screens.js` + `style.css`) : hero = **anneau** (kcal cible au centre + arcs = part des calories prot/glucides/lipides) + macros en **lignes à barres** (barre = part des calories). BMR/TDEE conservés.
+  - **Progrès** (`setup.js` `renderChart`) : 3 stats **plates à séparateurs** (Actuel/Record or/Progrès vert-rouge) + badge **⭐ PR**.
+  - **Objectif** (`index.html` Profil + onboarding + `style.css`) : icônes **SVG trait fin** (haltère/flamme/barre/balance/pouls) au lieu des emojis + fix label « Rééquilibrage » coupé.
+- **Point de restauration avant promo** : branche `restore-2026-07-04-clone-restyle-ok` (le proxy refuse les tags → on utilise une branche). Rollback : `git reset --hard origin/restore-2026-07-04-clone-restyle-ok`.
+- **Non promu (volontaire)** : le balayage des petites icônes de titres de section (🎯📐🔥⚡💧) — mis en pause à la demande de Michel. Le dossier `/clone/` reste en place pour la suite.
+- Testé (Chromium, jour + nuit, prod locale) : anneau + barres + stats plates + icônes OK, 0 erreur JS. ⚠️ Michel valide sur iPhone/Safari après déploiement.
+- **Rollback** : `git reset --hard origin/restore-2026-07-04-clone-restyle-ok`
+
 ### 🧪 Clone de test (`/clone/`) — bac à sable restylage (✅ 2026-07-04)
 - **But** : copie fonctionnelle et LIVE de l'app pour faire le restylage complet **sans toucher la prod**. Stratégie « copie test en off » du fichier idées. URL : `https://michdu75-commits.github.io/forcetracker/clone/`.
 - **⚠️ Impossible en repo séparé** (l'accès GitHub de Claude Code web est limité à `michdu75-commits/forcetracker`) → le clone vit dans un **sous-dossier `/clone/` du même repo**. La prod (racine) n'est jamais modifiée.
@@ -895,7 +907,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v185 | uniformisation étape 4 : arrondis de cartes ramenés à 16px (Nutrition 20, menu drawer 18 → 16) — boutons non touchés |
 | ft-v186 | restylage maquette étape 1 : Accueil (stats grille 2×2 + carte récup chiffre/barre) — restylage only, fonctions inchangées |
 | ft-v187 | restylage Accueil corrections maquette : ordre stats→récup, label CE MOIS, 3 tuiles séparées, CTA « Commencer une séance » gardé |
-| ft-v188 | Accueil : retrait « Bonjour + prénom » (démarre sur CE MOIS) + Menu restylé maquette 06 (rows Outils/Compte en cartes séparées `.menu-group`) ← **actuel** |
+| ft-v188 | Accueil : retrait « Bonjour + prénom » (démarre sur CE MOIS) + Menu restylé maquette 06 (rows Outils/Compte en cartes séparées `.menu-group`) |
+| ft-v189 | Promotion restyle clone→prod : Nutrition (anneau + barres macros), Progrès (stats plates + ⭐PR), Objectif (icônes trait fin + fix « Rééquilibrage ») ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
