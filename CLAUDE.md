@@ -467,6 +467,11 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Profil — confirmation de sauvegarde claire (✅ 2026-07-04, ft-v196)
+- **Signalé Michel** : « pas la confirmation que mon profil a bien été enregistré ». Cause : `saveProfile()` ne faisait qu'un **flash de 2 s sur le bouton** au succès (facile à rater) — alors que les **erreurs** avaient un `toast()`. Incohérent.
+- **Fix** (`setup.js` `saveProfile`) : ajout `toast('Profil enregistré ✅','success')` (grosse notif verte en haut, impossible à rater) EN PLUS du flash bouton. + fix : le reset du bouton restaure son HTML d'origine (`_orig=saveBtn.innerHTML`) au lieu de le remettre à l'ancien emoji `💾` (l'icône SVG était perdue depuis v192).
+- Testé (Chromium) : toast vert affiché à la sauvegarde, 0 erreur JS. sw.js bump ft-v196.
+
 ### Profil en accordéon — sections repliables + ordre logique (✅ 2026-07-04, ft-v195)
 - **Demande Michel** : « le profil va devenir une usine à gaz ». Réorganisation en **sections repliables** (`<details class="acc">`) avant d'ajouter le mode compétition.
 - **8 sections** (chacune un `<details>` indépendant, une seule ouverte au besoin) dans l'**ordre logique** : Identité *(ouverte par défaut)* · Objectif · Discipline · Composition corporelle · Morphologie · Santé · Cycle menstruel *(femmes)* · Accessibilité.
@@ -960,7 +965,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v192 | icônes trait fin : titres de section (Profil/Nutrition/Admin/Install) + Nutrition (Hydra/Séance/Total) + Suppléments (Créatine/Whey) + import journal |
 | ft-v193 | icônes trait fin (suite) : boutons bascule Charge/Décharge + Charge/Maintenance créatine + Enregistrer le profil (reste ~100 emojis enfouis gardés volontairement) |
 | ft-v194 | Profil : champ « Discipline » (Muscu/Bodybuilding/Force athlé/Haltéro) → injecté dans le Coach IA (cloud persistance = 1 ligne backend à déployer) |
-| ft-v195 | Profil réorganisé en accordéon (8 sections repliables, ordre logique, Identité ouverte) — anti « usine à gaz », prêt pour le mode compétition ← **actuel** |
+| ft-v195 | Profil réorganisé en accordéon (8 sections repliables, ordre logique, Identité ouverte) — anti « usine à gaz », prêt pour le mode compétition |
+| ft-v196 | Profil : toast « Profil enregistré ✅ » à la sauvegarde (confirmation claire, avant juste un flash bouton) + fix icône bouton ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
