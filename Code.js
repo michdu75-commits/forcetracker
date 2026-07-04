@@ -474,6 +474,8 @@ function handleSaveProfile_(body) {
     // Objets  : {} ou null n'écrase pas un objet existant
     if (body.healthProfile !== undefined) profile.healthProfile = body.healthProfile||profile.healthProfile||null;
     if (body.badges        !== undefined) profile.badges        = _po_(body.badges,        profile.badges);
+    if (body.discipline    !== undefined) profile.discipline    = _ps_(body.discipline,    profile.discipline);
+    if (body.histImports   !== undefined) profile.histImports   = _pn_(body.histImports,   profile.histImports);
 
     existing.profile = profile;
 
