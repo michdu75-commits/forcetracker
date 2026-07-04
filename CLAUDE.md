@@ -976,7 +976,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v196 | Profil : toast « Profil enregistré ✅ » à la sauvegarde (confirmation claire, avant juste un flash bouton) + fix icône bouton |
 | ft-v197 | Point rouge « nouveauté » sur Menu pour la Discipline + Profil réorganisé (NEW_FEATURES) |
 | ft-v198 | Aide détaillée mise à jour : cartes « Ton Profil » (accordéon) + « Discipline » + astuces (texte agrandi, points rouges) |
-| ft-v199 | Aide contextuelle (bouton ?) mise à jour : Profil (Discipline + sections repliables) + Coach (discipline injectée) ← **actuel** |
+| ft-v199 | Aide contextuelle (bouton ?) mise à jour : Profil (Discipline + sections repliables) + Coach (discipline injectée) |
+| ft-v200 | Accueil : tuile « Séances ce mois » cliquable → Progrès + scroll historique des séances (`goSessionsHistory`) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

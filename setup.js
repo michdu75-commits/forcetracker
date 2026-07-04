@@ -92,6 +92,8 @@ function switchProgTab(tab,btn){
   if(tab==='badges')renderBadges();
 }
 function goWeightTab(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>switchProgTab('poids',document.getElementById('ptab-poids')),80);}
+// Tuile « Séances ce mois » (Accueil) → Progrès, onglet Exercices, historique des séances
+function goSessionsHistory(){goScreen('progress',document.getElementById('nb-progress'));setTimeout(()=>{switchProgTab('exo',document.getElementById('ptab-exo'));setTimeout(()=>{const el=document.getElementById('sess-hist-title');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},140);},80);}
 function renderChart(){
   const name=_progEx,box=document.getElementById('chart-box');
   if(!box)return;

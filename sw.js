@@ -1,4 +1,4 @@
-const CACHE = 'ft-v199'; // Aide contextuelle (?) mise à jour : Profil (Discipline + sections repliables) + Coach (discipline injectée)
+const CACHE = 'ft-v200'; // Accueil : tuile « Séances ce mois » cliquable → Progrès, historique des séances
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
