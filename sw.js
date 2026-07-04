@@ -1,4 +1,4 @@
-const CACHE = 'ft-v212'; // Photo sur N'IMPORTE quel exercice (S.exPhotos) + tap vignette = voir en grand (n'ajoute plus)
+const CACHE = 'ft-v213'; // Figurines pectoraux : 5 nouvelles animations mappées (Incliné Haltères, Croisé Poulie, Chest Press Horiz/Incliné, Dips)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -23,6 +23,11 @@ const PRECACHE = [
   './exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.gif',
   './exercises/ecartes-decline-avec-halteres.gif',
   './exercises/pec-deck-butterfly-exercice-musculation.gif',
+  './exercises/developpe-incline-halteres-exercice-musculation.gif',
+  './exercises/ecartes-poulie-vis-a-vis.gif',
+  './exercises/developpe-machine-assis-pectoraux.gif',
+  './exercises/developpe-incline-machine-convergente-exercice-musculation.gif',
+  './exercises/dips-pectoraux.gif',
   './exercises/glute-bridge.webp',
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
