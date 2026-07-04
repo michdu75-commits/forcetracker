@@ -1065,7 +1065,16 @@ load();
     }
   }catch(e){}
 })();
-(async()=>{let cv='?';try{const ks=await caches.keys();cv=ks.find(k=>k.startsWith('ft-v'))||'?';}catch(e){}console.log('[FT] boot',cv,'— _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'_premiumPending=',window._premiumPending,'openRestoreAccount=',typeof openRestoreAccount);})();
+// Remplit les libellés de version (.app-ver) avec le VRAI build tournant (cache SW ft-vNN) → jamais périmé
+function _setAppVersionEls(){
+  if(!('caches' in window))return;
+  caches.keys().then(keys=>{
+    const ft=(keys||[]).find(k=>k&&k.startsWith('ft-v'));
+    if(!ft)return;
+    document.querySelectorAll('.app-ver').forEach(el=>{el.textContent=ft;});
+  }).catch(()=>{});
+}
+(async()=>{let cv='?';try{const ks=await caches.keys();cv=ks.find(k=>k.startsWith('ft-v'))||'?';}catch(e){}try{_setAppVersionEls();}catch(e){}console.log('[FT] boot',cv,'— _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'_premiumPending=',window._premiumPending,'openRestoreAccount=',typeof openRestoreAccount);})();
 // Garantie : le timer de repos ne survit jamais à un redémarrage ni à un retour au premier plan
 stopRest();
 document.addEventListener('visibilitychange',()=>{

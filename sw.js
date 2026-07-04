@@ -1,4 +1,4 @@
-const CACHE = 'ft-v209'; // Code admin de secours → 0115 + clavier numérique
+const CACHE = 'ft-v210'; // Version affichée = vrai build tournant (ft-vNN, lu du cache) partout → fini le « v2.8 » périmé
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -1038,7 +1038,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v206 | exercice perso avec PHOTO (`_cexImg`/`changeCustomExImg`/`_exImg`) : ajouter une photo de machine à un exercice créé, vignette partout (bloc, picker, éditeur prog), sync cloud auto |
 | ft-v207 | swipe entre onglets moins sensible (`_initSwipe`) : seuil 55→110px, angle 0.65→0.5, pas de nav si le geste part d'un contrôle (input/bouton) + fix `_sel` nullé avant `_hScrollParent` |
 | ft-v208 | verrou admin (email `ADMIN_EMAILS` OU code de secours `ADMIN_CODE`) + « Modifier l'exercice » perso (`openEditCustomEx`/`_saveCustomExEdit`/`_renameExEverywhere`) : nom/groupe/muscles sans perte d'historique |
-| ft-v209 | code admin de secours → `0115` + clavier numérique sur la saisie ← **actuel** |
+| ft-v209 | code admin de secours → `0115` + clavier numérique sur la saisie |
+| ft-v210 | version affichée = vrai build tournant partout (`.app-ver` rempli via `_setAppVersionEls` depuis `caches.keys()`) → fini le « v2.8 » périmé (footer menu + drawer) ; titre onglet nettoyé ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
