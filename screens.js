@@ -313,24 +313,17 @@ function renderHome(){try{
   const bwDisp=latestW?latestW.kg:(S.bw||'—');
   const volDisp=vol>9999?(Math.round(vol/100)/10)+'k':Math.round(vol);
   const statsEl=document.getElementById('home-stats');
-  if(statsEl)statsEl.innerHTML='<div style="display:flex;border-radius:16px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);padding:14px 0;">'
-    +'<div style="flex:1;text-align:center;cursor:pointer;" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
-    +'<div id="h-vol" style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--t1);">'+volDisp+'</div>'
-    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Volume</div>'
-    +'<div style="font-size:7.5px;color:var(--t3);opacity:.6;margin-top:1px;">hors échauffement</div></div>'
-    +'<div style="width:1px;background:rgba(255,255,255,.07);"></div>'
-    +'<div style="flex:1;text-align:center;cursor:pointer;" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
-    +'<div id="h-big3" style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--orange);">'+(b3>0?Math.round(b3):'—')+'</div>'
-    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Big 3</div></div>'
-    +'<div style="width:1px;background:rgba(255,255,255,.07);"></div>'
-    +'<div style="flex:1;text-align:center;">'
-    +'<div id="h-sess" style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--t1);">'+mo.length+'</div>'
-    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Séances</div>'
-    +'<div style="font-size:7.5px;color:var(--t3);opacity:.6;margin-top:1px;">ce mois</div></div>'
-    +'<div style="width:1px;background:rgba(255,255,255,.07);"></div>'
-    +'<div style="flex:1;text-align:center;cursor:pointer;" onclick="goWeightTab()">'
-    +'<div style="font-family:var(--font-cond);font-size:19px;font-weight:600;color:var(--t1);"><span id="h-bw">'+fmt(bwDisp)+'</span><span style="font-size:11px;color:var(--t2);font-weight:500;">kg</span></div>'
-    +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);margin-top:3px;">Poids</div></div></div>';
+  // Restylage maquette : grille 2×2 de cartes (icône + chiffre + label) — mêmes données, mêmes clics
+  const _sc=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:13px 14px;-webkit-tap-highlight-color:transparent;">'
+    +'<div style="width:32px;height:32px;border-radius:9px;background:'+icBg+';display:flex;align-items:center;justify-content:center;margin-bottom:10px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
+    +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:800;line-height:1;">'+valHtml+'</div>'
+    +'<div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-top:6px;">'+label+'</div></div>';
+  if(statsEl)statsEl.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
+    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>','rgba(255,106,115,.14)','var(--red)','<span id="h-vol" style="color:var(--t1)">'+volDisp+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Volume')
+    +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M6 12h12M4 9v6M8 8v8M16 8v8M20 9v6"/>','rgba(234,179,8,.14)','var(--gold)','<span id="h-big3" style="color:var(--orange)">'+(b3>0?Math.round(b3):'—')+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Big 3 · 1RM')
+    +_sc(null,'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois')
+    +_sc("goWeightTab()",'<circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 3h6"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+fmt(bwDisp)+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps')
+    +'</div>';
   const b3Lvl=BIG3.map(ex=>{const pr=S.prs[ex];const rm=pr?pr.rm1:0;return(S.bw&&S.age&&rm)?getLevel(ex,rm,S.bw,S.gender,S.age).name:'—';});
   const lvlSub=b3Lvl.some(l=>l!=='—')?b3Lvl.join(' · '):'Log tes séances pour voir ton niveau';
   const prCount=Object.keys(S.prs||{}).length;
