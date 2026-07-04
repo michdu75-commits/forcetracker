@@ -1,4 +1,4 @@
-const CACHE = 'ft-v198'; // Aide détaillée mise à jour : cartes « Ton Profil » (accordéon) + « Discipline » + astuce texte agrandi / points rouges
+const CACHE = 'ft-v199'; // Aide contextuelle (?) mise à jour : Profil (Discipline + sections repliables) + Coach (discipline injectée)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
