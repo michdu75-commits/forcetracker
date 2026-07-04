@@ -96,7 +96,8 @@ const PREMIUM_HARDCODED_ = [
   'michdu75@gmail.com',
   'elineazs32@gmail.com',
   'christophe@famillelanglois.fr',
-  'apollonone75@gmail.com'
+  'apollonone75@gmail.com',
+  'emma.david16@gmail.com'
 ];
 
 // Calcule le statut premium d'un email — retourne {premium, expiry}
