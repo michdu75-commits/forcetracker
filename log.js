@@ -791,6 +791,19 @@ function clearWkt(){
     toast('Séance annulée','info');
   });
 }
+// Tout effacer : vide les exercices mais GARDE la séance ouverte (ex. mauvais programme chargé).
+// Ne touche PAS l'historique ni les records. Distinct de « ✕ Annuler la séance » (qui quitte).
+function clearAllEx(){
+  if(!(S.wkt&&S.wkt.exs&&S.wkt.exs.length))return;
+  showConfirm('Vider la séance ?','Tous les exercices en cours seront retirés — pratique si tu as chargé le mauvais programme. La séance reste ouverte (tu pourras en charger une autre). Ton historique et tes records ne sont pas touchés.',()=>{
+    stopRest();
+    S.wkt.exs=[];
+    _expandedEx=null;
+    persist();
+    renderLog();
+    toast('Séance vidée','info');
+  });
+}
 // Sync boutons ✕/Changer dans l'en-tête + repositionne le FAB
 // Appellé à chaque renderExBlocks() pour rester cohérent sans passer par renderLog() entier
 function _syncLogHdrBtns(){
@@ -799,6 +812,7 @@ function _syncLogHdrBtns(){
   const hasExs=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
   el.innerHTML=hasExs
     ?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>'
+     +'<button onclick="clearAllEx()" style="padding:7px 10px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Vider</button>'
      +'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>'
     :'';
   requestAnimationFrame(_positionFab);

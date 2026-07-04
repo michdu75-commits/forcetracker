@@ -467,6 +467,13 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Bouton « Vider » l'en-tête séance (✅ 2026-07-04, ft-v202)
+- **Demande Michel** : « le bouton tout effacer quand on se trompe de séance d'un programme » — pouvoir retirer tous les exercices en une fois si on a chargé le mauvais programme, **sans quitter la séance**.
+- **`clearAllEx()`** (`log.js`, à côté de `clearWkt`) : `showConfirm` → `S.wkt.exs=[]` + `_expandedEx=null` + `stopRest()` + `persist()` + `renderLog()` + toast « Séance vidée ». **La séance reste ouverte** (on peut charger un autre programme). Ne touche NI l'historique NI les records. Early-return si aucun exo.
+- **⚠️ Distinct de `clearWkt()` (bouton ✕)** : `clearWkt` met `S.wkt=null` → **quitte** la séance. `clearAllEx` garde `S.wkt` (date, chrono, progLabel) et ne vide que `exs`.
+- **UI** : bouton rouge « 🗑 Vider » (SVG poubelle trait fin) dans `#log-hdr-btns` (`_syncLogHdrBtns`), entre ✕ et « 📋 Changer ». Visible seulement si ≥1 exo.
+- Testé (Chromium) : bouton présent, confirm « Vider la séance ? », après Vider → `S.wkt` existe (true), `exs` vide (0), `progLabel` conservé, 0 erreur JS. sw.js bump ft-v202.
+
 ### Points rouges « nouveauté » sur nouvelles features (✅ 2026-07-04, ft-v197)
 - **Demande Michel** : mettre les petits points rouges pour signaler les nouvelles fonctionnalités.
 - **Système existant réutilisé** : `NEW_FEATURES` (constants.js) + `_updateNewBadges`/`_markScreenSeen` (screens.js) + `S.seenFeatures` (ft4_seen_ft). Un `.new-dot` rouge apparaît sur le bouton nav `nb-{screen}` tant qu'il reste une feature `{id,screen}` non vue ; à l'ouverture de l'écran (`_applyScreen`→`_markScreenSeen`), les features de cet écran passent en « vues » et le point disparaît.
@@ -978,7 +985,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v198 | Aide détaillée mise à jour : cartes « Ton Profil » (accordéon) + « Discipline » + astuces (texte agrandi, points rouges) |
 | ft-v199 | Aide contextuelle (bouton ?) mise à jour : Profil (Discipline + sections repliables) + Coach (discipline injectée) |
 | ft-v200 | Accueil : tuile « Séances ce mois » cliquable → Progrès + scroll historique des séances (`goSessionsHistory`) |
-| ft-v201 | Coach IA voit la SÉANCE EN COURS (`S.wkt` injecté dans `buildCoachContext`) → aide en direct (alternative machine, ajustement charge, ordre) ← **actuel** |
+| ft-v201 | Coach IA voit la SÉANCE EN COURS (`S.wkt` injecté dans `buildCoachContext`) → aide en direct (alternative machine, ajustement charge, ordre) |
+| ft-v202 | bouton « Vider » dans l'en-tête séance (`clearAllEx`) : retire tous les exos mais garde la séance ouverte (mauvais programme chargé) — distinct de ✕ Annuler ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
