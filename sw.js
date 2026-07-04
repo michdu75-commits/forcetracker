@@ -1,4 +1,4 @@
-const CACHE = 'ft-v208'; // Verrou admin (email + code secours) + Modifier un exercice perso (nom/groupe/muscles sans perte d'historique)
+const CACHE = 'ft-v209'; // Code admin de secours → 0115 + clavier numérique
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
