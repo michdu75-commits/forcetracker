@@ -1,4 +1,4 @@
-const CACHE = 'ft-v206'; // Exercice perso avec PHOTO : ajouter une photo de machine à un exercice créé (vignette partout, sync cloud)
+const CACHE = 'ft-v207'; // Swipe entre onglets moins sensible : seuil 110px + geste franc horizontal + pas de nav si on part d'une saisie/bouton
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

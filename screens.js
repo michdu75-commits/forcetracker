@@ -238,11 +238,14 @@ function _initSwipe(){
     if(_sx===null)return;
     const dx=e.changedTouches[0].clientX-_sx;
     const dy=e.changedTouches[0].clientY-_sy;
+    const sel=_sel;               // capturer AVANT de réinitialiser (le guard _hScrollParent en dépend)
     _sx=_sy=_sel=null;
     if(document.querySelector('.overlay.open'))return; // overlay ouvert → pas de navigation
-    if(Math.abs(dx)<55)return;
-    if(Math.abs(dy)>Math.abs(dx)*0.65)return;
-    if(_hScrollParent(_sel))return;
+    if(Math.abs(dx)<110)return;                  // geste franc requis (était 55) → moins de changements d'onglet involontaires
+    if(Math.abs(dy)>Math.abs(dx)*0.5)return;     // doit être nettement horizontal (était 0.65)
+    // Ne pas naviguer si le geste part d'un contrôle (saisie kg/reps, boutons…) — évite les onglets qui sautent en séance
+    if(sel&&sel.closest&&sel.closest('input,textarea,select,button,a,.tbtn,.chk'))return;
+    if(_hScrollParent(sel))return;
     const idx=_SWIPE_ORDER.indexOf(window._curScreen);
     if(idx<0)return;
     if(dx<0&&idx<_SWIPE_ORDER.length-1){

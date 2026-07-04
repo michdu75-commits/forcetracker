@@ -1026,7 +1026,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v203 | pause de séance : bouton Pause/Reprendre (`toggleWktPause`) fige le chrono de durée ; le temps en pause est exclu de la durée finale (`_wktElapsedMs`) |
 | ft-v204 | point rouge « nouveauté » INLINE dans le menu-drawer : sur la ligne précise (`anchor`, ex. carte Profil) → l'utilisateur voit OÙ est le neuf, pas juste sur l'onglet Menu |
 | ft-v205 | bouton Partager/Exporter sous chaque réponse du Coach IA (`shareCoachReply`) : feuille de partage native (Web Share API) + fallback presse-papier, markdown nettoyé |
-| ft-v206 | exercice perso avec PHOTO (`_cexImg`/`changeCustomExImg`/`_exImg`) : ajouter une photo de machine à un exercice créé, vignette partout (bloc, picker, éditeur prog), sync cloud auto ← **actuel** |
+| ft-v206 | exercice perso avec PHOTO (`_cexImg`/`changeCustomExImg`/`_exImg`) : ajouter une photo de machine à un exercice créé, vignette partout (bloc, picker, éditeur prog), sync cloud auto |
+| ft-v207 | swipe entre onglets moins sensible (`_initSwipe`) : seuil 55→110px, angle 0.65→0.5, pas de nav si le geste part d'un contrôle (input/bouton) + fix `_sel` nullé avant `_hScrollParent` ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
