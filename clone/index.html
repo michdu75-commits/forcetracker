@@ -1,0 +1,1645 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Force Tracker">
+<meta name="theme-color" content="#FF2D55">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="../logo.png">
+<link rel="apple-touch-icon" href="../logo.png">
+<title>Force Tracker — CLONE TEST</title>
+<script>
+/* ============================================================================
+   CLONE DE TEST — isolation du stockage.
+   Toutes les clés localStorage sont préfixées « cl_ » → le clone a SES PROPRES
+   données et ne lit/écrit JAMAIS celles de l'app réelle (clés ft4_*).
+   S'exécute AVANT tout autre script (y compris la restauration cookie).
+   ========================================================================== */
+(function(){
+  try{
+    var real=window.localStorage, P='cl_';
+    var shim={
+      getItem:function(k){return real.getItem(P+k);},
+      setItem:function(k,v){real.setItem(P+k,v);},
+      removeItem:function(k){real.removeItem(P+k);},
+      clear:function(){var ks=[];for(var i=0;i<real.length;i++){var kk=real.key(i);if(kk&&kk.indexOf(P)===0)ks.push(kk);}ks.forEach(function(k){real.removeItem(k);});},
+      key:function(i){var ks=[];for(var j=0;j<real.length;j++){var kk=real.key(j);if(kk&&kk.indexOf(P)===0)ks.push(kk.slice(P.length));}return ks[i]||null;},
+      get length(){var n=0;for(var j=0;j<real.length;j++){var kk=real.key(j);if(kk&&kk.indexOf(P)===0)n++;}return n;}
+    };
+    Object.defineProperty(window,'localStorage',{value:shim,configurable:true});
+    window.__FT_CLONE__=true;
+  }catch(e){/* si le navigateur refuse la redéfinition, on continue (fallback) */}
+})();
+/* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
+document.addEventListener('DOMContentLoaded',function(){
+  var b=document.createElement('div');
+  b.textContent='🧪 CLONE';
+  b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
+  document.body.appendChild(b);
+});
+</script>
+<script>
+// Globals cross-fichiers : initialisés AVANT tout <script src> pour éviter ReferenceError sur iOS Safari
+window._adminMode=false;
+window._curScreen='home';
+window._premiumPending=false;
+window._deferredInstall=null;
+window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._deferredInstall=e;});
+// Récupération email depuis cookie si localStorage vidé par iOS Safari (synchrone, avant load())
+(function(){try{var ck={};document.cookie.split(';').forEach(function(c){var p=c.trim().indexOf('=');if(p>0)ck[c.trim().slice(0,p)]=decodeURIComponent(c.trim().slice(p+1));});if(ck.ft_email&&!localStorage.getItem('ft4_email')){localStorage.setItem('ft4_email',ck.ft_email);localStorage.setItem('ft4_ob2','1');window._emailRestoredFromCookie=true;}}catch(e){}})();
+if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add('ob-done');
+// Détection navigateur non compatible PWA — au plus tôt
+(function(){
+  var ua=navigator.userAgent;
+  var isStandalone=!!navigator.standalone||window.matchMedia('(display-mode:standalone)').matches;
+  if(isStandalone)return;
+  var isIOS=/iPhone|iPad|iPod/i.test(ua)&&!window.MSStream;
+  var isAndroid=/Android/i.test(ua);
+  var needsOverlay=false;
+  if(isIOS){
+    var isInApp=/FBAN|FBAV|Instagram|Twitter|Snapchat|TikTok|Musical\.ly|Line\/|LinkedIn|Pinterest|Threads|CriOS|FxiOS|OPiOS|EdgiOS|GSA/.test(ua)||!/Safari/i.test(ua);
+    needsOverlay=isInApp;
+  } else if(isAndroid && /Firefox/i.test(ua)){
+    needsOverlay=true;
+  }
+  if(needsOverlay){
+    document.addEventListener('DOMContentLoaded',function(){
+      if(typeof _showInAppOverlay==='function'){
+        if(isIOS) _showInAppOverlay('🧭','Ouvre dans Safari','Pour installer Force Tracker, ce lien doit s\'ouvrir dans <strong style="color:var(--t1)">Safari</strong>.','Essayer d\'ouvrir Safari',tryOpenSafari,'safari');
+        else _showInAppOverlay('🤖','Ouvre dans Chrome','Pour installer Force Tracker, ce lien doit s\'ouvrir dans <strong style="color:var(--t1)">Chrome</strong>.','Essayer d\'ouvrir Chrome',tryOpenChrome,'chrome');
+      } else {
+        var el=document.getElementById('ov-inapp');
+        if(el)el.classList.remove('hidden');
+      }
+    });
+  }
+})();
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══ ONBOARDING — hors de #root pour éviter overflow:hidden iOS ═══ -->
+<div id="onboarding">
+  <div class="ob-progress">
+    <div class="ob-dot ob-active" id="od-1"></div>
+    <div class="ob-dot" id="od-2"></div>
+    <div class="ob-dot" id="od-3"></div>
+    <div class="ob-dot" id="od-4"></div>
+  </div>
+  <div class="ob-wrap">
+
+    <!-- ÉTAPE 0 : Installer l'app (affichée si pas déjà installée) -->
+    <div class="ob-step" id="ob-0">
+
+      <!-- iOS layout -->
+      <div id="ob0-ios" style="flex:1;display:flex;flex-direction:column;padding:20px 0 0;display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
+          <img src="../force-tracker-logo-topbar.gif" style="width:44px;height:44px;border-radius:11px;object-fit:cover;flex-shrink:0;">
+          <div>
+            <div style="font-family:var(--font-cond);font-size:19px;font-weight:900;">Force Tracker</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:1px;">Installe sur ton iPhone</div>
+          </div>
+        </div>
+        <div style="background:var(--bg3);border-radius:14px;padding:16px;margin-bottom:10px;">
+          <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Étape 1</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:12px;">Appuie sur Partager en bas ↓</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:#007AFF;color:#fff;border-radius:9px;padding:8px 16px;font-size:14px;font-weight:700;">⬆️ Partager</span>
+        </div>
+        <div style="background:var(--bg3);border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Étape 2</div>
+          <div style="font-size:15px;font-weight:600;margin-bottom:12px;">Fais défiler et appuie sur</div>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1.5px solid var(--sep);border-radius:9px;padding:8px 16px;font-size:14px;font-weight:700;">➕ Sur l'écran d'accueil</span>
+        </div>
+        <div style="flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;">
+          <span style="font-size:32px;display:block;animation:ob0-bounce .85s infinite ease-in-out;">⬇️</span>
+        </div>
+      </div>
+
+      <!-- Android layout -->
+      <div id="ob0-android" style="flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px 0;">
+        <img src="../logo.png" style="width:72px;height:72px;border-radius:18px;object-fit:cover;margin-bottom:20px;">
+        <div style="font-family:var(--font-cond);font-size:26px;font-weight:900;text-align:center;margin-bottom:6px;">Installe Force Tracker</div>
+        <div style="font-size:14px;color:var(--t2);text-align:center;margin-bottom:28px;line-height:1.45;">Accès instantané depuis ton écran d'accueil</div>
+        <button id="ob0-install-btn" class="btn btn-red" onclick="ob0Install()" style="font-size:17px;padding:17px;width:100%;display:flex;align-items:center;justify-content:center;gap:9px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="7" x2="12" y2="14"/><polyline points="9 11 12 14 15 11"/></svg> Installer l'app</button>
+        <div id="ob0-android-fallback" style="display:none;margin-top:16px;background:var(--bg3);border-radius:12px;padding:12px 16px;width:100%;font-size:13px;color:var(--t2);text-align:center;line-height:1.55;">Chrome <strong style="color:var(--t1);">⋮</strong> → <strong style="color:var(--t1);">Ajouter à l'écran d'accueil</strong></div>
+      </div>
+
+      <div class="ob-footer">
+        <button class="btn btn-bg2" onclick="obGoTo(1)" style="font-size:14px;color:var(--t3);">Continuer sans installer</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 1 : As-tu déjà un compte ? -->
+    <div class="ob-step ob-active" id="ob-1">
+      <div class="ob-hero">
+        <img src="../force-tracker-logo-splash.gif" alt="Force Tracker" style="width:240px;height:240px;object-fit:contain;" loop>
+        <div class="ob-title">Bienvenue sur<br>Force Tracker</div>
+        <div class="ob-sub">Tu as déjà un compte Force Tracker ?</div>
+        <div id="ob-1-choice" style="width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+          <button class="btn btn-red" onclick="obShowRestore()" style="font-size:17px;padding:16px;">✅ Oui, je restaure mes données</button>
+          <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:15px;padding:14px;">Non, je crée mon profil →</button>
+        </div>
+        <div id="ob-1-restore" style="display:none;width:100%;flex-direction:column;gap:10px;margin-top:8px;">
+          <input class="ob-inp" id="ob-email" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
+          <button class="btn btn-red" onclick="obDoRestore()" style="font-size:17px;padding:16px;">☁️ Restaurer mes données</button>
+          <button class="btn btn-bg2" onclick="obHideRestore()" style="font-size:15px;padding:13px;">← Retour</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2 : (non utilisée — fusion dans ob-1) -->
+    <div class="ob-step" id="ob-2" style="display:none;"></div>
+
+    <!-- ÉTAPE 3 : Profil -->
+    <div class="ob-step" id="ob-3">
+      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding-top:16px;text-align:center;">
+        <div style="display:flex;align-items:center;gap:10px;width:100%;">
+          <span style="font-size:32px;line-height:1;">👤</span>
+          <div class="ob-title" style="font-size:28px;text-align:left;">Ton profil</div>
+        </div>
+        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Pour calculer tes calories et macros personnalisées.</div>
+        <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" enterkeyhint="next" style="width:100%;">
+        <div class="ob-gbrow" style="width:100%;">
+          <button class="ob-gbtn ob-sel" id="ob-gt-h" onclick="obSetGender('H')">♂ Homme</button>
+          <button class="ob-gbtn" id="ob-gt-f" onclick="obSetGender('F')">♀ Femme</button>
+        </div>
+        <div class="three-col" style="width:100%;gap:8px;">
+          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Âge</label><input class="ob-mini-inp" id="ob-age" type="number" placeholder="30" min="14" max="80" inputmode="numeric"></div>
+          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Taille cm</label><input class="ob-mini-inp" id="ob-ht" type="number" placeholder="175" inputmode="numeric"></div>
+          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Poids kg</label><input class="ob-mini-inp" id="ob-bw" type="number" placeholder="80" step="0.1" inputmode="decimal"></div>
+        </div>
+      </div>
+      <div class="ob-footer">
+        <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-bg2" onclick="obGoTo(1)" style="font-size:14px;flex:1;">← Retour</button>
+          <button class="btn btn-bg2" onclick="obGoTo(4)" style="font-size:14px;flex:2;">Passer cette étape</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 4 : Objectif -->
+    <div class="ob-step" id="ob-4">
+      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding-top:16px;text-align:center;">
+        <div style="display:flex;align-items:center;gap:10px;width:100%;">
+          <span style="font-size:32px;line-height:1;">🎯</span>
+          <div class="ob-title" style="font-size:28px;text-align:left;">Ton objectif</div>
+        </div>
+        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Macros et conseils Coach IA adaptés automatiquement.</div>
+        <div class="ob-goal-grid" style="width:100%;">
+          <button class="ob-goal-btn ob-sel" id="ob-gm" onclick="obSetGoal('muscle')"><span style="font-size:26px;">💪</span>Prise de muscle</button>
+          <button class="ob-goal-btn" id="ob-gp" onclick="obSetGoal('perte')"><span style="font-size:26px;">🔥</span>Perte de poids</button>
+          <button class="ob-goal-btn" id="ob-gf" onclick="obSetGoal('force')"><span style="font-size:26px;">🏋️</span>Force max</button>
+          <button class="ob-goal-btn" id="ob-ge" onclick="obSetGoal('equilibre')"><span style="font-size:26px;">⚖️</span>Rééquilibrage</button>
+          <button class="ob-goal-btn" id="ob-gen" onclick="obSetGoal('endurance')"><span style="font-size:26px;">🏃</span>Endurance</button>
+        </div>
+      </div>
+      <div class="ob-footer">
+        <button class="btn btn-red" onclick="obNext(5)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:14px;">← Retour</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 5 : C'est parti ! -->
+    <div class="ob-step" id="ob-5" style="display:flex;flex-direction:column;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;overflow-y:auto;padding-bottom:8px;">
+        <img src="../force-tracker-logo-splash.gif" alt="Force Tracker" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;" loop>
+        <div class="ob-title" id="ob-cta-title" style="font-size:38px;">C'est parti !</div>
+        <div id="ob-email-section" style="width:100%;margin-top:4px;">
+          <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Email (pour sauvegarder tes données)</label>
+          <input class="ob-inp" id="ob-email-final" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
+          <div style="margin-top:10px;background:var(--bg2);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--t2);line-height:1.5;text-align:left;">
+            💡 Complète ton profil dans l'onglet <strong style="color:var(--t1);">Profil</strong> et clique <strong style="color:var(--t1);">Enregistrer</strong> pour tout sauvegarder dans le cloud.
+          </div>
+        </div>
+      </div>
+      <div class="ob-footer">
+<button class="btn btn-red" id="ob-start-btn" onclick="obCheckEmailAndFinish()" style="font-size:20px;padding:20px;letter-spacing:.5px;">⚡ COMMENCER</button>
+        <button class="btn btn-bg2" onclick="obGoTo(4)" style="font-size:14px;">← Retour</button>
+      </div>
+    </div>
+
+  </div><!-- .ob-wrap -->
+</div><!-- #onboarding -->
+
+<!-- ═══ BANNIÈRE INSTALLATION (tous navigateurs) ═══════════════ -->
+<div id="install-banner" class="hidden">
+  <div class="ib-row">
+    <div class="ib-qr">
+      <img id="ib-qr-img" src="" alt="QR" loading="lazy">
+    </div>
+    <div class="ib-text">
+      <div id="ib-title" style="font-weight:700;font-size:14px;margin-bottom:2px;">Installer Force Tracker</div>
+      <div id="ib-desc" style="font-size:12px;color:var(--t2);line-height:1.4;">Scanne le QR code avec Safari, ou copie le lien.</div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button id="ib-btn-open" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:700;cursor:pointer;">Partager</button>
+        <button id="ib-btn-copy" style="flex:1;background:var(--bg3);color:var(--t1);border:none;border-radius:8px;padding:7px 10px;font-size:12px;font-weight:600;cursor:pointer;">Copier le lien</button>
+      </div>
+    </div>
+    <button class="ib-close" onclick="closeBanner()">×</button>
+  </div>
+</div>
+
+<!-- ═══ PWA INSTALL (iOS) — hors de #root ══════════════════════ -->
+<div id="install-popup" class="hidden">
+  <div class="install-card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <img src="../logo.png" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;">
+      <div>
+        <div style="font-family:var(--font-cond);font-size:21px;font-weight:900;line-height:1.1;">Installer Force Tracker</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:2px;line-height:1.4;">Accès depuis ton écran d'accueil, sans navigateur.</div>
+      </div>
+    </div>
+    <div style="background:var(--bg3);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:14px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:24px;flex-shrink:0;">1️⃣</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Appuie sur <strong>Partager</strong> en bas</div>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#007AFF;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;">⬆️&nbsp;Partager</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:24px;flex-shrink:0;">2️⃣</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Fais défiler et appuie sur</div>
+          <span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;">➕&nbsp;Sur l'écran d'accueil</span>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-bg2" onclick="closeInstall()" style="margin-top:12px;font-size:14px;color:var(--t3);">Plus tard</button>
+  </div>
+  <!-- Flèche flottante entre la card et la barre Safari -->
+  <span class="install-arrow" style="margin-top:10px;">⬇️</span>
+</div>
+
+<!-- OVERLAY PAYSAGE -->
+<div id="rotate-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:#0C0D11;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="font-size:48px;">📱</div>
+  <div style="font-family:var(--font-cond);font-size:20px;font-weight:800;color:#FF5A64;">Retourne ton téléphone</div>
+  <div style="font-size:14px;color:rgba(242,243,245,.6);text-align:center;max-width:240px;line-height:1.5;">Force Tracker est optimisé pour le mode portrait</div>
+</div>
+
+<div id="root" class="on-home">
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:10px;"><img src="../force-tracker-logo-topbar.gif" alt="" id="tb-logo" onclick="onLogoTap()" style="height:56px;width:56px;border-radius:14px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;" loop><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button onclick="showHelp()" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#F2F3F5;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;font-size:15px;font-weight:800;font-family:var(--font);" title="Aide">?</button>
+    <button onclick="openShareModal()" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#F2F3F5;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;" title="Partager l'app"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2F3F5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+    <button class="sync-pill" id="sync-pill" onclick="goScreen('setup',document.getElementById('nb-setup'))">
+      <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;"></span>
+      <span id="sync-lbl">Sheets</span>
+    </button>
+
+  </div>
+</div>
+
+<!-- PILL CHRONO DE REPOS FLOTTANTE -->
+<div id="rest-pill" onclick="goScreen('log',document.getElementById('nb-log'))">
+  <span style="font-size:12px;flex-shrink:0;opacity:.7;">⏱</span>
+  <span id="rest-pill-time">2:00</span>
+  <div id="rest-pill-bar"><div id="rest-pill-fill"></div></div>
+  <span style="font-size:10px;font-weight:700;color:rgba(255,255,255,.45);flex-shrink:0;white-space:nowrap;">Séance →</span>
+</div>
+
+<!-- DRAWER BACKDROP -->
+<div class="drawer-backdrop" id="drawer-backdrop" onclick="closeDrawer()"></div>
+<!-- DRAWER MENU -->
+<div class="drawer" id="drawer">
+  <div class="drawer-hd">
+    <span style="font-family:var(--font-cond);font-size:19px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Force Tracker</span>
+    <button onclick="closeDrawer()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;">
+    <div class="drawer-item" onclick="openDrawerContent('rm1calc')"><span class="di-ic">🔢</span><span>Calculateur 1RM</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="openDrawerContent('anatomy')"><span class="di-ic">🫀</span><span>Anatomie du corps humain</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="openDrawerContent('proteins')"><span class="di-ic">🥛</span><span>Protéines en poudre</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="openDrawerContent('supplements')"><span class="di-ic">💊</span><span>Compléments alimentaires</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="exportData()"><span class="di-ic">📤</span><span>Exporter mes données</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="closeDrawer();goScreen('setup',document.getElementById('nb-setup'))"><span class="di-ic">👤</span><span>Mon profil</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" onclick="openDrawerContent('help')"><span class="di-ic">❓</span><span>Aide détaillée</span><span class="di-arr">▶</span></div>
+    <div class="drawer-item" style="border-bottom:none;" onclick="openDrawerContent('about')"><span class="di-ic">ℹ️</span><span>À propos</span><span class="di-arr">▶</span></div>
+  </div>
+  <div style="padding:14px 20px;font-size:11px;color:var(--t3);text-align:center;border-top:1px solid var(--sep);">Force Tracker v3.5 · michdu75@gmail.com</div>
+</div>
+<!-- DRAWER CONTENT OVERLAY -->
+<div class="overlay" id="ov-drawer-cnt" onclick="if(event.target===this)closeDrawerContent()">
+  <div class="modal" style="max-width:460px;max-height:88vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div id="drawer-cnt-body"></div>
+  </div>
+</div>
+<!-- ANATOMY IMAGE LIGHTBOX -->
+<div id="ov-anatomy-img" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.96);z-index:600;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;flex-shrink:0;">
+    <div id="anatomy-full-title" style="color:#fff;font-weight:800;font-size:15px;"></div>
+    <button onclick="closeAnatomyImg()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;width:36px;height:36px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+  </div>
+  <div id="anatomy-zoom-wrap" onclick="if(_aZoom<=1.05)closeAnatomyImg();" style="flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;">
+    <img id="anatomy-full-img" src="" style="max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;touch-action:none;will-change:transform;user-select:none;-webkit-user-select:none;transform-origin:center center;">
+  </div>
+  <div style="font-size:12px;color:rgba(255,255,255,.35);text-align:center;padding:10px 16px;flex-shrink:0;">Pince pour zoomer · Double-tap pour réinitialiser · Tap fond pour fermer</div>
+</div>
+
+<div class="screens">
+
+<!-- ACCUEIL -->
+<div class="screen active" id="s-home">
+  <div id="home-hdr" style="padding:0;"></div>
+  <div id="home-stats" style="padding:14px 14px 0;"></div>
+  <div id="home-hero" style="padding:10px 14px 0;"></div>
+  <div id="home-secondary" style="padding:10px 14px 0;"></div>
+  <div style="text-align:center;padding:8px 14px 2px;font-size:13px;color:var(--t3);line-height:1.8;border-top:1px solid var(--sep);margin-top:10px;">
+    Développé par Michel — Force Tracker 2026
+  </div>
+  <!-- Éléments legacy cachés (ciblés par d'autres fonctions) -->
+  <div style="display:none;" id="recovery-card"></div>
+  <div style="display:none;" id="cycle-home-card"><span id="cycle-home-title"></span><span id="cycle-home-sub"></span></div>
+  <div style="display:none;" id="strength-levels"></div>
+  <div style="display:none;" id="pr-list"></div>
+</div>
+
+<!-- SÉANCE -->
+<div class="screen" id="s-log">
+  <div id="log-hdr" style="padding:0;"></div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <label for="s-date" style="flex:1;height:46px;padding:0 16px;background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="s-date-lbl">
+      <span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t2);flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="s-date-txt" style="font-size:14px;font-weight:600;color:var(--t1);"></span></span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);"><polyline points="6 9 12 15 18 9"/></svg>
+    </label>
+    <input type="date" id="s-date" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
+  </div>
+  <div id="log-sleep"></div>
+  <div id="log-cardio"></div>
+  <div id="rest-bar">
+    <div id="rest-time">1:30</div>
+    <div id="rest-label" style="font-size:12px;color:var(--t3);min-height:15px;margin-top:-4px;"></div>
+    <div id="rest-wrap"><div id="rest-fill"></div></div>
+    <div id="rest-btns">
+      <button class="rbtn" id="rp-60" onclick="setRestPreset(60)">1:00</button>
+      <button class="rbtn" id="rp-90" onclick="setRestPreset(90)">1:30</button>
+      <button class="rbtn" id="rp-120" onclick="setRestPreset(120)">2:00</button>
+      <button class="rbtn" id="rest-btn-minus" onclick="addRT(-_restStep)">−15s</button>
+      <button class="rbtn" id="rest-btn-plus" onclick="addRT(_restStep)">+15s</button>
+      <button class="rbtn" onclick="skipRest()">Skip</button>
+    </div>
+  </div>
+  <div id="wkt-exs" style="display:flex;flex-direction:column;gap:10px;"></div>
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-bg2 ft-press" style="flex:1;" onclick="openProgModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:5px;margin-bottom:1px;"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>Programme</button>
+      <button class="btn ft-press" style="flex:1;border:1.5px solid var(--red2);background:transparent;color:var(--red);" onclick="openExPicker()">+ Ajouter</button>
+    </div>
+    <button class="btn btn-bg2 ft-press" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px;" onclick="openImportProg()">
+      <span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Scanner ton programme</span>
+      <span style="font-size:11px;color:var(--t3);font-weight:400;">Prends en photo ton programme — il s'ajoute automatiquement</span>
+    </button>
+    <button class="btn btn-bg2 ft-press" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px;" onclick="openImportHist()">
+      <span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;">📅 Importer un journal de séances</span>
+      <span style="font-size:11px;color:var(--t3);font-weight:400;">Séances déjà réalisées → historique + stats + PRs aux bonnes dates</span>
+    </button>
+  </div>
+  <div id="log-finish"></div>
+</div>
+
+<!-- PROGRÈS -->
+<div class="screen" id="s-progress">
+  <div class="nu-tabs">
+    <button class="nu-tab active" id="ptab-exo" onclick="switchProgTab('exo',this)">Exercices</button>
+    <button class="nu-tab" id="ptab-poids" onclick="switchProgTab('poids',this)">Poids</button>
+    <button class="nu-tab" id="ptab-badges" onclick="switchProgTab('badges',this)">Badges</button>
+  </div>
+
+  <!-- TAB: Exercices -->
+  <div id="prog-exo" style="display:flex;flex-direction:column;gap:10px;">
+    <div class="sec">Progression</div>
+    <div id="big4-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    <select id="prog-sel" onchange="selectProgEx(this.value)" style="font-size:14px;padding:10px 13px;">
+      <option value="">— Autre exercice… —</option>
+    </select>
+    <div class="chart-box" id="chart-box"><div class="empty">Sélectionne un exercice</div></div>
+    <div id="prog-cycle-banner" style="display:none;"></div>
+    <div class="sec">Historique séances</div>
+    <div id="sess-list"></div>
+  </div>
+
+  <!-- TAB: Badges -->
+  <div id="prog-badges" style="display:none;flex-direction:column;gap:12px;">
+    <div class="sec">Mes Récompenses</div>
+    <div id="badge-grid" class="badge-grid"></div>
+  </div>
+
+  <!-- TAB: Poids -->
+  <div id="prog-poids" style="display:none;flex-direction:column;gap:10px;">
+    <div class="card cp" id="weight-entry-card" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div class="chart-box" id="weight-chart-box"><div class="empty">Ajoute au moins 2 pesées pour voir le graphique</div></div>
+    <div class="sec">Corrélations & tendances</div>
+    <div id="weight-correlations" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
+
+<!-- NUTRITION -->
+<div class="screen" id="s-nutrition">
+  <div class="nu-tabs">
+    <button class="nu-tab active" id="ntab-macros" onclick="switchNuTab('macros',this)">Macros</button>
+    <button class="nu-tab" id="ntab-suppl" onclick="switchNuTab('suppl',this)">Suppléments</button>
+  </div>
+
+  <!-- MACROS -->
+  <div id="nu-macros" style="display:flex;flex-direction:column;gap:12px;">
+    <div id="nu-cycle-banner" style="display:none;"></div>
+    <!-- Hero calories -->
+    <div style="background:var(--bg2);border-radius:16px;padding:18px 20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
+      <div id="nu-goal-info" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t3);margin-bottom:10px;"></div>
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px;">
+        <span style="font-family:var(--font-cond);font-size:42px;font-weight:900;color:var(--t1);line-height:1;" id="m-kcal">—</span>
+        <span style="font-size:14px;color:var(--t2);font-weight:600;">kcal / jour</span>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">BMR</div>
+          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t1);" id="nu-bmr">—</div>
+        </div>
+        <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">TDEE</div>
+          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t1);" id="nu-tdee">—</div>
+        </div>
+        <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;" id="nu-delta-chip">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;" id="nu-delta-lbl">Delta</div>
+          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t2);" id="nu-delta-val">—</div>
+        </div>
+      </div>
+    </div>
+    <!-- Phase toggle -->
+    <div class="phase-row">
+      <button class="phase-btn charge" id="pb-charge" onclick="setNuPhase('charge')">⚡ Charge<br><span style="font-size:11px;font-weight:500;opacity:.75;" id="pb-charge-lbl">Surplus</span></button>
+      <button class="phase-btn decharge" id="pb-decharge" onclick="setNuPhase('decharge')">🔄 Décharge<br><span style="font-size:11px;font-weight:500;opacity:.75;" id="pb-decharge-lbl">Déficit</span></button>
+    </div>
+    <!-- Macros -->
+    <div class="sec">Macronutriments</div>
+    <div class="macro-grid">
+      <div class="macro-box"><div class="macro-lbl">Protéines</div><div class="macro-val" id="m-prot" style="color:var(--green);">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--green);"></div></div>
+      <div class="macro-box"><div class="macro-lbl">Glucides</div><div class="macro-val" id="m-carbs" style="color:var(--orange);">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--orange);"></div></div>
+      <div class="macro-box"><div class="macro-lbl">Lipides</div><div class="macro-val" id="m-fat" style="color:var(--gold);">—</div><div class="macro-unit">g/jour</div><div class="macro-bar" style="background:var(--gold);"></div></div>
+      <div class="macro-box"><div class="macro-lbl">Hydratation</div><div class="macro-val" id="nu-hydra" style="color:var(--blue);">—</div><div class="macro-unit">L/jour</div><div class="macro-bar" style="background:var(--blue);"></div></div>
+    </div>
+    <!-- Session / Total dépensé -->
+    <div style="display:flex;gap:8px;">
+      <div class="nu-stat" style="flex:1;"><span class="nu-stat-lbl">🔥 Séance</span><span class="nu-stat-val" id="nu-session-cal" style="color:var(--red);">—</span></div>
+      <div class="nu-stat" style="flex:1;"><span class="nu-stat-lbl">⚡ Total</span><span class="nu-stat-val" id="nu-total-cal" style="color:var(--orange);">—</span></div>
+    </div>
+    <!-- Meal plan statique -->
+    <div class="sec">Plan alimentaire journalier</div>
+    <div class="card cp" id="meal-plan"><div style="text-align:center;color:var(--t3);font-size:13px;padding:16px;">Remplis ton profil pour voir le plan 🍽️</div></div>
+    <!-- Plan de repas IA -->
+    <div class="sec">Plan de repas IA 🤖</div>
+    <div id="meal-plan-ia"></div>
+  </div>
+
+  <!-- SUPPLÉMENTS -->
+  <div id="nu-suppl" style="display:none;flex-direction:column;gap:12px;">
+    <div class="sec">Protéines du jour</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="fg" style="flex:1;"><label>Protéines mangées (g)</label><input type="number" id="prot-eaten" placeholder="0" min="0" max="500" inputmode="numeric" enterkeyhint="done" oninput="updateProteinBar()"></div>
+        <div style="text-align:center;"><div style="font-family:var(--font-cond);font-size:26px;font-weight:900;color:var(--green);" id="prot-pct-disp">0%</div><div style="font-size:12px;color:var(--t2);">objectif</div></div>
+      </div>
+      <div class="protein-bar-wrap"><div class="protein-bar-fill" id="prot-bar" style="width:0%;background:var(--green);"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;">
+        <span style="color:var(--t2);">Objectif : <strong id="prot-target-disp">—</strong></span>
+        <span style="color:var(--t2);">Restant : <strong id="prot-remaining" style="color:var(--red);">—</strong></span>
+      </div>
+    </div>
+    <div class="sec">Créatine Monohydrate</div>
+    <div class="suppl-card">
+      <div class="suppl-header"><div class="suppl-icon">💊</div><div><div class="suppl-name">Créatine</div><div class="suppl-sub">Force, puissance, récupération</div></div></div>
+      <div class="suppl-body">
+        <div class="phase-toggle-small">
+          <button class="ptbtn active" id="creat-charge-btn" onclick="setCreatPhase('charge',this)">⚡ Charge (5-7j)</button>
+          <button class="ptbtn" id="creat-maint-btn" onclick="setCreatPhase('maintenance',this)">✅ Maintenance</button>
+        </div>
+        <div id="creat-content"></div>
+      </div>
+    </div>
+    <div class="sec">Whey Protéine</div>
+    <div class="suppl-card">
+      <div class="suppl-header"><div class="suppl-icon">🥤</div><div><div class="suppl-name">Whey</div><div class="suppl-sub">Protéines rapides post-workout</div></div></div>
+      <div class="suppl-body" id="whey-content"></div>
+    </div>
+    <div id="suppl-combos"></div>
+  </div>
+
+  <!-- 1RM -->
+</div>
+
+
+<!-- PROFIL -->
+<div class="screen" id="s-setup">
+
+  <!-- TABS (mode admin uniquement) -->
+  <div class="setup-tabs" id="setup-tabs-bar" style="display:none;flex-shrink:0;padding:0 16px;">
+    <button class="setup-tab active" id="stab-profil" onclick="switchSetupTab('profil',this)">👤 Profil</button>
+    <button class="setup-tab" id="stab-connexion" onclick="switchSetupTab('connexion',this)">🔧 Admin</button>
+  </div>
+
+  <!-- CONNEXION (admin) -->
+  <div id="setup-connexion" style="display:none;padding:0 16px;flex-direction:column;gap:12px;">
+    <div class="sec">⚙️ Administration</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="fg">
+        <label>Email Admin</label>
+        <input type="email" id="email-inp" placeholder="ton@email.com" inputmode="email" oninput="S.email=this.value.trim();persist();">
+      </div>
+      <button class="btn btn-bg2" onclick="restoreFromEmail()" style="padding:13px;font-size:15px;">☁️ Restaurer depuis mon email</button>
+      <button class="btn btn-red" onclick="testConn()" style="padding:13px;font-size:15px;">🔌 Tester la connexion</button>
+      <button class="btn btn-bg2" onclick="debugRestore()" style="padding:11px;font-size:14px;color:var(--t3);">🔍 Voir réponse brute API</button>
+    </div>
+    <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
+    <!-- CARTE DEBUG PREMIUM -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔑 Statut Premium</div>
+      <div id="admin-premium-info" style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;word-break:break-all;min-height:48px;">—</div>
+      <button class="btn btn-bg2" onclick="debugPremiumCheck()" style="padding:11px;font-size:14px;">🔑 Vérifier premium (serveur)</button>
+    </div>
+    <!-- CARTE SYNC SHEETS -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">☁️ Synchronisation Sheets</div>
+      <div id="admin-sync-info" style="font-size:12px;color:var(--t2);line-height:1.9;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;min-height:36px;">—</div>
+      <button class="btn btn-bg2" onclick="_retrySheetQueue()" style="padding:11px;font-size:14px;">🔄 Resynchroniser les séances</button>
+    </div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔍 Doublons d'exercices</div>
+      <button class="btn btn-bg2" onclick="detectDuplicates()" style="padding:11px;font-size:14px;">🔍 Analyser les doublons</button>
+      <div id="admin-dupes" style="display:none;flex-direction:column;gap:8px;font-size:13px;"></div>
+    </div>
+  </div>
+
+  <!-- PROFIL -->
+  <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;padding:0 16px;">
+    <!-- EN-TÊTE RETOUR -->
+    <div style="padding:8px 16px 8px;margin:0 -16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--sep);">
+      <button onclick="closeProfil()" style="width:36px;height:36px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);border:none;color:var(--t2);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">✕</button>
+      <span style="font-family:var(--font-cond);font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--t1);">Profil athlète</span>
+    </div>
+    <!-- COMPTE SYNC — cliquable pour restaurer -->
+    <div class="card cp" style="display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openRestoreAccount()">
+      <div style="width:36px;height:36px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">☁️</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-bottom:2px;">Compte synchronisé</div>
+        <div id="profil-email-lbl" style="font-size:14px;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <div id="profil-sync-dot" style="width:8px;height:8px;border-radius:50%;background:var(--t3);"></div>
+        <span style="font-size:18px;color:var(--t3);line-height:1;">›</span>
+      </div>
+    </div>
+    <!-- BOUTON RESTAURER — visible sans admin, pour récupérer ses données depuis le cloud -->
+    <button class="btn" id="btn-restore-cloud" onclick="openRestoreAccount()" style="width:100%;background:rgba(91,168,255,.10);border:1.5px solid rgba(91,168,255,.38);color:var(--blue);font-size:14px;font-weight:700;padding:14px;border-radius:14px;touch-action:manipulation;">🔄 Restaurer mon compte depuis le cloud</button>
+
+    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="fg">
+        <label>Sexe</label>
+        <div id="gender-ro" style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--sep);border-radius:var(--r-sm);padding:12px 14px;">
+          <span id="gender-ro-txt" style="font-size:15px;font-weight:700;color:var(--t1);">♂ Homme</span>
+          <button onclick="genderEditMode()" style="background:none;border:none;font-size:17px;padding:0 2px;cursor:pointer;line-height:1;" title="Modifier">✏️</button>
+        </div>
+        <div class="gender-toggle" id="gender-edit" style="display:none;">
+          <button class="gtbtn" id="gt-h" onclick="setGender('H')">♂ Homme</button>
+          <button class="gtbtn" id="gt-f" onclick="setGender('F')">♀ Femme</button>
+        </div>
+      </div>
+      <div class="three-col">
+        <div class="fg"><label>Âge</label><input type="number" id="age-inp" placeholder="30" min="14" max="80" inputmode="numeric"></div>
+        <div class="fg"><label>Taille (cm)</label><input type="number" id="ht-inp" placeholder="175" inputmode="numeric"></div>
+        <div class="fg"><label>Poids (kg)</label><input type="number" id="bw-inp" placeholder="80" step="0.1" inputmode="decimal"></div>
+      </div>
+      <div class="fg"><label>Date d'anniversaire</label><input type="text" id="bday-inp" placeholder="JJ/MM (ex: 14/07)" inputmode="numeric" maxlength="5" style="text-align:center;letter-spacing:2px;" oninput="fmtBday(this)"></div>
+      <div class="two-col">
+        <div class="fg"><label>Activité</label>
+          <select id="act-sel">
+            <option value="1.2">Sédentaire</option>
+            <option value="1.375">Léger (1-2j)</option>
+            <option value="1.55" selected>Modéré (3-4j)</option>
+            <option value="1.725">Actif (5-6j)</option>
+            <option value="1.9">Très actif</option>
+          </select>
+        </div>
+        <div class="fg"><label>Repos défaut</label>
+          <select id="rest-sel">
+            <option value="60">60s</option>
+            <option value="90">90s</option>
+            <option value="120" selected>120s</option>
+            <option value="180">180s</option>
+            <option value="300">300s</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Type de travail</label>
+        <div class="work-toggle">
+          <button class="wtbtn" id="wt-bureau" onclick="setWorkType('bureau')">💼 Bureau</button>
+          <button class="wtbtn" id="wt-debout" onclick="setWorkType('debout')">🚶 Debout</button>
+          <button class="wtbtn" id="wt-physique" onclick="setWorkType('physique')">⚒️ Physique</button>
+        </div>
+        <div style="font-size:13px;color:var(--t3);margin-top:4px;">Bureau +0 kcal · Debout +200 kcal · Physique +450 kcal/j sur le TDEE</div>
+      </div>
+      <div class="fg">
+        <label>Tabac</label>
+        <div class="gender-toggle">
+          <button class="gtbtn" id="sm-non" onclick="setSmoker(false)">🚭 Non-fumeur</button>
+          <button class="gtbtn" id="sm-oui" onclick="setSmoker(true)">🚬 Fumeur</button>
+        </div>
+        <div style="font-size:13px;color:var(--t3);margin-top:4px;">Fumeur : BMR +7% (effet thermogène de la nicotine)</div>
+      </div>
+      <div id="cycle-section" style="display:none;flex-direction:column;gap:10px;">
+        <div style="height:1px;background:var(--sep);"></div>
+        <div style="font-size:14px;color:var(--purp);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">🌙 Cycle menstruel</div>
+        <div class="two-col">
+          <div class="fg">
+            <label>Contraception</label>
+            <select id="contra-sel" onchange="setContraception(this.value)" style="padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:14px;width:100%;">
+              <option value="">Aucune</option>
+              <option value="pill-combo">Pilule combinée</option>
+              <option value="pill-prog">Pilule progestative</option>
+              <option value="implant">Implant</option>
+              <option value="iud-hormonal">DIU hormonal</option>
+              <option value="iud-copper">DIU cuivre</option>
+            </select>
+          </div>
+          <div class="fg" id="cycle-tracking-section">
+            <label>1er jour des règles</label>
+            <input type="date" id="cycle-start-inp" oninput="saveProfile()">
+          </div>
+        </div>
+        <input type="hidden" id="cycle-dur-inp" value="28">
+        <div id="cycle-phase-card"></div>
+      </div>
+      <!-- MORPHOLOGIE -->
+      <div style="height:1px;background:var(--sep);"></div>
+      <div style="font-size:14px;color:var(--orange);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">🧬 Morphologie</div>
+      <div style="font-size:12px;color:var(--t3);">Utilisé par le Coach IA pour personnaliser tes conseils.</div>
+      <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:4px;">Morphotype (métabolisme)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;" id="morphotype-btns"></div>
+      <div id="morphotype-desc" style="display:none;font-size:12px;color:var(--t2);padding:8px 10px;background:var(--bg3);border-radius:8px;line-height:1.5;"></div>
+      <div style="font-size:13px;font-weight:700;color:var(--t2);margin-top:6px;margin-bottom:4px;">Silhouette corporelle</div>
+      <div style="display:grid;gap:6px;" id="morpho-btns"></div>
+      <div id="morpho-desc" style="display:none;font-size:12px;color:var(--t2);padding:8px 10px;background:var(--bg3);border-radius:8px;line-height:1.5;"></div>
+      <!-- SANTÉ -->
+      <div style="height:1px;background:var(--sep);"></div>
+      <div style="font-size:14px;color:var(--red);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">🩺 Santé</div>
+      <div style="font-size:12px;color:var(--t3);">Utilisé par le Coach IA pour adapter tes conseils et éviter les contre-indications.</div>
+      <div id="health-section"></div>
+      <!-- COMPOSITION CORPORELLE -->
+      <div style="height:1px;background:var(--sep);"></div>
+      <div style="font-size:14px;color:var(--blue);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">📐 Composition corporelle — Méthode Marine US</div>
+      <div class="two-col">
+        <div class="fg"><label>Tour de cou (cm)</label><input type="number" id="neck-inp" placeholder="37" step="0.5" inputmode="decimal" oninput="renderBFCard()"></div>
+        <div class="fg"><label>Tour de taille (cm)</label><input type="number" id="waist-inp" placeholder="85" step="0.5" inputmode="decimal" oninput="renderBFCard()"></div>
+      </div>
+      <div class="fg" id="hip-fg" style="display:none;">
+        <label>Tour de hanches (cm)</label><input type="number" id="hip-inp" placeholder="95" step="0.5" inputmode="decimal" oninput="renderBFCard()">
+      </div>
+      <div id="bf-result-card"></div>
+      <!-- OBJECTIF -->
+      <div style="height:1px;background:var(--sep);"></div>
+      <div style="font-size:14px;color:var(--red);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">🎯 Objectif</div>
+      <div class="goal-grid">
+        <button class="goal-btn" id="g-muscle" onclick="setGoal('muscle')">💪<br><span>Prise de muscle</span></button>
+        <button class="goal-btn" id="g-perte" onclick="setGoal('perte')">🔥<br><span>Perte de poids</span></button>
+        <button class="goal-btn" id="g-force" onclick="setGoal('force')">🏋️<br><span>Force max</span></button>
+        <button class="goal-btn" id="g-equilibre" onclick="setGoal('equilibre')">⚖️<br><span>Rééquilibrage</span></button>
+        <button class="goal-btn" id="g-endurance" onclick="setGoal('endurance')">🏃<br><span>Endurance</span></button>
+      </div>
+      <div id="goal-desc" style="font-size:14px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:10px 12px;line-height:1.5;min-height:36px;"></div>
+      <!-- ACCESSIBILITÉ -->
+      <div style="height:1px;background:var(--sep);"></div>
+      <div style="font-size:14px;color:var(--purp);font-weight:800;text-transform:uppercase;letter-spacing:.08em;">♿ Accessibilité</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--bg3);border-radius:12px;border:1px solid var(--sep);">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1);">Affichage agrandi</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:3px;">Gros texte · Contraste renforcé</div>
+        </div>
+        <button id="a11y-btn" onclick="toggleA11y()" style="padding:8px 16px;border-radius:20px;border:2px solid var(--sep);background:var(--bg2);color:var(--t3);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;min-width:80px;">Désactivé</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--bg3);border-radius:12px;border:1px solid var(--sep);">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--t1);">Main dominante</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:3px;">Adapte la position des boutons</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button id="lh-right-btn" onclick="setHandedness('right')" style="padding:8px 12px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg2);font-size:13px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);">Droitier</button>
+          <button id="lh-left-btn" onclick="setHandedness('left')" style="padding:8px 12px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg2);font-size:13px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);">Gaucher</button>
+        </div>
+      </div>
+      <div style="padding:14px;background:var(--bg3);border-radius:12px;border:1px solid var(--sep);display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:13px;font-weight:700;color:var(--t2);">Mode daltonien</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;" id="cb-btns">
+          <button onclick="setColorblind('')" id="cb-none" style="padding:8px 4px;border-radius:8px;border:1.5px solid var(--sep);background:var(--bg2);font-size:11px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);">Normal</button>
+          <button onclick="setColorblind('deut')" id="cb-deut-btn" style="padding:8px 4px;border-radius:8px;border:1.5px solid var(--sep);background:var(--bg2);font-size:11px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);">Deutéran.</button>
+          <button onclick="setColorblind('prot')" id="cb-prot-btn" style="padding:8px 4px;border-radius:8px;border:1.5px solid var(--sep);background:var(--bg2);font-size:11px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);">Protan.</button>
+          <button onclick="setColorblind('trit')" id="cb-trit-btn" style="padding:8px 4px;border-radius:8px;border:1.5px solid var(--sep);background:var(--bg2);font-size:11px;font-weight:700;cursor:pointer;color:var(--t2);font-family:var(--font);">Tritan.</button>
+        </div>
+        <div id="cb-desc" style="font-size:12px;color:var(--t3);line-height:1.5;display:none;"></div>
+      </div>
+      <div style="position:sticky;bottom:0;background:var(--bg);padding:10px 0 2px;">
+        <button class="btn btn-red" onclick="saveProfile()" style="padding:14px;font-size:16px;width:100%;">💾 Enregistrer le profil</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COACH IA -->
+<div class="screen coach-screen" id="s-coach">
+  <div class="coach-header" style="display:flex;align-items:center;gap:12px;">
+    <div style="width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,#FF6A73,#EF3E57);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 6px 16px -4px rgba(239,62,87,.45);">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div style="flex:1;">
+      <div class="coach-header-title">Coach IA</div>
+      <div class="coach-header-sub">Personnalisé · En français</div>
+    </div>
+    <div id="coach-quota-badge"></div>
+  </div>
+
+  <!-- MURAL PREMIUM (affiché quand quota atteint) -->
+  <div class="coach-wall" id="coach-wall">
+    <div class="coach-wall-icon">⭐</div>
+    <div class="coach-wall-title">Coach IA Premium</div>
+    <div class="coach-wall-sub">Tu as utilisé tes 10 questions gratuites</div>
+    <div class="coach-wall-price">4,99€ <span>/ 2 mois</span></div>
+    <div class="coach-wall-card">
+      <div class="coach-wall-perk"><span class="pi">♾️</span> Questions illimitées</div>
+      <div class="coach-wall-perk"><span class="pi">🧠</span> Contexte complet : profil, PRs, cycle, nutrition</div>
+      <div class="coach-wall-perk"><span class="pi">💪</span> Programme sur mesure généré par l'IA</div>
+      <div class="coach-wall-perk"><span class="pi">📊</span> Analyse de progression personnalisée</div>
+      <div class="coach-wall-perk"><span class="pi">📸</span> Analyse morphologique par photos (3 angles)</div>
+    </div>
+    <a href="mailto:michdu75@gmail.com?subject=Force%20Tracker%20Premium&body=Bonjour%2C%20je%20souhaite%20acc%C3%A9der%20au%20Coach%20IA%20Premium." style="width:100%;text-decoration:none;">
+      <button class="btn btn-red" style="width:100%;padding:15px;font-size:16px;">✉️ Contacter pour le Premium</button>
+    </a>
+    <div class="coach-wall-or">— Tu as déjà un code d'accès ? —</div>
+    <div class="coach-code-row">
+      <input class="coach-code-inp" id="premium-code-inp" type="text" placeholder="Entre ton code..." maxlength="24" autocomplete="off">
+      <button class="btn btn-bg2" style="padding:0 18px;border-radius:12px;font-size:14px;white-space:nowrap;" onclick="activatePremium()">Activer</button>
+    </div>
+  </div>
+
+  <!-- ACCUEIL COACH (masqué dès le 1er échange) -->
+  <div class="coach-home" id="coach-home">
+    <!-- Carte contexte connecté -->
+    <div class="coach-ctx-card">
+      <div class="coach-ctx-title">Ce que je connais de toi</div>
+      <div class="coach-ctx-tags" id="coach-ctx-tags">
+        <span class="coach-ctx-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profil</span>
+        <span class="coach-ctx-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>PRs &amp; 1RM</span>
+        <span class="coach-ctx-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>Nutrition</span>
+        <span class="coach-ctx-tag" id="coach-ctx-morpho" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/><path d="M12 8v4l3 3"/></svg>Morpho</span>
+        <span class="coach-ctx-tag" id="coach-ctx-cycle" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Cycle</span>
+      </div>
+    </div>
+    <!-- Grille 4 actions -->
+    <div class="coach-action-grid">
+      <button class="coach-action-card" onclick="coachAction('programme')">
+        <div class="coach-action-ic" style="background:rgba(255,106,115,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div class="coach-action-lbl">Programme perso</div>
+        <div class="coach-action-sub">Basé sur tes 1RM et ton niveau</div>
+      </button>
+      <button class="coach-action-card" onclick="coachAction('analyse')">
+        <div class="coach-action-ic" style="background:rgba(52,211,153,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+        <div class="coach-action-lbl">Analyse mes stats</div>
+        <div class="coach-action-sub">Progression, tendances, surcharge</div>
+      </button>
+      <button class="coach-action-card" onclick="coachAction('nutrition')">
+        <div class="coach-action-ic" style="background:rgba(91,168,255,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg></div>
+        <div class="coach-action-lbl">Conseil nutrition</div>
+        <div class="coach-action-sub">Macros, timing, phase actuelle</div>
+      </button>
+      <button class="coach-action-card" onclick="coachAction('morpho')" id="coach-action-morpho">
+        <div class="coach-action-ic" style="background:rgba(234,179,8,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        <div class="coach-action-lbl">Analyse morpho</div>
+        <div class="coach-action-sub">3 photos · IA visuelle</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="coach-messages" id="coach-msgs" style="display:none;"></div>
+  <div id="coach-morpho-btn-wrap" style="display:none;padding:0 12px 8px;">
+    <button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;" onclick="openMorphoAnalysis()">📸 Analyser ma morphologie (3 photos)</button>
+  </div>
+  <div class="coach-suggestions" id="coach-suggs" style="display:none;">
+    <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">📊 Analyse ma progression</button>
+    <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">🍽️ Que manger ce soir ?</button>
+    <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">💪 Programme cette semaine</button>
+    <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">😴 Comment récupérer ?</button>
+    <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">🎯 Objectif réaliste ?</button>
+  </div>
+  <div class="coach-input-row">
+    <div id="coach-img-preview">
+      <img id="coach-img-thumb" src="" alt="photo">
+      <button onclick="clearCoachImg()">×</button>
+    </div>
+    <div class="coach-input-inner">
+      <button class="coach-cam-btn" onclick="openCoachCamera()" title="Prendre une photo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
+      <button class="coach-cam-btn" onclick="openCoachGallery()" title="Importer depuis la galerie"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+      <input class="coach-input" id="coach-inp" type="text" placeholder="Pose ta question au coach..." maxlength="500">
+      <button class="coach-send" id="coach-send-btn" onclick="sendToCoach()">
+        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <input type="file" id="coach-cam-input" accept="image/*" capture="environment" style="display:none;" onchange="onCoachImgSelected(this)">
+    <input type="file" id="coach-gallery-input" accept="image/*" style="display:none;" onchange="onCoachImgSelected(this)">
+  </div>
+</div>
+
+
+<!-- CYCLE DE FORCE -->
+<div class="screen" id="s-cycle">
+  <button class="back-btn" onclick="goScreen('home',document.getElementById('nb-home'))">‹ Accueil</button>
+
+  <!-- VUE CONFIGURATION -->
+  <div id="cycle-setup-view" style="display:flex;flex-direction:column;gap:12px;">
+    <div class="sec">Nouveau cycle de force</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;">
+      <div class="fg">
+        <label>Durée du cycle</label>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+          <input type="range" id="cycle-weeks-slider" min="8" max="20" value="12" step="1" style="flex:1;accent-color:var(--red);" oninput="updCycleWeeks(this.value)">
+          <span style="font-family:var(--font-cond);font-size:24px;font-weight:900;color:var(--red);min-width:28px;text-align:right;" id="cycle-weeks-disp">12</span>
+          <span style="font-size:12px;color:var(--t2);font-weight:600;">sem.</span>
+        </div>
+        <div style="font-size:13px;color:var(--t3);margin-top:6px;line-height:1.5;" id="cycle-phase-preview">Accumulation: 5s · Intensification: 4s · Peak: 2s · Décharge: 1s</div>
+      </div>
+    </div>
+    <div class="sec">1RM actuels</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:12px;" id="cycle-rm-inputs"></div>
+    <div class="sec">Projections fin de cycle</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:8px;" id="cycle-projections"></div>
+    <button class="btn btn-red" onclick="startCycle()">🚀 Démarrer le cycle</button>
+  </div>
+
+  <!-- VUE CYCLE ACTIF -->
+  <div id="cycle-active-view" style="display:none;flex-direction:column;gap:12px;">
+    <div class="card cp">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="font-family:var(--font-cond);font-size:18px;font-weight:900;" id="cyc-week-title">—</div>
+        <div id="cyc-phase-chip"></div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="cyc-prog-fill" style="width:0%;"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--t2);margin-top:6px;">
+        <span id="cyc-prog-label">—</span>
+        <span><strong id="cyc-pct-label" style="color:var(--red);">—</strong> · <span id="cyc-sets-label">—</span></span>
+      </div>
+    </div>
+    <div class="sec">Charges de la semaine</div>
+    <div class="card cp" id="cyc-week-loads"></div>
+    <div class="sec">Plan semaine par semaine</div>
+    <div class="week-tabs" id="week-tabs-bar"></div>
+    <div class="card cp" id="cyc-selected-week-plan"></div>
+    <div class="sec">Projections fin de cycle</div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:8px;" id="cyc-projections"></div>
+    <button class="btn btn-bg2" onclick="endCycle()" style="margin-top:4px;">⏹ Terminer le cycle</button>
+  </div>
+</div>
+
+</div><!-- /screens -->
+
+<nav class="nav">
+  <button class="nb active" id="nb-home" onclick="goScreen('home',this)">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Accueil
+  </button>
+  <button class="nb" id="nb-progress" onclick="goScreen('progress',this)">
+    <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Progrès
+  </button>
+  <button class="nb nb-ctr" id="nb-log" onclick="startWorkout()" aria-label="Démarrer une séance">
+    <span class="nb-plus"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>
+  </button>
+  <button class="nb" id="nb-nutrition" onclick="goScreen('nutrition',this)">
+    <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>Nutrition
+  </button>
+  <button class="nb" id="nb-coach" onclick="goScreen('coach',this)">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Coach
+  </button>
+  <button class="nb" id="nb-setup" onclick="toggleMenuDrawer()">
+    <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>Menu
+  </button>
+</nav>
+
+
+<!-- OVERLAY: Aide contextuelle -->
+<div class="overlay" id="ov-help" onclick="if(event.target===this)closeHelp()">
+  <div class="modal" style="max-width:420px;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--sep);flex-shrink:0">
+      <div style="font-weight:800;font-size:18px" id="help-title">Aide</div>
+      <button onclick="closeHelp()" style="width:36px;height:36px;border-radius:50%;background:var(--bg3);border:none;font-size:18px;font-weight:700;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px 20px" id="help-content"></div>
+  </div>
+</div>
+
+<!-- MODAL: Post-workout check-in -->
+<div class="overlay" id="mod-checkin">
+  <div class="modal" style="text-align:center;">
+    <div class="modal-handle"></div>
+    <div style="font-size:36px;margin-bottom:6px;">🏁</div>
+    <h2 style="margin-bottom:2px;">Séance terminée !</h2>
+    <p style="font-size:12px;color:var(--t3);margin-bottom:16px;" id="ci-subtitle">2 questions rapides</p>
+    <!-- STEP 1: Sommeil -->
+    <div id="ci-step-sleep">
+      <div style="font-size:14px;font-weight:700;color:var(--t2);margin-bottom:10px;">😴 Sommeil cette nuit ?</div>
+      <div style="display:flex;gap:8px;">
+        <button class="ci-btn" id="ci-s1" onclick="ciPickSleep(1)">😴<br><span>Mauvais</span></button>
+        <button class="ci-btn" id="ci-s2" onclick="ciPickSleep(2)">😐<br><span>Moyen</span></button>
+        <button class="ci-btn" id="ci-s3" onclick="ciPickSleep(3)">😊<br><span>Bon</span></button>
+        <button class="ci-btn" id="ci-s4" onclick="ciPickSleep(4)">⚡<br><span>Excellent</span></button>
+      </div>
+    </div>
+    <!-- STEP 2: Énergie -->
+    <div id="ci-step-energy" style="display:none;">
+      <div style="font-size:14px;font-weight:700;color:var(--t2);margin-bottom:10px;">⚡ Énergie pendant la séance ?</div>
+      <div style="display:flex;gap:8px;">
+        <button class="ci-btn" id="ci-e1" onclick="ciPickEnergy(1)">😩<br><span>Épuisé</span></button>
+        <button class="ci-btn" id="ci-e2" onclick="ciPickEnergy(2)">😐<br><span>Moyen</span></button>
+        <button class="ci-btn" id="ci-e3" onclick="ciPickEnergy(3)">😊<br><span>Bien</span></button>
+        <button class="ci-btn" id="ci-e4" onclick="ciPickEnergy(4)">⚡<br><span>Optimal</span></button>
+      </div>
+    </div>
+    <button class="btn btn-bg2" onclick="skipCheckin()" style="margin-top:14px;font-size:13px;padding:10px;">Passer →</button>
+  </div>
+</div>
+
+<!-- MODAL: Plate Calculator -->
+<!-- ═══ MODAL PARTAGE QR ══════════════════════════════════════ -->
+<div class="overlay" id="mod-share" onclick="if(event.target===this)closeShareModal()">
+  <div class="modal" style="text-align:center;padding:24px 20px;">
+    <div class="modal-handle"></div>
+    <div style="font-size:32px;margin-bottom:6px;">📲</div>
+    <div style="font-family:var(--font-cond);font-size:24px;font-weight:900;margin-bottom:4px;">Partager Force Tracker</div>
+    <div style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.5;">Montre ce QR code — ton ami le scanne et l'app s'ouvre directement.</div>
+    <div style="background:#fff;border-radius:14px;padding:12px;display:inline-block;margin-bottom:10px;">
+      <img id="share-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https%3A%2F%2Fmichdu75-commits.github.io%2Fforcetracker%2F" style="width:180px;height:180px;display:block;">
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-bottom:14px;">michdu75-commits.github.io/forcetracker</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button onclick="shareAppNative()" style="flex:1;background:var(--red);color:#fff;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;">Envoyer le lien</button>
+      <button onclick="copyAppLink('share')" style="flex:1;background:var(--bg3);color:var(--t1);border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:600;cursor:pointer;">Copier</button>
+    </div>
+    <!-- Instructions installation pour le destinataire -->
+    <div style="border-top:1px solid var(--sep);padding-top:14px;text-align:left;">
+      <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📥 Comment installer l'app</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;flex-shrink:0;">🍎</span>
+          <div style="font-size:13px;color:var(--t2);line-height:1.5;">
+            <strong style="color:var(--t1);">iPhone</strong> : Safari →
+            <span style="background:#007AFF;color:#fff;padding:1px 6px;border-radius:5px;font-size:11px;font-weight:700;">⬆️ Partager</span>
+            → <strong style="color:var(--t1);">Sur l'écran d'accueil</strong>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:20px;flex-shrink:0;">🤖</span>
+          <div style="font-size:13px;color:var(--t2);line-height:1.5;">
+            <strong style="color:var(--t1);">Android</strong> : Chrome →
+            <span style="background:var(--bg3);border:1px solid var(--sep);padding:1px 6px;border-radius:5px;font-size:11px;font-weight:700;">⋮</span>
+            → <strong style="color:var(--t1);">Ajouter à l'écran d'accueil</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button onclick="closeShareModal()" style="margin-top:14px;background:none;border:none;color:var(--t3);font-size:14px;cursor:pointer;">Fermer</button>
+  </div>
+</div>
+
+<div class="overlay" id="mod-plate">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>🔢 Calculateur de plaques</h2>
+    <div class="fg"><label>Charge cible (kg)</label><input type="number" id="plate-kg" placeholder="100" step="0.5" inputmode="decimal" oninput="renderPlates()"></div>
+    <p style="font-size:12px;color:var(--t3);margin-top:6px;">Barre : <span id="bar-disp">20</span> kg</p>
+    <div id="plate-viz" style="margin:14px 0;"></div>
+    <p id="plate-result" style="font-size:13px;color:var(--t2);text-align:center;min-height:18px;"></p>
+    <div class="modal-btns">
+      <button class="btn btn-bg2" onclick="closePlate()">Fermer</button>
+      <button class="btn btn-red" id="plate-apply" style="display:none;" onclick="applyPlate()">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Exercise Picker -->
+<div class="overlay" id="mod-ex">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Choisir un exercice</h2>
+    <input type="text" id="ex-search" placeholder="Rechercher…" oninput="filterEx()" style="margin-bottom:10px;">
+    <div id="ex-list"></div>
+    <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--sep);">
+      <button class="btn btn-bg2" style="width:100%;margin-bottom:0;" id="custom-ex-add-btn" onclick="showCustomExForm()">+ Créer un exercice</button>
+      <div id="custom-ex-form" style="display:none;flex-direction:column;gap:8px;margin-top:10px;">
+        <input type="text" id="custom-ex-name" placeholder="Nom de l'exercice">
+        <select id="custom-ex-grp" style="padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:14px;">
+          <option value="Pectoraux">Pectoraux</option>
+          <option value="Dos">Dos</option>
+          <option value="Trapèzes">Trapèzes</option>
+          <option value="Épaules">Épaules</option>
+          <option value="Biceps">Biceps</option>
+          <option value="Triceps">Triceps</option>
+          <option value="Jambes">Jambes</option>
+          <option value="Fessiers">Fessiers</option>
+          <option value="Abdominaux">Abdominaux</option>
+          <option value="Mollets">Mollets</option>
+        </select>
+        <div style="font-size:12px;color:var(--t2);font-weight:600;margin-top:2px;">💪 Muscles principaux <span style="font-weight:400;color:var(--t3)">(optionnel)</span></div>
+        <div id="cex-muscles-p" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        <div style="font-size:12px;color:var(--t2);font-weight:600;">Muscles secondaires</div>
+        <div id="cex-muscles-s" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button class="btn btn-bg2" style="flex:1;" onclick="hideCustomExForm()">Annuler</button>
+          <button class="btn btn-red" style="flex:1;" onclick="saveCustomEx()">Créer</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-btns" style="margin-top:10px;"><button class="btn btn-bg2" onclick="closeExPicker()">Fermer</button></div>
+  </div>
+</div>
+
+<!-- MODAL: Muscle Map -->
+<div class="overlay" id="ov-mm" style="z-index:300" onclick="if(event.target===this)closeMuscleMap()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 20px">
+    <div style="font-weight:700;font-size:17px;margin-bottom:10px;text-align:center">💪 Muscles travaillés</div>
+    <div id="mm-clicked-label" style="display:none;text-align:center;font-size:15px;font-weight:700;color:#fff;background:var(--red);padding:7px 18px;border-radius:20px;margin-bottom:10px;letter-spacing:.3px"></div>
+    <div id="mm-svg" style="width:100%"></div>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px;font-size:11px;flex-wrap:wrap;color:var(--t2)">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:11px;height:11px;background:linear-gradient(135deg,#FF6060,#CC0020);border-radius:2px;display:inline-block;flex-shrink:0"></span>Primaire</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:11px;height:11px;background:linear-gradient(135deg,#FFA030,#CC5500);border-radius:2px;display:inline-block;flex-shrink:0"></span>Secondaire</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:11px;height:11px;background:linear-gradient(135deg,#9DBBD6,#6E8CA8);border-radius:2px;display:inline-block;flex-shrink:0"></span>Indirect</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:11px;height:11px;background:linear-gradient(135deg,#C27060,#823830);border-radius:2px;display:inline-block;flex-shrink:0"></span>Non travaillé</span>
+    </div>
+    <div style="text-align:center;font-size:11px;color:var(--t3);margin-top:6px">Tape un muscle pour voir son nom</div>
+    <div id="mm-list" style="margin-top:8px;font-size:13px;line-height:1.7;text-align:center"></div>
+    <button class="btn btn-red" id="mm-btn" onclick="closeMuscleMap()" style="width:100%;margin-top:14px;padding:14px;font-size:16px">Continuer →</button>
+  </div>
+</div>
+
+<!-- MODAL: Confirmation générique -->
+<div class="overlay" id="ov-confirm" data-no-dismiss onclick="if(event.target===this)closeConfirm()">
+  <div class="modal" style="max-width:340px;padding:24px 20px">
+    <div style="font-size:36px;text-align:center;margin-bottom:12px">⚠️</div>
+    <div style="font-weight:800;font-size:16px;text-align:center;margin-bottom:8px" id="confirm-title"></div>
+    <div style="font-size:14px;color:var(--t2);text-align:center;margin-bottom:22px" id="confirm-msg"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-bg2" id="confirm-cancel" onclick="confirmCancel()" style="flex:1;padding:13px;font-size:15px">Annuler</button>
+      <button class="btn btn-red" id="confirm-ok" onclick="confirmOk()" style="flex:1;padding:13px;font-size:15px">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Types de séries -->
+<div class="overlay" id="ov-type-help" onclick="if(event.target===this)closeTypeHelp()">
+  <div class="modal" style="max-width:380px;padding:20px">
+    <div style="font-weight:800;font-size:17px;margin-bottom:16px;text-align:center">Tags de série</div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:20px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <span style="font-size:13px;font-weight:800;background:rgba(41,121,255,.1);border:1px solid rgba(41,121,255,.5);color:var(--blue);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">É</span>
+        <div><div style="font-weight:700;font-size:14px">Échauffement</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série légère de préparation. <strong>Exclue du volume et des PRs.</strong> Timer 45 s. Précède automatiquement la 1ère série si tu as un historique.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <span style="font-size:13px;font-weight:800;background:var(--bg3);border:1px solid rgba(240,240,255,.15);color:var(--t3);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">—</span>
+        <div><div style="font-weight:700;font-size:14px">Normal <span style="font-weight:400;font-size:12px;color:var(--t3)">(défaut, non affiché)</span></div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série de travail standard. <strong>Compte dans le volume et le 1RM.</strong> Timer selon ta préférence.</div></div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <span style="font-size:13px;font-weight:800;background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.5);color:var(--red);border-radius:6px;padding:5px 10px;min-width:36px;text-align:center">X</span>
+        <div><div style="font-weight:700;font-size:14px">Échec</div><div style="font-size:13px;color:var(--t2);margin-top:2px">Série menée jusqu'à l'échec musculaire. <strong>Compte pour le 1RM</strong> — repos 4 min automatique.</div></div>
+      </div>
+    </div>
+    <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.6">
+      💡 Le <strong>1RM estimé</strong> s'affiche en temps réel sous chaque série. Le <strong>volume</strong> affiché = séries de travail uniquement (échauffement exclu).
+    </div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:16px">Tape sur la pastille en séance pour changer le tag — le nom s'affiche en toast</div>
+    <div style="border-top:1px solid var(--sep);padding-top:16px;margin-bottom:12px">
+      <div style="font-weight:800;font-size:15px;margin-bottom:12px;text-align:center">Chaînes d'exercices</div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.5">Dans le footer d'un exercice, des boutons permettent d'enchaîner automatiquement plusieurs exercices ou séries :</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:12px;font-weight:800;background:rgba(255,109,0,.1);border:1px solid rgba(255,109,0,.4);color:var(--orange);border-radius:6px;padding:4px 8px;white-space:nowrap">⚡ Super Set</span>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5">Enchaîne 2+ exercices <strong>sans repos</strong>. Le timer se déclenche après le dernier exercice du tour, puis repart au 1er automatiquement.</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:12px;font-weight:800;background:rgba(191,90,242,.1);border:1px solid rgba(191,90,242,.4);color:#BF5AF2;border-radius:6px;padding:4px 8px;white-space:nowrap">📉 Drop</span>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5">Réduit le poids de <strong>~10%</strong> sans pause. Repos 20s automatique entre chaque palier. Crée autant de paliers que tu veux.</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:12px;font-weight:800;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.4);color:var(--green);border-radius:6px;padding:4px 8px;white-space:nowrap">📈 +10%</span>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5"><strong>Pyramide montante</strong> : crée 2 séries à +10% et +21%. Poids pré-rempli, ajustable.</div>
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:12px;font-weight:800;background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.4);color:var(--gold);border-radius:6px;padding:4px 8px;white-space:nowrap">📉 −10%</span>
+          <div style="font-size:12px;color:var(--t2);line-height:1.5"><strong>Pyramide descendante</strong> : crée 2 séries à −10% et −19%. Poids pré-rempli, ajustable.</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-red" onclick="closeTypeHelp()" style="width:100%;padding:13px">OK</button>
+  </div>
+</div>
+
+<!-- MODAL: Détail / Édition séance -->
+<div class="overlay" id="ov-sess-detail" onclick="if(event.target===this)closeSessDetail()">
+  <div class="modal" style="max-width:420px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:14px 16px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--sep);flex-shrink:0">
+      <div>
+        <div style="font-weight:700;font-size:17px" id="sd-title">Séance</div>
+        <div style="font-size:13px;color:var(--t2)" id="sd-sub"></div>
+      </div>
+      <button onclick="closeSessDetail()" style="width:36px;height:36px;border-radius:50%;background:var(--bg3);border:none;font-size:18px;font-weight:700;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px 16px">
+      <div id="sd-muscles" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--sep)"></div>
+      <div id="sd-content"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn" id="sd-del-btn" style="flex:1;padding:12px;background:var(--bg3);color:var(--red);border:none" onclick="deleteSessOrConfirm()">🗑️ Supprimer</button>
+        <button class="btn btn-red" style="flex:2;padding:12px" onclick="saveSessEdits()">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Import programme par photo -->
+<div class="overlay" id="ov-import-prog" onclick="if(event.target===this)closeImportProg()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px;">
+      <div class="imp-dot active" id="imp-dot-1"></div>
+      <div class="imp-dot" id="imp-dot-2"></div>
+      <div class="imp-dot" id="imp-dot-3"></div>
+      <div class="imp-dot" id="imp-dot-4"></div>
+    </div>
+    <!-- Étape 1 : Source -->
+    <div id="imp-s1">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;margin-bottom:8px;">📸</div>
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px;">Importer un programme</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.5;">Prends en photo ton programme ou sélectionne les images depuis ta galerie.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-cam-inp').click()">📷 Prendre une photo</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-gal-inp').click()">🖼️ Choisir depuis la galerie</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('imp-file-inp').click()">📄 Importer un PDF</button>
+      </div>
+      <input type="file" id="imp-cam-inp" accept="image/*" capture="environment" style="display:none" onchange="addImportPhoto(this)">
+      <input type="file" id="imp-gal-inp" accept="image/*" multiple style="display:none" onchange="addImportPhoto(this)">
+      <input type="file" id="imp-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addImportFile(this)">
+      <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="closeImportProg()">Annuler</button>
+    </div>
+    <!-- Étape 2 : Pages -->
+    <div id="imp-s2" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:16px;">Pages ajoutées</div>
+      <div id="imp-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;min-height:80px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('imp-more-inp').click()">+ Photo</button>
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('imp-more-file-inp').click()">+ PDF</button>
+      </div>
+      <input type="file" id="imp-more-inp" accept="image/*" multiple style="display:none" onchange="addImportPhoto(this)">
+      <input type="file" id="imp-more-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addImportFile(this)">
+      <button class="btn btn-red" style="margin-top:4px;" onclick="analyzeImportPhotos()">🤖 Analyser avec IA →</button>
+      <button class="btn btn-bg2" onclick="impGoStep(1)">← Retour</button>
+    </div>
+    <!-- Étape 3 : Analyse -->
+    <div id="imp-s3" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:32px 0;">
+      <div style="font-size:40px;">🤖</div>
+      <div style="font-weight:700;font-size:16px;">Analyse en cours…</div>
+      <div style="font-size:13px;color:var(--t2);text-align:center;">Claude analyse tes photos et extrait le programme</div>
+      <div class="imp-spinner"></div>
+    </div>
+    <!-- Étape 4 : Confirmation -->
+    <div id="imp-s4" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:17px;" id="imp-prog-name"></div>
+      <div style="font-size:13px;color:var(--t2);">Vérifie les exercices extraits. Appuie sur ✕ pour retirer un exercice.</div>
+      <div id="imp-preview" style="display:flex;flex-direction:column;gap:10px;max-height:40vh;overflow-y:auto;"></div>
+      <div style="background:var(--bg3);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Enregistrer comme</div>
+        <div style="display:flex;gap:8px;margin-bottom:0;" id="imp-mode-btns">
+          <button id="imp-mode-new" class="btn btn-red" style="flex:1;padding:10px;font-size:13px;" onclick="_setImpMode('new')">➕ Nouveau</button>
+          <button id="imp-mode-replace" class="btn btn-bg2" style="flex:1;padding:10px;font-size:13px;" onclick="_setImpMode('replace')">🔄 Remplacer</button>
+        </div>
+        <select id="imp-replace-sel" style="display:none;width:100%;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:14px;font-family:var(--font);"></select>
+      </div>
+      <button class="btn btn-red" onclick="finalImportProg()">✅ Importer ce programme</button>
+      <button class="btn btn-bg2" onclick="impGoStep(2)">← Modifier les photos</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Import historique séances (flow isolé) -->
+<div class="overlay" id="ov-import-hist" onclick="if(event.target===this)closeImportHist()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px;">
+      <div class="imp-dot active" id="hist-dot-1"></div>
+      <div class="imp-dot" id="hist-dot-2"></div>
+      <div class="imp-dot" id="hist-dot-3"></div>
+      <div class="imp-dot" id="hist-dot-4"></div>
+    </div>
+    <!-- Étape 1 : Source -->
+    <div id="hist-s1">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;margin-bottom:8px;">📅</div>
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px;">Importer un journal</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.5;">Photo ou PDF de ton journal de séances passées → elles s'ajoutent à l'historique aux bonnes dates.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('hist-cam-inp').click()">📷 Prendre une photo</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('hist-gal-inp').click()">🖼️ Choisir depuis la galerie</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('hist-file-inp').click()">📄 Importer un PDF</button>
+      </div>
+      <input type="file" id="hist-cam-inp" accept="image/*" capture="environment" style="display:none" onchange="addHistPhoto(this)">
+      <input type="file" id="hist-gal-inp" accept="image/*" multiple style="display:none" onchange="addHistPhoto(this)">
+      <input type="file" id="hist-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addHistFile(this)">
+      <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="closeImportHist()">Annuler</button>
+    </div>
+    <!-- Étape 2 : Pages -->
+    <div id="hist-s2" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:16px;">Pages ajoutées</div>
+      <div id="hist-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;min-height:80px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('hist-more-inp').click()">+ Photo</button>
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('hist-more-file-inp').click()">+ PDF</button>
+      </div>
+      <input type="file" id="hist-more-inp" accept="image/*" multiple style="display:none" onchange="addHistPhoto(this)">
+      <input type="file" id="hist-more-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addHistFile(this)">
+      <button class="btn btn-red" style="margin-top:4px;" onclick="analyzeHistPhotos()">🤖 Analyser avec IA →</button>
+      <button class="btn btn-bg2" onclick="histGoStep(1)">← Retour</button>
+    </div>
+    <!-- Étape 3 : Analyse -->
+    <div id="hist-s3" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:32px 0;">
+      <div style="font-size:40px;">🤖</div>
+      <div style="font-weight:700;font-size:16px;">Analyse en cours…</div>
+      <div id="hist-s3-status" style="font-size:13px;color:var(--t2);text-align:center;">Claude extrait les séances et leurs dates depuis tes pages</div>
+      <div class="imp-spinner"></div>
+    </div>
+    <!-- Étape 4 : Confirmation -->
+    <div id="hist-s4" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:17px;" id="hist-summary"></div>
+      <div style="font-size:13px;color:var(--t2);">Vérifie les séances extraites. Les ⚠️ indiquent un conflit avec une séance déjà enregistrée ce jour.</div>
+      <div id="hist-preview" style="display:flex;flex-direction:column;max-height:45vh;overflow-y:auto;"></div>
+      <button class="btn btn-red" onclick="finalImportHist()">✅ Importer dans l'historique</button>
+      <button class="btn btn-bg2" onclick="histGoStep(2)">← Modifier les fichiers</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Mur premium import journal (limite gratuite = 1 import) -->
+<div class="overlay" id="ov-hist-wall" onclick="if(event.target===this)closeHistWall()">
+  <div class="modal" style="max-width:400px;max-height:92vh;overflow-y:auto;padding:22px 18px 24px;text-align:center;">
+    <div class="modal-handle"></div>
+    <div style="font-size:52px;line-height:1;margin:4px 0 8px;">⭐</div>
+    <div class="coach-wall-title">Import de journal Premium</div>
+    <div class="coach-wall-sub">Tu as utilisé ton import de journal gratuit</div>
+    <div class="coach-wall-price" style="margin:10px 0;">4,99€ <span>/ 2 mois</span></div>
+    <div class="coach-wall-card" style="text-align:left;margin-bottom:14px;">
+      <div class="coach-wall-perk"><span class="pi">♾️</span> Imports de journal illimités</div>
+      <div class="coach-wall-perk"><span class="pi">🤖</span> Coach IA : questions illimitées</div>
+      <div class="coach-wall-perk"><span class="pi">📊</span> Analyse de progression + morphologie</div>
+    </div>
+    <a href="mailto:michdu75@gmail.com?subject=Force%20Tracker%20Premium&body=Bonjour%2C%20je%20souhaite%20acc%C3%A9der%20au%20Premium." style="width:100%;text-decoration:none;">
+      <button class="btn btn-red" style="width:100%;padding:15px;font-size:16px;">✉️ Contacter pour le Premium</button>
+    </a>
+    <div class="coach-wall-or" style="margin:14px 0 8px;">— Tu as déjà un code d'accès ? —</div>
+    <button class="btn btn-bg2" style="width:100%;padding:13px;font-size:14px;" onclick="closeHistWall();goScreen('coach',document.getElementById('nb-coach'));setTimeout(showPremiumWall,150);">Activer un code dans l'onglet Coach 🤖</button>
+    <button class="btn btn-bg2" style="width:100%;padding:11px;font-size:13px;margin-top:8px;opacity:.7;" onclick="closeHistWall()">Fermer</button>
+  </div>
+</div>
+
+<!-- OVERLAY: Sélection du jour -->
+<div class="overlay" id="ov-day-sel" onclick="if(event.target===this)closeDaySel()">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:17px;margin-bottom:4px;text-align:center;">Quel jour aujourd'hui ?</div>
+    <div id="day-sel-prog-name" style="font-size:13px;color:var(--t2);text-align:center;margin-bottom:16px;"></div>
+    <div id="day-sel-btns" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeDaySel()">Annuler</button>
+  </div>
+</div>
+
+<!-- OVERLAY: Analyse morphologique -->
+<div class="overlay" id="ov-morpho-analysis" onclick="if(event.target===this)closeMorphoAnalysis()">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:900;font-size:18px;margin-bottom:2px;text-align:center;">🧬 Analyse morphologique</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px;">🔒 Photos non stockées — analysées puis supprimées immédiatement</div>
+    <div style="display:flex;flex-direction:column;gap:12px;" id="morpho-slots">
+      <!-- Slot Face -->
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+        <label id="morpho-slot-0" for="morpho-file-0" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+          <span style="font-size:22px;">📷</span>
+        </label>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:14px;margin-bottom:2px;">Face</div>
+          <div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">Debout, bras légèrement écartés, face à la caméra. Tenue ajustée ou torse nu.</div>
+          <label for="morpho-file-0" style="display:block;text-align:center;font-size:11px;font-weight:700;padding:6px 8px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Importer une photo</label>
+        </div>
+        <input type="file" id="morpho-file-0" accept="image/*" style="display:none;" onchange="addMorphoPhoto(this,0)">
+      </div>
+      <!-- Slot Dos -->
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+        <label id="morpho-slot-1" for="morpho-file-1" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+          <span style="font-size:22px;">📷</span>
+        </label>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:14px;margin-bottom:2px;">Dos</div>
+          <div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">Même position, dos tourné à la caméra. Bras légèrement écartés.</div>
+          <label for="morpho-file-1" style="display:block;text-align:center;font-size:11px;font-weight:700;padding:6px 8px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Importer une photo</label>
+        </div>
+        <input type="file" id="morpho-file-1" accept="image/*" style="display:none;" onchange="addMorphoPhoto(this,1)">
+      </div>
+      <!-- Slot Profil -->
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+        <label id="morpho-slot-2" for="morpho-file-2" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+          <span style="font-size:22px;">📷</span>
+        </label>
+        <div style="flex:1;">
+          <div style="font-weight:800;font-size:14px;margin-bottom:2px;">Profil</div>
+          <div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">De côté (profil gauche ou droit), bras le long du corps.</div>
+          <label for="morpho-file-2" style="display:block;text-align:center;font-size:11px;font-weight:700;padding:6px 8px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Importer une photo</label>
+        </div>
+        <input type="file" id="morpho-file-2" accept="image/*" style="display:none;" onchange="addMorphoPhoto(this,2)">
+      </div>
+    </div>
+    <div id="morpho-result" style="display:none;margin-top:12px;padding:12px;background:var(--bg3);border-radius:12px;font-size:13px;line-height:1.6;"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="btn btn-bg2" style="flex:1;" onclick="closeMorphoAnalysis()">Annuler</button>
+      <button class="btn btn-red" id="morpho-analyze-btn" style="flex:2;" onclick="analyzeMorphoPhotos()">🔍 Analyser</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Morpho loading -->
+<div class="overlay" id="ov-morpho-loading" data-no-dismiss style="background:rgba(0,0,0,.97);z-index:300;align-items:center;justify-content:center;">
+  <div style="width:100%;max-width:380px;padding:0 24px;display:flex;flex-direction:column;align-items:center;gap:22px;">
+    <div style="font-family:var(--font-cond);font-size:20px;font-weight:900;color:#fff;letter-spacing:2px;text-align:center;">ANALYSE IA</div>
+    <div style="position:relative;display:flex;gap:8px;width:100%;justify-content:center;border-radius:10px;overflow:hidden;" id="ml-photos">
+      <div id="ml-scan-line" style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent 0%,var(--red) 40%,#fff 50%,var(--red) 60%,transparent 100%);box-shadow:0 0 14px 4px rgba(255,45,85,.7);animation:ml-scan 1.8s linear infinite;pointer-events:none;z-index:2;"></div>
+    </div>
+    <div id="ml-msg" style="font-size:13px;font-weight:700;color:rgba(255,255,255,.85);text-align:center;min-height:18px;transition:opacity .25s;letter-spacing:.3px;"></div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div class="ml-dot"></div>
+      <div class="ml-dot"></div>
+      <div class="ml-dot"></div>
+    </div>
+    <div style="width:100%;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;">
+      <div id="ml-bar" style="height:100%;background:linear-gradient(90deg,var(--red),#ff6b6b);border-radius:2px;width:5%;transition:width .9s ease;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Programmes -->
+<div class="overlay" id="mod-prog">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📋 Mes Programmes</h2>
+    <div id="prog-list-modal" style="margin-bottom:4px;"></div>
+    <div id="prog-save-section" style="border-top:1px solid var(--sep);padding-top:14px;margin-top:6px;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:13px;color:var(--t2);font-weight:700;">Sauvegarder la séance actuelle :</div>
+      <input type="text" id="prog-name-inp" placeholder="Nom du programme (ex: Push A, Séance Jambes…)" maxlength="40">
+      <button class="btn btn-red" onclick="saveAsProg()" style="padding:13px;">💾 Sauvegarder comme programme</button>
+    </div>
+    <div class="modal-btns" style="margin-top:10px;"><button class="btn btn-bg2" onclick="closeProgModal()">Fermer</button></div>
+  </div>
+</div>
+
+<!-- OVERLAY: Félicitations PR -->
+<div class="overlay" id="ov-pr-congrats">
+  <div class="pr-card">
+    <div class="pr-card-emoji">🎉</div>
+    <div class="pr-card-title">Bravo <span id="pr-name-txt"></span> !</div>
+    <div class="pr-card-ex" id="pr-ex-txt"></div>
+    <div class="pr-rm-row">
+      <div class="pr-rm-old" id="pr-old-txt"></div>
+      <div class="pr-rm-arr">→</div>
+      <div class="pr-rm-new" id="pr-new-txt"></div>
+    </div>
+    <div class="pr-rm-unit" id="pr-delta-txt"></div>
+    <div class="pr-lvl-chip" id="pr-lvl-txt" style="display:none;"></div>
+    <button class="btn btn-red" onclick="document.getElementById('ov-pr-congrats').classList.remove('open')" style="margin-top:4px;">Continuer 💪</button>
+  </div>
+</div>
+
+<!-- OVERLAY: Résumé hebdomadaire -->
+<div class="overlay" id="ov-week-summary" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>📅 Ta semaine passée</h2>
+    <div id="week-sum-content" style="display:flex;flex-direction:column;gap:4px;"></div>
+    <div class="modal-btns" style="margin-top:14px;">
+      <button class="btn btn-bg2" onclick="copyWeekSummary()">📋 Partager</button>
+      <button class="btn btn-red" onclick="document.getElementById('ov-week-summary').classList.remove('open')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Éditeur de programme -->
+<div class="overlay" id="ov-prog-edit" onclick="if(event.target===this)closeProgEdit()">
+  <div class="modal" style="max-width:420px;max-height:90vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:14px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--sep);flex-shrink:0;">
+      <input id="prog-edit-name" placeholder="Nom du programme" style="flex:1;font-weight:800;font-size:16px;background:none;border:none;color:var(--t1);outline:none;min-width:0;">
+      <button onclick="closeProgEdit()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px;" id="prog-edit-content"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--sep);flex-shrink:0;display:flex;gap:8px;">
+      <button class="btn btn-bg2" onclick="analyzeProgIa(_editProgIdx)" style="flex:1;padding:14px;">🤖 Coach IA</button>
+      <button class="btn btn-red" onclick="saveProgEdit()" style="flex:2;padding:14px;">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Analyse IA d'un programme -->
+<div class="overlay" id="ov-prog-analysis" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:420px;max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+    <div style="position:sticky;top:0;z-index:5;background:var(--bg2);border-radius:16px 16px 0 0;padding:14px 16px 12px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--sep);flex-shrink:0;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:900;font-size:16px;">🤖 Analyse du programme</div>
+        <div style="font-size:12px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="prog-analysis-title"></div>
+      </div>
+      <button onclick="document.getElementById('ov-prog-analysis').classList.remove('open')" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:14px 16px;" id="prog-analysis-content"></div>
+    <div style="padding:12px 16px;border-top:1px solid var(--sep);flex-shrink:0;display:none;" id="prog-analysis-footer">
+      <button class="btn btn-bg2" onclick="continueInCoach()" style="width:100%;padding:12px;">💬 Continuer dans le Coach IA</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+</div><!-- /#root -->
+
+<!-- MENU DRAWER — hors de #root pour éviter overflow:hidden clipping sur Chrome desktop -->
+<div id="menu-drawer-bd" onclick="closeMenuDrawer()"></div>
+<div id="menu-drawer">
+  <!-- Header -->
+  <div style="padding:max(env(safe-area-inset-top),44px) 16px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;border-bottom:1px solid var(--sep);">
+    <span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);">Menu</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="openShareModal()" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Partager
+      </button>
+      <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        Mode Jour
+      </button>
+      <button onclick="closeMenuDrawer()" style="width:32px;height:32px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);border:none;color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
+    </div>
+  </div>
+  <!-- Body scrollable -->
+  <div id="menu-drawer-body">
+    <!-- PROFILE CARD -->
+    <div onclick="closeMenuDrawer();openProfil()" style="display:flex;align-items:center;gap:14px;background:var(--bg2);border-radius:16px;padding:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;-webkit-tap-highlight-color:transparent;" class="ft-press">
+      <div class="menu-avatar" id="menu-avatar">M</div>
+      <div style="flex:1;min-width:0;">
+        <div id="menu-name-lbl" style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Michel</div>
+        <div id="menu-profile-sub" style="font-size:13px;color:var(--t2);font-weight:500;">Profil non configuré</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <!-- PREMIUM BANNER -->
+    <div id="menu-premium-banner" onclick="closeMenuDrawer();goScreen('coach',document.getElementById('nb-coach'))" style="display:flex;align-items:center;gap:12px;background:rgba(234,179,8,.08);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 1px rgba(234,179,8,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;" class="ft-press">
+      <div style="width:34px;height:34px;border-radius:10px;background:rgba(234,179,8,.15);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⭐</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:700;color:#F2D472;margin-bottom:1px;">Coach IA Premium</div>
+        <div style="font-size:12px;color:rgba(234,179,8,.65);font-weight:500;">4,99€ / 2 mois · Questions illimitées</div>
+      </div>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F2D472" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <!-- OUTILS -->
+    <div class="sec">Outils</div>
+    <div class="menu-group">
+      <div class="menu-row" onclick="openDrawerContent('anatomy')"><div class="menu-row-ic" style="background:rgba(255,106,115,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6A73" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><span class="menu-row-lbl">Anatomie du corps humain</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('proteins')"><div class="menu-row-ic" style="background:rgba(52,211,153,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H2v15h7c1.7 0 3 1.3 3 3V7c0-2.2-1.8-4-4-4zm8 0h6v15h-7c-1.7 0-3 1.3-3 3V7c0-2.2 1.8-4 4-4z"/></svg></div><span class="menu-row-lbl">Protéines en poudre</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('supplements')"><div class="menu-row-ic" style="background:rgba(168,85,247,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></div><span class="menu-row-lbl">Compléments alimentaires</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('rm1calc')"><div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div><span class="menu-row-lbl">Calculateur 1RM</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+    <!-- COMPTE -->
+    <div class="sec">Compte</div>
+    <div class="menu-group">
+      <div class="menu-row" onclick="closeMenuDrawer();exportData()"><div class="menu-row-ic" style="background:rgba(234,179,8,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><span class="menu-row-lbl">Exporter mes données</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('help')"><div class="menu-row-ic" style="background:rgba(52,211,153,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span class="menu-row-lbl">Aide détaillée</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="openDrawerContent('about')"><div class="menu-row-ic" style="background:rgba(255,255,255,.06);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><span class="menu-row-lbl">À propos</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+    </div>
+    <!-- FOOTER -->
+    <div style="text-align:center;padding:16px 0 8px;font-size:12px;color:var(--t3);line-height:1.8;font-weight:500;">
+      Force Tracker v2.8 · 2026<br>
+      <a href="mailto:michdu75@gmail.com" style="color:var(--t3);text-decoration:none;">michdu75@gmail.com</a>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Restauration compte depuis le cloud -->
+<div id="ov-restore-account" class="overlay" style="z-index:9999;" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:390px;padding:28px 20px 24px;">
+    <div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:6px;">🔄 Restaurer mon compte</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:20px;">Entre l'email avec lequel tu as créé ton compte. Tes séances, PRs et profil seront téléchargés depuis le cloud — <strong style="color:var(--t1);">aucune donnée ne sera écrite vers le serveur</strong>.</div>
+    <div class="fg" style="margin-bottom:16px;">
+      <label style="font-size:12px;font-weight:700;color:var(--t2);letter-spacing:.04em;text-transform:uppercase;">Adresse email</label>
+      <input type="email" id="restore-email-inp" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="width:100%;box-sizing:border-box;" onkeydown="if(event.key==='Enter')doRestoreAccount()">
+    </div>
+    <button id="restore-account-btn" class="btn btn-red" style="width:100%;font-size:15px;padding:15px;" onclick="doRestoreAccount()">🔄 Restaurer</button>
+    <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="document.getElementById('ov-restore-account').classList.remove('open')">Annuler</button>
+    <div id="restore-status" style="margin-top:14px;font-size:13px;color:var(--t2);text-align:center;display:none;"></div>
+  </div>
+</div>
+
+<!-- ÉCRAN ANNIVERSAIRE — Eline (2 juillet, une seule fois, mini-jeu bougies) -->
+<div id="ov-bday" style="display:none;position:fixed;inset:0;z-index:9999;background:linear-gradient(170deg,#0a0018 0%,#18002e 50%,#060010 100%);overflow:hidden;">
+  <div id="bday-particles" style="position:absolute;inset:0;pointer-events:none;overflow:hidden;"></div>
+  <div style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:max(env(safe-area-inset-top),18px) 16px max(env(safe-area-inset-bottom),18px);min-height:100%;box-sizing:border-box;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+
+    <!-- GÂTEAU — zone tactile pour souffler les bougies -->
+    <div id="bday-cake-wrap" style="position:relative;width:min(90vw,310px);margin:0 auto 8px;flex-shrink:0;touch-action:none;" ontouchstart="event.preventDefault()" ontouchmove="_bdayTouch(event)" ontouchend="event.preventDefault()">
+      <!-- Étincelles dorées au-dessus des flammes -->
+      <div id="bday-sparkle-zone" style="position:relative;height:28px;width:100%;pointer-events:none;"></div>
+      <!-- Rangée de 19 bougies -->
+      <div id="bday-candles" style="display:flex;align-items:flex-end;justify-content:center;gap:1px;padding:0 6px;box-sizing:border-box;height:62px;"></div>
+      <!-- Glaçage supérieur -->
+      <div style="height:16px;background:linear-gradient(to bottom,#e87ab0,#c55c8e);border-radius:6px 6px 0 0;margin:0 2px;box-shadow:0 -1px 0 rgba(255,255,255,.15) inset;"></div>
+      <!-- Corps du gâteau -->
+      <div style="height:50px;background:linear-gradient(to bottom,#9c2e5e 0%,#6a1e40 55%,#461228 100%);border-radius:0 0 10px 10px;margin:0 2px;box-shadow:0 4px 18px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:11px;color:rgba(255,200,180,.18);letter-spacing:.3em;">✦ ✦ ✦ ✦ ✦</span>
+      </div>
+    </div>
+
+    <!-- Instruction + compteur -->
+    <div id="bday-instr-wrap" style="margin:4px 0 10px;font-size:13px;color:#ffd700;font-weight:700;display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;text-align:center;min-height:28px;">
+      <span style="opacity:.6;">➜</span>
+      <span id="bday-instr-txt">Passe ton doigt sur les bougies — encore</span>
+      <span id="bday-n" style="font-size:22px;font-weight:900;line-height:1;">19</span>
+    </div>
+
+    <!-- JOYEUX ANNIVERSAIRE -->
+    <div style="font-size:11px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;color:rgba(255,215,0,.58);margin-bottom:1px;">JOYEUX ANNIVERSAIRE</div>
+
+    <!-- Eline -->
+    <div style="font-family:'Pacifico',cursive;font-size:clamp(52px,17vw,74px);color:#ffd700;line-height:1;text-shadow:0 0 40px rgba(255,200,0,.5),0 3px 14px rgba(0,0,0,.5);margin-bottom:3px;">Eline</div>
+
+    <!-- Trait décoratif -->
+    <div style="width:54px;height:2px;background:linear-gradient(to right,transparent,#ffd700,transparent);border-radius:1px;margin-bottom:14px;"></div>
+
+    <!-- Message -->
+    <div style="font-size:17px;color:rgba(255,255,255,.9);line-height:1.8;max-width:270px;margin-bottom:22px;text-align:center;">
+      Ma puce, ma fille que j'aime fort.<br>Une belle année à toi 💛<br>
+      <span style="font-size:14px;color:rgba(255,255,255,.38);display:block;margin-top:4px;">— Papa</span>
+    </div>
+
+    <!-- Bouton — verrouillé tant qu'il reste des bougies allumées -->
+    <button id="bday-btn" disabled onclick="closeBirthdayScreen()" style="width:100%;max-width:270px;padding:16px 20px;border:none;border-radius:50px;background:rgba(255,255,255,.07);color:rgba(255,255,255,.28);font-size:15px;font-weight:800;cursor:not-allowed;font-family:system-ui,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;letter-spacing:.02em;">
+      🔒 Souffle tes bougies pour entrer
+    </button>
+  </div>
+</div>
+
+<!-- ── OVERLAY DÉCOMPTE FINAL DE REPOS ─────────────────────────────── -->
+<div id="ov-rest-countdown" onclick="_cdownTap()" style="display:none;position:fixed;inset:0;z-index:9999;background:#0e1016;">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:max(env(safe-area-inset-top),24px) 24px max(env(safe-area-inset-bottom),24px);box-sizing:border-box;">
+    <div id="rcd-ex-name" style="font-size:18px;font-weight:700;color:rgba(255,255,255,.55);margin-bottom:8px;text-align:center;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+    <div id="rcd-label" style="font-size:11px;font-weight:800;letter-spacing:.22em;color:#FF6C00;margin-bottom:28px;">REPRISE DANS</div>
+    <!-- Anneau SVG + chiffre -->
+    <div style="position:relative;width:200px;height:200px;margin-bottom:32px;flex-shrink:0;">
+      <svg id="rcd-svg" viewBox="0 0 200 200" width="200" height="200" style="position:absolute;inset:0;transform:rotate(-90deg);">
+        <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="12"/>
+        <circle id="rcd-ring" cx="100" cy="100" r="85" fill="none" stroke="#FF6C00" stroke-width="12" stroke-linecap="round" stroke-dasharray="534" stroke-dashoffset="0"/>
+      </svg>
+      <div id="rcd-num" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:110px;font-weight:900;color:#FF6C00;line-height:1;font-family:system-ui,sans-serif;"></div>
+    </div>
+    <!-- Prochaine série -->
+    <div id="rcd-next-label" style="font-size:11px;font-weight:800;letter-spacing:.22em;color:rgba(255,255,255,.35);margin-bottom:6px;">SÉRIE SUIVANTE</div>
+    <div id="rcd-next-num" style="font-size:18px;font-weight:700;color:rgba(255,255,255,.6);margin-bottom:4px;"></div>
+    <div id="rcd-next-detail" style="font-size:22px;font-weight:800;color:rgba(255,255,255,.9);"></div>
+    <!-- Bouton Passer -->
+    <button onclick="event.stopPropagation();_cdownTap()" style="margin-top:40px;padding:13px 32px;border:none;border-radius:50px;background:rgba(255,255,255,.09);color:rgba(255,255,255,.55);font-size:15px;font-weight:700;font-family:system-ui,sans-serif;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;letter-spacing:.02em;">Passer ▸</button>
+  </div>
+</div>
+
+<!-- Overlay reconnexion — affiché si localStorage vidé et cookie/IDB contient l'email -->
+<div id="ov-reconnect" class="overlay" style="z-index:9998;" onclick="if(event.target===this)closeReconnect()">
+  <div class="modal" style="max-width:380px;padding:28px 20px 24px;text-align:center;">
+    <div style="font-size:52px;margin-bottom:6px;">🔑</div>
+    <div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:8px;">Reconnecte-toi</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:20px;">Tes données sont sauvegardées dans le cloud.<br>Entre ton email pour les retrouver instantanément.</div>
+    <input id="reconnect-email-inp" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg2);color:var(--t1);font-size:15px;margin-bottom:12px;" onkeydown="if(event.key==='Enter')doReconnect()">
+    <button id="reconnect-btn" class="btn btn-red" style="width:100%;font-size:15px;padding:15px;margin-bottom:10px;" onclick="doReconnect()">🔄 Retrouver mes données</button>
+    <div style="font-size:12px;color:var(--t3);">Pas encore de compte ? <a href="#" onclick="closeReconnect();return false;" style="color:var(--red);">Commencer sans compte</a></div>
+    <div id="reconnect-status" style="margin-top:12px;font-size:13px;color:var(--t2);display:none;"></div>
+  </div>
+</div>
+<script src="constants.js"></script>
+<script src="state.js"></script>
+<script src="screens.js"></script>
+<script src="log.js"></script>
+<script src="setup.js"></script>
+<script src="tracking.js"></script>
+<script src="coach.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
