@@ -431,6 +431,22 @@ function renderNutrition(){try{
     set('m-fat-bar','m-fat-pct',kF);
     const hb=document.getElementById('nu-hydra-bar');
     if(hb)hb.style.width=Math.min(100,Math.round((parseFloat(hydra)||0)/3.5*100))+'%';
+    // Anneau hero : arcs = part des calories (prot vert, glucides orange, lipides or)
+    const C=2*Math.PI*52; // circonférence r=52
+    const arc=(id,kcal,startKcal)=>{
+      const el=document.getElementById(id);if(!el)return;
+      const len=kcal/tot*C;
+      el.style.strokeDasharray=len.toFixed(1)+' '+(C-len).toFixed(1);
+      el.style.strokeDashoffset=(-(startKcal/tot*C)).toFixed(1);
+    };
+    arc('ring-prot',kP,0);
+    arc('ring-carb',kC,kP);
+    arc('ring-fat',kF,kP+kC);
+    const pctP=Math.round(kP/tot*100),pctC=Math.round(kC/tot*100),pctF=Math.round(kF/tot*100);
+    const lp=document.getElementById('ring-lg-p'),lcg=document.getElementById('ring-lg-c'),lf=document.getElementById('ring-lg-f');
+    if(lp)lp.textContent=pctP+'%';
+    if(lcg)lcg.textContent=pctC+'%';
+    if(lf)lf.textContent=pctF+'%';
   })();
 
   // Cycle menstruel banner

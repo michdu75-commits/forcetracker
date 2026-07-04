@@ -454,25 +454,45 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <!-- MACROS -->
   <div id="nu-macros" style="display:flex;flex-direction:column;gap:12px;">
     <div id="nu-cycle-banner" style="display:none;"></div>
-    <!-- Hero calories -->
-    <div style="background:var(--bg2);border-radius:16px;padding:18px 20px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
-      <div id="nu-goal-info" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--t3);margin-bottom:10px;"></div>
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px;">
-        <span style="font-family:var(--font-cond);font-size:42px;font-weight:900;color:var(--t1);line-height:1;" id="m-kcal">—</span>
-        <span style="font-size:14px;color:var(--t2);font-weight:600;">kcal / jour</span>
+    <!-- Hero calories (anneau = objectif du jour + répartition des macros) -->
+    <div style="background:var(--bg2);border-radius:16px;padding:18px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
+      <div style="display:flex;align-items:center;gap:18px;">
+        <!-- Anneau : arcs = part des calories (prot/glucides/lipides) -->
+        <div style="position:relative;width:120px;height:120px;flex-shrink:0;">
+          <svg viewBox="0 0 120 120" style="width:120px;height:120px;transform:rotate(-90deg);">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--bg3)" stroke-width="11"/>
+            <circle id="ring-prot" cx="60" cy="60" r="52" fill="none" stroke="var(--green)" stroke-width="11" stroke-dasharray="0 327" stroke-dashoffset="0"/>
+            <circle id="ring-carb" cx="60" cy="60" r="52" fill="none" stroke="var(--orange)" stroke-width="11" stroke-dasharray="0 327" stroke-dashoffset="0"/>
+            <circle id="ring-fat" cx="60" cy="60" r="52" fill="none" stroke="var(--gold)" stroke-width="11" stroke-dasharray="0 327" stroke-dashoffset="0"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <span style="font-family:var(--font-cond);font-size:30px;font-weight:900;color:var(--t1);line-height:1;" id="m-kcal">—</span>
+            <span style="font-size:9.5px;color:var(--t3);font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:2px;">kcal / jour</span>
+          </div>
+        </div>
+        <!-- Objectif + surplus/déficit + répartition -->
+        <div style="flex:1;min-width:0;">
+          <div id="nu-goal-info" style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--t2);margin-bottom:9px;line-height:1.3;"></div>
+          <div id="nu-delta-chip" style="display:inline-flex;align-items:baseline;gap:5px;border-radius:10px;padding:6px 11px;margin-bottom:10px;">
+            <span style="font-family:var(--font-cond);font-size:19px;font-weight:900;" id="nu-delta-val">—</span>
+            <span style="font-size:11px;font-weight:700;color:var(--t3);"><span id="nu-delta-lbl">Delta</span> kcal/j</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--t3);font-weight:600;">
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--green);margin-right:5px;"></span>Protéines <b style="color:var(--t2);" id="ring-lg-p">—</b></span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--orange);margin-right:5px;"></span>Glucides <b style="color:var(--t2);" id="ring-lg-c">—</b></span>
+            <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--gold);margin-right:5px;"></span>Lipides <b style="color:var(--t2);" id="ring-lg-f">—</b></span>
+          </div>
+        </div>
       </div>
-      <div style="display:flex;gap:6px;">
+      <!-- BMR / TDEE conservés -->
+      <div style="display:flex;gap:8px;margin-top:14px;">
         <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">BMR</div>
-          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t1);" id="nu-bmr">—</div>
+          <div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--t1);" id="nu-bmr">—</div>
         </div>
         <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">TDEE</div>
-          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t1);" id="nu-tdee">—</div>
-        </div>
-        <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;" id="nu-delta-chip">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;" id="nu-delta-lbl">Delta</div>
-          <div style="font-family:var(--font-cond);font-size:13px;font-weight:800;color:var(--t2);" id="nu-delta-val">—</div>
+          <div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--t1);" id="nu-tdee">—</div>
         </div>
       </div>
     </div>
