@@ -1007,8 +1007,9 @@ function saveProfile(){
   if(hipEl&&hipEl.value){const v=parseFloat(hipEl.value);if(v>40&&v<200)S.hip=v;}
   persist();renderHome();renderNutrition();
   renderCycleProfileCard();renderBFCard();
+  if(typeof toast==='function')toast('Profil enregistré ✅','success');
   const saveBtn=document.querySelector('[onclick="saveProfile()"]');
-  if(saveBtn){saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML='💾 Enregistrer le profil';saveBtn.disabled=false;},2000);}
+  if(saveBtn){const _orig=saveBtn.innerHTML;saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML=_orig;saveBtn.disabled=false;},2000);}
   _cloudSync();
 }
 
