@@ -1065,6 +1065,15 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <div id="cex-muscles-p" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
         <div style="font-size:12px;color:var(--t2);font-weight:600;">Muscles secondaires</div>
         <div id="cex-muscles-s" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+        <div style="font-size:12px;color:var(--t2);font-weight:600;margin-top:2px;">📷 Photo <span style="font-weight:400;color:var(--t3)">(optionnel)</span></div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <label id="cex-img-btn" style="display:inline-flex;align-items:center;gap:6px;padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:13px;font-weight:700;cursor:pointer;touch-action:manipulation;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Ajouter une photo
+            <input id="cex-img-input" type="file" accept="image/*" style="display:none" onchange="onCexImgSelected(this)">
+          </label>
+          <div id="cex-img-preview" style="display:none;align-items:center;gap:8px;"></div>
+        </div>
         <div style="display:flex;gap:8px;margin-top:4px;">
           <button class="btn btn-bg2" style="flex:1;" onclick="hideCustomExForm()">Annuler</button>
           <button class="btn btn-red" style="flex:1;" onclick="saveCustomEx()">Créer</button>

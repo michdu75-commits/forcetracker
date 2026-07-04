@@ -410,7 +410,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
   }
 
   // Vue développée
-  const _exyt=EX_YT[ex.name];const hasLocalGif=!!(_exyt&&_exyt.img);
+  const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
   const rows=ex.sets.map((set,si)=>{
     const p=prev[si]||prev[Math.max(0,prev.length-1)];
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
@@ -482,7 +482,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
 
   return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
-    +`${hasLocalGif?'<img src="'+_exyt.img+'" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
+    +`${hasLocalGif?'<img src="'+_exImgSrc+'" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
@@ -574,6 +574,8 @@ function openExMenu(ei,hasGif){
   }
   const {nm}=_exMenuCtx;
   const safeNm=nm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const isCustom=(S.customExercises||[]).some(e=>e.n===nm);
+  const hasCustomImg=isCustom&&!!(S.customExercises.find(e=>e.n===nm)||{}).img;
   const mRow=(icon,lbl,action)=>`<button onclick="${action}" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:manipulation;">`
     +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">${icon}</span>`
     +`<span style="font-size:15px;color:var(--t1);font-weight:500;">${lbl}</span>`
@@ -581,6 +583,7 @@ function openExMenu(ei,hasGif){
   ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
+    +(isCustom?mRow('📷',hasCustomImg?'Changer la photo':'Ajouter une photo',`closeExMenu();changeCustomExImg('${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
     +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchmove="event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;">`
@@ -1571,7 +1574,7 @@ function updateRMLive(ei,si){
 }
 let _restStep=15;
 let _restEx=null;
-let _cexMusclesP=[],_cexMusclesS=[];
+let _cexMusclesP=[],_cexMusclesS=[],_cexImg=null;
 function _highlightRestPreset(sec){
   [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
 }
@@ -1609,7 +1612,8 @@ const EX_GROUPS=[
 let _exGrp=null;
 
 function _exPickRow(e){
-  return `<div class="ex-pick" onclick="addExercise('${e.n.replace(/'/g,"\\'")}')"><span class="ex-pick-name">${e.n}${e.custom?' <span style="font-size:10px;color:var(--purp);">✎</span>':''}</span><span class="ex-pick-grp">${e.g}</span></div>`;
+  const thumb=e.img?`<img src="${e.img}" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);">`:'';
+  return `<div class="ex-pick" onclick="addExercise('${e.n.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;">${thumb}<span class="ex-pick-name">${e.n}${e.custom?' <span style="font-size:10px;color:var(--purp);">✎</span>':''}</span><span class="ex-pick-grp">${e.g}</span></div>`;
 }
 function openExPicker(){
   _exGrp=null;
@@ -1679,16 +1683,68 @@ function toggleMuscleChip(key,type){
   _renderCexChips();
 }
 function showCustomExForm(){
-  _cexMusclesP=[];_cexMusclesS=[];
+  _cexMusclesP=[];_cexMusclesS=[];_cexImg=null;
   document.getElementById('custom-ex-form').style.display='flex';
   document.getElementById('custom-ex-add-btn').style.display='none';
-  _renderCexChips();
+  _renderCexChips();_renderCexImgPreview();
 }
 function hideCustomExForm(){
   document.getElementById('custom-ex-form').style.display='none';
   document.getElementById('custom-ex-add-btn').style.display='';
   const n=document.getElementById('custom-ex-name');if(n)n.value='';
-  _cexMusclesP=[];_cexMusclesS=[];
+  _cexMusclesP=[];_cexMusclesS=[];_cexImg=null;_renderCexImgPreview();
+}
+// ─── PHOTO D'EXERCICE PERSO ───────────────────────────────────
+// Réduit une image (fichier) en vignette légère (max 420px, JPEG) → data URI via callback
+function _resizeImgFile(file,cb){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=420;let w=img.width,h=img.height;
+      if(w>=h){if(w>max){h=Math.round(h*max/w);w=max;}}
+      else{if(h>max){w=Math.round(w*max/h);h=max;}}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      try{cb(cv.toDataURL('image/jpeg',0.72));}catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
+    };
+    img.onerror=()=>{if(typeof toast==='function')toast('Image illisible','error');};
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+// Photo choisie dans le formulaire de création
+function onCexImgSelected(input){
+  const file=input.files&&input.files[0];input.value='';
+  if(!file)return;
+  _resizeImgFile(file,d=>{_cexImg=d;_renderCexImgPreview();});
+}
+function _renderCexImgPreview(){
+  const el=document.getElementById('cex-img-preview');if(!el)return;
+  if(_cexImg){
+    el.innerHTML='<img src="'+_cexImg+'" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--sep);">'
+      +'<button onclick="_clearCexImg()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);touch-action:manipulation;">Retirer</button>';
+    el.style.display='flex';
+  }else{el.innerHTML='';el.style.display='none';}
+}
+function _clearCexImg(){_cexImg=null;_renderCexImgPreview();}
+// Ajouter/changer la photo d'un exercice perso DÉJÀ créé (depuis le menu ⋯ en séance)
+function changeCustomExImg(name){
+  const c=(S.customExercises||[]).find(e=>e.n===name);
+  if(!c){toast('Seuls les exercices perso peuvent avoir une photo','info');return;}
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';
+  inp.onchange=()=>{
+    const file=inp.files&&inp.files[0];if(!file)return;
+    _resizeImgFile(file,d=>{c.img=d;persist();renderExBlocks();toast('Photo ajoutée ✅','success');});
+  };
+  inp.click();
+}
+// Source image d'un exercice : photo locale EX_YT, sinon photo perso
+function _exImg(name){
+  const y=EX_YT[name];if(y&&y.img)return y.img;
+  const c=(S.customExercises||[]).find(e=>e.n===name);
+  return (c&&c.img)?c.img:null;
 }
 function _reportCustomEx(name,grp,muscles){
   if(!S.url)return;
@@ -1725,7 +1781,7 @@ function saveCustomEx(){
 function _doCreateCustomEx(name,grp){
   if(!S.customExercises)S.customExercises=[];
   const muscles=(_cexMusclesP.length||_cexMusclesS.length)?{p:[..._cexMusclesP],s:[..._cexMusclesS]}:null;
-  S.customExercises.push({n:name,g:grp,custom:true,...(muscles&&{muscles})});
+  S.customExercises.push({n:name,g:grp,custom:true,...(muscles&&{muscles}),...(_cexImg&&{img:_cexImg})});
   persist();_reportCustomEx(name,grp,muscles);hideCustomExForm();filterEx();toast(name+' créé !','success');
 }
 
@@ -2797,8 +2853,8 @@ const _MG_IMG={
 // Vignette d'exercice : photo locale > image muscle réaliste (muscle deviné du nom) > figurine — 100% hors-ligne
 function _progExThumb(name){
   const box='width:46px;height:46px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);flex-shrink:0;box-sizing:border-box;';
-  const y=EX_YT[name];
-  if(y&&y.img) return `<img src="${y.img}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:2px;">`;
+  const cimg=_exImg(name);
+  if(cimg) return `<img src="${cimg}" onerror="this.style.visibility='hidden'" style="${box}object-fit:cover;">`;
   // Muscle principal deviné depuis le nom (_MEX, insensible aux accents) → image muscle réaliste
   let src='';
   try{
@@ -3023,7 +3079,7 @@ function toggleExGif(ei,name){
   if(panel.dataset.loaded==='1')return;
   panel.dataset.loaded='1';
 
-  const local=EX_YT[name]?.img;
+  const local=_exImg(name);
   let html='<div style="padding:10px;background:var(--bg3);border-radius:10px;">';
   if(local){
     html+=`<img src="${local}" style="width:100%;border-radius:8px;max-height:240px;object-fit:cover;display:block;" loading="lazy">`;
