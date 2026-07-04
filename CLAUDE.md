@@ -467,6 +467,13 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Fix mise à jour iOS — app collée à l'ancienne version (✅ 2026-07-04, ft-v191)
+- **Symptôme Michel** : après un déploiement, l'iPhone continuait d'afficher l'ancienne version malgré fermeture/réouverture (« pareil »). Le serveur avait bien la nouvelle version.
+- **Cause** : `navigator.serviceWorker.register('./sw.js')` sans option → le navigateur met **`sw.js` en cache HTTP** (GitHub Pages ~10 min). Les fermetures/réouvertures rapides retombaient sur le `sw.js` caché → nouvelle version non détectée.
+- **Fix** (`app.js`) : `register('./sw.js',{updateViaCache:'none'})` → le fichier `sw.js` (et ses imports) n'est **jamais** servi depuis le cache HTTP lors des vérifs de mise à jour → `reg.update()` voit tout de suite la nouvelle version. Corrige le problème pour **tous** les utilisateurs iOS, pour les futures updates.
+- ⚠️ Ne débloque pas rétroactivement un appareil déjà collé : il faut une fois attendre l'expiration du cache (~10-15 min) OU vider les données du site. Après ça, les updates sont immédiates.
+- Testé (Chromium) : SW s'enregistre avec l'option, 0 erreur JS.
+
 ### Accueil — tuiles stats réalignées (✅ 2026-07-04, ft-v190)
 - **Demande Michel** (capture iPhone) : sur les 4 tuiles du haut (Volume/Big3/Séances/Poids), mettre **le chiffre à droite, le label juste en dessous, aligné**.
 - **Fix** (`screens.js` helper `_sc`) : la tuile passe de pile verticale gauche (icône → chiffre → label) à **flex `space-between`** : icône à gauche (34px), bloc **aligné à droite** (chiffre `font-cond` 22px + label 10px dessous, `white-space:nowrap`). Données/clics inchangés (mêmes ids `h-vol/h-big3/h-sess/h-bw`).
@@ -914,7 +921,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v187 | restylage Accueil corrections maquette : ordre stats→récup, label CE MOIS, 3 tuiles séparées, CTA « Commencer une séance » gardé |
 | ft-v188 | Accueil : retrait « Bonjour + prénom » (démarre sur CE MOIS) + Menu restylé maquette 06 (rows Outils/Compte en cartes séparées `.menu-group`) |
 | ft-v189 | Promotion restyle clone→prod : Nutrition (anneau + barres macros), Progrès (stats plates + ⭐PR), Objectif (icônes trait fin + fix « Rééquilibrage ») |
-| ft-v190 | Accueil : 4 tuiles stats réalignées (icône à gauche, chiffre à droite, label dessous aligné) ← **actuel** |
+| ft-v190 | Accueil : 4 tuiles stats réalignées (icône à gauche, chiffre à droite, label dessous aligné) |
+| ft-v191 | fix maj iOS : `register(sw.js,{updateViaCache:'none'})` — l'app n'est plus jamais collée à l'ancienne version ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
