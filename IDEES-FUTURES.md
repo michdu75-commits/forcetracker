@@ -200,6 +200,34 @@ Pouvoir **glisser horizontalement** (swipe gauche/droite) pour passer d'un ongle
 
 # 💡 PROJETS À EXPLORER
 
+## 🎓 Offre Débutant (nouvelle formule payante — idée Michel)
+
+**Vision :** une offre dédiée aux **débutants** — le plus gros segment, le plus perdu au démarrage, et le plus fidèle si on l'accompagne bien. Un vrai « prends-moi par la main » de A à Z.
+
+**Tarifs proposés (Michel) :**
+- **Découverte** : 2 mois à **9,99 €**.
+- **Renouvellement** : 4 mois à **14,99 €**.
+- ⚠️ **Note de cohérence tarifaire à trancher** : 9,99 €/2 mois = **5,00 €/mois** ; 14,99 €/4 mois = **3,75 €/mois** → le renouvellement est **moins cher au mois** que la découverte. C'est défendable (« engage-toi plus longtemps, paie moins cher au mois » = logique d'abonnement classique + récompense de fidélité), mais à **valider consciemment**. Alternative si on veut « hameçon » : découverte moins chère puis prix plein.
+- **Inclut le Premium** (Coach IA illimité, etc.) → l'offre Débutant est un **cran au-dessus** du Premium actuel (4,99 €/2 mois).
+
+**Contenu de l'offre :**
+- 📋 **Questionnaire de départ** : situer la personne (niveau, objectif, matériel dispo, fréquence, blessures, morphologie…) → base pour tout personnaliser.
+- 🏋️ **Programme sur mesure** : exercices **simples**, adaptés débutant, avec **explications visuelles** (photo machine + GIF/mouvement + consignes de sécurité).
+- 🍽️ **Conseils nutrition** de base (adaptés à l'objectif, pas une usine à gaz).
+- 📈 **Suivi personnalisé** : stats dédiées + **évolution du programme selon les performances réelles** (surcharge progressive automatique, on complexifie quand la personne progresse).
+
+**Synergie avec l'existant :** s'appuie fortement sur le **Coach IA** (déjà là), les **visuels d'exercices** (chantier en cours), le **profil avancé** (santé/blessures), et le système **premium** existant.
+
+**Points techniques à cadrer (avant de coder) :**
+- 💳 **Abonnement récurrent** : le premium actuel passe par **Ko-fi** (codes / webhook one-shot). Une offre avec **durées + renouvellements** demande une vraie gestion d'abonnement (Ko-fi **memberships**, ou Stripe plus tard) → à décider. Prévoir dates de début/fin, relance de renouvellement.
+- 🧭 **Parcours guidé** : le questionnaire → génération de programme → suivi = un **flux onboarding** dédié (pas juste un écran de plus).
+- 🔁 **Programme évolutif** : logique de progression automatique (quand valider une montée de charge/volume, quand complexifier un exercice).
+- ⚠️ **Périmètre** : garder simple pour le débutant (ne pas noyer sous les options). L'offre = **accompagnement**, pas surcharge de features.
+
+**Prochaine étape :** maquette du parcours (questionnaire → 1er programme → 1re semaine → suivi) + décision sur la brique paiement récurrent, avant tout code.
+
+---
+
 ## 🎯 Exercices « ancre » vs « accessoire » (à explorer)
 
 **Origine (méthode Michel) :** Michel structure ses séances avec **1 polyarticulaire + 1 isolation** sur le muscle visé, **+ 3 exercices complémentaires** qui n'ont pas forcément à voir avec le groupe du jour — volontairement, **pour la nouveauté** (garder le cerveau stimulé, éviter la lassitude / « j'ai la flemme, c'est toujours pareil »). **Contrepartie assumée :** il ne se « spécialise » pas et ne performe pas sur ces mouvements qui tournent.
