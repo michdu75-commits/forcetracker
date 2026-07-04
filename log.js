@@ -3101,6 +3101,8 @@ const EX_YT={
   'Presse à Cuisses Iso-Latérale': {img:'exercises/presse-cuisse-iso-laterale-hammer-stenght.gif'},
   'Sled Push':                     {img:'exercises/sled-push-hyrox.gif'},
   'Croix de Fer Haltères':         {img:'exercises/croix-de-fer-halteres.gif'},
+  'Abduction Cuisses (Leg Abduction)':{img:'exercises/leg-abduction-machine.gif'},
+  'Adduction Cuisses (Leg Adduction)':{img:'exercises/leg-adduction-machine.gif'},
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={
