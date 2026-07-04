@@ -112,7 +112,7 @@ function renderChart(){
     });
   });
   const pr=S.prs[name];const prStr=pr?fmt(pr.rm1)+' kg':'—';
-  if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${name}</span><span class="badge-gold">PR: ${prStr}</span></div><div class="empty" style="padding:20px 0;">Aucune donnée — commence à logger !</div>`;return;}
+  if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${name}</span><span class="badge-gold">⭐ PR ${prStr}</span></div><div class="empty" style="padding:20px 0;">Aucune donnée — commence à logger !</div>`;return;}
   _chartPts=pts;
   const last=pts[pts.length-1],maxPt=pts.reduce((m,p)=>p.rm1>m.rm1?p:m,pts[0]);
   const delta=pts.length>1?fmt(last.rm1-pts[0].rm1):null;
@@ -140,22 +140,19 @@ function renderChart(){
   const prIdx=vals.indexOf(Math.max(...vals));
   const trend=pts.length>1?(pos?'📈 +':'📉 ')+fmt(last.rm1-pts[0].rm1)+' kg':'—';
   box.innerHTML=`
-<div class="chart-hdr" style="margin-bottom:12px;"><span class="chart-title">${name}</span><span class="badge-gold">🏆 ${prStr}</span></div>
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
-  <div style="text-align:center;background:var(--bg3);border-radius:10px;padding:9px 4px;border:1px solid var(--sep);">
-    <div style="font-size:11px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Actuel</div>
-    <div style="font-family:var(--font-cond);font-size:20px;font-weight:900;">${fmt(last.rm1)}</div>
-    <div style="font-size:11px;color:var(--t3);">kg 1RM</div>
+<div class="chart-hdr" style="margin-bottom:16px;"><span class="chart-title">${name}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>
+<div style="display:flex;margin-bottom:16px;">
+  <div style="flex:1;text-align:center;">
+    <div style="font-family:var(--font-cond);font-size:25px;font-weight:900;color:var(--t1);line-height:1;">${fmt(last.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
+    <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:6px;">1RM Actuel</div>
   </div>
-  <div style="text-align:center;background:rgba(255,214,0,.1);border-radius:10px;padding:9px 4px;border:1px solid rgba(255,214,0,.25);">
-    <div style="font-size:11px;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Record</div>
-    <div style="font-family:var(--font-cond);font-size:20px;font-weight:900;color:var(--gold);">${fmt(maxPt.rm1)}</div>
-    <div style="font-size:11px;color:var(--t3);">kg 1RM</div>
+  <div style="flex:1;text-align:center;border-left:1px solid var(--sep);">
+    <div style="font-family:var(--font-cond);font-size:25px;font-weight:900;color:var(--gold);line-height:1;">${fmt(maxPt.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
+    <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:6px;">Record</div>
   </div>
-  <div style="text-align:center;background:${pos?'rgba(0,230,118,.1)':'rgba(255,45,85,.1)'};border-radius:10px;padding:9px 4px;border:1px solid ${pos?'rgba(0,230,118,.25)':'rgba(255,45,85,.25)'};">
-    <div style="font-size:11px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;">Progrès</div>
-    <div style="font-family:var(--font-cond);font-size:20px;font-weight:900;color:${pos?'var(--green)':'var(--red)'};">${delta!==null?(pos?'+':'')+delta:'—'}</div>
-    <div style="font-size:11px;color:var(--t3);">${deltaPct!==null?(deltaPct>=0?'+':'')+deltaPct+'%':'—'}</div>
+  <div style="flex:1;text-align:center;border-left:1px solid var(--sep);">
+    <div style="font-family:var(--font-cond);font-size:25px;font-weight:900;color:${pos?'var(--green)':'var(--red)'};line-height:1;">${delta!==null?(pos?'+':'')+delta:'—'}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
+    <div style="font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-top:6px;">Progrès${deltaPct!==null?' '+(deltaPct>=0?'+':'')+deltaPct+'%':''}</div>
   </div>
 </div>
 ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13.5px;">
