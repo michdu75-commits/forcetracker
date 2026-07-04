@@ -687,27 +687,71 @@ function closeInstall(){
 // ─── ADMIN MODE ──────────────────────────────────────────────
 // _adminMode : initialisé sur window dans <head> de index.html (window._adminMode=false)
 var _adminTaps=0,_adminTimer=null;
+// L'appareil est-il autorisé à ouvrir l'admin ? (email admin OU déverrouillé une fois par code)
+function _isAdminEmail(){
+  const e=(S.email||'').trim().toLowerCase();
+  return (typeof ADMIN_EMAILS!=='undefined'?ADMIN_EMAILS:['michdu75@gmail.com']).indexOf(e)>=0;
+}
+function _isAdminUnlocked(){
+  try{ if(localStorage.getItem('ft4_admin_ok')==='1')return true; }catch(e){}
+  return _isAdminEmail();
+}
 function onLogoTap(){
   _adminTaps++;
   clearTimeout(_adminTimer);
   if(_adminTaps>=5){
     _adminTaps=0;
-    window._adminMode=!window._adminMode;
-    const bar=document.getElementById('setup-tabs-bar');
-    if(bar)bar.style.display=window._adminMode?'flex':'none';
-    if(window._adminMode){
-      if(!S.email){S.email='michdu75@gmail.com';persist();}
-      const eInp=document.getElementById('email-inp');
-      if(eInp)eInp.value=S.email||'michdu75@gmail.com';
-      goScreen('setup',document.getElementById('nb-setup'));
-      switchSetupTab('connexion',document.getElementById('stab-connexion'));
-    }else{
-      switchSetupTab('profil',document.getElementById('stab-profil'));
-    }
-    toast(window._adminMode?'🔧 Mode admin activé':'Mode admin désactivé','info');
+    if(!_isAdminUnlocked()){ _promptAdminCode(); return; } // ni email admin ni code → demander le code
+    _toggleAdminMode();
     return;
   }
   _adminTimer=setTimeout(()=>{_adminTaps=0;},1500);
+}
+function _toggleAdminMode(){
+  window._adminMode=!window._adminMode;
+  const bar=document.getElementById('setup-tabs-bar');
+  if(bar)bar.style.display=window._adminMode?'flex':'none';
+  if(window._adminMode){
+    if(!S.email){S.email='michdu75@gmail.com';persist();}
+    const eInp=document.getElementById('email-inp');
+    if(eInp)eInp.value=S.email||'michdu75@gmail.com';
+    goScreen('setup',document.getElementById('nb-setup'));
+    switchSetupTab('connexion',document.getElementById('stab-connexion'));
+  }else{
+    switchSetupTab('profil',document.getElementById('stab-profil'));
+  }
+  toast(window._adminMode?'🔧 Mode admin activé':'Mode admin désactivé','info');
+}
+// Demande le code de secours (appareil sans email admin) — overlay simple
+function _promptAdminCode(){
+  let ov=document.getElementById('ov-admin-code');
+  if(!ov){
+    ov=document.createElement('div');ov.className='overlay';ov.id='ov-admin-code';
+    ov.onclick=e=>{if(e.target===ov)ov.classList.remove('open');};
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML='<div class="modal" style="max-width:340px;padding:22px 18px;">'
+    +'<div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:6px;">🔒 Accès admin</div>'
+    +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:16px;">Réservé au propriétaire. Entre le code d\'accès.</div>'
+    +'<input type="password" id="admin-code-inp" inputmode="text" autocomplete="off" placeholder="Code" style="width:100%;box-sizing:border-box;margin-bottom:14px;" onkeydown="if(event.key===\'Enter\')_submitAdminCode()">'
+    +'<button class="btn btn-red" style="width:100%;" onclick="_submitAdminCode()">Déverrouiller</button>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;" onclick="document.getElementById(\'ov-admin-code\').classList.remove(\'open\')">Annuler</button>'
+    +'</div>';
+  ov.classList.add('open');
+  setTimeout(()=>{const i=document.getElementById('admin-code-inp');if(i)i.focus();},80);
+}
+function _submitAdminCode(){
+  const inp=document.getElementById('admin-code-inp');
+  const val=inp?inp.value:'';
+  const code=(typeof ADMIN_CODE!=='undefined')?ADMIN_CODE:'';
+  if(val&&code&&val===code){
+    try{localStorage.setItem('ft4_admin_ok','1');}catch(e){}
+    document.getElementById('ov-admin-code')?.classList.remove('open');
+    _toggleAdminMode();
+  }else{
+    toast('Code incorrect','error');
+    if(inp){inp.value='';inp.focus();}
+  }
 }
 
 function switchSetupTab(tab,btn){
