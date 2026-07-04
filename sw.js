@@ -1,4 +1,4 @@
-const CACHE = 'ft-v216'; // Figurines cuisses/quadriceps : 7 mappées (Leg Extension, Squat Bulgare, Smith, Fentes Marchées, Hip Thrust Machine, Farmer's Walk) + 14 nouveaux squats
+const CACHE = 'ft-v217'; // Figurines Abduction + Adduction Cuisses (les 2 dernières machines manquantes des Jambes)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -60,6 +60,7 @@ const PRECACHE = [
   './exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.gif','./exercises/hack-squat-inverse.gif','./exercises/pendulum-squat.gif','./exercises/belt-squat.gif','./exercises/safety-bar-squat.gif',
   './exercises/overhead-squat.gif','./exercises/pin-squat.gif','./exercises/sissy-squat.gif','./exercises/cossack-squat.gif','./exercises/squat-bande-elastique.gif',
   './exercises/squat-statique-contre-mur-exercice-chaise.gif','./exercises/presse-cuisse-iso-laterale-hammer-stenght.gif','./exercises/sled-push-hyrox.gif','./exercises/croix-de-fer-halteres.gif',
+  './exercises/leg-abduction-machine.gif','./exercises/leg-adduction-machine.gif',
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
   './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
