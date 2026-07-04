@@ -1,4 +1,4 @@
-const CACHE = 'ft-v186'; // restylage maquette étape 1 : Accueil (stats grille 2×2 + carte récup chiffre/barre) — restylage only
+const CACHE = 'ft-v187'; // restylage Accueil : fidélité maquette (ordre stats→récup, label CE MOIS, 3 tuiles séparées, CTA gardé)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
