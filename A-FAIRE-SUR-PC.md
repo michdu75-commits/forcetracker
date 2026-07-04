@@ -13,24 +13,9 @@
 
 ---
 
+> 💡 **Note Windows (cmd)** : la syntaxe `NODE_TLS_REJECT_UNAUTHORIZED=0 npx …` (une ligne) est du Mac/Linux. Sur **cmd Windows**, faire d'abord `set NODE_TLS_REJECT_UNAUTHORIZED=0` (ligne à part), puis la commande clasp. Pour récupérer juste le backend sans toucher aux fichiers locaux : `git checkout origin/master -- Code.js`.
+
 ## ⏳ En attente
-
-### 1 + 2. Persistance cloud « Discipline » (ft-v194) + compteur « imports journal » (ft-v168)
-✅ **Code déjà ajouté dans `Code.js`** (fonction `handleSaveProfile_`, juste après `body.badges`) :
-```js
-if (body.discipline    !== undefined) profile.discipline    = _ps_(body.discipline,    profile.discipline);
-if (body.histImports   !== undefined) profile.histImports   = _pn_(body.histImports,   profile.histImports);
-```
-`loadProfile` renvoie déjà tout `profile` → rien d'autre à changer.
-
-**➡️ Il ne reste QUE le déploiement depuis ton PC** (3 commandes) :
-```bash
-git pull                                                   # récupérer le Code.js à jour
-NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp push --force
-NODE_TLS_REJECT_UNAUTHORIZED=0 npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
-```
-Puis vérifier dans le navigateur que `…/exec?test=1` renvoie `{"status":"online"}`.
-Une fois fait → déplacer ce point dans « ✅ Fait ».
 
 ### 3. Analyse morpho « la totale » (premium) + exploitation de la discipline — *plus gros*
 Voir le plan détaillé dans le **fichier d'idées** (section « Analyse morpho par photo — 2 niveaux + insertions musculaires + Discipline »). À cadrer ensemble le moment venu :
@@ -42,4 +27,6 @@ Claude prépare le code ici, tu déploies depuis le PC.
 ---
 
 ## ✅ Fait
-*(rien encore — Claude déplacera les points ici une fois déployés)*
+
+### 1 + 2. Persistance cloud « Discipline » (ft-v194) + compteur « imports journal » (ft-v168) — ✅ déployé @59 (2026-07-04)
+Ajout dans `handleSaveProfile_` (Code.js) : `body.discipline` (`_ps_`) et `body.histImports` (`_pn_`). Déployé depuis le PC de Michel (clasp push + deploy -i → **@59**). Les deux champs sont désormais sauvegardés dans le cloud (survivent à une réinstallation).
