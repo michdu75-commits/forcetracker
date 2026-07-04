@@ -733,7 +733,7 @@ function _promptAdminCode(){
   ov.innerHTML='<div class="modal" style="max-width:340px;padding:22px 18px;">'
     +'<div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:6px;">🔒 Accès admin</div>'
     +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:16px;">Réservé au propriétaire. Entre le code d\'accès.</div>'
-    +'<input type="password" id="admin-code-inp" inputmode="text" autocomplete="off" placeholder="Code" style="width:100%;box-sizing:border-box;margin-bottom:14px;" onkeydown="if(event.key===\'Enter\')_submitAdminCode()">'
+    +'<input type="password" id="admin-code-inp" inputmode="numeric" autocomplete="off" placeholder="Code" style="width:100%;box-sizing:border-box;margin-bottom:14px;" onkeydown="if(event.key===\'Enter\')_submitAdminCode()">'
     +'<button class="btn btn-red" style="width:100%;" onclick="_submitAdminCode()">Déverrouiller</button>'
     +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;" onclick="document.getElementById(\'ov-admin-code\').classList.remove(\'open\')">Annuler</button>'
     +'</div>';

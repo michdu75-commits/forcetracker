@@ -143,7 +143,7 @@ const NEW_FEATURES=[
 //    ça bloque 99,9 % des gens, mais pas quelqu'un qui lirait le code source.
 //    Un vrai verrou nécessiterait une authentification côté serveur (chantier futur).
 const ADMIN_EMAILS=['michdu75@gmail.com'];
-const ADMIN_CODE='FT-boss-2176'; // code de secours (modifiable sur demande)
+const ADMIN_CODE='0115'; // code de secours (modifiable sur demande)
 
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────
 // [Débutant, Novice, Intermédiaire, Avancé] seuils
