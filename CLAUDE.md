@@ -46,7 +46,7 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **App live** : https://michdu75-commits.github.io/forcetracker/
 - **Auteur** : Michel — michdu75@gmail.com
 
-## Backend Apps Script (v3.5 @57 — actif)
+## Backend Apps Script (v3.5 @59 — actif)
 
 - **Compte Google** : forcetracker.app@gmail.com
 - **URL déployée** : `https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec`
@@ -1050,7 +1050,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | @55 | fix import : découpage séances (SÉANCE N only) + PDF natif + superset général |
 | @56 | import : unilatéral NxN×2, +M sur partenaire superset, setType défaut '' |
 | @57 | import : Ramping reps → repsPerSet[séquence], setType = '' ou 'D' seulement (jamais E/W) |
-| @58 | import historique : action importHistory → handleImportHistory_ (Sonnet) ← **actuel** |
+| @58 | import historique : action importHistory → handleImportHistory_ (Sonnet) |
+| @59 | persistance cloud `discipline` (ft-v194) + `histImports` (ft-v168) dans `handleSaveProfile_` ← **actuel** |
 
 **Dossier Drive backups** : `ForceTracker-Backups/` (ID : `1iQ6xFuG10d4qCE1Jz8d8lOodrUsV36Fq`)  
 **Trigger quotidien** : `backupAllUserData_()` à 2h du matin, 1 actif  
