@@ -1,4 +1,4 @@
-const CACHE = 'ft-v190'; // Accueil : 4 tuiles stats → icône à gauche, chiffre à droite, label dessous (aligné)
+const CACHE = 'ft-v191'; // fix maj iOS : register sw.js avec updateViaCache:'none' (app plus jamais collée à l'ancienne version)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

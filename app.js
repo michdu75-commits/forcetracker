@@ -1353,7 +1353,10 @@ function _reloadForUpdate(){
 }
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').then(reg=>{
+    // updateViaCache:'none' → le navigateur NE met JAMAIS le fichier sw.js en cache HTTP
+    // pour les vérifs de mise à jour. Corrige le bug iOS « app collée à l'ancienne version »
+    // (GitHub Pages cachait sw.js ~10 min → les updates n'étaient pas détectées tout de suite).
+    navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
       reg.update(); // vérification immédiate au démarrage (PWA standalone inclus)
       setInterval(()=>reg.update(), 5*60*1000); // re-vérif toutes les 5 min
       document.addEventListener('visibilitychange',()=>{
