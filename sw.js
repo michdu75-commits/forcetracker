@@ -1,4 +1,4 @@
-const CACHE = 'ft-v201'; // Coach IA voit la séance EN COURS (S.wkt injecté) → aide en direct (alternative machine, ajustement charge)
+const CACHE = 'ft-v202'; // Bouton « Vider » dans l'en-tête séance : retire tous les exos mais garde la séance ouverte (mauvais programme chargé)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
