@@ -482,6 +482,15 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **UI** : bouton rouge « 🗑 Vider » (SVG poubelle trait fin) dans `#log-hdr-btns` (`_syncLogHdrBtns`), entre ✕ et « 📋 Changer ». Visible seulement si ≥1 exo.
 - Testé (Chromium) : bouton présent, confirm « Vider la séance ? », après Vider → `S.wkt` existe (true), `exs` vide (0), `progLabel` conservé, 0 erreur JS. sw.js bump ft-v202.
 
+### Points rouges « nouveauté » — précision par ligne de menu (✅ 2026-07-04, ft-v204)
+- **Signalé Michel** : le point rouge sur l'onglet **Menu** (`nb-setup`) dit *qu'il y a* une nouveauté mais pas *où* (« on sait pas si c'est la partie Profil ou l'Aide détaillée »). Il faut un point rouge **sur la ligne précise** du menu.
+- **Champ `anchor`** ajouté aux entrées `NEW_FEATURES` (constants.js) = id de l'élément DOM (ligne de menu) où afficher le point. Les 3 features Profil (`morpho-setup`, `discipline`, `profil-accordion`) → `anchor:'menu-row-profil'` (la carte Profil du drawer, id ajouté dans index.html).
+- **`_updateMenuDots()`** (screens.js) : à l'ouverture du menu (`openMenuDrawer`), pose un `.menu-new-dot` (point rouge inline, avant le chevron) sur chaque ligne `anchor` ayant une feature non vue. CSS `.menu-new-dot` (9px, halo doux).
+- **Marquage « vu » par item, pas par écran** : `_markScreenSeen(screen)` **ignore désormais les features ancrées** (elles ne se marquent pas juste en ouvrant l'onglet). Les features ancrées à la carte Profil se marquent quand l'utilisateur ouvre réellement le Profil : `_applyScreen(id==='setup')` appelle `_markAnchorSeen('menu-row-profil')` (couvre tous les chemins : carte Profil, sync-pill, « Mon profil »).
+- **Helpers** : `_markFeatureSeen(...ids)` (marque des ids précis), `_markAnchorSeen(anchorId)` (marque toutes les features d'une ancre). Le point de l'onglet Menu (`_updateNewBadges`) reste tant qu'une feature setup (ancrée ou non) est non vue.
+- **Pour une future nouveauté ciblée** : ajouter `anchor:'<id-élément>'` à l'entrée `NEW_FEATURES` + s'assurer qu'ouvrir l'item appelle `_markAnchorSeen('<id-élément>')`.
+- Testé (Chromium) : nav dot au départ, point rouge sur carte Profil à l'ouverture du menu, disparaît après ouverture du Profil (les 3 features vues), 0 erreur JS. sw.js bump ft-v204.
+
 ### Points rouges « nouveauté » sur nouvelles features (✅ 2026-07-04, ft-v197)
 - **Demande Michel** : mettre les petits points rouges pour signaler les nouvelles fonctionnalités.
 - **Système existant réutilisé** : `NEW_FEATURES` (constants.js) + `_updateNewBadges`/`_markScreenSeen` (screens.js) + `S.seenFeatures` (ft4_seen_ft). Un `.new-dot` rouge apparaît sur le bouton nav `nb-{screen}` tant qu'il reste une feature `{id,screen}` non vue ; à l'ouverture de l'écran (`_applyScreen`→`_markScreenSeen`), les features de cet écran passent en « vues » et le point disparaît.
@@ -995,7 +1004,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v200 | Accueil : tuile « Séances ce mois » cliquable → Progrès + scroll historique des séances (`goSessionsHistory`) |
 | ft-v201 | Coach IA voit la SÉANCE EN COURS (`S.wkt` injecté dans `buildCoachContext`) → aide en direct (alternative machine, ajustement charge, ordre) |
 | ft-v202 | bouton « Vider » dans l'en-tête séance (`clearAllEx`) : retire tous les exos mais garde la séance ouverte (mauvais programme chargé) — distinct de ✕ Annuler |
-| ft-v203 | pause de séance : bouton Pause/Reprendre (`toggleWktPause`) fige le chrono de durée ; le temps en pause est exclu de la durée finale (`_wktElapsedMs`) ← **actuel** |
+| ft-v203 | pause de séance : bouton Pause/Reprendre (`toggleWktPause`) fige le chrono de durée ; le temps en pause est exclu de la durée finale (`_wktElapsedMs`) |
+| ft-v204 | point rouge « nouveauté » INLINE dans le menu-drawer : sur la ligne précise (`anchor`, ex. carte Profil) → l'utilisateur voit OÙ est le neuf, pas juste sur l'onglet Menu ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

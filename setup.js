@@ -885,6 +885,8 @@ function openMenuDrawer(){
     _ms.textContent=parts.length?parts.join(' · '):'Profil non configuré';
   }
   if(_mpb)_mpb.style.display=S.premium?'none':'flex';
+  // Points rouges « nouveauté » sur les lignes concernées (ex. carte Profil) → montre OÙ est le neuf
+  if(typeof _updateMenuDots==='function')_updateMenuDots();
 }
 function closeMenuDrawer(){
   document.getElementById('menu-drawer').classList.remove('open');
@@ -901,6 +903,7 @@ function openProfil(){
   closeMenuDrawer();
   closeDrawer();
   closeDrawerContent();
+  // goScreen('setup') → _applyScreen marque les nouveautés de la carte Profil comme « vues »
   goScreen('setup',null);
   document.getElementById('s-setup')?.scrollTo(0,0);
 }

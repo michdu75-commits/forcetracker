@@ -8,11 +8,30 @@ function _closeAllPanels(){
   document.getElementById('drawer-backdrop')?.classList.remove('open');
 }
 function _markScreenSeen(screen){
-  const unseen=NEW_FEATURES.filter(f=>f.screen===screen&&!(S.seenFeatures||[]).includes(f.id));
+  // À l'ouverture d'un écran : on ne marque « vu » QUE les features SANS ancre.
+  // Les features ancrées (ex. Profil) ne se marquent qu'à l'ouverture de leur item précis
+  // → le point rouge reste sur la bonne ligne du menu tant que l'utilisateur ne l'a pas ouverte.
+  const unseen=NEW_FEATURES.filter(f=>f.screen===screen&&!f.anchor&&!(S.seenFeatures||[]).includes(f.id));
   if(!unseen.length)return;
   S.seenFeatures=[...(S.seenFeatures||[]),...unseen.map(f=>f.id)];
   localStorage.setItem('ft4_seen_ft',JSON.stringify(S.seenFeatures));
   _updateNewBadges();
+}
+// Marque des features précises comme vues (par id) — utilisé quand on ouvre l'item concerné
+function _markFeatureSeen(){
+  const ids=[].slice.call(arguments);
+  const seen=S.seenFeatures||[];
+  const add=ids.filter(id=>!seen.includes(id));
+  if(!add.length)return;
+  S.seenFeatures=[...seen,...add];
+  localStorage.setItem('ft4_seen_ft',JSON.stringify(S.seenFeatures));
+  _updateNewBadges();
+  _updateMenuDots();
+}
+// Marque vues toutes les features ancrées à un élément (ex. ouvrir la carte Profil)
+function _markAnchorSeen(anchorId){
+  const ids=NEW_FEATURES.filter(f=>f.anchor===anchorId).map(f=>f.id);
+  if(ids.length)_markFeatureSeen.apply(null,ids);
 }
 function _updateNewBadges(){
   const seen=S.seenFeatures||[];
@@ -22,6 +41,23 @@ function _updateNewBadges(){
     let dot=btn.querySelector('.new-dot');
     if(hasNew&&!dot){dot=document.createElement('span');dot.className='new-dot';btn.appendChild(dot);}
     else if(!hasNew&&dot)dot.remove();
+  });
+}
+// Points rouges INLINE dans le menu-drawer : sur chaque ligne (anchor) qui contient une nouveauté non vue.
+// Appelé à l'ouverture du menu → l'utilisateur voit OÙ est le neuf (Profil, etc.).
+function _updateMenuDots(){
+  const seen=S.seenFeatures||[];
+  const anchors={};
+  NEW_FEATURES.forEach(f=>{if(f.anchor&&!seen.includes(f.id))anchors[f.anchor]=true;});
+  // Retire d'abord tous les points existants (reset)
+  document.querySelectorAll('.menu-new-dot').forEach(d=>d.remove());
+  Object.keys(anchors).forEach(aid=>{
+    const el=document.getElementById(aid);if(!el)return;
+    const dot=document.createElement('span');
+    dot.className='menu-new-dot';
+    // Insère juste avant la flèche (dernier <svg> de la ligne) pour un placement propre
+    const arrow=el.querySelector(':scope > svg:last-of-type');
+    if(arrow)el.insertBefore(dot,arrow);else el.appendChild(dot);
   });
 }
 
@@ -39,7 +75,7 @@ function _applyScreen(id,btn){
   if(id==='log')renderLog();
   if(id==='progress')renderProgress();
   if(id==='nutrition'){renderNutrition();switchNuTab('macros',document.getElementById('ntab-macros'));}
-  if(id==='setup'){_resetMenuView();renderSetup();}
+  if(id==='setup'){_resetMenuView();renderSetup();_markAnchorSeen('menu-row-profil');}
   if(id==='cycle')renderCycleScreen();
   if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();}
   _markScreenSeen(id);
