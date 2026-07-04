@@ -179,14 +179,11 @@ on est obligé de **tout effacer et refaire le regroupement**. → Permettre d'a
 
 ---
 
-## 🧱 PRIORITÉ #2 — Découper index.html en plusieurs fichiers
+## ✅ PRIORITÉ #2 — Découper index.html — FAIT
 
-L'app est un seul `index.html` de ~6000 lignes. Le découper en fichiers séparés (Coach, séances, style…) :
-- réduit les bugs en cascade (on touche un tiroir sans casser les autres) ;
-- **fait gagner du temps ET des tokens** : Claude Code n'ouvre que le petit fichier concerné au lieu des 6000 lignes à chaque modif.
+Le JS est désormais **découpé en 8 fichiers** (`constants.js` · `state.js` · `screens.js` · `log.js` · `setup.js` · `tracking.js` · `coach.js` · `app.js`), chargés via `<script src>`. `index.html` (~1660 lignes) ne contient plus que l'HTML/les modales + 1 petite balise d'init. Bénéfice atteint : fichiers séparés = moins de bugs en cascade + Claude n'ouvre que le fichier concerné.
 
-⚠️ Gros chantier ponctuel et risqué → à faire sur une **branche dédiée**, bien testé, **pas en même temps** que des bugs urgents.
-À faire **juste après** la refonte de l'affichage (priorité #1).
+**Reste éventuel (non prioritaire, risqué)** : `log.js` (~3350 lignes) est le plus gros — pourrait être re-découpé un jour (séance / picker / timers / figurines), MAIS c'est le fichier le plus sensible (« zéro perte de séance ») → n'y toucher que s'il devient ingérable.
 
 ---
 
