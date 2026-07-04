@@ -541,6 +541,11 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 .msg-coach strong{color:var(--red);}
 .msg-coach ul{padding-left:16px;margin-top:4px;}
 .msg-coach li{margin-bottom:3px;}
+/* Pied de bulle Coach : bouton Partager/Exporter */
+.coach-msg-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--sep);display:flex;justify-content:flex-end;}
+.coach-share-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:.12s;}
+.coach-share-btn:hover{color:var(--t1);}
+.coach-share-btn:active{transform:scale(.94);}
 /* COACH PREMIUM */
 .coach-quota{font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(255,106,115,.1);color:var(--red);box-shadow:inset 0 0 0 1px rgba(255,106,115,.25);white-space:nowrap;}
 .coach-quota.is-premium{background:rgba(234,179,8,.12);color:#F2D472;box-shadow:inset 0 0 0 1px rgba(234,179,8,.35);}

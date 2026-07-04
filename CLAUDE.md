@@ -482,6 +482,16 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **UI** : bouton rouge « 🗑 Vider » (SVG poubelle trait fin) dans `#log-hdr-btns` (`_syncLogHdrBtns`), entre ✕ et « 📋 Changer ». Visible seulement si ≥1 exo.
 - Testé (Chromium) : bouton présent, confirm « Vider la séance ? », après Vider → `S.wkt` existe (true), `exs` vide (0), `progLabel` conservé, 0 erreur JS. sw.js bump ft-v202.
 
+### Coach IA — Partager/Exporter une réponse (✅ 2026-07-04, ft-v205)
+- **Demande Michel** : pouvoir partager/exporter une réponse du Coach IA.
+- **UI** : sous chaque bulle Coach (`renderCoachMsg` role `coach`), un pied `.coach-msg-foot` avec bouton `.coach-share-btn` « 🔗 Partager » (icône partage trait fin). **Pas de bouton** sur les messages d'erreur (`/^Erreur\s*:/` filtré).
+- **Texte brut** stocké sur la bulle via `div.dataset.raw` (avant le formatage HTML).
+- **`shareCoachReply(btn)`** (coach.js) : lit `raw` depuis la bulle parente, construit un texte propre `💬 Mon Coach IA — Force Tracker\n\n… \n\n— via Force Tracker`. Priorité : **1) Web Share API** `navigator.share({text})` (feuille de partage native iOS/Android — idéal iPhone) — `AbortError` = annulation silencieuse ; **2) presse-papier** `navigator.clipboard.writeText` + toast ; **3) fallback** `textarea`+`execCommand('copy')`.
+- **`_coachPlain(text)`** : retire le markdown (`**gras**` → texte, `- ` → `• `) pour un partage lisible.
+- **CSS** (`style.css`) : `.coach-msg-foot` (séparateur fin, aligné à droite) + `.coach-share-btn`.
+- Red dot `coach-share` (NEW_FEATURES, screen `coach`) + aide contextuelle Coach + Aide détaillée mises à jour.
+- Testé (Chromium) : bouton présent, texte partagé nettoyé (gras retiré, puces `•`), message d'erreur sans bouton, 0 erreur JS. sw.js bump ft-v205.
+
 ### Points rouges « nouveauté » — précision par ligne de menu (✅ 2026-07-04, ft-v204)
 - **Signalé Michel** : le point rouge sur l'onglet **Menu** (`nb-setup`) dit *qu'il y a* une nouveauté mais pas *où* (« on sait pas si c'est la partie Profil ou l'Aide détaillée »). Il faut un point rouge **sur la ligne précise** du menu.
 - **Champ `anchor`** ajouté aux entrées `NEW_FEATURES` (constants.js) = id de l'élément DOM (ligne de menu) où afficher le point. Les 3 features Profil (`morpho-setup`, `discipline`, `profil-accordion`) → `anchor:'menu-row-profil'` (la carte Profil du drawer, id ajouté dans index.html).
@@ -1005,7 +1015,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v201 | Coach IA voit la SÉANCE EN COURS (`S.wkt` injecté dans `buildCoachContext`) → aide en direct (alternative machine, ajustement charge, ordre) |
 | ft-v202 | bouton « Vider » dans l'en-tête séance (`clearAllEx`) : retire tous les exos mais garde la séance ouverte (mauvais programme chargé) — distinct de ✕ Annuler |
 | ft-v203 | pause de séance : bouton Pause/Reprendre (`toggleWktPause`) fige le chrono de durée ; le temps en pause est exclu de la durée finale (`_wktElapsedMs`) |
-| ft-v204 | point rouge « nouveauté » INLINE dans le menu-drawer : sur la ligne précise (`anchor`, ex. carte Profil) → l'utilisateur voit OÙ est le neuf, pas juste sur l'onglet Menu ← **actuel** |
+| ft-v204 | point rouge « nouveauté » INLINE dans le menu-drawer : sur la ligne précise (`anchor`, ex. carte Profil) → l'utilisateur voit OÙ est le neuf, pas juste sur l'onglet Menu |
+| ft-v205 | bouton Partager/Exporter sous chaque réponse du Coach IA (`shareCoachReply`) : feuille de partage native (Web Share API) + fallback presse-papier, markdown nettoyé ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
