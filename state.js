@@ -145,6 +145,7 @@ function persist(){
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+    localStorage.setItem('ft4_cycle',JSON.stringify(S.cycle||null)); // cycle de force : local-first (était lu mais jamais écrit)
     // Brouillon de secours — effacé quand séance vide ou après sauvegarde dans finishWorkout()
     if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
       localStorage.setItem('ft4_wkt_draft',JSON.stringify(S.wkt));

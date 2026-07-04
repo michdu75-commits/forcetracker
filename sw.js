@@ -1,4 +1,4 @@
-const CACHE = 'ft-v219'; // figurine Dips Machine Assistée + nouvel exo Développé Nuque (Épaules) avec figurine
+const CACHE = 'ft-v220'; // Audit : fix persistance locale du Cycle de Force (ft4_cycle était lu mais jamais écrit → perdu au reload hors-ligne)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
