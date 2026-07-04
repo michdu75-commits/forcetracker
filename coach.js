@@ -129,6 +129,26 @@ function buildCoachContext() {
     return `${s.date}: ${exStr} — ${s.volume}kg vol`;
   }).join(' | ') || 'Aucune séance';
 
+  // Séance EN COURS (S.wkt) — permet au Coach d'aider PENDANT l'entraînement
+  let wktText='';
+  const _wkt=(typeof S!=='undefined')?S.wkt:null;
+  if(_wkt&&_wkt.exs&&_wkt.exs.length){
+    const _fmt=arr=>arr.map(x=>`${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(', ');
+    const exLines=_wkt.exs.map(e=>{
+      const sets=e.sets||[];
+      const done=sets.filter(x=>x.done);
+      const todo=sets.filter(x=>!x.done);
+      let l=`- ${e.name}`;
+      if(done.length)l+=` — fait: ${_fmt(done)}`;
+      if(todo.length)l+=` — à faire: ${_fmt(todo)}`;
+      if(e.group)l+=' [superset]';
+      if(e.dropset)l+=' [dropset]';
+      if(e.note)l+=` [note: ${e.note}]`;
+      return l;
+    }).join('\n');
+    wktText=`\nSÉANCE EN COURS — l'athlète s'entraîne MAINTENANT${_wkt.progLabel?' (programme: '+_wkt.progLabel+')':''}. Aide-le en DIRECT : proposer un exercice équivalent si une machine est prise, ajuster une charge (ex. "+2,5 kg vs la dernière fois"), conseiller l'ordre des exercices, gérer la fatigue.\n${exLines}\n`;
+  }
+
   return `Tu es un coach expert en force athlétique et musculation. Tu réponds TOUJOURS en français, de façon directe, précise et motivante. Maximum 200 mots sauf si l'athlète demande plus de détails.
 
 PROFIL ATHLÈTE:
@@ -180,6 +200,7 @@ ${prsText}
 CYCLE DE FORCE:
 ${S.cycle && S.cycle.active ? `Actif - Semaine ${curWeek}/${S.cycle.weeks} - Phase ${cyclePlan ? cyclePlan.phase : '—'} - ${cyclePlan ? cyclePlan.sets+'×'+cyclePlan.reps+' @ '+cyclePlan.pct+'%' : '—'}` : 'Aucun cycle actif'}
 
+${wktText}
 DERNIÈRES SÉANCES:
 ${recentSessions}
 
