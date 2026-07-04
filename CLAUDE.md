@@ -476,6 +476,15 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Accès** : ⋯ menu d'un exo perso → « Modifier l'exercice » ; ou le ✎ (cliquable) dans le sélecteur (`_exPickRow`, `stopPropagation`).
 - Testé (Chromium) : non-admin→prompt, mauvais code→refus, bon code→ouvre+flag, email admin→ouvre direct ; édition rename+groupe+muscle → PR/séance migrés, 0 perte, 0 erreur JS. Red dot `custom-ex-edit` + aides. sw.js bump ft-v208.
 
+### Photo sur n'importe quel exercice + tap pour voir (✅ 2026-07-04, ft-v212)
+- **Demande Michel** : pouvoir mettre une photo sur un exercice de la **bibliothèque** (pas que les perso) — ex. « Chest Press Machine Inclinée » = sa machine réelle. + pouvoir **taper la photo pour la voir** au lieu d'ajouter l'exercice.
+- **Modèle** : `S.exPhotos` (`{nom: dataURI}`, ft4_exphotos) pour les exos **bibliothèque** ; les exos **perso** gardent `customExercises[].img` (déjà synchro). `_exImg(name)` priorité : **photo perso (custom img OU exPhotos) > gif EX_YT** → une photo perso override l'image par défaut.
+- **`changeExImg(name)`** (généralise `changeCustomExImg`, alias conservé) : perso → `c.img` ; bibliothèque → `S.exPhotos[name]`. **`removeExImg(name)`** retire la photo. **`_hasUserPhoto(name)`** = a une photo perso (≠ gif par défaut).
+- **⋯ menu** : « Ajouter/Changer la photo » sur **TOUS** les exercices (plus seulement perso) + « Voir la photo » + « Retirer la photo » si photo perso.
+- **Sélecteur** (`_exPickRow`) : vignette via `_exImg` (montre aussi les gifs EX_YT) ; **tap sur la vignette = `_viewExPhoto(name)`** (overlay plein écran, `stopPropagation` → n'ajoute PAS l'exercice) ; tap sur le nom = ajoute.
+- **Cloud** : `exPhotos` ajouté au payload `_cloudSync` + restauré dans `_applyRestoreData`. ⚠️ **1 ligne backend à déployer** (`handleSaveProfile_`, `_po_` — code prêt dans Code.js, voir A-FAIRE-SUR-PC.md) sinon les photos bibliothèque restent locales.
+- Testé (Chromium) : photo built-in override gif, vignette+tap=voir (n'ajoute pas), tap nom=ajoute, ⋯ Changer/Voir/Retirer, remove OK, 0 erreur JS. Red dot `photo-any-ex` + aides. sw.js bump ft-v212.
+
 ### Exercice perso avec photo (✅ 2026-07-04, ft-v206)
 - **Demande Michel** : pouvoir **ajouter une photo** quand on crée un exercice perso (ex. une machine de sa salle absente de la bibliothèque) — pour la reconnaître d'un coup d'œil. Contexte : discussion sur le fait qu'une machine spécifique mérite son propre exercice (stats propres) → autant y mettre sa photo.
 - **Modèle** : champ optionnel `img` (data URI JPEG) sur l'objet exercice perso (`S.customExercises[].img`). **Sync cloud automatique** (customExercises est déjà dans le payload `saveProfile` + guard `_pa_`) — **aucune modif backend**.
@@ -1040,7 +1049,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v208 | verrou admin (email `ADMIN_EMAILS` OU code de secours `ADMIN_CODE`) + « Modifier l'exercice » perso (`openEditCustomEx`/`_saveCustomExEdit`/`_renameExEverywhere`) : nom/groupe/muscles sans perte d'historique |
 | ft-v209 | code admin de secours → `0115` + clavier numérique sur la saisie |
 | ft-v210 | version affichée = vrai build tournant partout (`.app-ver` rempli via `_setAppVersionEls` depuis `caches.keys()`) → fini le « v2.8 » périmé (footer menu + drawer) ; titre onglet nettoyé |
-| ft-v211 | sélecteur d'exercices aligné : slot photo réservé (30px) sur TOUTES les lignes + `.ex-pick-name` en `flex:1` → noms alignés à gauche (photo ou pas), groupe à droite ← **actuel** |
+| ft-v211 | sélecteur d'exercices aligné : slot photo réservé (30px) sur TOUTES les lignes + `.ex-pick-name` en `flex:1` → noms alignés à gauche (photo ou pas), groupe à droite |
+| ft-v212 | photo sur N'IMPORTE quel exercice (`S.exPhotos` pour la bibliothèque, `customExercises[].img` pour les perso) via ⋯ ; tap sur la vignette du sélecteur = voir en grand (`_viewExPhoto`, n'ajoute plus) ; priorité photo perso > gif EX_YT ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

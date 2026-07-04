@@ -212,6 +212,7 @@ function _cloudSync(){
       histImports:S.histImports||0,
       coachMemory:S.coachMemory||'',
       customExercises:S.customExercises||[],
+      exPhotos:S.exPhotos||{},
       sessions:(S.sessions||[]).slice(0,100),
       prs:S.prs||{},
       weightLog:(S.weightLog||[]).slice(-365),
@@ -1079,6 +1080,7 @@ function _applyRestoreData(raw){
   // Import journal : garder le compteur le plus élevé (local vs cloud) — évite de re-gagner un import gratuit après purge
   try{if(d.histImports!==undefined)S.histImports=Math.max(S.histImports||0,parseInt(d.histImports)||0);}catch(e){}
   try{if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;}catch(e){console.warn('[FT restore] customEx',e);}
+  try{if(d.exPhotos&&Object.keys(d.exPhotos).length)S.exPhotos={...(S.exPhotos||{}),...d.exPhotos};}catch(e){console.warn('[FT restore] exPhotos',e);}
   // PRs — prend le plus complet
   try{if(prs&&Object.keys(prs).length&&(!S.prs||!Object.keys(S.prs).length)){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}else if(prs&&Object.keys(prs).length>Object.keys(S.prs||{}).length){S.prs=prs;console.log('[FT restore] prs cloud plus complet:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
   // Sessions — prend le plus complet

@@ -122,6 +122,7 @@ const NEW_FEATURES=[
   {id:'wkt-vider',   screen:'log',      desc:'Vider la séance si mauvais programme chargé'},
   {id:'custom-ex-photo',screen:'log',   desc:'Ajouter une photo à un exercice que tu crées (📷)'},
   {id:'custom-ex-edit', screen:'log',   desc:'Modifier un exercice perso (nom, groupe, muscles) après création (✏️)'},
+  {id:'photo-any-ex',   screen:'log',   desc:'Photo sur n\'importe quel exercice + tap sur la photo pour la voir en grand'},
   // Progrès
   {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
   {id:'prog-badges', screen:'progress', desc:'Onglet Badges (🏅)'},

@@ -477,6 +477,7 @@ function handleSaveProfile_(body) {
     if (body.badges        !== undefined) profile.badges        = _po_(body.badges,        profile.badges);
     if (body.discipline    !== undefined) profile.discipline    = _ps_(body.discipline,    profile.discipline);
     if (body.histImports   !== undefined) profile.histImports   = _pn_(body.histImports,   profile.histImports);
+    if (body.exPhotos      !== undefined) profile.exPhotos      = _po_(body.exPhotos,      profile.exPhotos);
 
     existing.profile = profile;
 
