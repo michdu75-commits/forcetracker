@@ -1,4 +1,4 @@
-const CACHE = 'ft-v214'; // Figurines fessiers/ischios/jambes : 12 mappées + 20 nouveaux exercices (soulevés de terre, squats, leg curls…)
+const CACHE = 'ft-v215'; // Figurines dos/trapèzes/lombaires : 18 mappées + 17 nouveaux exercices (rowings, tractions, tirages, pull-overs)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -41,6 +41,19 @@ const PRECACHE = [
   './exercises/zercher-deadlift.gif','./exercises/reeves-deadlift.gif','./exercises/glute-ham-developer-ghd.gif','./exercises/kettlebell-swing.gif',
   './exercises/squat-pistol.gif','./exercises/kettlebell-back-squat.gif','./exercises/fentes-avant-kettlebell.gif',
   './exercises/leg-curl-avec-elastique-musculation.gif','./exercises/leg-curl-decline-haltere.gif','./exercises/leg-curl-inverse-machine-tirage-vertical.gif','./exercises/leg-curl-unilateral-debout-machine.gif',
+  // Dos / Trapèzes / Lombaires
+  './exercises/rowing-barre.gif','./exercises/rowing-haltere-un-bras.gif','./exercises/tirage-horizontal-poulie.gif',
+  './exercises/rowing-assis-machine-prise-pronation.gif','./exercises/rowing-assis-machine-hammer-strenght.gif','./exercises/rowing-halteres-banc-incline-prise-neutre.gif',
+  './exercises/tirage-vertical-poitrine.gif','./exercises/tirage-vertical-prise-serree.gif','./exercises/tirage-horizontal-prise-large.gif',
+  './exercises/traction-musculation-dos.gif','./exercises/traction-assistee-machine.gif','./exercises/traction-prise-neutre.gif',
+  './exercises/pullover-haltere.gif','./exercises/musculation-pull-over-assis-machine.gif',
+  './exercises/shrug-barre.gif','./exercises/shrugs-avec-halteres.gif','./exercises/shrug-poulie-haussement-epaules.gif',
+  './exercises/extension-lombaire-a-la-machine.gif',
+  './exercises/rowing-smith-machine.gif','./exercises/rowing-t-bar-machine.gif','./exercises/rowing-barre-t-landmine.gif',
+  './exercises/bent-over-row-avec-halteres.gif','./exercises/rowing-unilateral-landmine-meadows-row.gif','./exercises/seal-row-halteres.gif','./exercises/renegade-row.gif',
+  './exercises/tirage-avant-iso-laterale-hammer-strength.gif','./exercises/tirage-incline-poulie-haute.gif','./exercises/tirage-vertical-prise-inversee.gif',
+  './exercises/traction-barre-derriere-rear-oull-up.gif','./exercises/rocky-pull-up.gif','./exercises/sled-pull.gif',
+  './exercises/pull-over-barre.gif','./exercises/pull-over-poulie.gif','./exercises/superman.gif','./exercises/overhead-shrug.gif',
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
   './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
