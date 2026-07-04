@@ -1,4 +1,4 @@
-const CACHE = 'ft-v197'; // Point rouge « nouveauté » sur Menu pour la Discipline + Profil réorganisé (NEW_FEATURES)
+const CACHE = 'ft-v198'; // Aide détaillée mise à jour : cartes « Ton Profil » (accordéon) + « Discipline » + astuce texte agrandi / points rouges
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
