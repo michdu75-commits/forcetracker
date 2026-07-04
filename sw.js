@@ -1,4 +1,4 @@
-const CACHE = 'ft-v200'; // Accueil : tuile « Séances ce mois » cliquable → Progrès, historique des séances
+const CACHE = 'ft-v201'; // Coach IA voit la séance EN COURS (S.wkt injecté) → aide en direct (alternative machine, ajustement charge)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
