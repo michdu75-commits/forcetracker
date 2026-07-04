@@ -1,4 +1,4 @@
-const CACHE = 'ft-v213'; // Figurines pectoraux : 5 nouvelles animations mappées (Incliné Haltères, Croisé Poulie, Chest Press Horiz/Incliné, Dips)
+const CACHE = 'ft-v214'; // Figurines fessiers/ischios/jambes : 12 mappées + 20 nouveaux exercices (soulevés de terre, squats, leg curls…)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -29,6 +29,18 @@ const PRECACHE = [
   './exercises/developpe-incline-machine-convergente-exercice-musculation.gif',
   './exercises/dips-pectoraux.gif',
   './exercises/glute-bridge.webp',
+  // Fessiers / Ischios / Jambes / Soulevés de terre
+  './exercises/souleve-de-terre.gif','./exercises/souleve-de-terre-sumo.gif','./exercises/rack-pull.gif',
+  './exercises/good-morning-exercice.gif','./exercises/extension-lombaire-au-banc-45.gif',
+  './exercises/homme-faisant-un-squat-avec-barre.gif','./exercises/front-squat-avec-halteres.gif',
+  './exercises/squat-goblet-kettlebell.gif','./exercises/squat-sumo-avec-haltere.gif','./exercises/fente-avant-barre-femme.gif',
+  './exercises/leg-curl-allonge.gif','./exercises/leg-curl-assis-machine.gif',
+  './exercises/souleve-de-terre-jambes-tendues.gif','./exercises/souleve-de-terre-roumain-kettlebell.gif','./exercises/souleve-de-terre-roumain-landmine.gif',
+  './exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.gif','./exercises/souleve-de-terre-sumo-kettlebell.gif','./exercises/souleve-de-terre-sumo-landmine.gif',
+  './exercises/souleve-de-terre-a-la-trap-bar.gif','./exercises/souleve-de-terre-avec-deficit.gif','./exercises/souleve-de-terre-avec-machine.gif',
+  './exercises/zercher-deadlift.gif','./exercises/reeves-deadlift.gif','./exercises/glute-ham-developer-ghd.gif','./exercises/kettlebell-swing.gif',
+  './exercises/squat-pistol.gif','./exercises/kettlebell-back-squat.gif','./exercises/fentes-avant-kettlebell.gif',
+  './exercises/leg-curl-avec-elastique-musculation.gif','./exercises/leg-curl-decline-haltere.gif','./exercises/leg-curl-inverse-machine-tirage-vertical.gif','./exercises/leg-curl-unilateral-debout-machine.gif',
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
   './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
