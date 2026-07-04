@@ -8,7 +8,7 @@ let S={
   sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
   url:DEFAULT_URL,email:'',connected:false,
   nutritionPhase:'charge',
-  customExercises:[],
+  customExercises:[],exPhotos:{},
   neck:0,waist:0,hip:0,
   goal:'muscle',
   sleepLog:[],
@@ -51,6 +51,7 @@ function load(){
     S.cycle=JSON.parse(localStorage.getItem('ft4_cycle')||'null');
     S.nutritionPhase=localStorage.getItem('ft4_nphase')||'charge';
     S.customExercises=JSON.parse(localStorage.getItem('ft4_cuex')||'[]');
+    S.exPhotos=JSON.parse(localStorage.getItem('ft4_exphotos')||'{}');
     S.neck=parseFloat(localStorage.getItem('ft4_neck')||'0')||0;
     S.waist=parseFloat(localStorage.getItem('ft4_waist')||'0')||0;
     S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
@@ -164,6 +165,7 @@ function persist(){
     localStorage.setItem('ft4_morpho',S.morpho||'');
     localStorage.setItem('ft4_morphot',S.morphotype||'');
     localStorage.setItem('ft4_cuex',JSON.stringify(S.customExercises||[]));
+    localStorage.setItem('ft4_exphotos',JSON.stringify(S.exPhotos||{}));
     localStorage.setItem('ft4_neck',S.neck||0);
     localStorage.setItem('ft4_waist',S.waist||0);
     localStorage.setItem('ft4_hip',S.hip||0);

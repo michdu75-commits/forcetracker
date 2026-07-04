@@ -1,4 +1,4 @@
-const CACHE = 'ft-v211'; // Sélecteur d'exercices : slot photo réservé pour toutes les lignes → alignées avec ou sans photo
+const CACHE = 'ft-v212'; // Photo sur N'IMPORTE quel exercice (S.exPhotos) + tap vignette = voir en grand (n'ajoute plus)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

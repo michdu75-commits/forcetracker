@@ -17,6 +17,13 @@
 
 ## ⏳ En attente
 
+### 4. Persistance cloud des photos d'exercices « bibliothèque » (ft-v212)
+✅ **Code déjà ajouté dans `Code.js`** (`handleSaveProfile_`, à côté de `discipline`/`histImports`) :
+```js
+if (body.exPhotos !== undefined) profile.exPhotos = _po_(body.exPhotos, profile.exPhotos);
+```
+Sans ce déploiement, les photos ajoutées sur des exercices **de la bibliothèque** (S.exPhotos) restent **locales** (les photos d'exos **perso** sync déjà via `customExercises`). **À déployer** au prochain passage PC : `git checkout origin/master -- Code.js` → `clasp push --force` → `clasp deploy -i …`.
+
 ### 3. Analyse morpho « la totale » (premium) + exploitation de la discipline — *plus gros*
 Voir le plan détaillé dans le **fichier d'idées** (section « Analyse morpho par photo — 2 niveaux + insertions musculaires + Discipline »). À cadrer ensemble le moment venu :
 - prompt d'analyse à 2 variantes (basique gratuit / complet premium avec insertions, contraction, positionnement),

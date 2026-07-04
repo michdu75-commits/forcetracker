@@ -575,7 +575,7 @@ function openExMenu(ei,hasGif){
   const {nm}=_exMenuCtx;
   const safeNm=nm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   const isCustom=(S.customExercises||[]).some(e=>e.n===nm);
-  const hasCustomImg=isCustom&&!!(S.customExercises.find(e=>e.n===nm)||{}).img;
+  const hasUserPhoto=_hasUserPhoto(nm);
   const mRow=(icon,lbl,action)=>`<button onclick="${action}" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:manipulation;">`
     +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">${icon}</span>`
     +`<span style="font-size:15px;color:var(--t1);font-weight:500;">${lbl}</span>`
@@ -584,7 +584,9 @@ function openExMenu(ei,hasGif){
     +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
     +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
-    +(isCustom?mRow('📷',hasCustomImg?'Changer la photo':'Ajouter une photo',`closeExMenu();changeCustomExImg('${safeNm}')`):'')
+    +mRow('📷',hasUserPhoto?'Changer la photo':'Ajouter une photo',`closeExMenu();changeExImg('${safeNm}')`)
+    +(hasUserPhoto?mRow('🖼️','Voir la photo',`closeExMenu();_viewExPhoto('${safeNm}')`):'')
+    +(hasUserPhoto?mRow('🗑️','Retirer la photo',`closeExMenu();removeExImg('${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
     +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchmove="event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;">`
@@ -1613,11 +1615,13 @@ const EX_GROUPS=[
 let _exGrp=null;
 
 function _exPickRow(e){
-  // Slot photo TOUJOURS réservé (30px) → toutes les lignes alignées, avec ou sans photo
-  const thumb=e.img
-    ?`<img src="${e.img}" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);">`
-    :`<span style="width:30px;flex-shrink:0;margin-right:8px;" aria-hidden="true"></span>`;
   const safe=e.n.replace(/'/g,"\\'");
+  // Slot photo TOUJOURS réservé (30px) → toutes les lignes alignées, avec ou sans photo.
+  // Tap sur la vignette = VOIR la photo en grand (n'ajoute PAS l'exercice).
+  const src=_exImg(e.n);
+  const thumb=src
+    ?`<img src="${src}" onclick="event.stopPropagation();_viewExPhoto('${safe}')" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);cursor:zoom-in;">`
+    :`<span style="width:30px;flex-shrink:0;margin-right:8px;" aria-hidden="true"></span>`;
   const edit=e.custom?` <span onclick="event.stopPropagation();openEditCustomEx('${safe}')" title="Modifier" style="font-size:13px;color:var(--purp);cursor:pointer;padding:2px 6px;touch-action:manipulation;">✎</span>`:'';
   return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}<span class="ex-pick-name">${e.n}${edit}</span><span class="ex-pick-grp">${e.g}</span></div>`;
 }
@@ -1791,23 +1795,61 @@ function _renderCexImgPreview(){
   }else{el.innerHTML='';el.style.display='none';}
 }
 function _clearCexImg(){_cexImg=null;_renderCexImgPreview();}
-// Ajouter/changer la photo d'un exercice perso DÉJÀ créé (depuis le menu ⋯ en séance)
-function changeCustomExImg(name){
-  const c=(S.customExercises||[]).find(e=>e.n===name);
-  if(!c){toast('Seuls les exercices perso peuvent avoir une photo','info');return;}
+// Ajouter/changer la photo de N'IMPORTE quel exercice (perso OU bibliothèque).
+// Perso → stockée dans customExercises[].img (déjà synchro). Bibliothèque → dans S.exPhotos[name].
+function changeExImg(name){
   const inp=document.createElement('input');
   inp.type='file';inp.accept='image/*';
   inp.onchange=()=>{
     const file=inp.files&&inp.files[0];if(!file)return;
-    _resizeImgFile(file,d=>{c.img=d;persist();renderExBlocks();toast('Photo ajoutée ✅','success');});
+    _resizeImgFile(file,d=>{
+      const c=(S.customExercises||[]).find(e=>e.n===name);
+      if(c){c.img=d;}
+      else{if(!S.exPhotos)S.exPhotos={};S.exPhotos[name]=d;}
+      persist();
+      if(S.wkt)renderExBlocks();
+      const md=document.getElementById('mod-ex');if(md&&md.classList.contains('open'))filterEx();
+      toast('Photo ajoutée ✅','success');
+    });
   };
   inp.click();
 }
-// Source image d'un exercice : photo locale EX_YT, sinon photo perso
-function _exImg(name){
-  const y=EX_YT[name];if(y&&y.img)return y.img;
+// Alias rétro-compat
+function changeCustomExImg(name){ changeExImg(name); }
+// Retirer une photo perso (revient à l'image par défaut si l'exercice en a une)
+function removeExImg(name){
   const c=(S.customExercises||[]).find(e=>e.n===name);
-  return (c&&c.img)?c.img:null;
+  if(c&&c.img)delete c.img;
+  if(S.exPhotos&&S.exPhotos[name])delete S.exPhotos[name];
+  persist();
+  if(S.wkt)renderExBlocks();
+  const md=document.getElementById('mod-ex');if(md&&md.classList.contains('open'))filterEx();
+  toast('Photo retirée','info');
+}
+// Source image d'un exercice — priorité : photo perso (custom OU bibliothèque) > image par défaut EX_YT
+function _exImg(name){
+  const c=(S.customExercises||[]).find(e=>e.n===name);
+  if(c&&c.img)return c.img;
+  if(S.exPhotos&&S.exPhotos[name])return S.exPhotos[name];
+  const y=EX_YT[name];if(y&&y.img)return y.img;
+  return null;
+}
+// A-t-il une photo PERSO (pas juste le gif par défaut) ?
+function _hasUserPhoto(name){
+  const c=(S.customExercises||[]).find(e=>e.n===name);
+  return !!((c&&c.img)||(S.exPhotos&&S.exPhotos[name]));
+}
+// Ouvre la photo d'un exercice en grand (tap sur la vignette) — n'ajoute PAS l'exercice
+function _viewExPhoto(name){
+  const src=_exImg(name);if(!src)return;
+  let ov=document.getElementById('ov-ex-photo');
+  if(!ov){ov=document.createElement('div');ov.id='ov-ex-photo';ov.className='overlay';ov.style.zIndex='500';ov.onclick=e=>{if(e.target===ov)ov.classList.remove('open');};document.body.appendChild(ov);}
+  ov.innerHTML='<div class="modal" style="max-width:92vw;padding:14px;text-align:center;">'
+    +'<div style="font-weight:800;font-size:15px;color:var(--t1);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+name+'</div>'
+    +'<img src="'+src+'" style="max-width:100%;max-height:68vh;border-radius:12px;display:block;margin:0 auto;">'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;" onclick="document.getElementById(\'ov-ex-photo\').classList.remove(\'open\')">Fermer</button>'
+    +'</div>';
+  ov.classList.add('open');
 }
 function _reportCustomEx(name,grp,muscles){
   if(!S.url)return;
