@@ -975,7 +975,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v195 | Profil réorganisé en accordéon (8 sections repliables, ordre logique, Identité ouverte) — anti « usine à gaz », prêt pour le mode compétition |
 | ft-v196 | Profil : toast « Profil enregistré ✅ » à la sauvegarde (confirmation claire, avant juste un flash bouton) + fix icône bouton |
 | ft-v197 | Point rouge « nouveauté » sur Menu pour la Discipline + Profil réorganisé (NEW_FEATURES) |
-| ft-v198 | Aide détaillée mise à jour : cartes « Ton Profil » (accordéon) + « Discipline » + astuces (texte agrandi, points rouges) ← **actuel** |
+| ft-v198 | Aide détaillée mise à jour : cartes « Ton Profil » (accordéon) + « Discipline » + astuces (texte agrandi, points rouges) |
+| ft-v199 | Aide contextuelle (bouton ?) mise à jour : Profil (Discipline + sections repliables) + Coach (discipline injectée) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |
