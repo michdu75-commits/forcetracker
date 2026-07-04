@@ -467,6 +467,16 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Restylage Menu + retrait « Bonjour » Accueil (✅ 2026-07-04, ft-v188)
+- **Demande Michel (nuit)** : « On va faire le menu et sur accueil retire bonjour et le prénom on s'en fout ».
+- **Accueil** (`screens.js` `_renderHomeHdr`) : l'en-tête « Bonjour + prénom » est **retiré** (`el.innerHTML=''`). L'écran commence directement sur « CE MOIS ». Fonction inchangée (le div `#home-hdr` existe toujours, juste vidé).
+- **Menu** (`index.html` + `style.css`) — fidélité maquette 06 : les lignes d'`Outils` et de `Compte` passent d'**une carte groupée** (liste à séparateurs) à des **cartes séparées** (comme la maquette).
+  - `style.css` : `.menu-row` reçoit `background:var(--bg2)` + `border-radius:14px` + `box-shadow:inset 0 0 0 1px var(--sep)` (chaque row = carte). Suppression du `border-bottom` inter-rows. Ajout `.menu-group{display:flex;flex-direction:column;gap:10px;}`.
+  - `index.html` : les 2 conteneurs `Outils`/`Compte` passent de `background:var(--bg2)…overflow:hidden` à `class="menu-group"`.
+- **Aucune fonction touchée** : mêmes items, mêmes `onclick` (Anatomie, Protéines, Compléments, Calculateur 1RM / Exporter, Aide, À propos), carte profil et bannière Coach IA Premium inchangées.
+- Testé (Chromium, nuit + jour) : cartes séparées lisibles dans les 2 modes, « Bonjour » absent (Accueil démarre sur CE MOIS), 0 erreur JS.
+- **Rollback** : `git reset --hard backup-2026-07-03-avant-restyle-accueil`
+
 ### Restylage Accueil — corrections fidélité maquette (✅ 2026-07-04, ft-v187)
 - **Michel : « tu n'as pas suivi la maquette »** — l'étape 1 (ft-v186) avait 3 écarts corrigés ici :
   - **Ordre** : la maquette met les **stats EN PREMIER**, carte récup ensuite. `index.html` : `#home-stats` déplacé AVANT `#home-hero`.
@@ -874,7 +884,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v184 | uniformisation étape 3 : boxes Nutrition BMR/TDEE/Delta alignées sur les boxes Progrès (bordure + label 11px) |
 | ft-v185 | uniformisation étape 4 : arrondis de cartes ramenés à 16px (Nutrition 20, menu drawer 18 → 16) — boutons non touchés |
 | ft-v186 | restylage maquette étape 1 : Accueil (stats grille 2×2 + carte récup chiffre/barre) — restylage only, fonctions inchangées |
-| ft-v187 | restylage Accueil corrections maquette : ordre stats→récup, label CE MOIS, 3 tuiles séparées, CTA « Commencer une séance » gardé ← **actuel** |
+| ft-v187 | restylage Accueil corrections maquette : ordre stats→récup, label CE MOIS, 3 tuiles séparées, CTA « Commencer une séance » gardé |
+| ft-v188 | Accueil : retrait « Bonjour + prénom » (démarre sur CE MOIS) + Menu restylé maquette 06 (rows Outils/Compte en cartes séparées `.menu-group`) ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v187'; // restylage Accueil : fidélité maquette (ordre stats→récup, label CE MOIS, 3 tuiles séparées, CTA gardé)
+const CACHE = 'ft-v188'; // Accueil : retrait « Bonjour + prénom » + Menu restylé maquette (rows en cartes séparées)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
