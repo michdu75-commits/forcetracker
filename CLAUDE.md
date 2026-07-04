@@ -467,6 +467,15 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **SW** : les 3 fichiers ajoutés au `PRECACHE` de `sw.js` — disponibles hors-ligne dès la première visite.
 - **Sous-ensemble** : seul le subset "latin" (couvre les accents français, ex. é/è/à/ç/œ) a été téléchargé — pas les subsets cyrillique/vietnamien/etc., inutiles ici.
 
+### Verrou admin + Modifier un exercice perso (✅ 2026-07-04, ft-v208)
+- **Demande Michel** : réserver le mode admin à lui, et pouvoir modifier un exercice perso déjà créé.
+- **Verrou admin** (`app.js` + `constants.js`) : le panneau admin (5 taps logo) ne s'ouvre que si `_isAdminUnlocked()` = email dans `ADMIN_EMAILS` (`michdu75@gmail.com`) **OU** flag `ft4_admin_ok` (posé après saisie du code `ADMIN_CODE`). Sinon → `_promptAdminCode()` (overlay `#ov-admin-code`, input password → `_submitAdminCode()`). `onLogoTap` gate l'ancien corps, extrait dans `_toggleAdminMode()`.
+  - ⚠️ **Sécurité anti-curieux uniquement** : `ADMIN_CODE` est dans le JS public (GitHub Pages) → bloque les non-initiés, pas quelqu'un qui lit le source. Vrai verrou = auth serveur (futur).
+- **`openEditCustomEx(name)`** (`log.js`) : réutilise le formulaire « + Créer » pré-rempli (nom/groupe/muscles/photo), `_editingCustomExName=name`, bouton « Enregistrer » (via `_setCexFormMode`). `saveCustomEx` branche sur `_editingCustomExName` → `_saveCustomExEdit`.
+- **`_saveCustomExEdit(newName,grp)`** : applique groupe/muscles/photo ; si renommé → `_renameExEverywhere(old,new)` migre `S.sessions[].exs/exercises[].name`, `S.prs` (garde rm1 max), `S.programmes` (days & plat), `S.wkt`. Collision bloquée (EXLIB+customs). **N'agit que sur les exos perso** (privés au compte, sync cloud auto).
+- **Accès** : ⋯ menu d'un exo perso → « Modifier l'exercice » ; ou le ✎ (cliquable) dans le sélecteur (`_exPickRow`, `stopPropagation`).
+- Testé (Chromium) : non-admin→prompt, mauvais code→refus, bon code→ouvre+flag, email admin→ouvre direct ; édition rename+groupe+muscle → PR/séance migrés, 0 perte, 0 erreur JS. Red dot `custom-ex-edit` + aides. sw.js bump ft-v208.
+
 ### Exercice perso avec photo (✅ 2026-07-04, ft-v206)
 - **Demande Michel** : pouvoir **ajouter une photo** quand on crée un exercice perso (ex. une machine de sa salle absente de la bibliothèque) — pour la reconnaître d'un coup d'œil. Contexte : discussion sur le fait qu'une machine spécifique mérite son propre exercice (stats propres) → autant y mettre sa photo.
 - **Modèle** : champ optionnel `img` (data URI JPEG) sur l'objet exercice perso (`S.customExercises[].img`). **Sync cloud automatique** (customExercises est déjà dans le payload `saveProfile` + guard `_pa_`) — **aucune modif backend**.
@@ -1027,7 +1036,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v204 | point rouge « nouveauté » INLINE dans le menu-drawer : sur la ligne précise (`anchor`, ex. carte Profil) → l'utilisateur voit OÙ est le neuf, pas juste sur l'onglet Menu |
 | ft-v205 | bouton Partager/Exporter sous chaque réponse du Coach IA (`shareCoachReply`) : feuille de partage native (Web Share API) + fallback presse-papier, markdown nettoyé |
 | ft-v206 | exercice perso avec PHOTO (`_cexImg`/`changeCustomExImg`/`_exImg`) : ajouter une photo de machine à un exercice créé, vignette partout (bloc, picker, éditeur prog), sync cloud auto |
-| ft-v207 | swipe entre onglets moins sensible (`_initSwipe`) : seuil 55→110px, angle 0.65→0.5, pas de nav si le geste part d'un contrôle (input/bouton) + fix `_sel` nullé avant `_hScrollParent` ← **actuel** |
+| ft-v207 | swipe entre onglets moins sensible (`_initSwipe`) : seuil 55→110px, angle 0.65→0.5, pas de nav si le geste part d'un contrôle (input/bouton) + fix `_sel` nullé avant `_hScrollParent` |
+| ft-v208 | verrou admin (email `ADMIN_EMAILS` OU code de secours `ADMIN_CODE`) + « Modifier l'exercice » perso (`openEditCustomEx`/`_saveCustomExEdit`/`_renameExEverywhere`) : nom/groupe/muscles sans perte d'historique ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

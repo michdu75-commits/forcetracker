@@ -1,4 +1,4 @@
-const CACHE = 'ft-v207'; // Swipe entre onglets moins sensible : seuil 110px + geste franc horizontal + pas de nav si on part d'une saisie/bouton
+const CACHE = 'ft-v208'; // Verrou admin (email + code secours) + Modifier un exercice perso (nom/groupe/muscles sans perte d'historique)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

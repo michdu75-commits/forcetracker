@@ -121,6 +121,7 @@ const NEW_FEATURES=[
   {id:'wkt-pause',   screen:'log',      desc:'Mettre la séance en pause (le chrono se fige)'},
   {id:'wkt-vider',   screen:'log',      desc:'Vider la séance si mauvais programme chargé'},
   {id:'custom-ex-photo',screen:'log',   desc:'Ajouter une photo à un exercice que tu crées (📷)'},
+  {id:'custom-ex-edit', screen:'log',   desc:'Modifier un exercice perso (nom, groupe, muscles) après création (✏️)'},
   // Progrès
   {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
   {id:'prog-badges', screen:'progress', desc:'Onglet Badges (🏅)'},
@@ -133,6 +134,16 @@ const NEW_FEATURES=[
   {id:'discipline',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
   {id:'profil-accordion',screen:'setup', anchor:'menu-row-profil', desc:'Profil réorganisé en sections repliables'},
 ];
+
+// ─── ACCÈS ADMIN ─────────────────────────────────────────────
+// Le panneau admin (5 taps sur le logo) ne s'ouvre QUE si :
+//   - le compte connecté est un email admin, OU
+//   - l'appareil a été déverrouillé une fois avec le code de secours.
+// ⚠️ Sécurité « anti-curieux » : le code est dans le JS public (GitHub Pages) →
+//    ça bloque 99,9 % des gens, mais pas quelqu'un qui lirait le code source.
+//    Un vrai verrou nécessiterait une authentification côté serveur (chantier futur).
+const ADMIN_EMAILS=['michdu75@gmail.com'];
+const ADMIN_CODE='FT-boss-2176'; // code de secours (modifiable sur demande)
 
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────
 // [Débutant, Novice, Intermédiaire, Avancé] seuils

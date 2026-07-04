@@ -1048,6 +1048,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--sep);">
       <button class="btn btn-bg2" style="width:100%;margin-bottom:0;" id="custom-ex-add-btn" onclick="showCustomExForm()">+ Créer un exercice</button>
       <div id="custom-ex-form" style="display:none;flex-direction:column;gap:8px;margin-top:10px;">
+        <div id="cex-form-title" style="font-size:13px;font-weight:800;color:var(--t1);">Nouvel exercice</div>
         <input type="text" id="custom-ex-name" placeholder="Nom de l'exercice">
         <select id="custom-ex-grp" style="padding:10px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:14px;">
           <option value="Pectoraux">Pectoraux</option>
@@ -1076,7 +1077,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         </div>
         <div style="display:flex;gap:8px;margin-top:4px;">
           <button class="btn btn-bg2" style="flex:1;" onclick="hideCustomExForm()">Annuler</button>
-          <button class="btn btn-red" style="flex:1;" onclick="saveCustomEx()">Créer</button>
+          <button class="btn btn-red" style="flex:1;" id="cex-save-btn" onclick="saveCustomEx()">Créer</button>
         </div>
       </div>
     </div>

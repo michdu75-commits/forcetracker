@@ -583,6 +583,7 @@ function openExMenu(ei,hasGif){
   ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
+    +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
     +(isCustom?mRow('📷',hasCustomImg?'Changer la photo':'Ajouter une photo',`closeExMenu();changeCustomExImg('${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
@@ -1574,7 +1575,7 @@ function updateRMLive(ei,si){
 }
 let _restStep=15;
 let _restEx=null;
-let _cexMusclesP=[],_cexMusclesS=[],_cexImg=null;
+let _cexMusclesP=[],_cexMusclesS=[],_cexImg=null,_editingCustomExName=null;
 function _highlightRestPreset(sec){
   [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
 }
@@ -1613,7 +1614,9 @@ let _exGrp=null;
 
 function _exPickRow(e){
   const thumb=e.img?`<img src="${e.img}" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);">`:'';
-  return `<div class="ex-pick" onclick="addExercise('${e.n.replace(/'/g,"\\'")}')" style="display:flex;align-items:center;">${thumb}<span class="ex-pick-name">${e.n}${e.custom?' <span style="font-size:10px;color:var(--purp);">✎</span>':''}</span><span class="ex-pick-grp">${e.g}</span></div>`;
+  const safe=e.n.replace(/'/g,"\\'");
+  const edit=e.custom?` <span onclick="event.stopPropagation();openEditCustomEx('${safe}')" title="Modifier" style="font-size:13px;color:var(--purp);cursor:pointer;padding:2px 6px;touch-action:manipulation;">✎</span>`:'';
+  return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}<span class="ex-pick-name">${e.n}${edit}</span><span class="ex-pick-grp">${e.g}</span></div>`;
 }
 function openExPicker(){
   _exGrp=null;
@@ -1683,16 +1686,73 @@ function toggleMuscleChip(key,type){
   _renderCexChips();
 }
 function showCustomExForm(){
-  _cexMusclesP=[];_cexMusclesS=[];_cexImg=null;
+  _cexMusclesP=[];_cexMusclesS=[];_cexImg=null;_editingCustomExName=null;
   document.getElementById('custom-ex-form').style.display='flex';
   document.getElementById('custom-ex-add-btn').style.display='none';
-  _renderCexChips();_renderCexImgPreview();
+  _renderCexChips();_renderCexImgPreview();_setCexFormMode(false);
 }
 function hideCustomExForm(){
   document.getElementById('custom-ex-form').style.display='none';
   document.getElementById('custom-ex-add-btn').style.display='';
   const n=document.getElementById('custom-ex-name');if(n)n.value='';
-  _cexMusclesP=[];_cexMusclesS=[];_cexImg=null;_renderCexImgPreview();
+  _cexMusclesP=[];_cexMusclesS=[];_cexImg=null;_editingCustomExName=null;_renderCexImgPreview();_setCexFormMode(false);
+}
+// Bascule le libellé du formulaire perso entre « Créer » et « Enregistrer »
+function _setCexFormMode(editing){
+  const b=document.getElementById('cex-save-btn');if(b)b.textContent=editing?'Enregistrer':'Créer';
+  const t=document.getElementById('cex-form-title');if(t)t.textContent=editing?'Modifier l\'exercice':'Nouvel exercice';
+}
+// Ouvre le formulaire pré-rempli pour MODIFIER un exercice perso existant
+function openEditCustomEx(name){
+  const c=(S.customExercises||[]).find(e=>e.n===name);
+  if(!c){toast('Seuls les exercices perso sont modifiables','info');return;}
+  openExPicker();
+  showCustomExForm();
+  _editingCustomExName=name;
+  const ni=document.getElementById('custom-ex-name');if(ni)ni.value=c.n;
+  const gs=document.getElementById('custom-ex-grp');if(gs)gs.value=c.g;
+  _cexMusclesP=(c.muscles&&c.muscles.p)?[...c.muscles.p]:[];
+  _cexMusclesS=(c.muscles&&c.muscles.s)?[...c.muscles.s]:[];
+  _cexImg=c.img||null;
+  _renderCexChips();_renderCexImgPreview();_setCexFormMode(true);
+  setTimeout(()=>{document.getElementById('custom-ex-form')?.scrollIntoView({behavior:'smooth',block:'center'});},90);
+}
+// Renomme un exercice PARTOUT (historique, PRs, programmes, séance en cours) — pas de perte de données
+function _renameExEverywhere(o,n){
+  (S.sessions||[]).forEach(s=>{
+    (s.exs||[]).forEach(ex=>{if(ex.name===o)ex.name=n;});
+    (s.exercises||[]).forEach(ex=>{if(ex.name===o)ex.name=n;});
+  });
+  if((S.prs||{})[o]){
+    if(!S.prs[n]||(S.prs[o].rm1||0)>(S.prs[n].rm1||0))S.prs[n]=S.prs[o];
+    delete S.prs[o];
+  }
+  (S.programmes||[]).forEach(p=>{
+    (p.days||[]).forEach(d=>(d.exs||[]).forEach(ex=>{if(ex.name===o)ex.name=n;}));
+    (p.exs||[]).forEach(ex=>{if(ex.name===o)ex.name=n;});
+  });
+  if(S.wkt&&S.wkt.exs)S.wkt.exs.forEach(ex=>{if(ex.name===o)ex.name=n;});
+}
+// Enregistre les modifs d'un exercice perso existant
+function _saveCustomExEdit(newName,grp){
+  const oldName=_editingCustomExName;
+  const c=(S.customExercises||[]).find(e=>e.n===oldName);
+  if(!c){_editingCustomExName=null;hideCustomExForm();return;}
+  if(newName.toLowerCase()!==oldName.toLowerCase()){
+    const all=[...EXLIB,...(S.customExercises||[])];
+    if(all.find(e=>e.n.toLowerCase()===newName.toLowerCase())){toast('Ce nom existe déjà','error');return;}
+  }
+  const muscles=(_cexMusclesP.length||_cexMusclesS.length)?{p:[..._cexMusclesP],s:[..._cexMusclesS]}:null;
+  c.g=grp;
+  if(muscles)c.muscles=muscles; else delete c.muscles;
+  if(_cexImg)c.img=_cexImg; else delete c.img;
+  if(newName!==oldName){c.n=newName;_renameExEverywhere(oldName,newName);}
+  _editingCustomExName=null;
+  persist();
+  hideCustomExForm();
+  if(document.getElementById('mod-ex')&&document.getElementById('mod-ex').classList.contains('open'))filterEx();
+  if(S.wkt)renderExBlocks();
+  toast('Exercice modifié ✅','success');
 }
 // ─── PHOTO D'EXERCICE PERSO ───────────────────────────────────
 // Réduit une image (fichier) en vignette légère (max 420px, JPEG) → data URI via callback
@@ -1761,6 +1821,7 @@ function saveCustomEx(){
   const name=(document.getElementById('custom-ex-name').value||'').trim();
   const grp=document.getElementById('custom-ex-grp').value;
   if(!name){toast("Entre un nom d'exercice",'error');return;}
+  if(_editingCustomExName){ _saveCustomExEdit(name,grp); return; } // mode édition
   const all=[...EXLIB,...(S.customExercises||[])];
   if(all.find(e=>e.n.toLowerCase()===name.toLowerCase())){toast('Exercice déjà existant','error');return;}
   const similar=_findSimilar(name,all);
