@@ -821,7 +821,16 @@ function calcRecoveryScore(){
     } else if(d===1){ sessAdj=-8; }
     else { sessAdj=Math.min(d,4)*3; }                          // 2j +6 · 3j +9 · 4j+ +12
   }
-  return Math.max(0,Math.min(100,Math.round(wScore+sessAdj)));
+  // Âge : la récupération ralentit avec l'âge
+  const age=S.age||0;
+  const ageAdj = age>=60?-9 : age>=50?-6 : age>=40?-3 : 0;
+  // Cycle menstruel (femmes) : la phase influence la readiness (règles/lutéale ↓, ovulation ↑)
+  let cycleAdj=0;
+  try{
+    const cp=(typeof getMensCyclePhase==='function')?getMensCyclePhase():null;
+    if(cp&&cp.perf) cycleAdj = cp.perf==='low'?-10 : cp.perf==='declining'?-5 : cp.perf==='peak'?4 : cp.perf==='rising'?2 : 0;
+  }catch(e){}
+  return Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj)));
 }
 function getRecoveryInfo(score){
   if(score===null)return{label:'—',color:'var(--t3)',icon:'❓',rec:'Enregistre ton sommeil pour obtenir ton score de récupération.'};
