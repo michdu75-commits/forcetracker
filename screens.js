@@ -349,8 +349,57 @@ function _renderHomeHero(){
     +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
 }
 
+// ─── Coach proactif — petit mot de Milo sur l'Accueil (brique 4) ──────────
+// Choisit LE message le plus pertinent du jour à partir des données locales
+// (aucun backend). Fermable, jamais 2× le même message le même jour.
+function _miloMessage(){
+  const sess=(S.sessions||[]).filter(s=>s.date);
+  const tStr=today();
+  const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
+  const daysSince=lastDate?Math.floor((new Date(tStr+'T12:00:00')-new Date(lastDate+'T12:00:00'))/864e5):null;
+  // Séances de la semaine ISO en cours (lundi → dimanche)
+  const now=new Date(tStr+'T12:00:00');
+  const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));
+  const monK=mon.toISOString().slice(0,10);
+  const weekCount=[...new Set(sess.map(s=>s.date))].filter(d=>d>=monK).length;
+  const rec=(typeof calcRecoveryScore==='function')?calcRecoveryScore():null;
+  // Priorité : réengagement > relance > récup > lendemain > régularité
+  if(daysSince!==null&&daysSince>=10)
+    return {id:'retour',txt:'Content de te revoir 👋 On reprend tranquille — pas de record aujourd\'hui, on remet la machine en route.'};
+  if(daysSince!==null&&daysSince>=4)
+    return {id:'relance',txt:'Ça fait '+daysSince+' jours 👀 On se refait une séance aujourd\'hui ?'};
+  if(rec!==null&&rec<40&&daysSince!==null&&daysSince>=1)
+    return {id:'recup',txt:'Nuit courte ces derniers jours — vise plutôt une séance légère aujourd\'hui, et dors tôt ce soir. 😴'};
+  if(daysSince===1)
+    return {id:'lendemain',txt:'Bien joué pour hier 💪 Pense à bien manger et à récupérer aujourd\'hui.'};
+  if(weekCount>=3)
+    return {id:'regularite',txt:weekCount+' séances cette semaine 🔥 Tu tiens le rythme, continue comme ça !'};
+  return null;
+}
+function _renderMiloCard(){
+  const el=document.getElementById('home-milo');if(!el)return;
+  const m=_miloMessage();
+  if(!m){el.innerHTML='';return;}
+  let dism=null;try{dism=JSON.parse(localStorage.getItem('ft4_milo')||'null');}catch(e){}
+  if(dism&&dism.date===today()&&dism.id===m.id){el.innerHTML='';return;}
+  const name=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
+  el.innerHTML='<div class="milo-card ft-press" onclick="_openMiloChat()">'
+    +'<div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'
+    +'<div style="flex:1;min-width:0;"><div class="milo-name">'+name+'</div><div class="milo-txt">'+m.txt+'</div></div>'
+    +'<button class="milo-x" onclick="event.stopPropagation();_dismissMilo(\''+m.id+'\')" aria-label="Fermer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
+    +'</div>';
+}
+function _dismissMilo(id){
+  try{localStorage.setItem('ft4_milo',JSON.stringify({date:today(),id}));}catch(e){}
+  const el=document.getElementById('home-milo');if(el)el.innerHTML='';
+}
+function _openMiloChat(){
+  try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
+}
+
 function renderHome(){try{
   _renderHomeHdr();
+  _renderMiloCard();
   _renderHomeHero();
   const now=new Date();
   const mo=S.sessions.filter(s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
