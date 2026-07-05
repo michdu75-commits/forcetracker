@@ -1,4 +1,4 @@
-const CACHE = 'ft-v231'; // masse grasse : ✓ enregistre direct depuis les mesures (calcul US Navy) + vue « Les 2 » (poids+MG superposés, 2 axes) + « 2 mesures »
+const CACHE = 'ft-v232'; // vue « Les 2 » : la courbe de poids s'affiche toujours (même avec <2 mesures MG) + note pour ajouter une 2e mesure
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -425,10 +425,10 @@ function renderWeightTab(){
     return;
   }
   // Vue « Les 2 » : poids + masse grasse superposés (2 axes)
+  // La courbe de poids s'affiche toujours ; la masse grasse dès qu'il y a ≥2 mesures.
   if(_wMetric==='both'){
-    const bfpts=pts.filter(p=>p.bf!=null);
-    if(pts.length<2||bfpts.length<2){
-      if(chartEl)chartEl.innerHTML='<div class="empty" style="padding:20px 0;">Ajoute au moins 2 mesures de masse grasse pour comparer les deux courbes 📊</div>';
+    if(pts.length<2){
+      if(chartEl)chartEl.innerHTML='<div class="empty" style="padding:20px 0;">Ajoute au moins 2 pesées pour voir le graphique 📊</div>';
       if(corrEl)corrEl.innerHTML='';
       return;
     }
@@ -658,33 +658,35 @@ function renderCompareChart(pts,box){
   const W=340,H=176,pad={t:16,r:38,b:34,l:38},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
   const kgs=pts.map(p=>p.kg);
   const bfPts=pts.map((p,i)=>({i:i,bf:p.bf})).filter(o=>o.bf!=null);
+  const hasBf=bfPts.length>0;          // au moins 1 point → axe droit + dots
+  const bfLine=bfPts.length>=2;        // ≥2 → on trace la courbe orange
   const kMin0=Math.min(...kgs),kMax0=Math.max(...kgs),kSp=(kMax0-kMin0)||1;
   const kMin=kMin0-kSp*.12,kMax=kMax0+kSp*.12;
-  const bfVals=bfPts.map(o=>o.bf);
-  const bMin0=Math.min(...bfVals),bMax0=Math.max(...bfVals),bSp=(bMax0-bMin0)||1;
-  const bMin=bMin0-bSp*.12,bMax=bMax0+bSp*.12;
+  let bMin=0,bMax=1;
+  if(hasBf){const bfVals=bfPts.map(o=>o.bf);const bMin0=Math.min(...bfVals),bMax0=Math.max(...bfVals),bSp=(bMax0-bMin0)||2;const padB=Math.max(bSp*.12,1);bMin=bMin0-padB;bMax=bMax0+padB;}
   const xS=pts.length>1?iW/(pts.length-1):0;
   const toX=i=>pad.l+(pts.length>1?i*xS:iW/2);
   const toYk=v=>pad.t+iH-((v-kMin)/(kMax-kMin||1))*iH;
   const toYb=v=>pad.t+iH-((v-bMin)/(bMax-bMin||1))*iH;
   const kPath='M'+pts.map((p,i)=>toX(i)+' '+toYk(p.kg)).join(' L');
-  const bPath=bfPts.length?('M'+bfPts.map(o=>toX(o.i)+' '+toYb(o.bf)).join(' L')):'';
+  const bPath=bfLine?('M'+bfPts.map(o=>toX(o.i)+' '+toYb(o.bf)).join(' L')):'';
   const fmtW=d=>{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});};
   const xLabels=[0,Math.floor((pts.length-1)/2),pts.length-1].map(i=>({i:i,d:pts[i].date}));
   const ticks=4;
   const gl=[];for(let t=0;t<=ticks;t++){const y=pad.t+iH*(t/ticks);const kv=kMax-(kMax-kMin)*(t/ticks);const bv=bMax-(bMax-bMin)*(t/ticks);gl.push({y:y,kv:kv,bv:bv});}
   box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;overflow:visible;">
-    ${gl.map(g=>`<line x1="${pad.l}" y1="${g.y}" x2="${W-pad.r}" y2="${g.y}" stroke="var(--sep)" stroke-width=".5"/><text x="${pad.l-4}" y="${g.y+3}" text-anchor="end" font-size="8.5" style="fill:var(--blue)">${Math.round(g.kv*10)/10}</text><text x="${W-pad.r+4}" y="${g.y+3}" text-anchor="start" font-size="8.5" style="fill:var(--orange)">${Math.round(g.bv*10)/10}</text>`).join('')}
+    ${gl.map(g=>`<line x1="${pad.l}" y1="${g.y}" x2="${W-pad.r}" y2="${g.y}" stroke="var(--sep)" stroke-width=".5"/><text x="${pad.l-4}" y="${g.y+3}" text-anchor="end" font-size="8.5" style="fill:var(--blue)">${Math.round(g.kv*10)/10}</text>${hasBf?`<text x="${W-pad.r+4}" y="${g.y+3}" text-anchor="start" font-size="8.5" style="fill:var(--orange)">${Math.round(g.bv*10)/10}</text>`:''}`).join('')}
     ${xLabels.map(o=>`<text x="${toX(o.i)}" y="${H-4}" text-anchor="middle" font-size="9" style="fill:var(--t3)">${fmtW(o.d)}</text>`).join('')}
     <path d="${kPath}" fill="none" style="stroke:var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    ${bPath?`<path d="${bPath}" fill="none" style="stroke:var(--orange)" stroke-width="2" stroke-dasharray="1 0" stroke-linecap="round" stroke-linejoin="round"/>`:''}
+    ${bPath?`<path d="${bPath}" fill="none" style="stroke:var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:''}
     ${pts.map((p,i)=>`<circle cx="${toX(i)}" cy="${toYk(p.kg)}" r="2.6" style="fill:var(--blue)"/>`).join('')}
     ${bfPts.map(o=>`<circle cx="${toX(o.i)}" cy="${toYb(o.bf)}" r="2.6" style="fill:var(--orange)"/>`).join('')}
   </svg>
   <div style="display:flex;justify-content:center;gap:18px;align-items:center;margin-top:6px;font-size:12px;color:var(--t2);">
     <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:3px;border-radius:2px;background:var(--blue);display:inline-block;"></span>Poids (kg)</span>
-    <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:3px;border-radius:2px;background:var(--orange);display:inline-block;"></span>Masse grasse (%)</span>
-  </div>`;
+    <span style="display:inline-flex;align-items:center;gap:5px;opacity:${bfLine?1:.5};"><span style="width:10px;height:3px;border-radius:2px;background:var(--orange);display:inline-block;"></span>Masse grasse (%)</span>
+  </div>
+  ${bfLine?'':'<div style="text-align:center;margin-top:6px;font-size:11px;color:var(--t3);">🟠 Ajoute une 2ᵉ mesure de masse grasse pour voir sa courbe.</div>'}`;
 }
 function renderWeightCorrelations(el,pts){
   if(!pts||pts.length<3){el.innerHTML='';return;}
