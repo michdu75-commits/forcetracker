@@ -1,4 +1,4 @@
-const CACHE = 'ft-v221'; // Coach santé (brique 1) : disclaimer médical sur le Profil Santé (profil + injection Coach déjà en place)
+const CACHE = 'ft-v222'; // Coach personnalité (brique 2) : le coach s'appelle Milo, ton franc/direct qui S'ADAPTE à la personne (niveau, état du jour, façon de parler)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

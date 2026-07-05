@@ -1057,7 +1057,10 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v216 | figurines cuisses/quadriceps : 7 mappées (Leg Extension, Squat Bulgare, Smith Squat, Fentes Marchées, Hip Thrust Machine, Farmer's Walk) + **14 nouveaux squats** (Sissy, Pendulum, Belt, Safety Bar, Overhead, Pin, Cossack, Wall Sit, presse iso, sled push…) — doublons ignorés — EXLIB Jambes 31→45 |
 | ft-v217 | figurines Abduction + Adduction Cuisses (2 machines) → Jambes 41/45 avec figurine |
 | ft-v218 | figurines Chest Press Machine Déclinée + Dips Parallèles + Montée Box Haltères ; **fusion d'exo** : renommer un exo perso vers un nom existant propose de fusionner (`_mergeCustomInto` → déplace séances/PRs/programmes, supprime le perso) |
-| ft-v219 | figurine Dips Machine Assistée + nouvel exo **Développé Nuque** (Épaules) avec figurine ← **actuel** |
+| ft-v219 | figurine Dips Machine Assistée + nouvel exo **Développé Nuque** (Épaules) avec figurine |
+| ft-v220 | fix persistance cycle de force : `load()`/`persist()` ne sauvaient jamais `ft4_cycle` → cycle perdu au rechargement ; ajout `localStorage.setItem('ft4_cycle',…)` dans `persist()` |
+| ft-v221 | Coach santé (brique 1/4) : disclaimer médical `⚕️` sur le Profil Santé (« infos optionnelles et privées, le Coach ne pose jamais de diagnostic ») — profil santé + injection Coach déjà en place |
+| ft-v222 | Coach personnalité (brique 2/4) : le coach s'appelle **Milo** (`COACH_NAME`, header chat), ton franc/direct avec humour qui **s'ADAPTE à la personne** (niveau via PRs, état du jour via récup/sommeil, façon de parler) — jamais méchant, jamais de diagnostic médical ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

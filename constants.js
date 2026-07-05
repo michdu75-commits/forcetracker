@@ -166,6 +166,11 @@ const NEW_FEATURES=[
 const ADMIN_EMAILS=['michdu75@gmail.com'];
 const ADMIN_CODE='0115'; // code de secours (modifiable sur demande)
 
+// ─── COACH IA — identité ─────────────────────────────────────
+const COACH_NAME='Milo';   // nom affiché + signature (modifiable)
+// Pas de ton figé : Milo a un penchant « franc/direct » par défaut MAIS s'adapte à la personne
+// (niveau, état du jour, façon de parler) — voir buildCoachContext.
+
 // ─── STRENGTH STANDARDS (ratio 1RM / poids corps) ────────────
 // [Débutant, Novice, Intermédiaire, Avancé] seuils
 const STD={
