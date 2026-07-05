@@ -773,12 +773,12 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
 const APP_GUIDE_SLIDES=[
   {ic:'👋',t:'Bienvenue dans Force Tracker',x:'Ton carnet de muscu intelligent. En quelques écrans, voici l\'essentiel pour bien démarrer. Fais défiler ! 💪'},
-  {ic:'⚡',t:'Ta séance',x:'Onglet <b>Séance</b> (le + rouge au centre). Ajoute tes exercices, note chaque série (poids × répétitions). L\'app calcule tes <b>records</b> et ta progression toute seule.'},
+  {ic:'⚡',t:'Ta séance',x:'Onglet <b>Séance</b> (le + rouge au centre). Ajoute tes exercices, note chaque série (poids × répétitions). L\'app calcule tes <b>records</b> et ta progression toute seule.',v:'<div class="agv agv-nav"><div class="agv-bar"><i>🏠</i><i>📈</i><b class="agv-plus">+</b><i>🍽️</i><i>☰</i></div><span class="agv-tap"></span></div>'},
   {ic:'📋',t:'Tes programmes',x:'Sauvegarde une séance comme <b>programme</b> réutilisable, ou importe-en un (photo, Word, PDF). Charge-le en 1 tap, et tu peux même l\'<b>exporter en PDF</b> pour l\'imprimer.'},
   {ic:'🌱',t:'Tu débutes ?',x:'Dans <b>Mes Programmes</b>, crée ton <b>parcours débutant</b> : 2 questions et hop, un programme sur mesure sur machines guidées. On te prend par la main.'},
-  {ic:'📈',t:'Tes progrès',x:'L\'app suit tes <b>records</b> (1RM), ton <b>poids</b> et ta <b>masse grasse</b>, en graphiques clairs. Des <b>badges</b> se débloquent au fil de tes séances.'},
-  {ic:'🤖',t:'Milo, ton coach IA',x:'Onglet <b>Coach</b>. Pose-lui <b>toutes</b> tes questions : technique, nutrition, motivation. Il connaît ton profil et s\'adapte à toi — franc et direct, comme un vrai coach.'},
-  {ic:'📸',t:'Tes photos (analyse du corps)',x:'Milo peut analyser ton physique (morphologie, étude du corps). <b>Pour de bonnes photos :</b> bien éclairé, fond neutre, en short/sous-vêtements, de face / dos / profil, une fois relâché puis contracté, bien immobile.'},
+  {ic:'📈',t:'Tes progrès',x:'L\'app suit tes <b>records</b> (1RM), ton <b>poids</b> et ta <b>masse grasse</b>, en graphiques clairs. Des <b>badges</b> se débloquent au fil de tes séances.',v:'<div class="agv agv-chart"><i style="--d:0s"></i><i style="--d:.15s"></i><i style="--d:.3s"></i><i style="--d:.45s"></i><i style="--d:.6s"></i></div>'},
+  {ic:'🤖',t:'Milo, ton coach IA',x:'Onglet <b>Coach</b>. Pose-lui <b>toutes</b> tes questions : technique, nutrition, motivation. Il connaît ton profil et s\'adapte à toi — franc et direct, comme un vrai coach.',v:'<div class="agv agv-chat"><span class="agv-avatar">🤖</span><span class="agv-bubble2"><span class="agv-typing"><span></span><span></span><span></span></span></span></div>'},
+  {ic:'📸',t:'Tes photos (analyse du corps)',x:'Milo peut analyser ton physique (morphologie, étude du corps). <b>Pour de bonnes photos :</b> bien éclairé, fond neutre, en short/sous-vêtements, de face / dos / profil, une fois relâché puis contracté, bien immobile.',v:'<div class="agv agv-poses"><div class="agv-pose p1"><span>🧍</span><small>Face</small></div><div class="agv-pose p2"><span>🧍</span><small>Dos</small></div><div class="agv-pose p3"><span>🚶</span><small>Profil</small></div></div>'},
   {ic:'🍽️',t:'Nutrition',x:'L\'app calcule tes <b>calories et macros</b> selon ton objectif, avec un plan de repas et les suppléments utiles (créatine, whey…).'},
   {ic:'✅',t:'Les 3 choses importantes',x:'1️⃣ Remplis ton <b>profil</b> (Menu → Profil).<br>2️⃣ Note tes séances <b>à chaque fois</b>.<br>3️⃣ Sois <b>régulier</b> — c\'est ça qui paie. 💪'},
 ];
@@ -808,7 +808,11 @@ function _agGo(d){
 function _renderAppGuide(){
   const s=APP_GUIDE_SLIDES[_agIdx];if(!s)return;
   const set=(id,html,prop)=>{const el=document.getElementById(id);if(el)el[prop||'textContent']=html;};
-  set('ag-ic',s.ic);set('ag-title',s.t);set('ag-text',s.x,'innerHTML');
+  // visuel animé si présent (s.v), sinon grosse emoji
+  const icEl=document.getElementById('ag-ic'),vEl=document.getElementById('ag-visual');
+  if(s.v){ if(icEl)icEl.style.display='none'; if(vEl){vEl.style.display='flex';vEl.innerHTML=s.v;} }
+  else { if(icEl){icEl.style.display='';icEl.textContent=s.ic;} if(vEl){vEl.style.display='none';vEl.innerHTML='';} }
+  set('ag-title',s.t);set('ag-text',s.x,'innerHTML');
   set('ag-count',(_agIdx+1)+' / '+APP_GUIDE_SLIDES.length);
   const dots=document.getElementById('ag-dots');
   if(dots)dots.innerHTML=APP_GUIDE_SLIDES.map((_,i)=>'<span class="ag-dot'+(i===_agIdx?' on':'')+'"></span>').join('');

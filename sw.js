@@ -1,4 +1,4 @@
-const CACHE = 'ft-v249'; // Fix Coach : carte « Gagner en force » écrasée/texte coupé (flex-shrink des enfants de .coach-home) — la zone scrolle au lieu de comprimer
+const CACHE = 'ft-v250'; // Guide de l'application : slides animés (bouton + qui pulse, graphique qui monte, Milo qui écrit, poses photo qui flashent)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
