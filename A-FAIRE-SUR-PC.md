@@ -17,37 +17,16 @@
 
 ## ⏳ En attente
 
-### 5. ⭐ Étude du corps — bilan morpho-postural (ft-v224) — **le plus important à déployer**
-La nouvelle fonctionnalité **« Étude du corps »** (bouton dans le Coach, Premium, 4 photos relâché+contracté → bilan posture/insertions/équilibre + exercices, santé prise en compte) a **besoin du backend** pour fonctionner. Sans ce déploiement, le bouton apparaît mais l'analyse renvoie une erreur.
-✅ **Code déjà ajouté dans `Code.js`** :
-- `handleBodyStudy_(body)` (nouveau handler, modèle **Claude Sonnet**, prompt complet insertions/posture/équilibre/santé/exercices) + route `if (body.action === 'bodyStudy')`.
-- Persistance cloud du bilan : dans `handleSaveProfile_`, `if (body.bodyStudy !== undefined) profile.bodyStudy = _po_(body.bodyStudy, profile.bodyStudy);`
-**À déployer** (récupère tout Code.js d'un coup, ça embarque aussi le point 4 ci-dessous) :
-```
-git checkout origin/master -- Code.js
-set NODE_TLS_REJECT_UNAUTHORIZED=0
-npx clasp push --force
-npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
-```
-Puis vérifier `?test=1` → `{"status":"online"}`. Ça remplace le point 3 (« analyse morpho la totale ») qui est maintenant réalisé par cette Étude du corps.
-
-### 4. Persistance cloud des photos d'exercices « bibliothèque » (ft-v212)
-✅ **Code déjà ajouté dans `Code.js`** (`handleSaveProfile_`, à côté de `discipline`/`histImports`) :
-```js
-if (body.exPhotos !== undefined) profile.exPhotos = _po_(body.exPhotos, profile.exPhotos);
-```
-Sans ce déploiement, les photos ajoutées sur des exercices **de la bibliothèque** (S.exPhotos) restent **locales** (les photos d'exos **perso** sync déjà via `customExercises`). **À déployer** au prochain passage PC : `git checkout origin/master -- Code.js` → `clasp push --force` → `clasp deploy -i …`.
-
-### 3. Analyse morpho « la totale » (premium) + exploitation de la discipline — *plus gros*
-Voir le plan détaillé dans le **fichier d'idées** (section « Analyse morpho par photo — 2 niveaux + insertions musculaires + Discipline »). À cadrer ensemble le moment venu :
-- prompt d'analyse à 2 variantes (basique gratuit / complet premium avec insertions, contraction, positionnement),
-- passer le niveau complet sur **Claude Sonnet**,
-- ajouter 1 slot photo fléchie + guidage des poses.
-Claude prépare le code ici, tu déploies depuis le PC.
+*(Rien en attente pour l'instant — tout est déployé.)*
 
 ---
 
 ## ✅ Fait
+
+### 3 + 4 + 5. Étude du corps (@61) + photos exercices bibliothèque (@61) — ✅ déployé (2026-07-05)
+- **Étude du corps** (ft-v224) : `handleBodyStudy_` (Claude **Sonnet**, bilan posture/insertions/équilibre/santé/exercices) + route `bodyStudy` + persistance `bodyStudy` dans `handleSaveProfile_`. Réalise le point 3 (« analyse morpho la totale »).
+- **Photos exercices bibliothèque** (ft-v212) : `if (body.exPhotos !== undefined) profile.exPhotos = _po_(...)` — embarqué dans le même déploiement.
+- Déployé depuis le PC de Michel (clasp push + deploy -i → **@61**), `?test=1` OK.
 
 ### 1 + 2. Persistance cloud « Discipline » (ft-v194) + compteur « imports journal » (ft-v168) — ✅ déployé @59 (2026-07-04)
 Ajout dans `handleSaveProfile_` (Code.js) : `body.discipline` (`_ps_`) et `body.histImports` (`_pn_`). Déployé depuis le PC de Michel (clasp push + deploy -i → **@59**). Les deux champs sont désormais sauvegardés dans le cloud (survivent à une réinstallation).
