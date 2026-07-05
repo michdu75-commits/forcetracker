@@ -1,4 +1,4 @@
-const CACHE = 'ft-v229'; // poids objectif (ligne repère + kg restants) + note « masse grasse indicative » + endométriose (profil santé femme)
+const CACHE = 'ft-v230'; // note de confidentialité santé précisée (visibles seulement par toi ; téléphone + sauvegarde perso liée à l'email)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
