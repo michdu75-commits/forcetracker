@@ -413,6 +413,9 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div class="sec">Corrélations & tendances</div>
     <div id="weight-correlations" style="display:flex;flex-direction:column;gap:8px;"></div>
   </div>
+  <!-- Espaceur : garantit que la dernière carte passe au-dessus de la barre du bas sur iOS
+       (Safari ignore le padding-bottom d'un conteneur flex+scroll — voir CLAUDE.md) -->
+  <div class="scroll-spacer" aria-hidden="true"></div>
 </div>
 
 <!-- NUTRITION -->

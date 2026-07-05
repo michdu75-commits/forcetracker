@@ -1,4 +1,4 @@
-const CACHE = 'ft-v225'; // Gagner en force (Big 3) : Milo lit les maxes → conseil + programme force à enregistrer dans Mes programmes (réutilise le Coach, 0 backend)
+const CACHE = 'ft-v226'; // fix scroll iOS onglet Progrès/Poids : espaceur bas (Safari ignore le padding-bottom d'un flex+scroll) → dernière carte accessible
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
