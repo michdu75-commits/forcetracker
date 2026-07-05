@@ -350,6 +350,7 @@ function doPost(e) {
   if (body.action === 'importProgram')     return handleImportProgram_(body);
   if (body.action === 'importHistory')    return handleImportHistory_(body);
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
+  if (body.action === 'bodyStudy')         return handleBodyStudy_(body);
   if (body.action === 'summarizeCoach')    return handleSummarizeCoach_(body);
   if (body.action === 'generateMealPlan')  return handleGenerateMealPlan_(body);
   if (body.action === 'adminRestore')      return handleAdminRestore_(body);
@@ -478,6 +479,7 @@ function handleSaveProfile_(body) {
     if (body.discipline    !== undefined) profile.discipline    = _ps_(body.discipline,    profile.discipline);
     if (body.histImports   !== undefined) profile.histImports   = _pn_(body.histImports,   profile.histImports);
     if (body.exPhotos      !== undefined) profile.exPhotos      = _po_(body.exPhotos,      profile.exPhotos);
+    if (body.bodyStudy     !== undefined) profile.bodyStudy     = _po_(body.bodyStudy,     profile.bodyStudy);
 
     existing.profile = profile;
 
@@ -886,6 +888,69 @@ function handleMorphoAnalysis_(body) {
 
     const data = JSON.parse(match[0]);
     return json_({status:'ok', data});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+// Étude du corps — bilan morpho-postural profond (posture, insertions,
+// équilibre, exercices correctifs) en tenant compte de la santé.
+function handleBodyStudy_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+
+  try {
+    const images = body.images || [];
+    if (!images.length) return json_({status:'error', error:'Aucune image reçue'});
+    const gender = body.gender === 'F' ? 'femme' : 'homme';
+    const age = body.age || '?';
+    const goal = body.goal || 'muscle';
+    const discipline = body.discipline || 'muscu';
+    const health = body.health || {};
+    const conditions = (health.conditions || []).join(', ');
+    const injuries = (health.injuries || []).map(function(i){ return (i.zone||'') + (i.status?' ('+i.status+')':''); }).join(', ');
+    const healthNotes = (health.notes || '').trim();
+    const healthTxt = (conditions || injuries || healthNotes)
+      ? ('Conditions: ' + (conditions||'aucune') + ' | Blessures: ' + (injuries||'aucune') + (healthNotes?(' | Notes: '+healthNotes):''))
+      : 'Aucune information santé fournie';
+
+    const userContent = images.map(function(img){
+      return { type:'image', source:{ type:'base64', media_type: img.type || 'image/jpeg', data: img.data } };
+    });
+    // Rappel du rôle de chaque photo (les labels sont envoyés par le front)
+    const labelLine = images.map(function(img){ return img.label; }).filter(Boolean).join(', ');
+
+    userContent.push({
+      type: 'text',
+      text: 'Tu es un coach expert en morphologie, posture et biomécanique. Analyse ces photos d\'un(e) ' + gender + ' de ' + age + ' ans '
+        + '(objectif: ' + goal + ', discipline: ' + discipline + '). Photos fournies (dans l\'ordre): ' + (labelLine||'non précisé') + '. '
+        + 'Les poses relâchées montrent la posture, les poses contractées révèlent le développement réel et les asymétries.\n\n'
+        + 'PROFIL SANTÉ: ' + healthTxt + '. Tes suggestions d\'exercices DOIVENT respecter ces contraintes (éviter/adapter les mouvements à risque) et le mentionner dans "healthNotes".\n\n'
+        + 'Analyse: la stature et la posture (bascule du bassin, épaules enroulées/asymétriques, dos), les insertions musculaires visibles (longueur des muscles, points forts génétiques), l\'ÉQUILIBRE du corps (gauche/droite, haut/bas, agonistes/antagonistes ex. pectoraux vs dos), les points forts et les groupes en retard, et propose des exercices correctifs concrets et prioritaires.\n\n'
+        + 'Reste bienveillant, factuel et prudent. Ne pose JAMAIS de diagnostic médical.\n\n'
+        + 'Retourne UNIQUEMENT un objet JSON valide, sans texte avant/après, avec EXACTEMENT ces clés:\n'
+        + '{"stature":"posture et stature en 2-3 phrases","insertions":"insertions musculaires notables en 2-3 phrases","balance":"évaluation de l\'équilibre gauche/droite, haut/bas, avant/arrière — dis clairement si le corps est globalement équilibré ou non et pourquoi","strengths":"points forts en 1-2 phrases","weaknesses":"groupes musculaires ou zones en retard en 1-2 phrases","exercises":[{"zone":"groupe/zone ciblée","exercises":"2-3 exercices concrets","why":"pourquoi (court)"}],"healthNotes":"comment la santé a été prise en compte / mouvements à éviter ou adapter en 1-2 phrases","summary":"synthèse motivante en 1-2 phrases"}'
+    });
+
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      headers: { 'Content-Type':'application/json', 'x-api-key': apiKey, 'anthropic-version':'2023-06-01' },
+      payload: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        messages: [{ role:'user', content: userContent }]
+      }),
+      muteHttpExceptions: true
+    });
+
+    const result = JSON.parse(resp.getContentText());
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Analyse impossible. Réessaie avec des photos plus nettes et bien cadrées.'});
+
+    const data = JSON.parse(match[0]);
+    return json_({status:'ok', data: data});
   } catch(err) {
     return json_({status:'error', error: err.message});
   }

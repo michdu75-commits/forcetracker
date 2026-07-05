@@ -1396,6 +1396,43 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<!-- OVERLAY: Étude du corps (bilan morpho-postural, 4 photos) -->
+<div class="overlay" id="ov-body-study" onclick="if(event.target===this)closeBodyStudy()">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:900;font-size:18px;margin-bottom:2px;text-align:center;">📐 Étude du corps</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:4px;">Posture, insertions, équilibre & exercices suggérés</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px;">🔒 Photos non stockées — analysées puis supprimées immédiatement</div>
+    <div style="display:flex;flex-direction:column;gap:12px;" id="body-slots">
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+        <label id="body-slot-0" for="body-file-0" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"><span style="font-size:22px;">📷</span></label>
+        <div style="flex:1;"><div style="font-weight:800;font-size:14px;margin-bottom:2px;">Face — relâché</div><div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">Debout, face à la caméra, bras le long du corps, détendu. Torse nu ou tenue ajustée.</div><label for="body-file-0" style="display:block;text-align:center;font-size:11px;font-weight:700;padding:6px 8px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Importer une photo</label></div>
+        <input type="file" id="body-file-0" accept="image/*" style="display:none;" onchange="addBodyPhoto(this,0)">
+      </div>
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+        <label id="body-slot-1" for="body-file-1" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"><span style="font-size:22px;">📷</span></label>
+        <div style="flex:1;"><div style="font-weight:800;font-size:14px;margin-bottom:2px;">Face — contracté</div><div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">Face à la caméra, contracte le haut du corps (pose « double biceps » avant si possible).</div><label for="body-file-1" style="display:block;text-align:center;font-size:11px;font-weight:700;padding:6px 8px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Importer une photo</label></div>
+        <input type="file" id="body-file-1" accept="image/*" style="display:none;" onchange="addBodyPhoto(this,1)">
+      </div>
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+        <label id="body-slot-2" for="body-file-2" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"><span style="font-size:22px;">📷</span></label>
+        <div style="flex:1;"><div style="font-weight:800;font-size:14px;margin-bottom:2px;">Dos — contracté</div><div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">Dos tourné, contracte le dos et les bras (pose « double biceps » arrière).</div><label for="body-file-2" style="display:block;text-align:center;font-size:11px;font-weight:700;padding:6px 8px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Importer une photo</label></div>
+        <input type="file" id="body-file-2" accept="image/*" style="display:none;" onchange="addBodyPhoto(this,2)">
+      </div>
+      <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
+        <label id="body-slot-3" for="body-file-3" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"><span style="font-size:22px;">📷</span></label>
+        <div style="flex:1;"><div style="font-weight:800;font-size:14px;margin-bottom:2px;">Profil</div><div style="font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:8px;">De côté (gauche ou droit), debout naturellement, bras le long du corps.</div><label for="body-file-3" style="display:block;text-align:center;font-size:11px;font-weight:700;padding:6px 8px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Importer une photo</label></div>
+        <input type="file" id="body-file-3" accept="image/*" style="display:none;" onchange="addBodyPhoto(this,3)">
+      </div>
+    </div>
+    <div id="body-result" style="display:none;margin-top:12px;padding:12px;background:var(--bg3);border-radius:12px;"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="btn btn-bg2" style="flex:1;" onclick="closeBodyStudy()">Fermer</button>
+      <button class="btn btn-red" id="body-analyze-btn" style="flex:2;" onclick="analyzeBodyStudy()">🔍 Analyser mon corps</button>
+    </div>
+  </div>
+</div>
+
 <!-- OVERLAY: Morpho loading -->
 <div class="overlay" id="ov-morpho-loading" data-no-dismiss style="background:rgba(0,0,0,.97);z-index:300;align-items:center;justify-content:center;">
   <div style="width:100%;max-width:380px;padding:0 24px;display:flex;flex-direction:column;align-items:center;gap:22px;">

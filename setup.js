@@ -221,6 +221,7 @@ function _cloudSync(){
       programmes:S.programmes||[],
       exRestPref:S.exRestPref||{},
       healthProfile:S.healthProfile||null,
+      bodyStudy:S.bodyStudy||null,
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
       leftHand:S.leftHand||false
@@ -766,11 +767,130 @@ function _updateCoachMorphoBtn(){
   const w=document.getElementById('coach-morpho-btn-wrap');
   if(!w)return;
   w.style.display='block';
+  const premBadge='<span style="font-size:11px;background:rgba(255,184,0,.15);color:var(--gold);border-radius:6px;padding:1px 6px;margin-left:4px;">Premium</span>';
   if(S.premium){
-    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;" onclick="openMorphoAnalysis()">📸 Analyser ma morphologie (3 photos)</button>`;
+    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;margin-bottom:8px;" onclick="openBodyStudy()">📐 Étude du corps (4 photos)</button>`
+      +`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;" onclick="openMorphoAnalysis()">📸 Analyser ma morphologie (3 photos)</button>`;
   }else{
-    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;opacity:.45;cursor:default;" onclick="showPremiumWall()">🔒 Analyser ma morphologie (3 photos) <span style="font-size:11px;background:rgba(255,184,0,.15);color:var(--gold);border-radius:6px;padding:1px 6px;margin-left:4px;">Premium</span></button>`;
+    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;opacity:.45;cursor:default;margin-bottom:8px;" onclick="showPremiumWall()">🔒 Étude du corps (4 photos) ${premBadge}</button>`
+      +`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;opacity:.45;cursor:default;" onclick="showPremiumWall()">🔒 Analyser ma morphologie (3 photos) ${premBadge}</button>`;
   }
+}
+
+// ── Étude du corps — bilan morpho-postural (4 photos relâché + contracté) ──
+const _BODY_SLOTS=[
+  {key:'face_relax', t:'Face — relâché', d:'Debout, face à la caméra, bras le long du corps, détendu. Torse nu ou tenue ajustée.'},
+  {key:'face_flex',  t:'Face — contracté', d:'Face à la caméra, contracte le haut du corps (pose « double biceps » avant si possible).'},
+  {key:'back_flex',  t:'Dos — contracté', d:'Dos tourné, contracte le dos et les bras (pose « double biceps » arrière).'},
+  {key:'profil',     t:'Profil', d:'De côté (gauche ou droit), debout naturellement, bras le long du corps.'}
+];
+let _bodyPhotos=[null,null,null,null];
+function openBodyStudy(){
+  if(!S.premium){toast('Étude du corps réservée aux membres Premium ⭐','info');return;}
+  _bodyPhotos=[null,null,null,null];
+  _BODY_SLOTS.forEach((s,i)=>{
+    const sl=document.getElementById('body-slot-'+i);
+    if(sl){sl.innerHTML='<span style="font-size:22px;">📷</span>';sl.style.border='2px dashed var(--sep)';}
+    const fi=document.getElementById('body-file-'+i);if(fi)fi.value='';
+  });
+  const res=document.getElementById('body-result');if(res){res.style.display='none';res.innerHTML='';}
+  const btn=document.getElementById('body-analyze-btn');if(btn){btn.textContent='🔍 Analyser mon corps';btn.disabled=false;}
+  // Rappelle le dernier bilan s'il existe
+  if(S.bodyStudy)_renderBodyStudyReport(S.bodyStudy,true);
+  document.getElementById('ov-body-study').classList.add('open');
+}
+function closeBodyStudy(){document.getElementById('ov-body-study').classList.remove('open');}
+function addBodyPhoto(input,slot){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=800,scale=Math.min(1,MAX/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+      const ctx=c.getContext('2d');if(!ctx)return;
+      ctx.drawImage(img,0,0,c.width,c.height);
+      _bodyPhotos[slot]=c.toDataURL('image/jpeg',0.8).split(',')[1];
+      const sl=document.getElementById('body-slot-'+slot);
+      if(sl){sl.style.border='2px solid var(--green)';sl.innerHTML=`<img src="${c.toDataURL('image/jpeg',0.8)}" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">`;}
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+async function analyzeBodyStudy(){
+  const filled=_bodyPhotos.filter(Boolean);
+  if(filled.length<2){toast('Ajoute au moins 2 photos (face relâché + un contracté)','error');return;}
+  const btn=document.getElementById('body-analyze-btn');
+  if(btn){btn.textContent='⏳ Analyse…';btn.disabled=true;}
+  const res=document.getElementById('body-result');if(res){res.style.display='none';res.innerHTML='';}
+  showMorphoLoading(_bodyPhotos);
+  try{
+    const images=_bodyPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:_BODY_SLOTS[i].key}:null).filter(Boolean);
+    // Santé injectée pour des conseils sûrs (contre-indications)
+    const hp=S.healthProfile||{};
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'bodyStudy',images,gender:S.gender||'H',age:S.age||0,
+        goal:S.goal||'muscle',discipline:S.discipline||'muscu',
+        health:{conditions:hp.conditions||[],injuries:hp.injuries||[],notes:hp.notes||''},
+        email:S.email||''})
+    });
+    const txt=await resp.text();
+    let data;try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON: '+txt.substring(0,120));}
+    if(data.status!=='ok'||!data.data)throw new Error(data.error||'Erreur analyse');
+    const d=data.data;d.date=today();
+    S.bodyStudy=d;persist();_cloudSyncDebounced();
+    _renderBodyStudyReport(d,false);
+    if(typeof checkBadges==='function')try{checkBadges(true);}catch(e){}
+  }catch(e){
+    hideMorphoLoading();
+    if(res){res.style.display='block';res.innerHTML=`<div style="color:var(--red);">Erreur : ${e.message}</div>`;}
+    toast('Erreur analyse: '+e.message,'error');
+  }finally{
+    hideMorphoLoading();
+    if(btn){btn.textContent='🔍 Analyser mon corps';btn.disabled=false;}
+  }
+}
+function _bsSection(icon,title,body,color){
+  if(!body)return '';
+  return '<div style="margin-bottom:12px;">'
+    +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><span style="font-size:15px;">'+icon+'</span>'
+    +'<span style="font-weight:800;font-size:13px;color:'+(color||'var(--t1)')+';">'+title+'</span></div>'
+    +'<div style="font-size:13px;line-height:1.55;color:var(--t2);">'+body+'</div></div>';
+}
+function _renderBodyStudyReport(d,isRecall){
+  const res=document.getElementById('body-result');if(!res)return;
+  const esc=s=>(s==null?'':(''+s));
+  let exos='';
+  if(Array.isArray(d.exercises)&&d.exercises.length){
+    exos=d.exercises.map(x=>{
+      if(typeof x==='string')return '<li style="margin-bottom:5px;">'+esc(x)+'</li>';
+      const nm=esc(x.zone||x.muscle||'');const why=esc(x.why||x.reason||'');const list=Array.isArray(x.exercises)?x.exercises.join(', '):esc(x.exercises||x.exos||'');
+      return '<li style="margin-bottom:6px;"><b>'+nm+'</b>'+(list?' — '+list:'')+(why?'<div style="font-size:12px;color:var(--t3);">'+why+'</div>':'')+'</li>';
+    }).join('');
+  }else if(typeof d.exercises==='string'){exos='<li>'+esc(d.exercises)+'</li>';}
+  res.style.display='block';
+  res.innerHTML=''
+    +(isRecall?'<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">📅 Dernier bilan du '+esc(d.date||'?')+' — relance une analyse pour le mettre à jour.</div>'
+      :'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><div style="width:26px;height:26px;border-radius:50%;background:rgba(52,211,153,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span style="font-weight:800;font-size:14px;color:#5be3b4;">Bilan de ton corps</span></div>')
+    +_bsSection('🧍','Stature & posture',esc(d.stature))
+    +_bsSection('🧬','Insertions musculaires',esc(d.insertions))
+    +_bsSection('⚖️','Équilibre du corps',esc(d.balance),'var(--gold)')
+    +_bsSection('💪','Points forts',esc(d.strengths),'var(--green)')
+    +_bsSection('📉','Points à travailler',esc(d.weaknesses),'var(--orange)')
+    +(exos?'<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><span style="font-size:15px;">🎯</span><span style="font-weight:800;font-size:13px;color:var(--red);">Exercices suggérés</span></div><ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.5;color:var(--t2);">'+exos+'</ul></div>':'')
+    +_bsSection('⚕️','Santé prise en compte',esc(d.healthNotes),'#5BA8FF')
+    +(d.summary?'<div style="margin-top:6px;padding:10px 12px;background:rgba(239,62,87,.08);border-radius:10px;font-size:13px;line-height:1.5;color:var(--t1);"><b>En résumé :</b> '+esc(d.summary)+'</div>':'')
+    +'<div style="font-size:11px;color:var(--t3);margin-top:12px;line-height:1.4;">⚕️ Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou d\'un coach en personne.</div>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;padding:11px;font-size:13px;border-radius:12px;" onclick="_bodyStudyToCoach()">💬 En parler avec Milo</button>';
+}
+function _bodyStudyToCoach(){
+  closeBodyStudy();
+  try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
+  const inp=document.getElementById('coach-inp');
+  if(inp){inp.value='Explique-moi mon bilan corporel et propose-moi un plan pour rééquilibrer mon corps.';}
 }
 
 function _updateProgCycleBanner(){
@@ -1069,6 +1189,7 @@ function _applyRestoreData(raw){
   try{if(d.morphotype)S.morphotype=d.morphotype;}catch(e){}
   try{if(d.bday)S.bday=d.bday;}catch(e){}
   try{if(d.healthProfile)S.healthProfile=d.healthProfile;}catch(e){console.warn('[FT restore] healthProfile',e);}
+  try{if(d.bodyStudy)S.bodyStudy=d.bodyStudy;}catch(e){console.warn('[FT restore] bodyStudy',e);}
   try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
   try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
   try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}
