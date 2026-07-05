@@ -796,3 +796,25 @@ html.ob-done #onboarding{display:none;}
 #root.lh #rest-bar          { flex-direction:column; }
 #root.lh #rest-btns         { flex-direction:row-reverse; }
 #root.lh .ex-hdr-btns       { order:-1; }
+
+/* ─── Impression / export PDF d'un programme ─────────────────── */
+#print-area{ display:none; }
+@media print{
+  @page{ margin:14mm; }
+  html,body{ background:#fff !important; }
+  body>*:not(#print-area){ display:none !important; }
+  #print-area{ display:block !important; color:#111; font-family:'Manrope',system-ui,sans-serif; }
+  .prt-doc{ max-width:100%; }
+  .prt-h{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:4px; }
+  .prt-logo{ font-weight:800; font-size:15px; letter-spacing:.02em; white-space:nowrap; }
+  .prt-name{ font-weight:800; font-size:20px; text-align:right; }
+  .prt-sub{ font-size:12px; color:#555; margin-bottom:14px; }
+  .prt-doc h3{ font-size:15px; margin:16px 0 6px; padding:5px 8px; background:#f0f0f0; border-left:3px solid #111; }
+  .prt-doc table{ width:100%; border-collapse:collapse; margin-bottom:6px; }
+  .prt-doc th,.prt-doc td{ border:1px solid #bbb; padding:6px 8px; font-size:12.5px; text-align:left; }
+  .prt-doc th{ background:#111; color:#fff; font-weight:700; }
+  .prt-doc td.c,.prt-doc th.c{ text-align:center; white-space:nowrap; }
+  .prt-doc thead{ display:table-header-group; }
+  .prt-doc tr{ break-inside:avoid; }
+  .prt-foot{ margin-top:16px; font-size:11.5px; color:#444; border-top:1px solid #ccc; padding-top:8px; line-height:1.5; }
+}

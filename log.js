@@ -2777,6 +2777,7 @@ function renderProgModal(){
           <div style="display:flex;gap:6px;flex-shrink:0;">
             <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
             <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})">✏️</button>
+            <button class="btn-xs" style="color:var(--t2);" onclick="printProg(${i})" title="Imprimer / PDF">🖨️</button>
             ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
             <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
           </div>
@@ -2843,6 +2844,36 @@ function deleteProg(idx){
   S.programmes.splice(idx,1);
   persist();renderProgModal();
   toast('"'+name+'" supprimé','info');
+}
+// Impression / export PDF d'un programme — génère une feuille propre puis window.print()
+// (le navigateur propose « Imprimer » ou « Enregistrer en PDF » ; sur iPhone : Partager → Imprimer → PDF)
+function printProg(idx){
+  const p=(S.programmes||[])[idx];if(!p)return;
+  const esc=_escNote;
+  const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
+  const scheme=(sets)=>{
+    const s=sets||[];if(!s.length)return '';
+    const reps=s.map(x=>x.reps);
+    const val=reps.every(r=>r===reps[0])?reps[0]:reps.join('/');
+    return s.length+' × '+val;
+  };
+  const daysHtml=days.map(d=>{
+    const exRows=(d.exs||[]).map(e=>{
+      let sc=scheme(e.sets);
+      if(sc&&/gainage|planche/i.test(e.name))sc=sc.replace(/(\d+)$/,'$1 s'); // gainage = secondes
+      return '<tr><td>'+esc(e.name)+'</td><td class="c">'+sc+'</td><td class="c"></td></tr>';
+    }).join('');
+    return '<h3>'+esc(d.label||'Séance')+'</h3><table><thead><tr><th>Exercice</th><th class="c">Séries × Reps</th><th class="c">Poids</th></tr></thead><tbody>'+exRows+'</tbody></table>';
+  }).join('');
+  const sub=p.beginner?('Parcours débutant — Étape 1'+(p.bgFreq?' · '+p.bgFreq+' séances/semaine':'')):'';
+  const area=document.getElementById('print-area');if(!area)return;
+  area.innerHTML='<div class="prt-doc">'+
+    '<div class="prt-h"><span class="prt-logo">FORCE TRACKER</span><span class="prt-name">'+esc(p.name)+'</span></div>'+
+    '<div class="prt-sub">'+(sub||'Programme d\'entraînement')+'</div>'+
+    daysHtml+
+    '<div class="prt-foot">Note tes poids dans la colonne « Poids » à la salle. Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.</div>'+
+    '</div>';
+  window.print();
 }
 function editProg(idx){
   const prog=(S.programmes||[])[idx];
