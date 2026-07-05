@@ -1,4 +1,4 @@
-const CACHE = 'ft-v255'; // Récup : prend en compte l'âge (récup + lente avec l'âge) + le cycle menstruel des femmes (règles/lutéale ↓, ovulation ↑)
+const CACHE = 'ft-v256'; // Récup « Prêt à performer » croise TOUT : sommeil + volume séance + niveau + âge + cycle + fatigue accumulée + tabac + énergie ressentie
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
