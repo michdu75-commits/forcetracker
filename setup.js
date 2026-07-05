@@ -535,6 +535,7 @@ const _HC=[
   {id:'arthrite',label:'Arthrose',icon:'🦵'},
   {id:'osteo',label:'Ostéoporose',icon:'💀'},
   {id:'epilepsie',label:'Épilepsie',icon:'⚡'},
+  {id:'migraine',label:'Migraines',icon:'🤕'},
   {id:'endometriose',label:'Endométriose',icon:'🌸',f:true},
 ];
 const _HIZ=[

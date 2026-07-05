@@ -569,6 +569,11 @@ function finishOnboarding(){
   const emailFinal=(document.getElementById('ob-email-final')||{}).value||'';
   if(emailFinal&&!S.email){S.email=emailFinal.trim();}
   else if(emailFinal){S.email=emailFinal.trim();}
+  // Débutant nouveau : on lui offre d'office le programme « Premiers pas »
+  if(!_obDataRestored && S.level==='debutant' && typeof _beginnerProg==='function' && typeof _hasBeginnerProg==='function' && !_hasBeginnerProg()){
+    if(!S.programmes)S.programmes=[];
+    S.programmes.push(_beginnerProg(S.gender));
+  }
   persist();
   if(S.email&&S.url&&!_obDataRestored){
     // Nouveau profil uniquement — si restauration depuis cloud, on ne réécrit JAMAIS le Sheet
