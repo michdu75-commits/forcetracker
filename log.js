@@ -419,7 +419,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
-      +`<div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}</div>`
+      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
       +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
@@ -612,16 +612,71 @@ function openExHistory(name){
   }
   const inner=data.length>=2?_buildExHistChart(data)
     :`<div style="text-align:center;padding:20px 0;color:var(--t3);font-size:13px;">Pas encore assez d'historique —<br>reviens après 2 séances !</div>`;
+  // Progression des charges en % (1re → dernière séance affichée)
+  let progHtml='';
+  if(data.length>=2){
+    const first=data[0].kg,last=data[data.length-1].kg;
+    const diff=Math.round((last-first)*10)/10;
+    const pct=first>0?Math.round((last-first)/first*1000)/10:0;
+    const col=diff>0?'var(--green)':diff<0?'var(--red)':'var(--t2)';
+    const arrow=diff>0?'📈':diff<0?'📉':'➖';
+    progHtml=`<div style="text-align:center;margin:-2px 0 12px;font-size:13px;color:var(--t3);line-height:1.5;">`
+      +`<b style="color:var(--t1)">${first} kg</b> → <b style="color:var(--t1)">${last} kg</b><br>`
+      +`<span style="font-weight:800;color:${col};font-size:14px;">${arrow} ${diff>=0?'+':''}${diff} kg (${pct>=0?'+':''}${pct}%)</span> <span style="font-size:12px;">sur ${data.length} séances</span>`
+      +`</div>`;
+  }
   el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 18px;box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`
     +`<div style="font-weight:800;font-size:15px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">${name}</div>`
     +`<button onclick="closeExHistory()" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:none;font-size:15px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>`
-    +`</div>${inner}`
+    +`</div>${progHtml}${inner}`
     +`<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px;">Poids max · 5 dernières séances</div>`
     +`</div>`;
   el.classList.add('open');
 }
 function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)el.classList.remove('open');}
+
+// ── Note par série (dans la colonne « précédent ») ──
+function _escNote(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function _setPrevNote(set,p){
+  if(set&&set.note)return `<div style="font-size:9.5px;color:var(--gold);line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(set.note)}</div>`;
+  if(p&&p.note)return `<div style="font-size:9.5px;color:var(--t3);font-style:italic;line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(p.note)}</div>`;
+  return '';
+}
+let _setNoteCtx=null;
+function openSetNote(ei,si){
+  const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];if(!set)return;
+  _setNoteCtx={ei,si};
+  let ov=document.getElementById('ov-set-note');
+  if(!ov){ov=document.createElement('div');ov.className='overlay';ov.id='ov-set-note';ov.onclick=e=>{if(e.target===ov)closeSetNote();};document.body.appendChild(ov);}
+  ov.innerHTML=`<div class="modal" style="max-width:360px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:900;font-size:16px;margin-bottom:3px;text-align:center;">💬 Note — série ${si+1}</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:12px;">Une info à retrouver la prochaine fois (réglage machine, sensation, technique…). Elle s'affichera dans « précédent ».</div>
+    <textarea id="set-note-ta" rows="3" style="width:100%;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);padding:10px;font-size:15px;font-family:var(--font);resize:none;box-sizing:border-box;outline:none;" placeholder="Ex: cran 4 sur la machine, prise serrée, dos bien calé…">${_escNote(set.note)}</textarea>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      ${set.note?`<button class="btn btn-bg2" style="flex:1;color:var(--red);" onclick="deleteSetNote()">🗑 Retirer</button>`:''}
+      <button class="btn btn-red" style="flex:2;" onclick="saveSetNote()">Enregistrer</button>
+    </div>
+  </div>`;
+  ov.classList.add('open');
+  setTimeout(()=>{const ta=document.getElementById('set-note-ta');if(ta)ta.focus();},80);
+}
+function closeSetNote(){const ov=document.getElementById('ov-set-note');if(ov)ov.classList.remove('open');_setNoteCtx=null;}
+function saveSetNote(){
+  if(!_setNoteCtx)return;const {ei,si}=_setNoteCtx;
+  const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];if(!set){closeSetNote();return;}
+  const ta=document.getElementById('set-note-ta');const v=ta?ta.value.trim():'';
+  if(v)set.note=v;else delete set.note;
+  persist();closeSetNote();renderExBlocks();
+  toast('Note enregistrée 💬','success');
+}
+function deleteSetNote(){
+  if(!_setNoteCtx)return;const {ei,si}=_setNoteCtx;
+  const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];if(set)delete set.note;
+  persist();closeSetNote();renderExBlocks();
+  toast('Note retirée','info');
+}
 
 function renderExBlocks(){
   const c=document.getElementById('wkt-exs');

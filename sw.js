@@ -1,4 +1,4 @@
-const CACHE = 'ft-v235'; // éditeur de programme : mode SUPERSET (demande Christophe) — lier des exos consécutifs, propagé à la séance au chargement
+const CACHE = 'ft-v236'; // séance : #2 stats exo avec % de progression des charges (📊) + #5 note par série dans la colonne « précédent » (openSetNote)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
