@@ -569,6 +569,8 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 .coach-quota.is-premium{background:rgba(234,179,8,.12);color:#F2D472;box-shadow:inset 0 0 0 1px rgba(234,179,8,.35);}
 /* COACH ACCUEIL */
 .coach-home{display:flex;flex-direction:column;gap:14px;padding:12px 14px 8px;overflow-y:auto;flex:1;}
+/* Empêche les cartes de se comprimer (flex-shrink) → elles gardent leur hauteur, la zone scrolle (fix carte « Gagner en force » écrasée) */
+.coach-home>*{flex-shrink:0;}
 .coach-ctx-card{background:var(--bg2);border-radius:16px;padding:14px 16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);}
 .coach-ctx-title{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.14em;margin-bottom:10px;}
 .coach-ctx-tags{display:flex;flex-wrap:wrap;gap:7px;}
