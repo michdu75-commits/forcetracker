@@ -1060,7 +1060,8 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 | ft-v219 | figurine Dips Machine Assistée + nouvel exo **Développé Nuque** (Épaules) avec figurine |
 | ft-v220 | fix persistance cycle de force : `load()`/`persist()` ne sauvaient jamais `ft4_cycle` → cycle perdu au rechargement ; ajout `localStorage.setItem('ft4_cycle',…)` dans `persist()` |
 | ft-v221 | Coach santé (brique 1/4) : disclaimer médical `⚕️` sur le Profil Santé (« infos optionnelles et privées, le Coach ne pose jamais de diagnostic ») — profil santé + injection Coach déjà en place |
-| ft-v222 | Coach personnalité (brique 2/4) : le coach s'appelle **Milo** (`COACH_NAME`, header chat), ton franc/direct avec humour qui **s'ADAPTE à la personne** (niveau via PRs, état du jour via récup/sommeil, façon de parler) — jamais méchant, jamais de diagnostic médical ← **actuel** |
+| ft-v222 | Coach personnalité (brique 2/4) : le coach s'appelle **Milo** (`COACH_NAME`, header chat), ton franc/direct avec humour qui **s'ADAPTE à la personne** (niveau via PRs, état du jour via récup/sommeil, façon de parler) — jamais méchant, jamais de diagnostic médical |
+| ft-v223 | Coach proactif (brique 4/4) : carte **Milo** en haut de l'Accueil (`_renderMiloCard`/`_miloMessage` dans screens.js, div `#home-milo`) — 1 message le plus pertinent du jour parmi 5 (retour ≥10j, relance ≥4j, récup faible <40, lendemain de séance, régularité ≥3/sem), 100% local (aucun backend), fermable (`_dismissMilo`, `ft4_milo` = {date,id}, 1×/jour/message), tap → chat Milo. CSS `.milo-*`, thème jour/nuit OK ← **actuel** |
 
 ### Backend Apps Script — historique déploiements récents
 | Version | Contenu |

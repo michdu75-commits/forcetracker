@@ -1,4 +1,4 @@
-const CACHE = 'ft-v222'; // Coach personnalité (brique 2) : le coach s'appelle Milo, ton franc/direct qui S'ADAPTE à la personne (niveau, état du jour, façon de parler)
+const CACHE = 'ft-v223'; // Coach proactif (brique 4) : carte Milo sur l'Accueil (relance/récup/lendemain/régularité), fermable, 1×/jour/message
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
