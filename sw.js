@@ -1,4 +1,4 @@
-const CACHE = 'ft-v251'; // Guide : animations sur TOUS les slides (main qui salue, carte prog+PDF, graine qui pousse, anneau nutrition, 3 pastilles qui se cochent)
+const CACHE = 'ft-v252'; // Guide : + 2 slides orientation concrets (barre d'onglets animée « à quoi sert chaque onglet » + tableau de bord accueil)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
