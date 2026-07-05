@@ -1,4 +1,4 @@
-const CACHE = 'ft-v248'; // Guide de l'application : diaporama (Menu → Outils) expliquant séance/programmes/Milo/photos — remplace la vidéo 3D
+const CACHE = 'ft-v249'; // Fix Coach : carte « Gagner en force » écrasée/texte coupé (flex-shrink des enfants de .coach-home) — la zone scrolle au lieu de comprimer
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
