@@ -1,4 +1,4 @@
-const CACHE = 'ft-v240'; // Onboarding enrichi (niveau + poids visé + naissance) + niveau évolutif (débutant→intermédiaire→confirmé, auto-promotion + Coach adapté)
+const CACHE = 'ft-v241'; // Programme débutant « Premiers pas » (machines A/B, nuance H/F, gainage+crunch) + Milo ton adapté au sexe + cardio/poids + migraines (santé)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

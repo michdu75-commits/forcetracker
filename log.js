@@ -2627,6 +2627,42 @@ function loadProgDay(progIdx,dayIdx){
   toast('"'+prog.name+' — '+day.label+'" chargé ! 💪','success');
 }
 
+// ─── PROGRAMME DÉBUTANT « Premiers pas » ─────────────────────
+// Machines guidées, full-body 3×/semaine en A/B. Tronc commun identique H/F ;
+// une seule nuance par séance selon le sexe (accent haut du corps H / chaîne postérieure F).
+// Les mouvements techniques (squat, développé couché, soulevé) se débloquent au niveau Intermédiaire.
+function _beginnerProg(gender){
+  const F = gender==='F';
+  const _s3=(reps)=>[{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0}];
+  const ex=(name,reps)=>({name,sets:_s3(reps||12)});
+  const A=[
+    ex('Press Jambes 45°'),
+    ex('Chest Press Machine Horizontale'),
+    ex('Tirage Poulie Haute'),
+    ex('Leg Curl Assis Machine'),
+    F?ex('Poussée de Hanche Machine'):ex('Pec Deck'),
+    ex('Gainage',30),
+  ];
+  const B=[
+    ex('Extension Quadriceps (Leg Extension)'),
+    ex('Rowing Machine'),
+    ex('Développé Épaules Machine'),
+    ex('Curl Machine'),
+    F?ex('Abduction Cuisses (Leg Abduction)'):ex('Élévations Latérales Machine'),
+    ex('Crunch Machine',15),
+  ];
+  return {id:'p_beginner_'+Date.now(),name:'Premiers pas',beginner:true,
+    days:[{label:'Séance A',exs:A},{label:'Séance B',exs:B}]};
+}
+function _hasBeginnerProg(){return (S.programmes||[]).some(p=>p&&(p.beginner||p.name==='Premiers pas'));}
+function addBeginnerProg(){
+  if(!S.programmes)S.programmes=[];
+  if(_hasBeginnerProg()){renderProgModal();toast('Tu as déjà le programme « Premiers pas »','info');return;}
+  S.programmes.push(_beginnerProg(S.gender));
+  persist();renderProgModal();
+  toast('Programme « Premiers pas » ajouté ! 🌱','success');
+}
+
 // ─── PROGRAMMES ──────────────────────────────────────────────
 function openProgModal(){
   renderProgModal();
@@ -2638,6 +2674,8 @@ function closeProgModal(){
 function renderProgModal(){
   if(!S.programmes)S.programmes=[];
   const progs=S.programmes;
+  const begBtn=document.getElementById('prog-beginner-btn');
+  if(begBtn)begBtn.style.display=_hasBeginnerProg()?'none':'block';
   const list=document.getElementById('prog-list-modal');
   if(!progs.length){
     list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme sauvegardé.<br>Crée une séance et utilise "Sauvegarder" !</div>';
