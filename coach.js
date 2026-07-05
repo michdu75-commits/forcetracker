@@ -668,6 +668,12 @@ const _DRAWER_CONTENT = {
         {n:'Magnésium',ic:'🪨',cat:'Récupération & Sommeil',desc:'Cofacteur de +300 réactions enzymatiques. Souvent déficitaire chez les sportifs (pertes sudorales). Améliore la qualité du sommeil et réduit les crampes.',dose:'300-400mg/jour le soir. Préférer le bisglycinate (mieux absorbé).'},
         {n:'Vitamine D3 + K2',ic:'☀️',cat:'Santé générale & Force',desc:'La D3 est essentielle à la santé osseuse, à la testostérone et à la force musculaire. K2 oriente le calcium vers les os et non les artères.',dose:'2000-5000 UI D3 + 100-200µg K2 MK-7 par jour, avec un repas gras.'},
         {n:'Oméga-3 (EPA+DHA)',ic:'🐟',cat:'Anti-inflammatoire',desc:'Réduisent l\'inflammation chronique liée à l\'entraînement intensif. Améliorent la sensibilité à l\'insuline et la santé cardiovasculaire.',dose:'2-4g EPA+DHA/jour avec les repas. Préférer l\'huile de poisson concentrée.'},
+        {n:'L-Citrulline / Citrulline Malate',ic:'🩸',cat:'Congestion & Endurance',desc:'Booste la production d\'oxyde nitrique → meilleure circulation, plus de « pump » et un peu plus de reps sur les séries longues.',dose:'6-8g de citrulline malate, 30-45 min avant l\'entraînement.'},
+        {n:'Ashwagandha (KSM-66)',ic:'🌿',cat:'Stress & Récupération',desc:'Plante adaptogène : réduit le cortisol (stress), améliore le sommeil et la récupération. Effet modeste mais réel sur la force chez certains.',dose:'300-600mg/jour d\'extrait standardisé, plutôt le soir.'},
+        {n:'ZMA (Zinc + Magnésium + B6)',ic:'🌙',cat:'Sommeil & Hormones',desc:'Combo pensé pour le sommeil profond et la récupération, surtout si tu es déficitaire en zinc/magnésium (fréquent chez les sportifs).',dose:'À jeun le soir, ~30 min avant de dormir. Pas avec des produits laitiers (calcium gêne l\'absorption).'},
+        {n:'Électrolytes (sodium/potassium)',ic:'🧂',cat:'Hydratation & Crampes',desc:'Utiles si tu transpires beaucoup ou t\'entraînes longtemps/à jeun : évitent la baisse de perf et les crampes liées aux pertes minérales.',dose:'Autour de l\'entraînement selon la sudation. Le sel de table compte aussi.'},
+        {n:'Collagène + Vitamine C',ic:'🦵',cat:'Tendons & Articulations',desc:'Pour la santé des tendons et articulations, surtout en force athlétique/charges lourdes. La vitamine C aide la synthèse du collagène.',dose:'10-15g de collagène + 50mg de vitamine C, ~45-60 min avant l\'entraînement.'},
+        {n:'⚠️ Pré-workout « tout-en-un »',ic:'🔋',cat:'À utiliser avec tête',desc:'Souvent = caféine + citrulline + bêta-alanine + arômes. Pratique, mais tu paies cher des doses parfois faibles. Regarde les grammages réels — et méfie-toi de l\'excès de stimulants.',dose:'Pas plus d\'1 dose, jamais tard dans la journée. Fais des pauses pour garder l\'effet de la caféine.'},
       ].map(p=>`<div style="background:var(--bg3);border-radius:12px;padding:16px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
           <span style="font-size:26px;">${p.ic}</span>
@@ -677,6 +683,40 @@ const _DRAWER_CONTENT = {
         <div style="font-size:14px;color:var(--t3);"><strong style="color:var(--t2);">Dose :</strong> ${p.dose}</div>
       </div>`).join('')}
     </div>`
+  },
+  guide: {
+    title:'📚 Guide de la muscu',
+    html:(function(){
+      const card=(ic,t,d)=>'<div style="background:var(--bg3);border-radius:12px;padding:14px;">'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:22px;">'+ic+'</span><div style="font-weight:800;font-size:15.5px;color:var(--t1);">'+t+'</div></div>'
+        +'<div style="font-size:14px;color:var(--t2);line-height:1.55;">'+d+'</div></div>';
+      const sec=(t)=>'<div style="font-size:12px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin:6px 2px 2px;">'+t+'</div>';
+      return '<div style="display:flex;flex-direction:column;gap:11px;padding:0 2px 8px;">'
+        +'<div style="font-size:13px;color:var(--t3);line-height:1.5;padding:0 2px;">Un tour d\'horizon simple et concret : trouve ton style, connais ton matériel, et pimente tes séances. 💪</div>'
+        +sec('🥇 Les disciplines — trouve ton style')
+        +card('🏋️','Musculation / Bodybuilding','Objectif : faire GROSSIR le muscle (hypertrophie) et sculpter la silhouette. Séries moyennes (8-12 reps), beaucoup de volume, on cherche la « sensation » et la congestion. C\'est la base de Force Tracker.')
+        +card('🏆','Force athlétique (Powerlifting)','Objectif : soulever le plus LOURD possible sur 3 mouvements — Squat, Développé Couché, Soulevé de Terre. Séries courtes (1-5 reps), charges maximales, longues récup entre les séries.')
+        +card('⚡','Haltérophilie (Weightlifting)','Les 2 mouvements olympiques : Arraché et Épaulé-Jeté. Explosivité, vitesse et technique avant tout. Très exigeant techniquement — souvent avec un coach.')
+        +card('🤸','Fitness / Cross-training','Condition physique GÉNÉRALE : on mélange muscu, cardio, gainage et circuits. Objectif polyvalence, endurance et santé plutôt que la performance pure sur un lift.')
+        +card('🧗','Callisthénie / Street workout','Musculation au POIDS DU CORPS (tractions, dips, pompes, figures). Force relative, contrôle et mobilité. Peu de matériel, beaucoup de progression.')
+        +sec('🎒 Le matériel — tes outils')
+        +card('🎗️','Ceinture de force','Elle t\'aide à GAINER le tronc sur les gros soulevés (squat, soulevé de terre lourds). Tu pousses le ventre contre la ceinture → plus de pression = dos plus stable. À garder pour les séries lourdes, pas pour l\'échauffement.')
+        +card('🤚','Bandes de poignets (wrist wraps)','Soutiennent le poignet sur les pressions lourdes (développé couché, militaire). Elles évitent que le poignet parte en arrière. Utiles quand ça charge, inutiles léger.')
+        +card('🦵','Genouillères / bandes de genoux','Manchons (sleeves) : chaleur + maintien + un peu de rebond au squat, protègent l\'articulation. Bandes (wraps) : très serrées, gros rebond, réservées à la force athlétique lourde.')
+        +card('🪢','Sangles / straps (grip)','Elles accrochent la barre à tes poignets quand tes mains lâchent avant tes muscles (tirages, soulevés, shrugs lourds). Pratique pour le dos — mais travaille aussi ta prise sans, pour ne pas la négliger.')
+        +card('👕','Maillot / combinaison de force','En force athlétique « équipée » : combinaisons de squat/soulevé et chemises de bench très rigides qui renvoient de la force. C\'est un monde à part (compétitions spécifiques), pas nécessaire pour progresser.')
+        +card('👟','Les chaussures','Haltéro/squat : chaussure à talon rigide (meilleure profondeur, buste plus droit). Soulevé de terre : semelle PLATE et fine (chausson, Converse) pour être stable et proche du sol. Évite les grosses semelles moelleuses sous la barre.')
+        +card('🧗‍♂️','Craie / magnésie','Assèche les mains → bien meilleure prise sur la barre. Indispensable sur les soulevés lourds. Version liquide plus propre si ta salle interdit la poudre.')
+        +sec('🔥 Les techniques — monte en intensité')
+        +card('⚡','Superset','Deux exercices ENCHAÎNÉS sans repos (ex. biceps + triceps). Gain de temps + grosse congestion. Dans Force Tracker : bouton « ⚡ Grouper » en séance, ou « Superset » dans l\'éditeur de programme.')
+        +card('📉','Drop set','Tu vas à l\'échec, puis tu BAISSES la charge (~20%) et tu continues sans repos, une ou plusieurs fois. Brutal pour finir un muscle. Dispo via le bouton 📉 Drop.')
+        +card('⏸️','Rest-pause','À l\'échec, tu poses la barre 10-15s, puis tu arraches quelques reps de plus. Permet plus de reps avec la même charge lourde.')
+        +card('🔺','Pyramide','Tu montes la charge en baissant les reps série après série (ex. 12→10→8→6), ou l\'inverse. Bon mélange volume + force. Bouton 📈 +% en séance.')
+        +card('🐢','Tempo / Isométrie','Tu contrôles la vitesse (ex. 3s en descente) ou tu bloques en position basse quelques secondes. Plus de tension, meilleure technique, muscle sous pression plus longtemps.')
+        +card('💥','Pré-fatigue','Tu fatigues d\'abord le muscle avec un exercice d\'isolation, PUIS tu fais le polyarticulaire. Ex. écarté avant le développé couché → les pecs travaillent plus que les épaules/triceps.')
+        +'<div style="font-size:12px;color:var(--t3);line-height:1.5;padding:6px 2px 0;font-style:italic;">💡 Une technique à la fois, bien maîtrisée. L\'intensité, c\'est du bonus : la régularité et la progression des charges restent la base.</div>'
+        +'</div>';
+    })()
   },
   help: {
     title:'❓ Aide détaillée',
