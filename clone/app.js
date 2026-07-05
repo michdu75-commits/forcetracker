@@ -380,8 +380,9 @@ function updateProteinBar() {
 }
 
 // ─── ONBOARDING ──────────────────────────────────────────────
-let _obStep=1,_obGender='H',_obGoal='muscle',_obDataRestored=false;
+let _obStep=1,_obGender='H',_obGoal='muscle',_obLevel='',_obDataRestored=false;
 const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',force:'ob-gf',equilibre:'ob-ge',endurance:'ob-gen'};
+const _OB_LEVELS={debutant:'ob-lv-d',intermediaire:'ob-lv-i',confirme:'ob-lv-c'};
 
 function _initOb0(){
   if(_isStandalone())return;
@@ -419,8 +420,15 @@ function initOnboarding(){
   if(document.documentElement.classList.contains('ob-done'))return;
   const emailInp=document.getElementById('ob-email');
   if(emailInp){emailInp.setAttribute('enterkeyhint','done');emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});}
-  // step 3 : prénom → age → taille → poids en chaîne
-  const ob3=[['ob-name','ob-age'],['ob-age','ob-ht'],['ob-ht','ob-bw'],['ob-bw',null]];
+  // step 3 : prénom → age → taille → poids → naissance → poids visé en chaîne
+  const ob3=[['ob-name','ob-age'],['ob-age','ob-ht'],['ob-ht','ob-bw'],['ob-bw','ob-bday'],['ob-bday','ob-target'],['ob-target',null]];
+  // Naissance : insertion auto du "/" après le jour (JJ → JJ/)
+  const obBd=document.getElementById('ob-bday');
+  if(obBd)obBd.addEventListener('input',e=>{
+    let v=e.target.value.replace(/[^\d/]/g,'');
+    if(v.length===2&&e.target.value.length>obBd._prevLen)v=v+'/';
+    obBd._prevLen=v.length;e.target.value=v.slice(0,5);
+  });
   ob3.forEach(([id,nextId])=>{
     const inp=document.getElementById(id);
     if(!inp)return;
@@ -466,6 +474,12 @@ function obNext(step){
     if(age>=14&&age<=80)S.age=age;
     if(ht>=100&&ht<=250)S.height=ht;
     if(bw>=20&&bw<=300){S.bw=bw;}
+    // Nouveaux champs (onboarding enrichi) — tous optionnels
+    const tw=parseFloat((document.getElementById('ob-target')||{}).value)||0;
+    if(tw>=20&&tw<=300)S.targetWeight=tw;
+    const bd=((document.getElementById('ob-bday')||{}).value||'').trim();
+    if(/^\d{1,2}\/\d{1,2}$/.test(bd))S.bday=bd;
+    if(_obLevel)S.level=_obLevel;
   }else if(_obStep===4){
     S.goal=_obGoal;
   }
@@ -486,6 +500,12 @@ function obSetGoal(g){
   _obGoal=g;
   Object.values(_OB_GOALS).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('ob-sel');});
   const el=document.getElementById(_OB_GOALS[g]);if(el)el.classList.add('ob-sel');
+}
+
+function obSetLevel(l){
+  _obLevel=l;
+  Object.values(_OB_LEVELS).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('ob-sel');});
+  const el=document.getElementById(_OB_LEVELS[l]);if(el)el.classList.add('ob-sel');
 }
 
 function obShowRestore(){
@@ -552,7 +572,7 @@ function finishOnboarding(){
   persist();
   if(S.email&&S.url&&!_obDataRestored){
     // Nouveau profil uniquement — si restauration depuis cloud, on ne réécrit JAMAIS le Sheet
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,welcome:true};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,welcome:true};
     fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }
   localStorage.setItem('ft4_ob2','1');
@@ -687,27 +707,97 @@ function closeInstall(){
 // ─── ADMIN MODE ──────────────────────────────────────────────
 // _adminMode : initialisé sur window dans <head> de index.html (window._adminMode=false)
 var _adminTaps=0,_adminTimer=null;
+// L'appareil est-il autorisé à ouvrir l'admin ? (email admin OU déverrouillé une fois par code)
+function _isAdminEmail(){
+  const e=(S.email||'').trim().toLowerCase();
+  return (typeof ADMIN_EMAILS!=='undefined'?ADMIN_EMAILS:['michdu75@gmail.com']).indexOf(e)>=0;
+}
+function _isAdminUnlocked(){
+  try{ if(localStorage.getItem('ft4_admin_ok')==='1')return true; }catch(e){}
+  return _isAdminEmail();
+}
 function onLogoTap(){
   _adminTaps++;
   clearTimeout(_adminTimer);
   if(_adminTaps>=5){
     _adminTaps=0;
-    window._adminMode=!window._adminMode;
-    const bar=document.getElementById('setup-tabs-bar');
-    if(bar)bar.style.display=window._adminMode?'flex':'none';
-    if(window._adminMode){
-      if(!S.email){S.email='michdu75@gmail.com';persist();}
-      const eInp=document.getElementById('email-inp');
-      if(eInp)eInp.value=S.email||'michdu75@gmail.com';
-      goScreen('setup',document.getElementById('nb-setup'));
-      switchSetupTab('connexion',document.getElementById('stab-connexion'));
-    }else{
-      switchSetupTab('profil',document.getElementById('stab-profil'));
-    }
-    toast(window._adminMode?'🔧 Mode admin activé':'Mode admin désactivé','info');
+    if(!_isAdminUnlocked()){ _promptAdminCode(); return; } // ni email admin ni code → demander le code
+    _toggleAdminMode();
     return;
   }
   _adminTimer=setTimeout(()=>{_adminTaps=0;},1500);
+}
+function _toggleAdminMode(){
+  window._adminMode=!window._adminMode;
+  const bar=document.getElementById('setup-tabs-bar');
+  if(bar)bar.style.display=window._adminMode?'flex':'none';
+  if(window._adminMode){
+    if(!S.email){S.email='michdu75@gmail.com';persist();}
+    const eInp=document.getElementById('email-inp');
+    if(eInp)eInp.value=S.email||'michdu75@gmail.com';
+    goScreen('setup',document.getElementById('nb-setup'));
+    switchSetupTab('connexion',document.getElementById('stab-connexion'));
+  }else{
+    switchSetupTab('profil',document.getElementById('stab-profil'));
+  }
+  toast(window._adminMode?'🔧 Mode admin activé':'Mode admin désactivé','info');
+}
+
+// ── MODE DÉMO (super admin) ──────────────────────────────────
+// Montrer les fonctions à quelqu'un SANS toucher son compte : gèle toute sauvegarde
+// (local + cloud). En quittant, on recharge les vraies données depuis localStorage.
+function enterDemoMode(){
+  if(!_isAdminUnlocked()){toast('Réservé à l\'admin','error');return;}
+  if(window._demoMode)return;
+  // S'assurer que le localStorage contient bien les vraies données à jour AVANT de geler
+  try{persist();}catch(e){}
+  window._demoMode=true;
+  const rt=document.getElementById('root');if(rt)rt.classList.add('demo-on');
+  toast('🎬 Mode démo activé — rien ne sera enregistré','info');
+}
+function exitDemoMode(){
+  if(!window._demoMode)return;
+  window._demoMode=false;
+  // Recharge les vraies données depuis localStorage → annule tout ce qui a été fait en démo
+  try{load();}catch(e){}
+  const rt=document.getElementById('root');if(rt)rt.classList.remove('demo-on');
+  try{renderHome();}catch(e){}
+  try{renderNutrition();}catch(e){}
+  try{renderSetup();}catch(e){}
+  try{renderLog();}catch(e){}
+  try{goScreen('home',document.getElementById('nb-home'));}catch(e){}
+  toast('✅ Tes vraies données sont de retour','success');
+}
+// Demande le code de secours (appareil sans email admin) — overlay simple
+function _promptAdminCode(){
+  let ov=document.getElementById('ov-admin-code');
+  if(!ov){
+    ov=document.createElement('div');ov.className='overlay';ov.id='ov-admin-code';
+    ov.onclick=e=>{if(e.target===ov)ov.classList.remove('open');};
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML='<div class="modal" style="max-width:340px;padding:22px 18px;">'
+    +'<div style="font-size:17px;font-weight:800;color:var(--t1);margin-bottom:6px;">🔒 Accès admin</div>'
+    +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:16px;">Réservé au propriétaire. Entre le code d\'accès.</div>'
+    +'<input type="password" id="admin-code-inp" inputmode="numeric" autocomplete="off" placeholder="Code" style="width:100%;box-sizing:border-box;margin-bottom:14px;" onkeydown="if(event.key===\'Enter\')_submitAdminCode()">'
+    +'<button class="btn btn-red" style="width:100%;" onclick="_submitAdminCode()">Déverrouiller</button>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;" onclick="document.getElementById(\'ov-admin-code\').classList.remove(\'open\')">Annuler</button>'
+    +'</div>';
+  ov.classList.add('open');
+  setTimeout(()=>{const i=document.getElementById('admin-code-inp');if(i)i.focus();},80);
+}
+function _submitAdminCode(){
+  const inp=document.getElementById('admin-code-inp');
+  const val=inp?inp.value:'';
+  const code=(typeof ADMIN_CODE!=='undefined')?ADMIN_CODE:'';
+  if(val&&code&&val===code){
+    try{localStorage.setItem('ft4_admin_ok','1');}catch(e){}
+    document.getElementById('ov-admin-code')?.classList.remove('open');
+    _toggleAdminMode();
+  }else{
+    toast('Code incorrect','error');
+    if(inp){inp.value='';inp.focus();}
+  }
 }
 
 function switchSetupTab(tab,btn){
@@ -1021,7 +1111,16 @@ load();
     }
   }catch(e){}
 })();
-(async()=>{let cv='?';try{const ks=await caches.keys();cv=ks.find(k=>k.startsWith('ft-v'))||'?';}catch(e){}console.log('[FT] boot',cv,'— _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'_premiumPending=',window._premiumPending,'openRestoreAccount=',typeof openRestoreAccount);})();
+// Remplit les libellés de version (.app-ver) avec le VRAI build tournant (cache SW ft-vNN) → jamais périmé
+function _setAppVersionEls(){
+  if(!('caches' in window))return;
+  caches.keys().then(keys=>{
+    const ft=(keys||[]).find(k=>k&&k.startsWith('ft-v'));
+    if(!ft)return;
+    document.querySelectorAll('.app-ver').forEach(el=>{el.textContent=ft;});
+  }).catch(()=>{});
+}
+(async()=>{let cv='?';try{const ks=await caches.keys();cv=ks.find(k=>k.startsWith('ft-v'))||'?';}catch(e){}try{_setAppVersionEls();}catch(e){}console.log('[FT] boot',cv,'— _adminMode=',window._adminMode,'_curScreen=',window._curScreen,'_premiumPending=',window._premiumPending,'openRestoreAccount=',typeof openRestoreAccount);})();
 // Garantie : le timer de repos ne survit jamais à un redémarrage ni à un retour au premier plan
 stopRest();
 document.addEventListener('visibilitychange',()=>{
@@ -1353,7 +1452,10 @@ function _reloadForUpdate(){
 }
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').then(reg=>{
+    // updateViaCache:'none' → le navigateur NE met JAMAIS le fichier sw.js en cache HTTP
+    // pour les vérifs de mise à jour. Corrige le bug iOS « app collée à l'ancienne version »
+    // (GitHub Pages cachait sw.js ~10 min → les updates n'étaient pas détectées tout de suite).
+    navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
       reg.update(); // vérification immédiate au démarrage (PWA standalone inclus)
       setInterval(()=>reg.update(), 5*60*1000); // re-vérif toutes les 5 min
       document.addEventListener('visibilitychange',()=>{

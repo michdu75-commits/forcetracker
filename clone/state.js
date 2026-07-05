@@ -8,7 +8,7 @@ let S={
   sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
   url:DEFAULT_URL,email:'',connected:false,
   nutritionPhase:'charge',
-  customExercises:[],
+  customExercises:[],exPhotos:{},
   neck:0,waist:0,hip:0,
   goal:'muscle',
   sleepLog:[],
@@ -51,10 +51,16 @@ function load(){
     S.cycle=JSON.parse(localStorage.getItem('ft4_cycle')||'null');
     S.nutritionPhase=localStorage.getItem('ft4_nphase')||'charge';
     S.customExercises=JSON.parse(localStorage.getItem('ft4_cuex')||'[]');
+    S.exPhotos=JSON.parse(localStorage.getItem('ft4_exphotos')||'{}');
     S.neck=parseFloat(localStorage.getItem('ft4_neck')||'0')||0;
     S.waist=parseFloat(localStorage.getItem('ft4_waist')||'0')||0;
     S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
+    S.targetWeight=parseFloat(localStorage.getItem('ft4_target')||'0')||0;
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
+    S.discipline=localStorage.getItem('ft4_discipline')||'muscu';
+    S.level=localStorage.getItem('ft4_level')||''; // '' | 'debutant' | 'intermediaire' | 'confirme' (niveau déclaré, évolue avec les séances)
+    S.levelAuto=localStorage.getItem('ft4_levelAuto')==='1'; // true si le niveau a été promu automatiquement (évite de re-fêter)
+    S.beginnerJourney=JSON.parse(localStorage.getItem('ft4_bjourney')||'null'); // parcours débutant : {style,freq,startDate,phase}
     S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
     S.weightLog=JSON.parse(localStorage.getItem('ft4_wlog')||'[]');
     S.name=localStorage.getItem('ft4_name')||'';
@@ -75,6 +81,7 @@ function load(){
     S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
     S.mealPlan=JSON.parse(localStorage.getItem('ft4_mealplan')||'null');
     S.healthProfile=JSON.parse(localStorage.getItem('ft4_health')||'null');
+    S.bodyStudy=JSON.parse(localStorage.getItem('ft4_bodystudy')||'null');
     S.a11y=localStorage.getItem('ft4_a11y')==='1';
     S.colorblind=localStorage.getItem('ft4_cb')||'';
     S.leftHand=localStorage.getItem('ft4_lh')==='1';
@@ -135,6 +142,8 @@ function load(){
   }catch(e){}
 }
 function persist(){
+  // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
+  if(window._demoMode)return;
   try{
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_gender',S.gender);
@@ -143,6 +152,7 @@ function persist(){
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+    localStorage.setItem('ft4_cycle',JSON.stringify(S.cycle||null)); // cycle de force : local-first (était lu mais jamais écrit)
     // Brouillon de secours — effacé quand séance vide ou après sauvegarde dans finishWorkout()
     if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
       localStorage.setItem('ft4_wkt_draft',JSON.stringify(S.wkt));
@@ -163,10 +173,16 @@ function persist(){
     localStorage.setItem('ft4_morpho',S.morpho||'');
     localStorage.setItem('ft4_morphot',S.morphotype||'');
     localStorage.setItem('ft4_cuex',JSON.stringify(S.customExercises||[]));
+    localStorage.setItem('ft4_exphotos',JSON.stringify(S.exPhotos||{}));
     localStorage.setItem('ft4_neck',S.neck||0);
     localStorage.setItem('ft4_waist',S.waist||0);
     localStorage.setItem('ft4_hip',S.hip||0);
+    localStorage.setItem('ft4_target',S.targetWeight||0);
     localStorage.setItem('ft4_goal',S.goal||'muscle');
+    localStorage.setItem('ft4_discipline',S.discipline||'muscu');
+    localStorage.setItem('ft4_level',S.level||'');
+    localStorage.setItem('ft4_levelAuto',S.levelAuto?'1':'0');
+    localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
     localStorage.setItem('ft4_name',S.name||'');
@@ -183,6 +199,7 @@ function persist(){
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
     localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
+    localStorage.setItem('ft4_bodystudy',JSON.stringify(S.bodyStudy||null));
     localStorage.setItem('ft4_a11y',S.a11y?'1':'0');
     localStorage.setItem('ft4_cb',S.colorblind||'');
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');

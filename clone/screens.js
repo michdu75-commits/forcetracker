@@ -8,11 +8,30 @@ function _closeAllPanels(){
   document.getElementById('drawer-backdrop')?.classList.remove('open');
 }
 function _markScreenSeen(screen){
-  const unseen=NEW_FEATURES.filter(f=>f.screen===screen&&!(S.seenFeatures||[]).includes(f.id));
+  // À l'ouverture d'un écran : on ne marque « vu » QUE les features SANS ancre.
+  // Les features ancrées (ex. Profil) ne se marquent qu'à l'ouverture de leur item précis
+  // → le point rouge reste sur la bonne ligne du menu tant que l'utilisateur ne l'a pas ouverte.
+  const unseen=NEW_FEATURES.filter(f=>f.screen===screen&&!f.anchor&&!(S.seenFeatures||[]).includes(f.id));
   if(!unseen.length)return;
   S.seenFeatures=[...(S.seenFeatures||[]),...unseen.map(f=>f.id)];
   localStorage.setItem('ft4_seen_ft',JSON.stringify(S.seenFeatures));
   _updateNewBadges();
+}
+// Marque des features précises comme vues (par id) — utilisé quand on ouvre l'item concerné
+function _markFeatureSeen(){
+  const ids=[].slice.call(arguments);
+  const seen=S.seenFeatures||[];
+  const add=ids.filter(id=>!seen.includes(id));
+  if(!add.length)return;
+  S.seenFeatures=[...seen,...add];
+  localStorage.setItem('ft4_seen_ft',JSON.stringify(S.seenFeatures));
+  _updateNewBadges();
+  _updateMenuDots();
+}
+// Marque vues toutes les features ancrées à un élément (ex. ouvrir la carte Profil)
+function _markAnchorSeen(anchorId){
+  const ids=NEW_FEATURES.filter(f=>f.anchor===anchorId).map(f=>f.id);
+  if(ids.length)_markFeatureSeen.apply(null,ids);
 }
 function _updateNewBadges(){
   const seen=S.seenFeatures||[];
@@ -22,6 +41,23 @@ function _updateNewBadges(){
     let dot=btn.querySelector('.new-dot');
     if(hasNew&&!dot){dot=document.createElement('span');dot.className='new-dot';btn.appendChild(dot);}
     else if(!hasNew&&dot)dot.remove();
+  });
+}
+// Points rouges INLINE dans le menu-drawer : sur chaque ligne (anchor) qui contient une nouveauté non vue.
+// Appelé à l'ouverture du menu → l'utilisateur voit OÙ est le neuf (Profil, etc.).
+function _updateMenuDots(){
+  const seen=S.seenFeatures||[];
+  const anchors={};
+  NEW_FEATURES.forEach(f=>{if(f.anchor&&!seen.includes(f.id))anchors[f.anchor]=true;});
+  // Retire d'abord tous les points existants (reset)
+  document.querySelectorAll('.menu-new-dot').forEach(d=>d.remove());
+  Object.keys(anchors).forEach(aid=>{
+    const el=document.getElementById(aid);if(!el)return;
+    const dot=document.createElement('span');
+    dot.className='menu-new-dot';
+    // Insère juste avant la flèche (dernier <svg> de la ligne) pour un placement propre
+    const arrow=el.querySelector(':scope > svg:last-of-type');
+    if(arrow)el.insertBefore(dot,arrow);else el.appendChild(dot);
   });
 }
 
@@ -39,7 +75,7 @@ function _applyScreen(id,btn){
   if(id==='log')renderLog();
   if(id==='progress')renderProgress();
   if(id==='nutrition'){renderNutrition();switchNuTab('macros',document.getElementById('ntab-macros'));}
-  if(id==='setup'){_resetMenuView();renderSetup();}
+  if(id==='setup'){_resetMenuView();renderSetup();_markAnchorSeen('menu-row-profil');}
   if(id==='cycle')renderCycleScreen();
   if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();}
   _markScreenSeen(id);
@@ -80,17 +116,22 @@ const _HELP_DATA={
   setup:{
     title:'👤 Profil',
     tips:[
+      {i:'📂',t:'Le Profil est organisé en sections repliables (Identité · Objectif · Discipline · Composition · Morphologie · Santé · Cycle · Accessibilité) : tape un titre pour l\'ouvrir. Le bouton "Enregistrer" confirme par une notification verte.'},
       {i:'⚖️',t:'Poids, taille et âge sont indispensables pour calculer ton TDEE (besoins caloriques) dans Nutrition.'},
       {i:'🎯',t:'L\'objectif (muscle, perte de poids, force, rééquilibrage...) adapte tes macros et les conseils du Coach IA.'},
+      {i:'🎽',t:'Discipline : choisis ta pratique (musculation, bodybuilding, force athlétique, haltérophilie) — le Coach IA adapte ses conseils à ta discipline.'},
+      {i:'🥉',t:'Ton niveau (Débutant/Intermédiaire/Confirmé, dans la section Discipline) : le Coach s\'adapte, et il évolue tout seul avec tes séances et tes records — l\'app te félicite quand tu passes au niveau supérieur.'},
       {i:'🏃',t:'Niveau d\'activité : sois honnête — le sous-estimer te fera manger trop peu, le surestimer trop.'},
       {i:'📏',t:'Tour de cou + taille (+ hanches) → composition corporelle automatique (% graisse, masse maigre, méthode US Navy).'},
       {i:'🧬',t:'Remplis ta morphologie (H/A/V/X/O) et ton morphotype (ecto/méso/endo) pour des conseils Coach IA vraiment personnalisés. Bouton 📸 pour analyse IA sur 3 photos.'},
+      {i:'🩺',t:'Section Santé (optionnelle) : coche tes conditions médicales et blessures — le Coach IA les prend en compte pour éviter les mouvements à risque. 🔒 Privé : visible seulement par toi (ton téléphone + ta sauvegarde perso).'},
       {i:'🎂',t:'Renseigne ta date d\'anniversaire (JJ/MM) pour débloquer le badge spécial si tu t\'entraînes le jour J.'},
     ],
     female:[
       {i:'🌸',t:'La date de tes premières règles permet à l\'app d\'adapter tes macros et conseils selon ta phase de cycle.'},
       {i:'💊',t:'Si tu prends une contraception hormonale, coche-le — le suivi de phase est désactivé car les fluctuations naturelles sont masquées.'},
-      {i:'📐',t:'Les hanches sont indispensables au calcul du % de graisse pour les femmes (méthode US Navy).'},
+      {i:'📐',t:'Les hanches (en plus du cou et de la taille) sont indispensables au calcul du % de graisse pour les femmes (méthode US Navy). Chez l\'homme, cou + taille suffisent.'},
+      {i:'🌷',t:'Endométriose : tu peux la cocher dans la section Santé — le Coach en tient compte (elle peut freiner la perte de poids et jouer sur la fatigue et l\'inflammation).'},
       {i:'🧬',t:'La morphologie féminine (Poire/Sablier/Rectangle/Triangle inv./Ronde) affine les recommandations d\'exercices et de nutrition du Coach IA.'},
     ]
   },
@@ -132,16 +173,24 @@ const _HELP_DATA={
       {i:'📊',t:'Bouton 📊 sur chaque exercice → graphique du poids max sur les 5 dernières séances.'},
       {i:'🏋️',t:'Le 1RM (Brzycki) s\'affiche en temps réel sous le type — utilise-le pour calibrer tes charges. Appuie sur ℹ️ pour l\'aide sur les types.'},
       {i:'📸',t:'Bouton 📸 pour importer un programme depuis une photo, un fichier Word ou Excel — l\'IA le convertit en séance automatiquement.'},
+      {i:'🌱',t:'Débutant ? Dans 📋 Mes Programmes, bouton vert « Créer mon parcours débutant » : 2 questions (2 ou 3 séances/sem, style Full Body ou Split) et hop, un programme sur mesure sur machines (sécurité), adapté à ton profil. Étape 1 gratuite sur 3 semaines. +2,5 kg le haut du corps, +5 kg les jambes quand tes séries passent. Les mouvements techniques (squat, couché, soulevé) se débloquent ensuite. Pense au cardio léger en fin de séance.'},
+      {i:'📄',t:'Exporter en PDF : dans 📋 Mes Programmes, le bouton 📄 PDF génère un vrai fichier PDF du programme (exercices, séries × reps, colonne « Poids » vide à remplir à la salle). Sur iPhone, le menu Partager s\'ouvre (Enregistrer dans Fichiers, envoyer par message…) ; sur ordi ça se télécharge. Marche même hors-ligne.'},
+      {i:'⏸️',t:'Bouton "Pause" en haut : fige le chrono de durée si tu dois t\'interrompre (appel, pause…). Le temps en pause n\'est pas compté dans la durée de la séance. Appuie sur "Reprendre" pour relancer.'},
+      {i:'🗑️',t:'Bouton "Vider" : retire tous les exercices d\'un coup si tu as chargé le mauvais programme. La séance reste ouverte et ton historique n\'est pas touché. (Le "✕" à côté annule complètement la séance.)'},
+      {i:'📷',t:'Photo sur n\'importe quel exercice : tape le ⋯ sur un exercice (perso OU de la bibliothèque) → "Ajouter/Changer la photo". Pratique pour coller la photo de TA machine sur un exercice existant. Dans la liste de choix, tape la petite photo à gauche pour la voir en grand (ça n\'ajoute pas l\'exercice). Ta photo reste privée à ton compte.'},
+      {i:'✏️',t:'Modifier un exercice perso : tape le ⋯ sur l\'exercice → "Modifier l\'exercice" (ou le ✎ dans la liste). Tu peux changer le nom, le groupe et les muscles — sans perdre ton historique ni tes records. Ne marche que sur TES exercices perso (les autres restent intacts).'},
     ],
     female:[]
   },
   coach:{
     title:'🤖 Coach IA',
     tips:[
-      {i:'💬',t:'Ton profil complet (poids, objectif, PRs, morphologie) est injecté automatiquement — pas besoin de te présenter à chaque fois.'},
+      {i:'💬',t:'Ton profil complet (poids, objectif, discipline, PRs, morphologie) est injecté automatiquement — pas besoin de te présenter à chaque fois.'},
+      {i:'🏋️',t:'Pendant une séance, le Coach la voit EN DIRECT : demande-lui un exercice équivalent si une machine est prise, un ajustement de charge, ou l\'ordre des exercices.'},
       {i:'🧠',t:'Mémoire intelligente (Premium) : le Coach résume et retient le fil de vos échanges entre sessions.'},
       {i:'📸',t:'Bouton 📷 pour envoyer une photo (analyse corpo ou morphologie). Bouton 📸 "Analyser ma morphologie" pour l\'analyse 3 angles (Premium).'},
       {i:'📋',t:'Analyse de programme IA (bouton 🤖 dans Programmes) : le Coach évalue ton programme et propose des améliorations.'},
+      {i:'🔗',t:'Bouton "Partager" sous chaque réponse : envoie-la (SMS, Notes, WhatsApp…) ou copie-la en un tap. Pratique pour garder un conseil ou l\'envoyer à un pote.'},
       {i:'🔓',t:'10 questions gratuites, puis Premium illimité (4,99 € / 2 mois via Ko-fi).'},
     ],
     female:[
@@ -195,11 +244,14 @@ function _initSwipe(){
     if(_sx===null)return;
     const dx=e.changedTouches[0].clientX-_sx;
     const dy=e.changedTouches[0].clientY-_sy;
+    const sel=_sel;               // capturer AVANT de réinitialiser (le guard _hScrollParent en dépend)
     _sx=_sy=_sel=null;
     if(document.querySelector('.overlay.open'))return; // overlay ouvert → pas de navigation
-    if(Math.abs(dx)<55)return;
-    if(Math.abs(dy)>Math.abs(dx)*0.65)return;
-    if(_hScrollParent(_sel))return;
+    if(Math.abs(dx)<110)return;                  // geste franc requis (était 55) → moins de changements d'onglet involontaires
+    if(Math.abs(dy)>Math.abs(dx)*0.5)return;     // doit être nettement horizontal (était 0.65)
+    // Ne pas naviguer si le geste part d'un contrôle (saisie kg/reps, boutons…) — évite les onglets qui sautent en séance
+    if(sel&&sel.closest&&sel.closest('input,textarea,select,button,a,.tbtn,.chk'))return;
+    if(_hScrollParent(sel))return;
     const idx=_SWIPE_ORDER.indexOf(window._curScreen);
     if(idx<0)return;
     if(dx<0&&idx<_SWIPE_ORDER.length-1){
@@ -302,8 +354,57 @@ function _renderHomeHero(){
     +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
 }
 
+// ─── Coach proactif — petit mot de Milo sur l'Accueil (brique 4) ──────────
+// Choisit LE message le plus pertinent du jour à partir des données locales
+// (aucun backend). Fermable, jamais 2× le même message le même jour.
+function _miloMessage(){
+  const sess=(S.sessions||[]).filter(s=>s.date);
+  const tStr=today();
+  const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
+  const daysSince=lastDate?Math.floor((new Date(tStr+'T12:00:00')-new Date(lastDate+'T12:00:00'))/864e5):null;
+  // Séances de la semaine ISO en cours (lundi → dimanche)
+  const now=new Date(tStr+'T12:00:00');
+  const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));
+  const monK=mon.toISOString().slice(0,10);
+  const weekCount=[...new Set(sess.map(s=>s.date))].filter(d=>d>=monK).length;
+  const rec=(typeof calcRecoveryScore==='function')?calcRecoveryScore():null;
+  // Priorité : réengagement > relance > récup > lendemain > régularité
+  if(daysSince!==null&&daysSince>=10)
+    return {id:'retour',txt:'Content de te revoir 👋 On reprend tranquille — pas de record aujourd\'hui, on remet la machine en route.'};
+  if(daysSince!==null&&daysSince>=4)
+    return {id:'relance',txt:'Ça fait '+daysSince+' jours 👀 On se refait une séance aujourd\'hui ?'};
+  if(rec!==null&&rec<40&&daysSince!==null&&daysSince>=1)
+    return {id:'recup',txt:'Nuit courte ces derniers jours — vise plutôt une séance légère aujourd\'hui, et dors tôt ce soir. 😴'};
+  if(daysSince===1)
+    return {id:'lendemain',txt:'Bien joué pour hier 💪 Pense à bien manger et à récupérer aujourd\'hui.'};
+  if(weekCount>=3)
+    return {id:'regularite',txt:weekCount+' séances cette semaine 🔥 Tu tiens le rythme, continue comme ça !'};
+  return null;
+}
+function _renderMiloCard(){
+  const el=document.getElementById('home-milo');if(!el)return;
+  const m=_miloMessage();
+  if(!m){el.innerHTML='';return;}
+  let dism=null;try{dism=JSON.parse(localStorage.getItem('ft4_milo')||'null');}catch(e){}
+  if(dism&&dism.date===today()&&dism.id===m.id){el.innerHTML='';return;}
+  const name=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
+  el.innerHTML='<div class="milo-card ft-press" onclick="_openMiloChat()">'
+    +'<div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'
+    +'<div style="flex:1;min-width:0;"><div class="milo-name">'+name+'</div><div class="milo-txt">'+m.txt+'</div></div>'
+    +'<button class="milo-x" onclick="event.stopPropagation();_dismissMilo(\''+m.id+'\')" aria-label="Fermer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
+    +'</div>';
+}
+function _dismissMilo(id){
+  try{localStorage.setItem('ft4_milo',JSON.stringify({date:today(),id}));}catch(e){}
+  const el=document.getElementById('home-milo');if(el)el.innerHTML='';
+}
+function _openMiloChat(){
+  try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
+}
+
 function renderHome(){try{
   _renderHomeHdr();
+  _renderMiloCard();
   _renderHomeHero();
   const now=new Date();
   const mo=S.sessions.filter(s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
@@ -314,16 +415,17 @@ function renderHome(){try{
   const volDisp=vol>9999?(Math.round(vol/100)/10)+'k':Math.round(vol);
   const statsEl=document.getElementById('home-stats');
   // Restylage maquette : grille 2×2 de cartes (icône + chiffre + label) — mêmes données, mêmes clics
-  const _sc=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:13px 14px;-webkit-tap-highlight-color:transparent;">'
-    +'<div style="width:32px;height:32px;border-radius:9px;background:'+icBg+';display:flex;align-items:center;justify-content:center;margin-bottom:10px;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
+  const _sc=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+    +'<div style="width:34px;height:34px;border-radius:10px;background:'+icBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
+    +'<div style="text-align:right;min-width:0;">'
     +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:800;line-height:1;">'+valHtml+'</div>'
-    +'<div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-top:6px;">'+label+'</div></div>';
+    +'<div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-top:5px;white-space:nowrap;">'+label+'</div></div></div>';
   const _moName=now.toLocaleDateString('fr-FR',{month:'long'});
   if(statsEl)statsEl.innerHTML='<div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 3px 9px;"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
     +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>','rgba(255,106,115,.14)','var(--red)','<span id="h-vol" style="color:var(--t1)">'+volDisp+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Volume')
     +_sc("goScreen('progress',document.getElementById('nb-progress'))",'<path d="M6 12h12M4 9v6M8 8v8M16 8v8M20 9v6"/>','rgba(234,179,8,.14)','var(--gold)','<span id="h-big3" style="color:var(--orange)">'+(b3>0?Math.round(b3):'—')+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Big 3 · 1RM')
-    +_sc(null,'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois')
+    +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois')
     +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+fmt(bwDisp)+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps')
     +'</div>';
   const b3Lvl=BIG3.map(ex=>{const pr=S.prs[ex];const rm=pr?pr.rm1:0;return(S.bw&&S.age&&rm)?getLevel(ex,rm,S.bw,S.gender,S.age).name:'—';});

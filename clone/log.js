@@ -10,15 +10,25 @@ function _releaseWakeLock(){
 
 // ─── CHRONO DURÉE SÉANCE ─────────────────────────────────────
 let _wktChronoIv=null;
+// Temps écoulé réel (ms), en retirant le temps passé EN PAUSE.
+// pausedTotal = pauses déjà cumulées ; pausedAt = timestamp de la pause en cours (ou null).
+function _wktElapsedMs(){
+  if(!S.wkt||!S.wkt.startTs)return 0;
+  const paused=S.wkt.pausedTotal||0;
+  const end=S.wkt.pausedAt||Date.now(); // en pause → on fige au moment de la pause
+  return Math.max(0,end-S.wkt.startTs-paused);
+}
+function _isWktPaused(){return!!(S.wkt&&S.wkt.pausedAt);}
 function _fmtElapsed(){
   if(!S.wkt||!S.wkt.startTs)return'0:00';
-  const sec=Math.floor((Date.now()-S.wkt.startTs)/1000);
+  const sec=Math.floor(_wktElapsedMs()/1000);
   const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
   if(h>0)return h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
   return m+':'+(s<10?'0':'')+s;
 }
 function _startWktChrono(){
   if(_wktChronoIv)clearInterval(_wktChronoIv);
+  if(_isWktPaused())return; // en pause : pas de tick (le chrono reste figé)
   _wktChronoIv=setInterval(()=>{
     const el=document.getElementById('wkt-chrono');
     if(!el){clearInterval(_wktChronoIv);_wktChronoIv=null;return;}
@@ -26,6 +36,44 @@ function _startWktChrono(){
   },1000);
 }
 function _stopWktChrono(){if(_wktChronoIv){clearInterval(_wktChronoIv);_wktChronoIv=null;}}
+// Bouton Pause/Reprendre (affiché tant que la séance tourne, avec ou sans exos)
+function _pauseBtnHtml(){
+  if(!S.wkt||!S.wkt.startTs)return'';
+  const p=_isWktPaused();
+  const ico=p
+    ?'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg>'
+    :'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  return '<button id="wkt-pause-btn" onclick="toggleWktPause()" style="padding:7px 10px;border-radius:10px;border:1px solid '+(p?'rgba(255,159,10,.45)':'var(--sep)')+';background:'+(p?'rgba(255,159,10,.14)':'var(--bg3)')+';color:'+(p?'var(--orange)':'var(--t2)')+';font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;">'+ico+(p?'Reprendre':'Pause')+'</button>';
+}
+// Rafraîchit l'affichage chrono + bouton sans re-render complet
+function _syncWktPauseUI(){
+  const c=document.getElementById('wkt-chrono');
+  if(c){c.textContent=_fmtElapsed();c.style.color=_isWktPaused()?'var(--orange)':'var(--t3)';}
+  const b=document.getElementById('wkt-pause-btn');
+  if(b)b.outerHTML=_pauseBtnHtml();
+}
+// Met la séance en pause ou la reprend — fige/relance le chrono de durée.
+// Le temps en pause n'est PAS compté dans la durée finale de la séance.
+function toggleWktPause(){
+  if(!S.wkt||!S.wkt.startTs)return;
+  if(_isWktPaused()){
+    // Reprendre : cumule la pause qui vient de se terminer
+    S.wkt.pausedTotal=(S.wkt.pausedTotal||0)+(Date.now()-S.wkt.pausedAt);
+    S.wkt.pausedAt=null;
+    persist();
+    _startWktChrono();
+    _syncWktPauseUI();
+    toast('Séance reprise','info');
+  }else{
+    // Pause : fige le chrono + coupe un éventuel repos en cours
+    S.wkt.pausedAt=Date.now();
+    _stopWktChrono();
+    if(typeof stopRest==='function')stopRest();
+    persist();
+    _syncWktPauseUI();
+    toast('Séance en pause ⏸','info');
+  }
+}
 
 // Ré-acquérir + resync des deux chronos au retour au premier plan
 document.addEventListener('visibilitychange',()=>{
@@ -67,8 +115,9 @@ function renderLog(){
   const hasExs=S.wkt&&S.wkt.exs&&S.wkt.exs.length>0;
   if(hdr)hdr.innerHTML='<div style="display:flex;align-items:center;gap:8px;padding-bottom:10px;">'
     +'<span style="font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);flex:1;">Séance</span>'
-    +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:var(--t3);letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
+    +'<span id="wkt-chrono" style="font-family:\'SF Mono\',ui-monospace,monospace;font-size:14px;font-weight:700;color:'+(_isWktPaused()?'var(--orange)':'var(--t3)')+';letter-spacing:.04em;flex-shrink:0;">'+_fmtElapsed()+'</span>'
     +'<span id="log-hdr-btns" style="display:flex;gap:8px;">'
+    +_pauseBtnHtml()
     +(hasExs?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>':'')
     +(hasExs?'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>':'')
     +'</span>'
@@ -337,7 +386,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
   // Vue réduite
   if(!isExpanded){
     const _dsLbl=ex.dropset?'palier':'série';
-    const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}${ex.note?' 💬':''}`;
+    const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
+    const notePreview=ex.note?`<div style="font-size:11.5px;color:var(--gold);font-style:italic;line-height:1.4;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">💬 ${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
     const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':(!_groupMode?'opacity:.75':'');
     const clickAttr=_groupMode
       ?` onclick="toggleGroupSelect(${ei})" style="cursor:pointer;${selStyle}"`
@@ -350,6 +400,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`</div>`
       +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div>`
+      +notePreview
       +(!_groupMode&&!inGroup&&!ex.group&&!ex.dropset
         ?`<div style="display:flex;gap:4px;padding:2px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
           +`<button class="btn-xs" style="font-size:10px;color:var(--orange);border-color:rgba(255,109,0,.2);padding:2px 7px;" onclick="createSupersetFrom(${ei})">⚡ Super</button>`
@@ -361,14 +412,14 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
   }
 
   // Vue développée
-  const _exyt=EX_YT[ex.name];const hasLocalGif=!!(_exyt&&_exyt.img);
+  const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
   const rows=ex.sets.map((set,si)=>{
     const p=prev[si]||prev[Math.max(0,prev.length-1)];
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
-      +`<div class="sprev">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}</div>`
+      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
       +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
@@ -433,7 +484,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
 
   return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
-    +`${hasLocalGif?'<img src="'+_exyt.img+'" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
+    +`${hasLocalGif?'<img src="'+_exImgSrc+'" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
@@ -525,6 +576,8 @@ function openExMenu(ei,hasGif){
   }
   const {nm}=_exMenuCtx;
   const safeNm=nm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const isCustom=(S.customExercises||[]).some(e=>e.n===nm);
+  const hasUserPhoto=_hasUserPhoto(nm);
   const mRow=(icon,lbl,action)=>`<button onclick="${action}" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:manipulation;">`
     +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">${icon}</span>`
     +`<span style="font-size:15px;color:var(--t1);font-weight:500;">${lbl}</span>`
@@ -532,6 +585,10 @@ function openExMenu(ei,hasGif){
   ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
+    +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
+    +mRow('📷',hasUserPhoto?'Changer la photo':'Ajouter une photo',`closeExMenu();changeExImg('${safeNm}')`)
+    +(hasUserPhoto?mRow('🖼️','Voir la photo',`closeExMenu();_viewExPhoto('${safeNm}')`):'')
+    +(hasUserPhoto?mRow('🗑️','Retirer la photo',`closeExMenu();removeExImg('${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
     +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchmove="event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;">`
@@ -555,16 +612,71 @@ function openExHistory(name){
   }
   const inner=data.length>=2?_buildExHistChart(data)
     :`<div style="text-align:center;padding:20px 0;color:var(--t3);font-size:13px;">Pas encore assez d'historique —<br>reviens après 2 séances !</div>`;
+  // Progression des charges en % (1re → dernière séance affichée)
+  let progHtml='';
+  if(data.length>=2){
+    const first=data[0].kg,last=data[data.length-1].kg;
+    const diff=Math.round((last-first)*10)/10;
+    const pct=first>0?Math.round((last-first)/first*1000)/10:0;
+    const col=diff>0?'var(--green)':diff<0?'var(--red)':'var(--t2)';
+    const arrow=diff>0?'📈':diff<0?'📉':'➖';
+    progHtml=`<div style="text-align:center;margin:-2px 0 12px;font-size:13px;color:var(--t3);line-height:1.5;">`
+      +`<b style="color:var(--t1)">${first} kg</b> → <b style="color:var(--t1)">${last} kg</b><br>`
+      +`<span style="font-weight:800;color:${col};font-size:14px;">${arrow} ${diff>=0?'+':''}${diff} kg (${pct>=0?'+':''}${pct}%)</span> <span style="font-size:12px;">sur ${data.length} séances</span>`
+      +`</div>`;
+  }
   el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 18px;box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`
     +`<div style="font-weight:800;font-size:15px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">${name}</div>`
     +`<button onclick="closeExHistory()" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:none;font-size:15px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>`
-    +`</div>${inner}`
+    +`</div>${progHtml}${inner}`
     +`<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px;">Poids max · 5 dernières séances</div>`
     +`</div>`;
   el.classList.add('open');
 }
 function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)el.classList.remove('open');}
+
+// ── Note par série (dans la colonne « précédent ») ──
+function _escNote(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function _setPrevNote(set,p){
+  if(set&&set.note)return `<div style="font-size:9.5px;color:var(--gold);line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(set.note)}</div>`;
+  if(p&&p.note)return `<div style="font-size:9.5px;color:var(--t3);font-style:italic;line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(p.note)}</div>`;
+  return '';
+}
+let _setNoteCtx=null;
+function openSetNote(ei,si){
+  const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];if(!set)return;
+  _setNoteCtx={ei,si};
+  let ov=document.getElementById('ov-set-note');
+  if(!ov){ov=document.createElement('div');ov.className='overlay';ov.id='ov-set-note';ov.onclick=e=>{if(e.target===ov)closeSetNote();};document.body.appendChild(ov);}
+  ov.innerHTML=`<div class="modal" style="max-width:360px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:900;font-size:16px;margin-bottom:3px;text-align:center;">💬 Note — série ${si+1}</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:12px;">Une info à retrouver la prochaine fois (réglage machine, sensation, technique…). Elle s'affichera dans « précédent ».</div>
+    <textarea id="set-note-ta" rows="3" style="width:100%;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);padding:10px;font-size:15px;font-family:var(--font);resize:none;box-sizing:border-box;outline:none;" placeholder="Ex: cran 4 sur la machine, prise serrée, dos bien calé…">${_escNote(set.note)}</textarea>
+    <div style="margin-top:12px;display:flex;gap:8px;">
+      ${set.note?`<button class="btn btn-bg2" style="flex:1;color:var(--red);" onclick="deleteSetNote()">🗑 Retirer</button>`:''}
+      <button class="btn btn-red" style="flex:2;" onclick="saveSetNote()">Enregistrer</button>
+    </div>
+  </div>`;
+  ov.classList.add('open');
+  setTimeout(()=>{const ta=document.getElementById('set-note-ta');if(ta)ta.focus();},80);
+}
+function closeSetNote(){const ov=document.getElementById('ov-set-note');if(ov)ov.classList.remove('open');_setNoteCtx=null;}
+function saveSetNote(){
+  if(!_setNoteCtx)return;const {ei,si}=_setNoteCtx;
+  const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];if(!set){closeSetNote();return;}
+  const ta=document.getElementById('set-note-ta');const v=ta?ta.value.trim():'';
+  if(v)set.note=v;else delete set.note;
+  persist();closeSetNote();renderExBlocks();
+  toast('Note enregistrée 💬','success');
+}
+function deleteSetNote(){
+  if(!_setNoteCtx)return;const {ei,si}=_setNoteCtx;
+  const set=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]&&S.wkt.exs[ei].sets[si];if(set)delete set.note;
+  persist();closeSetNote();renderExBlocks();
+  toast('Note retirée','info');
+}
 
 function renderExBlocks(){
   const c=document.getElementById('wkt-exs');
@@ -791,16 +903,30 @@ function clearWkt(){
     toast('Séance annulée','info');
   });
 }
+// Tout effacer : vide les exercices mais GARDE la séance ouverte (ex. mauvais programme chargé).
+// Ne touche PAS l'historique ni les records. Distinct de « ✕ Annuler la séance » (qui quitte).
+function clearAllEx(){
+  if(!(S.wkt&&S.wkt.exs&&S.wkt.exs.length))return;
+  showConfirm('Vider la séance ?','Tous les exercices en cours seront retirés — pratique si tu as chargé le mauvais programme. La séance reste ouverte (tu pourras en charger une autre). Ton historique et tes records ne sont pas touchés.',()=>{
+    stopRest();
+    S.wkt.exs=[];
+    _expandedEx=null;
+    persist();
+    renderLog();
+    toast('Séance vidée','info');
+  });
+}
 // Sync boutons ✕/Changer dans l'en-tête + repositionne le FAB
 // Appellé à chaque renderExBlocks() pour rester cohérent sans passer par renderLog() entier
 function _syncLogHdrBtns(){
   const el=document.getElementById('log-hdr-btns');
   if(!el)return;
   const hasExs=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
-  el.innerHTML=hasExs
+  el.innerHTML=_pauseBtnHtml()+(hasExs
     ?'<button onclick="clearWkt()" style="padding:7px 11px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">✕</button>'
+     +'<button onclick="clearAllEx()" style="padding:7px 10px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Vider</button>'
      +'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>'
-    :'';
+    :'');
   requestAnimationFrame(_positionFab);
 }
 // Appui maintenu 400ms requis pour déclencher la suppression (anti-effleurement)
@@ -1202,7 +1328,7 @@ async function finishWorkout(){
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Ajoute un exercice !','error');_finishing=false;return;}
   const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
   if(!hasDone){toast('Valide au moins une série !','error');_finishing=false;return;}
-  const duration=S.wkt.startTs?Math.floor((Date.now()-S.wkt.startTs)/1000):0;
+  const duration=Math.floor(_wktElapsedMs()/1000); // durée réelle, hors temps en pause
   let vol=0;
   S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
   const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration,progLabel:S.wkt.progLabel||''};
@@ -1263,6 +1389,7 @@ async function finishWorkout(){
   renderLog();
 
   checkBadges();
+  _checkLevelUp(!!_bestPr);
   _cloudSyncSessions();
   if(S.connected&&S.url){
     const ok=await syncSheets(sess);
@@ -1278,6 +1405,31 @@ async function finishWorkout(){
   if(_bestPr)setTimeout(()=>showPrCongrats(_bestPr),2400);
   _finishing=false;
 }
+
+// ── Niveau évolutif (débutant → intermédiaire → confirmé) ─────────────
+// Promotion automatique selon le nombre de séances OU l'atteinte d'un standard de force.
+// N'agit que si un niveau a été déclaré (onboarding ou profil) et pas déjà "confirmé".
+function _checkLevelUp(hasPr){
+  if(!S.level||S.level==='confirme')return;
+  const bw=S.bw||0;
+  const nSess=(S.sessions||[]).length;
+  const rm=n=>{const p=S.prs&&S.prs[n];return p&&p.rm1?p.rm1:0;};
+  const sq=rm('Squat à la Barre'),dc=rm('Développé Couché'),sdt=rm('Soulevé de Terre');
+  let target=null,from='';
+  if(S.level==='debutant'){
+    // → Intermédiaire : ~20 séances OU un Big 3 à ≥1× le poids de corps
+    if(nSess>=20 || (bw>0 && (sq>=bw||dc>=bw||sdt>=bw))){target='intermediaire';from='débutant';}
+  }else if(S.level==='intermediaire'){
+    // → Confirmé : ~75 séances OU standard avancé (Squat 1.5× / DC 1.25× / SDT 1.75× le poids de corps)
+    if(nSess>=75 || (bw>0 && (sq>=bw*1.5||dc>=bw*1.25||sdt>=bw*1.75))){target='confirme';from='intermédiaire';}
+  }
+  if(!target)return;
+  S.level=target;S.levelAuto=true;persist();
+  const lbl=target==='intermediaire'?'Intermédiaire':'Confirmé';
+  // Message de félicitation, décalé pour ne pas se cumuler avec le toast de fin / le popup PR
+  setTimeout(()=>toast(`🎉 Bravo ! Tu n'es plus ${from} — tu passes ${lbl} !`,'success'),hasPr?4400:1700);
+}
+
 function _showSaveError(){
   const el=document.getElementById('log-finish');if(!el)return;
   el.innerHTML=`<div style="margin-top:12px;background:rgba(255,45,85,.10);border:1.5px solid var(--red);border-radius:14px;padding:16px;">
@@ -1508,7 +1660,7 @@ function updateRMLive(ei,si){
 }
 let _restStep=15;
 let _restEx=null;
-let _cexMusclesP=[],_cexMusclesS=[];
+let _cexMusclesP=[],_cexMusclesS=[],_cexImg=null,_editingCustomExName=null;
 function _highlightRestPreset(sec){
   [60,90,120].forEach(v=>{const b=document.getElementById('rp-'+v);if(b)b.classList.toggle('rp-active',v===sec);});
 }
@@ -1546,7 +1698,15 @@ const EX_GROUPS=[
 let _exGrp=null;
 
 function _exPickRow(e){
-  return `<div class="ex-pick" onclick="addExercise('${e.n.replace(/'/g,"\\'")}')"><span class="ex-pick-name">${e.n}${e.custom?' <span style="font-size:10px;color:var(--purp);">✎</span>':''}</span><span class="ex-pick-grp">${e.g}</span></div>`;
+  const safe=e.n.replace(/'/g,"\\'");
+  // Slot photo TOUJOURS réservé (30px) → toutes les lignes alignées, avec ou sans photo.
+  // Tap sur la vignette = VOIR la photo en grand (n'ajoute PAS l'exercice).
+  const src=_exImg(e.n);
+  const thumb=src
+    ?`<img src="${src}" onclick="event.stopPropagation();_viewExPhoto('${safe}')" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);cursor:zoom-in;">`
+    :`<span style="width:30px;flex-shrink:0;margin-right:8px;" aria-hidden="true"></span>`;
+  const edit=e.custom?` <span onclick="event.stopPropagation();openEditCustomEx('${safe}')" title="Modifier" style="font-size:13px;color:var(--purp);cursor:pointer;padding:2px 6px;touch-action:manipulation;">✎</span>`:'';
+  return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}<span class="ex-pick-name">${e.n}${edit}</span><span class="ex-pick-grp">${e.g}</span></div>`;
 }
 function openExPicker(){
   _exGrp=null;
@@ -1616,16 +1776,182 @@ function toggleMuscleChip(key,type){
   _renderCexChips();
 }
 function showCustomExForm(){
-  _cexMusclesP=[];_cexMusclesS=[];
+  _cexMusclesP=[];_cexMusclesS=[];_cexImg=null;_editingCustomExName=null;
   document.getElementById('custom-ex-form').style.display='flex';
   document.getElementById('custom-ex-add-btn').style.display='none';
-  _renderCexChips();
+  _renderCexChips();_renderCexImgPreview();_setCexFormMode(false);
 }
 function hideCustomExForm(){
   document.getElementById('custom-ex-form').style.display='none';
   document.getElementById('custom-ex-add-btn').style.display='';
   const n=document.getElementById('custom-ex-name');if(n)n.value='';
-  _cexMusclesP=[];_cexMusclesS=[];
+  _cexMusclesP=[];_cexMusclesS=[];_cexImg=null;_editingCustomExName=null;_renderCexImgPreview();_setCexFormMode(false);
+}
+// Bascule le libellé du formulaire perso entre « Créer » et « Enregistrer »
+function _setCexFormMode(editing){
+  const b=document.getElementById('cex-save-btn');if(b)b.textContent=editing?'Enregistrer':'Créer';
+  const t=document.getElementById('cex-form-title');if(t)t.textContent=editing?'Modifier l\'exercice':'Nouvel exercice';
+}
+// Ouvre le formulaire pré-rempli pour MODIFIER un exercice perso existant
+function openEditCustomEx(name){
+  const c=(S.customExercises||[]).find(e=>e.n===name);
+  if(!c){toast('Seuls les exercices perso sont modifiables','info');return;}
+  openExPicker();
+  showCustomExForm();
+  _editingCustomExName=name;
+  const ni=document.getElementById('custom-ex-name');if(ni)ni.value=c.n;
+  const gs=document.getElementById('custom-ex-grp');if(gs)gs.value=c.g;
+  _cexMusclesP=(c.muscles&&c.muscles.p)?[...c.muscles.p]:[];
+  _cexMusclesS=(c.muscles&&c.muscles.s)?[...c.muscles.s]:[];
+  _cexImg=c.img||null;
+  _renderCexChips();_renderCexImgPreview();_setCexFormMode(true);
+  setTimeout(()=>{document.getElementById('custom-ex-form')?.scrollIntoView({behavior:'smooth',block:'center'});},90);
+}
+// Renomme un exercice PARTOUT (historique, PRs, programmes, séance en cours) — pas de perte de données
+function _renameExEverywhere(o,n){
+  (S.sessions||[]).forEach(s=>{
+    (s.exs||[]).forEach(ex=>{if(ex.name===o)ex.name=n;});
+    (s.exercises||[]).forEach(ex=>{if(ex.name===o)ex.name=n;});
+  });
+  if((S.prs||{})[o]){
+    if(!S.prs[n]||(S.prs[o].rm1||0)>(S.prs[n].rm1||0))S.prs[n]=S.prs[o];
+    delete S.prs[o];
+  }
+  (S.programmes||[]).forEach(p=>{
+    (p.days||[]).forEach(d=>(d.exs||[]).forEach(ex=>{if(ex.name===o)ex.name=n;}));
+    (p.exs||[]).forEach(ex=>{if(ex.name===o)ex.name=n;});
+  });
+  if(S.wkt&&S.wkt.exs)S.wkt.exs.forEach(ex=>{if(ex.name===o)ex.name=n;});
+}
+// Enregistre les modifs d'un exercice perso existant
+function _saveCustomExEdit(newName,grp){
+  const oldName=_editingCustomExName;
+  const c=(S.customExercises||[]).find(e=>e.n===oldName);
+  if(!c){_editingCustomExName=null;hideCustomExForm();return;}
+  if(newName.toLowerCase()!==oldName.toLowerCase()){
+    const all=[...EXLIB,...(S.customExercises||[])];
+    const clash=all.find(e=>e.n.toLowerCase()===newName.toLowerCase());
+    if(clash){
+      // Nom déjà pris → proposer de FUSIONNER : déplacer l'historique dans l'exercice existant + supprimer le perso
+      showConfirm('Fusionner les exercices',
+        '« '+clash.n+' » existe déjà. Déplacer l\'historique et les records de « '+oldName+' » dans « '+clash.n+' », puis supprimer « '+oldName+' » ?',
+        ()=>_mergeCustomInto(oldName,clash.n),'Fusionner');
+      return;
+    }
+  }
+  const muscles=(_cexMusclesP.length||_cexMusclesS.length)?{p:[..._cexMusclesP],s:[..._cexMusclesS]}:null;
+  c.g=grp;
+  if(muscles)c.muscles=muscles; else delete c.muscles;
+  if(_cexImg)c.img=_cexImg; else delete c.img;
+  if(newName!==oldName){c.n=newName;_renameExEverywhere(oldName,newName);}
+  _editingCustomExName=null;
+  persist();
+  hideCustomExForm();
+  if(document.getElementById('mod-ex')&&document.getElementById('mod-ex').classList.contains('open'))filterEx();
+  if(S.wkt)renderExBlocks();
+  toast('Exercice modifié ✅','success');
+}
+// Fusionne un exercice perso dans un autre exercice existant : déplace séances/PRs/programmes, supprime le perso.
+function _mergeCustomInto(oldName,targetName){
+  _renameExEverywhere(oldName,targetName);
+  S.customExercises=(S.customExercises||[]).filter(e=>e.n!==oldName);
+  if(S.exPhotos&&S.exPhotos[oldName])delete S.exPhotos[oldName];
+  _editingCustomExName=null;
+  persist();
+  hideCustomExForm();
+  if(document.getElementById('mod-ex')&&document.getElementById('mod-ex').classList.contains('open'))filterEx();
+  if(S.wkt)renderExBlocks();
+  toast('Fusionné dans « '+targetName+' » ✅','success');
+}
+// ─── PHOTO D'EXERCICE PERSO ───────────────────────────────────
+// Réduit une image (fichier) en vignette légère (max 420px, JPEG) → data URI via callback
+function _resizeImgFile(file,cb){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=420;let w=img.width,h=img.height;
+      if(w>=h){if(w>max){h=Math.round(h*max/w);w=max;}}
+      else{if(h>max){w=Math.round(w*max/h);h=max;}}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      try{cb(cv.toDataURL('image/jpeg',0.72));}catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
+    };
+    img.onerror=()=>{if(typeof toast==='function')toast('Image illisible','error');};
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+// Photo choisie dans le formulaire de création
+function onCexImgSelected(input){
+  const file=input.files&&input.files[0];input.value='';
+  if(!file)return;
+  _resizeImgFile(file,d=>{_cexImg=d;_renderCexImgPreview();});
+}
+function _renderCexImgPreview(){
+  const el=document.getElementById('cex-img-preview');if(!el)return;
+  if(_cexImg){
+    el.innerHTML='<img src="'+_cexImg+'" style="width:52px;height:52px;object-fit:cover;border-radius:8px;border:1px solid var(--sep);">'
+      +'<button onclick="_clearCexImg()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);touch-action:manipulation;">Retirer</button>';
+    el.style.display='flex';
+  }else{el.innerHTML='';el.style.display='none';}
+}
+function _clearCexImg(){_cexImg=null;_renderCexImgPreview();}
+// Ajouter/changer la photo de N'IMPORTE quel exercice (perso OU bibliothèque).
+// Perso → stockée dans customExercises[].img (déjà synchro). Bibliothèque → dans S.exPhotos[name].
+function changeExImg(name){
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';
+  inp.onchange=()=>{
+    const file=inp.files&&inp.files[0];if(!file)return;
+    _resizeImgFile(file,d=>{
+      const c=(S.customExercises||[]).find(e=>e.n===name);
+      if(c){c.img=d;}
+      else{if(!S.exPhotos)S.exPhotos={};S.exPhotos[name]=d;}
+      persist();
+      if(S.wkt)renderExBlocks();
+      const md=document.getElementById('mod-ex');if(md&&md.classList.contains('open'))filterEx();
+      toast('Photo ajoutée ✅','success');
+    });
+  };
+  inp.click();
+}
+// Alias rétro-compat
+function changeCustomExImg(name){ changeExImg(name); }
+// Retirer une photo perso (revient à l'image par défaut si l'exercice en a une)
+function removeExImg(name){
+  const c=(S.customExercises||[]).find(e=>e.n===name);
+  if(c&&c.img)delete c.img;
+  if(S.exPhotos&&S.exPhotos[name])delete S.exPhotos[name];
+  persist();
+  if(S.wkt)renderExBlocks();
+  const md=document.getElementById('mod-ex');if(md&&md.classList.contains('open'))filterEx();
+  toast('Photo retirée','info');
+}
+// Source image d'un exercice — priorité : photo perso (custom OU bibliothèque) > image par défaut EX_YT
+function _exImg(name){
+  const c=(S.customExercises||[]).find(e=>e.n===name);
+  if(c&&c.img)return c.img;
+  if(S.exPhotos&&S.exPhotos[name])return S.exPhotos[name];
+  const y=EX_YT[name];if(y&&y.img)return y.img;
+  return null;
+}
+// A-t-il une photo PERSO (pas juste le gif par défaut) ?
+function _hasUserPhoto(name){
+  const c=(S.customExercises||[]).find(e=>e.n===name);
+  return !!((c&&c.img)||(S.exPhotos&&S.exPhotos[name]));
+}
+// Ouvre la photo d'un exercice en grand (tap sur la vignette) — n'ajoute PAS l'exercice
+function _viewExPhoto(name){
+  const src=_exImg(name);if(!src)return;
+  let ov=document.getElementById('ov-ex-photo');
+  if(!ov){ov=document.createElement('div');ov.id='ov-ex-photo';ov.className='overlay';ov.style.zIndex='500';ov.onclick=e=>{if(e.target===ov)ov.classList.remove('open');};document.body.appendChild(ov);}
+  ov.innerHTML='<div class="modal" style="max-width:92vw;padding:14px;text-align:center;">'
+    +'<div style="font-weight:800;font-size:15px;color:var(--t1);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+name+'</div>'
+    +'<img src="'+src+'" style="max-width:100%;max-height:68vh;border-radius:12px;display:block;margin:0 auto;">'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;" onclick="document.getElementById(\'ov-ex-photo\').classList.remove(\'open\')">Fermer</button>'
+    +'</div>';
+  ov.classList.add('open');
 }
 function _reportCustomEx(name,grp,muscles){
   if(!S.url)return;
@@ -1642,6 +1968,7 @@ function saveCustomEx(){
   const name=(document.getElementById('custom-ex-name').value||'').trim();
   const grp=document.getElementById('custom-ex-grp').value;
   if(!name){toast("Entre un nom d'exercice",'error');return;}
+  if(_editingCustomExName){ _saveCustomExEdit(name,grp); return; } // mode édition
   const all=[...EXLIB,...(S.customExercises||[])];
   if(all.find(e=>e.n.toLowerCase()===name.toLowerCase())){toast('Exercice déjà existant','error');return;}
   const similar=_findSimilar(name,all);
@@ -1662,7 +1989,7 @@ function saveCustomEx(){
 function _doCreateCustomEx(name,grp){
   if(!S.customExercises)S.customExercises=[];
   const muscles=(_cexMusclesP.length||_cexMusclesS.length)?{p:[..._cexMusclesP],s:[..._cexMusclesS]}:null;
-  S.customExercises.push({n:name,g:grp,custom:true,...(muscles&&{muscles})});
+  S.customExercises.push({n:name,g:grp,custom:true,...(muscles&&{muscles}),...(_cexImg&&{img:_cexImg})});
   persist();_reportCustomEx(name,grp,muscles);hideCustomExForm();filterEx();toast(name+' créé !','success');
 }
 
@@ -2290,7 +2617,7 @@ function loadProgDay(progIdx,dayIdx){
       reps:prev.length?prev[0].reps:(s.reps||10),
       type:s.type||'N',done:false,rm1:0,rest:s.rest||0
     }))};
-    if(e.group)obj.group=e.group; // propage le groupe superset
+    if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
     return obj;
   })};
   persist();closeDaySel();closeProgModal();
@@ -2298,6 +2625,102 @@ function loadProgDay(progIdx,dayIdx){
   goScreen('log',document.getElementById('nb-log'));
   renderExBlocks();
   toast('"'+prog.name+' — '+day.label+'" chargé ! 💪','success');
+}
+
+// ─── PARCOURS DÉBUTANT — Étape 1 « Découverte » (gratuit) ─────
+// Programme adapté : choix de fréquence (2/3 séances) + style (Full Body / Split),
+// nuance femme (un exo fessier en plus), machines guidées uniquement.
+// Objectif = 3 semaines. Les mouvements techniques (squat/couché/soulevé) et les
+// étapes suivantes (volume ↑, passage Intermédiaire) arrivent plus tard.
+const BEGINNER_PHASE1_WEEKS=3;
+function _beginnerProg(gender, style, freq){
+  const F = gender==='F';
+  freq = (freq===2)?2:3;
+  const _s3=(reps)=>[{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0}];
+  const ex=(name,reps)=>({name,sets:_s3(reps||12)}); // objet frais à chaque appel (pas de référence partagée)
+  let days, name;
+  if(style==='split'){
+    if(freq===3){
+      // Push / Pull / Legs
+      name='Premiers pas — Push/Pull/Legs';
+      const legs=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Poussée de Hanche Machine')];
+      if(F)legs.push(ex('Abduction Cuisses (Leg Abduction)'));
+      legs.push(ex('Gainage',30));
+      days=[
+        {label:'Poussée',exs:[ex('Chest Press Machine Horizontale'),ex('Pec Deck'),ex('Développé Épaules Machine'),ex('Élévations Latérales Machine'),ex('Triceps Machine')]},
+        {label:'Tirage',exs:[ex('Tirage Poulie Haute'),ex('Rowing Machine'),ex('Tirage Poulie Haute Prise Serrée'),ex('Curl Machine'),ex('Curl Incliné')]},
+        {label:'Jambes',exs:legs},
+      ];
+    }else{
+      // Haut / Bas (2 jours)
+      name='Premiers pas — Haut/Bas';
+      const bas=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Poussée de Hanche Machine')];
+      if(F)bas.push(ex('Abduction Cuisses (Leg Abduction)'));
+      bas.push(ex('Gainage',30));
+      days=[
+        {label:'Haut du corps',exs:[ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute'),ex('Développé Épaules Machine'),ex('Curl Machine'),ex('Triceps Machine')]},
+        {label:'Bas du corps',exs:bas},
+      ];
+    }
+  }else{
+    // Full Body (tout le corps à chaque séance)
+    name='Premiers pas — Full Body';
+    const fb1=[ex('Press Jambes 45°'),ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute'),ex('Développé Épaules Machine')];
+    if(F)fb1.push(ex('Poussée de Hanche Machine'));
+    fb1.push(ex('Gainage',30));
+    const fb2=[ex('Leg Curl Assis Machine'),ex('Pec Deck'),ex('Rowing Machine'),ex('Curl Machine'),ex('Crunch Machine',15)];
+    const fb3=[ex('Extension Quadriceps (Leg Extension)'),ex('Chest Press Machine Inclinée'),ex('Tirage Poulie Haute Prise Serrée'),ex('Triceps Machine'),ex('Gainage',30)];
+    days=(freq===2)?[{label:'Séance A',exs:fb1},{label:'Séance B',exs:fb2}]
+                   :[{label:'Séance A',exs:fb1},{label:'Séance B',exs:fb2},{label:'Séance C',exs:fb3}];
+  }
+  return {id:'p_beginner_'+Date.now(),name,beginner:true,bgStyle:style,bgFreq:freq,days};
+}
+function _hasBeginnerProg(){return (S.programmes||[]).some(p=>p&&(p.beginner||(p.name||'').indexOf('Premiers pas')===0));}
+
+// ── Setup du parcours débutant (les 2 questions) ──
+let _bgFreq=3,_bgStyle='fullbody';
+function openBeginnerSetup(){
+  if(_hasBeginnerProg()){renderProgModal();toast('Tu as déjà ton programme débutant','info');return;}
+  _bgFreq=3;_bgStyle='fullbody';
+  _renderBeginnerSetup();
+  document.getElementById('ov-beginner-setup').classList.add('open');
+}
+function closeBeginnerSetup(){document.getElementById('ov-beginner-setup').classList.remove('open');}
+function _bgSetFreq(n){_bgFreq=(n===2)?2:3;_renderBeginnerSetup();}
+function _bgSetStyle(s){_bgStyle=(s==='split')?'split':'fullbody';_renderBeginnerSetup();}
+function _renderBeginnerSetup(){
+  const tg=(id,on)=>{const e=document.getElementById(id);if(e)e.classList.toggle('active',on);};
+  tg('bg-freq-2',_bgFreq===2);tg('bg-freq-3',_bgFreq===3);
+  tg('bg-style-fullbody',_bgStyle==='fullbody');tg('bg-style-split',_bgStyle==='split');
+  const sl=document.getElementById('bg-style-split-lbl');if(sl)sl.textContent=_bgFreq===3?'Push / Pull / Legs':'Haut / Bas';
+  const d=document.getElementById('bg-style-desc');
+  if(d){
+    d.textContent = _bgStyle==='fullbody'
+      ? 'Tout le corps à chaque séance. Le plus simple pour débuter et bien apprendre les mouvements.'
+      : (_bgFreq===3
+          ? 'Une séance par zone : Poussée (pecs/épaules) · Tirage (dos/biceps) · Jambes. Facile à suivre.'
+          : 'Une séance haut du corps, une séance bas du corps — bon compromis sur 2 jours.');
+  }
+}
+function createBeginnerProg(){
+  if(!S.programmes)S.programmes=[];
+  if(_hasBeginnerProg()){closeBeginnerSetup();renderProgModal();return;}
+  S.programmes.push(_beginnerProg(S.gender,_bgStyle,_bgFreq));
+  S.beginnerJourney={style:_bgStyle,freq:_bgFreq,startDate:today(),phase:1};
+  persist();
+  closeBeginnerSetup();
+  openProgModal();
+  toast('Ton programme est prêt ! 🌱 '+_bgFreq+' séances/semaine','success');
+}
+// Ancien point d'entrée conservé (bouton) → ouvre désormais le setup
+function addBeginnerProg(){openBeginnerSetup();}
+// Objectif de fin d'étape 1, affiché dans le modal Programmes tant que le parcours est actif
+function _beginnerGoalText(){
+  const j=S.beginnerJourney;if(!j||j.phase!==1)return '';
+  const start=j.startDate?new Date(j.startDate):null;
+  let weekTxt='';
+  if(start){const w=Math.floor((Date.now()-start.getTime())/(7*86400000))+1;weekTxt=' (semaine '+Math.min(w,BEGINNER_PHASE1_WEEKS)+' / '+BEGINNER_PHASE1_WEEKS+')';}
+  return '🎯 Objectif '+BEGINNER_PHASE1_WEEKS+' semaines'+weekTxt+' : tiens tes '+j.freq+' séances/semaine et augmente les charges quand tu réussis tes séries (+2,5 kg haut du corps, +5 kg jambes). Après, Milo t\'ouvre la suite du parcours. 💪';
 }
 
 // ─── PROGRAMMES ──────────────────────────────────────────────
@@ -2311,6 +2734,10 @@ function closeProgModal(){
 function renderProgModal(){
   if(!S.programmes)S.programmes=[];
   const progs=S.programmes;
+  const begBtn=document.getElementById('prog-beginner-btn');
+  if(begBtn)begBtn.style.display=_hasBeginnerProg()?'none':'block';
+  const begGoal=document.getElementById('prog-beginner-goal');
+  if(begGoal){const g=_beginnerGoalText();begGoal.style.display=g?'block':'none';begGoal.textContent=g;}
   const list=document.getElementById('prog-list-modal');
   if(!progs.length){
     list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme sauvegardé.<br>Crée une séance et utilise "Sauvegarder" !</div>';
@@ -2350,6 +2777,7 @@ function renderProgModal(){
           <div style="display:flex;gap:6px;flex-shrink:0;">
             <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
             <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})">✏️</button>
+            <button class="btn-xs" style="color:var(--t2);" onclick="exportProgPdf(${i})" title="Exporter en PDF">📄 PDF</button>
             ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
             <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
           </div>
@@ -2374,10 +2802,11 @@ function saveAsProg(){
   if(!S.programmes)S.programmes=[];
   const prog={
     id:'p'+Date.now(),name,
-    exs:S.wkt.exs.map(ex=>({
-      name:ex.name,
-      sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,type:s.type||'N',rest:s.rest||0}))
-    }))
+    exs:S.wkt.exs.map(ex=>{
+      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,type:s.type||'N',rest:s.rest||0}))};
+      if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
+      return o;
+    })
   };
   const idx=S.programmes.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
   if(idx>=0){S.programmes[idx]=prog;toast('"'+name+'" mis à jour ✅','success');}
@@ -2394,11 +2823,13 @@ function loadProg(idx){
     progLabel:prog.name,
     exs:(prog.exs||[]).map(e=>{
       const prev=getPrev(e.name);
-      return{name:e.name,sets:(e.sets||[]).map(s=>({
+      const obj={name:e.name,sets:(e.sets||[]).map(s=>({
         kg:prev.length?prev[0].kg:(s.kg||0),
         reps:prev.length?prev[0].reps:(s.reps||5),
         type:s.type||'N',done:false,rm1:0,rest:s.rest||0
       }))};
+      if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
+      return obj;
     })
   };
   persist();
@@ -2413,6 +2844,101 @@ function deleteProg(idx){
   S.programmes.splice(idx,1);
   persist();renderProgModal();
   toast('"'+name+'" supprimé','info');
+}
+// Impression / export PDF d'un programme — génère une feuille propre puis window.print()
+// (le navigateur propose « Imprimer » ou « Enregistrer en PDF » ; sur iPhone : Partager → Imprimer → PDF)
+function printProg(idx){
+  const p=(S.programmes||[])[idx];if(!p)return;
+  const esc=_escNote;
+  const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
+  const scheme=(sets)=>{
+    const s=sets||[];if(!s.length)return '';
+    const reps=s.map(x=>x.reps);
+    const val=reps.every(r=>r===reps[0])?reps[0]:reps.join('/');
+    return s.length+' × '+val;
+  };
+  const daysHtml=days.map(d=>{
+    const exRows=(d.exs||[]).map(e=>{
+      let sc=scheme(e.sets);
+      if(sc&&/gainage|planche/i.test(e.name))sc=sc.replace(/(\d+)$/,'$1 s'); // gainage = secondes
+      return '<tr><td>'+esc(e.name)+'</td><td class="c">'+sc+'</td><td class="c"></td></tr>';
+    }).join('');
+    return '<h3>'+esc(d.label||'Séance')+'</h3><table><thead><tr><th>Exercice</th><th class="c">Séries × Reps</th><th class="c">Poids</th></tr></thead><tbody>'+exRows+'</tbody></table>';
+  }).join('');
+  const sub=p.beginner?('Parcours débutant — Étape 1'+(p.bgFreq?' · '+p.bgFreq+' séances/semaine':'')):'';
+  const area=document.getElementById('print-area');if(!area)return;
+  area.innerHTML='<div class="prt-doc">'+
+    '<div class="prt-h"><span class="prt-logo">FORCE TRACKER</span><span class="prt-name">'+esc(p.name)+'</span></div>'+
+    '<div class="prt-sub">'+(sub||'Programme d\'entraînement')+'</div>'+
+    daysHtml+
+    '<div class="prt-foot">Note tes poids dans la colonne « Poids » à la salle. Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.</div>'+
+    '</div>';
+  window.print();
+}
+
+// ── Vrai PDF (jsPDF hébergé en local → marche hors-ligne) ──────
+// Charge la lib à la demande depuis ./lib (précachée par le SW), génère un vrai
+// fichier PDF, puis feuille de partage iPhone (navigator.share) ou téléchargement.
+let _jspdfLoad=null;
+function _loadJsPdf(){
+  if(window.jspdf&&window.jspdf.jsPDF)return Promise.resolve();
+  if(_jspdfLoad)return _jspdfLoad;
+  const load=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load '+src));document.head.appendChild(s);});
+  _jspdfLoad=load('../lib/jspdf.umd.min.js').then(()=>load('../lib/jspdf.plugin.autotable.min.js')).catch(e=>{_jspdfLoad=null;throw e;});
+  return _jspdfLoad;
+}
+async function exportProgPdf(idx){
+  const p=(S.programmes||[])[idx];if(!p)return;
+  toast('Génération du PDF…','info');
+  try{ await _loadJsPdf(); }
+  catch(e){ toast('PDF indisponible ici — on passe par l\'impression','info'); printProg(idx); return; }
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(), M=40;
+    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('FORCE TRACKER',M,46);
+    doc.setFontSize(16);doc.text(p.name||'Programme',W-M,46,{align:'right'});
+    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,54,W-M,54);
+    const sub=p.beginner?('Parcours débutant — Étape 1'+(p.bgFreq?' · '+p.bgFreq+' séances/semaine':'')):'Programme d\'entraînement';
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);doc.text(sub,M,68);doc.setTextColor(20);
+    let y=84;
+    const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
+    days.forEach(d=>{
+      const body=(d.exs||[]).map(e=>{
+        const s=e.sets||[],reps=s.map(x=>x.reps);
+        const val=reps.length?(reps.every(r=>r===reps[0])?reps[0]:reps.join('/')):'';
+        let sc=s.length?(s.length+' × '+val):'';
+        if(sc&&/gainage|planche/i.test(e.name))sc=String(sc).replace(/(\d+)$/,'$1 s');
+        return [e.name,sc,''];
+      });
+      doc.autoTable({
+        startY:y, margin:{left:M,right:M},
+        head:[
+          [{content:(d.label||'Séance'),colSpan:3,styles:{halign:'left',fillColor:[240,240,240],textColor:20,fontStyle:'bold',fontSize:12}}],
+          ['Exercice','Séries × Reps','Poids']
+        ],
+        body,
+        styles:{fontSize:10,cellPadding:5,lineColor:[190,190,190],lineWidth:0.5,overflow:'linebreak'},
+        headStyles:{fillColor:[17,17,17],textColor:255,fontStyle:'bold'},
+        columnStyles:{1:{halign:'center',cellWidth:95},2:{halign:'center',cellWidth:75}},
+        theme:'grid'
+      });
+      y=doc.lastAutoTable.finalY+16;
+    });
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90);
+    doc.text(doc.splitTextToSize('Note tes poids dans la colonne « Poids ». Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.',W-2*M),M,y+6);
+    const fname=((p.name||'programme').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,''))+'.pdf';
+    const blob=doc.output('blob');
+    const file=new File([blob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:p.name||'Programme'}); return; }
+      catch(err){ if(err&&err.name==='AbortError')return; }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+    toast('PDF enregistré 📄','success');
+  }catch(e){ console.warn('[FT pdf]',e); toast('Souci PDF — on passe par l\'impression','error'); printProg(idx); }
 }
 function editProg(idx){
   const prog=(S.programmes||[])[idx];
@@ -2444,10 +2970,17 @@ function _renderProgEdit(){
   const _INP='padding:5px 4px;font-size:13px;text-align:center;border:1px solid var(--sep);border-radius:6px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;';
   const exCard=(ex,di,ei)=>{
     const sets=ex.sets||[];
-    return`<div style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:6px;">
+    const nextEx=_progEditEx(di,ei+1);
+    const hasNext=!!nextEx;
+    const linkedNext=hasNext&&ex.group&&ex.group===nextEx.group;
+    const inSuper=!!ex.group;
+    return`<div style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:${linkedNext?'2px':'6px'};${inSuper?'box-shadow:inset 3px 0 0 var(--orange);':''}">
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;">
       ${_progExThumb(ex.name)}
-      <div style="flex:1;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
+        ${inSuper?'<div style="font-size:10px;color:var(--orange);font-weight:800;letter-spacing:.03em;">⚡ SUPERSET</div>':''}
+      </div>
       <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
     </div>
     <div style="display:flex;gap:6px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
@@ -2462,7 +2995,10 @@ function _renderProgEdit(){
       </span>
       <button onclick="_removeProgSet(${di},${ei},${si})" title="Retirer la série" style="width:22px;background:none;border:none;color:var(--t3);font-size:16px;line-height:1;cursor:pointer;padding:0;">×</button>
     </div>`).join('')}
-    <button onclick="_addProgSet(${di},${ei})" style="margin-top:5px;padding:5px 12px;background:transparent;border:1px dashed var(--sep);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;">+ série</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:5px;">
+      <button onclick="_addProgSet(${di},${ei})" style="padding:5px 12px;background:transparent;border:1px dashed var(--sep);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;">+ série</button>
+      ${hasNext?`<button onclick="_toggleProgSuperset(${di},${ei})" style="padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;background:${linkedNext?'rgba(255,109,0,.14)':'transparent'};border:1px ${linkedNext?'solid var(--orange)':'dashed var(--sep)'};color:${linkedNext?'var(--orange)':'var(--t2)'};">⚡ ${linkedNext?'En superset ✓':'Superset avec le suivant'}</button>`:''}
+    </div>
   </div>`;};
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
   if(isMulti){
@@ -2510,6 +3046,37 @@ function _removeProgSet(di,ei,si){
   ex.sets.splice(si,1);
   _renderProgEdit();
 }
+// ── Supersets dans l'éditeur de programme ──
+// Un superset = exercices consécutifs partageant le même `group`. On lie/délie un exo avec le suivant.
+function _progDayExs(di){
+  const d=_editProgData;if(!d)return null;
+  return (d.days&&d.days.length)?(d.days[di]&&d.days[di].exs):d.exs;
+}
+function _rebuildProgGroups(exs,links){
+  for(let k=0;k<exs.length;k++){delete exs[k].group;delete exs[k].groupType;}
+  let gid=null;
+  for(let k=0;k<exs.length-1;k++){
+    if(links[k]){
+      if(!gid)gid='sg'+Date.now().toString(36)+k;
+      exs[k].group=gid;exs[k].groupType='super';
+      exs[k+1].group=gid;exs[k+1].groupType='super';
+    }else gid=null;
+  }
+}
+// Retire les groupes qui ne comptent plus qu'un membre (après suppression d'un exo)
+function _normalizeProgGroups(exs){
+  if(!exs)return;
+  const count={};exs.forEach(e=>{if(e.group)count[e.group]=(count[e.group]||0)+1;});
+  exs.forEach(e=>{if(e.group&&count[e.group]<2){delete e.group;delete e.groupType;}});
+}
+function _toggleProgSuperset(di,ei){
+  const exs=_progDayExs(di);if(!exs||ei>=exs.length-1)return;
+  const links=[];
+  for(let k=0;k<exs.length-1;k++)links[k]=!!(exs[k].group&&exs[k].group===exs[k+1].group);
+  links[ei]=!links[ei];
+  _rebuildProgGroups(exs,links);
+  _renderProgEdit();
+}
 function _openExPickerForProg(dayIdx){
   _editDayIdx=dayIdx;
   _exPickerMode='prog';
@@ -2519,6 +3086,7 @@ function _removeExFromProgEdit(dayIdx,exIdx){
   const d=_editProgData;if(!d)return;
   if(d.days&&d.days.length)(d.days[dayIdx].exs||[]).splice(exIdx,1);
   else(d.exs||[]).splice(exIdx,1);
+  _normalizeProgGroups(_progDayExs(dayIdx)); // évite un superset orphelin (1 seul membre)
   _renderProgEdit();
 }
 function _addExToProgEdit(name){
@@ -2734,8 +3302,8 @@ const _MG_IMG={
 // Vignette d'exercice : photo locale > image muscle réaliste (muscle deviné du nom) > figurine — 100% hors-ligne
 function _progExThumb(name){
   const box='width:46px;height:46px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);flex-shrink:0;box-sizing:border-box;';
-  const y=EX_YT[name];
-  if(y&&y.img) return `<img src="${y.img}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:2px;">`;
+  const cimg=_exImg(name);
+  if(cimg) return `<img src="${cimg}" onerror="this.style.visibility='hidden'" style="${box}object-fit:cover;">`;
   // Muscle principal deviné depuis le nom (_MEX, insensible aux accents) → image muscle réaliste
   let src='';
   try{
@@ -2766,9 +3334,14 @@ const EX_YT={
   'Smith Machine Développé Couché':{img:'../exercises/developpe-couche-smith-machine.gif'},
   'Développé Décliné':             {img:'../exercises/developpe-decline-barre.gif'},
   'Développé Incliné':             {img:'../exercises/developpe-incline-barre.gif'},
+  'Développé Incliné Haltères':    {img:'../exercises/developpe-incline-halteres-exercice-musculation.gif'},
   'Écarté Poulie':                 {img:'../exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.gif'},
   'Écarté Haltères':               {img:'../exercises/ecartes-decline-avec-halteres.gif'},
+  'Croisé Poulie (Cable Crossover)':{img:'../exercises/ecartes-poulie-vis-a-vis.gif'},
   'Pec Deck':                      {img:'../exercises/pec-deck-butterfly-exercice-musculation.gif'},
+  'Chest Press Machine Horizontale':{img:'../exercises/developpe-machine-assis-pectoraux.gif'},
+  'Chest Press Machine Inclinée':  {img:'../exercises/developpe-incline-machine-convergente-exercice-musculation.gif'},
+  'Dips':                          {img:'../exercises/dips-pectoraux.gif'},
   'Pont Fessier (Glute Bridge)':   {img:'../exercises/glute-bridge.webp'},
   'Press Jambes 45°':              {img:'../machine/press-jambes-1.png'},
   'Press Jambes Horizontale':      {img:'../machine/press-jambes-2.jpg'},
@@ -2776,6 +3349,108 @@ const EX_YT={
   'Press Jambes Inclinée':         {img:'../machine/press-jambes-4.jpg'},
   'Squat Hack (Hack Squat)':       {img:'../machine/press-jambes-5.jpg'},
   'Press Jambes Levier':           {img:'../machine/press-jambes-6.jpg'},
+  // ── Fessiers / Ischios / Jambes / Soulevés de terre (lot 2026-07-04) ──
+  'Soulevé de Terre':              {img:'../exercises/souleve-de-terre.gif'},
+  'Soulevé de Terre Sumo':         {img:'../exercises/souleve-de-terre-sumo.gif'},
+  'Tirage en Rack (Rack Pull)':    {img:'../exercises/rack-pull.gif'},
+  'Inclinaison Lombaire (Good Morning)':{img:'../exercises/good-morning-exercice.gif'},
+  'Hyperextension (Back Extension)':{img:'../exercises/extension-lombaire-au-banc-45.gif'},
+  'Squat à la Barre':              {img:'../exercises/homme-faisant-un-squat-avec-barre.gif'},
+  'Squat Avant':                   {img:'../exercises/front-squat-avec-halteres.gif'},
+  'Squat Gobelet (Goblet Squat)':  {img:'../exercises/squat-goblet-kettlebell.gif'},
+  'Squat Sumo':                    {img:'../exercises/squat-sumo-avec-haltere.gif'},
+  'Fentes':                        {img:'../exercises/fente-avant-barre-femme.gif'},
+  'Leg Curl Couché Machine':       {img:'../exercises/leg-curl-allonge.gif'},
+  'Curl Ischio-jambiers (Leg Curl)':{img:'../exercises/leg-curl-allonge.gif'},
+  'Leg Curl Assis Machine':        {img:'../exercises/leg-curl-assis-machine.gif'},
+  // Nouveaux exercices (figurines fournies)
+  'Soulevé de Terre Jambes Tendues':{img:'../exercises/souleve-de-terre-jambes-tendues.gif'},
+  'Soulevé de Terre Roumain Kettlebell':{img:'../exercises/souleve-de-terre-roumain-kettlebell.gif'},
+  'Soulevé de Terre Roumain Landmine':{img:'../exercises/souleve-de-terre-roumain-landmine.gif'},
+  'Soulevé de Terre Sumo Haltères':{img:'../exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.gif'},
+  'Soulevé de Terre Sumo Kettlebell':{img:'../exercises/souleve-de-terre-sumo-kettlebell.gif'},
+  'Soulevé de Terre Sumo Landmine':{img:'../exercises/souleve-de-terre-sumo-landmine.gif'},
+  'Soulevé de Terre Trap Bar':     {img:'../exercises/souleve-de-terre-a-la-trap-bar.gif'},
+  'Soulevé de Terre avec Déficit': {img:'../exercises/souleve-de-terre-avec-deficit.gif'},
+  'Soulevé de Terre Machine':      {img:'../exercises/souleve-de-terre-avec-machine.gif'},
+  'Zercher Deadlift':              {img:'../exercises/zercher-deadlift.gif'},
+  'Reeves Deadlift':               {img:'../exercises/reeves-deadlift.gif'},
+  'Glute Ham Raise (GHD)':         {img:'../exercises/glute-ham-developer-ghd.gif'},
+  'Kettlebell Swing':              {img:'../exercises/kettlebell-swing.gif'},
+  'Squat Pistol':                  {img:'../exercises/squat-pistol.gif'},
+  'Squat Kettlebell':              {img:'../exercises/kettlebell-back-squat.gif'},
+  'Fentes Kettlebell':             {img:'../exercises/fentes-avant-kettlebell.gif'},
+  'Leg Curl Élastique':            {img:'../exercises/leg-curl-avec-elastique-musculation.gif'},
+  'Leg Curl Haltère':              {img:'../exercises/leg-curl-decline-haltere.gif'},
+  'Leg Curl Inversé':              {img:'../exercises/leg-curl-inverse-machine-tirage-vertical.gif'},
+  'Leg Curl Unilatéral Debout':    {img:'../exercises/leg-curl-unilateral-debout-machine.gif'},
+  // ── Dos / Trapèzes / Lombaires (lot 2026-07-04) ──
+  'Rowing Barre':                  {img:'../exercises/rowing-barre.gif'},
+  'Rowing Haltère':                {img:'../exercises/rowing-haltere-un-bras.gif'},
+  'Rowing Cable':                  {img:'../exercises/tirage-horizontal-poulie.gif'},
+  'Rowing Machine':                {img:'../exercises/rowing-assis-machine-prise-pronation.gif'},
+  'Rowing Hammer Strength':        {img:'../exercises/rowing-assis-machine-hammer-strenght.gif'},
+  'Rowing Poitrine Appuyée (Chest Supported)':{img:'../exercises/rowing-halteres-banc-incline-prise-neutre.gif'},
+  'Tirage Poulie Haute':           {img:'../exercises/tirage-vertical-poitrine.gif'},
+  'Tirage Poulie Haute Prise Serrée':{img:'../exercises/tirage-vertical-prise-serree.gif'},
+  'Tirage Poulie Basse Prise Large':{img:'../exercises/tirage-horizontal-prise-large.gif'},
+  'Traction Lestée':               {img:'../exercises/traction-musculation-dos.gif'},
+  'Traction Assistée':             {img:'../exercises/traction-assistee-machine.gif'},
+  'Traction Prise Neutre':         {img:'../exercises/traction-prise-neutre.gif'},
+  'Pull-over Haltère':             {img:'../exercises/pullover-haltere.gif'},
+  'Pullover Machine':              {img:'../exercises/musculation-pull-over-assis-machine.gif'},
+  'Haussements d\'Épaules Barre':  {img:'../exercises/shrug-barre.gif'},
+  'Haussements d\'Épaules Haltères':{img:'../exercises/shrugs-avec-halteres.gif'},
+  'Haussements d\'Épaules Câble':  {img:'../exercises/shrug-poulie-haussement-epaules.gif'},
+  'Hyperextension Machine':        {img:'../exercises/extension-lombaire-a-la-machine.gif'},
+  // Nouveaux exercices Dos/Trapèzes/Lombaires
+  'Rowing Smith Machine':          {img:'../exercises/rowing-smith-machine.gif'},
+  'Rowing T-Bar Machine':          {img:'../exercises/rowing-t-bar-machine.gif'},
+  'Rowing Landmine (T-Bar)':       {img:'../exercises/rowing-barre-t-landmine.gif'},
+  'Rowing Haltères Buste Penché':  {img:'../exercises/bent-over-row-avec-halteres.gif'},
+  'Meadows Row':                   {img:'../exercises/rowing-unilateral-landmine-meadows-row.gif'},
+  'Seal Row':                      {img:'../exercises/seal-row-halteres.gif'},
+  'Renegade Row':                  {img:'../exercises/renegade-row.gif'},
+  'Tirage Iso-Latéral Hammer Strength':{img:'../exercises/tirage-avant-iso-laterale-hammer-strength.gif'},
+  'Tirage Incliné Poulie Haute':   {img:'../exercises/tirage-incline-poulie-haute.gif'},
+  'Tirage Poulie Haute Prise Inversée':{img:'../exercises/tirage-vertical-prise-inversee.gif'},
+  'Traction Derrière la Nuque':    {img:'../exercises/traction-barre-derriere-rear-oull-up.gif'},
+  'Rocky Pull-up':                 {img:'../exercises/rocky-pull-up.gif'},
+  'Sled Pull':                     {img:'../exercises/sled-pull.gif'},
+  'Pull-over Barre':               {img:'../exercises/pull-over-barre.gif'},
+  'Pull-over Poulie':              {img:'../exercises/pull-over-poulie.gif'},
+  'Superman':                      {img:'../exercises/superman.gif'},
+  'Haussements d\'Épaules Overhead':{img:'../exercises/overhead-shrug.gif'},
+  // ── Cuisses / Quadriceps (lot 2026-07-04) ──
+  'Squat Bulgare':                 {img:'../exercises/squat-bulgare-halteres-exercice-musculation.gif'},
+  'Smith Machine Squat':           {img:'../exercises/squat-smith-machine-exercice-musculation.gif'},
+  'Extension Quadriceps (Leg Extension)':{img:'../exercises/leg-extension-exercice-musculation.gif'},
+  'Fentes Marchées':               {img:'../exercises/fentes-marchees-avec-sandbag.gif'},
+  'Smith Machine Fentes':          {img:'../exercises/split-squat-smith-machine.gif'},
+  'Poussée de Hanche Machine':     {img:'../exercises/hip-thrust-a-la-machine.gif'},
+  'Farmer\'s Walk':                {img:'../exercises/marche-du-fermier-avec-kettlebells.gif'},
+  // Nouveaux exercices cuisses
+  'Extension Quadriceps Unilatérale':{img:'../exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.gif'},
+  'Hack Squat Inversé':            {img:'../exercises/hack-squat-inverse.gif'},
+  'Pendulum Squat':                {img:'../exercises/pendulum-squat.gif'},
+  'Belt Squat':                    {img:'../exercises/belt-squat.gif'},
+  'Safety Bar Squat':              {img:'../exercises/safety-bar-squat.gif'},
+  'Overhead Squat':                {img:'../exercises/overhead-squat.gif'},
+  'Pin Squat':                     {img:'../exercises/pin-squat.gif'},
+  'Sissy Squat':                   {img:'../exercises/sissy-squat.gif'},
+  'Cossack Squat':                 {img:'../exercises/cossack-squat.gif'},
+  'Squat Bande Élastique':         {img:'../exercises/squat-bande-elastique.gif'},
+  'Chaise (Wall Sit)':             {img:'../exercises/squat-statique-contre-mur-exercice-chaise.gif'},
+  'Presse à Cuisses Iso-Latérale': {img:'../exercises/presse-cuisse-iso-laterale-hammer-stenght.gif'},
+  'Sled Push':                     {img:'../exercises/sled-push-hyrox.gif'},
+  'Croix de Fer Haltères':         {img:'../exercises/croix-de-fer-halteres.gif'},
+  'Abduction Cuisses (Leg Abduction)':{img:'../exercises/leg-abduction-machine.gif'},
+  'Adduction Cuisses (Leg Adduction)':{img:'../exercises/leg-adduction-machine.gif'},
+  'Chest Press Machine Déclinée':  {img:'../exercises/chest-press-machine-declinee.gif'},
+  'Dips Parallèles':               {img:'../exercises/dips-triceps-paralleles.gif'},
+  'Montée sur Box Haltères':       {img:'../exercises/montees-banc-lateral-halteres.gif'},
+  'Dips Machine Assistée':         {img:'../exercises/dips-assiste-machine.gif'},
+  'Développé Nuque':               {img:'../exercises/developpe-nuque-barre-guidee.gif'},
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={
@@ -2960,7 +3635,7 @@ function toggleExGif(ei,name){
   if(panel.dataset.loaded==='1')return;
   panel.dataset.loaded='1';
 
-  const local=EX_YT[name]?.img;
+  const local=_exImg(name);
   let html='<div style="padding:10px;background:var(--bg3);border-radius:10px;">';
   if(local){
     html+=`<img src="${local}" style="width:100%;border-radius:8px;max-height:240px;object-fit:cover;display:block;" loading="lazy">`;
