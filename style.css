@@ -818,3 +818,10 @@ html.ob-done #onboarding{display:none;}
   .prt-doc tr{ break-inside:avoid; }
   .prt-foot{ margin-top:16px; font-size:11.5px; color:#444; border-top:1px solid #ccc; padding-top:8px; line-height:1.5; }
 }
+
+/* ─── Bandeau MODE DÉMO (admin) ──────────────────────────────── */
+#demo-banner{ display:none; align-items:center; justify-content:center; gap:12px; background:linear-gradient(90deg,#FF6C00,#FF2D55); color:#fff; font-weight:800; font-size:12.5px; letter-spacing:.02em; padding:max(env(safe-area-inset-top),8px) 12px 9px; flex-shrink:0; }
+#demo-banner button{ background:rgba(0,0,0,.28); color:#fff; border:1px solid rgba(255,255,255,.55); border-radius:8px; padding:5px 14px; font-weight:700; font-family:var(--font); font-size:12.5px; cursor:pointer; touch-action:manipulation; }
+#root.demo-on #demo-banner{ display:flex; }
+/* le bandeau a déjà géré l'encoche → on réduit le padding haut de la topbar en mode démo */
+#root.demo-on .topbar{ padding-top:14px; }

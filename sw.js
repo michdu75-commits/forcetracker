@@ -1,4 +1,4 @@
-const CACHE = 'ft-v243'; // Imprimer / exporter un programme en PDF (bouton 🖨️ sur chaque programme, feuille propre + colonne Poids)
+const CACHE = 'ft-v244'; // Mode démo (admin) : gèle toute sauvegarde (local+cloud), bandeau, sortie restaure les vraies données
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

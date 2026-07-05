@@ -27,6 +27,7 @@ function _buildSyncRows(sess){
 
 // ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
 async function syncSheets(sess){
+  if(window._demoMode)return{ok:true}; // mode démo : rien n'est envoyé aux Sheets
   if(!S.url)return{ok:false,error:'URL manquante'};
   try{
     const rows=_buildSyncRows(sess);

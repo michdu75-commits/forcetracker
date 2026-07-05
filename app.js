@@ -742,6 +742,32 @@ function _toggleAdminMode(){
   }
   toast(window._adminMode?'🔧 Mode admin activé':'Mode admin désactivé','info');
 }
+
+// ── MODE DÉMO (super admin) ──────────────────────────────────
+// Montrer les fonctions à quelqu'un SANS toucher son compte : gèle toute sauvegarde
+// (local + cloud). En quittant, on recharge les vraies données depuis localStorage.
+function enterDemoMode(){
+  if(!_isAdminUnlocked()){toast('Réservé à l\'admin','error');return;}
+  if(window._demoMode)return;
+  // S'assurer que le localStorage contient bien les vraies données à jour AVANT de geler
+  try{persist();}catch(e){}
+  window._demoMode=true;
+  const rt=document.getElementById('root');if(rt)rt.classList.add('demo-on');
+  toast('🎬 Mode démo activé — rien ne sera enregistré','info');
+}
+function exitDemoMode(){
+  if(!window._demoMode)return;
+  window._demoMode=false;
+  // Recharge les vraies données depuis localStorage → annule tout ce qui a été fait en démo
+  try{load();}catch(e){}
+  const rt=document.getElementById('root');if(rt)rt.classList.remove('demo-on');
+  try{renderHome();}catch(e){}
+  try{renderNutrition();}catch(e){}
+  try{renderSetup();}catch(e){}
+  try{renderLog();}catch(e){}
+  try{goScreen('home',document.getElementById('nb-home'));}catch(e){}
+  toast('✅ Tes vraies données sont de retour','success');
+}
 // Demande le code de secours (appareil sans email admin) — overlay simple
 function _promptAdminCode(){
   let ov=document.getElementById('ov-admin-code');
