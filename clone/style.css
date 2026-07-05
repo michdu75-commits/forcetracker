@@ -1,4 +1,4 @@
-/* Polices hébergées en local (../fonts/) — 0 dépendance réseau au démarrage, fonctionne 100% hors-ligne */
+/* Polices hébergées en local (fonts/) — 0 dépendance réseau au démarrage, fonctionne 100% hors-ligne */
 @font-face {
   font-family: 'Manrope';
   font-style: normal;
@@ -145,6 +145,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .home-row-ttl{font-size:15px;font-weight:700;color:var(--t1);}
 .home-row-sub{font-size:12px;color:var(--t3);margin-top:2px;line-height:1.4;}
 .home-row-chev{flex:none;color:var(--t3);}
+/* Coach proactif — carte Milo sur l'Accueil (brique 4) */
+.milo-card{display:flex;align-items:flex-start;gap:12px;padding:13px 12px 13px 14px;border-radius:16px;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;position:relative;overflow:hidden;}
+.milo-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#FF6A73,#EF3E57);}
+.milo-av{width:34px;height:34px;border-radius:11px;flex:none;background:linear-gradient(135deg,#FF6A73,#EF3E57);display:flex;align-items:center;justify-content:center;box-shadow:0 5px 13px -4px rgba(239,62,87,.5);}
+.milo-name{font-size:12px;font-weight:800;letter-spacing:.02em;color:var(--red);margin-bottom:2px;}
+.milo-txt{font-size:13.5px;line-height:1.42;color:var(--t1);}
+.milo-x{flex:none;width:26px;height:26px;margin:-2px -2px 0 0;border:none;background:transparent;color:var(--t3);display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.milo-x:active{background:var(--bg3);}
 .imp-spinner{width:36px;height:36px;border:3px solid var(--sep);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
@@ -152,6 +160,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .nav{display:flex;align-items:flex-end;overflow:visible;background:linear-gradient(180deg,rgba(12,13,17,0),#0c0d11 32%);border-top:none;padding:22px 26px 0;padding-bottom:max(env(safe-area-inset-bottom),8px);position:absolute;bottom:0;left:0;right:0;z-index:20;}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:0;background:none;border:none;cursor:pointer;font-family:var(--font);color:var(--t3);font-size:10px;font-weight:600;transition:color .15s;touch-action:manipulation;-webkit-tap-highlight-color:transparent;position:relative;}
 .new-dot{position:absolute;top:2px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--bg2);pointer-events:none;z-index:1;}
+/* Point rouge « nouveauté » INLINE dans une ligne de menu (indique QUEL item a du neuf) */
+.menu-new-dot{flex-shrink:0;width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px rgba(255,45,85,.14);margin-right:8px;pointer-events:none;}
 .nb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .nb.active{color:var(--red);}
 .nb-ctr{color:var(--t3);}
@@ -165,6 +175,16 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overscroll-behavior-y:contain;padding:12px 14px calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);display:none;flex-direction:column;gap:10px;background:var(--bg);}
 .screen.active{display:flex;}
+/* Espaceur bas de scroll (fix iOS : padding-bottom d'un flex scroll ignoré par Safari).
+   Un vrai élément est toujours compté dans la hauteur scrollable → la dernière carte passe au-dessus de la nav. */
+.scroll-spacer{flex:0 0 auto;height:calc(max(env(safe-area-inset-bottom,0px),8px) + 110px);}
+#s-progress{padding-bottom:8px;}
+/* Chips de navigation période du graphique de poids */
+.wrange-chip{flex:1;min-width:0;padding:7px 6px;border-radius:9px;border:1px solid var(--sep);background:var(--bg2);color:var(--t3);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;}
+.wrange-chip.active{background:rgba(91,168,255,.14);border-color:transparent;color:var(--blue);box-shadow:inset 0 0 0 1px var(--blue);}
+/* Bascule Poids ↔ Masse grasse du graphique */
+.wmetric-chip{flex:1;padding:8px 6px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t3);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;}
+.wmetric-chip.active{background:var(--bg3);border-color:transparent;color:var(--t1);box-shadow:inset 0 0 0 1px var(--t2);}
 .screen>*{flex-shrink:0;}
 
 .help-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--sep);}
@@ -240,6 +260,14 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .goal-btn span{font-size:10.5px;font-weight:600;overflow-wrap:break-word;hyphens:auto;}
 .goal-ico{width:23px;height:23px;display:block;flex-shrink:0;}
 .ob-goal-ico{width:27px;height:27px;display:block;flex-shrink:0;}
+/* Profil en accordéon (sections repliables) */
+details.acc{background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);overflow:hidden;}
+details.acc>summary{list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:9px;font-size:14px;font-weight:800;color:var(--t1);text-transform:uppercase;letter-spacing:.04em;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
+details.acc>summary::-webkit-details-marker{display:none;}
+details.acc>summary::after{content:'';margin-left:auto;flex-shrink:0;width:8px;height:8px;border-right:2px solid var(--t3);border-bottom:2px solid var(--t3);transform:rotate(-45deg);transition:transform .2s;}
+details.acc[open]>summary::after{transform:rotate(45deg);}
+.acc-inner{padding:2px 16px 16px;display:flex;flex-direction:column;gap:12px;}
+#root.a11y-lv details.acc>summary{font-size:16px;}
 .goal-btn.active{background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border-color:transparent;box-shadow:0 3px 12px rgba(255,45,85,.3);}
 
 /* WORKOUT */
@@ -423,7 +451,7 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .ex-pick{padding:14px 2px;border-bottom:1px solid var(--sep);cursor:pointer;display:flex;align-items:center;justify-content:space-between;}
 .ex-pick:last-child{border-bottom:none;}
 .ex-pick:active{background:var(--bg3);margin:0 -8px;padding:14px 10px;}
-.ex-pick-name{font-size:15px;font-weight:600;}
+.ex-pick-name{font-size:15px;font-weight:600;flex:1;min-width:0;}
 .ex-pick-grp{font-size:13px;color:var(--t3);font-weight:600;}
 .ex-grp-tile{display:flex;align-items:center;gap:14px;padding:14px 12px;border-radius:var(--r-sm);border:1px solid var(--sep);background:var(--bg3);cursor:pointer;margin-bottom:8px;transition:background .15s;}
 .ex-grp-tile:active{background:var(--bg2);}
@@ -531,6 +559,11 @@ label{font-size:15px;color:var(--t2);display:block;margin-bottom:6px;font-weight
 .msg-coach strong{color:var(--red);}
 .msg-coach ul{padding-left:16px;margin-top:4px;}
 .msg-coach li{margin-bottom:3px;}
+/* Pied de bulle Coach : bouton Partager/Exporter */
+.coach-msg-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--sep);display:flex;justify-content:flex-end;}
+.coach-share-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:.12s;}
+.coach-share-btn:hover{color:var(--t1);}
+.coach-share-btn:active{transform:scale(.94);}
 /* COACH PREMIUM */
 .coach-quota{font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:rgba(255,106,115,.1);color:var(--red);box-shadow:inset 0 0 0 1px rgba(255,106,115,.25);white-space:nowrap;}
 .coach-quota.is-premium{background:rgba(234,179,8,.12);color:#F2D472;box-shadow:inset 0 0 0 1px rgba(234,179,8,.35);}
@@ -763,3 +796,32 @@ html.ob-done #onboarding{display:none;}
 #root.lh #rest-bar          { flex-direction:column; }
 #root.lh #rest-btns         { flex-direction:row-reverse; }
 #root.lh .ex-hdr-btns       { order:-1; }
+
+/* ─── Impression / export PDF d'un programme ─────────────────── */
+#print-area{ display:none; }
+@media print{
+  @page{ margin:14mm; }
+  html,body{ background:#fff !important; }
+  body>*:not(#print-area){ display:none !important; }
+  #print-area{ display:block !important; color:#111; font-family:'Manrope',system-ui,sans-serif; }
+  .prt-doc{ max-width:100%; }
+  .prt-h{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:4px; }
+  .prt-logo{ font-weight:800; font-size:15px; letter-spacing:.02em; white-space:nowrap; }
+  .prt-name{ font-weight:800; font-size:20px; text-align:right; }
+  .prt-sub{ font-size:12px; color:#555; margin-bottom:14px; }
+  .prt-doc h3{ font-size:15px; margin:16px 0 6px; padding:5px 8px; background:#f0f0f0; border-left:3px solid #111; }
+  .prt-doc table{ width:100%; border-collapse:collapse; margin-bottom:6px; }
+  .prt-doc th,.prt-doc td{ border:1px solid #bbb; padding:6px 8px; font-size:12.5px; text-align:left; }
+  .prt-doc th{ background:#111; color:#fff; font-weight:700; }
+  .prt-doc td.c,.prt-doc th.c{ text-align:center; white-space:nowrap; }
+  .prt-doc thead{ display:table-header-group; }
+  .prt-doc tr{ break-inside:avoid; }
+  .prt-foot{ margin-top:16px; font-size:11.5px; color:#444; border-top:1px solid #ccc; padding-top:8px; line-height:1.5; }
+}
+
+/* ─── Bandeau MODE DÉMO (admin) ──────────────────────────────── */
+#demo-banner{ display:none; align-items:center; justify-content:center; gap:12px; background:linear-gradient(90deg,#FF6C00,#FF2D55); color:#fff; font-weight:800; font-size:12.5px; letter-spacing:.02em; padding:max(env(safe-area-inset-top),8px) 12px 9px; flex-shrink:0; }
+#demo-banner button{ background:rgba(0,0,0,.28); color:#fff; border:1px solid rgba(255,255,255,.55); border-radius:8px; padding:5px 14px; font-weight:700; font-family:var(--font); font-size:12.5px; cursor:pointer; touch-action:manipulation; }
+#root.demo-on #demo-banner{ display:flex; }
+/* le bandeau a déjà géré l'encoche → on réduit le padding haut de la topbar en mode démo */
+#root.demo-on .topbar{ padding-top:14px; }

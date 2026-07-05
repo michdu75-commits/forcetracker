@@ -27,6 +27,7 @@ function _buildSyncRows(sess){
 
 // ─── GOOGLE SHEETS SYNC ──────────────────────────────────────
 async function syncSheets(sess){
+  if(window._demoMode)return{ok:true}; // mode démo : rien n'est envoyé aux Sheets
   if(!S.url)return{ok:false,error:'URL manquante'};
   try{
     const rows=_buildSyncRows(sess);
@@ -390,26 +391,234 @@ function renderWeightTab(){
       <button class="btn-xs btn-red" onclick="saveWeightEntry()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>
     </div>
   </div>`;
+  renderWeightTarget();
+  renderBodyFatCard();
   const sorted=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
-  const pts=sorted.slice(-60);
-  if(pts.length<2){
-    if(chartEl)chartEl.innerHTML='<div class="empty" style="padding:20px 0;">Ajoute au moins 2 pesées pour voir le graphique 📊</div>';
+  // Bascule Poids ↔ Masse grasse
+  const metricEl=document.getElementById('weight-metric');
+  if(metricEl){
+    if(sorted.length<2)metricEl.innerHTML='';
+    else metricEl.innerHTML=[['kg','Poids'],['bf','Masse grasse'],['both','Les 2']]
+      .map(function(m){return '<button class="wmetric-chip'+(_wMetric===m[0]?' active':'')+'" onclick="setWeightMetric(\''+m[0]+'\')">'+m[1]+'</button>';}).join('');
+  }
+  // Chips de navigation par période (1 mois / 3 mois / 6 mois / Tout)
+  const rangeEl=document.getElementById('weight-range');
+  if(rangeEl){
+    if(sorted.length<2)rangeEl.innerHTML='';
+    else rangeEl.innerHTML=[['1m','1 mois'],['3m','3 mois'],['6m','6 mois'],['all','Tout']]
+      .map(function(r){return '<button class="wrange-chip'+(_wRange===r[0]?' active':'')+'" onclick="setWeightRange(\''+r[0]+'\')">'+r[1]+'</button>';}).join('');
+  }
+  // Filtre selon la période choisie
+  let pts=sorted;
+  const days={'1m':30,'3m':90,'6m':180}[_wRange];
+  if(days){const cut=new Date(today()+'T12:00:00');cut.setDate(cut.getDate()-days);const c=cut.toISOString().split('T')[0];pts=sorted.filter(p=>p.date>=c);}
+  pts=pts.slice(-120);
+  // Vue « Masse grasse » : on trace les pesées qui ont une valeur bf
+  if(_wMetric==='bf'){
+    const bfpts=pts.filter(p=>p.bf!=null);
+    if(bfpts.length<2){
+      if(chartEl)chartEl.innerHTML='<div class="empty" style="padding:20px 0;">Enregistre ta masse grasse sur au moins 2 mesures pour voir la courbe 📊</div>';
+      if(corrEl)corrEl.innerHTML='';
+      return;
+    }
+    if(chartEl)renderWeightChart(bfpts,chartEl,'bf');
     if(corrEl)corrEl.innerHTML='';
     return;
   }
-  if(chartEl)renderWeightChart(pts,chartEl);
+  // Vue « Les 2 » : poids + masse grasse superposés (2 axes)
+  // La courbe de poids s'affiche toujours ; la masse grasse dès qu'il y a ≥2 mesures.
+  if(_wMetric==='both'){
+    if(pts.length<2){
+      if(chartEl)chartEl.innerHTML='<div class="empty" style="padding:20px 0;">Ajoute au moins 2 pesées pour voir le graphique 📊</div>';
+      if(corrEl)corrEl.innerHTML='';
+      return;
+    }
+    if(chartEl)renderCompareChart(pts,chartEl);
+    if(corrEl)corrEl.innerHTML='';
+    return;
+  }
+  if(pts.length<2){
+    if(chartEl)chartEl.innerHTML='<div class="empty" style="padding:20px 0;">'+(sorted.length>=2?'Pas assez de pesées sur cette période 📊':'Ajoute au moins 2 pesées pour voir le graphique 📊')+'</div>';
+    if(corrEl)corrEl.innerHTML='';
+    return;
+  }
+  if(chartEl)renderWeightChart(pts,chartEl,'kg');
   if(corrEl)renderWeightCorrelations(corrEl,pts);
 }
-function renderWeightChart(pts,box){
+let _wRange='all'; // période affichée : '1m' | '3m' | '6m' | 'all'
+function setWeightRange(r){_wRange=r;renderWeightTab();}
+let _wMetric='kg'; // métrique affichée : 'kg' (poids) | 'bf' (masse grasse)
+function setWeightMetric(m){_wMetric=m;renderWeightTab();}
+
+// ── Poids objectif (futur souhaité) ──
+function renderWeightTarget(){
+  const el=document.getElementById('weight-target');if(!el)return;
+  const cur=(S.weightLog&&S.weightLog.length)?S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0].kg:(S.bw||0);
+  const tw=S.targetWeight||0;
+  let sub='Optionnel — fixe un poids à viser';
+  if(tw&&cur){
+    const rem=Math.round((cur-tw)*10)/10;
+    if(Math.abs(rem)<0.1)sub='🎉 Objectif atteint !';
+    else if(rem>0)sub=rem+' kg à perdre';
+    else sub=Math.abs(rem)+' kg à prendre';
+  }else if(tw)sub='Objectif fixé';
+  el.innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">'
+     +'<div><div style="font-size:14px;font-weight:800;color:var(--t1);">🎯 Poids objectif</div>'
+     +'<div style="font-size:12px;color:var(--t3);margin-top:2px;">'+sub+'</div></div>'
+     +'<div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">'
+       +'<input type="number" id="target-inp" value="'+(tw||'')+'" placeholder="kg" step="0.1" min="20" max="300" inputmode="decimal" style="width:70px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
+       +'<button class="btn-xs btn-red" onclick="setTargetWeight()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>'
+     +'</div>'
+    +'</div>';
+}
+function setTargetWeight(){
+  const v=parseFloat((document.getElementById('target-inp')||{}).value);
+  if(!v){S.targetWeight=0;persist();renderWeightTab();toast('Objectif retiré','info');return;}
+  if(v<20||v>300){toast('Objectif invalide (20–300 kg)','error');return;}
+  S.targetWeight=v;persist();renderWeightTab();
+  toast('Objectif : '+v+' kg 🎯','success');
+}
+
+// ── Masse grasse : calcul US Navy + saisie + suivi dans le temps ──
+function _bfNavy(neck,waist,hip,ht,gender){
+  neck=parseFloat(neck);waist=parseFloat(waist);hip=parseFloat(hip);ht=parseFloat(ht);
+  if(!ht||!neck||!waist)return null;
+  try{
+    let bf;
+    if(gender==='F'){ if(!hip||waist+hip<=neck)return null; bf=495/(1.29579-0.35004*Math.log10(waist+hip-neck)+0.22100*Math.log10(ht))-450; }
+    else{ if(waist<=neck)return null; bf=495/(1.0324-0.19077*Math.log10(waist-neck)+0.15456*Math.log10(ht))-450; }
+    if(!isFinite(bf)||bf<=2||bf>70)return null;
+    return Math.round(bf*10)/10;
+  }catch(e){return null;}
+}
+function _bfMeasInput(id,label,val){
+  return '<div style="flex:1;"><div style="font-size:10px;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em;">'+label+'</div>'
+    +'<input type="number" id="'+id+'" value="'+(val||'')+'" placeholder="cm" step="0.5" inputmode="decimal" oninput="_recalcNavyBf()" style="width:100%;padding:8px 6px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:15px;font-family:var(--font);text-align:center;box-sizing:border-box;"></div>';
+}
+function _navyBfHtml(){
+  const navy=_bfNavy(S.neck,S.waist,S.hip,S.height,S.gender);
+  return navy==null?'<span style="font-size:12px;color:var(--t3);">— (renseigne cou + taille)</span>':('~'+navy+' %');
+}
+// Recalcule à chaque saisie de mesure ET remplit automatiquement la case « Masse grasse du jour »
+function _recalcNavyBf(){
+  const neck=(document.getElementById('bf-neck')||{}).value,waist=(document.getElementById('bf-waist')||{}).value,hip=(document.getElementById('bf-hip')||{}).value;
+  const navy=_bfNavy(neck,waist,hip,S.height,S.gender);
+  const el=document.getElementById('bf-navy-val');if(el)el.innerHTML=navy==null?'<span style="font-size:12px;color:var(--t3);">—</span>':('~'+navy+' %');
+  if(navy!=null){const i=document.getElementById('bf-inp');if(i)i.value=navy;}
+}
+function renderBodyFatCard(){
+  const el=document.getElementById('bodyfat-card');if(!el)return;
+  const d=today();
+  const todayW=(S.weightLog||[]).find(w=>w.date===d);
+  const isF=S.gender==='F';
+  const savedToday=(todayW&&todayW.bf!=null);
+  const navyNow=_bfNavy(S.neck,S.waist,S.hip,S.height,S.gender);
+  // Case pré-remplie : valeur enregistrée du jour, sinon calcul US Navy (prêt à valider)
+  const prefill=savedToday?todayW.bf:(navyNow!=null?navyNow:'');
+  const sub=savedToday?('✓ Enregistrée : '+todayW.bf+' %')
+    :(navyNow!=null?('Estimée ~'+navyNow+' % — appuie sur ✓ pour enregistrer')
+    :'Entre ton cou et ta taille ci-dessous');
+  el.innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">'
+     +'<div><div style="font-size:14px;font-weight:800;color:var(--t1);">Masse grasse du jour</div>'
+     +'<div style="font-size:12px;color:var(--t3);margin-top:2px;">'+sub+'</div></div>'
+     +'<div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">'
+       +'<input type="number" id="bf-inp" value="'+prefill+'" placeholder="%" step="0.1" min="2" max="70" inputmode="decimal" style="width:70px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
+       +'<button class="btn-xs btn-red" onclick="saveBodyFat()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>'
+     +'</div>'
+    +'</div>'
+    +'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--sep);">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">'
+        +'<span style="font-size:12px;color:var(--t3);">Calcul auto (méthode US Navy) — remplit la case ci-dessus</span>'
+        +'<span id="bf-navy-val" style="font-size:14px;font-weight:800;color:var(--blue);">'+_navyBfHtml()+'</span>'
+      +'</div>'
+      +'<div style="display:flex;gap:6px;">'
+        +_bfMeasInput('bf-neck','Cou',S.neck)
+        +_bfMeasInput('bf-waist','Tour de taille',S.waist)
+        +(isF?_bfMeasInput('bf-hip','Hanches',S.hip):'')
+      +'</div>'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Mesures en cm, à jeun le matin. <b>Valeur indicative</b> — pas une science exacte. Vise la régularité : c\'est la tendance qui compte.</div>'
+    +'</div>';
+}
+function saveBodyFat(){
+  // Mensurations saisies (aussi utilisées pour le calcul US Navy de secours)
+  const nk=parseFloat((document.getElementById('bf-neck')||{}).value),wa=parseFloat((document.getElementById('bf-waist')||{}).value),hp=parseFloat((document.getElementById('bf-hip')||{}).value);
+  let bf=parseFloat((document.getElementById('bf-inp')||{}).value);
+  // Rien tapé à la main → on prend directement le calcul US Navy des mesures
+  if(!bf){const navy=_bfNavy(nk||S.neck,wa||S.waist,hp||S.hip,S.height,S.gender);if(navy!=null)bf=navy;}
+  if(!bf||bf<2||bf>70){toast('Entre un % ou tes mesures (cou + taille)','error');return;}
+  if(!S.weightLog)S.weightLog=[];
+  const d=today();
+  let e=S.weightLog.find(w=>w.date===d);
+  if(!e){
+    const last=S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const kg=last?last.kg:(S.bw||0);
+    if(!kg){toast('Enregistre d\'abord ton poids du jour','info');return;}
+    e={date:d,kg:kg};S.weightLog.unshift(e);
+  }
+  e.bf=Math.round(bf*10)/10;
+  // Mémorise les mensurations saisies (garde le profil à jour)
+  if(nk>20&&nk<80)S.neck=nk;if(wa>40&&wa<200)S.waist=wa;if(hp>40&&hp<200)S.hip=hp;
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
+  persist();renderWeightTab();
+  toast('Masse grasse enregistrée ✅','success');
+}
+// ── Édition d'une pesée (tap sur un point du graphique) ──
+let _weighEditDate=null;
+function openWeighEdit(date){
+  const w=(S.weightLog||[]).find(x=>x.date===date);if(!w)return;
+  _weighEditDate=date;
+  const di=document.getElementById('weigh-edit-date');if(di)di.value=date;
+  const ki=document.getElementById('weigh-edit-kg');if(ki)ki.value=w.kg;
+  const bi=document.getElementById('weigh-edit-bf');if(bi)bi.value=(w.bf!=null?w.bf:'');
+  const ov=document.getElementById('ov-weigh-edit');if(ov)ov.classList.add('open');
+}
+function closeWeighEdit(){const ov=document.getElementById('ov-weigh-edit');if(ov)ov.classList.remove('open');_weighEditDate=null;}
+function saveWeighEdit(){
+  const kg=parseFloat((document.getElementById('weigh-edit-kg')||{}).value);
+  const newDate=(document.getElementById('weigh-edit-date')||{}).value;
+  if(!kg||kg<20||kg>300){toast('Poids invalide (20–300 kg)','error');return;}
+  if(!newDate){toast('Date invalide','error');return;}
+  if(newDate>today()){toast('Date dans le futur','error');return;}
+  const bfv=parseFloat((document.getElementById('weigh-edit-bf')||{}).value);
+  const entry={date:newDate,kg:kg};
+  if(bfv>=2&&bfv<=70)entry.bf=bfv;
+  // retire l'ancienne entrée + toute entrée sur la nouvelle date, puis ré-insère
+  S.weightLog=(S.weightLog||[]).filter(x=>x.date!==_weighEditDate&&x.date!==newDate);
+  S.weightLog.unshift(entry);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
+  if(S.weightLog[0])S.bw=S.weightLog[0].kg;
+  persist();closeWeighEdit();renderWeightTab();renderHome();
+  toast('Pesée mise à jour ✅','success');
+}
+function deleteWeighEntry(){
+  const dt=_weighEditDate;if(!dt)return;
+  showConfirm('Supprimer cette pesée ?','Le '+new Date(dt+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+' — action définitive.',function(){
+    S.weightLog=(S.weightLog||[]).filter(x=>x.date!==dt);
+    if(S.weightLog[0])S.bw=S.weightLog[0].kg;
+    persist();closeWeighEdit();renderWeightTab();renderHome();
+    toast('Pesée supprimée','info');
+  });
+}
+function renderWeightChart(pts,box,metric){
+  metric=metric||'kg';
+  const field=metric==='bf'?'bf':'kg';
+  const unit=metric==='bf'?'%':'kg';
+  const noun=metric==='bf'?'mesures':'pesées';
+  const baseColor=metric==='bf'?'--orange':'--blue';
   const W=340,H=160,pad={t:18,r:14,b:32,l:44},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
-  const vals=pts.map(p=>p.kg);
-  const span=Math.max(...vals)-Math.min(...vals)||1;
-  const minY=Math.min(...vals)-span*.08,maxY=Math.max(...vals)+span*.08,rY=maxY-minY||1;
+  const vals=pts.map(p=>p[field]);
+  // Poids objectif (ligne repère) — uniquement en vue Poids
+  const tw=(metric==='kg'&&S.targetWeight)?S.targetWeight:null;
+  const rangeV=vals.concat(tw!=null?[tw]:[]);
+  const span=Math.max(...rangeV)-Math.min(...rangeV)||1;
+  const minY=Math.min(...rangeV)-span*.08,maxY=Math.max(...rangeV)+span*.08,rY=maxY-minY||1;
   const xS=pts.length>1?iW/(pts.length-1):0;
   const toX=i=>pad.l+(pts.length>1?i*xS:iW/2);
   const toY=v=>pad.t+iH-((v-minY)/rY)*iH;
   // Catmull-Rom bezier
-  const P=pts.map((p,i)=>({x:toX(i),y:toY(p.kg)}));
+  const P=pts.map((p,i)=>({x:toX(i),y:toY(p[field])}));
   let path='M'+P[0].x+' '+P[0].y;
   for(let i=0;i<P.length-1;i++){
     const p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(P.length-1,i+2)];
@@ -420,7 +629,7 @@ function renderWeightChart(pts,box){
   }
   const area=path+` L${toX(pts.length-1)} ${pad.t+iH} L${toX(0)} ${pad.t+iH} Z`;
   // Linear regression trend
-  const reg=linearRegression(pts.map((p,i)=>({x:i,y:p.kg})));
+  const reg=linearRegression(pts.map((p,i)=>({x:i,y:p[field]})));
   const weeklyChange=Math.round(reg.slope*7*100)/100;
   const tY0=toY(reg.intercept),tY1=toY(reg.intercept+reg.slope*(pts.length-1));
   // Y-axis ticks
@@ -429,20 +638,58 @@ function renderWeightChart(pts,box){
   // X-axis labels (first, mid, last)
   const xLabels=[0,Math.floor((pts.length-1)/2),pts.length-1].map(i=>({i,d:pts[i].date}));
   const fmtW=d=>{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});};
+  // Tendance : pour le poids, baisse = vert ; pour la masse grasse aussi (baisser la MG = positif)
   const trendColor=weeklyChange>0.1?'var(--red)':weeklyChange<-0.1?'var(--green)':'var(--blue)';
+  const gid=metric==='bf'?'wg-bf':'wg';
   box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;overflow:visible;">
-    <defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--blue)" stop-opacity=".25"/><stop offset="100%" stop-color="var(--blue)" stop-opacity=".02"/></linearGradient></defs>
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(${baseColor})" stop-opacity=".25"/><stop offset="100%" stop-color="var(${baseColor})" stop-opacity=".02"/></linearGradient></defs>
     ${yTicks.map(v=>`<line x1="${pad.l}" y1="${toY(v)}" x2="${W-pad.r}" y2="${toY(v)}" stroke="var(--sep)" stroke-width=".5"/><text x="${pad.l-4}" y="${toY(v)+4}" text-anchor="end" font-size="9" style="fill:var(--t3)">${Math.round(v*10)/10}</text>`).join('')}
     ${xLabels.map(({i,d})=>`<text x="${toX(i)}" y="${H-4}" text-anchor="middle" font-size="9" style="fill:var(--t3)">${fmtW(d)}</text>`).join('')}
-    <path d="${area}" fill="url(#wg)"/>
-    <path d="${path}" fill="none" style="stroke:var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${area}" fill="url(#${gid})"/>
+    <path d="${path}" fill="none" style="stroke:var(${baseColor})" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <line x1="${pad.l}" y1="${tY0}" x2="${W-pad.r}" y2="${tY1}" stroke="${trendColor}" stroke-width="1.5" stroke-dasharray="5 3" opacity=".6"/>
-    ${P.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="3" style="fill:var(--blue)" opacity=".7"/>`).join('')}
+    ${tw!=null?`<line x1="${pad.l}" y1="${toY(tw)}" x2="${W-pad.r}" y2="${toY(tw)}" stroke="var(--green)" stroke-width="1.2" stroke-dasharray="2 3" opacity=".85"/><text x="${W-pad.r}" y="${toY(tw)-4}" text-anchor="end" font-size="9" style="fill:var(--green);font-weight:700">🎯 ${tw}</text>`:''}
+    ${P.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="12" fill="transparent" style="cursor:pointer" onclick="openWeighEdit('${pts[i].date}')"><title>${fmtW(pts[i].date)} · ${pts[i][field]} ${unit} — modifier</title></circle><circle cx="${p.x}" cy="${p.y}" r="3.6" style="fill:var(${baseColor});stroke:var(--bg2);stroke-width:1.5;pointer-events:none"/>`).join('')}
   </svg>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:13px;color:var(--t3);">
-    <span>${pts.length} pesées · min ${Math.min(...vals).toFixed(1)} kg · max ${Math.max(...vals).toFixed(1)} kg</span>
-    <span style="color:${trendColor};font-weight:800;">${weeklyChange>=0?'+':''}${weeklyChange} kg/sem</span>
+    <span>${pts.length} ${noun} · min ${Math.min(...vals).toFixed(1)} ${unit} · max ${Math.max(...vals).toFixed(1)} ${unit}</span>
+    <span style="color:${trendColor};font-weight:800;">${weeklyChange>=0?'+':''}${weeklyChange} ${unit}/sem</span>
   </div>`;
+}
+// Vue « Les 2 » : poids (bleu, axe gauche kg) + masse grasse (orange, axe droit %) superposés
+function renderCompareChart(pts,box){
+  const W=340,H=176,pad={t:16,r:38,b:34,l:38},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  const kgs=pts.map(p=>p.kg);
+  const bfPts=pts.map((p,i)=>({i:i,bf:p.bf})).filter(o=>o.bf!=null);
+  const hasBf=bfPts.length>0;          // au moins 1 point → axe droit + dots
+  const bfLine=bfPts.length>=2;        // ≥2 → on trace la courbe orange
+  const kMin0=Math.min(...kgs),kMax0=Math.max(...kgs),kSp=(kMax0-kMin0)||1;
+  const kMin=kMin0-kSp*.12,kMax=kMax0+kSp*.12;
+  let bMin=0,bMax=1;
+  if(hasBf){const bfVals=bfPts.map(o=>o.bf);const bMin0=Math.min(...bfVals),bMax0=Math.max(...bfVals),bSp=(bMax0-bMin0)||2;const padB=Math.max(bSp*.12,1);bMin=bMin0-padB;bMax=bMax0+padB;}
+  const xS=pts.length>1?iW/(pts.length-1):0;
+  const toX=i=>pad.l+(pts.length>1?i*xS:iW/2);
+  const toYk=v=>pad.t+iH-((v-kMin)/(kMax-kMin||1))*iH;
+  const toYb=v=>pad.t+iH-((v-bMin)/(bMax-bMin||1))*iH;
+  const kPath='M'+pts.map((p,i)=>toX(i)+' '+toYk(p.kg)).join(' L');
+  const bPath=bfLine?('M'+bfPts.map(o=>toX(o.i)+' '+toYb(o.bf)).join(' L')):'';
+  const fmtW=d=>{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});};
+  const xLabels=[0,Math.floor((pts.length-1)/2),pts.length-1].map(i=>({i:i,d:pts[i].date}));
+  const ticks=4;
+  const gl=[];for(let t=0;t<=ticks;t++){const y=pad.t+iH*(t/ticks);const kv=kMax-(kMax-kMin)*(t/ticks);const bv=bMax-(bMax-bMin)*(t/ticks);gl.push({y:y,kv:kv,bv:bv});}
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;overflow:visible;">
+    ${gl.map(g=>`<line x1="${pad.l}" y1="${g.y}" x2="${W-pad.r}" y2="${g.y}" stroke="var(--sep)" stroke-width=".5"/><text x="${pad.l-4}" y="${g.y+3}" text-anchor="end" font-size="8.5" style="fill:var(--blue)">${Math.round(g.kv*10)/10}</text>${hasBf?`<text x="${W-pad.r+4}" y="${g.y+3}" text-anchor="start" font-size="8.5" style="fill:var(--orange)">${Math.round(g.bv*10)/10}</text>`:''}`).join('')}
+    ${xLabels.map(o=>`<text x="${toX(o.i)}" y="${H-4}" text-anchor="middle" font-size="9" style="fill:var(--t3)">${fmtW(o.d)}</text>`).join('')}
+    <path d="${kPath}" fill="none" style="stroke:var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${bPath?`<path d="${bPath}" fill="none" style="stroke:var(--orange)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:''}
+    ${pts.map((p,i)=>`<circle cx="${toX(i)}" cy="${toYk(p.kg)}" r="2.6" style="fill:var(--blue)"/>`).join('')}
+    ${bfPts.map(o=>`<circle cx="${toX(o.i)}" cy="${toYb(o.bf)}" r="2.6" style="fill:var(--orange)"/>`).join('')}
+  </svg>
+  <div style="display:flex;justify-content:center;gap:18px;align-items:center;margin-top:6px;font-size:12px;color:var(--t2);">
+    <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:3px;border-radius:2px;background:var(--blue);display:inline-block;"></span>Poids (kg)</span>
+    <span style="display:inline-flex;align-items:center;gap:5px;opacity:${bfLine?1:.5};"><span style="width:10px;height:3px;border-radius:2px;background:var(--orange);display:inline-block;"></span>Masse grasse (%)</span>
+  </div>
+  ${bfLine?'':'<div style="text-align:center;margin-top:6px;font-size:11px;color:var(--t3);">🟠 Ajoute une 2ᵉ mesure de masse grasse pour voir sa courbe.</div>'}`;
 }
 function renderWeightCorrelations(el,pts){
   if(!pts||pts.length<3){el.innerHTML='';return;}
