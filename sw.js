@@ -1,4 +1,4 @@
-const CACHE = 'ft-v230'; // note de confidentialité santé précisée (visibles seulement par toi ; téléphone + sauvegarde perso liée à l'email)
+const CACHE = 'ft-v231'; // masse grasse : ✓ enregistre direct depuis les mesures (calcul US Navy) + vue « Les 2 » (poids+MG superposés, 2 axes) + « 2 mesures »
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
