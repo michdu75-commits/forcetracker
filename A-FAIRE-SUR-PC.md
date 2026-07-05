@@ -17,22 +17,14 @@
 
 ## ⏳ En attente
 
-### 6. Persistance cloud du « poids objectif » (ft-v229)
-✅ **Code déjà ajouté dans `Code.js`** (`handleSaveProfile_`, à côté de `neck`/`waist`/`hip`) :
-```js
-if (body.targetWeight !== undefined) profile.targetWeight = _pn_(body.targetWeight, profile.targetWeight);
-```
-Sans ce déploiement, le poids objectif reste **local** (fonctionne quand même sur l'appareil, mais perdu si réinstallation/vidage du cache). **À déployer** au prochain passage PC (récupère tout `Code.js` d'un coup) :
-```
-git checkout origin/master -- Code.js
-set NODE_TLS_REJECT_UNAUTHORIZED=0
-npx clasp push --force
-npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
-```
+*(Rien en attente pour l'instant — tout est déployé.)*
 
 ---
 
 ## ✅ Fait
+
+### 6. Persistance cloud « poids objectif » (ft-v229) — ✅ déployé @62 (2026-07-05)
+`if (body.targetWeight !== undefined) profile.targetWeight = _pn_(...)` dans `handleSaveProfile_`. Déployé depuis le PC de Michel (clasp push + deploy -i → **@62**). Le poids objectif survit désormais à une réinstallation.
 
 ### 3 + 4 + 5. Étude du corps (@61) + photos exercices bibliothèque (@61) — ✅ déployé (2026-07-05)
 - **Étude du corps** (ft-v224) : `handleBodyStudy_` (Claude **Sonnet**, bilan posture/insertions/équilibre/santé/exercices) + route `bodyStudy` + persistance `bodyStudy` dans `handleSaveProfile_`. Réalise le point 3 (« analyse morpho la totale »).
