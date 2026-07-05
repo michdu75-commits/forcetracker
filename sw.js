@@ -1,4 +1,4 @@
-const CACHE = 'ft-v241'; // Programme débutant « Premiers pas » (machines A/B, nuance H/F, gainage+crunch) + Milo ton adapté au sexe + cardio/poids + migraines (santé)
+const CACHE = 'ft-v242'; // Parcours débutant Étape 1 : choix fréquence (2/3) + style (Full Body / Split PPL ou Haut-Bas), programme adapté au profil, objectif 3 semaines
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

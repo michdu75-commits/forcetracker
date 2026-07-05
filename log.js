@@ -2627,40 +2627,100 @@ function loadProgDay(progIdx,dayIdx){
   toast('"'+prog.name+' — '+day.label+'" chargé ! 💪','success');
 }
 
-// ─── PROGRAMME DÉBUTANT « Premiers pas » ─────────────────────
-// Machines guidées, full-body 3×/semaine en A/B. Tronc commun identique H/F ;
-// une seule nuance par séance selon le sexe (accent haut du corps H / chaîne postérieure F).
-// Les mouvements techniques (squat, développé couché, soulevé) se débloquent au niveau Intermédiaire.
-function _beginnerProg(gender){
+// ─── PARCOURS DÉBUTANT — Étape 1 « Découverte » (gratuit) ─────
+// Programme adapté : choix de fréquence (2/3 séances) + style (Full Body / Split),
+// nuance femme (un exo fessier en plus), machines guidées uniquement.
+// Objectif = 3 semaines. Les mouvements techniques (squat/couché/soulevé) et les
+// étapes suivantes (volume ↑, passage Intermédiaire) arrivent plus tard.
+const BEGINNER_PHASE1_WEEKS=3;
+function _beginnerProg(gender, style, freq){
   const F = gender==='F';
+  freq = (freq===2)?2:3;
   const _s3=(reps)=>[{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0},{kg:0,reps,type:'N',rest:0}];
-  const ex=(name,reps)=>({name,sets:_s3(reps||12)});
-  const A=[
-    ex('Press Jambes 45°'),
-    ex('Chest Press Machine Horizontale'),
-    ex('Tirage Poulie Haute'),
-    ex('Leg Curl Assis Machine'),
-    F?ex('Poussée de Hanche Machine'):ex('Pec Deck'),
-    ex('Gainage',30),
-  ];
-  const B=[
-    ex('Extension Quadriceps (Leg Extension)'),
-    ex('Rowing Machine'),
-    ex('Développé Épaules Machine'),
-    ex('Curl Machine'),
-    F?ex('Abduction Cuisses (Leg Abduction)'):ex('Élévations Latérales Machine'),
-    ex('Crunch Machine',15),
-  ];
-  return {id:'p_beginner_'+Date.now(),name:'Premiers pas',beginner:true,
-    days:[{label:'Séance A',exs:A},{label:'Séance B',exs:B}]};
+  const ex=(name,reps)=>({name,sets:_s3(reps||12)}); // objet frais à chaque appel (pas de référence partagée)
+  let days, name;
+  if(style==='split'){
+    if(freq===3){
+      // Push / Pull / Legs
+      name='Premiers pas — Push/Pull/Legs';
+      const legs=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Poussée de Hanche Machine')];
+      if(F)legs.push(ex('Abduction Cuisses (Leg Abduction)'));
+      legs.push(ex('Gainage',30));
+      days=[
+        {label:'Poussée',exs:[ex('Chest Press Machine Horizontale'),ex('Pec Deck'),ex('Développé Épaules Machine'),ex('Élévations Latérales Machine'),ex('Triceps Machine')]},
+        {label:'Tirage',exs:[ex('Tirage Poulie Haute'),ex('Rowing Machine'),ex('Tirage Poulie Haute Prise Serrée'),ex('Curl Machine'),ex('Curl Incliné')]},
+        {label:'Jambes',exs:legs},
+      ];
+    }else{
+      // Haut / Bas (2 jours)
+      name='Premiers pas — Haut/Bas';
+      const bas=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Poussée de Hanche Machine')];
+      if(F)bas.push(ex('Abduction Cuisses (Leg Abduction)'));
+      bas.push(ex('Gainage',30));
+      days=[
+        {label:'Haut du corps',exs:[ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute'),ex('Développé Épaules Machine'),ex('Curl Machine'),ex('Triceps Machine')]},
+        {label:'Bas du corps',exs:bas},
+      ];
+    }
+  }else{
+    // Full Body (tout le corps à chaque séance)
+    name='Premiers pas — Full Body';
+    const fb1=[ex('Press Jambes 45°'),ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute'),ex('Développé Épaules Machine')];
+    if(F)fb1.push(ex('Poussée de Hanche Machine'));
+    fb1.push(ex('Gainage',30));
+    const fb2=[ex('Leg Curl Assis Machine'),ex('Pec Deck'),ex('Rowing Machine'),ex('Curl Machine'),ex('Crunch Machine',15)];
+    const fb3=[ex('Extension Quadriceps (Leg Extension)'),ex('Chest Press Machine Inclinée'),ex('Tirage Poulie Haute Prise Serrée'),ex('Triceps Machine'),ex('Gainage',30)];
+    days=(freq===2)?[{label:'Séance A',exs:fb1},{label:'Séance B',exs:fb2}]
+                   :[{label:'Séance A',exs:fb1},{label:'Séance B',exs:fb2},{label:'Séance C',exs:fb3}];
+  }
+  return {id:'p_beginner_'+Date.now(),name,beginner:true,bgStyle:style,bgFreq:freq,days};
 }
-function _hasBeginnerProg(){return (S.programmes||[]).some(p=>p&&(p.beginner||p.name==='Premiers pas'));}
-function addBeginnerProg(){
+function _hasBeginnerProg(){return (S.programmes||[]).some(p=>p&&(p.beginner||(p.name||'').indexOf('Premiers pas')===0));}
+
+// ── Setup du parcours débutant (les 2 questions) ──
+let _bgFreq=3,_bgStyle='fullbody';
+function openBeginnerSetup(){
+  if(_hasBeginnerProg()){renderProgModal();toast('Tu as déjà ton programme débutant','info');return;}
+  _bgFreq=3;_bgStyle='fullbody';
+  _renderBeginnerSetup();
+  document.getElementById('ov-beginner-setup').classList.add('open');
+}
+function closeBeginnerSetup(){document.getElementById('ov-beginner-setup').classList.remove('open');}
+function _bgSetFreq(n){_bgFreq=(n===2)?2:3;_renderBeginnerSetup();}
+function _bgSetStyle(s){_bgStyle=(s==='split')?'split':'fullbody';_renderBeginnerSetup();}
+function _renderBeginnerSetup(){
+  const tg=(id,on)=>{const e=document.getElementById(id);if(e)e.classList.toggle('active',on);};
+  tg('bg-freq-2',_bgFreq===2);tg('bg-freq-3',_bgFreq===3);
+  tg('bg-style-fullbody',_bgStyle==='fullbody');tg('bg-style-split',_bgStyle==='split');
+  const sl=document.getElementById('bg-style-split-lbl');if(sl)sl.textContent=_bgFreq===3?'Push / Pull / Legs':'Haut / Bas';
+  const d=document.getElementById('bg-style-desc');
+  if(d){
+    d.textContent = _bgStyle==='fullbody'
+      ? 'Tout le corps à chaque séance. Le plus simple pour débuter et bien apprendre les mouvements.'
+      : (_bgFreq===3
+          ? 'Une séance par zone : Poussée (pecs/épaules) · Tirage (dos/biceps) · Jambes. Facile à suivre.'
+          : 'Une séance haut du corps, une séance bas du corps — bon compromis sur 2 jours.');
+  }
+}
+function createBeginnerProg(){
   if(!S.programmes)S.programmes=[];
-  if(_hasBeginnerProg()){renderProgModal();toast('Tu as déjà le programme « Premiers pas »','info');return;}
-  S.programmes.push(_beginnerProg(S.gender));
-  persist();renderProgModal();
-  toast('Programme « Premiers pas » ajouté ! 🌱','success');
+  if(_hasBeginnerProg()){closeBeginnerSetup();renderProgModal();return;}
+  S.programmes.push(_beginnerProg(S.gender,_bgStyle,_bgFreq));
+  S.beginnerJourney={style:_bgStyle,freq:_bgFreq,startDate:today(),phase:1};
+  persist();
+  closeBeginnerSetup();
+  openProgModal();
+  toast('Ton programme est prêt ! 🌱 '+_bgFreq+' séances/semaine','success');
+}
+// Ancien point d'entrée conservé (bouton) → ouvre désormais le setup
+function addBeginnerProg(){openBeginnerSetup();}
+// Objectif de fin d'étape 1, affiché dans le modal Programmes tant que le parcours est actif
+function _beginnerGoalText(){
+  const j=S.beginnerJourney;if(!j||j.phase!==1)return '';
+  const start=j.startDate?new Date(j.startDate):null;
+  let weekTxt='';
+  if(start){const w=Math.floor((Date.now()-start.getTime())/(7*86400000))+1;weekTxt=' (semaine '+Math.min(w,BEGINNER_PHASE1_WEEKS)+' / '+BEGINNER_PHASE1_WEEKS+')';}
+  return '🎯 Objectif '+BEGINNER_PHASE1_WEEKS+' semaines'+weekTxt+' : tiens tes '+j.freq+' séances/semaine et augmente les charges quand tu réussis tes séries (+2,5 kg haut du corps, +5 kg jambes). Après, Milo t\'ouvre la suite du parcours. 💪';
 }
 
 // ─── PROGRAMMES ──────────────────────────────────────────────
@@ -2676,6 +2736,8 @@ function renderProgModal(){
   const progs=S.programmes;
   const begBtn=document.getElementById('prog-beginner-btn');
   if(begBtn)begBtn.style.display=_hasBeginnerProg()?'none':'block';
+  const begGoal=document.getElementById('prog-beginner-goal');
+  if(begGoal){const g=_beginnerGoalText();begGoal.style.display=g?'block':'none';begGoal.textContent=g;}
   const list=document.getElementById('prog-list-modal');
   if(!progs.length){
     list.innerHTML='<div style="text-align:center;color:var(--t3);padding:14px 0;font-size:14px;">Aucun programme sauvegardé.<br>Crée une séance et utilise "Sauvegarder" !</div>';

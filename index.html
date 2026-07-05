@@ -1519,7 +1519,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <div class="modal">
     <div class="modal-handle"></div>
     <h2>📋 Mes Programmes</h2>
-    <button id="prog-beginner-btn" onclick="addBeginnerProg()" style="display:none;width:100%;padding:12px;margin-bottom:10px;font-size:14px;font-weight:700;font-family:var(--font);border-radius:12px;border:1.5px solid rgba(52,199,89,.45);color:#34c759;background:rgba(52,199,89,.10);cursor:pointer;">🌱 Ajouter le programme « Premiers pas » (débutant)</button>
+    <button id="prog-beginner-btn" onclick="openBeginnerSetup()" style="display:none;width:100%;padding:12px;margin-bottom:10px;font-size:14px;font-weight:700;font-family:var(--font);border-radius:12px;border:1.5px solid rgba(52,199,89,.45);color:#34c759;background:rgba(52,199,89,.10);cursor:pointer;">🌱 Créer mon parcours débutant</button>
+    <div id="prog-beginner-goal" style="display:none;font-size:12.5px;line-height:1.45;color:var(--t2);background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.28);border-radius:10px;padding:10px 12px;margin-bottom:10px;"></div>
     <div id="prog-list-modal" style="margin-bottom:4px;"></div>
     <div id="prog-save-section" style="border-top:1px solid var(--sep);padding-top:14px;margin-top:6px;display:flex;flex-direction:column;gap:8px;">
       <div style="font-size:13px;color:var(--t2);font-weight:700;">Sauvegarder la séance actuelle :</div>
@@ -1527,6 +1528,28 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <button class="btn btn-red" onclick="saveAsProg()" style="padding:13px;">💾 Sauvegarder comme programme</button>
     </div>
     <div class="modal-btns" style="margin-top:10px;"><button class="btn btn-bg2" onclick="closeProgModal()">Fermer</button></div>
+  </div>
+</div>
+
+<!-- OVERLAY: Setup parcours débutant (Étape 1 gratuite) -->
+<div class="overlay" id="ov-beginner-setup">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>🌱 Ton parcours débutant</h2>
+    <p style="font-size:14px;color:var(--t2);margin:-4px 0 14px;">On te crée un programme sur mesure, sur machines (en sécurité). 2 petites questions 👇</p>
+    <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px;">Combien de séances par semaine ?</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <button class="goal-btn" id="bg-freq-2" onclick="_bgSetFreq(2)" style="flex:1;padding:14px 4px;font-size:14px;"><span>2 séances</span></button>
+      <button class="goal-btn" id="bg-freq-3" onclick="_bgSetFreq(3)" style="flex:1;padding:14px 4px;font-size:14px;"><span>3 séances ✅</span></button>
+    </div>
+    <div style="font-size:14px;font-weight:700;color:var(--t1);margin-bottom:8px;">Quel style ?</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;">
+      <button class="goal-btn" id="bg-style-fullbody" onclick="_bgSetStyle('fullbody')" style="flex:1;padding:14px 4px;font-size:14px;"><span>Full Body</span></button>
+      <button class="goal-btn" id="bg-style-split" onclick="_bgSetStyle('split')" style="flex:1;padding:14px 4px;font-size:14px;"><span id="bg-style-split-lbl">Push / Pull / Legs</span></button>
+    </div>
+    <div id="bg-style-desc" style="font-size:13px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:9px 12px;line-height:1.45;margin-bottom:16px;"></div>
+    <button class="btn btn-red" onclick="createBeginnerProg()" style="width:100%;padding:15px;font-size:16px;">Créer mon programme 💪</button>
+    <div class="modal-btns" style="margin-top:8px;"><button class="btn btn-bg2" onclick="closeBeginnerSetup()">Annuler</button></div>
   </div>
 </div>
 
