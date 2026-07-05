@@ -1,4 +1,4 @@
-const CACHE = 'ft-v224'; // Étude du corps (Premium) : 4 photos relâché/contracté → bilan posture/insertions/équilibre + exercices, santé prise en compte, injecté à Milo
+const CACHE = 'ft-v225'; // Gagner en force (Big 3) : Milo lit les maxes → conseil + programme force à enregistrer dans Mes programmes (réutilise le Coach, 0 backend)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
