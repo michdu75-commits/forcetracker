@@ -771,18 +771,15 @@ function exitDemoMode(){
   toast('✅ Tes vraies données sont de retour','success');
 }
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
+// Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
-  {ic:'👋',t:'Bienvenue dans Force Tracker',x:'Ton carnet de muscu intelligent. En quelques écrans, voici l\'essentiel pour bien démarrer. Fais défiler ! 💪',v:'<div class="agv agv-wave"><span>👋</span></div>'},
-  {ic:'🧭',t:'Tes onglets, tout en bas',x:'Toute l\'app se pilote depuis la <b>barre du bas</b> :<br><b>🏠 Accueil</b> · <b>📈 Progrès</b> · <b>⚡ Séance</b> (le +) · <b>🍽️ Nutrition</b> · <b>🤖 Coach</b> · <b>☰ Menu</b>.',v:'<div class="agv agv-tabs"><div class="agv-tabbar"><span class="agv-tab t1"><i>🏠</i><small>Accueil</small></span><span class="agv-tab t2"><i>📈</i><small>Progrès</small></span><span class="agv-tab t3 agv-tabplus"><i>+</i></span><span class="agv-tab t4"><i>🍽️</i><small>Nutrition</small></span><span class="agv-tab t5"><i>💬</i><small>Coach</small></span><span class="agv-tab t6"><i>☰</i><small>Menu</small></span></div></div>'},
-  {ic:'🏠',t:'L\'accueil, ton tableau de bord',x:'La page qui s\'ouvre en premier. D\'un coup d\'œil : ton <b>volume du mois</b>, tes <b>Big 3</b>, tes <b>séances</b>, ton <b>poids</b>, ta <b>récupération</b> et tes <b>records</b>.',v:'<div class="agv agv-home"><div class="agv-htile"><b>💪</b><small>Volume</small></div><div class="agv-htile"><b>🏋️</b><small>Big 3</small></div><div class="agv-htile"><b>📅</b><small>Séances</small></div><div class="agv-htile"><b>⚖️</b><small>Poids</small></div></div>'},
-  {ic:'⚡',t:'Ta séance',x:'Onglet <b>Séance</b> (le + rouge au centre). Ajoute tes exercices, note chaque série (poids × répétitions). L\'app calcule tes <b>records</b> et ta progression toute seule.',v:'<div class="agv agv-nav"><div class="agv-bar"><i>🏠</i><i>📈</i><b class="agv-plus">+</b><i>🍽️</i><i>☰</i></div><span class="agv-tap"></span></div>'},
-  {ic:'📋',t:'Tes programmes',x:'Sauvegarde une séance comme <b>programme</b> réutilisable, ou importe-en un (photo, Word, PDF). Charge-le en 1 tap, et tu peux même l\'<b>exporter en PDF</b> pour l\'imprimer.',v:'<div class="agv agv-prog"><div class="agv-pcard"><span class="agv-prow p1"></span><span class="agv-prow p2"></span><span class="agv-prow p3"></span></div><b class="agv-pdf">PDF</b></div>'},
-  {ic:'🌱',t:'Tu débutes ?',x:'Dans <b>Mes Programmes</b>, crée ton <b>parcours débutant</b> : 2 questions et hop, un programme sur mesure sur machines guidées. On te prend par la main.',v:'<div class="agv agv-seedbox"><span class="agv-seed">🌱</span><div class="agv-pbar"><i></i></div></div>'},
-  {ic:'📈',t:'Tes progrès',x:'L\'app suit tes <b>records</b> (1RM), ton <b>poids</b> et ta <b>masse grasse</b>, en graphiques clairs. Des <b>badges</b> se débloquent au fil de tes séances.',v:'<div class="agv agv-chart"><i style="--d:0s"></i><i style="--d:.15s"></i><i style="--d:.3s"></i><i style="--d:.45s"></i><i style="--d:.6s"></i></div>'},
-  {ic:'🤖',t:'Milo, ton coach IA',x:'Onglet <b>Coach</b>. Pose-lui <b>toutes</b> tes questions : technique, nutrition, motivation. Il connaît ton profil et s\'adapte à toi — franc et direct, comme un vrai coach.',v:'<div class="agv agv-chat"><span class="agv-avatar">🤖</span><span class="agv-bubble2"><span class="agv-typing"><span></span><span></span><span></span></span></span></div>'},
-  {ic:'📸',t:'Tes photos (analyse du corps)',x:'Milo peut analyser ton physique (morphologie, étude du corps). <b>Pour de bonnes photos :</b> bien éclairé, fond neutre, en short/sous-vêtements, de face / dos / profil, une fois relâché puis contracté, bien immobile.',v:'<div class="agv agv-poses"><div class="agv-pose p1"><span>🧍</span><small>Face</small></div><div class="agv-pose p2"><span>🧍</span><small>Dos</small></div><div class="agv-pose p3"><span>🚶</span><small>Profil</small></div></div>'},
-  {ic:'🍽️',t:'Nutrition',x:'L\'app calcule tes <b>calories et macros</b> selon ton objectif, avec un plan de repas et les suppléments utiles (créatine, whey…).',v:'<div class="agv agv-ring"><svg viewBox="0 0 40 40"><circle class="agv-rbg" cx="20" cy="20" r="16"/><circle class="agv-rfg" cx="20" cy="20" r="16"/></svg><span class="agv-remoji">🍽️</span></div>'},
-  {ic:'✅',t:'Les 3 choses importantes',x:'1️⃣ Remplis ton <b>profil</b> (Menu → Profil).<br>2️⃣ Note tes séances <b>à chaque fois</b>.<br>3️⃣ Sois <b>régulier</b> — c\'est ça qui paie. 💪',v:'<div class="agv agv-checks"><span class="agv-ck k1">✓</span><span class="agv-ck k2">✓</span><span class="agv-ck k3">✓</span></div>'},
+  {img:'guide/home.jpg',       tap:[.5,.945],  t:'Ton accueil',            cap:'Tes stats du mois et ta <b>récup du jour</b> d\'un coup d\'œil. Le gros <b>+</b> démarre une séance.'},
+  {img:'guide/profil.jpg',     tap:[.5,.60],   t:'Remplis bien ton profil ⭐', cap:'<b>Le plus important !</b> Plus ton profil est complet (âge, poids, objectif, santé…), plus tout devient <b>précis</b> : ta récup, ton coach, tes calories.'},
+  {img:'guide/seance.jpg',     tap:[.875,.305],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche. Tes <b>records</b> se calculent tout seuls.'},
+  {img:'guide/programmes.jpg', tap:[.5,.42],   t:'Tes programmes',         cap:'Crée, <b>importe</b> (photo/Word/PDF) ou charge un programme en 1 tap. Débutant ? Un parcours guidé t\'attend.'},
+  {img:'guide/progres.jpg',    tap:[.5,.32],   t:'Tes progrès',            cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs.'},
+  {img:'guide/coach.jpg',      tap:[.5,.86],   t:'Milo, ton coach IA',     cap:'Une <b>question</b> ? Besoin d\'un <b>conseil</b> ou d\'un guide ? Milo répond à tout — il connaît ton profil.'},
+  {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;
 function openAppGuide(){
@@ -810,17 +807,37 @@ function _agGo(d){
 function _renderAppGuide(){
   const s=APP_GUIDE_SLIDES[_agIdx];if(!s)return;
   const set=(id,html,prop)=>{const el=document.getElementById(id);if(el)el[prop||'textContent']=html;};
-  // visuel animé si présent (s.v), sinon grosse emoji
-  const icEl=document.getElementById('ag-ic'),vEl=document.getElementById('ag-visual');
-  if(s.v){ if(icEl)icEl.style.display='none'; if(vEl){vEl.style.display='flex';vEl.innerHTML=s.v;} }
-  else { if(icEl){icEl.style.display='';icEl.textContent=s.ic;} if(vEl){vEl.style.display='none';vEl.innerHTML='';} }
-  set('ag-title',s.t);set('ag-text',s.x,'innerHTML');
+  const phone=document.getElementById('ag-phone'),prem=document.getElementById('ag-premium');
+  const img=document.getElementById('ag-img'),tap=document.getElementById('ag-tap');
+  if(s.premium){
+    if(phone)phone.style.display='none';
+    if(prem)prem.style.display='flex';
+  } else {
+    if(prem)prem.style.display='none';
+    if(phone)phone.style.display='block';
+    if(img&&s.img&&img.getAttribute('src')!==s.img){img.style.opacity='0';img.onload=function(){img.style.opacity='1';};img.src=s.img;}
+    if(tap){
+      // re-trigger l'animation du doigt à chaque slide
+      if(s.tap){tap.style.display='block';tap.style.left=(s.tap[0]*100)+'%';tap.style.top=(s.tap[1]*100)+'%';tap.classList.remove('on');void tap.offsetWidth;tap.classList.add('on');}
+      else tap.style.display='none';
+    }
+  }
+  set('ag-title',s.t);set('ag-cap',s.cap,'innerHTML');
   set('ag-count',(_agIdx+1)+' / '+APP_GUIDE_SLIDES.length);
   const dots=document.getElementById('ag-dots');
   if(dots)dots.innerHTML=APP_GUIDE_SLIDES.map((_,i)=>'<span class="ag-dot'+(i===_agIdx?' on':'')+'"></span>').join('');
-  const last=_agIdx===APP_GUIDE_SLIDES.length-1;
-  set('ag-next',last?'Terminer ✓':'Suivant →');
   const prev=document.getElementById('ag-prev');if(prev)prev.style.visibility=_agIdx===0?'hidden':'visible';
+  const next=document.getElementById('ag-next');
+  if(next){
+    if(s.premium){next.textContent='⭐ Voir le Premium';next.onclick=_agPremiumCta;}
+    else if(_agIdx===APP_GUIDE_SLIDES.length-1){next.textContent='Terminer ✓';next.onclick=function(){_agGo(1);};}
+    else {next.textContent='Suivant →';next.onclick=function(){_agGo(1);};}
+  }
+}
+// Fin du guide → emmène l'utilisateur vers Milo (Coach IA) où se trouve l'accès Premium.
+function _agPremiumCta(){
+  closeAppGuide();
+  try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
 }
 
 // ── OUTILS CLONE DE TEST (visibles uniquement dans /clone/) ───
