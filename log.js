@@ -2777,7 +2777,7 @@ function renderProgModal(){
           <div style="display:flex;gap:6px;flex-shrink:0;">
             <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
             <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})">✏️</button>
-            <button class="btn-xs" style="color:var(--t2);" onclick="printProg(${i})" title="Imprimer / PDF">🖨️</button>
+            <button class="btn-xs" style="color:var(--t2);" onclick="exportProgPdf(${i})" title="Exporter en PDF">📄 PDF</button>
             ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
             <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
           </div>
@@ -2874,6 +2874,71 @@ function printProg(idx){
     '<div class="prt-foot">Note tes poids dans la colonne « Poids » à la salle. Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.</div>'+
     '</div>';
   window.print();
+}
+
+// ── Vrai PDF (jsPDF hébergé en local → marche hors-ligne) ──────
+// Charge la lib à la demande depuis ./lib (précachée par le SW), génère un vrai
+// fichier PDF, puis feuille de partage iPhone (navigator.share) ou téléchargement.
+let _jspdfLoad=null;
+function _loadJsPdf(){
+  if(window.jspdf&&window.jspdf.jsPDF)return Promise.resolve();
+  if(_jspdfLoad)return _jspdfLoad;
+  const load=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load '+src));document.head.appendChild(s);});
+  _jspdfLoad=load('./lib/jspdf.umd.min.js').then(()=>load('./lib/jspdf.plugin.autotable.min.js')).catch(e=>{_jspdfLoad=null;throw e;});
+  return _jspdfLoad;
+}
+async function exportProgPdf(idx){
+  const p=(S.programmes||[])[idx];if(!p)return;
+  toast('Génération du PDF…','info');
+  try{ await _loadJsPdf(); }
+  catch(e){ toast('PDF indisponible ici — on passe par l\'impression','info'); printProg(idx); return; }
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(), M=40;
+    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('FORCE TRACKER',M,46);
+    doc.setFontSize(16);doc.text(p.name||'Programme',W-M,46,{align:'right'});
+    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,54,W-M,54);
+    const sub=p.beginner?('Parcours débutant — Étape 1'+(p.bgFreq?' · '+p.bgFreq+' séances/semaine':'')):'Programme d\'entraînement';
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);doc.text(sub,M,68);doc.setTextColor(20);
+    let y=84;
+    const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
+    days.forEach(d=>{
+      const body=(d.exs||[]).map(e=>{
+        const s=e.sets||[],reps=s.map(x=>x.reps);
+        const val=reps.length?(reps.every(r=>r===reps[0])?reps[0]:reps.join('/')):'';
+        let sc=s.length?(s.length+' × '+val):'';
+        if(sc&&/gainage|planche/i.test(e.name))sc=String(sc).replace(/(\d+)$/,'$1 s');
+        return [e.name,sc,''];
+      });
+      doc.autoTable({
+        startY:y, margin:{left:M,right:M},
+        head:[
+          [{content:(d.label||'Séance'),colSpan:3,styles:{halign:'left',fillColor:[240,240,240],textColor:20,fontStyle:'bold',fontSize:12}}],
+          ['Exercice','Séries × Reps','Poids']
+        ],
+        body,
+        styles:{fontSize:10,cellPadding:5,lineColor:[190,190,190],lineWidth:0.5,overflow:'linebreak'},
+        headStyles:{fillColor:[17,17,17],textColor:255,fontStyle:'bold'},
+        columnStyles:{1:{halign:'center',cellWidth:95},2:{halign:'center',cellWidth:75}},
+        theme:'grid'
+      });
+      y=doc.lastAutoTable.finalY+16;
+    });
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90);
+    doc.text(doc.splitTextToSize('Note tes poids dans la colonne « Poids ». Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.',W-2*M),M,y+6);
+    const fname=((p.name||'programme').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,''))+'.pdf';
+    const blob=doc.output('blob');
+    const file=new File([blob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:p.name||'Programme'}); return; }
+      catch(err){ if(err&&err.name==='AbortError')return; }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+    toast('PDF enregistré 📄','success');
+  }catch(e){ console.warn('[FT pdf]',e); toast('Souci PDF — on passe par l\'impression','error'); printProg(idx); }
 }
 function editProg(idx){
   const prog=(S.programmes||[])[idx];
