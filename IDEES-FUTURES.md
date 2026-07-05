@@ -31,6 +31,26 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+# 💡 IDÉES À CADRER (discussion en cours — pas encore lancées)
+
+## 📣 Réseau social / fil communautaire (gros projet, long terme)
+Idée Michel : une **page dédiée** type mini-réseau social / fil d'actu — ex. « Christophe a fait une super séance », « Événement aujourd'hui : salon du culturisme ». **Sans pop-up intrusif.** But : créer du lien entre utilisateurs.
+- ⚠️ **Gros chantier** : nécessite un **vrai backend** (comptes, posts, modération, notifications non-intrusives) — l'archi actuelle (Apps Script + localStorage) ne suffit pas. À planifier quand la base utilisateurs le justifie (cf. Phase 4 « base de données + hébergement »).
+- Piste douce et réaliste **tout de suite** : un simple **fil « Actus / Événements »** en lecture seule (annonces salon, défis du mois), alimenté par Michel — pas de comptes ni de posts utilisateurs. Beaucoup plus simple, sans backend social.
+
+## 🔔 Rappel « tu as oublié d'enregistrer ta séance » (petit, faisable)
+Michel veut **éviter les pop-ups à la con**, mais accepte un rappel utile : si une séance est **en cours depuis longtemps sans être terminée** (`S.wkt` actif, vieux), afficher un rappel discret (style carte Milo sur l'Accueil, pas de pop-up). → Faisable sans backend, à faire quand on veut.
+
+## 💳 « Super Premium » (suivi Excel/Sheets) — Michel penche vers « trop »
+Idée : un palier au-dessus du Premium pour ceux qui veulent le **suivi Excel/Sheets**. Michel doute que ça marche et pense que « c'est peut-être un peu trop ». **Avis : d'accord — ne pas ajouter de palier pour l'instant** (complexité tarifaire, valeur incertaine). L'export existe déjà (Exporter les données). À rediscuter seulement si des utilisateurs le réclament vraiment.
+
+## ⚖️ Connexion à une balance connectée — limite technique honnête
+Question Michel : se connecter à une appli de balance connectée (Withings, etc.) ?
+- **PWA web = très limité** : pas d'accès à Apple Santé / Google Fit depuis le web, Web Bluetooth **non supporté sur iOS Safari/PWA**. Se brancher sur Withings/Fitbit demanderait leur **API OAuth + un backend** (lourd), et ne couvrirait pas Apple Health.
+- **Réaliste aujourd'hui** : saisie manuelle (déjà en place). Une vraie synchro balance = **appli native** (futur) ou intégration API tierce ciblée (gros dev). À garder en tête, pas prioritaire.
+
+---
+
 # 🚧 EN COURS — à reprendre (non fini)
 
 ## 🏋️ Programme de force « Gagner en force (Big 3) » — v1 livrée (ft-v225), **à approfondir**

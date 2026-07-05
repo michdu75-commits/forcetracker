@@ -2536,7 +2536,7 @@ function loadProgDay(progIdx,dayIdx){
       reps:prev.length?prev[0].reps:(s.reps||10),
       type:s.type||'N',done:false,rm1:0,rest:s.rest||0
     }))};
-    if(e.group)obj.group=e.group; // propage le groupe superset
+    if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
     return obj;
   })};
   persist();closeDaySel();closeProgModal();
@@ -2620,10 +2620,11 @@ function saveAsProg(){
   if(!S.programmes)S.programmes=[];
   const prog={
     id:'p'+Date.now(),name,
-    exs:S.wkt.exs.map(ex=>({
-      name:ex.name,
-      sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,type:s.type||'N',rest:s.rest||0}))
-    }))
+    exs:S.wkt.exs.map(ex=>{
+      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,type:s.type||'N',rest:s.rest||0}))};
+      if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
+      return o;
+    })
   };
   const idx=S.programmes.findIndex(p=>p.name.toLowerCase()===name.toLowerCase());
   if(idx>=0){S.programmes[idx]=prog;toast('"'+name+'" mis à jour ✅','success');}
@@ -2640,11 +2641,13 @@ function loadProg(idx){
     progLabel:prog.name,
     exs:(prog.exs||[]).map(e=>{
       const prev=getPrev(e.name);
-      return{name:e.name,sets:(e.sets||[]).map(s=>({
+      const obj={name:e.name,sets:(e.sets||[]).map(s=>({
         kg:prev.length?prev[0].kg:(s.kg||0),
         reps:prev.length?prev[0].reps:(s.reps||5),
         type:s.type||'N',done:false,rm1:0,rest:s.rest||0
       }))};
+      if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
+      return obj;
     })
   };
   persist();
@@ -2690,10 +2693,17 @@ function _renderProgEdit(){
   const _INP='padding:5px 4px;font-size:13px;text-align:center;border:1px solid var(--sep);border-radius:6px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;';
   const exCard=(ex,di,ei)=>{
     const sets=ex.sets||[];
-    return`<div style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:6px;">
+    const nextEx=_progEditEx(di,ei+1);
+    const hasNext=!!nextEx;
+    const linkedNext=hasNext&&ex.group&&ex.group===nextEx.group;
+    const inSuper=!!ex.group;
+    return`<div style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:${linkedNext?'2px':'6px'};${inSuper?'box-shadow:inset 3px 0 0 var(--orange);':''}">
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;">
       ${_progExThumb(ex.name)}
-      <div style="flex:1;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
+        ${inSuper?'<div style="font-size:10px;color:var(--orange);font-weight:800;letter-spacing:.03em;">⚡ SUPERSET</div>':''}
+      </div>
       <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
     </div>
     <div style="display:flex;gap:6px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
@@ -2708,7 +2718,10 @@ function _renderProgEdit(){
       </span>
       <button onclick="_removeProgSet(${di},${ei},${si})" title="Retirer la série" style="width:22px;background:none;border:none;color:var(--t3);font-size:16px;line-height:1;cursor:pointer;padding:0;">×</button>
     </div>`).join('')}
-    <button onclick="_addProgSet(${di},${ei})" style="margin-top:5px;padding:5px 12px;background:transparent;border:1px dashed var(--sep);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;">+ série</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:5px;">
+      <button onclick="_addProgSet(${di},${ei})" style="padding:5px 12px;background:transparent;border:1px dashed var(--sep);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;">+ série</button>
+      ${hasNext?`<button onclick="_toggleProgSuperset(${di},${ei})" style="padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;background:${linkedNext?'rgba(255,109,0,.14)':'transparent'};border:1px ${linkedNext?'solid var(--orange)':'dashed var(--sep)'};color:${linkedNext?'var(--orange)':'var(--t2)'};">⚡ ${linkedNext?'En superset ✓':'Superset avec le suivant'}</button>`:''}
+    </div>
   </div>`;};
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
   if(isMulti){
@@ -2756,6 +2769,37 @@ function _removeProgSet(di,ei,si){
   ex.sets.splice(si,1);
   _renderProgEdit();
 }
+// ── Supersets dans l'éditeur de programme ──
+// Un superset = exercices consécutifs partageant le même `group`. On lie/délie un exo avec le suivant.
+function _progDayExs(di){
+  const d=_editProgData;if(!d)return null;
+  return (d.days&&d.days.length)?(d.days[di]&&d.days[di].exs):d.exs;
+}
+function _rebuildProgGroups(exs,links){
+  for(let k=0;k<exs.length;k++){delete exs[k].group;delete exs[k].groupType;}
+  let gid=null;
+  for(let k=0;k<exs.length-1;k++){
+    if(links[k]){
+      if(!gid)gid='sg'+Date.now().toString(36)+k;
+      exs[k].group=gid;exs[k].groupType='super';
+      exs[k+1].group=gid;exs[k+1].groupType='super';
+    }else gid=null;
+  }
+}
+// Retire les groupes qui ne comptent plus qu'un membre (après suppression d'un exo)
+function _normalizeProgGroups(exs){
+  if(!exs)return;
+  const count={};exs.forEach(e=>{if(e.group)count[e.group]=(count[e.group]||0)+1;});
+  exs.forEach(e=>{if(e.group&&count[e.group]<2){delete e.group;delete e.groupType;}});
+}
+function _toggleProgSuperset(di,ei){
+  const exs=_progDayExs(di);if(!exs||ei>=exs.length-1)return;
+  const links=[];
+  for(let k=0;k<exs.length-1;k++)links[k]=!!(exs[k].group&&exs[k].group===exs[k+1].group);
+  links[ei]=!links[ei];
+  _rebuildProgGroups(exs,links);
+  _renderProgEdit();
+}
 function _openExPickerForProg(dayIdx){
   _editDayIdx=dayIdx;
   _exPickerMode='prog';
@@ -2765,6 +2809,7 @@ function _removeExFromProgEdit(dayIdx,exIdx){
   const d=_editProgData;if(!d)return;
   if(d.days&&d.days.length)(d.days[dayIdx].exs||[]).splice(exIdx,1);
   else(d.exs||[]).splice(exIdx,1);
+  _normalizeProgGroups(_progDayExs(dayIdx)); // évite un superset orphelin (1 seul membre)
   _renderProgEdit();
 }
 function _addExToProgEdit(name){
