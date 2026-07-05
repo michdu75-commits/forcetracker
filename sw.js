@@ -1,4 +1,4 @@
-const CACHE = 'ft-v226'; // fix scroll iOS onglet Progrès/Poids : espaceur bas (Safari ignore le padding-bottom d'un flex+scroll) → dernière carte accessible
+const CACHE = 'ft-v227'; // graphique de poids : points cliquables (modifier/supprimer une pesée) + navigation par période (1M/3M/6M/Tout)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
