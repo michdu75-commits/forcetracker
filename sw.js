@@ -1,4 +1,4 @@
-const CACHE = 'ft-v232'; // vue « Les 2 » : la courbe de poids s'affiche toujours (même avec <2 mesures MG) + note pour ajouter une 2e mesure
+const CACHE = 'ft-v233'; // masse grasse : le calcul US Navy remplit AUTO la case « Masse grasse du jour » (fini le bouton « Utiliser » discret) → ✓ pour valider
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
