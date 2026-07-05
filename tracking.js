@@ -391,14 +391,60 @@ function renderWeightTab(){
     </div>
   </div>`;
   const sorted=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
-  const pts=sorted.slice(-60);
+  // Chips de navigation par période (1 mois / 3 mois / 6 mois / Tout)
+  const rangeEl=document.getElementById('weight-range');
+  if(rangeEl){
+    if(sorted.length<2)rangeEl.innerHTML='';
+    else rangeEl.innerHTML=[['1m','1 mois'],['3m','3 mois'],['6m','6 mois'],['all','Tout']]
+      .map(function(r){return '<button class="wrange-chip'+(_wRange===r[0]?' active':'')+'" onclick="setWeightRange(\''+r[0]+'\')">'+r[1]+'</button>';}).join('');
+  }
+  // Filtre selon la période choisie
+  let pts=sorted;
+  const days={'1m':30,'3m':90,'6m':180}[_wRange];
+  if(days){const cut=new Date(today()+'T12:00:00');cut.setDate(cut.getDate()-days);const c=cut.toISOString().split('T')[0];pts=sorted.filter(p=>p.date>=c);}
+  pts=pts.slice(-120);
   if(pts.length<2){
-    if(chartEl)chartEl.innerHTML='<div class="empty" style="padding:20px 0;">Ajoute au moins 2 pesées pour voir le graphique 📊</div>';
+    if(chartEl)chartEl.innerHTML='<div class="empty" style="padding:20px 0;">'+(sorted.length>=2?'Pas assez de pesées sur cette période 📊':'Ajoute au moins 2 pesées pour voir le graphique 📊')+'</div>';
     if(corrEl)corrEl.innerHTML='';
     return;
   }
   if(chartEl)renderWeightChart(pts,chartEl);
   if(corrEl)renderWeightCorrelations(corrEl,pts);
+}
+let _wRange='all'; // période affichée : '1m' | '3m' | '6m' | 'all'
+function setWeightRange(r){_wRange=r;renderWeightTab();}
+// ── Édition d'une pesée (tap sur un point du graphique) ──
+let _weighEditDate=null;
+function openWeighEdit(date){
+  const w=(S.weightLog||[]).find(x=>x.date===date);if(!w)return;
+  _weighEditDate=date;
+  const di=document.getElementById('weigh-edit-date');if(di)di.value=date;
+  const ki=document.getElementById('weigh-edit-kg');if(ki)ki.value=w.kg;
+  const ov=document.getElementById('ov-weigh-edit');if(ov)ov.classList.add('open');
+}
+function closeWeighEdit(){const ov=document.getElementById('ov-weigh-edit');if(ov)ov.classList.remove('open');_weighEditDate=null;}
+function saveWeighEdit(){
+  const kg=parseFloat((document.getElementById('weigh-edit-kg')||{}).value);
+  const newDate=(document.getElementById('weigh-edit-date')||{}).value;
+  if(!kg||kg<20||kg>300){toast('Poids invalide (20–300 kg)','error');return;}
+  if(!newDate){toast('Date invalide','error');return;}
+  if(newDate>today()){toast('Date dans le futur','error');return;}
+  // retire l'ancienne entrée + toute entrée sur la nouvelle date, puis ré-insère
+  S.weightLog=(S.weightLog||[]).filter(x=>x.date!==_weighEditDate&&x.date!==newDate);
+  S.weightLog.unshift({date:newDate,kg:kg});
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
+  if(S.weightLog[0])S.bw=S.weightLog[0].kg;
+  persist();closeWeighEdit();renderWeightTab();renderHome();
+  toast('Pesée mise à jour ✅','success');
+}
+function deleteWeighEntry(){
+  const dt=_weighEditDate;if(!dt)return;
+  showConfirm('Supprimer cette pesée ?','Le '+new Date(dt+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})+' — action définitive.',function(){
+    S.weightLog=(S.weightLog||[]).filter(x=>x.date!==dt);
+    if(S.weightLog[0])S.bw=S.weightLog[0].kg;
+    persist();closeWeighEdit();renderWeightTab();renderHome();
+    toast('Pesée supprimée','info');
+  });
 }
 function renderWeightChart(pts,box){
   const W=340,H=160,pad={t:18,r:14,b:32,l:44},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
@@ -437,7 +483,7 @@ function renderWeightChart(pts,box){
     <path d="${area}" fill="url(#wg)"/>
     <path d="${path}" fill="none" style="stroke:var(--blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <line x1="${pad.l}" y1="${tY0}" x2="${W-pad.r}" y2="${tY1}" stroke="${trendColor}" stroke-width="1.5" stroke-dasharray="5 3" opacity=".6"/>
-    ${P.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="3" style="fill:var(--blue)" opacity=".7"/>`).join('')}
+    ${P.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="12" fill="transparent" style="cursor:pointer" onclick="openWeighEdit('${pts[i].date}')"><title>${fmtW(pts[i].date)} · ${pts[i].kg} kg — modifier</title></circle><circle cx="${p.x}" cy="${p.y}" r="3.6" style="fill:var(--blue);stroke:var(--bg2);stroke-width:1.5;pointer-events:none"/>`).join('')}
   </svg>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:13px;color:var(--t3);">
     <span>${pts.length} pesées · min ${Math.min(...vals).toFixed(1)} kg · max ${Math.max(...vals).toFixed(1)} kg</span>
