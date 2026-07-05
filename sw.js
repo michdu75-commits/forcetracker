@@ -1,4 +1,4 @@
-const CACHE = 'ft-v242'; // Parcours débutant Étape 1 : choix fréquence (2/3) + style (Full Body / Split PPL ou Haut-Bas), programme adapté au profil, objectif 3 semaines
+const CACHE = 'ft-v243'; // Imprimer / exporter un programme en PDF (bouton 🖨️ sur chaque programme, feuille propre + colonne Poids)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
