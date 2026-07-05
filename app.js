@@ -770,6 +770,53 @@ function exitDemoMode(){
   try{goScreen('home',document.getElementById('nb-home'));}catch(e){}
   toast('✅ Tes vraies données sont de retour','success');
 }
+// ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
+const APP_GUIDE_SLIDES=[
+  {ic:'👋',t:'Bienvenue dans Force Tracker',x:'Ton carnet de muscu intelligent. En quelques écrans, voici l\'essentiel pour bien démarrer. Fais défiler ! 💪'},
+  {ic:'⚡',t:'Ta séance',x:'Onglet <b>Séance</b> (le + rouge au centre). Ajoute tes exercices, note chaque série (poids × répétitions). L\'app calcule tes <b>records</b> et ta progression toute seule.'},
+  {ic:'📋',t:'Tes programmes',x:'Sauvegarde une séance comme <b>programme</b> réutilisable, ou importe-en un (photo, Word, PDF). Charge-le en 1 tap, et tu peux même l\'<b>exporter en PDF</b> pour l\'imprimer.'},
+  {ic:'🌱',t:'Tu débutes ?',x:'Dans <b>Mes Programmes</b>, crée ton <b>parcours débutant</b> : 2 questions et hop, un programme sur mesure sur machines guidées. On te prend par la main.'},
+  {ic:'📈',t:'Tes progrès',x:'L\'app suit tes <b>records</b> (1RM), ton <b>poids</b> et ta <b>masse grasse</b>, en graphiques clairs. Des <b>badges</b> se débloquent au fil de tes séances.'},
+  {ic:'🤖',t:'Milo, ton coach IA',x:'Onglet <b>Coach</b>. Pose-lui <b>toutes</b> tes questions : technique, nutrition, motivation. Il connaît ton profil et s\'adapte à toi — franc et direct, comme un vrai coach.'},
+  {ic:'📸',t:'Tes photos (analyse du corps)',x:'Milo peut analyser ton physique (morphologie, étude du corps). <b>Pour de bonnes photos :</b> bien éclairé, fond neutre, en short/sous-vêtements, de face / dos / profil, une fois relâché puis contracté, bien immobile.'},
+  {ic:'🍽️',t:'Nutrition',x:'L\'app calcule tes <b>calories et macros</b> selon ton objectif, avec un plan de repas et les suppléments utiles (créatine, whey…).'},
+  {ic:'✅',t:'Les 3 choses importantes',x:'1️⃣ Remplis ton <b>profil</b> (Menu → Profil).<br>2️⃣ Note tes séances <b>à chaque fois</b>.<br>3️⃣ Sois <b>régulier</b> — c\'est ça qui paie. 💪'},
+];
+let _agIdx=0,_agSwipeInit=false;
+function openAppGuide(){
+  try{if(typeof closeMenuDrawer==='function')closeMenuDrawer();}catch(e){}
+  try{if(typeof _markAnchorSeen==='function')_markAnchorSeen('menu-row-appguide');}catch(e){}
+  _agIdx=0;_renderAppGuide();
+  const ov=document.getElementById('ov-appguide');if(ov)ov.classList.add('open');
+  if(!_agSwipeInit){
+    const sl=document.getElementById('ag-slide');
+    if(sl){
+      let x0=null;
+      sl.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
+      sl.addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>45)_agGo(dx<0?1:-1);},{passive:true});
+    }
+    _agSwipeInit=true;
+  }
+}
+function closeAppGuide(){const ov=document.getElementById('ov-appguide');if(ov)ov.classList.remove('open');}
+function _agGo(d){
+  const n=_agIdx+d;
+  if(n<0)return;
+  if(n>=APP_GUIDE_SLIDES.length){closeAppGuide();return;}
+  _agIdx=n;_renderAppGuide();
+}
+function _renderAppGuide(){
+  const s=APP_GUIDE_SLIDES[_agIdx];if(!s)return;
+  const set=(id,html,prop)=>{const el=document.getElementById(id);if(el)el[prop||'textContent']=html;};
+  set('ag-ic',s.ic);set('ag-title',s.t);set('ag-text',s.x,'innerHTML');
+  set('ag-count',(_agIdx+1)+' / '+APP_GUIDE_SLIDES.length);
+  const dots=document.getElementById('ag-dots');
+  if(dots)dots.innerHTML=APP_GUIDE_SLIDES.map((_,i)=>'<span class="ag-dot'+(i===_agIdx?' on':'')+'"></span>').join('');
+  const last=_agIdx===APP_GUIDE_SLIDES.length-1;
+  set('ag-next',last?'Terminer ✓':'Suivant →');
+  const prev=document.getElementById('ag-prev');if(prev)prev.style.visibility=_agIdx===0?'hidden':'visible';
+}
+
 // ── OUTILS CLONE DE TEST (visibles uniquement dans /clone/) ───
 // Affiche les éléments réservés au clone (le clone pose window.__FT_CLONE__=true dans son shim).
 function _initCloneTools(){

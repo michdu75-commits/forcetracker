@@ -1,4 +1,4 @@
-const CACHE = 'ft-v247'; // Inscription : « Ton niveau » devient son propre écran dédié (débutant/inter/confirmé) entre Profil et Objectif — plus jamais caché
+const CACHE = 'ft-v248'; // Guide de l'application : diaporama (Menu → Outils) expliquant séance/programmes/Milo/photos — remplace la vidéo 3D
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
