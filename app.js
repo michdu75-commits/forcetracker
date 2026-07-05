@@ -398,7 +398,7 @@ function _initOb0(){
   const ob0=document.getElementById('ob-0');
   if(ob0)ob0.classList.add('ob-active');
   _obStep=0;
-  for(let i=1;i<=4;i++){const d=document.getElementById('od-'+i);if(d)d.classList.remove('ob-active');}
+  for(let i=1;i<=5;i++){const d=document.getElementById('od-'+i);if(d)d.classList.remove('ob-active');}
 }
 
 function ob0Install(){
@@ -437,7 +437,7 @@ function initOnboarding(){
       if(e.key!=='Enter')return;
       e.preventDefault();
       if(nextId){const n=document.getElementById(nextId);if(n){n.focus();n.select&&n.select();}}
-      else obNext(4);
+      else obNext(2);
     });
   });
   const emailFinal=document.getElementById('ob-email-final');
@@ -453,10 +453,10 @@ function obGoTo(step){
   if(next){next.classList.add('ob-active');}
   if(step===5){const ef=document.getElementById('ob-email-final');if(ef&&S.email)ef.value=S.email;}
   _obStep=step;
-  // ob-0 → pas de dot actif, ob-1 → dot1, ob-3 → dot2, ob-4 → dot3, ob-5 → dot4
-  const dotMap={1:1,3:2,4:3,5:4};
+  // ordre d'affichage : ob-1 (compte) → ob-3 (profil) → ob-2 (niveau) → ob-4 (objectif) → ob-5 (email)
+  const dotMap={1:1,3:2,2:3,4:4,5:5};
   const dotNum=dotMap[step]||0;
-  for(let i=1;i<=4;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',dotNum>0&&i===dotNum);}
+  for(let i=1;i<=5;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',dotNum>0&&i===dotNum);}
 }
 
 function obNext(step){
@@ -479,6 +479,8 @@ function obNext(step){
     if(tw>=20&&tw<=300)S.targetWeight=tw;
     const bd=((document.getElementById('ob-bday')||{}).value||'').trim();
     if(/^\d{1,2}\/\d{1,2}$/.test(bd))S.bday=bd;
+  }else if(_obStep===2){
+    // étape Niveau (son propre écran) — le niveau est déjà posé par obSetLevel
     if(_obLevel)S.level=_obLevel;
   }else if(_obStep===4){
     S.goal=_obGoal;
