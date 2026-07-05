@@ -1,4 +1,4 @@
-const CACHE = 'ft-v254'; // Récup : la pénalité du jour même est proportionnelle au volume de la séance (nb séries, échec/drop pondérés) — abdos ≠ gros leg day
+const CACHE = 'ft-v255'; // Récup : prend en compte l'âge (récup + lente avec l'âge) + le cycle menstruel des femmes (règles/lutéale ↓, ovulation ↑)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
