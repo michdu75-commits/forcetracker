@@ -1,4 +1,4 @@
-const CACHE = 'ft-v256'; // Récup « Prêt à performer » croise TOUT : sommeil + volume séance + niveau + âge + cycle + fatigue accumulée + tabac + énergie ressentie
+const CACHE = 'ft-v257'; // Récup : affiche le « pourquoi » (détail des facteurs : sommeil/séance/âge/cycle…) + conseils pour remonter le score, sous la carte d'accueil
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
