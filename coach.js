@@ -27,7 +27,86 @@ function coachAction(type){
   if(type==='morpho'){openMorphoAnalysis();return;}
   if(!S.premium&&(S.coachFree||0)>=COACH_FREE_LIMIT){showPremiumWall();return;}
   _showCoachChat();
+  if(type==='force'){ _forceProgReq=true; sendToCoach(_buildForceMessage(),_forceDisplayMsg()); return; }
   sendToCoach(prompts[type]);
+}
+
+// ─── Progresser en force (Big 3) — programme téléchargeable ───────────────
+let _forceProgReq=false;      // vrai le temps d'une génération de programme force
+let _pendingForceProgs=[];    // programmes parsés en attente d'enregistrement
+function _forceRM(n){const p=S.prs&&S.prs[n];return p&&p.rm1?Math.round(p.rm1):null;}
+function _forceDisplayMsg(){
+  const sq=_forceRM('Squat à la Barre'),dc=_forceRM('Développé Couché'),sdt=_forceRM('Soulevé de Terre');
+  const parts=[];if(sq)parts.push('Squat '+sq);if(dc)parts.push('DC '+dc);if(sdt)parts.push('SDT '+sdt);
+  return '🏋️ Génère-moi un programme pour gagner en force'+(parts.length?' (mes maxes : '+parts.join(', ')+' kg)':'')+'.';
+}
+function _buildForceMessage(){
+  const sq=_forceRM('Squat à la Barre'),dc=_forceRM('Développé Couché'),sdt=_forceRM('Soulevé de Terre');
+  const f=v=>v?(v+' kg'):'inconnu (estime-le à partir de mes séances)';
+  return 'Je fais de la FORCE ATHLÉTIQUE et je veux augmenter mes maxes (1RM) sur les 3 mouvements de compétition. '
+    +'Mes 1RM actuels : Squat '+f(sq)+', Développé Couché '+f(dc)+', Soulevé de Terre '+f(sdt)+'.\n'
+    +'Donne-moi (1) un court conseil personnalisé, puis (2) un PROGRAMME de force structuré et progressif '
+    +'(périodisation accumulation → intensification → peak) pour faire monter ces 3 lifts.\n'
+    +'IMPORTANT : termine ta réponse par un bloc de code json (entre ```json et ```) au format EXACT suivant, pour que je puisse l\'enregistrer dans l\'app :\n'
+    +'{"name":"Force Big 3","days":[{"label":"Jour 1 — Squat","exs":[{"name":"Squat à la Barre","sets":[{"kg":0,"reps":5,"type":"N","rest":180}]}]}]}\n'
+    +'Règles du json : "type" = "N" (série normale) ou "W" (échauffement) ; "kg" = charge conseillée en kg calculée depuis mon 1RM (un pourcentage réaliste) ; "reps" entier ; "rest" en secondes ; 3 à 4 séances (days) par semaine ; '
+    +'utilise EXACTEMENT ces noms pour les mouvements principaux : "Squat à la Barre", "Développé Couché", "Soulevé de Terre".';
+}
+// Extrait le programme JSON de la réponse + renvoie le texte visible nettoyé
+function _extractForceProgram(reply){
+  try{
+    let m=reply.match(/```json\s*([\s\S]*?)```/i);
+    let jsonStr=m?m[1]:null;
+    if(!jsonStr){const m2=reply.match(/\{[\s\S]*?"days"[\s\S]*\}/);jsonStr=m2?m2[0]:null;}
+    if(!jsonStr){const m3=reply.match(/\{[\s\S]*?"exs"[\s\S]*\}/);jsonStr=m3?m3[0]:null;}
+    if(!jsonStr)return null;
+    const prog=JSON.parse(jsonStr.trim());
+    if(!prog||(!prog.days&&!prog.exs))return null;
+    let clean=reply.replace(/```json[\s\S]*?```/i,'').replace(/```[\s\S]*?```/g,'').trim();
+    if(!clean)clean=reply.replace(/\{[\s\S]*\}/,'').trim();
+    return {prog,clean};
+  }catch(e){console.warn('[force prog] parse',e);return null;}
+}
+// Normalise le JSON du modèle vers la structure S.programmes
+function _normalizeForceProg(prog){
+  const norm=ex=>({name:String(ex.name||'Exercice'),
+    sets:(Array.isArray(ex.sets)?ex.sets:[]).map(s=>({kg:parseFloat(s.kg)||0,reps:parseInt(s.reps)||5,type:(s.type==='W'?'W':'N'),rest:parseInt(s.rest)||0}))});
+  const out={id:'p'+Date.now(),name:String(prog.name||'Programme Force'),force:true};
+  if(Array.isArray(prog.days)&&prog.days.length){
+    out.days=prog.days.map((d,i)=>({label:String(d.label||('Jour '+(i+1))),exs:(Array.isArray(d.exs)?d.exs:[]).map(norm)}));
+    if(prog.weeks)out.weeks=parseInt(prog.weeks)||0;
+  }else{
+    out.exs=(Array.isArray(prog.exs)?prog.exs:[]).map(norm);
+  }
+  return out;
+}
+// Ajoute le bouton « Enregistrer ce programme » sous la dernière bulle coach
+function _appendSaveProgBtn(prog){
+  const norm=_normalizeForceProg(prog);
+  if((!norm.days||!norm.days.length)&&(!norm.exs||!norm.exs.length))return;
+  const idx=_pendingForceProgs.push(norm)-1;
+  const msgs=document.getElementById('coach-msgs');if(!msgs)return;
+  const bubbles=msgs.querySelectorAll('.msg-coach');
+  const last=bubbles[bubbles.length-1];if(!last)return;
+  const nDays=norm.days?norm.days.length:1;
+  const wrap=document.createElement('div');
+  wrap.className='coach-prog-save';
+  wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_saveForceProgram('+idx+',this)">💾 Enregistrer ce programme ('+nDays+(nDays>1?' séances':' séance')+')</button>';
+  last.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function _saveForceProgram(idx,btn){
+  const prog=_pendingForceProgs[idx];
+  if(!prog){toast('Programme introuvable','error');return;}
+  if(!S.programmes)S.programmes=[];
+  let name=prog.name,n=2;
+  while(S.programmes.some(p=>p.name===name)){name=prog.name+' '+n;n++;}
+  prog.name=name;
+  S.programmes.push(prog);
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  if(btn){btn.textContent='✅ Enregistré dans Mes programmes';btn.disabled=true;btn.style.opacity='.7';}
+  toast('"'+name+'" ajouté à Mes programmes 💪','success');
 }
 
 function updateCoachHeader() {
@@ -400,7 +479,7 @@ async function onCoachImgSelected(input) {
   if (prev) prev.style.display = 'block';
 }
 
-async function sendToCoach(customMsg) {
+async function sendToCoach(customMsg, displayMsg) {
   if (coachBusy) return;
 
   // Vérifier quota avant d'ouvrir l'input
@@ -442,7 +521,7 @@ async function sendToCoach(customMsg) {
       msgs.scrollTop = msgs.scrollHeight;
     }
   } else {
-    renderCoachMsg('user', msg);
+    renderCoachMsg('user', displayMsg || msg);
   }
 
   const userHistContent = hasImg
@@ -476,7 +555,15 @@ async function sendToCoach(customMsg) {
       reply = data.reply || '🔑 Le Coach IA nécessite une clé API Anthropic. Crée un compte gratuit sur console.anthropic.com, génère une clé, et ajoute-la dans le script Google Apps Script ligne 2.';
     }
     hideTyping();
-    renderCoachMsg('coach', reply);
+    // Programme de force : extraire le bloc JSON pour proposer un enregistrement
+    let _disp = reply, _fp = null;
+    if (_forceProgReq) {
+      _forceProgReq = false;
+      const ext = _extractForceProgram(reply);
+      if (ext && ext.prog) { _fp = ext.prog; if (ext.clean) _disp = ext.clean; }
+    }
+    renderCoachMsg('coach', _disp);
+    if (_fp) _appendSaveProgBtn(_fp);
     coachHistory.push({ role: 'assistant', content: reply });
     if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
 
@@ -494,6 +581,7 @@ async function sendToCoach(customMsg) {
     }
   } catch(e) {
     hideTyping();
+    _forceProgReq = false;
     console.error('[Coach] fetch error:', e.message, e);
     renderCoachMsg('coach', 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
   }
@@ -613,6 +701,7 @@ const _DRAWER_CONTENT = {
         {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
         {ic:'💬',t:'Petits mots de Milo (Accueil)',d:'Nouveau : Milo t\'envoie parfois un petit mot en haut de l\'Accueil au bon moment — te relancer après quelques jours sans séance, te féliciter après une séance, te conseiller une séance légère après une nuit courte, ou t\'encourager quand tu enchaînes. Tape le message pour lui parler, ou la croix pour le fermer.'},
         {ic:'📐',t:'Étude du corps (Premium)',d:'Nouveau : dans le Coach, bouton « Étude du corps ». Prends 4 photos (face relâché, face contracté, dos contracté, profil) et l\'IA te fait un bilan complet : posture/stature, insertions musculaires, équilibre du corps (gauche/droite, haut/bas, avant/arrière), points forts, points à travailler et exercices suggérés — en tenant compte de ta santé (blessures/conditions du profil). Les photos ne sont pas stockées. Tu peux ensuite « en parler avec Milo ».'},
+        {ic:'🏋️',t:'Gagner en force (Big 3)',d:'Nouveau : dans le Coach, bouton « Gagner en force (Big 3) ». Milo lit tes maxes (1RM) au Squat, Développé Couché et Soulevé de Terre depuis tes records, puis te donne un conseil ET un programme de force progressif (accumulation → intensification → peak). Un bouton « 💾 Enregistrer ce programme » l\'ajoute dans « Mes programmes » — prêt à charger en séance avec les charges.'},
         {ic:'☁️',t:'Synchronisation cloud',d:'Données sauvegardées localement (localStorage) ET sur Google Sheets. Sync automatique après chaque séance. Restauration complète sur un nouvel appareil : entre ton email à l\'onboarding ou dans Profil → Admin.'},
         {ic:'💡',t:'Astuces',d:'• Texte trop petit ? Profil → Accessibilité → "Affichage agrandi" · • 1RM Brzycki = kg × (36 / (37 − reps)) · • Swipe gauche/droite pour changer d\'onglet · • Tap sur une séance passée pour corriger des séries · • Menu ☰ → Anatomie pour visualiser les muscles · • Calculateur 1RM depuis Menu ☰ · • Les points rouges signalent les nouveautés'},
       ].map(h=>`<div style="background:var(--bg3);border-radius:12px;padding:14px;">
