@@ -1,4 +1,4 @@
-const CACHE = 'ft-v236'; // séance : #2 stats exo avec % de progression des charges (📊) + #5 note par série dans la colonne « précédent » (openSetNote)
+const CACHE = 'ft-v237'; // Menu → « Guide de la muscu » (disciplines, matériel, techniques, ludique) + 7 compléments alimentaires ajoutés
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
