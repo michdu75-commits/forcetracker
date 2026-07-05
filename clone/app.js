@@ -768,6 +768,22 @@ function exitDemoMode(){
   try{goScreen('home',document.getElementById('nb-home'));}catch(e){}
   toast('✅ Tes vraies données sont de retour','success');
 }
+// ── OUTILS CLONE DE TEST (visibles uniquement dans /clone/) ───
+// Affiche les éléments réservés au clone (le clone pose window.__FT_CLONE__=true dans son shim).
+function _initCloneTools(){
+  if(!window.__FT_CLONE__)return;
+  const c=document.getElementById('admin-clone-reset-card');
+  if(c)c.style.display='flex';
+}
+// Efface les données de CE clone et relance l'inscription depuis zéro (comme un nouvel inscrit, sans email).
+function resetOnboardingTest(){
+  if(!window.__FT_CLONE__){toast('Réservé au clone de test','error');return;}
+  showConfirm('Refaire l\'inscription ?','Les données de ce clone vont être effacées et l\'inscription repartira de zéro (comme un nouvel inscrit).',()=>{
+    try{localStorage.clear();}catch(e){}   // dans le clone : n'efface que les clés cl_ (stockage isolé)
+    try{document.documentElement.classList.remove('ob-done');}catch(e){}
+    location.reload();
+  });
+}
 // Demande le code de secours (appareil sans email admin) — overlay simple
 function _promptAdminCode(){
   let ov=document.getElementById('ov-admin-code');
@@ -1162,6 +1178,7 @@ checkWeeklySummary(); // résumé lundi matin
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
 initCoachInput();
 initOnboarding();
+_initCloneTools(); // affiche les outils réservés au clone de test (bouton « Refaire l'inscription »)
 // ─── DÉDICACE ANNIVERSAIRE — Eline (2 juillet) ───────────────
 let _bdayCandlesLeft=19;
 const _bdayCandles=[];
@@ -1397,6 +1414,7 @@ window._premiumPending=!!S.email;
 })();
 // Fallback IDB — si localStorage ET cookie vidés mais IDB survit (iOS purge complète localstorage/cookie)
 (async function _autoRestoreFromIDB(){
+  if(window.__FT_CLONE__)return; // clone de test : jamais hériter de l'identité/données de la prod (cookie + IDB partagés par origine)
   if(S.email||(S.sessions&&S.sessions.length>0))return; // email dispo ou données intactes
   const email=await _getEmailFromIDB();
   if(!email){

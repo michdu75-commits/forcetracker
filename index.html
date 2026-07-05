@@ -23,7 +23,7 @@ window._premiumPending=false;
 window._deferredInstall=null;
 window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window._deferredInstall=e;});
 // Récupération email depuis cookie si localStorage vidé par iOS Safari (synchrone, avant load())
-(function(){try{var ck={};document.cookie.split(';').forEach(function(c){var p=c.trim().indexOf('=');if(p>0)ck[c.trim().slice(0,p)]=decodeURIComponent(c.trim().slice(p+1));});if(ck.ft_email&&!localStorage.getItem('ft4_email')){localStorage.setItem('ft4_email',ck.ft_email);localStorage.setItem('ft4_ob2','1');window._emailRestoredFromCookie=true;}}catch(e){}})();
+(function(){if(window.__FT_CLONE__)return;try{var ck={};document.cookie.split(';').forEach(function(c){var p=c.trim().indexOf('=');if(p>0)ck[c.trim().slice(0,p)]=decodeURIComponent(c.trim().slice(p+1));});if(ck.ft_email&&!localStorage.getItem('ft4_email')){localStorage.setItem('ft4_email',ck.ft_email);localStorage.setItem('ft4_ob2','1');window._emailRestoredFromCookie=true;}}catch(e){}})();
 if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add('ob-done');
 // Détection navigateur non compatible PWA — au plus tôt
 (function(){
@@ -610,6 +610,12 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🎬 Mode démo</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Pour montrer les fonctions à quelqu'un (morphologie, coach, étude du corps…) <strong>sans toucher ton compte</strong>. Une fois activé, <strong>rien n'est enregistré</strong> (ni en local, ni dans le cloud). En quittant, tes vraies données reviennent intactes.</div>
       <button class="btn btn-bg2" onclick="enterDemoMode()" style="padding:11px;font-size:14px;">🎬 Activer le mode démo</button>
+    </div>
+    <!-- Réservé au CLONE de test (affiché seulement si window.__FT_CLONE__) -->
+    <div class="card cp" id="admin-clone-reset-card" style="display:none;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔄 Refaire l'inscription <span style="font-size:11px;color:var(--red);">(clone)</span></div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Efface les données de ce clone et relance <strong>l'inscription depuis le début</strong>, comme un nouvel inscrit (sans email requis). Pratique pour tester le parcours d'accueil en boucle.</div>
+      <button class="btn btn-bg2" onclick="resetOnboardingTest()" style="padding:11px;font-size:14px;">🔄 Recommencer l'inscription</button>
     </div>
   </div>
 
