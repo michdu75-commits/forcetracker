@@ -1389,6 +1389,7 @@ async function finishWorkout(){
   renderLog();
 
   checkBadges();
+  _checkLevelUp(!!_bestPr);
   _cloudSyncSessions();
   if(S.connected&&S.url){
     const ok=await syncSheets(sess);
@@ -1404,6 +1405,31 @@ async function finishWorkout(){
   if(_bestPr)setTimeout(()=>showPrCongrats(_bestPr),2400);
   _finishing=false;
 }
+
+// ── Niveau évolutif (débutant → intermédiaire → confirmé) ─────────────
+// Promotion automatique selon le nombre de séances OU l'atteinte d'un standard de force.
+// N'agit que si un niveau a été déclaré (onboarding ou profil) et pas déjà "confirmé".
+function _checkLevelUp(hasPr){
+  if(!S.level||S.level==='confirme')return;
+  const bw=S.bw||0;
+  const nSess=(S.sessions||[]).length;
+  const rm=n=>{const p=S.prs&&S.prs[n];return p&&p.rm1?p.rm1:0;};
+  const sq=rm('Squat à la Barre'),dc=rm('Développé Couché'),sdt=rm('Soulevé de Terre');
+  let target=null,from='';
+  if(S.level==='debutant'){
+    // → Intermédiaire : ~20 séances OU un Big 3 à ≥1× le poids de corps
+    if(nSess>=20 || (bw>0 && (sq>=bw||dc>=bw||sdt>=bw))){target='intermediaire';from='débutant';}
+  }else if(S.level==='intermediaire'){
+    // → Confirmé : ~75 séances OU standard avancé (Squat 1.5× / DC 1.25× / SDT 1.75× le poids de corps)
+    if(nSess>=75 || (bw>0 && (sq>=bw*1.5||dc>=bw*1.25||sdt>=bw*1.75))){target='confirme';from='intermédiaire';}
+  }
+  if(!target)return;
+  S.level=target;S.levelAuto=true;persist();
+  const lbl=target==='intermediaire'?'Intermédiaire':'Confirmé';
+  // Message de félicitation, décalé pour ne pas se cumuler avec le toast de fin / le popup PR
+  setTimeout(()=>toast(`🎉 Bravo ! Tu n'es plus ${from} — tu passes ${lbl} !`,'success'),hasPr?4400:1700);
+}
+
 function _showSaveError(){
   const el=document.getElementById('log-finish');if(!el)return;
   el.innerHTML=`<div style="margin-top:12px;background:rgba(255,45,85,.10);border:1.5px solid var(--red);border-radius:14px;padding:16px;">

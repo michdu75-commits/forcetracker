@@ -1,4 +1,4 @@
-const CACHE = 'ft-v239'; // Milo : s'adapte au registre de langage (cash/familier/grossier si la personne l'est, poli sinon) — miroir, jamais rabaissant
+const CACHE = 'ft-v240'; // Onboarding enrichi (niveau + poids visé + naissance) + niveau évolutif (débutant→intermédiaire→confirmé, auto-promotion + Coach adapté)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
