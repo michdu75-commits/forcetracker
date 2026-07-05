@@ -1,4 +1,4 @@
-const CACHE = 'ft-v252'; // Guide : + 2 slides orientation concrets (barre d'onglets animée « à quoi sert chaque onglet » + tableau de bord accueil)
+const CACHE = 'ft-v253'; // Fix récup « Prêt à performer » : entraîner le jour même applique désormais une pénalité de fatigue (avant : 90% même après une séance)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
