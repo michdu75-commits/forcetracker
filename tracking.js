@@ -821,6 +821,9 @@ function calcRecoveryScore(){
     } else if(d===1){ sessAdj=-8; }
     else { sessAdj=Math.min(d,4)*3; }                          // 2j +6 · 3j +9 · 4j+ +12
   }
+  // Niveau : un débutant récupère plus lentement d'un même volume, un confirmé a plus de capacité de travail
+  const lvlF = S.level==='debutant'?1.15 : S.level==='confirme'?0.85 : 1;
+  if(sessAdj<0) sessAdj=Math.round(sessAdj*lvlF); // n'affecte que la pénalité de fatigue, pas le bonus repos
   // Âge : la récupération ralentit avec l'âge
   const age=S.age||0;
   const ageAdj = age>=60?-9 : age>=50?-6 : age>=40?-3 : 0;
@@ -830,7 +833,19 @@ function calcRecoveryScore(){
     const cp=(typeof getMensCyclePhase==='function')?getMensCyclePhase():null;
     if(cp&&cp.perf) cycleAdj = cp.perf==='low'?-10 : cp.perf==='declining'?-5 : cp.perf==='peak'?4 : cp.perf==='rising'?2 : 0;
   }catch(e){}
-  return Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj)));
+  // Fatigue accumulée : plusieurs séances sur les 3 derniers jours (enchaîner sans repos)
+  const recentDays=new Set((S.sessions||[]).filter(s=>s&&s.date&&(()=>{const dd=Math.floor((new Date()-new Date(s.date+'T12:00:00'))/864e5);return dd>=0&&dd<=2;})()).map(s=>s.date)).size;
+  const accumAdj = recentDays>=3?-8 : recentDays>=2?-4 : 0;
+  // Tabac : la récupération est altérée
+  const smokerAdj = S.smoker?-4:0;
+  // Énergie ressentie (check-in de la dernière séance, si récente) : signal direct de la forme
+  let energyAdj=0;
+  const ls0=S.sessions&&S.sessions[0];
+  if(ls0&&ls0.date&&ls0.checkin&&ls0.checkin.energy){
+    const dd=Math.floor((new Date()-new Date(ls0.date+'T12:00:00'))/864e5);
+    if(dd<=1) energyAdj = ls0.checkin.energy<=1?-6 : ls0.checkin.energy===2?-3 : ls0.checkin.energy>=4?4 : 0;
+  }
+  return Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj)));
 }
 function getRecoveryInfo(score){
   if(score===null)return{label:'—',color:'var(--t3)',icon:'❓',rec:'Enregistre ton sommeil pour obtenir ton score de récupération.'};
