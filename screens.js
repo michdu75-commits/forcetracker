@@ -123,12 +123,14 @@ const _HELP_DATA={
       {i:'🏃',t:'Niveau d\'activité : sois honnête — le sous-estimer te fera manger trop peu, le surestimer trop.'},
       {i:'📏',t:'Tour de cou + taille (+ hanches) → composition corporelle automatique (% graisse, masse maigre, méthode US Navy).'},
       {i:'🧬',t:'Remplis ta morphologie (H/A/V/X/O) et ton morphotype (ecto/méso/endo) pour des conseils Coach IA vraiment personnalisés. Bouton 📸 pour analyse IA sur 3 photos.'},
+      {i:'🩺',t:'Section Santé (optionnelle) : coche tes conditions médicales et blessures — le Coach IA les prend en compte pour éviter les mouvements à risque. 🔒 Privé : visible seulement par toi (ton téléphone + ta sauvegarde perso).'},
       {i:'🎂',t:'Renseigne ta date d\'anniversaire (JJ/MM) pour débloquer le badge spécial si tu t\'entraînes le jour J.'},
     ],
     female:[
       {i:'🌸',t:'La date de tes premières règles permet à l\'app d\'adapter tes macros et conseils selon ta phase de cycle.'},
       {i:'💊',t:'Si tu prends une contraception hormonale, coche-le — le suivi de phase est désactivé car les fluctuations naturelles sont masquées.'},
-      {i:'📐',t:'Les hanches sont indispensables au calcul du % de graisse pour les femmes (méthode US Navy).'},
+      {i:'📐',t:'Les hanches (en plus du cou et de la taille) sont indispensables au calcul du % de graisse pour les femmes (méthode US Navy). Chez l\'homme, cou + taille suffisent.'},
+      {i:'🌷',t:'Endométriose : tu peux la cocher dans la section Santé — le Coach en tient compte (elle peut freiner la perte de poids et jouer sur la fatigue et l\'inflammation).'},
       {i:'🧬',t:'La morphologie féminine (Poire/Sablier/Rectangle/Triangle inv./Ronde) affine les recommandations d\'exercices et de nutrition du Coach IA.'},
     ]
   },

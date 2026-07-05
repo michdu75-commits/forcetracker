@@ -1,4 +1,4 @@
-const CACHE = 'ft-v233'; // masse grasse : le calcul US Navy remplit AUTO la case « Masse grasse du jour » (fini le bouton « Utiliser » discret) → ✓ pour valider
+const CACHE = 'ft-v234'; // séance : commentaire d'exercice lisible en vue repliée (sans cliquer) + aide (? et détaillée) mise à jour profil homme/femme (Santé, endométriose, US Navy)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

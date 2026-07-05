@@ -386,7 +386,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
   // Vue réduite
   if(!isExpanded){
     const _dsLbl=ex.dropset?'palier':'série';
-    const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}${ex.note?' 💬':''}`;
+    const summary=`${doneSets.length}/${ex.sets.length} ${_dsLbl}${ex.sets.length>1?'s':''}${ex.dropset?' · '+ex.dropset.paliers+'P '+(ex.dropset.direction==='down'?'⬇':'⬆'):''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · ~'+fmt(maxRM)+'kg 1RM':''}`;
+    const notePreview=ex.note?`<div style="font-size:11.5px;color:var(--gold);font-style:italic;line-height:1.4;padding:0 10px 7px;word-break:break-word;" onclick="event.stopPropagation()">💬 ${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`:'';
     const selStyle=isSelected?'box-shadow:inset 0 0 0 2px var(--orange);':(!_groupMode?'opacity:.75':'');
     const clickAttr=_groupMode
       ?` onclick="toggleGroupSelect(${ei})" style="cursor:pointer;${selStyle}"`
@@ -399,6 +400,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`</div>`
       +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div>`
+      +notePreview
       +(!_groupMode&&!inGroup&&!ex.group&&!ex.dropset
         ?`<div style="display:flex;gap:4px;padding:2px 8px 6px;border-top:1px solid var(--sep);" onclick="event.stopPropagation()">`
           +`<button class="btn-xs" style="font-size:10px;color:var(--orange);border-color:rgba(255,109,0,.2);padding:2px 7px;" onclick="createSupersetFrom(${ei})">⚡ Super</button>`
