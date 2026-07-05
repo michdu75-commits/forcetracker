@@ -1,4 +1,4 @@
-const CACHE = 'ft-v234'; // séance : commentaire d'exercice lisible en vue repliée (sans cliquer) + aide (? et détaillée) mise à jour profil homme/femme (Santé, endométriose, US Navy)
+const CACHE = 'ft-v235'; // éditeur de programme : mode SUPERSET (demande Christophe) — lier des exos consécutifs, propagé à la séance au chargement
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
