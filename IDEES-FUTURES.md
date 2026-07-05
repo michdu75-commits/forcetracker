@@ -31,6 +31,26 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+# 🚧 EN COURS — à reprendre (non fini)
+
+## 🏋️ Programme de force « Gagner en force (Big 3) » — v1 livrée (ft-v225), **à approfondir**
+
+**Ce qui marche déjà (déployé) :**
+- Bouton « Gagner en force (Big 3) » dans le Coach.
+- Milo lit automatiquement les maxes (1RM) Squat / Développé Couché / Soulevé de Terre dans les records (`S.prs`).
+- Il renvoie un conseil + un programme, avec un bouton « 💾 Enregistrer ce programme » qui l'ajoute dans « Mes programmes » (chargeable en séance avec les charges).
+
+**Ce qui reste à faire / améliorer (pourquoi c'est « non fini ») :**
+- **Vraie périodisation sur plusieurs semaines** : aujourd'hui le programme = des séances fixes. Il faudrait une progression semaine par semaine (montée des %1RM, deload) plutôt qu'un jeu de séances figé — idéalement relié au **Cycle de Force** existant (`s-cycle`) qui gère déjà accumulation → intensification → peak → décharge.
+- **Mode « prépa compétition »** : viser une date de compétition, avec un peak calé dessus.
+- **Fiabilité du format** : le programme dépend d'un bloc JSON généré par l'IA ; si le modèle ne respecte pas le format, pas de bouton « Enregistrer » (juste le conseil). À sécuriser (ex. action backend dédiée à réponse structurée, ou 2e tentative).
+- **Correction des maxes avant génération** : laisser Michel ajuster ses 3 maxes (si l'app en a mal estimé un) avant de lancer.
+- **Charges plus fines** : calcul des %1RM et de la progression plus rigoureux (RPE, tonnage), adapté au niveau.
+
+> État : posé de côté à la demande de Michel. La v1 reste utilisable telle quelle ; on reprend quand on veut pour la rendre « complète ».
+
+---
+
 # ✅ À FAIRE
 
 ## ⭐ PRIORITÉ — Refonte de la logique d'affichage des écrans
