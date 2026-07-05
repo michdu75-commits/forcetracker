@@ -203,7 +203,7 @@ function _cloudSync(){
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
       action:'saveProfile',email:S.email,
-      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,
+      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
@@ -981,6 +981,25 @@ function setDiscipline(d){
   const el=document.getElementById('disc-desc');
   if(el)el.textContent=DISC_DESCS[d]||'';
 }
+// Niveau déclaré (évolue tout seul avec les séances — voir _checkLevelUp dans log.js)
+const LEVEL_LABELS={debutant:'Débutant',intermediaire:'Intermédiaire',confirme:'Confirmé'};
+const LEVEL_DESCS={
+  debutant:'Tu débutes en muscu — le Coach explique la technique et reste pédagogue. Tu passeras intermédiaire tout seul avec tes progrès.',
+  intermediaire:'Les bases sont acquises — le Coach devient plus technique et pousse ta progression.',
+  confirme:'Expérimenté — le Coach te parle d\'égal à égal, techniques avancées bienvenues.',
+};
+function setLevel(l){
+  S.level=l;S.levelAuto=false;persist();
+  _renderLevelSel();
+  toast('Niveau : '+(LEVEL_LABELS[l]||l),'success');
+}
+function _renderLevelSel(){
+  ['debutant','intermediaire','confirme'].forEach(x=>{
+    const el=document.getElementById('lvl-'+x);if(el)el.classList.toggle('active',x===S.level);
+  });
+  const d=document.getElementById('lvl-desc');
+  if(d)d.textContent=S.level?(LEVEL_DESCS[S.level]||''):'Choisis ton niveau — le Coach adaptera ses conseils, et il évoluera tout seul avec tes séances.';
+}
 
 let _screenHistory=['home'];
 function openMenuDrawer(){
@@ -1083,6 +1102,7 @@ function renderSetup(){
   renderCycleProfileCard();
   setGoal(S.goal||'muscle');
   setDiscipline(S.discipline||'muscu');
+  _renderLevelSel();
   renderBFCard();
   _renderMorphoSection();
   _renderHealthSection();
@@ -1174,6 +1194,7 @@ function _applyRestoreData(raw){
   try{if(d.gender)S.gender=d.gender;}catch(e){console.warn('[FT restore] gender',e);}
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
+  try{if(d.level)S.level=d.level;}catch(e){}
   try{if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;}catch(e){console.warn('[FT restore] activityLevel',e);}
   try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
   try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}

@@ -159,6 +159,7 @@ const NEW_FEATURES=[
   {id:'morpho-setup',screen:'setup', anchor:'menu-row-profil', desc:'Section morphologie dans Profil'},
   {id:'discipline',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
   {id:'profil-accordion',screen:'setup', anchor:'menu-row-profil', desc:'Profil réorganisé en sections repliables'},
+  {id:'level-evolutif',screen:'setup', anchor:'menu-row-profil', desc:'Ton niveau (débutant/intermédiaire/confirmé) dans Profil → Discipline — le Coach s\'adapte et ton niveau évolue tout seul avec tes séances'},
 ];
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

@@ -380,8 +380,9 @@ function updateProteinBar() {
 }
 
 // ─── ONBOARDING ──────────────────────────────────────────────
-let _obStep=1,_obGender='H',_obGoal='muscle',_obDataRestored=false;
+let _obStep=1,_obGender='H',_obGoal='muscle',_obLevel='',_obDataRestored=false;
 const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',force:'ob-gf',equilibre:'ob-ge',endurance:'ob-gen'};
+const _OB_LEVELS={debutant:'ob-lv-d',intermediaire:'ob-lv-i',confirme:'ob-lv-c'};
 
 function _initOb0(){
   if(_isStandalone())return;
@@ -419,8 +420,15 @@ function initOnboarding(){
   if(document.documentElement.classList.contains('ob-done'))return;
   const emailInp=document.getElementById('ob-email');
   if(emailInp){emailInp.setAttribute('enterkeyhint','done');emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});}
-  // step 3 : prénom → age → taille → poids en chaîne
-  const ob3=[['ob-name','ob-age'],['ob-age','ob-ht'],['ob-ht','ob-bw'],['ob-bw',null]];
+  // step 3 : prénom → age → taille → poids → naissance → poids visé en chaîne
+  const ob3=[['ob-name','ob-age'],['ob-age','ob-ht'],['ob-ht','ob-bw'],['ob-bw','ob-bday'],['ob-bday','ob-target'],['ob-target',null]];
+  // Naissance : insertion auto du "/" après le jour (JJ → JJ/)
+  const obBd=document.getElementById('ob-bday');
+  if(obBd)obBd.addEventListener('input',e=>{
+    let v=e.target.value.replace(/[^\d/]/g,'');
+    if(v.length===2&&e.target.value.length>obBd._prevLen)v=v+'/';
+    obBd._prevLen=v.length;e.target.value=v.slice(0,5);
+  });
   ob3.forEach(([id,nextId])=>{
     const inp=document.getElementById(id);
     if(!inp)return;
@@ -466,6 +474,12 @@ function obNext(step){
     if(age>=14&&age<=80)S.age=age;
     if(ht>=100&&ht<=250)S.height=ht;
     if(bw>=20&&bw<=300){S.bw=bw;}
+    // Nouveaux champs (onboarding enrichi) — tous optionnels
+    const tw=parseFloat((document.getElementById('ob-target')||{}).value)||0;
+    if(tw>=20&&tw<=300)S.targetWeight=tw;
+    const bd=((document.getElementById('ob-bday')||{}).value||'').trim();
+    if(/^\d{1,2}\/\d{1,2}$/.test(bd))S.bday=bd;
+    if(_obLevel)S.level=_obLevel;
   }else if(_obStep===4){
     S.goal=_obGoal;
   }
@@ -486,6 +500,12 @@ function obSetGoal(g){
   _obGoal=g;
   Object.values(_OB_GOALS).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('ob-sel');});
   const el=document.getElementById(_OB_GOALS[g]);if(el)el.classList.add('ob-sel');
+}
+
+function obSetLevel(l){
+  _obLevel=l;
+  Object.values(_OB_LEVELS).forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('ob-sel');});
+  const el=document.getElementById(_OB_LEVELS[l]);if(el)el.classList.add('ob-sel');
 }
 
 function obShowRestore(){
@@ -552,7 +572,7 @@ function finishOnboarding(){
   persist();
   if(S.email&&S.url&&!_obDataRestored){
     // Nouveau profil uniquement — si restauration depuis cloud, on ne réécrit JAMAIS le Sheet
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,welcome:true};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,welcome:true};
     fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }
   localStorage.setItem('ft4_ob2','1');

@@ -145,6 +145,19 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
           <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Taille cm</label><input class="ob-mini-inp" id="ob-ht" type="number" placeholder="175" inputmode="numeric"></div>
           <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Poids kg</label><input class="ob-mini-inp" id="ob-bw" type="number" placeholder="80" step="0.1" inputmode="decimal"></div>
         </div>
+        <div class="two-col" style="width:100%;gap:8px;">
+          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Naissance JJ/MM</label><input class="ob-mini-inp" id="ob-bday" type="text" placeholder="21/07" inputmode="numeric" maxlength="5"></div>
+          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Poids visé kg</label><input class="ob-mini-inp" id="ob-target" type="number" placeholder="75" step="0.1" inputmode="decimal"></div>
+        </div>
+        <div style="width:100%;text-align:left;margin-top:2px;">
+          <label style="font-size:14px;color:var(--t2);display:block;margin-bottom:8px;">Ton niveau en musculation</label>
+          <div style="display:flex;gap:8px;width:100%;">
+            <button class="ob-gbtn" id="ob-lv-d" onclick="obSetLevel('debutant')" style="font-size:13px;padding:13px 4px;">Je débute</button>
+            <button class="ob-gbtn" id="ob-lv-i" onclick="obSetLevel('intermediaire')" style="font-size:13px;padding:13px 4px;">Intermédiaire</button>
+            <button class="ob-gbtn" id="ob-lv-c" onclick="obSetLevel('confirme')" style="font-size:13px;padding:13px 4px;">Confirmé</button>
+          </div>
+          <div style="font-size:12px;color:var(--t3);margin-top:7px;line-height:1.4;">Pour adapter les conseils du Coach. Ton niveau évoluera tout seul avec tes séances. 💪</div>
+        </div>
       </div>
       <div class="ob-footer">
         <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
@@ -689,6 +702,15 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <button class="goal-btn" id="disc-haltero" onclick="setDiscipline('haltero')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h12"/><circle cx="12" cy="7.5" r="1.6"/><path d="M12 9v4"/><path d="M9 11h6"/><path d="m8.5 21 3.5-8 3.5 8"/></svg><span>Haltérophilie</span></button>
       </div>
       <div id="disc-desc" style="font-size:14px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:10px 12px;line-height:1.5;min-height:36px;"></div>
+      <div style="margin-top:16px;">
+        <label style="font-size:14px;color:var(--t2);display:block;margin-bottom:8px;font-weight:600;">Ton niveau</label>
+        <div style="display:flex;gap:8px;">
+          <button class="goal-btn" id="lvl-debutant" onclick="setLevel('debutant')" style="flex:1;padding:12px 4px;font-size:14px;"><span>Débutant</span></button>
+          <button class="goal-btn" id="lvl-intermediaire" onclick="setLevel('intermediaire')" style="flex:1;padding:12px 4px;font-size:14px;"><span>Intermédiaire</span></button>
+          <button class="goal-btn" id="lvl-confirme" onclick="setLevel('confirme')" style="flex:1;padding:12px 4px;font-size:14px;"><span>Confirmé</span></button>
+        </div>
+        <div id="lvl-desc" style="font-size:13px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:9px 12px;line-height:1.45;margin-top:8px;"></div>
+      </div>
       </div></details>
       <details class="acc"><summary class="acc-h"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="4.5" r="1.4"/><path d="m9 20 3-6 3 6"/><path d="m6 8 6 2 6-2"/><path d="M12 10v4"/></svg>Composition corporelle</summary><div class="acc-inner">
       <div class="two-col">

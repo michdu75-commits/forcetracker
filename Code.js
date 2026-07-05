@@ -478,6 +478,7 @@ function handleSaveProfile_(body) {
     if (body.healthProfile !== undefined) profile.healthProfile = body.healthProfile||profile.healthProfile||null;
     if (body.badges        !== undefined) profile.badges        = _po_(body.badges,        profile.badges);
     if (body.discipline    !== undefined) profile.discipline    = _ps_(body.discipline,    profile.discipline);
+    if (body.level         !== undefined) profile.level         = _ps_(body.level,         profile.level);
     if (body.histImports   !== undefined) profile.histImports   = _pn_(body.histImports,   profile.histImports);
     if (body.exPhotos      !== undefined) profile.exPhotos      = _po_(body.exPhotos,      profile.exPhotos);
     if (body.bodyStudy     !== undefined) profile.bodyStudy     = _po_(body.bodyStudy,     profile.bodyStudy);

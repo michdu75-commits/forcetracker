@@ -17,7 +17,13 @@
 
 ## ⏳ En attente
 
-*(Rien en attente pour l'instant — tout est déployé.)*
+### 7. Persistance cloud « niveau » (ft-v240) — 1 ligne
+Dans `Code.js`, fonction `handleSaveProfile_`, la ligne est **déjà écrite** (juste sous `discipline`) :
+```js
+if (body.level !== undefined) profile.level = _ps_(body.level, profile.level);
+```
+👉 Il reste juste à **déployer** : `clasp push --force` puis `clasp deploy -i …` (voir séquence en haut), vérifier `?test=1` → `{"status":"online"}`.
+- **Sans ce déploiement** : le niveau (débutant/intermédiaire/confirmé) fonctionne quand même sur le téléphone (Coach adapté + auto-promotion), mais il ne serait **pas restauré** après une réinstallation. Avec le déploiement, il survit comme la discipline.
 
 ---
 
