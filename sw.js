@@ -1,9 +1,11 @@
-const CACHE = 'ft-v244'; // Mode démo (admin) : gèle toute sauvegarde (local+cloud), bandeau, sortie restaure les vraies données
+const CACHE = 'ft-v245'; // Vrai PDF : bouton « 📄 PDF » génère un fichier PDF (jsPDF hébergé en local, marche hors-ligne) + partage/téléchargement
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
   './setup.js', './tracking.js', './coach.js', './app.js',
   './manifest.json', './logo.png', './female-body.png',
+  // Librairie PDF (hébergée en local pour marcher hors-ligne — chargée à la demande)
+  './lib/jspdf.umd.min.js', './lib/jspdf.plugin.autotable.min.js',
   // Polices (hébergées localement — plus de dépendance Google Fonts)
   './fonts/manrope-variable.woff2', './fonts/spacegrotesk-variable.woff2', './fonts/pacifico-400.woff2',
   './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',
