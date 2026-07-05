@@ -804,10 +804,15 @@ function calcRecoveryScore(){
   const weights=[0.6,0.3,0.1].slice(0,scores.length);
   const wTotal=weights.reduce((a,b)=>a+b,0);
   const wScore=scores.reduce((a,s,i)=>a+s*weights[i],0)/wTotal;
-  const lastSess=S.sessions[0];
-  let restBonus=0;
-  if(lastSess){const d=Math.floor((new Date()-new Date(lastSess.date+'T12:00:00'))/864e5);restBonus=Math.min(d,3)*3;}
-  return Math.min(100,Math.round(wScore+restBonus));
+  // Ajustement selon la dernière séance : entraîné récemment → fatigue (pénalité),
+  // jours de repos → bonus. Avant, entraîner le jour même ne pénalisait pas (bug : « prêt à performer » à 90% après une séance).
+  const lastSess=S.sessions&&S.sessions[0];
+  let sessAdj=0;
+  if(lastSess&&lastSess.date){
+    const d=Math.floor((new Date()-new Date(lastSess.date+'T12:00:00'))/864e5);
+    sessAdj = d<=0 ? -25 : d===1 ? -8 : Math.min(d,4)*3; // aujourd'hui −25 · hier −8 · 2j +6 · 3j +9 · 4j+ +12
+  }
+  return Math.max(0,Math.min(100,Math.round(wScore+sessAdj)));
 }
 function getRecoveryInfo(score){
   if(score===null)return{label:'—',color:'var(--t3)',icon:'❓',rec:'Enregistre ton sommeil pour obtenir ton score de récupération.'};
