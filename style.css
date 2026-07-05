@@ -175,6 +175,10 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overscroll-behavior-y:contain;padding:12px 14px calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);display:none;flex-direction:column;gap:10px;background:var(--bg);}
 .screen.active{display:flex;}
+/* Espaceur bas de scroll (fix iOS : padding-bottom d'un flex scroll ignoré par Safari).
+   Un vrai élément est toujours compté dans la hauteur scrollable → la dernière carte passe au-dessus de la nav. */
+.scroll-spacer{flex:0 0 auto;height:calc(max(env(safe-area-inset-bottom,0px),8px) + 110px);}
+#s-progress{padding-bottom:8px;}
 .screen>*{flex-shrink:0;}
 
 .help-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--sep);}
