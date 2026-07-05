@@ -1,4 +1,4 @@
-const CACHE = 'ft-v238'; // Milo : consigne français soigné (évite les anglicismes — « gainage » pas « core », accords corrects) dans buildCoachContext
+const CACHE = 'ft-v239'; // Milo : s'adapte au registre de langage (cash/familier/grossier si la personne l'est, poli sinon) — miroir, jamais rabaissant
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

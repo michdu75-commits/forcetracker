@@ -44,6 +44,9 @@ Michel veut **éviter les pop-ups à la con**, mais accepte un rappel utile : si
 ## 💳 « Super Premium » (suivi Excel/Sheets) — Michel penche vers « trop »
 Idée : un palier au-dessus du Premium pour ceux qui veulent le **suivi Excel/Sheets**. Michel doute que ça marche et pense que « c'est peut-être un peu trop ». **Avis : d'accord — ne pas ajouter de palier pour l'instant** (complexité tarifaire, valeur incertaine). L'export existe déjà (Exporter les données). À rediscuter seulement si des utilisateurs le réclament vraiment.
 
+## 🌍 App / Coach en anglais (futur, gros taff)
+Idée Michel : à terme, proposer l'application (et Milo) en **anglais** pour toucher plus large. C'est un **vrai chantier** (traduction de toute l'UI + textes + prompts, gestion multilingue). Pas la priorité maintenant. Note : Milo peut déjà répondre dans la langue de la personne côté prompt, mais l'UI reste en français. À cadrer plus tard.
+
 ## ⚖️ Connexion à une balance connectée — limite technique honnête
 Question Michel : se connecter à une appli de balance connectée (Withings, etc.) ?
 - **PWA web = très limité** : pas d'accès à Apple Santé / Google Fit depuis le web, Web Bluetooth **non supporté sur iOS Safari/PWA**. Se brancher sur Withings/Fitbit demanderait leur **API OAuth + un backend** (lourd), et ne couvrirait pas Apple Health.
