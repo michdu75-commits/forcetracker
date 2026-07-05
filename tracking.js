@@ -495,39 +495,41 @@ function _bfMeasInput(id,label,val){
   return '<div style="flex:1;"><div style="font-size:10px;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em;">'+label+'</div>'
     +'<input type="number" id="'+id+'" value="'+(val||'')+'" placeholder="cm" step="0.5" inputmode="decimal" oninput="_recalcNavyBf()" style="width:100%;padding:8px 6px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:15px;font-family:var(--font);text-align:center;box-sizing:border-box;"></div>';
 }
-function _navyBtn(navy){
-  return '~'+navy+' % <button onclick="_useNavyBf('+navy+')" style="margin-left:6px;font-size:11px;font-weight:700;color:var(--blue);background:rgba(91,168,255,.12);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;">Utiliser</button>';
-}
 function _navyBfHtml(){
   const navy=_bfNavy(S.neck,S.waist,S.hip,S.height,S.gender);
-  if(navy==null)return '<span style="font-size:12px;color:var(--t3);">— (renseigne cou + taille)</span>';
-  return _navyBtn(navy);
+  return navy==null?'<span style="font-size:12px;color:var(--t3);">— (renseigne cou + taille)</span>':('~'+navy+' %');
 }
+// Recalcule à chaque saisie de mesure ET remplit automatiquement la case « Masse grasse du jour »
 function _recalcNavyBf(){
   const neck=(document.getElementById('bf-neck')||{}).value,waist=(document.getElementById('bf-waist')||{}).value,hip=(document.getElementById('bf-hip')||{}).value;
   const navy=_bfNavy(neck,waist,hip,S.height,S.gender);
-  const el=document.getElementById('bf-navy-val');if(!el)return;
-  el.innerHTML=navy==null?'<span style="font-size:12px;color:var(--t3);">—</span>':_navyBtn(navy);
+  const el=document.getElementById('bf-navy-val');if(el)el.innerHTML=navy==null?'<span style="font-size:12px;color:var(--t3);">—</span>':('~'+navy+' %');
+  if(navy!=null){const i=document.getElementById('bf-inp');if(i)i.value=navy;}
 }
-function _useNavyBf(v){const i=document.getElementById('bf-inp');if(i)i.value=v;}
 function renderBodyFatCard(){
   const el=document.getElementById('bodyfat-card');if(!el)return;
   const d=today();
   const todayW=(S.weightLog||[]).find(w=>w.date===d);
-  const curBf=(todayW&&todayW.bf!=null)?todayW.bf:'';
   const isF=S.gender==='F';
+  const savedToday=(todayW&&todayW.bf!=null);
+  const navyNow=_bfNavy(S.neck,S.waist,S.hip,S.height,S.gender);
+  // Case pré-remplie : valeur enregistrée du jour, sinon calcul US Navy (prêt à valider)
+  const prefill=savedToday?todayW.bf:(navyNow!=null?navyNow:'');
+  const sub=savedToday?('✓ Enregistrée : '+todayW.bf+' %')
+    :(navyNow!=null?('Estimée ~'+navyNow+' % — appuie sur ✓ pour enregistrer')
+    :'Entre ton cou et ta taille ci-dessous');
   el.innerHTML=
     '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">'
      +'<div><div style="font-size:14px;font-weight:800;color:var(--t1);">Masse grasse du jour</div>'
-     +'<div style="font-size:12px;color:var(--t3);margin-top:2px;">'+((todayW&&todayW.bf!=null)?('✓ Enregistrée : '+todayW.bf+' %'):'Optionnel — c\'est la tendance qui compte')+'</div></div>'
+     +'<div style="font-size:12px;color:var(--t3);margin-top:2px;">'+sub+'</div></div>'
      +'<div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">'
-       +'<input type="number" id="bf-inp" value="'+curBf+'" placeholder="%" step="0.1" min="2" max="70" inputmode="decimal" style="width:70px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
+       +'<input type="number" id="bf-inp" value="'+prefill+'" placeholder="%" step="0.1" min="2" max="70" inputmode="decimal" style="width:70px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
        +'<button class="btn-xs btn-red" onclick="saveBodyFat()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>'
      +'</div>'
     +'</div>'
     +'<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--sep);">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">'
-        +'<span style="font-size:12px;color:var(--t3);">Calcul auto (méthode US Navy)</span>'
+        +'<span style="font-size:12px;color:var(--t3);">Calcul auto (méthode US Navy) — remplit la case ci-dessus</span>'
         +'<span id="bf-navy-val" style="font-size:14px;font-weight:800;color:var(--blue);">'+_navyBfHtml()+'</span>'
       +'</div>'
       +'<div style="display:flex;gap:6px;">'
