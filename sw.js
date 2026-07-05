@@ -1,4 +1,4 @@
-const CACHE = 'ft-v257'; // Récup : affiche le « pourquoi » (détail des facteurs : sommeil/séance/âge/cycle…) + conseils pour remonter le score, sous la carte d'accueil
+const CACHE = 'ft-v258'; // Guide de l'application transformé en « film » : vraies captures d'écran dans un cadre téléphone + doigt animé + légendes, se termine sur Milo/Premium
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -9,6 +9,9 @@ const PRECACHE = [
   // Polices (hébergées localement — plus de dépendance Google Fonts)
   './fonts/manrope-variable.woff2', './fonts/spacegrotesk-variable.woff2', './fonts/pacifico-400.woff2',
   './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',
+  // Captures d'écran du guide-film (Menu → Guide de l'application)
+  './guide/home.jpg','./guide/profil.jpg','./guide/seance.jpg',
+  './guide/programmes.jpg','./guide/progres.jpg','./guide/coach.jpg',
   // Muscles SVG + PNG
   './muscles/abs.svg','./muscles/arms.svg','./muscles/back.svg','./muscles/calves.svg',
   './muscles/chest.svg','./muscles/glutes.svg','./muscles/legs.svg','./muscles/shoulders.svg',
