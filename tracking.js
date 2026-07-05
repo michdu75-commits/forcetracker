@@ -792,8 +792,8 @@ function renderLogFinish(){
   </div>`;
 }
 
-function calcRecoveryScore(){
-  if(!S.sleepLog||!S.sleepLog.length)return null;
+function calcRecoveryDetail(){
+  if(!S.sleepLog||!S.sleepLog.length)return{score:null,base:null,factors:[],tips:[]};
   const sorted=S.sleepLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
   const scores=sorted.map(e=>{
     const h=e.hours||0;
@@ -828,10 +828,10 @@ function calcRecoveryScore(){
   const age=S.age||0;
   const ageAdj = age>=60?-9 : age>=50?-6 : age>=40?-3 : 0;
   // Cycle menstruel (femmes) : la phase influence la readiness (règles/lutéale ↓, ovulation ↑)
-  let cycleAdj=0;
+  let cycleAdj=0,cpPhase='';
   try{
     const cp=(typeof getMensCyclePhase==='function')?getMensCyclePhase():null;
-    if(cp&&cp.perf) cycleAdj = cp.perf==='low'?-10 : cp.perf==='declining'?-5 : cp.perf==='peak'?4 : cp.perf==='rising'?2 : 0;
+    if(cp&&cp.perf){ cycleAdj = cp.perf==='low'?-10 : cp.perf==='declining'?-5 : cp.perf==='peak'?4 : cp.perf==='rising'?2 : 0; cpPhase=cp.phase||''; }
   }catch(e){}
   // Fatigue accumulée : plusieurs séances sur les 3 derniers jours (enchaîner sans repos)
   const recentDays=new Set((S.sessions||[]).filter(s=>s&&s.date&&(()=>{const dd=Math.floor((new Date()-new Date(s.date+'T12:00:00'))/864e5);return dd>=0&&dd<=2;})()).map(s=>s.date)).size;
@@ -845,8 +845,29 @@ function calcRecoveryScore(){
     const dd=Math.floor((new Date()-new Date(ls0.date+'T12:00:00'))/864e5);
     if(dd<=1) energyAdj = ls0.checkin.energy<=1?-6 : ls0.checkin.energy===2?-3 : ls0.checkin.energy>=4?4 : 0;
   }
-  return Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj)));
+  const base=Math.round(wScore);
+  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj)));
+  // Détail des facteurs (pour afficher le « pourquoi » sous le score)
+  const factors=[{ic:'😴',label:'Sommeil',val:base,base:true}];
+  if(sessAdj) factors.push({ic:sessAdj<0?'🏋️':'🛌',label:sessAdj<0?'Séance récente':'Repos',val:sessAdj});
+  if(ageAdj) factors.push({ic:'🎂',label:'Âge',val:ageAdj});
+  if(cycleAdj) factors.push({ic:'🌙',label:'Cycle'+(cpPhase?' ('+cpPhase+')':''),val:cycleAdj});
+  if(accumAdj) factors.push({ic:'🔥',label:'Jours enchaînés',val:accumAdj});
+  if(smokerAdj) factors.push({ic:'🚬',label:'Tabac',val:smokerAdj});
+  if(energyAdj) factors.push({ic:'⚡',label:'Énergie',val:energyAdj});
+  // Conseils pour remonter le score (les plus pertinents)
+  const tips=[];
+  if(base<70) tips.push('Vise 7–9 h de sommeil de qualité — c\'est le plus gros levier.');
+  if(sessAdj<=-18) tips.push('Grosse séance récente : laisse 1–2 jours avant de reprendre lourd.');
+  if(accumAdj<0) tips.push('Tu enchaînes les jours — un jour de repos complet te ferait du bien.');
+  if(cycleAdj<=-10) tips.push('Pendant les règles : repos actif ou séances légères, évite les charges max.');
+  else if(cycleAdj<0) tips.push('Phase prémenstruelle : volume modéré et bonne récup entre les séances.');
+  if(smokerAdj<0) tips.push('Réduire le tabac améliorerait nettement ta récupération.');
+  if(energyAdj<0) tips.push('Énergie basse au dernier check-in — écoute ton corps, séance légère.');
+  if(!tips.length) tips.push(score>=80?'Tu es au top — profites-en pour une séance intensive ! 💪':'Récup correcte — séance normale, et une bonne nuit ce soir.');
+  return {score,base,factors,tips:tips.slice(0,2)};
 }
+function calcRecoveryScore(){return calcRecoveryDetail().score;}
 function getRecoveryInfo(score){
   if(score===null)return{label:'—',color:'var(--t3)',icon:'❓',rec:'Enregistre ton sommeil pour obtenir ton score de récupération.'};
   if(score<40)return{label:'Fatigué',color:'var(--red)',icon:'🔴',rec:'Récupération insuffisante — séance légère ou repos complet recommandé. Priorise le sommeil ce soir.'};
