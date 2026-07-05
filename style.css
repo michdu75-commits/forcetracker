@@ -901,3 +901,19 @@ html.ob-done #onboarding{display:none;}
 .agv-ck{ width:44px; height:44px; border-radius:50%; background:var(--bg3); border:2px solid var(--sep); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; animation:agv-checkin 3s ease-in-out infinite; }
 .agv-ck.k2{ animation-delay:.5s; } .agv-ck.k3{ animation-delay:1s; }
 @keyframes agv-checkin{ 0%,10%{ opacity:.4; transform:scale(.85); background:var(--bg3); border-color:var(--sep);} 25%{ opacity:1; transform:scale(1.12); background:#34D399; border-color:#34D399;} 40%,90%{ opacity:1; transform:scale(1); background:#34D399; border-color:#34D399;} 100%{ opacity:.4; transform:scale(.85); background:var(--bg3); border-color:var(--sep);} }
+
+/* ─── Guide — visuels orientation (onglets + accueil) ────────── */
+/* Barre d'onglets : chaque onglet se surligne à tour de rôle */
+.agv-tabs{ width:264px; }
+.agv-tabbar{ width:100%; background:var(--bg3); border:1px solid var(--sep); border-radius:14px; display:flex; align-items:center; justify-content:space-around; padding:9px 4px; }
+.agv-tab{ display:flex; flex-direction:column; align-items:center; gap:2px; font-size:16px; opacity:.5; border-radius:9px; padding:5px 6px; animation:agv-tabhi 6s ease-in-out infinite; }
+.agv-tab small{ font-size:8px; color:var(--t3); font-weight:600; }
+.agv-tabplus i{ background:var(--red); color:#fff; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; }
+.agv-tab.t1{ animation-delay:0s; } .agv-tab.t2{ animation-delay:1s; } .agv-tab.t3{ animation-delay:2s; } .agv-tab.t4{ animation-delay:3s; } .agv-tab.t5{ animation-delay:4s; } .agv-tab.t6{ animation-delay:5s; }
+@keyframes agv-tabhi{ 0%,100%{ opacity:.5; transform:scale(1); background:transparent;} 8%{ opacity:1; transform:scale(1.18); background:rgba(255,45,85,.16);} 17%{ opacity:.5; transform:scale(1); background:transparent;} }
+/* Accueil : 4 tuiles de stats qui apparaissent */
+.agv-home{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:196px; }
+.agv-htile{ background:var(--bg3); border:1px solid var(--sep); border-radius:10px; padding:10px 10px; display:flex; flex-direction:column; align-items:flex-start; gap:3px; opacity:0; animation:agv-tilein 3.4s ease-in-out infinite; }
+.agv-htile b{ font-size:17px; line-height:1; } .agv-htile small{ font-size:9px; color:var(--t3); font-weight:600; }
+.agv-htile:nth-child(1){ animation-delay:0s; } .agv-htile:nth-child(2){ animation-delay:.2s; } .agv-htile:nth-child(3){ animation-delay:.4s; } .agv-htile:nth-child(4){ animation-delay:.6s; }
+@keyframes agv-tilein{ 0%{ opacity:0; transform:translateY(6px);} 20%,85%{ opacity:1; transform:translateY(0);} 100%{ opacity:0; transform:translateY(6px);} }
