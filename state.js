@@ -77,6 +77,7 @@ function load(){
     S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
     S.mealPlan=JSON.parse(localStorage.getItem('ft4_mealplan')||'null');
     S.healthProfile=JSON.parse(localStorage.getItem('ft4_health')||'null');
+    S.bodyStudy=JSON.parse(localStorage.getItem('ft4_bodystudy')||'null');
     S.a11y=localStorage.getItem('ft4_a11y')==='1';
     S.colorblind=localStorage.getItem('ft4_cb')||'';
     S.leftHand=localStorage.getItem('ft4_lh')==='1';
@@ -188,6 +189,7 @@ function persist(){
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
     localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
+    localStorage.setItem('ft4_bodystudy',JSON.stringify(S.bodyStudy||null));
     localStorage.setItem('ft4_a11y',S.a11y?'1':'0');
     localStorage.setItem('ft4_cb',S.colorblind||'');
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');

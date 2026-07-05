@@ -1,4 +1,4 @@
-const CACHE = 'ft-v223'; // Coach proactif (brique 4) : carte Milo sur l'Accueil (relance/récup/lendemain/régularité), fermable, 1×/jour/message
+const CACHE = 'ft-v224'; // Étude du corps (Premium) : 4 photos relâché/contracté → bilan posture/insertions/équilibre + exercices, santé prise en compte, injecté à Milo
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

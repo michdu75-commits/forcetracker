@@ -17,6 +17,20 @@
 
 ## ⏳ En attente
 
+### 5. ⭐ Étude du corps — bilan morpho-postural (ft-v224) — **le plus important à déployer**
+La nouvelle fonctionnalité **« Étude du corps »** (bouton dans le Coach, Premium, 4 photos relâché+contracté → bilan posture/insertions/équilibre + exercices, santé prise en compte) a **besoin du backend** pour fonctionner. Sans ce déploiement, le bouton apparaît mais l'analyse renvoie une erreur.
+✅ **Code déjà ajouté dans `Code.js`** :
+- `handleBodyStudy_(body)` (nouveau handler, modèle **Claude Sonnet**, prompt complet insertions/posture/équilibre/santé/exercices) + route `if (body.action === 'bodyStudy')`.
+- Persistance cloud du bilan : dans `handleSaveProfile_`, `if (body.bodyStudy !== undefined) profile.bodyStudy = _po_(body.bodyStudy, profile.bodyStudy);`
+**À déployer** (récupère tout Code.js d'un coup, ça embarque aussi le point 4 ci-dessous) :
+```
+git checkout origin/master -- Code.js
+set NODE_TLS_REJECT_UNAUTHORIZED=0
+npx clasp push --force
+npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
+```
+Puis vérifier `?test=1` → `{"status":"online"}`. Ça remplace le point 3 (« analyse morpho la totale ») qui est maintenant réalisé par cette Étude du corps.
+
 ### 4. Persistance cloud des photos d'exercices « bibliothèque » (ft-v212)
 ✅ **Code déjà ajouté dans `Code.js`** (`handleSaveProfile_`, à côté de `discipline`/`histImports`) :
 ```js
