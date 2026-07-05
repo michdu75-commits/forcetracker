@@ -1,4 +1,4 @@
-const CACHE = 'ft-v246'; // Clone : isolation renforcée (n'hérite plus du cookie/IDB de la prod) + bouton admin « Refaire l'inscription » (clone only)
+const CACHE = 'ft-v247'; // Inscription : « Ton niveau » devient son propre écran dédié (débutant/inter/confirmé) entre Profil et Objectif — plus jamais caché
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

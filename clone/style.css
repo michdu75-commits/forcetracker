@@ -667,6 +667,11 @@ html.ob-done #onboarding{display:none;}
 .ob-goal-btn.ob-sel{background:rgba(255,45,85,.12);border-color:var(--red);color:var(--t1);}
 .ob-mini-inp{width:100%;font-size:18px;font-weight:700;font-family:var(--font);background:var(--bg3);border:2px solid var(--sep);border-radius:12px;color:var(--t1);padding:10px 10px;outline:none;text-align:center;transition:border-color .2s;}
 .ob-mini-inp:focus{border-color:var(--red);}
+.ob-lvl-big{width:100%;padding:15px 16px;border-radius:var(--r);border:2px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);cursor:pointer;text-align:left;transition:all .2s;touch-action:manipulation;}
+.ob-lvl-big.ob-sel{border-color:var(--red);background:rgba(255,45,85,.12);}
+.ob-lvl-t{font-size:17px;font-weight:800;margin-bottom:4px;}
+.ob-lvl-d{font-size:13px;color:var(--t3);line-height:1.4;}
+.ob-lvl-big.ob-sel .ob-lvl-d{color:var(--t2);}
 
 /* ─── PWA INSTALL ────────────────────────────────────────────── */
 #install-popup{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:8000;background:rgba(0,0,0,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:24px 20px max(calc(env(safe-area-inset-bottom)+24px),40px);}

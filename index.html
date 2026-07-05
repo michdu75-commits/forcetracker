@@ -63,6 +63,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div class="ob-dot" id="od-2"></div>
     <div class="ob-dot" id="od-3"></div>
     <div class="ob-dot" id="od-4"></div>
+    <div class="ob-dot" id="od-5"></div>
   </div>
   <div class="ob-wrap">
 
@@ -126,7 +127,31 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     </div>
 
     <!-- ÉTAPE 2 : (non utilisée — fusion dans ob-1) -->
-    <div class="ob-step" id="ob-2" style="display:none;"></div>
+    <div class="ob-step" id="ob-2">
+      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding-top:16px;text-align:center;">
+        <div style="display:flex;align-items:center;gap:10px;width:100%;">
+          <span style="font-size:32px;line-height:1;">🥇</span>
+          <div class="ob-title" style="font-size:28px;text-align:left;">Ton niveau</div>
+        </div>
+        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">On adapte tout à ton niveau — et il évoluera tout seul avec tes séances. 💪</div>
+        <button class="ob-lvl-big" id="ob-lv-d" onclick="obSetLevel('debutant')">
+          <div class="ob-lvl-t">🌱 Je débute</div>
+          <div class="ob-lvl-d">Nouveau ou presque en musculation. On commence en douceur, sur machines guidées.</div>
+        </button>
+        <button class="ob-lvl-big" id="ob-lv-i" onclick="obSetLevel('intermediaire')">
+          <div class="ob-lvl-t">💪 Intermédiaire</div>
+          <div class="ob-lvl-d">Les bases sont acquises, tu t'entraînes déjà régulièrement.</div>
+        </button>
+        <button class="ob-lvl-big" id="ob-lv-c" onclick="obSetLevel('confirme')">
+          <div class="ob-lvl-t">🔥 Confirmé</div>
+          <div class="ob-lvl-d">Expérimenté, à l'aise avec les mouvements et les charges lourdes.</div>
+        </button>
+      </div>
+      <div class="ob-footer">
+        <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:14px;">← Retour</button>
+      </div>
+    </div>
 
     <!-- ÉTAPE 3 : Profil -->
     <div class="ob-step" id="ob-3">
@@ -150,21 +175,12 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
           <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Naissance JJ/MM</label><input class="ob-mini-inp" id="ob-bday" type="text" placeholder="21/07" inputmode="numeric" maxlength="5"></div>
           <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Poids visé kg</label><input class="ob-mini-inp" id="ob-target" type="number" placeholder="75" step="0.1" inputmode="decimal"></div>
         </div>
-        <div style="width:100%;text-align:left;margin-top:2px;">
-          <label style="font-size:14px;color:var(--t2);display:block;margin-bottom:8px;">Ton niveau en musculation</label>
-          <div style="display:flex;gap:8px;width:100%;">
-            <button class="ob-gbtn" id="ob-lv-d" onclick="obSetLevel('debutant')" style="font-size:13px;padding:13px 4px;">Je débute</button>
-            <button class="ob-gbtn" id="ob-lv-i" onclick="obSetLevel('intermediaire')" style="font-size:13px;padding:13px 4px;">Intermédiaire</button>
-            <button class="ob-gbtn" id="ob-lv-c" onclick="obSetLevel('confirme')" style="font-size:13px;padding:13px 4px;">Confirmé</button>
-          </div>
-          <div style="font-size:12px;color:var(--t3);margin-top:7px;line-height:1.4;">Pour adapter les conseils du Coach. Ton niveau évoluera tout seul avec tes séances. 💪</div>
-        </div>
       </div>
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-red" onclick="obNext(2)" style="font-size:17px;padding:16px;">Continuer →</button>
         <div style="display:flex;gap:8px;">
           <button class="btn btn-bg2" onclick="obGoTo(1)" style="font-size:14px;flex:1;">← Retour</button>
-          <button class="btn btn-bg2" onclick="obGoTo(4)" style="font-size:14px;flex:2;">Passer cette étape</button>
+          <button class="btn btn-bg2" onclick="obGoTo(2)" style="font-size:14px;flex:2;">Passer cette étape</button>
         </div>
       </div>
     </div>
@@ -187,7 +203,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       </div>
       <div class="ob-footer">
         <button class="btn btn-red" onclick="obNext(5)" style="font-size:17px;padding:16px;">Continuer →</button>
-        <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:14px;">← Retour</button>
+        <button class="btn btn-bg2" onclick="obGoTo(2)" style="font-size:14px;">← Retour</button>
       </div>
     </div>
 
