@@ -162,6 +162,7 @@ const NEW_FEATURES=[
   {id:'discipline',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
   {id:'profil-accordion',screen:'setup', anchor:'menu-row-profil', desc:'Profil réorganisé en sections repliables'},
   {id:'level-evolutif',screen:'setup', anchor:'menu-row-profil', desc:'Ton niveau (débutant/intermédiaire/confirmé) dans Profil → Discipline — le Coach s\'adapte et ton niveau évolue tout seul avec tes séances'},
+  {id:'app-guide',   screen:'setup', anchor:'menu-row-appguide', desc:'Nouveau : Menu → « Guide de l\'application » — un diaporama qui explique comment marche l\'app (séance, programmes, Milo, photos…)'},
 ];
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

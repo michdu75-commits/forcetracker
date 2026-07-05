@@ -830,3 +830,7 @@ html.ob-done #onboarding{display:none;}
 #root.demo-on #demo-banner{ display:flex; }
 /* le bandeau a déjà géré l'encoche → on réduit le padding haut de la topbar en mode démo */
 #root.demo-on .topbar{ padding-top:14px; }
+
+/* ─── Guide de l'application (diaporama) ─────────────────────── */
+.ag-dot{ width:7px; height:7px; border-radius:50%; background:var(--sep); transition:all .25s; }
+.ag-dot.on{ background:var(--red); width:22px; border-radius:4px; }
