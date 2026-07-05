@@ -145,6 +145,7 @@ const NEW_FEATURES=[
   {id:'photo-any-ex',   screen:'log',   desc:'Photo sur n\'importe quel exercice + tap sur la photo pour la voir en grand'},
   // Progrès
   {id:'weight-edit', screen:'progress', desc:'Nouveau : tape un point du graphique de poids pour modifier/supprimer la pesée + navigation par période (1M/3M/6M/Tout)'},
+  {id:'bodyfat-track', screen:'progress', desc:'Nouveau : suivi de la masse grasse dans le temps (calcul US Navy ou saisie) + bascule Poids ↔ Masse grasse sur le graphique'},
   {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
   {id:'prog-badges', screen:'progress', desc:'Onglet Badges (🏅)'},
   // Coach

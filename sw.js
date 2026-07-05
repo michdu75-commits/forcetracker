@@ -1,4 +1,4 @@
-const CACHE = 'ft-v227'; // graphique de poids : points cliquables (modifier/supprimer une pesée) + navigation par période (1M/3M/6M/Tout)
+const CACHE = 'ft-v228'; // suivi masse grasse (étape 2) : carte MG (calcul US Navy + saisie) sur pesées, bascule Poids↔Masse grasse du graphique
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
