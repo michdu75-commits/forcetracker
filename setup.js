@@ -198,6 +198,7 @@ function showChartTooltip(i){
 let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
 
 function _cloudSync(){
+  if(window._demoMode)return; // mode démo : aucune écriture cloud
   if(!S.email||!S.url)return;
   fetch(S.url,{method:'POST',mode:'no-cors',
     headers:{'Content-Type':'text/plain;charset=utf-8'},

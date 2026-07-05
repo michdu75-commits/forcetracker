@@ -142,6 +142,8 @@ function load(){
   }catch(e){}
 }
 function persist(){
+  // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
+  if(window._demoMode)return;
   try{
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_gender',S.gender);
