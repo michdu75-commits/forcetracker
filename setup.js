@@ -205,7 +205,7 @@ function _cloudSync(){
       action:'saveProfile',email:S.email,
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
-      neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,
+      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
@@ -535,6 +535,7 @@ const _HC=[
   {id:'arthrite',label:'Arthrose',icon:'🦵'},
   {id:'osteo',label:'Ostéoporose',icon:'💀'},
   {id:'epilepsie',label:'Épilepsie',icon:'⚡'},
+  {id:'endometriose',label:'Endométriose',icon:'🌸',f:true},
 ];
 const _HIZ=[
   {id:'epaule_d',label:'Épaule droite'},{id:'epaule_g',label:'Épaule gauche'},
@@ -562,7 +563,7 @@ function _renderHealthSection(){
   const conds=hp.conditions||[];
   const injs=hp.injuries||[];
 
-  const condHtml=_HC.map(c=>{
+  const condHtml=_HC.filter(c=>!c.f||S.gender==='F').map(c=>{
     const on=conds.includes(c.id);
     return `<button onclick="toggleHC('${c.id}')" style="padding:6px 10px;border-radius:20px;border:1.5px solid ${on?'#FF2D55':'var(--sep)'};background:${on?'rgba(255,45,85,.12)':'var(--bg3)'};font-size:12px;font-weight:600;cursor:pointer;color:${on?'#FF2D55':'var(--t2)'};display:inline-flex;align-items:center;gap:4px;">${c.icon} ${c.label}</button>`;
   }).join('');
@@ -1177,6 +1178,7 @@ function _applyRestoreData(raw){
   try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
   try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}
   try{if(d.neck)S.neck=parseFloat(d.neck)||0;}catch(e){}
+  try{if(d.targetWeight)S.targetWeight=parseFloat(d.targetWeight)||0;}catch(e){}
   try{if(d.waist)S.waist=parseFloat(d.waist)||0;}catch(e){}
   try{if(d.hip)S.hip=parseFloat(d.hip)||0;}catch(e){}
   try{if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;}catch(e){}

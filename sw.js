@@ -1,4 +1,4 @@
-const CACHE = 'ft-v228'; // suivi masse grasse (étape 2) : carte MG (calcul US Navy + saisie) sur pesées, bascule Poids↔Masse grasse du graphique
+const CACHE = 'ft-v229'; // poids objectif (ligne repère + kg restants) + note « masse grasse indicative » + endométriose (profil santé femme)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

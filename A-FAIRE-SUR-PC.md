@@ -17,7 +17,18 @@
 
 ## ⏳ En attente
 
-*(Rien en attente pour l'instant — tout est déployé.)*
+### 6. Persistance cloud du « poids objectif » (ft-v229)
+✅ **Code déjà ajouté dans `Code.js`** (`handleSaveProfile_`, à côté de `neck`/`waist`/`hip`) :
+```js
+if (body.targetWeight !== undefined) profile.targetWeight = _pn_(body.targetWeight, profile.targetWeight);
+```
+Sans ce déploiement, le poids objectif reste **local** (fonctionne quand même sur l'appareil, mais perdu si réinstallation/vidage du cache). **À déployer** au prochain passage PC (récupère tout `Code.js` d'un coup) :
+```
+git checkout origin/master -- Code.js
+set NODE_TLS_REJECT_UNAUTHORIZED=0
+npx clasp push --force
+npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
+```
 
 ---
 

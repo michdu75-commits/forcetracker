@@ -467,6 +467,7 @@ function handleSaveProfile_(body) {
     if (body.neck          !== undefined) profile.neck          = _pn_(body.neck,          profile.neck);
     if (body.waist         !== undefined) profile.waist         = _pn_(body.waist,         profile.waist);
     if (body.hip           !== undefined) profile.hip           = _pn_(body.hip,           profile.hip);
+    if (body.targetWeight  !== undefined) profile.targetWeight  = _pn_(body.targetWeight,  profile.targetWeight);
     // Booleans : false est une valeur valide — toujours écrire
     if (body.smoker        !== undefined) profile.smoker        = body.smoker;
     if (body.a11y          !== undefined) profile.a11y          = body.a11y;

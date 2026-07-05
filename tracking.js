@@ -390,6 +390,7 @@ function renderWeightTab(){
       <button class="btn-xs btn-red" onclick="saveWeightEntry()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>
     </div>
   </div>`;
+  renderWeightTarget();
   renderBodyFatCard();
   const sorted=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
   // Bascule Poids ↔ Masse grasse
@@ -436,6 +437,36 @@ function setWeightRange(r){_wRange=r;renderWeightTab();}
 let _wMetric='kg'; // métrique affichée : 'kg' (poids) | 'bf' (masse grasse)
 function setWeightMetric(m){_wMetric=m;renderWeightTab();}
 
+// ── Poids objectif (futur souhaité) ──
+function renderWeightTarget(){
+  const el=document.getElementById('weight-target');if(!el)return;
+  const cur=(S.weightLog&&S.weightLog.length)?S.weightLog.slice().sort((a,b)=>b.date.localeCompare(a.date))[0].kg:(S.bw||0);
+  const tw=S.targetWeight||0;
+  let sub='Optionnel — fixe un poids à viser';
+  if(tw&&cur){
+    const rem=Math.round((cur-tw)*10)/10;
+    if(Math.abs(rem)<0.1)sub='🎉 Objectif atteint !';
+    else if(rem>0)sub=rem+' kg à perdre';
+    else sub=Math.abs(rem)+' kg à prendre';
+  }else if(tw)sub='Objectif fixé';
+  el.innerHTML=
+    '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between;">'
+     +'<div><div style="font-size:14px;font-weight:800;color:var(--t1);">🎯 Poids objectif</div>'
+     +'<div style="font-size:12px;color:var(--t3);margin-top:2px;">'+sub+'</div></div>'
+     +'<div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">'
+       +'<input type="number" id="target-inp" value="'+(tw||'')+'" placeholder="kg" step="0.1" min="20" max="300" inputmode="decimal" style="width:70px;padding:9px 10px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
+       +'<button class="btn-xs btn-red" onclick="setTargetWeight()" style="background:linear-gradient(135deg,#FF2D55,#FF4D6D);color:#fff;border:none;padding:10px 14px;font-size:16px;">✓</button>'
+     +'</div>'
+    +'</div>';
+}
+function setTargetWeight(){
+  const v=parseFloat((document.getElementById('target-inp')||{}).value);
+  if(!v){S.targetWeight=0;persist();renderWeightTab();toast('Objectif retiré','info');return;}
+  if(v<20||v>300){toast('Objectif invalide (20–300 kg)','error');return;}
+  S.targetWeight=v;persist();renderWeightTab();
+  toast('Objectif : '+v+' kg 🎯','success');
+}
+
 // ── Masse grasse : calcul US Navy + saisie + suivi dans le temps ──
 function _bfNavy(neck,waist,hip,ht,gender){
   neck=parseFloat(neck);waist=parseFloat(waist);hip=parseFloat(hip);ht=parseFloat(ht);
@@ -452,16 +483,19 @@ function _bfMeasInput(id,label,val){
   return '<div style="flex:1;"><div style="font-size:10px;color:var(--t3);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em;">'+label+'</div>'
     +'<input type="number" id="'+id+'" value="'+(val||'')+'" placeholder="cm" step="0.5" inputmode="decimal" oninput="_recalcNavyBf()" style="width:100%;padding:8px 6px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:15px;font-family:var(--font);text-align:center;box-sizing:border-box;"></div>';
 }
+function _navyBtn(navy){
+  return '~'+navy+' % <button onclick="_useNavyBf('+navy+')" style="margin-left:6px;font-size:11px;font-weight:700;color:var(--blue);background:rgba(91,168,255,.12);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;">Utiliser</button>';
+}
 function _navyBfHtml(){
   const navy=_bfNavy(S.neck,S.waist,S.hip,S.height,S.gender);
   if(navy==null)return '<span style="font-size:12px;color:var(--t3);">— (renseigne cou + taille)</span>';
-  return navy+' % <button onclick="_useNavyBf('+navy+')" style="margin-left:6px;font-size:11px;font-weight:700;color:var(--blue);background:rgba(91,168,255,.12);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;">Utiliser</button>';
+  return _navyBtn(navy);
 }
 function _recalcNavyBf(){
   const neck=(document.getElementById('bf-neck')||{}).value,waist=(document.getElementById('bf-waist')||{}).value,hip=(document.getElementById('bf-hip')||{}).value;
   const navy=_bfNavy(neck,waist,hip,S.height,S.gender);
   const el=document.getElementById('bf-navy-val');if(!el)return;
-  el.innerHTML=navy==null?'<span style="font-size:12px;color:var(--t3);">—</span>':(navy+' % <button onclick="_useNavyBf('+navy+')" style="margin-left:6px;font-size:11px;font-weight:700;color:var(--blue);background:rgba(91,168,255,.12);border:none;border-radius:6px;padding:3px 8px;cursor:pointer;">Utiliser</button>');
+  el.innerHTML=navy==null?'<span style="font-size:12px;color:var(--t3);">—</span>':_navyBtn(navy);
 }
 function _useNavyBf(v){const i=document.getElementById('bf-inp');if(i)i.value=v;}
 function renderBodyFatCard(){
@@ -489,7 +523,7 @@ function renderBodyFatCard(){
         +_bfMeasInput('bf-waist','Tour de taille',S.waist)
         +(isF?_bfMeasInput('bf-hip','Hanches',S.hip):'')
       +'</div>'
-      +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Mesures en cm, à jeun le matin. Toujours pareil = fiable.</div>'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:6px;">Mesures en cm, à jeun le matin. <b>Valeur indicative</b> — pas une science exacte. Vise la régularité : c\'est la tendance qui compte.</div>'
     +'</div>';
 }
 function saveBodyFat(){
@@ -557,8 +591,11 @@ function renderWeightChart(pts,box,metric){
   const baseColor=metric==='bf'?'--orange':'--blue';
   const W=340,H=160,pad={t:18,r:14,b:32,l:44},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
   const vals=pts.map(p=>p[field]);
-  const span=Math.max(...vals)-Math.min(...vals)||1;
-  const minY=Math.min(...vals)-span*.08,maxY=Math.max(...vals)+span*.08,rY=maxY-minY||1;
+  // Poids objectif (ligne repère) — uniquement en vue Poids
+  const tw=(metric==='kg'&&S.targetWeight)?S.targetWeight:null;
+  const rangeV=vals.concat(tw!=null?[tw]:[]);
+  const span=Math.max(...rangeV)-Math.min(...rangeV)||1;
+  const minY=Math.min(...rangeV)-span*.08,maxY=Math.max(...rangeV)+span*.08,rY=maxY-minY||1;
   const xS=pts.length>1?iW/(pts.length-1):0;
   const toX=i=>pad.l+(pts.length>1?i*xS:iW/2);
   const toY=v=>pad.t+iH-((v-minY)/rY)*iH;
@@ -593,6 +630,7 @@ function renderWeightChart(pts,box,metric){
     <path d="${area}" fill="url(#${gid})"/>
     <path d="${path}" fill="none" style="stroke:var(${baseColor})" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
     <line x1="${pad.l}" y1="${tY0}" x2="${W-pad.r}" y2="${tY1}" stroke="${trendColor}" stroke-width="1.5" stroke-dasharray="5 3" opacity=".6"/>
+    ${tw!=null?`<line x1="${pad.l}" y1="${toY(tw)}" x2="${W-pad.r}" y2="${toY(tw)}" stroke="var(--green)" stroke-width="1.2" stroke-dasharray="2 3" opacity=".85"/><text x="${W-pad.r}" y="${toY(tw)-4}" text-anchor="end" font-size="9" style="fill:var(--green);font-weight:700">🎯 ${tw}</text>`:''}
     ${P.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="12" fill="transparent" style="cursor:pointer" onclick="openWeighEdit('${pts[i].date}')"><title>${fmtW(pts[i].date)} · ${pts[i][field]} ${unit} — modifier</title></circle><circle cx="${p.x}" cy="${p.y}" r="3.6" style="fill:var(${baseColor});stroke:var(--bg2);stroke-width:1.5;pointer-events:none"/>`).join('')}
   </svg>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:13px;color:var(--t3);">
