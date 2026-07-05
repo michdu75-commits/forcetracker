@@ -1,4 +1,4 @@
-const CACHE = 'ft-v237'; // Menu → « Guide de la muscu » (disciplines, matériel, techniques, ludique) + 7 compléments alimentaires ajoutés
+const CACHE = 'ft-v238'; // Milo : consigne français soigné (évite les anglicismes — « gainage » pas « core », accords corrects) dans buildCoachContext
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
