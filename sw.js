@@ -1,4 +1,4 @@
-const CACHE = 'ft-v250'; // Guide de l'application : slides animés (bouton + qui pulse, graphique qui monte, Milo qui écrit, poses photo qui flashent)
+const CACHE = 'ft-v251'; // Guide : animations sur TOUS les slides (main qui salue, carte prog+PDF, graine qui pousse, anneau nutrition, 3 pastilles qui se cochent)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
