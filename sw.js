@@ -1,4 +1,4 @@
-const CACHE = 'ft-v245'; // Vrai PDF : bouton « 📄 PDF » génère un fichier PDF (jsPDF hébergé en local, marche hors-ligne) + partage/téléchargement
+const CACHE = 'ft-v246'; // Clone : isolation renforcée (n'hérite plus du cookie/IDB de la prod) + bouton admin « Refaire l'inscription » (clone only)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
