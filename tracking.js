@@ -804,13 +804,22 @@ function calcRecoveryScore(){
   const weights=[0.6,0.3,0.1].slice(0,scores.length);
   const wTotal=weights.reduce((a,b)=>a+b,0);
   const wScore=scores.reduce((a,s,i)=>a+s*weights[i],0)/wTotal;
-  // Ajustement selon la dernière séance : entraîné récemment → fatigue (pénalité),
-  // jours de repos → bonus. Avant, entraîner le jour même ne pénalisait pas (bug : « prêt à performer » à 90% après une séance).
+  // Ajustement selon la dernière séance : entraîné récemment → fatigue, jours de repos → bonus.
+  // La pénalité du jour même est PROPORTIONNELLE au volume de la séance (nb de séries de travail),
+  // pondérée par l'intensité (échec ×1.5, drop ×1.3) → juste des abdos pénalise peu, un gros leg day pénalise beaucoup.
   const lastSess=S.sessions&&S.sessions[0];
   let sessAdj=0;
   if(lastSess&&lastSess.date){
     const d=Math.floor((new Date()-new Date(lastSess.date+'T12:00:00'))/864e5);
-    sessAdj = d<=0 ? -25 : d===1 ? -8 : Math.min(d,4)*3; // aujourd'hui −25 · hier −8 · 2j +6 · 3j +9 · 4j+ +12
+    if(d<=0){
+      let load=0;
+      (lastSess.exs||lastSess.exercises||[]).forEach(ex=>(ex.sets||[]).forEach(s=>{
+        if(!s.done||s.type==='W'||s.type==='É')return;      // exclut échauffement
+        load += s.type==='E'?1.5:s.type==='D'?1.3:1;         // échec/drop = plus fatigant
+      }));
+      sessAdj = -Math.max(6,Math.min(30,Math.round(load*1.7))); // ~ -10 (abdos) à -30 (grosse séance), min -6
+    } else if(d===1){ sessAdj=-8; }
+    else { sessAdj=Math.min(d,4)*3; }                          // 2j +6 · 3j +9 · 4j+ +12
   }
   return Math.max(0,Math.min(100,Math.round(wScore+sessAdj)));
 }

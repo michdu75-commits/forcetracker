@@ -1,4 +1,4 @@
-const CACHE = 'ft-v253'; // Fix récup « Prêt à performer » : entraîner le jour même applique désormais une pénalité de fatigue (avant : 90% même après une séance)
+const CACHE = 'ft-v254'; // Récup : la pénalité du jour même est proportionnelle au volume de la séance (nb séries, échec/drop pondérés) — abdos ≠ gros leg day
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
