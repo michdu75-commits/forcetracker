@@ -1,4 +1,4 @@
-const CACHE = 'ft-v270'; // Coach : 2 gros boutons photo → 1 bouton compact « Analyses photo » qui ouvre un menu 2 choix (Étude du corps 4 photos / Morphologie 3 photos une seule fois) → libère la place pour le chat
+const CACHE = 'ft-v271'; // Coach façon iMessage : les messages se collent en bas (margin-top:auto sur le 1er) → zéro vide quand peu de messages, scroll normal si conversation longue
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
