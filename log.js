@@ -420,8 +420,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
       +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
-      +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
-      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
+      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
+      +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
       +`</div></div>`;
@@ -433,7 +433,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
     const {pct,direction}=ex.dropset;
     const isDown=direction==='down';
     const curPi=ex.sets.findIndex(s=>!s.done);
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Palier</span><span>KG</span><span>Reps</span><span></span><span>✓</span></div>`;
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Palier</span><span>Reps</span><span>KG</span><span></span><span>✓</span></div>`;
     useRows=ex.sets.map((set,si)=>{
       const isDone=set.done;
       const isCur=!isDone&&si===curPi;
@@ -444,8 +444,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row" id="sr-${ei}-${si}" style="background:rgba(255,109,0,.06);">`
           +`<div class="snum" style="color:var(--orange);font-weight:900;">${si+1}</div>`
           +`<div style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
-          +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
-          +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" onfocus="this.select()">`
+          +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
+          +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()">`
           +`<div></div>`
           +`<button class="chk" onclick="toggleSet(${ei},${si})"></button>`
           +`</div></div>`;
@@ -453,8 +453,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row${isDone?' done-row':''}" id="sr-${ei}-${si}" style="${!isDone?'opacity:.55;':''}">`
           +`<div class="snum">${si+1}</div>`
           +`<div style="font-size:10px;color:${isDone?'#34D399':'var(--t3)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
-          +`<div style="text-align:center;font-size:14px;font-weight:700;color:${isDone?'var(--t1)':'var(--t3)'};">${set.kg||'—'}</div>`
           +`<div style="text-align:center;font-size:13px;color:${isDone?'var(--t2)':'var(--t3)'};">${set.reps||'?'}</div>`
+          +`<div style="text-align:center;font-size:14px;font-weight:700;color:${isDone?'var(--t1)':'var(--t3)'};">${set.kg||'—'}</div>`
           +`<div></div>`
           +`<div style="text-align:center;font-size:${isDone?'14':'10'}px;color:${isDone?'#34D399':'var(--t3)'};">${isDone?'✓':(isLast?'repos':'')}</div>`
           +`</div></div>`;
@@ -465,7 +465,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`<span style="font-size:11px;color:var(--t2);line-height:1.4;">${isDown?'Baisse le poids sans repos — repos unique après le dernier drop.':'Monte le poids — repos normal entre les séries.'}</span>`
       +`</div>`;
   }else{
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>`;
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>Reps</span><span>KG</span><span>Type</span><span>✓</span></div>`;
     useRows=rows;
   }
 
@@ -734,7 +734,7 @@ function upSet(ei,si,f,v){const s=S.wkt.exs[ei].sets[si];s[f]=parseFloat(v)||0;i
 function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];
   const row=document.getElementById(`sr-${ei}-${si}`);
-  if(row){const inps=row.querySelectorAll('.sinp');if(!set.kg&&inps[0])set.kg=parseFloat(inps[0].value||inps[0].placeholder)||0;if(!set.reps&&inps[1])set.reps=parseInt(inps[1].value||inps[1].placeholder)||0;}
+  if(row){const inps=row.querySelectorAll('.sinp');if(!set.reps&&inps[0])set.reps=parseInt(inps[0].value||inps[0].placeholder)||0;if(!set.kg&&inps[1])set.kg=parseFloat(inps[1].value||inps[1].placeholder)||0;}
   set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);persist();
   if(set.done){
     const exName=S.wkt.exs[ei].name;
@@ -881,7 +881,15 @@ function chainInputs(ids,lastFn){
     };
   });
 }
-function addSet(ei){const ex=S.wkt.exs[ei];const l=ex.sets[ex.sets.length-1];ex.sets.push({kg:l?l.kg:0,reps:l?l.reps:5,type:'N',done:false,rm1:0});persist();renderExBlocks();}
+function addSet(ei){
+  const ex=S.wkt.exs[ei];
+  // Nouvelle série basée sur la SÉANCE PRÉCÉDENTE (pas sur la série qu'on vient de faire) — cohérent avec la colonne « Précédent »
+  const prev=getPrev(ex.name);
+  const si=ex.sets.length;
+  const p=prev.length?(prev[si]||prev[prev.length-1]):null;
+  ex.sets.push({kg:p?p.kg:0,reps:p?p.reps:5,type:'N',done:false,rm1:0});
+  persist();renderExBlocks();
+}
 function rmLastSet(ei){const ex=S.wkt.exs[ei];if(ex.sets.length>1){ex.sets.pop();persist();renderExBlocks();}}
 function rmEx(ei){
   closeExMenu();
@@ -1639,7 +1647,8 @@ function stopRest(){
   _stopRestTimerOnly();
 }
 let _afTimer=null;
-function _onKgInput(el,ei,si){
+// Après saisie des reps (1re case), auto-focus la case KG (2e case) après un court délai.
+function _onRepsInput(el,ei,si){
   updateRMLive(ei,si);
   clearTimeout(_afTimer);
   if(!el.value)return;
@@ -1647,16 +1656,16 @@ function _onKgInput(el,ei,si){
     if(document.activeElement!==el)return;
     const row=document.getElementById(`sr-${ei}-${si}`);
     if(!row)return;
-    const repsInp=row.querySelectorAll('.sinp')[1];
-    if(repsInp){repsInp.focus();repsInp.select&&repsInp.select();}
+    const kgInp=row.querySelectorAll('.sinp')[1];
+    if(kgInp){kgInp.focus();kgInp.select&&kgInp.select();}
   },700);
 }
 function updateRMLive(ei,si){
   const row=document.getElementById(`sr-${ei}-${si}`);
   if(!row)return;
   const inps=row.querySelectorAll('.sinp');
-  const kg=parseFloat(inps[0]&&(inps[0].value||inps[0].placeholder))||0;
-  const reps=parseInt(inps[1]&&(inps[1].value||inps[1].placeholder))||0;
+  const reps=parseInt(inps[0]&&(inps[0].value||inps[0].placeholder))||0;
+  const kg=parseFloat(inps[1]&&(inps[1].value||inps[1].placeholder))||0;
   const trmEl=document.getElementById(`trm-${ei}-${si}`);
   if(trmEl)trmEl.textContent=kg&&reps?'~'+fmt(bz(kg,reps)):'';
 }

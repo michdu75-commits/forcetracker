@@ -1,4 +1,4 @@
-const CACHE = 'ft-v274'; // Boîte à idées : destination email = forcetracker.app@gmail.com (compte dédié de l'app, séparé du mail perso) au lieu de michdu75@gmail.com
+const CACHE = 'ft-v275'; // Séance : colonnes inversées Reps → KG (on commence par les reps), auto-focus reps→kg→validé ; « + Série » basé sur la séance précédente (getPrev) et non sur la série qu'on vient de faire
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
