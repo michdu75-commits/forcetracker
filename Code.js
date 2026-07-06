@@ -237,6 +237,14 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
+  // Lecture des idées des testeurs (boîte à idées) — ?action=getIdees&token=FT_IDEES_2026
+  if (p.action === 'getIdees') {
+    if (p.token !== 'FT_IDEES_2026') return json_({status:'error', error:'token'});
+    let arr = [];
+    try { arr = JSON.parse(PropertiesService.getScriptProperties().getProperty('TESTER_IDEAS') || '[]'); } catch(e2) { arr = []; }
+    return json_({status:'ok', count: arr.length, ideas: arr});
+  }
+
   // Test garde-fou universel — ?action=testGardeFou
   if (p.action === 'testGardeFou') {
     try {
@@ -351,6 +359,7 @@ function doPost(e) {
   if (body.action === 'importHistory')    return handleImportHistory_(body);
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
   if (body.action === 'bodyStudy')         return handleBodyStudy_(body);
+  if (body.action === 'testerIdea')        return handleTesterIdea_(body);
   if (body.action === 'summarizeCoach')    return handleSummarizeCoach_(body);
   if (body.action === 'generateMealPlan')  return handleGenerateMealPlan_(body);
   if (body.action === 'adminRestore')      return handleAdminRestore_(body);
@@ -964,6 +973,27 @@ function handleBodyStudy_(body) {
 
     const data = JSON.parse(match[0]);
     return json_({status:'ok', data: data});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ── Boîte à idées des testeurs — stockage (lecture via doGet ?action=getIdees) ──
+function handleTesterIdea_(body) {
+  try {
+    const ps = PropertiesService.getScriptProperties();
+    let arr = [];
+    try { arr = JSON.parse(ps.getProperty('TESTER_IDEAS') || '[]'); } catch(e) { arr = []; }
+    arr.push({
+      date:  body.date  || new Date().toISOString(),
+      name:  String(body.name  || ''),
+      email: String(body.email || ''),
+      text:  String(body.text  || ''),
+      photos: body.photos || 0
+    });
+    if (arr.length > 300) arr = arr.slice(-300); // garde les 300 dernières
+    ps.setProperty('TESTER_IDEAS', JSON.stringify(arr));
+    return json_({status:'ok'});
   } catch(err) {
     return json_({status:'error', error: err.message});
   }

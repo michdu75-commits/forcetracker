@@ -17,6 +17,16 @@
 
 ## ⏳ En attente
 
+### 9. Boîte à idées → backend (ft-v273) — pour que Claude/Michel lisent les idées directement
+**Code déjà écrit dans `Code.js`** (commité) :
+- `doPost` : route `if (body.action === 'testerIdea') return handleTesterIdea_(body);` + fonction `handleTesterIdea_` (stocke les idées dans la Script Property `TESTER_IDEAS`, garde les 300 dernières).
+- `doGet` : `?action=getIdees&token=FT_IDEES_2026` → renvoie toutes les idées en JSON.
+- Le **frontend** (déjà en ligne, ft-v273) envoie chaque idée au backend en plus du mail (texte + nom + email + date + nb photos ; **pas les photos**, trop lourdes).
+
+👉 **Déployer** : `clasp push --force` puis `clasp deploy -i …` (séquence en haut), vérifier `?test=1` → `online`.
+- **Après déploiement** : dis à Claude « regarde les idées de Christophe » → il lira `…/exec?action=getIdees&token=FT_IDEES_2026` et te les résumera. (Les photos restent sur ton email.)
+- **Avant déploiement** : les idées partent quand même par email (comme avant) ; l'envoi backend est juste ignoré sans erreur.
+
 ### 7. Persistance cloud « niveau » (ft-v240) — 1 ligne
 Dans `Code.js`, fonction `handleSaveProfile_`, la ligne est **déjà écrite** (juste sous `discipline`) :
 ```js

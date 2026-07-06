@@ -1303,10 +1303,14 @@ function onTesterIdeaPhotos(input){
 }
 function _renderTesterIdeaThumbs(){
   const el=document.getElementById('tester-idea-thumbs');if(!el)return;
-  el.innerHTML=_testerIdeaFiles.map((f,i)=>{
+  const thumbs=_testerIdeaFiles.map((f,i)=>{
     const url=URL.createObjectURL(f);
     return '<div style="position:relative;width:58px;height:58px;border-radius:9px;overflow:hidden;border:1px solid var(--sep);"><img src="'+url+'" style="width:100%;height:100%;object-fit:cover;"><button onclick="removeTesterIdeaPhoto('+i+')" style="position:absolute;top:1px;right:1px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer;padding:0;">×</button></div>';
   }).join('');
+  const shareBtn=_testerIdeaFiles.length
+    ? '<button class="btn btn-bg2" onclick="shareTesterPhotos()" style="width:100%;padding:10px;font-size:13px;margin-top:2px;">📤 Envoyer les '+_testerIdeaFiles.length+' photo'+(_testerIdeaFiles.length>1?'s':'')+' à Michel</button>'
+    : '';
+  el.innerHTML=thumbs+shareBtn;
 }
 function removeTesterIdeaPhoto(i){_testerIdeaFiles.splice(i,1);_renderTesterIdeaThumbs();}
 function sendTesterIdea(){
@@ -1319,15 +1323,26 @@ function sendTesterIdea(){
   S.testerIdeas=S.testerIdeas||[];
   S.testerIdeas.push({text:txt||'(photos jointes)',date:new Date().toLocaleDateString('fr-FR'),photos:_testerIdeaFiles.length,sent:true});
   persist();
-  const done=()=>{ _testerIdeaFiles=[]; if(inp)inp.value=''; _renderTesterSpace(); toast('Merci ! Ça part à Michel 📩','success'); };
-  if(_testerIdeaFiles.length&&navigator.share&&navigator.canShare&&navigator.canShare({files:_testerIdeaFiles})){
-    navigator.share({files:_testerIdeaFiles.slice(),title:subject,text:bodyM})
-      .then(done)
-      .catch(err=>{ if(err&&err.name==='AbortError'){done();return;} _testerIdeaMailto(subject,bodyM,_testerIdeaFiles.length); done(); });
-  } else {
-    _testerIdeaMailto(subject,bodyM,_testerIdeaFiles.length);
-    done();
-  }
+  // Envoi aussi au backend (texte + infos, pas les photos) → Michel/Claude peuvent lire les idées directement
+  try{
+    fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'testerIdea',email:S.email||'',name:who,text:txt||'(photos jointes)',photos:_testerIdeaFiles.length,date:new Date().toISOString()})}).catch(()=>{});
+  }catch(e){}
+  // Email DIRECT à Michel (adressé à lui) — fiable, plus de feuille de partage qui partait sur WhatsApp.
+  _testerIdeaMailto(subject,bodyM,_testerIdeaFiles.length);
+  const hadPhotos=_testerIdeaFiles.length;
+  if(inp)inp.value=''; _renderTesterSpace(); // on GARDE les photos → bouton « Envoyer les photos » dispo
+  toast(hadPhotos?('Idée envoyée ✅ — appuie sur « Envoyer les photos » pour les joindre'):('Idée envoyée à Michel ✅'),'success');
+}
+// Partage optionnel des photos/captures (bouton séparé) — l'utilisateur choisit Mail/Messages.
+function shareTesterPhotos(){
+  if(!_testerIdeaFiles.length){toast('Ajoute d’abord une photo 🙂','info');return;}
+  const who=(S.name||'Testeur');
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:_testerIdeaFiles})){
+    navigator.share({files:_testerIdeaFiles.slice(),title:'💡 Photos idée Force Tracker — '+who,text:'Photos pour Michel (Force Tracker)'})
+      .then(()=>{ _testerIdeaFiles=[]; _renderTesterSpace(); toast('Photos partagées ✅','success'); })
+      .catch(err=>{ if(!(err&&err.name==='AbortError'))toast('Partage impossible sur cet appareil','error'); });
+  } else { toast('Le partage de photos n’est pas dispo sur cet appareil','info'); }
 }
 function _testerIdeaMailto(subject,bodyM,nPhotos){
   let b=bodyM; if(nPhotos)b+='\n\n('+nPhotos+' photo'+(nPhotos>1?'s':'')+' à joindre depuis ta galerie)';
