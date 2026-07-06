@@ -770,14 +770,28 @@ function _updateCoachMorphoBtn(){
   const w=document.getElementById('coach-morpho-btn-wrap');
   if(!w)return;
   w.style.display='block';
-  const premBadge='<span style="font-size:11px;background:rgba(255,184,0,.15);color:var(--gold);border-radius:6px;padding:1px 6px;margin-left:4px;">Premium</span>';
-  if(S.premium){
-    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;margin-bottom:8px;" onclick="openBodyStudy()">📐 Étude du corps (4 photos)</button>`
-      +`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;" onclick="openMorphoAnalysis()">📸 Analyser ma morphologie (3 photos)</button>`;
-  }else{
-    w.innerHTML=`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;opacity:.45;cursor:default;margin-bottom:8px;" onclick="showPremiumWall()">🔒 Étude du corps (4 photos) ${premBadge}</button>`
-      +`<button class="btn btn-bg2" style="width:100%;padding:11px;font-size:14px;border-radius:12px;opacity:.45;cursor:default;" onclick="showPremiumWall()">🔒 Analyser ma morphologie (3 photos) ${premBadge}</button>`;
-  }
+  // Un seul bouton compact → ouvre un petit menu avec les 2 analyses photo (libère la place pour le chat)
+  w.innerHTML='<button class="btn btn-bg2" style="width:100%;padding:10px;font-size:13.5px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="openPhotoMenu()">'
+    +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>'
+    +'Analyses photo de Milo'
+    +'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>'
+    +'</button>';
+}
+// Petit menu « 1 bouton → 2 choix » : Étude du corps (4 photos) + Morphologie (3 photos)
+function openPhotoMenu(){ _renderPhotoMenu(); const o=document.getElementById('ov-photo-menu'); if(o)o.classList.add('open'); }
+function closePhotoMenu(){ const o=document.getElementById('ov-photo-menu'); if(o)o.classList.remove('open'); }
+function _renderPhotoMenu(){
+  const b=document.getElementById('photo-menu-body'); if(!b)return;
+  const prem=!!S.premium;
+  const badge='<span style="font-size:10.5px;background:rgba(234,179,8,.16);color:var(--gold);border-radius:6px;padding:2px 7px;font-weight:800;">Premium</span>';
+  const opt=(ic,title,sub,fn)=>'<button class="pm-opt" onclick="closePhotoMenu();'+(prem?fn:'showPremiumWall()')+'">'
+    +'<div class="pm-ic">'+ic+'</div>'
+    +'<div style="flex:1;min-width:0;text-align:left;"><div class="pm-title">'+(prem?'':'🔒 ')+title+'</div><div class="pm-sub">'+sub+'</div></div>'
+    +(prem?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>':badge)
+    +'</button>';
+  b.innerHTML=
+    opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5be3b4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 7l9-4 9 4M5 11l7-3 7 3"/></svg>','Étude du corps','4 photos · bilan posture, insertions, équilibre + exercices','openBodyStudy()')
+    +opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>','Analyser ma morphologie','3 photos · à faire une seule fois — définit ton type morpho','openMorphoAnalysis()');
 }
 
 // ── Étude du corps — bilan morpho-postural (4 photos relâché + contracté) ──
