@@ -229,6 +229,28 @@ function moveInGroup(ei,dir){
   [S.wkt.exs[ei],S.wkt.exs[swapEi]]=[S.wkt.exs[swapEi],S.wkt.exs[ei]];
   persist();renderExBlocks();
 }
+// Déplace un exercice (ou tout son superset) vers le haut/bas dans la séance — change l'ordre d'exécution.
+// N'affecte QUE la séance en cours (copie) : le programme sauvegardé n'est pas touché.
+function moveExBlock(ei,dir){
+  if(!S.wkt||!S.wkt.exs)return;
+  const exs=S.wkt.exs;
+  // Reconstruit les blocs comme le rendu (un superset = un bloc)
+  const seen=new Set();const parts=[];
+  exs.forEach((ex,i)=>{
+    if(seen.has(i))return;
+    if(ex.group&&ex.groupType==='super'){const m=_ssMembers(ex.group).map(o=>o.i);m.forEach(x=>seen.add(x));parts.push(m);}
+    else{seen.add(i);parts.push([i]);}
+  });
+  const pIdx=parts.findIndex(p=>p.indexOf(ei)>=0);
+  const tgt=pIdx+dir;
+  if(pIdx<0||tgt<0||tgt>=parts.length)return; // déjà en haut/bas
+  const expandedEx=(_expandedEx!=null&&_expandedEx>=0)?exs[_expandedEx]:null;
+  [parts[pIdx],parts[tgt]]=[parts[tgt],parts[pIdx]];
+  const newExs=[];parts.forEach(p=>p.forEach(i=>newExs.push(exs[i])));
+  S.wkt.exs=newExs;
+  if(expandedEx){const ni=newExs.indexOf(expandedEx);if(ni>=0)_expandedEx=ni;} // garde le même exo ouvert
+  persist();renderExBlocks();
+}
 function _groupStatusMeta(ex,pos,total){
   const gt=ex.groupType||'super';
   const done=ex.sets.filter(s=>s.done).length;
@@ -368,7 +390,7 @@ function _renderGroupHtml(gid,members){
     +bannerHtml
     +`</div>`;
 }
-function _renderExHtml(ei,inGroup,posInGroup,groupSize){
+function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   if(posInGroup===undefined)posInGroup=0;
   if(groupSize===undefined)groupSize=1;
   const ex=S.wkt.exs[ei];
@@ -398,7 +420,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`<div class="ex-name" style="font-size:14px">${ex.name} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
-      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
+      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
+        +((blockCount>1)?`<button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===0?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},-1)" title="Monter">↑</button><button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===blockCount-1?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},1)" title="Descendre">↓</button>`:'')
+        +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div>`
       +notePreview
       +(!_groupMode&&!inGroup&&!ex.group&&!ex.dropset
@@ -715,9 +739,9 @@ function renderExBlocks(){
       +`</div>`;
   }
 
-  c.innerHTML=topBar+parts.map(part=>{
-    if(part.type==='single') return _renderExHtml(part.ei,false);
-    return _renderGroupHtml(part.gid,part.members);
+  c.innerHTML=topBar+parts.map((part,pIdx)=>{
+    if(part.type==='single') return _renderExHtml(part.ei,false,undefined,undefined,pIdx,parts.length);
+    return _renderGroupHtml(part.gid,part.members,pIdx,parts.length);
   }).join('');
   // Notes d'exercice affichées EN ENTIER dès le départ (sinon tronquées à 1 ligne jusqu'au 1er tap)
   c.querySelectorAll('textarea[id^="ex-note-"]').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
