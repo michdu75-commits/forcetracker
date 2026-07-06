@@ -1,4 +1,4 @@
-const CACHE = 'ft-v266'; // Photos accessoires reçues (6/9) : ceinture souple/levier/ardillon, sangles, genouillères, chaussures → précachées ; maillot ×3 (couché/squat/soulevé) + wrist-wraps + magnésie encore à fournir
+const CACHE = 'ft-v267'; // Accessoires : wrist-wraps + magnésie (bloc + liquide, 2 photos) reçues et précachées ; ne manque plus que le maillot ×3 (couché/squat/soulevé)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -15,6 +15,7 @@ const PRECACHE = [
   // Photos accessoires (Guide de la muscu → Matériel) — les fichiers absents ne sont PAS listés ici (sinon l'install du SW échoue)
   './accessoires/ceinture-souple.jpg','./accessoires/ceinture-cuir-levier.jpg','./accessoires/ceinture-cuir-ardillon.jpg',
   './accessoires/sangles.jpg','./accessoires/genouilleres.jpg','./accessoires/chaussures.jpg',
+  './accessoires/wrist-wraps.jpg','./accessoires/magnesie-bloc.jpg','./accessoires/magnesie-liquide.jpg',
   // Muscles SVG + PNG
   './muscles/abs.svg','./muscles/arms.svg','./muscles/back.svg','./muscles/calves.svg',
   './muscles/chest.svg','./muscles/glutes.svg','./muscles/legs.svg','./muscles/shoulders.svg',
