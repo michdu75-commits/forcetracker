@@ -1,4 +1,4 @@
-const CACHE = 'ft-v269'; // Mes Programmes : cartes réorganisées — nom + détail en entier sur leur ligne, boutons (Charger/✏️/PDF/🤖/✕) sur une ligne dédiée en dessous (fini le nom écrasé « Séance 1 » sur 2 lignes)
+const CACHE = 'ft-v270'; // Coach : 2 gros boutons photo → 1 bouton compact « Analyses photo » qui ouvre un menu 2 choix (Étude du corps 4 photos / Morphologie 3 photos une seule fois) → libère la place pour le chat
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
