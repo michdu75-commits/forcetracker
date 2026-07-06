@@ -175,6 +175,13 @@ const NEW_FEATURES=[
 const ADMIN_EMAILS=['michdu75@gmail.com'];
 const ADMIN_CODE='0115'; // code de secours (modifiable sur demande)
 
+// ─── TESTEURS FONDATEURS ─────────────────────────────────────
+// Les tout premiers testeurs de Michel — récompensés par un statut exclusif
+// (carte dorée sur l'Accueil) + fonctions réservées à venir.
+// ⚠️ Emails en minuscules (comparaison via _isTester()). Reconnaissance « anti-curieux »
+//    côté client (comme le code admin) : suffisant pour une récompense cosmétique.
+const TESTER_EMAILS=['christophe@famillelanglois.fr','elineazs32@gmail.com','emma.david16@gmail.com'];
+
 // ─── COACH IA — identité ─────────────────────────────────────
 const COACH_NAME='Milo';   // nom affiché + signature (modifiable)
 // Pas de ton figé : Milo a un penchant « franc/direct » par défaut MAIS s'adapte à la personne

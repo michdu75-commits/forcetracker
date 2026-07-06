@@ -441,7 +441,28 @@ function _openMiloChat(){
   try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
 }
 
+// ─── STATUT TESTEUR FONDATEUR (récompense exclusive) ─────────
+// Reconnaît les tout premiers testeurs (Christophe, Eline, Emma) via leur email.
+function _isTester(){
+  const e=(S.email||'').trim().toLowerCase();
+  return !!e && typeof TESTER_EMAILS!=='undefined' && TESTER_EMAILS.indexOf(e)>=0;
+}
+// Carte dorée « Testeur Fondateur » en haut de l'Accueil — visible RIEN QUE pour eux.
+function _renderTesterCard(){
+  const el=document.getElementById('home-tester');if(!el)return;
+  if(!_isTester()){el.innerHTML='';el.style.padding='0';return;}
+  el.style.padding='14px 14px 0';
+  const first=((S.name||'').trim().split(/\s+/)[0]||'').replace(/[<>&]/g,'');
+  const hi=first?first+', ':'';
+  el.innerHTML='<div class="tester-card">'
+    +'<div class="tc-star"><svg viewBox="0 0 24 24" width="24" height="24" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>'
+    +'<div style="flex:1;min-width:0;">'
+    +'<div class="tc-ttl">Testeur Fondateur</div>'
+    +'<div class="tc-msg">Merci '+hi+'d’avoir cru en Force Tracker dès le premier jour — cette appli existe aussi grâce à toi. <span class="tc-sign">— Michel</span></div>'
+    +'</div></div>';
+}
 function renderHome(){try{
+  _renderTesterCard();
   _renderHomeHdr();
   _renderMiloCard();
   _renderHomeHero();

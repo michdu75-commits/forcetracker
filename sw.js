@@ -1,4 +1,4 @@
-const CACHE = 'ft-v259'; // Points rouges « nouveauté » sur l'élément précis (onglet Progrès/carte Coach) — montre OÙ est le neuf, pas juste sur l'onglet du bas
+const CACHE = 'ft-v260'; // Statut « Testeur Fondateur » : carte dorée exclusive sur l'Accueil (Christophe/Eline/Emma) + message de remerciement de Michel
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
