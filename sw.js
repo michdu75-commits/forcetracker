@@ -1,4 +1,4 @@
-const CACHE = 'ft-v277'; // Coach : Milo n'affiche/partage PLUS jamais de JSON brut (_stripCoachTech retire tout bloc technique de l'affichage ET du partage, même JSON tronqué) — force ou autre
+const CACHE = 'ft-v278'; // Coach : export PDF propre d'une réponse de Milo (bouton 📄 PDF, vrai PDF vectoriel via jsPDF local, accents OK, sans JSON/emoji) — fini l'export texte aux caractères cassés
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
