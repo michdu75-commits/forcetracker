@@ -1,4 +1,4 @@
-const CACHE = 'ft-v287'; // score récup : base neutre invisible (70) si le sommeil n'est pas renseigné → tout le monde a un score fonctionnel, conseil discret pour renseigner le sommeil
+const CACHE = 'ft-v288'; // badges : barre de progression sur les badges verrouillés (X/cible) + nouveau badge « Super Admin » (débloqué pour l'admin)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

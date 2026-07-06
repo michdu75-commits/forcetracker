@@ -936,6 +936,7 @@ const BADGES=[
   {id:'night_owl',icon:'🌙',name:'Noctambule',desc:'Séance après 22h',cat:'special'},
   {id:'birthday',icon:'🎂',name:'Bon anniversaire',desc:'Séance le jour de ton anniversaire',cat:'special'},
   {id:'premium_badge',icon:'👑',name:'Premium',desc:'Badge doré pour les utilisateurs Premium',cat:'special'},
+  {id:'super_admin',icon:'🦸',name:'Super Admin',desc:'Le boss de Force Tracker 😎',cat:'special'},
 ];
 
 function _getMaxStreak(){
@@ -991,7 +992,38 @@ function _checkBadgeCond(badge){
       });
     }
     case 'premium_badge':return !!S.premium;
+    case 'super_admin':return typeof _isAdminUnlocked==='function' && _isAdminUnlocked();
     default:return false;
+  }
+}
+
+// Progression vers un badge verrouillé (compteur + barre). null = badge sans progression (booléen).
+function _badgeProgress(badge){
+  const nS=(S.sessions||[]).length;
+  const prCount=Object.keys(S.prs||{}).length;
+  switch(badge.id){
+    case 'first_session':return {cur:Math.min(nS,1),target:1};
+    case 'regular_10':  return {cur:nS,target:10};
+    case 'assidu_25':   return {cur:nS,target:25};
+    case 'veteran_50':  return {cur:nS,target:50};
+    case 'legend_100':  return {cur:nS,target:100};
+    case 'first_pr':    return {cur:Math.min(prCount,1),target:1};
+    case 'prog_5':      return {cur:prCount,target:5};
+    case 'machine_20':  return {cur:prCount,target:20};
+    case 'streak_7':    return {cur:_getMaxStreak(),target:7};
+    case 'streak_30':   return {cur:_getMaxStreak(),target:30};
+    case 'streak_90':   return {cur:_getMaxStreak(),target:90};
+    case 'fire':{
+      const wk={};(S.sessions||[]).forEach(sess=>{const d=new Date((sess.date||'')+'T12:00:00');if(isNaN(d))return;const m=new Date(d);m.setDate(d.getDate()-((d.getDay()+6)%7));const k=m.toISOString().slice(0,10);wk[k]=(wk[k]||0)+1;});
+      const best=Object.values(wk).reduce((a,c)=>Math.max(a,c),0);
+      return {cur:Math.min(best,3),target:3};
+    }
+    case 'club_100':{
+      const sq=S.prs['Squat à la Barre'],bp=S.prs['Développé Couché'];
+      return {cur:Math.round(Math.max(sq?sq.kg||0:0, bp?bp.kg||0:0)),target:100,unit:' kg'};
+    }
+    case 'club_140':{const dl=S.prs['Soulevé de Terre'];return {cur:Math.round(dl?dl.kg||0:0),target:140,unit:' kg'};}
+    default:return null; // lève-tôt, noctambule, anniversaire, premium, super admin
   }
 }
 
@@ -1015,12 +1047,22 @@ function renderBadges(){
   grid.innerHTML=BADGES.map(b=>{
     const unlocked=!!S.badges[b.id];
     const d=unlocked?S.badges[b.id].unlockedAt:'';
+    let progHtml='';
+    if(!unlocked){
+      const p=(typeof _badgeProgress==='function')?_badgeProgress(b):null;
+      if(p&&p.target>1){
+        const cur=Math.max(0,Math.min(p.cur,p.target));
+        const pct=Math.round(cur/p.target*100);
+        progHtml=`<div class="badge-prog"><div class="badge-prog-bar"><div class="badge-prog-fill" style="width:${pct}%"></div></div><div class="badge-prog-txt">${cur}/${p.target}${p.unit||''}</div></div>`;
+      }
+    }
     return `<div class="badge-card ${unlocked?'unlocked':'locked'}">
       ${unlocked?'<div class="badge-glow"></div>':''}
       <div class="badge-icon">${b.icon}</div>
       <div class="badge-name">${b.name}</div>
       <div class="badge-desc">${b.desc}</div>
       ${d?`<div class="badge-date">${fmtD(d)}</div>`:''}
+      ${progHtml}
     </div>`;
   }).join('');
 }
