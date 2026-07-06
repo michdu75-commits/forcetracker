@@ -27,6 +27,25 @@ if (body.level !== undefined) profile.level = _ps_(body.level, profile.level);
 
 ---
 
+### 8. « Analyse photos à fond » du Super Testeur (Christophe) — GROSSE fonctionnalité (à construire + déployer)
+**Contexte** : Christophe (super testeur) a déjà, dès maintenant, l'**Espace Testeur** (ft-v261) avec l'entrée « Analyse approfondie de tes photos » qui ouvre l'**Étude du corps** existante (`handleBodyStudy_`, Sonnet — déjà déployée @61, elle fait un bilan 4 photos déjà poussé). C'est son avant-première.
+
+**Ce que Michel veut EN PLUS** (pas encore construit — c'est une vraie fonctionnalité, à faire dans une session dédiée) :
+- Christophe peut prendre **jusqu'à 4 séries de 4 photos par mois** (compteur mensuel).
+- Chaque nouvelle série est **comparée aux précédentes** → suivi d'évolution.
+- Analyse **encore plus complète** (« le paquet »).
+
+**Ce que ça demande (à faire ensemble, pas cette nuit)** :
+1. **Frontend** : un flux « série de photos daté » (stocker les 4 photos d'une série — localement, redimensionnées ~1000px ; garder ~2 séries max pour la comparaison sans exploser le stockage), un compteur `X/4 ce mois`, et l'envoi au backend de la nouvelle série **+ la série précédente** pour comparaison.
+2. **Backend** (`Code.js`) : soit enrichir `handleBodyStudy_` avec un mode `deep:true` + les photos « avant » pour comparaison, soit une route dédiée `bodyCompare`. Prompt Sonnet « bilan très complet + évolution vs série précédente ».
+3. **Limite** : 4 séries/mois côté frontend (compteur persisté). Réservé à `SUPER_TESTER_EMAILS`.
+
+⚠️ **Honnêteté à garder en tête** :
+- L'IA **analyse et décrit** — elle ne **fabrique pas** d'image « avec −5 kg ». Le « comparatif » = un bilan écrit d'évolution entre les séries.
+- Pour une **photo nue**, la **sécurité d'Anthropic peut refuser** l'analyse, quoi qu'on écrive dans le prompt. Photo en sous-vêtements/short = pas de souci.
+
+---
+
 ## ✅ Fait
 
 ### 6. Persistance cloud « poids objectif » (ft-v229) — ✅ déployé @62 (2026-07-05)
