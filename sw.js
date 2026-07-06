@@ -1,4 +1,4 @@
-const CACHE = 'ft-v264'; // Espace Testeur (dont boîte à idées) verrouillé aux vrais testeurs (_isTester + _isSuperTester) — Michel a le suivi photos via Admin mais pas la boîte à idées
+const CACHE = 'ft-v265'; // Guide → Matériel : emplacements photos pour les accessoires (ceinture souple/cuir levier/ardillon, wrist wraps, genouillères, sangles, maillot, chaussures, magnésie) avec repli auto si la photo manque
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
