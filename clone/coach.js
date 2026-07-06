@@ -351,12 +351,22 @@ ${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMe
 Utilise ces données pour personnaliser tes réponses et t'adapter à la personne en face. Reste toi-même : ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, franc et pratique, mais calibré sur son niveau et son état du jour.`;
 }
 
+// Retire tout bloc technique (JSON de programme, blocs de code ```…```) — Milo ne doit JAMAIS montrer de JSON.
+function _stripCoachTech(text){
+  let t = String(text||'');
+  t = t.replace(/```[\s\S]*?```/g, '');                       // blocs de code fermés
+  t = t.replace(/```[a-zA-Z]*[\s\S]*$/g, '');                 // bloc de code non fermé (tronqué)
+  t = t.replace(/\{[\s\S]*?"(?:days|exs|sets|weeks)"[\s\S]*\}/g, ''); // objet JSON programme (fermé)
+  t = t.replace(/\{(?=[\s\S]*?"(?:days|exs|sets|weeks)")[\s\S]*$/, ''); // objet JSON programme tronqué
+  return t.replace(/\n{3,}/g, '\n\n').trim();
+}
 function renderCoachMsg(role, text) {
   const msgs = document.getElementById('coach-msgs');
   if (!msgs) return;
   const div = document.createElement('div');
   div.className = 'msg-bubble ' + (role === 'user' ? 'msg-user' : 'msg-coach');
   if (role === 'coach') {
+    text = _stripCoachTech(text); // jamais de JSON brut à l'écran ni au partage (dataset.raw)
     div.innerHTML = text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/^- (.+)$/gm, '<li>$1</li>')
@@ -371,7 +381,8 @@ function renderCoachMsg(role, text) {
       div.dataset.raw = text;
       const foot = document.createElement('div');
       foot.className = 'coach-msg-foot';
-      foot.innerHTML = '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>';
+      foot.innerHTML = '<button class="coach-share-btn" onclick="exportCoachPdf(this)" aria-label="Exporter en PDF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>'
+        + '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>';
       div.appendChild(foot);
     }
   } else {
@@ -380,9 +391,9 @@ function renderCoachMsg(role, text) {
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
-// Nettoie le markdown pour un partage texte propre
+// Nettoie le markdown pour un partage texte propre (+ sécurité : retire tout bloc technique)
 function _coachPlain(text){
-  return String(text||'')
+  return _stripCoachTech(String(text||''))
     .replace(/\*\*(.*?)\*\*/g,'$1')
     .replace(/^\s*-\s+/gm,'• ')
     .trim();
@@ -412,6 +423,60 @@ async function shareCoachReply(btn){
     document.execCommand('copy'); ta.remove();
     if(typeof toast==='function') toast('Réponse copiée ✅','success');
   }catch(e){ if(typeof toast==='function') toast('Copie impossible','error'); }
+}
+// Texte prêt pour le PDF : sans JSON/markdown, sans emojis (non gérés par la police PDF), flèches en ASCII.
+function _coachPdfText(raw){
+  let t=_coachPlain(raw);
+  t=t.replace(/→/g,'->').replace(/←/g,'<-').replace(/[’]/g,"'");
+  t=t.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2300}-\u{23FF}]/gu,'');
+  return t.replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+}
+// Export PDF propre d'une réponse de Milo (vrai PDF vectoriel, accents OK, aucun caractère cassé).
+async function exportCoachPdf(btn){
+  const bubble=btn.closest('.msg-coach');
+  const raw=bubble?bubble.dataset.raw:'';
+  if(!raw){toast('Rien à exporter','error');return;}
+  toast('Génération du PDF…','info');
+  try{ await _loadJsPdf(); }
+  catch(e){ toast('PDF indisponible ici','error'); return; }
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=48;
+    const coach=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
+    const d=new Date();
+    const logo=await _loadLogoDataURL();
+    let hx=M;
+    if(logo){ try{ doc.addImage(logo,'PNG',M,24,36,36); hx=M+46; }catch(e){} }
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,42);
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Coach '+coach,hx,57);
+    doc.setFontSize(9);doc.text(d.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),W-M,42,{align:'right'});
+    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,68,W-M,68);
+    doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(30);
+    const lines=doc.splitTextToSize(_coachPdfText(raw),W-2*M);
+    let y=90;const lh=16;
+    lines.forEach(line=>{ if(y>H-64){doc.addPage();y=56;} doc.text(line,M,y); y+=lh; });
+    // Pied de page (sur toutes les pages) : contact + disclaimer
+    const pages=doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setLineWidth(.5);doc.setDrawColor(210);doc.line(M,H-38,W-M,H-38);
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-26);
+      doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(160);doc.text('Conseil indicatif — ne remplace pas l\'avis d\'un professionnel.',M,H-16);
+      doc.setTextColor(150);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('Page '+i+'/'+pages,W-M,H-16,{align:'right'});
+    }
+    const fname='coach-'+coach.toLowerCase()+'-'+d.toISOString().slice(0,10)+'.pdf';
+    const blob=doc.output('blob');
+    const file=new File([blob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:'Conseil de '+coach}); return; }
+      catch(err){ if(err&&err.name==='AbortError')return; }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+    toast('PDF enregistré 📄','success');
+  }catch(e){ console.warn('[FT coach pdf]',e); toast('Souci PDF','error'); }
 }
 
 function showTyping() {
@@ -696,6 +761,13 @@ const _DRAWER_CONTENT = {
       const card=(ic,t,d)=>'<div style="background:var(--bg3);border-radius:12px;padding:14px;">'
         +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:22px;">'+ic+'</span><div style="font-weight:800;font-size:15.5px;color:var(--t1);">'+t+'</div></div>'
         +'<div style="font-size:14px;color:var(--t2);line-height:1.55;">'+d+'</div></div>';
+      // Carte avec photo(s) — chaque image se cache toute seule si le fichier n'existe pas encore (pas de vignette cassée)
+      const _gimg=(src,cap)=>'<figure style="margin:0;flex:1;min-width:0;"><img src="'+src+'" loading="lazy" onerror="this.parentElement.style.display=\'none\'" style="width:100%;height:92px;object-fit:cover;border-radius:9px;display:block;background:var(--bg2);border:1px solid var(--sep);">'+(cap?'<figcaption style="font-size:10.5px;color:var(--t3);text-align:center;margin-top:4px;line-height:1.2;">'+cap+'</figcaption>':'')+'</figure>';
+      const pcard=(ic,t,d,imgs)=>'<div style="background:var(--bg3);border-radius:12px;padding:14px;">'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;"><span style="font-size:22px;">'+ic+'</span><div style="font-weight:800;font-size:15.5px;color:var(--t1);">'+t+'</div></div>'
+        +'<div style="font-size:14px;color:var(--t2);line-height:1.55;">'+d+'</div>'
+        +((imgs&&imgs.length)?'<div style="display:flex;gap:8px;margin-top:10px;">'+imgs.map(function(im){return _gimg(im.src,im.cap);}).join('')+'</div>':'')
+        +'</div>';
       const sec=(t)=>'<div style="font-size:12px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin:6px 2px 2px;">'+t+'</div>';
       return '<div style="display:flex;flex-direction:column;gap:11px;padding:0 2px 8px;">'
         +'<div style="font-size:13px;color:var(--t3);line-height:1.5;padding:0 2px;">Un tour d\'horizon simple et concret : trouve ton style, connais ton matériel, et pimente tes séances. 💪</div>'
@@ -706,13 +778,13 @@ const _DRAWER_CONTENT = {
         +card('🤸','Fitness / Cross-training','Condition physique GÉNÉRALE : on mélange muscu, cardio, gainage et circuits. Objectif polyvalence, endurance et santé plutôt que la performance pure sur un lift.')
         +card('🧗','Callisthénie / Street workout','Musculation au POIDS DU CORPS (tractions, dips, pompes, figures). Force relative, contrôle et mobilité. Peu de matériel, beaucoup de progression.')
         +sec('🎒 Le matériel — tes outils')
-        +card('🎗️','Ceinture de force','Elle t\'aide à GAINER le tronc sur les gros soulevés (squat, soulevé de terre lourds). Tu pousses le ventre contre la ceinture → plus de pression = dos plus stable. À garder pour les séries lourdes, pas pour l\'échauffement.')
-        +card('🤚','Bandes de poignets (wrist wraps)','Soutiennent le poignet sur les pressions lourdes (développé couché, militaire). Elles évitent que le poignet parte en arrière. Utiles quand ça charge, inutiles léger.')
-        +card('🦵','Genouillères / bandes de genoux','Manchons (sleeves) : chaleur + maintien + un peu de rebond au squat, protègent l\'articulation. Bandes (wraps) : très serrées, gros rebond, réservées à la force athlétique lourde.')
-        +card('🪢','Sangles / straps (grip)','Elles accrochent la barre à tes poignets quand tes mains lâchent avant tes muscles (tirages, soulevés, shrugs lourds). Pratique pour le dos — mais travaille aussi ta prise sans, pour ne pas la négliger.')
-        +card('👕','Maillot / combinaison de force','En force athlétique « équipée » : combinaisons de squat/soulevé et chemises de bench très rigides qui renvoient de la force. C\'est un monde à part (compétitions spécifiques), pas nécessaire pour progresser.')
-        +card('👟','Les chaussures','Haltéro/squat : chaussure à talon rigide (meilleure profondeur, buste plus droit). Soulevé de terre : semelle PLATE et fine (chausson, Converse) pour être stable et proche du sol. Évite les grosses semelles moelleuses sous la barre.')
-        +card('🧗‍♂️','Craie / magnésie','Assèche les mains → bien meilleure prise sur la barre. Indispensable sur les soulevés lourds. Version liquide plus propre si ta salle interdit la poudre.')
+        +pcard('🎗️','Ceinture de force','Elle t\'aide à GAINER le tronc sur les gros soulevés (squat, soulevé de terre lourds). Tu pousses le ventre contre la ceinture → plus de pression = dos plus stable. À garder pour les séries lourdes, pas pour l\'échauffement. Il en existe plusieurs : <b>souple</b> (nylon, confort, polyvalente) et <b>cuir rigide</b> avec fermeture à <b>levier</b> (rapide à mettre/enlever) ou à <b>ardillon/boucle</b> (réglage plus précis).',[{src:'../accessoires/ceinture-souple.jpg',cap:'Souple (nylon)'},{src:'../accessoires/ceinture-cuir-levier.jpg',cap:'Cuir · levier'},{src:'../accessoires/ceinture-cuir-ardillon.jpg',cap:'Cuir · ardillon'}])
+        +pcard('🤚','Bandes de poignets (wrist wraps)','Soutiennent le poignet sur les pressions lourdes (développé couché, militaire). Elles évitent que le poignet parte en arrière. Utiles quand ça charge, inutiles léger.',[{src:'../accessoires/wrist-wraps.jpg'}])
+        +pcard('🦵','Genouillères / bandes de genoux','Manchons (sleeves) : chaleur + maintien + un peu de rebond au squat, protègent l\'articulation. Bandes (wraps) : très serrées, gros rebond, réservées à la force athlétique lourde.',[{src:'../accessoires/genouilleres.jpg'}])
+        +pcard('🪢','Sangles / straps (grip)','Elles accrochent la barre à tes poignets quand tes mains lâchent avant tes muscles (tirages, soulevés, shrugs lourds). Pratique pour le dos — mais travaille aussi ta prise sans, pour ne pas la négliger.',[{src:'../accessoires/sangles.jpg'}])
+        +card('👕','Maillot / combinaison de force','En force athlétique « équipée » : des combinaisons/chemises très rigides qui renvoient de la force. Il y a un modèle <b>par mouvement</b> — une chemise pour le <b>développé couché</b>, une combinaison pour le <b>squat</b> et une pour le <b>soulevé de terre</b>. C\'est un monde à part (compétitions spécifiques), pas nécessaire pour progresser.')
+        +pcard('👟','Les chaussures','Haltéro/squat : chaussure à talon rigide (meilleure profondeur, buste plus droit). Soulevé de terre : semelle PLATE et fine (chausson, Converse) pour être stable et proche du sol. Évite les grosses semelles moelleuses sous la barre.',[{src:'../accessoires/chaussures.jpg'}])
+        +pcard('🧗‍♂️','Craie / magnésie','Assèche les mains → bien meilleure prise sur la barre. Indispensable sur les soulevés lourds. Existe en <b>bloc/poudre</b> (le plus efficace) ou en <b>version liquide</b>, plus propre et souvent autorisée quand ta salle interdit la poudre.',[{src:'../accessoires/magnesie-bloc.jpg',cap:'Bloc / poudre'},{src:'../accessoires/magnesie-liquide.jpg',cap:'Liquide'}])
         +sec('🔥 Les techniques — monte en intensité')
         +card('⚡','Superset','Deux exercices ENCHAÎNÉS sans repos (ex. biceps + triceps). Gain de temps + grosse congestion. Dans Force Tracker : bouton « ⚡ Grouper » en séance, ou « Superset » dans l\'éditeur de programme.')
         +card('📉','Drop set','Tu vas à l\'échec, puis tu BAISSES la charge (~20%) et tu continues sans repos, une ou plusieurs fois. Brutal pour finir un muscle. Dispo via le bouton 📉 Drop.')

@@ -52,6 +52,12 @@ Question Michel : se connecter à une appli de balance connectée (Withings, etc
 - **PWA web = très limité** : pas d'accès à Apple Santé / Google Fit depuis le web, Web Bluetooth **non supporté sur iOS Safari/PWA**. Se brancher sur Withings/Fitbit demanderait leur **API OAuth + un backend** (lourd), et ne couvrirait pas Apple Health.
 - **Réaliste aujourd'hui** : saisie manuelle (déjà en place). Une vraie synchro balance = **appli native** (futur) ou intégration API tierce ciblée (gros dev). À garder en tête, pas prioritaire.
 
+## 🖼️ Figurines des exercices dans le PDF de programme (idée Michel, parkée)
+Michel : dans le PDF de programme, mettre une **image de l'exercice** à côté de chaque ligne. Décision : **utiliser les figurines muscles** (les vignettes légères `_progExThumb` : photo perso > image muscle `muscles/*.png` > figurine `_mscSVGmini`) plutôt que les GIFs (trop lourds pour un PDF).
+- **Faisable** sur le PDF de **programme** uniquement (exercices bien listés). Pas sur une réponse coach en texte libre (pas de correspondance fiable nom→image).
+- **À cadrer** : la figurine est un SVG/PNG → il faut la rendre en dataURI (canvas) avant de l'injecter dans jsPDF (`addImage`), une par exercice. Reste léger (contrairement aux GIFs). Colonne « photo » ~24px à gauche de chaque ligne du tableau.
+- Cohérent avec l'identité « figurines muscles » (règle d'or n°7). **Pas lancé — dans la boîte à idées.**
+
 ---
 
 # 🚧 EN COURS — à reprendre (non fini)

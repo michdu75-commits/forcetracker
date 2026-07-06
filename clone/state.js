@@ -77,6 +77,8 @@ function load(){
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
     S.exRestPref=JSON.parse(localStorage.getItem('ft4_exRp')||'{}');
     S.badges=JSON.parse(localStorage.getItem('ft4_badges')||'{}');
+    S.testerIdeas=JSON.parse(localStorage.getItem('ft4_tester_ideas')||'[]'); // boîte à idées (super testeur)
+    S.bodySeries=JSON.parse(localStorage.getItem('ft4_body_series')||'[]'); // séries photos (super testeur) — local uniquement (photos lourdes)
     S.bday=localStorage.getItem('ft4_bday')||'';
     S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
     S.mealPlan=JSON.parse(localStorage.getItem('ft4_mealplan')||'null');
@@ -187,6 +189,8 @@ function persist(){
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
     localStorage.setItem('ft4_name',S.name||'');
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
+    localStorage.setItem('ft4_tester_ideas',JSON.stringify(S.testerIdeas||[]));
+    localStorage.setItem('ft4_body_series',JSON.stringify(S.bodySeries||[]));
     localStorage.setItem('ft4_progexos',JSON.stringify(S.progExos||BIG4));
     localStorage.setItem('ft4_coachFree',S.coachFree||0);
     localStorage.setItem('ft4_histImp',S.histImports||0);

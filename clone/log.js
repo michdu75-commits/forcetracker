@@ -229,6 +229,28 @@ function moveInGroup(ei,dir){
   [S.wkt.exs[ei],S.wkt.exs[swapEi]]=[S.wkt.exs[swapEi],S.wkt.exs[ei]];
   persist();renderExBlocks();
 }
+// Déplace un exercice (ou tout son superset) vers le haut/bas dans la séance — change l'ordre d'exécution.
+// N'affecte QUE la séance en cours (copie) : le programme sauvegardé n'est pas touché.
+function moveExBlock(ei,dir){
+  if(!S.wkt||!S.wkt.exs)return;
+  const exs=S.wkt.exs;
+  // Reconstruit les blocs comme le rendu (un superset = un bloc)
+  const seen=new Set();const parts=[];
+  exs.forEach((ex,i)=>{
+    if(seen.has(i))return;
+    if(ex.group&&ex.groupType==='super'){const m=_ssMembers(ex.group).map(o=>o.i);m.forEach(x=>seen.add(x));parts.push(m);}
+    else{seen.add(i);parts.push([i]);}
+  });
+  const pIdx=parts.findIndex(p=>p.indexOf(ei)>=0);
+  const tgt=pIdx+dir;
+  if(pIdx<0||tgt<0||tgt>=parts.length)return; // déjà en haut/bas
+  const expandedEx=(_expandedEx!=null&&_expandedEx>=0)?exs[_expandedEx]:null;
+  [parts[pIdx],parts[tgt]]=[parts[tgt],parts[pIdx]];
+  const newExs=[];parts.forEach(p=>p.forEach(i=>newExs.push(exs[i])));
+  S.wkt.exs=newExs;
+  if(expandedEx){const ni=newExs.indexOf(expandedEx);if(ni>=0)_expandedEx=ni;} // garde le même exo ouvert
+  persist();renderExBlocks();
+}
 function _groupStatusMeta(ex,pos,total){
   const gt=ex.groupType||'super';
   const done=ex.sets.filter(s=>s.done).length;
@@ -368,7 +390,7 @@ function _renderGroupHtml(gid,members){
     +bannerHtml
     +`</div>`;
 }
-function _renderExHtml(ei,inGroup,posInGroup,groupSize){
+function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   if(posInGroup===undefined)posInGroup=0;
   if(groupSize===undefined)groupSize=1;
   const ex=S.wkt.exs[ei];
@@ -398,7 +420,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`<div class="ex-name" style="font-size:14px">${ex.name} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
-      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()"><button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
+      +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
+        +((blockCount>1)?`<button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===0?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},-1)" title="Monter">↑</button><button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===blockCount-1?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},1)" title="Descendre">↓</button>`:'')
+        +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div>`
       +notePreview
       +(!_groupMode&&!inGroup&&!ex.group&&!ex.dropset
@@ -420,8 +444,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
       +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
-      +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="next" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
-      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="done" onchange="upSet(${ei},${si},'reps',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
+      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
+      +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
       +`</div></div>`;
@@ -433,7 +457,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
     const {pct,direction}=ex.dropset;
     const isDown=direction==='down';
     const curPi=ex.sets.findIndex(s=>!s.done);
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Palier</span><span>KG</span><span>Reps</span><span></span><span>✓</span></div>`;
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Palier</span><span>Reps</span><span>KG</span><span></span><span>✓</span></div>`;
     useRows=ex.sets.map((set,si)=>{
       const isDone=set.done;
       const isCur=!isDone&&si===curPi;
@@ -444,8 +468,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row" id="sr-${ei}-${si}" style="background:rgba(255,109,0,.06);">`
           +`<div class="snum" style="color:var(--orange);font-weight:900;">${si+1}</div>`
           +`<div style="font-size:10px;color:var(--orange);font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
-          +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="_onKgInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
-          +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" onfocus="this.select()">`
+          +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)">`
+          +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()">`
           +`<div></div>`
           +`<button class="chk" onclick="toggleSet(${ei},${si})"></button>`
           +`</div></div>`;
@@ -453,8 +477,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row${isDone?' done-row':''}" id="sr-${ei}-${si}" style="${!isDone?'opacity:.55;':''}">`
           +`<div class="snum">${si+1}</div>`
           +`<div style="font-size:10px;color:${isDone?'#34D399':'var(--t3)'};flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${label}</div>`
-          +`<div style="text-align:center;font-size:14px;font-weight:700;color:${isDone?'var(--t1)':'var(--t3)'};">${set.kg||'—'}</div>`
           +`<div style="text-align:center;font-size:13px;color:${isDone?'var(--t2)':'var(--t3)'};">${set.reps||'?'}</div>`
+          +`<div style="text-align:center;font-size:14px;font-weight:700;color:${isDone?'var(--t1)':'var(--t3)'};">${set.kg||'—'}</div>`
           +`<div></div>`
           +`<div style="text-align:center;font-size:${isDone?'14':'10'}px;color:${isDone?'#34D399':'var(--t3)'};">${isDone?'✓':(isLast?'repos':'')}</div>`
           +`</div></div>`;
@@ -465,7 +489,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize){
       +`<span style="font-size:11px;color:var(--t2);line-height:1.4;">${isDown?'Baisse le poids sans repos — repos unique après le dernier drop.':'Monte le poids — repos normal entre les séries.'}</span>`
       +`</div>`;
   }else{
-    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>KG</span><span>Reps</span><span>Type</span><span>✓</span></div>`;
+    useSetsHdr=`<div class="sets-hdr"><span>#</span><span>Précédent</span><span>Reps</span><span>KG</span><span>Type</span><span>✓</span></div>`;
     useRows=rows;
   }
 
@@ -715,10 +739,12 @@ function renderExBlocks(){
       +`</div>`;
   }
 
-  c.innerHTML=topBar+parts.map(part=>{
-    if(part.type==='single') return _renderExHtml(part.ei,false);
-    return _renderGroupHtml(part.gid,part.members);
+  c.innerHTML=topBar+parts.map((part,pIdx)=>{
+    if(part.type==='single') return _renderExHtml(part.ei,false,undefined,undefined,pIdx,parts.length);
+    return _renderGroupHtml(part.gid,part.members,pIdx,parts.length);
   }).join('');
+  // Notes d'exercice affichées EN ENTIER dès le départ (sinon tronquées à 1 ligne jusqu'au 1er tap)
+  c.querySelectorAll('textarea[id^="ex-note-"]').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
   renderLogFinish();
   _syncLogHdrBtns();
 }
@@ -732,7 +758,7 @@ function upSet(ei,si,f,v){const s=S.wkt.exs[ei].sets[si];s[f]=parseFloat(v)||0;i
 function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];
   const row=document.getElementById(`sr-${ei}-${si}`);
-  if(row){const inps=row.querySelectorAll('.sinp');if(!set.kg&&inps[0])set.kg=parseFloat(inps[0].value||inps[0].placeholder)||0;if(!set.reps&&inps[1])set.reps=parseInt(inps[1].value||inps[1].placeholder)||0;}
+  if(row){const inps=row.querySelectorAll('.sinp');if(!set.reps&&inps[0])set.reps=parseInt(inps[0].value||inps[0].placeholder)||0;if(!set.kg&&inps[1])set.kg=parseFloat(inps[1].value||inps[1].placeholder)||0;}
   set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);persist();
   if(set.done){
     const exName=S.wkt.exs[ei].name;
@@ -879,7 +905,15 @@ function chainInputs(ids,lastFn){
     };
   });
 }
-function addSet(ei){const ex=S.wkt.exs[ei];const l=ex.sets[ex.sets.length-1];ex.sets.push({kg:l?l.kg:0,reps:l?l.reps:5,type:'N',done:false,rm1:0});persist();renderExBlocks();}
+function addSet(ei){
+  const ex=S.wkt.exs[ei];
+  // Nouvelle série basée sur la SÉANCE PRÉCÉDENTE (pas sur la série qu'on vient de faire) — cohérent avec la colonne « Précédent »
+  const prev=getPrev(ex.name);
+  const si=ex.sets.length;
+  const p=prev.length?(prev[si]||prev[prev.length-1]):null;
+  ex.sets.push({kg:p?p.kg:0,reps:p?p.reps:5,type:'N',done:false,rm1:0});
+  persist();renderExBlocks();
+}
 function rmLastSet(ei){const ex=S.wkt.exs[ei];if(ex.sets.length>1){ex.sets.pop();persist();renderExBlocks();}}
 function rmEx(ei){
   closeExMenu();
@@ -1637,7 +1671,8 @@ function stopRest(){
   _stopRestTimerOnly();
 }
 let _afTimer=null;
-function _onKgInput(el,ei,si){
+// Après saisie des reps (1re case), auto-focus la case KG (2e case) après un court délai.
+function _onRepsInput(el,ei,si){
   updateRMLive(ei,si);
   clearTimeout(_afTimer);
   if(!el.value)return;
@@ -1645,16 +1680,16 @@ function _onKgInput(el,ei,si){
     if(document.activeElement!==el)return;
     const row=document.getElementById(`sr-${ei}-${si}`);
     if(!row)return;
-    const repsInp=row.querySelectorAll('.sinp')[1];
-    if(repsInp){repsInp.focus();repsInp.select&&repsInp.select();}
+    const kgInp=row.querySelectorAll('.sinp')[1];
+    if(kgInp){kgInp.focus();kgInp.select&&kgInp.select();}
   },700);
 }
 function updateRMLive(ei,si){
   const row=document.getElementById(`sr-${ei}-${si}`);
   if(!row)return;
   const inps=row.querySelectorAll('.sinp');
-  const kg=parseFloat(inps[0]&&(inps[0].value||inps[0].placeholder))||0;
-  const reps=parseInt(inps[1]&&(inps[1].value||inps[1].placeholder))||0;
+  const reps=parseInt(inps[0]&&(inps[0].value||inps[0].placeholder))||0;
+  const kg=parseFloat(inps[1]&&(inps[1].value||inps[1].placeholder))||0;
   const trmEl=document.getElementById(`trm-${ei}-${si}`);
   if(trmEl)trmEl.textContent=kg&&reps?'~'+fmt(bz(kg,reps)):'';
 }
@@ -2769,18 +2804,14 @@ function renderProgModal(){
         <div style="height:5px;background:var(--sep);border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--red);border-radius:3px;"></div></div>
       </div>`:'';
       return `<div class="prog-card" style="flex-direction:column;align-items:stretch;">
-        <div style="display:flex;align-items:flex-start;gap:8px;">
-          <div style="flex:1;min-width:0;">
-            <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${p.name}</div>
-            <div class="prog-card-detail">${detail}</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-shrink:0;">
-            <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
-            <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})">✏️</button>
-            <button class="btn-xs" style="color:var(--t2);" onclick="exportProgPdf(${i})" title="Exporter en PDF">📄 PDF</button>
-            ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
-            <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
-          </div>
+        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${p.name}</div>
+        <div class="prog-card-detail">${detail}</div>
+        <div style="display:flex;gap:6px;margin-top:10px;align-items:center;">
+          <button class="btn-xs" style="flex:1;background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
+          <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})" title="Modifier">✏️</button>
+          <button class="btn-xs" style="color:var(--t2);" onclick="exportProgPdf(${i})" title="Exporter en PDF">📄 PDF</button>
+          ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
+          <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})" title="Supprimer">✕</button>
         </div>
         ${cycleHtml}
       </div>`;
@@ -2887,6 +2918,23 @@ function _loadJsPdf(){
   _jspdfLoad=load('../lib/jspdf.umd.min.js').then(()=>load('../lib/jspdf.plugin.autotable.min.js')).catch(e=>{_jspdfLoad=null;throw e;});
   return _jspdfLoad;
 }
+// Logo Force Tracker en dataURL (pour l'en-tête des PDF) — chargé une fois, échec silencieux.
+let _logoDataUrl=null,_logoTried=false;
+function _loadLogoDataURL(){
+  if(_logoDataUrl||_logoTried)return Promise.resolve(_logoDataUrl);
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{ _logoTried=true; try{
+      const MAX=120,sc=Math.min(1,MAX/Math.max(img.naturalWidth||MAX,img.naturalHeight||MAX));
+      const c=document.createElement('canvas');c.width=Math.round((img.naturalWidth||MAX)*sc);c.height=Math.round((img.naturalHeight||MAX)*sc);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);_logoDataUrl=c.toDataURL('image/png');
+    }catch(e){_logoDataUrl=null;} res(_logoDataUrl); };
+    img.onerror=()=>{ _logoTried=true; res(null); };
+    img.src='../force-tracker-logo-final.png';
+  });
+}
+// Contact affiché en pied de PDF
+const PDF_CONTACT='forcetracker.app@gmail.com · michdu75-commits.github.io/forcetracker';
 async function exportProgPdf(idx){
   const p=(S.programmes||[])[idx];if(!p)return;
   toast('Génération du PDF…','info');
@@ -2895,13 +2943,16 @@ async function exportProgPdf(idx){
   try{
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:'pt',format:'a4'});
-    const W=doc.internal.pageSize.getWidth(), M=40;
-    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('FORCE TRACKER',M,46);
-    doc.setFontSize(16);doc.text(p.name||'Programme',W-M,46,{align:'right'});
-    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,54,W-M,54);
+    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=40;
+    const logo=await _loadLogoDataURL();
+    let hx=M;
+    if(logo){ try{ doc.addImage(logo,'PNG',M,22,34,34); hx=M+44; }catch(e){} }
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,40);
+    doc.setFontSize(15);doc.text(p.name||'Programme',W-M,40,{align:'right'});
+    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,56,W-M,56);
     const sub=p.beginner?('Parcours débutant — Étape 1'+(p.bgFreq?' · '+p.bgFreq+' séances/semaine':'')):'Programme d\'entraînement';
-    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);doc.text(sub,M,68);doc.setTextColor(20);
-    let y=84;
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);doc.text(sub,M,70);doc.setTextColor(20);
+    let y=86;
     const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
     days.forEach(d=>{
       const body=(d.exs||[]).map(e=>{
@@ -2927,6 +2978,14 @@ async function exportProgPdf(idx){
     });
     doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90);
     doc.text(doc.splitTextToSize('Note tes poids dans la colonne « Poids ». Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.',W-2*M),M,y+6);
+    // Pied de page (contact) sur toutes les pages
+    const _pgs=doc.getNumberOfPages();
+    for(let i=1;i<=_pgs;i++){
+      doc.setPage(i);
+      doc.setLineWidth(.5);doc.setDrawColor(210);doc.line(M,H-30,W-M,H-30);
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-18);
+      doc.text('Page '+i+'/'+_pgs,W-M,H-18,{align:'right'});
+    }
     const fname=((p.name||'programme').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,''))+'.pdf';
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});
