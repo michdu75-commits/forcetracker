@@ -734,7 +734,11 @@ html.ob-done #onboarding{display:none;}
 .badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .badge-card{background:var(--bg2);border-radius:var(--r);padding:14px;border:1px solid var(--sep);display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s;}
 .badge-card.unlocked{border-color:rgba(255,214,0,.45);background:linear-gradient(135deg,rgba(255,214,0,.05),var(--bg2));}
-.badge-card.locked{opacity:.4;}
+.badge-card.locked{opacity:.5;}
+.badge-prog{width:100%;margin-top:4px;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.badge-prog-bar{width:100%;height:5px;border-radius:4px;background:var(--bg3);overflow:hidden;}
+.badge-prog-fill{height:100%;border-radius:4px;background:var(--gold);transition:width .4s;}
+.badge-prog-txt{font-size:10px;font-weight:800;color:var(--t2);}
 .badge-icon{font-size:34px;line-height:1;}
 .badge-name{font-size:13px;font-weight:800;color:var(--t1);line-height:1.2;}
 .badge-desc{font-size:11px;color:var(--t3);line-height:1.35;}
