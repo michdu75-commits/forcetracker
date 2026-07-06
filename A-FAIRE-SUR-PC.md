@@ -27,7 +27,9 @@ if (body.level !== undefined) profile.level = _ps_(body.level, profile.level);
 
 ---
 
-### 8. « Suivi photos » du Super Testeur (Christophe) — ✅ FRONTEND FAIT (ft-v262) · ⏳ 1 DÉPLOIEMENT BACKEND pour la comparaison
+### 8. « Suivi photos » du Super Testeur (Christophe) — ✅ FAIT (frontend ft-v262 + backend déployé @63, 2026-07-06)
+> ✅ **Déployé @63** : la clé `evolution` (comparaison d'évolution) est active. La section ci-dessous est conservée pour référence.
+
 **Ce qui est déjà en ligne (frontend, ft-v262)** — Espace Testeur → « 📸 Mon suivi photos » (`openBodySeries`, setup.js) :
 - Christophe prend des **séries de 4 photos** (face relâché/contracté, dos contracté, profil), **jusqu'à 4 séries/mois** (compteur `_bserCountThisMonth`, limite `_BSER_MONTHLY_LIMIT=4`).
 - **Historique** des séries + bilan complet de chaque série (réutilise `handleBodyStudy_`).
