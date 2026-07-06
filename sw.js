@@ -1,4 +1,4 @@
-const CACHE = 'ft-v265'; // Guide → Matériel : emplacements photos pour les accessoires (ceinture souple/cuir levier/ardillon, wrist wraps, genouillères, sangles, maillot, chaussures, magnésie) avec repli auto si la photo manque
+const CACHE = 'ft-v266'; // Photos accessoires reçues (6/9) : ceinture souple/levier/ardillon, sangles, genouillères, chaussures → précachées ; maillot ×3 (couché/squat/soulevé) + wrist-wraps + magnésie encore à fournir
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -12,6 +12,9 @@ const PRECACHE = [
   // Captures d'écran du guide-film (Menu → Guide de l'application)
   './guide/home.jpg','./guide/profil.jpg','./guide/seance.jpg',
   './guide/programmes.jpg','./guide/progres.jpg','./guide/coach.jpg',
+  // Photos accessoires (Guide de la muscu → Matériel) — les fichiers absents ne sont PAS listés ici (sinon l'install du SW échoue)
+  './accessoires/ceinture-souple.jpg','./accessoires/ceinture-cuir-levier.jpg','./accessoires/ceinture-cuir-ardillon.jpg',
+  './accessoires/sangles.jpg','./accessoires/genouilleres.jpg','./accessoires/chaussures.jpg',
   // Muscles SVG + PNG
   './muscles/abs.svg','./muscles/arms.svg','./muscles/back.svg','./muscles/calves.svg',
   './muscles/chest.svg','./muscles/glutes.svg','./muscles/legs.svg','./muscles/shoulders.svg',
