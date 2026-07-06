@@ -1,4 +1,4 @@
-const CACHE = 'ft-v271'; // Coach façon iMessage : les messages se collent en bas (margin-top:auto sur le 1er) → zéro vide quand peu de messages, scroll normal si conversation longue
+const CACHE = 'ft-v272'; // Séance : la note d'exercice (💬) s'affiche EN ENTIER dès le chargement (auto-hauteur du textarea au rendu) — fini le texte tronqué à 1 ligne qu'il fallait taper pour agrandir (remontée Christophe)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

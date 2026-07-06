@@ -719,6 +719,8 @@ function renderExBlocks(){
     if(part.type==='single') return _renderExHtml(part.ei,false);
     return _renderGroupHtml(part.gid,part.members);
   }).join('');
+  // Notes d'exercice affichées EN ENTIER dès le départ (sinon tronquées à 1 ligne jusqu'au 1er tap)
+  c.querySelectorAll('textarea[id^="ex-note-"]').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
   renderLogFinish();
   _syncLogHdrBtns();
 }
