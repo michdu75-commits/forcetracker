@@ -1,4 +1,4 @@
-const CACHE = 'ft-v262'; // Suivi photos Super Testeur (Christophe) : séries de 4 photos (jusqu'à 4/mois), historique, bilan complet + comparaison d'évolution avec la série précédente (compa = après déploiement backend)
+const CACHE = 'ft-v263'; // Suivi photos aussi pour Michel (bouton dans le panneau Admin) — sans carte Testeur Fondateur ni message de bienvenue (réservés aux vrais testeurs)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

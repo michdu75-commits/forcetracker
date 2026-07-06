@@ -1256,7 +1256,8 @@ _initCloneTools(); // affiche les outils réservés au clone de test (bouton « 
 let _testerIdeaFiles=[];
 function checkSuperTesterWelcome(){
   try{
-    if(!_isSuperTester())return;
+    // Le message « Michel te remercie » est réservé aux vrais testeurs récompensés (pas à Michel lui-même).
+    if(!_isSuperTester()||!(typeof _isTester==='function'&&_isTester()))return;
     if(localStorage.getItem('ft4_super_welcome_v1'))return;
     setTimeout(showSuperWelcome,900);
   }catch(e){}
