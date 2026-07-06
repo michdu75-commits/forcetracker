@@ -1,4 +1,4 @@
-const CACHE = 'ft-v279'; // PDF (coach + programme) : logo Force Tracker en en-tête + email/site en pied de page (_loadLogoDataURL réduit à 120px) — plus pro
+const CACHE = 'ft-v280'; // fix séance : appui long ne fait plus « glisser » la vignette d'exercice (règle globale img{-webkit-user-drag:none}) + clone resync
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
