@@ -22,8 +22,14 @@
    S'exécute AVANT tout autre script (y compris la restauration cookie).
    ========================================================================== */
 (function(){
+  // __FT_CLONE__ posé EN PREMIER, quoi qu'il arrive : les guards anti-fuite
+  // (restauration cookie ft_email + IDB ft_meta) en dépendent, même si
+  // l'isolation du stockage échoue sur un navigateur récalcitrant.
+  window.__FT_CLONE__=true;
+  var P='cl_';
+  var real=window.localStorage;
+  // Tentative 1 — remplacer window.localStorage par un shim préfixant (Chrome/Android).
   try{
-    var real=window.localStorage, P='cl_';
     var shim={
       getItem:function(k){return real.getItem(P+k);},
       setItem:function(k,v){real.setItem(P+k,v);},
@@ -33,8 +39,19 @@
       get length(){var n=0;for(var j=0;j<real.length;j++){var kk=real.key(j);if(kk&&kk.indexOf(P)===0)n++;}return n;}
     };
     Object.defineProperty(window,'localStorage',{value:shim,configurable:true});
-    window.__FT_CLONE__=true;
-  }catch(e){/* si le navigateur refuse la redéfinition, on continue (fallback) */}
+    // Vérifie que la redéfinition a bien pris (Safari peut l'ignorer sans throw).
+    if(window.localStorage===shim) return;
+  }catch(e){}
+  // Tentative 2 — Safari iOS refuse parfois de redéfinir window.localStorage :
+  // on préfixe alors les méthodes du prototype Storage (n'affecte que CETTE page).
+  try{
+    var SP=Object.getPrototypeOf(real);
+    var _get=SP.getItem,_set=SP.setItem,_rem=SP.removeItem;
+    var pre=function(k){k=''+k;return k.indexOf(P)===0?k:P+k;};
+    SP.getItem=function(k){return _get.call(this,pre(k));};
+    SP.setItem=function(k,v){return _set.call(this,pre(k),v);};
+    SP.removeItem=function(k){return _rem.call(this,pre(k));};
+  }catch(e){}
 })();
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
