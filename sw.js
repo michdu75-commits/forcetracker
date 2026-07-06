@@ -1,4 +1,4 @@
-const CACHE = 'ft-v258'; // Guide de l'application transformé en « film » : vraies captures d'écran dans un cadre téléphone + doigt animé + légendes, se termine sur Milo/Premium
+const CACHE = 'ft-v259'; // Points rouges « nouveauté » sur l'élément précis (onglet Progrès/carte Coach) — montre OÙ est le neuf, pas juste sur l'onglet du bas
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

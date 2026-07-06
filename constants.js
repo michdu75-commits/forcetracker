@@ -145,18 +145,18 @@ const NEW_FEATURES=[
   {id:'photo-any-ex',   screen:'log',   desc:'Photo sur n\'importe quel exercice + tap sur la photo pour la voir en grand'},
   {id:'beginner-prog',  screen:'log',   desc:'Parcours débutant : programme sur mesure (choix 2/3 séances + style Full Body ou Split, machines guidées) — dans 📋 Mes Programmes'},
   {id:'prog-export',    screen:'log',   desc:'Exporter un programme en vrai PDF (bouton 📄 PDF sur chaque programme — partage iPhone ou téléchargement, marche hors-ligne)'},
-  // Progrès
-  {id:'weight-edit', screen:'progress', desc:'Nouveau : tape un point du graphique de poids pour modifier/supprimer la pesée + navigation par période (1M/3M/6M/Tout)'},
-  {id:'bodyfat-track', screen:'progress', desc:'Nouveau : suivi de la masse grasse dans le temps (calcul US Navy ou saisie) + bascule Poids ↔ Masse grasse sur le graphique'},
-  {id:'target-weight', screen:'progress', desc:'Nouveau : fixe un poids objectif (ligne repère sur le graphique + kg restants)'},
+  // Progrès — spot = id de l'élément (onglet) où poser le point rouge « ici »
+  {id:'weight-edit', screen:'progress', spot:'ptab-poids', desc:'Nouveau : tape un point du graphique de poids pour modifier/supprimer la pesée + navigation par période (1M/3M/6M/Tout)'},
+  {id:'bodyfat-track', screen:'progress', spot:'ptab-poids', desc:'Nouveau : suivi de la masse grasse dans le temps (calcul US Navy ou saisie) + bascule Poids ↔ Masse grasse sur le graphique'},
+  {id:'target-weight', screen:'progress', spot:'ptab-poids', desc:'Nouveau : fixe un poids objectif (ligne repère sur le graphique + kg restants)'},
   {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
-  {id:'prog-badges', screen:'progress', desc:'Onglet Badges (🏅)'},
-  // Coach
-  {id:'coach-photo', screen:'coach',    desc:'Envoi de photo au Coach IA (📷)'},
-  {id:'coach-morpho',screen:'coach',    desc:'Analyse morphologie 3 photos (📸 Premium)'},
+  {id:'prog-badges', screen:'progress', spot:'ptab-badges', desc:'Onglet Badges (🏅)'},
+  // Coach — spot = carte/bouton précis de l'écran Coach
+  {id:'coach-photo', screen:'coach', spot:'coach-cam-btn', desc:'Envoi de photo au Coach IA (📷)'},
+  {id:'coach-morpho',screen:'coach', spot:'coach-action-morpho', desc:'Analyse morphologie 3 photos (📸 Premium)'},
   {id:'coach-share', screen:'coach',    desc:'Nouveau : partager ou copier une réponse du Coach'},
   {id:'body-study',  screen:'coach',    desc:'Nouveau : Étude du corps — 4 photos, bilan posture/insertions/équilibre + exercices (📐 Premium)'},
-  {id:'force-prog',  screen:'coach',    desc:'Nouveau : Gagner en force (Big 3) — Milo te génère un programme powerlifting à enregistrer (🏋️)'},
+  {id:'force-prog',  screen:'coach', spot:'coach-action-force', desc:'Nouveau : Gagner en force (Big 3) — Milo te génère un programme powerlifting à enregistrer (🏋️)'},
   // Profil (setup) — anchor = id de la ligne de menu où le point rouge s'affiche (ici la carte Profil)
   {id:'morpho-setup',screen:'setup', anchor:'menu-row-profil', desc:'Section morphologie dans Profil'},
   {id:'discipline',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},

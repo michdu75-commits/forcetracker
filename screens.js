@@ -8,14 +8,35 @@ function _closeAllPanels(){
   document.getElementById('drawer-backdrop')?.classList.remove('open');
 }
 function _markScreenSeen(screen){
-  // À l'ouverture d'un écran : on ne marque « vu » QUE les features SANS ancre.
-  // Les features ancrées (ex. Profil) ne se marquent qu'à l'ouverture de leur item précis
-  // → le point rouge reste sur la bonne ligne du menu tant que l'utilisateur ne l'a pas ouverte.
-  const unseen=NEW_FEATURES.filter(f=>f.screen===screen&&!f.anchor&&!(S.seenFeatures||[]).includes(f.id));
+  // À l'ouverture d'un écran : on ne marque « vu » QUE les features SANS ancre ni spot.
+  // - features ancrées (ex. Profil) : marquées à l'ouverture de leur item précis (menu).
+  // - features « spot » (point rouge sur un élément de l'écran) : marquées quand on QUITTE
+  //   l'écran (_markSpotSeen) → le point rouge reste visible tout le temps où l'utilisateur
+  //   est sur l'écran, puis disparaît à la visite suivante.
+  const unseen=NEW_FEATURES.filter(f=>f.screen===screen&&!f.anchor&&!f.spot&&!(S.seenFeatures||[]).includes(f.id));
   if(!unseen.length)return;
   S.seenFeatures=[...(S.seenFeatures||[]),...unseen.map(f=>f.id)];
   localStorage.setItem('ft4_seen_ft',JSON.stringify(S.seenFeatures));
   _updateNewBadges();
+}
+// Marque « vues » les features « spot » d'un écran qu'on vient de quitter (le point a été montré).
+function _markSpotSeen(screen){
+  const ids=NEW_FEATURES.filter(f=>f.screen===screen&&f.spot).map(f=>f.id);
+  if(ids.length)_markFeatureSeen.apply(null,ids);
+}
+// Points rouges sur des éléments PRÉCIS d'un écran (onglet Progrès, carte Coach…) →
+// montre OÙ est la nouveauté, pas juste sur l'onglet du bas.
+function _updateScreenDots(screen){
+  const seen=S.seenFeatures||[];
+  document.querySelectorAll('.feat-dot').forEach(d=>d.remove());
+  const done={};
+  NEW_FEATURES.forEach(f=>{
+    if(f.screen!==screen||!f.spot||seen.includes(f.id)||done[f.spot])return;
+    const el=document.getElementById(f.spot);if(!el)return;
+    done[f.spot]=true;
+    if(getComputedStyle(el).position==='static')el.style.position='relative';
+    const dot=document.createElement('span');dot.className='feat-dot';el.appendChild(dot);
+  });
 }
 // Marque des features précises comme vues (par id) — utilisé quand on ouvre l'item concerné
 function _markFeatureSeen(){
@@ -62,7 +83,10 @@ function _updateMenuDots(){
 }
 
 function _applyScreen(id,btn){
+  const _prevScreen=window._curScreen;
   window._curScreen=id;
+  // On quitte un écran → ses points rouges « spot » ont été vus : on les marque.
+  if(_prevScreen&&_prevScreen!==id)_markSpotSeen(_prevScreen);
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
   document.getElementById('s-'+id)?.classList.add('active');
@@ -79,6 +103,7 @@ function _applyScreen(id,btn){
   if(id==='cycle')renderCycleScreen();
   if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();}
   _markScreenSeen(id);
+  _updateScreenDots(id);
   // Pill chrono flottante : show hors log, hide sur log
   if(typeof _updPill==='function')_updPill();
 }

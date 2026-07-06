@@ -162,6 +162,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .new-dot{position:absolute;top:2px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--bg2);pointer-events:none;z-index:1;}
 /* Point rouge « nouveauté » INLINE dans une ligne de menu (indique QUEL item a du neuf) */
 .menu-new-dot{flex-shrink:0;width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 0 4px rgba(255,45,85,.14);margin-right:8px;pointer-events:none;}
+/* Point rouge « nouveauté » sur un élément précis d'un écran (onglet, carte, bouton) → montre OÙ est le neuf */
+.feat-dot{position:absolute;top:6px;right:6px;width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--bg2);pointer-events:none;z-index:4;animation:feat-dot-pulse 1.8s ease-in-out infinite;}
+@keyframes feat-dot-pulse{0%,100%{box-shadow:0 0 0 2px var(--bg2),0 0 0 4px rgba(255,45,85,.35);}50%{box-shadow:0 0 0 2px var(--bg2),0 0 0 8px rgba(255,45,85,0);}}
 .nb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 .nb.active{color:var(--red);}
 .nb-ctr{color:var(--t3);}
