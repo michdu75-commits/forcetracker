@@ -1,4 +1,4 @@
-const CACHE = 'ft-v281'; // nouvel inscrit : guide-film de l'app affiché automatiquement en fin d'inscription (1×, flag ft4_guide_shown), puis prompt d'installation
+const CACHE = 'ft-v282'; // % de remplissage du profil (carte sur l'écran Profil) + nudge « complète-le pour un Coach IA (Milo) au top » + guide-film insiste sur le lien profil→Milo
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
