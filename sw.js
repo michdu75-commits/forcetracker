@@ -1,4 +1,4 @@
-const CACHE = 'ft-v261'; // Espace Super Testeur (Christophe) : message « Michel te remercie » (1×) + boîte à idées (texte + photos → partage/mail à Michel) + entrée analyse photos approfondie
+const CACHE = 'ft-v262'; // Suivi photos Super Testeur (Christophe) : séries de 4 photos (jusqu'à 4/mois), historique, bilan complet + comparaison d'évolution avec la série précédente (compa = après déploiement backend)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

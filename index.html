@@ -1574,6 +1574,17 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<!-- SUIVI PHOTOS (Super Testeur) — séries mensuelles comparées -->
+<div class="overlay" id="ov-body-series" style="z-index:485;" onclick="if(event.target===this)closeBodySeries()">
+  <div class="modal" style="max-width:430px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:17px;font-weight:900;color:var(--gold);display:flex;align-items:center;gap:7px;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Suivi photos</div>
+      <button onclick="closeBodySeries()" style="background:none;border:none;color:var(--t2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
+    </div>
+    <div id="bser-body"></div>
+  </div>
+</div>
+
 <!-- OVERLAY: Morpho loading -->
 <div class="overlay" id="ov-morpho-loading" data-no-dismiss style="background:rgba(0,0,0,.97);z-index:300;align-items:center;justify-content:center;">
   <div style="width:100%;max-width:380px;padding:0 24px;display:flex;flex-direction:column;align-items:center;gap:22px;">
