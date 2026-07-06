@@ -40,6 +40,8 @@ const EXLIB=[
   {n:'Oiseau',g:'Épaules'},{n:'Machine Oiseau',g:'Épaules'},
   {n:'Tirage Visage (Face Pull)',g:'Épaules'},{n:'Tirage Vertical (Upright Row)',g:'Épaules'},
   {n:'Y Raise / W Raise',g:'Épaules'},{n:'Développé Nuque',g:'Épaules'},
+  // Épaules + Trapèzes — figurines (lot 2026-07-06)
+  {n:'Développé Épaules Kettlebell',g:'Épaules'}, {n:'Développé Landmine (Épaules)',g:'Épaules'}, {n:'Écarté Arrière Élastique',g:'Épaules'}, {n:'Élévation Frontale Allongée Barre',g:'Épaules'}, {n:'Élévation Latérale Poulie Inclinée',g:'Épaules'}, {n:'Élévation Latérale Landmine',g:'Épaules'}, {n:'Élévations Latérales Kettlebell',g:'Épaules'}, {n:'Rotation Interne Épaule Élastique',g:'Épaules'}, {n:'Face Pull Couché Poulie',g:'Épaules'}, {n:'Oiseau Poulie 45°',g:'Épaules'}, {n:'Passage d\'Épaule Élastique',g:'Épaules'}, {n:'Rotation Externe Épaule Abduction',g:'Épaules'}, {n:'Rotation Externe Épaule Élastique',g:'Épaules'}, {n:'Rotation Interne 90° Poulie',g:'Épaules'},
   // ── Biceps ─────────────────────────────────────────────────
   {n:'Curl Barre',g:'Biceps'},{n:'Curl Haltères',g:'Biceps'},{n:'Curl Poulie',g:'Biceps'},
   {n:'Curl EZ',g:'Biceps'},{n:'Curl Barre EZ Prise Large',g:'Biceps'},

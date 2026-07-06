@@ -1,4 +1,4 @@
-const CACHE = 'ft-v282'; // % de remplissage du profil (carte sur l'écran Profil) + nudge « complète-le pour un Coach IA (Milo) au top » + guide-film insiste sur le lien profil→Milo
+const CACHE = 'ft-v283'; // figurines Épaules + Trapèzes : 28 GIFs (14 mappés sur exos existants + 14 nouveaux exos) — développés, élévations, oiseau/face pull, rotations coiffe, tirage menton
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -72,6 +72,17 @@ const PRECACHE = [
   './exercises/leg-abduction-machine.gif','./exercises/leg-adduction-machine.gif',
   './exercises/chest-press-machine-declinee.gif','./exercises/dips-triceps-paralleles.gif','./exercises/montees-banc-lateral-halteres.gif',
   './exercises/dips-assiste-machine.gif','./exercises/developpe-nuque-barre-guidee.gif',
+  // Épaules + Trapèzes (lot 2026-07-06)
+  './exercises/developpe-arnold-exercice-musculation.gif','./exercises/developpe-epaule-halteres.gif','./exercises/developpe-militaire-exercice-musculation.gif',
+  './exercises/elevation-laterale-machine.gif','./exercises/elevations-frontales-exercice-musculation.gif','./exercises/elevations-laterales-exercice-musculation.gif',
+  './exercises/elevations-laterales-poulie.gif','./exercises/face-pull.gif','./exercises/pec-deck-inverse.gif',
+  './exercises/presse-epaule-exercice-musculation.gif','./exercises/elevation-en-y-a-la-poulie.gif','./exercises/oiseau-assis-sur-banc.gif',
+  './exercises/tirage-menton-machine-guidee.gif','./exercises/tirage-menton-avec-kettlebell.gif','./exercises/developpe-epaule-avec-kettlebell.gif',
+  './exercises/developpe-landmine.gif','./exercises/ecarte-arriere-elastique.gif','./exercises/elevation-frontale-allongee-a-la-barre.gif',
+  './exercises/elevation-laterale-a-la-poulie-en-inclinaison.gif','./exercises/elevation-laterale-landmine-exercice-musculation.gif','./exercises/elevation-laterales-avec-kettlebell.gif',
+  './exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.gif','./exercises/face-pull-couche-a-la-poulie.gif','./exercises/oiseau-a-la-poulie-a-45.gif',
+  './exercises/passage-depaule-avec-elastique.gif','./exercises/rotation-externe-de-epaule-en-abduction.gif','./exercises/rotation-externe-epaule-exercice-renforcement-elastique.gif',
+  './exercises/rotation-interne-a-90-a-la-poulie.gif',
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
   './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
