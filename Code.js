@@ -917,30 +917,41 @@ function handleBodyStudy_(body) {
       ? ('Conditions: ' + (conditions||'aucune') + ' | Blessures: ' + (injuries||'aucune') + (healthNotes?(' | Notes: '+healthNotes):''))
       : 'Aucune information santé fournie';
 
+    // Mode « super testeur » : analyse plus poussée + comparaison avec la série précédente
+    const deep = body.deep === true;
+    const prevImages = (body.compare === true && Array.isArray(body.prevImages)) ? body.prevImages : [];
+    const compare = prevImages.length > 0;
+
     const userContent = images.map(function(img){
       return { type:'image', source:{ type:'base64', media_type: img.type || 'image/jpeg', data: img.data } };
     });
     // Rappel du rôle de chaque photo (les labels sont envoyés par le front)
     const labelLine = images.map(function(img){ return img.label; }).filter(Boolean).join(', ');
-
-    userContent.push({
-      type: 'text',
-      text: 'Tu es un coach expert en morphologie, posture et biomécanique. Analyse ces photos d\'un(e) ' + gender + ' de ' + age + ' ans '
-        + '(objectif: ' + goal + ', discipline: ' + discipline + '). Photos fournies (dans l\'ordre): ' + (labelLine||'non précisé') + '. '
-        + 'Les poses relâchées montrent la posture, les poses contractées révèlent le développement réel et les asymétries.\n\n'
-        + 'PROFIL SANTÉ: ' + healthTxt + '. Tes suggestions d\'exercices DOIVENT respecter ces contraintes (éviter/adapter les mouvements à risque) et le mentionner dans "healthNotes".\n\n'
-        + 'Analyse: la stature et la posture (bascule du bassin, épaules enroulées/asymétriques, dos), les insertions musculaires visibles (longueur des muscles, points forts génétiques), l\'ÉQUILIBRE du corps (gauche/droite, haut/bas, agonistes/antagonistes ex. pectoraux vs dos), les points forts et les groupes en retard, et propose des exercices correctifs concrets et prioritaires.\n\n'
-        + 'Reste bienveillant, factuel et prudent. Ne pose JAMAIS de diagnostic médical.\n\n'
-        + 'Retourne UNIQUEMENT un objet JSON valide, sans texte avant/après, avec EXACTEMENT ces clés:\n'
-        + '{"stature":"posture et stature en 2-3 phrases","insertions":"insertions musculaires notables en 2-3 phrases","balance":"évaluation de l\'équilibre gauche/droite, haut/bas, avant/arrière — dis clairement si le corps est globalement équilibré ou non et pourquoi","strengths":"points forts en 1-2 phrases","weaknesses":"groupes musculaires ou zones en retard en 1-2 phrases","exercises":[{"zone":"groupe/zone ciblée","exercises":"2-3 exercices concrets","why":"pourquoi (court)"}],"healthNotes":"comment la santé a été prise en compte / mouvements à éviter ou adapter en 1-2 phrases","summary":"synthèse motivante en 1-2 phrases"}'
+    // Photos de la série précédente (pour la comparaison d'évolution)
+    prevImages.forEach(function(img){
+      userContent.push({ type:'image', source:{ type:'base64', media_type: img.type || 'image/jpeg', data: img.data } });
     });
+
+    var promptText = 'Tu es un coach expert en morphologie, posture et biomécanique. Analyse ces photos d\'un(e) ' + gender + ' de ' + age + ' ans '
+      + '(objectif: ' + goal + ', discipline: ' + discipline + '). '
+      + (compare
+          ? ('Les ' + images.length + ' PREMIÈRES photos = SÉRIE ACTUELLE (ordre: ' + (labelLine||'non précisé') + '). Les ' + prevImages.length + ' SUIVANTES = SÉRIE PRÉCÉDENTE du ' + (body.prevDate||'?') + (body.prevAnalysis?(' (résumé du bilan précédent: ' + String(body.prevAnalysis).slice(0,400) + ')'):'') + '. Compare la série actuelle à la précédente. ')
+          : ('Photos fournies (dans l\'ordre): ' + (labelLine||'non précisé') + '. '))
+      + 'Les poses relâchées montrent la posture, les poses contractées révèlent le développement réel et les asymétries.\n\n'
+      + 'PROFIL SANTÉ: ' + healthTxt + '. Tes suggestions d\'exercices DOIVENT respecter ces contraintes (éviter/adapter les mouvements à risque) et le mentionner dans "healthNotes".\n\n'
+      + 'Analyse ' + (deep?'de façon TRÈS complète et détaillée':'') + ': la stature et la posture (bascule du bassin, épaules enroulées/asymétriques, dos), les insertions musculaires visibles (longueur des muscles, points forts génétiques), l\'ÉQUILIBRE du corps (gauche/droite, haut/bas, agonistes/antagonistes ex. pectoraux vs dos), les points forts et les groupes en retard, et propose des exercices correctifs concrets et prioritaires.\n\n'
+      + 'Reste bienveillant, factuel et prudent. Ne pose JAMAIS de diagnostic médical.\n\n'
+      + 'Retourne UNIQUEMENT un objet JSON valide, sans texte avant/après, avec EXACTEMENT ces clés:\n'
+      + '{' + (compare?'"evolution":"compare la série actuelle à la précédente: ce qui a progressé, ce qui a fondu/pris, les changements de posture/équilibre visibles — en 2-4 phrases concrètes et motivantes",':'') + '"stature":"posture et stature en 2-3 phrases","insertions":"insertions musculaires notables en 2-3 phrases","balance":"évaluation de l\'équilibre gauche/droite, haut/bas, avant/arrière — dis clairement si le corps est globalement équilibré ou non et pourquoi","strengths":"points forts en 1-2 phrases","weaknesses":"groupes musculaires ou zones en retard en 1-2 phrases","exercises":[{"zone":"groupe/zone ciblée","exercises":"2-3 exercices concrets","why":"pourquoi (court)"}],"healthNotes":"comment la santé a été prise en compte / mouvements à éviter ou adapter en 1-2 phrases","summary":"synthèse motivante en 1-2 phrases"}';
+
+    userContent.push({ type:'text', text: promptText });
 
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
       method: 'post',
       headers: { 'Content-Type':'application/json', 'x-api-key': apiKey, 'anthropic-version':'2023-06-01' },
       payload: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
+        max_tokens: (deep || compare) ? 3072 : 2048,
         messages: [{ role:'user', content: userContent }]
       }),
       muteHttpExceptions: true

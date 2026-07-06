@@ -1265,7 +1265,7 @@ function showSuperWelcome(){const o=document.getElementById('ov-super-welcome');
 function closeSuperWelcome(){try{localStorage.setItem('ft4_super_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-super-welcome');if(o)o.classList.remove('open');}
 function openTesterSpace(){if(!_isSuperTester()){toast('Espace réservé au testeur','info');return;}_renderTesterSpace();const o=document.getElementById('ov-tester-space');if(o)o.classList.add('open');}
 function closeTesterSpace(){const o=document.getElementById('ov-tester-space');if(o)o.classList.remove('open');}
-function _openTesterPhotoAnalysis(){ if(typeof openBodyStudy==='function')openBodyStudy(); else toast('Analyse photos bientôt disponible','info'); }
+function _openTesterPhotoAnalysis(){ if(typeof openBodySeries==='function')openBodySeries(); else if(typeof openBodyStudy==='function')openBodyStudy(); else toast('Analyse photos bientôt disponible','info'); }
 function _renderTesterSpace(){
   const body=document.getElementById('tester-space-body');if(!body)return;
   const esc=(t)=>(typeof _escNote==='function'?_escNote(t):(t||'')).replace(/\n/g,'<br>');
@@ -1274,8 +1274,8 @@ function _renderTesterSpace(){
   body.innerHTML=
     '<div class="tsp-card">'
     +'<h4>🔬 Analyse approfondie de tes photos</h4>'
-    +'<p>En avant-première rien que pour toi. Prends tes 4 photos (face relâché, face contracté, dos contracté, profil) — l’IA fait un bilan complet. <b>Très bientôt :</b> jusqu’à 4 séries par mois, comparées entre elles pour suivre ton évolution à fond.</p>'
-    +'<button class="btn" onclick="closeTesterSpace();_openTesterPhotoAnalysis();" style="width:100%;padding:12px;background:rgba(234,179,8,.16);border:1px solid rgba(234,179,8,.42);color:var(--gold);font-weight:800;">📸 Lancer mon analyse</button>'
+    +'<p>En avant-première rien que pour toi. Prends une série de 4 photos (face relâché, face contracté, dos contracté, profil) — l’IA fait un bilan complet. <b>Jusqu’à 4 séries par mois</b>, comparées entre elles pour suivre ton évolution.</p>'
+    +'<button class="btn" onclick="closeTesterSpace();_openTesterPhotoAnalysis();" style="width:100%;padding:12px;background:rgba(234,179,8,.16);border:1px solid rgba(234,179,8,.42);color:var(--gold);font-weight:800;">📸 Mon suivi photos</button>'
     +'</div>'
     +'<div class="tsp-card">'
     +'<h4>💡 Ta boîte à idées</h4>'

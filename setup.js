@@ -896,6 +896,156 @@ function _bodyStudyToCoach(){
   if(inp){inp.value='Explique-moi mon bilan corporel et propose-moi un plan pour rééquilibrer mon corps.';}
 }
 
+// ─── SUIVI PHOTOS (Super Testeur) — séries mensuelles comparées ──
+// Christophe prend jusqu'à 4 séries de 4 photos/mois. Chaque série est analysée à fond
+// et comparée à la précédente (évolution). Photos stockées LOCALEMENT (servent à comparer).
+let _bserPhotos=[null,null,null,null];
+let _bserView='list';
+let _bserReportIdx=-1;
+const _BSER_MONTHLY_LIMIT=4;
+function _bserFmtDate(iso){ if(!iso)return '?'; const p=(''+iso).split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso; }
+function _bserTrunc(s,n){ s=(s==null?'':(''+s)); return s.length>n?s.slice(0,n-1)+'…':s; }
+function _bserMonthKey(d){ return (''+(d||today())).slice(0,7); }
+function _bserCountThisMonth(){ const mk=_bserMonthKey(today()); return (S.bodySeries||[]).filter(s=>_bserMonthKey(s.date)===mk).length; }
+function openBodySeries(){
+  if(!(typeof _isSuperTester==='function'&&_isSuperTester())){toast('Réservé au testeur de l’application','info');return;}
+  _bserView='list'; _renderBodySeries();
+  document.getElementById('ov-body-series').classList.add('open');
+}
+function closeBodySeries(){document.getElementById('ov-body-series').classList.remove('open');}
+function _bserBackToList(){_bserView='list';_renderBodySeries();}
+function openBodySeriesReport(i){_bserReportIdx=i;_bserView='report';_renderBodySeries();}
+function _bserStartCapture(){
+  if(_bserCountThisMonth()>=_BSER_MONTHLY_LIMIT){toast('Tu as fait tes 4 séries ce mois — reviens le mois prochain 🙂','info');return;}
+  _bserPhotos=[null,null,null,null]; _bserView='capture'; _renderBodySeries();
+}
+function _bserAddPhoto(input,slot){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=800,scale=Math.min(1,MAX/Math.max(img.width,img.height));
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+      const ctx=c.getContext('2d');if(!ctx)return;
+      ctx.drawImage(img,0,0,c.width,c.height);
+      _bserPhotos[slot]=c.toDataURL('image/jpeg',0.72).split(',')[1];
+      const sl=document.getElementById('bser-slot-'+slot);
+      if(sl){sl.style.border='2px solid var(--green)';sl.innerHTML='<img src="data:image/jpeg;base64,'+_bserPhotos[slot]+'" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">';}
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function _bserCaptureHtml(){
+  const slots=_BODY_SLOTS.map((s,i)=>
+    '<div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">'
+    +'<label id="bser-slot-'+i+'" for="bser-file-'+i+'" style="width:66px;height:88px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"><span style="font-size:20px;">📷</span></label>'
+    +'<div style="flex:1;"><div style="font-weight:800;font-size:13.5px;margin-bottom:2px;">'+s.t+'</div><div style="font-size:11.5px;color:var(--t3);line-height:1.4;margin-bottom:8px;">'+s.d+'</div>'
+    +'<label for="bser-file-'+i+'" style="display:block;text-align:center;font-size:11px;font-weight:700;padding:6px 8px;background:var(--bg3);border:1px solid var(--sep);border-radius:8px;cursor:pointer;color:var(--t1);">📁 Importer / prendre</label></div>'
+    +'<input type="file" id="bser-file-'+i+'" accept="image/*" style="display:none;" onchange="_bserAddPhoto(this,'+i+')"></div>'
+  ).join('');
+  return '<div style="font-size:12px;color:var(--t3);margin-bottom:10px;">🔒 Tes photos restent sur ton téléphone (elles servent à comparer avec ta prochaine série).</div><div style="display:flex;flex-direction:column;gap:10px;">'+slots+'</div>';
+}
+function _bserReportHtml(d){
+  if(!d)return '';
+  const esc=s=>(s==null?'':(''+s));
+  let exos='';
+  if(Array.isArray(d.exercises)&&d.exercises.length){
+    exos=d.exercises.map(x=>{ if(typeof x==='string')return '<li style="margin-bottom:5px;">'+esc(x)+'</li>'; const nm=esc(x.zone||x.muscle||'');const list=Array.isArray(x.exercises)?x.exercises.join(', '):esc(x.exercises||x.exos||'');const why=esc(x.why||x.reason||''); return '<li style="margin-bottom:6px;"><b>'+nm+'</b>'+(list?' — '+list:'')+(why?'<div style="font-size:12px;color:var(--t3);">'+why+'</div>':'')+'</li>';}).join('');
+  }else if(typeof d.exercises==='string'){exos='<li>'+esc(d.exercises)+'</li>';}
+  return ''
+    +(d.evolution?'<div style="margin-bottom:14px;padding:12px;background:rgba(52,211,153,.10);border:1px solid rgba(52,211,153,.30);border-radius:12px;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;"><span style="font-size:15px;">📈</span><span style="font-weight:800;font-size:13px;color:#5be3b4;">Évolution depuis ta dernière série</span></div><div style="font-size:13px;line-height:1.55;color:var(--t2);">'+esc(d.evolution)+'</div></div>':'')
+    +_bsSection('🧍','Stature & posture',esc(d.stature))
+    +_bsSection('🧬','Insertions musculaires',esc(d.insertions))
+    +_bsSection('⚖️','Équilibre du corps',esc(d.balance),'var(--gold)')
+    +_bsSection('💪','Points forts',esc(d.strengths),'var(--green)')
+    +_bsSection('📉','Points à travailler',esc(d.weaknesses),'var(--orange)')
+    +(exos?'<div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;"><span style="font-size:15px;">🎯</span><span style="font-weight:800;font-size:13px;color:var(--red);">Exercices suggérés</span></div><ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.5;color:var(--t2);">'+exos+'</ul></div>':'')
+    +_bsSection('⚕️','Santé prise en compte',esc(d.healthNotes),'#5BA8FF')
+    +(d.summary?'<div style="margin-top:6px;padding:10px 12px;background:rgba(239,62,87,.08);border-radius:10px;font-size:13px;line-height:1.5;color:var(--t1);"><b>En résumé :</b> '+esc(d.summary)+'</div>':'');
+}
+function _renderBodySeries(){
+  const body=document.getElementById('bser-body');if(!body)return;
+  const series=S.bodySeries||[];
+  if(_bserView==='capture'){
+    body.innerHTML=_bserCaptureHtml()
+      +'<div style="margin-top:14px;display:flex;gap:8px;">'
+      +'<button class="btn btn-bg2" style="flex:1;" onclick="_bserBackToList()">← Retour</button>'
+      +'<button class="btn btn-red" id="bser-analyze-btn" style="flex:2;" onclick="analyzeBodySeries()">🔍 Analyser cette série</button>'
+      +'</div>';
+    return;
+  }
+  if(_bserView==='report'&&series[_bserReportIdx]){
+    const s=series[_bserReportIdx];
+    body.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:10px;">📅 Série du '+_bserFmtDate(s.date)+'</div>'
+      +_bserReportHtml(s.report)
+      +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;" onclick="_bserBackToList()">← Retour à mes séries</button>';
+    return;
+  }
+  const count=_bserCountThisMonth();
+  const canNew=count<_BSER_MONTHLY_LIMIT;
+  let hist;
+  if(series.length){
+    hist=series.map((s,i)=>({s,i})).reverse().map(({s,i})=>
+      '<div onclick="openBodySeriesReport('+i+')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border:1px solid var(--sep);border-radius:11px;margin-bottom:8px;cursor:pointer;">'
+      +'<div style="min-width:0;"><div style="font-weight:700;font-size:13.5px;color:var(--t1);">Série du '+_bserFmtDate(s.date)+'</div>'
+      +'<div style="font-size:11.5px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+((s.report&&s.report.summary)?_bserTrunc(s.report.summary,54):'Bilan complet')+'</div></div>'
+      +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><polyline points="9 18 15 12 9 6"/></svg></div>'
+    ).join('');
+  }else{
+    hist='<div style="font-size:13px;color:var(--t3);font-style:italic;text-align:center;padding:14px 0;">Aucune série pour l’instant — prends ta première série de 4 photos 📸</div>';
+  }
+  body.innerHTML=
+    '<div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px;">Prends une <b>série de 4 photos</b> (face relâché, face contracté, dos contracté, profil). L’IA fait un bilan complet et le <b>compare à ta série précédente</b> pour suivre ton évolution.</div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(234,179,8,.10);border:1px solid rgba(234,179,8,.32);border-radius:11px;padding:10px 13px;margin-bottom:12px;">'
+      +'<span style="font-size:12.5px;color:var(--t2);">Ce mois-ci</span>'
+      +'<span style="font-weight:800;color:var(--gold);">'+count+' / '+_BSER_MONTHLY_LIMIT+' séries</span></div>'
+    +'<button class="btn" onclick="_bserStartCapture()" '+(canNew?'':'disabled')+' style="width:100%;padding:13px;margin-bottom:16px;background:'+(canNew?'rgba(234,179,8,.16)':'var(--bg3)')+';border:1px solid '+(canNew?'rgba(234,179,8,.42)':'var(--sep)')+';color:'+(canNew?'var(--gold)':'var(--t3)')+';font-weight:800;'+(canNew?'':'opacity:.6;cursor:default;')+'">'+(canNew?'📸 Nouvelle série de photos':'✅ 4 séries faites ce mois')+'</button>'
+    +'<div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:700;">Tes séries</div>'
+    +hist
+    +'<div style="font-size:11px;color:var(--t3);margin-top:12px;line-height:1.4;">🔒 Tes photos restent sur ton téléphone. Analyse indicative — ne remplace pas un médecin.</div>';
+}
+async function analyzeBodySeries(){
+  const filled=_bserPhotos.filter(Boolean);
+  if(filled.length<2){toast('Ajoute au moins 2 photos (face relâché + un contracté)','error');return;}
+  if(_bserCountThisMonth()>=_BSER_MONTHLY_LIMIT){toast('Limite de 4 séries/mois atteinte','info');return;}
+  const btn=document.getElementById('bser-analyze-btn');
+  if(btn){btn.textContent='⏳ Analyse…';btn.disabled=true;}
+  const prev=(S.bodySeries||[]).filter(s=>s.photos&&s.photos.length).slice(-1)[0]||null;
+  try{
+    const images=_bserPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:_BODY_SLOTS[i].key}:null).filter(Boolean);
+    const hp=S.healthProfile||{};
+    const payload={action:'bodyStudy',images,gender:S.gender||'H',age:S.age||0,
+      goal:S.goal||'muscle',discipline:S.discipline||'muscu',
+      health:{conditions:hp.conditions||[],injuries:hp.injuries||[],notes:hp.notes||''},
+      email:S.email||'',deep:true};
+    if(prev&&prev.photos&&prev.photos.length){
+      payload.compare=true; payload.prevDate=prev.date;
+      payload.prevImages=prev.photos.map((b,i)=>({data:b,type:'image/jpeg',label:(prev.slots&&prev.slots[i])||('p'+i)}));
+      payload.prevAnalysis=prev.report?(prev.report.summary||''):'';
+    }
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+    const txt=await resp.text();
+    let data;try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON: '+txt.substring(0,120));}
+    if(data.status!=='ok'||!data.data)throw new Error(data.error||'Erreur analyse');
+    const d=data.data;d.date=today();
+    S.bodySeries=S.bodySeries||[];
+    S.bodySeries.push({date:today(),ts:Date.now(),photos:_bserPhotos.slice(),slots:_BODY_SLOTS.map(s=>s.key),report:d});
+    if(S.bodySeries.length>6)S.bodySeries=S.bodySeries.slice(-6);
+    // Ne garde les photos que des 2 dernières séries (comparaison + stockage maîtrisé)
+    S.bodySeries.forEach((s,idx)=>{ if(idx<S.bodySeries.length-2)s.photos=[]; });
+    persist();
+    _bserPhotos=[null,null,null,null];
+    _bserReportIdx=S.bodySeries.length-1; _bserView='report'; _renderBodySeries();
+    if(typeof checkBadges==='function')try{checkBadges(true);}catch(e){}
+  }catch(e){
+    toast('Erreur analyse : '+e.message,'error');
+    if(btn){btn.textContent='🔍 Analyser cette série';btn.disabled=false;}
+  }
+}
+
 function _updateProgCycleBanner(){
   const el=document.getElementById('prog-cycle-banner');if(!el)return;
   const cp=getMensCyclePhase();
