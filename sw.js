@@ -1,4 +1,4 @@
-const CACHE = 'ft-v272'; // Séance : la note d'exercice (💬) s'affiche EN ENTIER dès le chargement (auto-hauteur du textarea au rendu) — fini le texte tronqué à 1 ligne qu'il fallait taper pour agrandir (remontée Christophe)
+const CACHE = 'ft-v273'; // Boîte à idées : envoi FIABLE (email direct à Michel, fini le partage WhatsApp) + POST backend lisible via ?action=getIdees ; photos = bouton optionnel séparé. Backend à déployer (A-FAIRE #9)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
