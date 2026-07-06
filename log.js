@@ -2769,18 +2769,14 @@ function renderProgModal(){
         <div style="height:5px;background:var(--sep);border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--red);border-radius:3px;"></div></div>
       </div>`:'';
       return `<div class="prog-card" style="flex-direction:column;align-items:stretch;">
-        <div style="display:flex;align-items:flex-start;gap:8px;">
-          <div style="flex:1;min-width:0;">
-            <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${p.name}</div>
-            <div class="prog-card-detail">${detail}</div>
-          </div>
-          <div style="display:flex;gap:6px;flex-shrink:0;">
-            <button class="btn-xs" style="background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
-            <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})">✏️</button>
-            <button class="btn-xs" style="color:var(--t2);" onclick="exportProgPdf(${i})" title="Exporter en PDF">📄 PDF</button>
-            ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
-            <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})">✕</button>
-          </div>
+        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${p.name}</div>
+        <div class="prog-card-detail">${detail}</div>
+        <div style="display:flex;gap:6px;margin-top:10px;align-items:center;">
+          <button class="btn-xs" style="flex:1;background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
+          <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})" title="Modifier">✏️</button>
+          <button class="btn-xs" style="color:var(--t2);" onclick="exportProgPdf(${i})" title="Exporter en PDF">📄 PDF</button>
+          ${S.premium?`<button class="btn-xs" style="color:#AF52DE;" onclick="analyzeProgIa(${i})" title="Analyser avec le Coach IA">🤖</button>`:''}
+          <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="deleteProg(${i})" title="Supprimer">✕</button>
         </div>
         ${cycleHtml}
       </div>`;

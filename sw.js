@@ -1,4 +1,4 @@
-const CACHE = 'ft-v268'; // Section Matériel du Guide terminée : maillot de force remis en texte simple (Michel ne fournit pas de photo — accessoire de niche). 8 accessoires illustrés, 0 emplacement vide
+const CACHE = 'ft-v269'; // Mes Programmes : cartes réorganisées — nom + détail en entier sur leur ligne, boutons (Charger/✏️/PDF/🤖/✕) sur une ligne dédiée en dessous (fini le nom écrasé « Séance 1 » sur 2 lignes)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
