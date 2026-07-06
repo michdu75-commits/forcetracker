@@ -1247,10 +1247,89 @@ document.addEventListener('input',e=>{
 _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
+checkSuperTesterWelcome(); // message « super testeur » une seule fois (Christophe)
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
 initCoachInput();
 initOnboarding();
 _initCloneTools(); // affiche les outils réservés au clone de test (bouton « Refaire l'inscription »)
+// ─── ESPACE SUPER TESTEUR (Christophe) — analyse photos + boîte à idées ──
+let _testerIdeaFiles=[];
+function checkSuperTesterWelcome(){
+  try{
+    if(!_isSuperTester())return;
+    if(localStorage.getItem('ft4_super_welcome_v1'))return;
+    setTimeout(showSuperWelcome,900);
+  }catch(e){}
+}
+function showSuperWelcome(){const o=document.getElementById('ov-super-welcome');if(o)o.classList.add('open');}
+function closeSuperWelcome(){try{localStorage.setItem('ft4_super_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-super-welcome');if(o)o.classList.remove('open');}
+function openTesterSpace(){if(!_isSuperTester()){toast('Espace réservé au testeur','info');return;}_renderTesterSpace();const o=document.getElementById('ov-tester-space');if(o)o.classList.add('open');}
+function closeTesterSpace(){const o=document.getElementById('ov-tester-space');if(o)o.classList.remove('open');}
+function _openTesterPhotoAnalysis(){ if(typeof openBodyStudy==='function')openBodyStudy(); else toast('Analyse photos bientôt disponible','info'); }
+function _renderTesterSpace(){
+  const body=document.getElementById('tester-space-body');if(!body)return;
+  const esc=(t)=>(typeof _escNote==='function'?_escNote(t):(t||'')).replace(/\n/g,'<br>');
+  const ideas=(S.testerIdeas||[]).slice().reverse();
+  const ideasHtml=ideas.length?ideas.map(it=>'<div class="tsp-idea">'+esc(it.text)+'<span class="tsp-idea-date">'+(it.date||'')+(it.photos?' · '+it.photos+' photo'+(it.photos>1?'s':''):'')+(it.sent?' · envoyée ✓':'')+'</span></div>').join(''):'';
+  body.innerHTML=
+    '<div class="tsp-card">'
+    +'<h4>🔬 Analyse approfondie de tes photos</h4>'
+    +'<p>En avant-première rien que pour toi. Prends tes 4 photos (face relâché, face contracté, dos contracté, profil) — l’IA fait un bilan complet. <b>Très bientôt :</b> jusqu’à 4 séries par mois, comparées entre elles pour suivre ton évolution à fond.</p>'
+    +'<button class="btn" onclick="closeTesterSpace();_openTesterPhotoAnalysis();" style="width:100%;padding:12px;background:rgba(234,179,8,.16);border:1px solid rgba(234,179,8,.42);color:var(--gold);font-weight:800;">📸 Lancer mon analyse</button>'
+    +'</div>'
+    +'<div class="tsp-card">'
+    +'<h4>💡 Ta boîte à idées</h4>'
+    +'<p>Écris ce que tu aimerais, joins des photos ou des captures d’écran. Ça remonte direct à Michel.</p>'
+    +'<textarea id="tester-idea-input" placeholder="Ton idée, une remarque, un bug, un truc qui te manque…" style="width:100%;min-height:72px;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:10px;color:var(--t1);font-family:var(--font);font-size:13.5px;resize:vertical;box-sizing:border-box;"></textarea>'
+    +'<div id="tester-idea-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>'
+    +'<div style="display:flex;gap:8px;margin-top:8px;">'
+    +'<button class="btn btn-bg2" onclick="document.getElementById(\'tester-idea-photos\').click()" style="width:auto;flex:none;padding:11px 14px;font-size:14px;">📎 Photo</button>'
+    +'<button class="btn btn-red" onclick="sendTesterIdea()" style="width:auto;flex:1;padding:11px;font-size:14px;">📩 Envoyer à Michel</button>'
+    +'</div>'
+    +'<input type="file" id="tester-idea-photos" accept="image/*" multiple style="display:none;" onchange="onTesterIdeaPhotos(this)">'
+    +(ideas.length?'<div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px;font-weight:700;">Tes idées envoyées</div>'+ideasHtml:'')
+    +'</div>';
+  _renderTesterIdeaThumbs();
+}
+function onTesterIdeaPhotos(input){
+  [...(input.files||[])].forEach(f=>{if(f&&f.type&&f.type.indexOf('image')===0)_testerIdeaFiles.push(f);});
+  input.value='';
+  _renderTesterIdeaThumbs();
+}
+function _renderTesterIdeaThumbs(){
+  const el=document.getElementById('tester-idea-thumbs');if(!el)return;
+  el.innerHTML=_testerIdeaFiles.map((f,i)=>{
+    const url=URL.createObjectURL(f);
+    return '<div style="position:relative;width:58px;height:58px;border-radius:9px;overflow:hidden;border:1px solid var(--sep);"><img src="'+url+'" style="width:100%;height:100%;object-fit:cover;"><button onclick="removeTesterIdeaPhoto('+i+')" style="position:absolute;top:1px;right:1px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer;padding:0;">×</button></div>';
+  }).join('');
+}
+function removeTesterIdeaPhoto(i){_testerIdeaFiles.splice(i,1);_renderTesterIdeaThumbs();}
+function sendTesterIdea(){
+  const inp=document.getElementById('tester-idea-input');
+  const txt=inp?(inp.value||'').trim():'';
+  if(!txt&&!_testerIdeaFiles.length){toast('Écris ton idée ou joins une photo 🙂','info');return;}
+  const who=(S.name||'Testeur');
+  const subject='💡 Idée Force Tracker — '+who;
+  const bodyM='Idée de '+who+' ('+(S.email||'')+') :\n\n'+(txt||'(voir les photos jointes)')+'\n\n— boîte à idées Force Tracker';
+  S.testerIdeas=S.testerIdeas||[];
+  S.testerIdeas.push({text:txt||'(photos jointes)',date:new Date().toLocaleDateString('fr-FR'),photos:_testerIdeaFiles.length,sent:true});
+  persist();
+  const done=()=>{ _testerIdeaFiles=[]; if(inp)inp.value=''; _renderTesterSpace(); toast('Merci ! Ça part à Michel 📩','success'); };
+  if(_testerIdeaFiles.length&&navigator.share&&navigator.canShare&&navigator.canShare({files:_testerIdeaFiles})){
+    navigator.share({files:_testerIdeaFiles.slice(),title:subject,text:bodyM})
+      .then(done)
+      .catch(err=>{ if(err&&err.name==='AbortError'){done();return;} _testerIdeaMailto(subject,bodyM,_testerIdeaFiles.length); done(); });
+  } else {
+    _testerIdeaMailto(subject,bodyM,_testerIdeaFiles.length);
+    done();
+  }
+}
+function _testerIdeaMailto(subject,bodyM,nPhotos){
+  let b=bodyM; if(nPhotos)b+='\n\n('+nPhotos+' photo'+(nPhotos>1?'s':'')+' à joindre depuis ta galerie)';
+  const mail='mailto:'+TESTER_FEEDBACK_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(b);
+  try{window.location.href=mail;}catch(e){}
+}
+
 // ─── DÉDICACE ANNIVERSAIRE — Eline (2 juillet) ───────────────
 let _bdayCandlesLeft=19;
 const _bdayCandles=[];
