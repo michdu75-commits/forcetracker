@@ -1,4 +1,4 @@
-const CACHE = 'ft-v278'; // Coach : export PDF propre d'une réponse de Milo (bouton 📄 PDF, vrai PDF vectoriel via jsPDF local, accents OK, sans JSON/emoji) — fini l'export texte aux caractères cassés
+const CACHE = 'ft-v279'; // PDF (coach + programme) : logo Force Tracker en en-tête + email/site en pied de page (_loadLogoDataURL réduit à 120px) — plus pro
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -444,18 +444,27 @@ async function exportCoachPdf(btn){
     const doc=new jsPDF({unit:'pt',format:'a4'});
     const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=48;
     const coach=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
-    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(20);doc.text('FORCE TRACKER',M,50);
-    doc.setFontSize(15);doc.text('Coach '+coach,W-M,50,{align:'right'});
-    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,58,W-M,58);
     const d=new Date();
-    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);
-    doc.text('Conseil du '+d.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),M,72);
-    doc.setTextColor(30);doc.setFontSize(11);
+    const logo=await _loadLogoDataURL();
+    let hx=M;
+    if(logo){ try{ doc.addImage(logo,'PNG',M,24,36,36); hx=M+46; }catch(e){} }
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,42);
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Coach '+coach,hx,57);
+    doc.setFontSize(9);doc.text(d.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),W-M,42,{align:'right'});
+    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,68,W-M,68);
+    doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(30);
     const lines=doc.splitTextToSize(_coachPdfText(raw),W-2*M);
-    let y=96;const lh=16;
-    lines.forEach(line=>{ if(y>H-56){doc.addPage();y=56;} doc.text(line,M,y); y+=lh; });
-    doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(140);
-    doc.text('Généré par Force Tracker — conseil indicatif, ne remplace pas un professionnel.',M,H-28);
+    let y=90;const lh=16;
+    lines.forEach(line=>{ if(y>H-64){doc.addPage();y=56;} doc.text(line,M,y); y+=lh; });
+    // Pied de page (sur toutes les pages) : contact + disclaimer
+    const pages=doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setLineWidth(.5);doc.setDrawColor(210);doc.line(M,H-38,W-M,H-38);
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-26);
+      doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(160);doc.text('Conseil indicatif — ne remplace pas l\'avis d\'un professionnel.',M,H-16);
+      doc.setTextColor(150);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('Page '+i+'/'+pages,W-M,H-16,{align:'right'});
+    }
     const fname='coach-'+coach.toLowerCase()+'-'+d.toISOString().slice(0,10)+'.pdf';
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});
