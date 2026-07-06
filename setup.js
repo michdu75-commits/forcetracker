@@ -1217,6 +1217,56 @@ function openProfil(){
   document.getElementById('s-setup')?.scrollTo(0,0);
 }
 function closeProfil(){ navBack(); }
+
+// ─── COMPLÉTION DU PROFIL (% rempli) ─────────────────────────
+// Plus le profil est rempli, plus Milo (Coach IA), la récup et les calories
+// sont précis. On calcule un % simple + la liste des champs manquants.
+function _profileCompletion(){
+  const items=[
+    ['name',        !!S.name,                       'ton nom'],
+    ['age',         (+S.age)>0,                      'âge'],
+    ['height',      (+S.height)>0,                   'taille'],
+    ['bw',          (+S.bw)>0,                       'poids'],
+    ['goal',        !!S.goal,                        'objectif'],
+    ['level',       !!S.level,                       'niveau'],
+    ['discipline',  !!S.discipline,                  'discipline'],
+    ['activityLevel',!!S.activityLevel,              'activité'],
+    ['bday',        !!S.bday,                        'date de naissance'],
+    ['targetWeight',(+S.targetWeight)>0,             'poids visé'],
+    ['neck',        (+S.neck)>0,                     'tour de cou'],
+    ['waist',       (+S.waist)>0,                    'tour de taille'],
+    ['morphotype',  !!S.morphotype,                  'morphotype'],
+    ['morpho',      !!S.morpho,                      'morphologie'],
+  ];
+  if(S.gender==='F') items.push(['hip',(+S.hip)>0,'tour de hanches']);
+  const total=items.length;
+  const done=items.filter(i=>i[1]).length;
+  const missing=items.filter(i=>!i[1]).map(i=>i[2]);
+  return {pct:Math.round(done/total*100),done,total,missing};
+}
+function _renderProfileCompletion(){
+  const el=document.getElementById('profil-completion');
+  if(!el)return;
+  const c=_profileCompletion();
+  el.style.display='block';
+  const col=c.pct>=80?'var(--green)':c.pct>=50?'var(--gold)':'var(--orange)';
+  let nudge;
+  if(c.pct>=100){
+    nudge='<b>Profil complet 💪</b> — Milo, ton coach IA, est au top et tout est ultra précis.';
+  }else{
+    const miss=c.missing.slice(0,4).join(', ')+(c.missing.length>4?'…':'');
+    nudge='Complète-le pour un <b>Coach IA (Milo) au top</b> et des calculs précis.<br><span style="color:var(--t3);font-size:11.5px;">À ajouter : '+miss+'</span>';
+  }
+  el.innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">'
+     +'<span style="font-size:13px;font-weight:700;color:var(--t1);">Profil rempli</span>'
+     +'<span style="font-family:var(--font-cond);font-size:20px;font-weight:800;color:'+col+';">'+c.pct+'%</span>'
+    +'</div>'
+    +'<div style="height:8px;border-radius:6px;background:var(--bg3);overflow:hidden;margin-bottom:9px;">'
+     +'<div style="height:100%;width:'+c.pct+'%;background:'+col+';border-radius:6px;transition:width .5s;"></div>'
+    +'</div>'
+    +'<div style="font-size:12.5px;color:var(--t2);line-height:1.5;">'+nudge+'</div>';
+}
 function renderSetup(){
   // Update menu profile card
   const _mn=document.getElementById('menu-name-lbl');
@@ -1270,6 +1320,7 @@ function renderSetup(){
   setDiscipline(S.discipline||'muscu');
   _renderLevelSel();
   renderBFCard();
+  _renderProfileCompletion();
   _renderMorphoSection();
   _renderHealthSection();
   _applyA11y();
@@ -1321,7 +1372,7 @@ function saveProfile(){
   if(waistEl&&waistEl.value){const v=parseFloat(waistEl.value);if(v>40&&v<200)S.waist=v;}
   if(hipEl&&hipEl.value){const v=parseFloat(hipEl.value);if(v>40&&v<200)S.hip=v;}
   persist();renderHome();renderNutrition();
-  renderCycleProfileCard();renderBFCard();
+  renderCycleProfileCard();renderBFCard();_renderProfileCompletion();
   if(typeof toast==='function')toast('Profil enregistré ✅','success');
   const saveBtn=document.querySelector('[onclick="saveProfile()"]');
   if(saveBtn){const _orig=saveBtn.innerHTML;saveBtn.textContent='✅ Profil enregistré !';saveBtn.disabled=true;setTimeout(()=>{saveBtn.innerHTML=_orig;saveBtn.disabled=false;},2000);}
