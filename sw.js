@@ -1,4 +1,4 @@
-const CACHE = 'ft-v285'; // figurines réduites à 480px (exercises/ 25→15 Mo) + 2e lot Épaules/Trapèzes (9 figurines : smith, élévations, rotation haltère, tirage menton élastique, thruster ×2, russian twist)
+const CACHE = 'ft-v286'; // score « prêt à performer » : la fatigue de la séance s'efface au fil des heures → le score remonte progressivement dans la journée (jour d'entraînement uniquement)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

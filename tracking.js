@@ -817,7 +817,15 @@ function calcRecoveryDetail(){
         if(!s.done||s.type==='W'||s.type==='É')return;      // exclut échauffement
         load += s.type==='E'?1.5:s.type==='D'?1.3:1;         // échec/drop = plus fatigant
       }));
-      sessAdj = -Math.max(6,Math.min(30,Math.round(load*1.7))); // ~ -10 (abdos) à -30 (grosse séance), min -6
+      let pen = Math.max(6,Math.min(30,Math.round(load*1.7))); // ~ -10 (abdos) à -30 (grosse séance), min -6
+      // La fatigue s'efface au fil des heures APRÈS la séance : le score remonte
+      // progressivement dans la journée (jusqu'à ~-50% de la pénalité ~14 h après).
+      const tsSess = lastSess.ts || lastSess.id;
+      if(tsSess){
+        const hrs = Math.max(0,(Date.now()-tsSess)/36e5);
+        pen = Math.max(4, Math.round(pen * (1 - Math.min(0.5, hrs/14*0.5))));
+      }
+      sessAdj = -pen;
     } else if(d===1){ sessAdj=-8; }
     else { sessAdj=Math.min(d,4)*3; }                          // 2j +6 · 3j +9 · 4j+ +12
   }
