@@ -1,4 +1,4 @@
-const CACHE = 'ft-v276'; // Séance : flèches ↑↓ pour changer l'ordre des exercices (moveExBlock) — les supersets restent groupés, le programme sauvegardé n'est PAS modifié (la séance est une copie)
+const CACHE = 'ft-v277'; // Coach : Milo n'affiche/partage PLUS jamais de JSON brut (_stripCoachTech retire tout bloc technique de l'affichage ET du partage, même JSON tronqué) — force ou autre
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

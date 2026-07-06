@@ -351,12 +351,22 @@ ${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMe
 Utilise ces données pour personnaliser tes réponses et t'adapter à la personne en face. Reste toi-même : ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, franc et pratique, mais calibré sur son niveau et son état du jour.`;
 }
 
+// Retire tout bloc technique (JSON de programme, blocs de code ```…```) — Milo ne doit JAMAIS montrer de JSON.
+function _stripCoachTech(text){
+  let t = String(text||'');
+  t = t.replace(/```[\s\S]*?```/g, '');                       // blocs de code fermés
+  t = t.replace(/```[a-zA-Z]*[\s\S]*$/g, '');                 // bloc de code non fermé (tronqué)
+  t = t.replace(/\{[\s\S]*?"(?:days|exs|sets|weeks)"[\s\S]*\}/g, ''); // objet JSON programme (fermé)
+  t = t.replace(/\{(?=[\s\S]*?"(?:days|exs|sets|weeks)")[\s\S]*$/, ''); // objet JSON programme tronqué
+  return t.replace(/\n{3,}/g, '\n\n').trim();
+}
 function renderCoachMsg(role, text) {
   const msgs = document.getElementById('coach-msgs');
   if (!msgs) return;
   const div = document.createElement('div');
   div.className = 'msg-bubble ' + (role === 'user' ? 'msg-user' : 'msg-coach');
   if (role === 'coach') {
+    text = _stripCoachTech(text); // jamais de JSON brut à l'écran ni au partage (dataset.raw)
     div.innerHTML = text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/^- (.+)$/gm, '<li>$1</li>')
@@ -380,9 +390,9 @@ function renderCoachMsg(role, text) {
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
-// Nettoie le markdown pour un partage texte propre
+// Nettoie le markdown pour un partage texte propre (+ sécurité : retire tout bloc technique)
 function _coachPlain(text){
-  return String(text||'')
+  return _stripCoachTech(String(text||''))
     .replace(/\*\*(.*?)\*\*/g,'$1')
     .replace(/^\s*-\s+/gm,'• ')
     .trim();
