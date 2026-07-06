@@ -582,7 +582,16 @@ function finishOnboarding(){
   const ob=document.getElementById('onboarding');
   if(ob){ob.style.transition='opacity .4s';ob.style.opacity='0';setTimeout(()=>{ob.style.display='none';ob.style.opacity='';ob.style.transition='';},400);}
   renderHome();renderNutrition();renderSetup();
-  setTimeout(showInstallPrompt,1400);
+  // Nouvel inscrit → guide-film de l'application automatiquement (une seule fois),
+  // puis on enchaîne le prompt d'installation à la fermeture du guide.
+  // (Pas pour une restauration de compte existant : _obDataRestored.)
+  if(!_obDataRestored && !localStorage.getItem('ft4_guide_shown') && typeof openAppGuide==='function'){
+    try{localStorage.setItem('ft4_guide_shown','1');}catch(e){}
+    window._afterAppGuide=function(){setTimeout(showInstallPrompt,800);};
+    setTimeout(function(){try{openAppGuide();}catch(e){setTimeout(showInstallPrompt,1400);}},700);
+  }else{
+    setTimeout(showInstallPrompt,1400);
+  }
 }
 
 // ─── PWA INSTALL ─────────────────────────────────────────────
@@ -797,7 +806,11 @@ function openAppGuide(){
     _agSwipeInit=true;
   }
 }
-function closeAppGuide(){const ov=document.getElementById('ov-appguide');if(ov)ov.classList.remove('open');}
+function closeAppGuide(){
+  const ov=document.getElementById('ov-appguide');if(ov)ov.classList.remove('open');
+  // Callback à la fermeture (ex. nouvel inscrit : enchaîner le prompt d'installation)
+  if(window._afterAppGuide){const f=window._afterAppGuide;window._afterAppGuide=null;try{f();}catch(e){}}
+}
 function _agGo(d){
   const n=_agIdx+d;
   if(n<0)return;

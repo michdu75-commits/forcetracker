@@ -1,4 +1,4 @@
-const CACHE = 'ft-v280'; // fix séance : appui long ne fait plus « glisser » la vignette d'exercice (règle globale img{-webkit-user-drag:none}) + clone resync
+const CACHE = 'ft-v281'; // nouvel inscrit : guide-film de l'app affiché automatiquement en fin d'inscription (1×, flag ft4_guide_shown), puis prompt d'installation
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
