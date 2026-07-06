@@ -1,4 +1,4 @@
-const CACHE = 'ft-v275'; // Séance : colonnes inversées Reps → KG (on commence par les reps), auto-focus reps→kg→validé ; « + Série » basé sur la séance précédente (getPrev) et non sur la série qu'on vient de faire
+const CACHE = 'ft-v276'; // Séance : flèches ↑↓ pour changer l'ordre des exercices (moveExBlock) — les supersets restent groupés, le programme sauvegardé n'est PAS modifié (la séance est une copie)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
