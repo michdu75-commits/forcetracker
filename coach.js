@@ -381,7 +381,8 @@ function renderCoachMsg(role, text) {
       div.dataset.raw = text;
       const foot = document.createElement('div');
       foot.className = 'coach-msg-foot';
-      foot.innerHTML = '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>';
+      foot.innerHTML = '<button class="coach-share-btn" onclick="exportCoachPdf(this)" aria-label="Exporter en PDF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>'
+        + '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>';
       div.appendChild(foot);
     }
   } else {
@@ -422,6 +423,51 @@ async function shareCoachReply(btn){
     document.execCommand('copy'); ta.remove();
     if(typeof toast==='function') toast('Réponse copiée ✅','success');
   }catch(e){ if(typeof toast==='function') toast('Copie impossible','error'); }
+}
+// Texte prêt pour le PDF : sans JSON/markdown, sans emojis (non gérés par la police PDF), flèches en ASCII.
+function _coachPdfText(raw){
+  let t=_coachPlain(raw);
+  t=t.replace(/→/g,'->').replace(/←/g,'<-').replace(/[’]/g,"'");
+  t=t.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2300}-\u{23FF}]/gu,'');
+  return t.replace(/[ \t]{2,}/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+}
+// Export PDF propre d'une réponse de Milo (vrai PDF vectoriel, accents OK, aucun caractère cassé).
+async function exportCoachPdf(btn){
+  const bubble=btn.closest('.msg-coach');
+  const raw=bubble?bubble.dataset.raw:'';
+  if(!raw){toast('Rien à exporter','error');return;}
+  toast('Génération du PDF…','info');
+  try{ await _loadJsPdf(); }
+  catch(e){ toast('PDF indisponible ici','error'); return; }
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=48;
+    const coach=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
+    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(20);doc.text('FORCE TRACKER',M,50);
+    doc.setFontSize(15);doc.text('Coach '+coach,W-M,50,{align:'right'});
+    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,58,W-M,58);
+    const d=new Date();
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);
+    doc.text('Conseil du '+d.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),M,72);
+    doc.setTextColor(30);doc.setFontSize(11);
+    const lines=doc.splitTextToSize(_coachPdfText(raw),W-2*M);
+    let y=96;const lh=16;
+    lines.forEach(line=>{ if(y>H-56){doc.addPage();y=56;} doc.text(line,M,y); y+=lh; });
+    doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(140);
+    doc.text('Généré par Force Tracker — conseil indicatif, ne remplace pas un professionnel.',M,H-28);
+    const fname='coach-'+coach.toLowerCase()+'-'+d.toISOString().slice(0,10)+'.pdf';
+    const blob=doc.output('blob');
+    const file=new File([blob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:'Conseil de '+coach}); return; }
+      catch(err){ if(err&&err.name==='AbortError')return; }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+    toast('PDF enregistré 📄','success');
+  }catch(e){ console.warn('[FT coach pdf]',e); toast('Souci PDF','error'); }
 }
 
 function showTyping() {

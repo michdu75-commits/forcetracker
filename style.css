@@ -594,7 +594,7 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 .msg-coach ul{padding-left:16px;margin-top:4px;}
 .msg-coach li{margin-bottom:3px;}
 /* Pied de bulle Coach : bouton Partager/Exporter */
-.coach-msg-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--sep);display:flex;justify-content:flex-end;}
+.coach-msg-foot{margin-top:9px;padding-top:8px;border-top:1px solid var(--sep);display:flex;justify-content:flex-end;gap:8px;}
 .coach-share-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:.12s;}
 .coach-share-btn:hover{color:var(--t1);}
 .coach-share-btn:active{transform:scale(.94);}
