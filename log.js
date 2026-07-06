@@ -2918,6 +2918,23 @@ function _loadJsPdf(){
   _jspdfLoad=load('./lib/jspdf.umd.min.js').then(()=>load('./lib/jspdf.plugin.autotable.min.js')).catch(e=>{_jspdfLoad=null;throw e;});
   return _jspdfLoad;
 }
+// Logo Force Tracker en dataURL (pour l'en-tête des PDF) — chargé une fois, échec silencieux.
+let _logoDataUrl=null,_logoTried=false;
+function _loadLogoDataURL(){
+  if(_logoDataUrl||_logoTried)return Promise.resolve(_logoDataUrl);
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{ _logoTried=true; try{
+      const MAX=120,sc=Math.min(1,MAX/Math.max(img.naturalWidth||MAX,img.naturalHeight||MAX));
+      const c=document.createElement('canvas');c.width=Math.round((img.naturalWidth||MAX)*sc);c.height=Math.round((img.naturalHeight||MAX)*sc);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);_logoDataUrl=c.toDataURL('image/png');
+    }catch(e){_logoDataUrl=null;} res(_logoDataUrl); };
+    img.onerror=()=>{ _logoTried=true; res(null); };
+    img.src='./force-tracker-logo-final.png';
+  });
+}
+// Contact affiché en pied de PDF
+const PDF_CONTACT='forcetracker.app@gmail.com · michdu75-commits.github.io/forcetracker';
 async function exportProgPdf(idx){
   const p=(S.programmes||[])[idx];if(!p)return;
   toast('Génération du PDF…','info');
@@ -2926,13 +2943,16 @@ async function exportProgPdf(idx){
   try{
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:'pt',format:'a4'});
-    const W=doc.internal.pageSize.getWidth(), M=40;
-    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('FORCE TRACKER',M,46);
-    doc.setFontSize(16);doc.text(p.name||'Programme',W-M,46,{align:'right'});
-    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,54,W-M,54);
+    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=40;
+    const logo=await _loadLogoDataURL();
+    let hx=M;
+    if(logo){ try{ doc.addImage(logo,'PNG',M,22,34,34); hx=M+44; }catch(e){} }
+    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,40);
+    doc.setFontSize(15);doc.text(p.name||'Programme',W-M,40,{align:'right'});
+    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,56,W-M,56);
     const sub=p.beginner?('Parcours débutant — Étape 1'+(p.bgFreq?' · '+p.bgFreq+' séances/semaine':'')):'Programme d\'entraînement';
-    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);doc.text(sub,M,68);doc.setTextColor(20);
-    let y=84;
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);doc.text(sub,M,70);doc.setTextColor(20);
+    let y=86;
     const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
     days.forEach(d=>{
       const body=(d.exs||[]).map(e=>{
@@ -2958,6 +2978,14 @@ async function exportProgPdf(idx){
     });
     doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90);
     doc.text(doc.splitTextToSize('Note tes poids dans la colonne « Poids ». Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.',W-2*M),M,y+6);
+    // Pied de page (contact) sur toutes les pages
+    const _pgs=doc.getNumberOfPages();
+    for(let i=1;i<=_pgs;i++){
+      doc.setPage(i);
+      doc.setLineWidth(.5);doc.setDrawColor(210);doc.line(M,H-30,W-M,H-30);
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-18);
+      doc.text('Page '+i+'/'+_pgs,W-M,H-18,{align:'right'});
+    }
     const fname=((p.name||'programme').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,''))+'.pdf';
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});
