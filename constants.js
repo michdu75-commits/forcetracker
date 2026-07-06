@@ -181,6 +181,10 @@ const ADMIN_CODE='0115'; // code de secours (modifiable sur demande)
 // ⚠️ Emails en minuscules (comparaison via _isTester()). Reconnaissance « anti-curieux »
 //    côté client (comme le code admin) : suffisant pour une récompense cosmétique.
 const TESTER_EMAILS=['christophe@famillelanglois.fr','elineazs32@gmail.com','emma.david16@gmail.com'];
+// « Super testeur » : celui qui teste vraiment à fond → espace exclusif (analyse photos approfondie + boîte à idées remontée à Michel).
+const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr'];
+// Email où remontent les idées de la boîte à idées (Michel).
+const TESTER_FEEDBACK_EMAIL='michdu75@gmail.com';
 
 // ─── COACH IA — identité ─────────────────────────────────────
 const COACH_NAME='Milo';   // nom affiché + signature (modifiable)

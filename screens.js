@@ -447,6 +447,11 @@ function _isTester(){
   const e=(S.email||'').trim().toLowerCase();
   return !!e && typeof TESTER_EMAILS!=='undefined' && TESTER_EMAILS.indexOf(e)>=0;
 }
+// « Super testeur » (Christophe pour l'instant) : accès à l'Espace Testeur (analyse photos approfondie + boîte à idées).
+function _isSuperTester(){
+  const e=(S.email||'').trim().toLowerCase();
+  return !!e && typeof SUPER_TESTER_EMAILS!=='undefined' && SUPER_TESTER_EMAILS.indexOf(e)>=0;
+}
 // Carte dorée « Testeur Fondateur » en haut de l'Accueil — visible RIEN QUE pour eux.
 function _renderTesterCard(){
   const el=document.getElementById('home-tester');if(!el)return;
@@ -454,11 +459,15 @@ function _renderTesterCard(){
   el.style.padding='14px 14px 0';
   const first=((S.name||'').trim().split(/\s+/)[0]||'').replace(/[<>&]/g,'');
   const hi=first?first+', ':'';
+  const espace=_isSuperTester()
+    ? '<div class="tc-espace" onclick="openTesterSpace()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Mon espace testeur privé →</div>'
+    : '';
   el.innerHTML='<div class="tester-card">'
     +'<div class="tc-star"><svg viewBox="0 0 24 24" width="24" height="24" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>'
     +'<div style="flex:1;min-width:0;">'
     +'<div class="tc-ttl">Testeur Fondateur</div>'
     +'<div class="tc-msg">Merci '+hi+'d’avoir cru en Force Tracker dès le premier jour — cette appli existe aussi grâce à toi. <span class="tc-sign">— Michel</span></div>'
+    +espace
     +'</div></div>';
 }
 function renderHome(){try{
