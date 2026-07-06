@@ -184,8 +184,8 @@ const TESTER_EMAILS=['christophe@famillelanglois.fr','elineazs32@gmail.com','emm
 // « Super testeur » : celui qui teste vraiment à fond → espace exclusif (analyse photos approfondie + boîte à idées remontée à Michel).
 // michdu75 y est aussi pour le suivi photos (accès via le panneau Admin) — mais PAS de carte « Testeur Fondateur » ni de message « Michel te remercie » (voir _isTester / checkSuperTesterWelcome).
 const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr','michdu75@gmail.com'];
-// Email où remontent les idées de la boîte à idées (Michel).
-const TESTER_FEEDBACK_EMAIL='michdu75@gmail.com';
+// Email où remontent les idées de la boîte à idées → compte dédié de l'app (séparé du mail perso de Michel).
+const TESTER_FEEDBACK_EMAIL='forcetracker.app@gmail.com';
 
 // ─── COACH IA — identité ─────────────────────────────────────
 const COACH_NAME='Milo';   // nom affiché + signature (modifiable)

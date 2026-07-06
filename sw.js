@@ -1,4 +1,4 @@
-const CACHE = 'ft-v273'; // Boîte à idées : envoi FIABLE (email direct à Michel, fini le partage WhatsApp) + POST backend lisible via ?action=getIdees ; photos = bouton optionnel séparé. Backend à déployer (A-FAIRE #9)
+const CACHE = 'ft-v274'; // Boîte à idées : destination email = forcetracker.app@gmail.com (compte dédié de l'app, séparé du mail perso) au lieu de michdu75@gmail.com
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
