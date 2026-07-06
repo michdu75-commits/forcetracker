@@ -793,17 +793,25 @@ function renderLogFinish(){
 }
 
 function calcRecoveryDetail(){
-  if(!S.sleepLog||!S.sleepLog.length)return{score:null,base:null,factors:[],tips:[]};
-  const sorted=S.sleepLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  const scores=sorted.map(e=>{
-    const h=e.hours||0;
-    const hScore=h<4?5:h<6?35:h<7?60:h<=9?100:85;
-    const qScore=((e.quality||2)/4)*100;
-    return Math.round(hScore*0.6+qScore*0.4);
-  });
-  const weights=[0.6,0.3,0.1].slice(0,scores.length);
-  const wTotal=weights.reduce((a,b)=>a+b,0);
-  const wScore=scores.reduce((a,s,i)=>a+s*weights[i],0)/wTotal;
+  // Sommeil non renseigné → base neutre « invisible » (70) : le score reste
+  // fonctionnel pour tout le monde, les autres facteurs (séance, âge, cycle…)
+  // s'appliquent quand même, et un conseil discret invite à renseigner le sommeil.
+  const hasSleep = !!(S.sleepLog && S.sleepLog.length);
+  let wScore;
+  if(hasSleep){
+    const sorted=S.sleepLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+    const scores=sorted.map(e=>{
+      const h=e.hours||0;
+      const hScore=h<4?5:h<6?35:h<7?60:h<=9?100:85;
+      const qScore=((e.quality||2)/4)*100;
+      return Math.round(hScore*0.6+qScore*0.4);
+    });
+    const weights=[0.6,0.3,0.1].slice(0,scores.length);
+    const wTotal=weights.reduce((a,b)=>a+b,0);
+    wScore=scores.reduce((a,s,i)=>a+s*weights[i],0)/wTotal;
+  } else {
+    wScore=70; // base neutre par défaut (sommeil inconnu)
+  }
   // Ajustement selon la dernière séance : entraîné récemment → fatigue, jours de repos → bonus.
   // La pénalité du jour même est PROPORTIONNELLE au volume de la séance (nb de séries de travail),
   // pondérée par l'intensité (échec ×1.5, drop ×1.3) → juste des abdos pénalise peu, un gros leg day pénalise beaucoup.
@@ -856,7 +864,7 @@ function calcRecoveryDetail(){
   const base=Math.round(wScore);
   const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj)));
   // Détail des facteurs (pour afficher le « pourquoi » sous le score)
-  const factors=[{ic:'😴',label:'Sommeil',val:base,base:true}];
+  const factors=[{ic:'😴',label:hasSleep?'Sommeil':'Récup de base',val:base,base:true}];
   if(sessAdj) factors.push({ic:sessAdj<0?'🏋️':'🛌',label:sessAdj<0?'Séance récente':'Repos',val:sessAdj});
   if(ageAdj) factors.push({ic:'🎂',label:'Âge',val:ageAdj});
   if(cycleAdj) factors.push({ic:'🌙',label:'Cycle'+(cpPhase?' ('+cpPhase+')':''),val:cycleAdj});
@@ -865,7 +873,8 @@ function calcRecoveryDetail(){
   if(energyAdj) factors.push({ic:'⚡',label:'Énergie',val:energyAdj});
   // Conseils pour remonter le score (les plus pertinents)
   const tips=[];
-  if(base<70) tips.push('Vise 7–9 h de sommeil de qualité — c\'est le plus gros levier.');
+  if(!hasSleep) tips.push('💤 Renseigne ton sommeil pour un score personnalisé et plus précis.');
+  if(hasSleep&&base<70) tips.push('Vise 7–9 h de sommeil de qualité — c\'est le plus gros levier.');
   if(sessAdj<=-18) tips.push('Grosse séance récente : laisse 1–2 jours avant de reprendre lourd.');
   if(accumAdj<0) tips.push('Tu enchaînes les jours — un jour de repos complet te ferait du bien.');
   if(cycleAdj<=-10) tips.push('Pendant les règles : repos actif ou séances légères, évite les charges max.');

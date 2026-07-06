@@ -1,4 +1,4 @@
-const CACHE = 'ft-v286'; // score « prêt à performer » : la fatigue de la séance s'efface au fil des heures → le score remonte progressivement dans la journée (jour d'entraînement uniquement)
+const CACHE = 'ft-v287'; // score récup : base neutre invisible (70) si le sommeil n'est pas renseigné → tout le monde a un score fonctionnel, conseil discret pour renseigner le sommeil
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
