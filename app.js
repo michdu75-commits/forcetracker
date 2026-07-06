@@ -1264,7 +1264,11 @@ function checkSuperTesterWelcome(){
 }
 function showSuperWelcome(){const o=document.getElementById('ov-super-welcome');if(o)o.classList.add('open');}
 function closeSuperWelcome(){try{localStorage.setItem('ft4_super_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-super-welcome');if(o)o.classList.remove('open');}
-function openTesterSpace(){if(!_isSuperTester()){toast('Espace réservé au testeur','info');return;}_renderTesterSpace();const o=document.getElementById('ov-tester-space');if(o)o.classList.add('open');}
+function openTesterSpace(){
+  // L'Espace Testeur (dont la boîte à idées) est réservé aux vrais testeurs récompensés.
+  // Michel a le suivi photos via le panneau Admin, mais PAS cet espace ni la boîte à idées.
+  if(!(typeof _isTester==='function'&&_isTester())||!_isSuperTester()){toast('Espace réservé au testeur','info');return;}
+  _renderTesterSpace();const o=document.getElementById('ov-tester-space');if(o)o.classList.add('open');}
 function closeTesterSpace(){const o=document.getElementById('ov-tester-space');if(o)o.classList.remove('open');}
 function _openTesterPhotoAnalysis(){ if(typeof openBodySeries==='function')openBodySeries(); else if(typeof openBodyStudy==='function')openBodyStudy(); else toast('Analyse photos bientôt disponible','info'); }
 function _renderTesterSpace(){

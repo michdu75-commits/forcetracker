@@ -1,4 +1,4 @@
-const CACHE = 'ft-v263'; // Suivi photos aussi pour Michel (bouton dans le panneau Admin) — sans carte Testeur Fondateur ni message de bienvenue (réservés aux vrais testeurs)
+const CACHE = 'ft-v264'; // Espace Testeur (dont boîte à idées) verrouillé aux vrais testeurs (_isTester + _isSuperTester) — Michel a le suivi photos via Admin mais pas la boîte à idées
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
