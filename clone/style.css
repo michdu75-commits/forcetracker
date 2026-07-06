@@ -20,6 +20,9 @@
   font-display: swap;
   src: url('../fonts/pacifico-400.woff2') format('woff2');
 }
+/* Empêche de « faire glisser » l'image fantôme (drag natif) — appui long en séance
+   ne déplace plus la vignette de l'exercice. Le tap et le zoom restent normaux. */
+img { -webkit-user-drag: none; -khtml-user-drag: none; user-drag: none; }
 
 :root {
   /* DARK MODE — Charcoal Pro */
