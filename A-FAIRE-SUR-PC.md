@@ -17,6 +17,17 @@
 
 ## ⏳ En attente
 
+_Rien en attente. 🎉 Dernier déploiement backend : **@65** (2026-07-06)._
+
+---
+
+## ✅ Fait
+
+### 9 + 7. Boîte à idées cloud + persistance « niveau » — ✅ déployé @65 (2026-07-06)
+Déployés ensemble depuis le PC de Michel (`clasp push` → « already up to date » puis `clasp deploy -i …` → **@65**). Désormais :
+- **Boîte à idées** lisible côté backend → Claude peut lire `…/exec?action=getIdees&token=FT_IDEES_2026` et résumer les idées de Christophe (les photos restent sur l'email).
+- **Niveau** (débutant/inter/confirmé) sauvegardé dans le cloud → survit à une réinstallation.
+
 ### 9. Boîte à idées → backend (ft-v273) — pour que Claude/Michel lisent les idées directement
 **Code déjà écrit dans `Code.js`** (commité) :
 - `doPost` : route `if (body.action === 'testerIdea') return handleTesterIdea_(body);` + fonction `handleTesterIdea_` (stocke les idées dans la Script Property `TESTER_IDEAS`, garde les 300 dernières).
