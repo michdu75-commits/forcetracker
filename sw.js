@@ -1,4 +1,4 @@
-const CACHE = 'ft-v267'; // Accessoires : wrist-wraps + magnésie (bloc + liquide, 2 photos) reçues et précachées ; ne manque plus que le maillot ×3 (couché/squat/soulevé)
+const CACHE = 'ft-v268'; // Section Matériel du Guide terminée : maillot de force remis en texte simple (Michel ne fournit pas de photo — accessoire de niche). 8 accessoires illustrés, 0 emplacement vide
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
