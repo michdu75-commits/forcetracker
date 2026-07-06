@@ -3539,6 +3539,16 @@ const EX_YT={
   'Rotation Externe Épaule Abduction':{img:'../exercises/rotation-externe-de-epaule-en-abduction.webp'},
   'Rotation Externe Épaule Élastique':{img:'../exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp'},
   'Rotation Interne 90° Poulie':{img:'../exercises/rotation-interne-a-90-a-la-poulie.webp'},
+  // ── Épaules + Trapèzes — 2e partie (lot 2026-07-06) ──
+  'Smith Machine Développé Militaire':{img:'../exercises/developpe-epaules-smith-machine.webp'},
+  'Élévations Frontales Câble':{img:'../exercises/elevation-frontale-poulie-basse.webp'},
+  'Élévation Frontale Banc Incliné':{img:'../exercises/elevation-frontale-banc-incline.webp'},
+  'Élévation Latérale Inclinée Haltère':{img:'../exercises/elevation-laterale-incline-haltere.webp'},
+  'Rotation Externe Épaule Haltère':{img:'../exercises/rotation-externe-epaule-haltere.webp'},
+  'Tirage Menton Élastique':{img:'../exercises/tirage-menton-avec-elastique.webp'},
+  'Thruster':{img:'../exercises/thruster.webp'},
+  'Thruster Kettlebell':{img:'../exercises/thruster-kettlebell.webp'},
+  'Russian Twist Développé Épaules':{img:'../exercises/russian-twist-avec-developpe-epaule.webp'},
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={

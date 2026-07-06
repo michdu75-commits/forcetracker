@@ -1,4 +1,4 @@
-const CACHE = 'ft-v284'; // OPTIM : toutes les figurines d'exercices GIF → WebP animé (~105 Mo → 25 Mo, ×4 plus léger) — même qualité, chargement + install SW + data mobile bien plus légers
+const CACHE = 'ft-v285'; // figurines réduites à 480px (exercises/ 25→15 Mo) + 2e lot Épaules/Trapèzes (9 figurines : smith, élévations, rotation haltère, tirage menton élastique, thruster ×2, russian twist)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -83,6 +83,10 @@ const PRECACHE = [
   './exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp','./exercises/face-pull-couche-a-la-poulie.webp','./exercises/oiseau-a-la-poulie-a-45.webp',
   './exercises/passage-depaule-avec-elastique.webp','./exercises/rotation-externe-de-epaule-en-abduction.webp','./exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp',
   './exercises/rotation-interne-a-90-a-la-poulie.webp',
+  // Épaules + Trapèzes — 2e partie (lot 2026-07-06)
+  './exercises/developpe-epaules-smith-machine.webp','./exercises/elevation-frontale-poulie-basse.webp','./exercises/elevation-frontale-banc-incline.webp',
+  './exercises/elevation-laterale-incline-haltere.webp','./exercises/rotation-externe-epaule-haltere.webp','./exercises/tirage-menton-avec-elastique.webp',
+  './exercises/thruster.webp','./exercises/thruster-kettlebell.webp','./exercises/russian-twist-avec-developpe-epaule.webp',
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
   './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
