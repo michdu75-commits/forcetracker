@@ -683,11 +683,11 @@ function _resizeReport(file,cb){
   reader.onload=e=>{
     const img=new Image();
     img.onload=()=>{
-      const max=1100;let w=img.width,h=img.height;
+      const max=1500;let w=img.width,h=img.height;
       if(w>=h){if(w>max){h=Math.round(h*max/w);w=max;}}else{if(h>max){w=Math.round(w*max/h);h=max;}}
       const cv=document.createElement('canvas');cv.width=w;cv.height=h;
       cv.getContext('2d').drawImage(img,0,0,w,h);
-      try{cb(cv.toDataURL('image/jpeg',0.82).split(',')[1]);}catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
+      try{cb(cv.toDataURL('image/jpeg',0.85).split(',')[1]);}catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
     };
     img.onerror=()=>{if(typeof toast==='function')toast('Image illisible','error');};
     img.src=e.target.result;
