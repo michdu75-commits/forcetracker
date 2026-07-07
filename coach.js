@@ -2,6 +2,52 @@
 const COACH_FREE_LIMIT = 10;
 let coachHistory = [];
 let coachBusy = false;
+let _coachHistLoaded = false;
+
+// ─── Historique du chat persisté (survit à la fermeture de l'appli) ───
+// Stocké local (ft4_coach_hist). Léger : les photos deviennent "[photo]" (pas de base64 stocké).
+function _loadCoachHist(){
+  try{
+    const raw = localStorage.getItem('ft4_coach_hist');
+    if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr)) coachHistory = arr; }
+  }catch(e){ coachHistory = []; }
+}
+function _saveCoachHist(){
+  try{
+    const light = coachHistory.slice(-20).map(m=>({
+      role: m.role,
+      content: (typeof m.content === 'string') ? m.content
+             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : '')
+    }));
+    localStorage.setItem('ft4_coach_hist', JSON.stringify(light));
+  }catch(e){}
+}
+// Reconstruit les bulles à l'écran depuis coachHistory (à l'ouverture de l'appli)
+function _renderCoachThread(){
+  const msgs = document.getElementById('coach-msgs');
+  if(!msgs) return;
+  msgs.innerHTML = '';
+  coachHistory.forEach(m=>{
+    const t = (typeof m.content === 'string') ? m.content
+            : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
+    if(m.role === 'user') renderCoachMsg('user', t || '[photo]');
+    else if(t) renderCoachMsg('coach', t);
+  });
+  msgs.scrollTop = msgs.scrollHeight;
+}
+// Nouvelle discussion : vide le fil (garde la mémoire long-terme de Milo intacte)
+function newCoachChat(){
+  const go=()=>{
+    coachHistory = [];
+    try{ localStorage.removeItem('ft4_coach_hist'); }catch(e){}
+    const msgs=document.getElementById('coach-msgs'); if(msgs) msgs.innerHTML='';
+    updateCoachHeader();
+    if(typeof toast==='function') toast('Nouvelle discussion','info');
+  };
+  if(coachHistory.length && typeof showConfirm==='function'){
+    showConfirm('Nouvelle discussion ?','Le fil affiché sera effacé. Milo garde quand même l\'essentiel de vos échanges en mémoire.',go);
+  } else go();
+}
 
 function _showCoachChat(){
   const home=document.getElementById('coach-home');
@@ -110,11 +156,13 @@ function _saveForceProgram(idx,btn){
 }
 
 function updateCoachHeader() {
+  if(!_coachHistLoaded){ _loadCoachHist(); _coachHistLoaded = true; }
   _updateCoachMorphoBtn();
   _updateCoachCtxTags();
   // Cache le mur premium si l'utilisateur est maintenant premium
   if(S.premium){const wall=document.getElementById('coach-wall');if(wall)wall.style.display='none';}
   // Afficher accueil ou chat selon l'historique
+  const newBtn=document.getElementById('coach-new-btn');
   if(coachHistory.length===0){
     const home=document.getElementById('coach-home');
     const msgs=document.getElementById('coach-msgs');
@@ -122,8 +170,13 @@ function updateCoachHeader() {
     if(home)home.style.display='flex';
     if(msgs)msgs.style.display='none';
     if(suggs)suggs.style.display='none';
+    if(newBtn)newBtn.style.display='none';
   } else {
     _showCoachChat();
+    // Reconstruire le fil si l'écran est vide (ex. après réouverture de l'appli)
+    const msgs=document.getElementById('coach-msgs');
+    if(msgs && msgs.children.length===0) _renderCoachThread();
+    if(newBtn)newBtn.style.display='flex';
   }
   const badge = document.getElementById('coach-quota-badge');
   if (!badge) return;
@@ -638,6 +691,8 @@ async function sendToCoach(customMsg, displayMsg) {
     if (_fp) _appendSaveProgBtn(_fp);
     coachHistory.push({ role: 'assistant', content: reply });
     if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
+    _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
+    const newBtn=document.getElementById('coach-new-btn'); if(newBtn)newBtn.style.display='flex';
 
     // Sauvegarde mémoire intelligente (Premium, fire-and-forget)
     if (S.premium && coachHistory.length >= 4 && S.url && S.email) _saveCoachMemory();
