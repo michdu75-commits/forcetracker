@@ -1,4 +1,4 @@
-const CACHE = 'ft-v301'; // Bilan corporel (balance pro) : saisie manuelle datée + évolution + Milo
+const CACHE = 'ft-v302'; // Bilan corporel : import photo du rapport par l'IA + coller un code (en plus de la saisie manuelle)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

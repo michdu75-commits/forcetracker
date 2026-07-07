@@ -624,7 +624,11 @@ function renderBodyScanCard(){
   if(!scans.length){
     el.innerHTML=`<div class="card cp" style="text-align:center;">
       <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px;">Tu passes sur une balance pro (impédancemètre) ? Enregistre ton bilan — graisse viscérale, muscle, métabolisme… — pour suivre son évolution dans le temps et que Milo s'en serve.</div>
-      <button class="btn btn-red" style="width:100%;" onclick="openBodyScanForm(-1)">➕ Ajouter un bilan</button></div>`;
+      <button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 Importer depuis une photo</button>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="openBodyScanForm(-1)">✏️ À la main</button>
+        <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="pasteBodyScan()">📋 Coller un code</button>
+      </div></div>`;
     return;
   }
   const last=scans[0], prev=scans[1];
@@ -666,8 +670,69 @@ function renderBodyScanCard(){
     });
     html+=`</div>`;
   }
-  html+=`<button class="btn btn-red" style="width:100%;" onclick="openBodyScanForm(-1)">➕ Nouveau bilan</button>`;
+  html+=`<button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 Nouveau bilan (photo)</button>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="openBodyScanForm(-1)">✏️ À la main</button>
+      <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="pasteBodyScan()">📋 Coller un code</button>
+    </div>`;
   el.innerHTML=html;
+}
+// Import photo : lire un rapport de balance pro via l'IA → pré-remplit le formulaire
+function _resizeReport(file,cb){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1100;let w=img.width,h=img.height;
+      if(w>=h){if(w>max){h=Math.round(h*max/w);w=max;}}else{if(h>max){w=Math.round(w*max/h);h=max;}}
+      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      try{cb(cv.toDataURL('image/jpeg',0.82).split(',')[1]);}catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
+    };
+    img.onerror=()=>{if(typeof toast==='function')toast('Image illisible','error');};
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function importBodyScanPhoto(){const inp=document.getElementById('bs-photo-input');if(inp){inp.value='';inp.click();}}
+function onBodyScanPhoto(input){
+  const file=input.files&&input.files[0];if(!file)return;input.value='';
+  if(!S.url){toast('Coach non configuré (Profil > Admin)','error');return;}
+  toast('📖 Lecture du rapport…','info');
+  _resizeReport(file,async(b64)=>{
+    try{
+      const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'importBodyScan',image:b64,imageType:'image/jpeg',email:S.email||''})});
+      const txt=await resp.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('réponse illisible');}
+      if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
+      const o=data.data;
+      openBodyScanForm(-1);
+      if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
+      _BS_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
+      toast('Rapport lu ✅ Vérifie puis Enregistre','success');
+    }catch(e){toast('Souci lecture : '+(e.message||'réessaie'),'error');}
+  });
+}
+// Import rapide : coller un code "date=...;weight=...;bf=..." (préparé par Claude) → remplit le formulaire
+function _parseBilanCode(str){
+  const o={};
+  String(str||'').split(/[;\n,]+/).forEach(pair=>{
+    const i=pair.indexOf('=');if(i<0)return;
+    const k=pair.slice(0,i).trim();const v=pair.slice(i+1).trim();
+    if(k==='date'){o.date=v;return;}
+    const n=parseFloat(v.replace(',','.'));if(!isNaN(n))o[k]=n;
+  });
+  return o;
+}
+function pasteBodyScan(){
+  const t=prompt('Colle ici le code du bilan (fourni par Claude) :');
+  if(!t)return;
+  const o=_parseBilanCode(t);
+  if(!o||!o.weight){toast('Code non reconnu — vérifie le collage','error');return;}
+  openBodyScanForm(-1);
+  if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
+  _BS_FIELDS.forEach(f=>{const e=document.getElementById('bs-'+f.k);if(e&&o[f.k]!=null)e.value=o[f.k];});
+  toast('Vérifie puis Enregistre ✅','info');
 }
 function openBodyScanForm(idx){
   _bsEditIdx=idx;

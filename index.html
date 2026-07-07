@@ -1547,6 +1547,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<input type="file" id="bs-photo-input" accept="image/*" style="display:none;" onchange="onBodyScanPhoto(this)">
 <!-- OVERLAY: Bilan corporel (saisie balance pro / impédancemètre) -->
 <div class="overlay" id="ov-bodyscan-form" onclick="if(event.target===this)closeBodyScanForm()">
   <div class="modal" style="max-width:400px;max-height:88vh;overflow-y:auto;">
