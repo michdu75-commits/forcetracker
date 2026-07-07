@@ -872,6 +872,15 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <div id="cb-desc" style="font-size:12px;color:var(--t3);line-height:1.5;display:none;"></div>
       </div>
       </div></details>
+      <details class="acc"><summary class="acc-h"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M9 2h6"/></svg>Chrono de repos</summary><div class="acc-inner">
+        <div style="font-size:12px;color:var(--t3);line-height:1.5;margin-bottom:2px;">Choisis le style du grand décompte des 10 dernières secondes. <b style="color:var(--green);">Gratuit.</b></div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+          <button id="tskin-segments" onclick="setTimerSkin('segments')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:2px solid var(--sep);background:var(--bg2);cursor:pointer;font-family:var(--font);"><span class="tskin-prev" id="tskin-prev-segments"></span><span style="font-size:13px;font-weight:700;color:var(--t1);">Segments</span></button>
+          <button id="tskin-anneau" onclick="setTimerSkin('anneau')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:2px solid var(--sep);background:var(--bg2);cursor:pointer;font-family:var(--font);"><span class="tskin-prev" id="tskin-prev-anneau"></span><span style="font-size:13px;font-weight:700;color:var(--t1);">Anneau</span></button>
+          <button id="tskin-cadran" onclick="setTimerSkin('cadran')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:2px solid var(--sep);background:var(--bg2);cursor:pointer;font-family:var(--font);"><span class="tskin-prev" id="tskin-prev-cadran"></span><span style="font-size:13px;font-weight:700;color:var(--t1);">Cadran</span></button>
+          <button id="tskin-aiguille" onclick="setTimerSkin('aiguille')" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:12px;border:2px solid var(--sep);background:var(--bg2);cursor:pointer;font-family:var(--font);"><span class="tskin-prev" id="tskin-prev-aiguille"></span><span style="font-size:13px;font-weight:700;color:var(--t1);">Aiguille</span></button>
+        </div>
+      </div></details>
       <div style="position:sticky;bottom:0;background:var(--bg);padding:10px 0 2px;">
         <button class="btn btn-red" onclick="saveProfile()" style="padding:14px;font-size:16px;width:100%;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px;margin-right:7px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Enregistrer le profil</button>
       </div>

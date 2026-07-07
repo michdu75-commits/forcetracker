@@ -1567,8 +1567,12 @@ function _nextSetInfo(){
   const set=ex.sets[si];
   return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.reps||''};
 }
-// ─── Cadran à segments du décompte final (style timer digital) ───────
+// ─── Chrono de repos — skins au choix (segments / anneau / cadran / aiguille) ───
 const _CDOWN_TICKS=44;
+const _CDOWN_SKINS=['segments','anneau','cadran','aiguille'];
+const _CDOWN_SKIN_LABELS={segments:'Segments',anneau:'Anneau',cadran:'Cadran',aiguille:'Aiguille'};
+function _cdownSkin(){const s=(typeof S!=='undefined'&&S.timerSkin)||'segments';return _CDOWN_SKINS.includes(s)?s:'segments';}
+function _cdownColorFrac(f){return f>0.6?'#28E070':f>0.3?'#FF9500':'#FF3B30';}
 function _cdownTickColor(i){
   const t=i/(_CDOWN_TICKS-1); // 0 (haut) → 1 (fin) : vert → jaune → orange → rouge
   if(t<0.34) return '#28E070';
@@ -1576,29 +1580,96 @@ function _cdownTickColor(i){
   if(t<0.80) return '#FF9500';
   return '#FF3B30';
 }
-function _buildCdownTicks(){
-  const svg=document.getElementById('rcd-svg');
-  if(!svg||svg.getAttribute('data-ticks'))return;
-  svg.setAttribute('data-ticks','1');
+const _CDOWN_NS='http://www.w3.org/2000/svg';
+function _cdownSvgEl(tag,attrs){const e=document.createElementNS(_CDOWN_NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+// Construit les éléments statiques du skin choisi (une seule fois par skin — clé data-skin)
+function _buildCdownSkin(){
+  const svg=document.getElementById('rcd-svg');if(!svg)return;
+  const skin=_cdownSkin();
+  if(svg.getAttribute('data-skin')===skin)return;
+  svg.setAttribute('data-skin',skin);
   while(svg.firstChild)svg.removeChild(svg.firstChild);
-  const cx=100,cy=100,rI=64,rO=88,NS='http://www.w3.org/2000/svg';
-  for(let i=0;i<_CDOWN_TICKS;i++){
-    const a=(-90+i*(360/_CDOWN_TICKS))*Math.PI/180;
-    const ln=document.createElementNS(NS,'line');
-    ln.setAttribute('x1',(cx+rI*Math.cos(a)).toFixed(1));
-    ln.setAttribute('y1',(cy+rI*Math.sin(a)).toFixed(1));
-    ln.setAttribute('x2',(cx+rO*Math.cos(a)).toFixed(1));
-    ln.setAttribute('y2',(cy+rO*Math.sin(a)).toFixed(1));
-    ln.setAttribute('stroke-width','5.5');
-    ln.setAttribute('stroke-linecap','round');
-    ln.setAttribute('stroke','rgba(255,255,255,.09)');
-    svg.appendChild(ln);
+  const cx=100,cy=100,dim='rgba(255,255,255,.09)';
+  if(skin==='segments'){
+    const rI=64,rO=88;
+    for(let i=0;i<_CDOWN_TICKS;i++){
+      const a=(-90+i*(360/_CDOWN_TICKS))*Math.PI/180;
+      svg.appendChild(_cdownSvgEl('line',{x1:(cx+rI*Math.cos(a)).toFixed(1),y1:(cy+rI*Math.sin(a)).toFixed(1),x2:(cx+rO*Math.cos(a)).toFixed(1),y2:(cy+rO*Math.sin(a)).toFixed(1),'stroke-width':'5.5','stroke-linecap':'round',stroke:dim}));
+    }
+  }else if(skin==='anneau'){
+    const r=80,C=(2*Math.PI*r).toFixed(1);
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r,fill:'none',stroke:dim,'stroke-width':'13'}));
+    svg.appendChild(_cdownSvgEl('circle',{id:'rcd-arc',cx,cy,r,fill:'none',stroke:'#28E070','stroke-width':'13','stroke-linecap':'round',transform:'rotate(-90 100 100)','stroke-dasharray':C,'stroke-dashoffset':'0'}));
+  }else if(skin==='cadran'){
+    const r=86;
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r,fill:'rgba(255,255,255,.06)'}));
+    svg.appendChild(_cdownSvgEl('path',{id:'rcd-wedge',fill:'#28E070',d:''}));
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'58',fill:'#0e1016'}));
+  }else if(skin==='aiguille'){
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'92',fill:'none',stroke:'rgba(255,255,255,.14)','stroke-width':'2'}));
+    for(let i=0;i<12;i++){
+      const a=(-90+i*30)*Math.PI/180,r1=(i%3===0?76:82),r2=90;
+      svg.appendChild(_cdownSvgEl('line',{x1:(cx+r1*Math.cos(a)).toFixed(1),y1:(cy+r1*Math.sin(a)).toFixed(1),x2:(cx+r2*Math.cos(a)).toFixed(1),y2:(cy+r2*Math.sin(a)).toFixed(1),'stroke-width':(i%3===0?'3':'1.6'),'stroke-linecap':'round',stroke:'rgba(255,255,255,.35)'}));
+    }
+    svg.appendChild(_cdownSvgEl('line',{id:'rcd-hand',x1:'100',y1:'116',x2:'100',y2:'24','stroke-width':'4','stroke-linecap':'round',stroke:'#28E070',transform:'rotate(0 100 100)'}));
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'6',fill:'#fff'}));
   }
 }
-function _paintCdownTicks(litCount){
+// Mini aperçu d'un skin (pour le sélecteur du Profil), état ~62% (vert)
+function _miniSkinSvg(skin){
+  const cx=20,cy=20,frac=0.62,col='#28E070',dim='rgba(255,255,255,.16)';let inner='';
+  if(skin==='segments'){
+    const N=16,rI=11,rO=16,lit=Math.round(frac*N);
+    for(let i=0;i<N;i++){const a=(-90+i*(360/N))*Math.PI/180;const c=i<lit?_cdownTickColor(Math.round(i/(N-1)*(_CDOWN_TICKS-1))):dim;
+      inner+=`<line x1="${(cx+rI*Math.cos(a)).toFixed(1)}" y1="${(cy+rI*Math.sin(a)).toFixed(1)}" x2="${(cx+rO*Math.cos(a)).toFixed(1)}" y2="${(cy+rO*Math.sin(a)).toFixed(1)}" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;}
+  }else if(skin==='anneau'){
+    const r=14,C=2*Math.PI*r;
+    inner=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${dim}" stroke-width="4"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="4" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}"/>`;
+  }else if(skin==='cadran'){
+    const r=15,th=frac*360*Math.PI/180,ex=cx+r*Math.sin(th),ey=cy-r*Math.cos(th),la=frac*360>180?1:0;
+    inner=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(255,255,255,.08)"/><path d="M${cx} ${cy} L${cx} ${cy-r} A${r} ${r} 0 ${la} 1 ${ex.toFixed(1)} ${ey.toFixed(1)} Z" fill="${col}"/><circle cx="${cx}" cy="${cy}" r="9" fill="#12141b"/>`;
+  }else if(skin==='aiguille'){
+    inner=`<circle cx="${cx}" cy="${cy}" r="16" fill="none" stroke="${dim}" stroke-width="1.5"/>`;
+    for(let i=0;i<4;i++){const a=(-90+i*90)*Math.PI/180;inner+=`<line x1="${(cx+13*Math.cos(a)).toFixed(1)}" y1="${(cy+13*Math.sin(a)).toFixed(1)}" x2="${(cx+16*Math.cos(a)).toFixed(1)}" y2="${(cy+16*Math.sin(a)).toFixed(1)}" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>`;}
+    inner+=`<line x1="20" y1="23" x2="20" y2="7" stroke="${col}" stroke-width="2" stroke-linecap="round" transform="rotate(${((1-frac)*360).toFixed(1)} 20 20)"/><circle cx="20" cy="20" r="2.2" fill="#fff"/>`;
+  }
+  return `<svg viewBox="0 0 40 40" width="40" height="40">${inner}</svg>`;
+}
+// Rafraîchit le sélecteur de skin (Profil) : aperçus + état actif
+function _renderTimerSkinSel(){
+  const cur=_cdownSkin();
+  _CDOWN_SKINS.forEach(sk=>{
+    const prev=document.getElementById('tskin-prev-'+sk);if(prev)prev.innerHTML=_miniSkinSvg(sk);
+    const btn=document.getElementById('tskin-'+sk);
+    if(btn){const on=sk===cur;btn.style.borderColor=on?'var(--red)':'var(--sep)';btn.style.background=on?'rgba(239,62,87,.12)':'var(--bg2)';}
+  });
+}
+function setTimerSkin(v){
+  if(!_CDOWN_SKINS.includes(v))v='segments';
+  if(typeof S!=='undefined'){S.timerSkin=v;if(typeof persist==='function')persist();}
+  const svg=document.getElementById('rcd-svg');if(svg)svg.removeAttribute('data-skin'); // forcer la reconstruction au prochain repos
+  _renderTimerSkinSel();
+  if(typeof toast==='function')toast('Chrono : '+(_CDOWN_SKIN_LABELS[v]||v),'success');
+}
+// Met à jour la partie dynamique selon le temps restant (frac 1→0)
+function _paintCdown(frac){
   const svg=document.getElementById('rcd-svg');if(!svg)return;
-  const ln=svg.querySelectorAll('line');
-  for(let i=0;i<ln.length;i++) ln[i].setAttribute('stroke', i<litCount?_cdownTickColor(i):'rgba(255,255,255,.09)');
+  frac=Math.max(0,Math.min(1,frac));
+  const skin=svg.getAttribute('data-skin')||'segments';
+  const col=_cdownColorFrac(frac);
+  if(skin==='segments'){
+    const lit=Math.max(0,Math.round(frac*_CDOWN_TICKS)),ln=svg.querySelectorAll('line');
+    for(let i=0;i<ln.length;i++) ln[i].setAttribute('stroke', i<lit?_cdownTickColor(i):'rgba(255,255,255,.09)');
+  }else if(skin==='anneau'){
+    const arc=svg.querySelector('#rcd-arc');if(arc){const C=2*Math.PI*80;arc.setAttribute('stroke',col);arc.setAttribute('stroke-dashoffset',(C*(1-frac)).toFixed(1));}
+  }else if(skin==='cadran'){
+    const w=svg.querySelector('#rcd-wedge');
+    if(w){const r=86,cx=100,cy=100,th=Math.min(359.9,frac*360)*Math.PI/180,ex=cx+r*Math.sin(th),ey=cy-r*Math.cos(th),la=frac*360>180?1:0;
+      w.setAttribute('fill',col);
+      w.setAttribute('d',frac<=0?'':`M${cx} ${cy} L${cx} ${cy-r} A${r} ${r} 0 ${la} 1 ${ex.toFixed(1)} ${ey.toFixed(1)} Z`);}
+  }else if(skin==='aiguille'){
+    const h=svg.querySelector('#rcd-hand');if(h){h.setAttribute('transform',`rotate(${((1-frac)*360).toFixed(1)} 100 100)`);h.setAttribute('stroke',col);}
+  }
 }
 function _showRestCountdown(){
   if(_cdownActive)return;
@@ -1639,21 +1710,21 @@ function _updateRestCountdown(){
       if(o&&_cdownActive){o.style.transition='';o.style.background='';o.classList.add('go-cycle');}
     },5000);
   }
-  _buildCdownTicks();
+  _buildCdownSkin();
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
+  const skin=_cdownSkin();
+  const bigSize=skin==='cadran'?'88px':'110px';
   if(left<=0){
     // Écran GO persistant : reste affiché jusqu'au tap / bouton Passer (pas d'auto-close)
     if(labelEl){labelEl.textContent="C'EST REPARTI";labelEl.style.color='rgba(255,255,255,.9)';}
-    if(numEl){numEl.textContent='GO';numEl.style.fontSize='80px';numEl.style.color='#fff';}
-    _paintCdownTicks(0);
+    if(numEl){numEl.textContent='GO';numEl.style.fontSize=skin==='cadran'?'64px':'80px';numEl.style.color='#fff';}
+    _paintCdown(0);
     return;
   }
-  // Cadran à segments : le nombre de traits allumés = temps restant (10s → plein)
-  const litCount=Math.max(1,Math.round(left/10*_CDOWN_TICKS));
-  _paintCdownTicks(litCount);
-  const color=left<=3?'#FF3B30':left<=6?'#FF9500':'#28E070';
-  if(numEl){numEl.textContent=left;numEl.style.fontSize='110px';numEl.style.color=color;}
+  // Le cadran se vide sur les 10 dernières secondes (frac = temps restant / 10)
+  _paintCdown(left/10);
+  if(numEl){numEl.textContent=left;numEl.style.fontSize=bigSize;numEl.style.color=_cdownColorFrac(left/10);}
 }
 // Tap sur l'overlay ou bouton Passer :
 // - pendant le décompte (avant 0) → skip anticipé = fin immédiate du repos (timer + pastille effacés)
@@ -2316,14 +2387,14 @@ function finalImportProg(){
           sets=ex.repsPerSet.map((r,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:parseInt(r)||10,
-            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType,
+            type:baseType, /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
             rest:_restAt(si)
           }));
         }else{
           sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:ex.reps||10,
-            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType,
+            type:baseType, /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
             rest:_restAt(si)
           }));
         }

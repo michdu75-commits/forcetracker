@@ -1290,6 +1290,7 @@ function renderSetup(){
   if(ro)ro.style.display=window._adminMode?'none':'flex';
   if(ed)ed.style.display=window._adminMode?'flex':'none';
   setGender(S.gender);
+  if(typeof _renderTimerSkinSel==='function')_renderTimerSkinSel();
   const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
   const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';
   const bwEl=document.getElementById('bw-inp');if(bwEl)bwEl.value=S.bw||'';
