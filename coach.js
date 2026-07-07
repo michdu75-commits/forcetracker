@@ -609,6 +609,7 @@ async function sendToCoach(customMsg, displayMsg) {
     } else {
       const payload = {
         action: 'coach',
+        email: S.email || '',
         message: msg || 'Analyse cette photo de mon corps.',
         context: buildCoachContext(),
         history: coachHistory.slice(-8),
