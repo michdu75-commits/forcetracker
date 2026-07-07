@@ -706,6 +706,7 @@ function renderExBlocks(){
   const c=document.getElementById('wkt-exs');
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
     c.innerHTML=`<div class="empty">Appuie sur "+ Ajouter un exercice"<br>pour démarrer ta séance 💪</div>`;
+    if(typeof renderLogFinish==='function')renderLogFinish(); // vide le bloc "Terminer la séance" (sinon fantôme après suppression/vidage)
     _syncLogHdrBtns();return;
   }
   const exCount=S.wkt.exs.length;
