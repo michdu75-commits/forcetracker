@@ -1567,6 +1567,39 @@ function _nextSetInfo(){
   const set=ex.sets[si];
   return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.reps||''};
 }
+// ─── Cadran à segments du décompte final (style timer digital) ───────
+const _CDOWN_TICKS=44;
+function _cdownTickColor(i){
+  const t=i/(_CDOWN_TICKS-1); // 0 (haut) → 1 (fin) : vert → jaune → orange → rouge
+  if(t<0.34) return '#28E070';
+  if(t<0.58) return '#B7DE00';
+  if(t<0.80) return '#FF9500';
+  return '#FF3B30';
+}
+function _buildCdownTicks(){
+  const svg=document.getElementById('rcd-svg');
+  if(!svg||svg.getAttribute('data-ticks'))return;
+  svg.setAttribute('data-ticks','1');
+  while(svg.firstChild)svg.removeChild(svg.firstChild);
+  const cx=100,cy=100,rI=64,rO=88,NS='http://www.w3.org/2000/svg';
+  for(let i=0;i<_CDOWN_TICKS;i++){
+    const a=(-90+i*(360/_CDOWN_TICKS))*Math.PI/180;
+    const ln=document.createElementNS(NS,'line');
+    ln.setAttribute('x1',(cx+rI*Math.cos(a)).toFixed(1));
+    ln.setAttribute('y1',(cy+rI*Math.sin(a)).toFixed(1));
+    ln.setAttribute('x2',(cx+rO*Math.cos(a)).toFixed(1));
+    ln.setAttribute('y2',(cy+rO*Math.sin(a)).toFixed(1));
+    ln.setAttribute('stroke-width','5.5');
+    ln.setAttribute('stroke-linecap','round');
+    ln.setAttribute('stroke','rgba(255,255,255,.09)');
+    svg.appendChild(ln);
+  }
+}
+function _paintCdownTicks(litCount){
+  const svg=document.getElementById('rcd-svg');if(!svg)return;
+  const ln=svg.querySelectorAll('line');
+  for(let i=0;i<ln.length;i++) ln[i].setAttribute('stroke', i<litCount?_cdownTickColor(i):'rgba(255,255,255,.09)');
+}
 function _showRestCountdown(){
   if(_cdownActive)return;
   _cdownActive=true;
@@ -1606,20 +1639,20 @@ function _updateRestCountdown(){
       if(o&&_cdownActive){o.style.transition='';o.style.background='';o.classList.add('go-cycle');}
     },5000);
   }
-  const ring=document.getElementById('rcd-ring');
+  _buildCdownTicks();
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
   if(left<=0){
     // Écran GO persistant : reste affiché jusqu'au tap / bouton Passer (pas d'auto-close)
     if(labelEl){labelEl.textContent="C'EST REPARTI";labelEl.style.color='rgba(255,255,255,.9)';}
     if(numEl){numEl.textContent='GO';numEl.style.fontSize='80px';numEl.style.color='#fff';}
-    if(ring){ring.style.stroke='rgba(255,255,255,.25)';ring.setAttribute('stroke-dashoffset','534');}
+    _paintCdownTicks(0);
     return;
   }
-  const circ=534;
-  const offset=((10-left)/10*circ).toFixed(1);
-  const color=left<=3?'#FF2D55':'#FF6C00';
-  if(ring){ring.setAttribute('stroke-dashoffset',offset);ring.style.stroke=color;}
+  // Cadran à segments : le nombre de traits allumés = temps restant (10s → plein)
+  const litCount=Math.max(1,Math.round(left/10*_CDOWN_TICKS));
+  _paintCdownTicks(litCount);
+  const color=left<=3?'#FF3B30':left<=6?'#FF9500':'#28E070';
   if(numEl){numEl.textContent=left;numEl.style.fontSize='110px';numEl.style.color=color;}
 }
 // Tap sur l'overlay ou bouton Passer :

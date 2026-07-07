@@ -1907,11 +1907,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div id="rcd-label" style="font-size:11px;font-weight:800;letter-spacing:.22em;color:#FF6C00;margin-bottom:28px;">REPRISE DANS</div>
     <!-- Anneau SVG + chiffre -->
     <div style="position:relative;width:200px;height:200px;margin-bottom:32px;flex-shrink:0;">
-      <svg id="rcd-svg" viewBox="0 0 200 200" width="200" height="200" style="position:absolute;inset:0;transform:rotate(-90deg);">
-        <circle cx="100" cy="100" r="85" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="12"/>
-        <circle id="rcd-ring" cx="100" cy="100" r="85" fill="none" stroke="#FF6C00" stroke-width="12" stroke-linecap="round" stroke-dasharray="534" stroke-dashoffset="0"/>
-      </svg>
-      <div id="rcd-num" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:110px;font-weight:900;color:#FF6C00;line-height:1;font-family:system-ui,sans-serif;"></div>
+      <svg id="rcd-svg" viewBox="0 0 200 200" width="200" height="200" style="position:absolute;inset:0;"></svg>
+      <div id="rcd-num" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:110px;font-weight:900;color:#FF6C00;line-height:1;font-family:var(--font-cond),system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em;"></div>
     </div>
     <!-- Prochaine série -->
     <div id="rcd-next-label" style="font-size:11px;font-weight:800;letter-spacing:.22em;color:rgba(255,255,255,.35);margin-bottom:6px;">SÉRIE SUIVANTE</div>
