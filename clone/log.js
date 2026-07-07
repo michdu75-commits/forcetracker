@@ -706,6 +706,7 @@ function renderExBlocks(){
   const c=document.getElementById('wkt-exs');
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){
     c.innerHTML=`<div class="empty">Appuie sur "+ Ajouter un exercice"<br>pour démarrer ta séance 💪</div>`;
+    if(typeof renderLogFinish==='function')renderLogFinish(); // vide le bloc "Terminer la séance" (sinon fantôme après suppression/vidage)
     _syncLogHdrBtns();return;
   }
   const exCount=S.wkt.exs.length;
@@ -1569,8 +1570,8 @@ function _nextSetInfo(){
 }
 // ─── Chrono de repos — skins au choix (segments / anneau / cadran / aiguille) ───
 const _CDOWN_TICKS=44;
-const _CDOWN_SKINS=['segments','anneau','cadran','aiguille'];
-const _CDOWN_SKIN_LABELS={segments:'Segments',anneau:'Anneau',cadran:'Cadran',aiguille:'Aiguille'};
+const _CDOWN_SKINS=['segments','anneau','cadran','chrono']; // 'aiguille' (minimaliste) remplacé par 'chrono' (vraie montre-chrono)
+const _CDOWN_SKIN_LABELS={segments:'Segments',anneau:'Anneau',cadran:'Cadran',chrono:'Chrono'};
 function _cdownSkin(){const s=(typeof S!=='undefined'&&S.timerSkin)||'segments';return _CDOWN_SKINS.includes(s)?s:'segments';}
 function _cdownColorFrac(f){return f>0.6?'#28E070':f>0.3?'#FF9500':'#FF3B30';}
 function _cdownTickColor(i){
@@ -1605,14 +1606,25 @@ function _buildCdownSkin(){
     svg.appendChild(_cdownSvgEl('circle',{cx,cy,r,fill:'rgba(255,255,255,.06)'}));
     svg.appendChild(_cdownSvgEl('path',{id:'rcd-wedge',fill:'#28E070',d:''}));
     svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'58',fill:'#0e1016'}));
-  }else if(skin==='aiguille'){
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'92',fill:'none',stroke:'rgba(255,255,255,.14)','stroke-width':'2'}));
-    for(let i=0;i<12;i++){
-      const a=(-90+i*30)*Math.PI/180,r1=(i%3===0?76:82),r2=90;
-      svg.appendChild(_cdownSvgEl('line',{x1:(cx+r1*Math.cos(a)).toFixed(1),y1:(cy+r1*Math.sin(a)).toFixed(1),x2:(cx+r2*Math.cos(a)).toFixed(1),y2:(cy+r2*Math.sin(a)).toFixed(1),'stroke-width':(i%3===0?'3':'1.6'),'stroke-linecap':'round',stroke:'rgba(255,255,255,.35)'}));
-    }
-    svg.appendChild(_cdownSvgEl('line',{id:'rcd-hand',x1:'100',y1:'116',x2:'100',y2:'24','stroke-width':'4','stroke-linecap':'round',stroke:'#28E070',transform:'rotate(0 100 100)'}));
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'6',fill:'#fff'}));
+  }else if(skin==='chrono'){
+    // Vraie montre-chrono : couronne + boutons, bezel métallique, 60 graduations, arc de temps restant, aiguille + moyeu
+    svg.appendChild(_cdownSvgEl('rect',{x:'94',y:'0',width:'12',height:'8',rx:'2.5',fill:'#9aa0ad'}));
+    svg.appendChild(_cdownSvgEl('rect',{x:'96.5',y:'6',width:'7',height:'6',rx:'2',fill:'#767c8a'}));
+    const gL=_cdownSvgEl('g',{transform:'rotate(-32 100 100)'});gL.appendChild(_cdownSvgEl('rect',{x:'94',y:'2',width:'12',height:'9',rx:'2.5',fill:'#868c99'}));svg.appendChild(gL);
+    const gR=_cdownSvgEl('g',{transform:'rotate(32 100 100)'});gR.appendChild(_cdownSvgEl('rect',{x:'94',y:'2',width:'12',height:'9',rx:'2.5',fill:'#868c99'}));svg.appendChild(gR);
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'95',fill:'#0e1016',stroke:'#4a4f5a','stroke-width':'6'}));
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'89',fill:'none',stroke:'#23262e','stroke-width':'3'}));
+    for(let i=0;i<60;i++){const a=(-90+i*6)*Math.PI/180,maj=i%5===0,r1=maj?76:80,r2=85;
+      svg.appendChild(_cdownSvgEl('line',{x1:(cx+r1*Math.cos(a)).toFixed(1),y1:(cy+r1*Math.sin(a)).toFixed(1),x2:(cx+r2*Math.cos(a)).toFixed(1),y2:(cy+r2*Math.sin(a)).toFixed(1),stroke:maj?'rgba(255,255,255,.55)':'rgba(255,255,255,.25)','stroke-width':maj?'2.4':'1','stroke-linecap':'round'}));}
+    const r=71,C=(2*Math.PI*r).toFixed(1);
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r,fill:'none',stroke:'rgba(255,255,255,.06)','stroke-width':'8'}));
+    svg.appendChild(_cdownSvgEl('circle',{id:'rcd-arc',cx,cy,r,fill:'none',stroke:'#28E070','stroke-width':'8','stroke-linecap':'round',transform:'rotate(-90 100 100)','stroke-dasharray':C,'stroke-dashoffset':'0'}));
+    const gH=_cdownSvgEl('g',{id:'rcd-hand',transform:'rotate(0 100 100)'});
+    gH.appendChild(_cdownSvgEl('line',{x1:'100',y1:'112',x2:'100',y2:'32',stroke:'#28E070','stroke-width':'3','stroke-linecap':'round'}));
+    gH.appendChild(_cdownSvgEl('circle',{cx:'100',cy:'112',r:'3.4',fill:'#28E070'}));
+    svg.appendChild(gH);
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'7',fill:'#d3d6dd'}));
+    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'3',fill:'#0e1016'}));
   }
 }
 // Mini aperçu d'un skin (pour le sélecteur du Profil), état ~62% (vert)
@@ -1628,10 +1640,12 @@ function _miniSkinSvg(skin){
   }else if(skin==='cadran'){
     const r=15,th=frac*360*Math.PI/180,ex=cx+r*Math.sin(th),ey=cy-r*Math.cos(th),la=frac*360>180?1:0;
     inner=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(255,255,255,.08)"/><path d="M${cx} ${cy} L${cx} ${cy-r} A${r} ${r} 0 ${la} 1 ${ex.toFixed(1)} ${ey.toFixed(1)} Z" fill="${col}"/><circle cx="${cx}" cy="${cy}" r="9" fill="#12141b"/>`;
-  }else if(skin==='aiguille'){
-    inner=`<circle cx="${cx}" cy="${cy}" r="16" fill="none" stroke="${dim}" stroke-width="1.5"/>`;
-    for(let i=0;i<4;i++){const a=(-90+i*90)*Math.PI/180;inner+=`<line x1="${(cx+13*Math.cos(a)).toFixed(1)}" y1="${(cy+13*Math.sin(a)).toFixed(1)}" x2="${(cx+16*Math.cos(a)).toFixed(1)}" y2="${(cy+16*Math.sin(a)).toFixed(1)}" stroke="rgba(255,255,255,.4)" stroke-width="1.5"/>`;}
-    inner+=`<line x1="20" y1="23" x2="20" y2="7" stroke="${col}" stroke-width="2" stroke-linecap="round" transform="rotate(${((1-frac)*360).toFixed(1)} 20 20)"/><circle cx="20" cy="20" r="2.2" fill="#fff"/>`;
+  }else if(skin==='chrono'){
+    inner=`<rect x="18.5" y="0.5" width="3" height="3" rx="1" fill="#9aa0ad"/><circle cx="${cx}" cy="${cy+0.5}" r="16.5" fill="#0e1016" stroke="#4a4f5a" stroke-width="2"/>`;
+    for(let i=0;i<12;i++){const a=(-90+i*30)*Math.PI/180;inner+=`<line x1="${(cx+13*Math.cos(a)).toFixed(1)}" y1="${(cy+0.5+13*Math.sin(a)).toFixed(1)}" x2="${(cx+15*Math.cos(a)).toFixed(1)}" y2="${(cy+0.5+15*Math.sin(a)).toFixed(1)}" stroke="rgba(255,255,255,.4)" stroke-width="1.3"/>`;}
+    const r=11,C=2*Math.PI*r;
+    inner+=`<circle cx="${cx}" cy="${cy+0.5}" r="${r}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy+0.5})" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}"/>`;
+    inner+=`<line x1="20" y1="24" x2="20" y2="9" stroke="${col}" stroke-width="1.8" stroke-linecap="round" transform="rotate(${((1-frac)*360).toFixed(1)} 20 20.5)"/><circle cx="${cx}" cy="${cy+0.5}" r="2" fill="#d3d6dd"/>`;
   }
   return `<svg viewBox="0 0 40 40" width="40" height="40">${inner}</svg>`;
 }
@@ -1667,8 +1681,11 @@ function _paintCdown(frac){
     if(w){const r=86,cx=100,cy=100,th=Math.min(359.9,frac*360)*Math.PI/180,ex=cx+r*Math.sin(th),ey=cy-r*Math.cos(th),la=frac*360>180?1:0;
       w.setAttribute('fill',col);
       w.setAttribute('d',frac<=0?'':`M${cx} ${cy} L${cx} ${cy-r} A${r} ${r} 0 ${la} 1 ${ex.toFixed(1)} ${ey.toFixed(1)} Z`);}
-  }else if(skin==='aiguille'){
-    const h=svg.querySelector('#rcd-hand');if(h){h.setAttribute('transform',`rotate(${((1-frac)*360).toFixed(1)} 100 100)`);h.setAttribute('stroke',col);}
+  }else if(skin==='chrono'){
+    const arc=svg.querySelector('#rcd-arc');if(arc){const C=2*Math.PI*71;arc.setAttribute('stroke',col);arc.setAttribute('stroke-dashoffset',(C*(1-frac)).toFixed(1));}
+    const h=svg.querySelector('#rcd-hand');
+    if(h){h.setAttribute('transform',`rotate(${((1-frac)*360).toFixed(1)} 100 100)`);
+      h.querySelectorAll('line,circle').forEach(e=>e.setAttribute(e.tagName==='line'?'stroke':'fill',col));}
   }
 }
 function _showRestCountdown(){
@@ -1714,11 +1731,12 @@ function _updateRestCountdown(){
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
   const skin=_cdownSkin();
-  const bigSize=skin==='cadran'?'88px':'110px';
+  const compact=(skin==='cadran'||skin==='chrono'); // chiffre plus petit (rentre dans le disque/cadran)
+  const bigSize=compact?'84px':'110px';
   if(left<=0){
     // Écran GO persistant : reste affiché jusqu'au tap / bouton Passer (pas d'auto-close)
     if(labelEl){labelEl.textContent="C'EST REPARTI";labelEl.style.color='rgba(255,255,255,.9)';}
-    if(numEl){numEl.textContent='GO';numEl.style.fontSize=skin==='cadran'?'64px':'80px';numEl.style.color='#fff';}
+    if(numEl){numEl.textContent='GO';numEl.style.fontSize=compact?'62px':'80px';numEl.style.color='#fff';}
     _paintCdown(0);
     return;
   }
