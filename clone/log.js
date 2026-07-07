@@ -907,11 +907,16 @@ function chainInputs(ids,lastFn){
 }
 function addSet(ei){
   const ex=S.wkt.exs[ei];
-  // Nouvelle série basée sur la SÉANCE PRÉCÉDENTE (pas sur la série qu'on vient de faire) — cohérent avec la colonne « Précédent »
+  // Nouvelle série basée sur la SÉANCE PRÉCÉDENTE (cohérent avec la colonne « Précédent »).
   const prev=getPrev(ex.name);
   const si=ex.sets.length;
   const p=prev.length?(prev[si]||prev[prev.length-1]):null;
-  ex.sets.push({kg:p?p.kg:0,reps:p?p.reps:5,type:'N',done:false,rm1:0});
+  // Repli si aucune séance précédente : copie la DERNIÈRE série de la séance en cours
+  // → une nouvelle série ne repart jamais « à vide » (kg conservé).
+  const last=ex.sets.length?ex.sets[ex.sets.length-1]:null;
+  const kg   = p ? p.kg   : (last ? (last.kg||0)   : 0);
+  const reps = p ? p.reps : (last ? (last.reps||8) : 8);
+  ex.sets.push({kg,reps,type:'N',done:false,rm1:0});
   persist();renderExBlocks();
 }
 function rmLastSet(ei){const ex=S.wkt.exs[ei];if(ex.sets.length>1){ex.sets.pop();persist();renderExBlocks();}}
