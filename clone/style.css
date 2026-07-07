@@ -119,6 +119,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 #rest-bar.show{display:flex;}
 #rest-time{font-family:var(--font-cond);font-size:26px;font-weight:900;line-height:1;letter-spacing:0;font-variant-numeric:tabular-nums;color:var(--green);transition:color .4s;}
 #rest-label:empty{display:none;}          /* ligne label masquée quand vide → gagne ~15px de hauteur */
+/* Écran GO : après 5 s sans tap, cycle de couleurs (attrape-l'œil) */
+#ov-rest-countdown.go-cycle{animation:goCycle 3.2s linear infinite;}
+@keyframes goCycle{0%{background:#00e676;}20%{background:#2979FF;}40%{background:#AA00FF;}60%{background:#FF6C00;}80%{background:#FF2D55;}100%{background:#00e676;}}
 #rest-wrap{width:100%;max-width:260px;height:5px;background:var(--sep);border-radius:3px;overflow:hidden;}
 #rest-bar .rbtn{padding:5px 9px;font-size:12px;border-radius:7px;}
 #rest-fill{height:100%;background:var(--green);border-radius:3px;transition:width .5s linear,background .4s;}
