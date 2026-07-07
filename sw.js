@@ -1,4 +1,4 @@
-const CACHE = 'ft-v288'; // badges : barre de progression sur les badges verrouillés (X/cible) + nouveau badge « Super Admin » (débloqué pour l'admin)
+const CACHE = 'ft-v289'; // sous-menus (Menu → 1RM, guide…) : fermeture (et ouverture) en glissé doux au lieu de claquer d'un coup (anim dcUp/dcDown sur #ov-drawer-cnt)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

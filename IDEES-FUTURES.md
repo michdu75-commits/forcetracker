@@ -58,6 +58,12 @@ Michel : dans le PDF de programme, mettre une **image de l'exercice** à côté 
 - **À cadrer** : la figurine est un SVG/PNG → il faut la rendre en dataURI (canvas) avant de l'injecter dans jsPDF (`addImage`), une par exercice. Reste léger (contrairement aux GIFs). Colonne « photo » ~24px à gauche de chaque ligne du tableau.
 - Cohérent avec l'identité « figurines muscles » (règle d'or n°7). **Pas lancé — dans la boîte à idées.**
 
+## 🎨 Retravailler le logo (Michel : « il est moche finalement »)
+Michel veut réaméliorer le logo (`logo.png` / `force-tracker-logo-final.png` / `-splash.gif` / `-topbar.gif`).
+- ⚠️ **PAS DE SVG** (Michel : « c'est dégueulasse »). Le logo doit rester une **vraie image** (rendu type silhouette muscle actuelle).
+- **Chemin unique** : **Michel fournit** le nouveau logo (outil de génération d'image / graphiste) → **Claude l'intègre partout** (splash, topbar, favicon manifest, bonnes tailles, PRECACHE sw.js + bump). Claude ne dessine pas le logo.
+- Garder l'**identité « figurines muscles »** (règle d'or n°7), ne pas copier Hevy/JEFIT. **Pas lancé.**
+
 ---
 
 # 🚧 EN COURS — à reprendre (non fini)

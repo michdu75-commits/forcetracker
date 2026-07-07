@@ -576,6 +576,12 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 /* ─── DRAWER CONTENT OVERLAY ─── */
 #ov-drawer-cnt{background:var(--bg);}
 #ov-drawer-cnt .modal{max-width:460px;max-height:88vh;overflow-y:auto;}
+/* Sous-menus (Menu → 1RM, guide, protéines…) : ouverture ET fermeture en glissé doux (avant : instantané, « ça claque ») */
+#ov-drawer-cnt.open .modal{animation:dcUp .30s cubic-bezier(.32,.72,0,1);}
+#ov-drawer-cnt.dc-closing{display:flex;}
+#ov-drawer-cnt.dc-closing .modal{animation:dcDown .26s cubic-bezier(.32,.72,0,1) forwards;}
+@keyframes dcUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+@keyframes dcDown{from{transform:translateY(0);}to{transform:translateY(100%);}}
 .coach-suggestions{padding:8px 14px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0;border-top:1px solid var(--sep);}
 .coach-suggestions::-webkit-scrollbar{display:none;}
 .sugg-chip{flex-shrink:0;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;border:none;box-shadow:inset 0 0 0 1px rgba(255,106,115,.35);background:rgba(255,106,115,.08);color:var(--red);cursor:pointer;font-family:var(--font);white-space:nowrap;touch-action:manipulation;transition:all .15s;-webkit-tap-highlight-color:transparent;}
