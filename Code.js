@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════
 // Force Tracker — Google Apps Script v3.5
+// (re-sync clasp : projet backend = Code.js + appsscript.json uniquement)
 // Colle ce code dans script.google.com, remplace tout,
 // puis clique "Déployer > Nouveau déploiement" (web app,
 // "Tout le monde" pour l'accès), et copie la nouvelle URL.
