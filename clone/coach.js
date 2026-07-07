@@ -897,9 +897,15 @@ function openDrawerContent(key){
   const ov=document.getElementById('ov-drawer-cnt');
   ov.classList.add('open');
   const modal=ov.querySelector('.modal');
-  if(modal)_addSwipeClose(modal,closeDrawerContent,modal,null,modal.querySelector('.modal-handle'),120);
+  // Swipe : le geste anime déjà le glissé → fermeture immédiate (pas de double animation)
+  if(modal)_addSwipeClose(modal,function(){const o=document.getElementById('ov-drawer-cnt');if(o)o.classList.remove('open','dc-closing');},modal,null,modal.querySelector('.modal-handle'),120);
 }
-function closeDrawerContent(){document.getElementById('ov-drawer-cnt').classList.remove('open');}
+function closeDrawerContent(){
+  const ov=document.getElementById('ov-drawer-cnt');
+  if(!ov||!ov.classList.contains('open'))return;
+  ov.classList.add('dc-closing');           // joue le glissé vers le bas
+  setTimeout(()=>{ov.classList.remove('open','dc-closing');},250);
+}
 
 
 /* ── Swipe-down pour fermer (drawer / modales / lightbox) ── */
