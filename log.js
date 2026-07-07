@@ -608,6 +608,7 @@ function openExMenu(ei,hasGif){
     +`</button>`;
   ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
+    +mRow('🔄','Remplacer l\'exercice',`openExPickerForReplace(${ei})`)
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
     +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
     +mRow('📷',hasUserPhoto?'Changer la photo':'Ajouter une photo',`closeExMenu();changeExImg('${safeNm}')`)
@@ -992,6 +993,7 @@ function _rmSetHoldEnd(btn){
 let _expandedEx=null;
 let _groupMode=false;let _selectedGroupExs=new Set();
 let _exPickerMode='workout';
+let _replaceEi=null; // index de l'exo à remplacer (menu ⋯ → Remplacer l'exercice)
 let _editProgIdx=-1,_editProgData=null,_editDayIdx=0;
 function addExercise(name){
   if(_exPickerMode==='prog'){
@@ -1006,6 +1008,12 @@ function addExercise(name){
     _exPickerMode='workout';
     return;
   }
+  if(_exPickerMode==='replace'){
+    _exPickerMode='workout';       // avant closeExPicker (qui nullifie _replaceEi si mode==='replace')
+    _replaceExInWorkout(name);     // lit _replaceEi (encore défini)
+    closeExPicker();
+    return;
+  }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
   // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
@@ -1015,6 +1023,27 @@ function addExercise(name){
   persist();closeExPicker();renderExBlocks();
   setTimeout(()=>{const el=document.getElementById('ex-block-'+_expandedEx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
   toast(name+' ajouté !','info');
+}
+// Remplacer un exercice mal choisi (ex. Développé Décliné → Développé Couché) SANS perdre les séries.
+function openExPickerForReplace(ei){
+  closeExMenu();
+  _replaceEi=ei;
+  _exPickerMode='replace';
+  openExPicker();
+  toast('Choisis le bon exercice','info');
+}
+function _replaceExInWorkout(name){
+  const ei=_replaceEi;_replaceEi=null;
+  if(ei===null||!S.wkt||!S.wkt.exs[ei])return;
+  const old=S.wkt.exs[ei].name;
+  if(name===old){renderExBlocks();return;}
+  // On garde toutes les séries (kg/reps/type/note), on change juste le nom.
+  S.wkt.exs[ei].name=name;
+  // rm1 des séries validées recalculé sous le nouveau nom (inchangé numériquement, mais cohérent)
+  S.wkt.exs[ei].sets.forEach(s=>{if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);});
+  _expandedEx=ei;
+  persist();renderExBlocks();
+  toast('Exercice remplacé par '+name,'success');
 }
 function toggleExBlock(ei){
   _expandedEx=(_expandedEx===ei)?ei:ei;
@@ -1804,7 +1833,7 @@ function openExPicker(){
   filterEx();
   document.getElementById('mod-ex').classList.add('open');
 }
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'){_exPickerMode='workout';_replaceEi=null;}}
 function filterEx(){
   const q=(document.getElementById('ex-search').value||'').toLowerCase().trim();
   const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));
