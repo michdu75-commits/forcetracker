@@ -1,4 +1,4 @@
-const CACHE = 'ft-v294'; // pré-remplissage des séries PAR SÉRIE (perfs précédentes correctes, loadProg/loadProgDay/addExercise) + fix drag image iOS (touch-callout/user-select none + draggable=false)
+const CACHE = 'ft-v295'; // reclassement EXLIB : 6 Leg Curl + Abduction Cuisses déplacés de Jambes → Fessiers/Ischios (Adduction reste Jambes)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
