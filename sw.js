@@ -1,4 +1,4 @@
-const CACHE = 'ft-v302'; // Bilan corporel : import photo du rapport par l'IA + coller un code (en plus de la saisie manuelle)
+const CACHE = 'ft-v303'; // Bilan corporel : lecture photo améliorée (photo plus nette 1500px + prompt IA plus précis)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

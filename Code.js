@@ -991,13 +991,22 @@ function handleImportBodyScan_(body) {
       { type:'image', source:{ type:'base64', media_type: body.imageType || 'image/jpeg', data: body.image } },
       { type:'text', text:
           'Ceci est la photo d\'un rapport de composition corporelle (balance à impédance, type InBody/MyBodyCheck). '
-        + 'Lis les valeurs affichées et retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, avec EXACTEMENT ces clés '
-        + '(nombres, "." comme séparateur décimal, null si la valeur est absente ou illisible) :\n'
-        + '{"date":"YYYY-MM-DD ou null (date des mesures)","weight":poids total en kg,"bf":taux de graisse corporelle en pourcentage,'
-        + '"fatMass":masse grasse en kg,"muscle":masse musculaire en kg,"skMuscle":muscle squelettique en kg,"bone":masse osseuse en kg,'
-        + '"water":eau corporelle en kg,"protein":protéine en kg,"visceral":indice de graisse viscérale (nombre entier),'
-        + '"bmr":métabolisme de base (BMR) en kcal,"metaAge":âge corporel/métabolique en années,"imc":IMC}. '
-        + 'N\'invente aucun chiffre : si tu ne lis pas clairement une valeur, mets null.' }
+        + 'Lis TOUT le rapport, y compris les sections annexes ("Autres indicateurs", "Score corporel", "Analyse corporelle", "Mon coaching Expert"). '
+        + 'IMPORTANT : dans les tableaux, une valeur est souvent suivie d\'une PLAGE de référence entre parenthèses '
+        + '(ex. "87.50 (60.6-82.0)" ou "18.3 (8.6-17.1)"). Prends UNIQUEMENT le premier nombre (la mesure réelle), IGNORE la plage entre parenthèses.\n'
+        + 'Correspondance des libellés → clés JSON :\n'
+        + '- "Poids" → weight (kg)\n'
+        + '- "Taux de graisse corporelle" (%) → bf ; "Graisse corporelle" (kg) → fatMass\n'
+        + '- "Masse osseuse" (kg) → bone ; "Protéine" (kg) → protein ; "Eau corporelle" (kg) → water\n'
+        + '- "Muscle" (kg) → muscle ; "Muscle squelettique" (kg) → skMuscle\n'
+        + '- "Indice de graisse viscérale" → visceral (petit nombre entier, ex. 6)\n'
+        + '- "Taux Métabolique de Base" / "BMR" (kcal) → bmr\n'
+        + '- "Âge corporel" (années) → metaAge ; "IMC" → imc\n'
+        + '- "Date des mesures" → date (format YYYY-MM-DD)\n'
+        + 'Retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, avec EXACTEMENT ces clés '
+        + '("." comme séparateur décimal, null seulement si la valeur est vraiment absente ou illisible) :\n'
+        + '{"date":...,"weight":...,"bf":...,"fatMass":...,"muscle":...,"skMuscle":...,"bone":...,"water":...,"protein":...,"visceral":...,"bmr":...,"metaAge":...,"imc":...}. '
+        + 'Efforce-toi de remplir un MAXIMUM de champs (ils sont presque tous présents sur ce type de rapport). N\'invente aucun chiffre.' }
     ];
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
       method:'post',
