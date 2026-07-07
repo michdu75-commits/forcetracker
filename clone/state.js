@@ -58,6 +58,7 @@ function load(){
     S.targetWeight=parseFloat(localStorage.getItem('ft4_target')||'0')||0;
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
     S.discipline=localStorage.getItem('ft4_discipline')||'muscu';
+    S.timerSkin=localStorage.getItem('ft4_timerskin')||'segments'; // style du chrono de repos : segments | anneau | cadran | aiguille
     S.level=localStorage.getItem('ft4_level')||''; // '' | 'debutant' | 'intermediaire' | 'confirme' (niveau déclaré, évolue avec les séances)
     S.levelAuto=localStorage.getItem('ft4_levelAuto')==='1'; // true si le niveau a été promu automatiquement (évite de re-fêter)
     S.beginnerJourney=JSON.parse(localStorage.getItem('ft4_bjourney')||'null'); // parcours débutant : {style,freq,startDate,phase}
@@ -182,6 +183,7 @@ function persist(){
     localStorage.setItem('ft4_target',S.targetWeight||0);
     localStorage.setItem('ft4_goal',S.goal||'muscle');
     localStorage.setItem('ft4_discipline',S.discipline||'muscu');
+    localStorage.setItem('ft4_timerskin',S.timerSkin||'segments');
     localStorage.setItem('ft4_level',S.level||'');
     localStorage.setItem('ft4_levelAuto',S.levelAuto?'1':'0');
     localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
