@@ -1,4 +1,4 @@
-const CACHE = 'ft-v293'; // fix désynchro : bloc "Terminer la séance" (#log-finish) figé après suppression/vidage de la séance — vidé dans le chemin vide de renderExBlocks
+const CACHE = 'ft-v294'; // pré-remplissage des séries PAR SÉRIE (perfs précédentes correctes, loadProg/loadProgDay/addExercise) + fix drag image iOS (touch-callout/user-select none + draggable=false)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
