@@ -1,4 +1,4 @@
-const CACHE = 'ft-v295'; // reclassement EXLIB : 6 Leg Curl + Abduction Cuisses déplacés de Jambes → Fessiers/Ischios (Adduction reste Jambes)
+const CACHE = 'ft-v296'; // menu ⋯ → « Remplacer l'exercice » : corrige un exo mal choisi en séance sans perdre les séries
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
