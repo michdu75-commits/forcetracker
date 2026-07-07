@@ -280,7 +280,10 @@ function _renderSessDetailContent(){
     return`<div class="card" style="margin-bottom:8px;padding:10px 12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${ex.note?'4':'8'}px">
         <div style="font-weight:700;font-size:14px">${ex.name}</div>
-        <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--blue)" onclick="replaceSessEx(${ei})" title="Remplacer l'exercice">🔄</button>
+          <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
+        </div>
       </div>
       ${ex.note?`<div style="font-size:12px;color:var(--gold);font-style:italic;line-height:1.4;margin-bottom:8px;">💬 ${ex.note}</div>`:''}
       ${maxRM>0?`<div style="font-size:13px;color:var(--t1);font-weight:700;margin-bottom:8px;">🎯 Meilleur 1RM potentiel : <span style="font-weight:800">${fmt(maxRM)} kg</span></div>`:''}
@@ -315,6 +318,26 @@ function deleteSessEx(ei){
   if(!_sessEdits)return;
   const name=_sessEdits.exs[ei]&&_sessEdits.exs[ei].name||'cet exercice';
   showConfirm('Supprimer l\'exercice ?',`"${name}" sera retiré de cette séance.`,()=>{_sessEdits.exs.splice(ei,1);_renderSessDetailContent();_updateSdMuscles(_sessEdits);});
+}
+// Remplacer un exercice mal choisi dans une SÉANCE PASSÉE (garde les séries).
+// Ouvre le sélecteur ; le choix est routé par addExercise (mode 'replaceSess').
+let _replaceSessEi=null;
+function replaceSessEx(ei){
+  if(!_sessEdits||!_sessEdits.exs[ei])return;
+  _replaceSessEi=ei;
+  _exPickerMode='replaceSess';
+  openExPicker();
+  toast('Choisis le bon exercice','info');
+}
+function _replaceSessExPick(name){
+  const ei=_replaceSessEi;_replaceSessEi=null;
+  if(ei===null||!_sessEdits||!_sessEdits.exs[ei])return;
+  const old=_sessEdits.exs[ei].name;
+  if(name===old){_renderSessDetailContent();return;}
+  _sessEdits.exs[ei].name=name; // on garde toutes les séries, on change juste le nom
+  _renderSessDetailContent();
+  _updateSdMuscles(_sessEdits);
+  toast('Remplacé par '+name+' — pense à Enregistrer','info');
 }
 
 function deleteSessOrConfirm(){

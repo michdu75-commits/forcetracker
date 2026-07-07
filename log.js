@@ -1014,6 +1014,12 @@ function addExercise(name){
     closeExPicker();
     return;
   }
+  if(_exPickerMode==='replaceSess'){ // remplacement dans une séance passée (setup.js)
+    _exPickerMode='workout';
+    if(typeof _replaceSessExPick==='function')_replaceSessExPick(name);
+    closeExPicker();
+    return;
+  }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
   // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
@@ -1833,7 +1839,7 @@ function openExPicker(){
   filterEx();
   document.getElementById('mod-ex').classList.add('open');
 }
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'){_exPickerMode='workout';_replaceEi=null;}}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'){_exPickerMode='workout';_replaceEi=null;}}
 function filterEx(){
   const q=(document.getElementById('ex-search').value||'').toLowerCase().trim();
   const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));

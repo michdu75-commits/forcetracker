@@ -1,4 +1,4 @@
-const CACHE = 'ft-v296'; // menu ⋯ → « Remplacer l'exercice » : corrige un exo mal choisi en séance sans perdre les séries
+const CACHE = 'ft-v297'; // fix ✕ détail séance passée (confirm derrière le modal → z-index) + « Remplacer l'exercice » dans une séance terminée
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
