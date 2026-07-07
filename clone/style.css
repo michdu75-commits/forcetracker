@@ -212,7 +212,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 
 /* SCREENS */
 .screens{flex:1;overflow:hidden;position:relative;}
-.screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overscroll-behavior-y:contain;padding:12px 14px calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);display:none;flex-direction:column;gap:10px;background:var(--bg);}
+.screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:12px 14px calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);display:none;flex-direction:column;gap:10px;background:var(--bg);}
 .screen.active{display:flex;}
 /* Espaceur bas de scroll (fix iOS : padding-bottom d'un flex scroll ignoré par Safari).
    Un vrai élément est toujours compté dans la hauteur scrollable → la dernière carte passe au-dessus de la nav. */
@@ -571,7 +571,7 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 /* ─── DRAWER ─── */
 .drawer-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:400;opacity:0;pointer-events:none;transition:opacity .3s;}
 .drawer-backdrop.open{opacity:1;pointer-events:all;}
-.drawer{position:absolute;top:0;right:0;bottom:0;width:290px;max-width:90%;background:var(--bg2);z-index:401;transform:translateX(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-6px 0 32px rgba(0,0,0,.55);}
+.drawer{position:fixed;top:0;right:max(0px,calc(50vw - 215px));bottom:0;width:290px;max-width:90%;background:var(--bg2);z-index:401;transform:translateX(calc(100% + max(0px,50vw - 215px)));transition:transform .32s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-6px 0 32px rgba(0,0,0,.55);}
 .drawer.open{transform:translateX(0);}
 .drawer-hd{padding:max(env(safe-area-inset-top),44px) 16px 14px;border-bottom:1px solid var(--sep);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#0D0D1A,#12121F);}
 .drawer-item{display:flex;align-items:center;gap:14px;padding:15px 20px;border-bottom:1px solid rgba(255,255,255,.045);cursor:pointer;color:var(--t1);font-size:15px;font-weight:600;-webkit-tap-highlight-color:transparent;transition:background .12s;}
