@@ -1,4 +1,4 @@
-const CACHE = 'ft-v300'; // Coach : historique de chat persisté (survit à la fermeture) + bouton « Nouvelle discussion »
+const CACHE = 'ft-v301'; // Bilan corporel (balance pro) : saisie manuelle datée + évolution + Milo
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
