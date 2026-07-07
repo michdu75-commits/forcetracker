@@ -508,7 +508,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
-    +`${hasLocalGif?'<img src="'+_exImgSrc+'" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
+    +`${hasLocalGif?'<img src="'+_exImgSrc+'" draggable="false" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
@@ -1008,7 +1008,8 @@ function addExercise(name){
   }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
-  const sets=[0,1,2].map((_,i)=>({kg:prev.length?prev[0].kg:0,reps:prev.length?prev[0].reps:5,type:i===0&&prev.length?'É':'N',done:false,rm1:0}));
+  // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
+  const sets=[0,1,2].map((_,i)=>{const pp=prev.length?(prev[i]||prev[prev.length-1]):null;return{kg:pp?pp.kg:0,reps:pp?pp.reps:5,type:i===0&&prev.length?'É':'N',done:false,rm1:0};});
   S.wkt.exs.push({name,sets});
   _expandedEx=S.wkt.exs.length-1;
   persist();closeExPicker();renderExBlocks();
@@ -2701,11 +2702,16 @@ function loadProgDay(progIdx,dayIdx){
   const day=prog.days[dayIdx];
   S.wkt={date:today(),progLabel:day.label||('Jour '+(dayIdx+1)),exs:(day.exs||[]).map(e=>{
     const prev=getPrev(e.name);
-    const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map(s=>({
-      kg:prev.length?prev[0].kg:(s.kg||0),
-      reps:prev.length?prev[0].reps:(s.reps||10),
-      type:s.type||'N',done:false,rm1:0,rest:s.rest||0
-    }))};
+    // Pré-remplissage PAR SÉRIE depuis la séance précédente (comme la colonne « Précédent »
+    // et addSet) — série i → prev[i], repli sur la dernière série précédente, sinon valeur du programme.
+    const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
+      const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
+      return {
+        kg:pp?pp.kg:(s.kg||0),
+        reps:pp?pp.reps:(s.reps||10),
+        type:s.type||'N',done:false,rm1:0,rest:s.rest||0
+      };
+    })};
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
     return obj;
   })};
@@ -2908,11 +2914,15 @@ function loadProg(idx){
     progLabel:prog.name,
     exs:(prog.exs||[]).map(e=>{
       const prev=getPrev(e.name);
-      const obj={name:e.name,sets:(e.sets||[]).map(s=>({
-        kg:prev.length?prev[0].kg:(s.kg||0),
-        reps:prev.length?prev[0].reps:(s.reps||5),
-        type:s.type||'N',done:false,rm1:0,rest:s.rest||0
-      }))};
+      // Pré-remplissage PAR SÉRIE depuis la séance précédente (voir loadProgDay).
+      const obj={name:e.name,sets:(e.sets||[]).map((s,i)=>{
+        const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
+        return {
+          kg:pp?pp.kg:(s.kg||0),
+          reps:pp?pp.reps:(s.reps||5),
+          type:s.type||'N',done:false,rm1:0,rest:s.rest||0
+        };
+      })};
       if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
       return obj;
     })
