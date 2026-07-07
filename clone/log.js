@@ -1486,7 +1486,7 @@ let _pillIv=null; // interval dédié pill hors écran séance
 let _restBeeped=false;
 let _restDoneCb=null;
 let _countdownSecs=new Set(); // secondes 5..1 déjà vibrées
-let _cdownActive=false,_cdownAutoClose=null; // overlay décompte final
+let _cdownActive=false,_cdownAutoClose=null,_cdownColorTimer=null; // overlay décompte final
 let _cdownBeepedSecs=new Set(),_cdownGoDone=false; // vibration overlay
 const _isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
@@ -1591,18 +1591,24 @@ function _updateRestCountdown(){
   if(left<=0&&!_cdownGoDone){
     _cdownGoDone=true;
     if(navigator.vibrate)navigator.vibrate([200,60,200,60,300]);
-    // Flash vert — filet de sécurité mode silencieux iPhone
+    // Écran vert « GO » — reste vert jusqu'au tap (filet visuel mode silencieux)
     const _ov=document.getElementById('ov-rest-countdown');
-    if(_ov){_ov.style.transition='background .05s';_ov.style.background='#00e676';setTimeout(()=>{_ov.style.background='#0e1016';setTimeout(()=>{_ov.style.transition='';},200);},200);}
+    if(_ov){_ov.style.transition='background .22s';_ov.style.background='#00e676';}
+    // Après 5 s sans tap : cycle de couleurs (attrape-l'œil, on rappelle que c'est reparti)
+    if(_cdownColorTimer)clearTimeout(_cdownColorTimer);
+    _cdownColorTimer=setTimeout(()=>{
+      const o=document.getElementById('ov-rest-countdown');
+      if(o&&_cdownActive){o.style.transition='';o.style.background='';o.classList.add('go-cycle');}
+    },5000);
   }
   const ring=document.getElementById('rcd-ring');
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
   if(left<=0){
     // Écran GO persistant : reste affiché jusqu'au tap / bouton Passer (pas d'auto-close)
-    if(labelEl)labelEl.textContent="C'EST REPARTI";
+    if(labelEl){labelEl.textContent="C'EST REPARTI";labelEl.style.color='rgba(255,255,255,.9)';}
     if(numEl){numEl.textContent='GO';numEl.style.fontSize='80px';numEl.style.color='#fff';}
-    if(ring){ring.style.stroke='var(--red)';ring.setAttribute('stroke-dashoffset','534');}
+    if(ring){ring.style.stroke='rgba(255,255,255,.25)';ring.setAttribute('stroke-dashoffset','534');}
     return;
   }
   const circ=534;
@@ -1622,12 +1628,13 @@ function _closeRestCountdown(){
   if(!_cdownActive)return;
   _cdownActive=false;
   if(_cdownAutoClose){clearTimeout(_cdownAutoClose);_cdownAutoClose=null;}
+  if(_cdownColorTimer){clearTimeout(_cdownColorTimer);_cdownColorTimer=null;}
   const ov=document.getElementById('ov-rest-countdown');
-  if(ov)ov.style.display='none';
+  if(ov){ov.style.display='none';ov.style.background='';ov.style.transition='';ov.classList.remove('go-cycle');} // reset fond + cycle couleurs
   // reset pour la prochaine fois
   const labelEl=document.getElementById('rcd-label');
   const numEl=document.getElementById('rcd-num');
-  if(labelEl)labelEl.textContent='REPRISE DANS';
+  if(labelEl){labelEl.textContent='REPRISE DANS';labelEl.style.color='';}
   if(numEl){numEl.style.fontSize='110px';numEl.style.color='#FF6C00';}
 }
 // ─────────────────────────────────────────────────────────────────────
