@@ -1,4 +1,4 @@
-const CACHE = 'ft-v291'; // refonte chrono repos : barre compacte + ligne Séance collante (chrono+contrôles) + écran GO vert persistant + cycle couleurs 5s + cadran à segments du décompte final + fix glissement horizontal (ancien #drawer) + fix superset/transparence
+const CACHE = 'ft-v292'; // échec auto à l'import désactivé (_buildProgDay ne convertit plus specialSets en 'E')
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

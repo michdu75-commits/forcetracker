@@ -2316,14 +2316,14 @@ function finalImportProg(){
           sets=ex.repsPerSet.map((r,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:parseInt(r)||10,
-            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType,
+            type:baseType, /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
             rest:_restAt(si)
           }));
         }else{
           sets=Array.from({length:Math.max(1,ex.sets||3)},(_,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
             reps:ex.reps||10,
-            type:baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType,
+            type:baseType, /* échec auto à l'import désactivé (ft-v292) — ex.specialSets plus converti en 'E' */
             rest:_restAt(si)
           }));
         }
