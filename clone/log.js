@@ -1580,6 +1580,8 @@ function _showRestCountdown(){
   if(nameEl)nameEl.textContent=info?info.name:'';
   if(nextNumEl)nextNumEl.textContent=info?'Série '+info.num:'';
   if(nextDetailEl)nextDetailEl.textContent=info?(info.kg+' kg × '+info.reps):'';
+  // Fond sombre garanti à chaque ouverture (l'inline HTML #0e1016 avait pu être effacé par un GO précédent)
+  ov.style.background='#0e1016';ov.style.transition='';ov.classList.remove('go-cycle');
   ov.style.display='block';
   _updateRestCountdown();
 }
@@ -1633,7 +1635,7 @@ function _closeRestCountdown(){
   if(_cdownAutoClose){clearTimeout(_cdownAutoClose);_cdownAutoClose=null;}
   if(_cdownColorTimer){clearTimeout(_cdownColorTimer);_cdownColorTimer=null;}
   const ov=document.getElementById('ov-rest-countdown');
-  if(ov){ov.style.display='none';ov.style.background='';ov.style.transition='';ov.classList.remove('go-cycle');} // reset fond + cycle couleurs
+  if(ov){ov.style.display='none';ov.style.background='#0e1016';ov.style.transition='';ov.classList.remove('go-cycle');} // remet le fond sombre (jamais vide → jamais transparent)
   // reset pour la prochaine fois
   const labelEl=document.getElementById('rcd-label');
   const numEl=document.getElementById('rcd-num');
