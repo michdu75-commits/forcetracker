@@ -393,6 +393,7 @@ function renderWeightTab(){
   </div>`;
   renderWeightTarget();
   renderBodyFatCard();
+  renderBodyScanCard();
   const sorted=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
   // Bascule Poids ↔ Masse grasse
   const metricEl=document.getElementById('weight-metric');
@@ -599,6 +600,113 @@ function deleteWeighEntry(){
     if(S.weightLog[0])S.bw=S.weightLog[0].kg;
     persist();closeWeighEdit();renderWeightTab();renderHome();
     toast('Pesée supprimée','info');
+  });
+}
+// ─── BILAN CORPOREL (balance pro / impédancemètre) ───────────────
+const _BS_FIELDS=[
+  {k:'weight',l:'Poids',u:'kg',good:'down',req:true},
+  {k:'bf',l:'Graisse',u:'%',good:'down'},
+  {k:'fatMass',l:'Masse grasse',u:'kg',good:'down'},
+  {k:'muscle',l:'Muscle',u:'kg',good:'up'},
+  {k:'skMuscle',l:'Muscle squel.',u:'kg',good:'up'},
+  {k:'bone',l:'Masse osseuse',u:'kg',good:'up'},
+  {k:'water',l:'Eau',u:'kg',good:'up'},
+  {k:'protein',l:'Protéine',u:'kg',good:'up'},
+  {k:'visceral',l:'Graisse viscérale',u:'',good:'down'},
+  {k:'bmr',l:'Métabolisme base',u:'kcal',good:'up'},
+  {k:'metaAge',l:'Âge corporel',u:'ans',good:'down'},
+  {k:'imc',l:'IMC',u:'',good:'down'}
+];
+let _bsEditIdx=-1;
+function renderBodyScanCard(){
+  const el=document.getElementById('bodyscan-section');if(!el)return;
+  const scans=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(!scans.length){
+    el.innerHTML=`<div class="card cp" style="text-align:center;">
+      <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px;">Tu passes sur une balance pro (impédancemètre) ? Enregistre ton bilan — graisse viscérale, muscle, métabolisme… — pour suivre son évolution dans le temps et que Milo s'en serve.</div>
+      <button class="btn btn-red" style="width:100%;" onclick="openBodyScanForm(-1)">➕ Ajouter un bilan</button></div>`;
+    return;
+  }
+  const last=scans[0], prev=scans[1];
+  const showKeys=['weight','bf','muscle','visceral','bmr','metaAge'];
+  const cell=(f)=>{
+    const v=last[f.k]; if(v==null||v==='')return '';
+    let ev='';
+    if(prev&&prev[f.k]!=null&&prev[f.k]!==''){
+      const d=+(v-prev[f.k]).toFixed(1);
+      if(d!==0){
+        const goodDir=f.good==='up'?d>0:d<0;
+        const col=goodDir?'#22C55E':'var(--t3)';
+        ev=`<span style="font-size:10px;color:${col};font-weight:700;"> ${d>0?'▲':'▼'}${Math.abs(d)}</span>`;
+      }
+    }
+    return `<div style="background:var(--bg3);border-radius:10px;padding:9px 4px;text-align:center;">
+      <div style="font-size:15px;font-weight:800;color:var(--t1);white-space:nowrap;">${v}<span style="font-size:9px;color:var(--t3);font-weight:600;">${f.u?' '+f.u:''}</span>${ev}</div>
+      <div style="font-size:9px;color:var(--t3);margin-top:2px;">${f.l}</div></div>`;
+  };
+  const cells=_BS_FIELDS.filter(f=>showKeys.includes(f.k)).map(cell).join('');
+  const dstr=new Date(last.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+  let html=`<div class="card cp">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-weight:800;font-size:14px;">Dernier bilan · ${dstr}</div>
+      <button class="btn-xs btn-bg2" onclick="openBodyScanForm(${S.bodyScans.indexOf(last)})" style="padding:5px 10px;font-size:12px;">✎</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;">${cells}</div>
+    ${prev?'<div style="font-size:10px;color:var(--t3);text-align:center;margin-top:9px;">▲▼ = évolution depuis le bilan précédent (vert = dans le bon sens)</div>':''}
+  </div>`;
+  if(scans.length>1){
+    html+=`<div style="display:flex;flex-direction:column;gap:6px;">`;
+    scans.forEach(s=>{
+      const i=S.bodyScans.indexOf(s);
+      const dd=new Date(s.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
+      html+=`<div onclick="openBodyScanForm(${i})" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border-radius:10px;padding:10px 12px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);">
+        <span style="font-size:13px;font-weight:700;color:var(--t1);">${dd}</span>
+        <span style="font-size:12px;color:var(--t2);">${s.weight?s.weight+' kg':''}${s.bf?' · '+s.bf+'%':''}${s.muscle?' · '+s.muscle+' kg musc.':''}</span>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+  html+=`<button class="btn btn-red" style="width:100%;" onclick="openBodyScanForm(-1)">➕ Nouveau bilan</button>`;
+  el.innerHTML=html;
+}
+function openBodyScanForm(idx){
+  _bsEditIdx=idx;
+  const grid=document.getElementById('bs-grid');
+  const dateEl=document.getElementById('bs-date');
+  const delBtn=document.getElementById('bs-del-btn');
+  const sc=(idx>=0&&S.bodyScans&&S.bodyScans[idx])?S.bodyScans[idx]:null;
+  if(dateEl)dateEl.value=sc?sc.date:new Date().toISOString().slice(0,10);
+  if(grid)grid.innerHTML=_BS_FIELDS.map(f=>`<div>
+    <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:3px;">${f.l}${f.u?' ('+f.u+')':''}${f.req?' *':''}</label>
+    <input type="number" id="bs-${f.k}" step="0.1" inputmode="decimal" value="${sc&&sc[f.k]!=null?sc[f.k]:''}" placeholder="—" style="width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">
+  </div>`).join('');
+  if(delBtn)delBtn.style.display=sc?'block':'none';
+  const ov=document.getElementById('ov-bodyscan-form');if(ov)ov.classList.add('open');
+}
+function closeBodyScanForm(){const ov=document.getElementById('ov-bodyscan-form');if(ov)ov.classList.remove('open');}
+function saveBodyScan(){
+  const dEl=document.getElementById('bs-date');const date=dEl?dEl.value:'';
+  if(!date){toast('Choisis une date','error');return;}
+  const wEl=document.getElementById('bs-weight');const weight=wEl?parseFloat(wEl.value):NaN;
+  if(!weight||weight<=0){toast('Le poids est obligatoire','error');return;}
+  const obj={date};
+  _BS_FIELDS.forEach(f=>{const e=document.getElementById('bs-'+f.k);if(!e)return;const v=parseFloat(e.value);if(!isNaN(v))obj[f.k]=v;});
+  if((obj.imc==null||isNaN(obj.imc))&&S.height){obj.imc=+(weight/Math.pow(S.height/100,2)).toFixed(1);}
+  S.bodyScans=S.bodyScans||[];
+  if(_bsEditIdx>=0&&S.bodyScans[_bsEditIdx]){S.bodyScans[_bsEditIdx]=obj;}
+  else{const ex=S.bodyScans.findIndex(s=>s.date===date);if(ex>=0)S.bodyScans[ex]=obj;else S.bodyScans.push(obj);}
+  S.bodyScans.sort((a,b)=>b.date.localeCompare(a.date));
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  closeBodyScanForm();renderBodyScanCard();
+  toast('Bilan enregistré ✅','success');
+}
+function deleteBodyScan(){
+  if(_bsEditIdx<0||!S.bodyScans||!S.bodyScans[_bsEditIdx])return;
+  showConfirm('Supprimer ce bilan ?','Action définitive.',function(){
+    S.bodyScans.splice(_bsEditIdx,1);persist();
+    if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    closeBodyScanForm();renderBodyScanCard();toast('Bilan supprimé','info');
   });
 }
 function renderWeightChart(pts,box,metric){
