@@ -157,7 +157,7 @@ const NEW_FEATURES=[
   {id:'prog-badges', screen:'progress', spot:'ptab-badges', desc:'Onglet Badges (🏅)'},
   // Coach — spot = carte/bouton précis de l'écran Coach
   {id:'coach-photo', screen:'coach', spot:'coach-cam-btn', desc:'Envoi de photo au Coach IA (📷)'},
-  {id:'coach-morpho',screen:'coach', spot:'coach-action-morpho', desc:'Analyse morphologie 3 photos (📸 Premium)'},
+  {id:'coach-morpho',screen:'coach', spot:'coach-morpho-btn-wrap', desc:'Analyses photo de Milo (morpho + étude du corps, 📸 Premium)'},
   {id:'coach-share', screen:'coach',    desc:'Nouveau : partager ou copier une réponse du Coach'},
   {id:'body-study',  screen:'coach',    desc:'Nouveau : Étude du corps — 4 photos, bilan posture/insertions/équilibre + exercices (📐 Premium)'},
   {id:'force-prog',  screen:'coach', spot:'coach-action-force', desc:'Nouveau : Gagner en force (Big 3) — Milo te génère un programme powerlifting à enregistrer (🏋️)'},
