@@ -479,6 +479,12 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 /* MODALS */
 .overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
 .overlay.open{display:flex;}
+/* Hiérarchie des overlays empilés : le sélecteur d'exercices et surtout la
+   confirmation doivent passer AU-DESSUS d'un autre overlay ouvert (ex. détail
+   d'une séance passée). Sans ça, le popup s'ouvrait derrière → « la croix ne
+   marche pas » (ft-v297). */
+#mod-ex{z-index:300;}
+#ov-confirm{z-index:500;}
 .modal{background:var(--bg2);border-radius:24px 24px 0 0;padding:22px;width:100%;max-width:430px;max-height:85dvh;overflow-y:auto;border-top:1px solid var(--sep);}
 .modal-handle{width:40px;height:4px;background:var(--t3);border-radius:2px;margin:0 auto 10px;cursor:grab;padding:14px 60px;background-clip:content-box;box-sizing:content-box;}
 .modal h2{font-family:var(--font-cond);font-size:20px;font-weight:900;margin-bottom:16px;letter-spacing:.3px;}
