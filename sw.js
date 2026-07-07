@@ -1,4 +1,4 @@
-const CACHE = 'ft-v289'; // sous-menus (Menu → 1RM, guide…) : fermeture (et ouverture) en glissé doux au lieu de claquer d'un coup (anim dcUp/dcDown sur #ov-drawer-cnt)
+const CACHE = 'ft-v290'; // + Série : ne repart jamais à vide — poids de la séance précédente, sinon copie la dernière série en cours (fallback)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
