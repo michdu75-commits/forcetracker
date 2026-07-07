@@ -33,6 +33,15 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 # 💡 IDÉES À CADRER (discussion en cours — pas encore lancées)
 
+## ✕ (Annuler) vs 🗑 Vider — 2 boutons qui se ressemblent (à trancher)
+En séance, l'en-tête a **deux** boutons proches : **✕** (`clearWkt` → **quitte** la séance) et **🗑 Vider** (`clearAllEx` → **vide les exos mais garde la séance ouverte**, ex. mauvais programme chargé). Michel : « c'est quoi la différence, ça fait la même chose lol ». Ils font des choses **différentes** mais c'est pas clair visuellement. → À trancher plus tard : soit les rendre **visuellement distincts** (icônes/couleurs/libellés explicites « Quitter » vs « Vider »), soit en **retirer un** si l'un fait doublon à l'usage. **Laissé tel quel pour l'instant** (décision Michel 2026-07-07).
+
+## 🎨 Chronomètres de repos — skins au choix (gratuit) — EN COURS sur le clone
+Michel a envoyé 4 designs de chronos (montre chromée + anneau pointillé/pie rouge, cadrans noirs à segments vert→jaune→orange→rouge, chrono analogique aiguille, horloge pie verte à graduations). Idée : proposer **plusieurs styles de chrono au choix** (option **gratuite**), réglable quelque part (Profil ou réglages du timer). Essais **sur le clone** d'abord, puis promotion. *(Décision Michel 2026-07-07 : « voit ce que tu peux faire pour ces chronos, on fera des essais sur le clone, faudra les mettre en option de choix quelque part (gratuit) ».)*
+
+## 🅴 Échec auto à l'import — désactivé (ft-v292), à re-cadrer
+Avant : à l'import d'un programme, si le doc disait « à l'échec », `_buildProgDay` marquait la dernière série en **« E »** (via `ex.specialSets` → `'E'`). Remontée Christophe/Michel : indésirable (l'app mettait une série à l'échec toute seule). **Désactivé en ft-v292** (`type:baseType`, on ne convertit plus `specialSets` en `'E'`). **Gardé en mémoire** : si on veut le réactiver un jour, remettre la logique `baseType==='N'?((ex.specialSets&&ex.specialSets.includes(si))?'E':'N'):baseType` dans les deux `sets=` de `_buildProgDay` (log.js). *(Décision Michel 2026-07-07 : « on enlève pour l'instant mais garde en mémoire ».)*
+
 ## 📣 Réseau social / fil communautaire (gros projet, long terme)
 Idée Michel : une **page dédiée** type mini-réseau social / fil d'actu — ex. « Christophe a fait une super séance », « Événement aujourd'hui : salon du culturisme ». **Sans pop-up intrusif.** But : créer du lien entre utilisateurs.
 - ⚠️ **Gros chantier** : nécessite un **vrai backend** (comptes, posts, modération, notifications non-intrusives) — l'archi actuelle (Apps Script + localStorage) ne suffit pas. À planifier quand la base utilisateurs le justifie (cf. Phase 4 « base de données + hébergement »).
