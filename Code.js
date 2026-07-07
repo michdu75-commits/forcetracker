@@ -1027,6 +1027,16 @@ function handleCoach_(body) {
     const systemPrompt = String(ctx) +
       (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory : '');
 
+    // Milo : modèle selon l'utilisateur (valeurs dans les Script Properties, pas en dur)
+    var sp = PropertiesService.getScriptProperties();
+    var coachModel = 'claude-haiku-4-5-20251001';
+    var em = String(body.email || '').toLowerCase().trim();
+    var perUser = {
+      'michdu75@gmail.com':            sp.getProperty('COACH_MODEL_MICHEL'),
+      'christophe@famillelanglois.fr': sp.getProperty('COACH_MODEL_CHRISTOPHE')
+    };
+    if (perUser[em]) coachModel = perUser[em];
+
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
       method: 'post',
       headers: {
@@ -1035,7 +1045,7 @@ function handleCoach_(body) {
         'anthropic-version': '2023-06-01'
       },
       payload: JSON.stringify({
-        model:      'claude-haiku-4-5-20251001',
+        model:      coachModel,
         max_tokens: 1024,
         system:     systemPrompt,
         messages:   messages
