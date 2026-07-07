@@ -360,6 +360,7 @@ function doPost(e) {
   if (body.action === 'importHistory')    return handleImportHistory_(body);
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
   if (body.action === 'bodyStudy')         return handleBodyStudy_(body);
+  if (body.action === 'importBodyScan')    return handleImportBodyScan_(body);
   if (body.action === 'testerIdea')        return handleTesterIdea_(body);
   if (body.action === 'summarizeCoach')    return handleSummarizeCoach_(body);
   if (body.action === 'generateMealPlan')  return handleGenerateMealPlan_(body);
@@ -972,6 +973,41 @@ function handleBodyStudy_(body) {
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return json_({status:'error', error:'Analyse impossible. Réessaie avec des photos plus nettes et bien cadrées.'});
 
+    const data = JSON.parse(match[0]);
+    return json_({status:'ok', data: data});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ── Bilan corporel : lire une photo de rapport de balance pro → JSON des valeurs ──
+function handleImportBodyScan_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+  try {
+    if (!body.image) return json_({status:'error', error:'Aucune image reçue'});
+    const userContent = [
+      { type:'image', source:{ type:'base64', media_type: body.imageType || 'image/jpeg', data: body.image } },
+      { type:'text', text:
+          'Ceci est la photo d\'un rapport de composition corporelle (balance à impédance, type InBody/MyBodyCheck). '
+        + 'Lis les valeurs affichées et retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, avec EXACTEMENT ces clés '
+        + '(nombres, "." comme séparateur décimal, null si la valeur est absente ou illisible) :\n'
+        + '{"date":"YYYY-MM-DD ou null (date des mesures)","weight":poids total en kg,"bf":taux de graisse corporelle en pourcentage,'
+        + '"fatMass":masse grasse en kg,"muscle":masse musculaire en kg,"skMuscle":muscle squelettique en kg,"bone":masse osseuse en kg,'
+        + '"water":eau corporelle en kg,"protein":protéine en kg,"visceral":indice de graisse viscérale (nombre entier),'
+        + '"bmr":métabolisme de base (BMR) en kcal,"metaAge":âge corporel/métabolique en années,"imc":IMC}. '
+        + 'N\'invente aucun chiffre : si tu ne lis pas clairement une valeur, mets null.' }
+    ];
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method:'post',
+      headers:{ 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
+      payload: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1024, messages:[{role:'user', content:userContent}] }),
+      muteHttpExceptions:true
+    });
+    const result = JSON.parse(resp.getContentText());
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Lecture impossible. Réessaie avec une photo plus nette et bien cadrée.'});
     const data = JSON.parse(match[0]);
     return json_({status:'ok', data: data});
   } catch(err) {
