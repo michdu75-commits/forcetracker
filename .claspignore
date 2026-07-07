@@ -33,6 +33,12 @@ machine/**
 muscles/**
 anatomy/**
 
+# Clone (bac à sable frontend — NE JAMAIS pousser dans Apps Script, utilise window)
+clone/**
+
+# Libs frontend (jsPDF pour l'export PDF)
+lib/**
+
 # Dossiers dev
 .git/**
 node_modules/**

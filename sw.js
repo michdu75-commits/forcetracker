@@ -1,4 +1,4 @@
-const CACHE = 'ft-v298'; // Coach : 4 tuiles d'action avec icône à gauche (grid), plus compactes
+const CACHE = 'ft-v299'; // Coach : tuiles 1 colonne (2 lignes max) + retrait doublon « Analyse morpho » + envoi email pour Milo
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
