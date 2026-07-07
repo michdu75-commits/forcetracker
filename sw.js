@@ -1,4 +1,4 @@
-const CACHE = 'ft-v290'; // + Série : ne repart jamais à vide — poids de la séance précédente, sinon copie la dernière série en cours (fallback)
+const CACHE = 'ft-v291'; // refonte chrono repos : barre compacte + ligne Séance collante (chrono+contrôles) + écran GO vert persistant + cycle couleurs 5s + cadran à segments du décompte final + fix glissement horizontal (ancien #drawer) + fix superset/transparence
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
