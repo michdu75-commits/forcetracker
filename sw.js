@@ -1,4 +1,4 @@
-const CACHE = 'ft-v292'; // échec auto à l'import désactivé (_buildProgDay ne convertit plus specialSets en 'E')
+const CACHE = 'ft-v293'; // fix désynchro : bloc "Terminer la séance" (#log-finish) figé après suppression/vidage de la séance — vidé dans le chemin vide de renderExBlocks
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
