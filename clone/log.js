@@ -1486,7 +1486,7 @@ let _pillIv=null; // interval dédié pill hors écran séance
 let _restBeeped=false;
 let _restDoneCb=null;
 let _countdownSecs=new Set(); // secondes 5..1 déjà vibrées
-let _cdownActive=false,_cdownAutoClose=null,_cdownColorTimer=null; // overlay décompte final
+let _cdownActive=false,_cdownAutoClose=null,_cdownColorTimer=null,_cdownPendingCb=null; // overlay décompte final
 let _cdownBeepedSecs=new Set(),_cdownGoDone=false; // vibration overlay
 const _isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 
@@ -1539,11 +1539,14 @@ function _restTick(){
   if(left<=0&&!_restBeeped){
     _restBeeped=true;
     if(navigator.vibrate)navigator.vibrate([300,100,300,100,400]);
-    if(_restDoneCb){const cb=_restDoneCb;_restDoneCb=null;setTimeout(()=>{stopRest();cb();},400);return;}
     if(_cdownActive){
-      // Overlay GO visible : on arrête chrono + pastille mais on laisse l'overlay
-      // affiché (GO + flash) — il se ferme au tap ou bouton Passer
+      // Overlay GO visible : on garde l'overlay (vert persistant + cycle couleurs).
+      // Le callback superset (avance à l'exo suivant) se déclenchera à la FERMETURE (tap/Passer),
+      // pas automatiquement — sinon l'overlay se fermait après 400ms (vert disparu, pas de cycle).
+      _cdownPendingCb=_restDoneCb;   // préservé avant que _stopRestTimerOnly le remette à null
       _stopRestTimerOnly();
+    }else if(_restDoneCb){
+      const cb=_restDoneCb;_restDoneCb=null;setTimeout(()=>{stopRest();cb();},400);
     }else{
       stopRest();
     }
@@ -1636,6 +1639,9 @@ function _closeRestCountdown(){
   const numEl=document.getElementById('rcd-num');
   if(labelEl){labelEl.textContent='REPRISE DANS';labelEl.style.color='';}
   if(numEl){numEl.style.fontSize='110px';numEl.style.color='#FF6C00';}
+  // Callback superset différé (avance à l'exo suivant) — exécuté à la fermeture de l'écran GO
+  const _cb=_cdownPendingCb;_cdownPendingCb=null;
+  if(_cb)try{_cb();}catch(e){}
 }
 // ─────────────────────────────────────────────────────────────────────
 
