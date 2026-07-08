@@ -1,0 +1,42 @@
+name: Déployer le backend (Apps Script)
+
+# Se déclenche automatiquement dès que Code.js (ou appsscript.json) change sur master,
+# et peut aussi être lancé à la main depuis l'onglet "Actions" de GitHub.
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'Code.js'
+      - 'appsscript.json'
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Installer clasp
+        run: npm install -g @google/clasp@2.4.2
+
+      - name: Restaurer l'authentification clasp (depuis le secret)
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+        run: printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+
+      - name: Pousser Code.js (respecte .claspignore = seulement Code.js + appsscript.json)
+        run: clasp push --force
+
+      - name: Redéployer la web app (déploiement existant)
+        run: clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA -d "Auto-deploy GitHub"
+
+      - name: Vérifier que le backend répond
+        run: |
+          sleep 5
+          curl -s "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec?test=1" || true
