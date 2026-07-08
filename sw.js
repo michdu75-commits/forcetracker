@@ -1,4 +1,4 @@
-const CACHE = 'ft-v321'; // Pop-up Christophe v2 : explication bilan sanguin + Milo amélioré + questionnaire
+const CACHE = 'ft-v322'; // Import CSV de balance (testeurs) : charge l'historique complet dans le Bilan corporel + courbes poids/masse grasse
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

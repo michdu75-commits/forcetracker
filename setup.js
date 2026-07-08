@@ -224,7 +224,7 @@ function _cloudSync(){
       exRestPref:S.exRestPref||{},
       healthProfile:S.healthProfile||null,
       bodyStudy:S.bodyStudy||null,
-      bodyScans:(S.bodyScans||[]).slice(-60),
+      bodyScans:(S.bodyScans||[]).slice(-2000),
       bloodTests:(S.bloodTests||[]).slice(-40),
       coachQuiz:S.coachQuiz||null,
       coachQuizPro:S.coachQuizPro||null,
