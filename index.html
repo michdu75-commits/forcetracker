@@ -664,6 +664,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <span style="font-size:18px;color:var(--t3);line-height:1;">›</span>
       </div>
     </div>
+    <!-- Confirmation d'email (rempli par _renderEmailVerifyCard) -->
+    <div id="email-verify-card"></div>
     <!-- BOUTON RESTAURER — visible sans admin, pour récupérer ses données depuis le cloud -->
     <button class="btn" id="btn-restore-cloud" onclick="openRestoreAccount()" style="width:100%;background:rgba(91,168,255,.10);border:1.5px solid rgba(91,168,255,.38);color:var(--blue);font-size:14px;font-weight:700;padding:14px;border-radius:14px;touch-action:manipulation;">🔄 Restaurer mon compte depuis le cloud</button>
 
@@ -1912,6 +1914,22 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       Force Tracker <span class="app-ver">…</span> · 2026<br>
       <a href="mailto:michdu75@gmail.com" style="color:var(--t3);text-decoration:none;">michdu75@gmail.com</a>
     </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Confirmation d'email (code à 6 chiffres) -->
+<div id="ov-email-confirm" class="overlay" style="z-index:9999;" onclick="if(event.target===this)closeEmailConfirm()">
+  <div class="modal" style="max-width:390px;padding:26px 20px 22px;text-align:center;">
+    <div style="font-size:44px;line-height:1;">📧</div>
+    <div style="font-size:19px;font-weight:800;color:var(--t1);margin-top:8px;">Confirme ton email</div>
+    <div style="font-size:13.5px;color:var(--t2);line-height:1.5;margin-top:8px;">On a envoyé un code à 6 chiffres à<br><b id="ec-email" style="color:var(--t1);"></b>.<br>Entre-le ici pour sécuriser ta sauvegarde.</div>
+    <input id="ec-code" type="tel" inputmode="numeric" maxlength="6" placeholder="123456" style="width:100%;text-align:center;font-size:26px;letter-spacing:8px;font-weight:800;margin-top:16px;padding:12px;border-radius:12px;border:1.5px solid var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);">
+    <button id="ec-verify-btn" class="btn btn-red" onclick="verifyEmailCode()" style="width:100%;margin-top:14px;padding:13px;font-size:15px;">Vérifier</button>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button class="btn btn-bg2" onclick="resendEmailConfirm()" style="flex:1;font-size:13px;padding:11px;">Renvoyer le code</button>
+      <button class="btn btn-bg2" onclick="closeEmailConfirm()" style="flex:1;font-size:13px;padding:11px;">Plus tard</button>
+    </div>
+    <div style="font-size:11.5px;color:var(--t3);margin-top:12px;line-height:1.4;">Pas obligatoire — mais ça évite de perdre ta sauvegarde en cas de faute de frappe dans l'email. Regarde aussi tes spams.</div>
   </div>
 </div>
 

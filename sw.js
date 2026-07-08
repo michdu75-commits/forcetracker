@@ -1,4 +1,4 @@
-const CACHE = 'ft-v324'; // Type de balance à impédance (pieds / mains+pieds) + Milo interprète la masse grasse comme indicative (pas de fausse alarme sur un saut = changement d'appareil)
+const CACHE = 'ft-v325'; // Confirmation d'email (soft) : code a 6 chiffres par email a l'inscription + badge verifie (securise la sauvegarde)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

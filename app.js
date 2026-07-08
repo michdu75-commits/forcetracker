@@ -576,6 +576,8 @@ function finishOnboarding(){
     // Nouveau profil uniquement — si restauration depuis cloud, on ne réécrit JAMAIS le Sheet
     const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,welcome:true};
     fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
+    // Confirmation d'email (soft) : on envoie un code en fond — l'inscription n'est JAMAIS bloquée
+    if(!S.emailVerified){ try{ _sendEmailConfirm(true); }catch(e){} }
   }
   localStorage.setItem('ft4_ob2','1');
   try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){} // nouvel inscrit : pas de « Quoi de neuf » (il a le guide-film)
@@ -593,6 +595,51 @@ function finishOnboarding(){
   }else{
     setTimeout(showInstallPrompt,1400);
   }
+}
+
+// ── Confirmation d'email (soft) — bonus sécurité, ne bloque JAMAIS l'app ──
+function _sendEmailConfirm(silent){
+  if(!S.email||!S.url)return;
+  fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'sendConfirmCode',email:S.email})})
+    .then(r=>r.json()).then(d=>{
+      if(silent)return;
+      if(d&&d.status==='ok')toast('📧 Code envoyé — regarde ta boîte mail','success');
+      else toast('Envoi impossible pour l\'instant, réessaie plus tard','error');
+    }).catch(()=>{ if(!silent)toast('Réseau indisponible','error'); });
+}
+function openEmailConfirm(){
+  if(S.emailVerified){ if(typeof toast==='function')toast('Ton email est déjà confirmé ✅','info'); return; }
+  if(!S.email){ if(typeof toast==='function')toast('Ajoute d\'abord ton email dans le profil','info'); return; }
+  const em=document.getElementById('ec-email'); if(em)em.textContent=S.email;
+  const inp=document.getElementById('ec-code'); if(inp)inp.value='';
+  const ov=document.getElementById('ov-email-confirm'); if(ov)ov.classList.add('open');
+  _sendEmailConfirm(true); // (re)envoie un code à l'ouverture (respecte le cooldown serveur)
+}
+function closeEmailConfirm(){ const ov=document.getElementById('ov-email-confirm'); if(ov)ov.classList.remove('open'); }
+function resendEmailConfirm(){ _sendEmailConfirm(false); }
+function verifyEmailCode(){
+  const inp=document.getElementById('ec-code'); const code=(inp?inp.value:'').trim();
+  if(!/^\d{6}$/.test(code)){ toast('Entre le code à 6 chiffres reçu par email','error'); return; }
+  if(!S.url){ toast('Hors ligne — réessaie connecté','error'); return; }
+  const btn=document.getElementById('ec-verify-btn'); if(btn){btn.disabled=true;btn.textContent='Vérification…';}
+  fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'verifyConfirmCode',email:S.email,code:code})})
+    .then(r=>r.json()).then(d=>{
+      if(btn){btn.disabled=false;btn.textContent='Vérifier';}
+      if(d&&d.status==='ok'){ S.emailVerified=true; persist(); closeEmailConfirm(); _renderEmailVerifyCard(); toast('✅ Email confirmé, merci !','success'); }
+      else if(d&&d.status==='expired'){ toast('Code expiré — renvoie-en un nouveau','error'); }
+      else if(d&&d.status==='toomany'){ toast('Trop d\'essais — renvoie un nouveau code','error'); }
+      else if(d&&d.status==='nocode'){ toast('Aucun code en attente — clique « Renvoyer »','error'); }
+      else { toast('Code incorrect, réessaie','error'); }
+    }).catch(()=>{ if(btn){btn.disabled=false;btn.textContent='Vérifier';} toast('Réseau indisponible','error'); });
+}
+function _renderEmailVerifyCard(){
+  const el=document.getElementById('email-verify-card'); if(!el)return;
+  if(!S.email){ el.innerHTML=''; return; }
+  if(S.emailVerified){
+    el.innerHTML='<div style="display:flex;align-items:center;gap:7px;justify-content:center;font-size:13px;color:var(--green);font-weight:700;padding:8px;">✅ Email confirmé</div>';
+    return;
+  }
+  el.innerHTML='<button class="btn" onclick="openEmailConfirm()" style="width:100%;background:rgba(234,179,8,.10);border:1.5px solid rgba(234,179,8,.4);color:var(--gold);font-size:13.5px;font-weight:700;padding:13px;border-radius:14px;touch-action:manipulation;">📧 Confirme ton email — sécurise ta sauvegarde</button>';
 }
 
 // ─── PWA INSTALL ─────────────────────────────────────────────
@@ -1620,7 +1667,9 @@ window._premiumPending=!!S.email;
         const wasPremium=S.premium;
         S.premium=d2.premium===true;
         S.premiumExpiry=d2.premiumExpiry||'';
+        if(d2.profile&&d2.profile.emailVerified)S.emailVerified=true; // confirmé côté cloud
         persist();
+        try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
         window._premiumPending=false;
         updateCoachHeader();
         if(S.premium&&!wasPremium){
