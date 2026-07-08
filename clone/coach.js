@@ -576,6 +576,12 @@ ${(()=>{
 })()}
 ${(()=>{const cp=getMensCyclePhase();return cp?`- Phase cycle menstruel: ${cp.phase} (Jour ${cp.day}/${S.mensCycleDur}) — ${cp.nutrition}`:'';})()}
 ${(()=>{
+  const hasBf=((S.weightLog||[]).some(w=>w&&w.bf!=null))||((S.bodyScans||[]).length>0);
+  if(!hasBf&&!S.scaleType)return '';
+  const st=(typeof SCALE_TYPE_LABELS!=='undefined'&&SCALE_TYPE_LABELS[S.scaleType])||null;
+  return '\n⚖️ MASSE GRASSE — à interpréter avec prudence : ses % de masse grasse viennent d\'une balance à impédance'+(st?' ('+st+')':'')+'. C\'est une mesure INDICATIVE, TRÈS variable d\'un modèle à l\'autre (une balance mains+pieds/segmentaire lit souvent PLUS HAUT qu\'une balance pieds seuls). Devant un SAUT de masse grasse, pense d\'ABORD à un changement de balance ou d\'hydratation — PAS à une vraie prise de gras, ne l\'alarme jamais là-dessus. Fie-toi à la TENDANCE sur une même balance. Le poids (kg) est fiable, le % de gras beaucoup moins.';
+})()}
+${(()=>{
   const MT={ecto:'Ectomorphe (ossature légère, métabolisme rapide, difficultés à prendre du muscle)',meso:'Mésomorphe (corps athlétique naturel, réagit vite à l\'entraînement)',endo:'Endomorphe (métabolisme lent, prend du poids facilement, difficultés à perdre de la graisse)'};
   const MH={H:'Rectangle (épaules/taille/hanches similaires)',A:'Triangle (hanches plus larges que les épaules)',T:'Trapèze (épaules légèrement plus larges que les hanches)',V:'Triangle inversé (épaules beaucoup plus larges que les hanches)',O:'Ovale (ventre et torse proéminents)'};
   const MF={H:'Rectangle',A:'Poire (hanches et cuisses plus larges)',V:'Triangle inversé (épaules plus larges)',X:'Sablier (taille très marquée)',O:'Ronde (poids concentré autour du ventre)'};

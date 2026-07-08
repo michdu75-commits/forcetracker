@@ -1,4 +1,4 @@
-const CACHE = 'ft-v323'; // Import balance : lecture Excel (.xlsx/.xls via SheetJS local) + formats français (Feelfit) + dates AAAA/MM/JJ
+const CACHE = 'ft-v324'; // Type de balance à impédance (pieds / mains+pieds) + Milo interprète la masse grasse comme indicative (pas de fausse alarme sur un saut = changement d'appareil)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
