@@ -60,58 +60,138 @@ function _coachQuizContext(){
   return '\n🗣️ CE QUE LA PERSONNE A DIT SUR ELLE (questionnaire) — utilise-le pour vraiment personnaliser (ne le récite pas bêtement, sers-t\'en) :\n'+out.join('\n')+'\n';
 }
 
+// ── Réponses qui font AUSSI partie du profil → écrites direct dans le profil ──
+// (évite de redemander une info déjà connue, et remplit le profil au passage)
+const _CQ_PROFILE = {
+  goalfeel: { set:'setGoal',     map:{muscle:'muscle',force:'force',secher:'perte',forme:'equilibre'},
+              from:()=>({muscle:'muscle',force:'force',perte:'secher',equilibre:'forme'}[S.goal]) },
+  job:      { set:'setWorkType', map:{bureau:'bureau',debout:'debout',physique:'physique'},
+              from:()=>({bureau:'bureau',debout:'debout',physique:'physique'}[S.workType]) },
+};
+function _applyQuizToProfile(quiz,ans){
+  quiz.forEach(q=>{
+    const m=_CQ_PROFILE[q.id]; if(!m)return;
+    const v=ans[q.id]; if(v===undefined||v==='')return;
+    const target=m.map[v]; if(target===undefined)return;
+    try{ if(typeof window[m.set]==='function')window[m.set](target); else S[m.set==='setGoal'?'goal':'workType']=target; }catch(e){}
+  });
+}
+
 // ── UI du questionnaire ──────────────────────────────────────────────────
 let _cqSet='free';      // 'free' | 'pro'
 let _cqIdx=0;
 let _cqAns={};          // copie de travail
+let _cqSingle=false;    // mode "1 seule question" (question de la semaine premium)
 function _cqQuiz(){return _cqSet==='pro'?COACH_QUIZ_PRO:COACH_QUIZ;}
-function _cqStore(){return _cqSet==='pro'?S.coachQuizPro:S.coachQuiz;}
+// Première question avancée sans réponse (clé absente) — null si toutes posées
+function _nextProUnanswered(){
+  const a=(S.coachQuizPro&&S.coachQuizPro.answers)||{};
+  return COACH_QUIZ_PRO.find(q=>!Object.prototype.hasOwnProperty.call(a,q.id))||null;
+}
+function _proAnsweredCount(){
+  const a=(S.coachQuizPro&&S.coachQuizPro.answers)||{};
+  return COACH_QUIZ_PRO.filter(q=>Object.prototype.hasOwnProperty.call(a,q.id)).length;
+}
+// Question de la semaine "due" : premium, reste des questions, et ≥7 j depuis la dernière posée
+function _weeklyDue(){
+  if(!S.premium)return false;
+  if(!_nextProUnanswered())return false;
+  const la=S.coachQuizPro&&S.coachQuizPro.lastAsked;
+  if(!la)return true;
+  return (Date.now()-new Date(la).getTime())/86400000 >= 7;
+}
 function _renderCoachQuizCard(){
   const el=document.getElementById('coach-quiz-card'); if(!el)return;
   const freeDone=!!(S.coachQuiz&&S.coachQuiz.done);
-  const proDone=!!(S.coachQuizPro&&S.coachQuizPro.done);
   let html='';
   if(!freeDone){
     html=`<button class="cq-card" onclick="openCoachQuiz('free')">
       <div class="cq-card-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 0 1-9 9 9.5 9.5 0 0 1-4-.9L3 21l1.9-5A9 9 0 1 1 21 12z"/></svg></div>
       <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Milo veut apprendre à te connaître</div><div class="cq-card-sub">Quelques questions rapides (gratuit, ça ne compte pas dans tes questions) pour des conseils sur-mesure.</div></div></button>`;
+    el.innerHTML=html; return;
+  }
+  // Série gratuite faite
+  html=`<button class="cq-card done" onclick="openCoachQuiz('free')">
+    <div class="cq-card-ic" style="background:rgba(52,211,153,.16);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Milo te connaît ✅</div><div class="cq-card-sub">Tape pour revoir ou modifier tes réponses.</div></div></button>`;
+  const cnt=_proAnsweredCount(), tot=COACH_QUIZ_PRO.length;
+  const proAllAsked=!_nextProUnanswered();
+  const gem='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  const chk='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  const cal='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  if(proAllAsked){
+    html+=`<button class="cq-card done" style="margin-top:8px;" onclick="openCoachQuiz('pro')">
+      <div class="cq-card-ic" style="background:rgba(52,211,153,.16);">${chk}</div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées ✅</div><div class="cq-card-sub">Tape pour revoir tes réponses.</div></div></button>`;
+  } else if(!S.premium){
+    html+=`<button class="cq-card" style="margin-top:8px;opacity:.92;" onclick="openCoachQuiz('pro')">
+      <div class="cq-card-ic" style="background:rgba(234,179,8,.16);">${gem}</div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées <span style="color:var(--gold);">⭐ Premium</span></div><div class="cq-card-sub">Va plus loin : nutrition, récup, matériel, préférences… pour un ciblage encore plus fin.</div></div></button>`;
+  } else if(_weeklyDue()){
+    // Question de la semaine (une seule, pas tous les jours)
+    html+=`<button class="cq-card" style="margin-top:8px;" onclick="openWeeklyProQuestion()">
+      <div class="cq-card-ic" style="background:rgba(234,179,8,.16);">${cal}</div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">La question de la semaine de Milo</div><div class="cq-card-sub">1 petite question pour mieux te connaître · ${cnt}/${tot} déjà répondues. Tu peux aussi tout remplir d'un coup.</div></div></button>`;
   } else {
-    html=`<button class="cq-card done" onclick="openCoachQuiz('free')">
-      <div class="cq-card-ic" style="background:rgba(52,211,153,.16);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Milo te connaît ✅</div><div class="cq-card-sub">Tape pour revoir ou modifier tes réponses.</div></div></button>`;
-    // proposer le questionnaire avancé (premium)
-    if(!proDone){
-      html+=`<button class="cq-card" style="margin-top:8px;${S.premium?'':'opacity:.92;'}" onclick="openCoachQuiz('pro')">
-        <div class="cq-card-ic" style="background:rgba(234,179,8,.16);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
-        <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées ${S.premium?'':'<span style="color:var(--gold);">⭐ Premium</span>'}</div><div class="cq-card-sub">Va plus loin : nutrition, récup, matériel, préférences… pour un ciblage encore plus fin.</div></div></button>`;
-    } else {
-      html+=`<button class="cq-card done" style="margin-top:8px;" onclick="openCoachQuiz('pro')">
-        <div class="cq-card-ic" style="background:rgba(52,211,153,.16);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-        <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées ✅</div><div class="cq-card-sub">Tape pour revoir tes réponses.</div></div></button>`;
-    }
+    // Déjà posée cette semaine — bilan discret, remplissage groupé possible
+    html+=`<button class="cq-card done" style="margin-top:8px;" onclick="openCoachQuiz('pro')">
+      <div class="cq-card-ic" style="background:rgba(234,179,8,.16);">${gem}</div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées · ${cnt}/${tot}</div><div class="cq-card-sub">Milo t'a posé sa question de la semaine 👍 Reviens la semaine prochaine, ou tape pour tout remplir maintenant.</div></div></button>`;
   }
   el.innerHTML=html;
 }
 function openCoachQuiz(set){
-  if(set==='pro'&&!S.premium&&!(S.coachQuizPro&&S.coachQuizPro.done)){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
-  _cqSet=set;
-  _cqIdx=0;
-  const store=_cqStore();
+  if(set==='pro'&&!S.premium){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
+  _cqSet=set; _cqSingle=false;
+  const store=set==='pro'?S.coachQuizPro:S.coachQuiz;
   _cqAns=(store&&store.answers)?JSON.parse(JSON.stringify(store.answers)):{};
+  // reprend à la 1re question avancée non posée (sinon au début)
+  if(set==='pro'){ const nx=_nextProUnanswered(); _cqIdx=nx?COACH_QUIZ_PRO.indexOf(nx):0; }
+  else _cqIdx=0;
+  _cqPrefillFromProfile();
   const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.add('open');
   _renderCoachQuizStep();
 }
-function closeCoachQuiz(){ const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.remove('open'); }
+// Question de la semaine premium : une seule question (la prochaine non posée)
+function openWeeklyProQuestion(){
+  if(!S.premium){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
+  const q=_nextProUnanswered(); if(!q){ _renderCoachQuizCard(); return; }
+  _cqSet='pro'; _cqSingle=true;
+  _cqAns=(S.coachQuizPro&&S.coachQuizPro.answers)?JSON.parse(JSON.stringify(S.coachQuizPro.answers)):{};
+  _cqIdx=COACH_QUIZ_PRO.indexOf(q);
+  _cqPrefillFromProfile();
+  // marque "posée cette semaine" tout de suite → pas de relance même si fermée sans répondre
+  if(!S.coachQuizPro)S.coachQuizPro={answers:{},done:false};
+  S.coachQuizPro.lastAsked=new Date().toISOString().slice(0,10);
+  if(typeof persist==='function')persist();
+  const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.add('open');
+  _renderCoachQuizStep();
+}
+// Pré-sélectionne depuis le profil les questions qui recoupent le profil (si pas déjà répondues)
+function _cqPrefillFromProfile(){
+  _cqQuiz().forEach(q=>{
+    const m=_CQ_PROFILE[q.id]; if(!m)return;
+    if(_cqAns[q.id]!==undefined)return;
+    try{ const v=m.from&&m.from(); if(v)_cqAns[q.id]=v; }catch(e){}
+  });
+}
+function closeCoachQuiz(){ const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.remove('open'); _cqSingle=false; }
 function _renderCoachQuizStep(){
   const quiz=_cqQuiz();
   const total=quiz.length;
   const q=quiz[_cqIdx];
   const titleEl=document.getElementById('cq-title');
-  if(titleEl)titleEl.innerHTML=(_cqSet==='pro'
-    ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Questions avancées'
-    :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9.5 9.5 0 0 1-4-.9L3 21l1.9-5A9 9 0 1 1 21 12z"/></svg>Milo te connaît')
-    +` <span style="color:var(--t3);font-weight:600;font-size:13px;">${_cqIdx+1}/${total}</span>`;
-  const fill=document.getElementById('cq-progress-fill'); if(fill)fill.style.width=((_cqIdx)/total*100)+'%';
+  if(titleEl){
+    if(_cqSingle){
+      titleEl.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Question de la semaine';
+    } else {
+      titleEl.innerHTML=(_cqSet==='pro'
+        ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Questions avancées'
+        :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9.5 9.5 0 0 1-4-.9L3 21l1.9-5A9 9 0 1 1 21 12z"/></svg>Milo te connaît')
+        +` <span style="color:var(--t3);font-weight:600;font-size:13px;">${_cqIdx+1}/${total}</span>`;
+    }
+  }
+  const fill=document.getElementById('cq-progress-fill'); if(fill)fill.style.width=(_cqSingle?(_proAnsweredCount()/total*100):(_cqIdx/total*100))+'%';
   const step=document.getElementById('cq-step'); if(!step)return;
   const cur=_cqAns[q.id];
   let body=`<div class="cq-q">${q.q}</div>`;
@@ -128,8 +208,9 @@ function _renderCoachQuizStep(){
   }
   step.innerHTML=body;
   // Boutons nav
-  const prev=document.getElementById('cq-prev'); if(prev)prev.style.visibility=_cqIdx===0?'hidden':'visible';
-  const next=document.getElementById('cq-next'); if(next)next.innerHTML=(_cqIdx===total-1)?'Terminer ✓':'Suivant ▸';
+  const prev=document.getElementById('cq-prev'); if(prev)prev.style.visibility=(_cqSingle||_cqIdx===0)?'hidden':'visible';
+  const last=_cqIdx===total-1;
+  const next=document.getElementById('cq-next'); if(next)next.innerHTML=(_cqSingle?'Enregistrer ✓':(last?'Terminer ✓':'Suivant ▸'));
   const skip=document.getElementById('cq-skip'); if(skip)skip.style.display=(q.t==='text')?'none':'';
 }
 function _coachQuizPick(qid,val,multi){
@@ -144,24 +225,37 @@ function _coachQuizPick(qid,val,multi){
   } else {
     _cqAns[qid]=val;
     _renderCoachQuizStep();
-    // avance auto après un court délai (single choice)
-    setTimeout(()=>{ if(document.getElementById('ov-coach-quiz').classList.contains('open')) _coachQuizNext(); },230);
+    // avance auto après un court délai (single choice) — en mode "1 question" ça termine
+    setTimeout(()=>{ const ov=document.getElementById('ov-coach-quiz'); if(ov&&ov.classList.contains('open')) _coachQuizNext(); },230);
   }
 }
 function _coachQuizPrev(){ if(_cqIdx>0){_cqIdx--;_renderCoachQuizStep();} }
 function _coachQuizNext(skip){
+  if(_cqSingle){ _finishCoachQuiz(); return; }
   const quiz=_cqQuiz();
   if(_cqIdx<quiz.length-1){ _cqIdx++; _renderCoachQuizStep(); }
   else { _finishCoachQuiz(); }
 }
 function _finishCoachQuiz(){
-  const store={answers:JSON.parse(JSON.stringify(_cqAns)),done:true,date:new Date().toISOString().slice(0,10)};
-  if(_cqSet==='pro')S.coachQuizPro=store; else S.coachQuiz=store;
+  const today=new Date().toISOString().slice(0,10);
+  // En mode "1 question", marque la question posée (même si passée sans répondre) pour ne pas la reproposer
+  if(_cqSingle){ const q=COACH_QUIZ_PRO[_cqIdx]; if(q&&_cqAns[q.id]===undefined)_cqAns[q.id]=''; }
+  if(_cqSet==='pro'){
+    const prev=S.coachQuizPro||{};
+    S.coachQuizPro={ answers:JSON.parse(JSON.stringify(_cqAns)),
+      done: COACH_QUIZ_PRO.every(q=>Object.prototype.hasOwnProperty.call(_cqAns,q.id)),
+      lastAsked: today, date: prev.date||today };
+    _applyQuizToProfile(COACH_QUIZ_PRO,_cqAns);
+  } else {
+    S.coachQuiz={ answers:JSON.parse(JSON.stringify(_cqAns)), done:true, date:today };
+    _applyQuizToProfile(COACH_QUIZ,_cqAns);
+  }
   if(typeof persist==='function')persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  const single=_cqSingle;
   closeCoachQuiz();
   _renderCoachQuizCard();
-  if(typeof toast==='function')toast(_cqSet==='pro'?'Milo en sait encore plus sur toi 💪':'Milo te connaît mieux maintenant 💪','success');
+  if(typeof toast==='function')toast(single?'Merci ! Milo en sait un peu plus 👍':(_cqSet==='pro'?'Milo en sait encore plus sur toi 💪':'Milo te connaît mieux maintenant 💪'),'success');
 }
 
 // ─── Historique du chat persisté (survit à la fermeture de l'appli) ───

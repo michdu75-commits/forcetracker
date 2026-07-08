@@ -1,4 +1,4 @@
-const CACHE = 'ft-v316'; // Questionnaire « Milo apprend à te connaître » (gratuit, hors quota) + série avancée premium, injecté dans le contexte Milo
+const CACHE = 'ft-v317'; // Questionnaire : réponses profil (objectif/travail) écrites dans le profil + série avancée premium en 1 question/semaine
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
