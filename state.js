@@ -16,6 +16,7 @@ let S={
   name:'',
   coachFree:0,
   histImports:0,
+  bodyScanImports:0,
   premium:false,
   premiumExpiry:'',
   exRestPref:{},
@@ -72,6 +73,7 @@ function load(){
     S.anonId=localStorage.getItem('ft4_auid')||(()=>{const id='u_'+Math.random().toString(36).slice(2,11);localStorage.setItem('ft4_auid',id);return id;})();
     S.coachFree=parseInt(localStorage.getItem('ft4_coachFree')||'0')||0;
     S.histImports=parseInt(localStorage.getItem('ft4_histImp')||'0')||0;
+    S.bodyScanImports=parseInt(localStorage.getItem('ft4_bsimports')||'0')||0;
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
     S.premium=localStorage.getItem('ft4_premium')==='1';
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
@@ -195,6 +197,7 @@ function persist(){
     localStorage.setItem('ft4_progexos',JSON.stringify(S.progExos||BIG4));
     localStorage.setItem('ft4_coachFree',S.coachFree||0);
     localStorage.setItem('ft4_histImp',S.histImports||0);
+    localStorage.setItem('ft4_bsimports',S.bodyScanImports||0);
     localStorage.setItem('ft4_coach_mem',S.coachMemory||'');
     localStorage.setItem('ft4_exRp',JSON.stringify(S.exRestPref||{}));
     localStorage.setItem('ft4_premium',S.premium?'1':'0');

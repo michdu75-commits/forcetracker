@@ -708,9 +708,16 @@ function _resizeReport(file,cb){
   reader.readAsDataURL(file);
 }
 function importBodyScanPhoto(){const inp=document.getElementById('bs-photo-input');if(inp){inp.value='';inp.click();}}
+function _bodyScanPhotoUnlimited(){return (typeof _isSuperTester==='function'&&_isSuperTester());}
 function onBodyScanPhoto(input){
   const file=input.files&&input.files[0];if(!file)return;input.value='';
   if(!S.url){toast('Coach non configuré (Profil > Admin)','error');return;}
+  // Lecture photo : illimitée pour super-testeurs (Michel/Christophe), 1 seule fois pour les autres. Saisie main/code = gratuite.
+  const unlimited=_bodyScanPhotoUnlimited();
+  if(!unlimited&&(S.bodyScanImports||0)>=1){
+    toast('Lecture photo : ta lecture gratuite est déjà utilisée 🙂 Continue à la main ou par code (gratuit).','info');
+    return;
+  }
   toast('📖 Lecture du rapport…','info');
   _resizeReport(file,async(b64)=>{
     try{
@@ -719,6 +726,7 @@ function onBodyScanPhoto(input){
       const txt=await resp.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('réponse illisible');}
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
+      if(!unlimited){S.bodyScanImports=(S.bodyScanImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
       openBodyScanForm(-1);
       if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
       _BS_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});

@@ -211,6 +211,7 @@ function _cloudSync(){
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
       histImports:S.histImports||0,
+      bodyScanImports:S.bodyScanImports||0,
       coachMemory:S.coachMemory||'',
       customExercises:S.customExercises||[],
       exPhotos:S.exPhotos||{},
@@ -1465,6 +1466,7 @@ function _applyRestoreData(raw){
   try{const cb=d.badges&&Object.keys(d.badges).length;const lb=S.badges&&Object.keys(S.badges).length;if(cb&&(!lb||cb>lb))S.badges=d.badges;}catch(e){console.warn('[FT restore] badges',e);}
   // Import journal : garder le compteur le plus élevé (local vs cloud) — évite de re-gagner un import gratuit après purge
   try{if(d.histImports!==undefined)S.histImports=Math.max(S.histImports||0,parseInt(d.histImports)||0);}catch(e){}
+  try{if(d.bodyScanImports!==undefined)S.bodyScanImports=Math.max(S.bodyScanImports||0,parseInt(d.bodyScanImports)||0);}catch(e){}
   try{if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;}catch(e){console.warn('[FT restore] customEx',e);}
   try{if(d.exPhotos&&Object.keys(d.exPhotos).length)S.exPhotos={...(S.exPhotos||{}),...d.exPhotos};}catch(e){console.warn('[FT restore] exPhotos',e);}
   // PRs — prend le plus complet

@@ -494,6 +494,7 @@ function handleSaveProfile_(body) {
     if (body.exPhotos      !== undefined) profile.exPhotos      = _po_(body.exPhotos,      profile.exPhotos);
     if (body.bodyStudy     !== undefined) profile.bodyStudy     = _po_(body.bodyStudy,     profile.bodyStudy);
     if (body.bodyScans     !== undefined) profile.bodyScans     = _pa_(body.bodyScans,     profile.bodyScans);
+    if (body.bodyScanImports!== undefined) profile.bodyScanImports= _pn_(body.bodyScanImports, profile.bodyScanImports);
 
     existing.profile = profile;
 
