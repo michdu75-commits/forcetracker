@@ -573,6 +573,9 @@ function handleSaveProfile_(body) {
     if (body.coachQuiz     !== undefined) profile.coachQuiz     = _po_(body.coachQuiz,     profile.coachQuiz);
     if (body.coachQuizPro  !== undefined) profile.coachQuizPro  = _po_(body.coachQuizPro,  profile.coachQuizPro);
     if (body.scaleType     !== undefined) profile.scaleType     = _ps_(body.scaleType,     profile.scaleType);
+    if (body.diet          !== undefined) profile.diet          = _ps_(body.diet,          profile.diet);
+    if (body.dietRestrictions!== undefined) profile.dietRestrictions = _pa_(body.dietRestrictions, profile.dietRestrictions);
+    if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
 
     existing.profile = profile;
 

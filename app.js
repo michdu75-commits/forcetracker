@@ -1180,6 +1180,39 @@ function copyWeekSummary(){
 }
 
 // ─── PLAN DE REPAS IA ────────────────────────────────────────
+// ── Régime alimentaire + restrictions (végé, halal, allergies…) ──
+function _renderDietCard(){
+  const el=document.getElementById('diet-card'); if(!el)return;
+  const diet=S.diet||'';
+  const dietBtn=(v,l)=>`<button onclick="setDiet('${v}')" class="btn ${diet===v?'btn-red':'btn-bg2'}" style="flex:1;font-size:12.5px;padding:9px 4px;">${l}</button>`;
+  const restr=S.dietRestrictions||[];
+  const rBtn=(k,l)=>`<button onclick="toggleDietRestriction('${k}')" class="btn ${restr.includes(k)?'btn-red':'btn-bg2'}" style="width:auto;flex:0 0 auto;font-size:12px;padding:8px 12px;border-radius:20px;">${l}</button>`;
+  el.innerHTML=`<div class="card cp" style="display:flex;flex-direction:column;gap:13px;">
+    <div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Type d'alimentation</div>
+      <div style="display:flex;gap:6px;">${dietBtn('omnivore','Omnivore')}${dietBtn('vegetarien','Végé')}${dietBtn('vegan','Végan')}${dietBtn('pescetarien','Pescé')}</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Restrictions (plusieurs possibles)</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">${rBtn('halal','🕌 Halal')}${rBtn('casher','✡️ Casher')}${rBtn('sansporc','Sans porc')}${rBtn('sansboeuf','Sans bœuf')}${rBtn('sansalcool','Sans alcool')}${rBtn('sanslactose','Sans lactose')}${rBtn('sansgluten','Sans gluten')}</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Allergies / aliments à éviter</div>
+      <input id="diet-notes-inp" type="text" value="${(S.dietNotes||'').replace(/"/g,'&quot;')}" oninput="saveDietNotes(this.value)" placeholder="ex. fruits à coque, fruits de mer…" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:13.5px;box-sizing:border-box;">
+    </div>
+    <div style="font-size:11px;color:var(--t3);line-height:1.45;">🥗 Milo et le plan de repas respectent tout ça — jamais un aliment que tu ne manges pas.</div>
+    ${diet==='vegan'?'<div style="font-size:11.5px;color:var(--gold);line-height:1.45;">💊 Végan : protéine végétale (pois/riz) au lieu de la whey · pense B12, oméga-3 (algues), vitamine D, fer.</div>':diet==='vegetarien'?'<div style="font-size:11.5px;color:var(--gold);line-height:1.45;">💊 Végétarien : whey/œufs OK · surveille le fer et la B12.</div>':''}
+  </div>`;
+}
+function setDiet(v){ S.diet=(S.diet===v?'':v); if(typeof persist==='function')persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced(); _renderDietCard(); }
+function toggleDietRestriction(k){
+  const a=(S.dietRestrictions||[]).slice(); const i=a.indexOf(k);
+  if(i>=0)a.splice(i,1); else a.push(k);
+  S.dietRestrictions=a; if(typeof persist==='function')persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced(); _renderDietCard();
+}
+let _dietNotesT=null;
+function saveDietNotes(v){ S.dietNotes=v; if(_dietNotesT)clearTimeout(_dietNotesT); _dietNotesT=setTimeout(function(){ if(typeof persist==='function')persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced(); },600); }
+
 async function generateMealPlan(regenDay,regenMeal){
   if(!S.url){toast('Connexion requise','error');return;}
   if(!S.bw||!S.age||!S.height){toast('Complète ton profil d\'abord (âge, taille, poids)','error');return;}
@@ -1194,10 +1227,12 @@ async function generateMealPlan(regenDay,regenMeal){
   if(btn){btn.disabled=true;btn.textContent='⏳ Génération...';}
   const macros=calcMacros(S.nutritionPhase);
   const cp=getMensCyclePhase();
+  const _diet=(typeof dietSummary==='function')?dietSummary():'';
   const ctx=`Profil: ${S.gender==='H'?'Homme':'Femme'}, ${S.age} ans, ${S.bw}kg, objectif: ${GOAL_LABELS[S.goal]||S.goal}, phase: ${S.nutritionPhase}`
     +`\nMacros/jour: ${macros.calories} kcal · P ${macros.prot_g}g · G ${macros.carbs_g}g · L ${macros.fat_g}g`
     +(cp&&cp.phase?`\nCycle: phase ${cp.phase} (jour ${cp.day}/${S.mensCycleDur})`:'')
-    +(S.morphotype?` · Morphotype: ${S.morphotype}`:'');
+    +(S.morphotype?` · Morphotype: ${S.morphotype}`:'')
+    +(_diet?`\n⚠️ RÉGIME À RESPECTER ABSOLUMENT: ${_diet}. N'inclus AUCUN aliment interdit ni non conforme.`:'');
   try{
     const body={action:'generateMealPlan',context:ctx,scope:isPrem?'week':'day',startDate:td};
     if(isRegen){body.regenDay=regenDay;body.regenMeal=regenMeal;}

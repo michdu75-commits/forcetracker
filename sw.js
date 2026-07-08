@@ -1,4 +1,4 @@
-const CACHE = 'ft-v326'; // Photos d'exercices en LOCAL seulement (retirees du cloud) -> vide le store 9 Mo, garde local + hors-ligne
+const CACHE = 'ft-v327'; // Nutrition : regime alimentaire + restrictions (vege/vegan/halal/casher/allergies) -> plan de repas IA + Milo + suppléments
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -230,6 +230,9 @@ function _cloudSync(){
       coachQuiz:S.coachQuiz||null,
       coachQuizPro:S.coachQuizPro||null,
       scaleType:S.scaleType||'',
+      diet:S.diet||'',
+      dietRestrictions:S.dietRestrictions||[],
+      dietNotes:S.dietNotes||'',
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
       leftHand:S.leftHand||false
@@ -1469,6 +1472,9 @@ function _applyRestoreData(raw){
   try{if(d.coachQuiz&&d.coachQuiz.answers&&!(S.coachQuiz&&S.coachQuiz.done))S.coachQuiz=d.coachQuiz;}catch(e){console.warn('[FT restore] coachQuiz',e);}
   try{if(d.coachQuizPro&&d.coachQuizPro.answers&&!(S.coachQuizPro&&S.coachQuizPro.done))S.coachQuizPro=d.coachQuizPro;}catch(e){console.warn('[FT restore] coachQuizPro',e);}
   try{if(d.scaleType&&!S.scaleType)S.scaleType=d.scaleType;}catch(e){console.warn('[FT restore] scaleType',e);}
+  try{if(d.diet&&!S.diet)S.diet=d.diet;}catch(e){}
+  try{if(Array.isArray(d.dietRestrictions)&&d.dietRestrictions.length&&!(S.dietRestrictions||[]).length)S.dietRestrictions=d.dietRestrictions;}catch(e){}
+  try{if(d.dietNotes&&!(S.dietNotes||'').trim())S.dietNotes=d.dietNotes;}catch(e){}
   try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
   try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
   try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}

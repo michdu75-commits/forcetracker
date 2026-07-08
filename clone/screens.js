@@ -665,6 +665,7 @@ function renderNutrition(){try{
       </div>
       <div class="meal-kcal">${m.kcal} kcal</div>
     </div>`).join('');
+  try{if(typeof _renderDietCard==='function')_renderDietCard();}catch(e){}
   renderMealPlanIA();
 }catch(e){console.error('[FT] renderNutrition:',e);}}
 

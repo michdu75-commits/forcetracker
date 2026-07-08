@@ -561,6 +561,7 @@ ${S.level==='debutant'?`- Débutant·e : un « parcours débutant » (Étape 1 g
 ${(S.beginnerJourney&&S.beginnerJourney.phase===1)?`- Il/elle a démarré son parcours (Étape 1 « Découverte », ${S.beginnerJourney.freq} séances/sem, style ${S.beginnerJourney.style==='split'?'split':'full body'}). Objectif: tenir 3 semaines en montant les charges. Encourage, félicite la régularité, et prépare-le/la à la suite du parcours.`:''}
 ${(()=>{const bmi=(S.bw&&S.height)?S.bw/((S.height/100)**2):0;return (bmi>=28||S.goal==='perte')?`- Attention au poids/articulations${bmi?` (IMC ~${Math.round(bmi)})`:''} : privilégie le cardio À FAIBLE IMPACT (vélo, marche rapide, elliptique, rameur — évite course/sauts qui tapent genoux et dos), une progression douce des charges, et un travail de gainage. Le cardio est important ici pour la santé cardiovasculaire et la perte de gras.`:''})()}
 - Calories cible: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
+${(typeof dietSummary==='function'&&dietSummary())?`- ⚠️ RÉGIME ALIMENTAIRE À RESPECTER: ${dietSummary()} — ne propose JAMAIS d'aliment ou de supplément non conforme (ex. végan → pas de whey/œufs, propose protéine végétale + B12 ; halal/sans porc → aucun porc/gélatine porcine ni alcool si sans alcool).`:''}
 ${(()=>{
   const bf_n=S.neck,bf_w=S.waist,bf_h=S.hip,bf_ht=S.height;
   let bf=null;
