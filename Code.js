@@ -1003,9 +1003,14 @@ function handleImportBodyScan_(body) {
         + '- "Taux Métabolique de Base" / "BMR" (kcal) → bmr\n'
         + '- "Âge corporel" (années) → metaAge ; "IMC" → imc\n'
         + '- "Date des mesures" → date (format YYYY-MM-DD)\n'
+        + 'DÉTAIL PAR SEGMENT (sections "Analyse segmentaire de la masse musculaire" et "Analyse segmentaire de la masse grasse", en kg, souvent affiché à gauche=G et à droite=D du schéma corporel) :\n'
+        + '- muscle bras gauche/droit → armMuscleL / armMuscleR ; muscle tronc → trunkMuscle ; muscle jambe gauche/droite → legMuscleL / legMuscleR\n'
+        + '- graisse bras gauche/droit → armFatL / armFatR ; graisse tronc → trunkFat ; graisse jambe gauche/droite → legFatL / legFatR\n'
+        + '(Sur le schéma, la valeur en kg est le grand chiffre ; ignore le pourcentage et le mot Normal/Élevé.)\n'
         + 'Retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, avec EXACTEMENT ces clés '
         + '("." comme séparateur décimal, null seulement si la valeur est vraiment absente ou illisible) :\n'
-        + '{"date":...,"weight":...,"bf":...,"fatMass":...,"muscle":...,"skMuscle":...,"bone":...,"water":...,"protein":...,"visceral":...,"bmr":...,"metaAge":...,"imc":...}. '
+        + '{"date":...,"weight":...,"bf":...,"fatMass":...,"muscle":...,"skMuscle":...,"bone":...,"water":...,"protein":...,"visceral":...,"bmr":...,"metaAge":...,"imc":...,'
+        + '"armMuscleL":...,"armMuscleR":...,"trunkMuscle":...,"legMuscleL":...,"legMuscleR":...,"armFatL":...,"armFatR":...,"trunkFat":...,"legFatL":...,"legFatR":...}. '
         + 'Efforce-toi de remplir un MAXIMUM de champs (ils sont presque tous présents sur ce type de rapport). N\'invente aucun chiffre.' }
     ];
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {

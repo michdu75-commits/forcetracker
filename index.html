@@ -1560,6 +1560,11 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <input type="date" id="bs-date" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">
       </div>
       <div id="bs-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+      <details style="margin-top:2px;">
+        <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--t2);padding:4px 0;">📊 Détail par segment (optionnel)</summary>
+        <div style="font-size:11px;color:var(--t3);margin:4px 0 8px;line-height:1.4;">Muscle & graisse par zone (gauche/droite) — permet à Milo de repérer les déséquilibres. Facultatif.</div>
+        <div id="bs-seg-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+      </details>
     </div>
     <div style="margin-top:16px;display:flex;gap:8px;">
       <button class="btn btn-bg2" id="bs-del-btn" style="flex:1;color:var(--red);display:none;" onclick="deleteBodyScan()">🗑 Supprimer</button>
