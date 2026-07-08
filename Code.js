@@ -246,6 +246,26 @@ function doGet(e) {
     return json_({status:'ok', count: arr.length, ideas: arr});
   }
 
+  // Consommation IA du jour (garde-fou coût) — ?action=aiUsage&token=FT_IDEES_2026
+  if (p.action === 'aiUsage') {
+    if (p.token !== 'FT_IDEES_2026') return json_({status:'error', error:'token'});
+    var sp = PropertiesService.getScriptProperties();
+    var q = {};
+    try { q = JSON.parse(sp.getProperty('ai_quota') || '{}'); } catch(e2) { q = {}; }
+    var byEmail = q.byEmail || {};
+    var top = Object.keys(byEmail).map(function(k){ return {email:k, count:byEmail[k]}; })
+                    .sort(function(a,b){ return b.count - a.count; }).slice(0, 30);
+    return json_({
+      status: 'ok',
+      date: q.date || null,
+      global: q.global || 0,
+      globalMax: parseInt(sp.getProperty('AI_GLOBAL_MAX'), 10) || 1500,
+      emailMax: parseInt(sp.getProperty('AI_EMAIL_MAX'), 10) || 100,
+      uniqueUsers: Object.keys(byEmail).length,
+      topUsers: top
+    });
+  }
+
   // Test garde-fou universel — ?action=testGardeFou
   if (p.action === 'testGardeFou') {
     try {
@@ -333,6 +353,33 @@ function ensurePremiumEmails_() {
   }
 }
 
+// ── Garde-fou coût IA : compteurs journaliers d'appels IA (1 propriété JSON,
+// remise à zéro automatique chaque jour). Limites réglables via Script Properties
+// AI_GLOBAL_MAX / AI_EMAIL_MAX (sans redéploiement). Fail-open : en cas d'erreur,
+// on ne bloque JAMAIS un vrai utilisateur.
+function _aiQuotaBlock_(email) {
+  try {
+    var sp = PropertiesService.getScriptProperties();
+    var GLOBAL_MAX = parseInt(sp.getProperty('AI_GLOBAL_MAX'), 10) || 1500; // total / jour
+    var EMAIL_MAX  = parseInt(sp.getProperty('AI_EMAIL_MAX'), 10)  || 100;  // / jour / email
+    var tz = Session.getScriptTimeZone() || 'Europe/Paris';
+    var today = Utilities.formatDate(new Date(), tz, 'yyyyMMdd');
+    var raw = sp.getProperty('ai_quota');
+    var q = raw ? JSON.parse(raw) : null;
+    if (!q || q.date !== today) q = { date: today, global: 0, byEmail: {} };
+    var e = (email || 'anon').toString().toLowerCase().trim() || 'anon';
+    var ec = q.byEmail[e] || 0;
+    if (q.global >= GLOBAL_MAX) return { blocked: true, scope: 'global' };
+    if (ec >= EMAIL_MAX)        return { blocked: true, scope: 'email' };
+    q.global++;
+    q.byEmail[e] = ec + 1;
+    sp.setProperty('ai_quota', JSON.stringify(q));
+    return { blocked: false };
+  } catch (err) {
+    return { blocked: false };
+  }
+}
+
 // ───────────────────────────────────────────────────────────
 function doPost(e) {
   // Ko-fi envoie application/x-www-form-urlencoded avec un champ "data" JSON
@@ -348,6 +395,21 @@ function doPost(e) {
   }
 
   ensurePremiumEmails_();
+
+  // ── GARDE-FOU COÛT IA ─────────────────────────────────────────────
+  // Limite le nombre d'appels IA par jour (par email + global) pour éviter les abus
+  // et l'explosion de la facture Anthropic. N'affecte PAS les actions sans IA
+  // (loadProfile, saveProfile, logSession, validateCode, test…).
+  var AI_ACTIONS_ = ['coach','importProgram','importHistory','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
+  if (AI_ACTIONS_.indexOf(body.action) >= 0) {
+    var _q = _aiQuotaBlock_(body.email);
+    if (_q.blocked) {
+      var _msg = _q.scope === 'global'
+        ? "L'assistant IA est très sollicité aujourd'hui 🙏 Réessaie un peu plus tard ou demain."
+        : "Tu as atteint ta limite d'IA pour aujourd'hui 👍 Reviens demain, l'entraînement continue !";
+      return json_({status:'error', error:'quota', scope:_q.scope, reply:_msg});
+    }
+  }
 
   if (body.action === 'test')              return json_({status:'online', version:'3.5'});
   if (body.action === 'loadProfile')       return handleLoadProfilePost_(body);
