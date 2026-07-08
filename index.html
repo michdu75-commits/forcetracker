@@ -1055,6 +1055,35 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<!-- POP-UP perso Christophe (« billoute ») — une seule fois -->
+<div class="overlay" id="ov-billoute" style="z-index:500;">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:50px;line-height:1;">💪</div>
+    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Salut billoute !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel t'a préparé du lourd, rien que pour toi :</div>
+    <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
+      <div class="sw-feat"><span>🤖</span><div><b>Un Coach IA bien plus intelligent</b><small>Milo tourne pour toi sur un modèle beaucoup plus costaud — des conseils plus fins, plus complets, plus précis.</small></div></div>
+      <div class="sw-feat"><span>🧪</span><div><b>Tes rapports de balance en illimité</b><small>Prends en photo tes analyses de composition corporelle (balance à indice / impédance) autant de fois que tu veux. Progrès → Poids → Bilan corporel.</small></div></div>
+    </div>
+    <button class="btn btn-red" onclick="closeBilloute()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Trop bien, merci ! 🙌</button>
+  </div>
+</div>
+
+<!-- POP-UP « Quoi de neuf » — tout le monde, une seule fois -->
+<div class="overlay" id="ov-whatsnew" style="z-index:500;">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:50px;line-height:1;">✨</div>
+    <div style="font-size:22px;font-weight:900;color:var(--red);margin-top:8px;">Quoi de neuf ?</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Force Tracker s'est enrichi :</div>
+    <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
+      <div class="sw-feat"><span>🧪</span><div><b>Bilan corporel (balance pro)</b><small>Tu passes sur une balance à impédance ? Enregistre tes chiffres — par photo, à la main ou en collant un code — suis leur évolution, et Milo s'en sert. Progrès → Poids.</small></div></div>
+      <div class="sw-feat"><span>💾</span><div><b>Milo garde vos conversations</b><small>Ton fil de discussion reste sauvegardé même après fermeture. Le bouton « + » démarre une nouvelle discussion.</small></div></div>
+      <div class="sw-feat"><span>📖</span><div><b>Guide mis à jour</b><small>Menu → « Guide de l'application » pour tout revoir en images.</small></div></div>
+    </div>
+    <button class="btn btn-red" onclick="closeWhatsNew()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">C'est parti 💪</button>
+  </div>
+</div>
+
 <!-- ESPACE TESTEUR (super testeur) : analyse photos approfondie + boîte à idées -->
 <div class="overlay" id="ov-tester-space" style="z-index:480;" onclick="if(event.target===this)closeTesterSpace()">
   <div class="modal" style="max-width:430px;">
