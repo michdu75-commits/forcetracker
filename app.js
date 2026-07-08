@@ -1327,7 +1327,7 @@ function _isChristophe(){return (S.email||'').trim().toLowerCase()==='christophe
 function checkAnnouncements(){
   try{
     if(_isChristophe()){
-      if(!localStorage.getItem('ft4_billoute_v1')){
+      if(!localStorage.getItem('ft4_billoute_v2')){
         try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){} // Christophe a son pop perso, pas le général
         setTimeout(showBilloute,1000);
       }
@@ -1337,7 +1337,7 @@ function checkAnnouncements(){
   }catch(e){}
 }
 function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
-function closeBilloute(){try{localStorage.setItem('ft4_billoute_v1','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
+function closeBilloute(){try{localStorage.setItem('ft4_billoute_v2','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
 function showWhatsNew(){const o=document.getElementById('ov-whatsnew');if(o)o.classList.add('open');}
 function closeWhatsNew(){try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){}const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}
 function openTesterSpace(){
