@@ -239,7 +239,11 @@ const FOOD_MEALS = [
   {k:'diner',    ic:'🌙', lbl:'Dîner'}
 ];
 let _afMeal='dejeuner';
+const FOOD_AI_FREE_LIMIT=25; // ~ une semaine de notes IA en gratuit (illimité en Premium)
 function _foodMealInfo(k){return FOOD_MEALS.find(m=>m.k===k)||FOOD_MEALS[1];}
+function _foodAiLeft(){return Math.max(0,FOOD_AI_FREE_LIMIT-(S.foodAiUses||0));}
+function showFoodWall(){const el=document.getElementById('ov-food-wall');if(el)el.classList.add('open');}
+function closeFoodWall(){const el=document.getElementById('ov-food-wall');if(el)el.classList.remove('open');}
 function _foodTotals(date){
   const t={kcal:0,prot:0,carbs:0,fat:0};
   (S.foodLog||[]).forEach(e=>{if(e.date===date){t.kcal+=e.kcal||0;t.prot+=e.prot||0;t.carbs+=e.carbs||0;t.fat+=e.fat||0;}});
@@ -250,7 +254,16 @@ function openAddFood(){
   _afMeal = h<11?'petitdej' : h<15?'dejeuner' : h<18?'collation' : 'diner';
   ['af-desc','af-kcal','af-prot','af-carbs','af-fat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   _renderAfMealChips();
+  _renderAfAiNote();
   document.getElementById('ov-add-food').classList.add('open');
+}
+function _renderAfAiNote(){
+  const el=document.getElementById('af-ai-note');if(!el)return;
+  if(S.premium){el.innerHTML='<span style="color:var(--gold);">⭐ Estimations IA illimitées</span>';return;}
+  const left=_foodAiLeft();
+  el.innerHTML=left>0
+    ?`🆓 ${left} estimation${left>1?'s':''} IA restante${left>1?'s':''} · ou saisis à la main (gratuit, illimité)`
+    :`Estimations IA gratuites épuisées · ⭐ Premium pour l'illimité · la saisie à la main reste gratuite`;
 }
 function closeAddFood(){document.getElementById('ov-add-food').classList.remove('open');}
 function _renderAfMealChips(){
@@ -265,6 +278,11 @@ async function estimateFoodAI(){
   const desc=(document.getElementById('af-desc').value||'').trim();
   if(!desc){toast('Décris d\'abord ce que tu as mangé','error');return;}
   if(!S.url){toast('Connexion requise','error');return;}
+  // Limite gratuit : ~1 semaine de notes IA. La saisie manuelle reste illimitée.
+  if(!S.premium){
+    if(window._premiumPending){toast('Vérification premium en cours…','info');return;}
+    if((S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+  }
   const btn=document.getElementById('af-ai-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ Estimation…';}
   try{
@@ -278,6 +296,8 @@ async function estimateFoodAI(){
     document.getElementById('af-carbs').value=d.carbs||0;
     document.getElementById('af-fat').value=d.fat||0;
     if(d.name)document.getElementById('af-desc').value=d.name;
+    if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
+    _renderAfAiNote();
     toast('Estimé ✅ — ajuste si besoin','success');
   }catch(e){toast('Erreur réseau : '+e.message,'error');}
   finally{if(btn){btn.disabled=false;btn.textContent='🤖 Estimer les calories avec l\'IA';}}

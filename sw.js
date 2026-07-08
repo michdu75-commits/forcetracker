@@ -1,4 +1,4 @@
-const CACHE = 'ft-v329'; // Nutrition : journal alimentaire (3e onglet) -> ajout manuel + estimation IA, suivi kcal/macros vs objectif
+const CACHE = 'ft-v330'; // Journal : limite estimation IA gratuite (~1 semaine, 25) + mur premium #ov-food-wall, saisie manuelle illimitée
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
