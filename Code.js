@@ -417,6 +417,8 @@ function doPost(e) {
   if (body.action === 'logSession')        return handleLogSession_(body);
   if (body.action === 'coach')             return handleCoach_(body);
   if (body.action === 'validateCode')      return handleValidateCode_(body);
+  if (body.action === 'sendConfirmCode')   return handleSendConfirmCode_(body);
+  if (body.action === 'verifyConfirmCode') return handleVerifyConfirmCode_(body);
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
   if (body.action === 'importHistory')    return handleImportHistory_(body);
@@ -681,6 +683,74 @@ function handleValidateCode_(body) {
   } catch(err) {
     return json_({status:'error', error: err.message});
   }
+}
+
+// ── Confirmation d'email (soft) : envoi d'un code à 6 chiffres par email ──
+// Ne bloque JAMAIS l'inscription : c'est un bonus de sécurité (vérifie que l'email
+// est réel/possédé -> évite qu'une faute de frappe fasse perdre la sauvegarde cloud).
+function handleSendConfirmCode_(body) {
+  try {
+    var email = (body.email || '').toString().trim().toLowerCase();
+    if (!email || email.indexOf('@') < 0) return json_({status:'error', error:'email'});
+    var sp = PropertiesService.getScriptProperties();
+    var map = {}; try { map = JSON.parse(sp.getProperty('pending_confirms') || '{}'); } catch(e) { map = {}; }
+    var now = Date.now();
+    Object.keys(map).forEach(function(k){ if (map[k].exp < now) delete map[k]; }); // purge expirés
+    var cur = map[email];
+    if (cur && cur.sentAt && (now - cur.sentAt) < 60000) return json_({status:'ok', cooldown:true}); // anti-spam 60s
+    var code = '' + Math.floor(100000 + Math.random() * 900000);
+    map[email] = { code: code, exp: now + 15 * 60000, tries: 0, sentAt: now };
+    sp.setProperty('pending_confirms', JSON.stringify(map));
+    // GmailApp = scope gmail.send (déjà déclaré/autorisé) -> pas de nouvelle autorisation
+    GmailApp.sendEmail(email, 'Force Tracker — ton code de confirmation : ' + code,
+      'Ton code de confirmation Force Tracker : ' + code + ' (expire dans 15 minutes).',
+      {
+        name: 'Force Tracker',
+        htmlBody: '<div style="font-family:Arial,Helvetica,sans-serif;max-width:440px;margin:auto;">' +
+          '<h2 style="color:#FF2D55;margin-bottom:4px;">Force Tracker</h2>' +
+          '<p>Salut 👋 Voici ton code pour confirmer ton adresse email :</p>' +
+          '<p style="font-size:34px;font-weight:bold;letter-spacing:8px;color:#111;">' + code + '</p>' +
+          '<p style="color:#555;">Entre ce code dans l\'appli pour vérifier ton email. Il expire dans 15 minutes.</p>' +
+          '<p style="color:#999;font-size:12px;margin-top:18px;">Si tu n\'as pas demandé ça, ignore simplement ce message.</p>' +
+          '</div>'
+      });
+    return json_({status:'ok'});
+  } catch(err) {
+    // Quota email atteint ou autre : on renvoie une erreur douce (l'inscription n'est jamais bloquée)
+    return json_({status:'error', error:'send', detail: String(err)});
+  }
+}
+function handleVerifyConfirmCode_(body) {
+  try {
+    var email = (body.email || '').toString().trim().toLowerCase();
+    var code  = (body.code  || '').toString().trim();
+    if (!email || !code) return json_({status:'error', error:'params'});
+    var sp = PropertiesService.getScriptProperties();
+    var map = {}; try { map = JSON.parse(sp.getProperty('pending_confirms') || '{}'); } catch(e) { map = {}; }
+    var cur = map[email];
+    if (!cur) return json_({status:'nocode'});
+    var save = function(){ sp.setProperty('pending_confirms', JSON.stringify(map)); };
+    if (cur.exp < Date.now()) { delete map[email]; save(); return json_({status:'expired'}); }
+    if (cur.tries >= 5)       { delete map[email]; save(); return json_({status:'toomany'}); }
+    if (cur.code !== code)    { cur.tries++;       save(); return json_({status:'invalid'}); }
+    delete map[email]; save();
+    // Marque le profil comme vérifié (voyage via loadProfile)
+    try {
+      var data = loadUserData_(email);
+      if (data) { data.profile = data.profile || {}; data.profile.emailVerified = true; saveUserData_(email, data); }
+      else { sp.setProperty('confirmed_' + email, new Date().toISOString().slice(0,10)); }
+    } catch(e2) {}
+    return json_({status:'ok'});
+  } catch(err) {
+    return json_({status:'error', error:'verify', detail: String(err)});
+  }
+}
+// À lancer UNE fois depuis l'éditeur Apps Script SI les emails de confirmation
+// n'arrivent pas (force l'écran d'autorisation Google pour l'envoi d'email).
+function authorizeMail() {
+  GmailApp.sendEmail('forcetracker.app@gmail.com', 'Force Tracker — test autorisation email',
+    'Si tu reçois ce mail, l\'envoi d\'email fonctionne ✅');
+  Logger.log('Email de test envoyé — autorisation OK');
 }
 
 // ───────────────────────────────────────────────────────────
