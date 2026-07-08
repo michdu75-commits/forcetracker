@@ -361,6 +361,7 @@ function doPost(e) {
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
   if (body.action === 'bodyStudy')         return handleBodyStudy_(body);
   if (body.action === 'importBodyScan')    return handleImportBodyScan_(body);
+  if (body.action === 'importBloodTest')   return handleImportBloodTest_(body);
   if (body.action === 'testerIdea')        return handleTesterIdea_(body);
   if (body.action === 'summarizeCoach')    return handleSummarizeCoach_(body);
   if (body.action === 'generateMealPlan')  return handleGenerateMealPlan_(body);
@@ -494,6 +495,7 @@ function handleSaveProfile_(body) {
     if (body.exPhotos      !== undefined) profile.exPhotos      = _po_(body.exPhotos,      profile.exPhotos);
     if (body.bodyStudy     !== undefined) profile.bodyStudy     = _po_(body.bodyStudy,     profile.bodyStudy);
     if (body.bodyScans     !== undefined) profile.bodyScans     = _pa_(body.bodyScans,     profile.bodyScans);
+    if (body.bloodTests    !== undefined) profile.bloodTests    = _pa_(body.bloodTests,    profile.bloodTests);
     if (body.bodyScanImports!== undefined) profile.bodyScanImports= _pn_(body.bodyScanImports, profile.bodyScanImports);
 
     existing.profile = profile;
@@ -1041,6 +1043,52 @@ function handleImportBodyScan_(body) {
     const text = (result.content && result.content[0] && result.content[0].text) || '';
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return json_({status:'error', error:'Lecture impossible. Réessaie avec une photo plus nette et bien cadrée.'});
+    const data = JSON.parse(match[0]);
+    return json_({status:'ok', data: data});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ── Bilan sanguin : lit un ou plusieurs pages de résultats de laboratoire → JSON des marqueurs ──
+// MÉDICAL : on EXTRAIT seulement (valeur + unité + intervalle de référence du labo). Aucune interprétation.
+function handleImportBloodTest_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+  try {
+    var imgs = (Array.isArray(body.images) && body.images.length)
+      ? body.images
+      : (body.image ? [{ data: body.image, type: body.imageType || 'image/jpeg' }] : []);
+    if (!imgs.length) return json_({status:'error', error:'Aucune image reçue'});
+    const multi = imgs.length > 1;
+    const userContent = imgs.map(function(im){
+      return { type:'image', source:{ type:'base64', media_type: im.type || 'image/jpeg', data: im.data } };
+    });
+    userContent.push(
+      { type:'text', text:
+          (multi
+            ? ('Ces ' + imgs.length + ' images sont les PAGES successives (dans l\'ordre) d\'UN SEUL et même compte-rendu de laboratoire d\'analyses de sang. Lis-les toutes. ')
+            : 'Ceci est un compte-rendu de laboratoire d\'analyses de sang. ')
+        + 'Extrais TOUS les marqueurs biologiques présents (numération/hémogramme, biochimie, rein, foie, fer, vitamines, électrolytes, glycémie, lipides, hormones/thyroïde, etc.). '
+        + 'Pour CHAQUE marqueur, prends : le nom exact, la valeur mesurée (la plus récente si plusieurs colonnes de dates), l\'unité, et l\'intervalle de référence du labo (borne basse et haute). '
+        + 'Quand une valeur est donnée en 2 unités (ex. "16,7 g/dL" et une autre ligne), garde la ligne principale (celle avec l\'intervalle le plus lisible). '
+        + 'N\'INTERPRÈTE RIEN, ne dis pas si c\'est normal ou non, n\'ajoute aucun commentaire médical : tu ne fais que RECOPIER les chiffres du rapport. N\'invente aucune valeur. '
+        + 'Récupère aussi la DATE de prélèvement (format YYYY-MM-DD) si présente.\n'
+        + 'Réponds UNIQUEMENT par un objet JSON valide, sans texte avant/après, de cette forme EXACTE :\n'
+        + '{"date":"YYYY-MM-DD ou null","markers":[{"name":"Ferritine","group":"Fer & vitamines","value":293,"unit":"µg/L","low":30,"high":400}, ...]}\n'
+        + 'Le champ "group" = une catégorie courte que tu déduis (ex. "Hémogramme", "Rein", "Foie", "Fer & vitamines", "Électrolytes", "Glycémie & lipides", "Thyroïde"). '
+        + 'value = nombre. low/high = bornes de l\'intervalle (nombres) ou null si absentes/texte du type "< 50" (dans ce cas low=null, high=50) ou "> 10" (low=10, high=null).' }
+    );
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method:'post',
+      headers:{ 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
+      payload: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:4096, messages:[{role:'user', content:userContent}] }),
+      muteHttpExceptions:true
+    });
+    const result = JSON.parse(resp.getContentText());
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Lecture impossible. Réessaie avec des photos plus nettes.'});
     const data = JSON.parse(match[0]);
     return json_({status:'ok', data: data});
   } catch(err) {
