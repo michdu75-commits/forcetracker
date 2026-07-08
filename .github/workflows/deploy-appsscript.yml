@@ -23,7 +23,7 @@ jobs:
           node-version: '20'
 
       - name: Installer clasp
-        run: npm install -g @google/clasp@2.4.2
+        run: npm install -g @google/clasp@3.3.0
 
       - name: Restaurer l'authentification clasp (depuis le secret)
         env:
@@ -33,8 +33,8 @@ jobs:
       - name: Pousser Code.js (respecte .claspignore = seulement Code.js + appsscript.json)
         run: clasp push --force
 
-      - name: Redéployer la web app (déploiement existant)
-        run: clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA -d "Auto-deploy GitHub"
+      - name: Redéployer la web app (déploiement existant — clasp v3 : create-deployment)
+        run: clasp create-deployment -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA -d "Auto-deploy GitHub"
 
       - name: Vérifier que le backend répond
         run: |
