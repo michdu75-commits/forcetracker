@@ -92,6 +92,9 @@ function load(){
     S.coachQuizPro=JSON.parse(localStorage.getItem('ft4_coachquizpro')||'null');
     S.scaleType=localStorage.getItem('ft4_scaletype')||''; // '' | 'feet' | 'handsfeet'
     S.emailVerified=localStorage.getItem('ft4_email_verified')==='1';
+    S.diet=localStorage.getItem('ft4_diet')||''; // '' | omnivore | vegetarien | vegan | pescetarien
+    S.dietRestrictions=JSON.parse(localStorage.getItem('ft4_diet_restr')||'[]'); // halal, casher, sansporc, ...
+    S.dietNotes=localStorage.getItem('ft4_diet_notes')||'';
     S.a11y=localStorage.getItem('ft4_a11y')==='1';
     S.colorblind=localStorage.getItem('ft4_cb')||'';
     S.leftHand=localStorage.getItem('ft4_lh')==='1';
@@ -219,6 +222,9 @@ function persist(){
     localStorage.setItem('ft4_coachquizpro',JSON.stringify(S.coachQuizPro||null));
     localStorage.setItem('ft4_scaletype',S.scaleType||'');
     localStorage.setItem('ft4_email_verified',S.emailVerified?'1':'0');
+    localStorage.setItem('ft4_diet',S.diet||'');
+    localStorage.setItem('ft4_diet_restr',JSON.stringify(S.dietRestrictions||[]));
+    localStorage.setItem('ft4_diet_notes',S.dietNotes||'');
     localStorage.setItem('ft4_a11y',S.a11y?'1':'0');
     localStorage.setItem('ft4_cb',S.colorblind||'');
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');
@@ -256,6 +262,20 @@ function calcBMR(){
 }
 function calcWorkExtra(){return{bureau:0,debout:200,physique:450}[S.workType]||0;}
 function calcTDEE(){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra());}
+
+// ── Régime alimentaire + restrictions (végé, halal, allergies…) ──
+const DIET_LABELS={omnivore:'Omnivore',vegetarien:'Végétarien',vegan:'Végan',pescetarien:'Pescétarien'};
+const DIET_RESTR_LABELS={halal:'Halal',casher:'Casher',sansporc:'Sans porc',sansboeuf:'Sans bœuf / viande rouge',sansalcool:'Sans alcool',sanslactose:'Sans lactose',sansgluten:'Sans gluten'};
+// Résumé lisible du régime pour l'IA (plan de repas + Milo). Vide si rien de renseigné.
+function dietSummary(){
+  const parts=[];
+  if(S.diet&&DIET_LABELS[S.diet])parts.push(DIET_LABELS[S.diet]);
+  const rs=(S.dietRestrictions||[]).map(r=>DIET_RESTR_LABELS[r]||r).filter(Boolean);
+  if(rs.length)parts.push(rs.join(', '));
+  const n=(S.dietNotes||'').trim();
+  if(n)parts.push('à éviter: '+n);
+  return parts.join(' · ');
+}
 
 function getMensCyclePhase(){
   if(S.gender!=='F')return null;
