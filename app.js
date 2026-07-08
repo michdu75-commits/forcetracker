@@ -1734,9 +1734,32 @@ if('serviceWorker' in navigator){
     });
     navigator.serviceWorker.addEventListener('controllerchange',_reloadForUpdate);
     navigator.serviceWorker.addEventListener('message',e=>{
-      if(e.data&&e.data.type==='SW_UPDATED')_reloadForUpdate();
+      if(!e.data)return;
+      if(e.data.type==='SW_UPDATED')_reloadForUpdate();
+      else if(e.data.type==='PRECACHE_PROGRESS')_showInstallProgress(e.data.done,e.data.total);
+      else if(e.data.type==='PRECACHE_DONE')_hideInstallProgress();
     });
   });
+}
+// Barre d'installation : se remplit pendant que le Service Worker met les fichiers en cache (1re visite / mise à jour)
+function _showInstallProgress(done,total){
+  if(!total)return;
+  const pct=Math.max(1,Math.round(done/total*100));
+  let el=document.getElementById('install-progress');
+  if(!el){
+    el=document.createElement('div');el.id='install-progress';
+    el.innerHTML='<div class="ip-label">📦 Installation de l\'appli… <span id="ip-pct">0%</span></div><div class="ip-track"><div id="ip-bar" class="ip-bar"></div></div>';
+    document.body.appendChild(el);
+    requestAnimationFrame(()=>el.classList.add('show'));
+  }
+  const bar=document.getElementById('ip-bar');if(bar)bar.style.width=pct+'%';
+  const p=document.getElementById('ip-pct');if(p)p.textContent=pct+'%';
+}
+function _hideInstallProgress(){
+  const el=document.getElementById('install-progress');if(!el)return;
+  const bar=document.getElementById('ip-bar');if(bar)bar.style.width='100%';
+  const p=document.getElementById('ip-pct');if(p)p.textContent='100%';
+  setTimeout(()=>{el.classList.remove('show');setTimeout(()=>{if(el.parentNode)el.remove();},400);},600);
 }
 
 // ─── POSITION FAB ────────────────────────────────────────────

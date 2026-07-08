@@ -413,6 +413,21 @@ ${(()=>{
   const segTxt=seg.length?`\nDÉTAIL PAR SEGMENT:\n- ${seg.join('\n- ')}`:'';
   return `\nBILAN CORPOREL (balance pro, le ${L.date}):\n- ${parts.join('\n- ')}${segTxt}\n⚠️ IMPORTANT: utilise UNIQUEMENT les chiffres ci-dessus. N'invente JAMAIS une valeur qui n'y figure pas (ni masse osseuse, ni détail bras/tronc/jambes, ni autre) — si tu ne l'as pas, ne cite aucun chiffre pour ça, parle en termes généraux. Rappelle que l'IMC seul est trompeur chez une personne musclée. Ne pose jamais de diagnostic médical.\n`;
 })()}
+${(()=>{
+  const bt=(S.bloodTests||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!bt.length)return '';
+  const t=bt[0];const ms=(t.markers||[]);
+  if(!ms.length)return '';
+  const out=(m)=>{if(m.value==null)return false;if(m.low!=null&&m.value<m.low)return true;if(m.high!=null&&m.value>m.high)return true;return false;};
+  const line=(m)=>`${m.name}: ${m.value}${m.unit?(' '+m.unit):''}${(m.low!=null||m.high!=null)?` (réf. ${m.low!=null?m.low:''}${(m.low!=null&&m.high!=null)?'-':''}${m.high!=null?m.high:''})`:''}${out(m)?' [hors norme]':''}`;
+  const outs=ms.filter(out);
+  const keys=['ferritine','glyc','cholest','hdl','ldl','triglyc','tsh','hémoglobine','vitamine d','testost','crp','asat','alat','ggt','créatinine'];
+  const key=ms.filter(m=>keys.some(k=>String(m.name||'').toLowerCase().indexOf(k)>=0));
+  const sel=[];const seen={};
+  outs.concat(key).forEach(m=>{if(!seen[m.name]){seen[m.name]=1;sel.push(m);}});
+  if(!sel.length)return '';
+  return `\nBILAN SANGUIN (labo, le ${t.date||'?'}) — marqueurs clés:\n- ${sel.slice(0,16).map(line).join('\n- ')}\n⚠️ MÉDICAL : ce sont des chiffres recopiés du labo. Tu peux en parler en lien avec l'entraînement/récup/nutrition (ex. ferritine, glycémie, cholestérol) MAIS tu ne poses JAMAIS de diagnostic, tu ne dis jamais si c'est grave. Pour toute valeur [hors norme] ou toute inquiétude, renvoie SYSTÉMATIQUEMENT vers le médecin. Ne remplace jamais un professionnel de santé.\n`;
+})()}
 ${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
 Utilise ces données pour personnaliser tes réponses et t'adapter à la personne en face. Reste toi-même : ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, franc et pratique, mais calibré sur son niveau et son état du jour.`;
 }

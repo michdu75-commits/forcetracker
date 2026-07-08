@@ -394,6 +394,7 @@ function renderWeightTab(){
   renderWeightTarget();
   renderBodyFatCard();
   renderBodyScanCard();
+  renderBloodCard();
   const sorted=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
   // Bascule Poids ↔ Masse grasse
   const metricEl=document.getElementById('weight-metric');
@@ -858,6 +859,141 @@ function deleteBodyScan(){
     if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     closeBodyScanForm();renderBodyScanCard();toast('Bilan supprimé','info');
   });
+}
+
+// ─── BILAN SANGUIN (bêta : Michel uniquement) — PDF/photo → masquage identité → lecture IA ───
+function _isBloodBeta(){return (S.email||'').trim().toLowerCase()==='michdu75@gmail.com';}
+let _bloodPages=[], _bloodRects=[], _bloodPageIdx=0, _bloodImg=null, _bloodEditIdx=-1;
+function _bloodOut(m){ if(!m||m.value==null)return false; if(m.low!=null&&m.value<m.low)return true; if(m.high!=null&&m.value>m.high)return true; return false; }
+function renderBloodCard(){
+  const titleEl=document.getElementById('bloodtest-sec-title');
+  const el=document.getElementById('bloodtest-section');
+  if(!el)return;
+  if(!_isBloodBeta()){ if(titleEl)titleEl.style.display='none'; el.innerHTML=''; return; }
+  if(titleEl)titleEl.style.display='';
+  const tests=(S.bloodTests||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  if(!tests.length){
+    el.innerHTML=`<div class="card cp" style="text-align:center;">
+      <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px;">Importe ton bilan sanguin (PDF ou photo). Tu masques d'abord tes infos perso 🔒, puis l'appli lit tous les marqueurs et suit leur évolution. Bêta — visible rien que pour toi.</div>
+      <button class="btn btn-red" style="width:100%;" onclick="openBloodImport()">🩸 Importer un bilan sanguin</button></div>`;
+    return;
+  }
+  const last=tests[0];
+  const nOut=(last.markers||[]).filter(_bloodOut).length;
+  const dstr=last.date?new Date(last.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'—';
+  let html=`<div class="card cp" onclick="openBloodTest(${S.bloodTests.indexOf(last)})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+    <div><div style="font-weight:800;font-size:14px;">Dernier bilan · ${dstr}</div>
+      <div style="font-size:12px;color:var(--t2);margin-top:3px;">${(last.markers||[]).length} marqueurs${nOut?` · <span style="color:#FF9500;">${nOut} hors norme</span>`:` · <span style="color:#22C55E;">tous dans la norme</span>`}</div></div>
+    <span style="color:var(--t3);font-size:20px;">›</span></div>`;
+  if(tests.length>1){
+    html+=`<div style="display:flex;flex-direction:column;gap:6px;">`;
+    tests.forEach(t=>{const i=S.bloodTests.indexOf(t);const dd=t.date?new Date(t.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'}):'—';
+      html+=`<div onclick="openBloodTest(${i})" style="display:flex;justify-content:space-between;background:var(--bg2);border-radius:10px;padding:10px 12px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);"><span style="font-size:13px;font-weight:700;">${dd}</span><span style="font-size:12px;color:var(--t2);">${(t.markers||[]).length} marqueurs</span></div>`;});
+    html+=`</div>`;
+  }
+  html+=`<button class="btn btn-red" style="width:100%;" onclick="openBloodImport()">🩸 Importer un bilan sanguin</button>`;
+  el.innerHTML=html;
+}
+function openBloodImport(){const inp=document.getElementById('blood-file-input');if(inp){inp.value='';inp.click();}}
+async function onBloodFile(input){
+  const f=input.files&&input.files[0];if(!f)return;input.value='';
+  toast('Préparation du fichier…','info');
+  try{
+    let pages=[];
+    if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){
+      const imgs=await _pdfToImages(f); pages=imgs.map(p=>p.data);
+    }else{ pages=[await _bloodResizeImg(f)]; }
+    if(!pages.length){toast('Fichier illisible','error');return;}
+    _bloodPages=pages; _bloodRects=pages.map(()=>[]); _bloodPageIdx=0;
+    _showBloodRedact();
+  }catch(e){toast('Souci lecture fichier : '+(e.message||'réessaie'),'error');}
+}
+function _bloodResizeImg(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{const max=1400;let w=img.width,h=img.height;if(w>=h){if(w>max){h=Math.round(h*max/w);w=max;}}else{if(h>max){w=Math.round(w*max/h);h=max;}}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',0.85).split(',')[1]);};img.onerror=rej;img.src=e.target.result;};r.onerror=rej;r.readAsDataURL(f);});}
+function _showBloodRedact(){const ov=document.getElementById('ov-blood-redact');if(ov)ov.classList.add('open');_bloodDrawPage();}
+function closeBloodRedact(){const ov=document.getElementById('ov-blood-redact');if(ov)ov.classList.remove('open');}
+function _bloodRedactNav(d){const n=_bloodPageIdx+d;if(n<0||n>=_bloodPages.length)return;_bloodPageIdx=n;_bloodDrawPage();}
+function _bloodRedactUndo(){const r=_bloodRects[_bloodPageIdx];if(r&&r.length){r.pop();_bloodRedraw();}}
+function _bloodDrawPage(){
+  const cv=document.getElementById('blood-redact-canvas');const pg=document.getElementById('blood-redact-page');
+  if(pg)pg.textContent='Page '+(_bloodPageIdx+1)+' / '+_bloodPages.length;
+  const img=new Image();
+  img.onload=()=>{ _bloodImg=img; cv.width=img.naturalWidth; cv.height=img.naturalHeight; _bloodRedraw(); _bloodBindTouch(cv); };
+  img.src='data:image/jpeg;base64,'+_bloodPages[_bloodPageIdx];
+}
+function _bloodRedraw(dragRect){
+  const cv=document.getElementById('blood-redact-canvas');if(!cv||!_bloodImg)return;const ctx=cv.getContext('2d');
+  ctx.drawImage(_bloodImg,0,0,cv.width,cv.height);
+  ctx.fillStyle='#000';
+  (_bloodRects[_bloodPageIdx]||[]).forEach(r=>ctx.fillRect(r.x*cv.width,r.y*cv.height,r.w*cv.width,r.h*cv.height));
+  if(dragRect){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(dragRect.x*cv.width,dragRect.y*cv.height,dragRect.w*cv.width,dragRect.h*cv.height);}
+}
+function _normRect(a,b){return {x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),w:Math.abs(a.x-b.x),h:Math.abs(a.y-b.y)};}
+function _bloodBindTouch(cv){
+  if(cv._bloodBound)return; cv._bloodBound=true;
+  let start=null;
+  const pt=(ev)=>{const rect=cv.getBoundingClientRect();const t=ev.touches?ev.touches[0]:ev;return {x:(t.clientX-rect.left)/rect.width,y:(t.clientY-rect.top)/rect.height};};
+  const down=(ev)=>{ev.preventDefault();start=pt(ev);};
+  const move=(ev)=>{if(!start)return;ev.preventDefault();_bloodRedraw(_normRect(start,pt(ev)));};
+  const up=(ev)=>{if(!start)return;ev.preventDefault();const r=_normRect(start,pt(ev));if(r.w>0.008&&r.h>0.004)(_bloodRects[_bloodPageIdx]=_bloodRects[_bloodPageIdx]||[]).push(r);start=null;_bloodRedraw();};
+  cv.addEventListener('touchstart',down,{passive:false});cv.addEventListener('touchmove',move,{passive:false});cv.addEventListener('touchend',up,{passive:false});
+  cv.addEventListener('mousedown',down);cv.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
+}
+function _bloodApplyRedact(i){return new Promise(res=>{const img=new Image();img.onload=()=>{const cv=document.createElement('canvas');cv.width=img.naturalWidth;cv.height=img.naturalHeight;const ctx=cv.getContext('2d');ctx.drawImage(img,0,0);ctx.fillStyle='#000';(_bloodRects[i]||[]).forEach(r=>ctx.fillRect(r.x*cv.width,r.y*cv.height,r.w*cv.width,r.h*cv.height));res(cv.toDataURL('image/jpeg',0.85).split(',')[1]);};img.src='data:image/jpeg;base64,'+_bloodPages[i];});}
+async function _analyzeBloodRedacted(){
+  if(!S.url){toast('Coach non configuré (Profil > Admin)','error');return;}
+  const imgs=[];
+  for(let i=0;i<_bloodPages.length;i++){ imgs.push({data:await _bloodApplyRedact(i),type:'image/jpeg'}); }
+  closeBloodRedact();
+  _showBsScan('data:image/jpeg;base64,'+imgs[0].data,'🩸 Analyse du bilan sanguin…','Lecture des marqueurs','Extraction des valeurs…');
+  try{
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'importBloodTest',images:imgs,image:imgs[0].data,imageType:'image/jpeg',email:S.email||''})});
+    const txt=await resp.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('réponse illisible');}
+    if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
+    const d=data.data;
+    _hideBsScan(()=>{ _saveBloodTest(d); });
+  }catch(e){_hideBsScan(()=>toast('Souci lecture : '+(e.message||'réessaie'),'error'));}
+}
+function _saveBloodTest(d){
+  const markers=(d.markers||[]).filter(m=>m&&m.name);
+  const obj={date:d.date||today(),ts:Date.now(),markers:markers};
+  S.bloodTests=S.bloodTests||[];
+  const ex=S.bloodTests.findIndex(t=>t.date===obj.date);
+  if(ex>=0)S.bloodTests[ex]=obj; else S.bloodTests.push(obj);
+  S.bloodTests.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  renderBloodCard();
+  toast(markers.length+' marqueurs enregistrés ✅','success');
+  openBloodTest(S.bloodTests.indexOf(obj));
+}
+function openBloodTest(idx){
+  _bloodEditIdx=idx;const t=(S.bloodTests||[])[idx];if(!t)return;
+  const prev=(S.bloodTests||[]).filter(x=>x!==t&&(x.date||'')<(t.date||'')).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||null;
+  const dEl=document.getElementById('blood-test-date');if(dEl)dEl.textContent=t.date?new Date(t.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
+  const esc=(typeof _escNote==='function')?_escNote:(x=>x);
+  const groups={};(t.markers||[]).forEach(m=>{const g=m.group||'Autres';(groups[g]=groups[g]||[]).push(m);});
+  let html='';
+  Object.keys(groups).forEach(g=>{
+    html+=`<div style="font-size:12px;font-weight:800;color:var(--t3);letter-spacing:.04em;text-transform:uppercase;margin:12px 0 4px;">${esc(g)}</div>`;
+    groups[g].forEach(m=>{
+      const out=_bloodOut(m); const col=out?'#FF9500':'#22C55E';
+      const range=(m.low!=null||m.high!=null)?('réf. '+(m.low!=null?m.low:'')+(m.low!=null&&m.high!=null?'–':(m.high!=null?'< ':''))+(m.high!=null?m.high:(m.low!=null?' +':''))+' '+(m.unit||'')):'';
+      let ev='';
+      if(prev){const pm=(prev.markers||[]).find(x=>x.name===m.name);if(pm&&pm.value!=null&&m.value!=null){const dd=+(m.value-pm.value).toFixed(2);if(dd!==0)ev=`<span style="font-size:10px;color:var(--t3);"> ${dd>0?'▲':'▼'}${Math.abs(dd)}</span>`;}}
+      html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--sep);">
+        <span style="width:9px;height:9px;border-radius:50%;background:${col};flex-shrink:0;"></span>
+        <div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--t1);">${esc(m.name)}</div>${range?`<div style="font-size:10px;color:var(--t3);">${esc(range)}</div>`:''}</div>
+        <div style="text-align:right;white-space:nowrap;"><span style="font-size:14px;font-weight:800;color:${out?'#FF9500':'var(--t1)'};">${m.value}</span><span style="font-size:10px;color:var(--t3);"> ${esc(m.unit||'')}</span>${ev}</div></div>`;
+    });
+  });
+  const bodyEl=document.getElementById('blood-test-body');if(bodyEl)bodyEl.innerHTML=html||'<div style="color:var(--t3);text-align:center;padding:20px;">Aucun marqueur lu.</div>';
+  const ov=document.getElementById('ov-blood-test');if(ov)ov.classList.add('open');
+}
+function closeBloodTest(){const ov=document.getElementById('ov-blood-test');if(ov)ov.classList.remove('open');}
+function deleteBloodTest(){
+  if(_bloodEditIdx<0)return;
+  showConfirm('Supprimer ce bilan sanguin ?','Action définitive.',function(){S.bloodTests.splice(_bloodEditIdx,1);persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();closeBloodTest();renderBloodCard();toast('Bilan supprimé','info');});
 }
 function renderWeightChart(pts,box,metric){
   metric=metric||'kg';

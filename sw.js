@@ -1,4 +1,4 @@
-const CACHE = 'ft-v313'; // Bilan sanguin (beta Michel) : import PDF/photo + masquage identite + lecture IA marqueurs + suivi
+const CACHE = 'ft-v314'; // Barre d'installation (progression du telechargement des assets par le SW) + install resiliente (fichier par fichier)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -105,9 +105,23 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting())
-  );
+  e.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    const total = PRECACHE.length;
+    let done = 0;
+    const notify = async (type) => {
+      const clients = await self.clients.matchAll({includeUncontrolled:true});
+      clients.forEach(c => c.postMessage({type, done, total}));
+    };
+    for (const url of PRECACHE) {
+      // Fichier par fichier : si un asset manque/échoue, on continue (install jamais bloquée)
+      try { await cache.add(url); } catch (err) { /* skip */ }
+      done++;
+      if (done === total || done % 4 === 0) await notify('PRECACHE_PROGRESS');
+    }
+    await notify('PRECACHE_DONE');
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener('activate', e => {
