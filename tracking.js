@@ -617,6 +617,15 @@ const _BS_FIELDS=[
   {k:'metaAge',l:'Âge corporel',u:'ans',good:'down'},
   {k:'imc',l:'IMC',u:'',good:'down'}
 ];
+// Détail par segment (optionnel) — muscle & graisse par zone (gauche/droite pour l'équilibre)
+const _BS_SEG_FIELDS=[
+  {k:'armMuscleL',l:'Muscle bras G',u:'kg'},{k:'armMuscleR',l:'Muscle bras D',u:'kg'},
+  {k:'trunkMuscle',l:'Muscle tronc',u:'kg'},
+  {k:'legMuscleL',l:'Muscle jambe G',u:'kg'},{k:'legMuscleR',l:'Muscle jambe D',u:'kg'},
+  {k:'armFatL',l:'Graisse bras G',u:'kg'},{k:'armFatR',l:'Graisse bras D',u:'kg'},
+  {k:'trunkFat',l:'Graisse tronc',u:'kg'},
+  {k:'legFatL',l:'Graisse jambe G',u:'kg'},{k:'legFatR',l:'Graisse jambe D',u:'kg'}
+];
 let _bsEditIdx=-1;
 function renderBodyScanCard(){
   const el=document.getElementById('bodyscan-section');if(!el)return;
@@ -741,10 +750,13 @@ function openBodyScanForm(idx){
   const delBtn=document.getElementById('bs-del-btn');
   const sc=(idx>=0&&S.bodyScans&&S.bodyScans[idx])?S.bodyScans[idx]:null;
   if(dateEl)dateEl.value=sc?sc.date:new Date().toISOString().slice(0,10);
-  if(grid)grid.innerHTML=_BS_FIELDS.map(f=>`<div>
+  const inpHtml=f=>`<div>
     <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:3px;">${f.l}${f.u?' ('+f.u+')':''}${f.req?' *':''}</label>
     <input type="number" id="bs-${f.k}" step="0.1" inputmode="decimal" value="${sc&&sc[f.k]!=null?sc[f.k]:''}" placeholder="—" style="width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">
-  </div>`).join('');
+  </div>`;
+  if(grid)grid.innerHTML=_BS_FIELDS.map(inpHtml).join('');
+  const seg=document.getElementById('bs-seg-grid');
+  if(seg)seg.innerHTML=_BS_SEG_FIELDS.map(inpHtml).join('');
   if(delBtn)delBtn.style.display=sc?'block':'none';
   const ov=document.getElementById('ov-bodyscan-form');if(ov)ov.classList.add('open');
 }
@@ -755,7 +767,7 @@ function saveBodyScan(){
   const wEl=document.getElementById('bs-weight');const weight=wEl?parseFloat(wEl.value):NaN;
   if(!weight||weight<=0){toast('Le poids est obligatoire','error');return;}
   const obj={date};
-  _BS_FIELDS.forEach(f=>{const e=document.getElementById('bs-'+f.k);if(!e)return;const v=parseFloat(e.value);if(!isNaN(v))obj[f.k]=v;});
+  _BS_FIELDS.concat(_BS_SEG_FIELDS).forEach(f=>{const e=document.getElementById('bs-'+f.k);if(!e)return;const v=parseFloat(e.value);if(!isNaN(v))obj[f.k]=v;});
   if((obj.imc==null||isNaN(obj.imc))&&S.height){obj.imc=+(weight/Math.pow(S.height/100,2)).toFixed(1);}
   S.bodyScans=S.bodyScans||[];
   if(_bsEditIdx>=0&&S.bodyScans[_bsEditIdx]){S.bodyScans[_bsEditIdx]=obj;}

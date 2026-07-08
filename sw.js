@@ -1,4 +1,4 @@
-const CACHE = 'ft-v303'; // Bilan corporel : lecture photo améliorée (photo plus nette 1500px + prompt IA plus précis)
+const CACHE = 'ft-v304'; // Bilan corporel : détail par segment (bras/tronc/jambes G-D) + Milo anti-invention (n'invente plus de chiffres)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

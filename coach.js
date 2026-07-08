@@ -405,8 +405,13 @@ ${(()=>{
   if(!sc.length)return '';
   const L=sc[0],P=sc[1];
   const p=(k,lbl,u)=>{if(L[k]==null)return '';let e='';if(P&&P[k]!=null){const d=+(L[k]-P[k]).toFixed(1);if(d!==0)e=` (${d>0?'+':''}${d} vs bilan préc.)`;}return `${lbl}: ${L[k]}${u||''}${e}`;};
-  const parts=[p('weight','poids','kg'),p('bf','graisse','%'),p('fatMass','masse grasse','kg'),p('muscle','muscle','kg'),p('skMuscle','muscle squelettique','kg'),p('visceral','graisse viscérale',''),p('bmr','métabolisme de base','kcal'),p('metaAge','âge corporel','ans'),p('imc','IMC','')].filter(Boolean);
-  return `\nBILAN CORPOREL (balance pro, le ${L.date}):\n- ${parts.join('\n- ')}\nSers-toi de ces chiffres (graisse viscérale, muscle, métabolisme) pour tes conseils. Rappelle que l'IMC seul est trompeur chez une personne musclée. Ne pose jamais de diagnostic médical.\n`;
+  const parts=[p('weight','poids','kg'),p('bf','graisse','%'),p('fatMass','masse grasse','kg'),p('muscle','muscle','kg'),p('skMuscle','muscle squelettique','kg'),p('bone','masse osseuse','kg'),p('water','eau','kg'),p('protein','protéine','kg'),p('visceral','graisse viscérale',''),p('bmr','métabolisme de base','kcal'),p('metaAge','âge corporel','ans'),p('imc','IMC','')].filter(Boolean);
+  const seg=[];
+  const sp=(k,lbl,u)=>{if(L[k]!=null)seg.push(`${lbl}: ${L[k]}${u||''}`);};
+  sp('armMuscleL','muscle bras G','kg');sp('armMuscleR','muscle bras D','kg');sp('trunkMuscle','muscle tronc','kg');sp('legMuscleL','muscle jambe G','kg');sp('legMuscleR','muscle jambe D','kg');
+  sp('armFatL','graisse bras G','kg');sp('armFatR','graisse bras D','kg');sp('trunkFat','graisse tronc','kg');sp('legFatL','graisse jambe G','kg');sp('legFatR','graisse jambe D','kg');
+  const segTxt=seg.length?`\nDÉTAIL PAR SEGMENT:\n- ${seg.join('\n- ')}`:'';
+  return `\nBILAN CORPOREL (balance pro, le ${L.date}):\n- ${parts.join('\n- ')}${segTxt}\n⚠️ IMPORTANT: utilise UNIQUEMENT les chiffres ci-dessus. N'invente JAMAIS une valeur qui n'y figure pas (ni masse osseuse, ni détail bras/tronc/jambes, ni autre) — si tu ne l'as pas, ne cite aucun chiffre pour ça, parle en termes généraux. Rappelle que l'IMC seul est trompeur chez une personne musclée. Ne pose jamais de diagnostic médical.\n`;
 })()}
 ${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
 Utilise ces données pour personnaliser tes réponses et t'adapter à la personne en face. Reste toi-même : ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, franc et pratique, mais calibré sur son niveau et son état du jour.`;
