@@ -1,4 +1,4 @@
-const CACHE = 'ft-v312'; // Bilan corporel : lecture photo gratuite 1 -> 10 pour les non super-testeurs
+const CACHE = 'ft-v313'; // Bilan sanguin (beta Michel) : import PDF/photo + masquage identite + lecture IA marqueurs + suivi
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

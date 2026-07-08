@@ -451,6 +451,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div id="weight-correlations" style="display:flex;flex-direction:column;gap:8px;"></div>
     <div class="sec">Bilan corporel (balance pro)</div>
     <div id="bodyscan-section" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <div id="bloodtest-sec-title" class="sec" style="display:none;">Bilan sanguin 🩸</div>
+    <div id="bloodtest-section" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
   <!-- Espaceur : garantit que la dernière carte passe au-dessus de la barre du bas sur iOS
        (Safari ignore le padding-bottom d'un conteneur flex+scroll — voir CLAUDE.md) -->
@@ -1611,6 +1613,42 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<input type="file" id="blood-file-input" accept="application/pdf,image/*" style="display:none;" onchange="onBloodFile(this)">
+<!-- OVERLAY: caviardage du bilan sanguin (masquer les infos perso avant l'IA) -->
+<div class="overlay" id="ov-blood-redact" style="z-index:530;">
+  <div class="modal" style="max-width:440px;max-height:94vh;display:flex;flex-direction:column;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:900;font-size:17px;text-align:center;">🔒 Masque tes infos perso</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin:4px 0 10px;line-height:1.4;">Passe le doigt sur ton <b>nom</b>, ta <b>date de naissance</b>, ton <b>n° patient</b>… pour les noircir. Seul ce qui reste part à l'IA — ton identité ne sort pas du téléphone.</div>
+    <div id="blood-redact-wrap" style="flex:1;overflow:auto;background:#0e1016;border-radius:10px;display:flex;justify-content:center;align-items:center;min-height:200px;">
+      <canvas id="blood-redact-canvas" style="max-width:100%;max-height:64vh;touch-action:none;display:block;border-radius:6px;"></canvas>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;">
+      <button class="btn btn-bg2" style="padding:9px 14px;" onclick="_bloodRedactNav(-1)">◀</button>
+      <span id="blood-redact-page" style="font-size:12px;color:var(--t2);"></span>
+      <button class="btn btn-bg2" style="padding:9px 14px;" onclick="_bloodRedactNav(1)">▶</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-bg2" style="flex:1;" onclick="_bloodRedactUndo()">↶ Annuler</button>
+      <button class="btn btn-red" style="flex:2;" onclick="_analyzeBloodRedacted()">🔍 Analyser</button>
+    </div>
+    <button class="btn btn-bg2" style="width:100%;margin-top:8px;color:var(--t3);" onclick="closeBloodRedact()">Fermer</button>
+  </div>
+</div>
+<!-- OVERLAY: affichage d'un bilan sanguin (marqueurs groupés) -->
+<div class="overlay" id="ov-blood-test" onclick="if(event.target===this)closeBloodTest()">
+  <div class="modal" style="max-width:420px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:900;font-size:18px;text-align:center;">🩸 Bilan sanguin</div>
+    <div id="blood-test-date" style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:6px;"></div>
+    <div style="font-size:11px;color:var(--t3);background:var(--bg3);border-radius:10px;padding:9px 11px;line-height:1.45;margin-bottom:6px;">⚕️ Chiffres recopiés de ton labo, sans interprétation. Pastille orange = hors de l'intervalle du labo → <b>parles-en à ton médecin</b>. L'appli ne pose aucun diagnostic.</div>
+    <div id="blood-test-body"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="btn btn-bg2" style="flex:1;color:var(--red);" onclick="deleteBloodTest()">🗑 Supprimer</button>
+      <button class="btn btn-bg2" style="flex:1;" onclick="closeBloodTest()">Fermer</button>
+    </div>
+  </div>
+</div>
 <!-- OVERLAY: Étude du corps (bilan morpho-postural, 4 photos) -->
 <div class="overlay" id="ov-body-study" onclick="if(event.target===this)closeBodyStudy()">
   <div class="modal" style="max-width:400px;">
