@@ -1,4 +1,4 @@
-const CACHE = 'ft-v311'; // Bilan corporel : animation « analyse du rapport » (laser vert + traînée) pendant la lecture IA
+const CACHE = 'ft-v312'; // Bilan corporel : lecture photo gratuite 1 -> 10 pour les non super-testeurs
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
