@@ -635,7 +635,7 @@ let _bsEditIdx=-1;
 function renderBodyScanCard(){
   const el=document.getElementById('bodyscan-section');if(!el)return;
   // Import CSV de balance (historique complet) — réservé aux testeurs
-  const csvBtn=_isScaleCsvBeta()?`<button class="btn btn-bg2" style="width:100%;margin-top:8px;font-size:13px;" onclick="openScaleCsvImport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg> Importer un fichier CSV de balance</button>`:'';
+  const csvBtn=_isScaleCsvBeta()?`<button class="btn btn-bg2" style="width:100%;margin-top:8px;font-size:13px;" onclick="openScaleCsvImport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg> Importer un fichier balance (CSV ou Excel)</button>`:'';
   const scans=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(!scans.length){
     el.innerHTML=`<div class="card cp" style="text-align:center;">
@@ -714,8 +714,9 @@ function _csvSplit(line){
 }
 function _scaleDate(s){
   s=(s||'').trim();
-  let m=s.match(/(\d{4})-(\d{2})-(\d{2})/); if(m)return m[1]+'-'+m[2]+'-'+m[3];
-  m=s.match(/(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/);
+  let m=s.match(/(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/);   // AAAA-MM-JJ ou AAAA/MM/JJ (année d'abord)
+  if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
+  m=s.match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);     // JJ/MM/AAAA (jour d'abord)
   if(m){ let y=m[3]; if(y.length===2)y='20'+y; return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); }
   return null;
 }
@@ -725,15 +726,15 @@ function _scaleColMap(headers){
   const noSeg=h=>!h.includes(' - ')&&!h.includes('- right')&&!h.includes('- left')&&!h.includes('bras')&&!h.includes('jambe')&&!h.includes('tronc');
   const find=pred=>{ for(let i=0;i<H.length;i++){ if(pred(H[i]))return i; } return -1; };
   return {
-    date:    find(h=>h==='date'||h.startsWith('date')||h.includes('time')),
+    date:    find(h=>h==='date'||h.startsWith('date')||h.includes('time')||h.includes('temps')||h.includes('mesure')),
     weight:  find(h=>noSeg(h)&&(h.includes('weight')||h.includes('poids'))),
     imc:     find(h=>h==='bmi'||h.includes('imc')||h==='bmi '),
     bf:      find(h=>noSeg(h)&&(h.includes('body fat')||(h.includes('graisse')&&!h.includes('visc')&&!h.includes('masse')))&&h.includes('%')),
     visceral:find(h=>h.includes('visc')),
     muscle:  find(h=>noSeg(h)&&(h.includes('muscle mass')||h.includes('masse musc'))),
     bone:    find(h=>h.includes('bone')||h.includes('osseu')),
-    bmr:     find(h=>h.includes('bmr')||h.includes('metabolisme de base')||(h.includes('métabolisme')&&h.includes('base'))),
-    metaAge: find(h=>h.includes('metab age')||h.includes('metabolic age')||(h.includes('metab')&&h.includes('age'))||(h.includes('âge')&&h.includes('métab')))
+    bmr:     find(h=>h.includes('bmr')||(h.includes('metab')&&(h.includes('base')||h.includes('kcal')))||(h.includes('métab')&&(h.includes('base')||h.includes('kcal')))),
+    metaAge: find(h=>h.includes('metab age')||h.includes('metabolic age')||((h.includes('metab')||h.includes('métab'))&&h.includes('age'))||((h.includes('âge')||h.includes('age'))&&h.includes('métab')))
   };
 }
 function _parseScaleCsv(text){
@@ -778,30 +779,53 @@ function _importScaleRows(rows){
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   return {days:days.length};
 }
+// Charge SheetJS (lecteur Excel) hébergé en local — comme jsPDF, marche hors-ligne
+let _xlsxLoad=null;
+function _loadXlsx(){
+  if(window.XLSX)return Promise.resolve();
+  if(_xlsxLoad)return _xlsxLoad;
+  _xlsxLoad=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='./lib/xlsx.full.min.js'; s.onload=res; s.onerror=()=>{_xlsxLoad=null;rej(new Error('load xlsx'));}; document.head.appendChild(s); });
+  return _xlsxLoad;
+}
 function openScaleCsvImport(){
   if(!_isScaleCsvBeta()){ if(typeof toast==='function')toast('Réservé aux testeurs','info'); return; }
   let inp=document.getElementById('_scale-csv-input');
-  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='.csv,text/csv,text/plain'; inp.id='_scale-csv-input'; inp.style.display='none'; inp.onchange=()=>onScaleCsvFile(inp); document.body.appendChild(inp); }
+  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='.csv,.xlsx,.xls,text/csv,text/plain,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; inp.id='_scale-csv-input'; inp.style.display='none'; inp.onchange=()=>onScaleCsvFile(inp); document.body.appendChild(inp); }
   inp.value=''; inp.click();
+}
+// Traite le texte CSV (peu importe l'origine : CSV direct ou Excel converti) → confirm + import
+function _scaleCsvImportFromText(text){
+  const res=_parseScaleCsv(text);
+  if(res.err){ toast('Fichier : '+res.err,'error'); return; }
+  const rows=res.rows;
+  if(!rows.length){ toast('Aucune pesée lue dans ce fichier','error'); return; }
+  const dates=rows.map(r=>r.date).sort();
+  const days=new Set(dates).size;
+  const doImport=()=>{ const r=_importScaleRows(rows); renderBodyScanCard(); if(typeof renderWeightTab==='function')renderWeightTab(); toast('✅ '+r.days+' pesées importées','success'); };
+  if(typeof showConfirm==='function')
+    showConfirm('Importer '+days+' pesées ?', rows.length+' mesures lues ('+dates[0]+' → '+dates[dates.length-1]+'). On garde une pesée par jour, tout l\'historique. Les dates déjà présentes sont mises à jour, rien n\'est effacé.', doImport);
+  else doImport();
 }
 function onScaleCsvFile(input){
   const f=input.files&&input.files[0]; if(!f)return;
-  const reader=new FileReader();
-  reader.onload=e=>{
-    try{
-      const res=_parseScaleCsv(String(e.target.result||''));
-      if(res.err){ toast('CSV : '+res.err,'error'); return; }
-      const rows=res.rows;
-      if(!rows.length){ toast('Aucune pesée lue dans ce fichier','error'); return; }
-      const dates=rows.map(r=>r.date).sort();
-      const days=new Set(dates).size;
-      const doImport=()=>{ const r=_importScaleRows(rows); renderBodyScanCard(); if(typeof renderWeightTab==='function')renderWeightTab(); toast('✅ '+r.days+' pesées importées','success'); };
-      if(typeof showConfirm==='function')
-        showConfirm('Importer '+days+' pesées ?', rows.length+' mesures lues ('+dates[0]+' → '+dates[dates.length-1]+'). On garde une pesée par jour, tout l\'historique. Les dates déjà présentes sont mises à jour, rien n\'est effacé.', doImport);
-      else doImport();
-    }catch(ex){ if(typeof toast==='function')toast('Erreur lecture CSV','error'); console.warn('[scale csv]',ex); }
-  };
-  reader.readAsText(f);
+  const isXlsx=/\.xlsx?$/i.test(f.name||'');
+  if(isXlsx){
+    _loadXlsx().then(()=>{
+      const reader=new FileReader();
+      reader.onload=e=>{
+        try{
+          const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+          const ws=wb.Sheets[wb.SheetNames[0]];
+          _scaleCsvImportFromText(XLSX.utils.sheet_to_csv(ws));
+        }catch(ex){ if(typeof toast==='function')toast('Excel illisible','error'); console.warn('[scale xlsx]',ex); }
+      };
+      reader.readAsArrayBuffer(f);
+    }).catch(()=>{ if(typeof toast==='function')toast('Lecteur Excel indisponible (réseau ?)','error'); });
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>{ try{ _scaleCsvImportFromText(String(e.target.result||'')); }catch(ex){ if(typeof toast==='function')toast('Erreur lecture','error'); console.warn('[scale csv]',ex); } };
+    reader.readAsText(f);
+  }
 }
 // Import photo : lire un rapport de balance pro via l'IA → pré-remplit le formulaire
 // Prépare la photo du rapport pour l'IA. Les rapports de balance sont souvent TRÈS hauts :
