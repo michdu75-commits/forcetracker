@@ -1,4 +1,4 @@
-const CACHE = 'ft-v307'; // Aide + Guide de l'appli à jour (bilan corporel, historique Milo) + nouvelle slide guide/bilan.jpg
+const CACHE = 'ft-v308'; // Pop-ups : « Quoi de neuf » pour tous (bilan corporel + historique Milo) + message perso Christophe
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

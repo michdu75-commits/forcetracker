@@ -578,6 +578,7 @@ function finishOnboarding(){
     fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }
   localStorage.setItem('ft4_ob2','1');
+  try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){} // nouvel inscrit : pas de « Quoi de neuf » (il a le guide-film)
   document.documentElement.classList.add('ob-done');
   const ob=document.getElementById('onboarding');
   if(ob){ob.style.transition='opacity .4s';ob.style.opacity='0';setTimeout(()=>{ob.style.display='none';ob.style.opacity='';ob.style.transition='';},400);}
@@ -1304,6 +1305,7 @@ _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 checkSuperTesterWelcome(); // message « super testeur » une seule fois (Christophe)
+checkAnnouncements(); // pop perso Christophe + « Quoi de neuf » pour tous (une seule fois)
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
 initCoachInput();
 initOnboarding();
@@ -1320,6 +1322,24 @@ function checkSuperTesterWelcome(){
 }
 function showSuperWelcome(){const o=document.getElementById('ov-super-welcome');if(o)o.classList.add('open');}
 function closeSuperWelcome(){try{localStorage.setItem('ft4_super_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-super-welcome');if(o)o.classList.remove('open');}
+// ─── Annonces : pop-up perso Christophe + « Quoi de neuf » pour tous (une seule fois) ──
+function _isChristophe(){return (S.email||'').trim().toLowerCase()==='christophe@famillelanglois.fr';}
+function checkAnnouncements(){
+  try{
+    if(_isChristophe()){
+      if(!localStorage.getItem('ft4_billoute_v1')){
+        try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){} // Christophe a son pop perso, pas le général
+        setTimeout(showBilloute,1000);
+      }
+      return;
+    }
+    if(!localStorage.getItem('ft4_whatsnew_v1')) setTimeout(showWhatsNew,1000);
+  }catch(e){}
+}
+function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
+function closeBilloute(){try{localStorage.setItem('ft4_billoute_v1','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
+function showWhatsNew(){const o=document.getElementById('ov-whatsnew');if(o)o.classList.add('open');}
+function closeWhatsNew(){try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){}const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}
 function openTesterSpace(){
   // L'Espace Testeur (dont la boîte à idées) est réservé aux vrais testeurs récompensés.
   // Michel a le suivi photos via le panneau Admin, mais PAS cet espace ni la boîte à idées.
