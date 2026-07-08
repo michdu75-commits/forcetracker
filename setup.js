@@ -213,8 +213,9 @@ function _cloudSync(){
       histImports:S.histImports||0,
       bodyScanImports:S.bodyScanImports||0,
       coachMemory:S.coachMemory||'',
-      customExercises:S.customExercises||[],
-      exPhotos:S.exPhotos||{},
+      // Photos d'exercices = LOCAL SEULEMENT (n'alourdissent plus le store cloud de 9 Mo) :
+      // on envoie les exos perso SANS leur photo (img), et on n'envoie plus exPhotos du tout.
+      customExercises:(S.customExercises||[]).map(function(e){var c={};for(var k in e){if(k!=='img')c[k]=e[k];}return c;}),
       sessions:(S.sessions||[]).slice(0,100),
       prs:S.prs||{},
       weightLog:(S.weightLog||[]).slice(-365),
@@ -1479,8 +1480,14 @@ function _applyRestoreData(raw){
   // Import journal : garder le compteur le plus élevé (local vs cloud) — évite de re-gagner un import gratuit après purge
   try{if(d.histImports!==undefined)S.histImports=Math.max(S.histImports||0,parseInt(d.histImports)||0);}catch(e){}
   try{if(d.bodyScanImports!==undefined)S.bodyScanImports=Math.max(S.bodyScanImports||0,parseInt(d.bodyScanImports)||0);}catch(e){}
-  try{if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;}catch(e){console.warn('[FT restore] customEx',e);}
-  try{if(d.exPhotos&&Object.keys(d.exPhotos).length)S.exPhotos={...(S.exPhotos||{}),...d.exPhotos};}catch(e){console.warn('[FT restore] exPhotos',e);}
+  // customExercises restauré depuis le cloud SANS photo (local-only) → on réinjecte la photo locale
+  // si on l'a encore (même exo par nom) pour ne perdre aucune photo sur le même appareil.
+  try{if(d.customExercises&&d.customExercises.length){
+    const _li={}; (S.customExercises||[]).forEach(function(e){if(e&&e.img)_li[e.n]=e.img;});
+    S.customExercises=d.customExercises.map(function(e){var c={};for(var k in e){c[k]=e[k];} if(!c.img&&_li[c.n])c.img=_li[c.n]; return c;});
+  }}catch(e){console.warn('[FT restore] customEx',e);}
+  // exPhotos = local-only : on garde ce qui est sur le téléphone (le cloud n'en a plus). Fusion si vieux cloud en a encore.
+  try{if(d.exPhotos&&Object.keys(d.exPhotos).length)S.exPhotos={...(d.exPhotos),...(S.exPhotos||{})};}catch(e){console.warn('[FT restore] exPhotos',e);}
   // PRs — prend le plus complet
   try{if(prs&&Object.keys(prs).length&&(!S.prs||!Object.keys(S.prs).length)){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}else if(prs&&Object.keys(prs).length>Object.keys(S.prs||{}).length){S.prs=prs;console.log('[FT restore] prs cloud plus complet:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
   // Sessions — prend le plus complet

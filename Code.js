@@ -550,13 +550,22 @@ function handleSaveProfile_(body) {
     if (body.leftHand      !== undefined) profile.leftHand      = body.leftHand;
     // Tableaux : [] n'écrase pas un tableau existant
     if (body.customExercises!== undefined) profile.customExercises= _pa_(body.customExercises, profile.customExercises);
+    // Photos d'exercices = LOCAL SEULEMENT : on ne les garde JAMAIS dans le store cloud
+    // (elles saturaient les 9 Mo). On retire img des exos perso stockés + on nettoie l'existant.
+    if (Array.isArray(profile.customExercises)) {
+      profile.customExercises = profile.customExercises.map(function(x){
+        if (x && x.img) { var y = {}; for (var k in x) { if (k !== 'img') y[k] = x[k]; } return y; }
+        return x;
+      });
+    }
     // Objets  : {} ou null n'écrase pas un objet existant
     if (body.healthProfile !== undefined) profile.healthProfile = body.healthProfile||profile.healthProfile||null;
     if (body.badges        !== undefined) profile.badges        = _po_(body.badges,        profile.badges);
     if (body.discipline    !== undefined) profile.discipline    = _ps_(body.discipline,    profile.discipline);
     if (body.level         !== undefined) profile.level         = _ps_(body.level,         profile.level);
     if (body.histImports   !== undefined) profile.histImports   = _pn_(body.histImports,   profile.histImports);
-    if (body.exPhotos      !== undefined) profile.exPhotos      = _po_(body.exPhotos,      profile.exPhotos);
+    // exPhotos (photos d'exos bibliothèque) = LOCAL SEULEMENT : jamais stocké, et on nettoie l'existant.
+    if (profile.exPhotos) delete profile.exPhotos;
     if (body.bodyStudy     !== undefined) profile.bodyStudy     = _po_(body.bodyStudy,     profile.bodyStudy);
     if (body.bodyScans     !== undefined) profile.bodyScans     = _pa_(body.bodyScans,     profile.bodyScans);
     if (body.bloodTests    !== undefined) profile.bloodTests    = _pa_(body.bloodTests,    profile.bloodTests);

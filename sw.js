@@ -1,4 +1,4 @@
-const CACHE = 'ft-v325'; // Confirmation d'email (soft) : code a 6 chiffres par email a l'inscription + badge verifie (securise la sauvegarde)
+const CACHE = 'ft-v326'; // Photos d'exercices en LOCAL seulement (retirees du cloud) -> vide le store 9 Mo, garde local + hors-ligne
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
