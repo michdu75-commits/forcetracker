@@ -1,4 +1,4 @@
-const CACHE = 'ft-v320'; // Bilan sanguin (bêta) ouvert aussi à Christophe
+const CACHE = 'ft-v321'; // Pop-up Christophe v2 : explication bilan sanguin + Milo amélioré + questionnaire
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
