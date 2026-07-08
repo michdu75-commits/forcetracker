@@ -1,4 +1,4 @@
-const CACHE = 'ft-v305'; // Bilan corporel : 4 champs en plus (score/masse maigre/graisse sous-cut/SMI) + le bilan alimente la pesée du jour (poids + masse grasse)
+const CACHE = 'ft-v306'; // Bilan corporel : limite lecture photo (illimité super-testeurs Michel/Christophe, 1 fois les autres ; saisie main/code gratuites pour tous)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
