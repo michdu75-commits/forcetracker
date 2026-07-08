@@ -16,6 +16,7 @@ let S={
   name:'',
   coachFree:0,
   histImports:0,
+  bodyScanImports:0,
   premium:false,
   premiumExpiry:'',
   exRestPref:{},
@@ -58,7 +59,6 @@ function load(){
     S.targetWeight=parseFloat(localStorage.getItem('ft4_target')||'0')||0;
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
     S.discipline=localStorage.getItem('ft4_discipline')||'muscu';
-    S.timerSkin=localStorage.getItem('ft4_timerskin')||'segments'; // style du chrono de repos : segments | anneau | cadran | aiguille
     S.level=localStorage.getItem('ft4_level')||''; // '' | 'debutant' | 'intermediaire' | 'confirme' (niveau déclaré, évolue avec les séances)
     S.levelAuto=localStorage.getItem('ft4_levelAuto')==='1'; // true si le niveau a été promu automatiquement (évite de re-fêter)
     S.beginnerJourney=JSON.parse(localStorage.getItem('ft4_bjourney')||'null'); // parcours débutant : {style,freq,startDate,phase}
@@ -73,6 +73,7 @@ function load(){
     S.anonId=localStorage.getItem('ft4_auid')||(()=>{const id='u_'+Math.random().toString(36).slice(2,11);localStorage.setItem('ft4_auid',id);return id;})();
     S.coachFree=parseInt(localStorage.getItem('ft4_coachFree')||'0')||0;
     S.histImports=parseInt(localStorage.getItem('ft4_histImp')||'0')||0;
+    S.bodyScanImports=parseInt(localStorage.getItem('ft4_bsimports')||'0')||0;
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
     S.premium=localStorage.getItem('ft4_premium')==='1';
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
@@ -85,6 +86,7 @@ function load(){
     S.mealPlan=JSON.parse(localStorage.getItem('ft4_mealplan')||'null');
     S.healthProfile=JSON.parse(localStorage.getItem('ft4_health')||'null');
     S.bodyStudy=JSON.parse(localStorage.getItem('ft4_bodystudy')||'null');
+    S.bodyScans=JSON.parse(localStorage.getItem('ft4_bodyscans')||'[]');
     S.a11y=localStorage.getItem('ft4_a11y')==='1';
     S.colorblind=localStorage.getItem('ft4_cb')||'';
     S.leftHand=localStorage.getItem('ft4_lh')==='1';
@@ -183,7 +185,6 @@ function persist(){
     localStorage.setItem('ft4_target',S.targetWeight||0);
     localStorage.setItem('ft4_goal',S.goal||'muscle');
     localStorage.setItem('ft4_discipline',S.discipline||'muscu');
-    localStorage.setItem('ft4_timerskin',S.timerSkin||'segments');
     localStorage.setItem('ft4_level',S.level||'');
     localStorage.setItem('ft4_levelAuto',S.levelAuto?'1':'0');
     localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
@@ -196,6 +197,7 @@ function persist(){
     localStorage.setItem('ft4_progexos',JSON.stringify(S.progExos||BIG4));
     localStorage.setItem('ft4_coachFree',S.coachFree||0);
     localStorage.setItem('ft4_histImp',S.histImports||0);
+    localStorage.setItem('ft4_bsimports',S.bodyScanImports||0);
     localStorage.setItem('ft4_coach_mem',S.coachMemory||'');
     localStorage.setItem('ft4_exRp',JSON.stringify(S.exRestPref||{}));
     localStorage.setItem('ft4_premium',S.premium?'1':'0');
@@ -206,6 +208,7 @@ function persist(){
     localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
     localStorage.setItem('ft4_bodystudy',JSON.stringify(S.bodyStudy||null));
+    localStorage.setItem('ft4_bodyscans',JSON.stringify(S.bodyScans||[]));
     localStorage.setItem('ft4_a11y',S.a11y?'1':'0');
     localStorage.setItem('ft4_cb',S.colorblind||'');
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');

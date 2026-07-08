@@ -508,7 +508,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
-    +`${hasLocalGif?'<img src="'+_exImgSrc+'" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
+    +`${hasLocalGif?'<img src="'+_exImgSrc+'" draggable="false" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
@@ -608,6 +608,7 @@ function openExMenu(ei,hasGif){
     +`</button>`;
   ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
+    +mRow('🔄','Remplacer l\'exercice',`openExPickerForReplace(${ei})`)
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
     +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
     +mRow('📷',hasUserPhoto?'Changer la photo':'Ajouter une photo',`closeExMenu();changeExImg('${safeNm}')`)
@@ -992,6 +993,7 @@ function _rmSetHoldEnd(btn){
 let _expandedEx=null;
 let _groupMode=false;let _selectedGroupExs=new Set();
 let _exPickerMode='workout';
+let _replaceEi=null; // index de l'exo à remplacer (menu ⋯ → Remplacer l'exercice)
 let _editProgIdx=-1,_editProgData=null,_editDayIdx=0;
 function addExercise(name){
   if(_exPickerMode==='prog'){
@@ -1006,14 +1008,48 @@ function addExercise(name){
     _exPickerMode='workout';
     return;
   }
+  if(_exPickerMode==='replace'){
+    _exPickerMode='workout';       // avant closeExPicker (qui nullifie _replaceEi si mode==='replace')
+    _replaceExInWorkout(name);     // lit _replaceEi (encore défini)
+    closeExPicker();
+    return;
+  }
+  if(_exPickerMode==='replaceSess'){ // remplacement dans une séance passée (setup.js)
+    _exPickerMode='workout';
+    if(typeof _replaceSessExPick==='function')_replaceSessExPick(name);
+    closeExPicker();
+    return;
+  }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
-  const sets=[0,1,2].map((_,i)=>({kg:prev.length?prev[0].kg:0,reps:prev.length?prev[0].reps:5,type:i===0&&prev.length?'É':'N',done:false,rm1:0}));
+  // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
+  const sets=[0,1,2].map((_,i)=>{const pp=prev.length?(prev[i]||prev[prev.length-1]):null;return{kg:pp?pp.kg:0,reps:pp?pp.reps:5,type:i===0&&prev.length?'É':'N',done:false,rm1:0};});
   S.wkt.exs.push({name,sets});
   _expandedEx=S.wkt.exs.length-1;
   persist();closeExPicker();renderExBlocks();
   setTimeout(()=>{const el=document.getElementById('ex-block-'+_expandedEx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
   toast(name+' ajouté !','info');
+}
+// Remplacer un exercice mal choisi (ex. Développé Décliné → Développé Couché) SANS perdre les séries.
+function openExPickerForReplace(ei){
+  closeExMenu();
+  _replaceEi=ei;
+  _exPickerMode='replace';
+  openExPicker();
+  toast('Choisis le bon exercice','info');
+}
+function _replaceExInWorkout(name){
+  const ei=_replaceEi;_replaceEi=null;
+  if(ei===null||!S.wkt||!S.wkt.exs[ei])return;
+  const old=S.wkt.exs[ei].name;
+  if(name===old){renderExBlocks();return;}
+  // On garde toutes les séries (kg/reps/type/note), on change juste le nom.
+  S.wkt.exs[ei].name=name;
+  // rm1 des séries validées recalculé sous le nouveau nom (inchangé numériquement, mais cohérent)
+  S.wkt.exs[ei].sets.forEach(s=>{if(s.kg&&s.reps)s.rm1=bz(s.kg,s.reps);});
+  _expandedEx=ei;
+  persist();renderExBlocks();
+  toast('Exercice remplacé par '+name,'success');
 }
 function toggleExBlock(ei){
   _expandedEx=(_expandedEx===ei)?ei:ei;
@@ -1568,12 +1604,8 @@ function _nextSetInfo(){
   const set=ex.sets[si];
   return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.reps||''};
 }
-// ─── Chrono de repos — skins au choix (segments / anneau / cadran / aiguille) ───
+// ─── Cadran à segments du décompte final (style timer digital) ───────
 const _CDOWN_TICKS=44;
-const _CDOWN_SKINS=['segments','anneau','cadran','chrono']; // 'aiguille' (minimaliste) remplacé par 'chrono' (vraie montre-chrono)
-const _CDOWN_SKIN_LABELS={segments:'Segments',anneau:'Anneau',cadran:'Cadran',chrono:'Chrono'};
-function _cdownSkin(){const s=(typeof S!=='undefined'&&S.timerSkin)||'segments';return _CDOWN_SKINS.includes(s)?s:'segments';}
-function _cdownColorFrac(f){return f>0.6?'#28E070':f>0.3?'#FF9500':'#FF3B30';}
 function _cdownTickColor(i){
   const t=i/(_CDOWN_TICKS-1); // 0 (haut) → 1 (fin) : vert → jaune → orange → rouge
   if(t<0.34) return '#28E070';
@@ -1581,112 +1613,29 @@ function _cdownTickColor(i){
   if(t<0.80) return '#FF9500';
   return '#FF3B30';
 }
-const _CDOWN_NS='http://www.w3.org/2000/svg';
-function _cdownSvgEl(tag,attrs){const e=document.createElementNS(_CDOWN_NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
-// Construit les éléments statiques du skin choisi (une seule fois par skin — clé data-skin)
-function _buildCdownSkin(){
-  const svg=document.getElementById('rcd-svg');if(!svg)return;
-  const skin=_cdownSkin();
-  if(svg.getAttribute('data-skin')===skin)return;
-  svg.setAttribute('data-skin',skin);
+function _buildCdownTicks(){
+  const svg=document.getElementById('rcd-svg');
+  if(!svg||svg.getAttribute('data-ticks'))return;
+  svg.setAttribute('data-ticks','1');
   while(svg.firstChild)svg.removeChild(svg.firstChild);
-  const cx=100,cy=100,dim='rgba(255,255,255,.09)';
-  if(skin==='segments'){
-    const rI=64,rO=88;
-    for(let i=0;i<_CDOWN_TICKS;i++){
-      const a=(-90+i*(360/_CDOWN_TICKS))*Math.PI/180;
-      svg.appendChild(_cdownSvgEl('line',{x1:(cx+rI*Math.cos(a)).toFixed(1),y1:(cy+rI*Math.sin(a)).toFixed(1),x2:(cx+rO*Math.cos(a)).toFixed(1),y2:(cy+rO*Math.sin(a)).toFixed(1),'stroke-width':'5.5','stroke-linecap':'round',stroke:dim}));
-    }
-  }else if(skin==='anneau'){
-    const r=80,C=(2*Math.PI*r).toFixed(1);
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r,fill:'none',stroke:dim,'stroke-width':'13'}));
-    svg.appendChild(_cdownSvgEl('circle',{id:'rcd-arc',cx,cy,r,fill:'none',stroke:'#28E070','stroke-width':'13','stroke-linecap':'round',transform:'rotate(-90 100 100)','stroke-dasharray':C,'stroke-dashoffset':'0'}));
-  }else if(skin==='cadran'){
-    const r=86;
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r,fill:'rgba(255,255,255,.06)'}));
-    svg.appendChild(_cdownSvgEl('path',{id:'rcd-wedge',fill:'#28E070',d:''}));
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'58',fill:'#0e1016'}));
-  }else if(skin==='chrono'){
-    // Vraie montre-chrono : couronne + boutons, bezel métallique, 60 graduations, arc de temps restant, aiguille + moyeu
-    svg.appendChild(_cdownSvgEl('rect',{x:'94',y:'0',width:'12',height:'8',rx:'2.5',fill:'#9aa0ad'}));
-    svg.appendChild(_cdownSvgEl('rect',{x:'96.5',y:'6',width:'7',height:'6',rx:'2',fill:'#767c8a'}));
-    const gL=_cdownSvgEl('g',{transform:'rotate(-32 100 100)'});gL.appendChild(_cdownSvgEl('rect',{x:'94',y:'2',width:'12',height:'9',rx:'2.5',fill:'#868c99'}));svg.appendChild(gL);
-    const gR=_cdownSvgEl('g',{transform:'rotate(32 100 100)'});gR.appendChild(_cdownSvgEl('rect',{x:'94',y:'2',width:'12',height:'9',rx:'2.5',fill:'#868c99'}));svg.appendChild(gR);
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'95',fill:'#0e1016',stroke:'#4a4f5a','stroke-width':'6'}));
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'89',fill:'none',stroke:'#23262e','stroke-width':'3'}));
-    for(let i=0;i<60;i++){const a=(-90+i*6)*Math.PI/180,maj=i%5===0,r1=maj?76:80,r2=85;
-      svg.appendChild(_cdownSvgEl('line',{x1:(cx+r1*Math.cos(a)).toFixed(1),y1:(cy+r1*Math.sin(a)).toFixed(1),x2:(cx+r2*Math.cos(a)).toFixed(1),y2:(cy+r2*Math.sin(a)).toFixed(1),stroke:maj?'rgba(255,255,255,.55)':'rgba(255,255,255,.25)','stroke-width':maj?'2.4':'1','stroke-linecap':'round'}));}
-    const r=71,C=(2*Math.PI*r).toFixed(1);
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r,fill:'none',stroke:'rgba(255,255,255,.06)','stroke-width':'8'}));
-    svg.appendChild(_cdownSvgEl('circle',{id:'rcd-arc',cx,cy,r,fill:'none',stroke:'#28E070','stroke-width':'8','stroke-linecap':'round',transform:'rotate(-90 100 100)','stroke-dasharray':C,'stroke-dashoffset':'0'}));
-    const gH=_cdownSvgEl('g',{id:'rcd-hand',transform:'rotate(0 100 100)'});
-    gH.appendChild(_cdownSvgEl('line',{x1:'100',y1:'112',x2:'100',y2:'32',stroke:'#28E070','stroke-width':'3','stroke-linecap':'round'}));
-    gH.appendChild(_cdownSvgEl('circle',{cx:'100',cy:'112',r:'3.4',fill:'#28E070'}));
-    svg.appendChild(gH);
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'7',fill:'#d3d6dd'}));
-    svg.appendChild(_cdownSvgEl('circle',{cx,cy,r:'3',fill:'#0e1016'}));
+  const cx=100,cy=100,rI=64,rO=88,NS='http://www.w3.org/2000/svg';
+  for(let i=0;i<_CDOWN_TICKS;i++){
+    const a=(-90+i*(360/_CDOWN_TICKS))*Math.PI/180;
+    const ln=document.createElementNS(NS,'line');
+    ln.setAttribute('x1',(cx+rI*Math.cos(a)).toFixed(1));
+    ln.setAttribute('y1',(cy+rI*Math.sin(a)).toFixed(1));
+    ln.setAttribute('x2',(cx+rO*Math.cos(a)).toFixed(1));
+    ln.setAttribute('y2',(cy+rO*Math.sin(a)).toFixed(1));
+    ln.setAttribute('stroke-width','5.5');
+    ln.setAttribute('stroke-linecap','round');
+    ln.setAttribute('stroke','rgba(255,255,255,.09)');
+    svg.appendChild(ln);
   }
 }
-// Mini aperçu d'un skin (pour le sélecteur du Profil), état ~62% (vert)
-function _miniSkinSvg(skin){
-  const cx=20,cy=20,frac=0.62,col='#28E070',dim='rgba(255,255,255,.16)';let inner='';
-  if(skin==='segments'){
-    const N=16,rI=11,rO=16,lit=Math.round(frac*N);
-    for(let i=0;i<N;i++){const a=(-90+i*(360/N))*Math.PI/180;const c=i<lit?_cdownTickColor(Math.round(i/(N-1)*(_CDOWN_TICKS-1))):dim;
-      inner+=`<line x1="${(cx+rI*Math.cos(a)).toFixed(1)}" y1="${(cy+rI*Math.sin(a)).toFixed(1)}" x2="${(cx+rO*Math.cos(a)).toFixed(1)}" y2="${(cy+rO*Math.sin(a)).toFixed(1)}" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;}
-  }else if(skin==='anneau'){
-    const r=14,C=2*Math.PI*r;
-    inner=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${dim}" stroke-width="4"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="4" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy})" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}"/>`;
-  }else if(skin==='cadran'){
-    const r=15,th=frac*360*Math.PI/180,ex=cx+r*Math.sin(th),ey=cy-r*Math.cos(th),la=frac*360>180?1:0;
-    inner=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(255,255,255,.08)"/><path d="M${cx} ${cy} L${cx} ${cy-r} A${r} ${r} 0 ${la} 1 ${ex.toFixed(1)} ${ey.toFixed(1)} Z" fill="${col}"/><circle cx="${cx}" cy="${cy}" r="9" fill="#12141b"/>`;
-  }else if(skin==='chrono'){
-    inner=`<rect x="18.5" y="0.5" width="3" height="3" rx="1" fill="#9aa0ad"/><circle cx="${cx}" cy="${cy+0.5}" r="16.5" fill="#0e1016" stroke="#4a4f5a" stroke-width="2"/>`;
-    for(let i=0;i<12;i++){const a=(-90+i*30)*Math.PI/180;inner+=`<line x1="${(cx+13*Math.cos(a)).toFixed(1)}" y1="${(cy+0.5+13*Math.sin(a)).toFixed(1)}" x2="${(cx+15*Math.cos(a)).toFixed(1)}" y2="${(cy+0.5+15*Math.sin(a)).toFixed(1)}" stroke="rgba(255,255,255,.4)" stroke-width="1.3"/>`;}
-    const r=11,C=2*Math.PI*r;
-    inner+=`<circle cx="${cx}" cy="${cy+0.5}" r="${r}" fill="none" stroke="${col}" stroke-width="2.4" stroke-linecap="round" transform="rotate(-90 ${cx} ${cy+0.5})" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*(1-frac)).toFixed(1)}"/>`;
-    inner+=`<line x1="20" y1="24" x2="20" y2="9" stroke="${col}" stroke-width="1.8" stroke-linecap="round" transform="rotate(${((1-frac)*360).toFixed(1)} 20 20.5)"/><circle cx="${cx}" cy="${cy+0.5}" r="2" fill="#d3d6dd"/>`;
-  }
-  return `<svg viewBox="0 0 40 40" width="40" height="40">${inner}</svg>`;
-}
-// Rafraîchit le sélecteur de skin (Profil) : aperçus + état actif
-function _renderTimerSkinSel(){
-  const cur=_cdownSkin();
-  _CDOWN_SKINS.forEach(sk=>{
-    const prev=document.getElementById('tskin-prev-'+sk);if(prev)prev.innerHTML=_miniSkinSvg(sk);
-    const btn=document.getElementById('tskin-'+sk);
-    if(btn){const on=sk===cur;btn.style.borderColor=on?'var(--red)':'var(--sep)';btn.style.background=on?'rgba(239,62,87,.12)':'var(--bg2)';}
-  });
-}
-function setTimerSkin(v){
-  if(!_CDOWN_SKINS.includes(v))v='segments';
-  if(typeof S!=='undefined'){S.timerSkin=v;if(typeof persist==='function')persist();}
-  const svg=document.getElementById('rcd-svg');if(svg)svg.removeAttribute('data-skin'); // forcer la reconstruction au prochain repos
-  _renderTimerSkinSel();
-  if(typeof toast==='function')toast('Chrono : '+(_CDOWN_SKIN_LABELS[v]||v),'success');
-}
-// Met à jour la partie dynamique selon le temps restant (frac 1→0)
-function _paintCdown(frac){
+function _paintCdownTicks(litCount){
   const svg=document.getElementById('rcd-svg');if(!svg)return;
-  frac=Math.max(0,Math.min(1,frac));
-  const skin=svg.getAttribute('data-skin')||'segments';
-  const col=_cdownColorFrac(frac);
-  if(skin==='segments'){
-    const lit=Math.max(0,Math.round(frac*_CDOWN_TICKS)),ln=svg.querySelectorAll('line');
-    for(let i=0;i<ln.length;i++) ln[i].setAttribute('stroke', i<lit?_cdownTickColor(i):'rgba(255,255,255,.09)');
-  }else if(skin==='anneau'){
-    const arc=svg.querySelector('#rcd-arc');if(arc){const C=2*Math.PI*80;arc.setAttribute('stroke',col);arc.setAttribute('stroke-dashoffset',(C*(1-frac)).toFixed(1));}
-  }else if(skin==='cadran'){
-    const w=svg.querySelector('#rcd-wedge');
-    if(w){const r=86,cx=100,cy=100,th=Math.min(359.9,frac*360)*Math.PI/180,ex=cx+r*Math.sin(th),ey=cy-r*Math.cos(th),la=frac*360>180?1:0;
-      w.setAttribute('fill',col);
-      w.setAttribute('d',frac<=0?'':`M${cx} ${cy} L${cx} ${cy-r} A${r} ${r} 0 ${la} 1 ${ex.toFixed(1)} ${ey.toFixed(1)} Z`);}
-  }else if(skin==='chrono'){
-    const arc=svg.querySelector('#rcd-arc');if(arc){const C=2*Math.PI*71;arc.setAttribute('stroke',col);arc.setAttribute('stroke-dashoffset',(C*(1-frac)).toFixed(1));}
-    const h=svg.querySelector('#rcd-hand');
-    if(h){h.setAttribute('transform',`rotate(${((1-frac)*360).toFixed(1)} 100 100)`);
-      h.querySelectorAll('line,circle').forEach(e=>e.setAttribute(e.tagName==='line'?'stroke':'fill',col));}
-  }
+  const ln=svg.querySelectorAll('line');
+  for(let i=0;i<ln.length;i++) ln[i].setAttribute('stroke', i<litCount?_cdownTickColor(i):'rgba(255,255,255,.09)');
 }
 function _showRestCountdown(){
   if(_cdownActive)return;
@@ -1727,22 +1676,21 @@ function _updateRestCountdown(){
       if(o&&_cdownActive){o.style.transition='';o.style.background='';o.classList.add('go-cycle');}
     },5000);
   }
-  _buildCdownSkin();
+  _buildCdownTicks();
   const numEl=document.getElementById('rcd-num');
   const labelEl=document.getElementById('rcd-label');
-  const skin=_cdownSkin();
-  const compact=(skin==='cadran'||skin==='chrono'); // chiffre plus petit (rentre dans le disque/cadran)
-  const bigSize=compact?'84px':'110px';
   if(left<=0){
     // Écran GO persistant : reste affiché jusqu'au tap / bouton Passer (pas d'auto-close)
     if(labelEl){labelEl.textContent="C'EST REPARTI";labelEl.style.color='rgba(255,255,255,.9)';}
-    if(numEl){numEl.textContent='GO';numEl.style.fontSize=compact?'62px':'80px';numEl.style.color='#fff';}
-    _paintCdown(0);
+    if(numEl){numEl.textContent='GO';numEl.style.fontSize='80px';numEl.style.color='#fff';}
+    _paintCdownTicks(0);
     return;
   }
-  // Le cadran se vide sur les 10 dernières secondes (frac = temps restant / 10)
-  _paintCdown(left/10);
-  if(numEl){numEl.textContent=left;numEl.style.fontSize=bigSize;numEl.style.color=_cdownColorFrac(left/10);}
+  // Cadran à segments : le nombre de traits allumés = temps restant (10s → plein)
+  const litCount=Math.max(1,Math.round(left/10*_CDOWN_TICKS));
+  _paintCdownTicks(litCount);
+  const color=left<=3?'#FF3B30':left<=6?'#FF9500':'#28E070';
+  if(numEl){numEl.textContent=left;numEl.style.fontSize='110px';numEl.style.color=color;}
 }
 // Tap sur l'overlay ou bouton Passer :
 // - pendant le décompte (avant 0) → skip anticipé = fin immédiate du repos (timer + pastille effacés)
@@ -1891,7 +1839,7 @@ function openExPicker(){
   filterEx();
   document.getElementById('mod-ex').classList.add('open');
 }
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'){_exPickerMode='workout';_replaceEi=null;}}
 function filterEx(){
   const q=(document.getElementById('ex-search').value||'').toLowerCase().trim();
   const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));
@@ -2789,11 +2737,16 @@ function loadProgDay(progIdx,dayIdx){
   const day=prog.days[dayIdx];
   S.wkt={date:today(),progLabel:day.label||('Jour '+(dayIdx+1)),exs:(day.exs||[]).map(e=>{
     const prev=getPrev(e.name);
-    const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map(s=>({
-      kg:prev.length?prev[0].kg:(s.kg||0),
-      reps:prev.length?prev[0].reps:(s.reps||10),
-      type:s.type||'N',done:false,rm1:0,rest:s.rest||0
-    }))};
+    // Pré-remplissage PAR SÉRIE depuis la séance précédente (comme la colonne « Précédent »
+    // et addSet) — série i → prev[i], repli sur la dernière série précédente, sinon valeur du programme.
+    const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
+      const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
+      return {
+        kg:pp?pp.kg:(s.kg||0),
+        reps:pp?pp.reps:(s.reps||10),
+        type:s.type||'N',done:false,rm1:0,rest:s.rest||0
+      };
+    })};
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
     return obj;
   })};
@@ -2996,11 +2949,15 @@ function loadProg(idx){
     progLabel:prog.name,
     exs:(prog.exs||[]).map(e=>{
       const prev=getPrev(e.name);
-      const obj={name:e.name,sets:(e.sets||[]).map(s=>({
-        kg:prev.length?prev[0].kg:(s.kg||0),
-        reps:prev.length?prev[0].reps:(s.reps||5),
-        type:s.type||'N',done:false,rm1:0,rest:s.rest||0
-      }))};
+      // Pré-remplissage PAR SÉRIE depuis la séance précédente (voir loadProgDay).
+      const obj={name:e.name,sets:(e.sets||[]).map((s,i)=>{
+        const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
+        return {
+          kg:pp?pp.kg:(s.kg||0),
+          reps:pp?pp.reps:(s.reps||5),
+          type:s.type||'N',done:false,rm1:0,rest:s.rest||0
+        };
+      })};
       if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
       return obj;
     })

@@ -578,6 +578,7 @@ function finishOnboarding(){
     fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
   }
   localStorage.setItem('ft4_ob2','1');
+  try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){} // nouvel inscrit : pas de « Quoi de neuf » (il a le guide-film)
   document.documentElement.classList.add('ob-done');
   const ob=document.getElementById('onboarding');
   if(ob){ob.style.transition='opacity .4s';ob.style.opacity='0';setTimeout(()=>{ob.style.display='none';ob.style.opacity='';ob.style.transition='';},400);}
@@ -787,6 +788,7 @@ const APP_GUIDE_SLIDES=[
   {img:'../guide/seance.jpg',     tap:[.875,.305],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche. Tes <b>records</b> se calculent tout seuls.'},
   {img:'../guide/programmes.jpg', tap:[.5,.42],   t:'Tes programmes',         cap:'Crée, <b>importe</b> (photo/Word/PDF) ou charge un programme en 1 tap. Débutant ? Un parcours guidé t\'attend.'},
   {img:'../guide/progres.jpg',    tap:[.5,.32],   t:'Tes progrès',            cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs.'},
+  {img:'../guide/bilan.jpg',      tap:[.5,.72],   t:'Ton bilan corporel',     cap:'Balance pro (impédance) ? Enregistre tes chiffres — <b>📷 photo</b>, à la main ou code. Poids, graisse, muscle, métabolisme… Tu suis l\'<b>évolution</b> et <b>Milo s\'en sert</b>.'},
   {img:'../guide/coach.jpg',      tap:[.5,.86],   t:'Milo, ton coach IA',     cap:'Une <b>question</b> ? Besoin d\'un <b>conseil</b> ou d\'un guide ? Milo répond à tout — il connaît ton profil.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
@@ -1303,6 +1305,7 @@ _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 checkSuperTesterWelcome(); // message « super testeur » une seule fois (Christophe)
+checkAnnouncements(); // pop perso Christophe + « Quoi de neuf » pour tous (une seule fois)
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
 initCoachInput();
 initOnboarding();
@@ -1319,6 +1322,24 @@ function checkSuperTesterWelcome(){
 }
 function showSuperWelcome(){const o=document.getElementById('ov-super-welcome');if(o)o.classList.add('open');}
 function closeSuperWelcome(){try{localStorage.setItem('ft4_super_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-super-welcome');if(o)o.classList.remove('open');}
+// ─── Annonces : pop-up perso Christophe + « Quoi de neuf » pour tous (une seule fois) ──
+function _isChristophe(){return (S.email||'').trim().toLowerCase()==='christophe@famillelanglois.fr';}
+function checkAnnouncements(){
+  try{
+    if(_isChristophe()){
+      if(!localStorage.getItem('ft4_billoute_v1')){
+        try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){} // Christophe a son pop perso, pas le général
+        setTimeout(showBilloute,1000);
+      }
+      return;
+    }
+    if(!localStorage.getItem('ft4_whatsnew_v1')) setTimeout(showWhatsNew,1000);
+  }catch(e){}
+}
+function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
+function closeBilloute(){try{localStorage.setItem('ft4_billoute_v1','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
+function showWhatsNew(){const o=document.getElementById('ov-whatsnew');if(o)o.classList.add('open');}
+function closeWhatsNew(){try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){}const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}
 function openTesterSpace(){
   // L'Espace Testeur (dont la boîte à idées) est réservé aux vrais testeurs récompensés.
   // Michel a le suivi photos via le panneau Admin, mais PAS cet espace ni la boîte à idées.

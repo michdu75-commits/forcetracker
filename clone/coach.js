@@ -2,6 +2,52 @@
 const COACH_FREE_LIMIT = 10;
 let coachHistory = [];
 let coachBusy = false;
+let _coachHistLoaded = false;
+
+// ─── Historique du chat persisté (survit à la fermeture de l'appli) ───
+// Stocké local (ft4_coach_hist). Léger : les photos deviennent "[photo]" (pas de base64 stocké).
+function _loadCoachHist(){
+  try{
+    const raw = localStorage.getItem('ft4_coach_hist');
+    if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr)) coachHistory = arr; }
+  }catch(e){ coachHistory = []; }
+}
+function _saveCoachHist(){
+  try{
+    const light = coachHistory.slice(-20).map(m=>({
+      role: m.role,
+      content: (typeof m.content === 'string') ? m.content
+             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : '')
+    }));
+    localStorage.setItem('ft4_coach_hist', JSON.stringify(light));
+  }catch(e){}
+}
+// Reconstruit les bulles à l'écran depuis coachHistory (à l'ouverture de l'appli)
+function _renderCoachThread(){
+  const msgs = document.getElementById('coach-msgs');
+  if(!msgs) return;
+  msgs.innerHTML = '';
+  coachHistory.forEach(m=>{
+    const t = (typeof m.content === 'string') ? m.content
+            : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
+    if(m.role === 'user') renderCoachMsg('user', t || '[photo]');
+    else if(t) renderCoachMsg('coach', t);
+  });
+  msgs.scrollTop = msgs.scrollHeight;
+}
+// Nouvelle discussion : vide le fil (garde la mémoire long-terme de Milo intacte)
+function newCoachChat(){
+  const go=()=>{
+    coachHistory = [];
+    try{ localStorage.removeItem('ft4_coach_hist'); }catch(e){}
+    const msgs=document.getElementById('coach-msgs'); if(msgs) msgs.innerHTML='';
+    updateCoachHeader();
+    if(typeof toast==='function') toast('Nouvelle discussion','info');
+  };
+  if(coachHistory.length && typeof showConfirm==='function'){
+    showConfirm('Nouvelle discussion ?','Le fil affiché sera effacé. Milo garde quand même l\'essentiel de vos échanges en mémoire.',go);
+  } else go();
+}
 
 function _showCoachChat(){
   const home=document.getElementById('coach-home');
@@ -110,11 +156,13 @@ function _saveForceProgram(idx,btn){
 }
 
 function updateCoachHeader() {
+  if(!_coachHistLoaded){ _loadCoachHist(); _coachHistLoaded = true; }
   _updateCoachMorphoBtn();
   _updateCoachCtxTags();
   // Cache le mur premium si l'utilisateur est maintenant premium
   if(S.premium){const wall=document.getElementById('coach-wall');if(wall)wall.style.display='none';}
   // Afficher accueil ou chat selon l'historique
+  const newBtn=document.getElementById('coach-new-btn');
   if(coachHistory.length===0){
     const home=document.getElementById('coach-home');
     const msgs=document.getElementById('coach-msgs');
@@ -122,8 +170,13 @@ function updateCoachHeader() {
     if(home)home.style.display='flex';
     if(msgs)msgs.style.display='none';
     if(suggs)suggs.style.display='none';
+    if(newBtn)newBtn.style.display='none';
   } else {
     _showCoachChat();
+    // Reconstruire le fil si l'écran est vide (ex. après réouverture de l'appli)
+    const msgs=document.getElementById('coach-msgs');
+    if(msgs && msgs.children.length===0) _renderCoachThread();
+    if(newBtn)newBtn.style.display='flex';
   }
   const badge = document.getElementById('coach-quota-badge');
   if (!badge) return;
@@ -347,6 +400,19 @@ ${(()=>{
   return recent.map(s=>`- ${s.date}: Énergie ${qE[s.checkin.energy]||'?'} · Sommeil ${qS[s.checkin.sleep]||'?'}`).join('\n');
 })()}
 
+${(()=>{
+  const sc=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(!sc.length)return '';
+  const L=sc[0],P=sc[1];
+  const p=(k,lbl,u)=>{if(L[k]==null)return '';let e='';if(P&&P[k]!=null){const d=+(L[k]-P[k]).toFixed(1);if(d!==0)e=` (${d>0?'+':''}${d} vs bilan préc.)`;}return `${lbl}: ${L[k]}${u||''}${e}`;};
+  const parts=[p('weight','poids','kg'),p('bf','graisse','%'),p('fatMass','masse grasse','kg'),p('muscle','muscle','kg'),p('skMuscle','muscle squelettique','kg'),p('leanMass','masse maigre','kg'),p('bone','masse osseuse','kg'),p('water','eau','kg'),p('protein','protéine','kg'),p('visceral','graisse viscérale',''),p('subFat','graisse sous-cutanée','%'),p('bmr','métabolisme de base','kcal'),p('smi','indice muscle squelettique','kg/m²'),p('metaAge','âge corporel','ans'),p('imc','IMC',''),p('bodyScore','score corporel','/100')].filter(Boolean);
+  const seg=[];
+  const sp=(k,lbl,u)=>{if(L[k]!=null)seg.push(`${lbl}: ${L[k]}${u||''}`);};
+  sp('armMuscleL','muscle bras G','kg');sp('armMuscleR','muscle bras D','kg');sp('trunkMuscle','muscle tronc','kg');sp('legMuscleL','muscle jambe G','kg');sp('legMuscleR','muscle jambe D','kg');
+  sp('armFatL','graisse bras G','kg');sp('armFatR','graisse bras D','kg');sp('trunkFat','graisse tronc','kg');sp('legFatL','graisse jambe G','kg');sp('legFatR','graisse jambe D','kg');
+  const segTxt=seg.length?`\nDÉTAIL PAR SEGMENT:\n- ${seg.join('\n- ')}`:'';
+  return `\nBILAN CORPOREL (balance pro, le ${L.date}):\n- ${parts.join('\n- ')}${segTxt}\n⚠️ IMPORTANT: utilise UNIQUEMENT les chiffres ci-dessus. N'invente JAMAIS une valeur qui n'y figure pas (ni masse osseuse, ni détail bras/tronc/jambes, ni autre) — si tu ne l'as pas, ne cite aucun chiffre pour ça, parle en termes généraux. Rappelle que l'IMC seul est trompeur chez une personne musclée. Ne pose jamais de diagnostic médical.\n`;
+})()}
 ${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
 Utilise ces données pour personnaliser tes réponses et t'adapter à la personne en face. Reste toi-même : ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, franc et pratique, mais calibré sur son niveau et son état du jour.`;
 }
@@ -609,6 +675,7 @@ async function sendToCoach(customMsg, displayMsg) {
     } else {
       const payload = {
         action: 'coach',
+        email: S.email || '',
         message: msg || 'Analyse cette photo de mon corps.',
         context: buildCoachContext(),
         history: coachHistory.slice(-8),
@@ -637,6 +704,8 @@ async function sendToCoach(customMsg, displayMsg) {
     if (_fp) _appendSaveProgBtn(_fp);
     coachHistory.push({ role: 'assistant', content: reply });
     if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
+    _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
+    const newBtn=document.getElementById('coach-new-btn'); if(newBtn)newBtn.style.display='flex';
 
     // Sauvegarde mémoire intelligente (Premium, fire-and-forget)
     if (S.premium && coachHistory.length >= 4 && S.url && S.email) _saveCoachMemory();
@@ -815,6 +884,7 @@ const _DRAWER_CONTENT = {
         {ic:'⚖️',t:'Graphique de poids',d:'Onglet Progrès → Poids. Tape un point de la courbe pour modifier ou supprimer cette pesée (poids + date). Les boutons 1 mois / 3 mois / 6 mois / Tout choisissent la période affichée.'},
         {ic:'📉',t:'Suivi de la masse grasse',d:'Onglet Progrès → Poids, carte « Masse grasse ». Enregistre ton % de graisse au fil du temps : soit calculé automatiquement (méthode US Navy — tu entres tour de cou + taille, l\'app calcule), soit à la main (ton chiffre de balance/caliper). La bascule « Poids / Masse grasse / Les 2 » au-dessus du graphique choisit ce qu\'on affiche — « Les 2 » superpose les deux courbes (tu peux prendre du poids en perdant de la graisse). ⚠️ Valeur INDICATIVE, pas une science exacte — et la balance à impédance par les pieds est peu fiable. Vise la RÉGULARITÉ (même méthode, le matin à jeun) : c\'est la tendance qui compte.'},
         {ic:'🎯',t:'Poids objectif',d:'Onglet Progrès → Poids, carte « Poids objectif ». Fixe le poids que tu vises : une ligne repère verte apparaît sur le graphique et l\'app affiche les kg restants. Laisse vide (✓) pour le retirer.'},
+        {ic:'🧪',t:'Bilan corporel (balance pro)',d:'Nouveau : Onglet Progrès → Poids → section « Bilan corporel ». Tu passes sur une balance à impédance (InBody, MyBodyCheck…) ? Enregistre tes chiffres pour suivre leur évolution : poids, % de graisse, masse grasse & maigre, muscle, muscle squelettique, masse osseuse, eau, protéine, graisse viscérale, métabolisme de base, âge corporel, IMC, score corporel — et même le détail par segment (bras/tronc/jambes gauche-droite). Trois façons de remplir : 📷 Photo (l\'IA lit ton rapport toute seule), ✏️ à la main, ou 📋 coller un code. Le bilan sert AUSSI de pesée du jour (poids + masse grasse alimentent tes courbes, pas de double saisie). Bilan après bilan, des flèches vertes montrent ce qui va dans le bon sens (muscle ↑, gras ↓). Et Milo s\'en sert pour te conseiller — avec de vrais chiffres, sans jamais en inventer ni poser de diagnostic médical.'},
         {ic:'🏅',t:'Badges & Streaks',d:'18 badges en 4 catégories : évolution (1re séance, 10/25/50/100 séances), performance (PRs, clubs 100/140 kg), streak (7/30/90 jours), spécial (lève-tôt, noctambule, anniversaire, premium). Un résumé hebdomadaire s\'affiche le lundi.'},
         {ic:'🍽️',t:'Nutrition',d:'TDEE adaptatif (Harris-Benedict) calculé depuis ton profil. Phase Charge = surplus · Phase Décharge = déficit. Plan 5 repas détaillé. Créatine et whey dosés selon ton poids. Combinaisons Premium : 4 stacks (muscle, force, cardio, perte de poids).'},
         {ic:'👤',t:'Ton Profil',d:'Menu ☰ → Profil. Organisé en sections repliables (tape un titre pour l\'ouvrir) : Identité · Objectif · Discipline · Composition corporelle · Morphologie · Santé · Cycle menstruel (femmes) · Accessibilité. Le bouton "Enregistrer le profil" confirme par une notification verte. Ton profil nourrit le Coach IA, la nutrition et tes stats.'},
@@ -824,6 +894,7 @@ const _DRAWER_CONTENT = {
         {ic:'🥉',t:'Ton niveau (évolutif)',d:'Nouveau : dans Profil → Discipline, indique ton niveau — Débutant · Intermédiaire · Confirmé. Le Coach (Milo) s\'adapte : plus pédagogue si tu débutes, plus technique si tu es confirmé. Et surtout : ton niveau évolue tout seul ! À force de séances et de progrès sur les gros mouvements (squat, développé couché, soulevé de terre), l\'app te félicite et te fait passer au niveau supérieur. 🎉'},
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
         {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
+        {ic:'💾',t:'Historique de Milo',d:'Nouveau : tes conversations avec Milo restent sauvegardées — tu retrouves ton fil même après avoir fermé et rouvert l\'appli. Le bouton « + » en haut à droite du Coach démarre une nouvelle discussion (Milo garde quand même l\'essentiel de vos échanges en mémoire). Sous chaque réponse : boutons « Partager » et « 📄 PDF » pour l\'exporter proprement.'},
         {ic:'💬',t:'Petits mots de Milo (Accueil)',d:'Nouveau : Milo t\'envoie parfois un petit mot en haut de l\'Accueil au bon moment — te relancer après quelques jours sans séance, te féliciter après une séance, te conseiller une séance légère après une nuit courte, ou t\'encourager quand tu enchaînes. Tape le message pour lui parler, ou la croix pour le fermer.'},
         {ic:'📐',t:'Étude du corps (Premium)',d:'Nouveau : dans le Coach, bouton « Étude du corps ». Prends 4 photos (face relâché, face contracté, dos contracté, profil) et l\'IA te fait un bilan complet : posture/stature, insertions musculaires, équilibre du corps (gauche/droite, haut/bas, avant/arrière), points forts, points à travailler et exercices suggérés — en tenant compte de ta santé (blessures/conditions du profil). Les photos ne sont pas stockées. Tu peux ensuite « en parler avec Milo ».'},
         {ic:'🏋️',t:'Gagner en force (Big 3)',d:'Nouveau : dans le Coach, bouton « Gagner en force (Big 3) ». Milo lit tes maxes (1RM) au Squat, Développé Couché et Soulevé de Terre depuis tes records, puis te donne un conseil ET un programme de force progressif (accumulation → intensification → peak). Un bouton « 💾 Enregistrer ce programme » l\'ajoute dans « Mes programmes » — prêt à charger en séance avec les charges.'},
