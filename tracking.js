@@ -691,16 +691,37 @@ function renderBodyScanCard(){
   el.innerHTML=html;
 }
 // Import photo : lire un rapport de balance pro via l'IA → pré-remplit le formulaire
+// Prépare la photo du rapport pour l'IA. Les rapports de balance sont souvent TRÈS hauts :
+// on garde une largeur lisible et on DÉCOUPE en tranches (~1300px) pour ne pas perdre le texte.
 function _resizeReport(file,cb){
   const reader=new FileReader();
   reader.onload=e=>{
     const img=new Image();
     img.onload=()=>{
-      const max=1500;let w=img.width,h=img.height;
-      if(w>=h){if(w>max){h=Math.round(h*max/w);w=max;}}else{if(h>max){w=Math.round(w*max/h);h=max;}}
-      const cv=document.createElement('canvas');cv.width=w;cv.height=h;
-      cv.getContext('2d').drawImage(img,0,0,w,h);
-      try{cb(cv.toDataURL('image/jpeg',0.85).split(',')[1]);}catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
+      try{
+        const TW=1000;                 // largeur cible (nette après downscale API)
+        const scale=Math.min(1,TW/img.width);
+        const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+        // Canvas complet redimensionné
+        const full=document.createElement('canvas');full.width=w;full.height=h;
+        full.getContext('2d').drawImage(img,0,0,w,h);
+        const TILE=1300, OVER=70;       // hauteur max par tuile + recouvrement
+        const tiles=[];
+        if(h<=TILE){
+          tiles.push(full.toDataURL('image/jpeg',0.85).split(',')[1]);
+        }else{
+          let y=0;
+          while(y<h){
+            const th=Math.min(TILE,h-y);
+            const t=document.createElement('canvas');t.width=w;t.height=th;
+            t.getContext('2d').drawImage(full,0,y,w,th,0,0,w,th);
+            tiles.push(t.toDataURL('image/jpeg',0.85).split(',')[1]);
+            if(y+th>=h)break;
+            y+=TILE-OVER;
+          }
+        }
+        cb(tiles);
+      }catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
     };
     img.onerror=()=>{if(typeof toast==='function')toast('Image illisible','error');};
     img.src=e.target.result;
@@ -719,10 +740,11 @@ function onBodyScanPhoto(input){
     return;
   }
   toast('📖 Lecture du rapport…','info');
-  _resizeReport(file,async(b64)=>{
+  _resizeReport(file,async(tiles)=>{
     try{
+      const images=(Array.isArray(tiles)?tiles:[tiles]).map(t=>({data:t,type:'image/jpeg'}));
       const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'importBodyScan',image:b64,imageType:'image/jpeg',email:S.email||''})});
+        body:JSON.stringify({action:'importBodyScan',images,image:images[0]&&images[0].data,imageType:'image/jpeg',email:S.email||''})});
       const txt=await resp.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('réponse illisible');}
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
