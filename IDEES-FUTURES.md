@@ -597,3 +597,22 @@ Aujourd'hui l'app est pensée pour un **petit cercle de confiance**. Avant d'ouv
 - Garde-fous coût Milo (limites gratuites solides) — partie frontend possible, partie serveur à déployer.
 
 **Décidé avec Michel** : noter comme **prérequis bloquant** en tête de la check-list grand public. Le gros du travail (auth serveur) se fait **avec** la migration base de données, la nuit, branche + tag de backup, rollback prêt.
+
+### ✅ AVANCEMENT « grand public » — session 2026-07-08 (déployé en prod)
+- 💸 **Garde-fou coût IA** — FAIT (@ backend) : `_aiQuotaBlock_` limites journalières par email + global, réglables via Script Properties `AI_EMAIL_MAX`/`AI_GLOBAL_MAX`, suivi via `?action=aiUsage&token=FT_IDEES_2026`.
+- 📦 **Stockage 9 Mo** — FAIT (ft-v326) : photos d'exercices (exPhotos + customExercises[].img) rendues **local-only** (retirées du payload cloud, backend nettoie l'existant). Le tiroir ne grossit plus des photos. (Drive écarté : servir des `<img>` depuis Drive = fragile/déprécié + Apps Script ne sert pas d'image binaire ; le vrai cloud-photos = hébergeur d'images avec la migration DB.)
+- 📧 **Confirmation email (soft)** — FAIT (ft-v325) : code 6 chiffres par email (GmailApp) à l'inscription, badge « ✅ Email confirmé », ne bloque jamais l'app. 1re brique des comptes + preuve de possession de l'email.
+- 🤖 **Auto-déploiement backend** — FAIT : GitHub Action (clasp 3.3.0), plus besoin du PC de Michel.
+
+### 🔒 MOTS DE PASSE / COMPTES — design retenu (à faire AVEC la base de données, décidé 2026-07-08 : « on attend »)
+Michel a choisi d'**attendre** (le faire proprement avec la vraie DB, pas bricolé sur Apps Script — risque n°1 = bloquer des gens hors de leurs données). **Design validé à implémenter le moment venu** :
+- **Mot de passe OPTIONNEL (opt-in), rétro-compatible, ne bloque JAMAIS un utilisateur existant.**
+- Poser un mot de passe = **confirmer l'email d'abord** (le code déjà en place) → preuve de possession → personne ne vole un compte sans accès à l'email.
+- Une fois posé : `loadProfile`/`saveProfile` exigent un **token** (émis au login email+mot de passe). Comptes **sans** mot de passe = comportement actuel inchangé (pas de token requis) → zéro lockout.
+- « Mot de passe oublié » → code email → nouveau mot de passe.
+- Hash salé + itéré (Apps Script n'a pas bcrypt → PBKDF2-like via SHA-256, ou mieux : le faire côté vraie DB/Firebase Auth). ⚠️ La partie « verrou sur la synchro » touche le cœur → par étapes, branche + backup, tests.
+
+### ⏳ Restent pour le grand public
+- 🔒 **Vrais comptes / mots de passe** (design ci-dessus, avec la DB).
+- 🗄️ **Vraie base de données + hébergement** (va avec les comptes + le vrai cloud-photos).
+- 📄 **Page de confidentialité RGPD**.
