@@ -1052,6 +1052,7 @@ async function analyzeBodySeries(){
   if(_bserCountThisMonth()>=_BSER_MONTHLY_LIMIT){toast('Limite de 4 séries/mois atteinte','info');return;}
   const btn=document.getElementById('bser-analyze-btn');
   if(btn){btn.textContent='⏳ Analyse…';btn.disabled=true;}
+  showMorphoLoading(_bserPhotos);
   const prev=(S.bodySeries||[]).filter(s=>s.photos&&s.photos.length).slice(-1)[0]||null;
   try{
     const images=_bserPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:_BODY_SLOTS[i].key}:null).filter(Boolean);
@@ -1077,9 +1078,11 @@ async function analyzeBodySeries(){
     S.bodySeries.forEach((s,idx)=>{ if(idx<S.bodySeries.length-2)s.photos=[]; });
     persist();
     _bserPhotos=[null,null,null,null];
+    hideMorphoLoading();
     _bserReportIdx=S.bodySeries.length-1; _bserView='report'; _renderBodySeries();
     if(typeof checkBadges==='function')try{checkBadges(true);}catch(e){}
   }catch(e){
+    hideMorphoLoading();
     toast('Erreur analyse : '+e.message,'error');
     if(btn){btn.textContent='🔍 Analyser cette série';btn.disabled=false;}
   }
