@@ -1,4 +1,4 @@
-const CACHE = 'ft-v304'; // Bilan corporel : détail par segment (bras/tronc/jambes G-D) + Milo anti-invention (n'invente plus de chiffres)
+const CACHE = 'ft-v305'; // Bilan corporel : 4 champs en plus (score/masse maigre/graisse sous-cut/SMI) + le bilan alimente la pesée du jour (poids + masse grasse)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

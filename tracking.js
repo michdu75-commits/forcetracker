@@ -615,7 +615,11 @@ const _BS_FIELDS=[
   {k:'visceral',l:'Graisse viscérale',u:'',good:'down'},
   {k:'bmr',l:'Métabolisme base',u:'kcal',good:'up'},
   {k:'metaAge',l:'Âge corporel',u:'ans',good:'down'},
-  {k:'imc',l:'IMC',u:'',good:'down'}
+  {k:'imc',l:'IMC',u:'',good:'down'},
+  {k:'bodyScore',l:'Score corporel',u:'/100',good:'up'},
+  {k:'leanMass',l:'Masse maigre',u:'kg',good:'up'},
+  {k:'subFat',l:'Graisse sous-cutanée',u:'%',good:'down'},
+  {k:'smi',l:'Indice muscle squel.',u:'kg/m²',good:'up'}
 ];
 // Détail par segment (optionnel) — muscle & graisse par zone (gauche/droite pour l'équilibre)
 const _BS_SEG_FIELDS=[
@@ -773,10 +777,21 @@ function saveBodyScan(){
   if(_bsEditIdx>=0&&S.bodyScans[_bsEditIdx]){S.bodyScans[_bsEditIdx]=obj;}
   else{const ex=S.bodyScans.findIndex(s=>s.date===date);if(ex>=0)S.bodyScans[ex]=obj;else S.bodyScans.push(obj);}
   S.bodyScans.sort((a,b)=>b.date.localeCompare(a.date));
+  // Le bilan sert aussi de pesée du jour : met à jour poids + masse grasse (courbes)
+  if(!S.weightLog)S.weightLog=[];
+  const wi=S.weightLog.findIndex(w=>w.date===date);
+  const wentry=wi>=0?S.weightLog[wi]:{date};
+  wentry.kg=weight;
+  if(obj.bf!=null)wentry.bf=obj.bf;
+  if(wi<0)S.weightLog.unshift(wentry);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
+  if(S.weightLog[0])S.bw=S.weightLog[0].kg;
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  closeBodyScanForm();renderBodyScanCard();
-  toast('Bilan enregistré ✅','success');
+  closeBodyScanForm();
+  if(typeof renderWeightTab==='function')renderWeightTab(); else renderBodyScanCard();
+  if(typeof renderHome==='function')renderHome();
+  toast('Bilan enregistré ✅ (poids + masse grasse mis à jour)','success');
 }
 function deleteBodyScan(){
   if(_bsEditIdx<0||!S.bodyScans||!S.bodyScans[_bsEditIdx])return;
