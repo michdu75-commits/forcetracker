@@ -513,3 +513,87 @@ Le dossier local du projet est en désordre. À réorganiser proprement :
   - Marqueurs utiles muscu : testostérone, ferritine/fer, vitamine D, CRP/CK, glycémie/HbA1c, cholestérol/lipides, thyroïde.
   - ⚠️ **MÉDICAL — garde-fous stricts obligatoires** : Milo ne pose JAMAIS de diagnostic, ne dit JAMAIS « c'est normal/OK », renvoie SYSTÉMATIQUEMENT vers le médecin sur toute valeur hors norme. Contexte entraînement/récup/nutrition uniquement. Disclaimers partout. Données privées (local + cloud perso).
   - Michel très clair : « on ne rigole pas avec ça, ça peut vite faire peur s'il dit de la merde ». → concevoir messages + disclaimers avec soin avant de coder.
+
+---
+
+## 📦 STOCKAGE / PRÊT POUR LE GRAND PUBLIC — chantier pré-lancement (décidé avec Michel, 2026-07-08)
+
+**Constat (mesuré au banc d'essai « utilisateurs fantômes », 2026-07-08) :**
+- Le cloud (Script Properties `u_{email}`) est plafonné (~9 Mo TOTAL, tous utilisateurs confondus).
+- Mesuré par utilisateur : léger ~8 Ko · moyen sans photo ~68 Ko · lourd avec photos ~295 Ko.
+- Capacité actuelle ≈ **~130 utilisateurs sans photo, ~30 avec photos** → OK pour une **bêta** (amis/famille), PAS pour un vrai grand public.
+- Frontend testé **très robuste** : 0 plantage avec 120 ou 500 séances, profil vide, données cassées.
+
+**Ce qui est DÉJÀ propre (rien à faire) :**
+- **3 photos morpho**, **PDF/photos bilan sanguin**, **photo bilan corporel (balance)** → **jamais stockées** (analysées puis jetées, on ne garde que le résultat). ✅
+- **PDF de programme** → fabriqués à la volée, **jamais stockés**. ✅
+- **4 photos de comparaison** (suivi photos super-testeur) → stockées **sur le téléphone SEULEMENT** (local, jamais cloud) → n'impactent PAS la limite 9 Mo. ✅
+
+**Le VRAI poste qui remplit le tiroir 9 Mo = les PHOTOS D'EXERCICES** (photos de machines que l'utilisateur colle sur un exo : `S.exPhotos` + `customExercises[].img`, ~10-15 Ko chacune, sync cloud).
+
+### ✅ DÉCISION MICHEL : déplacer les photos d'exercices sur Google Drive
+- **But** : vider le petit tiroir de 9 Mo (le seul vrai frein au grand public). Photos de machines = **rien de sensible** → Drive privé (voire lien partagé) suffit, la sécurité n'est pas un enjeu ici.
+- **Deux caches à NE PAS confondre :**
+  1. **Figurines** (animations d'exercices, `exercises/*.webp`) = assets de l'app, **déjà précachés par le SW à l'installation** (barre d'installation ft-v314) → hors-ligne OK, **on n'y touche pas**.
+  2. **Photos machines de l'utilisateur** (nouveau, via Drive) : téléchargées au 1er affichage puis **mises en cache runtime sur le téléphone** (même idée) → hors-ligne OK **après la 1re fois**. C'est ce qui règle le seul compromis (voir ci-dessous).
+- **Compromis à gérer** : sans cache, une photo Drive ne s'affiche pas hors-ligne (règle d'or n°4). → prévoir un **cache SW runtime** pour ces images (fallback figurine muscle en attendant).
+- **Plan technique** (backend Code.js `handleSaveProfile_` + frontend `_exImg`) :
+  - À la sauvegarde : si `exPhotos`/`customExercises[].img` arrive en base64 → écrire le fichier dans un **dossier Drive dédié** (privé), stocker seulement l'**ID/URL Drive** dans la propriété (plus de base64 dans le tiroir).
+  - `loadProfile` renvoie les URLs ; `_exImg(name)` sait afficher une URL Drive (+ cache SW).
+  - **Migration one-time** des photos base64 existantes → Drive, **sans perte** (règle d'or n°3).
+  - ⚠️ Liens Drive directs pour `<img>` = capricieux (format Google change) → **tester sur le clone** avant.
+- **PRÉREQUIS** : touche au backend → nécessite l'**auto-déploiement** (GitHub Action, secret `CLASPRC_JSON` à poser 1× depuis le PC) OU le PC de Michel. Je ne peux ni déployer ni tester le backend d'ici (proxy bloque script.google.com).
+- **Ordre conseillé** : (1) brancher l'auto-déploiement → (2) je prépare tout le code + test sur le clone → (3) déploiement **la nuit**, **branche + tag de backup d'abord**, rollback prêt (règles d'or n°6 et n°8).
+
+### 🚀 Autres points « prêt pour le grand public » (rappel)
+- **Coût Milo** (API Anthropic) : garde-fous limites gratuites + estimation budget mensuel avant d'ouvrir en grand.
+- **Confidentialité / RGPD** : page de confidentialité claire (données santé/photos), message visible « 🔒 tes photos ne sont jamais enregistrées » sur morpho/bilans.
+- **Décider public/privé** : bilan sanguin (bêta Michel-only), boîte à idées (testeurs), etc.
+- **Vérifier la limite Google exacte** du store de propriétés (le ~9 Mo est la note projet ; à confirmer).
+
+---
+
+## 👩 PROFIL FEMME / THÈME FEMME — à approfondir (priorité produit, Michel 2026-07-08)
+
+Michel : « améliore le profil femme, faudra vraiment qu'on le fasse aussi, il reste pas mal de choses à faire et pas mal de tests ». → gros chantier transverse (profil + nutrition + coach + visuels), à découper en petites étapes testées, **une à la fois**, avec de **vraies testeuses** (Eline, Emma).
+
+**Déjà en place (la base existe) :**
+- Phase du cycle menstruel → nutrition + contexte Milo ; endométriose (condition santé femme-only).
+- Morphologie féminine (H/A/V/X/O) + sections genre-aware ; niveaux de force gendrés (`getLevel`).
+- Milo : ton adapté (plus à l'écoute, sans materner) ; masse grasse US Navy avec hanches (formule femme).
+- Parcours débutant : nuance femme (Poussée de Hanche / Abduction) — sans cliché, elles travaillent tout.
+
+**À faire / améliorer :**
+- 🎨 **Figurine muscle FÉMININE** : aujourd'hui la silhouette muscle est **masculine pour les deux sexes** (échecs iOS WebKit sur `female-body.png` ; dead code `_mscSVG_F`/`_BDY_F`/`_BDY_F_MINI` déjà présent). → reprendre proprement avec un **SVG féminin natif** (pas d'`<image>` + filtre CSS, ça casse sur iOS).
+- 🌸 **Cycle menstruel enrichi** : suivi plus complet (symptômes, SPM, humeur/énergie par phase), **adaptation de l'entraînement par phase** (folliculaire = pousser fort / lutéale = alléger), prédiction + rappels.
+- 🍽️ **Nutrition femme** : accent fer & calcium, macros de cycle affinées ; option **ménopause** (métabolisme, densité osseuse, protéines).
+- 🏋️ **Accents de programme (sans cliché)** : fessiers/hanches, plancher pelvien, haut du corps — options, pas des cases par défaut.
+- 🤰 **Grossesse / post-partum** (à décider si dans le scope) : mode « prudence » avec garde-fous médicaux stricts (même logique que le profil santé).
+- 🗣️ **Contenu & vocabulaire** : guides/aides avec exemples féminins, éviter le tout-masculin par défaut dans les textes.
+- 🧪 **Beaucoup de tests** avec testeuses réelles avant de reporter comme fini.
+
+⚠️ Ne PAS tomber dans le cliché « rose + cardio » : les femmes soulèvent lourd aussi. L'idée = **options et adaptations physiologiques réelles** (cycle, insertions, objectifs), pas un thème gadget.
+
+---
+
+## 🔒 SÉCURISATION DE L'APP — prérequis BLOQUANT avant le grand public (Michel 2026-07-08)
+
+Aujourd'hui l'app est pensée pour un **petit cercle de confiance**. Avant d'ouvrir à des inconnus (surtout avec des **données santé**), 3 vraies faiblesses à corriger :
+
+1. **Pas de vraie authentification (LE point n°1).** L'identité = **juste l'email** (pas de mot de passe, pas de jeton). Quelqu'un qui connaît/devine un email peut charger ou écraser les données de l'autre (`loadProfile?email=…` / `saveProfile`). Faible risque entre potes, **inacceptable** en grand public avec des bilans santé. → **vrai système de comptes** (email+mot de passe hashé, ou connexion Google/OAuth).
+2. **Backend ouvert à tous → abus + coût.** La web app Apps Script est « Anyone can access ». N'importe qui peut marteler l'action `coach`/`importBloodTest`/… et **faire exploser la facture Anthropic** (ou spammer). → **rate-limiting** par personne + **clé secrète** app↔serveur + quotas.
+3. **Données sensibles (santé) — accès & RGPD.** Bilans/santé dans Script Properties + backups Drive, liés à l'email. → contrôle d'accès (découle du n°1) + idéalement chiffrement + **page de confidentialité RGPD**.
+
+*(Déjà connu : `ADMIN_CODE` dans le JS public = anti-curieux seulement, pas un vrai verrou. Le premium est vérifié côté serveur (OK), mais le flag client se triche — fuite de revenu, pas de risque utilisateur.)*
+
+**Vérité honnête / stratégie :**
+- La vraie sécurité = **comptes côté serveur**, et les points n°1, n°2, n°3 ET la migration stockage (photos/9 Mo) **pointent tous vers la MÊME chose** : **vrais comptes + vraie base de données + hébergement adapté** (le gros chantier « phase 4 »).
+- ⚠️ **Ne PAS bricoler une auth fragile sur la fondation actuelle** (Apps Script + Script Properties n'est pas fait pour l'auth) : ce serait du **jetable** (refait lors de la migration DB) ET un **faux sentiment de sécurité** (dangereux sur des données santé). Mieux vaut faire les deux **ensemble, proprement** (ex. Firebase Auth / Supabase).
+- **Blocage déploiement** : tout ça touche le backend → nécessite l'**auto-déploiement** (secret CI) ou le PC ; je ne peux ni déployer ni tester le backend d'ici.
+
+**Ce qui peut avancer SANS le gros chantier (faible risque, testable frontend) :**
+- Échappement/sanitisation du contenu utilisateur injecté en `innerHTML` (noms, notes, programmes importés) → anti-injection (XSS). Balayage soigneux, à faire prudemment.
+- Design/plan détaillé du système de comptes (options A/B + reco) pour être prêt.
+- Garde-fous coût Milo (limites gratuites solides) — partie frontend possible, partie serveur à déployer.
+
+**Décidé avec Michel** : noter comme **prérequis bloquant** en tête de la check-list grand public. Le gros du travail (auth serveur) se fait **avec** la migration base de données, la nuit, branche + tag de backup, rollback prêt.

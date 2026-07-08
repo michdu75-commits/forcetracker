@@ -226,6 +226,8 @@ function _cloudSync(){
       bodyStudy:S.bodyStudy||null,
       bodyScans:(S.bodyScans||[]).slice(-60),
       bloodTests:(S.bloodTests||[]).slice(-40),
+      coachQuiz:S.coachQuiz||null,
+      coachQuizPro:S.coachQuizPro||null,
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
       leftHand:S.leftHand||false
@@ -1284,7 +1286,7 @@ function _renderProfileCompletion(){
     nudge='<b>Profil complet 💪</b> — Milo, ton coach IA, est au top et tout est ultra précis.';
   }else{
     const miss=c.missing.slice(0,4).join(', ')+(c.missing.length>4?'…':'');
-    nudge='Complète-le pour un <b>Coach IA (Milo) au top</b> et des calculs précis.<br><span style="color:var(--t3);font-size:11.5px;">À ajouter : '+miss+'</span>';
+    nudge='<b>Prends le temps de bien le remplir 📋</b> — plus il est complet, plus <b>Milo te connaît</b> et plus ses conseils (et tes calculs) sont VRAIMENT faits pour toi.<br><span style="color:var(--t3);font-size:11.5px;">Encore à ajouter : '+miss+'</span>';
   }
   el.innerHTML=
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">'
@@ -1461,6 +1463,8 @@ function _applyRestoreData(raw){
   try{if(d.bodyStudy)S.bodyStudy=d.bodyStudy;}catch(e){console.warn('[FT restore] bodyStudy',e);}
   try{if(Array.isArray(d.bodyScans)&&d.bodyScans.length>=(S.bodyScans||[]).length)S.bodyScans=d.bodyScans;}catch(e){console.warn('[FT restore] bodyScans',e);}
   try{if(Array.isArray(d.bloodTests)&&d.bloodTests.length>=(S.bloodTests||[]).length)S.bloodTests=d.bloodTests;}catch(e){console.warn('[FT restore] bloodTests',e);}
+  try{if(d.coachQuiz&&d.coachQuiz.answers&&!(S.coachQuiz&&S.coachQuiz.done))S.coachQuiz=d.coachQuiz;}catch(e){console.warn('[FT restore] coachQuiz',e);}
+  try{if(d.coachQuizPro&&d.coachQuizPro.answers&&!(S.coachQuizPro&&S.coachQuizPro.done))S.coachQuizPro=d.coachQuizPro;}catch(e){console.warn('[FT restore] coachQuizPro',e);}
   try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
   try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
   try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}

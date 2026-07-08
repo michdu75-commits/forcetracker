@@ -417,6 +417,12 @@ function _miloMessage(){
     return {id:'relance',txt:'Ça fait '+daysSince+' jours 👀 On se refait une séance aujourd\'hui ?'};
   if(rec!==null&&rec<40&&daysSince!==null&&daysSince>=1)
     return {id:'recup',txt:'Nuit courte ces derniers jours — vise plutôt une séance légère aujourd\'hui, et dors tôt ce soir. 😴'};
+  // Relance PROFIL : tant qu'il est incomplet, Milo insiste (c'est ce qui rend ses conseils sur-mesure)
+  if(typeof _profileCompletion==='function'){
+    const pc=_profileCompletion();
+    if(pc.pct<70)
+      return {id:'profil',go:'setup',txt:'Prends 2 min pour bien remplir ton profil (rempli à '+pc.pct+'% pour l\'instant) 📋 Plus je te connais — âge, objectif, niveau, morpho… — plus mes conseils sont VRAIMENT faits pour toi. On le complète ?'};
+  }
   if(daysSince===1)
     return {id:'lendemain',txt:'Bien joué pour hier 💪 Pense à bien manger et à récupérer aujourd\'hui.'};
   if(weekCount>=3)
@@ -430,7 +436,8 @@ function _renderMiloCard(){
   let dism=null;try{dism=JSON.parse(localStorage.getItem('ft4_milo')||'null');}catch(e){}
   if(dism&&dism.date===today()&&dism.id===m.id){el.innerHTML='';return;}
   const name=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
-  el.innerHTML='<div class="milo-card ft-press" onclick="_openMiloChat()">'
+  window._miloGoTarget=m.go||null;
+  el.innerHTML='<div class="milo-card ft-press" onclick="_miloCardTap()">'
     +'<div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'
     +'<div style="flex:1;min-width:0;"><div class="milo-name">'+name+'</div><div class="milo-txt">'+m.txt+'</div></div>'
     +'<button class="milo-x" onclick="event.stopPropagation();_dismissMilo(\''+m.id+'\')" aria-label="Fermer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
@@ -442,6 +449,13 @@ function _dismissMilo(id){
 }
 function _openMiloChat(){
   try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
+}
+// Tap sur la carte Milo : si la relance vise un écran précis (ex. Profil), on y va ; sinon → chat
+function _miloCardTap(){
+  const t=window._miloGoTarget;
+  if(t==='setup'){ try{ (typeof openProfil==='function')?openProfil():goScreen('setup'); }catch(e){ try{goScreen('setup');}catch(_){} } return; }
+  if(t){ try{goScreen(t);}catch(e){} return; }
+  _openMiloChat();
 }
 
 // ─── STATUT TESTEUR FONDATEUR (récompense exclusive) ─────────

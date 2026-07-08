@@ -4,6 +4,260 @@ let coachHistory = [];
 let coachBusy = false;
 let _coachHistLoaded = false;
 
+// ═══ QUESTIONNAIRE « Milo apprend à te connaître » ═══════════════════════
+// 100% GRATUIT et hors quota : ce sont des choix stockés en local (pas d'appel IA),
+// puis injectés dans le contexte que reçoit Milo. Une série gratuite + une série
+// premium plus poussée. type: 'single' | 'multi' | 'text'.
+const COACH_QUIZ = [
+  {id:'xp', q:'Depuis combien de temps tu t\'entraînes ?', t:'single', opts:[['debut','Je débute (ou je reprends)'],['6m','Moins de 6 mois'],['2a','6 mois à 2 ans'],['5a','2 à 5 ans'],['5p','Plus de 5 ans']]},
+  {id:'freq', q:'Combien de séances par semaine tu peux vraiment tenir ?', t:'single', opts:[['1','1 à 2'],['3','3'],['4','4'],['5','5 ou plus']]},
+  {id:'place', q:'Où tu t\'entraînes le plus souvent ?', t:'single', opts:[['salle','Salle complète'],['basic','Salle basique / peu de machines'],['maison','Maison avec du matériel'],['pdc','Maison sans matériel (poids du corps)']]},
+  {id:'time', q:'Combien de temps dure une séance en général ?', t:'single', opts:[['30','~30 min'],['45','~45 min'],['60','~1 h'],['90','1 h 30 ou plus']]},
+  {id:'bar', q:'Ton aisance avec les mouvements à la barre (squat, soulevé, développé) ?', t:'single', opts:[['jamais','Jamais essayé'],['debut','Débutant, pas à l\'aise'],['ok','Ça va'],['pro','Très à l\'aise']]},
+  {id:'motiv', q:'Qu\'est-ce qui te motive le plus ?', t:'single', opts:[['fort','Me sentir plus fort'],['corps','Me sentir mieux dans mon corps'],['sante','La santé, le bien-être'],['esth','L\'esthétique, la définition'],['perf','La compétition / la performance']]},
+  {id:'weak', q:'Quel groupe tu trouves le plus dur à faire progresser ?', t:'single', opts:[['pecs','Pectoraux'],['dos','Dos'],['jambes','Jambes'],['epaules','Épaules'],['bras','Bras'],['abdos','Abdos'],['nsp','Je ne sais pas']]},
+  {id:'cardio', q:'Ta relation avec le cardio ?', t:'single', opts:[['jamais','J\'en fais jamais'],['peu','Un peu à l\'échauffement'],['reg','Régulièrement'],['deteste','Je déteste ça']]},
+  {id:'pain', q:'Des zones sensibles / anciennes blessures à ménager ?', t:'multi', hint:'Plusieurs choix possibles.', opts:[['aucune','Aucune'],['epaules','Épaules'],['dos','Dos / lombaires'],['genoux','Genoux'],['poignets','Poignets'],['coudes','Coudes'],['hanches','Hanches'],['cou','Cou / nuque']]},
+  {id:'energy', q:'En ce moment, ton énergie et ton sommeil, c\'est plutôt…', t:'single', opts:[['top','Au top'],['ok','Correct'],['fatigue','Souvent fatigué'],['dors_mal','Je dors mal']]},
+  {id:'goalfeel', q:'Ton objectif du moment, en une idée ?', t:'single', opts:[['muscle','Prendre du muscle'],['force','Devenir plus fort'],['secher','Perdre du gras / sécher'],['forme','Me remettre en forme'],['maintien','Entretenir / rester au niveau']]},
+  {id:'diet0', q:'Ton alimentation en ce moment ?', t:'single', opts:[['propre','Plutôt propre / je fais attention'],['moyen','Ça dépend des jours'],['relax','Je mange ce que je veux'],['nsp','Je ne sais pas trop']]},
+  {id:'tone', q:'Comment tu veux que Milo te parle ?', t:'single', opts:[['cash','Cash et direct'],['motiv','Motivant et encourageant'],['tech','Technique et précis'],['fun','Détendu, avec de l\'humour']]},
+];
+const COACH_QUIZ_PRO = [
+  {id:'job', q:'Ton quotidien (hors sport) est plutôt…', t:'single', opts:[['bureau','Sédentaire / bureau'],['debout','Debout, actif'],['physique','Travail physique dur']]},
+  {id:'stress', q:'Ton niveau de stress général ?', t:'single', opts:[['bas','Faible'],['moy','Modéré'],['haut','Élevé']]},
+  {id:'sleep', q:'Tu dors combien d\'heures par nuit en moyenne ?', t:'single', opts:[['5','Moins de 6 h'],['7','6 à 7 h'],['8','7 à 8 h'],['9','Plus de 8 h']]},
+  {id:'prot', q:'Tu atteins tes protéines la plupart du temps ?', t:'single', opts:[['oui','Oui, presque toujours'],['souvent','Souvent'],['rare','Rarement'],['nsp','Je ne sais pas']]},
+  {id:'split', q:'Ta façon de découper tes séances préférée ?', t:'single', opts:[['full','Full body (tout le corps)'],['hb','Haut / Bas'],['ppl','Push / Pull / Legs'],['split','Un muscle par séance'],['nsp','Je ne sais pas']]},
+  {id:'deadline', q:'Tu as une échéance précise ?', t:'single', opts:[['compet','Oui, une compétition'],['event','Oui, un événement (vacances, photo…)'],['non','Non, sur le long terme']]},
+  {id:'progr', q:'Tu as déjà suivi un vrai programme structuré ?', t:'single', opts:[['ok','Oui, et ça a marché'],['abandon','Oui, mais abandonné'],['jamais','Jamais vraiment']]},
+  {id:'block', q:'Là où tu bloques le plus ?', t:'single', opts:[['regul','La régularité'],['tech','La technique'],['recup','La récup / le sommeil'],['nut','La nutrition'],['plateau','Un plateau de force'],['motiv','La motivation']]},
+  {id:'supp', q:'Tu prends des compléments ?', t:'multi', hint:'Plusieurs choix possibles.', opts:[['aucun','Aucun'],['whey','Protéine / whey'],['crea','Créatine'],['prewk','Pré-workout'],['omega','Oméga 3'],['vitd','Vitamine D'],['autre','Autres']]},
+  {id:'equip', q:'Matériel dispo (en plus des machines) ?', t:'multi', hint:'Plusieurs choix possibles.', opts:[['barre','Barre olympique'],['halteres','Haltères lourds'],['poulies','Poulies'],['elastiques','Élastiques'],['kb','Kettlebell'],['rack','Rack / cage'],['rien','Rien de spécial']]},
+  {id:'like', q:'Les exercices que tu ADORES (facultatif)', t:'text', hint:'Dis à Milo ce que tu préfères — il en tiendra compte.'},
+  {id:'hate', q:'Les exercices que tu ÉVITES ou détestes (facultatif)', t:'text', hint:'Il évitera de te les imposer.'},
+];
+// Libellé lisible d'une réponse (pour le contexte Milo)
+function _cqLabel(quiz,qid,val){
+  const q=quiz.find(x=>x.id===qid); if(!q||!q.opts)return val;
+  const find=v=>{const o=q.opts.find(o=>o[0]===v);return o?o[1]:v;};
+  return Array.isArray(val)?val.map(find).join(', '):find(val);
+}
+// Bloc de contexte injecté dans buildCoachContext
+function _coachQuizContext(){
+  const out=[];
+  const fmt=(quiz,ans)=>{
+    quiz.forEach(q=>{
+      const v=ans[q.id];
+      if(v===undefined||v===null||v===''||(Array.isArray(v)&&!v.length))return;
+      const val=q.t==='text'?String(v):_cqLabel(quiz,q.id,v);
+      if(val&&String(val).trim())out.push(`- ${q.q.replace(/\s*\(facultatif\)/i,'')} → ${val}`);
+    });
+  };
+  if(S.coachQuiz&&S.coachQuiz.answers)fmt(COACH_QUIZ,S.coachQuiz.answers);
+  if(S.coachQuizPro&&S.coachQuizPro.answers)fmt(COACH_QUIZ_PRO,S.coachQuizPro.answers);
+  if(!out.length)return '';
+  return '\n🗣️ CE QUE LA PERSONNE A DIT SUR ELLE (questionnaire) — utilise-le pour vraiment personnaliser (ne le récite pas bêtement, sers-t\'en) :\n'+out.join('\n')+'\n';
+}
+
+// ── Réponses qui font AUSSI partie du profil → écrites direct dans le profil ──
+// (évite de redemander une info déjà connue, et remplit le profil au passage)
+const _CQ_PROFILE = {
+  goalfeel: { set:'setGoal',     map:{muscle:'muscle',force:'force',secher:'perte',forme:'equilibre'},
+              from:()=>({muscle:'muscle',force:'force',perte:'secher',equilibre:'forme'}[S.goal]) },
+  job:      { set:'setWorkType', map:{bureau:'bureau',debout:'debout',physique:'physique'},
+              from:()=>({bureau:'bureau',debout:'debout',physique:'physique'}[S.workType]) },
+};
+function _applyQuizToProfile(quiz,ans){
+  quiz.forEach(q=>{
+    const m=_CQ_PROFILE[q.id]; if(!m)return;
+    const v=ans[q.id]; if(v===undefined||v==='')return;
+    const target=m.map[v]; if(target===undefined)return;
+    try{ if(typeof window[m.set]==='function')window[m.set](target); else S[m.set==='setGoal'?'goal':'workType']=target; }catch(e){}
+  });
+}
+
+// ── UI du questionnaire ──────────────────────────────────────────────────
+let _cqSet='free';      // 'free' | 'pro'
+let _cqIdx=0;
+let _cqAns={};          // copie de travail
+let _cqSingle=false;    // mode "1 seule question" (question de la semaine premium)
+function _cqQuiz(){return _cqSet==='pro'?COACH_QUIZ_PRO:COACH_QUIZ;}
+// Première question avancée sans réponse (clé absente) — null si toutes posées
+function _nextProUnanswered(){
+  const a=(S.coachQuizPro&&S.coachQuizPro.answers)||{};
+  return COACH_QUIZ_PRO.find(q=>!Object.prototype.hasOwnProperty.call(a,q.id))||null;
+}
+function _proAnsweredCount(){
+  const a=(S.coachQuizPro&&S.coachQuizPro.answers)||{};
+  return COACH_QUIZ_PRO.filter(q=>Object.prototype.hasOwnProperty.call(a,q.id)).length;
+}
+// Question de la semaine "due" : premium, reste des questions, et ≥7 j depuis la dernière posée
+function _weeklyDue(){
+  if(!S.premium)return false;
+  if(!_nextProUnanswered())return false;
+  const la=S.coachQuizPro&&S.coachQuizPro.lastAsked;
+  if(!la)return true;
+  return (Date.now()-new Date(la).getTime())/86400000 >= 7;
+}
+function _renderCoachQuizCard(){
+  const el=document.getElementById('coach-quiz-card'); if(!el)return;
+  const freeDone=!!(S.coachQuiz&&S.coachQuiz.done);
+  let html='';
+  if(!freeDone){
+    html=`<button class="cq-card" onclick="openCoachQuiz('free')">
+      <div class="cq-card-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 0 1-9 9 9.5 9.5 0 0 1-4-.9L3 21l1.9-5A9 9 0 1 1 21 12z"/></svg></div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Milo veut apprendre à te connaître</div><div class="cq-card-sub">Quelques questions rapides (gratuit, ça ne compte pas dans tes questions) pour des conseils sur-mesure.</div></div></button>`;
+    el.innerHTML=html; return;
+  }
+  // Série gratuite faite
+  html=`<button class="cq-card done" onclick="openCoachQuiz('free')">
+    <div class="cq-card-ic" style="background:rgba(52,211,153,.16);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+    <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Milo te connaît ✅</div><div class="cq-card-sub">Tape pour revoir ou modifier tes réponses.</div></div></button>`;
+  const cnt=_proAnsweredCount(), tot=COACH_QUIZ_PRO.length;
+  const proAllAsked=!_nextProUnanswered();
+  const gem='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+  const chk='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+  const cal='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  if(proAllAsked){
+    html+=`<button class="cq-card done" style="margin-top:8px;" onclick="openCoachQuiz('pro')">
+      <div class="cq-card-ic" style="background:rgba(52,211,153,.16);">${chk}</div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées ✅</div><div class="cq-card-sub">Tape pour revoir tes réponses.</div></div></button>`;
+  } else if(!S.premium){
+    html+=`<button class="cq-card" style="margin-top:8px;opacity:.92;" onclick="openCoachQuiz('pro')">
+      <div class="cq-card-ic" style="background:rgba(234,179,8,.16);">${gem}</div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées <span style="color:var(--gold);">⭐ Premium</span></div><div class="cq-card-sub">Va plus loin : nutrition, récup, matériel, préférences… pour un ciblage encore plus fin.</div></div></button>`;
+  } else if(_weeklyDue()){
+    // Question de la semaine (une seule, pas tous les jours)
+    html+=`<button class="cq-card" style="margin-top:8px;" onclick="openWeeklyProQuestion()">
+      <div class="cq-card-ic" style="background:rgba(234,179,8,.16);">${cal}</div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">La question de la semaine de Milo</div><div class="cq-card-sub">1 petite question pour mieux te connaître · ${cnt}/${tot} déjà répondues. Tu peux aussi tout remplir d'un coup.</div></div></button>`;
+  } else {
+    // Déjà posée cette semaine — bilan discret, remplissage groupé possible
+    html+=`<button class="cq-card done" style="margin-top:8px;" onclick="openCoachQuiz('pro')">
+      <div class="cq-card-ic" style="background:rgba(234,179,8,.16);">${gem}</div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées · ${cnt}/${tot}</div><div class="cq-card-sub">Milo t'a posé sa question de la semaine 👍 Reviens la semaine prochaine, ou tape pour tout remplir maintenant.</div></div></button>`;
+  }
+  el.innerHTML=html;
+}
+function openCoachQuiz(set){
+  if(set==='pro'&&!S.premium){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
+  _cqSet=set; _cqSingle=false;
+  const store=set==='pro'?S.coachQuizPro:S.coachQuiz;
+  _cqAns=(store&&store.answers)?JSON.parse(JSON.stringify(store.answers)):{};
+  // reprend à la 1re question avancée non posée (sinon au début)
+  if(set==='pro'){ const nx=_nextProUnanswered(); _cqIdx=nx?COACH_QUIZ_PRO.indexOf(nx):0; }
+  else _cqIdx=0;
+  _cqPrefillFromProfile();
+  const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.add('open');
+  _renderCoachQuizStep();
+}
+// Question de la semaine premium : une seule question (la prochaine non posée)
+function openWeeklyProQuestion(){
+  if(!S.premium){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
+  const q=_nextProUnanswered(); if(!q){ _renderCoachQuizCard(); return; }
+  _cqSet='pro'; _cqSingle=true;
+  _cqAns=(S.coachQuizPro&&S.coachQuizPro.answers)?JSON.parse(JSON.stringify(S.coachQuizPro.answers)):{};
+  _cqIdx=COACH_QUIZ_PRO.indexOf(q);
+  _cqPrefillFromProfile();
+  // marque "posée cette semaine" tout de suite → pas de relance même si fermée sans répondre
+  if(!S.coachQuizPro)S.coachQuizPro={answers:{},done:false};
+  S.coachQuizPro.lastAsked=new Date().toISOString().slice(0,10);
+  if(typeof persist==='function')persist();
+  const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.add('open');
+  _renderCoachQuizStep();
+}
+// Pré-sélectionne depuis le profil les questions qui recoupent le profil (si pas déjà répondues)
+function _cqPrefillFromProfile(){
+  _cqQuiz().forEach(q=>{
+    const m=_CQ_PROFILE[q.id]; if(!m)return;
+    if(_cqAns[q.id]!==undefined)return;
+    try{ const v=m.from&&m.from(); if(v)_cqAns[q.id]=v; }catch(e){}
+  });
+}
+function closeCoachQuiz(){ const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.remove('open'); _cqSingle=false; }
+function _renderCoachQuizStep(){
+  const quiz=_cqQuiz();
+  const total=quiz.length;
+  const q=quiz[_cqIdx];
+  const titleEl=document.getElementById('cq-title');
+  if(titleEl){
+    if(_cqSingle){
+      titleEl.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Question de la semaine';
+    } else {
+      titleEl.innerHTML=(_cqSet==='pro'
+        ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Questions avancées'
+        :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9.5 9.5 0 0 1-4-.9L3 21l1.9-5A9 9 0 1 1 21 12z"/></svg>Milo te connaît')
+        +` <span style="color:var(--t3);font-weight:600;font-size:13px;">${_cqIdx+1}/${total}</span>`;
+    }
+  }
+  const fill=document.getElementById('cq-progress-fill'); if(fill)fill.style.width=(_cqSingle?(_proAnsweredCount()/total*100):(_cqIdx/total*100))+'%';
+  const step=document.getElementById('cq-step'); if(!step)return;
+  const cur=_cqAns[q.id];
+  let body=`<div class="cq-q">${q.q}</div>`;
+  if(q.hint)body+=`<div class="cq-hint">${q.hint}</div>`;
+  if(q.t==='text'){
+    body+=`<textarea class="cq-textarea" id="cq-text" placeholder="Écris ici…" oninput="_cqAns['${q.id}']=this.value">${cur?String(cur).replace(/</g,'&lt;'):''}</textarea>`;
+  } else {
+    body+='<div class="cq-opts">';
+    q.opts.forEach(o=>{
+      const sel=q.t==='multi'?(Array.isArray(cur)&&cur.includes(o[0])):(cur===o[0]);
+      body+=`<button class="cq-opt${sel?' sel':''}" onclick="_coachQuizPick('${q.id}','${o[0]}',${q.t==='multi'})">${o[1]}<span class="cq-check">✓</span></button>`;
+    });
+    body+='</div>';
+  }
+  step.innerHTML=body;
+  // Boutons nav
+  const prev=document.getElementById('cq-prev'); if(prev)prev.style.visibility=(_cqSingle||_cqIdx===0)?'hidden':'visible';
+  const last=_cqIdx===total-1;
+  const next=document.getElementById('cq-next'); if(next)next.innerHTML=(_cqSingle?'Enregistrer ✓':(last?'Terminer ✓':'Suivant ▸'));
+  const skip=document.getElementById('cq-skip'); if(skip)skip.style.display=(q.t==='text')?'none':'';
+}
+function _coachQuizPick(qid,val,multi){
+  if(multi){
+    let arr=Array.isArray(_cqAns[qid])?_cqAns[qid].slice():[];
+    // "aucune"/"aucun"/"rien" = exclusif
+    const excl=['aucune','aucun','rien'];
+    if(excl.includes(val)){ arr=[val]; }
+    else { arr=arr.filter(x=>!excl.includes(x)); const i=arr.indexOf(val); if(i>=0)arr.splice(i,1); else arr.push(val); }
+    _cqAns[qid]=arr;
+    _renderCoachQuizStep();
+  } else {
+    _cqAns[qid]=val;
+    _renderCoachQuizStep();
+    // avance auto après un court délai (single choice) — en mode "1 question" ça termine
+    setTimeout(()=>{ const ov=document.getElementById('ov-coach-quiz'); if(ov&&ov.classList.contains('open')) _coachQuizNext(); },230);
+  }
+}
+function _coachQuizPrev(){ if(_cqIdx>0){_cqIdx--;_renderCoachQuizStep();} }
+function _coachQuizNext(skip){
+  if(_cqSingle){ _finishCoachQuiz(); return; }
+  const quiz=_cqQuiz();
+  if(_cqIdx<quiz.length-1){ _cqIdx++; _renderCoachQuizStep(); }
+  else { _finishCoachQuiz(); }
+}
+function _finishCoachQuiz(){
+  const today=new Date().toISOString().slice(0,10);
+  // En mode "1 question", marque la question posée (même si passée sans répondre) pour ne pas la reproposer
+  if(_cqSingle){ const q=COACH_QUIZ_PRO[_cqIdx]; if(q&&_cqAns[q.id]===undefined)_cqAns[q.id]=''; }
+  if(_cqSet==='pro'){
+    const prev=S.coachQuizPro||{};
+    S.coachQuizPro={ answers:JSON.parse(JSON.stringify(_cqAns)),
+      done: COACH_QUIZ_PRO.every(q=>Object.prototype.hasOwnProperty.call(_cqAns,q.id)),
+      lastAsked: today, date: prev.date||today };
+    _applyQuizToProfile(COACH_QUIZ_PRO,_cqAns);
+  } else {
+    S.coachQuiz={ answers:JSON.parse(JSON.stringify(_cqAns)), done:true, date:today };
+    _applyQuizToProfile(COACH_QUIZ,_cqAns);
+  }
+  if(typeof persist==='function')persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  const single=_cqSingle;
+  closeCoachQuiz();
+  _renderCoachQuizCard();
+  if(typeof toast==='function')toast(single?'Merci ! Milo en sait un peu plus 👍':(_cqSet==='pro'?'Milo en sait encore plus sur toi 💪':'Milo te connaît mieux maintenant 💪'),'success');
+}
+
 // ─── Historique du chat persisté (survit à la fermeture de l'appli) ───
 // Stocké local (ft4_coach_hist). Léger : les photos deviennent "[photo]" (pas de base64 stocké).
 function _loadCoachHist(){
@@ -159,6 +413,7 @@ function updateCoachHeader() {
   if(!_coachHistLoaded){ _loadCoachHist(); _coachHistLoaded = true; }
   _updateCoachMorphoBtn();
   _updateCoachCtxTags();
+  try{_renderCoachQuizCard();}catch(e){}
   // Cache le mur premium si l'utilisateur est maintenant premium
   if(S.premium){const wall=document.getElementById('coach-wall');if(wall)wall.style.display='none';}
   // Afficher accueil ou chat selon l'historique
@@ -351,7 +606,7 @@ ${(()=>{
   if(!L.length)return '';
   return '\n📐 ÉTUDE DU CORPS (bilan visuel du '+(bs.date||'?')+') — utilise-la pour cibler les déséquilibres et proposer des exercices correctifs:\n- '+L.join('\n- ');
 })()}
-
+${_coachQuizContext()}
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}
 
@@ -429,6 +684,11 @@ ${(()=>{
   return `\nBILAN SANGUIN (labo, le ${t.date||'?'}) — marqueurs clés:\n- ${sel.slice(0,16).map(line).join('\n- ')}\n⚠️ MÉDICAL : ce sont des chiffres recopiés du labo. Tu peux en parler en lien avec l'entraînement/récup/nutrition (ex. ferritine, glycémie, cholestérol) MAIS tu ne poses JAMAIS de diagnostic, tu ne dis jamais si c'est grave. Pour toute valeur [hors norme] ou toute inquiétude, renvoie SYSTÉMATIQUEMENT vers le médecin. Ne remplace jamais un professionnel de santé.\n`;
 })()}
 ${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
+MÉTHODE DE COACHING (très important) :
+- ADAPTE la profondeur à son niveau : débutant → simple, pédagogue, priorité technique + sécurité ; intermédiaire/confirmé → technique, périodisation (phases de charge/décharge), notion de RPE et d'autorégulation. Jamais de conseils « bateau » servis à tout le monde.
+- COMME UN VRAI COACH, quand ta réponse dépend d'infos que tu n'as pas (ressenti, douleur, matériel dispo, sensations, temps, objectif du jour), POSE 1 ou 2 questions ciblées AVANT de trancher — ne devine pas à l'aveugle. (Mais pas de question inutile si tu as déjà de quoi répondre.)
+- Connais et PROPOSE spontanément les mouvements FONDAMENTAUX, pas seulement les machines : au-delà du Big 3 (squat, développé couché, soulevé de terre), les incontournables — tractions, dips, pompes, rowing, développé militaire, fentes — pour construire une vraie base. Un débutant qui ne fait que des machines, oriente-le progressivement vers ces basiques.
+- NUANCES à connaître : le cardio LÉGER (échauffement 5-10 min, marche en pente, vélo/elliptique tranquille, LISS) est BON et n'abîme pas une séance de force — au contraire il prépare le corps. Seul le cardio LONG et INTENSE juste AVANT du lourd nuit (interférence/fatigue). Distingue bien travail de FORCE (lourd, peu de reps, longue récup) et HYPERTROPHIE (volume, reps modérées).${S.premium?'\n- PREMIUM : tu peux t\'appuyer sur des programmes reconnus et validés par le monde sportif (5/3/1 de Wendler, StrongLifts 5x5, Push/Pull/Legs, PHUL, GZCLP…) et les ADAPTER à la personne (niveau, dispo, matériel, objectif) — jamais copier-coller sans adapter.':''}
 Utilise ces données pour personnaliser tes réponses et t'adapter à la personne en face. Reste toi-même : ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, franc et pratique, mais calibré sur son niveau et son état du jour.`;
 }
 
@@ -954,6 +1214,8 @@ const _DRAWER_CONTENT = {
           if(el&&ft)el.textContent=ft;
         });
       }
+      // Remplit la taille du stockage (asynchrone)
+      if(typeof _fillStorageInfo==='function')setTimeout(_fillStorageInfo,50);
       return`<div style="text-align:center;padding:10px 0 20px;">
       <img src="logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
       <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;">Force Tracker</div>
@@ -962,6 +1224,18 @@ const _DRAWER_CONTENT = {
         Application de suivi de musculation Progressive Web App.<br>
         Fonctionne hors connexion · Synchronisation Google Sheets<br>
         Coach IA propulsé par Claude (Anthropic)
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--t1);margin-bottom:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+          Stockage sur ton téléphone
+        </div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:12px;">
+          L'appli garde les <strong>figurines d'exercices</strong> et les écrans sur ton téléphone pour marcher <strong>hors connexion</strong> et s'ouvrir vite.<br>
+          Espace utilisé : <strong id="_about-storage" style="color:var(--t1);">calcul…</strong>
+        </div>
+        <button onclick="clearAppCache()" style="width:100%;padding:11px;border:none;border-radius:10px;background:rgba(255,149,0,.14);color:var(--orange);font-weight:700;font-size:13.5px;font-family:var(--font);cursor:pointer;">🧹 Vider le cache (garde tes données)</button>
+        <div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-top:8px;">Vide seulement les fichiers de l'appli (figurines, images). <strong>Tes séances, records et réglages ne sont pas touchés.</strong> Les figurines se réinstallent aussitôt (une barre s'affiche).</div>
       </div>
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;font-size:13px;color:var(--t2);">
         <div style="margin-bottom:6px;">✉️ <strong>Contact :</strong> michdu75@gmail.com</div>
