@@ -400,7 +400,7 @@ function doPost(e) {
   // Limite le nombre d'appels IA par jour (par email + global) pour éviter les abus
   // et l'explosion de la facture Anthropic. N'affecte PAS les actions sans IA
   // (loadProfile, saveProfile, logSession, validateCode, test…).
-  var AI_ACTIONS_ = ['coach','importProgram','importHistory','importMealPlan','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
+  var AI_ACTIONS_ = ['coach','importProgram','importHistory','importMealPlan','estimateFood','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
   if (AI_ACTIONS_.indexOf(body.action) >= 0) {
     var _q = _aiQuotaBlock_(body.email);
     if (_q.blocked) {
@@ -423,6 +423,7 @@ function doPost(e) {
   if (body.action === 'importProgram')     return handleImportProgram_(body);
   if (body.action === 'importHistory')    return handleImportHistory_(body);
   if (body.action === 'importMealPlan')    return handleImportMealPlan_(body);
+  if (body.action === 'estimateFood')      return handleEstimateFood_(body);
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
   if (body.action === 'bodyStudy')         return handleBodyStudy_(body);
   if (body.action === 'importBodyScan')    return handleImportBodyScan_(body);
@@ -577,6 +578,7 @@ function handleSaveProfile_(body) {
     if (body.diet          !== undefined) profile.diet          = _ps_(body.diet,          profile.diet);
     if (body.dietRestrictions!== undefined) profile.dietRestrictions = _pa_(body.dietRestrictions, profile.dietRestrictions);
     if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
+    if (body.foodLog       !== undefined) profile.foodLog       = _pa_(body.foodLog,       profile.foodLog);
 
     existing.profile = profile;
 
@@ -1097,6 +1099,61 @@ function handleImportMealPlan_(body) {
     if (!data.days.length) return json_({status:'error', error:'Aucun repas trouvé dans le document.'});
 
     return json_({status:'ok', data});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+// Journal alimentaire : estime kcal + macros d'une description libre (texte)
+function handleEstimateFood_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+
+  try {
+    const desc = String(body.description || '').trim();
+    if (!desc) return json_({status:'error', error:'Description vide'});
+
+    const prompt = 'Tu es un expert en nutrition. Estime les valeurs nutritionnelles TOTALES de ce que la personne a mangé.\n\n'
+      + 'Repas décrit : "' + desc + '"\n\n'
+      + 'Retourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown :\n'
+      + '{"name":"résumé court du repas","kcal":650,"prot":40,"carbs":70,"fat":18}\n\n'
+      + 'Règles :\n'
+      + '- kcal = calories totales (nombre entier).\n'
+      + '- prot, carbs, fat = grammes totaux de protéines, glucides, lipides (nombres entiers).\n'
+      + '- Si les quantités ne sont pas précisées, estime une portion normale.\n'
+      + '- name = résumé court et propre du repas (max 40 caractères).\n'
+      + '- Sois réaliste, ne mets jamais 0 kcal si un aliment est cité.\n'
+      + 'Réponds UNIQUEMENT avec le JSON.';
+
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      headers: {'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01'},
+      payload: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 400,
+        messages: [{role:'user', content: prompt}]
+      }),
+      muteHttpExceptions: true
+    });
+
+    const result = JSON.parse(resp.getContentText());
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    const stripped = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Estimation échouée'});
+
+    let d;
+    try { d = JSON.parse(match[0]); }
+    catch(e){ return json_({status:'error', error:'JSON invalide'}); }
+
+    return json_({status:'ok',
+      name:  String(d.name || desc).slice(0, 60),
+      kcal:  Math.max(0, parseInt(d.kcal)  || 0),
+      prot:  Math.max(0, parseInt(d.prot)  || 0),
+      carbs: Math.max(0, parseInt(d.carbs) || 0),
+      fat:   Math.max(0, parseInt(d.fat)   || 0)
+    });
   } catch(err) {
     return json_({status:'error', error: err.message});
   }

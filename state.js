@@ -21,6 +21,7 @@ let S={
   premiumExpiry:'',
   exRestPref:{},
   mealPlan:null,
+  foodLog:[],
   healthProfile:null,
   a11y:false,
   colorblind:'',
@@ -84,6 +85,7 @@ function load(){
     S.bday=localStorage.getItem('ft4_bday')||'';
     S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
     S.mealPlan=JSON.parse(localStorage.getItem('ft4_mealplan')||'null');
+    S.foodLog=JSON.parse(localStorage.getItem('ft4_foodlog')||'[]');
     S.healthProfile=JSON.parse(localStorage.getItem('ft4_health')||'null');
     S.bodyStudy=JSON.parse(localStorage.getItem('ft4_bodystudy')||'null');
     S.bodyScans=JSON.parse(localStorage.getItem('ft4_bodyscans')||'[]');
@@ -214,6 +216,7 @@ function persist(){
     localStorage.setItem('ft4_bday',S.bday||'');
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
     localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
+    localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[]));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
     localStorage.setItem('ft4_bodystudy',JSON.stringify(S.bodyStudy||null));
     localStorage.setItem('ft4_bodyscans',JSON.stringify(S.bodyScans||[]));

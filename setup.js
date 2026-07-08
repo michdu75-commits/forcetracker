@@ -233,6 +233,7 @@ function _cloudSync(){
       diet:S.diet||'',
       dietRestrictions:S.dietRestrictions||[],
       dietNotes:S.dietNotes||'',
+      foodLog:(S.foodLog||[]).slice(-2000),
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
       leftHand:S.leftHand||false
@@ -1475,6 +1476,7 @@ function _applyRestoreData(raw){
   try{if(d.diet&&!S.diet)S.diet=d.diet;}catch(e){}
   try{if(Array.isArray(d.dietRestrictions)&&d.dietRestrictions.length&&!(S.dietRestrictions||[]).length)S.dietRestrictions=d.dietRestrictions;}catch(e){}
   try{if(d.dietNotes&&!(S.dietNotes||'').trim())S.dietNotes=d.dietNotes;}catch(e){}
+  try{if(Array.isArray(d.foodLog)&&d.foodLog.length>=(S.foodLog||[]).length)S.foodLog=d.foodLog;}catch(e){console.warn('[FT restore] foodLog',e);}
   try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
   try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
   try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}

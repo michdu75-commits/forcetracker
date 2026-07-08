@@ -510,7 +510,13 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 <div class="screen" id="s-nutrition">
   <div class="nu-tabs">
     <button class="nu-tab active" id="ntab-macros" onclick="switchNuTab('macros',this)">Macros</button>
+    <button class="nu-tab" id="ntab-journal" onclick="switchNuTab('journal',this)">Journal</button>
     <button class="nu-tab" id="ntab-suppl" onclick="switchNuTab('suppl',this)">Suppléments</button>
+  </div>
+
+  <!-- JOURNAL ALIMENTAIRE -->
+  <div id="nu-journal" style="display:none;flex-direction:column;gap:12px;">
+    <div id="food-journal"></div>
   </div>
 
   <!-- MACROS -->
@@ -1520,6 +1526,27 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <button class="btn btn-red" onclick="finalImportMeal()">✅ Enregistrer ce plan</button>
       <button class="btn btn-bg2" onclick="mealImpGoStep(2)">← Modifier les photos</button>
     </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Ajouter un aliment au journal -->
+<div class="overlay" id="ov-add-food" onclick="if(event.target===this)closeAddFood()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:18px;margin-bottom:14px;">🍽️ Ajouter un aliment</div>
+    <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Repas</div>
+    <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Ce que tu as mangé</div>
+    <textarea id="af-desc" placeholder="Ex : 2 œufs, 100g de riz, brocolis, 1 yaourt" rows="2" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);resize:vertical;margin-bottom:10px;"></textarea>
+    <button class="btn btn-bg2" id="af-ai-btn" onclick="estimateFoodAI()" style="width:100%;margin-bottom:16px;">🤖 Estimer les calories avec l'IA</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Calories (kcal)</div><input id="af-kcal" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines (g)</div><input id="af-prot" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides (g)</div><input id="af-carbs" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides (g)</div><input id="af-fat" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+    </div>
+    <button class="btn btn-red" onclick="addFoodEntry()" style="width:100%;margin-bottom:8px;">✅ Ajouter au journal</button>
+    <button class="btn btn-bg2" onclick="closeAddFood()" style="width:100%;">Annuler</button>
   </div>
 </div>
 

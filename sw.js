@@ -1,4 +1,4 @@
-const CACHE = 'ft-v328'; // Nutrition : import d'un plan alimentaire (photo/PDF dieteticien) -> IA lit les repas -> S.mealPlan
+const CACHE = 'ft-v329'; // Nutrition : journal alimentaire (3e onglet) -> ajout manuel + estimation IA, suivi kcal/macros vs objectif
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

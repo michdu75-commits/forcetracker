@@ -739,3 +739,69 @@ function _renderMealDay(day,isPrem,canRegen){
   return h+`</div>`;
 }
 
+// ─── JOURNAL ALIMENTAIRE (rendu) ──────────────────────────────
+function renderFoodJournal(){
+  const el=document.getElementById('food-journal');if(!el)return;
+  const td=today();
+  const hasProfile=S.bw&&S.age&&S.height;
+  const target=hasProfile?calcMacros(S.nutritionPhase):null;
+  const tot=(typeof _foodTotals==='function')?_foodTotals(td):{kcal:0,prot:0,carbs:0,fat:0};
+  const entries=(S.foodLog||[]).filter(e=>e.date===td).sort((a,b)=>b.ts-a.ts);
+
+  let html='';
+  // Résumé du jour
+  if(target){
+    const rem=target.calories-tot.kcal;
+    const pct=Math.min(100,Math.round(tot.kcal/Math.max(1,target.calories)*100));
+    const remCol=rem<0?'var(--red)':'var(--green)';
+    html+=`<div style="background:var(--bg2);border-radius:16px;padding:16px;box-shadow:inset 0 0 0 1px var(--sep);">`
+      +`<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">`
+        +`<span style="font-size:12px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Aujourd'hui</span>`
+        +`<span style="font-size:12px;color:${remCol};font-weight:700;">${rem>=0?rem+' kcal restantes':Math.abs(rem)+' kcal au-dessus'}</span>`
+      +`</div>`
+      +`<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px;">`
+        +`<span style="font-family:var(--font-cond);font-size:30px;font-weight:900;color:var(--t1);line-height:1;">${tot.kcal}</span>`
+        +`<span style="font-size:13px;color:var(--t3);">/ ${target.calories} kcal</span>`
+      +`</div>`
+      +`<div style="height:8px;border-radius:5px;background:var(--bg3);overflow:hidden;margin-bottom:12px;"><div style="height:100%;width:${pct}%;background:${rem<0?'var(--red)':'var(--red)'};border-radius:5px;"></div></div>`
+      +_macroLine('Protéines',tot.prot,target.prot_g,'var(--green)')
+      +_macroLine('Glucides',tot.carbs,target.carbs_g,'var(--orange)')
+      +_macroLine('Lipides',tot.fat,target.fat_g,'var(--gold)')
+      +`</div>`;
+  }else{
+    html+=`<div style="background:var(--bg2);border-radius:14px;padding:16px;text-align:center;color:var(--t3);font-size:13px;box-shadow:inset 0 0 0 1px var(--sep);">Remplis ton profil (âge, taille, poids) pour comparer à tes objectifs.</div>`;
+  }
+
+  // Bouton ajouter
+  html+=`<button class="btn btn-red" onclick="openAddFood()" style="width:100%;padding:14px;font-size:15px;margin-top:12px;">➕ Ajouter un aliment</button>`;
+
+  // Liste des entrées du jour
+  if(entries.length){
+    html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">`;
+    entries.forEach(e=>{
+      const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(e.meal):{ic:'🍽️',lbl:''};
+      html+=`<div style="background:var(--bg2);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:inset 0 0 0 1px var(--sep);">`
+        +`<span style="font-size:20px;flex-shrink:0;">${mi.ic}</span>`
+        +`<div style="flex:1;min-width:0;">`
+          +`<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escFood(e.name)}</div>`
+          +`<div style="font-size:11px;color:var(--t3);">${mi.lbl} · P ${e.prot||0} · G ${e.carbs||0} · L ${e.fat||0}</div>`
+        +`</div>`
+        +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${e.kcal||0}</span>`
+        +`<button onclick="removeFoodEntry(${e.ts})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
+      +`</div>`;
+    });
+    html+=`</div>`;
+  }else{
+    html+=`<div style="text-align:center;color:var(--t3);font-size:12px;padding:16px 8px;">Aucun aliment noté aujourd'hui. Ajoute ton premier repas 👆</div>`;
+  }
+  el.innerHTML=html;
+}
+function _macroLine(lbl,cur,tgt,col){
+  const pct=Math.min(100,Math.round(cur/Math.max(1,tgt)*100));
+  return`<div style="margin-bottom:8px;">`
+    +`<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span style="color:var(--t2);font-weight:600;">${lbl}</span><span style="color:var(--t3);">${cur} / ${tgt} g</span></div>`
+    +`<div style="height:5px;border-radius:3px;background:var(--bg3);overflow:hidden;"><div style="height:100%;width:${pct}%;background:${col};border-radius:3px;"></div></div>`
+    +`</div>`;
+}
+function _escFood(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+

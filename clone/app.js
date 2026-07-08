@@ -221,13 +221,89 @@ function applyTheme() {
 
 
 function switchNuTab(tab, btn) {
-  ['macros','suppl'].forEach(t => {
+  ['macros','journal','suppl'].forEach(t => {
     const el = document.getElementById('nu-' + t);
     if (el) el.style.display = t === tab ? 'flex' : 'none';
   });
   document.querySelectorAll('.nu-tab').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
   if (tab === 'suppl') renderSupplements();
+  if (tab === 'journal') renderFoodJournal();
+}
+
+// ─── JOURNAL ALIMENTAIRE ──────────────────────────────────────
+const FOOD_MEALS = [
+  {k:'petitdej', ic:'🌅', lbl:'Petit-déj'},
+  {k:'dejeuner', ic:'🍽️', lbl:'Déjeuner'},
+  {k:'collation',ic:'🍎', lbl:'Collation'},
+  {k:'diner',    ic:'🌙', lbl:'Dîner'}
+];
+let _afMeal='dejeuner';
+function _foodMealInfo(k){return FOOD_MEALS.find(m=>m.k===k)||FOOD_MEALS[1];}
+function _foodTotals(date){
+  const t={kcal:0,prot:0,carbs:0,fat:0};
+  (S.foodLog||[]).forEach(e=>{if(e.date===date){t.kcal+=e.kcal||0;t.prot+=e.prot||0;t.carbs+=e.carbs||0;t.fat+=e.fat||0;}});
+  return t;
+}
+function openAddFood(){
+  const h=new Date().getHours();
+  _afMeal = h<11?'petitdej' : h<15?'dejeuner' : h<18?'collation' : 'diner';
+  ['af-desc','af-kcal','af-prot','af-carbs','af-fat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  _renderAfMealChips();
+  document.getElementById('ov-add-food').classList.add('open');
+}
+function closeAddFood(){document.getElementById('ov-add-food').classList.remove('open');}
+function _renderAfMealChips(){
+  const el=document.getElementById('af-meal-chips');if(!el)return;
+  el.innerHTML=FOOD_MEALS.map(m=>{
+    const sel=m.k===_afMeal;
+    return`<button onclick="setFoodMeal('${m.k}')" style="flex:1;min-width:70px;padding:9px 6px;border-radius:12px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg2)'};color:${sel?'var(--red)':'var(--t2)'};font-size:12px;font-weight:${sel?700:500};cursor:pointer;font-family:var(--font);touch-action:manipulation;">${m.ic}<br>${m.lbl}</button>`;
+  }).join('');
+}
+function setFoodMeal(k){_afMeal=k;_renderAfMealChips();}
+async function estimateFoodAI(){
+  const desc=(document.getElementById('af-desc').value||'').trim();
+  if(!desc){toast('Décris d\'abord ce que tu as mangé','error');return;}
+  if(!S.url){toast('Connexion requise','error');return;}
+  const btn=document.getElementById('af-ai-btn');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Estimation…';}
+  try{
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'estimateFood',description:desc,email:S.email||''})});
+    const d=await r.json();
+    if(!d||d.status!=='ok'){toast('Erreur IA : '+(d&&d.error||d&&d.message||'réessaie'),'error');return;}
+    document.getElementById('af-kcal').value=d.kcal||0;
+    document.getElementById('af-prot').value=d.prot||0;
+    document.getElementById('af-carbs').value=d.carbs||0;
+    document.getElementById('af-fat').value=d.fat||0;
+    if(d.name)document.getElementById('af-desc').value=d.name;
+    toast('Estimé ✅ — ajuste si besoin','success');
+  }catch(e){toast('Erreur réseau : '+e.message,'error');}
+  finally{if(btn){btn.disabled=false;btn.textContent='🤖 Estimer les calories avec l\'IA';}}
+}
+function addFoodEntry(){
+  const name=(document.getElementById('af-desc').value||'').trim();
+  const kcal=parseInt(document.getElementById('af-kcal').value)||0;
+  const prot=parseInt(document.getElementById('af-prot').value)||0;
+  const carbs=parseInt(document.getElementById('af-carbs').value)||0;
+  const fat=parseInt(document.getElementById('af-fat').value)||0;
+  if(!name){toast('Donne un nom à l\'aliment','error');return;}
+  if(!kcal&&!prot&&!carbs&&!fat){toast('Renseigne au moins les calories','error');return;}
+  if(!S.foodLog)S.foodLog=[];
+  S.foodLog.push({date:today(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()});
+  persist();
+  closeAddFood();
+  renderFoodJournal();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  toast('Ajouté au journal 🍽️','success');
+}
+function removeFoodEntry(ts){
+  if(!S.foodLog)return;
+  S.foodLog=S.foodLog.filter(e=>e.ts!==ts);
+  persist();
+  renderFoodJournal();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
 }
 
 function renderSupplements() {
