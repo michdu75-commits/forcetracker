@@ -888,6 +888,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <span class="coach-ctx-tag" id="coach-ctx-cycle" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Cycle</span>
       </div>
     </div>
+    <!-- Carte questionnaire « Milo apprend à te connaître » (remplie par _renderCoachQuizCard) -->
+    <div id="coach-quiz-card"></div>
     <!-- Grille 4 actions -->
     <div class="coach-action-grid">
       <button class="coach-action-card" onclick="coachAction('programme')">
@@ -1694,6 +1696,23 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div style="font-size:12.5px;color:var(--t3);text-align:center;margin-bottom:14px;line-height:1.45;">Laisse Milo analyser ton corps à partir de tes photos.</div>
     <div id="photo-menu-body" style="display:flex;flex-direction:column;gap:10px;"></div>
     <button class="btn btn-bg2" style="width:100%;margin-top:14px;" onclick="closePhotoMenu()">Fermer</button>
+  </div>
+</div>
+
+<!-- QUESTIONNAIRE « Milo apprend à te connaître » — gratuit, ne compte pas dans les questions du Coach -->
+<div class="overlay" id="ov-coach-quiz" style="z-index:480;" onclick="if(event.target===this)closeCoachQuiz()">
+  <div class="modal" style="max-width:430px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div id="cq-title" style="font-size:16px;font-weight:900;display:flex;align-items:center;gap:7px;"></div>
+      <button onclick="closeCoachQuiz()" style="background:none;border:none;color:var(--t2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
+    </div>
+    <div class="cq-progress"><div id="cq-progress-fill" class="cq-progress-fill"></div></div>
+    <div id="cq-step" style="min-height:220px;padding-top:14px;"></div>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      <button id="cq-prev" class="btn btn-bg2" style="flex:0 0 auto;width:auto;padding:12px 18px;" onclick="_coachQuizPrev()">◂</button>
+      <button id="cq-next" class="btn btn-red" style="flex:1 1 auto;width:auto;padding:12px;" onclick="_coachQuizNext()">Suivant ▸</button>
+    </div>
+    <div style="text-align:center;margin-top:8px;"><button id="cq-skip" onclick="_coachQuizNext(true)" style="background:none;border:none;color:var(--t3);font-size:12.5px;text-decoration:underline;cursor:pointer;">Passer cette question</button></div>
   </div>
 </div>
 

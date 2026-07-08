@@ -4,6 +4,166 @@ let coachHistory = [];
 let coachBusy = false;
 let _coachHistLoaded = false;
 
+// ═══ QUESTIONNAIRE « Milo apprend à te connaître » ═══════════════════════
+// 100% GRATUIT et hors quota : ce sont des choix stockés en local (pas d'appel IA),
+// puis injectés dans le contexte que reçoit Milo. Une série gratuite + une série
+// premium plus poussée. type: 'single' | 'multi' | 'text'.
+const COACH_QUIZ = [
+  {id:'xp', q:'Depuis combien de temps tu t\'entraînes ?', t:'single', opts:[['debut','Je débute (ou je reprends)'],['6m','Moins de 6 mois'],['2a','6 mois à 2 ans'],['5a','2 à 5 ans'],['5p','Plus de 5 ans']]},
+  {id:'freq', q:'Combien de séances par semaine tu peux vraiment tenir ?', t:'single', opts:[['1','1 à 2'],['3','3'],['4','4'],['5','5 ou plus']]},
+  {id:'place', q:'Où tu t\'entraînes le plus souvent ?', t:'single', opts:[['salle','Salle complète'],['basic','Salle basique / peu de machines'],['maison','Maison avec du matériel'],['pdc','Maison sans matériel (poids du corps)']]},
+  {id:'time', q:'Combien de temps dure une séance en général ?', t:'single', opts:[['30','~30 min'],['45','~45 min'],['60','~1 h'],['90','1 h 30 ou plus']]},
+  {id:'bar', q:'Ton aisance avec les mouvements à la barre (squat, soulevé, développé) ?', t:'single', opts:[['jamais','Jamais essayé'],['debut','Débutant, pas à l\'aise'],['ok','Ça va'],['pro','Très à l\'aise']]},
+  {id:'motiv', q:'Qu\'est-ce qui te motive le plus ?', t:'single', opts:[['fort','Me sentir plus fort'],['corps','Me sentir mieux dans mon corps'],['sante','La santé, le bien-être'],['esth','L\'esthétique, la définition'],['perf','La compétition / la performance']]},
+  {id:'weak', q:'Quel groupe tu trouves le plus dur à faire progresser ?', t:'single', opts:[['pecs','Pectoraux'],['dos','Dos'],['jambes','Jambes'],['epaules','Épaules'],['bras','Bras'],['abdos','Abdos'],['nsp','Je ne sais pas']]},
+  {id:'cardio', q:'Ta relation avec le cardio ?', t:'single', opts:[['jamais','J\'en fais jamais'],['peu','Un peu à l\'échauffement'],['reg','Régulièrement'],['deteste','Je déteste ça']]},
+  {id:'pain', q:'Des zones sensibles / anciennes blessures à ménager ?', t:'multi', hint:'Plusieurs choix possibles.', opts:[['aucune','Aucune'],['epaules','Épaules'],['dos','Dos / lombaires'],['genoux','Genoux'],['poignets','Poignets'],['coudes','Coudes'],['hanches','Hanches'],['cou','Cou / nuque']]},
+  {id:'energy', q:'En ce moment, ton énergie et ton sommeil, c\'est plutôt…', t:'single', opts:[['top','Au top'],['ok','Correct'],['fatigue','Souvent fatigué'],['dors_mal','Je dors mal']]},
+  {id:'goalfeel', q:'Ton objectif du moment, en une idée ?', t:'single', opts:[['muscle','Prendre du muscle'],['force','Devenir plus fort'],['secher','Perdre du gras / sécher'],['forme','Me remettre en forme'],['maintien','Entretenir / rester au niveau']]},
+  {id:'diet0', q:'Ton alimentation en ce moment ?', t:'single', opts:[['propre','Plutôt propre / je fais attention'],['moyen','Ça dépend des jours'],['relax','Je mange ce que je veux'],['nsp','Je ne sais pas trop']]},
+  {id:'tone', q:'Comment tu veux que Milo te parle ?', t:'single', opts:[['cash','Cash et direct'],['motiv','Motivant et encourageant'],['tech','Technique et précis'],['fun','Détendu, avec de l\'humour']]},
+];
+const COACH_QUIZ_PRO = [
+  {id:'job', q:'Ton quotidien (hors sport) est plutôt…', t:'single', opts:[['bureau','Sédentaire / bureau'],['debout','Debout, actif'],['physique','Travail physique dur']]},
+  {id:'stress', q:'Ton niveau de stress général ?', t:'single', opts:[['bas','Faible'],['moy','Modéré'],['haut','Élevé']]},
+  {id:'sleep', q:'Tu dors combien d\'heures par nuit en moyenne ?', t:'single', opts:[['5','Moins de 6 h'],['7','6 à 7 h'],['8','7 à 8 h'],['9','Plus de 8 h']]},
+  {id:'prot', q:'Tu atteins tes protéines la plupart du temps ?', t:'single', opts:[['oui','Oui, presque toujours'],['souvent','Souvent'],['rare','Rarement'],['nsp','Je ne sais pas']]},
+  {id:'split', q:'Ta façon de découper tes séances préférée ?', t:'single', opts:[['full','Full body (tout le corps)'],['hb','Haut / Bas'],['ppl','Push / Pull / Legs'],['split','Un muscle par séance'],['nsp','Je ne sais pas']]},
+  {id:'deadline', q:'Tu as une échéance précise ?', t:'single', opts:[['compet','Oui, une compétition'],['event','Oui, un événement (vacances, photo…)'],['non','Non, sur le long terme']]},
+  {id:'progr', q:'Tu as déjà suivi un vrai programme structuré ?', t:'single', opts:[['ok','Oui, et ça a marché'],['abandon','Oui, mais abandonné'],['jamais','Jamais vraiment']]},
+  {id:'block', q:'Là où tu bloques le plus ?', t:'single', opts:[['regul','La régularité'],['tech','La technique'],['recup','La récup / le sommeil'],['nut','La nutrition'],['plateau','Un plateau de force'],['motiv','La motivation']]},
+  {id:'supp', q:'Tu prends des compléments ?', t:'multi', hint:'Plusieurs choix possibles.', opts:[['aucun','Aucun'],['whey','Protéine / whey'],['crea','Créatine'],['prewk','Pré-workout'],['omega','Oméga 3'],['vitd','Vitamine D'],['autre','Autres']]},
+  {id:'equip', q:'Matériel dispo (en plus des machines) ?', t:'multi', hint:'Plusieurs choix possibles.', opts:[['barre','Barre olympique'],['halteres','Haltères lourds'],['poulies','Poulies'],['elastiques','Élastiques'],['kb','Kettlebell'],['rack','Rack / cage'],['rien','Rien de spécial']]},
+  {id:'like', q:'Les exercices que tu ADORES (facultatif)', t:'text', hint:'Dis à Milo ce que tu préfères — il en tiendra compte.'},
+  {id:'hate', q:'Les exercices que tu ÉVITES ou détestes (facultatif)', t:'text', hint:'Il évitera de te les imposer.'},
+];
+// Libellé lisible d'une réponse (pour le contexte Milo)
+function _cqLabel(quiz,qid,val){
+  const q=quiz.find(x=>x.id===qid); if(!q||!q.opts)return val;
+  const find=v=>{const o=q.opts.find(o=>o[0]===v);return o?o[1]:v;};
+  return Array.isArray(val)?val.map(find).join(', '):find(val);
+}
+// Bloc de contexte injecté dans buildCoachContext
+function _coachQuizContext(){
+  const out=[];
+  const fmt=(quiz,ans)=>{
+    quiz.forEach(q=>{
+      const v=ans[q.id];
+      if(v===undefined||v===null||v===''||(Array.isArray(v)&&!v.length))return;
+      const val=q.t==='text'?String(v):_cqLabel(quiz,q.id,v);
+      if(val&&String(val).trim())out.push(`- ${q.q.replace(/\s*\(facultatif\)/i,'')} → ${val}`);
+    });
+  };
+  if(S.coachQuiz&&S.coachQuiz.answers)fmt(COACH_QUIZ,S.coachQuiz.answers);
+  if(S.coachQuizPro&&S.coachQuizPro.answers)fmt(COACH_QUIZ_PRO,S.coachQuizPro.answers);
+  if(!out.length)return '';
+  return '\n🗣️ CE QUE LA PERSONNE A DIT SUR ELLE (questionnaire) — utilise-le pour vraiment personnaliser (ne le récite pas bêtement, sers-t\'en) :\n'+out.join('\n')+'\n';
+}
+
+// ── UI du questionnaire ──────────────────────────────────────────────────
+let _cqSet='free';      // 'free' | 'pro'
+let _cqIdx=0;
+let _cqAns={};          // copie de travail
+function _cqQuiz(){return _cqSet==='pro'?COACH_QUIZ_PRO:COACH_QUIZ;}
+function _cqStore(){return _cqSet==='pro'?S.coachQuizPro:S.coachQuiz;}
+function _renderCoachQuizCard(){
+  const el=document.getElementById('coach-quiz-card'); if(!el)return;
+  const freeDone=!!(S.coachQuiz&&S.coachQuiz.done);
+  const proDone=!!(S.coachQuizPro&&S.coachQuizPro.done);
+  let html='';
+  if(!freeDone){
+    html=`<button class="cq-card" onclick="openCoachQuiz('free')">
+      <div class="cq-card-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 0 1-9 9 9.5 9.5 0 0 1-4-.9L3 21l1.9-5A9 9 0 1 1 21 12z"/></svg></div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Milo veut apprendre à te connaître</div><div class="cq-card-sub">Quelques questions rapides (gratuit, ça ne compte pas dans tes questions) pour des conseils sur-mesure.</div></div></button>`;
+  } else {
+    html=`<button class="cq-card done" onclick="openCoachQuiz('free')">
+      <div class="cq-card-ic" style="background:rgba(52,211,153,.16);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Milo te connaît ✅</div><div class="cq-card-sub">Tape pour revoir ou modifier tes réponses.</div></div></button>`;
+    // proposer le questionnaire avancé (premium)
+    if(!proDone){
+      html+=`<button class="cq-card" style="margin-top:8px;${S.premium?'':'opacity:.92;'}" onclick="openCoachQuiz('pro')">
+        <div class="cq-card-ic" style="background:rgba(234,179,8,.16);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées ${S.premium?'':'<span style="color:var(--gold);">⭐ Premium</span>'}</div><div class="cq-card-sub">Va plus loin : nutrition, récup, matériel, préférences… pour un ciblage encore plus fin.</div></div></button>`;
+    } else {
+      html+=`<button class="cq-card done" style="margin-top:8px;" onclick="openCoachQuiz('pro')">
+        <div class="cq-card-ic" style="background:rgba(52,211,153,.16);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées ✅</div><div class="cq-card-sub">Tape pour revoir tes réponses.</div></div></button>`;
+    }
+  }
+  el.innerHTML=html;
+}
+function openCoachQuiz(set){
+  if(set==='pro'&&!S.premium&&!(S.coachQuizPro&&S.coachQuizPro.done)){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
+  _cqSet=set;
+  _cqIdx=0;
+  const store=_cqStore();
+  _cqAns=(store&&store.answers)?JSON.parse(JSON.stringify(store.answers)):{};
+  const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.add('open');
+  _renderCoachQuizStep();
+}
+function closeCoachQuiz(){ const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.remove('open'); }
+function _renderCoachQuizStep(){
+  const quiz=_cqQuiz();
+  const total=quiz.length;
+  const q=quiz[_cqIdx];
+  const titleEl=document.getElementById('cq-title');
+  if(titleEl)titleEl.innerHTML=(_cqSet==='pro'
+    ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Questions avancées'
+    :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9.5 9.5 0 0 1-4-.9L3 21l1.9-5A9 9 0 1 1 21 12z"/></svg>Milo te connaît')
+    +` <span style="color:var(--t3);font-weight:600;font-size:13px;">${_cqIdx+1}/${total}</span>`;
+  const fill=document.getElementById('cq-progress-fill'); if(fill)fill.style.width=((_cqIdx)/total*100)+'%';
+  const step=document.getElementById('cq-step'); if(!step)return;
+  const cur=_cqAns[q.id];
+  let body=`<div class="cq-q">${q.q}</div>`;
+  if(q.hint)body+=`<div class="cq-hint">${q.hint}</div>`;
+  if(q.t==='text'){
+    body+=`<textarea class="cq-textarea" id="cq-text" placeholder="Écris ici…" oninput="_cqAns['${q.id}']=this.value">${cur?String(cur).replace(/</g,'&lt;'):''}</textarea>`;
+  } else {
+    body+='<div class="cq-opts">';
+    q.opts.forEach(o=>{
+      const sel=q.t==='multi'?(Array.isArray(cur)&&cur.includes(o[0])):(cur===o[0]);
+      body+=`<button class="cq-opt${sel?' sel':''}" onclick="_coachQuizPick('${q.id}','${o[0]}',${q.t==='multi'})">${o[1]}<span class="cq-check">✓</span></button>`;
+    });
+    body+='</div>';
+  }
+  step.innerHTML=body;
+  // Boutons nav
+  const prev=document.getElementById('cq-prev'); if(prev)prev.style.visibility=_cqIdx===0?'hidden':'visible';
+  const next=document.getElementById('cq-next'); if(next)next.innerHTML=(_cqIdx===total-1)?'Terminer ✓':'Suivant ▸';
+  const skip=document.getElementById('cq-skip'); if(skip)skip.style.display=(q.t==='text')?'none':'';
+}
+function _coachQuizPick(qid,val,multi){
+  if(multi){
+    let arr=Array.isArray(_cqAns[qid])?_cqAns[qid].slice():[];
+    // "aucune"/"aucun"/"rien" = exclusif
+    const excl=['aucune','aucun','rien'];
+    if(excl.includes(val)){ arr=[val]; }
+    else { arr=arr.filter(x=>!excl.includes(x)); const i=arr.indexOf(val); if(i>=0)arr.splice(i,1); else arr.push(val); }
+    _cqAns[qid]=arr;
+    _renderCoachQuizStep();
+  } else {
+    _cqAns[qid]=val;
+    _renderCoachQuizStep();
+    // avance auto après un court délai (single choice)
+    setTimeout(()=>{ if(document.getElementById('ov-coach-quiz').classList.contains('open')) _coachQuizNext(); },230);
+  }
+}
+function _coachQuizPrev(){ if(_cqIdx>0){_cqIdx--;_renderCoachQuizStep();} }
+function _coachQuizNext(skip){
+  const quiz=_cqQuiz();
+  if(_cqIdx<quiz.length-1){ _cqIdx++; _renderCoachQuizStep(); }
+  else { _finishCoachQuiz(); }
+}
+function _finishCoachQuiz(){
+  const store={answers:JSON.parse(JSON.stringify(_cqAns)),done:true,date:new Date().toISOString().slice(0,10)};
+  if(_cqSet==='pro')S.coachQuizPro=store; else S.coachQuiz=store;
+  if(typeof persist==='function')persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  closeCoachQuiz();
+  _renderCoachQuizCard();
+  if(typeof toast==='function')toast(_cqSet==='pro'?'Milo en sait encore plus sur toi 💪':'Milo te connaît mieux maintenant 💪','success');
+}
+
 // ─── Historique du chat persisté (survit à la fermeture de l'appli) ───
 // Stocké local (ft4_coach_hist). Léger : les photos deviennent "[photo]" (pas de base64 stocké).
 function _loadCoachHist(){
@@ -159,6 +319,7 @@ function updateCoachHeader() {
   if(!_coachHistLoaded){ _loadCoachHist(); _coachHistLoaded = true; }
   _updateCoachMorphoBtn();
   _updateCoachCtxTags();
+  try{_renderCoachQuizCard();}catch(e){}
   // Cache le mur premium si l'utilisateur est maintenant premium
   if(S.premium){const wall=document.getElementById('coach-wall');if(wall)wall.style.display='none';}
   // Afficher accueil ou chat selon l'historique
@@ -351,7 +512,7 @@ ${(()=>{
   if(!L.length)return '';
   return '\n📐 ÉTUDE DU CORPS (bilan visuel du '+(bs.date||'?')+') — utilise-la pour cibler les déséquilibres et proposer des exercices correctifs:\n- '+L.join('\n- ');
 })()}
-
+${_coachQuizContext()}
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}
 

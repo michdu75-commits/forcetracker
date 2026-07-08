@@ -1,4 +1,4 @@
-const CACHE = 'ft-v315'; // Milo coaching : adapte au niveau, pose des questions, mouvements fondamentaux, nuances cardio, programmes reconnus (premium)
+const CACHE = 'ft-v316'; // Questionnaire « Milo apprend à te connaître » (gratuit, hors quota) + série avancée premium, injecté dans le contexte Milo
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

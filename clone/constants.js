@@ -161,6 +161,7 @@ const NEW_FEATURES=[
   {id:'coach-share', screen:'coach',    desc:'Nouveau : partager ou copier une réponse du Coach'},
   {id:'body-study',  screen:'coach',    desc:'Nouveau : Étude du corps — 4 photos, bilan posture/insertions/équilibre + exercices (📐 Premium)'},
   {id:'force-prog',  screen:'coach', spot:'coach-action-force', desc:'Nouveau : Gagner en force (Big 3) — Milo te génère un programme powerlifting à enregistrer (🏋️)'},
+  {id:'coach-quiz',  screen:'coach', spot:'coach-quiz-card', desc:'Nouveau : réponds au questionnaire « Milo apprend à te connaître » (gratuit, ça ne compte pas dans tes questions) — Milo te donne des conseils bien plus personnalisés'},
   // Profil (setup) — anchor = id de la ligne de menu où le point rouge s'affiche (ici la carte Profil)
   {id:'morpho-setup',screen:'setup', anchor:'menu-row-profil', desc:'Section morphologie dans Profil'},
   {id:'discipline',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
