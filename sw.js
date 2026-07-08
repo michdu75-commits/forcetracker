@@ -1,4 +1,4 @@
-const CACHE = 'ft-v317'; // Questionnaire : réponses profil (objectif/travail) écrites dans le profil + série avancée premium en 1 question/semaine
+const CACHE = 'ft-v318'; // Stockage : afficher la place prise + bouton « Vider le cache » + réinstallation des figurines (bouton) + auto-réparation si iOS vide le cache
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -104,24 +104,55 @@ const PRECACHE = [
   './anatomy/Vue des Os avec nerfs sciatiques/os et nerfs.png',
 ];
 
+// Sentinelle : une figurine ; si elle manque, c'est que le cache a été vidé (manuel ou iOS)
+const PRECACHE_SENTINEL = PRECACHE.find(u => /exercises\//.test(u)) || PRECACHE[0];
+
+// Télécharge tous les assets dans le cache, fichier par fichier, en notifiant la progression.
+// Réutilisé par l'install ET par la réinstallation à la demande (bouton / auto-réparation).
+async function precacheAll() {
+  const cache = await caches.open(CACHE);
+  const total = PRECACHE.length;
+  let done = 0;
+  const notify = async (type) => {
+    const clients = await self.clients.matchAll({includeUncontrolled:true});
+    clients.forEach(c => c.postMessage({type, done, total}));
+  };
+  for (const url of PRECACHE) {
+    // Fichier par fichier : si un asset manque/échoue, on continue (install jamais bloquée)
+    try { await cache.add(url); } catch (err) { /* skip */ }
+    done++;
+    if (done === total || done % 4 === 0) await notify('PRECACHE_PROGRESS');
+  }
+  await notify('PRECACHE_DONE');
+}
+
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
-    const cache = await caches.open(CACHE);
-    const total = PRECACHE.length;
-    let done = 0;
-    const notify = async (type) => {
-      const clients = await self.clients.matchAll({includeUncontrolled:true});
-      clients.forEach(c => c.postMessage({type, done, total}));
-    };
-    for (const url of PRECACHE) {
-      // Fichier par fichier : si un asset manque/échoue, on continue (install jamais bloquée)
-      try { await cache.add(url); } catch (err) { /* skip */ }
-      done++;
-      if (done === total || done % 4 === 0) await notify('PRECACHE_PROGRESS');
-    }
-    await notify('PRECACHE_DONE');
+    await precacheAll();
     await self.skipWaiting();
   })());
+});
+
+// Messages venant de l'app :
+//  - REPRECACHE      : réinstalle tout de force (après « Vider le cache »)
+//  - ENSURE_PRECACHE : vérifie que les figurines sont là ; sinon, réinstalle (auto-réparation
+//                      quand iOS a vidé le cache tout seul, ou après un vidage navigateur)
+self.addEventListener('message', e => {
+  const t = e.data && e.data.type;
+  if (t === 'REPRECACHE') {
+    e.waitUntil(precacheAll());
+  } else if (t === 'ENSURE_PRECACHE') {
+    e.waitUntil((async () => {
+      const cache = await caches.open(CACHE);
+      const hit = await cache.match(PRECACHE_SENTINEL);
+      if (!hit) { await precacheAll(); }            // cache vidé → on répare
+      else {
+        // déjà en place : signale « fini » pour masquer une éventuelle barre
+        const clients = await self.clients.matchAll({includeUncontrolled:true});
+        clients.forEach(c => c.postMessage({type:'PRECACHE_DONE', done:PRECACHE.length, total:PRECACHE.length}));
+      }
+    })());
+  }
 });
 
 self.addEventListener('activate', e => {

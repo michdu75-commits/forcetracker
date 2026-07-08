@@ -1214,6 +1214,8 @@ const _DRAWER_CONTENT = {
           if(el&&ft)el.textContent=ft;
         });
       }
+      // Remplit la taille du stockage (asynchrone)
+      if(typeof _fillStorageInfo==='function')setTimeout(_fillStorageInfo,50);
       return`<div style="text-align:center;padding:10px 0 20px;">
       <img src="logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
       <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;">Force Tracker</div>
@@ -1222,6 +1224,18 @@ const _DRAWER_CONTENT = {
         Application de suivi de musculation Progressive Web App.<br>
         Fonctionne hors connexion · Synchronisation Google Sheets<br>
         Coach IA propulsé par Claude (Anthropic)
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--t1);margin-bottom:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+          Stockage sur ton téléphone
+        </div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:12px;">
+          L'appli garde les <strong>figurines d'exercices</strong> et les écrans sur ton téléphone pour marcher <strong>hors connexion</strong> et s'ouvrir vite.<br>
+          Espace utilisé : <strong id="_about-storage" style="color:var(--t1);">calcul…</strong>
+        </div>
+        <button onclick="clearAppCache()" style="width:100%;padding:11px;border:none;border-radius:10px;background:rgba(255,149,0,.14);color:var(--orange);font-weight:700;font-size:13.5px;font-family:var(--font);cursor:pointer;">🧹 Vider le cache (garde tes données)</button>
+        <div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-top:8px;">Vide seulement les fichiers de l'appli (figurines, images). <strong>Tes séances, records et réglages ne sont pas touchés.</strong> Les figurines se réinstallent aussitôt (une barre s'affiche).</div>
       </div>
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;font-size:13px;color:var(--t2);">
         <div style="margin-bottom:6px;">✉️ <strong>Contact :</strong> michdu75@gmail.com</div>

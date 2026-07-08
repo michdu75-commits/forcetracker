@@ -1739,7 +1739,45 @@ if('serviceWorker' in navigator){
       else if(e.data.type==='PRECACHE_PROGRESS')_showInstallProgress(e.data.done,e.data.total);
       else if(e.data.type==='PRECACHE_DONE')_hideInstallProgress();
     });
+    // Auto-réparation : si le cache a été vidé (bouton, vidage navigateur, ou iOS qui purge
+    // tout seul sous pression mémoire), on redemande au SW de réinstaller les figurines.
+    navigator.serviceWorker.ready.then(reg=>{
+      if(reg&&reg.active)reg.active.postMessage({type:'ENSURE_PRECACHE'});
+    }).catch(()=>{});
   });
+}
+// Demande au Service Worker de réinstaller tous les fichiers (figurines incluses)
+function _reprecacheSW(){
+  if(!('serviceWorker' in navigator))return;
+  navigator.serviceWorker.ready.then(reg=>{
+    const sw=reg.active||navigator.serviceWorker.controller;
+    if(sw)sw.postMessage({type:'REPRECACHE'});
+  }).catch(()=>{});
+}
+// Affiche la place occupée par l'appli sur le téléphone (dans « À propos »)
+function _fillStorageInfo(){
+  const el=document.getElementById('_about-storage');if(!el)return;
+  if(navigator.storage&&navigator.storage.estimate){
+    navigator.storage.estimate().then(est=>{
+      const mb=(est.usage||0)/1048576;
+      el.textContent=mb>=1?mb.toFixed(0)+' Mo':Math.max(1,Math.round((est.usage||0)/1024))+' Ko';
+    }).catch(()=>{el.textContent='—';});
+  } else { el.textContent='—'; }
+}
+// Vide le cache des fichiers de l'appli (PAS les données) puis réinstalle les figurines
+function clearAppCache(){
+  const go=async()=>{
+    try{
+      if('caches' in window){ const keys=await caches.keys(); await Promise.all(keys.map(k=>caches.delete(k))); }
+    }catch(e){}
+    // Relance la réinstallation → la barre de progression réapparaît via les messages SW
+    _reprecacheSW();
+    if(typeof toast==='function')toast('Cache vidé — réinstallation des figurines…','info');
+    setTimeout(_fillStorageInfo,1500);
+  };
+  if(typeof showConfirm==='function'){
+    showConfirm('Vider le cache ?','Ça libère de la place et réinstalle les figurines. Tes séances, records et réglages ne sont PAS touchés.',go);
+  } else go();
 }
 // Barre d'installation : se remplit pendant que le Service Worker met les fichiers en cache (1re visite / mise à jour)
 function _showInstallProgress(done,total){
