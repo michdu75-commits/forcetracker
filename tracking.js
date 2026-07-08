@@ -720,7 +720,12 @@ function _resizeReport(file,cb){
             y+=TILE-OVER;
           }
         }
-        cb(tiles);
+        // Image entière de secours (pour un backend pas encore à jour : lit comme avant, pas pire)
+        let whole;
+        {const m=1500;let ww=w,hh=h;if(ww>=hh){if(ww>m){hh=Math.round(hh*m/ww);ww=m;}}else{if(hh>m){ww=Math.round(ww*m/hh);hh=m;}}
+          const fc=document.createElement('canvas');fc.width=ww;fc.height=hh;fc.getContext('2d').drawImage(img,0,0,ww,hh);
+          whole=fc.toDataURL('image/jpeg',0.85).split(',')[1];}
+        cb({tiles:tiles, full:whole});
       }catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
     };
     img.onerror=()=>{if(typeof toast==='function')toast('Image illisible','error');};
@@ -740,11 +745,13 @@ function onBodyScanPhoto(input){
     return;
   }
   toast('📖 Lecture du rapport…','info');
-  _resizeReport(file,async(tiles)=>{
+  _resizeReport(file,async(out)=>{
     try{
-      const images=(Array.isArray(tiles)?tiles:[tiles]).map(t=>({data:t,type:'image/jpeg'}));
+      const tiles=(out&&out.tiles)?out.tiles:(Array.isArray(out)?out:[out]);
+      const full=(out&&out.full)?out.full:tiles[0];
+      const images=tiles.map(t=>({data:t,type:'image/jpeg'}));
       const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'importBodyScan',images,image:images[0]&&images[0].data,imageType:'image/jpeg',email:S.email||''})});
+        body:JSON.stringify({action:'importBodyScan',images,image:full,imageType:'image/jpeg',email:S.email||''})});
       const txt=await resp.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('réponse illisible');}
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
