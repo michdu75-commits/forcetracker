@@ -244,6 +244,75 @@ function _foodMealInfo(k){return FOOD_MEALS.find(m=>m.k===k)||FOOD_MEALS[1];}
 function _foodAiLeft(){return Math.max(0,FOOD_AI_FREE_LIMIT-(S.foodAiUses||0));}
 function showFoodWall(){const el=document.getElementById('ov-food-wall');if(el)el.classList.add('open');}
 function closeFoodWall(){const el=document.getElementById('ov-food-wall');if(el)el.classList.remove('open');}
+
+// ─── SCAN CODE-BARRES (ZXing local + Open Food Facts) ─────────
+let _bcNutr=null; // {name, kcal100, prot100, carbs100, fat100}
+function _loadZXing(){
+  return new Promise((res,rej)=>{
+    if(window.ZXing&&window.ZXing.BrowserMultiFormatReader){res();return;}
+    const s=document.createElement('script');
+    s.src='./lib/zxing.min.js';
+    s.onload=()=>{(window.ZXing&&window.ZXing.BrowserMultiFormatReader)?res():rej(new Error('ZXing indisponible'));};
+    s.onerror=()=>rej(new Error('Lecteur code-barres non chargé'));
+    document.head.appendChild(s);
+  });
+}
+function scanBarcode(){
+  const inp=document.getElementById('af-bc-input');
+  if(inp){inp.value='';inp.click();}
+}
+async function onBarcodeFile(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const url=URL.createObjectURL(f);
+  toast('Lecture du code-barres…','info');
+  try{
+    await _loadZXing();
+    const reader=new ZXing.BrowserMultiFormatReader();
+    let code='';
+    try{const result=await reader.decodeFromImageUrl(url);code=result&&result.getText&&result.getText();}
+    catch(e){code='';}
+    try{reader.reset&&reader.reset();}catch(e){}
+    URL.revokeObjectURL(url);
+    if(!code){toast('Code-barres illisible — rapproche-toi ou saisis à la main','error');return;}
+    await _lookupBarcode(code);
+  }catch(e){URL.revokeObjectURL(url);toast('Erreur scan : '+(e.message||e),'error');}
+}
+async function _lookupBarcode(ean){
+  toast('Recherche du produit…','info');
+  try{
+    const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(ean)+'.json?fields=product_name,product_name_fr,brands,nutriments,serving_quantity');
+    const d=await r.json();
+    if(!d||d.status!==1||!d.product){toast('Produit introuvable (code '+ean+') — saisis à la main','error');return;}
+    const p=d.product,n=p.nutriments||{};
+    const kcal100=Math.round(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
+    _bcNutr={
+      name:((p.product_name_fr||p.product_name||'Produit')+(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':'')).slice(0,60),
+      kcal100:kcal100,
+      prot100:Math.round(n['proteins_100g']||0),
+      carbs100:Math.round(n['carbohydrates_100g']||0),
+      fat100:Math.round(n['fat_100g']||0)
+    };
+    if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Produit trouvé mais sans infos nutritionnelles — saisis à la main','error');return;}
+    // Quantité par défaut : portion si connue, sinon 100 g
+    const serv=parseFloat(p.serving_quantity)||0;
+    const g=serv>0?serv:100;
+    const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
+    const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g';
+    const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
+    document.getElementById('af-desc').value=_bcNutr.name;
+    _bcApplyGrams();
+    toast('Produit trouvé ✅ — ajuste la quantité','success');
+  }catch(e){toast('Réseau indisponible pour la recherche produit','error');}
+}
+function _bcApplyGrams(){
+  if(!_bcNutr)return;
+  const g=parseFloat((document.getElementById('af-bc-grams')||{}).value)||0;
+  const f=g/100;
+  document.getElementById('af-kcal').value=Math.round(_bcNutr.kcal100*f);
+  document.getElementById('af-prot').value=Math.round(_bcNutr.prot100*f);
+  document.getElementById('af-carbs').value=Math.round(_bcNutr.carbs100*f);
+  document.getElementById('af-fat').value=Math.round(_bcNutr.fat100*f);
+}
 function _foodTotals(date){
   const t={kcal:0,prot:0,carbs:0,fat:0};
   (S.foodLog||[]).forEach(e=>{if(e.date===date){t.kcal+=e.kcal||0;t.prot+=e.prot||0;t.carbs+=e.carbs||0;t.fat+=e.fat||0;}});
@@ -253,6 +322,8 @@ function openAddFood(){
   const h=new Date().getHours();
   _afMeal = h<11?'petitdej' : h<15?'dejeuner' : h<18?'collation' : 'diner';
   ['af-desc','af-kcal','af-prot','af-carbs','af-fat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  _bcNutr=null;
+  const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
   _renderAfMealChips();
   _renderAfAiNote();
   document.getElementById('ov-add-food').classList.add('open');
@@ -676,7 +747,7 @@ function finishOnboarding(){
     if(!S.emailVerified){ try{ _sendEmailConfirm(true); }catch(e){} }
   }
   localStorage.setItem('ft4_ob2','1');
-  try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){} // nouvel inscrit : pas de « Quoi de neuf » (il a le guide-film)
+  try{localStorage.setItem('ft4_whatsnew_v2','1');}catch(e){} // nouvel inscrit : pas de « Quoi de neuf » (il a le guide-film)
   document.documentElement.classList.add('ob-done');
   const ob=document.getElementById('onboarding');
   if(ob){ob.style.transition='opacity .4s';ob.style.opacity='0';setTimeout(()=>{ob.style.display='none';ob.style.opacity='';ob.style.transition='';},400);}
@@ -1634,20 +1705,18 @@ function closeSuperWelcome(){try{localStorage.setItem('ft4_super_welcome_v1','1'
 function _isChristophe(){return (S.email||'').trim().toLowerCase()==='christophe@famillelanglois.fr';}
 function checkAnnouncements(){
   try{
-    if(_isChristophe()){
-      if(!localStorage.getItem('ft4_billoute_v2')){
-        try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){} // Christophe a son pop perso, pas le général
-        setTimeout(showBilloute,1000);
-      }
+    // Christophe : son pop perso « billoute » d'abord ; une fois vu, il reçoit les annonces générales comme tout le monde.
+    if(_isChristophe()&&!localStorage.getItem('ft4_billoute_v2')){
+      setTimeout(showBilloute,1000);
       return;
     }
-    if(!localStorage.getItem('ft4_whatsnew_v1')) setTimeout(showWhatsNew,1000);
+    if(!localStorage.getItem('ft4_whatsnew_v2')) setTimeout(showWhatsNew,1000);
   }catch(e){}
 }
 function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
 function closeBilloute(){try{localStorage.setItem('ft4_billoute_v2','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
 function showWhatsNew(){const o=document.getElementById('ov-whatsnew');if(o)o.classList.add('open');}
-function closeWhatsNew(){try{localStorage.setItem('ft4_whatsnew_v1','1');}catch(e){}const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}
+function closeWhatsNew(){try{localStorage.setItem('ft4_whatsnew_v2','1');}catch(e){}const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}
 function openTesterSpace(){
   // L'Espace Testeur (dont la boîte à idées) est réservé aux vrais testeurs récompensés.
   // Michel a le suivi photos via le panneau Admin, mais PAS cet espace ni la boîte à idées.

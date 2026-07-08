@@ -1,4 +1,4 @@
-const CACHE = 'ft-v330'; // Journal : limite estimation IA gratuite (~1 semaine, 25) + mur premium #ov-food-wall, saisie manuelle illimitée
+const CACHE = 'ft-v331'; // Journal : scan code-barres (ZXing local + Open Food Facts) + aide MAJ + popup « Quoi de neuf » v2 (nutrition) + red dots
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -8,6 +8,8 @@ const PRECACHE = [
   './lib/jspdf.umd.min.js', './lib/jspdf.plugin.autotable.min.js',
   // Lecteur Excel (SheetJS, local) — import de fichiers balance .xlsx/.xls, chargé à la demande
   './lib/xlsx.full.min.js',
+  // Lecteur code-barres (ZXing, local) — scan produit dans le journal alimentaire, chargé à la demande
+  './lib/zxing.min.js',
   // Polices (hébergées localement — plus de dépendance Google Fonts)
   './fonts/manrope-variable.woff2', './fonts/spacegrotesk-variable.woff2', './fonts/pacifico-400.woff2',
   './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',

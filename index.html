@@ -1091,11 +1091,12 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:50px;line-height:1;">✨</div>
     <div style="font-size:22px;font-weight:900;color:var(--red);margin-top:8px;">Quoi de neuf ?</div>
-    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Force Tracker s'est enrichi :</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Le suivi nutrition passe au niveau supérieur 🍽️</div>
     <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
-      <div class="sw-feat"><span>🧪</span><div><b>Bilan corporel (balance pro)</b><small>Tu passes sur une balance à impédance ? Enregistre tes chiffres — par photo, à la main ou en collant un code — suis leur évolution, et Milo s'en sert. Progrès → Poids.</small></div></div>
-      <div class="sw-feat"><span>💾</span><div><b>Milo garde vos conversations</b><small>Ton fil de discussion reste sauvegardé même après fermeture. Le bouton « + » démarre une nouvelle discussion.</small></div></div>
-      <div class="sw-feat"><span>📖</span><div><b>Guide mis à jour</b><small>Menu → « Guide de l'application » pour tout revoir en images.</small></div></div>
+      <div class="sw-feat"><span>📓</span><div><b>Journal alimentaire</b><small>Nouvel onglet « Journal » dans Nutrition : note ce que tu manges et suis tes calories + macros du jour face à ton objectif.</small></div></div>
+      <div class="sw-feat"><span>📷</span><div><b>Scan de code-barres</b><small>Scanne un produit : il est reconnu automatiquement et ses valeurs se remplissent — tu ajustes juste la quantité.</small></div></div>
+      <div class="sw-feat"><span>🤖</span><div><b>Estimation par l'IA</b><small>Décris ton repas (« 200g poulet, riz, brocolis »), l'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.</small></div></div>
+      <div class="sw-feat"><span>📥</span><div><b>Importer un plan diététicien</b><small>Une photo ou un PDF de ta diététicienne → l'IA range tous les repas, jour par jour.</small></div></div>
     </div>
     <button class="btn btn-red" onclick="closeWhatsNew()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">C'est parti 💪</button>
   </div>
@@ -1489,6 +1490,16 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div style="font-weight:800;font-size:18px;margin-bottom:14px;">🍽️ Ajouter un aliment</div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Repas</div>
     <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <button class="btn btn-bg2" onclick="scanBarcode()" style="width:100%;margin-bottom:14px;">📷 Scanner un code-barres</button>
+    <input type="file" id="af-bc-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodeFile(this)">
+    <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+      <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;color:var(--t3);">Quantité</span>
+        <input id="af-bc-grams" type="number" inputmode="numeric" value="100" oninput="_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
+        <span style="font-size:13px;color:var(--t3);">g</span>
+      </div>
+    </div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Ce que tu as mangé</div>
     <textarea id="af-desc" placeholder="Ex : 2 œufs, 100g de riz, brocolis, 1 yaourt" rows="2" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);resize:vertical;margin-bottom:10px;"></textarea>
     <button class="btn btn-bg2" id="af-ai-btn" onclick="estimateFoodAI()" style="width:100%;margin-bottom:6px;">🤖 Estimer les calories avec l'IA</button>
