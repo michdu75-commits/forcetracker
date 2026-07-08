@@ -499,6 +499,7 @@ function handleSaveProfile_(body) {
     if (body.bodyScanImports!== undefined) profile.bodyScanImports= _pn_(body.bodyScanImports, profile.bodyScanImports);
     if (body.coachQuiz     !== undefined) profile.coachQuiz     = _po_(body.coachQuiz,     profile.coachQuiz);
     if (body.coachQuizPro  !== undefined) profile.coachQuizPro  = _po_(body.coachQuizPro,  profile.coachQuizPro);
+    if (body.scaleType     !== undefined) profile.scaleType     = _ps_(body.scaleType,     profile.scaleType);
 
     existing.profile = profile;
 

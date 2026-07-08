@@ -90,6 +90,7 @@ function load(){
     S.bloodTests=JSON.parse(localStorage.getItem('ft4_bloodtests')||'[]');
     S.coachQuiz=JSON.parse(localStorage.getItem('ft4_coachquiz')||'null');
     S.coachQuizPro=JSON.parse(localStorage.getItem('ft4_coachquizpro')||'null');
+    S.scaleType=localStorage.getItem('ft4_scaletype')||''; // '' | 'feet' | 'handsfeet'
     S.a11y=localStorage.getItem('ft4_a11y')==='1';
     S.colorblind=localStorage.getItem('ft4_cb')||'';
     S.leftHand=localStorage.getItem('ft4_lh')==='1';
@@ -215,6 +216,7 @@ function persist(){
     localStorage.setItem('ft4_bloodtests',JSON.stringify(S.bloodTests||[]));
     localStorage.setItem('ft4_coachquiz',JSON.stringify(S.coachQuiz||null));
     localStorage.setItem('ft4_coachquizpro',JSON.stringify(S.coachQuizPro||null));
+    localStorage.setItem('ft4_scaletype',S.scaleType||'');
     localStorage.setItem('ft4_a11y',S.a11y?'1':'0');
     localStorage.setItem('ft4_cb',S.colorblind||'');
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');
