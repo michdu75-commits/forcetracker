@@ -1,4 +1,4 @@
-const CACHE = 'ft-v306'; // Bilan corporel : limite lecture photo (illimité super-testeurs Michel/Christophe, 1 fois les autres ; saisie main/code gratuites pour tous)
+const CACHE = 'ft-v307'; // Aide + Guide de l'appli à jour (bilan corporel, historique Milo) + nouvelle slide guide/bilan.jpg
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -11,7 +11,7 @@ const PRECACHE = [
   './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',
   // Captures d'écran du guide-film (Menu → Guide de l'application)
   './guide/home.jpg','./guide/profil.jpg','./guide/seance.jpg',
-  './guide/programmes.jpg','./guide/progres.jpg','./guide/coach.jpg',
+  './guide/programmes.jpg','./guide/progres.jpg','./guide/bilan.jpg','./guide/coach.jpg',
   // Photos accessoires (Guide de la muscu → Matériel) — les fichiers absents ne sont PAS listés ici (sinon l'install du SW échoue)
   './accessoires/ceinture-souple.jpg','./accessoires/ceinture-cuir-levier.jpg','./accessoires/ceinture-cuir-ardillon.jpg',
   './accessoires/sangles.jpg','./accessoires/genouilleres.jpg','./accessoires/chaussures.jpg',
