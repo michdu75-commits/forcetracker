@@ -1286,7 +1286,7 @@ function _renderProfileCompletion(){
     nudge='<b>Profil complet 💪</b> — Milo, ton coach IA, est au top et tout est ultra précis.';
   }else{
     const miss=c.missing.slice(0,4).join(', ')+(c.missing.length>4?'…':'');
-    nudge='Complète-le pour un <b>Coach IA (Milo) au top</b> et des calculs précis.<br><span style="color:var(--t3);font-size:11.5px;">À ajouter : '+miss+'</span>';
+    nudge='<b>Prends le temps de bien le remplir 📋</b> — plus il est complet, plus <b>Milo te connaît</b> et plus ses conseils (et tes calculs) sont VRAIMENT faits pour toi.<br><span style="color:var(--t3);font-size:11.5px;">Encore à ajouter : '+miss+'</span>';
   }
   el.innerHTML=
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">'

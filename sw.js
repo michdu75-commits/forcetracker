@@ -1,4 +1,4 @@
-const CACHE = 'ft-v318'; // Stockage : afficher la place prise + bouton « Vider le cache » + réinstallation des figurines (bouton) + auto-réparation si iOS vide le cache
+const CACHE = 'ft-v319'; // Relance profil : Milo insiste sur l'accueil tant que le profil est incomplet (<70%) + carte profil plus motivante
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
