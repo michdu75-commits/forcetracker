@@ -183,6 +183,7 @@ const _HELP_DATA={
       {i:'🏅',t:'18 badges en 4 catégories : évolution, performance, streak, spécial. Vérifie l\'onglet Badges pour les débloquer.'},
       {i:'📋',t:'Tap sur une séance passée dans l\'historique pour voir et modifier les kg/reps de chaque série.'},
       {i:'📉',t:'Un plateau sur plusieurs semaines est normal — le progrès n\'est jamais linéaire. Varie les charges et les volumes.'},
+      {i:'🧪',t:'Bilan corporel (balance pro) : sous ta courbe de poids, section « Bilan corporel ». Tu passes sur une balance à impédance ? Enregistre tes chiffres (graisse viscérale, muscle, métabolisme, détail par segment…) par 📷 photo, ✏️ à la main ou 📋 code. Le bilan sert aussi de pesée du jour (poids + masse grasse), tu suis l\'évolution, et Milo s\'en sert.'},
     ],
     female:[
       {i:'⚖️',t:'Variations de poids ±1 à 3 kg en cours de cycle = rétention d\'eau, pas de la graisse. Compare la même phase entre cycles.'},
@@ -213,6 +214,8 @@ const _HELP_DATA={
       {i:'💬',t:'Ton profil complet (poids, objectif, discipline, PRs, morphologie) est injecté automatiquement — pas besoin de te présenter à chaque fois.'},
       {i:'🏋️',t:'Pendant une séance, le Coach la voit EN DIRECT : demande-lui un exercice équivalent si une machine est prise, un ajustement de charge, ou l\'ordre des exercices.'},
       {i:'🧠',t:'Mémoire intelligente (Premium) : le Coach résume et retient le fil de vos échanges entre sessions.'},
+      {i:'💾',t:'Tes conversations restent sauvegardées : tu retrouves ton fil même après avoir fermé l\'appli. Le bouton « + » en haut démarre une nouvelle discussion.'},
+      {i:'🧪',t:'Milo connaît ton Bilan corporel (balance pro) si tu l\'as rempli : il te conseille avec tes vrais chiffres (graisse viscérale, muscle, métabolisme) — sans jamais en inventer ni poser de diagnostic.'},
       {i:'📸',t:'Bouton 📷 pour envoyer une photo (analyse corpo ou morphologie). Bouton 📸 "Analyser ma morphologie" pour l\'analyse 3 angles (Premium).'},
       {i:'📋',t:'Analyse de programme IA (bouton 🤖 dans Programmes) : le Coach évalue ton programme et propose des améliorations.'},
       {i:'🔗',t:'Bouton "Partager" sous chaque réponse : envoie-la (SMS, Notes, WhatsApp…) ou copie-la en un tap. Pratique pour garder un conseil ou l\'envoyer à un pote.'},

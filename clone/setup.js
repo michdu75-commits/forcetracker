@@ -211,6 +211,7 @@ function _cloudSync(){
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
       histImports:S.histImports||0,
+      bodyScanImports:S.bodyScanImports||0,
       coachMemory:S.coachMemory||'',
       customExercises:S.customExercises||[],
       exPhotos:S.exPhotos||{},
@@ -223,6 +224,7 @@ function _cloudSync(){
       exRestPref:S.exRestPref||{},
       healthProfile:S.healthProfile||null,
       bodyStudy:S.bodyStudy||null,
+      bodyScans:(S.bodyScans||[]).slice(-60),
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
       leftHand:S.leftHand||false
@@ -280,7 +282,10 @@ function _renderSessDetailContent(){
     return`<div class="card" style="margin-bottom:8px;padding:10px 12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${ex.note?'4':'8'}px">
         <div style="font-weight:700;font-size:14px">${ex.name}</div>
-        <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--blue)" onclick="replaceSessEx(${ei})" title="Remplacer l'exercice">🔄</button>
+          <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
+        </div>
       </div>
       ${ex.note?`<div style="font-size:12px;color:var(--gold);font-style:italic;line-height:1.4;margin-bottom:8px;">💬 ${ex.note}</div>`:''}
       ${maxRM>0?`<div style="font-size:13px;color:var(--t1);font-weight:700;margin-bottom:8px;">🎯 Meilleur 1RM potentiel : <span style="font-weight:800">${fmt(maxRM)} kg</span></div>`:''}
@@ -315,6 +320,26 @@ function deleteSessEx(ei){
   if(!_sessEdits)return;
   const name=_sessEdits.exs[ei]&&_sessEdits.exs[ei].name||'cet exercice';
   showConfirm('Supprimer l\'exercice ?',`"${name}" sera retiré de cette séance.`,()=>{_sessEdits.exs.splice(ei,1);_renderSessDetailContent();_updateSdMuscles(_sessEdits);});
+}
+// Remplacer un exercice mal choisi dans une SÉANCE PASSÉE (garde les séries).
+// Ouvre le sélecteur ; le choix est routé par addExercise (mode 'replaceSess').
+let _replaceSessEi=null;
+function replaceSessEx(ei){
+  if(!_sessEdits||!_sessEdits.exs[ei])return;
+  _replaceSessEi=ei;
+  _exPickerMode='replaceSess';
+  openExPicker();
+  toast('Choisis le bon exercice','info');
+}
+function _replaceSessExPick(name){
+  const ei=_replaceSessEi;_replaceSessEi=null;
+  if(ei===null||!_sessEdits||!_sessEdits.exs[ei])return;
+  const old=_sessEdits.exs[ei].name;
+  if(name===old){_renderSessDetailContent();return;}
+  _sessEdits.exs[ei].name=name; // on garde toutes les séries, on change juste le nom
+  _renderSessDetailContent();
+  _updateSdMuscles(_sessEdits);
+  toast('Remplacé par '+name+' — pense à Enregistrer','info');
 }
 
 function deleteSessOrConfirm(){
@@ -1290,7 +1315,6 @@ function renderSetup(){
   if(ro)ro.style.display=window._adminMode?'none':'flex';
   if(ed)ed.style.display=window._adminMode?'flex':'none';
   setGender(S.gender);
-  if(typeof _renderTimerSkinSel==='function')_renderTimerSkinSel();
   const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
   const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';
   const bwEl=document.getElementById('bw-inp');if(bwEl)bwEl.value=S.bw||'';
@@ -1431,6 +1455,7 @@ function _applyRestoreData(raw){
   try{if(d.bday)S.bday=d.bday;}catch(e){}
   try{if(d.healthProfile)S.healthProfile=d.healthProfile;}catch(e){console.warn('[FT restore] healthProfile',e);}
   try{if(d.bodyStudy)S.bodyStudy=d.bodyStudy;}catch(e){console.warn('[FT restore] bodyStudy',e);}
+  try{if(Array.isArray(d.bodyScans)&&d.bodyScans.length>=(S.bodyScans||[]).length)S.bodyScans=d.bodyScans;}catch(e){console.warn('[FT restore] bodyScans',e);}
   try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
   try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
   try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}
@@ -1441,6 +1466,7 @@ function _applyRestoreData(raw){
   try{const cb=d.badges&&Object.keys(d.badges).length;const lb=S.badges&&Object.keys(S.badges).length;if(cb&&(!lb||cb>lb))S.badges=d.badges;}catch(e){console.warn('[FT restore] badges',e);}
   // Import journal : garder le compteur le plus élevé (local vs cloud) — évite de re-gagner un import gratuit après purge
   try{if(d.histImports!==undefined)S.histImports=Math.max(S.histImports||0,parseInt(d.histImports)||0);}catch(e){}
+  try{if(d.bodyScanImports!==undefined)S.bodyScanImports=Math.max(S.bodyScanImports||0,parseInt(d.bodyScanImports)||0);}catch(e){}
   try{if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;}catch(e){console.warn('[FT restore] customEx',e);}
   try{if(d.exPhotos&&Object.keys(d.exPhotos).length)S.exPhotos={...(S.exPhotos||{}),...d.exPhotos};}catch(e){console.warn('[FT restore] exPhotos',e);}
   // PRs — prend le plus complet
