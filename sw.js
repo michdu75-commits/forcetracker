@@ -1,4 +1,4 @@
-const CACHE = 'ft-v308'; // Pop-ups : « Quoi de neuf » pour tous (bilan corporel + historique Milo) + message perso Christophe
+const CACHE = 'ft-v309'; // Bilan corporel : lecture photo des GRANDS rapports (découpage en tranches lisibles → l'IA lit tout, même très long)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

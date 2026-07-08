@@ -987,12 +987,21 @@ function handleImportBodyScan_(body) {
   const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
   if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
   try {
-    if (!body.image) return json_({status:'error', error:'Aucune image reçue'});
-    const userContent = [
-      { type:'image', source:{ type:'base64', media_type: body.imageType || 'image/jpeg', data: body.image } },
+    // Accepte soit un tableau d'images (tranches d'un long rapport), soit une seule image
+    var imgs = (Array.isArray(body.images) && body.images.length)
+      ? body.images
+      : (body.image ? [{ data: body.image, type: body.imageType || 'image/jpeg' }] : []);
+    if (!imgs.length) return json_({status:'error', error:'Aucune image reçue'});
+    const multi = imgs.length > 1;
+    const userContent = imgs.map(function(im){
+      return { type:'image', source:{ type:'base64', media_type: im.type || 'image/jpeg', data: im.data } };
+    });
+    userContent.push(
       { type:'text', text:
-          'Ceci est la photo d\'un rapport de composition corporelle (balance à impédance, type InBody/MyBodyCheck). '
-        + 'Lis TOUT le rapport, y compris les sections annexes ("Autres indicateurs", "Score corporel", "Analyse corporelle", "Mon coaching Expert"). '
+          (multi
+            ? ('Ces ' + imgs.length + ' images sont des TRANCHES horizontales successives (de HAUT en BAS, dans l\'ordre) d\'UN SEUL et même rapport de composition corporelle (balance à impédance, type InBody/MyBodyCheck) — un léger recouvrement existe entre elles. Combine-les pour lire le rapport ENTIER. ')
+            : 'Ceci est la photo d\'un rapport de composition corporelle (balance à impédance, type InBody/MyBodyCheck). ')
+        + 'Lis TOUT le rapport, y compris les sections annexes ("Autres indicateurs", "Score corporel", "Analyse corporelle", "Mon coaching Expert", analyses segmentaires). '
         + 'IMPORTANT : dans les tableaux, une valeur est souvent suivie d\'une PLAGE de référence entre parenthèses '
         + '(ex. "87.50 (60.6-82.0)" ou "18.3 (8.6-17.1)"). Prends UNIQUEMENT le premier nombre (la mesure réelle), IGNORE la plage entre parenthèses.\n'
         + 'Les rapports existent en PLUSIEURS formats/libellés — mappe les synonymes ci-dessous. Correspondance libellés → clés JSON :\n'
@@ -1017,7 +1026,7 @@ function handleImportBodyScan_(body) {
         + '"bodyScore":...,"leanMass":...,"subFat":...,"smi":...,'
         + '"armMuscleL":...,"armMuscleR":...,"trunkMuscle":...,"legMuscleL":...,"legMuscleR":...,"armFatL":...,"armFatR":...,"trunkFat":...,"legFatL":...,"legFatR":...}. '
         + 'Efforce-toi de remplir un MAXIMUM de champs (ils sont presque tous présents sur ce type de rapport). N\'invente aucun chiffre.' }
-    ];
+    );
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
       method:'post',
       headers:{ 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
