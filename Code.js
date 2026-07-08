@@ -1002,6 +1002,8 @@ function handleImportBodyScan_(body) {
         + '- "Indice de graisse viscérale" → visceral (petit nombre entier, ex. 6)\n'
         + '- "Taux Métabolique de Base" / "BMR" (kcal) → bmr\n'
         + '- "Âge corporel" (années) → metaAge ; "IMC" → imc\n'
+        + '- "Score corporel" (sur 100) → bodyScore ; "Masse maigre" (kg) → leanMass\n'
+        + '- "Graisse sous-cutanée" (%) → subFat ; "Indice de masse musculaire squelettique" (kg/m²) → smi\n'
         + '- "Date des mesures" → date (format YYYY-MM-DD)\n'
         + 'DÉTAIL PAR SEGMENT (sections "Analyse segmentaire de la masse musculaire" et "Analyse segmentaire de la masse grasse", en kg, souvent affiché à gauche=G et à droite=D du schéma corporel) :\n'
         + '- muscle bras gauche/droit → armMuscleL / armMuscleR ; muscle tronc → trunkMuscle ; muscle jambe gauche/droite → legMuscleL / legMuscleR\n'
@@ -1010,6 +1012,7 @@ function handleImportBodyScan_(body) {
         + 'Retourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, avec EXACTEMENT ces clés '
         + '("." comme séparateur décimal, null seulement si la valeur est vraiment absente ou illisible) :\n'
         + '{"date":...,"weight":...,"bf":...,"fatMass":...,"muscle":...,"skMuscle":...,"bone":...,"water":...,"protein":...,"visceral":...,"bmr":...,"metaAge":...,"imc":...,'
+        + '"bodyScore":...,"leanMass":...,"subFat":...,"smi":...,'
         + '"armMuscleL":...,"armMuscleR":...,"trunkMuscle":...,"legMuscleL":...,"legMuscleR":...,"armFatL":...,"armFatR":...,"trunkFat":...,"legFatL":...,"legFatR":...}. '
         + 'Efforce-toi de remplir un MAXIMUM de champs (ils sont presque tous présents sur ce type de rapport). N\'invente aucun chiffre.' }
     ];
