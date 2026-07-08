@@ -550,3 +550,26 @@ Le dossier local du projet est en désordre. À réorganiser proprement :
 - **Confidentialité / RGPD** : page de confidentialité claire (données santé/photos), message visible « 🔒 tes photos ne sont jamais enregistrées » sur morpho/bilans.
 - **Décider public/privé** : bilan sanguin (bêta Michel-only), boîte à idées (testeurs), etc.
 - **Vérifier la limite Google exacte** du store de propriétés (le ~9 Mo est la note projet ; à confirmer).
+
+---
+
+## 👩 PROFIL FEMME / THÈME FEMME — à approfondir (priorité produit, Michel 2026-07-08)
+
+Michel : « améliore le profil femme, faudra vraiment qu'on le fasse aussi, il reste pas mal de choses à faire et pas mal de tests ». → gros chantier transverse (profil + nutrition + coach + visuels), à découper en petites étapes testées, **une à la fois**, avec de **vraies testeuses** (Eline, Emma).
+
+**Déjà en place (la base existe) :**
+- Phase du cycle menstruel → nutrition + contexte Milo ; endométriose (condition santé femme-only).
+- Morphologie féminine (H/A/V/X/O) + sections genre-aware ; niveaux de force gendrés (`getLevel`).
+- Milo : ton adapté (plus à l'écoute, sans materner) ; masse grasse US Navy avec hanches (formule femme).
+- Parcours débutant : nuance femme (Poussée de Hanche / Abduction) — sans cliché, elles travaillent tout.
+
+**À faire / améliorer :**
+- 🎨 **Figurine muscle FÉMININE** : aujourd'hui la silhouette muscle est **masculine pour les deux sexes** (échecs iOS WebKit sur `female-body.png` ; dead code `_mscSVG_F`/`_BDY_F`/`_BDY_F_MINI` déjà présent). → reprendre proprement avec un **SVG féminin natif** (pas d'`<image>` + filtre CSS, ça casse sur iOS).
+- 🌸 **Cycle menstruel enrichi** : suivi plus complet (symptômes, SPM, humeur/énergie par phase), **adaptation de l'entraînement par phase** (folliculaire = pousser fort / lutéale = alléger), prédiction + rappels.
+- 🍽️ **Nutrition femme** : accent fer & calcium, macros de cycle affinées ; option **ménopause** (métabolisme, densité osseuse, protéines).
+- 🏋️ **Accents de programme (sans cliché)** : fessiers/hanches, plancher pelvien, haut du corps — options, pas des cases par défaut.
+- 🤰 **Grossesse / post-partum** (à décider si dans le scope) : mode « prudence » avec garde-fous médicaux stricts (même logique que le profil santé).
+- 🗣️ **Contenu & vocabulaire** : guides/aides avec exemples féminins, éviter le tout-masculin par défaut dans les textes.
+- 🧪 **Beaucoup de tests** avec testeuses réelles avant de reporter comme fini.
+
+⚠️ Ne PAS tomber dans le cliché « rose + cardio » : les femmes soulèvent lourd aussi. L'idée = **options et adaptations physiologiques réelles** (cycle, insertions, objectifs), pas un thème gadget.
