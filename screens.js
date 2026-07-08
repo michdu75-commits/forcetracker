@@ -680,30 +680,37 @@ function renderMealPlanIA(){
     el.innerHTML=`<div style="background:var(--bg2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:inset 0 0 0 1px var(--sep);">`
       +`<div style="font-size:13px;color:var(--t2);line-height:1.5;text-align:center;">Plan de repas personnalisé par l'IA, adapté à tes macros et ton objectif.</div>`
       +`<button class="btn btn-red" id="mp-gen-btn" onclick="generateMealPlan()" style="padding:14px;font-size:15px;">🍽️ Générer${isPrem?' ma semaine':' mon repas du jour'}</button>`
+      +`<button class="btn btn-bg2" onclick="openImportMeal()" style="padding:12px;font-size:14px;">📥 Importer un plan (diététicien)</button>`
+      +`<div style="font-size:11px;color:var(--t3);text-align:center;">Photo ou PDF du plan de ta diététicienne → l'IA le range.</div>`
       +(!isPrem?`<div style="font-size:11px;color:var(--t3);text-align:center;">🆓 Gratuit : repas du jour · 1 régénération/j &nbsp;·&nbsp; ⭐ Premium : semaine + illimité</div>`:'')
       +`</div>`;
     return;
   }
-  const days=isPrem?plan.days:plan.days.slice(0,1);
-  const canRegen=isPrem||(plan.regenDate!==td||(plan.regenCount||0)<1);
+  const imp=!!plan.imported;
+  const days=(isPrem||imp)?plan.days:plan.days.slice(0,1);
+  const canRegen=!imp&&(isPrem||(plan.regenDate!==td||(plan.regenCount||0)<1));
   let html=`<div style="display:flex;flex-direction:column;gap:8px;">`;
-  html+=`<div style="display:flex;align-items:center;justify-content:space-between;">
-    <span style="font-size:11px;color:var(--t3);">Généré le ${fmtD(plan.generatedAt)}</span>
-    <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="generateMealPlan()">🔄 Tout régénérer</button>
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+    <span style="font-size:11px;color:var(--t3);">${plan.imported?(plan.planName?'📥 '+plan.planName:'📥 Plan importé'):'Généré le '+fmtD(plan.generatedAt)}</span>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button class="btn-xs" style="color:var(--t2);border-color:var(--sep);" onclick="openImportMeal()">📥 Importer</button>
+      <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="generateMealPlan()">🔄 IA</button>
+    </div>
   </div>`;
-  if(isPrem&&days.length>1){
+  if((isPrem||imp)&&days.length>1){
     if(_mpDay>=days.length)_mpDay=0;
     html+=`<div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;">`;
     days.forEach((d,i)=>{
       const wd=new Date(d.date+'T12:00:00').getDay(),isT=d.date===td,sel=i===_mpDay;
-      html+=`<button onclick="setMpDay(${i})" style="flex-shrink:0;padding:5px 10px;border-radius:20px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg3)'};color:${sel?'var(--red)':isT?'var(--t1)':'var(--t2)'};font-size:12px;font-weight:${sel||isT?700:500};cursor:pointer;touch-action:manipulation;">${DAY[wd]}${isT?'·':''}</button>`;
+      const lbl=imp&&d.label?d.label.slice(0,10):DAY[wd]+(isT?'·':'');
+      html+=`<button onclick="setMpDay(${i})" style="flex-shrink:0;padding:5px 10px;border-radius:20px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg3)'};color:${sel?'var(--red)':isT?'var(--t1)':'var(--t2)'};font-size:12px;font-weight:${sel||isT?700:500};cursor:pointer;touch-action:manipulation;">${lbl}</button>`;
     });
     html+=`</div>`;
-    html+=_renderMealDay(days[_mpDay],isPrem,true);
+    html+=_renderMealDay(days[_mpDay],isPrem,canRegen);
   }else{
     html+=_renderMealDay(days[0],isPrem,canRegen);
   }
-  if(!isPrem){
+  if(!isPrem&&!imp){
     html+=`<div style="background:rgba(255,214,0,.07);border:1px solid rgba(255,214,0,.15);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
       <span style="font-size:18px;">⭐</span>
       <div style="font-size:12px;color:var(--t2);">Premium : semaine complète + régénérations illimitées — <strong style="color:var(--gold);">4,99€/2 mois</strong></div>

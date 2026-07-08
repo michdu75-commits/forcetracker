@@ -1257,6 +1257,136 @@ async function generateMealPlan(regenDay,regenMeal){
   finally{if(btn){btn.disabled=false;btn.textContent='🍽️ Générer'+(isPrem?' ma semaine':' mon repas du jour');}}
 }
 
+// ─── IMPORT PLAN ALIMENTAIRE (photo/PDF d'un diététicien) ──────────────
+let _mealImpPhotos=[],_mealImpExtracted=null;
+function openImportMeal(){
+  _mealImpPhotos=[];_mealImpExtracted=null;
+  mealImpGoStep(1);
+  document.getElementById('ov-import-meal').classList.add('open');
+}
+function closeImportMeal(){document.getElementById('ov-import-meal').classList.remove('open');}
+function mealImpGoStep(n){
+  [1,2,3,4].forEach(i=>{
+    const s=document.getElementById('mimp-s'+i);if(s)s.style.display='none';
+    const dot=document.getElementById('mimp-dot-'+i);if(dot)dot.classList.toggle('active',i===n);
+  });
+  const s=document.getElementById('mimp-s'+n);
+  if(s)s.style.display=(n===1||n===4)?'block':'flex';
+  if(n===1)['mimp-cam-inp','mimp-gal-inp','mimp-file-inp','mimp-more-inp','mimp-more-file-inp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+function addMealImportPhoto(input){
+  const files=[...input.files];if(!files.length)return;
+  const loadFile=f=>new Promise(res=>{
+    const img=new Image(),url=URL.createObjectURL(f);
+    img.onload=()=>{
+      const max=1200,canvas=document.createElement('canvas');
+      let w=img.width,h=img.height;
+      if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
+      canvas.width=w;canvas.height=h;
+      const c2d=canvas.getContext('2d');
+      if(!c2d){URL.revokeObjectURL(url);res(null);return;}
+      c2d.drawImage(img,0,0,w,h);URL.revokeObjectURL(url);
+      res({data:canvas.toDataURL('image/jpeg',0.82).split(',')[1],type:'image/jpeg'});
+    };
+    img.src=url;
+  });
+  Promise.all(files.map(loadFile)).then(results=>{
+    _mealImpPhotos.push(...results.filter(Boolean));
+    _renderMealImpThumbs();mealImpGoStep(2);
+  });
+}
+async function addMealImportFile(input){
+  const files=[...input.files];if(!files.length)return;
+  const MAX_MB=15,results=[];
+  for(const f of files){
+    if(f.size>MAX_MB*1024*1024){toast('Fichier trop volumineux (max '+MAX_MB+' MB)','error');continue;}
+    const name=(f.name||'').toLowerCase();
+    if(f.type==='application/pdf'||name.endsWith('.pdf')){
+      try{
+        toast('Lecture du PDF…','info');
+        const pages=await _pdfToImages(f);
+        if(!pages.length){toast('PDF vide ou illisible','error');continue;}
+        results.push(...pages);
+      }catch(e){toast('Erreur PDF : '+(e.message||e),'error');}
+    }
+  }
+  if(results.length){_mealImpPhotos.push(...results);_renderMealImpThumbs();mealImpGoStep(2);}
+}
+function _renderMealImpThumbs(){
+  const el=document.getElementById('mimp-thumbs');if(!el)return;
+  el.innerHTML=_mealImpPhotos.map((p,i)=>{
+    const isDoc=p.type==='application/pdf'||p.isText;
+    const thumb=isDoc
+      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">📄</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name||'Page'}</span></div>`
+      :`<img src="data:${p.type};base64,${p.data}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--sep);">`;
+    return`<div style="position:relative;display:inline-block;">${thumb}<button onclick="removeMealImpPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;font-family:var(--font);">✕</button></div>`;
+  }).join('');
+}
+function removeMealImpPhoto(i){
+  _mealImpPhotos.splice(i,1);
+  if(!_mealImpPhotos.length){mealImpGoStep(1);return;}
+  _renderMealImpThumbs();
+}
+async function analyzeMealImport(){
+  if(!_mealImpPhotos.length){toast('Ajoute au moins une photo','error');return;}
+  if(!S.url){toast('Connexion Apps Script requise','error');return;}
+  mealImpGoStep(3);
+  let raw='';
+  try{
+    const diet=(typeof dietSummary==='function')?dietSummary():'';
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'importMealPlan',images:_mealImpPhotos,diet})});
+    raw=await r.text();
+    console.log('[ImportMeal] Réponse brute :',raw);
+    const d=JSON.parse(raw);
+    if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
+    _mealImpExtracted=d.data;
+    _renderMealImpConfirm();
+    mealImpGoStep(4);
+  }catch(e){
+    console.error('[ImportMeal] Erreur :',e.message,'| Brut :',raw);
+    mealImpGoStep(2);
+    toast('Erreur analyse : '+e.message,'error');
+  }
+}
+function _renderMealImpConfirm(){
+  const d=_mealImpExtracted;if(!d)return;
+  const nameEl=document.getElementById('mimp-plan-name');
+  if(nameEl)nameEl.textContent=d.planName||'Plan alimentaire importé';
+  const el=document.getElementById('mimp-preview');if(!el)return;
+  el.innerHTML=(d.days||[]).map((day,di)=>`
+    <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
+      <div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">${day.label||'Jour '+(di+1)}</div>
+      ${(day.meals||[]).map(m=>`
+        <div style="background:var(--bg2);border-radius:8px;padding:8px 10px;margin-bottom:5px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:13px;font-weight:600;">${m.name}</div>
+            <span style="font-size:12px;font-weight:700;color:var(--red);">${m.kcal||0} kcal</span>
+          </div>
+          <ul style="margin:4px 0 0;padding:0 0 0 16px;">${(m.foods||[]).map(f=>`<li style="font-size:12px;color:var(--t2);">${f}</li>`).join('')}</ul>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px;">P ${m.prot||0}g · G ${m.carbs||0}g · L ${m.fat||0}g</div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+function finalImportMeal(){
+  const d=_mealImpExtracted;
+  if(!d||!(d.days||[]).length){toast('Aucun repas à importer','error');return;}
+  const td=today();
+  const days=d.days.map((day,i)=>{
+    const dt=new Date();dt.setDate(dt.getDate()+i);
+    const date=dt.toISOString().slice(0,10);
+    return{date,label:day.label||'',meals:(day.meals||[]).map(m=>({
+      name:m.name||'Repas',foods:m.foods||[],kcal:m.kcal||0,prot:m.prot||0,carbs:m.carbs||0,fat:m.fat||0
+    }))};
+  });
+  S.mealPlan={days,generatedAt:td,regenDate:null,regenCount:0,imported:true,planName:d.planName||''};
+  persist();
+  closeImportMeal();
+  if(typeof renderMealPlanIA==='function')renderMealPlanIA();
+  toast('Plan alimentaire importé ! 🍽️','success');
+}
+
 // ─── AUTO-RESTAURATION ───────────────────────────────────────
 let _lastSavedEmail='';
 function _saveEmailRedundant(email){

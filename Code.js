@@ -400,7 +400,7 @@ function doPost(e) {
   // Limite le nombre d'appels IA par jour (par email + global) pour éviter les abus
   // et l'explosion de la facture Anthropic. N'affecte PAS les actions sans IA
   // (loadProfile, saveProfile, logSession, validateCode, test…).
-  var AI_ACTIONS_ = ['coach','importProgram','importHistory','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
+  var AI_ACTIONS_ = ['coach','importProgram','importHistory','importMealPlan','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
   if (AI_ACTIONS_.indexOf(body.action) >= 0) {
     var _q = _aiQuotaBlock_(body.email);
     if (_q.blocked) {
@@ -422,6 +422,7 @@ function doPost(e) {
   if (body.action === 'logCustomExercise') return handleLogCustomExercise_(body);
   if (body.action === 'importProgram')     return handleImportProgram_(body);
   if (body.action === 'importHistory')    return handleImportHistory_(body);
+  if (body.action === 'importMealPlan')    return handleImportMealPlan_(body);
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
   if (body.action === 'bodyStudy')         return handleBodyStudy_(body);
   if (body.action === 'importBodyScan')    return handleImportBodyScan_(body);
@@ -998,6 +999,102 @@ function handleImportHistory_(body) {
     });
     data.sessions = data.sessions.filter(s => s.exercises && s.exercises.length > 0);
     if (!data.sessions.length) return json_({status:'error', error:'Aucune séance trouvée dans le document.'});
+
+    return json_({status:'ok', data});
+  } catch(err) {
+    return json_({status:'error', error: err.message});
+  }
+}
+
+// ───────────────────────────────────────────────────────────
+// Import d'un plan alimentaire (diététicien : photo/PDF) → repas structurés
+function handleImportMealPlan_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+
+  try {
+    const images = body.images || [];
+    if (!images.length) return json_({status:'error', error:'Aucun fichier reçu'});
+    const diet = String(body.diet || '');
+
+    const userContent = images.map(img => {
+      if (img.isText || img.type === 'text/plain') {
+        return {type:'text', text:'[Fichier : '+(img.name||'document')+']\n\n'+img.data};
+      }
+      if (img.type === 'application/pdf') {
+        return {type:'document', source:{type:'base64', media_type:'application/pdf', data:img.data}};
+      }
+      return {type:'image', source:{type:'base64', media_type:img.type||'image/jpeg', data:img.data}};
+    });
+
+    userContent.push({
+      type: 'text',
+      text: 'Analyse ce document (plan alimentaire d\'un(e) diététicien(ne) / nutritionniste) et extrais TOUS les repas.\n\nRetourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown, avec cette structure exacte :\n{"planName":"nom ou objectif du plan","days":[{"label":"Lundi","meals":[{"name":"Petit-déjeuner","foods":["3 œufs","50g de flocons d\'avoine","1 banane"],"kcal":450,"prot":30,"carbs":45,"fat":15}]}]}\n\nRÈGLES STRICTES :\n\n1. JOURS :\n- Si le plan détaille plusieurs jours (Lundi, Mardi… ou Jour 1, Jour 2…) → un objet par jour dans "days", label = le nom du jour.\n- Si le plan décrit UNE journée type (sans distinction de jours) → un seul jour, label = "Journée type".\n- Maximum 7 jours.\n\n2. REPAS :\n- Chaque repas (Petit-déjeuner, Collation, Déjeuner, Goûter, Dîner, Pré/Post-training…) = un objet dans "meals". name = le nom du repas tel qu\'écrit.\n- "foods" = liste des aliments avec leurs quantités, un aliment par entrée, texte fidèle au document (ex. "150g de riz basmati", "200g de poulet").\n\n3. MACROS ET CALORIES :\n- Si le document indique les kcal/protéines/glucides/lipides par repas → reprends-les (nombres entiers, en grammes pour prot/carbs/fat).\n- Si NON indiqués → estime-les au mieux à partir des aliments et quantités (valeurs réalistes). Ne mets jamais 0 si le repas contient des aliments.\n\n4. FIDÉLITÉ : n\'invente pas de repas absents. Ne modifie pas les quantités données. Reprends le plan tel quel.'
+        + (diet ? '\n\n5. RÉGIME DE L\'UTILISATEUR : '+diet+'. Si un aliment du plan ne respecte PAS ce régime, garde-le quand même (c\'est le plan du diététicien) mais ajoute " ⚠️" à la fin de la ligne de cet aliment.' : '')
+        + '\n\nRéponds UNIQUEMENT avec le JSON, aucun autre texte.'
+    });
+
+    const hasText = images.some(img => img.isText || img.type === 'text/plain');
+    const hasPdf  = images.some(img => img.type === 'application/pdf');
+    const model = (images.length > 1 || hasText || hasPdf) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
+
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      payload: JSON.stringify({
+        model: model,
+        max_tokens: 8192,
+        messages: [{role: 'user', content: userContent}]
+      }),
+      muteHttpExceptions: true
+    });
+
+    const rawText = resp.getContentText();
+    console.log('[importMealPlan] Réponse brute Claude :', rawText.substring(0, 3000));
+
+    const result = JSON.parse(rawText);
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+
+    const stripped = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Extraction échouée. Réponse IA : '+text.substring(0,300)});
+
+    const cleaned = match[0]
+      .replace(/‘|’/g, "'")
+      .replace(/“|”/g, '"')
+      .replace(/\r\n|\r/g, '\\n')
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+
+    let data;
+    try {
+      data = JSON.parse(cleaned);
+    } catch(parseErr) {
+      console.error('[importMealPlan] JSON invalide :', parseErr.message, '| Extrait :', cleaned.substring(0,500));
+      return json_({status:'error', error:'JSON invalide : '+parseErr.message+'. Réponse IA : '+text.substring(0,200)});
+    }
+
+    // Normaliser
+    data.planName = String(data.planName || '');
+    if (!data.days || !Array.isArray(data.days)) data.days = [];
+    data.days = data.days.slice(0, 7);
+    data.days.forEach(day => {
+      day.label = String(day.label || '');
+      (day.meals || []).forEach(m => {
+        m.name  = String(m.name || 'Repas');
+        m.foods = Array.isArray(m.foods) ? m.foods.map(f => String(f)).filter(Boolean) : [];
+        m.kcal  = parseInt(m.kcal)  || 0;
+        m.prot  = parseInt(m.prot)  || 0;
+        m.carbs = parseInt(m.carbs) || 0;
+        m.fat   = parseInt(m.fat)   || 0;
+      });
+      day.meals = (day.meals || []).filter(m => m.foods.length > 0);
+    });
+    data.days = data.days.filter(d => d.meals && d.meals.length > 0);
+    if (!data.days.length) return json_({status:'error', error:'Aucun repas trouvé dans le document.'});
 
     return json_({status:'ok', data});
   } catch(err) {

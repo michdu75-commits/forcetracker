@@ -1418,6 +1418,64 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<!-- OVERLAY: Import plan alimentaire (diététicien) -->
+<div class="overlay" id="ov-import-meal" onclick="if(event.target===this)closeImportMeal()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px;">
+      <div class="imp-dot active" id="mimp-dot-1"></div>
+      <div class="imp-dot" id="mimp-dot-2"></div>
+      <div class="imp-dot" id="mimp-dot-3"></div>
+      <div class="imp-dot" id="mimp-dot-4"></div>
+    </div>
+    <!-- Étape 1 : Source -->
+    <div id="mimp-s1">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;margin-bottom:8px;">🍽️</div>
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px;">Importer un plan alimentaire</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.5;">Prends en photo le plan de ta diététicienne (ou son PDF). L'IA lit les repas et les range.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('mimp-cam-inp').click()">📷 Prendre une photo</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('mimp-gal-inp').click()">🖼️ Choisir depuis la galerie</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('mimp-file-inp').click()">📄 Importer un PDF</button>
+      </div>
+      <input type="file" id="mimp-cam-inp" accept="image/*" capture="environment" style="display:none" onchange="addMealImportPhoto(this)">
+      <input type="file" id="mimp-gal-inp" accept="image/*" multiple style="display:none" onchange="addMealImportPhoto(this)">
+      <input type="file" id="mimp-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addMealImportFile(this)">
+      <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="closeImportMeal()">Annuler</button>
+    </div>
+    <!-- Étape 2 : Pages -->
+    <div id="mimp-s2" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:16px;">Pages ajoutées</div>
+      <div id="mimp-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;min-height:80px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('mimp-more-inp').click()">+ Photo</button>
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('mimp-more-file-inp').click()">+ PDF</button>
+      </div>
+      <input type="file" id="mimp-more-inp" accept="image/*" multiple style="display:none" onchange="addMealImportPhoto(this)">
+      <input type="file" id="mimp-more-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addMealImportFile(this)">
+      <button class="btn btn-red" style="margin-top:4px;" onclick="analyzeMealImport()">🤖 Analyser avec IA →</button>
+      <button class="btn btn-bg2" onclick="mealImpGoStep(1)">← Retour</button>
+    </div>
+    <!-- Étape 3 : Analyse -->
+    <div id="mimp-s3" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:32px 0;">
+      <div style="font-size:40px;">🤖</div>
+      <div style="font-weight:700;font-size:16px;">Analyse en cours…</div>
+      <div style="font-size:13px;color:var(--t2);text-align:center;">Claude lit ton plan et extrait les repas</div>
+      <div class="imp-spinner"></div>
+    </div>
+    <!-- Étape 4 : Confirmation -->
+    <div id="mimp-s4" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:17px;" id="mimp-plan-name"></div>
+      <div style="font-size:13px;color:var(--t2);">Vérifie les repas extraits. Ils remplaceront ton plan de repas actuel.</div>
+      <div id="mimp-preview" style="display:flex;flex-direction:column;gap:10px;max-height:44vh;overflow-y:auto;"></div>
+      <button class="btn btn-red" onclick="finalImportMeal()">✅ Enregistrer ce plan</button>
+      <button class="btn btn-bg2" onclick="mealImpGoStep(2)">← Modifier les photos</button>
+    </div>
+  </div>
+</div>
+
 <!-- OVERLAY: Import historique séances (flow isolé) -->
 <div class="overlay" id="ov-import-hist" onclick="if(event.target===this)closeImportHist()">
   <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
