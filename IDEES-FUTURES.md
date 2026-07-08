@@ -573,3 +573,27 @@ Michel : « améliore le profil femme, faudra vraiment qu'on le fasse aussi, il 
 - 🧪 **Beaucoup de tests** avec testeuses réelles avant de reporter comme fini.
 
 ⚠️ Ne PAS tomber dans le cliché « rose + cardio » : les femmes soulèvent lourd aussi. L'idée = **options et adaptations physiologiques réelles** (cycle, insertions, objectifs), pas un thème gadget.
+
+---
+
+## 🔒 SÉCURISATION DE L'APP — prérequis BLOQUANT avant le grand public (Michel 2026-07-08)
+
+Aujourd'hui l'app est pensée pour un **petit cercle de confiance**. Avant d'ouvrir à des inconnus (surtout avec des **données santé**), 3 vraies faiblesses à corriger :
+
+1. **Pas de vraie authentification (LE point n°1).** L'identité = **juste l'email** (pas de mot de passe, pas de jeton). Quelqu'un qui connaît/devine un email peut charger ou écraser les données de l'autre (`loadProfile?email=…` / `saveProfile`). Faible risque entre potes, **inacceptable** en grand public avec des bilans santé. → **vrai système de comptes** (email+mot de passe hashé, ou connexion Google/OAuth).
+2. **Backend ouvert à tous → abus + coût.** La web app Apps Script est « Anyone can access ». N'importe qui peut marteler l'action `coach`/`importBloodTest`/… et **faire exploser la facture Anthropic** (ou spammer). → **rate-limiting** par personne + **clé secrète** app↔serveur + quotas.
+3. **Données sensibles (santé) — accès & RGPD.** Bilans/santé dans Script Properties + backups Drive, liés à l'email. → contrôle d'accès (découle du n°1) + idéalement chiffrement + **page de confidentialité RGPD**.
+
+*(Déjà connu : `ADMIN_CODE` dans le JS public = anti-curieux seulement, pas un vrai verrou. Le premium est vérifié côté serveur (OK), mais le flag client se triche — fuite de revenu, pas de risque utilisateur.)*
+
+**Vérité honnête / stratégie :**
+- La vraie sécurité = **comptes côté serveur**, et les points n°1, n°2, n°3 ET la migration stockage (photos/9 Mo) **pointent tous vers la MÊME chose** : **vrais comptes + vraie base de données + hébergement adapté** (le gros chantier « phase 4 »).
+- ⚠️ **Ne PAS bricoler une auth fragile sur la fondation actuelle** (Apps Script + Script Properties n'est pas fait pour l'auth) : ce serait du **jetable** (refait lors de la migration DB) ET un **faux sentiment de sécurité** (dangereux sur des données santé). Mieux vaut faire les deux **ensemble, proprement** (ex. Firebase Auth / Supabase).
+- **Blocage déploiement** : tout ça touche le backend → nécessite l'**auto-déploiement** (secret CI) ou le PC ; je ne peux ni déployer ni tester le backend d'ici.
+
+**Ce qui peut avancer SANS le gros chantier (faible risque, testable frontend) :**
+- Échappement/sanitisation du contenu utilisateur injecté en `innerHTML` (noms, notes, programmes importés) → anti-injection (XSS). Balayage soigneux, à faire prudemment.
+- Design/plan détaillé du système de comptes (options A/B + reco) pour être prêt.
+- Garde-fous coût Milo (limites gratuites solides) — partie frontend possible, partie serveur à déployer.
+
+**Décidé avec Michel** : noter comme **prérequis bloquant** en tête de la check-list grand public. Le gros du travail (auth serveur) se fait **avec** la migration base de données, la nuit, branche + tag de backup, rollback prêt.
