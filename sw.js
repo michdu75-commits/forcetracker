@@ -1,4 +1,4 @@
-const CACHE = 'ft-v331'; // Journal : scan code-barres (ZXing local + Open Food Facts) + aide MAJ + popup « Quoi de neuf » v2 (nutrition) + red dots
+const CACHE = 'ft-v332'; // Fix bouton Omnivore coupé : régime type en grille 2x2 + libellés complets (Végétarien/Pescétarien)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

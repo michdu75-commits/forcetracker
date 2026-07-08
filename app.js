@@ -1351,13 +1351,13 @@ function copyWeekSummary(){
 function _renderDietCard(){
   const el=document.getElementById('diet-card'); if(!el)return;
   const diet=S.diet||'';
-  const dietBtn=(v,l)=>`<button onclick="setDiet('${v}')" class="btn ${diet===v?'btn-red':'btn-bg2'}" style="flex:1;font-size:12.5px;padding:9px 4px;">${l}</button>`;
+  const dietBtn=(v,l)=>`<button onclick="setDiet('${v}')" class="btn ${diet===v?'btn-red':'btn-bg2'}" style="font-size:13px;padding:10px 6px;letter-spacing:0;">${l}</button>`;
   const restr=S.dietRestrictions||[];
   const rBtn=(k,l)=>`<button onclick="toggleDietRestriction('${k}')" class="btn ${restr.includes(k)?'btn-red':'btn-bg2'}" style="width:auto;flex:0 0 auto;font-size:12px;padding:8px 12px;border-radius:20px;">${l}</button>`;
   el.innerHTML=`<div class="card cp" style="display:flex;flex-direction:column;gap:13px;">
     <div>
       <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Type d'alimentation</div>
-      <div style="display:flex;gap:6px;">${dietBtn('omnivore','Omnivore')}${dietBtn('vegetarien','Végé')}${dietBtn('vegan','Végan')}${dietBtn('pescetarien','Pescé')}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">${dietBtn('omnivore','Omnivore')}${dietBtn('vegetarien','Végétarien')}${dietBtn('vegan','Végan')}${dietBtn('pescetarien','Pescétarien')}</div>
     </div>
     <div>
       <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Restrictions (plusieurs possibles)</div>
