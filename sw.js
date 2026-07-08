@@ -1,4 +1,4 @@
-const CACHE = 'ft-v319'; // Relance profil : Milo insiste sur l'accueil tant que le profil est incomplet (<70%) + carte profil plus motivante
+const CACHE = 'ft-v320'; // Bilan sanguin (bêta) ouvert aussi à Christophe
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

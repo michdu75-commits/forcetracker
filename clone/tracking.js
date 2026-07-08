@@ -861,8 +861,11 @@ function deleteBodyScan(){
   });
 }
 
-// ─── BILAN SANGUIN (bêta : Michel uniquement) — PDF/photo → masquage identité → lecture IA ───
-function _isBloodBeta(){return (S.email||'').trim().toLowerCase()==='michdu75@gmail.com';}
+// ─── BILAN SANGUIN (bêta : Michel + Christophe) — PDF/photo → masquage identité → lecture IA ───
+function _isBloodBeta(){
+  const e=(S.email||'').trim().toLowerCase();
+  return e==='michdu75@gmail.com' || e==='christophe@famillelanglois.fr';
+}
 let _bloodPages=[], _bloodRects=[], _bloodPageIdx=0, _bloodImg=null, _bloodEditIdx=-1;
 function _bloodOut(m){ if(!m||m.value==null)return false; if(m.low!=null&&m.value<m.low)return true; if(m.high!=null&&m.value>m.high)return true; return false; }
 function renderBloodCard(){
