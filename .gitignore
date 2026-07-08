@@ -1,0 +1,12 @@
+# ⚠️ Identifiants clasp (clés privées Google OAuth) — NE JAMAIS committer/pousser
+.clasprc.json
+*/.clasprc.json
+
+# NB : .clasp.json (scriptId + rootDir) N'EST PAS ignoré — il est nécessaire à
+# l'auto-déploiement et ne contient aucune clé secrète.
+
+# Dépendances / système
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
