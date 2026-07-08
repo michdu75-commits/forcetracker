@@ -1,4 +1,4 @@
-const CACHE = 'ft-v314'; // Barre d'installation (progression du telechargement des assets par le SW) + install resiliente (fichier par fichier)
+const CACHE = 'ft-v315'; // Milo coaching : adapte au niveau, pose des questions, mouvements fondamentaux, nuances cardio, programmes reconnus (premium)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
