@@ -744,11 +744,11 @@ function onBodyScanPhoto(input){
     toast('Lecture photo : ta lecture gratuite est déjà utilisée 🙂 Continue à la main ou par code (gratuit).','info');
     return;
   }
-  toast('📖 Lecture du rapport…','info');
   _resizeReport(file,async(out)=>{
     try{
       const tiles=(out&&out.tiles)?out.tiles:(Array.isArray(out)?out:[out]);
       const full=(out&&out.full)?out.full:tiles[0];
+      _showBsScan('data:image/jpeg;base64,'+full); // retour visuel : scan du rapport pendant la lecture IA
       const images=tiles.map(t=>({data:t,type:'image/jpeg'}));
       const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'importBodyScan',images,image:full,imageType:'image/jpeg',email:S.email||''})});
@@ -756,12 +756,32 @@ function onBodyScanPhoto(input){
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
       if(!unlimited){S.bodyScanImports=(S.bodyScanImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
-      openBodyScanForm(-1);
-      if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
-      _BS_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
-      toast('Rapport lu ✅ Vérifie puis Enregistre','success');
-    }catch(e){toast('Souci lecture : '+(e.message||'réessaie'),'error');}
+      _hideBsScan(()=>{
+        openBodyScanForm(-1);
+        if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
+        _BS_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
+        _BS_SEG_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
+        toast('Rapport lu ✅ Vérifie puis Enregistre','success');
+      });
+    }catch(e){_hideBsScan(()=>toast('Souci lecture : '+(e.message||'réessaie'),'error'));}
   });
+}
+// Overlay « analyse en cours » (min ~1,4 s pour un retour visible même si le serveur répond vite)
+let _bsScanStart=0;
+function _showBsScan(src,title,sub,foot){
+  const img=document.getElementById('bs-scan-img');if(img)img.src=src||'';
+  const t=document.getElementById('bs-scan-title');if(t)t.textContent=title||'🔍 Analyse du rapport…';
+  const s=document.getElementById('bs-scan-sub');if(s)s.textContent=sub||'L\'IA lit tes chiffres';
+  const f=document.getElementById('bs-scan-foot');if(f)f.innerHTML='<span class="bs-scan-dot"></span>'+(foot||'Détection des valeurs…');
+  const ov=document.getElementById('ov-bs-scan');if(ov)ov.classList.add('open');
+  _bsScanStart=Date.now();
+}
+// Alias générique pour toutes les analyses IA (photos incluses)
+function showScanOverlay(src,title,sub,foot){_showBsScan(src,title,sub,foot);}
+function hideScanOverlay(cb){_hideBsScan(cb);}
+function _hideBsScan(cb){
+  const wait=Math.max(0,1400-(Date.now()-_bsScanStart));
+  setTimeout(()=>{const ov=document.getElementById('ov-bs-scan');if(ov)ov.classList.remove('open');if(cb)cb();},wait);
 }
 // Import rapide : coller un code "date=...;weight=...;bf=..." (préparé par Claude) → remplit le formulaire
 function _parseBilanCode(str){
