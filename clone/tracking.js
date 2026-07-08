@@ -634,6 +634,8 @@ const _BS_SEG_FIELDS=[
 let _bsEditIdx=-1;
 function renderBodyScanCard(){
   const el=document.getElementById('bodyscan-section');if(!el)return;
+  // Import CSV de balance (historique complet) — réservé aux testeurs
+  const csvBtn=_isScaleCsvBeta()?`<button class="btn btn-bg2" style="width:100%;margin-top:8px;font-size:13px;" onclick="openScaleCsvImport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg> Importer un fichier CSV de balance</button>`:'';
   const scans=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(!scans.length){
     el.innerHTML=`<div class="card cp" style="text-align:center;">
@@ -642,7 +644,7 @@ function renderBodyScanCard(){
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="openBodyScanForm(-1)">✏️ À la main</button>
         <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="pasteBodyScan()">📋 Coller un code</button>
-      </div></div>`;
+      </div>${csvBtn}</div>`;
     return;
   }
   const last=scans[0], prev=scans[1];
@@ -673,8 +675,10 @@ function renderBodyScanCard(){
     ${prev?'<div style="font-size:10px;color:var(--t3);text-align:center;margin-top:9px;">▲▼ = évolution depuis le bilan précédent (vert = dans le bon sens)</div>':''}
   </div>`;
   if(scans.length>1){
+    const LIST_MAX=24;                       // liste plafonnée (les courbes gardent tout l'historique)
+    const shown=scans.slice(0,LIST_MAX);
     html+=`<div style="display:flex;flex-direction:column;gap:6px;">`;
-    scans.forEach(s=>{
+    shown.forEach(s=>{
       const i=S.bodyScans.indexOf(s);
       const dd=new Date(s.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
       html+=`<div onclick="openBodyScanForm(${i})" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border-radius:10px;padding:10px 12px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);">
@@ -682,14 +686,122 @@ function renderBodyScanCard(){
         <span style="font-size:12px;color:var(--t2);">${s.weight?s.weight+' kg':''}${s.bf?' · '+s.bf+'%':''}${s.muscle?' · '+s.muscle+' kg musc.':''}</span>
       </div>`;
     });
+    if(scans.length>LIST_MAX)
+      html+=`<div style="font-size:11.5px;color:var(--t3);text-align:center;padding:6px;">+ ${scans.length-LIST_MAX} autres bilans plus anciens — visibles sur la courbe ci-dessus 📈</div>`;
     html+=`</div>`;
   }
   html+=`<button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 Nouveau bilan (photo)</button>
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="openBodyScanForm(-1)">✏️ À la main</button>
       <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="pasteBodyScan()">📋 Coller un code</button>
-    </div>`;
+    </div>${csvBtn}`;
   el.innerHTML=html;
+}
+// ─── Import CSV de balance connectée (Tanita/impédancemètre) — testeurs, historique complet ───
+function _isScaleCsvBeta(){
+  const e=(S.email||'').trim().toLowerCase();
+  if(e==='michdu75@gmail.com')return true;
+  return typeof TESTER_EMAILS!=='undefined' && TESTER_EMAILS.indexOf(e)>=0;
+}
+function _csvSplit(line){
+  const out=[]; let cur='', q=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(q){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else { if(c==='"')q=true; else if(c===','){out.push(cur);cur='';} else cur+=c; }
+  }
+  out.push(cur); return out;
+}
+function _scaleDate(s){
+  s=(s||'').trim();
+  let m=s.match(/(\d{4})-(\d{2})-(\d{2})/); if(m)return m[1]+'-'+m[2]+'-'+m[3];
+  m=s.match(/(\d{1,2})[\/.](\d{1,2})[\/.](\d{2,4})/);
+  if(m){ let y=m[3]; if(y.length===2)y='20'+y; return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); }
+  return null;
+}
+// Trouve l'indice des colonnes par nom d'en-tête (robuste, multi-marques). Exclut les colonnes segmentaires.
+function _scaleColMap(headers){
+  const H=headers.map(h=>(h||'').trim().toLowerCase());
+  const noSeg=h=>!h.includes(' - ')&&!h.includes('- right')&&!h.includes('- left')&&!h.includes('bras')&&!h.includes('jambe')&&!h.includes('tronc');
+  const find=pred=>{ for(let i=0;i<H.length;i++){ if(pred(H[i]))return i; } return -1; };
+  return {
+    date:    find(h=>h==='date'||h.startsWith('date')||h.includes('time')),
+    weight:  find(h=>noSeg(h)&&(h.includes('weight')||h.includes('poids'))),
+    imc:     find(h=>h==='bmi'||h.includes('imc')||h==='bmi '),
+    bf:      find(h=>noSeg(h)&&(h.includes('body fat')||(h.includes('graisse')&&!h.includes('visc')&&!h.includes('masse')))&&h.includes('%')),
+    visceral:find(h=>h.includes('visc')),
+    muscle:  find(h=>noSeg(h)&&(h.includes('muscle mass')||h.includes('masse musc'))),
+    bone:    find(h=>h.includes('bone')||h.includes('osseu')),
+    bmr:     find(h=>h.includes('bmr')||h.includes('metabolisme de base')||(h.includes('métabolisme')&&h.includes('base'))),
+    metaAge: find(h=>h.includes('metab age')||h.includes('metabolic age')||(h.includes('metab')&&h.includes('age'))||(h.includes('âge')&&h.includes('métab')))
+  };
+}
+function _parseScaleCsv(text){
+  const lines=String(text||'').split(/\r?\n/).filter(l=>l.trim());
+  if(!lines.length)return {rows:[],err:'fichier vide'};
+  const col=_scaleColMap(_csvSplit(lines[0]));
+  if(col.date<0||col.weight<0)return {rows:[],err:'colonnes Date/Poids introuvables'};
+  const num=v=>{ v=(v||'').trim(); if(v===''||v==='-')return null; const n=parseFloat(v.replace(',','.')); return isNaN(n)?null:n; };
+  const keys=['bf','imc','visceral','muscle','bone','bmr','metaAge'];
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const c=_csvSplit(lines[i]);
+    const date=_scaleDate(c[col.date]); if(!date)continue;
+    const w=num(c[col.weight]); if(w==null)continue;
+    const r={date,weight:w};
+    keys.forEach(k=>{ if(col[k]>=0){ const v=num(c[col[k]]); if(v!=null)r[k]=v; } });
+    rows.push(r);
+  }
+  return {rows};
+}
+// Range les lignes lues dans S.bodyScans + S.weightLog (1 par jour, garde tout l'historique)
+function _importScaleRows(rows){
+  const byDay={}; rows.forEach(r=>{ if(r.date)byDay[r.date]=r; }); // dernière du jour gagne
+  const days=Object.keys(byDay).sort();
+  S.bodyScans=S.bodyScans||[]; S.weightLog=S.weightLog||[];
+  const bsIdx={}; S.bodyScans.forEach((s,i)=>{bsIdx[s.date]=i;});
+  const wIdx={};  S.weightLog.forEach((w,i)=>{wIdx[w.date]=i;});
+  days.forEach(d=>{
+    const r=byDay[d];
+    const scan={date:d};
+    ['weight','bf','imc','visceral','muscle','bone','bmr','metaAge'].forEach(k=>{ if(r[k]!=null)scan[k]=r[k]; });
+    if(bsIdx[d]!=null)S.bodyScans[bsIdx[d]]=scan; else {S.bodyScans.push(scan);bsIdx[d]=S.bodyScans.length-1;}
+    if(r.weight!=null){
+      if(wIdx[d]!=null){ S.weightLog[wIdx[d]].kg=r.weight; if(r.bf!=null)S.weightLog[wIdx[d]].bf=r.bf; }
+      else { const wl={date:d,kg:r.weight}; if(r.bf!=null)wl.bf=r.bf; S.weightLog.push(wl); wIdx[d]=S.weightLog.length-1; }
+    }
+  });
+  S.bodyScans.sort((a,b)=>b.date.localeCompare(a.date));
+  S.weightLog.sort((a,b)=>b.date.localeCompare(a.date));
+  const latest=days[days.length-1]; if(byDay[latest]&&byDay[latest].weight)S.bw=Math.round(byDay[latest].weight*10)/10;
+  if(typeof persist==='function')persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  return {days:days.length};
+}
+function openScaleCsvImport(){
+  if(!_isScaleCsvBeta()){ if(typeof toast==='function')toast('Réservé aux testeurs','info'); return; }
+  let inp=document.getElementById('_scale-csv-input');
+  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='.csv,text/csv,text/plain'; inp.id='_scale-csv-input'; inp.style.display='none'; inp.onchange=()=>onScaleCsvFile(inp); document.body.appendChild(inp); }
+  inp.value=''; inp.click();
+}
+function onScaleCsvFile(input){
+  const f=input.files&&input.files[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const res=_parseScaleCsv(String(e.target.result||''));
+      if(res.err){ toast('CSV : '+res.err,'error'); return; }
+      const rows=res.rows;
+      if(!rows.length){ toast('Aucune pesée lue dans ce fichier','error'); return; }
+      const dates=rows.map(r=>r.date).sort();
+      const days=new Set(dates).size;
+      const doImport=()=>{ const r=_importScaleRows(rows); renderBodyScanCard(); if(typeof renderWeightTab==='function')renderWeightTab(); toast('✅ '+r.days+' pesées importées','success'); };
+      if(typeof showConfirm==='function')
+        showConfirm('Importer '+days+' pesées ?', rows.length+' mesures lues ('+dates[0]+' → '+dates[dates.length-1]+'). On garde une pesée par jour, tout l\'historique. Les dates déjà présentes sont mises à jour, rien n\'est effacé.', doImport);
+      else doImport();
+    }catch(ex){ if(typeof toast==='function')toast('Erreur lecture CSV','error'); console.warn('[scale csv]',ex); }
+  };
+  reader.readAsText(f);
 }
 // Import photo : lire un rapport de balance pro via l'IA → pré-remplit le formulaire
 // Prépare la photo du rapport pour l'IA. Les rapports de balance sont souvent TRÈS hauts :
