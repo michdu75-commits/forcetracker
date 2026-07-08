@@ -506,3 +506,10 @@ Le dossier local du projet est en désordre. À réorganiser proprement :
 ---
 
 
+
+## 🤖 Milo « au top / très évolué » — priorité Michel (2026-07-08)
+- **Objectif Michel** : Milo doit être le plus avancé possible, **d'abord pour lui** (déjà sur Opus depuis @68), Christophe ensuite. Continuer à enrichir : contexte, mémoire, nouvelles capacités.
+- **Lire un bilan sanguin** (idée validée, à concevoir à froid) : même moule que le bilan corporel (photo/PDF → IA `importBodyScan`-like → stockage daté → suivi → Milo).
+  - Marqueurs utiles muscu : testostérone, ferritine/fer, vitamine D, CRP/CK, glycémie/HbA1c, cholestérol/lipides, thyroïde.
+  - ⚠️ **MÉDICAL — garde-fous stricts obligatoires** : Milo ne pose JAMAIS de diagnostic, ne dit JAMAIS « c'est normal/OK », renvoie SYSTÉMATIQUEMENT vers le médecin sur toute valeur hors norme. Contexte entraînement/récup/nutrition uniquement. Disclaimers partout. Données privées (local + cloud perso).
+  - Michel très clair : « on ne rigole pas avec ça, ça peut vite faire peur s'il dit de la merde ». → concevoir messages + disclaimers avec soin avant de coder.
