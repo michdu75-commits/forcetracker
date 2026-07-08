@@ -33,8 +33,10 @@ jobs:
       - name: Pousser Code.js (respecte .claspignore = seulement Code.js + appsscript.json)
         run: clasp push --force
 
-      - name: Redéployer la web app (déploiement existant — clasp v3 : create-deployment)
-        run: clasp create-deployment -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA -d "Auto-deploy GitHub"
+      - name: Redéployer la web app (déploiement existant — clasp v3 create-deployment, repli sur deploy)
+        run: |
+          ID=AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
+          clasp create-deployment -i "$ID" -d "Auto-deploy GitHub" || clasp deploy -i "$ID" -d "Auto-deploy GitHub"
 
       - name: Vérifier que le backend répond
         run: |
