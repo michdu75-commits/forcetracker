@@ -1,4 +1,4 @@
-const CACHE = 'ft-v344'; // Fix cardio : la durée ne détruit plus l'input à chaque frappe (focus gardé) -> le cardio s'enregistre
+const CACHE = 'ft-v345'; // Nouvel exo : Dips Assis Machine (Seated Dip) — Pectoraux, figurine pecs primaire + triceps secondaire
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -8,7 +8,7 @@ const EXLIB=[
   {n:'Croisé Poulie (Cable Crossover)',g:'Pectoraux'},
   {n:'Pec Deck',g:'Pectoraux'},
   {n:'Chest Press Machine Horizontale',g:'Pectoraux'},{n:'Chest Press Machine Inclinée',g:'Pectoraux'},{n:'Chest Press Machine Déclinée',g:'Pectoraux'},
-  {n:'Dips',g:'Pectoraux'},{n:'Dips Parallèles',g:'Pectoraux'},{n:'Dips Machine Assistée',g:'Pectoraux'},
+  {n:'Dips',g:'Pectoraux'},{n:'Dips Parallèles',g:'Pectoraux'},{n:'Dips Machine Assistée',g:'Pectoraux'},{n:'Dips Assis Machine (Seated Dip)',g:'Pectoraux'},
   {n:'Pompes Lestées',g:'Pectoraux'},{n:'Pompes Déficit (Deficit Push-up)',g:'Pectoraux'},{n:'Pompes Diamant',g:'Pectoraux'},
   {n:'Smith Machine Développé Couché',g:'Pectoraux'},{n:'Smith Machine Développé Incliné',g:'Pectoraux'},
   // ── Dos / Dorsaux ──────────────────────────────────────────

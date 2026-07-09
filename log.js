@@ -1108,6 +1108,8 @@ const _MEX=[
   {re:/hip thrust|glute bridge|fessier|hip extension|pont fessier/i,            p:['glutes'],                           s:['hamstrings','lower-back']},
   // Soulevé de terre
   {re:/souleve de terre|deadlift/i,                                             p:['glutes','hamstrings','lower-back'], s:['quads','traps','lats','forearms']},
+  // Dips assis machine (Seated Dip) : pecs primaire, triceps secondaire — AVANT la règle /dips/i générique
+  {re:/dips assis|seated dip/i,                                                 p:['pec'],                              s:['triceps','front-delt']},
   // Dips
   {re:/dips/i,                                                                  p:['triceps','pec'],                    s:['front-delt']},
   // Trapèzes — shrug
@@ -3703,7 +3705,7 @@ const EX_EN={
   'Croisé Poulie (Cable Crossover)':'cable crossover',
   'Pec Deck':'pec deck fly','Chest Press Machine Horizontale':'chest press machine',
   'Chest Press Machine Inclinée':'incline chest press machine','Chest Press Machine Déclinée':'decline chest press machine',
-  'Dips':'chest dips','Dips Parallèles':'parallel bar dip',
+  'Dips':'chest dips','Dips Parallèles':'parallel bar dip','Dips Assis Machine (Seated Dip)':'seated dip machine',
   'Dips Machine Assistée':'assisted dip machine',
   'Pompes Lestées':'push up weighted','Pompes Déficit (Deficit Push-up)':'deficit push up','Pompes Diamant':'diamond push up',
   'Smith Machine Développé Couché':'smith machine bench press','Smith Machine Développé Incliné':'smith machine incline bench press',
