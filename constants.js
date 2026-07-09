@@ -174,6 +174,25 @@ const NEW_FEATURES=[
   {id:'meal-import',  screen:'nutrition', desc:'Nouveau : importer le plan alimentaire de ta diététicienne (photo/PDF) — l\'IA range les repas'},
 ];
 
+// ─── « QUOI DE NEUF » — pop-up de nouveautés versionnée ──────
+// Liste des nouveautés notables, de la PLUS RÉCENTE (v le plus grand) à la plus ancienne.
+// À l'ouverture de l'app, la pop-up affiche toutes les entrées dont `v` > au dernier
+// numéro vu par l'utilisateur (localStorage ft4_wn_seen). Donc quelqu'un qui n'a pas
+// ouvert l'app depuis longtemps voit TOUTES les nouveautés manquées d'un seul coup ;
+// un utilisateur à jour ne voit que la (ou les) toute(s) dernière(s).
+// ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
+//    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
+const WHATS_NEW=[
+  {v:6, ic:'🏃', t:'Niveau de travail « Actif »', d:'Nouveau réglage dans ton Profil pour les métiers debout ET en déplacement toute la journée (serveuse, infirmier, vendeur) — entre « Debout » et « Physique ». Tes calories et macros de la Nutrition sont plus justes.'},
+  {v:5, ic:'💬', t:'Milo (Coach IA) plus naturel', d:'Le Coach sait maintenant l\'heure qu\'il est (jour / nuit) et depuis combien de temps vous vous êtes parlé (hier, il y a quelques jours…) — il t\'accueille comme il faut au lieu de reprendre comme si tu venais de partir.'},
+  {v:4, ic:'📓', t:'Journal alimentaire', d:'Onglet « Journal » dans Nutrition : note ce que tu manges et suis tes calories + macros du jour face à ton objectif.'},
+  {v:3, ic:'📷', t:'Scan de code-barres', d:'Scanne un produit dans le journal : il est reconnu automatiquement et ses valeurs se remplissent — tu ajustes juste la quantité.'},
+  {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
+  {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
+];
+const WHATS_NEW_MAX=6;      // = plus grand `v` ci-dessus
+const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
+
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
 // Le panneau admin (5 taps sur le logo) ne s'ouvre QUE si :
 //   - le compte connecté est un email admin, OU

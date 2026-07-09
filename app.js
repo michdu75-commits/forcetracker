@@ -758,7 +758,7 @@ function finishOnboarding(){
     if(!S.emailVerified){ try{ _sendEmailConfirm(true); }catch(e){} }
   }
   localStorage.setItem('ft4_ob2','1');
-  try{localStorage.setItem('ft4_whatsnew_v2','1');}catch(e){} // nouvel inscrit : pas de « Quoi de neuf » (il a le guide-film)
+  try{localStorage.setItem('ft4_whatsnew_v2','1');localStorage.setItem('ft4_wn_seen',String(typeof WHATS_NEW_MAX==='number'?WHATS_NEW_MAX:0));}catch(e){} // nouvel inscrit : pas de « Quoi de neuf » (il a le guide-film)
   document.documentElement.classList.add('ob-done');
   const ob=document.getElementById('onboarding');
   if(ob){ob.style.transition='opacity .4s';ob.style.opacity='0';setTimeout(()=>{ob.style.display='none';ob.style.opacity='';ob.style.transition='';},400);}
@@ -1722,13 +1722,43 @@ function checkAnnouncements(){
       setTimeout(showBilloute,1000);
       return;
     }
-    if(!localStorage.getItem('ft4_whatsnew_v2')) setTimeout(showWhatsNew,1000);
+    if(_whatsNewUnseen().length) setTimeout(showWhatsNew,1000);
   }catch(e){}
 }
 function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
 function closeBilloute(){try{localStorage.setItem('ft4_billoute_v2','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
-function showWhatsNew(){const o=document.getElementById('ov-whatsnew');if(o)o.classList.add('open');}
-function closeWhatsNew(){try{localStorage.setItem('ft4_whatsnew_v2','1');}catch(e){}const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}
+// ─── « Quoi de neuf » versionné : montre toutes les nouveautés non vues d'un coup ──
+function _whatsNewSeen(){
+  try{
+    var s=localStorage.getItem('ft4_wn_seen');
+    if(s!==null&&s!=='') return parseInt(s)||0;
+    // Migration : l'ancien flag ft4_whatsnew_v2 = a déjà vu le lot Nutrition (v≤4)
+    if(localStorage.getItem('ft4_whatsnew_v2')) return 4;
+  }catch(e){}
+  return 0;
+}
+function _whatsNewUnseen(){
+  if(typeof WHATS_NEW==='undefined') return [];
+  var seen=_whatsNewSeen();
+  var list=WHATS_NEW.filter(function(f){return f.v>seen;});
+  if(typeof WHATS_NEW_SHOW_MAX==='number') list=list.slice(0,WHATS_NEW_SHOW_MAX);
+  return list;
+}
+function showWhatsNew(){
+  var items=_whatsNewUnseen();
+  if(!items.length){_whatsNewMarkSeen();return;}
+  var box=document.getElementById('whatsnew-list');
+  if(box){
+    box.innerHTML=items.map(function(f){
+      return '<div class="sw-feat"><span>'+f.ic+'</span><div><b>'+f.t+'</b><small>'+f.d+'</small></div></div>';
+    }).join('');
+  }
+  var sub=document.getElementById('whatsnew-sub');
+  if(sub) sub.textContent=items.length>1?('Voici les '+items.length+' dernières nouveautés 👇'):'Une nouveauté pour toi 👇';
+  var o=document.getElementById('ov-whatsnew');if(o)o.classList.add('open');
+}
+function _whatsNewMarkSeen(){try{localStorage.setItem('ft4_wn_seen',String(typeof WHATS_NEW_MAX==='number'?WHATS_NEW_MAX:0));localStorage.setItem('ft4_whatsnew_v2','1');}catch(e){}}
+function closeWhatsNew(){_whatsNewMarkSeen();const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}
 // ─── Pop testeurs : différenciation des types de matériel (test, une seule fois) ──
 function checkTesterEq(){
   try{

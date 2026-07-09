@@ -1178,13 +1178,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:50px;line-height:1;">✨</div>
     <div style="font-size:22px;font-weight:900;color:var(--red);margin-top:8px;">Quoi de neuf ?</div>
-    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Le suivi nutrition passe au niveau supérieur 🍽️</div>
-    <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
-      <div class="sw-feat"><span>📓</span><div><b>Journal alimentaire</b><small>Nouvel onglet « Journal » dans Nutrition : note ce que tu manges et suis tes calories + macros du jour face à ton objectif.</small></div></div>
-      <div class="sw-feat"><span>📷</span><div><b>Scan de code-barres</b><small>Scanne un produit : il est reconnu automatiquement et ses valeurs se remplissent — tu ajustes juste la quantité.</small></div></div>
-      <div class="sw-feat"><span>🤖</span><div><b>Estimation par l'IA</b><small>Décris ton repas (« 200g poulet, riz, brocolis »), l'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.</small></div></div>
-      <div class="sw-feat"><span>📥</span><div><b>Importer un plan diététicien</b><small>Une photo ou un PDF de ta diététicienne → l'IA range tous les repas, jour par jour.</small></div></div>
-    </div>
+    <div id="whatsnew-sub" style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Voici les dernières nouveautés 👇</div>
+    <div id="whatsnew-list" style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;"></div>
     <button class="btn btn-red" onclick="closeWhatsNew()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">C'est parti 💪</button>
   </div>
 </div>
