@@ -1852,10 +1852,27 @@ function _exEquip(name){
 }
 // Le test n'est visible que pour les testeurs + Michel (pas les utilisateurs normaux)
 function _eqTestOn(){try{return (typeof _isTester==='function'&&_isTester())||(typeof _isSuperTester==='function'&&_isSuperTester());}catch(e){return false;}}
+let _eqHideBadge=false; // vrai pendant le rendu groupé : le titre de section porte déjà le type, pas besoin du badge par ligne
 function _exEqBadge(name){
-  if(!_eqTestOn())return'';
+  if(_eqHideBadge||!_eqTestOn())return'';
   const m=_EQ_META[_exEquip(name)];
   return m?`<span class="ex-eq" style="color:${m.c};background:${m.bg};">${m.ic} ${m.lbl}</span>`:'';
+}
+// Rendu du sélecteur groupé par TYPE DE MATÉRIEL (titres de sous-sections colorés)
+const _EQ_ORDER=['barre','libre','guide','corps','autre'];
+function _renderExGrouped(listArr){
+  const buckets={};
+  listArr.forEach(e=>{const k=_exEquip(e.n);(buckets[k]=buckets[k]||[]).push(e);});
+  let html='';
+  _eqHideBadge=true; // les lignes n'affichent pas le badge (le titre de section le porte)
+  _EQ_ORDER.forEach(k=>{
+    const arr=buckets[k];if(!arr||!arr.length)return;
+    const m=_EQ_META[k];
+    html+=`<div class="ex-subhdr" style="color:${m.c};background:${m.bg};"><span>${m.ic} ${m.lbl}</span><span class="ex-subhdr-n">${arr.length}</span></div>`
+      +arr.map(_exPickRow).join('');
+  });
+  _eqHideBadge=false;
+  return html;
 }
 function _exPickRow(e){
   const safe=e.n.replace(/'/g,"\\'");
@@ -1887,7 +1904,7 @@ function filterEx(){
   if(q){
     _exGrp=null;
     const qn=_normEx(q);const f=all.filter(e=>e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q));
-    list.innerHTML=f.length?f.map(_exPickRow).join(''):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
+    list.innerHTML=f.length?(_eqTestOn()?_renderExGrouped(f):f.map(_exPickRow).join('')):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
     return;
   }
   // Groupe sélectionné → exercices du groupe
@@ -1903,7 +1920,7 @@ function filterEx(){
         <div class="ex-grp-header" style="margin-bottom:0;">${grp.icon} ${grp.label}</div>
         ${anatBtn}
       </div>`+
-      (f.length?f.map(_exPickRow).join(''):'<div style="padding:16px;text-align:center;color:var(--t3);">Aucun exercice — utilise "+ Créer"</div>');
+      (f.length?(_eqTestOn()?_renderExGrouped(f):f.map(_exPickRow).join('')):'<div style="padding:16px;text-align:center;color:var(--t3);">Aucun exercice — utilise "+ Créer"</div>');
     return;
   }
   // Vue par défaut → tuiles des groupes

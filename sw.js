@@ -1,4 +1,4 @@
-const CACHE = 'ft-v345'; // Nouvel exo : Dips Assis Machine (Seated Dip) — Pectoraux, figurine pecs primaire + triceps secondaire
+const CACHE = 'ft-v346'; // Test testeurs : sélecteur d'exercices groupé par type de matériel (sous-titres colorés Barre/Poids libre/Guidé/Corps)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
