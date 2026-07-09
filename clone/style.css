@@ -779,6 +779,25 @@ html.ob-done #onboarding{display:none;}
 @keyframes iBounce{0%,100%{transform:translateY(-5px)}50%{transform:translateY(5px)}}
 @keyframes iSlideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
 
+/* ─── Guide d'installation iPhone (visuel, iOS-fidèle) ───────── */
+.ii-guide{display:flex;flex-direction:column;gap:10px;}
+.ii-step{display:flex;align-items:flex-start;gap:12px;background:var(--bg3);border-radius:14px;padding:13px 14px;}
+.ii-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.ii-body{flex:1;min-width:0;}
+.ii-txt{font-size:14.5px;font-weight:600;color:var(--t1);line-height:1.35;}
+.ii-txt b{color:var(--blue);font-weight:800;}
+.ii-safaribar{margin-top:10px;display:flex;align-items:center;justify-content:space-between;background:#1c1c1e;border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:7px 14px;}
+.ii-sfico{color:#8e8e93;display:flex;align-items:center;}
+.ii-share{position:relative;width:34px;height:34px;border-radius:9px;background:#007AFF;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,122,255,.5);}
+.ii-share::after{content:"";position:absolute;inset:-5px;border-radius:13px;border:2.5px solid #007AFF;animation:iiPulse 1.4s ease-out infinite;}
+@keyframes iiPulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.55);opacity:0}}
+.ii-sheetrow{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--bg2);border-radius:11px;padding:10px 13px;box-shadow:0 0 0 2px var(--blue);}
+.ii-sheetlbl{font-size:14px;font-weight:700;color:var(--t1);}
+.ii-sqadd{flex-shrink:0;color:var(--t1);display:flex;}
+.ii-addbtn{margin-top:10px;display:inline-block;background:#007AFF;color:#fff;font-size:13px;font-weight:800;padding:6px 18px;border-radius:8px;}
+.ii-hint{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--t3);font-size:12px;margin-top:6px;text-align:center;}
+.ii-downarrow{font-size:26px;line-height:1;animation:ob0-bounce .85s infinite ease-in-out;}
+
 /* ─── BANNIÈRE INSTALLATION ──────────────────────────────────── */
 #install-banner{position:fixed;bottom:calc(68px + max(env(safe-area-inset-bottom),0px));left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:410px;z-index:9000;padding:12px 14px;background:var(--bg2);border:1px solid var(--sep);border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.28);transition:transform .3s ease,opacity .3s ease;pointer-events:none;}
 #install-banner button,#install-banner a{pointer-events:auto;}

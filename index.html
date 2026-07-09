@@ -71,26 +71,48 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div class="ob-step" id="ob-0">
 
       <!-- iOS layout -->
-      <div id="ob0-ios" style="flex:1;display:flex;flex-direction:column;padding:20px 0 0;display:none;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
+      <div id="ob0-ios" style="flex:1;display:flex;flex-direction:column;padding:18px 0 0;display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
           <img src="force-tracker-logo-topbar.gif" style="width:44px;height:44px;border-radius:11px;object-fit:cover;flex-shrink:0;">
           <div>
-            <div style="font-family:var(--font-cond);font-size:19px;font-weight:900;">Force Tracker</div>
-            <div style="font-size:11px;color:var(--t3);margin-top:1px;">Installe sur ton iPhone</div>
+            <div style="font-family:var(--font-cond);font-size:19px;font-weight:900;">Installe Force Tracker</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:1px;">En 3 étapes — comme une vraie app 📲</div>
           </div>
         </div>
-        <div style="background:var(--bg3);border-radius:14px;padding:16px;margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Étape 1</div>
-          <div style="font-size:15px;font-weight:600;margin-bottom:12px;">Appuie sur Partager en bas ↓</div>
-          <span style="display:inline-flex;align-items:center;gap:6px;background:#007AFF;color:#fff;border-radius:9px;padding:8px 16px;font-size:14px;font-weight:700;">⬆️ Partager</span>
-        </div>
-        <div style="background:var(--bg3);border-radius:14px;padding:16px;">
-          <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Étape 2</div>
-          <div style="font-size:15px;font-weight:600;margin-bottom:12px;">Fais défiler et appuie sur</div>
-          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1.5px solid var(--sep);border-radius:9px;padding:8px 16px;font-size:14px;font-weight:700;">➕ Sur l'écran d'accueil</span>
+        <div class="ii-guide" style="margin-top:12px;">
+          <div class="ii-step">
+            <div class="ii-num">1</div>
+            <div class="ii-body">
+              <div class="ii-txt">Appuie sur <b>Partager</b>, tout en bas de Safari</div>
+              <div class="ii-safaribar">
+                <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg></span>
+                <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="9 18 15 12 9 6"/></svg></span>
+                <span class="ii-share"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><path d="M12 15V3"/><path d="m8 6.5 4-4 4 4"/><path d="M8 10H6a1.5 1.5 0 0 0-1.5 1.5V19A1.5 1.5 0 0 0 6 20.5h12A1.5 1.5 0 0 0 19.5 19v-7.5A1.5 1.5 0 0 0 18 10h-2"/></svg></span>
+                <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="3" width="18" height="18" rx="4"/></svg></span>
+              </div>
+            </div>
+          </div>
+          <div class="ii-step">
+            <div class="ii-num">2</div>
+            <div class="ii-body">
+              <div class="ii-txt">Fais défiler, puis <b>Sur l'écran d'accueil</b></div>
+              <div class="ii-sheetrow">
+                <span class="ii-sheetlbl">Sur l'écran d'accueil</span>
+                <span class="ii-sqadd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:21px;height:21px"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><line x1="12" y1="8.5" x2="12" y2="15.5"/><line x1="8.5" y1="12" x2="15.5" y2="12"/></svg></span>
+              </div>
+            </div>
+          </div>
+          <div class="ii-step">
+            <div class="ii-num">3</div>
+            <div class="ii-body">
+              <div class="ii-txt">Appuie sur <b>Ajouter</b> — et c'est fait ! ✅</div>
+              <span class="ii-addbtn">Ajouter</span>
+            </div>
+          </div>
         </div>
         <div style="flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;">
-          <span style="font-size:32px;display:block;animation:ob0-bounce .85s infinite ease-in-out;">⬇️</span>
+          <div class="ii-hint"><span>Le bouton Partager est tout en bas de ton écran</span><span class="ii-downarrow">⬇️</span></div>
         </div>
       </div>
 
@@ -257,19 +279,35 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <div style="font-size:12px;color:var(--t2);margin-top:2px;line-height:1.4;">Accès depuis ton écran d'accueil, sans navigateur.</div>
       </div>
     </div>
-    <div style="background:var(--bg3);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:14px;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:24px;flex-shrink:0;">1️⃣</span>
-        <div>
-          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Appuie sur <strong>Partager</strong> en bas</div>
-          <span style="display:inline-flex;align-items:center;gap:4px;background:#007AFF;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;">⬆️&nbsp;Partager</span>
+    <div class="ii-guide">
+      <div class="ii-step">
+        <div class="ii-num">1</div>
+        <div class="ii-body">
+          <div class="ii-txt">Appuie sur <b>Partager</b>, tout en bas de Safari</div>
+          <div class="ii-safaribar">
+            <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg></span>
+            <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="9 18 15 12 9 6"/></svg></span>
+            <span class="ii-share"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><path d="M12 15V3"/><path d="m8 6.5 4-4 4 4"/><path d="M8 10H6a1.5 1.5 0 0 0-1.5 1.5V19A1.5 1.5 0 0 0 6 20.5h12A1.5 1.5 0 0 0 19.5 19v-7.5A1.5 1.5 0 0 0 18 10h-2"/></svg></span>
+            <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+            <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="3" width="18" height="18" rx="4"/></svg></span>
+          </div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:24px;flex-shrink:0;">2️⃣</span>
-        <div>
-          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Fais défiler et appuie sur</div>
-          <span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;">➕&nbsp;Sur l'écran d'accueil</span>
+      <div class="ii-step">
+        <div class="ii-num">2</div>
+        <div class="ii-body">
+          <div class="ii-txt">Fais défiler, puis <b>Sur l'écran d'accueil</b></div>
+          <div class="ii-sheetrow">
+            <span class="ii-sheetlbl">Sur l'écran d'accueil</span>
+            <span class="ii-sqadd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:21px;height:21px"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><line x1="12" y1="8.5" x2="12" y2="15.5"/><line x1="8.5" y1="12" x2="15.5" y2="12"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="ii-step">
+        <div class="ii-num">3</div>
+        <div class="ii-body">
+          <div class="ii-txt">Appuie sur <b>Ajouter</b> — et c'est fait ! ✅</div>
+          <span class="ii-addbtn">Ajouter</span>
         </div>
       </div>
     </div>

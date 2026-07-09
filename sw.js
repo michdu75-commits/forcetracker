@@ -1,4 +1,4 @@
-const CACHE = 'ft-v337'; // Graphique poids : zoom/nav des vues Masse grasse + Les 2 cadrés sur la plage des mesures de MG (récentes/clairsemées)
+const CACHE = 'ft-v338'; // Guide d'installation iPhone visuel (barre Safari + bouton Partager pulsé + rangée « Sur l'écran d'accueil » fidèles iOS)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
