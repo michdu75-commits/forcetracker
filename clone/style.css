@@ -237,7 +237,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
   --halo-a:.30;              /* intensité mode nuit */
   --halo:rgba(var(--halo-rgb),var(--halo-a));
 }
-#root.light-mode{ --halo-a:.30; } /* mode jour : bleu plus soutenu pour rester visible sur fond clair */
+/* mode jour : sur fond clair un bleu translucide vire au pâle délavé → bleu plus profond + saturé + plus opaque, pour un rendu franc comme en nuit */
+#root.light-mode{ --halo-rgb:37,99,235; --halo-a:.42; }
 /* Apparence « Noir » (choix Menu → Apparence) : plus de halo ni de grain, fond uni comme avant */
 html.no-halo #root{ background:var(--bg); }
 /* Boutons du choix Apparence (Menu) */
