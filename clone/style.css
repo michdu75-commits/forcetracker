@@ -49,8 +49,8 @@ img {
   --gold: #CC8800; --orange: #CC5200;
 }
 #root.light-mode .topbar {
-  background: #0C0D11;
-  border-bottom: 1px solid rgba(242,243,245,.08);
+  background: linear-gradient(180deg, rgba(var(--halo-rgb),.08), rgba(var(--halo-rgb),.26)), #0C0D11;
+  border-bottom: none;
 }
 #root.light-mode .topbar::after { display: none; }
 #root.light-mode .nav {
@@ -80,8 +80,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 
 /* TOPBAR */
 .topbar{
-  background:#0C0D11;
-  border-bottom:1px solid rgba(255,255,255,.06);
+  /* Teinté du même bleu que le halo (bas plus soutenu) → se raccorde au halo du contenu, plus de couture noire */
+  background:linear-gradient(180deg, rgba(var(--halo-rgb),.08), rgba(var(--halo-rgb),.30)), #0C0D11;
+  border-bottom:none;
   padding:max(env(safe-area-inset-top),44px) 16px 14px;
   display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
   position:relative;
