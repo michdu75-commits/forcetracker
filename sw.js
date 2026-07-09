@@ -1,6 +1,6 @@
-const CACHE = 'ft-v339'; // Passe de solidité : fin des troncatures locales d'historique (poids 365, sommeil 30, séances 200 -> illimité de fait) + garde-fou SW
+const CACHE = 'ft-v340'; // Page Politique de confidentialité (App Store + RGPD) + lien Menu
 const PRECACHE = [
-  './', './index.html', './style.css',
+  './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
   './setup.js', './tracking.js', './coach.js', './app.js',
   './manifest.json', './logo.png', './female-body.png',
