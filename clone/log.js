@@ -2274,14 +2274,14 @@ function _renderImpConfirm(){
   const el=document.getElementById('imp-preview');if(!el)return;
   el.innerHTML=(d.days||[]).map((day,di)=>`
     <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
-      <div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">${day.label||'Jour '+(di+1)}</div>
+      <div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">${_escNote(day.label||'Jour '+(di+1))}</div>
       <div id="imp-day-${di}">
         ${(day.exercises||[]).map((ex,ei)=>`
           <div id="imp-ex-${di}-${ei}" style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border-radius:8px;margin-bottom:5px;">
             <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;">${ex.name}</div>
+              <div style="font-size:13px;font-weight:600;">${_escNote(ex.name)}</div>
               <div style="font-size:12px;color:var(--t2);">${ex.sets}×${ex.reps} reps${ex.kg?' · '+ex.kg+' kg':''}</div>
-              ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${ex.note}</div>`:''}
+              ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${_escNote(ex.note)}</div>`:''}
             </div>
             <button onclick="removeImpEx(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
           </div>`).join('')}

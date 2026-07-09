@@ -1,4 +1,4 @@
-const CACHE = 'ft-v340'; // Page Politique de confidentialité (App Store + RGPD) + lien Menu
+const CACHE = 'ft-v341'; // Sécurité : échappement du contenu IA/imports dans les aperçus (anti-XSS)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

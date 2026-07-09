@@ -1524,14 +1524,14 @@ function _renderMealImpConfirm(){
   const el=document.getElementById('mimp-preview');if(!el)return;
   el.innerHTML=(d.days||[]).map((day,di)=>`
     <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
-      <div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">${day.label||'Jour '+(di+1)}</div>
+      <div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">${_escNote(day.label||'Jour '+(di+1))}</div>
       ${(day.meals||[]).map(m=>`
         <div style="background:var(--bg2);border-radius:8px;padding:8px 10px;margin-bottom:5px;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="font-size:13px;font-weight:600;">${m.name}</div>
+            <div style="font-size:13px;font-weight:600;">${_escNote(m.name)}</div>
             <span style="font-size:12px;font-weight:700;color:var(--red);">${m.kcal||0} kcal</span>
           </div>
-          <ul style="margin:4px 0 0;padding:0 0 0 16px;">${(m.foods||[]).map(f=>`<li style="font-size:12px;color:var(--t2);">${f}</li>`).join('')}</ul>
+          <ul style="margin:4px 0 0;padding:0 0 0 16px;">${(m.foods||[]).map(f=>`<li style="font-size:12px;color:var(--t2);">${_escNote(f)}</li>`).join('')}</ul>
           <div style="font-size:11px;color:var(--t3);margin-top:4px;">P ${m.prot||0}g · G ${m.carbs||0}g · L ${m.fat||0}g</div>
         </div>`).join('')}
     </div>`).join('');
