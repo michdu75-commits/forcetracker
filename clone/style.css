@@ -49,7 +49,7 @@ img {
   --gold: #CC8800; --orange: #CC5200;
 }
 #root.light-mode .topbar {
-  background: linear-gradient(180deg, rgba(var(--halo-rgb),.08), rgba(var(--halo-rgb),.26)), #0C0D11;
+  background: #0C0D11;
   border-bottom: none;
 }
 #root.light-mode .topbar::after { display: none; }
@@ -75,13 +75,13 @@ html.light-mode #menu-drawer-bd{background:rgba(0,0,0,.25);}
 #root.light-mode .drawer{box-shadow:-4px 0 16px rgba(0,0,0,.10);}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--font);color:var(--t1);overscroll-behavior-x:none;}
-#root{display:flex;flex-direction:column;height:100dvh;max-width:430px;margin:0 auto;background:var(--bg);overflow:hidden;position:relative;}
+#root{display:flex;flex-direction:column;height:100dvh;max-width:430px;margin:0 auto;background:radial-gradient(150% 68% at 50% 0%, var(--halo,transparent), transparent 78%), var(--bg);overflow:hidden;position:relative;}
 @media(orientation:landscape) and (hover:none) and (pointer:coarse){#rotate-overlay{display:flex!important;}}
 
 /* TOPBAR */
 .topbar{
-  /* Teinté du même bleu que le halo (bas plus soutenu) → se raccorde au halo du contenu, plus de couture noire */
-  background:linear-gradient(180deg, rgba(var(--halo-rgb),.08), rgba(var(--halo-rgb),.30)), #0C0D11;
+  /* Transparente → laisse passer le halo unique de #root (un seul fondu, plus de « cascade ») */
+  background:transparent;
   border-bottom:none;
   padding:max(env(safe-area-inset-top),44px) 16px 14px;
   display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
@@ -219,25 +219,20 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 
 /* SCREENS */
 .screens{flex:1;overflow:hidden;position:relative;}
-.screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:12px 14px calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);display:none;flex-direction:column;gap:10px;background:var(--bg);}
+.screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:12px 14px calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);display:none;flex-direction:column;gap:10px;background:transparent;}
 .screen.active{display:flex;}
-/* ─── Halo d'ambiance en haut de chaque écran (prototype clone) ──
-   Une lueur de couleur douce en haut de chaque écran, qui se fond dans le noir.
-   Le gros de l'écran reste noir (batterie/lisibilité).
-   La couleur est pilotée par UNE seule variable --halo-rgb (R,G,B) + une intensité
-   --halo-a → future ligne « Apparence » : le sélecteur n'aura qu'à changer --halo-rgb.
-   Le fond de base var(--bg) reste en 2e couche => sous la lueur = noir pur. */
+/* ─── Halo d'ambiance UNIQUE (prototype clone) ──────────────────
+   UN seul halo, posé sur #root (voir son background plus haut), derrière TOUT
+   (barre du haut + écrans, tous deux transparents). Un seul fondu du haut vers
+   le bas → plus de « cascade » (paliers) qu'on avait avec 2 dégradés empilés.
+   Couleur pilotée par --halo-rgb (R,G,B) + intensité --halo-a → future ligne
+   « Apparence » : le sélecteur n'aura qu'à changer --halo-rgb. */
 #root{
   --halo-rgb:59,130,246;     /* BLEU partout (par défaut) */
   --halo-a:.30;              /* intensité mode nuit */
   --halo:rgba(var(--halo-rgb),var(--halo-a));
 }
 #root.light-mode{ --halo-a:.15; } /* mode jour : fond déjà clair, lueur allégée */
-.screen.active{
-  background:
-    radial-gradient(150% 88% at 50% 0%, var(--halo,transparent), transparent 80%),
-    var(--bg);
-}
 /* Espaceur bas de scroll (fix iOS : padding-bottom d'un flex scroll ignoré par Safari).
    Un vrai élément est toujours compté dans la hauteur scrollable → la dernière carte passe au-dessus de la nav. */
 .scroll-spacer{flex:0 0 auto;height:calc(max(env(safe-area-inset-bottom,0px),8px) + 110px);}
