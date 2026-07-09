@@ -1,4 +1,4 @@
-const CACHE = 'ft-v338'; // Guide d'installation iPhone visuel (barre Safari + bouton Partager pulsé + rangée « Sur l'écran d'accueil » fidèles iOS)
+const CACHE = 'ft-v339'; // Passe de solidité : fin des troncatures locales d'historique (poids 365, sommeil 30, séances 200 -> illimité de fait) + garde-fou SW
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

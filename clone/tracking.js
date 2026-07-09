@@ -63,7 +63,7 @@ async function _retrySheetQueue(){
     else errors.push({date:sess.date,error:res.error||'erreur inconnue'});
   }
   if(synced>0){
-    try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));}catch(e){}
+    try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));}catch(e){}
   }
   _updateAdminSyncInfo(errors);
   if(synced>0&&errors.length===0)toast('☁️ '+synced+' séance'+(synced>1?'s':'')+' synchronisée'+(synced>1?'s':'')+' !','success');
@@ -333,7 +333,7 @@ function ciPickSleep(q){
   const hours=(S.sleepLog.find(e=>e.date===d)||{}).hours||7.5;
   const entry={date:d,hours,quality:q};
   if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
-  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
+  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
   // Mark sleep step as answered, show energy step
   document.getElementById('ci-step-sleep').style.display='none';
   document.getElementById('ci-step-energy').style.display='block';
@@ -366,7 +366,7 @@ function saveWeightEntry(){
   if(!S.weightLog)S.weightLog=[];
   const d=today();const idx=S.weightLog.findIndex(w=>w.date===d);
   if(idx>=0)S.weightLog[idx].kg=kg;else S.weightLog.unshift({date:d,kg});
-  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
   S.bw=kg;persist();
   renderWeightTab();renderHome();
   toast('Poids enregistré !','success');
@@ -617,7 +617,7 @@ function saveBodyFat(){
   e.bf=Math.round(bf*10)/10;
   // Mémorise les mensurations saisies (garde le profil à jour)
   if(nk>20&&nk<80)S.neck=nk;if(wa>40&&wa<200)S.waist=wa;if(hp>40&&hp<200)S.hip=hp;
-  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
   persist();renderWeightTab();
   toast('Masse grasse enregistrée ✅','success');
 }
@@ -644,7 +644,7 @@ function saveWeighEdit(){
   // retire l'ancienne entrée + toute entrée sur la nouvelle date, puis ré-insère
   S.weightLog=(S.weightLog||[]).filter(x=>x.date!==_weighEditDate&&x.date!==newDate);
   S.weightLog.unshift(entry);
-  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
   if(S.weightLog[0])S.bw=S.weightLog[0].kg;
   persist();closeWeighEdit();renderWeightTab();renderHome();
   toast('Pesée mise à jour ✅','success');
@@ -1048,7 +1048,7 @@ function saveBodyScan(){
   wentry.kg=weight;
   if(obj.bf!=null)wentry.bf=obj.bf;
   if(wi<0)S.weightLog.unshift(wentry);
-  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
   if(S.weightLog[0])S.bw=S.weightLog[0].kg;
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
@@ -1550,7 +1550,7 @@ function saveSleepEntry(){
   const idx=S.sleepLog.findIndex(e=>e.date===todayStr);
   const entry={date:todayStr,hours,quality:_sleepQual};
   if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
-  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
+  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
   _sleepEditLog=false;
   persist();
   renderLogSleep();renderRecoveryCard();

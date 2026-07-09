@@ -1436,7 +1436,7 @@ async function finishWorkout(){
   S.sessions.unshift(sess);
   let _savedOk=false;
   try{
-    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));
+    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs||{}));
     _savedOk=true;
   }catch(e){
@@ -1471,7 +1471,7 @@ async function finishWorkout(){
     const ok=await syncSheets(sess);
     if(ok){
       if(S.sessions.length)S.sessions[0].synced=true;
-      try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));}catch(e){}
+      try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));}catch(e){}
       toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');
     }else toast(`Séance sauvegardée ! 🔥 ${calData.total} kcal`,'success');
   }else{

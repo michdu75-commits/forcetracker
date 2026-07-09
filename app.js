@@ -2100,6 +2100,7 @@ if('serviceWorker' in navigator){
     // pour les vérifs de mise à jour. Corrige le bug iOS « app collée à l'ancienne version »
     // (GitHub Pages cachait sw.js ~10 min → les updates n'étaient pas détectées tout de suite).
     navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
+      if(!reg)return; // garde-fou : certains contextes résolvent sans registration
       reg.update(); // vérification immédiate au démarrage (PWA standalone inclus)
       setInterval(()=>reg.update(), 5*60*1000); // re-vérif toutes les 5 min
       document.addEventListener('visibilitychange',()=>{

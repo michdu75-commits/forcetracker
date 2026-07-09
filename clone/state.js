@@ -166,7 +166,7 @@ function persist(){
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_gender',S.gender);
     localStorage.setItem('ft4_age',S.age);localStorage.setItem('ft4_ht',S.height);
     localStorage.setItem('ft4_act',S.activityLevel);
-    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));
+    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
     localStorage.setItem('ft4_cycle',JSON.stringify(S.cycle||null)); // cycle de force : local-first (était lu mais jamais écrit)
