@@ -1,4 +1,4 @@
-const CACHE = 'ft-v350'; // « Quoi de neuf » versionné : montre toutes les nouveautés non vues d'un coup (retour d'un utilisateur absent) + annonce du niveau Actif
+const CACHE = 'ft-v351'; // Points rouges « nouveauté » pour le niveau Actif (Profil) et Milo plus naturel (Coach) — NEW_FEATURES
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
