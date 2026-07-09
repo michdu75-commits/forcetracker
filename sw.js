@@ -1,4 +1,4 @@
-const CACHE = 'ft-v341'; // Sécurité : échappement du contenu IA/imports dans les aperçus (anti-XSS)
+const CACHE = 'ft-v342'; // Test testeurs : badges type de matériel (barre/libre/guidé/corps) dans le sélecteur + popup testeurs
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

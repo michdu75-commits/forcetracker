@@ -1685,6 +1685,7 @@ checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 checkSuperTesterWelcome(); // message « super testeur » une seule fois (Christophe)
 checkAnnouncements(); // pop perso Christophe + « Quoi de neuf » pour tous (une seule fois)
+checkTesterEq();      // pop testeurs : différenciation des types de matériel (test, une seule fois)
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
 initCoachInput();
 initOnboarding();
@@ -1717,6 +1718,21 @@ function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.cl
 function closeBilloute(){try{localStorage.setItem('ft4_billoute_v2','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
 function showWhatsNew(){const o=document.getElementById('ov-whatsnew');if(o)o.classList.add('open');}
 function closeWhatsNew(){try{localStorage.setItem('ft4_whatsnew_v2','1');}catch(e){}const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}
+// ─── Pop testeurs : différenciation des types de matériel (test, une seule fois) ──
+function checkTesterEq(){
+  try{
+    if(!(typeof _eqTestOn==='function'&&_eqTestOn()))return;      // testeurs + Michel uniquement
+    if(localStorage.getItem('ft4_tester_eq_v1'))return;           // déjà vu
+    setTimeout(showTesterEq,1400);
+  }catch(e){}
+}
+function showTesterEq(){
+  // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
+  const busy=['ov-whatsnew','ov-super-welcome','ov-billoute','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  if(busy){setTimeout(showTesterEq,2500);return;}
+  const o=document.getElementById('ov-tester-eq');if(o)o.classList.add('open');
+}
+function closeTesterEq(){try{localStorage.setItem('ft4_tester_eq_v1','1');}catch(e){}const o=document.getElementById('ov-tester-eq');if(o)o.classList.remove('open');}
 function openTesterSpace(){
   // L'Espace Testeur (dont la boîte à idées) est réservé aux vrais testeurs récompensés.
   // Michel a le suivi photos via le panneau Admin, mais PAS cet espace ni la boîte à idées.

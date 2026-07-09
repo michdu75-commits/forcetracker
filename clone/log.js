@@ -1822,6 +1822,33 @@ const EX_GROUPS=[
 ];
 let _exGrp=null;
 
+// ─── TYPE DE MATÉRIEL (test testeurs) — deviné du nom de l'exercice ──────
+const _EQ_META={
+  barre:{lbl:'Barre',          ic:'🏋️', c:'#FF6C00', bg:'rgba(255,108,0,.13)'},
+  libre:{lbl:'Poids libre',    ic:'💪', c:'#5BA8FF', bg:'rgba(91,168,255,.13)'},
+  guide:{lbl:'Guidé',          ic:'⚙️', c:'#A855F7', bg:'rgba(168,85,247,.13)'},
+  corps:{lbl:'Poids du corps', ic:'🤸', c:'#34D399', bg:'rgba(52,211,153,.13)'},
+  autre:{lbl:'À classer',      ic:'❓', c:'#8A8F9C', bg:'rgba(255,255,255,.05)'}
+};
+function _exEquip(name){
+  const s=_naz(name);
+  // 1) Guidé / machine (le plus spécifique d'abord)
+  if(/machine|poulie|smith|guide|pec ?deck|peck ?deck|presse|leg press|leg extension|leg curl|leg abduction|leg adduction|tirage|chest press|hack|convergent|hammer|cable|câble|vis-a-vis|crossover|croise poulie|assist|butterfly|pendulum|belt squat|sled|iso.?laterale?|convergente/.test(s)) return 'guide';
+  // 2) Poids du corps
+  if(/traction|pull-?up|pull up|dips|pompe|push-?up|gainage|planche|plank|pistol|muscle-?up|chaise|wall sit|superman|l-sit|releve.*jambe|leg raise|crunch|russian twist|mountain climber|burpee|hollow|ghd|glute ham|nordic|box|montee/.test(s)) return 'corps';
+  // 3) Poids libre (haltères / kettlebell)
+  if(/haltere|dumbbell|kettlebell|goblet|landmine|croix de fer|farmer|marche du fermier|swing|arnold|renegade/.test(s)) return 'libre';
+  // 4) Barre (classiques : couché/incliné, squat, soulevé, rowing, militaire, curl…)
+  if(/barre|barbell|couche|incline|decline|squat|souleve|deadlift|rowing|militaire|curl|developpe|good morning|hip thrust|zercher|reeves|rack pull|shrug|thruster|meadows|seal row|pull-?over|overhead/.test(s)) return 'barre';
+  return 'autre';
+}
+// Le test n'est visible que pour les testeurs + Michel (pas les utilisateurs normaux)
+function _eqTestOn(){try{return (typeof _isTester==='function'&&_isTester())||(typeof _isSuperTester==='function'&&_isSuperTester());}catch(e){return false;}}
+function _exEqBadge(name){
+  if(!_eqTestOn())return'';
+  const m=_EQ_META[_exEquip(name)];
+  return m?`<span class="ex-eq" style="color:${m.c};background:${m.bg};">${m.ic} ${m.lbl}</span>`:'';
+}
 function _exPickRow(e){
   const safe=e.n.replace(/'/g,"\\'");
   // Slot photo TOUJOURS réservé (30px) → toutes les lignes alignées, avec ou sans photo.
@@ -1831,7 +1858,11 @@ function _exPickRow(e){
     ?`<img src="${src}" onclick="event.stopPropagation();_viewExPhoto('${safe}')" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);cursor:zoom-in;">`
     :`<span style="width:30px;flex-shrink:0;margin-right:8px;" aria-hidden="true"></span>`;
   const edit=e.custom?` <span onclick="event.stopPropagation();openEditCustomEx('${safe}')" title="Modifier" style="font-size:13px;color:var(--purp);cursor:pointer;padding:2px 6px;touch-action:manipulation;">✎</span>`:'';
-  return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}<span class="ex-pick-name">${e.n}${edit}</span><span class="ex-pick-grp">${e.g}</span></div>`;
+  const eqBadge=_exEqBadge(e.n);
+  const mid=eqBadge
+    ?`<div class="ex-pick-mid"><span class="ex-pick-name">${e.n}${edit}</span>${eqBadge}</div>`
+    :`<span class="ex-pick-name">${e.n}${edit}</span>`;
+  return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}${mid}<span class="ex-pick-grp">${e.g}</span></div>`;
 }
 function openExPicker(){
   _exGrp=null;
