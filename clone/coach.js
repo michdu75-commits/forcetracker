@@ -24,7 +24,7 @@ const COACH_QUIZ = [
   {id:'tone', q:'Comment tu veux que Milo te parle ?', t:'single', opts:[['cash','Cash et direct'],['motiv','Motivant et encourageant'],['tech','Technique et précis'],['fun','Détendu, avec de l\'humour']]},
 ];
 const COACH_QUIZ_PRO = [
-  {id:'job', q:'Ton quotidien (hors sport) est plutôt…', t:'single', opts:[['bureau','Sédentaire / bureau'],['debout','Debout, actif'],['physique','Travail physique dur']]},
+  {id:'job', q:'Ton quotidien (hors sport) est plutôt…', t:'single', opts:[['bureau','Sédentaire / bureau'],['debout','Debout, peu de déplacements'],['actif','Actif, en mouvement (serveuse, infirmier…)'],['physique','Travail physique dur']]},
   {id:'stress', q:'Ton niveau de stress général ?', t:'single', opts:[['bas','Faible'],['moy','Modéré'],['haut','Élevé']]},
   {id:'sleep', q:'Tu dors combien d\'heures par nuit en moyenne ?', t:'single', opts:[['5','Moins de 6 h'],['7','6 à 7 h'],['8','7 à 8 h'],['9','Plus de 8 h']]},
   {id:'prot', q:'Tu atteins tes protéines la plupart du temps ?', t:'single', opts:[['oui','Oui, presque toujours'],['souvent','Souvent'],['rare','Rarement'],['nsp','Je ne sais pas']]},
@@ -65,8 +65,8 @@ function _coachQuizContext(){
 const _CQ_PROFILE = {
   goalfeel: { set:'setGoal',     map:{muscle:'muscle',force:'force',secher:'perte',forme:'equilibre'},
               from:()=>({muscle:'muscle',force:'force',perte:'secher',equilibre:'forme'}[S.goal]) },
-  job:      { set:'setWorkType', map:{bureau:'bureau',debout:'debout',physique:'physique'},
-              from:()=>({bureau:'bureau',debout:'debout',physique:'physique'}[S.workType]) },
+  job:      { set:'setWorkType', map:{bureau:'bureau',debout:'debout',actif:'actif',physique:'physique'},
+              from:()=>({bureau:'bureau',debout:'debout',actif:'actif',physique:'physique'}[S.workType]) },
 };
 function _applyQuizToProfile(quiz,ans){
   quiz.forEach(q=>{
@@ -580,7 +580,7 @@ MOMENT PRÉSENT (heure locale de la personne) :
 PROFIL ATHLÈTE:
 - Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal
-- Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Marchant',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
+- Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
 - Objectif: ${GOAL_LABELS[S.goal||'muscle']} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
 - Discipline pratiquée: ${(typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'Musculation'} — adapte tes conseils (exercices, répétitions, périodisation) à cette discipline

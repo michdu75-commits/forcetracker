@@ -266,7 +266,7 @@ function calcBMR(){
   const bmr=Math.round(S.gender==='H'?base+5:base-161);
   return S.smoker?Math.round(bmr*1.07):bmr;
 }
-function calcWorkExtra(){return{bureau:0,debout:200,physique:450}[S.workType]||0;}
+function calcWorkExtra(){return{bureau:0,debout:200,actif:325,physique:450}[S.workType]||0;}
 function calcTDEE(){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra());}
 
 // ── Régime alimentaire + restrictions (végé, halal, allergies…) ──

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v348'; // Coach Milo : notion du délai depuis le dernier échange (hier, il y a X jours…) -> reprend naturellement
+const CACHE = 'ft-v349'; // Type de travail : ajout niveau "Actif" (serveuse, infirmier : debout + déplacements, +325 kcal) entre Debout et Physique
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

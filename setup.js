@@ -458,7 +458,7 @@ function setGender(g){
 }
 function setWorkType(t){
   S.workType=t;persist();
-  ['bureau','debout','physique'].forEach(x=>{const el=document.getElementById('wt-'+x);if(el)el.classList.toggle('active',x===t);});
+  ['bureau','debout','actif','physique'].forEach(x=>{const el=document.getElementById('wt-'+x);if(el)el.classList.toggle('active',x===t);});
 }
 function setSmoker(v){
   S.smoker=v;persist();
