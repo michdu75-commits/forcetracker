@@ -1,4 +1,4 @@
-const CACHE = 'ft-v335'; // Sauvegarde cloud sans limite de temps : séances 100->2000, journal nutrition 2000->8000 (tout l'historique)
+const CACHE = 'ft-v336'; // Graphique poids : les flèches ◀▶ déplacent d'une période complète (3 mois = 3 mois) + bouton de période reste actif
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',

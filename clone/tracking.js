@@ -491,10 +491,10 @@ function weightZoom(dir){
 }
 function weightPan(dir){
   if(_wSpanDays==null)return; // déjà tout affiché
-  const eff=_wSpanDays;
-  const step=Math.max(1,Math.round(eff*0.5));
+  // Se déplace d'une FENÊTRE COMPLÈTE (ex. période 3 mois → recule/avance de 3 mois pile)
+  const step=Math.max(1,_wSpanDays);
   _wEndOff=Math.max(0,_wEndOff+(dir<0?step:-step)); // ◀ = reculer (offset↑) · ▶ = avancer (offset↓)
-  _wRange='';
+  // On garde _wRange : le bouton de période reste allumé pendant la navigation (on ne change que la position, pas le zoom)
   renderWeightTab();
 }
 let _wMetric='kg'; // métrique affichée : 'kg' (poids) | 'bf' (masse grasse)
