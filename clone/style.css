@@ -49,10 +49,15 @@ img {
   --gold: #CC8800; --orange: #CC5200;
 }
 #root.light-mode .topbar {
-  background: #0C0D11;
+  background: transparent;   /* mode jour : laisse passer le halo, comme en nuit */
   border-bottom: none;
 }
 #root.light-mode .topbar::after { display: none; }
+/* Textes/boutons de la barre lisibles sur fond clair (halo) en mode jour */
+#root.light-mode .tb-sub { color: var(--t2); }
+#root.light-mode .topbar button { color: var(--t1) !important; background: rgba(0,0,0,.05) !important; border-color: rgba(0,0,0,.14) !important; }
+#root.light-mode .sync-pill { color: var(--t1) !important; }
+#root.light-mode .sync-pill.ok { color: var(--green) !important; background: rgba(0,168,86,.10) !important; }
 #root.light-mode .nav {
   background: rgba(242,242,247,.95);
   border-top: 1px solid var(--sep);
@@ -232,7 +237,13 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
   --halo-a:.30;              /* intensité mode nuit */
   --halo:rgba(var(--halo-rgb),var(--halo-a));
 }
-#root.light-mode{ --halo-a:.15; } /* mode jour : fond déjà clair, lueur allégée */
+#root.light-mode{ --halo-a:.30; } /* mode jour : bleu plus soutenu pour rester visible sur fond clair */
+/* Apparence « Noir » (choix Menu → Apparence) : plus de halo ni de grain, fond uni comme avant */
+html.no-halo #root{ background:var(--bg); }
+/* Boutons du choix Apparence (Menu) */
+.appr-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 8px;border-radius:12px;border:none;background:var(--bg3);color:var(--t2);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all .18s;}
+.appr-btn.active{color:var(--t1);box-shadow:inset 0 0 0 2px var(--blue);background:rgba(91,168,255,.10);}
+.appr-sw{width:18px;height:18px;border-radius:6px;flex-shrink:0;display:inline-block;}
 /* Espaceur bas de scroll (fix iOS : padding-bottom d'un flex scroll ignoré par Safari).
    Un vrai élément est toujours compté dans la hauteur scrollable → la dernière carte passe au-dessus de la nav. */
 .scroll-spacer{flex:0 0 auto;height:calc(max(env(safe-area-inset-bottom,0px),8px) + 110px);}

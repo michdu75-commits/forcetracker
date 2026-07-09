@@ -230,6 +230,21 @@ function applyTheme() {
   }
 }
 
+// ── Apparence : halo bleu (défaut) ou tout noir ──────────────
+function setHalo(mode){
+  S.halo = (mode==='none') ? 'none' : 'blue';
+  try{ localStorage.setItem('ft4_halo', S.halo); }catch(e){}
+  persist();
+  _applyHalo();
+  toast(S.halo==='none' ? 'Apparence : Fond uni' : 'Apparence : Halo bleu ✨', 'info');
+}
+function _applyHalo(){
+  document.documentElement.classList.toggle('no-halo', S.halo==='none');
+  const b=document.getElementById('appr-blue'), n=document.getElementById('appr-none');
+  if(b) b.classList.toggle('active', S.halo!=='none');
+  if(n) n.classList.toggle('active', S.halo==='none');
+}
+
 
 function switchNuTab(tab, btn) {
   ['macros','journal','suppl'].forEach(t => {
@@ -1663,6 +1678,7 @@ document.addEventListener('visibilitychange',()=>{
 });
 document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 applyTheme();
+if(typeof _applyHalo==='function')_applyHalo();
 if(typeof _applyA11y==='function')_applyA11y();
 if(typeof _applyColorblind==='function')_applyColorblind();
 if(typeof _applyLeftHand==='function')_applyLeftHand();
