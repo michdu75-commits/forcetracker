@@ -234,7 +234,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 #root.light-mode{ --halo-a:.15; } /* mode jour : fond déjà clair, lueur allégée */
 .screen.active{
   background:
-    radial-gradient(150% 60% at 50% 0%, var(--halo,transparent), transparent 68%),
+    radial-gradient(150% 88% at 50% 0%, var(--halo,transparent), transparent 80%),
     var(--bg);
 }
 /* Espaceur bas de scroll (fix iOS : padding-bottom d'un flex scroll ignoré par Safari).
