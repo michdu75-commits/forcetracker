@@ -1,4 +1,4 @@
-const CACHE = 'ft-v343'; // Fix décompte repos : après la dernière série d'un exo, la « prochaine série » pointe vers l'exercice suivant (avant : vide)
+const CACHE = 'ft-v344'; // Fix cardio : la durée ne détruit plus l'input à chaque frappe (focus gardé) -> le cardio s'enregistre
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

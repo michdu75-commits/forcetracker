@@ -92,8 +92,19 @@ function calcCardioKcal(c){
 function setCardioField(field,val){
   if(!S.wkt)return;
   if(!S.wkt.cardio)S.wkt.cardio={type:'elliptique',intensity:'modere',duration:0};
-  S.wkt.cardio[field]=field==='duration'?Math.max(0,Math.min(120,parseInt(val)||0)):val;
-  persist();renderCardioBlock();
+  S.wkt.cardio[field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
+  persist();
+  // Durée : NE PAS re-render (sinon l'input est détruit à chaque chiffre → focus perdu sur mobile → saisie impossible).
+  // On met juste à jour le résumé ; les boutons type/intensité, eux, re-render pour refléter la sélection.
+  if(field==='duration')_updateCardioSummary();
+  else renderCardioBlock();
+}
+function _updateCardioSummary(){
+  const c=S.wkt&&S.wkt.cardio;if(!c)return;
+  const el=document.getElementById('cardio-summary');if(!el)return;
+  const kcal=calcCardioKcal(c);
+  el.textContent=c.duration?`${CARDIO_LABELS[c.type||'elliptique']} · ${c.duration}min · ~${kcal}kcal`:'optionnel';
+  el.style.color=kcal?'var(--green)':'var(--t3)';
 }
 let _cardioOpen=false;
 function toggleCardio(){_cardioOpen=!_cardioOpen;renderCardioBlock();}
@@ -109,7 +120,7 @@ function renderCardioBlock(){
   <div onclick="toggleCardio()" style="display:flex;align-items:center;gap:13px;padding:12px 16px;cursor:pointer;touch-action:manipulation;">
     <div class="home-row-ic" style="background:rgba(255,138,114,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M10 12L8 20"/><path d="M10 12L13 17L16 12"/><path d="M6 12L8 10L12 12L16 10L18 12"/></svg></div>
     <span class="home-row-ttl" style="flex:1;">Cardio</span>
-    <span style="font-size:12px;color:${kcal?'var(--green)':'var(--t3)'};">${summary}</span>
+    <span id="cardio-summary" style="font-size:12px;color:${kcal?'var(--green)':'var(--t3)'};">${summary}</span>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);transition:transform .2s;transform:rotate(${_cardioOpen?-90:0}deg);flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
   </div>
   ${_cardioOpen?`<div style="padding:0 12px 12px;border-top:1px solid var(--sep);padding-top:10px;">
@@ -120,7 +131,7 @@ function renderCardioBlock(){
       ${['leger','modere','intense'].map((iv,i)=>{const lbl=['Léger','Modéré','Intense'][i];return`<button onclick="setCardioField('intensity','${iv}')" style="flex:1;padding:6px 0;border-radius:8px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.intensity===iv?'var(--red)':'var(--bg2)'};color:${c.intensity===iv?'#fff':'var(--t2)'};">${lbl}</button>`;}).join('')}
       <div style="display:flex;align-items:center;gap:6px;margin-left:6px;">
         <label style="font-size:12px;color:var(--t2);white-space:nowrap;">Durée</label>
-        <input type="number" inputmode="numeric" min="0" max="300" value="${c.duration||0}" oninput="setCardioField('duration',this.value)" style="width:52px;padding:5px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;font-family:var(--font);text-align:center;">
+        <input type="number" inputmode="numeric" min="0" max="300" value="${c.duration||''}" placeholder="0" oninput="setCardioField('duration',this.value)" style="width:52px;padding:5px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;font-family:var(--font);text-align:center;">
         <span style="font-size:12px;color:var(--t3);">min</span>
       </div>
     </div>
