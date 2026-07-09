@@ -1597,12 +1597,18 @@ function saveExNote(ei,val){if(S.wkt?.exs?.[ei]!==undefined){S.wkt.exs[ei].note=
 
 // ── OVERLAY DÉCOMPTE FINAL ────────────────────────────────────────────
 function _nextSetInfo(){
-  const ex=S.wkt?.exs?.[_expandedEx];
-  if(!ex)return null;
-  const si=ex.sets.findIndex(s=>!s.done);
-  if(si<0)return null;
-  const set=ex.sets[si];
-  return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.reps||''};
+  const exs=S.wkt&&S.wkt.exs;
+  if(!exs||!exs.length)return null;
+  const cur=_expandedEx;
+  const _row=(ex,si)=>{const set=ex.sets[si];return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.reps||''};};
+  // 1) Prochaine série NON faite dans l'exercice en cours
+  if(exs[cur]){const si=exs[cur].sets.findIndex(s=>!s.done);if(si>=0)return _row(exs[cur],si);}
+  // 2) Sinon (exercice terminé) → 1re série non faite de l'exercice suivant (puis n'importe lequel restant)
+  const order=[];
+  for(let i=(cur||0)+1;i<exs.length;i++)order.push(i);
+  for(let i=0;i<exs.length;i++)if(i!==cur&&order.indexOf(i)<0)order.push(i);
+  for(let k=0;k<order.length;k++){const ex=exs[order[k]];const si=ex.sets.findIndex(s=>!s.done);if(si>=0)return _row(ex,si);}
+  return null;
 }
 // ─── Cadran à segments du décompte final (style timer digital) ───────
 const _CDOWN_TICKS=44;

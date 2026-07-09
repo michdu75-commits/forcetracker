@@ -1,4 +1,4 @@
-const CACHE = 'ft-v342'; // Test testeurs : badges type de matériel (barre/libre/guidé/corps) dans le sélecteur + popup testeurs
+const CACHE = 'ft-v343'; // Fix décompte repos : après la dernière série d'un exo, la « prochaine série » pointe vers l'exercice suivant (avant : vide)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
