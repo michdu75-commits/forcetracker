@@ -406,7 +406,14 @@ function renderWeightTab(){
   // ── Fenêtre temporelle : navigation dans l'historique + zoom ──
   // _wSpanDays = largeur de la fenêtre en jours (null = tout) · _wEndOff = décalage du bord droit (jours) vs aujourd'hui
   const _isoD=dt=>dt.toISOString().split('T')[0];
-  const firstD=sorted.length?new Date(sorted[0].date+'T12:00:00'):new Date();
+  // Référence de la fenêtre (bornes + zoom) : en Masse grasse ET « Les 2 », on cadre sur les mesures
+  // de MG (souvent récentes/clairsemées) — sinon le zoom traverse des années sans MG et semble figé.
+  // Repli sur tout le poids si moins de 2 mesures de MG (pas de régression).
+  let refSource=sorted;
+  if(_wMetric==='bf'||_wMetric==='both'){const bfr=sorted.filter(p=>p.bf!=null);if(bfr.length>=2)refSource=bfr;}
+  // Ce qui est tracé : MG seule en vue « bf » ; toutes les pesées (courbe dense) sinon.
+  const plotSource=(_wMetric==='bf')?sorted.filter(p=>p.bf!=null):sorted;
+  const firstD=refSource.length?new Date(refSource[0].date+'T12:00:00'):new Date();
   const nowD=new Date(today()+'T12:00:00');
   const fullSpan=Math.max(1,Math.round((nowD-firstD)/86400000));
   const eff=(_wSpanDays!=null)?_wSpanDays:(fullSpan+1);
@@ -416,7 +423,7 @@ function renderWeightTab(){
   const rightD=new Date(nowD);rightD.setDate(rightD.getDate()-_wEndOff);
   const leftD=new Date(rightD);leftD.setDate(leftD.getDate()-eff);
   const lStr=_isoD(leftD),rStr=_isoD(rightD);
-  let pts=(_wSpanDays!=null)?sorted.filter(p=>p.date>=lStr&&p.date<=rStr):sorted.slice();
+  let pts=(_wSpanDays!=null)?plotSource.filter(p=>p.date>=lStr&&p.date<=rStr):plotSource.slice();
   // Sous-échantillonnage pour l'affichage si trop de points (garde toujours le dernier)
   if(pts.length>160){const k=Math.ceil(pts.length/160);pts=pts.filter((_,i)=>i%k===0||i===pts.length-1);}
   // Chips de période (préréglages)
@@ -480,7 +487,7 @@ let _wSpanDays=null; // largeur de la fenêtre en jours (null = tout l'historiqu
 let _wEndOff=0;      // décalage du bord droit de la fenêtre (jours) vs aujourd'hui
 function setWeightRange(r){_wRange=r;_wSpanDays={'1m':30,'3m':90,'6m':180,'all':null}[r];_wEndOff=0;renderWeightTab();}
 function _fmtWNav(d){const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});}
-function _wFullSpan(){const s=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];if(!s.length)return 1;const f=new Date(s[0].date+'T12:00:00'),n=new Date(today()+'T12:00:00');return Math.max(1,Math.round((n-f)/86400000));}
+function _wFullSpan(){let s=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];if(_wMetric==='bf'||_wMetric==='both'){const b=s.filter(p=>p.bf!=null);if(b.length>=2)s=b;}if(!s.length)return 1;const f=new Date(s[0].date+'T12:00:00'),n=new Date(today()+'T12:00:00');return Math.max(1,Math.round((n-f)/86400000));}
 function weightZoom(dir){
   const full=_wFullSpan();
   const eff=(_wSpanDays!=null)?_wSpanDays:full;

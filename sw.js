@@ -1,4 +1,4 @@
-const CACHE = 'ft-v336'; // Graphique poids : les flèches ◀▶ déplacent d'une période complète (3 mois = 3 mois) + bouton de période reste actif
+const CACHE = 'ft-v337'; // Graphique poids : zoom/nav des vues Masse grasse + Les 2 cadrés sur la plage des mesures de MG (récentes/clairsemées)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
