@@ -23,6 +23,14 @@ function userKey_(email) {
   return 'u_' + (email || '').toLowerCase().trim();
 }
 
+// SÉCURITÉ : les tokens d'admin ne sont PLUS en dur dans le code (repo public).
+// Ils vivent dans les Script Properties (ADMIN_TOKEN, IDEES_TOKEN, BACKUP_TOKEN).
+// Fail-closed : si la propriété est absente/vide/trop courte, l'accès est REFUSÉ.
+function _checkTok_(propName, given) {
+  var stored = PropertiesService.getScriptProperties().getProperty(propName) || '';
+  return stored.length >= 12 && given === stored;
+}
+
 function loadUserData_(email) {
   const raw = PropertiesService.getScriptProperties().getProperty(userKey_(email));
   if (!raw) return null;
@@ -206,7 +214,7 @@ function doGet(e) {
 
   // Installation trigger backup quotidien — ouvrir l'URL dans le navigateur une seule fois
   // ?action=installDailyBackup&t=FT_BACKUP_INIT_2026
-  if (p.action === 'installDailyBackup' && p.t === 'FT_BACKUP_INIT_2026') {
+  if (p.action === 'installDailyBackup' && _checkTok_('BACKUP_TOKEN', p.t)) {
     try {
       installDailyBackupTrigger_();
       try { backupAllUserData_(); } catch(be) { Logger.log('[FT backup init] ' + be); }
@@ -217,7 +225,7 @@ function doGet(e) {
   }
 
   // Migration onglets Sheet → Drive — ?action=migrateBackups&t=FT_BACKUP_INIT_2026
-  if (p.action === 'migrateBackups' && p.t === 'FT_BACKUP_INIT_2026') {
+  if (p.action === 'migrateBackups' && _checkTok_('BACKUP_TOKEN', p.t)) {
     try {
       const result = migrateSheetBackupsToDrive_();
       const folder = _getDriveBackupFolder_();
@@ -225,8 +233,9 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
-  // Vérification état backup Drive — ?action=checkBackup
+  // Vérification état backup Drive — ?action=checkBackup&token=<BACKUP_TOKEN>
   if (p.action === 'checkBackup') {
+    if (!_checkTok_('BACKUP_TOKEN', p.token)) return json_({status:'error', error:'unauthorized'});
     try {
       const cnt = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'backupAllUserData_').length;
       const folder = _getDriveBackupFolder_();
@@ -240,7 +249,7 @@ function doGet(e) {
 
   // Lecture des idées des testeurs (boîte à idées) — ?action=getIdees&token=FT_IDEES_2026
   if (p.action === 'getIdees') {
-    if (p.token !== 'FT_IDEES_2026') return json_({status:'error', error:'token'});
+    if (!_checkTok_('IDEES_TOKEN', p.token)) return json_({status:'error', error:'token'});
     let arr = [];
     try { arr = JSON.parse(PropertiesService.getScriptProperties().getProperty('TESTER_IDEAS') || '[]'); } catch(e2) { arr = []; }
     return json_({status:'ok', count: arr.length, ideas: arr});
@@ -248,7 +257,7 @@ function doGet(e) {
 
   // Consommation IA du jour (garde-fou coût) — ?action=aiUsage&token=FT_IDEES_2026
   if (p.action === 'aiUsage') {
-    if (p.token !== 'FT_IDEES_2026') return json_({status:'error', error:'token'});
+    if (!_checkTok_('IDEES_TOKEN', p.token)) return json_({status:'error', error:'token'});
     var sp = PropertiesService.getScriptProperties();
     var q = {};
     try { q = JSON.parse(sp.getProperty('ai_quota') || '{}'); } catch(e2) { q = {}; }
@@ -1748,10 +1757,9 @@ function authorizeAndListTriggers() {
 
 // ───────────────────────────────────────────────────────────
 // Restauration admin — réimporte un backup complet depuis PC
-// Token one-time : FT_RESTORE_2026_MICHEL
+// Admin : restaure/écrase un compte — protégé par ADMIN_TOKEN (Script Property, jamais dans le repo)
 function handleAdminRestore_(body) {
-  const ADMIN_TOKEN = 'FT_RESTORE_2026_MICHEL';
-  if (body.adminToken !== ADMIN_TOKEN) {
+  if (!_checkTok_('ADMIN_TOKEN', body.adminToken)) {
     return json_({status:'error', error:'unauthorized'});
   }
   const email = (body.email || '').toLowerCase().trim();
@@ -1779,8 +1787,7 @@ function handleAdminRestore_(body) {
 // ───────────────────────────────────────────────────────────
 // Admin : liste tous les utilisateurs et leurs stats
 function handleListUsers_(body) {
-  const ADMIN_TOKEN = 'FT_RESTORE_2026_MICHEL';
-  if (body.adminToken !== ADMIN_TOKEN) return json_({status:'error', error:'unauthorized'});
+  if (!_checkTok_('ADMIN_TOKEN', body.adminToken)) return json_({status:'error', error:'unauthorized'});
   const props = PropertiesService.getScriptProperties().getProperties();
   const users = [];
   Object.keys(props).filter(k => k.startsWith('u_')).forEach(k => {
