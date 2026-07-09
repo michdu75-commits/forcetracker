@@ -403,18 +403,46 @@ function renderWeightTab(){
     else metricEl.innerHTML=[['kg','Poids'],['bf','Masse grasse'],['both','Les 2']]
       .map(function(m){return '<button class="wmetric-chip'+(_wMetric===m[0]?' active':'')+'" onclick="setWeightMetric(\''+m[0]+'\')">'+m[1]+'</button>';}).join('');
   }
-  // Chips de navigation par période (1 mois / 3 mois / 6 mois / Tout)
+  // ── Fenêtre temporelle : navigation dans l'historique + zoom ──
+  // _wSpanDays = largeur de la fenêtre en jours (null = tout) · _wEndOff = décalage du bord droit (jours) vs aujourd'hui
+  const _isoD=dt=>dt.toISOString().split('T')[0];
+  const firstD=sorted.length?new Date(sorted[0].date+'T12:00:00'):new Date();
+  const nowD=new Date(today()+'T12:00:00');
+  const fullSpan=Math.max(1,Math.round((nowD-firstD)/86400000));
+  const eff=(_wSpanDays!=null)?_wSpanDays:(fullSpan+1);
+  const maxOff=Math.max(0,fullSpan-eff);
+  if(_wEndOff>maxOff)_wEndOff=maxOff;
+  if(_wEndOff<0)_wEndOff=0;
+  const rightD=new Date(nowD);rightD.setDate(rightD.getDate()-_wEndOff);
+  const leftD=new Date(rightD);leftD.setDate(leftD.getDate()-eff);
+  const lStr=_isoD(leftD),rStr=_isoD(rightD);
+  let pts=(_wSpanDays!=null)?sorted.filter(p=>p.date>=lStr&&p.date<=rStr):sorted.slice();
+  // Sous-échantillonnage pour l'affichage si trop de points (garde toujours le dernier)
+  if(pts.length>160){const k=Math.ceil(pts.length/160);pts=pts.filter((_,i)=>i%k===0||i===pts.length-1);}
+  // Chips de période (préréglages)
   const rangeEl=document.getElementById('weight-range');
   if(rangeEl){
     if(sorted.length<2)rangeEl.innerHTML='';
     else rangeEl.innerHTML=[['1m','1 mois'],['3m','3 mois'],['6m','6 mois'],['all','Tout']]
       .map(function(r){return '<button class="wrange-chip'+(_wRange===r[0]?' active':'')+'" onclick="setWeightRange(\''+r[0]+'\')">'+r[1]+'</button>';}).join('');
   }
-  // Filtre selon la période choisie
-  let pts=sorted;
-  const days={'1m':30,'3m':90,'6m':180}[_wRange];
-  if(days){const cut=new Date(today()+'T12:00:00');cut.setDate(cut.getDate()-days);const c=cut.toISOString().split('T')[0];pts=sorted.filter(p=>p.date>=c);}
-  pts=pts.slice(-120);
+  // Ligne de navigation ◀ 🔍− [dates] 🔍+ ▶ (revenir dans le temps + zoomer le graphique)
+  const navEl=document.getElementById('weight-nav');
+  if(navEl){
+    if(sorted.length<2){navEl.style.display='none';}
+    else{
+      navEl.style.display='flex';
+      const allShown=(_wSpanDays==null),atNewest=(_wEndOff<=0),atOldest=(_wEndOff>=maxOff);
+      const nb=(lbl,fn,dis,title)=>'<button class="wnav-btn" title="'+title+'"'+(dis?' disabled':'')+' onclick="'+fn+'">'+lbl+'</button>';
+      const rangeLbl=pts.length?(_fmtWNav(pts[0].date)+' → '+_fmtWNav(pts[pts.length-1].date)):'—';
+      navEl.innerHTML=
+        nb('◀','weightPan(-1)',allShown||atOldest,'Reculer dans le temps')
+        +nb('🔍−','weightZoom(-1)',allShown,'Dézoomer')
+        +'<span style="flex:1;text-align:center;font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+rangeLbl+'</span>'
+        +nb('🔍+','weightZoom(1)',pts.length<3,'Zoomer')
+        +nb('▶','weightPan(1)',allShown||atNewest,'Avancer dans le temps');
+    }
+  }
   // Vue « Masse grasse » : on trace les pesées qui ont une valeur bf
   if(_wMetric==='bf'){
     const bfpts=pts.filter(p=>p.bf!=null);
@@ -447,8 +475,28 @@ function renderWeightTab(){
   if(chartEl)renderWeightChart(pts,chartEl,'kg');
   if(corrEl)renderWeightCorrelations(corrEl,pts);
 }
-let _wRange='all'; // période affichée : '1m' | '3m' | '6m' | 'all'
-function setWeightRange(r){_wRange=r;renderWeightTab();}
+let _wRange='all'; // préréglage actif : '1m' | '3m' | '6m' | 'all' | '' (zoom/pan custom)
+let _wSpanDays=null; // largeur de la fenêtre en jours (null = tout l'historique)
+let _wEndOff=0;      // décalage du bord droit de la fenêtre (jours) vs aujourd'hui
+function setWeightRange(r){_wRange=r;_wSpanDays={'1m':30,'3m':90,'6m':180,'all':null}[r];_wEndOff=0;renderWeightTab();}
+function _fmtWNav(d){const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});}
+function _wFullSpan(){const s=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];if(!s.length)return 1;const f=new Date(s[0].date+'T12:00:00'),n=new Date(today()+'T12:00:00');return Math.max(1,Math.round((n-f)/86400000));}
+function weightZoom(dir){
+  const full=_wFullSpan();
+  const eff=(_wSpanDays!=null)?_wSpanDays:full;
+  let ns=dir>0?Math.max(7,Math.round(eff/1.6)):Math.round(eff*1.6);
+  if(ns>=full){_wSpanDays=null;_wEndOff=0;_wRange='all';}
+  else{_wSpanDays=ns;_wRange='';}
+  renderWeightTab();
+}
+function weightPan(dir){
+  if(_wSpanDays==null)return; // déjà tout affiché
+  const eff=_wSpanDays;
+  const step=Math.max(1,Math.round(eff*0.5));
+  _wEndOff=Math.max(0,_wEndOff+(dir<0?step:-step)); // ◀ = reculer (offset↑) · ▶ = avancer (offset↓)
+  _wRange='';
+  renderWeightTab();
+}
 let _wMetric='kg'; // métrique affichée : 'kg' (poids) | 'bf' (masse grasse)
 function setWeightMetric(m){_wMetric=m;renderWeightTab();}
 

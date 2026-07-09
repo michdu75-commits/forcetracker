@@ -230,6 +230,9 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 /* Bascule Poids ↔ Masse grasse du graphique */
 .wmetric-chip{flex:1;padding:8px 6px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t3);font-size:13px;font-weight:700;font-family:var(--font);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;}
 .wmetric-chip.active{background:var(--bg3);border-color:transparent;color:var(--t1);box-shadow:inset 0 0 0 1px var(--t2);}
+.wnav-btn{min-width:40px;padding:8px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-size:14px;font-weight:700;font-family:var(--font);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:all .15s;touch-action:manipulation;}
+.wnav-btn:active{transform:scale(.94);}
+.wnav-btn:disabled{opacity:.32;cursor:default;}
 .screen>*{flex-shrink:0;}
 
 .help-item{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--sep);}

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v332'; // Fix bouton Omnivore coupé : régime type en grille 2x2 + libellés complets (Végétarien/Pescétarien)
+const CACHE = 'ft-v333'; // Graphique poids : navigation dans le temps (◀▶) + zoom (🔍) par fenêtre de dates, fin du cap 120 pesées
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
