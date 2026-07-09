@@ -1,4 +1,4 @@
-const CACHE = 'ft-v333'; // Graphique poids : navigation dans le temps (◀▶) + zoom (🔍) par fenêtre de dates, fin du cap 120 pesées
+const CACHE = 'ft-v334'; // Sauvegarde cloud : historique poids+sommeil COMPLET (cap 365->4000) + restore garde-le-plus-complet (anti-perte)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
