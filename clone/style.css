@@ -596,7 +596,7 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 /* COACH IA */
 .coach-screen{flex-direction:column;padding:0 0 calc(96px + env(safe-area-inset-bottom)) 0!important;gap:0!important;}
 .screen.active.coach-screen{display:flex;overflow:hidden;}
-.coach-header{padding:max(env(safe-area-inset-top),44px) 16px 12px;border-bottom:1px solid rgba(255,255,255,.05);background:var(--bg);flex-shrink:0;}
+.coach-header{padding:8px 16px 12px;border-bottom:none;background:transparent;flex-shrink:0;}
 .coach-header-title{font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);}
 .coach-header-sub{font-size:12px;color:var(--t3);font-weight:600;margin-top:2px;}
 .coach-messages{flex:1;min-height:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding:14px 14px 8px;display:flex;flex-direction:column;gap:12px;}
