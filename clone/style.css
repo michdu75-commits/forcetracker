@@ -220,6 +220,32 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:12px 14px calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);display:none;flex-direction:column;gap:10px;background:var(--bg);}
 .screen.active{display:flex;}
+/* ─── Halo d'ambiance par onglet (prototype clone) ──────────────
+   Une lueur de couleur douce en haut de chaque écran, différente par onglet,
+   qui se fond dans le noir. Le gros de l'écran reste noir (batterie/lisibilité).
+   La couleur est pilotée par la variable --halo, réglée selon #root[data-screen].
+   Le fond de base var(--bg) reste en 2e couche => sous la lueur = noir pur. */
+#root{--halo:rgba(255,45,85,.13);}
+.screen.active{
+  background:
+    radial-gradient(135% 42% at 50% 0%, var(--halo,transparent), transparent 58%),
+    var(--bg);
+}
+#root[data-screen="home"]     { --halo:rgba(255,45,85,.13); }
+#root[data-screen="log"]      { --halo:rgba(255,108,0,.13); }
+#root[data-screen="progress"] { --halo:rgba(59,130,246,.14); }
+#root[data-screen="nutrition"]{ --halo:rgba(52,211,153,.12); }
+#root[data-screen="coach"]    { --halo:rgba(168,85,247,.14); }
+#root[data-screen="setup"]    { --halo:rgba(234,179,8,.11); }
+#root[data-screen="cycle"]    { --halo:rgba(255,45,85,.12); }
+/* Mode jour : le fond est déjà clair, on allège la lueur */
+#root.light-mode[data-screen="home"]     { --halo:rgba(255,45,85,.07); }
+#root.light-mode[data-screen="log"]      { --halo:rgba(255,108,0,.07); }
+#root.light-mode[data-screen="progress"] { --halo:rgba(59,130,246,.08); }
+#root.light-mode[data-screen="nutrition"]{ --halo:rgba(52,211,153,.07); }
+#root.light-mode[data-screen="coach"]    { --halo:rgba(168,85,247,.08); }
+#root.light-mode[data-screen="setup"]    { --halo:rgba(234,179,8,.07); }
+#root.light-mode[data-screen="cycle"]    { --halo:rgba(255,45,85,.06); }
 /* Espaceur bas de scroll (fix iOS : padding-bottom d'un flex scroll ignoré par Safari).
    Un vrai élément est toujours compté dans la hauteur scrollable → la dernière carte passe au-dessus de la nav. */
 .scroll-spacer{flex:0 0 auto;height:calc(max(env(safe-area-inset-bottom,0px),8px) + 110px);}
