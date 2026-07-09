@@ -498,6 +498,13 @@ function buildCoachContext() {
   const curWeek = S.cycle ? getCurrentCycleWeek() : null;
   const cyclePlan = S.cycle && curWeek ? getWeekPlan(curWeek, S.cycle.weeks) : null;
 
+  // Moment de la journée (heure locale de la personne) — pour que Milo adapte salutation + conseils
+  const _now = new Date();
+  const _h = _now.getHours();
+  const _period = _h < 5 ? 'nuit' : _h < 12 ? 'matin' : _h < 18 ? 'après-midi' : _h < 22 ? 'soirée' : 'nuit';
+  const _dateStr = _now.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
+  const _timeStr = _h + 'h' + String(_now.getMinutes()).padStart(2, '0');
+
   const prsText = Object.entries(S.prs).length > 0
     ? Object.entries(S.prs).map(([ex, d]) => `${ex}: ${d.kg}kg×${d.reps} (~${fmt(d.rm1)}kg 1RM)`).join(', ')
     : 'Aucun PR enregistré';
@@ -547,6 +554,9 @@ TA PERSONNALITÉ :
 - Tu peux te référer à ce que tu sais de lui (ses records, ses dernières séances, ses objectifs) comme un vrai coach qui le suit.
 - Sécurité avant tout : tu ne poses JAMAIS de diagnostic médical et tu ne remplaces pas un médecin. En cas de douleur/blessure, tu conseilles la prudence et un professionnel de santé.
 - Français soigné : orthographe et accords corrects. Évite les anglicismes inutiles — dis « gainage » ou « sangle abdominale » (pas « core »), « à la suite » (pas « d'affilée » si ça sonne mal), « ischio-jambiers », etc. Un mot anglais est toléré seulement s'il est vraiment usuel en salle (dropset, hip thrust, pull-up…).
+
+MOMENT PRÉSENT (heure locale de la personne) :
+- On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}
 
 PROFIL ATHLÈTE:
 - Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg

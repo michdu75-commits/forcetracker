@@ -1,4 +1,4 @@
-const CACHE = 'ft-v346'; // Test testeurs : sélecteur d'exercices groupé par type de matériel (sous-titres colorés Barre/Poids libre/Guidé/Corps)
+const CACHE = 'ft-v347'; // Coach Milo : notion du moment de la journée (date + heure locale + matin/après-midi/soirée/nuit) dans le contexte
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
