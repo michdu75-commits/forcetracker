@@ -216,7 +216,7 @@ function _cloudSync(){
       // Photos d'exercices = LOCAL SEULEMENT (n'alourdissent plus le store cloud de 9 Mo) :
       // on envoie les exos perso SANS leur photo (img), et on n'envoie plus exPhotos du tout.
       customExercises:(S.customExercises||[]).map(function(e){var c={};for(var k in e){if(k!=='img')c[k]=e[k];}return c;}),
-      sessions:(S.sessions||[]).slice(0,100),
+      sessions:(S.sessions||[]).slice(0,2000), // ~8-10 ans de seances — plus limite a 100 (historique complet sauvegarde)
       prs:S.prs||{},
       weightLog:(S.weightLog||[]).slice(-4000), // historique complet (~11 ans de pesées quotidiennes) — entrées minuscules, pas seulement 1 an
       sleepLog:(S.sleepLog||[]).slice(-4000),
@@ -233,7 +233,7 @@ function _cloudSync(){
       diet:S.diet||'',
       dietRestrictions:S.dietRestrictions||[],
       dietNotes:S.dietNotes||'',
-      foodLog:(S.foodLog||[]).slice(-2000),
+      foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)
       foodAiUses:S.foodAiUses||0,
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',

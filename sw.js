@@ -1,4 +1,4 @@
-const CACHE = 'ft-v334'; // Sauvegarde cloud : historique poids+sommeil COMPLET (cap 365->4000) + restore garde-le-plus-complet (anti-perte)
+const CACHE = 'ft-v335'; // Sauvegarde cloud sans limite de temps : séances 100->2000, journal nutrition 2000->8000 (tout l'historique)
 const PRECACHE = [
   './', './index.html', './style.css',
   './constants.js', './state.js', './screens.js', './log.js',
