@@ -491,6 +491,25 @@ async function activatePremium() {
   } catch(e) { toast('Erreur de connexion', 'error'); }
 }
 
+// Décrit le temps écoulé depuis le dernier échange avec Milo (pour qu'il reprenne naturellement)
+function _coachGapText() {
+  let last = 0;
+  try { last = parseInt(localStorage.getItem('ft4_coach_lastts') || '0') || 0; } catch(e) {}
+  if (!last || !coachHistory.length) return '';
+  const ms = Date.now() - last;
+  const mins = ms / 60000;
+  if (mins < 20) return ''; // conversation en cours : rien à signaler
+  const d1 = new Date(last), d2 = new Date();
+  const dayDiff = Math.floor((new Date(d2.getFullYear(),d2.getMonth(),d2.getDate()) - new Date(d1.getFullYear(),d1.getMonth(),d1.getDate())) / 86400000);
+  let g;
+  if (dayDiff === 0)      g = 'plus tôt aujourd\'hui (il y a ~' + Math.max(1, Math.round(ms/3600000)) + 'h)';
+  else if (dayDiff === 1) g = 'hier';
+  else if (dayDiff < 7)   g = 'il y a ' + dayDiff + ' jours';
+  else if (dayDiff < 14)  g = 'il y a une semaine environ';
+  else if (dayDiff < 60)  g = 'il y a ' + Math.round(dayDiff/7) + ' semaines';
+  else                    g = 'il y a un moment (plus d\'un mois)';
+  return '\n- VOTRE DERNIER ÉCHANGE remonte à ' + g + '. Rends-toi compte de ce délai : accueille la personne en fonction (ex. « content de te revoir », « alors, cette séance d\'hier ? », « ça faisait un moment ! ») — naturellement, sans en faire trop, et NE fais PAS comme si la conversation venait de s\'interrompre il y a 5 min.';
+}
 function buildCoachContext() {
   const bmr = calcBMR ? calcBMR() : '—';
   const tdee = calcTDEE ? calcTDEE() : '—';
@@ -556,7 +575,7 @@ TA PERSONNALITÉ :
 - Français soigné : orthographe et accords corrects. Évite les anglicismes inutiles — dis « gainage » ou « sangle abdominale » (pas « core »), « à la suite » (pas « d'affilée » si ça sonne mal), « ischio-jambiers », etc. Un mot anglais est toléré seulement s'il est vraiment usuel en salle (dropset, hip thrust, pull-up…).
 
 MOMENT PRÉSENT (heure locale de la personne) :
-- On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}
+- On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}${_coachGapText()}
 
 PROFIL ATHLÈTE:
 - Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
@@ -997,6 +1016,7 @@ async function sendToCoach(customMsg, displayMsg) {
     coachHistory.push({ role: 'assistant', content: reply });
     if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
+    try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)
     const newBtn=document.getElementById('coach-new-btn'); if(newBtn)newBtn.style.display='flex';
 
     // Sauvegarde mémoire intelligente (Premium, fire-and-forget)

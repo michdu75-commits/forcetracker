@@ -1,4 +1,4 @@
-const CACHE = 'ft-v347'; // Coach Milo : notion du moment de la journée (date + heure locale + matin/après-midi/soirée/nuit) dans le contexte
+const CACHE = 'ft-v348'; // Coach Milo : notion du délai depuis le dernier échange (hier, il y a X jours…) -> reprend naturellement
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
