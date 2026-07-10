@@ -185,6 +185,8 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 const WHATS_NEW=[
+  {v:8, ic:'🎨', t:'Ton app à ta couleur', d:'Nouveau : un halo d\'ambiance en mode nuit ✨. Dans Menu → Apparence, choisis TA couleur (8 teintes), le sens du halo (haut/bas), ou un fond uni tout noir. Le thème Jour/Nuit est aussi regroupé là.'},
+  {v:7, ic:'🏋️', t:'Séances : cardio & corrections', d:'Tu peux maintenant enregistrer une séance de cardio seul (sans muscu). Et sur une séance passée, tu peux ajouter un exercice oublié, des séries, ou le cardio.'},
   {v:6, ic:'🏃', t:'Niveau de travail « Actif »', d:'Nouveau réglage dans ton Profil pour les métiers debout ET en déplacement toute la journée (serveuse, infirmier, vendeur) — entre « Debout » et « Physique ». Tes calories et macros de la Nutrition sont plus justes.'},
   {v:5, ic:'💬', t:'Milo (Coach IA) plus naturel', d:'Le Coach sait maintenant l\'heure qu\'il est (jour / nuit) et depuis combien de temps vous vous êtes parlé (hier, il y a quelques jours…) — il t\'accueille comme il faut au lieu de reprendre comme si tu venais de partir.'},
   {v:4, ic:'📓', t:'Journal alimentaire', d:'Onglet « Journal » dans Nutrition : note ce que tu manges et suis tes calories + macros du jour face à ton objectif.'},
@@ -192,7 +194,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=6;      // = plus grand `v` ci-dessus
+const WHATS_NEW_MAX=8;      // = plus grand `v` ci-dessus
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

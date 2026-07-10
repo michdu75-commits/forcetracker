@@ -231,19 +231,49 @@ function applyTheme() {
   }
 }
 
-// -- Apparence : halo bleu (defaut) ou fond uni + theme Jour/Nuit (regroupe dans le Menu) --
-function setHalo(mode){
-  S.halo = (mode==='none') ? 'none' : 'blue';
+// -- Apparence : halo (couleur au choix) ou fond uni + theme Jour/Nuit --
+function setHalo(mode){        // 'none' = fond uni ; sinon = halo active (garde la couleur courante)
+  S.halo = (mode==='none') ? 'none' : 'on';
   try{ localStorage.setItem('ft4_halo', S.halo); }catch(e){}
   persist();
   _applyHalo();
-  toast(S.halo==='none' ? 'Apparence : Fond uni' : 'Apparence : Halo bleu ✨', 'info');
+  toast(S.halo==='none' ? 'Apparence : Fond uni' : 'Apparence : Halo active ✨', 'info');
+}
+function setHaloColor(rgb){    // couleur de la palette -> active le halo avec cette couleur
+  S.halo='on'; S.haloColor=rgb;
+  try{ localStorage.setItem('ft4_halo','on'); localStorage.setItem('ft4_haloColor',rgb); }catch(e){}
+  persist();
+  _applyHalo();
+}
+function setHaloDir(dir){      // 'top' (normal) | 'bottom' (inverse)
+  S.haloDir = (dir==='bottom') ? 'bottom' : 'top';
+  try{ localStorage.setItem('ft4_haloDir', S.haloDir); }catch(e){}
+  persist();
+  _applyHalo();
 }
 function _applyHalo(){
+  const root=document.getElementById('root');
   document.documentElement.classList.toggle('no-halo', S.halo==='none');
-  const b=document.getElementById('appr-blue'), n=document.getElementById('appr-none');
-  if(b) b.classList.toggle('active', S.halo!=='none');
+  if(root){
+    root.style.setProperty('--halo-rgb', S.haloColor||'59,130,246');
+    if(S.haloDir==='bottom'){
+      root.style.setProperty('--halo-y','100%');
+      root.style.setProperty('--halo-h','118%');
+      root.style.setProperty('--halo-stop','82%');
+    }else{
+      root.style.setProperty('--halo-y','0%');
+      root.style.setProperty('--halo-h','92%');
+      root.style.setProperty('--halo-stop','66%');
+    }
+  }
+  const n=document.getElementById('appr-none');
   if(n) n.classList.toggle('active', S.halo==='none');
+  const dn=document.getElementById('appr-dir-normal'), di=document.getElementById('appr-dir-invert');
+  if(dn) dn.classList.toggle('active', S.haloDir!=='bottom');
+  if(di) di.classList.toggle('active', S.haloDir==='bottom');
+  document.querySelectorAll('.appr-color').forEach(function(el){
+    el.classList.toggle('active', S.halo!=='none' && el.getAttribute('data-rgb')===S.haloColor);
+  });
 }
 function setTheme(mode){
   const isLight = mode==='light';

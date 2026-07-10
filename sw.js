@@ -1,4 +1,4 @@
-const CACHE = 'ft-v355'; // Seance passee : ajouter un/des exercices + des series + un cardio (editeur #ov-sess-detail enrichi)
+const CACHE = 'ft-v356'; // Apparence : palette de couleurs du halo + sens (Normal/Inverse) en prod + pop-up nouveaute (halo/Apparence + cardio/seances)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

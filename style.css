@@ -75,7 +75,7 @@ html.light-mode #menu-drawer-bd{background:rgba(0,0,0,.25);}
 #root.light-mode .drawer{box-shadow:-4px 0 16px rgba(0,0,0,.10);}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--font);color:var(--t1);overscroll-behavior-x:none;}
-#root{display:flex;flex-direction:column;height:100dvh;max-width:430px;margin:0 auto;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E") repeat, radial-gradient(150% var(--halo-h,92%) at 50% 0%, var(--halo,transparent), transparent var(--halo-stop,66%)) no-repeat, var(--bg);overflow:hidden;position:relative;}
+#root{display:flex;flex-direction:column;height:100dvh;max-width:430px;margin:0 auto;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E") repeat, radial-gradient(150% var(--halo-h,92%) at 50% var(--halo-y,0%), var(--halo,transparent), transparent var(--halo-stop,66%)) no-repeat, var(--bg);overflow:hidden;position:relative;}
 /* Halo d'ambiance (signature du MODE NUIT) : un seul halo bleu derriere tout, reglable via Apparence (Menu). */
 #root{ --halo-rgb:59,130,246; --halo-a:.30; --halo:rgba(var(--halo-rgb),var(--halo-a)); }
 #root.light-mode{ background:var(--bg); } /* mode jour = clair epure, pas de halo */
@@ -83,6 +83,9 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .appr-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 8px;border-radius:12px;border:none;background:var(--bg3);color:var(--t2);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all .18s;}
 .appr-btn.active{color:var(--t1);box-shadow:inset 0 0 0 2px var(--blue);background:rgba(91,168,255,.10);}
 .appr-sw{width:18px;height:18px;border-radius:6px;flex-shrink:0;display:inline-block;}
+.appr-colors{display:flex;flex-wrap:wrap;gap:10px;}
+.appr-color{width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s;padding:0;}
+.appr-color.active{box-shadow:0 0 0 2px var(--bg2),0 0 0 4px var(--t1);transform:scale(1.06);}
 @media(orientation:landscape) and (hover:none) and (pointer:coarse){#rotate-overlay{display:flex!important;}}
 
 /* TOPBAR */
