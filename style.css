@@ -286,7 +286,7 @@ button:active{transform:scale(.95);}
 /* Splash iPhone (app installée) — caché par défaut, affiché via html.ios-boot, fondu auto en CSS (jamais bloqué) */
 #ios-splash{position:fixed;inset:0;z-index:100000;background:#0C0C0E;display:none;align-items:center;justify-content:center;}
 #ios-splash img{width:170px;height:170px;object-fit:contain;-webkit-user-drag:none;}
-html.ios-boot #ios-splash{display:flex;animation:iosSplashFade .5s ease .9s forwards;}
+html.ios-boot #ios-splash{display:flex;animation:iosSplashFade .5s ease 1.8s forwards;}
 @keyframes iosSplashFade{from{opacity:1;}to{opacity:0;visibility:hidden;}}
 .btn-ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.35);width:60px;height:60px;margin:-30px 0 0 -30px;pointer-events:none;animation:btn-ripple .5s ease-out forwards;}
 .btn{width:100%;padding:15px;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;transition:transform .15s,opacity .15s,background .15s,box-shadow .15s;letter-spacing:.3px;}

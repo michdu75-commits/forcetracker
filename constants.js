@@ -185,6 +185,7 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 const WHATS_NEW=[
+  {v:9, ic:'🔒', t:'Mise à jour de sécurité en approche', d:'On renforce la protection de tes données 🛡️. Plusieurs améliorations sont DÉJÀ en place (invisibles pour toi). Et très bientôt : tu pourras protéger ton compte avec un CODE PERSO — comme un mot de passe — pour que toi seul(e) puisses accéder à tes séances, ton poids et tes infos. Aucune action à faire maintenant : on te guidera pas à pas le moment venu, et tes données restent en sécurité entre-temps. 👊'},
   {v:8, ic:'🎨', t:'Ton app à ta couleur', d:'Nouveau : un halo d\'ambiance en mode nuit ✨. Dans Menu → Apparence, choisis TA couleur (8 teintes), le sens du halo (haut/bas), ou un fond uni tout noir. Le thème Jour/Nuit est aussi regroupé là.'},
   {v:7, ic:'🏋️', t:'Séances : cardio & corrections', d:'Tu peux maintenant enregistrer une séance de cardio seul (sans muscu). Et sur une séance passée, tu peux ajouter un exercice oublié, des séries, ou le cardio.'},
   {v:6, ic:'🏃', t:'Niveau de travail « Actif »', d:'Nouveau réglage dans ton Profil pour les métiers debout ET en déplacement toute la journée (serveuse, infirmier, vendeur) — entre « Debout » et « Physique ». Tes calories et macros de la Nutrition sont plus justes.'},
@@ -194,7 +195,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=8;      // = plus grand `v` ci-dessus
+const WHATS_NEW_MAX=9;      // = plus grand `v` ci-dessus
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

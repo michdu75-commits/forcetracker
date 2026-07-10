@@ -1,4 +1,4 @@
-const CACHE = 'ft-v362'; // logo gris : splash iPhone (app installee) + remplace le logo dans l'app (topbar + onboarding)
+const CACHE = 'ft-v363'; // annonce Quoi de neuf securite (code perso a venir) + splash iPhone affiche plus longtemps
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
