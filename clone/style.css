@@ -80,7 +80,7 @@ html.light-mode #menu-drawer-bd{background:rgba(0,0,0,.25);}
 #root.light-mode .drawer{box-shadow:-4px 0 16px rgba(0,0,0,.10);}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--font);color:var(--t1);overscroll-behavior-x:none;}
-#root{display:flex;flex-direction:column;height:100dvh;max-width:430px;margin:0 auto;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E") repeat, radial-gradient(150% 92% at 50% 0%, var(--halo,transparent), transparent 66%) no-repeat, var(--bg);overflow:hidden;position:relative;}
+#root{display:flex;flex-direction:column;height:100dvh;max-width:430px;margin:0 auto;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E") repeat, radial-gradient(150% var(--halo-h,92%) at 50% 0%, var(--halo,transparent), transparent var(--halo-stop,66%)) no-repeat, var(--bg);overflow:hidden;position:relative;}
 @media(orientation:landscape) and (hover:none) and (pointer:coarse){#rotate-overlay{display:flex!important;}}
 
 /* TOPBAR */
@@ -237,8 +237,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
   --halo-a:.30;              /* intensité mode nuit */
   --halo:rgba(var(--halo-rgb),var(--halo-a));
 }
-/* mode jour : sur fond clair un bleu translucide vire au pâle délavé → bleu plus profond + saturé + plus opaque, pour un rendu franc comme en nuit */
-#root.light-mode{ --halo-rgb:37,99,235; --halo-a:.42; }
+/* mode jour : bleu ENCORE plus foncé/saturé (le pâle délavé disparaît) + halo descendu à ~80% de l'écran, fondu bien progressif */
+#root.light-mode{ --halo-rgb:29,78,216; --halo-a:.50; --halo-h:100%; --halo-stop:80%; }
 /* Apparence « Noir » (choix Menu → Apparence) : plus de halo ni de grain, fond uni comme avant */
 html.no-halo #root{ background:var(--bg); }
 /* Boutons du choix Apparence (Menu) */
