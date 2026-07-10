@@ -1782,7 +1782,7 @@ function _isChristophe(){return (S.email||'').trim().toLowerCase()==='christophe
 function checkAnnouncements(){
   try{
     // Christophe : son pop perso « billoute » d'abord ; une fois vu, il reçoit les annonces générales comme tout le monde.
-    if(_isChristophe()&&!localStorage.getItem('ft4_billoute_v2')){
+    if(_isChristophe()&&!localStorage.getItem('ft4_billoute_v3')){
       setTimeout(showBilloute,1000);
       return;
     }
@@ -1790,7 +1790,7 @@ function checkAnnouncements(){
   }catch(e){}
 }
 function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
-function closeBilloute(){try{localStorage.setItem('ft4_billoute_v2','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
+function closeBilloute(){try{localStorage.setItem('ft4_billoute_v3','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
 // ─── « Quoi de neuf » versionné : montre toutes les nouveautés non vues d'un coup ──
 function _whatsNewSeen(){
   try{

@@ -157,6 +157,21 @@ function createSupersetFrom(ei){
   openExPicker();
   toast('Choisis le 2ᵉ exercice de la supersérie','info');
 }
+// Lie l'exercice avec CELUI DU DESSUS en superset (demande Christophe : « glisser sur le
+// précédent »). Ne touche QUE la séance en cours (S.wkt), jamais le programme sauvegardé.
+function supersetWithPrev(ei){
+  if(!S.wkt||!S.wkt.exs||ei<=0){toast('Aucun exercice au-dessus','info');return;}
+  const cur=S.wkt.exs[ei], prev=S.wkt.exs[ei-1];
+  if(!cur||!prev)return;
+  if(cur.dropset||prev.dropset){toast('Impossible avec un dropset','info');return;}
+  // Réutilise le superset du dessus s'il existe (→ tri-set), sinon en crée un neuf.
+  let gid=(prev.group&&prev.groupType==='super')?prev.group:null;
+  if(!gid){gid='ss'+Date.now();prev.group=gid;prev.groupType='super';}
+  cur.group=gid;cur.groupType='super';
+  _expandedEx=ei-1;
+  persist();renderExBlocks();
+  toast('Superset créé ⚡','success');
+}
 let _addToGroupGid=null;
 // ─── DROPSET / PYRAMIDE ─────────────────────────────────────────────────────
 let _dropCfgEi=null,_dropCfgPaliers=3,_dropCfgPct=20,_dropCfgDir='down';
@@ -609,6 +624,7 @@ function openExMenu(ei,hasGif){
   ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
     +mRow('🔄','Remplacer l\'exercice',`openExPickerForReplace(${ei})`)
+    +((ei>0 && !ex.group && !ex.dropset)?mRow('⚡','Superset avec l\'exercice du dessus',`closeExMenu();supersetWithPrev(${ei})`):'')
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
     +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
     +mRow('📷',hasUserPhoto?'Changer la photo':'Ajouter une photo',`closeExMenu();changeExImg('${safeNm}')`)
