@@ -282,13 +282,16 @@ function _initSwipe(){
     // Ne pas naviguer si le geste part d'un contrôle (saisie kg/reps, boutons…) — évite les onglets qui sautent en séance
     if(sel&&sel.closest&&sel.closest('input,textarea,select,button,a,.tbtn,.chk'))return;
     if(_hScrollParent(sel))return;
-    const idx=_SWIPE_ORDER.indexOf(window._curScreen);
+    // La Séance (log) n'est swipable QUE si une séance est active — sinon on tomberait
+    // sur l'écran vide (« onglet blanc »). Hors séance, on l'atteint par le bouton +.
+    const order=(typeof S!=='undefined'&&S&&S.wkt)?_SWIPE_ORDER:_SWIPE_ORDER.filter(s=>s!=='log');
+    const idx=order.indexOf(window._curScreen);
     if(idx<0)return;
-    if(dx<0&&idx<_SWIPE_ORDER.length-1){
-      const next=_SWIPE_ORDER[idx+1];
+    if(dx<0&&idx<order.length-1){
+      const next=order[idx+1];
       goScreen(next,document.getElementById('nb-'+next));
     }else if(dx>0&&idx>0){
-      const prev=_SWIPE_ORDER[idx-1];
+      const prev=order[idx-1];
       goScreen(prev,document.getElementById('nb-'+prev));
     }
   },{passive:true});

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v359'; // Securite : echappement anti-injection des noms (exos/programmes/repas/fichiers) + plafonds IA baisses + Ko-fi fail-closed
+const CACHE = 'ft-v360'; // Fix swipe : la Seance (log) n'est swipable que si une seance est active -> plus d'onglet blanc
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
