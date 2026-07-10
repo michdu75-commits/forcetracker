@@ -1877,6 +1877,7 @@ _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 checkSuperTesterWelcome(); // message « super testeur » une seule fois (Christophe)
+checkEmmaWelcome(); // pop perso Emma : bienvenue Espace Testeur + boîte à idées (une seule fois)
 checkAnnouncements(); // pop perso Christophe + « Quoi de neuf » pour tous (une seule fois)
 checkTesterEq();      // pop testeurs : différenciation des types de matériel (test, une seule fois)
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
@@ -1889,12 +1890,23 @@ function checkSuperTesterWelcome(){
   try{
     // Le message « Michel te remercie » est réservé aux vrais testeurs récompensés (pas à Michel lui-même).
     if(!_isSuperTester()||!(typeof _isTester==='function'&&_isTester()))return;
+    if(_isEmma())return; // Emma a son propre message perso (checkEmmaWelcome)
     if(localStorage.getItem('ft4_super_welcome_v1'))return;
     setTimeout(showSuperWelcome,900);
   }catch(e){}
 }
 function showSuperWelcome(){const o=document.getElementById('ov-super-welcome');if(o)o.classList.add('open');}
 function closeSuperWelcome(){try{localStorage.setItem('ft4_super_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-super-welcome');if(o)o.classList.remove('open');}
+// ─── Pop-up perso Emma : bienvenue Espace Testeur + boîte à idées (une seule fois) ──
+function _isEmma(){return (S.email||'').trim().toLowerCase()==='emma.david16@gmail.com';}
+function checkEmmaWelcome(){
+  try{
+    if(!_isEmma())return;
+    if(localStorage.getItem('ft4_emma_welcome_v1'))return;
+    setTimeout(function(){const o=document.getElementById('ov-emma-welcome');if(o)o.classList.add('open');},1000);
+  }catch(e){}
+}
+function closeEmmaWelcome(){try{localStorage.setItem('ft4_emma_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-emma-welcome');if(o)o.classList.remove('open');}
 // ─── Annonces : pop-up perso Christophe + « Quoi de neuf » pour tous (une seule fois) ──
 function _isChristophe(){return (S.email||'').trim().toLowerCase()==='christophe@famillelanglois.fr';}
 function checkAnnouncements(){

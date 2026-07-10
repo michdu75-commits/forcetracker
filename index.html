@@ -1135,6 +1135,21 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
   </div>
 </div>
 
+<!-- POP-UP perso Emma — bienvenue Espace Testeur + boîte à idées (une seule fois) -->
+<div class="overlay" id="ov-emma-welcome" style="z-index:9999;">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:50px;line-height:1;">🎉</div>
+    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Bienvenue dans l'équipe, Emma !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel t'a donné un accès spécial rien que pour toi 👇</div>
+    <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
+      <div class="sw-feat"><span>🌟</span><div><b>Tu es Testeuse de l'app</b><small>Tu vois maintenant une <b>carte dorée « Testeur »</b> tout en haut de ton Accueil. C'est ta porte d'entrée vers l'Espace Testeur.</small></div></div>
+      <div class="sw-feat"><span>💡</span><div><b>La boîte à idées — le plus important</b><small>Une idée, un truc qui te gêne, un bug, une suggestion ? <b>Écris-le à Michel</b> (tu peux ajouter des photos ou des captures d'écran). → <b>Accueil → carte dorée → Espace Testeur → Boîte à idées</b>. Michel reçoit tout, et c'est comme ça que l'app s'améliore. 🙏</small></div></div>
+      <div class="sw-feat"><span>📸</span><div><b>Bonus : analyse de tes photos</b><small>Dans le même Espace Testeur, tu peux faire analyser tes photos d'évolution (en avant-première).</small></div></div>
+    </div>
+    <button class="btn btn-red" onclick="closeEmmaWelcome()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">J'ai compris, merci Michel ! 🙌</button>
+  </div>
+</div>
+
 <!-- POP-UP « Quoi de neuf » — tout le monde, une seule fois -->
 <div class="overlay" id="ov-whatsnew" style="z-index:500;">
   <div class="modal" style="max-width:400px;text-align:center;">

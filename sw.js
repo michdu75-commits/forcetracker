@@ -1,4 +1,4 @@
-const CACHE = 'ft-v366'; // Protection compte : formulaire clarifie (1 code email / 2 code perso) + deverrouillage admin (retrait outil de test)
+const CACHE = 'ft-v367'; // Emma : acces Espace Testeur (boite a idees) + pop-up perso d'explication
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

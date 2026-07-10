@@ -216,7 +216,7 @@ const ADMIN_CODE='0115'; // code de secours (modifiable sur demande)
 const TESTER_EMAILS=['christophe@famillelanglois.fr','elineazs32@gmail.com','emma.david16@gmail.com'];
 // « Super testeur » : celui qui teste vraiment à fond → espace exclusif (analyse photos approfondie + boîte à idées remontée à Michel).
 // michdu75 y est aussi pour le suivi photos (accès via le panneau Admin) — mais PAS de carte « Testeur Fondateur » ni de message « Michel te remercie » (voir _isTester / checkSuperTesterWelcome).
-const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr','michdu75@gmail.com'];
+const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr','michdu75@gmail.com','emma.david16@gmail.com'];
 // Email où remontent les idées de la boîte à idées → compte dédié de l'app (séparé du mail perso de Michel).
 const TESTER_FEEDBACK_EMAIL='forcetracker.app@gmail.com';
 
