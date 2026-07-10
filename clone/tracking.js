@@ -1370,14 +1370,20 @@ function renderLogSleep(){
       +'<button class="slq-btn" id="sq-4" onclick="setSleepQual(4)">'+bars(4)+'Excellent</button>'
       +'</div>'
       +'<div style="display:flex;gap:8px;align-items:center;">'
-      +'<input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?ts.hours:'')+'">'
+      +'<input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" oninput="_toggleSleepSaveBtn(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?ts.hours:'')+'">'
       +'<span style="font-size:13px;color:var(--t2);white-space:nowrap;">h de sommeil</span>'
       +(ts?'<button class="btn btn-bg2 btn-sm" onclick="_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;font-size:12px;padding:8px 12px;">Annuler</button>':'')
       +'</div>'
-      +'<button class="btn btn-red ft-press" onclick="saveSleepEntry()" style="margin-top:10px;padding:14px;">Enregistrer</button>'
+      +'<button id="sleep-save-btn" class="btn btn-red ft-press" onclick="saveSleepEntry()" style="margin-top:10px;padding:10px;font-size:14px;display:'+((ts&&ts.hours)?'block':'none')+';">Enregistrer</button>'
       +'</div>';
     updateSleepQualBtns();
   }
+}
+
+// Bouton « Enregistrer » du sommeil : visible seulement quand une valeur d'heures est saisie.
+function _toggleSleepSaveBtn(v){
+  const b=document.getElementById('sleep-save-btn');
+  if(b)b.style.display=(parseFloat(v)>0)?'block':'none';
 }
 
 function renderLogFinish(){

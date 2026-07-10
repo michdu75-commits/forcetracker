@@ -1,4 +1,4 @@
-const CACHE = 'ft-v368'; // Scommeil/cardio : bouton Enregistrer plus petit, visible seulement si valeur, cardio validable sur place (plus de scroll) + carte email masquee si compte protege
+const CACHE = 'ft-v369'; // Guide de l'app : slide 'Proteger ton compte' (vue a l'installation via le guide auto) + resync clone
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

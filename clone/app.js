@@ -102,10 +102,15 @@ function setCardioField(field,val){
 }
 function _updateCardioSummary(){
   const c=S.wkt&&S.wkt.cardio;if(!c)return;
-  const el=document.getElementById('cardio-summary');if(!el)return;
-  const kcal=calcCardioKcal(c);
-  el.textContent=c.duration?`${CARDIO_LABELS[c.type||'elliptique']} · ${c.duration}min · ~${kcal}kcal`:'optionnel';
-  el.style.color=kcal?'var(--green)':'var(--t3)';
+  const el=document.getElementById('cardio-summary');
+  if(el){
+    const kcal=calcCardioKcal(c);
+    el.textContent=c.duration?`${CARDIO_LABELS[c.type||'elliptique']} · ${c.duration}min · ~${kcal}kcal`:'optionnel';
+    el.style.color=kcal?'var(--green)':'var(--t3)';
+  }
+  // Bouton « Enregistrer le cardio » : visible dès qu'une durée est saisie (sans re-render → focus gardé)
+  const btn=document.getElementById('cardio-save-btn');
+  if(btn)btn.style.display=(c.duration>0)?'block':'none';
 }
 let _cardioOpen=false;
 function toggleCardio(){_cardioOpen=!_cardioOpen;renderCardioBlock();}
@@ -136,8 +141,16 @@ function renderCardioBlock(){
         <span style="font-size:12px;color:var(--t3);">min</span>
       </div>
     </div>
+    <button id="cardio-save-btn" class="btn btn-red ft-press" onclick="saveCardioEntry()" style="width:100%;margin-top:10px;padding:10px;font-size:14px;display:${c.duration>0?'block':'none'};">✓ Enregistrer le cardio</button>
   </div>`:''}
 </div>`;
+}
+// Valide le cardio : replie le bloc (le résumé reste visible dans l'en-tête) — pas besoin de scroller.
+function saveCardioEntry(){
+  if(!S.wkt||!S.wkt.cardio||!S.wkt.cardio.duration){toast('Entre une durée de cardio','info');return;}
+  _cardioOpen=false;persist();renderCardioBlock();
+  if(typeof renderLogFinish==='function')renderLogFinish();
+  toast('Cardio enregistré ✅','success');
 }
 
 // ─── CALORIES BRÛLÉES ─────────────────────────────────────────
@@ -892,6 +905,8 @@ function verifyEmailCode(){
 function _renderEmailVerifyCard(){
   const el=document.getElementById('email-verify-card'); if(!el)return;
   if(!S.email){ el.innerHTML=''; return; }
+  // Compte protégé (code perso) = email déjà vérifié → pas de prompt redondant.
+  if(_authCode()){ el.innerHTML=''; return; }
   if(S.emailVerified){
     el.innerHTML='<div style="display:flex;align-items:center;gap:7px;justify-content:center;font-size:13px;color:var(--green);font-weight:700;padding:8px;">✅ Email confirmé</div>';
     return;
@@ -1194,6 +1209,7 @@ const APP_GUIDE_SLIDES=[
   {img:'../guide/progres.jpg',    tap:[.5,.32],   t:'Tes progrès',            cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs.'},
   {img:'../guide/bilan.jpg',      tap:[.5,.72],   t:'Ton bilan corporel',     cap:'Balance pro (impédance) ? Enregistre tes chiffres — <b>📷 photo</b>, à la main ou code. Poids, graisse, muscle, métabolisme… Tu suis l\'<b>évolution</b> et <b>Milo s\'en sert</b>.'},
   {img:'../guide/coach.jpg',      tap:[.5,.86],   t:'Milo, ton coach IA',     cap:'Une <b>question</b> ? Besoin d\'un <b>conseil</b> ou d\'un guide ? Milo répond à tout — il connaît ton profil.'},
+  {secure:true, t:'Protège ton compte 🔒', cap:'Ajoute un <b>code perso</b> pour que <b>toi seul</b> accèdes à tes données — même depuis un autre téléphone. Va dans <b>Profil → 🔒 Protéger mon compte</b> : on vérifie ton email une fois (pense à tes spams), puis tu choisis ton code. Ça protège tes séances, ton poids et tes infos.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;
@@ -1228,9 +1244,9 @@ function _renderAppGuide(){
   const set=(id,html,prop)=>{const el=document.getElementById(id);if(el)el[prop||'textContent']=html;};
   const phone=document.getElementById('ag-phone'),prem=document.getElementById('ag-premium');
   const img=document.getElementById('ag-img'),tap=document.getElementById('ag-tap');
-  if(s.premium){
+  if(s.premium||s.secure){
     if(phone)phone.style.display='none';
-    if(prem)prem.style.display='flex';
+    if(prem){prem.style.display='flex';prem.textContent=s.secure?'🔒':'⭐';}
   } else {
     if(prem)prem.style.display='none';
     if(phone)phone.style.display='block';

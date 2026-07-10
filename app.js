@@ -1209,6 +1209,7 @@ const APP_GUIDE_SLIDES=[
   {img:'guide/progres.jpg',    tap:[.5,.32],   t:'Tes progrès',            cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs.'},
   {img:'guide/bilan.jpg',      tap:[.5,.72],   t:'Ton bilan corporel',     cap:'Balance pro (impédance) ? Enregistre tes chiffres — <b>📷 photo</b>, à la main ou code. Poids, graisse, muscle, métabolisme… Tu suis l\'<b>évolution</b> et <b>Milo s\'en sert</b>.'},
   {img:'guide/coach.jpg',      tap:[.5,.86],   t:'Milo, ton coach IA',     cap:'Une <b>question</b> ? Besoin d\'un <b>conseil</b> ou d\'un guide ? Milo répond à tout — il connaît ton profil.'},
+  {secure:true, t:'Protège ton compte 🔒', cap:'Ajoute un <b>code perso</b> pour que <b>toi seul</b> accèdes à tes données — même depuis un autre téléphone. Va dans <b>Profil → 🔒 Protéger mon compte</b> : on vérifie ton email une fois (pense à tes spams), puis tu choisis ton code. Ça protège tes séances, ton poids et tes infos.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
 let _agIdx=0,_agSwipeInit=false;
@@ -1243,9 +1244,9 @@ function _renderAppGuide(){
   const set=(id,html,prop)=>{const el=document.getElementById(id);if(el)el[prop||'textContent']=html;};
   const phone=document.getElementById('ag-phone'),prem=document.getElementById('ag-premium');
   const img=document.getElementById('ag-img'),tap=document.getElementById('ag-tap');
-  if(s.premium){
+  if(s.premium||s.secure){
     if(phone)phone.style.display='none';
-    if(prem)prem.style.display='flex';
+    if(prem){prem.style.display='flex';prem.textContent=s.secure?'🔒':'⭐';}
   } else {
     if(prem)prem.style.display='none';
     if(phone)phone.style.display='block';
