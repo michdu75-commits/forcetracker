@@ -94,7 +94,6 @@ function _applyScreen(id,btn){
   document.getElementById('root').classList.toggle('on-home',id==='home');
   document.getElementById('root').classList.toggle('on-log',id==='log');
   document.getElementById('root').classList.toggle('on-setup',id==='setup');
-  document.getElementById('root').setAttribute('data-screen',id); // halo d'ambiance par onglet (CSS)
   if(id!=='log')_releaseWakeLock();
   if(id==='home')renderHome();
   if(id==='log')renderLog();
@@ -283,16 +282,46 @@ function _initSwipe(){
     // Ne pas naviguer si le geste part d'un contrôle (saisie kg/reps, boutons…) — évite les onglets qui sautent en séance
     if(sel&&sel.closest&&sel.closest('input,textarea,select,button,a,.tbtn,.chk'))return;
     if(_hScrollParent(sel))return;
-    const idx=_SWIPE_ORDER.indexOf(window._curScreen);
+    // La Séance (log) n'est swipable QUE si une séance est active — sinon on tomberait
+    // sur l'écran vide (« onglet blanc »). Hors séance, on l'atteint par le bouton +.
+    const order=(typeof S!=='undefined'&&S&&S.wkt)?_SWIPE_ORDER:_SWIPE_ORDER.filter(s=>s!=='log');
+    const idx=order.indexOf(window._curScreen);
     if(idx<0)return;
-    if(dx<0&&idx<_SWIPE_ORDER.length-1){
-      const next=_SWIPE_ORDER[idx+1];
+    if(dx<0&&idx<order.length-1){
+      const next=order[idx+1];
       goScreen(next,document.getElementById('nb-'+next));
     }else if(dx>0&&idx>0){
-      const prev=_SWIPE_ORDER[idx-1];
+      const prev=order[idx-1];
       goScreen(prev,document.getElementById('nb-'+prev));
     }
   },{passive:true});
+}
+
+// iOS : bloque le geste « retour » natif (swipe depuis le tout premier bord gauche vers
+// la droite) qui affichait une page BLANCHE. On n'annule QUE ce cas précis (départ < 24px
+// du bord + mouvement nettement horizontal) → aucun impact sur le scroll vertical ni sur
+// les listes qui défilent horizontalement. Notre swipe entre onglets continue de marcher.
+function _blockEdgeBackSwipe(){
+  let sx=null,sy=null,edge=false,tgt=null,locked=false;
+  document.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1){edge=false;return;}
+    const t=e.touches[0];sx=t.clientX;sy=t.clientY;tgt=e.target;locked=false;
+    edge=(t.clientX<=30); // zone bord gauche (iOS décide très tôt → zone un peu large)
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!edge||sx===null)return;
+    const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(!locked){
+      // Décision au TOUT PREMIER mouvement (iOS engage le retour dès le 1er px) :
+      if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>5){edge=false;return;} // scroll vertical → on laisse passer
+      if(dx>0&&!_hScrollParent(tgt))locked=true;                        // vers la droite depuis le bord → geste retour → on bloque
+      else if(dx<0)return;                                              // vers la gauche → pas concerné
+    }
+    if(locked)e.preventDefault(); // annule le geste retour natif (page blanche) sur tous les mouvements suivants
+  },{passive:false});
+  const _clr=()=>{sx=sy=null;edge=false;tgt=null;locked=false;};
+  document.addEventListener('touchend',_clr,{passive:true});
+  document.addEventListener('touchcancel',_clr,{passive:true});
 }
 
 // ─── PULL-TO-DISMISS ─────────────────────────────────────────
@@ -662,8 +691,8 @@ function renderNutrition(){try{
   document.getElementById('meal-plan').innerHTML=meals.map(m=>`
     <div class="meal-row">
       <div style="flex:1;">
-        <div class="meal-name">${m.name}</div>
-        <div class="meal-detail">${m.desc}</div>
+        <div class="meal-name">${_escNote(m.name)}</div>
+        <div class="meal-detail">${_escNote(m.desc)}</div>
         <div class="meal-detail" style="margin-top:3px;color:var(--t3);">P: ${m.prot}g · G: ${m.carbs}g · L: ${m.fat}g</div>
       </div>
       <div class="meal-kcal">${m.kcal} kcal</div>
@@ -725,10 +754,10 @@ function _renderMealDay(day,isPrem,canRegen){
   if(!day)return'';
   let h=`<div style="display:flex;flex-direction:column;gap:6px;">`;
   (day.meals||[]).forEach(m=>{
-    const enc=m.name.replace(/'/g,"\\'");
+    const enc=_escAttrJs(m.name);
     h+=`<div style="background:var(--bg2);border-radius:12px;padding:12px 14px;box-shadow:inset 0 0 0 1px var(--sep);">`
       +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">`
-      +`<div style="font-weight:700;font-size:13px;color:var(--t1);">${m.name}</div>`
+      +`<div style="font-weight:700;font-size:13px;color:var(--t1);">${_escNote(m.name)}</div>`
       +`<div style="display:flex;align-items:center;gap:6px;">`
       +`<span style="font-size:12px;font-weight:700;color:var(--red);">${m.kcal||0} kcal</span>`
       +(canRegen?`<button onclick="generateMealPlan('${day.date}','${enc}')" style="background:none;border:none;padding:2px 6px;color:var(--t3);cursor:pointer;font-size:14px;touch-action:manipulation;" title="Régénérer ce repas">🔄</button>`:'')

@@ -49,7 +49,7 @@ img {
   --gold: #CC8800; --orange: #CC5200;
 }
 #root.light-mode .topbar {
-  background: #0C0D11;   /* mode jour : barre du haut sombre d'origine (pas de halo à laisser passer) */
+  background: #0C0D11;
   border-bottom: none;
 }
 #root.light-mode .topbar::after { display: none; }
@@ -76,11 +76,20 @@ html.light-mode #menu-drawer-bd{background:rgba(0,0,0,.25);}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--font);color:var(--t1);overscroll-behavior-x:none;}
 #root{display:flex;flex-direction:column;height:100dvh;max-width:430px;margin:0 auto;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E") repeat, radial-gradient(150% var(--halo-h,92%) at 50% var(--halo-y,0%), var(--halo,transparent), transparent var(--halo-stop,66%)) no-repeat, var(--bg);overflow:hidden;position:relative;}
+/* Halo d'ambiance (signature du MODE NUIT) : un seul halo bleu derriere tout, reglable via Apparence (Menu). */
+#root{ --halo-rgb:59,130,246; --halo-a:.30; --halo:rgba(var(--halo-rgb),var(--halo-a)); }
+#root.light-mode{ background:var(--bg); } /* mode jour = clair epure, pas de halo */
+html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
+.appr-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 8px;border-radius:12px;border:none;background:var(--bg3);color:var(--t2);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all .18s;}
+.appr-btn.active{color:var(--t1);box-shadow:inset 0 0 0 2px var(--blue);background:rgba(91,168,255,.10);}
+.appr-sw{width:18px;height:18px;border-radius:6px;flex-shrink:0;display:inline-block;}
+.appr-colors{display:flex;flex-wrap:wrap;gap:10px;}
+.appr-color{width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s;padding:0;}
+.appr-color.active{box-shadow:0 0 0 2px var(--bg2),0 0 0 4px var(--t1);transform:scale(1.06);}
 @media(orientation:landscape) and (hover:none) and (pointer:coarse){#rotate-overlay{display:flex!important;}}
 
 /* TOPBAR */
 .topbar{
-  /* Transparente → laisse passer le halo unique de #root (un seul fondu, plus de « cascade ») */
   background:transparent;
   border-bottom:none;
   padding:max(env(safe-area-inset-top),44px) 16px 14px;
@@ -221,28 +230,6 @@ html,body{height:100%;overflow:hidden;background:var(--bg);font-family:var(--fon
 .screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:12px 14px calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);display:none;flex-direction:column;gap:10px;background:transparent;}
 .screen.active{display:flex;}
-/* ─── Halo d'ambiance UNIQUE (prototype clone) ──────────────────
-   UN seul halo, posé sur #root (voir son background plus haut), derrière TOUT
-   (barre du haut + écrans, tous deux transparents). Un seul fondu du haut vers
-   le bas → plus de « cascade » (paliers) qu'on avait avec 2 dégradés empilés.
-   Couleur pilotée par --halo-rgb (R,G,B) + intensité --halo-a → future ligne
-   « Apparence » : le sélecteur n'aura qu'à changer --halo-rgb. */
-#root{
-  --halo-rgb:59,130,246;     /* BLEU partout (par défaut) */
-  --halo-a:.30;              /* intensité mode nuit */
-  --halo:rgba(var(--halo-rgb),var(--halo-a));
-}
-/* mode jour = clair ÉPURÉ, PAS de halo (le halo bleu est la signature du mode NUIT uniquement) → fond uni clair, sans halo ni grain */
-#root.light-mode{ background:var(--bg); }
-/* Apparence « Noir » (choix Menu → Apparence) : plus de halo ni de grain, fond uni comme avant */
-html.no-halo #root{ background:var(--bg); }
-/* Boutons du choix Apparence (Menu) */
-.appr-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 8px;border-radius:12px;border:none;background:var(--bg3);color:var(--t2);font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all .18s;}
-.appr-btn.active{color:var(--t1);box-shadow:inset 0 0 0 2px var(--blue);background:rgba(91,168,255,.10);}
-.appr-sw{width:18px;height:18px;border-radius:6px;flex-shrink:0;display:inline-block;}
-.appr-colors{display:flex;flex-wrap:wrap;gap:10px;}
-.appr-color{width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:transform .12s;padding:0;}
-.appr-color.active{box-shadow:0 0 0 2px var(--bg2),0 0 0 4px var(--t1);transform:scale(1.06);}
 /* Espaceur bas de scroll (fix iOS : padding-bottom d'un flex scroll ignoré par Safari).
    Un vrai élément est toujours compté dans la hauteur scrollable → la dernière carte passe au-dessus de la nav. */
 .scroll-spacer{flex:0 0 auto;height:calc(max(env(safe-area-inset-bottom,0px),8px) + 110px);}
@@ -296,6 +283,11 @@ button:active{transform:scale(.95);}
 @keyframes btn-ripple{0%{transform:scale(0);opacity:.45;}100%{transform:scale(5);opacity:0;}}
 @keyframes logo-pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,45,85,0);}50%{transform:scale(1.06);box-shadow:0 0 14px 4px rgba(255,45,85,.28);}}
 #tb-logo{animation:logo-pulse 3.5s ease-in-out infinite;}
+/* Splash iPhone (app installée) — caché par défaut, affiché via html.ios-boot, fondu auto en CSS (jamais bloqué) */
+#ios-splash{position:fixed;inset:0;z-index:100000;background:#0C0C0E;display:none;align-items:center;justify-content:center;}
+#ios-splash img{width:170px;height:170px;object-fit:contain;-webkit-user-drag:none;}
+html.ios-boot #ios-splash{display:flex;animation:iosSplashFade .5s ease 1.8s forwards;}
+@keyframes iosSplashFade{from{opacity:1;}to{opacity:0;visibility:hidden;}}
 .btn-ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.35);width:60px;height:60px;margin:-30px 0 0 -30px;pointer-events:none;animation:btn-ripple .5s ease-out forwards;}
 .btn{width:100%;padding:15px;border:none;border-radius:var(--r);font-size:16px;font-weight:700;font-family:var(--font);cursor:pointer;transition:transform .15s,opacity .15s,background .15s,box-shadow .15s;letter-spacing:.3px;}
 .btn:active{transform:scale(.95);opacity:.9;}

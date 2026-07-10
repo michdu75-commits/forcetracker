@@ -157,6 +157,21 @@ function createSupersetFrom(ei){
   openExPicker();
   toast('Choisis le 2ᵉ exercice de la supersérie','info');
 }
+// Lie l'exercice avec CELUI DU DESSUS en superset (demande Christophe : « glisser sur le
+// précédent »). Ne touche QUE la séance en cours (S.wkt), jamais le programme sauvegardé.
+function supersetWithPrev(ei){
+  if(!S.wkt||!S.wkt.exs||ei<=0){toast('Aucun exercice au-dessus','info');return;}
+  const cur=S.wkt.exs[ei], prev=S.wkt.exs[ei-1];
+  if(!cur||!prev)return;
+  if(cur.dropset||prev.dropset){toast('Impossible avec un dropset','info');return;}
+  // Réutilise le superset du dessus s'il existe (→ tri-set), sinon en crée un neuf.
+  let gid=(prev.group&&prev.groupType==='super')?prev.group:null;
+  if(!gid){gid='ss'+Date.now();prev.group=gid;prev.groupType='super';}
+  cur.group=gid;cur.groupType='super';
+  _expandedEx=ei-1;
+  persist();renderExBlocks();
+  toast('Superset créé ⚡','success');
+}
 let _addToGroupGid=null;
 // ─── DROPSET / PYRAMIDE ─────────────────────────────────────────────────────
 let _dropCfgEi=null,_dropCfgPaliers=3,_dropCfgPct=20,_dropCfgDir='down';
@@ -417,12 +432,12 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     return`<div class="ex-block${inGroup?(isExpanded?' ss-active':' ss-inactive'):''}" id="ex-block-${ei}"${clickAttr}>`
       +`<div class="ex-hdr" style="pointer-events:${_groupMode||inGroup?'none':'all'}">`
       +`<div style="flex:1;min-width:0;">`
-      +`<div class="ex-name" style="font-size:14px">${ex.name} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
+      +`<div class="ex-name" style="font-size:14px">${_escNote(ex.name)} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
       +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
         +((blockCount>1)?`<button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===0?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},-1)" title="Monter">↑</button><button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===blockCount-1?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},1)" title="Descendre">↓</button>`:'')
-        +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
+        +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${_escAttrJs(ex.name)}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div>`
       +notePreview
       +(!_groupMode&&!inGroup&&!ex.group&&!ex.dropset
@@ -508,9 +523,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
-    +`${hasLocalGif?'<img src="'+_exImgSrc+'" draggable="false" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
+    +`${hasLocalGif?'<img src="'+_exImgSrc+'" draggable="false" onclick="toggleExGif('+ei+',\''+_escAttrJs(ex.name)+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
     +`<div style="flex:1;min-width:0;">`
-    +`<div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
+    +`<div class="ex-name">${_escNote(ex.name)} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
     +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${ex.dropset?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
     +`</div>`
@@ -599,7 +614,7 @@ function openExMenu(ei,hasGif){
     document.body.appendChild(ov);
   }
   const {nm}=_exMenuCtx;
-  const safeNm=nm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const safeNm=_escAttrJs(nm);
   const isCustom=(S.customExercises||[]).some(e=>e.n===nm);
   const hasUserPhoto=_hasUserPhoto(nm);
   const mRow=(icon,lbl,action)=>`<button onclick="${action}" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:manipulation;">`
@@ -607,8 +622,9 @@ function openExMenu(ei,hasGif){
     +`<span style="font-size:15px;color:var(--t1);font-weight:500;">${lbl}</span>`
     +`</button>`;
   ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
-    +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
+    +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${_escNote(nm)}</div>`
     +mRow('🔄','Remplacer l\'exercice',`openExPickerForReplace(${ei})`)
+    +((ei>0 && !ex.group && !ex.dropset)?mRow('⚡','Superset avec l\'exercice du dessus',`closeExMenu();supersetWithPrev(${ei})`):'')
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
     +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
     +mRow('📷',hasUserPhoto?'Changer la photo':'Ajouter une photo',`closeExMenu();changeExImg('${safeNm}')`)
@@ -652,7 +668,7 @@ function openExHistory(name){
   }
   el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 18px;box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`
-    +`<div style="font-weight:800;font-size:15px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">${name}</div>`
+    +`<div style="font-weight:800;font-size:15px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">${_escNote(name)}</div>`
     +`<button onclick="closeExHistory()" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:none;font-size:15px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>`
     +`</div>${progHtml}${inner}`
     +`<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px;">Poids max · 5 dernières séances</div>`
@@ -663,6 +679,9 @@ function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)e
 
 // ── Note par série (dans la colonne « précédent ») ──
 function _escNote(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// Échappe une valeur destinée à un '…' JS DANS un attribut "…" (ex. onclick="f('${_escAttrJs(nom)}')").
+// D'abord échappement JS (backslash + apostrophe), puis échappement HTML d'attribut ("<>&) → aucune évasion possible.
+function _escAttrJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function _setPrevNote(set,p){
   if(set&&set.note)return `<div style="font-size:9.5px;color:var(--gold);line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(set.note)}</div>`;
   if(p&&p.note)return `<div style="font-size:9.5px;color:var(--t3);font-style:italic;line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(p.note)}</div>`;
@@ -1607,6 +1626,16 @@ function _restTick(){
 function saveExNote(ei,val){if(S.wkt?.exs?.[ei]!==undefined){S.wkt.exs[ei].note=val||'';persist();}}
 
 // ── OVERLAY DÉCOMPTE FINAL ────────────────────────────────────────────
+// Format « N reps à X kg » (cohérent avec l'affichage reps→kg des programmes,
+// demande Christophe). Gère les cas sans poids (poids du corps) / sans reps.
+function _fmtNextSet(info){
+  if(!info)return '';
+  const r=info.reps, k=info.kg;
+  if(r&&k) return r+' reps à '+k+' kg';
+  if(r) return r+' reps';
+  if(k) return k+' kg';
+  return '';
+}
 function _nextSetInfo(){
   const exs=S.wkt&&S.wkt.exs;
   if(!exs||!exs.length)return null;
@@ -1666,7 +1695,7 @@ function _showRestCountdown(){
   const nextDetailEl=document.getElementById('rcd-next-detail');
   if(nameEl)nameEl.textContent=info?info.name:'';
   if(nextNumEl)nextNumEl.textContent=info?'Série '+info.num:'';
-  if(nextDetailEl)nextDetailEl.textContent=info?(info.kg+' kg × '+info.reps):'';
+  if(nextDetailEl)nextDetailEl.textContent=_fmtNextSet(info);
   // Fond sombre garanti à chaque ouverture (l'inline HTML #0e1016 avait pu être effacé par un GO précédent)
   ov.style.background='#0e1016';ov.style.transition='';ov.classList.remove('go-cycle');
   ov.style.display='block';
@@ -1884,7 +1913,7 @@ function _renderExGrouped(listArr){
   return html;
 }
 function _exPickRow(e){
-  const safe=e.n.replace(/'/g,"\\'");
+  const safe=_escAttrJs(e.n);
   // Slot photo TOUJOURS réservé (30px) → toutes les lignes alignées, avec ou sans photo.
   // Tap sur la vignette = VOIR la photo en grand (n'ajoute PAS l'exercice).
   const src=_exImg(e.n);
@@ -1894,8 +1923,8 @@ function _exPickRow(e){
   const edit=e.custom?` <span onclick="event.stopPropagation();openEditCustomEx('${safe}')" title="Modifier" style="font-size:13px;color:var(--purp);cursor:pointer;padding:2px 6px;touch-action:manipulation;">✎</span>`:'';
   const eqBadge=_exEqBadge(e.n);
   const mid=eqBadge
-    ?`<div class="ex-pick-mid"><span class="ex-pick-name">${e.n}${edit}</span>${eqBadge}</div>`
-    :`<span class="ex-pick-name">${e.n}${edit}</span>`;
+    ?`<div class="ex-pick-mid"><span class="ex-pick-name">${_escNote(e.n)}${edit}</span>${eqBadge}</div>`
+    :`<span class="ex-pick-name">${_escNote(e.n)}${edit}</span>`;
   return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}${mid}<span class="ex-pick-grp">${e.g}</span></div>`;
 }
 function openExPicker(){
@@ -2297,7 +2326,7 @@ function _renderImpThumbs(){
   el.innerHTML=_impPhotos.map((p,i)=>{
     const fileIcon=p.isXlsx?'📊':p.isText?'📝':'📄';
     const thumb=(p.isPdf||p.isText)
-      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">${fileIcon}</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name||'Fichier'}</span></div>`
+      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">${fileIcon}</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote(p.name||'Fichier')}</span></div>`
       :`<img src="data:${p.type};base64,${p.data}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--sep);">`;
     return`<div style="position:relative;display:inline-block;">${thumb}<button onclick="removeImpPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;font-family:var(--font);">✕</button></div>`;
   }).join('');
@@ -2370,7 +2399,7 @@ function _setImpMode(mode){
   if(mode==='replace'){
     const progs=S.programmes||[];
     if(!progs.length){toast('Aucun programme existant à remplacer','info');_setImpMode('new');return;}
-    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${p.name}</option>`).join('');
+    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${_escNote(p.name)}</option>`).join('');
     sel.style.display='block';
     if(btnN)btnN.className='btn btn-bg2';
     if(btnR)btnR.className='btn btn-red';
@@ -2530,7 +2559,7 @@ function _renderHistThumbs(){
   const el=document.getElementById('hist-thumbs');if(!el)return;
   el.innerHTML=_histPhotos.map((p,i)=>{
     const thumb=(p.isPdf||p.isText)
-      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">📄</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name||'Page'}</span></div>`
+      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">📄</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote(p.name||'Page')}</span></div>`
       :`<img src="data:${p.type};base64,${p.data}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--sep);">`;
     return`<div style="position:relative;display:inline-block;">${thumb}<button onclick="removeHistPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;font-family:var(--font);">✕</button></div>`;
   }).join('');
@@ -2788,8 +2817,8 @@ function openDaySel(progIdx){
   const btns=document.getElementById('day-sel-btns');
   if(btns)btns.innerHTML=(prog.days||[]).map((d,i)=>`
     <button class="btn btn-bg2" style="padding:14px 16px;text-align:left;" onclick="loadProgDay(${progIdx},${i})">
-      <div style="font-weight:700;font-size:14px;">${d.label}</div>
-      <div style="font-size:12px;color:var(--t2);margin-top:3px;">${(d.exs||[]).slice(0,3).map(e=>e.name).join(', ')}${(d.exs||[]).length>3?' +'+((d.exs||[]).length-3):''}</div>
+      <div style="font-weight:700;font-size:14px;">${_escNote(d.label)}</div>
+      <div style="font-size:12px;color:var(--t2);margin-top:3px;">${_escNote((d.exs||[]).slice(0,3).map(e=>e.name).join(', '))}${(d.exs||[]).length>3?' +'+((d.exs||[]).length-3):''}</div>
     </button>`).join('');
   document.getElementById('ov-day-sel').classList.add('open');
 }
@@ -2964,8 +2993,8 @@ function renderProgModal(){
         <div style="height:5px;background:var(--sep);border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--red);border-radius:3px;"></div></div>
       </div>`:'';
       return `<div class="prog-card" style="flex-direction:column;align-items:stretch;">
-        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${p.name}</div>
-        <div class="prog-card-detail">${detail}</div>
+        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${_escNote(p.name)}</div>
+        <div class="prog-card-detail">${_escNote(detail)}</div>
         <div style="display:flex;gap:6px;margin-top:10px;align-items:center;">
           <button class="btn-xs" style="flex:1;background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
           <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})" title="Modifier">✏️</button>
@@ -3079,7 +3108,7 @@ function _loadJsPdf(){
   if(window.jspdf&&window.jspdf.jsPDF)return Promise.resolve();
   if(_jspdfLoad)return _jspdfLoad;
   const load=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load '+src));document.head.appendChild(s);});
-  _jspdfLoad=load('../lib/jspdf.umd.min.js').then(()=>load('../lib/jspdf.plugin.autotable.min.js')).catch(e=>{_jspdfLoad=null;throw e;});
+  _jspdfLoad=load('./lib/jspdf.umd.min.js').then(()=>load('./lib/jspdf.plugin.autotable.min.js')).catch(e=>{_jspdfLoad=null;throw e;});
   return _jspdfLoad;
 }
 // Logo Force Tracker en dataURL (pour l'en-tête des PDF) — chargé une fois, échec silencieux.
@@ -3094,7 +3123,7 @@ function _loadLogoDataURL(){
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);_logoDataUrl=c.toDataURL('image/png');
     }catch(e){_logoDataUrl=null;} res(_logoDataUrl); };
     img.onerror=()=>{ _logoTried=true; res(null); };
-    img.src='../force-tracker-logo-final.png';
+    img.src='./force-tracker-logo-final.png';
   });
 }
 // Contact affiché en pied de PDF
@@ -3201,7 +3230,7 @@ function _renderProgEdit(){
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;">
       ${_progExThumb(ex.name)}
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escNote(ex.name)}</div>
         ${inSuper?'<div style="font-size:10px;color:var(--orange);font-weight:800;letter-spacing:.03em;">⚡ SUPERSET</div>':''}
       </div>
       <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
@@ -3226,7 +3255,7 @@ function _renderProgEdit(){
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
   if(isMulti){
     el.innerHTML=cycleSection+d.days.map((day,di)=>`<div style="margin-bottom:16px;">
-      <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">${day.label}</div>
+      <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">${_escNote(day.label)}</div>
       ${(day.exs||[]).map((ex,ei)=>exCard(ex,di,ei)).join('')}
       ${addBtn(di)}
     </div>${di<d.days.length-1?'<hr style="border:none;border-top:1px solid var(--sep);margin:0 0 16px;">':''}`).join('');

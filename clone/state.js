@@ -1,4 +1,8 @@
 // ─── STATE ───────────────────────────────────────────────────
+// Code perso de protection du compte (stocké UNIQUEMENT en local sur l'appareil,
+// JAMAIS envoyé au cloud comme donnée — seulement joint aux requêtes pour prouver l'accès).
+function _authCode(){ try{ return localStorage.getItem('ft4_authcode')||''; }catch(e){ return ''; } }
+function _setAuthCode(c){ try{ if(c) localStorage.setItem('ft4_authcode',c); else localStorage.removeItem('ft4_authcode'); }catch(e){} }
 let _chartPts=[];
 let S={
   bw:80,barW:20,defRest:130,
@@ -43,7 +47,7 @@ function load(){
     if(S.halo==='blue')S.halo='on';                 // migration ancien nom
     if(S.halo!=='none'&&S.halo!=='on')S.halo='on';
     S.haloColor=localStorage.getItem('ft4_haloColor')||'59,130,246';
-    S.haloDir=localStorage.getItem('ft4_haloDir')||'top'; // 'top' (normal) | 'bottom' (inversé)
+    S.haloDir=localStorage.getItem('ft4_haloDir')||'top';
     S.smoker=localStorage.getItem('ft4_smoker')==='1';
     S.mensCycleStart=localStorage.getItem('ft4_mcstart')||'';
     S.mensCycleDur=parseInt(localStorage.getItem('ft4_mcdur')||'28')||28;

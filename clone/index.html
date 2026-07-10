@@ -72,8 +72,11 @@ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();win
 // Récupération email depuis cookie si localStorage vidé par iOS Safari (synchrone, avant load())
 (function(){if(window.__FT_CLONE__)return;try{var ck={};document.cookie.split(';').forEach(function(c){var p=c.trim().indexOf('=');if(p>0)ck[c.trim().slice(0,p)]=decodeURIComponent(c.trim().slice(p+1));});if(ck.ft_email&&!localStorage.getItem('ft4_email')){localStorage.setItem('ft4_email',ck.ft_email);localStorage.setItem('ft4_ob2','1');window._emailRestoredFromCookie=true;}}catch(e){}})();
 if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add('ob-done');
-// Apparence : halo bleu (défaut) ou tout noir — appliqué au plus tôt pour éviter le flash (clé ft4_halo)
+// Apparence : halo bleu (defaut) ou fond uni -- applique au plus tot pour eviter le flash (cle ft4_halo)
 try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classList.add('no-halo');}catch(e){}
+// Splash iPhone (logo gris fixe) — uniquement en mode app installée (comme le splash natif Android).
+// Se ferme tout seul en CSS (jamais bloqué). Pas sur Safari navigateur, pas sur Android.
+try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)document.documentElement.classList.add('ios-boot');}catch(e){}
 // Détection navigateur non compatible PWA — au plus tôt
 (function(){
   var ua=navigator.userAgent;
@@ -104,6 +107,8 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Splash iPhone (app installée) : logo gris fixe, se ferme tout seul (CSS) -->
+<div id="ios-splash"><img src="../force-tracker-logo-gray.png" alt="Force Tracker"></div>
 
 <!-- ═══ ONBOARDING — hors de #root pour éviter overflow:hidden iOS ═══ -->
 <div id="onboarding">
@@ -122,7 +127,7 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
       <!-- iOS layout -->
       <div id="ob0-ios" style="flex:1;display:flex;flex-direction:column;padding:18px 0 0;display:none;">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
-          <img src="../force-tracker-logo-topbar.gif" style="width:44px;height:44px;border-radius:11px;object-fit:cover;flex-shrink:0;">
+          <img src="../force-tracker-logo-gray.png" style="width:44px;height:44px;border-radius:11px;object-fit:cover;flex-shrink:0;">
           <div>
             <div style="font-family:var(--font-cond);font-size:19px;font-weight:900;">Installe Force Tracker</div>
             <div style="font-size:11px;color:var(--t3);margin-top:1px;">En 3 étapes — comme une vraie app 📲</div>
@@ -182,7 +187,7 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
     <!-- ÉTAPE 1 : As-tu déjà un compte ? -->
     <div class="ob-step ob-active" id="ob-1">
       <div class="ob-hero">
-        <img src="../force-tracker-logo-splash.gif" alt="Force Tracker" style="width:240px;height:240px;object-fit:contain;" loop>
+        <img src="../force-tracker-logo-gray.png" alt="Force Tracker" style="width:240px;height:240px;object-fit:contain;" loop>
         <div class="ob-title">Bienvenue sur<br>Force Tracker</div>
         <div class="ob-sub">Tu as déjà un compte Force Tracker ?</div>
         <div id="ob-1-choice" style="width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px;">
@@ -281,7 +286,7 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
     <!-- ÉTAPE 5 : C'est parti ! -->
     <div class="ob-step" id="ob-5" style="display:flex;flex-direction:column;">
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;overflow-y:auto;padding-bottom:8px;">
-        <img src="../force-tracker-logo-splash.gif" alt="Force Tracker" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;" loop>
+        <img src="../force-tracker-logo-gray.png" alt="Force Tracker" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;" loop>
         <div class="ob-title" id="ob-cta-title" style="font-size:38px;">C'est parti !</div>
         <div id="ob-email-section" style="width:100%;margin-top:4px;">
           <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Email (pour sauvegarder tes données)</label>
@@ -377,7 +382,7 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
 <!-- Bandeau MODE DÉMO (admin) — en flux, pousse le contenu vers le bas ; visible via #root.demo-on -->
 <div id="demo-banner"><span>🎬 MODE DÉMO — rien n'est enregistré</span><button onclick="exitDemoMode()">Quitter</button></div>
 <div class="topbar">
-  <div style="display:flex;align-items:center;gap:10px;"><img src="../force-tracker-logo-topbar.gif" alt="" id="tb-logo" onclick="onLogoTap()" style="height:56px;width:56px;border-radius:14px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;" loop><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
+  <div style="display:flex;align-items:center;gap:10px;"><img src="../force-tracker-logo-gray.png" alt="" id="tb-logo" onclick="onLogoTap()" style="height:56px;width:56px;border-radius:14px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;" loop><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
   <div style="display:flex;align-items:center;gap:8px;">
     <button onclick="showHelp()" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#F2F3F5;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;font-size:15px;font-weight:800;font-family:var(--font);" title="Aide">?</button>
     <button onclick="openShareModal()" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#F2F3F5;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;" title="Partager l'app"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
@@ -764,6 +769,8 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
     <div id="email-verify-card"></div>
     <!-- BOUTON RESTAURER — visible sans admin, pour récupérer ses données depuis le cloud -->
     <button class="btn" id="btn-restore-cloud" onclick="openRestoreAccount()" style="width:100%;background:rgba(91,168,255,.10);border:1.5px solid rgba(91,168,255,.38);color:var(--blue);font-size:14px;font-weight:700;padding:14px;border-radius:14px;touch-action:manipulation;">🔄 Restaurer mon compte depuis le cloud</button>
+    <!-- PROTÉGER MON COMPTE (code perso) -->
+    <button class="btn" id="btn-protect-account" onclick="openProtect()" style="width:100%;margin-top:8px;background:rgba(48,209,88,.10);border:1.5px solid rgba(48,209,88,.40);color:var(--green);font-size:14px;font-weight:700;padding:14px;border-radius:14px;touch-action:manipulation;">🔒 Protéger mon compte avec un code</button>
 
     <!-- % de remplissage du profil (rempli par _renderProfileCompletion) -->
     <div id="profil-completion" style="display:none;background:var(--bg2);border-radius:14px;padding:13px 15px;box-shadow:inset 0 0 0 1px var(--sep);"></div>
@@ -1161,16 +1168,32 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
 <!-- POP-UP perso Christophe (« billoute ») — une seule fois -->
 <div class="overlay" id="ov-billoute" style="z-index:500;">
   <div class="modal" style="max-width:400px;text-align:center;">
-    <div style="font-size:50px;line-height:1;">🩸</div>
-    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Salut billoute !</div>
-    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Comme je te disais sur WhatsApp — Michel t'a encore préparé du lourd, rien que pour toi 👇</div>
+    <div style="font-size:50px;line-height:1;">✅</div>
+    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">C'est fait, billoute !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel a traité <b>TOUTES</b> tes remontées de la boîte à idées 🙌<br>Jette un œil et dis-moi si tout est bon 👇</div>
     <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
-      <div class="sw-feat"><span>🩸</span><div><b>Le bilan sanguin, rien que pour toi !</b><small>Prends en photo (ou en PDF) tes analyses de sang. Tes infos perso (nom, etc.), tu les caches d'un coup de doigt AVANT l'envoi — elles ne partent jamais. Milo lit tes marqueurs (fer, testostérone, cholestérol…) et t'en parle côté muscu, récup et nutrition. → Progrès → Poids → Bilan sanguin.</small></div></div>
-      <div class="sw-feat"><span>⚠️</span><div><b>Mais on déconne pas avec la santé</b><small>Milo n'est PAS médecin : il ne pose jamais de diagnostic, ne dit jamais « c'est bon / c'est grave », et te renvoie TOUJOURS vers ton médecin pour la moindre valeur. C'est une bêta réservée à toi et Michel.</small></div></div>
-      <div class="sw-feat"><span>🤖</span><div><b>Milo encore plus balèze</b><small>Il s'adapte à ton niveau, te pose des questions comme un vrai coach, connaît les mouvements de base (tractions, dips, pompes…) et sait qu'un peu de cardio léger, ça flingue pas ta séance — au contraire.</small></div></div>
-      <div class="sw-feat"><span>📋</span><div><b>« Milo apprend à te connaître »</b><small>Dans le Coach, réponds à quelques questions (gratuites, ça compte pas dans tes 10 questions) → des conseils vraiment sur-mesure. Et il t'en posera une nouvelle chaque semaine.</small></div></div>
+      <div class="sw-feat"><span>🏋️</span><div><b>Les poids du programme reviennent tout seuls</b><small>Quand tu charges un programme, les charges de ta dernière séance sont reprises automatiquement — <b>série par série</b> (60, 70, 80… chacune à sa valeur). Vérifie sur ton programme importé !</small></div></div>
+      <div class="sw-feat"><span>🔢</span><div><b>Affichage « 8 reps à 30 kg »</b><small>Pendant le chrono de repos, la prochaine série s'affiche maintenant « 8 reps à 30 kg » (et non « 30 kg × 8 ») — cohérent avec l'ordre reps → kg des programmes, comme tu l'avais demandé.</small></div></div>
+      <div class="sw-feat"><span>⚡</span><div><b>Le superset, partout et facile</b><small>Tu peux lier deux exercices en superset : <b>dans l'éditeur de programme</b> (bouton « ⚡ Superset avec le suivant »), à l'ajout d'un exo, ET <b>pendant la séance</b> (menu ⋯ d'un exo → « ⚡ Superset avec l'exercice du dessus »).</small></div></div>
+      <div class="sw-feat"><span>🍽️</span><div><b>Noter ce que tu manges</b><small>Dans Nutrition, tu peux saisir toi-même tes repas — matin, midi, soir + collations (le 3ᵉ onglet « Journal »). Dis-moi si c'est bien ce que tu voulais !</small></div></div>
+      <div class="sw-feat"><span>⏱️</span><div><b>Et merci pour le compteur de durée 😄</b><small>Content qu'il te plaise ! Continue de m'envoyer tes idées — c'est comme ça que l'app s'améliore. 🙏</small></div></div>
     </div>
-    <button class="btn btn-red" onclick="closeBilloute()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Ça déchire, merci Michel ! 🙌</button>
+    <button class="btn btn-red" onclick="closeBilloute()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Je vérifie tout ça ! 👊</button>
+  </div>
+</div>
+
+<!-- POP-UP perso Emma — bienvenue Espace Testeur + boîte à idées (une seule fois) -->
+<div class="overlay" id="ov-emma-welcome" style="z-index:9999;">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:50px;line-height:1;">🎉</div>
+    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Bienvenue dans l'équipe, Emma !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel t'a donné un accès spécial rien que pour toi 👇</div>
+    <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
+      <div class="sw-feat"><span>🌟</span><div><b>Tu es Testeuse de l'app</b><small>Tu vois maintenant une <b>carte dorée « Testeur »</b> tout en haut de ton Accueil. C'est ta porte d'entrée vers l'Espace Testeur.</small></div></div>
+      <div class="sw-feat"><span>💡</span><div><b>La boîte à idées — le plus important</b><small>Une idée, un truc qui te gêne, un bug, une suggestion ? <b>Écris-le à Michel</b> (tu peux ajouter des photos ou des captures d'écran). → <b>Accueil → carte dorée → Espace Testeur → Boîte à idées</b>. Michel reçoit tout, et c'est comme ça que l'app s'améliore. 🙏</small></div></div>
+      <div class="sw-feat"><span>📸</span><div><b>Bonus : analyse de tes photos</b><small>Dans le même Espace Testeur, tu peux faire analyser tes photos d'évolution (en avant-première).</small></div></div>
+    </div>
+    <button class="btn btn-red" onclick="closeEmmaWelcome()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">J'ai compris, merci Michel ! 🙌</button>
   </div>
 </div>
 
@@ -2156,7 +2179,7 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
       <div class="menu-row" onclick="closeMenuDrawer();exportData()"><div class="menu-row-ic" style="background:rgba(234,179,8,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><span class="menu-row-lbl">Exporter mes données</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" onclick="openDrawerContent('help')"><div class="menu-row-ic" style="background:rgba(52,211,153,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span class="menu-row-lbl">Aide détaillée</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" onclick="openDrawerContent('about')"><div class="menu-row-ic" style="background:rgba(255,255,255,.06);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><span class="menu-row-lbl">À propos</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
-      <div class="menu-row" onclick="window.open('../confidentialite.html','_blank')"><div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="menu-row-lbl">Confidentialité</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="window.open('./confidentialite.html','_blank')"><div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="menu-row-lbl">Confidentialité</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
     <!-- FOOTER -->
     <div style="text-align:center;padding:16px 0 8px;font-size:12px;color:var(--t3);line-height:1.8;font-weight:500;">
@@ -2183,6 +2206,17 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
 </div>
 
 <!-- OVERLAY: Restauration compte depuis le cloud -->
+<!-- PROTÉGER MON COMPTE (code perso) -->
+<div id="ov-protect" class="overlay" style="z-index:9999;" onclick="if(event.target===this)closeProtect()">
+  <div class="modal" style="max-width:400px;padding:22px 20px 22px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:19px;font-weight:900;color:var(--t1);">🔒 Protéger mon compte</div>
+      <button onclick="closeProtect()" style="width:32px;height:32px;border-radius:50%;background:var(--bg3);border:none;color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>
+    </div>
+    <div id="protect-body"></div>
+  </div>
+</div>
+
 <div id="ov-restore-account" class="overlay" style="z-index:9999;" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal" style="max-width:390px;padding:28px 20px 24px;">
     <div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:6px;">🔄 Restaurer mon compte</div>

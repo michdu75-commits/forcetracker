@@ -3,7 +3,7 @@ let _progEx=BIG4[0];
 
 function _renderProgChips(chips){
   const exos=S.progExos||BIG4;
-  chips.innerHTML=exos.map((n,i)=>`<button onclick="selectProgEx('${n.replace(/'/g,"\\'")}',${i})" id="pchip-${i}" style="flex:1;min-width:0;padding:9px 6px;border-radius:14px;font-size:12px;font-weight:700;font-family:var(--font);border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t3);cursor:pointer;touch-action:manipulation;transition:all .18s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent;">${n}</button>`).join('')
+  chips.innerHTML=exos.map((n,i)=>`<button onclick="selectProgEx('${_escAttrJs(n)}',${i})" id="pchip-${i}" style="flex:1;min-width:0;padding:9px 6px;border-radius:14px;font-size:12px;font-weight:700;font-family:var(--font);border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t3);cursor:pointer;touch-action:manipulation;transition:all .18s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</button>`).join('')
   +`<button onclick="openProgExoEditor()" title="Personnaliser" style="flex-shrink:0;width:36px;border-radius:14px;border:none;background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);-webkit-tap-highlight-color:transparent;">✏️</button>`;
 }
 
@@ -114,7 +114,7 @@ function renderChart(){
     });
   });
   const pr=S.prs[name];const prStr=pr?fmt(pr.rm1)+' kg':'—';
-  if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${name}</span><span class="badge-gold">⭐ PR ${prStr}</span></div><div class="empty" style="padding:20px 0;">Aucune donnée — commence à logger !</div>`;return;}
+  if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div><div class="empty" style="padding:20px 0;">Aucune donnée — commence à logger !</div>`;return;}
   _chartPts=pts;
   const last=pts[pts.length-1],maxPt=pts.reduce((m,p)=>p.rm1>m.rm1?p:m,pts[0]);
   const delta=pts.length>1?fmt(last.rm1-pts[0].rm1):null;
@@ -142,7 +142,7 @@ function renderChart(){
   const prIdx=vals.indexOf(Math.max(...vals));
   const trend=pts.length>1?(pos?'📈 +':'📉 ')+fmt(last.rm1-pts[0].rm1)+' kg':'—';
   box.innerHTML=`
-<div class="chart-hdr" style="margin-bottom:16px;"><span class="chart-title">${name}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>
+<div class="chart-hdr" style="margin-bottom:16px;"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>
 <div style="display:flex;margin-bottom:16px;">
   <div style="flex:1;text-align:center;">
     <div style="font-family:var(--font-cond);font-size:25px;font-weight:900;color:var(--t1);line-height:1;">${fmt(last.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
@@ -203,7 +203,7 @@ function _cloudSync(){
   fetch(S.url,{method:'POST',mode:'no-cors',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
-      action:'saveProfile',email:S.email,
+      action:'saveProfile',email:S.email,authCode:_authCode(),
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,nutritionPhase:S.nutritionPhase,
@@ -291,7 +291,7 @@ function _renderSessDetailContent(){
     const maxRM=done.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
     return`<div class="card" style="margin-bottom:8px;padding:10px 12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${ex.note?'4':'8'}px">
-        <div style="font-weight:700;font-size:14px">${ex.name}</div>
+        <div style="font-weight:700;font-size:14px">${_escNote(ex.name)}</div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
           <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--blue)" onclick="replaceSessEx(${ei})" title="Remplacer l'exercice">🔄</button>
           <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
@@ -317,7 +317,9 @@ function _renderSessDetailContent(){
       <button class="btn btn-bg2" style="width:100%;margin-top:4px;padding:6px;font-size:12px;color:var(--t2)" onclick="addSessSet(${ei})">+ Ajouter une série</button>
     </div>`;
   }).join('');
+  // Ajouter un exercice oublié à cette séance passée
   html+=`<button class="btn btn-bg2" style="width:100%;margin-bottom:10px;padding:11px;font-size:14px;font-weight:700;color:var(--red)" onclick="openSessAddEx()">+ Ajouter un exercice</button>`;
+  // Cardio de la séance
   const c=_sessEdits.cardio||null;
   const ckcal=(c&&c.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(c):0;
   const selSty='padding:6px 8px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:13px;font-family:var(--font)';
@@ -468,8 +470,8 @@ function renderSessions(){
     // Étiquette : nom de la séance du programme si dispo, sinon muscle le plus travaillé
     let _topLbl='';{let _b='',_bv=0;const _sc=sc.sc||{};for(const g in _sc){if(_sc[g]>_bv){_bv=_sc[g];_b=g;}}if(_b&&_MG[_b])_topLbl=_MG[_b].label;}
     const _tag=s.progLabel?('🗂️ '+s.progLabel):(_topLbl?('💪 '+_topLbl):'');
-    const tagHtml=_tag?`<div style="font-size:11px;font-weight:700;color:var(--red);margin:1px 0 7px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_tag}</div>`:'';
-    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div>${tagHtml}<div style="display:flex;align-items:center;gap:8px;padding:0 10px 10px 0"><div class="sess-exs" style="flex:1;min-width:0">${exs||'—'}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
+    const tagHtml=_tag?`<div style="font-size:11px;font-weight:700;color:var(--red);margin:1px 0 7px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_escNote(_tag)}</div>`:'';
+    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div>${tagHtml}<div style="display:flex;align-items:center;gap:8px;padding:0 10px 10px 0"><div class="sess-exs" style="flex:1;min-width:0">${_escNote(exs)||'—'}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
   }).join('');
 }
 
@@ -1575,11 +1577,20 @@ function _applyRestoreData(raw){
 }
 
 async function _fetchRestoreRaw(email){
-  const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email})});
+  const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email,authCode:_authCode()})});
   const txt=await resp.text();
   let data;
   try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON : '+txt.substring(0,120));}
   return data;
+}
+
+// Restauration : l'utilisateur saisit son code perso → on le mémorise localement et on relance.
+function _restoreSubmitCode(){
+  const c=document.getElementById('restore-code-inp');
+  const code=(c?c.value:'').trim();
+  if(!code){toast('Entre ton code','error');return;}
+  _setAuthCode(code);            // mémorisé sur l'appareil ; sera envoyé par _fetchRestoreRaw
+  doRestoreAccount();            // relance → si le code est bon, la restauration s'applique
 }
 
 function openRestoreAccount(){
@@ -1607,6 +1618,23 @@ async function doRestoreAccount(){
     // PULL-ONLY : on lit, on ne pousse rien avant
     const data=await _fetchRestoreRaw(email);
     console.log('[FT restore] raw server response',JSON.stringify(data).substring(0,500));
+
+    // Compte protégé par un code perso → demander le code (et réessayer)
+    if(data&&data.error==='auth'){
+      const hadCode=!!_authCode();
+      if(hadCode)_setAuthCode('');           // le code tenté était faux → on l'enlève
+      S.email=email;
+      if(st){
+        st.style.display='block';st.style.color='var(--orange)';
+        st.innerHTML=(hadCode?'❌ Code incorrect. ':'🔒 Ce compte est protégé. ')+'Entre ton code perso&nbsp;:'
+          +'<input type="password" inputmode="numeric" id="restore-code-inp" placeholder="Ton code" autocomplete="off" '
+          +'style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--orange);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:16px;">'
+          +'<button onclick="_restoreSubmitCode()" style="margin-top:8px;width:100%;padding:11px;border:none;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer;">Valider le code</button>';
+        setTimeout(()=>{const c=document.getElementById('restore-code-inp');if(c){c.focus();c.addEventListener('keydown',e=>{if(e.key==='Enter')_restoreSubmitCode();});}},120);
+      }
+      if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+      return;
+    }
 
     if(!data||data.status==='not_found'||data.error){
       const msg=data&&data.error?data.error:'Aucun profil trouvé pour cet email.';
@@ -1693,7 +1721,7 @@ async function debugRestore(){
   if(!S.email){toast('Pas d\'email configuré','error');return;}
   toast('Test API en cours…','info');
   try{
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email,authCode:_authCode()})});
     const txt=await resp.text();
     console.log('[FT debug restore]',txt);
     toast('Réponse API : '+txt.substring(0,80),'info');
@@ -1728,7 +1756,7 @@ async function debugPremiumCheck(){
   }
   try{
     // 1. check loadProfile (POST) — résultat premium
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email,authCode:_authCode()})});
     const txt=await r.text();
     let d=null;try{d=JSON.parse(txt);}catch(_){}
     const srvPrem=d&&d.premium===true;

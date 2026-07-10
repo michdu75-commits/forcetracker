@@ -231,21 +231,21 @@ function applyTheme() {
   }
 }
 
-// ── Apparence : halo (couleur au choix) ou fond uni ──────────
-function setHalo(mode){        // 'none' = fond uni ; sinon = halo activé (garde la couleur courante)
+// -- Apparence : halo (couleur au choix) ou fond uni + theme Jour/Nuit --
+function setHalo(mode){        // 'none' = fond uni ; sinon = halo active (garde la couleur courante)
   S.halo = (mode==='none') ? 'none' : 'on';
   try{ localStorage.setItem('ft4_halo', S.halo); }catch(e){}
   persist();
   _applyHalo();
-  toast(S.halo==='none' ? 'Apparence : Fond uni' : 'Apparence : Halo activé ✨', 'info');
+  toast(S.halo==='none' ? 'Apparence : Fond uni' : 'Apparence : Halo active ✨', 'info');
 }
-function setHaloColor(rgb){    // couleur de la palette → active le halo avec cette couleur
+function setHaloColor(rgb){    // couleur de la palette -> active le halo avec cette couleur
   S.halo='on'; S.haloColor=rgb;
   try{ localStorage.setItem('ft4_halo','on'); localStorage.setItem('ft4_haloColor',rgb); }catch(e){}
   persist();
   _applyHalo();
 }
-function setHaloDir(dir){      // 'top' (normal, depuis le haut) | 'bottom' (inversé, depuis le bas)
+function setHaloDir(dir){      // 'top' (normal) | 'bottom' (inverse)
   S.haloDir = (dir==='bottom') ? 'bottom' : 'top';
   try{ localStorage.setItem('ft4_haloDir', S.haloDir); }catch(e){}
   persist();
@@ -256,11 +256,11 @@ function _applyHalo(){
   document.documentElement.classList.toggle('no-halo', S.halo==='none');
   if(root){
     root.style.setProperty('--halo-rgb', S.haloColor||'59,130,246');
-    if(S.haloDir==='bottom'){ // inversé : part du bas et monte BEAUCOUP plus haut
+    if(S.haloDir==='bottom'){
       root.style.setProperty('--halo-y','100%');
       root.style.setProperty('--halo-h','118%');
       root.style.setProperty('--halo-stop','82%');
-    }else{                    // normal : depuis le haut (~60%)
+    }else{
       root.style.setProperty('--halo-y','0%');
       root.style.setProperty('--halo-h','92%');
       root.style.setProperty('--halo-stop','66%');
@@ -275,7 +275,6 @@ function _applyHalo(){
     el.classList.toggle('active', S.halo!=='none' && el.getAttribute('data-rgb')===S.haloColor);
   });
 }
-// ── Apparence : thème Jour / Nuit (regroupé avec le halo) ──────
 function setTheme(mode){
   const isLight = mode==='light';
   const root=document.getElementById('root');
@@ -286,11 +285,12 @@ function setTheme(mode){
   const tb=document.getElementById('theme-toggle-btn'); if(tb) tb.innerHTML = isLight?'🌙 Mode Nuit':'☀️ Mode Jour';
 }
 function _applyThemeBtns(){
-  const isLight=document.getElementById('root')?.classList.contains('light-mode');
+  const isLight=document.getElementById('root') && document.getElementById('root').classList.contains('light-mode');
   const j=document.getElementById('appr-jour'), n=document.getElementById('appr-nuit');
   if(j) j.classList.toggle('active', !!isLight);
   if(n) n.classList.toggle('active', !isLight);
 }
+
 
 
 function switchNuTab(tab, btn) {
@@ -324,7 +324,7 @@ function _loadZXing(){
   return new Promise((res,rej)=>{
     if(window.ZXing&&window.ZXing.BrowserMultiFormatReader){res();return;}
     const s=document.createElement('script');
-    s.src='../lib/zxing.min.js';
+    s.src='./lib/zxing.min.js';
     s.onload=()=>{(window.ZXing&&window.ZXing.BrowserMultiFormatReader)?res():rej(new Error('ZXing indisponible'));};
     s.onerror=()=>rej(new Error('Lecteur code-barres non chargé'));
     document.head.appendChild(s);
@@ -770,6 +770,7 @@ async function obDoRestore(){
   toast('Restauration en cours…','info');
   try{
     const data=await _fetchRestoreRaw(email);
+    if(data&&data.error==='auth'){ const hadCode=!!_authCode(); if(hadCode)_setAuthCode(''); _obShowCodePrompt(hadCode); return; }
     if(!data||data.error||data.status==='not_found'){toast(data&&data.error?data.error:'Aucun profil trouvé pour cet email. Enregistre d\'abord ton profil depuis l\'appli.','error');return;}
     _obDataRestored=true;
     _applyRestoreData(data);
@@ -782,6 +783,22 @@ async function obDoRestore(){
   }catch(e){toast(e.message,'error');}
 }
 
+// Onboarding : compte protégé → demander le code perso et réessayer
+function _obShowCodePrompt(wrong){
+  const host=document.getElementById('ob-1-restore');if(!host)return;
+  let el=document.getElementById('ob-code-wrap');
+  if(!el){el=document.createElement('div');el.id='ob-code-wrap';el.style.marginTop='10px';host.appendChild(el);}
+  el.innerHTML='<div style="font-size:13px;color:var(--gold);font-weight:700;margin-bottom:6px;line-height:1.4;">'+(wrong?'❌ Code incorrect.':'🔒 Ce compte est protégé.')+' Entre ton code perso&nbsp;:</div>'
+    +'<input class="ob-inp" id="ob-code-inp" type="password" inputmode="numeric" autocomplete="off" placeholder="Ton code" style="font-size:16px;">'
+    +'<button class="btn btn-red" onclick="_obSubmitCode()" style="width:100%;margin-top:8px;padding:14px;font-size:16px;">Valider le code</button>';
+  const c=document.getElementById('ob-code-inp');
+  if(c){setTimeout(()=>c.focus(),120);c.addEventListener('keydown',e=>{if(e.key==='Enter')_obSubmitCode();});}
+}
+function _obSubmitCode(){
+  const c=document.getElementById('ob-code-inp');const code=(c?c.value:'').trim();
+  if(!code){toast('Entre ton code','error');return;}
+  _setAuthCode(code);obDoRestore();
+}
 async function obCheckEmailAndFinish(){
   const emailFinal=(document.getElementById('ob-email-final')||{}).value.trim();
   if(!emailFinal){finishOnboarding();return;}
@@ -814,7 +831,7 @@ function finishOnboarding(){
   persist();
   if(S.email&&S.url&&!_obDataRestored){
     // Nouveau profil uniquement — si restauration depuis cloud, on ne réécrit JAMAIS le Sheet
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,welcome:true};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,authCode:_authCode(),welcome:true};
     fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
     // Confirmation d'email (soft) : on envoie un code en fond — l'inscription n'est JAMAIS bloquée
     if(!S.emailVerified){ try{ _sendEmailConfirm(true); }catch(e){} }
@@ -880,6 +897,106 @@ function _renderEmailVerifyCard(){
     return;
   }
   el.innerHTML='<button class="btn" onclick="openEmailConfirm()" style="width:100%;background:rgba(234,179,8,.10);border:1.5px solid rgba(234,179,8,.4);color:var(--gold);font-size:13.5px;font-weight:700;padding:13px;border-radius:14px;touch-action:manipulation;">📧 Confirme ton email — sécurise ta sauvegarde</button>';
+}
+
+// ─── PROTÉGER MON COMPTE (code perso) ────────────────────────
+let _protectStatus=null;
+function _protectPost(payload){
+  return fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}).then(r=>r.json());
+}
+function _protectErr(d){
+  const m={nocode:'Demande d\'abord un code par email',expired:'Code expiré — redemande-en un',toomany:'Trop d\'essais — redemande un code',invalid:'Code email incorrect',court:'Ton code perso : au moins 4 chiffres',params:'Champs manquants'};
+  return (d&&m[d.error])||'Une erreur est survenue';
+}
+function openProtect(){
+  if(!S.email){toast('Ajoute d\'abord ton email dans le Profil','info');return;}
+  const ov=document.getElementById('ov-protect');if(!ov)return;
+  ov.classList.add('open');
+  const b=document.getElementById('protect-body');
+  if(b)b.innerHTML='<div style="text-align:center;color:var(--t3);padding:24px 0;">Chargement…</div>';
+  _protectPost({action:'authStatus',email:S.email})
+    .then(d=>{_protectStatus=d&&d.status==='ok'?d:{hasCode:!!_authCode(),emailVerified:!!S.emailVerified};_renderProtect();})
+    .catch(()=>{_protectStatus={hasCode:!!_authCode(),emailVerified:!!S.emailVerified};_renderProtect();});
+}
+function closeProtect(){const ov=document.getElementById('ov-protect');if(ov)ov.classList.remove('open');}
+function _renderProtect(mode){
+  const b=document.getElementById('protect-body');if(!b)return;
+  const st=_protectStatus||{};
+  const inpS='width:100%;box-sizing:border-box;padding:11px 12px;border:1.5px solid var(--sep);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:16px;margin-top:8px;';
+  const btnR='width:100%;padding:13px;border:none;border-radius:11px;background:var(--red);color:#fff;font-weight:800;font-size:15px;cursor:pointer;margin-top:12px;touch-action:manipulation;';
+  const btnG='width:100%;padding:12px;border:1.5px solid var(--sep);border-radius:11px;background:var(--bg3);color:var(--t2);font-weight:700;font-size:14px;cursor:pointer;margin-top:8px;touch-action:manipulation;';
+  // Vue "déjà protégé"
+  if(st.hasCode && mode!=='change' && mode!=='disable'){
+    b.innerHTML='<div style="background:rgba(48,209,88,.08);border:1px solid rgba(48,209,88,.3);border-radius:12px;padding:14px;text-align:center;color:var(--green);font-weight:700;font-size:15px;">✅ Ton compte est protégé par un code perso.</div>'
+      +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin-top:12px;">Sur un nouveau téléphone, on te demandera ce code pour récupérer tes données. Personne d\'autre ne peut y accéder.</div>'
+      +'<button onclick="_renderProtect(\'change\')" style="'+btnG+'">🔑 Changer mon code</button>'
+      +'<button onclick="_renderProtect(\'disable\')" style="'+btnG+'color:var(--red);border-color:rgba(255,45,85,.3);">🔓 Désactiver la protection</button>';
+    return;
+  }
+  const isDisable=(mode==='disable');
+  const isChange=(mode==='change');
+  const title=isDisable?'Désactiver la protection':(isChange?'Changer ton code':'Activer la protection');
+  const intro=isDisable
+    ?'Pour désactiver, on vérifie que c\'est bien toi : reçois un code par email, puis confirme.'
+    :'Pour '+(isChange?'changer ton code':'protéger ton compte')+', on vérifie d\'abord ton email (pour pouvoir te dépanner si tu oublies ton code un jour).';
+  b.innerHTML='<div style="font-weight:800;font-size:15px;color:var(--t1);margin-bottom:6px;">'+title+'</div>'
+    +'<div style="font-size:13px;color:var(--t2);line-height:1.5;">'+intro+'</div>'
+    +'<div style="font-size:12px;color:var(--t3);margin-top:10px;">📧 '+(_escNote(S.email||''))+'</div>'
+    +'<button id="protect-send-btn" onclick="protectSendEmail()" style="'+btnG+'">📩 Recevoir le code par email</button>'
+    +'<div style="font-size:11px;color:var(--t3);margin-top:6px;text-align:center;">Pas reçu ? Regarde tes <b>spams</b> et marque « non-spam ».</div>'
+    +'<div style="font-weight:700;font-size:13px;color:var(--t1);margin-top:14px;">1️⃣ Le code reçu par email</div>'
+    +'<div style="font-size:11.5px;color:var(--t3);margin-top:1px;">Les 6 chiffres du mail — temporaire, juste pour vérifier que c\'est toi.</div>'
+    +'<input id="protect-emailcode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Ex : 483920" style="'+inpS+'">'
+    +(isDisable?''
+      :'<div style="font-weight:700;font-size:13px;color:var(--t1);margin-top:14px;">2️⃣ TON code perso</div>'
+       +'<div style="font-size:11.5px;color:var(--t3);margin-top:1px;">Celui que tu inventes et que tu retiendras (min 4 chiffres).</div>'
+       +'<input id="protect-newcode" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Choisis ton code" style="'+inpS+'">')
+    +'<button id="protect-activate-btn" onclick="'+(isDisable?'protectDisable()':'protectActivate()')+'" style="'+btnR+(isDisable?'background:var(--red);':'')+'">'+(isDisable?'🔓 Désactiver':(isChange?'✅ Changer mon code':'✅ Activer la protection'))+'</button>'
+    +(st.hasCode?'<button onclick="_renderProtect()" style="'+btnG+'">‹ Retour</button>':'');
+}
+function protectSendEmail(){
+  const btn=document.getElementById('protect-send-btn');
+  if(btn){btn.disabled=true;btn.textContent='Envoi…';}
+  _protectPost({action:'sendConfirmCode',email:S.email})
+    .then(d=>{
+      if(d&&d.cooldown)toast('Patiente 1 min avant un nouvel envoi','info');
+      else toast('Code envoyé 📩 (checke tes spams)','success');
+      if(btn){btn.disabled=false;btn.textContent='📩 Renvoyer le code';}
+    })
+    .catch(()=>{toast('Envoi impossible, réessaie','error');if(btn){btn.disabled=false;btn.textContent='📩 1. Recevoir le code par email';}});
+}
+function protectActivate(){
+  const ec=((document.getElementById('protect-emailcode')||{}).value||'').trim();
+  const nc=((document.getElementById('protect-newcode')||{}).value||'').trim();
+  if(!ec){toast('Entre le code reçu par email','error');return;}
+  if(nc.length<4){toast('Ton code perso : au moins 4 chiffres','error');return;}
+  const btn=document.getElementById('protect-activate-btn');
+  if(btn){btn.disabled=true;btn.textContent='Activation…';}
+  _protectPost({action:'setAccessCode',email:S.email,code:ec,newCode:nc})
+    .then(d=>{
+      if(d&&d.status==='ok'){
+        _setAuthCode(nc);S.emailVerified=true;persist();
+        try{_renderEmailVerifyCard();}catch(e){}
+        _protectStatus={hasCode:true,emailVerified:true};_renderProtect();
+        toast('Compte protégé ✅','success');
+      }else{toast(_protectErr(d),'error');if(btn){btn.disabled=false;btn.textContent='✅ Activer la protection';}}
+    })
+    .catch(()=>{toast('Erreur réseau, réessaie','error');if(btn){btn.disabled=false;btn.textContent='✅ Activer la protection';}});
+}
+function protectDisable(){
+  const ec=((document.getElementById('protect-emailcode')||{}).value||'').trim();
+  if(!ec){toast('Entre le code reçu par email','error');return;}
+  const btn=document.getElementById('protect-activate-btn');
+  if(btn){btn.disabled=true;btn.textContent='Désactivation…';}
+  _protectPost({action:'setAccessCode',email:S.email,code:ec,remove:true})
+    .then(d=>{
+      if(d&&d.status==='ok'){
+        _setAuthCode('');
+        _protectStatus={hasCode:false,emailVerified:true};_renderProtect();
+        toast('Protection désactivée','info');
+      }else{toast(_protectErr(d),'error');if(btn){btn.disabled=false;btn.textContent='🔓 Désactiver';}}
+    })
+    .catch(()=>{toast('Erreur réseau, réessaie','error');if(btn){btn.disabled=false;btn.textContent='🔓 Désactiver';}});
 }
 
 // ─── PWA INSTALL ─────────────────────────────────────────────
@@ -1657,7 +1774,7 @@ async function _silentCloudRestore(email){
   if(!S.url)return false;
   try{
     const ctrl=new AbortController();const tId=setTimeout(()=>ctrl.abort(),5000);
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email})});
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',signal:ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email,authCode:_authCode()})});
     clearTimeout(tId);const d=await r.json();
     if(d.status!=='ok'||!d.sessions||d.sessions.length===0)return false;
     S.email=email;
@@ -1739,6 +1856,7 @@ if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
   setTimeout(()=>toast('Séance en cours — '+nEx+' exercice'+(nEx>1?'s':'')+(nDone?' · '+nDone+' séries validées':'')+' · Appuie sur Reprendre','info'),1000);
 }
 _initSwipe();
+_blockEdgeBackSwipe(); // iOS : neutralise le geste "retour" bord gauche (page blanche)
 _initPullToDismiss();
 // Bouton retour Android / navigateur → ferme overlay ou revient à l'écran précédent
 history.pushState(null,'',location.href);
@@ -1759,6 +1877,7 @@ _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 checkSuperTesterWelcome(); // message « super testeur » une seule fois (Christophe)
+checkEmmaWelcome(); // pop perso Emma : bienvenue Espace Testeur + boîte à idées (une seule fois)
 checkAnnouncements(); // pop perso Christophe + « Quoi de neuf » pour tous (une seule fois)
 checkTesterEq();      // pop testeurs : différenciation des types de matériel (test, une seule fois)
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
@@ -1771,18 +1890,29 @@ function checkSuperTesterWelcome(){
   try{
     // Le message « Michel te remercie » est réservé aux vrais testeurs récompensés (pas à Michel lui-même).
     if(!_isSuperTester()||!(typeof _isTester==='function'&&_isTester()))return;
+    if(_isEmma())return; // Emma a son propre message perso (checkEmmaWelcome)
     if(localStorage.getItem('ft4_super_welcome_v1'))return;
     setTimeout(showSuperWelcome,900);
   }catch(e){}
 }
 function showSuperWelcome(){const o=document.getElementById('ov-super-welcome');if(o)o.classList.add('open');}
 function closeSuperWelcome(){try{localStorage.setItem('ft4_super_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-super-welcome');if(o)o.classList.remove('open');}
+// ─── Pop-up perso Emma : bienvenue Espace Testeur + boîte à idées (une seule fois) ──
+function _isEmma(){return (S.email||'').trim().toLowerCase()==='emma.david16@gmail.com';}
+function checkEmmaWelcome(){
+  try{
+    if(!_isEmma())return;
+    if(localStorage.getItem('ft4_emma_welcome_v1'))return;
+    setTimeout(function(){const o=document.getElementById('ov-emma-welcome');if(o)o.classList.add('open');},1000);
+  }catch(e){}
+}
+function closeEmmaWelcome(){try{localStorage.setItem('ft4_emma_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-emma-welcome');if(o)o.classList.remove('open');}
 // ─── Annonces : pop-up perso Christophe + « Quoi de neuf » pour tous (une seule fois) ──
 function _isChristophe(){return (S.email||'').trim().toLowerCase()==='christophe@famillelanglois.fr';}
 function checkAnnouncements(){
   try{
     // Christophe : son pop perso « billoute » d'abord ; une fois vu, il reçoit les annonces générales comme tout le monde.
-    if(_isChristophe()&&!localStorage.getItem('ft4_billoute_v2')){
+    if(_isChristophe()&&!localStorage.getItem('ft4_billoute_v3')){
       setTimeout(showBilloute,1000);
       return;
     }
@@ -1790,7 +1920,7 @@ function checkAnnouncements(){
   }catch(e){}
 }
 function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
-function closeBilloute(){try{localStorage.setItem('ft4_billoute_v2','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
+function closeBilloute(){try{localStorage.setItem('ft4_billoute_v3','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
 // ─── « Quoi de neuf » versionné : montre toutes les nouveautés non vues d'un coup ──
 function _whatsNewSeen(){
   try{
@@ -2110,7 +2240,7 @@ window._premiumPending=!!S.email;
     try{
       const _ctrl=new AbortController();
       const _tId=setTimeout(()=>_ctrl.abort(),3000);
-      const r2=await fetch(S.url,{method:'POST',redirect:'follow',signal:_ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+      const r2=await fetch(S.url,{method:'POST',redirect:'follow',signal:_ctrl.signal,headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email,authCode:_authCode()})});
       clearTimeout(_tId);
       const d2=await r2.json();
       console.log('[FT premium check]',{email:S.email,status:d2.status,premium:d2.premium,expiry:d2.premiumExpiry});

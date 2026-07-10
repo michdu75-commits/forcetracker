@@ -853,7 +853,7 @@ let _xlsxLoad=null;
 function _loadXlsx(){
   if(window.XLSX)return Promise.resolve();
   if(_xlsxLoad)return _xlsxLoad;
-  _xlsxLoad=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='../lib/xlsx.full.min.js'; s.onload=res; s.onerror=()=>{_xlsxLoad=null;rej(new Error('load xlsx'));}; document.head.appendChild(s); });
+  _xlsxLoad=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='./lib/xlsx.full.min.js'; s.onload=res; s.onerror=()=>{_xlsxLoad=null;rej(new Error('load xlsx'));}; document.head.appendChild(s); });
   return _xlsxLoad;
 }
 function openScaleCsvImport(){
