@@ -3,7 +3,7 @@ let _chartPts=[];
 let S={
   bw:80,barW:20,defRest:130,
   gender:'H',age:30,height:175,activityLevel:1.55,
-  workType:'bureau',smoker:false,
+  workType:'bureau',smoker:false,halo:'blue',
   mensCycleStart:'',mensCycleDur:28,contraception:'',morpho:'',morphotype:'',
   sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
   url:DEFAULT_URL,email:'',connected:false,
@@ -39,6 +39,7 @@ function load(){
     S.height=parseFloat(localStorage.getItem('ft4_ht')||'0')||0;
     S.activityLevel=parseFloat(localStorage.getItem('ft4_act')||'1.55')||1.55;
     S.workType=localStorage.getItem('ft4_work')||'bureau';
+    S.halo=localStorage.getItem('ft4_halo')||'blue';
     S.smoker=localStorage.getItem('ft4_smoker')==='1';
     S.mensCycleStart=localStorage.getItem('ft4_mcstart')||'';
     S.mensCycleDur=parseInt(localStorage.getItem('ft4_mcdur')||'28')||28;
@@ -183,6 +184,7 @@ function persist(){
     if(S.sessions&&S.sessions.length>0){try{localStorage.setItem('ft4_had_data','1');}catch(e){}}
     localStorage.setItem('ft4_nphase',S.nutritionPhase);
     localStorage.setItem('ft4_work',S.workType);
+    localStorage.setItem('ft4_halo',S.halo);
     localStorage.setItem('ft4_smoker',S.smoker?'1':'0');
     localStorage.setItem('ft4_mcstart',S.mensCycleStart);
     localStorage.setItem('ft4_mcdur',S.mensCycleDur);

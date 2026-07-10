@@ -1,4 +1,4 @@
-const CACHE = 'ft-v351'; // Points rouges « nouveauté » pour le niveau Actif (Profil) et Milo plus naturel (Coach) — NEW_FEATURES
+const CACHE = 'ft-v352'; // Halo bleu ambiance (mode nuit) + reglage Apparence (Menu : theme Jour/Nuit + Halo bleu/Fond uni) ; mode jour epure sans halo
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
