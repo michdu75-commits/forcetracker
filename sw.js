@@ -1,4 +1,4 @@
-const CACHE = 'ft-v360'; // Fix swipe : la Seance (log) n'est swipable que si une seance est active -> plus d'onglet blanc
+const CACHE = 'ft-v361'; // iOS : blocage du geste retour bord gauche (page blanche)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

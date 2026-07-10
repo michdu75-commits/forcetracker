@@ -297,6 +297,25 @@ function _initSwipe(){
   },{passive:true});
 }
 
+// iOS : bloque le geste « retour » natif (swipe depuis le tout premier bord gauche vers
+// la droite) qui affichait une page BLANCHE. On n'annule QUE ce cas précis (départ < 24px
+// du bord + mouvement nettement horizontal) → aucun impact sur le scroll vertical ni sur
+// les listes qui défilent horizontalement. Notre swipe entre onglets continue de marcher.
+function _blockEdgeBackSwipe(){
+  let sx=null,sy=null,edge=false,tgt=null;
+  document.addEventListener('touchstart',e=>{
+    const t=e.touches[0];sx=t.clientX;sy=t.clientY;tgt=e.target;edge=(t.clientX<=24);
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!edge||sx===null)return;
+    const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(dx>10&&Math.abs(dx)>Math.abs(dy)&&!_hScrollParent(tgt))e.preventDefault();
+  },{passive:false});
+  const _clr=()=>{sx=sy=null;edge=false;tgt=null;};
+  document.addEventListener('touchend',_clr,{passive:true});
+  document.addEventListener('touchcancel',_clr,{passive:true});
+}
+
 // ─── PULL-TO-DISMISS ─────────────────────────────────────────
 function _initPullToDismiss(){
   let _p0y=null,_p0x=null,_pOv=null,_pCnt=null,_pLocked=false;

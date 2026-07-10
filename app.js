@@ -1739,6 +1739,7 @@ if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){
   setTimeout(()=>toast('Séance en cours — '+nEx+' exercice'+(nEx>1?'s':'')+(nDone?' · '+nDone+' séries validées':'')+' · Appuie sur Reprendre','info'),1000);
 }
 _initSwipe();
+_blockEdgeBackSwipe(); // iOS : neutralise le geste "retour" bord gauche (page blanche)
 _initPullToDismiss();
 // Bouton retour Android / navigateur → ferme overlay ou revient à l'écran précédent
 history.pushState(null,'',location.href);
