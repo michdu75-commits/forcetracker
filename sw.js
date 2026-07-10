@@ -1,4 +1,4 @@
-const CACHE = 'ft-v363'; // annonce Quoi de neuf securite (code perso a venir) + splash iPhone affiche plus longtemps
+const CACHE = 'ft-v364'; // fix geste retour iPhone : blocage des le 1er pixel (avant : trop tard, la page blanche passait)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

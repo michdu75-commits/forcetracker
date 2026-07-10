@@ -302,16 +302,24 @@ function _initSwipe(){
 // du bord + mouvement nettement horizontal) → aucun impact sur le scroll vertical ni sur
 // les listes qui défilent horizontalement. Notre swipe entre onglets continue de marcher.
 function _blockEdgeBackSwipe(){
-  let sx=null,sy=null,edge=false,tgt=null;
+  let sx=null,sy=null,edge=false,tgt=null,locked=false;
   document.addEventListener('touchstart',e=>{
-    const t=e.touches[0];sx=t.clientX;sy=t.clientY;tgt=e.target;edge=(t.clientX<=24);
+    if(e.touches.length!==1){edge=false;return;}
+    const t=e.touches[0];sx=t.clientX;sy=t.clientY;tgt=e.target;locked=false;
+    edge=(t.clientX<=30); // zone bord gauche (iOS décide très tôt → zone un peu large)
   },{passive:true});
   document.addEventListener('touchmove',e=>{
     if(!edge||sx===null)return;
     const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy;
-    if(dx>10&&Math.abs(dx)>Math.abs(dy)&&!_hScrollParent(tgt))e.preventDefault();
+    if(!locked){
+      // Décision au TOUT PREMIER mouvement (iOS engage le retour dès le 1er px) :
+      if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>5){edge=false;return;} // scroll vertical → on laisse passer
+      if(dx>0&&!_hScrollParent(tgt))locked=true;                        // vers la droite depuis le bord → geste retour → on bloque
+      else if(dx<0)return;                                              // vers la gauche → pas concerné
+    }
+    if(locked)e.preventDefault(); // annule le geste retour natif (page blanche) sur tous les mouvements suivants
   },{passive:false});
-  const _clr=()=>{sx=sy=null;edge=false;tgt=null;};
+  const _clr=()=>{sx=sy=null;edge=false;tgt=null;locked=false;};
   document.addEventListener('touchend',_clr,{passive:true});
   document.addEventListener('touchcancel',_clr,{passive:true});
 }
