@@ -43,7 +43,7 @@ function _filterProgSearch(q){
   const all=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].sort((a,b)=>a.localeCompare(b,'fr'));
   const hits=all.filter(n=>_naz(n).includes(qn)).slice(0,30);
   if(!hits.length){res.innerHTML=`<div style="padding:11px 13px;font-size:13px;color:var(--t3);">Aucun exercice trouvé</div>`;res.style.display='block';return;}
-  res.innerHTML=hits.map(n=>`<div onmousedown="_pickProgSearch('${_escAttrJs(n)}')" ontouchstart="_pickProgSearch('${_escAttrJs(n)}')" style="padding:11px 13px;font-size:14px;color:var(--t1);cursor:pointer;border-bottom:1px solid var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</div>`).join('');
+  res.innerHTML=hits.map(n=>`<div onmousedown="event.preventDefault()" onclick="_pickProgSearch('${_escAttrJs(n)}')" style="padding:11px 13px;font-size:14px;color:var(--t1);cursor:pointer;border-bottom:1px solid var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</div>`).join('');
   res.style.display='block';
 }
 function _pickProgSearch(name){
@@ -67,7 +67,6 @@ function openProgExoEditor(){
     el.onclick=e=>{if(e.target===el)el.classList.remove('open');};
     document.body.appendChild(el);
   }
-  const opts=all.map(n=>`<option value="${n}">${n}</option>`).join('');
   el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 28px;box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">`
     +`<div style="font-weight:800;font-size:15px;color:var(--t1);">Personnaliser les 4 exercices</div>`
@@ -75,10 +74,38 @@ function openProgExoEditor(){
     +`</div>`
     +exos.map((n,i)=>`<div style="margin-bottom:12px;">`
       +`<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Emplacement ${i+1}</div>`
-      +`<select onchange="_saveProgExoSlot(${i},this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:14px;font-family:var(--font);">${opts.replace(`value="${n}"`,`value="${n}" selected`)}</select>`
+      +`<button id="progslot-btn-${i}" onclick="_toggleProgSlot(${i})" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:14px;font-family:var(--font);cursor:pointer;text-align:left;touch-action:manipulation;"><span>${_escNote(n)}</span><span style="color:var(--t3);margin-left:8px;">▾</span></button>`
+      +`<div id="progslot-box-${i}" style="display:none;margin-top:6px;">`
+        +`<input id="progslot-inp-${i}" type="text" autocomplete="off" oninput="_filterProgSlot(${i},this.value)" placeholder="🔍 Rechercher un exercice…" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-family:var(--font);">`
+        +`<div id="progslot-res-${i}" style="max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;margin-top:4px;"></div>`
+      +`</div>`
       +`</div>`).join('')
     +`</div>`;
   el.classList.add('open');
+}
+// Ouvre/ferme la recherche d'un emplacement (un seul ouvert à la fois)
+function _toggleProgSlot(i){
+  const box=document.getElementById('progslot-box-'+i);if(!box)return;
+  const willOpen=box.style.display==='none';
+  (S.progExos||BIG4).forEach((_,j)=>{const b=document.getElementById('progslot-box-'+j);if(b)b.style.display='none';});
+  if(willOpen){
+    box.style.display='block';
+    _filterProgSlot(i,'');
+    const inp=document.getElementById('progslot-inp-'+i);if(inp){inp.value='';try{inp.focus();}catch(e){}}
+  }
+}
+// Filtre la liste d'un emplacement (insensible aux accents/majuscules) — tap scroll-safe (onclick)
+function _filterProgSlot(i,q){
+  const res=document.getElementById('progslot-res-'+i);if(!res)return;
+  const all=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].sort((a,b)=>a.localeCompare(b,'fr'));
+  const qn=_naz((q||'').trim());
+  const hits=(qn?all.filter(n=>_naz(n).includes(qn)):all).slice(0,60);
+  res.innerHTML=hits.length?hits.map(n=>`<div onclick="_pickProgSlot(${i},'${_escAttrJs(n)}')" style="padding:11px 13px;font-size:14px;color:var(--t1);cursor:pointer;border-bottom:1px solid var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</div>`).join(''):`<div style="padding:11px 13px;font-size:13px;color:var(--t3);">Aucun exercice trouvé</div>`;
+}
+function _pickProgSlot(i,name){
+  if(!name)return;
+  _saveProgExoSlot(i,name);   // persiste + met à jour les 4 chips + la recherche de l'écran principal
+  openProgExoEditor();        // re-render : le bouton du slot affiche le nouveau nom, recherche refermée
 }
 
 function _saveProgExoSlot(idx,name){

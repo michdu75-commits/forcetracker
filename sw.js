@@ -1,4 +1,4 @@
-const CACHE = 'ft-v371'; // Progres : recherche d'exercice (champ de recherche a la place du long dropdown)
+const CACHE = 'ft-v372'; // Progres : recherche aussi dans l'editeur "Personnaliser les 4 exercices" + tap resultat scroll-safe
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
