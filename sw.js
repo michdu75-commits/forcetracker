@@ -1,4 +1,4 @@
-const CACHE = 'ft-v365'; // Protection compte : ecran Proteger mon compte (code perso, email-verifie) + code envoye/demande partout
+const CACHE = 'ft-v366'; // Protection compte : formulaire clarifie (1 code email / 2 code perso) + deverrouillage admin (retrait outil de test)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

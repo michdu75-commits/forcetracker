@@ -942,12 +942,16 @@ function _renderProtect(mode){
   b.innerHTML='<div style="font-weight:800;font-size:15px;color:var(--t1);margin-bottom:6px;">'+title+'</div>'
     +'<div style="font-size:13px;color:var(--t2);line-height:1.5;">'+intro+'</div>'
     +'<div style="font-size:12px;color:var(--t3);margin-top:10px;">📧 '+(_escNote(S.email||''))+'</div>'
-    +'<button id="protect-send-btn" onclick="protectSendEmail()" style="'+btnG+'">📩 1. Recevoir le code par email</button>'
+    +'<button id="protect-send-btn" onclick="protectSendEmail()" style="'+btnG+'">📩 Recevoir le code par email</button>'
     +'<div style="font-size:11px;color:var(--t3);margin-top:6px;text-align:center;">Pas reçu ? Regarde tes <b>spams</b> et marque « non-spam ».</div>'
-    +'<input id="protect-emailcode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Code reçu par email (6 chiffres)" style="'+inpS+'">'
+    +'<div style="font-weight:700;font-size:13px;color:var(--t1);margin-top:14px;">1️⃣ Le code reçu par email</div>'
+    +'<div style="font-size:11.5px;color:var(--t3);margin-top:1px;">Les 6 chiffres du mail — temporaire, juste pour vérifier que c\'est toi.</div>'
+    +'<input id="protect-emailcode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Ex : 483920" style="'+inpS+'">'
     +(isDisable?''
-      :'<input id="protect-newcode" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Choisis ton code perso (min 4 chiffres)" style="'+inpS+'">')
-    +'<button id="protect-activate-btn" onclick="'+(isDisable?'protectDisable()':'protectActivate()')+'" style="'+btnR+(isDisable?'background:var(--red);':'')+'">'+(isDisable?'🔓 Désactiver':(isChange?'✅ Changer mon code':'✅ 2. Activer la protection'))+'</button>'
+      :'<div style="font-weight:700;font-size:13px;color:var(--t1);margin-top:14px;">2️⃣ TON code perso</div>'
+       +'<div style="font-size:11.5px;color:var(--t3);margin-top:1px;">Celui que tu inventes et que tu retiendras (min 4 chiffres).</div>'
+       +'<input id="protect-newcode" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Choisis ton code" style="'+inpS+'">')
+    +'<button id="protect-activate-btn" onclick="'+(isDisable?'protectDisable()':'protectActivate()')+'" style="'+btnR+(isDisable?'background:var(--red);':'')+'">'+(isDisable?'🔓 Désactiver':(isChange?'✅ Changer mon code':'✅ Activer la protection'))+'</button>'
     +(st.hasCode?'<button onclick="_renderProtect()" style="'+btnG+'">‹ Retour</button>':'');
 }
 function protectSendEmail(){

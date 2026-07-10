@@ -336,19 +336,15 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
-  // TEMPORAIRE (test protection opt-in) — à RETIRER après validation.
-  // Active/retire un code perso sur le compte bidon apollonone75 UNIQUEMENT.
-  // Gardé par une phrase secrète (empreinte SHA-256, jamais en clair).
-  if (p.action === '_setAuthTest') {
-    if (_sha256hex_(p.pass || '') !== '1ee7689307d30a836f310fa0a09f288b63d67b74a7a42868fee80183189fe357')
-      return json_({status:'error', error:'pass'});
-    var _em='apollonone75@gmail.com', _sp=PropertiesService.getScriptProperties();
-    if (p.remove) { _sp.deleteProperty('auth_'+_em); return json_({status:'ok', removed:_em}); }
-    var _code=String(p.code||'');
-    if (_code.length<3) return json_({status:'error', error:'code trop court'});
-    var _salt=Utilities.getUuid().replace(/-/g,'').slice(0,16);
-    _sp.setProperty('auth_'+_em, _salt+'$'+_sha256hex_(_salt+'|'+_code));
-    return json_({status:'ok', set:_em, codeLen:_code.length});
+  // Déverrouillage admin (dernier recours) : retire le code perso d'un compte si
+  // un utilisateur est vraiment coincé. Protégé par ADMIN_TOKEN (Script Property).
+  // ?action=adminUnlockAuth&email=...&token=<ADMIN_TOKEN>
+  if (p.action === 'adminUnlockAuth') {
+    if (!_checkTok_('ADMIN_TOKEN', p.token)) return json_({status:'error', error:'unauthorized'});
+    var _e = (p.email || '').toLowerCase().trim();
+    if (!_e) return json_({status:'error', error:'email'});
+    PropertiesService.getScriptProperties().deleteProperty('auth_' + _e);
+    return json_({status:'ok', unlocked:_e});
   }
 
   if (p.action === 'loadProfile' && p.email) {
