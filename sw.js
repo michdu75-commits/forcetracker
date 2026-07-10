@@ -1,4 +1,4 @@
-const CACHE = 'ft-v352'; // Halo bleu ambiance (mode nuit) + reglage Apparence (Menu : theme Jour/Nuit + Halo bleu/Fond uni) ; mode jour epure sans halo
+const CACHE = 'ft-v353'; // Fix iOS : trainee rouge floue en haut du Profil (backdrop-filter du header glitchait avec le bouton rouge collant) -> header profil transparent sans flou
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

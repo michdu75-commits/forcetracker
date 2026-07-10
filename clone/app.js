@@ -230,19 +230,29 @@ function applyTheme() {
   }
 }
 
-// ── Apparence : halo bleu (défaut) ou tout noir ──────────────
-function setHalo(mode){
-  S.halo = (mode==='none') ? 'none' : 'blue';
+// ── Apparence : halo (couleur au choix) ou fond uni ──────────
+function setHalo(mode){        // 'none' = fond uni ; sinon = halo activé (garde la couleur courante)
+  S.halo = (mode==='none') ? 'none' : 'on';
   try{ localStorage.setItem('ft4_halo', S.halo); }catch(e){}
   persist();
   _applyHalo();
-  toast(S.halo==='none' ? 'Apparence : Fond uni' : 'Apparence : Halo bleu ✨', 'info');
+  toast(S.halo==='none' ? 'Apparence : Fond uni' : 'Apparence : Halo activé ✨', 'info');
+}
+function setHaloColor(rgb){    // couleur de la palette → active le halo avec cette couleur
+  S.halo='on'; S.haloColor=rgb;
+  try{ localStorage.setItem('ft4_halo','on'); localStorage.setItem('ft4_haloColor',rgb); }catch(e){}
+  persist();
+  _applyHalo();
 }
 function _applyHalo(){
+  const root=document.getElementById('root');
   document.documentElement.classList.toggle('no-halo', S.halo==='none');
-  const b=document.getElementById('appr-blue'), n=document.getElementById('appr-none');
-  if(b) b.classList.toggle('active', S.halo!=='none');
+  if(root) root.style.setProperty('--halo-rgb', S.haloColor||'59,130,246');
+  const n=document.getElementById('appr-none');
   if(n) n.classList.toggle('active', S.halo==='none');
+  document.querySelectorAll('.appr-color').forEach(function(el){
+    el.classList.toggle('active', S.halo!=='none' && el.getAttribute('data-rgb')===S.haloColor);
+  });
 }
 // ── Apparence : thème Jour / Nuit (regroupé avec le halo) ──────
 function setTheme(mode){

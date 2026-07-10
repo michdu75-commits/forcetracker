@@ -3,7 +3,7 @@ let _chartPts=[];
 let S={
   bw:80,barW:20,defRest:130,
   gender:'H',age:30,height:175,activityLevel:1.55,
-  workType:'bureau',smoker:false,halo:'blue',
+  workType:'bureau',smoker:false,halo:'on',haloColor:'59,130,246',
   mensCycleStart:'',mensCycleDur:28,contraception:'',morpho:'',morphotype:'',
   sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
   url:DEFAULT_URL,email:'',connected:false,
@@ -39,7 +39,10 @@ function load(){
     S.height=parseFloat(localStorage.getItem('ft4_ht')||'0')||0;
     S.activityLevel=parseFloat(localStorage.getItem('ft4_act')||'1.55')||1.55;
     S.workType=localStorage.getItem('ft4_work')||'bureau';
-    S.halo=localStorage.getItem('ft4_halo')||'blue';
+    S.halo=localStorage.getItem('ft4_halo')||'on';
+    if(S.halo==='blue')S.halo='on';                 // migration ancien nom
+    if(S.halo!=='none'&&S.halo!=='on')S.halo='on';
+    S.haloColor=localStorage.getItem('ft4_haloColor')||'59,130,246';
     S.smoker=localStorage.getItem('ft4_smoker')==='1';
     S.mensCycleStart=localStorage.getItem('ft4_mcstart')||'';
     S.mensCycleDur=parseInt(localStorage.getItem('ft4_mcdur')||'28')||28;
@@ -185,6 +188,7 @@ function persist(){
     localStorage.setItem('ft4_nphase',S.nutritionPhase);
     localStorage.setItem('ft4_work',S.workType);
     localStorage.setItem('ft4_halo',S.halo);
+    localStorage.setItem('ft4_haloColor',S.haloColor);
     localStorage.setItem('ft4_smoker',S.smoker?'1':'0');
     localStorage.setItem('ft4_mcstart',S.mensCycleStart);
     localStorage.setItem('ft4_mcdur',S.mensCycleDur);

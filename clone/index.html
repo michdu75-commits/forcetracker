@@ -745,7 +745,7 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
   <!-- PROFIL -->
   <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;padding:0 16px;">
     <!-- EN-TÊTE RETOUR -->
-    <div style="padding:8px 16px 8px;margin:0 -16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;background:transparent;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);">
+    <div style="padding:8px 16px 8px;margin:0 -16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;background:transparent;">
       <button onclick="closeProfil()" style="width:36px;height:36px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);border:none;color:var(--t2);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">✕</button>
     </div>
     <!-- COMPTE SYNC — cliquable pour restaurer -->
@@ -2113,9 +2113,17 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
         <button id="appr-jour" onclick="setTheme('light')" class="appr-btn"><span class="appr-sw" style="background:#F2F3F5;box-shadow:inset 0 0 0 1px var(--sep);"></span>☀️ Jour</button>
       </div>
       <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Fond <span style="text-transform:none;font-weight:500;">(en mode nuit)</span></div>
-      <div style="display:flex;gap:8px;">
-        <button id="appr-blue" onclick="setHalo('blue')" class="appr-btn"><span class="appr-sw" style="background:linear-gradient(160deg,#3B82F6,#0e1016);"></span>Halo bleu</button>
-        <button id="appr-none" onclick="setHalo('none')" class="appr-btn"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>Fond uni</button>
+      <button id="appr-none" onclick="setHalo('none')" class="appr-btn" style="width:100%;justify-content:center;margin-bottom:12px;"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>Fond uni (noir)</button>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:8px;">Couleur du halo</div>
+      <div class="appr-colors">
+        <button class="appr-color" data-rgb="59,130,246" onclick="setHaloColor('59,130,246')" style="background:#3B82F6;" title="Bleu"></button>
+        <button class="appr-color" data-rgb="168,85,247" onclick="setHaloColor('168,85,247')" style="background:#A855F7;" title="Violet"></button>
+        <button class="appr-color" data-rgb="34,197,94" onclick="setHaloColor('34,197,94')" style="background:#22C55E;" title="Vert"></button>
+        <button class="appr-color" data-rgb="45,212,191" onclick="setHaloColor('45,212,191')" style="background:#2DD4BF;" title="Turquoise"></button>
+        <button class="appr-color" data-rgb="244,63,94" onclick="setHaloColor('244,63,94')" style="background:#F43F5E;" title="Rouge"></button>
+        <button class="appr-color" data-rgb="249,115,22" onclick="setHaloColor('249,115,22')" style="background:#F97316;" title="Orange"></button>
+        <button class="appr-color" data-rgb="234,179,8" onclick="setHaloColor('234,179,8')" style="background:#EAB308;" title="Or"></button>
+        <button class="appr-color" data-rgb="236,72,153" onclick="setHaloColor('236,72,153')" style="background:#EC4899;" title="Rose"></button>
       </div>
     </div>
     <!-- PREMIUM BANNER -->
