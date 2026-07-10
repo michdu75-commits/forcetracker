@@ -27,8 +27,11 @@ function userKey_(email) {
 // Ils vivent dans les Script Properties (ADMIN_TOKEN, IDEES_TOKEN, BACKUP_TOKEN).
 // Fail-closed : si la propriété est absente/vide/trop courte, l'accès est REFUSÉ.
 function _checkTok_(propName, given) {
-  var stored = PropertiesService.getScriptProperties().getProperty(propName) || '';
-  return stored.length >= 12 && given === stored;
+  // .trim() des deux côtés : robuste aux espaces/retours à la ligne invisibles
+  // collés par erreur dans la Script Property ou l'URL.
+  var stored = (PropertiesService.getScriptProperties().getProperty(propName) || '').trim();
+  var g = String(given == null ? '' : given).trim();
+  return stored.length >= 12 && g === stored;
 }
 
 function loadUserData_(email) {
