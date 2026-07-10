@@ -34,6 +34,15 @@ function _checkTok_(propName, given) {
   return stored.length >= 12 && g === stored;
 }
 
+// SÉCURITÉ Sheets : neutralise l'injection de formule (CSV injection). Une chaîne
+// qui commence par = + - @ (ou une tabulation) est exécutée comme formule quand on
+// ouvre le Sheet → on la préfixe d'une apostrophe (invisible, affichage identique).
+function _safeCell_(v) {
+  if (typeof v === 'string' && /^[=+\-@\t\r]/.test(v)) return "'" + v;
+  return v;
+}
+function _safeRow_(arr) { return (arr || []).map(_safeCell_); }
+
 function loadUserData_(email) {
   const raw = PropertiesService.getScriptProperties().getProperty(userKey_(email));
   if (!raw) return null;
@@ -78,9 +87,9 @@ function _mirrorUserToSheet_(email, data) {
       if (String(allVals[i][0]).toLowerCase() === email) { rowIdx = i + 1; break; }
     }
     if (rowIdx > 0) {
-      sheet.getRange(rowIdx, 1, 1, row.length).setValues([row]);
+      sheet.getRange(rowIdx, 1, 1, row.length).setValues([_safeRow_(row)]);
     } else {
-      sheet.appendRow(row);
+      sheet.appendRow(_safeRow_(row));
     }
   } catch(e) {} // Silencieux — jamais bloquant
 }
@@ -392,6 +401,24 @@ function _aiQuotaBlock_(email) {
   }
 }
 
+// Compteur journalier générique (1 propriété JSON, remise à zéro chaque jour).
+// Sert à plafonner des endpoints sensibles sans IA (envoi d'emails, essais de codes).
+// Fail-open : en cas d'erreur, on ne bloque JAMAIS (dispo > strictness).
+function _dailyCounterBlock_(propKey, max) {
+  try {
+    var sp = PropertiesService.getScriptProperties();
+    var tz = Session.getScriptTimeZone() || 'Europe/Paris';
+    var today = Utilities.formatDate(new Date(), tz, 'yyyyMMdd');
+    var raw = sp.getProperty(propKey);
+    var q = raw ? JSON.parse(raw) : null;
+    if (!q || q.date !== today) q = { date: today, count: 0 };
+    if (q.count >= max) return true;
+    q.count++;
+    sp.setProperty(propKey, JSON.stringify(q));
+    return false;
+  } catch (e) { return false; }
+}
+
 // ───────────────────────────────────────────────────────────
 function doPost(e) {
   // Ko-fi envoie application/x-www-form-urlencoded avec un champ "data" JSON
@@ -495,7 +522,7 @@ function handleKofiWebhook_(dataStr) {
         sheet = ss.insertSheet('Premium');
         sheet.appendRow(['date','email','nom','montant','devise','tier','expiration','transaction_id']);
       }
-      sheet.appendRow([
+      sheet.appendRow(_safeRow_([
         new Date().toISOString(),
         email,
         data.from_name || '',
@@ -504,7 +531,7 @@ function handleKofiWebhook_(dataStr) {
         tier,
         expiryStr,
         data.kofi_transaction_id || ''
-      ]);
+      ]));
     } catch(e) {}
 
     return ContentService.createTextOutput('OK').setMimeType(ContentService.MimeType.TEXT);
@@ -672,11 +699,11 @@ function handleLogSession_(body) {
       sheet = ss.insertSheet('Sessions');
       sheet.appendRow(['date','exercise','set_num','type','kg','reps','volume','rm1','bw','gender','age']);
     }
-    rows.forEach(r => sheet.appendRow([
+    rows.forEach(r => sheet.appendRow(_safeRow_([
       r.date, r.exercise, r.set_num, r.type,
       r.kg, r.reps, r.volume, r.rm1,
       r.bw, r.gender, r.age
-    ]));
+    ])));
 
     return json_({status:'ok', count: rows.length});
   } catch(err) {
@@ -690,6 +717,10 @@ function handleValidateCode_(body) {
   try {
     const code = (body.code || '').trim().toUpperCase();
     if (!code) return json_({status:'error', error:'Code requis'});
+
+    // Anti-brute-force : plafonne les essais/jour (un code payant ne se teste pas 1000×).
+    // ~40/jour = large pour de vrais utilisateurs, rend le forçage d'un code infaisable.
+    if (_dailyCounterBlock_('validate_code_quota', 40)) return json_({status:'error', error:'trop d\'essais, réessaie demain'});
 
     const raw = PropertiesService.getScriptProperties().getProperty('PREMIUM_CODES') || '';
     const codes = raw.split(',').map(c => c.trim().toUpperCase()).filter(Boolean);
@@ -726,7 +757,10 @@ function handleSendConfirmCode_(body) {
     var now = Date.now();
     Object.keys(map).forEach(function(k){ if (map[k].exp < now) delete map[k]; }); // purge expirés
     var cur = map[email];
-    if (cur && cur.sentAt && (now - cur.sentAt) < 60000) return json_({status:'ok', cooldown:true}); // anti-spam 60s
+    if (cur && cur.sentAt && (now - cur.sentAt) < 60000) return json_({status:'ok', cooldown:true}); // anti-spam 60s par email
+    // Plafond GLOBAL d'envois/jour : empêche le bombardement d'emails en changeant d'adresse
+    // (protège la réputation + le quota du compte Gmail). ~80/jour = large pour de vrais inscrits.
+    if (_dailyCounterBlock_('confirm_send_quota', 80)) return json_({status:'ok', capped:true});
     var code = '' + Math.floor(100000 + Math.random() * 900000);
     map[email] = { code: code, exp: now + 15 * 60000, tries: 0, sentAt: now };
     sp.setProperty('pending_confirms', JSON.stringify(map));
@@ -812,9 +846,9 @@ function handleLogCustomExercise_(body) {
       const count = (row[2] || 0) + 1;
       const ids = (row[3] || '').split(', ').filter(Boolean);
       if (anonId && !ids.includes(anonId)) ids.push(anonId);
-      sheet.getRange(rowIdx, 3, 1, 4).setValues([[count, ids.join(', '), row[4]||today, today]]);
+      sheet.getRange(rowIdx, 3, 1, 4).setValues([_safeRow_([count, ids.join(', '), row[4]||today, today])]);
     } else {
-      sheet.appendRow([name, grp, 1, anonId, today, today]);
+      sheet.appendRow(_safeRow_([name, grp, 1, anonId, today, today]));
     }
 
     return json_({status:'ok'});
