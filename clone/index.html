@@ -2087,10 +2087,6 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         Partager
       </button>
-      <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        Mode Jour
-      </button>
       <button onclick="closeMenuDrawer()" style="width:32px;height:32px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);border:none;color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
   </div>
@@ -2111,6 +2107,12 @@ try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classL
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t2);"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
         Apparence
       </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Thème</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button id="appr-nuit" onclick="setTheme('dark')" class="appr-btn"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>🌙 Nuit</button>
+        <button id="appr-jour" onclick="setTheme('light')" class="appr-btn"><span class="appr-sw" style="background:#F2F3F5;box-shadow:inset 0 0 0 1px var(--sep);"></span>☀️ Jour</button>
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Fond <span style="text-transform:none;font-weight:500;">(en mode nuit)</span></div>
       <div style="display:flex;gap:8px;">
         <button id="appr-blue" onclick="setHalo('blue')" class="appr-btn"><span class="appr-sw" style="background:linear-gradient(160deg,#3B82F6,#0e1016);"></span>Halo bleu</button>
         <button id="appr-none" onclick="setHalo('none')" class="appr-btn"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>Fond uni</button>

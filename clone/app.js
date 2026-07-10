@@ -244,6 +244,22 @@ function _applyHalo(){
   if(b) b.classList.toggle('active', S.halo!=='none');
   if(n) n.classList.toggle('active', S.halo==='none');
 }
+// ── Apparence : thème Jour / Nuit (regroupé avec le halo) ──────
+function setTheme(mode){
+  const isLight = mode==='light';
+  const root=document.getElementById('root');
+  root.classList.toggle('light-mode', isLight);
+  document.documentElement.classList.toggle('light-mode', isLight);
+  try{ localStorage.setItem('ft4_theme', isLight?'light':'dark'); }catch(e){}
+  _applyThemeBtns();
+  const tb=document.getElementById('theme-toggle-btn'); if(tb) tb.innerHTML = isLight?'🌙 Mode Nuit':'☀️ Mode Jour';
+}
+function _applyThemeBtns(){
+  const isLight=document.getElementById('root')?.classList.contains('light-mode');
+  const j=document.getElementById('appr-jour'), n=document.getElementById('appr-nuit');
+  if(j) j.classList.toggle('active', !!isLight);
+  if(n) n.classList.toggle('active', !isLight);
+}
 
 
 function switchNuTab(tab, btn) {
@@ -1679,6 +1695,7 @@ document.addEventListener('visibilitychange',()=>{
 document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 applyTheme();
 if(typeof _applyHalo==='function')_applyHalo();
+if(typeof _applyThemeBtns==='function')_applyThemeBtns();
 if(typeof _applyA11y==='function')_applyA11y();
 if(typeof _applyColorblind==='function')_applyColorblind();
 if(typeof _applyLeftHand==='function')_applyLeftHand();
