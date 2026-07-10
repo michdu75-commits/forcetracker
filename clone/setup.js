@@ -11,11 +11,9 @@ function renderProgress(){
   switchProgTab('exo',document.getElementById('ptab-exo'));
   const chips=document.getElementById('big4-chips');
   if(chips)_renderProgChips(chips);
-  // Dropdown tous les autres exercices
-  const sel=document.getElementById('prog-sel');
-  const exos=S.progExos||BIG4;
-  const others=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].filter(n=>!exos.includes(n)).sort((a,b)=>a.localeCompare(b,'fr'));
-  sel.innerHTML=`<option value="">— Autre exercice… —</option>`+others.map(n=>`<option value="${n}">${n}</option>`).join('');
+  // Recherche d'exercice (remplace l'ancien dropdown déroulant)
+  const srch=document.getElementById('prog-search');if(srch)srch.value='';
+  const res=document.getElementById('prog-search-results');if(res)res.style.display='none';
   selectProgEx(_progEx);
   renderSessions();
   _updateProgCycleBanner();
@@ -32,9 +30,31 @@ function selectProgEx(name){
     c.style.color=active?'#fff':'var(--t3)';
     c.style.boxShadow=active?'0 4px 12px -4px rgba(239,62,87,.5)':'inset 0 0 0 1px rgba(255,255,255,.08)';
   });
-  const sel=document.getElementById('prog-sel');
-  if(sel&&exos.includes(name))sel.value='';
+  const srch=document.getElementById('prog-search');
+  if(srch&&exos.includes(name))srch.value='';   // exo dans les 4 chips → vide la recherche
   renderChart();
+}
+
+// ─── Recherche d'exercice dans Progrès (remplace le long dropdown) ──────────
+function _filterProgSearch(q){
+  const res=document.getElementById('prog-search-results');if(!res)return;
+  const qn=_naz((q||'').trim());
+  if(!qn){res.style.display='none';res.innerHTML='';return;}
+  const all=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].sort((a,b)=>a.localeCompare(b,'fr'));
+  const hits=all.filter(n=>_naz(n).includes(qn)).slice(0,30);
+  if(!hits.length){res.innerHTML=`<div style="padding:11px 13px;font-size:13px;color:var(--t3);">Aucun exercice trouvé</div>`;res.style.display='block';return;}
+  res.innerHTML=hits.map(n=>`<div onmousedown="_pickProgSearch('${_escAttrJs(n)}')" ontouchstart="_pickProgSearch('${_escAttrJs(n)}')" style="padding:11px 13px;font-size:14px;color:var(--t1);cursor:pointer;border-bottom:1px solid var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</div>`).join('');
+  res.style.display='block';
+}
+function _pickProgSearch(name){
+  if(!name)return;
+  const srch=document.getElementById('prog-search');if(srch)srch.value=name;
+  const res=document.getElementById('prog-search-results');if(res){res.style.display='none';res.innerHTML='';}
+  selectProgEx(name);
+}
+function _blurProgSearch(){
+  // Ferme la liste après le tap (petit délai pour laisser le onmousedown/touch se déclencher)
+  setTimeout(()=>{const res=document.getElementById('prog-search-results');if(res)res.style.display='none';},200);
 }
 
 function openProgExoEditor(){

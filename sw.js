@@ -1,4 +1,4 @@
-const CACHE = 'ft-v370'; // Fusion d'exercices : transfere aussi la PHOTO sur la cible (avant : supprimee)
+const CACHE = 'ft-v371'; // Progres : recherche d'exercice (champ de recherche a la place du long dropdown)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

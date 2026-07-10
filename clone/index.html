@@ -516,9 +516,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
   <div id="prog-exo" style="display:flex;flex-direction:column;gap:10px;">
     <div class="sec">Progression</div>
     <div id="big4-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-    <select id="prog-sel" onchange="selectProgEx(this.value)" style="font-size:14px;padding:10px 13px;">
-      <option value="">— Autre exercice… —</option>
-    </select>
+    <div id="prog-search-wrap" style="position:relative;">
+      <input id="prog-search" type="text" placeholder="🔍 Rechercher un exercice…" autocomplete="off" oninput="_filterProgSearch(this.value)" onfocus="_filterProgSearch(this.value)" onblur="_blurProgSearch()" style="width:100%;box-sizing:border-box;font-size:14px;padding:10px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);">
+      <div id="prog-search-results" style="display:none;max-height:240px;overflow-y:auto;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;margin-top:4px;-webkit-overflow-scrolling:touch;"></div>
+    </div>
     <div class="chart-box" id="chart-box"><div class="empty">Sélectionne un exercice</div></div>
     <div id="prog-cycle-banner" style="display:none;"></div>
     <div class="sec" id="sess-hist-title">Historique séances</div>
