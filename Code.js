@@ -34,6 +34,27 @@ function _checkTok_(propName, given) {
   return stored.length >= 12 && g === stored;
 }
 
+// SHA-256 hexadécimal (pour l'authentification par code perso — jamais le code en clair).
+function _sha256hex_(s){
+  var raw=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8);
+  return raw.map(function(b){return ('0'+(b&0xff).toString(16)).slice(-2);}).join('');
+}
+// ─── Protection opt-in par code perso ─────────────────────────────────────────
+// INVARIANT ABSOLU : un compte SANS 'auth_{email}' se comporte EXACTEMENT comme
+// avant (aucun impact sur les utilisateurs actuels). Un compte AVEC un code activé
+// exige le bon code pour lire/écrire ses données. Stockage : 'salt$hash' (jamais le code).
+function _authCheck_(email, code){
+  try{
+    var stored=PropertiesService.getScriptProperties().getProperty('auth_'+email)||'';
+    if(stored.length<20) return {ok:true, opted:false};           // pas de code → accès libre (comportement actuel)
+    var sep=stored.indexOf('$');
+    var salt=sep>0?stored.slice(0,sep):'', hash=sep>0?stored.slice(sep+1):'';
+    if(_sha256hex_(salt+'|'+String(code==null?'':code))===hash) return {ok:true, opted:true};
+    var blocked=_dailyCounterBlock_('authfail_'+email, 20);       // anti-brute-force : 20 essais ratés/jour/compte
+    return {ok:false, opted:true, blocked:blocked};
+  }catch(e){ return {ok:true, opted:false}; }                     // fail-open : un bug ne bloque jamais un vrai utilisateur
+}
+
 // SÉCURITÉ Sheets : neutralise l'injection de formule (CSV injection). Une chaîne
 // qui commence par = + - @ (ou une tabulation) est exécutée comme formule quand on
 // ouvre le Sheet → on la préfixe d'une apostrophe (invisible, affichage identique).
@@ -315,8 +336,25 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
+  // TEMPORAIRE (test protection opt-in) — à RETIRER après validation.
+  // Active/retire un code perso sur le compte bidon apollonone75 UNIQUEMENT.
+  // Gardé par une phrase secrète (empreinte SHA-256, jamais en clair).
+  if (p.action === '_setAuthTest') {
+    if (_sha256hex_(p.pass || '') !== '1ee7689307d30a836f310fa0a09f288b63d67b74a7a42868fee80183189fe357')
+      return json_({status:'error', error:'pass'});
+    var _em='apollonone75@gmail.com', _sp=PropertiesService.getScriptProperties();
+    if (p.remove) { _sp.deleteProperty('auth_'+_em); return json_({status:'ok', removed:_em}); }
+    var _code=String(p.code||'');
+    if (_code.length<3) return json_({status:'error', error:'code trop court'});
+    var _salt=Utilities.getUuid().replace(/-/g,'').slice(0,16);
+    _sp.setProperty('auth_'+_em, _salt+'$'+_sha256hex_(_salt+'|'+_code));
+    return json_({status:'ok', set:_em, codeLen:_code.length});
+  }
+
   if (p.action === 'loadProfile' && p.email) {
     const email = (p.email || '').toLowerCase().trim();
+    const _a = _authCheck_(email, p.authCode);
+    if (!_a.ok) return json_({status:'error', error:'auth', blocked:_a.blocked});
     const data = loadUserData_(email);
     const prem = getPremiumStatus_(email);
     if (!data) return json_({status:'not_found', premium: prem.premium, premiumExpiry: prem.expiry});
@@ -341,6 +379,8 @@ function doGet(e) {
 function handleLoadProfilePost_(body) {
   const email = (body.email || '').toLowerCase().trim();
   if (!email) return json_({status:'error', error:'email required'});
+  const _a = _authCheck_(email, body.authCode);
+  if (!_a.ok) return json_({status:'error', error:'auth', blocked:_a.blocked});
   const data = loadUserData_(email);
   const prem = getPremiumStatus_(email);
   if (!data) return json_({status:'not_found', premium: prem.premium, premiumExpiry: prem.expiry});
@@ -555,6 +595,9 @@ function handleSaveProfile_(body) {
   try {
     const email = (body.email || '').toLowerCase().trim();
     if (!email) return json_({status:'error', error:'Email requis'});
+
+    const _a = _authCheck_(email, body.authCode);
+    if (!_a.ok) return json_({status:'error', error:'auth', blocked:_a.blocked});
 
     const isNewUser = !loadUserData_(email);
     const existing = loadUserData_(email) || {};
