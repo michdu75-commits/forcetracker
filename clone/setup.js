@@ -286,7 +286,7 @@ function _updateSdMuscles(sess){
 function _renderSessDetailContent(){
   const el=document.getElementById('sd-content');
   if(!_sessEdits||!el)return;
-  el.innerHTML=(_sessEdits.exs||[]).map((ex,ei)=>{
+  let html=(_sessEdits.exs||[]).map((ex,ei)=>{
     const done=ex.sets.filter(s=>s.done);
     const maxRM=done.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
     return`<div class="card" style="margin-bottom:8px;padding:10px 12px">
@@ -313,9 +313,57 @@ function _renderSessDetailContent(){
         ${s.kg&&s.reps?`<span style="font-size:12px;color:var(--t1);font-weight:600;margin-left:2px" title="1RM potentiel estimé de cette série">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
         <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
       </div>`).join('')}
-      ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série</div>':''}
+      ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série — ajoutes-en une</div>':''}
+      <button class="btn btn-bg2" style="width:100%;margin-top:4px;padding:6px;font-size:12px;color:var(--t2)" onclick="addSessSet(${ei})">+ Ajouter une série</button>
     </div>`;
   }).join('');
+  html+=`<button class="btn btn-bg2" style="width:100%;margin-bottom:10px;padding:11px;font-size:14px;font-weight:700;color:var(--red)" onclick="openSessAddEx()">+ Ajouter un exercice</button>`;
+  const c=_sessEdits.cardio||null;
+  const ckcal=(c&&c.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(c):0;
+  const selSty='padding:6px 8px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:13px;font-family:var(--font)';
+  html+=`<div class="card" style="margin-bottom:8px;padding:10px 12px">
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🏃 Cardio ${ckcal?`<span style="font-weight:600;font-size:12px;color:var(--green)">· ~${ckcal} kcal</span>`:'<span style="font-weight:500;font-size:12px;color:var(--t3)">(optionnel)</span>'}</div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <select onchange="setSessCardio('type',this.value)" style="${selSty}">
+        ${Object.keys(CARDIO_LABELS).map(t=>`<option value="${t}" ${(c?c.type:'elliptique')===t?'selected':''}>${CARDIO_LABELS[t]}</option>`).join('')}
+      </select>
+      <select onchange="setSessCardio('intensity',this.value)" style="${selSty}">
+        ${[['leger','Léger'],['modere','Modéré'],['intense','Intense']].map(([v,l])=>`<option value="${v}" ${(c?c.intensity:'modere')===v?'selected':''}>${l}</option>`).join('')}
+      </select>
+      <input type="number" min="0" max="300" inputmode="numeric" value="${c&&c.duration?c.duration:''}" placeholder="min" onchange="setSessCardio('duration',this.value)" style="width:56px;padding:6px 4px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:14px;text-align:center;font-family:var(--font)">
+      <span style="font-size:12px;color:var(--t3)">min</span>
+      ${c&&c.duration?`<button class="btn btn-bg2" style="padding:3px 9px;font-size:11px;color:var(--red)" onclick="setSessCardio('duration',0)">Retirer</button>`:''}
+    </div>
+  </div>`;
+  el.innerHTML=html;
+}
+function addSessSet(ei){
+  if(!_sessEdits||!_sessEdits.exs[ei])return;
+  const sets=_sessEdits.exs[ei].sets;
+  const last=sets.filter(s=>s.done).slice(-1)[0]||sets.slice(-1)[0];
+  sets.push({kg:last?last.kg:0,reps:last?last.reps:0,type:'N',done:true,rm1:0});
+  _renderSessDetailContent();
+}
+function openSessAddEx(){
+  if(!_sessEdits)return;
+  _exPickerMode='addSess';
+  openExPicker();
+  toast('Choisis l\'exercice à ajouter','info');
+}
+function _addSessExPick(name){
+  if(!_sessEdits)return;
+  if(!_sessEdits.exs)_sessEdits.exs=[];
+  _sessEdits.exs.push({name,sets:[{kg:0,reps:0,type:'N',done:true,rm1:0}]});
+  _renderSessDetailContent();
+  _updateSdMuscles(_sessEdits);
+  toast(name+' ajouté — remplis les séries puis Enregistre','info');
+}
+function setSessCardio(field,val){
+  if(!_sessEdits)return;
+  if(!_sessEdits.cardio)_sessEdits.cardio={type:'elliptique',intensity:'modere',duration:0};
+  _sessEdits.cardio[field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
+  if(field==='duration'&&!_sessEdits.cardio.duration)delete _sessEdits.cardio; // 0 → pas de cardio
+  _renderSessDetailContent();
 }
 
 function updateSessSet(ei,si,field,val){
@@ -381,6 +429,8 @@ function saveSessEdits(){
     }
   }));
   const calData=calcSessionCalories(_sessEdits);
+  const cardioKcal=(_sessEdits.cardio&&_sessEdits.cardio.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(_sessEdits.cardio):0;
+  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
   _sessEdits.calories=calData.total;
   _sessEdits.calData=calData;
   S.sessions[idx]=_sessEdits;

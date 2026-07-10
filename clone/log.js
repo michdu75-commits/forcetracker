@@ -1020,6 +1020,12 @@ function addExercise(name){
     closeExPicker();
     return;
   }
+  if(_exPickerMode==='addSess'){ // ajout d'un exercice à une séance passée (setup.js)
+    _exPickerMode='workout';
+    if(typeof _addSessExPick==='function')_addSessExPick(name);
+    closeExPicker();
+    return;
+  }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
   // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
@@ -1898,7 +1904,7 @@ function openExPicker(){
   filterEx();
   document.getElementById('mod-ex').classList.add('open');
 }
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'){_exPickerMode='workout';_replaceEi=null;}}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'){_exPickerMode='workout';_replaceEi=null;}}
 function filterEx(){
   const q=(document.getElementById('ex-search').value||'').toLowerCase().trim();
   const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));

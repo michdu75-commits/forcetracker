@@ -1,4 +1,4 @@
-const CACHE = 'ft-v354'; // Figurine Dips Assis Machine (Seated Dip) + fix : cardio SEUL peut etre valide/enregistre (bouton Enregistrer le cardio)
+const CACHE = 'ft-v355'; // Seance passee : ajouter un/des exercices + des series + un cardio (editeur #ov-sess-detail enrichi)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
