@@ -372,8 +372,8 @@ function ensurePremiumEmails_() {
 function _aiQuotaBlock_(email) {
   try {
     var sp = PropertiesService.getScriptProperties();
-    var GLOBAL_MAX = parseInt(sp.getProperty('AI_GLOBAL_MAX'), 10) || 1500; // total / jour
-    var EMAIL_MAX  = parseInt(sp.getProperty('AI_EMAIL_MAX'), 10)  || 100;  // / jour / email
+    var GLOBAL_MAX = parseInt(sp.getProperty('AI_GLOBAL_MAX'), 10) || 600; // total / jour (baissé de 1500 : borne le coût en cas d'abus)
+    var EMAIL_MAX  = parseInt(sp.getProperty('AI_EMAIL_MAX'), 10)  || 50;  // / jour / email (baissé de 100 : l'email est usurpable)
     var tz = Session.getScriptTimeZone() || 'Europe/Paris';
     var today = Utilities.formatDate(new Date(), tz, 'yyyyMMdd');
     var raw = sp.getProperty('ai_quota');
@@ -457,9 +457,10 @@ function handleKofiWebhook_(dataStr) {
   try {
     const data = JSON.parse(dataStr);
 
-    // Vérification token Ko-fi
+    // Vérification token Ko-fi — FAIL-CLOSED : on refuse si le token n'est pas
+    // configuré OU s'il ne correspond pas (empêche d'auto-s'attribuer premium).
     const expectedToken = PropertiesService.getScriptProperties().getProperty('KOFI_TOKEN') || '';
-    if (expectedToken && data.verification_token !== expectedToken) {
+    if (!expectedToken || data.verification_token !== expectedToken) {
       return ContentService.createTextOutput('Unauthorized').setMimeType(ContentService.MimeType.TEXT);
     }
 

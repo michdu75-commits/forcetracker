@@ -661,8 +661,8 @@ function renderNutrition(){try{
   document.getElementById('meal-plan').innerHTML=meals.map(m=>`
     <div class="meal-row">
       <div style="flex:1;">
-        <div class="meal-name">${m.name}</div>
-        <div class="meal-detail">${m.desc}</div>
+        <div class="meal-name">${_escNote(m.name)}</div>
+        <div class="meal-detail">${_escNote(m.desc)}</div>
         <div class="meal-detail" style="margin-top:3px;color:var(--t3);">P: ${m.prot}g · G: ${m.carbs}g · L: ${m.fat}g</div>
       </div>
       <div class="meal-kcal">${m.kcal} kcal</div>
@@ -724,10 +724,10 @@ function _renderMealDay(day,isPrem,canRegen){
   if(!day)return'';
   let h=`<div style="display:flex;flex-direction:column;gap:6px;">`;
   (day.meals||[]).forEach(m=>{
-    const enc=m.name.replace(/'/g,"\\'");
+    const enc=_escAttrJs(m.name);
     h+=`<div style="background:var(--bg2);border-radius:12px;padding:12px 14px;box-shadow:inset 0 0 0 1px var(--sep);">`
       +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">`
-      +`<div style="font-weight:700;font-size:13px;color:var(--t1);">${m.name}</div>`
+      +`<div style="font-weight:700;font-size:13px;color:var(--t1);">${_escNote(m.name)}</div>`
       +`<div style="display:flex;align-items:center;gap:6px;">`
       +`<span style="font-size:12px;font-weight:700;color:var(--red);">${m.kcal||0} kcal</span>`
       +(canRegen?`<button onclick="generateMealPlan('${day.date}','${enc}')" style="background:none;border:none;padding:2px 6px;color:var(--t3);cursor:pointer;font-size:14px;touch-action:manipulation;" title="Régénérer ce repas">🔄</button>`:'')

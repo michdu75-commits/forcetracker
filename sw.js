@@ -1,4 +1,4 @@
-const CACHE = 'ft-v358'; // Superset en seance (menu ⋯ → avec l'exercice du dessus) + pop-up Christophe "toutes tes idees sont faites"
+const CACHE = 'ft-v359'; // Securite : echappement anti-injection des noms (exos/programmes/repas/fichiers) + plafonds IA baisses + Ko-fi fail-closed
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
