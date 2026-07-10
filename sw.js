@@ -1,4 +1,4 @@
-const CACHE = 'ft-v367'; // Emma : acces Espace Testeur (boite a idees) + pop-up perso d'explication
+const CACHE = 'ft-v368'; // Scommeil/cardio : bouton Enregistrer plus petit, visible seulement si valeur, cardio validable sur place (plus de scroll) + carte email masquee si compte protege
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

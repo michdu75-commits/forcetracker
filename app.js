@@ -102,10 +102,15 @@ function setCardioField(field,val){
 }
 function _updateCardioSummary(){
   const c=S.wkt&&S.wkt.cardio;if(!c)return;
-  const el=document.getElementById('cardio-summary');if(!el)return;
-  const kcal=calcCardioKcal(c);
-  el.textContent=c.duration?`${CARDIO_LABELS[c.type||'elliptique']} · ${c.duration}min · ~${kcal}kcal`:'optionnel';
-  el.style.color=kcal?'var(--green)':'var(--t3)';
+  const el=document.getElementById('cardio-summary');
+  if(el){
+    const kcal=calcCardioKcal(c);
+    el.textContent=c.duration?`${CARDIO_LABELS[c.type||'elliptique']} · ${c.duration}min · ~${kcal}kcal`:'optionnel';
+    el.style.color=kcal?'var(--green)':'var(--t3)';
+  }
+  // Bouton « Enregistrer le cardio » : visible dès qu'une durée est saisie (sans re-render → focus gardé)
+  const btn=document.getElementById('cardio-save-btn');
+  if(btn)btn.style.display=(c.duration>0)?'block':'none';
 }
 let _cardioOpen=false;
 function toggleCardio(){_cardioOpen=!_cardioOpen;renderCardioBlock();}
@@ -136,8 +141,16 @@ function renderCardioBlock(){
         <span style="font-size:12px;color:var(--t3);">min</span>
       </div>
     </div>
+    <button id="cardio-save-btn" class="btn btn-red ft-press" onclick="saveCardioEntry()" style="width:100%;margin-top:10px;padding:10px;font-size:14px;display:${c.duration>0?'block':'none'};">✓ Enregistrer le cardio</button>
   </div>`:''}
 </div>`;
+}
+// Valide le cardio : replie le bloc (le résumé reste visible dans l'en-tête) — pas besoin de scroller.
+function saveCardioEntry(){
+  if(!S.wkt||!S.wkt.cardio||!S.wkt.cardio.duration){toast('Entre une durée de cardio','info');return;}
+  _cardioOpen=false;persist();renderCardioBlock();
+  if(typeof renderLogFinish==='function')renderLogFinish();
+  toast('Cardio enregistré ✅','success');
 }
 
 // ─── CALORIES BRÛLÉES ─────────────────────────────────────────
@@ -892,6 +905,8 @@ function verifyEmailCode(){
 function _renderEmailVerifyCard(){
   const el=document.getElementById('email-verify-card'); if(!el)return;
   if(!S.email){ el.innerHTML=''; return; }
+  // Compte protégé (code perso) = email déjà vérifié → pas de prompt redondant.
+  if(_authCode()){ el.innerHTML=''; return; }
   if(S.emailVerified){
     el.innerHTML='<div style="display:flex;align-items:center;gap:7px;justify-content:center;font-size:13px;color:var(--green);font-weight:700;padding:8px;">✅ Email confirmé</div>';
     return;
