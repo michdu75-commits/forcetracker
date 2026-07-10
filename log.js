@@ -1607,6 +1607,16 @@ function _restTick(){
 function saveExNote(ei,val){if(S.wkt?.exs?.[ei]!==undefined){S.wkt.exs[ei].note=val||'';persist();}}
 
 // ── OVERLAY DÉCOMPTE FINAL ────────────────────────────────────────────
+// Format « N reps à X kg » (cohérent avec l'affichage reps→kg des programmes,
+// demande Christophe). Gère les cas sans poids (poids du corps) / sans reps.
+function _fmtNextSet(info){
+  if(!info)return '';
+  const r=info.reps, k=info.kg;
+  if(r&&k) return r+' reps à '+k+' kg';
+  if(r) return r+' reps';
+  if(k) return k+' kg';
+  return '';
+}
 function _nextSetInfo(){
   const exs=S.wkt&&S.wkt.exs;
   if(!exs||!exs.length)return null;
@@ -1666,7 +1676,7 @@ function _showRestCountdown(){
   const nextDetailEl=document.getElementById('rcd-next-detail');
   if(nameEl)nameEl.textContent=info?info.name:'';
   if(nextNumEl)nextNumEl.textContent=info?'Série '+info.num:'';
-  if(nextDetailEl)nextDetailEl.textContent=info?(info.kg+' kg × '+info.reps):'';
+  if(nextDetailEl)nextDetailEl.textContent=_fmtNextSet(info);
   // Fond sombre garanti à chaque ouverture (l'inline HTML #0e1016 avait pu être effacé par un GO précédent)
   ov.style.background='#0e1016';ov.style.transition='';ov.classList.remove('go-cycle');
   ov.style.display='block';

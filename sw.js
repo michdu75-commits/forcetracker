@@ -1,4 +1,4 @@
-const CACHE = 'ft-v356'; // Apparence : palette de couleurs du halo + sens (Normal/Inverse) en prod + pop-up nouveaute (halo/Apparence + cardio/seances)
+const CACHE = 'ft-v357'; // Decompte repos : "N reps à X kg" au lieu de "X kg × N" (coherent reps→kg, demande Christophe)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
