@@ -1403,9 +1403,12 @@ async function finishWorkout(){
   _finishing=true;
   _releaseWakeLock();
   _stopWktChrono();
-  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Ajoute un exercice !','error');_finishing=false;return;}
-  const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
-  if(!hasDone){toast('Valide au moins une série !','error');_finishing=false;return;}
+  if(!S.wkt){_finishing=false;return;}
+  const _hasCardio=!!(S.wkt.cardio&&S.wkt.cardio.duration);
+  const _hasExs=!!(S.wkt.exs&&S.wkt.exs.length);
+  if(!_hasExs&&!_hasCardio){toast('Ajoute un exercice ou un cardio !','error');_finishing=false;return;}
+  const hasDone=_hasExs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
+  if(!hasDone&&!_hasCardio){toast('Valide une série ou ajoute un cardio !','error');_finishing=false;return;}
   const duration=Math.floor(_wktElapsedMs()/1000); // durée réelle, hors temps en pause
   let vol=0;
   S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
@@ -3664,6 +3667,7 @@ const EX_YT={
   'Dips Parallèles':               {img:'../exercises/dips-triceps-paralleles.webp'},
   'Montée sur Box Haltères':       {img:'../exercises/montees-banc-lateral-halteres.webp'},
   'Dips Machine Assistée':         {img:'../exercises/dips-assiste-machine.webp'},
+  'Dips Assis Machine (Seated Dip)':{img:'../exercises/dips-assis-machine-avec-poids.webp'},
   'Développé Nuque':               {img:'../exercises/developpe-nuque-barre-guidee.webp'},
   // ── Épaules + Trapèzes (lot 2026-07-06) ──
   'Développé Arnold (Arnold Press)':{img:'../exercises/developpe-arnold-exercice-musculation.webp'},

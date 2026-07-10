@@ -1382,15 +1382,26 @@ function renderLogSleep(){
 
 function renderLogFinish(){
   const el=document.getElementById('log-finish');if(!el)return;
-  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){el.innerHTML='';return;}
-  const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
-  if(!hasDone){el.innerHTML='';return;}
-  const nEx=S.wkt.exs.filter(ex=>ex.sets.some(s=>s.done)).length;
-  const nSets=S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
-  const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
+  if(!S.wkt){el.innerHTML='';return;}
+  const hasCardio=!!(S.wkt.cardio&&S.wkt.cardio.duration);
+  const hasDone=!!(S.wkt.exs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done)));
+  if(!hasDone&&!hasCardio){el.innerHTML='';return;} // rien à enregistrer (ni série validée, ni cardio)
+  let summary='';
+  if(hasDone){
+    const nEx=S.wkt.exs.filter(ex=>ex.sets.some(s=>s.done)).length;
+    const nSets=S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
+    const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
+    summary=`${nEx} exercice${nEx>1?'s':''} · ${nSets} série${nSets>1?'s':''} · ${vol} kg de volume`;
+  }
+  if(hasCardio){
+    const c=S.wkt.cardio, kcal=(typeof calcCardioKcal==='function'?calcCardioKcal(c):0);
+    const cardioTxt=`🏃 Cardio ${c.duration}min${kcal?` · ~${kcal}kcal`:''}`;
+    summary = summary ? summary+' · '+cardioTxt : cardioTxt;
+  }
+  const label = hasDone ? '🏁 Terminer la séance' : '🏁 Enregistrer le cardio';
   el.innerHTML=`<div style="border-top:1px solid var(--sep);padding-top:14px;margin-top:4px;">
-    <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${nEx} exercice${nEx>1?'s':''} · ${nSets} série${nSets>1?'s':''} · ${vol} kg de volume</div>
-    <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">🏁 Terminer la séance</button>
+    <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${summary}</div>
+    <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">${label}</button>
   </div>`;
 }
 

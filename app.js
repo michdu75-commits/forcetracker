@@ -98,6 +98,7 @@ function setCardioField(field,val){
   // On met juste à jour le résumé ; les boutons type/intensité, eux, re-render pour refléter la sélection.
   if(field==='duration')_updateCardioSummary();
   else renderCardioBlock();
+  if(typeof renderLogFinish==='function')renderLogFinish(); // le cardio seul suffit pour valider → afficher/màj le bouton
 }
 function _updateCardioSummary(){
   const c=S.wkt&&S.wkt.cardio;if(!c)return;

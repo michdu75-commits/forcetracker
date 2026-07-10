@@ -1,4 +1,4 @@
-const CACHE = 'ft-v353'; // Fix iOS : trainee rouge floue en haut du Profil (backdrop-filter du header glitchait avec le bouton rouge collant) -> header profil transparent sans flou
+const CACHE = 'ft-v354'; // Figurine Dips Assis Machine (Seated Dip) + fix : cardio SEUL peut etre valide/enregistre (bouton Enregistrer le cardio)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -76,6 +76,7 @@ const PRECACHE = [
   './exercises/leg-abduction-machine.webp','./exercises/leg-adduction-machine.webp',
   './exercises/chest-press-machine-declinee.webp','./exercises/dips-triceps-paralleles.webp','./exercises/montees-banc-lateral-halteres.webp',
   './exercises/dips-assiste-machine.webp','./exercises/developpe-nuque-barre-guidee.webp',
+  './exercises/dips-assis-machine-avec-poids.webp',
   // Épaules + Trapèzes (lot 2026-07-06)
   './exercises/developpe-arnold-exercice-musculation.webp','./exercises/developpe-epaule-halteres.webp','./exercises/developpe-militaire-exercice-musculation.webp',
   './exercises/elevation-laterale-machine.webp','./exercises/elevations-frontales-exercice-musculation.webp','./exercises/elevations-laterales-exercice-musculation.webp',
