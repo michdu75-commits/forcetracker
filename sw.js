@@ -1,4 +1,4 @@
-const CACHE = 'ft-v369'; // Guide de l'app : slide 'Proteger ton compte' (vue a l'installation via le guide auto) + resync clone
+const CACHE = 'ft-v370'; // Fusion d'exercices : transfere aussi la PHOTO sur la cible (avant : supprimee)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

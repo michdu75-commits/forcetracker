@@ -2070,11 +2070,21 @@ function _saveCustomExEdit(newName,grp){
   if(S.wkt)renderExBlocks();
   toast('Exercice modifié ✅','success');
 }
-// Fusionne un exercice perso dans un autre exercice existant : déplace séances/PRs/programmes, supprime le perso.
+// Fusionne un exercice perso dans un autre exercice existant : déplace séances/PRs/programmes,
+// TRANSFÈRE la photo sur la cible (si elle n'en a pas déjà une), puis supprime le perso.
 function _mergeCustomInto(oldName,targetName){
+  // Récupère la photo du perso (img du perso OU exPhotos) AVANT de le supprimer.
+  const src=(S.customExercises||[]).find(e=>e.n===oldName);
+  const srcImg=(src&&src.img)||(S.exPhotos&&S.exPhotos[oldName])||'';
   _renameExEverywhere(oldName,targetName);
   S.customExercises=(S.customExercises||[]).filter(e=>e.n!==oldName);
   if(S.exPhotos&&S.exPhotos[oldName])delete S.exPhotos[oldName];
+  // Transfère la photo sur la cible si elle n'en a pas déjà une (on n'écrase jamais la photo de la cible).
+  if(srcImg){
+    const tc=(S.customExercises||[]).find(e=>e.n===targetName);
+    if(tc){ if(!tc.img)tc.img=srcImg; }                 // cible = exo perso → champ img
+    else { if(!S.exPhotos)S.exPhotos={}; if(!S.exPhotos[targetName])S.exPhotos[targetName]=srcImg; } // cible = biblio → exPhotos
+  }
   _editingCustomExName=null;
   persist();
   hideCustomExForm();
