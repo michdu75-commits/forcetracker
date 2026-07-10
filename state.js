@@ -1,4 +1,8 @@
 // ─── STATE ───────────────────────────────────────────────────
+// Code perso de protection du compte (stocké UNIQUEMENT en local sur l'appareil,
+// JAMAIS envoyé au cloud comme donnée — seulement joint aux requêtes pour prouver l'accès).
+function _authCode(){ try{ return localStorage.getItem('ft4_authcode')||''; }catch(e){ return ''; } }
+function _setAuthCode(c){ try{ if(c) localStorage.setItem('ft4_authcode',c); else localStorage.removeItem('ft4_authcode'); }catch(e){} }
 let _chartPts=[];
 let S={
   bw:80,barW:20,defRest:130,

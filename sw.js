@@ -1,4 +1,4 @@
-const CACHE = 'ft-v364'; // fix geste retour iPhone : blocage des le 1er pixel (avant : trop tard, la page blanche passait)
+const CACHE = 'ft-v365'; // Protection compte : ecran Proteger mon compte (code perso, email-verifie) + code envoye/demande partout
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

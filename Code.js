@@ -512,6 +512,8 @@ function doPost(e) {
   if (body.action === 'generateMealPlan')  return handleGenerateMealPlan_(body);
   if (body.action === 'adminRestore')      return handleAdminRestore_(body);
   if (body.action === 'listUsers')         return handleListUsers_(body);
+  if (body.action === 'setAccessCode')     return handleSetAccessCode_(body);
+  if (body.action === 'authStatus')        return handleAuthStatus_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -851,6 +853,56 @@ function handleVerifyConfirmCode_(body) {
     return json_({status:'error', error:'verify', detail: String(err)});
   }
 }
+
+// ── Activer / réinitialiser le code perso (protection opt-in) ─────────────────
+// Exige un code de confirmation email VALIDE (prouve la possession de l'email →
+// garantit la récupération). Couvre le 1er réglage ET le reset "code oublié".
+function handleSetAccessCode_(body) {
+  try {
+    var email   = (body.email   || '').toString().trim().toLowerCase();
+    var confirm = (body.code    || '').toString().trim();       // code 6 chiffres reçu par email
+    var newCode = (body.newCode || '').toString().trim();       // code perso choisi
+    if (!email || !confirm) return json_({status:'error', error:'params'});
+    if (!body.remove && newCode.length < 4) return json_({status:'error', error:'court'}); // min 4 caractères (sauf désactivation)
+    // 1) Vérifier le code email (même logique que verifyConfirmCode)
+    var sp = PropertiesService.getScriptProperties();
+    var map = {}; try { map = JSON.parse(sp.getProperty('pending_confirms') || '{}'); } catch(e) { map = {}; }
+    var cur = map[email];
+    var save = function(){ sp.setProperty('pending_confirms', JSON.stringify(map)); };
+    if (!cur)                 return json_({status:'nocode'});
+    if (cur.exp < Date.now()) { delete map[email]; save(); return json_({status:'expired'}); }
+    if (cur.tries >= 5)       { delete map[email]; save(); return json_({status:'toomany'}); }
+    if (cur.code !== confirm) { cur.tries++;       save(); return json_({status:'invalid'}); }
+    delete map[email]; save();
+    // 2a) DÉSACTIVATION : email vérifié → on retire la protection
+    if (body.remove) { sp.deleteProperty('auth_' + email); return json_({status:'ok', removed:true}); }
+    // 2b) Poser le code perso (salt$hash, jamais le code en clair) + marquer email vérifié
+    var salt = Utilities.getUuid().replace(/-/g,'').slice(0,16);
+    sp.setProperty('auth_' + email, salt + '$' + _sha256hex_(salt + '|' + newCode));
+    try {
+      var data = loadUserData_(email);
+      if (data) { data.profile = data.profile || {}; data.profile.emailVerified = true; saveUserData_(email, data); }
+    } catch(e2) {}
+    return json_({status:'ok'});
+  } catch(err) {
+    return json_({status:'error', error:'setcode', detail:String(err)});
+  }
+}
+// L'app demande si un compte est protégé (aucun secret divulgué — juste un booléen).
+function handleAuthStatus_(body) {
+  try {
+    var email = (body.email || '').toString().trim().toLowerCase();
+    if (!email) return json_({status:'error', error:'email'});
+    var sp = PropertiesService.getScriptProperties();
+    var hasCode = (sp.getProperty('auth_' + email) || '').length >= 20;
+    var data = loadUserData_(email);
+    var verified = !!(data && data.profile && data.profile.emailVerified) || !!sp.getProperty('confirmed_' + email);
+    return json_({status:'ok', hasCode: hasCode, emailVerified: verified});
+  } catch(err) {
+    return json_({status:'error', error:'authstatus'});
+  }
+}
+
 // À lancer UNE fois depuis l'éditeur Apps Script SI les emails de confirmation
 // n'arrivent pas (force l'écran d'autorisation Google pour l'envoi d'email).
 function authorizeMail() {

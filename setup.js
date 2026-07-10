@@ -203,7 +203,7 @@ function _cloudSync(){
   fetch(S.url,{method:'POST',mode:'no-cors',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
-      action:'saveProfile',email:S.email,
+      action:'saveProfile',email:S.email,authCode:_authCode(),
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,nutritionPhase:S.nutritionPhase,
@@ -1577,11 +1577,20 @@ function _applyRestoreData(raw){
 }
 
 async function _fetchRestoreRaw(email){
-  const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email})});
+  const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email,authCode:_authCode()})});
   const txt=await resp.text();
   let data;
   try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON : '+txt.substring(0,120));}
   return data;
+}
+
+// Restauration : l'utilisateur saisit son code perso → on le mémorise localement et on relance.
+function _restoreSubmitCode(){
+  const c=document.getElementById('restore-code-inp');
+  const code=(c?c.value:'').trim();
+  if(!code){toast('Entre ton code','error');return;}
+  _setAuthCode(code);            // mémorisé sur l'appareil ; sera envoyé par _fetchRestoreRaw
+  doRestoreAccount();            // relance → si le code est bon, la restauration s'applique
 }
 
 function openRestoreAccount(){
@@ -1609,6 +1618,23 @@ async function doRestoreAccount(){
     // PULL-ONLY : on lit, on ne pousse rien avant
     const data=await _fetchRestoreRaw(email);
     console.log('[FT restore] raw server response',JSON.stringify(data).substring(0,500));
+
+    // Compte protégé par un code perso → demander le code (et réessayer)
+    if(data&&data.error==='auth'){
+      const hadCode=!!_authCode();
+      if(hadCode)_setAuthCode('');           // le code tenté était faux → on l'enlève
+      S.email=email;
+      if(st){
+        st.style.display='block';st.style.color='var(--orange)';
+        st.innerHTML=(hadCode?'❌ Code incorrect. ':'🔒 Ce compte est protégé. ')+'Entre ton code perso&nbsp;:'
+          +'<input type="password" inputmode="numeric" id="restore-code-inp" placeholder="Ton code" autocomplete="off" '
+          +'style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--orange);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:16px;">'
+          +'<button onclick="_restoreSubmitCode()" style="margin-top:8px;width:100%;padding:11px;border:none;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer;">Valider le code</button>';
+        setTimeout(()=>{const c=document.getElementById('restore-code-inp');if(c){c.focus();c.addEventListener('keydown',e=>{if(e.key==='Enter')_restoreSubmitCode();});}},120);
+      }
+      if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+      return;
+    }
 
     if(!data||data.status==='not_found'||data.error){
       const msg=data&&data.error?data.error:'Aucun profil trouvé pour cet email.';
@@ -1695,7 +1721,7 @@ async function debugRestore(){
   if(!S.email){toast('Pas d\'email configuré','error');return;}
   toast('Test API en cours…','info');
   try{
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email,authCode:_authCode()})});
     const txt=await resp.text();
     console.log('[FT debug restore]',txt);
     toast('Réponse API : '+txt.substring(0,80),'info');
@@ -1730,7 +1756,7 @@ async function debugPremiumCheck(){
   }
   try{
     // 1. check loadProfile (POST) — résultat premium
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email,authCode:_authCode()})});
     const txt=await r.text();
     let d=null;try{d=JSON.parse(txt);}catch(_){}
     const srvPrem=d&&d.premium===true;
