@@ -244,12 +244,32 @@ function setHaloColor(rgb){    // couleur de la palette → active le halo avec 
   persist();
   _applyHalo();
 }
+function setHaloDir(dir){      // 'top' (normal, depuis le haut) | 'bottom' (inversé, depuis le bas)
+  S.haloDir = (dir==='bottom') ? 'bottom' : 'top';
+  try{ localStorage.setItem('ft4_haloDir', S.haloDir); }catch(e){}
+  persist();
+  _applyHalo();
+}
 function _applyHalo(){
   const root=document.getElementById('root');
   document.documentElement.classList.toggle('no-halo', S.halo==='none');
-  if(root) root.style.setProperty('--halo-rgb', S.haloColor||'59,130,246');
+  if(root){
+    root.style.setProperty('--halo-rgb', S.haloColor||'59,130,246');
+    if(S.haloDir==='bottom'){ // inversé : part du bas et monte BEAUCOUP plus haut
+      root.style.setProperty('--halo-y','100%');
+      root.style.setProperty('--halo-h','118%');
+      root.style.setProperty('--halo-stop','82%');
+    }else{                    // normal : depuis le haut (~60%)
+      root.style.setProperty('--halo-y','0%');
+      root.style.setProperty('--halo-h','92%');
+      root.style.setProperty('--halo-stop','66%');
+    }
+  }
   const n=document.getElementById('appr-none');
   if(n) n.classList.toggle('active', S.halo==='none');
+  const dn=document.getElementById('appr-dir-normal'), di=document.getElementById('appr-dir-invert');
+  if(dn) dn.classList.toggle('active', S.haloDir!=='bottom');
+  if(di) di.classList.toggle('active', S.haloDir==='bottom');
   document.querySelectorAll('.appr-color').forEach(function(el){
     el.classList.toggle('active', S.halo!=='none' && el.getAttribute('data-rgb')===S.haloColor);
   });
