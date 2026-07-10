@@ -1,4 +1,4 @@
-const CACHE = 'ft-v361'; // iOS : blocage du geste retour bord gauche (page blanche)
+const CACHE = 'ft-v362'; // logo gris : splash iPhone (app installee) + remplace le logo dans l'app (topbar + onboarding)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -12,7 +12,7 @@ const PRECACHE = [
   './lib/zxing.min.js',
   // Polices (hébergées localement — plus de dépendance Google Fonts)
   './fonts/manrope-variable.woff2', './fonts/spacegrotesk-variable.woff2', './fonts/pacifico-400.woff2',
-  './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',
+  './force-tracker-logo-gray.png', './force-tracker-logo-splash.gif', './force-tracker-logo-topbar.gif', './force-tracker-logo-final.png',
   // Captures d'écran du guide-film (Menu → Guide de l'application)
   './guide/home.jpg','./guide/profil.jpg','./guide/seance.jpg',
   './guide/programmes.jpg','./guide/progres.jpg','./guide/bilan.jpg','./guide/coach.jpg',
