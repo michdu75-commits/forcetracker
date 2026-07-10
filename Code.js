@@ -34,6 +34,12 @@ function _checkTok_(propName, given) {
   return stored.length >= 12 && g === stored;
 }
 
+// SHA-256 hexadécimal (pour l'enregistrement sécurisé des tokens via URL).
+function _sha256hex_(s) {
+  var raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8);
+  return raw.map(function(b){ return ('0' + (b & 0xff).toString(16)).slice(-2); }).join('');
+}
+
 function loadUserData_(email) {
   const raw = PropertiesService.getScriptProperties().getProperty(userKey_(email));
   if (!raw) return null;
@@ -269,6 +275,23 @@ function doGet(e) {
       givenLast3: _g.substring(Math.max(0, _g.length - 3)),
       wouldMatch: _v.trim() === _g.trim()
     });
+  }
+
+  // Enregistrement sécurisé d'un token dans les Script Properties, via URL.
+  // Contourne l'UI Apps Script (qui n'enregistre pas fiablement). SÛR : ne pose
+  // la valeur QUE si son empreinte SHA-256 correspond (impossible à détourner —
+  // l'empreinte en clair ne révèle pas la valeur).
+  if (p.action === 'setTok') {
+    var _HASHES = {
+      'ADMIN_TOKEN':  '2c9a3d8de73ff7960f0d6fd7de4477613e854f78d8ad2291ddbd462620318b9a',
+      'BACKUP_TOKEN': 'e99ecd32e50161c32fde99fce686c0aabe26120d5cbc2e345adb73b3eeee6a36',
+      'IDEES_TOKEN':  '526532e72e00aa0f041d5702a1f1bd0f2d68a1875d62a62910885ffa3872a0e3'
+    };
+    var _k = p.k || '', _v = (p.v == null ? '' : String(p.v)).trim();
+    if (!_HASHES[_k]) return json_({status:'error', error:'unknown_key'});
+    if (_sha256hex_(_v) !== _HASHES[_k]) return json_({status:'error', error:'bad_value'});
+    PropertiesService.getScriptProperties().setProperty(_k, _v);
+    return json_({status:'ok', set:_k, len:_v.length});
   }
 
   // Lecture des idées des testeurs (boîte à idées) — ?action=getIdees&token=FT_IDEES_2026
