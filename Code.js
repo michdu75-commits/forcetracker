@@ -250,6 +250,27 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
+  // DIAGNOSTIC TEMPORAIRE (à retirer après) — ne divulgue PAS les secrets,
+  // juste ce que le serveur voit pour comprendre le "token error".
+  if (p.action === 'tokdebug') {
+    var _sp = PropertiesService.getScriptProperties();
+    var _keys = _sp.getKeys();
+    var _v = _sp.getProperty('IDEES_TOKEN') || '';
+    var _g = (p.token == null ? '' : String(p.token));
+    return json_({
+      allKeys: _keys,
+      ideesKeyExists: _keys.indexOf('IDEES_TOKEN') >= 0,
+      storedLen: _v.length,
+      storedTrimLen: _v.trim().length,
+      storedFirst3: _v.substring(0, 3),
+      storedLast3: _v.substring(Math.max(0, _v.length - 3)),
+      givenLen: _g.length,
+      givenFirst3: _g.substring(0, 3),
+      givenLast3: _g.substring(Math.max(0, _g.length - 3)),
+      wouldMatch: _v.trim() === _g.trim()
+    });
+  }
+
   // Lecture des idées des testeurs (boîte à idées) — ?action=getIdees&token=FT_IDEES_2026
   if (p.action === 'getIdees') {
     if (!_checkTok_('IDEES_TOKEN', p.token)) return json_({status:'error', error:'token'});
