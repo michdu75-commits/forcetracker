@@ -1615,15 +1615,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Repas</div>
     <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
     <div id="af-quick-list"></div>
-    <button class="btn btn-bg2" onclick="scanBarcode()" style="width:100%;margin-bottom:10px;">📷 Scanner un code-barres</button>
-    <input type="file" id="af-bc-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodeFile(this)">
-    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:10px;">📸 Lire l'étiquette nutritionnelle (IA)</button>
-    <input type="file" id="af-label-input" accept="image/*" capture="environment" style="display:none" onchange="onFoodLabelFile(this)">
-    <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">…ou tape le code-barres à la main (les chiffres sous le code) :</div>
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <!-- Code-barres : saisie des chiffres (rapide et fiable) -->
+    <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Code-barres du produit — tape les chiffres écrits sous le code :</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
       <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ex : 3017620422003" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1 1 auto;min-width:0;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
       <button onclick="_manualBarcode()" style="flex:0 0 auto;width:auto;padding:0 20px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:15px;font-family:var(--font);cursor:pointer;">OK</button>
     </div>
+    <!-- Produit sans code / étiquette : photo IA -->
+    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Ou lire l'étiquette nutritionnelle (IA)</button>
+    <input type="file" id="af-label-input" accept="image/*" capture="environment" style="display:none" onchange="onFoodLabelFile(this)">
     <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
       <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
       <div style="display:flex;align-items:center;gap:8px;">
