@@ -416,32 +416,52 @@ async function onBarcodeFile(input){
     await _lookupBarcode(code);
   }catch(e){URL.revokeObjectURL(url);toast('Erreur scan : '+(e.message||e),'error');}
 }
+// Récupère un produit Open Food Facts — essaie l'API v2 (champs) PUIS v0 (repli).
+// ⚠️ Tolérant sur le champ « status » : v2 ne renvoie pas toujours status===1 pour un produit trouvé
+// (ancien bug : le produit existait mais était rejeté « introuvable »). On considère « trouvé » dès que
+// l'objet product contient de vraies données (nom, marque ou nutriments).
+async function _offFetchProduct(ean){
+  const urls=[
+    'https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(ean)+'.json?fields=product_name,product_name_fr,generic_name,generic_name_fr,brands,nutriments,serving_quantity',
+    'https://world.openfoodfacts.org/api/v0/product/'+encodeURIComponent(ean)+'.json'
+  ];
+  for(let i=0;i<urls.length;i++){
+    try{
+      const r=await fetch(urls[i],{headers:{'Accept':'application/json'}});
+      if(!r.ok)continue;
+      const d=await r.json();
+      const p=d&&d.product;
+      const notFound = !p || (typeof p==='object'&&!Object.keys(p).length) || d.status===0 || d.status==='failure' || d.status_verbose==='product not found';
+      if(!notFound && p && (p.product_name||p.product_name_fr||p.generic_name||p.generic_name_fr||p.brands||(p.nutriments&&Object.keys(p.nutriments).length))) return p;
+    }catch(e){ /* essaie l'URL suivante */ }
+  }
+  return null;
+}
 async function _lookupBarcode(ean){
   toast('Recherche du produit…','info');
-  try{
-    const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(ean)+'.json?fields=product_name,product_name_fr,brands,nutriments,serving_quantity');
-    const d=await r.json();
-    if(!d||d.status!==1||!d.product){toast('Produit introuvable (code '+ean+') — saisis à la main','error');return;}
-    const p=d.product,n=p.nutriments||{};
-    const kcal100=Math.round(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
-    _bcNutr={
-      name:((p.product_name_fr||p.product_name||'Produit')+(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':'')).slice(0,60),
-      kcal100:kcal100,
-      prot100:Math.round(n['proteins_100g']||0),
-      carbs100:Math.round(n['carbohydrates_100g']||0),
-      fat100:Math.round(n['fat_100g']||0)
-    };
-    if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Produit trouvé mais sans infos nutritionnelles — saisis à la main','error');return;}
-    // Quantité par défaut : portion si connue, sinon 100 g
-    const serv=parseFloat(p.serving_quantity)||0;
-    const g=serv>0?serv:100;
-    const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
-    const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g';
-    const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
-    document.getElementById('af-desc').value=_bcNutr.name;
-    _bcApplyGrams();
-    toast('Produit trouvé ✅ — ajuste la quantité','success');
-  }catch(e){toast('Réseau indisponible pour la recherche produit','error');}
+  let p=null;
+  try{ p=await _offFetchProduct(ean); }
+  catch(e){ toast('Réseau indisponible pour la recherche produit','error'); return; }
+  if(!p){ toast('Produit introuvable dans la base (code '+ean+') — saisis à la main','error'); return; }
+  const n=p.nutriments||{};
+  const kcal100=Math.round(n['energy-kcal_100g']||(n['energy_100g']?n['energy_100g']/4.184:0)||0);
+  _bcNutr={
+    name:((p.product_name_fr||p.product_name||p.generic_name_fr||p.generic_name||'Produit')+(p.brands?' ('+String(p.brands).split(',')[0].trim()+')':'')).slice(0,60),
+    kcal100:kcal100,
+    prot100:Math.round(n['proteins_100g']||0),
+    carbs100:Math.round(n['carbohydrates_100g']||0),
+    fat100:Math.round(n['fat_100g']||0)
+  };
+  if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Produit trouvé mais sans infos nutritionnelles — saisis à la main','error');return;}
+  // Quantité par défaut : portion si connue, sinon 100 g
+  const serv=parseFloat(p.serving_quantity)||0;
+  const g=serv>0?serv:100;
+  const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
+  const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g';
+  const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
+  document.getElementById('af-desc').value=_bcNutr.name;
+  _bcApplyGrams();
+  toast('Produit trouvé ✅ — ajuste la quantité','success');
 }
 function _bcApplyGrams(){
   if(!_bcNutr)return;

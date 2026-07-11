@@ -1,4 +1,4 @@
-const CACHE = 'ft-v376'; // Scanner code-barres EN DIRECT (camera live ZXing decodeFromConstraints, facon Yuka) + repli photo/manuel
+const CACHE = 'ft-v377'; // Fix recherche produit code-barres : tolerant sur le champ status Open Food Facts (v2 success) + repli API v0 (avant: tout rejete introuvable)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
