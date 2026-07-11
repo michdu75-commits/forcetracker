@@ -1,4 +1,4 @@
-const CACHE = 'ft-v385'; // Accueil : calendrier mensuel (zoom semaine + nav mois), cycle de force déplacé dans Menu>Outils + icône 📊 perf par exercice dans le détail d'une séance passée
+const CACHE = 'ft-v386'; // Calendrier accueil : badge 🏆 sur les jours où une séance a battu un record (même règle que le popup PR)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
