@@ -999,7 +999,3 @@ html.ob-done #onboarding{display:none;}
   --fh-orange:var(--orange); --fh-red:var(--red);
   max-width:100%!important; font-family:var(--font)!important;
 }
-
-/* Commande vocale — pulsation du micro pendant l'écoute */
-@keyframes voicePulse{0%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,45,85,.55);}70%{transform:scale(1.06);box-shadow:0 0 0 18px rgba(255,45,85,0);}100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,45,85,0);}}
-.voice-pulse{animation:voicePulse 1.3s ease-out infinite;}
