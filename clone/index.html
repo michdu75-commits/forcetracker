@@ -1619,9 +1619,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <input type="file" id="af-bc-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodeFile(this)">
     <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:10px;">📸 Lire l'étiquette nutritionnelle (IA)</button>
     <input type="file" id="af-label-input" accept="image/*" capture="environment" style="display:none" onchange="onFoodLabelFile(this)">
+    <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">…ou tape le code-barres à la main (les chiffres sous le code) :</div>
     <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ou tape le code-barres (chiffres sous le code)" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-family:var(--font);">
-      <button class="btn btn-bg2" onclick="_manualBarcode()" style="padding:0 16px;font-weight:700;">OK</button>
+      <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ex : 3017620422003" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1 1 auto;min-width:0;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
+      <button onclick="_manualBarcode()" style="flex:0 0 auto;width:auto;padding:0 20px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:15px;font-family:var(--font);cursor:pointer;">OK</button>
     </div>
     <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
       <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
