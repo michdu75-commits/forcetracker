@@ -364,13 +364,14 @@ async function openBarcodeScanner(){
   if(!ov){ov=document.createElement('div');ov.id='ov-bc-scan';ov.className='overlay';ov.style.zIndex='600';document.body.appendChild(ov);}
   ov.innerHTML='<div class="modal" style="max-width:94vw;padding:14px;text-align:center;">'
     +'<div style="font-weight:800;font-size:15px;color:var(--t1);margin-bottom:4px;">📷 Scanne le code-barres</div>'
-    +'<div style="font-size:12px;color:var(--t3);margin-bottom:10px;">Vise le code-barres du produit — ça se lit tout seul.</div>'
-    +'<div style="position:relative;width:100%;aspect-ratio:3/4;max-height:58vh;background:#000;border-radius:12px;overflow:hidden;">'
+    +'<div style="font-size:12px;color:var(--t3);margin-bottom:10px;">Cadre le code-barres dans le rectangle rouge, bien net, puis appuie sur « Capturer » (ou attends, ça se lit tout seul).</div>'
+    +'<div style="position:relative;width:100%;aspect-ratio:3/4;max-height:56vh;background:#000;border-radius:12px;overflow:hidden;">'
       +'<video id="bc-video" autoplay muted playsinline webkit-playsinline style="width:100%;height:100%;object-fit:cover;"></video>'
-      +'<div style="position:absolute;left:8%;right:8%;top:40%;height:20%;border:2px solid rgba(255,45,85,.95);border-radius:8px;pointer-events:none;"></div>'
+      +'<div style="position:absolute;left:6%;right:6%;top:40%;height:20%;border:3px solid rgba(255,45,85,.95);border-radius:8px;pointer-events:none;"></div>'
     +'</div>'
     +'<div id="bc-scan-status" style="font-size:12px;color:var(--t3);margin-top:8px;min-height:16px;">Démarrage de la caméra…</div>'
-    +'<button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="_bcPhotoFallback()">📸 Prendre une photo à la place</button>'
+    +'<button id="bc-capture-btn" class="btn" style="width:100%;margin-top:10px;background:var(--red);color:#fff;font-weight:700;" onclick="_bcCaptureFrame()">📸 Capturer le code</button>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;" onclick="_bcPhotoFallback()">🖼️ Prendre une photo à la place</button>'
     +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;" onclick="closeBarcodeScanner()">Annuler</button>'
     +'</div>';
   ov.classList.add('open');
@@ -379,19 +380,40 @@ async function openBarcodeScanner(){
     _bcReader=new ZXing.BrowserMultiFormatReader(_bcHints());
     const video=document.getElementById('bc-video');
     _bcScanning=true;
-    await _bcReader.decodeFromConstraints({video:{facingMode:{ideal:'environment'}}}, video, (result)=>{
+    // Haute résolution → le code-barres a assez de pixels pour être décodé (sinon « caméra ouverte mais ne lit pas »)
+    await _bcReader.decodeFromConstraints({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},advanced:[{focusMode:'continuous'}]}}, video, (result)=>{
       if(result&&_bcScanning){
         const code=result.getText&&result.getText();
         if(code){ _bcScanning=false; closeBarcodeScanner(); _lookupBarcode(code); }
       }
       // erreur "NotFound" entre les frames = normal, on ignore
     });
-    const st=document.getElementById('bc-scan-status'); if(st)st.textContent='Vise le code-barres…';
+    try{ const v=document.getElementById('bc-video'); if(v&&v.play)v.play().catch(()=>{}); }catch(e){}
+    const st=document.getElementById('bc-scan-status'); if(st)st.textContent='Vise le code-barres… ou appuie sur « Capturer ».';
   }catch(e){
     const st=document.getElementById('bc-scan-status');
     if(st)st.textContent='Caméra indisponible ici — utilise « Prendre une photo » ou saisis à la main.';
     // overlay laissé ouvert avec le bouton photo en repli
   }
+}
+// Capture manuelle : lit l'image en direct de la caméra (déjà cadrée + focalisée) → décodage ZXing.
+async function _bcCaptureFrame(){
+  const video=document.getElementById('bc-video');
+  const st=document.getElementById('bc-scan-status');
+  if(!video||!video.videoWidth){ if(st)st.textContent='Caméra pas encore prête, réessaie dans 1 s…'; return; }
+  if(st)st.textContent='Lecture…';
+  try{
+    const c=document.createElement('canvas');
+    c.width=video.videoWidth; c.height=video.videoHeight;
+    c.getContext('2d').drawImage(video,0,0,c.width,c.height);
+    const url=c.toDataURL('image/jpeg',0.95);
+    const reader=new ZXing.BrowserMultiFormatReader(_bcHints());
+    let code='';
+    try{ const res=await reader.decodeFromImageUrl(url); code=res&&res.getText&&res.getText(); }catch(e){ code=''; }
+    try{ reader.reset(); }catch(e){}
+    if(code){ _bcScanning=false; closeBarcodeScanner(); _lookupBarcode(code); }
+    else if(st){ st.textContent='Pas lu — recule un peu (~15-20 cm), attends la mise au point, remplis le cadre rouge, puis recapture.'; }
+  }catch(e){ if(st)st.textContent='Souci de capture — réessaie ou « Prendre une photo ».'; }
 }
 function closeBarcodeScanner(){
   _bcScanning=false;

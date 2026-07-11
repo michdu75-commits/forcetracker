@@ -1,4 +1,4 @@
-const CACHE = 'ft-v377'; // Fix recherche produit code-barres : tolerant sur le champ status Open Food Facts (v2 success) + repli API v0 (avant: tout rejete introuvable)
+const CACHE = 'ft-v378'; // Scanner code-barres : haute resolution 1080p + bouton Capturer (lit la frame cadree) + focusMode continu — fix "camera ouverte mais ne lit pas"
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
