@@ -515,6 +515,12 @@ function openAddFood(){
   _bcNutr=null;
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
+  // Code-barres + score santé : testeurs / super-testeurs uniquement pour l'instant
+  // (le clone /clone/ l'affiche toujours — c'est le bac à sable de test)
+  const bb=document.getElementById('af-barcode-block');
+  const _showBc=window.__FT_CLONE__||(typeof _isTester==='function'&&_isTester())||(typeof _isSuperTester==='function'&&_isSuperTester());
+  if(bb)bb.style.display=_showBc?'block':'none';
+  const mi=document.getElementById('af-bc-manual');if(mi)mi.value='';
   _renderAfMealChips();
   _renderAfAiNote();
   _renderFoodQuickList();
