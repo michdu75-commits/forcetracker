@@ -1,4 +1,4 @@
-const CACHE = 'ft-v382'; // Journal : confirmation avant suppression d'un aliment (journal + edit) + supprimer un aliment de la liste Mes aliments (favori/recent)
+const CACHE = 'ft-v387'; // Calendrier : jour de record = anneau doré autour de la case (au lieu du 🏆)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
