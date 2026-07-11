@@ -1,4 +1,4 @@
-const CACHE = 'ft-v386'; // Calendrier accueil : badge 🏆 sur les jours où une séance a battu un record (même règle que le popup PR)
+const CACHE = 'ft-v387'; // Calendrier : jour de record = anneau doré autour de la case (au lieu du 🏆)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

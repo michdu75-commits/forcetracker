@@ -600,16 +600,20 @@ function _renderHomeCalendar(){
       html+='<div onclick="_calZoom('+wi+')" class="ft-press" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;cursor:pointer;border-radius:8px;">';
       wk.forEach(c=>{
         const ymd=_calYmd(c.d), has=sessSet[ymd], isPr=has&&prSet[ymd], isToday=ymd===todayY, num=c.d.getDate();
+        // anneau : record = doré ; aujourd'hui = rouge ; les deux = doré (extérieur) + rouge (intérieur)
+        const ring=(isPr&&isToday)?'box-shadow:inset 0 0 0 2px var(--gold),inset 0 0 0 3.5px var(--red);'
+          :isPr?'box-shadow:inset 0 0 0 2px var(--gold);'
+          :isToday?'box-shadow:inset 0 0 0 1.5px var(--red);':'';
         html+='<div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:12.5px;'
           +(c.inMonth?'color:var(--t1);':'color:var(--t3);opacity:.35;')
-          +(isToday?'box-shadow:inset 0 0 0 1.5px var(--red);':'')
-          +(isPr?'background:rgba(234,179,8,.22);font-weight:800;':(has?'background:rgba(255,45,85,.16);font-weight:800;':''))
-          +'">'+num+(isPr?'<span style="font-size:9px;line-height:1;margin-top:1px;">🏆</span>':(has?'<span style="width:4px;height:4px;border-radius:50%;background:var(--red);margin-top:2px;"></span>':''))+'</div>';
+          +ring
+          +(has?'background:rgba(255,45,85,.16);font-weight:800;':'')
+          +'">'+num+((has&&!isPr)?'<span style="width:4px;height:4px;border-radius:50%;background:var(--red);margin-top:2px;"></span>':'')+'</div>';
       });
       html+='</div>';
     });
     html+='<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:8px;">Tape une semaine pour la voir en détail 🔍</div>';
-    if(Object.keys(prSet).length)html+='<div style="font-size:10.5px;color:var(--t3);text-align:center;margin-top:3px;">🏆 = séance avec un nouveau record</div>';
+    if(Object.keys(prSet).length)html+='<div style="font-size:10.5px;color:var(--t3);text-align:center;margin-top:3px;"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-2px;"></span> = séance avec un nouveau record</div>';
   }else{
     const wk=weeks[_calZoomWeek]||[];
     html+='<button onclick="_calZoom(null)" style="width:100%;padding:8px;margin-bottom:8px;border:none;border-radius:9px;background:var(--bg3);color:var(--blue);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation;">‹ Retour au mois</button>';
@@ -619,7 +623,7 @@ function _renderHomeCalendar(){
       const dow=c.d.toLocaleDateString('fr-FR',{weekday:'short'});
       html+='<div onclick="'+(daySess.length?'goSessionsHistory()':'')+'" style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--sep);'+(isToday?'background:rgba(255,45,85,.06);':'')+(daySess.length?'cursor:pointer;':'')+'">'
         +'<div style="width:44px;text-align:center;flex-shrink:0;"><div style="font-size:10px;color:var(--t3);text-transform:capitalize;">'+dow+'</div><div style="font-size:17px;font-weight:800;color:'+(c.inMonth?'var(--t1)':'var(--t3)')+';">'+c.d.getDate()+'</div></div>'
-        +'<div style="flex:1;min-width:0;font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?('💪 '+_escFood(daySess.map(_calSessLabel).join(', '))+(isPr?' <span style="color:var(--gold);font-weight:800;">🏆 Record !</span>':'')):'Repos')+'</div>'
+        +'<div style="flex:1;min-width:0;font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?('💪 '+_escFood(daySess.map(_calSessLabel).join(', '))+(isPr?' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-1px;"></span> <span style="color:var(--gold);font-weight:800;">Record !</span>':'')):'Repos')+'</div>'
         +(daySess.length?'<span style="font-size:11px;color:var(--red);font-weight:700;flex-shrink:0;">'+daySess.length+'×</span>':'')
         +'</div>';
     });
