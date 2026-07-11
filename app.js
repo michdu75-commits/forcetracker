@@ -459,6 +459,13 @@ async function _offFetchProduct(ean){
   }
   return null;
 }
+// Saisie manuelle du code-barres (repli quand le scan galère + test facile)
+function _manualBarcode(){
+  const inp=document.getElementById('af-bc-manual');
+  const code=inp?(inp.value||'').replace(/\D/g,''):'';
+  if(code.length<8){toast('Tape le code-barres complet (au moins 8 chiffres)','error');return;}
+  _lookupBarcode(code);
+}
 async function _lookupBarcode(ean){
   toast('Recherche du produit…','info');
   let p=null;

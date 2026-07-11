@@ -1,4 +1,4 @@
-const CACHE = 'ft-v383'; // [branche score-sante] Score sante produit (food-health.js) sur le scan code-barres
+const CACHE = 'ft-v384'; // [branche score-sante] + saisie manuelle du code-barres (test/repli)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

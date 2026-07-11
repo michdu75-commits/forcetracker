@@ -1570,8 +1570,12 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div id="af-quick-list"></div>
     <button class="btn btn-bg2" onclick="scanBarcode()" style="width:100%;margin-bottom:10px;">📷 Scanner un code-barres</button>
     <input type="file" id="af-bc-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodeFile(this)">
-    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Lire l'étiquette nutritionnelle (IA)</button>
+    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:10px;">📸 Lire l'étiquette nutritionnelle (IA)</button>
     <input type="file" id="af-label-input" accept="image/*" capture="environment" style="display:none" onchange="onFoodLabelFile(this)">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ou tape le code-barres (chiffres sous le code)" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-family:var(--font);">
+      <button class="btn btn-bg2" onclick="_manualBarcode()" style="padding:0 16px;font-weight:700;">OK</button>
+    </div>
     <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
       <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
       <div style="display:flex;align-items:center;gap:8px;">
