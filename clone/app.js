@@ -515,11 +515,10 @@ function openAddFood(){
   _bcNutr=null;
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
-  // Code-barres + score santé : testeurs / super-testeurs uniquement pour l'instant
-  // (le clone /clone/ l'affiche toujours — c'est le bac à sable de test)
+  // Code-barres + score santé : GRATUIT pour tout le monde (client-side, 0 token).
+  // Les fonctions IA (📸 étiquette, 🤖 estimation) restent freemium (25 essais puis Premium).
   const bb=document.getElementById('af-barcode-block');
-  const _showBc=window.__FT_CLONE__||(typeof _isTester==='function'&&_isTester())||(typeof _isSuperTester==='function'&&_isSuperTester());
-  if(bb)bb.style.display=_showBc?'block':'none';
+  if(bb)bb.style.display='block';
   const mi=document.getElementById('af-bc-manual');if(mi)mi.value='';
   _renderAfMealChips();
   _renderAfAiNote();
