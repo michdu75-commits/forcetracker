@@ -1,4 +1,4 @@
-const CACHE = 'ft-v374'; // Etude du corps : HISTORIQUE des bilans (24 max, plus recent en tete) + PDF du bilan affiche
+const CACHE = 'ft-v375'; // Etude du corps : photos gardees EN LOCAL (IndexedDB, 4 derniers bilans) + vignettes + comparaison avant-apres
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

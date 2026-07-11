@@ -1002,6 +1002,11 @@ async function analyzeBodyStudy(){
     if(S.bodyStudies.length>24)S.bodyStudies=S.bodyStudies.slice(0,24);
     _bsViewing=d;
     persist();_cloudSyncDebounced();
+    // Photos gardées EN LOCAL uniquement (IndexedDB, jamais le cloud), pour les 4 derniers bilans
+    try{
+      const _ph={};_bodyPhotos.forEach((b,i)=>{if(b&&_BODY_SLOTS[i])_ph[_BODY_SLOTS[i].key]=b;});
+      if(Object.keys(_ph).length){await _bsPhotosSave(d.date,_ph);await _bsPhotosPrune((S.bodyStudies||[]).slice(0,_BS_KEEP).map(x=>x.date));}
+    }catch(e){}
     _renderBodyStudyReport(d,false);
     if(typeof checkBadges==='function')try{checkBadges(true);}catch(e){}
   }catch(e){
@@ -1039,6 +1044,7 @@ function _renderBodyStudyReport(d,isRecall){
       :'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><div style="width:26px;height:26px;border-radius:50%;background:rgba(52,211,153,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span style="font-weight:800;font-size:14px;color:#5be3b4;">Bilan de ton corps</span></div>')
     +((S.bodyStudies||[]).length>1?'<button onclick="_openBodyStudyHistory()" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;">📚 Historique — '+(S.bodyStudies.length)+' bilans</button>'
       +(!_isLatest?'<button onclick="_viewBodyStudyAt(0)" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--blue);cursor:pointer;touch-action:manipulation;">‹ Revenir au dernier bilan</button>':''):'')
+    +'<div id="bs-photos"></div>'
     +_bsSection('🧍','Stature & posture',esc(d.stature))
     +_bsSection('🧬','Insertions musculaires',esc(d.insertions))
     +_bsSection('⚖️','Équilibre du corps',esc(d.balance),'var(--gold)')
@@ -1050,6 +1056,7 @@ function _renderBodyStudyReport(d,isRecall){
     +'<div style="font-size:11px;color:var(--t3);margin-top:12px;line-height:1.4;">⚕️ Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou d\'un coach en personne.</div>'
     +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;padding:11px;font-size:13px;border-radius:12px;" onclick="exportBodyStudyPdf()">📄 Exporter en PDF</button>'
     +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;padding:11px;font-size:13px;border-radius:12px;" onclick="_bodyStudyToCoach()">💬 En parler avec Milo</button>';
+  if(d.date)_bsInjectPhotos(d.date);   // charge les vignettes photo (async, local)
 }
 function _bodyStudyToCoach(){
   closeBodyStudy();
@@ -1059,18 +1066,21 @@ function _bodyStudyToCoach(){
 }
 // ─── Historique des études corporelles ─────────────────────────────────────
 function _bsFmtDate(iso){ if(!iso)return '?'; const p=(''+iso).split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso; }
-function _openBodyStudyHistory(){
+async function _openBodyStudyHistory(){
   const res=document.getElementById('body-result');if(!res)return;
   const list=S.bodyStudies||[];
   if(!list.length){toast('Aucun bilan enregistré','info');return;}
+  let photoDates=[];try{photoDates=await _bsPhotosDates();}catch(e){}
   res.style.display='block';
   res.innerHTML='<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:4px;">📚 Historique des bilans</div>'
     +'<div style="font-size:11px;color:var(--t3);margin-bottom:12px;">Tape un bilan pour le revoir (et l\'exporter en PDF).</div>'
+    +(photoDates.length>=2?'<button onclick="_bsCompare()" style="width:100%;margin-bottom:12px;padding:11px;font-size:13px;font-weight:700;border-radius:12px;border:1px solid var(--sep);background:rgba(52,211,153,.10);color:#5be3b4;cursor:pointer;touch-action:manipulation;">📸 Comparer mon évolution (avant / après)</button>':'')
     +list.map((d,i)=>{
       const sum=(d.summary||d.balance||d.stature||'').toString();
       const snip=sum.length>90?sum.slice(0,89)+'…':sum;
+      const hasPh=photoDates.indexOf(d.date)>=0;
       return '<button onclick="_viewBodyStudyAt('+i+')" style="width:100%;text-align:left;margin-bottom:8px;padding:11px 12px;border-radius:12px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);cursor:pointer;touch-action:manipulation;">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:13px;">'+_bsFmtDate(d.date)+(i===0?' <span style="color:var(--green);font-size:11px;">· dernier</span>':'')+'</span><span style="color:var(--t3);font-size:16px;">›</span></div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:13px;">'+_bsFmtDate(d.date)+(hasPh?' <span title="Photos disponibles">📷</span>':'')+(i===0?' <span style="color:var(--green);font-size:11px;">· dernier</span>':'')+'</span><span style="color:var(--t3);font-size:16px;">›</span></div>'
         +(snip?'<div style="font-size:12px;color:var(--t3);line-height:1.4;margin-top:3px;">'+_escNote(snip)+'</div>':'')
         +'</button>';
     }).join('');
@@ -1079,6 +1089,86 @@ function _viewBodyStudyAt(i){
   const d=(S.bodyStudies||[])[i];if(!d)return;
   _renderBodyStudyReport(d,true);
   const res=document.getElementById('body-result');if(res)try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
+
+// ─── Photos Étude du corps — stockage LOCAL uniquement (IndexedDB, jamais le cloud) ──
+const _BS_IDB='ft_bodyphotos', _BS_STORE='photos', _BS_KEEP=4; // garde les photos des 4 derniers bilans
+const _BS_POSES=[{k:'face_relax',l:'Face relâché'},{k:'face_flex',l:'Face contracté'},{k:'back_flex',l:'Dos'},{k:'profil',l:'Profil'}];
+function _bsIdbOpen(){
+  return new Promise((res,rej)=>{
+    try{
+      const req=indexedDB.open(_BS_IDB,1);
+      req.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(_BS_STORE))db.createObjectStore(_BS_STORE,{keyPath:'date'});};
+      req.onsuccess=e=>res(e.target.result);
+      req.onerror=()=>rej(req.error);
+      setTimeout(()=>rej(new Error('idb timeout')),1500);
+    }catch(e){rej(e);}
+  });
+}
+function _bsPhotosSave(date,photos){ // photos = {face_relax,face_flex,back_flex,profil} en base64
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const tx=db.transaction(_BS_STORE,'readwrite');tx.objectStore(_BS_STORE).put({date,photos});tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);}catch(e){res(false);}
+  })).catch(()=>false);
+}
+function _bsPhotosGet(date){
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const g=db.transaction(_BS_STORE,'readonly').objectStore(_BS_STORE).get(date);g.onsuccess=()=>res(g.result?g.result.photos:null);g.onerror=()=>res(null);}catch(e){res(null);}
+  })).catch(()=>null);
+}
+function _bsPhotosDates(){
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const g=db.transaction(_BS_STORE,'readonly').objectStore(_BS_STORE).getAllKeys();g.onsuccess=()=>res(g.result||[]);g.onerror=()=>res([]);}catch(e){res([]);}
+  })).catch(()=>[]);
+}
+function _bsPhotosPrune(keepDates){ // supprime les photos des bilans hors des N derniers (place maîtrisée)
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const st=db.transaction(_BS_STORE,'readwrite').objectStore(_BS_STORE);const g=st.getAllKeys();g.onsuccess=()=>{(g.result||[]).forEach(k=>{if(keepDates.indexOf(k)<0)try{st.delete(k);}catch(e){}});res(true);};g.onerror=()=>res(false);}catch(e){res(false);}
+  })).catch(()=>false);
+}
+// Injecte les vignettes photo dans le bilan affiché (async — IDB)
+function _bsInjectPhotos(date){
+  const el=document.getElementById('bs-photos');if(!el)return;
+  _bsPhotosGet(date).then(photos=>{
+    const el2=document.getElementById('bs-photos');if(!el2)return;
+    if(!photos){el2.innerHTML='';return;}
+    const thumbs=_BS_POSES.filter(p=>photos[p.k]).map(p=>
+      '<div style="text-align:center;"><img src="data:image/jpeg;base64,'+photos[p.k]+'" onclick="_viewBsPhoto(\''+date+'\',\''+p.k+'\')" style="width:62px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--sep);cursor:zoom-in;"><div style="font-size:9px;color:var(--t3);margin-top:2px;">'+p.l+'</div></div>').join('');
+    el2.innerHTML=thumbs?('<div style="font-size:11px;color:var(--t3);margin-bottom:6px;">📷 Tes photos (sur ton téléphone) — tape pour agrandir :</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'+thumbs+'</div>'):'';
+  }).catch(()=>{});
+}
+// Visionneuse plein écran d'une photo corporelle
+function _bsViewFull(b64,title){
+  let ov=document.getElementById('ov-bs-photo');
+  if(!ov){ov=document.createElement('div');ov.id='ov-bs-photo';ov.className='overlay';ov.style.zIndex='600';ov.onclick=e=>{if(e.target===ov)ov.classList.remove('open');};document.body.appendChild(ov);}
+  ov.innerHTML='<div class="modal" style="max-width:94vw;padding:14px;text-align:center;">'
+    +'<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:10px;">'+_escNote(title||'')+'</div>'
+    +'<img src="data:image/jpeg;base64,'+b64+'" style="max-width:100%;max-height:74vh;border-radius:12px;display:block;margin:0 auto;">'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;" onclick="document.getElementById(\'ov-bs-photo\').classList.remove(\'open\')">Fermer</button>'
+    +'</div>';
+  ov.classList.add('open');
+}
+function _viewBsPhoto(date,key){
+  _bsPhotosGet(date).then(photos=>{ if(photos&&photos[key])_bsViewFull(photos[key],_bsFmtDate(date)+' · '+((_BS_POSES.find(p=>p.k===key)||{}).l||'')); });
+}
+// Comparaison visuelle avant/après : plus ancien bilan avec photos vs plus récent
+async function _bsCompare(){
+  const res=document.getElementById('body-result');if(!res)return;
+  const dates=(await _bsPhotosDates()).slice().sort(); // croissant YYYY-MM-DD
+  if(dates.length<2){toast('Il faut au moins 2 bilans avec photos pour comparer','info');return;}
+  const dA=dates[0], dB=dates[dates.length-1];
+  const [pA,pB]=await Promise.all([_bsPhotosGet(dA),_bsPhotosGet(dB)]);
+  if(!pA||!pB){toast('Photos indisponibles','error');return;}
+  const cell=(b64,date,key)=>b64
+    ? '<img src="data:image/jpeg;base64,'+b64+'" onclick="_viewBsPhoto(\''+date+'\',\''+key+'\')" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;border:1px solid var(--sep);cursor:zoom-in;">'
+    : '<div style="width:100%;aspect-ratio:3/4;border-radius:8px;border:1px dashed var(--sep);display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:10px;">—</div>';
+  res.style.display='block';
+  res.innerHTML='<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:4px;">📸 Évolution — avant / après</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--t2);text-align:center;"><div>'+_bsFmtDate(dA)+'</div><div>'+_bsFmtDate(dB)+'</div></div>'
+    +_BS_POSES.filter(p=>pA[p.k]||pB[p.k]).map(p=>
+      '<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);margin-bottom:4px;">'+p.l+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+cell(pA[p.k],dA,p.k)+cell(pB[p.k],dB,p.k)+'</div></div>').join('')
+    +'<button onclick="_openBodyStudyHistory()" style="width:100%;margin-top:4px;padding:11px;font-size:13px;font-weight:700;border-radius:12px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;">‹ Retour à l\'historique</button>';
+  try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
 }
 // Nettoie un texte pour le PDF (helvetica gère les accents mais pas les emojis/flèches)
 function _bsPdfClean(s){
