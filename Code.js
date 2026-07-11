@@ -662,6 +662,7 @@ function handleSaveProfile_(body) {
     if (body.dietRestrictions!== undefined) profile.dietRestrictions = _pa_(body.dietRestrictions, profile.dietRestrictions);
     if (body.dietNotes     !== undefined) profile.dietNotes     = _ps_(body.dietNotes,     profile.dietNotes);
     if (body.foodLog       !== undefined) profile.foodLog       = _pa_(body.foodLog,       profile.foodLog);
+    if (body.savedFoods    !== undefined) profile.savedFoods    = _pa_(body.savedFoods,    profile.savedFoods);
     if (body.foodAiUses    !== undefined) profile.foodAiUses    = Math.max(parseInt(body.foodAiUses)||0, parseInt(profile.foodAiUses)||0);
 
     existing.profile = profile;

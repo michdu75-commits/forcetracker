@@ -282,6 +282,7 @@ function _cloudSync(){
       dietRestrictions:S.dietRestrictions||[],
       dietNotes:S.dietNotes||'',
       foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)
+      savedFoods:(S.savedFoods||[]).slice(0,200), // aliments favoris (re-ajout rapide)
       foodAiUses:S.foodAiUses||0,
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
@@ -1784,6 +1785,7 @@ function _applyRestoreData(raw){
   try{if(Array.isArray(d.dietRestrictions)&&d.dietRestrictions.length&&!(S.dietRestrictions||[]).length)S.dietRestrictions=d.dietRestrictions;}catch(e){}
   try{if(d.dietNotes&&!(S.dietNotes||'').trim())S.dietNotes=d.dietNotes;}catch(e){}
   try{if(Array.isArray(d.foodLog)&&d.foodLog.length>=(S.foodLog||[]).length)S.foodLog=d.foodLog;}catch(e){console.warn('[FT restore] foodLog',e);}
+  try{if(Array.isArray(d.savedFoods)&&d.savedFoods.length)S.savedFoods=d.savedFoods;}catch(e){console.warn('[FT restore] savedFoods',e);}
   try{if(typeof d.foodAiUses==='number')S.foodAiUses=Math.max(S.foodAiUses||0,d.foodAiUses);}catch(e){}
   try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
   try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}

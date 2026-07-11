@@ -507,6 +507,7 @@ function openAddFood(){
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
   _renderAfMealChips();
   _renderAfAiNote();
+  _renderFoodQuickList();
   document.getElementById('ov-add-food').classList.add('open');
 }
 function _renderAfAiNote(){
@@ -518,6 +519,58 @@ function _renderAfAiNote(){
     :`Estimations IA gratuites épuisées · ⭐ Premium pour l'illimité · la saisie à la main reste gratuite`;
 }
 function closeAddFood(){document.getElementById('ov-add-food').classList.remove('open');}
+// ─── Aliments récents / favoris — ré-ajout rapide sans re-scanner ────────────
+let _afQuickItems=[];
+function _buildFoodQuickItems(){
+  const favs=(S.savedFoods||[]).map(f=>({name:f.name,kcal:f.kcal||0,prot:f.prot||0,carbs:f.carbs||0,fat:f.fat||0,fav:true}));
+  const seen=new Set(favs.map(f=>(f.name||'').toLowerCase()));
+  const recent=[];
+  (S.foodLog||[]).slice().sort((a,b)=>b.ts-a.ts).forEach(e=>{
+    const k=(e.name||'').toLowerCase(); if(!k||seen.has(k))return; seen.add(k);
+    recent.push({name:e.name,kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0,fav:false});
+  });
+  return favs.concat(recent).slice(0,12);
+}
+function _renderFoodQuickList(){
+  const el=document.getElementById('af-quick-list'); if(!el)return;
+  _afQuickItems=_buildFoodQuickItems();
+  if(!_afQuickItems.length){el.innerHTML='';return;}
+  el.innerHTML='<div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Mes aliments (récents & favoris)</div>'
+    +'<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">'
+    +_afQuickItems.map((it,i)=>'<div style="background:var(--bg2);border-radius:12px;padding:9px 12px;display:flex;align-items:center;gap:8px;box-shadow:inset 0 0 0 1px var(--sep);">'
+      +'<button onclick="toggleFavFood('+i+')" title="Favori" style="background:none;border:none;font-size:16px;cursor:pointer;flex-shrink:0;padding:0;line-height:1;color:'+(it.fav?'var(--gold)':'var(--t3)')+';">'+(it.fav?'★':'☆')+'</button>'
+      +'<div onclick="quickFillFood('+i+')" style="flex:1;min-width:0;cursor:pointer;">'
+        +'<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_escFood(it.name)+'</div>'
+        +'<div style="font-size:11px;color:var(--t3);">'+(it.kcal||0)+' kcal · P '+(it.prot||0)+' · G '+(it.carbs||0)+' · L '+(it.fat||0)+'</div>'
+      +'</div>'
+      +'<button onclick="quickAddFood('+i+')" style="background:var(--bg3);border:none;border-radius:8px;color:var(--red);font-size:12px;font-weight:700;padding:7px 11px;cursor:pointer;flex-shrink:0;">+ Ajouter</button>'
+    +'</div>').join('')
+    +'</div>';
+}
+function quickFillFood(i){
+  const it=_afQuickItems[i]; if(!it)return;
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+  set('af-desc',it.name); set('af-kcal',it.kcal||0); set('af-prot',it.prot||0); set('af-carbs',it.carbs||0); set('af-fat',it.fat||0);
+  toast('Pré-rempli — choisis le repas puis « Ajouter au journal » ✅','info');
+}
+function quickAddFood(i){
+  const it=_afQuickItems[i]; if(!it)return;
+  if(!S.foodLog)S.foodLog=[];
+  S.foodLog.push({date:today(),meal:_afMeal,name:(it.name||'').slice(0,80),kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0,ts:Date.now()});
+  persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  closeAddFood(); renderFoodJournal();
+  toast('Ajouté au journal 🍽️','success');
+}
+function toggleFavFood(i){
+  const it=_afQuickItems[i]; if(!it)return;
+  if(!S.savedFoods)S.savedFoods=[];
+  const key=(it.name||'').toLowerCase();
+  const idx=S.savedFoods.findIndex(f=>(f.name||'').toLowerCase()===key);
+  if(idx>=0){ S.savedFoods.splice(idx,1); toast('Retiré des favoris','info'); }
+  else { S.savedFoods.push({name:it.name,kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0}); toast('Ajouté aux favoris ⭐','success'); }
+  persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  _renderFoodQuickList();
+}
 function _renderAfMealChips(){
   const el=document.getElementById('af-meal-chips');if(!el)return;
   el.innerHTML=FOOD_MEALS.map(m=>{

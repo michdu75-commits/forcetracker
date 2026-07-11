@@ -1,4 +1,4 @@
-const CACHE = 'ft-v380'; // Journal alimentaire : taper une entree pour la MODIFIER (repas + nom + calories/macros) ou supprimer
+const CACHE = 'ft-v381'; // Journal : liste aliments recents + favoris (re-ajout 1 tap, etoile favori) — savedFoods local+cloud
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
