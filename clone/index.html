@@ -1614,8 +1614,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div style="font-weight:800;font-size:18px;margin-bottom:14px;">🍽️ Ajouter un aliment</div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Repas</div>
     <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
-    <button class="btn btn-bg2" onclick="scanBarcode()" style="width:100%;margin-bottom:14px;">📷 Scanner un code-barres</button>
+    <button class="btn btn-bg2" onclick="scanBarcode()" style="width:100%;margin-bottom:10px;">📷 Scanner un code-barres</button>
     <input type="file" id="af-bc-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodeFile(this)">
+    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Lire l'étiquette nutritionnelle (IA)</button>
+    <input type="file" id="af-label-input" accept="image/*" capture="environment" style="display:none" onchange="onFoodLabelFile(this)">
     <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
       <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
       <div style="display:flex;align-items:center;gap:8px;">

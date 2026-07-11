@@ -475,7 +475,7 @@ function doPost(e) {
   // Limite le nombre d'appels IA par jour (par email + global) pour éviter les abus
   // et l'explosion de la facture Anthropic. N'affecte PAS les actions sans IA
   // (loadProfile, saveProfile, logSession, validateCode, test…).
-  var AI_ACTIONS_ = ['coach','importProgram','importHistory','importMealPlan','estimateFood','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
+  var AI_ACTIONS_ = ['coach','importProgram','importHistory','importMealPlan','estimateFood','foodLabel','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
   if (AI_ACTIONS_.indexOf(body.action) >= 0) {
     var _q = _aiQuotaBlock_(body.email);
     if (_q.blocked) {
@@ -499,6 +499,7 @@ function doPost(e) {
   if (body.action === 'importHistory')    return handleImportHistory_(body);
   if (body.action === 'importMealPlan')    return handleImportMealPlan_(body);
   if (body.action === 'estimateFood')      return handleEstimateFood_(body);
+  if (body.action === 'foodLabel')         return handleFoodLabel_(body);
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
   if (body.action === 'bodyStudy')         return handleBodyStudy_(body);
   if (body.action === 'importBodyScan')    return handleImportBodyScan_(body);
@@ -1297,6 +1298,54 @@ function handleEstimateFood_(body) {
   } catch(err) {
     return json_({status:'error', error: err.message});
   }
+}
+
+// Lecture du tableau nutritionnel depuis une photo (Claude vision) → valeurs POUR 100 g
+function handleFoodLabel_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+  try {
+    const img = body.image || {};
+    if (!img.data) return json_({status:'error', error:'Image manquante'});
+    const prompt = 'Tu regardes la photo du tableau des VALEURS NUTRITIONNELLES d\'un produit alimentaire. '
+      + 'Lis les valeurs POUR 100 g (colonne "pour 100 g"). Si seule une portion est indiquee, convertis en pour-100g. '
+      + 'Retourne UNIQUEMENT un JSON valide, sans texte ni markdown :\n'
+      + '{"name":"nom du produit si visible sinon vide","kcal100":99,"prot100":6.1,"carbs100":10,"fat100":3.2,"serving":205}\n\n'
+      + 'Regles :\n'
+      + '- kcal100 = calories POUR 100 g (depuis les kcal, JAMAIS les kJ).\n'
+      + '- prot100/carbs100/fat100 = grammes POUR 100 g (proteines/glucides/lipides), garde 1 decimale si presente.\n'
+      + '- serving = taille d\'une portion en grammes si indiquee, sinon 0.\n'
+      + '- Si le tableau est illisible ou absent, renvoie {"error":"illisible"}.\n'
+      + 'Reponds UNIQUEMENT avec le JSON.';
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method:'post',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+      payload: JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:400,
+        messages:[{role:'user', content:[
+          {type:'image', source:{type:'base64', media_type:(img.type||'image/jpeg'), data:img.data}},
+          {type:'text', text:prompt}
+        ]}]
+      }),
+      muteHttpExceptions:true
+    });
+    const result = JSON.parse(resp.getContentText());
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    const stripped = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Lecture echouee'});
+    let d; try { d = JSON.parse(match[0]); } catch(e){ return json_({status:'error', error:'JSON invalide'}); }
+    if (d.error) return json_({status:'error', error:String(d.error)});
+    return json_({status:'ok',
+      name: String(d.name||'').slice(0,60),
+      kcal100: Math.max(0, parseFloat(d.kcal100)||0),
+      prot100: Math.max(0, parseFloat(d.prot100)||0),
+      carbs100: Math.max(0, parseFloat(d.carbs100)||0),
+      fat100: Math.max(0, parseFloat(d.fat100)||0),
+      serving: Math.max(0, parseFloat(d.serving)||0)
+    });
+  } catch(err) { return json_({status:'error', error: err.message}); }
 }
 
 // ───────────────────────────────────────────────────────────

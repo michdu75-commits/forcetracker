@@ -1,4 +1,4 @@
-const CACHE = 'ft-v378'; // Scanner code-barres : haute resolution 1080p + bouton Capturer (lit la frame cadree) + focusMode continu — fix "camera ouverte mais ne lit pas"
+const CACHE = 'ft-v379'; // Nutrition : "Lire l'etiquette nutritionnelle (IA)" — photo du tableau -> Claude vision -> valeurs pour 100g (contourne le code-barres)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

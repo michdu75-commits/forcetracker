@@ -526,6 +526,63 @@ function _renderAfMealChips(){
   }).join('');
 }
 function setFoodMeal(k){_afMeal=k;_renderAfMealChips();}
+// ─── LECTURE ÉTIQUETTE NUTRITIONNELLE PAR PHOTO (IA vision) ──────────────────
+// Redimensionne un fichier image en base64 JPEG (sans le préfixe data:) — assez net pour lire les chiffres.
+function _resizeToB64(file, maxPx, quality){
+  return new Promise((res,rej)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        try{
+          const scale=Math.min(1, (maxPx||1100)/Math.max(img.width,img.height));
+          const c=document.createElement('canvas');
+          c.width=Math.round(img.width*scale); c.height=Math.round(img.height*scale);
+          c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+          res(c.toDataURL('image/jpeg', quality||0.85).split(',')[1]);
+        }catch(err){rej(err);}
+      };
+      img.onerror=rej; img.src=e.target.result;
+    };
+    reader.onerror=rej; reader.readAsDataURL(file);
+  });
+}
+function readFoodLabel(){
+  if(!S.url){toast('Connexion requise','error');return;}
+  if(!S.premium){
+    if(window._premiumPending){toast('Vérification premium en cours…','info');return;}
+    if((S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+  }
+  const inp=document.getElementById('af-label-input'); if(inp){inp.value='';inp.click();}
+}
+async function onFoodLabelFile(input){
+  const f=input.files&&input.files[0]; if(!f)return;
+  if(!S.premium&&(S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+  toast('Lecture de l\'étiquette…','info');
+  try{
+    const b64=await _resizeToB64(f, 1100, 0.85);
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'foodLabel',image:{data:b64,type:'image/jpeg'},email:S.email||''})});
+    const d=await r.json();
+    if(!d||d.status!=='ok'){toast('Étiquette illisible — rapproche-toi, éclaire, ou saisis à la main','error');return;}
+    _bcNutr={
+      name:(d.name||'Produit').slice(0,60),
+      kcal100:Math.round(d.kcal100||0),
+      prot100:Math.round((d.prot100||0)*10)/10,
+      carbs100:Math.round((d.carbs100||0)*10)/10,
+      fat100:Math.round((d.fat100||0)*10)/10
+    };
+    if(!_bcNutr.kcal100&&!_bcNutr.prot100&&!_bcNutr.carbs100&&!_bcNutr.fat100){toast('Valeurs non lues — réessaie ou saisis à la main','error');return;}
+    const g=(parseFloat(d.serving)>0)?parseFloat(d.serving):100;
+    const gramsEl=document.getElementById('af-bc-grams');if(gramsEl)gramsEl.value=g;
+    const nameEl=document.getElementById('af-bc-name');if(nameEl)nameEl.textContent=_bcNutr.name+' · '+_bcNutr.kcal100+' kcal/100g (lu sur l\'étiquette)';
+    const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
+    document.getElementById('af-desc').value=_bcNutr.name;
+    _bcApplyGrams();
+    if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();if(typeof _renderAfAiNote==='function')_renderAfAiNote();}
+    toast('Étiquette lue ✅ — ajuste la quantité','success');
+  }catch(e){toast('Erreur : '+(e.message||e),'error');}
+}
 async function estimateFoodAI(){
   const desc=(document.getElementById('af-desc').value||'').trim();
   if(!desc){toast('Décris d\'abord ce que tu as mangé','error');return;}
