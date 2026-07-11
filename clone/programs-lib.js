@@ -282,7 +282,8 @@ function _pgPhysicalJob(){return S.workType==='actif'||S.workType==='physique';}
 function _pgAdapt(rawDays, prof){
   prof=prof||S.trainingProfile||{};
   const zones=prof.zones||[], equip=prof.equipment||'full';
-  const physical=_pgPhysicalJob(), shortSess=!!(prof.duration&&prof.duration<=45), veryShort=!!(prof.duration&&prof.duration<=30);
+  // Le VOLUME est un CHOIX de l'utilisateur (pas déduit du travail physique).
+  const lowVol=(prof.intensity==='low'), highVol=(prof.intensity==='high');
   const changeSet={};
   const swapName=(name)=>{
     let n=name, whys=[];
@@ -295,20 +296,16 @@ function _pgAdapt(rawDays, prof){
   const days=rawDays.map(d=>({label:d.label,note:d.note||'',exs:d.exs.map(ex=>{
     const nm=swapName(ex.name);
     let sets=ex.sets.slice();
-    if(physical||shortSess){
-      // BBB : garde 3 séries de volume au lieu de 5
+    // Réduction de volume UNIQUEMENT si l'utilisateur l'a demandé (« moins de volume »).
+    if(lowVol){
       const bbbIdx=sets.map((s,i)=>/BBB/.test(s.note||'')?i:-1).filter(i=>i>=0);
       if(bbbIdx.length>3){const drop=bbbIdx.slice(3);sets=sets.filter((_,i)=>drop.indexOf(i)<0);volReduced=true;}
-    }
-    if(veryShort){
-      // séance très courte : accessoires (pas de note %/TM) plafonnés à 2 séries
-      const isAccessory=!sets.some(s=>/%|TM/.test(s.note||''));
-      if(isAccessory&&sets.length>2){sets=sets.slice(0,2);volReduced=true;}
     }
     return {name:nm,note:ex.note||'',sets:sets};
   })}));
   const changes=Object.values(changeSet);
-  if(volReduced)changes.push('Volume réduit ('+(physical?'travail physique':'')+((physical&&shortSess)?' + ':'')+(shortSess?'séance courte':'')+') — moins de séries pour mieux récupérer.');
+  if(volReduced)changes.push('Volume allégé (à ta demande) — moins de séries de volume.');
+  else if(highVol)changes.push('Gros volume gardé (à ta demande) — programme complet.');
   return {days,changes};
 }
 
@@ -320,7 +317,8 @@ function _pgAdaptSummary(prof){
   if(prof.duration)bits.push(prof.duration+' min');
   if(prof.timeOfDay)bits.push({matin:'matin',aprem:'après-midi',soir:'soir'}[prof.timeOfDay]||'');
   if(prof.equipment&&prof.equipment!=='full')bits.push(prof.equipment==='home'?'à la maison':'matériel basique');
-  if(_pgPhysicalJob())bits.push('travail physique');
+  if(prof.intensity==='high')bits.push('gros volume');
+  else if(prof.intensity==='low')bits.push('volume allégé');
   if((prof.zones||[]).length)bits.push('zones : '+prof.zones.map(z=>_PG_ZONE_LBL[z]||z).join(', '));
   return bits.join(' · ');
 }
@@ -328,7 +326,7 @@ function _pgAdaptSummary(prof){
 // ─── Questionnaire ───────────────────────────────────────────────────────────
 let _tqDraft=null;
 function openTrainQuiz(){
-  _tqDraft=Object.assign({days:3,duration:60,timeOfDay:'soir',equipment:'full',zones:[]}, S.trainingProfile||{});
+  _tqDraft=Object.assign({days:3,duration:60,timeOfDay:'soir',equipment:'full',zones:[],intensity:'standard'}, S.trainingProfile||{});
   let el=document.getElementById('ov-train-quiz');
   if(!el){el=document.createElement('div');el.id='ov-train-quiz';el.className='overlay';el.style.zIndex='410';
     el.onclick=e=>{if(e.target===el)closeTrainQuiz();};document.body.appendChild(el);}
@@ -361,8 +359,10 @@ function _renderTrainQuiz(){
     +sec('Durée d\'une séance')+'<div style="'+row+'">'+[[30,'30 min'],[45,'45 min'],[60,'1 h'],[90,'1 h 30']].map(([v,l])=>_tqChip('duration',v,l)).join('')+'</div>'
     +sec('Tu t\'entraînes plutôt…')+'<div style="'+row+'">'+[['matin','🌅 Matin'],['aprem','☀️ Après-midi'],['soir','🌙 Soir']].map(([v,l])=>_tqChip('timeOfDay',v,l)).join('')+'</div>'
     +sec('Matériel dispo')+'<div style="'+row+'">'+[['full','🏋️ Salle complète'],['basic','Haltères + banc'],['home','🏠 Maison (peu de matériel)']].map(([v,l])=>_tqChip('equipment',v,l)).join('')+'</div>'
+    +sec('Ton volume d\'entraînement')+'<div style="'+row+'">'+[['high','💪 Je pousse fort'],['standard','Standard'],['low','Moins de volume']].map(([v,l])=>_tqChip('intensity',v,l)).join('')+'</div>'
+    +'<div style="font-size:11.5px;color:var(--t3);margin-top:6px;">C\'est TOI qui choisis. « Je pousse fort » = tout le volume. « Moins » = on allège (reprise, récup difficile…). Ton travail physique ne change rien ici — beaucoup de gens bossent dur ET poussent fort. 💪</div>'
     +sec('Zones sensibles / blessures (optionnel)')+'<div style="font-size:11.5px;color:var(--t3);margin-bottom:8px;">On remplacera les exos à risque par des équivalents. ⚠️ Ce n\'est pas un avis médical — en cas de vraie blessure, vois un pro.</div><div style="'+row+'">'+['genou','epaule','dos','poignet','hanche','coude'].map(_tqZone).join('')+'</div>'
-    +'<div style="margin-top:16px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:11px 13px;font-size:12.5px;color:var(--t2);line-height:1.6;">On réutilise aussi ton profil : <b>niveau</b> '+lvl+' · <b>objectif</b> '+goal+' · <b>travail</b> '+({bureau:'bureau',debout:'debout',actif:'actif',physique:'physique'}[S.workType]||'—')+(nCond?' · <b>santé</b> '+nCond+' point'+(nCond>1?'s':''):'')+'.<br><span style="color:var(--t3);">(modifiables dans ton Profil)</span></div>'
+    +'<div style="margin-top:16px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:11px 13px;font-size:12.5px;color:var(--t2);line-height:1.6;">On réutilise aussi ton profil : <b>niveau</b> '+lvl+' · <b>objectif</b> '+goal+(nCond?' · <b>santé</b> '+nCond+' point'+(nCond>1?'s':''):'')+'.<br><span style="color:var(--t3);">(modifiables dans ton Profil)</span></div>'
     +'<button onclick="saveTrainQuiz()" style="width:100%;margin-top:16px;padding:14px;border-radius:13px;border:none;background:var(--red);color:#fff;font-weight:800;font-size:15px;cursor:pointer;">Enregistrer</button>'
     +'</div>';
 }
