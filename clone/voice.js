@@ -45,10 +45,10 @@ function _parseVoiceCmd(raw){
   if(!raw)return {};
   let t=_frWordsToNum(raw).toLowerCase();
   const res={};
-  // validation ?  (valide, ok, suivant, c'est bon, terminé…)
-  if(/\b(valide|valid[eé]s?|valider|ok|okay|c'?est bon|cest bon|suivant|termin[eé]|next)\b/.test(t)) res.validate=true;
+  // validation ? — vocabulaire large + fautes de transcription fréquentes iOS
+  if(/\b(valid\w*|vali\w*|ok\w*|oké|c'?est bon|cé?s?t? ?bon|bon|c'?est fait|c'?est ça|c'?est sa|suivant|next|termin\w*|fini|finie?|enregistr\w*|nickel|top|fait|voil[aà]|ça marche|sa marche|parfait)\b/.test(t)) res.validate=true;
   // repos / chrono ?
-  if(/\b(repos|pause|r[eé]cup(?:[eé]ration)?|chrono|minuteur)\b/.test(t)) res.rest=true;
+  if(/\b(repos|repo|pause|r[eé]cup\w*|chrono\w*|minuteur|minute)\b/.test(t)) res.rest=true;
   // poids explicite : "80 kilo(s)/kg"
   let m=t.match(/(\d+(?:[.,]\d+)?)\s*(?:kilo?s?|kg)\b/);
   if(m) res.kg=parseFloat(m[1].replace(',','.'));
@@ -132,7 +132,7 @@ function _voiceRestSecs(ei){
 }
 
 // ─── Micro : push-to-talk (une écoute) ───────────────────────────────────────
-let _voiceHeardFinal='', _voiceWatchdog=null, _voiceGotEvent=false;
+let _voiceHeardFinal='', _voiceHeardInterim='', _voiceWatchdog=null, _voiceGotEvent=false;
 // iPhone en mode « app installée » (écran d'accueil) : la dictée web est souvent bloquée.
 function _voiceStandalone(){
   return (window.navigator.standalone===true) ||
@@ -142,14 +142,14 @@ function startVoiceLog(){
   if(!_voiceSupported()){_voiceShowOverlay();_voiceStatus('Ton navigateur ne gère pas la commande vocale.',true);return;}
   if(_voiceListening){_voiceStop();return;}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  _voiceHeardFinal='';_voiceGotEvent=false;
+  _voiceHeardFinal='';_voiceHeardInterim='';_voiceGotEvent=false;
   _voiceShowOverlay();
   _voiceStatus('Démarrage du micro…');
   try{
     _voiceRec=new SR();
     _voiceRec.lang='fr-FR';
     _voiceRec.continuous=false;
-    _voiceRec.interimResults=false;   // iOS : plus fiable sans résultats intermédiaires
+    _voiceRec.interimResults=true;    // capte aussi les mots courts (« valide ») même sans résultat « final »
     _voiceRec.maxAlternatives=1;
     _voiceRec.onstart=()=>{_voiceGotEvent=true;_voiceListening=true;_voiceStatus('');_voiceSetPhase('listening');};
     _voiceRec.onaudiostart=()=>{_voiceGotEvent=true;};
@@ -157,7 +157,9 @@ function startVoiceLog(){
     _voiceRec.onresult=(e)=>{
       _voiceGotEvent=true;
       let txt='';for(let i=0;i<e.results.length;i++)txt+=e.results[i][0].transcript;
+      txt=txt.trim();
       _voiceSetHeard(txt);
+      if(txt)_voiceHeardInterim=txt;                                   // dernier texte entendu (repli mots courts)
       if(e.results[e.results.length-1].isFinal)_voiceHeardFinal=txt;
     };
     _voiceRec.onerror=(e)=>{
@@ -174,7 +176,14 @@ function startVoiceLog(){
     };
     _voiceRec.onend=()=>{
       _voiceListening=false;_voiceClearWatchdog();
-      if(_voiceHeardFinal){const t=_voiceHeardFinal;_voiceHeardFinal='';_voiceHideOverlay();_handleVoiceTranscript(t);}
+      const heard=_voiceHeardFinal||_voiceHeardInterim;   // repli sur l'interim (mots courts type « valide »)
+      if(heard){
+        const t=heard;_voiceHeardFinal='';_voiceHeardInterim='';
+        const r=_handleVoiceTranscript(t);
+        _voiceSetHeard('« '+t+' »');   // montre ce qu'iPhone a compris
+        if(r&&r.done&&r.done.length){_voiceStatus('✅ '+r.done.join(' · '));_voiceSetPhase('listening');setTimeout(_voiceHideOverlay,1200);}
+        else{_voiceStatus('Pas compris. Dis « valide » ou « 80 kilos 8 reps ».',true);_voiceSetPhase('error');}
+      }
       else if(_voiceGotEvent){_voiceStatus('Rien compris — appuie et réessaie.',true);_voiceSetPhase('error');}
       // si !_voiceGotEvent : le watchdog affiche déjà le message « ne démarre pas »
     };
