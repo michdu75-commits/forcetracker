@@ -1,4 +1,4 @@
-const CACHE = 'ft-v379'; // Nutrition : "Lire l'etiquette nutritionnelle (IA)" — photo du tableau -> Claude vision -> valeurs pour 100g (contourne le code-barres)
+const CACHE = 'ft-v380'; // Journal alimentaire : taper une entree pour la MODIFIER (repas + nom + calories/macros) ou supprimer
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

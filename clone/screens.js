@@ -812,14 +812,14 @@ function renderFoodJournal(){
     html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">`;
     entries.forEach(e=>{
       const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(e.meal):{ic:'🍽️',lbl:''};
-      html+=`<div style="background:var(--bg2);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:inset 0 0 0 1px var(--sep);">`
+      html+=`<div onclick="openEditFood(${e.ts})" style="background:var(--bg2);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:inset 0 0 0 1px var(--sep);cursor:pointer;">`
         +`<span style="font-size:20px;flex-shrink:0;">${mi.ic}</span>`
         +`<div style="flex:1;min-width:0;">`
           +`<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escFood(e.name)}</div>`
-          +`<div style="font-size:11px;color:var(--t3);">${mi.lbl} · P ${e.prot||0} · G ${e.carbs||0} · L ${e.fat||0}</div>`
+          +`<div style="font-size:11px;color:var(--t3);">${mi.lbl} · P ${e.prot||0} · G ${e.carbs||0} · L ${e.fat||0} · ✎ modifier</div>`
         +`</div>`
         +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${e.kcal||0}</span>`
-        +`<button onclick="removeFoodEntry(${e.ts})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
+        +`<button onclick="event.stopPropagation();removeFoodEntry(${e.ts})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
       +`</div>`;
     });
     html+=`</div>`;

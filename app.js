@@ -634,6 +634,45 @@ function removeFoodEntry(ts){
   renderFoodJournal();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
 }
+// ─── MODIFIER une entrée du journal (repas + nom + valeurs) ──────────────────
+let _editFoodTs=null, _editFoodMeal='dejeuner';
+function openEditFood(ts){
+  const e=(S.foodLog||[]).find(x=>x.ts===ts); if(!e)return;
+  _editFoodTs=ts; _editFoodMeal=e.meal||'dejeuner';
+  let ov=document.getElementById('ov-edit-food');
+  if(!ov){ov=document.createElement('div');ov.id='ov-edit-food';ov.className='overlay';ov.style.zIndex='500';ov.onclick=ev=>{if(ev.target===ov)ov.classList.remove('open');};document.body.appendChild(ov);}
+  const fld=(id,lbl,val)=>'<div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">'+lbl+'</div><input id="'+id+'" type="number" inputmode="numeric" value="'+(val||0)+'" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>';
+  ov.innerHTML='<div class="modal" style="max-width:94vw;width:400px;padding:16px;">'
+    +'<div style="font-weight:800;font-size:16px;color:var(--t1);margin-bottom:12px;">Modifier l\'aliment</div>'
+    +'<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Nom</div>'
+    +'<input id="ef-name" style="width:100%;box-sizing:border-box;padding:10px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);margin-bottom:12px;">'
+    +'<div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:6px;">Repas</div>'
+    +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">'+FOOD_MEALS.map(m=>'<button id="ef-meal-'+m.k+'" onclick="_setEditFoodMeal(\''+m.k+'\')" style="flex:1;min-width:70px;padding:9px 6px;border-radius:10px;border:none;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;background:var(--bg3);color:var(--t2);">'+m.ic+'<br>'+m.lbl+'</button>').join('')+'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'+fld('ef-kcal','Calories (kcal)',e.kcal)+fld('ef-prot','Protéines (g)',e.prot)+fld('ef-carbs','Glucides (g)',e.carbs)+fld('ef-fat','Lipides (g)',e.fat)+'</div>'
+    +'<button class="btn btn-red" onclick="saveEditFood()" style="width:100%;padding:13px;font-size:15px;">✅ Enregistrer</button>'
+    +'<button class="btn btn-bg2" onclick="removeFoodEntry('+ts+');document.getElementById(\'ov-edit-food\').classList.remove(\'open\')" style="width:100%;margin-top:8px;color:var(--red);">🗑 Supprimer</button>'
+    +'<button class="btn btn-bg2" onclick="document.getElementById(\'ov-edit-food\').classList.remove(\'open\')" style="width:100%;margin-top:8px;">Annuler</button>'
+    +'</div>';
+  document.getElementById('ef-name').value=e.name||''; // évite tout souci d'échappement dans l'attribut
+  _renderEditFoodMeals();
+  ov.classList.add('open');
+}
+function _setEditFoodMeal(k){_editFoodMeal=k;_renderEditFoodMeals();}
+function _renderEditFoodMeals(){FOOD_MEALS.forEach(m=>{const b=document.getElementById('ef-meal-'+m.k);if(!b)return;const sel=m.k===_editFoodMeal;b.style.background=sel?'var(--red)':'var(--bg3)';b.style.color=sel?'#fff':'var(--t2)';});}
+function saveEditFood(){
+  const e=(S.foodLog||[]).find(x=>x.ts===_editFoodTs); if(!e){toast('Entrée introuvable','error');return;}
+  const name=(document.getElementById('ef-name').value||'').trim();
+  e.name=(name||e.name).slice(0,80);
+  e.meal=_editFoodMeal;
+  e.kcal=parseInt(document.getElementById('ef-kcal').value)||0;
+  e.prot=parseInt(document.getElementById('ef-prot').value)||0;
+  e.carbs=parseInt(document.getElementById('ef-carbs').value)||0;
+  e.fat=parseInt(document.getElementById('ef-fat').value)||0;
+  persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open');
+  renderFoodJournal();
+  toast('Modifié ✅','success');
+}
 
 function renderSupplements() {
   renderCreatine(); renderWhey(); updateProteinBar(); renderSupplCombos();
