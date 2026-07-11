@@ -1,4 +1,4 @@
-const CACHE = 'ft-v384'; // [branche score-sante] + saisie manuelle du code-barres (test/repli)
+const CACHE = 'ft-v388'; // Score santé + code-barres (Open Food Facts) ouvert à tous ; IA nourriture freemium (25 essais + Premium)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

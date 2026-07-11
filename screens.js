@@ -546,28 +546,93 @@ function renderHome(){try{
     +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois')
     +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+fmt(bwDisp)+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps')
     +'</div>';
-  const b3Lvl=BIG3.map(ex=>{const pr=S.prs[ex];const rm=pr?pr.rm1:0;return(S.bw&&S.age&&rm)?getLevel(ex,rm,S.bw,S.gender,S.age).name:'—';});
-  const lvlSub=b3Lvl.some(l=>l!=='—')?b3Lvl.join(' · '):'Log tes séances pour voir ton niveau';
-  const prCount=Object.keys(S.prs||{}).length;
-  const prSub=prCount>0?prCount+' exercice'+(prCount>1?'s':'')+' traqé'+(prCount>1?'s':''):'Commence à logger tes séances';
-  const chevSvg='<svg class="home-row-chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
-  const secEl=document.getElementById('home-secondary');
-  // Restylage maquette : 3 cartes séparées (au lieu d'une carte avec traits)
-  const _nc='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);overflow:hidden;">';
-  if(secEl)secEl.innerHTML='<div style="display:flex;flex-direction:column;gap:10px;">'
-    +_nc+'<div class="home-row ft-press" onclick="goScreen(\'cycle\',null)">'
-    +'<div class="home-row-ic" style="background:rgba(239,62,87,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>'
-    +'<div class="home-row-cnt"><div class="home-row-ttl" id="cycle-home-title">Cycle de Force</div><div class="home-row-sub" id="cycle-home-sub">Planifie ta progression sur mesure</div></div>'+chevSvg+'</div></div>'
-    +_nc+'<div class="home-row ft-press" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
-    +'<div class="home-row-ic" style="background:rgba(234,179,8,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3Z"/></svg></div>'
-    +'<div class="home-row-cnt"><div class="home-row-ttl">Niveau de force</div><div class="home-row-sub">'+lvlSub+'</div></div>'+chevSvg+'</div></div>'
-    +_nc+'<div class="home-row ft-press" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
-    +'<div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 22l4-2.5L16 22l-1-8.5"/></svg></div>'
-    +'<div class="home-row-cnt"><div class="home-row-ttl">Records personnels</div><div class="home-row-sub">'+prSub+'</div></div>'+chevSvg+'</div></div>'
-    +'</div>';
-  renderCycleHomeCard();
+  // Calendrier mensuel (remplace cycle de force / niveau / records sur l'Accueil — chantier feat/accueil-calendrier)
+  _renderHomeCalendar();
   updatePill();
 }catch(e){console.error('[FT] renderHome:',e);}}
+
+// ─── CALENDRIER MENSUEL (Accueil) ───────────────────────────────────────────
+let _calDate=new Date();      // mois affiché (1er du mois)
+let _calZoomWeek=null;         // null = vue mois ; sinon index (0-5) de la semaine zoomée
+function _calPad(n){return (n<10?'0':'')+n;}
+function _calYmd(d){return d.getFullYear()+'-'+_calPad(d.getMonth()+1)+'-'+_calPad(d.getDate());}
+function _calSessLabel(s){ if(!s)return 'Séance'; if(s.progLabel)return s.progLabel; return 'Séance'; }
+// Jours où au moins une série a battu un record (même règle que le popup PR :
+// 1er passage d'un exo OU 1RM > meilleur précédent ; W/É exclus). Rejoue tout
+// l'historique dans l'ordre chronologique pour trouver ces jours.
+function _calPrDays(){
+  const best={}, prDays={};
+  const arr=(S.sessions||[]).filter(s=>s&&s.date).slice()
+    .sort((a,b)=>((a.ts||Date.parse(a.date)||0)-(b.ts||Date.parse(b.date)||0)));
+  arr.forEach(s=>{(s.exs||[]).forEach(ex=>{(ex.sets||[]).forEach(st=>{
+    if(!st.done||!st.kg||!st.reps||st.type==='É'||st.type==='W')return;
+    const rm=st.rm1||bz(st.kg,st.reps);
+    if(best[ex.name]===undefined||rm>best[ex.name]){best[ex.name]=rm;prDays[s.date]=true;}
+  });});});
+  return prDays;
+}
+function _renderHomeCalendar(){
+  const el=document.getElementById('home-secondary');if(!el)return;
+  const sessSet={};(S.sessions||[]).forEach(s=>{if(s&&s.date)sessSet[s.date]=(sessSet[s.date]||0)+1;});
+  const prSet=_calPrDays();
+  const y=_calDate.getFullYear(), m=_calDate.getMonth();
+  const todayY=_calYmd(new Date());
+  const moName=_calDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  const first=new Date(y,m,1);
+  const startDow=(first.getDay()+6)%7;               // 0 = lundi
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const cells=[];
+  for(let i=0;i<startDow;i++){cells.push({d:new Date(y,m,1-(startDow-i)),inMonth:false});}
+  for(let day=1;day<=daysInMonth;day++){cells.push({d:new Date(y,m,day),inMonth:true});}
+  while(cells.length%7!==0){const last=cells[cells.length-1].d;cells.push({d:new Date(last.getFullYear(),last.getMonth(),last.getDate()+1),inMonth:false});}
+  const weeks=[];for(let i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
+  const navBtn=(dir,txt)=>'<button onclick="_calNav('+dir+')" style="width:34px;height:34px;border-radius:9px;border:none;background:var(--bg3);color:var(--t1);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;">'+txt+'</button>';
+  let html='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+      +navBtn(-1,'‹')
+      +'<span style="font-weight:800;font-size:15px;color:var(--t1);text-transform:capitalize;">📅 '+moName+'</span>'
+      +navBtn(1,'›')
+    +'</div>';
+  if(_calZoomWeek===null){
+    html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px;">'
+      +['L','M','M','J','V','S','D'].map(w=>'<div style="text-align:center;font-size:10px;color:var(--t3);font-weight:700;">'+w+'</div>').join('')+'</div>';
+    weeks.forEach((wk,wi)=>{
+      html+='<div onclick="_calZoom('+wi+')" class="ft-press" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;cursor:pointer;border-radius:8px;">';
+      wk.forEach(c=>{
+        const ymd=_calYmd(c.d), has=sessSet[ymd], isPr=has&&prSet[ymd], isToday=ymd===todayY, num=c.d.getDate();
+        // anneau : record = doré ; aujourd'hui = rouge ; les deux = doré (extérieur) + rouge (intérieur)
+        const ring=(isPr&&isToday)?'box-shadow:inset 0 0 0 2px var(--gold),inset 0 0 0 3.5px var(--red);'
+          :isPr?'box-shadow:inset 0 0 0 2px var(--gold);'
+          :isToday?'box-shadow:inset 0 0 0 1.5px var(--red);':'';
+        html+='<div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:12.5px;'
+          +(c.inMonth?'color:var(--t1);':'color:var(--t3);opacity:.35;')
+          +ring
+          +(has?'background:rgba(255,45,85,.16);font-weight:800;':'')
+          +'">'+num+((has&&!isPr)?'<span style="width:4px;height:4px;border-radius:50%;background:var(--red);margin-top:2px;"></span>':'')+'</div>';
+      });
+      html+='</div>';
+    });
+    html+='<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:8px;">Tape une semaine pour la voir en détail 🔍</div>';
+    if(Object.keys(prSet).length)html+='<div style="font-size:10.5px;color:var(--t3);text-align:center;margin-top:3px;"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-2px;"></span> = séance avec un nouveau record</div>';
+  }else{
+    const wk=weeks[_calZoomWeek]||[];
+    html+='<button onclick="_calZoom(null)" style="width:100%;padding:8px;margin-bottom:8px;border:none;border-radius:9px;background:var(--bg3);color:var(--blue);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation;">‹ Retour au mois</button>';
+    wk.forEach(c=>{
+      const ymd=_calYmd(c.d), isToday=ymd===todayY, isPr=prSet[ymd];
+      const daySess=(S.sessions||[]).filter(s=>s.date===ymd);
+      const dow=c.d.toLocaleDateString('fr-FR',{weekday:'short'});
+      html+='<div onclick="'+(daySess.length?'goSessionsHistory()':'')+'" style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--sep);'+(isToday?'background:rgba(255,45,85,.06);':'')+(daySess.length?'cursor:pointer;':'')+'">'
+        +'<div style="width:44px;text-align:center;flex-shrink:0;"><div style="font-size:10px;color:var(--t3);text-transform:capitalize;">'+dow+'</div><div style="font-size:17px;font-weight:800;color:'+(c.inMonth?'var(--t1)':'var(--t3)')+';">'+c.d.getDate()+'</div></div>'
+        +'<div style="flex:1;min-width:0;font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?('💪 '+_escFood(daySess.map(_calSessLabel).join(', '))+(isPr?' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-1px;"></span> <span style="color:var(--gold);font-weight:800;">Record !</span>':'')):'Repos')+'</div>'
+        +(daySess.length?'<span style="font-size:11px;color:var(--red);font-weight:700;flex-shrink:0;">'+daySess.length+'×</span>':'')
+        +'</div>';
+    });
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+function _calNav(dir){_calDate=new Date(_calDate.getFullYear(),_calDate.getMonth()+dir,1);_calZoomWeek=null;_renderHomeCalendar();}
+function _calZoom(wi){_calZoomWeek=wi;_renderHomeCalendar();}
 
 function updatePill(){
   const p=document.getElementById('sync-pill'),d=document.getElementById('sync-dot'),l=document.getElementById('sync-lbl');

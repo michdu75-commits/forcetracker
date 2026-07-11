@@ -31,6 +31,18 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+# 🌿 CHANTIERS SUR BRANCHES (workflow branche → test /clone/ → validation → mise en ligne)
+
+*(Décidé avec Michel le 2026-07-11 : construire chaque gros chantier sur SA branche, isolé de la prod ; tester dans le bac à sable `/clone/` ; ne mettre en ligne que sur validation.)*
+
+- **`feat/score-sante`** — 🥗 Score santé produit (module `food-health.js` : Nutri-Score + NOVA + additifs + macros sur le scan code-barres). ✅ **Construit + testé + sur le clone.** Scanner caméra retiré (pourri iPhone), saisie du code-barres en avant, étiquette IA publique. Recherche Open Food Facts = **gratuite, 0 token**. **Gate testeurs/super-testeurs** (le clone l'affiche toujours). ⏳ Reste : validation finale Michel → merge en prod.
+- **`feat/coach-v2`** — 🧠 Coach IA v2 : plus de techniques d'entraînement (périodisation, RPE, tempo, techniques d'intensité, powerlifting/BB) + dimension **coach de vie** (sommeil, stress, motivation, habitudes). *(branche prête, à construire)*
+- **`feat/accueil-calendrier`** — 📅 **Calendrier mensuel sur l'Accueil** (1re page). Demande Michel (2026-07-11) : afficher un calendrier du mois sur l'accueil (probablement les jours de séance / activité). **Retirer de l'Accueil pour l'instant** : le **cycle de force**, le **niveau de force**, les **records personnels (PRs)**. ⚠️ **À décider** : on les met de côté (masqués) OU on leur trouve une place ailleurs (onglet Progrès ? Menu ? un écran dédié ?). *(branche prête, à cadrer + construire)*
+- **`feat/commandes-vocales`** — 🎙️ Commandes vocales pour l'app. *(branche prête, en réserve)*
+- *(à créer)* — 🏋️ **Programmes complexes** (powerlifting + bodybuilding) : périodisation, %1RM/RPE, splits, supersets/dropsets, semaine par semaine.
+
+---
+
 # 🌙 À FAIRE AU CALME — session dédiée le soir (backup + branche, 0 utilisateur en séance)
 
 *(Convenu avec Michel le 2026-07-11. Touche au backend / à des points sensibles → à faire posément, pas en coup de vent.)*
