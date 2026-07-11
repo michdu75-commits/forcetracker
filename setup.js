@@ -1035,13 +1035,91 @@ function _renderBodyStudyReport(d,isRecall){
     +_bsSection('⚕️','Santé prise en compte',esc(d.healthNotes),'#5BA8FF')
     +(d.summary?'<div style="margin-top:6px;padding:10px 12px;background:rgba(239,62,87,.08);border-radius:10px;font-size:13px;line-height:1.5;color:var(--t1);"><b>En résumé :</b> '+esc(d.summary)+'</div>':'')
     +'<div style="font-size:11px;color:var(--t3);margin-top:12px;line-height:1.4;">⚕️ Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou d\'un coach en personne.</div>'
-    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;padding:11px;font-size:13px;border-radius:12px;" onclick="_bodyStudyToCoach()">💬 En parler avec Milo</button>';
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;padding:11px;font-size:13px;border-radius:12px;" onclick="exportBodyStudyPdf()">📄 Exporter en PDF</button>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;padding:11px;font-size:13px;border-radius:12px;" onclick="_bodyStudyToCoach()">💬 En parler avec Milo</button>';
 }
 function _bodyStudyToCoach(){
   closeBodyStudy();
   try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
   const inp=document.getElementById('coach-inp');
   if(inp){inp.value='Explique-moi mon bilan corporel et propose-moi un plan pour rééquilibrer mon corps.';}
+}
+// Nettoie un texte pour le PDF (helvetica gère les accents mais pas les emojis/flèches)
+function _bsPdfClean(s){
+  s=(s==null?'':(''+s)).replace(/→/g,'->').replace(/←/g,'<-').replace(/[’]/g,"'");
+  s=s.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2300}-\u{23FF}]/gu,'');
+  return s.replace(/[ \t]{2,}/g,' ').trim();
+}
+// Export PDF propre du bilan « Étude du corps » (même moteur jsPDF que le Coach / les programmes).
+async function exportBodyStudyPdf(){
+  const d=S.bodyStudy;
+  if(!d){toast('Aucun bilan à exporter','error');return;}
+  toast('Génération du PDF…','info');
+  try{ await _loadJsPdf(); }
+  catch(e){ toast('PDF indisponible ici','error'); return; }
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=48;
+    const dt=new Date();
+    const logo=await _loadLogoDataURL();
+    let hx=M;
+    if(logo){ try{ doc.addImage(logo,'PNG',M,24,36,36); hx=M+46; }catch(e){} }
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,42);
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Étude du corps',hx,57);
+    doc.setFontSize(9);doc.text(dt.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),W-M,42,{align:'right'});
+    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,68,W-M,68);
+    let y=90;const lh=15;
+    const ensure=sp=>{ if(y>H-64-(sp||0)){doc.addPage();y=56;} };
+    const section=(title,body)=>{
+      body=_bsPdfClean(body); if(!body)return;
+      ensure(34);
+      doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(20);
+      doc.text(title,M,y); y+=6+lh;
+      doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(45);
+      doc.splitTextToSize(body,W-2*M).forEach(l=>{ ensure(lh); doc.text(l,M,y); y+=lh; });
+      y+=9;
+    };
+    section('Stature & posture',d.stature);
+    section('Insertions musculaires',d.insertions);
+    section('Équilibre du corps',d.balance);
+    section('Points forts',d.strengths);
+    section('Points à travailler',d.weaknesses);
+    // Exercices suggérés (liste structurée ou texte)
+    let exText='';
+    if(Array.isArray(d.exercises)&&d.exercises.length){
+      exText=d.exercises.map(x=>{
+        if(typeof x==='string')return '- '+x;
+        const nm=(x.zone||x.muscle||'');
+        const list=Array.isArray(x.exercises)?x.exercises.join(', '):(x.exercises||x.exos||'');
+        const why=(x.why||x.reason||'');
+        return '- '+nm+(list?' : '+list:'')+(why?'\n   ('+why+')':'');
+      }).join('\n');
+    }else if(typeof d.exercises==='string'){exText=d.exercises;}
+    section('Exercices suggérés',exText);
+    section('Santé prise en compte',d.healthNotes);
+    if(d.summary)section('En résumé',d.summary);
+    // Pied de page sur toutes les pages : contact + disclaimer + numéro
+    const pages=doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setLineWidth(.5);doc.setDrawColor(210);doc.line(M,H-38,W-M,H-38);
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-26);
+      doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(160);doc.text('Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou coach.',M,H-16);
+      doc.setTextColor(150);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('Page '+i+'/'+pages,W-M,H-16,{align:'right'});
+    }
+    const fname='etude-du-corps-'+dt.toISOString().slice(0,10)+'.pdf';
+    const blob=doc.output('blob');
+    const file=new File([blob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:'Étude du corps — Force Tracker'}); return; }
+      catch(err){ if(err&&err.name==='AbortError')return; }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+    toast('PDF enregistré 📄','success');
+  }catch(e){ console.warn('[FT bodystudy pdf]',e); toast('Souci PDF','error'); }
 }
 
 // ─── SUIVI PHOTOS (Super Testeur) — séries mensuelles comparées ──

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v372'; // Progres : recherche aussi dans l'editeur "Personnaliser les 4 exercices" + tap resultat scroll-safe
+const CACHE = 'ft-v373'; // Etude du corps : bouton "Exporter en PDF" (bilan complet, meme moteur jsPDF que Coach/programmes)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
