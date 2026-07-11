@@ -28,6 +28,7 @@ let S={
   foodLog:[],
   foodAiUses:0,
   healthProfile:null,
+  trainingProfile:null,   // {days, duration, timeOfDay, equipment, zones:[]} — questionnaire programme adaptatif
   a11y:false,
   colorblind:'',
   leftHand:false
@@ -100,6 +101,7 @@ function load(){
     S.hiddenFoods=JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]');
     S.foodAiUses=parseInt(localStorage.getItem('ft4_foodai')||'0')||0;
     S.healthProfile=JSON.parse(localStorage.getItem('ft4_health')||'null');
+    S.trainingProfile=JSON.parse(localStorage.getItem('ft4_trainprof')||'null');
     S.bodyStudy=JSON.parse(localStorage.getItem('ft4_bodystudy')||'null');
     // Historique des études corporelles (le plus récent en tête). Migration : si pas encore
     // d'historique mais un dernier bilan existe, on l'initialise avec ce bilan.
@@ -240,6 +242,7 @@ function persist(){
     localStorage.setItem('ft4_hiddenfoods',JSON.stringify(S.hiddenFoods||[]));
     localStorage.setItem('ft4_foodai',String(S.foodAiUses||0));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
+    localStorage.setItem('ft4_trainprof',JSON.stringify(S.trainingProfile||null));
     localStorage.setItem('ft4_bodystudy',JSON.stringify(S.bodyStudy||null));
     localStorage.setItem('ft4_bodystudies',JSON.stringify(S.bodyStudies||[]));
     localStorage.setItem('ft4_bodyscans',JSON.stringify(S.bodyScans||[]));

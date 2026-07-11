@@ -1,4 +1,4 @@
-const CACHE = 'ft-v392'; // Bibliothèque de programmes de force (5/3/1 BBB, Texas Method, Starting Strength) — charges calculées depuis les 1RM
+const CACHE = 'ft-v393'; // Programmes de force ADAPTATIFS : questionnaire (jours/durée/moment/matériel/zones) → exos remplacés + volume ajusté
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
