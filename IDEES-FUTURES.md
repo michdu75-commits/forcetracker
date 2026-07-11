@@ -31,6 +31,16 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+# 🌙 À FAIRE AU CALME — session dédiée le soir (backup + branche, 0 utilisateur en séance)
+
+*(Convenu avec Michel le 2026-07-11. Touche au backend / à des points sensibles → à faire posément, pas en coup de vent.)*
+
+1. 🔒 **Fix activation protection iPhone** — `_protectPost` (app.js) fait un `fetch` CORS et **lit la réponse** (`r.json()`) du serveur Apps Script. Sur **iPhone Safari, cette lecture est intermittente** (redirection 302 vers `script.googleusercontent.com` → Safari bloque parfois la lecture) → toast « Erreur réseau » alors que le serveur a parfois bien reçu la demande. Michel a réussi en « allant doucement » (ça confirme le côté course/intermittent). **Fix visé** : que l'activation **ne dépende plus de la lecture de cette réponse** → POST en `mode:'no-cors'` (fire-and-forget, marche toujours) **puis vérification par un GET** (ex. `authStatus` exposé aussi en `doGet`, comme `loadProfile` GET qui marche sur iPhone). Idem pour `sendConfirmCode` / `setAccessCode` (activer/désactiver). ⚠️ Touche **Emma & Christophe** (iPhone) aussi. Nécessite modif `Code.js` (nouveau `doGet ?action=authStatus`) + rework frontend + **test sur vrai iPhone**.
+
+2. 📤 **Boîte à idées — photos qui remontent dans l'appli (fini WhatsApp)** — aujourd'hui (`sendTesterIdea`/`shareTesterPhotos`, app.js) : le **texte** part de façon fiable (email `forcetracker.app@gmail.com` + backend `testerIdea`), mais les **photos ne peuvent pas être attachées à l'email** (limite navigateur : `mailto:` ne porte pas de fichier) → l'appli propose seulement le **menu « Partager »** du téléphone, où **WhatsApp apparaît** (avec Mail/Messages). Michel veut que les photos **arrivent collées à l'idée**. **Fix visé** : uploader les photos (redimensionnées, comme le Coach / l'étude du corps) vers le **backend** avec l'idée — probablement stockées dans **Drive** (les Script Properties sont trop petites, ~9 Ko/valeur). `handleTesterIdea_` (Code.js) à enrichir pour recevoir les images → dossier Drive dédié → Michel/Claude les lisent. Nécessite modif `Code.js` + déploiement.
+
+---
+
 # 💡 IDÉES À CADRER (discussion en cours — pas encore lancées)
 
 ## ✕ (Annuler) vs 🗑 Vider — 2 boutons qui se ressemblent (à trancher)
