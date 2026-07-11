@@ -1,4 +1,4 @@
-const CACHE = 'ft-v393'; // Programmes de force ADAPTATIFS : questionnaire (jours/durée/moment/matériel/zones) → exos remplacés + volume ajusté
+const CACHE = 'ft-v394'; // Programmes adaptatifs : le VOLUME est un choix explicite (plus déduit du travail physique)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
