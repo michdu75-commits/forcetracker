@@ -1580,6 +1580,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <span style="font-size:13px;color:var(--t3);">g</span>
       </div>
     </div>
+    <div id="af-health-card" style="margin-bottom:14px;"></div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Ce que tu as mangé</div>
     <textarea id="af-desc" placeholder="Ex : 2 œufs, 100g de riz, brocolis, 1 yaourt" rows="2" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);resize:vertical;margin-bottom:10px;"></textarea>
     <button class="btn btn-bg2" id="af-ai-btn" onclick="estimateFoodAI()" style="width:100%;margin-bottom:6px;">🤖 Estimer les calories avec l'IA</button>
@@ -2276,6 +2277,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
 <script src="setup.js"></script>
 <script src="tracking.js"></script>
 <script src="coach.js"></script>
+<script src="food-health.js"></script>
+<script>if(window.FoodHealth)FoodHealth.configure({appName:'ForceTracker',appVersion:'1.0',contactEmail:'forcetracker.app@gmail.com'});</script>
 <script src="app.js"></script>
 </body>
 </html>

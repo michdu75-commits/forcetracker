@@ -1,8 +1,8 @@
-const CACHE = 'ft-v382'; // Journal : confirmation avant suppression d'un aliment (journal + edit) + supprimer un aliment de la liste Mes aliments (favori/recent)
+const CACHE = 'ft-v383'; // [branche score-sante] Score sante produit (food-health.js) sur le scan code-barres
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
-  './setup.js', './tracking.js', './coach.js', './app.js',
+  './setup.js', './tracking.js', './coach.js', './app.js', './food-health.js',
   './manifest.json', './logo.png', './female-body.png',
   // Librairie PDF (hébergée en local pour marcher hors-ligne — chargée à la demande)
   './lib/jspdf.umd.min.js', './lib/jspdf.plugin.autotable.min.js',

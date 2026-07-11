@@ -444,7 +444,7 @@ async function onBarcodeFile(input){
 // l'objet product contient de vraies données (nom, marque ou nutriments).
 async function _offFetchProduct(ean){
   const urls=[
-    'https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(ean)+'.json?fields=product_name,product_name_fr,generic_name,generic_name_fr,brands,nutriments,serving_quantity',
+    'https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(ean)+'.json?fields=product_name,product_name_fr,generic_name,generic_name_fr,brands,quantity,nutriments,serving_quantity,nutriscore_grade,nova_group,additives_n,labels_tags,image_front_small_url',
     'https://world.openfoodfacts.org/api/v0/product/'+encodeURIComponent(ean)+'.json'
   ];
   for(let i=0;i<urls.length;i++){
@@ -483,6 +483,8 @@ async function _lookupBarcode(ean){
   const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
   document.getElementById('af-desc').value=_bcNutr.name;
   _bcApplyGrams();
+  // Score santé indicatif (Nutri-Score + NOVA + additifs) — module food-health.js
+  try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
   toast('Produit trouvé ✅ — ajuste la quantité','success');
 }
 function _bcApplyGrams(){
@@ -505,6 +507,7 @@ function openAddFood(){
   ['af-desc','af-kcal','af-prot','af-carbs','af-fat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   _bcNutr=null;
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
+  const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
   _renderAfMealChips();
   _renderAfAiNote();
   _renderFoodQuickList();
