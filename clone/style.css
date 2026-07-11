@@ -990,12 +990,3 @@ html.ob-done #onboarding{display:none;}
 /* Slide finale Premium : grande étoile qui pulse */
 .ag-premium{ width:120px; height:120px; margin:14px auto 0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:58px; background:radial-gradient(circle,rgba(234,179,8,.22),rgba(234,179,8,.04)); animation:ag-star 2s ease-in-out infinite; }
 @keyframes ag-star{ 0%,100%{ transform:scale(1); box-shadow:0 0 0 0 rgba(234,179,8,.28);} 50%{ transform:scale(1.08); box-shadow:0 0 0 14px rgba(234,179,8,0);} }
-
-/* Score santé produit (module food-health.js) — habillé aux couleurs Force Tracker (jour/nuit auto) */
-.fh-card{
-  --fh-bg:var(--bg2); --fh-alt:var(--bg3); --fh-line:var(--sep);
-  --fh-text:var(--t1); --fh-muted:var(--t3); --fh-accent:var(--red);
-  --fh-green:var(--green); --fh-lime:#8FC742; --fh-yellow:var(--gold);
-  --fh-orange:var(--orange); --fh-red:var(--red);
-  max-width:100%!important; font-family:var(--font)!important;
-}

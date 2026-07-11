@@ -342,6 +342,7 @@ function _renderSessDetailContent(){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${ex.note?'4':'8'}px">
         <div style="font-weight:700;font-size:14px">${_escNote(ex.name)}</div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--gold)" onclick="openExHistory('${_escNote(ex.name).replace(/'/g,"\\'")}')" title="Voir mes perfs sur cet exercice">📊</button>
           <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--blue)" onclick="replaceSessEx(${ei})" title="Remplacer l'exercice">🔄</button>
           <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
         </div>

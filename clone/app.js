@@ -444,7 +444,7 @@ async function onBarcodeFile(input){
 // l'objet product contient de vraies données (nom, marque ou nutriments).
 async function _offFetchProduct(ean){
   const urls=[
-    'https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(ean)+'.json?fields=product_name,product_name_fr,generic_name,generic_name_fr,brands,quantity,nutriments,serving_quantity,nutriscore_grade,nova_group,additives_n,labels_tags,image_front_small_url',
+    'https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(ean)+'.json?fields=product_name,product_name_fr,generic_name,generic_name_fr,brands,nutriments,serving_quantity',
     'https://world.openfoodfacts.org/api/v0/product/'+encodeURIComponent(ean)+'.json'
   ];
   for(let i=0;i<urls.length;i++){
@@ -458,13 +458,6 @@ async function _offFetchProduct(ean){
     }catch(e){ /* essaie l'URL suivante */ }
   }
   return null;
-}
-// Saisie manuelle du code-barres (repli quand le scan galère + test facile)
-function _manualBarcode(){
-  const inp=document.getElementById('af-bc-manual');
-  const code=inp?(inp.value||'').replace(/\D/g,''):'';
-  if(code.length<8){toast('Tape le code-barres complet (au moins 8 chiffres)','error');return;}
-  _lookupBarcode(code);
 }
 async function _lookupBarcode(ean){
   toast('Recherche du produit…','info');
@@ -490,8 +483,6 @@ async function _lookupBarcode(ean){
   const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
   document.getElementById('af-desc').value=_bcNutr.name;
   _bcApplyGrams();
-  // Score santé indicatif (Nutri-Score + NOVA + additifs) — module food-health.js
-  try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
   toast('Produit trouvé ✅ — ajuste la quantité','success');
 }
 function _bcApplyGrams(){
@@ -514,13 +505,6 @@ function openAddFood(){
   ['af-desc','af-kcal','af-prot','af-carbs','af-fat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   _bcNutr=null;
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
-  const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
-  // Code-barres + score santé : testeurs / super-testeurs uniquement pour l'instant
-  // (le clone /clone/ l'affiche toujours — c'est le bac à sable de test)
-  const bb=document.getElementById('af-barcode-block');
-  const _showBc=window.__FT_CLONE__||(typeof _isTester==='function'&&_isTester())||(typeof _isSuperTester==='function'&&_isSuperTester());
-  if(bb)bb.style.display=_showBc?'block':'none';
-  const mi=document.getElementById('af-bc-manual');if(mi)mi.value='';
   _renderAfMealChips();
   _renderAfAiNote();
   _renderFoodQuickList();

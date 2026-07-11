@@ -1615,16 +1615,9 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Repas</div>
     <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
     <div id="af-quick-list"></div>
-    <!-- Code-barres + score santé : réservé testeurs/super-testeurs pour l'instant (affiché par openAddFood) -->
-    <div id="af-barcode-block" style="display:none;">
-      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Code-barres du produit — tape les chiffres écrits sous le code :</div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ex : 3017620422003" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1 1 auto;min-width:0;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
-        <button onclick="_manualBarcode()" style="flex:0 0 auto;width:auto;padding:0 20px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:15px;font-family:var(--font);cursor:pointer;">OK</button>
-      </div>
-    </div>
-    <!-- Produit sans code / étiquette : photo IA -->
-    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Ou lire l'étiquette nutritionnelle (IA)</button>
+    <button class="btn btn-bg2" onclick="scanBarcode()" style="width:100%;margin-bottom:10px;">📷 Scanner un code-barres</button>
+    <input type="file" id="af-bc-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodeFile(this)">
+    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Lire l'étiquette nutritionnelle (IA)</button>
     <input type="file" id="af-label-input" accept="image/*" capture="environment" style="display:none" onchange="onFoodLabelFile(this)">
     <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
       <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
@@ -1634,7 +1627,6 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <span style="font-size:13px;color:var(--t3);">g</span>
       </div>
     </div>
-    <div id="af-health-card" style="margin-bottom:14px;"></div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Ce que tu as mangé</div>
     <textarea id="af-desc" placeholder="Ex : 2 œufs, 100g de riz, brocolis, 1 yaourt" rows="2" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);resize:vertical;margin-bottom:10px;"></textarea>
     <button class="btn btn-bg2" id="af-ai-btn" onclick="estimateFoodAI()" style="width:100%;margin-bottom:6px;">🤖 Estimer les calories avec l'IA</button>
@@ -2184,6 +2176,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       <div class="menu-row" onclick="openDrawerContent('rm1calc')"><div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div><span class="menu-row-lbl">Calculateur 1RM</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" id="menu-row-appguide" onclick="openAppGuide()"><div class="menu-row-ic" style="background:rgba(91,168,255,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M10 8.5v3l3-1.5-3-1.5z" fill="#5BA8FF"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="menu-row-lbl">Guide de l'application</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" onclick="openDrawerContent('guide')"><div class="menu-row-ic" style="background:rgba(255,109,0,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6D00" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><span class="menu-row-lbl">Guide de la muscu</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="closeMenuDrawer();goScreen('cycle',null)"><div class="menu-row-ic" style="background:rgba(239,62,87,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div><span class="menu-row-lbl">Cycle de force</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
     <!-- COMPTE -->
     <div class="sec">Compte</div>
@@ -2331,8 +2324,6 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
 <script src="setup.js"></script>
 <script src="tracking.js"></script>
 <script src="coach.js"></script>
-<script src="food-health.js"></script>
-<script>if(window.FoodHealth)FoodHealth.configure({appName:'ForceTracker',appVersion:'1.0',contactEmail:'forcetracker.app@gmail.com'});</script>
 <script src="app.js"></script>
 </body>
 </html>
