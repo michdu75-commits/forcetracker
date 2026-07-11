@@ -1966,6 +1966,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div class="modal-handle"></div>
     <h2>📋 Mes Programmes</h2>
     <button id="prog-beginner-btn" onclick="openBeginnerSetup()" style="display:none;width:100%;padding:12px;margin-bottom:10px;font-size:14px;font-weight:700;font-family:var(--font);border-radius:12px;border:1.5px solid rgba(52,199,89,.45);color:#34c759;background:rgba(52,199,89,.10);cursor:pointer;">🌱 Créer mon parcours débutant</button>
+    <button onclick="openProgLib()" style="width:100%;padding:12px;margin-bottom:10px;font-size:14px;font-weight:700;font-family:var(--font);border-radius:12px;border:1.5px solid rgba(91,168,255,.45);color:var(--blue);background:rgba(91,168,255,.10);cursor:pointer;">📚 Programmes de force reconnus (5/3/1, Texas…)</button>
     <div id="prog-beginner-goal" style="display:none;font-size:12.5px;line-height:1.45;color:var(--t2);background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.28);border-radius:10px;padding:10px 12px;margin-bottom:10px;"></div>
     <div id="prog-list-modal" style="margin-bottom:4px;"></div>
     <div id="prog-save-section" style="border-top:1px solid var(--sep);padding-top:14px;margin-top:6px;display:flex;flex-direction:column;gap:8px;">
@@ -2285,6 +2286,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
 <script src="setup.js"></script>
 <script src="tracking.js"></script>
 <script src="coach.js"></script>
+<script src="programs-lib.js"></script>
 <script src="food-health.js"></script>
 <script>if(window.FoodHealth)FoodHealth.configure({appName:'ForceTracker',appVersion:'1.0',contactEmail:'forcetracker.app@gmail.com'});</script>
 <script src="app.js"></script>

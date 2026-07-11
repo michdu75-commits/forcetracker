@@ -41,7 +41,7 @@ open(rp('clone','index.html'), 'w', encoding='utf-8').write(rewrite(prod))
 
 # 3) JS + CSS : copie avec réécriture des chemins
 for f in ['constants.js','state.js','screens.js','log.js','setup.js',
-          'tracking.js','coach.js','app.js','food-health.js','style.css']:
+          'tracking.js','coach.js','app.js','food-health.js','programs-lib.js','style.css']:
     if not os.path.exists(rp(f)):   # fichier propre à une autre branche → on saute
         print('  (ignoré, absent sur cette branche :', f, ')'); continue
     open(rp('clone',f), 'w', encoding='utf-8').write(rewrite(open(rp(f), encoding='utf-8').read()))

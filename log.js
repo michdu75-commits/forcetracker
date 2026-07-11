@@ -2839,16 +2839,19 @@ function loadProgDay(progIdx,dayIdx){
   const prog=(S.programmes||[])[progIdx];
   if(!prog||!prog.days||!prog.days[dayIdx])return;
   const day=prog.days[dayIdx];
+  const presc=!!prog.prescribed; // programme de la bibliothèque : poids calculé, on n'écrase pas par la séance précédente
   S.wkt={date:today(),progLabel:day.label||('Jour '+(dayIdx+1)),exs:(day.exs||[]).map(e=>{
-    const prev=getPrev(e.name);
+    const prev=presc?[]:getPrev(e.name);
     // Pré-remplissage PAR SÉRIE depuis la séance précédente (comme la colonne « Précédent »
     // et addSet) — série i → prev[i], repli sur la dernière série précédente, sinon valeur du programme.
+    // Pour un programme prescrit (biblio), on garde le poids du programme (calculé sur le 1RM).
     const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
       const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
       return {
         kg:pp?pp.kg:(s.kg||0),
         reps:pp?pp.reps:(s.reps||10),
-        type:s.type||'N',done:false,rm1:0,rest:s.rest||0
+        type:s.type||'N',done:false,rm1:0,rest:s.rest||0,
+        note:s.note||''
       };
     })};
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
