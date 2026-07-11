@@ -41,7 +41,7 @@ open(rp('clone','index.html'), 'w', encoding='utf-8').write(rewrite(prod))
 
 # 3) JS + CSS : copie avec réécriture des chemins
 for f in ['constants.js','state.js','screens.js','log.js','setup.js',
-          'tracking.js','coach.js','app.js','style.css']:
+          'tracking.js','coach.js','app.js','food-health.js','style.css']:
     open(rp('clone',f), 'w', encoding='utf-8').write(rewrite(open(rp(f), encoding='utf-8').read()))
 
 print('Clone régénéré : index.html + 8 JS + style.css (sw.js et manifest.json du clone conservés).')
