@@ -343,9 +343,62 @@ function _loadZXing(){
     document.head.appendChild(s);
   });
 }
-function scanBarcode(){
-  const inp=document.getElementById('af-bc-input');
-  if(inp){inp.value='';inp.click();}
+// Le bouton « Scanner un code-barres » ouvre le scanner EN DIRECT (façon Yuka).
+function scanBarcode(){ openBarcodeScanner(); }
+// Repli : ancienne méthode photo unique (input file caméra).
+function scanBarcodePhoto(){ const inp=document.getElementById('af-bc-input'); if(inp){inp.value='';inp.click();} }
+function _bcPhotoFallback(){ closeBarcodeScanner(); scanBarcodePhoto(); }
+
+// ─── SCANNER CODE-BARRES EN DIRECT (caméra live + ZXing continu) ─────────────
+let _bcReader=null, _bcScanning=false;
+function _bcHints(){
+  try{
+    const h=new Map();
+    h.set(ZXing.DecodeHintType.TRY_HARDER,true);
+    h.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.UPC_E]);
+    return h;
+  }catch(e){ return undefined; }
+}
+async function openBarcodeScanner(){
+  let ov=document.getElementById('ov-bc-scan');
+  if(!ov){ov=document.createElement('div');ov.id='ov-bc-scan';ov.className='overlay';ov.style.zIndex='600';document.body.appendChild(ov);}
+  ov.innerHTML='<div class="modal" style="max-width:94vw;padding:14px;text-align:center;">'
+    +'<div style="font-weight:800;font-size:15px;color:var(--t1);margin-bottom:4px;">📷 Scanne le code-barres</div>'
+    +'<div style="font-size:12px;color:var(--t3);margin-bottom:10px;">Vise le code-barres du produit — ça se lit tout seul.</div>'
+    +'<div style="position:relative;width:100%;aspect-ratio:3/4;max-height:58vh;background:#000;border-radius:12px;overflow:hidden;">'
+      +'<video id="bc-video" autoplay muted playsinline webkit-playsinline style="width:100%;height:100%;object-fit:cover;"></video>'
+      +'<div style="position:absolute;left:8%;right:8%;top:40%;height:20%;border:2px solid rgba(255,45,85,.95);border-radius:8px;pointer-events:none;"></div>'
+    +'</div>'
+    +'<div id="bc-scan-status" style="font-size:12px;color:var(--t3);margin-top:8px;min-height:16px;">Démarrage de la caméra…</div>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="_bcPhotoFallback()">📸 Prendre une photo à la place</button>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;" onclick="closeBarcodeScanner()">Annuler</button>'
+    +'</div>';
+  ov.classList.add('open');
+  try{
+    await _loadZXing();
+    _bcReader=new ZXing.BrowserMultiFormatReader(_bcHints());
+    const video=document.getElementById('bc-video');
+    _bcScanning=true;
+    await _bcReader.decodeFromConstraints({video:{facingMode:{ideal:'environment'}}}, video, (result)=>{
+      if(result&&_bcScanning){
+        const code=result.getText&&result.getText();
+        if(code){ _bcScanning=false; closeBarcodeScanner(); _lookupBarcode(code); }
+      }
+      // erreur "NotFound" entre les frames = normal, on ignore
+    });
+    const st=document.getElementById('bc-scan-status'); if(st)st.textContent='Vise le code-barres…';
+  }catch(e){
+    const st=document.getElementById('bc-scan-status');
+    if(st)st.textContent='Caméra indisponible ici — utilise « Prendre une photo » ou saisis à la main.';
+    // overlay laissé ouvert avec le bouton photo en repli
+  }
+}
+function closeBarcodeScanner(){
+  _bcScanning=false;
+  try{ if(_bcReader)_bcReader.reset(); }catch(e){}
+  try{ if(_bcReader&&_bcReader.stopStreams)_bcReader.stopStreams(); }catch(e){}
+  _bcReader=null;
+  const ov=document.getElementById('ov-bc-scan'); if(ov)ov.classList.remove('open');
 }
 async function onBarcodeFile(input){
   const f=input.files&&input.files[0];if(!f)return;

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v375'; // Etude du corps : photos gardees EN LOCAL (IndexedDB, 4 derniers bilans) + vignettes + comparaison avant-apres
+const CACHE = 'ft-v376'; // Scanner code-barres EN DIRECT (camera live ZXing decodeFromConstraints, facon Yuka) + repli photo/manuel
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
