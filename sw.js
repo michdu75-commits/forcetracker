@@ -1,4 +1,4 @@
-const CACHE = 'ft-v390'; // Commandes vocales : écran vocal bavard (statut/erreurs visibles, watchdog, détection app installée iOS) pour diagnostiquer
+const CACHE = 'ft-v391'; // Voix : « valide » et vocabulaire élargi + capture des mots courts (interim) + affiche ce qu'iPhone a compris
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
