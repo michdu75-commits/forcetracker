@@ -1,4 +1,4 @@
-const CACHE = 'ft-v389'; // Commandes vocales : logger une série à la voix pendant la séance (micro dans l'en-tête Séance)
+const CACHE = 'ft-v390'; // Commandes vocales : écran vocal bavard (statut/erreurs visibles, watchdog, détection app installée iOS) pour diagnostiquer
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
