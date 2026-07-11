@@ -650,6 +650,7 @@ function handleSaveProfile_(body) {
     // exPhotos (photos d'exos bibliothèque) = LOCAL SEULEMENT : jamais stocké, et on nettoie l'existant.
     if (profile.exPhotos) delete profile.exPhotos;
     if (body.bodyStudy     !== undefined) profile.bodyStudy     = _po_(body.bodyStudy,     profile.bodyStudy);
+    if (body.bodyStudies   !== undefined) profile.bodyStudies   = _pa_(body.bodyStudies,   profile.bodyStudies);
     if (body.bodyScans     !== undefined) profile.bodyScans     = _pa_(body.bodyScans,     profile.bodyScans);
     if (body.bloodTests    !== undefined) profile.bloodTests    = _pa_(body.bloodTests,    profile.bloodTests);
     if (body.bodyScanImports!== undefined) profile.bodyScanImports= _pn_(body.bodyScanImports, profile.bodyScanImports);
