@@ -1,4 +1,4 @@
-const CACHE = 'ft-v382'; // Journal : confirmation avant suppression d'un aliment (journal + edit) + supprimer un aliment de la liste Mes aliments (favori/recent)
+const CACHE = 'ft-v385'; // Accueil : calendrier mensuel (zoom semaine + nav mois), cycle de force déplacé dans Menu>Outils + icône 📊 perf par exercice dans le détail d'une séance passée
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
