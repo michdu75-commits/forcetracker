@@ -524,9 +524,10 @@ let _afQuickItems=[];
 function _buildFoodQuickItems(){
   const favs=(S.savedFoods||[]).map(f=>({name:f.name,kcal:f.kcal||0,prot:f.prot||0,carbs:f.carbs||0,fat:f.fat||0,fav:true}));
   const seen=new Set(favs.map(f=>(f.name||'').toLowerCase()));
+  const hidden=new Set((S.hiddenFoods||[]).map(x=>(x||'').toLowerCase()));
   const recent=[];
   (S.foodLog||[]).slice().sort((a,b)=>b.ts-a.ts).forEach(e=>{
-    const k=(e.name||'').toLowerCase(); if(!k||seen.has(k))return; seen.add(k);
+    const k=(e.name||'').toLowerCase(); if(!k||seen.has(k)||hidden.has(k))return; seen.add(k);
     recent.push({name:e.name,kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0,fav:false});
   });
   return favs.concat(recent).slice(0,12);
@@ -544,9 +545,26 @@ function _renderFoodQuickList(){
         +'<div style="font-size:11px;color:var(--t3);">'+(it.kcal||0)+' kcal · P '+(it.prot||0)+' · G '+(it.carbs||0)+' · L '+(it.fat||0)+'</div>'
       +'</div>'
       +'<button onclick="quickAddFood('+i+')" style="background:var(--bg3);border:none;border-radius:8px;color:var(--red);font-size:12px;font-weight:700;padding:7px 11px;cursor:pointer;flex-shrink:0;">+ Ajouter</button>'
+      +'<button onclick="deleteQuickFood('+i+')" title="Supprimer" style="background:none;border:none;color:var(--t3);font-size:15px;cursor:pointer;flex-shrink:0;padding:2px 3px;line-height:1;">✕</button>'
     +'</div>').join('')
     +'</div>';
 }
+// Supprime un aliment de la liste (avec confirmation) : favori → retiré des favoris ; récent → masqué des suggestions
+function deleteQuickFood(i){
+  const it=_afQuickItems[i]; if(!it)return;
+  const nm=it.name||''; const key=nm.toLowerCase();
+  const msg=it.fav?('« '+nm+' » sera retiré de tes favoris.'):('« '+nm+' » n\'apparaîtra plus dans tes aliments récents.');
+  const doit=()=>{
+    if(it.fav)S.savedFoods=(S.savedFoods||[]).filter(f=>(f.name||'').toLowerCase()!==key);
+    if(!S.hiddenFoods)S.hiddenFoods=[];
+    if(!S.hiddenFoods.includes(key))S.hiddenFoods.push(key); // masque aussi un ex-favori pour qu'il ne revienne pas en « récent »
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    _renderFoodQuickList(); toast('Supprimé de la liste','info');
+  };
+  if(typeof showConfirm==='function') showConfirm('Supprimer de la liste ?',msg,doit,'Supprimer');
+  else doit();
+}
+function _unhideFood(nm){ const k=(nm||'').toLowerCase(); if(k&&S.hiddenFoods&&S.hiddenFoods.length)S.hiddenFoods=S.hiddenFoods.filter(x=>x!==k); }
 function quickFillFood(i){
   const it=_afQuickItems[i]; if(!it)return;
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
@@ -557,6 +575,7 @@ function quickAddFood(i){
   const it=_afQuickItems[i]; if(!it)return;
   if(!S.foodLog)S.foodLog=[];
   S.foodLog.push({date:today(),meal:_afMeal,name:(it.name||'').slice(0,80),kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0,ts:Date.now()});
+  _unhideFood(it.name);
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeAddFood(); renderFoodJournal();
   toast('Ajouté au journal 🍽️','success');
@@ -674,6 +693,7 @@ function addFoodEntry(){
   if(!kcal&&!prot&&!carbs&&!fat){toast('Renseigne au moins les calories','error');return;}
   if(!S.foodLog)S.foodLog=[];
   S.foodLog.push({date:today(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()});
+  _unhideFood(name);
   persist();
   closeAddFood();
   renderFoodJournal();
@@ -686,6 +706,14 @@ function removeFoodEntry(ts){
   persist();
   renderFoodJournal();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+}
+// Demande confirmation avant de retirer un aliment du journal
+function confirmRemoveFood(ts){
+  const e=(S.foodLog||[]).find(x=>x.ts===ts);
+  const nm=e?e.name:'cet aliment';
+  const doit=()=>{ const ov=document.getElementById('ov-edit-food'); if(ov)ov.classList.remove('open'); removeFoodEntry(ts); toast('Aliment supprimé','info'); };
+  if(typeof showConfirm==='function') showConfirm('Supprimer l\'aliment ?','« '+nm+' » sera retiré de ton journal.',doit,'Supprimer');
+  else doit();
 }
 // ─── MODIFIER une entrée du journal (repas + nom + valeurs) ──────────────────
 let _editFoodTs=null, _editFoodMeal='dejeuner';
@@ -703,7 +731,7 @@ function openEditFood(ts){
     +'<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">'+FOOD_MEALS.map(m=>'<button id="ef-meal-'+m.k+'" onclick="_setEditFoodMeal(\''+m.k+'\')" style="flex:1;min-width:70px;padding:9px 6px;border-radius:10px;border:none;font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;background:var(--bg3);color:var(--t2);">'+m.ic+'<br>'+m.lbl+'</button>').join('')+'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'+fld('ef-kcal','Calories (kcal)',e.kcal)+fld('ef-prot','Protéines (g)',e.prot)+fld('ef-carbs','Glucides (g)',e.carbs)+fld('ef-fat','Lipides (g)',e.fat)+'</div>'
     +'<button class="btn btn-red" onclick="saveEditFood()" style="width:100%;padding:13px;font-size:15px;">✅ Enregistrer</button>'
-    +'<button class="btn btn-bg2" onclick="removeFoodEntry('+ts+');document.getElementById(\'ov-edit-food\').classList.remove(\'open\')" style="width:100%;margin-top:8px;color:var(--red);">🗑 Supprimer</button>'
+    +'<button class="btn btn-bg2" onclick="confirmRemoveFood('+ts+')" style="width:100%;margin-top:8px;color:var(--red);">🗑 Supprimer</button>'
     +'<button class="btn btn-bg2" onclick="document.getElementById(\'ov-edit-food\').classList.remove(\'open\')" style="width:100%;margin-top:8px;">Annuler</button>'
     +'</div>';
   document.getElementById('ef-name').value=e.name||''; // évite tout souci d'échappement dans l'attribut

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v381'; // Journal : liste aliments recents + favoris (re-ajout 1 tap, etoile favori) — savedFoods local+cloud
+const CACHE = 'ft-v382'; // Journal : confirmation avant suppression d'un aliment (journal + edit) + supprimer un aliment de la liste Mes aliments (favori/recent)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
