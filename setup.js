@@ -272,6 +272,7 @@ function _cloudSync(){
       exRestPref:S.exRestPref||{},
       healthProfile:S.healthProfile||null,
       bodyStudy:S.bodyStudy||null,
+      bodyStudies:S.bodyStudies||[],   // historique des études corporelles (⚠️ 1 ligne backend à déployer pour la persistance cloud)
       bodyScans:(S.bodyScans||[]).slice(-2000),
       bloodTests:(S.bloodTests||[]).slice(-40),
       coachQuiz:S.coachQuiz||null,
@@ -936,6 +937,7 @@ const _BODY_SLOTS=[
   {key:'profil',     t:'Profil', d:'De côté (gauche ou droit), debout naturellement, bras le long du corps.'}
 ];
 let _bodyPhotos=[null,null,null,null];
+let _bsViewing=null; // bilan actuellement affiché (dernier par défaut, ou un bilan de l'historique)
 function openBodyStudy(){
   if(!S.premium){toast('Étude du corps réservée aux membres Premium ⭐','info');return;}
   _bodyPhotos=[null,null,null,null];
@@ -992,7 +994,14 @@ async function analyzeBodyStudy(){
     let data;try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON: '+txt.substring(0,120));}
     if(data.status!=='ok'||!data.data)throw new Error(data.error||'Erreur analyse');
     const d=data.data;d.date=today();
-    S.bodyStudy=d;persist();_cloudSyncDebounced();
+    S.bodyStudy=d;
+    // Historique : le plus récent en tête, un seul bilan par jour (relance le même jour = remplace), plafonné à 24
+    S.bodyStudies=S.bodyStudies||[];
+    S.bodyStudies=S.bodyStudies.filter(x=>x&&x.date!==d.date);
+    S.bodyStudies.unshift(d);
+    if(S.bodyStudies.length>24)S.bodyStudies=S.bodyStudies.slice(0,24);
+    _bsViewing=d;
+    persist();_cloudSyncDebounced();
     _renderBodyStudyReport(d,false);
     if(typeof checkBadges==='function')try{checkBadges(true);}catch(e){}
   }catch(e){
@@ -1022,10 +1031,14 @@ function _renderBodyStudyReport(d,isRecall){
       return '<li style="margin-bottom:6px;"><b>'+nm+'</b>'+(list?' — '+list:'')+(why?'<div style="font-size:12px;color:var(--t3);">'+why+'</div>':'')+'</li>';
     }).join('');
   }else if(typeof d.exercises==='string'){exos='<li>'+esc(d.exercises)+'</li>';}
+  _bsViewing=d;   // mémorise le bilan affiché (pour l'export PDF)
+  const _isLatest=!(S.bodyStudy)||!d.date||d.date===S.bodyStudy.date;
   res.style.display='block';
   res.innerHTML=''
-    +(isRecall?'<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">📅 Dernier bilan du '+esc(d.date||'?')+' — relance une analyse pour le mettre à jour.</div>'
+    +(isRecall?'<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">📅 '+(_isLatest?'Dernier bilan':'Ancien bilan')+' du '+_bsFmtDate(d.date)+(_isLatest?' — relance une analyse pour le mettre à jour.':'.')+'</div>'
       :'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><div style="width:26px;height:26px;border-radius:50%;background:rgba(52,211,153,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span style="font-weight:800;font-size:14px;color:#5be3b4;">Bilan de ton corps</span></div>')
+    +((S.bodyStudies||[]).length>1?'<button onclick="_openBodyStudyHistory()" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;">📚 Historique — '+(S.bodyStudies.length)+' bilans</button>'
+      +(!_isLatest?'<button onclick="_viewBodyStudyAt(0)" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--blue);cursor:pointer;touch-action:manipulation;">‹ Revenir au dernier bilan</button>':''):'')
     +_bsSection('🧍','Stature & posture',esc(d.stature))
     +_bsSection('🧬','Insertions musculaires',esc(d.insertions))
     +_bsSection('⚖️','Équilibre du corps',esc(d.balance),'var(--gold)')
@@ -1044,6 +1057,29 @@ function _bodyStudyToCoach(){
   const inp=document.getElementById('coach-inp');
   if(inp){inp.value='Explique-moi mon bilan corporel et propose-moi un plan pour rééquilibrer mon corps.';}
 }
+// ─── Historique des études corporelles ─────────────────────────────────────
+function _bsFmtDate(iso){ if(!iso)return '?'; const p=(''+iso).split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso; }
+function _openBodyStudyHistory(){
+  const res=document.getElementById('body-result');if(!res)return;
+  const list=S.bodyStudies||[];
+  if(!list.length){toast('Aucun bilan enregistré','info');return;}
+  res.style.display='block';
+  res.innerHTML='<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:4px;">📚 Historique des bilans</div>'
+    +'<div style="font-size:11px;color:var(--t3);margin-bottom:12px;">Tape un bilan pour le revoir (et l\'exporter en PDF).</div>'
+    +list.map((d,i)=>{
+      const sum=(d.summary||d.balance||d.stature||'').toString();
+      const snip=sum.length>90?sum.slice(0,89)+'…':sum;
+      return '<button onclick="_viewBodyStudyAt('+i+')" style="width:100%;text-align:left;margin-bottom:8px;padding:11px 12px;border-radius:12px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);cursor:pointer;touch-action:manipulation;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:13px;">'+_bsFmtDate(d.date)+(i===0?' <span style="color:var(--green);font-size:11px;">· dernier</span>':'')+'</span><span style="color:var(--t3);font-size:16px;">›</span></div>'
+        +(snip?'<div style="font-size:12px;color:var(--t3);line-height:1.4;margin-top:3px;">'+_escNote(snip)+'</div>':'')
+        +'</button>';
+    }).join('');
+}
+function _viewBodyStudyAt(i){
+  const d=(S.bodyStudies||[])[i];if(!d)return;
+  _renderBodyStudyReport(d,true);
+  const res=document.getElementById('body-result');if(res)try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
 // Nettoie un texte pour le PDF (helvetica gère les accents mais pas les emojis/flèches)
 function _bsPdfClean(s){
   s=(s==null?'':(''+s)).replace(/→/g,'->').replace(/←/g,'<-').replace(/[’]/g,"'");
@@ -1052,7 +1088,7 @@ function _bsPdfClean(s){
 }
 // Export PDF propre du bilan « Étude du corps » (même moteur jsPDF que le Coach / les programmes).
 async function exportBodyStudyPdf(){
-  const d=S.bodyStudy;
+  const d=_bsViewing||S.bodyStudy;   // le bilan affiché (dernier OU un bilan de l'historique)
   if(!d){toast('Aucun bilan à exporter','error');return;}
   toast('Génération du PDF…','info');
   try{ await _loadJsPdf(); }
@@ -1062,12 +1098,14 @@ async function exportBodyStudyPdf(){
     const doc=new jsPDF({unit:'pt',format:'a4'});
     const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=48;
     const dt=new Date();
+    // Date affichée = celle du bilan (JJ/MM/AAAA) si connue, sinon aujourd'hui
+    const dispDate=(d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date))?d.date.split('-').reverse().join('/'):dt.toLocaleDateString('fr-FR');
     const logo=await _loadLogoDataURL();
     let hx=M;
     if(logo){ try{ doc.addImage(logo,'PNG',M,24,36,36); hx=M+46; }catch(e){} }
     doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,42);
     doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Étude du corps',hx,57);
-    doc.setFontSize(9);doc.text(dt.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),W-M,42,{align:'right'});
+    doc.setFontSize(9);doc.text(dispDate+(S.name?(' · '+S.name):''),W-M,42,{align:'right'});
     doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,68,W-M,68);
     let y=90;const lh=15;
     const ensure=sp=>{ if(y>H-64-(sp||0)){doc.addPage();y=56;} };
@@ -1108,7 +1146,7 @@ async function exportBodyStudyPdf(){
       doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(160);doc.text('Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou coach.',M,H-16);
       doc.setTextColor(150);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('Page '+i+'/'+pages,W-M,H-16,{align:'right'});
     }
-    const fname='etude-du-corps-'+dt.toISOString().slice(0,10)+'.pdf';
+    const fname='etude-du-corps-'+((d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date))?d.date:dt.toISOString().slice(0,10))+'.pdf';
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
@@ -1646,6 +1684,7 @@ function _applyRestoreData(raw){
   try{if(d.bday)S.bday=d.bday;}catch(e){}
   try{if(d.healthProfile)S.healthProfile=d.healthProfile;}catch(e){console.warn('[FT restore] healthProfile',e);}
   try{if(d.bodyStudy)S.bodyStudy=d.bodyStudy;}catch(e){console.warn('[FT restore] bodyStudy',e);}
+  try{if(Array.isArray(d.bodyStudies)&&d.bodyStudies.length)S.bodyStudies=d.bodyStudies;}catch(e){console.warn('[FT restore] bodyStudies',e);}
   try{if(Array.isArray(d.bodyScans)&&d.bodyScans.length>=(S.bodyScans||[]).length)S.bodyScans=d.bodyScans;}catch(e){console.warn('[FT restore] bodyScans',e);}
   try{if(Array.isArray(d.bloodTests)&&d.bloodTests.length>=(S.bloodTests||[]).length)S.bloodTests=d.bloodTests;}catch(e){console.warn('[FT restore] bloodTests',e);}
   try{if(d.coachQuiz&&d.coachQuiz.answers&&!(S.coachQuiz&&S.coachQuiz.done))S.coachQuiz=d.coachQuiz;}catch(e){console.warn('[FT restore] coachQuiz',e);}

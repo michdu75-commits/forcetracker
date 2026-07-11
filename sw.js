@@ -1,4 +1,4 @@
-const CACHE = 'ft-v373'; // Etude du corps : bouton "Exporter en PDF" (bilan complet, meme moteur jsPDF que Coach/programmes)
+const CACHE = 'ft-v374'; // Etude du corps : HISTORIQUE des bilans (24 max, plus recent en tete) + PDF du bilan affiche
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
