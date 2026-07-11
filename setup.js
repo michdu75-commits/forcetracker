@@ -272,7 +272,7 @@ function _cloudSync(){
       exRestPref:S.exRestPref||{},
       healthProfile:S.healthProfile||null,
       bodyStudy:S.bodyStudy||null,
-      bodyStudies:S.bodyStudies||[],   // historique des études corporelles (⚠️ 1 ligne backend à déployer pour la persistance cloud)
+      bodyStudies:S.bodyStudies||[],   // historique des études corporelles (persistance cloud active — backend déployé via CI 2026-07-11)
       bodyScans:(S.bodyScans||[]).slice(-2000),
       bloodTests:(S.bloodTests||[]).slice(-40),
       coachQuiz:S.coachQuiz||null,

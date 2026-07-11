@@ -17,16 +17,9 @@
 
 ## ⏳ En attente
 
-### Historique des études corporelles — persistance cloud (ft-v374, 2026-07-11)
-Le **frontend est déjà en ligne** : l'historique des bilans « Étude du corps » (`S.bodyStudies`) fonctionne **en local** (garde les 24 derniers, le plus récent en tête) et est **déjà envoyé** au cloud dans le payload `saveProfile` + **déjà restauré** (`_applyRestoreData`). Il ne manque qu'**UNE ligne backend** pour que le cloud le **stocke** (sinon l'historique reste local : perdu si réinstallation/vidage du cache — mais le **dernier** bilan survit quand même via `bodyStudy`).
+_Rien en attente. 🎉_
 
-👉 Dans `Code.js`, fonction **`handleSaveProfile_`**, à côté de la ligne `bodyStudy` (ajoutée @61), ajouter :
-```js
-if (body.bodyStudies !== undefined) profile.bodyStudies = _pa_(body.bodyStudies, profile.bodyStudies);
-```
-`loadProfile` renvoie déjà tout le `profile` → l'historique reviendra tout seul après déploiement. Aucune autre modif. Puis séquence habituelle : `clasp push --force` → `clasp deploy -i …` → vérifier `?test=1`.
-
-_Dernier déploiement backend : **@71** (2026-07-08)._
+_Dernier déploiement backend : **historique études corporelles** (`bodyStudies`), déployé **automatiquement via la CI GitHub** le 2026-07-11 (run #22, succès, `?test=1` OK)._
 
 ---
 
