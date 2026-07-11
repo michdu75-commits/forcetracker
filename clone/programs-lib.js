@@ -156,7 +156,10 @@ function _renderProgLib(){
   if(_pgView==='list'){
     el.innerHTML='<div class="pglib-sheet">'
       +_pgHdr('📚 Programmes de force')
-      +'<div style="font-size:13px;color:var(--t3);line-height:1.5;margin-bottom:14px;">Des programmes reconnus et éprouvés. L\'app calcule tes charges à partir de tes 1RM. Choisis-en un pour voir le détail.</div>'
+      +'<div style="font-size:13px;color:var(--t3);line-height:1.5;margin-bottom:12px;">Des programmes reconnus et éprouvés. L\'app calcule tes charges à partir de tes 1RM. Choisis-en un pour voir le détail.</div>'
+      +(S.trainingProfile
+        ?'<div onclick="openTrainQuiz()" class="ft-press" style="background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.3);border-radius:12px;padding:10px 12px;margin-bottom:14px;cursor:pointer;"><div style="font-weight:800;font-size:12.5px;color:#34c759;">🎯 Programmes adaptés à toi <span style="float:right;color:var(--blue);font-weight:700;">modifier ›</span></div><div style="font-size:12px;color:var(--t2);margin-top:2px;">'+_escNote(_pgAdaptSummary(S.trainingProfile))+'</div></div>'
+        :'<div onclick="openTrainQuiz()" class="ft-press" style="background:rgba(91,168,255,.08);border:1px solid rgba(91,168,255,.3);border-radius:12px;padding:11px 12px;margin-bottom:14px;cursor:pointer;"><div style="font-weight:800;font-size:13px;color:var(--blue);">🧩 Adapte les programmes à ta vie ›</div><div style="font-size:12px;color:var(--t2);margin-top:2px;">5 questions (jours, durée, matériel, zones sensibles) → chaque programme ajusté à toi.</div></div>')
       +PROG_LIB.map(p=>{
         const badge={'Débutant':'#34D399','Intermédiaire':'var(--gold)','Avancé':'var(--red)'}[p.level]||'var(--t3)';
         return '<div class="pglib-card ft-press" onclick="openProgLibDetail(\''+p.key+'\')">'
@@ -203,9 +206,22 @@ function _pgReadInputs(){
 }
 function _pgRecalc(){
   const p=_pgFind(_pgSelKey);if(!p)return;
-  const days=p.build(_pgReadInputs());
+  const ad=_pgAdapt(p.build(_pgReadInputs()), S.trainingProfile);
+  const days=ad.days;
   const box=document.getElementById('pg-preview');if(!box)return;
-  box.innerHTML=days.map(d=>{
+  let head='';
+  if(S.trainingProfile){
+    head='<div style="background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.3);border-radius:12px;padding:10px 12px;margin-bottom:10px;">'
+      +'<div style="font-weight:800;font-size:12.5px;color:#34c759;margin-bottom:4px;">🎯 Adapté à ton profil <button onclick="openTrainQuiz()" style="float:right;border:none;background:none;color:var(--blue);font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--font);">modifier</button></div>'
+      +'<div style="font-size:12px;color:var(--t2);line-height:1.5;">'+_escNote(_pgAdaptSummary(S.trainingProfile))+'</div>'
+      +(ad.changes.length?'<ul style="margin:6px 0 0;padding-left:18px;font-size:11.5px;color:var(--t3);line-height:1.5;">'+ad.changes.map(c=>'<li>'+_escNote(c)+'</li>').join('')+'</ul>':'')
+      +'</div>';
+  }else{
+    head='<div onclick="openTrainQuiz()" class="ft-press" style="background:rgba(91,168,255,.08);border:1px solid rgba(91,168,255,.3);border-radius:12px;padding:11px 12px;margin-bottom:10px;cursor:pointer;">'
+      +'<div style="font-weight:800;font-size:12.5px;color:var(--blue);">🧩 Adapter ce programme à toi ›</div>'
+      +'<div style="font-size:12px;color:var(--t2);margin-top:2px;">Réponds à 5 questions (jours, durée, matériel, zones sensibles) → exos et volume ajustés à ta vie.</div></div>';
+  }
+  box.innerHTML=head+days.map(d=>{
     return '<div class="pglib-day"><div style="font-weight:800;font-size:13px;color:var(--red);margin-bottom:6px;">'+_escNote(d.label)+'</div>'
       +d.exs.map(ex=>{
         const sets=ex.sets||[];
@@ -222,18 +238,140 @@ function _pgRecalc(){
 function addLibProgram(){
   const p=_pgFind(_pgSelKey);if(!p)return;
   const rm=_pgReadInputs();
-  const days=p.build(rm);
+  const ad=_pgAdapt(p.build(rm), S.trainingProfile);   // sauvegarde la version ADAPTÉE au profil
   if(!S.programmes)S.programmes=[];
   S.programmes.unshift({
     id:'p_lib_'+p.key+'_'+Date.now(),
     name:p.name,
     libKey:p.key, author:p.author, prescribed:true,
     baseRM:rm,
-    days:days
+    adaptedTo:S.trainingProfile?_pgAdaptSummary(S.trainingProfile):'',
+    days:ad.days
   });
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeProgLib();
   if(typeof renderProgModal==='function')renderProgModal();
   toast('« '+p.name+' » ajouté à tes programmes 💪','success');
+}
+
+// ═══ ÉTAPE 1 : QUESTIONNAIRE ADAPTATIF + MOTEUR D'ADAPTATION ═════════════════
+// S.trainingProfile = {days, duration, timeOfDay, equipment, zones:[]}
+// (niveau=S.level, objectif=S.goal, travail=S.workType, santé=S.healthProfile réutilisés)
+
+// Remplacements par ZONE SENSIBLE (mécanique, PAS un avis médical — prudence)
+const _PG_ZONE_SWAP={
+  genou:  {'Squat à la Barre':'Press Jambes 45°','Extension Quadriceps (Leg Extension)':'Press Jambes 45°'},
+  epaule: {'Développé Militaire':'Développé Épaules Machine','Développé Couché':'Chest Press Machine Horizontale','Dips Triceps Parallèles':'Triceps Machine'},
+  dos:    {'Soulevé de Terre':'Rack Pull','Squat à la Barre':'Press Jambes 45°','Rowing Barre':'Rowing Machine'},
+  poignet:{'Développé Couché':'Chest Press Machine Horizontale','Développé Militaire':'Développé Épaules Machine'},
+  hanche: {'Soulevé de Terre':'Rack Pull','Squat à la Barre':'Press Jambes 45°'},
+  coude:  {'Dips Triceps Parallèles':'Triceps Machine'},
+};
+// Remplacements ÉQUIPEMENT maison (pas de barre)
+const _PG_EQUIP_HOME={
+  'Squat à la Barre':'Squat Goblet Kettlebell','Développé Couché':'Développé Couché Haltères',
+  'Développé Militaire':'Développé Militaire Haltères','Soulevé de Terre':'Soulevé de Terre Roumain Kettlebell',
+  'Rowing Barre':'Rowing Haltère Un Bras',
+};
+const _PG_ZONE_LBL={genou:'genou',epaule:'épaule',dos:'dos',poignet:'poignet',hanche:'hanche',coude:'coude'};
+
+function _pgPhysicalJob(){return S.workType==='actif'||S.workType==='physique';}
+
+// Adapte des jours générés au profil. Retourne {days, changes:[texte…]}
+function _pgAdapt(rawDays, prof){
+  prof=prof||S.trainingProfile||{};
+  const zones=prof.zones||[], equip=prof.equipment||'full';
+  const physical=_pgPhysicalJob(), shortSess=!!(prof.duration&&prof.duration<=45), veryShort=!!(prof.duration&&prof.duration<=30);
+  const changeSet={};
+  const swapName=(name)=>{
+    let n=name, whys=[];
+    zones.forEach(z=>{const m=_PG_ZONE_SWAP[z];if(m&&m[n]){n=m[n];whys.push(_PG_ZONE_LBL[z]||z);}});
+    if(equip==='home'&&_PG_EQUIP_HOME[n]){n=_PG_EQUIP_HOME[n];whys.push('maison');}
+    if(n!==name)changeSet[name+'→'+n]='« '+name+' » → « '+n+' » ('+whys.join(', ')+')';
+    return n;
+  };
+  let volReduced=false;
+  const days=rawDays.map(d=>({label:d.label,note:d.note||'',exs:d.exs.map(ex=>{
+    const nm=swapName(ex.name);
+    let sets=ex.sets.slice();
+    if(physical||shortSess){
+      // BBB : garde 3 séries de volume au lieu de 5
+      const bbbIdx=sets.map((s,i)=>/BBB/.test(s.note||'')?i:-1).filter(i=>i>=0);
+      if(bbbIdx.length>3){const drop=bbbIdx.slice(3);sets=sets.filter((_,i)=>drop.indexOf(i)<0);volReduced=true;}
+    }
+    if(veryShort){
+      // séance très courte : accessoires (pas de note %/TM) plafonnés à 2 séries
+      const isAccessory=!sets.some(s=>/%|TM/.test(s.note||''));
+      if(isAccessory&&sets.length>2){sets=sets.slice(0,2);volReduced=true;}
+    }
+    return {name:nm,note:ex.note||'',sets:sets};
+  })}));
+  const changes=Object.values(changeSet);
+  if(volReduced)changes.push('Volume réduit ('+(physical?'travail physique':'')+((physical&&shortSess)?' + ':'')+(shortSess?'séance courte':'')+') — moins de séries pour mieux récupérer.');
+  return {days,changes};
+}
+
+// Un résumé « Adapté à ton profil » pour l'aperçu
+function _pgAdaptSummary(prof){
+  prof=prof||S.trainingProfile;if(!prof)return '';
+  const bits=[];
+  if(prof.days)bits.push(prof.days+' j/sem');
+  if(prof.duration)bits.push(prof.duration+' min');
+  if(prof.timeOfDay)bits.push({matin:'matin',aprem:'après-midi',soir:'soir'}[prof.timeOfDay]||'');
+  if(prof.equipment&&prof.equipment!=='full')bits.push(prof.equipment==='home'?'à la maison':'matériel basique');
+  if(_pgPhysicalJob())bits.push('travail physique');
+  if((prof.zones||[]).length)bits.push('zones : '+prof.zones.map(z=>_PG_ZONE_LBL[z]||z).join(', '));
+  return bits.join(' · ');
+}
+
+// ─── Questionnaire ───────────────────────────────────────────────────────────
+let _tqDraft=null;
+function openTrainQuiz(){
+  _tqDraft=Object.assign({days:3,duration:60,timeOfDay:'soir',equipment:'full',zones:[]}, S.trainingProfile||{});
+  let el=document.getElementById('ov-train-quiz');
+  if(!el){el=document.createElement('div');el.id='ov-train-quiz';el.className='overlay';el.style.zIndex='410';
+    el.onclick=e=>{if(e.target===el)closeTrainQuiz();};document.body.appendChild(el);}
+  _renderTrainQuiz();el.classList.add('open');
+}
+function closeTrainQuiz(){const el=document.getElementById('ov-train-quiz');if(el)el.classList.remove('open');}
+function _tqChip(field,val,lbl){
+  const on=_tqDraft[field]===val;
+  return '<button onclick="_tqSet(\''+field+'\',\''+val+'\')" style="padding:9px 12px;border-radius:10px;border:1.5px solid '+(on?'var(--red)':'var(--sep)')+';background:'+(on?'rgba(255,45,85,.12)':'var(--bg2)')+';color:'+(on?'var(--red)':'var(--t2)')+';font-weight:700;font-size:13px;font-family:var(--font);cursor:pointer;">'+lbl+'</button>';
+}
+function _tqZone(z){
+  const on=(_tqDraft.zones||[]).indexOf(z)>=0;
+  return '<button onclick="_tqToggleZone(\''+z+'\')" style="padding:8px 12px;border-radius:20px;border:1.5px solid '+(on?'var(--gold)':'var(--sep)')+';background:'+(on?'rgba(234,179,8,.12)':'var(--bg2)')+';color:'+(on?'var(--gold)':'var(--t2)')+';font-weight:700;font-size:12.5px;font-family:var(--font);cursor:pointer;">'+(_PG_ZONE_LBL[z]||z)+'</button>';
+}
+function _tqSet(f,v){_tqDraft[f]=(f==='days'||f==='duration')?parseInt(v):v;_renderTrainQuiz();}
+function _tqToggleZone(z){const a=_tqDraft.zones||(_tqDraft.zones=[]);const i=a.indexOf(z);if(i>=0)a.splice(i,1);else a.push(z);_renderTrainQuiz();}
+function _renderTrainQuiz(){
+  const el=document.getElementById('ov-train-quiz');if(!el)return;
+  const lvl={debutant:'Débutant',intermediaire:'Intermédiaire',confirme:'Confirmé'}[S.level]||'non renseigné';
+  const goal={muscle:'Muscle',perte:'Perte de poids',force:'Force',reeq:'Rééquilibrage',endurance:'Endurance'}[S.goal]||'—';
+  const nCond=((S.healthProfile&&S.healthProfile.conditions)||[]).length;
+  const sec=(t)=>'<div style="font-weight:800;font-size:14px;color:var(--t1);margin:16px 0 8px;">'+t+'</div>';
+  const row='display:flex;gap:8px;flex-wrap:wrap;';
+  el.innerHTML='<div class="pglib-sheet">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
+      +'<div style="font-weight:800;font-size:18px;color:var(--t1);flex:1;">🧩 Adapter mes programmes</div>'
+      +'<button onclick="closeTrainQuiz()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--t2);font-size:15px;cursor:pointer;">✕</button></div>'
+    +'<div style="font-size:13px;color:var(--t3);line-height:1.5;margin-bottom:6px;">Quelques questions pour que les programmes collent à ta vie. Tu peux revenir les changer quand tu veux.</div>'
+    +sec('Combien de jours par semaine ?')+'<div style="'+row+'">'+[2,3,4,5,6].map(n=>_tqChip('days',n,n+' j')).join('')+'</div>'
+    +sec('Durée d\'une séance')+'<div style="'+row+'">'+[[30,'30 min'],[45,'45 min'],[60,'1 h'],[90,'1 h 30']].map(([v,l])=>_tqChip('duration',v,l)).join('')+'</div>'
+    +sec('Tu t\'entraînes plutôt…')+'<div style="'+row+'">'+[['matin','🌅 Matin'],['aprem','☀️ Après-midi'],['soir','🌙 Soir']].map(([v,l])=>_tqChip('timeOfDay',v,l)).join('')+'</div>'
+    +sec('Matériel dispo')+'<div style="'+row+'">'+[['full','🏋️ Salle complète'],['basic','Haltères + banc'],['home','🏠 Maison (peu de matériel)']].map(([v,l])=>_tqChip('equipment',v,l)).join('')+'</div>'
+    +sec('Zones sensibles / blessures (optionnel)')+'<div style="font-size:11.5px;color:var(--t3);margin-bottom:8px;">On remplacera les exos à risque par des équivalents. ⚠️ Ce n\'est pas un avis médical — en cas de vraie blessure, vois un pro.</div><div style="'+row+'">'+['genou','epaule','dos','poignet','hanche','coude'].map(_tqZone).join('')+'</div>'
+    +'<div style="margin-top:16px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:11px 13px;font-size:12.5px;color:var(--t2);line-height:1.6;">On réutilise aussi ton profil : <b>niveau</b> '+lvl+' · <b>objectif</b> '+goal+' · <b>travail</b> '+({bureau:'bureau',debout:'debout',actif:'actif',physique:'physique'}[S.workType]||'—')+(nCond?' · <b>santé</b> '+nCond+' point'+(nCond>1?'s':''):'')+'.<br><span style="color:var(--t3);">(modifiables dans ton Profil)</span></div>'
+    +'<button onclick="saveTrainQuiz()" style="width:100%;margin-top:16px;padding:14px;border-radius:13px;border:none;background:var(--red);color:#fff;font-weight:800;font-size:15px;cursor:pointer;">Enregistrer</button>'
+    +'</div>';
+}
+function saveTrainQuiz(){
+  S.trainingProfile=Object.assign({}, _tqDraft);
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  closeTrainQuiz();
+  toast('Profil d\'entraînement enregistré ✅','success');
+  // rafraîchit la biblio si ouverte
+  if(document.getElementById('ov-prog-lib')&&document.getElementById('ov-prog-lib').classList.contains('open'))_renderProgLib();
 }
