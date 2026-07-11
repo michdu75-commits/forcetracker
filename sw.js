@@ -1,8 +1,8 @@
-const CACHE = 'ft-v387'; // Calendrier : jour de record = anneau doré autour de la case (au lieu du 🏆)
+const CACHE = 'ft-v388'; // Score santé + code-barres (Open Food Facts) ouvert à tous ; IA nourriture freemium (25 essais + Premium)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
-  './setup.js', './tracking.js', './coach.js', './app.js',
+  './setup.js', './tracking.js', './coach.js', './app.js', './food-health.js',
   './manifest.json', './logo.png', './female-body.png',
   // Librairie PDF (hébergée en local pour marcher hors-ligne — chargée à la demande)
   './lib/jspdf.umd.min.js', './lib/jspdf.plugin.autotable.min.js',

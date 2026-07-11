@@ -1568,9 +1568,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Repas</div>
     <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
     <div id="af-quick-list"></div>
-    <button class="btn btn-bg2" onclick="scanBarcode()" style="width:100%;margin-bottom:10px;">📷 Scanner un code-barres</button>
-    <input type="file" id="af-bc-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodeFile(this)">
-    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Lire l'étiquette nutritionnelle (IA)</button>
+    <!-- Code-barres + score santé : gratuit pour tout le monde (client-side, 0 token ; affiché par openAddFood) -->
+    <div id="af-barcode-block" style="display:none;">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Code-barres du produit — tape les chiffres écrits sous le code :</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ex : 3017620422003" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1 1 auto;min-width:0;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
+        <button onclick="_manualBarcode()" style="flex:0 0 auto;width:auto;padding:0 20px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:15px;font-family:var(--font);cursor:pointer;">OK</button>
+      </div>
+    </div>
+    <!-- Produit sans code / étiquette : photo IA -->
+    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Ou lire l'étiquette nutritionnelle (IA)</button>
     <input type="file" id="af-label-input" accept="image/*" capture="environment" style="display:none" onchange="onFoodLabelFile(this)">
     <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
       <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
@@ -1580,6 +1587,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <span style="font-size:13px;color:var(--t3);">g</span>
       </div>
     </div>
+    <div id="af-health-card" style="margin-bottom:14px;"></div>
     <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Ce que tu as mangé</div>
     <textarea id="af-desc" placeholder="Ex : 2 œufs, 100g de riz, brocolis, 1 yaourt" rows="2" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);resize:vertical;margin-bottom:10px;"></textarea>
     <button class="btn btn-bg2" id="af-ai-btn" onclick="estimateFoodAI()" style="width:100%;margin-bottom:6px;">🤖 Estimer les calories avec l'IA</button>
@@ -2277,6 +2285,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
 <script src="setup.js"></script>
 <script src="tracking.js"></script>
 <script src="coach.js"></script>
+<script src="food-health.js"></script>
+<script>if(window.FoodHealth)FoodHealth.configure({appName:'ForceTracker',appVersion:'1.0',contactEmail:'forcetracker.app@gmail.com'});</script>
 <script src="app.js"></script>
 </body>
 </html>
