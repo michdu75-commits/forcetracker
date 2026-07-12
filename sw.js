@@ -1,4 +1,4 @@
-const CACHE = 'ft-v399'; // Powerbuilding (force + muscu) : chaque seance = mouvement de force lourd calcule sur le 1RM PUIS volume hypertrophie (Haut/Bas 4 jours)
+const CACHE = 'ft-v400'; // Powerbuilding : J2 allege (fini couche+incline+militaire empiles -> 1 poussee lourde + isolation) + J3 sans Superman redondant (logique d exercices)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
