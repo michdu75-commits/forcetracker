@@ -3160,9 +3160,20 @@ async function exportProgPdf(idx){
     doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);doc.text(sub,M,70);doc.setTextColor(20);
     let y=86;
     const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
+    const presc=!!p.prescribed; // programme de la bibliothèque : poids calculés → on les imprime
     days.forEach(d=>{
       const body=(d.exs||[]).map(e=>{
-        const s=e.sets||[],reps=s.map(x=>x.reps);
+        const s=e.sets||[];
+        if(presc){
+          // groupe les séries consécutives identiques (poids×reps) → colonnes Reps + Poids alignées
+          const runs=[];let cur=null;
+          s.forEach(x=>{const k=x.kg+'x'+x.reps;if(cur&&cur.k===k)cur.n++;else{cur={k,n:1,kg:x.kg,reps:x.reps};runs.push(cur);}});
+          let sc=runs.map(r=>(r.n>1?r.n+'×':'')+r.reps).join(' · ');
+          const pd=runs.map(r=>r.kg>0?r.kg:'libre').join(' · ');
+          if(/gainage|planche/i.test(e.name))sc=sc.replace(/(\d+)/g,'$1 s');
+          return [e.name,sc,pd];
+        }
+        const reps=s.map(x=>x.reps);
         const val=reps.length?(reps.every(r=>r===reps[0])?reps[0]:reps.join('/')):'';
         let sc=s.length?(s.length+' × '+val):'';
         if(sc&&/gainage|planche/i.test(e.name))sc=String(sc).replace(/(\d+)$/,'$1 s');

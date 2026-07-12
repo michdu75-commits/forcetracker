@@ -1,4 +1,4 @@
-const CACHE = 'ft-v396'; // Fix fenetre programme : cases 1RM en 16px (plus d auto-zoom iPhone) + la fenetre ne se ferme plus au tap/scroll/zoom sur le fond
+const CACHE = 'ft-v397'; // Programmes de force etoffes : assistance (tirage/bras/gainage) par seance + noms d exos corriges + PDF affiche les poids calcules
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

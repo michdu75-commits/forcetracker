@@ -36,25 +36,27 @@ const _W531=[
 ];
 function _build531(rm){
   const days=[];
+  // Accessoire léger (poids libre au choix) : n séries × reps
+  const A=(name,n,reps,rest)=>({name,sets:Array.from({length:n},()=>_pgSet(0,reps,{rest:rest||60}))});
+  // Assistance par jour = tirer + bras/épaules + gainage (esprit 5/3/1 : push/pull/core)
   const plan=[
-    {lift:PG_PRESS,rm:rm.press,acc:'Dips Triceps Parallèles'},
-    {lift:PG_DEAD, rm:rm.dead, acc:'Rowing Barre'},
-    {lift:PG_BENCH,rm:rm.bench,acc:'Dips Triceps Parallèles'},
-    {lift:PG_SQUAT,rm:rm.squat,acc:'Extension Quadriceps (Leg Extension)'},
+    {lift:PG_PRESS,rm:rm.press,assist:[A('Tirage Poulie Haute',4,10,90),A('Élévations Latérales Machine',3,15),A('Crunch Machine',3,15)]},
+    {lift:PG_DEAD, rm:rm.dead, assist:[A('Leg Curl Assis Machine',4,10,90),A('Superman',3,12),A('Gainage',3,40)]},
+    {lift:PG_BENCH,rm:rm.bench,assist:[A('Rowing Barre',4,10,90),A('Dips Parallèles',3,12),A('Curl Haltères',3,12)]},
+    {lift:PG_SQUAT,rm:rm.squat,assist:[A('Leg Curl Assis Machine',4,10,90),A('Extension Quadriceps (Leg Extension)',3,15),A('Crunch Machine',3,15)]},
   ];
   _W531.forEach((wk,wi)=>{
+    const deload=(wi===3);
     plan.forEach(L=>{
       const tm=(L.rm||0)*0.9; // Training Max = 90% du 1RM
       const mainSets=wk.sets.map(([p,r,amrap])=>_pgSet(tm*p,r,{
-        rest: wi===3?90:180,
+        rest: deload?90:180,
         note: Math.round(p*100)+'% TM'+(amrap?' · MAX de reps (min '+r+')':'')
       }));
       // BBB : 5×10 @ 50% TM sur le même lift (sauf semaine de décharge)
-      if(wi<3){
-        for(let s=0;s<5;s++)mainSets.push(_pgSet(tm*0.5,10,{rest:90,note:'BBB 50% TM · volume'}));
-      }
-      const exs=[{name:L.lift,note:wi<3?'Force (5/3/1) puis volume (BBB 5×10)':'Décharge — léger',sets:mainSets}];
-      exs.push({name:L.acc,sets:[_pgSet(0,12,{rest:60}),_pgSet(0,12,{rest:60}),_pgSet(0,12,{rest:60})]});
+      if(!deload){for(let s=0;s<5;s++)mainSets.push(_pgSet(tm*0.5,10,{rest:90,note:'BBB 50% TM · volume'}));}
+      const exs=[{name:L.lift,note:deload?'Décharge — léger':'Force (5/3/1) puis volume (BBB 5×10)',sets:mainSets}];
+      if(!deload)L.assist.forEach(a=>exs.push(a)); // pas d'assistance en semaine de décharge
       days.push({label:wk.lbl+' · '+_pgShort(L.lift),exs});
     });
   });
@@ -65,21 +67,24 @@ function _build531(rm){
 function _buildTexas(rm){
   const V=0.80, L=0.62, I=0.90; // % du 1RM : Volume / Léger / Intensité
   const s5=(kg,n,note,rest)=>Array.from({length:n},()=>_pgSet(kg,5,{note:note||'',rest:rest||0}));
+  const acc=(name,n,reps,rest)=>({name,sets:Array.from({length:n},()=>_pgSet(0,reps,{rest:rest||60}))});
   return [
     {label:'Lundi · Volume', exs:[
       {name:PG_SQUAT,note:'5×5 lourd — base de la semaine',sets:s5(rm.squat*V,5,'~80% · même poids les 5 séries',210)},
       {name:PG_BENCH,sets:s5(rm.bench*V,5,'~80%',180)},
       {name:PG_DEAD, sets:s5(rm.dead*V,1,'~80% · 1 série',0)},
+      acc('Tirage Poulie Haute',3,10,90), acc('Gainage',3,40),
     ]},
     {label:'Mercredi · Léger (récup)', exs:[
       {name:PG_SQUAT,note:'Léger — récupération, technique',sets:s5(rm.squat*L,2,'~62% · facile',120)},
       {name:PG_PRESS,sets:s5(rm.press*V,3,'~80%',150)},
-      {name:'Tirage Vertical Poitrine',sets:[_pgSet(0,10,{rest:90}),_pgSet(0,10,{rest:90}),_pgSet(0,10,{rest:90})]},
+      acc('Tirage Poulie Haute',3,10,90), acc('Curl Haltères',3,12),
     ]},
     {label:'Vendredi · Intensité (PR)', exs:[
       {name:PG_SQUAT,note:'1×5 le plus lourd possible (nouveau record de série)',sets:[_pgSet(rm.squat*I,5,{note:'~90% · série record',rest:240})]},
       {name:PG_BENCH,sets:[_pgSet(rm.bench*(I-0.03),5,{note:'~87% · série record',rest:210})]},
       {name:PG_DEAD, sets:[_pgSet(rm.dead*(I-0.03),3,{note:'~87% · 1×3 lourd',rest:0})]},
+      acc('Crunch Machine',3,15,60),
     ]},
   ];
 }
@@ -263,11 +268,11 @@ function addLibProgram(){
 // Remplacements par ZONE SENSIBLE (mécanique, PAS un avis médical — prudence)
 const _PG_ZONE_SWAP={
   genou:  {'Squat à la Barre':'Press Jambes 45°','Extension Quadriceps (Leg Extension)':'Press Jambes 45°'},
-  epaule: {'Développé Militaire':'Développé Épaules Machine','Développé Couché':'Chest Press Machine Horizontale','Dips Triceps Parallèles':'Triceps Machine'},
+  epaule: {'Développé Militaire':'Développé Épaules Machine','Développé Couché':'Chest Press Machine Horizontale','Dips Parallèles':'Triceps Poulie'},
   dos:    {'Soulevé de Terre':'Rack Pull','Squat à la Barre':'Press Jambes 45°','Rowing Barre':'Rowing Machine'},
   poignet:{'Développé Couché':'Chest Press Machine Horizontale','Développé Militaire':'Développé Épaules Machine'},
   hanche: {'Soulevé de Terre':'Rack Pull','Squat à la Barre':'Press Jambes 45°'},
-  coude:  {'Dips Triceps Parallèles':'Triceps Machine'},
+  coude:  {'Dips Parallèles':'Triceps Poulie'},
 };
 // Remplacements ÉQUIPEMENT maison (pas de barre)
 const _PG_EQUIP_HOME={
