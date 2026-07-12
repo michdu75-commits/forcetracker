@@ -1,4 +1,4 @@
-const CACHE = 'ft-v403'; // Milo : se mefier des donnees incompletes (montre pas portee, detection auto coupee) — verifier avant de conclure une tendance
+const CACHE = 'ft-v404'; // Annonce a tous : Milo coache comme un vrai coach (pop-up Quoi de neuf v14 + point rouge Coach + aides)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
