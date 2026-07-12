@@ -3,6 +3,11 @@
 Langues cibles : **FR (défaut) · EN (anglais) · ES (espagnol) · EL (grec) · RU (russe)**
 Branche de travail : `feat/traduction-app`. **Sur le CLONE d'abord** (la prod reste en français tant que ce n'est pas validé).
 
+## 📊 État au 2026-07-12 (nuit)
+- **Dictionnaire `TR` : ~252 chaînes × 4 langues** (EN/ES/EL/RU), toutes testées (Playwright, 0 erreur JS, rendu DOM live vérifié en grec).
+- **`build_clone.py` auto-répare** désormais le câblage i18n du clone (drapeau + `<script>` + ligne Milo multilingue) → un rebuild ne casse plus la traduction.
+- **Prod (racine) intacte, en français** : `translations.js` est dans le repo mais **non chargé** (dormant). Rien n'a changé pour les utilisateurs actuels. Le clone seul est traduisible.
+
 ## ✅ Ce qui est fait (fondation, sur le clone)
 - **Moteur i18n** : `translations.js` (nouveau fichier). Principe : le **code garde ses textes source en français** ; à l'affichage, on **parcourt le DOM** et on remplace les chaînes connues par leur traduction (dictionnaire `TR`). Un `MutationObserver` ré-applique après chaque rendu dynamique. **Aucune réécriture massive du code** → sûr et rapide à étendre.
 - **Sélecteur de langue (drapeaux 🇫🇷🇬🇧🇪🇸🇬🇷🇷🇺)** : bouton drapeau dans la barre du haut (`openLangPicker`), overlay `#ov-lang`. Changer de langue = `setLang(l)` → sauvegarde `ft4_lang` + **recharge la page** (propre, source toujours en FR).
