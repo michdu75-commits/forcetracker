@@ -1,4 +1,4 @@
-const CACHE = 'ft-v390'; // Fix Milo : lit AUSSI le bilan du « Suivi photos » (S.bodySeries) super-testeur, pas seulement l'Etude du corps -> le bilan des 4 photos remonte enfin
+const CACHE = 'ft-v391'; // Rattrapage nouveautes : points rouges + Quoi de neuf (calendrier accueil, score sante, icone perf historique) + Aide detaillee mise a jour
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
