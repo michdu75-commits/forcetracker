@@ -165,6 +165,8 @@ function _renderProgLib(){
       +(S.trainingProfile
         ?'<div onclick="openTrainQuiz()" class="ft-press" style="background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.3);border-radius:12px;padding:10px 12px;margin-bottom:14px;cursor:pointer;"><div style="font-weight:800;font-size:12.5px;color:#34c759;">🎯 Programmes adaptés à toi <span style="float:right;color:var(--blue);font-weight:700;">modifier ›</span></div><div style="font-size:12px;color:var(--t2);margin-top:2px;">'+_escNote(_pgAdaptSummary(S.trainingProfile))+'</div></div>'
         :'<div onclick="openTrainQuiz()" class="ft-press" style="background:rgba(91,168,255,.08);border:1px solid rgba(91,168,255,.3);border-radius:12px;padding:11px 12px;margin-bottom:14px;cursor:pointer;"><div style="font-weight:800;font-size:13px;color:var(--blue);">🧩 Adapte les programmes à ta vie ›</div><div style="font-size:12px;color:var(--t2);margin-top:2px;">5 questions (jours, durée, matériel, zones sensibles) → chaque programme ajusté à toi.</div></div>')
+      // Programme Force Athlétique périodisé (compétition) — carte vedette
+      +'<div class="pglib-card ft-press" onclick="openForceAthle()" style="background:linear-gradient(135deg,rgba(255,45,85,.12),rgba(255,45,85,.04));box-shadow:inset 0 0 0 1.5px rgba(255,45,85,.4);"><div style="display:flex;justify-content:space-between;align-items:start;gap:8px;"><div style="font-weight:800;font-size:16px;color:var(--t1);">🔴 Force Athlétique</div><span style="font-size:10.5px;font-weight:800;color:var(--red);border:1px solid var(--red);border-radius:20px;padding:2px 8px;white-space:nowrap;">Compétition</span></div><div style="font-size:12px;color:var(--t3);margin:3px 0 8px;">Programme périodisé — 3 blocs sur ~12 semaines</div><div style="font-size:13px;color:var(--t2);line-height:1.45;margin-bottom:8px;">Le vrai programme de compét : Accumulation → Force → Peak. Variantes, abdos/lombaires/cardio, rotation Sem A/B. Ce n\'est PAS de la muscu.</div><div style="font-size:11.5px;color:var(--t3);">🗓️ 4 à 5 séances / semaine</div><div style="text-align:right;margin-top:4px;font-size:12px;color:var(--red);font-weight:700;">Voir le programme ›</div></div>'
       +PROG_LIB.map(p=>{
         const badge={'Débutant':'#34D399','Intermédiaire':'var(--gold)','Avancé':'var(--red)'}[p.level]||'var(--t3)';
         return '<div class="pglib-card ft-press" onclick="openProgLibDetail(\''+p.key+'\')">'
@@ -227,11 +229,15 @@ function _pgRecalc(){
       +'<div style="font-weight:800;font-size:12.5px;color:var(--blue);">🧩 Adapter ce programme à toi ›</div>'
       +'<div style="font-size:12px;color:var(--t2);margin-top:2px;">Réponds à 5 questions (jours, durée, matériel, zones sensibles) → exos et volume ajustés à ta vie.</div></div>';
   }
-  box.innerHTML=head+days.map(d=>{
+  box.innerHTML=head+_pgDaysHtml(days);
+}
+// Rendu compact d'une liste de jours (aperçu) — partagé biblio + force athlé
+function _pgDaysHtml(days){
+  return days.map(d=>{
     return '<div class="pglib-day"><div style="font-weight:800;font-size:13px;color:var(--red);margin-bottom:6px;">'+_escNote(d.label)+'</div>'
+      +(d.note?'<div style="font-size:11px;color:var(--t3);font-style:italic;margin:-3px 0 6px;">'+_escNote(d.note)+'</div>':'')
       +d.exs.map(ex=>{
         const sets=ex.sets||[];
-        // regroupe les séries identiques (kg×reps) pour un aperçu compact
         const parts=[];let run=null;
         sets.forEach(s=>{const k=s.kg+'x'+s.reps;if(run&&run.k===k){run.n++;}else{run={k,n:1,kg:s.kg,reps:s.reps,note:s.note};parts.push(run);}});
         const line=parts.map(r=>(r.n>1?r.n+'×':'')+(r.kg>0?r.kg+'kg':'—')+' × '+r.reps).join('  ·  ');
@@ -241,6 +247,7 @@ function _pgRecalc(){
       +'</div>';
   }).join('');
 }
+function _pgRenderDays(days,box){if(box)box.innerHTML=_pgDaysHtml(days);}
 function addLibProgram(){
   const p=_pgFind(_pgSelKey);if(!p)return;
   const rm=_pgReadInputs();
@@ -380,4 +387,141 @@ function saveTrainQuiz(){
   toast('Profil d\'entraînement enregistré ✅','success');
   // rafraîchit la biblio si ouverte
   if(document.getElementById('ov-prog-lib')&&document.getElementById('ov-prog-lib').classList.contains('open'))_renderProgLib();
+}
+
+// ═══ FORCE ATHLÉTIQUE (compétition) — programme périodisé, gate profil ═══════
+// Différent de la muscu : maximiser la force sur Squat/Couché/Soulevé.
+// Niveau 1 (règles, gratuit). Bloc 1 = Accumulation (volume). Rotation Sem A/B.
+// Abdos + lombaires + cardio léger dans chaque séance.
+
+// Profil « rempli correctement » pour débloquer le VRAI programme
+function _forceReady(){
+  const miss=[];
+  const has=n=>{const p=S.prs&&S.prs[n];return !!(p&&p.rm1>0);};
+  if(!S.level)miss.push('ton niveau (Profil)');
+  if(!S.trainingProfile||!S.trainingProfile.days)miss.push('le questionnaire 🧩 (jours/semaine)');
+  else if(S.trainingProfile.days<4)miss.push('au moins 4 jours/semaine (force athlé)');
+  if(!has(PG_SQUAT))miss.push('ton record Squat');
+  if(!has(PG_BENCH))miss.push('ton record Développé couché');
+  if(!has(PG_DEAD))miss.push('ton record Soulevé de terre');
+  return {ready:miss.length===0, missing:miss};
+}
+
+// Bloc 1 — Accumulation (4 ou 5 jours) — charges depuis les 1RM
+function _forceBlock1(rm, prof){
+  const d5=!!(prof&&prof.days>=5);
+  const A=(name,n,reps,rest,note)=>({name,sets:Array.from({length:n},()=>_pgSet(0,reps,{rest:rest||90,note:note||''}))});
+  const W=(lift,kg,n,reps,note,rest)=>({name:lift,sets:Array.from({length:n},()=>_pgSet(kg,reps,{note:note||'',rest:rest||180}))});
+  const cardio=(min)=>({name:'Cardio (vélo / marche / elliptique)',note:'récup active, faible impact',sets:[_pgSet(0,min,{rest:0,note:'~'+min+' min'})]});
+  const s=rm.squat,b=rm.bench,dl=rm.dead,pr=rm.press;
+  const days=[
+    {label:'J1 · Squat',note:'Squat lourd + chaîne antérieure',exs:[
+      W(PG_SQUAT,s*0.75,4,6,'~75% · MOUVEMENT PRINCIPAL',210),
+      {name:PG_SQUAT,note:'Variante — pause 2 s en bas (force dans le trou)',sets:Array.from({length:3},()=>_pgSet(s*0.65,5,{note:'Pause 2 s · ~65%',rest:180}))},
+      A('Press Jambes 45°',3,10,120),
+      A('Leg Curl Assis Machine',3,12,90,'ischios (isolation légère)'),
+      A('Inclinaison Lombaire (Good Morning)',3,10,90,'lombaires — léger'),
+      A('Gainage',3,45,60,'abdos — gainage (secondes)'),
+      cardio(10),
+    ]},
+    {label:'J2 · Couché',note:'Développé couché lourd + poussée',exs:[
+      W(PG_BENCH,b*0.75,4,6,'~75% · MOUVEMENT PRINCIPAL',180),
+      A('Développé Incliné',3,8,150,'haut des pecs / carryover épaules'),
+      A('Rowing Barre',4,8,120,'équilibre dos ↔ pecs'),
+      A('Dips Parallèles',3,10,90,'triceps / verrouillage'),
+      A('Élévations Latérales Machine',3,15,60,'épaules'),
+      A('Relevé de Jambes',3,15,60,'abdos'),
+      cardio(10),
+    ]},
+    {label:'J3 · Soulevé',note:'Soulevé de terre lourd + chaîne postérieure',exs:[
+      W(PG_DEAD,dl*0.75,4,5,'~75% · PRINCIPAL (peu de séries, lourd)',210),
+      A('Soulevé de Terre Roumain Barre',3,6,150,'ischios/fessiers (~65%)'),
+      A('Rowing Barre',4,8,120,'dos épais'),
+      A('Tirage Poulie Haute',3,10,90,'dos large'),
+      A('Superman',3,12,60,'lombaires'),
+      A('Crunch Machine',3,15,60,'abdos'),
+      cardio(15),
+    ]},
+    {label:'J4 · Volume (Sem A — horizontal)',note:'SEMAINE A : accent développé couché',exs:[
+      W(PG_BENCH,b*0.68,4,8,'~68% · volume',150),
+      W(PG_SQUAT,s*0.68,3,6,'~68% · volume',180),
+      A('Développé Incliné',3,10,120),
+      A('Curl Haltères',3,12,60,'biceps'),
+      A('Gainage',3,45,60,'abdos'),
+      A('Superman',3,12,60,'lombaires'),
+      cardio(20),
+    ]},
+    {label:'J4 · Volume (Sem B — vertical)',note:'SEMAINE B : accent militaire (alterne avec Sem A chaque semaine)',exs:[
+      W(PG_PRESS,pr*0.72,4,8,'~72% · volume vertical',150),
+      W(PG_SQUAT,s*0.68,3,6,'~68% · volume',180),
+      A('Élévations Latérales Machine',3,15,60,'épaules'),
+      A('Dips Parallèles',3,10,90,'triceps'),
+      A('Relevé de Buste (Sit-up)',3,15,60,'abdos'),
+      A('Superman',3,12,60,'lombaires'),
+      cardio(20),
+    ]},
+  ];
+  if(d5){
+    days.push({label:'J5 · Vitesse / point faible',note:'Force-vitesse : barre rapide, technique parfaite',exs:[
+      W(PG_SQUAT,s*0.60,6,3,'~60% · EXPLOSIF (vitesse)',120),
+      W(PG_BENCH,b*0.60,6,3,'~60% · EXPLOSIF',120),
+      A('Soulevé de Terre Roumain Barre',3,8,120,'renforcement chaîne postérieure'),
+      A('Gainage',3,45,60,'abdos'),
+      cardio(15),
+    ]});
+  }
+  return days;
+}
+
+// ─── UI Force Athlétique ─────────────────────────────────────────────────────
+function openForceAthle(){
+  _pgView='force';_pgSelKey='force';
+  let el=document.getElementById('ov-prog-lib');
+  if(!el){el=document.createElement('div');el.id='ov-prog-lib';el.className='overlay';el.style.zIndex='400';document.body.appendChild(el);}
+  _renderForceAthle();el.classList.add('open');
+  el.scrollTop=0;
+}
+function _renderForceAthle(){
+  const el=document.getElementById('ov-prog-lib');if(!el)return;
+  const rdy=_forceReady();
+  const pedago='<div class="pglib-block" style="background:rgba(255,45,85,.07);border-color:rgba(255,45,85,.3);"><div style="font-weight:800;font-size:13px;color:var(--red);margin-bottom:5px;">⚠️ La force athlétique, ce n\'est pas de la musculation</div><div style="font-size:12.5px;color:var(--t2);line-height:1.55;">C\'est <b>maximiser ta force</b> sur 3 mouvements (Squat · Couché · Soulevé) : basses répétitions, hautes charges, périodisation, travail de vitesse et affûtage. Plus technique et plus exigeant que se muscler. Un vrai programme de compét.</div></div>';
+  let html='<div class="pglib-sheet">'+_pgHdr('🔴 Force Athlétique','backProgLib()')+pedago;
+  if(!rdy.ready){
+    // Profil incomplet → programme basique + message clair
+    html+='<div class="pglib-block" style="background:rgba(234,179,8,.08);border-color:rgba(234,179,8,.35);">'
+      +'<div style="font-weight:800;font-size:14px;color:var(--gold);margin-bottom:6px;">🔒 Le vrai programme est verrouillé</div>'
+      +'<div style="font-size:13px;color:var(--t2);line-height:1.55;margin-bottom:8px;">Pour te bâtir un programme de force athlétique <b>sérieux</b>, l\'app a besoin de te connaître. Il te manque :</div>'
+      +'<ul style="margin:0 0 4px;padding-left:20px;font-size:13px;color:var(--t1);line-height:1.7;">'+rdy.missing.map(m=>'<li>'+_escNote(m)+'</li>').join('')+'</ul>'
+      +'<div style="font-size:12px;color:var(--t3);line-height:1.5;margin-top:8px;">Sans ces infos, un vrai programme de force n\'aurait aucun sens (les charges se calculent sur tes records).</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px;">'
+      +'<button onclick="openTrainQuiz()" style="width:100%;padding:12px;border-radius:11px;border:1.5px solid rgba(91,168,255,.4);background:rgba(91,168,255,.1);color:var(--blue);font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font);">🧩 Remplir le questionnaire</button>'
+      +'<button onclick="closeProgLib();openProfil&&openProfil()" style="width:100%;padding:12px;border-radius:11px;border:1.5px solid var(--sep);background:var(--bg2);color:var(--t2);font-weight:700;font-size:13px;cursor:pointer;font-family:var(--font);">👤 Compléter mon profil (records, niveau)</button>'
+      +'</div>'
+      +'<div style="font-weight:800;font-size:13px;color:var(--t1);margin:18px 0 6px;">En attendant : un programme basique</div>'
+      +'<div style="font-size:12.5px;color:var(--t3);line-height:1.5;margin-bottom:8px;">Commence par <b>Starting Strength</b> — le programme de base pour construire de la force et apprendre les mouvements. Tu reviendras au vrai programme de force athlé une fois ton profil complet.</div>'
+      +'<button onclick="openProgLibDetail(\'ss\')" style="width:100%;padding:13px;border-radius:12px;border:none;background:var(--red);color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:var(--font);">▶ Voir Starting Strength (programme de base)</button>';
+  }else{
+    // Profil OK → le vrai programme
+    const rm=_pgUser1RM();
+    const days=_pgAdapt(_forceBlock1(rm, S.trainingProfile), S.trainingProfile).days;
+    html+='<div style="font-size:12px;color:var(--t3);margin:2px 0 10px;">Cycle de ~12 semaines · 3 blocs · Bloc 1 ci-dessous (Accumulation)</div>'
+      +'<div class="pglib-block" style="background:rgba(52,199,89,.08);border-color:rgba(52,199,89,.3);"><div style="font-weight:800;font-size:12.5px;color:#34c759;margin-bottom:4px;">🧠 Rendre ce programme VRAIMENT sur-mesure</div><div style="font-size:12px;color:var(--t2);line-height:1.55;">Fais ton <b>analyse morpho</b> + l\'<b>étude du corps (4 photos)</b> → Milo pourra adapter les charges et les exos à TON corps (ex. bras longs → plus de volume couché). Sinon on part sur une base standard solide.</div></div>'
+      +'<div style="font-weight:800;font-size:14px;color:var(--t1);margin:8px 0 4px;">Bloc 1 — Accumulation (volume)</div>'
+      +'<div style="font-size:12px;color:var(--t3);line-height:1.5;margin-bottom:8px;">4 semaines · reps 5-8 · ~65-75%. On construit le muscle et la caisse. +2,5 kg (haut) / +5 kg (bas) chaque semaine. Sem A / Sem B en alternance. Puis Bloc 2 (Force) et Bloc 3 (Peak).</div>'
+      +'<div id="pg-preview"></div>'
+      +'<button onclick="addForceAthle()" style="width:100%;margin-top:16px;padding:14px;border-radius:13px;border:none;background:var(--red);color:#fff;font-weight:800;font-size:15px;cursor:pointer;">➕ Ajouter à mes programmes</button>';
+  }
+  html+='</div>';
+  el.innerHTML=html;
+  if(rdy.ready)_pgRenderDays(_pgAdapt(_forceBlock1(_pgUser1RM(),S.trainingProfile),S.trainingProfile).days,document.getElementById('pg-preview'));
+}
+function addForceAthle(){
+  const rm=_pgUser1RM();
+  const ad=_pgAdapt(_forceBlock1(rm,S.trainingProfile),S.trainingProfile);
+  if(!S.programmes)S.programmes=[];
+  S.programmes.unshift({id:'p_force_b1_'+Date.now(),name:'Force Athlétique — Bloc 1 (Accumulation)',libKey:'force',prescribed:true,baseRM:rm,forceBlock:1,days:ad.days});
+  persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  closeProgLib();if(typeof renderProgModal==='function')renderProgModal();
+  toast('Force Athlétique Bloc 1 ajouté 💪','success');
 }

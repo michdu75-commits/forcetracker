@@ -1,4 +1,4 @@
-const CACHE = 'ft-v397'; // Programmes de force etoffes : assistance (tirage/bras/gainage) par seance + noms d exos corriges + PDF affiche les poids calcules
+const CACHE = 'ft-v398'; // Force Athletique periodise (Bloc 1 Accumulation) : routage compet vs muscu, gate profil incomplet -> programme basique, variantes+abdos+lombaires+cardio+rotation Sem A/B
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
