@@ -1,4 +1,4 @@
-const CACHE = 'ft-v399'; // Superset glisser-deposer AUSSI dans l'editeur de programme (meme geste) + elementsFromPoint robuste (ne casse pas les programmes existants : supersets & annotations preserves)
+const CACHE = 'ft-v400'; // Milo coache comme un vrai coach : methode + raisonnement + modele pro (buildCoachContext) ~2500 tokens
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
