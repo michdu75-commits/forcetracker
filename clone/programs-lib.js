@@ -140,7 +140,7 @@ function openProgLib(){
   _pgView='list';_pgSelKey=null;
   let el=document.getElementById('ov-prog-lib');
   if(!el){el=document.createElement('div');el.id='ov-prog-lib';el.className='overlay';el.style.zIndex='400';
-    el.onclick=e=>{if(e.target===el)closeProgLib();};document.body.appendChild(el);}
+    document.body.appendChild(el);} // pas de fermeture au tap sur le fond (le pinch-zoom/scroll la fermait) → on ferme par la croix ✕
   _renderProgLib();el.classList.add('open');
 }
 function closeProgLib(){const el=document.getElementById('ov-prog-lib');if(el)el.classList.remove('open');}
@@ -177,8 +177,9 @@ function _renderProgLib(){
   } else {
     const p=_pgFind(_pgSelKey);if(!p)return;
     const rm=_pgUser1RM();
-    const inp=(id,lbl,val)=>'<div style="flex:1;min-width:0;"><div style="font-size:11px;color:var(--t3);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+lbl+'</div>'
-      +'<div style="display:flex;align-items:center;gap:3px;"><input id="'+id+'" type="number" inputmode="numeric" value="'+val+'" oninput="_pgRecalc()" style="width:100%;box-sizing:border-box;padding:8px 6px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;text-align:center;font-family:var(--font);"><span style="font-size:11px;color:var(--t3);">kg</span></div></div>';
+    // font-size 16px : empêche le zoom automatique d'iPhone au focus (qui faisait « sauter »/fermer la fenêtre)
+    const inp=(id,lbl,val)=>'<div style="min-width:0;"><div style="font-size:12px;color:var(--t3);margin-bottom:4px;">'+lbl+'</div>'
+      +'<div style="display:flex;align-items:center;gap:4px;"><input id="'+id+'" type="number" inputmode="numeric" value="'+val+'" oninput="_pgRecalc()" style="flex:1;min-width:0;box-sizing:border-box;padding:12px 8px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:16px;text-align:center;font-family:var(--font);"><span style="font-size:12px;color:var(--t3);">kg</span></div></div>';
     el.innerHTML='<div class="pglib-sheet">'
       +_pgHdr(p.name,'backProgLib()')
       +'<div style="font-size:12px;color:var(--t3);margin:-6px 0 10px;">par '+p.author+' · '+p.level+' · '+p.freq+'</div>'
@@ -186,7 +187,7 @@ function _renderProgLib(){
       +'<div class="pglib-block" style="background:rgba(234,179,8,.08);border-color:rgba(234,179,8,.3);"><div style="font-weight:800;font-size:13px;color:var(--gold);margin-bottom:5px;">📐 Comment ça marche</div><div style="font-size:13px;color:var(--t2);line-height:1.55;">'+p.how+'</div></div>'
       +'<div style="font-weight:800;font-size:14px;color:var(--t1);margin:14px 0 4px;">Tes 1RM (records)</div>'
       +'<div style="font-size:11.5px;color:var(--t3);margin-bottom:8px;">Vérifie/ajuste — les charges du programme en découlent. Pré-remplis depuis tes records (ou une estimation).</div>'
-      +'<div style="display:flex;gap:8px;margin-bottom:16px;">'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">'
         +inp('pg-rm-squat','Squat',rm.squat)+inp('pg-rm-bench','Couché',rm.bench)+inp('pg-rm-dead','Soulevé',rm.dead)+inp('pg-rm-press','Militaire',rm.press)
       +'</div>'
       +'<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:8px;">Aperçu du programme</div>'
@@ -329,7 +330,7 @@ function openTrainQuiz(){
   _tqDraft=Object.assign({days:3,duration:60,timeOfDay:'soir',equipment:'full',zones:[],intensity:'standard'}, S.trainingProfile||{});
   let el=document.getElementById('ov-train-quiz');
   if(!el){el=document.createElement('div');el.id='ov-train-quiz';el.className='overlay';el.style.zIndex='410';
-    el.onclick=e=>{if(e.target===el)closeTrainQuiz();};document.body.appendChild(el);}
+    document.body.appendChild(el);} // pas de fermeture au tap sur le fond → croix ✕ uniquement
   _renderTrainQuiz();el.classList.add('open');
 }
 function closeTrainQuiz(){const el=document.getElementById('ov-train-quiz');if(el)el.classList.remove('open');}
