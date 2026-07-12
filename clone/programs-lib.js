@@ -107,8 +107,48 @@ function _buildSS(rm){
   ];
 }
 
+// ─── Powerbuilding (force + muscu) — Haut/Bas, 4 jours ───────────────────────
+// Chaque séance : 1 MOUVEMENT DE FORCE lourd (calculé sur le 1RM) PUIS du
+// volume hypertrophie (musculation). Le pont entre force athlé et muscu.
+function _buildPowerbuilding(rm){
+  const A=(name,n,reps,rest)=>({name,sets:Array.from({length:n},()=>_pgSet(0,reps,{rest:rest||75}))});
+  const F=(lift,rmv,pct,n,reps,rest)=>({name:lift,note:'FORCE — lourd et contrôlé',sets:Array.from({length:n},()=>_pgSet(rmv*pct,reps,{note:Math.round(pct*100)+'% · force',rest:rest||180}))});
+  return [
+    {label:'J1 · Bas — Squat force + jambes',note:'Force puis volume (bas du corps)',exs:[
+      F(PG_SQUAT,rm.squat,0.80,4,5,210),
+      A('Press Jambes 45°',4,10,120), A('Leg Curl Assis Machine',3,12),
+      A('Extension Quadriceps (Leg Extension)',3,15), A('Élévations Mollets Debout',4,15,60),
+      A('Gainage',3,45,60),
+    ]},
+    {label:'J2 · Haut poussée — Couché force + pecs/épaules',note:'Force puis volume (poussée)',exs:[
+      F(PG_BENCH,rm.bench,0.80,4,5,180),
+      A('Développé Incliné',3,10,120), A('Développé Militaire',3,10,120),
+      A('Dips Parallèles',3,12), A('Élévations Latérales Machine',3,15,60), A('Triceps Poulie',3,12,60),
+    ]},
+    {label:'J3 · Bas — Soulevé force + chaîne postérieure',note:'Force puis volume (soulevé)',exs:[
+      F(PG_DEAD,rm.dead,0.82,4,4,210),
+      A('Soulevé de Terre Roumain Barre',3,8,150), A('Fentes',3,12),
+      A('Leg Curl Assis Machine',3,12), A('Superman',3,12,60), A('Relevé de Jambes',3,15,60),
+    ]},
+    {label:'J4 · Haut tirage — Militaire force + dos/bras',note:'Force puis volume (tirage/épaules)',exs:[
+      F(PG_PRESS,rm.press,0.78,4,5,150),
+      A('Rowing Barre',4,8,120), A('Tirage Poulie Haute',4,10),
+      A('Rowing Machine',3,12), A('Curl Barre',4,10,60), A('Crunch Machine',3,15,60),
+    ]},
+  ];
+}
+
 // ─── Catalogue ───────────────────────────────────────────────────────────────
 const PROG_LIB=[
+  {
+    key:'powerbuilding', name:'Powerbuilding', author:'Force + Muscu', level:'Intermédiaire',
+    days:4, freq:'4 séances / semaine (Haut/Bas)', duration:'Progression continue',
+    tag:'Le meilleur des deux mondes : la FORCE des gros mouvements ET le MUSCLE.',
+    lifts:[PG_SQUAT,PG_BENCH,PG_DEAD,PG_PRESS],
+    desc:'Chaque séance commence par un mouvement de FORCE lourd (squat/couché/soulevé/militaire en 4-5 reps, calculé sur ton 1RM), PUIS du volume de musculation (8-15 reps) pour construire le muscle. Idéal si tu veux être fort ET musclé.',
+    how:'Le mouvement de force est calculé depuis ton 1RM (~78-82%). Ajoute du poids quand les séries passent proprement. Le volume hypertrophie (accessoires) : charge « à la sensation », 8-15 reps propres, proche de l\'échec sur les dernières séries.',
+    build:_buildPowerbuilding
+  },
   {
     key:'ss', name:'Starting Strength', author:'Mark Rippetoe', level:'Débutant',
     days:3, freq:'3 séances / semaine (A-B-A puis B-A-B)', duration:'Linéaire (tant que ça progresse)',
