@@ -1,4 +1,4 @@
-const CACHE = 'ft-v395'; // Séance : bouton « Mes programmes const CACHE = 'ft-v394'; // Programmes adaptatifs : le VOLUME est un choix explicite (plus déduit du travail physique) bibliothèque » plus visible (accès aux programmes de force reconnus)
+const CACHE = 'ft-v395'; // Seance : bouton Mes programmes et bibliotheque plus visible (acces aux programmes de force reconnus)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
