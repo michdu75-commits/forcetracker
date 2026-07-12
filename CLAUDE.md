@@ -34,6 +34,17 @@ Michel conçoit l'appli avec l'aide de Claude (design/réflexion/prompts), il ne
 - **Ne jamais supposer** qu'il sait lancer une commande — le guider pas à pas, une étape à la fois.
 - **Une chose à la fois**, testée et validée avant de passer à la suivante.
 
+**11. 📣 À CHAQUE fonctionnalité mise en PROD — prévenir l'utilisateur (checklist OBLIGATOIRE, ne jamais zapper).**
+Une feature n'est PAS finie tant que l'utilisateur n'est pas informé. Avant de considérer une feature comme livrée en prod, faire **les 5** :
+1. **Pop-up « Quoi de neuf »** → ajouter une entrée dans `WHATS_NEW` (constants.js) avec `v = WHATS_NEW_MAX+1`, puis **incrémenter `WHATS_NEW_MAX`**.
+2. **Point rouge « nouveauté »** → ajouter une entrée dans `NEW_FEATURES` (constants.js) : `{id, screen, desc}` (+ `spot`/`anchor` si on vise un élément précis).
+3. **Aide contextuelle « ? »** de l'onglet concerné → mettre à jour `_HELP_DATA` (screens.js) pour l'écran touché.
+4. **Aide détaillée** (Menu → Aide) → ajouter/mettre à jour l'entrée dans `_DRAWER_CONTENT.help` (coach.js).
+5. **Guide de l'application** (Menu → Guide de l'application, diaporama `APP_GUIDE_SLIDES` dans app.js) → ajouter/mettre à jour la diapo. ⚠️ Les **captures d'écran** (`guide/*.jpg`) doivent être **fournies par Michel** — lui demander si besoin.
+- **Guide d'installation** : à mettre à jour SEULEMENT si la feature change la façon d'installer l'app (rare).
+- Ces éléments vivent sur des **branches de test** tant que la feature est sur le `/clone/` → on les remplit **au moment de la promotion en prod** (sinon les points rouges/pop-ups ne servent personne).
+- ⚠️ Ne PAS se laisser emporter par la construction et oublier cette étape (erreur commise en juillet 2026 : calendrier/score santé livrés sans pop-up ni aide).
+
 ---
 
 # Force Tracker — Contexte projet pour Claude

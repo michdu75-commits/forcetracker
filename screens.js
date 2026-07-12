@@ -127,6 +127,7 @@ const _HELP_DATA={
   home:{
     title:'🏠 Accueil',
     tips:[
+      {i:'📅',t:'Le calendrier de ton mois : tes jours de séance sont en rouge, les jours de RECORD cerclés en or 🏆. Les flèches ‹ › changent de mois, et tu peux taper une semaine pour voir le détail jour par jour.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'😴',t:'Le score de récupération vient du check-in post-séance (sommeil + énergie). Remplis-le après chaque séance pour un suivi fiable.'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
@@ -168,7 +169,8 @@ const _HELP_DATA={
       {i:'💊',t:'Suppléments : créatine (phases charge/entretien) et whey dosés selon ton poids. Combinaisons Premium : 4 stacks complets (muscle, force, cardio, perte de poids).'},
       {i:'🔥',t:'Les calories brûlées au cardio (bloc cardio dans ta séance) s\'ajoutent à ton TDEE estimé du jour.'},
       {i:'🍽️',t:'Le plan de repas détaillé (5 repas) est généré depuis tes macros — adapté à ta phase et ton objectif.'},
-      {i:'📓',t:'Onglet Journal : note ce que tu manges dans la journée et compare aux objectifs. 3 façons d\'ajouter un aliment : saisie à la main (gratuit, illimité), 🤖 estimation IA (décris ton repas, l\'IA remplit les calories — 25 gratuites, illimité en Premium), ou 📷 scan d\'un code-barres (produit reconnu via une base mondiale, ajuste la quantité en grammes).'},
+      {i:'📓',t:'Onglet Journal : note ce que tu manges dans la journée et compare aux objectifs. 3 façons d\'ajouter un aliment : saisie à la main (gratuit, illimité), 🤖 estimation IA (décris ton repas, l\'IA remplit les calories — 25 gratuites, illimité en Premium), ou saisie du code-barres (produit reconnu via une base mondiale, ajuste la quantité en grammes).'},
+      {i:'🥗',t:'Score santé : au code-barres d\'un produit, tu vois son Nutri-Score (A à E) et son niveau de transformation (brut ou ultra-transformé). Gratuit pour tout le monde, sans crédit IA. Pratique pour repérer d\'un coup d\'œil ce qui est sain.'},
       {i:'📥',t:'Tu as un plan de ta diététicienne ? Bouton « Importer un plan » (Plan de repas IA) : prends-le en photo ou importe le PDF, l\'IA range les repas.'},
     ],
     female:[
@@ -183,7 +185,7 @@ const _HELP_DATA={
       {i:'💪',t:'Le graphique affiche ton 1RM estimé (Brzycki) par exercice — sans avoir besoin de tester à l\'échec.'},
       {i:'⚖️',t:'Log ton poids régulièrement (idéalement le matin à jeun) pour une courbe fiable. Tap sur une entrée pour la corriger.'},
       {i:'🏅',t:'18 badges en 4 catégories : évolution, performance, streak, spécial. Vérifie l\'onglet Badges pour les débloquer.'},
-      {i:'📋',t:'Tap sur une séance passée dans l\'historique pour voir et modifier les kg/reps de chaque série.'},
+      {i:'📋',t:'Tap sur une séance passée dans l\'historique pour voir et modifier les kg/reps de chaque série. Sur chaque exercice de cette séance, l\'icône 📊 t\'ouvre sa progression (ton poids sur les dernières séances).'},
       {i:'📉',t:'Un plateau sur plusieurs semaines est normal — le progrès n\'est jamais linéaire. Varie les charges et les volumes.'},
       {i:'🧪',t:'Bilan corporel (balance pro) : sous ta courbe de poids, section « Bilan corporel ». Tu passes sur une balance à impédance ? Enregistre tes chiffres (graisse viscérale, muscle, métabolisme, détail par segment…) par 📷 photo, ✏️ à la main ou 📋 code. Le bilan sert aussi de pesée du jour (poids + masse grasse), tu suis l\'évolution, et Milo s\'en sert.'},
     ],

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v391'; // Rattrapage nouveautes : points rouges + Quoi de neuf (calendrier accueil, score sante, icone perf historique) + Aide detaillee mise a jour
+const CACHE = 'ft-v392'; // Aides ? contextuelles mises a jour (Accueil calendrier, Nutrition score sante, Progres icone perf) + regle d or projet (checklist nouveaute)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
