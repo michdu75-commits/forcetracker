@@ -172,6 +172,81 @@ function supersetWithPrev(ei){
   persist();renderExBlocks();
   toast('Superset créé ⚡','success');
 }
+// ─── Superset par GLISSER-DÉPOSER (demande Christophe) ───────────────────────
+// On glisse un exercice (via la poignée ⠿) sur un autre → superset entre les deux.
+// Ne démarre QUE depuis la poignée (touch-action:none) → n'affecte ni le scroll,
+// ni le swipe entre onglets, ni les champs de saisie.
+function _dropSuperset(dragEi, targetEi){
+  if(!S.wkt||!S.wkt.exs||dragEi===targetEi)return;
+  const exs=S.wkt.exs, drag=exs[dragEi], target=exs[targetEi];
+  if(!drag||!target)return;
+  if(drag.dropset||target.dropset){toast('Impossible avec un dropset','info');return;}
+  if(drag.group&&drag.group===target.group){toast('Déjà en superset ensemble','info');return;}
+  // Groupe : réutilise celui de la cible si c'est déjà un superset, sinon en crée un neuf
+  let gid=(target.group&&target.groupType==='super')?target.group:null;
+  if(!gid){gid='ss'+Date.now();target.group=gid;target.groupType='super';}
+  drag.group=gid;drag.groupType='super';
+  // Rendre contigu : retirer le dragué puis le réinsérer après le dernier membre du groupe
+  exs.splice(dragEi,1);
+  let insertAt=exs.indexOf(target)+1;
+  while(insertAt<exs.length&&exs[insertAt].group===gid)insertAt++;
+  exs.splice(insertAt,0,drag);
+  _expandedEx=null;
+  persist();renderExBlocks();
+  if(navigator.vibrate)navigator.vibrate(30);
+  toast('Superset créé ⚡','success');
+}
+let _dragEx=null; // { ei, ghost, overEi }
+function _exDragStart(e,ei){
+  if(_groupMode)return;
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei];
+  if(!ex||ex.dropset)return;
+  e.preventDefault();e.stopPropagation();
+  const pt=e.touches?e.touches[0]:e;
+  const ghost=document.createElement('div');
+  ghost.className='ex-drag-ghost';ghost.textContent=ex.name;
+  document.body.appendChild(ghost);
+  _dragEx={ei,ghost,overEi:null};
+  _exDragMoveTo(pt.clientX,pt.clientY);
+  document.addEventListener('touchmove',_exDragMove,{passive:false});
+  document.addEventListener('touchend',_exDragEnd);
+  document.addEventListener('touchcancel',_exDragEnd);
+  document.addEventListener('mousemove',_exDragMove);
+  document.addEventListener('mouseup',_exDragEnd);
+  if(navigator.vibrate)navigator.vibrate(15);
+}
+function _exDragMoveTo(x,y){
+  if(!_dragEx)return;
+  _dragEx.ghost.style.left=x+'px';_dragEx.ghost.style.top=y+'px';
+  const el=document.elementFromPoint(x,y);
+  const block=el&&el.closest?el.closest('.ex-block'):null;
+  document.querySelectorAll('.ex-block.drag-over').forEach(b=>b.classList.remove('drag-over'));
+  let overEi=null;
+  if(block&&block.id&&block.id.indexOf('ex-block-')===0){
+    const tei=parseInt(block.id.slice(9));
+    if(!isNaN(tei)&&tei!==_dragEx.ei){block.classList.add('drag-over');overEi=tei;}
+  }
+  _dragEx.overEi=overEi;
+}
+function _exDragMove(e){
+  if(!_dragEx)return;
+  e.preventDefault();
+  const pt=e.touches?e.touches[0]:e;
+  _exDragMoveTo(pt.clientX,pt.clientY);
+}
+function _exDragEnd(){
+  if(!_dragEx)return;
+  const over=_dragEx.overEi, dragEi=_dragEx.ei, ghost=_dragEx.ghost;
+  document.removeEventListener('touchmove',_exDragMove);
+  document.removeEventListener('touchend',_exDragEnd);
+  document.removeEventListener('touchcancel',_exDragEnd);
+  document.removeEventListener('mousemove',_exDragMove);
+  document.removeEventListener('mouseup',_exDragEnd);
+  if(ghost&&ghost.parentNode)ghost.parentNode.removeChild(ghost);
+  document.querySelectorAll('.ex-block.drag-over').forEach(b=>b.classList.remove('drag-over'));
+  _dragEx=null;
+  if(over!==null&&over!==dragEi)_dropSuperset(dragEi,over);
+}
 let _addToGroupGid=null;
 // ─── DROPSET / PYRAMIDE ─────────────────────────────────────────────────────
 let _dropCfgEi=null,_dropCfgPaliers=3,_dropCfgPct=20,_dropCfgDir='down';
@@ -436,6 +511,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
       +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
+        +((!ex.group&&!ex.dropset&&exCount>1)?`<span class="ex-grip" title="Glisser sur un autre exercice pour créer un superset" ontouchstart="_exDragStart(event,${ei})" onmousedown="_exDragStart(event,${ei})" onclick="event.stopPropagation()">⠿</span>`:'')
         +((blockCount>1)?`<button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===0?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},-1)" title="Monter">↑</button><button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===blockCount-1?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},1)" title="Descendre">↓</button>`:'')
         +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${_escAttrJs(ex.name)}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div>`
