@@ -148,7 +148,7 @@ function renderChart(){
   const pts=[];
   [...S.sessions].reverse().forEach(s=>{
     const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
-    const best=(ex.sets||[]).filter(s=>s.done!==false&&s.kg&&s.reps).reduce((b,s)=>{const r=bz(s.kg,s.reps);return r>(b?bz(b.kg,b.reps):0)?s:b;},null);
+    const best=(ex.sets||[]).filter(s=>s.done!==false&&s.kg&&s.reps&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>{const r=bz(s.kg,s.reps);return r>(b?bz(b.kg,b.reps):0)?s:b;},null);
     if(best)pts.push({date:s.date,kg:best.kg,reps:best.reps,rm1:bz(best.kg,best.reps)});
   });
   // Charge max RÉELLE soulevée (poids le plus lourd sur la barre) — distinct du 1RM estimé
@@ -156,7 +156,7 @@ function renderChart(){
   S.sessions.forEach(s=>{
     const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
     (ex.sets||[]).forEach(set=>{
-      if(set.done===false||!set.kg||!set.reps)return;
+      if(set.done===false||!set.kg||!set.reps||set.type==='É'||set.type==='W')return;
       if(!maxLoad||set.kg>maxLoad.kg||(set.kg===maxLoad.kg&&set.reps>maxLoad.reps))maxLoad={kg:set.kg,reps:set.reps};
     });
   });

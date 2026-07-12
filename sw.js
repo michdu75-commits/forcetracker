@@ -1,4 +1,4 @@
-const CACHE = 'ft-v393'; // Journal : photographier le code-barres, l IA lit les chiffres (bouton + backend readBarcode) + pop-up/point rouge/aides
+const CACHE = 'ft-v394'; // Fix : l echauffement (type E) ne compte plus dans la force (graphique 1RM + charge max soulevee) - Progres
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
