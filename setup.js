@@ -206,7 +206,7 @@ function renderChart(){
 </div>
 ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13.5px;">
   <span style="color:var(--t2);font-weight:600;white-space:nowrap;">🏋️ Charge max soulevée</span>
-  <span style="white-space:nowrap;"><b style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--t1);">${fmt(maxLoad.kg)} kg</b> <span style="color:var(--t3);">× ${maxLoad.reps}</span> <span style="color:var(--t3);">→</span> <span style="color:var(--t2);font-weight:700;">~${fmt(bz(maxLoad.kg,maxLoad.reps))} kg 1RM</span></span>
+  <span style="white-space:nowrap;"><span style="color:var(--t3);">${maxLoad.reps} reps ×</span> <b style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--t1);">${fmt(maxLoad.kg)} kg</b> <span style="color:var(--t3);">→</span> <span style="color:var(--t2);font-weight:700;">~${fmt(bz(maxLoad.kg,maxLoad.reps))} kg 1RM</span></span>
 </div>`:''}
 <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible;">
   <defs>
@@ -238,7 +238,7 @@ function showChartTooltip(i){
   if(!hint)return;
   hint.textContent=new Date(p.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long'});
   if(rm)rm.textContent=fmt(p.rm1)+' kg 1RM';
-  if(set)set.textContent=p.kg+' kg × '+p.reps+' reps';
+  if(set)set.textContent=p.reps+' reps × '+p.kg+' kg';
   if(vals)vals.style.display='block';
 }
 // ─── SESSION DETAIL / EDIT ───────────────────────────────────
@@ -352,14 +352,14 @@ function _renderSessDetailContent(){
       ${ex.sets.map((s,si)=>!s.done?'':`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
         <span style="font-size:11px;color:var(--t3);min-width:14px">${si+1}</span>
         <span style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
-        <input type="number" step="0.5" min="0" inputmode="decimal" value="${s.kg}"
-               style="width:58px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
-               onchange="updateSessSet(${ei},${si},'kg',+this.value)">
-        <span style="color:var(--t2);font-size:12px">kg ×</span>
         <input type="number" min="1" inputmode="numeric" value="${s.reps}"
                style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'reps',+this.value)">
-        <span style="color:var(--t2);font-size:12px">reps</span>
+        <span style="color:var(--t2);font-size:12px">reps ×</span>
+        <input type="number" step="0.5" min="0" inputmode="decimal" value="${s.kg}"
+               style="width:58px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
+               onchange="updateSessSet(${ei},${si},'kg',+this.value)">
+        <span style="color:var(--t2);font-size:12px">kg</span>
         ${s.kg&&s.reps?`<span style="font-size:12px;color:var(--t1);font-weight:600;margin-left:2px" title="1RM potentiel estimé de cette série">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
         <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
       </div>`).join('')}

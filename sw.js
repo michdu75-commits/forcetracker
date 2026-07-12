@@ -1,4 +1,4 @@
-const CACHE = 'ft-v395'; // Fix decompte repos : le « 10 » (2 chiffres) reduit a 82px pour ne plus deborder sur l anneau (retour Christophe)
+const CACHE = 'ft-v396'; // Affichage series : « reps × poids » partout (seance/precedent, progres, historique) au lieu de « poids × reps » — coherence colonnes Reps/KG (retour Christophe/Michel)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

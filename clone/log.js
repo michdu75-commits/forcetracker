@@ -284,7 +284,7 @@ function _groupStatusMeta(ex,pos,total){
   else if(done>0)status='En cours ('+done+'/'+all+')';
   else status='À suivre';
   const kg=ex.sets[0]?.kg,reps=ex.sets[0]?.reps;
-  return status+(kg&&reps?' · '+kg+'×'+reps:'');
+  return status+(kg&&reps?' · '+reps+'×'+kg:'');
 }
 function addToGroup(gid){
   const members=_ssMembers(gid);if(!members.length)return;
@@ -458,7 +458,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
-      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
+      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
