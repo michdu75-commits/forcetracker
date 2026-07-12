@@ -488,11 +488,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
   </div>
   <div id="wkt-exs" style="display:flex;flex-direction:column;gap:10px;"></div>
   <div style="display:flex;flex-direction:column;gap:8px;">
-    <button class="btn ft-press" style="width:100%;border:1.5px solid var(--red2);background:transparent;color:var(--red);font-weight:700;" onclick="openExPicker()">+ Ajouter un exercice</button>
-    <button class="btn btn-bg2 ft-press" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px;" onclick="openProgModal()">
-      <span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>Mes programmes &amp; bibliothèque</span>
-      <span style="font-size:11px;color:var(--t3);font-weight:400;">Tes programmes, parcours débutant &amp; programmes de force reconnus (5/3/1, Texas…)</span>
-    </button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-bg2 ft-press" style="flex:1;" onclick="openProgModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:5px;margin-bottom:1px;"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>Programme</button>
+      <button class="btn ft-press" style="flex:1;border:1.5px solid var(--red2);background:transparent;color:var(--red);" onclick="openExPicker()">+ Ajouter</button>
+    </div>
     <button class="btn btn-bg2 ft-press" style="width:100%;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px;" onclick="openImportProg()">
       <span style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Scanner ton programme</span>
       <span style="font-size:11px;color:var(--t3);font-weight:400;">Prends en photo ton programme — il s'ajoute automatiquement</span>
@@ -2014,7 +2013,6 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div class="modal-handle"></div>
     <h2>📋 Mes Programmes</h2>
     <button id="prog-beginner-btn" onclick="openBeginnerSetup()" style="display:none;width:100%;padding:12px;margin-bottom:10px;font-size:14px;font-weight:700;font-family:var(--font);border-radius:12px;border:1.5px solid rgba(52,199,89,.45);color:#34c759;background:rgba(52,199,89,.10);cursor:pointer;">🌱 Créer mon parcours débutant</button>
-    <button onclick="openProgLib()" style="width:100%;padding:12px;margin-bottom:10px;font-size:14px;font-weight:700;font-family:var(--font);border-radius:12px;border:1.5px solid rgba(91,168,255,.45);color:var(--blue);background:rgba(91,168,255,.10);cursor:pointer;">📚 Programmes de force reconnus (5/3/1, Texas…)</button>
     <div id="prog-beginner-goal" style="display:none;font-size:12.5px;line-height:1.45;color:var(--t2);background:rgba(52,199,89,.08);border:1px solid rgba(52,199,89,.28);border-radius:10px;padding:10px 12px;margin-bottom:10px;"></div>
     <div id="prog-list-modal" style="margin-bottom:4px;"></div>
     <div id="prog-save-section" style="border-top:1px solid var(--sep);padding-top:14px;margin-top:6px;display:flex;flex-direction:column;gap:8px;">
@@ -2334,7 +2332,6 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
 <script src="setup.js"></script>
 <script src="tracking.js"></script>
 <script src="coach.js"></script>
-<script src="programs-lib.js"></script>
 <script src="food-health.js"></script>
 <script>if(window.FoodHealth)FoodHealth.configure({appName:'ForceTracker',appVersion:'1.0',contactEmail:'forcetracker.app@gmail.com'});</script>
 <script src="app.js"></script>

@@ -271,7 +271,6 @@ function _cloudSync(){
       programmes:S.programmes||[],
       exRestPref:S.exRestPref||{},
       healthProfile:S.healthProfile||null,
-      trainingProfile:S.trainingProfile||null,
       bodyStudy:S.bodyStudy||null,
       bodyStudies:S.bodyStudies||[],   // historique des études corporelles (persistance cloud active — backend déployé via CI 2026-07-11)
       bodyScans:(S.bodyScans||[]).slice(-2000),
@@ -1776,7 +1775,6 @@ function _applyRestoreData(raw){
   try{if(d.morphotype)S.morphotype=d.morphotype;}catch(e){}
   try{if(d.bday)S.bday=d.bday;}catch(e){}
   try{if(d.healthProfile)S.healthProfile=d.healthProfile;}catch(e){console.warn('[FT restore] healthProfile',e);}
-  try{if(d.trainingProfile)S.trainingProfile=d.trainingProfile;}catch(e){console.warn('[FT restore] trainingProfile',e);}
   try{if(d.bodyStudy)S.bodyStudy=d.bodyStudy;}catch(e){console.warn('[FT restore] bodyStudy',e);}
   try{if(Array.isArray(d.bodyStudies)&&d.bodyStudies.length)S.bodyStudies=d.bodyStudies;}catch(e){console.warn('[FT restore] bodyStudies',e);}
   try{if(Array.isArray(d.bodyScans)&&d.bodyScans.length>=(S.bodyScans||[]).length)S.bodyScans=d.bodyScans;}catch(e){console.warn('[FT restore] bodyScans',e);}

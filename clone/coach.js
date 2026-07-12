@@ -632,15 +632,24 @@ ${(()=>{
   return '\n⚠️ PROFIL SANTÉ — adapter les conseils en conséquence:\n- '+parts.join('\n- ');
 })()}
 ${(()=>{
-  const bs=S.bodyStudy;if(!bs)return '';
+  // Bilan visuel du corps : « Étude du corps » (S.bodyStudy) OU « Suivi photos »
+  // super-testeur (S.bodySeries[].report). On prend le plus récent des deux.
+  let bs=S.bodyStudy||null;
+  const ser=(S.bodySeries||[]).filter(s=>s&&s.report).slice(-1)[0];
+  if(ser){const r=Object.assign({date:ser.date},ser.report); if(!bs||!bs.date||(r.date&&r.date>=bs.date))bs=r;}
+  if(!bs)return '';
   const L=[];
   if(bs.stature)L.push('Stature/posture: '+bs.stature);
   if(bs.insertions)L.push('Insertions: '+bs.insertions);
   if(bs.balance)L.push('Équilibre: '+bs.balance);
   if(bs.strengths)L.push('Points forts: '+bs.strengths);
   if(bs.weaknesses)L.push('À travailler: '+bs.weaknesses);
+  if(bs.evolution)L.push('Évolution vs bilan précédent: '+bs.evolution);
+  if(bs.summary)L.push('Résumé: '+bs.summary);
+  if(bs.healthNotes)L.push('Santé prise en compte: '+bs.healthNotes);
   if(!L.length)return '';
-  return '\n📐 ÉTUDE DU CORPS (bilan visuel du '+(bs.date||'?')+') — utilise-la pour cibler les déséquilibres et proposer des exercices correctifs:\n- '+L.join('\n- ');
+  // Consigne ferme : Milo DOIT reconnaître et utiliser le bilan (ne jamais nier l'avoir).
+  return '\n📐 ÉTUDE DU CORPS DE L\'UTILISATEUR — tu AS ce bilan (résumé texte de ses photos, réalisé le '+(bs.date||'?')+'). Tu DOIS t\'en servir pour cibler ses déséquilibres et proposer des exercices correctifs. NE DIS JAMAIS que tu n\'as pas accès à son bilan ni à ses photos : tu en as le résumé complet ci-dessous.\n- '+L.join('\n- ');
 })()}
 ${_coachQuizContext()}
 RECORDS PERSONNELS (1RM estimés):
