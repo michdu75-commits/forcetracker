@@ -1657,16 +1657,25 @@ function handleTesterIdea_(body) {
     });
     if (arr.length > 300) arr = arr.slice(-300); // garde les 300 dernières
     ps.setProperty('TESTER_IDEAS', JSON.stringify(arr));
-    // Envoi mail (robuste : ne dépend d'aucune propriété qui pourrait ne pas persister)
+    // Envoi mail avec les PHOTOS EN PIÈCES JOINTES (texte + photos ENSEMBLE — fix Christophe #13).
+    // Les photos ne sont PAS stockées dans la propriété (trop lourdes) : elles vivent dans le mail.
     try {
+      var atts = [];
+      var imgs = body.images || [];
+      for (var i = 0; i < imgs.length; i++) {
+        if (imgs[i] && imgs[i].data) {
+          try { atts.push(Utilities.newBlob(Utilities.base64Decode(imgs[i].data), imgs[i].type || 'image/jpeg', 'idee-' + (i + 1) + '.jpg')); } catch (eB) {}
+        }
+      }
       GmailApp.sendEmail('forcetracker.app@gmail.com',
         '💡 Force Tracker — nouvelle idée' + (body.name ? ' de ' + body.name : ''),
         'Nouvelle idée dans la boîte à idées :\n\n'
         + 'Date : ' + (body.date || new Date().toISOString()) + '\n'
         + 'De   : ' + (body.name || '?') + ' <' + (body.email || '?') + '>\n'
-        + 'Photos jointes par le testeur : ' + (body.photos || 0) + '\n\n'
+        + 'Photos jointes : ' + atts.length + '\n\n'
         + '--- Idée ---\n' + (body.text || '(vide)') + '\n------------\n\n'
-        + '— Force Tracker (boîte à idées automatique)');
+        + '— Force Tracker (boîte à idées automatique)',
+        atts.length ? { attachments: atts } : {});
     } catch (eMail) {}
     return json_({status:'ok'});
   } catch(err) {

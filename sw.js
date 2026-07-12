@@ -1,4 +1,4 @@
-const CACHE = 'ft-v396'; // Affichage series : « reps × poids » partout (seance/precedent, progres, historique) au lieu de « poids × reps » — coherence colonnes Reps/KG (retour Christophe/Michel)
+const CACHE = 'ft-v397'; // Boite a idees : texte + photos envoyes ENSEMBLE au serveur -> mail a Michel avec photos en pieces jointes (fix Christophe #13, idee Michel : comme l import)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

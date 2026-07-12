@@ -2341,32 +2341,41 @@ function _renderTesterIdeaThumbs(){
     const url=URL.createObjectURL(f);
     return '<div style="position:relative;width:58px;height:58px;border-radius:9px;overflow:hidden;border:1px solid var(--sep);"><img src="'+url+'" style="width:100%;height:100%;object-fit:cover;"><button onclick="removeTesterIdeaPhoto('+i+')" style="position:absolute;top:1px;right:1px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:none;font-size:12px;line-height:1;cursor:pointer;padding:0;">×</button></div>';
   }).join('');
-  const shareBtn=_testerIdeaFiles.length
-    ? '<button class="btn btn-bg2" onclick="shareTesterPhotos()" style="width:100%;padding:10px;font-size:13px;margin-top:2px;">📤 Envoyer les '+_testerIdeaFiles.length+' photo'+(_testerIdeaFiles.length>1?'s':'')+' à Michel</button>'
-    : '';
-  el.innerHTML=thumbs+shareBtn;
+  // Plus de bouton de partage séparé : les photos partent AVEC l'idée (bouton « Envoyer »).
+  el.innerHTML=thumbs;
 }
 function removeTesterIdeaPhoto(i){_testerIdeaFiles.splice(i,1);_renderTesterIdeaThumbs();}
-function sendTesterIdea(){
+async function sendTesterIdea(){
   const inp=document.getElementById('tester-idea-input');
   const txt=inp?(inp.value||'').trim():'';
   if(!txt&&!_testerIdeaFiles.length){toast('Écris ton idée ou joins une photo 🙂','info');return;}
   const who=(S.name||'Testeur');
-  const subject='💡 Idée Force Tracker — '+who;
-  const bodyM='Idée de '+who+' ('+(S.email||'')+') :\n\n'+(txt||'(voir les photos jointes)')+'\n\n— boîte à idées Force Tracker';
+  const nPhotos=_testerIdeaFiles.length;
+  toast(nPhotos?'Envoi de ton idée + photos…':'Envoi de ton idée…','info');
+  // Photos → base64 (comme l'import de programme) pour partir AVEC le texte, en 1 seul envoi
+  let images=[];
+  try{ images=await Promise.all(_testerIdeaFiles.map(f=>_resizeToB64(f,1100,0.82).then(data=>({data,type:'image/jpeg'})))); }
+  catch(e){ images=[]; }
+  // Trace locale
   S.testerIdeas=S.testerIdeas||[];
-  S.testerIdeas.push({text:txt||'(photos jointes)',date:new Date().toLocaleDateString('fr-FR'),photos:_testerIdeaFiles.length,sent:true});
+  S.testerIdeas.push({text:txt||'(photos jointes)',date:new Date().toLocaleDateString('fr-FR'),photos:nPhotos,sent:true});
   persist();
-  // Envoi aussi au backend (texte + infos, pas les photos) → Michel/Claude peuvent lire les idées directement
+  // Envoi serveur : texte + photos → mail à Michel AVEC les photos en pièces jointes (fix #13)
+  let ok=false;
   try{
-    fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'testerIdea',email:S.email||'',name:who,text:txt||'(photos jointes)',photos:_testerIdeaFiles.length,date:new Date().toISOString()})}).catch(()=>{});
-  }catch(e){}
-  // Email DIRECT à Michel (adressé à lui) — fiable, plus de feuille de partage qui partait sur WhatsApp.
-  _testerIdeaMailto(subject,bodyM,_testerIdeaFiles.length);
-  const hadPhotos=_testerIdeaFiles.length;
-  if(inp)inp.value=''; _renderTesterSpace(); // on GARDE les photos → bouton « Envoyer les photos » dispo
-  toast(hadPhotos?('Idée envoyée ✅ — appuie sur « Envoyer les photos » pour les joindre'):('Idée envoyée à Michel ✅'),'success');
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'testerIdea',email:S.email||'',name:who,text:txt||'(photos jointes)',photos:images.length,images,date:new Date().toISOString()})});
+    const d=await r.json(); ok=!!(d&&d.status==='ok');
+  }catch(e){ ok=false; }
+  _testerIdeaFiles=[];
+  if(inp)inp.value=''; _renderTesterSpace();
+  if(ok){
+    toast(nPhotos?('Idée + '+nPhotos+' photo'+(nPhotos>1?'s':'')+' envoyées à Michel ✅'):'Idée envoyée à Michel ✅','success');
+  }else{
+    // Repli : mail texte si le serveur est injoignable (au moins l'idée part)
+    _testerIdeaMailto('💡 Idée Force Tracker — '+who,'Idée de '+who+' ('+(S.email||'')+') :\n\n'+(txt||'(voir photos)')+'\n\n— boîte à idées Force Tracker',nPhotos);
+    toast('Serveur injoignable — idée envoyée par mail (texte)','info');
+  }
 }
 // Partage optionnel des photos/captures (bouton séparé) — l'utilisateur choisit Mail/Messages.
 function shareTesterPhotos(){
