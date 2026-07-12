@@ -653,3 +653,16 @@ Quand on traduira l'app dans d'autres langues, penser au **Coach IA (Milo)** :
 - La consigne « **langue soignée** » (aujourd'hui « français soigné » : traduire les anglicismes, « de zéro » pas « from scratch »…) doit valoir **dans chaque langue** (pas d'anglais parasite quel que soit l'idiome).
 - Toutes les sections du contexte Milo (méthode, raisonnement, modèle) sont en français → à traduire ou à laisser en français avec instruction « réponds en {langue} » (Claude traduit très bien à la volée, mais mieux vaut au moins traduire l'intro + la langue de réponse).
 - Reste de l'app : `WHATS_NEW`, `NEW_FEATURES`, `_HELP_DATA`, `_DRAWER_CONTENT`, textes UI (index.html) — gros chantier i18n (clés de traduction).
+
+## 😴 IMPORT DONNÉES SOMMEIL/SANTÉ (Garmin & wearables) — idée notée 2026-07-12
+Michel a un export **Garmin** (CSV : date, score, qualité, durée, heure coucher/lever par semaine). Idée : **importer** ces données dans l'app (comme les bilans de balance via `handleImportBodyScan_`) → alimente le `sleepLog` + donne à Milo une vraie vision de la récup.
+- Format Garmin CSV connu (colonnes ci-dessus). Montre surtout l'IRRÉGULARITÉ (coucher de 22h à 4h43) et des durées 5h30-8h30.
+- Contexte Michel (à retenir pour le coaching) : **travail de nuit + astreintes + 2e job** → sommeil forcément irrégulier, PAS un manque de volonté. Milo doit composer avec (principe « adapter à la vie réelle » ajouté à buildCoachContext le 2026-07-12).
+- Piste : import CSV (SheetJS déjà présent) ou photo du récap Garmin (vision IA). À voir au retour de Michel.
+
+## 🎓 PROCHAINES « LEÇONS » POUR MILO (roadmap, notée 2026-07-12)
+Milo a déjà : méthode + raisonnement + modèle pro + adaptation vie/travail. À enrichir (par ordre d'intérêt discuté avec Michel) :
+1. **Nutrition « facile »** (LE gros pain point — « la nutrition c'est pénible pour tout le monde ») : cerveau nutrition + rendre ça SIMPLE/indolore, pas obsessionnel.
+2. **Récup/sommeil** : exploiter le sommeil (régularité, dette) + import Garmin.
+3. **Prépa compétition** (Michel prépare « les Jeux ») : périodisation bloc, affûtage/tapering, gestion semaine de compét.
+4. Technique par exercice (cues détaillés gros mouvements), lecture des courbes de l'app pour décider.
