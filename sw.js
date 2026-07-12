@@ -1,4 +1,4 @@
-const CACHE = 'ft-v398'; // Force Athletique periodise (Bloc 1 Accumulation) : routage compet vs muscu, gate profil incomplet -> programme basique, variantes+abdos+lombaires+cardio+rotation Sem A/B
+const CACHE = 'ft-v399'; // Powerbuilding (force + muscu) : chaque seance = mouvement de force lourd calcule sur le 1RM PUIS volume hypertrophie (Haut/Bas 4 jours)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
