@@ -1,4 +1,4 @@
-const CACHE = 'ft-v389'; // Fix Milo : consigne ferme pour qu'il utilise TOUJOURS l'etude du corps (ne nie plus avoir le bilan) + inclut resume/sante du bilan
+const CACHE = 'ft-v390'; // Fix Milo : lit AUSSI le bilan du « Suivi photos » (S.bodySeries) super-testeur, pas seulement l'Etude du corps -> le bilan des 4 photos remonte enfin
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
