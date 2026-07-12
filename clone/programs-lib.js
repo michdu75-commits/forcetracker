@@ -120,15 +120,15 @@ function _buildPowerbuilding(rm){
       A('Extension Quadriceps (Leg Extension)',3,15), A('Élévations Mollets Debout',4,15,60),
       A('Gainage',3,45,60),
     ]},
-    {label:'J2 · Haut poussée — Couché force + pecs/épaules',note:'Force puis volume (poussée)',exs:[
+    {label:'J2 · Haut poussée — Couché force + pecs/épaules',note:'1 seule poussée lourde (couché) puis isolation — pas 3 développés',exs:[
       F(PG_BENCH,rm.bench,0.80,4,5,180),
-      A('Développé Incliné',3,10,120), A('Développé Militaire',3,10,120),
-      A('Dips Parallèles',3,12), A('Élévations Latérales Machine',3,15,60), A('Triceps Poulie',3,12,60),
+      A('Développé Incliné',3,10,120), A('Pec Deck',3,12),
+      A('Élévations Latérales Machine',3,15,60), A('Triceps Poulie',3,12,60),
     ]},
-    {label:'J3 · Bas — Soulevé force + chaîne postérieure',note:'Force puis volume (soulevé)',exs:[
+    {label:'J3 · Bas — Soulevé force + chaîne postérieure',note:'Le soulevé + roumain couvrent déjà les lombaires (pas de Superman en plus)',exs:[
       F(PG_DEAD,rm.dead,0.82,4,4,210),
       A('Soulevé de Terre Roumain Barre',3,8,150), A('Fentes',3,12),
-      A('Leg Curl Assis Machine',3,12), A('Superman',3,12,60), A('Relevé de Jambes',3,15,60),
+      A('Leg Curl Assis Machine',3,12), A('Relevé de Jambes',3,15,60),
     ]},
     {label:'J4 · Haut tirage — Militaire force + dos/bras',note:'Force puis volume (tirage/épaules)',exs:[
       F(PG_PRESS,rm.press,0.78,4,5,150),
