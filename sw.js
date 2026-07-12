@@ -1,4 +1,4 @@
-const CACHE = 'ft-v397'; // Boite a idees : texte + photos envoyes ENSEMBLE au serveur -> mail a Michel avec photos en pieces jointes (fix Christophe #13, idee Michel : comme l import)
+const CACHE = 'ft-v398'; // Superset par GLISSER-DEPOSER en seance (poignee 6 points -> glisse sur un autre exo) — demande Christophe. + checklist (pop-up v13, red dot, aides)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

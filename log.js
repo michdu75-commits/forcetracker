@@ -172,6 +172,85 @@ function supersetWithPrev(ei){
   persist();renderExBlocks();
   toast('Superset créé ⚡','success');
 }
+// ─── Superset par GLISSER-DÉPOSER (demande Christophe) ───────────────────────
+// On glisse un exercice (via la poignée ⠿) sur un autre → superset entre les deux.
+// Ne démarre QUE depuis la poignée (touch-action:none) → n'affecte ni le scroll,
+// ni le swipe entre onglets, ni les champs de saisie.
+function _dropSuperset(dragEi, targetEi){
+  if(!S.wkt||!S.wkt.exs||dragEi===targetEi)return;
+  const exs=S.wkt.exs, drag=exs[dragEi], target=exs[targetEi];
+  if(!drag||!target)return;
+  if(drag.dropset||target.dropset){toast('Impossible avec un dropset','info');return;}
+  if(drag.group&&drag.group===target.group){toast('Déjà en superset ensemble','info');return;}
+  // Groupe : réutilise celui de la cible si c'est déjà un superset, sinon en crée un neuf
+  let gid=(target.group&&target.groupType==='super')?target.group:null;
+  if(!gid){gid='ss'+Date.now();target.group=gid;target.groupType='super';}
+  drag.group=gid;drag.groupType='super';
+  // Rendre contigu : retirer le dragué puis le réinsérer après le dernier membre du groupe
+  exs.splice(dragEi,1);
+  let insertAt=exs.indexOf(target)+1;
+  while(insertAt<exs.length&&exs[insertAt].group===gid)insertAt++;
+  exs.splice(insertAt,0,drag);
+  _expandedEx=null;
+  persist();renderExBlocks();
+  if(navigator.vibrate)navigator.vibrate(30);
+  toast('Superset créé ⚡','success');
+}
+// Poignée de glissement (icône SVG 6 points — visible partout, contrairement au braille)
+function _gripHtml(ei){
+  return `<span class="ex-grip" title="Glisser sur un autre exercice pour créer un superset" ontouchstart="_exDragStart(event,${ei})" onmousedown="_exDragStart(event,${ei})" onclick="event.stopPropagation()"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display:block;pointer-events:none;"><circle cx="5.5" cy="3.5" r="1.5"/><circle cx="10.5" cy="3.5" r="1.5"/><circle cx="5.5" cy="8" r="1.5"/><circle cx="10.5" cy="8" r="1.5"/><circle cx="5.5" cy="12.5" r="1.5"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></span>`;
+}
+let _dragEx=null; // { ei, ghost, overEi }
+function _exDragStart(e,ei){
+  if(_groupMode)return;
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei];
+  if(!ex||ex.dropset)return;
+  e.preventDefault();e.stopPropagation();
+  const pt=e.touches?e.touches[0]:e;
+  const ghost=document.createElement('div');
+  ghost.className='ex-drag-ghost';ghost.textContent=ex.name;
+  document.body.appendChild(ghost);
+  _dragEx={ei,ghost,overEi:null};
+  _exDragMoveTo(pt.clientX,pt.clientY);
+  document.addEventListener('touchmove',_exDragMove,{passive:false});
+  document.addEventListener('touchend',_exDragEnd);
+  document.addEventListener('touchcancel',_exDragEnd);
+  document.addEventListener('mousemove',_exDragMove);
+  document.addEventListener('mouseup',_exDragEnd);
+  if(navigator.vibrate)navigator.vibrate(15);
+}
+function _exDragMoveTo(x,y){
+  if(!_dragEx)return;
+  _dragEx.ghost.style.left=x+'px';_dragEx.ghost.style.top=y+'px';
+  const el=document.elementFromPoint(x,y);
+  const block=el&&el.closest?el.closest('.ex-block'):null;
+  document.querySelectorAll('.ex-block.drag-over').forEach(b=>b.classList.remove('drag-over'));
+  let overEi=null;
+  if(block&&block.id&&block.id.indexOf('ex-block-')===0){
+    const tei=parseInt(block.id.slice(9));
+    if(!isNaN(tei)&&tei!==_dragEx.ei){block.classList.add('drag-over');overEi=tei;}
+  }
+  _dragEx.overEi=overEi;
+}
+function _exDragMove(e){
+  if(!_dragEx)return;
+  e.preventDefault();
+  const pt=e.touches?e.touches[0]:e;
+  _exDragMoveTo(pt.clientX,pt.clientY);
+}
+function _exDragEnd(){
+  if(!_dragEx)return;
+  const over=_dragEx.overEi, dragEi=_dragEx.ei, ghost=_dragEx.ghost;
+  document.removeEventListener('touchmove',_exDragMove);
+  document.removeEventListener('touchend',_exDragEnd);
+  document.removeEventListener('touchcancel',_exDragEnd);
+  document.removeEventListener('mousemove',_exDragMove);
+  document.removeEventListener('mouseup',_exDragEnd);
+  if(ghost&&ghost.parentNode)ghost.parentNode.removeChild(ghost);
+  document.querySelectorAll('.ex-block.drag-over').forEach(b=>b.classList.remove('drag-over'));
+  _dragEx=null;
+  if(over!==null&&over!==dragEi)_dropSuperset(dragEi,over);
+}
 let _addToGroupGid=null;
 // ─── DROPSET / PYRAMIDE ─────────────────────────────────────────────────────
 let _dropCfgEi=null,_dropCfgPaliers=3,_dropCfgPct=20,_dropCfgDir='down';
@@ -436,6 +515,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
       +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
+        +((!ex.group&&!ex.dropset&&exCount>1)?_gripHtml(ei):'')
         +((blockCount>1)?`<button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===0?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},-1)" title="Monter">↑</button><button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===blockCount-1?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},1)" title="Descendre">↓</button>`:'')
         +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${_escAttrJs(ex.name)}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div>`
@@ -529,7 +609,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     +``
     +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${ex.dropset?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
     +`</div>`
-    +`<div style="pointer-events:auto;flex-shrink:0;" onclick="event.stopPropagation()">`
+    +`<div style="pointer-events:auto;flex-shrink:0;display:flex;align-items:center;gap:4px;" onclick="event.stopPropagation()">`
+    +((!inGroup&&!ex.dropset&&exCount>1)?_gripHtml(ei):'')
     +`<button onclick="openExMenu(${ei},${hasLocalGif})" style="width:34px;height:34px;border-radius:10px;background:var(--bg3);border:1px solid var(--sep);font-size:18px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;letter-spacing:2px;line-height:1;">⋯</button>`
     +`</div></div>`
     +`<div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>`

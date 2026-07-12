@@ -145,6 +145,7 @@ const NEW_FEATURES=[
   {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
   {id:'wkt-pause',   screen:'log',      desc:'Mettre la séance en pause (le chrono se fige)'},
+  {id:'superset-drag', screen:'log',    desc:'Nouveau : glisse un exercice (via la poignée 6 points) sur un autre pour créer un superset en un geste'},
   {id:'wkt-vider',   screen:'log',      desc:'Vider la séance si mauvais programme chargé'},
   {id:'custom-ex-photo',screen:'log',   desc:'Ajouter une photo à un exercice que tu crées (📷)'},
   {id:'custom-ex-edit', screen:'log',   desc:'Modifier un exercice perso (nom, groupe, muscles) après création (✏️)'},
@@ -190,6 +191,7 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 const WHATS_NEW=[
+  {v:13, ic:'✋', t:'Superset par glisser-déposer', d:'En séance, attrape la petite poignée (6 points) sur un exercice et glisse-le sur un autre → le superset (enchaînement sans repos) se crée tout seul. Plus rapide que de passer par le menu. Marche sur les exercices pas encore groupés.'},
   {v:12, ic:'📷', t:'Photographie le code-barres', d:'Dans le Journal alimentaire, plus besoin de taper les chiffres : appuie sur « 📷 Photographier le code-barres », prends-le en photo, et l\'IA lit le numéro pour toi → le produit et son score santé s\'affichent tout seuls. Pratique quand les chiffres sont petits ou abîmés.'},
   {v:11, ic:'🥗', t:'Score santé des produits', d:'Dans le Journal alimentaire, tape le code-barres d\'un produit → tu vois son SCORE SANTÉ : Nutri-Score (A à E) et niveau de transformation. Pour manger plus clair, sans te prendre la tête. Gratuit pour tout le monde.'},
   {v:10, ic:'📅', t:'Calendrier sur ton Accueil', d:'Un calendrier de ton mois directement sur la page d\'accueil : tes jours de séance ressortent en rouge, et les jours où tu as BATTU UN RECORD sont cerclés en or 🏆. Navigue sur les mois précédents, et tape une semaine pour voir le détail jour par jour.'},
@@ -203,7 +205,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=12;     // = plus grand `v` ci-dessus
+const WHATS_NEW_MAX=13;     // = plus grand `v` ci-dessus
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
