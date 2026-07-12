@@ -643,3 +643,6 @@ Michel a choisi d'**attendre** (le faire proprement avec la vraie DB, pas bricol
 - 🔒 **Vrais comptes / mots de passe** (design ci-dessus, avec la DB).
 - 🗄️ **Vraie base de données + hébergement** (va avec les comptes + le vrai cloud-photos).
 - 📄 **Page de confidentialité RGPD**.
+
+## 🐛 BUG À INVESTIGUER (signalé 2026-07-12, à voir plus tard)
+**Annotations sur un programme → « ça fout le bordel ».** Un utilisateur a mis des annotations/notes sur son programme et ça casse quelque chose (affichage ? chargement en séance ? sauvegarde ?). Détails à préciser avec Michel. Pistes : notes de jour (`day.note`) / notes d'exercice (`ex.note`) dans un programme importé ou édité, peut-être un souci d'échappement HTML, de rendu, ou de conflit avec le parsing d'import. À reproduire + corriger.
