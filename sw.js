@@ -1,4 +1,4 @@
-const CACHE = 'ft-v395'; // Seance : bouton Mes programmes et bibliotheque plus visible (acces aux programmes de force reconnus)
+const CACHE = 'ft-v396'; // Fix fenetre programme : cases 1RM en 16px (plus d auto-zoom iPhone) + la fenetre ne se ferme plus au tap/scroll/zoom sur le fond
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
