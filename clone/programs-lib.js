@@ -107,13 +107,29 @@ function _buildSS(rm){
   ];
 }
 
-// ─── Powerbuilding (force + muscu) — Haut/Bas, 4 jours ───────────────────────
+// ─── Powerbuilding (force + muscu) — Haut/Bas ────────────────────────────────
 // Chaque séance : 1 MOUVEMENT DE FORCE lourd (calculé sur le 1RM) PUIS du
 // volume hypertrophie (musculation). Le pont entre force athlé et muscu.
+// RÉÉQUILIBRAGE du point faible : intégré DÈS 4 jours (plus de volume sur le
+// retard, on retire du point fort) + journée spécialisation en plus si 5 jours.
+const _PB_WEAK={
+  epaules:{lbl:'épaules', dayIdx:1, add:[['Élévations Frontales',3,15],['Face Pull Couché Poulie',3,15]], trim:'Pec Deck',
+    spec:[['Développé Militaire',4,10],['Élévations Latérales Machine',4,15],['Élévations Frontales',3,15],['Face Pull Couché Poulie',3,15]]},
+  pecs:{lbl:'pecs', dayIdx:1, add:[['Développé Couché Haltères',3,10],['Pec Deck',3,15]], trim:null,
+    spec:[['Développé Incliné',4,10],['Développé Couché Haltères',3,12],['Pec Deck',4,15]]},
+  dos:{lbl:'dos', dayIdx:3, add:[['Rowing Machine',3,12],['Tirage Poulie Haute Prise Serrée',3,12]], trim:null,
+    spec:[['Rowing Barre',4,8],['Tirage Poulie Haute',4,10],['Rowing Machine',3,12],['Superman',3,15]]},
+  bras:{lbl:'bras', dayIdx:3, add:[['Curl Incliné',3,12],['Triceps Corde Poulie',3,12]], trim:null,
+    spec:[['Curl Barre',4,10],['Curl Incliné',3,12],['Triceps Poulie',4,12],['Triceps Corde Poulie',3,12]]},
+  jambes:{lbl:'jambes', dayIdx:0, add:[['Fentes',3,12],['Élévations Mollets Debout',3,15]], trim:null,
+    spec:[['Press Jambes 45°',4,12],['Fentes',3,12],['Leg Curl Assis Machine',4,12],['Extension Quadriceps (Leg Extension)',3,15]]},
+};
 function _buildPowerbuilding(rm){
+  const prof=S.trainingProfile||{};
   const A=(name,n,reps,rest)=>({name,sets:Array.from({length:n},()=>_pgSet(0,reps,{rest:rest||75}))});
+  const An=(name,n,reps,note)=>({name,sets:Array.from({length:n},()=>_pgSet(0,reps,{rest:75,note:note||''}))});
   const F=(lift,rmv,pct,n,reps,rest)=>({name:lift,note:'FORCE — lourd et contrôlé',sets:Array.from({length:n},()=>_pgSet(rmv*pct,reps,{note:Math.round(pct*100)+'% · force',rest:rest||180}))});
-  return [
+  const days=[
     {label:'J1 · Bas — Squat force + jambes',note:'Force puis volume (bas du corps)',exs:[
       F(PG_SQUAT,rm.squat,0.80,4,5,210),
       A('Press Jambes 45°',4,10,120), A('Leg Curl Assis Machine',3,12),
@@ -136,6 +152,21 @@ function _buildPowerbuilding(rm){
       A('Rowing Machine',3,12), A('Curl Barre',4,10,60), A('Crunch Machine',3,15,60),
     ]},
   ];
+  // Rééquilibrage du point faible — INTÉGRÉ même à 4 jours
+  const wp=_PB_WEAK[prof.weakPoint];
+  if(wp){
+    const day=days[wp.dayIdx];
+    if(wp.trim){const i=day.exs.findIndex(e=>e.name===wp.trim);if(i>=0)day.exs.splice(i,1);} // on allège le point FORT
+    wp.add.forEach(([n,ns,r])=>day.exs.push(An(n,ns,r,'🎯 rattrapage '+wp.lbl)));
+    day.note='🎯 Rééquilibrage — on renforce : '+wp.lbl+' (point fort allégé)';
+  }
+  // 5e jour = spécialisation (bonus) — point faible si défini, sinon bras/épaules
+  if(prof.days>=5){
+    const spec=wp?wp.spec:[['Curl Barre',4,10],['Triceps Poulie',4,12],['Élévations Latérales Machine',4,15],['Gainage',3,45]];
+    days.push({label:wp?('J5 · Spécialisation '+wp.lbl):'J5 · Bras & épaules',note:wp?('On rattrape le retard : '+wp.lbl):'Volume bras & épaules',
+      exs:spec.map(([n,ns,r])=>An(n,ns,r,wp?('🎯 '+wp.lbl):''))});
+  }
+  return days;
 }
 
 // ─── Catalogue ───────────────────────────────────────────────────────────────
@@ -379,7 +410,7 @@ function _pgAdaptSummary(prof){
 // ─── Questionnaire ───────────────────────────────────────────────────────────
 let _tqDraft=null;
 function openTrainQuiz(){
-  _tqDraft=Object.assign({days:3,duration:60,timeOfDay:'soir',equipment:'full',zones:[],intensity:'standard'}, S.trainingProfile||{});
+  _tqDraft=Object.assign({days:3,duration:60,timeOfDay:'soir',equipment:'full',zones:[],intensity:'standard',weakPoint:''}, S.trainingProfile||{});
   let el=document.getElementById('ov-train-quiz');
   if(!el){el=document.createElement('div');el.id='ov-train-quiz';el.className='overlay';el.style.zIndex='410';
     document.body.appendChild(el);} // pas de fermeture au tap sur le fond → croix ✕ uniquement
@@ -412,6 +443,7 @@ function _renderTrainQuiz(){
     +sec('Durée d\'une séance')+'<div style="'+row+'">'+[[30,'30 min'],[45,'45 min'],[60,'1 h'],[90,'1 h 30']].map(([v,l])=>_tqChip('duration',v,l)).join('')+'</div>'
     +sec('Tu t\'entraînes plutôt…')+'<div style="'+row+'">'+[['matin','🌅 Matin'],['aprem','☀️ Après-midi'],['soir','🌙 Soir']].map(([v,l])=>_tqChip('timeOfDay',v,l)).join('')+'</div>'
     +sec('Matériel dispo')+'<div style="'+row+'">'+[['full','🏋️ Salle complète'],['basic','Haltères + banc'],['home','🏠 Maison (peu de matériel)']].map(([v,l])=>_tqChip('equipment',v,l)).join('')+'</div>'
+    +sec('Un muscle en retard à rattraper ? (optionnel)')+'<div style="font-size:11.5px;color:var(--t3);margin-bottom:8px;">Le programme mettra plus de volume dessus (et moins sur ton point fort) pour te rééquilibrer dans le temps. Ex. pecs trop forts → on renforce les épaules.</div><div style="'+row+'">'+[['','Aucun'],['epaules','Épaules'],['pecs','Pecs'],['dos','Dos'],['bras','Bras'],['jambes','Jambes']].map(([v,l])=>_tqChip('weakPoint',v,l)).join('')+'</div>'
     +sec('Ton volume d\'entraînement')+'<div style="'+row+'">'+[['high','💪 Je pousse fort'],['standard','Standard'],['low','Moins de volume']].map(([v,l])=>_tqChip('intensity',v,l)).join('')+'</div>'
     +'<div style="font-size:11.5px;color:var(--t3);margin-top:6px;">C\'est TOI qui choisis. « Je pousse fort » = tout le volume. « Moins » = on allège (reprise, récup difficile…). Ton travail physique ne change rien ici — beaucoup de gens bossent dur ET poussent fort. 💪</div>'
     +sec('Zones sensibles / blessures (optionnel)')+'<div style="font-size:11.5px;color:var(--t3);margin-bottom:8px;">On remplacera les exos à risque par des équivalents. ⚠️ Ce n\'est pas un avis médical — en cas de vraie blessure, vois un pro.</div><div style="'+row+'">'+['genou','epaule','dos','poignet','hanche','coude'].map(_tqZone).join('')+'</div>'
