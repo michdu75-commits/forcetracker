@@ -1,4 +1,4 @@
-const CACHE = 'ft-v388'; // Score santé + code-barres (Open Food Facts) ouvert à tous ; IA nourriture freemium (25 essais + Premium)
+const CACHE = 'ft-v389'; // Fix Milo : consigne ferme pour qu'il utilise TOUJOURS l'etude du corps (ne nie plus avoir le bilan) + inclut resume/sante du bilan
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

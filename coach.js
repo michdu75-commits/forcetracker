@@ -639,8 +639,11 @@ ${(()=>{
   if(bs.balance)L.push('Équilibre: '+bs.balance);
   if(bs.strengths)L.push('Points forts: '+bs.strengths);
   if(bs.weaknesses)L.push('À travailler: '+bs.weaknesses);
+  if(bs.summary)L.push('Résumé: '+bs.summary);
+  if(bs.healthNotes)L.push('Santé prise en compte: '+bs.healthNotes);
   if(!L.length)return '';
-  return '\n📐 ÉTUDE DU CORPS (bilan visuel du '+(bs.date||'?')+') — utilise-la pour cibler les déséquilibres et proposer des exercices correctifs:\n- '+L.join('\n- ');
+  // Consigne ferme : Milo DOIT reconnaître et utiliser le bilan (ne jamais nier l'avoir).
+  return '\n📐 ÉTUDE DU CORPS DE L\'UTILISATEUR — tu AS ce bilan (résumé texte de ses photos, réalisé le '+(bs.date||'?')+'). Tu DOIS t\'en servir pour cibler ses déséquilibres et proposer des exercices correctifs. NE DIS JAMAIS que tu n\'as pas accès à son bilan ni à ses photos : tu en as le résumé complet ci-dessous.\n- '+L.join('\n- ');
 })()}
 ${_coachQuizContext()}
 RECORDS PERSONNELS (1RM estimés):
