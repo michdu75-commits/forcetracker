@@ -1,4 +1,4 @@
-const CACHE = 'ft-v402'; // Milo apprend a adapter le coaching a la VIE reelle (travail de nuit, astreintes, plusieurs jobs, horaires decales) — ne juge pas, compose avec
+const CACHE = 'ft-v403'; // Milo : se mefier des donnees incompletes (montre pas portee, detection auto coupee) — verifier avant de conclure une tendance
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
