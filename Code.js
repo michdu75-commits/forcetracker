@@ -475,7 +475,7 @@ function doPost(e) {
   // Limite le nombre d'appels IA par jour (par email + global) pour éviter les abus
   // et l'explosion de la facture Anthropic. N'affecte PAS les actions sans IA
   // (loadProfile, saveProfile, logSession, validateCode, test…).
-  var AI_ACTIONS_ = ['coach','importProgram','importHistory','importMealPlan','estimateFood','foodLabel','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
+  var AI_ACTIONS_ = ['coach','importProgram','importHistory','importMealPlan','estimateFood','foodLabel','readBarcode','morphoAnalysis','bodyStudy','importBodyScan','importBloodTest','summarizeCoach','generateMealPlan'];
   if (AI_ACTIONS_.indexOf(body.action) >= 0) {
     var _q = _aiQuotaBlock_(body.email);
     if (_q.blocked) {
@@ -500,6 +500,7 @@ function doPost(e) {
   if (body.action === 'importMealPlan')    return handleImportMealPlan_(body);
   if (body.action === 'estimateFood')      return handleEstimateFood_(body);
   if (body.action === 'foodLabel')         return handleFoodLabel_(body);
+  if (body.action === 'readBarcode')       return handleReadBarcode_(body);
   if (body.action === 'morphoAnalysis')    return handleMorphoAnalysis_(body);
   if (body.action === 'bodyStudy')         return handleBodyStudy_(body);
   if (body.action === 'importBodyScan')    return handleImportBodyScan_(body);
@@ -1346,6 +1347,51 @@ function handleFoodLabel_(body) {
       fat100: Math.max(0, parseFloat(d.fat100)||0),
       serving: Math.max(0, parseFloat(d.serving)||0)
     });
+  } catch(err) { return json_({status:'error', error: err.message}); }
+}
+
+// ───────────────────────────────────────────────────────────
+// Lit le NUMERO d'un code-barres sur une photo (l'IA lit les chiffres imprimes
+// sous les barres) -> renvoie la suite de chiffres, que l'app cherche ensuite
+// gratuitement dans Open Food Facts. Pour les produits ou le scan camera galere.
+function handleReadBarcode_(body) {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '';
+  if (!apiKey) return json_({status:'error', error:'Clé API Anthropic non configurée'});
+  try {
+    const img = body.image || {};
+    if (!img.data) return json_({status:'error', error:'Image manquante'});
+    const prompt = 'Tu regardes la photo d\'un CODE-BARRES de produit (les barres noires verticales avec des chiffres imprimes juste en dessous). '
+      + 'Lis le NUMERO du code-barres : la suite de chiffres imprimee sous les barres (en general 8, 12 ou 13 chiffres, format EAN ou UPC). '
+      + 'Retourne UNIQUEMENT un JSON valide, sans texte ni markdown :\n'
+      + '{"barcode":"3017620422003"}\n\n'
+      + 'Regles :\n'
+      + '- barcode = uniquement les chiffres, sans espaces ni tirets.\n'
+      + '- Renvoie SEULEMENT le code-barres principal du produit (le long numero sous les barres). Ignore les autres numeros visibles (prix, numero de lot, dates, poids).\n'
+      + '- Si aucun code-barres n\'est lisible, renvoie {"error":"illisible"}.\n'
+      + 'Reponds UNIQUEMENT avec le JSON.';
+    const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+      method:'post',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},
+      payload: JSON.stringify({
+        model:'claude-haiku-4-5-20251001',
+        max_tokens:100,
+        messages:[{role:'user', content:[
+          {type:'image', source:{type:'base64', media_type:(img.type||'image/jpeg'), data:img.data}},
+          {type:'text', text:prompt}
+        ]}]
+      }),
+      muteHttpExceptions:true
+    });
+    const result = JSON.parse(resp.getContentText());
+    const text = (result.content && result.content[0] && result.content[0].text) || '';
+    const stripped = text.replace(/```json\s*/gi,'').replace(/```\s*/g,'').trim();
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (!match) return json_({status:'error', error:'Lecture echouee'});
+    let d; try { d = JSON.parse(match[0]); } catch(e){ return json_({status:'error', error:'JSON invalide'}); }
+    if (d.error) return json_({status:'error', error:String(d.error)});
+    var code = String(d.barcode||'').replace(/\D/g,'');
+    if (code.length < 8) return json_({status:'error', error:'Code-barres illisible'});
+    return json_({status:'ok', barcode: code});
   } catch(err) { return json_({status:'error', error: err.message}); }
 }
 
