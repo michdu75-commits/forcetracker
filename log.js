@@ -222,8 +222,10 @@ function _exDragStart(e,ei){
 function _exDragMoveTo(x,y){
   if(!_dragEx)return;
   _dragEx.ghost.style.left=x+'px';_dragEx.ghost.style.top=y+'px';
-  const el=document.elementFromPoint(x,y);
-  const block=el&&el.closest?el.closest('.ex-block'):null;
+  // elementsFromPoint (pluriel) : robuste si un élément flottant recouvre le bloc
+  let block=null;
+  const stack=document.elementsFromPoint(x,y);
+  for(let s=0;s<stack.length;s++){const c=stack[s].closest?stack[s].closest('.ex-block'):null;if(c){block=c;break;}}
   document.querySelectorAll('.ex-block.drag-over').forEach(b=>b.classList.remove('drag-over'));
   let overEi=null;
   if(block&&block.id&&block.id.indexOf('ex-block-')===0){
@@ -3319,8 +3321,10 @@ function _renderProgEdit(){
     const hasNext=!!nextEx;
     const linkedNext=hasNext&&ex.group&&ex.group===nextEx.group;
     const inSuper=!!ex.group;
-    return`<div style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:${linkedNext?'2px':'6px'};${inSuper?'box-shadow:inset 3px 0 0 var(--orange);':''}">
+    const dayLen=(_progDayExs(di)||[]).length;
+    return`<div class="prog-ex-card" data-di="${di}" data-ei="${ei}" style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:${linkedNext?'2px':'6px'};${inSuper?'box-shadow:inset 3px 0 0 var(--orange);':''}">
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;">
+      ${dayLen>1?_progGripHtml(di,ei):''}
       ${_progExThumb(ex.name)}
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escNote(ex.name)}</div>
@@ -3421,6 +3425,73 @@ function _toggleProgSuperset(di,ei){
   links[ei]=!links[ei];
   _rebuildProgGroups(exs,links);
   _renderProgEdit();
+}
+// ── Superset par GLISSER-DÉPOSER dans l'éditeur de programme (demande Christophe) ──
+// Glisser une carte exercice sur une autre (même jour) → superset. Réutilise le
+// modèle groupe consécutif (_rebuildProgGroups compatible : membres contigus + même group).
+function _dropProgSuperset(di, dragEi, targetEi){
+  const exs=_progDayExs(di); if(!exs||dragEi===targetEi)return;
+  const drag=exs[dragEi], target=exs[targetEi];
+  if(!drag||!target)return;
+  if(drag.group&&drag.group===target.group){toast('Déjà en superset ensemble','info');return;}
+  let gid=(target.group&&target.groupType==='super')?target.group:null;
+  if(!gid){gid='sg'+Date.now().toString(36);target.group=gid;target.groupType='super';}
+  drag.group=gid;drag.groupType='super';
+  exs.splice(dragEi,1);
+  let insertAt=exs.indexOf(target)+1;
+  while(insertAt<exs.length&&exs[insertAt].group===gid)insertAt++;
+  exs.splice(insertAt,0,drag);
+  _renderProgEdit();
+  if(navigator.vibrate)navigator.vibrate(30);
+  toast('Superset créé ⚡','success');
+}
+function _progGripHtml(di,ei){
+  return `<span class="ex-grip" title="Glisser sur un autre exercice pour créer un superset" ontouchstart="_progDragStart(event,${di},${ei})" onmousedown="_progDragStart(event,${di},${ei})" onclick="event.stopPropagation()"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display:block;pointer-events:none;"><circle cx="5.5" cy="3.5" r="1.5"/><circle cx="10.5" cy="3.5" r="1.5"/><circle cx="5.5" cy="8" r="1.5"/><circle cx="10.5" cy="8" r="1.5"/><circle cx="5.5" cy="12.5" r="1.5"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></span>`;
+}
+let _progDrag=null; // { di, ei, ghost, over:{di,ei}|null }
+function _progDragStart(e,di,ei){
+  const ex=_progEditEx(di,ei); if(!ex)return;
+  e.preventDefault();e.stopPropagation();
+  const pt=e.touches?e.touches[0]:e;
+  const ghost=document.createElement('div'); ghost.className='ex-drag-ghost'; ghost.textContent=ex.name;
+  document.body.appendChild(ghost);
+  _progDrag={di,ei,ghost,over:null};
+  _progDragMoveTo(pt.clientX,pt.clientY);
+  document.addEventListener('touchmove',_progDragMove,{passive:false});
+  document.addEventListener('touchend',_progDragEnd);
+  document.addEventListener('touchcancel',_progDragEnd);
+  document.addEventListener('mousemove',_progDragMove);
+  document.addEventListener('mouseup',_progDragEnd);
+  if(navigator.vibrate)navigator.vibrate(15);
+}
+function _progDragMoveTo(x,y){
+  if(!_progDrag)return;
+  _progDrag.ghost.style.left=x+'px';_progDrag.ghost.style.top=y+'px';
+  // elementsFromPoint (pluriel) : robuste si un élément flottant recouvre la carte
+  let card=null;
+  const stack=document.elementsFromPoint(x,y);
+  for(let s=0;s<stack.length;s++){const c=stack[s].closest?stack[s].closest('.prog-ex-card'):null;if(c){card=c;break;}}
+  document.querySelectorAll('.prog-ex-card.drag-over').forEach(c=>c.classList.remove('drag-over'));
+  let over=null;
+  if(card){
+    const di=parseInt(card.dataset.di), ei=parseInt(card.dataset.ei);
+    if(!isNaN(di)&&!isNaN(ei)&&di===_progDrag.di&&ei!==_progDrag.ei){card.classList.add('drag-over');over={di,ei};}
+  }
+  _progDrag.over=over;
+}
+function _progDragMove(e){ if(!_progDrag)return; e.preventDefault(); const pt=e.touches?e.touches[0]:e; _progDragMoveTo(pt.clientX,pt.clientY); }
+function _progDragEnd(){
+  if(!_progDrag)return;
+  const over=_progDrag.over, di=_progDrag.di, ei=_progDrag.ei, ghost=_progDrag.ghost;
+  document.removeEventListener('touchmove',_progDragMove);
+  document.removeEventListener('touchend',_progDragEnd);
+  document.removeEventListener('touchcancel',_progDragEnd);
+  document.removeEventListener('mousemove',_progDragMove);
+  document.removeEventListener('mouseup',_progDragEnd);
+  if(ghost&&ghost.parentNode)ghost.parentNode.removeChild(ghost);
+  document.querySelectorAll('.prog-ex-card.drag-over').forEach(c=>c.classList.remove('drag-over'));
+  _progDrag=null;
+  if(over&&over.di===di&&over.ei!==ei)_dropProgSuperset(di,ei,over.ei);
 }
 function _openExPickerForProg(dayIdx){
   _editDayIdx=dayIdx;

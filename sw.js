@@ -1,4 +1,4 @@
-const CACHE = 'ft-v398'; // Superset par GLISSER-DEPOSER en seance (poignee 6 points -> glisse sur un autre exo) — demande Christophe. + checklist (pop-up v13, red dot, aides)
+const CACHE = 'ft-v399'; // Superset glisser-deposer AUSSI dans l'editeur de programme (meme geste) + elementsFromPoint robuste (ne casse pas les programmes existants : supersets & annotations preserves)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
