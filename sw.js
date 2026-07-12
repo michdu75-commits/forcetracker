@@ -1,4 +1,4 @@
-const CACHE = 'ft-v394'; // Fix : l echauffement (type E) ne compte plus dans la force (graphique 1RM + charge max soulevee) - Progres
+const CACHE = 'ft-v395'; // Fix decompte repos : le « 10 » (2 chiffres) reduit a 82px pour ne plus deborder sur l anneau (retour Christophe)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

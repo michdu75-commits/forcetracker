@@ -1736,7 +1736,9 @@ function _updateRestCountdown(){
   const litCount=Math.max(1,Math.round(left/10*_CDOWN_TICKS));
   _paintCdownTicks(litCount);
   const color=left<=3?'#FF3B30':left<=6?'#FF9500':'#28E070';
-  if(numEl){numEl.textContent=left;numEl.style.fontSize='110px';numEl.style.color=color;}
+  // Police adaptée au nombre de chiffres : « 10 » (2 chiffres) plus petit pour
+  // ne pas déborder sur l'anneau (retour Christophe) ; 1→9 restent bien gros.
+  if(numEl){numEl.textContent=left;numEl.style.fontSize=(left>=10?'82px':'110px');numEl.style.color=color;}
 }
 // Tap sur l'overlay ou bouton Passer :
 // - pendant le décompte (avant 0) → skip anticipé = fin immédiate du repos (timer + pastille effacés)
