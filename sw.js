@@ -1,4 +1,4 @@
-const CACHE = 'ft-v392'; // Aides ? contextuelles mises a jour (Accueil calendrier, Nutrition score sante, Progres icone perf) + regle d or projet (checklist nouveaute)
+const CACHE = 'ft-v393'; // Journal : photographier le code-barres, l IA lit les chiffres (bouton + backend readBarcode) + pop-up/point rouge/aides
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

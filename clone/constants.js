@@ -177,6 +177,7 @@ const NEW_FEATURES=[
   {id:'food-journal', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : Journal alimentaire — note tes repas et suis tes calories/macros du jour vs ton objectif'},
   {id:'food-barcode', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : scan d\'un code-barres dans le journal — le produit est reconnu automatiquement (base mondiale)'},
   {id:'food-score',   screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : le score santé des produits (Nutri-Score + niveau de transformation) au code-barres — gratuit pour tout le monde'},
+  {id:'food-bc-photo', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : photographie le code-barres, l\'IA lit les chiffres pour toi (plus besoin de les taper)'},
   {id:'meal-import',  screen:'nutrition', desc:'Nouveau : importer le plan alimentaire de ta diététicienne (photo/PDF) — l\'IA range les repas'},
 ];
 
@@ -189,6 +190,7 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 const WHATS_NEW=[
+  {v:12, ic:'📷', t:'Photographie le code-barres', d:'Dans le Journal alimentaire, plus besoin de taper les chiffres : appuie sur « 📷 Photographier le code-barres », prends-le en photo, et l\'IA lit le numéro pour toi → le produit et son score santé s\'affichent tout seuls. Pratique quand les chiffres sont petits ou abîmés.'},
   {v:11, ic:'🥗', t:'Score santé des produits', d:'Dans le Journal alimentaire, tape le code-barres d\'un produit → tu vois son SCORE SANTÉ : Nutri-Score (A à E) et niveau de transformation. Pour manger plus clair, sans te prendre la tête. Gratuit pour tout le monde.'},
   {v:10, ic:'📅', t:'Calendrier sur ton Accueil', d:'Un calendrier de ton mois directement sur la page d\'accueil : tes jours de séance ressortent en rouge, et les jours où tu as BATTU UN RECORD sont cerclés en or 🏆. Navigue sur les mois précédents, et tape une semaine pour voir le détail jour par jour.'},
   {v:9, ic:'🔒', t:'Mise à jour de sécurité en approche', d:'On renforce la protection de tes données 🛡️. Plusieurs améliorations sont DÉJÀ en place (invisibles pour toi). Et très bientôt : tu pourras protéger ton compte avec un CODE PERSO — comme un mot de passe — pour que toi seul(e) puisses accéder à tes séances, ton poids et tes infos. Aucune action à faire maintenant : on te guidera pas à pas le moment venu, et tes données restent en sécurité entre-temps. 👊'},
@@ -201,7 +203,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=11;     // = plus grand `v` ci-dessus
+const WHATS_NEW_MAX=12;     // = plus grand `v` ci-dessus
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

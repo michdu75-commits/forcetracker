@@ -1575,6 +1575,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ex : 3017620422003" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1 1 auto;min-width:0;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
         <button onclick="_manualBarcode()" style="flex:0 0 auto;width:auto;padding:0 20px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:15px;font-family:var(--font);cursor:pointer;">OK</button>
       </div>
+      <button class="btn btn-bg2" onclick="scanBarcodeIA()" style="width:100%;margin-bottom:12px;">📷 Ou photographier le code-barres (IA lit les chiffres)</button>
+      <input type="file" id="af-bc-photo-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodePhotoIA(this)">
     </div>
     <!-- Produit sans code / étiquette : photo IA -->
     <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Ou lire l'étiquette nutritionnelle (IA)</button>

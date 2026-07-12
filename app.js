@@ -670,6 +670,33 @@ async function onFoodLabelFile(input){
     toast('Étiquette lue ✅ — ajuste la quantité','success');
   }catch(e){toast('Erreur : '+(e.message||e),'error');}
 }
+// ─── Photo du code-barres → l'IA lit les CHIFFRES → recherche produit (gratuite) ───
+// Même logique que la lecture d'étiquette : 1 essai IA pour lire le numéro,
+// puis la recherche produit + score santé sont gratuites (Open Food Facts).
+function scanBarcodeIA(){
+  if(!S.url){toast('Connexion requise','error');return;}
+  if(!S.premium){
+    if(window._premiumPending){toast('Vérification premium en cours…','info');return;}
+    if((S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+  }
+  const inp=document.getElementById('af-bc-photo-input'); if(inp){inp.value='';inp.click();}
+}
+async function onBarcodePhotoIA(input){
+  const f=input.files&&input.files[0]; if(!f)return;
+  if(!S.premium&&(S.foodAiUses||0)>=FOOD_AI_FREE_LIMIT){showFoodWall();return;}
+  toast('Lecture du code-barres…','info');
+  try{
+    const b64=await _resizeToB64(f, 1100, 0.85);
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'readBarcode',image:{data:b64,type:'image/jpeg'},email:S.email||''})});
+    const d=await r.json();
+    if(!d||d.status!=='ok'||!d.barcode){toast('Code-barres illisible — rapproche-toi, éclaire bien, ou tape les chiffres','error');return;}
+    // L'IA a lu le numéro → décompte 1 essai (comme l'étiquette), la recherche produit reste gratuite
+    if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();if(typeof _renderAfAiNote==='function')_renderAfAiNote();}
+    const mi=document.getElementById('af-bc-manual');if(mi)mi.value=d.barcode;
+    await _lookupBarcode(d.barcode);
+  }catch(e){toast('Erreur : '+(e.message||e),'error');}
+}
 async function estimateFoodAI(){
   const desc=(document.getElementById('af-desc').value||'').trim();
   if(!desc){toast('Décris d\'abord ce que tu as mangé','error');return;}
