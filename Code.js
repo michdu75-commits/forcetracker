@@ -39,6 +39,15 @@ function _sha256hex_(s){
   var raw=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8);
   return raw.map(function(b){return ('0'+(b&0xff).toString(16)).slice(-2);}).join('');
 }
+// Token de la boîte à idées (lecture ?action=getIdees / aiUsage). Vérifié contre un
+// HASH en dur dans le code (immunisé contre les Script Properties qui ne persistent
+// pas sur ce projet) OU l'ancienne propriété IDEES_TOKEN si elle tient. Le token en
+// clair (FT_IDEES_2026) n'est PAS dans le repo public — seul son SHA-256 l'est.
+var IDEES_TOKEN_HASH_ = '678a434202beb8faf720d9f91c3f21387cf2cd4ad7083ff2435658578208ad92';
+function _checkIdeesTok_(given){
+  if (_checkTok_('IDEES_TOKEN', given)) return true;
+  return _sha256hex_(String(given == null ? '' : given).trim()) === IDEES_TOKEN_HASH_;
+}
 // ─── Protection opt-in par code perso ─────────────────────────────────────────
 // INVARIANT ABSOLU : un compte SANS 'auth_{email}' se comporte EXACTEMENT comme
 // avant (aucun impact sur les utilisateurs actuels). Un compte AVEC un code activé
@@ -282,7 +291,7 @@ function doGet(e) {
 
   // Lecture des idées des testeurs (boîte à idées) — ?action=getIdees&token=FT_IDEES_2026
   if (p.action === 'getIdees') {
-    if (!_checkTok_('IDEES_TOKEN', p.token)) return json_({status:'error', error:'token'});
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
     let arr = [];
     try { arr = JSON.parse(PropertiesService.getScriptProperties().getProperty('TESTER_IDEAS') || '[]'); } catch(e2) { arr = []; }
     return json_({status:'ok', count: arr.length, ideas: arr});
@@ -290,7 +299,7 @@ function doGet(e) {
 
   // Consommation IA du jour (garde-fou coût) — ?action=aiUsage&token=FT_IDEES_2026
   if (p.action === 'aiUsage') {
-    if (!_checkTok_('IDEES_TOKEN', p.token)) return json_({status:'error', error:'token'});
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
     var sp = PropertiesService.getScriptProperties();
     var q = {};
     try { q = JSON.parse(sp.getProperty('ai_quota') || '{}'); } catch(e2) { q = {}; }
@@ -1648,6 +1657,17 @@ function handleTesterIdea_(body) {
     });
     if (arr.length > 300) arr = arr.slice(-300); // garde les 300 dernières
     ps.setProperty('TESTER_IDEAS', JSON.stringify(arr));
+    // Envoi mail (robuste : ne dépend d'aucune propriété qui pourrait ne pas persister)
+    try {
+      GmailApp.sendEmail('forcetracker.app@gmail.com',
+        '💡 Force Tracker — nouvelle idée' + (body.name ? ' de ' + body.name : ''),
+        'Nouvelle idée dans la boîte à idées :\n\n'
+        + 'Date : ' + (body.date || new Date().toISOString()) + '\n'
+        + 'De   : ' + (body.name || '?') + ' <' + (body.email || '?') + '>\n'
+        + 'Photos jointes par le testeur : ' + (body.photos || 0) + '\n\n'
+        + '--- Idée ---\n' + (body.text || '(vide)') + '\n------------\n\n'
+        + '— Force Tracker (boîte à idées automatique)');
+    } catch (eMail) {}
     return json_({status:'ok'});
   } catch(err) {
     return json_({status:'error', error: err.message});
