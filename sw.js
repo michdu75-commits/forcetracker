@@ -1,4 +1,4 @@
-const CACHE = 'ft-v400'; // Milo coache comme un vrai coach : methode + raisonnement + modele pro (buildCoachContext) ~2500 tokens
+const CACHE = 'ft-v401'; // Milo francais soigne renforce (traduit les anglicismes : 'de zero' pas 'from scratch'…) — utile aussi pour la future traduction
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

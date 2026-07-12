@@ -646,3 +646,10 @@ Michel a choisi d'**attendre** (le faire proprement avec la vraie DB, pas bricol
 
 ## 🐛 BUG À INVESTIGUER (signalé 2026-07-12, à voir plus tard)
 **Annotations sur un programme → « ça fout le bordel ».** Un utilisateur a mis des annotations/notes sur son programme et ça casse quelque chose (affichage ? chargement en séance ? sauvegarde ?). Détails à préciser avec Michel. Pistes : notes de jour (`day.note`) / notes d'exercice (`ex.note`) dans un programme importé ou édité, peut-être un souci d'échappement HTML, de rendu, ou de conflit avec le parsing d'import. À reproduire + corriger.
+
+## 🌍 TRADUCTION DE L'APP (branche feat/traduction-app) — points clés notés 2026-07-12
+Quand on traduira l'app dans d'autres langues, penser au **Coach IA (Milo)** :
+- Le cerveau de Milo (`buildCoachContext`, coach.js) commence par « Tu es Milo… **Tu réponds TOUJOURS en français** ». → à rendre **adaptatif** : « réponds dans la LANGUE de l'utilisateur » (langue de l'app / du profil).
+- La consigne « **langue soignée** » (aujourd'hui « français soigné » : traduire les anglicismes, « de zéro » pas « from scratch »…) doit valoir **dans chaque langue** (pas d'anglais parasite quel que soit l'idiome).
+- Toutes les sections du contexte Milo (méthode, raisonnement, modèle) sont en français → à traduire ou à laisser en français avec instruction « réponds en {langue} » (Claude traduit très bien à la volée, mais mieux vaut au moins traduire l'intro + la langue de réponse).
+- Reste de l'app : `WHATS_NEW`, `NEW_FEATURES`, `_HELP_DATA`, `_DRAWER_CONTENT`, textes UI (index.html) — gros chantier i18n (clés de traduction).
