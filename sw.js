@@ -1,4 +1,4 @@
-const CACHE = 'ft-v400'; // Powerbuilding : J2 allege (fini couche+incline+militaire empiles -> 1 poussee lourde + isolation) + J3 sans Superman redondant (logique d exercices)
+const CACHE = 'ft-v401'; // Powerbuilding : rééquilibrage du point faible INTÉGRÉ dès 4 jours (plus de volume sur le retard, moins sur le point fort) + journée spécialisation si 5 jours + question questionnaire
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
