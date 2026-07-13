@@ -1,4 +1,4 @@
-const CACHE = 'ft-v416'; // FIX MAJEUR mises a jour iOS : install rapide (code seul) + skipWaiting immediat -> fini les versions coincees (avant : install bloquee par ~15Mo d'images)
+const CACHE = 'ft-v417'; // Fix barre "Installation..." bloquante : sentinelle santé cache = fichier CORE (plus une figurine) + ENSURE_PRECACHE repare le CORE (rapide) au lieu des 15Mo d'images
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -109,8 +109,12 @@ const PRECACHE = [
   './anatomy/Vue des Os avec nerfs sciatiques/os et nerfs.png',
 ];
 
-// Sentinelle : une figurine ; si elle manque, c'est que le cache a été vidé (manuel ou iOS)
-const PRECACHE_SENTINEL = PRECACHE.find(u => /exercises\//.test(u)) || PRECACHE[0];
+// Sentinelle de « santé du cache » : un fichier du CORE (précaché à l'install). S'il manque, c'est
+// que le cache a été vidé (iOS/manuel) → on réinstalle juste le CORE (rapide). ⚠️ NE PAS pointer sur
+// une figurine : avec l'install rapide, les images ne sont PLUS précachées → une sentinelle-figurine
+// serait toujours « absente » → ENSURE_PRECACHE re-téléchargerait les 15 Mo à CHAQUE ouverture
+// (barre « Installation… » bloquante sur 5G). Fix 2026-07-13.
+const PRECACHE_SENTINEL = './style.css';
 
 // Télécharge tous les assets dans le cache, fichier par fichier, en notifiant la progression.
 // Réutilisé par l'install ET par la réinstallation à la demande (bouton / auto-réparation).
@@ -161,7 +165,7 @@ self.addEventListener('message', e => {
     e.waitUntil((async () => {
       const cache = await caches.open(CACHE);
       const hit = await cache.match(PRECACHE_SENTINEL);
-      if (!hit) { await precacheAll(); }            // cache vidé → on répare
+      if (!hit) { await precacheCore(); }           // cache vidé → on répare le CORE (rapide, pas les 15 Mo d'images)
       else {
         // déjà en place : signale « fini » pour masquer une éventuelle barre
         const clients = await self.clients.matchAll({includeUncontrolled:true});
