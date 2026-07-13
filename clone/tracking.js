@@ -941,14 +941,13 @@ function onBodyScanPhoto(input){
       const tiles=(out&&out.tiles)?out.tiles:(Array.isArray(out)?out:[out]);
       const full=(out&&out.full)?out.full:tiles[0];
       _showBsScan('data:image/jpeg;base64,'+full); // retour visuel : scan du rapport pendant la lecture IA
-      const images=tiles.map(t=>({data:t,type:'image/jpeg'}));
-      // Payload allégé : on n'envoie PAS l'image "full" quand on a déjà les tuiles
-      // (le backend ignore body.image dès qu'il reçoit body.images) → ~2× moins lourd,
-      // bien moins de "Load failed" sur réseau faible/cellulaire (fix bug 2026-07-13).
-      const payload=JSON.stringify(images.length
-        ? {action:'importBodyScan',images,email:S.email||''}
-        : {action:'importBodyScan',image:full,imageType:'image/jpeg',email:S.email||''});
-      const data=await _postBodyScan(payload); // retry réseau intégré (Load failed = réseau)
+      // ⚠️ ENVOI IDENTIQUE au code-barres photo (onBarcodePhotoIA) qui MARCHE : fetch SIMPLE,
+      // une seule image, .json() direct. On abandonne _postBodyScan / XHR / retry / tuiles —
+      // le code-barres prouve que ce transport passe (même serveur, même type de requête).
+      // (Le bug « versions coincées » faisait qu'on testait des versions périmées — corrigé v416/v417.)
+      const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'importBodyScan',image:tiles[0],imageType:'image/jpeg',email:S.email||''})});
+      const data=await r.json();
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
       if(!unlimited){S.bodyScanImports=(S.bodyScanImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
@@ -969,21 +968,35 @@ function onBodyScanPhoto(input){
 // POST du rapport corporel avec retry réseau (3 tentatives, backoff). Fetch IDENTIQUE au Coach
 // photo (qui marche) : pas d'AbortController. Ne retente QUE sur échec réseau (fetch rejeté) ;
 // une réponse reçue mais illisible n'est pas retentée.
+// Envoi via XMLHttpRequest (et non fetch) : sur iOS Safari, un POST cross-origin avec un corps
+// « image » peut être rejeté INSTANTANÉMENT par fetch (« envoi 1s : TypeError: Load failed »)
+// alors que XHR passe — stack réseau différente. XHR suit le redirect Apps Script tout seul.
+function _xhrPostText(url,body,timeoutMs){
+  return new Promise((resolve,reject)=>{
+    try{
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST',url,true);
+      try{ xhr.setRequestHeader('Content-Type','text/plain;charset=utf-8'); }catch(e){}
+      if(timeoutMs)xhr.timeout=timeoutMs;
+      xhr.onload=()=>resolve({status:xhr.status,text:xhr.responseText||''});
+      xhr.onerror=()=>reject(new Error('XHR onerror'+(xhr.status?' '+xhr.status:'')));
+      xhr.ontimeout=()=>reject(new Error('XHR timeout'));
+      xhr.onabort=()=>reject(new Error('XHR abort'));
+      xhr.send(body);
+    }catch(e){ reject(e); }
+  });
+}
 async function _postBodyScan(payload){
   let lastErr;
   for(let attempt=0;attempt<3;attempt++){
     if(attempt>0)await new Promise(r=>setTimeout(r,attempt*1500)); // backoff 1,5 s puis 3 s
     const t0=Date.now();
-    let resp;
+    let r;
     try{
-      // Fetch identique au Coach photo (qui marche), sans AbortController.
-      resp=await fetch(S.url,{method:'POST',redirect:'follow',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
-    }catch(e){ lastErr=new Error('envoi '+Math.round((Date.now()-t0)/1000)+'s ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // échec fetch (envoi OU pas de réponse à temps) → retente
-    let txt;
-    try{ txt=await resp.text(); }
-    catch(e){ lastErr=new Error('réception '+Math.round((Date.now()-t0)/1000)+'s ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // réponse coupée en réception → retente
-    try{return JSON.parse(txt);}catch(e){throw new Error('réponse illisible (HTTP '+(resp.status||'?')+')');} // réponse reçue → pas de retry
+      r=await _xhrPostText(S.url,payload,90000);
+    }catch(e){ lastErr=new Error('envoi '+Math.round((Date.now()-t0)/1000)+'s ('+(e.message||'?')+')'); continue; } // échec → on retente
+    try{ return JSON.parse(r.text); }
+    catch(e){ throw new Error('réponse illisible (HTTP '+(r.status||'?')+')'); } // réponse reçue → pas de retry
   }
   throw lastErr||new Error('réseau');
 }
