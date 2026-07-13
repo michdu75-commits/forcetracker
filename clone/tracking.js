@@ -960,9 +960,8 @@ function onBodyScanPhoto(input){
         toast('Rapport lu ✅ Vérifie puis Enregistre','success');
       });
     }catch(e){
-      // Diagnostic : on affiche le type + message exact de l'erreur (name), pour identifier
-      // précisément la cause si ça échoue encore (ex. "TypeError: Load failed" vs "AbortError").
-      const detail=(e&&(e.name?e.name+': ':'')+(e.message||''))||'erreur inconnue';
+      // Diagnostic : le message indique désormais la PHASE (envoi / réception) + le type d'erreur.
+      const detail=(e&&e.message)||'erreur inconnue';
       _hideBsScan(()=>toast('Souci lecture : '+detail,'error'));
     }
   });
@@ -976,14 +975,14 @@ async function _postBodyScan(payload){
     if(attempt>0)await new Promise(r=>setTimeout(r,attempt*1500)); // backoff 1,5 s puis 3 s
     let resp;
     try{
-      // ⚠️ EXACTEMENT le même fetch que le Coach photo (qui marche) : PAS d'AbortController/signal.
-      // Le signal d'abandon provoquait des « Load failed » spurieux sur iOS Safari pour les requêtes
-      // longues (analyse IA) — c'était ça le vrai coupable, pas le poids de l'image (2026-07-13).
+      // Fetch identique au Coach photo (qui marche), sans AbortController.
       resp=await fetch(S.url,{method:'POST',redirect:'follow',
         headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
-    }catch(e){ lastErr=e; continue; } // échec réseau → on retente
-    const txt=await resp.text();
-    try{return JSON.parse(txt);}catch(e){throw new Error('réponse illisible du serveur');} // réponse reçue → pas de retry
+    }catch(e){ lastErr=new Error('envoi ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // échec à l'ENVOI → on retente
+    let txt;
+    try{ txt=await resp.text(); }
+    catch(e){ lastErr=new Error('réception ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // réponse coupée en cours de réception → on retente
+    try{return JSON.parse(txt);}catch(e){throw new Error('réponse illisible (HTTP '+(resp.status||'?')+')');} // réponse reçue → pas de retry
   }
   throw lastErr||new Error('réseau');
 }
