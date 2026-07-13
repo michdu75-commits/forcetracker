@@ -1,4 +1,4 @@
-const CACHE = 'ft-v411'; // Fix bilan corporel photo (2) : UNE seule image ~1500px/114Ko au lieu de 2 grosses tuiles -> fini "Load failed" iOS meme en wifi
+const CACHE = 'ft-v412'; // Bilan corporel photo : retour a l'approche d'origine ft-v302 (UNE image 1500px q0.85) qui marchait ; le decoupage en tranches ft-v309 avait re-casse l'envoi iOS
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
