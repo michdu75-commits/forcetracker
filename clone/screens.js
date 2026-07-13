@@ -663,38 +663,6 @@ function setNuPhase(phase){
   renderNutrition();
 }
 
-// ─── Réglage manuel des calories/macros (retour testeuse : « pouvoir corriger moi-même ») ──
-function openKcalEdit(){
-  const m=calcMacros(S.nutritionPhase);
-  const inp=document.getElementById('kcal-edit-inp');
-  if(inp)inp.value=m.calories;
-  const auto=document.getElementById('kcal-edit-auto');
-  if(auto)auto.textContent="Calcul auto de l'app : "+m.autoCalories.toLocaleString('fr-FR')+" kcal (d'après ton profil et ton objectif).";
-  const reset=document.getElementById('kcal-edit-reset');
-  if(reset)reset.style.display=m.isManual?'':'none';
-  _kcalPreview();
-  const o=document.getElementById('ov-kcal-edit');if(o)o.classList.add('open');
-}
-function _kcalPreview(){
-  const inp=document.getElementById('kcal-edit-inp');
-  const v=inp?Math.round(parseFloat(inp.value)||0):0;
-  const mm=(typeof macrosForKcal==='function')?macrosForKcal(v):{prot_g:0,carbs_g:0,fat_g:0};
-  const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val+' g';};
-  set('kcal-pv-prot',mm.prot_g);set('kcal-pv-carb',mm.carbs_g);set('kcal-pv-fat',mm.fat_g);
-}
-function saveKcalEdit(){
-  const inp=document.getElementById('kcal-edit-inp');
-  let v=inp?Math.round(parseFloat(inp.value)||0):0;
-  if(!(v>0)){toast('Entre un nombre de calories valide','info');return;}
-  v=Math.max(800,Math.min(6000,v));
-  S.manualKcal=v;persist();closeKcalEdit();renderNutrition();
-  toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal ✅','success');
-}
-function resetKcalAuto(){
-  S.manualKcal=0;persist();closeKcalEdit();renderNutrition();
-  toast('Calories remises en automatique','info');
-}
-function closeKcalEdit(){const o=document.getElementById('ov-kcal-edit');if(o)o.classList.remove('open');}
 function renderNutrition(){try{
   renderSupplements();
   // Phase buttons
@@ -702,10 +670,10 @@ function renderNutrition(){try{
   document.getElementById('pb-decharge').classList.toggle('active',S.nutritionPhase==='decharge');
   // Goal banner
   const goal=S.goal||'muscle';
-  const goalDelta={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}[goal]||350;
-  const goalColors={muscle:'rgba(255,45,85,.1)',perte:'rgba(255,149,0,.1)',recomp:'rgba(170,0,255,.1)',force:'rgba(41,121,255,.1)',equilibre:'rgba(52,199,89,.1)',endurance:'rgba(170,0,255,.1)'};
-  const goalBorderColors={muscle:'rgba(255,45,85,.3)',perte:'rgba(255,149,0,.3)',recomp:'rgba(170,0,255,.3)',force:'rgba(41,121,255,.3)',equilibre:'rgba(52,199,89,.3)',endurance:'rgba(170,0,255,.3)'};
-  const goalIcons={muscle:'💪',perte:'🔥',recomp:'✨',force:'🏋️',equilibre:'⚖️',endurance:'🏃'};
+  const goalDelta={muscle:350,perte:-450,force:200,equilibre:0,endurance:100}[goal]||350;
+  const goalColors={muscle:'rgba(255,45,85,.1)',perte:'rgba(255,149,0,.1)',force:'rgba(41,121,255,.1)',equilibre:'rgba(52,199,89,.1)',endurance:'rgba(170,0,255,.1)'};
+  const goalBorderColors={muscle:'rgba(255,45,85,.3)',perte:'rgba(255,149,0,.3)',force:'rgba(41,121,255,.3)',equilibre:'rgba(52,199,89,.3)',endurance:'rgba(170,0,255,.3)'};
+  const goalIcons={muscle:'💪',perte:'🔥',force:'🏋️',equilibre:'⚖️',endurance:'🏃'};
   const nuGoal=document.getElementById('nu-goal-info');
   if(nuGoal)nuGoal.textContent=`${goalIcons[goal]||'💪'} ${GOAL_LABELS[goal]||'Prise de muscle'}`;
   // Dynamic phase labels + delta chip
@@ -734,17 +702,6 @@ function renderNutrition(){try{
 
   const macros=calcMacros(S.nutritionPhase);
   document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');
-  // Bloc réglage manuel (sous l'anneau) : état auto vs manuel + bouton d'ajustement
-  const adj=document.getElementById('nu-adjust');
-  if(adj){
-    if(macros.isManual){
-      adj.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:rgba(255,45,85,.08);border:1px solid rgba(255,45,85,.25);border-radius:12px;padding:9px 12px;">'
-        +'<span style="font-size:12.5px;color:var(--t2);flex:1;line-height:1.35;">🎯 <b style="color:var(--t1);">Objectif manuel</b> — '+macros.calories.toLocaleString('fr-FR')+' kcal <span style="color:var(--t3);white-space:nowrap;">(auto : '+macros.autoCalories.toLocaleString('fr-FR')+')</span></span>'
-        +'<button onclick="openKcalEdit()" class="btn" style="width:auto;flex:none;padding:7px 12px;font-size:12.5px;background:var(--bg3);color:var(--t1);border:1px solid var(--sep);">Modifier</button></div>';
-    } else {
-      adj.innerHTML='<button onclick="openKcalEdit()" class="btn" style="width:100%;padding:11px;font-size:13.5px;background:var(--bg2);color:var(--t2);border:1px solid var(--sep);font-weight:700;">✎ Ajuster mes calories à la main</button>';
-    }
-  }
   document.getElementById('m-prot').textContent=macros.prot_g;
   document.getElementById('m-carbs').textContent=macros.carbs_g;
   document.getElementById('m-fat').textContent=macros.fat_g;
