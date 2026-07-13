@@ -1,4 +1,4 @@
-const CACHE = 'ft-v414'; // Bilan corporel photo : modele Haiku (rapide, la reponse revient avant qu'iOS coupe) + retry a la reception + diagnostic par phase (envoi/reception)
+const CACHE = 'ft-v415'; // Bilan corporel photo : image reduite a 1100px (~43Ko) + temps ecoule dans le message d'erreur (diagnostic timeout vs envoi)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
