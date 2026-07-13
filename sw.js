@@ -1,4 +1,4 @@
-const CACHE = 'ft-v405'; // Graphique poids/masse grasse/les 2 : periode par defaut = 1 semaine (chip "1 sem." ajoute)
+const CACHE = 'ft-v406'; // Nouvelle testeuse : tanna.valery.studio@gmail.com (statut Testeur Fondateur + premium a vie)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

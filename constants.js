@@ -225,7 +225,7 @@ const ADMIN_CODE='0115'; // code de secours (modifiable sur demande)
 // (carte dorée sur l'Accueil) + fonctions réservées à venir.
 // ⚠️ Emails en minuscules (comparaison via _isTester()). Reconnaissance « anti-curieux »
 //    côté client (comme le code admin) : suffisant pour une récompense cosmétique.
-const TESTER_EMAILS=['christophe@famillelanglois.fr','elineazs32@gmail.com','emma.david16@gmail.com'];
+const TESTER_EMAILS=['christophe@famillelanglois.fr','elineazs32@gmail.com','emma.david16@gmail.com','tanna.valery.studio@gmail.com'];
 // « Super testeur » : celui qui teste vraiment à fond → espace exclusif (analyse photos approfondie + boîte à idées remontée à Michel).
 // michdu75 y est aussi pour le suivi photos (accès via le panneau Admin) — mais PAS de carte « Testeur Fondateur » ni de message « Michel te remercie » (voir _isTester / checkSuperTesterWelcome).
 const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr','michdu75@gmail.com','emma.david16@gmail.com'];
