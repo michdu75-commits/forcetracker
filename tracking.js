@@ -430,7 +430,7 @@ function renderWeightTab(){
   const rangeEl=document.getElementById('weight-range');
   if(rangeEl){
     if(sorted.length<2)rangeEl.innerHTML='';
-    else rangeEl.innerHTML=[['1m','1 mois'],['3m','3 mois'],['6m','6 mois'],['all','Tout']]
+    else rangeEl.innerHTML=[['1w','1 sem.'],['1m','1 mois'],['3m','3 mois'],['6m','6 mois'],['all','Tout']]
       .map(function(r){return '<button class="wrange-chip'+(_wRange===r[0]?' active':'')+'" onclick="setWeightRange(\''+r[0]+'\')">'+r[1]+'</button>';}).join('');
   }
   // Ligne de navigation ◀ 🔍− [dates] 🔍+ ▶ (revenir dans le temps + zoomer le graphique)
@@ -482,10 +482,10 @@ function renderWeightTab(){
   if(chartEl)renderWeightChart(pts,chartEl,'kg');
   if(corrEl)renderWeightCorrelations(corrEl,pts);
 }
-let _wRange='all'; // préréglage actif : '1m' | '3m' | '6m' | 'all' | '' (zoom/pan custom)
-let _wSpanDays=null; // largeur de la fenêtre en jours (null = tout l'historique)
+let _wRange='1w'; // préréglage actif : '1w' | '1m' | '3m' | '6m' | 'all' | '' (zoom/pan custom) — défaut = 1 semaine
+let _wSpanDays=7; // largeur de la fenêtre en jours (null = tout l'historique) — défaut = 7 jours
 let _wEndOff=0;      // décalage du bord droit de la fenêtre (jours) vs aujourd'hui
-function setWeightRange(r){_wRange=r;_wSpanDays={'1m':30,'3m':90,'6m':180,'all':null}[r];_wEndOff=0;renderWeightTab();}
+function setWeightRange(r){_wRange=r;_wSpanDays={'1w':7,'1m':30,'3m':90,'6m':180,'all':null}[r];_wEndOff=0;renderWeightTab();}
 function _fmtWNav(d){const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});}
 function _wFullSpan(){let s=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];if(_wMetric==='bf'||_wMetric==='both'){const b=s.filter(p=>p.bf!=null);if(b.length>=2)s=b;}if(!s.length)return 1;const f=new Date(s[0].date+'T12:00:00'),n=new Date(today()+'T12:00:00');return Math.max(1,Math.round((n-f)/86400000));}
 function weightZoom(dir){

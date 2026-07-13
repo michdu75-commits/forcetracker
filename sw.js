@@ -1,4 +1,4 @@
-const CACHE = 'ft-v404'; // Annonce a tous : Milo coache comme un vrai coach (pop-up Quoi de neuf v14 + point rouge Coach + aides)
+const CACHE = 'ft-v405'; // Graphique poids/masse grasse/les 2 : periode par defaut = 1 semaine (chip "1 sem." ajoute)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
