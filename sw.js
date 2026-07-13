@@ -1,4 +1,4 @@
-const CACHE = 'ft-v428'; // Relais 4G : TOUS les appels IA routes via _aiUrl() (bilan, programme, historique, code-barres, etiquette, coach, morpho, etude du corps, bilan sanguin) — 12 au total, endormi (AI_PROXY_URL vide = prod identique)
+const CACHE = 'ft-v429'; // Test relais 4G/5G : le Worker Cloudflare (dry-field-e931) est branche UNIQUEMENT sur le CLONE (via __FT_CLONE__) pour validation ; PROD reste sur Apps Script (inerte)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

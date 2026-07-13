@@ -135,8 +135,10 @@ const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEk
 // Relais IA optionnel (Cloudflare Worker — voir worker.js / GUIDE-CLOUDFLARE.md). Il répond
 // DIRECT (sans la redirection Google qui casse en 4G/5G) et relaie vers Apps Script côté serveur.
 // VIDE = comportement actuel (Apps Script direct) → aucun changement tant que ce n'est pas rempli.
-// Une fois le Worker créé, coller son URL ici (ex. 'https://forcetracker-ia.xxxx.workers.dev').
-const AI_PROXY_URL='';
+// PHASE DE TEST (2026-07-13) : le relais est actif UNIQUEMENT sur le CLONE (window.__FT_CLONE__)
+// pour valider en 5G sans toucher la prod. La PROD reste sur Apps Script (vide) tant que ce n'est
+// pas validé. Une fois validé → mettre l'URL aussi pour la prod (retirer la condition __FT_CLONE__).
+const AI_PROXY_URL=(typeof window!=='undefined'&&window.__FT_CLONE__)?'https://dry-field-e931.forcetracker-app.workers.dev':'';
 // URL à utiliser pour les appels IA (photo/vision) : le relais s'il est configuré, sinon Apps Script.
 function _aiUrl(){ try{ if(typeof AI_PROXY_URL!=='undefined'&&AI_PROXY_URL) return AI_PROXY_URL; }catch(e){} return (typeof S!=='undefined'&&S&&S.url)?S.url:DEFAULT_URL; }
 const SET_TYPES=['N','É','X'];
