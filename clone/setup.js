@@ -3,7 +3,7 @@ let _progEx=BIG4[0];
 
 function _renderProgChips(chips){
   const exos=S.progExos||BIG4;
-  chips.innerHTML=exos.map((n,i)=>`<button onclick="selectProgEx('${n.replace(/'/g,"\\'")}',${i})" id="pchip-${i}" style="flex:1;min-width:0;padding:9px 6px;border-radius:14px;font-size:12px;font-weight:700;font-family:var(--font);border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t3);cursor:pointer;touch-action:manipulation;transition:all .18s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent;">${n}</button>`).join('')
+  chips.innerHTML=exos.map((n,i)=>`<button onclick="selectProgEx('${_escAttrJs(n)}',${i})" id="pchip-${i}" style="flex:1;min-width:0;padding:9px 6px;border-radius:14px;font-size:12px;font-weight:700;font-family:var(--font);border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t3);cursor:pointer;touch-action:manipulation;transition:all .18s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</button>`).join('')
   +`<button onclick="openProgExoEditor()" title="Personnaliser" style="flex-shrink:0;width:36px;border-radius:14px;border:none;background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);-webkit-tap-highlight-color:transparent;">✏️</button>`;
 }
 
@@ -11,11 +11,9 @@ function renderProgress(){
   switchProgTab('exo',document.getElementById('ptab-exo'));
   const chips=document.getElementById('big4-chips');
   if(chips)_renderProgChips(chips);
-  // Dropdown tous les autres exercices
-  const sel=document.getElementById('prog-sel');
-  const exos=S.progExos||BIG4;
-  const others=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].filter(n=>!exos.includes(n)).sort((a,b)=>a.localeCompare(b,'fr'));
-  sel.innerHTML=`<option value="">— Autre exercice… —</option>`+others.map(n=>`<option value="${n}">${n}</option>`).join('');
+  // Recherche d'exercice (remplace l'ancien dropdown déroulant)
+  const srch=document.getElementById('prog-search');if(srch)srch.value='';
+  const res=document.getElementById('prog-search-results');if(res)res.style.display='none';
   selectProgEx(_progEx);
   renderSessions();
   _updateProgCycleBanner();
@@ -32,9 +30,31 @@ function selectProgEx(name){
     c.style.color=active?'#fff':'var(--t3)';
     c.style.boxShadow=active?'0 4px 12px -4px rgba(239,62,87,.5)':'inset 0 0 0 1px rgba(255,255,255,.08)';
   });
-  const sel=document.getElementById('prog-sel');
-  if(sel&&exos.includes(name))sel.value='';
+  const srch=document.getElementById('prog-search');
+  if(srch&&exos.includes(name))srch.value='';   // exo dans les 4 chips → vide la recherche
   renderChart();
+}
+
+// ─── Recherche d'exercice dans Progrès (remplace le long dropdown) ──────────
+function _filterProgSearch(q){
+  const res=document.getElementById('prog-search-results');if(!res)return;
+  const qn=_naz((q||'').trim());
+  if(!qn){res.style.display='none';res.innerHTML='';return;}
+  const all=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].sort((a,b)=>a.localeCompare(b,'fr'));
+  const hits=all.filter(n=>_naz(n).includes(qn)).slice(0,30);
+  if(!hits.length){res.innerHTML=`<div style="padding:11px 13px;font-size:13px;color:var(--t3);">Aucun exercice trouvé</div>`;res.style.display='block';return;}
+  res.innerHTML=hits.map(n=>`<div onmousedown="event.preventDefault()" onclick="_pickProgSearch('${_escAttrJs(n)}')" style="padding:11px 13px;font-size:14px;color:var(--t1);cursor:pointer;border-bottom:1px solid var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</div>`).join('');
+  res.style.display='block';
+}
+function _pickProgSearch(name){
+  if(!name)return;
+  const srch=document.getElementById('prog-search');if(srch)srch.value=name;
+  const res=document.getElementById('prog-search-results');if(res){res.style.display='none';res.innerHTML='';}
+  selectProgEx(name);
+}
+function _blurProgSearch(){
+  // Ferme la liste après le tap (petit délai pour laisser le onmousedown/touch se déclencher)
+  setTimeout(()=>{const res=document.getElementById('prog-search-results');if(res)res.style.display='none';},200);
 }
 
 function openProgExoEditor(){
@@ -47,7 +67,6 @@ function openProgExoEditor(){
     el.onclick=e=>{if(e.target===el)el.classList.remove('open');};
     document.body.appendChild(el);
   }
-  const opts=all.map(n=>`<option value="${n}">${n}</option>`).join('');
   el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 28px;box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">`
     +`<div style="font-weight:800;font-size:15px;color:var(--t1);">Personnaliser les 4 exercices</div>`
@@ -55,10 +74,38 @@ function openProgExoEditor(){
     +`</div>`
     +exos.map((n,i)=>`<div style="margin-bottom:12px;">`
       +`<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;">Emplacement ${i+1}</div>`
-      +`<select onchange="_saveProgExoSlot(${i},this.value)" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:14px;font-family:var(--font);">${opts.replace(`value="${n}"`,`value="${n}" selected`)}</select>`
+      +`<button id="progslot-btn-${i}" onclick="_toggleProgSlot(${i})" style="width:100%;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:14px;font-family:var(--font);cursor:pointer;text-align:left;touch-action:manipulation;"><span>${_escNote(n)}</span><span style="color:var(--t3);margin-left:8px;">▾</span></button>`
+      +`<div id="progslot-box-${i}" style="display:none;margin-top:6px;">`
+        +`<input id="progslot-inp-${i}" type="text" autocomplete="off" oninput="_filterProgSlot(${i},this.value)" placeholder="🔍 Rechercher un exercice…" style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-family:var(--font);">`
+        +`<div id="progslot-res-${i}" style="max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;margin-top:4px;"></div>`
+      +`</div>`
       +`</div>`).join('')
     +`</div>`;
   el.classList.add('open');
+}
+// Ouvre/ferme la recherche d'un emplacement (un seul ouvert à la fois)
+function _toggleProgSlot(i){
+  const box=document.getElementById('progslot-box-'+i);if(!box)return;
+  const willOpen=box.style.display==='none';
+  (S.progExos||BIG4).forEach((_,j)=>{const b=document.getElementById('progslot-box-'+j);if(b)b.style.display='none';});
+  if(willOpen){
+    box.style.display='block';
+    _filterProgSlot(i,'');
+    const inp=document.getElementById('progslot-inp-'+i);if(inp){inp.value='';try{inp.focus();}catch(e){}}
+  }
+}
+// Filtre la liste d'un emplacement (insensible aux accents/majuscules) — tap scroll-safe (onclick)
+function _filterProgSlot(i,q){
+  const res=document.getElementById('progslot-res-'+i);if(!res)return;
+  const all=[...new Set([...EXLIB.map(e=>e.n),...(S.customExercises||[]).map(e=>e.n)])].sort((a,b)=>a.localeCompare(b,'fr'));
+  const qn=_naz((q||'').trim());
+  const hits=(qn?all.filter(n=>_naz(n).includes(qn)):all).slice(0,60);
+  res.innerHTML=hits.length?hits.map(n=>`<div onclick="_pickProgSlot(${i},'${_escAttrJs(n)}')" style="padding:11px 13px;font-size:14px;color:var(--t1);cursor:pointer;border-bottom:1px solid var(--sep);touch-action:manipulation;-webkit-tap-highlight-color:transparent;">${_escNote(n)}</div>`).join(''):`<div style="padding:11px 13px;font-size:13px;color:var(--t3);">Aucun exercice trouvé</div>`;
+}
+function _pickProgSlot(i,name){
+  if(!name)return;
+  _saveProgExoSlot(i,name);   // persiste + met à jour les 4 chips + la recherche de l'écran principal
+  openProgExoEditor();        // re-render : le bouton du slot affiche le nouveau nom, recherche refermée
 }
 
 function _saveProgExoSlot(idx,name){
@@ -101,7 +148,7 @@ function renderChart(){
   const pts=[];
   [...S.sessions].reverse().forEach(s=>{
     const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
-    const best=(ex.sets||[]).filter(s=>s.done!==false&&s.kg&&s.reps).reduce((b,s)=>{const r=bz(s.kg,s.reps);return r>(b?bz(b.kg,b.reps):0)?s:b;},null);
+    const best=(ex.sets||[]).filter(s=>s.done!==false&&s.kg&&s.reps&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>{const r=bz(s.kg,s.reps);return r>(b?bz(b.kg,b.reps):0)?s:b;},null);
     if(best)pts.push({date:s.date,kg:best.kg,reps:best.reps,rm1:bz(best.kg,best.reps)});
   });
   // Charge max RÉELLE soulevée (poids le plus lourd sur la barre) — distinct du 1RM estimé
@@ -109,12 +156,12 @@ function renderChart(){
   S.sessions.forEach(s=>{
     const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
     (ex.sets||[]).forEach(set=>{
-      if(set.done===false||!set.kg||!set.reps)return;
+      if(set.done===false||!set.kg||!set.reps||set.type==='É'||set.type==='W')return;
       if(!maxLoad||set.kg>maxLoad.kg||(set.kg===maxLoad.kg&&set.reps>maxLoad.reps))maxLoad={kg:set.kg,reps:set.reps};
     });
   });
   const pr=S.prs[name];const prStr=pr?fmt(pr.rm1)+' kg':'—';
-  if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${name}</span><span class="badge-gold">⭐ PR ${prStr}</span></div><div class="empty" style="padding:20px 0;">Aucune donnée — commence à logger !</div>`;return;}
+  if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div><div class="empty" style="padding:20px 0;">Aucune donnée — commence à logger !</div>`;return;}
   _chartPts=pts;
   const last=pts[pts.length-1],maxPt=pts.reduce((m,p)=>p.rm1>m.rm1?p:m,pts[0]);
   const delta=pts.length>1?fmt(last.rm1-pts[0].rm1):null;
@@ -142,7 +189,7 @@ function renderChart(){
   const prIdx=vals.indexOf(Math.max(...vals));
   const trend=pts.length>1?(pos?'📈 +':'📉 ')+fmt(last.rm1-pts[0].rm1)+' kg':'—';
   box.innerHTML=`
-<div class="chart-hdr" style="margin-bottom:16px;"><span class="chart-title">${name}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>
+<div class="chart-hdr" style="margin-bottom:16px;"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>
 <div style="display:flex;margin-bottom:16px;">
   <div style="flex:1;text-align:center;">
     <div style="font-family:var(--font-cond);font-size:25px;font-weight:900;color:var(--t1);line-height:1;">${fmt(last.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
@@ -159,7 +206,7 @@ function renderChart(){
 </div>
 ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 12px;margin-bottom:14px;font-size:13.5px;">
   <span style="color:var(--t2);font-weight:600;white-space:nowrap;">🏋️ Charge max soulevée</span>
-  <span style="white-space:nowrap;"><b style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--t1);">${fmt(maxLoad.kg)} kg</b> <span style="color:var(--t3);">× ${maxLoad.reps}</span> <span style="color:var(--t3);">→</span> <span style="color:var(--t2);font-weight:700;">~${fmt(bz(maxLoad.kg,maxLoad.reps))} kg 1RM</span></span>
+  <span style="white-space:nowrap;"><span style="color:var(--t3);">${maxLoad.reps} reps ×</span> <b style="font-family:var(--font-cond);font-size:16px;font-weight:900;color:var(--t1);">${fmt(maxLoad.kg)} kg</b> <span style="color:var(--t3);">→</span> <span style="color:var(--t2);font-weight:700;">~${fmt(bz(maxLoad.kg,maxLoad.reps))} kg 1RM</span></span>
 </div>`:''}
 <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;overflow:visible;">
   <defs>
@@ -191,7 +238,7 @@ function showChartTooltip(i){
   if(!hint)return;
   hint.textContent=new Date(p.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long'});
   if(rm)rm.textContent=fmt(p.rm1)+' kg 1RM';
-  if(set)set.textContent=p.kg+' kg × '+p.reps+' reps';
+  if(set)set.textContent=p.reps+' reps × '+p.kg+' kg';
   if(vals)vals.style.display='block';
 }
 // ─── SESSION DETAIL / EDIT ───────────────────────────────────
@@ -203,28 +250,40 @@ function _cloudSync(){
   fetch(S.url,{method:'POST',mode:'no-cors',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
-      action:'saveProfile',email:S.email,
+      action:'saveProfile',email:S.email,authCode:_authCode(),
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
-      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,nutritionPhase:S.nutritionPhase,
+      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
       histImports:S.histImports||0,
       bodyScanImports:S.bodyScanImports||0,
       coachMemory:S.coachMemory||'',
-      customExercises:S.customExercises||[],
-      exPhotos:S.exPhotos||{},
-      sessions:(S.sessions||[]).slice(0,100),
+      // Photos d'exercices = LOCAL SEULEMENT (n'alourdissent plus le store cloud de 9 Mo) :
+      // on envoie les exos perso SANS leur photo (img), et on n'envoie plus exPhotos du tout.
+      customExercises:(S.customExercises||[]).map(function(e){var c={};for(var k in e){if(k!=='img')c[k]=e[k];}return c;}),
+      sessions:(S.sessions||[]).slice(0,2000), // ~8-10 ans de seances — plus limite a 100 (historique complet sauvegarde)
       prs:S.prs||{},
-      weightLog:(S.weightLog||[]).slice(-365),
-      sleepLog:(S.sleepLog||[]).slice(-365),
+      weightLog:(S.weightLog||[]).slice(-4000), // historique complet (~11 ans de pesées quotidiennes) — entrées minuscules, pas seulement 1 an
+      sleepLog:(S.sleepLog||[]).slice(-4000),
       cycle:S.cycle||null,
       programmes:S.programmes||[],
       exRestPref:S.exRestPref||{},
       healthProfile:S.healthProfile||null,
       bodyStudy:S.bodyStudy||null,
-      bodyScans:(S.bodyScans||[]).slice(-60),
+      bodyStudies:S.bodyStudies||[],   // historique des études corporelles (persistance cloud active — backend déployé via CI 2026-07-11)
+      bodyScans:(S.bodyScans||[]).slice(-2000),
+      bloodTests:(S.bloodTests||[]).slice(-40),
+      coachQuiz:S.coachQuiz||null,
+      coachQuizPro:S.coachQuizPro||null,
+      scaleType:S.scaleType||'',
+      diet:S.diet||'',
+      dietRestrictions:S.dietRestrictions||[],
+      dietNotes:S.dietNotes||'',
+      foodLog:(S.foodLog||[]).slice(-8000), // ~journal nutrition sur plusieurs annees (entrees minuscules)
+      savedFoods:(S.savedFoods||[]).slice(0,200), // aliments favoris (re-ajout rapide)
+      foodAiUses:S.foodAiUses||0,
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
       leftHand:S.leftHand||false
@@ -276,13 +335,14 @@ function _updateSdMuscles(sess){
 function _renderSessDetailContent(){
   const el=document.getElementById('sd-content');
   if(!_sessEdits||!el)return;
-  el.innerHTML=(_sessEdits.exs||[]).map((ex,ei)=>{
+  let html=(_sessEdits.exs||[]).map((ex,ei)=>{
     const done=ex.sets.filter(s=>s.done);
     const maxRM=done.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
     return`<div class="card" style="margin-bottom:8px;padding:10px 12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${ex.note?'4':'8'}px">
-        <div style="font-weight:700;font-size:14px">${ex.name}</div>
+        <div style="font-weight:700;font-size:14px">${_escNote(ex.name)}</div>
         <div style="display:flex;gap:6px;flex-shrink:0;">
+          <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--gold)" onclick="openExHistory('${_escNote(ex.name).replace(/'/g,"\\'")}')" title="Voir mes perfs sur cet exercice">📊</button>
           <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--blue)" onclick="replaceSessEx(${ei})" title="Remplacer l'exercice">🔄</button>
           <button class="btn btn-bg2" style="padding:3px 10px;font-size:12px;color:var(--red)" onclick="deleteSessEx(${ei})">✕</button>
         </div>
@@ -292,20 +352,70 @@ function _renderSessDetailContent(){
       ${ex.sets.map((s,si)=>!s.done?'':`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
         <span style="font-size:11px;color:var(--t3);min-width:14px">${si+1}</span>
         <span style="font-size:11px;background:var(--bg3);padding:2px 5px;border-radius:4px;color:var(--t2);min-width:22px;text-align:center">${s.type||'N'}</span>
-        <input type="number" step="0.5" min="0" inputmode="decimal" value="${s.kg}"
-               style="width:58px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
-               onchange="updateSessSet(${ei},${si},'kg',+this.value)">
-        <span style="color:var(--t2);font-size:12px">kg ×</span>
         <input type="number" min="1" inputmode="numeric" value="${s.reps}"
                style="width:46px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
                onchange="updateSessSet(${ei},${si},'reps',+this.value)">
-        <span style="color:var(--t2);font-size:12px">reps</span>
+        <span style="color:var(--t2);font-size:12px">reps ×</span>
+        <input type="number" step="0.5" min="0" inputmode="decimal" value="${s.kg}"
+               style="width:58px;padding:6px 4px;font-size:14px;text-align:center;border:1px solid var(--bg3);border-radius:6px;background:var(--bg2);color:var(--t1)"
+               onchange="updateSessSet(${ei},${si},'kg',+this.value)">
+        <span style="color:var(--t2);font-size:12px">kg</span>
         ${s.kg&&s.reps?`<span style="font-size:12px;color:var(--t1);font-weight:600;margin-left:2px" title="1RM potentiel estimé de cette série">~${fmt(s.rm1||bz(s.kg,s.reps))}kg</span>`:''}
         <button class="btn btn-bg2" style="padding:3px 7px;font-size:11px;color:var(--red);margin-left:auto" onclick="deleteSessSet(${ei},${si})">✕</button>
       </div>`).join('')}
-      ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série</div>':''}
+      ${done.length===0?'<div style="font-size:12px;color:var(--t3);text-align:center;padding:4px 0">Aucune série — ajoutes-en une</div>':''}
+      <button class="btn btn-bg2" style="width:100%;margin-top:4px;padding:6px;font-size:12px;color:var(--t2)" onclick="addSessSet(${ei})">+ Ajouter une série</button>
     </div>`;
   }).join('');
+  // Ajouter un exercice oublié à cette séance passée
+  html+=`<button class="btn btn-bg2" style="width:100%;margin-bottom:10px;padding:11px;font-size:14px;font-weight:700;color:var(--red)" onclick="openSessAddEx()">+ Ajouter un exercice</button>`;
+  // Cardio de la séance
+  const c=_sessEdits.cardio||null;
+  const ckcal=(c&&c.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(c):0;
+  const selSty='padding:6px 8px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:13px;font-family:var(--font)';
+  html+=`<div class="card" style="margin-bottom:8px;padding:10px 12px">
+    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🏃 Cardio ${ckcal?`<span style="font-weight:600;font-size:12px;color:var(--green)">· ~${ckcal} kcal</span>`:'<span style="font-weight:500;font-size:12px;color:var(--t3)">(optionnel)</span>'}</div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <select onchange="setSessCardio('type',this.value)" style="${selSty}">
+        ${Object.keys(CARDIO_LABELS).map(t=>`<option value="${t}" ${(c?c.type:'elliptique')===t?'selected':''}>${CARDIO_LABELS[t]}</option>`).join('')}
+      </select>
+      <select onchange="setSessCardio('intensity',this.value)" style="${selSty}">
+        ${[['leger','Léger'],['modere','Modéré'],['intense','Intense']].map(([v,l])=>`<option value="${v}" ${(c?c.intensity:'modere')===v?'selected':''}>${l}</option>`).join('')}
+      </select>
+      <input type="number" min="0" max="300" inputmode="numeric" value="${c&&c.duration?c.duration:''}" placeholder="min" onchange="setSessCardio('duration',this.value)" style="width:56px;padding:6px 4px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:14px;text-align:center;font-family:var(--font)">
+      <span style="font-size:12px;color:var(--t3)">min</span>
+      ${c&&c.duration?`<button class="btn btn-bg2" style="padding:3px 9px;font-size:11px;color:var(--red)" onclick="setSessCardio('duration',0)">Retirer</button>`:''}
+    </div>
+  </div>`;
+  el.innerHTML=html;
+}
+function addSessSet(ei){
+  if(!_sessEdits||!_sessEdits.exs[ei])return;
+  const sets=_sessEdits.exs[ei].sets;
+  const last=sets.filter(s=>s.done).slice(-1)[0]||sets.slice(-1)[0];
+  sets.push({kg:last?last.kg:0,reps:last?last.reps:0,type:'N',done:true,rm1:0});
+  _renderSessDetailContent();
+}
+function openSessAddEx(){
+  if(!_sessEdits)return;
+  _exPickerMode='addSess';
+  openExPicker();
+  toast('Choisis l\'exercice à ajouter','info');
+}
+function _addSessExPick(name){
+  if(!_sessEdits)return;
+  if(!_sessEdits.exs)_sessEdits.exs=[];
+  _sessEdits.exs.push({name,sets:[{kg:0,reps:0,type:'N',done:true,rm1:0}]});
+  _renderSessDetailContent();
+  _updateSdMuscles(_sessEdits);
+  toast(name+' ajouté — remplis les séries puis Enregistre','info');
+}
+function setSessCardio(field,val){
+  if(!_sessEdits)return;
+  if(!_sessEdits.cardio)_sessEdits.cardio={type:'elliptique',intensity:'modere',duration:0};
+  _sessEdits.cardio[field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
+  if(field==='duration'&&!_sessEdits.cardio.duration)delete _sessEdits.cardio; // 0 → pas de cardio
+  _renderSessDetailContent();
 }
 
 function updateSessSet(ei,si,field,val){
@@ -371,6 +481,8 @@ function saveSessEdits(){
     }
   }));
   const calData=calcSessionCalories(_sessEdits);
+  const cardioKcal=(_sessEdits.cardio&&_sessEdits.cardio.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(_sessEdits.cardio):0;
+  if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
   _sessEdits.calories=calData.total;
   _sessEdits.calData=calData;
   S.sessions[idx]=_sessEdits;
@@ -408,8 +520,8 @@ function renderSessions(){
     // Étiquette : nom de la séance du programme si dispo, sinon muscle le plus travaillé
     let _topLbl='';{let _b='',_bv=0;const _sc=sc.sc||{};for(const g in _sc){if(_sc[g]>_bv){_bv=_sc[g];_b=g;}}if(_b&&_MG[_b])_topLbl=_MG[_b].label;}
     const _tag=s.progLabel?('🗂️ '+s.progLabel):(_topLbl?('💪 '+_topLbl):'');
-    const tagHtml=_tag?`<div style="font-size:11px;font-weight:700;color:var(--red);margin:1px 0 7px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_tag}</div>`:'';
-    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div>${tagHtml}<div style="display:flex;align-items:center;gap:8px;padding:0 10px 10px 0"><div class="sess-exs" style="flex:1;min-width:0">${exs||'—'}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
+    const tagHtml=_tag?`<div style="font-size:11px;font-weight:700;color:var(--red);margin:1px 0 7px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_escNote(_tag)}</div>`:'';
+    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer"><div class="sess-hdr"><span class="sess-date">${fmtD(s.date)}${sync}</span><span class="sess-vol">${Math.round(s.volume||0)}kg${cals}</span></div>${tagHtml}<div style="display:flex;align-items:center;gap:8px;padding:0 10px 10px 0"><div class="sess-exs" style="flex:1;min-width:0">${_escNote(exs)||'—'}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
   }).join('');
 }
 
@@ -448,7 +560,7 @@ function setGender(g){
 }
 function setWorkType(t){
   S.workType=t;persist();
-  ['bureau','debout','physique'].forEach(x=>{const el=document.getElementById('wt-'+x);if(el)el.classList.toggle('active',x===t);});
+  ['bureau','debout','actif','physique'].forEach(x=>{const el=document.getElementById('wt-'+x);if(el)el.classList.toggle('active',x===t);});
 }
 function setSmoker(v){
   S.smoker=v;persist();
@@ -827,6 +939,7 @@ const _BODY_SLOTS=[
   {key:'profil',     t:'Profil', d:'De côté (gauche ou droit), debout naturellement, bras le long du corps.'}
 ];
 let _bodyPhotos=[null,null,null,null];
+let _bsViewing=null; // bilan actuellement affiché (dernier par défaut, ou un bilan de l'historique)
 function openBodyStudy(){
   if(!S.premium){toast('Étude du corps réservée aux membres Premium ⭐','info');return;}
   _bodyPhotos=[null,null,null,null];
@@ -883,7 +996,19 @@ async function analyzeBodyStudy(){
     let data;try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON: '+txt.substring(0,120));}
     if(data.status!=='ok'||!data.data)throw new Error(data.error||'Erreur analyse');
     const d=data.data;d.date=today();
-    S.bodyStudy=d;persist();_cloudSyncDebounced();
+    S.bodyStudy=d;
+    // Historique : le plus récent en tête, un seul bilan par jour (relance le même jour = remplace), plafonné à 24
+    S.bodyStudies=S.bodyStudies||[];
+    S.bodyStudies=S.bodyStudies.filter(x=>x&&x.date!==d.date);
+    S.bodyStudies.unshift(d);
+    if(S.bodyStudies.length>24)S.bodyStudies=S.bodyStudies.slice(0,24);
+    _bsViewing=d;
+    persist();_cloudSyncDebounced();
+    // Photos gardées EN LOCAL uniquement (IndexedDB, jamais le cloud), pour les 4 derniers bilans
+    try{
+      const _ph={};_bodyPhotos.forEach((b,i)=>{if(b&&_BODY_SLOTS[i])_ph[_BODY_SLOTS[i].key]=b;});
+      if(Object.keys(_ph).length){await _bsPhotosSave(d.date,_ph);await _bsPhotosPrune((S.bodyStudies||[]).slice(0,_BS_KEEP).map(x=>x.date));}
+    }catch(e){}
     _renderBodyStudyReport(d,false);
     if(typeof checkBadges==='function')try{checkBadges(true);}catch(e){}
   }catch(e){
@@ -913,10 +1038,15 @@ function _renderBodyStudyReport(d,isRecall){
       return '<li style="margin-bottom:6px;"><b>'+nm+'</b>'+(list?' — '+list:'')+(why?'<div style="font-size:12px;color:var(--t3);">'+why+'</div>':'')+'</li>';
     }).join('');
   }else if(typeof d.exercises==='string'){exos='<li>'+esc(d.exercises)+'</li>';}
+  _bsViewing=d;   // mémorise le bilan affiché (pour l'export PDF)
+  const _isLatest=!(S.bodyStudy)||!d.date||d.date===S.bodyStudy.date;
   res.style.display='block';
   res.innerHTML=''
-    +(isRecall?'<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">📅 Dernier bilan du '+esc(d.date||'?')+' — relance une analyse pour le mettre à jour.</div>'
+    +(isRecall?'<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">📅 '+(_isLatest?'Dernier bilan':'Ancien bilan')+' du '+_bsFmtDate(d.date)+(_isLatest?' — relance une analyse pour le mettre à jour.':'.')+'</div>'
       :'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><div style="width:26px;height:26px;border-radius:50%;background:rgba(52,211,153,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span style="font-weight:800;font-size:14px;color:#5be3b4;">Bilan de ton corps</span></div>')
+    +((S.bodyStudies||[]).length>1?'<button onclick="_openBodyStudyHistory()" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;">📚 Historique — '+(S.bodyStudies.length)+' bilans</button>'
+      +(!_isLatest?'<button onclick="_viewBodyStudyAt(0)" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--blue);cursor:pointer;touch-action:manipulation;">‹ Revenir au dernier bilan</button>':''):'')
+    +'<div id="bs-photos"></div>'
     +_bsSection('🧍','Stature & posture',esc(d.stature))
     +_bsSection('🧬','Insertions musculaires',esc(d.insertions))
     +_bsSection('⚖️','Équilibre du corps',esc(d.balance),'var(--gold)')
@@ -926,13 +1056,200 @@ function _renderBodyStudyReport(d,isRecall){
     +_bsSection('⚕️','Santé prise en compte',esc(d.healthNotes),'#5BA8FF')
     +(d.summary?'<div style="margin-top:6px;padding:10px 12px;background:rgba(239,62,87,.08);border-radius:10px;font-size:13px;line-height:1.5;color:var(--t1);"><b>En résumé :</b> '+esc(d.summary)+'</div>':'')
     +'<div style="font-size:11px;color:var(--t3);margin-top:12px;line-height:1.4;">⚕️ Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou d\'un coach en personne.</div>'
-    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;padding:11px;font-size:13px;border-radius:12px;" onclick="_bodyStudyToCoach()">💬 En parler avec Milo</button>';
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;padding:11px;font-size:13px;border-radius:12px;" onclick="exportBodyStudyPdf()">📄 Exporter en PDF</button>'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:8px;padding:11px;font-size:13px;border-radius:12px;" onclick="_bodyStudyToCoach()">💬 En parler avec Milo</button>';
+  if(d.date)_bsInjectPhotos(d.date);   // charge les vignettes photo (async, local)
 }
 function _bodyStudyToCoach(){
   closeBodyStudy();
   try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
   const inp=document.getElementById('coach-inp');
   if(inp){inp.value='Explique-moi mon bilan corporel et propose-moi un plan pour rééquilibrer mon corps.';}
+}
+// ─── Historique des études corporelles ─────────────────────────────────────
+function _bsFmtDate(iso){ if(!iso)return '?'; const p=(''+iso).split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso; }
+async function _openBodyStudyHistory(){
+  const res=document.getElementById('body-result');if(!res)return;
+  const list=S.bodyStudies||[];
+  if(!list.length){toast('Aucun bilan enregistré','info');return;}
+  let photoDates=[];try{photoDates=await _bsPhotosDates();}catch(e){}
+  res.style.display='block';
+  res.innerHTML='<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:4px;">📚 Historique des bilans</div>'
+    +'<div style="font-size:11px;color:var(--t3);margin-bottom:12px;">Tape un bilan pour le revoir (et l\'exporter en PDF).</div>'
+    +(photoDates.length>=2?'<button onclick="_bsCompare()" style="width:100%;margin-bottom:12px;padding:11px;font-size:13px;font-weight:700;border-radius:12px;border:1px solid var(--sep);background:rgba(52,211,153,.10);color:#5be3b4;cursor:pointer;touch-action:manipulation;">📸 Comparer mon évolution (avant / après)</button>':'')
+    +list.map((d,i)=>{
+      const sum=(d.summary||d.balance||d.stature||'').toString();
+      const snip=sum.length>90?sum.slice(0,89)+'…':sum;
+      const hasPh=photoDates.indexOf(d.date)>=0;
+      return '<button onclick="_viewBodyStudyAt('+i+')" style="width:100%;text-align:left;margin-bottom:8px;padding:11px 12px;border-radius:12px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);cursor:pointer;touch-action:manipulation;">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:13px;">'+_bsFmtDate(d.date)+(hasPh?' <span title="Photos disponibles">📷</span>':'')+(i===0?' <span style="color:var(--green);font-size:11px;">· dernier</span>':'')+'</span><span style="color:var(--t3);font-size:16px;">›</span></div>'
+        +(snip?'<div style="font-size:12px;color:var(--t3);line-height:1.4;margin-top:3px;">'+_escNote(snip)+'</div>':'')
+        +'</button>';
+    }).join('');
+}
+function _viewBodyStudyAt(i){
+  const d=(S.bodyStudies||[])[i];if(!d)return;
+  _renderBodyStudyReport(d,true);
+  const res=document.getElementById('body-result');if(res)try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
+
+// ─── Photos Étude du corps — stockage LOCAL uniquement (IndexedDB, jamais le cloud) ──
+const _BS_IDB='ft_bodyphotos', _BS_STORE='photos', _BS_KEEP=4; // garde les photos des 4 derniers bilans
+const _BS_POSES=[{k:'face_relax',l:'Face relâché'},{k:'face_flex',l:'Face contracté'},{k:'back_flex',l:'Dos'},{k:'profil',l:'Profil'}];
+function _bsIdbOpen(){
+  return new Promise((res,rej)=>{
+    try{
+      const req=indexedDB.open(_BS_IDB,1);
+      req.onupgradeneeded=e=>{const db=e.target.result;if(!db.objectStoreNames.contains(_BS_STORE))db.createObjectStore(_BS_STORE,{keyPath:'date'});};
+      req.onsuccess=e=>res(e.target.result);
+      req.onerror=()=>rej(req.error);
+      setTimeout(()=>rej(new Error('idb timeout')),1500);
+    }catch(e){rej(e);}
+  });
+}
+function _bsPhotosSave(date,photos){ // photos = {face_relax,face_flex,back_flex,profil} en base64
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const tx=db.transaction(_BS_STORE,'readwrite');tx.objectStore(_BS_STORE).put({date,photos});tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);}catch(e){res(false);}
+  })).catch(()=>false);
+}
+function _bsPhotosGet(date){
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const g=db.transaction(_BS_STORE,'readonly').objectStore(_BS_STORE).get(date);g.onsuccess=()=>res(g.result?g.result.photos:null);g.onerror=()=>res(null);}catch(e){res(null);}
+  })).catch(()=>null);
+}
+function _bsPhotosDates(){
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const g=db.transaction(_BS_STORE,'readonly').objectStore(_BS_STORE).getAllKeys();g.onsuccess=()=>res(g.result||[]);g.onerror=()=>res([]);}catch(e){res([]);}
+  })).catch(()=>[]);
+}
+function _bsPhotosPrune(keepDates){ // supprime les photos des bilans hors des N derniers (place maîtrisée)
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const st=db.transaction(_BS_STORE,'readwrite').objectStore(_BS_STORE);const g=st.getAllKeys();g.onsuccess=()=>{(g.result||[]).forEach(k=>{if(keepDates.indexOf(k)<0)try{st.delete(k);}catch(e){}});res(true);};g.onerror=()=>res(false);}catch(e){res(false);}
+  })).catch(()=>false);
+}
+// Injecte les vignettes photo dans le bilan affiché (async — IDB)
+function _bsInjectPhotos(date){
+  const el=document.getElementById('bs-photos');if(!el)return;
+  _bsPhotosGet(date).then(photos=>{
+    const el2=document.getElementById('bs-photos');if(!el2)return;
+    if(!photos){el2.innerHTML='';return;}
+    const thumbs=_BS_POSES.filter(p=>photos[p.k]).map(p=>
+      '<div style="text-align:center;"><img src="data:image/jpeg;base64,'+photos[p.k]+'" onclick="_viewBsPhoto(\''+date+'\',\''+p.k+'\')" style="width:62px;height:80px;object-fit:cover;border-radius:8px;border:1px solid var(--sep);cursor:zoom-in;"><div style="font-size:9px;color:var(--t3);margin-top:2px;">'+p.l+'</div></div>').join('');
+    el2.innerHTML=thumbs?('<div style="font-size:11px;color:var(--t3);margin-bottom:6px;">📷 Tes photos (sur ton téléphone) — tape pour agrandir :</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">'+thumbs+'</div>'):'';
+  }).catch(()=>{});
+}
+// Visionneuse plein écran d'une photo corporelle
+function _bsViewFull(b64,title){
+  let ov=document.getElementById('ov-bs-photo');
+  if(!ov){ov=document.createElement('div');ov.id='ov-bs-photo';ov.className='overlay';ov.style.zIndex='600';ov.onclick=e=>{if(e.target===ov)ov.classList.remove('open');};document.body.appendChild(ov);}
+  ov.innerHTML='<div class="modal" style="max-width:94vw;padding:14px;text-align:center;">'
+    +'<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:10px;">'+_escNote(title||'')+'</div>'
+    +'<img src="data:image/jpeg;base64,'+b64+'" style="max-width:100%;max-height:74vh;border-radius:12px;display:block;margin:0 auto;">'
+    +'<button class="btn btn-bg2" style="width:100%;margin-top:12px;" onclick="document.getElementById(\'ov-bs-photo\').classList.remove(\'open\')">Fermer</button>'
+    +'</div>';
+  ov.classList.add('open');
+}
+function _viewBsPhoto(date,key){
+  _bsPhotosGet(date).then(photos=>{ if(photos&&photos[key])_bsViewFull(photos[key],_bsFmtDate(date)+' · '+((_BS_POSES.find(p=>p.k===key)||{}).l||'')); });
+}
+// Comparaison visuelle avant/après : plus ancien bilan avec photos vs plus récent
+async function _bsCompare(){
+  const res=document.getElementById('body-result');if(!res)return;
+  const dates=(await _bsPhotosDates()).slice().sort(); // croissant YYYY-MM-DD
+  if(dates.length<2){toast('Il faut au moins 2 bilans avec photos pour comparer','info');return;}
+  const dA=dates[0], dB=dates[dates.length-1];
+  const [pA,pB]=await Promise.all([_bsPhotosGet(dA),_bsPhotosGet(dB)]);
+  if(!pA||!pB){toast('Photos indisponibles','error');return;}
+  const cell=(b64,date,key)=>b64
+    ? '<img src="data:image/jpeg;base64,'+b64+'" onclick="_viewBsPhoto(\''+date+'\',\''+key+'\')" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;border:1px solid var(--sep);cursor:zoom-in;">'
+    : '<div style="width:100%;aspect-ratio:3/4;border-radius:8px;border:1px dashed var(--sep);display:flex;align-items:center;justify-content:center;color:var(--t3);font-size:10px;">—</div>';
+  res.style.display='block';
+  res.innerHTML='<div style="font-weight:800;font-size:14px;color:var(--t1);margin-bottom:4px;">📸 Évolution — avant / après</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--t2);text-align:center;"><div>'+_bsFmtDate(dA)+'</div><div>'+_bsFmtDate(dB)+'</div></div>'
+    +_BS_POSES.filter(p=>pA[p.k]||pB[p.k]).map(p=>
+      '<div style="margin-bottom:12px;"><div style="font-size:11px;color:var(--t3);margin-bottom:4px;">'+p.l+'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+cell(pA[p.k],dA,p.k)+cell(pB[p.k],dB,p.k)+'</div></div>').join('')
+    +'<button onclick="_openBodyStudyHistory()" style="width:100%;margin-top:4px;padding:11px;font-size:13px;font-weight:700;border-radius:12px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;">‹ Retour à l\'historique</button>';
+  try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
+// Nettoie un texte pour le PDF (helvetica gère les accents mais pas les emojis/flèches)
+function _bsPdfClean(s){
+  s=(s==null?'':(''+s)).replace(/→/g,'->').replace(/←/g,'<-').replace(/[’]/g,"'");
+  s=s.replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE00}-\u{FE0F}\u{200D}\u{2190}-\u{21FF}\u{2300}-\u{23FF}]/gu,'');
+  return s.replace(/[ \t]{2,}/g,' ').trim();
+}
+// Export PDF propre du bilan « Étude du corps » (même moteur jsPDF que le Coach / les programmes).
+async function exportBodyStudyPdf(){
+  const d=_bsViewing||S.bodyStudy;   // le bilan affiché (dernier OU un bilan de l'historique)
+  if(!d){toast('Aucun bilan à exporter','error');return;}
+  toast('Génération du PDF…','info');
+  try{ await _loadJsPdf(); }
+  catch(e){ toast('PDF indisponible ici','error'); return; }
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=48;
+    const dt=new Date();
+    // Date affichée = celle du bilan (JJ/MM/AAAA) si connue, sinon aujourd'hui
+    const dispDate=(d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date))?d.date.split('-').reverse().join('/'):dt.toLocaleDateString('fr-FR');
+    const logo=await _loadLogoDataURL();
+    let hx=M;
+    if(logo){ try{ doc.addImage(logo,'PNG',M,24,36,36); hx=M+46; }catch(e){} }
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,42);
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Étude du corps',hx,57);
+    doc.setFontSize(9);doc.text(dispDate+(S.name?(' · '+S.name):''),W-M,42,{align:'right'});
+    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,68,W-M,68);
+    let y=90;const lh=15;
+    const ensure=sp=>{ if(y>H-64-(sp||0)){doc.addPage();y=56;} };
+    const section=(title,body)=>{
+      body=_bsPdfClean(body); if(!body)return;
+      ensure(34);
+      doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(20);
+      doc.text(title,M,y); y+=6+lh;
+      doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(45);
+      doc.splitTextToSize(body,W-2*M).forEach(l=>{ ensure(lh); doc.text(l,M,y); y+=lh; });
+      y+=9;
+    };
+    section('Stature & posture',d.stature);
+    section('Insertions musculaires',d.insertions);
+    section('Équilibre du corps',d.balance);
+    section('Points forts',d.strengths);
+    section('Points à travailler',d.weaknesses);
+    // Exercices suggérés (liste structurée ou texte)
+    let exText='';
+    if(Array.isArray(d.exercises)&&d.exercises.length){
+      exText=d.exercises.map(x=>{
+        if(typeof x==='string')return '- '+x;
+        const nm=(x.zone||x.muscle||'');
+        const list=Array.isArray(x.exercises)?x.exercises.join(', '):(x.exercises||x.exos||'');
+        const why=(x.why||x.reason||'');
+        return '- '+nm+(list?' : '+list:'')+(why?'\n   ('+why+')':'');
+      }).join('\n');
+    }else if(typeof d.exercises==='string'){exText=d.exercises;}
+    section('Exercices suggérés',exText);
+    section('Santé prise en compte',d.healthNotes);
+    if(d.summary)section('En résumé',d.summary);
+    // Pied de page sur toutes les pages : contact + disclaimer + numéro
+    const pages=doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setLineWidth(.5);doc.setDrawColor(210);doc.line(M,H-38,W-M,H-38);
+      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-26);
+      doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(160);doc.text('Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou coach.',M,H-16);
+      doc.setTextColor(150);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('Page '+i+'/'+pages,W-M,H-16,{align:'right'});
+    }
+    const fname='etude-du-corps-'+((d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date))?d.date:dt.toISOString().slice(0,10))+'.pdf';
+    const blob=doc.output('blob');
+    const file=new File([blob],fname,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file],title:'Étude du corps — Force Tracker'}); return; }
+      catch(err){ if(err&&err.name==='AbortError')return; }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=fname;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1500);
+    toast('PDF enregistré 📄','success');
+  }catch(e){ console.warn('[FT bodystudy pdf]',e); toast('Souci PDF','error'); }
 }
 
 // ─── SUIVI PHOTOS (Super Testeur) — séries mensuelles comparées ──
@@ -1052,6 +1369,7 @@ async function analyzeBodySeries(){
   if(_bserCountThisMonth()>=_BSER_MONTHLY_LIMIT){toast('Limite de 4 séries/mois atteinte','info');return;}
   const btn=document.getElementById('bser-analyze-btn');
   if(btn){btn.textContent='⏳ Analyse…';btn.disabled=true;}
+  showMorphoLoading(_bserPhotos);
   const prev=(S.bodySeries||[]).filter(s=>s.photos&&s.photos.length).slice(-1)[0]||null;
   try{
     const images=_bserPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:_BODY_SLOTS[i].key}:null).filter(Boolean);
@@ -1077,9 +1395,11 @@ async function analyzeBodySeries(){
     S.bodySeries.forEach((s,idx)=>{ if(idx<S.bodySeries.length-2)s.photos=[]; });
     persist();
     _bserPhotos=[null,null,null,null];
+    hideMorphoLoading();
     _bserReportIdx=S.bodySeries.length-1; _bserView='report'; _renderBodySeries();
     if(typeof checkBadges==='function')try{checkBadges(true);}catch(e){}
   }catch(e){
+    hideMorphoLoading();
     toast('Erreur analyse : '+e.message,'error');
     if(btn){btn.textContent='🔍 Analyser cette série';btn.disabled=false;}
   }
@@ -1140,17 +1460,18 @@ function renderBFCard(){
   </div>`;
 }
 
-const GOAL_LABELS={muscle:'Prise de muscle',perte:'Perte de poids',force:'Force maximale',equilibre:'Rééquilibrage',endurance:'Endurance'};
+const GOAL_LABELS={muscle:'Prise de muscle',perte:'Perte de poids',recomp:'Perte de gras + muscle',force:'Force maximale',equilibre:'Rééquilibrage',endurance:'Endurance'};
 const GOAL_DESCS={
   muscle:'Surplus de +350 kcal · Protéines 2.2 g/kg · Macros orientées hypertrophie avec charge glucidique.',
   perte:'Déficit de −450 kcal · Protéines 2.5 g/kg (préservation musculaire) · Glucides réduits, satiété maximale.',
+  recomp:'Recomposition : léger déficit −250 kcal · Protéines très élevées 2.6 g/kg → perdre du gras tout en gardant/formant du muscle (éviter le « skinny fat »). Idéal muscles toniques.',
   force:'Surplus léger +200 kcal · Protéines 2.0 g/kg · Lipides élevés pour le support hormonal, énergie maximale.',
   equilibre:'Maintenance calorique · Protéines 2.0 g/kg · Améliorer la composition corporelle sans prise/perte de masse.',
   endurance:'Surplus modéré +100 kcal · Protéines 1.7 g/kg · Glucides élevés pour le glycogène musculaire.',
 };
 function setGoal(g){
   S.goal=g;persist();
-  ['muscle','perte','force','equilibre','endurance'].forEach(x=>{
+  ['muscle','perte','recomp','force','equilibre','endurance'].forEach(x=>{
     const el=document.getElementById('g-'+x);if(el)el.classList.toggle('active',x===g);
   });
   const el=document.getElementById('goal-desc');
@@ -1280,7 +1601,7 @@ function _renderProfileCompletion(){
     nudge='<b>Profil complet 💪</b> — Milo, ton coach IA, est au top et tout est ultra précis.';
   }else{
     const miss=c.missing.slice(0,4).join(', ')+(c.missing.length>4?'…':'');
-    nudge='Complète-le pour un <b>Coach IA (Milo) au top</b> et des calculs précis.<br><span style="color:var(--t3);font-size:11.5px;">À ajouter : '+miss+'</span>';
+    nudge='<b>Prends le temps de bien le remplir 📋</b> — plus il est complet, plus <b>Milo te connaît</b> et plus ses conseils (et tes calculs) sont VRAIMENT faits pour toi.<br><span style="color:var(--t3);font-size:11.5px;">Encore à ajouter : '+miss+'</span>';
   }
   el.innerHTML=
     '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">'
@@ -1341,11 +1662,15 @@ function renderSetup(){
   const hipEl=document.getElementById('hip-inp');if(hipEl)hipEl.value=S.hip||'';
   const bdayEl=document.getElementById('bday-inp');if(bdayEl)bdayEl.value=S.bday||'';
   renderCycleProfileCard();
+  // Objectif « Perte de gras + muscle » (recomposition) réservé aux testeurs pour l'instant
+  const _gr=document.getElementById('g-recomp');
+  if(_gr)_gr.style.display=((typeof _isNutriBeta==='function')&&_isNutriBeta())?'':'none';
   setGoal(S.goal||'muscle');
   setDiscipline(S.discipline||'muscu');
   _renderLevelSel();
   renderBFCard();
   _renderProfileCompletion();
+  try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
   _renderMorphoSection();
   _renderHealthSection();
   _applyA11y();
@@ -1442,6 +1767,7 @@ function _applyRestoreData(raw){
   try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}
   try{if(d.neck)S.neck=parseFloat(d.neck)||0;}catch(e){}
   try{if(d.targetWeight)S.targetWeight=parseFloat(d.targetWeight)||0;}catch(e){}
+  try{if(d.manualKcal)S.manualKcal=parseFloat(d.manualKcal)||0;}catch(e){}
   try{if(d.waist)S.waist=parseFloat(d.waist)||0;}catch(e){}
   try{if(d.hip)S.hip=parseFloat(d.hip)||0;}catch(e){}
   try{if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;}catch(e){}
@@ -1455,7 +1781,18 @@ function _applyRestoreData(raw){
   try{if(d.bday)S.bday=d.bday;}catch(e){}
   try{if(d.healthProfile)S.healthProfile=d.healthProfile;}catch(e){console.warn('[FT restore] healthProfile',e);}
   try{if(d.bodyStudy)S.bodyStudy=d.bodyStudy;}catch(e){console.warn('[FT restore] bodyStudy',e);}
+  try{if(Array.isArray(d.bodyStudies)&&d.bodyStudies.length)S.bodyStudies=d.bodyStudies;}catch(e){console.warn('[FT restore] bodyStudies',e);}
   try{if(Array.isArray(d.bodyScans)&&d.bodyScans.length>=(S.bodyScans||[]).length)S.bodyScans=d.bodyScans;}catch(e){console.warn('[FT restore] bodyScans',e);}
+  try{if(Array.isArray(d.bloodTests)&&d.bloodTests.length>=(S.bloodTests||[]).length)S.bloodTests=d.bloodTests;}catch(e){console.warn('[FT restore] bloodTests',e);}
+  try{if(d.coachQuiz&&d.coachQuiz.answers&&!(S.coachQuiz&&S.coachQuiz.done))S.coachQuiz=d.coachQuiz;}catch(e){console.warn('[FT restore] coachQuiz',e);}
+  try{if(d.coachQuizPro&&d.coachQuizPro.answers&&!(S.coachQuizPro&&S.coachQuizPro.done))S.coachQuizPro=d.coachQuizPro;}catch(e){console.warn('[FT restore] coachQuizPro',e);}
+  try{if(d.scaleType&&!S.scaleType)S.scaleType=d.scaleType;}catch(e){console.warn('[FT restore] scaleType',e);}
+  try{if(d.diet&&!S.diet)S.diet=d.diet;}catch(e){}
+  try{if(Array.isArray(d.dietRestrictions)&&d.dietRestrictions.length&&!(S.dietRestrictions||[]).length)S.dietRestrictions=d.dietRestrictions;}catch(e){}
+  try{if(d.dietNotes&&!(S.dietNotes||'').trim())S.dietNotes=d.dietNotes;}catch(e){}
+  try{if(Array.isArray(d.foodLog)&&d.foodLog.length>=(S.foodLog||[]).length)S.foodLog=d.foodLog;}catch(e){console.warn('[FT restore] foodLog',e);}
+  try{if(Array.isArray(d.savedFoods)&&d.savedFoods.length)S.savedFoods=d.savedFoods;}catch(e){console.warn('[FT restore] savedFoods',e);}
+  try{if(typeof d.foodAiUses==='number')S.foodAiUses=Math.max(S.foodAiUses||0,d.foodAiUses);}catch(e){}
   try{if(d.a11y!==undefined)S.a11y=!!d.a11y;}catch(e){}
   try{if(d.colorblind!==undefined)S.colorblind=d.colorblind||'';}catch(e){}
   try{if(d.leftHand!==undefined)S.leftHand=!!d.leftHand;}catch(e){}
@@ -1467,14 +1804,21 @@ function _applyRestoreData(raw){
   // Import journal : garder le compteur le plus élevé (local vs cloud) — évite de re-gagner un import gratuit après purge
   try{if(d.histImports!==undefined)S.histImports=Math.max(S.histImports||0,parseInt(d.histImports)||0);}catch(e){}
   try{if(d.bodyScanImports!==undefined)S.bodyScanImports=Math.max(S.bodyScanImports||0,parseInt(d.bodyScanImports)||0);}catch(e){}
-  try{if(d.customExercises&&d.customExercises.length)S.customExercises=d.customExercises;}catch(e){console.warn('[FT restore] customEx',e);}
-  try{if(d.exPhotos&&Object.keys(d.exPhotos).length)S.exPhotos={...(S.exPhotos||{}),...d.exPhotos};}catch(e){console.warn('[FT restore] exPhotos',e);}
+  // customExercises restauré depuis le cloud SANS photo (local-only) → on réinjecte la photo locale
+  // si on l'a encore (même exo par nom) pour ne perdre aucune photo sur le même appareil.
+  try{if(d.customExercises&&d.customExercises.length){
+    const _li={}; (S.customExercises||[]).forEach(function(e){if(e&&e.img)_li[e.n]=e.img;});
+    S.customExercises=d.customExercises.map(function(e){var c={};for(var k in e){c[k]=e[k];} if(!c.img&&_li[c.n])c.img=_li[c.n]; return c;});
+  }}catch(e){console.warn('[FT restore] customEx',e);}
+  // exPhotos = local-only : on garde ce qui est sur le téléphone (le cloud n'en a plus). Fusion si vieux cloud en a encore.
+  try{if(d.exPhotos&&Object.keys(d.exPhotos).length)S.exPhotos={...(d.exPhotos),...(S.exPhotos||{})};}catch(e){console.warn('[FT restore] exPhotos',e);}
   // PRs — prend le plus complet
   try{if(prs&&Object.keys(prs).length&&(!S.prs||!Object.keys(S.prs).length)){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}else if(prs&&Object.keys(prs).length>Object.keys(S.prs||{}).length){S.prs=prs;console.log('[FT restore] prs cloud plus complet:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
   // Sessions — prend le plus complet
   try{if(sessions&&sessions.length&&(!S.sessions||S.sessions.length===0)){S.sessions=sessions;console.log('[FT restore] sessions:',sessions.length);}else if(sessions&&sessions.length>0&&S.sessions&&sessions.length>S.sessions.length){S.sessions=sessions;console.log('[FT restore] sessions cloud plus complet:',sessions.length);}}catch(e){console.warn('[FT restore] sessions',e);}
-  try{if(weightLog&&weightLog.length)S.weightLog=weightLog;}catch(e){}
-  try{if(sleepLog&&sleepLog.length)S.sleepLog=sleepLog;}catch(e){}
+  // Poids / sommeil — prend le plus complet (un cloud plus petit ne doit JAMAIS écraser un local plus fourni)
+  try{if(weightLog&&weightLog.length>=(S.weightLog||[]).length)S.weightLog=weightLog;}catch(e){}
+  try{if(sleepLog&&sleepLog.length>=(S.sleepLog||[]).length)S.sleepLog=sleepLog;}catch(e){}
   try{if(raw&&raw.cycle)S.cycle=raw.cycle;}catch(e){}
   // Programmes — local-first
   try{if(raw&&raw.programmes&&raw.programmes.length&&(!S.programmes||!S.programmes.length)){S.programmes=raw.programmes;console.log('[FT restore] programmes:',raw.programmes.length);}}catch(e){console.warn('[FT restore] programmes',e);}
@@ -1495,11 +1839,20 @@ function _applyRestoreData(raw){
 }
 
 async function _fetchRestoreRaw(email){
-  const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email})});
+  const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email,authCode:_authCode()})});
   const txt=await resp.text();
   let data;
   try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON : '+txt.substring(0,120));}
   return data;
+}
+
+// Restauration : l'utilisateur saisit son code perso → on le mémorise localement et on relance.
+function _restoreSubmitCode(){
+  const c=document.getElementById('restore-code-inp');
+  const code=(c?c.value:'').trim();
+  if(!code){toast('Entre ton code','error');return;}
+  _setAuthCode(code);            // mémorisé sur l'appareil ; sera envoyé par _fetchRestoreRaw
+  doRestoreAccount();            // relance → si le code est bon, la restauration s'applique
 }
 
 function openRestoreAccount(){
@@ -1527,6 +1880,23 @@ async function doRestoreAccount(){
     // PULL-ONLY : on lit, on ne pousse rien avant
     const data=await _fetchRestoreRaw(email);
     console.log('[FT restore] raw server response',JSON.stringify(data).substring(0,500));
+
+    // Compte protégé par un code perso → demander le code (et réessayer)
+    if(data&&data.error==='auth'){
+      const hadCode=!!_authCode();
+      if(hadCode)_setAuthCode('');           // le code tenté était faux → on l'enlève
+      S.email=email;
+      if(st){
+        st.style.display='block';st.style.color='var(--orange)';
+        st.innerHTML=(hadCode?'❌ Code incorrect. ':'🔒 Ce compte est protégé. ')+'Entre ton code perso&nbsp;:'
+          +'<input type="password" inputmode="numeric" id="restore-code-inp" placeholder="Ton code" autocomplete="off" '
+          +'style="margin-top:8px;width:100%;box-sizing:border-box;padding:10px 12px;border:1.5px solid var(--orange);border-radius:10px;background:var(--bg2);color:var(--t1);font-size:16px;">'
+          +'<button onclick="_restoreSubmitCode()" style="margin-top:8px;width:100%;padding:11px;border:none;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer;">Valider le code</button>';
+        setTimeout(()=>{const c=document.getElementById('restore-code-inp');if(c){c.focus();c.addEventListener('keydown',e=>{if(e.key==='Enter')_restoreSubmitCode();});}},120);
+      }
+      if(btn){btn.disabled=false;btn.textContent='🔄 Restaurer';}
+      return;
+    }
 
     if(!data||data.status==='not_found'||data.error){
       const msg=data&&data.error?data.error:'Aucun profil trouvé pour cet email.';
@@ -1613,7 +1983,7 @@ async function debugRestore(){
   if(!S.email){toast('Pas d\'email configuré','error');return;}
   toast('Test API en cours…','info');
   try{
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email,authCode:_authCode()})});
     const txt=await resp.text();
     console.log('[FT debug restore]',txt);
     toast('Réponse API : '+txt.substring(0,80),'info');
@@ -1648,7 +2018,7 @@ async function debugPremiumCheck(){
   }
   try{
     // 1. check loadProfile (POST) — résultat premium
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email})});
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'loadProfile',email:S.email,authCode:_authCode()})});
     const txt=await r.text();
     let d=null;try{d=JSON.parse(txt);}catch(_){}
     const srvPrem=d&&d.premium===true;

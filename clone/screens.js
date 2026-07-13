@@ -127,6 +127,7 @@ const _HELP_DATA={
   home:{
     title:'🏠 Accueil',
     tips:[
+      {i:'📅',t:'Le calendrier de ton mois : tes jours de séance sont en rouge, les jours de RECORD cerclés en or 🏆. Les flèches ‹ › changent de mois, et tu peux taper une semaine pour voir le détail jour par jour.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'😴',t:'Le score de récupération vient du check-in post-séance (sommeil + énergie). Remplis-le après chaque séance pour un suivi fiable.'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
@@ -168,6 +169,12 @@ const _HELP_DATA={
       {i:'💊',t:'Suppléments : créatine (phases charge/entretien) et whey dosés selon ton poids. Combinaisons Premium : 4 stacks complets (muscle, force, cardio, perte de poids).'},
       {i:'🔥',t:'Les calories brûlées au cardio (bloc cardio dans ta séance) s\'ajoutent à ton TDEE estimé du jour.'},
       {i:'🍽️',t:'Le plan de repas détaillé (5 repas) est généré depuis tes macros — adapté à ta phase et ton objectif.'},
+      {i:'📓',t:'Onglet Journal : note ce que tu manges dans la journée et compare aux objectifs. 3 façons d\'ajouter un aliment : saisie à la main (gratuit, illimité), 🤖 estimation IA (décris ton repas, l\'IA remplit les calories — 25 gratuites, illimité en Premium), ou par code-barres (produit reconnu via une base mondiale, ajuste la quantité en grammes).'},
+      {i:'📷',t:'Code-barres : tape les chiffres écrits sous le code (gratuit) OU appuie sur « 📷 Photographier le code-barres » et prends-le en photo — l\'IA lit le numéro pour toi (utile si les chiffres sont petits/abîmés). La lecture photo utilise 1 essai IA ; ensuite la recherche du produit et le score santé restent gratuits.'},
+      {i:'🥗',t:'Score santé : au code-barres d\'un produit, tu vois son Nutri-Score (A à E) et son niveau de transformation (brut ou ultra-transformé). Gratuit pour tout le monde, sans crédit IA. Pratique pour repérer d\'un coup d\'œil ce qui est sain.'},
+      {i:'📥',t:'Tu as un plan de ta diététicienne ? Bouton « Importer un plan » (Plan de repas IA) : prends-le en photo ou importe le PDF, l\'IA range les repas.'},
+      {i:'🎯',t:'Calories trop hautes ou trop basses pour toi ? Sous l\'anneau, bouton « ✎ Ajuster mes calories » : tape ton chiffre à la main. Les protéines et lipides restent calés sur ton profil, les glucides s\'ajustent → équilibre garanti. « Revenir en automatique » à tout moment.'},
+      {i:'💪',t:'Objectif « Perte de gras + muscle » (Profil → Objectif) = recomposition : léger déficit + protéines élevées → perdre du gras sans perdre de muscle (muscles toniques, pas « skinny fat »).'},
     ],
     female:[
       {i:'🌙',t:'Tes macros s\'adaptent automatiquement : plus de glucides en folliculaire (énergie haute), légère hausse en lutéale.'},
@@ -181,7 +188,7 @@ const _HELP_DATA={
       {i:'💪',t:'Le graphique affiche ton 1RM estimé (Brzycki) par exercice — sans avoir besoin de tester à l\'échec.'},
       {i:'⚖️',t:'Log ton poids régulièrement (idéalement le matin à jeun) pour une courbe fiable. Tap sur une entrée pour la corriger.'},
       {i:'🏅',t:'18 badges en 4 catégories : évolution, performance, streak, spécial. Vérifie l\'onglet Badges pour les débloquer.'},
-      {i:'📋',t:'Tap sur une séance passée dans l\'historique pour voir et modifier les kg/reps de chaque série.'},
+      {i:'📋',t:'Tap sur une séance passée dans l\'historique pour voir et modifier les kg/reps de chaque série. Sur chaque exercice de cette séance, l\'icône 📊 t\'ouvre sa progression (ton poids sur les dernières séances).'},
       {i:'📉',t:'Un plateau sur plusieurs semaines est normal — le progrès n\'est jamais linéaire. Varie les charges et les volumes.'},
       {i:'🧪',t:'Bilan corporel (balance pro) : sous ta courbe de poids, section « Bilan corporel ». Tu passes sur une balance à impédance ? Enregistre tes chiffres (graisse viscérale, muscle, métabolisme, détail par segment…) par 📷 photo, ✏️ à la main ou 📋 code. Le bilan sert aussi de pesée du jour (poids + masse grasse), tu suis l\'évolution, et Milo s\'en sert.'},
     ],
@@ -196,6 +203,8 @@ const _HELP_DATA={
       {i:'🔤',t:'Tags de série : É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. Appuie sur la pastille pour changer, le nom complet s\'affiche en toast.'},
       {i:'⏱️',t:'Timer adaptatif : É = 45s · N = 2:10 · X = 4min. Boutons −15s/+15s et presets 1:00/1:30/2:00.'},
       {i:'⚡',t:'Super-séries : bouton "⚡ Grouper" dès 2 exercices → sélectionne-les → "Lier en supersérie". Enchaînement automatique sans repos. Boutons 📉 Drop / 📈 +10% / 📉 −10% pour pyramides et drop sets.'},
+      {i:'🔁',t:'« maxi » : dans l\'éditeur de programme, touche le bouton « max » à côté des reps d\'une série pour viser le maximum de répétitions (au lieu d\'un chiffre exact). En séance, la case affiche « max » et tu notes ce que tu as vraiment fait.'},
+      {i:'✋',t:'Superset au doigt : sur un exercice pas encore en superset, attrape la petite poignée (6 points, à côté du ⋯) et glisse-le sur un autre exercice → le superset se crée tout seul. Plus rapide que le bouton "⚡ Grouper". Pour défaire : "↩ Retirer". Marche aussi dans l\'éditeur de programme (✏️) : glisse une carte exercice sur une autre.'},
       {i:'📊',t:'Bouton 📊 sur chaque exercice → graphique du poids max sur les 5 dernières séances.'},
       {i:'🏋️',t:'Le 1RM (Brzycki) s\'affiche en temps réel sous le type — utilise-le pour calibrer tes charges. Appuie sur ℹ️ pour l\'aide sur les types.'},
       {i:'📸',t:'Bouton 📸 pour importer un programme depuis une photo, un fichier Word ou Excel — l\'IA le convertit en séance automatiquement.'},
@@ -212,6 +221,7 @@ const _HELP_DATA={
     title:'🤖 Coach IA',
     tips:[
       {i:'💬',t:'Ton profil complet (poids, objectif, discipline, PRs, morphologie) est injecté automatiquement — pas besoin de te présenter à chaque fois.'},
+      {i:'🎯',t:'Milo raisonne comme un vrai coach : il t\'évalue avant de conseiller (il peut te poser des questions), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans complaisance. Demande-lui « fais-moi un programme » ou « pourquoi je stagne au couché ? ».'},
       {i:'🏋️',t:'Pendant une séance, le Coach la voit EN DIRECT : demande-lui un exercice équivalent si une machine est prise, un ajustement de charge, ou l\'ordre des exercices.'},
       {i:'🧠',t:'Mémoire intelligente (Premium) : le Coach résume et retient le fil de vos échanges entre sessions.'},
       {i:'💾',t:'Tes conversations restent sauvegardées : tu retrouves ton fil même après avoir fermé l\'appli. Le bouton « + » en haut démarre une nouvelle discussion.'},
@@ -280,16 +290,46 @@ function _initSwipe(){
     // Ne pas naviguer si le geste part d'un contrôle (saisie kg/reps, boutons…) — évite les onglets qui sautent en séance
     if(sel&&sel.closest&&sel.closest('input,textarea,select,button,a,.tbtn,.chk'))return;
     if(_hScrollParent(sel))return;
-    const idx=_SWIPE_ORDER.indexOf(window._curScreen);
+    // La Séance (log) n'est swipable QUE si une séance est active — sinon on tomberait
+    // sur l'écran vide (« onglet blanc »). Hors séance, on l'atteint par le bouton +.
+    const order=(typeof S!=='undefined'&&S&&S.wkt)?_SWIPE_ORDER:_SWIPE_ORDER.filter(s=>s!=='log');
+    const idx=order.indexOf(window._curScreen);
     if(idx<0)return;
-    if(dx<0&&idx<_SWIPE_ORDER.length-1){
-      const next=_SWIPE_ORDER[idx+1];
+    if(dx<0&&idx<order.length-1){
+      const next=order[idx+1];
       goScreen(next,document.getElementById('nb-'+next));
     }else if(dx>0&&idx>0){
-      const prev=_SWIPE_ORDER[idx-1];
+      const prev=order[idx-1];
       goScreen(prev,document.getElementById('nb-'+prev));
     }
   },{passive:true});
+}
+
+// iOS : bloque le geste « retour » natif (swipe depuis le tout premier bord gauche vers
+// la droite) qui affichait une page BLANCHE. On n'annule QUE ce cas précis (départ < 24px
+// du bord + mouvement nettement horizontal) → aucun impact sur le scroll vertical ni sur
+// les listes qui défilent horizontalement. Notre swipe entre onglets continue de marcher.
+function _blockEdgeBackSwipe(){
+  let sx=null,sy=null,edge=false,tgt=null,locked=false;
+  document.addEventListener('touchstart',e=>{
+    if(e.touches.length!==1){edge=false;return;}
+    const t=e.touches[0];sx=t.clientX;sy=t.clientY;tgt=e.target;locked=false;
+    edge=(t.clientX<=30); // zone bord gauche (iOS décide très tôt → zone un peu large)
+  },{passive:true});
+  document.addEventListener('touchmove',e=>{
+    if(!edge||sx===null)return;
+    const t=e.touches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(!locked){
+      // Décision au TOUT PREMIER mouvement (iOS engage le retour dès le 1er px) :
+      if(Math.abs(dy)>Math.abs(dx)&&Math.abs(dy)>5){edge=false;return;} // scroll vertical → on laisse passer
+      if(dx>0&&!_hScrollParent(tgt))locked=true;                        // vers la droite depuis le bord → geste retour → on bloque
+      else if(dx<0)return;                                              // vers la gauche → pas concerné
+    }
+    if(locked)e.preventDefault(); // annule le geste retour natif (page blanche) sur tous les mouvements suivants
+  },{passive:false});
+  const _clr=()=>{sx=sy=null;edge=false;tgt=null;locked=false;};
+  document.addEventListener('touchend',_clr,{passive:true});
+  document.addEventListener('touchcancel',_clr,{passive:true});
 }
 
 // ─── PULL-TO-DISMISS ─────────────────────────────────────────
@@ -417,6 +457,12 @@ function _miloMessage(){
     return {id:'relance',txt:'Ça fait '+daysSince+' jours 👀 On se refait une séance aujourd\'hui ?'};
   if(rec!==null&&rec<40&&daysSince!==null&&daysSince>=1)
     return {id:'recup',txt:'Nuit courte ces derniers jours — vise plutôt une séance légère aujourd\'hui, et dors tôt ce soir. 😴'};
+  // Relance PROFIL : tant qu'il est incomplet, Milo insiste (c'est ce qui rend ses conseils sur-mesure)
+  if(typeof _profileCompletion==='function'){
+    const pc=_profileCompletion();
+    if(pc.pct<70)
+      return {id:'profil',go:'setup',txt:'Prends 2 min pour bien remplir ton profil (rempli à '+pc.pct+'% pour l\'instant) 📋 Plus je te connais — âge, objectif, niveau, morpho… — plus mes conseils sont VRAIMENT faits pour toi. On le complète ?'};
+  }
   if(daysSince===1)
     return {id:'lendemain',txt:'Bien joué pour hier 💪 Pense à bien manger et à récupérer aujourd\'hui.'};
   if(weekCount>=3)
@@ -430,7 +476,8 @@ function _renderMiloCard(){
   let dism=null;try{dism=JSON.parse(localStorage.getItem('ft4_milo')||'null');}catch(e){}
   if(dism&&dism.date===today()&&dism.id===m.id){el.innerHTML='';return;}
   const name=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
-  el.innerHTML='<div class="milo-card ft-press" onclick="_openMiloChat()">'
+  window._miloGoTarget=m.go||null;
+  el.innerHTML='<div class="milo-card ft-press" onclick="_miloCardTap()">'
     +'<div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'
     +'<div style="flex:1;min-width:0;"><div class="milo-name">'+name+'</div><div class="milo-txt">'+m.txt+'</div></div>'
     +'<button class="milo-x" onclick="event.stopPropagation();_dismissMilo(\''+m.id+'\')" aria-label="Fermer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
@@ -443,6 +490,13 @@ function _dismissMilo(id){
 function _openMiloChat(){
   try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
 }
+// Tap sur la carte Milo : si la relance vise un écran précis (ex. Profil), on y va ; sinon → chat
+function _miloCardTap(){
+  const t=window._miloGoTarget;
+  if(t==='setup'){ try{ (typeof openProfil==='function')?openProfil():goScreen('setup'); }catch(e){ try{goScreen('setup');}catch(_){} } return; }
+  if(t){ try{goScreen(t);}catch(e){} return; }
+  _openMiloChat();
+}
 
 // ─── STATUT TESTEUR FONDATEUR (récompense exclusive) ─────────
 // Reconnaît les tout premiers testeurs (Christophe, Eline, Emma) via leur email.
@@ -450,6 +504,12 @@ function _isTester(){
   const e=(S.email||'').trim().toLowerCase();
   return !!e && typeof TESTER_EMAILS!=='undefined' && TESTER_EMAILS.indexOf(e)>=0;
 }
+// ─── VERROU « BÊTA TESTEUR » pour les features nutrition/séance issues des retours testeuses ───
+// Réglage manuel des calories, objectif « Perte de gras + muscle » (recomposition) et « maxi » reps
+// sont EN PROD mais visibles UNIQUEMENT pour les testeurs pour l'instant.
+// 👉 POUR OUVRIR À TOUT LE MONDE : remplacer le corps par `return true;` (+ réactiver le pop-up
+//    « Quoi de neuf » v15/16/17 et les red dots manual-kcal/goal-recomp/reps-maxi dans constants.js).
+function _isNutriBeta(){ return (typeof _isTester==='function' && _isTester()); }
 // « Super testeur » (Christophe pour l'instant) : accès à l'Espace Testeur (analyse photos approfondie + boîte à idées).
 function _isSuperTester(){
   const e=(S.email||'').trim().toLowerCase();
@@ -462,9 +522,8 @@ function _renderTesterCard(){
   el.style.padding='14px 14px 0';
   const first=((S.name||'').trim().split(/\s+/)[0]||'').replace(/[<>&]/g,'');
   const hi=first?first+', ':'';
-  const espace=_isSuperTester()
-    ? '<div class="tc-espace" onclick="openTesterSpace()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Mon espace testeur privé →</div>'
-    : '';
+  // Lien vers l'Espace Testeur (boîte à idées) pour TOUS les testeurs (le suivi photos y reste réservé aux super testeurs).
+  const espace='<div class="tc-espace" onclick="openTesterSpace()"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>Mon espace testeur privé →</div>';
   el.innerHTML='<div class="tester-card">'
     +'<div class="tc-star"><svg viewBox="0 0 24 24" width="24" height="24" fill="var(--gold)" stroke="var(--gold)" stroke-width="1.2" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>'
     +'<div style="flex:1;min-width:0;">'
@@ -500,28 +559,93 @@ function renderHome(){try{
     +_sc("goSessionsHistory()",'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>','rgba(168,85,247,.14)','var(--purp)','<span id="h-sess" style="color:var(--t1)">'+mo.length+'</span>','Séances ce mois')
     +_sc("goWeightTab()",'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9.5a3 3 0 0 1 6 0"/><line x1="12" y1="9.5" x2="13.8" y2="8"/>','rgba(91,168,255,.14)','#5BA8FF','<span id="h-bw" style="color:var(--t1)">'+fmt(bwDisp)+'</span><span style="font-size:13px;color:var(--t2);font-weight:600;"> kg</span>','Poids de corps')
     +'</div>';
-  const b3Lvl=BIG3.map(ex=>{const pr=S.prs[ex];const rm=pr?pr.rm1:0;return(S.bw&&S.age&&rm)?getLevel(ex,rm,S.bw,S.gender,S.age).name:'—';});
-  const lvlSub=b3Lvl.some(l=>l!=='—')?b3Lvl.join(' · '):'Log tes séances pour voir ton niveau';
-  const prCount=Object.keys(S.prs||{}).length;
-  const prSub=prCount>0?prCount+' exercice'+(prCount>1?'s':'')+' traqé'+(prCount>1?'s':''):'Commence à logger tes séances';
-  const chevSvg='<svg class="home-row-chev" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
-  const secEl=document.getElementById('home-secondary');
-  // Restylage maquette : 3 cartes séparées (au lieu d'une carte avec traits)
-  const _nc='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);overflow:hidden;">';
-  if(secEl)secEl.innerHTML='<div style="display:flex;flex-direction:column;gap:10px;">'
-    +_nc+'<div class="home-row ft-press" onclick="goScreen(\'cycle\',null)">'
-    +'<div class="home-row-ic" style="background:rgba(239,62,87,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div>'
-    +'<div class="home-row-cnt"><div class="home-row-ttl" id="cycle-home-title">Cycle de Force</div><div class="home-row-sub" id="cycle-home-sub">Planifie ta progression sur mesure</div></div>'+chevSvg+'</div></div>'
-    +_nc+'<div class="home-row ft-press" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
-    +'<div class="home-row-ic" style="background:rgba(234,179,8,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 3Z"/></svg></div>'
-    +'<div class="home-row-cnt"><div class="home-row-ttl">Niveau de force</div><div class="home-row-sub">'+lvlSub+'</div></div>'+chevSvg+'</div></div>'
-    +_nc+'<div class="home-row ft-press" onclick="goScreen(\'progress\',document.getElementById(\'nb-progress\'))">'
-    +'<div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 22l4-2.5L16 22l-1-8.5"/></svg></div>'
-    +'<div class="home-row-cnt"><div class="home-row-ttl">Records personnels</div><div class="home-row-sub">'+prSub+'</div></div>'+chevSvg+'</div></div>'
-    +'</div>';
-  renderCycleHomeCard();
+  // Calendrier mensuel (remplace cycle de force / niveau / records sur l'Accueil — chantier feat/accueil-calendrier)
+  _renderHomeCalendar();
   updatePill();
 }catch(e){console.error('[FT] renderHome:',e);}}
+
+// ─── CALENDRIER MENSUEL (Accueil) ───────────────────────────────────────────
+let _calDate=new Date();      // mois affiché (1er du mois)
+let _calZoomWeek=null;         // null = vue mois ; sinon index (0-5) de la semaine zoomée
+function _calPad(n){return (n<10?'0':'')+n;}
+function _calYmd(d){return d.getFullYear()+'-'+_calPad(d.getMonth()+1)+'-'+_calPad(d.getDate());}
+function _calSessLabel(s){ if(!s)return 'Séance'; if(s.progLabel)return s.progLabel; return 'Séance'; }
+// Jours où au moins une série a battu un record (même règle que le popup PR :
+// 1er passage d'un exo OU 1RM > meilleur précédent ; W/É exclus). Rejoue tout
+// l'historique dans l'ordre chronologique pour trouver ces jours.
+function _calPrDays(){
+  const best={}, prDays={};
+  const arr=(S.sessions||[]).filter(s=>s&&s.date).slice()
+    .sort((a,b)=>((a.ts||Date.parse(a.date)||0)-(b.ts||Date.parse(b.date)||0)));
+  arr.forEach(s=>{(s.exs||[]).forEach(ex=>{(ex.sets||[]).forEach(st=>{
+    if(!st.done||!st.kg||!st.reps||st.type==='É'||st.type==='W')return;
+    const rm=st.rm1||bz(st.kg,st.reps);
+    if(best[ex.name]===undefined||rm>best[ex.name]){best[ex.name]=rm;prDays[s.date]=true;}
+  });});});
+  return prDays;
+}
+function _renderHomeCalendar(){
+  const el=document.getElementById('home-secondary');if(!el)return;
+  const sessSet={};(S.sessions||[]).forEach(s=>{if(s&&s.date)sessSet[s.date]=(sessSet[s.date]||0)+1;});
+  const prSet=_calPrDays();
+  const y=_calDate.getFullYear(), m=_calDate.getMonth();
+  const todayY=_calYmd(new Date());
+  const moName=_calDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  const first=new Date(y,m,1);
+  const startDow=(first.getDay()+6)%7;               // 0 = lundi
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const cells=[];
+  for(let i=0;i<startDow;i++){cells.push({d:new Date(y,m,1-(startDow-i)),inMonth:false});}
+  for(let day=1;day<=daysInMonth;day++){cells.push({d:new Date(y,m,day),inMonth:true});}
+  while(cells.length%7!==0){const last=cells[cells.length-1].d;cells.push({d:new Date(last.getFullYear(),last.getMonth(),last.getDate()+1),inMonth:false});}
+  const weeks=[];for(let i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
+  const navBtn=(dir,txt)=>'<button onclick="_calNav('+dir+')" style="width:34px;height:34px;border-radius:9px;border:none;background:var(--bg3);color:var(--t1);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;">'+txt+'</button>';
+  let html='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
+      +navBtn(-1,'‹')
+      +'<span style="font-weight:800;font-size:15px;color:var(--t1);text-transform:capitalize;">📅 '+moName+'</span>'
+      +navBtn(1,'›')
+    +'</div>';
+  if(_calZoomWeek===null){
+    html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px;">'
+      +['L','M','M','J','V','S','D'].map(w=>'<div style="text-align:center;font-size:10px;color:var(--t3);font-weight:700;">'+w+'</div>').join('')+'</div>';
+    weeks.forEach((wk,wi)=>{
+      html+='<div onclick="_calZoom('+wi+')" class="ft-press" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;cursor:pointer;border-radius:8px;">';
+      wk.forEach(c=>{
+        const ymd=_calYmd(c.d), has=sessSet[ymd], isPr=has&&prSet[ymd], isToday=ymd===todayY, num=c.d.getDate();
+        // anneau : record = doré ; aujourd'hui = rouge ; les deux = doré (extérieur) + rouge (intérieur)
+        const ring=(isPr&&isToday)?'box-shadow:inset 0 0 0 2px var(--gold),inset 0 0 0 3.5px var(--red);'
+          :isPr?'box-shadow:inset 0 0 0 2px var(--gold);'
+          :isToday?'box-shadow:inset 0 0 0 1.5px var(--red);':'';
+        html+='<div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:12.5px;'
+          +(c.inMonth?'color:var(--t1);':'color:var(--t3);opacity:.35;')
+          +ring
+          +(has?'background:rgba(255,45,85,.16);font-weight:800;':'')
+          +'">'+num+((has&&!isPr)?'<span style="width:4px;height:4px;border-radius:50%;background:var(--red);margin-top:2px;"></span>':'')+'</div>';
+      });
+      html+='</div>';
+    });
+    html+='<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:8px;">Tape une semaine pour la voir en détail 🔍</div>';
+    if(Object.keys(prSet).length)html+='<div style="font-size:10.5px;color:var(--t3);text-align:center;margin-top:3px;"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-2px;"></span> = séance avec un nouveau record</div>';
+  }else{
+    const wk=weeks[_calZoomWeek]||[];
+    html+='<button onclick="_calZoom(null)" style="width:100%;padding:8px;margin-bottom:8px;border:none;border-radius:9px;background:var(--bg3);color:var(--blue);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation;">‹ Retour au mois</button>';
+    wk.forEach(c=>{
+      const ymd=_calYmd(c.d), isToday=ymd===todayY, isPr=prSet[ymd];
+      const daySess=(S.sessions||[]).filter(s=>s.date===ymd);
+      const dow=c.d.toLocaleDateString('fr-FR',{weekday:'short'});
+      html+='<div onclick="'+(daySess.length?'goSessionsHistory()':'')+'" style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--sep);'+(isToday?'background:rgba(255,45,85,.06);':'')+(daySess.length?'cursor:pointer;':'')+'">'
+        +'<div style="width:44px;text-align:center;flex-shrink:0;"><div style="font-size:10px;color:var(--t3);text-transform:capitalize;">'+dow+'</div><div style="font-size:17px;font-weight:800;color:'+(c.inMonth?'var(--t1)':'var(--t3)')+';">'+c.d.getDate()+'</div></div>'
+        +'<div style="flex:1;min-width:0;font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?('💪 '+_escFood(daySess.map(_calSessLabel).join(', '))+(isPr?' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-1px;"></span> <span style="color:var(--gold);font-weight:800;">Record !</span>':'')):'Repos')+'</div>'
+        +(daySess.length?'<span style="font-size:11px;color:var(--red);font-weight:700;flex-shrink:0;">'+daySess.length+'×</span>':'')
+        +'</div>';
+    });
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+function _calNav(dir){_calDate=new Date(_calDate.getFullYear(),_calDate.getMonth()+dir,1);_calZoomWeek=null;_renderHomeCalendar();}
+function _calZoom(wi){_calZoomWeek=wi;_renderHomeCalendar();}
 
 function updatePill(){
   const p=document.getElementById('sync-pill'),d=document.getElementById('sync-dot'),l=document.getElementById('sync-lbl');
@@ -548,6 +672,38 @@ function setNuPhase(phase){
   renderNutrition();
 }
 
+// ─── Réglage manuel des calories/macros (retour testeuse : « pouvoir corriger moi-même ») ──
+function openKcalEdit(){
+  const m=calcMacros(S.nutritionPhase);
+  const inp=document.getElementById('kcal-edit-inp');
+  if(inp)inp.value=m.calories;
+  const auto=document.getElementById('kcal-edit-auto');
+  if(auto)auto.textContent="Calcul auto de l'app : "+m.autoCalories.toLocaleString('fr-FR')+" kcal (d'après ton profil et ton objectif).";
+  const reset=document.getElementById('kcal-edit-reset');
+  if(reset)reset.style.display=m.isManual?'':'none';
+  _kcalPreview();
+  const o=document.getElementById('ov-kcal-edit');if(o)o.classList.add('open');
+}
+function _kcalPreview(){
+  const inp=document.getElementById('kcal-edit-inp');
+  const v=inp?Math.round(parseFloat(inp.value)||0):0;
+  const mm=(typeof macrosForKcal==='function')?macrosForKcal(v):{prot_g:0,carbs_g:0,fat_g:0};
+  const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val+' g';};
+  set('kcal-pv-prot',mm.prot_g);set('kcal-pv-carb',mm.carbs_g);set('kcal-pv-fat',mm.fat_g);
+}
+function saveKcalEdit(){
+  const inp=document.getElementById('kcal-edit-inp');
+  let v=inp?Math.round(parseFloat(inp.value)||0):0;
+  if(!(v>0)){toast('Entre un nombre de calories valide','info');return;}
+  v=Math.max(800,Math.min(6000,v));
+  S.manualKcal=v;persist();closeKcalEdit();renderNutrition();
+  toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal ✅','success');
+}
+function resetKcalAuto(){
+  S.manualKcal=0;persist();closeKcalEdit();renderNutrition();
+  toast('Calories remises en automatique','info');
+}
+function closeKcalEdit(){const o=document.getElementById('ov-kcal-edit');if(o)o.classList.remove('open');}
 function renderNutrition(){try{
   renderSupplements();
   // Phase buttons
@@ -555,10 +711,10 @@ function renderNutrition(){try{
   document.getElementById('pb-decharge').classList.toggle('active',S.nutritionPhase==='decharge');
   // Goal banner
   const goal=S.goal||'muscle';
-  const goalDelta={muscle:350,perte:-450,force:200,equilibre:0,endurance:100}[goal]||350;
-  const goalColors={muscle:'rgba(255,45,85,.1)',perte:'rgba(255,149,0,.1)',force:'rgba(41,121,255,.1)',equilibre:'rgba(52,199,89,.1)',endurance:'rgba(170,0,255,.1)'};
-  const goalBorderColors={muscle:'rgba(255,45,85,.3)',perte:'rgba(255,149,0,.3)',force:'rgba(41,121,255,.3)',equilibre:'rgba(52,199,89,.3)',endurance:'rgba(170,0,255,.3)'};
-  const goalIcons={muscle:'💪',perte:'🔥',force:'🏋️',equilibre:'⚖️',endurance:'🏃'};
+  const goalDelta={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}[goal]||350;
+  const goalColors={muscle:'rgba(255,45,85,.1)',perte:'rgba(255,149,0,.1)',recomp:'rgba(170,0,255,.1)',force:'rgba(41,121,255,.1)',equilibre:'rgba(52,199,89,.1)',endurance:'rgba(170,0,255,.1)'};
+  const goalBorderColors={muscle:'rgba(255,45,85,.3)',perte:'rgba(255,149,0,.3)',recomp:'rgba(170,0,255,.3)',force:'rgba(41,121,255,.3)',equilibre:'rgba(52,199,89,.3)',endurance:'rgba(170,0,255,.3)'};
+  const goalIcons={muscle:'💪',perte:'🔥',recomp:'✨',force:'🏋️',equilibre:'⚖️',endurance:'🏃'};
   const nuGoal=document.getElementById('nu-goal-info');
   if(nuGoal)nuGoal.textContent=`${goalIcons[goal]||'💪'} ${GOAL_LABELS[goal]||'Prise de muscle'}`;
   // Dynamic phase labels + delta chip
@@ -587,6 +743,20 @@ function renderNutrition(){try{
 
   const macros=calcMacros(S.nutritionPhase);
   document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');
+  // Bloc réglage manuel (sous l'anneau) : état auto vs manuel + bouton d'ajustement — RÉSERVÉ AUX TESTEURS
+  const _nutriBeta=(typeof _isNutriBeta==='function')&&_isNutriBeta();
+  const _jptr=document.getElementById('nu-journal-ptr'); if(_jptr)_jptr.style.display=_nutriBeta?'':'none';
+  const adj=document.getElementById('nu-adjust');
+  if(adj&&!_nutriBeta){adj.innerHTML='';}
+  else if(adj){
+    if(macros.isManual){
+      adj.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:rgba(255,45,85,.08);border:1px solid rgba(255,45,85,.25);border-radius:12px;padding:9px 12px;">'
+        +'<span style="font-size:12.5px;color:var(--t2);flex:1;line-height:1.35;">🎯 <b style="color:var(--t1);">Objectif manuel</b> — '+macros.calories.toLocaleString('fr-FR')+' kcal <span style="color:var(--t3);white-space:nowrap;">(auto : '+macros.autoCalories.toLocaleString('fr-FR')+')</span></span>'
+        +'<button onclick="openKcalEdit()" class="btn" style="width:auto;flex:none;padding:7px 12px;font-size:12.5px;background:var(--bg3);color:var(--t1);border:1px solid var(--sep);">Modifier</button></div>';
+    } else {
+      adj.innerHTML='<button onclick="openKcalEdit()" class="btn" style="width:100%;padding:11px;font-size:13.5px;background:var(--bg2);color:var(--t2);border:1px solid var(--sep);font-weight:700;">✎ Ajuster mes calories à la main</button>';
+    }
+  }
   document.getElementById('m-prot').textContent=macros.prot_g;
   document.getElementById('m-carbs').textContent=macros.carbs_g;
   document.getElementById('m-fat').textContent=macros.fat_g;
@@ -645,12 +815,13 @@ function renderNutrition(){try{
   document.getElementById('meal-plan').innerHTML=meals.map(m=>`
     <div class="meal-row">
       <div style="flex:1;">
-        <div class="meal-name">${m.name}</div>
-        <div class="meal-detail">${m.desc}</div>
+        <div class="meal-name">${_escNote(m.name)}</div>
+        <div class="meal-detail">${_escNote(m.desc)}</div>
         <div class="meal-detail" style="margin-top:3px;color:var(--t3);">P: ${m.prot}g · G: ${m.carbs}g · L: ${m.fat}g</div>
       </div>
       <div class="meal-kcal">${m.kcal} kcal</div>
     </div>`).join('');
+  try{if(typeof _renderDietCard==='function')_renderDietCard();}catch(e){}
   renderMealPlanIA();
 }catch(e){console.error('[FT] renderNutrition:',e);}}
 
@@ -665,30 +836,37 @@ function renderMealPlanIA(){
     el.innerHTML=`<div style="background:var(--bg2);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:inset 0 0 0 1px var(--sep);">`
       +`<div style="font-size:13px;color:var(--t2);line-height:1.5;text-align:center;">Plan de repas personnalisé par l'IA, adapté à tes macros et ton objectif.</div>`
       +`<button class="btn btn-red" id="mp-gen-btn" onclick="generateMealPlan()" style="padding:14px;font-size:15px;">🍽️ Générer${isPrem?' ma semaine':' mon repas du jour'}</button>`
+      +`<button class="btn btn-bg2" onclick="openImportMeal()" style="padding:12px;font-size:14px;">📥 Importer un plan (diététicien)</button>`
+      +`<div style="font-size:11px;color:var(--t3);text-align:center;">Photo ou PDF du plan de ta diététicienne → l'IA le range.</div>`
       +(!isPrem?`<div style="font-size:11px;color:var(--t3);text-align:center;">🆓 Gratuit : repas du jour · 1 régénération/j &nbsp;·&nbsp; ⭐ Premium : semaine + illimité</div>`:'')
       +`</div>`;
     return;
   }
-  const days=isPrem?plan.days:plan.days.slice(0,1);
-  const canRegen=isPrem||(plan.regenDate!==td||(plan.regenCount||0)<1);
+  const imp=!!plan.imported;
+  const days=(isPrem||imp)?plan.days:plan.days.slice(0,1);
+  const canRegen=!imp&&(isPrem||(plan.regenDate!==td||(plan.regenCount||0)<1));
   let html=`<div style="display:flex;flex-direction:column;gap:8px;">`;
-  html+=`<div style="display:flex;align-items:center;justify-content:space-between;">
-    <span style="font-size:11px;color:var(--t3);">Généré le ${fmtD(plan.generatedAt)}</span>
-    <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="generateMealPlan()">🔄 Tout régénérer</button>
+  html+=`<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+    <span style="font-size:11px;color:var(--t3);">${plan.imported?(plan.planName?'📥 '+plan.planName:'📥 Plan importé'):'Généré le '+fmtD(plan.generatedAt)}</span>
+    <div style="display:flex;gap:6px;flex-shrink:0;">
+      <button class="btn-xs" style="color:var(--t2);border-color:var(--sep);" onclick="openImportMeal()">📥 Importer</button>
+      <button class="btn-xs" style="color:var(--red);border-color:rgba(255,45,85,.3);" onclick="generateMealPlan()">🔄 IA</button>
+    </div>
   </div>`;
-  if(isPrem&&days.length>1){
+  if((isPrem||imp)&&days.length>1){
     if(_mpDay>=days.length)_mpDay=0;
     html+=`<div style="display:flex;gap:4px;overflow-x:auto;padding-bottom:2px;">`;
     days.forEach((d,i)=>{
       const wd=new Date(d.date+'T12:00:00').getDay(),isT=d.date===td,sel=i===_mpDay;
-      html+=`<button onclick="setMpDay(${i})" style="flex-shrink:0;padding:5px 10px;border-radius:20px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg3)'};color:${sel?'var(--red)':isT?'var(--t1)':'var(--t2)'};font-size:12px;font-weight:${sel||isT?700:500};cursor:pointer;touch-action:manipulation;">${DAY[wd]}${isT?'·':''}</button>`;
+      const lbl=imp&&d.label?d.label.slice(0,10):DAY[wd]+(isT?'·':'');
+      html+=`<button onclick="setMpDay(${i})" style="flex-shrink:0;padding:5px 10px;border-radius:20px;border:1px solid ${sel?'var(--red)':'var(--sep)'};background:${sel?'rgba(255,45,85,.12)':'var(--bg3)'};color:${sel?'var(--red)':isT?'var(--t1)':'var(--t2)'};font-size:12px;font-weight:${sel||isT?700:500};cursor:pointer;touch-action:manipulation;">${lbl}</button>`;
     });
     html+=`</div>`;
-    html+=_renderMealDay(days[_mpDay],isPrem,true);
+    html+=_renderMealDay(days[_mpDay],isPrem,canRegen);
   }else{
     html+=_renderMealDay(days[0],isPrem,canRegen);
   }
-  if(!isPrem){
+  if(!isPrem&&!imp){
     html+=`<div style="background:rgba(255,214,0,.07);border:1px solid rgba(255,214,0,.15);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
       <span style="font-size:18px;">⭐</span>
       <div style="font-size:12px;color:var(--t2);">Premium : semaine complète + régénérations illimitées — <strong style="color:var(--gold);">4,99€/2 mois</strong></div>
@@ -700,10 +878,10 @@ function _renderMealDay(day,isPrem,canRegen){
   if(!day)return'';
   let h=`<div style="display:flex;flex-direction:column;gap:6px;">`;
   (day.meals||[]).forEach(m=>{
-    const enc=m.name.replace(/'/g,"\\'");
+    const enc=_escAttrJs(m.name);
     h+=`<div style="background:var(--bg2);border-radius:12px;padding:12px 14px;box-shadow:inset 0 0 0 1px var(--sep);">`
       +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">`
-      +`<div style="font-weight:700;font-size:13px;color:var(--t1);">${m.name}</div>`
+      +`<div style="font-weight:700;font-size:13px;color:var(--t1);">${_escNote(m.name)}</div>`
       +`<div style="display:flex;align-items:center;gap:6px;">`
       +`<span style="font-size:12px;font-weight:700;color:var(--red);">${m.kcal||0} kcal</span>`
       +(canRegen?`<button onclick="generateMealPlan('${day.date}','${enc}')" style="background:none;border:none;padding:2px 6px;color:var(--t3);cursor:pointer;font-size:14px;touch-action:manipulation;" title="Régénérer ce repas">🔄</button>`:'')
@@ -716,4 +894,70 @@ function _renderMealDay(day,isPrem,canRegen){
   });
   return h+`</div>`;
 }
+
+// ─── JOURNAL ALIMENTAIRE (rendu) ──────────────────────────────
+function renderFoodJournal(){
+  const el=document.getElementById('food-journal');if(!el)return;
+  const td=today();
+  const hasProfile=S.bw&&S.age&&S.height;
+  const target=hasProfile?calcMacros(S.nutritionPhase):null;
+  const tot=(typeof _foodTotals==='function')?_foodTotals(td):{kcal:0,prot:0,carbs:0,fat:0};
+  const entries=(S.foodLog||[]).filter(e=>e.date===td).sort((a,b)=>b.ts-a.ts);
+
+  let html='';
+  // Résumé du jour
+  if(target){
+    const rem=target.calories-tot.kcal;
+    const pct=Math.min(100,Math.round(tot.kcal/Math.max(1,target.calories)*100));
+    const remCol=rem<0?'var(--red)':'var(--green)';
+    html+=`<div style="background:var(--bg2);border-radius:16px;padding:16px;box-shadow:inset 0 0 0 1px var(--sep);">`
+      +`<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">`
+        +`<span style="font-size:12px;color:var(--t3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Aujourd'hui</span>`
+        +`<span style="font-size:12px;color:${remCol};font-weight:700;">${rem>=0?rem+' kcal restantes':Math.abs(rem)+' kcal au-dessus'}</span>`
+      +`</div>`
+      +`<div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px;">`
+        +`<span style="font-family:var(--font-cond);font-size:30px;font-weight:900;color:var(--t1);line-height:1;">${tot.kcal}</span>`
+        +`<span style="font-size:13px;color:var(--t3);">/ ${target.calories} kcal</span>`
+      +`</div>`
+      +`<div style="height:8px;border-radius:5px;background:var(--bg3);overflow:hidden;margin-bottom:12px;"><div style="height:100%;width:${pct}%;background:${rem<0?'var(--red)':'var(--red)'};border-radius:5px;"></div></div>`
+      +_macroLine('Protéines',tot.prot,target.prot_g,'var(--green)')
+      +_macroLine('Glucides',tot.carbs,target.carbs_g,'var(--orange)')
+      +_macroLine('Lipides',tot.fat,target.fat_g,'var(--gold)')
+      +`</div>`;
+  }else{
+    html+=`<div style="background:var(--bg2);border-radius:14px;padding:16px;text-align:center;color:var(--t3);font-size:13px;box-shadow:inset 0 0 0 1px var(--sep);">Remplis ton profil (âge, taille, poids) pour comparer à tes objectifs.</div>`;
+  }
+
+  // Bouton ajouter
+  html+=`<button class="btn btn-red" onclick="openAddFood()" style="width:100%;padding:14px;font-size:15px;margin-top:12px;">➕ Ajouter un aliment</button>`;
+
+  // Liste des entrées du jour
+  if(entries.length){
+    html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px;">`;
+    entries.forEach(e=>{
+      const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(e.meal):{ic:'🍽️',lbl:''};
+      html+=`<div onclick="openEditFood(${e.ts})" style="background:var(--bg2);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:inset 0 0 0 1px var(--sep);cursor:pointer;">`
+        +`<span style="font-size:20px;flex-shrink:0;">${mi.ic}</span>`
+        +`<div style="flex:1;min-width:0;">`
+          +`<div style="font-size:13px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escFood(e.name)}</div>`
+          +`<div style="font-size:11px;color:var(--t3);">${mi.lbl} · P ${e.prot||0} · G ${e.carbs||0} · L ${e.fat||0} · ✎ modifier</div>`
+        +`</div>`
+        +`<span style="font-size:13px;font-weight:700;color:var(--red);flex-shrink:0;">${e.kcal||0}</span>`
+        +`<button onclick="event.stopPropagation();confirmRemoveFood(${e.ts})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:2px 4px;flex-shrink:0;line-height:1;">✕</button>`
+      +`</div>`;
+    });
+    html+=`</div>`;
+  }else{
+    html+=`<div style="text-align:center;color:var(--t3);font-size:12px;padding:16px 8px;">Aucun aliment noté aujourd'hui. Ajoute ton premier repas 👆</div>`;
+  }
+  el.innerHTML=html;
+}
+function _macroLine(lbl,cur,tgt,col){
+  const pct=Math.min(100,Math.round(cur/Math.max(1,tgt)*100));
+  return`<div style="margin-bottom:8px;">`
+    +`<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;"><span style="color:var(--t2);font-weight:600;">${lbl}</span><span style="color:var(--t3);">${cur} / ${tgt} g</span></div>`
+    +`<div style="height:5px;border-radius:3px;background:var(--bg3);overflow:hidden;"><div style="height:100%;width:${pct}%;background:${col};border-radius:3px;"></div></div>`
+    +`</div>`;
+}
+function _escFood(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 

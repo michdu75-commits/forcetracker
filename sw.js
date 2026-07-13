@@ -1,4 +1,4 @@
-const CACHE = 'ft-v424'; // STOP telechargement auto des 15 Mo d'images sur 4G a chaque MAJ (mangeait les donnees + saturait la connexion → envois serveur en Load failed). Images en cache A LA DEMANDE. Barre = uniquement via bouton « Vider le cache » (explicite, en wifi)
+const CACHE = 'ft-v425'; // Bilan corporel : bouton « photo » MASQUE en prod (echoue en 4G, cf CLAUDE.md) — garde A la main / Coller un code / CSV. Bouton photo garde sur le clone (window.__FT_CLONE__) pour developper l'envoi 4G. Clone remis a la version actuelle.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

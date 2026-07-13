@@ -691,13 +691,17 @@ function renderBodyScanCard(){
   const el=document.getElementById('bodyscan-section');if(!el)return;
   // Import CSV de balance (historique complet) — réservé aux testeurs
   const csvBtn=_isScaleCsvBeta()?`<button class="btn btn-bg2" style="width:100%;margin-top:8px;font-size:13px;" onclick="openScaleCsvImport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg> Importer un fichier balance (CSV ou Excel)</button>`:'';
+  // Import PHOTO du bilan : MASQUÉ en prod — échoue en 4G (le POST vers Apps Script ne passe pas sur
+  // réseau mobile, cf CLAUDE.md « bilan corporel »). Gardé UNIQUEMENT sur le clone (window.__FT_CLONE__)
+  // pour y développer une méthode d'envoi qui marche en 4G. À réactiver en prod une fois la solution trouvée.
+  const bsPhotoBtn=(label)=>window.__FT_CLONE__?`<button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 ${label}</button>`:'';
   const scaleSel=_scaleTypeSelector();
   const scans=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(!scans.length){
     el.innerHTML=`<div class="card cp" style="text-align:center;">
       <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px;">Tu passes sur une balance pro (impédancemètre) ? Enregistre ton bilan — graisse viscérale, muscle, métabolisme… — pour suivre son évolution dans le temps et que Milo s'en serve.</div>
       <div style="text-align:left;">${scaleSel}</div>
-      <button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 Importer depuis une photo</button>
+      ${bsPhotoBtn('Importer depuis une photo')}
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="openBodyScanForm(-1)">✏️ À la main</button>
         <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="pasteBodyScan()">📋 Coller un code</button>
@@ -748,7 +752,7 @@ function renderBodyScanCard(){
     html+=`</div>`;
   }
   html+=scaleSel;
-  html+=`<button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 Nouveau bilan (photo)</button>
+  html+=`${bsPhotoBtn('Nouveau bilan (photo)')}
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="openBodyScanForm(-1)">✏️ À la main</button>
       <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="pasteBodyScan()">📋 Coller un code</button>

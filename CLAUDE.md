@@ -461,21 +461,27 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Limites honnêtes** : le code est optionnel (invariant ci-dessus) ; 4 chiffres = anti-curieux, pas anti-pirate déterminé. Solide (salt+SHA256, vérif email) mais court.
 - ⚠️ **Ce code est la brique clé pour un futur « photos cryptées sur le Drive »** (chiffrement côté téléphone avec une clé dérivée du code perso → même l'admin ne voit que du charabia). Voir IDEES-FUTURES.md.
 
-### ⚠️ Bilan corporel photo (lecture du fichier de balance) — ÉTAT ACTUEL & pièges (PAS confirmé résolu, 2026-07-13)
-**Statut honnête** : bug récurrent « Load failed » à l'envoi de la photo de rapport de balance (MyBodyCheck/impédancemètre). Plusieurs fix tentés (ft-v408→v420). **La dernière version (v420 = découpe en tranches) n'a PAS encore été confirmée sur l'iPhone de Michel** — à revalider en vrai avant de dire « réglé ».
+### ✅ Bilan corporel photo (lecture balance) — CAUSE TROUVÉE = réseau mobile 4G (2026-07-13 soir)
+**Conclusion (enfin certaine)** : le « Load failed » à l'envoi de la photo N'EST **PAS** un bug de l'appli ni une régression. C'est **le POST vers Google Apps Script qui ne passe pas sur la 4G/5G de Michel** (La Réunion).
 
-**Faits diagnostiques ACQUIS (ne pas re-tester à zéro)** :
-- ✅ Les fichiers **texte (Excel/CSV)** de balance marchent. L'**import de PROGRAMME (images)** marche → **le transport réseau/images n'est PAS le problème** → le bug est **spécifique au bilan corporel**.
-- **Vraies causes trouvées** : (a) le **Service Worker restait bloqué en install** → Michel testait en boucle des **versions périmées** (le message d'erreur prouvait qu'il était resté en vieille version) — corrigé v416/v417 ; (b) certaines captures sont **ultra-longues** (ex. `1290×7623`, capture d'appli-balance déroulée) → écrasées en une bande illisible / payload cassé — corrigé v420 (`_resizeReport` découpe en tranches ~1000×1400 envoyées en `images:[]`).
-- **3 formats d'export MyBodyCheck** vus : A4 large `3720×5262` (le plus lisible ✅), ultra-long `1290×7623` (celui qui plantait), vue schéma-corps png. **Reco à Michel** : préférer le **rapport A4 large**, le plus fiable.
-- Le message d'erreur affiche maintenant **`[N img · X Ko]`** (nb de tranches + poids du payload) → sert à diagnostiquer sur le vrai téléphone.
+**Comment on l'a PROUVÉ (test A/B décisif de Michel)** :
+- On a remis le **clone** à la version **du 8 juillet** (ft-v310, le lancement de la lecture balance, quand « ça marchait ») → **elle échoue AUSSI en 4G** (« Load failed »). Donc rien n'a « sauté » : même l'origine rate sur ce réseau.
+- L'**import de PROGRAMME** (7 pages) échoue **AUSSI** en 4G → ce n'est **pas** spécifique au bilan : **tous** les POST qui lisent une réponse CORS vers Apps Script tombent sur sa 4G.
+- « Ça marchait avant » = c'était en **wifi**. Sur mobile, cet envoi a toujours été fragile chez lui.
+- Facteur aggravant introduit puis corrigé : l'auto-précache des 15 Mo à chaque MAJ (ft-v421) saturait sa 4G → **retiré en v424** (images en cache à la demande, plus de téléchargement auto).
 
-**Si ça replante — check-list AVANT de recoder** :
-1. **Vérifier la version qui tourne** (Menu → À propos) = bien la dernière (`ft-v422+`), sinon Michel est encore sur une version périmée (SW) → fermer/rouvrir, pas rediagnostiquer.
-2. Lire le **`[N img · X Ko]`** du message d'erreur : payload énorme ? nb de tranches aberrant ? échec réseau vs réponse backend invalide ?
-3. Distinguer **échec réseau** (« Load failed » / TypeError au `fetch`) vs **backend renvoie une erreur/JSON invalide** (lecture IA ratée). Ce ne sont pas les mêmes correctifs.
-4. Code : `onBodyScanPhoto`/`_resizeReport` (tracking.js), backend `handleImportBodyScan_` (Code.js, route `importBodyScan`). ⚠️ Du **code mort** traîne (`_postBodyScan`/`_xhrPostText`, pistes XHR/AbortController abandonnées) — ne pas s'y fier.
-5. Le **modèle backend a bougé** pendant le debug (Haiku ↔ Sonnet, `max_tokens`) → vérifier l'état réel déployé avant de conclure.
+**Pourquoi le chat Claude lit la photo mais pas l'appli** : Claude passe par les serveurs d'Anthropic (chemin robuste). L'appli doit passer par **téléphone(4G) → Apps Script → IA**, et c'est cette 1re étape qui casse. On **doit** un serveur au milieu (la clé API secrète ne peut pas être dans le JS public) — mais **pas forcément Google** (Apps Script fait des redirections `googleusercontent.com` que la 4G digère mal).
+
+**Ce qu'on a livré (2026-07-13, ft-v425)** :
+- **PROD** : bouton « photo » du bilan **MASQUÉ** (`bsPhotoBtn` dans `renderBodyScanCard`, gaté `window.__FT_CLONE__` → caché hors clone). On garde **À la main** + **Coller un code** + **Importer un fichier balance CSV/Excel**. → « ça sert à rien tant que ça marche pas en 4G ».
+- **CSV/Excel** (`openScaleCsvImport`/`_parseScaleCsv`, testeurs + michdu75) = **lu EN LOCAL, marche en 4G** (aucun serveur). Colonnes reconnues : date, poids, IMC, graisse %, viscérale, muscle, masse osseuse, métabolisme, âge métabolique (PAS masse graisseuse kg/skMuscle/eau/protéine/segmentaire). **Astuce Claude** : Claude peut lire un rapport de balance directement dans le chat et **générer un CSV prêt à importer** pour l'utilisateur (dépannage 4G immédiat).
+- **CLONE** : bouton photo **conservé** (`__FT_CLONE__=true`) — c'est là qu'on développe la solution 4G. Clone remis à la version actuelle (`build_clone.py`).
+
+**🎯 CHANTIER À FAIRE (sur le clone) — envoi qui marche en 4G, pour PROGRAMME ET photo** :
+- Piste 1 : **`mode:'no-cors'` + polling** — POST « tire et oublie » (comme `_cloudSync` qui, lui, passe en 4G), le backend stocke le résultat sous un id, l'app va le chercher dans un 2e temps. Contourne peut-être le blocage de la réponse CORS.
+- Piste 2 : **changer de serveur** (pas Apps Script → Cloudflare Workers / Vercel…) — plus « direct », sans les redirections `googleusercontent.com`. Plus gros chantier, petit coût mensuel possible.
+- Vérifier d'abord si `_cloudSync` (no-cors) réussit VRAIMENT en 4G chez Michel → si oui, la piste 1 est la bonne.
+- ⚠️ Code mort à ignorer : `_postBodyScan`/`_xhrPostText` (pistes XHR/AbortController abandonnées).
 
 ### Chasse au trigger fantôme PREMIUM_EMAILS (✅ 2026-06-30, Code.js @46)
 - **Trigger fantôme** : trigger installable inconnu dans l'UI Apps Script (invisible depuis clasp) réécrit `PREMIUM_EMAILS` — cause identifiée

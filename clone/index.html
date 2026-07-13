@@ -72,6 +72,11 @@ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();win
 // Récupération email depuis cookie si localStorage vidé par iOS Safari (synchrone, avant load())
 (function(){if(window.__FT_CLONE__)return;try{var ck={};document.cookie.split(';').forEach(function(c){var p=c.trim().indexOf('=');if(p>0)ck[c.trim().slice(0,p)]=decodeURIComponent(c.trim().slice(p+1));});if(ck.ft_email&&!localStorage.getItem('ft4_email')){localStorage.setItem('ft4_email',ck.ft_email);localStorage.setItem('ft4_ob2','1');window._emailRestoredFromCookie=true;}}catch(e){}})();
 if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add('ob-done');
+// Apparence : halo bleu (defaut) ou fond uni -- applique au plus tot pour eviter le flash (cle ft4_halo)
+try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classList.add('no-halo');}catch(e){}
+// Splash iPhone (logo gris fixe) — uniquement en mode app installée (comme le splash natif Android).
+// Se ferme tout seul en CSS (jamais bloqué). Pas sur Safari navigateur, pas sur Android.
+try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)document.documentElement.classList.add('ios-boot');}catch(e){}
 // Détection navigateur non compatible PWA — au plus tôt
 (function(){
   var ua=navigator.userAgent;
@@ -102,6 +107,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Splash iPhone (app installée) : logo gris fixe, se ferme tout seul (CSS) -->
+<div id="ios-splash"><img src="../force-tracker-logo-gray.png" alt="Force Tracker"></div>
 
 <!-- ═══ ONBOARDING — hors de #root pour éviter overflow:hidden iOS ═══ -->
 <div id="onboarding">
@@ -118,26 +125,48 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div class="ob-step" id="ob-0">
 
       <!-- iOS layout -->
-      <div id="ob0-ios" style="flex:1;display:flex;flex-direction:column;padding:20px 0 0;display:none;">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;">
-          <img src="../force-tracker-logo-topbar.gif" style="width:44px;height:44px;border-radius:11px;object-fit:cover;flex-shrink:0;">
+      <div id="ob0-ios" style="flex:1;display:flex;flex-direction:column;padding:18px 0 0;display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <img src="../force-tracker-logo-gray.png" style="width:44px;height:44px;border-radius:11px;object-fit:cover;flex-shrink:0;">
           <div>
-            <div style="font-family:var(--font-cond);font-size:19px;font-weight:900;">Force Tracker</div>
-            <div style="font-size:11px;color:var(--t3);margin-top:1px;">Installe sur ton iPhone</div>
+            <div style="font-family:var(--font-cond);font-size:19px;font-weight:900;">Installe Force Tracker</div>
+            <div style="font-size:11px;color:var(--t3);margin-top:1px;">En 3 étapes — comme une vraie app 📲</div>
           </div>
         </div>
-        <div style="background:var(--bg3);border-radius:14px;padding:16px;margin-bottom:10px;">
-          <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Étape 1</div>
-          <div style="font-size:15px;font-weight:600;margin-bottom:12px;">Appuie sur Partager en bas ↓</div>
-          <span style="display:inline-flex;align-items:center;gap:6px;background:#007AFF;color:#fff;border-radius:9px;padding:8px 16px;font-size:14px;font-weight:700;">⬆️ Partager</span>
-        </div>
-        <div style="background:var(--bg3);border-radius:14px;padding:16px;">
-          <div style="font-size:10px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;">Étape 2</div>
-          <div style="font-size:15px;font-weight:600;margin-bottom:12px;">Fais défiler et appuie sur</div>
-          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--bg2);border:1.5px solid var(--sep);border-radius:9px;padding:8px 16px;font-size:14px;font-weight:700;">➕ Sur l'écran d'accueil</span>
+        <div class="ii-guide" style="margin-top:12px;">
+          <div class="ii-step">
+            <div class="ii-num">1</div>
+            <div class="ii-body">
+              <div class="ii-txt">Appuie sur <b>Partager</b>, tout en bas de Safari</div>
+              <div class="ii-safaribar">
+                <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg></span>
+                <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="9 18 15 12 9 6"/></svg></span>
+                <span class="ii-share"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><path d="M12 15V3"/><path d="m8 6.5 4-4 4 4"/><path d="M8 10H6a1.5 1.5 0 0 0-1.5 1.5V19A1.5 1.5 0 0 0 6 20.5h12A1.5 1.5 0 0 0 19.5 19v-7.5A1.5 1.5 0 0 0 18 10h-2"/></svg></span>
+                <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="3" width="18" height="18" rx="4"/></svg></span>
+              </div>
+            </div>
+          </div>
+          <div class="ii-step">
+            <div class="ii-num">2</div>
+            <div class="ii-body">
+              <div class="ii-txt">Fais défiler, puis <b>Sur l'écran d'accueil</b></div>
+              <div class="ii-sheetrow">
+                <span class="ii-sheetlbl">Sur l'écran d'accueil</span>
+                <span class="ii-sqadd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:21px;height:21px"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><line x1="12" y1="8.5" x2="12" y2="15.5"/><line x1="8.5" y1="12" x2="15.5" y2="12"/></svg></span>
+              </div>
+            </div>
+          </div>
+          <div class="ii-step">
+            <div class="ii-num">3</div>
+            <div class="ii-body">
+              <div class="ii-txt">Appuie sur <b>Ajouter</b> — et c'est fait ! ✅</div>
+              <span class="ii-addbtn">Ajouter</span>
+            </div>
+          </div>
         </div>
         <div style="flex:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;">
-          <span style="font-size:32px;display:block;animation:ob0-bounce .85s infinite ease-in-out;">⬇️</span>
+          <div class="ii-hint"><span>Le bouton Partager est tout en bas de ton écran</span><span class="ii-downarrow">⬇️</span></div>
         </div>
       </div>
 
@@ -158,7 +187,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <!-- ÉTAPE 1 : As-tu déjà un compte ? -->
     <div class="ob-step ob-active" id="ob-1">
       <div class="ob-hero">
-        <img src="../force-tracker-logo-splash.gif" alt="Force Tracker" style="width:240px;height:240px;object-fit:contain;" loop>
+        <img src="../force-tracker-logo-gray.png" alt="Force Tracker" style="width:240px;height:240px;object-fit:contain;" loop>
         <div class="ob-title">Bienvenue sur<br>Force Tracker</div>
         <div class="ob-sub">Tu as déjà un compte Force Tracker ?</div>
         <div id="ob-1-choice" style="width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px;">
@@ -243,6 +272,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <div class="ob-goal-grid" style="width:100%;">
           <button class="ob-goal-btn ob-sel" id="ob-gm" onclick="obSetGoal('muscle')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>Prise de muscle</button>
           <button class="ob-goal-btn" id="ob-gp" onclick="obSetGoal('perte')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg>Perte de poids</button>
+          <button class="ob-goal-btn" id="ob-gr" onclick="obSetGoal('recomp')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/><path d="M19 14.5l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6z"/></svg>Perte de gras + muscle</button>
           <button class="ob-goal-btn" id="ob-gf" onclick="obSetGoal('force')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="2.5" y1="12" x2="21.5" y2="12"/><rect x="2" y="8" width="2.6" height="8" rx="1"/><rect x="19.4" y="8" width="2.6" height="8" rx="1"/><rect x="5.4" y="9.6" width="2.2" height="4.8" rx="1"/><rect x="16.4" y="9.6" width="2.2" height="4.8" rx="1"/></svg>Force max</button>
           <button class="ob-goal-btn" id="ob-ge" onclick="obSetGoal('equilibre')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>Rééquilibrage</button>
           <button class="ob-goal-btn" id="ob-gen" onclick="obSetGoal('endurance')"><svg class="ob-goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>Endurance</button>
@@ -257,7 +287,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <!-- ÉTAPE 5 : C'est parti ! -->
     <div class="ob-step" id="ob-5" style="display:flex;flex-direction:column;">
       <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;overflow-y:auto;padding-bottom:8px;">
-        <img src="../force-tracker-logo-splash.gif" alt="Force Tracker" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;" loop>
+        <img src="../force-tracker-logo-gray.png" alt="Force Tracker" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;" loop>
         <div class="ob-title" id="ob-cta-title" style="font-size:38px;">C'est parti !</div>
         <div id="ob-email-section" style="width:100%;margin-top:4px;">
           <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Email (pour sauvegarder tes données)</label>
@@ -304,19 +334,35 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <div style="font-size:12px;color:var(--t2);margin-top:2px;line-height:1.4;">Accès depuis ton écran d'accueil, sans navigateur.</div>
       </div>
     </div>
-    <div style="background:var(--bg3);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:14px;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:24px;flex-shrink:0;">1️⃣</span>
-        <div>
-          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Appuie sur <strong>Partager</strong> en bas</div>
-          <span style="display:inline-flex;align-items:center;gap:4px;background:#007AFF;color:#fff;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;">⬆️&nbsp;Partager</span>
+    <div class="ii-guide">
+      <div class="ii-step">
+        <div class="ii-num">1</div>
+        <div class="ii-body">
+          <div class="ii-txt">Appuie sur <b>Partager</b>, tout en bas de Safari</div>
+          <div class="ii-safaribar">
+            <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="15 18 9 12 15 6"/></svg></span>
+            <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><polyline points="9 18 15 12 9 6"/></svg></span>
+            <span class="ii-share"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px"><path d="M12 15V3"/><path d="m8 6.5 4-4 4 4"/><path d="M8 10H6a1.5 1.5 0 0 0-1.5 1.5V19A1.5 1.5 0 0 0 6 20.5h12A1.5 1.5 0 0 0 19.5 19v-7.5A1.5 1.5 0 0 0 18 10h-2"/></svg></span>
+            <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+            <span class="ii-sfico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><rect x="3" y="3" width="18" height="18" rx="4"/></svg></span>
+          </div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:24px;flex-shrink:0;">2️⃣</span>
-        <div>
-          <div style="font-size:14px;font-weight:700;margin-bottom:5px;">Fais défiler et appuie sur</div>
-          <span style="display:inline-flex;align-items:center;gap:4px;background:var(--bg2);border:1px solid var(--sep);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;">➕&nbsp;Sur l'écran d'accueil</span>
+      <div class="ii-step">
+        <div class="ii-num">2</div>
+        <div class="ii-body">
+          <div class="ii-txt">Fais défiler, puis <b>Sur l'écran d'accueil</b></div>
+          <div class="ii-sheetrow">
+            <span class="ii-sheetlbl">Sur l'écran d'accueil</span>
+            <span class="ii-sqadd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:21px;height:21px"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><line x1="12" y1="8.5" x2="12" y2="15.5"/><line x1="8.5" y1="12" x2="15.5" y2="12"/></svg></span>
+          </div>
+        </div>
+      </div>
+      <div class="ii-step">
+        <div class="ii-num">3</div>
+        <div class="ii-body">
+          <div class="ii-txt">Appuie sur <b>Ajouter</b> — et c'est fait ! ✅</div>
+          <span class="ii-addbtn">Ajouter</span>
         </div>
       </div>
     </div>
@@ -337,10 +383,11 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 <!-- Bandeau MODE DÉMO (admin) — en flux, pousse le contenu vers le bas ; visible via #root.demo-on -->
 <div id="demo-banner"><span>🎬 MODE DÉMO — rien n'est enregistré</span><button onclick="exitDemoMode()">Quitter</button></div>
 <div class="topbar">
-  <div style="display:flex;align-items:center;gap:10px;"><img src="../force-tracker-logo-topbar.gif" alt="" id="tb-logo" onclick="onLogoTap()" style="height:56px;width:56px;border-radius:14px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;" loop><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
+  <div style="display:flex;align-items:center;gap:10px;"><img src="../force-tracker-logo-gray.png" alt="" id="tb-logo" onclick="onLogoTap()" style="height:56px;width:56px;border-radius:14px;object-fit:cover;flex-shrink:0;cursor:pointer;-webkit-tap-highlight-color:transparent;" loop><div><div class="tb-title">Force Tracker</div><div class="tb-sub" id="tb-date"></div></div></div>
   <div style="display:flex;align-items:center;gap:8px;">
+    <button onclick="openLangPicker()" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;font-size:17px;line-height:1;padding:0;" title="Langue / Language"><span class="lang-flag-cur">🇫🇷</span></button>
     <button onclick="showHelp()" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#F2F3F5;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;font-size:15px;font-weight:800;font-family:var(--font);" title="Aide">?</button>
-    <button onclick="openShareModal()" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#F2F3F5;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;" title="Partager l'app"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F2F3F5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
+    <button onclick="openShareModal()" style="width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.10);color:#F2F3F5;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;" title="Partager l'app"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
     <button class="sync-pill" id="sync-pill" onclick="goScreen('setup',document.getElementById('nb-setup'))">
       <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;"></span>
       <span id="sync-lbl">Sheets</span>
@@ -418,7 +465,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 
 <!-- SÉANCE -->
 <div class="screen" id="s-log">
-  <div id="log-hdr" style="padding:8px 0 0;position:sticky;top:0;z-index:26;background:var(--bg);box-shadow:0 6px 10px -6px rgba(0,0,0,.5);"></div>
+  <div id="log-hdr" style="padding:10px 14px 0;position:sticky;top:0;z-index:26;background:rgba(12,13,17,.55);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-radius:16px;"></div>
   <div style="display:flex;gap:8px;align-items:center;">
     <label for="s-date" style="flex:1;height:46px;padding:0 16px;background:var(--bg2);border-radius:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" id="s-date-lbl">
       <span style="display:flex;align-items:center;gap:8px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t2);flex-shrink:0;"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span id="s-date-txt" style="font-size:14px;font-weight:600;color:var(--t1);"></span></span>
@@ -471,9 +518,10 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <div id="prog-exo" style="display:flex;flex-direction:column;gap:10px;">
     <div class="sec">Progression</div>
     <div id="big4-chips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-    <select id="prog-sel" onchange="selectProgEx(this.value)" style="font-size:14px;padding:10px 13px;">
-      <option value="">— Autre exercice… —</option>
-    </select>
+    <div id="prog-search-wrap" style="position:relative;">
+      <input id="prog-search" type="text" placeholder="🔍 Rechercher un exercice…" autocomplete="off" oninput="_filterProgSearch(this.value)" onfocus="_filterProgSearch(this.value)" onblur="_blurProgSearch()" style="width:100%;box-sizing:border-box;font-size:14px;padding:10px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-family:var(--font);">
+      <div id="prog-search-results" style="display:none;max-height:240px;overflow-y:auto;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;margin-top:4px;-webkit-overflow-scrolling:touch;"></div>
+    </div>
     <div class="chart-box" id="chart-box"><div class="empty">Sélectionne un exercice</div></div>
     <div id="prog-cycle-banner" style="display:none;"></div>
     <div class="sec" id="sess-hist-title">Historique séances</div>
@@ -493,11 +541,14 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <div class="card cp" id="bodyfat-card" style="display:flex;flex-direction:column;"></div>
     <div id="weight-metric" style="display:flex;gap:6px;"></div>
     <div id="weight-range" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    <div id="weight-nav" style="display:none;align-items:center;gap:6px;"></div>
     <div class="chart-box" id="weight-chart-box"><div class="empty">Ajoute au moins 2 pesées pour voir le graphique</div></div>
     <div class="sec">Corrélations & tendances</div>
     <div id="weight-correlations" style="display:flex;flex-direction:column;gap:8px;"></div>
     <div class="sec">Bilan corporel (balance pro)</div>
     <div id="bodyscan-section" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <div id="bloodtest-sec-title" class="sec" style="display:none;">Bilan sanguin 🩸</div>
+    <div id="bloodtest-section" style="display:flex;flex-direction:column;gap:10px;"></div>
   </div>
   <!-- Espaceur : garantit que la dernière carte passe au-dessus de la barre du bas sur iOS
        (Safari ignore le padding-bottom d'un conteneur flex+scroll — voir CLAUDE.md) -->
@@ -508,7 +559,13 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 <div class="screen" id="s-nutrition">
   <div class="nu-tabs">
     <button class="nu-tab active" id="ntab-macros" onclick="switchNuTab('macros',this)">Macros</button>
+    <button class="nu-tab" id="ntab-journal" onclick="switchNuTab('journal',this)">Journal</button>
     <button class="nu-tab" id="ntab-suppl" onclick="switchNuTab('suppl',this)">Suppléments</button>
+  </div>
+
+  <!-- JOURNAL ALIMENTAIRE -->
+  <div id="nu-journal" style="display:none;flex-direction:column;gap:12px;">
+    <div id="food-journal"></div>
   </div>
 
   <!-- MACROS -->
@@ -556,6 +613,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         </div>
       </div>
     </div>
+    <!-- Réglage manuel des calories/macros (comme MyFitnessPal) — rempli par renderNutrition -->
+    <div id="nu-adjust"></div>
     <!-- Phase toggle -->
     <div class="phase-row">
       <button class="phase-btn charge" id="pb-charge" onclick="setNuPhase('charge')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:5px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Charge<br><span style="font-size:11px;font-weight:500;opacity:.75;" id="pb-charge-lbl">Surplus</span></button>
@@ -591,6 +650,17 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
     <!-- Meal plan statique -->
     <div class="sec">Plan alimentaire journalier</div>
     <div class="card cp" id="meal-plan"><div style="text-align:center;color:var(--t3);font-size:13px;padding:16px;">Remplis ton profil pour voir le plan 🍽️</div></div>
+    <!-- Pointeur vers le Journal (retour testeuse : « pas évident où appuyer pour noter moi-même ») — bêta testeur -->
+    <div id="nu-journal-ptr" onclick="switchNuTab('journal',document.getElementById('ntab-journal'))" style="display:flex;align-items:center;gap:11px;background:var(--bg2);border:1px solid var(--sep);border-radius:14px;padding:12px 14px;margin-top:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+      <span style="font-size:22px;flex-shrink:0;">📓</span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13.5px;font-weight:700;color:var(--t1);">Noter ce que je mange &rsaquo;</div>
+        <div style="font-size:11.5px;color:var(--t3);line-height:1.35;">Ce plan est une suggestion. Pour saisir tes vrais repas (grammes, pièces) et suivre tes calories du jour, ouvre le <b style="color:var(--t2);">Journal</b>.</div>
+      </div>
+    </div>
+    <!-- Régime alimentaire + restrictions (rempli par _renderDietCard) -->
+    <div class="sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;margin-right:5px;"><path d="M3 2v7c0 1.1.9 2 2 2h1v11h2V2M11 2v20h2V15c1.7 0 3-1.3 3-3V5c0-1.7-1.3-3-3-3"/></svg>Mon régime alimentaire</div>
+    <div id="diet-card"></div>
     <!-- Plan de repas IA -->
     <div class="sec"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;vertical-align:-2px;margin-right:5px;"><path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/><path d="M19 14.5l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6z"/></svg>Plan de repas IA</div>
     <div id="meal-plan-ia"></div>
@@ -693,9 +763,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <!-- PROFIL -->
   <div id="setup-profil" style="display:flex;flex-direction:column;gap:12px;padding:0 16px;">
     <!-- EN-TÊTE RETOUR -->
-    <div style="padding:8px 16px 8px;margin:0 -16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--sep);">
+    <div style="padding:8px 16px 8px;margin:0 -16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;background:transparent;">
       <button onclick="closeProfil()" style="width:36px;height:36px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);border:none;color:var(--t2);font-size:19px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">✕</button>
-      <span style="font-family:var(--font-cond);font-size:18px;font-weight:800;letter-spacing:-.01em;color:var(--t1);">Profil athlète</span>
     </div>
     <!-- COMPTE SYNC — cliquable pour restaurer -->
     <div class="card cp" style="display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;" onclick="openRestoreAccount()">
@@ -709,8 +778,12 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <span style="font-size:18px;color:var(--t3);line-height:1;">›</span>
       </div>
     </div>
+    <!-- Confirmation d'email (rempli par _renderEmailVerifyCard) -->
+    <div id="email-verify-card"></div>
     <!-- BOUTON RESTAURER — visible sans admin, pour récupérer ses données depuis le cloud -->
     <button class="btn" id="btn-restore-cloud" onclick="openRestoreAccount()" style="width:100%;background:rgba(91,168,255,.10);border:1.5px solid rgba(91,168,255,.38);color:var(--blue);font-size:14px;font-weight:700;padding:14px;border-radius:14px;touch-action:manipulation;">🔄 Restaurer mon compte depuis le cloud</button>
+    <!-- PROTÉGER MON COMPTE (code perso) -->
+    <button class="btn" id="btn-protect-account" onclick="openProtect()" style="width:100%;margin-top:8px;background:rgba(48,209,88,.10);border:1.5px solid rgba(48,209,88,.40);color:var(--green);font-size:14px;font-weight:700;padding:14px;border-radius:14px;touch-action:manipulation;">🔒 Protéger mon compte avec un code</button>
 
     <!-- % de remplissage du profil (rempli par _renderProfileCompletion) -->
     <div id="profil-completion" style="display:none;background:var(--bg2);border-radius:14px;padding:13px 15px;box-shadow:inset 0 0 0 1px var(--sep);"></div>
@@ -759,9 +832,10 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <div class="work-toggle">
           <button class="wtbtn" id="wt-bureau" onclick="setWorkType('bureau')">💼 Bureau</button>
           <button class="wtbtn" id="wt-debout" onclick="setWorkType('debout')">🚶 Debout</button>
+          <button class="wtbtn" id="wt-actif" onclick="setWorkType('actif')">🏃 Actif</button>
           <button class="wtbtn" id="wt-physique" onclick="setWorkType('physique')">⚒️ Physique</button>
         </div>
-        <div style="font-size:13px;color:var(--t3);margin-top:4px;">Bureau +0 kcal · Debout +200 kcal · Physique +450 kcal/j sur le TDEE</div>
+        <div style="font-size:13px;color:var(--t3);margin-top:4px;">Bureau (assis) +0 · Debout (peu de déplacements) +200 · Actif (serveuse, infirmier, vendeur : debout + déplacements toute la journée) +325 · Physique (bâtiment, manutention lourde) +450 kcal/j sur le TDEE</div>
       </div>
       <div class="fg">
         <label>Tabac</label>
@@ -776,6 +850,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <div class="goal-grid">
         <button class="goal-btn" id="g-muscle" onclick="setGoal('muscle')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg><span>Prise de muscle</span></button>
         <button class="goal-btn" id="g-perte" onclick="setGoal('perte')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5Z"/></svg><span>Perte de poids</span></button>
+        <button class="goal-btn" id="g-recomp" onclick="setGoal('recomp')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 5.4L19 10l-5.4 1.6L12 17l-1.6-5.4L5 10l5.4-1.6z"/><path d="M19 14.5l.6 2 2 .6-2 .6-.6 2-.6-2-2-.6 2-.6z"/></svg><span>Perte de gras + muscle</span></button>
         <button class="goal-btn" id="g-force" onclick="setGoal('force')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="2.5" y1="12" x2="21.5" y2="12"/><rect x="2" y="8" width="2.6" height="8" rx="1"/><rect x="19.4" y="8" width="2.6" height="8" rx="1"/><rect x="5.4" y="9.6" width="2.2" height="4.8" rx="1"/><rect x="16.4" y="9.6" width="2.2" height="4.8" rx="1"/></svg><span>Force max</span></button>
         <button class="goal-btn" id="g-equilibre" onclick="setGoal('equilibre')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg><span>Rééquilibrage</span></button>
         <button class="goal-btn" id="g-endurance" onclick="setGoal('endurance')"><svg class="goal-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg><span>Endurance</span></button>
@@ -933,6 +1008,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <span class="coach-ctx-tag" id="coach-ctx-cycle" style="display:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Cycle</span>
       </div>
     </div>
+    <!-- Carte questionnaire « Milo apprend à te connaître » (remplie par _renderCoachQuizCard) -->
+    <div id="coach-quiz-card"></div>
     <!-- Grille 4 actions -->
     <div class="coach-action-grid">
       <button class="coach-action-card" onclick="coachAction('programme')">
@@ -1105,14 +1182,72 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 <!-- POP-UP perso Christophe (« billoute ») — une seule fois -->
 <div class="overlay" id="ov-billoute" style="z-index:500;">
   <div class="modal" style="max-width:400px;text-align:center;">
-    <div style="font-size:50px;line-height:1;">💪</div>
-    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Salut billoute !</div>
-    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel t'a préparé du lourd, rien que pour toi :</div>
+    <div style="font-size:50px;line-height:1;">✅</div>
+    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">C'est fait, billoute !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel a traité <b>TOUTES</b> tes remontées de la boîte à idées 🙌<br>Jette un œil et dis-moi si tout est bon 👇</div>
     <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
-      <div class="sw-feat"><span>🤖</span><div><b>Un Coach IA bien plus intelligent</b><small>Milo tourne pour toi sur un modèle beaucoup plus costaud — des conseils plus fins, plus complets, plus précis.</small></div></div>
-      <div class="sw-feat"><span>🧪</span><div><b>Tes rapports de balance en illimité</b><small>Prends en photo tes analyses de composition corporelle (balance à indice / impédance) autant de fois que tu veux. Progrès → Poids → Bilan corporel.</small></div></div>
+      <div class="sw-feat"><span>🏋️</span><div><b>Les poids du programme reviennent tout seuls</b><small>Quand tu charges un programme, les charges de ta dernière séance sont reprises automatiquement — <b>série par série</b> (60, 70, 80… chacune à sa valeur). Vérifie sur ton programme importé !</small></div></div>
+      <div class="sw-feat"><span>🔢</span><div><b>Affichage « 8 reps à 30 kg »</b><small>Pendant le chrono de repos, la prochaine série s'affiche maintenant « 8 reps à 30 kg » (et non « 30 kg × 8 ») — cohérent avec l'ordre reps → kg des programmes, comme tu l'avais demandé.</small></div></div>
+      <div class="sw-feat"><span>⚡</span><div><b>Le superset, partout et facile</b><small>Tu peux lier deux exercices en superset : <b>dans l'éditeur de programme</b> (bouton « ⚡ Superset avec le suivant »), à l'ajout d'un exo, ET <b>pendant la séance</b> (menu ⋯ d'un exo → « ⚡ Superset avec l'exercice du dessus »).</small></div></div>
+      <div class="sw-feat"><span>🍽️</span><div><b>Noter ce que tu manges</b><small>Dans Nutrition, tu peux saisir toi-même tes repas — matin, midi, soir + collations (le 3ᵉ onglet « Journal »). Dis-moi si c'est bien ce que tu voulais !</small></div></div>
+      <div class="sw-feat"><span>⏱️</span><div><b>Et merci pour le compteur de durée 😄</b><small>Content qu'il te plaise ! Continue de m'envoyer tes idées — c'est comme ça que l'app s'améliore. 🙏</small></div></div>
     </div>
-    <button class="btn btn-red" onclick="closeBilloute()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Trop bien, merci ! 🙌</button>
+    <button class="btn btn-red" onclick="closeBilloute()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Je vérifie tout ça ! 👊</button>
+  </div>
+</div>
+
+<!-- POP-UP perso Emma — bienvenue Espace Testeur + boîte à idées (une seule fois) -->
+<div class="overlay" id="ov-emma-welcome" style="z-index:9999;">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:50px;line-height:1;">🎉</div>
+    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Bienvenue dans l'équipe, Emma !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Michel t'a donné un accès spécial rien que pour toi 👇</div>
+    <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
+      <div class="sw-feat"><span>🌟</span><div><b>Tu es Testeuse de l'app</b><small>Tu vois maintenant une <b>carte dorée « Testeur »</b> tout en haut de ton Accueil. C'est ta porte d'entrée vers l'Espace Testeur.</small></div></div>
+      <div class="sw-feat"><span>💡</span><div><b>La boîte à idées — le plus important</b><small>Une idée, un truc qui te gêne, un bug, une suggestion ? <b>Écris-le à Michel</b> (tu peux ajouter des photos ou des captures d'écran). → <b>Accueil → carte dorée → Espace Testeur → Boîte à idées</b>. Michel reçoit tout, et c'est comme ça que l'app s'améliore. 🙏</small></div></div>
+      <div class="sw-feat"><span>📸</span><div><b>Bonus : analyse de tes photos</b><small>Dans le même Espace Testeur, tu peux faire analyser tes photos d'évolution (en avant-première).</small></div></div>
+    </div>
+    <button class="btn btn-red" onclick="closeEmmaWelcome()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">J'ai compris, merci Michel ! 🙌</button>
+  </div>
+</div>
+
+<!-- OVERLAY : réglage manuel des calories/macros -->
+<div class="overlay" id="ov-kcal-edit" style="z-index:500;">
+  <div class="modal" style="max-width:400px;">
+    <div style="font-size:19px;font-weight:900;color:var(--t1);margin-bottom:4px;">🎯 Ajuster mes objectifs</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:14px;">Corrige tes calories à la main. Les protéines et lipides restent calés sur ton profil ; les glucides s'ajustent tout seuls pour garder un équilibre sain.</div>
+    <label style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;">Calories par jour</label>
+    <div style="display:flex;align-items:center;gap:8px;margin:6px 0 4px;">
+      <input id="kcal-edit-inp" type="number" inputmode="numeric" min="800" max="6000" oninput="_kcalPreview()" style="flex:1;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:12px;color:var(--t1);font-family:var(--font-cond);font-size:22px;font-weight:900;text-align:center;box-sizing:border-box;">
+      <span style="font-size:13px;color:var(--t3);font-weight:700;">kcal</span>
+    </div>
+    <div id="kcal-edit-auto" style="font-size:11.5px;color:var(--t3);margin-bottom:12px;line-height:1.4;"></div>
+    <div style="background:var(--bg2);border-radius:12px;padding:12px;display:flex;justify-content:space-around;text-align:center;">
+      <div><div id="kcal-pv-prot" style="font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--green);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Protéines</div></div>
+      <div><div id="kcal-pv-carb" style="font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--orange);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Glucides</div></div>
+      <div><div id="kcal-pv-fat" style="font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--gold);">—</div><div style="font-size:10.5px;color:var(--t3);font-weight:700;">Lipides</div></div>
+    </div>
+    <button class="btn btn-red" onclick="saveKcalEdit()" style="width:100%;margin-top:16px;padding:13px;font-size:15px;">Enregistrer mes calories</button>
+    <button class="btn btn-bg2" id="kcal-edit-reset" onclick="resetKcalAuto()" style="width:100%;margin-top:8px;">Revenir en automatique</button>
+    <button class="btn" onclick="closeKcalEdit()" style="width:100%;margin-top:8px;background:transparent;color:var(--t3);">Annuler</button>
+  </div>
+</div>
+
+<!-- POP-UP TESTEUSES (Eline, Emma, Tanna) — bienvenue + tour de l'app + boîte à idées (une seule fois) -->
+<div class="overlay" id="ov-tester-guide" style="z-index:9999;">
+  <div class="modal" style="max-width:410px;text-align:center;">
+    <div style="font-size:50px;line-height:1;">🎉</div>
+    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Bienvenue dans l'équipe<span id="tguide-name"></span> !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Tu fais partie des <b style="color:var(--t1);">testeuses</b> de Force Tracker 🙏<br>Voici ce que tu peux faire — et surtout comment m'aider à améliorer l'appli 👇</div>
+    <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
+      <div class="sw-feat"><span>🏋️</span><div><b>Suivre tes séances</b><small>Note tes exercices, séries, reps et poids. L'appli calcule tes records et ta progression toute seule.</small></div></div>
+      <div class="sw-feat"><span>📋</span><div><b>Tes programmes</b><small>Crée ou importe un programme (photo / PDF), charge-le en séance — les poids de la dernière fois reviennent tout seuls.</small></div></div>
+      <div class="sw-feat"><span>🤖</span><div><b>Ton coach Milo (IA)</b><small>Un vrai coach dans ta poche : pose-lui tes questions, il connaît ton profil et tes séances. <b>Illimité pour toi</b> ⭐</small></div></div>
+      <div class="sw-feat"><span>📈</span><div><b>Tes progrès</b><small>Graphiques de force, de poids, de masse grasse, et analyse de tes photos d'évolution.</small></div></div>
+      <div class="sw-feat"><span>💡</span><div><b>La boîte à idées — le plus important</b><small>Une idée, un truc qui te gêne, un bug, un manque ? <b>Écris-le moi</b> (tu peux joindre des photos ou des captures d'écran). → <b>Accueil → carte dorée « Testeur » → Espace Testeur → Boîte à idées</b>. Je reçois tout direct, et c'est comme ça que l'appli grandit. 🙏</small></div></div>
+    </div>
+    <button class="btn btn-red" onclick="closeTesterGuide();openTesterSpace();" style="width:100%;margin-top:16px;padding:13px;font-size:15px;">Voir ma boîte à idées →</button>
+    <button class="btn btn-bg2" onclick="closeTesterGuide()" style="width:100%;margin-top:8px;">Plus tard</button>
   </div>
 </div>
 
@@ -1121,13 +1256,26 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <div class="modal" style="max-width:400px;text-align:center;">
     <div style="font-size:50px;line-height:1;">✨</div>
     <div style="font-size:22px;font-weight:900;color:var(--red);margin-top:8px;">Quoi de neuf ?</div>
-    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Force Tracker s'est enrichi :</div>
-    <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
-      <div class="sw-feat"><span>🧪</span><div><b>Bilan corporel (balance pro)</b><small>Tu passes sur une balance à impédance ? Enregistre tes chiffres — par photo, à la main ou en collant un code — suis leur évolution, et Milo s'en sert. Progrès → Poids.</small></div></div>
-      <div class="sw-feat"><span>💾</span><div><b>Milo garde vos conversations</b><small>Ton fil de discussion reste sauvegardé même après fermeture. Le bouton « + » démarre une nouvelle discussion.</small></div></div>
-      <div class="sw-feat"><span>📖</span><div><b>Guide mis à jour</b><small>Menu → « Guide de l'application » pour tout revoir en images.</small></div></div>
-    </div>
+    <div id="whatsnew-sub" style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Voici les dernières nouveautés 👇</div>
+    <div id="whatsnew-list" style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;"></div>
     <button class="btn btn-red" onclick="closeWhatsNew()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">C'est parti 💪</button>
+  </div>
+</div>
+
+<!-- POP-UP TESTEURS : différenciation des types de matériel (test) -->
+<div class="overlay" id="ov-tester-eq" style="z-index:500;">
+  <div class="modal" style="max-width:410px;text-align:center;">
+    <div style="display:inline-block;background:rgba(255,45,85,.14);color:var(--red);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;border-radius:20px;">🧪 Test testeurs</div>
+    <div style="font-size:21px;font-weight:900;color:var(--t1);margin-top:12px;">Types de matériel</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:10px;">Nouveauté en test : quand tu <b style="color:var(--t1);">choisis un exercice</b>, chacun affiche maintenant <b style="color:var(--t1);">son type de matériel</b> — pour t'y retrouver d'un coup d'œil.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:16px;">
+      <span class="ex-eq" style="color:#FF6C00;background:rgba(255,108,0,.13);font-size:13px;padding:5px 12px;">🏋️ Barre</span>
+      <span class="ex-eq" style="color:#5BA8FF;background:rgba(91,168,255,.13);font-size:13px;padding:5px 12px;">💪 Poids libre</span>
+      <span class="ex-eq" style="color:#A855F7;background:rgba(168,85,247,.13);font-size:13px;padding:5px 12px;">⚙️ Guidé</span>
+      <span class="ex-eq" style="color:#34D399;background:rgba(52,211,153,.13);font-size:13px;padding:5px 12px;">🤸 Poids du corps</span>
+    </div>
+    <div style="font-size:13px;line-height:1.55;color:var(--t3);margin-top:16px;background:var(--bg3);border-radius:12px;padding:12px 14px;">💬 <b style="color:var(--t2);">On compte sur toi :</b> si un exercice te semble <b style="color:var(--t2);">mal classé</b>, note-le et dis-le à Michel — c'est le but du test !</div>
+    <button class="btn btn-red" onclick="closeTesterEq()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">C'est noté 👍</button>
   </div>
 </div>
 
@@ -1454,6 +1602,131 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<!-- OVERLAY: Import plan alimentaire (diététicien) -->
+<div class="overlay" id="ov-import-meal" onclick="if(event.target===this)closeImportMeal()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px;">
+      <div class="imp-dot active" id="mimp-dot-1"></div>
+      <div class="imp-dot" id="mimp-dot-2"></div>
+      <div class="imp-dot" id="mimp-dot-3"></div>
+      <div class="imp-dot" id="mimp-dot-4"></div>
+    </div>
+    <!-- Étape 1 : Source -->
+    <div id="mimp-s1">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:36px;margin-bottom:8px;">🍽️</div>
+        <div style="font-weight:800;font-size:17px;margin-bottom:6px;">Importer un plan alimentaire</div>
+        <div style="font-size:13px;color:var(--t2);line-height:1.5;">Prends en photo le plan de ta diététicienne (ou son PDF). L'IA lit les repas et les range.</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('mimp-cam-inp').click()">📷 Prendre une photo</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('mimp-gal-inp').click()">🖼️ Choisir depuis la galerie</button>
+        <button class="btn btn-bg2" style="padding:16px;font-size:15px;" onclick="document.getElementById('mimp-file-inp').click()">📄 Importer un PDF</button>
+      </div>
+      <input type="file" id="mimp-cam-inp" accept="image/*" capture="environment" style="display:none" onchange="addMealImportPhoto(this)">
+      <input type="file" id="mimp-gal-inp" accept="image/*" multiple style="display:none" onchange="addMealImportPhoto(this)">
+      <input type="file" id="mimp-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addMealImportFile(this)">
+      <button class="btn btn-bg2" style="width:100%;margin-top:10px;" onclick="closeImportMeal()">Annuler</button>
+    </div>
+    <!-- Étape 2 : Pages -->
+    <div id="mimp-s2" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:16px;">Pages ajoutées</div>
+      <div id="mimp-thumbs" style="display:flex;flex-wrap:wrap;gap:8px;min-height:80px;"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('mimp-more-inp').click()">+ Photo</button>
+        <button class="btn btn-bg2" style="flex:1" onclick="document.getElementById('mimp-more-file-inp').click()">+ PDF</button>
+      </div>
+      <input type="file" id="mimp-more-inp" accept="image/*" multiple style="display:none" onchange="addMealImportPhoto(this)">
+      <input type="file" id="mimp-more-file-inp" accept=".pdf,application/pdf" style="display:none" onchange="addMealImportFile(this)">
+      <button class="btn btn-red" style="margin-top:4px;" onclick="analyzeMealImport()">🤖 Analyser avec IA →</button>
+      <button class="btn btn-bg2" onclick="mealImpGoStep(1)">← Retour</button>
+    </div>
+    <!-- Étape 3 : Analyse -->
+    <div id="mimp-s3" style="display:none;flex-direction:column;align-items:center;gap:16px;padding:32px 0;">
+      <div style="font-size:40px;">🤖</div>
+      <div style="font-weight:700;font-size:16px;">Analyse en cours…</div>
+      <div style="font-size:13px;color:var(--t2);text-align:center;">Claude lit ton plan et extrait les repas</div>
+      <div class="imp-spinner"></div>
+    </div>
+    <!-- Étape 4 : Confirmation -->
+    <div id="mimp-s4" style="display:none;flex-direction:column;gap:12px;">
+      <div style="font-weight:800;font-size:17px;" id="mimp-plan-name"></div>
+      <div style="font-size:13px;color:var(--t2);">Vérifie les repas extraits. Ils remplaceront ton plan de repas actuel.</div>
+      <div id="mimp-preview" style="display:flex;flex-direction:column;gap:10px;max-height:44vh;overflow-y:auto;"></div>
+      <button class="btn btn-red" onclick="finalImportMeal()">✅ Enregistrer ce plan</button>
+      <button class="btn btn-bg2" onclick="mealImpGoStep(2)">← Modifier les photos</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY: Ajouter un aliment au journal -->
+<div class="overlay" id="ov-add-food" onclick="if(event.target===this)closeAddFood()">
+  <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:18px;margin-bottom:14px;">🍽️ Ajouter un aliment</div>
+    <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Repas</div>
+    <div id="af-meal-chips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
+    <div id="af-quick-list"></div>
+    <!-- Code-barres + score santé : gratuit pour tout le monde (client-side, 0 token ; affiché par openAddFood) -->
+    <div id="af-barcode-block" style="display:none;">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px;">🔢 Code-barres du produit — tape les chiffres écrits sous le code :</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input id="af-bc-manual" type="text" inputmode="numeric" placeholder="ex : 3017620422003" onkeydown="if(event.key==='Enter')_manualBarcode()" style="flex:1 1 auto;min-width:0;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:15px;font-family:var(--font);">
+        <button onclick="_manualBarcode()" style="flex:0 0 auto;width:auto;padding:0 20px;border-radius:10px;border:none;background:var(--red);color:#fff;font-weight:700;font-size:15px;font-family:var(--font);cursor:pointer;">OK</button>
+      </div>
+      <button class="btn btn-bg2" onclick="scanBarcodeIA()" style="width:100%;margin-bottom:12px;">📷 Ou photographier le code-barres (IA lit les chiffres)</button>
+      <input type="file" id="af-bc-photo-input" accept="image/*" capture="environment" style="display:none" onchange="onBarcodePhotoIA(this)">
+    </div>
+    <!-- Produit sans code / étiquette : photo IA -->
+    <button class="btn btn-bg2" onclick="readFoodLabel()" style="width:100%;margin-bottom:14px;">📸 Ou lire l'étiquette nutritionnelle (IA)</button>
+    <input type="file" id="af-label-input" accept="image/*" capture="environment" style="display:none" onchange="onFoodLabelFile(this)">
+    <div id="af-bc-row" style="display:none;background:var(--bg3);border-radius:10px;padding:10px 12px;margin-bottom:14px;">
+      <div id="af-bc-name" style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:13px;color:var(--t3);">Quantité</span>
+        <input id="af-bc-grams" type="number" inputmode="numeric" value="100" oninput="_bcApplyGrams()" style="flex:1;box-sizing:border-box;padding:9px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);">
+        <span style="font-size:13px;color:var(--t3);">g</span>
+      </div>
+    </div>
+    <div id="af-health-card" style="margin-bottom:14px;"></div>
+    <div style="font-size:12px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:8px;">Ce que tu as mangé</div>
+    <textarea id="af-desc" placeholder="Ex : 2 œufs, 100g de riz, brocolis, 1 yaourt" rows="2" style="width:100%;box-sizing:border-box;padding:12px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);resize:vertical;margin-bottom:10px;"></textarea>
+    <button class="btn btn-bg2" id="af-ai-btn" onclick="estimateFoodAI()" style="width:100%;margin-bottom:6px;">🤖 Estimer les calories avec l'IA</button>
+    <div id="af-ai-note" style="font-size:11px;color:var(--t3);text-align:center;margin-bottom:16px;line-height:1.4;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Calories (kcal)</div><input id="af-kcal" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Protéines (g)</div><input id="af-prot" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Glucides (g)</div><input id="af-carbs" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+      <div><div style="font-size:11px;color:var(--t3);font-weight:700;margin-bottom:4px;">Lipides (g)</div><input id="af-fat" type="number" inputmode="numeric" placeholder="0" style="width:100%;box-sizing:border-box;padding:11px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:15px;font-family:var(--font);"></div>
+    </div>
+    <button class="btn btn-red" onclick="addFoodEntry()" style="width:100%;margin-bottom:8px;">✅ Ajouter au journal</button>
+    <button class="btn btn-bg2" onclick="closeAddFood()" style="width:100%;">Annuler</button>
+  </div>
+</div>
+
+<!-- OVERLAY: Mur premium estimation IA du journal -->
+<div class="overlay" id="ov-food-wall" onclick="if(event.target===this)closeFoodWall()">
+  <div class="modal" style="max-width:400px;max-height:92vh;overflow-y:auto;padding:22px 18px 24px;text-align:center;">
+    <div class="modal-handle"></div>
+    <div style="font-size:52px;line-height:1;margin:4px 0 8px;">⭐</div>
+    <div class="coach-wall-title">Estimations IA illimitées</div>
+    <div class="coach-wall-sub">Tu as utilisé tes estimations IA gratuites du journal. La saisie à la main reste gratuite et illimitée 👍</div>
+    <div class="coach-wall-price" style="margin:10px 0;">4,99€ <span>/ 2 mois</span></div>
+    <div class="coach-wall-card" style="text-align:left;margin-bottom:14px;">
+      <div class="coach-wall-perk"><span class="pi">♾️</span> Estimations IA du journal illimitées</div>
+      <div class="coach-wall-perk"><span class="pi">🤖</span> Coach IA : questions illimitées</div>
+      <div class="coach-wall-perk"><span class="pi">📊</span> Analyse de progression + morphologie</div>
+    </div>
+    <a href="mailto:michdu75@gmail.com?subject=Force%20Tracker%20Premium&body=Bonjour%2C%20je%20souhaite%20acc%C3%A9der%20au%20Premium." style="width:100%;text-decoration:none;">
+      <button class="btn btn-red" style="width:100%;padding:15px;font-size:16px;">✉️ Contacter pour le Premium</button>
+    </a>
+    <div class="coach-wall-or" style="margin:14px 0 8px;">— Tu as déjà un code d'accès ? —</div>
+    <button class="btn btn-bg2" style="width:100%;padding:13px;font-size:14px;" onclick="closeFoodWall();goScreen('coach',document.getElementById('nb-coach'));setTimeout(showPremiumWall,150);">Activer un code dans l'onglet Coach 🤖</button>
+    <button class="btn btn-bg2" style="width:100%;padding:11px;font-size:13px;margin-top:8px;opacity:.7;" onclick="closeFoodWall()">Saisir à la main</button>
+  </div>
+</div>
+
 <!-- OVERLAY: Import historique séances (flow isolé) -->
 <div class="overlay" id="ov-import-hist" onclick="if(event.target===this)closeImportHist()">
   <div class="modal" style="max-width:420px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;">
@@ -1624,6 +1897,15 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 </div>
 
 <input type="file" id="bs-photo-input" accept="image/*" style="display:none;" onchange="onBodyScanPhoto(this)">
+<!-- OVERLAY: scan « analyse du rapport en cours » (visuel pendant la lecture IA) -->
+<div class="overlay" id="ov-bs-scan" style="z-index:520;">
+  <div class="modal" style="max-width:340px;text-align:center;">
+    <div id="bs-scan-title" style="font-weight:900;font-size:17px;margin-bottom:4px;">🔍 Analyse du rapport…</div>
+    <div id="bs-scan-sub" style="font-size:12px;color:var(--t3);margin-bottom:12px;">L'IA lit tes chiffres</div>
+    <div class="bs-scan-frame"><img id="bs-scan-img" alt=""><div class="bs-scan-grid"></div><div class="bs-scan-line"></div></div>
+    <div id="bs-scan-foot" style="font-size:13px;color:var(--t2);margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px;"><span class="bs-scan-dot"></span>Détection des valeurs…</div>
+  </div>
+</div>
 <!-- OVERLAY: Bilan corporel (saisie balance pro / impédancemètre) -->
 <div class="overlay" id="ov-bodyscan-form" onclick="if(event.target===this)closeBodyScanForm()">
   <div class="modal" style="max-width:400px;max-height:88vh;overflow-y:auto;">
@@ -1649,13 +1931,49 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<input type="file" id="blood-file-input" accept="application/pdf,image/*" style="display:none;" onchange="onBloodFile(this)">
+<!-- OVERLAY: caviardage du bilan sanguin (masquer les infos perso avant l'IA) -->
+<div class="overlay" id="ov-blood-redact" style="z-index:530;">
+  <div class="modal" style="max-width:440px;max-height:94vh;display:flex;flex-direction:column;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:900;font-size:17px;text-align:center;">🔒 Masque tes infos perso</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin:4px 0 10px;line-height:1.4;">Passe le doigt sur ton <b>nom</b>, ta <b>date de naissance</b>, ton <b>n° patient</b>… pour les noircir. Seul ce qui reste part à l'IA — ton identité ne sort pas du téléphone.</div>
+    <div id="blood-redact-wrap" style="flex:1;overflow:auto;background:#0e1016;border-radius:10px;display:flex;justify-content:center;align-items:center;min-height:200px;">
+      <canvas id="blood-redact-canvas" style="max-width:100%;max-height:64vh;touch-action:none;display:block;border-radius:6px;"></canvas>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;">
+      <button class="btn btn-bg2" style="padding:9px 14px;" onclick="_bloodRedactNav(-1)">◀</button>
+      <span id="blood-redact-page" style="font-size:12px;color:var(--t2);"></span>
+      <button class="btn btn-bg2" style="padding:9px 14px;" onclick="_bloodRedactNav(1)">▶</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="btn btn-bg2" style="flex:1;" onclick="_bloodRedactUndo()">↶ Annuler</button>
+      <button class="btn btn-red" style="flex:2;" onclick="_analyzeBloodRedacted()">🔍 Analyser</button>
+    </div>
+    <button class="btn btn-bg2" style="width:100%;margin-top:8px;color:var(--t3);" onclick="closeBloodRedact()">Fermer</button>
+  </div>
+</div>
+<!-- OVERLAY: affichage d'un bilan sanguin (marqueurs groupés) -->
+<div class="overlay" id="ov-blood-test" onclick="if(event.target===this)closeBloodTest()">
+  <div class="modal" style="max-width:420px;max-height:90vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:900;font-size:18px;text-align:center;">🩸 Bilan sanguin</div>
+    <div id="blood-test-date" style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:6px;"></div>
+    <div style="font-size:11px;color:var(--t3);background:var(--bg3);border-radius:10px;padding:9px 11px;line-height:1.45;margin-bottom:6px;">⚕️ Chiffres recopiés de ton labo, sans interprétation. Pastille orange = hors de l'intervalle du labo → <b>parles-en à ton médecin</b>. L'appli ne pose aucun diagnostic.</div>
+    <div id="blood-test-body"></div>
+    <div style="margin-top:14px;display:flex;gap:8px;">
+      <button class="btn btn-bg2" style="flex:1;color:var(--red);" onclick="deleteBloodTest()">🗑 Supprimer</button>
+      <button class="btn btn-bg2" style="flex:1;" onclick="closeBloodTest()">Fermer</button>
+    </div>
+  </div>
+</div>
 <!-- OVERLAY: Étude du corps (bilan morpho-postural, 4 photos) -->
 <div class="overlay" id="ov-body-study" onclick="if(event.target===this)closeBodyStudy()">
   <div class="modal" style="max-width:400px;">
     <div class="modal-handle"></div>
     <div style="font-weight:900;font-size:18px;margin-bottom:2px;text-align:center;">📐 Étude du corps</div>
     <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:4px;">Posture, insertions, équilibre & exercices suggérés</div>
-    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px;">🔒 Photos non stockées — analysées puis supprimées immédiatement</div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:14px;">🔒 Tes photos restent <b>uniquement sur ton téléphone</b> (jamais envoyées sur le serveur) — gardées pour comparer ton évolution.</div>
     <div style="display:flex;flex-direction:column;gap:12px;" id="body-slots">
       <div style="border:1px solid var(--sep);border-radius:12px;padding:12px;display:flex;gap:12px;align-items:flex-start;">
         <label id="body-slot-0" for="body-file-0" style="width:72px;height:96px;border-radius:8px;border:2px dashed var(--sep);background:var(--bg3);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;"><span style="font-size:22px;">📷</span></label>
@@ -1697,6 +2015,23 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<!-- QUESTIONNAIRE « Milo apprend à te connaître » — gratuit, ne compte pas dans les questions du Coach -->
+<div class="overlay" id="ov-coach-quiz" style="z-index:480;" onclick="if(event.target===this)closeCoachQuiz()">
+  <div class="modal" style="max-width:430px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div id="cq-title" style="font-size:16px;font-weight:900;display:flex;align-items:center;gap:7px;"></div>
+      <button onclick="closeCoachQuiz()" style="background:none;border:none;color:var(--t2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
+    </div>
+    <div class="cq-progress"><div id="cq-progress-fill" class="cq-progress-fill"></div></div>
+    <div id="cq-step" style="min-height:220px;padding-top:14px;"></div>
+    <div style="display:flex;gap:10px;margin-top:12px;">
+      <button id="cq-prev" class="btn btn-bg2" style="flex:0 0 auto;width:auto;padding:12px 18px;" onclick="_coachQuizPrev()">◂</button>
+      <button id="cq-next" class="btn btn-red" style="flex:1 1 auto;width:auto;padding:12px;" onclick="_coachQuizNext()">Suivant ▸</button>
+    </div>
+    <div style="text-align:center;margin-top:8px;"><button id="cq-skip" onclick="_coachQuizNext(true)" style="background:none;border:none;color:var(--t3);font-size:12.5px;text-decoration:underline;cursor:pointer;">Passer cette question</button></div>
+  </div>
+</div>
+
 <!-- SUIVI PHOTOS (Super Testeur) — séries mensuelles comparées -->
 <div class="overlay" id="ov-body-series" style="z-index:485;" onclick="if(event.target===this)closeBodySeries()">
   <div class="modal" style="max-width:430px;">
@@ -1713,7 +2048,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   <div style="width:100%;max-width:380px;padding:0 24px;display:flex;flex-direction:column;align-items:center;gap:22px;">
     <div style="font-family:var(--font-cond);font-size:20px;font-weight:900;color:#fff;letter-spacing:2px;text-align:center;">ANALYSE IA</div>
     <div style="position:relative;display:flex;gap:8px;width:100%;justify-content:center;border-radius:10px;overflow:hidden;" id="ml-photos">
-      <div id="ml-scan-line" style="position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent 0%,var(--red) 40%,#fff 50%,var(--red) 60%,transparent 100%);box-shadow:0 0 14px 4px rgba(255,45,85,.7);animation:ml-scan 1.8s linear infinite;pointer-events:none;z-index:2;"></div>
+      <div id="ml-scan-line" style="position:absolute;left:0;right:0;top:-70px;height:70px;background:linear-gradient(180deg,rgba(0,224,158,0),rgba(0,224,158,.12) 40%,rgba(140,255,220,.85) 50%,rgba(0,224,158,.12) 60%,rgba(0,224,158,0));box-shadow:0 0 16px 5px rgba(0,224,158,.4);animation:ml-scan 2.6s ease-in-out infinite;pointer-events:none;z-index:2;"></div>
     </div>
     <div id="ml-msg" style="font-size:13px;font-weight:700;color:rgba(255,255,255,.85);text-align:center;min-height:18px;transition:opacity .25s;letter-spacing:.3px;"></div>
     <div style="display:flex;gap:12px;align-items:center;">
@@ -1842,10 +2177,6 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
         Partager
       </button>
-      <button onclick="toggleTheme(this)" id="theme-toggle-btn" style="display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:20px;box-shadow:inset 0 0 0 1px var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;touch-action:manipulation;border:none;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        Mode Jour
-      </button>
       <button onclick="closeMenuDrawer()" style="width:32px;height:32px;border-radius:50%;background:var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);border:none;color:var(--t2);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">✕</button>
     </div>
   </div>
@@ -1859,6 +2190,36 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
         <div id="menu-profile-sub" style="font-size:13px;color:var(--t2);font-weight:500;">Profil non configuré</div>
       </div>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+    <!-- APPARENCE -->
+    <div style="background:var(--bg2);border-radius:16px;padding:14px 16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
+      <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--t1);margin-bottom:10px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t2);"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+        Apparence
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Thème</div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <button id="appr-nuit" onclick="setTheme('dark')" class="appr-btn"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>🌙 Nuit</button>
+        <button id="appr-jour" onclick="setTheme('light')" class="appr-btn"><span class="appr-sw" style="background:#F2F3F5;box-shadow:inset 0 0 0 1px var(--sep);"></span>☀️ Jour</button>
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Fond <span style="text-transform:none;font-weight:500;">(en mode nuit)</span></div>
+      <button id="appr-none" onclick="setHalo('none')" class="appr-btn" style="width:100%;justify-content:center;margin-bottom:12px;"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>Fond uni (noir)</button>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:8px;">Couleur du halo</div>
+      <div class="appr-colors">
+        <button class="appr-color" data-rgb="59,130,246" onclick="setHaloColor('59,130,246')" style="background:#3B82F6;" title="Bleu"></button>
+        <button class="appr-color" data-rgb="168,85,247" onclick="setHaloColor('168,85,247')" style="background:#A855F7;" title="Violet"></button>
+        <button class="appr-color" data-rgb="34,197,94" onclick="setHaloColor('34,197,94')" style="background:#22C55E;" title="Vert"></button>
+        <button class="appr-color" data-rgb="45,212,191" onclick="setHaloColor('45,212,191')" style="background:#2DD4BF;" title="Turquoise"></button>
+        <button class="appr-color" data-rgb="244,63,94" onclick="setHaloColor('244,63,94')" style="background:#F43F5E;" title="Rouge"></button>
+        <button class="appr-color" data-rgb="249,115,22" onclick="setHaloColor('249,115,22')" style="background:#F97316;" title="Orange"></button>
+        <button class="appr-color" data-rgb="234,179,8" onclick="setHaloColor('234,179,8')" style="background:#EAB308;" title="Or"></button>
+        <button class="appr-color" data-rgb="236,72,153" onclick="setHaloColor('236,72,153')" style="background:#EC4899;" title="Rose"></button>
+      </div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin:12px 0 6px;">Sens du halo</div>
+      <div style="display:flex;gap:8px;">
+        <button id="appr-dir-normal" onclick="setHaloDir('top')" class="appr-btn">⬆️ Normal</button>
+        <button id="appr-dir-invert" onclick="setHaloDir('bottom')" class="appr-btn">⬇️ Inversé</button>
+      </div>
     </div>
     <!-- PREMIUM BANNER -->
     <div id="menu-premium-banner" onclick="closeMenuDrawer();goScreen('coach',document.getElementById('nb-coach'))" style="display:flex;align-items:center;gap:12px;background:rgba(234,179,8,.08);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 1px rgba(234,179,8,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;" class="ft-press">
@@ -1878,6 +2239,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <div class="menu-row" onclick="openDrawerContent('rm1calc')"><div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div><span class="menu-row-lbl">Calculateur 1RM</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" id="menu-row-appguide" onclick="openAppGuide()"><div class="menu-row-ic" style="background:rgba(91,168,255,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M10 8.5v3l3-1.5-3-1.5z" fill="#5BA8FF"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="menu-row-lbl">Guide de l'application</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" onclick="openDrawerContent('guide')"><div class="menu-row-ic" style="background:rgba(255,109,0,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6D00" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><span class="menu-row-lbl">Guide de la muscu</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="closeMenuDrawer();goScreen('cycle',null)"><div class="menu-row-ic" style="background:rgba(239,62,87,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div><span class="menu-row-lbl">Cycle de force</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
     <!-- COMPTE -->
     <div class="sec">Compte</div>
@@ -1885,6 +2247,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
       <div class="menu-row" onclick="closeMenuDrawer();exportData()"><div class="menu-row-ic" style="background:rgba(234,179,8,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><span class="menu-row-lbl">Exporter mes données</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" onclick="openDrawerContent('help')"><div class="menu-row-ic" style="background:rgba(52,211,153,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><span class="menu-row-lbl">Aide détaillée</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" onclick="openDrawerContent('about')"><div class="menu-row-ic" style="background:rgba(255,255,255,.06);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t2)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><span class="menu-row-lbl">À propos</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" onclick="window.open('./confidentialite.html','_blank')"><div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><span class="menu-row-lbl">Confidentialité</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>
     <!-- FOOTER -->
     <div style="text-align:center;padding:16px 0 8px;font-size:12px;color:var(--t3);line-height:1.8;font-weight:500;">
@@ -1894,7 +2257,34 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 
+<!-- OVERLAY: Confirmation d'email (code à 6 chiffres) -->
+<div id="ov-email-confirm" class="overlay" style="z-index:9999;" onclick="if(event.target===this)closeEmailConfirm()">
+  <div class="modal" style="max-width:390px;padding:26px 20px 22px;text-align:center;">
+    <div style="font-size:44px;line-height:1;">📧</div>
+    <div style="font-size:19px;font-weight:800;color:var(--t1);margin-top:8px;">Confirme ton email</div>
+    <div style="font-size:13.5px;color:var(--t2);line-height:1.5;margin-top:8px;">On a envoyé un code à 6 chiffres à<br><b id="ec-email" style="color:var(--t1);"></b>.<br>Entre-le ici pour sécuriser ta sauvegarde.</div>
+    <input id="ec-code" type="tel" inputmode="numeric" maxlength="6" placeholder="123456" style="width:100%;text-align:center;font-size:26px;letter-spacing:8px;font-weight:800;margin-top:16px;padding:12px;border-radius:12px;border:1.5px solid var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);">
+    <button id="ec-verify-btn" class="btn btn-red" onclick="verifyEmailCode()" style="width:100%;margin-top:14px;padding:13px;font-size:15px;">Vérifier</button>
+    <div style="display:flex;gap:10px;margin-top:10px;">
+      <button class="btn btn-bg2" onclick="resendEmailConfirm()" style="flex:1;font-size:13px;padding:11px;">Renvoyer le code</button>
+      <button class="btn btn-bg2" onclick="closeEmailConfirm()" style="flex:1;font-size:13px;padding:11px;">Plus tard</button>
+    </div>
+    <div style="font-size:11.5px;color:var(--t3);margin-top:12px;line-height:1.4;">Pas obligatoire — mais ça évite de perdre ta sauvegarde en cas de faute de frappe dans l'email. Regarde aussi tes spams.</div>
+  </div>
+</div>
+
 <!-- OVERLAY: Restauration compte depuis le cloud -->
+<!-- PROTÉGER MON COMPTE (code perso) -->
+<div id="ov-protect" class="overlay" style="z-index:9999;" onclick="if(event.target===this)closeProtect()">
+  <div class="modal" style="max-width:400px;padding:22px 20px 22px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:19px;font-weight:900;color:var(--t1);">🔒 Protéger mon compte</div>
+      <button onclick="closeProtect()" style="width:32px;height:32px;border-radius:50%;background:var(--bg3);border:none;color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>
+    </div>
+    <div id="protect-body"></div>
+  </div>
+</div>
+
 <div id="ov-restore-account" class="overlay" style="z-index:9999;" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal" style="max-width:390px;padding:28px 20px 24px;">
     <div style="font-size:20px;font-weight:800;color:var(--t1);margin-bottom:6px;">🔄 Restaurer mon compte</div>
@@ -1989,6 +2379,7 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
   </div>
 </div>
 <script src="constants.js"></script>
+<script src="translations.js"></script>
 <script src="state.js"></script>
 <script src="screens.js"></script>
 <!-- Zone d'impression / export PDF d'un programme (cachée à l'écran, visible seulement à l'impression) -->
@@ -1997,6 +2388,8 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 <script src="setup.js"></script>
 <script src="tracking.js"></script>
 <script src="coach.js"></script>
+<script src="food-health.js"></script>
+<script>if(window.FoodHealth)FoodHealth.configure({appName:'ForceTracker',appVersion:'1.0',contactEmail:'forcetracker.app@gmail.com'});</script>
 <script src="app.js"></script>
 </body>
 </html>

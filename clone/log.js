@@ -157,6 +157,102 @@ function createSupersetFrom(ei){
   openExPicker();
   toast('Choisis le 2ᵉ exercice de la supersérie','info');
 }
+// Lie l'exercice avec CELUI DU DESSUS en superset (demande Christophe : « glisser sur le
+// précédent »). Ne touche QUE la séance en cours (S.wkt), jamais le programme sauvegardé.
+function supersetWithPrev(ei){
+  if(!S.wkt||!S.wkt.exs||ei<=0){toast('Aucun exercice au-dessus','info');return;}
+  const cur=S.wkt.exs[ei], prev=S.wkt.exs[ei-1];
+  if(!cur||!prev)return;
+  if(cur.dropset||prev.dropset){toast('Impossible avec un dropset','info');return;}
+  // Réutilise le superset du dessus s'il existe (→ tri-set), sinon en crée un neuf.
+  let gid=(prev.group&&prev.groupType==='super')?prev.group:null;
+  if(!gid){gid='ss'+Date.now();prev.group=gid;prev.groupType='super';}
+  cur.group=gid;cur.groupType='super';
+  _expandedEx=ei-1;
+  persist();renderExBlocks();
+  toast('Superset créé ⚡','success');
+}
+// ─── Superset par GLISSER-DÉPOSER (demande Christophe) ───────────────────────
+// On glisse un exercice (via la poignée ⠿) sur un autre → superset entre les deux.
+// Ne démarre QUE depuis la poignée (touch-action:none) → n'affecte ni le scroll,
+// ni le swipe entre onglets, ni les champs de saisie.
+function _dropSuperset(dragEi, targetEi){
+  if(!S.wkt||!S.wkt.exs||dragEi===targetEi)return;
+  const exs=S.wkt.exs, drag=exs[dragEi], target=exs[targetEi];
+  if(!drag||!target)return;
+  if(drag.dropset||target.dropset){toast('Impossible avec un dropset','info');return;}
+  if(drag.group&&drag.group===target.group){toast('Déjà en superset ensemble','info');return;}
+  // Groupe : réutilise celui de la cible si c'est déjà un superset, sinon en crée un neuf
+  let gid=(target.group&&target.groupType==='super')?target.group:null;
+  if(!gid){gid='ss'+Date.now();target.group=gid;target.groupType='super';}
+  drag.group=gid;drag.groupType='super';
+  // Rendre contigu : retirer le dragué puis le réinsérer après le dernier membre du groupe
+  exs.splice(dragEi,1);
+  let insertAt=exs.indexOf(target)+1;
+  while(insertAt<exs.length&&exs[insertAt].group===gid)insertAt++;
+  exs.splice(insertAt,0,drag);
+  _expandedEx=null;
+  persist();renderExBlocks();
+  if(navigator.vibrate)navigator.vibrate(30);
+  toast('Superset créé ⚡','success');
+}
+// Poignée de glissement (icône SVG 6 points — visible partout, contrairement au braille)
+function _gripHtml(ei){
+  return `<span class="ex-grip" title="Glisser sur un autre exercice pour créer un superset" ontouchstart="_exDragStart(event,${ei})" onmousedown="_exDragStart(event,${ei})" onclick="event.stopPropagation()"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display:block;pointer-events:none;"><circle cx="5.5" cy="3.5" r="1.5"/><circle cx="10.5" cy="3.5" r="1.5"/><circle cx="5.5" cy="8" r="1.5"/><circle cx="10.5" cy="8" r="1.5"/><circle cx="5.5" cy="12.5" r="1.5"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></span>`;
+}
+let _dragEx=null; // { ei, ghost, overEi }
+function _exDragStart(e,ei){
+  if(_groupMode)return;
+  const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei];
+  if(!ex||ex.dropset)return;
+  e.preventDefault();e.stopPropagation();
+  const pt=e.touches?e.touches[0]:e;
+  const ghost=document.createElement('div');
+  ghost.className='ex-drag-ghost';ghost.textContent=ex.name;
+  document.body.appendChild(ghost);
+  _dragEx={ei,ghost,overEi:null};
+  _exDragMoveTo(pt.clientX,pt.clientY);
+  document.addEventListener('touchmove',_exDragMove,{passive:false});
+  document.addEventListener('touchend',_exDragEnd);
+  document.addEventListener('touchcancel',_exDragEnd);
+  document.addEventListener('mousemove',_exDragMove);
+  document.addEventListener('mouseup',_exDragEnd);
+  if(navigator.vibrate)navigator.vibrate(15);
+}
+function _exDragMoveTo(x,y){
+  if(!_dragEx)return;
+  _dragEx.ghost.style.left=x+'px';_dragEx.ghost.style.top=y+'px';
+  // elementsFromPoint (pluriel) : robuste si un élément flottant recouvre le bloc
+  let block=null;
+  const stack=document.elementsFromPoint(x,y);
+  for(let s=0;s<stack.length;s++){const c=stack[s].closest?stack[s].closest('.ex-block'):null;if(c){block=c;break;}}
+  document.querySelectorAll('.ex-block.drag-over').forEach(b=>b.classList.remove('drag-over'));
+  let overEi=null;
+  if(block&&block.id&&block.id.indexOf('ex-block-')===0){
+    const tei=parseInt(block.id.slice(9));
+    if(!isNaN(tei)&&tei!==_dragEx.ei){block.classList.add('drag-over');overEi=tei;}
+  }
+  _dragEx.overEi=overEi;
+}
+function _exDragMove(e){
+  if(!_dragEx)return;
+  e.preventDefault();
+  const pt=e.touches?e.touches[0]:e;
+  _exDragMoveTo(pt.clientX,pt.clientY);
+}
+function _exDragEnd(){
+  if(!_dragEx)return;
+  const over=_dragEx.overEi, dragEi=_dragEx.ei, ghost=_dragEx.ghost;
+  document.removeEventListener('touchmove',_exDragMove);
+  document.removeEventListener('touchend',_exDragEnd);
+  document.removeEventListener('touchcancel',_exDragEnd);
+  document.removeEventListener('mousemove',_exDragMove);
+  document.removeEventListener('mouseup',_exDragEnd);
+  if(ghost&&ghost.parentNode)ghost.parentNode.removeChild(ghost);
+  document.querySelectorAll('.ex-block.drag-over').forEach(b=>b.classList.remove('drag-over'));
+  _dragEx=null;
+  if(over!==null&&over!==dragEi)_dropSuperset(dragEi,over);
+}
 let _addToGroupGid=null;
 // ─── DROPSET / PYRAMIDE ─────────────────────────────────────────────────────
 let _dropCfgEi=null,_dropCfgPaliers=3,_dropCfgPct=20,_dropCfgDir='down';
@@ -269,7 +365,7 @@ function _groupStatusMeta(ex,pos,total){
   else if(done>0)status='En cours ('+done+'/'+all+')';
   else status='À suivre';
   const kg=ex.sets[0]?.kg,reps=ex.sets[0]?.reps;
-  return status+(kg&&reps?' · '+kg+'×'+reps:'');
+  return status+(kg&&reps?' · '+reps+'×'+kg:'');
 }
 function addToGroup(gid){
   const members=_ssMembers(gid);if(!members.length)return;
@@ -417,12 +513,13 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     return`<div class="ex-block${inGroup?(isExpanded?' ss-active':' ss-inactive'):''}" id="ex-block-${ei}"${clickAttr}>`
       +`<div class="ex-hdr" style="pointer-events:${_groupMode||inGroup?'none':'all'}">`
       +`<div style="flex:1;min-width:0;">`
-      +`<div class="ex-name" style="font-size:14px">${ex.name} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
+      +`<div class="ex-name" style="font-size:14px">${_escNote(ex.name)} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
       +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
+        +((!ex.group&&!ex.dropset&&exCount>1)?_gripHtml(ei):'')
         +((blockCount>1)?`<button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===0?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},-1)" title="Monter">↑</button><button class="btn-xs" style="color:var(--t2);padding:4px 7px;${blockIdx===blockCount-1?'opacity:.25;pointer-events:none;':''}" onclick="event.stopPropagation();moveExBlock(${ei},1)" title="Descendre">↓</button>`:'')
-        +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${ex.name.replace(/'/g,"\\'")}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
+        +`<button class="btn-xs" style="color:var(--t2);" onclick="openExHistory('${_escAttrJs(ex.name)}')">📊</button><button class="btn-xs" style="color:var(--red);transition:opacity .1s,transform .1s;" ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)">✕</button></div>`:'')
       +`</div>`
       +notePreview
       +(!_groupMode&&!inGroup&&!ex.group&&!ex.dropset
@@ -443,8 +540,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
-      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.kg}×${p.reps}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
-      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
+      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
+      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
@@ -508,13 +605,14 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
-    +`${hasLocalGif?'<img src="'+_exImgSrc+'" draggable="false" onclick="toggleExGif('+ei+',\''+ex.name.replace(/'/g,"\\'")+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
+    +`${hasLocalGif?'<img src="'+_exImgSrc+'" draggable="false" onclick="toggleExGif('+ei+',\''+_escAttrJs(ex.name)+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
     +`<div style="flex:1;min-width:0;">`
-    +`<div class="ex-name">${ex.name} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
+    +`<div class="ex-name">${_escNote(ex.name)} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
     +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${ex.dropset?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
     +`</div>`
-    +`<div style="pointer-events:auto;flex-shrink:0;" onclick="event.stopPropagation()">`
+    +`<div style="pointer-events:auto;flex-shrink:0;display:flex;align-items:center;gap:4px;" onclick="event.stopPropagation()">`
+    +((!inGroup&&!ex.dropset&&exCount>1)?_gripHtml(ei):'')
     +`<button onclick="openExMenu(${ei},${hasLocalGif})" style="width:34px;height:34px;border-radius:10px;background:var(--bg3);border:1px solid var(--sep);font-size:18px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;letter-spacing:2px;line-height:1;">⋯</button>`
     +`</div></div>`
     +`<div id="ex-gif-${ei}" style="display:none;" data-open="0" data-loaded="0"></div>`
@@ -599,7 +697,7 @@ function openExMenu(ei,hasGif){
     document.body.appendChild(ov);
   }
   const {nm}=_exMenuCtx;
-  const safeNm=nm.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const safeNm=_escAttrJs(nm);
   const isCustom=(S.customExercises||[]).some(e=>e.n===nm);
   const hasUserPhoto=_hasUserPhoto(nm);
   const mRow=(icon,lbl,action)=>`<button onclick="${action}" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:manipulation;">`
@@ -607,8 +705,9 @@ function openExMenu(ei,hasGif){
     +`<span style="font-size:15px;color:var(--t1);font-weight:500;">${lbl}</span>`
     +`</button>`;
   ov.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
-    +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${nm}</div>`
+    +`<div style="text-align:center;font-size:13px;font-weight:600;color:var(--t2);padding:13px 16px 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--sep);">${_escNote(nm)}</div>`
     +mRow('🔄','Remplacer l\'exercice',`openExPickerForReplace(${ei})`)
+    +((ei>0 && !ex.group && !ex.dropset)?mRow('⚡','Superset avec l\'exercice du dessus',`closeExMenu();supersetWithPrev(${ei})`):'')
     +(hasGif?mRow('🎬','Vidéo / Animation',`closeExMenu();toggleExGif(${ei},'${safeNm}')`):'')
     +(isCustom?mRow('✏️','Modifier l\'exercice',`closeExMenu();openEditCustomEx('${safeNm}')`):'')
     +mRow('📷',hasUserPhoto?'Changer la photo':'Ajouter une photo',`closeExMenu();changeExImg('${safeNm}')`)
@@ -652,7 +751,7 @@ function openExHistory(name){
   }
   el.innerHTML=`<div style="width:100%;max-width:430px;background:var(--bg2);border-radius:16px 16px 0 0;padding:16px 16px 18px;box-shadow:0 -4px 30px rgba(0,0,0,.5);">`
     +`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`
-    +`<div style="font-weight:800;font-size:15px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">${name}</div>`
+    +`<div style="font-weight:800;font-size:15px;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80%;">${_escNote(name)}</div>`
     +`<button onclick="closeExHistory()" style="width:30px;height:30px;border-radius:50%;background:var(--bg3);border:none;font-size:15px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;">✕</button>`
     +`</div>${progHtml}${inner}`
     +`<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:6px;">Poids max · 5 dernières séances</div>`
@@ -663,6 +762,9 @@ function closeExHistory(){const el=document.getElementById('ov-ex-hist');if(el)e
 
 // ── Note par série (dans la colonne « précédent ») ──
 function _escNote(t){return (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+// Échappe une valeur destinée à un '…' JS DANS un attribut "…" (ex. onclick="f('${_escAttrJs(nom)}')").
+// D'abord échappement JS (backslash + apostrophe), puis échappement HTML d'attribut ("<>&) → aucune évasion possible.
+function _escAttrJs(s){return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function _setPrevNote(set,p){
   if(set&&set.note)return `<div style="font-size:9.5px;color:var(--gold);line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(set.note)}</div>`;
   if(p&&p.note)return `<div style="font-size:9.5px;color:var(--t3);font-style:italic;line-height:1.2;margin-top:2px;word-break:break-word;">💬 ${_escNote(p.note)}</div>`;
@@ -1020,6 +1122,12 @@ function addExercise(name){
     closeExPicker();
     return;
   }
+  if(_exPickerMode==='addSess'){ // ajout d'un exercice à une séance passée (setup.js)
+    _exPickerMode='workout';
+    if(typeof _addSessExPick==='function')_addSessExPick(name);
+    closeExPicker();
+    return;
+  }
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
   // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
@@ -1108,6 +1216,8 @@ const _MEX=[
   {re:/hip thrust|glute bridge|fessier|hip extension|pont fessier/i,            p:['glutes'],                           s:['hamstrings','lower-back']},
   // Soulevé de terre
   {re:/souleve de terre|deadlift/i,                                             p:['glutes','hamstrings','lower-back'], s:['quads','traps','lats','forearms']},
+  // Dips assis machine (Seated Dip) : pecs primaire, triceps secondaire — AVANT la règle /dips/i générique
+  {re:/dips assis|seated dip/i,                                                 p:['pec'],                              s:['triceps','front-delt']},
   // Dips
   {re:/dips/i,                                                                  p:['triceps','pec'],                    s:['front-delt']},
   // Trapèzes — shrug
@@ -1401,9 +1511,12 @@ async function finishWorkout(){
   _finishing=true;
   _releaseWakeLock();
   _stopWktChrono();
-  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){toast('Ajoute un exercice !','error');_finishing=false;return;}
-  const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
-  if(!hasDone){toast('Valide au moins une série !','error');_finishing=false;return;}
+  if(!S.wkt){_finishing=false;return;}
+  const _hasCardio=!!(S.wkt.cardio&&S.wkt.cardio.duration);
+  const _hasExs=!!(S.wkt.exs&&S.wkt.exs.length);
+  if(!_hasExs&&!_hasCardio){toast('Ajoute un exercice ou un cardio !','error');_finishing=false;return;}
+  const hasDone=_hasExs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
+  if(!hasDone&&!_hasCardio){toast('Valide une série ou ajoute un cardio !','error');_finishing=false;return;}
   const duration=Math.floor(_wktElapsedMs()/1000); // durée réelle, hors temps en pause
   let vol=0;
   S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
@@ -1436,7 +1549,7 @@ async function finishWorkout(){
   S.sessions.unshift(sess);
   let _savedOk=false;
   try{
-    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));
+    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs||{}));
     _savedOk=true;
   }catch(e){
@@ -1471,7 +1584,7 @@ async function finishWorkout(){
     const ok=await syncSheets(sess);
     if(ok){
       if(S.sessions.length)S.sessions[0].synced=true;
-      try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));}catch(e){}
+      try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));}catch(e){}
       toast(`Séance synchronisée ! 🔥 ${calData.total} kcal`,'success');
     }else toast(`Séance sauvegardée ! 🔥 ${calData.total} kcal`,'success');
   }else{
@@ -1596,13 +1709,29 @@ function _restTick(){
 function saveExNote(ei,val){if(S.wkt?.exs?.[ei]!==undefined){S.wkt.exs[ei].note=val||'';persist();}}
 
 // ── OVERLAY DÉCOMPTE FINAL ────────────────────────────────────────────
+// Format « N reps à X kg » (cohérent avec l'affichage reps→kg des programmes,
+// demande Christophe). Gère les cas sans poids (poids du corps) / sans reps.
+function _fmtNextSet(info){
+  if(!info)return '';
+  const r=info.reps, k=info.kg;
+  if(r&&k) return r+' reps à '+k+' kg';
+  if(r) return r+' reps';
+  if(k) return k+' kg';
+  return '';
+}
 function _nextSetInfo(){
-  const ex=S.wkt?.exs?.[_expandedEx];
-  if(!ex)return null;
-  const si=ex.sets.findIndex(s=>!s.done);
-  if(si<0)return null;
-  const set=ex.sets[si];
-  return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.reps||''};
+  const exs=S.wkt&&S.wkt.exs;
+  if(!exs||!exs.length)return null;
+  const cur=_expandedEx;
+  const _row=(ex,si)=>{const set=ex.sets[si];return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.maxi?'max':(set.reps||'')};};
+  // 1) Prochaine série NON faite dans l'exercice en cours
+  if(exs[cur]){const si=exs[cur].sets.findIndex(s=>!s.done);if(si>=0)return _row(exs[cur],si);}
+  // 2) Sinon (exercice terminé) → 1re série non faite de l'exercice suivant (puis n'importe lequel restant)
+  const order=[];
+  for(let i=(cur||0)+1;i<exs.length;i++)order.push(i);
+  for(let i=0;i<exs.length;i++)if(i!==cur&&order.indexOf(i)<0)order.push(i);
+  for(let k=0;k<order.length;k++){const ex=exs[order[k]];const si=ex.sets.findIndex(s=>!s.done);if(si>=0)return _row(ex,si);}
+  return null;
 }
 // ─── Cadran à segments du décompte final (style timer digital) ───────
 const _CDOWN_TICKS=44;
@@ -1649,7 +1778,7 @@ function _showRestCountdown(){
   const nextDetailEl=document.getElementById('rcd-next-detail');
   if(nameEl)nameEl.textContent=info?info.name:'';
   if(nextNumEl)nextNumEl.textContent=info?'Série '+info.num:'';
-  if(nextDetailEl)nextDetailEl.textContent=info?(info.kg+' kg × '+info.reps):'';
+  if(nextDetailEl)nextDetailEl.textContent=_fmtNextSet(info);
   // Fond sombre garanti à chaque ouverture (l'inline HTML #0e1016 avait pu être effacé par un GO précédent)
   ov.style.background='#0e1016';ov.style.transition='';ov.classList.remove('go-cycle');
   ov.style.display='block';
@@ -1690,7 +1819,9 @@ function _updateRestCountdown(){
   const litCount=Math.max(1,Math.round(left/10*_CDOWN_TICKS));
   _paintCdownTicks(litCount);
   const color=left<=3?'#FF3B30':left<=6?'#FF9500':'#28E070';
-  if(numEl){numEl.textContent=left;numEl.style.fontSize='110px';numEl.style.color=color;}
+  // Police adaptée au nombre de chiffres : « 10 » (2 chiffres) plus petit pour
+  // ne pas déborder sur l'anneau (retour Christophe) ; 1→9 restent bien gros.
+  if(numEl){numEl.textContent=left;numEl.style.fontSize=(left>=10?'82px':'110px');numEl.style.color=color;}
 }
 // Tap sur l'overlay ou bouton Passer :
 // - pendant le décompte (avant 0) → skip anticipé = fin immédiate du repos (timer + pastille effacés)
@@ -1822,8 +1953,52 @@ const EX_GROUPS=[
 ];
 let _exGrp=null;
 
+// ─── TYPE DE MATÉRIEL (test testeurs) — deviné du nom de l'exercice ──────
+const _EQ_META={
+  barre:{lbl:'Barre',          ic:'🏋️', c:'#FF6C00', bg:'rgba(255,108,0,.13)'},
+  libre:{lbl:'Poids libre',    ic:'💪', c:'#5BA8FF', bg:'rgba(91,168,255,.13)'},
+  guide:{lbl:'Guidé',          ic:'⚙️', c:'#A855F7', bg:'rgba(168,85,247,.13)'},
+  corps:{lbl:'Poids du corps', ic:'🤸', c:'#34D399', bg:'rgba(52,211,153,.13)'},
+  autre:{lbl:'À classer',      ic:'❓', c:'#8A8F9C', bg:'rgba(255,255,255,.05)'}
+};
+function _exEquip(name){
+  const s=_naz(name);
+  // 1) Guidé / machine (le plus spécifique d'abord)
+  if(/machine|poulie|smith|guide|pec ?deck|peck ?deck|presse|leg press|leg extension|leg curl|leg abduction|leg adduction|tirage|chest press|hack|convergent|hammer|cable|câble|vis-a-vis|crossover|croise poulie|assist|butterfly|pendulum|belt squat|sled|iso.?laterale?|convergente/.test(s)) return 'guide';
+  // 2) Poids du corps
+  if(/traction|pull-?up|pull up|dips|pompe|push-?up|gainage|planche|plank|pistol|muscle-?up|chaise|wall sit|superman|l-sit|releve.*jambe|leg raise|crunch|russian twist|mountain climber|burpee|hollow|ghd|glute ham|nordic|box|montee/.test(s)) return 'corps';
+  // 3) Poids libre (haltères / kettlebell)
+  if(/haltere|dumbbell|kettlebell|goblet|landmine|croix de fer|farmer|marche du fermier|swing|arnold|renegade/.test(s)) return 'libre';
+  // 4) Barre (classiques : couché/incliné, squat, soulevé, rowing, militaire, curl…)
+  if(/barre|barbell|couche|incline|decline|squat|souleve|deadlift|rowing|militaire|curl|developpe|good morning|hip thrust|zercher|reeves|rack pull|shrug|thruster|meadows|seal row|pull-?over|overhead/.test(s)) return 'barre';
+  return 'autre';
+}
+// Le test n'est visible que pour les testeurs + Michel (pas les utilisateurs normaux)
+function _eqTestOn(){try{return (typeof _isTester==='function'&&_isTester())||(typeof _isSuperTester==='function'&&_isSuperTester());}catch(e){return false;}}
+let _eqHideBadge=false; // vrai pendant le rendu groupé : le titre de section porte déjà le type, pas besoin du badge par ligne
+function _exEqBadge(name){
+  if(_eqHideBadge||!_eqTestOn())return'';
+  const m=_EQ_META[_exEquip(name)];
+  return m?`<span class="ex-eq" style="color:${m.c};background:${m.bg};">${m.ic} ${m.lbl}</span>`:'';
+}
+// Rendu du sélecteur groupé par TYPE DE MATÉRIEL (titres de sous-sections colorés)
+const _EQ_ORDER=['barre','libre','guide','corps','autre'];
+function _renderExGrouped(listArr){
+  const buckets={};
+  listArr.forEach(e=>{const k=_exEquip(e.n);(buckets[k]=buckets[k]||[]).push(e);});
+  let html='';
+  _eqHideBadge=true; // les lignes n'affichent pas le badge (le titre de section le porte)
+  _EQ_ORDER.forEach(k=>{
+    const arr=buckets[k];if(!arr||!arr.length)return;
+    const m=_EQ_META[k];
+    html+=`<div class="ex-subhdr" style="color:${m.c};background:${m.bg};"><span>${m.ic} ${m.lbl}</span><span class="ex-subhdr-n">${arr.length}</span></div>`
+      +arr.map(_exPickRow).join('');
+  });
+  _eqHideBadge=false;
+  return html;
+}
 function _exPickRow(e){
-  const safe=e.n.replace(/'/g,"\\'");
+  const safe=_escAttrJs(e.n);
   // Slot photo TOUJOURS réservé (30px) → toutes les lignes alignées, avec ou sans photo.
   // Tap sur la vignette = VOIR la photo en grand (n'ajoute PAS l'exercice).
   const src=_exImg(e.n);
@@ -1831,7 +2006,11 @@ function _exPickRow(e){
     ?`<img src="${src}" onclick="event.stopPropagation();_viewExPhoto('${safe}')" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);cursor:zoom-in;">`
     :`<span style="width:30px;flex-shrink:0;margin-right:8px;" aria-hidden="true"></span>`;
   const edit=e.custom?` <span onclick="event.stopPropagation();openEditCustomEx('${safe}')" title="Modifier" style="font-size:13px;color:var(--purp);cursor:pointer;padding:2px 6px;touch-action:manipulation;">✎</span>`:'';
-  return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}<span class="ex-pick-name">${e.n}${edit}</span><span class="ex-pick-grp">${e.g}</span></div>`;
+  const eqBadge=_exEqBadge(e.n);
+  const mid=eqBadge
+    ?`<div class="ex-pick-mid"><span class="ex-pick-name">${_escNote(e.n)}${edit}</span>${eqBadge}</div>`
+    :`<span class="ex-pick-name">${_escNote(e.n)}${edit}</span>`;
+  return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}${mid}<span class="ex-pick-grp">${e.g}</span></div>`;
 }
 function openExPicker(){
   _exGrp=null;
@@ -1839,7 +2018,7 @@ function openExPicker(){
   filterEx();
   document.getElementById('mod-ex').classList.add('open');
 }
-function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'){_exPickerMode='workout';_replaceEi=null;}}
+function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'){_exPickerMode='workout';_replaceEi=null;}}
 function filterEx(){
   const q=(document.getElementById('ex-search').value||'').toLowerCase().trim();
   const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));
@@ -1848,7 +2027,7 @@ function filterEx(){
   if(q){
     _exGrp=null;
     const qn=_normEx(q);const f=all.filter(e=>e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q));
-    list.innerHTML=f.length?f.map(_exPickRow).join(''):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
+    list.innerHTML=f.length?(_eqTestOn()?_renderExGrouped(f):f.map(_exPickRow).join('')):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
     return;
   }
   // Groupe sélectionné → exercices du groupe
@@ -1864,7 +2043,7 @@ function filterEx(){
         <div class="ex-grp-header" style="margin-bottom:0;">${grp.icon} ${grp.label}</div>
         ${anatBtn}
       </div>`+
-      (f.length?f.map(_exPickRow).join(''):'<div style="padding:16px;text-align:center;color:var(--t3);">Aucun exercice — utilise "+ Créer"</div>');
+      (f.length?(_eqTestOn()?_renderExGrouped(f):f.map(_exPickRow).join('')):'<div style="padding:16px;text-align:center;color:var(--t3);">Aucun exercice — utilise "+ Créer"</div>');
     return;
   }
   // Vue par défaut → tuiles des groupes
@@ -1976,11 +2155,21 @@ function _saveCustomExEdit(newName,grp){
   if(S.wkt)renderExBlocks();
   toast('Exercice modifié ✅','success');
 }
-// Fusionne un exercice perso dans un autre exercice existant : déplace séances/PRs/programmes, supprime le perso.
+// Fusionne un exercice perso dans un autre exercice existant : déplace séances/PRs/programmes,
+// TRANSFÈRE la photo sur la cible (si elle n'en a pas déjà une), puis supprime le perso.
 function _mergeCustomInto(oldName,targetName){
+  // Récupère la photo du perso (img du perso OU exPhotos) AVANT de le supprimer.
+  const src=(S.customExercises||[]).find(e=>e.n===oldName);
+  const srcImg=(src&&src.img)||(S.exPhotos&&S.exPhotos[oldName])||'';
   _renameExEverywhere(oldName,targetName);
   S.customExercises=(S.customExercises||[]).filter(e=>e.n!==oldName);
   if(S.exPhotos&&S.exPhotos[oldName])delete S.exPhotos[oldName];
+  // Transfère la photo sur la cible si elle n'en a pas déjà une (on n'écrase jamais la photo de la cible).
+  if(srcImg){
+    const tc=(S.customExercises||[]).find(e=>e.n===targetName);
+    if(tc){ if(!tc.img)tc.img=srcImg; }                 // cible = exo perso → champ img
+    else { if(!S.exPhotos)S.exPhotos={}; if(!S.exPhotos[targetName])S.exPhotos[targetName]=srcImg; } // cible = biblio → exPhotos
+  }
   _editingCustomExName=null;
   persist();
   hideCustomExForm();
@@ -2232,7 +2421,7 @@ function _renderImpThumbs(){
   el.innerHTML=_impPhotos.map((p,i)=>{
     const fileIcon=p.isXlsx?'📊':p.isText?'📝':'📄';
     const thumb=(p.isPdf||p.isText)
-      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">${fileIcon}</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name||'Fichier'}</span></div>`
+      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">${fileIcon}</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote(p.name||'Fichier')}</span></div>`
       :`<img src="data:${p.type};base64,${p.data}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--sep);">`;
     return`<div style="position:relative;display:inline-block;">${thumb}<button onclick="removeImpPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;font-family:var(--font);">✕</button></div>`;
   }).join('');
@@ -2274,14 +2463,14 @@ function _renderImpConfirm(){
   const el=document.getElementById('imp-preview');if(!el)return;
   el.innerHTML=(d.days||[]).map((day,di)=>`
     <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
-      <div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">${day.label||'Jour '+(di+1)}</div>
+      <div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">${_escNote(day.label||'Jour '+(di+1))}</div>
       <div id="imp-day-${di}">
         ${(day.exercises||[]).map((ex,ei)=>`
           <div id="imp-ex-${di}-${ei}" style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border-radius:8px;margin-bottom:5px;">
             <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:600;">${ex.name}</div>
+              <div style="font-size:13px;font-weight:600;">${_escNote(ex.name)}</div>
               <div style="font-size:12px;color:var(--t2);">${ex.sets}×${ex.reps} reps${ex.kg?' · '+ex.kg+' kg':''}</div>
-              ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${ex.note}</div>`:''}
+              ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${_escNote(ex.note)}</div>`:''}
             </div>
             <button onclick="removeImpEx(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
           </div>`).join('')}
@@ -2305,7 +2494,7 @@ function _setImpMode(mode){
   if(mode==='replace'){
     const progs=S.programmes||[];
     if(!progs.length){toast('Aucun programme existant à remplacer','info');_setImpMode('new');return;}
-    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${p.name}</option>`).join('');
+    sel.innerHTML=progs.map((p,i)=>`<option value="${i}">${_escNote(p.name)}</option>`).join('');
     sel.style.display='block';
     if(btnN)btnN.className='btn btn-bg2';
     if(btnR)btnR.className='btn btn-red';
@@ -2465,7 +2654,7 @@ function _renderHistThumbs(){
   const el=document.getElementById('hist-thumbs');if(!el)return;
   el.innerHTML=_histPhotos.map((p,i)=>{
     const thumb=(p.isPdf||p.isText)
-      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">📄</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${p.name||'Page'}</span></div>`
+      ?`<div style="width:72px;height:72px;border-radius:8px;border:2px solid var(--sep);background:var(--bg3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;"><span style="font-size:24px;">📄</span><span style="font-size:9px;color:var(--t3);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote(p.name||'Page')}</span></div>`
       :`<img src="data:${p.type};base64,${p.data}" style="width:72px;height:72px;object-fit:cover;border-radius:8px;border:2px solid var(--sep);">`;
     return`<div style="position:relative;display:inline-block;">${thumb}<button onclick="removeHistPhoto(${i})" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:10px;background:var(--red);color:#fff;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0;font-family:var(--font);">✕</button></div>`;
   }).join('');
@@ -2723,8 +2912,8 @@ function openDaySel(progIdx){
   const btns=document.getElementById('day-sel-btns');
   if(btns)btns.innerHTML=(prog.days||[]).map((d,i)=>`
     <button class="btn btn-bg2" style="padding:14px 16px;text-align:left;" onclick="loadProgDay(${progIdx},${i})">
-      <div style="font-weight:700;font-size:14px;">${d.label}</div>
-      <div style="font-size:12px;color:var(--t2);margin-top:3px;">${(d.exs||[]).slice(0,3).map(e=>e.name).join(', ')}${(d.exs||[]).length>3?' +'+((d.exs||[]).length-3):''}</div>
+      <div style="font-weight:700;font-size:14px;">${_escNote(d.label)}</div>
+      <div style="font-size:12px;color:var(--t2);margin-top:3px;">${_escNote((d.exs||[]).slice(0,3).map(e=>e.name).join(', '))}${(d.exs||[]).length>3?' +'+((d.exs||[]).length-3):''}</div>
     </button>`).join('');
   document.getElementById('ov-day-sel').classList.add('open');
 }
@@ -2743,7 +2932,8 @@ function loadProgDay(progIdx,dayIdx){
       const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
       return {
         kg:pp?pp.kg:(s.kg||0),
-        reps:pp?pp.reps:(s.reps||10),
+        reps:s.maxi?0:(pp?pp.reps:(s.reps||10)), // série "maxi" : reps vide, elle saisit ce qu'elle a fait
+        maxi:!!s.maxi,
         type:s.type||'N',done:false,rm1:0,rest:s.rest||0
       };
     })};
@@ -2899,8 +3089,8 @@ function renderProgModal(){
         <div style="height:5px;background:var(--sep);border-radius:3px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:var(--red);border-radius:3px;"></div></div>
       </div>`:'';
       return `<div class="prog-card" style="flex-direction:column;align-items:stretch;">
-        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${p.name}</div>
-        <div class="prog-card-detail">${detail}</div>
+        <div class="prog-card-name">${isMulti?'📅 ':'📋 '}${_escNote(p.name)}</div>
+        <div class="prog-card-detail">${_escNote(detail)}</div>
         <div style="display:flex;gap:6px;margin-top:10px;align-items:center;">
           <button class="btn-xs" style="flex:1;background:rgba(255,45,85,.12);border-color:rgba(255,45,85,.4);color:var(--red);" onclick="loadProg(${i})">▶ Charger</button>
           <button class="btn-xs" style="color:var(--t2);" onclick="editProg(${i})" title="Modifier">✏️</button>
@@ -2929,7 +3119,7 @@ function saveAsProg(){
   const prog={
     id:'p'+Date.now(),name,
     exs:S.wkt.exs.map(ex=>{
-      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,type:s.type||'N',rest:s.rest||0}))};
+      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:s.rest||0}))};
       if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
       return o;
     })
@@ -2954,7 +3144,8 @@ function loadProg(idx){
         const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
         return {
           kg:pp?pp.kg:(s.kg||0),
-          reps:pp?pp.reps:(s.reps||5),
+          reps:s.maxi?0:(pp?pp.reps:(s.reps||5)),
+          maxi:!!s.maxi,
           type:s.type||'N',done:false,rm1:0,rest:s.rest||0
         };
       })};
@@ -3014,7 +3205,7 @@ function _loadJsPdf(){
   if(window.jspdf&&window.jspdf.jsPDF)return Promise.resolve();
   if(_jspdfLoad)return _jspdfLoad;
   const load=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=()=>rej(new Error('load '+src));document.head.appendChild(s);});
-  _jspdfLoad=load('../lib/jspdf.umd.min.js').then(()=>load('../lib/jspdf.plugin.autotable.min.js')).catch(e=>{_jspdfLoad=null;throw e;});
+  _jspdfLoad=load('./lib/jspdf.umd.min.js').then(()=>load('./lib/jspdf.plugin.autotable.min.js')).catch(e=>{_jspdfLoad=null;throw e;});
   return _jspdfLoad;
 }
 // Logo Force Tracker en dataURL (pour l'en-tête des PDF) — chargé une fois, échec silencieux.
@@ -3029,7 +3220,7 @@ function _loadLogoDataURL(){
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);_logoDataUrl=c.toDataURL('image/png');
     }catch(e){_logoDataUrl=null;} res(_logoDataUrl); };
     img.onerror=()=>{ _logoTried=true; res(null); };
-    img.src='../force-tracker-logo-final.png';
+    img.src='./force-tracker-logo-final.png';
   });
 }
 // Contact affiché en pied de PDF
@@ -3126,27 +3317,33 @@ function _renderProgEdit(){
     </div>
   </div>`;
   const _INP='padding:5px 4px;font-size:13px;text-align:center;border:1px solid var(--sep);border-radius:6px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;';
+  const _nbMaxi=(typeof _isNutriBeta==='function')&&_isNutriBeta(); // « maxi » reps réservé aux testeurs pour l'instant
   const exCard=(ex,di,ei)=>{
     const sets=ex.sets||[];
     const nextEx=_progEditEx(di,ei+1);
     const hasNext=!!nextEx;
     const linkedNext=hasNext&&ex.group&&ex.group===nextEx.group;
     const inSuper=!!ex.group;
-    return`<div style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:${linkedNext?'2px':'6px'};${inSuper?'box-shadow:inset 3px 0 0 var(--orange);':''}">
+    const dayLen=(_progDayExs(di)||[]).length;
+    return`<div class="prog-ex-card" data-di="${di}" data-ei="${ei}" style="padding:9px 11px;background:var(--bg3);border-radius:10px;margin-bottom:${linkedNext?'2px':'6px'};${inSuper?'box-shadow:inset 3px 0 0 var(--orange);':''}">
     <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px;">
+      ${dayLen>1?_progGripHtml(di,ei):''}
       ${_progExThumb(ex.name)}
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.name}</div>
+        <div style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_escNote(ex.name)}</div>
         ${inSuper?'<div style="font-size:10px;color:var(--orange);font-weight:800;letter-spacing:.03em;">⚡ SUPERSET</div>':''}
       </div>
       <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
     </div>
     <div style="display:flex;gap:6px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
-      <span style="width:30px;">Série</span><span style="width:58px;text-align:center;">Reps</span><span style="flex:1;text-align:right;">Repos</span><span style="width:22px;"></span>
+      <span style="width:30px;">Série</span><span style="width:58px;text-align:center;">Reps</span>${_nbMaxi?'<span style="width:36px;"></span>':''}<span style="flex:1;text-align:right;">Repos</span><span style="width:22px;"></span>
     </div>
     ${sets.map((s,si)=>`<div style="display:flex;align-items:center;gap:6px;padding:2px 2px;">
       <span style="width:30px;font-size:12px;color:var(--t2);">${si+1}</span>
-      <input type="number" min="1" inputmode="numeric" value="${s.reps||''}" onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">
+      ${(_nbMaxi&&s.maxi)
+        ? `<div onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Répétitions au maximum — touche pour revenir à un nombre" style="width:58px;text-align:center;padding:6px 0;background:rgba(255,109,0,.14);border:1px solid var(--orange);border-radius:8px;color:var(--orange);font-size:12px;font-weight:800;cursor:pointer;box-sizing:border-box;">maxi</div>`
+        : `<input type="number" min="1" inputmode="numeric" value="${s.reps||''}" onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">`}
+      ${_nbMaxi?`<button onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Nombre max de répétitions" style="width:36px;flex-shrink:0;background:${s.maxi?'rgba(255,109,0,.14)':'transparent'};border:1px ${s.maxi?'solid var(--orange)':'dashed var(--sep)'};border-radius:8px;color:${s.maxi?'var(--orange)':'var(--t3)'};font-size:10px;font-weight:800;cursor:pointer;padding:5px 0;">max</button>`:''}
       <span style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;">
         <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${_defRestForType(s.type)}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;${_INP}">
         <span style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:44px;">s${s.rest>0?' '+_fmtRest(s.rest):''}</span>
@@ -3161,7 +3358,7 @@ function _renderProgEdit(){
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
   if(isMulti){
     el.innerHTML=cycleSection+d.days.map((day,di)=>`<div style="margin-bottom:16px;">
-      <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">${day.label}</div>
+      <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">${_escNote(day.label)}</div>
       ${(day.exs||[]).map((ex,ei)=>exCard(ex,di,ei)).join('')}
       ${addBtn(di)}
     </div>${di<d.days.length-1?'<hr style="border:none;border-top:1px solid var(--sep);margin:0 0 16px;">':''}`).join('');
@@ -3188,6 +3385,15 @@ function _setProgSetRest(di,ei,si,val){
 function _setProgSetReps(di,ei,si,val){
   const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
   ex.sets[si].reps=parseInt(val)||0;
+  if(ex.sets[si].reps>0)ex.sets[si].maxi=false; // saisir un nombre annule le mode « maxi »
+}
+// Bascule une série en « maxi » (nombre max de répétitions) ou revient à un nombre — re-render
+function _toggleProgSetMaxi(di,ei,si){
+  const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
+  const s=ex.sets[si];
+  s.maxi=!s.maxi;
+  if(s.maxi)s.reps=0; // en mode maxi, pas de nombre cible
+  _renderProgEdit();
 }
 // Ajoute une série (copie la dernière) puis re-render
 function _addProgSet(di,ei){
@@ -3234,6 +3440,73 @@ function _toggleProgSuperset(di,ei){
   links[ei]=!links[ei];
   _rebuildProgGroups(exs,links);
   _renderProgEdit();
+}
+// ── Superset par GLISSER-DÉPOSER dans l'éditeur de programme (demande Christophe) ──
+// Glisser une carte exercice sur une autre (même jour) → superset. Réutilise le
+// modèle groupe consécutif (_rebuildProgGroups compatible : membres contigus + même group).
+function _dropProgSuperset(di, dragEi, targetEi){
+  const exs=_progDayExs(di); if(!exs||dragEi===targetEi)return;
+  const drag=exs[dragEi], target=exs[targetEi];
+  if(!drag||!target)return;
+  if(drag.group&&drag.group===target.group){toast('Déjà en superset ensemble','info');return;}
+  let gid=(target.group&&target.groupType==='super')?target.group:null;
+  if(!gid){gid='sg'+Date.now().toString(36);target.group=gid;target.groupType='super';}
+  drag.group=gid;drag.groupType='super';
+  exs.splice(dragEi,1);
+  let insertAt=exs.indexOf(target)+1;
+  while(insertAt<exs.length&&exs[insertAt].group===gid)insertAt++;
+  exs.splice(insertAt,0,drag);
+  _renderProgEdit();
+  if(navigator.vibrate)navigator.vibrate(30);
+  toast('Superset créé ⚡','success');
+}
+function _progGripHtml(di,ei){
+  return `<span class="ex-grip" title="Glisser sur un autre exercice pour créer un superset" ontouchstart="_progDragStart(event,${di},${ei})" onmousedown="_progDragStart(event,${di},${ei})" onclick="event.stopPropagation()"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display:block;pointer-events:none;"><circle cx="5.5" cy="3.5" r="1.5"/><circle cx="10.5" cy="3.5" r="1.5"/><circle cx="5.5" cy="8" r="1.5"/><circle cx="10.5" cy="8" r="1.5"/><circle cx="5.5" cy="12.5" r="1.5"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></span>`;
+}
+let _progDrag=null; // { di, ei, ghost, over:{di,ei}|null }
+function _progDragStart(e,di,ei){
+  const ex=_progEditEx(di,ei); if(!ex)return;
+  e.preventDefault();e.stopPropagation();
+  const pt=e.touches?e.touches[0]:e;
+  const ghost=document.createElement('div'); ghost.className='ex-drag-ghost'; ghost.textContent=ex.name;
+  document.body.appendChild(ghost);
+  _progDrag={di,ei,ghost,over:null};
+  _progDragMoveTo(pt.clientX,pt.clientY);
+  document.addEventListener('touchmove',_progDragMove,{passive:false});
+  document.addEventListener('touchend',_progDragEnd);
+  document.addEventListener('touchcancel',_progDragEnd);
+  document.addEventListener('mousemove',_progDragMove);
+  document.addEventListener('mouseup',_progDragEnd);
+  if(navigator.vibrate)navigator.vibrate(15);
+}
+function _progDragMoveTo(x,y){
+  if(!_progDrag)return;
+  _progDrag.ghost.style.left=x+'px';_progDrag.ghost.style.top=y+'px';
+  // elementsFromPoint (pluriel) : robuste si un élément flottant recouvre la carte
+  let card=null;
+  const stack=document.elementsFromPoint(x,y);
+  for(let s=0;s<stack.length;s++){const c=stack[s].closest?stack[s].closest('.prog-ex-card'):null;if(c){card=c;break;}}
+  document.querySelectorAll('.prog-ex-card.drag-over').forEach(c=>c.classList.remove('drag-over'));
+  let over=null;
+  if(card){
+    const di=parseInt(card.dataset.di), ei=parseInt(card.dataset.ei);
+    if(!isNaN(di)&&!isNaN(ei)&&di===_progDrag.di&&ei!==_progDrag.ei){card.classList.add('drag-over');over={di,ei};}
+  }
+  _progDrag.over=over;
+}
+function _progDragMove(e){ if(!_progDrag)return; e.preventDefault(); const pt=e.touches?e.touches[0]:e; _progDragMoveTo(pt.clientX,pt.clientY); }
+function _progDragEnd(){
+  if(!_progDrag)return;
+  const over=_progDrag.over, di=_progDrag.di, ei=_progDrag.ei, ghost=_progDrag.ghost;
+  document.removeEventListener('touchmove',_progDragMove);
+  document.removeEventListener('touchend',_progDragEnd);
+  document.removeEventListener('touchcancel',_progDragEnd);
+  document.removeEventListener('mousemove',_progDragMove);
+  document.removeEventListener('mouseup',_progDragEnd);
+  if(ghost&&ghost.parentNode)ghost.parentNode.removeChild(ghost);
+  document.querySelectorAll('.prog-ex-card.drag-over').forEach(c=>c.classList.remove('drag-over'));
+  _progDrag=null;
+  if(over&&over.di===di&&over.ei!==ei)_dropProgSuperset(di,ei,over.ei);
 }
 function _openExPickerForProg(dayIdx){
   _editDayIdx=dayIdx;
@@ -3608,6 +3881,7 @@ const EX_YT={
   'Dips Parallèles':               {img:'../exercises/dips-triceps-paralleles.webp'},
   'Montée sur Box Haltères':       {img:'../exercises/montees-banc-lateral-halteres.webp'},
   'Dips Machine Assistée':         {img:'../exercises/dips-assiste-machine.webp'},
+  'Dips Assis Machine (Seated Dip)':{img:'../exercises/dips-assis-machine-avec-poids.webp'},
   'Développé Nuque':               {img:'../exercises/developpe-nuque-barre-guidee.webp'},
   // ── Épaules + Trapèzes (lot 2026-07-06) ──
   'Développé Arnold (Arnold Press)':{img:'../exercises/developpe-arnold-exercice-musculation.webp'},
@@ -3666,7 +3940,7 @@ const EX_EN={
   'Croisé Poulie (Cable Crossover)':'cable crossover',
   'Pec Deck':'pec deck fly','Chest Press Machine Horizontale':'chest press machine',
   'Chest Press Machine Inclinée':'incline chest press machine','Chest Press Machine Déclinée':'decline chest press machine',
-  'Dips':'chest dips','Dips Parallèles':'parallel bar dip',
+  'Dips':'chest dips','Dips Parallèles':'parallel bar dip','Dips Assis Machine (Seated Dip)':'seated dip machine',
   'Dips Machine Assistée':'assisted dip machine',
   'Pompes Lestées':'push up weighted','Pompes Déficit (Deficit Push-up)':'deficit push up','Pompes Diamant':'diamond push up',
   'Smith Machine Développé Couché':'smith machine bench press','Smith Machine Développé Incliné':'smith machine incline bench press',

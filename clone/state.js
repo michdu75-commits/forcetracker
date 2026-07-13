@@ -1,9 +1,13 @@
 // ─── STATE ───────────────────────────────────────────────────
+// Code perso de protection du compte (stocké UNIQUEMENT en local sur l'appareil,
+// JAMAIS envoyé au cloud comme donnée — seulement joint aux requêtes pour prouver l'accès).
+function _authCode(){ try{ return localStorage.getItem('ft4_authcode')||''; }catch(e){ return ''; } }
+function _setAuthCode(c){ try{ if(c) localStorage.setItem('ft4_authcode',c); else localStorage.removeItem('ft4_authcode'); }catch(e){} }
 let _chartPts=[];
 let S={
   bw:80,barW:20,defRest:130,
   gender:'H',age:30,height:175,activityLevel:1.55,
-  workType:'bureau',smoker:false,
+  workType:'bureau',smoker:false,halo:'on',haloColor:'59,130,246',haloDir:'top',
   mensCycleStart:'',mensCycleDur:28,contraception:'',morpho:'',morphotype:'',
   sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
   url:DEFAULT_URL,email:'',connected:false,
@@ -21,6 +25,8 @@ let S={
   premiumExpiry:'',
   exRestPref:{},
   mealPlan:null,
+  foodLog:[],
+  foodAiUses:0,
   healthProfile:null,
   a11y:false,
   colorblind:'',
@@ -37,6 +43,11 @@ function load(){
     S.height=parseFloat(localStorage.getItem('ft4_ht')||'0')||0;
     S.activityLevel=parseFloat(localStorage.getItem('ft4_act')||'1.55')||1.55;
     S.workType=localStorage.getItem('ft4_work')||'bureau';
+    S.halo=localStorage.getItem('ft4_halo')||'on';
+    if(S.halo==='blue')S.halo='on';                 // migration ancien nom
+    if(S.halo!=='none'&&S.halo!=='on')S.halo='on';
+    S.haloColor=localStorage.getItem('ft4_haloColor')||'59,130,246';
+    S.haloDir=localStorage.getItem('ft4_haloDir')||'top';
     S.smoker=localStorage.getItem('ft4_smoker')==='1';
     S.mensCycleStart=localStorage.getItem('ft4_mcstart')||'';
     S.mensCycleDur=parseInt(localStorage.getItem('ft4_mcdur')||'28')||28;
@@ -57,6 +68,7 @@ function load(){
     S.waist=parseFloat(localStorage.getItem('ft4_waist')||'0')||0;
     S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
     S.targetWeight=parseFloat(localStorage.getItem('ft4_target')||'0')||0;
+    S.manualKcal=parseFloat(localStorage.getItem('ft4_manualkcal')||'0')||0; // 0 = calories auto
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
     S.discipline=localStorage.getItem('ft4_discipline')||'muscu';
     S.level=localStorage.getItem('ft4_level')||''; // '' | 'debutant' | 'intermediaire' | 'confirme' (niveau déclaré, évolue avec les séances)
@@ -84,9 +96,24 @@ function load(){
     S.bday=localStorage.getItem('ft4_bday')||'';
     S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
     S.mealPlan=JSON.parse(localStorage.getItem('ft4_mealplan')||'null');
+    S.foodLog=JSON.parse(localStorage.getItem('ft4_foodlog')||'[]');
+    S.savedFoods=JSON.parse(localStorage.getItem('ft4_savedfoods')||'[]');
+    S.hiddenFoods=JSON.parse(localStorage.getItem('ft4_hiddenfoods')||'[]');
+    S.foodAiUses=parseInt(localStorage.getItem('ft4_foodai')||'0')||0;
     S.healthProfile=JSON.parse(localStorage.getItem('ft4_health')||'null');
     S.bodyStudy=JSON.parse(localStorage.getItem('ft4_bodystudy')||'null');
+    // Historique des études corporelles (le plus récent en tête). Migration : si pas encore
+    // d'historique mais un dernier bilan existe, on l'initialise avec ce bilan.
+    S.bodyStudies=JSON.parse(localStorage.getItem('ft4_bodystudies')||'null')||(S.bodyStudy?[S.bodyStudy]:[]);
     S.bodyScans=JSON.parse(localStorage.getItem('ft4_bodyscans')||'[]');
+    S.bloodTests=JSON.parse(localStorage.getItem('ft4_bloodtests')||'[]');
+    S.coachQuiz=JSON.parse(localStorage.getItem('ft4_coachquiz')||'null');
+    S.coachQuizPro=JSON.parse(localStorage.getItem('ft4_coachquizpro')||'null');
+    S.scaleType=localStorage.getItem('ft4_scaletype')||''; // '' | 'feet' | 'handsfeet'
+    S.emailVerified=localStorage.getItem('ft4_email_verified')==='1';
+    S.diet=localStorage.getItem('ft4_diet')||''; // '' | omnivore | vegetarien | vegan | pescetarien
+    S.dietRestrictions=JSON.parse(localStorage.getItem('ft4_diet_restr')||'[]'); // halal, casher, sansporc, ...
+    S.dietNotes=localStorage.getItem('ft4_diet_notes')||'';
     S.a11y=localStorage.getItem('ft4_a11y')==='1';
     S.colorblind=localStorage.getItem('ft4_cb')||'';
     S.leftHand=localStorage.getItem('ft4_lh')==='1';
@@ -154,7 +181,7 @@ function persist(){
     localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_gender',S.gender);
     localStorage.setItem('ft4_age',S.age);localStorage.setItem('ft4_ht',S.height);
     localStorage.setItem('ft4_act',S.activityLevel);
-    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));
+    localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
     localStorage.setItem('ft4_cycle',JSON.stringify(S.cycle||null)); // cycle de force : local-first (était lu mais jamais écrit)
@@ -171,6 +198,9 @@ function persist(){
     if(S.sessions&&S.sessions.length>0){try{localStorage.setItem('ft4_had_data','1');}catch(e){}}
     localStorage.setItem('ft4_nphase',S.nutritionPhase);
     localStorage.setItem('ft4_work',S.workType);
+    localStorage.setItem('ft4_halo',S.halo);
+    localStorage.setItem('ft4_haloColor',S.haloColor);
+    localStorage.setItem('ft4_haloDir',S.haloDir);
     localStorage.setItem('ft4_smoker',S.smoker?'1':'0');
     localStorage.setItem('ft4_mcstart',S.mensCycleStart);
     localStorage.setItem('ft4_mcdur',S.mensCycleDur);
@@ -183,6 +213,7 @@ function persist(){
     localStorage.setItem('ft4_waist',S.waist||0);
     localStorage.setItem('ft4_hip',S.hip||0);
     localStorage.setItem('ft4_target',S.targetWeight||0);
+    localStorage.setItem('ft4_manualkcal',S.manualKcal||0);
     localStorage.setItem('ft4_goal',S.goal||'muscle');
     localStorage.setItem('ft4_discipline',S.discipline||'muscu');
     localStorage.setItem('ft4_level',S.level||'');
@@ -206,9 +237,22 @@ function persist(){
     localStorage.setItem('ft4_bday',S.bday||'');
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
     localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
+    localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[]));
+    localStorage.setItem('ft4_savedfoods',JSON.stringify(S.savedFoods||[]));
+    localStorage.setItem('ft4_hiddenfoods',JSON.stringify(S.hiddenFoods||[]));
+    localStorage.setItem('ft4_foodai',String(S.foodAiUses||0));
     localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile||null));
     localStorage.setItem('ft4_bodystudy',JSON.stringify(S.bodyStudy||null));
+    localStorage.setItem('ft4_bodystudies',JSON.stringify(S.bodyStudies||[]));
     localStorage.setItem('ft4_bodyscans',JSON.stringify(S.bodyScans||[]));
+    localStorage.setItem('ft4_bloodtests',JSON.stringify(S.bloodTests||[]));
+    localStorage.setItem('ft4_coachquiz',JSON.stringify(S.coachQuiz||null));
+    localStorage.setItem('ft4_coachquizpro',JSON.stringify(S.coachQuizPro||null));
+    localStorage.setItem('ft4_scaletype',S.scaleType||'');
+    localStorage.setItem('ft4_email_verified',S.emailVerified?'1':'0');
+    localStorage.setItem('ft4_diet',S.diet||'');
+    localStorage.setItem('ft4_diet_restr',JSON.stringify(S.dietRestrictions||[]));
+    localStorage.setItem('ft4_diet_notes',S.dietNotes||'');
     localStorage.setItem('ft4_a11y',S.a11y?'1':'0');
     localStorage.setItem('ft4_cb',S.colorblind||'');
     localStorage.setItem('ft4_lh',S.leftHand?'1':'0');
@@ -244,8 +288,22 @@ function calcBMR(){
   const bmr=Math.round(S.gender==='H'?base+5:base-161);
   return S.smoker?Math.round(bmr*1.07):bmr;
 }
-function calcWorkExtra(){return{bureau:0,debout:200,physique:450}[S.workType]||0;}
+function calcWorkExtra(){return{bureau:0,debout:200,actif:325,physique:450}[S.workType]||0;}
 function calcTDEE(){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra());}
+
+// ── Régime alimentaire + restrictions (végé, halal, allergies…) ──
+const DIET_LABELS={omnivore:'Omnivore',vegetarien:'Végétarien',vegan:'Végan',pescetarien:'Pescétarien'};
+const DIET_RESTR_LABELS={halal:'Halal',casher:'Casher',sansporc:'Sans porc',sansboeuf:'Sans bœuf / viande rouge',sansalcool:'Sans alcool',sanslactose:'Sans lactose',sansgluten:'Sans gluten'};
+// Résumé lisible du régime pour l'IA (plan de repas + Milo). Vide si rien de renseigné.
+function dietSummary(){
+  const parts=[];
+  if(S.diet&&DIET_LABELS[S.diet])parts.push(DIET_LABELS[S.diet]);
+  const rs=(S.dietRestrictions||[]).map(r=>DIET_RESTR_LABELS[r]||r).filter(Boolean);
+  if(rs.length)parts.push(rs.join(', '));
+  const n=(S.dietNotes||'').trim();
+  if(n)parts.push('à éviter: '+n);
+  return parts.join(' · ');
+}
 
 function getMensCyclePhase(){
   if(S.gender!=='F')return null;
@@ -277,23 +335,39 @@ function getMensCyclePhase(){
     training:'Fatigue accrue est normale. Privilégie volume modéré, exercices familiers et bonne récupération entre les séances.'};
 }
 
-function calcMacros(phase){
+// Protéines + lipides calés sur le profil (g/kg selon l'objectif) ; les glucides
+// complètent le total calorique. Sert au calcul auto ET à l'aperçu du réglage manuel.
+function macrosForKcal(kcal){
+  const goal=S.goal||'muscle';
+  const cp=getMensCyclePhase();
+  const lutealProt=cp&&cp.phase==='Lutéale'?0.2:0;
+  const protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
+  const fatRatio={muscle:0.9,perte:0.8,recomp:0.85,force:1.0,equilibre:0.85,endurance:0.75}[goal]||0.9;
+  const prot_g=Math.round((S.bw||0)*protRatio);
+  const fat_g=Math.round((S.bw||0)*fatRatio);
+  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));
+  return{prot_g,fat_g,carbs_g};
+}
+// Objectif calorique auto (TDEE + objectif + phase + cycle). Isolé pour l'aperçu « auto ».
+function autoKcal(phase){
   const tdee=calcTDEE();
   const goal=S.goal||'muscle';
-  const isCharge=phase==='charge';
   const cp=getMensCyclePhase();
   const lutealBonus=cp&&cp.phase==='Lutéale'?150:0;
-  const goalDelta={muscle:350,perte:-450,force:200,equilibre:0,endurance:100}[goal]||350;
-  const phaseAdj=isCharge?100:-100;
-  const calories=tdee+goalDelta+phaseAdj+lutealBonus;
-  const lutealProt=cp&&cp.phase==='Lutéale'?0.2:0;
-  const protRatio=({muscle:2.2,perte:2.5,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
-  const fatRatio={muscle:0.9,perte:0.8,force:1.0,equilibre:0.85,endurance:0.75}[goal]||0.9;
-  const prot_g=Math.round(S.bw*protRatio);
-  const fat_g=Math.round(S.bw*fatRatio);
-  const prot_k=prot_g*4,fat_k=fat_g*9;
-  const carbs_g=Math.max(0,Math.round((calories-prot_k-fat_k)/4));
-  return{calories,prot_g,fat_g,carbs_g};
+  // recomp (perte de gras + muscle) : léger déficit — le corps pioche dans le gras,
+  // les protéines élevées (voir macrosForKcal) protègent le muscle → pas de « skinny fat ».
+  const goalDelta={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}[goal]||350;
+  const phaseAdj=phase==='charge'?100:-100;
+  return tdee+goalDelta+phaseAdj+lutealBonus;
+}
+function calcMacros(phase){
+  const auto=autoKcal(phase);
+  // Réglage manuel (comme MyFitnessPal) : si l'utilisateur a fixé ses calories à la main,
+  // on les utilise ; les protéines/lipides restent sains, les glucides s'ajustent.
+  const manual=(typeof S.manualKcal==='number'&&S.manualKcal>0)?Math.round(S.manualKcal):0;
+  const calories=manual||auto;
+  const m=macrosForKcal(calories);
+  return{calories,prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:m.carbs_g,autoCalories:auto,isManual:!!manual};
 }
 
 function getMeals(macros,phase){
@@ -335,7 +409,7 @@ function getMeals(macros,phase){
       [0.15,'🌙 Dîner','Riz + poulet + légumes — Reconstruction musculaire nocturne'],
     ],
   };
-  const plan=plans[goal]||plans.muscle;
+  const plan=plans[goal]||(goal==='recomp'?plans.perte:plans.muscle); // recomp → plan orienté satiété/perte de gras
   return plan.map(([pct,name,desc])=>{
     const kcal=Math.round(macros.calories*pct);
     const prot=Math.round(macros.prot_g*pct);
