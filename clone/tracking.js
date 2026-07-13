@@ -63,7 +63,7 @@ async function _retrySheetQueue(){
     else errors.push({date:sess.date,error:res.error||'erreur inconnue'});
   }
   if(synced>0){
-    try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));}catch(e){}
+    try{localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,200)));}catch(e){}
   }
   _updateAdminSyncInfo(errors);
   if(synced>0&&errors.length===0)toast('☁️ '+synced+' séance'+(synced>1?'s':'')+' synchronisée'+(synced>1?'s':'')+' !','success');
@@ -333,7 +333,7 @@ function ciPickSleep(q){
   const hours=(S.sleepLog.find(e=>e.date===d)||{}).hours||7.5;
   const entry={date:d,hours,quality:q};
   if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
-  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
+  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
   // Mark sleep step as answered, show energy step
   document.getElementById('ci-step-sleep').style.display='none';
   document.getElementById('ci-step-energy').style.display='block';
@@ -366,7 +366,7 @@ function saveWeightEntry(){
   if(!S.weightLog)S.weightLog=[];
   const d=today();const idx=S.weightLog.findIndex(w=>w.date===d);
   if(idx>=0)S.weightLog[idx].kg=kg;else S.weightLog.unshift({date:d,kg});
-  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
   S.bw=kg;persist();
   renderWeightTab();renderHome();
   toast('Poids enregistré !','success');
@@ -394,7 +394,6 @@ function renderWeightTab(){
   renderWeightTarget();
   renderBodyFatCard();
   renderBodyScanCard();
-  renderBloodCard();
   const sorted=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
   // Bascule Poids ↔ Masse grasse
   const metricEl=document.getElementById('weight-metric');
@@ -403,53 +402,18 @@ function renderWeightTab(){
     else metricEl.innerHTML=[['kg','Poids'],['bf','Masse grasse'],['both','Les 2']]
       .map(function(m){return '<button class="wmetric-chip'+(_wMetric===m[0]?' active':'')+'" onclick="setWeightMetric(\''+m[0]+'\')">'+m[1]+'</button>';}).join('');
   }
-  // ── Fenêtre temporelle : navigation dans l'historique + zoom ──
-  // _wSpanDays = largeur de la fenêtre en jours (null = tout) · _wEndOff = décalage du bord droit (jours) vs aujourd'hui
-  const _isoD=dt=>dt.toISOString().split('T')[0];
-  // Référence de la fenêtre (bornes + zoom) : en Masse grasse ET « Les 2 », on cadre sur les mesures
-  // de MG (souvent récentes/clairsemées) — sinon le zoom traverse des années sans MG et semble figé.
-  // Repli sur tout le poids si moins de 2 mesures de MG (pas de régression).
-  let refSource=sorted;
-  if(_wMetric==='bf'||_wMetric==='both'){const bfr=sorted.filter(p=>p.bf!=null);if(bfr.length>=2)refSource=bfr;}
-  // Ce qui est tracé : MG seule en vue « bf » ; toutes les pesées (courbe dense) sinon.
-  const plotSource=(_wMetric==='bf')?sorted.filter(p=>p.bf!=null):sorted;
-  const firstD=refSource.length?new Date(refSource[0].date+'T12:00:00'):new Date();
-  const nowD=new Date(today()+'T12:00:00');
-  const fullSpan=Math.max(1,Math.round((nowD-firstD)/86400000));
-  const eff=(_wSpanDays!=null)?_wSpanDays:(fullSpan+1);
-  const maxOff=Math.max(0,fullSpan-eff);
-  if(_wEndOff>maxOff)_wEndOff=maxOff;
-  if(_wEndOff<0)_wEndOff=0;
-  const rightD=new Date(nowD);rightD.setDate(rightD.getDate()-_wEndOff);
-  const leftD=new Date(rightD);leftD.setDate(leftD.getDate()-eff);
-  const lStr=_isoD(leftD),rStr=_isoD(rightD);
-  let pts=(_wSpanDays!=null)?plotSource.filter(p=>p.date>=lStr&&p.date<=rStr):plotSource.slice();
-  // Sous-échantillonnage pour l'affichage si trop de points (garde toujours le dernier)
-  if(pts.length>160){const k=Math.ceil(pts.length/160);pts=pts.filter((_,i)=>i%k===0||i===pts.length-1);}
-  // Chips de période (préréglages)
+  // Chips de navigation par période (1 mois / 3 mois / 6 mois / Tout)
   const rangeEl=document.getElementById('weight-range');
   if(rangeEl){
     if(sorted.length<2)rangeEl.innerHTML='';
     else rangeEl.innerHTML=[['1m','1 mois'],['3m','3 mois'],['6m','6 mois'],['all','Tout']]
       .map(function(r){return '<button class="wrange-chip'+(_wRange===r[0]?' active':'')+'" onclick="setWeightRange(\''+r[0]+'\')">'+r[1]+'</button>';}).join('');
   }
-  // Ligne de navigation ◀ 🔍− [dates] 🔍+ ▶ (revenir dans le temps + zoomer le graphique)
-  const navEl=document.getElementById('weight-nav');
-  if(navEl){
-    if(sorted.length<2){navEl.style.display='none';}
-    else{
-      navEl.style.display='flex';
-      const allShown=(_wSpanDays==null),atNewest=(_wEndOff<=0),atOldest=(_wEndOff>=maxOff);
-      const nb=(lbl,fn,dis,title)=>'<button class="wnav-btn" title="'+title+'"'+(dis?' disabled':'')+' onclick="'+fn+'">'+lbl+'</button>';
-      const rangeLbl=pts.length?(_fmtWNav(pts[0].date)+' → '+_fmtWNav(pts[pts.length-1].date)):'—';
-      navEl.innerHTML=
-        nb('◀','weightPan(-1)',allShown||atOldest,'Reculer dans le temps')
-        +nb('🔍−','weightZoom(-1)',allShown,'Dézoomer')
-        +'<span style="flex:1;text-align:center;font-size:11px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+rangeLbl+'</span>'
-        +nb('🔍+','weightZoom(1)',pts.length<3,'Zoomer')
-        +nb('▶','weightPan(1)',allShown||atNewest,'Avancer dans le temps');
-    }
-  }
+  // Filtre selon la période choisie
+  let pts=sorted;
+  const days={'1m':30,'3m':90,'6m':180}[_wRange];
+  if(days){const cut=new Date(today()+'T12:00:00');cut.setDate(cut.getDate()-days);const c=cut.toISOString().split('T')[0];pts=sorted.filter(p=>p.date>=c);}
+  pts=pts.slice(-120);
   // Vue « Masse grasse » : on trace les pesées qui ont une valeur bf
   if(_wMetric==='bf'){
     const bfpts=pts.filter(p=>p.bf!=null);
@@ -482,28 +446,8 @@ function renderWeightTab(){
   if(chartEl)renderWeightChart(pts,chartEl,'kg');
   if(corrEl)renderWeightCorrelations(corrEl,pts);
 }
-let _wRange='all'; // préréglage actif : '1m' | '3m' | '6m' | 'all' | '' (zoom/pan custom)
-let _wSpanDays=null; // largeur de la fenêtre en jours (null = tout l'historique)
-let _wEndOff=0;      // décalage du bord droit de la fenêtre (jours) vs aujourd'hui
-function setWeightRange(r){_wRange=r;_wSpanDays={'1m':30,'3m':90,'6m':180,'all':null}[r];_wEndOff=0;renderWeightTab();}
-function _fmtWNav(d){const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});}
-function _wFullSpan(){let s=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];if(_wMetric==='bf'||_wMetric==='both'){const b=s.filter(p=>p.bf!=null);if(b.length>=2)s=b;}if(!s.length)return 1;const f=new Date(s[0].date+'T12:00:00'),n=new Date(today()+'T12:00:00');return Math.max(1,Math.round((n-f)/86400000));}
-function weightZoom(dir){
-  const full=_wFullSpan();
-  const eff=(_wSpanDays!=null)?_wSpanDays:full;
-  let ns=dir>0?Math.max(7,Math.round(eff/1.6)):Math.round(eff*1.6);
-  if(ns>=full){_wSpanDays=null;_wEndOff=0;_wRange='all';}
-  else{_wSpanDays=ns;_wRange='';}
-  renderWeightTab();
-}
-function weightPan(dir){
-  if(_wSpanDays==null)return; // déjà tout affiché
-  // Se déplace d'une FENÊTRE COMPLÈTE (ex. période 3 mois → recule/avance de 3 mois pile)
-  const step=Math.max(1,_wSpanDays);
-  _wEndOff=Math.max(0,_wEndOff+(dir<0?step:-step)); // ◀ = reculer (offset↑) · ▶ = avancer (offset↓)
-  // On garde _wRange : le bouton de période reste allumé pendant la navigation (on ne change que la position, pas le zoom)
-  renderWeightTab();
-}
+let _wRange='all'; // période affichée : '1m' | '3m' | '6m' | 'all'
+function setWeightRange(r){_wRange=r;renderWeightTab();}
 let _wMetric='kg'; // métrique affichée : 'kg' (poids) | 'bf' (masse grasse)
 function setWeightMetric(m){_wMetric=m;renderWeightTab();}
 
@@ -617,7 +561,7 @@ function saveBodyFat(){
   e.bf=Math.round(bf*10)/10;
   // Mémorise les mensurations saisies (garde le profil à jour)
   if(nk>20&&nk<80)S.neck=nk;if(wa>40&&wa<200)S.waist=wa;if(hp>40&&hp<200)S.hip=hp;
-  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
   persist();renderWeightTab();
   toast('Masse grasse enregistrée ✅','success');
 }
@@ -644,7 +588,7 @@ function saveWeighEdit(){
   // retire l'ancienne entrée + toute entrée sur la nouvelle date, puis ré-insère
   S.weightLog=(S.weightLog||[]).filter(x=>x.date!==_weighEditDate&&x.date!==newDate);
   S.weightLog.unshift(entry);
-  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
   if(S.weightLog[0])S.bw=S.weightLog[0].kg;
   persist();closeWeighEdit();renderWeightTab();renderHome();
   toast('Pesée mise à jour ✅','success');
@@ -689,19 +633,15 @@ const _BS_SEG_FIELDS=[
 let _bsEditIdx=-1;
 function renderBodyScanCard(){
   const el=document.getElementById('bodyscan-section');if(!el)return;
-  // Import CSV de balance (historique complet) — réservé aux testeurs
-  const csvBtn=_isScaleCsvBeta()?`<button class="btn btn-bg2" style="width:100%;margin-top:8px;font-size:13px;" onclick="openScaleCsvImport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg> Importer un fichier balance (CSV ou Excel)</button>`:'';
-  const scaleSel=_scaleTypeSelector();
   const scans=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(!scans.length){
     el.innerHTML=`<div class="card cp" style="text-align:center;">
       <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px;">Tu passes sur une balance pro (impédancemètre) ? Enregistre ton bilan — graisse viscérale, muscle, métabolisme… — pour suivre son évolution dans le temps et que Milo s'en serve.</div>
-      <div style="text-align:left;">${scaleSel}</div>
       <button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 Importer depuis une photo</button>
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="openBodyScanForm(-1)">✏️ À la main</button>
         <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="pasteBodyScan()">📋 Coller un code</button>
-      </div>${csvBtn}</div>`;
+      </div></div>`;
     return;
   }
   const last=scans[0], prev=scans[1];
@@ -732,10 +672,8 @@ function renderBodyScanCard(){
     ${prev?'<div style="font-size:10px;color:var(--t3);text-align:center;margin-top:9px;">▲▼ = évolution depuis le bilan précédent (vert = dans le bon sens)</div>':''}
   </div>`;
   if(scans.length>1){
-    const LIST_MAX=24;                       // liste plafonnée (les courbes gardent tout l'historique)
-    const shown=scans.slice(0,LIST_MAX);
     html+=`<div style="display:flex;flex-direction:column;gap:6px;">`;
-    shown.forEach(s=>{
+    scans.forEach(s=>{
       const i=S.bodyScans.indexOf(s);
       const dd=new Date(s.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
       html+=`<div onclick="openBodyScanForm(${i})" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border-radius:10px;padding:10px 12px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);">
@@ -743,158 +681,14 @@ function renderBodyScanCard(){
         <span style="font-size:12px;color:var(--t2);">${s.weight?s.weight+' kg':''}${s.bf?' · '+s.bf+'%':''}${s.muscle?' · '+s.muscle+' kg musc.':''}</span>
       </div>`;
     });
-    if(scans.length>LIST_MAX)
-      html+=`<div style="font-size:11.5px;color:var(--t3);text-align:center;padding:6px;">+ ${scans.length-LIST_MAX} autres bilans plus anciens — visibles sur la courbe ci-dessus 📈</div>`;
     html+=`</div>`;
   }
-  html+=scaleSel;
   html+=`<button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 Nouveau bilan (photo)</button>
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="openBodyScanForm(-1)">✏️ À la main</button>
       <button class="btn btn-bg2" style="flex:1;font-size:13px;" onclick="pasteBodyScan()">📋 Coller un code</button>
-    </div>${csvBtn}`;
+    </div>`;
   el.innerHTML=html;
-}
-// ─── Import CSV de balance connectée (Tanita/impédancemètre) — testeurs, historique complet ───
-function _isScaleCsvBeta(){
-  const e=(S.email||'').trim().toLowerCase();
-  if(e==='michdu75@gmail.com')return true;
-  return typeof TESTER_EMAILS!=='undefined' && TESTER_EMAILS.indexOf(e)>=0;
-}
-// Type de balance à impédance — change beaucoup la lecture de la masse grasse (Milo en tient compte)
-const SCALE_TYPE_LABELS={feet:'Pieds seulement (2 électrodes)',handsfeet:'Mains + pieds (segmentaire)'};
-function setScaleType(t){ S.scaleType=(S.scaleType===t?'':t); if(typeof persist==='function')persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced(); renderBodyScanCard(); if(typeof toast==='function'&&S.scaleType)toast('Balance : '+SCALE_TYPE_LABELS[t],'info'); }
-function _scaleTypeSelector(){
-  const t=S.scaleType||'';
-  const opt=(v,l)=>`<button onclick="setScaleType('${v}')" class="btn ${t===v?'btn-red':'btn-bg2'}" style="flex:1;font-size:12px;padding:8px 6px;line-height:1.25;">${l}</button>`;
-  return `<div style="margin-bottom:12px;">
-    <div style="font-size:11.5px;color:var(--t3);margin-bottom:6px;line-height:1.4;">Ta balance à impédance (aide à bien lire la masse grasse — les modèles donnent des % différents) :</div>
-    <div style="display:flex;gap:6px;">${opt('feet','👣 Pieds')}${opt('handsfeet','🖐️ Mains + pieds')}</div>
-  </div>`;
-}
-function _csvSplit(line){
-  const out=[]; let cur='', q=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(q){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
-    else { if(c==='"')q=true; else if(c===','){out.push(cur);cur='';} else cur+=c; }
-  }
-  out.push(cur); return out;
-}
-function _scaleDate(s){
-  s=(s||'').trim();
-  let m=s.match(/(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/);   // AAAA-MM-JJ ou AAAA/MM/JJ (année d'abord)
-  if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
-  m=s.match(/(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/);     // JJ/MM/AAAA (jour d'abord)
-  if(m){ let y=m[3]; if(y.length===2)y='20'+y; return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'); }
-  return null;
-}
-// Trouve l'indice des colonnes par nom d'en-tête (robuste, multi-marques). Exclut les colonnes segmentaires.
-function _scaleColMap(headers){
-  const H=headers.map(h=>(h||'').trim().toLowerCase());
-  const noSeg=h=>!h.includes(' - ')&&!h.includes('- right')&&!h.includes('- left')&&!h.includes('bras')&&!h.includes('jambe')&&!h.includes('tronc');
-  const find=pred=>{ for(let i=0;i<H.length;i++){ if(pred(H[i]))return i; } return -1; };
-  return {
-    date:    find(h=>h==='date'||h.startsWith('date')||h.includes('time')||h.includes('temps')||h.includes('mesure')),
-    weight:  find(h=>noSeg(h)&&(h.includes('weight')||h.includes('poids'))),
-    imc:     find(h=>h==='bmi'||h.includes('imc')||h==='bmi '),
-    bf:      find(h=>noSeg(h)&&(h.includes('body fat')||(h.includes('graisse')&&!h.includes('visc')&&!h.includes('masse')))&&h.includes('%')),
-    visceral:find(h=>h.includes('visc')),
-    muscle:  find(h=>noSeg(h)&&(h.includes('muscle mass')||h.includes('masse musc'))),
-    bone:    find(h=>h.includes('bone')||h.includes('osseu')),
-    bmr:     find(h=>h.includes('bmr')||(h.includes('metab')&&(h.includes('base')||h.includes('kcal')))||(h.includes('métab')&&(h.includes('base')||h.includes('kcal')))),
-    metaAge: find(h=>h.includes('metab age')||h.includes('metabolic age')||((h.includes('metab')||h.includes('métab'))&&h.includes('age'))||((h.includes('âge')||h.includes('age'))&&h.includes('métab')))
-  };
-}
-function _parseScaleCsv(text){
-  const lines=String(text||'').split(/\r?\n/).filter(l=>l.trim());
-  if(!lines.length)return {rows:[],err:'fichier vide'};
-  const col=_scaleColMap(_csvSplit(lines[0]));
-  if(col.date<0||col.weight<0)return {rows:[],err:'colonnes Date/Poids introuvables'};
-  const num=v=>{ v=(v||'').trim(); if(v===''||v==='-')return null; const n=parseFloat(v.replace(',','.')); return isNaN(n)?null:n; };
-  const keys=['bf','imc','visceral','muscle','bone','bmr','metaAge'];
-  const rows=[];
-  for(let i=1;i<lines.length;i++){
-    const c=_csvSplit(lines[i]);
-    const date=_scaleDate(c[col.date]); if(!date)continue;
-    const w=num(c[col.weight]); if(w==null)continue;
-    const r={date,weight:w};
-    keys.forEach(k=>{ if(col[k]>=0){ const v=num(c[col[k]]); if(v!=null)r[k]=v; } });
-    rows.push(r);
-  }
-  return {rows};
-}
-// Range les lignes lues dans S.bodyScans + S.weightLog (1 par jour, garde tout l'historique)
-function _importScaleRows(rows){
-  const byDay={}; rows.forEach(r=>{ if(r.date)byDay[r.date]=r; }); // dernière du jour gagne
-  const days=Object.keys(byDay).sort();
-  S.bodyScans=S.bodyScans||[]; S.weightLog=S.weightLog||[];
-  const bsIdx={}; S.bodyScans.forEach((s,i)=>{bsIdx[s.date]=i;});
-  const wIdx={};  S.weightLog.forEach((w,i)=>{wIdx[w.date]=i;});
-  days.forEach(d=>{
-    const r=byDay[d];
-    const scan={date:d};
-    ['weight','bf','imc','visceral','muscle','bone','bmr','metaAge'].forEach(k=>{ if(r[k]!=null)scan[k]=r[k]; });
-    if(bsIdx[d]!=null)S.bodyScans[bsIdx[d]]=scan; else {S.bodyScans.push(scan);bsIdx[d]=S.bodyScans.length-1;}
-    if(r.weight!=null){
-      if(wIdx[d]!=null){ S.weightLog[wIdx[d]].kg=r.weight; if(r.bf!=null)S.weightLog[wIdx[d]].bf=r.bf; }
-      else { const wl={date:d,kg:r.weight}; if(r.bf!=null)wl.bf=r.bf; S.weightLog.push(wl); wIdx[d]=S.weightLog.length-1; }
-    }
-  });
-  S.bodyScans.sort((a,b)=>b.date.localeCompare(a.date));
-  S.weightLog.sort((a,b)=>b.date.localeCompare(a.date));
-  const latest=days[days.length-1]; if(byDay[latest]&&byDay[latest].weight)S.bw=Math.round(byDay[latest].weight*10)/10;
-  if(typeof persist==='function')persist();
-  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  return {days:days.length};
-}
-// Charge SheetJS (lecteur Excel) hébergé en local — comme jsPDF, marche hors-ligne
-let _xlsxLoad=null;
-function _loadXlsx(){
-  if(window.XLSX)return Promise.resolve();
-  if(_xlsxLoad)return _xlsxLoad;
-  _xlsxLoad=new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='./lib/xlsx.full.min.js'; s.onload=res; s.onerror=()=>{_xlsxLoad=null;rej(new Error('load xlsx'));}; document.head.appendChild(s); });
-  return _xlsxLoad;
-}
-function openScaleCsvImport(){
-  if(!_isScaleCsvBeta()){ if(typeof toast==='function')toast('Réservé aux testeurs','info'); return; }
-  let inp=document.getElementById('_scale-csv-input');
-  if(!inp){ inp=document.createElement('input'); inp.type='file'; inp.accept='.csv,.xlsx,.xls,text/csv,text/plain,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'; inp.id='_scale-csv-input'; inp.style.display='none'; inp.onchange=()=>onScaleCsvFile(inp); document.body.appendChild(inp); }
-  inp.value=''; inp.click();
-}
-// Traite le texte CSV (peu importe l'origine : CSV direct ou Excel converti) → confirm + import
-function _scaleCsvImportFromText(text){
-  const res=_parseScaleCsv(text);
-  if(res.err){ toast('Fichier : '+res.err,'error'); return; }
-  const rows=res.rows;
-  if(!rows.length){ toast('Aucune pesée lue dans ce fichier','error'); return; }
-  const dates=rows.map(r=>r.date).sort();
-  const days=new Set(dates).size;
-  const doImport=()=>{ const r=_importScaleRows(rows); renderBodyScanCard(); if(typeof renderWeightTab==='function')renderWeightTab(); toast('✅ '+r.days+' pesées importées','success'); };
-  if(typeof showConfirm==='function')
-    showConfirm('Importer '+days+' pesées ?', rows.length+' mesures lues ('+dates[0]+' → '+dates[dates.length-1]+'). On garde une pesée par jour, tout l\'historique. Les dates déjà présentes sont mises à jour, rien n\'est effacé.', doImport);
-  else doImport();
-}
-function onScaleCsvFile(input){
-  const f=input.files&&input.files[0]; if(!f)return;
-  const isXlsx=/\.xlsx?$/i.test(f.name||'');
-  if(isXlsx){
-    _loadXlsx().then(()=>{
-      const reader=new FileReader();
-      reader.onload=e=>{
-        try{
-          const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-          const ws=wb.Sheets[wb.SheetNames[0]];
-          _scaleCsvImportFromText(XLSX.utils.sheet_to_csv(ws));
-        }catch(ex){ if(typeof toast==='function')toast('Excel illisible','error'); console.warn('[scale xlsx]',ex); }
-      };
-      reader.readAsArrayBuffer(f);
-    }).catch(()=>{ if(typeof toast==='function')toast('Lecteur Excel indisponible (réseau ?)','error'); });
-  } else {
-    const reader=new FileReader();
-    reader.onload=e=>{ try{ _scaleCsvImportFromText(String(e.target.result||'')); }catch(ex){ if(typeof toast==='function')toast('Erreur lecture','error'); console.warn('[scale csv]',ex); } };
-    reader.readAsText(f);
-  }
 }
 // Import photo : lire un rapport de balance pro via l'IA → pré-remplit le formulaire
 // Prépare la photo du rapport pour l'IA. Les rapports de balance sont souvent TRÈS hauts :
@@ -940,22 +734,21 @@ function _resizeReport(file,cb){
   reader.readAsDataURL(file);
 }
 function importBodyScanPhoto(){const inp=document.getElementById('bs-photo-input');if(inp){inp.value='';inp.click();}}
-const BODYSCAN_FREE_LIMIT=10; // lectures photo gratuites pour les non super-testeurs (saisie main/code toujours illimitée)
 function _bodyScanPhotoUnlimited(){return (typeof _isSuperTester==='function'&&_isSuperTester());}
 function onBodyScanPhoto(input){
   const file=input.files&&input.files[0];if(!file)return;input.value='';
   if(!S.url){toast('Coach non configuré (Profil > Admin)','error');return;}
   // Lecture photo : illimitée pour super-testeurs (Michel/Christophe), 1 seule fois pour les autres. Saisie main/code = gratuite.
   const unlimited=_bodyScanPhotoUnlimited();
-  if(!unlimited&&(S.bodyScanImports||0)>=BODYSCAN_FREE_LIMIT){
-    toast('Lecture photo : tes '+BODYSCAN_FREE_LIMIT+' lectures gratuites sont utilisées 🙂 Continue à la main ou par code (gratuit).','info');
+  if(!unlimited&&(S.bodyScanImports||0)>=1){
+    toast('Lecture photo : ta lecture gratuite est déjà utilisée 🙂 Continue à la main ou par code (gratuit).','info');
     return;
   }
+  toast('📖 Lecture du rapport…','info');
   _resizeReport(file,async(out)=>{
     try{
       const tiles=(out&&out.tiles)?out.tiles:(Array.isArray(out)?out:[out]);
       const full=(out&&out.full)?out.full:tiles[0];
-      _showBsScan('data:image/jpeg;base64,'+full); // retour visuel : scan du rapport pendant la lecture IA
       const images=tiles.map(t=>({data:t,type:'image/jpeg'}));
       const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'importBodyScan',images,image:full,imageType:'image/jpeg',email:S.email||''})});
@@ -963,32 +756,12 @@ function onBodyScanPhoto(input){
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
       if(!unlimited){S.bodyScanImports=(S.bodyScanImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
-      _hideBsScan(()=>{
-        openBodyScanForm(-1);
-        if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
-        _BS_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
-        _BS_SEG_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
-        toast('Rapport lu ✅ Vérifie puis Enregistre','success');
-      });
-    }catch(e){_hideBsScan(()=>toast('Souci lecture : '+(e.message||'réessaie'),'error'));}
+      openBodyScanForm(-1);
+      if(o.date){const dEl=document.getElementById('bs-date');if(dEl)dEl.value=o.date;}
+      _BS_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
+      toast('Rapport lu ✅ Vérifie puis Enregistre','success');
+    }catch(e){toast('Souci lecture : '+(e.message||'réessaie'),'error');}
   });
-}
-// Overlay « analyse en cours » (min ~1,4 s pour un retour visible même si le serveur répond vite)
-let _bsScanStart=0;
-function _showBsScan(src,title,sub,foot){
-  const img=document.getElementById('bs-scan-img');if(img)img.src=src||'';
-  const t=document.getElementById('bs-scan-title');if(t)t.textContent=title||'🔍 Analyse du rapport…';
-  const s=document.getElementById('bs-scan-sub');if(s)s.textContent=sub||'L\'IA lit tes chiffres';
-  const f=document.getElementById('bs-scan-foot');if(f)f.innerHTML='<span class="bs-scan-dot"></span>'+(foot||'Détection des valeurs…');
-  const ov=document.getElementById('ov-bs-scan');if(ov)ov.classList.add('open');
-  _bsScanStart=Date.now();
-}
-// Alias générique pour toutes les analyses IA (photos incluses)
-function showScanOverlay(src,title,sub,foot){_showBsScan(src,title,sub,foot);}
-function hideScanOverlay(cb){_hideBsScan(cb);}
-function _hideBsScan(cb){
-  const wait=Math.max(0,1400-(Date.now()-_bsScanStart));
-  setTimeout(()=>{const ov=document.getElementById('ov-bs-scan');if(ov)ov.classList.remove('open');if(cb)cb();},wait);
 }
 // Import rapide : coller un code "date=...;weight=...;bf=..." (préparé par Claude) → remplit le formulaire
 function _parseBilanCode(str){
@@ -1048,7 +821,7 @@ function saveBodyScan(){
   wentry.kg=weight;
   if(obj.bf!=null)wentry.bf=obj.bf;
   if(wi<0)S.weightLog.unshift(wentry);
-  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
+  S.weightLog=S.weightLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,365);
   if(S.weightLog[0])S.bw=S.weightLog[0].kg;
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
@@ -1064,144 +837,6 @@ function deleteBodyScan(){
     if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     closeBodyScanForm();renderBodyScanCard();toast('Bilan supprimé','info');
   });
-}
-
-// ─── BILAN SANGUIN (bêta : Michel + Christophe) — PDF/photo → masquage identité → lecture IA ───
-function _isBloodBeta(){
-  const e=(S.email||'').trim().toLowerCase();
-  return e==='michdu75@gmail.com' || e==='christophe@famillelanglois.fr';
-}
-let _bloodPages=[], _bloodRects=[], _bloodPageIdx=0, _bloodImg=null, _bloodEditIdx=-1;
-function _bloodOut(m){ if(!m||m.value==null)return false; if(m.low!=null&&m.value<m.low)return true; if(m.high!=null&&m.value>m.high)return true; return false; }
-function renderBloodCard(){
-  const titleEl=document.getElementById('bloodtest-sec-title');
-  const el=document.getElementById('bloodtest-section');
-  if(!el)return;
-  if(!_isBloodBeta()){ if(titleEl)titleEl.style.display='none'; el.innerHTML=''; return; }
-  if(titleEl)titleEl.style.display='';
-  const tests=(S.bloodTests||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  if(!tests.length){
-    el.innerHTML=`<div class="card cp" style="text-align:center;">
-      <div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px;">Importe ton bilan sanguin (PDF ou photo). Tu masques d'abord tes infos perso 🔒, puis l'appli lit tous les marqueurs et suit leur évolution. Bêta — visible rien que pour toi.</div>
-      <button class="btn btn-red" style="width:100%;" onclick="openBloodImport()">🩸 Importer un bilan sanguin</button></div>`;
-    return;
-  }
-  const last=tests[0];
-  const nOut=(last.markers||[]).filter(_bloodOut).length;
-  const dstr=last.date?new Date(last.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'—';
-  let html=`<div class="card cp" onclick="openBloodTest(${S.bloodTests.indexOf(last)})" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
-    <div><div style="font-weight:800;font-size:14px;">Dernier bilan · ${dstr}</div>
-      <div style="font-size:12px;color:var(--t2);margin-top:3px;">${(last.markers||[]).length} marqueurs${nOut?` · <span style="color:#FF9500;">${nOut} hors norme</span>`:` · <span style="color:#22C55E;">tous dans la norme</span>`}</div></div>
-    <span style="color:var(--t3);font-size:20px;">›</span></div>`;
-  if(tests.length>1){
-    html+=`<div style="display:flex;flex-direction:column;gap:6px;">`;
-    tests.forEach(t=>{const i=S.bloodTests.indexOf(t);const dd=t.date?new Date(t.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'}):'—';
-      html+=`<div onclick="openBloodTest(${i})" style="display:flex;justify-content:space-between;background:var(--bg2);border-radius:10px;padding:10px 12px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);"><span style="font-size:13px;font-weight:700;">${dd}</span><span style="font-size:12px;color:var(--t2);">${(t.markers||[]).length} marqueurs</span></div>`;});
-    html+=`</div>`;
-  }
-  html+=`<button class="btn btn-red" style="width:100%;" onclick="openBloodImport()">🩸 Importer un bilan sanguin</button>`;
-  el.innerHTML=html;
-}
-function openBloodImport(){const inp=document.getElementById('blood-file-input');if(inp){inp.value='';inp.click();}}
-async function onBloodFile(input){
-  const f=input.files&&input.files[0];if(!f)return;input.value='';
-  toast('Préparation du fichier…','info');
-  try{
-    let pages=[];
-    if(f.type==='application/pdf'||/\.pdf$/i.test(f.name)){
-      const imgs=await _pdfToImages(f); pages=imgs.map(p=>p.data);
-    }else{ pages=[await _bloodResizeImg(f)]; }
-    if(!pages.length){toast('Fichier illisible','error');return;}
-    _bloodPages=pages; _bloodRects=pages.map(()=>[]); _bloodPageIdx=0;
-    _showBloodRedact();
-  }catch(e){toast('Souci lecture fichier : '+(e.message||'réessaie'),'error');}
-}
-function _bloodResizeImg(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>{const img=new Image();img.onload=()=>{const max=1400;let w=img.width,h=img.height;if(w>=h){if(w>max){h=Math.round(h*max/w);w=max;}}else{if(h>max){w=Math.round(w*max/h);h=max;}}const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(img,0,0,w,h);res(cv.toDataURL('image/jpeg',0.85).split(',')[1]);};img.onerror=rej;img.src=e.target.result;};r.onerror=rej;r.readAsDataURL(f);});}
-function _showBloodRedact(){const ov=document.getElementById('ov-blood-redact');if(ov)ov.classList.add('open');_bloodDrawPage();}
-function closeBloodRedact(){const ov=document.getElementById('ov-blood-redact');if(ov)ov.classList.remove('open');}
-function _bloodRedactNav(d){const n=_bloodPageIdx+d;if(n<0||n>=_bloodPages.length)return;_bloodPageIdx=n;_bloodDrawPage();}
-function _bloodRedactUndo(){const r=_bloodRects[_bloodPageIdx];if(r&&r.length){r.pop();_bloodRedraw();}}
-function _bloodDrawPage(){
-  const cv=document.getElementById('blood-redact-canvas');const pg=document.getElementById('blood-redact-page');
-  if(pg)pg.textContent='Page '+(_bloodPageIdx+1)+' / '+_bloodPages.length;
-  const img=new Image();
-  img.onload=()=>{ _bloodImg=img; cv.width=img.naturalWidth; cv.height=img.naturalHeight; _bloodRedraw(); _bloodBindTouch(cv); };
-  img.src='data:image/jpeg;base64,'+_bloodPages[_bloodPageIdx];
-}
-function _bloodRedraw(dragRect){
-  const cv=document.getElementById('blood-redact-canvas');if(!cv||!_bloodImg)return;const ctx=cv.getContext('2d');
-  ctx.drawImage(_bloodImg,0,0,cv.width,cv.height);
-  ctx.fillStyle='#000';
-  (_bloodRects[_bloodPageIdx]||[]).forEach(r=>ctx.fillRect(r.x*cv.width,r.y*cv.height,r.w*cv.width,r.h*cv.height));
-  if(dragRect){ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(dragRect.x*cv.width,dragRect.y*cv.height,dragRect.w*cv.width,dragRect.h*cv.height);}
-}
-function _normRect(a,b){return {x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),w:Math.abs(a.x-b.x),h:Math.abs(a.y-b.y)};}
-function _bloodBindTouch(cv){
-  if(cv._bloodBound)return; cv._bloodBound=true;
-  let start=null;
-  const pt=(ev)=>{const rect=cv.getBoundingClientRect();const t=ev.touches?ev.touches[0]:ev;return {x:(t.clientX-rect.left)/rect.width,y:(t.clientY-rect.top)/rect.height};};
-  const down=(ev)=>{ev.preventDefault();start=pt(ev);};
-  const move=(ev)=>{if(!start)return;ev.preventDefault();_bloodRedraw(_normRect(start,pt(ev)));};
-  const up=(ev)=>{if(!start)return;ev.preventDefault();const r=_normRect(start,pt(ev));if(r.w>0.008&&r.h>0.004)(_bloodRects[_bloodPageIdx]=_bloodRects[_bloodPageIdx]||[]).push(r);start=null;_bloodRedraw();};
-  cv.addEventListener('touchstart',down,{passive:false});cv.addEventListener('touchmove',move,{passive:false});cv.addEventListener('touchend',up,{passive:false});
-  cv.addEventListener('mousedown',down);cv.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
-}
-function _bloodApplyRedact(i){return new Promise(res=>{const img=new Image();img.onload=()=>{const cv=document.createElement('canvas');cv.width=img.naturalWidth;cv.height=img.naturalHeight;const ctx=cv.getContext('2d');ctx.drawImage(img,0,0);ctx.fillStyle='#000';(_bloodRects[i]||[]).forEach(r=>ctx.fillRect(r.x*cv.width,r.y*cv.height,r.w*cv.width,r.h*cv.height));res(cv.toDataURL('image/jpeg',0.85).split(',')[1]);};img.src='data:image/jpeg;base64,'+_bloodPages[i];});}
-async function _analyzeBloodRedacted(){
-  if(!S.url){toast('Coach non configuré (Profil > Admin)','error');return;}
-  const imgs=[];
-  for(let i=0;i<_bloodPages.length;i++){ imgs.push({data:await _bloodApplyRedact(i),type:'image/jpeg'}); }
-  closeBloodRedact();
-  _showBsScan('data:image/jpeg;base64,'+imgs[0].data,'🩸 Analyse du bilan sanguin…','Lecture des marqueurs','Extraction des valeurs…');
-  try{
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'importBloodTest',images:imgs,image:imgs[0].data,imageType:'image/jpeg',email:S.email||''})});
-    const txt=await resp.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('réponse illisible');}
-    if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
-    const d=data.data;
-    _hideBsScan(()=>{ _saveBloodTest(d); });
-  }catch(e){_hideBsScan(()=>toast('Souci lecture : '+(e.message||'réessaie'),'error'));}
-}
-function _saveBloodTest(d){
-  const markers=(d.markers||[]).filter(m=>m&&m.name);
-  const obj={date:d.date||today(),ts:Date.now(),markers:markers};
-  S.bloodTests=S.bloodTests||[];
-  const ex=S.bloodTests.findIndex(t=>t.date===obj.date);
-  if(ex>=0)S.bloodTests[ex]=obj; else S.bloodTests.push(obj);
-  S.bloodTests.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  persist();
-  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  renderBloodCard();
-  toast(markers.length+' marqueurs enregistrés ✅','success');
-  openBloodTest(S.bloodTests.indexOf(obj));
-}
-function openBloodTest(idx){
-  _bloodEditIdx=idx;const t=(S.bloodTests||[])[idx];if(!t)return;
-  const prev=(S.bloodTests||[]).filter(x=>x!==t&&(x.date||'')<(t.date||'')).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||null;
-  const dEl=document.getElementById('blood-test-date');if(dEl)dEl.textContent=t.date?new Date(t.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';
-  const esc=(typeof _escNote==='function')?_escNote:(x=>x);
-  const groups={};(t.markers||[]).forEach(m=>{const g=m.group||'Autres';(groups[g]=groups[g]||[]).push(m);});
-  let html='';
-  Object.keys(groups).forEach(g=>{
-    html+=`<div style="font-size:12px;font-weight:800;color:var(--t3);letter-spacing:.04em;text-transform:uppercase;margin:12px 0 4px;">${esc(g)}</div>`;
-    groups[g].forEach(m=>{
-      const out=_bloodOut(m); const col=out?'#FF9500':'#22C55E';
-      const range=(m.low!=null||m.high!=null)?('réf. '+(m.low!=null?m.low:'')+(m.low!=null&&m.high!=null?'–':(m.high!=null?'< ':''))+(m.high!=null?m.high:(m.low!=null?' +':''))+' '+(m.unit||'')):'';
-      let ev='';
-      if(prev){const pm=(prev.markers||[]).find(x=>x.name===m.name);if(pm&&pm.value!=null&&m.value!=null){const dd=+(m.value-pm.value).toFixed(2);if(dd!==0)ev=`<span style="font-size:10px;color:var(--t3);"> ${dd>0?'▲':'▼'}${Math.abs(dd)}</span>`;}}
-      html+=`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--sep);">
-        <span style="width:9px;height:9px;border-radius:50%;background:${col};flex-shrink:0;"></span>
-        <div style="flex:1;min-width:0;"><div style="font-size:13px;color:var(--t1);">${esc(m.name)}</div>${range?`<div style="font-size:10px;color:var(--t3);">${esc(range)}</div>`:''}</div>
-        <div style="text-align:right;white-space:nowrap;"><span style="font-size:14px;font-weight:800;color:${out?'#FF9500':'var(--t1)'};">${m.value}</span><span style="font-size:10px;color:var(--t3);"> ${esc(m.unit||'')}</span>${ev}</div></div>`;
-    });
-  });
-  const bodyEl=document.getElementById('blood-test-body');if(bodyEl)bodyEl.innerHTML=html||'<div style="color:var(--t3);text-align:center;padding:20px;">Aucun marqueur lu.</div>';
-  const ov=document.getElementById('ov-blood-test');if(ov)ov.classList.add('open');
-}
-function closeBloodTest(){const ov=document.getElementById('ov-blood-test');if(ov)ov.classList.remove('open');}
-function deleteBloodTest(){
-  if(_bloodEditIdx<0)return;
-  showConfirm('Supprimer ce bilan sanguin ?','Action définitive.',function(){S.bloodTests.splice(_bloodEditIdx,1);persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();closeBloodTest();renderBloodCard();toast('Bilan supprimé','info');});
 }
 function renderWeightChart(pts,box,metric){
   metric=metric||'kg';
@@ -1370,44 +1005,27 @@ function renderLogSleep(){
       +'<button class="slq-btn" id="sq-4" onclick="setSleepQual(4)">'+bars(4)+'Excellent</button>'
       +'</div>'
       +'<div style="display:flex;gap:8px;align-items:center;">'
-      +'<input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" oninput="_toggleSleepSaveBtn(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?ts.hours:'')+'">'
+      +'<input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?ts.hours:'')+'">'
       +'<span style="font-size:13px;color:var(--t2);white-space:nowrap;">h de sommeil</span>'
       +(ts?'<button class="btn btn-bg2 btn-sm" onclick="_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;font-size:12px;padding:8px 12px;">Annuler</button>':'')
       +'</div>'
-      +'<button id="sleep-save-btn" class="btn btn-red ft-press" onclick="saveSleepEntry()" style="margin-top:10px;padding:10px;font-size:14px;display:'+((ts&&ts.hours)?'block':'none')+';">Enregistrer</button>'
+      +'<button class="btn btn-red ft-press" onclick="saveSleepEntry()" style="margin-top:10px;padding:14px;">Enregistrer</button>'
       +'</div>';
     updateSleepQualBtns();
   }
 }
 
-// Bouton « Enregistrer » du sommeil : visible seulement quand une valeur d'heures est saisie.
-function _toggleSleepSaveBtn(v){
-  const b=document.getElementById('sleep-save-btn');
-  if(b)b.style.display=(parseFloat(v)>0)?'block':'none';
-}
-
 function renderLogFinish(){
   const el=document.getElementById('log-finish');if(!el)return;
-  if(!S.wkt){el.innerHTML='';return;}
-  const hasCardio=!!(S.wkt.cardio&&S.wkt.cardio.duration);
-  const hasDone=!!(S.wkt.exs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done)));
-  if(!hasDone&&!hasCardio){el.innerHTML='';return;} // rien à enregistrer (ni série validée, ni cardio)
-  let summary='';
-  if(hasDone){
-    const nEx=S.wkt.exs.filter(ex=>ex.sets.some(s=>s.done)).length;
-    const nSets=S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
-    const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
-    summary=`${nEx} exercice${nEx>1?'s':''} · ${nSets} série${nSets>1?'s':''} · ${vol} kg de volume`;
-  }
-  if(hasCardio){
-    const c=S.wkt.cardio, kcal=(typeof calcCardioKcal==='function'?calcCardioKcal(c):0);
-    const cardioTxt=`🏃 Cardio ${c.duration}min${kcal?` · ~${kcal}kcal`:''}`;
-    summary = summary ? summary+' · '+cardioTxt : cardioTxt;
-  }
-  const label = hasDone ? '🏁 Terminer la séance' : '🏁 Enregistrer le cardio';
+  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length){el.innerHTML='';return;}
+  const hasDone=S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
+  if(!hasDone){el.innerHTML='';return;}
+  const nEx=S.wkt.exs.filter(ex=>ex.sets.some(s=>s.done)).length;
+  const nSets=S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done).length,0);
+  const vol=Math.round(S.wkt.exs.reduce((a,ex)=>a+ex.sets.filter(s=>s.done&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>b+(s.kg||0)*(s.reps||0),0),0));
   el.innerHTML=`<div style="border-top:1px solid var(--sep);padding-top:14px;margin-top:4px;">
-    <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${summary}</div>
-    <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">${label}</button>
+    <div style="text-align:center;font-size:13px;color:var(--t2);margin-bottom:10px;font-weight:600;">${nEx} exercice${nEx>1?'s':''} · ${nSets} série${nSets>1?'s':''} · ${vol} kg de volume</div>
+    <button class="btn btn-red" onclick="finishWorkout()" style="font-size:17px;padding:16px;letter-spacing:.3px;">🏁 Terminer la séance</button>
   </div>`;
 }
 
@@ -1567,7 +1185,7 @@ function saveSleepEntry(){
   const idx=S.sleepLog.findIndex(e=>e.date===todayStr);
   const entry={date:todayStr,hours,quality:_sleepQual};
   if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
-  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
+  S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,30);
   _sleepEditLog=false;
   persist();
   renderLogSleep();renderRecoveryCard();

@@ -8,7 +8,7 @@ const EXLIB=[
   {n:'Croisé Poulie (Cable Crossover)',g:'Pectoraux'},
   {n:'Pec Deck',g:'Pectoraux'},
   {n:'Chest Press Machine Horizontale',g:'Pectoraux'},{n:'Chest Press Machine Inclinée',g:'Pectoraux'},{n:'Chest Press Machine Déclinée',g:'Pectoraux'},
-  {n:'Dips',g:'Pectoraux'},{n:'Dips Parallèles',g:'Pectoraux'},{n:'Dips Machine Assistée',g:'Pectoraux'},{n:'Dips Assis Machine (Seated Dip)',g:'Pectoraux'},
+  {n:'Dips',g:'Pectoraux'},{n:'Dips Parallèles',g:'Pectoraux'},{n:'Dips Machine Assistée',g:'Pectoraux'},
   {n:'Pompes Lestées',g:'Pectoraux'},{n:'Pompes Déficit (Deficit Push-up)',g:'Pectoraux'},{n:'Pompes Diamant',g:'Pectoraux'},
   {n:'Smith Machine Développé Couché',g:'Pectoraux'},{n:'Smith Machine Développé Incliné',g:'Pectoraux'},
   // ── Dos / Dorsaux ──────────────────────────────────────────
@@ -139,13 +139,10 @@ const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
 // Ajouter ici chaque nouvelle feature avec un id unique + l'écran concerné.
 // La pastille disparaît au premier accès à l'écran.
 const NEW_FEATURES=[
-  // Accueil
-  {id:'home-calendar', screen:'home', desc:'Nouveau : un calendrier de ton mois sur l\'Accueil — tes jours de séance en rouge, les jours de RECORD cerclés en or. Navigue sur les mois, tape une semaine pour le détail'},
   // Séance
   {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
   {id:'wkt-pause',   screen:'log',      desc:'Mettre la séance en pause (le chrono se fige)'},
-  {id:'superset-drag', screen:'log',    desc:'Nouveau : glisse un exercice (via la poignée 6 points) sur un autre pour créer un superset en un geste'},
   {id:'wkt-vider',   screen:'log',      desc:'Vider la séance si mauvais programme chargé'},
   {id:'custom-ex-photo',screen:'log',   desc:'Ajouter une photo à un exercice que tu crées (📷)'},
   {id:'custom-ex-edit', screen:'log',   desc:'Modifier un exercice perso (nom, groupe, muscles) après création (✏️)'},
@@ -158,57 +155,19 @@ const NEW_FEATURES=[
   {id:'target-weight', screen:'progress', spot:'ptab-poids', desc:'Nouveau : fixe un poids objectif (ligne repère sur le graphique + kg restants)'},
   {id:'prog-chips',  screen:'progress', desc:'Barre de progression personnalisable (✏️)'},
   {id:'prog-badges', screen:'progress', spot:'ptab-badges', desc:'Onglet Badges (🏅)'},
-  {id:'hist-ex-perf', screen:'progress', desc:'Nouveau : dans le détail d\'une séance passée, une icône 📊 sur chaque exercice → voir ta progression (ton poids sur les dernières séances)'},
   // Coach — spot = carte/bouton précis de l'écran Coach
   {id:'coach-photo', screen:'coach', spot:'coach-cam-btn', desc:'Envoi de photo au Coach IA (📷)'},
   {id:'coach-morpho',screen:'coach', spot:'coach-morpho-btn-wrap', desc:'Analyses photo de Milo (morpho + étude du corps, 📸 Premium)'},
   {id:'coach-share', screen:'coach',    desc:'Nouveau : partager ou copier une réponse du Coach'},
   {id:'body-study',  screen:'coach',    desc:'Nouveau : Étude du corps — 4 photos, bilan posture/insertions/équilibre + exercices (📐 Premium)'},
   {id:'force-prog',  screen:'coach', spot:'coach-action-force', desc:'Nouveau : Gagner en force (Big 3) — Milo te génère un programme powerlifting à enregistrer (🏋️)'},
-  {id:'coach-quiz',  screen:'coach', spot:'coach-quiz-card', desc:'Nouveau : réponds au questionnaire « Milo apprend à te connaître » (gratuit, ça ne compte pas dans tes questions) — Milo te donne des conseils bien plus personnalisés'},
-  {id:'milo-natural',screen:'coach', desc:'Nouveau : Milo (Coach IA) tient compte de l\'heure qu\'il est et du temps écoulé depuis votre dernière discussion — il t\'accueille naturellement'},
-  {id:'milo-coach-pro',screen:'coach', desc:'Nouveau : Milo coache comme un vrai coach — il t\'évalue, croise tes données, justifie ses choix et s\'adapte à ta vie (horaires, travail, temps)'},
   // Profil (setup) — anchor = id de la ligne de menu où le point rouge s'affiche (ici la carte Profil)
   {id:'morpho-setup',screen:'setup', anchor:'menu-row-profil', desc:'Section morphologie dans Profil'},
   {id:'discipline',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
   {id:'profil-accordion',screen:'setup', anchor:'menu-row-profil', desc:'Profil réorganisé en sections repliables'},
   {id:'level-evolutif',screen:'setup', anchor:'menu-row-profil', desc:'Ton niveau (débutant/intermédiaire/confirmé) dans Profil → Discipline — le Coach s\'adapte et ton niveau évolue tout seul avec tes séances'},
-  {id:'work-actif',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : niveau de travail « Actif » (serveuse, infirmier, vendeur : debout + en déplacement) dans ton Profil — tes calories et macros sont plus justes'},
   {id:'app-guide',   screen:'setup', anchor:'menu-row-appguide', desc:'Nouveau : Menu → « Guide de l\'application » — un diaporama qui explique comment marche l\'app (séance, programmes, Milo, photos…)'},
-  // Nutrition — spot = onglet où poser le point rouge « ici »
-  {id:'food-journal', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : Journal alimentaire — note tes repas et suis tes calories/macros du jour vs ton objectif'},
-  {id:'food-barcode', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : scan d\'un code-barres dans le journal — le produit est reconnu automatiquement (base mondiale)'},
-  {id:'food-score',   screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : le score santé des produits (Nutri-Score + niveau de transformation) au code-barres — gratuit pour tout le monde'},
-  {id:'food-bc-photo', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : photographie le code-barres, l\'IA lit les chiffres pour toi (plus besoin de les taper)'},
-  {id:'meal-import',  screen:'nutrition', desc:'Nouveau : importer le plan alimentaire de ta diététicienne (photo/PDF) — l\'IA range les repas'},
 ];
-
-// ─── « QUOI DE NEUF » — pop-up de nouveautés versionnée ──────
-// Liste des nouveautés notables, de la PLUS RÉCENTE (v le plus grand) à la plus ancienne.
-// À l'ouverture de l'app, la pop-up affiche toutes les entrées dont `v` > au dernier
-// numéro vu par l'utilisateur (localStorage ft4_wn_seen). Donc quelqu'un qui n'a pas
-// ouvert l'app depuis longtemps voit TOUTES les nouveautés manquées d'un seul coup ;
-// un utilisateur à jour ne voit que la (ou les) toute(s) dernière(s).
-// ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
-//    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
-const WHATS_NEW=[
-  {v:14, ic:'🧠', t:'Milo coache comme un vrai coach', d:'Ton Coach IA a franchi un cap : il RAISONNE comme un vrai coach. Il t\'évalue avant de te conseiller (et te pose des questions si besoin), croise tes records, ta morpho et ton bilan corporel, justifie ses choix, s\'adapte à ta vie (horaires, travail, temps dispo) et te dit la vérité sans langue de bois. Demande-lui un programme ou « pourquoi je stagne ? » — tu vas voir la différence !'},
-  {v:13, ic:'✋', t:'Superset par glisser-déposer', d:'En séance, attrape la petite poignée (6 points) sur un exercice et glisse-le sur un autre → le superset (enchaînement sans repos) se crée tout seul. Plus rapide que de passer par le menu. Marche sur les exercices pas encore groupés.'},
-  {v:12, ic:'📷', t:'Photographie le code-barres', d:'Dans le Journal alimentaire, plus besoin de taper les chiffres : appuie sur « 📷 Photographier le code-barres », prends-le en photo, et l\'IA lit le numéro pour toi → le produit et son score santé s\'affichent tout seuls. Pratique quand les chiffres sont petits ou abîmés.'},
-  {v:11, ic:'🥗', t:'Score santé des produits', d:'Dans le Journal alimentaire, tape le code-barres d\'un produit → tu vois son SCORE SANTÉ : Nutri-Score (A à E) et niveau de transformation. Pour manger plus clair, sans te prendre la tête. Gratuit pour tout le monde.'},
-  {v:10, ic:'📅', t:'Calendrier sur ton Accueil', d:'Un calendrier de ton mois directement sur la page d\'accueil : tes jours de séance ressortent en rouge, et les jours où tu as BATTU UN RECORD sont cerclés en or 🏆. Navigue sur les mois précédents, et tape une semaine pour voir le détail jour par jour.'},
-  {v:9, ic:'🔒', t:'Mise à jour de sécurité en approche', d:'On renforce la protection de tes données 🛡️. Plusieurs améliorations sont DÉJÀ en place (invisibles pour toi). Et très bientôt : tu pourras protéger ton compte avec un CODE PERSO — comme un mot de passe — pour que toi seul(e) puisses accéder à tes séances, ton poids et tes infos. Aucune action à faire maintenant : on te guidera pas à pas le moment venu, et tes données restent en sécurité entre-temps. 👊'},
-  {v:8, ic:'🎨', t:'Ton app à ta couleur', d:'Nouveau : un halo d\'ambiance en mode nuit ✨. Dans Menu → Apparence, choisis TA couleur (8 teintes), le sens du halo (haut/bas), ou un fond uni tout noir. Le thème Jour/Nuit est aussi regroupé là.'},
-  {v:7, ic:'🏋️', t:'Séances : cardio & corrections', d:'Tu peux maintenant enregistrer une séance de cardio seul (sans muscu). Et sur une séance passée, tu peux ajouter un exercice oublié, des séries, ou le cardio.'},
-  {v:6, ic:'🏃', t:'Niveau de travail « Actif »', d:'Nouveau réglage dans ton Profil pour les métiers debout ET en déplacement toute la journée (serveuse, infirmier, vendeur) — entre « Debout » et « Physique ». Tes calories et macros de la Nutrition sont plus justes.'},
-  {v:5, ic:'💬', t:'Milo (Coach IA) plus naturel', d:'Le Coach sait maintenant l\'heure qu\'il est (jour / nuit) et depuis combien de temps vous vous êtes parlé (hier, il y a quelques jours…) — il t\'accueille comme il faut au lieu de reprendre comme si tu venais de partir.'},
-  {v:4, ic:'📓', t:'Journal alimentaire', d:'Onglet « Journal » dans Nutrition : note ce que tu manges et suis tes calories + macros du jour face à ton objectif.'},
-  {v:3, ic:'📷', t:'Scan de code-barres', d:'Scanne un produit dans le journal : il est reconnu automatiquement et ses valeurs se remplissent — tu ajustes juste la quantité.'},
-  {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
-  {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
-];
-const WHATS_NEW_MAX=14;     // = plus grand `v` ci-dessus
-const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
 // Le panneau admin (5 taps sur le logo) ne s'ouvre QUE si :
@@ -228,7 +187,7 @@ const ADMIN_CODE='0115'; // code de secours (modifiable sur demande)
 const TESTER_EMAILS=['christophe@famillelanglois.fr','elineazs32@gmail.com','emma.david16@gmail.com'];
 // « Super testeur » : celui qui teste vraiment à fond → espace exclusif (analyse photos approfondie + boîte à idées remontée à Michel).
 // michdu75 y est aussi pour le suivi photos (accès via le panneau Admin) — mais PAS de carte « Testeur Fondateur » ni de message « Michel te remercie » (voir _isTester / checkSuperTesterWelcome).
-const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr','michdu75@gmail.com','emma.david16@gmail.com'];
+const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr','michdu75@gmail.com'];
 // Email où remontent les idées de la boîte à idées → compte dédié de l'app (séparé du mail perso de Michel).
 const TESTER_FEEDBACK_EMAIL='forcetracker.app@gmail.com';
 

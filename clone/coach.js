@@ -4,260 +4,6 @@ let coachHistory = [];
 let coachBusy = false;
 let _coachHistLoaded = false;
 
-// ═══ QUESTIONNAIRE « Milo apprend à te connaître » ═══════════════════════
-// 100% GRATUIT et hors quota : ce sont des choix stockés en local (pas d'appel IA),
-// puis injectés dans le contexte que reçoit Milo. Une série gratuite + une série
-// premium plus poussée. type: 'single' | 'multi' | 'text'.
-const COACH_QUIZ = [
-  {id:'xp', q:'Depuis combien de temps tu t\'entraînes ?', t:'single', opts:[['debut','Je débute (ou je reprends)'],['6m','Moins de 6 mois'],['2a','6 mois à 2 ans'],['5a','2 à 5 ans'],['5p','Plus de 5 ans']]},
-  {id:'freq', q:'Combien de séances par semaine tu peux vraiment tenir ?', t:'single', opts:[['1','1 à 2'],['3','3'],['4','4'],['5','5 ou plus']]},
-  {id:'place', q:'Où tu t\'entraînes le plus souvent ?', t:'single', opts:[['salle','Salle complète'],['basic','Salle basique / peu de machines'],['maison','Maison avec du matériel'],['pdc','Maison sans matériel (poids du corps)']]},
-  {id:'time', q:'Combien de temps dure une séance en général ?', t:'single', opts:[['30','~30 min'],['45','~45 min'],['60','~1 h'],['90','1 h 30 ou plus']]},
-  {id:'bar', q:'Ton aisance avec les mouvements à la barre (squat, soulevé, développé) ?', t:'single', opts:[['jamais','Jamais essayé'],['debut','Débutant, pas à l\'aise'],['ok','Ça va'],['pro','Très à l\'aise']]},
-  {id:'motiv', q:'Qu\'est-ce qui te motive le plus ?', t:'single', opts:[['fort','Me sentir plus fort'],['corps','Me sentir mieux dans mon corps'],['sante','La santé, le bien-être'],['esth','L\'esthétique, la définition'],['perf','La compétition / la performance']]},
-  {id:'weak', q:'Quel groupe tu trouves le plus dur à faire progresser ?', t:'single', opts:[['pecs','Pectoraux'],['dos','Dos'],['jambes','Jambes'],['epaules','Épaules'],['bras','Bras'],['abdos','Abdos'],['nsp','Je ne sais pas']]},
-  {id:'cardio', q:'Ta relation avec le cardio ?', t:'single', opts:[['jamais','J\'en fais jamais'],['peu','Un peu à l\'échauffement'],['reg','Régulièrement'],['deteste','Je déteste ça']]},
-  {id:'pain', q:'Des zones sensibles / anciennes blessures à ménager ?', t:'multi', hint:'Plusieurs choix possibles.', opts:[['aucune','Aucune'],['epaules','Épaules'],['dos','Dos / lombaires'],['genoux','Genoux'],['poignets','Poignets'],['coudes','Coudes'],['hanches','Hanches'],['cou','Cou / nuque']]},
-  {id:'energy', q:'En ce moment, ton énergie et ton sommeil, c\'est plutôt…', t:'single', opts:[['top','Au top'],['ok','Correct'],['fatigue','Souvent fatigué'],['dors_mal','Je dors mal']]},
-  {id:'goalfeel', q:'Ton objectif du moment, en une idée ?', t:'single', opts:[['muscle','Prendre du muscle'],['force','Devenir plus fort'],['secher','Perdre du gras / sécher'],['forme','Me remettre en forme'],['maintien','Entretenir / rester au niveau']]},
-  {id:'diet0', q:'Ton alimentation en ce moment ?', t:'single', opts:[['propre','Plutôt propre / je fais attention'],['moyen','Ça dépend des jours'],['relax','Je mange ce que je veux'],['nsp','Je ne sais pas trop']]},
-  {id:'tone', q:'Comment tu veux que Milo te parle ?', t:'single', opts:[['cash','Cash et direct'],['motiv','Motivant et encourageant'],['tech','Technique et précis'],['fun','Détendu, avec de l\'humour']]},
-];
-const COACH_QUIZ_PRO = [
-  {id:'job', q:'Ton quotidien (hors sport) est plutôt…', t:'single', opts:[['bureau','Sédentaire / bureau'],['debout','Debout, peu de déplacements'],['actif','Actif, en mouvement (serveuse, infirmier…)'],['physique','Travail physique dur']]},
-  {id:'stress', q:'Ton niveau de stress général ?', t:'single', opts:[['bas','Faible'],['moy','Modéré'],['haut','Élevé']]},
-  {id:'sleep', q:'Tu dors combien d\'heures par nuit en moyenne ?', t:'single', opts:[['5','Moins de 6 h'],['7','6 à 7 h'],['8','7 à 8 h'],['9','Plus de 8 h']]},
-  {id:'prot', q:'Tu atteins tes protéines la plupart du temps ?', t:'single', opts:[['oui','Oui, presque toujours'],['souvent','Souvent'],['rare','Rarement'],['nsp','Je ne sais pas']]},
-  {id:'split', q:'Ta façon de découper tes séances préférée ?', t:'single', opts:[['full','Full body (tout le corps)'],['hb','Haut / Bas'],['ppl','Push / Pull / Legs'],['split','Un muscle par séance'],['nsp','Je ne sais pas']]},
-  {id:'deadline', q:'Tu as une échéance précise ?', t:'single', opts:[['compet','Oui, une compétition'],['event','Oui, un événement (vacances, photo…)'],['non','Non, sur le long terme']]},
-  {id:'progr', q:'Tu as déjà suivi un vrai programme structuré ?', t:'single', opts:[['ok','Oui, et ça a marché'],['abandon','Oui, mais abandonné'],['jamais','Jamais vraiment']]},
-  {id:'block', q:'Là où tu bloques le plus ?', t:'single', opts:[['regul','La régularité'],['tech','La technique'],['recup','La récup / le sommeil'],['nut','La nutrition'],['plateau','Un plateau de force'],['motiv','La motivation']]},
-  {id:'supp', q:'Tu prends des compléments ?', t:'multi', hint:'Plusieurs choix possibles.', opts:[['aucun','Aucun'],['whey','Protéine / whey'],['crea','Créatine'],['prewk','Pré-workout'],['omega','Oméga 3'],['vitd','Vitamine D'],['autre','Autres']]},
-  {id:'equip', q:'Matériel dispo (en plus des machines) ?', t:'multi', hint:'Plusieurs choix possibles.', opts:[['barre','Barre olympique'],['halteres','Haltères lourds'],['poulies','Poulies'],['elastiques','Élastiques'],['kb','Kettlebell'],['rack','Rack / cage'],['rien','Rien de spécial']]},
-  {id:'like', q:'Les exercices que tu ADORES (facultatif)', t:'text', hint:'Dis à Milo ce que tu préfères — il en tiendra compte.'},
-  {id:'hate', q:'Les exercices que tu ÉVITES ou détestes (facultatif)', t:'text', hint:'Il évitera de te les imposer.'},
-];
-// Libellé lisible d'une réponse (pour le contexte Milo)
-function _cqLabel(quiz,qid,val){
-  const q=quiz.find(x=>x.id===qid); if(!q||!q.opts)return val;
-  const find=v=>{const o=q.opts.find(o=>o[0]===v);return o?o[1]:v;};
-  return Array.isArray(val)?val.map(find).join(', '):find(val);
-}
-// Bloc de contexte injecté dans buildCoachContext
-function _coachQuizContext(){
-  const out=[];
-  const fmt=(quiz,ans)=>{
-    quiz.forEach(q=>{
-      const v=ans[q.id];
-      if(v===undefined||v===null||v===''||(Array.isArray(v)&&!v.length))return;
-      const val=q.t==='text'?String(v):_cqLabel(quiz,q.id,v);
-      if(val&&String(val).trim())out.push(`- ${q.q.replace(/\s*\(facultatif\)/i,'')} → ${val}`);
-    });
-  };
-  if(S.coachQuiz&&S.coachQuiz.answers)fmt(COACH_QUIZ,S.coachQuiz.answers);
-  if(S.coachQuizPro&&S.coachQuizPro.answers)fmt(COACH_QUIZ_PRO,S.coachQuizPro.answers);
-  if(!out.length)return '';
-  return '\n🗣️ CE QUE LA PERSONNE A DIT SUR ELLE (questionnaire) — utilise-le pour vraiment personnaliser (ne le récite pas bêtement, sers-t\'en) :\n'+out.join('\n')+'\n';
-}
-
-// ── Réponses qui font AUSSI partie du profil → écrites direct dans le profil ──
-// (évite de redemander une info déjà connue, et remplit le profil au passage)
-const _CQ_PROFILE = {
-  goalfeel: { set:'setGoal',     map:{muscle:'muscle',force:'force',secher:'perte',forme:'equilibre'},
-              from:()=>({muscle:'muscle',force:'force',perte:'secher',equilibre:'forme'}[S.goal]) },
-  job:      { set:'setWorkType', map:{bureau:'bureau',debout:'debout',actif:'actif',physique:'physique'},
-              from:()=>({bureau:'bureau',debout:'debout',actif:'actif',physique:'physique'}[S.workType]) },
-};
-function _applyQuizToProfile(quiz,ans){
-  quiz.forEach(q=>{
-    const m=_CQ_PROFILE[q.id]; if(!m)return;
-    const v=ans[q.id]; if(v===undefined||v==='')return;
-    const target=m.map[v]; if(target===undefined)return;
-    try{ if(typeof window[m.set]==='function')window[m.set](target); else S[m.set==='setGoal'?'goal':'workType']=target; }catch(e){}
-  });
-}
-
-// ── UI du questionnaire ──────────────────────────────────────────────────
-let _cqSet='free';      // 'free' | 'pro'
-let _cqIdx=0;
-let _cqAns={};          // copie de travail
-let _cqSingle=false;    // mode "1 seule question" (question de la semaine premium)
-function _cqQuiz(){return _cqSet==='pro'?COACH_QUIZ_PRO:COACH_QUIZ;}
-// Première question avancée sans réponse (clé absente) — null si toutes posées
-function _nextProUnanswered(){
-  const a=(S.coachQuizPro&&S.coachQuizPro.answers)||{};
-  return COACH_QUIZ_PRO.find(q=>!Object.prototype.hasOwnProperty.call(a,q.id))||null;
-}
-function _proAnsweredCount(){
-  const a=(S.coachQuizPro&&S.coachQuizPro.answers)||{};
-  return COACH_QUIZ_PRO.filter(q=>Object.prototype.hasOwnProperty.call(a,q.id)).length;
-}
-// Question de la semaine "due" : premium, reste des questions, et ≥7 j depuis la dernière posée
-function _weeklyDue(){
-  if(!S.premium)return false;
-  if(!_nextProUnanswered())return false;
-  const la=S.coachQuizPro&&S.coachQuizPro.lastAsked;
-  if(!la)return true;
-  return (Date.now()-new Date(la).getTime())/86400000 >= 7;
-}
-function _renderCoachQuizCard(){
-  const el=document.getElementById('coach-quiz-card'); if(!el)return;
-  const freeDone=!!(S.coachQuiz&&S.coachQuiz.done);
-  let html='';
-  if(!freeDone){
-    html=`<button class="cq-card" onclick="openCoachQuiz('free')">
-      <div class="cq-card-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10h.01M12 10h.01M16 10h.01M21 12a9 9 0 0 1-9 9 9.5 9.5 0 0 1-4-.9L3 21l1.9-5A9 9 0 1 1 21 12z"/></svg></div>
-      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Milo veut apprendre à te connaître</div><div class="cq-card-sub">Quelques questions rapides (gratuit, ça ne compte pas dans tes questions) pour des conseils sur-mesure.</div></div></button>`;
-    el.innerHTML=html; return;
-  }
-  // Série gratuite faite
-  html=`<button class="cq-card done" onclick="openCoachQuiz('free')">
-    <div class="cq-card-ic" style="background:rgba(52,211,153,.16);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-    <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Milo te connaît ✅</div><div class="cq-card-sub">Tape pour revoir ou modifier tes réponses.</div></div></button>`;
-  const cnt=_proAnsweredCount(), tot=COACH_QUIZ_PRO.length;
-  const proAllAsked=!_nextProUnanswered();
-  const gem='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
-  const chk='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
-  const cal='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
-  if(proAllAsked){
-    html+=`<button class="cq-card done" style="margin-top:8px;" onclick="openCoachQuiz('pro')">
-      <div class="cq-card-ic" style="background:rgba(52,211,153,.16);">${chk}</div>
-      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées ✅</div><div class="cq-card-sub">Tape pour revoir tes réponses.</div></div></button>`;
-  } else if(!S.premium){
-    html+=`<button class="cq-card" style="margin-top:8px;opacity:.92;" onclick="openCoachQuiz('pro')">
-      <div class="cq-card-ic" style="background:rgba(234,179,8,.16);">${gem}</div>
-      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées <span style="color:var(--gold);">⭐ Premium</span></div><div class="cq-card-sub">Va plus loin : nutrition, récup, matériel, préférences… pour un ciblage encore plus fin.</div></div></button>`;
-  } else if(_weeklyDue()){
-    // Question de la semaine (une seule, pas tous les jours)
-    html+=`<button class="cq-card" style="margin-top:8px;" onclick="openWeeklyProQuestion()">
-      <div class="cq-card-ic" style="background:rgba(234,179,8,.16);">${cal}</div>
-      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">La question de la semaine de Milo</div><div class="cq-card-sub">1 petite question pour mieux te connaître · ${cnt}/${tot} déjà répondues. Tu peux aussi tout remplir d'un coup.</div></div></button>`;
-  } else {
-    // Déjà posée cette semaine — bilan discret, remplissage groupé possible
-    html+=`<button class="cq-card done" style="margin-top:8px;" onclick="openCoachQuiz('pro')">
-      <div class="cq-card-ic" style="background:rgba(234,179,8,.16);">${gem}</div>
-      <div style="flex:1;min-width:0;"><div class="cq-card-ttl">Questions avancées · ${cnt}/${tot}</div><div class="cq-card-sub">Milo t'a posé sa question de la semaine 👍 Reviens la semaine prochaine, ou tape pour tout remplir maintenant.</div></div></button>`;
-  }
-  el.innerHTML=html;
-}
-function openCoachQuiz(set){
-  if(set==='pro'&&!S.premium){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
-  _cqSet=set; _cqSingle=false;
-  const store=set==='pro'?S.coachQuizPro:S.coachQuiz;
-  _cqAns=(store&&store.answers)?JSON.parse(JSON.stringify(store.answers)):{};
-  // reprend à la 1re question avancée non posée (sinon au début)
-  if(set==='pro'){ const nx=_nextProUnanswered(); _cqIdx=nx?COACH_QUIZ_PRO.indexOf(nx):0; }
-  else _cqIdx=0;
-  _cqPrefillFromProfile();
-  const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.add('open');
-  _renderCoachQuizStep();
-}
-// Question de la semaine premium : une seule question (la prochaine non posée)
-function openWeeklyProQuestion(){
-  if(!S.premium){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
-  const q=_nextProUnanswered(); if(!q){ _renderCoachQuizCard(); return; }
-  _cqSet='pro'; _cqSingle=true;
-  _cqAns=(S.coachQuizPro&&S.coachQuizPro.answers)?JSON.parse(JSON.stringify(S.coachQuizPro.answers)):{};
-  _cqIdx=COACH_QUIZ_PRO.indexOf(q);
-  _cqPrefillFromProfile();
-  // marque "posée cette semaine" tout de suite → pas de relance même si fermée sans répondre
-  if(!S.coachQuizPro)S.coachQuizPro={answers:{},done:false};
-  S.coachQuizPro.lastAsked=new Date().toISOString().slice(0,10);
-  if(typeof persist==='function')persist();
-  const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.add('open');
-  _renderCoachQuizStep();
-}
-// Pré-sélectionne depuis le profil les questions qui recoupent le profil (si pas déjà répondues)
-function _cqPrefillFromProfile(){
-  _cqQuiz().forEach(q=>{
-    const m=_CQ_PROFILE[q.id]; if(!m)return;
-    if(_cqAns[q.id]!==undefined)return;
-    try{ const v=m.from&&m.from(); if(v)_cqAns[q.id]=v; }catch(e){}
-  });
-}
-function closeCoachQuiz(){ const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.remove('open'); _cqSingle=false; }
-function _renderCoachQuizStep(){
-  const quiz=_cqQuiz();
-  const total=quiz.length;
-  const q=quiz[_cqIdx];
-  const titleEl=document.getElementById('cq-title');
-  if(titleEl){
-    if(_cqSingle){
-      titleEl.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Question de la semaine';
-    } else {
-      titleEl.innerHTML=(_cqSet==='pro'
-        ?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Questions avancées'
-        :'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9 9.5 9.5 0 0 1-4-.9L3 21l1.9-5A9 9 0 1 1 21 12z"/></svg>Milo te connaît')
-        +` <span style="color:var(--t3);font-weight:600;font-size:13px;">${_cqIdx+1}/${total}</span>`;
-    }
-  }
-  const fill=document.getElementById('cq-progress-fill'); if(fill)fill.style.width=(_cqSingle?(_proAnsweredCount()/total*100):(_cqIdx/total*100))+'%';
-  const step=document.getElementById('cq-step'); if(!step)return;
-  const cur=_cqAns[q.id];
-  let body=`<div class="cq-q">${q.q}</div>`;
-  if(q.hint)body+=`<div class="cq-hint">${q.hint}</div>`;
-  if(q.t==='text'){
-    body+=`<textarea class="cq-textarea" id="cq-text" placeholder="Écris ici…" oninput="_cqAns['${q.id}']=this.value">${cur?String(cur).replace(/</g,'&lt;'):''}</textarea>`;
-  } else {
-    body+='<div class="cq-opts">';
-    q.opts.forEach(o=>{
-      const sel=q.t==='multi'?(Array.isArray(cur)&&cur.includes(o[0])):(cur===o[0]);
-      body+=`<button class="cq-opt${sel?' sel':''}" onclick="_coachQuizPick('${q.id}','${o[0]}',${q.t==='multi'})">${o[1]}<span class="cq-check">✓</span></button>`;
-    });
-    body+='</div>';
-  }
-  step.innerHTML=body;
-  // Boutons nav
-  const prev=document.getElementById('cq-prev'); if(prev)prev.style.visibility=(_cqSingle||_cqIdx===0)?'hidden':'visible';
-  const last=_cqIdx===total-1;
-  const next=document.getElementById('cq-next'); if(next)next.innerHTML=(_cqSingle?'Enregistrer ✓':(last?'Terminer ✓':'Suivant ▸'));
-  const skip=document.getElementById('cq-skip'); if(skip)skip.style.display=(q.t==='text')?'none':'';
-}
-function _coachQuizPick(qid,val,multi){
-  if(multi){
-    let arr=Array.isArray(_cqAns[qid])?_cqAns[qid].slice():[];
-    // "aucune"/"aucun"/"rien" = exclusif
-    const excl=['aucune','aucun','rien'];
-    if(excl.includes(val)){ arr=[val]; }
-    else { arr=arr.filter(x=>!excl.includes(x)); const i=arr.indexOf(val); if(i>=0)arr.splice(i,1); else arr.push(val); }
-    _cqAns[qid]=arr;
-    _renderCoachQuizStep();
-  } else {
-    _cqAns[qid]=val;
-    _renderCoachQuizStep();
-    // avance auto après un court délai (single choice) — en mode "1 question" ça termine
-    setTimeout(()=>{ const ov=document.getElementById('ov-coach-quiz'); if(ov&&ov.classList.contains('open')) _coachQuizNext(); },230);
-  }
-}
-function _coachQuizPrev(){ if(_cqIdx>0){_cqIdx--;_renderCoachQuizStep();} }
-function _coachQuizNext(skip){
-  if(_cqSingle){ _finishCoachQuiz(); return; }
-  const quiz=_cqQuiz();
-  if(_cqIdx<quiz.length-1){ _cqIdx++; _renderCoachQuizStep(); }
-  else { _finishCoachQuiz(); }
-}
-function _finishCoachQuiz(){
-  const today=new Date().toISOString().slice(0,10);
-  // En mode "1 question", marque la question posée (même si passée sans répondre) pour ne pas la reproposer
-  if(_cqSingle){ const q=COACH_QUIZ_PRO[_cqIdx]; if(q&&_cqAns[q.id]===undefined)_cqAns[q.id]=''; }
-  if(_cqSet==='pro'){
-    const prev=S.coachQuizPro||{};
-    S.coachQuizPro={ answers:JSON.parse(JSON.stringify(_cqAns)),
-      done: COACH_QUIZ_PRO.every(q=>Object.prototype.hasOwnProperty.call(_cqAns,q.id)),
-      lastAsked: today, date: prev.date||today };
-    _applyQuizToProfile(COACH_QUIZ_PRO,_cqAns);
-  } else {
-    S.coachQuiz={ answers:JSON.parse(JSON.stringify(_cqAns)), done:true, date:today };
-    _applyQuizToProfile(COACH_QUIZ,_cqAns);
-  }
-  if(typeof persist==='function')persist();
-  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  const single=_cqSingle;
-  closeCoachQuiz();
-  _renderCoachQuizCard();
-  if(typeof toast==='function')toast(single?'Merci ! Milo en sait un peu plus 👍':(_cqSet==='pro'?'Milo en sait encore plus sur toi 💪':'Milo te connaît mieux maintenant 💪'),'success');
-}
-
 // ─── Historique du chat persisté (survit à la fermeture de l'appli) ───
 // Stocké local (ft4_coach_hist). Léger : les photos deviennent "[photo]" (pas de base64 stocké).
 function _loadCoachHist(){
@@ -413,7 +159,6 @@ function updateCoachHeader() {
   if(!_coachHistLoaded){ _loadCoachHist(); _coachHistLoaded = true; }
   _updateCoachMorphoBtn();
   _updateCoachCtxTags();
-  try{_renderCoachQuizCard();}catch(e){}
   // Cache le mur premium si l'utilisateur est maintenant premium
   if(S.premium){const wall=document.getElementById('coach-wall');if(wall)wall.style.display='none';}
   // Afficher accueil ou chat selon l'historique
@@ -491,38 +236,12 @@ async function activatePremium() {
   } catch(e) { toast('Erreur de connexion', 'error'); }
 }
 
-// Décrit le temps écoulé depuis le dernier échange avec Milo (pour qu'il reprenne naturellement)
-function _coachGapText() {
-  let last = 0;
-  try { last = parseInt(localStorage.getItem('ft4_coach_lastts') || '0') || 0; } catch(e) {}
-  if (!last || !coachHistory.length) return '';
-  const ms = Date.now() - last;
-  const mins = ms / 60000;
-  if (mins < 20) return ''; // conversation en cours : rien à signaler
-  const d1 = new Date(last), d2 = new Date();
-  const dayDiff = Math.floor((new Date(d2.getFullYear(),d2.getMonth(),d2.getDate()) - new Date(d1.getFullYear(),d1.getMonth(),d1.getDate())) / 86400000);
-  let g;
-  if (dayDiff === 0)      g = 'plus tôt aujourd\'hui (il y a ~' + Math.max(1, Math.round(ms/3600000)) + 'h)';
-  else if (dayDiff === 1) g = 'hier';
-  else if (dayDiff < 7)   g = 'il y a ' + dayDiff + ' jours';
-  else if (dayDiff < 14)  g = 'il y a une semaine environ';
-  else if (dayDiff < 60)  g = 'il y a ' + Math.round(dayDiff/7) + ' semaines';
-  else                    g = 'il y a un moment (plus d\'un mois)';
-  return '\n- VOTRE DERNIER ÉCHANGE remonte à ' + g + '. Rends-toi compte de ce délai : accueille la personne en fonction (ex. « content de te revoir », « alors, cette séance d\'hier ? », « ça faisait un moment ! ») — naturellement, sans en faire trop, et NE fais PAS comme si la conversation venait de s\'interrompre il y a 5 min.';
-}
 function buildCoachContext() {
   const bmr = calcBMR ? calcBMR() : '—';
   const tdee = calcTDEE ? calcTDEE() : '—';
   const macros = calcMacros ? calcMacros(S.nutritionPhase || 'charge') : {};
   const curWeek = S.cycle ? getCurrentCycleWeek() : null;
   const cyclePlan = S.cycle && curWeek ? getWeekPlan(curWeek, S.cycle.weeks) : null;
-
-  // Moment de la journée (heure locale de la personne) — pour que Milo adapte salutation + conseils
-  const _now = new Date();
-  const _h = _now.getHours();
-  const _period = _h < 5 ? 'nuit' : _h < 12 ? 'matin' : _h < 18 ? 'après-midi' : _h < 22 ? 'soirée' : 'nuit';
-  const _dateStr = _now.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
-  const _timeStr = _h + 'h' + String(_now.getMinutes()).padStart(2, '0');
 
   const prsText = Object.entries(S.prs).length > 0
     ? Object.entries(S.prs).map(([ex, d]) => `${ex}: ${d.kg}kg×${d.reps} (~${fmt(d.rm1)}kg 1RM)`).join(', ')
@@ -562,7 +281,7 @@ function buildCoachContext() {
     wktText=`\nSÉANCE EN COURS — l'athlète s'entraîne MAINTENANT${_wkt.progLabel?' (programme: '+_wkt.progLabel+')':''}. Aide-le en DIRECT : proposer un exercice équivalent si une machine est prise, ajuster une charge (ex. "+2,5 kg vs la dernière fois"), conseiller l'ordre des exercices, gérer la fatigue.\n${exLines}\n`;
   }
 
-  return `Tu es ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, le coach personnel de cet athlète (expert en force athlétique et musculation). Tu réponds TOUJOURS en ${(typeof LANG_COACH!=='undefined'&&LANG_COACH[window._LANG])||'français'}${(typeof window!=='undefined'&&window._LANG&&window._LANG!=='fr')?' — IMPORTANT : toutes tes consignes internes ci-dessous sont rédigées en français, mais tu DOIS répondre à la personne dans cette langue, avec une langue soignée, naturelle et idiomatique (pas une traduction mot à mot)':''}. Maximum 200 mots sauf si l'athlète demande plus de détails.
+  return `Tu es ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, le coach personnel de cet athlète (expert en force athlétique et musculation). Tu réponds TOUJOURS en français. Maximum 200 mots sauf si l'athlète demande plus de détails.
 
 TA PERSONNALITÉ :
 - Ton naturel : franc, direct, avec un brin d'humour — jamais langue de bois, mais TOUJOURS bienveillant, jamais méchant ni rabaissant.
@@ -572,40 +291,12 @@ TA PERSONNALITÉ :
   • Sa façon de parler : cale-toi sur son registre. Détendu s'il est détendu, sérieux s'il est sérieux. S'il est cash, familier, voire GROSSIER/vulgaire (jurons), tu peux l'être aussi — dans la complicité, pour créer le lien, JAMAIS pour rabaisser ni insulter la personne. S'il reste poli et posé, garde un langage propre. Miroir de son énergie, pas plus.
 - Tu peux te référer à ce que tu sais de lui (ses records, ses dernières séances, ses objectifs) comme un vrai coach qui le suit.
 - Sécurité avant tout : tu ne poses JAMAIS de diagnostic médical et tu ne remplaces pas un médecin. En cas de douleur/blessure, tu conseilles la prudence et un professionnel de santé.
-- Français soigné : orthographe et accords corrects. Traduis SYSTÉMATIQUEMENT les expressions anglaises courantes, ne les laisse jamais en anglais — « de zéro » / « à zéro » (JAMAIS « from scratch »), « gainage » / « sangle abdominale » (pas « core »), « sensation » / « ressenti » (pas « feeling »), « échauffement » (pas « warm-up »), « à la suite » (pas « d'affilée » si ça sonne mal), « ischio-jambiers », etc. Un mot anglais n'est toléré que s'il est vraiment usuel en salle ET sans équivalent français naturel (dropset, hip thrust, pull-up…).
-
-TA MÉTHODE DE COACH (comment un vrai coach physique construit et coache — c'est ton savoir-faire ; applique-le en l'ADAPTANT à CETTE personne, jamais un programme générique) :
-- Bâtir une séance : échauffement 5-10 min OBLIGATOIRE (mobilité + 1-2 séries légères de montée en charge sur le 1er mouvement), un travail d'abdos/gainage régulier (2 à 4×/sem, court), puis 4 à 6 exercices. Sur la semaine : full body si débutant ; sinon haut/bas, push/pull/legs, ou un gros groupe par séance en confirmé.
-- Ordre : polyarticulaires lourds d'abord quand il est frais (squat, développé, soulevé, tractions), isolation ensuite. Jamais 3 grosses poussées lourdes à la suite.
-- Variété : varie les angles (incliné/plat/décliné, prise large/serrée), alterne barre/haltères/machine/poulie. Machines guidées pour débuter (sécurité) et pour finir un muscle. Fais tourner les exercices d'un bloc à l'autre pour éviter la stagnation.
-- Charges & reps selon l'objectif : force → 3-6 reps lourdes, repos 2-4 min ; muscle/hypertrophie → 8-15 reps, repos 60-90 s ; endurance/sèche → 15-20+ reps, repos court. Calibre depuis ses records (1RM) et son niveau.
-- Techniques d'intensification (dose-les, pas partout) : supersets (2 exos enchaînés sans repos), dropsets (à l'échec puis −20% sans repos), reps dégressives (12-10-8-6 en montant la charge), double contraction, tempo (descente lente 3-4 s, montée explosive), rest-pause, séries à l'échec avec parcimonie, unilatéral pour corriger un déséquilibre.
-- Cues d'exécution PRÉCIS, comme un coach à côté de lui : tempo, amplitude complète, gainage (« serre les abdos », « bassin fixe »), placement (« pieds serrés », « coudes rentrés »), connexion muscle-esprit, respiration. C'est ce qui fait vraiment la différence.
-- Progression : monte la charge (ou les reps) quand toutes les séries passent proprement (~+2,5 kg haut du corps, +5 kg bas du corps). Une semaine plus légère (décharge) toutes les 4-6 sem. Pense périodisation sur un cycle (accumulation volume → intensification charge → pic → décharge).
-- ADAPTATION (le cœur du métier) : cale TOUT sur son niveau, son objectif, sa morphologie (renforce ses points faibles — ex. épaules en retard → plus de volume dessus), sa santé et ses douleurs (contourne, allège, oriente vers un pro si besoin), son sexe, son âge, son matériel et son temps dispo. Tu es une vraie alternative à un coach : sérieux, structuré, personnalisé — mais tu ne poses jamais de diagnostic médical.
-
-COMMENT UN COACH RAISONNE ET FONCTIONNE (le plus important — c'est ta façon de PENSER, pas juste un format à recopier) :
-- Avant de conseiller, tu ÉVALUES la personne : son niveau réel (records, aisance technique), son objectif, sa morphologie et ses points faibles, son historique et ses blessures, son mode de vie (temps dispo, matériel, sommeil, stress, nutrition). S'il te manque une info clé, tu la DEMANDES avant de trancher.
-- La VIE de la personne prime sur le programme idéal : beaucoup ont un quotidien dur (travail de NUIT, horaires décalés, astreintes, PLUSIEURS boulots, enfants…). Leur sommeil et leurs repas sont forcément irréguliers — ce n'est PAS un manque de volonté, ne juge JAMAIS et ne prescris pas l'impossible (« couche-toi à 22h » à quelqu'un qui bosse de nuit = inutile). Tu composes AVEC leur réalité : séances flexibles et plus courtes si besoin, gestion de la fatigue et des dettes de sommeil, sommeil/nutrition calés sur LEURS horaires même décalés, attentes réalistes. Mieux vaut un plan imparfait qu'ils tiennent qu'un plan parfait intenable. Si tu ne connais pas leur situation de travail/vie, demande-la.
-- Méfie-toi des données INCOMPLÈTES : les chiffres (montre/tracker, séances loggées, journal alimentaire) ont souvent des trous — montre pas portée, détection auto coupée, séance ou repas non enregistrés. Une BAISSE dans les chiffres ne veut PAS forcément dire une baisse dans la réalité. Ne conclus jamais trop vite sur une tendance : signale-la comme une hypothèse et VÉRIFIE avec la personne (« je vois moins d'activité enregistrée — c'est réel ou tu notes/portes moins ta montre ? ») avant d'affirmer.
-- Chaque choix a une RAISON : tu expliques le POURQUOI, pas juste le QUOI — pourquoi cet exercice (objectif/point faible), pourquoi cette fourchette de reps (phase/objectif), pourquoi cette technique (stimulus voulu). C'est ce qui distingue un coach d'un générateur de listes.
-- Tu SUIS et tu AJUSTES dans le temps : tu lis les retours (progression, fatigue, douleur, ressenti) et tu adaptes — monter la charge si ça passe, changer le stimulus si ça stagne, alléger si fatigue/douleur, prévoir une décharge. Un programme n'est jamais figé, il ÉVOLUE.
-- Tu DIAGNOSTIQUES : stagnation → change (exercice, volume, intensité ou récup) ; déséquilibre → cible le muscle en retard ; douleur → contourne et oriente vers un pro ; manque de temps → priorise l'essentiel.
-- Ton état d'esprit : l'individualisation prime sur le générique, la régularité prime sur la perfection, la technique avant la charge, et la récupération/le sommeil comptent autant que l'entraînement.
-
-MODÈLE DE PROGRAMME PRO (le format des meilleurs coachs — reproduis CE niveau de détail quand on te demande un programme, en l'adaptant à la personne) :
-- Un programme = un CYCLE périodisé et daté (ex. « 7 semaines, Volume-Masse »), avec objectif clair, fourchette de reps (ex. 6-15) et d'intensité (ex. 60-85 % du 1RM), et l'EFFET recherché résumé en 1 phrase.
-- 4 à 6 séances/sem splittées par groupes musculaires (ex. S1 Dorsaux+Triceps+Abdos · S2 Épaules+Ischios · S3 Quadriceps+Fessiers+Lombaires · S4 Dos+Trapèzes+Abdos · S5 Pectoraux+Mollets · S6 Bras+Abdos). Abdos, lombaires et mollets répartis sur la semaine. Chaque séance démarre par 2-3 min de cardio + échauffement.
-- Pour CHAQUE exercice, donne : le mouvement précis (angle/prise), le nombre de SÉRIES × REPS, le REPOS, un CUE d'exécution technique (« ne pas arrondir les lombaires », « contracter fort les dorsaux sans balancer », « coudes serrés dans l'axe des poignets ») et parfois une MÉTHODE nommée (isométrie 2-5'' en début ou pendant, excentrique lent 3'', complète/partielle « 1 complète + 1 partielle », dégressif, bras/bras unilatéral, double contraction).
-- Notations utiles : « 5''+8 » = 5 s d'isométrie puis 8 reps ; « 10x2 » = 10 reps par côté (bras/bras, jambe/jambe) ; « 12/10/8/8 » = reps dégressives série par série (charge qui monte). Progression : montée en charge sur le cycle, semaine de décharge à la fin.
-
-MOMENT PRÉSENT (heure locale de la personne) :
-- On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}${_coachGapText()}
+- Français soigné : orthographe et accords corrects. Évite les anglicismes inutiles — dis « gainage » ou « sangle abdominale » (pas « core »), « à la suite » (pas « d'affilée » si ça sonne mal), « ischio-jambiers », etc. Un mot anglais est toléré seulement s'il est vraiment usuel en salle (dropset, hip thrust, pull-up…).
 
 PROFIL ATHLÈTE:
 - Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal
-- Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
+- Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Marchant',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
 - Objectif: ${GOAL_LABELS[S.goal||'muscle']} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
 - Discipline pratiquée: ${(typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'Musculation'} — adapte tes conseils (exercices, répétitions, périodisation) à cette discipline
@@ -615,7 +306,6 @@ ${S.level==='debutant'?`- Débutant·e : un « parcours débutant » (Étape 1 g
 ${(S.beginnerJourney&&S.beginnerJourney.phase===1)?`- Il/elle a démarré son parcours (Étape 1 « Découverte », ${S.beginnerJourney.freq} séances/sem, style ${S.beginnerJourney.style==='split'?'split':'full body'}). Objectif: tenir 3 semaines en montant les charges. Encourage, félicite la régularité, et prépare-le/la à la suite du parcours.`:''}
 ${(()=>{const bmi=(S.bw&&S.height)?S.bw/((S.height/100)**2):0;return (bmi>=28||S.goal==='perte')?`- Attention au poids/articulations${bmi?` (IMC ~${Math.round(bmi)})`:''} : privilégie le cardio À FAIBLE IMPACT (vélo, marche rapide, elliptique, rameur — évite course/sauts qui tapent genoux et dos), une progression douce des charges, et un travail de gainage. Le cardio est important ici pour la santé cardiovasculaire et la perte de gras.`:''})()}
 - Calories cible: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
-${(typeof dietSummary==='function'&&dietSummary())?`- ⚠️ RÉGIME ALIMENTAIRE À RESPECTER: ${dietSummary()} — ne propose JAMAIS d'aliment ou de supplément non conforme (ex. végan → pas de whey/œufs, propose protéine végétale + B12 ; halal/sans porc → aucun porc/gélatine porcine ni alcool si sans alcool).`:''}
 ${(()=>{
   const bf_n=S.neck,bf_w=S.waist,bf_h=S.hip,bf_ht=S.height;
   let bf=null;
@@ -630,12 +320,6 @@ ${(()=>{
   return `- Masse grasse: ${Math.max(2,bf)}% (${cat}, Méthode Marine US) — Masse maigre ~${Math.round(S.bw*(1-Math.max(2,bf)/100))}kg`;
 })()}
 ${(()=>{const cp=getMensCyclePhase();return cp?`- Phase cycle menstruel: ${cp.phase} (Jour ${cp.day}/${S.mensCycleDur}) — ${cp.nutrition}`:'';})()}
-${(()=>{
-  const hasBf=((S.weightLog||[]).some(w=>w&&w.bf!=null))||((S.bodyScans||[]).length>0);
-  if(!hasBf&&!S.scaleType)return '';
-  const st=(typeof SCALE_TYPE_LABELS!=='undefined'&&SCALE_TYPE_LABELS[S.scaleType])||null;
-  return '\n⚖️ MASSE GRASSE — à interpréter avec prudence : ses % de masse grasse viennent d\'une balance à impédance'+(st?' ('+st+')':'')+'. C\'est une mesure INDICATIVE, TRÈS variable d\'un modèle à l\'autre (une balance mains+pieds/segmentaire lit souvent PLUS HAUT qu\'une balance pieds seuls). Devant un SAUT de masse grasse, pense d\'ABORD à un changement de balance ou d\'hydratation — PAS à une vraie prise de gras, ne l\'alarme jamais là-dessus. Fie-toi à la TENDANCE sur une même balance. Le poids (kg) est fiable, le % de gras beaucoup moins.';
-})()}
 ${(()=>{
   const MT={ecto:'Ectomorphe (ossature légère, métabolisme rapide, difficultés à prendre du muscle)',meso:'Mésomorphe (corps athlétique naturel, réagit vite à l\'entraînement)',endo:'Endomorphe (métabolisme lent, prend du poids facilement, difficultés à perdre de la graisse)'};
   const MH={H:'Rectangle (épaules/taille/hanches similaires)',A:'Triangle (hanches plus larges que les épaules)',T:'Trapèze (épaules légèrement plus larges que les hanches)',V:'Triangle inversé (épaules beaucoup plus larges que les hanches)',O:'Ovale (ventre et torse proéminents)'};
@@ -657,26 +341,17 @@ ${(()=>{
   return '\n⚠️ PROFIL SANTÉ — adapter les conseils en conséquence:\n- '+parts.join('\n- ');
 })()}
 ${(()=>{
-  // Bilan visuel du corps : « Étude du corps » (S.bodyStudy) OU « Suivi photos »
-  // super-testeur (S.bodySeries[].report). On prend le plus récent des deux.
-  let bs=S.bodyStudy||null;
-  const ser=(S.bodySeries||[]).filter(s=>s&&s.report).slice(-1)[0];
-  if(ser){const r=Object.assign({date:ser.date},ser.report); if(!bs||!bs.date||(r.date&&r.date>=bs.date))bs=r;}
-  if(!bs)return '';
+  const bs=S.bodyStudy;if(!bs)return '';
   const L=[];
   if(bs.stature)L.push('Stature/posture: '+bs.stature);
   if(bs.insertions)L.push('Insertions: '+bs.insertions);
   if(bs.balance)L.push('Équilibre: '+bs.balance);
   if(bs.strengths)L.push('Points forts: '+bs.strengths);
   if(bs.weaknesses)L.push('À travailler: '+bs.weaknesses);
-  if(bs.evolution)L.push('Évolution vs bilan précédent: '+bs.evolution);
-  if(bs.summary)L.push('Résumé: '+bs.summary);
-  if(bs.healthNotes)L.push('Santé prise en compte: '+bs.healthNotes);
   if(!L.length)return '';
-  // Consigne ferme : Milo DOIT reconnaître et utiliser le bilan (ne jamais nier l'avoir).
-  return '\n📐 ÉTUDE DU CORPS DE L\'UTILISATEUR — tu AS ce bilan (résumé texte de ses photos, réalisé le '+(bs.date||'?')+'). Tu DOIS t\'en servir pour cibler ses déséquilibres et proposer des exercices correctifs. NE DIS JAMAIS que tu n\'as pas accès à son bilan ni à ses photos : tu en as le résumé complet ci-dessous.\n- '+L.join('\n- ');
+  return '\n📐 ÉTUDE DU CORPS (bilan visuel du '+(bs.date||'?')+') — utilise-la pour cibler les déséquilibres et proposer des exercices correctifs:\n- '+L.join('\n- ');
 })()}
-${_coachQuizContext()}
+
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}
 
@@ -738,27 +413,7 @@ ${(()=>{
   const segTxt=seg.length?`\nDÉTAIL PAR SEGMENT:\n- ${seg.join('\n- ')}`:'';
   return `\nBILAN CORPOREL (balance pro, le ${L.date}):\n- ${parts.join('\n- ')}${segTxt}\n⚠️ IMPORTANT: utilise UNIQUEMENT les chiffres ci-dessus. N'invente JAMAIS une valeur qui n'y figure pas (ni masse osseuse, ni détail bras/tronc/jambes, ni autre) — si tu ne l'as pas, ne cite aucun chiffre pour ça, parle en termes généraux. Rappelle que l'IMC seul est trompeur chez une personne musclée. Ne pose jamais de diagnostic médical.\n`;
 })()}
-${(()=>{
-  const bt=(S.bloodTests||[]).slice().sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-  if(!bt.length)return '';
-  const t=bt[0];const ms=(t.markers||[]);
-  if(!ms.length)return '';
-  const out=(m)=>{if(m.value==null)return false;if(m.low!=null&&m.value<m.low)return true;if(m.high!=null&&m.value>m.high)return true;return false;};
-  const line=(m)=>`${m.name}: ${m.value}${m.unit?(' '+m.unit):''}${(m.low!=null||m.high!=null)?` (réf. ${m.low!=null?m.low:''}${(m.low!=null&&m.high!=null)?'-':''}${m.high!=null?m.high:''})`:''}${out(m)?' [hors norme]':''}`;
-  const outs=ms.filter(out);
-  const keys=['ferritine','glyc','cholest','hdl','ldl','triglyc','tsh','hémoglobine','vitamine d','testost','crp','asat','alat','ggt','créatinine'];
-  const key=ms.filter(m=>keys.some(k=>String(m.name||'').toLowerCase().indexOf(k)>=0));
-  const sel=[];const seen={};
-  outs.concat(key).forEach(m=>{if(!seen[m.name]){seen[m.name]=1;sel.push(m);}});
-  if(!sel.length)return '';
-  return `\nBILAN SANGUIN (labo, le ${t.date||'?'}) — marqueurs clés:\n- ${sel.slice(0,16).map(line).join('\n- ')}\n⚠️ MÉDICAL : ce sont des chiffres recopiés du labo. Tu peux en parler en lien avec l'entraînement/récup/nutrition (ex. ferritine, glycémie, cholestérol) MAIS tu ne poses JAMAIS de diagnostic, tu ne dis jamais si c'est grave. Pour toute valeur [hors norme] ou toute inquiétude, renvoie SYSTÉMATIQUEMENT vers le médecin. Ne remplace jamais un professionnel de santé.\n`;
-})()}
 ${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
-MÉTHODE DE COACHING (très important) :
-- ADAPTE la profondeur à son niveau : débutant → simple, pédagogue, priorité technique + sécurité ; intermédiaire/confirmé → technique, périodisation (phases de charge/décharge), notion de RPE et d'autorégulation. Jamais de conseils « bateau » servis à tout le monde.
-- COMME UN VRAI COACH, quand ta réponse dépend d'infos que tu n'as pas (ressenti, douleur, matériel dispo, sensations, temps, objectif du jour), POSE 1 ou 2 questions ciblées AVANT de trancher — ne devine pas à l'aveugle. (Mais pas de question inutile si tu as déjà de quoi répondre.)
-- Connais et PROPOSE spontanément les mouvements FONDAMENTAUX, pas seulement les machines : au-delà du Big 3 (squat, développé couché, soulevé de terre), les incontournables — tractions, dips, pompes, rowing, développé militaire, fentes — pour construire une vraie base. Un débutant qui ne fait que des machines, oriente-le progressivement vers ces basiques.
-- NUANCES à connaître : le cardio LÉGER (échauffement 5-10 min, marche en pente, vélo/elliptique tranquille, LISS) est BON et n'abîme pas une séance de force — au contraire il prépare le corps. Seul le cardio LONG et INTENSE juste AVANT du lourd nuit (interférence/fatigue). Distingue bien travail de FORCE (lourd, peu de reps, longue récup) et HYPERTROPHIE (volume, reps modérées).${S.premium?'\n- PREMIUM : tu peux t\'appuyer sur des programmes reconnus et validés par le monde sportif (5/3/1 de Wendler, StrongLifts 5x5, Push/Pull/Legs, PHUL, GZCLP…) et les ADAPTER à la personne (niveau, dispo, matériel, objectif) — jamais copier-coller sans adapter.':''}
 Utilise ces données pour personnaliser tes réponses et t'adapter à la personne en face. Reste toi-même : ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, franc et pratique, mais calibré sur son niveau et son état du jour.`;
 }
 
@@ -1050,7 +705,6 @@ async function sendToCoach(customMsg, displayMsg) {
     coachHistory.push({ role: 'assistant', content: reply });
     if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
-    try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)
     const newBtn=document.getElementById('coach-new-btn'); if(newBtn)newBtn.style.display='flex';
 
     // Sauvegarde mémoire intelligente (Premium, fire-and-forget)
@@ -1215,10 +869,9 @@ const _DRAWER_CONTENT = {
     title:'❓ Aide détaillée',
     html:`<div style="display:flex;flex-direction:column;gap:10px;padding:0 2px 8px;">
       ${[
-        {ic:'📅',t:'Calendrier sur l\'Accueil',d:'Nouveau : un calendrier de ton mois sur la page d\'accueil. Tes jours de séance ressortent en rouge, et les jours où tu as BATTU UN RECORD sont cerclés en or 🏆. Les flèches ‹ › te déplacent sur les mois, et tu peux taper une semaine pour voir le détail jour par jour (nom de la séance / repos).'},
         {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central ⚡ ou "Commencer une séance" depuis l\'accueil. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries.'},
         {ic:'🏋️',t:'Tags de série',d:'É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. Tape la pastille pour changer. Timer : É 45s · N 2:10 · X 4min.'},
-        {ic:'⚡',t:'Super-séries & Pyramides',d:'Deux façons de créer un superset : 1) le bouton "⚡ Grouper" (dès 2 exercices) → sélectionne les exercices → "Lier en supersérie". 2) Plus rapide : attrape la petite poignée (6 points, à côté du ⋯) sur un exercice et glisse-le sur un autre → le superset se crée tout seul. Ça marche EN SÉANCE et dans l\'ÉDITEUR DE PROGRAMME (✏️ — glisse une carte sur une autre). Enchaînement sans repos entre eux, avance automatique + vibration entre les blocs. Pour défaire : "↩ Retirer". Sous chaque exercice : 📉 Drop set (−10% auto) · 📈 Pyramide + (+10%) · 📉 Pyramide − (−10%).'},
+        {ic:'⚡',t:'Super-séries & Pyramides',d:'Bouton "⚡ Grouper" (dès 2 exercices) → sélectionne les exercices → "Lier en supersérie" : enchaînement sans repos entre eux. Sous chaque exercice : 📉 Drop set (−10% auto) · 📈 Pyramide + (+10%) · 📉 Pyramide − (−10%). Avance automatique et vibration entre les blocs.'},
         {ic:'📊',t:'Historique par exercice',d:'Bouton 📊 sur chaque exercice en séance → graphique du poids max sur les 5 dernières séances. Pratique pour calibrer sa charge du jour.'},
         {ic:'🏃',t:'Cardio en séance',d:'Bloc cardio en haut de séance (replié par défaut). Choisis le type (elliptique, tapis, vélo, rameur, corde...), l\'intensité (léger/modéré/intense) et la durée. Les calories brûlées sont calculées et ajoutées à ton TDEE.'},
         {ic:'📋',t:'Programmes',d:'Sauvegarde ta séance en cours comme programme réutilisable. Charge-le pour retrouver les exercices avec les poids de la dernière fois. Bouton 🤖 pour une analyse IA de ton programme. Bouton ✏️ pour modifier les exercices. Bouton 📄 PDF pour exporter le programme en vrai fichier PDF (feuille propre avec une colonne « Poids » à remplir à la salle). Sur iPhone, le menu Partager s\'ouvre (Enregistrer dans Fichiers, envoyer…) ; sur ordi, le PDF se télécharge. Marche aussi hors-ligne.'},
@@ -1227,24 +880,20 @@ const _DRAWER_CONTENT = {
         {ic:'📷',t:'Photo sur tes exercices',d:'Tu peux coller une photo sur N\'IMPORTE quel exercice (perso OU de la bibliothèque) : ⋯ sur l\'exercice → "Ajouter/Changer la photo". Idéal pour reconnaître TA machine sur un exercice existant (ex. ta chest press sur "Chest Press Machine Inclinée"). Dans la liste de choix, tape la vignette à gauche pour voir la photo en grand (sans ajouter l\'exercice). Ta photo est privée à ton compte. Pour créer un exercice inexistant : "+ Créer un exercice".'},
         {ic:'✏️',t:'Modifier un exercice perso',d:'Tape le ⋯ sur un exercice perso → "Modifier l\'exercice" (ou le ✎ dans la liste de choix). Tu peux changer son nom, son groupe musculaire et les muscles ciblés — ton historique et tes records suivent le nouveau nom, rien n\'est perdu. Ça ne touche que TES exercices perso (privés à ton compte).'},
         {ic:'⏸️',t:'Pause & Vider la séance',d:'Nouveau : en haut de la séance, "Pause" fige le chrono de durée si tu t\'interromps (le temps en pause n\'est pas compté) — "Reprendre" relance. "Vider" retire tous les exercices d\'un coup (utile si tu as chargé le mauvais programme), la séance reste ouverte et ton historique n\'est pas touché. Le "✕" annule complètement la séance.'},
-        {ic:'📈',t:'Progrès & PRs',d:'Les PRs se calculent automatiquement via Brzycki (1RM estimé). Onglet Progrès → graphique par exercice · Onglet Poids → courbe de poids · Onglet Badges → 18 récompenses à débloquer. Tap sur une séance pour voir/modifier les séries — et sur chaque exercice de cette séance, l\'icône 📊 t\'ouvre sa progression (ton poids sur les dernières séances).'},
+        {ic:'📈',t:'Progrès & PRs',d:'Les PRs se calculent automatiquement via Brzycki (1RM estimé). Onglet Progrès → graphique par exercice · Onglet Poids → courbe de poids · Onglet Badges → 18 récompenses à débloquer. Tap sur une séance pour voir/modifier les séries.'},
         {ic:'⚖️',t:'Graphique de poids',d:'Onglet Progrès → Poids. Tape un point de la courbe pour modifier ou supprimer cette pesée (poids + date). Les boutons 1 mois / 3 mois / 6 mois / Tout choisissent la période affichée.'},
         {ic:'📉',t:'Suivi de la masse grasse',d:'Onglet Progrès → Poids, carte « Masse grasse ». Enregistre ton % de graisse au fil du temps : soit calculé automatiquement (méthode US Navy — tu entres tour de cou + taille, l\'app calcule), soit à la main (ton chiffre de balance/caliper). La bascule « Poids / Masse grasse / Les 2 » au-dessus du graphique choisit ce qu\'on affiche — « Les 2 » superpose les deux courbes (tu peux prendre du poids en perdant de la graisse). ⚠️ Valeur INDICATIVE, pas une science exacte — et la balance à impédance par les pieds est peu fiable. Vise la RÉGULARITÉ (même méthode, le matin à jeun) : c\'est la tendance qui compte.'},
         {ic:'🎯',t:'Poids objectif',d:'Onglet Progrès → Poids, carte « Poids objectif ». Fixe le poids que tu vises : une ligne repère verte apparaît sur le graphique et l\'app affiche les kg restants. Laisse vide (✓) pour le retirer.'},
         {ic:'🧪',t:'Bilan corporel (balance pro)',d:'Nouveau : Onglet Progrès → Poids → section « Bilan corporel ». Tu passes sur une balance à impédance (InBody, MyBodyCheck…) ? Enregistre tes chiffres pour suivre leur évolution : poids, % de graisse, masse grasse & maigre, muscle, muscle squelettique, masse osseuse, eau, protéine, graisse viscérale, métabolisme de base, âge corporel, IMC, score corporel — et même le détail par segment (bras/tronc/jambes gauche-droite). Trois façons de remplir : 📷 Photo (l\'IA lit ton rapport toute seule), ✏️ à la main, ou 📋 coller un code. Le bilan sert AUSSI de pesée du jour (poids + masse grasse alimentent tes courbes, pas de double saisie). Bilan après bilan, des flèches vertes montrent ce qui va dans le bon sens (muscle ↑, gras ↓). Et Milo s\'en sert pour te conseiller — avec de vrais chiffres, sans jamais en inventer ni poser de diagnostic médical.'},
         {ic:'🏅',t:'Badges & Streaks',d:'18 badges en 4 catégories : évolution (1re séance, 10/25/50/100 séances), performance (PRs, clubs 100/140 kg), streak (7/30/90 jours), spécial (lève-tôt, noctambule, anniversaire, premium). Un résumé hebdomadaire s\'affiche le lundi.'},
         {ic:'🍽️',t:'Nutrition',d:'TDEE adaptatif (Harris-Benedict) calculé depuis ton profil. Phase Charge = surplus · Phase Décharge = déficit. Plan 5 repas détaillé. Créatine et whey dosés selon ton poids. Combinaisons Premium : 4 stacks (muscle, force, cardio, perte de poids).'},
-        {ic:'📓',t:'Journal alimentaire',d:'Onglet « Journal » dans Nutrition : note tes repas et suis tes calories/macros du jour vs tes objectifs. Ajoute un aliment de 3 façons : à la main (gratuit, illimité), estimation IA (🤖 décris ton repas → l\'IA remplit les calories, 25 gratuites puis Premium), ou par code-barres (produit reconnu automatiquement, tu ajustes la quantité). Tout est sauvegardé dans ton compte.'},
-        {ic:'📷',t:'Code-barres : chiffres ou photo',d:'Deux façons de passer par le code-barres d\'un produit. 1) Tape les chiffres écrits sous le code → recherche gratuite (aucun crédit IA). 2) Nouveau : appuie sur « 📷 Photographier le code-barres » et prends-le en photo → l\'IA lit le numéro à ta place (pratique si les chiffres sont petits ou abîmés). La lecture par photo utilise 1 essai IA ; ensuite le produit et son score santé s\'affichent gratuitement.'},
-        {ic:'🥗',t:'Score santé des produits',d:'Nouveau : dans le Journal, tape le code-barres d\'un produit → tu vois son SCORE SANTÉ : Nutri-Score (A à E) et niveau de transformation (aliment brut ou ultra-transformé). Pour repérer d\'un coup d\'œil ce qui est sain. Gratuit pour tout le monde (aucune limite), ça n\'utilise pas de crédit IA. Pour lire une étiquette en photo ou estimer un plat, c\'est l\'IA (📸/🤖, 25 essais gratuits puis Premium).'},
-        {ic:'📥',t:'Importer un plan alimentaire',d:'Un plan de diététicienne (photo ou PDF) ? Bouton « Importer un plan » sous Plan de repas IA : l\'IA lit le document et range les repas jour par jour, en tenant compte de ton régime.'},
         {ic:'👤',t:'Ton Profil',d:'Menu ☰ → Profil. Organisé en sections repliables (tape un titre pour l\'ouvrir) : Identité · Objectif · Discipline · Composition corporelle · Morphologie · Santé · Cycle menstruel (femmes) · Accessibilité. Le bouton "Enregistrer le profil" confirme par une notification verte. Ton profil nourrit le Coach IA, la nutrition et tes stats.'},
         {ic:'⚧',t:'Profil homme / femme',d:'Certaines sections s\'adaptent à ton sexe. Femmes : section Cycle menstruel (règles, contraception) pour ajuster macros et conseils selon la phase ; hanches demandées pour le calcul du % de graisse (US Navy) ; condition Endométriose dans Santé (le Coach en tient compte, elle peut freiner la perte de poids). Hommes : composition corporelle sur cou + taille seulement (les hanches ne servent pas).'},
         {ic:'🩺',t:'Santé (privé)',d:'Section Santé du Profil : conditions médicales et blessures, optionnelles. 🔒 Visibles seulement par toi (ton téléphone + ta sauvegarde perso). Le Coach IA les utilise pour éviter les mouvements à risque — il ne pose jamais de diagnostic et ne remplace pas un médecin.'},
         {ic:'🎽',t:'Discipline',d:'Nouveau : dans Profil → Discipline, choisis ta pratique — Musculation · Bodybuilding/Culturisme · Force athlétique · Haltérophilie. Le Coach IA adapte ses conseils (exercices, répétitions, périodisation) à ta discipline.'},
         {ic:'🥉',t:'Ton niveau (évolutif)',d:'Nouveau : dans Profil → Discipline, indique ton niveau — Débutant · Intermédiaire · Confirmé. Le Coach (Milo) s\'adapte : plus pédagogue si tu débutes, plus technique si tu es confirmé. Et surtout : ton niveau évolue tout seul ! À force de séances et de progrès sur les gros mouvements (squat, développé couché, soulevé de terre), l\'app te félicite et te fait passer au niveau supérieur. 🎉'},
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
-        {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Nouveau : il coache comme un VRAI coach — il t\'évalue avant de conseiller (et te pose des questions au besoin), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans langue de bois. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
+        {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
         {ic:'💾',t:'Historique de Milo',d:'Nouveau : tes conversations avec Milo restent sauvegardées — tu retrouves ton fil même après avoir fermé et rouvert l\'appli. Le bouton « + » en haut à droite du Coach démarre une nouvelle discussion (Milo garde quand même l\'essentiel de vos échanges en mémoire). Sous chaque réponse : boutons « Partager » et « 📄 PDF » pour l\'exporter proprement.'},
         {ic:'💬',t:'Petits mots de Milo (Accueil)',d:'Nouveau : Milo t\'envoie parfois un petit mot en haut de l\'Accueil au bon moment — te relancer après quelques jours sans séance, te féliciter après une séance, te conseiller une séance légère après une nuit courte, ou t\'encourager quand tu enchaînes. Tape le message pour lui parler, ou la croix pour le fermer.'},
         {ic:'📐',t:'Étude du corps (Premium)',d:'Nouveau : dans le Coach, bouton « Étude du corps ». Prends 4 photos (face relâché, face contracté, dos contracté, profil) et l\'IA te fait un bilan complet : posture/stature, insertions musculaires, équilibre du corps (gauche/droite, haut/bas, avant/arrière), points forts, points à travailler et exercices suggérés — en tenant compte de ta santé (blessures/conditions du profil). Les photos ne sont pas stockées. Tu peux ensuite « en parler avec Milo ».'},
@@ -1290,8 +939,6 @@ const _DRAWER_CONTENT = {
           if(el&&ft)el.textContent=ft;
         });
       }
-      // Remplit la taille du stockage (asynchrone)
-      if(typeof _fillStorageInfo==='function')setTimeout(_fillStorageInfo,50);
       return`<div style="text-align:center;padding:10px 0 20px;">
       <img src="../logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
       <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;">Force Tracker</div>
@@ -1300,18 +947,6 @@ const _DRAWER_CONTENT = {
         Application de suivi de musculation Progressive Web App.<br>
         Fonctionne hors connexion · Synchronisation Google Sheets<br>
         Coach IA propulsé par Claude (Anthropic)
-      </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--t1);margin-bottom:6px;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
-          Stockage sur ton téléphone
-        </div>
-        <div style="font-size:13px;color:var(--t2);line-height:1.6;margin-bottom:12px;">
-          L'appli garde les <strong>figurines d'exercices</strong> et les écrans sur ton téléphone pour marcher <strong>hors connexion</strong> et s'ouvrir vite.<br>
-          Espace utilisé : <strong id="_about-storage" style="color:var(--t1);">calcul…</strong>
-        </div>
-        <button onclick="clearAppCache()" style="width:100%;padding:11px;border:none;border-radius:10px;background:rgba(255,149,0,.14);color:var(--orange);font-weight:700;font-size:13.5px;font-family:var(--font);cursor:pointer;">🧹 Vider le cache (garde tes données)</button>
-        <div style="font-size:11.5px;color:var(--t3);line-height:1.5;margin-top:8px;">Vide seulement les fichiers de l'appli (figurines, images). <strong>Tes séances, records et réglages ne sont pas touchés.</strong> Les figurines se réinstallent aussitôt (une barre s'affiche).</div>
       </div>
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;font-size:13px;color:var(--t2);">
         <div style="margin-bottom:6px;">✉️ <strong>Contact :</strong> michdu75@gmail.com</div>
