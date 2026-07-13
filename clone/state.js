@@ -68,7 +68,6 @@ function load(){
     S.waist=parseFloat(localStorage.getItem('ft4_waist')||'0')||0;
     S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
     S.targetWeight=parseFloat(localStorage.getItem('ft4_target')||'0')||0;
-    S.manualKcal=parseFloat(localStorage.getItem('ft4_manualkcal')||'0')||0; // 0 = calories auto
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
     S.discipline=localStorage.getItem('ft4_discipline')||'muscu';
     S.level=localStorage.getItem('ft4_level')||''; // '' | 'debutant' | 'intermediaire' | 'confirme' (niveau déclaré, évolue avec les séances)
@@ -213,7 +212,6 @@ function persist(){
     localStorage.setItem('ft4_waist',S.waist||0);
     localStorage.setItem('ft4_hip',S.hip||0);
     localStorage.setItem('ft4_target',S.targetWeight||0);
-    localStorage.setItem('ft4_manualkcal',S.manualKcal||0);
     localStorage.setItem('ft4_goal',S.goal||'muscle');
     localStorage.setItem('ft4_discipline',S.discipline||'muscu');
     localStorage.setItem('ft4_level',S.level||'');
@@ -335,39 +333,23 @@ function getMensCyclePhase(){
     training:'Fatigue accrue est normale. Privilégie volume modéré, exercices familiers et bonne récupération entre les séances.'};
 }
 
-// Protéines + lipides calés sur le profil (g/kg selon l'objectif) ; les glucides
-// complètent le total calorique. Sert au calcul auto ET à l'aperçu du réglage manuel.
-function macrosForKcal(kcal){
-  const goal=S.goal||'muscle';
-  const cp=getMensCyclePhase();
-  const lutealProt=cp&&cp.phase==='Lutéale'?0.2:0;
-  const protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
-  const fatRatio={muscle:0.9,perte:0.8,recomp:0.85,force:1.0,equilibre:0.85,endurance:0.75}[goal]||0.9;
-  const prot_g=Math.round((S.bw||0)*protRatio);
-  const fat_g=Math.round((S.bw||0)*fatRatio);
-  const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));
-  return{prot_g,fat_g,carbs_g};
-}
-// Objectif calorique auto (TDEE + objectif + phase + cycle). Isolé pour l'aperçu « auto ».
-function autoKcal(phase){
+function calcMacros(phase){
   const tdee=calcTDEE();
   const goal=S.goal||'muscle';
+  const isCharge=phase==='charge';
   const cp=getMensCyclePhase();
   const lutealBonus=cp&&cp.phase==='Lutéale'?150:0;
-  // recomp (perte de gras + muscle) : léger déficit — le corps pioche dans le gras,
-  // les protéines élevées (voir macrosForKcal) protègent le muscle → pas de « skinny fat ».
-  const goalDelta={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}[goal]||350;
-  const phaseAdj=phase==='charge'?100:-100;
-  return tdee+goalDelta+phaseAdj+lutealBonus;
-}
-function calcMacros(phase){
-  const auto=autoKcal(phase);
-  // Réglage manuel (comme MyFitnessPal) : si l'utilisateur a fixé ses calories à la main,
-  // on les utilise ; les protéines/lipides restent sains, les glucides s'ajustent.
-  const manual=(typeof S.manualKcal==='number'&&S.manualKcal>0)?Math.round(S.manualKcal):0;
-  const calories=manual||auto;
-  const m=macrosForKcal(calories);
-  return{calories,prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:m.carbs_g,autoCalories:auto,isManual:!!manual};
+  const goalDelta={muscle:350,perte:-450,force:200,equilibre:0,endurance:100}[goal]||350;
+  const phaseAdj=isCharge?100:-100;
+  const calories=tdee+goalDelta+phaseAdj+lutealBonus;
+  const lutealProt=cp&&cp.phase==='Lutéale'?0.2:0;
+  const protRatio=({muscle:2.2,perte:2.5,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
+  const fatRatio={muscle:0.9,perte:0.8,force:1.0,equilibre:0.85,endurance:0.75}[goal]||0.9;
+  const prot_g=Math.round(S.bw*protRatio);
+  const fat_g=Math.round(S.bw*fatRatio);
+  const prot_k=prot_g*4,fat_k=fat_g*9;
+  const carbs_g=Math.max(0,Math.round((calories-prot_k-fat_k)/4));
+  return{calories,prot_g,fat_g,carbs_g};
 }
 
 function getMeals(macros,phase){
@@ -409,7 +391,7 @@ function getMeals(macros,phase){
       [0.15,'🌙 Dîner','Riz + poulet + légumes — Reconstruction musculaire nocturne'],
     ],
   };
-  const plan=plans[goal]||(goal==='recomp'?plans.perte:plans.muscle); // recomp → plan orienté satiété/perte de gras
+  const plan=plans[goal]||plans.muscle;
   return plan.map(([pct,name,desc])=>{
     const kcal=Math.round(macros.calories*pct);
     const prot=Math.round(macros.prot_g*pct);

@@ -430,7 +430,7 @@ function renderWeightTab(){
   const rangeEl=document.getElementById('weight-range');
   if(rangeEl){
     if(sorted.length<2)rangeEl.innerHTML='';
-    else rangeEl.innerHTML=[['1w','1 sem.'],['1m','1 mois'],['3m','3 mois'],['6m','6 mois'],['all','Tout']]
+    else rangeEl.innerHTML=[['1m','1 mois'],['3m','3 mois'],['6m','6 mois'],['all','Tout']]
       .map(function(r){return '<button class="wrange-chip'+(_wRange===r[0]?' active':'')+'" onclick="setWeightRange(\''+r[0]+'\')">'+r[1]+'</button>';}).join('');
   }
   // Ligne de navigation ◀ 🔍− [dates] 🔍+ ▶ (revenir dans le temps + zoomer le graphique)
@@ -482,10 +482,10 @@ function renderWeightTab(){
   if(chartEl)renderWeightChart(pts,chartEl,'kg');
   if(corrEl)renderWeightCorrelations(corrEl,pts);
 }
-let _wRange='1w'; // préréglage actif : '1w' | '1m' | '3m' | '6m' | 'all' | '' (zoom/pan custom) — défaut = 1 semaine
-let _wSpanDays=7; // largeur de la fenêtre en jours (null = tout l'historique) — défaut = 7 jours
+let _wRange='all'; // préréglage actif : '1m' | '3m' | '6m' | 'all' | '' (zoom/pan custom)
+let _wSpanDays=null; // largeur de la fenêtre en jours (null = tout l'historique)
 let _wEndOff=0;      // décalage du bord droit de la fenêtre (jours) vs aujourd'hui
-function setWeightRange(r){_wRange=r;_wSpanDays={'1w':7,'1m':30,'3m':90,'6m':180,'all':null}[r];_wEndOff=0;renderWeightTab();}
+function setWeightRange(r){_wRange=r;_wSpanDays={'1m':30,'3m':90,'6m':180,'all':null}[r];_wEndOff=0;renderWeightTab();}
 function _fmtWNav(d){const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});}
 function _wFullSpan(){let s=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];if(_wMetric==='bf'||_wMetric==='both'){const b=s.filter(p=>p.bf!=null);if(b.length>=2)s=b;}if(!s.length)return 1;const f=new Date(s[0].date+'T12:00:00'),n=new Date(today()+'T12:00:00');return Math.max(1,Math.round((n-f)/86400000));}
 function weightZoom(dir){
@@ -905,34 +905,33 @@ function _resizeReport(file,cb){
     const img=new Image();
     img.onload=()=>{
       try{
-        // Largeur cible LISIBLE (1000 px), puis DÉCOUPAGE VERTICAL en tranches ≤ 1400 px de haut.
-        // ⚠️ Les exports « vue appli » des rapports sont ÉNORMÉMENT longs (ex. 1290×7623) : réduits
-        // en une seule image ils deviennent un filet illisible. On les découpe en tranches lisibles,
-        // tirées DIRECTEMENT de la source (pas de canvas géant → sûr sur iOS). 2026-07-13.
-        const TW=1000;
+        const TW=1000;                 // largeur cible (nette après downscale API)
         const scale=Math.min(1,TW/img.width);
-        const w=Math.round(img.width*scale);
-        const fullH=Math.round(img.height*scale);
-        const TILE=1400;
+        const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
+        // Canvas complet redimensionné
+        const full=document.createElement('canvas');full.width=w;full.height=h;
+        full.getContext('2d').drawImage(img,0,0,w,h);
+        const TILE=1300, OVER=70;       // hauteur max par tuile + recouvrement
         const tiles=[];
-        if(fullH<=TILE){
-          const c=document.createElement('canvas');c.width=w;c.height=fullH;
-          c.getContext('2d').drawImage(img,0,0,w,fullH);
-          tiles.push(c.toDataURL('image/jpeg',0.78).split(',')[1]);
+        if(h<=TILE){
+          tiles.push(full.toDataURL('image/jpeg',0.85).split(',')[1]);
         }else{
-          const srcTileH=Math.round(TILE/scale), srcOver=Math.round(60/scale);
-          let sy=0;
-          while(sy<img.height){
-            const sh=Math.min(srcTileH,img.height-sy);
-            const th=Math.max(1,Math.round(sh*scale));
-            const c=document.createElement('canvas');c.width=w;c.height=th;
-            c.getContext('2d').drawImage(img,0,sy,img.width,sh,0,0,w,th);
-            tiles.push(c.toDataURL('image/jpeg',0.75).split(',')[1]);
-            if(sy+sh>=img.height)break;
-            sy+=srcTileH-srcOver;
+          let y=0;
+          while(y<h){
+            const th=Math.min(TILE,h-y);
+            const t=document.createElement('canvas');t.width=w;t.height=th;
+            t.getContext('2d').drawImage(full,0,y,w,th,0,0,w,th);
+            tiles.push(t.toDataURL('image/jpeg',0.85).split(',')[1]);
+            if(y+th>=h)break;
+            y+=TILE-OVER;
           }
         }
-        cb({tiles:tiles, full:tiles[0]});
+        // Image entière de secours (pour un backend pas encore à jour : lit comme avant, pas pire)
+        let whole;
+        {const m=1500;let ww=w,hh=h;if(ww>=hh){if(ww>m){hh=Math.round(hh*m/ww);ww=m;}}else{if(hh>m){ww=Math.round(ww*m/hh);hh=m;}}
+          const fc=document.createElement('canvas');fc.width=ww;fc.height=hh;fc.getContext('2d').drawImage(img,0,0,ww,hh);
+          whole=fc.toDataURL('image/jpeg',0.85).split(',')[1];}
+        cb({tiles:tiles, full:whole});
       }catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
     };
     img.onerror=()=>{if(typeof toast==='function')toast('Image illisible','error');};
@@ -957,14 +956,10 @@ function onBodyScanPhoto(input){
       const tiles=(out&&out.tiles)?out.tiles:(Array.isArray(out)?out:[out]);
       const full=(out&&out.full)?out.full:tiles[0];
       _showBsScan('data:image/jpeg;base64,'+full); // retour visuel : scan du rapport pendant la lecture IA
-      // ENVOI comme l'import de programme (qui MARCHE) : plusieurs images en tranches lisibles,
-      // fetch SIMPLE, .json() direct. Les rapports « vue appli » très longs sont découpés (voir _resizeReport).
       const images=tiles.map(t=>({data:t,type:'image/jpeg'}));
-      const payload=JSON.stringify({action:'importBodyScan',images,email:S.email||''});
-      window._bsLastKb=Math.round(payload.length/1024); window._bsLastTiles=tiles.length; // diagnostic
-      const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:payload});
-      const data=await r.json();
+      const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'importBodyScan',images,image:full,imageType:'image/jpeg',email:S.email||''})});
+      const txt=await resp.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('réponse illisible');}
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
       if(!unlimited){S.bodyScanImports=(S.bodyScanImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
@@ -975,48 +970,8 @@ function onBodyScanPhoto(input){
         _BS_SEG_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
         toast('Rapport lu ✅ Vérifie puis Enregistre','success');
       });
-    }catch(e){
-      // Diagnostic : nb de tranches + poids du paquet + type d'erreur → on voit tout de suite si c'est la taille.
-      const detail=(e&&e.message)||'erreur inconnue';
-      const info=window._bsLastTiles?(' ['+window._bsLastTiles+' img · '+window._bsLastKb+' Ko]'):'';
-      _hideBsScan(()=>toast('Souci lecture'+info+' : '+detail,'error'));
-    }
+    }catch(e){_hideBsScan(()=>toast('Souci lecture : '+(e.message||'réessaie'),'error'));}
   });
-}
-// POST du rapport corporel avec retry réseau (3 tentatives, backoff). Fetch IDENTIQUE au Coach
-// photo (qui marche) : pas d'AbortController. Ne retente QUE sur échec réseau (fetch rejeté) ;
-// une réponse reçue mais illisible n'est pas retentée.
-// Envoi via XMLHttpRequest (et non fetch) : sur iOS Safari, un POST cross-origin avec un corps
-// « image » peut être rejeté INSTANTANÉMENT par fetch (« envoi 1s : TypeError: Load failed »)
-// alors que XHR passe — stack réseau différente. XHR suit le redirect Apps Script tout seul.
-function _xhrPostText(url,body,timeoutMs){
-  return new Promise((resolve,reject)=>{
-    try{
-      const xhr=new XMLHttpRequest();
-      xhr.open('POST',url,true);
-      try{ xhr.setRequestHeader('Content-Type','text/plain;charset=utf-8'); }catch(e){}
-      if(timeoutMs)xhr.timeout=timeoutMs;
-      xhr.onload=()=>resolve({status:xhr.status,text:xhr.responseText||''});
-      xhr.onerror=()=>reject(new Error('XHR onerror'+(xhr.status?' '+xhr.status:'')));
-      xhr.ontimeout=()=>reject(new Error('XHR timeout'));
-      xhr.onabort=()=>reject(new Error('XHR abort'));
-      xhr.send(body);
-    }catch(e){ reject(e); }
-  });
-}
-async function _postBodyScan(payload){
-  let lastErr;
-  for(let attempt=0;attempt<3;attempt++){
-    if(attempt>0)await new Promise(r=>setTimeout(r,attempt*1500)); // backoff 1,5 s puis 3 s
-    const t0=Date.now();
-    let r;
-    try{
-      r=await _xhrPostText(S.url,payload,90000);
-    }catch(e){ lastErr=new Error('envoi '+Math.round((Date.now()-t0)/1000)+'s ('+(e.message||'?')+')'); continue; } // échec → on retente
-    try{ return JSON.parse(r.text); }
-    catch(e){ throw new Error('réponse illisible (HTTP '+(r.status||'?')+')'); } // réponse reçue → pas de retry
-  }
-  throw lastErr||new Error('réseau');
 }
 // Overlay « analyse en cours » (min ~1,4 s pour un retour visible même si le serveur répond vite)
 let _bsScanStart=0;

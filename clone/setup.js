@@ -253,7 +253,7 @@ function _cloudSync(){
       action:'saveProfile',email:S.email,authCode:_authCode(),
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
-      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
+      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
@@ -1460,18 +1460,17 @@ function renderBFCard(){
   </div>`;
 }
 
-const GOAL_LABELS={muscle:'Prise de muscle',perte:'Perte de poids',recomp:'Perte de gras + muscle',force:'Force maximale',equilibre:'Rééquilibrage',endurance:'Endurance'};
+const GOAL_LABELS={muscle:'Prise de muscle',perte:'Perte de poids',force:'Force maximale',equilibre:'Rééquilibrage',endurance:'Endurance'};
 const GOAL_DESCS={
   muscle:'Surplus de +350 kcal · Protéines 2.2 g/kg · Macros orientées hypertrophie avec charge glucidique.',
   perte:'Déficit de −450 kcal · Protéines 2.5 g/kg (préservation musculaire) · Glucides réduits, satiété maximale.',
-  recomp:'Recomposition : léger déficit −250 kcal · Protéines très élevées 2.6 g/kg → perdre du gras tout en gardant/formant du muscle (éviter le « skinny fat »). Idéal muscles toniques.',
   force:'Surplus léger +200 kcal · Protéines 2.0 g/kg · Lipides élevés pour le support hormonal, énergie maximale.',
   equilibre:'Maintenance calorique · Protéines 2.0 g/kg · Améliorer la composition corporelle sans prise/perte de masse.',
   endurance:'Surplus modéré +100 kcal · Protéines 1.7 g/kg · Glucides élevés pour le glycogène musculaire.',
 };
 function setGoal(g){
   S.goal=g;persist();
-  ['muscle','perte','recomp','force','equilibre','endurance'].forEach(x=>{
+  ['muscle','perte','force','equilibre','endurance'].forEach(x=>{
     const el=document.getElementById('g-'+x);if(el)el.classList.toggle('active',x===g);
   });
   const el=document.getElementById('goal-desc');
@@ -1662,9 +1661,6 @@ function renderSetup(){
   const hipEl=document.getElementById('hip-inp');if(hipEl)hipEl.value=S.hip||'';
   const bdayEl=document.getElementById('bday-inp');if(bdayEl)bdayEl.value=S.bday||'';
   renderCycleProfileCard();
-  // Objectif « Perte de gras + muscle » (recomposition) réservé aux testeurs pour l'instant
-  const _gr=document.getElementById('g-recomp');
-  if(_gr)_gr.style.display=((typeof _isNutriBeta==='function')&&_isNutriBeta())?'':'none';
   setGoal(S.goal||'muscle');
   setDiscipline(S.discipline||'muscu');
   _renderLevelSel();
@@ -1767,7 +1763,6 @@ function _applyRestoreData(raw){
   try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}
   try{if(d.neck)S.neck=parseFloat(d.neck)||0;}catch(e){}
   try{if(d.targetWeight)S.targetWeight=parseFloat(d.targetWeight)||0;}catch(e){}
-  try{if(d.manualKcal)S.manualKcal=parseFloat(d.manualKcal)||0;}catch(e){}
   try{if(d.waist)S.waist=parseFloat(d.waist)||0;}catch(e){}
   try{if(d.hip)S.hip=parseFloat(d.hip)||0;}catch(e){}
   try{if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;}catch(e){}

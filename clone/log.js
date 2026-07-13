@@ -541,7 +541,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
       +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
-      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
+      +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${p?p.reps:''}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
       +`<button class="chk${set.done?' done':''}" onclick="toggleSet(${ei},${si})">${set.done?'✓':''}</button>`
@@ -1723,7 +1723,7 @@ function _nextSetInfo(){
   const exs=S.wkt&&S.wkt.exs;
   if(!exs||!exs.length)return null;
   const cur=_expandedEx;
-  const _row=(ex,si)=>{const set=ex.sets[si];return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.maxi?'max':(set.reps||'')};};
+  const _row=(ex,si)=>{const set=ex.sets[si];return{name:ex.name,num:si+1,kg:set.kg||'',reps:set.reps||''};};
   // 1) Prochaine série NON faite dans l'exercice en cours
   if(exs[cur]){const si=exs[cur].sets.findIndex(s=>!s.done);if(si>=0)return _row(exs[cur],si);}
   // 2) Sinon (exercice terminé) → 1re série non faite de l'exercice suivant (puis n'importe lequel restant)
@@ -2932,8 +2932,7 @@ function loadProgDay(progIdx,dayIdx){
       const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
       return {
         kg:pp?pp.kg:(s.kg||0),
-        reps:s.maxi?0:(pp?pp.reps:(s.reps||10)), // série "maxi" : reps vide, elle saisit ce qu'elle a fait
-        maxi:!!s.maxi,
+        reps:pp?pp.reps:(s.reps||10),
         type:s.type||'N',done:false,rm1:0,rest:s.rest||0
       };
     })};
@@ -3119,7 +3118,7 @@ function saveAsProg(){
   const prog={
     id:'p'+Date.now(),name,
     exs:S.wkt.exs.map(ex=>{
-      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:s.rest||0}))};
+      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,type:s.type||'N',rest:s.rest||0}))};
       if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
       return o;
     })
@@ -3144,8 +3143,7 @@ function loadProg(idx){
         const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
         return {
           kg:pp?pp.kg:(s.kg||0),
-          reps:s.maxi?0:(pp?pp.reps:(s.reps||5)),
-          maxi:!!s.maxi,
+          reps:pp?pp.reps:(s.reps||5),
           type:s.type||'N',done:false,rm1:0,rest:s.rest||0
         };
       })};
@@ -3317,7 +3315,6 @@ function _renderProgEdit(){
     </div>
   </div>`;
   const _INP='padding:5px 4px;font-size:13px;text-align:center;border:1px solid var(--sep);border-radius:6px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;';
-  const _nbMaxi=(typeof _isNutriBeta==='function')&&_isNutriBeta(); // « maxi » reps réservé aux testeurs pour l'instant
   const exCard=(ex,di,ei)=>{
     const sets=ex.sets||[];
     const nextEx=_progEditEx(di,ei+1);
@@ -3336,14 +3333,11 @@ function _renderProgEdit(){
       <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
     </div>
     <div style="display:flex;gap:6px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
-      <span style="width:30px;">Série</span><span style="width:58px;text-align:center;">Reps</span>${_nbMaxi?'<span style="width:36px;"></span>':''}<span style="flex:1;text-align:right;">Repos</span><span style="width:22px;"></span>
+      <span style="width:30px;">Série</span><span style="width:58px;text-align:center;">Reps</span><span style="flex:1;text-align:right;">Repos</span><span style="width:22px;"></span>
     </div>
     ${sets.map((s,si)=>`<div style="display:flex;align-items:center;gap:6px;padding:2px 2px;">
       <span style="width:30px;font-size:12px;color:var(--t2);">${si+1}</span>
-      ${(_nbMaxi&&s.maxi)
-        ? `<div onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Répétitions au maximum — touche pour revenir à un nombre" style="width:58px;text-align:center;padding:6px 0;background:rgba(255,109,0,.14);border:1px solid var(--orange);border-radius:8px;color:var(--orange);font-size:12px;font-weight:800;cursor:pointer;box-sizing:border-box;">maxi</div>`
-        : `<input type="number" min="1" inputmode="numeric" value="${s.reps||''}" onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">`}
-      ${_nbMaxi?`<button onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Nombre max de répétitions" style="width:36px;flex-shrink:0;background:${s.maxi?'rgba(255,109,0,.14)':'transparent'};border:1px ${s.maxi?'solid var(--orange)':'dashed var(--sep)'};border-radius:8px;color:${s.maxi?'var(--orange)':'var(--t3)'};font-size:10px;font-weight:800;cursor:pointer;padding:5px 0;">max</button>`:''}
+      <input type="number" min="1" inputmode="numeric" value="${s.reps||''}" onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">
       <span style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;">
         <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${_defRestForType(s.type)}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;${_INP}">
         <span style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:44px;">s${s.rest>0?' '+_fmtRest(s.rest):''}</span>
@@ -3385,15 +3379,6 @@ function _setProgSetRest(di,ei,si,val){
 function _setProgSetReps(di,ei,si,val){
   const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
   ex.sets[si].reps=parseInt(val)||0;
-  if(ex.sets[si].reps>0)ex.sets[si].maxi=false; // saisir un nombre annule le mode « maxi »
-}
-// Bascule une série en « maxi » (nombre max de répétitions) ou revient à un nombre — re-render
-function _toggleProgSetMaxi(di,ei,si){
-  const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
-  const s=ex.sets[si];
-  s.maxi=!s.maxi;
-  if(s.maxi)s.reps=0; // en mode maxi, pas de nombre cible
-  _renderProgEdit();
 }
 // Ajoute une série (copie la dernière) puis re-render
 function _addProgSet(di,ei){
