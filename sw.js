@@ -1,4 +1,4 @@
-const CACHE = 'ft-v412'; // Bilan corporel photo : retour a l'approche d'origine ft-v302 (UNE image 1500px q0.85) qui marchait ; le decoupage en tranches ft-v309 avait re-casse l'envoi iOS
+const CACHE = 'ft-v413'; // Bilan corporel photo : SUPPRESSION de l'AbortController (vrai coupable des "Load failed" iOS) -> fetch identique au Coach photo qui marche + message d'erreur detaille
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
