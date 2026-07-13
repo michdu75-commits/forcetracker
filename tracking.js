@@ -905,33 +905,18 @@ function _resizeReport(file,cb){
     const img=new Image();
     img.onload=()=>{
       try{
-        const TW=1000;                 // largeur cible (nette après downscale API)
-        const scale=Math.min(1,TW/img.width);
-        const w=Math.round(img.width*scale), h=Math.round(img.height*scale);
-        // Canvas complet redimensionné
-        const full=document.createElement('canvas');full.width=w;full.height=h;
-        full.getContext('2d').drawImage(img,0,0,w,h);
-        const TILE=1300, OVER=70;       // hauteur max par tuile + recouvrement
-        const tiles=[];
-        if(h<=TILE){
-          tiles.push(full.toDataURL('image/jpeg',0.85).split(',')[1]);
-        }else{
-          let y=0;
-          while(y<h){
-            const th=Math.min(TILE,h-y);
-            const t=document.createElement('canvas');t.width=w;t.height=th;
-            t.getContext('2d').drawImage(full,0,y,w,th,0,0,w,th);
-            tiles.push(t.toDataURL('image/jpeg',0.85).split(',')[1]);
-            if(y+th>=h)break;
-            y+=TILE-OVER;
-          }
-        }
-        // Image entière de secours (pour un backend pas encore à jour : lit comme avant, pas pire)
-        let whole;
-        {const m=1500;let ww=w,hh=h;if(ww>=hh){if(ww>m){hh=Math.round(hh*m/ww);ww=m;}}else{if(hh>m){ww=Math.round(ww*m/hh);hh=m;}}
-          const fc=document.createElement('canvas');fc.width=ww;fc.height=hh;fc.getContext('2d').drawImage(img,0,0,ww,hh);
-          whole=fc.toDataURL('image/jpeg',0.85).split(',')[1];}
-        cb({tiles:tiles, full:whole});
+        // UNE SEULE image, côté le plus long ≤ 1500 px (l'API plafonne ~1568 de toute façon),
+        // JPEG 0.78 → payload léger (~200-300 Ko) et fiable sur iOS. Fix « Load failed » sur les
+        // rapports A4 denses (avant : 2 grosses tuiles envoyées ensemble = paquet trop lourd
+        // que Safari n'arrivait pas à pousser, même en wifi). 2026-07-13.
+        const M=1500;
+        let w=img.width,h=img.height;
+        const scale=Math.min(1,M/Math.max(w,h));
+        w=Math.round(w*scale); h=Math.round(h*scale);
+        const c=document.createElement('canvas');c.width=w;c.height=h;
+        c.getContext('2d').drawImage(img,0,0,w,h);
+        const data=c.toDataURL('image/jpeg',0.78).split(',')[1];
+        cb({tiles:[data], full:data});
       }catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
     };
     img.onerror=()=>{if(typeof toast==='function')toast('Image illisible','error');};
@@ -992,7 +977,7 @@ async function _postBodyScan(payload){
     let resp;
     try{
       const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
-      const to=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(e){}},60000):0;
+      const to=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(e){}},90000):0;
       resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:payload,signal:ctrl?ctrl.signal:undefined});
       if(to)clearTimeout(to);

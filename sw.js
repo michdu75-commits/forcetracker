@@ -1,4 +1,4 @@
-const CACHE = 'ft-v410'; // Nutrition (calories manuelles + recomposition + "maxi") verrouille TESTEURS seulement (_isNutriBeta) + pop-up/red dots retires
+const CACHE = 'ft-v411'; // Fix bilan corporel photo (2) : UNE seule image ~1500px/114Ko au lieu de 2 grosses tuiles -> fini "Load failed" iOS meme en wifi
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
