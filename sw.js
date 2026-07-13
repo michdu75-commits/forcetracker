@@ -1,4 +1,4 @@
-const CACHE = 'ft-v422'; // Barre d'installation rendue FINE et discrete (barre mince + petit %, sans ombre) — meme logique de fond (FULL_MARKER, une seule fois par version)
+const CACHE = 'ft-v423'; // Bilan corporel photo : envoi robuste (lecture .text() + 3 tentatives sur echec reseau 4G) + message d'erreur qui distingue reseau vs reponse serveur (diagnostic)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

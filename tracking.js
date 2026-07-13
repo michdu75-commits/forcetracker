@@ -957,14 +957,27 @@ function onBodyScanPhoto(input){
       const tiles=(out&&out.tiles)?out.tiles:(Array.isArray(out)?out:[out]);
       const full=(out&&out.full)?out.full:tiles[0];
       _showBsScan('data:image/jpeg;base64,'+full); // retour visuel : scan du rapport pendant la lecture IA
-      // ENVOI comme l'import de programme (qui MARCHE) : plusieurs images en tranches lisibles,
-      // fetch SIMPLE, .json() direct. Les rapports « vue appli » très longs sont découpés (voir _resizeReport).
+      // ENVOI comme l'import de programme (qui MARCHE) : plusieurs images en tranches lisibles.
+      // ⚠️ On lit .text() (pas .json() direct) → si le serveur renvoie autre chose que du JSON
+      // (page d'erreur, redirection), on VOIT le contenu au lieu d'un « Load failed » opaque.
+      // + 3 tentatives : sur 4G capricieuse, un « Load failed » réseau réussit souvent au 2e essai.
       const images=tiles.map(t=>({data:t,type:'image/jpeg'}));
       const payload=JSON.stringify({action:'importBodyScan',images,email:S.email||''});
       window._bsLastKb=Math.round(payload.length/1024); window._bsLastTiles=tiles.length; // diagnostic
-      const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:payload});
-      const data=await r.json();
+      let raw='', netErr=null;
+      for(let attempt=1;attempt<=3;attempt++){
+        try{
+          const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
+          raw=await r.text(); netErr=null; break;               // réponse reçue (JSON ou pas)
+        }catch(err){
+          netErr=err;                                            // « Load failed » = échec réseau AVANT toute réponse
+          if(attempt<3) await new Promise(res=>setTimeout(res,1200*attempt)); // backoff 1,2s puis 2,4s
+        }
+      }
+      if(netErr) throw new Error('réseau ('+((netErr&&netErr.message)||'échec')+') après 3 essais');
+      let data;
+      try{ data=JSON.parse(raw); }
+      catch(_){ throw new Error('réponse serveur : '+(raw?raw.slice(0,70):'(vide)')); }
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
       if(!unlimited){S.bodyScanImports=(S.bodyScanImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
