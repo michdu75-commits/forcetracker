@@ -694,7 +694,7 @@ function renderBodyScanCard(){
   // Import PHOTO du bilan : MASQUÉ en prod — échoue en 4G (le POST vers Apps Script ne passe pas sur
   // réseau mobile, cf CLAUDE.md « bilan corporel »). Gardé UNIQUEMENT sur le clone (window.__FT_CLONE__)
   // pour y développer une méthode d'envoi qui marche en 4G. À réactiver en prod une fois la solution trouvée.
-  const bsPhotoBtn=(label)=>window.__FT_CLONE__?`<button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 ${label}</button>`:'';
+  const bsPhotoBtn=(label)=>window.__FT_CLONE__?`<button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 ${label}</button><div style="font-size:10.5px;color:var(--t3);text-align:center;margin-top:4px;">📶 à tester en wifi</div>`:'';
   const scaleSel=_scaleTypeSelector();
   const scans=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(!scans.length){

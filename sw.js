@@ -1,4 +1,4 @@
-const CACHE = 'ft-v425'; // Bilan corporel : bouton « photo » MASQUE en prod (echoue en 4G, cf CLAUDE.md) — garde A la main / Coller un code / CSV. Bouton photo garde sur le clone (window.__FT_CLONE__) pour developper l'envoi 4G. Clone remis a la version actuelle.
+const CACHE = 'ft-v426'; // Rappel « à tester en wifi » sous le bouton photo du bilan (sur le clone) pour se souvenir que l'envoi photo ne marche qu'en wifi
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
