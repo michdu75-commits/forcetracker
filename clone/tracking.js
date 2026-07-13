@@ -909,13 +909,13 @@ function _resizeReport(file,cb){
         // JPEG 0.78 → payload léger (~200-300 Ko) et fiable sur iOS. Fix « Load failed » sur les
         // rapports A4 denses (avant : 2 grosses tuiles envoyées ensemble = paquet trop lourd
         // que Safari n'arrivait pas à pousser, même en wifi). 2026-07-13.
-        const M=1500;
+        const M=1100;   // réduit (était 1500) pour alléger le paquet — piste « image trop lourde à l'envoi iOS »
         let w=img.width,h=img.height;
         const scale=Math.min(1,M/Math.max(w,h));
         w=Math.round(w*scale); h=Math.round(h*scale);
         const c=document.createElement('canvas');c.width=w;c.height=h;
         c.getContext('2d').drawImage(img,0,0,w,h);
-        const data=c.toDataURL('image/jpeg',0.85).split(',')[1]; // qualité d'origine (ft-v302, celle qui marchait)
+        const data=c.toDataURL('image/jpeg',0.72).split(',')[1];
         cb({tiles:[data], full:data});
       }catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
     };
@@ -973,15 +973,16 @@ async function _postBodyScan(payload){
   let lastErr;
   for(let attempt=0;attempt<3;attempt++){
     if(attempt>0)await new Promise(r=>setTimeout(r,attempt*1500)); // backoff 1,5 s puis 3 s
+    const t0=Date.now();
     let resp;
     try{
       // Fetch identique au Coach photo (qui marche), sans AbortController.
       resp=await fetch(S.url,{method:'POST',redirect:'follow',
         headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
-    }catch(e){ lastErr=new Error('envoi ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // échec à l'ENVOI → on retente
+    }catch(e){ lastErr=new Error('envoi '+Math.round((Date.now()-t0)/1000)+'s ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // échec fetch (envoi OU pas de réponse à temps) → retente
     let txt;
     try{ txt=await resp.text(); }
-    catch(e){ lastErr=new Error('réception ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // réponse coupée en cours de réception → on retente
+    catch(e){ lastErr=new Error('réception '+Math.round((Date.now()-t0)/1000)+'s ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // réponse coupée en réception → retente
     try{return JSON.parse(txt);}catch(e){throw new Error('réponse illisible (HTTP '+(resp.status||'?')+')');} // réponse reçue → pas de retry
   }
   throw lastErr||new Error('réseau');
