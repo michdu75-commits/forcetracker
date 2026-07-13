@@ -504,6 +504,12 @@ function _isTester(){
   const e=(S.email||'').trim().toLowerCase();
   return !!e && typeof TESTER_EMAILS!=='undefined' && TESTER_EMAILS.indexOf(e)>=0;
 }
+// ─── VERROU « BÊTA TESTEUR » pour les features nutrition/séance issues des retours testeuses ───
+// Réglage manuel des calories, objectif « Perte de gras + muscle » (recomposition) et « maxi » reps
+// sont EN PROD mais visibles UNIQUEMENT pour les testeurs pour l'instant.
+// 👉 POUR OUVRIR À TOUT LE MONDE : remplacer le corps par `return true;` (+ réactiver le pop-up
+//    « Quoi de neuf » v15/16/17 et les red dots manual-kcal/goal-recomp/reps-maxi dans constants.js).
+function _isNutriBeta(){ return (typeof _isTester==='function' && _isTester()); }
 // « Super testeur » (Christophe pour l'instant) : accès à l'Espace Testeur (analyse photos approfondie + boîte à idées).
 function _isSuperTester(){
   const e=(S.email||'').trim().toLowerCase();
@@ -737,9 +743,12 @@ function renderNutrition(){try{
 
   const macros=calcMacros(S.nutritionPhase);
   document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');
-  // Bloc réglage manuel (sous l'anneau) : état auto vs manuel + bouton d'ajustement
+  // Bloc réglage manuel (sous l'anneau) : état auto vs manuel + bouton d'ajustement — RÉSERVÉ AUX TESTEURS
+  const _nutriBeta=(typeof _isNutriBeta==='function')&&_isNutriBeta();
+  const _jptr=document.getElementById('nu-journal-ptr'); if(_jptr)_jptr.style.display=_nutriBeta?'':'none';
   const adj=document.getElementById('nu-adjust');
-  if(adj){
+  if(adj&&!_nutriBeta){adj.innerHTML='';}
+  else if(adj){
     if(macros.isManual){
       adj.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:rgba(255,45,85,.08);border:1px solid rgba(255,45,85,.25);border-radius:12px;padding:9px 12px;">'
         +'<span style="font-size:12.5px;color:var(--t2);flex:1;line-height:1.35;">🎯 <b style="color:var(--t1);">Objectif manuel</b> — '+macros.calories.toLocaleString('fr-FR')+' kcal <span style="color:var(--t3);white-space:nowrap;">(auto : '+macros.autoCalories.toLocaleString('fr-FR')+')</span></span>'

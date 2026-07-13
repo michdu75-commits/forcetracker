@@ -1,4 +1,4 @@
-const CACHE = 'ft-v409'; // PROMO nutrition : calories manuelles + objectif recomposition + "maxi" reps (retours Tatiana)
+const CACHE = 'ft-v410'; // Nutrition (calories manuelles + recomposition + "maxi") verrouille TESTEURS seulement (_isNutriBeta) + pop-up/red dots retires
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
