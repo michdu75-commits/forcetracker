@@ -180,9 +180,7 @@ const NEW_FEATURES=[
   {id:'food-barcode', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : scan d\'un code-barres dans le journal — le produit est reconnu automatiquement (base mondiale)'},
   {id:'food-score',   screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : le score santé des produits (Nutri-Score + niveau de transformation) au code-barres — gratuit pour tout le monde'},
   {id:'food-bc-photo', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : photographie le code-barres, l\'IA lit les chiffres pour toi (plus besoin de les taper)'},
-  {id:'manual-kcal', screen:'nutrition', desc:'Nouveau : règle tes calories et macros à la main (bouton « Ajuster mes calories » sous l\'anneau) — l\'équilibre reste sain'},
-  {id:'goal-recomp', screen:'setup', anchor:'menu-row-profil', desc:'Nouvel objectif « Perte de gras + muscle » (recomposition) dans Profil → Objectif — perdre du gras en gardant/formant du muscle'},
-  {id:'reps-maxi',   screen:'log', desc:'Nouveau : dans un programme, une série peut viser « maxi » (nombre max de répétitions) au lieu d\'un chiffre — bouton « max »'},
+  // ⏳ Réservé testeurs — red dots manual-kcal/goal-recomp/reps-maxi à réactiver à l'ouverture générale.
   {id:'meal-import',  screen:'nutrition', desc:'Nouveau : importer le plan alimentaire de ta diététicienne (photo/PDF) — l\'IA range les repas'},
 ];
 
@@ -194,10 +192,9 @@ const NEW_FEATURES=[
 // un utilisateur à jour ne voit que la (ou les) toute(s) dernière(s).
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
+// ⏳ Réservé testeurs (v15/16/17 : calories manuelles, objectif recomposition, « maxi ») —
+//    à RÉACTIVER (remettre les 3 entrées + WHATS_NEW_MAX=17) quand on ouvre à tout le monde.
 const WHATS_NEW=[
-  {v:17, ic:'💪', t:'Objectif « Perte de gras + muscle »', d:'Un nouvel objectif dans ton Profil : la recomposition. Tu perds du gras TOUT EN gardant (et en formant) du muscle — l\'app règle le bon léger déficit et des protéines élevées. Parfait pour des muscles toniques sans devenir « skinny fat ». Profil → Objectif → « Perte de gras + muscle ».'},
-  {v:16, ic:'🎯', t:'Règle tes calories à la main', d:'Le nombre de calories te semble trop haut ou trop bas ? Tu peux maintenant le corriger toi-même : Nutrition → sous l\'anneau, bouton « ✎ Ajuster mes calories ». Tu tapes ton chiffre, et les protéines/lipides restent calés sur ton profil (les glucides s\'ajustent) → impossible d\'entrer n\'importe quoi. Un bouton « Revenir en automatique » à tout moment.'},
-  {v:15, ic:'🔁', t:'« maxi » dans les reps', d:'Dans l\'éditeur de programme, une série peut viser « le max de répétitions » au lieu d\'un nombre exact : touche le petit bouton « max » à côté des reps. En séance, tu verras « max » comme repère et tu noteras ce que tu as vraiment fait.'},
   {v:14, ic:'🧠', t:'Milo coache comme un vrai coach', d:'Ton Coach IA a franchi un cap : il RAISONNE comme un vrai coach. Il t\'évalue avant de te conseiller (et te pose des questions si besoin), croise tes records, ta morpho et ton bilan corporel, justifie ses choix, s\'adapte à ta vie (horaires, travail, temps dispo) et te dit la vérité sans langue de bois. Demande-lui un programme ou « pourquoi je stagne ? » — tu vas voir la différence !'},
   {v:13, ic:'✋', t:'Superset par glisser-déposer', d:'En séance, attrape la petite poignée (6 points) sur un exercice et glisse-le sur un autre → le superset (enchaînement sans repos) se crée tout seul. Plus rapide que de passer par le menu. Marche sur les exercices pas encore groupés.'},
   {v:12, ic:'📷', t:'Photographie le code-barres', d:'Dans le Journal alimentaire, plus besoin de taper les chiffres : appuie sur « 📷 Photographier le code-barres », prends-le en photo, et l\'IA lit le numéro pour toi → le produit et son score santé s\'affichent tout seuls. Pratique quand les chiffres sont petits ou abîmés.'},
@@ -213,7 +210,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=17;     // = plus grand `v` ci-dessus
+const WHATS_NEW_MAX=14;     // = plus grand `v` ci-dessus (17 quand on réactive les features testeurs)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

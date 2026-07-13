@@ -985,6 +985,9 @@ function ob0Install(){
 
 function initOnboarding(){
   if(document.documentElement.classList.contains('ob-done'))return;
+  // Objectif « Perte de gras + muscle » (recomposition) réservé aux testeurs pour l'instant
+  const _obgr=document.getElementById('ob-gr');
+  if(_obgr)_obgr.style.display=((typeof _isNutriBeta==='function')&&_isNutriBeta())?'':'none';
   const emailInp=document.getElementById('ob-email');
   if(emailInp){emailInp.setAttribute('enterkeyhint','done');emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});}
   // step 3 : prénom → age → taille → poids → naissance → poids visé en chaîne

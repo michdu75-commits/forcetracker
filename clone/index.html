@@ -650,8 +650,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <!-- Meal plan statique -->
     <div class="sec">Plan alimentaire journalier</div>
     <div class="card cp" id="meal-plan"><div style="text-align:center;color:var(--t3);font-size:13px;padding:16px;">Remplis ton profil pour voir le plan 🍽️</div></div>
-    <!-- Pointeur vers le Journal (retour testeuse : « pas évident où appuyer pour noter moi-même ») -->
-    <div onclick="switchNuTab('journal',document.getElementById('ntab-journal'))" style="display:flex;align-items:center;gap:11px;background:var(--bg2);border:1px solid var(--sep);border-radius:14px;padding:12px 14px;margin-top:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+    <!-- Pointeur vers le Journal (retour testeuse : « pas évident où appuyer pour noter moi-même ») — bêta testeur -->
+    <div id="nu-journal-ptr" onclick="switchNuTab('journal',document.getElementById('ntab-journal'))" style="display:flex;align-items:center;gap:11px;background:var(--bg2);border:1px solid var(--sep);border-radius:14px;padding:12px 14px;margin-top:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
       <span style="font-size:22px;flex-shrink:0;">📓</span>
       <div style="flex:1;min-width:0;">
         <div style="font-size:13.5px;font-weight:700;color:var(--t1);">Noter ce que je mange &rsaquo;</div>

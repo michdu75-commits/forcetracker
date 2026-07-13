@@ -3317,6 +3317,7 @@ function _renderProgEdit(){
     </div>
   </div>`;
   const _INP='padding:5px 4px;font-size:13px;text-align:center;border:1px solid var(--sep);border-radius:6px;background:var(--bg2);color:var(--t1);font-family:var(--font);outline:none;';
+  const _nbMaxi=(typeof _isNutriBeta==='function')&&_isNutriBeta(); // « maxi » reps réservé aux testeurs pour l'instant
   const exCard=(ex,di,ei)=>{
     const sets=ex.sets||[];
     const nextEx=_progEditEx(di,ei+1);
@@ -3335,14 +3336,14 @@ function _renderProgEdit(){
       <button onclick="_removeExFromProgEdit(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:20px;line-height:1;cursor:pointer;padding:2px 4px;flex-shrink:0;">×</button>
     </div>
     <div style="display:flex;gap:6px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;padding:0 2px 3px;">
-      <span style="width:30px;">Série</span><span style="width:58px;text-align:center;">Reps</span><span style="width:36px;"></span><span style="flex:1;text-align:right;">Repos</span><span style="width:22px;"></span>
+      <span style="width:30px;">Série</span><span style="width:58px;text-align:center;">Reps</span>${_nbMaxi?'<span style="width:36px;"></span>':''}<span style="flex:1;text-align:right;">Repos</span><span style="width:22px;"></span>
     </div>
     ${sets.map((s,si)=>`<div style="display:flex;align-items:center;gap:6px;padding:2px 2px;">
       <span style="width:30px;font-size:12px;color:var(--t2);">${si+1}</span>
-      ${s.maxi
+      ${(_nbMaxi&&s.maxi)
         ? `<div onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Répétitions au maximum — touche pour revenir à un nombre" style="width:58px;text-align:center;padding:6px 0;background:rgba(255,109,0,.14);border:1px solid var(--orange);border-radius:8px;color:var(--orange);font-size:12px;font-weight:800;cursor:pointer;box-sizing:border-box;">maxi</div>`
         : `<input type="number" min="1" inputmode="numeric" value="${s.reps||''}" onchange="_setProgSetReps(${di},${ei},${si},this.value)" style="width:58px;${_INP}">`}
-      <button onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Nombre max de répétitions" style="width:36px;flex-shrink:0;background:${s.maxi?'rgba(255,109,0,.14)':'transparent'};border:1px ${s.maxi?'solid var(--orange)':'dashed var(--sep)'};border-radius:8px;color:${s.maxi?'var(--orange)':'var(--t3)'};font-size:10px;font-weight:800;cursor:pointer;padding:5px 0;">max</button>
+      ${_nbMaxi?`<button onclick="_toggleProgSetMaxi(${di},${ei},${si})" title="Nombre max de répétitions" style="width:36px;flex-shrink:0;background:${s.maxi?'rgba(255,109,0,.14)':'transparent'};border:1px ${s.maxi?'solid var(--orange)':'dashed var(--sep)'};border-radius:8px;color:${s.maxi?'var(--orange)':'var(--t3)'};font-size:10px;font-weight:800;cursor:pointer;padding:5px 0;">max</button>`:''}
       <span style="flex:1;display:flex;align-items:center;justify-content:flex-end;gap:5px;">
         <input type="number" min="0" step="5" inputmode="numeric" value="${s.rest||''}" placeholder="${_defRestForType(s.type)}" onchange="_setProgSetRest(${di},${ei},${si},this.value)" style="width:56px;${_INP}">
         <span style="font-size:11px;color:var(--t3);white-space:nowrap;min-width:44px;">s${s.rest>0?' '+_fmtRest(s.rest):''}</span>

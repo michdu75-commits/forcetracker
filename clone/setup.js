@@ -1662,6 +1662,9 @@ function renderSetup(){
   const hipEl=document.getElementById('hip-inp');if(hipEl)hipEl.value=S.hip||'';
   const bdayEl=document.getElementById('bday-inp');if(bdayEl)bdayEl.value=S.bday||'';
   renderCycleProfileCard();
+  // Objectif « Perte de gras + muscle » (recomposition) réservé aux testeurs pour l'instant
+  const _gr=document.getElementById('g-recomp');
+  if(_gr)_gr.style.display=((typeof _isNutriBeta==='function')&&_isNutriBeta())?'':'none';
   setGoal(S.goal||'muscle');
   setDiscipline(S.discipline||'muscu');
   _renderLevelSel();
