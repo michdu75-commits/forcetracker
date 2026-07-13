@@ -1,4 +1,4 @@
-const CACHE = 'ft-v417'; // Fix barre "Installation..." bloquante : sentinelle santé cache = fichier CORE (plus une figurine) + ENSURE_PRECACHE repare le CORE (rapide) au lieu des 15Mo d'images
+const CACHE = 'ft-v418'; // Bilan corporel photo : envoi via XMLHttpRequest au lieu de fetch (fetch rejete instantanement l'upload image sur iOS - XHR passe)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -969,21 +969,35 @@ function onBodyScanPhoto(input){
 // POST du rapport corporel avec retry réseau (3 tentatives, backoff). Fetch IDENTIQUE au Coach
 // photo (qui marche) : pas d'AbortController. Ne retente QUE sur échec réseau (fetch rejeté) ;
 // une réponse reçue mais illisible n'est pas retentée.
+// Envoi via XMLHttpRequest (et non fetch) : sur iOS Safari, un POST cross-origin avec un corps
+// « image » peut être rejeté INSTANTANÉMENT par fetch (« envoi 1s : TypeError: Load failed »)
+// alors que XHR passe — stack réseau différente. XHR suit le redirect Apps Script tout seul.
+function _xhrPostText(url,body,timeoutMs){
+  return new Promise((resolve,reject)=>{
+    try{
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST',url,true);
+      try{ xhr.setRequestHeader('Content-Type','text/plain;charset=utf-8'); }catch(e){}
+      if(timeoutMs)xhr.timeout=timeoutMs;
+      xhr.onload=()=>resolve({status:xhr.status,text:xhr.responseText||''});
+      xhr.onerror=()=>reject(new Error('XHR onerror'+(xhr.status?' '+xhr.status:'')));
+      xhr.ontimeout=()=>reject(new Error('XHR timeout'));
+      xhr.onabort=()=>reject(new Error('XHR abort'));
+      xhr.send(body);
+    }catch(e){ reject(e); }
+  });
+}
 async function _postBodyScan(payload){
   let lastErr;
   for(let attempt=0;attempt<3;attempt++){
     if(attempt>0)await new Promise(r=>setTimeout(r,attempt*1500)); // backoff 1,5 s puis 3 s
     const t0=Date.now();
-    let resp;
+    let r;
     try{
-      // Fetch identique au Coach photo (qui marche), sans AbortController.
-      resp=await fetch(S.url,{method:'POST',redirect:'follow',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
-    }catch(e){ lastErr=new Error('envoi '+Math.round((Date.now()-t0)/1000)+'s ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // échec fetch (envoi OU pas de réponse à temps) → retente
-    let txt;
-    try{ txt=await resp.text(); }
-    catch(e){ lastErr=new Error('réception '+Math.round((Date.now()-t0)/1000)+'s ('+(e.name||'?')+': '+(e.message||'')+')'); continue; } // réponse coupée en réception → retente
-    try{return JSON.parse(txt);}catch(e){throw new Error('réponse illisible (HTTP '+(resp.status||'?')+')');} // réponse reçue → pas de retry
+      r=await _xhrPostText(S.url,payload,90000);
+    }catch(e){ lastErr=new Error('envoi '+Math.round((Date.now()-t0)/1000)+'s ('+(e.message||'?')+')'); continue; } // échec → on retente
+    try{ return JSON.parse(r.text); }
+    catch(e){ throw new Error('réponse illisible (HTTP '+(r.status||'?')+')'); } // réponse reçue → pas de retry
   }
   throw lastErr||new Error('réseau');
 }
