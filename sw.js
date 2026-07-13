@@ -1,4 +1,4 @@
-const CACHE = 'ft-v419'; // Bilan corporel photo : envoi IDENTIQUE au code-barres photo qui marche (fetch simple, 1 image, .json()) - fini XHR/retry/tuiles
+const CACHE = 'ft-v420'; // Bilan corporel photo : rapport TRES LONG (ex 1290x7623) decoupe en tranches lisibles + envoi multi-images comme l'import programme (qui marche) + diagnostic taille
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
