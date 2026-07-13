@@ -957,9 +957,13 @@ function onBodyScanPhoto(input){
       const full=(out&&out.full)?out.full:tiles[0];
       _showBsScan('data:image/jpeg;base64,'+full); // retour visuel : scan du rapport pendant la lecture IA
       const images=tiles.map(t=>({data:t,type:'image/jpeg'}));
-      const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'importBodyScan',images,image:full,imageType:'image/jpeg',email:S.email||''})});
-      const txt=await resp.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('réponse illisible');}
+      // Payload allégé : on n'envoie PAS l'image "full" quand on a déjà les tuiles
+      // (le backend ignore body.image dès qu'il reçoit body.images) → ~2× moins lourd,
+      // bien moins de "Load failed" sur réseau faible/cellulaire (fix bug 2026-07-13).
+      const payload=JSON.stringify(images.length
+        ? {action:'importBodyScan',images,email:S.email||''}
+        : {action:'importBodyScan',image:full,imageType:'image/jpeg',email:S.email||''});
+      const data=await _postBodyScan(payload); // retry réseau intégré (Load failed = réseau)
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
       if(!unlimited){S.bodyScanImports=(S.bodyScanImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
@@ -970,8 +974,33 @@ function onBodyScanPhoto(input){
         _BS_SEG_FIELDS.forEach(f=>{const el=document.getElementById('bs-'+f.k);if(el&&o[f.k]!=null&&o[f.k]!=='')el.value=o[f.k];});
         toast('Rapport lu ✅ Vérifie puis Enregistre','success');
       });
-    }catch(e){_hideBsScan(()=>toast('Souci lecture : '+(e.message||'réessaie'),'error'));}
+    }catch(e){
+      const raw=(e&&e.message)||'';
+      // "Load failed"/"Failed to fetch"/abort = échec réseau (aucune réponse reçue) → message clair, on invite à réessayer
+      const msg=/load failed|failed to fetch|network|timeout|abort/i.test(raw)?'réseau instable, réessaie 🙂':(raw||'réessaie');
+      _hideBsScan(()=>toast('Souci lecture : '+msg,'error'));
+    }
   });
+}
+// POST du rapport corporel avec retry réseau (3 tentatives, backoff) + timeout 60 s.
+// Ne retente QUE sur échec réseau (fetch rejeté / abort) ; une réponse reçue mais illisible
+// n'est pas retentée. Corrige les "Load failed" transitoires sur réseau faible (2026-07-13).
+async function _postBodyScan(payload){
+  let lastErr;
+  for(let attempt=0;attempt<3;attempt++){
+    if(attempt>0)await new Promise(r=>setTimeout(r,attempt*1500)); // backoff 1,5 s puis 3 s
+    let resp;
+    try{
+      const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+      const to=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(e){}},60000):0;
+      resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:payload,signal:ctrl?ctrl.signal:undefined});
+      if(to)clearTimeout(to);
+    }catch(e){ lastErr=e; continue; } // échec réseau → on retente
+    const txt=await resp.text();
+    try{return JSON.parse(txt);}catch(e){throw new Error('réponse illisible du serveur');} // réponse reçue → pas de retry
+  }
+  throw lastErr||new Error('réseau');
 }
 // Overlay « analyse en cours » (min ~1,4 s pour un retour visible même si le serveur répond vite)
 let _bsScanStart=0;

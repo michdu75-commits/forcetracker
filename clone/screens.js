@@ -173,6 +173,8 @@ const _HELP_DATA={
       {i:'📷',t:'Code-barres : tape les chiffres écrits sous le code (gratuit) OU appuie sur « 📷 Photographier le code-barres » et prends-le en photo — l\'IA lit le numéro pour toi (utile si les chiffres sont petits/abîmés). La lecture photo utilise 1 essai IA ; ensuite la recherche du produit et le score santé restent gratuits.'},
       {i:'🥗',t:'Score santé : au code-barres d\'un produit, tu vois son Nutri-Score (A à E) et son niveau de transformation (brut ou ultra-transformé). Gratuit pour tout le monde, sans crédit IA. Pratique pour repérer d\'un coup d\'œil ce qui est sain.'},
       {i:'📥',t:'Tu as un plan de ta diététicienne ? Bouton « Importer un plan » (Plan de repas IA) : prends-le en photo ou importe le PDF, l\'IA range les repas.'},
+      {i:'🎯',t:'Calories trop hautes ou trop basses pour toi ? Sous l\'anneau, bouton « ✎ Ajuster mes calories » : tape ton chiffre à la main. Les protéines et lipides restent calés sur ton profil, les glucides s\'ajustent → équilibre garanti. « Revenir en automatique » à tout moment.'},
+      {i:'💪',t:'Objectif « Perte de gras + muscle » (Profil → Objectif) = recomposition : léger déficit + protéines élevées → perdre du gras sans perdre de muscle (muscles toniques, pas « skinny fat »).'},
     ],
     female:[
       {i:'🌙',t:'Tes macros s\'adaptent automatiquement : plus de glucides en folliculaire (énergie haute), légère hausse en lutéale.'},
@@ -201,6 +203,7 @@ const _HELP_DATA={
       {i:'🔤',t:'Tags de série : É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. Appuie sur la pastille pour changer, le nom complet s\'affiche en toast.'},
       {i:'⏱️',t:'Timer adaptatif : É = 45s · N = 2:10 · X = 4min. Boutons −15s/+15s et presets 1:00/1:30/2:00.'},
       {i:'⚡',t:'Super-séries : bouton "⚡ Grouper" dès 2 exercices → sélectionne-les → "Lier en supersérie". Enchaînement automatique sans repos. Boutons 📉 Drop / 📈 +10% / 📉 −10% pour pyramides et drop sets.'},
+      {i:'🔁',t:'« maxi » : dans l\'éditeur de programme, touche le bouton « max » à côté des reps d\'une série pour viser le maximum de répétitions (au lieu d\'un chiffre exact). En séance, la case affiche « max » et tu notes ce que tu as vraiment fait.'},
       {i:'✋',t:'Superset au doigt : sur un exercice pas encore en superset, attrape la petite poignée (6 points, à côté du ⋯) et glisse-le sur un autre exercice → le superset se crée tout seul. Plus rapide que le bouton "⚡ Grouper". Pour défaire : "↩ Retirer". Marche aussi dans l\'éditeur de programme (✏️) : glisse une carte exercice sur une autre.'},
       {i:'📊',t:'Bouton 📊 sur chaque exercice → graphique du poids max sur les 5 dernières séances.'},
       {i:'🏋️',t:'Le 1RM (Brzycki) s\'affiche en temps réel sous le type — utilise-le pour calibrer tes charges. Appuie sur ℹ️ pour l\'aide sur les types.'},
@@ -663,6 +666,38 @@ function setNuPhase(phase){
   renderNutrition();
 }
 
+// ─── Réglage manuel des calories/macros (retour testeuse : « pouvoir corriger moi-même ») ──
+function openKcalEdit(){
+  const m=calcMacros(S.nutritionPhase);
+  const inp=document.getElementById('kcal-edit-inp');
+  if(inp)inp.value=m.calories;
+  const auto=document.getElementById('kcal-edit-auto');
+  if(auto)auto.textContent="Calcul auto de l'app : "+m.autoCalories.toLocaleString('fr-FR')+" kcal (d'après ton profil et ton objectif).";
+  const reset=document.getElementById('kcal-edit-reset');
+  if(reset)reset.style.display=m.isManual?'':'none';
+  _kcalPreview();
+  const o=document.getElementById('ov-kcal-edit');if(o)o.classList.add('open');
+}
+function _kcalPreview(){
+  const inp=document.getElementById('kcal-edit-inp');
+  const v=inp?Math.round(parseFloat(inp.value)||0):0;
+  const mm=(typeof macrosForKcal==='function')?macrosForKcal(v):{prot_g:0,carbs_g:0,fat_g:0};
+  const set=(id,val)=>{const e=document.getElementById(id);if(e)e.textContent=val+' g';};
+  set('kcal-pv-prot',mm.prot_g);set('kcal-pv-carb',mm.carbs_g);set('kcal-pv-fat',mm.fat_g);
+}
+function saveKcalEdit(){
+  const inp=document.getElementById('kcal-edit-inp');
+  let v=inp?Math.round(parseFloat(inp.value)||0):0;
+  if(!(v>0)){toast('Entre un nombre de calories valide','info');return;}
+  v=Math.max(800,Math.min(6000,v));
+  S.manualKcal=v;persist();closeKcalEdit();renderNutrition();
+  toast('Objectif réglé sur '+v.toLocaleString('fr-FR')+' kcal ✅','success');
+}
+function resetKcalAuto(){
+  S.manualKcal=0;persist();closeKcalEdit();renderNutrition();
+  toast('Calories remises en automatique','info');
+}
+function closeKcalEdit(){const o=document.getElementById('ov-kcal-edit');if(o)o.classList.remove('open');}
 function renderNutrition(){try{
   renderSupplements();
   // Phase buttons
@@ -670,10 +705,10 @@ function renderNutrition(){try{
   document.getElementById('pb-decharge').classList.toggle('active',S.nutritionPhase==='decharge');
   // Goal banner
   const goal=S.goal||'muscle';
-  const goalDelta={muscle:350,perte:-450,force:200,equilibre:0,endurance:100}[goal]||350;
-  const goalColors={muscle:'rgba(255,45,85,.1)',perte:'rgba(255,149,0,.1)',force:'rgba(41,121,255,.1)',equilibre:'rgba(52,199,89,.1)',endurance:'rgba(170,0,255,.1)'};
-  const goalBorderColors={muscle:'rgba(255,45,85,.3)',perte:'rgba(255,149,0,.3)',force:'rgba(41,121,255,.3)',equilibre:'rgba(52,199,89,.3)',endurance:'rgba(170,0,255,.3)'};
-  const goalIcons={muscle:'💪',perte:'🔥',force:'🏋️',equilibre:'⚖️',endurance:'🏃'};
+  const goalDelta={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}[goal]||350;
+  const goalColors={muscle:'rgba(255,45,85,.1)',perte:'rgba(255,149,0,.1)',recomp:'rgba(170,0,255,.1)',force:'rgba(41,121,255,.1)',equilibre:'rgba(52,199,89,.1)',endurance:'rgba(170,0,255,.1)'};
+  const goalBorderColors={muscle:'rgba(255,45,85,.3)',perte:'rgba(255,149,0,.3)',recomp:'rgba(170,0,255,.3)',force:'rgba(41,121,255,.3)',equilibre:'rgba(52,199,89,.3)',endurance:'rgba(170,0,255,.3)'};
+  const goalIcons={muscle:'💪',perte:'🔥',recomp:'✨',force:'🏋️',equilibre:'⚖️',endurance:'🏃'};
   const nuGoal=document.getElementById('nu-goal-info');
   if(nuGoal)nuGoal.textContent=`${goalIcons[goal]||'💪'} ${GOAL_LABELS[goal]||'Prise de muscle'}`;
   // Dynamic phase labels + delta chip
@@ -702,6 +737,17 @@ function renderNutrition(){try{
 
   const macros=calcMacros(S.nutritionPhase);
   document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');
+  // Bloc réglage manuel (sous l'anneau) : état auto vs manuel + bouton d'ajustement
+  const adj=document.getElementById('nu-adjust');
+  if(adj){
+    if(macros.isManual){
+      adj.innerHTML='<div style="display:flex;align-items:center;gap:8px;background:rgba(255,45,85,.08);border:1px solid rgba(255,45,85,.25);border-radius:12px;padding:9px 12px;">'
+        +'<span style="font-size:12.5px;color:var(--t2);flex:1;line-height:1.35;">🎯 <b style="color:var(--t1);">Objectif manuel</b> — '+macros.calories.toLocaleString('fr-FR')+' kcal <span style="color:var(--t3);white-space:nowrap;">(auto : '+macros.autoCalories.toLocaleString('fr-FR')+')</span></span>'
+        +'<button onclick="openKcalEdit()" class="btn" style="width:auto;flex:none;padding:7px 12px;font-size:12.5px;background:var(--bg3);color:var(--t1);border:1px solid var(--sep);">Modifier</button></div>';
+    } else {
+      adj.innerHTML='<button onclick="openKcalEdit()" class="btn" style="width:100%;padding:11px;font-size:13.5px;background:var(--bg2);color:var(--t2);border:1px solid var(--sep);font-weight:700;">✎ Ajuster mes calories à la main</button>';
+    }
+  }
   document.getElementById('m-prot').textContent=macros.prot_g;
   document.getElementById('m-carbs').textContent=macros.carbs_g;
   document.getElementById('m-fat').textContent=macros.fat_g;
