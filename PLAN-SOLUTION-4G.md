@@ -51,10 +51,13 @@ Appli (4G) ──POST direct──▶ Cloudflare Worker ──▶ API Anthropic 
 - [x] **Router bilan + programme + historique** via `_aiUrl()` (tracking.js, log.js). ✅
 - [x] **Tester le repli** : `AI_PROXY_URL` vide → `_aiUrl()===S.url` (Apps Script), 0 erreur JS (Playwright). ✅ Prod strictement identique.
 - [x] **Guide d'installation** → `GUIDE-CLOUDFLARE.md`. ✅
-- [ ] (Quand 4G revient) Michel crée le Worker (coller `worker.js`) → me donne l'URL → je remplis `AI_PROXY_URL` → teste en 4G.
-- [ ] Si OK en 4G : router aussi `coach`/`morphoAnalysis`/`bodyStudy`/`readBarcode`/`foodLabel` via `_aiUrl()`, **réactiver le bouton photo bilan en prod** (retirer le gate `__FT_CLONE__`), promotion prod.
+- [x] **Router TOUS les appels IA** via `_aiUrl()` (12 au total) — pas seulement bilan/programme : ✅ 2026-07-13
+      `importBodyScan`, `importProgram`, `importHistory`, `importBloodTest`, `readBarcode` (code-barres photo), `foodLabel` (étiquette nutrition), `coach` (×2 : chat + analyse programme), `summarizeCoach`, `morphoAnalysis`, `bodyStudy` (×2 : étude + suivi photos). → le relais couvrira **tout ce qui échoue en 4G** (magasin = code-barres/étiquette compris).
+      NON routés (volontaire) : `validateCode`, `loadProfile`, `saveProfile`(no-cors), `logSession`, `sendConfirmCode`… (auth/sync — petits ; à router aussi si besoin plus tard).
+- [ ] (Quand 4G revient) Michel crée le Worker (coller `worker.js`) → me donne l'URL → je remplis `AI_PROXY_URL` → teste en 4G (bilan + code-barres + étiquette).
+- [ ] Si OK en 4G : **réactiver le bouton photo bilan en prod** (retirer le gate `__FT_CLONE__`), promotion prod.
 
-**État au 2026-07-13** : tout est PRÊT et ENDORMI. `worker.js` + guide à la racine. Le branchement (`_aiUrl`) est en place mais inactif (`AI_PROXY_URL=''`) → aucun changement pour personne tant que Michel n'a pas collé l'URL de son Worker. Il ne reste que les ~5 min de réglage Cloudflare de Michel (au retour de sa 4G).
+**État au 2026-07-13** : tout est PRÊT et ENDORMI. `worker.js` + guide à la racine. Les **12 appels IA** passent par `_aiUrl()` mais restent sur Apps Script tant que `AI_PROXY_URL=''` → aucun changement pour personne. Vérifié Playwright : `_aiUrl()===S.url`, 0 erreur JS. Il ne reste que les ~5 min de réglage Cloudflare de Michel (au retour de sa 4G) → et **code-barres + étiquette + bilan + coach + morpho** marcheront en 4G d'un coup.
 
 ## 7. Notes / risques
 - **Pas testable en vrai avant le retour de la 4G de Michel** — on prépare, on ne promet pas que ça marche à 100 % tant que testé sur son réseau.

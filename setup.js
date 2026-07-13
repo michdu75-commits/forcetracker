@@ -858,7 +858,7 @@ async function analyzeMorphoPhotos(){
   try{
     const labels=['face','dos','profil'];
     const images=_morphoPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:labels[i]}:null).filter(Boolean);
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',
+    const resp=await fetch(_aiUrl(),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'morphoAnalysis',images,gender:S.gender||'H',email:S.email||''})
     });
@@ -985,7 +985,7 @@ async function analyzeBodyStudy(){
     const images=_bodyPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:_BODY_SLOTS[i].key}:null).filter(Boolean);
     // Santé injectée pour des conseils sûrs (contre-indications)
     const hp=S.healthProfile||{};
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',
+    const resp=await fetch(_aiUrl(),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'bodyStudy',images,gender:S.gender||'H',age:S.age||0,
         goal:S.goal||'muscle',discipline:S.discipline||'muscu',
@@ -1383,7 +1383,7 @@ async function analyzeBodySeries(){
       payload.prevImages=prev.photos.map((b,i)=>({data:b,type:'image/jpeg',label:(prev.slots&&prev.slots[i])||('p'+i)}));
       payload.prevAnalysis=prev.report?(prev.report.summary||''):'';
     }
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
+    const resp=await fetch(_aiUrl(),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)});
     const txt=await resp.text();
     let data;try{data=JSON.parse(txt);}catch(e){throw new Error('Réponse non-JSON: '+txt.substring(0,120));}
     if(data.status!=='ok'||!data.data)throw new Error(data.error||'Erreur analyse');

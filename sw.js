@@ -1,4 +1,4 @@
-const CACHE = 'ft-v427'; // Solution 4G PREPAREE (endormie) : worker.js (relais Cloudflare) + AI_PROXY_URL vide + _aiUrl() route bilan/programme/historique (repli Apps Script si vide = prod identique) + GUIDE-CLOUDFLARE.md
+const CACHE = 'ft-v428'; // Relais 4G : TOUS les appels IA routes via _aiUrl() (bilan, programme, historique, code-barres, etiquette, coach, morpho, etude du corps, bilan sanguin) — 12 au total, endormi (AI_PROXY_URL vide = prod identique)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
