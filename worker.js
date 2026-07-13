@@ -42,7 +42,14 @@ export default {
       const body = await request.text();
       const upstream = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8',
+          // On se fait passer pour un vrai navigateur iPhone : sinon Google sert parfois
+          // une page HTML (login/challenge) au « serveur du milieu » au lieu du JSON.
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'fr-FR,fr;q=0.9',
+        },
         body,
         redirect: 'follow', // la redirection Google est suivie ICI, côté serveur (fiable)
       });
