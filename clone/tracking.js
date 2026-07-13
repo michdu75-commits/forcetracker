@@ -905,18 +905,34 @@ function _resizeReport(file,cb){
     const img=new Image();
     img.onload=()=>{
       try{
-        // UNE SEULE image, côté le plus long ≤ 1500 px (l'API plafonne ~1568 de toute façon),
-        // JPEG 0.78 → payload léger (~200-300 Ko) et fiable sur iOS. Fix « Load failed » sur les
-        // rapports A4 denses (avant : 2 grosses tuiles envoyées ensemble = paquet trop lourd
-        // que Safari n'arrivait pas à pousser, même en wifi). 2026-07-13.
-        const M=1100;   // réduit (était 1500) pour alléger le paquet — piste « image trop lourde à l'envoi iOS »
-        let w=img.width,h=img.height;
-        const scale=Math.min(1,M/Math.max(w,h));
-        w=Math.round(w*scale); h=Math.round(h*scale);
-        const c=document.createElement('canvas');c.width=w;c.height=h;
-        c.getContext('2d').drawImage(img,0,0,w,h);
-        const data=c.toDataURL('image/jpeg',0.72).split(',')[1];
-        cb({tiles:[data], full:data});
+        // Largeur cible LISIBLE (1000 px), puis DÉCOUPAGE VERTICAL en tranches ≤ 1400 px de haut.
+        // ⚠️ Les exports « vue appli » des rapports sont ÉNORMÉMENT longs (ex. 1290×7623) : réduits
+        // en une seule image ils deviennent un filet illisible. On les découpe en tranches lisibles,
+        // tirées DIRECTEMENT de la source (pas de canvas géant → sûr sur iOS). 2026-07-13.
+        const TW=1000;
+        const scale=Math.min(1,TW/img.width);
+        const w=Math.round(img.width*scale);
+        const fullH=Math.round(img.height*scale);
+        const TILE=1400;
+        const tiles=[];
+        if(fullH<=TILE){
+          const c=document.createElement('canvas');c.width=w;c.height=fullH;
+          c.getContext('2d').drawImage(img,0,0,w,fullH);
+          tiles.push(c.toDataURL('image/jpeg',0.78).split(',')[1]);
+        }else{
+          const srcTileH=Math.round(TILE/scale), srcOver=Math.round(60/scale);
+          let sy=0;
+          while(sy<img.height){
+            const sh=Math.min(srcTileH,img.height-sy);
+            const th=Math.max(1,Math.round(sh*scale));
+            const c=document.createElement('canvas');c.width=w;c.height=th;
+            c.getContext('2d').drawImage(img,0,sy,img.width,sh,0,0,w,th);
+            tiles.push(c.toDataURL('image/jpeg',0.75).split(',')[1]);
+            if(sy+sh>=img.height)break;
+            sy+=srcTileH-srcOver;
+          }
+        }
+        cb({tiles:tiles, full:tiles[0]});
       }catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
     };
     img.onerror=()=>{if(typeof toast==='function')toast('Image illisible','error');};
@@ -941,12 +957,13 @@ function onBodyScanPhoto(input){
       const tiles=(out&&out.tiles)?out.tiles:(Array.isArray(out)?out:[out]);
       const full=(out&&out.full)?out.full:tiles[0];
       _showBsScan('data:image/jpeg;base64,'+full); // retour visuel : scan du rapport pendant la lecture IA
-      // ⚠️ ENVOI IDENTIQUE au code-barres photo (onBarcodePhotoIA) qui MARCHE : fetch SIMPLE,
-      // une seule image, .json() direct. On abandonne _postBodyScan / XHR / retry / tuiles —
-      // le code-barres prouve que ce transport passe (même serveur, même type de requête).
-      // (Le bug « versions coincées » faisait qu'on testait des versions périmées — corrigé v416/v417.)
+      // ENVOI comme l'import de programme (qui MARCHE) : plusieurs images en tranches lisibles,
+      // fetch SIMPLE, .json() direct. Les rapports « vue appli » très longs sont découpés (voir _resizeReport).
+      const images=tiles.map(t=>({data:t,type:'image/jpeg'}));
+      const payload=JSON.stringify({action:'importBodyScan',images,email:S.email||''});
+      window._bsLastKb=Math.round(payload.length/1024); window._bsLastTiles=tiles.length; // diagnostic
       const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'importBodyScan',image:tiles[0],imageType:'image/jpeg',email:S.email||''})});
+        body:payload});
       const data=await r.json();
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
@@ -959,9 +976,10 @@ function onBodyScanPhoto(input){
         toast('Rapport lu ✅ Vérifie puis Enregistre','success');
       });
     }catch(e){
-      // Diagnostic : le message indique désormais la PHASE (envoi / réception) + le type d'erreur.
+      // Diagnostic : nb de tranches + poids du paquet + type d'erreur → on voit tout de suite si c'est la taille.
       const detail=(e&&e.message)||'erreur inconnue';
-      _hideBsScan(()=>toast('Souci lecture : '+detail,'error'));
+      const info=window._bsLastTiles?(' ['+window._bsLastTiles+' img · '+window._bsLastKb+' Ko]'):'';
+      _hideBsScan(()=>toast('Souci lecture'+info+' : '+detail,'error'));
     }
   });
 }
