@@ -915,7 +915,7 @@ function _resizeReport(file,cb){
         w=Math.round(w*scale); h=Math.round(h*scale);
         const c=document.createElement('canvas');c.width=w;c.height=h;
         c.getContext('2d').drawImage(img,0,0,w,h);
-        const data=c.toDataURL('image/jpeg',0.78).split(',')[1];
+        const data=c.toDataURL('image/jpeg',0.85).split(',')[1]; // qualité d'origine (ft-v302, celle qui marchait)
         cb({tiles:[data], full:data});
       }catch(err){if(typeof toast==='function')toast('Image trop grande','error');}
     };
