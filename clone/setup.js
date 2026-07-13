@@ -253,7 +253,7 @@ function _cloudSync(){
       action:'saveProfile',email:S.email,authCode:_authCode(),
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
-      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,nutritionPhase:S.nutritionPhase,
+      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
@@ -1763,6 +1763,7 @@ function _applyRestoreData(raw){
   try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}
   try{if(d.neck)S.neck=parseFloat(d.neck)||0;}catch(e){}
   try{if(d.targetWeight)S.targetWeight=parseFloat(d.targetWeight)||0;}catch(e){}
+  try{if(d.manualKcal)S.manualKcal=parseFloat(d.manualKcal)||0;}catch(e){}
   try{if(d.waist)S.waist=parseFloat(d.waist)||0;}catch(e){}
   try{if(d.hip)S.hip=parseFloat(d.hip)||0;}catch(e){}
   try{if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;}catch(e){}
