@@ -948,7 +948,7 @@ function updateProteinBar() {
 
 // ─── ONBOARDING ──────────────────────────────────────────────
 let _obStep=1,_obGender='H',_obGoal='muscle',_obLevel='',_obDataRestored=false;
-const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',force:'ob-gf',equilibre:'ob-ge',endurance:'ob-gen'};
+const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',recomp:'ob-gr',force:'ob-gf',equilibre:'ob-ge',endurance:'ob-gen'};
 const _OB_LEVELS={debutant:'ob-lv-d',intermediaire:'ob-lv-i',confirme:'ob-lv-c'};
 
 function _initOb0(){

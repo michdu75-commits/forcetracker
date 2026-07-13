@@ -1,4 +1,4 @@
-const CACHE = 'ft-v408'; // Fix bilan corporel photo "Load failed" : payload allege + retry reseau + message clair
+const CACHE = 'ft-v409'; // PROMO nutrition : calories manuelles + objectif recomposition + "maxi" reps (retours Tatiana)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
