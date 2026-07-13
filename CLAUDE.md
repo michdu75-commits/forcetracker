@@ -461,6 +461,22 @@ La Script Property `PREMIUM_EMAILS` est régulièrement réécrite à `michdu75@
 - **Limites honnêtes** : le code est optionnel (invariant ci-dessus) ; 4 chiffres = anti-curieux, pas anti-pirate déterminé. Solide (salt+SHA256, vérif email) mais court.
 - ⚠️ **Ce code est la brique clé pour un futur « photos cryptées sur le Drive »** (chiffrement côté téléphone avec une clé dérivée du code perso → même l'admin ne voit que du charabia). Voir IDEES-FUTURES.md.
 
+### ⚠️ Bilan corporel photo (lecture du fichier de balance) — ÉTAT ACTUEL & pièges (PAS confirmé résolu, 2026-07-13)
+**Statut honnête** : bug récurrent « Load failed » à l'envoi de la photo de rapport de balance (MyBodyCheck/impédancemètre). Plusieurs fix tentés (ft-v408→v420). **La dernière version (v420 = découpe en tranches) n'a PAS encore été confirmée sur l'iPhone de Michel** — à revalider en vrai avant de dire « réglé ».
+
+**Faits diagnostiques ACQUIS (ne pas re-tester à zéro)** :
+- ✅ Les fichiers **texte (Excel/CSV)** de balance marchent. L'**import de PROGRAMME (images)** marche → **le transport réseau/images n'est PAS le problème** → le bug est **spécifique au bilan corporel**.
+- **Vraies causes trouvées** : (a) le **Service Worker restait bloqué en install** → Michel testait en boucle des **versions périmées** (le message d'erreur prouvait qu'il était resté en vieille version) — corrigé v416/v417 ; (b) certaines captures sont **ultra-longues** (ex. `1290×7623`, capture d'appli-balance déroulée) → écrasées en une bande illisible / payload cassé — corrigé v420 (`_resizeReport` découpe en tranches ~1000×1400 envoyées en `images:[]`).
+- **3 formats d'export MyBodyCheck** vus : A4 large `3720×5262` (le plus lisible ✅), ultra-long `1290×7623` (celui qui plantait), vue schéma-corps png. **Reco à Michel** : préférer le **rapport A4 large**, le plus fiable.
+- Le message d'erreur affiche maintenant **`[N img · X Ko]`** (nb de tranches + poids du payload) → sert à diagnostiquer sur le vrai téléphone.
+
+**Si ça replante — check-list AVANT de recoder** :
+1. **Vérifier la version qui tourne** (Menu → À propos) = bien la dernière (`ft-v422+`), sinon Michel est encore sur une version périmée (SW) → fermer/rouvrir, pas rediagnostiquer.
+2. Lire le **`[N img · X Ko]`** du message d'erreur : payload énorme ? nb de tranches aberrant ? échec réseau vs réponse backend invalide ?
+3. Distinguer **échec réseau** (« Load failed » / TypeError au `fetch`) vs **backend renvoie une erreur/JSON invalide** (lecture IA ratée). Ce ne sont pas les mêmes correctifs.
+4. Code : `onBodyScanPhoto`/`_resizeReport` (tracking.js), backend `handleImportBodyScan_` (Code.js, route `importBodyScan`). ⚠️ Du **code mort** traîne (`_postBodyScan`/`_xhrPostText`, pistes XHR/AbortController abandonnées) — ne pas s'y fier.
+5. Le **modèle backend a bougé** pendant le debug (Haiku ↔ Sonnet, `max_tokens`) → vérifier l'état réel déployé avant de conclure.
+
 ### Chasse au trigger fantôme PREMIUM_EMAILS (✅ 2026-06-30, Code.js @46)
 - **Trigger fantôme** : trigger installable inconnu dans l'UI Apps Script (invisible depuis clasp) réécrit `PREMIUM_EMAILS` — cause identifiée
 - **Double protection** : `PREMIUM_HARDCODED_` (priorité absolue) + `ensurePremiumEmails_()` appelée à chaque `doPost`
