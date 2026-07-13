@@ -1,4 +1,4 @@
-const CACHE = 'ft-v420'; // Bilan corporel photo : rapport TRES LONG (ex 1290x7623) decoupe en tranches lisibles + envoi multi-images comme l'import programme (qui marche) + diagnostic taille
+const CACHE = 'ft-v421'; // Retour de la barre « Installation de l'appli… X% » : install complete des images EN FOND (non bloquante, resumable, une seule fois par version via marqueur FULL_MARKER)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -110,14 +110,20 @@ const PRECACHE = [
 ];
 
 // Sentinelle de « santé du cache » : un fichier du CORE (précaché à l'install). S'il manque, c'est
-// que le cache a été vidé (iOS/manuel) → on réinstalle juste le CORE (rapide). ⚠️ NE PAS pointer sur
-// une figurine : avec l'install rapide, les images ne sont PLUS précachées → une sentinelle-figurine
-// serait toujours « absente » → ENSURE_PRECACHE re-téléchargerait les 15 Mo à CHAQUE ouverture
-// (barre « Installation… » bloquante sur 5G). Fix 2026-07-13.
+// que le cache a été vidé (iOS/manuel) → on réinstalle le CORE (rapide). ⚠️ NE PAS pointer sur
+// une figurine (le CORE seul ne les contient pas → fausse « absence »). Fix 2026-07-13.
 const PRECACHE_SENTINEL = './style.css';
 
+// Marqueur « installation complète terminée » : écrit dans le cache SEULEMENT quand precacheAll() a
+// fini de télécharger TOUTES les images. Tant qu'il manque, l'installation de fond (avec la barre
+// « 📦 Installation de l'appli… X% ») se (re)lance et REPREND là où elle en était — une fois posé,
+// elle ne se relance plus (fini le re-téléchargement des 15 Mo à chaque ouverture, bug 2026-07-13).
+const FULL_MARKER = './__ft_full_cache__';
+
 // Télécharge tous les assets dans le cache, fichier par fichier, en notifiant la progression.
-// Réutilisé par l'install ET par la réinstallation à la demande (bouton / auto-réparation).
+// Réutilisé par l'install complète en fond, le bouton « Vider le cache », l'auto-réparation.
+// Les fichiers DÉJÀ en cache sont sautés → l'install est RÉSUMABLE (si l'utilisateur ferme l'appli
+// en cours de route, la reprise ne re-télécharge que ce qui manque) et la barre reflète le vrai reste.
 async function precacheAll() {
   const cache = await caches.open(CACHE);
   const total = PRECACHE.length;
@@ -127,11 +133,12 @@ async function precacheAll() {
     clients.forEach(c => c.postMessage({type, done, total}));
   };
   for (const url of PRECACHE) {
-    // Fichier par fichier : si un asset manque/échoue, on continue (install jamais bloquée)
-    try { await cache.add(url); } catch (err) { /* skip */ }
+    const already = await cache.match(url);              // déjà en cache → on saute (reprise)
+    if (!already) { try { await cache.add(url); } catch (err) { /* skip : asset manquant, on continue */ } }
     done++;
     if (done === total || done % 4 === 0) await notify('PRECACHE_PROGRESS');
   }
+  try { await cache.put(FULL_MARKER, new Response('ok')); } catch (e) {} // pose le marqueur « fini »
   await notify('PRECACHE_DONE');
 }
 
@@ -155,8 +162,10 @@ self.addEventListener('install', e => {
 
 // Messages venant de l'app :
 //  - REPRECACHE      : réinstalle tout de force (après « Vider le cache »)
-//  - ENSURE_PRECACHE : vérifie que les figurines sont là ; sinon, réinstalle (auto-réparation
-//                      quand iOS a vidé le cache tout seul, ou après un vidage navigateur)
+//  - ENSURE_PRECACHE : envoyé à chaque ouverture. Répare le CORE si le cache a été vidé, PUIS lance
+//                      l'installation complète des images EN FOND (barre « 📦 Installation… X% »)
+//                      tant que le marqueur « fini » n'est pas posé. Non bloquant (l'appli reste
+//                      utilisable pendant), résumable, et ne se relance plus une fois complet.
 self.addEventListener('message', e => {
   const t = e.data && e.data.type;
   if (t === 'REPRECACHE') {
@@ -164,10 +173,13 @@ self.addEventListener('message', e => {
   } else if (t === 'ENSURE_PRECACHE') {
     e.waitUntil((async () => {
       const cache = await caches.open(CACHE);
-      const hit = await cache.match(PRECACHE_SENTINEL);
-      if (!hit) { await precacheCore(); }           // cache vidé → on répare le CORE (rapide, pas les 15 Mo d'images)
-      else {
-        // déjà en place : signale « fini » pour masquer une éventuelle barre
+      const coreOk = await cache.match(PRECACHE_SENTINEL);
+      if (!coreOk) { await precacheCore(); }        // cache vidé → répare d'abord le code (rapide)
+      const fullOk = await cache.match(FULL_MARKER);
+      if (!fullOk) {
+        await precacheAll();                        // 1re install / mise à jour : images en fond + barre (une seule fois)
+      } else {
+        // tout est déjà là : signale « fini » pour masquer une éventuelle barre, ne re-télécharge rien
         const clients = await self.clients.matchAll({includeUncontrolled:true});
         clients.forEach(c => c.postMessage({type:'PRECACHE_DONE', done:PRECACHE.length, total:PRECACHE.length}));
       }
