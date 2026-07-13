@@ -341,8 +341,8 @@ function macrosForKcal(kcal){
   const goal=S.goal||'muscle';
   const cp=getMensCyclePhase();
   const lutealProt=cp&&cp.phase==='Lutéale'?0.2:0;
-  const protRatio=({muscle:2.2,perte:2.5,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
-  const fatRatio={muscle:0.9,perte:0.8,force:1.0,equilibre:0.85,endurance:0.75}[goal]||0.9;
+  const protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
+  const fatRatio={muscle:0.9,perte:0.8,recomp:0.85,force:1.0,equilibre:0.85,endurance:0.75}[goal]||0.9;
   const prot_g=Math.round((S.bw||0)*protRatio);
   const fat_g=Math.round((S.bw||0)*fatRatio);
   const carbs_g=Math.max(0,Math.round((kcal-prot_g*4-fat_g*9)/4));
@@ -354,7 +354,9 @@ function autoKcal(phase){
   const goal=S.goal||'muscle';
   const cp=getMensCyclePhase();
   const lutealBonus=cp&&cp.phase==='Lutéale'?150:0;
-  const goalDelta={muscle:350,perte:-450,force:200,equilibre:0,endurance:100}[goal]||350;
+  // recomp (perte de gras + muscle) : léger déficit — le corps pioche dans le gras,
+  // les protéines élevées (voir macrosForKcal) protègent le muscle → pas de « skinny fat ».
+  const goalDelta={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}[goal]||350;
   const phaseAdj=phase==='charge'?100:-100;
   return tdee+goalDelta+phaseAdj+lutealBonus;
 }
@@ -407,7 +409,7 @@ function getMeals(macros,phase){
       [0.15,'🌙 Dîner','Riz + poulet + légumes — Reconstruction musculaire nocturne'],
     ],
   };
-  const plan=plans[goal]||plans.muscle;
+  const plan=plans[goal]||(goal==='recomp'?plans.perte:plans.muscle); // recomp → plan orienté satiété/perte de gras
   return plan.map(([pct,name,desc])=>{
     const kcal=Math.round(macros.calories*pct);
     const prot=Math.round(macros.prot_g*pct);

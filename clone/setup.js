@@ -1460,17 +1460,18 @@ function renderBFCard(){
   </div>`;
 }
 
-const GOAL_LABELS={muscle:'Prise de muscle',perte:'Perte de poids',force:'Force maximale',equilibre:'Rééquilibrage',endurance:'Endurance'};
+const GOAL_LABELS={muscle:'Prise de muscle',perte:'Perte de poids',recomp:'Perte de gras + muscle',force:'Force maximale',equilibre:'Rééquilibrage',endurance:'Endurance'};
 const GOAL_DESCS={
   muscle:'Surplus de +350 kcal · Protéines 2.2 g/kg · Macros orientées hypertrophie avec charge glucidique.',
   perte:'Déficit de −450 kcal · Protéines 2.5 g/kg (préservation musculaire) · Glucides réduits, satiété maximale.',
+  recomp:'Recomposition : léger déficit −250 kcal · Protéines très élevées 2.6 g/kg → perdre du gras tout en gardant/formant du muscle (éviter le « skinny fat »). Idéal muscles toniques.',
   force:'Surplus léger +200 kcal · Protéines 2.0 g/kg · Lipides élevés pour le support hormonal, énergie maximale.',
   equilibre:'Maintenance calorique · Protéines 2.0 g/kg · Améliorer la composition corporelle sans prise/perte de masse.',
   endurance:'Surplus modéré +100 kcal · Protéines 1.7 g/kg · Glucides élevés pour le glycogène musculaire.',
 };
 function setGoal(g){
   S.goal=g;persist();
-  ['muscle','perte','force','equilibre','endurance'].forEach(x=>{
+  ['muscle','perte','recomp','force','equilibre','endurance'].forEach(x=>{
     const el=document.getElementById('g-'+x);if(el)el.classList.toggle('active',x===g);
   });
   const el=document.getElementById('goal-desc');
