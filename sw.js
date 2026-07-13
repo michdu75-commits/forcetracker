@@ -1,4 +1,4 @@
-const CACHE = 'ft-v423'; // Bilan corporel photo : envoi robuste (lecture .text() + 3 tentatives sur echec reseau 4G) + message d'erreur qui distingue reseau vs reponse serveur (diagnostic)
+const CACHE = 'ft-v424'; // STOP telechargement auto des 15 Mo d'images sur 4G a chaque MAJ (mangeait les donnees + saturait la connexion → envois serveur en Load failed). Images en cache A LA DEMANDE. Barre = uniquement via bouton « Vider le cache » (explicite, en wifi)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -161,11 +161,13 @@ self.addEventListener('install', e => {
 });
 
 // Messages venant de l'app :
-//  - REPRECACHE      : réinstalle tout de force (après « Vider le cache »)
-//  - ENSURE_PRECACHE : envoyé à chaque ouverture. Répare le CORE si le cache a été vidé, PUIS lance
-//                      l'installation complète des images EN FOND (barre « 📦 Installation… X% »)
-//                      tant que le marqueur « fini » n'est pas posé. Non bloquant (l'appli reste
-//                      utilisable pendant), résumable, et ne se relance plus une fois complet.
+//  - REPRECACHE      : réinstalle TOUT de force (bouton « Vider le cache ») → montre la barre.
+//                      C'est EXPLICITE : l'utilisateur le déclenche (à faire en wifi de préférence).
+//  - ENSURE_PRECACHE : envoyé à chaque ouverture. Répare UNIQUEMENT le CORE (code) si le cache a été
+//                      vidé. ⚠️ NE re-télécharge PLUS les 15 Mo d'images automatiquement en fond :
+//                      ça mangeait les données mobiles ET saturait la 4G À CHAQUE mise à jour → les
+//                      envois au serveur (bilan, import) tombaient en « Load failed » (2026-07-13).
+//                      Les images se mettent en cache À LA DEMANDE (fetch handler) — offline OK après 1re vue.
 self.addEventListener('message', e => {
   const t = e.data && e.data.type;
   if (t === 'REPRECACHE') {
@@ -174,15 +176,10 @@ self.addEventListener('message', e => {
     e.waitUntil((async () => {
       const cache = await caches.open(CACHE);
       const coreOk = await cache.match(PRECACHE_SENTINEL);
-      if (!coreOk) { await precacheCore(); }        // cache vidé → répare d'abord le code (rapide)
-      const fullOk = await cache.match(FULL_MARKER);
-      if (!fullOk) {
-        await precacheAll();                        // 1re install / mise à jour : images en fond + barre (une seule fois)
-      } else {
-        // tout est déjà là : signale « fini » pour masquer une éventuelle barre, ne re-télécharge rien
-        const clients = await self.clients.matchAll({includeUncontrolled:true});
-        clients.forEach(c => c.postMessage({type:'PRECACHE_DONE', done:PRECACHE.length, total:PRECACHE.length}));
-      }
+      if (!coreOk) { await precacheCore(); }        // cache vidé → répare le code (rapide, PAS les 15 Mo)
+      // masque une éventuelle barre — aucun téléchargement de fond ici
+      const clients = await self.clients.matchAll({includeUncontrolled:true});
+      clients.forEach(c => c.postMessage({type:'PRECACHE_DONE', done:1, total:1}));
     })());
   }
 });
