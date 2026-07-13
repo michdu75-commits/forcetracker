@@ -960,27 +960,27 @@ function onBodyScanPhoto(input){
         toast('Rapport lu ✅ Vérifie puis Enregistre','success');
       });
     }catch(e){
-      const raw=(e&&e.message)||'';
-      // "Load failed"/"Failed to fetch"/abort = échec réseau (aucune réponse reçue) → message clair, on invite à réessayer
-      const msg=/load failed|failed to fetch|network|timeout|abort/i.test(raw)?'réseau instable, réessaie 🙂':(raw||'réessaie');
-      _hideBsScan(()=>toast('Souci lecture : '+msg,'error'));
+      // Diagnostic : on affiche le type + message exact de l'erreur (name), pour identifier
+      // précisément la cause si ça échoue encore (ex. "TypeError: Load failed" vs "AbortError").
+      const detail=(e&&(e.name?e.name+': ':'')+(e.message||''))||'erreur inconnue';
+      _hideBsScan(()=>toast('Souci lecture : '+detail,'error'));
     }
   });
 }
-// POST du rapport corporel avec retry réseau (3 tentatives, backoff) + timeout 60 s.
-// Ne retente QUE sur échec réseau (fetch rejeté / abort) ; une réponse reçue mais illisible
-// n'est pas retentée. Corrige les "Load failed" transitoires sur réseau faible (2026-07-13).
+// POST du rapport corporel avec retry réseau (3 tentatives, backoff). Fetch IDENTIQUE au Coach
+// photo (qui marche) : pas d'AbortController. Ne retente QUE sur échec réseau (fetch rejeté) ;
+// une réponse reçue mais illisible n'est pas retentée.
 async function _postBodyScan(payload){
   let lastErr;
   for(let attempt=0;attempt<3;attempt++){
     if(attempt>0)await new Promise(r=>setTimeout(r,attempt*1500)); // backoff 1,5 s puis 3 s
     let resp;
     try{
-      const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
-      const to=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(e){}},90000):0;
-      resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:payload,signal:ctrl?ctrl.signal:undefined});
-      if(to)clearTimeout(to);
+      // ⚠️ EXACTEMENT le même fetch que le Coach photo (qui marche) : PAS d'AbortController/signal.
+      // Le signal d'abandon provoquait des « Load failed » spurieux sur iOS Safari pour les requêtes
+      // longues (analyse IA) — c'était ça le vrai coupable, pas le poids de l'image (2026-07-13).
+      resp=await fetch(S.url,{method:'POST',redirect:'follow',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
     }catch(e){ lastErr=e; continue; } // échec réseau → on retente
     const txt=await resp.text();
     try{return JSON.parse(txt);}catch(e){throw new Error('réponse illisible du serveur');} // réponse reçue → pas de retry
