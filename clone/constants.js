@@ -132,6 +132,13 @@ const BIG4=['Squat à la Barre','Soulevé de Terre','Développé Couché','Déve
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec';
+// Relais IA optionnel (Cloudflare Worker — voir worker.js / GUIDE-CLOUDFLARE.md). Il répond
+// DIRECT (sans la redirection Google qui casse en 4G/5G) et relaie vers Apps Script côté serveur.
+// VIDE = comportement actuel (Apps Script direct) → aucun changement tant que ce n'est pas rempli.
+// Une fois le Worker créé, coller son URL ici (ex. 'https://forcetracker-ia.xxxx.workers.dev').
+const AI_PROXY_URL='';
+// URL à utiliser pour les appels IA (photo/vision) : le relais s'il est configuré, sinon Apps Script.
+function _aiUrl(){ try{ if(typeof AI_PROXY_URL!=='undefined'&&AI_PROXY_URL) return AI_PROXY_URL; }catch(e){} return (typeof S!=='undefined'&&S&&S.url)?S.url:DEFAULT_URL; }
 const SET_TYPES=['N','É','X'];
 const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
 

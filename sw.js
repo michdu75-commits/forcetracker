@@ -1,4 +1,4 @@
-const CACHE = 'ft-v426'; // Rappel « à tester en wifi » sous le bouton photo du bilan (sur le clone) pour se souvenir que l'envoi photo ne marche qu'en wifi
+const CACHE = 'ft-v427'; // Solution 4G PREPAREE (endormie) : worker.js (relais Cloudflare) + AI_PROXY_URL vide + _aiUrl() route bilan/programme/historique (repli Apps Script si vide = prod identique) + GUIDE-CLOUDFLARE.md
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

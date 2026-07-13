@@ -2439,7 +2439,7 @@ async function analyzeImportPhotos(){
   impGoStep(3);
   let _rawResp='';
   try{
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+    const r=await fetch(_aiUrl(),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'importProgram',images:_impPhotos})});
     _rawResp=await r.text();
@@ -2671,7 +2671,7 @@ function removeHistPhoto(i){
 // Chaque lot est analysé séparément, puis les séances de tous les lots sont fusionnées.
 const _HIST_BATCH=3;
 async function _histAnalyzeBatch(imgs){
-  const r=await fetch(S.url,{method:'POST',redirect:'follow',
+  const r=await fetch(_aiUrl(),{method:'POST',redirect:'follow',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({action:'importHistory',images:imgs})});
   const raw=await r.text();

@@ -45,12 +45,16 @@ Appli (4G) ──POST direct──▶ Cloudflare Worker ──▶ API Anthropic 
 5. Tester le bilan photo **en 4G**.
 
 ## 6. Plan des 2 semaines (Michel sans 4G)
-- [ ] Écrire `worker.js` (body-scan + programme d'abord).
-- [ ] Ajouter `AI_PROXY_URL` + `_aiFetch` + repli Apps Script, sur le **clone**.
-- [ ] Router bilan + programme via `_aiFetch` sur le clone.
-- [ ] Tester le **repli** (Worker absent → Apps Script) sur le clone (ne casse rien).
-- [ ] Écrire le **guide d'installation Cloudflare** ultra-simple pour Michel.
-- [ ] (Quand 4G revient) Michel déploie le Worker + teste en 4G → si OK, promotion prod + réactivation du bouton photo.
+- [x] **Écrire `worker.js`** — relais générique (transmet à Apps Script, répond direct+CORS). ✅ 2026-07-13
+      → Choix : **relais** (pas de duplication des prompts, aucune clé dans Cloudflare). Bien mieux que dupliquer les handlers.
+- [x] **Ajouter `AI_PROXY_URL` + `_aiUrl()`** dans constants.js (vide par défaut = inerte). ✅
+- [x] **Router bilan + programme + historique** via `_aiUrl()` (tracking.js, log.js). ✅
+- [x] **Tester le repli** : `AI_PROXY_URL` vide → `_aiUrl()===S.url` (Apps Script), 0 erreur JS (Playwright). ✅ Prod strictement identique.
+- [x] **Guide d'installation** → `GUIDE-CLOUDFLARE.md`. ✅
+- [ ] (Quand 4G revient) Michel crée le Worker (coller `worker.js`) → me donne l'URL → je remplis `AI_PROXY_URL` → teste en 4G.
+- [ ] Si OK en 4G : router aussi `coach`/`morphoAnalysis`/`bodyStudy`/`readBarcode`/`foodLabel` via `_aiUrl()`, **réactiver le bouton photo bilan en prod** (retirer le gate `__FT_CLONE__`), promotion prod.
+
+**État au 2026-07-13** : tout est PRÊT et ENDORMI. `worker.js` + guide à la racine. Le branchement (`_aiUrl`) est en place mais inactif (`AI_PROXY_URL=''`) → aucun changement pour personne tant que Michel n'a pas collé l'URL de son Worker. Il ne reste que les ~5 min de réglage Cloudflare de Michel (au retour de sa 4G).
 
 ## 7. Notes / risques
 - **Pas testable en vrai avant le retour de la 4G de Michel** — on prépare, on ne promet pas que ça marche à 100 % tant que testé sur son réseau.

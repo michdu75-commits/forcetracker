@@ -971,7 +971,7 @@ function onBodyScanPhoto(input){
       let raw='', netErr=null;
       for(let attempt=1;attempt<=3;attempt++){
         try{
-          const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
+          const r=await fetch(_aiUrl(),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
           raw=await r.text(); netErr=null; break;               // réponse reçue (JSON ou pas)
         }catch(err){
           netErr=err;                                            // « Load failed » = échec réseau AVANT toute réponse
