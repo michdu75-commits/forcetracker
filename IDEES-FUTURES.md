@@ -31,6 +31,30 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 📸🔒 Sauvegarde des PHOTOS sur le Drive de Force Tracker (cryptées par le code perso) — chantier discuté 2026-07-13
+
+**Le besoin (Michel)** : sur un changement de téléphone, on récupère toutes les DONNÉES mais **pas les photos** (photos d'exercices ajoutées, photos brutes des analyses morpho/bilan corporel). « C'est la base d'une appli de tout récupérer. »
+
+**Pourquoi c'est bloqué aujourd'hui** : la sauvegarde cloud par personne (Apps Script `u_{email}`) a une limite **9 Mo/personne** → une seule photo peut peser autant que 10 ans de séances. On protège donc l'essentiel (données) et on laisse les photos en local.
+
+**La solution (idée de Michel, validée faisable)** :
+1. Stocker les photos sur le **Drive de Force Tracker** (`forcetracker.app@gmail.com`, **15 Go** gratuits vs 9 Mo — le backend écrit déjà dans ce Drive, dossier `ForceTracker-Backups/`). Un dossier/fichier par email.
+2. **Crypter chaque photo sur le téléphone** avec une clé dérivée du **code d'accès perso** (`ft4_authcode` — voir CLAUDE.md « Protection de compte ») AVANT l'upload → sur le Drive, même l'admin ne voit que du charabia.
+3. Restauration sur nouveau tél : email + code → le code **décrypte** les photos.
+
+**Limites honnêtes à assumer / prévoir** :
+- ⚠️ **Code oublié = photos perdues** (le prix du vraiment-privé ; les données, elles, restent récupérables).
+- Code 4 chiffres = faible → prévoir d'**autoriser un code plus long** (ou un vrai mot de passe optionnel).
+- Code optionnel aujourd'hui → sans code : soit on ne stocke pas les photos, soit non cryptées (choix clair de l'utilisateur).
+- 🔒 **Données sensibles** (photos de corps, testeuses) → responsabilité RGPD, note de confidentialité honnête obligatoire.
+- Surveiller le quota Drive (15 Go partagé Gmail/Drive/Photos) → Google One si ça grandit.
+
+**« Sauvegarde complète » = déjà là pour les données** : `backupAllUserData_()` dumpe déjà tout (`u_{email}`) sur ce Drive chaque nuit à 2h. Ce chantier = **ajouter les photos** à cette logique.
+
+**Statut** : discuté, non commencé. Gros chantier (crypto côté téléphone + stockage Drive + backend) → à faire une nuit, avec backup + branche, mini-plan validé par Michel AVANT de coder.
+
+---
+
 # 🌿 CHANTIERS SUR BRANCHES (workflow branche → test /clone/ → validation → mise en ligne)
 
 *(Décidé avec Michel le 2026-07-11 : construire chaque gros chantier sur SA branche, isolé de la prod ; tester dans le bac à sable `/clone/` ; ne mettre en ligne que sur validation.)*
