@@ -2208,6 +2208,7 @@ checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
 checkSuperTesterWelcome(); // message « super testeur » une seule fois (Christophe)
 checkEmmaWelcome(); // pop perso Emma : bienvenue Espace Testeur + boîte à idées (une seule fois)
+checkTesterGuide(); // guide testeuses (Eline, Emma, Tanna) : tour de l'app + boîte à idées (une seule fois)
 checkAnnouncements(); // pop perso Christophe + « Quoi de neuf » pour tous (une seule fois)
 checkTesterEq();      // pop testeurs : différenciation des types de matériel (test, une seule fois)
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
@@ -2228,19 +2229,48 @@ function checkSuperTesterWelcome(){
 function showSuperWelcome(){const o=document.getElementById('ov-super-welcome');if(o)o.classList.add('open');}
 function closeSuperWelcome(){try{localStorage.setItem('ft4_super_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-super-welcome');if(o)o.classList.remove('open');}
 // ─── Pop-up perso Emma : bienvenue Espace Testeur + boîte à idées (une seule fois) ──
+// ⚠️ Remplacé par le guide testeuses unifié (checkTesterGuide) : Emma est une « guided tester »,
+//    donc son ancienne pop perso ne se déclenche plus (le guide la couvre).
 function _isEmma(){return (S.email||'').trim().toLowerCase()==='emma.david16@gmail.com';}
 function checkEmmaWelcome(){
   try{
+    if(_isGuidedTester())return; // le guide testeuses unifié couvre Emma
     if(!_isEmma())return;
     if(localStorage.getItem('ft4_emma_welcome_v1'))return;
     setTimeout(function(){const o=document.getElementById('ov-emma-welcome');if(o)o.classList.add('open');},1000);
   }catch(e){}
 }
 function closeEmmaWelcome(){try{localStorage.setItem('ft4_emma_welcome_v1','1');}catch(e){}const o=document.getElementById('ov-emma-welcome');if(o)o.classList.remove('open');}
+// ─── Guide testeuses (Eline, Emma, Tanna) : bienvenue + tour de l'app + boîte à idées (une seule fois) ──
+function _isGuidedTester(){
+  var e=(S.email||'').trim().toLowerCase();
+  return ['elineazs32@gmail.com','emma.david16@gmail.com','tanna.valery.studio@gmail.com'].indexOf(e)>=0;
+}
+function checkTesterGuide(){
+  try{
+    if(!_isGuidedTester())return;
+    if(localStorage.getItem('ft4_tester_guide_v1'))return;
+    setTimeout(showTesterGuide,1100);
+  }catch(e){}
+}
+function showTesterGuide(){
+  // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
+  var busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-billoute','ov-bday','ov-tester-eq'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  if(busy){setTimeout(showTesterGuide,2500);return;}
+  var span=document.getElementById('tguide-name');
+  if(span){var f=((S.name||'').trim().split(/\s+/)[0]||'').replace(/[<>&]/g,'');span.textContent=f?(', '+f):'';}
+  var o=document.getElementById('ov-tester-guide');if(o)o.classList.add('open');
+}
+function closeTesterGuide(){
+  try{localStorage.setItem('ft4_tester_guide_v1','1');localStorage.setItem('ft4_emma_welcome_v1','1');}catch(e){}
+  var o=document.getElementById('ov-tester-guide');if(o)o.classList.remove('open');
+}
 // ─── Annonces : pop-up perso Christophe + « Quoi de neuf » pour tous (une seule fois) ──
 function _isChristophe(){return (S.email||'').trim().toLowerCase()==='christophe@famillelanglois.fr';}
 function checkAnnouncements(){
   try{
+    // Testeuses (Eline/Emma/Tanna) : leur guide passe en priorité — pas de « Quoi de neuf » par-dessus tant qu'elles ne l'ont pas vu.
+    if(_isGuidedTester()&&!localStorage.getItem('ft4_tester_guide_v1'))return;
     // Christophe : son pop perso « billoute » d'abord ; une fois vu, il reçoit les annonces générales comme tout le monde.
     if(_isChristophe()&&!localStorage.getItem('ft4_billoute_v3')){
       setTimeout(showBilloute,1000);
@@ -2293,15 +2323,17 @@ function checkTesterEq(){
 }
 function showTesterEq(){
   // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
-  const busy=['ov-whatsnew','ov-super-welcome','ov-billoute','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-billoute','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
   if(busy){setTimeout(showTesterEq,2500);return;}
   const o=document.getElementById('ov-tester-eq');if(o)o.classList.add('open');
 }
 function closeTesterEq(){try{localStorage.setItem('ft4_tester_eq_v1','1');}catch(e){}const o=document.getElementById('ov-tester-eq');if(o)o.classList.remove('open');}
 function openTesterSpace(){
-  // L'Espace Testeur (dont la boîte à idées) est réservé aux vrais testeurs récompensés.
-  // Michel a le suivi photos via le panneau Admin, mais PAS cet espace ni la boîte à idées.
-  if(!(typeof _isTester==='function'&&_isTester())||!_isSuperTester()){toast('Espace réservé au testeur','info');return;}
+  // L'Espace Testeur (dont la boîte à idées) est ouvert à TOUS les testeurs récompensés.
+  // Le suivi photos à l'intérieur reste réservé aux super testeurs (voir _renderTesterSpace).
+  // Michel a le suivi photos via le panneau Admin.
+  const isTester=(typeof _isTester==='function'&&_isTester());
+  if(!isTester&&!(typeof _isSuperTester==='function'&&_isSuperTester())){toast('Espace réservé aux testeurs','info');return;}
   _renderTesterSpace();const o=document.getElementById('ov-tester-space');if(o)o.classList.add('open');}
 function closeTesterSpace(){const o=document.getElementById('ov-tester-space');if(o)o.classList.remove('open');}
 function _openTesterPhotoAnalysis(){ if(typeof openBodySeries==='function')openBodySeries(); else if(typeof openBodyStudy==='function')openBodyStudy(); else toast('Analyse photos bientôt disponible','info'); }
@@ -2310,12 +2342,16 @@ function _renderTesterSpace(){
   const esc=(t)=>(typeof _escNote==='function'?_escNote(t):(t||'')).replace(/\n/g,'<br>');
   const ideas=(S.testerIdeas||[]).slice().reverse();
   const ideasHtml=ideas.length?ideas.map(it=>'<div class="tsp-idea">'+esc(it.text)+'<span class="tsp-idea-date">'+(it.date||'')+(it.photos?' · '+it.photos+' photo'+(it.photos>1?'s':''):'')+(it.sent?' · envoyée ✓':'')+'</span></div>').join(''):'';
+  // Le suivi photos approfondi reste réservé aux super testeurs (coûteux) ; la boîte à idées est pour tous les testeurs.
+  const photoCard=(typeof _isSuperTester==='function'&&_isSuperTester())
+    ? '<div class="tsp-card">'
+      +'<h4>🔬 Analyse approfondie de tes photos</h4>'
+      +'<p>En avant-première rien que pour toi. Prends une série de 4 photos (face relâché, face contracté, dos contracté, profil) — l’IA fait un bilan complet. <b>Jusqu’à 4 séries par mois</b>, comparées entre elles pour suivre ton évolution.</p>'
+      +'<button class="btn" onclick="closeTesterSpace();_openTesterPhotoAnalysis();" style="width:100%;padding:12px;background:rgba(234,179,8,.16);border:1px solid rgba(234,179,8,.42);color:var(--gold);font-weight:800;">📸 Mon suivi photos</button>'
+      +'</div>'
+    : '';
   body.innerHTML=
-    '<div class="tsp-card">'
-    +'<h4>🔬 Analyse approfondie de tes photos</h4>'
-    +'<p>En avant-première rien que pour toi. Prends une série de 4 photos (face relâché, face contracté, dos contracté, profil) — l’IA fait un bilan complet. <b>Jusqu’à 4 séries par mois</b>, comparées entre elles pour suivre ton évolution.</p>'
-    +'<button class="btn" onclick="closeTesterSpace();_openTesterPhotoAnalysis();" style="width:100%;padding:12px;background:rgba(234,179,8,.16);border:1px solid rgba(234,179,8,.42);color:var(--gold);font-weight:800;">📸 Mon suivi photos</button>'
-    +'</div>'
+    photoCard
     +'<div class="tsp-card">'
     +'<h4>💡 Ta boîte à idées</h4>'
     +'<p>Écris ce que tu aimerais, joins des photos ou des captures d’écran. Ça remonte direct à Michel.</p>'

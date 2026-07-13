@@ -1,4 +1,4 @@
-const CACHE = 'ft-v406'; // Nouvelle testeuse : tanna.valery.studio@gmail.com (statut Testeur Fondateur + premium a vie)
+const CACHE = 'ft-v407'; // Boite a idees ouverte a TOUS les testeurs + pop-up guide testeuses (Eline/Emma/Tanna)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

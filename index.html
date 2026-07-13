@@ -1151,6 +1151,24 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
   </div>
 </div>
 
+<!-- POP-UP TESTEUSES (Eline, Emma, Tanna) — bienvenue + tour de l'app + boîte à idées (une seule fois) -->
+<div class="overlay" id="ov-tester-guide" style="z-index:9999;">
+  <div class="modal" style="max-width:410px;text-align:center;">
+    <div style="font-size:50px;line-height:1;">🎉</div>
+    <div style="font-size:22px;font-weight:900;color:var(--gold);margin-top:8px;">Bienvenue dans l'équipe<span id="tguide-name"></span> !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Tu fais partie des <b style="color:var(--t1);">testeuses</b> de Force Tracker 🙏<br>Voici ce que tu peux faire — et surtout comment m'aider à améliorer l'appli 👇</div>
+    <div style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;">
+      <div class="sw-feat"><span>🏋️</span><div><b>Suivre tes séances</b><small>Note tes exercices, séries, reps et poids. L'appli calcule tes records et ta progression toute seule.</small></div></div>
+      <div class="sw-feat"><span>📋</span><div><b>Tes programmes</b><small>Crée ou importe un programme (photo / PDF), charge-le en séance — les poids de la dernière fois reviennent tout seuls.</small></div></div>
+      <div class="sw-feat"><span>🤖</span><div><b>Ton coach Milo (IA)</b><small>Un vrai coach dans ta poche : pose-lui tes questions, il connaît ton profil et tes séances. <b>Illimité pour toi</b> ⭐</small></div></div>
+      <div class="sw-feat"><span>📈</span><div><b>Tes progrès</b><small>Graphiques de force, de poids, de masse grasse, et analyse de tes photos d'évolution.</small></div></div>
+      <div class="sw-feat"><span>💡</span><div><b>La boîte à idées — le plus important</b><small>Une idée, un truc qui te gêne, un bug, un manque ? <b>Écris-le moi</b> (tu peux joindre des photos ou des captures d'écran). → <b>Accueil → carte dorée « Testeur » → Espace Testeur → Boîte à idées</b>. Je reçois tout direct, et c'est comme ça que l'appli grandit. 🙏</small></div></div>
+    </div>
+    <button class="btn btn-red" onclick="closeTesterGuide();openTesterSpace();" style="width:100%;margin-top:16px;padding:13px;font-size:15px;">Voir ma boîte à idées →</button>
+    <button class="btn btn-bg2" onclick="closeTesterGuide()" style="width:100%;margin-top:8px;">Plus tard</button>
+  </div>
+</div>
+
 <!-- POP-UP « Quoi de neuf » — tout le monde, une seule fois -->
 <div class="overlay" id="ov-whatsnew" style="z-index:500;">
   <div class="modal" style="max-width:400px;text-align:center;">
