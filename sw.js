@@ -1,4 +1,4 @@
-const CACHE = 'ft-v413'; // Bilan corporel photo : SUPPRESSION de l'AbortController (vrai coupable des "Load failed" iOS) -> fetch identique au Coach photo qui marche + message d'erreur detaille
+const CACHE = 'ft-v414'; // Bilan corporel photo : modele Haiku (rapide, la reponse revient avant qu'iOS coupe) + retry a la reception + diagnostic par phase (envoi/reception)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

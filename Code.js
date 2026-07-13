@@ -1584,7 +1584,10 @@ function handleImportBodyScan_(body) {
     const resp = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
       method:'post',
       headers:{ 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
-      payload: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:1024, messages:[{role:'user', content:userContent}] }),
+      // Haiku 4.5 : bien plus RAPIDE que Sonnet (~5-10 s au lieu de 30-60 s) → la réponse revient
+      // avant qu'iOS Safari ne coupe la requête longue (« TypeError: Load failed »). Le rapport est
+      // un document net imprimé → Haiku lit les chiffres sans souci (2026-07-13).
+      payload: JSON.stringify({ model:'claude-haiku-4-5', max_tokens:1024, messages:[{role:'user', content:userContent}] }),
       muteHttpExceptions:true
     });
     const result = JSON.parse(resp.getContentText());
