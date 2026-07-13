@@ -57,7 +57,16 @@ Appli (4G) ──POST direct──▶ Cloudflare Worker ──▶ API Anthropic 
 - [ ] (Quand 4G revient) Michel crée le Worker (coller `worker.js`) → me donne l'URL → je remplis `AI_PROXY_URL` → teste en 4G (bilan + code-barres + étiquette).
 - [ ] Si OK en 4G : **réactiver le bouton photo bilan en prod** (retirer le gate `__FT_CLONE__`), promotion prod.
 
-**État au 2026-07-13** : tout est PRÊT et ENDORMI. `worker.js` + guide à la racine. Les **12 appels IA** passent par `_aiUrl()` mais restent sur Apps Script tant que `AI_PROXY_URL=''` → aucun changement pour personne. Vérifié Playwright : `_aiUrl()===S.url`, 0 erreur JS. Il ne reste que les ~5 min de réglage Cloudflare de Michel (au retour de sa 4G) → et **code-barres + étiquette + bilan + coach + morpho** marcheront en 4G d'un coup.
+## 8. SESSION 2026-07-13 soir — Worker créé + PREMIER RÉSULTAT (à reprendre demain)
+- ✅ Michel a créé son compte Cloudflare + le Worker **`dry-field-e931.forcetracker-app.workers.dev`** (relais déployé, version « e5132246 (Active) », 0 erreur).
+- ✅ Le Worker est branché sur le CLONE via `AI_PROXY_URL` (condition `window.__FT_CLONE__`) — **PROD reste inerte** (Apps Script).
+- 🏆 **VICTOIRE PARTIELLE** : test bilan photo sur le clone en **5G → PLUS de « Load failed »** ! La requête passe par Cloudflare et une réponse revient. **Le mur réseau est cassé.**
+- ❌ **Souci restant** : Apps Script renvoie une **page HTML** (`<!DOCTYPE html><html><head><link rel="s...`) au Worker au lieu du JSON → l'app affiche « Réponse serveur : <!DOCTYPE html>… ». Google sert une page (login/challenge) au « serveur du milieu ».
+- 🔧 **Fix tenté (à finir demain)** : `worker.js` mis à jour avec un **User-Agent Safari iPhone** + `Accept: application/json` → pour que Google traite le Worker comme un vrai navigateur. **Michel doit coller cette nouvelle version dans le Worker + Deploy + re-tester** (il a arrêté avant de confirmer le collage — session coupée réseau).
+- 🅱️ **PLAN B si le User-Agent ne suffit pas** (blocage Google par IP datacenter) : le Worker appelle **Anthropic directement** (clé `ANTHROPIC_API_KEY` en variable secrète Cloudflare + prompts répliqués OU l'app envoie le prompt tout fait). Plus gros, mais contourne Google totalement.
+- **REPRENDRE DEMAIN** : ① Michel colle le `worker.js` à jour (avec User-Agent) + Deploy ; ② re-test bilan/code-barres photo sur le clone en 5G ; ③ si JSON OK → retirer la condition `__FT_CLONE__` (relais en prod pour tous) + réactiver le bouton photo bilan en prod (retirer son gate `__FT_CLONE__` dans `renderBodyScanCard`) ; ④ sinon → plan B.
+
+**État au 2026-07-13** : tout est PRÊT et ENDORMI (en prod). `worker.js` + guide à la racine. Les **12 appels IA** passent par `_aiUrl()` mais restent sur Apps Script tant que `AI_PROXY_URL=''` → aucun changement pour personne. Vérifié Playwright : `_aiUrl()===S.url`, 0 erreur JS. Il ne reste que les ~5 min de réglage Cloudflare de Michel (au retour de sa 4G) → et **code-barres + étiquette + bilan + coach + morpho** marcheront en 4G d'un coup.
 
 ## 7. Notes / risques
 - **Pas testable en vrai avant le retour de la 4G de Michel** — on prépare, on ne promet pas que ça marche à 100 % tant que testé sur son réseau.
