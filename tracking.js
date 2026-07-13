@@ -941,14 +941,13 @@ function onBodyScanPhoto(input){
       const tiles=(out&&out.tiles)?out.tiles:(Array.isArray(out)?out:[out]);
       const full=(out&&out.full)?out.full:tiles[0];
       _showBsScan('data:image/jpeg;base64,'+full); // retour visuel : scan du rapport pendant la lecture IA
-      const images=tiles.map(t=>({data:t,type:'image/jpeg'}));
-      // Payload allégé : on n'envoie PAS l'image "full" quand on a déjà les tuiles
-      // (le backend ignore body.image dès qu'il reçoit body.images) → ~2× moins lourd,
-      // bien moins de "Load failed" sur réseau faible/cellulaire (fix bug 2026-07-13).
-      const payload=JSON.stringify(images.length
-        ? {action:'importBodyScan',images,email:S.email||''}
-        : {action:'importBodyScan',image:full,imageType:'image/jpeg',email:S.email||''});
-      const data=await _postBodyScan(payload); // retry réseau intégré (Load failed = réseau)
+      // ⚠️ ENVOI IDENTIQUE au code-barres photo (onBarcodePhotoIA) qui MARCHE : fetch SIMPLE,
+      // une seule image, .json() direct. On abandonne _postBodyScan / XHR / retry / tuiles —
+      // le code-barres prouve que ce transport passe (même serveur, même type de requête).
+      // (Le bug « versions coincées » faisait qu'on testait des versions périmées — corrigé v416/v417.)
+      const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'importBodyScan',image:tiles[0],imageType:'image/jpeg',email:S.email||''})});
+      const data=await r.json();
       if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');
       const o=data.data;
       if(!unlimited){S.bodyScanImports=(S.bodyScanImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}

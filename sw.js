@@ -1,4 +1,4 @@
-const CACHE = 'ft-v418'; // Bilan corporel photo : envoi via XMLHttpRequest au lieu de fetch (fetch rejete instantanement l'upload image sur iOS - XHR passe)
+const CACHE = 'ft-v419'; // Bilan corporel photo : envoi IDENTIQUE au code-barres photo qui marche (fetch simple, 1 image, .json()) - fini XHR/retry/tuiles
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
