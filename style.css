@@ -504,11 +504,12 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 .overlay{position:absolute;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
 .overlay.open{display:flex;}
 /* Barre d'installation (téléchargement des assets par le Service Worker) */
-#install-progress{position:fixed;left:0;right:0;top:0;z-index:9998;background:var(--bg2);border-bottom:1px solid var(--sep);padding:calc(env(safe-area-inset-top) + 9px) 16px 11px;transform:translateY(-130%);transition:transform .35s ease;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+/* Barre d'installation FINE et discrète (barre mince + petit %), sans ombre appuyée */
+#install-progress{position:fixed;left:0;right:0;top:0;z-index:9998;background:var(--bg2);border-bottom:1px solid var(--sep);padding:calc(env(safe-area-inset-top) + 5px) 14px 6px;transform:translateY(-130%);transition:transform .35s ease;}
 #install-progress.show{transform:translateY(0);}
-#install-progress .ip-label{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;font-family:var(--font);}
-#install-progress .ip-track{height:7px;background:var(--bg3);border-radius:4px;overflow:hidden;}
-#install-progress .ip-bar{height:100%;width:0;background:linear-gradient(90deg,#FF6A73,#EF3E57);border-radius:4px;transition:width .35s ease;box-shadow:0 0 10px rgba(239,62,87,.5);}
+#install-progress .ip-label{font-size:10.5px;font-weight:700;color:var(--t3);margin-bottom:4px;font-family:var(--font);letter-spacing:.01em;}
+#install-progress .ip-track{height:4px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+#install-progress .ip-bar{height:100%;width:0;background:linear-gradient(90deg,#FF6A73,#EF3E57);border-radius:3px;transition:width .35s ease;}
 /* Scan « analyse du rapport » — retour visuel pendant la lecture IA */
 .bs-scan-frame{position:relative;border-radius:12px;overflow:hidden;max-height:44vh;background:var(--bg3);box-shadow:inset 0 0 0 1px var(--sep);}
 .bs-scan-frame img{width:100%;display:block;}

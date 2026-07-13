@@ -1,4 +1,4 @@
-const CACHE = 'ft-v421'; // Retour de la barre « Installation de l'appli… X% » : install complete des images EN FOND (non bloquante, resumable, une seule fois par version via marqueur FULL_MARKER)
+const CACHE = 'ft-v422'; // Barre d'installation rendue FINE et discrete (barre mince + petit %, sans ombre) — meme logique de fond (FULL_MARKER, une seule fois par version)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
