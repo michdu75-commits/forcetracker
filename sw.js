@@ -1,4 +1,4 @@
-const CACHE = 'ft-v415'; // Bilan corporel photo : image reduite a 1100px (~43Ko) + temps ecoule dans le message d'erreur (diagnostic timeout vs envoi)
+const CACHE = 'ft-v416'; // FIX MAJEUR mises a jour iOS : install rapide (code seul) + skipWaiting immediat -> fini les versions coincees (avant : install bloquee par ~15Mo d'images)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -131,10 +131,21 @@ async function precacheAll() {
   await notify('PRECACHE_DONE');
 }
 
+// Fichiers ESSENTIELS (code + polices + libs + logos) — petits → install RAPIDE.
+// ⚠️ On ne bloque PLUS l'install sur les ~15 Mo d'images (exercices/anatomie/guide/…) : sur
+// iOS/5G ce téléchargement faisait traîner/échouer l'install → skipWaiting jamais atteint → la
+// nouvelle version ne s'activait pas → utilisateur COINCÉ sur l'ancienne (bug 2026-07-13, cause
+// des « versions périmées »). Les images se mettent en cache À LA DEMANDE (fetch handler) +
+// via ENSURE_PRECACHE en arrière-plan (non bloquant).
+const CORE = PRECACHE.filter(u => !/\/(exercises|anatomy|guide|accessoires|muscles)\//.test(u));
+async function precacheCore(){
+  const cache = await caches.open(CACHE);
+  for (const url of CORE){ try { await cache.add(url); } catch (e) {} }
+}
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
-    await precacheAll();
-    await self.skipWaiting();
+    await precacheCore();      // rapide : uniquement le code (+ polices, libs, logos)
+    await self.skipWaiting();  // → la nouvelle version s'active immédiatement, sans attendre les images
   })());
 });
 
