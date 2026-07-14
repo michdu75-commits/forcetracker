@@ -1027,12 +1027,24 @@ async function sendToCoach(customMsg, displayMsg) {
         coachMemory: S.premium ? (S.coachMemory||'') : ''
       };
       if (hasImg) { payload.image = imgData; payload.imageType = imgType; }
-      const resp = await fetch(_aiUrl(), {
-        method: 'POST',
-        redirect: 'follow',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      });
+      // Envoi avec 3 tentatives : sur connexion capricieuse (wifi faible / 4G-5G), un
+      // « Load failed » réseau réussit souvent au 2e essai (même logique que le bilan).
+      let resp = null, _netErr = null;
+      for (let _a = 1; _a <= 3; _a++) {
+        try {
+          resp = await fetch(_aiUrl(), {
+            method: 'POST',
+            redirect: 'follow',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          });
+          _netErr = null; break;
+        } catch (e) {
+          _netErr = e;
+          if (_a < 3) await new Promise(r => setTimeout(r, 1200 * _a));
+        }
+      }
+      if (_netErr) throw _netErr;
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       const data = await resp.json();
       reply = data.reply || '🔑 Le Coach IA nécessite une clé API Anthropic. Crée un compte gratuit sur console.anthropic.com, génère une clé, et ajoute-la dans le script Google Apps Script ligne 2.';

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v429'; // Test relais 4G/5G : le Worker Cloudflare (dry-field-e931) est branche UNIQUEMENT sur le CLONE (via __FT_CLONE__) pour validation ; PROD reste sur Apps Script (inerte)
+const CACHE = 'ft-v430'; // Coach Milo : 3 tentatives sur echec reseau (Load failed sur wifi faible/4G) — meme resilience que le bilan ; routage _aiUrl inchange (inerte en prod)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
