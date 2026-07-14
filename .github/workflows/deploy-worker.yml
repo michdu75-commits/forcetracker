@@ -1,0 +1,22 @@
+name: Déployer le serveur IA Cloudflare
+
+# Se déclenche quand worker.js (ou sa config) change sur master → déploie tout seul le Worker.
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'worker.js'
+      - 'wrangler.toml'
+      - '.github/workflows/deploy-worker.yml'
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+      - name: Déployer sur Cloudflare Workers
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}

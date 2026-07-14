@@ -1,0 +1,10 @@
+# Config de déploiement du serveur IA Cloudflare (worker.js).
+# Permet le déploiement AUTOMATIQUE via GitHub Actions (.github/workflows/deploy-worker.yml)
+# → plus besoin de coller le code à la main dans Cloudflare.
+name = "dry-field-e931"
+main = "worker.js"
+account_id = "bb406e02a83b62a2d7710c74e00bde4a"
+compatibility_date = "2024-11-01"
+
+# ⚠️ La clé secrète ANTHROPIC_API_KEY est gérée dans le dashboard Cloudflare (variable secrète)
+# et N'EST PAS déclarée ici — elle reste en place à chaque déploiement.
