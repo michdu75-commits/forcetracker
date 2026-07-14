@@ -203,8 +203,9 @@ const NEW_FEATURES=[
 // un utilisateur à jour ne voit que la (ou les) toute(s) dernière(s).
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
-// ⏳ Réservé testeurs (v15/16/17 : calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées + WHATS_NEW_MAX=17) quand on ouvre à tout le monde.
+// ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
+//    à RÉACTIVER (remettre les 3 entrées en v16/17/18 + WHATS_NEW_MAX=18) quand on ouvre à tout le monde.
+//    (v15 = pop-up d'excuses réseau 4G, déjà utilisée pour tout le monde.)
 const WHATS_NEW=[
   {v:15, ic:'🙏', t:'Petit souci réglé — merci de votre patience', d:'Ces derniers jours, les lectures par PHOTO (bilan de balance, code-barres, étiquette nutrition) et le Coach Milo pouvaient échouer quand tu n\'étais pas en wifi (4G/5G). Désolé pour la gêne ! 😅 C\'est RÉPARÉ ✅ — tout ça fonctionne maintenant PARTOUT, même sans wifi (à la salle, au magasin…). ⚠️ C\'est encore en cours de test : si tu remarques un souci, dis-le-nous (Menu → Espace testeur, ou par email). Merci de votre patience, et bon entraînement ! 💪'},
   {v:14, ic:'🧠', t:'Milo coache comme un vrai coach', d:'Ton Coach IA a franchi un cap : il RAISONNE comme un vrai coach. Il t\'évalue avant de te conseiller (et te pose des questions si besoin), croise tes records, ta morpho et ton bilan corporel, justifie ses choix, s\'adapte à ta vie (horaires, travail, temps dispo) et te dit la vérité sans langue de bois. Demande-lui un programme ou « pourquoi je stagne ? » — tu vas voir la différence !'},
