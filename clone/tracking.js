@@ -687,6 +687,8 @@ const _BS_SEG_FIELDS=[
   {k:'legFatL',l:'Graisse jambe G',u:'kg'},{k:'legFatR',l:'Graisse jambe D',u:'kg'}
 ];
 let _bsEditIdx=-1;
+let _bsListOpen=false; // liste des bilans/pesées de la balance : réduite par défaut (gagne de la place), tap pour ouvrir
+function toggleBsList(){_bsListOpen=!_bsListOpen;renderBodyScanCard();}
 function renderBodyScanCard(){
   const el=document.getElementById('bodyscan-section');if(!el)return;
   // Import CSV de balance (historique complet) — réservé aux testeurs
@@ -737,18 +739,25 @@ function renderBodyScanCard(){
   if(scans.length>1){
     const LIST_MAX=24;                       // liste plafonnée (les courbes gardent tout l'historique)
     const shown=scans.slice(0,LIST_MAX);
-    html+=`<div style="display:flex;flex-direction:column;gap:6px;">`;
-    shown.forEach(s=>{
-      const i=S.bodyScans.indexOf(s);
-      const dd=new Date(s.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
-      html+=`<div onclick="openBodyScanForm(${i})" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border-radius:10px;padding:10px 12px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);">
-        <span style="font-size:13px;font-weight:700;color:var(--t1);">${dd}</span>
-        <span style="font-size:12px;color:var(--t2);">${s.weight?s.weight+' kg':''}${s.bf?' · '+s.bf+'%':''}${s.muscle?' · '+s.muscle+' kg musc.':''}</span>
-      </div>`;
-    });
-    if(scans.length>LIST_MAX)
-      html+=`<div style="font-size:11.5px;color:var(--t3);text-align:center;padding:6px;">+ ${scans.length-LIST_MAX} autres bilans plus anciens — visibles sur la courbe ci-dessus 📈</div>`;
-    html+=`</div>`;
+    // En-tête repliable : la liste est RÉDUITE par défaut (gagne de la place) → tap pour l'ouvrir/fermer.
+    html+=`<div onclick="toggleBsList()" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border-radius:10px;padding:11px 12px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);user-select:none;-webkit-user-select:none;margin-top:2px;">
+      <span style="font-size:13px;font-weight:800;color:var(--t1);">📋 Historique des pesées · ${scans.length}</span>
+      <span style="font-size:12px;color:var(--t3);font-weight:700;">${_bsListOpen?'Réduire':'Voir'} <span style="display:inline-block;transition:transform .2s;transform:rotate(${_bsListOpen?90:0}deg);">›</span></span>
+    </div>`;
+    if(_bsListOpen){
+      html+=`<div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">`;
+      shown.forEach(s=>{
+        const i=S.bodyScans.indexOf(s);
+        const dd=new Date(s.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
+        html+=`<div onclick="openBodyScanForm(${i})" style="display:flex;justify-content:space-between;align-items:center;background:var(--bg2);border-radius:10px;padding:10px 12px;cursor:pointer;box-shadow:inset 0 0 0 1px var(--sep);">
+          <span style="font-size:13px;font-weight:700;color:var(--t1);">${dd}</span>
+          <span style="font-size:12px;color:var(--t2);">${s.weight?s.weight+' kg':''}${s.bf?' · '+s.bf+'%':''}${s.muscle?' · '+s.muscle+' kg musc.':''}</span>
+        </div>`;
+      });
+      if(scans.length>LIST_MAX)
+        html+=`<div style="font-size:11.5px;color:var(--t3);text-align:center;padding:6px;">+ ${scans.length-LIST_MAX} autres bilans plus anciens — visibles sur la courbe ci-dessus 📈</div>`;
+      html+=`</div>`;
+    }
   }
   html+=scaleSel;
   html+=`${bsPhotoBtn('Nouveau bilan (photo)')}

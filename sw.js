@@ -1,4 +1,4 @@
-const CACHE = 'ft-v434'; // TOUTES les actions IA (13) passent par le serveur IA Cloudflare (worker.js) : + étude du corps, prise de sang, mémoire Milo, estim. repas, import/génération plan repas → tout marche en 4G/5G.
+const CACHE = 'ft-v435'; // Progrès -> Poids : liste des pesées/bilans balance repliable (réduite par défaut, tap pour ouvrir) — gagne de la place.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
