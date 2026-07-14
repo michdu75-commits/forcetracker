@@ -137,7 +137,7 @@ const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEk
 const AI_PROXY_URL='https://dry-field-e931.forcetracker-app.workers.dev';
 // Actions traitées EN DIRECT par le Worker (marchent en 4G). Les AUTRES (coach, importProgram…)
 // restent sur Apps Script tant qu'elles n'ont pas été ajoutées au Worker → à étendre ensuite.
-const AI_PROXY_ACTIONS=['importBodyScan','foodLabel','readBarcode','coach'];
+const AI_PROXY_ACTIONS=['importBodyScan','foodLabel','readBarcode','coach','importProgram','importHistory','morphoAnalysis'];
 // URL pour un appel IA : le Worker si l'action y est gérée en direct, sinon Apps Script (S.url).
 function _aiUrl(action){
   try{ if(typeof AI_PROXY_URL!=='undefined'&&AI_PROXY_URL&&action&&AI_PROXY_ACTIONS.indexOf(action)>=0) return AI_PROXY_URL; }catch(e){}
@@ -206,6 +206,7 @@ const NEW_FEATURES=[
 // ⏳ Réservé testeurs (v15/16/17 : calories manuelles, objectif recomposition, « maxi ») —
 //    à RÉACTIVER (remettre les 3 entrées + WHATS_NEW_MAX=17) quand on ouvre à tout le monde.
 const WHATS_NEW=[
+  {v:15, ic:'🙏', t:'Petit souci réglé — merci de votre patience', d:'Ces derniers jours, les lectures par PHOTO (bilan de balance, code-barres, étiquette nutrition) et le Coach Milo pouvaient échouer quand tu n\'étais pas en wifi (4G/5G). Désolé pour la gêne ! 😅 C\'est RÉPARÉ ✅ — tout ça fonctionne maintenant PARTOUT, même sans wifi (à la salle, au magasin…). ⚠️ C\'est encore en cours de test : si tu remarques un souci, dis-le-nous (Menu → Espace testeur, ou par email). Merci de votre patience, et bon entraînement ! 💪'},
   {v:14, ic:'🧠', t:'Milo coache comme un vrai coach', d:'Ton Coach IA a franchi un cap : il RAISONNE comme un vrai coach. Il t\'évalue avant de te conseiller (et te pose des questions si besoin), croise tes records, ta morpho et ton bilan corporel, justifie ses choix, s\'adapte à ta vie (horaires, travail, temps dispo) et te dit la vérité sans langue de bois. Demande-lui un programme ou « pourquoi je stagne ? » — tu vas voir la différence !'},
   {v:13, ic:'✋', t:'Superset par glisser-déposer', d:'En séance, attrape la petite poignée (6 points) sur un exercice et glisse-le sur un autre → le superset (enchaînement sans repos) se crée tout seul. Plus rapide que de passer par le menu. Marche sur les exercices pas encore groupés.'},
   {v:12, ic:'📷', t:'Photographie le code-barres', d:'Dans le Journal alimentaire, plus besoin de taper les chiffres : appuie sur « 📷 Photographier le code-barres », prends-le en photo, et l\'IA lit le numéro pour toi → le produit et son score santé s\'affichent tout seuls. Pratique quand les chiffres sont petits ou abîmés.'},
@@ -221,7 +222,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=14;     // = plus grand `v` ci-dessus (17 quand on réactive les features testeurs)
+const WHATS_NEW_MAX=15;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v16/17/18)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

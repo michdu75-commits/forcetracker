@@ -858,7 +858,7 @@ async function analyzeMorphoPhotos(){
   try{
     const labels=['face','dos','profil'];
     const images=_morphoPhotos.map((b,i)=>b?{data:b,type:'image/jpeg',label:labels[i]}:null).filter(Boolean);
-    const resp=await fetch(_aiUrl(),{method:'POST',redirect:'follow',
+    const resp=await fetch(_aiUrl('morphoAnalysis'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'morphoAnalysis',images,gender:S.gender||'H',email:S.email||''})
     });

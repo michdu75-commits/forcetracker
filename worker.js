@@ -41,6 +41,9 @@ export default {
       if (body.action === 'foodLabel')      return json(await foodLabel(body, apiKey));
       if (body.action === 'readBarcode')    return json(await readBarcode(body, apiKey));
       if (body.action === 'coach')          return json(await coach(body, apiKey));
+      if (body.action === 'importProgram')  return json(await importDoc(body, apiKey, 'program'));
+      if (body.action === 'importHistory')  return json(await importDoc(body, apiKey, 'history'));
+      if (body.action === 'morphoAnalysis') return json(await morpho(body, apiKey));
 
       // ── Sinon : relais vers Apps Script (fallback) ────────────────────────
       const up = await fetch(APPS_SCRIPT_URL, {
@@ -208,6 +211,82 @@ async function coach(body, apiKey) {
   else if (em === 'christophe@famillelanglois.fr') model = 'claude-sonnet-4-6';
   const text = await callClaude(apiKey, { model, max_tokens: 1024, system, messages });
   return { reply: text || 'Désolé, réessaie.' };
+}
+
+// ── Import de document : programme / historique — recopié de handleImportProgram_/handleImportHistory_
+function docContent(images) {
+  return images.map(img => {
+    if (img.isText || img.type === 'text/plain') return { type: 'text', text: '[Fichier : ' + (img.name || 'document') + ']\n\n' + img.data };
+    if (img.type === 'application/pdf') return { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: img.data } };
+    return { type: 'image', source: { type: 'base64', media_type: img.type || 'image/jpeg', data: img.data } };
+  });
+}
+const PROG_PROMPT = 'Analyse ces images/documents et extrait le programme d\'entraînement complet.\n\nRetourne UNIQUEMENT un objet JSON valide, sans aucun texte avant ou après, sans balises markdown, avec cette structure exacte :\n{"name":"nom du programme","weeks":7,"startDate":"2026-03-23","days":[{"label":"Séance 1 - Dorsaux Triceps","exercises":[{"name":"nom complet de l\'exercice","sets":5,"reps":8,"repsPerSet":[20,15,12,8,8],"specialSets":[3,4],"kg":0,"kgPerSet":[],"supersetGroup":"","setType":"","note":"méthode et instructions"}]}]}\n\nRègles STRICTES :\n\n0. DÉCOUPAGE EN SÉANCES — RÈGLE ABSOLUE :\n- Une NOUVELLE séance commence UNIQUEMENT quand le document contient un titre explicite : "SÉANCE N", "SEANCE N", "Jour N", "Day N", "Workout N".\n- Les titres de GROUPES MUSCULAIRES (DORSAUX, PECTORAUX, BICEPS…) = sous-sections à l\'intérieur d\'une séance. Ils ne créent JAMAIS une nouvelle séance.\n- Ignore les pages SOMMAIRE (liste des séances sans tableau d\'exercices) et toute séance vide.\n\n1. REPS PAR SÉRIE (repsPerSet) :\n- Reps différentes par série (ex: 20/15/12/8/8) → repsPerSet:[20,15,12,8,8] et sets:5. Mêmes reps partout → repsPerSet:[] et sets=nombre de séries.\n- "4x8" → sets:4, reps:8, repsPerSet:[]. Unilatéral (bras/bras, jambe/jambe, alterné) → chaque ligne NxN = 2 séries.\n- "vide"/"barre à vide" → kg:0. Ramping reps ("3+4+5+6+7 par cycle") → repsPerSet:[3,4,5,6,7], jamais 3x7.\n\n2. SÉRIES SPÉCIALES (specialSets) : indices 0-based des séries dont les reps sont en rouge/couleur. Aucune → [].\n\n3. NOTE (OBLIGATOIRE, ne rien omettre) : capture TOUT le texte en couleur = méthodes (Isométrie, Excentrique, Myo-Reps, Rest-pause, Ramping…) + instructions d\'exécution. Sépare par " | ".\n\n4. STRUCTURE et setType : setType = "" (Normal) ou "D" (Dropset) UNIQUEMENT. JAMAIS "E" ni "W". "à l\'échec"/"Maxi"/"échauffement" → NOTE, jamais setType. kg:0 si non indiqué.\n\n5. SUPERSETS : préfixe lettre+chiffre (C1/C2 → supersetGroup:"C") ou "+" ENTRE deux noms d\'exercices complets. Ne PAS confondre avec un "+" dans les reps (15x2+15). Solo → supersetGroup:"".\n\n6. DROPSETS : charges/reps dégressives → setType:"D", repsPerSet + kgPerSet par palier. "max"/"à l\'échec" → 99 dans repsPerSet.\n\n7. CHARGES (%1RM) : si 1RM + pourcentages donnés → kg = arrondi(1RM × %, 0.5). RPE → note.\n\nRéponds UNIQUEMENT avec le JSON, aucun autre texte.';
+const HIST_PROMPT = 'Analyse ce document et extrait TOUTES les séances d\'entraînement réalisées.\n\nRetourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown :\n{"sessions":[{"date":"YYYY-MM-DD","estimatedDate":false,"label":"Séance 1 (15) 23/04","exercises":[{"name":"Squat à la barre","sets":[{"kg":80,"reps":8,"type":"","note":""}],"note":""}]}]}\n\nRÈGLES STRICTES :\n\n0. EXTRACTION : Extrais TOUTES les séances dans l\'ordre chronologique, sans rater aucun exercice ni série. Chaque bloc "Séance N" ou titre de séance daté = une séance.\n\n1. DATES : "23/04/26"→"2026-04-23" ; "14/05"→"2026-05-14" (année 2026 si manquante). Séance sans date claire → estimatedDate:true. label = titre exact du bloc.\n\n2. SÉRIES ("N rep Xkg" = une série) : kg=X, reps=N, type="". "vide"/"PDC"/"poids du corps"→kg:0. "par bras"/"par jambe"/"unilatéral"→2 séries. "N rep Xkg N rep Ykg" sur une ligne = DROP SET [{kg:X,reps:N,type:"D"},{kg:Y,reps:M,type:"D"}]. Notes libres → champ note.\n\n3. TYPE : UNIQUEMENT "" (Normal) ou "D" (Drop set). JAMAIS "E" ni "W".\n\n4. NOMS : le nom tel qu\'écrit, corrige les fautes évidentes.\n\nRéponds UNIQUEMENT avec le JSON, aucun autre texte.';
+async function importDoc(body, apiKey, kind) {
+  if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
+  const images = body.images || [];
+  if (!images.length) return { status: 'error', error: 'Aucun fichier reçu' };
+  const hasText = images.some(img => img.isText || img.type === 'text/plain');
+  const hasPdf = images.some(img => img.type === 'application/pdf');
+  const userContent = docContent(images);
+  userContent.push({ type: 'text', text: kind === 'history' ? HIST_PROMPT : PROG_PROMPT });
+  const model = (kind === 'history' || images.length > 1 || hasText || hasPdf) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
+  const text = await callClaude(apiKey, { model, max_tokens: 8192, messages: [{ role: 'user', content: userContent }] });
+  const stripped = String(text || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  const m = stripped.match(/\{[\s\S]*\}/);
+  if (!m) return { status: 'error', error: 'Extraction échouée. Réponse IA : ' + String(text).slice(0, 200) };
+  const cleaned = m[0].replace(/‘|’/g, "'").replace(/“|”/g, '"').replace(/\r\n|\r/g, '\\n').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  let data;
+  try { data = JSON.parse(cleaned); } catch (e) { return { status: 'error', error: 'JSON invalide : ' + e.message }; }
+  if (kind === 'history') {
+    if (!data.sessions || !Array.isArray(data.sessions)) data.sessions = [];
+    data.sessions.forEach(sess => {
+      sess.estimatedDate = Boolean(sess.estimatedDate);
+      sess.label = String(sess.label || '');
+      if (sess.date && !/^\d{4}-\d{2}-\d{2}$/.test(String(sess.date))) {
+        const mm = String(sess.date).match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+        if (mm) { const y = mm[3] ? (mm[3].length === 2 ? '20' + mm[3] : mm[3]) : '2026'; sess.date = y + '-' + String(mm[2]).padStart(2, '0') + '-' + String(mm[1]).padStart(2, '0'); }
+        else { sess.date = ''; sess.estimatedDate = true; }
+      }
+      (sess.exercises || []).forEach(ex => {
+        ex.name = String(ex.name || '').trim();
+        ex.note = String(ex.note || '');
+        (ex.sets || []).forEach(s => { s.kg = Math.round((parseFloat(s.kg) || 0) * 2) / 2; s.reps = parseInt(s.reps) || 0; s.type = s.type === 'D' ? 'D' : ''; s.note = String(s.note || ''); });
+        ex.sets = (ex.sets || []).filter(s => s.reps > 0);
+      });
+      sess.exercises = (sess.exercises || []).filter(ex => ex.name && ex.sets && ex.sets.length > 0);
+    });
+    data.sessions = data.sessions.filter(s => s.exercises && s.exercises.length > 0);
+    if (!data.sessions.length) return { status: 'error', error: 'Aucune séance trouvée dans le document.' };
+  }
+  return { status: 'ok', data };
+}
+
+// ── Morphologie — recopié de handleMorphoAnalysis_
+async function morpho(body, apiKey) {
+  if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
+  const images = body.images || [];
+  if (!images.length) return { status: 'error', error: 'Aucune image reçue' };
+  const gender = body.gender || 'H';
+  const gLabel = gender === 'F' ? 'femme' : 'homme';
+  const userContent = images.map(img => ({ type: 'image', source: { type: 'base64', media_type: img.type || 'image/jpeg', data: img.data } }));
+  userContent.push({ type: 'text', text:
+    'Analyse les photos de cet(te) ' + gLabel + ' et détermine sa morphologie.\n\nRetourne UNIQUEMENT un objet JSON valide sans texte avant ou après :\n'
+    + (gender === 'F'
+      ? '{"morpho":"H|A|V|X|O","morphotype":"ecto|meso|endo","bodyComp":"description courte de la composition corporelle estimée","strengths":"points forts morphologiques en 1-2 phrases","advice":"conseils nutrition et entraînement personnalisés selon la morphologie en 2-3 phrases"}'
+      : '{"morpho":"H|A|T|V|O","morphotype":"ecto|meso|endo","bodyComp":"description courte de la composition corporelle estimée","strengths":"points forts morphologiques en 1-2 phrases","advice":"conseils nutrition et entraînement personnalisés selon la morphologie en 2-3 phrases"}')
+    + '\n\nMorphologies ' + (gender === 'F' ? 'femme' : 'homme') + ' :\n'
+    + (gender === 'F'
+      ? '- H: Rectangle (épaules/taille/hanches similaires)\n- A: Poire (hanches plus larges)\n- V: Triangle inversé (épaules plus larges)\n- X: Sablier (taille très marquée)\n- O: Ronde (ventre proéminent)'
+      : '- H: Rectangle\n- A: Triangle (hanches plus larges)\n- T: Trapèze (épaules légèrement plus larges)\n- V: Triangle inversé (épaules beaucoup plus larges)\n- O: Ovale (ventre proéminent)')
+    + '\nMorphotypes : ecto=mince/métabolisme rapide, meso=athlétique, endo=rond/métabolisme lent' });
+  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 1024, messages: [{ role: 'user', content: userContent }] });
+  const m = String(text || '').match(/\{[\s\S]*\}/);
+  if (!m) return { status: 'error', error: 'Analyse impossible. Réessaie avec des photos plus nettes.' };
+  let data;
+  try { data = JSON.parse(m[0]); } catch (e) { return { status: 'error', error: 'JSON invalide' }; }
+  return { status: 'ok', data };
 }
 
 function json(obj, status) {

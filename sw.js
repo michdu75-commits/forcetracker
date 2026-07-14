@@ -1,4 +1,4 @@
-const CACHE = 'ft-v432'; // Milo (coach) passe aussi par le serveur IA Cloudflare (worker.js action coach, Anthropic direct) → Milo blinde en 4G comme le bilan. Reste programmes/historique/morpho a ajouter
+const CACHE = 'ft-v433'; // Import programme/historique + analyse morpho passent aussi par le serveur IA Cloudflare (worker.js) → tout marche en 4G/5G. Pop-up d'excuses v15.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
