@@ -648,7 +648,7 @@ async function onFoodLabelFile(input){
   toast('Lecture de l\'étiquette…','info');
   try{
     const b64=await _resizeToB64(f, 1100, 0.85);
-    const r=await fetch(_aiUrl(),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    const r=await fetch(_aiUrl('foodLabel'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'foodLabel',image:{data:b64,type:'image/jpeg'},email:S.email||''})});
     const d=await r.json();
     if(!d||d.status!=='ok'){toast('Étiquette illisible — rapproche-toi, éclaire, ou saisis à la main','error');return;}
@@ -687,7 +687,7 @@ async function onBarcodePhotoIA(input){
   toast('Lecture du code-barres…','info');
   try{
     const b64=await _resizeToB64(f, 1100, 0.85);
-    const r=await fetch(_aiUrl(),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    const r=await fetch(_aiUrl('readBarcode'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'readBarcode',image:{data:b64,type:'image/jpeg'},email:S.email||''})});
     const d=await r.json();
     if(!d||d.status!=='ok'||!d.barcode){toast('Code-barres illisible — rapproche-toi, éclaire bien, ou tape les chiffres','error');return;}

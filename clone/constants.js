@@ -132,15 +132,17 @@ const BIG4=['Squat à la Barre','Soulevé de Terre','Développé Couché','Déve
 const PCT_IDS=['p100','p95','p90','p85','p80','p75','p70','p60'];
 const PCT_VALS=[100,95,90,85,80,75,70,60];
 const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec';
-// Relais IA optionnel (Cloudflare Worker — voir worker.js / GUIDE-CLOUDFLARE.md). Il répond
-// DIRECT (sans la redirection Google qui casse en 4G/5G) et relaie vers Apps Script côté serveur.
-// VIDE = comportement actuel (Apps Script direct) → aucun changement tant que ce n'est pas rempli.
-// PHASE DE TEST (2026-07-13) : le relais est actif UNIQUEMENT sur le CLONE (window.__FT_CLONE__)
-// pour valider en 5G sans toucher la prod. La PROD reste sur Apps Script (vide) tant que ce n'est
-// pas validé. Une fois validé → mettre l'URL aussi pour la prod (retirer la condition __FT_CLONE__).
-const AI_PROXY_URL=(typeof window!=='undefined'&&window.__FT_CLONE__)?'https://dry-field-e931.forcetracker-app.workers.dev':'';
-// URL à utiliser pour les appels IA (photo/vision) : le relais s'il est configuré, sinon Apps Script.
-function _aiUrl(){ try{ if(typeof AI_PROXY_URL!=='undefined'&&AI_PROXY_URL) return AI_PROXY_URL; }catch(e){} return (typeof S!=='undefined'&&S&&S.url)?S.url:DEFAULT_URL; }
+// Serveur IA Cloudflare (worker.js / GUIDE-CLOUDFLARE.md) : appelle Anthropic EN DIRECT (sans la
+// redirection Google qui casse en 4G/5G) → validé en 5G le 2026-07-14 (bilan photo lu ✅).
+const AI_PROXY_URL='https://dry-field-e931.forcetracker-app.workers.dev';
+// Actions traitées EN DIRECT par le Worker (marchent en 4G). Les AUTRES (coach, importProgram…)
+// restent sur Apps Script tant qu'elles n'ont pas été ajoutées au Worker → à étendre ensuite.
+const AI_PROXY_ACTIONS=['importBodyScan','foodLabel','readBarcode'];
+// URL pour un appel IA : le Worker si l'action y est gérée en direct, sinon Apps Script (S.url).
+function _aiUrl(action){
+  try{ if(typeof AI_PROXY_URL!=='undefined'&&AI_PROXY_URL&&action&&AI_PROXY_ACTIONS.indexOf(action)>=0) return AI_PROXY_URL; }catch(e){}
+  return (typeof S!=='undefined'&&S&&S.url)?S.url:DEFAULT_URL;
+}
 const SET_TYPES=['N','É','X'];
 const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
 

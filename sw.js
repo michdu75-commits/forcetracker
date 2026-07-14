@@ -1,4 +1,4 @@
-const CACHE = 'ft-v430'; // Coach Milo : 3 tentatives sur echec reseau (Load failed sur wifi faible/4G) — meme resilience que le bilan ; routage _aiUrl inchange (inerte en prod)
+const CACHE = 'ft-v431'; // VICTOIRE 4G : bilan photo + code-barres + etiquette passent par le serveur IA Cloudflare (worker.js, Anthropic direct) → marchent en 4G/5G. Bouton photo bilan reactive en prod. Coach/programmes restent Apps Script (a ajouter au Worker ensuite)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

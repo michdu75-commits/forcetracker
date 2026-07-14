@@ -691,10 +691,9 @@ function renderBodyScanCard(){
   const el=document.getElementById('bodyscan-section');if(!el)return;
   // Import CSV de balance (historique complet) — réservé aux testeurs
   const csvBtn=_isScaleCsvBeta()?`<button class="btn btn-bg2" style="width:100%;margin-top:8px;font-size:13px;" onclick="openScaleCsvImport()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg> Importer un fichier balance (CSV ou Excel)</button>`:'';
-  // Import PHOTO du bilan : MASQUÉ en prod — échoue en 4G (le POST vers Apps Script ne passe pas sur
-  // réseau mobile, cf CLAUDE.md « bilan corporel »). Gardé UNIQUEMENT sur le clone (window.__FT_CLONE__)
-  // pour y développer une méthode d'envoi qui marche en 4G. À réactiver en prod une fois la solution trouvée.
-  const bsPhotoBtn=(label)=>window.__FT_CLONE__?`<button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 ${label}</button><div style="font-size:10.5px;color:var(--t3);text-align:center;margin-top:4px;">📶 à tester en wifi</div>`:'';
+  // Import PHOTO du bilan : ACTIF en prod depuis 2026-07-14 — la lecture passe par le serveur IA
+  // Cloudflare (worker.js, action importBodyScan) qui appelle Anthropic en direct → marche en 4G/5G.
+  const bsPhotoBtn=(label)=>`<button class="btn btn-red" style="width:100%;" onclick="importBodyScanPhoto()">📷 ${label}</button>`;
   const scaleSel=_scaleTypeSelector();
   const scans=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
   if(!scans.length){
@@ -971,7 +970,7 @@ function onBodyScanPhoto(input){
       let raw='', netErr=null;
       for(let attempt=1;attempt<=3;attempt++){
         try{
-          const r=await fetch(_aiUrl(),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
+          const r=await fetch(_aiUrl('importBodyScan'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload});
           raw=await r.text(); netErr=null; break;               // réponse reçue (JSON ou pas)
         }catch(err){
           netErr=err;                                            // « Load failed » = échec réseau AVANT toute réponse
