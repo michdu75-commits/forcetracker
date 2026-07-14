@@ -709,7 +709,7 @@ async function estimateFoodAI(){
   const btn=document.getElementById('af-ai-btn');
   if(btn){btn.disabled=true;btn.textContent='⏳ Estimation…';}
   try{
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+    const r=await fetch(_aiUrl('estimateFood'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'estimateFood',description:desc,email:S.email||''})});
     const d=await r.json();
@@ -1926,7 +1926,7 @@ async function generateMealPlan(regenDay,regenMeal){
   try{
     const body={action:'generateMealPlan',context:ctx,scope:isPrem?'week':'day',startDate:td};
     if(isRegen){body.regenDay=regenDay;body.regenMeal=regenMeal;}
-    const resp=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
+    const resp=await fetch(_aiUrl('generateMealPlan'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)});
     const data=await resp.json();
     if(!data||data.status!=='ok'||!data.plan){toast('Erreur IA : '+(data&&data.message||'réessaie'),'error');return;}
     if(isRegen){
@@ -2024,7 +2024,7 @@ async function analyzeMealImport(){
   let raw='';
   try{
     const diet=(typeof dietSummary==='function')?dietSummary():'';
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',
+    const r=await fetch(_aiUrl('importMealPlan'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'importMealPlan',images:_mealImpPhotos,diet})});
     raw=await r.text();

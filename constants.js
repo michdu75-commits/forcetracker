@@ -137,7 +137,7 @@ const DEFAULT_URL='https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEk
 const AI_PROXY_URL='https://dry-field-e931.forcetracker-app.workers.dev';
 // Actions traitées EN DIRECT par le Worker (marchent en 4G). Les AUTRES (coach, importProgram…)
 // restent sur Apps Script tant qu'elles n'ont pas été ajoutées au Worker → à étendre ensuite.
-const AI_PROXY_ACTIONS=['importBodyScan','foodLabel','readBarcode','coach','importProgram','importHistory','morphoAnalysis'];
+const AI_PROXY_ACTIONS=['importBodyScan','foodLabel','readBarcode','coach','importProgram','importHistory','morphoAnalysis','bodyStudy','importBloodTest','summarizeCoach','estimateFood','importMealPlan','generateMealPlan'];
 // URL pour un appel IA : le Worker si l'action y est gérée en direct, sinon Apps Script (S.url).
 function _aiUrl(action){
   try{ if(typeof AI_PROXY_URL!=='undefined'&&AI_PROXY_URL&&action&&AI_PROXY_ACTIONS.indexOf(action)>=0) return AI_PROXY_URL; }catch(e){}

@@ -44,6 +44,12 @@ export default {
       if (body.action === 'importProgram')  return json(await importDoc(body, apiKey, 'program'));
       if (body.action === 'importHistory')  return json(await importDoc(body, apiKey, 'history'));
       if (body.action === 'morphoAnalysis') return json(await morpho(body, apiKey));
+      if (body.action === 'bodyStudy')      return json(await bodyStudy(body, apiKey));
+      if (body.action === 'importBloodTest') return json(await bloodTest(body, apiKey));
+      if (body.action === 'summarizeCoach')  return json(await summarizeCoach(body, apiKey));
+      if (body.action === 'estimateFood')    return json(await estimateFood(body, apiKey));
+      if (body.action === 'importMealPlan')  return json(await importMealPlan(body, apiKey));
+      if (body.action === 'generateMealPlan') return json(await generateMealPlan(body, apiKey));
 
       // ── Sinon : relais vers Apps Script (fallback) ────────────────────────
       const up = await fetch(APPS_SCRIPT_URL, {
@@ -287,6 +293,212 @@ async function morpho(body, apiKey) {
   let data;
   try { data = JSON.parse(m[0]); } catch (e) { return { status: 'error', error: 'JSON invalide' }; }
   return { status: 'ok', data };
+}
+
+// ── Étude du corps — recopié de handleBodyStudy_ (mode deep/compare) ──────────
+async function bodyStudy(body, apiKey) {
+  if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
+  const images = body.images || [];
+  if (!images.length) return { status: 'error', error: 'Aucune image reçue' };
+  const gender = body.gender === 'F' ? 'femme' : 'homme';
+  const age = body.age || '?';
+  const goal = body.goal || 'muscle';
+  const discipline = body.discipline || 'muscu';
+  const health = body.health || {};
+  const conditions = (health.conditions || []).join(', ');
+  const injuries = (health.injuries || []).map(i => (i.zone || '') + (i.status ? ' (' + i.status + ')' : '')).join(', ');
+  const healthNotes = (health.notes || '').trim();
+  const healthTxt = (conditions || injuries || healthNotes)
+    ? ('Conditions: ' + (conditions || 'aucune') + ' | Blessures: ' + (injuries || 'aucune') + (healthNotes ? (' | Notes: ' + healthNotes) : ''))
+    : 'Aucune information santé fournie';
+
+  const deep = body.deep === true;
+  const prevImages = (body.compare === true && Array.isArray(body.prevImages)) ? body.prevImages : [];
+  const compare = prevImages.length > 0;
+
+  const userContent = images.map(img => ({ type: 'image', source: { type: 'base64', media_type: img.type || 'image/jpeg', data: img.data } }));
+  const labelLine = images.map(img => img.label).filter(Boolean).join(', ');
+  prevImages.forEach(img => userContent.push({ type: 'image', source: { type: 'base64', media_type: img.type || 'image/jpeg', data: img.data } }));
+
+  const promptText = 'Tu es un coach expert en morphologie, posture et biomécanique. Analyse ces photos d\'un(e) ' + gender + ' de ' + age + ' ans '
+    + '(objectif: ' + goal + ', discipline: ' + discipline + '). '
+    + (compare
+        ? ('Les ' + images.length + ' PREMIÈRES photos = SÉRIE ACTUELLE (ordre: ' + (labelLine || 'non précisé') + '). Les ' + prevImages.length + ' SUIVANTES = SÉRIE PRÉCÉDENTE du ' + (body.prevDate || '?') + (body.prevAnalysis ? (' (résumé du bilan précédent: ' + String(body.prevAnalysis).slice(0, 400) + ')') : '') + '. Compare la série actuelle à la précédente. ')
+        : ('Photos fournies (dans l\'ordre): ' + (labelLine || 'non précisé') + '. '))
+    + 'Les poses relâchées montrent la posture, les poses contractées révèlent le développement réel et les asymétries.\n\n'
+    + 'PROFIL SANTÉ: ' + healthTxt + '. Tes suggestions d\'exercices DOIVENT respecter ces contraintes (éviter/adapter les mouvements à risque) et le mentionner dans "healthNotes".\n\n'
+    + 'Analyse ' + (deep ? 'de façon TRÈS complète et détaillée' : '') + ': la stature et la posture (bascule du bassin, épaules enroulées/asymétriques, dos), les insertions musculaires visibles (longueur des muscles, points forts génétiques), l\'ÉQUILIBRE du corps (gauche/droite, haut/bas, agonistes/antagonistes ex. pectoraux vs dos), les points forts et les groupes en retard, et propose des exercices correctifs concrets et prioritaires.\n\n'
+    + 'Reste bienveillant, factuel et prudent. Ne pose JAMAIS de diagnostic médical.\n\n'
+    + 'Retourne UNIQUEMENT un objet JSON valide, sans texte avant/après, avec EXACTEMENT ces clés:\n'
+    + '{' + (compare ? '"evolution":"compare la série actuelle à la précédente: ce qui a progressé, ce qui a fondu/pris, les changements de posture/équilibre visibles — en 2-4 phrases concrètes et motivantes",' : '') + '"stature":"posture et stature en 2-3 phrases","insertions":"insertions musculaires notables en 2-3 phrases","balance":"évaluation de l\'équilibre gauche/droite, haut/bas, avant/arrière — dis clairement si le corps est globalement équilibré ou non et pourquoi","strengths":"points forts en 1-2 phrases","weaknesses":"groupes musculaires ou zones en retard en 1-2 phrases","exercises":[{"zone":"groupe/zone ciblée","exercises":"2-3 exercices concrets","why":"pourquoi (court)"}],"healthNotes":"comment la santé a été prise en compte / mouvements à éviter ou adapter en 1-2 phrases","summary":"synthèse motivante en 1-2 phrases"}';
+
+  userContent.push({ type: 'text', text: promptText });
+  const text = await callClaude(apiKey, { model: 'claude-sonnet-4-6', max_tokens: (deep || compare) ? 3072 : 2048, messages: [{ role: 'user', content: userContent }] });
+  const m = String(text || '').match(/\{[\s\S]*\}/);
+  if (!m) return { status: 'error', error: 'Analyse impossible. Réessaie avec des photos plus nettes et bien cadrées.' };
+  let data;
+  try { data = JSON.parse(m[0]); } catch (e) { return { status: 'error', error: 'JSON invalide' }; }
+  return { status: 'ok', data };
+}
+
+// ── Prise de sang — recopié de handleImportBloodTest_ ────────────────────────
+async function bloodTest(body, apiKey) {
+  if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
+  const imgs = imagesOf(body);
+  if (!imgs.length) return { status: 'error', error: 'Aucune image reçue' };
+  const multi = imgs.length > 1;
+  const userContent = imgs.map(im => ({ type: 'image', source: { type: 'base64', media_type: im.type || 'image/jpeg', data: im.data } }));
+  userContent.push({ type: 'text', text:
+      (multi
+        ? ('Ces ' + imgs.length + ' images sont les PAGES successives (dans l\'ordre) d\'UN SEUL et même compte-rendu de laboratoire d\'analyses de sang. Lis-les toutes. ')
+        : 'Ceci est un compte-rendu de laboratoire d\'analyses de sang. ')
+    + 'Extrais TOUS les marqueurs biologiques présents (numération/hémogramme, biochimie, rein, foie, fer, vitamines, électrolytes, glycémie, lipides, hormones/thyroïde, etc.). '
+    + 'Pour CHAQUE marqueur, prends : le nom exact, la valeur mesurée (la plus récente si plusieurs colonnes de dates), l\'unité, et l\'intervalle de référence du labo (borne basse et haute). '
+    + 'Quand une valeur est donnée en 2 unités (ex. "16,7 g/dL" et une autre ligne), garde la ligne principale (celle avec l\'intervalle le plus lisible). '
+    + 'N\'INTERPRÈTE RIEN, ne dis pas si c\'est normal ou non, n\'ajoute aucun commentaire médical : tu ne fais que RECOPIER les chiffres du rapport. N\'invente aucune valeur. '
+    + 'Récupère aussi la DATE de prélèvement (format YYYY-MM-DD) si présente.\n'
+    + 'Réponds UNIQUEMENT par un objet JSON valide, sans texte avant/après, de cette forme EXACTE :\n'
+    + '{"date":"YYYY-MM-DD ou null","markers":[{"name":"Ferritine","group":"Fer & vitamines","value":293,"unit":"µg/L","low":30,"high":400}, ...]}\n'
+    + 'Le champ "group" = une catégorie courte que tu déduis (ex. "Hémogramme", "Rein", "Foie", "Fer & vitamines", "Électrolytes", "Glycémie & lipides", "Thyroïde"). '
+    + 'value = nombre. low/high = bornes de l\'intervalle (nombres) ou null si absentes/texte du type "< 50" (dans ce cas low=null, high=50) ou "> 10" (low=10, high=null).' });
+  const text = await callClaude(apiKey, { model: 'claude-sonnet-4-6', max_tokens: 4096, messages: [{ role: 'user', content: userContent }] });
+  const m = String(text || '').match(/\{[\s\S]*\}/);
+  if (!m) return { status: 'error', error: 'Lecture impossible. Réessaie avec des photos plus nettes.' };
+  let data;
+  try { data = JSON.parse(m[0]); } catch (e) { return { status: 'error', error: 'JSON invalide' }; }
+  return { status: 'ok', data };
+}
+
+// ── Mémoire du coach — recopié de handleSummarizeCoach_ (génère le résumé) ────
+// ⚠️ Le worker ne persiste PAS dans le stockage Google : le résumé revient au
+//    front (S.coachMemory local) puis part au cloud via le prochain saveProfile.
+async function summarizeCoach(body, apiKey) {
+  if (!apiKey) return { summary: '' };
+  const history = (body.history || []).slice(-16);
+  const existing = body.existingMemory || '';
+  const histText = history.map(m => {
+    const role = m.role === 'user' ? 'Utilisateur' : 'Coach';
+    const content = typeof m.content === 'string' ? m.content
+      : (Array.isArray(m.content) ? m.content.filter(c => c.type === 'text').map(c => c.text).join(' ') : '');
+    return role + ': ' + String(content).substring(0, 400);
+  }).join('\n');
+  const prompt = (existing ? 'Mémoire existante : ' + existing + '\n\n' : '')
+    + 'Résume cette conversation coach/athlète en 2-3 phrases max (garde : objectifs, conseils clés, décisions, problèmes identifiés). Français uniquement.\n\nConversation :\n' + histText + '\n\nRésumé :';
+  const summary = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 250, messages: [{ role: 'user', content: prompt }] });
+  return { summary: summary || '' };
+}
+
+// ── Journal : estimer kcal+macros d'une description texte — handleEstimateFood_
+async function estimateFood(body, apiKey) {
+  if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
+  const desc = String(body.description || '').trim();
+  if (!desc) return { status: 'error', error: 'Description vide' };
+  const prompt = 'Tu es un expert en nutrition. Estime les valeurs nutritionnelles TOTALES de ce que la personne a mangé.\n\n'
+    + 'Repas décrit : "' + desc + '"\n\n'
+    + 'Retourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown :\n'
+    + '{"name":"résumé court du repas","kcal":650,"prot":40,"carbs":70,"fat":18}\n\n'
+    + 'Règles :\n- kcal = calories totales (nombre entier).\n- prot, carbs, fat = grammes totaux de protéines, glucides, lipides (nombres entiers).\n'
+    + '- Si les quantités ne sont pas précisées, estime une portion normale.\n- name = résumé court et propre du repas (max 40 caractères).\n'
+    + '- Sois réaliste, ne mets jamais 0 kcal si un aliment est cité.\nRéponds UNIQUEMENT avec le JSON.';
+  const text = await callClaude(apiKey, { model: 'claude-haiku-4-5-20251001', max_tokens: 400, messages: [{ role: 'user', content: prompt }] });
+  const d = firstJson(text);
+  if (!d) return { status: 'error', error: 'Estimation échouée' };
+  return {
+    status: 'ok',
+    name: String(d.name || desc).slice(0, 60),
+    kcal: Math.max(0, parseInt(d.kcal) || 0),
+    prot: Math.max(0, parseInt(d.prot) || 0),
+    carbs: Math.max(0, parseInt(d.carbs) || 0),
+    fat: Math.max(0, parseInt(d.fat) || 0),
+  };
+}
+
+// ── Import plan diététicien (photo/PDF/texte) — handleImportMealPlan_ ─────────
+async function importMealPlan(body, apiKey) {
+  if (!apiKey) return { status: 'error', error: 'Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
+  const images = body.images || [];
+  if (!images.length) return { status: 'error', error: 'Aucun fichier reçu' };
+  const diet = String(body.diet || '');
+  const userContent = docContent(images);
+  userContent.push({ type: 'text', text:
+    'Analyse ce document (plan alimentaire d\'un(e) diététicien(ne) / nutritionniste) et extrais TOUS les repas.\n\nRetourne UNIQUEMENT un objet JSON valide, sans texte avant ni après, sans balises markdown, avec cette structure exacte :\n{"planName":"nom ou objectif du plan","days":[{"label":"Lundi","meals":[{"name":"Petit-déjeuner","foods":["3 œufs","50g de flocons d\'avoine","1 banane"],"kcal":450,"prot":30,"carbs":45,"fat":15}]}]}\n\nRÈGLES STRICTES :\n\n1. JOURS :\n- Si le plan détaille plusieurs jours (Lundi, Mardi… ou Jour 1, Jour 2…) → un objet par jour dans "days", label = le nom du jour.\n- Si le plan décrit UNE journée type (sans distinction de jours) → un seul jour, label = "Journée type".\n- Maximum 7 jours.\n\n2. REPAS :\n- Chaque repas (Petit-déjeuner, Collation, Déjeuner, Goûter, Dîner, Pré/Post-training…) = un objet dans "meals". name = le nom du repas tel qu\'écrit.\n- "foods" = liste des aliments avec leurs quantités, un aliment par entrée, texte fidèle au document (ex. "150g de riz basmati", "200g de poulet").\n\n3. MACROS ET CALORIES :\n- Si le document indique les kcal/protéines/glucides/lipides par repas → reprends-les (nombres entiers, en grammes pour prot/carbs/fat).\n- Si NON indiqués → estime-les au mieux à partir des aliments et quantités (valeurs réalistes). Ne mets jamais 0 si le repas contient des aliments.\n\n4. FIDÉLITÉ : n\'invente pas de repas absents. Ne modifie pas les quantités données. Reprends le plan tel quel.'
+    + (diet ? '\n\n5. RÉGIME DE L\'UTILISATEUR : ' + diet + '. Si un aliment du plan ne respecte PAS ce régime, garde-le quand même (c\'est le plan du diététicien) mais ajoute " ⚠️" à la fin de la ligne de cet aliment.' : '')
+    + '\n\nRéponds UNIQUEMENT avec le JSON, aucun autre texte.' });
+  const hasText = images.some(img => img.isText || img.type === 'text/plain');
+  const hasPdf = images.some(img => img.type === 'application/pdf');
+  const model = (images.length > 1 || hasText || hasPdf) ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001';
+  const text = await callClaude(apiKey, { model, max_tokens: 8192, messages: [{ role: 'user', content: userContent }] });
+  const stripped = String(text || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+  const mm = stripped.match(/\{[\s\S]*\}/);
+  if (!mm) return { status: 'error', error: 'Extraction échouée. Réponse IA : ' + String(text).slice(0, 200) };
+  const cleaned = mm[0].replace(/‘|’/g, "'").replace(/“|”/g, '"').replace(/\r\n|\r/g, '\\n').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  let data;
+  try { data = JSON.parse(cleaned); } catch (e) { return { status: 'error', error: 'JSON invalide : ' + e.message }; }
+  data.planName = String(data.planName || '');
+  if (!data.days || !Array.isArray(data.days)) data.days = [];
+  data.days = data.days.slice(0, 7);
+  data.days.forEach(day => {
+    day.label = String(day.label || '');
+    (day.meals || []).forEach(m => {
+      m.name = String(m.name || 'Repas');
+      m.foods = Array.isArray(m.foods) ? m.foods.map(f => String(f)).filter(Boolean) : [];
+      m.kcal = parseInt(m.kcal) || 0; m.prot = parseInt(m.prot) || 0; m.carbs = parseInt(m.carbs) || 0; m.fat = parseInt(m.fat) || 0;
+    });
+    day.meals = (day.meals || []).filter(m => m.foods.length > 0);
+  });
+  data.days = data.days.filter(d => d.meals && d.meals.length > 0);
+  if (!data.days.length) return { status: 'error', error: 'Aucun repas trouvé dans le document.' };
+  return { status: 'ok', data };
+}
+
+// ── Génération de plan de repas IA — handleGenerateMealPlan_ (erreur = message)
+async function generateMealPlan(body, apiKey) {
+  if (!apiKey) return { status: 'error', message: 'Clé API manquante' };
+  const ctx = String(body.context || '');
+  const scope = body.scope || 'day';
+  const startDate = body.startDate || new Date().toISOString().split('T')[0];
+  const regenDay = body.regenDay || null;
+  const regenMeal = body.regenMeal || null;
+  let userMsg, maxTokens;
+  if (regenMeal && regenDay) {
+    userMsg = 'Régénère UNIQUEMENT le repas "' + regenMeal + '" pour la date ' + regenDay + '.\n'
+      + 'Retourne UNIQUEMENT ce JSON (un seul repas) :\n'
+      + '{"days":[{"date":"' + regenDay + '","meals":[{"name":"' + regenMeal + '","foods":["Aliment 1","Aliment 2"],"kcal":0,"prot":0,"carbs":0,"fat":0}]}]}';
+    maxTokens = 512;
+  } else {
+    const days = scope === 'week' ? 7 : 1;
+    const dates = [];
+    const d0 = new Date(startDate + 'T12:00:00');
+    for (let i = 0; i < days; i++) { const di = new Date(d0.getTime()); di.setDate(d0.getDate() + i); dates.push(di.toISOString().split('T')[0]); }
+    userMsg = 'Génère un plan de repas pour ' + (days === 1 ? '1 jour' : '7 jours') + '.\n'
+      + 'Dates exactes : ' + dates.join(', ') + '\nRetourne UNIQUEMENT le JSON, sans texte avant ou après.';
+    maxTokens = scope === 'week' ? 3500 : 900;
+  }
+  const systemPrompt = 'Tu es un diététicien sportif. Génère un plan de repas adapté au profil fourni.\n\n'
+    + 'RÈGLE ABSOLUE : réponds UNIQUEMENT avec du JSON valide, sans aucun texte avant ou après.\n\n'
+    + 'Format exact (respecte les emojis dans "name") :\n'
+    + '{"days":[{"date":"YYYY-MM-DD","meals":['
+    + '{"name":"🌅 Petit-déjeuner","foods":["Avoine 80g","Œufs brouillés (3)","Lait 200ml"],"kcal":420,"prot":28,"carbs":55,"fat":12},'
+    + '{"name":"🍽️ Déjeuner","foods":["Poulet grillé 150g","Riz basmati 100g","Brocolis 100g"],"kcal":580,"prot":45,"carbs":65,"fat":14},'
+    + '{"name":"🌙 Dîner","foods":["Saumon 130g","Patate douce 150g","Haricots verts"],"kcal":480,"prot":38,"carbs":40,"fat":18},'
+    + '{"name":"🍎 Collation","foods":["Yaourt grec 200g","Noix 20g"],"kcal":220,"prot":16,"carbs":12,"fat":11}'
+    + ']}]}\n\n'
+    + 'Règles :\n- Exactement 4 repas par jour (Petit-déjeuner, Déjeuner, Dîner, Collation)\n'
+    + '- 2 à 4 aliments par repas avec quantités précises (en grammes ou unités)\n'
+    + '- Macros cohérentes avec le profil fourni, s\'additionnant proches des cibles\n'
+    + '- Aliments réalistes et disponibles en France\n- Sur 7 jours : varie les plats (pas le même dîner deux jours consécutifs)';
+  const r = await fetch(ANTHROPIC_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+    body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: maxTokens, system: systemPrompt, messages: [{ role: 'user', content: ctx + '\n\n' + userMsg }] }),
+  });
+  const result = await r.json();
+  if (result.error) return { status: 'error', message: result.error.message };
+  const rawTxt = ((result.content && result.content[0] && result.content[0].text) || '').trim();
+  let parsed;
+  try { const m2 = rawTxt.match(/\{[\s\S]*\}/); parsed = JSON.parse(m2 ? m2[0] : rawTxt); }
+  catch (pe) { return { status: 'error', message: 'Format JSON invalide : ' + rawTxt.substring(0, 100) }; }
+  return { status: 'ok', plan: parsed };
 }
 
 function json(obj, status) {

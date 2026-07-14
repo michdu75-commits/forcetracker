@@ -1215,7 +1215,7 @@ async function _analyzeBloodRedacted(){
   closeBloodRedact();
   _showBsScan('data:image/jpeg;base64,'+imgs[0].data,'🩸 Analyse du bilan sanguin…','Lecture des marqueurs','Extraction des valeurs…');
   try{
-    const resp=await fetch(_aiUrl(),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    const resp=await fetch(_aiUrl('importBloodTest'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'importBloodTest',images:imgs,image:imgs[0].data,imageType:'image/jpeg',email:S.email||''})});
     const txt=await resp.text();let data;try{data=JSON.parse(txt);}catch(e){throw new Error('réponse illisible');}
     if(data.status!=='ok'||!data.data)throw new Error(data.error||'lecture impossible');

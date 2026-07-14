@@ -1,4 +1,4 @@
-const CACHE = 'ft-v433'; // Import programme/historique + analyse morpho passent aussi par le serveur IA Cloudflare (worker.js) → tout marche en 4G/5G. Pop-up d'excuses v15.
+const CACHE = 'ft-v434'; // TOUTES les actions IA (13) passent par le serveur IA Cloudflare (worker.js) : + étude du corps, prise de sang, mémoire Milo, estim. repas, import/génération plan repas → tout marche en 4G/5G.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

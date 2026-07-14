@@ -1458,7 +1458,7 @@ function exportData(){
 async function _saveCoachMemory(){
   if(!S.premium||!S.url||!S.email)return;
   try{
-    const resp=await fetch(_aiUrl(),{method:'POST',redirect:'follow',
+    const resp=await fetch(_aiUrl('summarizeCoach'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'summarizeCoach',email:S.email,
         history:coachHistory.slice(-16),existingMemory:S.coachMemory||''})
