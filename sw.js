@@ -1,4 +1,4 @@
-const CACHE = 'ft-v431'; // VICTOIRE 4G : bilan photo + code-barres + etiquette passent par le serveur IA Cloudflare (worker.js, Anthropic direct) → marchent en 4G/5G. Bouton photo bilan reactive en prod. Coach/programmes restent Apps Script (a ajouter au Worker ensuite)
+const CACHE = 'ft-v432'; // Milo (coach) passe aussi par le serveur IA Cloudflare (worker.js action coach, Anthropic direct) → Milo blinde en 4G comme le bilan. Reste programmes/historique/morpho a ajouter
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

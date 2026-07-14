@@ -1032,7 +1032,7 @@ async function sendToCoach(customMsg, displayMsg) {
       let resp = null, _netErr = null;
       for (let _a = 1; _a <= 3; _a++) {
         try {
-          resp = await fetch(_aiUrl(), {
+          resp = await fetch(_aiUrl('coach'), {
             method: 'POST',
             redirect: 'follow',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },

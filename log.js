@@ -3613,7 +3613,7 @@ async function analyzeProgIa(idx){
   const progText=_formatProgForAnalysis(prog);
   const message='Analyse ce programme d\'entraînement en tant que coach expert. Réponds en 4 parties :\n\n🎯 VERDICT GLOBAL (1 phrase directe et honnête)\n✅ POINTS FORTS\n⚠️ POINTS À AMÉLIORER\n💡 RECOMMANDATIONS CONCRÈTES (actions à faire)\n\nSois direct, concret et personnalisé selon mon profil.\n\nProgramme : "'+prog.name+'"\n'+progText;
   try{
-    const resp=await fetch(_aiUrl(),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'coach',message,context:buildCoachContext(),history:[]})});
+    const resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'coach',message,context:buildCoachContext(),history:[]})});
     if(!resp.ok)throw new Error('HTTP '+resp.status);
     const data=await resp.json();
     const reply=data.reply||'Erreur lors de l\'analyse.';

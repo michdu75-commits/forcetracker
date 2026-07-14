@@ -40,6 +40,7 @@ export default {
       if (body.action === 'importBodyScan') return json(await bodyScan(body, apiKey));
       if (body.action === 'foodLabel')      return json(await foodLabel(body, apiKey));
       if (body.action === 'readBarcode')    return json(await readBarcode(body, apiKey));
+      if (body.action === 'coach')          return json(await coach(body, apiKey));
 
       // ── Sinon : relais vers Apps Script (fallback) ────────────────────────
       const up = await fetch(APPS_SCRIPT_URL, {
@@ -179,6 +180,34 @@ async function readBarcode(body, apiKey) {
   const code = String(d.barcode || '').replace(/\D/g, '');
   if (code.length < 8) return { status: 'error', error: 'Code-barres illisible' };
   return { status: 'ok', barcode: code };
+}
+
+// ── Coach IA (Milo) — recopié de handleCoach_ ───────────────────────────────
+// Le system prompt (personnalité de Milo) est envoyé par l'appli dans body.context → pas de
+// duplication ici. Renvoie {reply:"..."} (comme Apps Script). Modèle par utilisateur.
+async function coach(body, apiKey) {
+  if (!apiKey) return { reply: '🔑 Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
+  const history = (body.history || []).slice(-8);
+  const ctx = body.context || '';
+  const memory = body.coachMemory || '';
+  let userContent;
+  if (body.image) {
+    userContent = [
+      { type: 'image', source: { type: 'base64', media_type: body.imageType || 'image/jpeg', data: body.image } },
+      { type: 'text', text: String(body.message || 'Analyse cette photo de mon corps.') },
+    ];
+  } else {
+    userContent = String(body.message || '');
+  }
+  const messages = history.concat([{ role: 'user', content: userContent }]);
+  const system = String(ctx) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory : '');
+  // Modèle selon l'utilisateur (comme Code.js, mais en dur ici — pas d'accès aux Script Properties)
+  const em = String(body.email || '').toLowerCase().trim();
+  let model = 'claude-haiku-4-5';
+  if (em === 'michdu75@gmail.com') model = 'claude-opus-4-6';
+  else if (em === 'christophe@famillelanglois.fr') model = 'claude-sonnet-4-6';
+  const text = await callClaude(apiKey, { model, max_tokens: 1024, system, messages });
+  return { reply: text || 'Désolé, réessaie.' };
 }
 
 function json(obj, status) {
