@@ -1,4 +1,4 @@
-const CACHE = 'ft-v435'; // Progrès -> Poids : liste des pesées/bilans balance repliable (réduite par défaut, tap pour ouvrir) — gagne de la place.
+const CACHE = 'ft-v436'; // Barre "Installation... X%" DE RETOUR (choix Michel) : installation complète des images en fond avec la barre, 1x par version (a chaque MAJ), via ENSURE_PRECACHE+FULL_MARKER. + liste pesees repliable (v435).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -163,11 +163,13 @@ self.addEventListener('install', e => {
 // Messages venant de l'app :
 //  - REPRECACHE      : réinstalle TOUT de force (bouton « Vider le cache ») → montre la barre.
 //                      C'est EXPLICITE : l'utilisateur le déclenche (à faire en wifi de préférence).
-//  - ENSURE_PRECACHE : envoyé à chaque ouverture. Répare UNIQUEMENT le CORE (code) si le cache a été
-//                      vidé. ⚠️ NE re-télécharge PLUS les 15 Mo d'images automatiquement en fond :
-//                      ça mangeait les données mobiles ET saturait la 4G À CHAQUE mise à jour → les
-//                      envois au serveur (bilan, import) tombaient en « Load failed » (2026-07-13).
-//                      Les images se mettent en cache À LA DEMANDE (fetch handler) — offline OK après 1re vue.
+//  - ENSURE_PRECACHE : envoyé à chaque ouverture. Répare le CORE (code) si le cache a été vidé, PUIS
+//                      lance l'installation COMPLÈTE des images en arrière-plan AVEC la barre
+//                      « 📦 Installation… X% » — SEULEMENT si le marqueur FULL_MARKER manque (donc
+//                      1 fois par version = à chaque mise à jour). Résumable : reprend là où ça s'est
+//                      arrêté, saute ce qui est déjà en cache. (Choix Michel 2026-07-15 : barre auto à
+//                      chaque MAJ, compromis assumé vs data mobile — la lecture bilan/import passe
+//                      désormais par le serveur Cloudflare, plus par Google, donc moins de contention.)
 self.addEventListener('message', e => {
   const t = e.data && e.data.type;
   if (t === 'REPRECACHE') {
@@ -176,10 +178,15 @@ self.addEventListener('message', e => {
     e.waitUntil((async () => {
       const cache = await caches.open(CACHE);
       const coreOk = await cache.match(PRECACHE_SENTINEL);
-      if (!coreOk) { await precacheCore(); }        // cache vidé → répare le code (rapide, PAS les 15 Mo)
-      // masque une éventuelle barre — aucun téléchargement de fond ici
-      const clients = await self.clients.matchAll({includeUncontrolled:true});
-      clients.forEach(c => c.postMessage({type:'PRECACHE_DONE', done:1, total:1}));
+      if (!coreOk) { await precacheCore(); }        // cache vidé → répare le code d'abord (rapide)
+      const full = await cache.match(FULL_MARKER);
+      if (!full) {
+        await precacheAll();                        // installation complète en fond → montre la barre, pose le marqueur à la fin
+      } else {
+        // déjà tout installé pour cette version → rien à télécharger, on masque une éventuelle barre
+        const clients = await self.clients.matchAll({includeUncontrolled:true});
+        clients.forEach(c => c.postMessage({type:'PRECACHE_DONE', done:1, total:1}));
+      }
     })());
   }
 });
