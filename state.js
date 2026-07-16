@@ -270,6 +270,7 @@ function persist(){
   // Rechargement de mise à jour reporté pendant la séance (app.js) — la séance vient de se terminer/annuler
   if(window._swReloadPending&&!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){
     window._swReloadPending=false;
+    try{localStorage.setItem('ft4_just_updated','1');}catch(e){} // → badge « Application mise à jour » au reboot
     window.location.reload();
   }
   _cloudSyncDebounced();

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v436'; // Barre "Installation... X%" DE RETOUR (choix Michel) : installation complète des images en fond avec la barre, 1x par version (a chaque MAJ), via ENSURE_PRECACHE+FULL_MARKER. + liste pesees repliable (v435).
+const CACHE = 'ft-v437'; // CODE uniquement (versionné). Les IMAGES sont dans IMG_CACHE ('ft-images'), tiroir STABLE jamais vidé par une MAJ → téléchargées 1 seule fois (fini le re-téléchargement des 15 Mo à chaque mise à jour). + badge « Application mise à jour ».
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -114,44 +114,51 @@ const PRECACHE = [
 // une figurine (le CORE seul ne les contient pas → fausse « absence »). Fix 2026-07-13.
 const PRECACHE_SENTINEL = './style.css';
 
-// Marqueur « installation complète terminée » : écrit dans le cache SEULEMENT quand precacheAll() a
-// fini de télécharger TOUTES les images. Tant qu'il manque, l'installation de fond (avec la barre
-// « 📦 Installation de l'appli… X% ») se (re)lance et REPREND là où elle en était — une fois posé,
-// elle ne se relance plus (fini le re-téléchargement des 15 Mo à chaque ouverture, bug 2026-07-13).
-const FULL_MARKER = './__ft_full_cache__';
+// ── DEUX TIROIRS SÉPARÉS (fix 2026-07-16, demande Michel) ─────────────────────
+// CACHE (versionné, tout en haut) = le CODE (html/js/css/polices/libs/logos) : petit, change à
+//   chaque mise à jour → renouvelé à chaque version (garantit qu'on reçoit bien le nouveau code).
+// IMG_CACHE (nom STABLE ci-dessous) = les IMAGES (exercices/anatomie/guide/accessoires/muscles) :
+//   ~15 Mo, ne changent quasi jamais. Ce tiroir n'est JAMAIS vidé par une mise à jour → les images
+//   sont téléchargées UNE SEULE FOIS (1re install) puis CONSERVÉES sur le téléphone. Fini le
+//   re-téléchargement des 15 Mo à chaque MAJ (qui mangeait la data et saturait la 4G).
+const IMG_CACHE = 'ft-images';
+const IMG_RE = /\/(exercises|anatomy|guide|accessoires|muscles)\//;
+const IMG_ASSETS = PRECACHE.filter(u => IMG_RE.test(u));
 
-// Télécharge tous les assets dans le cache, fichier par fichier, en notifiant la progression.
-// Réutilisé par l'install complète en fond, le bouton « Vider le cache », l'auto-réparation.
-// Les fichiers DÉJÀ en cache sont sautés → l'install est RÉSUMABLE (si l'utilisateur ferme l'appli
-// en cours de route, la reprise ne re-télécharge que ce qui manque) et la barre reflète le vrai reste.
-async function precacheAll() {
+// Fichiers ESSENTIELS (code + polices + libs + logos) — petits → install RAPIDE.
+// ⚠️ On ne bloque PAS l'install sur les ~15 Mo d'images : sur iOS/5G ça faisait traîner/échouer
+// l'install → skipWaiting jamais atteint → utilisateur COINCÉ sur l'ancienne version (bug 2026-07-13).
+const CORE = PRECACHE.filter(u => !IMG_RE.test(u));
+async function precacheCore(){
   const cache = await caches.open(CACHE);
-  const total = PRECACHE.length;
+  for (const url of CORE){ try { await cache.add(url); } catch (e) {} }
+}
+
+// Télécharge SEULEMENT les images MANQUANTES dans le tiroir stable IMG_CACHE, une par une, en
+// notifiant la progression (barre « 📦 Installation… X% »). Résumable. La barre n'apparaît donc
+// QUE quand il y a vraiment quelque chose à télécharger : 1re installation, ou nouvelles figurines
+// ajoutées. Sur une mise à jour normale (images déjà présentes) → rien à faire, AUCUNE barre, 0 data.
+async function precacheImages(){
+  const cache = await caches.open(IMG_CACHE);
+  const missing = [];
+  for (const url of IMG_ASSETS){ if (!(await cache.match(url))) missing.push(url); }
+  if (!missing.length){                          // tout est déjà là → pas de barre
+    const clients = await self.clients.matchAll({includeUncontrolled:true});
+    clients.forEach(c => c.postMessage({type:'PRECACHE_DONE', done:1, total:1}));
+    return;
+  }
+  const total = missing.length;
   let done = 0;
   const notify = async (type) => {
     const clients = await self.clients.matchAll({includeUncontrolled:true});
     clients.forEach(c => c.postMessage({type, done, total}));
   };
-  for (const url of PRECACHE) {
-    const already = await cache.match(url);              // déjà en cache → on saute (reprise)
-    if (!already) { try { await cache.add(url); } catch (err) { /* skip : asset manquant, on continue */ } }
+  for (const url of missing){
+    try { await cache.add(url); } catch (err) { /* asset manquant sur le serveur → on continue */ }
     done++;
     if (done === total || done % 4 === 0) await notify('PRECACHE_PROGRESS');
   }
-  try { await cache.put(FULL_MARKER, new Response('ok')); } catch (e) {} // pose le marqueur « fini »
   await notify('PRECACHE_DONE');
-}
-
-// Fichiers ESSENTIELS (code + polices + libs + logos) — petits → install RAPIDE.
-// ⚠️ On ne bloque PLUS l'install sur les ~15 Mo d'images (exercices/anatomie/guide/…) : sur
-// iOS/5G ce téléchargement faisait traîner/échouer l'install → skipWaiting jamais atteint → la
-// nouvelle version ne s'activait pas → utilisateur COINCÉ sur l'ancienne (bug 2026-07-13, cause
-// des « versions périmées »). Les images se mettent en cache À LA DEMANDE (fetch handler) +
-// via ENSURE_PRECACHE en arrière-plan (non bloquant).
-const CORE = PRECACHE.filter(u => !/\/(exercises|anatomy|guide|accessoires|muscles)\//.test(u));
-async function precacheCore(){
-  const cache = await caches.open(CACHE);
-  for (const url of CORE){ try { await cache.add(url); } catch (e) {} }
 }
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
@@ -173,20 +180,14 @@ self.addEventListener('install', e => {
 self.addEventListener('message', e => {
   const t = e.data && e.data.type;
   if (t === 'REPRECACHE') {
-    e.waitUntil(precacheAll());
+    // « Vider le cache » (explicite) → tout réinstaller : code + images (les images ont été vidées).
+    e.waitUntil((async () => { await precacheCore(); await precacheImages(); })());
   } else if (t === 'ENSURE_PRECACHE') {
     e.waitUntil((async () => {
       const cache = await caches.open(CACHE);
       const coreOk = await cache.match(PRECACHE_SENTINEL);
-      if (!coreOk) { await precacheCore(); }        // cache vidé → répare le code d'abord (rapide)
-      const full = await cache.match(FULL_MARKER);
-      if (!full) {
-        await precacheAll();                        // installation complète en fond → montre la barre, pose le marqueur à la fin
-      } else {
-        // déjà tout installé pour cette version → rien à télécharger, on masque une éventuelle barre
-        const clients = await self.clients.matchAll({includeUncontrolled:true});
-        clients.forEach(c => c.postMessage({type:'PRECACHE_DONE', done:1, total:1}));
-      }
+      if (!coreOk) { await precacheCore(); }        // cache CODE vidé → répare le code d'abord (rapide)
+      await precacheImages();                        // télécharge les images MANQUANTES → barre SI besoin, sinon rien
     })());
   }
 });
@@ -194,7 +195,7 @@ self.addEventListener('message', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== IMG_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
       .then(() => self.clients.matchAll({includeUncontrolled:true}).then(clients =>
         clients.forEach(c => c.postMessage({type:'SW_UPDATED'}))
@@ -241,12 +242,17 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Autres assets locaux : cache d'abord, réseau en fallback
+  // Autres assets locaux : cache d'abord (cherche dans les DEUX tiroirs), réseau en fallback.
+  // Au téléchargement à la demande : les images vont dans IMG_CACHE (stable), le reste dans CACHE.
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
       return fetch(e.request).then(r => {
-        if (r && r.status === 200) { const cl=r.clone(); caches.open(CACHE).then(c => c.put(e.request, cl)); }
+        if (r && r.status === 200) {
+          const cl=r.clone();
+          const target = IMG_RE.test(url.pathname) ? IMG_CACHE : CACHE;
+          caches.open(target).then(c => c.put(e.request, cl));
+        }
         return r;
       });
     })

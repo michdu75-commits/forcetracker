@@ -1833,6 +1833,20 @@ function saveBday(val){
 }
 
 let _weekSumText='';
+// Badge « ✅ Application mise à jour » : affiché une fois au reboot qui suit une mise à jour du code
+// (le flag ft4_just_updated est posé juste avant le reload de MAJ). Pas au tout 1er install (on se
+// base sur la présence d'un compte existant pour distinguer install ≠ mise à jour).
+function checkJustUpdated(){
+  try{
+    const isUpdate=localStorage.getItem('ft4_just_updated')==='1';
+    const existing=localStorage.getItem('ft4_app_seen')==='1'||!!localStorage.getItem('ft4_name');
+    if(isUpdate){
+      localStorage.removeItem('ft4_just_updated');
+      if(existing)setTimeout(()=>{ if(typeof toast==='function')toast('✅ Application mise à jour','success'); },800);
+    }
+    localStorage.setItem('ft4_app_seen','1');
+  }catch(e){}
+}
 function checkWeeklySummary(){
   const now=new Date();
   if(now.getDay()!==1)return; // lundi seulement
@@ -2209,6 +2223,7 @@ document.addEventListener('input',e=>{
 _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
+checkJustUpdated();   // badge « Application mise à jour » après un reboot de mise à jour
 checkSuperTesterWelcome(); // message « super testeur » une seule fois (Christophe)
 checkEmmaWelcome(); // pop perso Emma : bienvenue Espace Testeur + boîte à idées (une seule fois)
 checkTesterGuide(); // guide testeuses (Eline, Emma, Tanna) : tour de l'app + boîte à idées (une seule fois)
@@ -2720,6 +2735,7 @@ function _reloadForUpdate(){
     window._swReloadPending=true;
     if(typeof toast==='function')toast('Mise à jour disponible — appliquée à la fin de la séance','info');
   }else{
+    try{localStorage.setItem('ft4_just_updated','1');}catch(e){} // → badge « Application mise à jour » au reboot
     window.location.reload();
   }
 }
