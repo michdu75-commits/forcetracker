@@ -1236,8 +1236,10 @@ const _MEX=[
   {re:/gainage|plank|superman|bird.?dog/i,                                      p:['abs','lower-back'],                 s:['obliques','front-delt','glutes']},
   // Abdos — crunch / relevés / twist
   {re:/crunch|abdos|sit.?up|hanging leg|releves? de jambe|releves? de genou|leg raise|twist/i, p:['abs'],               s:['obliques','hip-flexors']},
-  // Avant-bras — farmers / carry
-  {re:/farmers?|portes|carry/i,                                                 p:['forearms','traps'],                 s:['quads','glutes']},
+  // Avant-bras — grip / préhension (Farmer's Walk Grip, dead hang) : la préhension domine
+  {re:/grip|prehension|dead ?hang/i,                                            p:['forearms'],                         s:['traps','quads']},
+  // Jambes — farmer's walk / marche du fermier / portés : muscle principal = les cuisses (retour Michel)
+  {re:/farmers?|fermier|portes|carry/i,                                         p:['quads','glutes'],                   s:['forearms','traps']},
 ];
 const _MG={
   pec:           {paths:['chest-upper-left','chest-upper-right','chest-lower-left','chest-lower-right'],                                                                                          label:'Pectoraux'},

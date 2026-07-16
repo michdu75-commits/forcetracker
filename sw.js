@@ -1,4 +1,4 @@
-const CACHE = 'ft-v439'; // Fix : le grand décompte final de repos s'affiche sur TOUS les écrans (retour Michel : manquait quand on discute avec Milo).
+const CACHE = 'ft-v440'; // Farmer's Walk reclassé Trapèzes -> Jambes (muscle principal = cuisses, retour Michel) + _MEX aligné (cuisses primaires ; variante Grip reste avant-bras).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -29,7 +29,7 @@ const EXLIB=[
   // ── Trapèzes ───────────────────────────────────────────────
   {n:'Haussements d\'Épaules (Shrugs)',g:'Trapèzes'},{n:'Haussements d\'Épaules Barre',g:'Trapèzes'},
   {n:'Haussements d\'Épaules Haltères',g:'Trapèzes'},{n:'Haussements d\'Épaules Câble',g:'Trapèzes'},
-  {n:'Tirage Menton',g:'Trapèzes'},{n:'Farmer\'s Walk',g:'Trapèzes'},
+  {n:'Tirage Menton',g:'Trapèzes'},{n:'Farmer\'s Walk',g:'Jambes'},
   {n:'Haussements d\'Épaules Overhead',g:'Trapèzes'},
   // ── Épaules ────────────────────────────────────────────────
   {n:'Développé Militaire',g:'Épaules'},{n:'Développé Militaire Haltères',g:'Épaules'},
