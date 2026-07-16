@@ -1,4 +1,4 @@
-const CACHE = 'ft-v440'; // Farmer's Walk reclassé Trapèzes -> Jambes (muscle principal = cuisses, retour Michel) + _MEX aligné (cuisses primaires ; variante Grip reste avant-bras).
+const CACHE = 'ft-v441'; // Reclassement muscles : squats/fentes/presses/montées AUSSI en Fessiers (cuisses+fessiers), Croix de Fer Haltères -> Épaules (retour Michel).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

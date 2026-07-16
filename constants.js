@@ -78,7 +78,7 @@ const EXLIB=[
   {n:'Pendulum Squat',g:'Jambes'},{n:'Belt Squat',g:'Jambes'},{n:'Safety Bar Squat',g:'Jambes'},
   {n:'Overhead Squat',g:'Jambes'},{n:'Pin Squat',g:'Jambes'},{n:'Sissy Squat',g:'Jambes'},
   {n:'Cossack Squat',g:'Jambes'},{n:'Squat Bande Élastique',g:'Jambes'},{n:'Chaise (Wall Sit)',g:'Jambes'},
-  {n:'Presse à Cuisses Iso-Latérale',g:'Jambes'},{n:'Sled Push',g:'Jambes'},{n:'Croix de Fer Haltères',g:'Jambes'},
+  {n:'Presse à Cuisses Iso-Latérale',g:'Jambes'},{n:'Sled Push',g:'Jambes'},{n:'Croix de Fer Haltères',g:'Épaules'},
   // ── Fessiers ───────────────────────────────────────────────
   {n:'Poussée de Hanche (Hip Thrust)',g:'Fessiers'},{n:'Poussée de Hanche Haltère',g:'Fessiers'},{n:'Poussée de Hanche Machine',g:'Fessiers'},
   {n:'Pont Fessier (Glute Bridge)',g:'Fessiers'},
@@ -95,6 +95,18 @@ const EXLIB=[
   {n:'Soulevé de Terre Trap Bar',g:'Fessiers'},{n:'Soulevé de Terre avec Déficit',g:'Fessiers'},{n:'Soulevé de Terre Machine',g:'Fessiers'},
   {n:'Zercher Deadlift',g:'Fessiers'},{n:'Reeves Deadlift',g:'Fessiers'},
   {n:'Glute Ham Raise (GHD)',g:'Fessiers'},{n:'Kettlebell Swing',g:'Fessiers'},
+  // ── Squats / fentes / presses / montées : AUSSI en Fessiers (cuisses + fessiers = 2 muscles principaux, retour Michel 2026-07-16) ──
+  {n:'Squat à la Barre',g:'Fessiers'},{n:'Squat Avant',g:'Fessiers'},{n:'Squat Bulgare',g:'Fessiers'},
+  {n:'Squat Gobelet (Goblet Squat)',g:'Fessiers'},{n:'Squat Sumo',g:'Fessiers'},{n:'Smith Machine Squat',g:'Fessiers'},
+  {n:'Squat Hack (Hack Squat)',g:'Fessiers'},{n:'Squat Pistol',g:'Fessiers'},{n:'Squat Kettlebell',g:'Fessiers'},
+  {n:'Belt Squat',g:'Fessiers'},{n:'Safety Bar Squat',g:'Fessiers'},{n:'Overhead Squat',g:'Fessiers'},
+  {n:'Pin Squat',g:'Fessiers'},{n:'Cossack Squat',g:'Fessiers'},{n:'Squat Bande Élastique',g:'Fessiers'},
+  {n:'Pendulum Squat',g:'Fessiers'},{n:'Hack Squat Inversé',g:'Fessiers'},
+  {n:'Press Jambes 45°',g:'Fessiers'},{n:'Press Jambes Horizontale',g:'Fessiers'},{n:'Press Jambes Verticale',g:'Fessiers'},
+  {n:'Press Jambes Inclinée',g:'Fessiers'},{n:'Press Jambes Levier',g:'Fessiers'},{n:'Presse à Cuisses Iso-Latérale',g:'Fessiers'},
+  {n:'Fentes',g:'Fessiers'},{n:'Fentes Marchées',g:'Fessiers'},{n:'Fentes Arrière',g:'Fessiers'},
+  {n:'Fentes Latérales',g:'Fessiers'},{n:'Fentes Kettlebell',g:'Fessiers'},{n:'Smith Machine Fentes',g:'Fessiers'},
+  {n:'Montée sur Box (Step-up)',g:'Fessiers'},{n:'Montée sur Box Haltères',g:'Fessiers'},
   // ── Lombaires ──────────────────────────────────────────────
   {n:'Hyperextension (Back Extension)',g:'Lombaires'},{n:'Hyperextension Inverse (Reverse Hyper)',g:'Lombaires'},
   {n:'Hyperextension Lestée',g:'Lombaires'},{n:'Hyperextension Machine',g:'Lombaires'},
