@@ -1687,8 +1687,10 @@ function _updPill(){
 
 function _restTick(){
   const left=_restLeft();
-  // Overlay décompte final : 10 dernières secondes (seulement si repos > 10s)
-  if(left===10&&!_cdownActive&&restTot>10&&window._curScreen==='log')_showRestCountdown();
+  // Overlay décompte final : 10 dernières secondes (si repos > 10s).
+  // Affiché sur TOUS les écrans (retour Michel : le décompte manquait quand on discute avec Milo)
+  // — l'overlay est plein écran (z-index 9999), il couvre n'importe quel écran ; tap/Passer pour fermer.
+  if(left===10&&!_cdownActive&&restTot>10)_showRestCountdown();
   if(_cdownActive)_updateRestCountdown();
   // Décompte 5..1 : vibrations courtes (aucun son)
   if(left>0&&left<=5&&!_countdownSecs.has(left)){

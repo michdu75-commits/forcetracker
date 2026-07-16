@@ -1,4 +1,4 @@
-const CACHE = 'ft-v438'; // Retours Emma : repos réglable à la main en séance + option « Tout dérouler » les exercices + régime cétogène (keto 5/15/80) dans Nutrition. (Images toujours dans IMG_CACHE stable.)
+const CACHE = 'ft-v439'; // Fix : le grand décompte final de repos s'affiche sur TOUS les écrans (retour Michel : manquait quand on discute avec Milo).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
