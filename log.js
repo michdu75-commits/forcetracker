@@ -496,7 +496,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
   const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
   // En mode sélection, tout apparaît replié pour faciliter les taps
-  const isExpanded=!_groupMode&&(ei===_expandedEx||exCount===1);
+  // S.expandAll (option « tout dérouler », retour Emma) : tous les exercices ouverts en même temps
+  const isExpanded=!_groupMode&&(S.expandAll||ei===_expandedEx||exCount===1);
   const isSelected=_groupMode&&_selectedGroupExs.has(ei);
   const nextEi=ex.group?_nextInGroup(ei):null;
   const nextExName=nextEi!==null?S.wkt.exs[nextEi].name:null;
@@ -838,7 +839,8 @@ function renderExBlocks(){
         :`<button class="btn btn-bg2 btn-sm" style="flex:2;opacity:.45;" disabled>Sélectionne 2+ exos</button>`)
       +`</div>`;
   } else if(exCount>=2){
-    topBar=`<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">`
+    topBar=`<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px;">`
+      +`<button class="btn-xs" style="color:var(--t2);border-color:var(--sep);font-size:12px;padding:4px 10px;" onclick="toggleExpandAll()">${S.expandAll?'⊟ Concentration':'⊞ Tout dérouler'}</button>`
       +`<button class="btn-xs" style="color:var(--orange);border-color:rgba(255,109,0,.4);font-size:12px;padding:4px 10px;" onclick="toggleGroupMode()">⚡ Grouper</button>`
       +`</div>`;
   }
@@ -1158,6 +1160,14 @@ function _replaceExInWorkout(name){
   _expandedEx=ei;
   persist();renderExBlocks();
   toast('Exercice remplacé par '+name,'success');
+}
+// Option « tout dérouler » vs « concentration » (retour Emma) : voir toutes les séries d'un coup
+// ou un seul exercice à la fois. Persisté (ft4_expandall).
+function toggleExpandAll(){
+  S.expandAll=!S.expandAll;
+  persist();
+  renderExBlocks();
+  if(typeof toast==='function')toast(S.expandAll?'Tous les exercices déroulés':'Mode concentration (un exercice à la fois)','info');
 }
 function toggleExBlock(ei){
   _expandedEx=(_expandedEx===ei)?ei:ei;

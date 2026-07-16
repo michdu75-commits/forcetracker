@@ -38,6 +38,7 @@ function load(){
     S.bw=parseFloat(localStorage.getItem('ft4_bw')||'0')||0;
     S.barW=parseFloat(localStorage.getItem('ft4_bar')||'20')||20;
     S.defRest=parseInt(localStorage.getItem('ft4_rest')||'130')||130;
+    S.expandAll=localStorage.getItem('ft4_expandall')==='1'; // option « tout dérouler » les exercices en séance (retour Emma)
     S.gender=localStorage.getItem('ft4_gender')||'H';
     S.age=parseInt(localStorage.getItem('ft4_age')||'0')||0;
     S.height=parseFloat(localStorage.getItem('ft4_ht')||'0')||0;
@@ -178,7 +179,7 @@ function persist(){
   if(window._demoMode)return;
   try{
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
-    localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_gender',S.gender);
+    localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_gender',S.gender);
     localStorage.setItem('ft4_age',S.age);localStorage.setItem('ft4_ht',S.height);
     localStorage.setItem('ft4_act',S.activityLevel);
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
