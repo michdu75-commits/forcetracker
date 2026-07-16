@@ -1939,6 +1939,36 @@ function addRT(s){
 }
 function skipRest(){stopRest();}
 
+// ─── Réglage manuel du temps de repos (retour Emma, ft-v438) ──────────────────
+// Ouvre un mini-éditeur min:sec → règle la durée du repos en cours (avant, on ne pouvait
+// qu'ajouter/retirer 15s à répétition). Mémorise aussi la préférence pour l'exercice.
+function openRestEdit(){
+  const mi=document.getElementById('re-min'),se=document.getElementById('re-sec');
+  const left=restStartTs?Math.max(5,_restLeft()):(restTot||S.defRest||130);
+  if(mi)mi.value=Math.floor(left/60);
+  if(se)se.value=left%60;
+  const ov=document.getElementById('ov-rest-edit');if(ov)ov.classList.add('open');
+  setTimeout(()=>{if(mi){mi.focus();mi.select&&mi.select();}},60);
+}
+function closeRestEdit(){const ov=document.getElementById('ov-rest-edit');if(ov)ov.classList.remove('open');}
+function applyRestEdit(){
+  const mi=parseInt(document.getElementById('re-min')?.value)||0;
+  const se=parseInt(document.getElementById('re-sec')?.value)||0;
+  let total=mi*60+se;
+  total=Math.max(5,Math.min(total,900)); // borne : 5 s … 15 min
+  if(!restStartTs){startRest(total);}
+  else{
+    // repart du nouveau total (compte à rebours frais depuis la valeur saisie)
+    restTot=total;restStartTs=Date.now();_restBeeped=false;_countdownSecs=new Set();
+    _closeRestCountdown();
+    updRest();_updPill();
+  }
+  if(_restEx){S.exRestPref=S.exRestPref||{};S.exRestPref[_restEx]=total;persist();}
+  _highlightRestPreset(total);
+  closeRestEdit();
+  if(typeof toast==='function')toast('Repos réglé sur '+(mi?mi+' min ':'')+(se||!mi?se+' s':''),'info');
+}
+
 // ─── EXERCISE PICKER ─────────────────────────────────────────
 const _IMG=n=>`<img src="muscles/${n}.svg" style="height:46px;width:auto">`;
 const EX_GROUPS=[
