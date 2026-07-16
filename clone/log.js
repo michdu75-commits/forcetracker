@@ -496,7 +496,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
   const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
   // En mode sélection, tout apparaît replié pour faciliter les taps
-  const isExpanded=!_groupMode&&(ei===_expandedEx||exCount===1);
+  // S.expandAll (option « tout dérouler », retour Emma) : tous les exercices ouverts en même temps
+  const isExpanded=!_groupMode&&(S.expandAll||ei===_expandedEx||exCount===1);
   const isSelected=_groupMode&&_selectedGroupExs.has(ei);
   const nextEi=ex.group?_nextInGroup(ei):null;
   const nextExName=nextEi!==null?S.wkt.exs[nextEi].name:null;
@@ -838,7 +839,8 @@ function renderExBlocks(){
         :`<button class="btn btn-bg2 btn-sm" style="flex:2;opacity:.45;" disabled>Sélectionne 2+ exos</button>`)
       +`</div>`;
   } else if(exCount>=2){
-    topBar=`<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">`
+    topBar=`<div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:6px;">`
+      +`<button class="btn-xs" style="color:var(--t2);border-color:var(--sep);font-size:12px;padding:4px 10px;" onclick="toggleExpandAll()">${S.expandAll?'⊟ Concentration':'⊞ Tout dérouler'}</button>`
       +`<button class="btn-xs" style="color:var(--orange);border-color:rgba(255,109,0,.4);font-size:12px;padding:4px 10px;" onclick="toggleGroupMode()">⚡ Grouper</button>`
       +`</div>`;
   }
@@ -1158,6 +1160,14 @@ function _replaceExInWorkout(name){
   _expandedEx=ei;
   persist();renderExBlocks();
   toast('Exercice remplacé par '+name,'success');
+}
+// Option « tout dérouler » vs « concentration » (retour Emma) : voir toutes les séries d'un coup
+// ou un seul exercice à la fois. Persisté (ft4_expandall).
+function toggleExpandAll(){
+  S.expandAll=!S.expandAll;
+  persist();
+  renderExBlocks();
+  if(typeof toast==='function')toast(S.expandAll?'Tous les exercices déroulés':'Mode concentration (un exercice à la fois)','info');
 }
 function toggleExBlock(ei){
   _expandedEx=(_expandedEx===ei)?ei:ei;
@@ -1938,6 +1948,36 @@ function addRT(s){
   updRest();
 }
 function skipRest(){stopRest();}
+
+// ─── Réglage manuel du temps de repos (retour Emma, ft-v438) ──────────────────
+// Ouvre un mini-éditeur min:sec → règle la durée du repos en cours (avant, on ne pouvait
+// qu'ajouter/retirer 15s à répétition). Mémorise aussi la préférence pour l'exercice.
+function openRestEdit(){
+  const mi=document.getElementById('re-min'),se=document.getElementById('re-sec');
+  const left=restStartTs?Math.max(5,_restLeft()):(restTot||S.defRest||130);
+  if(mi)mi.value=Math.floor(left/60);
+  if(se)se.value=left%60;
+  const ov=document.getElementById('ov-rest-edit');if(ov)ov.classList.add('open');
+  setTimeout(()=>{if(mi){mi.focus();mi.select&&mi.select();}},60);
+}
+function closeRestEdit(){const ov=document.getElementById('ov-rest-edit');if(ov)ov.classList.remove('open');}
+function applyRestEdit(){
+  const mi=parseInt(document.getElementById('re-min')?.value)||0;
+  const se=parseInt(document.getElementById('re-sec')?.value)||0;
+  let total=mi*60+se;
+  total=Math.max(5,Math.min(total,900)); // borne : 5 s … 15 min
+  if(!restStartTs){startRest(total);}
+  else{
+    // repart du nouveau total (compte à rebours frais depuis la valeur saisie)
+    restTot=total;restStartTs=Date.now();_restBeeped=false;_countdownSecs=new Set();
+    _closeRestCountdown();
+    updRest();_updPill();
+  }
+  if(_restEx){S.exRestPref=S.exRestPref||{};S.exRestPref[_restEx]=total;persist();}
+  _highlightRestPreset(total);
+  closeRestEdit();
+  if(typeof toast==='function')toast('Repos réglé sur '+(mi?mi+' min ':'')+(se||!mi?se+' s':''),'info');
+}
 
 // ─── EXERCISE PICKER ─────────────────────────────────────────
 const _IMG=n=>`<img src="../muscles/${n}.svg" style="height:46px;width:auto">`;

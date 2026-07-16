@@ -671,6 +671,12 @@ function setNuPhase(phase){
   document.getElementById('pb-decharge').classList.toggle('active',phase==='decharge');
   renderNutrition();
 }
+// Régime cétogène (keto, retour Emma) : bascule les macros en 5% glucides / 15% prot / 80% lipides
+function toggleKeto(){
+  S.keto=!S.keto; persist();
+  renderNutrition();
+  if(typeof toast==='function')toast(S.keto?'🥑 Régime cétogène activé':'Régime cétogène désactivé','info');
+}
 
 // ─── Réglage manuel des calories/macros (retour testeuse : « pouvoir corriger moi-même ») ──
 function openKcalEdit(){
@@ -740,6 +746,18 @@ function renderNutrition(){try{
   document.getElementById('nu-session-cal').textContent=sessCals>0?sessCals.toLocaleString('fr-FR')+' kcal':'— (pas de séance)';
   document.getElementById('nu-total-cal').textContent=(sessCals>0?totalCals:tdee).toLocaleString('fr-FR')+' kcal';
   document.getElementById('nu-hydra').textContent=hydra;
+
+  // Régime cétogène (keto, retour Emma) : bascule visible par tous
+  const ketoEl=document.getElementById('nu-keto');
+  if(ketoEl){
+    const on=!!S.keto;
+    ketoEl.innerHTML='<div onclick="toggleKeto()" style="display:flex;align-items:center;gap:10px;cursor:pointer;background:'+(on?'rgba(52,199,89,.1)':'var(--bg2)')+';border:1px solid '+(on?'rgba(52,199,89,.35)':'var(--sep)')+';border-radius:12px;padding:10px 12px;margin-bottom:10px;">'
+      +'<span style="font-size:20px;">🥑</span>'
+      +'<div style="flex:1;line-height:1.3;"><div style="font-size:13.5px;font-weight:800;color:var(--t1);">Régime cétogène (keto)</div>'
+      +'<div style="font-size:11.5px;color:var(--t3);">'+(on?'Actif — 5% glucides · 15% protéines · 80% lipides':'Très peu de glucides, beaucoup de lipides')+'</div></div>'
+      +'<div style="width:42px;height:24px;border-radius:12px;background:'+(on?'var(--green)':'var(--sep)')+';position:relative;flex-shrink:0;transition:background .2s;"><div style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:'+(on?'20px':'2px')+';transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);"></div></div>'
+      +'</div>';
+  }
 
   const macros=calcMacros(S.nutritionPhase);
   document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');

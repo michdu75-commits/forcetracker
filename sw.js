@@ -1,4 +1,4 @@
-const CACHE = 'ft-v437'; // CODE uniquement (versionné). Les IMAGES sont dans IMG_CACHE ('ft-images'), tiroir STABLE jamais vidé par une MAJ → téléchargées 1 seule fois (fini le re-téléchargement des 15 Mo à chaque mise à jour). + badge « Application mise à jour ».
+const CACHE = 'ft-v438'; // Retours Emma : repos réglable à la main en séance + option « Tout dérouler » les exercices + régime cétogène (keto 5/15/80) dans Nutrition. (Images toujours dans IMG_CACHE stable.)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
