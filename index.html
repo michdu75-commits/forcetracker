@@ -590,6 +590,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       <button class="phase-btn charge" id="pb-charge" onclick="setNuPhase('charge')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:5px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>Charge<br><span style="font-size:11px;font-weight:500;opacity:.75;" id="pb-charge-lbl">Surplus</span></button>
       <button class="phase-btn decharge" id="pb-decharge" onclick="setNuPhase('decharge')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:-2px;margin-right:5px;"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg>Décharge<br><span style="font-size:11px;font-weight:500;opacity:.75;" id="pb-decharge-lbl">Déficit</span></button>
     </div>
+    <!-- Régime cétogène (keto) — rempli par renderNutrition (retour Emma) -->
+    <div id="nu-keto"></div>
     <!-- Macros (maquette : lignes + barres ; barre = part des calories) -->
     <div class="sec">Macronutriments <span style="color:var(--t3);font-weight:500;text-transform:none;letter-spacing:0;">· barre = part des calories</span></div>
     <div class="macro-card">

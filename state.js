@@ -39,6 +39,7 @@ function load(){
     S.barW=parseFloat(localStorage.getItem('ft4_bar')||'20')||20;
     S.defRest=parseInt(localStorage.getItem('ft4_rest')||'130')||130;
     S.expandAll=localStorage.getItem('ft4_expandall')==='1'; // option « tout dérouler » les exercices en séance (retour Emma)
+    S.keto=localStorage.getItem('ft4_keto')==='1'; // régime cétogène : macros 5/15/80 (retour Emma)
     S.gender=localStorage.getItem('ft4_gender')||'H';
     S.age=parseInt(localStorage.getItem('ft4_age')||'0')||0;
     S.height=parseFloat(localStorage.getItem('ft4_ht')||'0')||0;
@@ -179,7 +180,7 @@ function persist(){
   if(window._demoMode)return;
   try{
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
-    localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_gender',S.gender);
+    localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_keto',S.keto?'1':'0');localStorage.setItem('ft4_gender',S.gender);
     localStorage.setItem('ft4_age',S.age);localStorage.setItem('ft4_ht',S.height);
     localStorage.setItem('ft4_act',S.activityLevel);
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
@@ -341,6 +342,14 @@ function getMensCyclePhase(){
 // complètent le total calorique. Sert au calcul auto ET à l'aperçu du réglage manuel.
 function macrosForKcal(kcal){
   const goal=S.goal||'muscle';
+  // Régime cétogène (keto, retour Emma) : répartition par POURCENTAGES de calories au lieu du g/kg
+  // — 5% glucides / 15% protéines / 80% lipides (standard keto, celui de sa nutritionniste).
+  if(S.keto){
+    const carbs_g=Math.max(0,Math.round(kcal*0.05/4));
+    const prot_g =Math.max(0,Math.round(kcal*0.15/4));
+    const fat_g  =Math.max(0,Math.round(kcal*0.80/9));
+    return{prot_g,fat_g,carbs_g};
+  }
   const cp=getMensCyclePhase();
   const lutealProt=cp&&cp.phase==='Lutéale'?0.2:0;
   const protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
