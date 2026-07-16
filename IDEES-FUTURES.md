@@ -690,3 +690,12 @@ Milo a déjà : méthode + raisonnement + modèle pro + adaptation vie/travail. 
 2. **Récup/sommeil** : exploiter le sommeil (régularité, dette) + import Garmin.
 3. **Prépa compétition** (Michel prépare « les Jeux ») : périodisation bloc, affûtage/tapering, gestion semaine de compét.
 4. Technique par exercice (cues détaillés gros mouvements), lecture des courbes de l'app pour décider.
+
+## 🎨 COULEURS PAR GROUPE MUSCULAIRE (idée Michel, notée 2026-07-16 — « on verra plus tard »)
+Idée : donner une **couleur par groupe musculaire** pour repérer d'un coup d'œil, dans une séance / un programme / l'historique, ce qui est jambes, pecs, dos… (Michel : « une palette de couleurs différente »).
+- **⚠️ Piège = le dosage.** 12 groupes → si fonds pleins colorés partout = **arc-en-ciel fatigant** qui casse l'identité rouge/propre de l'app. À éviter absolument.
+- **Approche recommandée (discutée)** : touche **discrète**, pas de fond plein. Ex. **fine barre de couleur à gauche** de chaque bloc d'exercice, ou petite **pastille/étiquette**. Icône de muscle éventuellement teintée.
+- **Couleurs par FAMILLES** (pour rester harmonieux, pas 12 couleurs qui se battent) : 🟢 bas du corps (Jambes/Fessiers/Mollets) = verts · 🔴 Pectoraux = rouge (couleur identité) · 🔵 Dos/Trapèzes/Lombaires = bleus · 🟣 Épaules = violet · 🟡 Bras (Biceps/Triceps/Avant-bras) = ambre/or · 🟠 Abdominaux = orange.
+- **Où l'appliquer** : d'abord la **séance** (blocs d'exercice) + l'**historique/programmes** (là où scanner aide). Le sélecteur a déjà ses icônes de muscles → pas prioritaire.
+- **Méthode** : prototyper **sur le clone** (`/clone/`) sur UN écran (blocs séance), version « barre de couleur à gauche », **testé jour + nuit + affichage agrandi**, Michel valide sur iPhone → si OK, promotion en prod. Sinon on annule sans risque.
+- Le groupe d'un exercice se lit dans `EXLIB` (`.g`) ; certains exos sont dans 2 groupes (squat = Jambes+Fessiers) → décider quelle couleur montrer (le 1er groupe ? le muscle principal ?).
