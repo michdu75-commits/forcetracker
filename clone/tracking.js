@@ -1507,16 +1507,17 @@ function _sleepListHtml(){
   }).join('');
   return`<div style="max-height:240px;overflow-y:auto;margin-top:12px;border-top:1px solid var(--sep);-webkit-overflow-scrolling:touch;">${rows}</div>`;
 }
-function _sleepHistHtml(){
+// Section historique — SANS carte propre (elle vit DANS la carte sommeil, sous un séparateur)
+function _sleepHistInner(){
   const n=(S.sleepLog||[]).length;
   const chev=`<span style="display:inline-block;transition:transform .2s;transform:rotate(${_sleepHistOpen?90:0}deg);">›</span>`;
-  let html='<div style="margin-top:8px;background:var(--bg2);border-radius:12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">';
-  html+=`<button id="sleep-hist-toggle" onclick="toggleSleepHist()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:12px 14px;font-family:var(--font);touch-action:manipulation;">
+  let html='<div style="border-top:1px solid var(--sep);">';
+  html+=`<button id="sleep-hist-toggle" onclick="toggleSleepHist()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:12px 16px;font-family:var(--font);touch-action:manipulation;">
     <span style="font-size:13px;font-weight:700;color:var(--t2);">📊 Historique du sommeil${n?' · '+n+' nuit'+(n>1?'s':''):''}</span>
     <span style="font-size:12px;color:var(--t3);font-weight:700;">${_sleepHistOpen?'Réduire':'Voir'} ${chev}</span>
   </button>`;
   if(_sleepHistOpen){
-    html+='<div style="padding:0 14px 14px;">'
+    html+='<div style="padding:0 16px 14px;">'
       +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
       +[[7,'7 jours'],[30,'30 jours']].map(r=>`<button onclick="setSleepHistRange(${r[0]})" class="wrange-chip${_sleepHistDays===r[0]?' active':''}">${r[1]}</button>`).join('')
       +'</div>'
@@ -1536,11 +1537,12 @@ function renderLogSleep(){
   const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===dateStr);
   const qLabels={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
   const moonSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purp);flex-shrink:0;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-  let main;
+  let inner,pad;
   const isCompact=tsToday&&!_sleepEditLog;
   // Vue compacte : cette nuit déjà renseignée et on n'édite pas
   if(isCompact){
-    main='<div style="background:var(--bg2);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">'
+    pad='12px 16px';
+    inner='<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div style="display:flex;align-items:center;gap:13px;">'
       +'<div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>'
       +'<div><div class="home-row-ttl">'+tsToday.hours+'h · '+qLabels[tsToday.quality||2]+'</div>'
@@ -1549,14 +1551,14 @@ function renderLogSleep(){
       +'<button style="font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditDate=null;_sleepEditLog=true;renderLogSleep()">Modifier</button>'
       +'</div>';
   }else{
+    pad='16px';
     _sleepQual=(ts&&ts.quality)||3;
     const bars=function(n){
       const h=[6,9,12,15];
       return '<div class="slq-bars">'+h.map(function(height,i){return'<div class="slq-bar'+(i>=n?' slq-bar-off':'')+'" style="height:'+height+'px;"></div>';}).join('')+'</div>';
     };
     const editingPast=dateStr!==todayStr;
-    main='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:16px;">'
-      +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">'+moonSvg
+    inner='<div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">'+moonSvg
       +'<span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);">Sommeil — '+_fmtSleepDay(dateStr)+'</span></div>'
       +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">'
       +'<span style="font-size:12px;color:var(--t2);white-space:nowrap;">Jour :</span>'
@@ -1573,10 +1575,13 @@ function renderLogSleep(){
       +'<span style="font-size:13px;color:var(--t2);white-space:nowrap;">h de sommeil</span>'
       +((ts||editingPast)?'<button class="btn btn-bg2 btn-sm" onclick="_sleepEditDate=null;_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;font-size:12px;padding:8px 12px;">Annuler</button>':'')
       +'</div>'
-      +'<button id="sleep-save-btn" class="btn btn-red ft-press" onclick="saveSleepEntry()" style="margin-top:10px;padding:10px;font-size:14px;display:'+((ts&&ts.hours)?'block':'none')+';">Enregistrer</button>'
-      +'</div>';
+      +'<button id="sleep-save-btn" class="btn btn-red ft-press" onclick="saveSleepEntry()" style="margin-top:10px;padding:10px;font-size:14px;display:'+((ts&&ts.hours)?'block':'none')+';">Enregistrer</button>';
   }
-  el.innerHTML=main+_sleepHistHtml();
+  // UNE seule carte : le résumé/éditeur du jour EN HAUT, puis l'historique sous un séparateur.
+  el.innerHTML='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">'
+    +'<div style="padding:'+pad+';">'+inner+'</div>'
+    +_sleepHistInner()
+    +'</div>';
   if(!isCompact)updateSleepQualBtns();
 }
 

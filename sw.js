@@ -1,4 +1,4 @@
-const CACHE = 'ft-v453'; // Accueil réordonné (retour Michel) : Sommeil AU-DESSUS de la récup, Stats EN DESSOUS. Bloc « aujourd'hui » (sommeil+récup) en haut, « ce mois » (stats+calendrier) en bas.
+const CACHE = 'ft-v454'; // Sommeil : historique INTÉGRÉ dans la carte sommeil (une seule carte : résumé du jour + séparateur + historique repliable). Demande Michel.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
