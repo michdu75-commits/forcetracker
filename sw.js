@@ -1,4 +1,4 @@
-const CACHE = 'ft-v451'; // Aides sommeil : ? contextuel Accueil + Aide détaillée + slide Guide de l'application.
+const CACHE = 'ft-v452'; // Accueil : bloc sommeil déplacé SOUS le calendrier (avant il coupait la carte récup + le bouton Commencer du calendrier). Retour Michel.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
