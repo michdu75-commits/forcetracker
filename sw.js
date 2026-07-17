@@ -1,4 +1,4 @@
-const CACHE = 'ft-v448'; // Sommeil : « Noter un jour oublié » — saisir/modifier le sommeil d'un jour passé (sélecteur de date, ex. hier). Demande Christophe (oubli de la veille).
+const CACHE = 'ft-v449'; // Sommeil : historique repliable (chevron) — mini-graphique 7/30 j + liste jour par jour (tap pour éditer, jours vides « ＋ à renseigner »). Demande Michel.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

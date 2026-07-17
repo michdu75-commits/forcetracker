@@ -1432,6 +1432,101 @@ function _openForgottenSleep(){
   const el=document.getElementById('log-sleep');
   if(el)try{el.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}
 }
+// Ouvre l'éditeur sur un jour précis (depuis la liste/graphique d'historique)
+function editSleepDay(d){
+  _sleepEditDate=(d===today())?null:d;
+  _sleepEditLog=true;
+  renderLogSleep();
+  const el=document.getElementById('log-sleep');
+  if(el)try{el.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
+
+// ── Historique du sommeil (repliable, façon graphique de poids) ──
+let _sleepHistOpen=false;   // panneau replié par défaut (gagne de la place)
+let _sleepHistDays=30;      // fenêtre affichée : 7 ou 30 jours
+function toggleSleepHist(){_sleepHistOpen=!_sleepHistOpen;renderLogSleep();}
+function setSleepHistRange(n){_sleepHistDays=n;renderLogSleep();}
+const _SLP_QCOL={1:'var(--red)',2:'var(--orange)',3:'var(--purp)',4:'var(--green)'};
+const _SLP_QLBL={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
+
+// Tableau des N derniers jours (du plus ancien au plus récent) avec l'entrée sommeil ou null
+function _sleepDaysArr(){
+  const days=_sleepHistDays;
+  const t=new Date(today()+'T12:00:00').getTime();
+  const byDate={};(S.sleepLog||[]).forEach(e=>{byDate[e.date]=e;});
+  const arr=[];
+  for(let i=days-1;i>=0;i--){
+    const d=new Date(t-i*864e5).toISOString().slice(0,10);
+    arr.push({date:d,e:byDate[d]||null});
+  }
+  return arr;
+}
+function _sleepChartHtml(){
+  const arr=_sleepDaysArr();
+  const withData=arr.filter(a=>a.e);
+  if(!withData.length)return'<div style="text-align:center;font-size:13px;color:var(--t3);padding:16px 0;line-height:1.5;">Aucune nuit renseignée sur cette période.<br>Choisis un jour dans la liste pour l\'ajouter.</div>';
+  const maxH=Math.max(10,...withData.map(a=>a.e.hours||0));
+  const W=320,H=120,pad={t:10,r:6,b:18,l:22},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
+  const step=iW/arr.length;
+  const bw=Math.max(3,Math.min(22,step-2));
+  const toY=h=>pad.t+iH-(Math.min(h,maxH)/maxH)*iH;
+  const y8=toY(8);
+  const fmtD=d=>{const dt=new Date(d+'T12:00:00');return dt.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});};
+  const bars=arr.map((a,i)=>{
+    if(!a.e)return'';
+    const x=pad.l+i*step+(step-bw)/2,y=toY(a.e.hours),bh=pad.t+iH-y;
+    return`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(2,bh).toFixed(1)}" rx="2" fill="${_SLP_QCOL[a.e.quality||2]}" style="cursor:pointer" onclick="editSleepDay('${a.date}')"><title>${fmtD(a.date)} · ${a.e.hours}h · ${_SLP_QLBL[a.e.quality||2]}</title></rect>`;
+  }).join('');
+  const avg=Math.round(withData.reduce((s,a)=>s+(a.e.hours||0),0)/withData.length*10)/10;
+  return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;overflow:visible;">
+    <line x1="${pad.l}" y1="${toY(maxH)}" x2="${W-pad.r}" y2="${toY(maxH)}" stroke="var(--sep)" stroke-width=".5"/>
+    <text x="${pad.l-4}" y="${toY(maxH)+3}" text-anchor="end" font-size="8.5" style="fill:var(--t3)">${maxH}h</text>
+    <line x1="${pad.l}" y1="${y8}" x2="${W-pad.r}" y2="${y8}" stroke="var(--purp)" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>
+    <text x="${W-pad.r}" y="${y8-3}" text-anchor="end" font-size="8.5" style="fill:var(--purp);font-weight:700">8h</text>
+    <line x1="${pad.l}" y1="${pad.t+iH}" x2="${W-pad.r}" y2="${pad.t+iH}" stroke="var(--sep)" stroke-width=".5"/>
+    ${bars}
+    <text x="${pad.l}" y="${H-4}" text-anchor="start" font-size="8.5" style="fill:var(--t3)">${fmtD(arr[0].date)}</text>
+    <text x="${W-pad.r}" y="${H-4}" text-anchor="end" font-size="8.5" style="fill:var(--t3)">${fmtD(arr[arr.length-1].date)}</text>
+  </svg>
+  <div style="text-align:center;margin-top:6px;font-size:13px;color:var(--t2);">Moyenne : <b style="color:var(--t1)">${avg}h</b> / nuit · ${withData.length} nuit${withData.length>1?'s':''} renseignée${withData.length>1?'s':''}</div>`;
+}
+function _sleepListHtml(){
+  const arr=_sleepDaysArr().slice().reverse(); // plus récent en tête
+  const rows=arr.map(a=>{
+    const lbl=_fmtSleepDay(a.date);const label=lbl.charAt(0).toUpperCase()+lbl.slice(1);
+    if(a.e){
+      return`<button onclick="editSleepDay('${a.date}')" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;border-bottom:1px solid var(--sep);cursor:pointer;padding:10px 4px;font-family:var(--font);touch-action:manipulation;">
+        <span style="font-size:13px;color:var(--t1);font-weight:600;">${label}</span>
+        <span style="font-size:13px;color:var(--t2);"><b style="color:var(--t1)">${a.e.hours}h</b> · <span style="color:${_SLP_QCOL[a.e.quality||2]};font-weight:700;">${_SLP_QLBL[a.e.quality||2]}</span> <span style="color:var(--t3)">›</span></span>
+      </button>`;
+    }
+    return`<button onclick="editSleepDay('${a.date}')" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;border-bottom:1px solid var(--sep);cursor:pointer;padding:10px 4px;font-family:var(--font);touch-action:manipulation;">
+      <span style="font-size:13px;color:var(--t3);">${label}</span>
+      <span style="font-size:12px;color:var(--purp);font-weight:700;">＋ à renseigner</span>
+    </button>`;
+  }).join('');
+  return`<div style="max-height:240px;overflow-y:auto;margin-top:12px;border-top:1px solid var(--sep);-webkit-overflow-scrolling:touch;">${rows}</div>`;
+}
+function _sleepHistHtml(){
+  const n=(S.sleepLog||[]).length;
+  const chev=`<span style="display:inline-block;transition:transform .2s;transform:rotate(${_sleepHistOpen?90:0}deg);">›</span>`;
+  let html='<div style="margin-top:8px;background:var(--bg2);border-radius:12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">';
+  html+=`<button onclick="toggleSleepHist()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:12px 14px;font-family:var(--font);touch-action:manipulation;">
+    <span style="font-size:13px;font-weight:700;color:var(--t2);">📊 Historique du sommeil${n?' · '+n+' nuit'+(n>1?'s':''):''}</span>
+    <span style="font-size:12px;color:var(--t3);font-weight:700;">${_sleepHistOpen?'Réduire':'Voir'} ${chev}</span>
+  </button>`;
+  if(_sleepHistOpen){
+    html+='<div style="padding:0 14px 14px;">'
+      +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
+      +[[7,'7 jours'],[30,'30 jours']].map(r=>`<button onclick="setSleepHistRange(${r[0]})" class="wrange-chip${_sleepHistDays===r[0]?' active':''}">${r[1]}</button>`).join('')
+      +'</div>'
+      +_sleepChartHtml()
+      +_sleepListHtml()
+      +'</div>';
+  }
+  html+='</div>';
+  return html;
+}
 
 function renderLogSleep(){
   const el=document.getElementById('log-sleep');if(!el)return;
@@ -1441,17 +1536,18 @@ function renderLogSleep(){
   const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===dateStr);
   const qLabels={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
   const moonSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purp);flex-shrink:0;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+  let main;
+  const isCompact=tsToday&&!_sleepEditLog;
   // Vue compacte : cette nuit déjà renseignée et on n'édite pas
-  if(tsToday&&!_sleepEditLog){
-    el.innerHTML='<div style="background:var(--bg2);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">'
+  if(isCompact){
+    main='<div style="background:var(--bg2);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">'
       +'<div style="display:flex;align-items:center;gap:13px;">'
       +'<div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>'
       +'<div><div class="home-row-ttl">'+tsToday.hours+'h · '+qLabels[tsToday.quality||2]+'</div>'
       +'<div class="home-row-sub">Sommeil de cette nuit</div></div>'
       +'</div>'
       +'<button style="font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditDate=null;_sleepEditLog=true;renderLogSleep()">Modifier</button>'
-      +'</div>'
-      +'<button style="width:100%;margin-top:8px;font-size:12px;font-weight:600;color:var(--purp);background:none;border:none;cursor:pointer;padding:6px;touch-action:manipulation;" onclick="_openForgottenSleep()">＋ Noter un jour oublié</button>';
+      +'</div>';
   }else{
     _sleepQual=(ts&&ts.quality)||3;
     const bars=function(n){
@@ -1459,7 +1555,7 @@ function renderLogSleep(){
       return '<div class="slq-bars">'+h.map(function(height,i){return'<div class="slq-bar'+(i>=n?' slq-bar-off':'')+'" style="height:'+height+'px;"></div>';}).join('')+'</div>';
     };
     const editingPast=dateStr!==todayStr;
-    el.innerHTML='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:16px;">'
+    main='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:16px;">'
       +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">'+moonSvg
       +'<span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);">Sommeil — '+_fmtSleepDay(dateStr)+'</span></div>'
       +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">'
@@ -1479,8 +1575,9 @@ function renderLogSleep(){
       +'</div>'
       +'<button id="sleep-save-btn" class="btn btn-red ft-press" onclick="saveSleepEntry()" style="margin-top:10px;padding:10px;font-size:14px;display:'+((ts&&ts.hours)?'block':'none')+';">Enregistrer</button>'
       +'</div>';
-    updateSleepQualBtns();
   }
+  el.innerHTML=main+_sleepHistHtml();
+  if(!isCompact)updateSleepQualBtns();
 }
 
 // Bouton « Enregistrer » du sommeil : visible seulement quand une valeur d'heures est saisie.
