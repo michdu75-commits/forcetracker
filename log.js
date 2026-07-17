@@ -2598,7 +2598,7 @@ function finalImportProg(){
           }));
         }
         const obj={name:ex.name,note:ex.note||'',sets};
-        if(group)obj.group=group;
+        if(group){obj.group=group;obj.groupType='super';} // FIX Emma : sans groupType='super' le superset importé n'était pas reconnu
         return obj;
       })
     };
