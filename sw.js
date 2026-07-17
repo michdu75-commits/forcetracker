@@ -1,4 +1,4 @@
-const CACHE = 'ft-v449'; // Sommeil : historique repliable (chevron) — mini-graphique 7/30 j + liste jour par jour (tap pour éditer, jours vides « ＋ à renseigner »). Demande Michel.
+const CACHE = 'ft-v450'; // Sommeil : pop-up « Quoi de neuf » v16 + points rouges (nav Accueil + barre Historique du sommeil).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

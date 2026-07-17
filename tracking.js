@@ -1511,7 +1511,7 @@ function _sleepHistHtml(){
   const n=(S.sleepLog||[]).length;
   const chev=`<span style="display:inline-block;transition:transform .2s;transform:rotate(${_sleepHistOpen?90:0}deg);">›</span>`;
   let html='<div style="margin-top:8px;background:var(--bg2);border-radius:12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);overflow:hidden;">';
-  html+=`<button onclick="toggleSleepHist()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:12px 14px;font-family:var(--font);touch-action:manipulation;">
+  html+=`<button id="sleep-hist-toggle" onclick="toggleSleepHist()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:12px 14px;font-family:var(--font);touch-action:manipulation;">
     <span style="font-size:13px;font-weight:700;color:var(--t2);">📊 Historique du sommeil${n?' · '+n+' nuit'+(n>1?'s':''):''}</span>
     <span style="font-size:12px;color:var(--t3);font-weight:700;">${_sleepHistOpen?'Réduire':'Voir'} ${chev}</span>
   </button>`;
