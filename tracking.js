@@ -1408,31 +1408,64 @@ function renderWeightCorrelations(el,pts){
 // ─── SLEEP & RECOVERY ─────────────────────────────────────────
 let _sleepQual=3;
 let _sleepEditLog=false;
+let _sleepEditDate=null; // jour ciblé pour saisir/modifier un sommeil (null = cette nuit)
+
+// Jour effectivement en cours de saisie (par défaut : cette nuit)
+function _sleepDateFor(){ return _sleepEditDate||today(); }
+
+// Libellé humain d'une date de sommeil : « cette nuit » / « nuit d'hier » / « nuit du JJ/MM »
+function _fmtSleepDay(d){
+  const t=today();
+  if(d===t)return'cette nuit';
+  const y=new Date(new Date(t+'T12:00:00')-864e5).toISOString().slice(0,10);
+  if(d===y)return"nuit d'hier";
+  const p=d.split('-'); // YYYY-MM-DD
+  return'nuit du '+p[2]+'/'+p[1];
+}
+
+// « Noter un jour oublié » → ouvre l'éditeur pré-réglé sur hier
+function _openForgottenSleep(){
+  const t=today();
+  _sleepEditDate=new Date(new Date(t+'T12:00:00')-864e5).toISOString().slice(0,10);
+  _sleepEditLog=true;
+  renderLogSleep();
+  const el=document.getElementById('log-sleep');
+  if(el)try{el.scrollIntoView({behavior:'smooth',block:'center'});}catch(e){}
+}
 
 function renderLogSleep(){
   const el=document.getElementById('log-sleep');if(!el)return;
   const todayStr=today();
-  const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===todayStr);
+  const dateStr=_sleepDateFor();
+  const tsToday=S.sleepLog&&S.sleepLog.find(e=>e.date===todayStr);
+  const ts=S.sleepLog&&S.sleepLog.find(e=>e.date===dateStr);
   const qLabels={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
   const moonSvg='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purp);flex-shrink:0;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-  if(ts&&!_sleepEditLog){
+  // Vue compacte : cette nuit déjà renseignée et on n'édite pas
+  if(tsToday&&!_sleepEditLog){
     el.innerHTML='<div style="background:var(--bg2);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">'
       +'<div style="display:flex;align-items:center;gap:13px;">'
       +'<div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>'
-      +'<div><div class="home-row-ttl">'+ts.hours+'h · '+qLabels[ts.quality||2]+'</div>'
+      +'<div><div class="home-row-ttl">'+tsToday.hours+'h · '+qLabels[tsToday.quality||2]+'</div>'
       +'<div class="home-row-sub">Sommeil de cette nuit</div></div>'
       +'</div>'
-      +'<button style="font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditLog=true;renderLogSleep()">Modifier</button>'
-      +'</div>';
+      +'<button style="font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditDate=null;_sleepEditLog=true;renderLogSleep()">Modifier</button>'
+      +'</div>'
+      +'<button style="width:100%;margin-top:8px;font-size:12px;font-weight:600;color:var(--purp);background:none;border:none;cursor:pointer;padding:6px;touch-action:manipulation;" onclick="_openForgottenSleep()">＋ Noter un jour oublié</button>';
   }else{
     _sleepQual=(ts&&ts.quality)||3;
     const bars=function(n){
       const h=[6,9,12,15];
       return '<div class="slq-bars">'+h.map(function(height,i){return'<div class="slq-bar'+(i>=n?' slq-bar-off':'')+'" style="height:'+height+'px;"></div>';}).join('')+'</div>';
     };
+    const editingPast=dateStr!==todayStr;
     el.innerHTML='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:16px;">'
       +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:12px;">'+moonSvg
-      +'<span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);">Sommeil de cette nuit</span></div>'
+      +'<span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--t3);">Sommeil — '+_fmtSleepDay(dateStr)+'</span></div>'
+      +'<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">'
+      +'<span style="font-size:12px;color:var(--t2);white-space:nowrap;">Jour :</span>'
+      +'<input type="date" id="sleep-date" max="'+todayStr+'" value="'+dateStr+'" onchange="_sleepEditDate=(this.value&&this.value!==\''+todayStr+'\')?this.value:null;renderLogSleep()" style="flex:1;padding:9px 10px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:15px;">'
+      +'</div>'
       +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
       +'<button class="slq-btn" id="sq-1" onclick="setSleepQual(1)">'+bars(1)+'Mauvais</button>'
       +'<button class="slq-btn" id="sq-2" onclick="setSleepQual(2)">'+bars(2)+'Moyen</button>'
@@ -1442,7 +1475,7 @@ function renderLogSleep(){
       +'<div style="display:flex;gap:8px;align-items:center;">'
       +'<input type="number" id="sleep-hours" placeholder="7.5" step="0.5" min="2" max="14" inputmode="decimal" enterkeyhint="done" oninput="_toggleSleepSaveBtn(this.value)" onkeydown="if(event.key===\'Enter\'){event.preventDefault();saveSleepEntry();}" style="flex:1;padding:11px 12px;border-radius:10px;border:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);background:var(--bg3);color:var(--t1);font-family:var(--font);font-size:16px;" value="'+(ts?ts.hours:'')+'">'
       +'<span style="font-size:13px;color:var(--t2);white-space:nowrap;">h de sommeil</span>'
-      +(ts?'<button class="btn btn-bg2 btn-sm" onclick="_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;font-size:12px;padding:8px 12px;">Annuler</button>':'')
+      +((ts||editingPast)?'<button class="btn btn-bg2 btn-sm" onclick="_sleepEditDate=null;_sleepEditLog=false;renderLogSleep()" style="flex-shrink:0;font-size:12px;padding:8px 12px;">Annuler</button>':'')
       +'</div>'
       +'<button id="sleep-save-btn" class="btn btn-red ft-press" onclick="saveSleepEntry()" style="margin-top:10px;padding:10px;font-size:14px;display:'+((ts&&ts.hours)?'block':'none')+';">Enregistrer</button>'
       +'</div>';
@@ -1633,16 +1666,17 @@ function saveSleepEntry(){
   const hours=parseFloat(hEl?hEl.value:0)||0;
   if(!hours||hours<2||hours>14){toast('Heures invalides (entre 2 et 14h)','error');return;}
   if(!S.sleepLog)S.sleepLog=[];
-  const todayStr=today();
-  const idx=S.sleepLog.findIndex(e=>e.date===todayStr);
-  const entry={date:todayStr,hours,quality:_sleepQual};
+  const dateStr=_sleepDateFor();
+  const forPast=dateStr!==today();
+  const idx=S.sleepLog.findIndex(e=>e.date===dateStr);
+  const entry={date:dateStr,hours,quality:_sleepQual};
   if(idx>=0)S.sleepLog[idx]=entry;else S.sleepLog.unshift(entry);
   S.sleepLog=S.sleepLog.sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4000);
-  _sleepEditLog=false;
+  _sleepEditLog=false;_sleepEditDate=null;
   persist();
   renderLogSleep();renderRecoveryCard();
   // Le sommeil est maintenant sur l'Accueil → rafraîchir le score de récup visible juste au-dessus
   try{if(typeof _renderHomeHero==='function')_renderHomeHero();}catch(e){}
-  toast('Sommeil enregistré !','success');
+  toast(forPast?'Sommeil du '+dateStr.split('-').reverse().slice(0,2).join('/')+' enregistré !':'Sommeil enregistré !','success');
 }
 

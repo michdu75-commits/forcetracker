@@ -1,4 +1,4 @@
-const CACHE = 'ft-v447'; // Sommeil déplacé de Séance -> Accueil (juste sous le score de récup) : les gens ne le trouvaient pas dans Séance. Score de récup rafraîchi à l'enregistrement.
+const CACHE = 'ft-v448'; // Sommeil : « Noter un jour oublié » — saisir/modifier le sommeil d'un jour passé (sélecteur de date, ex. hier). Demande Christophe (oubli de la veille).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
