@@ -1,4 +1,10 @@
-const CACHE = 'ft-v455'; // Sommeil : un seul bloc — aperçu mini-courbe (7 dernières nuits) sous le sommeil du jour, déplie l'historique complet (plus de trait de séparation). Option 2 validée Michel.
+/*!
+ * Force Tracker — © 2026 Michel (michdu75@gmail.com). Tous droits réservés.
+ * Code propriétaire. Toute reproduction, copie, distribution ou réutilisation,
+ * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
+ * All Rights Reserved — unauthorized copying or reuse is prohibited.
+ */
+const CACHE = 'ft-v456'; // Ajout mention © Tous droits réservés (LICENSE + en-tête des fichiers). Protection juridique du code.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

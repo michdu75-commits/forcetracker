@@ -1,3 +1,9 @@
+/*!
+ * Force Tracker — © 2026 Michel (michdu75@gmail.com). Tous droits réservés.
+ * Code propriétaire. Toute reproduction, copie, distribution ou réutilisation,
+ * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
+ * All Rights Reserved — unauthorized copying or reuse is prohibited.
+ */
 // ─── WORKOUT ─────────────────────────────────────────────────
 let _wakeLock=null;
 async function _acquireWakeLock(){

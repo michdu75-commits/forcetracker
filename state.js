@@ -1,3 +1,9 @@
+/*!
+ * Force Tracker — © 2026 Michel (michdu75@gmail.com). Tous droits réservés.
+ * Code propriétaire. Toute reproduction, copie, distribution ou réutilisation,
+ * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
+ * All Rights Reserved — unauthorized copying or reuse is prohibited.
+ */
 // ─── STATE ───────────────────────────────────────────────────
 // Code perso de protection du compte (stocké UNIQUEMENT en local sur l'appareil,
 // JAMAIS envoyé au cloud comme donnée — seulement joint aux requêtes pour prouver l'accès).
