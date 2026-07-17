@@ -129,7 +129,8 @@ const _HELP_DATA={
     tips:[
       {i:'📅',t:'Le calendrier de ton mois : tes jours de séance sont en rouge, les jours de RECORD cerclés en or 🏆. Les flèches ‹ › changent de mois, et tu peux taper une semaine pour voir le détail jour par jour.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
-      {i:'😴',t:'Le score de récupération vient du check-in post-séance (sommeil + énergie). Remplis-le après chaque séance pour un suivi fiable.'},
+      {i:'😴',t:'Ton sommeil se note directement sur l\'Accueil (juste sous le score de récup) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération.'},
+      {i:'📊',t:'« Historique du sommeil » (la barre repliable, tape la flèche) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
       {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Consulte l\'onglet Badges dans Progrès pour tout voir.'},

@@ -1,4 +1,4 @@
-const CACHE = 'ft-v450'; // Sommeil : pop-up « Quoi de neuf » v16 + points rouges (nav Accueil + barre Historique du sommeil).
+const CACHE = 'ft-v451'; // Aides sommeil : ? contextuel Accueil + Aide détaillée + slide Guide de l'application.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
