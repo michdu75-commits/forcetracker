@@ -1216,6 +1216,17 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
   </div>
 </div>
 
+<!-- POP-UP perso Christophe — bouton Supprimer une série photo (une seule fois) -->
+<div class="overlay" id="ov-christophe-photos" style="z-index:9999;">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:48px;line-height:1;">🗑️</div>
+    <div style="font-size:21px;font-weight:900;color:var(--gold);margin-top:8px;">Tu peux supprimer tes séries photos</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Salut Christophe ! J'ai ajouté ce que tu voulais 👍<br><br>Dans <b>Mon suivi photos</b> (Espace testeur), chaque série a maintenant une petite <b>corbeille 🗑️</b> à droite. Un tap → la série et ses photos sont <b>effacées de ton téléphone</b>.</div>
+    <div style="font-size:13px;line-height:1.55;color:var(--t3);margin-top:12px;background:var(--bg3);border-radius:12px;padding:11px 13px;text-align:left;">Comme ça tu peux retirer les photos que tu as prises pour quelqu'un d'autre. 🔒 Rappel : ces photos ne sont JAMAIS parties dans le cloud — elles ne sont que sur ton téléphone.</div>
+    <button class="btn btn-red" onclick="closeChristophePhotos()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Compris, merci ! 👊</button>
+  </div>
+</div>
+
 <!-- POP-UP perso Emma — bienvenue Espace Testeur + boîte à idées (une seule fois) -->
 <div class="overlay" id="ov-emma-welcome" style="z-index:9999;">
   <div class="modal" style="max-width:400px;text-align:center;">

@@ -2294,11 +2294,18 @@ function checkAnnouncements(){
       setTimeout(showBilloute,1000);
       return;
     }
+    // Christophe : pop perso « supprimer une série photo » (une seule fois, après le billoute)
+    if(_isChristophe()&&!localStorage.getItem('ft4_christophe_photodel_v1')){
+      setTimeout(showChristophePhotos,1000);
+      return;
+    }
     if(_whatsNewUnseen().length) setTimeout(showWhatsNew,1000);
   }catch(e){}
 }
 function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
 function closeBilloute(){try{localStorage.setItem('ft4_billoute_v3','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
+function showChristophePhotos(){const o=document.getElementById('ov-christophe-photos');if(o)o.classList.add('open');}
+function closeChristophePhotos(){try{localStorage.setItem('ft4_christophe_photodel_v1','1');}catch(e){}const o=document.getElementById('ov-christophe-photos');if(o)o.classList.remove('open');}
 // ─── « Quoi de neuf » versionné : montre toutes les nouveautés non vues d'un coup ──
 function _whatsNewSeen(){
   try{
