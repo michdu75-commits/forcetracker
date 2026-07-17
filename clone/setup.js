@@ -1868,7 +1868,7 @@ function _applyRestoreData(raw){
   try{if(raw&&raw.exRestPref&&Object.keys(raw.exRestPref).length&&(!S.exRestPref||!Object.keys(S.exRestPref).length))S.exRestPref=raw.exRestPref;}catch(e){}
 
   // Premium
-  try{if(raw&&raw.premium!==undefined)S.premium=raw.premium===true;}catch(e){}
+  try{if(raw&&raw.premium!==undefined)S.premium=(raw.premium===true)||(typeof _isClientPremium==='function'&&_isClientPremium());}catch(e){}
   try{if(raw&&raw.premiumExpiry!==undefined)S.premiumExpiry=raw.premiumExpiry||'';}catch(e){}
   // coachMemory — top-level dans la réponse ET dans profile (double source)
   try{const cm=raw.coachMemory||d.coachMemory||'';if(cm)S.coachMemory=cm;}catch(e){}
@@ -2094,7 +2094,7 @@ async function debugPremiumCheck(){
 
     if(d&&(d.status==='ok'||d.status==='not_found')){
       const was=S.premium;
-      S.premium=d.premium===true;
+      S.premium=(d.premium===true)||(typeof _isClientPremium==='function'&&_isClientPremium());
       S.premiumExpiry=d.premiumExpiry||'';
       persist();
       updateCoachHeader();

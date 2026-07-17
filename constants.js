@@ -257,6 +257,15 @@ const TESTER_EMAILS=['christophe@famillelanglois.fr','elineazs32@gmail.com','emm
 // « Super testeur » : celui qui teste vraiment à fond → espace exclusif (analyse photos approfondie + boîte à idées remontée à Michel).
 // michdu75 y est aussi pour le suivi photos (accès via le panneau Admin) — mais PAS de carte « Testeur Fondateur » ni de message « Michel te remercie » (voir _isTester / checkSuperTesterWelcome).
 const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr','michdu75@gmail.com','emma.david16@gmail.com'];
+// ─── PREMIUM CÔTÉ CLIENT (fondateurs / testeurs premium À VIE) ────────────────
+// Miroir de PREMIUM_HARDCODED_ (Code.js). Comme la boîte à idées (TESTER_EMAILS),
+// le premium de ces comptes est accordé DIRECTEMENT dans l'app — sans dépendre de
+// l'appel serveur (loadProfile), qui peut échouer (réseau faible, code d'accès,
+// erreur) et laisser le mur premium affiché alors qu'ils sont premium à vie.
+// « Anti-curieux » comme le reste : seul un email de cette liste devient premium.
+// ⚠️ Garder synchronisé avec PREMIUM_HARDCODED_ dans Code.js.
+const PREMIUM_CLIENT_EMAILS=['michdu75@gmail.com','elineazs32@gmail.com','christophe@famillelanglois.fr','apollonone75@gmail.com','emma.david16@gmail.com','tanna.valery.studio@gmail.com'];
+function _isClientPremium(){ try{ const e=((typeof S!=='undefined'&&S.email)||'').trim().toLowerCase(); return !!e && PREMIUM_CLIENT_EMAILS.indexOf(e)>=0; }catch(_){ return false; } }
 // Email où remontent les idées de la boîte à idées → compte dédié de l'app (séparé du mail perso de Michel).
 const TESTER_FEEDBACK_EMAIL='forcetracker.app@gmail.com';
 

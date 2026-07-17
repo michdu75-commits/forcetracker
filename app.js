@@ -2646,7 +2646,7 @@ window._premiumPending=!!S.email;
       console.log('[FT premium check]',{email:S.email,status:d2.status,premium:d2.premium,expiry:d2.premiumExpiry});
       if(d2.status==='ok'||d2.status==='not_found'){
         const wasPremium=S.premium;
-        S.premium=d2.premium===true;
+        S.premium=(d2.premium===true)||(typeof _isClientPremium==='function'&&_isClientPremium());
         S.premiumExpiry=d2.premiumExpiry||'';
         if(d2.profile&&d2.profile.emailVerified)S.emailVerified=true; // confirmé côté cloud
         persist();

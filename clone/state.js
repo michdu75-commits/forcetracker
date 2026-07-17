@@ -90,6 +90,8 @@ function load(){
     S.bodyScanImports=parseInt(localStorage.getItem('ft4_bsimports')||'0')||0;
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
     S.premium=localStorage.getItem('ft4_premium')==='1';
+    // Fondateurs/testeurs premium à vie : premium accordé côté client (indépendant du serveur, cf. PREMIUM_CLIENT_EMAILS)
+    if(typeof _isClientPremium==='function'&&_isClientPremium())S.premium=true;
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
     S.exRestPref=JSON.parse(localStorage.getItem('ft4_exRp')||'{}');
     S.badges=JSON.parse(localStorage.getItem('ft4_badges')||'{}');
