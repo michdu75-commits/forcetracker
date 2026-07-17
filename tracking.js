@@ -1641,6 +1641,8 @@ function saveSleepEntry(){
   _sleepEditLog=false;
   persist();
   renderLogSleep();renderRecoveryCard();
+  // Le sommeil est maintenant sur l'Accueil → rafraîchir le score de récup visible juste au-dessus
+  try{if(typeof _renderHomeHero==='function')_renderHomeHero();}catch(e){}
   toast('Sommeil enregistré !','success');
 }
 

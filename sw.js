@@ -1,4 +1,4 @@
-const CACHE = 'ft-v446'; // FIX premium testeurs/fondateurs : premium accordé côté client (PREMIUM_CLIENT_EMAILS) comme la boîte à idées → ne dépend plus du serveur (loadProfile pouvait échouer et laisser le mur premium).
+const CACHE = 'ft-v447'; // Sommeil déplacé de Séance -> Accueil (juste sous le score de récup) : les gens ne le trouvaient pas dans Séance. Score de récup rafraîchi à l'enregistrement.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

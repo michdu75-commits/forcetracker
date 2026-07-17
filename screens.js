@@ -537,6 +537,7 @@ function renderHome(){try{
   _renderHomeHdr();
   _renderMiloCard();
   _renderHomeHero();
+  if(typeof renderLogSleep==='function')renderLogSleep(); // sommeil du jour, juste sous le score de récup (déplacé de Séance → Accueil)
   const now=new Date();
   const mo=S.sessions.filter(s=>{const d=new Date(s.date+'T12:00:00');return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
   const vol=mo.reduce((a,s)=>a+(_workVol(s)||s.volume||0),0);

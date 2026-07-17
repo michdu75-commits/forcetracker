@@ -125,7 +125,6 @@ function renderLog(){
   _startWktChrono();
   // Refresh immédiat des timers au retour sur l'écran (ne pas attendre le prochain tick)
   if(restIv)_restTick();
-  renderLogSleep();
   renderCardioBlock();
   renderExBlocks();
 }
