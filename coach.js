@@ -630,7 +630,12 @@ ${(()=>{
   const cat=(cats.find(c=>bf<c[0])||cats[cats.length-1])[1];
   return `- Masse grasse: ${Math.max(2,bf)}% (${cat}, Méthode Marine US) — Masse maigre ~${Math.round(S.bw*(1-Math.max(2,bf)/100))}kg`;
 })()}
-${(()=>{const cp=getMensCyclePhase();return cp?`- Phase cycle menstruel: ${cp.phase} (Jour ${cp.day}/${S.mensCycleDur}) — ${cp.nutrition}`:'';})()}
+${(()=>{const cp=getMensCyclePhase();if(!cp)return '';
+  const perfTxt={low:'énergie basse',rising:'énergie qui remonte',peak:'énergie et force au maximum',declining:'énergie en baisse'}[cp.perf]||'';
+  return `- Phase cycle menstruel: ${cp.phase}${cp.day?` (Jour ${cp.day}/${S.mensCycleDur})`:''}${perfTxt?` — ${perfTxt}`:''}
+- Nutrition (phase): ${cp.nutrition}
+- Entraînement (phase): ${cp.training}
+- ⚠️ ADAPTE tes conseils d'entraînement à cette phase : folliculaire/ovulation = énergie haute → propose de pousser les charges, tenter des PRs ; lutéale/menstruation = fatigue normale → allège (volume modéré, exercices familiers, plus de récup), rassure-la que ce n'est PAS une régression. Le cycle est un REPÈRE, pas une règle absolue : respecte toujours son ressenti du jour, et tiens compte de l'endométriose / de règles douloureuses (elles changent la donne).`;})()}
 ${(()=>{
   const hasBf=((S.weightLog||[]).some(w=>w&&w.bf!=null))||((S.bodyScans||[]).length>0);
   if(!hasBf&&!S.scaleType)return '';
