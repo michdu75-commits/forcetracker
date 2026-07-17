@@ -1,4 +1,4 @@
-const CACHE = 'ft-v442'; // Retours Emma : Milo conseille selon la phase du cycle (entraînement) + supersets reconnus à l'import (groupType). Worker : détection superset élargie.
+const CACHE = 'ft-v443'; // Suivi photos : bouton Supprimer une série (retire ligne + photos localStorage + base interne IndexedDB) — pour retirer les photos de qqn d'autre de son tel.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

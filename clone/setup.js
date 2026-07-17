@@ -1127,6 +1127,26 @@ function _bsPhotosPrune(keepDates){ // supprime les photos des bilans hors des N
     try{const st=db.transaction(_BS_STORE,'readwrite').objectStore(_BS_STORE);const g=st.getAllKeys();g.onsuccess=()=>{(g.result||[]).forEach(k=>{if(keepDates.indexOf(k)<0)try{st.delete(k);}catch(e){}});res(true);};g.onerror=()=>res(false);}catch(e){res(false);}
   })).catch(()=>false);
 }
+function _bsPhotosDelete(date){ // supprime les photos d'UNE série (par date) dans la base interne
+  return _bsIdbOpen().then(db=>new Promise(res=>{
+    try{const tx=db.transaction(_BS_STORE,'readwrite');tx.objectStore(_BS_STORE).delete(date);tx.oncomplete=()=>res(true);tx.onerror=()=>res(false);}catch(e){res(false);}
+  })).catch(()=>false);
+}
+// Supprime définitivement une série de photos (ligne + images localStorage + base interne).
+// Utile ex. quand un testeur a pris les photos de quelqu'un d'autre et veut les retirer de son tel.
+function deleteBodySeries(i){
+  const series=S.bodySeries||[]; const s=series[i]; if(!s)return;
+  const doDel=()=>{
+    const date=s.date;
+    S.bodySeries.splice(i,1);
+    if(typeof persist==='function')persist();      // met à jour ft4_body_series (retire les images gardées en local)
+    try{ _bsPhotosDelete(date); }catch(e){}          // retire aussi les photos de la base interne (IndexedDB)
+    _bserView='list'; _renderBodySeries();
+    if(typeof toast==='function')toast('Série supprimée','info');
+  };
+  if(typeof showConfirm==='function')showConfirm('Supprimer cette série ?','Les photos et le bilan de cette série seront définitivement effacés de ton téléphone.',doDel);
+  else doDel();
+}
 // Injecte les vignettes photo dans le bilan affiché (async — IDB)
 function _bsInjectPhotos(date){
   const el=document.getElementById('bs-photos');if(!el)return;
@@ -1348,7 +1368,9 @@ function _renderBodySeries(){
       '<div onclick="openBodySeriesReport('+i+')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 13px;background:var(--bg3);border:1px solid var(--sep);border-radius:11px;margin-bottom:8px;cursor:pointer;">'
       +'<div style="min-width:0;"><div style="font-weight:700;font-size:13.5px;color:var(--t1);">Série du '+_bserFmtDate(s.date)+'</div>'
       +'<div style="font-size:11.5px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+((s.report&&s.report.summary)?_bserTrunc(s.report.summary,54):'Bilan complet')+'</div></div>'
-      +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><polyline points="9 18 15 12 9 6"/></svg></div>'
+      +'<div style="display:flex;align-items:center;gap:6px;flex:none;">'
+      +'<button onclick="event.stopPropagation();deleteBodySeries('+i+')" title="Supprimer cette série" style="background:none;border:none;padding:6px;margin:-6px 0;cursor:pointer;color:var(--red);line-height:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+      +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div></div>'
     ).join('');
   }else{
     hist='<div style="font-size:13px;color:var(--t3);font-style:italic;text-align:center;padding:14px 0;">Aucune série pour l’instant — prends ta première série de 4 photos 📸</div>';
