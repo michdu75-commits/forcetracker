@@ -1,4 +1,4 @@
-const CACHE = 'ft-v441'; // Reclassement muscles : squats/fentes/presses/montées AUSSI en Fessiers (cuisses+fessiers), Croix de Fer Haltères -> Épaules (retour Michel).
+const CACHE = 'ft-v442'; // Retours Emma : Milo conseille selon la phase du cycle (entraînement) + supersets reconnus à l'import (groupType). Worker : détection superset élargie.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
