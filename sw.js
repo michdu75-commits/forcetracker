@@ -1,4 +1,4 @@
-const CACHE = 'ft-v452'; // Accueil : bloc sommeil déplacé SOUS le calendrier (avant il coupait la carte récup + le bouton Commencer du calendrier). Retour Michel.
+const CACHE = 'ft-v453'; // Accueil réordonné (retour Michel) : Sommeil AU-DESSUS de la récup, Stats EN DESSOUS. Bloc « aujourd'hui » (sommeil+récup) en haut, « ce mois » (stats+calendrier) en bas.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
