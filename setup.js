@@ -1081,16 +1081,37 @@ async function _openBodyStudyHistory(){
       const sum=(d.summary||d.balance||d.stature||'').toString();
       const snip=sum.length>90?sum.slice(0,89)+'…':sum;
       const hasPh=photoDates.indexOf(d.date)>=0;
-      return '<button onclick="_viewBodyStudyAt('+i+')" style="width:100%;text-align:left;margin-bottom:8px;padding:11px 12px;border-radius:12px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);cursor:pointer;touch-action:manipulation;">'
-        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:13px;">'+_bsFmtDate(d.date)+(hasPh?' <span title="Photos disponibles">📷</span>':'')+(i===0?' <span style="color:var(--green);font-size:11px;">· dernier</span>':'')+'</span><span style="color:var(--t3);font-size:16px;">›</span></div>'
-        +(snip?'<div style="font-size:12px;color:var(--t3);line-height:1.4;margin-top:3px;">'+_escNote(snip)+'</div>':'')
-        +'</button>';
+      return '<div style="display:flex;align-items:stretch;gap:6px;margin-bottom:8px;">'
+        +'<div onclick="_viewBodyStudyAt('+i+')" style="flex:1;min-width:0;text-align:left;padding:11px 12px;border-radius:12px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);cursor:pointer;touch-action:manipulation;">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-weight:700;font-size:13px;">'+_bsFmtDate(d.date)+(hasPh?' <span title="Photos disponibles">📷</span>':'')+(i===0?' <span style="color:var(--green);font-size:11px;">· dernier</span>':'')+'</span><span style="color:var(--t3);font-size:16px;">›</span></div>'
+          +(snip?'<div style="font-size:12px;color:var(--t3);line-height:1.4;margin-top:3px;">'+_escNote(snip)+'</div>':'')
+        +'</div>'
+        +'<button onclick="deleteBodyStudy('+i+')" title="Supprimer ce bilan" style="flex:none;background:none;border:1px solid var(--sep);border-radius:12px;padding:0 11px;cursor:pointer;color:var(--red);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
+        +'</div>';
     }).join('');
 }
 function _viewBodyStudyAt(i){
   const d=(S.bodyStudies||[])[i];if(!d)return;
   _renderBodyStudyReport(d,true);
   const res=document.getElementById('body-result');if(res)try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
+}
+// Supprime un bilan « Étude du corps » (texte synchronisé cloud + éventuelles photos locales).
+// Contrairement au suivi photos (local), ce bilan est dans le cloud → persist()+sync le retire aussi côté cloud.
+function deleteBodyStudy(i){
+  const list=S.bodyStudies||[]; const d=list[i]; if(!d)return;
+  const doDel=()=>{
+    const date=d.date;
+    S.bodyStudies.splice(i,1);
+    if(S.bodyStudy&&S.bodyStudy.date===date)S.bodyStudy=S.bodyStudies[0]||null; // n'affiche plus le bilan supprimé
+    if(typeof persist==='function')persist();
+    if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced(); // met à jour la sauvegarde cloud (bodyStudies y est synchronisé)
+    try{ if(date)_bsPhotosDelete(date); }catch(e){}                    // photos éventuelles de ce bilan (base interne)
+    if(S.bodyStudies.length){ _openBodyStudyHistory(); }
+    else { const res=document.getElementById('body-result'); if(res)res.style.display='none'; if(typeof renderBodyStudyCard==='function')try{renderBodyStudyCard();}catch(e){} }
+    if(typeof toast==='function')toast('Bilan supprimé','info');
+  };
+  if(typeof showConfirm==='function')showConfirm('Supprimer ce bilan ?','Le bilan (et ses éventuelles photos) sera effacé de ton téléphone et de ta sauvegarde cloud.',doDel);
+  else doDel();
 }
 
 // ─── Photos Étude du corps — stockage LOCAL uniquement (IndexedDB, jamais le cloud) ──

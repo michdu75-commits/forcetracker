@@ -1,4 +1,4 @@
-const CACHE = 'ft-v444'; // Pop perso Christophe (1x) : t'as un bouton Supprimer une série photo — pour retirer les photos prises pour qqn d'autre.
+const CACHE = 'ft-v445'; // Suppression aussi pour l'Étude du corps (bilan cloud) : bouton corbeille dans l'historique (deleteBodyStudy) — retire du téléphone + cloud.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
