@@ -1,4 +1,4 @@
-const CACHE = 'ft-v454'; // Sommeil : historique INTÉGRÉ dans la carte sommeil (une seule carte : résumé du jour + séparateur + historique repliable). Demande Michel.
+const CACHE = 'ft-v455'; // Sommeil : un seul bloc — aperçu mini-courbe (7 dernières nuits) sous le sommeil du jour, déplie l'historique complet (plus de trait de séparation). Option 2 validée Michel.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

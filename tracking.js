@@ -1443,7 +1443,7 @@ function editSleepDay(d){
 
 // ── Historique du sommeil (repliable, façon graphique de poids) ──
 let _sleepHistOpen=false;   // panneau replié par défaut (gagne de la place)
-let _sleepHistDays=30;      // fenêtre affichée : 7 ou 30 jours
+let _sleepHistDays=7;       // fenêtre affichée : 7 ou 30 jours (défaut 7 = cohérent avec l'aperçu mini-courbe)
 function toggleSleepHist(){_sleepHistOpen=!_sleepHistOpen;renderLogSleep();}
 function setSleepHistRange(n){_sleepHistDays=n;renderLogSleep();}
 const _SLP_QCOL={1:'var(--red)',2:'var(--orange)',3:'var(--purp)',4:'var(--green)'};
@@ -1507,16 +1507,35 @@ function _sleepListHtml(){
   }).join('');
   return`<div style="max-height:240px;overflow-y:auto;margin-top:12px;border-top:1px solid var(--sep);-webkit-overflow-scrolling:touch;">${rows}</div>`;
 }
-// Section historique — SANS carte propre (elle vit DANS la carte sommeil, sous un séparateur)
+// Mini-courbe (aperçu) des 7 dernières nuits — barres colorées par qualité, jour vide = trait fin
+function _sleepSparkline(){
+  const t=new Date(today()+'T12:00:00').getTime();
+  const byDate={};(S.sleepLog||[]).forEach(e=>{byDate[e.date]=e;});
+  let bars='';
+  for(let i=6;i>=0;i--){
+    const d=new Date(t-i*864e5).toISOString().slice(0,10);
+    const e=byDate[d];
+    if(e){const h=Math.max(5,Math.min(28,(Math.min(e.hours,10)/10)*28));bars+='<div style="width:6px;height:'+h.toFixed(0)+'px;border-radius:2px;background:'+_SLP_QCOL[e.quality||2]+';"></div>';}
+    else bars+='<div style="width:6px;height:4px;border-radius:2px;background:var(--sep);"></div>';
+  }
+  return '<div style="display:flex;align-items:flex-end;gap:4px;height:28px;">'+bars+'</div>';
+}
+// Section historique — un seul bloc avec la carte sommeil (pas de carte ni de trait à part)
 function _sleepHistInner(){
   const n=(S.sleepLog||[]).length;
   const chev=`<span style="display:inline-block;transition:transform .2s;transform:rotate(${_sleepHistOpen?90:0}deg);">›</span>`;
-  let html='<div style="border-top:1px solid var(--sep);">';
-  html+=`<button id="sleep-hist-toggle" onclick="toggleSleepHist()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:12px 16px;font-family:var(--font);touch-action:manipulation;">
-    <span style="font-size:13px;font-weight:700;color:var(--t2);">📊 Historique du sommeil${n?' · '+n+' nuit'+(n>1?'s':''):''}</span>
-    <span style="font-size:12px;color:var(--t3);font-weight:700;">${_sleepHistOpen?'Réduire':'Voir'} ${chev}</span>
-  </button>`;
-  if(_sleepHistOpen){
+  let html='<div>';
+  if(!_sleepHistOpen){
+    // Aperçu repliable : la mini-courbe (ou un libellé si aucune nuit) + chevron — tap = déplier
+    html+=`<button id="sleep-hist-toggle" onclick="toggleSleepHist()" style="width:100%;display:flex;align-items:center;gap:12px;background:none;border:none;cursor:pointer;padding:4px 16px 14px;font-family:var(--font);touch-action:manipulation;">`
+      +(n?_sleepSparkline():'<span style="font-size:13px;font-weight:700;color:var(--t2);">📊 Historique du sommeil</span>')
+      +`<span style="margin-left:auto;font-size:12px;color:var(--t3);font-weight:700;white-space:nowrap;">${n?'Historique · '+n+' nuit'+(n>1?'s':''):'Ajouter'} ${chev}</span>`
+      +`</button>`;
+  }else{
+    html+=`<button id="sleep-hist-toggle" onclick="toggleSleepHist()" style="width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;cursor:pointer;padding:4px 16px 10px;font-family:var(--font);touch-action:manipulation;">
+      <span style="font-size:13px;font-weight:700;color:var(--t2);">📊 Historique du sommeil${n?' · '+n+' nuit'+(n>1?'s':''):''}</span>
+      <span style="font-size:12px;color:var(--t3);font-weight:700;">Réduire ${chev}</span>
+    </button>`;
     html+='<div style="padding:0 16px 14px;">'
       +'<div style="display:flex;gap:6px;margin-bottom:12px;">'
       +[[7,'7 jours'],[30,'30 jours']].map(r=>`<button onclick="setSleepHistRange(${r[0]})" class="wrange-chip${_sleepHistDays===r[0]?' active':''}">${r[1]}</button>`).join('')
@@ -1541,7 +1560,7 @@ function renderLogSleep(){
   const isCompact=tsToday&&!_sleepEditLog;
   // Vue compacte : cette nuit déjà renseignée et on n'édite pas
   if(isCompact){
-    pad='12px 16px';
+    pad='12px 16px 0';
     inner='<div style="display:flex;justify-content:space-between;align-items:center;">'
       +'<div style="display:flex;align-items:center;gap:13px;">'
       +'<div class="home-row-ic" style="background:rgba(168,85,247,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--purp)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>'
@@ -1551,7 +1570,7 @@ function renderLogSleep(){
       +'<button style="font-size:12px;font-weight:600;color:var(--t3);background:none;border:none;cursor:pointer;padding:4px 8px;touch-action:manipulation;" onclick="_sleepEditDate=null;_sleepEditLog=true;renderLogSleep()">Modifier</button>'
       +'</div>';
   }else{
-    pad='16px';
+    pad='16px 16px 4px';
     _sleepQual=(ts&&ts.quality)||3;
     const bars=function(n){
       const h=[6,9,12,15];
