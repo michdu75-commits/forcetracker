@@ -48,6 +48,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | `backup-2026-07-19-milo-comprendre` | + amélioration « comprendre avant de conseiller » | `git reset --hard origin/backup-2026-07-19-milo-comprendre` |
 | `backup-2026-07-19-brique3-etat-du-jour` | + brique 3 (état du jour, 3A conversationnel) | `git reset --hard origin/backup-2026-07-19-brique3-etat-du-jour` |
 | `backup-2026-07-19-avant-brique4-adn` | **AVANT** la brique 4A (état = fin brique 3) | `git reset --hard origin/backup-2026-07-19-avant-brique4-adn` |
+| `backup-2026-07-19-brique4a-adn-ok` | + brique 4A (ADN sportif) **validée** | `git reset --hard origin/backup-2026-07-19-brique4a-adn-ok` |
 
 ---
 
