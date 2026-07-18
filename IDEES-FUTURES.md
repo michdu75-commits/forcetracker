@@ -31,6 +31,39 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🗣️ BACKLOG — Profil conversationnel avec Milo (⭐ étoile polaire, PAS maintenant)
+
+> Idée de ChatGPT (19/07/2026), validée sur le plan fonctionnel par Claude.
+> **À NE PAS développer avant que les fondations (briques 5, 6 et suivantes)
+> soient terminées et stabilisées.** Fondations d'abord.
+
+**Vision.** À terme, remplir son profil ne passe plus seulement par des
+formulaires : **Milo accueille le nouvel utilisateur par une conversation
+naturelle** (« Quel sport ? Depuis quand ? Force ou hypertrophie ? »). Les
+réponses alimentent automatiquement le **Profil**, l'**ADN sportif** et
+certaines infos du **Registre**. L'utilisateur a l'impression de **discuter**,
+pas de remplir un questionnaire. Cohérent avec `docs/PRESENCE-MILO.md` (Milo =
+la présence / la porte d'entrée).
+
+**Non négociable.** Le profil manuel NE disparaît pas. **Deux modes coexistent**
+(conversation Milo + édition manuelle) et alimentent la **même base**.
+
+**S'appuie sur la brique 5** : mécanisme « Milo propose → l'utilisateur valide »
+(« Si j'ai bien compris, tu préfères les charges lourdes. Je le retiens ? »).
+Rien enregistré sans validation.
+
+**⚠️ Garde-fou Claude (à respecter le jour où on le fait) : ne pas re-mélanger
+les couches** qu'on a soigneusement séparées. La conversation remplit surtout le
+**qualitatif** (discipline, préférences, ADN) ; les **données dures** (poids,
+taille, âge) restent **déclarées/mesurées**, jamais « devinées » par Milo.
+
+**Nature.** C'est la **convergence** de la brique **4B** (Milo apprend l'ADN
+tout seul) + brique **5** (propose/valide) + l'**onboarding**. → Gros chantier,
+étoile polaire, pas une petite brique. À reprendre quand la fondation Milo est
+stable.
+
+---
+
 ## 📸🔒 Sauvegarde des PHOTOS sur le Drive de Force Tracker (cryptées par le code perso) — chantier discuté 2026-07-13
 
 **Le besoin (Michel)** : sur un changement de téléphone, on récupère toutes les DONNÉES mais **pas les photos** (photos d'exercices ajoutées, photos brutes des analyses morpho/bilan corporel). « C'est la base d'une appli de tout récupérer. »
