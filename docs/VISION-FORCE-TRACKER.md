@@ -86,6 +86,11 @@ question de contrôle « l'app s'adapte au sportif, ou l'inverse ? ».)*
 > **« Force Tracker ne te dit pas qui tu dois devenir.
 > Il se souvient de qui tu es devenu. »**
 
+> **« Force Tracker ne cherche pas à créer une IA plus intelligente que le sportif.
+> Il cherche à rendre le sportif plus lucide grâce à sa propre histoire. »**
+> *(ChatGPT, 19/07/2026 — une philosophie plus humble et plus durable. C'est aussi
+> l'esprit du Principe 14 de la Constitution : « miroir, jamais prophète ».)*
+
 ---
 
 ## Vision à long terme — et l'honnêteté technique
@@ -125,6 +130,16 @@ cette machinerie sert.
 | 6 | **Le Gardien** | sécurité : adapter, pas interdire |
 | **7** | **🎯 Mémoire vivante** | **relier les événements dans le temps, dégager des tendances sur plusieurs années** |
 | **8** | **🎯 Synthèse** | **aider le sportif à prendre du recul sur toute son histoire** |
+
+**La frontière entre 7 et 8** (cadrage ChatGPT — deux questions distinctes) :
+
+- **Brique 7 — Mémoire vivante** répond à **« Que s'est-il passé ? »** : relier les
+  événements dans le temps, raconter l'histoire sportive, détecter les tendances
+  récurrentes.
+- **Brique 8 — Synthèse** répond à **« Qu'est-ce que cette histoire m'apprend ? »** :
+  aider à prendre du recul, **sans jamais prescrire**. Tournures autorisées : *« Ton
+  historique semble montrer que… »*, *« Une constante apparaît… »* — **jamais** *« Tu
+  devrais… »*.
 
 **Pourquoi 7 et 8 sont la destination.** Les briques 0→6 font en sorte que Milo
 *connaisse* la personne. Les briques 7 et 8, c'est là que la promesse se réalise :

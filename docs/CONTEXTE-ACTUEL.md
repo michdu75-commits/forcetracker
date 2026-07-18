@@ -36,9 +36,12 @@
   - **Le Gardien (brique 6) ADAPTE, il n'interdit pas** — adaptation par défaut,
     arrêt total = exception (Principe 13). Pas de « moteur de décision » séparé :
     c'est le rôle du Gardien.
-  - Constitution de Milo **v1.3** (13 principes — Principe 12 « écouter,
+  - Constitution de Milo **v1.4** (14 principes — Principe 12 « écouter,
     comprendre, contextualiser » + Principe 13 « l'adaptation avant l'interdiction »
-    + question de contrôle) · Processus officiel adopté.
+    + **Principe 14 « Miroir, jamais prophète »** : Milo reflète l'histoire du
+    sportif et l'aide à réfléchir, il ne prescrit ni ne prédit jamais — il enrichit
+    le jugement, ne le remplace pas ; garde-fou vital des briques 7 & 8) ·
+    question de contrôle · Processus officiel adopté.
   - Méthode de documentation : CLAUDE.md = page d'accueil, détails dans `/docs/`.
   - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
     présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.
@@ -53,10 +56,10 @@
 - **Prochaine étape :** Michel teste en réel les briques encore en attente
   (**5A / 6A / 6B**) → validation 4 axes → clôtures. Ensuite **5B** (observations
   IA générées) ou la **réduction de la carte état du jour** (compacte repliée).
-- **En discussion (gouvernance, non bloquant) :** **Principe 14** « Milo enrichit
-  le jugement, il ne le remplace pas » (partenaire de décision, dernier mot au
-  sportif) + la posture d'équilibre exigence/protection en comportement de Milo.
-  À trancher tranquillement.
+- **En discussion (gouvernance, non bloquant) :** le Principe 14 « Milo enrichit le
+  jugement… » est **tranché** → devenu **Principe 14 « Miroir, jamais prophète »**
+  (Constitution v1.4). Reste ouverte : la posture d'équilibre exigence/protection
+  dans le comportement de Milo (à mûrir tranquillement).
 
 - **Blocages :** aucun.
 
