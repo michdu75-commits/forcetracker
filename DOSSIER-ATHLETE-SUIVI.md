@@ -241,7 +241,16 @@ la cause d'abord** (question douce) avant de conseiller. Testé Playwright, 0 er
 
 ---
 
-### Brique 4A — L'ADN sportif (socle déclaré) · `ft-v464` · 19/07/2026 · ⏳ EN ATTENTE VALIDATION MICHEL
+### Brique 4A — L'ADN sportif (socle déclaré) · `ft-v464` · 19/07/2026 · ✅ CLÔTURÉE
+
+> **Validée officiellement par Michel sur les 4 axes** (fonctionnelle · technique
+> · situation réelle · philosophie de Milo). Preuve en situation réelle : un
+> « Conseil de Milo » (PDF du 18/07) où Milo **utilise les zones fragiles
+> durables** de l'ADN (arthrose, genoux, cervicales, épaule) **et** le mode de
+> vie (travaux physiques lourds) → il comprend avant de conseiller, contextualise
+> (« ton corps s'entraîne déjà toute la journée ») et **protège** (« pas question
+> de t'envoyer du squat lourd si t'as porté du parpaing toute la semaine »).
+> L'ADN sportif remplit sa mission.
 
 **Objectif.** Donner à Milo un « ADN sportif » durable — ce qui caractérise la
 personne sur le long terme, différent du profil (déclaré général), des faits
