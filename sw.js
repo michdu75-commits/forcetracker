@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v471'; // Brique 3B : etat du jour STRUCTURE (carte Accueil optionnelle : energie + douleur du jour par zone, S.dayState/ft4_daystate, repart a zero chaque jour). Nourrit Milo (dosage) + le Gardien (protege une DOULEUR DU JOUR en PRIORITE, tag AUJOURD'HUI). Capture legere ; extraction IA = 3B+ plus tard.
+const CACHE = 'ft-v472'; // Ressenti du jour (3B) branche sur le score de recup : energie + gene du jour font BAISSER le score en DOUCEUR (facteur '🌡️ Ressenti du jour', -3/zone plafonne -8, energie 😴-10/😐-4/🙂 0/⚡+4). Le ressenti prime, mais on adapte sans alarmer (on s'entraine quand meme).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

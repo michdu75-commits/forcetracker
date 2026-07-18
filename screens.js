@@ -542,8 +542,8 @@ function _dayState(){
   if(!S.dayState||S.dayState.date!==t)S.dayState={date:t,energy:null,mood:null,pains:[],note:''};
   return S.dayState;
 }
-function setDayEnergy(v){const d=_dayState();d.energy=(d.energy===v?null:v);persist();_renderDayStateCard();}
-function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=>p&&p.zone===z);if(i>=0)d.pains.splice(i,1);else{d.pains=d.pains||[];d.pains.push({zone:z,intensity:'moyen'});}persist();_renderDayStateCard();}
+function setDayEnergy(v){const d=_dayState();d.energy=(d.energy===v?null:v);persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=>p&&p.zone===z);if(i>=0)d.pains.splice(i,1);else{d.pains=d.pains||[];d.pains.push({zone:z,intensity:'moyen'});}persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
 function _renderDayStateCard(){
   const el=document.getElementById('home-daystate');if(!el)return;
   const d=_dayState();

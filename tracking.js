@@ -1858,8 +1858,20 @@ function calcRecoveryDetail(){
     const dd=Math.floor((new Date()-new Date(ls0.date+'T12:00:00'))/864e5);
     if(dd<=1) energyAdj = ls0.checkin.energy<=1?-6 : ls0.checkin.energy===2?-3 : ls0.checkin.energy>=4?4 : 0;
   }
+  // État du jour ressenti (brique 3B) : le RESSENTI PRIME sur les chiffres → il
+  // ajuste le score, mais en DOUCEUR (« adapter, pas alarmer »). Une gêne ne doit
+  // pas transformer une bonne récup en alerte : on s'entraîne quand même.
+  let dayAdj=0,dayPainN=0;
+  try{
+    const ds=S.dayState, tday=(typeof today==='function')?today():null;
+    if(ds&&(!tday||ds.date===tday)){
+      if(ds.energy!=null) dayAdj += ds.energy===0?-10 : ds.energy===1?-4 : ds.energy===3?4 : 0; // 😴 −10 · 😐 −4 · 🙂 0 · ⚡ +4
+      dayPainN=(ds.pains&&ds.pains.length)||0;
+      if(dayPainN) dayAdj += Math.max(-8,-3*dayPainN); // −3 par zone, plafonné à −8 (doux : on s'entraîne quand même)
+    }
+  }catch(e){}
   const base=Math.round(wScore);
-  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj)));
+  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj+dayAdj)));
   // Détail des facteurs (pour afficher le « pourquoi » sous le score)
   const factors=[{ic:'😴',label:hasSleep?'Sommeil':'Récup de base',val:base,base:true}];
   if(sessAdj) factors.push({ic:sessAdj<0?'🏋️':'🛌',label:sessAdj<0?'Séance récente':'Repos',val:sessAdj});
@@ -1868,6 +1880,7 @@ function calcRecoveryDetail(){
   if(accumAdj) factors.push({ic:'🔥',label:'Jours enchaînés',val:accumAdj});
   if(smokerAdj) factors.push({ic:'🚬',label:'Tabac',val:smokerAdj});
   if(energyAdj) factors.push({ic:'⚡',label:'Énergie',val:energyAdj});
+  if(dayAdj) factors.push({ic:'🌡️',label:'Ressenti du jour',val:dayAdj});
   // Conseils pour remonter le score (les plus pertinents)
   const tips=[];
   if(!hasSleep) tips.push('💤 Renseigne ton sommeil pour un score personnalisé et plus précis.');
@@ -1878,6 +1891,8 @@ function calcRecoveryDetail(){
   else if(cycleAdj<0) tips.push('Phase prémenstruelle : volume modéré et bonne récup entre les séances.');
   if(smokerAdj<0) tips.push('Réduire le tabac améliorerait nettement ta récupération.');
   if(energyAdj<0) tips.push('Énergie basse au dernier check-in — écoute ton corps, séance légère.');
+  if(dayPainN) tips.push('Une gêne aujourd\'hui : échauffe-toi bien et allège si besoin — tu peux t\'entraîner.');
+  else if(dayAdj<0) tips.push('Journée sans énergie — une séance plus courte reste bénéfique.');
   if(!tips.length) tips.push(score>=80?'Tu es au top — profites-en pour une séance intensive ! 💪':'Récup correcte — séance normale, et une bonne nuit ce soir.');
   return {score,base,factors,tips:tips.slice(0,2)};
 }
