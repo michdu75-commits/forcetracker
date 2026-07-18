@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v456'; // Ajout mention © Tous droits réservés (LICENSE + en-tête des fichiers). Protection juridique du code.
+const CACHE = 'ft-v457'; // Dossier Athlète brique 0 : « Le ton de Milo » (Cool/Classique/Dynamique/Scientifique) dans Profil → Discipline. Change la façon de parler de Milo, pas ses conseils. Défaut = ton actuel.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

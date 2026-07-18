@@ -257,7 +257,7 @@ function _cloudSync(){
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
       action:'saveProfile',email:S.email,authCode:_authCode(),
-      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',
+      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
@@ -1561,6 +1561,28 @@ function _renderLevelSel(){
   const d=document.getElementById('lvl-desc');
   if(d)d.textContent=S.level?(LEVEL_DESCS[S.level]||''):'Choisis ton niveau — le Coach adaptera ses conseils, et il évoluera tout seul avec tes séances.';
 }
+// Ton de Milo (Coach IA) — change SA FAÇON DE PARLER, pas son caractère ni ses conseils.
+// Brique 0 du « Dossier Athlète ». '' = ton actuel (aucun changement pour l'existant).
+const COACH_TONE_LABELS={cool:'Cool',classique:'Classique',dynamique:'Dynamique',scientifique:'Scientifique'};
+const COACH_TONE_DESCS={
+  cool:'Décontracté et complice, comme un pote de salle. Simple et détendu.',
+  classique:'Équilibré : pro, clair et bienveillant. Le ton par défaut de Milo.',
+  dynamique:'Énergique et motivant, qui te booste et te pousse à te dépasser.',
+  scientifique:'Précis et technique : explique le pourquoi (mécanismes, données) sans jargon inutile.',
+};
+function setCoachTone(t){
+  S.coachTone=(S.coachTone===t)?'':t; // re-tap = revenir au ton par défaut
+  persist();
+  _renderCoachToneSel();
+  toast(S.coachTone?('Ton de Milo : '+(COACH_TONE_LABELS[S.coachTone]||S.coachTone)):'Ton de Milo : par défaut','success');
+}
+function _renderCoachToneSel(){
+  Object.keys(COACH_TONE_LABELS).forEach(x=>{
+    const el=document.getElementById('tone-'+x);if(el)el.classList.toggle('active',x===S.coachTone);
+  });
+  const d=document.getElementById('tone-desc');
+  if(d)d.textContent=S.coachTone?(COACH_TONE_DESCS[S.coachTone]||''):'Choisis le ton de Milo — son caractère et ses conseils ne changent pas, seulement sa façon de te parler.';
+}
 
 let _screenHistory=['home'];
 function openMenuDrawer(){
@@ -1717,6 +1739,7 @@ function renderSetup(){
   setGoal(S.goal||'muscle');
   setDiscipline(S.discipline||'muscu');
   _renderLevelSel();
+  _renderCoachToneSel();
   renderBFCard();
   _renderProfileCompletion();
   try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
@@ -1810,6 +1833,7 @@ function _applyRestoreData(raw){
   try{if(d.gender)S.gender=d.gender;}catch(e){console.warn('[FT restore] gender',e);}
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
+  try{if(d.coachTone!==undefined)S.coachTone=d.coachTone;}catch(e){console.warn('[FT restore] coachTone',e);}
   try{if(d.level)S.level=d.level;}catch(e){}
   try{if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;}catch(e){console.warn('[FT restore] activityLevel',e);}
   try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
