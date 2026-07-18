@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v462`
+- **Version en prod :** `ft-v463`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** `backup-2026-07-19-brique3-etat-du-jour`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*

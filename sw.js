@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v462'; // Dossier Athlete brique 3 (etat du jour, version 3A conversationnelle) : Milo peut ouvrir par un check-in chaleureux (energie/moral/douleur), dose sa presence (s'efface si la personne veut juste agir), distingue Registre (qui tu es) et Etat du jour (comment tu vas aujourd'hui). Consigne prompt only.
+const CACHE = 'ft-v463'; // Milo brique 3 renforcee : le RESSENTI prime sur les chiffres (ne jamais contredire « je suis HS » avec « ta recup est au top ») + comprendre la cause avant de conseiller sur un signal d'etat. Consigne prompt only.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

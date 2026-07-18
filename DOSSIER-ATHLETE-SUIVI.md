@@ -228,6 +228,16 @@ hors périmètre.
 
 **Rollback :** `git reset --hard origin/backup-2026-07-19-milo-comprendre`
 
+**🔧 Renfort · `ft-v463` (retour Michel, capture) :** Milo avait répondu « t'es HS
+mais ta récup est au top » à « je suis HS » → il **contredisait** le ressenti avec
+le chiffre, et **fonçait sur le conseil** sans comprendre la cause. Ajout de 2
+règles fortes dans la consigne : ① **le RESSENTI prime TOUJOURS sur les chiffres**
+(ne jamais contredire « je suis HS » avec « ta récup est au top » ; le score de
+récup est un indice calculé, pas la vérité — le boulot/stress/nuit blanche n'y
+sont pas) ; ② sur un **signal d'état** (« je suis HS/crevé/j'ai mal »), **comprendre
+la cause d'abord** (question douce) avant de conseiller. Testé Playwright, 0 erreur.
+**Rollback :** `git reset --hard origin/backup-2026-07-19-brique3-etat-du-jour`
+
 ---
 
 ## 🔜 Prochaines briques prévues (rappel, ordre indicatif)
