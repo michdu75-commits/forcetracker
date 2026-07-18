@@ -137,6 +137,7 @@ const _HELP_DATA={
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'😴',t:'Ton sommeil se note directement sur l\'Accueil (juste sous le score de récup) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération.'},
       {i:'📊',t:'« Historique du sommeil » (la barre repliable, tape la flèche) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
+      {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
       {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Consulte l\'onglet Badges dans Progrès pour tout voir.'},
@@ -495,6 +496,37 @@ function _dismissMilo(id){
   try{localStorage.setItem('ft4_milo',JSON.stringify({date:today(),id}));}catch(e){}
   const el=document.getElementById('home-milo');if(el)el.innerHTML='';
 }
+// ─── Observation de Milo à valider (Dossier Athlète, brique 5A) ───
+function _obsEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function _renderObsCard(){
+  const el=document.getElementById('home-obs');if(!el)return;
+  try{if(typeof maybeProposeObservation==='function')maybeProposeObservation();}catch(e){}
+  const o=(typeof _pendingObs==='function')?_pendingObs():null;
+  if(!o){el.innerHTML='';el.style.padding='0';return;}
+  el.style.padding='14px 14px 0';
+  const name=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
+  el.innerHTML='<div class="obs-card">'
+    +'<div class="obs-head"><div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'
+    +'<div class="obs-lead">'+name+' a une petite question…</div></div>'
+    +'<div class="obs-txt">'+_obsEsc(o.ask||o.text||'')+'</div>'
+    +'<div class="obs-btns">'
+    +'<button class="obs-yes ft-press" onclick="validateObs(\''+o.id+'\')">Oui, c\'est vrai</button>'
+    +'<button class="obs-no ft-press" onclick="rejectObs(\''+o.id+'\')">Pas vraiment</button>'
+    +'</div></div>';
+}
+// « Ce que Milo sait de toi » — liste des observations validées (supprimables)
+function openMiloKnows(){
+  const ov=document.getElementById('ov-milo-knows');if(!ov)return;
+  _renderMiloKnows();ov.classList.add('open');
+}
+function closeMiloKnows(){const ov=document.getElementById('ov-milo-knows');if(ov)ov.classList.remove('open');}
+function _renderMiloKnows(){
+  const box=document.getElementById('milo-knows-list');if(!box)return;
+  const list=(typeof _validatedObs==='function')?_validatedObs():[];
+  if(!list.length){box.innerHTML='<div class="mk-empty">Milo n\'a encore rien retenu sur toi. Au fil de tes séances, il te posera de petites questions sur l\'Accueil — chaque fois que tu confirmes, il apprend à mieux te connaître. Rien n\'est mémorisé sans ton accord.</div>';return;}
+  box.innerHTML=list.map(o=>'<div class="mk-row"><span class="mk-txt">'+_obsEsc(o.fact||o.ask||'')+'</span>'
+    +'<button class="mk-del ft-press" onclick="deleteObs(\''+o.id+'\')" aria-label="Oublier"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>').join('');
+}
 function _openMiloChat(){
   try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
 }
@@ -544,6 +576,7 @@ function renderHome(){try{
   _renderTesterCard();
   _renderHomeHdr();
   _renderMiloCard();
+  _renderObsCard();
   _renderHomeHero();
   if(typeof renderLogSleep==='function')renderLogSleep(); // sommeil du jour, juste sous le score de récup (déplacé de Séance → Accueil)
   const now=new Date();

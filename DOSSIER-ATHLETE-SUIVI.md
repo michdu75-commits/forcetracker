@@ -49,6 +49,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | `backup-2026-07-19-brique3-etat-du-jour` | + brique 3 (état du jour, 3A conversationnel) | `git reset --hard origin/backup-2026-07-19-brique3-etat-du-jour` |
 | `backup-2026-07-19-avant-brique4-adn` | **AVANT** la brique 4A (état = fin brique 3) | `git reset --hard origin/backup-2026-07-19-avant-brique4-adn` |
 | `backup-2026-07-19-brique4a-adn-ok` | + brique 4A (ADN sportif) **validée** | `git reset --hard origin/backup-2026-07-19-brique4a-adn-ok` |
+| `backup-2026-07-19-avant-brique5a` | **AVANT** la brique 5A (état = fin 4A + Constitution v1.3) | `git reset --hard origin/backup-2026-07-19-avant-brique5a` |
 
 ---
 
@@ -310,11 +311,48 @@ si vide, `_adnFilled` OK, 0 erreur JS ; visuel jour + nuit OK.
 
 ---
 
-## 🧠 Brique 5A — « Observations à valider » · CADRAGE VALIDÉ (à développer)
+## 🧠 Brique 5A — « Observations à valider » · `ft-v465` · 19/07/2026 · ⏳ EN ATTENTE VALIDATION MICHEL
 
-> Direction choisie par Michel (Option B). Cadrage validé par ChatGPT + Claude
-> le 19/07/2026. **À coder à la reprise** (backup + tests + 4 axes). *« Le cœur,
-> ce n'est pas la mémoire, c'est la confiance. »*
+> Direction choisie par Michel (Option B). Cadrage validé par ChatGPT + Claude,
+> **codé en `ft-v465`**. *« Le cœur, ce n'est pas la mémoire, c'est la confiance. »*
+
+**Ce qui a été fait.** Milo repère une tendance ancrée dans les données →
+**propose une hypothèse humble sur l'Accueil** (carte `#home-obs`) → l'utilisateur
+**valide (« Oui, c'est vrai ») ou refuse (« Pas vraiment »)** → validée = rangée
+en mémoire durable (`S.registre.observations`, `status:'validated'`) et **injectée
+dans le briefing de Milo** (sous forme de FAIT confirmé, `o.fact`) → refusée =
+`status:'rejected'`, plus jamais re-proposée. Menu → **« Ce que Milo sait de toi »**
+(`#ov-milo-knows`) pour revoir/**effacer**. **Rien n'est mémorisé sans validation.**
+
+**Générateurs d'observations (ancrés données, 5A)** — `_obsCandidates()` (tracking.js) :
+semaine vs week-end · matin vs soir (startHour) · haut vs bas du corps (EXLIB) ·
+très régulier (10+/28 j). Chaque candidate a `ask` (question montrée) + `fact`
+(phrase injectée à Milo) + `confidence` (interne).
+
+**Les 4 règles ChatGPT, implémentées :**
+1. **Humilité** — formulé en question (« … c'est le cas ? »).
+2. **Une à la fois** — `maybeProposeObservation` sort si une `pending` existe.
+3. **Le bon moment** — ≥ 8 séances requises + **espacement ≥ 3 jours** (`lastObsAt`).
+4. **Seuil de confiance interne** — ne propose que `confidence ≥ 0.7`, choisit la
+   plus haute ; la confiance n'est **jamais** montrée ni à l'utilisateur ni à Milo.
+
+**Anti-répétition** : une clé déjà décidée (validée/refusée/en attente) n'est
+jamais re-proposée. **Injection** : seules les `validated` entrent dans Milo.
+
+**Fichiers** : `tracking.js` (générateurs + logique + validate/reject/delete),
+`screens.js` (`_renderObsCard`/`openMiloKnows`/`_renderMiloKnows`), `coach.js`
+(injection validated-only via `o.fact`), `index.html` (`#home-obs`, `#ov-milo-knows`,
+ligne menu), `style.css` (`.obs-*`/`.mk-*`), `constants.js` (WHATS_NEW v18 🧠 +
+red dot `milo-knows`), `screens.js` (aide `?` Accueil), `sw.js` (ft-v465).
+
+**Tests Playwright** : 10 séances semaine/matin → 4 candidates (morning 1.0,
+weekday 0.96, upper 0.75, regular 0.75) ; carte affiche l'hypothèse + 2 boutons ;
+validate → fait injecté dans Milo + carte vidée ; reject → `rejected`, non
+re-proposé (passe au suivant) ; « Ce que Milo sait de toi » liste + suppression ;
+0 erreur JS ; visuels OK. **Découpage** : 5A = ancré données (fait) ; **5B** =
+génération IA plus riche (plus tard).
+
+**Rollback :** `git reset --hard origin/backup-2026-07-19-avant-brique5a`
 
 **Principe.** Milo **remarque → propose → l'utilisateur VALIDE → c'est rangé en
 mémoire (`S.registre.observations`, déjà câblé brique 1) → il réutilise.** Rien

@@ -6,18 +6,19 @@
 
 ---
 
-- **Version en prod :** `ft-v464`
+- **Version en prod :** `ft-v465`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
-- **Dernier point de sauvegarde :** `backup-2026-07-19-avant-brique4-adn`
+- **Dernier point de sauvegarde :** `backup-2026-07-19-avant-brique5a`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).
-- **Brique en cours :** aucune. **Briques 0, 1, 2, 3, 4A CLÔTURÉES.** La brique
-  4A (« Mon ADN sportif », `ft-v464`) a été **validée par Michel sur les 4 axes**
-  le 19/07/2026 (preuve réelle : Milo utilise les zones fragiles + le mode de vie
-  de l'ADN dans un vrai conseil). **Prochaine : brique 4B** (Milo apprend l'ADN
-  tout seul au fil des échanges — plus tard, plus risqué). À cadrer.
+- **Brique en cours :** **Brique 5A — « Observations à valider »** livrée en
+  `ft-v465`, **EN ATTENTE de la validation Michel (4 axes)**. Milo propose une
+  hypothèse ancrée données sur l'Accueil → l'utilisateur valide/refuse → mémoire
+  durable réutilisée. Briques 0, 1, 2, 3, 4A CLÔTURÉES ; Constitution v1.3.
+  **Ensuite : 5B** (observations générées par l'IA) ou brique 4B (Milo apprend
+  l'ADN tout seul).
 
 - **Dernières décisions validées :**
   - Ton de Milo : « Laisse Milo choisir » (auto) par défaut, manuel = secours.
@@ -39,11 +40,10 @@
   - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
     présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.
 
-- **Prochaine étape :** **coder la brique 5A — « Observations à valider »**
-  (Milo propose → tu valides → mémoire). **Cadrage VALIDÉ** (ChatGPT + Claude,
-  voir `DOSSIER-ATHLETE-SUIVI.md`), à développer à la reprise (backup + tests +
-  4 axes). 4 règles à respecter : humilité (hypothèse), 1 obs à la fois, bon
-  moment, seuil de confiance interne.
+- **Prochaine étape :** Michel **teste la brique 5A** sur iPhone (Milo pose une
+  question sur l'Accueil quand il a ≥8 séances ; valider/refuser ; Menu → « Ce
+  que Milo sait de toi ») → validation des 4 axes → clôture. Puis **5B** (Milo
+  génère des observations plus riches via l'IA) ou une autre brique.
 - **En discussion (gouvernance, non bloquant) :** **Principe 14** « Milo enrichit
   le jugement, il ne le remplace pas » (partenaire de décision, dernier mot au
   sportif) + la posture d'équilibre exigence/protection en comportement de Milo.
