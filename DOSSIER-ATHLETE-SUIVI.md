@@ -46,6 +46,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | `backup-2026-07-19-dossier-athlete-brique1` | Briques 0 + 1 (ton de Milo + Registre socle) | `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique1` |
 | `backup-2026-07-19-dossier-athlete-brique2` | Briques 0 + 1 + 2 (faits mesurés) | `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique2` |
 | `backup-2026-07-19-milo-comprendre` | + amélioration « comprendre avant de conseiller » | `git reset --hard origin/backup-2026-07-19-milo-comprendre` |
+| `backup-2026-07-19-brique3-etat-du-jour` | + brique 3 (état du jour, 3A conversationnel) | `git reset --hard origin/backup-2026-07-19-brique3-etat-du-jour` |
 
 ---
 
@@ -193,6 +194,39 @@ Milo MAINTENANT ; la **détection fiable** des ruptures d'habitude viendra avec 
 À valider en vrai par Michel (dire à Milo « je n'irai pas m'entraîner »).
 
 **Rollback :** `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique2`
+
+---
+
+### Brique 3 — L'état du jour (version 3A conversationnelle) · `ft-v462` · 19/07/2026
+*(Version consolidée après échanges Michel / ChatGPT / Claude / Gemini.)*
+
+**Objectif :** Milo comprend l'état du jour de la personne pour adapter son
+accompagnement, via un **check-in CONVERSATIONNEL** (pas un formulaire) — c'est
+son **premier geste de présence**.
+
+**Critère de réussite :** Milo peut prendre le pouls (énergie/moral/douleur) de
+façon naturelle, adapte ses réponses au contexte, sans que ce soit vécu comme un
+questionnaire ; le check-in reste **facultatif** et la **navigation libre**
+préservée. → ✅ Consigne présente dans le contexte (Playwright), 0 erreur JS. La
+vraie validation = ressenti de Michel dans le Coach (c'est conversationnel).
+
+**Hors périmètre (respecté) :** ❌ pas de formulaire/écran · ❌ pas de stockage
+structuré (la version **3B** — capture invisible en `S.dayState` pour le Gardien —
+viendra plus tard) · ❌ pas de garantie de sécurité auto (= Gardien, brique 6) ·
+❌ présence globale / porte d'entrée Milo = gouvernance (`docs/PRESENCE-MILO.md`),
+hors périmètre.
+
+**Explication :** ajout d'une consigne « ÉTAT DU JOUR & CHECK-IN » dans
+`buildCoachContext` (coach.js), à la suite de « comprendre avant de conseiller » :
+- distinction stricte **Registre (qui tu es) / État du jour (comment tu vas
+  aujourd'hui)** ;
+- Milo peut **ouvrir** par un check-in bref et chaleureux (« comment tu te sens
+  aujourd'hui ? ») — une conversation, pas une saisie ;
+- il **dose sa présence** : si la personne veut juste agir, il s'efface (facultatif) ;
+- il s'en sert pour adapter le conseil **du jour** (allège si fatigue, protège la
+  zone si douleur + oriente vers un pro, soutient si moral bas, pousse si en forme).
+
+**Rollback :** `git reset --hard origin/backup-2026-07-19-milo-comprendre`
 
 ---
 

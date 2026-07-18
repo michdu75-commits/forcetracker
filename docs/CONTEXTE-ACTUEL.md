@@ -6,16 +6,18 @@
 
 ---
 
-- **Version en prod :** `ft-v461`
+- **Version en prod :** `ft-v462`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
-- **Dernier point de sauvegarde :** `backup-2026-07-19-milo-comprendre`
+- **Dernier point de sauvegarde :** `backup-2026-07-19-brique3-etat-du-jour`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).
-- **Brique en cours :** aucune en cours. **Briques 0, 1, 2 terminées** + amélioration
-  Milo « comprendre avant de conseiller ». **Prochaine : brique 3 — l'état du jour**
-  (mini check-in humeur/stress/douleurs/envie avant la séance) — *à cadrer avant de coder*.
+- **Brique en cours :** aucune en cours. **Briques 0, 1, 2, 3 terminées** (3 = état
+  du jour, version 3A conversationnelle) + amélioration Milo « comprendre avant de
+  conseiller ». **Prochaine : brique 4 — l'ADN sportif** (étoffer « Milo apprend à
+  te connaître ») OU la version **3B** (capture structurée de l'état du jour, avec
+  le Gardien). À cadrer.
 
 - **Dernières décisions validées :**
   - Ton de Milo : « Laisse Milo choisir » (auto) par défaut, manuel = secours.
