@@ -13,14 +13,15 @@
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).
-- **Brique en cours :** **3B — l'état du jour structuré** livré (`ft-v471`), **EN
-  ATTENTE de la validation Michel (4 axes)**. 3B = petite carte optionnelle sur
-  l'Accueil (énergie du jour + zones qui font mal aujourd'hui) → le **Gardien
-  protège en PRIORITÉ** une douleur du jour (tag « DOULEUR AUJOURD'HUI ») et Milo
-  reçoit un bloc « 📍 ÉTAT DU JOUR » (ponctuel, remis à zéro chaque jour). **5A,
-  6A, 6B aussi en attente** de validation réelle. Briques 0–4A CLÔTURÉES ;
-  Constitution v1.3 ; **Vision** gravée. Toutes les briques 0→6B sont **bâties** ;
-  reste à valider en réel puis clôturer, ensuite **5B** (observations IA).
+- **Brique en cours :** — **3B CLÔTURÉE** (`ft-v471`, **validée Michel** : « 3B
+  validé », « nickel »). Affinée (`ft-v472→v473`) : le ressenti nourrit le score —
+  l'énergie l'ajuste en douceur, une **douleur ne fait pas chuter le chiffre** mais
+  affiche un bandeau ⚠️ (« adapter, pas interdire »). Testeurs prévenus par un
+  pop-up dédié (`ft-v474`). ⏳ À faire plus tard (IDEES-FUTURES) : **réduire la
+  carte** de l'état du jour (elle encombre le haut de l'Accueil). **Restent en
+  attente de validation réelle : 5A · 6A · 6B.** Briques 0–4A + 3B CLÔTURÉES ;
+  Constitution v1.3 ; **Vision** gravée. Toutes les briques 0→6B **bâties** ;
+  ensuite **5B** (observations IA).
 
 - **Dernières décisions validées :**
   - Ton de Milo : « Laisse Milo choisir » (auto) par défaut, manuel = secours.
@@ -42,10 +43,9 @@
   - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
     présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.
 
-- **Prochaine étape :** Michel teste en réel la **3B** (mettre une énergie + une
-  zone qui fait mal aujourd'hui sur l'Accueil → demander à Milo, vérifier qu'il
-  protège cette zone en priorité) + les briques encore en attente (**5A / 6A /
-  6B**) → validation 4 axes → clôtures. Ensuite **5B** (observations IA).
+- **Prochaine étape :** Michel teste en réel les briques encore en attente
+  (**5A / 6A / 6B**) → validation 4 axes → clôtures. Ensuite **5B** (observations
+  IA générées) ou la **réduction de la carte état du jour** (compacte repliée).
 - **En discussion (gouvernance, non bloquant) :** **Principe 14** « Milo enrichit
   le jugement, il ne le remplace pas » (partenaire de décision, dernier mot au
   sportif) + la posture d'équilibre exigence/protection en comportement de Milo.
