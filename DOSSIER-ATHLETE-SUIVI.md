@@ -53,6 +53,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | `backup-2026-07-19-avant-gardien6a` | **AVANT** le Gardien 6A (état = 5A + points rouges simplifiés) | `git reset --hard origin/backup-2026-07-19-avant-gardien6a` |
 | `backup-2026-07-19-avant-adn-sante-sep` | **AVANT** la séparation ADN/Santé (état = Gardien 6A) | `git reset --hard origin/backup-2026-07-19-avant-adn-sante-sep` |
 | `backup-2026-07-19-avant-gardien6b` | **AVANT** le Gardien 6B précis (état = séparation ADN/Santé) | `git reset --hard origin/backup-2026-07-19-avant-gardien6b` |
+| `backup-2026-07-19-avant-3b` | **AVANT** la brique 3B (état = Gardien 6B + séparation ADN/Santé) | `git reset --hard origin/backup-2026-07-19-avant-3b` |
 
 ---
 
@@ -519,6 +520,58 @@ nouveau pop-up.*
 épaule, Squat→genou), Curl non signalé ; rien → silencieux ; 0 erreur JS.
 
 **Rollback :** `git reset --hard origin/backup-2026-07-19-avant-gardien6b`
+
+---
+
+## 🌡️ Brique 3B — L'ÉTAT DU JOUR STRUCTURÉ · `ft-v471` · 19/07/2026 · ⏳ EN ATTENTE VALIDATION MICHEL
+
+> Complète la brique 3 (état du jour conversationnel, 3A). La 3A laissait Milo
+> *demander* comment on va ; la 3B laisse la personne le **noter en un geste** —
+> et surtout donne au **Gardien** une **douleur du jour** à protéger en priorité.
+> Cadrage validé : approche **hybride** — capture structurée légère et optionnelle
+> maintenant ; extraction IA depuis la conversation = « 3B+ » plus tard.
+
+**Ce qui a été fait.**
+- **`S.dayState`** (`ft4_daystate`) = `{date, energy, mood, pains:[{zone,intensity}], note}`
+  — **remis à zéro chaque jour** (si `date` ≠ aujourd'hui, on repart d'un état vide).
+- **Petite carte optionnelle sur l'Accueil** (`_renderDayStateCard`, `#home-daystate`,
+  CSS `.ds-*`) : 4 émojis d'énergie (😴😐🙂⚡) + puces des zones qui font mal
+  aujourd'hui (épaule, genou, bas du dos, nuque, coude, poignet, hanche, cheville).
+  Un tap suffit, rien d'obligatoire.
+- **Le Gardien protège une douleur DU JOUR en PRIORITÉ** (`_gardienRules`, coach.js) :
+  une zone marquée douloureuse aujourd'hui prend le tag **« DOULEUR AUJOURD'HUI —
+  priorité, protège cette zone en PREMIER »** (avant même une blessure `[ACTIVE]`
+  ou une zone fragile durable).
+- **Milo reçoit un bloc « 📍 ÉTAT DU JOUR »** (`buildCoachContext`) : énergie du
+  jour + zones qui font mal + note libre, avec le rappel « **le ressenti prime
+  toujours sur les chiffres** ». Ponctuel (aujourd'hui seulement), distinct du
+  Registre (« qui tu es ») et de l'ADN (« ton portrait durable »).
+
+**Réglages retenus (cadrage) :**
+- **Léger et optionnel** : une carte discrète, jamais un passage obligé (Vision :
+  « la présence sans gadget »).
+- **Structuré maintenant, IA plus tard** : la 3B capture ce que la personne coche ;
+  faire *déduire* l'état du jour par Milo depuis la conversation = brique **3B+**.
+- **Priorité absolue au jour** : une douleur du jour passe devant tout le reste
+  dans le Gardien (Principe 12 : le ressenti prime).
+
+**Rétrocompatible** : rien coché → carte neutre, Gardien silencieux, aucun bloc
+« état du jour » injecté → contexte identique à avant.
+
+**Fichiers** : `state.js` (load/persist `ft4_daystate`), `screens.js`
+(`_renderDayStateCard`/`setDayEnergy`/`toggleDayPain` + appel dans `renderHome` +
+aide `?`), `coach.js` (Gardien priorité douleur du jour + bloc « ÉTAT DU JOUR » +
+aide détaillée 🌡️), `index.html` (`#home-daystate`), `style.css` (`.ds-*`),
+`constants.js` (WHATS_NEW v20 🌡️ + `WHATS_NEW_MAX=20` + red dot `day-state`),
+`sw.js` (ft-v471).
+
+**Tests Playwright (5/5, 0 erreur JS)** : carte + énergie + douleur persistés ;
+Gardien → tag « DOULEUR AUJOURD'HUI » actif sur l'épaule ; contexte Milo → bloc
+état du jour (fatigue + douleur épaule + « ressenti prime ») ; reset quotidien
+(date d'aujourd'hui, énergie/douleurs vidées) ; rien coché → Gardien vide + pas de
+bloc.
+
+**Rollback :** `git reset --hard origin/backup-2026-07-19-avant-3b`
 
 ---
 

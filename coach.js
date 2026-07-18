@@ -595,12 +595,16 @@ function _gardienRules(){
     if(hp.notes){_gardienZonesFromText(hp.notes).forEach(k=>{zones[k]=zones[k]||{};zones[k].durable=true;});}
     // 3) Conditions santé pertinentes
     const conds=(hp.conditions||[]).filter(c=>_GARDIEN_COND[c]);
+    // 4) DOULEUR DU JOUR (état du jour, brique 3B) — priorité absolue, tag AUJOURD'HUI
+    try{const ds=S.dayState;const tday=(typeof today==='function')?today():null;
+      if(ds&&(!tday||ds.date===tday)&&Array.isArray(ds.pains)){ds.pains.forEach(pn=>{const k=pn&&pn.zone;if(_GARDIEN_ZONE[k]){zones[k]=zones[k]||{};zones[k].today=true;}});}
+    }catch(e){}
     const zoneKeys=Object.keys(zones);
     if(!zoneKeys.length&&!conds.length)return ''; // Gardien silencieux → comportement identique
     const lines=[];
     zoneKeys.forEach(k=>{
       const rule=_GARDIEN_ZONE[k]; if(!rule)return;
-      const tag=zones[k].active?' [ACTIVE — protège fortement]':(zones[k].durable&&!zones[k].injury?' [zone fragile durable]':'');
+      const tag=zones[k].today?' [DOULEUR AUJOURD\'HUI — priorité, protège cette zone en PREMIER]':(zones[k].active?' [ACTIVE — protège fortement]':(zones[k].durable&&!zones[k].injury?' [zone fragile durable]':''));
       // 6B — enrichissement : sollicitations du mouvement + exemples à alléger + alternative
       const cons=_GARDIEN_CONSTRAINTS.filter(c=>c.zones.indexOf(k)>=0);
       let extra='';
@@ -842,6 +846,19 @@ ${(()=>{
   if(a.experience&&a.experience.trim())L.push('- Son expérience sportive: '+a.experience.trim()+' → cale ton niveau de discours dessus.');
   if(!L.length)return ''; // (les zones fragiles ne sont plus ici : elles vivent dans le Profil Santé → traitées par le Gardien)
   return '\nADN SPORTIF (ce qui caractérise DURABLEMENT cette personne — ce qui fait qu\'elle s\'entraîne comme ELLE et pas comme une autre ; tiens-en compte dans chaque conseil):\n'+L.join('\n')+'\n';
+})()}
+${(()=>{
+  // ÉTAT DU JOUR (Dossier Athlète, brique 3B) — ponctuel, aujourd'hui seulement. Ne définit pas la personne.
+  const ds=S.dayState;const tday=(typeof today==='function')?today():null;
+  if(!ds||(tday&&ds.date!==tday))return '';
+  const EN=['très fatiguée','plutôt fatiguée','en forme','pleine d\'énergie'];
+  const parts=[];
+  if(ds.energy!=null&&EN[ds.energy])parts.push('énergie: '+EN[ds.energy]);
+  const zl=(typeof _GARDIEN_ZLABEL!=='undefined')?_GARDIEN_ZLABEL:{};
+  if((ds.pains||[]).length)parts.push('douleur(s) du jour: '+ds.pains.map(p=>zl[p.zone]||p.zone).join(', '));
+  if(ds.note&&ds.note.trim())parts.push('note: '+ds.note.trim());
+  if(!parts.length)return '';
+  return '\n📍 ÉTAT DU JOUR (AUJOURD\'HUI, ponctuel — ne définit PAS la personne, ne vaut que pour aujourd\'hui) : '+parts.join(' · ')+'.\n→ Adapte tes conseils DU JOUR : fatigue → allège/soutiens ; en forme → tu peux pousser ; une DOULEUR du jour → protège cette zone EN PRIORITÉ (le Gardien en tient déjà compte), allège ou propose une alternative. ⚠️ LE RESSENTI PRIME toujours sur les chiffres.\n';
 })()}
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}
@@ -1425,6 +1442,7 @@ const _DRAWER_CONTENT = {
         {ic:'🥉',t:'Ton niveau (évolutif)',d:'Nouveau : dans Profil → Discipline, indique ton niveau — Débutant · Intermédiaire · Confirmé. Le Coach (Milo) s\'adapte : plus pédagogue si tu débutes, plus technique si tu es confirmé. Et surtout : ton niveau évolue tout seul ! À force de séances et de progrès sur les gros mouvements (squat, développé couché, soulevé de terre), l\'app te félicite et te fait passer au niveau supérieur. 🎉'},
         {ic:'🧬',t:'Mon ADN sportif',d:'Section « Mon ADN sportif » dans ton Profil. Tu y dis à Milo ce qui te caractérise DURABLEMENT dans ta façon de t\'entraîner — ta motivation profonde, ton mode de vie (temps dispo, salle/maison, matériel, rythme), tes préférences (exos que tu aimes/détestes, ton style) et ton expérience. Milo s\'en sert pour des conseils vraiment personnels ET réalistes : il ne te proposera pas une séance d\'1h30 si tu as 45 min, ni des squats si tu les détestes. Tout est optionnel et privé. C\'est différent de ton humeur du jour (dis-la lui dans le chat) ET de ta santé (tes zones fragiles/blessures vont dans Profil → Santé).'},
         {ic:'🧠',t:'Milo apprend à te connaître',d:'Au fil de tes séances, Milo repère des tendances (par ex. que tu t\'entraînes plutôt le matin, ou plus le haut du corps que les jambes) et te pose une petite question sur l\'Accueil pour vérifier — une à la fois, seulement quand une tendance est claire. Si tu réponds « Oui, c\'est vrai », il le RETIENT et s\'en sert pour mieux te conseiller. Si tu réponds « Pas vraiment », il oublie et ne re-pose plus la question. RIEN n\'est mémorisé sans ton accord. Tu peux revoir et effacer tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi ». C\'est ta mémoire, tu en gardes le contrôle. 🔒'},
+        {ic:'🌡️',t:'Comment tu te sens aujourd\'hui',d:'Sur ton Accueil, une petite carte optionnelle « Comment tu te sens aujourd\'hui ? ». En 1-2 taps : ton énergie du jour (😴 → ⚡) et, si besoin, une gêne ou douleur (tape la zone : épaule, genou, dos…). Milo adapte alors ses conseils DU JOUR : fatigue → il allège et te soutient ; en forme → il te pousse. Et surtout, si tu signales une DOULEUR, le Gardien PROTÈGE cette zone en priorité (il allège ou propose une alternative, jamais il ne t\'interdit de bouger). Ça repart à zéro chaque jour — c\'est ponctuel, ça ne te définit pas. Le ressenti prime toujours. C\'est différent de tes zones fragiles DURABLES (Profil → Santé) : là c\'est juste pour aujourd\'hui.'},
         {ic:'🛡️',t:'Milo veille sur ta sécurité',d:'Milo place TA sécurité en priorité : il tient compte de ta santé et de tes zones fragiles (Profil → Santé — blessures, zones fragiles, arthrose, hernie…) AVANT de te conseiller. Sa règle : ADAPTER, jamais t\'interdire bêtement. Face à une épaule sensible, un genou fragile ou des lombaires, il cherche le moyen le MOINS contraignant de continuer à progresser en sécurité (réduire la charge/l\'amplitude, changer d\'exercice, protéger la zone tout en travaillant le reste) et te propose des alternatives. L\'arrêt total reste l\'exception. ⚠️ Il ne pose jamais de diagnostic : devant une douleur forte ou inhabituelle, il te conseille le repos et un professionnel de santé. Plus tu renseignes tes zones fragiles et ta santé, mieux il te protège.'},
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
         {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Nouveau : il coache comme un VRAI coach — il t\'évalue avant de conseiller (et te pose des questions au besoin), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans langue de bois. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},

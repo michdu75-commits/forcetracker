@@ -170,6 +170,7 @@ const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
 const NEW_FEATURES=[
   // Accueil
   {id:'home-calendar', screen:'home', desc:'Nouveau : un calendrier de ton mois sur l\'Accueil — tes jours de séance en rouge, les jours de RECORD cerclés en or. Navigue sur les mois, tape une semaine pour le détail'},
+  {id:'day-state', screen:'home', spot:'home-daystate', desc:'Nouveau : « Comment tu te sens aujourd\'hui ? » — indique ton énergie et une éventuelle douleur du jour ; Milo adapte ses conseils et protège la zone douloureuse'},
   // Séance
   {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
@@ -228,9 +229,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v20/21/22 + WHATS_NEW_MAX=22) quand on ouvre à tout le monde.
-//    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN sportif ; v18 = Milo apprend à te connaître ; v19 = Milo veille sur ta sécurité — déjà pour tout le monde.)
+//    à RÉACTIVER (remettre les 3 entrées en v21/22/23 + WHATS_NEW_MAX=23) quand on ouvre à tout le monde.
+//    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:20, ic:'🌡️', t:'Dis à Milo comment tu te sens aujourd\'hui', d:'Nouveau sur ton Accueil : une petite carte « Comment tu te sens aujourd\'hui ? » (optionnelle). En 1-2 taps, indique ton énergie du jour et, si besoin, une gêne ou une douleur (épaule, genou, dos…). Milo adapte alors ses conseils DU JOUR — et surtout, s\'il y a une douleur, il PROTÈGE cette zone en priorité (il allège ou propose une alternative, sans t\'interdire de bouger). Ça repart à zéro chaque jour, et le ressenti prime toujours. 🌡️'},
   {v:19, ic:'🛡️', t:'Milo veille sur ta sécurité', d:'Milo tient maintenant compte EN PRIORITÉ de ta santé et de tes zones fragiles (épaule, genou, dos, arthrose…) avant de te conseiller. Sa règle d\'or : ADAPTER, jamais t\'interdire bêtement — il cherche toujours le moyen le MOINS contraignant de continuer à progresser en sécurité, et te propose des alternatives. 👉 Renseigne tes zones fragiles, vieilles blessures et soucis de santé dans Profil → Santé, pour qu\'il les protège. 🛡️'},
   {v:18, ic:'🧠', t:'Milo apprend à te connaître', d:'Milo va commencer à te poser de petites questions sur ta page d\'Accueil (par ex. « tu t\'entraînes plutôt le matin, non ? »). À chaque fois que tu confirmes, il RETIENT — et ses conseils deviennent plus justes, plus personnels. Rien n\'est mémorisé sans ton accord : tu réponds « Oui, c\'est vrai » ou « Pas vraiment ». Et tu peux voir ou effacer tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi ». 🧠'},
   {v:17, ic:'🧬', t:'Ton ADN sportif', d:'Nouveau dans ton Profil (Menu → Profil → « Mon ADN sportif ») : dis à Milo ce qui te caractérise DURABLEMENT dans ta façon de t\'entraîner — ta motivation profonde, ton mode de vie (temps, lieu, matériel), ce que tu aimes/détestes et ton expérience. Résultat : des conseils bien plus personnels et RÉALISTES (il ne te proposera pas une séance d\'1h30 si tu as 45 min, ni des squats si tu les détestes). Tout est optionnel et privé. 🧬'},
@@ -251,7 +253,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=19;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v20/21/22)
+const WHATS_NEW_MAX=20;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v21/22/23)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

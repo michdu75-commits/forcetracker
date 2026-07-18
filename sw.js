@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v470'; // Gardien 6B (precis) : contraintes du mouvement (sollicitations articulaires) deduites du nom -> le Gardien nomme des exos a alleger + une alternative, et signale les exos de la SEANCE DU JOUR qui sollicitent une zone fragile. Intensite (charge lourde d'abord). Terme neutre « sollicite ». Adapter pas interdire.
+const CACHE = 'ft-v471'; // Brique 3B : etat du jour STRUCTURE (carte Accueil optionnelle : energie + douleur du jour par zone, S.dayState/ft4_daystate, repart a zero chaque jour). Nourrit Milo (dosage) + le Gardien (protege une DOULEUR DU JOUR en PRIORITE, tag AUJOURD'HUI). Capture legere ; extraction IA = 3B+ plus tard.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

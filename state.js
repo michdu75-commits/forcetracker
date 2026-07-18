@@ -87,6 +87,8 @@ function load(){
     // ADN sportif (Dossier Athlète, brique 4A) : portrait DURABLE déclaré par l'utilisateur, injecté dans le briefing de Milo.
     // Différent du profil (déclaré général), des faits (mesurés) et de l'état du jour (ponctuel). Tout optionnel, vide = comportement identique.
     S.adn=JSON.parse(localStorage.getItem('ft4_adn')||'null')||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};
+    // État du jour (Dossier Athlète, brique 3B) : énergie + douleurs du JOUR (ponctuel, repart à zéro chaque jour). Optionnel.
+    S.dayState=JSON.parse(localStorage.getItem('ft4_daystate')||'null')||null;
     S.levelAuto=localStorage.getItem('ft4_levelAuto')==='1'; // true si le niveau a été promu automatiquement (évite de re-fêter)
     S.beginnerJourney=JSON.parse(localStorage.getItem('ft4_bjourney')||'null'); // parcours débutant : {style,freq,startDate,phase}
     S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
@@ -261,6 +263,7 @@ function persist(){
     localStorage.setItem('ft4_coachtone',S.coachTone||'');
     localStorage.setItem('ft4_registre',JSON.stringify(S.registre||{facts:{},observations:[],updatedAt:''}));
     localStorage.setItem('ft4_adn',JSON.stringify(S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''}));
+    localStorage.setItem('ft4_daystate',JSON.stringify(S.dayState||null));
     localStorage.setItem('ft4_levelAuto',S.levelAuto?'1':'0');
     localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
