@@ -51,6 +51,10 @@ Documenter n'est PAS une étape séparée « pour plus tard » : ça fait partie
 - **Fichier(s) de suivi dédié(s)** du chantier en cours (ex. `DOSSIER-ATHLETE-SUIVI.md`, `CONSTITUTION-MILO.md`, `IDEES-FUTURES.md`, `A-FAIRE-SUR-PC.md`…) : entrée détaillée + mise à jour de la table des **points de sauvegarde** + de toute décision prise.
 - **Règle stricte** : aucune version livrée (commit/push) sans que TOUS les fichiers de suivi concernés soient à jour **dans le même commit** (ou juste avant). Si un retard est constaté → **rattrapage immédiat** (1 ligne par version manquante) avant toute autre chose.
 
+**📜 Documents de gouvernance (à respecter) :**
+- **`docs/PROCESSUS-DEVELOPPEMENT.md`** — la **méthode officielle** : le cycle d'une brique (Réflexion → Spécification `Objectif/Critère/Hors périmètre` → Challenge → Développement → **Clôture obligatoire** → Validation Michel). Suivre ce processus pour CHAQUE brique, sans sauter d'étape.
+- **`CONSTITUTION-MILO.md`** — les principes stables (la personne d'abord, sécurité, faits avant opinions, confidentialité…). Toute évolution doit les respecter.
+
 ---
 
 # Force Tracker — Contexte projet pour Claude

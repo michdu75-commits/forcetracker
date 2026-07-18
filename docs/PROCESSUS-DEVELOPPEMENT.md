@@ -1,0 +1,115 @@
+# 🏗️ Processus officiel de développement — Force Tracker
+
+> Méthode de travail **officielle** de Force Tracker. Chaque évolution suit
+> exactement ce processus. **L'objectif n'est pas de développer plus vite —
+> c'est de développer mieux.**
+>
+> Cohérent avec la **Constitution de Milo** (`CONSTITUTION-MILO.md`, Principe 8
+> « une brique à la fois ») et la **règle d'or #12** de `CLAUDE.md` (journal en
+> temps réel).
+
+---
+
+## 🎯 Philosophie
+
+Chaque brique doit être : **comprise · challengée · simplifiée · validée ·
+développée · testée · documentée · puis clôturée.**
+
+**Aucune étape ne doit être sautée.**
+
+> Je préfère développer une fonctionnalité de moins mais conserver un projet
+> parfaitement organisé. — Michel
+
+---
+
+## 🔁 Le cycle d'une brique
+
+### 1. Réflexion
+- Définir le problème à résoudre.
+- Vérifier que la brique respecte la **Constitution** de Force Tracker.
+- Identifier clairement sa **valeur pour l'utilisateur** (règle d'or : « cela
+  rend-il Milo/l'app réellement meilleur pour le sportif ? »).
+
+### 2. Spécification
+Toujours définir les **3 sections** :
+- **Objectif** — ce que la brique apporte, en une phrase.
+- **Critère de réussite** — comment on sait qu'elle est finie et validée.
+- **Hors périmètre** — ce qui NE doit PAS être fait dans cette brique.
+
+La brique doit rester **simple et indépendante** (anti « puisqu'on y est »).
+
+### 3. Challenge
+- La proposition est relue (Claude ↔ ChatGPT ↔ Michel).
+- Les remarques sont discutées, les améliorations intégrées.
+- **La validation finale appartient toujours à Michel.**
+
+### 4. Développement
+- **Sauvegarde d'abord** (point de restauration — voir « Adaptation Force
+  Tracker » ci-dessous).
+- Implémentation, une chose à la fois.
+- **Tests techniques** (Playwright / Chrome + Safari quand c'est de l'UI).
+
+### 5. Clôture obligatoire
+Une brique n'est **PAS terminée** tant que TOUT ceci n'est pas fait :
+
+- [ ] Code terminé
+- [ ] Tests réalisés
+- [ ] **`CLAUDE.md` mis à jour** (fichier maître, prioritaire)
+- [ ] Roadmap mise à jour (si nécessaire)
+- [ ] Fichier de suivi dédié mis à jour (ex. `DOSSIER-ATHLETE-SUIVI.md`)
+- [ ] Journal des décisions mis à jour
+- [ ] Documentation (aides `?`, Aide détaillée, Guide…) mise à jour si feature visible
+- [ ] Résumé des changements rédigé (message clair à Michel)
+- [ ] Point de sauvegarde / rollback fourni
+
+### 6. Validation finale
+- **Michel valide** (souvent sur iPhone).
+- La brique est alors considérée comme close ; on passe à la suivante.
+
+---
+
+## 🎯 Objectif
+
+Le code n'est qu'une **partie** du travail. Une brique n'est terminée que
+lorsque :
+- le code fonctionne,
+- la documentation est à jour,
+- la traçabilité est complète,
+- **l'état du projet est immédiatement compréhensible.**
+
+## ❓ Pourquoi ?
+
+Pour qu'à **tout moment** on puisse reprendre le projet **sans relire des
+centaines de lignes de code**. Chaque décision doit rester compréhensible des
+mois — ou des années — plus tard.
+
+---
+
+## 🔧 Adaptation Force Tracker (le vrai flux)
+
+Force Tracker se **déploie sur `master`** (GitHub Pages met en ligne
+directement ; le backend Apps Script + le Worker Cloudflare s'auto-déploient).
+Le « branche → merge » classique se traduit donc ainsi :
+
+- **Sauvegarde = point de restauration**, pas une branche de feature fusionnée :
+  - commit clair **avant** la modif (rollback facile),
+  - **branche de backup** poussée pour un jalon important (ex.
+    `backup-AAAA-MM-JJ-sujet`) → restauration en 1 ligne
+    (`git reset --hard origin/<branche-backup>`).
+- **Gros chantier ou risqué** → on construit dans le **bac à sable `/clone/`**,
+  Michel valide sur l'URL du clone, PUIS on **promeut** en prod.
+- **Petite brique sûre** → commit + push sur `master`, **puis** Michel valide sur
+  iPhone (le déploiement est réversible via le rollback).
+- **Backend / migration / suppression** → branche + **tag/branche de backup**
+  d'abord, et de préférence **la nuit** (0 utilisateur en séance).
+- Toujours **bumper `sw.js` (`ft-vNN`)** à chaque release qui touche un asset,
+  et **journaliser en temps réel** (règle d'or #12).
+
+> En clair : la rigueur du cycle (spéc → challenge → tests → clôture → doc) est
+> **identique** ; seule la mécanique Git est adaptée au fait qu'on déploie en
+> continu sur `master` plutôt que via des PR.
+
+---
+
+*Ce document est la méthode officielle de Force Tracker. Il évolue si la méthode
+elle-même évolue (rare) — la discipline, elle, reste stable.*
