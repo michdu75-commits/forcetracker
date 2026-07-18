@@ -339,6 +339,16 @@ très régulier (10+/28 j). Chaque candidate a `ask` (question montrée) + `fact
 **Anti-répétition** : une clé déjà décidée (validée/refusée/en attente) n'est
 jamais re-proposée. **Injection** : seules les `validated` entrent dans Milo.
 
+**Règle « observation REFUSÉE »** (question explicitement cadrée par ChatGPT,
+19/07) : une observation refusée est **écartée durablement** — sa clé est bloquée,
+Milo ne la re-propose **jamais** (zéro harcèlement ; la rareté donne de la valeur
+à ses interventions). *Nuance déléguée à la 5B / plus tard :* on pourra autoriser
+une **ré-évaluation** si le signal devient **nettement** plus fort qu'au moment du
+refus — **pas en 5A** (on reste simple et non intrusif). Cas particulier : si
+l'utilisateur **supprime** une observation validée (« Ce que Milo sait de toi »),
+sa clé se libère → elle peut réapparaître si la tendance persiste (suppression =
+choix volontaire, donc légitime).
+
 **Fichiers** : `tracking.js` (générateurs + logique + validate/reject/delete),
 `screens.js` (`_renderObsCard`/`openMiloKnows`/`_renderMiloKnows`), `coach.js`
 (injection validated-only via `o.fact`), `index.html` (`#home-obs`, `#ov-milo-knows`,
