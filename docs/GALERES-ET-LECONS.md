@@ -1,9 +1,14 @@
-# 🧨 Galères & leçons — Force Tracker
+# 🧨 Galères & leçons — Force Tracker  ·  *le Journal d'expérience*
 
-> **À quoi sert ce fichier.** La mémoire des vrais pièges du projet : ce qui nous
-> a fait galérer, pourquoi, comment on l'a réglé, combien ça a coûté (en
-> versions / sessions), ce qui **reste ouvert** aujourd'hui, et ce qui **pourrait
-> manquer**. But : que Claude (et Michel) ne re-tombent pas dans les mêmes trous.
+> **À quoi sert ce fichier.** Ce n'est pas un journal de bugs : c'est la **mémoire
+> d'expérience** du projet — *comment Force Tracker est devenu plus robuste*. Il
+> raconte ce qui nous a fait galérer (pourquoi, la solution, le coût en versions),
+> mais aussi les **décisions qu'on ne regrette pas**, les **fausses bonnes idées**,
+> ce qui **reste ouvert** et ce qui **pourrait manquer**. But : que Claude (et
+> Michel) ne re-tombent pas dans les mêmes trous — et se souviennent **pourquoi**
+> telle architecture a été retenue ou abandonnée. *(Cadrage suggéré par ChatGPT,
+> 19/07/2026 : « la mémoire des erreurs évitées vaut autant que celle des
+> réussites ».)*
 >
 > ⚠️ Les « temps » sont **approximatifs** — mesurés en **nombre de versions
 > `ft-vNN`** et de sessions, car on n'a pas de chrono précis. Un gros nombre de
@@ -112,5 +117,72 @@
 
 ---
 
-*Fichier vivant — à compléter à chaque nouvelle galère (une ligne dans le tableau
-§1) et à chaque fois qu'un problème ouvert du §3 est résolu.*
+## 6. ✅ Décisions qu'on ne regrette PAS (les choix structurants)
+
+> Les choix qui ont **réellement** rendu Force Tracker meilleur / plus fiable.
+> À **préserver** — ne pas défaire par confort ou par « puisqu'on y est ».
+
+- **Local-first** (zéro perte de séance) — on enregistre en local AVANT toute
+  synchro ; le réseau ne bloque jamais. C'est la priorité n°1 absolue.
+- **La Constitution de Milo** — des principes stables, **indépendants du modèle
+  d'IA**. Ils survivent aux changements de moteur.
+- **La séparation des couches** — Profil (déclaré) / Faits (mesurés) / ADN
+  (déclaré durable) / État du jour (ponctuel) / Observations (proposées→validées).
+  Ne **jamais** les mélanger : c'est ce qui rend Milo clair et cohérent.
+- **« Adapter plutôt qu'interdire »** (Principe 13) — le Gardien protège sans
+  bloquer ; Milo ne devient jamais anxiogène.
+- **« Milo propose, tu valides »** (brique 5A) — rien n'est mémorisé sans accord.
+  Le cœur, c'est **la confiance**, pas la mémoire.
+- **« Comprendre avant de conseiller » + le ressenti prime sur les chiffres** —
+  ce qui a fait passer Milo de « chatbot » à « bras droit ».
+- **Le Worker Cloudflare pour l'IA** — un chemin robuste (≠ Google) qui marche en
+  4G/5G. A débloqué tout l'usage mobile.
+- **Deux caches Service Worker** (code versionné / images stable) — plus de
+  re-téléchargement des 15 Mo à chaque MAJ.
+- **Les garde-fous anti-perte cloud** (`_ps_/_pn_/_pa_/_po_`) — une valeur vide
+  n'écrase jamais une valeur remplie.
+- **L'auto-déploiement backend** (GitHub Actions) — fini le PC + clasp à la main.
+- **La méthode « une brique à la fois » + validation sur 4 axes** — la rigueur qui
+  garde le projet propre et compréhensible.
+- **`CLAUDE.md` relu à chaque session** — le contexte ne se perd jamais entre deux
+  sessions.
+- **Le bac à sable `/clone/`** — tester en conditions réelles sans casser la prod.
+- **Vanilla JS, sans build** — simplicité, ouverture instantanée, zéro dépendance
+  qui pourrit avec le temps.
+
+---
+
+## 7. ⛔ Fausses bonnes idées (séduisantes, mauvaises en vrai)
+
+> Des idées qui semblaient bonnes… puis se sont révélées mauvaises **en
+> conditions réelles**. Les garder ici évite de les re-tenter.
+
+- **Mettre un son sympa dans le timer de repos** → sur iPhone, ça **coupe la
+  musique de fond** (Spotify…). Abandonné : timer **100 % silencieux**.
+- **Le « déblocage » audio iOS muet** (jouer un son muet au démarrage) → jouait le
+  son **quand même** sur iOS récent + coupait la musique. Abandonné.
+- **Faire passer toute l'IA par Google Apps Script** → **casse en 4G/5G**.
+  Remplacé par le Worker Cloudflare.
+- **Le FAB flottant « + »** (joli, au-dessus de la barre) → **recouvrait** les
+  séries et **gênait le swipe**. Remplacé par un bouton **docké** dans la barre.
+- **Précacher automatiquement toutes les images à chaque MAJ** → **saturait la
+  4G** (« Load failed »). Rendu résumable / 1× par version.
+- **L'auto-échec à l'import** (mettre la dernière série en « E » parce que le doc
+  disait « à l'échec ») → **surprenait** l'utilisateur. Retiré (gardé en mémoire).
+- **Un « moteur de décision » séparé** (comme une brique dédiée) → **doublonnerait
+  le Gardien**. Décision : pas de brique séparée, c'est le rôle du Gardien.
+- **Écrire une couleur de texte en dur** (hex) → **illisible en mode jour**.
+  Toujours utiliser les variables de thème (`var(--…)`).
+- **Charger les polices via `@import` Google Fonts** → **écran blanc** sur réseau
+  faible. Polices **hébergées en local**.
+- **Intégrer la silhouette féminine** (`female-body.png`) → échecs iOS WebKit
+  (filtre CSS sur `<image>`). Laissé en code mort ; silhouette unique pour l'instant.
+- **Les pistes XHR / AbortController** pour l'envoi du bilan corporel → abandonnées
+  (code mort `_postBodyScan`/`_xhrPostText`). La vraie cause était le réseau (4G).
+- **« Milo retient tout seul » sans validation** (aller direct à la 4B) → jugé trop
+  risqué (il peut mémoriser du faux). On fait **5A (propose/valide)** d'abord.
+
+---
+
+*Fichier vivant — à compléter à chaque nouvelle galère (§1), décision structurante
+(§6), fausse bonne idée (§7), et à chaque problème ouvert du §3 qui se résout.*
