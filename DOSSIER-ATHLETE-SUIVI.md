@@ -36,6 +36,14 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 
 ---
 
+## 💾 Points de sauvegarde (restauration)
+
+| Branche de backup | État | Restaurer |
+|---|---|---|
+| `backup-2026-07-19-dossier-athlete-brique1` | Briques 0 + 1 (ton de Milo + Registre socle) | `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique1` |
+
+---
+
 ## 📒 Journal des évolutions
 
 ### Brique 0 — Le ton de Milo · `ft-v457` · 18/07/2026
