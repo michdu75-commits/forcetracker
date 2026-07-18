@@ -23,9 +23,13 @@
   - Milo « comprendre avant de conseiller » (rupture d'habitude → question douce d'abord).
   - Constitution de Milo **v1.1** (11 principes) · Processus officiel de développement adopté.
   - Méthode de documentation : CLAUDE.md = page d'accueil, détails dans `/docs/`.
+  - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
+    présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.
 
-- **Prochaine étape possible :** brique 3 (état du jour) OU finir la réorganisation
-  de la documentation (alléger CLAUDE.md vers `/docs/`).
+- **Prochaine étape :** **Brique 3 — l'état du jour**, conçue comme un **check-in
+  CONVERSATIONNEL** (Milo demande « comment tu te sens ? », pas un formulaire) —
+  version **3A** (conversation pure) d'abord ; capture structurée (3B) plus tard
+  avec le Gardien. Champs visés : énergie · moral · douleur (+zone). À lancer.
 
 - **Blocages :** aucun.
 
