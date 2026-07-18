@@ -185,6 +185,8 @@ function load(){
       localStorage.setItem('ft4_sessions',JSON.stringify(S.sessions));
       if(S.wkt)localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
     }
+    // Registre Athlète (brique 2) : recalcule les faits mesurés au démarrage.
+    try{if(typeof computeRegistreFacts==='function')computeRegistreFacts();}catch(e){}
   }catch(e){}
 }
 function persist(){

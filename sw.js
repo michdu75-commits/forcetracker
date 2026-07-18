@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v459'; // Dossier Athlete brique 1 : socle « Registre Athlete » (S.registre) — memoire durable persistee (local + cloud) et injectee dans le briefing de Milo. Vide pour l'instant (facts/observations aux briques 2 et 5).
+const CACHE = 'ft-v460'; // Dossier Athlete brique 2 : faits mesures (computeRegistreFacts) — remplit le Registre (seances, regularite, duree moyenne, exos preferes, groupe le plus/moins travaille, sommeil moyen, anciennete) pour Milo.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

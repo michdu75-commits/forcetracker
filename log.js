@@ -1589,6 +1589,8 @@ async function finishWorkout(){
   S.wkt=null;
   try{localStorage.setItem('ft4_wkt','null');localStorage.removeItem('ft4_wkt_draft');}catch(e){}
   persist();
+  // Registre Athlète (brique 2) : recalcule les faits mesurés après la séance.
+  try{if(typeof computeRegistreFacts==='function'){computeRegistreFacts();persist();}}catch(e){}
 
   // Quitter l'écran séance immédiatement (évite double-tap sur DOM stale)
   goScreen('home',document.getElementById('nb-home'));
@@ -2943,6 +2945,7 @@ function finalImportHist(){
   // Compte l'import journal réussi (limite premium : 1 gratuit au total)
   S.histImports=(S.histImports||0)+1;
 
+  try{if(typeof computeRegistreFacts==='function')computeRegistreFacts();}catch(e){}
   persist();
   _cloudSyncSessions();
   checkBadges(true);

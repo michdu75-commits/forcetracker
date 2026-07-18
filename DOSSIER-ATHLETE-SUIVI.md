@@ -44,6 +44,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | Branche de backup | État | Restaurer |
 |---|---|---|
 | `backup-2026-07-19-dossier-athlete-brique1` | Briques 0 + 1 (ton de Milo + Registre socle) | `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique1` |
+| `backup-2026-07-19-dossier-athlete-brique2` | Briques 0 + 1 + 2 (faits mesurés) | `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique2` |
 
 ---
 
@@ -128,6 +129,41 @@ Milo**. → ✅ **Vérifié (Playwright)** : registre vide = rien d'injecté ; i
   l'instant, normal : c'est un socle).
 
 **Rollback :** `git reset --hard 05a08a6`
+
+---
+
+### Brique 2 — Les faits mesurés · `ft-v460` · 19/07/2026
+
+**Objectif :** l'app calcule toute seule des faits FIABLES (séances, sommeil,
+profil) et les range dans le Registre, pour que Milo s'appuie sur des chiffres
+justes au lieu de deviner.
+
+**Critère de réussite :** après une séance (et au démarrage), le Registre
+contient des faits corrects, retrouvés à la session suivante et visibles par
+Milo ; on peut refaire le calcul à la main → ça correspond. → ✅ **Vérifié
+(Playwright)** : 7 faits corrects (contrôlés à la main), section « REGISTRE
+ATHLÈTE » injectée, retrouvés après rechargement, 0 erreur JS.
+
+**Hors périmètre (respecté) :** pas de déduction molle (brique 5), pas de niveau
+de confiance, pas d'écran, pas de Gardien, pas d'historique intelligent.
+
+**Règle d'or appliquée** (Constitution P4) : chaque fait sert une décision de
+Milo ; si une donnée manque, le fait n'est pas produit (aucune invention).
+
+**Les 7 faits calculés** (`computeRegistreFacts()` dans tracking.js) :
+1. Nombre de séances (total + ce mois) · 2. Régularité (séances/sem, 28 j) ·
+3. Durée moyenne d'une séance · 4. Exercices préférés (top 3) · 5. Groupe
+musculaire le plus / le moins travaillé (30 j) · 6. Sommeil moyen (7 nuits) ·
+7. Ancienneté calculée (depuis la 1re séance) — **≠ niveau déclaré** (déjà connu
+de Milo, non dupliqué). ⏳ Sommeil↔perf reporté.
+
+**Explication :** `computeRegistreFacts()` recalcule TOUT à chaque fois (remplace,
+n'accumule pas) et écrit dans `S.registre.facts`. Appelée au **démarrage**
+(state.js load), **après « Terminer la séance »** (log.js finishWorkout) et
+**après un import de journal** (finalImportHist). Milo les lit via la section
+« REGISTRE ATHLÈTE » (label lisible). Toujours INVISIBLE pour l'utilisateur.
+
+**Rollback :** `git reset --hard 05a08a6`  *(ou branche backup brique 1)*
 
 ---
 

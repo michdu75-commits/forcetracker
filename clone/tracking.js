@@ -1369,6 +1369,68 @@ function renderCompareChart(pts,box){
   </div>
   ${bfLine?'':'<div style="text-align:center;margin-top:6px;font-size:11px;color:var(--t3);">🟠 Ajoute une 2ᵉ mesure de masse grasse pour voir sa courbe.</div>'}`;
 }
+
+// ─── REGISTRE ATHLÈTE — FAITS MESURÉS (Dossier Athlète, brique 2) ─────────────
+// Calcule des faits FIABLES depuis les vraies données et les range dans
+// S.registre.facts (RECALCUL COMPLET à chaque fois → jamais périmé/en double).
+// Règle d'or (Constitution) : chaque fait doit servir une décision de Milo,
+// sinon on ne le produit pas. Que du MESURÉ, aucune déduction (ça = brique 5).
+// Si une donnée manque (pas assez de séances), le fait n'est simplement pas produit.
+function computeRegistreFacts(){
+  try{
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts));
+    const F={};
+    const now=new Date(), dayMs=864e5;
+    const sdate=s=>new Date(s.date?s.date+'T12:00:00':new Date(s.ts).toISOString());
+    // 1) Nombre de séances (total + ce mois)
+    if(sess.length){
+      const ym=now.toISOString().slice(0,7);
+      const nMonth=sess.filter(s=>(s.date||new Date(s.ts).toISOString().slice(0,10)).slice(0,7)===ym).length;
+      F.seances={label:'Séances',value:`${sess.length} au total, ${nMonth} ce mois-ci`};
+    }
+    // 2) Régularité (28 derniers jours / 4)
+    if(sess.length>=3){
+      const c28=sess.filter(s=>{const d=now-sdate(s);return d>=0&&d<=28*dayMs;}).length;
+      if(c28>0){const perWk=Math.round(c28/4*10)/10;F.regularite={label:'Régularité',value:`~${perWk} séance${perWk>1?'s':''}/semaine`};}
+    }
+    // 3) Durée moyenne d'une séance (duration en secondes, >1 min) → minutes
+    const durs=sess.map(s=>s.duration).filter(d=>d&&d>60);
+    if(durs.length>=3){const avgMin=Math.round(durs.reduce((a,b)=>a+b,0)/durs.length/60);F.duree_moyenne={label:"Durée moyenne d'une séance",value:`~${avgMin} min`};}
+    // 4) Exercices préférés (top 3 par nb de séances où présents)
+    if(sess.length>=5){
+      const freq={};
+      sess.forEach(s=>{const seen=new Set();(s.exs||s.exercises||[]).forEach(ex=>{if(ex&&ex.name&&!seen.has(ex.name)){seen.add(ex.name);freq[ex.name]=(freq[ex.name]||0)+1;}});});
+      const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+      if(top.length)F.exos_preferes={label:'Exercices préférés',value:top.join(', ')};
+    }
+    // 5) Groupe musculaire le plus / le moins travaillé (30 derniers jours, via EXLIB)
+    const allEx=[...(typeof EXLIB!=='undefined'?EXLIB:[]),...(S.customExercises||[])];
+    const grpOf=n=>{const e=allEx.find(x=>x.n===n);return e?e.g:null;};
+    const recent=sess.filter(s=>{const d=now-sdate(s);return d>=0&&d<=30*dayMs;});
+    if(recent.length>=3){
+      const g={};
+      recent.forEach(s=>(s.exs||s.exercises||[]).forEach(ex=>{
+        const done=(ex.sets||[]).some(st=>st&&st.done&&st.type!=='É'&&st.type!=='W');
+        if(!done)return;const grp=grpOf(ex.name);if(!grp)return;g[grp]=(g[grp]||0)+1;
+      }));
+      const ent=Object.entries(g);
+      if(ent.length>=2){ent.sort((a,b)=>b[1]-a[1]);F.groupe_travail={label:'Groupes musculaires (30 j)',value:`le plus : ${ent[0][0]} · le moins : ${ent[ent.length-1][0]}`};}
+    }
+    // 6) Sommeil moyen (7 dernières nuits renseignées)
+    const sl=(S.sleepLog||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,7);
+    if(sl.length>=2){const avgH=sl.reduce((a,e)=>a+(e.hours||0),0)/sl.length;const h=Math.floor(avgH),m=Math.round((avgH-h)*60);F.sommeil_moyen={label:'Sommeil moyen',value:`~${h} h${m?(' '+String(m).padStart(2,'0')):''} / nuit (${sl.length} nuits)`};}
+    // 7) Ancienneté sportive CALCULÉE (depuis la 1re séance) — ≠ niveau déclaré (déjà connu de Milo)
+    if(sess.length>=3){
+      let first=sdate(sess[0]);sess.forEach(s=>{const d=sdate(s);if(d<first)first=d;});
+      const months=Math.floor((now-first)/dayMs/30.44);
+      let anc;if(months<1)anc="moins d'un mois";else if(months<12)anc=`~${months} mois`;else{const y=Math.floor(months/12),mo=months%12;anc=`~${y} an${y>1?'s':''}${mo?(' '+mo+' mois'):''}`;}
+      F.anciennete={label:'Ancienneté (depuis la 1re séance)',value:`${anc} · ${sess.length} séances`};
+    }
+    S.registre.facts=F;
+    S.registre.updatedAt=today();
+  }catch(e){console.warn('[FT registre] computeRegistreFacts',e);}
+}
 function renderWeightCorrelations(el,pts){
   if(!pts||pts.length<3){el.innerHTML='';return;}
   const cards=[];
