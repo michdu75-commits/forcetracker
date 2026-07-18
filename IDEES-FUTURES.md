@@ -31,6 +31,34 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🚀 NOUVELLE BRIQUE PROPOSÉE — « Milo construit ta séance du jour »
+
+- **Idée (demande Michel)** : pouvoir dire à Milo « aujourd'hui je fais les pecs,
+  fais-moi 4-5 exos + un peu de cardio » → et que Milo **remplisse directement la
+  séance en cours** (les exercices apparaissent dans l'écran Séance, prêts à
+  logger), au lieu de seulement les proposer dans le chat.
+- **État actuel** : Milo sait (1) **proposer** des exos dans le chat (l'utilisateur
+  les ajoute à la main), (2) **générer un programme** enregistrable (`coachAction('force')`
+  → `_saveForceProgram` → `S.programmes`, à charger plus tard), (3) **voir la séance
+  en cours** (`S.wkt` injecté dans `buildCoachContext`). Mais **pas** injecter les
+  exos directement dans `S.wkt`.
+- **Pourquoi ça a du sens** : colle à la vision « Milo → App » (Milo qui **agit**,
+  pas seulement qui parle). Passage « conseil » → « action ».
+- **Faisabilité** : PAS énorme. On réutilise le moteur qui génère déjà un programme
+  depuis Milo (`_extractForceProgram`/`_normalizeForceProg`) mais on le **branche
+  sur la séance active** au lieu de `S.programmes` → un bouton **« ⚡ Démarrer cette
+  séance »** sous la réponse de Milo qui appelle un équivalent de `loadProgDay` sur
+  la structure générée. Réutiliser aussi la reconnaissance des groupes/supersets.
+- **Points à cadrer** (méthode brique — Objectif/Critère/Hors périmètre) :
+  · confirmer avant d'écraser une séance déjà commencée ;
+  · pré-remplir les poids depuis les perfs précédentes (comme `loadProgDay`) ;
+  · gérer le cardio (bloc cardio existant) ;
+  · garder le contrôle à l'utilisateur (il peut retirer/modifier après).
+- **Quand** : après les validations salle (5A/6A/6B). Prochaine vraie brique
+  candidate avec la 5B.
+
+---
+
 ## 🔧 À FAIRE APRÈS VALIDATION (petits ajustements notés en test réel)
 
 - **Carte « Comment tu te sens aujourd'hui ? » (état du jour, brique 3B) → à RÉDUIRE.**
