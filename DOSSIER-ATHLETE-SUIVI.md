@@ -31,6 +31,9 @@ chaque brique est décrite AVANT de coder avec **3 sections** :
 - **Hors périmètre** : ce qui NE doit PAS être fait dans cette brique.
 Puis : une branche/commit + un backup + des tests + validation → seulement ensuite la suivante.
 
+📜 **Document fondateur : `CONSTITUTION-MILO.md`** — les 10 principes stables du
+projet (à respecter à chaque brique).
+
 Documents de réflexion liés (dans la boîte à idées / échangés avec ChatGPT) :
 avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 
