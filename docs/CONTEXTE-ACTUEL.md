@@ -6,19 +6,20 @@
 
 ---
 
-- **Version en prod :** `ft-v467`
+- **Version en prod :** `ft-v468`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
-- **Dernier point de sauvegarde :** `backup-2026-07-19-avant-brique5a`
+- **Dernier point de sauvegarde :** `backup-2026-07-19-avant-gardien6a`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).
-- **Brique en cours :** **Brique 5A — « Observations à valider »** livrée en
-  `ft-v465`, **EN ATTENTE de la validation Michel (4 axes)**. Milo propose une
-  hypothèse ancrée données sur l'Accueil → l'utilisateur valide/refuse → mémoire
-  durable réutilisée. Briques 0, 1, 2, 3, 4A CLÔTURÉES ; Constitution v1.3.
-  **Ensuite : 5B** (observations générées par l'IA) ou brique 4B (Milo apprend
-  l'ADN tout seul).
+- **Brique en cours :** **Brique 6A — LE GARDIEN** livrée en `ft-v468`, **EN
+  ATTENTE de la validation Michel (4 axes)**. `_gardienRules()` pose des règles
+  de sécurité (« adapter, pas interdire ») en tête du briefing de Milo, à partir
+  des blessures/zones fragiles ADN/conditions santé. **5A aussi en attente** de
+  validation réelle (Michel : « tkt pour le réel »). Briques 0–4A CLÔTURÉES ;
+  Constitution v1.3. **Ensuite : 6B** (fiche exercice structurée → Gardien précis)
+  ou 5B (observations IA).
 
 - **Dernières décisions validées :**
   - Ton de Milo : « Laisse Milo choisir » (auto) par défaut, manuel = secours.
@@ -40,10 +41,10 @@
   - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
     présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.
 
-- **Prochaine étape :** Michel **teste la brique 5A** sur iPhone (Milo pose une
-  question sur l'Accueil quand il a ≥8 séances ; valider/refuser ; Menu → « Ce
-  que Milo sait de toi ») → validation des 4 axes → clôture. Puis **5B** (Milo
-  génère des observations plus riches via l'IA) ou une autre brique.
+- **Prochaine étape :** Michel teste en réel la **5A** (question de Milo sur
+  l'Accueil) **et le Gardien 6A** (renseigner une zone fragile / santé, vérifier
+  que Milo protège en adaptant) → validation 4 axes → clôtures. Puis **6B** (fiche
+  exercice structurée) ou **5B** (observations IA).
 - **En discussion (gouvernance, non bloquant) :** **Principe 14** « Milo enrichit
   le jugement, il ne le remplace pas » (partenaire de décision, dernier mot au
   sportif) + la posture d'équilibre exigence/protection en comportement de Milo.

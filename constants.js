@@ -197,6 +197,7 @@ const NEW_FEATURES=[
   {id:'coach-quiz',  screen:'coach', spot:'coach-quiz-card', desc:'Nouveau : réponds au questionnaire « Milo apprend à te connaître » (gratuit, ça ne compte pas dans tes questions) — Milo te donne des conseils bien plus personnalisés'},
   {id:'milo-natural',screen:'coach', desc:'Nouveau : Milo (Coach IA) tient compte de l\'heure qu\'il est et du temps écoulé depuis votre dernière discussion — il t\'accueille naturellement'},
   {id:'milo-coach-pro',screen:'coach', desc:'Nouveau : Milo coache comme un vrai coach — il t\'évalue, croise tes données, justifie ses choix et s\'adapte à ta vie (horaires, travail, temps)'},
+  {id:'gardien-securite',screen:'coach', desc:'Nouveau : Milo veille sur ta sécurité — il tient compte en priorité de tes zones fragiles et de ta santé, et ADAPTE au lieu d\'interdire. Renseigne-les dans Profil → ADN sportif + Santé'},
   // Profil (setup) — anchor = id de la ligne de menu où le point rouge s'affiche (ici la carte Profil)
   {id:'morpho-setup',screen:'setup', anchor:'menu-row-profil', desc:'Section morphologie dans Profil'},
   {id:'discipline',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
@@ -227,9 +228,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v19/20/21 + WHATS_NEW_MAX=21) quand on ouvre à tout le monde.
-//    (v15 = pop-up d'excuses réseau 4G ; v16 = sommeil ; v17 = ADN sportif ; v18 = Milo apprend à te connaître — déjà pour tout le monde.)
+//    à RÉACTIVER (remettre les 3 entrées en v20/21/22 + WHATS_NEW_MAX=22) quand on ouvre à tout le monde.
+//    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN sportif ; v18 = Milo apprend à te connaître ; v19 = Milo veille sur ta sécurité — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:19, ic:'🛡️', t:'Milo veille sur ta sécurité', d:'Milo tient maintenant compte EN PRIORITÉ de tes zones fragiles et de ta santé (épaule, genou, dos, arthrose…) avant de te conseiller. Sa règle d\'or : ADAPTER, jamais t\'interdire bêtement — il cherche toujours le moyen le MOINS contraignant de continuer à progresser en sécurité, et te propose des alternatives. 👉 Renseigne tes zones fragiles dans Profil → « Mon ADN sportif » et tes soucis de santé dans Profil → Santé, pour qu\'il les protège. 🛡️'},
   {v:18, ic:'🧠', t:'Milo apprend à te connaître', d:'Milo va commencer à te poser de petites questions sur ta page d\'Accueil (par ex. « tu t\'entraînes plutôt le matin, non ? »). À chaque fois que tu confirmes, il RETIENT — et ses conseils deviennent plus justes, plus personnels. Rien n\'est mémorisé sans ton accord : tu réponds « Oui, c\'est vrai » ou « Pas vraiment ». Et tu peux voir ou effacer tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi ». 🧠'},
   {v:17, ic:'🧬', t:'Ton ADN sportif', d:'Nouveau dans ton Profil (Menu → Profil → « Mon ADN sportif ») : dis à Milo ce qui te caractérise DURABLEMENT — ta motivation profonde, ton mode de vie (temps, lieu, matériel), ce que tu aimes/détestes, ton expérience et tes zones fragiles. Résultat : des conseils bien plus personnels et RÉALISTES (il ne te proposera pas une séance d\'1h30 si tu as 45 min, ni des squats si tu les détestes). Tout est optionnel et privé. 🧬'},
   {v:16, ic:'😴', t:'Ton sommeil sur l\'Accueil + son historique', d:'Le sommeil est maintenant sur la page d\'Accueil, juste sous ton score de récup (avant il était dans Séance et on ne le trouvait pas). Nouveau aussi : tu peux NOTER UN JOUR OUBLIÉ (choisis la date, ex. hier) et ouvrir « 📊 Historique du sommeil » → un petit graphique (7 ou 30 jours) + la liste nuit par nuit ; tape n\'importe quel jour pour l\'ajouter ou le corriger. 😴'},
@@ -249,7 +251,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=18;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v19/20/21)
+const WHATS_NEW_MAX=19;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v20/21/22)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

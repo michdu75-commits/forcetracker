@@ -516,6 +516,85 @@ function _coachGapText() {
   else                    g = 'il y a un moment (plus d\'un mois)';
   return '\n- VOTRE DERNIER ÉCHANGE remonte à ' + g + '. Rends-toi compte de ce délai : accueille la personne en fonction (ex. « content de te revoir », « alors, cette séance d\'hier ? », « ça faisait un moment ! ») — naturellement, sans en faire trop, et NE fais PAS comme si la conversation venait de s\'interrompre il y a 5 min.';
 }
+// ─── LE GARDIEN (Dossier Athlète, brique 6A) ─────────────────────────────────
+// Produit des RÈGLES DE SÉCURITÉ explicites, collées EN TÊTE du briefing de Milo,
+// à partir de ce qu'on sait DÉJÀ (blessures structurées + zones fragiles ADN +
+// conditions santé). Philosophie « ADAPTER, pas interdire » (Constitution v1.3,
+// Principe 13). Silencieux si rien de pertinent (rétrocompatible).
+const _GARDIEN_ZONE={
+  epaule:"protège l'épaule — évite le développé au-dessus de la tête et le développé couché LOURDS, réduis l'amplitude, privilégie prises neutres/haltères, échauffe la coiffe des rotateurs",
+  genou:"protège le genou — évite squats/fentes PROFONDS lourds et les sauts, privilégie presse/leg curl/extension à amplitude contrôlée SANS douleur",
+  lombaires:"protège les lombaires — évite soulevé de terre lourd, good morning et toute flexion chargée du dos ; dos neutre et gainé, privilégie le gainage",
+  dorsaux:"ménage le haut du dos — omoplates serrées, pas d'à-coups sur les tirages lourds",
+  cervicales:"protège les cervicales — évite les charges au-dessus de la tête et les shrugs lourds, aucune hyperextension ni à-coup du cou",
+  coude:"ménage le coude — évite curls/extensions lourds et prises douloureuses, réduis le volume bras, contrôle le tempo",
+  poignet:"protège le poignet — évite les prises/extensions douloureuses, utilise des sangles et des machines guidées",
+  hanche:"protège la hanche — évite les amplitudes extrêmes, contrôle la profondeur du squat et des fentes",
+  cheville:"ménage la cheville — évite les sauts et le travail balistique des mollets, reste en contrôle"
+};
+const _GARDIEN_COND={
+  arthrite:"arthrose/arthrite — mouvements contrôlés, amplitude SANS douleur, évite l'impact (sauts, course), échauffement long et progressif",
+  hernie:"hernie discale — AUCUNE charge lombaire en flexion, dos neutre absolu, évite soulevé de terre/good morning, privilégie gainage et machines dos soutenu",
+  cardio:"cardio/HTA — évite l'apnée et le Valsalva sur les charges lourdes, respiration régulière, intensité progressive",
+  osteo:"ostéoporose — évite les chocs et les charges maximales, privilégie un renforcement progressif et contrôlé",
+  migraine:"migraines — évite les efforts très intenses en apnée/Valsalva, hydrate-toi bien"
+};
+function _gardienZoneKey(code){
+  code=code||'';
+  if(/epaule/.test(code))return 'epaule';
+  if(/genou/.test(code))return 'genou';
+  if(code==='dos_bas')return 'lombaires';
+  if(code==='dos_haut')return 'dorsaux';
+  if(code==='cou')return 'cervicales';
+  if(/coude/.test(code))return 'coude';
+  if(/poignet/.test(code))return 'poignet';
+  if(/hanche/.test(code))return 'hanche';
+  if(/cheville/.test(code))return 'cheville';
+  return null;
+}
+function _gardienZonesFromText(t){
+  const s=(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const out=[];
+  if(/epaule|coiffe|rotateur|acromion/.test(s))out.push('epaule');
+  if(/genou|rotule|menisque|ligament crois/.test(s))out.push('genou');
+  if(/lombaire|bas du dos|hernie|sciatique|lumbago|disque/.test(s))out.push('lombaires');
+  if(/cervical|nuque|\bcou\b/.test(s))out.push('cervicales');
+  if(/coude|epicondyl|tennis elbow/.test(s))out.push('coude');
+  if(/poignet|canal carpien/.test(s))out.push('poignet');
+  if(/hanche|psoas|bassin/.test(s))out.push('hanche');
+  if(/cheville|achille/.test(s))out.push('cheville');
+  return out;
+}
+function _gardienRules(){
+  try{
+    const zones={}; // key -> {active:bool, durable:bool}
+    const hp=S.healthProfile||{};
+    // 1) Blessures structurées (zone + statut)
+    (hp.injuries||[]).forEach(inj=>{
+      const k=_gardienZoneKey(inj&&inj.zone); if(!k)return;
+      zones[k]=zones[k]||{}; if((inj.status||'')==='active')zones[k].active=true; zones[k].injury=true;
+    });
+    // 2) Zones fragiles DURABLES déclarées dans l'ADN (texte libre)
+    if(S.adn&&S.adn.fragile){_gardienZonesFromText(S.adn.fragile).forEach(k=>{zones[k]=zones[k]||{};zones[k].durable=true;});}
+    // 3) Conditions santé pertinentes
+    const conds=(hp.conditions||[]).filter(c=>_GARDIEN_COND[c]);
+    const zoneKeys=Object.keys(zones);
+    if(!zoneKeys.length&&!conds.length)return ''; // Gardien silencieux → comportement identique
+    const lines=[];
+    zoneKeys.forEach(k=>{
+      const rule=_GARDIEN_ZONE[k]; if(!rule)return;
+      const tag=zones[k].active?' [ACTIVE — protège fortement]':(zones[k].durable&&!zones[k].injury?' [zone fragile durable]':'');
+      lines.push('• '+rule+tag);
+    });
+    conds.forEach(c=>lines.push('• '+_GARDIEN_COND[c]));
+    return '🛡️ RÈGLES DU GARDIEN — SÉCURITÉ, PRIORITÉ ABSOLUE (à prendre en compte AVANT tout le reste) :\n'
+      +'Principe : ADAPTER, jamais interdire bêtement. Ta 1re question est « comment lui permettre de continuer de la manière la plus SÛRE et la plus adaptée ? ». Cherche TOUJOURS l\'adaptation la MOINS restrictive qui permet de continuer à progresser en sécurité (charge, amplitude, choix d\'exercice, alternative, tempo, repos, protéger la zone en poursuivant le reste). Tiens compte de ce que la personne veut faire AUJOURD\'HUI (performance, entretien, reprise après une pause, simple activité/défoulement) — la bonne adaptation en dépend. L\'arrêt total est l\'EXCEPTION, jamais le réflexe.\n'
+      +'Ces repères de prudence sont CONTEXTUELS (à ajuster à son ressenti et à sa situation), PAS des interdictions rigides.\n'
+      +lines.join('\n')+'\n'
+      +'⚠️ Ces points sont DURABLES (≠ une douleur passagère du jour). Devant une douleur du jour FORTE, aiguë ou inhabituelle : conseille le repos et un professionnel de santé (tu ne poses jamais de diagnostic). Propose TOUJOURS une alternative pour progresser sur le reste du corps.\n\n';
+  }catch(e){console.warn('[FT gardien]',e);return '';}
+}
+
 function buildCoachContext() {
   const bmr = calcBMR ? calcBMR() : '—';
   const tdee = calcTDEE ? calcTDEE() : '—';
@@ -568,7 +647,7 @@ function buildCoachContext() {
     wktText=`\nSÉANCE EN COURS — l'athlète s'entraîne MAINTENANT${_wkt.progLabel?' (programme: '+_wkt.progLabel+')':''}. Aide-le en DIRECT : proposer un exercice équivalent si une machine est prise, ajuster une charge (ex. "+2,5 kg vs la dernière fois"), conseiller l'ordre des exercices, gérer la fatigue.\n${exLines}\n`;
   }
 
-  return `Tu es ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, le coach personnel de cet athlète (expert en force athlétique et musculation). Tu réponds TOUJOURS en français. Maximum 200 mots sauf si l'athlète demande plus de détails.
+  return _gardienRules() + `Tu es ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, le coach personnel de cet athlète (expert en force athlétique et musculation). Tu réponds TOUJOURS en français. Maximum 200 mots sauf si l'athlète demande plus de détails.
 
 TA PERSONNALITÉ :
 - Ton naturel : franc, direct, avec un brin d'humour — jamais langue de bois, mais TOUJOURS bienveillant, jamais méchant ni rabaissant.
@@ -1311,6 +1390,7 @@ const _DRAWER_CONTENT = {
         {ic:'🥉',t:'Ton niveau (évolutif)',d:'Nouveau : dans Profil → Discipline, indique ton niveau — Débutant · Intermédiaire · Confirmé. Le Coach (Milo) s\'adapte : plus pédagogue si tu débutes, plus technique si tu es confirmé. Et surtout : ton niveau évolue tout seul ! À force de séances et de progrès sur les gros mouvements (squat, développé couché, soulevé de terre), l\'app te félicite et te fait passer au niveau supérieur. 🎉'},
         {ic:'🧬',t:'Mon ADN sportif',d:'Nouveau : section « Mon ADN sportif » dans ton Profil. Tu y dis à Milo ce qui te caractérise DURABLEMENT — ta motivation profonde, ton mode de vie (temps dispo, salle/maison, matériel, rythme), tes préférences (exos que tu aimes/détestes, ton style), ton expérience et tes zones fragiles (vieilles blessures). Milo s\'en sert pour des conseils vraiment personnels ET réalistes : il ne te proposera pas une séance d\'1h30 si tu as 45 min, ni des squats si tu les détestes, et il protège tes zones fragiles. Tout est optionnel et privé. C\'est différent de ton humeur du jour (ça, tu la dis directement à Milo dans le chat).'},
         {ic:'🧠',t:'Milo apprend à te connaître',d:'Au fil de tes séances, Milo repère des tendances (par ex. que tu t\'entraînes plutôt le matin, ou plus le haut du corps que les jambes) et te pose une petite question sur l\'Accueil pour vérifier — une à la fois, seulement quand une tendance est claire. Si tu réponds « Oui, c\'est vrai », il le RETIENT et s\'en sert pour mieux te conseiller. Si tu réponds « Pas vraiment », il oublie et ne re-pose plus la question. RIEN n\'est mémorisé sans ton accord. Tu peux revoir et effacer tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi ». C\'est ta mémoire, tu en gardes le contrôle. 🔒'},
+        {ic:'🛡️',t:'Milo veille sur ta sécurité',d:'Milo place TA sécurité en priorité : il tient compte de tes zones fragiles (Profil → « Mon ADN sportif ») et de ta santé (Profil → Santé — blessures, arthrose, hernie…) AVANT de te conseiller. Sa règle : ADAPTER, jamais t\'interdire bêtement. Face à une épaule sensible, un genou fragile ou des lombaires, il cherche le moyen le MOINS contraignant de continuer à progresser en sécurité (réduire la charge/l\'amplitude, changer d\'exercice, protéger la zone tout en travaillant le reste) et te propose des alternatives. L\'arrêt total reste l\'exception. ⚠️ Il ne pose jamais de diagnostic : devant une douleur forte ou inhabituelle, il te conseille le repos et un professionnel de santé. Plus tu renseignes tes zones fragiles et ta santé, mieux il te protège.'},
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
         {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Nouveau : il coache comme un VRAI coach — il t\'évalue avant de conseiller (et te pose des questions au besoin), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans langue de bois. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
         {ic:'💾',t:'Historique de Milo',d:'Nouveau : tes conversations avec Milo restent sauvegardées — tu retrouves ton fil même après avoir fermé et rouvert l\'appli. Le bouton « + » en haut à droite du Coach démarre une nouvelle discussion (Milo garde quand même l\'essentiel de vos échanges en mémoire). Sous chaque réponse : boutons « Partager » et « 📄 PDF » pour l\'exporter proprement.'},

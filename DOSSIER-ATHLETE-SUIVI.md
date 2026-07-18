@@ -50,6 +50,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | `backup-2026-07-19-avant-brique4-adn` | **AVANT** la brique 4A (état = fin brique 3) | `git reset --hard origin/backup-2026-07-19-avant-brique4-adn` |
 | `backup-2026-07-19-brique4a-adn-ok` | + brique 4A (ADN sportif) **validée** | `git reset --hard origin/backup-2026-07-19-brique4a-adn-ok` |
 | `backup-2026-07-19-avant-brique5a` | **AVANT** la brique 5A (état = fin 4A + Constitution v1.3) | `git reset --hard origin/backup-2026-07-19-avant-brique5a` |
+| `backup-2026-07-19-avant-gardien6a` | **AVANT** le Gardien 6A (état = 5A + points rouges simplifiés) | `git reset --hard origin/backup-2026-07-19-avant-gardien6a` |
 
 ---
 
@@ -404,7 +405,57 @@ harcèlement ; supprimable ; rien sans validation ; rétrocompatible ; 4 axes OK
 
 ---
 
-## 🛡️ Note de conception — LE GARDIEN (brique 6, à venir) : « adapter, pas interdire »
+## 🛡️ Brique 6A — LE GARDIEN (à partir de l'existant) · `ft-v468` · 19/07/2026 · ⏳ EN ATTENTE VALIDATION MICHEL
+
+> Cadrage validé (ChatGPT + Claude). Michel : « on y va, tkt pour le réel » → codé
+> sans attendre la validation réelle de la 5A. *« buildCoachContext rassemble les
+> connaissances, le Gardien leur donne un cadre de décision. »* (ChatGPT)
+
+**Ce qui a été fait.** `_gardienRules()` (coach.js) — une **vraie fonction** qui
+produit une liste de **règles de sécurité explicites**, collées **EN TÊTE** du
+briefing de Milo (avant « Tu es Milo… »), à partir de ce qu'on sait DÉJÀ :
+- **Blessures structurées** (`S.healthProfile.injuries` : zone + statut) → règle
+  par zone (épaule/genou/lombaires/dorsaux/cervicales/coude/poignet/hanche/cheville),
+  taggée `[ACTIVE — protège fortement]` si le statut est actif.
+- **Zones fragiles ADN** (`S.adn.fragile`, texte libre) → détection par mots-clés
+  (accents ignorés) → même règle, taggée `[zone fragile durable]`.
+- **Conditions santé** (`S.healthProfile.conditions`) : arthrose · hernie · HTA ·
+  ostéoporose · migraines → consigne dédiée.
+
+**Philosophie (Constitution v1.3, Principe 13) + raffinements ChatGPT :**
+- **ADAPTER, jamais interdire bêtement** ; l'arrêt total est l'exception.
+- **Chercher l'adaptation la MOINS restrictive** qui permet de continuer à
+  progresser en sécurité.
+- **Tenir compte de l'objectif du jour** (performance/entretien/reprise/défoulement).
+- Catalogue = **repères CONTEXTUELS**, pas des interdictions rigides.
+- Douleur du jour FORTE/aiguë → repos + professionnel de santé (jamais de diagnostic).
+
+**Rétrocompatible** : si aucune blessure / zone fragile / condition → `_gardienRules()`
+renvoie `''` (Gardien silencieux, contexte identique à avant).
+
+**Découpage.** 6A = à partir des données existantes (fait). **6B** (plus tard) =
+la **fiche exercice structurée** → règles précises par exercice.
+
+**Backlog (idée ChatGPT, pas maintenant)** : un niveau interne de vigilance
+Vert/Jaune/Orange/Rouge pour moduler la prudence de Milo.
+
+**Checklist nouveauté (règle #11)** : pop-up « Quoi de neuf » **v19** 🛡️ +
+`WHATS_NEW_MAX=19` ; red dot `gardien-securite` (Coach) ; aide `?` Coach ; aide
+détaillée « Milo veille sur ta sécurité ».
+
+**Fichiers** : `coach.js` (`_gardienRules` + prepend + aide détaillée), `constants.js`
+(WHATS_NEW v19 + red dot), `screens.js` (aide `?` Coach), `sw.js` (ft-v468).
+
+**Tests Playwright** : rien → Gardien vide (contexte démarre par « Tu es Milo ») ;
+épaule D active + arthrose + genou (ADN) → règles en tête, tags ACTIVE/durable,
+« adapter pas interdire » + « moins restrictive » + « contextuels » présents ;
+lombaires depuis l'ADN OK ; 0 erreur JS.
+
+**Rollback :** `git reset --hard origin/backup-2026-07-19-avant-gardien6a`
+
+---
+
+## 🛡️ Note de conception — LE GARDIEN (référence 6A/6B) : « adapter, pas interdire »
 
 > Réflexion posée le 19/07/2026 (ChatGPT + Claude + Michel), en amont de la
 > brique 6. **Principe désormais gravé en Constitution (Principe 13 « l'adaptation

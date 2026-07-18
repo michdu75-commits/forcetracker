@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v467'; // Simplification points rouges : le point de l'ONGLET Menu (nb-setup) s'eteint des qu'on OUVRE le Menu (S.menuAck / ft4_menu_ack, _ackMenu dans openMenuDrawer) ; les points INLINE des lignes restent pour montrer OU est le neuf et se marquent vus a l'ouverture de chaque item. Fini le point onglet qui « nag » sans fin.
+const CACHE = 'ft-v468'; // Dossier Athlete brique 6A : LE GARDIEN — regles de securite explicites en tete du briefing de Milo (_gardienRules dans coach.js), a partir des blessures structurees + zones fragiles ADN + conditions sante. Adapter pas interdire, adaptation la moins restrictive, contextuel. Silencieux si rien.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
