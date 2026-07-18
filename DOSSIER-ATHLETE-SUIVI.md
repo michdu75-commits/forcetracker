@@ -310,6 +310,52 @@ si vide, `_adnFilled` OK, 0 erreur JS ; visuel jour + nuit OK.
 
 ---
 
+## 🧠 Brique 5A — « Observations à valider » · CADRAGE VALIDÉ (à développer)
+
+> Direction choisie par Michel (Option B). Cadrage validé par ChatGPT + Claude
+> le 19/07/2026. **À coder à la reprise** (backup + tests + 4 axes). *« Le cœur,
+> ce n'est pas la mémoire, c'est la confiance. »*
+
+**Principe.** Milo **remarque → propose → l'utilisateur VALIDE → c'est rangé en
+mémoire (`S.registre.observations`, déjà câblé brique 1) → il réutilise.** Rien
+n'entre sans validation (Principe 3). L'utilisateur peut **supprimer** à tout
+moment (Principe 11). « Tu valides » = le dernier mot au sportif (cohérent avec
+le futur Principe 14 en discussion).
+
+**Découpage.**
+- **5A** (à coder) = le MÉCANISME complet (proposer → valider → ranger →
+  réutiliser → supprimer) avec des observations **ANCRÉES DONNÉES** (dérivées
+  des faits/séances, zéro invention).
+- **5B** (plus tard) = observations plus riches **générées par l'IA**.
+
+**4 règles ajoutées par ChatGPT (validées, à respecter dans la 5A) :**
+1. **Humilité** — formuler en HYPOTHÈSE (« j'ai *peut-être* remarqué… »), le ton
+   invite à valider (Principe 7).
+2. **Une observation à la fois** — jamais plusieurs propositions simultanées.
+3. **Le bon moment** — pas au hasard : après plusieurs séances/échanges, quand
+   une tendance devient claire.
+4. **Seuil de confiance INTERNE** — chaque candidate a un niveau de confiance ;
+   faible → attendre, élevé → proposer. Interne (ne complique pas l'UX).
+
+**Modèle.** `S.registre.observations[]` = `[{text, confidence, status:'pending'|
+'validated'|'rejected', source, proposedAt, validatedAt}]`. Injection Milo : déjà
+en place (seules les `validated` comptent). Une `rejected` n'est pas re-proposée
+en boucle.
+
+**Décisions à trancher avant de coder (dans le cadrage détaillé) :**
+- OÙ propose-t-on ? (carte Accueil « 💡 Milo a remarqué… » + espace « Ce que Milo
+  sait de toi » — reco Claude, discret).
+- Quelles observations candidates au départ (option A, ancrées données) : ex.
+  week-end/semaine, haut vs bas du corps, sommeil↔énergie, régularité… — garder
+  celles qui CHANGENT une décision de Milo.
+- Format de validation : ✅ oui · ❌ non · ✏️ corriger (1 tap).
+
+**Critère de réussite** : Milo propose UNE observation vraie/ancrée, humble, au
+bon moment ; validée → mémoire durable réutilisée ; refusée → jetée, pas de
+harcèlement ; supprimable ; rien sans validation ; rétrocompatible ; 4 axes OK.
+
+---
+
 ## 🛡️ Note de conception — LE GARDIEN (brique 6, à venir) : « adapter, pas interdire »
 
 > Réflexion posée le 19/07/2026 (ChatGPT + Claude + Michel), en amont de la

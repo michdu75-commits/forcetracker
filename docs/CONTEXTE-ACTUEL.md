@@ -39,9 +39,15 @@
   - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
     présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.
 
-- **Prochaine étape :** cadrer la **brique 4B** (Milo apprend l'ADN tout seul au
-  fil des échanges) — Objectif / Critère / Hors périmètre, avec garde-fou, avant
-  tout code. À lancer quand Michel le décide.
+- **Prochaine étape :** **coder la brique 5A — « Observations à valider »**
+  (Milo propose → tu valides → mémoire). **Cadrage VALIDÉ** (ChatGPT + Claude,
+  voir `DOSSIER-ATHLETE-SUIVI.md`), à développer à la reprise (backup + tests +
+  4 axes). 4 règles à respecter : humilité (hypothèse), 1 obs à la fois, bon
+  moment, seuil de confiance interne.
+- **En discussion (gouvernance, non bloquant) :** **Principe 14** « Milo enrichit
+  le jugement, il ne le remplace pas » (partenaire de décision, dernier mot au
+  sportif) + la posture d'équilibre exigence/protection en comportement de Milo.
+  À trancher tranquillement.
 
 - **Blocages :** aucun.
 
