@@ -13,25 +13,31 @@
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).
-- **Brique en cours :** aucune en cours. **Briques 0, 1, 2, 3 terminées** (3 = état
-  du jour, version 3A conversationnelle) + amélioration Milo « comprendre avant de
-  conseiller ». **Prochaine : brique 4 — l'ADN sportif** (étoffer « Milo apprend à
-  te connaître ») OU la version **3B** (capture structurée de l'état du jour, avec
-  le Gardien). À cadrer.
+- **Brique en cours :** aucune en cours. **Briques 0, 1, 2, 3 CLÔTURÉES.** La
+  brique 3 (état du jour, version 3A conversationnelle + renfort « le ressenti
+  prime sur les chiffres ») a été **validée officiellement par Michel sur les
+  4 axes** (fonctionnelle · technique · situation réelle iPhone · philosophie de
+  Milo) le 19/07/2026. **Prochaine : brique 4 — l'ADN sportif** (enrichir la
+  connaissance durable de l'utilisateur, sans toucher aux fondations validées).
+  À cadrer (Objectif / Critère / Hors périmètre) avant de coder.
 
 - **Dernières décisions validées :**
   - Ton de Milo : « Laisse Milo choisir » (auto) par défaut, manuel = secours.
   - Registre Athlète (mémoire) + 7 faits mesurés, invisibles, règle d'or « un fait = une décision ».
   - Milo « comprendre avant de conseiller » (rupture d'habitude → question douce d'abord).
-  - Constitution de Milo **v1.1** (11 principes) · Processus officiel de développement adopté.
+  - **Le ressenti de la personne prime toujours sur les chiffres** (ne jamais
+    contredire « je suis HS » avec « ta récup est au top »).
+  - **Nouvelle méthode de validation : les 4 axes** (fonctionnelle · technique ·
+    situation réelle · philosophie de Milo) — adoptée à la clôture de la brique 3.
+  - Constitution de Milo **v1.2** (12 principes — ajout du Principe 12 « écouter,
+    comprendre, contextualiser — puis conseiller ») · Processus officiel adopté.
   - Méthode de documentation : CLAUDE.md = page d'accueil, détails dans `/docs/`.
   - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
     présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.
 
-- **Prochaine étape :** **Brique 3 — l'état du jour**, conçue comme un **check-in
-  CONVERSATIONNEL** (Milo demande « comment tu te sens ? », pas un formulaire) —
-  version **3A** (conversation pure) d'abord ; capture structurée (3B) plus tard
-  avec le Gardien. Champs visés : énergie · moral · douleur (+zone). À lancer.
+- **Prochaine étape :** **Brique 4 — l'ADN sportif.** Enrichir la connaissance
+  durable de l'utilisateur (ce qui le caractérise sur le long terme). À cadrer
+  avec Michel (Objectif / Critère / Hors périmètre) avant tout code.
 
 - **Blocages :** aucun.
 

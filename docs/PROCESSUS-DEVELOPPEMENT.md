@@ -62,9 +62,18 @@ Une brique n'est **PAS terminée** tant que TOUT ceci n'est pas fait :
 - [ ] Résumé des changements rédigé (message clair à Michel)
 - [ ] Point de sauvegarde / rollback fourni
 
-### 6. Validation finale
-- **Michel valide** (souvent sur iPhone).
-- La brique est alors considérée comme close ; on passe à la suivante.
+### 6. Validation finale — les 4 axes
+Une brique n'est **réellement terminée** que lorsque les **4 validations** sont
+obtenues (méthode adoptée à la clôture de la brique 3, 19/07/2026) :
+
+1. **Validation fonctionnelle** — la fonction fait ce qu'elle doit faire.
+2. **Validation technique** — code propre, tests OK, 0 erreur, rien de cassé.
+3. **Validation en situation réelle** — Michel l'a essayée en vrai (iPhone) et
+   ça tient dans l'usage.
+4. **Validation de la philosophie de Milo** — le comportement respecte la
+   Constitution (la personne d'abord, écouter/comprendre avant de conseiller…).
+
+- **Michel valide** ces 4 axes → la brique est close ; on passe à la suivante.
 
 ---
 

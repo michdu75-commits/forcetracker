@@ -197,8 +197,8 @@ Milo MAINTENANT ; la **détection fiable** des ruptures d'habitude viendra avec 
 
 ---
 
-### Brique 3 — L'état du jour (version 3A conversationnelle) · `ft-v462` · 19/07/2026
-*(Version consolidée après échanges Michel / ChatGPT / Claude / Gemini.)*
+### Brique 3 — L'état du jour (version 3A conversationnelle) · `ft-v462`/`ft-v463` · 19/07/2026 · ✅ CLÔTURÉE
+*(Version consolidée après échanges Michel / ChatGPT / Claude / Gemini. **Validée officiellement** par Michel sur les 4 axes — fonctionnelle, technique, situation réelle (test iPhone), philosophie de Milo. Leçon élevée en Constitution : Principe 12 « écouter, comprendre, contextualiser — puis conseiller ».)*
 
 **Objectif :** Milo comprend l'état du jour de la personne pour adapter son
 accompagnement, via un **check-in CONVERSATIONNEL** (pas un formulaire) — c'est
