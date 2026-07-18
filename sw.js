@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v472'; // Ressenti du jour (3B) branche sur le score de recup : energie + gene du jour font BAISSER le score en DOUCEUR (facteur '🌡️ Ressenti du jour', -3/zone plafonne -8, energie 😴-10/😐-4/🙂 0/⚡+4). Le ressenti prime, mais on adapte sans alarmer (on s'entraine quand meme).
+const CACHE = 'ft-v473'; // Gene du jour (3B) : SEPARE energie et douleur (retour ChatGPT). L'energie ajuste le score en douceur (readiness) ; une DOULEUR ne touche PLUS le chiffre -> bandeau contextuel ⚠️ sous le score (echauffe-toi/adapte, tu peux t'entrainer). Adapter, pas interdire.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

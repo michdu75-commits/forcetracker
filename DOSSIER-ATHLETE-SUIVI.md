@@ -574,14 +574,21 @@ bloc.
 
 **Rollback :** `git reset --hard origin/backup-2026-07-19-avant-3b`
 
-**Suite immédiate (ft-v472) — le ressenti du jour nourrit AUSSI le score de récup.**
+**Suite immédiate (ft-v472 → ft-v473) — le ressenti du jour et le score de récup.**
 Retour de Michel en test réel : il coche « Bas du dos » + 🙂 mais le score reste
-« 92/100 · Prêt à performer » → le score contredisait le ressenti (contre le
-Principe 12). Correctif (`calcRecoveryDetail`, tracking.js) : l'état du jour
-d'aujourd'hui ajuste le score, **en DOUCEUR** (« adapter, pas alarmer » — Michel :
-« même si j'ai mal au dos, je m'entraîne quand même »). Énergie : 😴 −10 · 😐 −4 ·
-🙂 0 · ⚡ +4. Douleur : **−3 par zone, plafonné à −8**. Facteur « 🌡️ Ressenti du
-jour » affiché + conseil « échauffe-toi bien, tu peux t'entraîner ». Rétrocompatible.
+« 92/100 · Prêt à performer » → le score contredisait le ressenti. **Deux temps :**
+- **ft-v472** (première réponse) : l'état du jour ajustait le score en douceur
+  (énergie + douleur, −3/zone plafonné −8).
+- **ft-v473** (affinage, réflexion ChatGPT validée) : on **sépare énergie et
+  douleur**. L'**énergie** reste un signal de readiness → ajuste le score en
+  douceur (😴 −10 · 😐 −4 · 🙂 0 · ⚡ +4, facteur « 🌡️ Forme du jour »). La
+  **douleur/gêne n'est PAS un manque de récup** → elle **ne touche plus le
+  chiffre** ; elle devient un **bandeau contextuel ⚠️** sous le score (« ton corps
+  est récupéré, mais échauffe-toi bien et allège si besoin — tu peux t'entraîner »).
+  → l'exemple de ChatGPT : « 92/100 · Prêt à performer » ⚠️ gêne au dos. Milo + le
+  Gardien voient toujours la douleur du jour (inchangé). **Principe : distinguer le
+  *score de récup* (physiologique) du *contexte du jour* (douleur/ressenti) —
+  « adapter, pas interdire ».**
 Rollback : `git reset --hard origin/backup-2026-07-19-avant-ressenti-score`.
 
 ---

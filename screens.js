@@ -445,6 +445,15 @@ function _renderHomeHero(){
     detailHtml='<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px 7px;font-size:11px;color:var(--t3);align-items:center;">'+fx+'</div>'
       +(tipsHtml?'<div style="margin-top:9px;background:var(--bg3);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;flex-direction:column;gap:5px;">'+tipsHtml+'</div>':'');
   }
+  // Bandeau contextuel « gêne du jour » (brique 3B) : une douleur ne fait PAS baisser
+  // le chiffre (le corps reste récupéré) — elle prévient juste d'adapter. Adapter, pas interdire.
+  let warnHtml='';
+  if(detail.dayPains&&detail.dayPains.length){
+    const z=detail.dayPains;
+    const zTxt=z.length===1?z[0]:z.slice(0,-1).join(', ')+' et '+z[z.length-1];
+    warnHtml='<div style="margin-top:10px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.32);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;gap:8px;align-items:flex-start;">'
+      +'<span style="flex:none;">⚠️</span><span>Gêne signalée aujourd\'hui (<b>'+zTxt+'</b>) : ton corps est récupéré, mais <b>échauffe-toi bien</b> et allège les mouvements qui tirent si besoin. Tu peux t\'entraîner.</span></div>';
+  }
   el.innerHTML='<div style="padding:20px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.10),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);" class="ft-rise">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;">'
     +'<div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'
@@ -457,7 +466,7 @@ function _renderHomeHero(){
     +'<div style="flex:1;"><div style="font-size:16px;font-weight:700;color:var(--t1);">'+heroLabel+'</div>'
     +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:3px;">'+heroDesc+'</div></div></div>'
     +'<div style="margin-top:14px;height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;"><div style="height:100%;width:'+barW+'%;background:'+ringColor+';border-radius:4px;transition:width .4s;"></div></div>'
-    +detailHtml
+    +detailHtml+warnHtml
     +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
     +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
     +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
