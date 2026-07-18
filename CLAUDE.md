@@ -45,11 +45,11 @@ Une feature n'est PAS finie tant que l'utilisateur n'est pas informé. Avant de 
 - Ces éléments vivent sur des **branches de test** tant que la feature est sur le `/clone/` → on les remplit **au moment de la promotion en prod** (sinon les points rouges/pop-ups ne servent personne).
 - ⚠️ Ne PAS se laisser emporter par la construction et oublier cette étape (erreur commise en juillet 2026 : calendrier/score santé livrés sans pop-up ni aide).
 
-**12. 📓 TENIR LE JOURNAL À JOUR AUTOMATIQUEMENT — à chaque modif, sans qu'on le demande.**
-Après CHAQUE fonctionnalité ou correctif livré (chaque `ft-vNN`), **écrire l'évolution dans le journal, tout seul**, dans le même mouvement que le bump `sw.js` + commit + push (comme un réflexe, jamais sur demande de Michel) :
-- **`CLAUDE.md`** : ajouter une entrée (1 ligne concise) dans le journal des versions, avec **quoi + pourquoi** (le retour/la raison) + le `ft-vNN`.
-- **Fichier de suivi dédié** s'il y en a un pour le chantier en cours (ex. `DOSSIER-ATHLETE-SUIVI.md`) : ajouter l'entrée détaillée + mettre à jour la table des **points de sauvegarde**.
-- Ne JAMAIS livrer une version sans l'avoir journalisée. Si plusieurs versions ont été livrées sans journal → faire un **rattrapage** (1 ligne par version) dès qu'on s'en aperçoit.
+**12. 📓 TENIR TOUS LES FICHIERS DE SUIVI À JOUR EN TEMPS RÉEL — automatiquement, à chaque modif, sans qu'on le demande.**
+Documenter n'est PAS une étape séparée « pour plus tard » : ça fait partie de la livraison, **en temps réel**, dans le **même mouvement** que le bump `sw.js` + commit + push (un réflexe, jamais sur demande de Michel). À CHAQUE fonctionnalité ou correctif livré (chaque `ft-vNN`) :
+- **`CLAUDE.md` — LE fichier maître, PRIORITAIRE** (il est relu au début de CHAQUE session : il doit TOUJOURS refléter la réalité). Ajouter une entrée (1 ligne concise) dans le journal des versions : **quoi + pourquoi** (le retour/la raison) + le `ft-vNN`. Ne jamais le laisser prendre du retard.
+- **Fichier(s) de suivi dédié(s)** du chantier en cours (ex. `DOSSIER-ATHLETE-SUIVI.md`, `CONSTITUTION-MILO.md`, `IDEES-FUTURES.md`, `A-FAIRE-SUR-PC.md`…) : entrée détaillée + mise à jour de la table des **points de sauvegarde** + de toute décision prise.
+- **Règle stricte** : aucune version livrée (commit/push) sans que TOUS les fichiers de suivi concernés soient à jour **dans le même commit** (ou juste avant). Si un retard est constaté → **rattrapage immédiat** (1 ligne par version manquante) avant toute autre chose.
 
 ---
 
