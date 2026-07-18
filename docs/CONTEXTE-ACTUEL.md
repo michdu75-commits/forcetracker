@@ -27,8 +27,14 @@
     contredire « je suis HS » avec « ta récup est au top »).
   - **Nouvelle méthode de validation : les 4 axes** (fonctionnelle · technique ·
     situation réelle · philosophie de Milo) — adoptée à la clôture de la brique 3.
-  - Constitution de Milo **v1.2** (12 principes — ajout du Principe 12 « écouter,
-    comprendre, contextualiser — puis conseiller ») · Processus officiel adopté.
+  - **Devise officielle** : « Force Tracker s'adapte au sportif. Le sportif ne
+    s'adapte jamais à Force Tracker. »
+  - **Le Gardien (brique 6) ADAPTE, il n'interdit pas** — adaptation par défaut,
+    arrêt total = exception (Principe 13). Pas de « moteur de décision » séparé :
+    c'est le rôle du Gardien.
+  - Constitution de Milo **v1.3** (13 principes — Principe 12 « écouter,
+    comprendre, contextualiser » + Principe 13 « l'adaptation avant l'interdiction »
+    + question de contrôle) · Processus officiel adopté.
   - Méthode de documentation : CLAUDE.md = page d'accueil, détails dans `/docs/`.
   - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
     présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.

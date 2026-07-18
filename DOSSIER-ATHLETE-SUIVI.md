@@ -310,6 +310,42 @@ si vide, `_adnFilled` OK, 0 erreur JS ; visuel jour + nuit OK.
 
 ---
 
+## 🛡️ Note de conception — LE GARDIEN (brique 6, à venir) : « adapter, pas interdire »
+
+> Réflexion posée le 19/07/2026 (ChatGPT + Claude + Michel), en amont de la
+> brique 6. **Principe désormais gravé en Constitution (Principe 13 « l'adaptation
+> avant l'interdiction », v1.3).** Cette note conserve le matériau de conception.
+
+**Philosophie.** Le Gardien n'est **pas un système d'interdiction** mais un
+**système d'adaptation**. Sa première question n'est jamais « faut-il empêcher
+l'entraînement ? » mais **« comment permettre de continuer de la manière la plus
+sûre et la plus adaptée ? »**. L'adaptation est le comportement **par défaut** ;
+l'arrêt total est **l'exception**. Objectif : que l'utilisateur sente que Milo
+**protège sa progression**, sans devenir **anxiogène** ou excessivement prudent.
+La sécurité **guide** l'adaptation, elle n'en est pas un **frein systématique**.
+
+**Arbre de décision** (à implémenter dans le Gardien) — avant de limiter une
+séance, Milo se demande :
+1. Le problème est-il **ponctuel ou durable** ? *(douleur du jour ≠ zone fragile durable — cf. ADN brique 4A)*
+2. Quelle **intensité** ?
+3. Quelles **zones** concernées ?
+4. Peut-on **adapter** plutôt que supprimer ? *(charge, amplitude, exercice, séance, repos, protéger une zone en poursuivant le reste)*
+5. Existe-t-il une **alternative sûre** ?
+
+**Exemples.** Arthrose du genou → adapter le travail des jambes, pas le
+supprimer. Épaule sensible → modifier exercices/prises/amplitude/charge.
+Courbatures quadriceps → entraîner le haut du corps. Peu de temps → adapter la
+séance, pas culpabiliser.
+
+**Note d'architecture.** Le Gardien est **à la fois** le garde-fou sécurité **et**
+le « moteur de décision » (priorisation des infos). → On ne crée donc **pas** de
+brique « moteur de décision » séparée (elle doublonnerait le Gardien). L'ordre de
+priorité (Sécurité > Ressenti du jour > Vie réelle > Préférences > Programme
+idéal) pourra être posé plus tôt, en consigne de Milo, puis consolidé par le
+Gardien.
+
+---
+
 ## 🔜 Prochaines briques prévues (rappel, ordre indicatif)
 
 1. **Le socle « Dossier »** — créer l'objet mémoire (tiroir sauvegardé + synchro)
@@ -321,8 +357,9 @@ si vide, `_adnFilled` OK, 0 erreur JS ; visuel jour + nuit OK.
 4. **L'ADN sportif** — étoffer le questionnaire « Milo apprend à te connaître ».
 5. **Les observations de Milo (à valider)** — Milo propose, tu valides. *(cœur)*
 6. **Le Gardien** — une petite fonction qui sort une liste de « règles
-   impératives » (sécurité) collée en haut du briefing de Milo. *(dépend des
-   fiches exercices)*
+   impératives » (sécurité) collée en haut du briefing de Milo. **Adapter, pas
+   interdire** (voir la note de conception ci-dessus + Constitution Principe 13).
+   *(dépend des fiches exercices)*
 7. **L'historique intelligent** — synthèses utiles (« +8 kg en 8 semaines,
    facteurs observés… »).
 
