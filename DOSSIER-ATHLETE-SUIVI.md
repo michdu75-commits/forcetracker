@@ -47,6 +47,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | `backup-2026-07-19-dossier-athlete-brique2` | Briques 0 + 1 + 2 (faits mesurés) | `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique2` |
 | `backup-2026-07-19-milo-comprendre` | + amélioration « comprendre avant de conseiller » | `git reset --hard origin/backup-2026-07-19-milo-comprendre` |
 | `backup-2026-07-19-brique3-etat-du-jour` | + brique 3 (état du jour, 3A conversationnel) | `git reset --hard origin/backup-2026-07-19-brique3-etat-du-jour` |
+| `backup-2026-07-19-avant-brique4-adn` | **AVANT** la brique 4A (état = fin brique 3) | `git reset --hard origin/backup-2026-07-19-avant-brique4-adn` |
 
 ---
 
@@ -237,6 +238,65 @@ récup est un indice calculé, pas la vérité — le boulot/stress/nuit blanche
 sont pas) ; ② sur un **signal d'état** (« je suis HS/crevé/j'ai mal »), **comprendre
 la cause d'abord** (question douce) avant de conseiller. Testé Playwright, 0 erreur.
 **Rollback :** `git reset --hard origin/backup-2026-07-19-brique3-etat-du-jour`
+
+---
+
+### Brique 4A — L'ADN sportif (socle déclaré) · `ft-v464` · 19/07/2026 · ⏳ EN ATTENTE VALIDATION MICHEL
+
+**Objectif.** Donner à Milo un « ADN sportif » durable — ce qui caractérise la
+personne sur le long terme, différent du profil (déclaré général), des faits
+(mesurés, brique 2) et de l'état du jour (ponctuel, brique 3). Répond à la
+question directrice (ChatGPT) : *« qu'est-ce qui fait que cette personne
+s'entraîne comme ELLE, et pas comme quelqu'un d'autre ? »*
+
+**Découpage** (validé ChatGPT + Michel) :
+- **4A (cette brique)** = ADN **DÉCLARÉ** par l'utilisateur (sûr, sous contrôle,
+  Milo n'invente rien).
+- **4B (plus tard)** = Milo **RETIENT tout seul** ce qu'on lui dit au fil des
+  échanges (magique mais risqué → quand les fondations/le Gardien sont là).
+
+**Ce qui a été fait (4A).** Section repliable **🧬 Mon ADN sportif** dans le
+Profil (après Discipline), **5 champs optionnels** (texte libre, auto-extensible) :
+
+| Champ (`S.adn.*`) | Ce que ça change chez Milo |
+|---|---|
+| `motivation` | la façon dont il te motive |
+| `lifestyle` (« mode de vie ») | il propose du RÉALISTE (temps/lieu/matériel/rythme) |
+| `preferences` | il joue sur ce que tu aimes, évite ce que tu détestes |
+| `experience` | il calibre son niveau de discours |
+| `fragile` (zones fragiles DURABLES) | il PROTÈGE ces zones (≠ douleur du jour) |
+
+**Technique.**
+- `S.adn` (`ft4_adn` = `{motivation,lifestyle,preferences,experience,fragile}`),
+  persisté **local + cloud**, **rétrocompatible** (vide = comportement identique).
+- Injecté dans `buildCoachContext` (coach.js) **section « ADN SPORTIF »**,
+  uniquement les champs remplis.
+- ⚠️ **Anti-perte cloud** : le frontend n'envoie `adn` que s'il a du contenu
+  (`_adnFilled`) — car le garde-fou backend `_po_` compte les CLÉS, pas le
+  contenu (l'ADN a toujours ses 5 clés) → sans ce filtre, un ADN vide écraserait
+  un ADN rempli. Restauration = **merge par champ** (ne remplit que les champs
+  locaux vides, ne réécrase jamais).
+- Backend `handleSaveProfile_` : `if(body.adn!==undefined) profile.adn=_po_(...)`
+  (auto-déployé via la GitHub Action).
+
+**Retours ChatGPT intégrés** : « mode de vie » au lieu de « contraintes » ;
+séparation expérience ≠ zones fragiles ; règle « une info = une décision » ;
+**garde-fou Claude** : les habitudes MESURABLES (horaire/jour/durée) restent dans
+les FAITS (brique 2), pas dans l'ADN déclaré (anti-doublon + anti-contradiction).
+
+**Checklist nouveauté (règle #11)** : pop-up « Quoi de neuf » **v17** 🧬 +
+`WHATS_NEW_MAX=17` ; red dot `adn-sportif` (Profil) ; aide `?` Profil ; aide
+détaillée « Mon ADN sportif ». ⏳ Slide Guide de l'application = à faire quand
+Michel fournit une capture.
+
+**Fichiers** : `state.js`, `coach.js`, `setup.js`, `index.html`, `Code.js`,
+`constants.js`, `screens.js`, `sw.js` (ft-v464).
+
+**Tests Playwright** : 5 champs présents, save → `S.adn` + `ft4_adn`, restore au
+reload dans les textareas, contexte Milo **inclut** l'ADN si rempli / **absent**
+si vide, `_adnFilled` OK, 0 erreur JS ; visuel jour + nuit OK.
+
+**Rollback :** `git reset --hard origin/backup-2026-07-19-avant-brique4-adn`
 
 ---
 

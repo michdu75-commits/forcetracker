@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v463'; // Milo brique 3 renforcee : le RESSENTI prime sur les chiffres (ne jamais contredire « je suis HS » avec « ta recup est au top ») + comprendre la cause avant de conseiller sur un signal d'etat. Consigne prompt only.
+const CACHE = 'ft-v464'; // Dossier Athlete brique 4A : « Mon ADN sportif » (Profil) — portrait DURABLE declare (motivation/mode de vie/preferences/experience/zones fragiles), injecte dans le briefing de Milo. S.adn (ft4_adn) persiste local+cloud, optionnel, retrocompatible.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

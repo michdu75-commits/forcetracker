@@ -716,6 +716,18 @@ ${(()=>{
   if(!facts&&!obs)return '';
   return '\nREGISTRE ATHLÈTE (ce que tu as mémorisé sur cette personne au fil du temps — appuie-toi dessus, ne le contredis pas sans raison):\n'+[facts,obs].filter(Boolean).join('\n')+'\n';
 })()}
+${(()=>{
+  // ADN SPORTIF (Dossier Athlète, brique 4A) — portrait durable DÉCLARÉ par l'utilisateur. Injecté seulement si rempli.
+  const a=S.adn;if(!a)return '';
+  const L=[];
+  if(a.motivation&&a.motivation.trim())L.push('- Sa motivation profonde: '+a.motivation.trim()+' → motive-la dans CE sens.');
+  if(a.lifestyle&&a.lifestyle.trim())L.push('- Son mode de vie (temps/lieu/matériel/rythme): '+a.lifestyle.trim()+' → propose du RÉALISTE, adapté à ça.');
+  if(a.preferences&&a.preferences.trim())L.push('- Ses préférences & son style: '+a.preferences.trim()+' → joue sur ce qu\'elle aime, évite ce qu\'elle déteste.');
+  if(a.experience&&a.experience.trim())L.push('- Son expérience sportive: '+a.experience.trim()+' → cale ton niveau de discours dessus.');
+  if(a.fragile&&a.fragile.trim())L.push('- Ses zones fragiles DURABLES: '+a.fragile.trim()+' → PROTÈGE ces zones (sécurité avant performance), propose des alternatives. ⚠️ Ceci est durable, à ne pas confondre avec une douleur ponctuelle du jour.');
+  if(!L.length)return '';
+  return '\nADN SPORTIF (ce qui caractérise DURABLEMENT cette personne — ce qui fait qu\'elle s\'entraîne comme ELLE et pas comme une autre ; tiens-en compte dans chaque conseil):\n'+L.join('\n')+'\n';
+})()}
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}
 
@@ -1296,6 +1308,7 @@ const _DRAWER_CONTENT = {
         {ic:'🩺',t:'Santé (privé)',d:'Section Santé du Profil : conditions médicales et blessures, optionnelles. 🔒 Visibles seulement par toi (ton téléphone + ta sauvegarde perso). Le Coach IA les utilise pour éviter les mouvements à risque — il ne pose jamais de diagnostic et ne remplace pas un médecin.'},
         {ic:'🎽',t:'Discipline',d:'Nouveau : dans Profil → Discipline, choisis ta pratique — Musculation · Bodybuilding/Culturisme · Force athlétique · Haltérophilie. Le Coach IA adapte ses conseils (exercices, répétitions, périodisation) à ta discipline.'},
         {ic:'🥉',t:'Ton niveau (évolutif)',d:'Nouveau : dans Profil → Discipline, indique ton niveau — Débutant · Intermédiaire · Confirmé. Le Coach (Milo) s\'adapte : plus pédagogue si tu débutes, plus technique si tu es confirmé. Et surtout : ton niveau évolue tout seul ! À force de séances et de progrès sur les gros mouvements (squat, développé couché, soulevé de terre), l\'app te félicite et te fait passer au niveau supérieur. 🎉'},
+        {ic:'🧬',t:'Mon ADN sportif',d:'Nouveau : section « Mon ADN sportif » dans ton Profil. Tu y dis à Milo ce qui te caractérise DURABLEMENT — ta motivation profonde, ton mode de vie (temps dispo, salle/maison, matériel, rythme), tes préférences (exos que tu aimes/détestes, ton style), ton expérience et tes zones fragiles (vieilles blessures). Milo s\'en sert pour des conseils vraiment personnels ET réalistes : il ne te proposera pas une séance d\'1h30 si tu as 45 min, ni des squats si tu les détestes, et il protège tes zones fragiles. Tout est optionnel et privé. C\'est différent de ton humeur du jour (ça, tu la dis directement à Milo dans le chat).'},
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
         {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Nouveau : il coache comme un VRAI coach — il t\'évalue avant de conseiller (et te pose des questions au besoin), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans langue de bois. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
         {ic:'💾',t:'Historique de Milo',d:'Nouveau : tes conversations avec Milo restent sauvegardées — tu retrouves ton fil même après avoir fermé et rouvert l\'appli. Le bouton « + » en haut à droite du Coach démarre une nouvelle discussion (Milo garde quand même l\'essentiel de vos échanges en mémoire). Sous chaque réponse : boutons « Partager » et « 📄 PDF » pour l\'exporter proprement.'},

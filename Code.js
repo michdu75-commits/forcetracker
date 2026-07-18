@@ -667,6 +667,7 @@ function handleSaveProfile_(body) {
     if (body.level         !== undefined) profile.level         = _ps_(body.level,         profile.level);
     if (body.coachTone     !== undefined) profile.coachTone     = _ps_(body.coachTone,     profile.coachTone);
     if (body.registre      !== undefined) profile.registre      = _po_(body.registre,      profile.registre);
+    if (body.adn           !== undefined) profile.adn           = _po_(body.adn,           profile.adn);
     if (body.histImports   !== undefined) profile.histImports   = _pn_(body.histImports,   profile.histImports);
     // exPhotos (photos d'exos bibliothèque) = LOCAL SEULEMENT : jamais stocké, et on nettoie l'existant.
     if (profile.exPhotos) delete profile.exPhotos;
