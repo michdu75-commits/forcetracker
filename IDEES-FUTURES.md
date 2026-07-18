@@ -31,6 +31,20 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🔧 À FAIRE APRÈS VALIDATION (petits ajustements notés en test réel)
+
+- **Carte « Comment tu te sens aujourd'hui ? » (état du jour, brique 3B) → à RÉDUIRE.**
+  Retour Michel (test réel, ft-v473) : « ça fonctionne nickel mais ça encombre
+  l'écran ». Elle est en grand en haut de l'Accueil le temps de la validation.
+  **Après validation** : la passer en **version compacte repliée** — une ligne
+  résumé du type « 🌡️ Comment tu te sens ? · 🙂 · ⚠️ bas du dos » qu'on **déplie
+  d'un tap** pour cocher énergie/douleur (même modèle que la carte Sommeil juste en
+  dessous, `#home-sleep`). Objectif : rester accessible sans manger le haut de
+  l'Accueil. Fichiers concernés : `_renderDayStateCard` (screens.js), `.ds-*`
+  (style.css), `#home-daystate` (index.html).
+
+---
+
 ## 🗣️ BACKLOG — Profil conversationnel avec Milo (⭐ étoile polaire, PAS maintenant)
 
 > Idée de ChatGPT (19/07/2026), validée sur le plan fonctionnel par Claude.
