@@ -51,6 +51,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | `backup-2026-07-19-brique4a-adn-ok` | + brique 4A (ADN sportif) **validée** | `git reset --hard origin/backup-2026-07-19-brique4a-adn-ok` |
 | `backup-2026-07-19-avant-brique5a` | **AVANT** la brique 5A (état = fin 4A + Constitution v1.3) | `git reset --hard origin/backup-2026-07-19-avant-brique5a` |
 | `backup-2026-07-19-avant-gardien6a` | **AVANT** le Gardien 6A (état = 5A + points rouges simplifiés) | `git reset --hard origin/backup-2026-07-19-avant-gardien6a` |
+| `backup-2026-07-19-avant-adn-sante-sep` | **AVANT** la séparation ADN/Santé (état = Gardien 6A) | `git reset --hard origin/backup-2026-07-19-avant-adn-sante-sep` |
 
 ---
 
@@ -452,6 +453,29 @@ détaillée « Milo veille sur ta sécurité ».
 lombaires depuis l'ADN OK ; 0 erreur JS.
 
 **Rollback :** `git reset --hard origin/backup-2026-07-19-avant-gardien6a`
+
+### 🔀 MàJ `ft-v469` — Séparation ADN sportif / Profil Santé (résout le doublon)
+
+> Retour Michel (« ça fait doublon avec l'ADN et la Santé ? ») + proposition
+> ChatGPT (séparer par **NATURE**, pas par thème). Validé.
+
+- **Une « zone fragile » n'est pas l'identité sportive → c'est de la vigilance
+  SANTÉ.** Donc : le champ **« zones fragiles » quitte l'ADN** (ADN = 4 champs :
+  motivation · mode de vie · préférences · expérience) et vit dans **Profil →
+  Santé**, qui devient **la seule source du Gardien**.
+- **Le Gardien (6A)** ne lit plus `adn.fragile` : il lit la **Santé** — blessures
+  structurées (`healthProfile.injuries`) + conditions + **`healthProfile.notes`**
+  (détection texte libre).
+- **Migration `_migrateFragileToHealth()`** (state.js, flag `ft4_fragmig1`) :
+  `adn.fragile` → `healthProfile.notes` (« Zones fragiles : … »). **Idempotente
+  + robuste au cloud** (re-jouée à la restauration : un vieil ADN cloud avec
+  `fragile` est aussi migré → **rien perdu**).
+- Bénéfice : **plus de doublon**, un **modèle mental clair** (chaque couche = une
+  responsabilité), et le Gardien a **une seule source de vérité**. Rappel aussi :
+  fréquence/récup/habitudes = **Faits mesurés**, jamais déclarés dans l'ADN.
+- Testé Playwright (migration local + cloud, Gardien depuis notes Santé, ADN 4
+  champs, contexte propre, 0 erreur JS).
+- **Rollback :** `git reset --hard origin/backup-2026-07-19-avant-adn-sante-sep`
 
 ---
 

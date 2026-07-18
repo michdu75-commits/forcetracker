@@ -6,9 +6,9 @@
 
 ---
 
-- **Version en prod :** `ft-v468`
+- **Version en prod :** `ft-v469`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
-- **Dernier point de sauvegarde :** `backup-2026-07-19-avant-gardien6a`
+- **Dernier point de sauvegarde :** `backup-2026-07-19-avant-adn-sante-sep`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire

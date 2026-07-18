@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v468'; // Dossier Athlete brique 6A : LE GARDIEN — regles de securite explicites en tete du briefing de Milo (_gardienRules dans coach.js), a partir des blessures structurees + zones fragiles ADN + conditions sante. Adapter pas interdire, adaptation la moins restrictive, contextuel. Silencieux si rien.
+const CACHE = 'ft-v469'; // Separation ADN/Sante : les « zones fragiles » quittent l'ADN sportif (4 champs) pour le Profil Sante (une seule source de verite). Le Gardien lit la Sante (blessures structurees + notes + conditions). Migration _migrateFragileToHealth (fragile -> notes Sante) au load + a la restauration cloud (rien perdu).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

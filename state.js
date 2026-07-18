@@ -180,6 +180,9 @@ function load(){
       localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
       localStorage.setItem('ft4_cuex',JSON.stringify(S.customExercises||[]));
     }
+    // Migration : « zones fragiles » déplacées de l'ADN sportif → Profil Santé (séparation ADN/Santé, cf. Gardien 6A).
+    // Idempotente + robuste au cloud : tant qu'un ADN a un `fragile` rempli, on le bascule dans les notes Santé et on le vide.
+    if(typeof _migrateFragileToHealth==='function')_migrateFragileToHealth();
     // Migration set-tags : W→É, E→X, D→N (one-time)
     if(!localStorage.getItem('ft4_stmig1')){
       const _migSet=s=>{if(s.type==='W')s.type='É';else if(s.type==='E')s.type='X';else if(s.type==='D')s.type='N';};
@@ -192,6 +195,24 @@ function load(){
     // Registre Athlète (brique 2) : recalcule les faits mesurés au démarrage.
     try{if(typeof computeRegistreFacts==='function')computeRegistreFacts();}catch(e){}
   }catch(e){}
+}
+// Bascule le champ « zones fragiles » de l'ADN sportif vers les notes du Profil Santé (séparation ADN/Santé).
+// Idempotente : ne fait rien si l'ADN n'a pas de `fragile`. Appelée au load ET après une restauration cloud
+// (robuste : même si le cloud renvoie un vieil ADN avec `fragile` rempli, on le déplace vers la Santé).
+function _migrateFragileToHealth(){
+  try{
+    const frag=((S.adn&&S.adn.fragile)||'').trim();
+    if(!frag){if(!localStorage.getItem('ft4_fragmig1'))localStorage.setItem('ft4_fragmig1','1');return;}
+    const hp=S.healthProfile||{conditions:[],injuries:[],notes:''};
+    hp.conditions=hp.conditions||[];hp.injuries=hp.injuries||[];
+    const notes=(hp.notes||'').trim();
+    if(notes.indexOf(frag)<0)hp.notes=(notes?notes+'\n':'')+'Zones fragiles : '+frag;
+    S.healthProfile=hp;
+    S.adn.fragile='';
+    localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile));
+    localStorage.setItem('ft4_adn',JSON.stringify(S.adn));
+    localStorage.setItem('ft4_fragmig1','1');
+  }catch(e){console.warn('[FT fragmig]',e);}
 }
 function persist(){
   // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
