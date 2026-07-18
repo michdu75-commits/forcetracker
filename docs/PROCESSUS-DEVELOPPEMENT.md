@@ -68,6 +68,23 @@ Une brique n'est **PAS terminée** tant que TOUT ceci n'est pas fait :
 
 ---
 
+## 📝 Résumé de fin de tâche (obligatoire, format standard)
+
+À la fin de CHAQUE tâche, produire automatiquement un petit compte-rendu — **toujours
+les mêmes 5 points** (fait partie de la « Clôture obligatoire », pas optionnel) :
+
+1. **Ce qui a été modifié** (le quoi).
+2. **Pourquoi** (le retour / la raison).
+3. **Fichiers impactés.**
+4. **Documentation mise à jour** (CLAUDE.md, CONTEXTE-ACTUEL, suivi, décisions…).
+5. **Prochaine étape** (+ le rollback / point de sauvegarde).
+
+> C'est ce compte-rendu que Michel lit pour comprendre l'état sans relire le code.
+> La doc est donc TOUJOURS synchronisée avec le code — plus jamais de rappel
+> « tu as oublié de mettre à jour le fichier… ».
+
+---
+
 ## 🎯 Objectif
 
 Le code n'est qu'une **partie** du travail. Une brique n'est terminée que
