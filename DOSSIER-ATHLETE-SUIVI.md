@@ -45,6 +45,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 |---|---|---|
 | `backup-2026-07-19-dossier-athlete-brique1` | Briques 0 + 1 (ton de Milo + Registre socle) | `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique1` |
 | `backup-2026-07-19-dossier-athlete-brique2` | Briques 0 + 1 + 2 (faits mesurés) | `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique2` |
+| `backup-2026-07-19-milo-comprendre` | + amélioration « comprendre avant de conseiller » | `git reset --hard origin/backup-2026-07-19-milo-comprendre` |
 
 ---
 
@@ -164,6 +165,34 @@ n'accumule pas) et écrit dans `S.registre.facts`. Appelée au **démarrage**
 « REGISTRE ATHLÈTE » (label lisible). Toujours INVISIBLE pour l'utilisateur.
 
 **Rollback :** `git reset --hard 05a08a6`  *(ou branche backup brique 1)*
+
+---
+
+### Amélioration Milo — « Comprendre avant de conseiller » (l'âme) · `ft-v461` · 19/07/2026
+*(Pas une brique numérotée : affinage du comportement de Milo, prompt-only.)*
+
+**Déclencheur (retour Michel) :** face à « je n'irai pas m'entraîner
+aujourd'hui », Milo validait puis fonçait sur la logistique — sans **s'intéresser
+à la personne** ni **chercher à comprendre** pourquoi (« il n'a pas d'âme »).
+
+**Ce qu'on a fait :** ajout d'une consigne dans `buildCoachContext` (coach.js),
+qui regroupe 3 retours en un bloc « COMPRENDRE AVANT DE CONSEILLER » :
+1. **La personne avant le programme** : sur une **rupture d'habitude** (séance
+   sautée, sommeil, pesées, plans qui changent…), Milo cherche D'ABORD à
+   comprendre avec **une** question douce et sincère, avant de conseiller.
+2. **Curiosité utile seulement**, **sans jugement ni culpabilisation** ; il
+   respecte si la personne veut juste souffler (pas d'interrogatoire).
+3. **Ne jamais inventer** ce qui a été fait récemment : s'appuyer sur le Registre
+   et les vraies séances ; si l'info manque, demander (Principes 1, 3, 7).
+
+**Décision d'archi (validée) :** le **comportement** va dans le raisonnement de
+Milo MAINTENANT ; la **détection fiable** des ruptures d'habitude viendra avec le
+**Gardien (brique 6)**. → *Le Gardien détecte, Milo accompagne.*
+
+**Testé (Playwright) :** consigne bien présente dans le contexte, 0 erreur JS.
+À valider en vrai par Michel (dire à Milo « je n'irai pas m'entraîner »).
+
+**Rollback :** `git reset --hard origin/backup-2026-07-19-dossier-athlete-brique2`
 
 ---
 

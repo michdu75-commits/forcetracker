@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v460'; // Dossier Athlete brique 2 : faits mesures (computeRegistreFacts) — remplit le Registre (seances, regularite, duree moyenne, exos preferes, groupe le plus/moins travaille, sommeil moyen, anciennete) pour Milo.
+const CACHE = 'ft-v461'; // Milo plus « bras droit » : comprendre AVANT de conseiller sur une rupture d'habitude (une question douce, sans jugement), la personne avant le programme, ne jamais inventer ce qui a ete fait recemment. Consigne prompt only.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
