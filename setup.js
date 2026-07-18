@@ -1566,22 +1566,28 @@ function _renderLevelSel(){
 const COACH_TONE_LABELS={cool:'Cool',classique:'Classique',dynamique:'Dynamique',scientifique:'Scientifique'};
 const COACH_TONE_DESCS={
   cool:'Décontracté et complice, comme un pote de salle. Simple et détendu.',
-  classique:'Équilibré : pro, clair et bienveillant. Le ton par défaut de Milo.',
+  classique:'Équilibré : pro, clair et bienveillant.',
   dynamique:'Énergique et motivant, qui te booste et te pousse à te dépasser.',
   scientifique:'Précis et technique : explique le pourquoi (mécanismes, données) sans jargon inutile.',
 };
+const COACH_TONE_AUTO_DESC='Par défaut, Milo choisit tout seul le ton qui te correspond (et s\'ajuste au fil des échanges). Tu peux forcer un ton ci-dessous si tu préfères.';
+// '' ou 'auto' = Milo choisit ; sinon = ton imposé.
+function _isToneAuto(){return !S.coachTone||S.coachTone==='auto';}
 function setCoachTone(t){
-  S.coachTone=(S.coachTone===t)?'':t; // re-tap = revenir au ton par défaut
+  if(t==='auto')S.coachTone='auto';
+  else S.coachTone=(S.coachTone===t)?'auto':t; // re-tap d'un ton imposé = retour auto
   persist();
   _renderCoachToneSel();
-  toast(S.coachTone?('Ton de Milo : '+(COACH_TONE_LABELS[S.coachTone]||S.coachTone)):'Ton de Milo : par défaut','success');
+  toast(_isToneAuto()?'Ton de Milo : automatique (Milo choisit)':('Ton de Milo : '+(COACH_TONE_LABELS[S.coachTone]||S.coachTone)),'success');
 }
 function _renderCoachToneSel(){
+  const auto=_isToneAuto();
+  const a=document.getElementById('tone-auto');if(a)a.classList.toggle('active',auto);
   Object.keys(COACH_TONE_LABELS).forEach(x=>{
-    const el=document.getElementById('tone-'+x);if(el)el.classList.toggle('active',x===S.coachTone);
+    const el=document.getElementById('tone-'+x);if(el)el.classList.toggle('active',!auto&&x===S.coachTone);
   });
   const d=document.getElementById('tone-desc');
-  if(d)d.textContent=S.coachTone?(COACH_TONE_DESCS[S.coachTone]||''):'Choisis le ton de Milo — son caractère et ses conseils ne changent pas, seulement sa façon de te parler.';
+  if(d)d.textContent=auto?COACH_TONE_AUTO_DESC:(COACH_TONE_DESCS[S.coachTone]||'');
 }
 
 let _screenHistory=['home'];

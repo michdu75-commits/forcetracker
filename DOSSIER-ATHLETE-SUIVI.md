@@ -71,6 +71,15 @@ APPRENDRE le ton, pas se le faire configurer**. Décidé :
 - → Rien de perdu dans la brique 0 : elle devient la base « manuelle » ; l'auto
   se pose par-dessus quand la mémoire (ADN sportif + Dossier) sera là.
 
+**✅ Appliqué · `ft-v458` (19/07) :** « 🎯 Laisse Milo choisir » (auto) est
+maintenant le **DÉFAUT** (bouton pleine largeur en tête). Les 4 tons deviennent
+des **overrides manuels**. En mode auto, Milo reçoit la consigne de **choisir
+lui-même** le ton adapté (d'après niveau, discipline, façon d'écrire) ; re-taper
+un ton imposé = retour à l'auto. Les utilisateurs existants (`coachTone` vide)
+sont traités comme « auto » → aucun réglage à faire. **Version 1 de l'auto =
+Milo déduit** ; le « j'ai remarqué que tu préfères… » (proposition validée)
+viendra avec la brique mémoire. **Rollback :** `git reset --hard 05a08a6`
+
 ---
 
 ## 🔜 Prochaines briques prévues (rappel, ordre indicatif)
