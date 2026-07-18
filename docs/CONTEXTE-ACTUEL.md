@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v466`
+- **Version en prod :** `ft-v467`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** `backup-2026-07-19-avant-brique5a`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*

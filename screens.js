@@ -62,13 +62,29 @@ function _markAnchorSeen(anchorId){
 }
 function _updateNewBadges(){
   const seen=S.seenFeatures||[];
+  const ack=S.menuAck||[];
   ['home','progress','log','nutrition','coach','setup'].forEach(sc=>{
     const btn=document.getElementById('nb-'+sc);if(!btn)return;
-    const hasNew=NEW_FEATURES.some(f=>f.screen===sc&&!seen.includes(f.id));
+    // L'onglet Menu (setup) : le point s'éteint dès que l'utilisateur a OUVERT le Menu
+    // (features déjà dans `menuAck`). Les points inline des lignes restent pour montrer OÙ.
+    // Les autres onglets gardent le comportement d'origine (point tant qu'une feature de l'écran est non vue).
+    const hasNew = sc==='setup'
+      ? NEW_FEATURES.some(f=>f.screen==='setup'&&!seen.includes(f.id)&&ack.indexOf(f.id)<0)
+      : NEW_FEATURES.some(f=>f.screen===sc&&!seen.includes(f.id));
     let dot=btn.querySelector('.new-dot');
     if(hasNew&&!dot){dot=document.createElement('span');dot.className='new-dot';btn.appendChild(dot);}
     else if(!hasNew&&dot)dot.remove();
   });
+}
+// Ouvrir le Menu = « j'ai vu qu'il y a du neuf » → éteint le point de l'onglet Menu
+// (sans marquer les features « vues » : les points sur les lignes restent pour guider).
+function _ackMenu(){
+  const seen=S.seenFeatures||[];
+  const cur=NEW_FEATURES.filter(f=>f.screen==='setup'&&!seen.includes(f.id)).map(f=>f.id);
+  const ack=S.menuAck||[];
+  const add=cur.filter(id=>ack.indexOf(id)<0);
+  if(add.length){S.menuAck=[...ack,...add];try{localStorage.setItem('ft4_menu_ack',JSON.stringify(S.menuAck));}catch(e){}}
+  _updateNewBadges();
 }
 // Points rouges INLINE dans le menu-drawer : sur chaque ligne (anchor) qui contient une nouveauté non vue.
 // Appelé à l'ouverture du menu → l'utilisateur voit OÙ est le neuf (Profil, etc.).

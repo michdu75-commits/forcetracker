@@ -1635,6 +1635,8 @@ function openMenuDrawer(){
   if(_mpb)_mpb.style.display=S.premium?'none':'flex';
   // Points rouges « nouveauté » sur les lignes concernées (ex. carte Profil) → montre OÙ est le neuf
   if(typeof _updateMenuDots==='function')_updateMenuDots();
+  // Ouvrir le Menu éteint le point rouge de l'ONGLET Menu (les points des lignes restent pour guider)
+  if(typeof _ackMenu==='function')_ackMenu();
   // Version affichée = vrai build tournant (jamais périmé)
   if(typeof _setAppVersionEls==='function')_setAppVersionEls();
 }

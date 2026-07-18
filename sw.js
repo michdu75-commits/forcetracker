@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v466'; // Dossier Athlete brique 5A : « Observations a valider » — Milo propose une hypothese ancree donnees sur l'Accueil (une a la fois, humble, au bon moment, seuil de confiance interne), l'utilisateur VALIDE ou refuse. Validee -> memoire durable (registre.observations) reutilisee par Milo. « Ce que Milo sait de toi » (Menu) pour revoir/effacer. Rien memorise sans accord.
+const CACHE = 'ft-v467'; // Simplification points rouges : le point de l'ONGLET Menu (nb-setup) s'eteint des qu'on OUVRE le Menu (S.menuAck / ft4_menu_ack, _ackMenu dans openMenuDrawer) ; les points INLINE des lignes restent pour montrer OU est le neuf et se marquent vus a l'ouverture de chaque item. Fini le point onglet qui « nag » sans fin.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

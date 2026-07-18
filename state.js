@@ -95,6 +95,7 @@ function load(){
     S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
     S.progExos=JSON.parse(localStorage.getItem('ft4_progexos')||'null')||[...BIG4];
     S.seenFeatures=JSON.parse(localStorage.getItem('ft4_seen_ft')||'[]');
+    S.menuAck=JSON.parse(localStorage.getItem('ft4_menu_ack')||'[]'); // features setup « vues au niveau onglet Menu » (le point onglet s'éteint à l'ouverture du Menu ; les points de ligne restent)
     S.reportedCustomEx=JSON.parse(localStorage.getItem('ft4_rep_cex')||'[]');
     // ID anonyme persistant — jamais lié à l'email
     S.anonId=localStorage.getItem('ft4_auid')||(()=>{const id='u_'+Math.random().toString(36).slice(2,11);localStorage.setItem('ft4_auid',id);return id;})();
