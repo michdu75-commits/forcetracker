@@ -104,6 +104,13 @@ et deviendra vital pour les briques finales (7 « Mémoire vivante » et 8
 montrer que… », « une constante apparaît… ») ; on ne **prescrit** jamais (« tu
 devrais… »), on ne **prédit** pas qui la personne va devenir.
 
+**La limite exacte (précision, apport Gemini)** : elle se situe à la
+**prescription**, pas au conseil. **Refléter** l'histoire ET **proposer des options
+/ alternatives** (facilitateur) reste permis — c'est même attendu (Principe 6).
+Ce qui est interdit, c'est **imposer** (« tu dois… ») ou **prédire qui la personne
+va devenir**. Milo n'est donc **pas passif** : il éclaire et propose, l'utilisateur
+**garde le contrôle** et décide.
+
 *(Ce principe est la garantie humble de la Vision : « Force Tracker ne te dit pas
 qui tu dois devenir, il se souvient de qui tu es devenu. » Il rend le sportif plus
 **lucide grâce à sa propre histoire**, sans jamais se substituer à lui.)*
@@ -140,7 +147,9 @@ elle, doit rester la plus stable possible.
   prédit jamais qui il doit devenir — il enrichit le jugement, ne le remplace pas.
   Tranche le « Principe 14 en discussion » (« Milo enrichit le jugement… ») avec la
   formule plus nette de ChatGPT ; garde-fou vital des briques finales 7 et 8.
-  Proposé par ChatGPT, validé par Michel.
+  Proposé par ChatGPT, validé par Michel. **Précision (regard externe Gemini)** :
+  la limite est à la **prescription**, pas au conseil — refléter ET **proposer des
+  options** reste permis (Milo n'est pas passif, l'utilisateur garde le contrôle).
 - **v1.3** (19/07/2026) — Ajout du **Principe 13 (L'adaptation avant
   l'interdiction)** + de la **devise officielle** en tête + de la **question de
   contrôle** (« l'app s'adapte au sportif, ou l'inverse ? »). Fait suite à la

@@ -141,6 +141,18 @@ cette machinerie sert.
   historique semble montrer que… »*, *« Une constante apparaît… »* — **jamais** *« Tu
   devrais… »*.
 
+> **Premier pas candidat de la brique 7** *(apport regard externe Gemini)* : **« Le
+> Rétroviseur de progression »** — un **résumé narratif mensuel** de l'évolution de
+> la performance **malgré les aléas de la vie**. Descriptif (donc « miroir »),
+> faisable dès ~6-12 mois d'historique.
+
+> **Un fil transversal à garder en tête : le rythme de vie (chronobiologie).**
+> Comprendre les cycles de la personne (semaine/week-end, matin/soir, saisons) pour
+> **anticiper au lieu de seulement réagir**. ⚠️ Ce n'est **PAS une 9ᵉ brique** : ça
+> vit déjà dans les **Faits** (brique 2), les **Observations** (brique 5) et la
+> **Mémoire vivante** (brique 7). Et « anticiper » ne doit jamais glisser vers
+> « prédire qui tu deviens » (Principe 14).
+
 **Pourquoi 7 et 8 sont la destination.** Les briques 0→6 font en sorte que Milo
 *connaisse* la personne. Les briques 7 et 8, c'est là que la promesse se réalise :
 *« il se souvient de qui tu es devenu »*, *« le sportif ne repart jamais de zéro »*

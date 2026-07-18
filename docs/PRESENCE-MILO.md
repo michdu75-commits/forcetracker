@@ -58,6 +58,15 @@ repose sur :
   Registre / l'état du jour). Sinon, il se tait.
 - **Pas de gadget visuel.** Pas d'avatar 3D, pas de mascotte animée. La présence
   se fait avec des mots, du timing et de la mémoire.
+- **🚦 Le seuil d'intrusion** *(apport regard externe Gemini, 19/07/2026)*. Le
+  risque principal d'un coach qui a de l'initiative, c'est la **sur-sollicitation**
+  → **érosion de la confiance** (trop de questions, de pop-ups, de check-in →
+  l'utilisateur décroche). Règle : Milo ne **questionne le contexte** (« comment tu
+  vas ? », « il s'est passé quelque chose ? ») **que lorsqu'une anomalie de
+  comportement dépasse un seuil significatif** (rupture nette d'habitude, chute de
+  régularité, retour après une longue absence…). Le reste du temps, il se tait et
+  laisse agir. **Moins mais mieux** : chaque intervention doit valoir le
+  dérangement. *(Prolonge « l'initiative est gouvernée par l'utilité ».)*
 
 ---
 
