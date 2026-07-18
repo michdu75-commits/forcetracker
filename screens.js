@@ -518,6 +518,7 @@ function _renderObsCard(){
 function openMiloKnows(){
   const ov=document.getElementById('ov-milo-knows');if(!ov)return;
   _renderMiloKnows();ov.classList.add('open');
+  try{_markAnchorSeen('menu-row-miloknows');}catch(e){} // le point rouge « nouveauté » disparaît une fois la rubrique ouverte
 }
 function closeMiloKnows(){const ov=document.getElementById('ov-milo-knows');if(ov)ov.classList.remove('open');}
 function _renderMiloKnows(){

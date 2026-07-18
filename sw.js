@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v465'; // Dossier Athlete brique 5A : « Observations a valider » — Milo propose une hypothese ancree donnees sur l'Accueil (une a la fois, humble, au bon moment, seuil de confiance interne), l'utilisateur VALIDE ou refuse. Validee -> memoire durable (registre.observations) reutilisee par Milo. « Ce que Milo sait de toi » (Menu) pour revoir/effacer. Rien memorise sans accord.
+const CACHE = 'ft-v466'; // Dossier Athlete brique 5A : « Observations a valider » — Milo propose une hypothese ancree donnees sur l'Accueil (une a la fois, humble, au bon moment, seuil de confiance interne), l'utilisateur VALIDE ou refuse. Validee -> memoire durable (registre.observations) reutilisee par Milo. « Ce que Milo sait de toi » (Menu) pour revoir/effacer. Rien memorise sans accord.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
