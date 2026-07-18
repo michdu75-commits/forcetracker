@@ -60,6 +60,17 @@ Athlète sera plus avancé (décision à confirmer avec Michel).
 
 **Rollback :** `git reset --hard 9cbca6f`
 
+**🔄 Décision d'évolution (19/07, retour Michel + ChatGPT) :** le réglage
+manuel du ton « fait à l'envers » — dans l'esprit du projet, **Milo devrait
+APPRENDRE le ton, pas se le faire configurer**. Décidé :
+- Le **choix manuel reste** (il devient une **option / un repli** pour forcer un ton).
+- On ajoutera **« 🎯 Laisse Milo choisir »** (mode auto), qui deviendra le **défaut**.
+- En 2 temps : (1) au début, Milo **déduit** le ton de ce qu'il sait déjà (niveau,
+  réponses ADN sportif) ; (2) plus tard, le « j'ai remarqué que tu préfères… je
+  continue ? » = la **brique « observations validées »** du Dossier.
+- → Rien de perdu dans la brique 0 : elle devient la base « manuelle » ; l'auto
+  se pose par-dessus quand la mémoire (ADN sportif + Dossier) sera là.
+
 ---
 
 ## 🔜 Prochaines briques prévues (rappel, ordre indicatif)
