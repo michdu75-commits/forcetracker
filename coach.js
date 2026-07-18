@@ -516,11 +516,16 @@ function _coachGapText() {
   else                    g = 'il y a un moment (plus d\'un mois)';
   return '\n- VOTRE DERNIER ÉCHANGE remonte à ' + g + '. Rends-toi compte de ce délai : accueille la personne en fonction (ex. « content de te revoir », « alors, cette séance d\'hier ? », « ça faisait un moment ! ») — naturellement, sans en faire trop, et NE fais PAS comme si la conversation venait de s\'interrompre il y a 5 min.';
 }
-// ─── LE GARDIEN (Dossier Athlète, brique 6A) ─────────────────────────────────
+// ─── LE GARDIEN (Dossier Athlète, briques 6A + 6B) ───────────────────────────
 // Produit des RÈGLES DE SÉCURITÉ explicites, collées EN TÊTE du briefing de Milo,
-// à partir de ce qu'on sait DÉJÀ (blessures structurées + zones fragiles ADN +
+// à partir de ce qu'on sait DÉJÀ (blessures structurées + zones fragiles Santé +
 // conditions santé). Philosophie « ADAPTER, pas interdire » (Constitution v1.3,
 // Principe 13). Silencieux si rien de pertinent (rétrocompatible).
+// 6B = « le Gardien précis » : au lieu de fiches par exercice (255 = usine à gaz),
+// on décrit les CONTRAINTES DU MOUVEMENT (sollicitations articulaires), déduites du
+// NOM. Le Gardien nomme alors des exemples à alléger/mettre de côté + une alternative,
+// et signale les exercices de la SÉANCE DU JOUR qui sollicitent une zone fragile.
+// (Terme neutre « sollicite », pas « à risque » — le Gardien ne juge pas un exo bon/mauvais.)
 const _GARDIEN_ZONE={
   epaule:"protège l'épaule — évite le développé au-dessus de la tête et le développé couché LOURDS, réduis l'amplitude, privilégie prises neutres/haltères, échauffe la coiffe des rotateurs",
   genou:"protège le genou — évite squats/fentes PROFONDS lourds et les sauts, privilégie presse/leg curl/extension à amplitude contrôlée SANS douleur",
@@ -539,6 +544,18 @@ const _GARDIEN_COND={
   osteo:"ostéoporose — évite les chocs et les charges maximales, privilégie un renforcement progressif et contrôlé",
   migraine:"migraines — évite les efforts très intenses en apnée/Valsalva, hydrate-toi bien"
 };
+// 6B — CONTRAINTES DU MOUVEMENT (sollicitations articulaires), déduites du nom de l'exercice.
+// Chaque contrainte : zones sollicitées · libellé · regex (nom normalisé) · exemples à alléger · alternative plus douce.
+const _GARDIEN_ZLABEL={epaule:'épaule',genou:'genou',lombaires:'bas du dos (lombaires)',dorsaux:'haut du dos',cervicales:'cou/cervicales',coude:'coude',poignet:'poignet',hanche:'hanche',cheville:'cheville'};
+const _GARDIEN_CONSTRAINTS=[
+  {zones:['epaule','cervicales'],sollicite:'les mouvements au-dessus de la tête',rx:/militaire|overhead|nuque|arnold|au.?dessus|elevation frontale|developpe epaule|epaules? (halter|barre)|thruster|landmine press|pike|hand ?stand/,avoid:'développé militaire/nuque, développé épaules debout, élévations très hautes',alt:'développé épaules à la machine ou assis avec dossier, élévations latérales sous la ligne de l\'épaule'},
+  {zones:['lombaires'],sollicite:'la charge sur la colonne (flexion/compression du dos)',rx:/souleve de terre|deadlift|good morning|squat|rowing barre|rowing penche|pendlay|t.?bar|clean|arrache|epaule.?jete|zercher|front squat|hack|bent.?over/,avoid:'soulevé de terre lourd, good morning, squat barre lourd, rowing penché',alt:'rowing poitrine soutenue/machine, tirage machine, hip thrust, gainage'},
+  {zones:['genou'],sollicite:'la flexion profonde du genou',rx:/squat|fente|presse|hack|pistol|sissy|bulgare|montee|step.?up|lunge|cossack|leg extension/,avoid:'squats et fentes profonds lourds, hack squat profond',alt:'presse à amplitude contrôlée, leg curl et leg extension légers'},
+  {zones:['poignet','coude'],sollicite:'les prises lourdes (grip)',rx:/farmer|souleve de terre|deadlift|traction|shrug|rack pull|dead.?hang|pull.?up/,avoid:'soulevé de terre, farmer\'s walk, tractions lestées',alt:'sangles de tirage, machines guidées'},
+  {zones:['genou','cheville'],sollicite:'les impacts et les sauts',rx:/saut|jump|box|pliometrie|sprint|burpee|corde a sauter|sled|skipping|hyrox/,avoid:'sauts, box jumps, pliométrie, sprint',alt:'vélo, marche rapide, elliptique (faible impact)'},
+  {zones:['coude'],sollicite:'les curls et extensions du bras',rx:/curl|extension triceps|barre au front|dips|skull|pushdown|kickback|magic/,avoid:'curls et extensions triceps lourds, dips lestés',alt:'volume réduit, machines, tempo contrôlé'}
+];
+function _gzNaz(s){return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
 function _gardienZoneKey(code){
   code=code||'';
   if(/epaule/.test(code))return 'epaule';
@@ -584,13 +601,32 @@ function _gardienRules(){
     zoneKeys.forEach(k=>{
       const rule=_GARDIEN_ZONE[k]; if(!rule)return;
       const tag=zones[k].active?' [ACTIVE — protège fortement]':(zones[k].durable&&!zones[k].injury?' [zone fragile durable]':'');
-      lines.push('• '+rule+tag);
+      // 6B — enrichissement : sollicitations du mouvement + exemples à alléger + alternative
+      const cons=_GARDIEN_CONSTRAINTS.filter(c=>c.zones.indexOf(k)>=0);
+      let extra='';
+      if(cons.length){
+        const soll=cons.map(c=>c.sollicite).join(', ');
+        const avoid=cons.map(c=>c.avoid).join(' ; ');
+        const alt=cons.map(c=>c.alt).join(' ; ');
+        extra=' → sollicitée par '+soll+'. Allège ou mets de côté (surtout LOURD) : '+avoid+'. Alternatives plus douces (même travail) : '+alt+'.';
+      }
+      lines.push('• '+rule+tag+extra);
     });
     conds.forEach(c=>lines.push('• '+_GARDIEN_COND[c]));
+    // 6B — signale les exercices de la SÉANCE EN COURS qui sollicitent une zone fragile (précis + contextuel)
+    let todayNote='';
+    try{
+      const wkt=((S.wkt&&S.wkt.exs)||[]).map(e=>e&&e.name).filter(Boolean);
+      const flagged={}; // zone -> Set(noms)
+      wkt.forEach(name=>{const nz=_gzNaz(name);_GARDIEN_CONSTRAINTS.forEach(c=>{if(c.rx.test(nz))c.zones.forEach(z=>{if(zones[z]){(flagged[z]=flagged[z]||[]);if(flagged[z].indexOf(name)<0)flagged[z].push(name);}});});});
+      const parts=Object.keys(flagged).map(z=>flagged[z].join(', ')+' → sollicite ton '+(_GARDIEN_ZLABEL[z]||z));
+      if(parts.length)todayNote='⚠️ DANS SA SÉANCE DU JOUR : '+parts.join(' · ')+'. Propose d\'ALLÉGER la charge/réduire l\'amplitude, ou une alternative plus douce — sans lui interdire la séance.\n';
+    }catch(e){}
     return '🛡️ RÈGLES DU GARDIEN — SÉCURITÉ, PRIORITÉ ABSOLUE (à prendre en compte AVANT tout le reste) :\n'
-      +'Principe : ADAPTER, jamais interdire bêtement. Ta 1re question est « comment lui permettre de continuer de la manière la plus SÛRE et la plus adaptée ? ». Cherche TOUJOURS l\'adaptation la MOINS restrictive qui permet de continuer à progresser en sécurité (charge, amplitude, choix d\'exercice, alternative, tempo, repos, protéger la zone en poursuivant le reste). Tiens compte de ce que la personne veut faire AUJOURD\'HUI (performance, entretien, reprise après une pause, simple activité/défoulement) — la bonne adaptation en dépend. L\'arrêt total est l\'EXCEPTION, jamais le réflexe.\n'
-      +'Ces repères de prudence sont CONTEXTUELS (à ajuster à son ressenti et à sa situation), PAS des interdictions rigides.\n'
+      +'Principe : ADAPTER, jamais interdire bêtement. Ta 1re question est « comment lui permettre de continuer de la manière la plus SÛRE et la plus adaptée ? ». Cherche TOUJOURS l\'adaptation la MOINS restrictive qui permet de continuer à progresser en sécurité (charge, amplitude, choix d\'exercice, alternative, tempo, repos, protéger la zone en poursuivant le reste). La plupart de ces sollicitations ne posent problème qu\'à CHARGE LOURDE — ton PREMIER réflexe est de réduire la charge/les reps avant de changer d\'exercice. Tiens compte de ce que la personne veut faire AUJOURD\'HUI (performance, entretien, reprise, défoulement). L\'arrêt total est l\'EXCEPTION.\n'
+      +'Tu ne juges jamais un exercice « bon » ou « mauvais » — tu regardes seulement ce qu\'il SOLLICITE et si c\'est adapté à cette personne aujourd\'hui. Ces repères sont CONTEXTUELS, pas des interdictions rigides.\n'
       +lines.join('\n')+'\n'
+      +todayNote
       +'⚠️ Ces points sont DURABLES (≠ une douleur passagère du jour). Devant une douleur du jour FORTE, aiguë ou inhabituelle : conseille le repos et un professionnel de santé (tu ne poses jamais de diagnostic). Propose TOUJOURS une alternative pour progresser sur le reste du corps.\n\n';
   }catch(e){console.warn('[FT gardien]',e);return '';}
 }

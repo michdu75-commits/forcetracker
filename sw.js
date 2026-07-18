@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v469'; // Separation ADN/Sante : les « zones fragiles » quittent l'ADN sportif (4 champs) pour le Profil Sante (une seule source de verite). Le Gardien lit la Sante (blessures structurees + notes + conditions). Migration _migrateFragileToHealth (fragile -> notes Sante) au load + a la restauration cloud (rien perdu).
+const CACHE = 'ft-v470'; // Gardien 6B (precis) : contraintes du mouvement (sollicitations articulaires) deduites du nom -> le Gardien nomme des exos a alleger + une alternative, et signale les exos de la SEANCE DU JOUR qui sollicitent une zone fragile. Intensite (charge lourde d'abord). Terme neutre « sollicite ». Adapter pas interdire.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

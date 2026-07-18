@@ -6,20 +6,22 @@
 
 ---
 
-- **Version en prod :** `ft-v469`
+- **Version en prod :** `ft-v470`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
-- **Dernier point de sauvegarde :** `backup-2026-07-19-avant-adn-sante-sep`
+- **Dernier point de sauvegarde :** `backup-2026-07-19-avant-gardien6b`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).
-- **Brique en cours :** **Brique 6A — LE GARDIEN** livrée en `ft-v468`, **EN
-  ATTENTE de la validation Michel (4 axes)**. `_gardienRules()` pose des règles
-  de sécurité (« adapter, pas interdire ») en tête du briefing de Milo, à partir
-  des blessures/zones fragiles ADN/conditions santé. **5A aussi en attente** de
-  validation réelle (Michel : « tkt pour le réel »). Briques 0–4A CLÔTURÉES ;
-  Constitution v1.3. **Ensuite : 6B** (fiche exercice structurée → Gardien précis)
-  ou 5B (observations IA).
+- **Brique en cours :** **Gardien 6A + 6B** livrés (`ft-v468` / `ft-v470`), **EN
+  ATTENTE de la validation Michel (4 axes)**. 6A = règles de sécurité par zone en
+  tête du briefing de Milo (« adapter, pas interdire », à partir de la Santé).
+  6B = **le Gardien précis** : contraintes du mouvement (sollicitations) déduites
+  du nom → il nomme des exos à alléger + une alternative, et **signale les exos de
+  la séance en cours** qui sollicitent une zone fragile. **5A aussi en attente**
+  de validation réelle. Briques 0–4A CLÔTURÉES ; Constitution v1.3 ; **Vision**
+  gravée. **Ensuite : bilan des briques** (demandé par Michel), puis **3B**
+  (état du jour structuré) ou **5B** (observations IA).
 
 - **Dernières décisions validées :**
   - Ton de Milo : « Laisse Milo choisir » (auto) par défaut, manuel = secours.

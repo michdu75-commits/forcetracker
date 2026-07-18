@@ -52,6 +52,7 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | `backup-2026-07-19-avant-brique5a` | **AVANT** la brique 5A (état = fin 4A + Constitution v1.3) | `git reset --hard origin/backup-2026-07-19-avant-brique5a` |
 | `backup-2026-07-19-avant-gardien6a` | **AVANT** le Gardien 6A (état = 5A + points rouges simplifiés) | `git reset --hard origin/backup-2026-07-19-avant-gardien6a` |
 | `backup-2026-07-19-avant-adn-sante-sep` | **AVANT** la séparation ADN/Santé (état = Gardien 6A) | `git reset --hard origin/backup-2026-07-19-avant-adn-sante-sep` |
+| `backup-2026-07-19-avant-gardien6b` | **AVANT** le Gardien 6B précis (état = séparation ADN/Santé) | `git reset --hard origin/backup-2026-07-19-avant-gardien6b` |
 
 ---
 
@@ -476,6 +477,48 @@ lombaires depuis l'ADN OK ; 0 erreur JS.
 - Testé Playwright (migration local + cloud, Gardien depuis notes Santé, ADN 4
   champs, contexte propre, 0 erreur JS).
 - **Rollback :** `git reset --hard origin/backup-2026-07-19-avant-adn-sante-sep`
+
+---
+
+## 🛡️ Brique 6B — LE GARDIEN PRÉCIS · `ft-v470` · 19/07/2026 · ⏳ EN ATTENTE VALIDATION MICHEL
+
+> Cadrage validé (ChatGPT + Claude). Approche « catégories de mouvement » plutôt
+> que 255 fiches à la main. *« Le Gardien ne se demande pas si un exercice est bon
+> ou mauvais, mais s'il est adapté à cette personne, aujourd'hui. »* (ChatGPT)
+
+**Ce qui a été fait.** Le Gardien passe de « par zone » à « **par exercice** » :
+- **`_GARDIEN_CONSTRAINTS`** (coach.js) = table des **contraintes du mouvement**
+  (sollicitations articulaires) déduites du NOM : au-dessus de la tête · charge
+  sur la colonne · flexion profonde du genou · grip lourd · impact/sauts ·
+  curls/extensions du bras. Chaque contrainte → zones sollicitées + exemples à
+  **alléger** + une **alternative plus douce**.
+- **Par zone fragile**, le Gardien ajoute : « → sollicitée par … ; allège/mets de
+  côté (surtout LOURD) : … ; alternatives plus douces : … ».
+- **Séance du jour** : le Gardien scanne `S.wkt.exs` et **nomme les exercices en
+  cours** qui sollicitent une zone fragile (« Développé Militaire → sollicite ton
+  épaule »), en proposant d'alléger ou une alternative — sans interdire.
+
+**Réglages retenus (retour ChatGPT) :**
+- **Point 3 (terme neutre)** ✅ : « **sollicite** » / « contraintes du mouvement »,
+  jamais « à risque » — le Gardien ne juge pas un exo bon/mauvais.
+- **Point 1 (intensité)** ✅ léger : « la plupart de ces sollicitations ne posent
+  problème qu'à **CHARGE LOURDE** → réduire la charge/les reps AVANT de changer
+  d'exercice » (levier le moins restrictif).
+- **Point 2 (état du jour)** ⏳ **reporté au 3B** (capture structurée de l'état du
+  jour) — déjà géré en partie par la conversation ; on garde la 6B simple.
+
+**Rétrocompatible** : aucune zone fragile / condition → Gardien silencieux.
+
+**Fichiers** : `coach.js` (`_GARDIEN_CONSTRAINTS`/`_GARDIEN_ZLABEL`/`_gzNaz` +
+`_gardienRules` enrichi), `sw.js` (ft-v470). *Nouveauté : couverte par le pop-up
+v19 « Milo veille sur ta sécurité » (6B = même feature, plus précise) — pas de
+nouveau pop-up.*
+
+**Tests Playwright** : durable → sollicitations + exemples à alléger + alternative
++ intensité + « ne juge pas » ; séance en cours → exos du jour nommés (Militaire→
+épaule, Squat→genou), Curl non signalé ; rien → silencieux ; 0 erreur JS.
+
+**Rollback :** `git reset --hard origin/backup-2026-07-19-avant-gardien6b`
 
 ---
 
