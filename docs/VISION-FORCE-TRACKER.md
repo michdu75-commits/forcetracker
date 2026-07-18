@@ -103,6 +103,48 @@ terme. Voir `docs/GALERES-ET-LECONS.md` (§ « Ce qui pourrait manquer »).
 
 ---
 
+## La destination — l'architecture en 8 briques
+
+*(Cadrage proposé par ChatGPT, validé le 19/07/2026. C'est la **colonne
+vertébrale** du produit : la vraie carte. Tout le reste — 5B, « Milo construit ta
+séance »… — sont des **affinages À L'INTÉRIEUR** de ces briques, pas de nouvelles
+grandes briques.)*
+
+Force Tracker se construit en **8 grandes briques**. Les six premières bâtissent
+la **machinerie** ; les deux dernières sont **la finalité** — ce à quoi toute
+cette machinerie sert.
+
+| # | Brique | Rôle |
+|---|---|---|
+| 0 | **Personnalité de Milo** | le ton, la présence |
+| 1 | **Mémoire de l'athlète** | le Registre (socle durable) |
+| 2 | **Cerveau (contexte)** | les faits mesurés injectés dans Milo |
+| 3 | **État du jour** | énergie / douleur ponctuelle |
+| 4 | **ADN sportif** | le portrait durable déclaré |
+| 5 | **Observations intelligentes** | Milo propose → la personne valide |
+| 6 | **Le Gardien** | sécurité : adapter, pas interdire |
+| **7** | **🎯 Mémoire vivante** | **relier les événements dans le temps, dégager des tendances sur plusieurs années** |
+| **8** | **🎯 Synthèse** | **aider le sportif à prendre du recul sur toute son histoire** |
+
+**Pourquoi 7 et 8 sont la destination.** Les briques 0→6 font en sorte que Milo
+*connaisse* la personne. Les briques 7 et 8, c'est là que la promesse se réalise :
+*« il se souvient de qui tu es devenu »*, *« le sportif ne repart jamais de zéro »*
+— à l'échelle de **toute une vie sportive**.
+
+**Deux garde-fous, gravés avec elles :**
+
+1. **Miroir, jamais prophète.** Sur des années de données, le danger serait de
+   glisser vers « l'IA qui prédit / qui te dit qui devenir » → cela **trahirait la
+   Vision**. Les briques 7 et 8 **décrivent et aident à réfléchir**, elles ne
+   prescrivent jamais. La personne tire ses propres conclusions (la même humilité
+   que les Observations, mais à l'échelle d'une histoire).
+2. **Dernières par nécessité, pas par choix.** Elles ont besoin de **temps + de
+   données accumulées** pour exister — sans historique, elles sont vides. Elles ne
+   *peuvent pas* venir avant. C'est la preuve du « **cerveau d'abord** » — et ce
+   qui rend indispensable, à terme, une **vraie base de données** (voir ci-dessus).
+
+---
+
 ## Où cette vision se construit déjà (ce n'est pas un rêve lointain)
 
 | L'esprit dit… | Ce qui est déjà bâti |

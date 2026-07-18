@@ -42,6 +42,13 @@
   - Méthode de documentation : CLAUDE.md = page d'accueil, détails dans `/docs/`.
   - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
     présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.
+  - **La DESTINATION = architecture en 8 briques** (cadrage ChatGPT, gravé dans la
+    Vision) : 0 Personnalité · 1 Mémoire · 2 Cerveau · 3 État du jour · 4 ADN ·
+    5 Observations · 6 Gardien · **7 Mémoire vivante** (tendances sur plusieurs
+    années) · **8 Synthèse** (prendre du recul sur toute son histoire). **7 et 8 =
+    la finalité** (miroir jamais prophète ; dernières par nécessité — besoin de
+    temps + données). Tout le reste (5B, « Milo construit ta séance »…) = affinages
+    À L'INTÉRIEUR des briques, pas de nouvelles grandes briques.
 
 - **Prochaine étape :** Michel teste en réel les briques encore en attente
   (**5A / 6A / 6B**) → validation 4 axes → clôtures. Ensuite **5B** (observations

@@ -24,6 +24,28 @@ On sépare le cerveau de Milo en **couches** qui ont chacune un rôle :
 **Principe : le Gardien protège, Milo accompagne.**
 On avance **une brique à la fois, testée**, sans jamais casser l'existant.
 
+**🧭 La colonne vertébrale — 8 briques (cadrage ChatGPT, gravé 19/07 dans la Vision).**
+C'est LA carte du produit. Les six premières bâtissent la machinerie, **les deux
+dernières sont la finalité** :
+
+| # | Brique | Statut |
+|---|---|---|
+| 0 | Personnalité de Milo | ✅ clôturée |
+| 1 | Mémoire de l'athlète (Registre) | ✅ clôturée |
+| 2 | Cerveau (contexte / faits) | ✅ clôturée |
+| 3 | État du jour (3A + 3B) | ✅ clôturée |
+| 4 | ADN sportif (4A) | ✅ clôturée |
+| 5 | Observations intelligentes (5A) | ⏳ à valider · 5B à venir |
+| 6 | Le Gardien (6A + 6B) | ⏳ à valider |
+| **7** | **🎯 Mémoire vivante** — relier les événements sur plusieurs années | 🔮 destination |
+| **8** | **🎯 Synthèse** — prendre du recul sur toute son histoire sportive | 🔮 destination |
+
+⚠️ **7 et 8 = miroir, jamais prophète** (décrire/aider à réfléchir, jamais
+prescrire — sinon on trahit la Vision) ; **dernières par nécessité** (besoin de
+temps + données accumulées → cerveau d'abord, puis une vraie base de données).
+Tout ce qui est « en cours » (5B, « Milo construit ta séance »…) = **affinages À
+L'INTÉRIEUR** d'une brique, PAS de nouvelles grandes briques.
+
 **📏 Méthode par brique (adoptée 19/07, suggestion ChatGPT — anti « puisqu'on y est ») :**
 chaque brique est décrite AVANT de coder avec **3 sections** :
 - **Objectif** : ce que la brique apporte, en une phrase.
