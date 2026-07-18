@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v458'; // Ton de Milo : mode « Laisse Milo choisir » (auto) devient le DÉFAUT ; les 4 tons deviennent des overrides manuels. Milo choisit le ton adapté d'après ce qu'il sait de la personne.
+const CACHE = 'ft-v459'; // Dossier Athlete brique 1 : socle « Registre Athlete » (S.registre) — memoire durable persistee (local + cloud) et injectee dans le briefing de Milo. Vide pour l'instant (facts/observations aux briques 2 et 5).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -24,6 +24,13 @@ On sépare le cerveau de Milo en **couches** qui ont chacune un rôle :
 **Principe : le Gardien protège, Milo accompagne.**
 On avance **une brique à la fois, testée**, sans jamais casser l'existant.
 
+**📏 Méthode par brique (adoptée 19/07, suggestion ChatGPT — anti « puisqu'on y est ») :**
+chaque brique est décrite AVANT de coder avec **3 sections** :
+- **Objectif** : ce que la brique apporte, en une phrase.
+- **Critère de réussite** : comment on sait qu'elle est finie et validée.
+- **Hors périmètre** : ce qui NE doit PAS être fait dans cette brique.
+Puis : une branche/commit + un backup + des tests + validation → seulement ensuite la suivante.
+
 Documents de réflexion liés (dans la boîte à idées / échangés avec ChatGPT) :
 avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 
@@ -79,6 +86,37 @@ un ton imposé = retour à l'auto. Les utilisateurs existants (`coachTone` vide)
 sont traités comme « auto » → aucun réglage à faire. **Version 1 de l'auto =
 Milo déduit** ; le « j'ai remarqué que tu préfères… » (proposition validée)
 viendra avec la brique mémoire. **Rollback :** `git reset --hard 05a08a6`
+
+---
+
+### Brique 1 — Le Registre Athlète (le socle) · `ft-v459` · 19/07/2026
+*(Nom retenu : « Registre Athlète » — mémoire officielle, fiable, évolutive, suggestion ChatGPT.)*
+
+**Objectif :** créer une mémoire durable que Milo peut consulter (sauvegardée sur
+le téléphone + le compte, et injectée dans son briefing).
+
+**Critère de réussite :** une info écrite dans le Registre aujourd'hui est
+**retrouvée** à la prochaine session (persistée, restaurée) **et visible par
+Milo**. → ✅ **Vérifié (Playwright)** : registre vide = rien d'injecté ; info
+écrite = apparaît dans le contexte ; après rechargement = retrouvée + visible ;
+0 erreur JS.
+
+**Hors périmètre (respecté) :** ❌ faits calculés automatiquement (brique 2) ·
+❌ observations de Milo (brique 5) · ❌ Gardien · ❌ historique intelligent ·
+❌ écran utilisateur. **Juste le tiroir + la persistance + l'injection.**
+
+**Explication (comment ça marche) :**
+- `S.registre = { facts:{}, observations:[], updatedAt:'' }` (`ft4_registre`),
+  **vide pour l'instant** (les `facts` viendront à la brique 2, les
+  `observations` à la brique 5).
+- Persistance : localStorage + payload `_cloudSync` + restore `_applyRestoreData`
+  + `Code.js` `handleSaveProfile_` (`_po_`, auto-déployé).
+- Injection dans `buildCoachContext` (coach.js) : une section **« REGISTRE
+  ATHLÈTE »** listée à Milo **UNIQUEMENT si elle contient quelque chose** →
+  aucun bruit tant que c'est vide (donc **aucun changement visible** pour
+  l'instant, normal : c'est un socle).
+
+**Rollback :** `git reset --hard 05a08a6`
 
 ---
 

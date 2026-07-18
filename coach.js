@@ -693,6 +693,15 @@ ${(()=>{
   return '\n📐 ÉTUDE DU CORPS DE L\'UTILISATEUR — tu AS ce bilan (résumé texte de ses photos, réalisé le '+(bs.date||'?')+'). Tu DOIS t\'en servir pour cibler ses déséquilibres et proposer des exercices correctifs. NE DIS JAMAIS que tu n\'as pas accès à son bilan ni à ses photos : tu en as le résumé complet ci-dessous.\n- '+L.join('\n- ');
 })()}
 ${_coachQuizContext()}
+${(()=>{
+  // REGISTRE ATHLÈTE (Dossier Athlète, brique 1 = socle) — mémoire durable.
+  // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.
+  const r=S.registre;if(!r)return '';
+  const facts=(r.facts&&Object.keys(r.facts).length)?Object.entries(r.facts).map(([k,v])=>`- ${k}: ${(v&&v.value!==undefined)?v.value:v}`).join('\n'):'';
+  const obs=(r.observations||[]).filter(o=>o&&o.text).map(o=>`- ${o.text}${o.confidence?` (confiance: ${o.confidence})`:''}`).join('\n');
+  if(!facts&&!obs)return '';
+  return '\nREGISTRE ATHLÈTE (ce que tu as mémorisé sur cette personne au fil du temps — appuie-toi dessus, ne le contredis pas sans raison):\n'+[facts,obs].filter(Boolean).join('\n')+'\n';
+})()}
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}
 

@@ -257,7 +257,7 @@ function _cloudSync(){
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
       action:'saveProfile',email:S.email,authCode:_authCode(),
-      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',
+      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
@@ -1840,6 +1840,7 @@ function _applyRestoreData(raw){
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
   try{if(d.coachTone!==undefined)S.coachTone=d.coachTone;}catch(e){console.warn('[FT restore] coachTone',e);}
+  try{if(d.registre&&(Object.keys(d.registre.facts||{}).length||(d.registre.observations||[]).length))S.registre=d.registre;}catch(e){console.warn('[FT restore] registre',e);}
   try{if(d.level)S.level=d.level;}catch(e){}
   try{if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;}catch(e){console.warn('[FT restore] activityLevel',e);}
   try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
