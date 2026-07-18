@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v473'; // Gene du jour (3B) : SEPARE energie et douleur (retour ChatGPT). L'energie ajuste le score en douceur (readiness) ; une DOULEUR ne touche PLUS le chiffre -> bandeau contextuel ⚠️ sous le score (echauffe-toi/adapte, tu peux t'entrainer). Adapter, pas interdire.
+const CACHE = 'ft-v474'; // Pop-up testeurs (une seule fois) pour annoncer l'etat du jour (3B) et demander un retour : carte Accueil energie+douleur, la douleur ne baisse pas le score (bandeau ⚠️), Milo protege la zone. Reserve aux testeurs (_isTester), flag ft4_tester_3b_v1.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

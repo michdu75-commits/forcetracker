@@ -1297,6 +1297,23 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
   </div>
 </div>
 
+<!-- Pop testeurs : état du jour (brique 3B) — informer + demander un retour (une seule fois) -->
+<div class="overlay" id="ov-tester-3b" style="z-index:500;">
+  <div class="modal" style="max-width:410px;text-align:center;">
+    <div style="display:inline-block;background:rgba(255,45,85,.14);color:var(--red);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;border-radius:20px;">🧪 Test testeurs</div>
+    <div style="font-size:28px;margin-top:14px;">🌡️</div>
+    <div style="font-size:21px;font-weight:900;color:var(--t1);margin-top:6px;">Comment tu te sens aujourd'hui ?</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:10px;">Tout en haut de l'écran <b style="color:var(--t1);">Accueil</b>, une nouvelle carte : tape ton <b style="color:var(--t1);">énergie du jour</b> (😴 → ⚡) et coche une <b style="color:var(--t1);">zone qui te fait mal</b> aujourd'hui (dos, épaule, genou…).</div>
+    <div style="font-size:13.5px;line-height:1.6;color:var(--t2);margin-top:14px;background:var(--bg3);border-radius:12px;padding:12px 14px;text-align:left;">
+      <b style="color:var(--t1);">Ce qu'on aimerait que tu vérifies :</b><br>
+      • Si tu coches une <b style="color:var(--t1);">douleur</b>, ton score de récup <b style="color:var(--t1);">ne chute pas</b> — il affiche juste un ⚠️ « échauffe-toi bien, tu peux t'entraîner ».<br>
+      • <b style="color:var(--t1);">Milo</b> voit ce que tu coches : demande-lui un conseil et regarde s'il <b style="color:var(--t1);">protège bien la zone</b> signalée.
+    </div>
+    <div style="font-size:13px;line-height:1.55;color:var(--t3);margin-top:14px;">💬 Ton avis compte : dis-nous si ça te paraît juste via <b style="color:var(--t2);">Menu → Espace Testeur → Boîte à idées</b> 🙏</div>
+    <button class="btn btn-red" onclick="closeTester3B()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">C'est noté 👍</button>
+  </div>
+</div>
+
 <!-- ESPACE TESTEUR (super testeur) : analyse photos approfondie + boîte à idées -->
 <div class="overlay" id="ov-tester-space" style="z-index:480;" onclick="if(event.target===this)closeTesterSpace()">
   <div class="modal" style="max-width:430px;">

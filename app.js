@@ -2235,6 +2235,7 @@ checkEmmaWelcome(); // pop perso Emma : bienvenue Espace Testeur + boîte à id�
 checkTesterGuide(); // guide testeuses (Eline, Emma, Tanna) : tour de l'app + boîte à idées (une seule fois)
 checkAnnouncements(); // pop perso Christophe + « Quoi de neuf » pour tous (une seule fois)
 checkTesterEq();      // pop testeurs : différenciation des types de matériel (test, une seule fois)
+checkTester3B();      // pop testeurs : état du jour (brique 3B) — informer + demander un retour (une seule fois)
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
 initCoachInput();
 initOnboarding();
@@ -2279,7 +2280,7 @@ function checkTesterGuide(){
 }
 function showTesterGuide(){
   // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
-  var busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-billoute','ov-bday','ov-tester-eq'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  var busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-billoute','ov-bday','ov-tester-eq','ov-tester-3b'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
   if(busy){setTimeout(showTesterGuide,2500);return;}
   var span=document.getElementById('tguide-name');
   if(span){var f=((S.name||'').trim().split(/\s+/)[0]||'').replace(/[<>&]/g,'');span.textContent=f?(', '+f):'';}
@@ -2354,11 +2355,26 @@ function checkTesterEq(){
 }
 function showTesterEq(){
   // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
-  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-billoute','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-billoute','ov-bday','ov-tester-3b'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
   if(busy){setTimeout(showTesterEq,2500);return;}
   const o=document.getElementById('ov-tester-eq');if(o)o.classList.add('open');
 }
 function closeTesterEq(){try{localStorage.setItem('ft4_tester_eq_v1','1');}catch(e){}const o=document.getElementById('ov-tester-eq');if(o)o.classList.remove('open');}
+// ─── Pop testeurs : état du jour (brique 3B) — informer + demander un retour (une seule fois) ──
+function checkTester3B(){
+  try{
+    if(!(typeof _isTester==='function'&&_isTester()))return;       // testeurs récompensés uniquement
+    if(localStorage.getItem('ft4_tester_3b_v1'))return;            // déjà vu
+    setTimeout(showTester3B,1600);
+  }catch(e){}
+}
+function showTester3B(){
+  // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
+  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-tester-eq','ov-billoute','ov-christophe-photos','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  if(busy){setTimeout(showTester3B,2500);return;}
+  const o=document.getElementById('ov-tester-3b');if(o)o.classList.add('open');
+}
+function closeTester3B(){try{localStorage.setItem('ft4_tester_3b_v1','1');}catch(e){}const o=document.getElementById('ov-tester-3b');if(o)o.classList.remove('open');}
 function openTesterSpace(){
   // L'Espace Testeur (dont la boîte à idées) est ouvert à TOUS les testeurs récompensés.
   // Le suivi photos à l'intérieur reste réservé aux super testeurs (voir _renderTesterSpace).
