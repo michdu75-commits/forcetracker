@@ -916,8 +916,12 @@ ${(()=>{
   const facts=(r.facts&&Object.keys(r.facts).length)?Object.entries(r.facts).map(([k,v])=>`- ${(v&&v.label)?v.label:k}: ${(v&&v.value!==undefined)?v.value:v}`).join('\n'):'';
   // Observations : SEULES celles VALIDÉES par l'utilisateur (brique 5A) sont injectées, sous forme de FAIT confirmé (o.fact). La confiance reste interne (jamais montrée à Milo).
   const obs=(r.observations||[]).filter(o=>o&&o.status==='validated').map(o=>`- ${o.fact||o.text||''}`.trim()).filter(s=>s!=='-').join('\n');
-  if(!facts&&!obs)return '';
-  return '\nREGISTRE ATHLÈTE (ce que tu as mémorisé sur cette personne au fil du temps — appuie-toi dessus, ne le contredis pas sans raison):\n'+[facts,obs].filter(Boolean).join('\n')+'\n';
+  // Étape 2 : les derniers débriefs de séance (objectif fixé + décision/pourquoi + tendance) → CONTINUITÉ.
+  const sl=(r.sessionLog||[]).slice(-3);
+  const dbf=sl.length?('\nDERNIERS DÉBRIEFS DE SÉANCE (ce que TOI, Milo, tu as dit/fixé les fois précédentes — sers-t\'en pour la CONTINUITÉ, ex. « la dernière fois je t\'avais demandé… » ; ne le réinvente pas) :\n'
+    +sl.map(x=>`- ${x.date}${x.objectif?' · objectif fixé: '+x.objectif:''}${x.decision?' · ta décision (pourquoi): '+x.decision:''}${x.tendances?' · tendance repérée: '+x.tendances:''}`).join('\n')):'';
+  if(!facts&&!obs&&!dbf)return '';
+  return '\nREGISTRE ATHLÈTE (ce que tu as mémorisé sur cette personne au fil du temps — appuie-toi dessus, ne le contredis pas sans raison):\n'+[facts,obs].filter(Boolean).join('\n')+dbf+'\n';
 })()}
 ${(()=>{
   // ADN SPORTIF (Dossier Athlète, brique 4A) — portrait durable DÉCLARÉ par l'utilisateur. Injecté seulement si rempli.
@@ -1029,6 +1033,48 @@ MÉTHODE DE COACHING (très important) :
 Utilise ces données pour personnaliser tes réponses et t'adapter à la personne en face. Reste toi-même : ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, franc et pratique, mais calibré sur son niveau et son état du jour.`;
 }
 
+// ─── MÉMOIRE DURABLE DU DÉBRIEF (Dossier Athlète, Étape 2) ────────────────
+// Le débrief de Milo se termine par un petit bloc technique CACHÉ (```json {objectif,
+// decision, tendances, ressenti}```) — jamais affiché (retiré par _stripCoachTech).
+// On le PARSE et on l'écrit dans le Registre (S.registre.sessionLog) → mémoire durable,
+// une seule mémoire (pas de silo), qui prépare l'Étape 3 (« objectif tenu ? »).
+// Consigne ajoutée aux 2 débriefs (écran de fin + ouverture Coach) : le bloc caché à parser.
+const _DEBRIEF_MEM_TAIL = '\n\nÀ LA TOUTE FIN de ta réponse, ajoute un bloc technique CACHÉ (l\'utilisateur ne le verra pas — il est retiré de l\'affichage), au format EXACT et rien après :\n```json\n{"objectif":"…","decision":"…","tendances":"…","ressenti":"…"}\n```\n- objectif = ce que tu veux que je vise la PROCHAINE fois (court, concret).\n- decision = ta reco principale / le POURQUOI (ex. « garder la charge », « +2,5 kg », « +1 rép », « augmenter le repos », « surveiller l\'épaule », « réduire l\'intensité »).\n- tendances = ce que tu as repéré (progression / stabilité / point d\'attention).\n- ressenti = mon état si tu le perçois (sinon "").\nChaque champ court (une phrase max).';
+function _parseDebriefMemory(reply){
+  try{
+    const s = String(reply||'');
+    let m = s.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);      // bloc ```json {...}```
+    let jstr = m ? m[1] : null;
+    if(!jstr){ const m2 = s.match(/\{[^{}]*"objectif"[\s\S]*?\}/i); jstr = m2 ? m2[0] : null; } // repli : objet nu contenant "objectif"
+    if(!jstr) return null;
+    const o = JSON.parse(jstr);
+    if(!o || typeof o!=='object') return null;
+    const pick = k => (o[k]!=null ? String(o[k]).replace(/\s+/g,' ').trim().slice(0,300) : '');
+    const e = { objectif:pick('objectif'), decision:pick('decision'), tendances:pick('tendances'), ressenti:pick('ressenti') };
+    if(!e.objectif && !e.decision) return null; // rien d'exploitable
+    return e;
+  }catch(err){ return null; }
+}
+function _recordDebriefMemory(reply, sess){
+  try{
+    const e = _parseDebriefMemory(reply);
+    if(!e) return false;
+    if(!S.registre) S.registre = {facts:{},observations:[],updatedAt:''};
+    if(!Array.isArray(S.registre.sessionLog)) S.registre.sessionLog = [];
+    const sid = sess ? (sess.id||sess.ts||sess.date||null) : null;
+    if(sid && S.registre.sessionLog.some(x=>x && x.sessId===sid)) return false; // dédup : 1 entrée par séance
+    S.registre.sessionLog.push({
+      date: (sess&&sess.date) || (typeof today==='function'?today():new Date().toISOString().slice(0,10)),
+      sessId: sid,
+      objectif: e.objectif, decision: e.decision, tendances: e.tendances, ressenti: e.ressenti,
+      ts: Date.now()
+    });
+    if(S.registre.sessionLog.length>40) S.registre.sessionLog = S.registre.sessionLog.slice(-40);
+    S.registre.updatedAt = (typeof today==='function')?today():'';
+    if(typeof persist==='function') persist(); // local + cloud (le Registre voyage déjà)
+    return true;
+  }catch(err){ console.warn('[FT debrief mem]', err); return false; }
+}
 // Retire tout bloc technique (JSON de programme, blocs de code ```…```) — Milo ne doit JAMAIS montrer de JSON.
 function _stripCoachTech(text){
   let t = String(text||'');
@@ -1330,6 +1376,8 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     }
     renderCoachMsg('coach', _disp);
     if (_fp) _appendSaveProgBtn(_fp);
+    // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
+    if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
     coachHistory.push({ role: 'assistant', content: reply });
     if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
@@ -1386,8 +1434,9 @@ async function _maybeAutoDebrief(){
     +'signale un éventuel record ou une progression vs les fois précédentes, et propose UNE piste pour la prochaine fois. '
     +'⚠️ Cette piste doit aller dans le sens de MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
     +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
-    +'reflète ce que tu observes et demande-moi ma priorité. Court, direct, motivant. Ne me redemande JAMAIS mes charges.';
-  const ok = await sendToCoach(instr, null, {silent:true, noQuota:true});
+    +'reflète ce que tu observes et demande-moi ma priorité. Court, direct, motivant. Ne me redemande JAMAIS mes charges.'
+    +_DEBRIEF_MEM_TAIL;
+  const ok = await sendToCoach(instr, null, {silent:true, noQuota:true, debriefSess: pid});
   if(!ok){ try{ localStorage.setItem('ft4_pending_debrief', pid); }catch(e){} } // échec réseau → on réarme
 }
 

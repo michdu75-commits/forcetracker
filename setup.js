@@ -1862,7 +1862,7 @@ function _applyRestoreData(raw){
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
   try{if(d.coachTone!==undefined)S.coachTone=d.coachTone;}catch(e){console.warn('[FT restore] coachTone',e);}
-  try{if(d.registre&&(Object.keys(d.registre.facts||{}).length||(d.registre.observations||[]).length))S.registre=d.registre;}catch(e){console.warn('[FT restore] registre',e);}
+  try{if(d.registre&&(Object.keys(d.registre.facts||{}).length||(d.registre.observations||[]).length||(d.registre.sessionLog||[]).length))S.registre=d.registre;}catch(e){console.warn('[FT restore] registre',e);}
   try{if(d.adn&&typeof d.adn==='object'){S.adn=S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};['motivation','lifestyle','preferences','experience'].forEach(k=>{if(d.adn[k]&&!(S.adn[k]||'').trim())S.adn[k]=d.adn[k];});}}catch(e){console.warn('[FT restore] adn',e);}
   try{if(d.level)S.level=d.level;}catch(e){}
   try{if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;}catch(e){console.warn('[FT restore] activityLevel',e);}

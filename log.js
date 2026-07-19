@@ -1684,7 +1684,8 @@ async function _runSeDebrief(sess,prCount){
     +'en t\'appuyant sur mes charges par exercice (tu les as), tiens compte d\'une éventuelle douleur du jour, et termine par UNE piste '
     +'pour la prochaine séance. ⚠️ Cette piste doit servir MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
     +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
-    +'reflète ce que tu observes et demande-moi ma priorité. Court (4-6 phrases), direct, motivant. Ne me redemande JAMAIS mes charges.';
+    +'reflète ce que tu observes et demande-moi ma priorité. Court (4-6 phrases), direct, motivant. Ne me redemande JAMAIS mes charges.'
+    +((typeof _DEBRIEF_MEM_TAIL!=='undefined')?_DEBRIEF_MEM_TAIL:'');
   try{
     const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:coachHistory.slice(-8),coachMemory:S.coachMemory||''};
     let resp=null,_err=null;
@@ -1699,6 +1700,8 @@ async function _runSeDebrief(sess,prCount){
     if(!reply)throw new Error('vide');
     const clean=(typeof _stripCoachTech==='function')?_stripCoachTech(reply):reply;
     slot.innerHTML=(typeof _coachFmtHtml==='function')?_coachFmtHtml(clean):('<p>'+clean.replace(/</g,'&lt;')+'</p>');
+    // Étape 2 — mémoire DURABLE : enregistre {objectif, décision, tendances, ressenti} dans le Registre
+    try{ if(typeof _recordDebriefMemory==='function') _recordDebriefMemory(reply, sess); }catch(e){}
     // Mémoire : pousse le débrief dans le fil du Coach (consigne cachée + réponse de Milo)
     try{
       coachHistory.push({role:'user',content:instr,_silent:true});
