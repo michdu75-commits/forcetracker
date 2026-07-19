@@ -49,7 +49,7 @@ const EXLIB=[
   // Épaules + Trapèzes — figurines (lot 2026-07-06)
   {n:'Développé Épaules Kettlebell',g:'Épaules'}, {n:'Développé Landmine (Épaules)',g:'Épaules'}, {n:'Écarté Arrière Élastique',g:'Épaules'}, {n:'Élévation Frontale Allongée Barre',g:'Épaules'}, {n:'Élévation Latérale Poulie Inclinée',g:'Épaules'}, {n:'Élévation Latérale Landmine',g:'Épaules'}, {n:'Élévations Latérales Kettlebell',g:'Épaules'}, {n:'Rotation Interne Épaule Élastique',g:'Épaules'}, {n:'Face Pull Couché Poulie',g:'Épaules'}, {n:'Oiseau Poulie 45°',g:'Épaules'}, {n:'Passage d\'Épaule Élastique',g:'Épaules'}, {n:'Rotation Externe Épaule Abduction',g:'Épaules'}, {n:'Rotation Externe Épaule Élastique',g:'Épaules'}, {n:'Rotation Interne 90° Poulie',g:'Épaules'},
   // Épaules + Trapèzes — figurines 2e partie (lot 2026-07-06)
-  {n:'Élévation Frontale Banc Incliné',g:'Épaules'}, {n:'Élévation Latérale Inclinée Haltère',g:'Épaules'}, {n:'Rotation Externe Épaule Haltère',g:'Épaules'}, {n:'Tirage Menton Élastique',g:'Trapèzes'}, {n:'Thruster',g:'Full Body'}, {n:'Thruster Kettlebell',g:'Full Body'}, {n:'Russian Twist Développé Épaules',g:'Abdominaux'},
+  {n:'Élévation Frontale Banc Incliné',g:'Épaules'}, {n:'Élévation Latérale Inclinée Haltère',g:'Épaules'}, {n:'Rotation Externe Épaule Haltère',g:'Épaules'}, {n:'Tirage Menton Élastique',g:'Trapèzes'}, {n:'Thruster',g:'Full Body'}, {n:'Thruster Kettlebell',g:'Full Body'}, {n:'Russian Twist Développé Épaules',g:'Abdominaux'}, {n:'Développé Épaules Assis Machine (Shoulder Press)',g:'Épaules'},
   // ── Biceps ─────────────────────────────────────────────────
   {n:'Curl Barre',g:'Biceps'},{n:'Curl Haltères',g:'Biceps'},{n:'Curl Poulie',g:'Biceps'},
   {n:'Curl EZ',g:'Biceps'},{n:'Curl Barre EZ Prise Large',g:'Biceps'},

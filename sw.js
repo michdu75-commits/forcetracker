@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v486'; // Fix Coach : la barre « Pose ta question » flottait trop haut (gros vide noir avant la nav). L'ecran Coach reservait 96px alors que la nav ne fait ~74px (+safe-area) -> reserve EXACTEMENT la hauteur de la nav (66px + safe) -> le composeur colle la barre du bas.
+const CACHE = 'ft-v487'; // Nouvel exercice « Developpe Epaules Assis Machine (Shoulder Press) » dans Epaules + figurine (shoulder-press-machine.webp) fournie par Michel.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
@@ -98,6 +98,7 @@ const PRECACHE = [
   './exercises/developpe-epaules-smith-machine.webp','./exercises/elevation-frontale-poulie-basse.webp','./exercises/elevation-frontale-banc-incline.webp',
   './exercises/elevation-laterale-incline-haltere.webp','./exercises/rotation-externe-epaule-haltere.webp','./exercises/tirage-menton-avec-elastique.webp',
   './exercises/thruster.webp','./exercises/thruster-kettlebell.webp','./exercises/russian-twist-avec-developpe-epaule.webp',
+  './exercises/shoulder-press-machine.webp',
   // Images machines press jambes
   './machine/press-jambes-1.png','./machine/press-jambes-2.jpg','./machine/press-jambes-3.jpg',
   './machine/press-jambes-4.jpg','./machine/press-jambes-5.jpg','./machine/press-jambes-6.jpg',
