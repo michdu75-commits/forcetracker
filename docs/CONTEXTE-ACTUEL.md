@@ -62,9 +62,15 @@
   auto des programmes** (Milo agit, en 1 clic — *à moitié bâti* : `_saveForceProgram`) ·
   **5. Traduction ensuite** (levier de croissance Tatiana, mais après le cœur ; déjà bien
   avancée sur le clone — voir `IDEES-FUTURES.md` + `RETOURS-TESTEURS.md`).
-  → **Question de séquencement ouverte** (à trancher avec Michel/GPT) : finir la **mémoire (#3)**
-  d'abord (on est dedans, Étapes 2/3 du débrief) PUIS l'**inscription (#1)** — recommandation
-  Claude (A) ; ou suivre l'ordre à la lettre, inscription (#1) d'abord (B).
+  → **✅ SÉQUENCEMENT TRANCHÉ = OPTION C (alignés à 3, Michel/GPT/Claude, 19/07)** : GPT
+  distingue *priorités de dev* vs *priorités d'impact utilisateur* — la **mémoire (#3)** sert les
+  utilisateurs **déjà là**, l'**onboarding (#1)** sert les **nouveaux** (pas le même problème).
+  Donc : **(1)** Claude construit la **mémoire (#3)** + boucle l'**import (#4)** (déjà engagé) ;
+  **(2)** EN PARALLÈLE, Michel + GPT **conçoivent** l'onboarding à fond (UX, dialogues, parcours,
+  perso) **sans le coder tout de suite** ; **(3)** mémoire finie → on **enchaîne sur un onboarding
+  déjà mûri**. ⚠️ L'onboarding n'est plus un simple écran = **mini-projet** (accueil perso, niveaux,
+  effet Waouh) → concevoir avant de coder. Répartition qui colle au modèle « équipe IA »
+  (`README-IA.md`) : Claude=dev, Michel+GPT=vision/UX, puis Claude exécute.
 - *(ancienne note : « Inscription + premier accueil » restait le prochain gros chantier ;
   le moteur nutrition local vient après. Toujours valable, replacé dans l'ordre ci-dessus.)*
 - **En parallèle (Milo) :** Michel teste en réel les briques encore en attente
