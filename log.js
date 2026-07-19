@@ -2077,7 +2077,12 @@ function filterEx(){
   // Recherche active → liste plate
   if(q){
     _exGrp=null;
-    const qn=_normEx(q);const f=all.filter(e=>e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q));
+    const qn=_normEx(q);const f=all.filter(e=>{
+      // Cherche aussi dans les termes ANGLAIS (EX_EN) → « shoulder press », « bench press », « leg press »…
+      // trouvent l'exercice même si son nom français ne contient pas le mot anglais.
+      const en=(typeof EX_EN!=='undefined'&&EX_EN[e.n])?EX_EN[e.n].toLowerCase():'';
+      return e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q)||(en&&(en.includes(q)||_normEx(en).includes(qn)));
+    });
     list.innerHTML=f.length?(_eqTestOn()?_renderExGrouped(f):f.map(_exPickRow).join('')):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
     return;
   }
