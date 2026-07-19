@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v501` (PT-001 « dire la vérité » : classification des réponses par nature + champ _diag du Worker)
+- **Version en prod :** `ft-v502` (🔴 FIX Milo cassé : le champ _silent du débrief auto ft-v491 était envoyé à l'API Claude → 400. Révélé par PT-001)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** `backup-2026-07-19-avant-ressenti-score`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*

@@ -94,7 +94,7 @@ async function callClaudeDiag(apiKey, payload) {
     });
     let data = null; try { data = await r.json(); } catch (e) {}
     const text = (data && data.content && data.content[0] && data.content[0].text) || '';
-    const apiErr = (data && data.error && (data.error.type || data.error.message)) || '';
+    const apiErr = (data && data.error) ? [data.error.type, data.error.message].filter(Boolean).join(': ') : '';
     return { text, status: r.status, apiErr: String(apiErr) };
   } catch (e) {
     return { text: '', status: 0, apiErr: 'fetch: ' + ((e && e.message) || '?') };
@@ -220,7 +220,11 @@ async function readBarcode(body, apiKey) {
 // duplication ici. Renvoie {reply:"..."} (comme Apps Script). Modèle par utilisateur.
 async function coach(body, apiKey) {
   if (!apiKey) return { reply: '🔑 Clé API absente dans Cloudflare (ANTHROPIC_API_KEY).' };
-  const history = (body.history || []).slice(-8);
+  // Sanitize : l'API Anthropic n'accepte QUE {role, content} sur un message. Un champ parasite
+  // (ex. _silent du débrief auto) → 400 invalid_request_error. On nettoie défensivement.
+  const history = (body.history || []).slice(-8)
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && m.content != null && m.content !== '')
+    .map(m => ({ role: m.role, content: m.content }));
   const ctx = body.context || '';
   const memory = body.coachMemory || '';
   let userContent;

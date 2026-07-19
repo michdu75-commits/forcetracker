@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v501'; // PT-001 « dire la verite » (principe labo, GPT) : chaque appel CLASSE par nature (valid/fallback/rate_limit/overloaded/api_error/timeout/network/http_error) + timeout 45s ; les metriques ne portent que sur les VALIDES ; le Worker renvoie un champ _diag qui nomme la cause d'un fallback (sans changer le message utilisateur). Suite du fix throttle ft-v500.
+const CACHE = 'ft-v502'; // FIX MILO CASSE (400 invalid_request_error) revele par PT-001 : depuis ft-v491 le debrief auto ajoute des messages _silent dans coachHistory, envoyes tels quels a l'API Claude qui REJETTE le champ inconnu -> Milo tombait des qu'un debrief silencieux etait dans les 8 derniers messages. Fix : _coachHistPayload() n'envoie QUE {role,content} (retire _silent/champs parasites) partout + sanitize defensif dans le Worker.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

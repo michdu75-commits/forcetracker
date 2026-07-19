@@ -717,6 +717,15 @@ function _gardienRules(){
   }catch(e){console.warn('[FT gardien]',e);return '';}
 }
 
+// Historique à envoyer à l'API Claude : UNIQUEMENT {role, content}. Retire _silent (débrief
+// auto, ft-v491) et tout champ parasite — l'API Anthropic rejette les champs inconnus sur un
+// message (→ 400 invalid_request_error, qui cassait Milo dès qu'un débrief silencieux était
+// dans les 8 derniers messages). Ignore les entrées vides/malformées.
+function _coachHistPayload(n){
+  return (coachHistory||[]).slice(-(n||8))
+    .filter(m => m && (m.role==='user'||m.role==='assistant') && m.content!=null && m.content!=='')
+    .map(m => ({ role: m.role, content: m.content }));
+}
 function buildCoachContext() {
   const bmr = calcBMR ? calcBMR() : '—';
   const tdee = calcTDEE ? calcTDEE() : '—';
@@ -1343,7 +1352,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
         email: S.email || '',
         message: msg || 'Analyse cette photo de mon corps.',
         context: buildCoachContext(),
-        history: coachHistory.slice(-8),
+        history: _coachHistPayload(8), // ⚠️ ne JAMAIS envoyer _silent/champs parasites à l'API (400 invalid_request_error)
         coachMemory: S.coachMemory||''
       };
       if (hasImg) { payload.image = imgData; payload.imageType = imgType; }
@@ -1487,7 +1496,7 @@ const _PT001_TIMEOUT_MS=45000;
 async function _pt001Ask(instr){
   const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
   const t0=_now();
-  const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:coachHistory.slice(-8),coachMemory:S.coachMemory||''};
+  const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:_coachHistPayload(8),coachMemory:S.coachMemory||''};
   let lastErr='inconnue', lastKind='error', status=0;
   for(let a=1;a<=3;a++){
     let resp=null;
@@ -2134,7 +2143,7 @@ async function _saveCoachMemory(){
     const resp=await fetch(_aiUrl('summarizeCoach'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'summarizeCoach',email:S.email,
-        history:coachHistory.slice(-16),existingMemory:S.coachMemory||''})
+        history:_coachHistPayload(16),existingMemory:S.coachMemory||''})
     });
     const data=await resp.json();
     if(data.summary){S.coachMemory=data.summary;localStorage.setItem('ft4_coach_mem',data.summary);}
