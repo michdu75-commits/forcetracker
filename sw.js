@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v496'; // Debrief « OBJECTIF TENU ? » (Etape 3 : le comportement) : a chaque nouveau debrief, Milo VERIFIE d'abord l'objectif qu'il avait fixe la fois d'avant (felicite si tenu / dedramatise sinon) puis debriefe. Verdict trace (objectifTenu oui/non/partiel). Le vrai « il me suit ».
+const CACHE = 'ft-v497'; // PT-001 (admin) : outil de test « continuite memoire ». Rejoue TOUT l'historique dans l'ordre chrono -> Milo debriefe chaque seance + verifie l'objectif de la fois d'avant. Question finale « Qui suis-je en tant que sportif ? ». Rapport technique (timing/erreurs/saturation/continuite) + validation exportable (texte + PDF). Admin-only, aucune donnee effacee.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

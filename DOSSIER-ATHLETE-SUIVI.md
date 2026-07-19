@@ -144,6 +144,52 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 
 ---
 
+## 🧪 Protocoles de validation (PT-xxx) — méthode reproductible
+
+> Idée validée à 3 (Michel + GPT + Claude, 19/07/2026) : *« On ne construit plus
+> seulement des fonctionnalités, on construit une **méthode de validation
+> reproductible** »* (GPT). Chaque grande brique de Milo a (ou aura) son **protocole
+> numéroté**, avec une grille d'observation et un **verdict archivable** (« Brique
+> validée / à revoir ») → permet de **comparer les versions de Milo dans le temps**.
+
+| Protocole | Cible | Outil | État |
+|---|---|---|---|
+| **PT-001** | **Continuité mémoire** (Étape 3 du débrief) | outil admin `ft-v497` | ✅ construit — ⏳ à jouer en réel (iPhone) |
+| PT-002 | Le Gardien (6A/6B) | à concevoir | ⏳ |
+| PT-003 | Observations IA (5A/5B) | à concevoir | ⏳ |
+| PT-004 | ADN sportif (4A) | à concevoir | ⏳ |
+| PT-005 | Onboarding (effet Waouh) | à concevoir | ⏳ |
+
+### PT-001 · Continuité mémoire · `ft-v497` · 19/07/2026
+
+- **Objectif** : prouver que Milo « suit vraiment le même sportif dans le temps » —
+  il rappelle et vérifie l'objectif fixé la fois d'avant, séance après séance.
+- **Critère de réussite** (reformulation GPT) : *« Après des dizaines de séances,
+  l'utilisateur a-t-il l'impression d'avoir été suivi par le même coach ? »* — pas
+  seulement « est-ce que ça marche techniquement ? ».
+- **Comment (outil admin, `startPt001Test`)** : rejeu de **tout l'historique** dans
+  l'ordre chrono → un débrief par séance (Milo fixe un objectif + vérifie le
+  précédent) → puis la **question nue « Qui suis-je en tant que sportif ? »** (si Milo
+  récite des stats = incomplet ; s'il décrit la personne = mémoire qui accompagne).
+- **Ce qu'on mesure (rapport auto)** : erreurs · temps moy/min/max · **saturation**
+  (1er tiers vs dernier tiers) · mémoire lue (objectifs captés) · continuité détectée
+  (%) · « objectif tenu » capté · portrait descriptif vs chiffres.
+- **Grille des 7 axes (GPT)** : continuité · cohérence · diversité · mémoire · vitesse
+  · crédibilité · émotion → les axes qualitatifs se jugent à la **lecture** des
+  débriefs (fournis dans l'export texte).
+- **Verdict** : champ « Brique validée / à revoir » à trancher après lecture (Michel +
+  Claude), **archivé** (texte + PDF) pour comparer les versions.
+- **Hors périmètre** : l'outil ne tranche pas seul les axes qualitatifs (il fournit les
+  signaux + les textes) ; il ne modifie pas le comportement de Milo (c'est un
+  observateur). **Admin-only**, n'efface aucune donnée (les objectifs s'ajoutent au
+  Registre comme après de vraies séances).
+- **Limite honnête** : je (Claude) ne peux pas voir le test en direct (il tourne sur
+  l'iPhone, mon environnement bloque Cloudflare/Google, un « espion » = porte dérobée
+  à éviter) → **Michel exporte le rapport et me l'envoie** ; c'est le même canal que le
+  chat, sans accès caché.
+
+---
+
 ## 📒 Journal des évolutions
 
 ### Brique 0 — Le ton de Milo · `ft-v457` · 18/07/2026

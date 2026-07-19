@@ -6,10 +6,20 @@
 
 ---
 
-- **Version en prod :** `ft-v496`
+- **Version en prod :** `ft-v497`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** `backup-2026-07-19-avant-ressenti-score`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
+
+- **🧪 PROTOCOLE DE VALIDATION (nouveau, `ft-v497`) — PT-001 « Continuité mémoire »** :
+  outil **admin** qui rejoue TOUT l'historique → Milo débriefe chaque séance + vérifie
+  l'objectif de la fois d'avant, finit par « Qui suis-je en tant que sportif ? », et
+  produit un **rapport exportable** (texte + PDF : timing, saturation, continuité,
+  verdict + 7 axes GPT). Valide à 3 (Michel/GPT/Claude). C'est le **1ᵉʳ d'une série de
+  protocoles** (PT-002 Gardien · PT-003 Observations · PT-004 ADN · PT-005 Onboarding).
+  → **PROCHAINE ACTION : Michel lance PT-001 sur iPhone** puis m'envoie le rapport texte
+  pour l'analyse (les 4 axes + les 7 points). *« On construit une méthode de validation
+  reproductible, plus seulement des fonctionnalités » (GPT).*
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).

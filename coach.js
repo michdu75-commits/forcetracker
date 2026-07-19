@@ -1443,6 +1443,285 @@ async function _maybeAutoDebrief(){
   if(!ok){ try{ localStorage.setItem('ft4_pending_debrief', pid); }catch(e){} } // échec réseau → on réarme
 }
 
+// ─── PT-001 · PROTOCOLE DE TEST « CONTINUITÉ MÉMOIRE » (admin) ──────────────
+// Rejoue TOUT l'historique de séances dans l'ordre chrono. Milo débriefe chacune,
+// fixe un objectif puis VÉRIFIE le précédent (continuité, Étape 3). But double :
+//   (1) valider la continuité de la mémoire ; (2) voir si Milo « sature » sur un gros
+//   historique (timing). Termine par la question « Qui suis-je en tant que sportif ? »
+//   (test GPT). Produit un rapport technique + un rapport de validation exportables.
+// ⚠️ Admin-only. N'écrase AUCUNE donnée réelle : les débriefs = conversation ; les
+//   objectifs s'ajoutent au Registre exactement comme après de vraies séances (pas de perte).
+let _pt001Running = false;
+let _pt001Report  = null;
+function _pt001Sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+// Format d'une séance pour Milo (kg×reps par série, comme buildCoachContext ; É=échauffement, X=échec)
+function _pt001FmtSess(s){
+  const exs = (s.exs||s.exercises||[]);
+  return exs.map(e=>{
+    const ds=(e.sets||[]).filter(x=>x.done);
+    const setsStr=ds.length?ds.map(x=>`${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(' '):'—';
+    return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}`;
+  }).join(' · ');
+}
+// Détecte si Milo fait référence à l'objectif de la fois d'avant (continuité visible dans le texte)
+function _pt001HasContinuity(reply){
+  return /(la (?:dernière|derniere) fois|je t'?avais (?:demand|dit|fix)|comme (?:pr[ée]vu|demand)|tu (?:l'?as|as tenu|avais|as bien)|objectif (?:tenu|atteint|rempli|non tenu|pas tenu)|la fois (?:d'?avant|pr[ée]c[ée]dente|derni[èe]re))/i.test(String(reply||''));
+}
+// Petite étiquette visuelle dans le Coach (n'entre PAS dans coachHistory)
+function _pt001Label(txt){
+  const msgs=document.getElementById('coach-msgs'); if(!msgs)return;
+  const d=document.createElement('div');
+  d.style.cssText='align-self:center;margin:10px auto 4px;font-size:11.5px;font-weight:700;color:var(--t3);background:var(--bg3);border-radius:20px;padding:4px 12px;';
+  d.textContent=txt; msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+}
+// Un appel Coach instrumenté (timing + statut + taille) — n'incrémente aucun quota
+async function _pt001Ask(instr){
+  const t0=(typeof performance!=='undefined'?performance.now():Date.now());
+  let resp=null,_err=null,status=0,reply='';
+  const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:coachHistory.slice(-8),coachMemory:S.coachMemory||''};
+  for(let a=1;a<=2;a++){
+    try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); _err=null; break; }
+    catch(e){ _err=e; if(a<2)await _pt001Sleep(1200); }
+  }
+  const t1=(typeof performance!=='undefined'?performance.now():Date.now());
+  const ms=Math.round(t1-t0);
+  if(_err) return {ok:false,ms,status:0,err:(_err.message||'réseau'),reply:''};
+  status=resp.status;
+  if(!resp.ok) return {ok:false,ms,status,err:'HTTP '+status,reply:''};
+  try{ const data=await resp.json(); reply=data.reply||''; }catch(e){ return {ok:false,ms,status,err:'JSON réponse',reply:''}; }
+  if(!reply) return {ok:false,ms,status,err:'réponse vide',reply:''};
+  return {ok:true,ms,status,err:'',reply};
+}
+function startPt001Test(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  if(_pt001Running){ toast('Test déjà en cours…','info'); return; }
+  if(!S.url){ toast('URL du Coach IA absente','error'); return; }
+  const sessions=(S.sessions||[]).filter(s=>s&&((s.exs||s.exercises||[]).length));
+  if(sessions.length<2){ toast('Il faut au moins 2 séances dans l\'historique','error'); return; }
+  const n=sessions.length;
+  const estMin=Math.max(1,Math.round(n*7/60)); // ~7 s / débrief estimé
+  const msg='Ça va rejouer TES '+n+' séances dans l\'ordre : Milo débriefe chacune et vérifie l\'objectif de la fois d\'avant.\n\n• ~'+estMin+' min (≈7 s/débrief)\n• Coût : '+(n+1)+' appels au modèle du Coach (quelques €)\n• '+n+' débriefs empilés dans le Coach\n\nÀ la fin : la question « Qui suis-je en tant que sportif ? » + un rapport exportable.\n\nLancer ?';
+  showConfirm('🧪 PT-001 · Test continuité', msg, ()=>_pt001Run(sessions));
+}
+async function _pt001Run(allSessions){
+  _pt001Running=true;
+  try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){} // pas de débrief auto parasite
+  // Ordre chronologique ASCENDANT (la plus ancienne d'abord)
+  const sessions=allSessions.slice().sort((a,b)=>{
+    const ta=a.ts||Date.parse(a.id)||Date.parse(a.date)||0, tb=b.ts||Date.parse(b.id)||Date.parse(b.date)||0;
+    return ta-tb;
+  });
+  try{ goScreen('s-coach'); }catch(e){}
+  try{ _showCoachChat(); }catch(e){}
+  coachBusy=true; // bloque envoi manuel + _maybeAutoDebrief pendant le test
+  const sendBtn=document.getElementById('coach-send-btn'); if(sendBtn)sendBtn.disabled=true;
+  const startTs=Date.now();
+  const rows=[];
+  _pt001Label('🧪 PT-001 — rejeu de '+sessions.length+' séances (le plus ancien d\'abord)');
+  for(let i=0;i<sessions.length;i++){
+    const s=sessions[i];
+    _pt001Label('Séance '+(i+1)+'/'+sessions.length+' · '+(s.date||'?'));
+    await _pt001Sleep(120); // laisse l'UI peindre
+    const instr='[REJEU PT-001] Voici la séance que je viens de terminer, le '+(s.date||'?')+' :\n'+_pt001FmtSess(s)
+      +'\n\nDébriefe CETTE séance (ignore d\'éventuelles séances plus récentes du contexte, concentre-toi sur celle-ci) : '
+      +'analyse (progression / stabilité / points d\'attention) à partir de ces charges, et termine par UNE piste pour la prochaine fois. '
+      +'Court (4-6 phrases), direct, motivant. Ne me redemande jamais mes charges.'
+      +_DEBRIEF_CONTINUITY+_DEBRIEF_MEM_TAIL;
+    const memBefore=(S.registre&&S.registre.sessionLog)?S.registre.sessionLog.length:0;
+    const res=await _pt001Ask(instr);
+    if(res.ok){
+      renderCoachMsg('coach', res.reply);
+      let mem=null; try{ mem=_parseDebriefMemory(res.reply); }catch(e){}
+      try{ _recordDebriefMemory(res.reply, s); }catch(e){}
+      // Continuité dans le fil (le prochain débrief voit l'objectif précédent)
+      coachHistory.push({role:'user',content:instr,_silent:true});
+      coachHistory.push({role:'assistant',content:res.reply});
+      if(coachHistory.length>20)coachHistory=coachHistory.slice(-20);
+      rows.push({ i:i+1, date:s.date||'?', ok:true, ms:res.ms, status:res.status, err:'',
+        len:res.reply.length, parsed:!!mem,
+        objectif:mem?mem.objectif:'', decision:mem?mem.decision:'', tenu:mem?(mem.objectifTenu||''):'',
+        cont:_pt001HasContinuity(res.reply),
+        memAfter:(S.registre&&S.registre.sessionLog)?S.registre.sessionLog.length:memBefore,
+        reply:res.reply });
+    }else{
+      _pt001Label('❌ Séance '+(i+1)+' : '+res.err);
+      rows.push({ i:i+1, date:s.date||'?', ok:false, ms:res.ms, status:res.status, err:res.err,
+        len:0, parsed:false, objectif:'', decision:'', tenu:'', cont:false,
+        memAfter:memBefore, reply:'' });
+    }
+  }
+  try{ if(typeof _saveCoachHist==='function')_saveCoachHist(); }catch(e){}
+  // ── Question finale (test GPT) : « Qui suis-je en tant que sportif ? » (bare, sans guidage) ──
+  _pt001Label('🧪 Question finale');
+  renderCoachMsg('user','Qui suis-je en tant que sportif ?');
+  await _pt001Sleep(120);
+  const portraitRes=await _pt001Ask('Qui suis-je en tant que sportif ?');
+  let portrait='';
+  if(portraitRes.ok){ portrait=portraitRes.reply; renderCoachMsg('coach', portrait); }
+  else { _pt001Label('❌ Portrait : '+portraitRes.err); }
+  // ── Rapports ──
+  _pt001Report=_pt001BuildReport(rows, portrait, portraitRes, startTs);
+  _pt001ShowResultCard();
+  coachBusy=false; if(sendBtn)sendBtn.disabled=false;
+  _pt001Running=false;
+  toast('PT-001 terminé — rapport prêt','success');
+}
+// Construit le texte du rapport (technique + validation) + calcule les signaux mesurables
+function _pt001BuildReport(rows, portrait, portraitRes, startTs){
+  const done=rows.filter(r=>r.ok), errs=rows.filter(r=>!r.ok);
+  const times=done.map(r=>r.ms);
+  const avg=times.length?Math.round(times.reduce((a,b)=>a+b,0)/times.length):0;
+  const mn=times.length?Math.min(...times):0, mx=times.length?Math.max(...times):0;
+  // Signal saturation : moyenne du 1er tiers vs dernier tiers
+  const third=Math.max(1,Math.floor(times.length/3));
+  const firstAvg=times.length?Math.round(times.slice(0,third).reduce((a,b)=>a+b,0)/third):0;
+  const lastAvg=times.length?Math.round(times.slice(-third).reduce((a,b)=>a+b,0)/third):0;
+  const slowdown=firstAvg>0?(lastAvg/firstAvg):1;
+  const satFlag=slowdown>1.5?('⚠️ RALENTISSEMENT (×'+slowdown.toFixed(2)+')'):('OK (stable, ×'+slowdown.toFixed(2)+')');
+  const parsedN=done.filter(r=>r.parsed).length;
+  // Continuité : à partir du 2e débrief (le 1er n'a pas d'objectif précédent)
+  const contPool=done.filter(r=>r.i>1);
+  const contN=contPool.filter(r=>r.cont).length;
+  const tenuN=done.filter(r=>r.tenu&&r.tenu!=='').length;
+  // Portrait : descriptif vs liste de chiffres (heuristique = ratio de chiffres)
+  const pTxt=String(portrait||''), pDigits=(pTxt.match(/\d/g)||[]).length;
+  const pRatio=pTxt.length?(pDigits/pTxt.length):0;
+  const pVerdict=!pTxt?'—':(pRatio>0.12?'⚠️ Beaucoup de chiffres — à vérifier (liste de stats ?)':'Semble descriptif (peu de chiffres) — à confirmer à la lecture');
+  const totalMin=((Date.now()-startTs)/60000).toFixed(1);
+  const ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+  // ── Texte complet (pour analyse Claude) ──
+  const L=[];
+  L.push('═══════════════════════════════════════════');
+  L.push('  PROTOCOLE PT-001 · CONTINUITÉ MÉMOIRE DE MILO');
+  L.push('  Force Tracker · rapport de test grandeur nature');
+  L.push('═══════════════════════════════════════════');
+  L.push('Date : '+ymd+'   ·   Version app : '+(window.__FT_VER__||'—'));
+  L.push('Utilisateur : '+(S.email||'—'));
+  L.push('Séances rejouées : '+rows.length+'   ·   Durée totale : '+totalMin+' min');
+  L.push('');
+  L.push('── SIGNAUX MESURABLES ──────────────────────');
+  L.push('• Erreurs : '+errs.length+' / '+rows.length);
+  L.push('• Temps de réponse : moy '+avg+' ms · min '+mn+' · max '+mx+' ms');
+  L.push('• Saturation (1er tiers '+firstAvg+' ms → dernier tiers '+lastAvg+' ms) : '+satFlag);
+  L.push('• Bloc mémoire lu (objectif capté) : '+parsedN+' / '+done.length);
+  L.push('• Continuité détectée (dès le 2e débrief) : '+contN+' / '+contPool.length);
+  L.push('• Verdict « objectif tenu » capté : '+tenuN+' / '+done.length);
+  L.push('• Portrait final : '+pVerdict);
+  L.push('');
+  L.push('── GRILLE DE VALIDATION (7 axes GPT) ───────');
+  L.push('1. Continuité ....... '+(contPool.length?Math.round(100*contN/contPool.length):0)+'% détectée   → '+((contPool.length&&contN/contPool.length>=0.6)?'OK auto':'à évaluer'));
+  L.push('2. Cohérence ........ à évaluer (lecture des débriefs ci-dessous)');
+  L.push('3. Diversité ........ à évaluer (répétitions de formules ?)');
+  L.push('4. Mémoire .......... à évaluer (infos pertinentes, pas que la dernière séance ?)');
+  L.push('5. Vitesse .......... '+satFlag);
+  L.push('6. Crédibilité ...... à évaluer (impression de suivi long terme ?)');
+  L.push('7. Émotion .......... à évaluer (impression de coach perso ?)');
+  L.push('');
+  L.push('── VERDICT ─────────────────────────────────');
+  L.push('BRIQUE VALIDÉE / À REVOIR : ____ (à trancher après lecture — Michel + Claude)');
+  L.push('');
+  L.push('── DÉTAIL PAR DÉBRIEF ──────────────────────');
+  rows.forEach(r=>{
+    L.push('');
+    L.push('#'+r.i+' · '+r.date+' · '+(r.ok?(r.ms+' ms · '+r.len+' car.'):('❌ '+r.err)));
+    if(r.ok){
+      L.push('   objectif fixé : '+(r.objectif||'—'));
+      L.push('   décision      : '+(r.decision||'—'));
+      L.push('   objectif tenu : '+(r.tenu||'—')+'   · continuité détectée : '+(r.cont?'oui':'non')+'   · mémoire : '+r.memAfter);
+      L.push('   ── réponse de Milo ──');
+      L.push('   '+_stripCoachTech(r.reply).replace(/\n/g,'\n   '));
+    }
+  });
+  L.push('');
+  L.push('── QUESTION FINALE « Qui suis-je en tant que sportif ? » ──');
+  L.push((portraitRes&&!portraitRes.ok)?('❌ '+portraitRes.err):(portrait||'—'));
+  L.push('');
+  L.push('═══════════════════════════════════════════');
+  const text=L.join('\n');
+  return { text, ymd, nSess:rows.length, errs:errs.length, avg, mn, mx, firstAvg, lastAvg, satFlag,
+    parsedN, doneN:done.length, contN, contPool:contPool.length, tenuN, portrait, pVerdict, totalMin,
+    slowdown };
+}
+// Carte de résultat dans le Coach (résumé + boutons d'export)
+function _pt001ShowResultCard(){
+  const msgs=document.getElementById('coach-msgs'); if(!msgs||!_pt001Report)return;
+  const R=_pt001Report;
+  const d=document.createElement('div');
+  d.className='msg-bubble msg-coach';
+  d.style.cssText='background:var(--bg3);border:1px solid var(--sep);';
+  const contPct=R.contPool?Math.round(100*R.contN/R.contPool):0;
+  d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧪 PT-001 — rapport</p>'
+    +'<p style="margin:2px 0"><b>'+R.nSess+'</b> séances · <b>'+R.errs+'</b> erreur(s) · durée '+R.totalMin+' min</p>'
+    +'<p style="margin:2px 0">⏱️ Temps moyen <b>'+R.avg+' ms</b> (min '+R.mn+' / max '+R.mx+')</p>'
+    +'<p style="margin:2px 0">⚙️ Saturation : <b>'+R.satFlag+'</b></p>'
+    +'<p style="margin:2px 0">🔗 Continuité détectée : <b>'+contPct+'%</b> ('+R.contN+'/'+R.contPool+')</p>'
+    +'<p style="margin:2px 0">🧠 Mémoire lue : <b>'+R.parsedN+'/'+R.doneN+'</b> · « objectif tenu » capté : <b>'+R.tenuN+'</b></p>'
+    +'<p style="margin:2px 0">🪞 Portrait final : '+R.pVerdict+'</p>'
+    +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+    +'<button class="btn btn-bg2" style="flex:1;min-width:130px;padding:10px;font-size:13px" onclick="exportPt001Text()">📤 Rapport (texte)</button>'
+    +'<button class="btn btn-bg2" style="flex:1;min-width:130px;padding:10px;font-size:13px" onclick="exportPt001Pdf()">📄 PDF (archive)</button>'
+    +'</div>';
+  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+}
+// Export TEXTE (pour analyse Claude) — partage fichier si possible, sinon téléchargement
+async function exportPt001Text(){
+  if(!_pt001Report){ toast('Aucun rapport','error'); return; }
+  const txt=_pt001Report.text, fname='PT-001_continuite_'+_pt001Report.ymd+'.txt';
+  try{
+    const file=new File([txt],fname,{type:'text/plain'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'PT-001'}); return; }
+  }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{
+    const blob=new Blob([txt],{type:'text/plain'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+    toast('Rapport texte exporté','success');
+  }catch(e){ toast('Export impossible','error'); }
+}
+// Export PDF (archive / comparaison de versions) — jsPDF local (hors-ligne)
+async function exportPt001Pdf(){
+  if(!_pt001Report){ toast('Aucun rapport','error'); return; }
+  const R=_pt001Report;
+  toast('Génération du PDF…','info');
+  try{ await _loadJsPdf(); }catch(e){ toast('PDF indisponible — utilise l\'export texte','info'); return; }
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=40;
+    let y=48;
+    if(typeof _loadLogoDataURL==='function'){ try{ const logo=await _loadLogoDataURL(); if(logo)doc.addImage(logo,'PNG',M,24,28,28); }catch(e){} }
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',M+36,44);
+    doc.setFontSize(12);doc.text('PT-001 · Continuité mémoire',W-M,44,{align:'right'});
+    doc.setLineWidth(1);doc.setDrawColor(20);doc.line(M,58,W-M,58); y=76;
+    const line=(t,b)=>{ doc.setFont('helvetica',b?'bold':'normal'); doc.setFontSize(b?11:10); doc.setTextColor(b?20:60);
+      (doc.splitTextToSize(t,W-2*M)).forEach(s=>{ if(y>H-50){doc.addPage();y=50;} doc.text(s,M,y); y+=b?15:13; }); };
+    line('Date : '+R.ymd+'   ·   Séances : '+R.nSess+'   ·   Durée : '+R.totalMin+' min');
+    line('Utilisateur : '+(S.email||'—')); y+=4;
+    line('SIGNAUX MESURABLES',true);
+    line('• Erreurs : '+R.errs+' / '+R.nSess);
+    line('• Temps : moy '+R.avg+' ms (min '+R.mn+' / max '+R.mx+')');
+    line('• Saturation : '+R.satFlag+'  (1er tiers '+R.firstAvg+' → dernier '+R.lastAvg+' ms)');
+    line('• Mémoire lue : '+R.parsedN+' / '+R.doneN+'   ·   objectif tenu capté : '+R.tenuN);
+    line('• Continuité détectée : '+R.contN+' / '+R.contPool);
+    line('• Portrait final : '+R.pVerdict); y+=4;
+    line('GRILLE DE VALIDATION (7 axes)',true);
+    line('1. Continuité · 2. Cohérence · 3. Diversité · 4. Mémoire · 5. Vitesse · 6. Crédibilité · 7. Émotion');
+    line('(les axes qualitatifs s\'évaluent à la lecture des débriefs — voir l\'export texte)'); y+=4;
+    line('VERDICT',true);
+    line('BRIQUE VALIDÉE / À REVOIR : ____ (à trancher après lecture — Michel + Claude)'); y+=6;
+    line('PORTRAIT FINAL « Qui suis-je en tant que sportif ? »',true);
+    line(R.portrait||'—');
+    doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-24);
+    const fname='PT-001_continuite_'+R.ymd+'.pdf';
+    const blob=doc.output('blob');
+    try{ const file=new File([blob],fname,{type:'application/pdf'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'PT-001'}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+    toast('PDF exporté','success');
+  }catch(e){ console.error('[PT-001 pdf]',e); toast('Erreur PDF — utilise l\'export texte','error'); }
+}
+
 // ─── DRAWER ───────────────────────────────────────────────────
 function openDrawer(){
   const dr=document.getElementById('drawer');
