@@ -1577,23 +1577,25 @@ function _pt001BuildReport(rows, portrait, portraitRes, startTs){
   const firstAvg=times.length?Math.round(times.slice(0,third).reduce((a,b)=>a+b,0)/third):0;
   const lastAvg=times.length?Math.round(times.slice(-third).reduce((a,b)=>a+b,0)/third):0;
   const slowdown=firstAvg>0?(lastAvg/firstAvg):1;
-  const satFlag=slowdown>1.5?('⚠️ RALENTISSEMENT (×'+slowdown.toFixed(2)+')'):('OK (stable, ×'+slowdown.toFixed(2)+')');
+  // Statut métier lisible (GPT : « ×0.76 » ne parlera plus dans 6 mois) — le chiffre reste dans le détail technique
+  const satStatus=slowdown<1.2?'🟢 Confortable':(slowdown<1.5?'🟡 Dense':'🔴 Limite');
+  const satFlag=satStatus+' (×'+slowdown.toFixed(2)+', 1er tiers '+firstAvg+' → dernier '+lastAvg+' ms)';
   const parsedN=done.filter(r=>r.parsed).length;
-  // Continuité : à partir du 2e débrief (le 1er n'a pas d'objectif précédent)
+  // Continuité EXPLOITÉE (GPT : « détectée : 0% » est anxiogène → cadrage métier positif) : à partir du 2e débrief
   const contPool=done.filter(r=>r.i>1);
   const contN=contPool.filter(r=>r.cont).length;
   const tenuN=done.filter(r=>r.tenu&&r.tenu!=='').length;
-  // Portrait : descriptif vs liste de chiffres (heuristique = ratio de chiffres)
+  // Portrait : verdict DIRECT (GPT) au lieu d'un commentaire technique (heuristique = ratio de chiffres)
   const pTxt=String(portrait||''), pDigits=(pTxt.match(/\d/g)||[]).length;
   const pRatio=pTxt.length?(pDigits/pTxt.length):0;
-  const pVerdict=!pTxt?'—':(pRatio>0.12?'⚠️ Beaucoup de chiffres — à vérifier (liste de stats ?)':'Semble descriptif (peu de chiffres) — à confirmer à la lecture');
+  const pVerdict=!pTxt?'—':(pRatio>0.12?'⚠️ Portrait incomplet (semble une liste de stats)':'✅ Portrait cohérent (descriptif)');
   const totalMin=((Date.now()-startTs)/60000).toFixed(1);
   const ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
   // ── Texte complet (pour analyse Claude) ──
   const L=[];
   L.push('═══════════════════════════════════════════');
-  L.push('  PROTOCOLE PT-001 · CONTINUITÉ MÉMOIRE DE MILO');
-  L.push('  Force Tracker · rapport de test grandeur nature');
+  L.push('  LABORATOIRE MILO · PT-001 — CONTINUITÉ MÉMOIRE');
+  L.push('  Force Tracker · est-ce que Milo devient le coach imaginé ?');
   L.push('═══════════════════════════════════════════');
   L.push('Date : '+ymd+'   ·   Version app : '+(window.__FT_VER__||'—'));
   L.push('Utilisateur : '+(S.email||'—'));
@@ -1602,14 +1604,14 @@ function _pt001BuildReport(rows, portrait, portraitRes, startTs){
   L.push('── SIGNAUX MESURABLES ──────────────────────');
   L.push('• Erreurs : '+errs.length+' / '+rows.length);
   L.push('• Temps de réponse : moy '+avg+' ms · min '+mn+' · max '+mx+' ms');
-  L.push('• Saturation (1er tiers '+firstAvg+' ms → dernier tiers '+lastAvg+' ms) : '+satFlag);
+  L.push('• Charge / saturation : '+satFlag);
   L.push('• Bloc mémoire lu (objectif capté) : '+parsedN+' / '+done.length);
-  L.push('• Continuité détectée (dès le 2e débrief) : '+contN+' / '+contPool.length);
+  L.push('• Continuité exploitée (dès le 2e débrief) : '+contN+' / '+contPool.length);
   L.push('• Verdict « objectif tenu » capté : '+tenuN+' / '+done.length);
   L.push('• Portrait final : '+pVerdict);
   L.push('');
   L.push('── GRILLE DE VALIDATION (7 axes GPT) ───────');
-  L.push('1. Continuité ....... '+(contPool.length?Math.round(100*contN/contPool.length):0)+'% détectée   → '+((contPool.length&&contN/contPool.length>=0.6)?'OK auto':'à évaluer'));
+  L.push('1. Continuité ....... '+(contPool.length?Math.round(100*contN/contPool.length):0)+'% exploitée   → '+((contPool.length&&contN/contPool.length>=0.6)?'OK auto':'à évaluer'));
   L.push('2. Cohérence ........ à évaluer (lecture des débriefs ci-dessous)');
   L.push('3. Diversité ........ à évaluer (répétitions de formules ?)');
   L.push('4. Mémoire .......... à évaluer (infos pertinentes, pas que la dernière séance ?)');
@@ -1638,7 +1640,7 @@ function _pt001BuildReport(rows, portrait, portraitRes, startTs){
   L.push('');
   L.push('═══════════════════════════════════════════');
   const text=L.join('\n');
-  return { text, ymd, nSess:rows.length, errs:errs.length, avg, mn, mx, firstAvg, lastAvg, satFlag,
+  return { text, ymd, nSess:rows.length, errs:errs.length, avg, mn, mx, firstAvg, lastAvg, satFlag, satStatus,
     parsedN, doneN:done.length, contN, contPool:contPool.length, tenuN, portrait, pVerdict, totalMin,
     slowdown };
 }
@@ -1650,11 +1652,11 @@ function _pt001ShowResultCard(){
   d.className='msg-bubble msg-coach';
   d.style.cssText='background:var(--bg3);border:1px solid var(--sep);';
   const contPct=R.contPool?Math.round(100*R.contN/R.contPool):0;
-  d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧪 PT-001 — rapport</p>'
+  d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧪 Laboratoire Milo — PT-001</p>'
     +'<p style="margin:2px 0"><b>'+R.nSess+'</b> séances · <b>'+R.errs+'</b> erreur(s) · durée '+R.totalMin+' min</p>'
     +'<p style="margin:2px 0">⏱️ Temps moyen <b>'+R.avg+' ms</b> (min '+R.mn+' / max '+R.mx+')</p>'
-    +'<p style="margin:2px 0">⚙️ Saturation : <b>'+R.satFlag+'</b></p>'
-    +'<p style="margin:2px 0">🔗 Continuité détectée : <b>'+contPct+'%</b> ('+R.contN+'/'+R.contPool+')</p>'
+    +'<p style="margin:2px 0">⚙️ Charge : <b>'+R.satStatus+'</b> <span style="opacity:.55">(×'+R.slowdown.toFixed(2)+')</span></p>'
+    +'<p style="margin:2px 0">🔗 Continuité exploitée : <b>'+contPct+'%</b> ('+R.contN+'/'+R.contPool+')</p>'
     +'<p style="margin:2px 0">🧠 Mémoire lue : <b>'+R.parsedN+'/'+R.doneN+'</b> · « objectif tenu » capté : <b>'+R.tenuN+'</b></p>'
     +'<p style="margin:2px 0">🪞 Portrait final : '+R.pVerdict+'</p>'
     +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
@@ -1691,7 +1693,7 @@ async function exportPt001Pdf(){
     let y=48;
     if(typeof _loadLogoDataURL==='function'){ try{ const logo=await _loadLogoDataURL(); if(logo)doc.addImage(logo,'PNG',M,24,28,28); }catch(e){} }
     doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',M+36,44);
-    doc.setFontSize(12);doc.text('PT-001 · Continuité mémoire',W-M,44,{align:'right'});
+    doc.setFontSize(12);doc.text('Laboratoire Milo · PT-001',W-M,44,{align:'right'});
     doc.setLineWidth(1);doc.setDrawColor(20);doc.line(M,58,W-M,58); y=76;
     const line=(t,b)=>{ doc.setFont('helvetica',b?'bold':'normal'); doc.setFontSize(b?11:10); doc.setTextColor(b?20:60);
       (doc.splitTextToSize(t,W-2*M)).forEach(s=>{ if(y>H-50){doc.addPage();y=50;} doc.text(s,M,y); y+=b?15:13; }); };
@@ -1700,9 +1702,9 @@ async function exportPt001Pdf(){
     line('SIGNAUX MESURABLES',true);
     line('• Erreurs : '+R.errs+' / '+R.nSess);
     line('• Temps : moy '+R.avg+' ms (min '+R.mn+' / max '+R.mx+')');
-    line('• Saturation : '+R.satFlag+'  (1er tiers '+R.firstAvg+' → dernier '+R.lastAvg+' ms)');
+    line('• Charge / saturation : '+R.satFlag);
     line('• Mémoire lue : '+R.parsedN+' / '+R.doneN+'   ·   objectif tenu capté : '+R.tenuN);
-    line('• Continuité détectée : '+R.contN+' / '+R.contPool);
+    line('• Continuité exploitée : '+R.contN+' / '+R.contPool);
     line('• Portrait final : '+R.pVerdict); y+=4;
     line('GRILLE DE VALIDATION (7 axes)',true);
     line('1. Continuité · 2. Cohérence · 3. Diversité · 4. Mémoire · 5. Vitesse · 6. Crédibilité · 7. Émotion');

@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v498'; // FIX PT-001 : goScreen('s-coach') -> goScreen('coach'). Le mauvais id desactivait TOUS les ecrans sans en reactiver aucun -> ecran blanc sous le bandeau au lancement de PT-001 (retire le mode admin = re-navigation = revient normal). Correction 1 ligne.
+const CACHE = 'ft-v499'; // PT-001 -> « Laboratoire Milo » (retours GPT, chambrage QA affectueux) : libelles metier au lieu de debug (Continuite EXPLOITEE, Charge 🟢Confortable/🟡Dense/🔴Limite au lieu de x0.76, Portrait coherent/incomplet, le chiffre reste dans le detail). On teste si Milo devient le coach imagine, pas du code.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

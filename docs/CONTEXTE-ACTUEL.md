@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v498` (fix écran blanc au lancement de PT-001 : `goScreen('s-coach')` → `goScreen('coach')`)
+- **Version en prod :** `ft-v499` (PT-001 → « Laboratoire Milo » : libellés métier, retours GPT)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** `backup-2026-07-19-avant-ressenti-score`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
