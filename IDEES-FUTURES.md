@@ -59,6 +59,31 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🥫 IDÉE PRODUIT — Cache intelligent des produits alimentaires (moteur local)
+
+- **Idée (Michel, 19/07)** : quand un utilisateur scanne un produit, si on l'a déjà
+  → usage immédiat ; sinon on le récupère (Open Food Facts) **et on en garde une copie
+  locale (cache)**. Va dans le sens du principe « moteur local d'abord ».
+- **⚠️ 2 niveaux à bien distinguer (difficultés très différentes) :**
+  - **Niveau 1 — cache PAR APPAREIL** : chaque téléphone garde les produits qu'il a
+    déjà scannés → re-scan instantané + **hors-ligne**. **Facile, aucun serveur, 0
+    souci de confidentialité ni de licence. Quick win** — à faire quand on attaque le
+    moteur local nutrition (moteur de recherche d'aliments + cache).
+  - **Niveau 2 — cache COMMUNAUTAIRE (partagé serveur)** : un produit récupéré par un
+    utilisateur profite à tous. C'est le « patrimoine de données ». **Plus gros
+    chantier → nécessite la VRAIE base de données** (Script Properties Google trop
+    limitées pour une bibliothèque de produits). **À lier au chantier base de données.**
+- **⚠️ Nuance coût (honnêteté)** : la recherche produit (code-barres → nutrition) passe
+  par **Open Food Facts, GRATUIT** (pas l'IA) → le cache gagne en **vitesse / hors-ligne
+  / indépendance**, **peu en argent**. Le vrai coût IA aujourd'hui = **lire le code-barres
+  sur une photo** (`readBarcode`). Le vrai gain « argent » à terme = un **vrai scanner de
+  code-barres sur le téléphone** (local, 0 IA) — chantier « moteur local » distinct.
+- **⚠️ Licence** : Open Food Facts = **ODbL** → cache/réutilisation OK **avec attribution
+  (« données Open Food Facts ») + partage à l'identique**. À respecter pour le **niveau 2**
+  (redistribution). Niveau 1 (par appareil) = aucun souci.
+
+---
+
 ## 🔧 À FAIRE APRÈS VALIDATION (petits ajustements notés en test réel)
 
 - **Carte « Comment tu te sens aujourd'hui ? » (état du jour, brique 3B) → à RÉDUIRE.**
