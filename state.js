@@ -105,6 +105,7 @@ function load(){
     S.histImports=parseInt(localStorage.getItem('ft4_histImp')||'0')||0;
     S.bodyScanImports=parseInt(localStorage.getItem('ft4_bsimports')||'0')||0;
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
+    try{S.coachConversations=JSON.parse(localStorage.getItem('ft4_coach_convs')||'[]')||[];}catch(e){S.coachConversations=[];}
     S.premium=localStorage.getItem('ft4_premium')==='1';
     // Fondateurs/testeurs premium à vie : premium accordé côté client (indépendant du serveur, cf. PREMIUM_CLIENT_EMAILS)
     if(typeof _isClientPremium==='function'&&_isClientPremium())S.premium=true;

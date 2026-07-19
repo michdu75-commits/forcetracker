@@ -295,18 +295,78 @@ function _renderCoachThread(){
   });
   msgs.scrollTop = msgs.scrollHeight;
 }
-// Nouvelle discussion : vide le fil (garde la mémoire long-terme de Milo intacte)
+// ─── Historique des discussions ───────────────────────────────────
+// Le « + » ne SUPPRIME plus le fil : il le RANGE dans une liste (S.coachConversations,
+// local — comme ft4_coach_hist) et ouvre une discussion neuve. Rien n'est perdu.
+function _persistCoachConvs(){ try{ localStorage.setItem('ft4_coach_convs', JSON.stringify(S.coachConversations||[])); }catch(e){} }
+function _convLightMsgs(){
+  return coachHistory.slice(-40).map(m=>({
+    role: m.role,
+    content: (typeof m.content === 'string') ? m.content
+           : (Array.isArray(m.content) ? (((m.content.find(p=>p&&p.type==='text')||{}).text) ? '[photo] '+(m.content.find(p=>p&&p.type==='text').text) : '[photo]') : '')
+  }));
+}
+function _convTitle(msgs){
+  const fu=(msgs||[]).find(m=>m.role==='user'&&typeof m.content==='string'&&m.content.trim());
+  let t=(fu?fu.content:'').replace(/^\[photo\]\s*/,'').replace(/\s+/g,' ').trim();
+  if(t.length>44) t=t.slice(0,44)+'…';
+  return t || ('Discussion du '+new Date().toLocaleDateString('fr-FR'));
+}
+// Range le fil courant dans l'historique (si utile : au moins 1 message de l'utilisateur)
+function _archiveCurrentConv(){
+  if(!coachHistory||!coachHistory.length) return;
+  const light=_convLightMsgs();
+  if(!light.some(m=>m.role==='user')) return;
+  S.coachConversations = S.coachConversations || [];
+  S.coachConversations.unshift({ id:'c'+Date.now()+Math.floor(Math.random()*1000), title:_convTitle(light), ts:Date.now(), messages:light });
+  if(S.coachConversations.length>30) S.coachConversations=S.coachConversations.slice(0,30);
+  _persistCoachConvs();
+}
 function newCoachChat(){
-  const go=()=>{
-    coachHistory = [];
-    try{ localStorage.removeItem('ft4_coach_hist'); }catch(e){}
-    const msgs=document.getElementById('coach-msgs'); if(msgs) msgs.innerHTML='';
-    updateCoachHeader();
-    if(typeof toast==='function') toast('Nouvelle discussion','info');
-  };
-  if(coachHistory.length && typeof showConfirm==='function'){
-    showConfirm('Nouvelle discussion ?','Le fil affiché sera effacé. Milo garde quand même l\'essentiel de vos échanges en mémoire.',go);
-  } else go();
+  _archiveCurrentConv();                       // range la discussion en cours (plus de perte)
+  coachHistory = [];
+  try{ localStorage.removeItem('ft4_coach_hist'); }catch(e){}
+  const msgs=document.getElementById('coach-msgs'); if(msgs) msgs.innerHTML='';
+  updateCoachHeader();
+  if(typeof toast==='function') toast('Nouvelle discussion','info');
+}
+function openCoachConvs(){ _renderCoachConvs(); const o=document.getElementById('ov-coach-convs'); if(o)o.classList.add('open'); }
+function closeCoachConvs(){ const o=document.getElementById('ov-coach-convs'); if(o)o.classList.remove('open'); }
+function _renderCoachConvs(){
+  const el=document.getElementById('coach-convs-list'); if(!el) return;
+  const list=S.coachConversations||[];
+  if(!list.length){ el.innerHTML='<div class="cconv-empty">Aucune discussion enregistrée pour l\'instant.<br>Quand tu appuies sur « + », ta discussion en cours est rangée ici — tu pourras la rouvrir quand tu veux.</div>'; return; }
+  el.innerHTML=list.map(c=>{
+    const d=new Date(c.ts||Date.now());
+    const dt=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const n=(c.messages||[]).filter(m=>m.role==='user').length;
+    const title=(typeof _escNote==='function')?_escNote(c.title||'Discussion'):(c.title||'Discussion');
+    return '<div class="cconv-row" onclick="loadCoachConv(\''+c.id+'\')">'
+      +'<div class="cconv-main"><div class="cconv-title">'+(title||'Discussion')+'</div>'
+      +'<div class="cconv-sub">'+dt+' · '+n+' question'+(n>1?'s':'')+'</div></div>'
+      +'<button class="cconv-del" onclick="event.stopPropagation();deleteCoachConv(\''+c.id+'\')" aria-label="Supprimer">✕</button></div>';
+  }).join('');
+}
+function loadCoachConv(id){
+  _archiveCurrentConv();                       // sauvegarde d'abord le fil courant
+  S.coachConversations = S.coachConversations || [];
+  const idx=S.coachConversations.findIndex(c=>c.id===id);
+  if(idx<0){ closeCoachConvs(); return; }
+  const conv=S.coachConversations.splice(idx,1)[0]; // devient le fil actif → retiré de la liste
+  _persistCoachConvs();
+  coachHistory=(conv.messages||[]).map(m=>({role:m.role,content:m.content}));
+  _saveCoachHist();
+  closeCoachConvs();
+  _showCoachChat();
+  _renderCoachThread();
+  updateCoachHeader();
+  if(typeof toast==='function') toast('Discussion rouverte','info');
+}
+function deleteCoachConv(id){
+  S.coachConversations=(S.coachConversations||[]).filter(c=>c.id!==id);
+  _persistCoachConvs();
+  _renderCoachConvs();
+  if(typeof toast==='function') toast('Discussion supprimée','info');
 }
 
 function _showCoachChat(){
@@ -422,6 +482,9 @@ function updateCoachHeader() {
   try{_renderCoachQuizCard();}catch(e){}
   // Cache le mur premium si l'utilisateur est maintenant premium
   if(S.premium){const wall=document.getElementById('coach-wall');if(wall)wall.style.display='none';}
+  // Bouton « Mes discussions » (historique) : visible dès qu'il y a des discussions rangées OU un fil en cours
+  const histBtn=document.getElementById('coach-hist-btn');
+  if(histBtn) histBtn.style.display=(((S.coachConversations&&S.coachConversations.length)||coachHistory.length)?'flex':'none');
   // Afficher accueil ou chat selon l'historique
   const newBtn=document.getElementById('coach-new-btn');
   if(coachHistory.length===0){
@@ -1449,7 +1512,7 @@ const _DRAWER_CONTENT = {
         {ic:'🛡️',t:'Milo veille sur ta sécurité',d:'Milo place TA sécurité en priorité : il tient compte de ta santé et de tes zones fragiles (Profil → Santé — blessures, zones fragiles, arthrose, hernie…) AVANT de te conseiller. Sa règle : ADAPTER, jamais t\'interdire bêtement. Face à une épaule sensible, un genou fragile ou des lombaires, il cherche le moyen le MOINS contraignant de continuer à progresser en sécurité (réduire la charge/l\'amplitude, changer d\'exercice, protéger la zone tout en travaillant le reste) et te propose des alternatives. L\'arrêt total reste l\'exception. ⚠️ Il ne pose jamais de diagnostic : devant une douleur forte ou inhabituelle, il te conseille le repos et un professionnel de santé. Plus tu renseignes tes zones fragiles et ta santé, mieux il te protège.'},
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
         {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Nouveau : il coache comme un VRAI coach — il t\'évalue avant de conseiller (et te pose des questions au besoin), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans langue de bois. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
-        {ic:'💾',t:'Historique de Milo',d:'Nouveau : tes conversations avec Milo restent sauvegardées — tu retrouves ton fil même après avoir fermé et rouvert l\'appli. Le bouton « + » en haut à droite du Coach démarre une nouvelle discussion (Milo garde quand même l\'essentiel de vos échanges en mémoire). Sous chaque réponse : boutons « Partager » et « 📄 PDF » pour l\'exporter proprement.'},
+        {ic:'💾',t:'Mémoire & historique de Milo',d:'Milo se souvient de l\'essentiel de vos échanges — MÊME sans être Premium (c\'est un acquis : il te connaît un peu plus à chaque conversation, et si tu passes Premium un jour, il ne repart pas de zéro). Tes discussions sont gardées : le bouton « + » (nouvelle discussion) ne les efface plus, il les RANGE dans « Mes discussions » (l\'icône horloge en haut à droite du Coach) — tape-la pour rouvrir une ancienne discussion, ✕ pour la supprimer. Sous chaque réponse : boutons « Partager » et « 📄 PDF » pour l\'exporter proprement.'},
         {ic:'💬',t:'Petits mots de Milo (Accueil)',d:'Nouveau : Milo t\'envoie parfois un petit mot en haut de l\'Accueil au bon moment — te relancer après quelques jours sans séance, te féliciter après une séance, te conseiller une séance légère après une nuit courte, ou t\'encourager quand tu enchaînes. Tape le message pour lui parler, ou la croix pour le fermer.'},
         {ic:'📐',t:'Étude du corps (Premium)',d:'Nouveau : dans le Coach, bouton « Étude du corps ». Prends 4 photos (face relâché, face contracté, dos contracté, profil) et l\'IA te fait un bilan complet : posture/stature, insertions musculaires, équilibre du corps (gauche/droite, haut/bas, avant/arrière), points forts, points à travailler et exercices suggérés — en tenant compte de ta santé (blessures/conditions du profil). Les photos ne sont pas stockées. Tu peux ensuite « en parler avec Milo ».'},
         {ic:'🏋️',t:'Gagner en force (Big 3)',d:'Nouveau : dans le Coach, bouton « Gagner en force (Big 3) ». Milo lit tes maxes (1RM) au Squat, Développé Couché et Soulevé de Terre depuis tes records, puis te donne un conseil ET un programme de force progressif (accumulation → intensification → peak). Un bouton « 💾 Enregistrer ce programme » l\'ajoute dans « Mes programmes » — prêt à charger en séance avec les charges.'},

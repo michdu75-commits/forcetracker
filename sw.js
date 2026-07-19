@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v475'; // Memoire de Milo = ACQUIS pour TOUS (gratuit compris) : le resume de conversations est construit ET injecte pour tout le monde (plus de barriere premium sur coachMemory). Au passage premium, Milo ne repart pas de zero. Cout borne par le quota chat gratuit. Le premium debloque l'INTELLIGENCE (analyses/syntheses/comparaisons, briques 7/8), pas l'existence de la memoire.
+const CACHE = 'ft-v476'; // Historique des discussions du Coach : le bouton « + » ne supprime plus le fil, il le RANGE dans S.coachConversations (ft4_coach_convs, local). Nouveau bouton « Mes discussions » (icone horloge) -> overlay #ov-coach-convs : rouvrir (loadCoachConv) / supprimer (deleteCoachConv). Rien de perdu. WHATS_NEW v24, red dot coach-history.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
