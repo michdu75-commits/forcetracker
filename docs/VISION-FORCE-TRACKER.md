@@ -140,6 +140,14 @@ un **cache local**.
 *(Ce principe complète le modèle mémoire ci-dessous et le modèle économique : le local est
 gratuit et durable ; l'IA est un coût variable à réserver à ce qui la nécessite vraiment.)*
 
+> **À venir — « L'inscription minimale » (ChatGPT, 19/07)** : *« Force Tracker ne devrait
+> pas demander un profil. Il devrait le découvrir. »* Au 1ᵉʳ lancement, Milo ne pose que
+> l'indispensable (objectif · ancienneté · blessure) → entrée directe dans l'app ; le reste du
+> profil se construit via les Faits, les Observations et la Mémoire, une question **quand elle
+> devient utile**. C'est le **1ᵉʳ contact avec l'esprit** du produit. ⚠️ Nuance : certaines
+> données (âge/poids/taille/sexe) ne se **découvrent pas** — à demander plus tard au bon moment
+> (Nutrition/récup), pas à zapper. **Gros chantier à part** — détail dans `IDEES-FUTURES.md`.
+
 ---
 
 ## La mémoire — le principe fondateur

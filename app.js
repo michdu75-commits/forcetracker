@@ -1525,6 +1525,9 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  {icon:'🧭', t:'Tu ne repars jamais de zéro', cap:'Chaque séance, chaque record, chaque sensation s\'inscrit dans <b>ton histoire</b>. Force Tracker s\'en souvient pour toi — et <b>plus tu l\'utilises, plus il t\'aide à progresser</b>. Ce n\'est pas une appli de muscu de plus : c\'est <b>ta mémoire sportive</b>.'},
+  {icon:'🤖', t:'Un coach qui te connaît vraiment', cap:'<b>Milo</b> répond à tes questions, te fait des programmes, des conseils — en tenant compte de <b>TOI</b> (ton profil, tes séances, ton ressenti) et de <b>ta vie</b>. Sa règle : <b>t\'aider à continuer, jamais te bloquer</b>. Il protège tes zones fragiles, et plus tu l\'utilises, mieux il te connaît.'},
+  {icon:'🔒', t:'Tes données t\'appartiennent', cap:'Tes séances, ton poids, ta santé restent <b>privés</b> — visibles seulement par toi. Tu peux même <b>protéger ton compte avec un code perso</b>. Ici, tu es chez toi.'},
   {img:'guide/home.jpg',       tap:[.5,.945],  t:'Ton accueil',            cap:'Tes stats du mois et ta <b>récup du jour</b> d\'un coup d\'œil. Juste en dessous, note ton <b>sommeil</b> (et son <b>historique</b>). Le gros <b>+</b> démarre une séance.'},
   {img:'guide/profil.jpg',     tap:[.5,.60],   t:'Remplis bien ton profil ⭐', cap:'<b>Le plus important !</b> Plus ton profil est complet, plus <b>Milo, ton coach IA</b>, est précis et personnalisé (récup et calories aussi). Un <b>% de remplissage</b> t\'aide à ne rien oublier.'},
   {img:'guide/seance.jpg',     tap:[.875,.305],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche. Tes <b>records</b> se calculent tout seuls.'},
@@ -1567,9 +1570,9 @@ function _renderAppGuide(){
   const set=(id,html,prop)=>{const el=document.getElementById(id);if(el)el[prop||'textContent']=html;};
   const phone=document.getElementById('ag-phone'),prem=document.getElementById('ag-premium');
   const img=document.getElementById('ag-img'),tap=document.getElementById('ag-tap');
-  if(s.premium||s.secure){
+  if(s.premium||s.secure||s.icon){
     if(phone)phone.style.display='none';
-    if(prem){prem.style.display='flex';prem.textContent=s.secure?'🔒':'⭐';}
+    if(prem){prem.style.display='flex';prem.textContent=s.icon?s.icon:(s.secure?'🔒':'⭐');}
   } else {
     if(prem)prem.style.display='none';
     if(phone)phone.style.display='block';

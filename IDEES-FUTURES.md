@@ -31,6 +31,37 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🚪 GROS CHANTIER PROPOSÉ — « L'inscription minimale » (découvrir le profil, pas le demander)
+
+- **Vision (ChatGPT, 19/07)** : *« Force Tracker ne devrait pas demander un profil. Il
+  devrait le découvrir. »* Le but n'est pas le questionnaire parfait, mais **la plus petite
+  inscription possible** → l'utilisateur arrive **tout de suite** dans l'app (effet « waouh »).
+- **Au 1ᵉʳ lancement, Milo ne pose que l'indispensable** : objectif · depuis combien de temps
+  tu t'entraînes · une blessure/contrainte importante. Le reste du profil se **construit
+  progressivement** via les **Faits**, les **Observations** et la **Mémoire** — une question
+  posée **seulement quand elle devient utile**, jamais un long formulaire. S'adapte aux profils
+  (passionné, sceptique, pressé, amateur de stats).
+- **✅ L'infra existe déjà en partie** : le **quiz du Coach** (`COACH_QUIZ`/`_applyQuizToProfile`,
+  coach.js) pose déjà de petites questions qui remplissent le profil ; les **Observations 5A**
+  proposent→valident des faits. → on **construit dessus**, pas de zéro.
+- **⚠️ Le piège (nuance Claude) : certaines données ne se DÉCOUVRENT pas.** Âge, poids, taille,
+  sexe → impossibles à deviner depuis les séances, et **indispensables** aux moteurs de calcul
+  (Nutrition = calories/macros, récup, niveaux de force). Donc l'inscription minimale doit les
+  demander **plus tard, au bon moment** (« pour calculer tes calories, dis-moi ton poids/taille/
+  âge » à la 1ʳᵉ ouverture de Nutrition), pas les zapper. Les 3 questions de ChatGPT sont
+  parfaites pour **Milo/coaching**, pas pour les calculs.
+- **⚠️ Mouvement inverse assumé** : on vient JUSTE d'enrichir l'inscription (écran niveau, date
+  de naissance, poids visé — ft-v240/247). Ce chantier, c'est la **trimmer**. Assumé, pas une
+  contradiction.
+- **Ampleur** : GROS chantier (refonte de l'onboarding + mécanisme « demander au bon moment »),
+  au moins aussi important que la mémoire (« c'est le 1ᵉʳ contact avec l'esprit de Force Tracker »
+  — ChatGPT). À faire **à part**, après le chantier aides + les priorités mémoire en cours.
+- **Piste de conception** : un onboarding « 3 questions Milo » → entrée directe dans l'app →
+  « collecte paresseuse » des données de calcul quand un écran en a besoin (Nutrition/récup) +
+  questions progressives de Milo (quiz + Observations) pour le reste.
+
+---
+
 ## 🚀 NOUVELLE BRIQUE PROPOSÉE — « Milo construit ta séance du jour »
 
 - **Idée (demande Michel)** : pouvoir dire à Milo « aujourd'hui je fais les pecs,

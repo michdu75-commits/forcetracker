@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v476'; // Historique des discussions du Coach : le bouton « + » ne supprime plus le fil, il le RANGE dans S.coachConversations (ft4_coach_convs, local). Nouveau bouton « Mes discussions » (icone horloge) -> overlay #ov-coach-convs : rouvrir (loadCoachConv) / supprimer (deleteCoachConv). Rien de perdu. WHATS_NEW v24, red dot coach-history.
+const CACHE = 'ft-v477'; // Aides — Lot 5 « l'esprit » : 3 diapos d'intro dans le Guide de l'appli (Tu ne repars jamais de zero / Un coach qui te connait / Tes donnees t'appartiennent, type slide `icon`) + carte « L'esprit de Force Tracker » (4 principes) en tete de l'Aide detaillee. Orientees benefice utilisateur (effet waouh).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
