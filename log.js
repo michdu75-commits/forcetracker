@@ -1680,9 +1680,11 @@ async function _runSeDebrief(sess,prCount){
   // Pas de réseau → résumé local (le flag reste : le Coach débriefera à son ouverture)
   if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)){ slot.innerHTML=fallback; return; }
   const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
-    +'Débriefe-la MAINTENANT, directement, SANS me poser de question : analyse-la (progression, stabilité, points d\'attention) '
-    +'en t\'appuyant sur mes charges par exercice (tu les as), tiens compte d\'une éventuelle douleur du jour, et termine par UN objectif '
-    +'simple et concret pour la prochaine séance. Court (4-6 phrases), direct, motivant. Ne me redemande JAMAIS mes charges.';
+    +'Débriefe-la MAINTENANT, directement : analyse-la (progression, stabilité, points d\'attention) '
+    +'en t\'appuyant sur mes charges par exercice (tu les as), tiens compte d\'une éventuelle douleur du jour, et termine par UNE piste '
+    +'pour la prochaine séance. ⚠️ Cette piste doit servir MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
+    +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
+    +'reflète ce que tu observes et demande-moi ma priorité. Court (4-6 phrases), direct, motivant. Ne me redemande JAMAIS mes charges.';
   try{
     const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:coachHistory.slice(-8),coachMemory:S.coachMemory||''};
     let resp=null,_err=null;

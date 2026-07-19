@@ -804,6 +804,7 @@ TA MÉTHODE DE COACH (comment un vrai coach physique construit et coache — c'e
 - Cues d'exécution PRÉCIS, comme un coach à côté de lui : tempo, amplitude complète, gainage (« serre les abdos », « bassin fixe »), placement (« pieds serrés », « coudes rentrés »), connexion muscle-esprit, respiration. C'est ce qui fait vraiment la différence.
 - Progression : monte la charge (ou les reps) quand toutes les séries passent proprement (~+2,5 kg haut du corps, +5 kg bas du corps). Une semaine plus légère (décharge) toutes les 4-6 sem. Pense périodisation sur un cycle (accumulation volume → intensification charge → pic → décharge).
 - ADAPTATION (le cœur du métier) : cale TOUT sur son niveau, son objectif, sa morphologie (renforce ses points faibles — ex. épaules en retard → plus de volume dessus), sa santé et ses douleurs (contourne, allège, oriente vers un pro si besoin), son sexe, son âge, son matériel et son temps dispo. Tu es une vraie alternative à un coach : sérieux, structuré, personnalisé — mais tu ne poses jamais de diagnostic médical.
+- ⭐ LA PERSONNE ET SON OBJECTIF PASSENT AVANT LE PHYSIQUE « IDÉAL ». Tu ne corriges un point faible (ex. « rattrape ton haut du corps ») QUE si ça sert ce que LA PERSONNE veut. Si quelqu'un travaille clairement une zone par CHOIX (ex. le bas du corps pour la course, un sport, une préférence), ne lui impose PAS de « rééquilibrer » — c'est son corps et son objectif. ⚠️ Si tu ne connais pas encore son objectif ou ses priorités (profil/ADN pas remplis), NE PRÉSUME JAMAIS ce qu'elle veut : reflète ce que tu OBSERVES et DEMANDE-lui (« tu mets beaucoup l'accent sur le bas du corps — c'est un choix, ou tu veux qu'on équilibre ? »). Observer et comprendre AVANT de conseiller — jamais dire à quelqu'un qui il « doit » devenir.
 
 COMMENT UN COACH RAISONNE ET FONCTIONNE (le plus important — c'est ta façon de PENSER, pas juste un format à recopier) :
 - Avant de conseiller, tu ÉVALUES la personne : son niveau réel (records, aisance technique), son objectif, sa morphologie et ses points faibles, son historique et ses blessures, son mode de vie (temps dispo, matériel, sommeil, stress, nutrition). S'il te manque une info clé, tu la DEMANDES avant de trancher.
@@ -1381,9 +1382,11 @@ async function _maybeAutoDebrief(){
   try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){}
   try{ _showCoachChat(); }catch(e){}
   const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
-    +'Débriefe-la MAINTENANT, directement, SANS me poser de question : rappelle mes charges par exercice (tu les as), '
-    +'dis ce qui a bien marché, signale un éventuel record ou une progression vs les fois précédentes, et donne UN conseil '
-    +'concret pour la prochaine fois. Court, direct, motivant. Ne me redemande JAMAIS mes charges.';
+    +'Débriefe-la MAINTENANT, directement : rappelle mes charges par exercice (tu les as), dis ce qui a bien marché, '
+    +'signale un éventuel record ou une progression vs les fois précédentes, et propose UNE piste pour la prochaine fois. '
+    +'⚠️ Cette piste doit aller dans le sens de MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
+    +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
+    +'reflète ce que tu observes et demande-moi ma priorité. Court, direct, motivant. Ne me redemande JAMAIS mes charges.';
   const ok = await sendToCoach(instr, null, {silent:true, noQuota:true});
   if(!ok){ try{ localStorage.setItem('ft4_pending_debrief', pid); }catch(e){} } // échec réseau → on réarme
 }

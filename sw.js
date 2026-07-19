@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v492'; // ECRAN DE FIN DE SEANCE (Etape 1) : a la fin d'une seance -> ecran cohérent (exos+images, chiffres, debrief Milo inline, « comment tu t'es senti ») a la place des pop-ups eparses (carte muscles + record + check-in). Debrief pousse dans la memoire du Coach.
+const CACHE = 'ft-v493'; // Milo : la personne et SON objectif priment. Ne corrige un point faible que si ca sert son objectif ; si l'objectif n'est pas connu (profil vide), NE PRESUME PAS -> reflete et DEMANDE (retour testeuse Tatiana : Milo lui imposait « rattrape ton haut du corps » alors qu'elle bosse le bas par choix).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
