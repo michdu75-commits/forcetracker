@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v481'; // Fix bug Christophe : boite a idees, photos absentes du mail. Cause = envoi CORS (lecture reponse) qui echoue sur certains reseaux -> repli mailto qui ne peut PAS joindre de photo. Fix = envoi en NO-CORS (comme _cloudSync, passe en 4G) -> le backend recoit les images et les met en pieces jointes.
+const CACHE = 'ft-v482'; // Michel : bouton « Boite a idees (test) » dans le panneau Admin -> openTesterSpace() (deja autorise aux super testeurs, dont michdu75). Pour tester la boite a idees en direct et reproduire les bugs.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
