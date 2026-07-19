@@ -108,6 +108,35 @@ terme. Voir `docs/GALERES-ET-LECONS.md` (§ « Ce qui pourrait manquer »).
 
 ---
 
+## La mémoire — le principe fondateur
+
+> **« Force Tracker conserve les données. Milo leur donne du sens. »**
+> *(ChatGPT, 19/07/2026 — cette distinction est le principe fondateur du modèle,
+> à la fois philosophique et économique.)*
+
+La mémoire s'organise en **3 niveaux** :
+
+1. **Mémoire essentielle — GRATUITE, un acquis, jamais perdue.** Les **données** de la
+   personne : profil, blessures et limitations, performances, séances, objectifs,
+   préférences — **et un résumé léger** qui garde l'essentiel de qui elle est.
+   *« Les données appartiennent toujours à l'utilisateur. »* (Constitution, Principe 11.)
+2. **Mémoire intelligente — PREMIUM.** Le premium ne stocke **pas plus** de données :
+   il les **exploite**. Tendances sur plusieurs mois, liens entre événements
+   (sommeil ↔ fatigue ↔ performance ↔ douleur), rappels intelligents, analyses
+   comparatives, chat approfondi. *« Le premium débloque l'intelligence de la
+   mémoire, pas la mémoire elle-même. »*
+3. **Mémoire vivante — la destination (briques 7 & 8).** Milo **raconte** l'histoire :
+   *« Depuis deux ans, tu progresses davantage quand tu dors plus de 7 h 30. »* Une
+   mémoire sportive **vivante**, pas un simple historique.
+
+⚠️ **Affinage important (garde-fou de l'effet « je te connais déjà »)** : le **socle
++ le résumé léger** se **construisent dès le 1ᵉʳ jour, en gratuit**. Le premium ne
+débloque pas *l'existence* de la mémoire, mais son **intelligence**. Sinon un
+utilisateur qui s'abonne après des mois de gratuit arriverait « vide » — ce qui
+trahirait la philosophie.
+
+---
+
 ## La destination — l'architecture en 8 briques
 
 *(Cadrage proposé par ChatGPT, validé le 19/07/2026. C'est la **colonne
