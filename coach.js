@@ -1474,23 +1474,29 @@ function _pt001Label(txt){
   d.style.cssText='align-self:center;margin:10px auto 4px;font-size:11.5px;font-weight:700;color:var(--t3);background:var(--bg3);border-radius:20px;padding:4px 12px;';
   d.textContent=txt; msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
 }
-// Un appel Coach instrumenté (timing + statut + taille) — n'incrémente aucun quota
+// Un appel Coach instrumenté (timing + statut + taille) — n'incrémente aucun quota.
+// ⚠️ Détecte le fallback « Désolé, réessaie. » (= le Worker a reçu un texte VIDE de l'API :
+//    surcharge ou LIMITE DE DÉBIT) et le compte comme une ERREUR (pas un succès), avec
+//    réessais espacés (backoff) — un rejeu de tout l'historique peut cogner la limite Opus.
+const _PT001_FALLBACK='Désolé, réessaie.';
 async function _pt001Ask(instr){
-  const t0=(typeof performance!=='undefined'?performance.now():Date.now());
-  let resp=null,_err=null,status=0,reply='';
+  const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
+  const t0=_now();
   const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:coachHistory.slice(-8),coachMemory:S.coachMemory||''};
-  for(let a=1;a<=2;a++){
-    try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); _err=null; break; }
-    catch(e){ _err=e; if(a<2)await _pt001Sleep(1200); }
+  let lastErr='inconnue', status=0;
+  for(let a=1;a<=3;a++){
+    let resp=null;
+    try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); }
+    catch(e){ lastErr='réseau: '+(e.message||'?'); if(a<3){await _pt001Sleep(2000*a);continue;} break; }
+    status=resp.status;
+    if(!resp.ok){ lastErr='HTTP '+status; if(a<3){await _pt001Sleep(2500*a);continue;} break; }
+    let data=null; try{ data=await resp.json(); }catch(e){ lastErr='JSON réponse'; if(a<3){await _pt001Sleep(1500*a);continue;} break; }
+    const reply=(data&&data.reply)||'';
+    const fallback = !reply || reply.trim()===_PT001_FALLBACK;
+    if(fallback){ lastErr='Milo n\'a pas répondu (surcharge / limite de débit ?)'; if(a<3){await _pt001Sleep(5000*a);continue;} break; }
+    return {ok:true,ms:Math.round(_now()-t0),status,err:'',reply,tries:a};
   }
-  const t1=(typeof performance!=='undefined'?performance.now():Date.now());
-  const ms=Math.round(t1-t0);
-  if(_err) return {ok:false,ms,status:0,err:(_err.message||'réseau'),reply:''};
-  status=resp.status;
-  if(!resp.ok) return {ok:false,ms,status,err:'HTTP '+status,reply:''};
-  try{ const data=await resp.json(); reply=data.reply||''; }catch(e){ return {ok:false,ms,status,err:'JSON réponse',reply:''}; }
-  if(!reply) return {ok:false,ms,status,err:'réponse vide',reply:''};
-  return {ok:true,ms,status,err:'',reply};
+  return {ok:false,ms:Math.round(_now()-t0),status,err:lastErr,reply:''};
 }
 function startPt001Test(){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
@@ -1499,8 +1505,8 @@ function startPt001Test(){
   const sessions=(S.sessions||[]).filter(s=>s&&((s.exs||s.exercises||[]).length));
   if(sessions.length<2){ toast('Il faut au moins 2 séances dans l\'historique','error'); return; }
   const n=sessions.length;
-  const estMin=Math.max(1,Math.round(n*7/60)); // ~7 s / débrief estimé
-  const msg='Ça va rejouer TES '+n+' séances dans l\'ordre : Milo débriefe chacune et vérifie l\'objectif de la fois d\'avant.\n\n• ~'+estMin+' min (≈7 s/débrief)\n• Coût : '+(n+1)+' appels au modèle du Coach (quelques €)\n• '+n+' débriefs empilés dans le Coach\n\nÀ la fin : la question « Qui suis-je en tant que sportif ? » + un rapport exportable.\n\nLancer ?';
+  const estMin=Math.max(1,Math.round(n*9/60)); // ~9 s / débrief (génération + throttle anti-limite)
+  const msg='Ça va rejouer TES '+n+' séances dans l\'ordre : Milo débriefe chacune et vérifie l\'objectif de la fois d\'avant.\n\n• ~'+estMin+' min (appels espacés pour ne pas saturer la limite de débit)\n• Coût : '+(n+1)+' appels au modèle du Coach (quelques €)\n• '+n+' débriefs empilés dans le Coach\n\nÀ la fin : la question « Qui suis-je en tant que sportif ? » + un rapport exportable.\n\nLancer ?';
   showConfirm('🧪 PT-001 · Test continuité', msg, ()=>_pt001Run(sessions));
 }
 async function _pt001Run(allSessions){
@@ -1549,6 +1555,8 @@ async function _pt001Run(allSessions){
         len:0, parsed:false, objectif:'', decision:'', tenu:'', cont:false,
         memAfter:memBefore, reply:'' });
     }
+    // Throttle entre débriefs : ne pas cogner la limite de débit Opus (le rejeu enchaîne vite)
+    if(i<sessions.length-1) await _pt001Sleep(1800);
   }
   try{ if(typeof _saveCoachHist==='function')_saveCoachHist(); }catch(e){}
   // ── Question finale (test GPT) : « Qui suis-je en tant que sportif ? » (bare, sans guidage) ──

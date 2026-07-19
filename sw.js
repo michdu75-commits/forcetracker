@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v499'; // PT-001 -> « Laboratoire Milo » (retours GPT, chambrage QA affectueux) : libelles metier au lieu de debug (Continuite EXPLOITEE, Charge 🟢Confortable/🟡Dense/🔴Limite au lieu de x0.76, Portrait coherent/incomplet, le chiffre reste dans le detail). On teste si Milo devient le coach imagine, pas du code.
+const CACHE = 'ft-v500'; // FIX PT-001 : le 1er rejeu tirait 20 appels Opus en 18s -> LIMITE DE DEBIT -> le Worker renvoyait « Desole, reessaie. » x20 (compte a tort comme succes). Fix : throttle 1.8s entre debriefs + reessais espaces (backoff) + le fallback « Desole reessaie »/vide est desormais compte comme ERREUR (rapport honnete).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

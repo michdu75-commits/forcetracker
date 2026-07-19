@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v499` (PT-001 → « Laboratoire Milo » : libellés métier, retours GPT)
+- **Version en prod :** `ft-v500` (fix PT-001 : throttle + réessais + fallback compté comme erreur — le rejeu saturait la limite de débit Opus)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** `backup-2026-07-19-avant-ressenti-score`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
