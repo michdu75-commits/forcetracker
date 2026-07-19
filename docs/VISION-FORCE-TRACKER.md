@@ -151,6 +151,13 @@ cette machinerie sert.
 > évite « progression » : toute histoire n'est pas une montée continue (blessures,
 > pauses, reprises, changements d'objectif) — le sport est une **histoire**, pas une
 > barre qui monte.
+>
+> **La brique 7 ne montre pas des statistiques — elle fait revivre des SOUVENIRS
+> utiles au bon moment** (ChatGPT). Un souvenir a toujours **une raison** d'apparaître
+> (jamais au hasard → « moins mais mieux ») et il **décrit**, il ne prescrit jamais
+> (Principe 14). Trois déclencheurs : **anniversaire** (« il y a un an… »),
+> **contextuel** (une situation similaire revient), **demandé** (l'utilisateur le
+> demande). *(Fiche de conception détaillée : `DOSSIER-ATHLETE-SUIVI.md`.)*
 
 > **Un fil transversal à garder en tête : le rythme de vie (chronobiologie).**
 > Comprendre les cycles de la personne (semaine/week-end, matin/soir, saisons) pour

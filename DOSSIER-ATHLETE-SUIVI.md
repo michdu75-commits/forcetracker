@@ -46,6 +46,42 @@ temps + données accumulées → cerveau d'abord, puis une vraie base de donnée
 Tout ce qui est « en cours » (5B, « Milo construit ta séance »…) = **affinages À
 L'INTÉRIEUR** d'une brique, PAS de nouvelles grandes briques.
 
+> **🔮 Fiche de conception — BRIQUE 7 « Mémoire vivante » (design capturé, À
+> CONSTRUIRE PLUS TARD).** *(Ne PAS développer maintenant : on est sur la validation
+> de 5A/6A/6B — Principe 8. On capture juste la conception pendant qu'elle est
+> fraîche, apport ChatGPT du 19/07.)*
+>
+> **Principe.** La brique 7 **ne montre pas de statistiques** — elle fait **revivre
+> des SOUVENIRS utiles au bon moment**. C'est ce qui transforme une mémoire technique
+> en mémoire *vivante*. Nom visible de la 1ʳᵉ fonctionnalité : **« Ton histoire
+> sportive »**.
+>
+> **« Le Souvenir » = un vrai objet métier** (au même titre que l'État du jour, le
+> Gardien, les Observations). Structure :
+> - **type** : `anniversaire` · `contextuel` · `demandé`
+> - **date** (l'événement d'origine)
+> - **résumé** (le souvenir, en une ou deux phrases, DESCRIPTIF)
+> - **lien avec la situation actuelle** (pourquoi c'est pertinent aujourd'hui)
+> - **raison** (pourquoi Milo le fait remonter maintenant) → c'est le garde-fou
+>   « moins mais mieux » : un souvenir sans raison ne remonte pas.
+>
+> **3 déclencheurs** (jamais au hasard) :
+> 1. **Anniversaire** — « Il y a un an aujourd'hui… ».
+> 2. **Contextuel** — une situation similaire réapparaît (même douleur, même
+>    objectif, même reprise).
+> 3. **Demandé** — l'utilisateur demande explicitement à revoir une période.
+>
+> **Garde-fous** : un souvenir **décrit**, il ne prescrit jamais (Principe 14) ; il
+> respecte le **seuil d'intrusion** (« moins mais mieux »).
+>
+> **Décision d'architecture (ChatGPT) — le « détecteur d'anomalies ».** Les 3
+> catégories d'anomalie (changement brutal / tendance progressive / événement
+> marquant) recoupent ce que regardent déjà les Observations (5), le Gardien (6) et
+> l'initiative de Milo. **On ne mutualise PAS tout de suite** : chaque brique garde
+> sa logique tant qu'elles évoluent ; on extrait un **composant commun seulement
+> quand le besoin est prouvé** (« factoriser après avoir prouvé le besoin, pas
+> avant »).
+
 **📏 Méthode par brique (adoptée 19/07, suggestion ChatGPT — anti « puisqu'on y est ») :**
 chaque brique est décrite AVANT de coder avec **3 sections** :
 - **Objectif** : ce que la brique apporte, en une phrase.
