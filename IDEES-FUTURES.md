@@ -70,6 +70,34 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
   + questions progressives de Milo (quiz Coach + Observations) pour enrichir le reste.
   → l'inscription reste **légère** sans pénaliser les calculs.
 
+### 📐 SPEC du chantier « Faisons connaissance » (cadrage ChatGPT + Claude, 19/07)
+- **Objectif** : remplacer l'inscription-formulaire par une **« Faisons connaissance »** —
+  Milo pose **3 questions par boutons** (objectif · depuis quand tu t'entraînes · une
+  blessure/contrainte) + l'**email** (avec le pourquoi) → **entrée directe dans l'app**.
+- **Critère de réussite** : un nouvel inscrit arrive dans l'app en **< 1 min**, sent que Milo
+  « commence à le connaître », et les moteurs de calcul (Nutrition/récup) demandent les données
+  manquantes (poids/taille/âge/sexe) **au bon moment**, sans jamais planter.
+- **Hors périmètre** : renommer « Profil » globalement · refondre les moteurs de calcul ·
+  demander l'email plus tard (on le **garde** à l'inscription).
+- **Décisions de cadrage** :
+  - **① 3 questions = conversation guidée par BOUTONS** (pas de texte à taper). *« Bonjour, moi
+    c'est Milo. Avant de commencer, j'aimerais apprendre 3 choses sur toi. »* → l'utilisateur
+    sent que Milo apprend déjà. **Réutilise l'infra existante** (`COACH_QUIZ`/boutons + onboarding
+    déjà à boutons).
+  - **② Email à l'inscription + EXPLIQUER pourquoi** : « Ton compte te permet de retrouver ton
+    historique si tu changes de téléphone. » (Mieux que demander tard = risque de perte.)
+  - **③ Vocabulaire « relation, pas compte »** : *Inscription → « Faisons connaissance »* ·
+    *Informations perso → « Ce qui m'aidera à mieux t'accompagner »*. ⚠️ **PIÈGE** : ne PAS
+    renommer « Profil » en « Ce que Milo sait déjà de toi » → **ce nom est DÉJÀ pris** (page des
+    Observations, Menu → « Ce que Milo sait de toi »). Garder « Profil » (mot clair) ; vocabulaire
+    chaleureux réservé à l'onboarding.
+- **Découpage en petits pas (jamais casser l'inscription)** :
+  1. **Vocabulaire + email « pourquoi »** (texte seul, risque ~0) — le premier pas.
+  2. Écran « Faisons connaissance » : les 3 questions Milo par boutons.
+  3. « Collecte paresseuse » : demander poids/taille/âge au bon moment (Nutrition/récup) + garde-fou
+     anti-plantage si absent.
+  4. Trim de l'ancien formulaire profil de l'onboarding (une fois 2 et 3 en place).
+
 ---
 
 ## 🚀 NOUVELLE BRIQUE PROPOSÉE — « Milo construit ta séance du jour »

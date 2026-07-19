@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v478'; // Diapo esprit 3 reformulee (retour ChatGPT) : « Tes donnees t'appartiennent » -> « Ton histoire t'appartient » (Force Tracker construit une histoire sportive, pas juste des donnees ; sejour prive, utilise seulement pour t'aider a progresser). + priorite gravee : chantier Inscription+accueil juste apres les aides.
+const CACHE = 'ft-v479'; // Chantier inscription, pas 1/4 (texte seul, 0 changement de logique) : vocabulaire chaleureux (« Non, faisons connaissance », profil = « ce qui aidera Milo a mieux t'accompagner ») + email « pourquoi » (« retrouver ton historique si tu changes de telephone, prive a toi »). Suite : ecran 3 questions Milo -> collecte paresseuse -> trim formulaire.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

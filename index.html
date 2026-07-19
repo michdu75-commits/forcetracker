@@ -146,7 +146,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <div class="ob-sub">Tu as déjà un compte Force Tracker ?</div>
         <div id="ob-1-choice" style="width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px;">
           <button class="btn btn-red" onclick="obShowRestore()" style="font-size:17px;padding:16px;">✅ Oui, je restaure mes données</button>
-          <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:15px;padding:14px;">Non, je crée mon profil →</button>
+          <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:15px;padding:14px;">Non, faisons connaissance →</button>
         </div>
         <div id="ob-1-restore" style="display:none;width:100%;flex-direction:column;gap:10px;margin-top:8px;">
           <input class="ob-inp" id="ob-email" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
@@ -190,7 +190,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
           <span style="font-size:32px;line-height:1;">👤</span>
           <div class="ob-title" style="font-size:28px;text-align:left;">Ton profil</div>
         </div>
-        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Pour calculer tes calories et macros personnalisées.</div>
+        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Ce qui aidera Milo à mieux t'accompagner (calories, macros, conseils personnalisés).</div>
         <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" enterkeyhint="next" style="width:100%;">
         <div class="ob-gbrow" style="width:100%;">
           <button class="ob-gbtn ob-sel" id="ob-gt-h" onclick="obSetGender('H')">♂ Homme</button>
@@ -244,10 +244,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <img src="force-tracker-logo-gray.png" alt="Force Tracker" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;" loop>
         <div class="ob-title" id="ob-cta-title" style="font-size:38px;">C'est parti !</div>
         <div id="ob-email-section" style="width:100%;margin-top:4px;">
-          <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Email (pour sauvegarder tes données)</label>
+          <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Ton email</label>
           <input class="ob-inp" id="ob-email-final" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
-          <div style="margin-top:10px;background:var(--bg2);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--t2);line-height:1.5;text-align:left;">
-            💡 Complète ton profil dans l'onglet <strong style="color:var(--t1);">Profil</strong> et clique <strong style="color:var(--t1);">Enregistrer</strong> pour tout sauvegarder dans le cloud.
+          <div style="margin-top:10px;background:var(--bg2);border-radius:10px;padding:12px 14px;font-size:14.5px;color:var(--t2);line-height:1.55;text-align:left;">
+            🔒 Ton compte te permet de <strong style="color:var(--t1);">retrouver ton historique si tu changes de téléphone</strong> — et tes données restent <strong style="color:var(--t1);">privées, à toi</strong>. Ensuite, complète ton <strong style="color:var(--t1);">Profil</strong> pour que Milo te connaisse mieux.
           </div>
         </div>
       </div>
