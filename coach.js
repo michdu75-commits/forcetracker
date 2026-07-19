@@ -1038,8 +1038,10 @@ Utilise ces données pour personnaliser tes réponses et t'adapter à la personn
 // decision, tendances, ressenti}```) — jamais affiché (retiré par _stripCoachTech).
 // On le PARSE et on l'écrit dans le Registre (S.registre.sessionLog) → mémoire durable,
 // une seule mémoire (pas de silo), qui prépare l'Étape 3 (« objectif tenu ? »).
+// Étape 3 — CONTINUITÉ : Milo vérifie d'abord l'objectif qu'il avait fixé la fois d'avant.
+const _DEBRIEF_CONTINUITY = ' ⭐ CONTINUITÉ (très important) : si tu vois dans « DERNIERS DÉBRIEFS DE SÉANCE » un objectif que TU m\'avais fixé la dernière fois, COMMENCE ta réponse en le VÉRIFIANT au vu de MA séance d\'aujourd\'hui (tu as mes charges/reps) — est-il tenu ? Si OUI → félicite-moi brièvement et propose la suite logique (ex. monter un peu la charge). Si NON → dédramatise (« on remet ça la prochaine fois »), sans jamais juger. Si tu n\'avais pas fixé d\'objectif la dernière fois, débriefe normalement. Ne préjuge pas si c\'est ambigu : demande-moi.';
 // Consigne ajoutée aux 2 débriefs (écran de fin + ouverture Coach) : le bloc caché à parser.
-const _DEBRIEF_MEM_TAIL = '\n\nÀ LA TOUTE FIN de ta réponse, ajoute un bloc technique CACHÉ (l\'utilisateur ne le verra pas — il est retiré de l\'affichage), au format EXACT et rien après :\n```json\n{"objectif":"…","decision":"…","tendances":"…","ressenti":"…"}\n```\n- objectif = ce que tu veux que je vise la PROCHAINE fois (court, concret).\n- decision = ta reco principale / le POURQUOI (ex. « garder la charge », « +2,5 kg », « +1 rép », « augmenter le repos », « surveiller l\'épaule », « réduire l\'intensité »).\n- tendances = ce que tu as repéré (progression / stabilité / point d\'attention).\n- ressenti = mon état si tu le perçois (sinon "").\nChaque champ court (une phrase max).';
+const _DEBRIEF_MEM_TAIL = '\n\nÀ LA TOUTE FIN de ta réponse, ajoute un bloc technique CACHÉ (l\'utilisateur ne le verra pas — il est retiré de l\'affichage), au format EXACT et rien après :\n```json\n{"objectif":"…","decision":"…","tendances":"…","ressenti":"…","objectifTenu":"…"}\n```\n- objectif = ce que tu veux que je vise la PROCHAINE fois (court, concret).\n- decision = ta reco principale / le POURQUOI (ex. « garder la charge », « +2,5 kg », « +1 rép », « augmenter le repos », « surveiller l\'épaule », « réduire l\'intensité »).\n- tendances = ce que tu as repéré (progression / stabilité / point d\'attention).\n- ressenti = mon état si tu le perçois (sinon "").\n- objectifTenu = l\'objectif que tu m\'avais fixé la DERNIÈRE fois est-il tenu aujourd\'hui ? réponds "oui", "non" ou "partiel" (ou "" s\'il n\'y en avait pas).\nChaque champ court (une phrase max).';
 function _parseDebriefMemory(reply){
   try{
     const s = String(reply||'');
@@ -1050,7 +1052,7 @@ function _parseDebriefMemory(reply){
     const o = JSON.parse(jstr);
     if(!o || typeof o!=='object') return null;
     const pick = k => (o[k]!=null ? String(o[k]).replace(/\s+/g,' ').trim().slice(0,300) : '');
-    const e = { objectif:pick('objectif'), decision:pick('decision'), tendances:pick('tendances'), ressenti:pick('ressenti') };
+    const e = { objectif:pick('objectif'), decision:pick('decision'), tendances:pick('tendances'), ressenti:pick('ressenti'), objectifTenu:pick('objectifTenu') };
     if(!e.objectif && !e.decision) return null; // rien d'exploitable
     return e;
   }catch(err){ return null; }
@@ -1067,6 +1069,7 @@ function _recordDebriefMemory(reply, sess){
       date: (sess&&sess.date) || (typeof today==='function'?today():new Date().toISOString().slice(0,10)),
       sessId: sid,
       objectif: e.objectif, decision: e.decision, tendances: e.tendances, ressenti: e.ressenti,
+      objectifTenu: e.objectifTenu, // Étape 3 : verdict sur l'objectif de la fois PRÉCÉDENTE (oui/non/partiel)
       ts: Date.now()
     });
     if(S.registre.sessionLog.length>40) S.registre.sessionLog = S.registre.sessionLog.slice(-40);
@@ -1435,7 +1438,7 @@ async function _maybeAutoDebrief(){
     +'⚠️ Cette piste doit aller dans le sens de MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
     +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
     +'reflète ce que tu observes et demande-moi ma priorité. Court, direct, motivant. Ne me redemande JAMAIS mes charges.'
-    +_DEBRIEF_MEM_TAIL;
+    +_DEBRIEF_CONTINUITY+_DEBRIEF_MEM_TAIL;
   const ok = await sendToCoach(instr, null, {silent:true, noQuota:true, debriefSess: pid});
   if(!ok){ try{ localStorage.setItem('ft4_pending_debrief', pid); }catch(e){} } // échec réseau → on réarme
 }

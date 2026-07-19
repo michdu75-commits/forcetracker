@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v495'; // Debrief DURABLE (Etape 2 memoire) : chaque debrief de Milo enregistre {objectif, decision, tendances, ressenti} dans le Registre (S.registre.sessionLog) via un bloc cache -> Milo « se souvient » de ce qu'il a fixe (prepare l'Etape 3 « objectif tenu ? »). Une seule memoire, local+cloud.
+const CACHE = 'ft-v496'; // Debrief « OBJECTIF TENU ? » (Etape 3 : le comportement) : a chaque nouveau debrief, Milo VERIFIE d'abord l'objectif qu'il avait fixe la fois d'avant (felicite si tenu / dedramatise sinon) puis debriefe. Verdict trace (objectifTenu oui/non/partiel). Le vrai « il me suit ».
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
