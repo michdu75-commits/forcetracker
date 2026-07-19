@@ -31,6 +31,29 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🌟 RETOURS DE L'ANALYSE PRODUIT EXTERNE (19/07) — actionnables
+
+*(Analyse complète très positive : Concept 10/10, Coach IA 9,5, Potentiel commercial 10/10.
+Confirme la direction — Gardien « adapte au lieu d'interdire », Milo compagnon, inscription
+prénom/sexe/objectif/niveau/blessures. Ci-dessous ce qui est VRAIMENT nouveau à faire.)*
+
+- **🎯 « La valeur AVANT le premium » (le meilleur point).** Le premium arrive trop tôt : il
+  serait bien plus convaincant **après** une 1ʳᵉ séance / un 1ᵉʳ record / une 1ʳᵉ analyse.
+  Principe gravé dans la Vision. **Actionnable** : ne pas afficher de mur/incitation premium
+  tant que l'utilisateur n'a pas ressenti de valeur (ex. décaler le mur du Coach, les teasers
+  premium après la 1ʳᵉ séance ou le 1ᵉʳ record). À cadrer proprement (quels déclencheurs de
+  « valeur atteinte »).
+- **✨ Accueil « waouh » personnalisé** (carte Milo de l'Accueil). Exemple de l'analyse :
+  *« Bienvenue Michel, objectif Force, attention à ton genou droit, construisons ton prochain
+  record. »* → réutilise **pile** le profil + la **blessure** qu'on vient d'ajouter à
+  l'inscription. Beau « waouh » à faire **après l'Étape B** (peu de code, gros effet).
+- **🗣️ Milo encore plus humain/conversationnel** — continuer le travail de personnalité (ton,
+  effet miroir, registre de langage) ; l'analyse le note comme un levier.
+- **📖 Guide un peu plus court / optionnel** — le guide-film pourrait être raccourci (5-6
+  diapos) ou offrir un « Passer » plus visible. Mineur.
+
+---
+
 ## 🚪 GROS CHANTIER PROPOSÉ — « L'inscription minimale » (découvrir le profil, pas le demander)
 
 - **Vision (ChatGPT, 19/07)** : *« Force Tracker ne devrait pas demander un profil. Il

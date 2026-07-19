@@ -177,6 +177,13 @@ débloque pas *l'existence* de la mémoire, mais son **intelligence**. Sinon un
 utilisateur qui s'abonne après des mois de gratuit arriverait « vide » — ce qui
 trahirait la philosophie.
 
+> **La valeur AVANT le premium (timing)** *(analyse produit externe, 19/07)* : on ne
+> propose jamais le premium **avant** que l'utilisateur ait ressenti de la valeur —
+> une 1ʳᵉ séance, un 1ᵉʳ record, une 1ʳᵉ analyse. Le premium se **mérite par la
+> preuve**, il n'est pas un péage à l'entrée. Cohérent avec « la mémoire est un
+> acquis » : d'abord Milo montre qu'il te connaît et t'aide ; **ensuite** il propose
+> d'aller plus loin.
+
 ---
 
 ## La destination — l'architecture en 8 briques
