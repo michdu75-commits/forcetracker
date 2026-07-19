@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v480'; // Inscription pas 2 (Etape A) : « Faisons connaissance » reorganisee -> Bienvenue -> Prenom+Sexe (leger) -> Objectif -> Niveau -> Blessure (nouvel ecran optionnel, zones -> S.healthProfile.notes lues par le Gardien) -> Email. Age/taille/poids RETIRES de l'inscription (collecte paresseuse = Etape B). 6 points de progression, obNext/obGoTo/dotMap recables.
+const CACHE = 'ft-v481'; // Fix bug Christophe : boite a idees, photos absentes du mail. Cause = envoi CORS (lecture reponse) qui echoue sur certains reseaux -> repli mailto qui ne peut PAS joindre de photo. Fix = envoi en NO-CORS (comme _cloudSync, passe en 4G) -> le backend recoit les images et les met en pieces jointes.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

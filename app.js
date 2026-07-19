@@ -2440,21 +2440,24 @@ async function sendTesterIdea(){
   S.testerIdeas=S.testerIdeas||[];
   S.testerIdeas.push({text:txt||'(photos jointes)',date:new Date().toLocaleDateString('fr-FR'),photos:nPhotos,sent:true});
   persist();
-  // Envoi serveur : texte + photos → mail à Michel AVEC les photos en pièces jointes (fix #13)
-  let ok=false;
+  // Envoi serveur en NO-CORS (fiable comme _cloudSync — passe en wifi ET en 4G/5G) : texte + photos
+  // ENSEMBLE, en 1 seul envoi. ⚠️ Bug Christophe : avant, un fetch CORS lisait la réponse et
+  // échouait sur certains réseaux → repli `mailto` qui NE PEUT PAS joindre de pièce jointe (photos
+  // absentes du mail). En no-cors, le backend reçoit bien les images et les met en pièces jointes.
+  let sent=false;
   try{
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'testerIdea',email:S.email||'',name:who,text:txt||'(photos jointes)',photos:images.length,images,date:new Date().toISOString()})});
-    const d=await r.json(); ok=!!(d&&d.status==='ok');
-  }catch(e){ ok=false; }
+    sent=true;
+  }catch(e){ sent=false; }
   _testerIdeaFiles=[];
   if(inp)inp.value=''; _renderTesterSpace();
-  if(ok){
+  if(sent){
     toast(nPhotos?('Idée + '+nPhotos+' photo'+(nPhotos>1?'s':'')+' envoyées à Michel ✅'):'Idée envoyée à Michel ✅','success');
   }else{
-    // Repli : mail texte si le serveur est injoignable (au moins l'idée part)
+    // Réseau totalement HS → repli mail TEXTE (le mailto ne peut pas porter les photos).
     _testerIdeaMailto('💡 Idée Force Tracker — '+who,'Idée de '+who+' ('+(S.email||'')+') :\n\n'+(txt||'(voir photos)')+'\n\n— boîte à idées Force Tracker',nPhotos);
-    toast('Serveur injoignable — idée envoyée par mail (texte)','info');
+    toast('Réseau injoignable — idée envoyée par mail (texte, ajoute la photo à la main)','info');
   }
 }
 // Partage optionnel des photos/captures (bouton séparé) — l'utilisateur choisit Mail/Messages.
