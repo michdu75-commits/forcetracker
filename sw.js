@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v474'; // Pop-up testeurs (une seule fois) pour annoncer l'etat du jour (3B) et demander un retour : carte Accueil energie+douleur, la douleur ne baisse pas le score (bandeau ⚠️), Milo protege la zone. Reserve aux testeurs (_isTester), flag ft4_tester_3b_v1.
+const CACHE = 'ft-v475'; // Memoire de Milo = ACQUIS pour TOUS (gratuit compris) : le resume de conversations est construit ET injecte pour tout le monde (plus de barriere premium sur coachMemory). Au passage premium, Milo ne repart pas de zero. Cout borne par le quota chat gratuit. Le premium debloque l'INTELLIGENCE (analyses/syntheses/comparaisons, briques 7/8), pas l'existence de la memoire.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

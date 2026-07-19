@@ -936,7 +936,7 @@ ${(()=>{
   if(!sel.length)return '';
   return `\nBILAN SANGUIN (labo, le ${t.date||'?'}) — marqueurs clés:\n- ${sel.slice(0,16).map(line).join('\n- ')}\n⚠️ MÉDICAL : ce sont des chiffres recopiés du labo. Tu peux en parler en lien avec l'entraînement/récup/nutrition (ex. ferritine, glycémie, cholestérol) MAIS tu ne poses JAMAIS de diagnostic, tu ne dis jamais si c'est grave. Pour toute valeur [hors norme] ou toute inquiétude, renvoie SYSTÉMATIQUEMENT vers le médecin. Ne remplace jamais un professionnel de santé.\n`;
 })()}
-${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
+${S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
 MÉTHODE DE COACHING (très important) :
 - ADAPTE la profondeur à son niveau : débutant → simple, pédagogue, priorité technique + sécurité ; intermédiaire/confirmé → technique, périodisation (phases de charge/décharge), notion de RPE et d'autorégulation. Jamais de conseils « bateau » servis à tout le monde.
 - COMME UN VRAI COACH, quand ta réponse dépend d'infos que tu n'as pas (ressenti, douleur, matériel dispo, sensations, temps, objectif du jour), POSE 1 ou 2 questions ciblées AVANT de trancher — ne devine pas à l'aveugle. (Mais pas de question inutile si tu as déjà de quoi répondre.)
@@ -1207,7 +1207,7 @@ async function sendToCoach(customMsg, displayMsg) {
         message: msg || 'Analyse cette photo de mon corps.',
         context: buildCoachContext(),
         history: coachHistory.slice(-8),
-        coachMemory: S.premium ? (S.coachMemory||'') : ''
+        coachMemory: S.coachMemory||''
       };
       if (hasImg) { payload.image = imgData; payload.imageType = imgType; }
       // Envoi avec 3 tentatives : sur connexion capricieuse (wifi faible / 4G-5G), un
@@ -1248,8 +1248,11 @@ async function sendToCoach(customMsg, displayMsg) {
     try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)
     const newBtn=document.getElementById('coach-new-btn'); if(newBtn)newBtn.style.display='flex';
 
-    // Sauvegarde mémoire intelligente (Premium, fire-and-forget)
-    if (S.premium && coachHistory.length >= 4 && S.url && S.email) _saveCoachMemory();
+    // Sauvegarde mémoire — la mémoire est un ACQUIS, construite pour TOUS (gratuit compris) :
+    // au passage premium, Milo ne repart pas de zéro (« je te connais déjà »). Coût naturellement
+    // borné par le quota de chat gratuit (COACH_FREE_LIMIT). Le premium débloque l'INTELLIGENCE
+    // qui exploite la mémoire (analyses, synthèses, comparaisons — briques 7/8), pas son existence.
+    if (coachHistory.length >= 4 && S.url && S.email) _saveCoachMemory();
 
     // Incrémenter compteur (seulement sur réponse réussie)
     if (!S.premium) {
@@ -1644,7 +1647,7 @@ function exportData(){
 }
 
 async function _saveCoachMemory(){
-  if(!S.premium||!S.url||!S.email)return;
+  if(!S.url||!S.email)return; // construite pour TOUS (mémoire = acquis) — plus de barrière premium
   try{
     const resp=await fetch(_aiUrl('summarizeCoach'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
