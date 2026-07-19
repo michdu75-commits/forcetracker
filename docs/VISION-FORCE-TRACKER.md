@@ -108,6 +108,40 @@ terme. Voir `docs/GALERES-ET-LECONS.md` (§ « Ce qui pourrait manquer »).
 
 ---
 
+## Le moteur local — le vrai patrimoine
+
+> **« Force Tracker calcule, mémorise, analyse. Milo explique, relie, accompagne. »**
+> *(ChatGPT, 19/07/2026 — le contrepoids : ne pas réduire Force Tracker à « un coach IA ».)*
+
+Force Tracker n'est **pas** uniquement un coach IA : c'est une application qui possède
+son **propre moteur d'intelligence**, **local**. Principe directeur :
+
+> **Le moteur local d'abord — l'IA seulement pour ce qui l'exige** (le langage, la
+> vision/photo, l'interprétation, la personnalisation). Tout ce qui peut être
+> **calculé, mémorisé ou analysé en local** doit l'être.
+
+Plus on traite en local, plus on gagne en **rapidité**, **fiabilité**, **coût** (le
+local = 0 €) et surtout **indépendance vis-à-vis des modèles d'IA**.
+
+**Pourquoi c'est stratégique (le patrimoine).** L'IA évoluera au fil des années — les
+modèles changent de prix, se déprécient, tombent parfois (cf. la galère 4G/Cloudflare,
+`docs/GALERES-ET-LECONS.md`). Ce qui **reste**, ce qui **t'appartient** vraiment, c'est le
+**moteur de calcul + la mémoire + les bases de données**. C'est le **vrai patrimoine** de
+Force Tracker, celui que personne ne peut retirer.
+
+**Exemple — la nutrition.** Les valeurs nutritionnelles ne doivent pas venir de l'IA à
+chaque fois, mais d'une **vraie base d'aliments** (l'app utilise déjà **Open Food Facts**,
+gratuite et ouverte, pour les codes-barres). Les calculs de macros sont **locaux**. L'IA
+n'intervient que pour **interpréter** les résultats et **conseiller** — ou pour le confort
+(lire une photo d'étiquette, estimer un repas décrit en texte). Étape suivante pragmatique :
+un vrai **moteur de recherche d'aliments** (choix dans la base → valeurs locales, 0 IA) +
+un **cache local**.
+
+*(Ce principe complète le modèle mémoire ci-dessous et le modèle économique : le local est
+gratuit et durable ; l'IA est un coût variable à réserver à ce qui la nécessite vraiment.)*
+
+---
+
 ## La mémoire — le principe fondateur
 
 > **« Force Tracker conserve les données. Milo leur donne du sens. »**
