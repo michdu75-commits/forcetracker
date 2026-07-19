@@ -1388,6 +1388,28 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
 </div>
 
 <!-- MODAL: Post-workout check-in -->
+<!-- ÉCRAN DE FIN DE SÉANCE (le « moment signature » — exos + chiffres + débrief Milo + ressenti) -->
+<div class="overlay" id="ov-session-end" data-no-dismiss>
+  <div class="modal se-modal">
+    <div class="se-hd">
+      <div class="se-badge">🏁</div>
+      <div>
+        <div class="se-ttl">Séance terminée</div>
+        <div class="se-sub" id="se-sub"></div>
+      </div>
+    </div>
+    <div class="se-stats" id="se-stats"></div>
+    <div class="se-exs" id="se-exs"></div>
+    <div class="se-debrief-wrap">
+      <div class="se-debrief-hd"><span class="se-milo-av"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Milo débriefe ta séance</div>
+      <div class="se-debrief" id="se-debrief"></div>
+    </div>
+    <div class="se-mood" id="se-mood"></div>
+    <button class="btn btn-red" onclick="closeSessionEnd()" style="width:100%;margin-top:14px;padding:14px;font-size:16px;">Terminer</button>
+    <button class="btn btn-bg2" onclick="closeSessionEnd('coach')" style="width:100%;margin-top:8px;padding:12px;font-size:14px;">💬 Continuer avec Milo</button>
+  </div>
+</div>
+
 <div class="overlay" id="mod-checkin">
   <div class="modal" style="text-align:center;">
     <div class="modal-handle"></div>

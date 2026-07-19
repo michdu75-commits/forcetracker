@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v491`
+- **Version en prod :** `ft-v492`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** `backup-2026-07-19-avant-ressenti-score`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*

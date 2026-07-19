@@ -1546,15 +1546,17 @@ async function finishWorkout(){
     const rm=bz(s.kg,s.reps),cur=S.prs[ex.name];
     if(!cur||rm>cur.rm1)S.prs[ex.name]={kg:s.kg,reps:s.reps,rm1:rm,date:sess.date};
   }));
-  let _bestPr=null;
+  let _bestPr=null;const _prExs=new Set();
   sess.exs.forEach(ex=>ex.sets.forEach(s=>{
     if(!s.done||!s.kg||!s.reps||s.type==='É'||s.type==='W')return;
     const rm=bz(s.kg,s.reps),old=_oldPrs[ex.name];
     if(!old||rm>old.rm1){
+      _prExs.add(ex.name);
       const gain=rm-(old?old.rm1:0);
       if(!_bestPr||gain>(_bestPr.newRm-(_bestPr.oldRm||0)))_bestPr={ex:ex.name,newRm:rm,oldRm:old?old.rm1:0};
     }
   }));
+  const _prCount=_prExs.size;
   stopRest();
   if(S.wkt?.cardio?.duration) sess.cardio={...S.wkt.cardio};
   const calData=calcSessionCalories(sess);
@@ -1612,9 +1614,103 @@ async function finishWorkout(){
   }else{
     toast(`Séance terminée ! 🔥 ${calData.total} kcal brûlées`,'success');
   }
-  setTimeout(()=>showMuscleMap(sess.exs,()=>openCheckin(sess)),800);
-  if(_bestPr)setTimeout(()=>showPrCongrats(_bestPr),2400);
+  // ÉCRAN DE FIN DE SÉANCE (le « moment signature ») — remplace les pop-ups éparses
+  // (carte muscles + félicitations record + check-in) par UN écran cohérent :
+  // exos + chiffres + débrief de Milo + « comment tu t'es senti ».
+  _showSessionEnd(sess,_bestPr,_prCount);
   _finishing=false;
+}
+
+// ─── ÉCRAN DE FIN DE SÉANCE (Étape 1) ─────────────────────────────
+const _SE_ENERGY=['😴','😐','🙂','⚡'];
+function _showSessionEnd(sess,bestPr,prCount){
+  const ov=document.getElementById('ov-session-end');if(!ov){goScreen('home',document.getElementById('nb-home'));return;}
+  const sub=document.getElementById('se-sub');
+  if(sub)sub.textContent=(sess.progLabel?sess.progLabel+' · ':'')+new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  _renderSeStats(sess,prCount||0);
+  _renderSeExs(sess);
+  _renderSeMood();
+  ov.classList.add('open');
+  const dbf=document.getElementById('se-debrief');
+  if(dbf){dbf.innerHTML='<span class="se-load">Milo analyse ta séance…</span>';}
+  _runSeDebrief(sess,prCount||0);
+}
+function _renderSeStats(sess,prCount){
+  const el=document.getElementById('se-stats');if(!el)return;
+  let nSets=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')nSets++;}));
+  const dur=sess.duration?Math.max(1,Math.round(sess.duration/60)):null;
+  const tiles=[];
+  if(prCount>0)tiles.push('<div class="se-stat pr" style="grid-column:1/3;"><div class="se-stat-v">🏆 '+prCount+' record'+(prCount>1?'s':'')+' battu'+(prCount>1?'s':'')+' !</div><div class="se-stat-l">nouveau max</div></div>');
+  tiles.push('<div class="se-stat"><div class="se-stat-v">'+(sess.volume||0)+' kg</div><div class="se-stat-l">Volume</div></div>');
+  tiles.push('<div class="se-stat"><div class="se-stat-v">'+nSets+'</div><div class="se-stat-l">Séries</div></div>');
+  if(dur)tiles.push('<div class="se-stat"><div class="se-stat-v">'+dur+' min</div><div class="se-stat-l">Durée</div></div>');
+  if(sess.calories)tiles.push('<div class="se-stat"><div class="se-stat-v">'+sess.calories+'</div><div class="se-stat-l">kcal brûlées</div></div>');
+  el.innerHTML=tiles.join('');
+}
+function _renderSeExs(sess){
+  const el=document.getElementById('se-exs');if(!el)return;
+  el.innerHTML=(sess.exs||[]).map(e=>{
+    const done=(e.sets||[]).filter(s=>s.done&&s.type!=='É'&&s.type!=='W');
+    let best=null;done.forEach(s=>{if(s.kg&&s.reps&&(!best||s.kg>best.kg||(s.kg===best.kg&&s.reps>best.reps)))best=s;});
+    const dt=done.length+' série'+(done.length>1?'s':'')+(best?' · top '+best.reps+'×'+best.kg+' kg':'');
+    const img=(typeof _exImg==='function')?_exImg(e.name):null;
+    const thumb=img?'<img class="se-ex-img" src="'+img+'" alt="" draggable="false">':'<div class="se-ex-img"></div>';
+    return '<div class="se-ex">'+thumb+'<div style="min-width:0;"><div class="se-ex-nm">'+_escNote(e.name)+'</div><div class="se-ex-dt">'+dt+'</div></div></div>';
+  }).join('');
+}
+function _renderSeMood(){
+  const el=document.getElementById('se-mood');if(!el)return;
+  let cur=null;try{const d=(typeof _dayState==='function')?_dayState():null;cur=d?d.energy:null;}catch(e){}
+  const btns=_SE_ENERGY.map((e,i)=>'<button class="se-mood-btn'+(cur===i?' on':'')+'" onclick="_seSetMood('+i+')">'+e+'</button>').join('');
+  el.innerHTML='<div class="se-mood-q">Comment t\'es-tu senti aujourd\'hui ?</div><div class="se-mood-row">'+btns+'</div>';
+}
+function _seSetMood(v){ try{ if(typeof setDayEnergy==='function')setDayEnergy(v); }catch(e){} _renderSeMood(); }
+function closeSessionEnd(dest){
+  const ov=document.getElementById('ov-session-end');if(ov)ov.classList.remove('open');
+  try{ if(dest==='coach'){goScreen('coach',document.getElementById('nb-coach'));} else {goScreen('home',document.getElementById('nb-home'));} }catch(e){}
+  try{renderLog();}catch(e){}
+}
+// Débrief de Milo INLINE sur l'écran de fin (local d'abord : un résumé local s'affiche toujours,
+// l'IA l'enrichit). Le débrief est POUSSÉ dans coachHistory (mémoire + visible dans le Coach).
+async function _runSeDebrief(sess,prCount){
+  const slot=document.getElementById('se-debrief');if(!slot)return;
+  const nExs=(sess.exs||[]).length;
+  let nSets=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')nSets++;}));
+  const fallback='<p>'+nExs+' exercice'+(nExs>1?'s':'')+' · '+nSets+' série'+(nSets>1?'s':'')+' · '+(sess.volume||0)+' kg de volume.'+(prCount>0?' Nouveau record 💪 bien joué !':' Séance bouclée, continue comme ça 👊')+'</p>';
+  // Pas de réseau → résumé local (le flag reste : le Coach débriefera à son ouverture)
+  if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)){ slot.innerHTML=fallback; return; }
+  const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
+    +'Débriefe-la MAINTENANT, directement, SANS me poser de question : analyse-la (progression, stabilité, points d\'attention) '
+    +'en t\'appuyant sur mes charges par exercice (tu les as), tiens compte d\'une éventuelle douleur du jour, et termine par UN objectif '
+    +'simple et concret pour la prochaine séance. Court (4-6 phrases), direct, motivant. Ne me redemande JAMAIS mes charges.';
+  try{
+    const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:coachHistory.slice(-8),coachMemory:S.coachMemory||''};
+    let resp=null,_err=null;
+    for(let a=1;a<=2;a++){
+      try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); _err=null; break; }
+      catch(e){ _err=e; if(a<2)await new Promise(r=>setTimeout(r,1200)); }
+    }
+    if(_err)throw _err;
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    let reply=data.reply||'';
+    if(!reply)throw new Error('vide');
+    const clean=(typeof _stripCoachTech==='function')?_stripCoachTech(reply):reply;
+    slot.innerHTML=(typeof _coachFmtHtml==='function')?_coachFmtHtml(clean):('<p>'+clean.replace(/</g,'&lt;')+'</p>');
+    // Mémoire : pousse le débrief dans le fil du Coach (consigne cachée + réponse de Milo)
+    try{
+      coachHistory.push({role:'user',content:instr,_silent:true});
+      coachHistory.push({role:'assistant',content:reply});
+      if(coachHistory.length>20)coachHistory=coachHistory.slice(-20);
+      if(typeof _saveCoachHist==='function')_saveCoachHist();
+      if(coachHistory.length>=4 && S.url && S.email && typeof _saveCoachMemory==='function')_saveCoachMemory();
+      localStorage.removeItem('ft4_pending_debrief'); // débrief fait ici → le Coach ne le refera pas
+      const nb=document.getElementById('coach-new-btn'); if(nb)nb.style.display='flex';
+    }catch(e){}
+  }catch(e){
+    // Échec réseau → résumé local ; le flag ft4_pending_debrief reste → le Coach réessaiera à son ouverture
+    slot.innerHTML=fallback;
+  }
 }
 
 // ── Niveau évolutif (débutant → intermédiaire → confirmé) ─────────────

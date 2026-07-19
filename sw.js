@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v491'; // Debrief AUTO de seance : apres une seance, quand on ouvre le Coach, Milo poste de lui-meme un debrief (charges, records, conseil) une seule fois, sans bulle « toi » et sans consommer de question gratuite (retour Michel « il doit sortir direct »).
+const CACHE = 'ft-v492'; // ECRAN DE FIN DE SEANCE (Etape 1) : a la fin d'une seance -> ecran cohérent (exos+images, chiffres, debrief Milo inline, « comment tu t'es senti ») a la place des pop-ups eparses (carte muscles + record + check-in). Debrief pousse dans la memoire du Coach.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
