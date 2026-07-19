@@ -53,11 +53,20 @@
     temps + données). Tout le reste (5B, « Milo construit ta séance »…) = affinages
     À L'INTÉRIEUR des briques, pas de nouvelles grandes briques.
 
-- **Feuille de route « passage à l'action » :** ✅ mémoire pour tous (ft-v475) · ✅ historique
-  des discussions (ft-v476) · ✅ aides « esprit » (ft-v477/478, Lot 4 visuel = captures Michel)
-  · **⏭️ prochain GROS chantier : « Inscription + premier accueil »** (inscription minimale —
-  découvrir le profil, pas le demander ; priorité décidée avec ChatGPT = juste après les aides,
-  AVANT le moteur nutrition local) · puis **moteur nutrition local** (scanner local + IA en filet).
+- **🎯 ORDRE DES PRIORITÉS (recentrage GPT du 19/07 — « revenir au cœur du projet ») :**
+  **1. Effet Waouh à l'inscription** (accueil perso et marquant — le nouveau comprend tout
+  de suite que ce n'est pas un carnet) · **2. Débrief auto de fin de séance** *(déjà
+  LARGEMENT FAIT : écran de fin `ft-v492` + débrief à l'ouverture du Coach `ft-v491`)* ·
+  **3. Mémoire réellement exploitable** (Milo ressort l'info au bon moment, des semaines/mois
+  après = Étapes 2/3 du débrief + brique 7 — « le plus important » selon GPT) · **4. Import
+  auto des programmes** (Milo agit, en 1 clic — *à moitié bâti* : `_saveForceProgram`) ·
+  **5. Traduction ensuite** (levier de croissance Tatiana, mais après le cœur ; déjà bien
+  avancée sur le clone — voir `IDEES-FUTURES.md` + `RETOURS-TESTEURS.md`).
+  → **Question de séquencement ouverte** (à trancher avec Michel/GPT) : finir la **mémoire (#3)**
+  d'abord (on est dedans, Étapes 2/3 du débrief) PUIS l'**inscription (#1)** — recommandation
+  Claude (A) ; ou suivre l'ordre à la lettre, inscription (#1) d'abord (B).
+- *(ancienne note : « Inscription + premier accueil » restait le prochain gros chantier ;
+  le moteur nutrition local vient après. Toujours valable, replacé dans l'ordre ci-dessus.)*
 - **En parallèle (Milo) :** Michel teste en réel les briques encore en attente
   (**5A / 6A / 6B**) → validation 4 axes → clôtures. Ensuite **5B** (observations
   IA générées) ou la **réduction de la carte état du jour** (compacte repliée).
