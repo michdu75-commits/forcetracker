@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v488'; // Recherche d'exercices : cherche AUSSI dans les termes anglais (EX_EN) -> « shoulder press », « bench press », « leg press »… trouvent l'exo meme si son nom FR ne contient pas le mot anglais (retour Michel : machine introuvable). + exo shoulder press assis (v487).
+const CACHE = 'ft-v489'; // Fix zoom : quand la page est zoomee (pinch-zoom), deplacer la vue de gauche a droite ne change PLUS d'onglet (visualViewport.scale>1 -> pas de swipe navigation). Retour Michel.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

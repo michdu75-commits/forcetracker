@@ -312,6 +312,9 @@ function _initSwipe(){
     const sel=_sel;               // capturer AVANT de réinitialiser (le guard _hScrollParent en dépend)
     _sx=_sy=_sel=null;
     if(document.querySelector('.overlay.open'))return; // overlay ouvert → pas de navigation
+    // ZOOMÉ (pinch-zoom) : l'utilisateur déplace la vue pour lire de gauche à droite → ce geste
+    // horizontal ne doit PAS changer d'onglet (retour Michel). visualViewport.scale > 1 = zoomé.
+    try{ if(window.visualViewport && window.visualViewport.scale > 1.05) return; }catch(e){}
     if(Math.abs(dx)<110)return;                  // geste franc requis (était 55) → moins de changements d'onglet involontaires
     if(Math.abs(dy)>Math.abs(dx)*0.5)return;     // doit être nettement horizontal (était 0.65)
     // Ne pas naviguer si le geste part d'un contrôle (saisie kg/reps, boutons…) — évite les onglets qui sautent en séance
