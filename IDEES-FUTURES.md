@@ -55,10 +55,20 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
   contradiction.
 - **Ampleur** : GROS chantier (refonte de l'onboarding + mécanisme « demander au bon moment »),
   au moins aussi important que la mémoire (« c'est le 1ᵉʳ contact avec l'esprit de Force Tracker »
-  — ChatGPT). À faire **à part**, après le chantier aides + les priorités mémoire en cours.
-- **Piste de conception** : un onboarding « 3 questions Milo » → entrée directe dans l'app →
-  « collecte paresseuse » des données de calcul quand un écran en a besoin (Nutrition/récup) +
-  questions progressives de Milo (quiz + Observations) pour le reste.
+  — ChatGPT).
+- **🎯 PRIORITÉ (décidée avec ChatGPT, 19/07)** : chantier **« Inscription + premier accueil »**
+  placé **juste APRÈS le chantier aides** (donc AVANT le moteur nutrition local). Raison : tous
+  les utilisateurs passent par l'inscription + les premières minutes → si on réussit ces deux
+  minutes, on donne envie de découvrir tout le reste. « L'investissement produit le plus
+  important aujourd'hui » (ChatGPT).
+- **Piste de conception** : onboarding « 3 questions Milo » (objectif · ancienneté · blessure)
+  → **entrée directe dans l'app** → **« collecte paresseuse »** des données de calcul **au moment
+  où elles deviennent utiles** :
+  - 1ʳᵉ ouverture de **Nutrition** → demander le **poids** ;
+  - calcul des **besoins** (TDEE/macros) → demander la **taille** (+ âge, sexe) ;
+  - autres infos demandées **quand elles apportent une vraie valeur** (jamais un formulaire).
+  + questions progressives de Milo (quiz Coach + Observations) pour enrichir le reste.
+  → l'inscription reste **légère** sans pénaliser les calculs.
 
 ---
 

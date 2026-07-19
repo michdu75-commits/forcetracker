@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v477'; // Aides — Lot 5 « l'esprit » : 3 diapos d'intro dans le Guide de l'appli (Tu ne repars jamais de zero / Un coach qui te connait / Tes donnees t'appartiennent, type slide `icon`) + carte « L'esprit de Force Tracker » (4 principes) en tete de l'Aide detaillee. Orientees benefice utilisateur (effet waouh).
+const CACHE = 'ft-v478'; // Diapo esprit 3 reformulee (retour ChatGPT) : « Tes donnees t'appartiennent » -> « Ton histoire t'appartient » (Force Tracker construit une histoire sportive, pas juste des donnees ; sejour prive, utilise seulement pour t'aider a progresser). + priorite gravee : chantier Inscription+accueil juste apres les aides.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

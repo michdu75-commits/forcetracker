@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v477`
+- **Version en prod :** `ft-v478`
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** `backup-2026-07-19-avant-ressenti-score`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
@@ -53,7 +53,12 @@
     temps + données). Tout le reste (5B, « Milo construit ta séance »…) = affinages
     À L'INTÉRIEUR des briques, pas de nouvelles grandes briques.
 
-- **Prochaine étape :** Michel teste en réel les briques encore en attente
+- **Feuille de route « passage à l'action » :** ✅ mémoire pour tous (ft-v475) · ✅ historique
+  des discussions (ft-v476) · ✅ aides « esprit » (ft-v477/478, Lot 4 visuel = captures Michel)
+  · **⏭️ prochain GROS chantier : « Inscription + premier accueil »** (inscription minimale —
+  découvrir le profil, pas le demander ; priorité décidée avec ChatGPT = juste après les aides,
+  AVANT le moteur nutrition local) · puis **moteur nutrition local** (scanner local + IA en filet).
+- **En parallèle (Milo) :** Michel teste en réel les briques encore en attente
   (**5A / 6A / 6B**) → validation 4 axes → clôtures. Ensuite **5B** (observations
   IA générées) ou la **réduction de la carte état du jour** (compacte repliée).
 - **En discussion (gouvernance, non bloquant) :** le Principe 14 « Milo enrichit le
