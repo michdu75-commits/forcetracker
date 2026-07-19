@@ -82,6 +82,24 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
   (« données Open Food Facts ») + partage à l'identique**. À respecter pour le **niveau 2**
   (redistribution). Niveau 1 (par appareil) = aucun souci.
 
+### 🎯 Séquence complète du « moteur nutrition local » (plan validé 19/07, prêt à exécuter)
+Objectif : supprimer presque tout le coût IA de la fonction code-barres, en restant fidèle à
+« moteur local d'abord, l'IA seulement quand elle apporte une vraie valeur ».
+1. **Scanner de code-barres LOCAL** (0 IA) :
+   - **Android** : API navigateur native **`BarcodeDetector`** (gratuit, rapide, local).
+   - **iPhone/Safari** : `BarcodeDetector` **absent** → **bibliothèque WASM embarquée** (type
+     ZXing-wasm), stockée en local, hors-ligne. ⚠️ **À TESTER sérieusement sur iPhone** —
+     c'est **la raison historique** du passage à l'IA (« la caméra live lisait mal les barres
+     sur iPhone »). C'est le point dur du chantier.
+2. **Fallback IA** (`readBarcode`, lecture de la photo) **UNIQUEMENT si le scan local
+   échoue** → l'IA devient un **filet de secours**, plus la règle → coût quasi nul en usage
+   normal. (Le code IA existe déjà, on le garde en repli.)
+3. **Recherche produit** dans **Open Food Facts** (gratuit, déjà en place).
+4. **Cache local par appareil** (niveau 1 ci-dessus) → re-scan instantané + hors-ligne.
+5. **Cache communautaire** (niveau 2) **plus tard**, avec la vraie base de données + licence ODbL.
+- **Gain** : usage normal = 100 % local (scan + cache), 0 € ; l'IA ne coûte que sur les cas
+  vraiment difficiles. Résout aussi le souci iPhone historique (si la lib WASM tient).
+
 ---
 
 ## 🔧 À FAIRE APRÈS VALIDATION (petits ajustements notés en test réel)
