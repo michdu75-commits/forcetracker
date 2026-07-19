@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v485'; // Observations (5A) : Milo commence a poser ses petites questions des 4 seances (au lieu de 8) -> tout le monde (mode normal) les voit plus tot. Espacement 3 jours GARDE (pas de spam) + seuil de confiance inchange.
+const CACHE = 'ft-v486'; // Fix Coach : la barre « Pose ta question » flottait trop haut (gros vide noir avant la nav). L'ecran Coach reservait 96px alors que la nav ne fait ~74px (+safe-area) -> reserve EXACTEMENT la hauteur de la nav (66px + safe) -> le composeur colle la barre du bas.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

@@ -634,7 +634,7 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 .combo-warn{margin-top:10px;background:rgba(255,45,85,.07);border:1px solid rgba(255,45,85,.2);border-radius:8px;padding:9px 12px;font-size:12.5px;color:#ff8a99;line-height:1.5;}
 
 /* COACH IA */
-.coach-screen{flex-direction:column;padding:0 0 calc(96px + env(safe-area-inset-bottom)) 0!important;gap:0!important;}
+.coach-screen{flex-direction:column;padding:0 0 calc(66px + max(env(safe-area-inset-bottom),8px)) 0!important;gap:0!important;}
 .screen.active.coach-screen{display:flex;overflow:hidden;}
 .coach-header{padding:8px 16px 12px;border-bottom:none;background:transparent;flex-shrink:0;}
 .coach-header-title{font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);}
