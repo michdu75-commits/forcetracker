@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v482'; // Michel : bouton « Boite a idees (test) » dans le panneau Admin -> openTesterSpace() (deja autorise aux super testeurs, dont michdu75). Pour tester la boite a idees en direct et reproduire les bugs.
+const CACHE = 'ft-v483'; // Admin : lecteur d'idees recues (loadTesterIdeasAdmin -> ?action=getIdees) -> Michel lit tout le texte des idees DANS l'app, sans ouvrir ses mails ; les photos restent dans forcetracker.app@gmail.com.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

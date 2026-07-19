@@ -2475,6 +2475,40 @@ function _testerIdeaMailto(subject,bodyM,nPhotos){
   const mail='mailto:'+TESTER_FEEDBACK_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(b);
   try{window.location.href=mail;}catch(e){}
 }
+// ── ADMIN : lecteur d'idées reçues (Michel lit tout le texte SANS ouvrir ses mails) ──
+// Les photos NE SONT PAS stockées côté serveur (seulement leur nombre) → elles restent
+// dans la boîte forcetracker.app@gmail.com. Le lecteur affiche le texte + « 📎 N photo(s) → mail ».
+function _escIdea(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+async function loadTesterIdeasAdmin(){
+  const box=document.getElementById('admin-ideas-list');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Chargement des idées…</div>';
+  try{
+    const url=S.url+'?action=getIdees&token=FT_IDEES_2026';
+    const r=await fetch(url,{method:'GET'});
+    const d=await r.json();
+    if(!d||d.status!=='ok'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Erreur : '+_escIdea(d&&d.error||'inconnue')+' — réessaie.</div>'; return; }
+    const arr=(d.ideas||[]).slice().reverse(); // plus récentes en haut
+    if(!arr.length){ box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Aucune idée reçue pour l\'instant.</div>'; return; }
+    let h='<div style="font-size:11.5px;color:var(--t3);margin:2px 0 8px;">'+arr.length+' idée'+(arr.length>1?'s':'')+' — la plus récente en haut</div>';
+    arr.forEach(it=>{
+      const nph=+(it.photos||0);
+      h+='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:10px 12px;margin-bottom:8px;">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;">'
+        +'<div style="font-weight:700;color:var(--t1);font-size:13px;">'+_escIdea(it.name||'Testeur')+'</div>'
+        +'<div style="font-size:11px;color:var(--t3);white-space:nowrap;">'+_escIdea(it.date||'')+'</div>'
+        +'</div>'
+        +(it.email?'<div style="font-size:11px;color:var(--t3);margin-top:1px;">'+_escIdea(it.email)+'</div>':'')
+        +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin-top:6px;white-space:pre-wrap;">'+_escIdea(it.text||'')+'</div>'
+        +(nph>0?'<div style="font-size:11.5px;color:var(--gold);margin-top:6px;">📎 '+nph+' photo'+(nph>1?'s':'')+' → voir dans forcetracker.app@gmail.com</div>':'')
+        +'</div>';
+    });
+    box.innerHTML=h;
+  }catch(e){
+    box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réseau injoignable — réessaie (les idées restent lisibles dans ta boîte mail).</div>';
+  }
+}
 
 // ─── DÉDICACE ANNIVERSAIRE — Eline (2 juillet) ───────────────
 let _bdayCandlesLeft=19;
