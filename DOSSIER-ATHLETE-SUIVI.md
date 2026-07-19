@@ -82,6 +82,34 @@ L'INTÉRIEUR** d'une brique, PAS de nouvelles grandes briques.
 > quand le besoin est prouvé** (« factoriser après avoir prouvé le besoin, pas
 > avant »).
 
+> **💬 Note de conception — « MILO PROACTIF AVEC SA MÉMOIRE » (apport ChatGPT du
+> 19/07, gravé, À CONSTRUIRE PLUS TARD).** *(Ne PAS développer maintenant — on
+> valide 5A/6A/6B — Principe 8 ; on capture la conception à chaud.)*
+> ChatGPT propose des interventions spontanées et SPÉCIFIQUES : « tu n'as pas
+> travaillé les quadriceps depuis 8 jours », « ton développé couché progresse depuis
+> 3 semaines », « ta douleur au genou droit semble diminuer », « vu ton sommeil cette
+> semaine, allège la séance ». **C'est ce qui donne l'impression d'un vrai coach.**
+> - **Où ça vit** : c'est un **affinage** de la carte proactive de Milo sur l'Accueil
+>   (`_miloMessage`, brique 4 — présence) NOURRIE par les Faits (brique 2), les
+>   Observations (5B) et les tendances (brique 7). **PAS une nouvelle grande brique.**
+> - **4 familles de messages** : (a) *inactivité d'un groupe* → dernière date par
+>   groupe musculaire (Faits) ; (b) *tendance de progression* → pente d'un 1RM sur
+>   N semaines (`S.prs`/séances) ; (c) *évolution d'une douleur* → **nécessite
+>   d'HISTORISER l'état du jour** (aujourd'hui il est remis à zéro chaque jour →
+>   prérequis technique : garder un historique léger énergie/douleurs, cf. 3B+) ;
+>   (d) *readiness* → sommeil/récup faible → alléger (existe déjà en partie : message
+>   `recup` + le Gardien).
+> - **Garde-fous NON négociables** (c'est ici qu'ils comptent le plus) :
+>   **Principe 14 « miroir, jamais prophète »** → une douleur qui diminue se
+>   *décrit* (« semble diminuer, non ? »), un conseil se *propose* (« je te
+>   conseille d'alléger ») — jamais on ne prescrit ni ne prédit. **« Moins mais
+>   mieux »** → une intervention à la fois, espacée (la carte le fait déjà).
+>   **Méfiance des données incomplètes** (ft-v403) → « pas travaillé les quads
+>   depuis 8 j » n'est vrai que si tout est loggé → formuler comme observation à
+>   confirmer, pas comme un fait asséné.
+> - **Prérequis identifié** : historiser l'état du jour (douleurs/énergie) pour la
+>   famille (c) → petite extension de la 3B, à planifier.
+
 **📏 Méthode par brique (adoptée 19/07, suggestion ChatGPT — anti « puisqu'on y est ») :**
 chaque brique est décrite AVANT de coder avec **3 sections** :
 - **Objectif** : ce que la brique apporte, en une phrase.
