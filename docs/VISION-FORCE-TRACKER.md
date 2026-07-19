@@ -326,6 +326,57 @@ calories `calcTDEE`/`calcMacros`, 1er programme), **Milo raconte** (moins cher, 
 robuste). ② **Premier deliverable concret = « Milo agit »** (le bouton import) : le
 plus tangible et **déjà à moitié bâti** (`_saveForceProgram`/`continueInCoach`).
 
+### 🏁 Le débrief de fin de séance — LE moment signature (réflexion Michel du 19/07)
+
+> **Ce n'est PAS une option ni un gadget** (Michel) — c'est un moment central de
+> l'expérience. C'est *la* chose qui peut distinguer Force Tracker de Strong / Hevy.
+
+**Le rituel.** Dès qu'on **termine** une séance → un **écran de fin de séance** :
+- **En haut** : les exercices réalisés (avec leurs images) + les chiffres clés (volume,
+  records, durée…).
+- **Juste en dessous** : Milo publie **automatiquement** son débrief — **jamais
+  générique** (« Bravo », « Belle séance ») mais un **vrai débrief personnalisé** :
+  chiffres du jour, **tendances** (« ton incliné progresse, ton développé épaules est
+  stable depuis 2 séances »), **prise en compte des douleurs** (« aucune douleur
+  signalée aujourd'hui, bonne nouvelle pour ton épaule »), et **un objectif concret
+  pour la prochaine fois** (« gagne 1 rép sur la dernière série d'incliné »).
+- Puis **une petite question** : *« Comment t'es-tu senti aujourd'hui ? »* (= l'État du
+  jour, brique 3B, posé au **bon moment**).
+
+**Le vrai but : la sensation.** Peu importe le texte exact — l'utilisateur doit sentir
+qu'**un vrai coach vient de regarder sa séance**. C'est CETTE sensation qui crée le Waouh.
+
+### 🧠 Le débrief n'est PAS jetable — il nourrit la mémoire (le point crucial, Michel)
+
+> *« Je ne veux pas que Milo pose les mêmes questions tous les 2 mois. Je veux qu'il
+> apprenne réellement de chaque séance et réutilise ces infos au bon moment. »*
+
+C'est **la** condition pour que ce soit un vrai coach et pas un bel effet. Trois règles
+d'architecture (analyse Claude) :
+1. **UNE mémoire, pas trois.** Le débrief et la réponse de l'utilisateur alimentent la
+   mémoire **existante** (le **Registre**, briques 1-2 + les **Observations**, brique 5)
+   — surtout **pas** un nouveau silo isolé.
+2. **Semi-structuré, pas un blob.** Pour « réutiliser au bon moment », il faut un
+   **journal de séance** léger : par séance → `{date, tendances repérées, ressenti
+   déclaré, objectif fixé par Milo pour la fois suivante}`. Un pavé de texte n'est pas
+   requêtable.
+3. **Le mécanisme signature = l'objectif tenu.** Milo **fixe** un objectif (« +1 rép sur
+   l'incliné ») → **au débrief SUIVANT il le VÉRIFIE** (« la dernière fois je t'avais
+   demandé +1 rép sur l'incliné — c'est fait ! » / « pas encore, on remet ça »). Cette
+   **continuité** est ce qui donne le sentiment d'un coach qui te suit vraiment. C'est le
+   court-terme de la **Mémoire vivante (brique 7)**.
+
+**Garde-fous (rappel).** Les tendances doivent être **vraies** (calculées sur les
+données — Milo a les charges depuis `ft-v490`), jamais inventées (Principe 14 + méfiance
+des données incomplètes). « Ne pas reposer la même question » = s'appuyer sur les **clés
+déjà connues** des Observations (5A) + l'espacement. **Moins mais mieux.**
+
+**Phasage proposé (une brique à la fois) :** ① l'**écran de fin de séance** (exos +
+chiffres + débrief inline + « comment tu t'es senti ») — réutilise le moteur de débrief
+`ft-v491` ; ② rendre le débrief **durable** (écrire l'entrée `{tendances, ressenti,
+objectif}` dans le Registre) ; ③ le mécanisme **« objectif tenu ? »** (Milo rappelle et
+vérifie l'objectif de la fois d'avant) — le vrai Waouh de continuité.
+
 ---
 
 ## Place dans la gouvernance
