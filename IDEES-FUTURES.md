@@ -314,8 +314,11 @@ Michel veut **éviter les pop-ups à la con**, mais accepte un rappel utile : si
 ## 💳 « Super Premium » (suivi Excel/Sheets) — Michel penche vers « trop »
 Idée : un palier au-dessus du Premium pour ceux qui veulent le **suivi Excel/Sheets**. Michel doute que ça marche et pense que « c'est peut-être un peu trop ». **Avis : d'accord — ne pas ajouter de palier pour l'instant** (complexité tarifaire, valeur incertaine). L'export existe déjà (Exporter les données). À rediscuter seulement si des utilisateurs le réclament vraiment.
 
-## 🌍 App / Coach en anglais (futur, gros taff)
-Idée Michel : à terme, proposer l'application (et Milo) en **anglais** pour toucher plus large. C'est un **vrai chantier** (traduction de toute l'UI + textes + prompts, gestion multilingue). Pas la priorité maintenant. Note : Milo peut déjà répondre dans la langue de la personne côté prompt, mais l'UI reste en français. À cadrer plus tard.
+## 🌍 App / Coach MULTILINGUE (anglais, russe… — futur, gros taff)
+Idée Michel : à terme, proposer l'application (et Milo) en **plusieurs langues** pour toucher plus large. C'est un **vrai chantier** (traduction de toute l'UI + textes + prompts, gestion multilingue). Pas la priorité maintenant. Note : Milo peut déjà répondre dans la langue de la personne côté prompt, mais l'UI reste en français.
+- **Déjà commencé puis mis en pause** (Michel, 19/07) : « on a commencé la traduction, après on est parti sur autre chose » → reste dans le fonctionnement futur, à reprendre.
+- **Piste technique** : rendre le « réponds TOUJOURS en français » de Milo **adaptatif à la langue de l'utilisateur** (déjà noté ft-v401/402), puis attaquer l'UI (i18n).
+- **🎯 SIGNAL TERRAIN FORT (Tatiana, testeuse + coach, 19/07)** : elle a demandé **si ce sera utilisable en RUSSE** — parce qu'elle **partagerait l'app avec ses clientes**. Double intérêt : (1) une vraie **demande de langue** (russe), (2) un **canal de distribution** = **les coachs amènent leurs clients**. Une coach qui adopte Force Tracker peut faire entrer tout son groupe. → La traduction n'est pas qu'un confort : c'est un **levier de croissance** via les coachs. À garder en tête au moment de prioriser.
 
 ## ⚖️ Connexion à une balance connectée — limite technique honnête
 Question Michel : se connecter à une appli de balance connectée (Withings, etc.) ?
