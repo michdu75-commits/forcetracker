@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v484'; // Douleurs precises (retour Christophe, Phase 1) : etat du jour (Accueil) + ecran blessure inscription = plus de zones (trapeze/cuisse/ischio/mollet/fessier/adducteur/pectoraux/abdos) + cote gauche/droite/les deux. Gardien + Milo tiennent compte du cote.
+const CACHE = 'ft-v485'; // Observations (5A) : Milo commence a poser ses petites questions des 4 seances (au lieu de 8) -> tout le monde (mode normal) les voit plus tot. Espacement 3 jours GARDE (pas de spam) + seuil de confiance inchange.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

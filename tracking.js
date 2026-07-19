@@ -1442,7 +1442,7 @@ function _obsCandidates(){
   const out=[];
   try{
     const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts));
-    if(sess.length<8)return out; // le bon moment : pas avant 8 séances
+    if(sess.length<4)return out; // le bon moment : pas avant 4 séances (baissé de 8 → 4 pour que Milo commence à apprendre plus tôt ; l'espacement 3 j + le seuil de confiance protègent la qualité)
     const now=new Date(), dayMs=864e5, N=sess.length;
     const sdate=s=>new Date(s.date?s.date+'T12:00:00':new Date(s.ts).toISOString());
     // A) Semaine vs week-end
@@ -1452,7 +1452,7 @@ function _obsCandidates(){
     else if(weShare>=0.6)out.push({key:'weekend_pref',source:'jours',confidence:Math.min(1,0.7+(weShare-0.6)),ask:"On dirait que le week-end est ton moment pour t'entraîner. Je me trompe ?",fact:"S'entraîne surtout le week-end."});
     // B) Matin vs soir (via startHour, fallback heure du ts)
     const hrs=sess.map(s=>{const h=(s.startHour!=null?s.startHour:new Date(s.ts||s.id||sdate(s)).getHours());return h;}).filter(h=>h>=0&&h<=23);
-    if(hrs.length>=8){
+    if(hrs.length>=4){
       const mShare=hrs.filter(h=>h<12).length/hrs.length, eShare=hrs.filter(h=>h>=18).length/hrs.length;
       if(mShare>=0.65)out.push({key:'morning',source:'horaires',confidence:Math.min(1,0.7+(mShare-0.65)),ask:"J'ai remarqué que tu t'entraînes plutôt le matin, on dirait. Ça te correspond ?",fact:"S'entraîne plutôt le matin."});
       else if(eShare>=0.65)out.push({key:'evening',source:'horaires',confidence:Math.min(1,0.7+(eShare-0.65)),ask:"Tu sembles être plutôt du soir pour tes séances. C'est bien ça ?",fact:"S'entraîne plutôt le soir."});
@@ -1484,7 +1484,7 @@ function maybeProposeObservation(){
     if(!Array.isArray(S.registre.observations))S.registre.observations=[];
     const obs=S.registre.observations;
     if(obs.some(o=>o&&o.status==='pending'))return;                 // une à la fois
-    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<8)return; // le bon moment
+    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<4)return; // le bon moment (baissé de 8 → 4)
     const last=S.registre.lastObsAt;                                 // espacement ≥ 3 jours
     if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<3)return;}
     const known=new Set(obs.map(o=>o&&o.key));                       // ne jamais re-proposer une clé déjà décidée
