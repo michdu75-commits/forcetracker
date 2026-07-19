@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v497'; // PT-001 (admin) : outil de test « continuite memoire ». Rejoue TOUT l'historique dans l'ordre chrono -> Milo debriefe chaque seance + verifie l'objectif de la fois d'avant. Question finale « Qui suis-je en tant que sportif ? ». Rapport technique (timing/erreurs/saturation/continuite) + validation exportable (texte + PDF). Admin-only, aucune donnee effacee.
+const CACHE = 'ft-v498'; // FIX PT-001 : goScreen('s-coach') -> goScreen('coach'). Le mauvais id desactivait TOUS les ecrans sans en reactiver aucun -> ecran blanc sous le bandeau au lancement de PT-001 (retire le mode admin = re-navigation = revient normal). Correction 1 ligne.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

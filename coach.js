@@ -1511,7 +1511,7 @@ async function _pt001Run(allSessions){
     const ta=a.ts||Date.parse(a.id)||Date.parse(a.date)||0, tb=b.ts||Date.parse(b.id)||Date.parse(b.date)||0;
     return ta-tb;
   });
-  try{ goScreen('s-coach'); }catch(e){}
+  try{ goScreen('coach',document.getElementById('nb-coach')); }catch(e){}
   try{ _showCoachChat(); }catch(e){}
   coachBusy=true; // bloque envoi manuel + _maybeAutoDebrief pendant le test
   const sendBtn=document.getElementById('coach-send-btn'); if(sendBtn)sendBtn.disabled=true;
