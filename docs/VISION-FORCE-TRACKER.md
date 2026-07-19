@@ -280,6 +280,54 @@ Le chantier **Dossier Athlète** (voir `DOSSIER-ATHLETE-SUIVI.md`) est la
 
 ---
 
+## ✨ L'effet Waouh — la couche acquisition + rétention (réflexion Michel du 19/07, gravée)
+
+> Jusqu'ici on a construit le **cerveau** de Milo. Cette réflexion ajoute la couche
+> qui manquait : **donner envie de rester**. Ce n'est PAS une nouvelle brique — c'est
+> le chantier déjà prioritaire **« Inscription + premier accueil »**, avec une spec
+> beaucoup plus nette, prolongé par la **présence de Milo** (`PRESENCE-MILO.md`).
+
+**Le principe.** Les **2 premières minutes** décident de l'adoption. L'utilisateur
+doit **recevoir de la valeur avant même sa première séance**. On ne manipule pas — on
+**démontre** que Force Tracker est différente. Progression émotionnelle visée :
+« c'est différent » → « ça me comprend » → « je ne veux plus en changer ».
+
+**Les 3 onboardings (le niveau devient le point de bascule) :**
+- **Débutant** → Waouh = **la simplicité** (rassurer, guider les bases).
+- **Intermédiaire** → Waouh = **la personnalisation** (optimiser, repérer les plateaux).
+- **Confirmé** → Waouh = **l'intelligence** : *« Tu connais sûrement Strong/Hevy. Je ne
+  vais pas refaire la même chose — je vais faire ce qu'elles ne savent pas faire »*
+  (mémoire, adaptation, récup, plateaux, prévention blessures).
+
+**Montrer plutôt que promettre.** En fin d'onboarding, Milo produit une **synthèse
+immédiate** (niveau, objectif, fréquence, points forts, points de vigilance, 1er
+programme prêt). **Milo devient le visage** : il ne vend jamais, il fait découvrir ;
+il révèle une capacité **au bon moment** (pas un drip quotidien — respecte le *seuil
+d'intrusion*). **Retour d'un ancien** = accueil (« content de te revoir, voici ce qui
+a évolué ») → **chaque grosse MAJ = une nouvelle première impression**. **Milo agit** :
+un programme généré par Milo → bouton **« Importer dans ma séance / Ajouter à mon
+programme »** (continuité chat → entraînement).
+
+**⚠️ Les 2 tensions à tenir (analyse Claude — c'est là que ça se joue) :**
+1. **Waouh ↔ inscription minimale.** La synthèse veut des chiffres (calories,
+   protéines) ; l'inscription minimale (v480) a justement **retiré** poids/taille/âge.
+   → On les conçoit **ENSEMBLE** : la donnée manquante devient une **accroche**
+   (« donne-moi ton poids, je précise tes calories »), pas un formulaire. La synthèse
+   **dégrade gracieusement** : Waouh **qualitatif** (Milo « te comprend » + méthode)
+   quand le quantitatif manque.
+2. **Waouh ↔ Principe 14 (« miroir, jamais prophète ») + méfiance des données
+   incomplètes.** À l'inscription, Milo a **zéro séance** : il ne peut pas « détecter un
+   plateau » qui n'existe pas encore. → Il montre la **MÉTHODE** honnêtement (« voici
+   comment je vais suivre tes Big 3 »), jamais une fausse analyse de données absentes.
+   L'intelligence réelle se **révèle progressivement**, avec les données.
+
+**Deux réflexes on-brand :** ① **local d'abord** — le moteur local calcule (niveau,
+calories `calcTDEE`/`calcMacros`, 1er programme), **Milo raconte** (moins cher, plus
+robuste). ② **Premier deliverable concret = « Milo agit »** (le bouton import) : le
+plus tangible et **déjà à moitié bâti** (`_saveForceProgram`/`continueInCoach`).
+
+---
+
 ## Place dans la gouvernance
 
 - **`CONSTITUTION-MILO.md`** — les **principes** (le comment ; ce qu'on ne viole jamais).
