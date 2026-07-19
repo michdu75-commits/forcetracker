@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v500'; // FIX PT-001 : le 1er rejeu tirait 20 appels Opus en 18s -> LIMITE DE DEBIT -> le Worker renvoyait « Desole, reessaie. » x20 (compte a tort comme succes). Fix : throttle 1.8s entre debriefs + reessais espaces (backoff) + le fallback « Desole reessaie »/vide est desormais compte comme ERREUR (rapport honnete).
+const CACHE = 'ft-v501'; // PT-001 « dire la verite » (principe labo, GPT) : chaque appel CLASSE par nature (valid/fallback/rate_limit/overloaded/api_error/timeout/network/http_error) + timeout 45s ; les metriques ne portent que sur les VALIDES ; le Worker renvoie un champ _diag qui nomme la cause d'un fallback (sans changer le message utilisateur). Suite du fix throttle ft-v500.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

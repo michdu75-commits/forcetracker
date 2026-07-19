@@ -82,6 +82,24 @@ async function callClaude(apiKey, payload) {
   const data = await r.json();
   return (data && data.content && data.content[0] && data.content[0].text) || '';
 }
+// Variante instrumentée : renvoie AUSSI le statut HTTP et le type d'erreur de l'API Anthropic.
+// Sert au diagnostic (PT-001 / laboratoire) — distinguer rate limit (429), surcharge (529),
+// erreur API, réponse vide… au lieu de tout masquer en « Désolé, réessaie. ».
+async function callClaudeDiag(apiKey, payload) {
+  try {
+    const r = await fetch(ANTHROPIC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify(payload),
+    });
+    let data = null; try { data = await r.json(); } catch (e) {}
+    const text = (data && data.content && data.content[0] && data.content[0].text) || '';
+    const apiErr = (data && data.error && (data.error.type || data.error.message)) || '';
+    return { text, status: r.status, apiErr: String(apiErr) };
+  } catch (e) {
+    return { text: '', status: 0, apiErr: 'fetch: ' + ((e && e.message) || '?') };
+  }
+}
 function firstJson(text) {
   const stripped = String(text || '').replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
   const m = stripped.match(/\{[\s\S]*\}/);
@@ -221,8 +239,15 @@ async function coach(body, apiKey) {
   let model = 'claude-haiku-4-5';
   if (em === 'michdu75@gmail.com') model = 'claude-opus-4-6';
   else if (em === 'christophe@famillelanglois.fr') model = 'claude-sonnet-4-6';
-  const text = await callClaude(apiKey, { model, max_tokens: 1024, system, messages });
-  return { reply: text || 'Désolé, réessaie.' };
+  const d = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system, messages });
+  // _diag = diagnostic technique (ignoré par l'app normale, lu par PT-001 / le laboratoire).
+  // On NE change PAS le message utilisateur : Milo dit toujours « Désolé, réessaie. » si vide.
+  const _diag = d.text ? 'ok'
+    : (d.status === 429 ? 'rate_limit'
+      : (d.status === 529 ? 'overloaded'
+        : (d.status && d.status >= 400 ? ('api_error ' + d.status + (d.apiErr ? ' ' + d.apiErr : ''))
+          : (d.apiErr ? ('error ' + d.apiErr) : 'empty'))));
+  return { reply: d.text || 'Désolé, réessaie.', _diag };
 }
 
 // ── Import de document : programme / historique — recopié de handleImportProgram_/handleImportHistory_

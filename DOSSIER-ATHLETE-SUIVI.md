@@ -152,6 +152,18 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 > numéroté**, avec une grille d'observation et un **verdict archivable** (« Brique
 > validée / à revoir ») → permet de **comparer les versions de Milo dans le temps**.
 
+> ### ⭐ PRINCIPE DU LABORATOIRE (GPT, 19/07/2026)
+> **« Un protocole ne cherche pas à être optimiste. Il cherche à dire la vérité. »**
+> Corollaire (leçon du 1er run PT-001) : **une réponse n'est JAMAIS considérée valide
+> juste parce qu'on a reçu du texte.** Chaque appel doit être **classé par nature** —
+> `valid` · `fallback` (« Désolé, réessaie ») · `rate_limit` · `overloaded` · `api_error`
+> · `timeout` · `network` · `http_error` · `empty`. Les métriques (temps, continuité,
+> mémoire…) ne portent QUE sur les réponses **valides**. Un rapport qui masque un rate
+> limit derrière un faux « 0 erreur » n'est pas un rapport — c'est un piège. Ce garde-fou
+> vaut pour **tous** les futurs protocoles (PT-002, PT-003…). *(Implémenté ft-v500/501 :
+> throttle + réessais + classification ; le Worker renvoie un champ `_diag` qui nomme la
+> cause d'un fallback sans changer le message vu par l'utilisateur.)*
+
 | Protocole | Cible | Outil | État |
 |---|---|---|---|
 | **PT-001** | **Continuité mémoire** (Étape 3 du débrief) | outil admin `ft-v497` | ✅ construit — ⏳ à jouer en réel (iPhone) |

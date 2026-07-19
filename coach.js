@@ -1478,25 +1478,38 @@ function _pt001Label(txt){
 // ⚠️ Détecte le fallback « Désolé, réessaie. » (= le Worker a reçu un texte VIDE de l'API :
 //    surcharge ou LIMITE DE DÉBIT) et le compte comme une ERREUR (pas un succès), avec
 //    réessais espacés (backoff) — un rejeu de tout l'historique peut cogner la limite Opus.
+// Principe du laboratoire (GPT) : « Un protocole ne cherche pas à être optimiste, il
+// cherche à dire la vérité. » → une réponse n'est JAMAIS « valide » juste parce qu'on a
+// reçu du texte. On classe chaque appel : valid · fallback · rate_limit · overloaded ·
+// api_error · timeout · network · http_error · bad_json · empty.
 const _PT001_FALLBACK='Désolé, réessaie.';
+const _PT001_TIMEOUT_MS=45000;
 async function _pt001Ask(instr){
   const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
   const t0=_now();
   const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:coachHistory.slice(-8),coachMemory:S.coachMemory||''};
-  let lastErr='inconnue', status=0;
+  let lastErr='inconnue', lastKind='error', status=0;
   for(let a=1;a<=3;a++){
     let resp=null;
-    try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)}); }
-    catch(e){ lastErr='réseau: '+(e.message||'?'); if(a<3){await _pt001Sleep(2000*a);continue;} break; }
+    const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+    const to=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(e){}},_PT001_TIMEOUT_MS):null;
+    try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),signal:ctrl?ctrl.signal:undefined}); }
+    catch(e){ if(to)clearTimeout(to); const ab=(e&&e.name==='AbortError'); lastKind=ab?'timeout':'network'; lastErr=ab?('timeout (>'+Math.round(_PT001_TIMEOUT_MS/1000)+'s)'):('réseau: '+((e&&e.message)||'?')); if(a<3){await _pt001Sleep(2000*a);continue;} break; }
+    if(to)clearTimeout(to);
     status=resp.status;
-    if(!resp.ok){ lastErr='HTTP '+status; if(a<3){await _pt001Sleep(2500*a);continue;} break; }
-    let data=null; try{ data=await resp.json(); }catch(e){ lastErr='JSON réponse'; if(a<3){await _pt001Sleep(1500*a);continue;} break; }
+    if(!resp.ok){ lastKind='http_error'; lastErr='HTTP '+status; if(a<3){await _pt001Sleep(2500*a);continue;} break; }
+    let data=null; try{ data=await resp.json(); }catch(e){ lastKind='bad_json'; lastErr='JSON réponse illisible'; if(a<3){await _pt001Sleep(1500*a);continue;} break; }
     const reply=(data&&data.reply)||'';
+    const diag=(data&&data._diag)||''; // diagnostic du Worker : ok / rate_limit / overloaded / api_error … / empty
     const fallback = !reply || reply.trim()===_PT001_FALLBACK;
-    if(fallback){ lastErr='Milo n\'a pas répondu (surcharge / limite de débit ?)'; if(a<3){await _pt001Sleep(5000*a);continue;} break; }
-    return {ok:true,ms:Math.round(_now()-t0),status,err:'',reply,tries:a};
+    if(fallback){
+      lastKind = (diag && diag!=='ok') ? String(diag).split(' ')[0] : 'fallback';
+      lastErr  = (diag && diag!=='ok') ? ('Milo muet — '+diag) : 'Milo muet (fallback « Désolé, réessaie »)';
+      if(a<3){ await _pt001Sleep((lastKind==='rate_limit'?8000:5000)*a); continue; } break;
+    }
+    return {ok:true,kind:'valid',ms:Math.round(_now()-t0),status,err:'',reply,diag,tries:a};
   }
-  return {ok:false,ms:Math.round(_now()-t0),status,err:lastErr,reply:''};
+  return {ok:false,kind:lastKind,ms:Math.round(_now()-t0),status,err:lastErr,reply:''};
 }
 function startPt001Test(){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
@@ -1543,7 +1556,7 @@ async function _pt001Run(allSessions){
       coachHistory.push({role:'user',content:instr,_silent:true});
       coachHistory.push({role:'assistant',content:res.reply});
       if(coachHistory.length>20)coachHistory=coachHistory.slice(-20);
-      rows.push({ i:i+1, date:s.date||'?', ok:true, ms:res.ms, status:res.status, err:'',
+      rows.push({ i:i+1, date:s.date||'?', ok:true, kind:'valid', ms:res.ms, status:res.status, err:'',
         len:res.reply.length, parsed:!!mem,
         objectif:mem?mem.objectif:'', decision:mem?mem.decision:'', tenu:mem?(mem.objectifTenu||''):'',
         cont:_pt001HasContinuity(res.reply),
@@ -1551,7 +1564,7 @@ async function _pt001Run(allSessions){
         reply:res.reply });
     }else{
       _pt001Label('❌ Séance '+(i+1)+' : '+res.err);
-      rows.push({ i:i+1, date:s.date||'?', ok:false, ms:res.ms, status:res.status, err:res.err,
+      rows.push({ i:i+1, date:s.date||'?', ok:false, kind:res.kind||'error', ms:res.ms, status:res.status, err:res.err,
         len:0, parsed:false, objectif:'', decision:'', tenu:'', cont:false,
         memAfter:memBefore, reply:'' });
     }
@@ -1599,6 +1612,13 @@ function _pt001BuildReport(rows, portrait, portraitRes, startTs){
   const pVerdict=!pTxt?'—':(pRatio>0.12?'⚠️ Portrait incomplet (semble une liste de stats)':'✅ Portrait cohérent (descriptif)');
   const totalMin=((Date.now()-startTs)/60000).toFixed(1);
   const ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+  // Répartition par NATURE de réponse (principe « dire la vérité ») — inclut le portrait final
+  const _kindLbl={valid:'✅ valides',fallback:'🔇 fallback (Milo muet)',rate_limit:'⏳ limite de débit',overloaded:'🌡️ surcharge API',api_error:'⚠️ erreur API',timeout:'⏱️ timeout',network:'📶 réseau',http_error:'🚫 HTTP',bad_json:'🧩 JSON illisible',empty:'␀ vide',error:'❓ erreur'};
+  const kinds={};
+  rows.forEach(r=>{ const k=r.kind||(r.ok?'valid':'error'); kinds[k]=(kinds[k]||0)+1; });
+  if(portraitRes){ const pk=portraitRes.kind||(portraitRes.ok?'valid':'error'); kinds[pk]=(kinds[pk]||0)+1; }
+  const validN=done.length, callsN=rows.length+(portraitRes?1:0);
+  const kindsStr=Object.entries(kinds).map(([k,v])=>(_kindLbl[k]||k)+' × '+v).join('  ·  ');
   // ── Texte complet (pour analyse Claude) ──
   const L=[];
   L.push('═══════════════════════════════════════════');
@@ -1610,8 +1630,10 @@ function _pt001BuildReport(rows, portrait, portraitRes, startTs){
   L.push('Séances rejouées : '+rows.length+'   ·   Durée totale : '+totalMin+' min');
   L.push('');
   L.push('── SIGNAUX MESURABLES ──────────────────────');
-  L.push('• Erreurs : '+errs.length+' / '+rows.length);
-  L.push('• Temps de réponse : moy '+avg+' ms · min '+mn+' · max '+mx+' ms');
+  L.push('• Réponses VALIDES de Milo : '+validN+' / '+rows.length+' débriefs'+(portraitRes?' (+ portrait)':''));
+  L.push('• Nature des '+callsN+' appels : '+kindsStr);
+  if(errs.length) L.push('  ⚠️ '+errs.length+' réponse(s) non valide(s) → les métriques ci-dessous ne portent QUE sur les valides.');
+  L.push('• Temps de réponse (valides) : moy '+avg+' ms · min '+mn+' · max '+mx+' ms');
   L.push('• Charge / saturation : '+satFlag);
   L.push('• Bloc mémoire lu (objectif capté) : '+parsedN+' / '+done.length);
   L.push('• Continuité exploitée (dès le 2e débrief) : '+contN+' / '+contPool.length);
@@ -1648,7 +1670,7 @@ function _pt001BuildReport(rows, portrait, portraitRes, startTs){
   L.push('');
   L.push('═══════════════════════════════════════════');
   const text=L.join('\n');
-  return { text, ymd, nSess:rows.length, errs:errs.length, avg, mn, mx, firstAvg, lastAvg, satFlag, satStatus,
+  return { text, ymd, nSess:rows.length, errs:errs.length, validN, callsN, kindsStr, avg, mn, mx, firstAvg, lastAvg, satFlag, satStatus,
     parsedN, doneN:done.length, contN, contPool:contPool.length, tenuN, portrait, pVerdict, totalMin,
     slowdown };
 }
@@ -1661,7 +1683,8 @@ function _pt001ShowResultCard(){
   d.style.cssText='background:var(--bg3);border:1px solid var(--sep);';
   const contPct=R.contPool?Math.round(100*R.contN/R.contPool):0;
   d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧪 Laboratoire Milo — PT-001</p>'
-    +'<p style="margin:2px 0"><b>'+R.nSess+'</b> séances · <b>'+R.errs+'</b> erreur(s) · durée '+R.totalMin+' min</p>'
+    +'<p style="margin:2px 0">✅ Réponses valides : <b>'+R.validN+'/'+R.nSess+'</b> · durée '+R.totalMin+' min</p>'
+    +(R.errs?('<p style="margin:2px 0;color:var(--red)">⚠️ '+R.errs+' non valide(s) — '+R.kindsStr+'</p>'):'')
     +'<p style="margin:2px 0">⏱️ Temps moyen <b>'+R.avg+' ms</b> (min '+R.mn+' / max '+R.mx+')</p>'
     +'<p style="margin:2px 0">⚙️ Charge : <b>'+R.satStatus+'</b> <span style="opacity:.55">(×'+R.slowdown.toFixed(2)+')</span></p>'
     +'<p style="margin:2px 0">🔗 Continuité exploitée : <b>'+contPct+'%</b> ('+R.contN+'/'+R.contPool+')</p>'
@@ -1708,8 +1731,9 @@ async function exportPt001Pdf(){
     line('Date : '+R.ymd+'   ·   Séances : '+R.nSess+'   ·   Durée : '+R.totalMin+' min');
     line('Utilisateur : '+(S.email||'—')); y+=4;
     line('SIGNAUX MESURABLES',true);
-    line('• Erreurs : '+R.errs+' / '+R.nSess);
-    line('• Temps : moy '+R.avg+' ms (min '+R.mn+' / max '+R.mx+')');
+    line('• Réponses valides de Milo : '+R.validN+' / '+R.nSess);
+    line('• Nature des appels : '+R.kindsStr);
+    line('• Temps (valides) : moy '+R.avg+' ms (min '+R.mn+' / max '+R.mx+')');
     line('• Charge / saturation : '+R.satFlag);
     line('• Mémoire lue : '+R.parsedN+' / '+R.doneN+'   ·   objectif tenu capté : '+R.tenuN);
     line('• Continuité exploitée : '+R.contN+' / '+R.contPool);

@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v500` (fix PT-001 : throttle + réessais + fallback compté comme erreur — le rejeu saturait la limite de débit Opus)
+- **Version en prod :** `ft-v501` (PT-001 « dire la vérité » : classification des réponses par nature + champ _diag du Worker)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** `backup-2026-07-19-avant-ressenti-score`
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
