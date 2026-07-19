@@ -20,6 +20,15 @@
   → **PROCHAINE ACTION : Michel lance PT-001 sur iPhone** puis m'envoie le rapport texte
   pour l'analyse (les 4 axes + les 7 points). *« On construit une méthode de validation
   reproductible, plus seulement des fonctionnalités » (GPT).*
+  - **🏛️ CADRE ADOPTÉ — Laboratoire à 2 piliers VT / VC** (idée Michel, structurée GPT,
+    19-20/07) : **VT** = Vérifications Techniques = les PT-xxx (le système marche) ·
+    **VC** = Vérifications Comportementales = rejouer des **personas** (sportifs fictifs
+    détaillés avec « attendus ») pour garder Milo cohérent/bienveillant/fidèle = filet
+    **anti-régression de personnalité**. Garde-fous Claude : juge humain d'abord (IA-juge
+    plus tard si prouvé), chaque persona a son « attendu », **semer depuis les VRAIS
+    testeurs** (Tatiana = 1ᵉʳ VC) + la Constitution, **commencer PETIT** (5-6), le labo
+    SERT la feuille de route sans la remplacer. Détail : `DOSSIER-ATHLETE-SUIVI.md`.
+    ⏳ À faire (DESIGN d'abord, pas de code sans spec) : format persona + harnais VC + VC-001 (Tatiana).
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).

@@ -164,6 +164,39 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 > throttle + réessais + classification ; le Worker renvoie un champ `_diag` qui nomme la
 > cause d'un fallback sans changer le message vu par l'utilisateur.)*
 
+### 🏛️ LE LABORATOIRE À DEUX PILIERS — VT / VC (idée Michel, structurée GPT, 19-20/07/2026)
+
+Cadre **adopté** (implémentation progressive, une chose à la fois — Principe 8). Il **formalise
+les « 4 axes »** de validation déjà en place : VT = axes *fonctionnel/technique*, VC = axes
+*situation réelle / philosophie de Milo*.
+
+- **VT — Vérifications Techniques** = les **PT-xxx** actuels. Prouver que le **système** marche :
+  continuité, mémoire, débrief, Gardien, temps de réponse, gestion des erreurs. Métriques
+  **objectives** (timing, code d'erreur, JSON parsé ✓/✗).
+- **VC — Vérifications Comportementales** = tester le **comportement** de Milo, pas le code. On
+  injecte un **persona** (sportif fictif détaillé : histoire, personnalité, blessures, objectifs,
+  façon de parler, **pièges + réactions attendues**) et on vérifie que Milo reste **cohérent,
+  bienveillant, crédible, fidèle à son identité**. C'est l'**équivalent des tests unitaires, mais
+  pour la personnalité** → filet **anti-régression comportementale** quand on change le prompt/modèle.
+
+**Garde-fous (analyse Claude, à respecter) :**
+1. **Le juge = le point dur.** VC est **subjectif** → commencer par la **lecture humaine** +
+   drapeaux heuristiques (comme PT-001). N'ajouter une **IA-juge** (2ᵉ passe qui note) que si le
+   besoin est prouvé — elle a un coût et sa propre fiabilité à valider.
+2. **Chaque persona DOIT avoir son « attendu »** (ce que Milo devrait / ne devrait PAS faire),
+   sinon il est invalidable. Le trésor = les **pièges + réactions attendues**.
+3. **Semer depuis le RÉEL** : `RETOURS-TESTEURS.md` (⭐ **Tatiana** = travaille le bas du corps
+   PAR CHOIX → Milo a imposé « rattrape ton haut du corps », bug ft-v493 = LE VC parfait) +
+   **chaque principe de la Constitution → un persona qui le teste**. Pas de fiction hors-sol.
+4. **Commencer PETIT** (5-6 personas), jouer **avant chaque grosse évolution de Milo**. Ne PAS
+   bâtir « des centaines » avant que 5 aient prouvé leur utilité. Le labo **sert** les briques et
+   la feuille de route (mémoire → import → onboarding), il ne la remplace pas.
+
+**Actif stratégique** : la bibliothèque de personas capitalise le travail sur l'identité de Milo
+et devient une richesse propre au projet (dure à copier). **Nommage** : VT = `PT-xxx` (existant) ;
+VC = `VC-xxx` (à créer, chacun avec persona + attendus + verdict archivable). ⏳ **À FAIRE (design
+d'abord, pas de code sans spec)** : format d'un persona, harnais de rejeu VC, 1ᵉʳ persona (Tatiana).
+
 | Protocole | Cible | Outil | État |
 |---|---|---|---|
 | **PT-001** | **Continuité mémoire** (Étape 3 du débrief) | outil admin `ft-v497` | ✅ construit — ⏳ à jouer en réel (iPhone) |
