@@ -31,6 +31,31 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## ⏱️ Timer de repos adapté à la FORCE (réflexion Michel, 20/07/2026)
+
+**Constat Michel** : quand on s'entraîne en **force** (charges lourdes, peu de reps), le timer de
+repos **ne s'adapte pas** — il reste à ~1'30-2'00 max, alors qu'en force il faut **3 à 5 min**
+entre les séries lourdes.
+**État actuel** : le repos s'adapte par **type de série** (N=`defRest`~130 s, W=45 s, E/échec=240 s,
+D=20 s) + réglage manuel par exo (`S.exRestPref`, éditeur ft-v438) + ±15 s. Mais **aucune
+adaptation automatique à la DISCIPLINE / au but force**.
+**Pistes (à cadrer, pas encore lancé)** :
+- Repos par défaut qui **suit la discipline** : `S.discipline` = *force athlétique* ou *haltéro*
+  → défaut plus long (ex. 180-240 s) ; muscu/bodybuilding → défaut actuel.
+- Ou adapter selon **exo + plage de reps** (compound lourd, ≤5 reps → repos long auto).
+- Ou selon la **phase du cycle de force** (Intensification / Peak → repos long).
+- ⚠️ Toujours **laisser l'utilisateur régler à la main** (ne pas forcer). Le plus simple d'abord =
+  brancher le défaut sur `S.discipline`.
+
+## 🤖→🏋️ Milo propose une séance dans le chat → « charger dans ma séance » (precision de la priorité #4)
+
+Déjà dans la feuille de route (**import 1 clic**, `_saveForceProgram` à moitié bâti). Précision
+Michel (20/07) : quand Milo propose une séance/un programme **dans le chat** et qu'elle convient,
+un **bouton pour l'incorporer directement dans la séance en cours** (pas juste l'enregistrer en
+programme). À faire **après la mémoire** (Option C).
+
+---
+
 ## 🌟 RETOURS DE L'ANALYSE PRODUIT EXTERNE (19/07) — actionnables
 
 *(Analyse complète très positive : Concept 10/10, Coach IA 9,5, Potentiel commercial 10/10.
