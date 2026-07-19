@@ -329,7 +329,14 @@ plus tangible et **déjà à moitié bâti** (`_saveForceProgram`/`continueInCoa
 ### 🏁 Le débrief de fin de séance — LE moment signature (réflexion Michel du 19/07)
 
 > **Ce n'est PAS une option ni un gadget** (Michel) — c'est un moment central de
-> l'expérience. C'est *la* chose qui peut distinguer Force Tracker de Strong / Hevy.
+> l'expérience, un **élément FONDATEUR** de Force Tracker (confirmé GPT). C'est *la*
+> chose qui peut distinguer Force Tracker de Strong / Hevy.
+>
+> **Aligné à 3 (Michel · GPT · Claude, 19/07).** GPT confirme les 3 décisions et
+> insiste sur **la mémoire ACTIVE** : Milo ne doit pas seulement mémoriser, il doit
+> **ressortir l'info au bon moment**, des semaines/mois plus tard, **SANS que
+> l'utilisateur ait à la lui rappeler**. C'est cette mémoire active — pas le stockage —
+> qui donne la sensation d'un vrai coach personnel.
 
 **Le rituel.** Dès qu'on **termine** une séance → un **écran de fin de séance** :
 - **En haut** : les exercices réalisés (avec leurs images) + les chiffres clés (volume,
