@@ -73,6 +73,7 @@ PWA de suivi de musculation (Progressive Web App), conçue pour mobile (max-widt
 - **Repo GitHub** : https://github.com/michdu75-commits/forcetracker
 - **App live** : https://michdu75-commits.github.io/forcetracker/
 - **Auteur** : Michel — michdu75@gmail.com
+- **🎂 Date de naissance** : **17 juin 2026** (première maquette Claude Design). Le suivi Git n'a démarré qu'au 30 juin 2026 — la période « Claude Design / Claude.ai » d'avant n'est pas dans le dépôt. Conçu de bout en bout avec Claude (Design → réflexion → code).
 
 ## Backend Apps Script (v3.5 @62 — actif)
 
