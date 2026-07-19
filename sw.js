@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v493'; // Milo : la personne et SON objectif priment. Ne corrige un point faible que si ca sert son objectif ; si l'objectif n'est pas connu (profil vide), NE PRESUME PAS -> reflete et DEMANDE (retour testeuse Tatiana : Milo lui imposait « rattrape ton haut du corps » alors qu'elle bosse le bas par choix).
+const CACHE = 'ft-v494'; // « A propos » : date de naissance de l'app affichee (Ne le 17 juin 2026, conçu avec Claude).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

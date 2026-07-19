@@ -1619,7 +1619,8 @@ const _DRAWER_CONTENT = {
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--t2);">
         Application de suivi de musculation Progressive Web App.<br>
         Fonctionne hors connexion · Synchronisation Google Sheets<br>
-        Coach IA propulsé par Claude (Anthropic)
+        Coach IA propulsé par Claude (Anthropic)<br>
+        <span style="color:var(--t3);">🎂 Né le 17 juin 2026 · conçu avec Claude</span>
       </div>
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--t1);margin-bottom:6px;">
