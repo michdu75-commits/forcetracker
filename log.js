@@ -1588,6 +1588,9 @@ async function finishWorkout(){
   // Séance confirmée en localStorage — on peut effacer le brouillon
   S.wkt=null;
   try{localStorage.setItem('ft4_wkt','null');localStorage.removeItem('ft4_wkt_draft');}catch(e){}
+  // DÉBRIEF AUTO : Milo débriefera de lui-même la prochaine fois que l'utilisateur ouvre le Coach
+  // (une seule fois par séance ; seulement si de vrais exercices ont été validés, pas un cardio seul).
+  if(_hasExs&&hasDone){try{localStorage.setItem('ft4_pending_debrief',String(sess.id||sess.ts||sess.date));}catch(e){}}
   persist();
   // Registre Athlète (brique 2) : recalcule les faits mesurés après la séance.
   try{if(typeof computeRegistreFacts==='function'){computeRegistreFacts();persist();}}catch(e){}

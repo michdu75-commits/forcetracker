@@ -277,7 +277,8 @@ function _saveCoachHist(){
     const light = coachHistory.slice(-20).map(m=>({
       role: m.role,
       content: (typeof m.content === 'string') ? m.content
-             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : '')
+             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : ''),
+      ...(m._silent?{_silent:true}:{}) // consigne interne (débrief auto) : gardée pour le contexte, jamais affichée
     }));
     localStorage.setItem('ft4_coach_hist', JSON.stringify(light));
   }catch(e){}
@@ -288,6 +289,7 @@ function _renderCoachThread(){
   if(!msgs) return;
   msgs.innerHTML = '';
   coachHistory.forEach(m=>{
+    if(m.role==='user' && m._silent) return; // consigne interne (débrief auto) : jamais affichée
     const t = (typeof m.content === 'string') ? m.content
             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
     if(m.role === 'user') renderCoachMsg('user', t || '[photo]');
@@ -1225,11 +1227,13 @@ async function onCoachImgSelected(input) {
   if (prev) prev.style.display = 'block';
 }
 
-async function sendToCoach(customMsg, displayMsg) {
-  if (coachBusy) return;
+async function sendToCoach(customMsg, displayMsg, opts) {
+  opts = opts || {};
+  let _sentOk = false;
+  if (coachBusy) return false;
 
-  // Vérifier quota avant d'ouvrir l'input
-  if (!S.premium && (S.coachFree || 0) >= COACH_FREE_LIMIT) {
+  // Vérifier quota avant d'ouvrir l'input — un débrief auto (opts.noQuota) ne consomme pas de question
+  if (!S.premium && !opts.noQuota && (S.coachFree || 0) >= COACH_FREE_LIMIT) {
     if (window._premiumPending) {
       toast('Vérification premium en cours…', 'info'); return;
     }
@@ -1255,8 +1259,10 @@ async function sendToCoach(customMsg, displayMsg) {
   if(coachHistory.length===0)_showCoachChat();
   const suggs = document.getElementById('coach-suggs');
 
-  // Bulle utilisateur avec image optionnelle
-  if (hasImg) {
+  // Bulle utilisateur avec image optionnelle — sauf débrief auto (opts.silent : Milo vient à toi, pas de bulle « toi »)
+  if (opts.silent) {
+    /* pas de bulle utilisateur */
+  } else if (hasImg) {
     const msgs = document.getElementById('coach-msgs');
     if (msgs) {
       const div = document.createElement('div');
@@ -1274,7 +1280,7 @@ async function sendToCoach(customMsg, displayMsg) {
     ? [{ type: 'image', source: { type: 'base64', media_type: imgType, data: imgData } },
        { type: 'text', text: msg || 'Analyse cette photo.' }]
     : msg;
-  coachHistory.push({ role: 'user', content: userHistContent });
+  coachHistory.push({ role: 'user', content: userHistContent, ...(opts.silent?{_silent:true}:{}) });
   showTyping();
 
   try {
@@ -1335,8 +1341,8 @@ async function sendToCoach(customMsg, displayMsg) {
     // qui exploite la mémoire (analyses, synthèses, comparaisons — briques 7/8), pas son existence.
     if (coachHistory.length >= 4 && S.url && S.email) _saveCoachMemory();
 
-    // Incrémenter compteur (seulement sur réponse réussie)
-    if (!S.premium) {
+    // Incrémenter compteur (seulement sur réponse réussie ; un débrief auto ne compte pas)
+    if (!S.premium && !opts.noQuota) {
       S.coachFree = (S.coachFree || 0) + 1;
       persist();
       updateCoachHeader();
@@ -1344,18 +1350,43 @@ async function sendToCoach(customMsg, displayMsg) {
         setTimeout(showPremiumWall, 1200);
       }
     }
+    _sentOk = true;
   } catch(e) {
     hideTyping();
     _forceProgReq = false;
     console.error('[Coach] fetch error:', e.message, e);
-    renderCoachMsg('coach', 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
+    // Débrief auto (silencieux) : pas de bulle d'erreur parasite — on échoue en silence (réarmé par l'appelant)
+    if (!opts.silent) renderCoachMsg('coach', 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
   }
 
   coachBusy = false;
   if (sendBtn) sendBtn.disabled = false;
+  return _sentOk;
 }
 
 function sendSuggestion(text) { sendToCoach(text); }
+
+// ─── DÉBRIEF AUTOMATIQUE DE SÉANCE ────────────────────────────────
+// « Il doit sortir direct » (Michel) : après une séance, quand l'utilisateur ouvre le Coach,
+// Milo poste de LUI-MÊME un débrief (charges, records, conseil) — une seule fois par séance,
+// sans bulle « toi » et SANS consommer de question gratuite (c'est Milo qui vient à toi).
+// Local d'abord : les chiffres viennent des données (buildCoachContext), Milo ne fait que raconter.
+async function _maybeAutoDebrief(){
+  let pid=null; try{ pid=localStorage.getItem('ft4_pending_debrief'); }catch(e){}
+  if(!pid) return;
+  if(coachBusy) return;
+  // Pas de réseau → on GARDE le flag (on réessaiera à la prochaine ouverture du Coach)
+  if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)) return;
+  // On retire le flag AVANT l'appel (anti double-déclenchement) ; on le remet si l'appel échoue
+  try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){}
+  try{ _showCoachChat(); }catch(e){}
+  const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
+    +'Débriefe-la MAINTENANT, directement, SANS me poser de question : rappelle mes charges par exercice (tu les as), '
+    +'dis ce qui a bien marché, signale un éventuel record ou une progression vs les fois précédentes, et donne UN conseil '
+    +'concret pour la prochaine fois. Court, direct, motivant. Ne me redemande JAMAIS mes charges.';
+  const ok = await sendToCoach(instr, null, {silent:true, noQuota:true});
+  if(!ok){ try{ localStorage.setItem('ft4_pending_debrief', pid); }catch(e){} } // échec réseau → on réarme
+}
 
 // ─── DRAWER ───────────────────────────────────────────────────
 function openDrawer(){
