@@ -141,10 +141,16 @@ cette machinerie sert.
   historique semble montrer que… »*, *« Une constante apparaît… »* — **jamais** *« Tu
   devrais… »*.
 
-> **Premier pas candidat de la brique 7** *(apport regard externe Gemini)* : **« Le
-> Rétroviseur de progression »** — un **résumé narratif mensuel** de l'évolution de
-> la performance **malgré les aléas de la vie**. Descriptif (donc « miroir »),
-> faisable dès ~6-12 mois d'historique.
+> **Premier pas candidat de la brique 7 : « Ton histoire sportive »** *(idée Gemini
+> « Rétroviseur », affinée par ChatGPT)*. Un **souvenir**, pas un rapport : Milo
+> rappelle un moment marquant relié à aujourd'hui. Exemple : *« Il y a un an, tu
+> reprenais après une blessure au genou. Aujourd'hui tu refais tes séances jambes
+> normalement. »* Descriptif (donc « miroir »), faisable dès ~6-12 mois d'historique.
+> ⚠️ **Nom** : la brique reste **« Mémoire vivante »** (le mécanisme) ; **« Ton
+> histoire sportive »** est le **nom visible** de sa première fonctionnalité. On
+> évite « progression » : toute histoire n'est pas une montée continue (blessures,
+> pauses, reprises, changements d'objectif) — le sport est une **histoire**, pas une
+> barre qui monte.
 
 > **Un fil transversal à garder en tête : le rythme de vie (chronobiologie).**
 > Comprendre les cycles de la personne (semaine/week-end, matin/soir, saisons) pour

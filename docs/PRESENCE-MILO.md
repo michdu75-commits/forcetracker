@@ -58,15 +58,23 @@ repose sur :
   Registre / l'état du jour). Sinon, il se tait.
 - **Pas de gadget visuel.** Pas d'avatar 3D, pas de mascotte animée. La présence
   se fait avec des mots, du timing et de la mémoire.
-- **🚦 Le seuil d'intrusion** *(apport regard externe Gemini, 19/07/2026)*. Le
-  risque principal d'un coach qui a de l'initiative, c'est la **sur-sollicitation**
-  → **érosion de la confiance** (trop de questions, de pop-ups, de check-in →
-  l'utilisateur décroche). Règle : Milo ne **questionne le contexte** (« comment tu
-  vas ? », « il s'est passé quelque chose ? ») **que lorsqu'une anomalie de
-  comportement dépasse un seuil significatif** (rupture nette d'habitude, chute de
-  régularité, retour après une longue absence…). Le reste du temps, il se tait et
-  laisse agir. **Moins mais mieux** : chaque intervention doit valoir le
-  dérangement. *(Prolonge « l'initiative est gouvernée par l'utilité ».)*
+- **🚦 Le seuil d'intrusion** *(apport regard externe Gemini, affiné par ChatGPT,
+  19/07/2026)*. Le risque principal d'un coach qui a de l'initiative, c'est la
+  **sur-sollicitation** → **érosion de la confiance** (trop de questions, de
+  pop-ups, de check-in → l'utilisateur décroche).
+  - **Philosophie de conception : « Moins mais mieux ».** Milo intervient **peu**,
+    mais **uniquement quand il apporte une réelle valeur**. Cela vaut pour **les
+    questions, les notifications ET les interventions dans le chat** — pas seulement
+    le check-in.
+  - **Ce qui déclenche légitimement une intervention = une anomalie** (pas un seuil
+    unique arbitraire, mais **3 catégories**) :
+    1. **Changement brutal** — arrêt soudain, rupture nette d'habitude.
+    2. **Tendance progressive** — baisse d'énergie, de sommeil ou de régularité sur
+       plusieurs jours.
+    3. **Événement marquant** — retour après blessure, longue absence, record
+       personnel.
+  - Hors de ces cas, Milo **se tait et laisse agir**. Chaque intervention doit
+    valoir le dérangement. *(Prolonge « l'initiative est gouvernée par l'utilité ».)*
 
 ---
 
