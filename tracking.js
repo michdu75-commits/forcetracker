@@ -1868,8 +1868,9 @@ function calcRecoveryDetail(){
     const ds=S.dayState, tday=(typeof today==='function')?today():null;
     if(ds&&(!tday||ds.date===tday)){
       if(ds.energy!=null) dayEnergyAdj = ds.energy===0?-10 : ds.energy===1?-4 : ds.energy===3?4 : 0; // 😴 −10 · 😐 −4 · 🙂 0 · ⚡ +4
-      const _ZL={epaule:'épaule',genou:'genou',lombaires:'bas du dos',cervicales:'nuque',coude:'coude',poignet:'poignet',hanche:'hanche',cheville:'cheville'};
-      (ds.pains||[]).forEach(p=>{if(p&&p.zone)dayPains.push(_ZL[p.zone]||p.zone);});
+      const _ZL={epaule:'épaule',trapeze:'trapèze',cervicales:'nuque',pectoraux:'pectoraux',coude:'coude',poignet:'poignet',lombaires:'bas du dos',abdos:'abdos',hanche:'hanche',fessier:'fessier',cuisse:'cuisse',ischio:'ischio',adducteur:'adducteur',genou:'genou',mollet:'mollet',cheville:'cheville'};
+      const _SW=s=>s==='L'?' (côté gauche)':s==='R'?' (côté droit)':'';
+      (ds.pains||[]).forEach(p=>{if(p&&p.zone)dayPains.push((_ZL[p.zone]||p.zone)+_SW(p.side));});
     }
   }catch(e){}
   const base=Math.round(wScore);

@@ -153,7 +153,7 @@ const _HELP_DATA={
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'😴',t:'Ton sommeil se note directement sur l\'Accueil (juste sous le score de récup) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération.'},
       {i:'📊',t:'« Historique du sommeil » (la barre repliable, tape la flèche) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
-      {i:'🌡️',t:'« Comment tu te sens aujourd\'hui ? » (optionnel) : en 1-2 taps, indique ton énergie du jour et, si besoin, une gêne/douleur (épaule, genou, dos…). Milo adapte ses conseils du jour — et s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité (il allège ou propose une alternative). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
+      {i:'🌡️',t:'« Comment tu te sens aujourd\'hui ? » (optionnel) : en 1-2 taps, indique ton énergie du jour et, si besoin, une gêne/douleur. Tape la zone (trapèze, épaule, dos, cuisse, ischio, genou, mollet…) ; pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Milo adapte ses conseils du jour — et s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité (il allège ou propose une alternative). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
       {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
@@ -544,26 +544,42 @@ function _renderObsCard(){
 // ─── État du jour (Dossier Athlète, brique 3B) — capture légère & optionnelle ───
 // énergie du jour + douleurs du jour (zones). Ponctuel : repart à zéro chaque jour.
 // Nourrit Milo (dosage) + le Gardien (protège une douleur DU JOUR en priorité).
-const _DAY_ZONES=[['epaule','Épaule'],['genou','Genou'],['lombaires','Bas du dos'],['cervicales','Nuque'],['coude','Coude'],['poignet','Poignet'],['hanche','Hanche'],['cheville','Cheville']];
+// [zone, libellé, latéral?] — latéral = peut avoir un côté (gauche/droite/les deux).
+const _DAY_ZONES=[['epaule','Épaule',1],['trapeze','Trapèze',1],['cervicales','Nuque',0],['pectoraux','Pectoraux',1],['coude','Coude',1],['poignet','Poignet',1],['lombaires','Bas du dos',0],['abdos','Abdos',0],['hanche','Hanche',1],['fessier','Fessier',1],['cuisse','Cuisse',1],['ischio','Ischio',1],['adducteur','Adducteur',1],['genou','Genou',1],['mollet','Mollet',1],['cheville','Cheville',1]];
 const _DAY_ENERGY=['😴','😐','🙂','⚡']; // 0=très fatigué → 3=plein d'énergie
+function _dayZoneLat(z){const e=_DAY_ZONES.find(x=>x[0]===z);return e?!!e[2]:false;}
+function _dayZoneLbl(z){const e=_DAY_ZONES.find(x=>x[0]===z);return e?e[1]:z;}
 function _dayState(){
   const t=today();
   if(!S.dayState||S.dayState.date!==t)S.dayState={date:t,energy:null,mood:null,pains:[],note:''};
   return S.dayState;
 }
 function setDayEnergy(v){const d=_dayState();d.energy=(d.energy===v?null:v);persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
-function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=>p&&p.zone===z);if(i>=0)d.pains.splice(i,1);else{d.pains=d.pains||[];d.pains.push({zone:z,intensity:'moyen'});}persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=>p&&p.zone===z);if(i>=0)d.pains.splice(i,1);else{d.pains=d.pains||[];d.pains.push({zone:z,side:_dayZoneLat(z)?'both':null});}persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+function setDayPainSide(z,side){const d=_dayState();const p=(d.pains||[]).find(x=>x&&x.zone===z);if(!p)return;p.side=side;persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
 function _renderDayStateCard(){
   const el=document.getElementById('home-daystate');if(!el)return;
   const d=_dayState();
   const painSet=new Set((d.pains||[]).map(p=>p&&p.zone));
   const enBtns=_DAY_ENERGY.map((e,i)=>'<button class="ds-en'+(d.energy===i?' on':'')+'" onclick="setDayEnergy('+i+')">'+e+'</button>').join('');
   const zBtns=_DAY_ZONES.map(z=>'<button class="ds-z'+(painSet.has(z[0])?' on':'')+'" onclick="toggleDayPain(\''+z[0]+'\')">'+z[1]+'</button>').join('');
+  // Côté (G/D/Les 2) — n'apparaît que pour les zones latérales sélectionnées.
+  const latSel=(d.pains||[]).filter(p=>p&&_dayZoneLat(p.zone));
+  let sideHtml='';
+  if(latSel.length){
+    const rows=latSel.map(p=>{
+      const cur=p.side||'both';
+      const b=(val,lbl)=>'<button class="ds-side'+(cur===val?' on':'')+'" onclick="setDayPainSide(\''+p.zone+'\',\''+val+'\')">'+lbl+'</button>';
+      return '<div class="ds-siderow"><span class="ds-sidelbl">'+_dayZoneLbl(p.zone)+'</span>'+b('L','G')+b('R','D')+b('both','Les 2')+'</div>';
+    }).join('');
+    sideHtml='<div class="ds-sub" style="margin-top:11px;">Un côté en particulier ?</div>'+rows;
+  }
   el.innerHTML='<div class="ds-card">'
     +'<div class="ds-ttl">🌡️ Comment tu te sens aujourd\'hui ? <span class="ds-opt">(optionnel)</span></div>'
     +'<div class="ds-row">'+enBtns+'</div>'
     +'<div class="ds-sub">Une gêne ou douleur ? Tape la zone :</div>'
     +'<div class="ds-zrow">'+zBtns+'</div>'
+    +sideHtml
     +'</div>';
 }
 // « Ce que Milo sait de toi » — liste des observations validées (supprimables)

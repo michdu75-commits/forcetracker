@@ -1047,18 +1047,35 @@ function obNext(step){
   obGoTo(step);
 }
 // Blessure à l'inscription (optionnel) : zones stockées dans S.healthProfile.notes → le Gardien les protège
-const _OB_INJ_BTN={'épaule':'ob-inj-epaule','genou':'ob-inj-genou','bas du dos':'ob-inj-dos','nuque':'ob-inj-nuque','coude':'ob-inj-coude','poignet':'ob-inj-poignet','hanche':'ob-inj-hanche','cheville':'ob-inj-cheville'};
+const _OB_INJ_BTN={'épaule':'ob-inj-epaule','trapèze':'ob-inj-trapeze','nuque':'ob-inj-nuque','pectoraux':'ob-inj-pectoraux','coude':'ob-inj-coude','poignet':'ob-inj-poignet','bas du dos':'ob-inj-dos','abdos':'ob-inj-abdos','hanche':'ob-inj-hanche','fessier':'ob-inj-fessier','cuisse':'ob-inj-cuisse','ischio':'ob-inj-ischio','adducteur':'ob-inj-adducteur','genou':'ob-inj-genou','mollet':'ob-inj-mollet','cheville':'ob-inj-cheville'};
+// Zones latérales (peuvent avoir un côté gauche/droite/les deux) — les centrales (nuque, bas du dos, abdos) n'en ont pas.
+const _OB_INJ_LAT={'épaule':1,'trapèze':1,'pectoraux':1,'coude':1,'poignet':1,'hanche':1,'fessier':1,'cuisse':1,'ischio':1,'adducteur':1,'genou':1,'mollet':1,'cheville':1};
 let _obInjuries=[];
+let _obInjSide={}; // zone -> 'L'|'R'|'both'
 function obToggleInjury(zone){
-  if(zone==='none'){_obInjuries=[];}
-  else{const i=_obInjuries.indexOf(zone);if(i>=0)_obInjuries.splice(i,1);else _obInjuries.push(zone);}
+  if(zone==='none'){_obInjuries=[];_obInjSide={};}
+  else{const i=_obInjuries.indexOf(zone);if(i>=0){_obInjuries.splice(i,1);delete _obInjSide[zone];}else{_obInjuries.push(zone);if(_OB_INJ_LAT[zone])_obInjSide[zone]='both';}}
   const none=document.getElementById('ob-inj-none');if(none)none.classList.toggle('ob-sel',_obInjuries.length===0);
   Object.keys(_OB_INJ_BTN).forEach(z=>{const el=document.getElementById(_OB_INJ_BTN[z]);if(el)el.classList.toggle('ob-sel',_obInjuries.indexOf(z)>=0);});
+  _obRenderInjSide();
+}
+function obSetInjSide(zone,side){_obInjSide[zone]=side;_obRenderInjSide();}
+function _obRenderInjSide(){
+  const box=document.getElementById('ob-inj-side');if(!box)return;
+  const lat=_obInjuries.filter(z=>_OB_INJ_LAT[z]);
+  if(!lat.length){box.innerHTML='';return;}
+  const rows=lat.map(z=>{
+    const cur=_obInjSide[z]||'both';
+    const b=(val,lbl)=>'<button class="ds-side'+(cur===val?' on':'')+'" onclick="obSetInjSide(\''+z+'\',\''+val+'\')">'+lbl+'</button>';
+    return '<div class="ds-siderow"><span class="ds-sidelbl" style="text-transform:capitalize;">'+z+'</span>'+b('L','G')+b('R','D')+b('both','Les 2')+'</div>';
+  }).join('');
+  box.innerHTML='<div class="ds-sub" style="margin-top:12px;text-align:left;">Un côté en particulier ?</div>'+rows;
 }
 function _obApplyInjuries(){
   if(!_obInjuries.length)return;
   S.healthProfile=S.healthProfile||{};
-  const txt='Zones fragiles : '+_obInjuries.join(', ')+'.';
+  const parts=_obInjuries.map(z=>{const s=_obInjSide[z];return z+(s==='L'?' (côté gauche)':s==='R'?' (côté droit)':'');});
+  const txt='Zones fragiles : '+parts.join(', ')+'.';
   S.healthProfile.notes=S.healthProfile.notes?(S.healthProfile.notes+' '+txt):txt;
 }
 

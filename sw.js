@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v483'; // Admin : lecteur d'idees recues (loadTesterIdeasAdmin -> ?action=getIdees) -> Michel lit tout le texte des idees DANS l'app, sans ouvrir ses mails ; les photos restent dans forcetracker.app@gmail.com.
+const CACHE = 'ft-v484'; // Douleurs precises (retour Christophe, Phase 1) : etat du jour (Accueil) + ecran blessure inscription = plus de zones (trapeze/cuisse/ischio/mollet/fessier/adducteur/pectoraux/abdos) + cote gauche/droite/les deux. Gardien + Milo tiennent compte du cote.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

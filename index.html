@@ -238,14 +238,23 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <div id="ob-injury-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
           <button class="ob-gbtn ob-sel" id="ob-inj-none" onclick="obToggleInjury('none')" style="grid-column:1/3;">✅ Aucune, tout va bien</button>
           <button class="ob-gbtn" id="ob-inj-epaule" onclick="obToggleInjury('épaule')">Épaule</button>
-          <button class="ob-gbtn" id="ob-inj-genou" onclick="obToggleInjury('genou')">Genou</button>
-          <button class="ob-gbtn" id="ob-inj-dos" onclick="obToggleInjury('bas du dos')">Bas du dos</button>
+          <button class="ob-gbtn" id="ob-inj-trapeze" onclick="obToggleInjury('trapèze')">Trapèze</button>
           <button class="ob-gbtn" id="ob-inj-nuque" onclick="obToggleInjury('nuque')">Nuque</button>
+          <button class="ob-gbtn" id="ob-inj-pectoraux" onclick="obToggleInjury('pectoraux')">Pectoraux</button>
           <button class="ob-gbtn" id="ob-inj-coude" onclick="obToggleInjury('coude')">Coude</button>
           <button class="ob-gbtn" id="ob-inj-poignet" onclick="obToggleInjury('poignet')">Poignet</button>
+          <button class="ob-gbtn" id="ob-inj-dos" onclick="obToggleInjury('bas du dos')">Bas du dos</button>
+          <button class="ob-gbtn" id="ob-inj-abdos" onclick="obToggleInjury('abdos')">Abdos</button>
           <button class="ob-gbtn" id="ob-inj-hanche" onclick="obToggleInjury('hanche')">Hanche</button>
+          <button class="ob-gbtn" id="ob-inj-fessier" onclick="obToggleInjury('fessier')">Fessier</button>
+          <button class="ob-gbtn" id="ob-inj-cuisse" onclick="obToggleInjury('cuisse')">Cuisse</button>
+          <button class="ob-gbtn" id="ob-inj-ischio" onclick="obToggleInjury('ischio')">Ischio</button>
+          <button class="ob-gbtn" id="ob-inj-adducteur" onclick="obToggleInjury('adducteur')">Adducteur</button>
+          <button class="ob-gbtn" id="ob-inj-genou" onclick="obToggleInjury('genou')">Genou</button>
+          <button class="ob-gbtn" id="ob-inj-mollet" onclick="obToggleInjury('mollet')">Mollet</button>
           <button class="ob-gbtn" id="ob-inj-cheville" onclick="obToggleInjury('cheville')">Cheville</button>
         </div>
+        <div id="ob-inj-side" style="width:100%;"></div>
       </div>
       <div class="ob-footer">
         <button class="btn btn-red" onclick="obNext(5)" style="font-size:17px;padding:16px;">Continuer →</button>

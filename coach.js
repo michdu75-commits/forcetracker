@@ -598,7 +598,15 @@ const _GARDIEN_ZONE={
   coude:"ménage le coude — évite curls/extensions lourds et prises douloureuses, réduis le volume bras, contrôle le tempo",
   poignet:"protège le poignet — évite les prises/extensions douloureuses, utilise des sangles et des machines guidées",
   hanche:"protège la hanche — évite les amplitudes extrêmes, contrôle la profondeur du squat et des fentes",
-  cheville:"ménage la cheville — évite les sauts et le travail balistique des mollets, reste en contrôle"
+  cheville:"ménage la cheville — évite les sauts et le travail balistique des mollets, reste en contrôle",
+  trapeze:"ménage les trapèzes — allège shrugs et tirages lourds, réduis la charge/le volume, échauffe bien nuque et épaules",
+  pectoraux:"ménage les pectoraux — évite le développé/écarté LOURD et les grandes amplitudes en étirement, réduis charge et volume",
+  abdos:"ménage les abdominaux — évite le gainage intense et les relevés lourds tant que c'est douloureux, laisse récupérer",
+  fessier:"ménage les fessiers — réduis la charge sur hip thrust/squat/fente, amplitude contrôlée sans douleur",
+  cuisse:"ménage les quadriceps — réduis charge et volume sur squats/presses/extensions, amplitude sans douleur",
+  ischio:"ménage les ischio-jambiers — prudence sur soulevé jambes tendues/leg curl/good morning, contrôle le tempo, évite l'étirement brusque",
+  adducteur:"ménage les adducteurs — évite les grands écarts et la machine adducteur lourde, amplitude contrôlée",
+  mollet:"ménage les mollets — évite le travail balistique et les sauts, extensions contrôlées sans douleur"
 };
 const _GARDIEN_COND={
   arthrite:"arthrose/arthrite — mouvements contrôlés, amplitude SANS douleur, évite l'impact (sauts, course), échauffement long et progressif",
@@ -609,7 +617,7 @@ const _GARDIEN_COND={
 };
 // 6B — CONTRAINTES DU MOUVEMENT (sollicitations articulaires), déduites du nom de l'exercice.
 // Chaque contrainte : zones sollicitées · libellé · regex (nom normalisé) · exemples à alléger · alternative plus douce.
-const _GARDIEN_ZLABEL={epaule:'épaule',genou:'genou',lombaires:'bas du dos (lombaires)',dorsaux:'haut du dos',cervicales:'cou/cervicales',coude:'coude',poignet:'poignet',hanche:'hanche',cheville:'cheville'};
+const _GARDIEN_ZLABEL={epaule:'épaule',genou:'genou',lombaires:'bas du dos (lombaires)',dorsaux:'haut du dos',cervicales:'cou/cervicales',coude:'coude',poignet:'poignet',hanche:'hanche',cheville:'cheville',trapeze:'trapèzes',pectoraux:'pectoraux',abdos:'abdominaux',fessier:'fessiers',cuisse:'cuisses (quadriceps)',ischio:'ischio-jambiers',adducteur:'adducteurs',mollet:'mollets'};
 const _GARDIEN_CONSTRAINTS=[
   {zones:['epaule','cervicales'],sollicite:'les mouvements au-dessus de la tête',rx:/militaire|overhead|nuque|arnold|au.?dessus|elevation frontale|developpe epaule|epaules? (halter|barre)|thruster|landmine press|pike|hand ?stand/,avoid:'développé militaire/nuque, développé épaules debout, élévations très hautes',alt:'développé épaules à la machine ou assis avec dossier, élévations latérales sous la ligne de l\'épaule'},
   {zones:['lombaires'],sollicite:'la charge sur la colonne (flexion/compression du dos)',rx:/souleve de terre|deadlift|good morning|squat|rowing barre|rowing penche|pendlay|t.?bar|clean|arrache|epaule.?jete|zercher|front squat|hack|bent.?over/,avoid:'soulevé de terre lourd, good morning, squat barre lourd, rowing penché',alt:'rowing poitrine soutenue/machine, tirage machine, hip thrust, gainage'},
@@ -643,6 +651,14 @@ function _gardienZonesFromText(t){
   if(/poignet|canal carpien/.test(s))out.push('poignet');
   if(/hanche|psoas|bassin/.test(s))out.push('hanche');
   if(/cheville|achille/.test(s))out.push('cheville');
+  if(/trapeze/.test(s))out.push('trapeze');
+  if(/pectora|\bpec\b/.test(s))out.push('pectoraux');
+  if(/abdo|gainage|\bcore\b/.test(s))out.push('abdos');
+  if(/fessier|glute/.test(s))out.push('fessier');
+  if(/cuisse|quadri/.test(s))out.push('cuisse');
+  if(/ischio|hamstring/.test(s))out.push('ischio');
+  if(/adducteur/.test(s))out.push('adducteur');
+  if(/mollet|soleaire|jumeaux/.test(s))out.push('mollet');
   return out;
 }
 function _gardienRules(){
@@ -660,14 +676,15 @@ function _gardienRules(){
     const conds=(hp.conditions||[]).filter(c=>_GARDIEN_COND[c]);
     // 4) DOULEUR DU JOUR (état du jour, brique 3B) — priorité absolue, tag AUJOURD'HUI
     try{const ds=S.dayState;const tday=(typeof today==='function')?today():null;
-      if(ds&&(!tday||ds.date===tday)&&Array.isArray(ds.pains)){ds.pains.forEach(pn=>{const k=pn&&pn.zone;if(_GARDIEN_ZONE[k]){zones[k]=zones[k]||{};zones[k].today=true;}});}
+      if(ds&&(!tday||ds.date===tday)&&Array.isArray(ds.pains)){ds.pains.forEach(pn=>{const k=pn&&pn.zone;if(_GARDIEN_ZONE[k]){zones[k]=zones[k]||{};zones[k].today=true;if(pn.side==='L'||pn.side==='R')zones[k].todaySide=pn.side;}});}
     }catch(e){}
     const zoneKeys=Object.keys(zones);
     if(!zoneKeys.length&&!conds.length)return ''; // Gardien silencieux → comportement identique
     const lines=[];
     zoneKeys.forEach(k=>{
       const rule=_GARDIEN_ZONE[k]; if(!rule)return;
-      const tag=zones[k].today?' [DOULEUR AUJOURD\'HUI — priorité, protège cette zone en PREMIER]':(zones[k].active?' [ACTIVE — protège fortement]':(zones[k].durable&&!zones[k].injury?' [zone fragile durable]':''));
+      const _side=zones[k].todaySide==='L'?' côté gauche':zones[k].todaySide==='R'?' côté droit':'';
+      const tag=zones[k].today?' [DOULEUR AUJOURD\'HUI'+_side+' — priorité, protège cette zone en PREMIER]':(zones[k].active?' [ACTIVE — protège fortement]':(zones[k].durable&&!zones[k].injury?' [zone fragile durable]':''));
       // 6B — enrichissement : sollicitations du mouvement + exemples à alléger + alternative
       const cons=_GARDIEN_CONSTRAINTS.filter(c=>c.zones.indexOf(k)>=0);
       let extra='';
@@ -918,7 +935,8 @@ ${(()=>{
   const parts=[];
   if(ds.energy!=null&&EN[ds.energy])parts.push('énergie: '+EN[ds.energy]);
   const zl=(typeof _GARDIEN_ZLABEL!=='undefined')?_GARDIEN_ZLABEL:{};
-  if((ds.pains||[]).length)parts.push('douleur(s) du jour: '+ds.pains.map(p=>zl[p.zone]||p.zone).join(', '));
+  const _sw=s=>s==='L'?' (côté gauche)':s==='R'?' (côté droit)':'';
+  if((ds.pains||[]).length)parts.push('douleur(s) du jour: '+ds.pains.map(p=>(zl[p.zone]||p.zone)+_sw(p.side)).join(', '));
   if(ds.note&&ds.note.trim())parts.push('note: '+ds.note.trim());
   if(!parts.length)return '';
   return '\n📍 ÉTAT DU JOUR (AUJOURD\'HUI, ponctuel — ne définit PAS la personne, ne vaut que pour aujourd\'hui) : '+parts.join(' · ')+'.\n→ Adapte tes conseils DU JOUR : fatigue → allège/soutiens ; en forme → tu peux pousser ; une DOULEUR du jour → protège cette zone EN PRIORITÉ (le Gardien en tient déjà compte), allège ou propose une alternative. ⚠️ LE RESSENTI PRIME toujours sur les chiffres.\n';
@@ -1509,7 +1527,7 @@ const _DRAWER_CONTENT = {
         {ic:'🥉',t:'Ton niveau (évolutif)',d:'Nouveau : dans Profil → Discipline, indique ton niveau — Débutant · Intermédiaire · Confirmé. Le Coach (Milo) s\'adapte : plus pédagogue si tu débutes, plus technique si tu es confirmé. Et surtout : ton niveau évolue tout seul ! À force de séances et de progrès sur les gros mouvements (squat, développé couché, soulevé de terre), l\'app te félicite et te fait passer au niveau supérieur. 🎉'},
         {ic:'🧬',t:'Mon ADN sportif',d:'Section « Mon ADN sportif » dans ton Profil. Tu y dis à Milo ce qui te caractérise DURABLEMENT dans ta façon de t\'entraîner — ta motivation profonde, ton mode de vie (temps dispo, salle/maison, matériel, rythme), tes préférences (exos que tu aimes/détestes, ton style) et ton expérience. Milo s\'en sert pour des conseils vraiment personnels ET réalistes : il ne te proposera pas une séance d\'1h30 si tu as 45 min, ni des squats si tu les détestes. Tout est optionnel et privé. C\'est différent de ton humeur du jour (dis-la lui dans le chat) ET de ta santé (tes zones fragiles/blessures vont dans Profil → Santé).'},
         {ic:'🧠',t:'Milo apprend à te connaître',d:'Au fil de tes séances, Milo repère des tendances (par ex. que tu t\'entraînes plutôt le matin, ou plus le haut du corps que les jambes) et te pose une petite question sur l\'Accueil pour vérifier — une à la fois, seulement quand une tendance est claire. Si tu réponds « Oui, c\'est vrai », il le RETIENT et s\'en sert pour mieux te conseiller. Si tu réponds « Pas vraiment », il oublie et ne re-pose plus la question. RIEN n\'est mémorisé sans ton accord. Tu peux revoir et effacer tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi ». C\'est ta mémoire, tu en gardes le contrôle. 🔒'},
-        {ic:'🌡️',t:'Comment tu te sens aujourd\'hui',d:'Sur ton Accueil, une petite carte optionnelle « Comment tu te sens aujourd\'hui ? ». En 1-2 taps : ton énergie du jour (😴 → ⚡) et, si besoin, une gêne ou douleur (tape la zone : épaule, genou, dos…). Milo adapte alors ses conseils DU JOUR : fatigue → il allège et te soutient ; en forme → il te pousse. Et surtout, si tu signales une DOULEUR, le Gardien PROTÈGE cette zone en priorité (il allège ou propose une alternative, jamais il ne t\'interdit de bouger). Ça repart à zéro chaque jour — c\'est ponctuel, ça ne te définit pas. Le ressenti prime toujours. C\'est différent de tes zones fragiles DURABLES (Profil → Santé) : là c\'est juste pour aujourd\'hui.'},
+        {ic:'🌡️',t:'Comment tu te sens aujourd\'hui',d:'Sur ton Accueil, une petite carte optionnelle « Comment tu te sens aujourd\'hui ? ». En 1-2 taps : ton énergie du jour (😴 → ⚡) et, si besoin, une gêne ou douleur — tape la zone (trapèze, épaule, pectoraux, dos, cuisse, ischio, fessier, adducteur, genou, mollet, cheville…) et, pour une zone comme le genou ou l\'épaule, précise le CÔTÉ (gauche / droite / les deux). Milo adapte alors ses conseils DU JOUR : fatigue → il allège et te soutient ; en forme → il te pousse. Et surtout, si tu signales une DOULEUR, le Gardien PROTÈGE cette zone en priorité (il allège ou propose une alternative, jamais il ne t\'interdit de bouger). Ça repart à zéro chaque jour — c\'est ponctuel, ça ne te définit pas. Le ressenti prime toujours. C\'est différent de tes zones fragiles DURABLES (Profil → Santé) : là c\'est juste pour aujourd\'hui.'},
         {ic:'🛡️',t:'Milo veille sur ta sécurité',d:'Milo place TA sécurité en priorité : il tient compte de ta santé et de tes zones fragiles (Profil → Santé — blessures, zones fragiles, arthrose, hernie…) AVANT de te conseiller. Sa règle : ADAPTER, jamais t\'interdire bêtement. Face à une épaule sensible, un genou fragile ou des lombaires, il cherche le moyen le MOINS contraignant de continuer à progresser en sécurité (réduire la charge/l\'amplitude, changer d\'exercice, protéger la zone tout en travaillant le reste) et te propose des alternatives. L\'arrêt total reste l\'exception. ⚠️ Il ne pose jamais de diagnostic : devant une douleur forte ou inhabituelle, il te conseille le repos et un professionnel de santé. Plus tu renseignes tes zones fragiles et ta santé, mieux il te protège.'},
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
         {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Nouveau : il coache comme un VRAI coach — il t\'évalue avant de conseiller (et te pose des questions au besoin), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans langue de bois. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
