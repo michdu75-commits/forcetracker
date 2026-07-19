@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v489'; // Fix zoom : quand la page est zoomee (pinch-zoom), deplacer la vue de gauche a droite ne change PLUS d'onglet (visualViewport.scale>1 -> pas de swipe navigation). Retour Michel.
+const CACHE = 'ft-v490'; // Fix Milo : l'historique (DERNIERES SEANCES) donnait juste le nb de series + volume total -> Milo ne voyait PAS les charges kg×reps de chaque serie. Corrige : detail par serie + 5 seances (retour Michel « il prend la charge totale mais pas chaque exercice »).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

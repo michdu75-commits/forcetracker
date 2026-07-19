@@ -733,19 +733,19 @@ function buildCoachContext() {
     ? Object.entries(S.prs).map(([ex, d]) => `${ex}: ${d.kg}kg×${d.reps} (~${fmt(d.rm1)}kg 1RM)`).join(', ')
     : 'Aucun PR enregistré';
 
-  const recentSessions = S.sessions.slice(0, 3).map(s => {
+  // Historique détaillé : le kg×reps de CHAQUE série (pas juste le nb de séries + volume total),
+  // sinon Milo ne peut pas parler des charges réellement soulevées (retour Michel : « il prend
+  // la charge totale mais pas chaque exercice »). É = échauffement, X = échec.
+  const recentSessions = S.sessions.slice(0, 5).map(s => {
     const exStr = (s.exs||s.exercises||[]).map(e => {
-      const ds = e.sets.filter(x => x.done);
-      const nNorm = ds.filter(x => x.type==='N'||!x.type).length;
-      const nFail = ds.filter(x => x.type==='X'||x.type==='E').length;
-      const nWarm = ds.filter(x => x.type==='É'||x.type==='W').length;
-      let tech = nNorm ? `${nNorm}s` : '';
-      if (nWarm) tech += `+${nWarm}É`;
-      if (nFail) tech += `+${nFail}X`;
-      return `${e.name}(${tech})${e.note?' [note: '+e.note+']':''}`;
-    }).join(', ');
-    return `${s.date}: ${exStr} — ${s.volume}kg vol`;
-  }).join(' | ') || 'Aucune séance';
+      const ds = (e.sets||[]).filter(x => x.done);
+      const setsStr = ds.length
+        ? ds.map(x => `${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(' ')
+        : '—';
+      return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}`;
+    }).join(' · ');
+    return `${s.date}: ${exStr} — ${s.volume}kg vol total`;
+  }).join('\n') || 'Aucune séance';
 
   // Séance EN COURS (S.wkt) — permet au Coach d'aider PENDANT l'entraînement
   let wktText='';
