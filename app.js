@@ -996,26 +996,12 @@ function initOnboarding(){
   if(_obgr)_obgr.style.display=((typeof _isNutriBeta==='function')&&_isNutriBeta())?'':'none';
   const emailInp=document.getElementById('ob-email');
   if(emailInp){emailInp.setAttribute('enterkeyhint','done');emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});}
-  // step 3 : prénom → age → taille → poids → naissance → poids visé en chaîne
-  const ob3=[['ob-name','ob-age'],['ob-age','ob-ht'],['ob-ht','ob-bw'],['ob-bw','ob-bday'],['ob-bday','ob-target'],['ob-target',null]];
-  // Naissance : insertion auto du "/" après le jour (JJ → JJ/)
-  const obBd=document.getElementById('ob-bday');
-  if(obBd)obBd.addEventListener('input',e=>{
-    let v=e.target.value.replace(/[^\d/]/g,'');
-    if(v.length===2&&e.target.value.length>obBd._prevLen)v=v+'/';
-    obBd._prevLen=v.length;e.target.value=v.slice(0,5);
-  });
-  ob3.forEach(([id,nextId])=>{
-    const inp=document.getElementById(id);
-    if(!inp)return;
-    inp.setAttribute('enterkeyhint',nextId?'next':'done');
-    inp.addEventListener('keydown',e=>{
-      if(e.key!=='Enter')return;
-      e.preventDefault();
-      if(nextId){const n=document.getElementById(nextId);if(n){n.focus();n.select&&n.select();}}
-      else obNext(2);
-    });
-  });
+  // étape 3 « on se présente » : prénom → Continuer (le reste = collecte paresseuse)
+  const nameInp=document.getElementById('ob-name');
+  if(nameInp){
+    nameInp.setAttribute('enterkeyhint','done');
+    nameInp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); obNext(4); } });
+  }
   const emailFinal=document.getElementById('ob-email-final');
   if(emailFinal){emailFinal.setAttribute('enterkeyhint','done');emailFinal.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obCheckEmailAndFinish();}});}
   _initOb0();
@@ -1029,43 +1015,51 @@ function obGoTo(step){
   if(next){next.classList.add('ob-active');}
   if(step===5){const ef=document.getElementById('ob-email-final');if(ef&&S.email)ef.value=S.email;}
   _obStep=step;
-  // ordre d'affichage : ob-1 (compte) → ob-3 (profil) → ob-2 (niveau) → ob-4 (objectif) → ob-5 (email)
-  const dotMap={1:1,3:2,2:3,4:4,5:5};
+  // ordre : ob-1 (compte) → ob-3 (prénom+sexe) → ob-4 (objectif) → ob-2 (niveau) → ob-6 (blessure) → ob-5 (email)
+  const dotMap={1:1,3:2,4:3,2:4,6:5,5:6};
   const dotNum=dotMap[step]||0;
-  for(let i=1;i<=5;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',dotNum>0&&i===dotNum);}
+  for(let i=1;i<=6;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',dotNum>0&&i===dotNum);}
 }
 
 function obNext(step){
   if(_obStep===3){
+    // On se présente : prénom + sexe seulement (âge/taille/poids → collecte paresseuse)
     const name=(document.getElementById('ob-name').value||'').trim();
     if(name){
       S.name=name;
       const cta=document.getElementById('ob-cta-title');
       if(cta)cta.textContent='C\'est parti, '+name+' !';
     }
-    const age=parseInt(document.getElementById('ob-age').value)||0;
-    const ht=parseFloat(document.getElementById('ob-ht').value)||0;
-    const bw=parseFloat(document.getElementById('ob-bw').value)||0;
     S.gender=_obGender;
-    if(age>=14&&age<=80)S.age=age;
-    if(ht>=100&&ht<=250)S.height=ht;
-    if(bw>=20&&bw<=300){S.bw=bw;}
-    // Nouveaux champs (onboarding enrichi) — tous optionnels
-    const tw=parseFloat((document.getElementById('ob-target')||{}).value)||0;
-    if(tw>=20&&tw<=300)S.targetWeight=tw;
-    const bd=((document.getElementById('ob-bday')||{}).value||'').trim();
-    if(/^\d{1,2}\/\d{1,2}$/.test(bd))S.bday=bd;
   }else if(_obStep===2){
     // étape Niveau (son propre écran) — le niveau est déjà posé par obSetLevel
     if(_obLevel)S.level=_obLevel;
   }else if(_obStep===4){
     S.goal=_obGoal;
+  }else if(_obStep===6){
+    // étape Blessure/zone fragile → Profil Santé (le Gardien la lira)
+    _obApplyInjuries();
   }
   if(step===5){
     const emailSec=document.getElementById('ob-email-section');
     if(emailSec)emailSec.style.display='';
   }
   obGoTo(step);
+}
+// Blessure à l'inscription (optionnel) : zones stockées dans S.healthProfile.notes → le Gardien les protège
+const _OB_INJ_BTN={'épaule':'ob-inj-epaule','genou':'ob-inj-genou','bas du dos':'ob-inj-dos','nuque':'ob-inj-nuque','coude':'ob-inj-coude','poignet':'ob-inj-poignet','hanche':'ob-inj-hanche','cheville':'ob-inj-cheville'};
+let _obInjuries=[];
+function obToggleInjury(zone){
+  if(zone==='none'){_obInjuries=[];}
+  else{const i=_obInjuries.indexOf(zone);if(i>=0)_obInjuries.splice(i,1);else _obInjuries.push(zone);}
+  const none=document.getElementById('ob-inj-none');if(none)none.classList.toggle('ob-sel',_obInjuries.length===0);
+  Object.keys(_OB_INJ_BTN).forEach(z=>{const el=document.getElementById(_OB_INJ_BTN[z]);if(el)el.classList.toggle('ob-sel',_obInjuries.indexOf(z)>=0);});
+}
+function _obApplyInjuries(){
+  if(!_obInjuries.length)return;
+  S.healthProfile=S.healthProfile||{};
+  const txt='Zones fragiles : '+_obInjuries.join(', ')+'.';
+  S.healthProfile.notes=S.healthProfile.notes?(S.healthProfile.notes+' '+txt):txt;
 }
 
 function obSetGender(g){
@@ -1167,7 +1161,7 @@ function finishOnboarding(){
   persist();
   if(S.email&&S.url&&!_obDataRestored){
     // Nouveau profil uniquement — si restauration depuis cloud, on ne réécrit JAMAIS le Sheet
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,authCode:_authCode(),welcome:true};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,healthProfile:S.healthProfile,authCode:_authCode(),welcome:true};
     fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
     // Confirmation d'email (soft) : on envoie un code en fond — l'inscription n'est JAMAIS bloquée
     if(!S.emailVerified){ try{ _sendEmailConfirm(true); }catch(e){} }
