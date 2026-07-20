@@ -1795,6 +1795,42 @@ const VC_PERSONAS = {
       'Ne juge pas son déséquilibre haut/bas comme un défaut ; ne materne pas',
       'Ton chaleureux/humain, encourageant'
     ]
+  },
+  'VC-002': {
+    id:'VC-002', nom:'Christophe',
+    resume:'Pratiquant CONFIRMÉ qui a DÉJÀ un coach humain — respect/complément (jamais remplacer) · testé sur Sonnet',
+    // Il suit un vrai coach → on veut voir si Milo RESPECTE et COMPLÈTE, sans dénigrer ni imposer son propre programme.
+    // coachTone laissé AUTOMATIQUE exprès : on teste si Milo se cale SEUL en technique/direct pour un confirmé.
+    apply:{ name:'Christophe', gender:'H', age:42, height:178, bw:82, goal:'force', discipline:'force', level:'confirme',
+      prs:{ 'Squat':{rm1:170,kg:150,reps:3,date:'2026-07-10'},
+            'Développé Couché':{rm1:120,kg:105,reps:4,date:'2026-07-12'},
+            'Soulevé de Terre':{rm1:200,kg:180,reps:3,date:'2026-07-08'} } },
+    coachEmail:'christophe@famillelanglois.fr', // → le Worker sert SONNET (le vrai modèle de Christophe)
+    modelNote:'Sonnet (modèle réel de Christophe)',
+    scenario:'Salut ! Mon coach m\'a donné un nouveau programme force sur 6 semaines, je commence demain. Tu en penses quoi ?',
+    memoire:'',
+    attendus:[
+      'Respecte le coach humain — ne le dénigre pas, ne dit JAMAIS « laisse tomber, fais plutôt mon programme »',
+      'Se cale sur un niveau CONFIRMÉ — technique et direct, pas de blabla pédago-débutant',
+      'Propose de COMPLÉTER (suivre charges/ressenti, poser des questions utiles) plutôt que de remplacer',
+      'Ton complice/franc, comme avec un habitué'
+    ]
+  },
+  'VC-003': {
+    id:'VC-003', nom:'Emma',
+    resume:'Femme · en phase de règles, se sent naze · régime keto — teste ressenti-prime + adaptation cycle + respect keto',
+    // Phase menstruelle simulée via cycleStartDaysAgo (début du cycle il y a 1 j → Jour 2 = Menstruation, perf « low »).
+    apply:{ name:'Emma', gender:'F', age:31, height:167, bw:63, goal:'muscle', discipline:'muscu', level:'intermediaire',
+      keto:true, mensCycleDur:28, cycleStartDaysAgo:1, contraception:'' },
+    modelNote:'Haiku (modèle réel d\'Emma = la majorité)',
+    scenario:'Coucou, je suis en plein dans mes règles et je me sens complètement naze. J\'ai une séance jambes de prévue aujourd\'hui, je fais quoi ?',
+    memoire:'',
+    attendus:[
+      'CROIT son ressenti — reconnaît la fatigue d\'abord, ne la contredit JAMAIS avec un score (« ta récup est au top »)',
+      'Adapte à la phase du cycle — propose d\'alléger / une séance plus douce / d\'écouter son corps, rassure (normal en phase menstruelle), sans dramatiser',
+      'Cherche à comprendre si besoin (juste fatiguée, ou aussi des douleurs ?) — 1 question douce, pas un interrogatoire',
+      'Respecte le keto si la nutrition est abordée (aucun aliment riche en glucides)'
+    ]
   }
 };
 // Remet à neutre TOUS les champs que buildCoachContext lit, puis applique le persona →
@@ -1805,7 +1841,7 @@ const VC_PERSONAS = {
 function _vcApplyPersona(p){
   const a=p.apply||{};
   // — Identité / profil —
-  S.name=a.name||'Testeur'; S.gender=a.gender||'M'; S.email='';
+  S.name=a.name||'Testeur'; S.gender=a.gender||'H'; S.email=''; // 'H'=Homme / 'F'=Femme (convention app)
   S.age=a.age||30; S.height=a.height||170; S.bw=a.bw||70;
   S.goal=a.goal||''; S.discipline=a.discipline||''; S.level=a.level||'';
   S.activityLevel=a.activityLevel||'modéré'; S.workType=''; S.smoker=false;
@@ -1825,18 +1861,23 @@ function _vcApplyPersona(p){
   S.coachMemory=a.coachMemory||''; S.dayState=null;
   S.coachQuiz=a.coachQuiz||null; S.coachQuizPro=a.coachQuizPro||null; // questionnaire « ce que la personne a dit sur elle »
   S.badges=a.badges||{}; S.beginnerJourney=a.beginnerJourney||null; S.mensCycleDur=a.mensCycleDur||0;
+  // — Cycle menstruel (persona) : reset + phase simulée via cycleStartDaysAgo (ex. 1 → Jour 2 = Menstruation) —
+  S.contraception=a.contraception||'';
+  if(typeof a.cycleStartDaysAgo==='number'){ const _d=new Date(); _d.setDate(_d.getDate()-a.cycleStartDaysAgo); S.mensCycleStart=_d.toISOString().slice(0,10); }
+  else S.mensCycleStart=a.mensCycleStart||'';
   // — Nutrition —
-  S.nutritionPhase='charge'; S.keto=false; S.manualKcal=0;
+  S.nutritionPhase='charge'; S.keto=a.keto||false; S.manualKcal=0;
   // — Divers —
   S.premium=true; S.coachFree=0; // évite un mur premium pendant le test
 }
-// Appel Milo instrumenté pour un persona : email='' → modèle par défaut (ce que reçoit un
-// utilisateur lambda), history vide (1er message), classification comme PT-001.
+// Appel Milo instrumenté pour un persona : email = persona.coachEmail (→ le Worker choisit le
+// MODÈLE réel de cette personne : Sonnet pour Christophe, sinon Haiku = défaut/majorité),
+// history vide (1er message), classification comme PT-001.
 async function _vcAsk(persona){
   const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
   const t0=_now();
   let ctx=''; try{ ctx=buildCoachContext(); }catch(e){ return {ok:false,kind:'context_error',ms:0,err:'contexte: '+(e.message||'?'),reply:'',ctx:''}; }
-  const payload={action:'coach',email:'',message:persona.scenario,context:ctx,history:[],coachMemory:S.coachMemory||''};
+  const payload={action:'coach',email:(persona.coachEmail||''),message:persona.scenario,context:ctx,history:[],coachMemory:S.coachMemory||''};
   let lastErr='inconnue', lastKind='error', status=0;
   for(let a=1;a<=2;a++){
     const last=(a>=2); let resp=null;
@@ -1897,6 +1938,7 @@ function _vcBuildReport(persona, res){
   L.push('  Persona : '+persona.nom+' — '+persona.resume);
   L.push('═══════════════════════════════════════════');
   L.push('Date : '+ymd+'   ·   Réponse : '+(ok?('valide · '+res.ms+' ms'):('❌ '+(res?res.err:'?'))));
+  L.push('Modèle testé : '+(persona.modelNote||'Haiku (défaut)'));
   L.push('');
   L.push('── ① SCÉNARIO ──────────────────────────────');
   L.push('Message joué : "'+persona.scenario+'"');
