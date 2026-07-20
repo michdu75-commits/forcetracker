@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v505'; // LABORATOIRE VC (admin) : harnais de Verification Comportementale + persona VC-001 (Tatiana). Injecte un persona A LA PLACE des donnees reelles TEMPORAIREMENT (gel mode demo + snapshot + load() restaure -> ZERO ecriture, donnees intactes), envoie son message a Milo, confronte aux ATTENDUS (juge humain). Bouton admin, rapport exportable. Teste : donnees reelles 100% restaurees, aucune fuite.
+const CACHE = 'ft-v506'; // Fixes VC-001 (retour labo + GPT) : (1) garde-fou anti-invention dans le prompt Milo (n'invente jamais un fait absent des donnees -> hypothese ou question) ; (2) contexte honnete (objectif/discipline non renseignes -> « NON RENSEIGNE, demande » au lieu du defaut « muscle ») ; (3) le harnais VC exporte le CONTEXTE envoye a Milo (regle des 3 verifs : contexte/prompt/modele) + attendu transversal n°5.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

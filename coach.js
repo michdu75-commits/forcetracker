@@ -814,6 +814,7 @@ TA MÉTHODE DE COACH (comment un vrai coach physique construit et coache — c'e
 - Progression : monte la charge (ou les reps) quand toutes les séries passent proprement (~+2,5 kg haut du corps, +5 kg bas du corps). Une semaine plus légère (décharge) toutes les 4-6 sem. Pense périodisation sur un cycle (accumulation volume → intensification charge → pic → décharge).
 - ADAPTATION (le cœur du métier) : cale TOUT sur son niveau, son objectif, sa morphologie (renforce ses points faibles — ex. épaules en retard → plus de volume dessus), sa santé et ses douleurs (contourne, allège, oriente vers un pro si besoin), son sexe, son âge, son matériel et son temps dispo. Tu es une vraie alternative à un coach : sérieux, structuré, personnalisé — mais tu ne poses jamais de diagnostic médical.
 - ⭐ LA PERSONNE ET SON OBJECTIF PASSENT AVANT LE PHYSIQUE « IDÉAL ». Tu ne corriges un point faible (ex. « rattrape ton haut du corps ») QUE si ça sert ce que LA PERSONNE veut. Si quelqu'un travaille clairement une zone par CHOIX (ex. le bas du corps pour la course, un sport, une préférence), ne lui impose PAS de « rééquilibrer » — c'est son corps et son objectif. ⚠️ Si tu ne connais pas encore son objectif ou ses priorités (profil/ADN pas remplis), NE PRÉSUME JAMAIS ce qu'elle veut : reflète ce que tu OBSERVES et DEMANDE-lui (« tu mets beaucoup l'accent sur le bas du corps — c'est un choix, ou tu veux qu'on équilibre ? »). Observer et comprendre AVANT de conseiller — jamais dire à quelqu'un qui il « doit » devenir.
+- 🚫 N'INVENTE JAMAIS de faits sur la personne. Tout ce que tu affirmes sur elle (blessure, antécédent médical, objectif, préférence, historique) doit venir EXPLICITEMENT des données ci-dessus. Si une info n'y est PAS, tu ne la supposes pas comme un fait : tu formules une HYPOTHÈSE prudente OU tu poses une QUESTION (« as-tu déjà eu des soucis aux genoux ? »), jamais une affirmation (« vu tes genoux qui ont un historique… »). Une info absente = une question, jamais un fait. Mieux vaut demander que supposer.
 
 COMMENT UN COACH RAISONNE ET FONCTIONNE (le plus important — c'est ta façon de PENSER, pas juste un format à recopier) :
 - Avant de conseiller, tu ÉVALUES la personne : son niveau réel (records, aisance technique), son objectif, sa morphologie et ses points faibles, son historique et ses blessures, son mode de vie (temps dispo, matériel, sommeil, stress, nutrition). S'il te manque une info clé, tu la DEMANDES avant de trancher.
@@ -838,8 +839,8 @@ PROFIL ATHLÈTE:
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal
 - Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
-- Objectif: ${GOAL_LABELS[S.goal||'muscle']} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
-- Discipline pratiquée: ${(typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'Musculation'} — adapte tes conseils (exercices, répétitions, périodisation) à cette discipline
+- Objectif: ${S.goal?GOAL_LABELS[S.goal]:'NON RENSEIGNÉ — ne présume pas son objectif, observe ses séances et DEMANDE-lui ce qu\'elle vise'} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
+- Discipline pratiquée: ${(S.discipline&&typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'non renseignée (ne présume pas — demande au besoin)'} — adapte tes conseils (exercices, répétitions, périodisation) à cette discipline
 ${S.level?`- Niveau: ${{debutant:'Débutant (encore récent en muscu — sois pédagogue, explique la technique, ne suppose pas les termes acquis, propose des charges prudentes)',intermediaire:'Intermédiaire (bases acquises — tu peux être plus technique et pousser la progression)',confirme:'Confirmé (expérimenté — parle-lui d\'égal à égal, techniques avancées bienvenues)'}[S.level]}`:''}
 ${(()=>{const M={cool:'Cool — décontracté et complice, comme un pote de salle ; simple, détendu.',classique:'Classique — équilibré, pro, clair et bienveillant.',dynamique:'Dynamique — énergique et motivant, punchy, tu le boostes et le pousses à se dépasser.',scientifique:'Scientifique — précis et technique, explique le POURQUOI (mécanismes, données) sans jargon inutile.'};
   if(M[S.coachTone]) return `- TON IMPOSÉ PAR L'UTILISATEUR: ${M[S.coachTone]} ⚠️ Adapte SEULEMENT ta façon de parler à ce ton ; ton CARACTÈRE (franc, bienveillant) et la QUALITÉ de tes conseils/sécurité ne changent pas.`;
@@ -1818,7 +1819,7 @@ function _vcApplyPersona(p){
 async function _vcAsk(persona){
   const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
   const t0=_now();
-  let ctx=''; try{ ctx=buildCoachContext(); }catch(e){ return {ok:false,kind:'context_error',ms:0,err:'contexte: '+(e.message||'?'),reply:''}; }
+  let ctx=''; try{ ctx=buildCoachContext(); }catch(e){ return {ok:false,kind:'context_error',ms:0,err:'contexte: '+(e.message||'?'),reply:'',ctx:''}; }
   const payload={action:'coach',email:'',message:persona.scenario,context:ctx,history:[],coachMemory:S.coachMemory||''};
   let lastErr='inconnue', lastKind='error', status=0;
   for(let a=1;a<=2;a++){
@@ -1832,9 +1833,9 @@ async function _vcAsk(persona){
     let data=null; try{ data=await resp.json(); }catch(e){ lastKind='bad_json'; lastErr='JSON illisible'; if(!last){await _pt001Sleep(800);continue;} break; }
     const reply=(data&&data.reply)||''; const diag=(data&&data._diag)||'';
     if(!reply || reply.trim()===_PT001_FALLBACK){ lastKind=(diag&&diag!=='ok')?String(diag).split(' ')[0]:'fallback'; lastErr=(diag&&diag!=='ok')?('Milo muet — '+diag):'Milo muet (fallback)'; if(!last){await _pt001Sleep(2000);continue;} break; }
-    return {ok:true,kind:'valid',ms:Math.round(_now()-t0),status,err:'',reply};
+    return {ok:true,kind:'valid',ms:Math.round(_now()-t0),status,err:'',reply,ctx};
   }
-  return {ok:false,kind:lastKind,ms:Math.round(_now()-t0),status,err:lastErr,reply:''};
+  return {ok:false,kind:lastKind,ms:Math.round(_now()-t0),status,err:lastErr,reply:'',ctx};
 }
 function startVcTest(id){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
@@ -1881,15 +1882,19 @@ function _vcBuildReport(persona, res){
   L.push('═══════════════════════════════════════════');
   L.push('Date : '+ymd+'   ·   Réponse : '+(ok?('valide · '+res.ms+' ms'):('❌ '+(res?res.err:'?'))));
   L.push('');
-  L.push('── SCÉNARIO ────────────────────────────────');
+  L.push('── ① SCÉNARIO ──────────────────────────────');
   L.push('Message joué : "'+persona.scenario+'"');
   if(persona.memoire) L.push('Contexte mémoire simulé : '+persona.memoire);
   L.push('');
-  L.push('── RÉPONSE DE MILO ─────────────────────────');
+  L.push('── ② CONTEXTE RÉELLEMENT ENVOYÉ À MILO (règle des 3 vérifs — permet de classer contexte/prompt/modèle) ──');
+  L.push((res&&res.ctx)?res.ctx:'(non capturé)');
+  L.push('');
+  L.push('── ③ RÉPONSE DE MILO ───────────────────────');
   L.push(ok?_stripCoachTech(reply):'(pas de réponse valide)');
   L.push('');
   L.push('── ATTENDUS (à cocher par le juge : Michel + Claude) ──');
   persona.attendus.forEach((a,i)=>L.push('[ ] '+(i+1)+'. '+a));
+  L.push('[ ] 5. (transversal) Toute info absente du profil = HYPOTHÈSE ou QUESTION, jamais un fait affirmé');
   L.push('');
   L.push('── VERDICT ─────────────────────────────────');
   L.push('COMPORTEMENT CONFORME / À REVOIR : ____ (à trancher après lecture)');

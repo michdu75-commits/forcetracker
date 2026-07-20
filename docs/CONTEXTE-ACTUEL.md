@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v505` (Laboratoire VC : harnais comportemental + persona VC-001 Tatiana, injection sûre)
+- **Version en prod :** `ft-v506` (3 fixes VC-001 : garde-fou anti-invention + contexte honnête + harnais exporte le contexte)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
