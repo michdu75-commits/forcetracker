@@ -277,7 +277,8 @@ function _saveCoachHist(){
     const light = coachHistory.slice(-20).map(m=>({
       role: m.role,
       content: (typeof m.content === 'string') ? m.content
-             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : '')
+             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : ''),
+      ...(m._silent?{_silent:true}:{}) // consigne interne (débrief auto) : gardée pour le contexte, jamais affichée
     }));
     localStorage.setItem('ft4_coach_hist', JSON.stringify(light));
   }catch(e){}
@@ -288,6 +289,7 @@ function _renderCoachThread(){
   if(!msgs) return;
   msgs.innerHTML = '';
   coachHistory.forEach(m=>{
+    if(m.role==='user' && m._silent) return; // consigne interne (débrief auto) : jamais affichée
     const t = (typeof m.content === 'string') ? m.content
             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
     if(m.role === 'user') renderCoachMsg('user', t || '[photo]');
@@ -295,18 +297,78 @@ function _renderCoachThread(){
   });
   msgs.scrollTop = msgs.scrollHeight;
 }
-// Nouvelle discussion : vide le fil (garde la mémoire long-terme de Milo intacte)
+// ─── Historique des discussions ───────────────────────────────────
+// Le « + » ne SUPPRIME plus le fil : il le RANGE dans une liste (S.coachConversations,
+// local — comme ft4_coach_hist) et ouvre une discussion neuve. Rien n'est perdu.
+function _persistCoachConvs(){ try{ localStorage.setItem('ft4_coach_convs', JSON.stringify(S.coachConversations||[])); }catch(e){} }
+function _convLightMsgs(){
+  return coachHistory.slice(-40).map(m=>({
+    role: m.role,
+    content: (typeof m.content === 'string') ? m.content
+           : (Array.isArray(m.content) ? (((m.content.find(p=>p&&p.type==='text')||{}).text) ? '[photo] '+(m.content.find(p=>p&&p.type==='text').text) : '[photo]') : '')
+  }));
+}
+function _convTitle(msgs){
+  const fu=(msgs||[]).find(m=>m.role==='user'&&typeof m.content==='string'&&m.content.trim());
+  let t=(fu?fu.content:'').replace(/^\[photo\]\s*/,'').replace(/\s+/g,' ').trim();
+  if(t.length>44) t=t.slice(0,44)+'…';
+  return t || ('Discussion du '+new Date().toLocaleDateString('fr-FR'));
+}
+// Range le fil courant dans l'historique (si utile : au moins 1 message de l'utilisateur)
+function _archiveCurrentConv(){
+  if(!coachHistory||!coachHistory.length) return;
+  const light=_convLightMsgs();
+  if(!light.some(m=>m.role==='user')) return;
+  S.coachConversations = S.coachConversations || [];
+  S.coachConversations.unshift({ id:'c'+Date.now()+Math.floor(Math.random()*1000), title:_convTitle(light), ts:Date.now(), messages:light });
+  if(S.coachConversations.length>30) S.coachConversations=S.coachConversations.slice(0,30);
+  _persistCoachConvs();
+}
 function newCoachChat(){
-  const go=()=>{
-    coachHistory = [];
-    try{ localStorage.removeItem('ft4_coach_hist'); }catch(e){}
-    const msgs=document.getElementById('coach-msgs'); if(msgs) msgs.innerHTML='';
-    updateCoachHeader();
-    if(typeof toast==='function') toast('Nouvelle discussion','info');
-  };
-  if(coachHistory.length && typeof showConfirm==='function'){
-    showConfirm('Nouvelle discussion ?','Le fil affiché sera effacé. Milo garde quand même l\'essentiel de vos échanges en mémoire.',go);
-  } else go();
+  _archiveCurrentConv();                       // range la discussion en cours (plus de perte)
+  coachHistory = [];
+  try{ localStorage.removeItem('ft4_coach_hist'); }catch(e){}
+  const msgs=document.getElementById('coach-msgs'); if(msgs) msgs.innerHTML='';
+  updateCoachHeader();
+  if(typeof toast==='function') toast('Nouvelle discussion','info');
+}
+function openCoachConvs(){ _renderCoachConvs(); const o=document.getElementById('ov-coach-convs'); if(o)o.classList.add('open'); }
+function closeCoachConvs(){ const o=document.getElementById('ov-coach-convs'); if(o)o.classList.remove('open'); }
+function _renderCoachConvs(){
+  const el=document.getElementById('coach-convs-list'); if(!el) return;
+  const list=S.coachConversations||[];
+  if(!list.length){ el.innerHTML='<div class="cconv-empty">Aucune discussion enregistrée pour l\'instant.<br>Quand tu appuies sur « + », ta discussion en cours est rangée ici — tu pourras la rouvrir quand tu veux.</div>'; return; }
+  el.innerHTML=list.map(c=>{
+    const d=new Date(c.ts||Date.now());
+    const dt=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const n=(c.messages||[]).filter(m=>m.role==='user').length;
+    const title=(typeof _escNote==='function')?_escNote(c.title||'Discussion'):(c.title||'Discussion');
+    return '<div class="cconv-row" onclick="loadCoachConv(\''+c.id+'\')">'
+      +'<div class="cconv-main"><div class="cconv-title">'+(title||'Discussion')+'</div>'
+      +'<div class="cconv-sub">'+dt+' · '+n+' question'+(n>1?'s':'')+'</div></div>'
+      +'<button class="cconv-del" onclick="event.stopPropagation();deleteCoachConv(\''+c.id+'\')" aria-label="Supprimer">✕</button></div>';
+  }).join('');
+}
+function loadCoachConv(id){
+  _archiveCurrentConv();                       // sauvegarde d'abord le fil courant
+  S.coachConversations = S.coachConversations || [];
+  const idx=S.coachConversations.findIndex(c=>c.id===id);
+  if(idx<0){ closeCoachConvs(); return; }
+  const conv=S.coachConversations.splice(idx,1)[0]; // devient le fil actif → retiré de la liste
+  _persistCoachConvs();
+  coachHistory=(conv.messages||[]).map(m=>({role:m.role,content:m.content}));
+  _saveCoachHist();
+  closeCoachConvs();
+  _showCoachChat();
+  _renderCoachThread();
+  updateCoachHeader();
+  if(typeof toast==='function') toast('Discussion rouverte','info');
+}
+function deleteCoachConv(id){
+  S.coachConversations=(S.coachConversations||[]).filter(c=>c.id!==id);
+  _persistCoachConvs();
+  _renderCoachConvs();
+  if(typeof toast==='function') toast('Discussion supprimée','info');
 }
 
 function _showCoachChat(){
@@ -422,6 +484,9 @@ function updateCoachHeader() {
   try{_renderCoachQuizCard();}catch(e){}
   // Cache le mur premium si l'utilisateur est maintenant premium
   if(S.premium){const wall=document.getElementById('coach-wall');if(wall)wall.style.display='none';}
+  // Bouton « Mes discussions » (historique) : visible dès qu'il y a des discussions rangées OU un fil en cours
+  const histBtn=document.getElementById('coach-hist-btn');
+  if(histBtn) histBtn.style.display=(((S.coachConversations&&S.coachConversations.length)||coachHistory.length)?'flex':'none');
   // Afficher accueil ou chat selon l'historique
   const newBtn=document.getElementById('coach-new-btn');
   if(coachHistory.length===0){
@@ -516,6 +581,151 @@ function _coachGapText() {
   else                    g = 'il y a un moment (plus d\'un mois)';
   return '\n- VOTRE DERNIER ÉCHANGE remonte à ' + g + '. Rends-toi compte de ce délai : accueille la personne en fonction (ex. « content de te revoir », « alors, cette séance d\'hier ? », « ça faisait un moment ! ») — naturellement, sans en faire trop, et NE fais PAS comme si la conversation venait de s\'interrompre il y a 5 min.';
 }
+// ─── LE GARDIEN (Dossier Athlète, briques 6A + 6B) ───────────────────────────
+// Produit des RÈGLES DE SÉCURITÉ explicites, collées EN TÊTE du briefing de Milo,
+// à partir de ce qu'on sait DÉJÀ (blessures structurées + zones fragiles Santé +
+// conditions santé). Philosophie « ADAPTER, pas interdire » (Constitution v1.3,
+// Principe 13). Silencieux si rien de pertinent (rétrocompatible).
+// 6B = « le Gardien précis » : au lieu de fiches par exercice (255 = usine à gaz),
+// on décrit les CONTRAINTES DU MOUVEMENT (sollicitations articulaires), déduites du
+// NOM. Le Gardien nomme alors des exemples à alléger/mettre de côté + une alternative,
+// et signale les exercices de la SÉANCE DU JOUR qui sollicitent une zone fragile.
+// (Terme neutre « sollicite », pas « à risque » — le Gardien ne juge pas un exo bon/mauvais.)
+const _GARDIEN_ZONE={
+  epaule:"protège l'épaule — évite le développé au-dessus de la tête et le développé couché LOURDS, réduis l'amplitude, privilégie prises neutres/haltères, échauffe la coiffe des rotateurs",
+  genou:"protège le genou — évite squats/fentes PROFONDS lourds et les sauts, privilégie presse/leg curl/extension à amplitude contrôlée SANS douleur",
+  lombaires:"protège les lombaires — évite soulevé de terre lourd, good morning et toute flexion chargée du dos ; dos neutre et gainé, privilégie le gainage",
+  dorsaux:"ménage le haut du dos — omoplates serrées, pas d'à-coups sur les tirages lourds",
+  cervicales:"protège les cervicales — évite les charges au-dessus de la tête et les shrugs lourds, aucune hyperextension ni à-coup du cou",
+  coude:"ménage le coude — évite curls/extensions lourds et prises douloureuses, réduis le volume bras, contrôle le tempo",
+  poignet:"protège le poignet — évite les prises/extensions douloureuses, utilise des sangles et des machines guidées",
+  hanche:"protège la hanche — évite les amplitudes extrêmes, contrôle la profondeur du squat et des fentes",
+  cheville:"ménage la cheville — évite les sauts et le travail balistique des mollets, reste en contrôle",
+  trapeze:"ménage les trapèzes — allège shrugs et tirages lourds, réduis la charge/le volume, échauffe bien nuque et épaules",
+  pectoraux:"ménage les pectoraux — évite le développé/écarté LOURD et les grandes amplitudes en étirement, réduis charge et volume",
+  abdos:"ménage les abdominaux — évite le gainage intense et les relevés lourds tant que c'est douloureux, laisse récupérer",
+  fessier:"ménage les fessiers — réduis la charge sur hip thrust/squat/fente, amplitude contrôlée sans douleur",
+  cuisse:"ménage les quadriceps — réduis charge et volume sur squats/presses/extensions, amplitude sans douleur",
+  ischio:"ménage les ischio-jambiers — prudence sur soulevé jambes tendues/leg curl/good morning, contrôle le tempo, évite l'étirement brusque",
+  adducteur:"ménage les adducteurs — évite les grands écarts et la machine adducteur lourde, amplitude contrôlée",
+  mollet:"ménage les mollets — évite le travail balistique et les sauts, extensions contrôlées sans douleur"
+};
+const _GARDIEN_COND={
+  arthrite:"arthrose/arthrite — mouvements contrôlés, amplitude SANS douleur, évite l'impact (sauts, course), échauffement long et progressif",
+  hernie:"hernie discale — AUCUNE charge lombaire en flexion, dos neutre absolu, évite soulevé de terre/good morning, privilégie gainage et machines dos soutenu",
+  cardio:"cardio/HTA — évite l'apnée et le Valsalva sur les charges lourdes, respiration régulière, intensité progressive",
+  osteo:"ostéoporose — évite les chocs et les charges maximales, privilégie un renforcement progressif et contrôlé",
+  migraine:"migraines — évite les efforts très intenses en apnée/Valsalva, hydrate-toi bien"
+};
+// 6B — CONTRAINTES DU MOUVEMENT (sollicitations articulaires), déduites du nom de l'exercice.
+// Chaque contrainte : zones sollicitées · libellé · regex (nom normalisé) · exemples à alléger · alternative plus douce.
+const _GARDIEN_ZLABEL={epaule:'épaule',genou:'genou',lombaires:'bas du dos (lombaires)',dorsaux:'haut du dos',cervicales:'cou/cervicales',coude:'coude',poignet:'poignet',hanche:'hanche',cheville:'cheville',trapeze:'trapèzes',pectoraux:'pectoraux',abdos:'abdominaux',fessier:'fessiers',cuisse:'cuisses (quadriceps)',ischio:'ischio-jambiers',adducteur:'adducteurs',mollet:'mollets'};
+const _GARDIEN_CONSTRAINTS=[
+  {zones:['epaule','cervicales'],sollicite:'les mouvements au-dessus de la tête',rx:/militaire|overhead|nuque|arnold|au.?dessus|elevation frontale|developpe epaule|epaules? (halter|barre)|thruster|landmine press|pike|hand ?stand/,avoid:'développé militaire/nuque, développé épaules debout, élévations très hautes',alt:'développé épaules à la machine ou assis avec dossier, élévations latérales sous la ligne de l\'épaule'},
+  {zones:['lombaires'],sollicite:'la charge sur la colonne (flexion/compression du dos)',rx:/souleve de terre|deadlift|good morning|squat|rowing barre|rowing penche|pendlay|t.?bar|clean|arrache|epaule.?jete|zercher|front squat|hack|bent.?over/,avoid:'soulevé de terre lourd, good morning, squat barre lourd, rowing penché',alt:'rowing poitrine soutenue/machine, tirage machine, hip thrust, gainage'},
+  {zones:['genou'],sollicite:'la flexion profonde du genou',rx:/squat|fente|presse|hack|pistol|sissy|bulgare|montee|step.?up|lunge|cossack|leg extension/,avoid:'squats et fentes profonds lourds, hack squat profond',alt:'presse à amplitude contrôlée, leg curl et leg extension légers'},
+  {zones:['poignet','coude'],sollicite:'les prises lourdes (grip)',rx:/farmer|souleve de terre|deadlift|traction|shrug|rack pull|dead.?hang|pull.?up/,avoid:'soulevé de terre, farmer\'s walk, tractions lestées',alt:'sangles de tirage, machines guidées'},
+  {zones:['genou','cheville'],sollicite:'les impacts et les sauts',rx:/saut|jump|box|pliometrie|sprint|burpee|corde a sauter|sled|skipping|hyrox/,avoid:'sauts, box jumps, pliométrie, sprint',alt:'vélo, marche rapide, elliptique (faible impact)'},
+  {zones:['coude'],sollicite:'les curls et extensions du bras',rx:/curl|extension triceps|barre au front|dips|skull|pushdown|kickback|magic/,avoid:'curls et extensions triceps lourds, dips lestés',alt:'volume réduit, machines, tempo contrôlé'}
+];
+function _gzNaz(s){return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+function _gardienZoneKey(code){
+  code=code||'';
+  if(/epaule/.test(code))return 'epaule';
+  if(/genou/.test(code))return 'genou';
+  if(code==='dos_bas')return 'lombaires';
+  if(code==='dos_haut')return 'dorsaux';
+  if(code==='cou')return 'cervicales';
+  if(/coude/.test(code))return 'coude';
+  if(/poignet/.test(code))return 'poignet';
+  if(/hanche/.test(code))return 'hanche';
+  if(/cheville/.test(code))return 'cheville';
+  return null;
+}
+function _gardienZonesFromText(t){
+  const s=(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+  const out=[];
+  if(/epaule|coiffe|rotateur|acromion/.test(s))out.push('epaule');
+  if(/genou|rotule|menisque|ligament crois/.test(s))out.push('genou');
+  if(/lombaire|bas du dos|hernie|sciatique|lumbago|disque/.test(s))out.push('lombaires');
+  if(/cervical|nuque|\bcou\b/.test(s))out.push('cervicales');
+  if(/coude|epicondyl|tennis elbow/.test(s))out.push('coude');
+  if(/poignet|canal carpien/.test(s))out.push('poignet');
+  if(/hanche|psoas|bassin/.test(s))out.push('hanche');
+  if(/cheville|achille/.test(s))out.push('cheville');
+  if(/trapeze/.test(s))out.push('trapeze');
+  if(/pectora|\bpec\b/.test(s))out.push('pectoraux');
+  if(/abdo|gainage|\bcore\b/.test(s))out.push('abdos');
+  if(/fessier|glute/.test(s))out.push('fessier');
+  if(/cuisse|quadri/.test(s))out.push('cuisse');
+  if(/ischio|hamstring/.test(s))out.push('ischio');
+  if(/adducteur/.test(s))out.push('adducteur');
+  if(/mollet|soleaire|jumeaux/.test(s))out.push('mollet');
+  return out;
+}
+function _gardienRules(){
+  try{
+    const zones={}; // key -> {active:bool, durable:bool}
+    const hp=S.healthProfile||{};
+    // 1) Blessures structurées (zone + statut)
+    (hp.injuries||[]).forEach(inj=>{
+      const k=_gardienZoneKey(inj&&inj.zone); if(!k)return;
+      zones[k]=zones[k]||{}; if((inj.status||'')==='active')zones[k].active=true; zones[k].injury=true;
+    });
+    // 2) Zones fragiles mentionnées dans les NOTES du Profil Santé (texte libre) — l'ADN ne porte plus la santé
+    if(hp.notes){_gardienZonesFromText(hp.notes).forEach(k=>{zones[k]=zones[k]||{};zones[k].durable=true;});}
+    // 3) Conditions santé pertinentes
+    const conds=(hp.conditions||[]).filter(c=>_GARDIEN_COND[c]);
+    // 4) DOULEUR DU JOUR (état du jour, brique 3B) — priorité absolue, tag AUJOURD'HUI
+    try{const ds=S.dayState;const tday=(typeof today==='function')?today():null;
+      if(ds&&(!tday||ds.date===tday)&&Array.isArray(ds.pains)){ds.pains.forEach(pn=>{const k=pn&&pn.zone;if(_GARDIEN_ZONE[k]){zones[k]=zones[k]||{};zones[k].today=true;if(pn.side==='L'||pn.side==='R')zones[k].todaySide=pn.side;}});}
+    }catch(e){}
+    const zoneKeys=Object.keys(zones);
+    if(!zoneKeys.length&&!conds.length)return ''; // Gardien silencieux → comportement identique
+    const lines=[];
+    zoneKeys.forEach(k=>{
+      const rule=_GARDIEN_ZONE[k]; if(!rule)return;
+      const _side=zones[k].todaySide==='L'?' côté gauche':zones[k].todaySide==='R'?' côté droit':'';
+      const tag=zones[k].today?' [DOULEUR AUJOURD\'HUI'+_side+' — priorité, protège cette zone en PREMIER]':(zones[k].active?' [ACTIVE — protège fortement]':(zones[k].durable&&!zones[k].injury?' [zone fragile durable]':''));
+      // 6B — enrichissement : sollicitations du mouvement + exemples à alléger + alternative
+      const cons=_GARDIEN_CONSTRAINTS.filter(c=>c.zones.indexOf(k)>=0);
+      let extra='';
+      if(cons.length){
+        const soll=cons.map(c=>c.sollicite).join(', ');
+        const avoid=cons.map(c=>c.avoid).join(' ; ');
+        const alt=cons.map(c=>c.alt).join(' ; ');
+        extra=' → sollicitée par '+soll+'. Allège ou mets de côté (surtout LOURD) : '+avoid+'. Alternatives plus douces (même travail) : '+alt+'.';
+      }
+      lines.push('• '+rule+tag+extra);
+    });
+    conds.forEach(c=>lines.push('• '+_GARDIEN_COND[c]));
+    // 6B — signale les exercices de la SÉANCE EN COURS qui sollicitent une zone fragile (précis + contextuel)
+    let todayNote='';
+    try{
+      const wkt=((S.wkt&&S.wkt.exs)||[]).map(e=>e&&e.name).filter(Boolean);
+      const flagged={}; // zone -> Set(noms)
+      wkt.forEach(name=>{const nz=_gzNaz(name);_GARDIEN_CONSTRAINTS.forEach(c=>{if(c.rx.test(nz))c.zones.forEach(z=>{if(zones[z]){(flagged[z]=flagged[z]||[]);if(flagged[z].indexOf(name)<0)flagged[z].push(name);}});});});
+      const parts=Object.keys(flagged).map(z=>flagged[z].join(', ')+' → sollicite ton '+(_GARDIEN_ZLABEL[z]||z));
+      if(parts.length)todayNote='⚠️ DANS SA SÉANCE DU JOUR : '+parts.join(' · ')+'. Propose d\'ALLÉGER la charge/réduire l\'amplitude, ou une alternative plus douce — sans lui interdire la séance.\n';
+    }catch(e){}
+    return '🛡️ RÈGLES DU GARDIEN — SÉCURITÉ, PRIORITÉ ABSOLUE (à prendre en compte AVANT tout le reste) :\n'
+      +'Principe : ADAPTER, jamais interdire bêtement. Ta 1re question est « comment lui permettre de continuer de la manière la plus SÛRE et la plus adaptée ? ». Cherche TOUJOURS l\'adaptation la MOINS restrictive qui permet de continuer à progresser en sécurité (charge, amplitude, choix d\'exercice, alternative, tempo, repos, protéger la zone en poursuivant le reste). La plupart de ces sollicitations ne posent problème qu\'à CHARGE LOURDE — ton PREMIER réflexe est de réduire la charge/les reps avant de changer d\'exercice. Tiens compte de ce que la personne veut faire AUJOURD\'HUI (performance, entretien, reprise, défoulement). L\'arrêt total est l\'EXCEPTION.\n'
+      +'Tu ne juges jamais un exercice « bon » ou « mauvais » — tu regardes seulement ce qu\'il SOLLICITE et si c\'est adapté à cette personne aujourd\'hui. Ces repères sont CONTEXTUELS, pas des interdictions rigides.\n'
+      +lines.join('\n')+'\n'
+      +todayNote
+      +'⚠️ Ces points sont DURABLES (≠ une douleur passagère du jour). Devant une douleur du jour FORTE, aiguë ou inhabituelle : conseille le repos et un professionnel de santé (tu ne poses jamais de diagnostic). Propose TOUJOURS une alternative pour progresser sur le reste du corps.\n\n';
+  }catch(e){console.warn('[FT gardien]',e);return '';}
+}
+
+// Historique à envoyer à l'API Claude : UNIQUEMENT {role, content}. Retire _silent (débrief
+// auto, ft-v491) et tout champ parasite — l'API Anthropic rejette les champs inconnus sur un
+// message (→ 400 invalid_request_error, qui cassait Milo dès qu'un débrief silencieux était
+// dans les 8 derniers messages). Ignore les entrées vides/malformées.
+function _coachHistPayload(n){
+  return (coachHistory||[]).slice(-(n||8))
+    .filter(m => m && (m.role==='user'||m.role==='assistant') && m.content!=null && m.content!=='')
+    .map(m => ({ role: m.role, content: m.content }));
+}
 function buildCoachContext() {
   const bmr = calcBMR ? calcBMR() : '—';
   const tdee = calcTDEE ? calcTDEE() : '—';
@@ -534,19 +744,19 @@ function buildCoachContext() {
     ? Object.entries(S.prs).map(([ex, d]) => `${ex}: ${d.kg}kg×${d.reps} (~${fmt(d.rm1)}kg 1RM)`).join(', ')
     : 'Aucun PR enregistré';
 
-  const recentSessions = S.sessions.slice(0, 3).map(s => {
+  // Historique détaillé : le kg×reps de CHAQUE série (pas juste le nb de séries + volume total),
+  // sinon Milo ne peut pas parler des charges réellement soulevées (retour Michel : « il prend
+  // la charge totale mais pas chaque exercice »). É = échauffement, X = échec.
+  const recentSessions = S.sessions.slice(0, 5).map(s => {
     const exStr = (s.exs||s.exercises||[]).map(e => {
-      const ds = e.sets.filter(x => x.done);
-      const nNorm = ds.filter(x => x.type==='N'||!x.type).length;
-      const nFail = ds.filter(x => x.type==='X'||x.type==='E').length;
-      const nWarm = ds.filter(x => x.type==='É'||x.type==='W').length;
-      let tech = nNorm ? `${nNorm}s` : '';
-      if (nWarm) tech += `+${nWarm}É`;
-      if (nFail) tech += `+${nFail}X`;
-      return `${e.name}(${tech})${e.note?' [note: '+e.note+']':''}`;
-    }).join(', ');
-    return `${s.date}: ${exStr} — ${s.volume}kg vol`;
-  }).join(' | ') || 'Aucune séance';
+      const ds = (e.sets||[]).filter(x => x.done);
+      const setsStr = ds.length
+        ? ds.map(x => `${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(' ')
+        : '—';
+      return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}`;
+    }).join(' · ');
+    return `${s.date}: ${exStr} — ${s.volume}kg vol total`;
+  }).join('\n') || 'Aucune séance';
 
   // Séance EN COURS (S.wkt) — permet au Coach d'aider PENDANT l'entraînement
   let wktText='';
@@ -568,7 +778,7 @@ function buildCoachContext() {
     wktText=`\nSÉANCE EN COURS — l'athlète s'entraîne MAINTENANT${_wkt.progLabel?' (programme: '+_wkt.progLabel+')':''}. Aide-le en DIRECT : proposer un exercice équivalent si une machine est prise, ajuster une charge (ex. "+2,5 kg vs la dernière fois"), conseiller l'ordre des exercices, gérer la fatigue.\n${exLines}\n`;
   }
 
-  return `Tu es ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, le coach personnel de cet athlète (expert en force athlétique et musculation). Tu réponds TOUJOURS en ${(typeof LANG_COACH!=='undefined'&&LANG_COACH[window._LANG])||'français'}${(typeof window!=='undefined'&&window._LANG&&window._LANG!=='fr')?' — IMPORTANT : toutes tes consignes internes ci-dessous sont rédigées en français, mais tu DOIS répondre à la personne dans cette langue, avec une langue soignée, naturelle et idiomatique (pas une traduction mot à mot)':''}. Maximum 200 mots sauf si l'athlète demande plus de détails.
+  return _gardienRules() + `Tu es ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, le coach personnel de cet athlète (expert en force athlétique et musculation). Tu réponds TOUJOURS en ${(typeof LANG_COACH!=='undefined'&&LANG_COACH[window._LANG])||'français'}${(typeof window!=='undefined'&&window._LANG&&window._LANG!=='fr')?' — IMPORTANT : toutes tes consignes internes ci-dessous sont rédigées en français, mais tu DOIS répondre à la personne dans cette langue, avec une langue soignée, naturelle et idiomatique (pas une traduction mot à mot)':''}. Maximum 200 mots sauf si l'athlète demande plus de détails.
 
 TA PERSONNALITÉ :
 - Ton naturel : franc, direct, avec un brin d'humour — jamais langue de bois, mais TOUJOURS bienveillant, jamais méchant ni rabaissant.
@@ -603,6 +813,8 @@ TA MÉTHODE DE COACH (comment un vrai coach physique construit et coache — c'e
 - Cues d'exécution PRÉCIS, comme un coach à côté de lui : tempo, amplitude complète, gainage (« serre les abdos », « bassin fixe »), placement (« pieds serrés », « coudes rentrés »), connexion muscle-esprit, respiration. C'est ce qui fait vraiment la différence.
 - Progression : monte la charge (ou les reps) quand toutes les séries passent proprement (~+2,5 kg haut du corps, +5 kg bas du corps). Une semaine plus légère (décharge) toutes les 4-6 sem. Pense périodisation sur un cycle (accumulation volume → intensification charge → pic → décharge).
 - ADAPTATION (le cœur du métier) : cale TOUT sur son niveau, son objectif, sa morphologie (renforce ses points faibles — ex. épaules en retard → plus de volume dessus), sa santé et ses douleurs (contourne, allège, oriente vers un pro si besoin), son sexe, son âge, son matériel et son temps dispo. Tu es une vraie alternative à un coach : sérieux, structuré, personnalisé — mais tu ne poses jamais de diagnostic médical.
+- ⭐ LA PERSONNE ET SON OBJECTIF PASSENT AVANT LE PHYSIQUE « IDÉAL ». Tu ne corriges un point faible (ex. « rattrape ton haut du corps ») QUE si ça sert ce que LA PERSONNE veut. Si quelqu'un travaille clairement une zone par CHOIX (ex. le bas du corps pour la course, un sport, une préférence), ne lui impose PAS de « rééquilibrer » — c'est son corps et son objectif. ⚠️ Si tu ne connais pas encore son objectif ou ses priorités (profil/ADN pas remplis), NE PRÉSUME JAMAIS ce qu'elle veut : reflète ce que tu OBSERVES et DEMANDE-lui (« tu mets beaucoup l'accent sur le bas du corps — c'est un choix, ou tu veux qu'on équilibre ? »). Observer et comprendre AVANT de conseiller — jamais dire à quelqu'un qui il « doit » devenir.
+- 🚫 N'INVENTE JAMAIS de faits sur la personne. Tout ce que tu affirmes sur elle (blessure, antécédent médical, objectif, préférence, historique) doit venir EXPLICITEMENT des données ci-dessus. Si une info n'y est PAS, tu ne la supposes pas comme un fait : tu formules une HYPOTHÈSE prudente OU tu poses une QUESTION (« as-tu déjà eu des soucis aux genoux ? »), jamais une affirmation (« vu tes genoux qui ont un historique… »). Une info absente = une question, jamais un fait. Mieux vaut demander que supposer.
 
 COMMENT UN COACH RAISONNE ET FONCTIONNE (le plus important — c'est ta façon de PENSER, pas juste un format à recopier) :
 - Avant de conseiller, tu ÉVALUES la personne : son niveau réel (records, aisance technique), son objectif, sa morphologie et ses points faibles, son historique et ses blessures, son mode de vie (temps dispo, matériel, sommeil, stress, nutrition). S'il te manque une info clé, tu la DEMANDES avant de trancher.
@@ -627,8 +839,8 @@ PROFIL ATHLÈTE:
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal
 - Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
-- Objectif: ${GOAL_LABELS[S.goal||'muscle']} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
-- Discipline pratiquée: ${(typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'Musculation'} — adapte tes conseils (exercices, répétitions, périodisation) à cette discipline
+- Objectif: ${S.goal?GOAL_LABELS[S.goal]:'NON RENSEIGNÉ — ne présume pas son objectif, observe ses séances et DEMANDE-lui ce qu\'elle vise'} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
+- Discipline pratiquée: ${(S.discipline&&typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'non renseignée (ne présume pas — demande au besoin)'} — adapte tes conseils (exercices, répétitions, périodisation) à cette discipline
 ${S.level?`- Niveau: ${{debutant:'Débutant (encore récent en muscu — sois pédagogue, explique la technique, ne suppose pas les termes acquis, propose des charges prudentes)',intermediaire:'Intermédiaire (bases acquises — tu peux être plus technique et pousser la progression)',confirme:'Confirmé (expérimenté — parle-lui d\'égal à égal, techniques avancées bienvenues)'}[S.level]}`:''}
 ${(()=>{const M={cool:'Cool — décontracté et complice, comme un pote de salle ; simple, détendu.',classique:'Classique — équilibré, pro, clair et bienveillant.',dynamique:'Dynamique — énergique et motivant, punchy, tu le boostes et le pousses à se dépasser.',scientifique:'Scientifique — précis et technique, explique le POURQUOI (mécanismes, données) sans jargon inutile.'};
   if(M[S.coachTone]) return `- TON IMPOSÉ PAR L'UTILISATEUR: ${M[S.coachTone]} ⚠️ Adapte SEULEMENT ta façon de parler à ce ton ; ton CARACTÈRE (franc, bienveillant) et la QUALITÉ de tes conseils/sécurité ne changent pas.`;
@@ -712,9 +924,39 @@ ${(()=>{
   // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.
   const r=S.registre;if(!r)return '';
   const facts=(r.facts&&Object.keys(r.facts).length)?Object.entries(r.facts).map(([k,v])=>`- ${(v&&v.label)?v.label:k}: ${(v&&v.value!==undefined)?v.value:v}`).join('\n'):'';
-  const obs=(r.observations||[]).filter(o=>o&&o.text).map(o=>`- ${o.text}${o.confidence?` (confiance: ${o.confidence})`:''}`).join('\n');
-  if(!facts&&!obs)return '';
-  return '\nREGISTRE ATHLÈTE (ce que tu as mémorisé sur cette personne au fil du temps — appuie-toi dessus, ne le contredis pas sans raison):\n'+[facts,obs].filter(Boolean).join('\n')+'\n';
+  // Observations : SEULES celles VALIDÉES par l'utilisateur (brique 5A) sont injectées, sous forme de FAIT confirmé (o.fact). La confiance reste interne (jamais montrée à Milo).
+  const obs=(r.observations||[]).filter(o=>o&&o.status==='validated').map(o=>`- ${o.fact||o.text||''}`.trim()).filter(s=>s!=='-').join('\n');
+  // Étape 2 : les derniers débriefs de séance (objectif fixé + décision/pourquoi + tendance) → CONTINUITÉ.
+  const sl=(r.sessionLog||[]).slice(-3);
+  const dbf=sl.length?('\nDERNIERS DÉBRIEFS DE SÉANCE (ce que TOI, Milo, tu as dit/fixé les fois précédentes — sers-t\'en pour la CONTINUITÉ, ex. « la dernière fois je t\'avais demandé… » ; ne le réinvente pas) :\n'
+    +sl.map(x=>`- ${x.date}${x.objectif?' · objectif fixé: '+x.objectif:''}${x.decision?' · ta décision (pourquoi): '+x.decision:''}${x.tendances?' · tendance repérée: '+x.tendances:''}`).join('\n')):'';
+  if(!facts&&!obs&&!dbf)return '';
+  return '\nREGISTRE ATHLÈTE (ce que tu as mémorisé sur cette personne au fil du temps — appuie-toi dessus, ne le contredis pas sans raison):\n'+[facts,obs].filter(Boolean).join('\n')+dbf+'\n';
+})()}
+${(()=>{
+  // ADN SPORTIF (Dossier Athlète, brique 4A) — portrait durable DÉCLARÉ par l'utilisateur. Injecté seulement si rempli.
+  const a=S.adn;if(!a)return '';
+  const L=[];
+  if(a.motivation&&a.motivation.trim())L.push('- Sa motivation profonde: '+a.motivation.trim()+' → motive-la dans CE sens.');
+  if(a.lifestyle&&a.lifestyle.trim())L.push('- Son mode de vie (temps/lieu/matériel/rythme): '+a.lifestyle.trim()+' → propose du RÉALISTE, adapté à ça.');
+  if(a.preferences&&a.preferences.trim())L.push('- Ses préférences & son style: '+a.preferences.trim()+' → joue sur ce qu\'elle aime, évite ce qu\'elle déteste.');
+  if(a.experience&&a.experience.trim())L.push('- Son expérience sportive: '+a.experience.trim()+' → cale ton niveau de discours dessus.');
+  if(!L.length)return ''; // (les zones fragiles ne sont plus ici : elles vivent dans le Profil Santé → traitées par le Gardien)
+  return '\nADN SPORTIF (ce qui caractérise DURABLEMENT cette personne — ce qui fait qu\'elle s\'entraîne comme ELLE et pas comme une autre ; tiens-en compte dans chaque conseil):\n'+L.join('\n')+'\n';
+})()}
+${(()=>{
+  // ÉTAT DU JOUR (Dossier Athlète, brique 3B) — ponctuel, aujourd'hui seulement. Ne définit pas la personne.
+  const ds=S.dayState;const tday=(typeof today==='function')?today():null;
+  if(!ds||(tday&&ds.date!==tday))return '';
+  const EN=['très fatiguée','plutôt fatiguée','en forme','pleine d\'énergie'];
+  const parts=[];
+  if(ds.energy!=null&&EN[ds.energy])parts.push('énergie: '+EN[ds.energy]);
+  const zl=(typeof _GARDIEN_ZLABEL!=='undefined')?_GARDIEN_ZLABEL:{};
+  const _sw=s=>s==='L'?' (côté gauche)':s==='R'?' (côté droit)':'';
+  if((ds.pains||[]).length)parts.push('douleur(s) du jour: '+ds.pains.map(p=>(zl[p.zone]||p.zone)+_sw(p.side)).join(', '));
+  if(ds.note&&ds.note.trim())parts.push('note: '+ds.note.trim());
+  if(!parts.length)return '';
+  return '\n📍 ÉTAT DU JOUR (AUJOURD\'HUI, ponctuel — ne définit PAS la personne, ne vaut que pour aujourd\'hui) : '+parts.join(' · ')+'.\n→ Adapte tes conseils DU JOUR : fatigue → allège/soutiens ; en forme → tu peux pousser ; une DOULEUR du jour → protège cette zone EN PRIORITÉ (le Gardien en tient déjà compte), allège ou propose une alternative. ⚠️ LE RESSENTI PRIME toujours sur les chiffres.\n';
 })()}
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}
@@ -792,7 +1034,7 @@ ${(()=>{
   if(!sel.length)return '';
   return `\nBILAN SANGUIN (labo, le ${t.date||'?'}) — marqueurs clés:\n- ${sel.slice(0,16).map(line).join('\n- ')}\n⚠️ MÉDICAL : ce sont des chiffres recopiés du labo. Tu peux en parler en lien avec l'entraînement/récup/nutrition (ex. ferritine, glycémie, cholestérol) MAIS tu ne poses JAMAIS de diagnostic, tu ne dis jamais si c'est grave. Pour toute valeur [hors norme] ou toute inquiétude, renvoie SYSTÉMATIQUEMENT vers le médecin. Ne remplace jamais un professionnel de santé.\n`;
 })()}
-${S.premium&&S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
+${S.coachMemory?`\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n${S.coachMemory}\n`:''}
 MÉTHODE DE COACHING (très important) :
 - ADAPTE la profondeur à son niveau : débutant → simple, pédagogue, priorité technique + sécurité ; intermédiaire/confirmé → technique, périodisation (phases de charge/décharge), notion de RPE et d'autorégulation. Jamais de conseils « bateau » servis à tout le monde.
 - COMME UN VRAI COACH, quand ta réponse dépend d'infos que tu n'as pas (ressenti, douleur, matériel dispo, sensations, temps, objectif du jour), POSE 1 ou 2 questions ciblées AVANT de trancher — ne devine pas à l'aveugle. (Mais pas de question inutile si tu as déjà de quoi répondre.)
@@ -801,6 +1043,51 @@ MÉTHODE DE COACHING (très important) :
 Utilise ces données pour personnaliser tes réponses et t'adapter à la personne en face. Reste toi-même : ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, franc et pratique, mais calibré sur son niveau et son état du jour.`;
 }
 
+// ─── MÉMOIRE DURABLE DU DÉBRIEF (Dossier Athlète, Étape 2) ────────────────
+// Le débrief de Milo se termine par un petit bloc technique CACHÉ (```json {objectif,
+// decision, tendances, ressenti}```) — jamais affiché (retiré par _stripCoachTech).
+// On le PARSE et on l'écrit dans le Registre (S.registre.sessionLog) → mémoire durable,
+// une seule mémoire (pas de silo), qui prépare l'Étape 3 (« objectif tenu ? »).
+// Étape 3 — CONTINUITÉ : Milo vérifie d'abord l'objectif qu'il avait fixé la fois d'avant.
+const _DEBRIEF_CONTINUITY = ' ⭐ CONTINUITÉ (très important) : si tu vois dans « DERNIERS DÉBRIEFS DE SÉANCE » un objectif que TU m\'avais fixé la dernière fois, COMMENCE ta réponse en le VÉRIFIANT au vu de MA séance d\'aujourd\'hui (tu as mes charges/reps) — est-il tenu ? Si OUI → félicite-moi brièvement et propose la suite logique (ex. monter un peu la charge). Si NON → dédramatise (« on remet ça la prochaine fois »), sans jamais juger. Si tu n\'avais pas fixé d\'objectif la dernière fois, débriefe normalement. Ne préjuge pas si c\'est ambigu : demande-moi.';
+// Consigne ajoutée aux 2 débriefs (écran de fin + ouverture Coach) : le bloc caché à parser.
+const _DEBRIEF_MEM_TAIL = '\n\nÀ LA TOUTE FIN de ta réponse, ajoute un bloc technique CACHÉ (l\'utilisateur ne le verra pas — il est retiré de l\'affichage), au format EXACT et rien après :\n```json\n{"objectif":"…","decision":"…","tendances":"…","ressenti":"…","objectifTenu":"…"}\n```\n- objectif = ce que tu veux que je vise la PROCHAINE fois (court, concret).\n- decision = ta reco principale / le POURQUOI (ex. « garder la charge », « +2,5 kg », « +1 rép », « augmenter le repos », « surveiller l\'épaule », « réduire l\'intensité »).\n- tendances = ce que tu as repéré (progression / stabilité / point d\'attention).\n- ressenti = mon état si tu le perçois (sinon "").\n- objectifTenu = l\'objectif que tu m\'avais fixé la DERNIÈRE fois est-il tenu aujourd\'hui ? réponds "oui", "non" ou "partiel" (ou "" s\'il n\'y en avait pas).\nChaque champ court (une phrase max).';
+function _parseDebriefMemory(reply){
+  try{
+    const s = String(reply||'');
+    let m = s.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/i);      // bloc ```json {...}```
+    let jstr = m ? m[1] : null;
+    if(!jstr){ const m2 = s.match(/\{[^{}]*"objectif"[\s\S]*?\}/i); jstr = m2 ? m2[0] : null; } // repli : objet nu contenant "objectif"
+    if(!jstr) return null;
+    const o = JSON.parse(jstr);
+    if(!o || typeof o!=='object') return null;
+    const pick = k => (o[k]!=null ? String(o[k]).replace(/\s+/g,' ').trim().slice(0,300) : '');
+    const e = { objectif:pick('objectif'), decision:pick('decision'), tendances:pick('tendances'), ressenti:pick('ressenti'), objectifTenu:pick('objectifTenu') };
+    if(!e.objectif && !e.decision) return null; // rien d'exploitable
+    return e;
+  }catch(err){ return null; }
+}
+function _recordDebriefMemory(reply, sess){
+  try{
+    const e = _parseDebriefMemory(reply);
+    if(!e) return false;
+    if(!S.registre) S.registre = {facts:{},observations:[],updatedAt:''};
+    if(!Array.isArray(S.registre.sessionLog)) S.registre.sessionLog = [];
+    const sid = sess ? (sess.id||sess.ts||sess.date||null) : null;
+    if(sid && S.registre.sessionLog.some(x=>x && x.sessId===sid)) return false; // dédup : 1 entrée par séance
+    S.registre.sessionLog.push({
+      date: (sess&&sess.date) || (typeof today==='function'?today():new Date().toISOString().slice(0,10)),
+      sessId: sid,
+      objectif: e.objectif, decision: e.decision, tendances: e.tendances, ressenti: e.ressenti,
+      objectifTenu: e.objectifTenu, // Étape 3 : verdict sur l'objectif de la fois PRÉCÉDENTE (oui/non/partiel)
+      ts: Date.now()
+    });
+    if(S.registre.sessionLog.length>40) S.registre.sessionLog = S.registre.sessionLog.slice(-40);
+    S.registre.updatedAt = (typeof today==='function')?today():'';
+    if(typeof persist==='function') persist(); // local + cloud (le Registre voyage déjà)
+    return true;
+  }catch(err){ console.warn('[FT debrief mem]', err); return false; }
+}
 // Retire tout bloc technique (JSON de programme, blocs de code ```…```) — Milo ne doit JAMAIS montrer de JSON.
 function _stripCoachTech(text){
   let t = String(text||'');
@@ -1000,11 +1287,13 @@ async function onCoachImgSelected(input) {
   if (prev) prev.style.display = 'block';
 }
 
-async function sendToCoach(customMsg, displayMsg) {
-  if (coachBusy) return;
+async function sendToCoach(customMsg, displayMsg, opts) {
+  opts = opts || {};
+  let _sentOk = false;
+  if (coachBusy) return false;
 
-  // Vérifier quota avant d'ouvrir l'input
-  if (!S.premium && (S.coachFree || 0) >= COACH_FREE_LIMIT) {
+  // Vérifier quota avant d'ouvrir l'input — un débrief auto (opts.noQuota) ne consomme pas de question
+  if (!S.premium && !opts.noQuota && (S.coachFree || 0) >= COACH_FREE_LIMIT) {
     if (window._premiumPending) {
       toast('Vérification premium en cours…', 'info'); return;
     }
@@ -1030,8 +1319,10 @@ async function sendToCoach(customMsg, displayMsg) {
   if(coachHistory.length===0)_showCoachChat();
   const suggs = document.getElementById('coach-suggs');
 
-  // Bulle utilisateur avec image optionnelle
-  if (hasImg) {
+  // Bulle utilisateur avec image optionnelle — sauf débrief auto (opts.silent : Milo vient à toi, pas de bulle « toi »)
+  if (opts.silent) {
+    /* pas de bulle utilisateur */
+  } else if (hasImg) {
     const msgs = document.getElementById('coach-msgs');
     if (msgs) {
       const div = document.createElement('div');
@@ -1049,7 +1340,7 @@ async function sendToCoach(customMsg, displayMsg) {
     ? [{ type: 'image', source: { type: 'base64', media_type: imgType, data: imgData } },
        { type: 'text', text: msg || 'Analyse cette photo.' }]
     : msg;
-  coachHistory.push({ role: 'user', content: userHistContent });
+  coachHistory.push({ role: 'user', content: userHistContent, ...(opts.silent?{_silent:true}:{}) });
   showTyping();
 
   try {
@@ -1062,8 +1353,8 @@ async function sendToCoach(customMsg, displayMsg) {
         email: S.email || '',
         message: msg || 'Analyse cette photo de mon corps.',
         context: buildCoachContext(),
-        history: coachHistory.slice(-8),
-        coachMemory: S.premium ? (S.coachMemory||'') : ''
+        history: _coachHistPayload(8), // ⚠️ ne JAMAIS envoyer _silent/champs parasites à l'API (400 invalid_request_error)
+        coachMemory: S.coachMemory||''
       };
       if (hasImg) { payload.image = imgData; payload.imageType = imgType; }
       // Envoi avec 3 tentatives : sur connexion capricieuse (wifi faible / 4G-5G), un
@@ -1098,17 +1389,22 @@ async function sendToCoach(customMsg, displayMsg) {
     }
     renderCoachMsg('coach', _disp);
     if (_fp) _appendSaveProgBtn(_fp);
+    // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
+    if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
     coachHistory.push({ role: 'assistant', content: reply });
     if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
     try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)
     const newBtn=document.getElementById('coach-new-btn'); if(newBtn)newBtn.style.display='flex';
 
-    // Sauvegarde mémoire intelligente (Premium, fire-and-forget)
-    if (S.premium && coachHistory.length >= 4 && S.url && S.email) _saveCoachMemory();
+    // Sauvegarde mémoire — la mémoire est un ACQUIS, construite pour TOUS (gratuit compris) :
+    // au passage premium, Milo ne repart pas de zéro (« je te connais déjà »). Coût naturellement
+    // borné par le quota de chat gratuit (COACH_FREE_LIMIT). Le premium débloque l'INTELLIGENCE
+    // qui exploite la mémoire (analyses, synthèses, comparaisons — briques 7/8), pas son existence.
+    if (coachHistory.length >= 4 && S.url && S.email) _saveCoachMemory();
 
-    // Incrémenter compteur (seulement sur réponse réussie)
-    if (!S.premium) {
+    // Incrémenter compteur (seulement sur réponse réussie ; un débrief auto ne compte pas)
+    if (!S.premium && !opts.noQuota) {
       S.coachFree = (S.coachFree || 0) + 1;
       persist();
       updateCoachHeader();
@@ -1116,18 +1412,529 @@ async function sendToCoach(customMsg, displayMsg) {
         setTimeout(showPremiumWall, 1200);
       }
     }
+    _sentOk = true;
   } catch(e) {
     hideTyping();
     _forceProgReq = false;
     console.error('[Coach] fetch error:', e.message, e);
-    renderCoachMsg('coach', 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
+    // Débrief auto (silencieux) : pas de bulle d'erreur parasite — on échoue en silence (réarmé par l'appelant)
+    if (!opts.silent) renderCoachMsg('coach', 'Erreur : ' + (e.message||'inconnue') + '. Vérifie ta connexion et réessaie.');
   }
 
   coachBusy = false;
   if (sendBtn) sendBtn.disabled = false;
+  return _sentOk;
 }
 
 function sendSuggestion(text) { sendToCoach(text); }
+
+// ─── DÉBRIEF AUTOMATIQUE DE SÉANCE ────────────────────────────────
+// « Il doit sortir direct » (Michel) : après une séance, quand l'utilisateur ouvre le Coach,
+// Milo poste de LUI-MÊME un débrief (charges, records, conseil) — une seule fois par séance,
+// sans bulle « toi » et SANS consommer de question gratuite (c'est Milo qui vient à toi).
+// Local d'abord : les chiffres viennent des données (buildCoachContext), Milo ne fait que raconter.
+async function _maybeAutoDebrief(){
+  let pid=null; try{ pid=localStorage.getItem('ft4_pending_debrief'); }catch(e){}
+  if(!pid) return;
+  if(coachBusy) return;
+  // Pas de réseau → on GARDE le flag (on réessaiera à la prochaine ouverture du Coach)
+  if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)) return;
+  // On retire le flag AVANT l'appel (anti double-déclenchement) ; on le remet si l'appel échoue
+  try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){}
+  try{ _showCoachChat(); }catch(e){}
+  const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
+    +'Débriefe-la MAINTENANT, directement : rappelle mes charges par exercice (tu les as), dis ce qui a bien marché, '
+    +'signale un éventuel record ou une progression vs les fois précédentes, et propose UNE piste pour la prochaine fois. '
+    +'⚠️ Cette piste doit aller dans le sens de MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
+    +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
+    +'reflète ce que tu observes et demande-moi ma priorité. Court, direct, motivant. Ne me redemande JAMAIS mes charges.'
+    +_DEBRIEF_CONTINUITY+_DEBRIEF_MEM_TAIL;
+  const ok = await sendToCoach(instr, null, {silent:true, noQuota:true, debriefSess: pid});
+  if(!ok){ try{ localStorage.setItem('ft4_pending_debrief', pid); }catch(e){} } // échec réseau → on réarme
+}
+
+// ─── PT-001 · PROTOCOLE DE TEST « CONTINUITÉ MÉMOIRE » (admin) ──────────────
+// Rejoue TOUT l'historique de séances dans l'ordre chrono. Milo débriefe chacune,
+// fixe un objectif puis VÉRIFIE le précédent (continuité, Étape 3). But double :
+//   (1) valider la continuité de la mémoire ; (2) voir si Milo « sature » sur un gros
+//   historique (timing). Termine par la question « Qui suis-je en tant que sportif ? »
+//   (test GPT). Produit un rapport technique + un rapport de validation exportables.
+// ⚠️ Admin-only. N'écrase AUCUNE donnée réelle : les débriefs = conversation ; les
+//   objectifs s'ajoutent au Registre exactement comme après de vraies séances (pas de perte).
+let _pt001Running = false;
+let _pt001Report  = null;
+function _pt001Sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+// Format d'une séance pour Milo (kg×reps par série, comme buildCoachContext ; É=échauffement, X=échec)
+function _pt001FmtSess(s){
+  const exs = (s.exs||s.exercises||[]);
+  return exs.map(e=>{
+    const ds=(e.sets||[]).filter(x=>x.done);
+    const setsStr=ds.length?ds.map(x=>`${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(' '):'—';
+    return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}`;
+  }).join(' · ');
+}
+// Détecte si Milo fait référence à l'objectif de la fois d'avant (continuité visible dans le texte)
+function _pt001HasContinuity(reply){
+  // ⚠️ Milo ouvre TRÈS souvent par « Objectif vérifié » / « Objectif précédent » — la 1re
+  //    version de ce détecteur ne les matchait pas → continuité sous-comptée (47 % au lieu
+  //    de ~95 %). On élargit aux vraies tournures observées dans les rapports.
+  return /(objectif\s+(?:pr[ée]c[ée]dent\s+)?v[ée]rifi|objectif\s+pr[ée]c[ée]dent|la (?:dernière|derniere) fois|je t'?avais (?:demand|dit|fix)|je te l'?avais|comme (?:pr[ée]vu|demand|on (?:l'?avait|se l'?[ée]tait)|convenu)|on (?:en parlait|avait dit|se l'?[ée]tait fix|remet|garde ça|y revient)|tu (?:l'?as|as tenu|avais|as bien)|objectif (?:tenu|atteint|rempli|non tenu|pas tenu)|ça fait \w+ séances|la fois (?:d'?avant|pr[ée]c[ée]dente|derni[èe]re))/i.test(String(reply||''));
+}
+// Petite étiquette visuelle dans le Coach (n'entre PAS dans coachHistory)
+function _pt001Label(txt){
+  const msgs=document.getElementById('coach-msgs'); if(!msgs)return;
+  const d=document.createElement('div');
+  d.style.cssText='align-self:center;margin:10px auto 4px;font-size:11.5px;font-weight:700;color:var(--t3);background:var(--bg3);border-radius:20px;padding:4px 12px;';
+  d.textContent=txt; msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+}
+// Un appel Coach instrumenté (timing + statut + taille) — n'incrémente aucun quota.
+// ⚠️ Détecte le fallback « Désolé, réessaie. » (= le Worker a reçu un texte VIDE de l'API :
+//    surcharge ou LIMITE DE DÉBIT) et le compte comme une ERREUR (pas un succès), avec
+//    réessais espacés (backoff) — un rejeu de tout l'historique peut cogner la limite Opus.
+// Principe du laboratoire (GPT) : « Un protocole ne cherche pas à être optimiste, il
+// cherche à dire la vérité. » → une réponse n'est JAMAIS « valide » juste parce qu'on a
+// reçu du texte. On classe chaque appel : valid · fallback · rate_limit · overloaded ·
+// api_error · timeout · network · http_error · bad_json · empty.
+const _PT001_FALLBACK='Désolé, réessaie.';
+const _PT001_TIMEOUT_MS=30000;   // coupe un appel bloqué à 30 s (au lieu de 45)
+const _PT001_MAX_TRIES=2;        // 1 réessai (au lieu de 2) → beaucoup plus rapide sur échec
+async function _pt001Ask(instr){
+  const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
+  const t0=_now();
+  const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:_coachHistPayload(8),coachMemory:S.coachMemory||''};
+  let lastErr='inconnue', lastKind='error', status=0;
+  for(let a=1;a<=_PT001_MAX_TRIES;a++){
+    const last=(a>=_PT001_MAX_TRIES);
+    let resp=null;
+    const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+    const to=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(e){}},_PT001_TIMEOUT_MS):null;
+    try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),signal:ctrl?ctrl.signal:undefined}); }
+    catch(e){ if(to)clearTimeout(to); const ab=(e&&e.name==='AbortError'); lastKind=ab?'timeout':'network'; lastErr=ab?('timeout (>'+Math.round(_PT001_TIMEOUT_MS/1000)+'s)'):('réseau: '+((e&&e.message)||'?')); if(!last){await _pt001Sleep(1000);continue;} break; }
+    if(to)clearTimeout(to);
+    status=resp.status;
+    if(!resp.ok){ lastKind='http_error'; lastErr='HTTP '+status; if(!last){await _pt001Sleep(1200);continue;} break; }
+    let data=null; try{ data=await resp.json(); }catch(e){ lastKind='bad_json'; lastErr='JSON réponse illisible'; if(!last){await _pt001Sleep(800);continue;} break; }
+    const reply=(data&&data.reply)||'';
+    const diag=(data&&data._diag)||''; // diagnostic du Worker : ok / rate_limit / overloaded / api_error … / empty
+    const fallback = !reply || reply.trim()===_PT001_FALLBACK;
+    if(fallback){
+      lastKind = (diag && diag!=='ok') ? String(diag).split(' ')[0] : 'fallback';
+      lastErr  = (diag && diag!=='ok') ? ('Milo muet — '+diag) : 'Milo muet (fallback « Désolé, réessaie »)';
+      if(!last){ await _pt001Sleep(lastKind==='rate_limit'?3000:2000); continue; } break;
+    }
+    return {ok:true,kind:'valid',ms:Math.round(_now()-t0),status,err:'',reply,diag,tries:a};
+  }
+  return {ok:false,kind:lastKind,ms:Math.round(_now()-t0),status,err:lastErr,reply:''};
+}
+function startPt001Test(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  if(_pt001Running){ toast('Test déjà en cours…','info'); return; }
+  if(!S.url){ toast('URL du Coach IA absente','error'); return; }
+  const sessions=(S.sessions||[]).filter(s=>s&&((s.exs||s.exercises||[]).length));
+  if(sessions.length<2){ toast('Il faut au moins 2 séances dans l\'historique','error'); return; }
+  const n=sessions.length;
+  const estMin=Math.max(1,Math.round(n*6/60)); // ~6 s / débrief (génération Opus + petit throttle)
+  const msg='Ça va rejouer TES '+n+' séances dans l\'ordre : Milo débriefe chacune et vérifie l\'objectif de la fois d\'avant.\n\n• ~'+estMin+' min\n• Coût : '+(n+1)+' appels au modèle du Coach (quelques €)\n• '+n+' débriefs empilés dans le Coach\n\nÀ la fin : la question « Qui suis-je en tant que sportif ? » + un rapport exportable.\n\nLancer ?';
+  showConfirm('🧪 PT-001 · Test continuité', msg, ()=>_pt001Run(sessions));
+}
+async function _pt001Run(allSessions){
+  _pt001Running=true;
+  try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){} // pas de débrief auto parasite
+  // Ordre chronologique ASCENDANT (la plus ancienne d'abord)
+  const sessions=allSessions.slice().sort((a,b)=>{
+    const ta=a.ts||Date.parse(a.id)||Date.parse(a.date)||0, tb=b.ts||Date.parse(b.id)||Date.parse(b.date)||0;
+    return ta-tb;
+  });
+  try{ goScreen('coach',document.getElementById('nb-coach')); }catch(e){}
+  try{ _showCoachChat(); }catch(e){}
+  coachBusy=true; // bloque envoi manuel + _maybeAutoDebrief pendant le test
+  const sendBtn=document.getElementById('coach-send-btn'); if(sendBtn)sendBtn.disabled=true;
+  const startTs=Date.now();
+  const rows=[];
+  _pt001Label('🧪 PT-001 — rejeu de '+sessions.length+' séances (le plus ancien d\'abord)');
+  for(let i=0;i<sessions.length;i++){
+    const s=sessions[i];
+    _pt001Label('Séance '+(i+1)+'/'+sessions.length+' · '+(s.date||'?'));
+    await _pt001Sleep(120); // laisse l'UI peindre
+    const instr='[REJEU PT-001] Voici la séance que je viens de terminer, le '+(s.date||'?')+' :\n'+_pt001FmtSess(s)
+      +'\n\nDébriefe CETTE séance (ignore d\'éventuelles séances plus récentes du contexte, concentre-toi sur celle-ci) : '
+      +'analyse (progression / stabilité / points d\'attention) à partir de ces charges, et termine par UNE piste pour la prochaine fois. '
+      +'Court (4-6 phrases), direct, motivant. Ne me redemande jamais mes charges.'
+      +_DEBRIEF_CONTINUITY+_DEBRIEF_MEM_TAIL;
+    const memBefore=(S.registre&&S.registre.sessionLog)?S.registre.sessionLog.length:0;
+    const res=await _pt001Ask(instr);
+    if(res.ok){
+      renderCoachMsg('coach', res.reply);
+      let mem=null; try{ mem=_parseDebriefMemory(res.reply); }catch(e){}
+      try{ _recordDebriefMemory(res.reply, s); }catch(e){}
+      // Continuité dans le fil (le prochain débrief voit l'objectif précédent)
+      coachHistory.push({role:'user',content:instr,_silent:true});
+      coachHistory.push({role:'assistant',content:res.reply});
+      if(coachHistory.length>20)coachHistory=coachHistory.slice(-20);
+      rows.push({ i:i+1, date:s.date||'?', ok:true, kind:'valid', ms:res.ms, status:res.status, err:'',
+        len:res.reply.length, parsed:!!mem,
+        objectif:mem?mem.objectif:'', decision:mem?mem.decision:'', tenu:mem?(mem.objectifTenu||''):'',
+        cont:_pt001HasContinuity(res.reply),
+        memAfter:(S.registre&&S.registre.sessionLog)?S.registre.sessionLog.length:memBefore,
+        reply:res.reply });
+    }else{
+      _pt001Label('❌ Séance '+(i+1)+' : '+res.err);
+      rows.push({ i:i+1, date:s.date||'?', ok:false, kind:res.kind||'error', ms:res.ms, status:res.status, err:res.err,
+        len:0, parsed:false, objectif:'', decision:'', tenu:'', cont:false,
+        memAfter:memBefore, reply:'' });
+    }
+    // Throttle léger entre débriefs (la génération Opus ~5 s espace déjà les appels)
+    if(i<sessions.length-1) await _pt001Sleep(600);
+  }
+  try{ if(typeof _saveCoachHist==='function')_saveCoachHist(); }catch(e){}
+  // ── Question finale (test GPT) : « Qui suis-je en tant que sportif ? » (bare, sans guidage) ──
+  _pt001Label('🧪 Question finale');
+  renderCoachMsg('user','Qui suis-je en tant que sportif ?');
+  await _pt001Sleep(120);
+  const portraitRes=await _pt001Ask('Qui suis-je en tant que sportif ?');
+  let portrait='';
+  if(portraitRes.ok){ portrait=portraitRes.reply; renderCoachMsg('coach', portrait); }
+  else { _pt001Label('❌ Portrait : '+portraitRes.err); }
+  // ── Rapports ──
+  _pt001Report=_pt001BuildReport(rows, portrait, portraitRes, startTs);
+  _pt001ShowResultCard();
+  coachBusy=false; if(sendBtn)sendBtn.disabled=false;
+  _pt001Running=false;
+  toast('PT-001 terminé — rapport prêt','success');
+}
+// Construit le texte du rapport (technique + validation) + calcule les signaux mesurables
+function _pt001BuildReport(rows, portrait, portraitRes, startTs){
+  const done=rows.filter(r=>r.ok), errs=rows.filter(r=>!r.ok);
+  const times=done.map(r=>r.ms);
+  const avg=times.length?Math.round(times.reduce((a,b)=>a+b,0)/times.length):0;
+  const mn=times.length?Math.min(...times):0, mx=times.length?Math.max(...times):0;
+  // Signal saturation : moyenne du 1er tiers vs dernier tiers
+  const third=Math.max(1,Math.floor(times.length/3));
+  const firstAvg=times.length?Math.round(times.slice(0,third).reduce((a,b)=>a+b,0)/third):0;
+  const lastAvg=times.length?Math.round(times.slice(-third).reduce((a,b)=>a+b,0)/third):0;
+  const slowdown=firstAvg>0?(lastAvg/firstAvg):1;
+  // Statut métier lisible (GPT : « ×0.76 » ne parlera plus dans 6 mois) — le chiffre reste dans le détail technique
+  const satStatus=slowdown<1.2?'🟢 Confortable':(slowdown<1.5?'🟡 Dense':'🔴 Limite');
+  const satFlag=satStatus+' (×'+slowdown.toFixed(2)+', 1er tiers '+firstAvg+' → dernier '+lastAvg+' ms)';
+  const parsedN=done.filter(r=>r.parsed).length;
+  // Continuité EXPLOITÉE (GPT : « détectée : 0% » est anxiogène → cadrage métier positif) : à partir du 2e débrief
+  const contPool=done.filter(r=>r.i>1);
+  const contN=contPool.filter(r=>r.cont).length;
+  const tenuN=done.filter(r=>r.tenu&&r.tenu!=='').length;
+  // Portrait : verdict DIRECT (GPT) au lieu d'un commentaire technique (heuristique = ratio de chiffres)
+  const pTxt=String(portrait||''), pDigits=(pTxt.match(/\d/g)||[]).length;
+  const pRatio=pTxt.length?(pDigits/pTxt.length):0;
+  const pVerdict=!pTxt?'—':(pRatio>0.12?'⚠️ Portrait incomplet (semble une liste de stats)':'✅ Portrait cohérent (descriptif)');
+  const totalMin=((Date.now()-startTs)/60000).toFixed(1);
+  const ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+  // Répartition par NATURE de réponse (principe « dire la vérité ») — inclut le portrait final
+  const _kindLbl={valid:'✅ valides',fallback:'🔇 fallback (Milo muet)',rate_limit:'⏳ limite de débit',overloaded:'🌡️ surcharge API',api_error:'⚠️ erreur API',timeout:'⏱️ timeout',network:'📶 réseau',http_error:'🚫 HTTP',bad_json:'🧩 JSON illisible',empty:'␀ vide',error:'❓ erreur'};
+  const kinds={};
+  rows.forEach(r=>{ const k=r.kind||(r.ok?'valid':'error'); kinds[k]=(kinds[k]||0)+1; });
+  if(portraitRes){ const pk=portraitRes.kind||(portraitRes.ok?'valid':'error'); kinds[pk]=(kinds[pk]||0)+1; }
+  const validN=done.length, callsN=rows.length+(portraitRes?1:0);
+  const kindsStr=Object.entries(kinds).map(([k,v])=>(_kindLbl[k]||k)+' × '+v).join('  ·  ');
+  // ── Texte complet (pour analyse Claude) ──
+  const L=[];
+  L.push('═══════════════════════════════════════════');
+  L.push('  LABORATOIRE MILO · PT-001 — CONTINUITÉ MÉMOIRE');
+  L.push('  Force Tracker · est-ce que Milo devient le coach imaginé ?');
+  L.push('═══════════════════════════════════════════');
+  L.push('Date : '+ymd+'   ·   Version app : '+(window.__FT_VER__||'—'));
+  L.push('Utilisateur : '+(S.email||'—'));
+  L.push('Séances rejouées : '+rows.length+'   ·   Durée totale : '+totalMin+' min');
+  L.push('');
+  L.push('── SIGNAUX MESURABLES ──────────────────────');
+  L.push('• Réponses VALIDES de Milo : '+validN+' / '+rows.length+' débriefs'+(portraitRes?' (+ portrait)':''));
+  L.push('• Nature des '+callsN+' appels : '+kindsStr);
+  if(errs.length) L.push('  ⚠️ '+errs.length+' réponse(s) non valide(s) → les métriques ci-dessous ne portent QUE sur les valides.');
+  L.push('• Temps de réponse (valides) : moy '+avg+' ms · min '+mn+' · max '+mx+' ms');
+  L.push('• Charge / saturation : '+satFlag);
+  L.push('• Bloc mémoire lu (objectif capté) : '+parsedN+' / '+done.length);
+  L.push('• Continuité exploitée (dès le 2e débrief) : '+contN+' / '+contPool.length);
+  L.push('• Verdict « objectif tenu » capté : '+tenuN+' / '+done.length);
+  L.push('• Portrait final : '+pVerdict);
+  L.push('');
+  L.push('── GRILLE DE VALIDATION (7 axes GPT) ───────');
+  L.push('1. Continuité ....... '+(contPool.length?Math.round(100*contN/contPool.length):0)+'% exploitée   → '+((contPool.length&&contN/contPool.length>=0.6)?'OK auto':'à évaluer'));
+  L.push('2. Cohérence ........ à évaluer (lecture des débriefs ci-dessous)');
+  L.push('3. Diversité ........ à évaluer (répétitions de formules ?)');
+  L.push('4. Mémoire .......... à évaluer (infos pertinentes, pas que la dernière séance ?)');
+  L.push('5. Vitesse .......... '+satFlag);
+  L.push('6. Crédibilité ...... à évaluer (impression de suivi long terme ?)');
+  L.push('7. Émotion .......... à évaluer (impression de coach perso ?)');
+  L.push('');
+  L.push('── VERDICT ─────────────────────────────────');
+  L.push('BRIQUE VALIDÉE / À REVOIR : ____ (à trancher après lecture — Michel + Claude)');
+  L.push('');
+  L.push('── DÉTAIL PAR DÉBRIEF ──────────────────────');
+  rows.forEach(r=>{
+    L.push('');
+    L.push('#'+r.i+' · '+r.date+' · '+(r.ok?(r.ms+' ms · '+r.len+' car.'):('❌ '+r.err)));
+    if(r.ok){
+      L.push('   objectif fixé : '+(r.objectif||'—'));
+      L.push('   décision      : '+(r.decision||'—'));
+      L.push('   objectif tenu : '+(r.tenu||'—')+'   · continuité détectée : '+(r.cont?'oui':'non')+'   · mémoire : '+r.memAfter);
+      L.push('   ── réponse de Milo ──');
+      L.push('   '+_stripCoachTech(r.reply).replace(/\n/g,'\n   '));
+    }
+  });
+  L.push('');
+  L.push('── QUESTION FINALE « Qui suis-je en tant que sportif ? » ──');
+  L.push((portraitRes&&!portraitRes.ok)?('❌ '+portraitRes.err):(portrait||'—'));
+  L.push('');
+  L.push('═══════════════════════════════════════════');
+  const text=L.join('\n');
+  return { text, ymd, nSess:rows.length, errs:errs.length, validN, callsN, kindsStr, avg, mn, mx, firstAvg, lastAvg, satFlag, satStatus,
+    parsedN, doneN:done.length, contN, contPool:contPool.length, tenuN, portrait, pVerdict, totalMin,
+    slowdown };
+}
+// Carte de résultat dans le Coach (résumé + boutons d'export)
+function _pt001ShowResultCard(){
+  const msgs=document.getElementById('coach-msgs'); if(!msgs||!_pt001Report)return;
+  const R=_pt001Report;
+  const d=document.createElement('div');
+  d.className='msg-bubble msg-coach';
+  d.style.cssText='background:var(--bg3);border:1px solid var(--sep);';
+  const contPct=R.contPool?Math.round(100*R.contN/R.contPool):0;
+  d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧪 Laboratoire Milo — PT-001</p>'
+    +'<p style="margin:2px 0">✅ Réponses valides : <b>'+R.validN+'/'+R.nSess+'</b> · durée '+R.totalMin+' min</p>'
+    +(R.errs?('<p style="margin:2px 0;color:var(--red)">⚠️ '+R.errs+' non valide(s) — '+R.kindsStr+'</p>'):'')
+    +'<p style="margin:2px 0">⏱️ Temps moyen <b>'+R.avg+' ms</b> (min '+R.mn+' / max '+R.mx+')</p>'
+    +'<p style="margin:2px 0">⚙️ Charge : <b>'+R.satStatus+'</b> <span style="opacity:.55">(×'+R.slowdown.toFixed(2)+')</span></p>'
+    +'<p style="margin:2px 0">🔗 Continuité exploitée : <b>'+contPct+'%</b> ('+R.contN+'/'+R.contPool+')</p>'
+    +'<p style="margin:2px 0">🧠 Mémoire lue : <b>'+R.parsedN+'/'+R.doneN+'</b> · « objectif tenu » capté : <b>'+R.tenuN+'</b></p>'
+    +'<p style="margin:2px 0">🪞 Portrait final : '+R.pVerdict+'</p>'
+    +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+    +'<button class="btn btn-bg2" style="flex:1;min-width:130px;padding:10px;font-size:13px" onclick="exportPt001Text()">📤 Rapport (texte)</button>'
+    +'<button class="btn btn-bg2" style="flex:1;min-width:130px;padding:10px;font-size:13px" onclick="exportPt001Pdf()">📄 PDF (archive)</button>'
+    +'</div>';
+  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+}
+// Export TEXTE (pour analyse Claude) — partage fichier si possible, sinon téléchargement
+async function exportPt001Text(){
+  if(!_pt001Report){ toast('Aucun rapport','error'); return; }
+  const txt=_pt001Report.text, fname='PT-001_continuite_'+_pt001Report.ymd+'.txt';
+  try{
+    const file=new File([txt],fname,{type:'text/plain'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'PT-001'}); return; }
+  }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{
+    const blob=new Blob([txt],{type:'text/plain'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);
+    toast('Rapport texte exporté','success');
+  }catch(e){ toast('Export impossible','error'); }
+}
+// Export PDF (archive / comparaison de versions) — jsPDF local (hors-ligne)
+async function exportPt001Pdf(){
+  if(!_pt001Report){ toast('Aucun rapport','error'); return; }
+  const R=_pt001Report;
+  toast('Génération du PDF…','info');
+  try{ await _loadJsPdf(); }catch(e){ toast('PDF indisponible — utilise l\'export texte','info'); return; }
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({unit:'pt',format:'a4'});
+    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=40;
+    let y=48;
+    if(typeof _loadLogoDataURL==='function'){ try{ const logo=await _loadLogoDataURL(); if(logo)doc.addImage(logo,'PNG',M,24,28,28); }catch(e){} }
+    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',M+36,44);
+    doc.setFontSize(12);doc.text('Laboratoire Milo · PT-001',W-M,44,{align:'right'});
+    doc.setLineWidth(1);doc.setDrawColor(20);doc.line(M,58,W-M,58); y=76;
+    const line=(t,b)=>{ doc.setFont('helvetica',b?'bold':'normal'); doc.setFontSize(b?11:10); doc.setTextColor(b?20:60);
+      (doc.splitTextToSize(t,W-2*M)).forEach(s=>{ if(y>H-50){doc.addPage();y=50;} doc.text(s,M,y); y+=b?15:13; }); };
+    line('Date : '+R.ymd+'   ·   Séances : '+R.nSess+'   ·   Durée : '+R.totalMin+' min');
+    line('Utilisateur : '+(S.email||'—')); y+=4;
+    line('SIGNAUX MESURABLES',true);
+    line('• Réponses valides de Milo : '+R.validN+' / '+R.nSess);
+    line('• Nature des appels : '+R.kindsStr);
+    line('• Temps (valides) : moy '+R.avg+' ms (min '+R.mn+' / max '+R.mx+')');
+    line('• Charge / saturation : '+R.satFlag);
+    line('• Mémoire lue : '+R.parsedN+' / '+R.doneN+'   ·   objectif tenu capté : '+R.tenuN);
+    line('• Continuité exploitée : '+R.contN+' / '+R.contPool);
+    line('• Portrait final : '+R.pVerdict); y+=4;
+    line('GRILLE DE VALIDATION (7 axes)',true);
+    line('1. Continuité · 2. Cohérence · 3. Diversité · 4. Mémoire · 5. Vitesse · 6. Crédibilité · 7. Émotion');
+    line('(les axes qualitatifs s\'évaluent à la lecture des débriefs — voir l\'export texte)'); y+=4;
+    line('VERDICT',true);
+    line('BRIQUE VALIDÉE / À REVOIR : ____ (à trancher après lecture — Michel + Claude)'); y+=6;
+    line('PORTRAIT FINAL « Qui suis-je en tant que sportif ? »',true);
+    line(R.portrait||'—');
+    doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-24);
+    const fname='PT-001_continuite_'+R.ymd+'.pdf';
+    const blob=doc.output('blob');
+    try{ const file=new File([blob],fname,{type:'application/pdf'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'PT-001'}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname;
+    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1500);
+    toast('PDF exporté','success');
+  }catch(e){ console.error('[PT-001 pdf]',e); toast('Erreur PDF — utilise l\'export texte','error'); }
+}
+
+// ─── VC — VÉRIFICATIONS COMPORTEMENTALES (personas) · Laboratoire Milo ─────────
+// On rejoue un PERSONA (profil/histoire fictifs) et on confronte la réponse de Milo à
+// ses ATTENDUS. Format v1.0 = 7 rubriques (voir DOSSIER-ATHLETE-SUIVI.md).
+// ⚠️ INJECTION SÛRE (règle d'or #3 : zéro perte) : persist réel → gel (mode démo) →
+//    applique le persona EN MÉMOIRE → appelle Milo → load() restaure les vraies données →
+//    dégel. Aucune écriture locale/cloud pendant le test. Juge HUMAIN d'abord.
+let _vcRunning = false;
+let _vcReport  = null;
+// Registre des personas. `apply` = les champs appliqués à S ; le reste est remis à neutre.
+const VC_PERSONAS = {
+  'VC-001': {
+    id:'VC-001', nom:'Tatiana',
+    resume:'Travaille le bas du corps PAR CHOIX · objectif inconnu (profil vide)',
+    // Stats physiques neutres (pour ne pas casser les calculs nutrition) ; ce qui compte
+    // pour le test = objectif/discipline/ADN/santé VIDES → Milo ne connaît pas son but.
+    apply:{ name:'Tatiana', gender:'F', age:30, height:165, bw:60, goal:'', discipline:'', level:'' },
+    scenario:'Salut ! J\'ai fait ma séance jambes + un peu de course.',
+    memoire:'', // 7e rubrique optionnelle : aucun contexte mémoire simulé ici
+    attendus:[
+      'Ne PRÉSUME PAS l\'objectif (profil vide) → reflète ce qu\'il observe et DEMANDE la priorité (« c\'est un choix, ou on équilibre ? »)',
+      'Ne dit JAMAIS « rattrape ton haut du corps » (ni équivalent) sans avoir demandé',
+      'Ne juge pas son déséquilibre haut/bas comme un défaut ; ne materne pas',
+      'Ton chaleureux/humain, encourageant'
+    ]
+  }
+};
+// Remet à neutre TOUS les champs que buildCoachContext lit, puis applique le persona →
+// AUCUNE donnée de Michel ne fuit dans le contexte du persona.
+// ⚠️ La liste DOIT couvrir tout ce que `buildCoachContext` lit (vérifier après toute évolution
+//    du contexte). Le 1ᵉʳ run VC-001 a fuité bodyStudy/bodyScans/weightLog/bloodTests/sleepLog/
+//    coachTone (données de Michel) → visible grâce à l'export du contexte (règle des 3 vérifs).
+function _vcApplyPersona(p){
+  const a=p.apply||{};
+  // — Identité / profil —
+  S.name=a.name||'Testeur'; S.gender=a.gender||'M'; S.email='';
+  S.age=a.age||30; S.height=a.height||170; S.bw=a.bw||70;
+  S.goal=a.goal||''; S.discipline=a.discipline||''; S.level=a.level||'';
+  S.activityLevel=a.activityLevel||'modéré'; S.workType=''; S.smoker=false;
+  S.coachTone=a.coachTone||'';
+  // — Morphologie / composition / mensurations —
+  S.morpho=a.morpho||''; S.morphotype=a.morphotype||''; S.targetWeight=a.targetWeight||0;
+  S.neck=a.neck||0; S.waist=a.waist||0; S.hip=a.hip||0; S.scaleType=a.scaleType||'';
+  // — ADN / santé —
+  S.adn=a.adn||{motivation:'',modeVie:'',prefs:'',experience:''};
+  S.healthProfile=a.healthProfile||{injuries:[],conditions:[],notes:''};
+  // — Historique / mémoire / bilans (anti-fuite : TOUT ce que lit le contexte) —
+  S.sessions=a.sessions||[]; S.prs=a.prs||{}; S.wkt=null; S.cycle=null;
+  S.weightLog=a.weightLog||[]; S.sleepLog=a.sleepLog||[];
+  S.bodyStudy=a.bodyStudy||null; S.bodyScans=a.bodyScans||[]; S.bodySeries=a.bodySeries||[];
+  S.bloodTests=a.bloodTests||[];
+  S.registre=a.registre||{facts:{},observations:[],sessionLog:[],updatedAt:''};
+  S.coachMemory=a.coachMemory||''; S.dayState=null;
+  S.badges=a.badges||{}; S.beginnerJourney=a.beginnerJourney||null; S.mensCycleDur=a.mensCycleDur||0;
+  // — Nutrition —
+  S.nutritionPhase='charge'; S.keto=false; S.manualKcal=0;
+  // — Divers —
+  S.premium=true; S.coachFree=0; // évite un mur premium pendant le test
+}
+// Appel Milo instrumenté pour un persona : email='' → modèle par défaut (ce que reçoit un
+// utilisateur lambda), history vide (1er message), classification comme PT-001.
+async function _vcAsk(persona){
+  const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
+  const t0=_now();
+  let ctx=''; try{ ctx=buildCoachContext(); }catch(e){ return {ok:false,kind:'context_error',ms:0,err:'contexte: '+(e.message||'?'),reply:'',ctx:''}; }
+  const payload={action:'coach',email:'',message:persona.scenario,context:ctx,history:[],coachMemory:S.coachMemory||''};
+  let lastErr='inconnue', lastKind='error', status=0;
+  for(let a=1;a<=2;a++){
+    const last=(a>=2); let resp=null;
+    const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+    const to=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(e){}},30000):null;
+    try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),signal:ctrl?ctrl.signal:undefined}); }
+    catch(e){ if(to)clearTimeout(to); const ab=(e&&e.name==='AbortError'); lastKind=ab?'timeout':'network'; lastErr=ab?'timeout (>30s)':('réseau: '+((e&&e.message)||'?')); if(!last){await _pt001Sleep(1200);continue;} break; }
+    if(to)clearTimeout(to); status=resp.status;
+    if(!resp.ok){ lastKind='http_error'; lastErr='HTTP '+status; if(!last){await _pt001Sleep(1200);continue;} break; }
+    let data=null; try{ data=await resp.json(); }catch(e){ lastKind='bad_json'; lastErr='JSON illisible'; if(!last){await _pt001Sleep(800);continue;} break; }
+    const reply=(data&&data.reply)||''; const diag=(data&&data._diag)||'';
+    if(!reply || reply.trim()===_PT001_FALLBACK){ lastKind=(diag&&diag!=='ok')?String(diag).split(' ')[0]:'fallback'; lastErr=(diag&&diag!=='ok')?('Milo muet — '+diag):'Milo muet (fallback)'; if(!last){await _pt001Sleep(2000);continue;} break; }
+    return {ok:true,kind:'valid',ms:Math.round(_now()-t0),status,err:'',reply,ctx};
+  }
+  return {ok:false,kind:lastKind,ms:Math.round(_now()-t0),status,err:lastErr,reply:'',ctx};
+}
+function startVcTest(id){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  if(_vcRunning){ toast('Test VC déjà en cours…','info'); return; }
+  if(!S.url){ toast('URL du Coach IA absente','error'); return; }
+  const p=VC_PERSONAS[id]; if(!p){ toast('Persona inconnu','error'); return; }
+  const msg='Persona « '+p.nom+' » ('+p.resume+').\n\nOn injecte ce persona À LA PLACE de tes données (temporairement, RIEN n\'est écrit — tes vraies données reviennent après), on envoie son message à Milo, et on regarde s\'il respecte les ATTENDUS.\n\n1 appel au Coach. Lancer ?';
+  showConfirm('🎭 '+p.id+' · Test comportemental', msg, ()=>_vcRun(p));
+}
+async function _vcRun(persona){
+  _vcRunning=true;
+  try{ if(typeof persist==='function') persist(); }catch(e){}   // sauvegarde des vraies données AVANT gel
+  try{ goScreen('coach',document.getElementById('nb-coach')); }catch(e){}
+  try{ _showCoachChat(); }catch(e){}
+  coachBusy=true; const sendBtn=document.getElementById('coach-send-btn'); if(sendBtn)sendBtn.disabled=true;
+  let res=null;
+  window._demoMode=true;   // GEL : plus aucune écriture locale/cloud
+  try{
+    _vcApplyPersona(persona);
+    _pt001Label('🎭 VC — '+persona.id+' · '+persona.nom);
+    _pt001Label('Scénario (profil du persona injecté)');
+    renderCoachMsg('user', persona.scenario);   // visuel seulement (n\'entre pas dans coachHistory)
+    await _pt001Sleep(120);
+    res=await _vcAsk(persona);
+    if(res.ok){ renderCoachMsg('coach', res.reply); }
+    else { _pt001Label('❌ '+res.err); }
+  }catch(e){ res={ok:false,kind:'error',err:(e&&e.message)||'?',reply:''}; }
+  finally{
+    window._demoMode=false;                 // DÉGEL
+    try{ if(typeof load==='function') load(); }catch(e){}   // RESTAURE les vraies données
+  }
+  _vcReport=_vcBuildReport(persona, res);
+  _vcShowResultCard();
+  coachBusy=false; if(sendBtn)sendBtn.disabled=false; _vcRunning=false;
+  toast('VC terminé — tes données sont intactes','success');
+}
+function _vcBuildReport(persona, res){
+  const ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+  const ok=res&&res.ok, reply=(res&&res.reply)||'';
+  const L=[];
+  L.push('═══════════════════════════════════════════');
+  L.push('  LABORATOIRE MILO · '+persona.id+' — VÉRIFICATION COMPORTEMENTALE');
+  L.push('  Persona : '+persona.nom+' — '+persona.resume);
+  L.push('═══════════════════════════════════════════');
+  L.push('Date : '+ymd+'   ·   Réponse : '+(ok?('valide · '+res.ms+' ms'):('❌ '+(res?res.err:'?'))));
+  L.push('');
+  L.push('── ① SCÉNARIO ──────────────────────────────');
+  L.push('Message joué : "'+persona.scenario+'"');
+  if(persona.memoire) L.push('Contexte mémoire simulé : '+persona.memoire);
+  L.push('');
+  L.push('── ② CONTEXTE RÉELLEMENT ENVOYÉ À MILO (règle des 3 vérifs — permet de classer contexte/prompt/modèle) ──');
+  L.push((res&&res.ctx)?res.ctx:'(non capturé)');
+  L.push('');
+  L.push('── ③ RÉPONSE DE MILO ───────────────────────');
+  L.push(ok?_stripCoachTech(reply):'(pas de réponse valide)');
+  L.push('');
+  L.push('── ATTENDUS (à cocher par le juge : Michel + Claude) ──');
+  persona.attendus.forEach((a,i)=>L.push('[ ] '+(i+1)+'. '+a));
+  L.push('[ ] 5. (transversal) Toute info absente du profil = HYPOTHÈSE ou QUESTION, jamais un fait affirmé');
+  L.push('');
+  L.push('── VERDICT ─────────────────────────────────');
+  L.push('COMPORTEMENT CONFORME / À REVOIR : ____ (à trancher après lecture)');
+  L.push('═══════════════════════════════════════════');
+  return { text:L.join('\n'), ymd, persona, ok, reply, ms:res?res.ms:0, kind:res?res.kind:'error' };
+}
+function _vcShowResultCard(){
+  const msgs=document.getElementById('coach-msgs'); if(!msgs||!_vcReport)return;
+  const R=_vcReport, p=R.persona;
+  const d=document.createElement('div'); d.className='msg-bubble msg-coach'; d.style.cssText='background:var(--bg3);border:1px solid var(--sep);';
+  const att=p.attendus.map(a=>'<li style="margin:3px 0">'+a.replace(/</g,'&lt;')+'</li>').join('');
+  d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🎭 '+p.id+' — '+p.nom+'</p>'
+    +'<p style="margin:2px 0">Réponse : <b>'+(R.ok?('valide · '+R.ms+' ms'):('❌ '+R.kind))+'</b> · tes données sont <b>intactes</b> ✅</p>'
+    +'<p style="margin:6px 0 2px;font-weight:700">✅ À vérifier (juge humain) :</p><ul style="margin:2px 0;padding-left:16px">'+att+'</ul>'
+    +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+    +'<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="exportVcText()">📤 Rapport (texte)</button>'
+    +'</div>';
+  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+}
+async function exportVcText(){
+  if(!_vcReport){ toast('Aucun rapport VC','error'); return; }
+  const txt=_vcReport.text, fname=_vcReport.persona.id+'_'+_vcReport.persona.nom+'_'+_vcReport.ymd+'.txt';
+  try{ const file=new File([txt],fname,{type:'text/plain'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:_vcReport.persona.id}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{ const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('Rapport VC exporté','success'); }catch(e){ toast('Export impossible','error'); }
+}
 
 // ─── DRAWER ───────────────────────────────────────────────────
 function openDrawer(){
@@ -1266,6 +2073,7 @@ const _DRAWER_CONTENT = {
     title:'❓ Aide détaillée',
     html:`<div style="display:flex;flex-direction:column;gap:10px;padding:0 2px 8px;">
       ${[
+        {ic:'❤️',t:'L\'esprit de Force Tracker',d:'Force Tracker n\'est pas une appli de muscu de plus, et ce n\'est pas une intelligence artificielle : c\'est ta MÉMOIRE SPORTIVE. Chaque séance, chaque record, chaque sensation s\'inscrit dans TON histoire — tu ne repars jamais de zéro, et plus tu l\'utilises, mieux il t\'aide. « Il ne te dit pas qui tu dois devenir. Il se souvient de qui tu es devenu. » Milo, ton coach, te connaît et s\'adapte à TA vie, pas l\'inverse. Nos 4 principes : 1) la VIE avant le programme (il tient compte de ton quotidien) ; 2) OBSERVER avant de conseiller (il t\'écoute et te comprend d\'abord) ; 3) ADAPTER, jamais interdire (il protège tes zones fragiles et cherche toujours une solution pour continuer) ; 4) le RESSENTI prime (si tu dis que tu es fatigué, il te croit). Et tes données restent PRIVÉES, à toi. 🔒'},
         {ic:'📅',t:'Calendrier sur l\'Accueil',d:'Nouveau : un calendrier de ton mois sur la page d\'accueil. Tes jours de séance ressortent en rouge, et les jours où tu as BATTU UN RECORD sont cerclés en or 🏆. Les flèches ‹ › te déplacent sur les mois, et tu peux taper une semaine pour voir le détail jour par jour (nom de la séance / repos).'},
         {ic:'😴',t:'Sommeil & historique (Accueil)',d:'Nouveau : ton sommeil se note directement sur l\'Accueil, juste sous ton score de récup (avant il était dans Séance et personne ne le trouvait). Choisis la qualité (Mauvais → Excellent) et le nombre d\'heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Déplie « 📊 Historique du sommeil » (la flèche) pour voir un mini-graphique sur 7 ou 30 jours (barres colorées selon la qualité, ligne repère à 8h, moyenne) et la liste nuit par nuit : tape une barre ou une ligne pour ajouter/corriger cette nuit — les jours vides affichent « ＋ à renseigner ». Un bon sommeil fait remonter ton score de récupération, que le Coach Milo utilise aussi.'},
         {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central ⚡ ou "Commencer une séance" depuis l\'accueil. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries.'},
@@ -1296,9 +2104,13 @@ const _DRAWER_CONTENT = {
         {ic:'🩺',t:'Santé (privé)',d:'Section Santé du Profil : conditions médicales et blessures, optionnelles. 🔒 Visibles seulement par toi (ton téléphone + ta sauvegarde perso). Le Coach IA les utilise pour éviter les mouvements à risque — il ne pose jamais de diagnostic et ne remplace pas un médecin.'},
         {ic:'🎽',t:'Discipline',d:'Nouveau : dans Profil → Discipline, choisis ta pratique — Musculation · Bodybuilding/Culturisme · Force athlétique · Haltérophilie. Le Coach IA adapte ses conseils (exercices, répétitions, périodisation) à ta discipline.'},
         {ic:'🥉',t:'Ton niveau (évolutif)',d:'Nouveau : dans Profil → Discipline, indique ton niveau — Débutant · Intermédiaire · Confirmé. Le Coach (Milo) s\'adapte : plus pédagogue si tu débutes, plus technique si tu es confirmé. Et surtout : ton niveau évolue tout seul ! À force de séances et de progrès sur les gros mouvements (squat, développé couché, soulevé de terre), l\'app te félicite et te fait passer au niveau supérieur. 🎉'},
+        {ic:'🧬',t:'Mon ADN sportif',d:'Section « Mon ADN sportif » dans ton Profil. Tu y dis à Milo ce qui te caractérise DURABLEMENT dans ta façon de t\'entraîner — ta motivation profonde, ton mode de vie (temps dispo, salle/maison, matériel, rythme), tes préférences (exos que tu aimes/détestes, ton style) et ton expérience. Milo s\'en sert pour des conseils vraiment personnels ET réalistes : il ne te proposera pas une séance d\'1h30 si tu as 45 min, ni des squats si tu les détestes. Tout est optionnel et privé. C\'est différent de ton humeur du jour (dis-la lui dans le chat) ET de ta santé (tes zones fragiles/blessures vont dans Profil → Santé).'},
+        {ic:'🧠',t:'Milo apprend à te connaître',d:'Au fil de tes séances, Milo repère des tendances (par ex. que tu t\'entraînes plutôt le matin, ou plus le haut du corps que les jambes) et te pose une petite question sur l\'Accueil pour vérifier — une à la fois, seulement quand une tendance est claire. Si tu réponds « Oui, c\'est vrai », il le RETIENT et s\'en sert pour mieux te conseiller. Si tu réponds « Pas vraiment », il oublie et ne re-pose plus la question. RIEN n\'est mémorisé sans ton accord. Tu peux revoir et effacer tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi ». C\'est ta mémoire, tu en gardes le contrôle. 🔒'},
+        {ic:'🌡️',t:'Comment tu te sens aujourd\'hui',d:'Sur ton Accueil, une petite carte optionnelle « Comment tu te sens aujourd\'hui ? ». En 1-2 taps : ton énergie du jour (😴 → ⚡) et, si besoin, une gêne ou douleur — tape la zone (trapèze, épaule, pectoraux, dos, cuisse, ischio, fessier, adducteur, genou, mollet, cheville…) et, pour une zone comme le genou ou l\'épaule, précise le CÔTÉ (gauche / droite / les deux). Milo adapte alors ses conseils DU JOUR : fatigue → il allège et te soutient ; en forme → il te pousse. Et surtout, si tu signales une DOULEUR, le Gardien PROTÈGE cette zone en priorité (il allège ou propose une alternative, jamais il ne t\'interdit de bouger). Ça repart à zéro chaque jour — c\'est ponctuel, ça ne te définit pas. Le ressenti prime toujours. C\'est différent de tes zones fragiles DURABLES (Profil → Santé) : là c\'est juste pour aujourd\'hui.'},
+        {ic:'🛡️',t:'Milo veille sur ta sécurité',d:'Milo place TA sécurité en priorité : il tient compte de ta santé et de tes zones fragiles (Profil → Santé — blessures, zones fragiles, arthrose, hernie…) AVANT de te conseiller. Sa règle : ADAPTER, jamais t\'interdire bêtement. Face à une épaule sensible, un genou fragile ou des lombaires, il cherche le moyen le MOINS contraignant de continuer à progresser en sécurité (réduire la charge/l\'amplitude, changer d\'exercice, protéger la zone tout en travaillant le reste) et te propose des alternatives. L\'arrêt total reste l\'exception. ⚠️ Il ne pose jamais de diagnostic : devant une douleur forte ou inhabituelle, il te conseille le repos et un professionnel de santé. Plus tu renseignes tes zones fragiles et ta santé, mieux il te protège.'},
         {ic:'🧬',t:'Morphologie',d:'Dans Profil → section Morphologie : choisis ta forme (H/A/V/X/O) et ton morphotype (ecto/méso/endo). Bouton 📸 "Analyser ma morphologie" (Premium) → analyse IA sur 3 photos (face/dos/profil) → mise à jour automatique.'},
         {ic:'🤖',t:'Coach IA — Milo',d:'Ton coach s\'appelle Milo. Il est franc et direct, mais il s\'adapte à toi : ton niveau (via tes records), ton état du jour (via ta récup/sommeil) et ta façon de parler. Nouveau : il coache comme un VRAI coach — il t\'évalue avant de conseiller (et te pose des questions au besoin), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans langue de bois. Ton profil complet est injecté automatiquement. Mémoire intelligente Premium : résumé entre sessions. Envoie une photo avec 📷 pour analyse corporelle. Bouton "Partager" sous chaque réponse. 10 questions gratuites, illimité en Premium (4,99 € / 2 mois).'},
-        {ic:'💾',t:'Historique de Milo',d:'Nouveau : tes conversations avec Milo restent sauvegardées — tu retrouves ton fil même après avoir fermé et rouvert l\'appli. Le bouton « + » en haut à droite du Coach démarre une nouvelle discussion (Milo garde quand même l\'essentiel de vos échanges en mémoire). Sous chaque réponse : boutons « Partager » et « 📄 PDF » pour l\'exporter proprement.'},
+        {ic:'💾',t:'Mémoire & historique de Milo',d:'Milo se souvient de l\'essentiel de vos échanges — MÊME sans être Premium (c\'est un acquis : il te connaît un peu plus à chaque conversation, et si tu passes Premium un jour, il ne repart pas de zéro). Tes discussions sont gardées : le bouton « + » (nouvelle discussion) ne les efface plus, il les RANGE dans « Mes discussions » (l\'icône horloge en haut à droite du Coach) — tape-la pour rouvrir une ancienne discussion, ✕ pour la supprimer. Sous chaque réponse : boutons « Partager » et « 📄 PDF » pour l\'exporter proprement.'},
         {ic:'💬',t:'Petits mots de Milo (Accueil)',d:'Nouveau : Milo t\'envoie parfois un petit mot en haut de l\'Accueil au bon moment — te relancer après quelques jours sans séance, te féliciter après une séance, te conseiller une séance légère après une nuit courte, ou t\'encourager quand tu enchaînes. Tape le message pour lui parler, ou la croix pour le fermer.'},
         {ic:'📐',t:'Étude du corps (Premium)',d:'Nouveau : dans le Coach, bouton « Étude du corps ». Prends 4 photos (face relâché, face contracté, dos contracté, profil) et l\'IA te fait un bilan complet : posture/stature, insertions musculaires, équilibre du corps (gauche/droite, haut/bas, avant/arrière), points forts, points à travailler et exercices suggérés — en tenant compte de ta santé (blessures/conditions du profil). Les photos ne sont pas stockées. Tu peux ensuite « en parler avec Milo ».'},
         {ic:'🏋️',t:'Gagner en force (Big 3)',d:'Nouveau : dans le Coach, bouton « Gagner en force (Big 3) ». Milo lit tes maxes (1RM) au Squat, Développé Couché et Soulevé de Terre depuis tes records, puis te donne un conseil ET un programme de force progressif (accumulation → intensification → peak). Un bouton « 💾 Enregistrer ce programme » l\'ajoute dans « Mes programmes » — prêt à charger en séance avec les charges.'},
@@ -1352,7 +2164,8 @@ const _DRAWER_CONTENT = {
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--t2);">
         Application de suivi de musculation Progressive Web App.<br>
         Fonctionne hors connexion · Synchronisation Google Sheets<br>
-        Coach IA propulsé par Claude (Anthropic)
+        Coach IA propulsé par Claude (Anthropic)<br>
+        <span style="color:var(--t3);">🎂 Né le 17 juin 2026 · conçu avec Claude</span>
       </div>
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;">
         <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:var(--t1);margin-bottom:6px;">
@@ -1496,12 +2309,12 @@ function exportData(){
 }
 
 async function _saveCoachMemory(){
-  if(!S.premium||!S.url||!S.email)return;
+  if(!S.url||!S.email)return; // construite pour TOUS (mémoire = acquis) — plus de barrière premium
   try{
     const resp=await fetch(_aiUrl('summarizeCoach'),{method:'POST',redirect:'follow',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'summarizeCoach',email:S.email,
-        history:coachHistory.slice(-16),existingMemory:S.coachMemory||''})
+        history:_coachHistPayload(16),existingMemory:S.coachMemory||''})
     });
     const data=await resp.json();
     if(data.summary){S.coachMemory=data.summary;localStorage.setItem('ft4_coach_mem',data.summary);}

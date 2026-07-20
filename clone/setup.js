@@ -258,6 +258,7 @@ function _cloudSync(){
     body:JSON.stringify({
       action:'saveProfile',email:S.email,authCode:_authCode(),
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
+      ...(_adnFilled()?{adn:S.adn}:{}),
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
@@ -1590,6 +1591,24 @@ function _renderCoachToneSel(){
   if(d)d.textContent=auto?COACH_TONE_AUTO_DESC:(COACH_TONE_DESCS[S.coachTone]||'');
 }
 
+// ── ADN sportif (Dossier Athlète, brique 4A) — portrait durable déclaré ──
+// « zones fragiles » a quitté l'ADN pour le Profil Santé (séparation ADN=identité de pratique / Santé=vigilance). 4 champs.
+const _ADN_FIELDS=['motivation','lifestyle','preferences','experience'];
+function _adnFilled(){return !!(S.adn&&_ADN_FIELDS.some(k=>(S.adn[k]||'').trim()));}
+function saveAdn(field,val){
+  if(_ADN_FIELDS.indexOf(field)<0)return;
+  S.adn=S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};
+  S.adn[field]=val;
+  persist();
+}
+function _renderAdnSection(){
+  const a=S.adn||{};
+  _ADN_FIELDS.forEach(f=>{
+    const el=document.getElementById('adn-'+f);
+    if(el&&el.value!==(a[f]||'')){el.value=a[f]||'';el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+  });
+}
+
 let _screenHistory=['home'];
 function openMenuDrawer(){
   const _ob=document.getElementById('onboarding');
@@ -1617,6 +1636,8 @@ function openMenuDrawer(){
   if(_mpb)_mpb.style.display=S.premium?'none':'flex';
   // Points rouges « nouveauté » sur les lignes concernées (ex. carte Profil) → montre OÙ est le neuf
   if(typeof _updateMenuDots==='function')_updateMenuDots();
+  // Ouvrir le Menu éteint le point rouge de l'ONGLET Menu (les points des lignes restent pour guider)
+  if(typeof _ackMenu==='function')_ackMenu();
   // Version affichée = vrai build tournant (jamais périmé)
   if(typeof _setAppVersionEls==='function')_setAppVersionEls();
 }
@@ -1746,6 +1767,7 @@ function renderSetup(){
   setDiscipline(S.discipline||'muscu');
   _renderLevelSel();
   _renderCoachToneSel();
+  _renderAdnSection();
   renderBFCard();
   _renderProfileCompletion();
   try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
@@ -1840,7 +1862,8 @@ function _applyRestoreData(raw){
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
   try{if(d.coachTone!==undefined)S.coachTone=d.coachTone;}catch(e){console.warn('[FT restore] coachTone',e);}
-  try{if(d.registre&&(Object.keys(d.registre.facts||{}).length||(d.registre.observations||[]).length))S.registre=d.registre;}catch(e){console.warn('[FT restore] registre',e);}
+  try{if(d.registre&&(Object.keys(d.registre.facts||{}).length||(d.registre.observations||[]).length||(d.registre.sessionLog||[]).length))S.registre=d.registre;}catch(e){console.warn('[FT restore] registre',e);}
+  try{if(d.adn&&typeof d.adn==='object'){S.adn=S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};['motivation','lifestyle','preferences','experience'].forEach(k=>{if(d.adn[k]&&!(S.adn[k]||'').trim())S.adn[k]=d.adn[k];});}}catch(e){console.warn('[FT restore] adn',e);}
   try{if(d.level)S.level=d.level;}catch(e){}
   try{if(d.activityLevel)S.activityLevel=parseFloat(d.activityLevel)||S.activityLevel;}catch(e){console.warn('[FT restore] activityLevel',e);}
   try{if(d.workType)S.workType=d.workType;}catch(e){console.warn('[FT restore] workType',e);}
@@ -1860,6 +1883,8 @@ function _applyRestoreData(raw){
   try{if(d.morphotype)S.morphotype=d.morphotype;}catch(e){}
   try{if(d.bday)S.bday=d.bday;}catch(e){}
   try{if(d.healthProfile)S.healthProfile=d.healthProfile;}catch(e){console.warn('[FT restore] healthProfile',e);}
+  // « zones fragiles » a quitté l'ADN pour la Santé : si le cloud renvoie un vieil ADN avec `fragile`, on le bascule dans les notes Santé APRÈS avoir restauré la Santé (ne rien perdre, ne pas être écrasé).
+  try{const cf=((d.adn&&d.adn.fragile)||'').trim();if(cf){S.healthProfile=S.healthProfile||{conditions:[],injuries:[],notes:''};const n=(S.healthProfile.notes||'').trim();if(n.indexOf(cf)<0)S.healthProfile.notes=(n?n+'\n':'')+'Zones fragiles : '+cf;if(S.adn)S.adn.fragile='';}}catch(e){console.warn('[FT restore] fragile→health',e);}
   try{if(d.bodyStudy)S.bodyStudy=d.bodyStudy;}catch(e){console.warn('[FT restore] bodyStudy',e);}
   try{if(Array.isArray(d.bodyStudies)&&d.bodyStudies.length)S.bodyStudies=d.bodyStudies;}catch(e){console.warn('[FT restore] bodyStudies',e);}
   try{if(Array.isArray(d.bodyScans)&&d.bodyScans.length>=(S.bodyScans||[]).length)S.bodyScans=d.bodyScans;}catch(e){console.warn('[FT restore] bodyScans',e);}

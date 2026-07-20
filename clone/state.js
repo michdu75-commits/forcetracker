@@ -84,6 +84,11 @@ function load(){
     // Registre Athlète (Dossier Athlète, brique 1) : mémoire durable consultée par Milo.
     // facts = faits mesurés (brique 2, à venir) ; observations = observations validées (brique 5, à venir). Vide pour l'instant.
     S.registre=JSON.parse(localStorage.getItem('ft4_registre')||'null')||{facts:{},observations:[],updatedAt:''};
+    // ADN sportif (Dossier Athlète, brique 4A) : portrait DURABLE déclaré par l'utilisateur, injecté dans le briefing de Milo.
+    // Différent du profil (déclaré général), des faits (mesurés) et de l'état du jour (ponctuel). Tout optionnel, vide = comportement identique.
+    S.adn=JSON.parse(localStorage.getItem('ft4_adn')||'null')||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};
+    // État du jour (Dossier Athlète, brique 3B) : énergie + douleurs du JOUR (ponctuel, repart à zéro chaque jour). Optionnel.
+    S.dayState=JSON.parse(localStorage.getItem('ft4_daystate')||'null')||null;
     S.levelAuto=localStorage.getItem('ft4_levelAuto')==='1'; // true si le niveau a été promu automatiquement (évite de re-fêter)
     S.beginnerJourney=JSON.parse(localStorage.getItem('ft4_bjourney')||'null'); // parcours débutant : {style,freq,startDate,phase}
     S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
@@ -92,6 +97,7 @@ function load(){
     S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
     S.progExos=JSON.parse(localStorage.getItem('ft4_progexos')||'null')||[...BIG4];
     S.seenFeatures=JSON.parse(localStorage.getItem('ft4_seen_ft')||'[]');
+    S.menuAck=JSON.parse(localStorage.getItem('ft4_menu_ack')||'[]'); // features setup « vues au niveau onglet Menu » (le point onglet s'éteint à l'ouverture du Menu ; les points de ligne restent)
     S.reportedCustomEx=JSON.parse(localStorage.getItem('ft4_rep_cex')||'[]');
     // ID anonyme persistant — jamais lié à l'email
     S.anonId=localStorage.getItem('ft4_auid')||(()=>{const id='u_'+Math.random().toString(36).slice(2,11);localStorage.setItem('ft4_auid',id);return id;})();
@@ -99,6 +105,7 @@ function load(){
     S.histImports=parseInt(localStorage.getItem('ft4_histImp')||'0')||0;
     S.bodyScanImports=parseInt(localStorage.getItem('ft4_bsimports')||'0')||0;
     S.coachMemory=localStorage.getItem('ft4_coach_mem')||'';
+    try{S.coachConversations=JSON.parse(localStorage.getItem('ft4_coach_convs')||'[]')||[];}catch(e){S.coachConversations=[];}
     S.premium=localStorage.getItem('ft4_premium')==='1';
     // Fondateurs/testeurs premium à vie : premium accordé côté client (indépendant du serveur, cf. PREMIUM_CLIENT_EMAILS)
     if(typeof _isClientPremium==='function'&&_isClientPremium())S.premium=true;
@@ -176,6 +183,9 @@ function load(){
       localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
       localStorage.setItem('ft4_cuex',JSON.stringify(S.customExercises||[]));
     }
+    // Migration : « zones fragiles » déplacées de l'ADN sportif → Profil Santé (séparation ADN/Santé, cf. Gardien 6A).
+    // Idempotente + robuste au cloud : tant qu'un ADN a un `fragile` rempli, on le bascule dans les notes Santé et on le vide.
+    if(typeof _migrateFragileToHealth==='function')_migrateFragileToHealth();
     // Migration set-tags : W→É, E→X, D→N (one-time)
     if(!localStorage.getItem('ft4_stmig1')){
       const _migSet=s=>{if(s.type==='W')s.type='É';else if(s.type==='E')s.type='X';else if(s.type==='D')s.type='N';};
@@ -188,6 +198,24 @@ function load(){
     // Registre Athlète (brique 2) : recalcule les faits mesurés au démarrage.
     try{if(typeof computeRegistreFacts==='function')computeRegistreFacts();}catch(e){}
   }catch(e){}
+}
+// Bascule le champ « zones fragiles » de l'ADN sportif vers les notes du Profil Santé (séparation ADN/Santé).
+// Idempotente : ne fait rien si l'ADN n'a pas de `fragile`. Appelée au load ET après une restauration cloud
+// (robuste : même si le cloud renvoie un vieil ADN avec `fragile` rempli, on le déplace vers la Santé).
+function _migrateFragileToHealth(){
+  try{
+    const frag=((S.adn&&S.adn.fragile)||'').trim();
+    if(!frag){if(!localStorage.getItem('ft4_fragmig1'))localStorage.setItem('ft4_fragmig1','1');return;}
+    const hp=S.healthProfile||{conditions:[],injuries:[],notes:''};
+    hp.conditions=hp.conditions||[];hp.injuries=hp.injuries||[];
+    const notes=(hp.notes||'').trim();
+    if(notes.indexOf(frag)<0)hp.notes=(notes?notes+'\n':'')+'Zones fragiles : '+frag;
+    S.healthProfile=hp;
+    S.adn.fragile='';
+    localStorage.setItem('ft4_health',JSON.stringify(S.healthProfile));
+    localStorage.setItem('ft4_adn',JSON.stringify(S.adn));
+    localStorage.setItem('ft4_fragmig1','1');
+  }catch(e){console.warn('[FT fragmig]',e);}
 }
 function persist(){
   // Mode démo : on ne sauvegarde RIEN (ni local, ni cloud) — les vraies données restent figées telles quelles
@@ -235,6 +263,8 @@ function persist(){
     localStorage.setItem('ft4_level',S.level||'');
     localStorage.setItem('ft4_coachtone',S.coachTone||'');
     localStorage.setItem('ft4_registre',JSON.stringify(S.registre||{facts:{},observations:[],updatedAt:''}));
+    localStorage.setItem('ft4_adn',JSON.stringify(S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''}));
+    localStorage.setItem('ft4_daystate',JSON.stringify(S.dayState||null));
     localStorage.setItem('ft4_levelAuto',S.levelAuto?'1':'0');
     localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));

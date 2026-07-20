@@ -62,13 +62,29 @@ function _markAnchorSeen(anchorId){
 }
 function _updateNewBadges(){
   const seen=S.seenFeatures||[];
+  const ack=S.menuAck||[];
   ['home','progress','log','nutrition','coach','setup'].forEach(sc=>{
     const btn=document.getElementById('nb-'+sc);if(!btn)return;
-    const hasNew=NEW_FEATURES.some(f=>f.screen===sc&&!seen.includes(f.id));
+    // L'onglet Menu (setup) : le point s'éteint dès que l'utilisateur a OUVERT le Menu
+    // (features déjà dans `menuAck`). Les points inline des lignes restent pour montrer OÙ.
+    // Les autres onglets gardent le comportement d'origine (point tant qu'une feature de l'écran est non vue).
+    const hasNew = sc==='setup'
+      ? NEW_FEATURES.some(f=>f.screen==='setup'&&!seen.includes(f.id)&&ack.indexOf(f.id)<0)
+      : NEW_FEATURES.some(f=>f.screen===sc&&!seen.includes(f.id));
     let dot=btn.querySelector('.new-dot');
     if(hasNew&&!dot){dot=document.createElement('span');dot.className='new-dot';btn.appendChild(dot);}
     else if(!hasNew&&dot)dot.remove();
   });
+}
+// Ouvrir le Menu = « j'ai vu qu'il y a du neuf » → éteint le point de l'onglet Menu
+// (sans marquer les features « vues » : les points sur les lignes restent pour guider).
+function _ackMenu(){
+  const seen=S.seenFeatures||[];
+  const cur=NEW_FEATURES.filter(f=>f.screen==='setup'&&!seen.includes(f.id)).map(f=>f.id);
+  const ack=S.menuAck||[];
+  const add=cur.filter(id=>ack.indexOf(id)<0);
+  if(add.length){S.menuAck=[...ack,...add];try{localStorage.setItem('ft4_menu_ack',JSON.stringify(S.menuAck));}catch(e){}}
+  _updateNewBadges();
 }
 // Points rouges INLINE dans le menu-drawer : sur chaque ligne (anchor) qui contient une nouveauté non vue.
 // Appelé à l'ouverture du menu → l'utilisateur voit OÙ est le neuf (Profil, etc.).
@@ -107,7 +123,7 @@ function _applyScreen(id,btn){
   if(id==='nutrition'){renderNutrition();switchNuTab('macros',document.getElementById('ntab-macros'));}
   if(id==='setup'){_resetMenuView();renderSetup();_markAnchorSeen('menu-row-profil');}
   if(id==='cycle')renderCycleScreen();
-  if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();}
+  if(id==='coach'){const suggs=document.getElementById('coach-suggs');if(suggs&&coachHistory.length>0)suggs.style.display='none';updateCoachHeader();_updateCoachMorphoBtn();try{if(typeof _maybeAutoDebrief==='function')_maybeAutoDebrief();}catch(e){}}
   _markScreenSeen(id);
   _updateScreenDots(id);
   // Pill chrono flottante : show hors log, hide sur log
@@ -137,6 +153,8 @@ const _HELP_DATA={
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'😴',t:'Ton sommeil se note directement sur l\'Accueil (juste sous le score de récup) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération.'},
       {i:'📊',t:'« Historique du sommeil » (la barre repliable, tape la flèche) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
+      {i:'🌡️',t:'« Comment tu te sens aujourd\'hui ? » (optionnel) : en 1-2 taps, indique ton énergie du jour et, si besoin, une gêne/douleur. Tape la zone (trapèze, épaule, dos, cuisse, ischio, genou, mollet…) ; pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Milo adapte ses conseils du jour — et s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité (il allège ou propose une alternative). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
+      {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
       {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Consulte l\'onglet Badges dans Progrès pour tout voir.'},
@@ -154,6 +172,7 @@ const _HELP_DATA={
       {i:'🎯',t:'L\'objectif (muscle, perte de poids, force, rééquilibrage...) adapte tes macros et les conseils du Coach IA.'},
       {i:'🎽',t:'Discipline : choisis ta pratique (musculation, bodybuilding, force athlétique, haltérophilie) — le Coach IA adapte ses conseils à ta discipline.'},
       {i:'🥉',t:'Ton niveau (Débutant/Intermédiaire/Confirmé, dans la section Discipline) : le Coach s\'adapte, et il évolue tout seul avec tes séances et tes records — l\'app te félicite quand tu passes au niveau supérieur.'},
+      {i:'🧬',t:'« Mon ADN sportif » (optionnel) : ce qui te caractérise DURABLEMENT dans ta pratique — ta motivation, ton mode de vie (temps/lieu/matériel), tes préférences (exos aimés/détestés, style), ton expérience. Milo s\'en sert pour des conseils vraiment personnels et réalistes. (Tes zones fragiles/blessures, elles, vont dans la section Santé.) 🔒 Privé.'},
       {i:'🏃',t:'Niveau d\'activité : sois honnête — le sous-estimer te fera manger trop peu, le surestimer trop.'},
       {i:'📏',t:'Tour de cou + taille (+ hanches) → composition corporelle automatique (% graisse, masse maigre, méthode US Navy).'},
       {i:'🧬',t:'Remplis ta morphologie (H/A/V/X/O) et ton morphotype (ecto/méso/endo) pour des conseils Coach IA vraiment personnalisés. Bouton 📸 pour analyse IA sur 3 photos.'},
@@ -230,8 +249,9 @@ const _HELP_DATA={
       {i:'💬',t:'Ton profil complet (poids, objectif, discipline, PRs, morphologie) est injecté automatiquement — pas besoin de te présenter à chaque fois.'},
       {i:'🎯',t:'Milo raisonne comme un vrai coach : il t\'évalue avant de conseiller (il peut te poser des questions), croise tes données (records, morpho, bilan corporel), justifie ses choix, s\'adapte à ta vie (horaires, travail de nuit, temps dispo) et te dit la vérité sans complaisance. Demande-lui « fais-moi un programme » ou « pourquoi je stagne au couché ? ».'},
       {i:'🏋️',t:'Pendant une séance, le Coach la voit EN DIRECT : demande-lui un exercice équivalent si une machine est prise, un ajustement de charge, ou l\'ordre des exercices.'},
-      {i:'🧠',t:'Mémoire intelligente (Premium) : le Coach résume et retient le fil de vos échanges entre sessions.'},
-      {i:'💾',t:'Tes conversations restent sauvegardées : tu retrouves ton fil même après avoir fermé l\'appli. Le bouton « + » en haut démarre une nouvelle discussion.'},
+      {i:'🛡️',t:'Milo veille sur ta sécurité : il tient compte EN PRIORITÉ de ta santé et de tes zones fragiles (Profil → Santé — blessures, arthrose, hernie…). Sa règle = ADAPTER, pas t\'interdire : il réduit la charge/l\'amplitude ou change d\'exercice plutôt que de te dire « ne fais pas ». Devant une douleur forte, il conseille le repos et un pro (jamais de diagnostic).'},
+      {i:'🧠',t:'Milo se souvient de l\'essentiel de vos échanges — même en gratuit (c\'est un acquis). Si tu passes Premium un jour, il ne repart pas de zéro.'},
+      {i:'💾',t:'Tes discussions sont gardées : le bouton « + » ne les efface plus, il les range dans « Mes discussions » (icône horloge, en haut du Coach). Tape-la pour rouvrir une ancienne discussion, ✕ pour la supprimer.'},
       {i:'🧪',t:'Milo connaît ton Bilan corporel (balance pro) si tu l\'as rempli : il te conseille avec tes vrais chiffres (graisse viscérale, muscle, métabolisme) — sans jamais en inventer ni poser de diagnostic.'},
       {i:'📸',t:'Bouton 📷 pour envoyer une photo (analyse corpo ou morphologie). Bouton 📸 "Analyser ma morphologie" pour l\'analyse 3 angles (Premium).'},
       {i:'📋',t:'Analyse de programme IA (bouton 🤖 dans Programmes) : le Coach évalue ton programme et propose des améliorations.'},
@@ -292,6 +312,9 @@ function _initSwipe(){
     const sel=_sel;               // capturer AVANT de réinitialiser (le guard _hScrollParent en dépend)
     _sx=_sy=_sel=null;
     if(document.querySelector('.overlay.open'))return; // overlay ouvert → pas de navigation
+    // ZOOMÉ (pinch-zoom) : l'utilisateur déplace la vue pour lire de gauche à droite → ce geste
+    // horizontal ne doit PAS changer d'onglet (retour Michel). visualViewport.scale > 1 = zoomé.
+    try{ if(window.visualViewport && window.visualViewport.scale > 1.05) return; }catch(e){}
     if(Math.abs(dx)<110)return;                  // geste franc requis (était 55) → moins de changements d'onglet involontaires
     if(Math.abs(dy)>Math.abs(dx)*0.5)return;     // doit être nettement horizontal (était 0.65)
     // Ne pas naviguer si le geste part d'un contrôle (saisie kg/reps, boutons…) — évite les onglets qui sautent en séance
@@ -425,6 +448,15 @@ function _renderHomeHero(){
     detailHtml='<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px 7px;font-size:11px;color:var(--t3);align-items:center;">'+fx+'</div>'
       +(tipsHtml?'<div style="margin-top:9px;background:var(--bg3);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;flex-direction:column;gap:5px;">'+tipsHtml+'</div>':'');
   }
+  // Bandeau contextuel « gêne du jour » (brique 3B) : une douleur ne fait PAS baisser
+  // le chiffre (le corps reste récupéré) — elle prévient juste d'adapter. Adapter, pas interdire.
+  let warnHtml='';
+  if(detail.dayPains&&detail.dayPains.length){
+    const z=detail.dayPains;
+    const zTxt=z.length===1?z[0]:z.slice(0,-1).join(', ')+' et '+z[z.length-1];
+    warnHtml='<div style="margin-top:10px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.32);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;gap:8px;align-items:flex-start;">'
+      +'<span style="flex:none;">⚠️</span><span>Gêne signalée aujourd\'hui (<b>'+zTxt+'</b>) : ton corps est récupéré, mais <b>échauffe-toi bien</b> et allège les mouvements qui tirent si besoin. Tu peux t\'entraîner.</span></div>';
+  }
   el.innerHTML='<div style="padding:20px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.10),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);" class="ft-rise">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;">'
     +'<div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'
@@ -437,7 +469,7 @@ function _renderHomeHero(){
     +'<div style="flex:1;"><div style="font-size:16px;font-weight:700;color:var(--t1);">'+heroLabel+'</div>'
     +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:3px;">'+heroDesc+'</div></div></div>'
     +'<div style="margin-top:14px;height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;"><div style="height:100%;width:'+barW+'%;background:'+ringColor+';border-radius:4px;transition:width .4s;"></div></div>'
-    +detailHtml
+    +detailHtml+warnHtml
     +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
     +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
     +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
@@ -494,6 +526,79 @@ function _dismissMilo(id){
   try{localStorage.setItem('ft4_milo',JSON.stringify({date:today(),id}));}catch(e){}
   const el=document.getElementById('home-milo');if(el)el.innerHTML='';
 }
+// ─── Observation de Milo à valider (Dossier Athlète, brique 5A) ───
+function _obsEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function _renderObsCard(){
+  const el=document.getElementById('home-obs');if(!el)return;
+  try{if(typeof maybeProposeObservation==='function')maybeProposeObservation();}catch(e){}
+  const o=(typeof _pendingObs==='function')?_pendingObs():null;
+  if(!o){el.innerHTML='';el.style.padding='0';return;}
+  el.style.padding='14px 14px 0';
+  const name=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
+  el.innerHTML='<div class="obs-card">'
+    +'<div class="obs-head"><div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'
+    +'<div class="obs-lead">'+name+' a une petite question…</div></div>'
+    +'<div class="obs-txt">'+_obsEsc(o.ask||o.text||'')+'</div>'
+    +'<div class="obs-btns">'
+    +'<button class="obs-yes ft-press" onclick="validateObs(\''+o.id+'\')">Oui, c\'est vrai</button>'
+    +'<button class="obs-no ft-press" onclick="rejectObs(\''+o.id+'\')">Pas vraiment</button>'
+    +'</div></div>';
+}
+// ─── État du jour (Dossier Athlète, brique 3B) — capture légère & optionnelle ───
+// énergie du jour + douleurs du jour (zones). Ponctuel : repart à zéro chaque jour.
+// Nourrit Milo (dosage) + le Gardien (protège une douleur DU JOUR en priorité).
+// [zone, libellé, latéral?] — latéral = peut avoir un côté (gauche/droite/les deux).
+const _DAY_ZONES=[['epaule','Épaule',1],['trapeze','Trapèze',1],['cervicales','Nuque',0],['pectoraux','Pectoraux',1],['coude','Coude',1],['poignet','Poignet',1],['lombaires','Bas du dos',0],['abdos','Abdos',0],['hanche','Hanche',1],['fessier','Fessier',1],['cuisse','Cuisse',1],['ischio','Ischio',1],['adducteur','Adducteur',1],['genou','Genou',1],['mollet','Mollet',1],['cheville','Cheville',1]];
+const _DAY_ENERGY=['😴','😐','🙂','⚡']; // 0=très fatigué → 3=plein d'énergie
+function _dayZoneLat(z){const e=_DAY_ZONES.find(x=>x[0]===z);return e?!!e[2]:false;}
+function _dayZoneLbl(z){const e=_DAY_ZONES.find(x=>x[0]===z);return e?e[1]:z;}
+function _dayState(){
+  const t=today();
+  if(!S.dayState||S.dayState.date!==t)S.dayState={date:t,energy:null,mood:null,pains:[],note:''};
+  return S.dayState;
+}
+function setDayEnergy(v){const d=_dayState();d.energy=(d.energy===v?null:v);persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=>p&&p.zone===z);if(i>=0)d.pains.splice(i,1);else{d.pains=d.pains||[];d.pains.push({zone:z,side:_dayZoneLat(z)?'both':null});}persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+function setDayPainSide(z,side){const d=_dayState();const p=(d.pains||[]).find(x=>x&&x.zone===z);if(!p)return;p.side=side;persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+function _renderDayStateCard(){
+  const el=document.getElementById('home-daystate');if(!el)return;
+  const d=_dayState();
+  const painSet=new Set((d.pains||[]).map(p=>p&&p.zone));
+  const enBtns=_DAY_ENERGY.map((e,i)=>'<button class="ds-en'+(d.energy===i?' on':'')+'" onclick="setDayEnergy('+i+')">'+e+'</button>').join('');
+  const zBtns=_DAY_ZONES.map(z=>'<button class="ds-z'+(painSet.has(z[0])?' on':'')+'" onclick="toggleDayPain(\''+z[0]+'\')">'+z[1]+'</button>').join('');
+  // Côté (G/D/Les 2) — n'apparaît que pour les zones latérales sélectionnées.
+  const latSel=(d.pains||[]).filter(p=>p&&_dayZoneLat(p.zone));
+  let sideHtml='';
+  if(latSel.length){
+    const rows=latSel.map(p=>{
+      const cur=p.side||'both';
+      const b=(val,lbl)=>'<button class="ds-side'+(cur===val?' on':'')+'" onclick="setDayPainSide(\''+p.zone+'\',\''+val+'\')">'+lbl+'</button>';
+      return '<div class="ds-siderow"><span class="ds-sidelbl">'+_dayZoneLbl(p.zone)+'</span>'+b('L','G')+b('R','D')+b('both','Les 2')+'</div>';
+    }).join('');
+    sideHtml='<div class="ds-sub" style="margin-top:11px;">Un côté en particulier ?</div>'+rows;
+  }
+  el.innerHTML='<div class="ds-card">'
+    +'<div class="ds-ttl">🌡️ Comment tu te sens aujourd\'hui ? <span class="ds-opt">(optionnel)</span></div>'
+    +'<div class="ds-row">'+enBtns+'</div>'
+    +'<div class="ds-sub">Une gêne ou douleur ? Tape la zone :</div>'
+    +'<div class="ds-zrow">'+zBtns+'</div>'
+    +sideHtml
+    +'</div>';
+}
+// « Ce que Milo sait de toi » — liste des observations validées (supprimables)
+function openMiloKnows(){
+  const ov=document.getElementById('ov-milo-knows');if(!ov)return;
+  _renderMiloKnows();ov.classList.add('open');
+  try{_markAnchorSeen('menu-row-miloknows');}catch(e){} // le point rouge « nouveauté » disparaît une fois la rubrique ouverte
+}
+function closeMiloKnows(){const ov=document.getElementById('ov-milo-knows');if(ov)ov.classList.remove('open');}
+function _renderMiloKnows(){
+  const box=document.getElementById('milo-knows-list');if(!box)return;
+  const list=(typeof _validatedObs==='function')?_validatedObs():[];
+  if(!list.length){box.innerHTML='<div class="mk-empty">Milo n\'a encore rien retenu sur toi. Au fil de tes séances, il te posera de petites questions sur l\'Accueil — chaque fois que tu confirmes, il apprend à mieux te connaître. Rien n\'est mémorisé sans ton accord.</div>';return;}
+  box.innerHTML=list.map(o=>'<div class="mk-row"><span class="mk-txt">'+_obsEsc(o.fact||o.ask||'')+'</span>'
+    +'<button class="mk-del ft-press" onclick="deleteObs(\''+o.id+'\')" aria-label="Oublier"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></div>').join('');
+}
 function _openMiloChat(){
   try{goScreen('coach',document.getElementById('nb-coach'));}catch(e){}
 }
@@ -543,6 +648,8 @@ function renderHome(){try{
   _renderTesterCard();
   _renderHomeHdr();
   _renderMiloCard();
+  _renderObsCard();
+  _renderDayStateCard();
   _renderHomeHero();
   if(typeof renderLogSleep==='function')renderLogSleep(); // sommeil du jour, juste sous le score de récup (déplacé de Séance → Accueil)
   const now=new Date();

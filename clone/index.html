@@ -119,6 +119,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div class="ob-dot" id="od-3"></div>
     <div class="ob-dot" id="od-4"></div>
     <div class="ob-dot" id="od-5"></div>
+    <div class="ob-dot" id="od-6"></div>
   </div>
   <div class="ob-wrap">
 
@@ -193,7 +194,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <div class="ob-sub">Tu as déjà un compte Force Tracker ?</div>
         <div id="ob-1-choice" style="width:100%;display:flex;flex-direction:column;gap:10px;margin-top:8px;">
           <button class="btn btn-red" onclick="obShowRestore()" style="font-size:17px;padding:16px;">✅ Oui, je restaure mes données</button>
-          <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:15px;padding:14px;">Non, je crée mon profil →</button>
+          <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:15px;padding:14px;">Non, faisons connaissance →</button>
         </div>
         <div id="ob-1-restore" style="display:none;width:100%;flex-direction:column;gap:10px;margin-top:8px;">
           <input class="ob-inp" id="ob-email" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
@@ -225,40 +226,28 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         </button>
       </div>
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
-        <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:14px;">← Retour</button>
+        <button class="btn btn-red" onclick="obNext(6)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-bg2" onclick="obGoTo(4)" style="font-size:14px;">← Retour</button>
       </div>
     </div>
 
-    <!-- ÉTAPE 3 : Profil -->
+    <!-- ÉTAPE 3 : On se présente (prénom + sexe) — léger, chaleureux -->
     <div class="ob-step" id="ob-3">
-      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding-top:16px;text-align:center;">
+      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:14px;padding-top:16px;text-align:center;">
         <div style="display:flex;align-items:center;gap:10px;width:100%;">
-          <span style="font-size:32px;line-height:1;">👤</span>
-          <div class="ob-title" style="font-size:28px;text-align:left;">Ton profil</div>
+          <span style="font-size:32px;line-height:1;">👋</span>
+          <div class="ob-title" style="font-size:28px;text-align:left;">On se présente ?</div>
         </div>
-        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Pour calculer tes calories et macros personnalisées.</div>
-        <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" enterkeyhint="next" style="width:100%;">
+        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Juste ton prénom et ton sexe — pour que Milo t'appelle par ton nom et te conseille juste. Le reste, il te le demandera au bon moment.</div>
+        <input class="ob-inp" id="ob-name" type="text" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30" enterkeyhint="done" style="width:100%;">
         <div class="ob-gbrow" style="width:100%;">
           <button class="ob-gbtn ob-sel" id="ob-gt-h" onclick="obSetGender('H')">♂ Homme</button>
           <button class="ob-gbtn" id="ob-gt-f" onclick="obSetGender('F')">♀ Femme</button>
         </div>
-        <div class="three-col" style="width:100%;gap:8px;">
-          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Âge</label><input class="ob-mini-inp" id="ob-age" type="number" placeholder="30" min="14" max="80" inputmode="numeric"></div>
-          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Taille cm</label><input class="ob-mini-inp" id="ob-ht" type="number" placeholder="175" inputmode="numeric"></div>
-          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Poids kg</label><input class="ob-mini-inp" id="ob-bw" type="number" placeholder="80" step="0.1" inputmode="decimal"></div>
-        </div>
-        <div class="two-col" style="width:100%;gap:8px;">
-          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Naissance JJ/MM</label><input class="ob-mini-inp" id="ob-bday" type="text" placeholder="21/07" inputmode="numeric" maxlength="5"></div>
-          <div class="fg"><label style="font-size:13px;text-align:center;display:block;margin-bottom:6px;">Poids visé kg</label><input class="ob-mini-inp" id="ob-target" type="number" placeholder="75" step="0.1" inputmode="decimal"></div>
-        </div>
       </div>
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="obNext(2)" style="font-size:17px;padding:16px;">Continuer →</button>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-bg2" onclick="obGoTo(1)" style="font-size:14px;flex:1;">← Retour</button>
-          <button class="btn btn-bg2" onclick="obGoTo(2)" style="font-size:14px;flex:2;">Passer cette étape</button>
-        </div>
+        <button class="btn btn-red" onclick="obNext(4)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-bg2" onclick="obGoTo(1)" style="font-size:14px;">← Retour</button>
       </div>
     </div>
 
@@ -280,6 +269,41 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         </div>
       </div>
       <div class="ob-footer">
+        <button class="btn btn-red" onclick="obNext(2)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-bg2" onclick="obGoTo(3)" style="font-size:14px;">← Retour</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 6 : Une blessure / zone fragile ? (optionnel) -->
+    <div class="ob-step" id="ob-6">
+      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:12px;padding-top:16px;text-align:center;">
+        <div style="display:flex;align-items:center;gap:10px;width:100%;">
+          <span style="font-size:32px;line-height:1;">🩹</span>
+          <div class="ob-title" style="font-size:26px;text-align:left;">Une blessure ou zone fragile ?</div>
+        </div>
+        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Optionnel. Si tu as une zone sensible, Milo la <b>protège en priorité</b> (il allège ou propose une alternative). Tu pourras compléter dans Profil → Santé.</div>
+        <div id="ob-injury-grid" style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button class="ob-gbtn ob-sel" id="ob-inj-none" onclick="obToggleInjury('none')" style="grid-column:1/3;">✅ Aucune, tout va bien</button>
+          <button class="ob-gbtn" id="ob-inj-epaule" onclick="obToggleInjury('épaule')">Épaule</button>
+          <button class="ob-gbtn" id="ob-inj-trapeze" onclick="obToggleInjury('trapèze')">Trapèze</button>
+          <button class="ob-gbtn" id="ob-inj-nuque" onclick="obToggleInjury('nuque')">Nuque</button>
+          <button class="ob-gbtn" id="ob-inj-pectoraux" onclick="obToggleInjury('pectoraux')">Pectoraux</button>
+          <button class="ob-gbtn" id="ob-inj-coude" onclick="obToggleInjury('coude')">Coude</button>
+          <button class="ob-gbtn" id="ob-inj-poignet" onclick="obToggleInjury('poignet')">Poignet</button>
+          <button class="ob-gbtn" id="ob-inj-dos" onclick="obToggleInjury('bas du dos')">Bas du dos</button>
+          <button class="ob-gbtn" id="ob-inj-abdos" onclick="obToggleInjury('abdos')">Abdos</button>
+          <button class="ob-gbtn" id="ob-inj-hanche" onclick="obToggleInjury('hanche')">Hanche</button>
+          <button class="ob-gbtn" id="ob-inj-fessier" onclick="obToggleInjury('fessier')">Fessier</button>
+          <button class="ob-gbtn" id="ob-inj-cuisse" onclick="obToggleInjury('cuisse')">Cuisse</button>
+          <button class="ob-gbtn" id="ob-inj-ischio" onclick="obToggleInjury('ischio')">Ischio</button>
+          <button class="ob-gbtn" id="ob-inj-adducteur" onclick="obToggleInjury('adducteur')">Adducteur</button>
+          <button class="ob-gbtn" id="ob-inj-genou" onclick="obToggleInjury('genou')">Genou</button>
+          <button class="ob-gbtn" id="ob-inj-mollet" onclick="obToggleInjury('mollet')">Mollet</button>
+          <button class="ob-gbtn" id="ob-inj-cheville" onclick="obToggleInjury('cheville')">Cheville</button>
+        </div>
+        <div id="ob-inj-side" style="width:100%;"></div>
+      </div>
+      <div class="ob-footer">
         <button class="btn btn-red" onclick="obNext(5)" style="font-size:17px;padding:16px;">Continuer →</button>
         <button class="btn btn-bg2" onclick="obGoTo(2)" style="font-size:14px;">← Retour</button>
       </div>
@@ -291,16 +315,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <img src="../force-tracker-logo-gray.png" alt="Force Tracker" style="width:180px;height:180px;object-fit:contain;flex-shrink:0;" loop>
         <div class="ob-title" id="ob-cta-title" style="font-size:38px;">C'est parti !</div>
         <div id="ob-email-section" style="width:100%;margin-top:4px;">
-          <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Email (pour sauvegarder tes données)</label>
+          <label style="font-size:15px;color:var(--t2);display:block;margin-bottom:8px;text-align:left;">📧 Ton email</label>
           <input class="ob-inp" id="ob-email-final" type="email" placeholder="ton@email.com" inputmode="email" autocomplete="email" style="font-size:18px;">
-          <div style="margin-top:10px;background:var(--bg2);border-radius:10px;padding:12px 14px;font-size:15px;color:var(--t2);line-height:1.5;text-align:left;">
-            💡 Complète ton profil dans l'onglet <strong style="color:var(--t1);">Profil</strong> et clique <strong style="color:var(--t1);">Enregistrer</strong> pour tout sauvegarder dans le cloud.
+          <div style="margin-top:10px;background:var(--bg2);border-radius:10px;padding:12px 14px;font-size:14.5px;color:var(--t2);line-height:1.55;text-align:left;">
+            🔒 Ton compte te permet de <strong style="color:var(--t1);">retrouver ton historique si tu changes de téléphone</strong> — et tes données restent <strong style="color:var(--t1);">privées, à toi</strong>. Ensuite, complète ton <strong style="color:var(--t1);">Profil</strong> pour que Milo te connaisse mieux.
           </div>
         </div>
       </div>
       <div class="ob-footer">
 <button class="btn btn-red" id="ob-start-btn" onclick="obCheckEmailAndFinish()" style="font-size:20px;padding:20px;letter-spacing:.5px;">⚡ COMMENCER</button>
-        <button class="btn btn-bg2" onclick="obGoTo(4)" style="font-size:14px;">← Retour</button>
+        <button class="btn btn-bg2" onclick="obGoTo(6)" style="font-size:14px;">← Retour</button>
       </div>
     </div>
 
@@ -432,6 +456,18 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div id="drawer-cnt-body"></div>
   </div>
 </div>
+<!-- CE QUE MILO SAIT DE TOI (observations validées, brique 5A) -->
+<div class="overlay" id="ov-milo-knows" onclick="if(event.target===this)closeMiloKnows()">
+  <div class="modal" style="max-width:460px;max-height:86vh;overflow-y:auto;">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <div style="font-size:19px;font-weight:800;color:var(--t1);">🧠 Ce que Milo sait de toi</div>
+    </div>
+    <div style="font-size:12.5px;color:var(--t3);line-height:1.5;margin-bottom:14px;">Ce que tu as confirmé à Milo au fil du temps. Il s'en sert pour te conseiller. Tape la corbeille pour lui faire oublier une chose. 🔒 Privé.</div>
+    <div id="milo-knows-list"></div>
+    <button class="btn" style="width:100%;margin-top:14px;background:var(--bg3);color:var(--t1);" onclick="closeMiloKnows()">Fermer</button>
+  </div>
+</div>
 <!-- ANATOMY IMAGE LIGHTBOX -->
 <div id="ov-anatomy-img" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.96);z-index:600;flex-direction:column;">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;flex-shrink:0;">
@@ -451,6 +487,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
   <div id="home-tester" style="padding:14px 14px 0;"></div>
   <div id="home-hdr" style="padding:0;"></div>
   <div id="home-milo" style="padding:14px 14px 0;"></div>
+  <div id="home-obs" style="padding:14px 14px 0;"></div>
+  <div id="home-daystate" style="padding:14px 14px 0;"></div>
   <div id="log-sleep" style="padding:14px 14px 0;"></div>
   <div id="home-hero" style="padding:10px 14px 0;"></div>
   <div id="home-stats" style="padding:10px 14px 0;"></div>
@@ -773,6 +811,27 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Le même suivi photos que Christophe, pour <strong>ton compte</strong> : séries de 4 photos (jusqu'à 4/mois), bilan complet et <strong>comparaison d'évolution</strong> entre tes séries.</div>
       <button class="btn btn-bg2" onclick="openBodySeries()" style="padding:11px;font-size:14px;">📸 Ouvrir mon suivi photos</button>
     </div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">💡 Boîte à idées (test)</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">La même boîte à idées que les testeurs, pour <strong>tester en direct</strong> — reproduire les bugs, vérifier l'envoi des photos… Ce que tu envoies part vers <strong>forcetracker.app@gmail.com</strong>.</div>
+      <button class="btn btn-bg2" onclick="openTesterSpace()" style="padding:11px;font-size:14px;">💡 Ouvrir la boîte à idées</button>
+    </div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">📥 Idées reçues des testeurs</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Lis toutes les idées <strong>directement dans l'app</strong>, sans ouvrir tes mails. Les <strong>photos</strong>, elles, restent dans <strong>forcetracker.app@gmail.com</strong> (le mail te prévient).</div>
+      <button class="btn btn-bg2" onclick="loadTesterIdeasAdmin()" style="padding:11px;font-size:14px;">📥 Voir les idées reçues</button>
+      <div id="admin-ideas-list" style="margin-top:4px;"></div>
+    </div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🧪 Laboratoire Milo · PT-001 (continuité)</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Rejoue <strong>tout ton historique</strong> de séances dans l'ordre : Milo débriefe chacune et <strong>vérifie l'objectif de la fois d'avant</strong>. Sert à valider la <strong>continuité de sa mémoire</strong> et à voir si <strong>ça sature</strong> sur un gros historique. À la fin : la question « Qui suis-je en tant que sportif&nbsp;? » + un <strong>rapport exportable</strong> (texte + PDF). Prend plusieurs minutes, coûte quelques appels au modèle. Aucune donnée effacée.</div>
+      <button class="btn btn-bg2" onclick="startPt001Test()" style="padding:11px;font-size:14px;">🧪 Lancer PT-001 (rejeu historique)</button>
+    </div>
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🎭 Laboratoire Milo · VC (comportement)</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Vérifie le <strong>comportement</strong> de Milo : on injecte un <strong>persona</strong> (sportif fictif) <strong>temporairement, à la place de tes données</strong> (rien n'est écrit — tes vraies données reviennent après), on lui envoie un message et on regarde s'il respecte les <strong>attendus</strong>. Juge humain (toi + moi), rapport exportable.</div>
+      <button class="btn btn-bg2" onclick="startVcTest('VC-001')" style="padding:11px;font-size:14px;">🎭 Lancer VC-001 (Tatiana)</button>
+    </div>
     <!-- Réservé au CLONE de test (affiché seulement si window.__FT_CLONE__) -->
     <div class="card cp" id="admin-clone-reset-card" style="display:none;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🔄 Refaire l'inscription <span style="font-size:11px;color:var(--red);">(clone)</span></div>
@@ -907,6 +966,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <div id="tone-desc" style="font-size:13px;color:var(--t3);background:var(--bg3);border-radius:8px;padding:9px 12px;line-height:1.45;margin-top:8px;"></div>
       </div>
       </div></details>
+      <details class="acc" id="adn-acc"><summary class="acc-h"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><path d="M12 10a2 2 0 0 0-2 2c0 1.02.1 2.51.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>Mon ADN sportif</summary><div class="acc-inner">
+      <div style="font-size:12.5px;color:var(--t3);line-height:1.5;margin-bottom:6px;">🧬 Ce qui te caractérise <b>durablement</b> — ce qui fait que tu t'entraînes comme <i>toi</i>. Tout est optionnel et privé. Plus tu remplis, plus <b>Milo</b> te connaît et personnalise ses conseils.</div>
+      <div class="fg"><label>💪 Ta motivation profonde</label><textarea id="adn-motivation" rows="1" oninput="saveAdn('motivation',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px';" placeholder="Pourquoi tu t'entraînes vraiment : santé, physique, performance, bien-être mental, te défouler…" style="width:100%;resize:none;overflow:hidden;font-family:inherit;font-size:14px;line-height:1.5;"></textarea></div>
+      <div class="fg"><label>🗓️ Ton mode de vie</label><textarea id="adn-lifestyle" rows="1" oninput="saveAdn('lifestyle',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px';" placeholder="Ce qui cadre tes séances : temps dispo, salle ou maison, matériel, rythme de vie (travail de nuit, astreintes…)." style="width:100%;resize:none;overflow:hidden;font-family:inherit;font-size:14px;line-height:1.5;"></textarea></div>
+      <div class="fg"><label>❤️ Tes préférences & ton style</label><textarea id="adn-preferences" rows="1" oninput="saveAdn('preferences',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px';" placeholder="Ce que tu aimes / détestes : exos préférés, exos que tu fuis, pousser lourd ou séries longues, séances courtes ou longues, machines ou poids libres…" style="width:100%;resize:none;overflow:hidden;font-family:inherit;font-size:14px;line-height:1.5;"></textarea></div>
+      <div class="fg"><label>🎖️ Ton expérience sportive</label><textarea id="adn-experience" rows="1" oninput="saveAdn('experience',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px';" placeholder="Depuis quand tu t'entraînes, ton passé sportif (autre sport avant), ton niveau ressenti." style="width:100%;resize:none;overflow:hidden;font-family:inherit;font-size:14px;line-height:1.5;"></textarea></div>
+      <div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:4px;">🩹 <b>Zones fragiles, vieilles blessures, arthrose…</b> → à renseigner dans la section <b>Santé</b> ci-dessous : c'est de là que Milo (le Gardien) veille sur ta sécurité.</div>
+      <div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:4px;">🔒 Ces infos restent privées (sur ton téléphone et dans ta sauvegarde perso liée à ton email). Elles servent uniquement à améliorer ton accompagnement.</div>
+      </div></details>
       <details class="acc"><summary class="acc-h"><svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><circle cx="12" cy="4.5" r="1.4"/><path d="m9 20 3-6 3 6"/><path d="m6 8 6 2 6-2"/><path d="M12 10v4"/></svg>Composition corporelle</summary><div class="acc-inner">
       <div class="two-col">
         <div class="fg"><label>Tour de cou (cm)</label><input type="number" id="neck-inp" placeholder="37" step="0.5" inputmode="decimal" oninput="renderBFCard()"></div>
@@ -927,7 +995,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       <div id="morpho-desc" style="display:none;font-size:12px;color:var(--t2);padding:8px 10px;background:var(--bg3);border-radius:8px;line-height:1.5;"></div>
       </div></details>
       <details class="acc"><summary class="acc-h"><svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;flex-shrink:0;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7Z"/><path d="M3.5 12H8l1.5-3 3 6 2-4.5 1 1.5h5"/></svg>Santé</summary><div class="acc-inner">
-      <div style="font-size:12px;color:var(--t3);">Utilisé par le Coach IA pour adapter tes conseils et éviter les contre-indications.</div>
+      <div style="font-size:12px;color:var(--t3);">Utilisé par le Coach IA pour adapter tes conseils et éviter les contre-indications. 🛡️ <b>C'est ici que Milo (le Gardien) veille sur ta sécurité</b> — renseigne tes blessures, zones fragiles et pathologies (arthrose…).</div>
       <div style="font-size:11px;color:var(--t3);line-height:1.5;background:rgba(255,159,10,.08);border:1px solid rgba(255,159,10,.25);border-radius:8px;padding:8px 10px;margin:8px 0;">⚕️ <strong style="color:var(--orange);">Informations optionnelles et privées.</strong> 🔒 Visibles <strong>seulement par toi</strong>. Elles sont enregistrées sur <strong>ton téléphone</strong> et dans <strong>ta sauvegarde personnelle</strong> (liée à ton email), et servent uniquement à personnaliser tes conseils et éviter les mouvements à risque. Le Coach <strong>ne pose jamais de diagnostic</strong> et <strong>ne remplace pas un médecin</strong> — en cas de doute ou de douleur, consulte un professionnel de santé.</div>
       <div id="health-section"></div>
       </div></details>
@@ -999,9 +1067,25 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       <div class="coach-header-sub">Ton coach IA · S'adapte à toi</div>
     </div>
     <div id="coach-quota-badge"></div>
+    <button id="coach-hist-btn" onclick="openCoachConvs()" aria-label="Mes discussions" title="Mes discussions" style="display:none;background:var(--bg2);border:none;width:38px;height:38px;border-radius:12px;color:var(--t2);cursor:pointer;flex-shrink:0;align-items:center;justify-content:center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    </button>
     <button id="coach-new-btn" onclick="newCoachChat()" aria-label="Nouvelle discussion" title="Nouvelle discussion" style="display:none;background:var(--bg2);border:none;width:38px;height:38px;border-radius:12px;color:var(--t2);cursor:pointer;flex-shrink:0;align-items:center;justify-content:center;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
     </button>
+  </div>
+
+  <!-- HISTORIQUE DES DISCUSSIONS (Coach) -->
+  <div class="overlay" id="ov-coach-convs" onclick="if(event.target===this)closeCoachConvs()">
+    <div class="modal" style="max-width:430px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div style="font-size:18px;font-weight:900;color:var(--t1);display:flex;align-items:center;gap:8px;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Mes discussions</div>
+        <button onclick="closeCoachConvs()" style="background:none;border:none;color:var(--t2);font-size:24px;cursor:pointer;line-height:1;padding:0 4px;">✕</button>
+      </div>
+      <div style="font-size:12.5px;color:var(--t3);line-height:1.5;margin-bottom:12px;">Tes anciennes discussions avec Milo. Tape pour en rouvrir une, ✕ pour la supprimer. Milo garde de toute façon l'essentiel en mémoire.</div>
+      <div id="coach-convs-list" style="display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto;"></div>
+    </div>
   </div>
 
   <!-- MURAL PREMIUM (affiché quand quota atteint) -->
@@ -1322,6 +1406,23 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
   </div>
 </div>
 
+<!-- Pop testeurs : état du jour (brique 3B) — informer + demander un retour (une seule fois) -->
+<div class="overlay" id="ov-tester-3b" style="z-index:500;">
+  <div class="modal" style="max-width:410px;text-align:center;">
+    <div style="display:inline-block;background:rgba(255,45,85,.14);color:var(--red);font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 12px;border-radius:20px;">🧪 Test testeurs</div>
+    <div style="font-size:28px;margin-top:14px;">🌡️</div>
+    <div style="font-size:21px;font-weight:900;color:var(--t1);margin-top:6px;">Comment tu te sens aujourd'hui ?</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:10px;">Tout en haut de l'écran <b style="color:var(--t1);">Accueil</b>, une nouvelle carte : tape ton <b style="color:var(--t1);">énergie du jour</b> (😴 → ⚡) et coche une <b style="color:var(--t1);">zone qui te fait mal</b> aujourd'hui (dos, épaule, genou…).</div>
+    <div style="font-size:13.5px;line-height:1.6;color:var(--t2);margin-top:14px;background:var(--bg3);border-radius:12px;padding:12px 14px;text-align:left;">
+      <b style="color:var(--t1);">Ce qu'on aimerait que tu vérifies :</b><br>
+      • Si tu coches une <b style="color:var(--t1);">douleur</b>, ton score de récup <b style="color:var(--t1);">ne chute pas</b> — il affiche juste un ⚠️ « échauffe-toi bien, tu peux t'entraîner ».<br>
+      • <b style="color:var(--t1);">Milo</b> voit ce que tu coches : demande-lui un conseil et regarde s'il <b style="color:var(--t1);">protège bien la zone</b> signalée.
+    </div>
+    <div style="font-size:13px;line-height:1.55;color:var(--t3);margin-top:14px;">💬 Ton avis compte : dis-nous si ça te paraît juste via <b style="color:var(--t2);">Menu → Espace Testeur → Boîte à idées</b> 🙏</div>
+    <button class="btn btn-red" onclick="closeTester3B()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">C'est noté 👍</button>
+  </div>
+</div>
+
 <!-- ESPACE TESTEUR (super testeur) : analyse photos approfondie + boîte à idées -->
 <div class="overlay" id="ov-tester-space" style="z-index:480;" onclick="if(event.target===this)closeTesterSpace()">
   <div class="modal" style="max-width:430px;">
@@ -1345,6 +1446,28 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
 </div>
 
 <!-- MODAL: Post-workout check-in -->
+<!-- ÉCRAN DE FIN DE SÉANCE (le « moment signature » — exos + chiffres + débrief Milo + ressenti) -->
+<div class="overlay" id="ov-session-end" data-no-dismiss>
+  <div class="modal se-modal">
+    <div class="se-hd">
+      <div class="se-badge">🏁</div>
+      <div>
+        <div class="se-ttl">Séance terminée</div>
+        <div class="se-sub" id="se-sub"></div>
+      </div>
+    </div>
+    <div class="se-stats" id="se-stats"></div>
+    <div class="se-exs" id="se-exs"></div>
+    <div class="se-debrief-wrap">
+      <div class="se-debrief-hd"><span class="se-milo-av"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Milo débriefe ta séance</div>
+      <div class="se-debrief" id="se-debrief"></div>
+    </div>
+    <div class="se-mood" id="se-mood"></div>
+    <button class="btn btn-red" onclick="closeSessionEnd()" style="width:100%;margin-top:14px;padding:14px;font-size:16px;">Terminer</button>
+    <button class="btn btn-bg2" onclick="closeSessionEnd('coach')" style="width:100%;margin-top:8px;padding:12px;font-size:14px;">💬 Continuer avec Milo</button>
+  </div>
+</div>
+
 <div class="overlay" id="mod-checkin">
   <div class="modal" style="text-align:center;">
     <div class="modal-handle"></div>
@@ -2281,6 +2404,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       <div class="menu-row" onclick="openDrawerContent('supplements')"><div class="menu-row-ic" style="background:rgba(168,85,247,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A855F7" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></div><span class="menu-row-lbl">Compléments alimentaires</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" onclick="openDrawerContent('rm1calc')"><div class="menu-row-ic" style="background:rgba(91,168,255,.1);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="14" y2="14"/></svg></div><span class="menu-row-lbl">Calculateur 1RM</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" id="menu-row-appguide" onclick="openAppGuide()"><div class="menu-row-ic" style="background:rgba(91,168,255,.14);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8FF" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M10 8.5v3l3-1.5-3-1.5z" fill="#5BA8FF"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><span class="menu-row-lbl">Guide de l'application</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+      <div class="menu-row" id="menu-row-miloknows" onclick="closeMenuDrawer();openMiloKnows()"><div class="menu-row-ic" style="background:rgba(239,62,87,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2z"/><line x1="9.5" y1="22" x2="14.5" y2="22"/></svg></div><span class="menu-row-lbl">Ce que Milo sait de toi</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" onclick="openDrawerContent('guide')"><div class="menu-row-ic" style="background:rgba(255,109,0,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF6D00" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div><span class="menu-row-lbl">Guide de la muscu</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
       <div class="menu-row" onclick="closeMenuDrawer();goScreen('cycle',null)"><div class="menu-row-ic" style="background:rgba(239,62,87,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></div><span class="menu-row-lbl">Cycle de force</span><svg class="menu-row-arr" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
     </div>

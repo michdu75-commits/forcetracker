@@ -996,26 +996,12 @@ function initOnboarding(){
   if(_obgr)_obgr.style.display=((typeof _isNutriBeta==='function')&&_isNutriBeta())?'':'none';
   const emailInp=document.getElementById('ob-email');
   if(emailInp){emailInp.setAttribute('enterkeyhint','done');emailInp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obDoRestore();}});}
-  // step 3 : prénom → age → taille → poids → naissance → poids visé en chaîne
-  const ob3=[['ob-name','ob-age'],['ob-age','ob-ht'],['ob-ht','ob-bw'],['ob-bw','ob-bday'],['ob-bday','ob-target'],['ob-target',null]];
-  // Naissance : insertion auto du "/" après le jour (JJ → JJ/)
-  const obBd=document.getElementById('ob-bday');
-  if(obBd)obBd.addEventListener('input',e=>{
-    let v=e.target.value.replace(/[^\d/]/g,'');
-    if(v.length===2&&e.target.value.length>obBd._prevLen)v=v+'/';
-    obBd._prevLen=v.length;e.target.value=v.slice(0,5);
-  });
-  ob3.forEach(([id,nextId])=>{
-    const inp=document.getElementById(id);
-    if(!inp)return;
-    inp.setAttribute('enterkeyhint',nextId?'next':'done');
-    inp.addEventListener('keydown',e=>{
-      if(e.key!=='Enter')return;
-      e.preventDefault();
-      if(nextId){const n=document.getElementById(nextId);if(n){n.focus();n.select&&n.select();}}
-      else obNext(2);
-    });
-  });
+  // étape 3 « on se présente » : prénom → Continuer (le reste = collecte paresseuse)
+  const nameInp=document.getElementById('ob-name');
+  if(nameInp){
+    nameInp.setAttribute('enterkeyhint','done');
+    nameInp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); obNext(4); } });
+  }
   const emailFinal=document.getElementById('ob-email-final');
   if(emailFinal){emailFinal.setAttribute('enterkeyhint','done');emailFinal.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();obCheckEmailAndFinish();}});}
   _initOb0();
@@ -1029,43 +1015,68 @@ function obGoTo(step){
   if(next){next.classList.add('ob-active');}
   if(step===5){const ef=document.getElementById('ob-email-final');if(ef&&S.email)ef.value=S.email;}
   _obStep=step;
-  // ordre d'affichage : ob-1 (compte) → ob-3 (profil) → ob-2 (niveau) → ob-4 (objectif) → ob-5 (email)
-  const dotMap={1:1,3:2,2:3,4:4,5:5};
+  // ordre : ob-1 (compte) → ob-3 (prénom+sexe) → ob-4 (objectif) → ob-2 (niveau) → ob-6 (blessure) → ob-5 (email)
+  const dotMap={1:1,3:2,4:3,2:4,6:5,5:6};
   const dotNum=dotMap[step]||0;
-  for(let i=1;i<=5;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',dotNum>0&&i===dotNum);}
+  for(let i=1;i<=6;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',dotNum>0&&i===dotNum);}
 }
 
 function obNext(step){
   if(_obStep===3){
+    // On se présente : prénom + sexe seulement (âge/taille/poids → collecte paresseuse)
     const name=(document.getElementById('ob-name').value||'').trim();
     if(name){
       S.name=name;
       const cta=document.getElementById('ob-cta-title');
       if(cta)cta.textContent='C\'est parti, '+name+' !';
     }
-    const age=parseInt(document.getElementById('ob-age').value)||0;
-    const ht=parseFloat(document.getElementById('ob-ht').value)||0;
-    const bw=parseFloat(document.getElementById('ob-bw').value)||0;
     S.gender=_obGender;
-    if(age>=14&&age<=80)S.age=age;
-    if(ht>=100&&ht<=250)S.height=ht;
-    if(bw>=20&&bw<=300){S.bw=bw;}
-    // Nouveaux champs (onboarding enrichi) — tous optionnels
-    const tw=parseFloat((document.getElementById('ob-target')||{}).value)||0;
-    if(tw>=20&&tw<=300)S.targetWeight=tw;
-    const bd=((document.getElementById('ob-bday')||{}).value||'').trim();
-    if(/^\d{1,2}\/\d{1,2}$/.test(bd))S.bday=bd;
   }else if(_obStep===2){
     // étape Niveau (son propre écran) — le niveau est déjà posé par obSetLevel
     if(_obLevel)S.level=_obLevel;
   }else if(_obStep===4){
     S.goal=_obGoal;
+  }else if(_obStep===6){
+    // étape Blessure/zone fragile → Profil Santé (le Gardien la lira)
+    _obApplyInjuries();
   }
   if(step===5){
     const emailSec=document.getElementById('ob-email-section');
     if(emailSec)emailSec.style.display='';
   }
   obGoTo(step);
+}
+// Blessure à l'inscription (optionnel) : zones stockées dans S.healthProfile.notes → le Gardien les protège
+const _OB_INJ_BTN={'épaule':'ob-inj-epaule','trapèze':'ob-inj-trapeze','nuque':'ob-inj-nuque','pectoraux':'ob-inj-pectoraux','coude':'ob-inj-coude','poignet':'ob-inj-poignet','bas du dos':'ob-inj-dos','abdos':'ob-inj-abdos','hanche':'ob-inj-hanche','fessier':'ob-inj-fessier','cuisse':'ob-inj-cuisse','ischio':'ob-inj-ischio','adducteur':'ob-inj-adducteur','genou':'ob-inj-genou','mollet':'ob-inj-mollet','cheville':'ob-inj-cheville'};
+// Zones latérales (peuvent avoir un côté gauche/droite/les deux) — les centrales (nuque, bas du dos, abdos) n'en ont pas.
+const _OB_INJ_LAT={'épaule':1,'trapèze':1,'pectoraux':1,'coude':1,'poignet':1,'hanche':1,'fessier':1,'cuisse':1,'ischio':1,'adducteur':1,'genou':1,'mollet':1,'cheville':1};
+let _obInjuries=[];
+let _obInjSide={}; // zone -> 'L'|'R'|'both'
+function obToggleInjury(zone){
+  if(zone==='none'){_obInjuries=[];_obInjSide={};}
+  else{const i=_obInjuries.indexOf(zone);if(i>=0){_obInjuries.splice(i,1);delete _obInjSide[zone];}else{_obInjuries.push(zone);if(_OB_INJ_LAT[zone])_obInjSide[zone]='both';}}
+  const none=document.getElementById('ob-inj-none');if(none)none.classList.toggle('ob-sel',_obInjuries.length===0);
+  Object.keys(_OB_INJ_BTN).forEach(z=>{const el=document.getElementById(_OB_INJ_BTN[z]);if(el)el.classList.toggle('ob-sel',_obInjuries.indexOf(z)>=0);});
+  _obRenderInjSide();
+}
+function obSetInjSide(zone,side){_obInjSide[zone]=side;_obRenderInjSide();}
+function _obRenderInjSide(){
+  const box=document.getElementById('ob-inj-side');if(!box)return;
+  const lat=_obInjuries.filter(z=>_OB_INJ_LAT[z]);
+  if(!lat.length){box.innerHTML='';return;}
+  const rows=lat.map(z=>{
+    const cur=_obInjSide[z]||'both';
+    const b=(val,lbl)=>'<button class="ds-side'+(cur===val?' on':'')+'" onclick="obSetInjSide(\''+z+'\',\''+val+'\')">'+lbl+'</button>';
+    return '<div class="ds-siderow"><span class="ds-sidelbl" style="text-transform:capitalize;">'+z+'</span>'+b('L','G')+b('R','D')+b('both','Les 2')+'</div>';
+  }).join('');
+  box.innerHTML='<div class="ds-sub" style="margin-top:12px;text-align:left;">Un côté en particulier ?</div>'+rows;
+}
+function _obApplyInjuries(){
+  if(!_obInjuries.length)return;
+  S.healthProfile=S.healthProfile||{};
+  const parts=_obInjuries.map(z=>{const s=_obInjSide[z];return z+(s==='L'?' (côté gauche)':s==='R'?' (côté droit)':'');});
+  const txt='Zones fragiles : '+parts.join(', ')+'.';
+  S.healthProfile.notes=S.healthProfile.notes?(S.healthProfile.notes+' '+txt):txt;
 }
 
 function obSetGender(g){
@@ -1167,7 +1178,7 @@ function finishOnboarding(){
   persist();
   if(S.email&&S.url&&!_obDataRestored){
     // Nouveau profil uniquement — si restauration depuis cloud, on ne réécrit JAMAIS le Sheet
-    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,authCode:_authCode(),welcome:true};
+    const p={action:'saveProfile',email:S.email,name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,level:S.level||'',targetWeight:S.targetWeight||0,bday:S.bday||'',activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,neck:S.neck,waist:S.waist,hip:S.hip,nutritionPhase:S.nutritionPhase,barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',customExercises:S.customExercises,healthProfile:S.healthProfile,authCode:_authCode(),welcome:true};
     fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(p)}).catch(()=>{});
     // Confirmation d'email (soft) : on envoie un code en fond — l'inscription n'est JAMAIS bloquée
     if(!S.emailVerified){ try{ _sendEmailConfirm(true); }catch(e){} }
@@ -1525,6 +1536,9 @@ function exitDemoMode(){
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
 // Guide-film : chaque slide = un vrai écran de l'app (../guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
+  {icon:'🧭', t:'Tu ne repars jamais de zéro', cap:'Chaque séance, chaque record, chaque sensation s\'inscrit dans <b>ton histoire</b>. Force Tracker s\'en souvient pour toi — et <b>plus tu l\'utilises, plus il t\'aide à progresser</b>. Ce n\'est pas une appli de muscu de plus : c\'est <b>ta mémoire sportive</b>.'},
+  {icon:'🤖', t:'Un coach qui te connaît vraiment', cap:'<b>Milo</b> répond à tes questions, te fait des programmes, des conseils — en tenant compte de <b>TOI</b> (ton profil, tes séances, ton ressenti) et de <b>ta vie</b>. Sa règle : <b>t\'aider à continuer, jamais te bloquer</b>. Il protège tes zones fragiles, et plus tu l\'utilises, mieux il te connaît.'},
+  {icon:'🔒', t:'Ton histoire t\'appartient', cap:'Force Tracker ne garde pas juste des chiffres : il construit <b>ton histoire sportive</b>. Et elle est <b>à toi</b> — tes séances, tes progrès, tes infos restent <b>privés</b>, utilisés seulement pour t\'aider à progresser. Tu peux même <b>protéger ton compte avec un code perso</b>.'},
   {img:'../guide/home.jpg',       tap:[.5,.945],  t:'Ton accueil',            cap:'Tes stats du mois et ta <b>récup du jour</b> d\'un coup d\'œil. Juste en dessous, note ton <b>sommeil</b> (et son <b>historique</b>). Le gros <b>+</b> démarre une séance.'},
   {img:'../guide/profil.jpg',     tap:[.5,.60],   t:'Remplis bien ton profil ⭐', cap:'<b>Le plus important !</b> Plus ton profil est complet, plus <b>Milo, ton coach IA</b>, est précis et personnalisé (récup et calories aussi). Un <b>% de remplissage</b> t\'aide à ne rien oublier.'},
   {img:'../guide/seance.jpg',     tap:[.875,.305],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche. Tes <b>records</b> se calculent tout seuls.'},
@@ -1567,9 +1581,9 @@ function _renderAppGuide(){
   const set=(id,html,prop)=>{const el=document.getElementById(id);if(el)el[prop||'textContent']=html;};
   const phone=document.getElementById('ag-phone'),prem=document.getElementById('ag-premium');
   const img=document.getElementById('ag-img'),tap=document.getElementById('ag-tap');
-  if(s.premium||s.secure){
+  if(s.premium||s.secure||s.icon){
     if(phone)phone.style.display='none';
-    if(prem){prem.style.display='flex';prem.textContent=s.secure?'🔒':'⭐';}
+    if(prem){prem.style.display='flex';prem.textContent=s.icon?s.icon:(s.secure?'🔒':'⭐');}
   } else {
     if(prem)prem.style.display='none';
     if(phone)phone.style.display='block';
@@ -2235,6 +2249,7 @@ checkEmmaWelcome(); // pop perso Emma : bienvenue Espace Testeur + boîte à id�
 checkTesterGuide(); // guide testeuses (Eline, Emma, Tanna) : tour de l'app + boîte à idées (une seule fois)
 checkAnnouncements(); // pop perso Christophe + « Quoi de neuf » pour tous (une seule fois)
 checkTesterEq();      // pop testeurs : différenciation des types de matériel (test, une seule fois)
+checkTester3B();      // pop testeurs : état du jour (brique 3B) — informer + demander un retour (une seule fois)
 // checkBirthdayDedication(); // 🗄️ Anniversaire Eline archivé (passé) — code + overlay #ov-bday conservés, réactiver en décommentant
 initCoachInput();
 initOnboarding();
@@ -2279,7 +2294,7 @@ function checkTesterGuide(){
 }
 function showTesterGuide(){
   // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
-  var busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-billoute','ov-bday','ov-tester-eq'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  var busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-billoute','ov-bday','ov-tester-eq','ov-tester-3b'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
   if(busy){setTimeout(showTesterGuide,2500);return;}
   var span=document.getElementById('tguide-name');
   if(span){var f=((S.name||'').trim().split(/\s+/)[0]||'').replace(/[<>&]/g,'');span.textContent=f?(', '+f):'';}
@@ -2354,11 +2369,26 @@ function checkTesterEq(){
 }
 function showTesterEq(){
   // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
-  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-billoute','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-billoute','ov-bday','ov-tester-3b'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
   if(busy){setTimeout(showTesterEq,2500);return;}
   const o=document.getElementById('ov-tester-eq');if(o)o.classList.add('open');
 }
 function closeTesterEq(){try{localStorage.setItem('ft4_tester_eq_v1','1');}catch(e){}const o=document.getElementById('ov-tester-eq');if(o)o.classList.remove('open');}
+// ─── Pop testeurs : état du jour (brique 3B) — informer + demander un retour (une seule fois) ──
+function checkTester3B(){
+  try{
+    if(!(typeof _isTester==='function'&&_isTester()))return;       // testeurs récompensés uniquement
+    if(localStorage.getItem('ft4_tester_3b_v1'))return;            // déjà vu
+    setTimeout(showTester3B,1600);
+  }catch(e){}
+}
+function showTester3B(){
+  // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
+  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-tester-eq','ov-billoute','ov-christophe-photos','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  if(busy){setTimeout(showTester3B,2500);return;}
+  const o=document.getElementById('ov-tester-3b');if(o)o.classList.add('open');
+}
+function closeTester3B(){try{localStorage.setItem('ft4_tester_3b_v1','1');}catch(e){}const o=document.getElementById('ov-tester-3b');if(o)o.classList.remove('open');}
 function openTesterSpace(){
   // L'Espace Testeur (dont la boîte à idées) est ouvert à TOUS les testeurs récompensés.
   // Le suivi photos à l'intérieur reste réservé aux super testeurs (voir _renderTesterSpace).
@@ -2427,21 +2457,24 @@ async function sendTesterIdea(){
   S.testerIdeas=S.testerIdeas||[];
   S.testerIdeas.push({text:txt||'(photos jointes)',date:new Date().toLocaleDateString('fr-FR'),photos:nPhotos,sent:true});
   persist();
-  // Envoi serveur : texte + photos → mail à Michel AVEC les photos en pièces jointes (fix #13)
-  let ok=false;
+  // Envoi serveur en NO-CORS (fiable comme _cloudSync — passe en wifi ET en 4G/5G) : texte + photos
+  // ENSEMBLE, en 1 seul envoi. ⚠️ Bug Christophe : avant, un fetch CORS lisait la réponse et
+  // échouait sur certains réseaux → repli `mailto` qui NE PEUT PAS joindre de pièce jointe (photos
+  // absentes du mail). En no-cors, le backend reçoit bien les images et les met en pièces jointes.
+  let sent=false;
   try{
-    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    await fetch(S.url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'testerIdea',email:S.email||'',name:who,text:txt||'(photos jointes)',photos:images.length,images,date:new Date().toISOString()})});
-    const d=await r.json(); ok=!!(d&&d.status==='ok');
-  }catch(e){ ok=false; }
+    sent=true;
+  }catch(e){ sent=false; }
   _testerIdeaFiles=[];
   if(inp)inp.value=''; _renderTesterSpace();
-  if(ok){
+  if(sent){
     toast(nPhotos?('Idée + '+nPhotos+' photo'+(nPhotos>1?'s':'')+' envoyées à Michel ✅'):'Idée envoyée à Michel ✅','success');
   }else{
-    // Repli : mail texte si le serveur est injoignable (au moins l'idée part)
+    // Réseau totalement HS → repli mail TEXTE (le mailto ne peut pas porter les photos).
     _testerIdeaMailto('💡 Idée Force Tracker — '+who,'Idée de '+who+' ('+(S.email||'')+') :\n\n'+(txt||'(voir photos)')+'\n\n— boîte à idées Force Tracker',nPhotos);
-    toast('Serveur injoignable — idée envoyée par mail (texte)','info');
+    toast('Réseau injoignable — idée envoyée par mail (texte, ajoute la photo à la main)','info');
   }
 }
 // Partage optionnel des photos/captures (bouton séparé) — l'utilisateur choisit Mail/Messages.
@@ -2458,6 +2491,40 @@ function _testerIdeaMailto(subject,bodyM,nPhotos){
   let b=bodyM; if(nPhotos)b+='\n\n('+nPhotos+' photo'+(nPhotos>1?'s':'')+' à joindre depuis ta galerie)';
   const mail='mailto:'+TESTER_FEEDBACK_EMAIL+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(b);
   try{window.location.href=mail;}catch(e){}
+}
+// ── ADMIN : lecteur d'idées reçues (Michel lit tout le texte SANS ouvrir ses mails) ──
+// Les photos NE SONT PAS stockées côté serveur (seulement leur nombre) → elles restent
+// dans la boîte forcetracker.app@gmail.com. Le lecteur affiche le texte + « 📎 N photo(s) → mail ».
+function _escIdea(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+async function loadTesterIdeasAdmin(){
+  const box=document.getElementById('admin-ideas-list');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Chargement des idées…</div>';
+  try{
+    const url=S.url+'?action=getIdees&token=FT_IDEES_2026';
+    const r=await fetch(url,{method:'GET'});
+    const d=await r.json();
+    if(!d||d.status!=='ok'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Erreur : '+_escIdea(d&&d.error||'inconnue')+' — réessaie.</div>'; return; }
+    const arr=(d.ideas||[]).slice().reverse(); // plus récentes en haut
+    if(!arr.length){ box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Aucune idée reçue pour l\'instant.</div>'; return; }
+    let h='<div style="font-size:11.5px;color:var(--t3);margin:2px 0 8px;">'+arr.length+' idée'+(arr.length>1?'s':'')+' — la plus récente en haut</div>';
+    arr.forEach(it=>{
+      const nph=+(it.photos||0);
+      h+='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:10px 12px;margin-bottom:8px;">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;">'
+        +'<div style="font-weight:700;color:var(--t1);font-size:13px;">'+_escIdea(it.name||'Testeur')+'</div>'
+        +'<div style="font-size:11px;color:var(--t3);white-space:nowrap;">'+_escIdea(it.date||'')+'</div>'
+        +'</div>'
+        +(it.email?'<div style="font-size:11px;color:var(--t3);margin-top:1px;">'+_escIdea(it.email)+'</div>':'')
+        +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin-top:6px;white-space:pre-wrap;">'+_escIdea(it.text||'')+'</div>'
+        +(nph>0?'<div style="font-size:11.5px;color:var(--gold);margin-top:6px;">📎 '+nph+' photo'+(nph>1?'s':'')+' → voir dans forcetracker.app@gmail.com</div>':'')
+        +'</div>';
+    });
+    box.innerHTML=h;
+  }catch(e){
+    box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réseau injoignable — réessaie (les idées restent lisibles dans ta boîte mail).</div>';
+  }
 }
 
 // ─── DÉDICACE ANNIVERSAIRE — Eline (2 juillet) ───────────────

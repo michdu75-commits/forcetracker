@@ -49,7 +49,7 @@ const EXLIB=[
   // Épaules + Trapèzes — figurines (lot 2026-07-06)
   {n:'Développé Épaules Kettlebell',g:'Épaules'}, {n:'Développé Landmine (Épaules)',g:'Épaules'}, {n:'Écarté Arrière Élastique',g:'Épaules'}, {n:'Élévation Frontale Allongée Barre',g:'Épaules'}, {n:'Élévation Latérale Poulie Inclinée',g:'Épaules'}, {n:'Élévation Latérale Landmine',g:'Épaules'}, {n:'Élévations Latérales Kettlebell',g:'Épaules'}, {n:'Rotation Interne Épaule Élastique',g:'Épaules'}, {n:'Face Pull Couché Poulie',g:'Épaules'}, {n:'Oiseau Poulie 45°',g:'Épaules'}, {n:'Passage d\'Épaule Élastique',g:'Épaules'}, {n:'Rotation Externe Épaule Abduction',g:'Épaules'}, {n:'Rotation Externe Épaule Élastique',g:'Épaules'}, {n:'Rotation Interne 90° Poulie',g:'Épaules'},
   // Épaules + Trapèzes — figurines 2e partie (lot 2026-07-06)
-  {n:'Élévation Frontale Banc Incliné',g:'Épaules'}, {n:'Élévation Latérale Inclinée Haltère',g:'Épaules'}, {n:'Rotation Externe Épaule Haltère',g:'Épaules'}, {n:'Tirage Menton Élastique',g:'Trapèzes'}, {n:'Thruster',g:'Full Body'}, {n:'Thruster Kettlebell',g:'Full Body'}, {n:'Russian Twist Développé Épaules',g:'Abdominaux'},
+  {n:'Élévation Frontale Banc Incliné',g:'Épaules'}, {n:'Élévation Latérale Inclinée Haltère',g:'Épaules'}, {n:'Rotation Externe Épaule Haltère',g:'Épaules'}, {n:'Tirage Menton Élastique',g:'Trapèzes'}, {n:'Thruster',g:'Full Body'}, {n:'Thruster Kettlebell',g:'Full Body'}, {n:'Russian Twist Développé Épaules',g:'Abdominaux'}, {n:'Développé Épaules Assis Machine (Shoulder Press)',g:'Épaules'},
   // ── Biceps ─────────────────────────────────────────────────
   {n:'Curl Barre',g:'Biceps'},{n:'Curl Haltères',g:'Biceps'},{n:'Curl Poulie',g:'Biceps'},
   {n:'Curl EZ',g:'Biceps'},{n:'Curl Barre EZ Prise Large',g:'Biceps'},
@@ -170,6 +170,8 @@ const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
 const NEW_FEATURES=[
   // Accueil
   {id:'home-calendar', screen:'home', desc:'Nouveau : un calendrier de ton mois sur l\'Accueil — tes jours de séance en rouge, les jours de RECORD cerclés en or. Navigue sur les mois, tape une semaine pour le détail'},
+  {id:'day-state', screen:'home', spot:'home-daystate', desc:'Nouveau : « Comment tu te sens aujourd\'hui ? » — indique ton énergie et une éventuelle douleur du jour ; Milo adapte ses conseils et protège la zone douloureuse'},
+  {id:'day-pain-detail', screen:'home', spot:'home-daystate', desc:'Nouveau : plus de zones de douleur (trapèze, cuisse, ischio, mollet…) + précise le côté (gauche/droite/les deux)'},
   // Séance
   {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
@@ -197,13 +199,17 @@ const NEW_FEATURES=[
   {id:'coach-quiz',  screen:'coach', spot:'coach-quiz-card', desc:'Nouveau : réponds au questionnaire « Milo apprend à te connaître » (gratuit, ça ne compte pas dans tes questions) — Milo te donne des conseils bien plus personnalisés'},
   {id:'milo-natural',screen:'coach', desc:'Nouveau : Milo (Coach IA) tient compte de l\'heure qu\'il est et du temps écoulé depuis votre dernière discussion — il t\'accueille naturellement'},
   {id:'milo-coach-pro',screen:'coach', desc:'Nouveau : Milo coache comme un vrai coach — il t\'évalue, croise tes données, justifie ses choix et s\'adapte à ta vie (horaires, travail, temps)'},
+  {id:'gardien-securite',screen:'coach', desc:'Nouveau : Milo veille sur ta sécurité — il tient compte en priorité de ta santé et de tes zones fragiles, et ADAPTE au lieu d\'interdire. Renseigne-les dans Profil → Santé'},
   // Profil (setup) — anchor = id de la ligne de menu où le point rouge s'affiche (ici la carte Profil)
   {id:'morpho-setup',screen:'setup', anchor:'menu-row-profil', desc:'Section morphologie dans Profil'},
   {id:'discipline',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : choisis ta Discipline (muscu, bodybuilding, force athlé, haltéro) — le Coach s\'y adapte'},
   {id:'profil-accordion',screen:'setup', anchor:'menu-row-profil', desc:'Profil réorganisé en sections repliables'},
   {id:'level-evolutif',screen:'setup', anchor:'menu-row-profil', desc:'Ton niveau (débutant/intermédiaire/confirmé) dans Profil → Discipline — le Coach s\'adapte et ton niveau évolue tout seul avec tes séances'},
+  {id:'adn-sportif', screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : « Mon ADN sportif » dans ton Profil — dis à Milo ce qui te caractérise durablement (motivation, mode de vie, préférences, expérience) pour des conseils vraiment personnels'},
   {id:'work-actif',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : niveau de travail « Actif » (serveuse, infirmier, vendeur : debout + en déplacement) dans ton Profil — tes calories et macros sont plus justes'},
   {id:'app-guide',   screen:'setup', anchor:'menu-row-appguide', desc:'Nouveau : Menu → « Guide de l\'application » — un diaporama qui explique comment marche l\'app (séance, programmes, Milo, photos…)'},
+  {id:'milo-knows',  screen:'setup', anchor:'menu-row-miloknows', desc:'Nouveau : Milo apprend à te connaître — il te pose de petites questions sur l\'Accueil, et tu retrouves tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi »'},
+  {id:'coach-history', screen:'coach', desc:'Nouveau : Milo se souvient de vos échanges (même en gratuit) + le bouton « + » range tes discussions dans « Mes discussions » (icône horloge) au lieu de les effacer'},
   // Nutrition — spot = onglet où poser le point rouge « ici »
   {id:'food-journal', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : Journal alimentaire — note tes repas et suis tes calories/macros du jour vs ton objectif'},
   {id:'food-barcode', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : scan d\'un code-barres dans le journal — le produit est reconnu automatiquement (base mondiale)'},
@@ -225,9 +231,16 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v17/18/19 + WHATS_NEW_MAX=19) quand on ouvre à tout le monde.
-//    (v15 = pop-up d'excuses réseau 4G ; v16 = sommeil sur l'Accueil + historique — déjà pour tout le monde.)
+//    à RÉACTIVER (remettre les 3 entrées en v27/28/29 + WHATS_NEW_MAX=29) quand on ouvre à tout le monde.
+//    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:26, ic:'🏁', t:'Ton écran de fin de séance', d:'Dès que tu termines une séance, tu arrives sur un vrai écran de bilan : tes exercices (avec leurs images), tes chiffres (volume, records battus 🏆, durée, calories)… et juste en dessous, MILO DÉBRIEFE TA SÉANCE tout seul — pas un « Bravo » générique, mais une vraie analyse (progression, points d\'attention, et un objectif concret pour la prochaine fois). Puis il te demande comment tu t\'es senti. L\'impression qu\'un vrai coach vient de regarder ta séance. 🏁'},
+  {v:25, ic:'🎯', t:'Tes douleurs, en plus précis', d:'La carte « Comment tu te sens aujourd\'hui ? » (sur l\'Accueil) et l\'écran des blessures à l\'inscription reconnaissent maintenant BEAUCOUP plus de zones (trapèze, pectoraux, cuisse, ischio, fessier, adducteur, mollet, abdos… en plus des articulations). Et pour une zone comme le genou ou l\'épaule, tu peux préciser le CÔTÉ : gauche, droite ou les deux. Résultat : Milo protège encore plus finement la bonne zone. 🎯 (Merci Christophe pour l\'idée !)'},
+  {v:24, ic:'💬', t:'Tes discussions avec Milo sont gardées', d:'Deux nouveautés côté Coach 💬 : 1) Milo se souvient maintenant de l\'essentiel de vos échanges MÊME sans être Premium — il te connaît un peu plus à chaque conversation. 2) Le bouton « + » (nouvelle discussion) n\'efface plus rien : ta discussion en cours est RANGÉE dans « Mes discussions » (l\'icône horloge en haut du Coach). Tape-la pour la rouvrir quand tu veux, ✕ pour la supprimer. Fini les conversations perdues !'},
+  {v:20, ic:'🌡️', t:'Dis à Milo comment tu te sens aujourd\'hui', d:'Nouveau sur ton Accueil : une petite carte « Comment tu te sens aujourd\'hui ? » (optionnelle). En 1-2 taps, indique ton énergie du jour et, si besoin, une gêne ou une douleur (épaule, genou, dos…). Milo adapte alors ses conseils DU JOUR — et surtout, s\'il y a une douleur, il PROTÈGE cette zone en priorité (il allège ou propose une alternative, sans t\'interdire de bouger). Ça repart à zéro chaque jour, et le ressenti prime toujours. 🌡️'},
+  {v:19, ic:'🛡️', t:'Milo veille sur ta sécurité', d:'Milo tient maintenant compte EN PRIORITÉ de ta santé et de tes zones fragiles (épaule, genou, dos, arthrose…) avant de te conseiller. Sa règle d\'or : ADAPTER, jamais t\'interdire bêtement — il cherche toujours le moyen le MOINS contraignant de continuer à progresser en sécurité, et te propose des alternatives. 👉 Renseigne tes zones fragiles, vieilles blessures et soucis de santé dans Profil → Santé, pour qu\'il les protège. 🛡️'},
+  {v:18, ic:'🧠', t:'Milo apprend à te connaître', d:'Milo va commencer à te poser de petites questions sur ta page d\'Accueil (par ex. « tu t\'entraînes plutôt le matin, non ? »). À chaque fois que tu confirmes, il RETIENT — et ses conseils deviennent plus justes, plus personnels. Rien n\'est mémorisé sans ton accord : tu réponds « Oui, c\'est vrai » ou « Pas vraiment ». Et tu peux voir ou effacer tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi ». 🧠'},
+  {v:17, ic:'🧬', t:'Ton ADN sportif', d:'Nouveau dans ton Profil (Menu → Profil → « Mon ADN sportif ») : dis à Milo ce qui te caractérise DURABLEMENT dans ta façon de t\'entraîner — ta motivation profonde, ton mode de vie (temps, lieu, matériel), ce que tu aimes/détestes et ton expérience. Résultat : des conseils bien plus personnels et RÉALISTES (il ne te proposera pas une séance d\'1h30 si tu as 45 min, ni des squats si tu les détestes). Tout est optionnel et privé. 🧬'},
   {v:16, ic:'😴', t:'Ton sommeil sur l\'Accueil + son historique', d:'Le sommeil est maintenant sur la page d\'Accueil, juste sous ton score de récup (avant il était dans Séance et on ne le trouvait pas). Nouveau aussi : tu peux NOTER UN JOUR OUBLIÉ (choisis la date, ex. hier) et ouvrir « 📊 Historique du sommeil » → un petit graphique (7 ou 30 jours) + la liste nuit par nuit ; tape n\'importe quel jour pour l\'ajouter ou le corriger. 😴'},
   {v:15, ic:'🙏', t:'Petit souci réglé — merci de votre patience', d:'Ces derniers jours, les lectures par PHOTO (bilan de balance, code-barres, étiquette nutrition) et le Coach Milo pouvaient échouer quand tu n\'étais pas en wifi (4G/5G). Désolé pour la gêne ! 😅 C\'est RÉPARÉ ✅ — tout ça fonctionne maintenant PARTOUT, même sans wifi (à la salle, au magasin…). ⚠️ C\'est encore en cours de test : si tu remarques un souci, dis-le-nous (Menu → Espace testeur, ou par email). Merci de votre patience, et bon entraînement ! 💪'},
   {v:14, ic:'🧠', t:'Milo coache comme un vrai coach', d:'Ton Coach IA a franchi un cap : il RAISONNE comme un vrai coach. Il t\'évalue avant de te conseiller (et te pose des questions si besoin), croise tes records, ta morpho et ton bilan corporel, justifie ses choix, s\'adapte à ta vie (horaires, travail, temps dispo) et te dit la vérité sans langue de bois. Demande-lui un programme ou « pourquoi je stagne ? » — tu vas voir la différence !'},
@@ -245,7 +258,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=16;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v17/18/19)
+const WHATS_NEW_MAX=26;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v27/28/29)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

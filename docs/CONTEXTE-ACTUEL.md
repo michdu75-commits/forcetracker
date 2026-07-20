@@ -34,8 +34,15 @@
     SERT la feuille de route sans la remplacer. Détail : `DOSSIER-ATHLETE-SUIVI.md`.
     ✅ **FAIT (`ft-v505`)** : format persona **v1.0 (7 rubriques)** figé + **harnais VC** (injection
     sûre : gel + snapshot + `load()` → données réelles intactes, testé) + **VC-001 Tatiana bâti**.
-    ⏳ Reste : **Michel lance le run réel VC-001** (bouton admin « 🎭 Lancer VC-001 »), on lit la
-    réponse de Milo vs les attendus → verdict. Puis étoffer la bibliothèque (débutant/force/blessure…).
+  - **🎭 VC-001 — état (20/07) :** **le COMPORTEMENT de Milo est conforme** (runs 3→6 : 5/5 attendus —
+    il DEMANDE l'objectif, ne présume pas, n'invente pas « rattrape ton haut du corps »). MAIS les
+    runs sur l'iPhone de Michel **fuitent encore ses données dans le contexte** — non pas un bug du
+    code (v507 prouvé propre : git HEAD OK + Playwright 0 fuite), mais **iOS qui garde le vieux SW
+    v506 en service** malgré l'affichage « 507 ». **→ SOLUTION : le `/clone/` devient le labo**
+    (idée GPT). Le clone a un SW `cache:'no-store'` → exécute TOUJOURS le dernier code (aucune version
+    périmée) + isolation `cl_`. Clone régénéré depuis prod ft-v507 (porte le harnais VC/PT + le fix).
+    ⏳ **PROCHAIN PAS : Michel relance VC-001 sur l'URL du CLONE** (`…/forcetracker/clone/`) → run propre
+    garanti → **validation officielle de VC-001**. Puis étoffer la bibliothèque (débutant/force/blessure…).
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).

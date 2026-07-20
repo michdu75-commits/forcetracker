@@ -1431,6 +1431,92 @@ function computeRegistreFacts(){
     S.registre.updatedAt=today();
   }catch(e){console.warn('[FT registre] computeRegistreFacts',e);}
 }
+
+// ─── OBSERVATIONS DE MILO (Dossier Athlète, brique 5A) ────────────────────────
+// Milo REMARQUE une tendance ancrée dans les données → PROPOSE (hypothèse humble)
+// → l'utilisateur VALIDE → l'observation devient une mémoire durable réutilisée.
+// Rien n'est mémorisé sans validation. 4 règles ChatGPT : humilité, UNE à la fois,
+// le bon moment (assez de séances + espacement), seuil de confiance interne.
+// Chaque candidate a : ask (question montrée) + fact (phrase injectée à Milo si validée).
+function _obsCandidates(){
+  const out=[];
+  try{
+    const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts));
+    if(sess.length<4)return out; // le bon moment : pas avant 4 séances (baissé de 8 → 4 pour que Milo commence à apprendre plus tôt ; l'espacement 3 j + le seuil de confiance protègent la qualité)
+    const now=new Date(), dayMs=864e5, N=sess.length;
+    const sdate=s=>new Date(s.date?s.date+'T12:00:00':new Date(s.ts).toISOString());
+    // A) Semaine vs week-end
+    let we=0;sess.forEach(s=>{const d=sdate(s).getDay();if(d===0||d===6)we++;});
+    const weShare=we/N;
+    if(weShare<=0.12)out.push({key:'weekday_only',source:'jours',confidence:Math.min(1,0.72+(0.12-weShare)*2),ask:"J'ai l'impression que tu t'entraînes surtout en semaine, très rarement le week-end. C'est le cas ?",fact:"S'entraîne surtout en semaine, très rarement le week-end."});
+    else if(weShare>=0.6)out.push({key:'weekend_pref',source:'jours',confidence:Math.min(1,0.7+(weShare-0.6)),ask:"On dirait que le week-end est ton moment pour t'entraîner. Je me trompe ?",fact:"S'entraîne surtout le week-end."});
+    // B) Matin vs soir (via startHour, fallback heure du ts)
+    const hrs=sess.map(s=>{const h=(s.startHour!=null?s.startHour:new Date(s.ts||s.id||sdate(s)).getHours());return h;}).filter(h=>h>=0&&h<=23);
+    if(hrs.length>=4){
+      const mShare=hrs.filter(h=>h<12).length/hrs.length, eShare=hrs.filter(h=>h>=18).length/hrs.length;
+      if(mShare>=0.65)out.push({key:'morning',source:'horaires',confidence:Math.min(1,0.7+(mShare-0.65)),ask:"J'ai remarqué que tu t'entraînes plutôt le matin, on dirait. Ça te correspond ?",fact:"S'entraîne plutôt le matin."});
+      else if(eShare>=0.65)out.push({key:'evening',source:'horaires',confidence:Math.min(1,0.7+(eShare-0.65)),ask:"Tu sembles être plutôt du soir pour tes séances. C'est bien ça ?",fact:"S'entraîne plutôt le soir."});
+    }
+    // C) Haut vs bas du corps (via EXLIB)
+    const allEx=[...(typeof EXLIB!=='undefined'?EXLIB:[]),...(S.customExercises||[])];
+    const grpOf=n=>{const e=allEx.find(x=>x.n===n);return e?e.g:null;};
+    const UP=['Pectoraux','Dos','Trapèzes','Épaules','Biceps','Triceps','Avant-bras'],LO=['Jambes','Fessiers','Mollets'];
+    let up=0,lo=0;
+    sess.forEach(s=>(s.exs||s.exercises||[]).forEach(ex=>{
+      const done=(ex.sets||[]).some(st=>st&&st.done&&st.type!=='É'&&st.type!=='W');
+      if(!done)return;const g=grpOf(ex.name);if(!g)return;
+      if(UP.indexOf(g)>=0)up++;else if(LO.indexOf(g)>=0)lo++;
+    }));
+    if(up+lo>=20){
+      if(up>=lo*2.2)out.push({key:'upper_dom',source:'groupes',confidence:0.75,ask:"En regardant tes séances, tu travailles bien plus souvent le haut du corps que les jambes. C'est un choix, ou on rééquilibre un peu ?",fact:"Travaille beaucoup plus le haut du corps que les jambes."});
+      else if(lo>=up*2.2)out.push({key:'lower_dom',source:'groupes',confidence:0.75,ask:"Tu mets beaucoup l'accent sur les jambes par rapport au haut du corps, on dirait. C'est voulu ?",fact:"Met beaucoup l'accent sur les jambes par rapport au haut du corps."});
+    }
+    // D) Très régulier (10+ séances sur 28 jours)
+    const c28=sess.filter(s=>{const d=now-sdate(s);return d>=0&&d<=28*dayMs;}).length;
+    if(c28>=10)out.push({key:'very_regular',source:'régularité',confidence:0.75,ask:"T'es quelqu'un de très régulier — plusieurs séances par semaine sans lâcher. J'ai bon ?",fact:"Très régulier(e) : plusieurs séances par semaine, avec constance."});
+  }catch(e){console.warn('[FT obs] candidates',e);}
+  return out;
+}
+// Décide s'il faut PROPOSER une nouvelle observation (le bon moment + une à la fois + seuil de confiance).
+function maybeProposeObservation(){
+  try{
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    if(!Array.isArray(S.registre.observations))S.registre.observations=[];
+    const obs=S.registre.observations;
+    if(obs.some(o=>o&&o.status==='pending'))return;                 // une à la fois
+    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<4)return; // le bon moment (baissé de 8 → 4)
+    const last=S.registre.lastObsAt;                                 // espacement ≥ 3 jours
+    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<3)return;}
+    const known=new Set(obs.map(o=>o&&o.key));                       // ne jamais re-proposer une clé déjà décidée
+    const cands=_obsCandidates().filter(c=>c.confidence>=0.7&&!known.has(c.key));
+    if(!cands.length)return;
+    cands.sort((a,b)=>b.confidence-a.confidence);
+    const c=cands[0];
+    obs.push({id:'ob'+Date.now().toString(36),key:c.key,ask:c.ask,fact:c.fact,confidence:Math.round(c.confidence*100)/100,status:'pending',source:c.source,proposedAt:today()});
+    S.registre.lastObsAt=today();
+    persist();
+  }catch(e){console.warn('[FT obs] propose',e);}
+}
+function _pendingObs(){const o=(S.registre&&S.registre.observations)||[];return o.find(x=>x&&x.status==='pending')||null;}
+function _validatedObs(){const o=(S.registre&&S.registre.observations)||[];return o.filter(x=>x&&x.status==='validated');}
+function validateObs(id){
+  const o=(S.registre&&S.registre.observations)||[];const x=o.find(e=>e&&e.id===id);if(!x)return;
+  x.status='validated';x.validatedAt=today();persist();
+  if(typeof _renderObsCard==='function')_renderObsCard();
+  if(typeof toast==='function')toast('Milo te connaît un peu mieux 👊','success');
+}
+function rejectObs(id){
+  const o=(S.registre&&S.registre.observations)||[];const x=o.find(e=>e&&e.id===id);if(!x)return;
+  x.status='rejected';x.rejectedAt=today();persist();
+  if(typeof _renderObsCard==='function')_renderObsCard();
+  if(typeof toast==='function')toast("Noté, j'oublie ça.",'info');
+}
+function deleteObs(id){
+  if(!S.registre||!Array.isArray(S.registre.observations))return;
+  S.registre.observations=S.registre.observations.filter(o=>o&&o.id!==id);
+  persist();
+  if(typeof _renderMiloKnows==='function')_renderMiloKnows();
+}
 function renderWeightCorrelations(el,pts){
   if(!pts||pts.length<3){el.innerHTML='';return;}
   const cards=[];
@@ -1772,8 +1858,23 @@ function calcRecoveryDetail(){
     const dd=Math.floor((new Date()-new Date(ls0.date+'T12:00:00'))/864e5);
     if(dd<=1) energyAdj = ls0.checkin.energy<=1?-6 : ls0.checkin.energy===2?-3 : ls0.checkin.energy>=4?4 : 0;
   }
+  // État du jour ressenti (brique 3B). On SÉPARE deux natures (retour ChatGPT + Michel) :
+  //  • l'ÉNERGIE du jour est un signal de readiness → elle ajuste le score, en DOUCEUR
+  //    (😴 crevé = vraiment moins prêt ; ⚡ = un peu plus prêt).
+  //  • une DOULEUR/GÊNE n'est PAS un manque de récup → elle ne touche PAS le chiffre.
+  //    Elle devient un AVERTISSEMENT contextuel (bandeau ⚠️) : « adapter, pas interdire ».
+  let dayEnergyAdj=0, dayPains=[];
+  try{
+    const ds=S.dayState, tday=(typeof today==='function')?today():null;
+    if(ds&&(!tday||ds.date===tday)){
+      if(ds.energy!=null) dayEnergyAdj = ds.energy===0?-10 : ds.energy===1?-4 : ds.energy===3?4 : 0; // 😴 −10 · 😐 −4 · 🙂 0 · ⚡ +4
+      const _ZL={epaule:'épaule',trapeze:'trapèze',cervicales:'nuque',pectoraux:'pectoraux',coude:'coude',poignet:'poignet',lombaires:'bas du dos',abdos:'abdos',hanche:'hanche',fessier:'fessier',cuisse:'cuisse',ischio:'ischio',adducteur:'adducteur',genou:'genou',mollet:'mollet',cheville:'cheville'};
+      const _SW=s=>s==='L'?' (côté gauche)':s==='R'?' (côté droit)':'';
+      (ds.pains||[]).forEach(p=>{if(p&&p.zone)dayPains.push((_ZL[p.zone]||p.zone)+_SW(p.side));});
+    }
+  }catch(e){}
   const base=Math.round(wScore);
-  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj)));
+  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj+dayEnergyAdj)));
   // Détail des facteurs (pour afficher le « pourquoi » sous le score)
   const factors=[{ic:'😴',label:hasSleep?'Sommeil':'Récup de base',val:base,base:true}];
   if(sessAdj) factors.push({ic:sessAdj<0?'🏋️':'🛌',label:sessAdj<0?'Séance récente':'Repos',val:sessAdj});
@@ -1782,6 +1883,7 @@ function calcRecoveryDetail(){
   if(accumAdj) factors.push({ic:'🔥',label:'Jours enchaînés',val:accumAdj});
   if(smokerAdj) factors.push({ic:'🚬',label:'Tabac',val:smokerAdj});
   if(energyAdj) factors.push({ic:'⚡',label:'Énergie',val:energyAdj});
+  if(dayEnergyAdj) factors.push({ic:'🌡️',label:'Forme du jour',val:dayEnergyAdj});
   // Conseils pour remonter le score (les plus pertinents)
   const tips=[];
   if(!hasSleep) tips.push('💤 Renseigne ton sommeil pour un score personnalisé et plus précis.');
@@ -1792,8 +1894,9 @@ function calcRecoveryDetail(){
   else if(cycleAdj<0) tips.push('Phase prémenstruelle : volume modéré et bonne récup entre les séances.');
   if(smokerAdj<0) tips.push('Réduire le tabac améliorerait nettement ta récupération.');
   if(energyAdj<0) tips.push('Énergie basse au dernier check-in — écoute ton corps, séance légère.');
+  if(dayEnergyAdj<0) tips.push('Journée sans énergie — une séance plus courte reste bénéfique.');
   if(!tips.length) tips.push(score>=80?'Tu es au top — profites-en pour une séance intensive ! 💪':'Récup correcte — séance normale, et une bonne nuit ce soir.');
-  return {score,base,factors,tips:tips.slice(0,2)};
+  return {score,base,factors,tips:tips.slice(0,2),dayPains};
 }
 function calcRecoveryScore(){return calcRecoveryDetail().score;}
 function getRecoveryInfo(score){
