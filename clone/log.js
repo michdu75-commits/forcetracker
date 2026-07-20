@@ -3682,15 +3682,29 @@ function _renderProgEdit(){
     </div>
   </div>`;};
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
+  // Bouton « rattacher » (VM) — dans l'éditeur, pas sur la carte (évite d'empiler les boutons)
+  const cleanupBtn=`<button onclick="_cleanProgEditExercises()" class="btn btn-bg2" style="width:100%;padding:10px;font-size:13px;margin-bottom:14px;">🧹 Rattacher les exercices reconnus (évite les doublons)</button>`;
   if(isMulti){
-    el.innerHTML=cycleSection+d.days.map((day,di)=>`<div style="margin-bottom:16px;">
+    el.innerHTML=cleanupBtn+cycleSection+d.days.map((day,di)=>`<div style="margin-bottom:16px;">
       <input value="${_escNote(day.label||'Jour '+(di+1)).replace(/"/g,'&quot;')}" onchange="_setProgDayLabel(${di},this.value)" title="Renomme la séance" style="width:100%;font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;background:transparent;border:none;border-bottom:1px dashed var(--sep);padding:2px 0;font-family:inherit;">
       ${(day.exs||[]).map((ex,ei)=>exCard(ex,di,ei)).join('')}
       ${addBtn(di)}
     </div>${di<d.days.length-1?'<hr style="border:none;border-top:1px solid var(--sep);margin:0 0 16px;">':''}`).join('');
   }else{
-    el.innerHTML=cycleSection+(d.exs||[]).map((ex,ei)=>exCard(ex,0,ei)).join('')+addBtn(0);
+    el.innerHTML=cleanupBtn+cycleSection+(d.exs||[]).map((ex,ei)=>exCard(ex,0,ei)).join('')+addBtn(0);
   }
+}
+// VM sur un programme DÉJÀ enregistré (dans l'éditeur) : rattache les exos aux références EXLIB
+// (palier auto ≥90 uniquement → sûr). N'écrit que dans la copie d'édition → validé par « Enregistrer ».
+function _cleanProgEditExercises(){
+  if(!_editProgData||typeof _matchExercise!=='function'){toast('Indisponible','error');return;}
+  let n=0;
+  const doEx=ex=>{ if(!ex||!ex.name)return; let r; try{r=_matchExercise(ex.name);}catch(e){return;}
+    if(r&&r.match&&r.tier==='auto'&&r.match!==ex.name){ ex.name=r.match; n++; } };
+  if(_editProgData.days&&_editProgData.days.length) _editProgData.days.forEach(day=>(day.exs||[]).forEach(doEx));
+  else (_editProgData.exs||[]).forEach(doEx);
+  if(n){ _renderProgEdit(); toast(n+' exercice'+(n>1?'s':'')+' rattaché'+(n>1?'s':'')+' — 💾 enregistre pour valider','success'); }
+  else toast('Aucun doublon évident à rattacher 👍','info');
 }
 // Repos par défaut selon le type de série (pour le placeholder de l'éditeur)
 function _defRestForType(type){return type==='É'||type==='W'?45:((type==='X'||type==='E')?240:(type==='D'?20:90));}
