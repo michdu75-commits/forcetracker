@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v502'; // FIX MILO CASSE (400 invalid_request_error) revele par PT-001 : depuis ft-v491 le debrief auto ajoute des messages _silent dans coachHistory, envoyes tels quels a l'API Claude qui REJETTE le champ inconnu -> Milo tombait des qu'un debrief silencieux etait dans les 8 derniers messages. Fix : _coachHistPayload() n'envoie QUE {role,content} (retire _silent/champs parasites) partout + sanitize defensif dans le Worker.
+const CACHE = 'ft-v503'; // PT-001 plus RAPIDE (retour Michel « c'est trop long ») : throttle 1.8s->0.6s entre debriefs, 1 seul reessai au lieu de 2, backoffs raccourcis (fallback 5->2s, rate_limit 8->3s), timeout 45->30s. Robustesse gardee, mais fini les 10 min d'attente.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
