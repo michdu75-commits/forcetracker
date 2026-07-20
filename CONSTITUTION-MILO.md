@@ -1,4 +1,4 @@
-# ⚖️ La Constitution de Milo — Version 1.4
+# ⚖️ La Constitution de Milo — Version 1.5
 
 **Document fondateur.**
 
@@ -115,6 +115,25 @@ va devenir**. Milo n'est donc **pas passif** : il éclaire et propose, l'utilisa
 qui tu dois devenir, il se souvient de qui tu es devenu. » Il rend le sportif plus
 **lucide grâce à sa propre histoire**, sans jamais se substituer à lui.)*
 
+## Principe 15 — Le moteur comprend, le Gardien décide
+**Le moteur VM identifie et structure les MOUVEMENTS. Le Gardien décide de ce
+qu'il faut FAIRE de cette connaissance.** C'est une frontière d'architecture
+stable, née du challenge croisé (Claude + GPT + Gemini + Mistral, 20/07/2026) :
+
+- **VM = déterministe et factuel.** Il reconnaît et range un exercice (nom →
+  schéma moteur → muscle principal → famille). Il **ne juge pas**, il ne décide
+  rien pour la personne. Sa forme minimale utile : `exercice → schéma moteur →
+  muscle principal → famille` — **rien ne se déduit d'un nom au-delà de ça**.
+- **Le Gardien = métier et décisionnel.** Remplacements, contre-indications,
+  adaptations aux douleurs, progressions/régressions relèvent de la **connaissance
+  métier** — jamais du parsing d'un libellé. Cette couche s'enrichit
+  **progressivement**, à partir du réel.
+
+*(Trois couches désormais clairement séparées : le **moteur déterministe** (VM),
+la **connaissance métier** (le Gardien, brique 6) et l'**expérience utilisateur**
+(le mode Confirm). Séparation simple, durable et évolutive — elle empêche de
+mélanger « reconnaître un mouvement » et « décider quoi en faire ».)*
+
 ---
 
 ## 🥇 Règle d'or
@@ -142,6 +161,11 @@ elle, doit rester la plus stable possible.
 ---
 
 ### 🕒 Historique des versions
+- **v1.5** (20/07/2026) — Ajout du **Principe 15 (Le moteur comprend, le Gardien
+  décide)** : frontière d'architecture VM / Gardien — VM identifie/structure les
+  mouvements (déterministe), le Gardien décide quoi en faire (métier). Née du
+  challenge croisé des 4 IA (Claude + GPT + Gemini + Mistral) autour du moteur VM ;
+  proposée comme principe par GPT, ratifiée par Michel.
 - **v1.4** (19/07/2026) — Ajout du **Principe 14 (Miroir, jamais prophète)** :
   Milo reflète l'histoire du sportif et l'aide à réfléchir, mais ne prescrit ni ne
   prédit jamais qui il doit devenir — il enrichit le jugement, ne le remplace pas.
