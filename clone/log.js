@@ -1001,7 +1001,7 @@ function _findSimilar(name,all){const na=_normEx(name);let best=null,bestD=Infin
 const _EX_STOP=new Set(['de','du','des','la','le','les','a','au','aux','en','avec','sur','et','l','d','the','with','on','machine','exercice','musculation','barre','bar','barbell','poulie','cable','halteres','haltere','dumbbell','dumbbells','poids','gym',
   // Bruit COMMERCIAL & marques (noms de salle : « Chest Press Evolution X900 », « Pendulum Elite »…) —
   // ignorés pour la reconnaissance. Vérifié : aucun de ces mots n'apparaît dans un vrai nom EXLIB.
-  'evolution','ultra','deluxe','elite','infinite','signature','nitro','extreme','eagle','panther','smartline','station','master','motion','axis','smart','series','edition','plus','pro','max','evo','xt','dual','iso',
+  'evolution','ultra','deluxe','elite','infinite','signature','nitro','extreme','eagle','panther','smartline','station','master','motion','axis','smart','series','edition','plus','pro','max','evo','xt','dual','iso','super',
   'technogym','life','fitness','panatta','matrix','cybex','nautilus','atlantis','watson','rhino','prime','hammerstrength']);
 // Groupes de modificateurs MUTUELLEMENT EXCLUSIFS : si deux noms portent chacun un
 // membre DIFFÉRENT du même groupe → mouvements distincts → JAMAIS fusionner auto.
@@ -1102,7 +1102,14 @@ Object.assign(_EX_EQUIV,{
   'hack':'Squat Hack (Hack Squat)','presse':'Press Jambes 45°',
   'high pulley':'Tirage Poulie Haute','pulley wide':'Tirage Poulie Haute','wide pulley':'Tirage Poulie Haute',
   // Abréviations « cas pièges » (Niveau Expert)
-  'chest bb':'Développé Couché','hack sq':'Squat Hack (Hack Squat)','lp':'Press Jambes 45°'
+  'chest bb':'Développé Couché','hack sq':'Squat Hack (Hack Squat)','lp':'Press Jambes 45°',
+  // 3e vague (rapport banc d'essai) : « nouveau » + confirm faux à rattacher
+  'dual cable cross':'Croisé Poulie (Cable Crossover)',
+  'high pulley close grip':'Tirage Poulie Haute Prise Serrée','close grip pulldown':'Tirage Poulie Haute Prise Serrée',
+  'close grip bench':'Développé Couché','incl db press':'Développé Incliné Haltères','bench bb':'Développé Couché','leg ext':'Extension Quadriceps (Leg Extension)',
+  'converging press':'Chest Press Machine Horizontale','converging chest press':'Chest Press Machine Horizontale','horizontal press':'Chest Press Machine Horizontale',
+  'hammer incline':'Chest Press Machine Inclinée','hammer iso incline':'Chest Press Machine Inclinée',
+  'high row':'Rowing Machine'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
