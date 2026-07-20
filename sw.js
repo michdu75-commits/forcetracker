@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v506'; // Fixes VC-001 (retour labo + GPT) : (1) garde-fou anti-invention dans le prompt Milo (n'invente jamais un fait absent des donnees -> hypothese ou question) ; (2) contexte honnete (objectif/discipline non renseignes -> « NON RENSEIGNE, demande » au lieu du defaut « muscle ») ; (3) le harnais VC exporte le CONTEXTE envoye a Milo (regle des 3 verifs : contexte/prompt/modele) + attendu transversal n°5.
+const CACHE = 'ft-v507'; // FIX FUITE harnais VC : _vcApplyPersona oubliait ~10 champs (bodyStudy/bodyScans/weightLog/bloodTests/sleepLog/coachTone/neck-waist-hip/badges/beginnerJourney) -> les donnees de Michel fuitaient dans le CONTEXTE du persona (85.8kg, etude du corps, bilan sanguin...) alors que Tatiana = Femme 60kg. Revele par l'export du contexte (regle des 3 verifs, ft-v506). Reset complet de tout ce que lit buildCoachContext. Donnees jamais ecrites (gel), c'etait le contexte transitoire.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

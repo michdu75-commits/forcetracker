@@ -1798,21 +1798,36 @@ const VC_PERSONAS = {
   }
 };
 // Remet à neutre TOUS les champs que buildCoachContext lit, puis applique le persona →
-// aucune donnée de Michel ne fuit dans le contexte du persona.
+// AUCUNE donnée de Michel ne fuit dans le contexte du persona.
+// ⚠️ La liste DOIT couvrir tout ce que `buildCoachContext` lit (vérifier après toute évolution
+//    du contexte). Le 1ᵉʳ run VC-001 a fuité bodyStudy/bodyScans/weightLog/bloodTests/sleepLog/
+//    coachTone (données de Michel) → visible grâce à l'export du contexte (règle des 3 vérifs).
 function _vcApplyPersona(p){
   const a=p.apply||{};
-  S.name=a.name||'Testeur'; S.gender=a.gender||'M';
+  // — Identité / profil —
+  S.name=a.name||'Testeur'; S.gender=a.gender||'M'; S.email='';
   S.age=a.age||30; S.height=a.height||170; S.bw=a.bw||70;
   S.goal=a.goal||''; S.discipline=a.discipline||''; S.level=a.level||'';
   S.activityLevel=a.activityLevel||'modéré'; S.workType=''; S.smoker=false;
+  S.coachTone=a.coachTone||'';
+  // — Morphologie / composition / mensurations —
   S.morpho=a.morpho||''; S.morphotype=a.morphotype||''; S.targetWeight=a.targetWeight||0;
+  S.neck=a.neck||0; S.waist=a.waist||0; S.hip=a.hip||0; S.scaleType=a.scaleType||'';
+  // — ADN / santé —
   S.adn=a.adn||{motivation:'',modeVie:'',prefs:'',experience:''};
   S.healthProfile=a.healthProfile||{injuries:[],conditions:[],notes:''};
+  // — Historique / mémoire / bilans (anti-fuite : TOUT ce que lit le contexte) —
   S.sessions=a.sessions||[]; S.prs=a.prs||{}; S.wkt=null; S.cycle=null;
+  S.weightLog=a.weightLog||[]; S.sleepLog=a.sleepLog||[];
+  S.bodyStudy=a.bodyStudy||null; S.bodyScans=a.bodyScans||[]; S.bodySeries=a.bodySeries||[];
+  S.bloodTests=a.bloodTests||[];
   S.registre=a.registre||{facts:{},observations:[],sessionLog:[],updatedAt:''};
   S.coachMemory=a.coachMemory||''; S.dayState=null;
+  S.badges=a.badges||{}; S.beginnerJourney=a.beginnerJourney||null; S.mensCycleDur=a.mensCycleDur||0;
+  // — Nutrition —
   S.nutritionPhase='charge'; S.keto=false; S.manualKcal=0;
-  S.premium=true; // évite un mur premium pendant le test
+  // — Divers —
+  S.premium=true; S.coachFree=0; // évite un mur premium pendant le test
 }
 // Appel Milo instrumenté pour un persona : email='' → modèle par défaut (ce que reçoit un
 // utilisateur lambda), history vide (1er message), classification comme PT-001.

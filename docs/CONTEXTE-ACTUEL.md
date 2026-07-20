@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v506` (3 fixes VC-001 : garde-fou anti-invention + contexte honnête + harnais exporte le contexte)
+- **Version en prod :** `ft-v507` (fix fuite harnais VC : reset complet du persona)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
