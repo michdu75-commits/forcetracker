@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v514` (VM branché sur l'import de programme : rattachement aux références EXLIB → fini les doublons)
+- **Version en prod :** `ft-v516` (import : fusion des sous-séances mal découpées + wording Milo ; VM branché sur l'import)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*

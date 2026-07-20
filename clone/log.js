@@ -2708,6 +2708,7 @@ async function analyzeImportPhotos(){
     const d=JSON.parse(_rawResp);
     if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
     _impExtracted=d.data;
+    _mergeImportSeances(); // fusionne « Séance 1 - Dorsaux/Biceps/… » en UNE séance (groupes = sections internes)
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
     _renderImpConfirm();
     impGoStep(4);
@@ -2718,6 +2719,26 @@ async function analyzeImportPhotos(){
   }
 }
 
+// Fusionne les « jours » d'import qui partagent le MÊME numéro de séance : « Séance 1 - Dorsaux »
+// + « Séance 1 - Biceps » + « Séance 1 - Triceps » = UNE séance (les groupes musculaires sont des
+// sections INTERNES, pas des séances distinctes — Règle 0 du projet). Local & déterministe : ne
+// dépend pas du modèle, qui découpe parfois à tort quand le doc met un en-tête par groupe.
+function _seanceNum(label){ const m=String(label||'').match(/s[ée]ance\s*(\d+)|jour\s*(\d+)|\bday\s*(\d+)|workout\s*(\d+)/i); return m?(m[1]||m[2]||m[3]||m[4]):null; }
+function _seanceKw(label){ const m=String(label||'').match(/(s[ée]ance|jour|day|workout)/i); const k=(m?m[1]:'séance').toLowerCase(); return k==='séance'||k==='seance'?'Séance':k.charAt(0).toUpperCase()+k.slice(1); }
+function _mergeImportSeances(){
+  if(!_impExtracted||!(_impExtracted.days||[]).length)return;
+  const out=[]; let merged=0;
+  _impExtracted.days.forEach(day=>{
+    const n=_seanceNum(day.label), prev=out[out.length-1];
+    if(prev && n!=null && _seanceNum(prev.label)===n){
+      prev.exercises=(prev.exercises||[]).concat(day.exercises||[]);
+      prev.label=_seanceKw(prev.label)+' '+n;   // « Séance N » propre (groupes musculaires = sections internes)
+      merged++;
+    } else out.push(day);
+  });
+  _impExtracted.days=out;
+  if(merged)console.log('[Import] '+merged+' sous-séance(s) fusionnée(s) par numéro de séance');
+}
 // VM → import : rattache chaque exercice importé à sa RÉFÉRENCE EXLIB (fini les doublons).
 // Palier auto (confiance ≥90) = rattaché direct (nom remplacé, original gardé pour « annuler »).
 // Palier confirm (zone grise) = proposé à l'utilisateur (« ≈ Rattacher à X ? »), nom inchangé
