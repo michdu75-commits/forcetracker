@@ -540,6 +540,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   // Vue développée
   const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
+  const _thumbSrc=_exImgSrc||_exMuscleImg(ex.name); // toujours une vignette (photo/gif, sinon muscle deviné)
   const rows=ex.sets.map((set,si)=>{
     const p=prev[si]||prev[Math.max(0,prev.length-1)];
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
@@ -611,7 +612,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
 
   return`<div class="ex-block${inGroup?' ss-active':''}" id="ex-block-${ei}">`
     +`<div class="ex-hdr">`
-    +`${hasLocalGif?'<img src="'+_exImgSrc+'" draggable="false" onclick="toggleExGif('+ei+',\''+_escAttrJs(ex.name)+'\');event.stopPropagation()" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">':''}`
+    +`<img src="${_thumbSrc}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:48px;height:48px;object-fit:${hasLocalGif?'cover':'contain'};${hasLocalGif?'':'padding:3px;background:var(--bg2);'}border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">`
     +`<div style="flex:1;min-width:0;">`
     +`<div class="ex-name">${_escNote(ex.name)} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
@@ -4051,6 +4052,18 @@ const _MG_IMG={
   abs:'../muscles/muscle abdominaux.png',obliques:'../muscles/muscle abdominaux.png',
   calves:'../muscles/muscle mollet.png',tibialis:'../muscles/muscle mollet.png',
 };
+// SRC de secours quand un exo n'a pas d'image dédiée : devine le muscle principal depuis le nom
+// (moteur _mscScores/_MEX) → image muscle réaliste (PNG anatomie) ; sinon silhouette du groupe.
+// → une machine importée (« Chest press machine convergente… ») a TOUJOURS une figurine pertinente.
+function _exMuscleImg(name){
+  try{
+    const {sc}=_mscScores([{name,sets:[{done:true}]}]);
+    const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0];
+    if(top&&_MG_IMG[top[0]])return _MG_IMG[top[0]];
+  }catch(e){}
+  const ex=EXLIB.find(e=>e.n===name);
+  return _MUSCLE_FILE[ex&&ex.g]||'../muscles/chest.svg';
+}
 // Vignette d'exercice : photo locale > image muscle réaliste (muscle deviné du nom) > figurine — 100% hors-ligne
 function _progExThumb(name){
   const box='width:46px;height:46px;border-radius:8px;background:var(--bg2);border:1px solid var(--sep);flex-shrink:0;box-sizing:border-box;';
@@ -4434,10 +4447,11 @@ function toggleExGif(ei,name){
   if(local){
     html+=`<img src="${local}" style="width:100%;border-radius:8px;max-height:240px;object-fit:cover;display:block;" loading="lazy">`;
   } else {
+    // Pas de photo/gif dédié → figurine du muscle deviné du nom (taxonomie) — jamais vide
+    const file=_exMuscleImg(name);
     const ex=EXLIB.find(e=>e.n===name);
-    const file=_MUSCLE_FILE[ex?.g]||'../muscles/chest.svg';
     html+=`<div style="text-align:center;padding:8px 0;"><img src="${file}" style="width:160px;height:auto;display:block;margin:0 auto;"></div>`;
-    html+=`<div style="text-align:center;font-size:12px;color:var(--t3);margin-top:2px;">${ex?.g||''}</div>`;
+    html+=`<div style="text-align:center;font-size:12px;color:var(--t3);margin-top:2px;">${ex?ex.g:'Muscle principal deviné'}</div>`;
   }
   html+='</div>';
   panel.innerHTML=html;
