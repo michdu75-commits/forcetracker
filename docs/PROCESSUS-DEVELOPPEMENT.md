@@ -137,5 +137,27 @@ Le « branche → merge » classique se traduit donc ainsi :
 
 ---
 
+## 🔭 Croiser les regards extérieurs (adopté le 20/07/2026)
+
+Le projet avance à plusieurs IA (**Michel décide · Claude archi/dev · GPT
+vision**) et fait ponctuellement appel à des **regards extérieurs** (Gemini,
+Mistral…) pour un avis franc. La règle, proposée par GPT et validée :
+
+- **Convergence** de plusieurs regards **indépendants** sur une même idée
+  → **décision d'architecture** (on grave et on avance).
+- **Divergence** → **débat technique** explicite **avant** d'implémenter.
+- Un nouvel avis n'a de valeur que s'il ouvre une **dimension nouvelle**
+  (règle des personas) — pas juste « un avis de plus » (sinon = bruit +
+  contradictions qui ralentissent la décision).
+- **Honnêteté du briefing** : quand on sollicite une IA extérieure, lui préciser
+  ce qui **existe déjà** — sinon elle classera « urgent » des choses déjà faites
+  (piège vécu : Mistral a cru la sauvegarde absente alors qu'elle est en place).
+
+> Exemple fondateur (20/07) : Gemini + Mistral ont **convergé** sur « ne pas
+> sur-modéliser le graphe biomécanique » et « la couche machine, le risque =
+> les médias » → ces 2 convergences sont **devenues des décisions d'archi VM**.
+
+---
+
 *Ce document est la méthode officielle de Force Tracker. Il évolue si la méthode
 elle-même évolue (rare) — la discipline, elle, reste stable.*

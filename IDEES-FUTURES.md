@@ -4,6 +4,18 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🔭 Issues du tour de table IA extérieures (20/07/2026) — pertinent mais PRÉMATURÉ
+
+*(Contexte : après l'intégration des alias VM, avis croisés GPT + Gemini + Mistral. Les décisions d'archi retenues sont dans CLAUDE.md ; ci-dessous ce qui est bon mais pas maintenant.)*
+
+- **⌚ Matériel connecté (import montre)** — Mistral : « ~70 % des pratiquants ont une montre » → import de fichiers **FIT/TCX** (Garmin/Apple/Strava), d'abord manuel, puis API si >20 % d'usage. **Vrai trou**, mais c'est un **satellite** → à faire *après* la décision « cœur muscu + satellites ». (Recoupe la note « import Garmin sommeil/activité » plus bas.)
+- **💰 Modèle économique approfondi / partenariats** — on a déjà le freemium (Premium 4,99€). Pistes Mistral à réfléchir *plus tard* : abonnement analyse avancée, partenariats salles/marques (ex. une marque de machine « en avant » dans les suggestions — à manier avec éthique, ne pas biaiser les conseils). Non urgent (GPT d'accord).
+- **💾 Export manuel JSON/CSV** — filet de sécurité **local**, indépendant du cloud (Mistral le classait « URGENT » car il ignorait qu'on a **déjà** sync cloud + backup Drive quotidien + code de compte + restauration email). Donc **basse priorité**, mais cheap et aligné « zéro perte » → à faire un jour comme 2ᵉ ceinture.
+- **🏗️ Couche machine — MVP mesuré** (quand on la construira, décision d'archi = *user-fed* d'abord) : commencer petit (~10 exos × 2-3 machines), **mesurer l'usage** avant d'étendre ; ne PAS collecter 15 marques à la main (le risque = les médias). L'utilisateur photographie SA machine (déjà amorcé ft-v521).
+- **🕸️ Graphe biomécanique — plafonné** : forme minimale utile = `exercice → schéma moteur → muscle principal → famille` (tout ce qu'on calcule déjà). Détail fin (angles, remplacements, contre-indications) = base experte (wger/ExRx) ou via **le Gardien**, **jamais** du parsing de nom exhaustif (Gemini + Mistral convergent : plafond honnête ~85-90 %, le reste passe par le palier *confirm*).
+
+---
+
 # 🗺️ FEUILLE DE ROUTE (ordre des priorités)
 
 **Phase 1 — Stabiliser la fondation (AVANT tout le reste)**
