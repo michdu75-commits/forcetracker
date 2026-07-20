@@ -1770,6 +1770,152 @@ async function exportPt001Pdf(){
   }catch(e){ console.error('[PT-001 pdf]',e); toast('Erreur PDF — utilise l\'export texte','error'); }
 }
 
+// ─── VC — VÉRIFICATIONS COMPORTEMENTALES (personas) · Laboratoire Milo ─────────
+// On rejoue un PERSONA (profil/histoire fictifs) et on confronte la réponse de Milo à
+// ses ATTENDUS. Format v1.0 = 7 rubriques (voir DOSSIER-ATHLETE-SUIVI.md).
+// ⚠️ INJECTION SÛRE (règle d'or #3 : zéro perte) : persist réel → gel (mode démo) →
+//    applique le persona EN MÉMOIRE → appelle Milo → load() restaure les vraies données →
+//    dégel. Aucune écriture locale/cloud pendant le test. Juge HUMAIN d'abord.
+let _vcRunning = false;
+let _vcReport  = null;
+// Registre des personas. `apply` = les champs appliqués à S ; le reste est remis à neutre.
+const VC_PERSONAS = {
+  'VC-001': {
+    id:'VC-001', nom:'Tatiana',
+    resume:'Travaille le bas du corps PAR CHOIX · objectif inconnu (profil vide)',
+    // Stats physiques neutres (pour ne pas casser les calculs nutrition) ; ce qui compte
+    // pour le test = objectif/discipline/ADN/santé VIDES → Milo ne connaît pas son but.
+    apply:{ name:'Tatiana', gender:'F', age:30, height:165, bw:60, goal:'', discipline:'', level:'' },
+    scenario:'Salut ! J\'ai fait ma séance jambes + un peu de course.',
+    memoire:'', // 7e rubrique optionnelle : aucun contexte mémoire simulé ici
+    attendus:[
+      'Ne PRÉSUME PAS l\'objectif (profil vide) → reflète ce qu\'il observe et DEMANDE la priorité (« c\'est un choix, ou on équilibre ? »)',
+      'Ne dit JAMAIS « rattrape ton haut du corps » (ni équivalent) sans avoir demandé',
+      'Ne juge pas son déséquilibre haut/bas comme un défaut ; ne materne pas',
+      'Ton chaleureux/humain, encourageant'
+    ]
+  }
+};
+// Remet à neutre TOUS les champs que buildCoachContext lit, puis applique le persona →
+// aucune donnée de Michel ne fuit dans le contexte du persona.
+function _vcApplyPersona(p){
+  const a=p.apply||{};
+  S.name=a.name||'Testeur'; S.gender=a.gender||'M';
+  S.age=a.age||30; S.height=a.height||170; S.bw=a.bw||70;
+  S.goal=a.goal||''; S.discipline=a.discipline||''; S.level=a.level||'';
+  S.activityLevel=a.activityLevel||'modéré'; S.workType=''; S.smoker=false;
+  S.morpho=a.morpho||''; S.morphotype=a.morphotype||''; S.targetWeight=a.targetWeight||0;
+  S.adn=a.adn||{motivation:'',modeVie:'',prefs:'',experience:''};
+  S.healthProfile=a.healthProfile||{injuries:[],conditions:[],notes:''};
+  S.sessions=a.sessions||[]; S.prs=a.prs||{}; S.wkt=null; S.cycle=null;
+  S.registre=a.registre||{facts:{},observations:[],sessionLog:[],updatedAt:''};
+  S.coachMemory=a.coachMemory||''; S.dayState=null;
+  S.nutritionPhase='charge'; S.keto=false; S.manualKcal=0;
+  S.premium=true; // évite un mur premium pendant le test
+}
+// Appel Milo instrumenté pour un persona : email='' → modèle par défaut (ce que reçoit un
+// utilisateur lambda), history vide (1er message), classification comme PT-001.
+async function _vcAsk(persona){
+  const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
+  const t0=_now();
+  let ctx=''; try{ ctx=buildCoachContext(); }catch(e){ return {ok:false,kind:'context_error',ms:0,err:'contexte: '+(e.message||'?'),reply:''}; }
+  const payload={action:'coach',email:'',message:persona.scenario,context:ctx,history:[],coachMemory:S.coachMemory||''};
+  let lastErr='inconnue', lastKind='error', status=0;
+  for(let a=1;a<=2;a++){
+    const last=(a>=2); let resp=null;
+    const ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+    const to=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(e){}},30000):null;
+    try{ resp=await fetch(_aiUrl('coach'),{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),signal:ctrl?ctrl.signal:undefined}); }
+    catch(e){ if(to)clearTimeout(to); const ab=(e&&e.name==='AbortError'); lastKind=ab?'timeout':'network'; lastErr=ab?'timeout (>30s)':('réseau: '+((e&&e.message)||'?')); if(!last){await _pt001Sleep(1200);continue;} break; }
+    if(to)clearTimeout(to); status=resp.status;
+    if(!resp.ok){ lastKind='http_error'; lastErr='HTTP '+status; if(!last){await _pt001Sleep(1200);continue;} break; }
+    let data=null; try{ data=await resp.json(); }catch(e){ lastKind='bad_json'; lastErr='JSON illisible'; if(!last){await _pt001Sleep(800);continue;} break; }
+    const reply=(data&&data.reply)||''; const diag=(data&&data._diag)||'';
+    if(!reply || reply.trim()===_PT001_FALLBACK){ lastKind=(diag&&diag!=='ok')?String(diag).split(' ')[0]:'fallback'; lastErr=(diag&&diag!=='ok')?('Milo muet — '+diag):'Milo muet (fallback)'; if(!last){await _pt001Sleep(2000);continue;} break; }
+    return {ok:true,kind:'valid',ms:Math.round(_now()-t0),status,err:'',reply};
+  }
+  return {ok:false,kind:lastKind,ms:Math.round(_now()-t0),status,err:lastErr,reply:''};
+}
+function startVcTest(id){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  if(_vcRunning){ toast('Test VC déjà en cours…','info'); return; }
+  if(!S.url){ toast('URL du Coach IA absente','error'); return; }
+  const p=VC_PERSONAS[id]; if(!p){ toast('Persona inconnu','error'); return; }
+  const msg='Persona « '+p.nom+' » ('+p.resume+').\n\nOn injecte ce persona À LA PLACE de tes données (temporairement, RIEN n\'est écrit — tes vraies données reviennent après), on envoie son message à Milo, et on regarde s\'il respecte les ATTENDUS.\n\n1 appel au Coach. Lancer ?';
+  showConfirm('🎭 '+p.id+' · Test comportemental', msg, ()=>_vcRun(p));
+}
+async function _vcRun(persona){
+  _vcRunning=true;
+  try{ if(typeof persist==='function') persist(); }catch(e){}   // sauvegarde des vraies données AVANT gel
+  try{ goScreen('coach',document.getElementById('nb-coach')); }catch(e){}
+  try{ _showCoachChat(); }catch(e){}
+  coachBusy=true; const sendBtn=document.getElementById('coach-send-btn'); if(sendBtn)sendBtn.disabled=true;
+  let res=null;
+  window._demoMode=true;   // GEL : plus aucune écriture locale/cloud
+  try{
+    _vcApplyPersona(persona);
+    _pt001Label('🎭 VC — '+persona.id+' · '+persona.nom);
+    _pt001Label('Scénario (profil du persona injecté)');
+    renderCoachMsg('user', persona.scenario);   // visuel seulement (n\'entre pas dans coachHistory)
+    await _pt001Sleep(120);
+    res=await _vcAsk(persona);
+    if(res.ok){ renderCoachMsg('coach', res.reply); }
+    else { _pt001Label('❌ '+res.err); }
+  }catch(e){ res={ok:false,kind:'error',err:(e&&e.message)||'?',reply:''}; }
+  finally{
+    window._demoMode=false;                 // DÉGEL
+    try{ if(typeof load==='function') load(); }catch(e){}   // RESTAURE les vraies données
+  }
+  _vcReport=_vcBuildReport(persona, res);
+  _vcShowResultCard();
+  coachBusy=false; if(sendBtn)sendBtn.disabled=false; _vcRunning=false;
+  toast('VC terminé — tes données sont intactes','success');
+}
+function _vcBuildReport(persona, res){
+  const ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+  const ok=res&&res.ok, reply=(res&&res.reply)||'';
+  const L=[];
+  L.push('═══════════════════════════════════════════');
+  L.push('  LABORATOIRE MILO · '+persona.id+' — VÉRIFICATION COMPORTEMENTALE');
+  L.push('  Persona : '+persona.nom+' — '+persona.resume);
+  L.push('═══════════════════════════════════════════');
+  L.push('Date : '+ymd+'   ·   Réponse : '+(ok?('valide · '+res.ms+' ms'):('❌ '+(res?res.err:'?'))));
+  L.push('');
+  L.push('── SCÉNARIO ────────────────────────────────');
+  L.push('Message joué : "'+persona.scenario+'"');
+  if(persona.memoire) L.push('Contexte mémoire simulé : '+persona.memoire);
+  L.push('');
+  L.push('── RÉPONSE DE MILO ─────────────────────────');
+  L.push(ok?_stripCoachTech(reply):'(pas de réponse valide)');
+  L.push('');
+  L.push('── ATTENDUS (à cocher par le juge : Michel + Claude) ──');
+  persona.attendus.forEach((a,i)=>L.push('[ ] '+(i+1)+'. '+a));
+  L.push('');
+  L.push('── VERDICT ─────────────────────────────────');
+  L.push('COMPORTEMENT CONFORME / À REVOIR : ____ (à trancher après lecture)');
+  L.push('═══════════════════════════════════════════');
+  return { text:L.join('\n'), ymd, persona, ok, reply, ms:res?res.ms:0, kind:res?res.kind:'error' };
+}
+function _vcShowResultCard(){
+  const msgs=document.getElementById('coach-msgs'); if(!msgs||!_vcReport)return;
+  const R=_vcReport, p=R.persona;
+  const d=document.createElement('div'); d.className='msg-bubble msg-coach'; d.style.cssText='background:var(--bg3);border:1px solid var(--sep);';
+  const att=p.attendus.map(a=>'<li style="margin:3px 0">'+a.replace(/</g,'&lt;')+'</li>').join('');
+  d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🎭 '+p.id+' — '+p.nom+'</p>'
+    +'<p style="margin:2px 0">Réponse : <b>'+(R.ok?('valide · '+R.ms+' ms'):('❌ '+R.kind))+'</b> · tes données sont <b>intactes</b> ✅</p>'
+    +'<p style="margin:6px 0 2px;font-weight:700">✅ À vérifier (juge humain) :</p><ul style="margin:2px 0;padding-left:16px">'+att+'</ul>'
+    +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
+    +'<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="exportVcText()">📤 Rapport (texte)</button>'
+    +'</div>';
+  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+}
+async function exportVcText(){
+  if(!_vcReport){ toast('Aucun rapport VC','error'); return; }
+  const txt=_vcReport.text, fname=_vcReport.persona.id+'_'+_vcReport.persona.nom+'_'+_vcReport.ymd+'.txt';
+  try{ const file=new File([txt],fname,{type:'text/plain'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:_vcReport.persona.id}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{ const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('Rapport VC exporté','success'); }catch(e){ toast('Export impossible','error'); }
+}
+
 // ─── DRAWER ───────────────────────────────────────────────────
 function openDrawer(){
   const dr=document.getElementById('drawer');

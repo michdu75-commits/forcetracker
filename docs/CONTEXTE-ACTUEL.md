@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v504` (PT-001 : détecteur de continuité corrigé ; v502 = fix Milo cassé bug 400 `_silent` ; v503 = test accéléré)
+- **Version en prod :** `ft-v505` (Laboratoire VC : harnais comportemental + persona VC-001 Tatiana, injection sûre)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*

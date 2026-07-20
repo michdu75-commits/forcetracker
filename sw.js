@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v504'; // PT-001 : fix detecteur de continuite (sous-comptait a 47%). Milo ouvre par « Objectif verifie » / « Objectif precedent » / « on en parlait » -> non matches par l'ancienne regex. Elargie -> continuite reelle ~95% (le 1er run montrait 9/19 a tort). « Dire la verite » aussi sur la mesure.
+const CACHE = 'ft-v505'; // LABORATOIRE VC (admin) : harnais de Verification Comportementale + persona VC-001 (Tatiana). Injecte un persona A LA PLACE des donnees reelles TEMPORAIREMENT (gel mode demo + snapshot + load() restaure -> ZERO ecriture, donnees intactes), envoie son message a Milo, confronte aux ATTENDUS (juge humain). Bouton admin, rapport exportable. Teste : donnees reelles 100% restaurees, aucune fuite.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
