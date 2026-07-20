@@ -2100,33 +2100,40 @@ async function exportVmText(){
 const VM_BENCH={
   'Salle commerciale':['Chest Press Evolution X900','Incline Press Matrix Ultra','Pec Deck Fly Pro','Shoulder Press SmartLine','Triceps Rope Station','Smith Bench Flat','Dual Cable Cross','Dip Assist Evolution','Lat Pulldown EVO Max','Low Row Iso Motion','High Pulley Close Grip','Reverse Pec Fly Station','Hammer Curl Machine','Preacher Curl Deluxe','Shrug Rack Elite','Leg Press 45 Infinite','Hack Squat XT','V-Squat Panther','Leg Extension Dual Axis','Seated Leg Curl Evo','Standing Calf Master','Hip Abductor Pro'],
   'Coach américain':['BB Bench','Incl DB Press','HS Incline Press','Cable Fly Low','JM Press','Pushdown V-Bar','Skull Crusher EZ','Pull Up Assisted','Hammer Row','Seal Row','Chest Supported T-Bar','Straight Arm Pulldown','Face Pull','Spider Curl','Safety Bar Squat','Pendulum Squat','Belt Squat','RDL','Nordic Curl','Tib Raise','Donkey Calf Raise'],
+  'Powerlifting':['Squat','Bench','Deadlift','Comp Squat','Paused Bench','Deficit Deadlift','Pin Squat','Close Grip Bench','SSB Squat','Sumo Deadlift','Front Squat','Tempo Bench','Block Pull','Good Morning'],
+  'Bodybuilding':['Incline DB Press','Cable Fly','Pec Deck','Hack Squat','Leg Extension','Lying Leg Curl','Preacher Curl','Cable Curl','Rope Pushdown','Lateral Raise','Rear Delt Fly','Seated Cable Row','Standing Calf Raise','Chest Supported Row'],
   'Cauchemar VM':['Panatta Super Horizontal Press','Hammer Iso Incline','Matrix Converging Press','Life Fitness Signature Chest','Atlantis Flat Press','Nautilus Nitro Fly','Prime Extreme Row','Cybex Eagle Pullover','Atlantis High Row','Watson Seal Row','Panatta Deltoid Machine','Prime Biceps Curl','Booty Builder V4','Pendulum Elite','Rhino Belt Squat','Glute Drive','Quad Extension Max','Iso Leg Curl','Standing Soleus Press'],
   'Niveau Expert':['Tractions','Lat Pull','High Pulley','Tirage Devant','Pulley Wide','Row Assis','Low Row','T-Bar','Rear Delt','Oiseau Machine','Curl EZ','Curl Pupitre','ATG Squat','Presse','LP45','Leg Press','Hack','Ischios assis','Mollets Machine Debout','Abdos gainage','Bench BB','Chest BB','DC barre','Hack Sq','LP','Leg Ext','Front Squat','Deadlift Sumo','Hip Thrust Machine','Calf Press']
 };
+let _vmBenchLast=null; // { version, date, results:{nom:{m,tier,conf,prog}}, stats }
+function _vmBenchBaseKey(){ return 'ft4_vmbench_base'; }
+function _vmBenchLoadBaseline(){ try{ return JSON.parse(localStorage.getItem(_vmBenchBaseKey())||'null'); }catch(e){ return null; } }
+function saveVmBenchBaseline(){
+  if(!_vmBenchLast){ toast('Lance d\'abord le banc d\'essai','error'); return; }
+  try{ localStorage.setItem(_vmBenchBaseKey(), JSON.stringify(_vmBenchLast)); toast('Référence enregistrée ('+_vmBenchLast.version+')','success'); }
+  catch(e){ toast('Impossible d\'enregistrer','error'); }
+}
 function startVmBench(){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
   if(typeof _matchExercise!=='function'){ toast('Moteur absent','error'); return; }
   _vmBenchRun();
 }
+function _vmBenchRank(t){ return t==='auto'?2:(t==='confirm'?1:0); }
 function _vmBenchRun(){
   const ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
-  const ver=(typeof _appVersion==='function')?_appVersion():'';
+  let ver=''; try{ ver=(typeof CACHE_LABEL!=='undefined'&&CACHE_LABEL)||(document.querySelector('.app-ver')&&document.querySelector('.app-ver').textContent)||''; }catch(e){}
   let tot=0,direct=0,alias=0,conf=0,neu=0;
-  const L=[];
-  L.push('═══════════════════════════════════════════');
-  L.push('  MODE TEST VM — BANC D\'ESSAI (reconnaissance d\'exercices, moteur LOCAL)');
-  L.push('  Aucun appel IA · '+ymd+(ver?'  ·  '+ver:''));
-  L.push('═══════════════════════════════════════════');
-  L.push('');
-  const detail=[];
+  const results={}, catStats={}, detail=[];
   for(const [prog,names] of Object.entries(VM_BENCH)){
+    catStats[prog]={tot:0,auto:0,confirm:0,neu:0};
     detail.push('── '+prog+' ──');
     names.forEach(n=>{
       let r; try{ r=_matchExercise(n); }catch(e){ r={match:null,tier:'new',via:'erreur',confidence:0}; }
-      tot++; let cat,ic;
-      if(r.tier==='auto'){ if(/exact|synonyme/.test(r.via||'')){direct++;cat='direct';ic='🟢';} else {alias++;cat='alias ';ic='🟢';} }
-      else if(r.tier==='confirm'){conf++;cat='confirm';ic='🟡';}
-      else {neu++;cat='nouveau';ic='⚪';}
+      tot++; catStats[prog].tot++; let cat,ic;
+      if(r.tier==='auto'){ if(/exact|synonyme/.test(r.via||'')){direct++;cat='direct';} else {alias++;cat='alias ';} ic='🟢'; catStats[prog].auto++; }
+      else if(r.tier==='confirm'){conf++;cat='confirm';ic='🟡';catStats[prog].confirm++;}
+      else {neu++;cat='nouveau';ic='⚪';catStats[prog].neu++;}
+      results[n]={m:r.match||null,tier:r.tier,conf:r.confidence,prog};
       detail.push('  '+ic+' ['+cat+'] « '+n+' » → '+(r.match||'(nouveau)')+'  ('+r.confidence+'%)');
     });
     detail.push('');
@@ -2134,11 +2141,50 @@ function _vmBenchRun(){
   const reconnu=direct+alias+conf;
   const pctAuto=tot?Math.round((direct+alias)/tot*100):0;
   const pctReconnu=tot?Math.round(reconnu/tot*100):0;
+  _vmBenchLast={ version:ver||ymd, date:ymd, results, stats:{tot,direct,alias,conf,neu,pctAuto,pctReconnu} };
+
+  // ── Comparaison avec la RÉFÉRENCE enregistrée (détection de régression) ──
+  const base=_vmBenchLoadBaseline();
+  const improvements=[], regressions=[], changed=[];
+  if(base&&base.results){
+    for(const [n,cur] of Object.entries(results)){
+      const b=base.results[n]; if(!b)continue;
+      const rc=_vmBenchRank(cur.tier), rb=_vmBenchRank(b.tier);
+      if(rc>rb) improvements.push(n+' : '+b.tier+'→'+cur.tier+' ('+(cur.m||'nouveau')+')');
+      else if(rc<rb) regressions.push(n+' : '+b.tier+'→'+cur.tier+'  [était '+(b.m||'nouveau')+' → maintenant '+(cur.m||'nouveau')+']');
+      else if(cur.tier!=='new' && b.m && cur.m && b.m!==cur.m) changed.push(n+' : '+b.m+' → '+cur.m);
+    }
+  }
+
+  const L=[];
+  L.push('═══════════════════════════════════════════');
+  L.push('  MODE TEST VM — BANC D\'ESSAI (reconnaissance d\'exercices, moteur LOCAL)');
+  L.push('  Aucun appel IA · '+ymd+(ver?'  ·  '+ver:''));
+  L.push('═══════════════════════════════════════════');
+  L.push('');
+  // Régressions EN PRIORITÉ (le plus important pour sécuriser les évolutions)
+  if(base&&base.results){
+    L.push('── COMPARAISON avec la référence ('+(base.version||base.date||'?')+') ──');
+    L.push('  ✅ Améliorations : '+improvements.length+'   ·   🔴 Régressions : '+regressions.length+'   ·   ↔ Changements : '+changed.length);
+    if(regressions.length){ L.push(''); L.push('  🔴 RÉGRESSIONS (À CORRIGER EN PRIORITÉ) :'); regressions.forEach(x=>L.push('     - '+x)); }
+    if(changed.length){ L.push(''); L.push('  ↔ Rattachements CHANGÉS (à vérifier) :'); changed.forEach(x=>L.push('     - '+x)); }
+    if(improvements.length){ L.push(''); L.push('  ✅ Nouvelles reconnaissances :'); improvements.forEach(x=>L.push('     + '+x)); }
+    L.push('');
+  } else {
+    L.push('(Aucune référence enregistrée — lance « 💾 Enregistrer comme référence » pour comparer les prochains runs.)');
+    L.push('');
+  }
   L.push('RÉSULTAT GLOBAL ('+tot+' exercices testés)');
   L.push('  🟢 Reconnus AUTO      : '+(direct+alias)+'/'+tot+'  ('+pctAuto+'%)  — dont '+direct+' direct, '+alias+' par alias');
   L.push('  🟡 À confirmer        : '+conf+'/'+tot);
   L.push('  ⚪ Non reconnus       : '+neu+'/'+tot);
   L.push('  ➜ Taux de reconnaissance (auto + confirm) : '+pctReconnu+'%');
+  L.push('');
+  L.push('── SCORE PAR PROGRAMME ──────────────────────');
+  for(const [prog,s] of Object.entries(catStats)){
+    const p=s.tot?Math.round((s.auto+s.confirm)/s.tot*100):0;
+    L.push('  '+prog.padEnd(20,'.')+' '+String(p).padStart(3)+'%   ('+s.auto+' auto · '+s.confirm+' confirm · '+s.neu+' nouveau / '+s.tot+')');
+  }
   L.push('');
   L.push('── DÉTAIL PAR PROGRAMME ─────────────────────');
   L.push(...detail);
@@ -2146,24 +2192,51 @@ function _vmBenchRun(){
   L.push('🟢 direct = nom exact / synonyme anglais · 🟢 alias = équivalence ou recouvrement de mots');
   L.push('🟡 confirm = zone grise, l\'app demande à l\'utilisateur (✓/✕) · ⚪ nouveau = exercice créé');
   L.push('Un ⚪ « nouveau » n\'est PAS forcément une erreur : un vrai mouvement inconnu DOIT rester nouveau.');
-  L.push('Astuce : exporter ce rapport après chaque version pour comparer (avant/après une évolution du moteur).');
+  L.push('🔴 régression = un exercice qui était reconnu ne l\'est plus (ou a été rétrogradé) depuis la référence.');
   L.push('═══════════════════════════════════════════');
   _vmReport={ text:L.join('\n'), ymd, pass:pctReconnu, total:100, bench:true };
+
   // carte de résultat dans le Coach
   try{
     const msgs=document.getElementById('coach-msgs');
     if(msgs){
       goScreen('coach',document.getElementById('nb-coach')); try{_showCoachChat();}catch(e){}
       const d=document.createElement('div'); d.className='msg-bubble msg-coach'; d.style.cssText='background:var(--bg3);border:1px solid var(--sep);';
+      let comp='';
+      if(base&&base.results){
+        comp='<p style="margin:6px 0 2px;font-size:13px">vs réf. '+((base.version||base.date||'?')+'').replace(/</g,'&lt;')+' : '
+          +'<b style="color:var(--green)">+'+improvements.length+'</b> · '
+          +'<b style="color:'+(regressions.length?'var(--red)':'var(--t2)')+'">🔴 '+regressions.length+' régression'+(regressions.length>1?'s':'')+'</b>'
+          +(changed.length?' · ↔ '+changed.length:'')+'</p>';
+        if(regressions.length) comp+='<ul style="margin:4px 0;padding-left:16px;font-size:12px;color:var(--red)">'+regressions.slice(0,6).map(x=>'<li>'+x.replace(/</g,'&lt;')+'</li>').join('')+'</ul>';
+      }
       d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧪 Mode Test VM — Banc d\'essai</p>'
-        +'<p style="margin:2px 0">'+tot+' exercices « tordus » testés (0 appel IA)</p>'
+        +'<p style="margin:2px 0">'+tot+' exercices testés (0 appel IA)'+(ver?' · '+(''+ver).replace(/</g,'&lt;'):'')+'</p>'
         +'<p style="margin:6px 0 2px">🟢 Auto <b>'+(direct+alias)+'</b> ('+pctAuto+'%) &nbsp;·&nbsp; 🟡 Confirm <b>'+conf+'</b> &nbsp;·&nbsp; ⚪ Nouveau <b>'+neu+'</b></p>'
         +'<p style="margin:2px 0;font-size:15px">➜ Reconnaissance : <b style="color:var(--green)">'+pctReconnu+'%</b></p>'
-        +'<button class="btn btn-bg2" style="width:100%;padding:10px;font-size:13px;margin-top:8px" onclick="exportVmText()">📤 Rapport complet (texte)</button>';
+        +comp
+        +'<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'
+        +'<button class="btn btn-bg2" style="flex:1;min-width:90px;padding:9px;font-size:12px" onclick="exportVmText()">📤 Texte</button>'
+        +'<button class="btn btn-bg2" style="flex:1;min-width:90px;padding:9px;font-size:12px" onclick="exportVmBenchCsv()">📊 CSV</button>'
+        +'<button class="btn btn-bg2" style="flex:1;min-width:120px;padding:9px;font-size:12px" onclick="saveVmBenchBaseline()">💾 Référence</button>'
+        +'</div>';
       msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
     }
   }catch(e){}
-  toast('Banc VM : '+pctReconnu+'% reconnus ('+tot+' exos)','info');
+  const msg='Banc VM : '+pctReconnu+'% reconnus'+(base&&regressions.length?' · 🔴 '+regressions.length+' régression'+(regressions.length>1?'s':''):'');
+  toast(msg, (base&&regressions.length)?'error':'info');
+}
+async function exportVmBenchCsv(){
+  if(!_vmBenchLast){ toast('Lance d\'abord le banc d\'essai','error'); return; }
+  const rows=[['nom','programme','resultat','match','confiance']];
+  for(const [n,r] of Object.entries(_vmBenchLast.results)){
+    const res=r.tier==='auto'?'auto':(r.tier==='confirm'?'confirm':'nouveau');
+    rows.push([n, r.prog, res, r.m||'', r.conf]);
+  }
+  const csv=rows.map(r=>r.map(c=>{const s=(''+c);return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';')).join('\r\n');
+  const fname='VM_banc_essai_'+_vmBenchLast.date+'.csv';
+  try{ const file=new File([csv],fname,{type:'text/csv'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'VM CSV'}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{ const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('CSV exporté','success'); }catch(e){ toast('Export impossible','error'); }
 }
 
 // ─── DRAWER ───────────────────────────────────────────────────
