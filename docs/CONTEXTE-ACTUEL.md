@@ -32,7 +32,10 @@
     plus tard si prouvé), chaque persona a son « attendu », **semer depuis les VRAIS
     testeurs** (Tatiana = 1ᵉʳ VC) + la Constitution, **commencer PETIT** (5-6), le labo
     SERT la feuille de route sans la remplacer. Détail : `DOSSIER-ATHLETE-SUIVI.md`.
-    ⏳ À faire (DESIGN d'abord, pas de code sans spec) : format persona + harnais VC + VC-001 (Tatiana).
+    ✅ **FAIT (`ft-v505`)** : format persona **v1.0 (7 rubriques)** figé + **harnais VC** (injection
+    sûre : gel + snapshot + `load()` → données réelles intactes, testé) + **VC-001 Tatiana bâti**.
+    ⏳ Reste : **Michel lance le run réel VC-001** (bouton admin « 🎭 Lancer VC-001 »), on lit la
+    réponse de Milo vs les attendus → verdict. Puis étoffer la bibliothèque (débutant/force/blessure…).
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).
