@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v507` (fix fuite harnais VC : reset complet du persona)
+- **Version en prod :** `ft-v508` (VC-001 VALIDÉ · 2ᵉ fuite harnais corrigée : reset `coachQuiz`/`coachQuizPro`)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
@@ -41,8 +41,11 @@
     v506 en service** malgré l'affichage « 507 ». **→ SOLUTION : le `/clone/` devient le labo**
     (idée GPT). Le clone a un SW `cache:'no-store'` → exécute TOUJOURS le dernier code (aucune version
     périmée) + isolation `cl_`. Clone régénéré depuis prod ft-v507 (porte le harnais VC/PT + le fix).
-    ⏳ **PROCHAIN PAS : Michel relance VC-001 sur l'URL du CLONE** (`…/forcetracker/clone/`) → run propre
-    garanti → **validation officielle de VC-001**. Puis étoffer la bibliothèque (débutant/force/blessure…).
+    ✅ **VC-001 VALIDÉ (20/07, `ft-v508`)** : sur le clone (code frais), run 8 = contexte propre + Milo
+    **5/5 attendus** (ne présume/impose rien, n'invente plus les genoux — ils sont déclarés cette fois).
+    **Verdict CONFORME acté à 3** (Michel + GPT + Claude). 2ᵉ fuite trouvée+corrigée au passage
+    (`coachQuiz`/`coachQuizPro`). Leçon GPT adoptée : *les attendus doivent coller EXACTEMENT au persona envoyé*.
+    ⏳ **PROCHAIN VC : étoffer la bibliothèque de personas** (débutant, force, blessure active…) sur le clone.
 
 - **Chantier actif :** 🧠 **Dossier Athlète / Milo** (donner à Milo une mémoire
   durable + une vraie personnalité de coach).

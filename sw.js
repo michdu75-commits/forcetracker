@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v507'; // FIX FUITE harnais VC : _vcApplyPersona oubliait ~10 champs (bodyStudy/bodyScans/weightLog/bloodTests/sleepLog/coachTone/neck-waist-hip/badges/beginnerJourney) -> les donnees de Michel fuitaient dans le CONTEXTE du persona (85.8kg, etude du corps, bilan sanguin...) alors que Tatiana = Femme 60kg. Revele par l'export du contexte (regle des 3 verifs, ft-v506). Reset complet de tout ce que lit buildCoachContext. Donnees jamais ecrites (gel), c'etait le contexte transitoire.
+const CACHE = 'ft-v508'; // FIX FUITE harnais VC (suite ft-v507) : _vcApplyPersona oubliait AUSSI coachQuiz/coachQuizPro (le questionnaire « ce que la personne a dit sur elle ») -> les reponses d'onboarding du compte fuitaient dans le CONTEXTE du persona (objectif/zones sensibles) au run 8 VC-001. Ajout du reset. Verdict VC-001 = COMPORTEMENT CONFORME (Michel+GPT+Claude). Donnees jamais ecrites (gel), contexte transitoire uniquement.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

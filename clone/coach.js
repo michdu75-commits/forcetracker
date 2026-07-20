@@ -1823,6 +1823,7 @@ function _vcApplyPersona(p){
   S.bloodTests=a.bloodTests||[];
   S.registre=a.registre||{facts:{},observations:[],sessionLog:[],updatedAt:''};
   S.coachMemory=a.coachMemory||''; S.dayState=null;
+  S.coachQuiz=a.coachQuiz||null; S.coachQuizPro=a.coachQuizPro||null; // questionnaire « ce que la personne a dit sur elle »
   S.badges=a.badges||{}; S.beginnerJourney=a.beginnerJourney||null; S.mensCycleDur=a.mensCycleDur||0;
   // — Nutrition —
   S.nutritionPhase='charge'; S.keto=false; S.manualKcal=0;
