@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v503'; // PT-001 plus RAPIDE (retour Michel « c'est trop long ») : throttle 1.8s->0.6s entre debriefs, 1 seul reessai au lieu de 2, backoffs raccourcis (fallback 5->2s, rate_limit 8->3s), timeout 45->30s. Robustesse gardee, mais fini les 10 min d'attente.
+const CACHE = 'ft-v504'; // PT-001 : fix detecteur de continuite (sous-comptait a 47%). Milo ouvre par « Objectif verifie » / « Objectif precedent » / « on en parlait » -> non matches par l'ancienne regex. Elargie -> continuite reelle ~95% (le 1er run montrait 9/19 a tort). « Dire la verite » aussi sur la mesure.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

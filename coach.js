@@ -1474,7 +1474,10 @@ function _pt001FmtSess(s){
 }
 // Détecte si Milo fait référence à l'objectif de la fois d'avant (continuité visible dans le texte)
 function _pt001HasContinuity(reply){
-  return /(la (?:dernière|derniere) fois|je t'?avais (?:demand|dit|fix)|comme (?:pr[ée]vu|demand)|tu (?:l'?as|as tenu|avais|as bien)|objectif (?:tenu|atteint|rempli|non tenu|pas tenu)|la fois (?:d'?avant|pr[ée]c[ée]dente|derni[èe]re))/i.test(String(reply||''));
+  // ⚠️ Milo ouvre TRÈS souvent par « Objectif vérifié » / « Objectif précédent » — la 1re
+  //    version de ce détecteur ne les matchait pas → continuité sous-comptée (47 % au lieu
+  //    de ~95 %). On élargit aux vraies tournures observées dans les rapports.
+  return /(objectif\s+(?:pr[ée]c[ée]dent\s+)?v[ée]rifi|objectif\s+pr[ée]c[ée]dent|la (?:dernière|derniere) fois|je t'?avais (?:demand|dit|fix)|je te l'?avais|comme (?:pr[ée]vu|demand|on (?:l'?avait|se l'?[ée]tait)|convenu)|on (?:en parlait|avait dit|se l'?[ée]tait fix|remet|garde ça|y revient)|tu (?:l'?as|as tenu|avais|as bien)|objectif (?:tenu|atteint|rempli|non tenu|pas tenu)|ça fait \w+ séances|la fois (?:d'?avant|pr[ée]c[ée]dente|derni[èe]re))/i.test(String(reply||''));
 }
 // Petite étiquette visuelle dans le Coach (n'entre PAS dans coachHistory)
 function _pt001Label(txt){
