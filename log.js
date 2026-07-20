@@ -1116,7 +1116,10 @@ Object.assign(_EX_EQUIV,{
   'butter fly':'Pec Deck','butter fly machine':'Pec Deck','pec machine':'Pec Deck','fly machine':'Pec Deck',
   'lat machine':'Tirage Poulie Haute','lat pd':'Tirage Poulie Haute','row assis':'Rowing Cable',
   // 5e vague (rapport HELL MODE v2, validé GPT) : squat profond + presse mollets
-  'atg squat':'Squat à la Barre','mollet presse':'Presse Mollets (Leg Press)'
+  'atg squat':'Squat à la Barre','mollet presse':'Presse Mollets (Leg Press)',
+  // 6e vague (rapport TRX/poids du corps) : 3 suggestions absurdes corrigées (muscle faux)
+  'trx ham curl':'Curl Ischio-jambiers (Leg Curl)','nordic curl':'Curl Ischio-jambiers (Leg Curl)',
+  'chin up':'Traction Prise Neutre'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
