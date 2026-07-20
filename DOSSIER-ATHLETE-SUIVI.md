@@ -141,7 +141,8 @@ avis « MILO ENGINE », « Dossier Athlète », « Milo V3 / le Gardien ».
 | `backup-2026-07-19-avant-gardien6b` | **AVANT** le Gardien 6B précis (état = séparation ADN/Santé) | `git reset --hard origin/backup-2026-07-19-avant-gardien6b` |
 | `backup-2026-07-19-avant-3b` | **AVANT** la brique 3B (état = Gardien 6B + séparation ADN/Santé) | `git reset --hard origin/backup-2026-07-19-avant-3b` |
 | `backup-2026-07-19-avant-ressenti-score` | **AVANT** le branchement ressenti→score (état = 3B livrée) | `git reset --hard origin/backup-2026-07-19-avant-ressenti-score` |
-| ⭐ `backup-2026-07-19-pt001-labo-milo-vt-vc-ft-v502` | **MILESTONE STABLE** — `ft-v502` : Milo **réparé** (fix 400 `_silent`), **PT-001** (labo continuité + « dire la vérité ») livré, cadre **VT/VC** gravé. Bon point de reprise. | `git reset --hard origin/backup-2026-07-19-pt001-labo-milo-vt-vc-ft-v502` |
+| `backup-2026-07-19-pt001-labo-milo-vt-vc-ft-v502` | `ft-v502` : Milo réparé (fix 400 `_silent`) + PT-001 + cadre VT/VC. *(snapshot antérieur — préférer le suivant)* | `git reset --hard origin/backup-2026-07-19-pt001-labo-milo-vt-vc-ft-v502` |
+| ⭐ `backup-2026-07-20-pt001-valide-ft-v504` | **MILESTONE À JOUR** — `ft-v504` : PT-001 **validé au 1ᵉʳ run réel** (Milo « te suit », 20/20), test **accéléré** (v503) + **détecteur de continuité corrigé** (v504) + **résultats & raffinements GPT gravés**. **Le meilleur point de reprise.** | `git reset --hard origin/backup-2026-07-20-pt001-valide-ft-v504` |
 
 ---
 
