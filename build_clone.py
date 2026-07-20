@@ -32,6 +32,14 @@ if not m:
     raise SystemExit('Shim clone introuvable dans clone/index.html — abandon (rien écrasé).')
 shim = m.group(0)
 
+# Estampille la VERSION (depuis prod sw.js) dans le badge « CLONE ». Le clone tourne en
+# no-store (pas de cache versionné ft-vNNN) → l'indicateur de version normal reste vide ;
+# on l'affiche donc directement dans le badge. Idempotent (réécrit à chaque build).
+sw = open(rp('sw.js'), encoding='utf-8').read()
+mv = re.search(r"const CACHE\s*=\s*'(ft-v\d+)'", sw)
+VER = mv.group(1) if mv else ''
+shim = re.sub(r"(b\.textContent\s*=\s*)'🧪 CLONE[^']*'", r"\1'🧪 CLONE " + VER + "'", shim)
+
 # ─── Câblage i18n propre au CLONE ────────────────────────────────────────────
 # La PROD reste en français : le bouton drapeau, le <script translations.js> et
 # la ligne Milo multilingue n'existent QUE dans le clone. build_clone régénère
