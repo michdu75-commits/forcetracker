@@ -6,9 +6,9 @@
 
 ---
 
-- **Version en prod :** `ft-v502` (🔴 FIX Milo cassé : le champ _silent du débrief auto ft-v491 était envoyé à l'API Claude → 400. Révélé par PT-001)
+- **Version en prod :** `ft-v504` (PT-001 : détecteur de continuité corrigé ; v502 = fix Milo cassé bug 400 `_silent` ; v503 = test accéléré)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
-- **Dernier point de sauvegarde :** `backup-2026-07-19-avant-ressenti-score`
+- **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
 
 - **🧪 PROTOCOLE DE VALIDATION (nouveau, `ft-v497`) — PT-001 « Continuité mémoire »** :
@@ -17,9 +17,13 @@
   produit un **rapport exportable** (texte + PDF : timing, saturation, continuité,
   verdict + 7 axes GPT). Valide à 3 (Michel/GPT/Claude). C'est le **1ᵉʳ d'une série de
   protocoles** (PT-002 Gardien · PT-003 Observations · PT-004 ADN · PT-005 Onboarding).
-  → **PROCHAINE ACTION : Michel lance PT-001 sur iPhone** puis m'envoie le rapport texte
-  pour l'analyse (les 4 axes + les 7 points). *« On construit une méthode de validation
-  reproductible, plus seulement des fonctionnalités » (GPT).*
+  → **✅ 1ᵉʳ RUN RÉEL FAIT ET VALIDÉ (20/07)** : 20 séances, **20/20 réponses valides**
+  (après le fix du bug 400), mémoire 20/20, **continuité d'objectif réelle ~95 %**
+  (détecteur corrigé v504), **portrait « Qui suis-je ? » réussi** (décrit la personne).
+  Preuves de suivi : saga hip thrust + « 105 OBJECTIF TENU, bravo ». Seul 🔴 = saturation
+  = **artefact du rejeu Opus en rafale**, PAS Milo en réel (~14 s/débrief en vrai).
+  Détail : `DOSSIER-ATHLETE-SUIVI.md` (§ Résultats du 1ᵉʳ run). *« On construit une méthode
+  de validation reproductible, plus seulement des fonctionnalités » (GPT).*
   - **🏛️ CADRE ADOPTÉ — Laboratoire à 2 piliers VT / VC** (idée Michel, structurée GPT,
     19-20/07) : **VT** = Vérifications Techniques = les PT-xxx (le système marche) ·
     **VC** = Vérifications Comportementales = rejouer des **personas** (sportifs fictifs
