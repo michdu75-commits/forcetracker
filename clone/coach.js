@@ -2119,12 +2119,14 @@ function startVmBench(){
   _vmBenchRun();
 }
 function _vmBenchRank(t){ return t==='auto'?2:(t==='confirm'?1:0); }
-function _vmBenchRun(){
+// benchDef : jeu de tests (par défaut VM_BENCH) · compare : comparer à la référence (false pour « mon programme »)
+function _vmBenchRun(benchDef, compare){
+  const DEF=benchDef||VM_BENCH; const doCompare=(compare!==false);
   const ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
   let ver=''; try{ ver=(typeof CACHE_LABEL!=='undefined'&&CACHE_LABEL)||(document.querySelector('.app-ver')&&document.querySelector('.app-ver').textContent)||''; }catch(e){}
   let tot=0,direct=0,alias=0,conf=0,neu=0;
   const results={}, catStats={}, detail=[];
-  for(const [prog,names] of Object.entries(VM_BENCH)){
+  for(const [prog,names] of Object.entries(DEF)){
     catStats[prog]={tot:0,auto:0,confirm:0,neu:0};
     detail.push('── '+prog+' ──');
     names.forEach(n=>{
@@ -2144,7 +2146,7 @@ function _vmBenchRun(){
   _vmBenchLast={ version:ver||ymd, date:ymd, results, stats:{tot,direct,alias,conf,neu,pctAuto,pctReconnu} };
 
   // ── Comparaison avec la RÉFÉRENCE enregistrée (détection de régression) ──
-  const base=_vmBenchLoadBaseline();
+  const base=doCompare?_vmBenchLoadBaseline():null;
   const improvements=[], regressions=[], changed=[];
   if(base&&base.results){
     for(const [n,cur] of Object.entries(results)){
@@ -2170,8 +2172,8 @@ function _vmBenchRun(){
     if(changed.length){ L.push(''); L.push('  ↔ Rattachements CHANGÉS (à vérifier) :'); changed.forEach(x=>L.push('     - '+x)); }
     if(improvements.length){ L.push(''); L.push('  ✅ Nouvelles reconnaissances :'); improvements.forEach(x=>L.push('     + '+x)); }
     L.push('');
-  } else {
-    L.push('(Aucune référence enregistrée — lance « 💾 Enregistrer comme référence » pour comparer les prochains runs.)');
+  } else if(doCompare){
+    L.push('(Aucune référence enregistrée — lance « 💾 Référence » pour comparer les prochains runs.)');
     L.push('');
   }
   L.push('RÉSULTAT GLOBAL ('+tot+' exercices testés)');
@@ -2237,6 +2239,43 @@ async function exportVmBenchCsv(){
   const fname='VM_banc_essai_'+_vmBenchLast.date+'.csv';
   try{ const file=new File([csv],fname,{type:'text/csv'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'VM CSV'}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
   try{ const blob=new Blob([csv],{type:'text/csv'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('CSV exporté','success'); }catch(e){ toast('Export impossible','error'); }
+}
+
+// ── « Tester MON programme » : colle une liste d'exercices → passe dans le moteur (0 IA) ──
+// Nettoie chaque ligne (retire puces, séries/reps/repos) puis lance le même rapport que le banc.
+function _vmCleanExName(line){
+  let s=(''+line).trim();
+  s=s.replace(/^[\s•\-\*·▪◦>»→\d]+[\.\)]?\s*/,'');        // puces / numéros de liste
+  s=s.replace(/\s*[:\-–—]\s*\d.*$/,'');                    // « : 4x8 » / « - 90s »
+  s=s.replace(/\s+\d+\s*[x×*]\s*\d+.*$/i,'');              // « 4x8 » / « 3 x 12 … »
+  s=s.replace(/\s+\d+\s*(reps?|répétitions?|répét|séries?|sets?|s|sec|secondes?|min|kg)\b.*$/i,''); // « 12 reps », « 90s »
+  s=s.replace(/\s{2,}/g,' ').trim();
+  return s;
+}
+function openVmBenchCustom(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  let ov=document.getElementById('ov-vm-custom');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='ov-vm-custom'; ov.className='overlay'; ov.style.zIndex='600';
+    ov.innerHTML='<div class="modal" style="max-width:460px;width:92vw;">'
+      +'<div style="font-weight:800;font-size:16px;margin-bottom:4px">🧪 Tester MON programme</div>'
+      +'<div style="font-size:12px;color:var(--t2);margin-bottom:8px">Colle une liste d\'exercices (un par ligne). Les séries/reps/repos sont ignorés automatiquement.</div>'
+      +'<textarea id="vm-custom-ta" rows="9" style="width:100%;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:10px;color:var(--t1);font-family:inherit;font-size:13px;line-height:1.5" placeholder="Développé Couché 4x8&#10;Peck deck machine 3x12&#10;Rowing barre 4x10&#10;..."></textarea>'
+      +'<div style="display:flex;gap:8px;margin-top:10px">'
+      +'<button class="btn btn-bg2" style="flex:1" onclick="document.getElementById(\'ov-vm-custom\').classList.remove(\'open\')">Fermer</button>'
+      +'<button class="btn btn-red" style="flex:1" onclick="_vmBenchCustomRun()">Lancer le test</button></div></div>';
+    document.body.appendChild(ov);
+    ov.onclick=e=>{ if(e.target===ov)ov.classList.remove('open'); };
+  }
+  ov.classList.add('open');
+  setTimeout(()=>{ const t=document.getElementById('vm-custom-ta'); if(t)t.focus(); },120);
+}
+function _vmBenchCustomRun(){
+  const ta=document.getElementById('vm-custom-ta'); if(!ta)return;
+  const names=ta.value.split('\n').map(_vmCleanExName).filter(x=>x&&x.length>1);
+  if(!names.length){ toast('Colle au moins un exercice','error'); return; }
+  const ov=document.getElementById('ov-vm-custom'); if(ov)ov.classList.remove('open');
+  _vmBenchRun({'Mon programme':names}, false);   // pas de comparaison référence (programme ad hoc)
 }
 
 // ─── DRAWER ───────────────────────────────────────────────────
