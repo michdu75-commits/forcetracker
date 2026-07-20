@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v512` (VM : confiance 0-100 + paliers auto/confirm/new + 4 pièges GPT → **21/21**, 0 IA)
+- **Version en prod :** `ft-v513` (VM : taxonomie biomécanique niveau 1 « schéma moteur » — 14 schémas, 89% EXLIB auto-classé, garde-fou non-fusion)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*

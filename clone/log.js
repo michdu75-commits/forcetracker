@@ -1015,6 +1015,40 @@ function _exModConflict(a,b){ for(const grp of _EX_MODGROUPS){ for(const m of gr
 function _exJac(qset,cset){ if(!cset.size)return 0; if(_exModConflict(qset,cset))return 0;
   let inter=0,core=0; qset.forEach(t=>{if(cset.has(t)){inter++; if(!_EX_MODS_ALL.has(t))core++;}});
   if(!core)return 0; const uni=new Set([...qset,...cset]).size; return uni?inter/uni:0; }
+
+// ─── Taxonomie biomécanique (couche « ontologie du mouvement », GPT) ──────────
+// Niveau 1 = SCHÉMA MOTEUR (poussée/tirage vertical/horizontal, squat, hip hinge…),
+// dérivé du NOM (0 migration, additif). Sert de garde-fou VM (2 mouvements de
+// schémas DIFFÉRENTS ne se fusionnent jamais) et prépare l'analyse « par famille ».
+// Niveau 3 = résistance (indicatif). Niveaux 2/4/5 = modificateurs / marques / alias
+// (déjà couverts par _EX_MODGROUPS et _EX_EQUIV). Ordre = du + spécifique au + générique.
+const _MOV_PATTERNS=[
+  {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','haussement','shrug','croix de fer']},
+  {id:'flexion-genou',label:'Flexion de genou (ischios)',kw:['leg curl','curl ischio','ischio','nordic']}, // AVANT curl-biceps (« leg curl » ≠ curl de bras)
+  {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['curl','preacher','biceps']},
+  {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps']},
+  {id:'mollets',label:'Extension de cheville (mollets)',kw:['mollet','calf']},
+  {id:'extension-genou',label:'Extension de genou (quadriceps)',kw:['leg extension','extension quadriceps','sissy squat']},
+  {id:'gainage-abdos',label:'Gainage / abdominaux',kw:['gainage','planche','plank','crunch','abdo','releve de jambe','releve de genou','russian twist','sit up','vacuum','roue abdo','ab wheel']},
+  {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','hyperextension','extension lombaire','ghd','glute ham','superman']},
+  {id:'fente',label:'Fente',kw:['fente','lunge','split squat','bulgare','montee sur box','step up','cossack']},
+  {id:'squat',label:'Squat (flexion hanche+genou)',kw:['squat','press jambe','leg press','hack','pendulum','belt squat','presse a cuisse','wall sit','sled']},
+  {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster']},
+  {id:'poussee-horizontale',label:'Poussée horizontale (pectoraux)',kw:['developpe couche','bench press','couche','chest press','ecarte','pec deck','pompe','push up','dips','croise poulie','crossover','decline','incline']},
+  {id:'tirage-vertical',label:'Tirage vertical',kw:['tirage poulie haute','tirage vertical','pulldown','lat pull','traction','pull up','tirage nuque','tirage poitrine','rocky pull']},
+  {id:'tirage-horizontal',label:'Tirage horizontal',kw:['rowing','tirage horizontal','tirage poulie basse','seal row','meadows','yates','renegade','bent over','bucheron','pull over','pullover']}
+];
+// Stemme les pluriels MAIS garde tous les mots (ne PAS retirer les mots vides ici :
+// sinon un mot-clé « curl haltère » se réduirait à « curl » et matcherait « leg curl »).
+function _movNorm(s){return _normEx(s).split(' ').filter(Boolean).map(_exStem).join(' ');}
+function _movPattern(name){ const q=' '+_movNorm(name)+' '; for(const p of _MOV_PATTERNS){ for(const k of p.kw){ if(q.indexOf(' '+_movNorm(k)+' ')>=0 || q.indexOf(_movNorm(k))>=0) return p.id; } } return null; }
+function _movResist(name){ const q=_normEx(name);
+  if(/kettlebell/.test(q))return'kettlebell'; if(/elastique|band/.test(q))return'elastique';
+  if(/poulie|cable/.test(q))return'poulie'; if(/haltere|dumbbell/.test(q))return'halteres';
+  if(/smith|hammer|machine|levier|convergent|leg press|press jambe|pec deck|presse/.test(q))return'machine';
+  if(/traction|pompe|dips|gainage|planche|pull up/.test(q))return'poids-du-corps';
+  if(/barre|barbell/.test(q))return'barre'; return null; }
+function _exTaxo(name){ return {pattern:_movPattern(name), resistance:_movResist(name)}; }
 // Table d'équivalences SÉMANTIQUES connues (ce que le lexical ne peut pas deviner).
 // clé = forme normalisée d'entrée → nom EXLIB cible. À enrichir au fil des vrais imports.
 const _EX_EQUIV={
@@ -1038,7 +1072,9 @@ function _matchExercise(name,opts){
   const qt=_exTokens(name); if(!qt.length)return{match:null,score:0,confidence:0,tier:'new',via:'aucun mot utile'};
   const qset=new Set(qt); let best=null,bestScore=0;
   const hasEN=(typeof EX_EN!=='undefined');
+  const qPat=_movPattern(name);   // garde-fou taxonomie : schémas moteurs différents → jamais fusionner
   for(const ex of all){
+    if(qPat){ const cPat=_movPattern(ex.n); if(cPat && cPat!==qPat) continue; }
     const jN=_exJac(qset,new Set(_exTokens(ex.n)));                                   // vs nom français
     const jE=hasEN&&EX_EN[ex.n]?_exJac(qset,new Set(_exTokens(EX_EN[ex.n]))):0;       // vs synonyme anglais
     const jac=Math.max(jN,jE);

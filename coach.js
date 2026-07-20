@@ -2012,6 +2012,20 @@ const VM_CASES=[
   {input:'Extenseur de nuque manuel maison', expect:null, why:'mouvement inconnu → nouveau'},
   {input:'Machine à vibration corps entier', expect:null, why:'pas un exercice de la base → nouveau'}
 ];
+// VM-005 : TAXONOMIE — le nom (même de marque) doit tomber sur le bon SCHÉMA MOTEUR (niveau 1).
+const VM_TAXO_CASES=[
+  {input:'Développé Couché', pattern:'poussee-horizontale'},
+  {input:'Développé Militaire', pattern:'poussee-verticale'},
+  {input:'Tirage Poulie Haute', pattern:'tirage-vertical'},
+  {input:'Rowing Barre', pattern:'tirage-horizontal'},
+  {input:'Squat à la Barre', pattern:'squat'},
+  {input:'Soulevé de Terre Roumain Barre', pattern:'hip-hinge'},
+  {input:'Leg Curl Assis Machine', pattern:'flexion-genou'},
+  {input:'Extension Quadriceps (Leg Extension)', pattern:'extension-genou'},
+  {input:'Élévations Latérales', pattern:'elevation-epaules'},
+  {input:'Technogym Pulldown', pattern:'tirage-vertical'},              // marque → toujours tirage vertical
+  {input:'Hammer Strength Chest Press', pattern:'poussee-horizontale'}  // marque → toujours poussée horizontale
+];
 function startVmTest(){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
   if(typeof _matchExercise!=='function'){ toast('Moteur de reconnaissance absent','error'); return; }
@@ -2042,6 +2056,14 @@ function _vmRun(){
     L.push('     ('+x.c.why+')');
   });
   L.push('');
+  // — VM-005 : taxonomie (schéma moteur) —
+  let tpass=0; const trows=[];
+  if(typeof _movPattern==='function'){
+    VM_TAXO_CASES.forEach(c=>{ let got; try{got=_movPattern(c.input);}catch(e){got='erreur';} const ok=(got===c.pattern); if(ok)tpass++; trows.push({c,got,ok}); });
+    L.push('── TAXONOMIE (schéma moteur, niveau 1) : '+tpass+'/'+VM_TAXO_CASES.length+' ──');
+    trows.forEach(x=>L.push('   '+(x.ok?'✅':'❌')+' « '+x.c.input+' » → '+(x.got||'(aucun)')+(x.ok?'':'   [attendu '+x.c.pattern+']')));
+    L.push('');
+  }
   L.push('── LECTURE ─────────────────────────────────');
   L.push('✅ = le moteur local a rattaché au bon exercice (ou a bien laissé « nouveau »).');
   L.push('❌ = à corriger : soit un doublon manqué (rattachement raté), soit une fusion à tort');
