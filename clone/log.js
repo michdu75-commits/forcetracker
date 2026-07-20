@@ -1074,6 +1074,12 @@ function _eqLookup(q,name){ if(_EX_EQUIV[q])return _EX_EQUIV[q];
   // (« Leg press machine » → « leg press », pas « leg pres » qui corromprait la clé).
   const core=_normEx(name).split(' ').filter(t=>t&&!_EX_STOP.has(t)).join(' ');
   return (core&&core!==q&&_EX_EQUIV[core])?_EX_EQUIV[core]:null; }
+// ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
+Object.assign(_EX_EQUIV,{
+  'cable hip abduction':'Abduction Cuisses (Leg Abduction)','standing hip abduction':'Abduction Cuisses (Leg Abduction)',
+  'cable hip adduction':'Adduction Cuisses (Leg Adduction)','standing hip adduction':'Adduction Cuisses (Leg Adduction)',
+  'alternating waves':'Battle Rope','battle rope waves':'Battle Rope','double waves':'Battle Rope',
+});
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles 6-14 + spéciales) → nom canonique EXLIB ───
 // Fentes, Quadriceps, Ischios, Mollets, Gainage/Abdos, Curl, Triceps, Épaules, Poussée verticale.
 // Même principe : rattache un libellé importé au bon exo EXLIB, ne crée jamais d'exercice.
