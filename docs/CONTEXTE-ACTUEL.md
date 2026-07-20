@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v513` (VM : taxonomie biomécanique niveau 1 « schéma moteur » — 14 schémas, 89% EXLIB auto-classé, garde-fou non-fusion)
+- **Version en prod :** `ft-v514` (VM branché sur l'import de programme : rattachement aux références EXLIB → fini les doublons)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*

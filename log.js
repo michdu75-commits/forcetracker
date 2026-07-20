@@ -2708,6 +2708,7 @@ async function analyzeImportPhotos(){
     const d=JSON.parse(_rawResp);
     if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
     _impExtracted=d.data;
+    _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
     _renderImpConfirm();
     impGoStep(4);
   }catch(e){
@@ -2717,6 +2718,35 @@ async function analyzeImportPhotos(){
   }
 }
 
+// VM → import : rattache chaque exercice importé à sa RÉFÉRENCE EXLIB (fini les doublons).
+// Palier auto (confiance ≥90) = rattaché direct (nom remplacé, original gardé pour « annuler »).
+// Palier confirm (zone grise) = proposé à l'utilisateur (« ≈ Rattacher à X ? »), nom inchangé
+// tant qu'il n'a pas dit oui. Palier nouveau = laissé tel quel → exercice créé (comme avant).
+function _vmMatchExtracted(){
+  if(typeof _matchExercise!=='function'||!_impExtracted)return;
+  (_impExtracted.days||[]).forEach(day=>(day.exercises||[]).forEach(ex=>{
+    if(!ex||!ex.name)return;
+    delete ex._vmFrom; delete ex._vmSuggest; delete ex._vmConf;
+    let r; try{ r=_matchExercise(ex.name); }catch(e){ return; }
+    if(!r||!r.match||r.match===ex.name)return; // rien à faire / déjà EXACTEMENT le nom canonique
+    // (une simple différence de casse/accents « Pec deck » → « Pec Deck » est un rattachement utile :
+    //  sinon l'exo importé ne partagerait ni stats ni figurine avec la référence EXLIB)
+    if(r.tier==='auto'){ ex._vmFrom=ex.name; ex._vmConf=r.confidence; ex.name=r.match; }
+    else if(r.tier==='confirm'){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; }
+  }));
+}
+function impAcceptMatch(di,ei){
+  const ex=_impExtracted&&_impExtracted.days[di]&&_impExtracted.days[di].exercises[ei];
+  if(!ex||!ex._vmSuggest)return;
+  ex._vmFrom=ex.name; ex.name=ex._vmSuggest; delete ex._vmSuggest;
+  _renderImpConfirm();
+}
+function impUndoMatch(di,ei){
+  const ex=_impExtracted&&_impExtracted.days[di]&&_impExtracted.days[di].exercises[ei];
+  if(!ex||!ex._vmFrom)return;
+  ex.name=ex._vmFrom; delete ex._vmFrom; delete ex._vmConf;
+  _renderImpConfirm();
+}
 function _renderImpConfirm(){
   const d=_impExtracted;if(!d)return;
   const nameEl=document.getElementById('imp-prog-name');
@@ -2731,6 +2761,8 @@ function _renderImpConfirm(){
             <div style="flex:1;min-width:0;">
               <div style="font-size:13px;font-weight:600;">${_escNote(ex.name)}</div>
               <div style="font-size:12px;color:var(--t2);">${ex.sets}×${ex.reps} reps${ex.kg?' · '+ex.kg+' kg':''}</div>
+              ${ex._vmFrom?`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
+              ${ex._vmSuggest?`<div style="font-size:11px;color:var(--gold);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">≈ Rattacher à « ${_escNote(ex._vmSuggest)} » ? <button onclick="impAcceptMatch(${di},${ei})" style="background:var(--gold);border:none;color:#000;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:700;cursor:pointer;">Oui</button></div>`:''}
               ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${_escNote(ex.note)}</div>`:''}
             </div>
             <button onclick="removeImpEx(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
