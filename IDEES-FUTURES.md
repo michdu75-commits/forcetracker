@@ -54,10 +54,21 @@ besoin du drapeau « confirmé ? ». **Aucune priorité définie = objectif inco
    priorités. Pas en bolt-on.
 5. **Migration douce** : objectif unique existant → **Priorité 1 = [son objectif]**, zéro perturbation.
 
-**Statut** : direction validée conceptuellement (Michel + GPT + Claude), **à cadrer** (surtout nutrition
-+ UX) et à **construire avec l'onboarding**. Pour l'immédiat (VC-001), les fixes légers suffisent
-(anti-invention + « priorités/objectif non définis → demande »). ⚠️ Ne PAS gonfler les 8 briques : c'est
-une **évolution de la couche Objectif/ADN** qui nourrit le raisonnement de Milo, pas une 9ᵉ brique.
+**Décisions consolidées (Michel + GPT + Claude, 20/07)** :
+- **Max 3 priorités**, dans une **LISTE FERMÉE** d'objectifs (force / muscle / perte de gras /
+  forme-santé / endurance / définition…) — simplifie le raisonnement de Milo.
+- **Nutrition** : la **Priorité 1 pilote** la stratégie, **les priorités secondaires la MODULENT**
+  (GPT — ex. Force + Perte de gras → maintien/léger surplus, pas gros surplus). Mapping à cadrer.
+- **Terminologie** : garder **« Priorités »** (⚠️ « phase » déjà pris = nutrition charge/décharge +
+  cycle de force → collision) ; l'évolution est couverte par le fait qu'on **re-classe** les priorités.
+  *(GPT proposait « Phase actuelle » ; à re-trancher au design, mais Claude penche « Priorités ».)*
+- **À concevoir AVEC l'onboarding** · migration : objectif unique → Priorité 1 · **pas une 9ᵉ brique**
+  (évolution de la couche Objectif/ADN).
+
+**Statut** : 🟢 **direction validée** (évolution MAJEURE de la couche Objectif — influence coaching +
+nutrition + raisonnement). **Construction = avec le chantier onboarding.** Pour l'immédiat (débloquer
+VC-001), fixes légers suffisent : **garde-fou anti-invention** + **contexte honnête** (objectif non
+défini → « non renseigné, demande ») + **le harnais VC exporte le contexte** (règle des 3 vérifs).
 
 ---
 
