@@ -1096,7 +1096,11 @@ Object.assign(_EX_EQUIV,{
   'tirage devant':'Tirage Poulie Haute','lat pull':'Tirage Poulie Haute',
   'reverse pec fly':'Machine Oiseau','reverse fly':'Machine Oiseau','reverse pec deck':'Machine Oiseau','ecarte inverse machine':'Machine Oiseau',
   'quad extension':'Extension Quadriceps (Leg Extension)',
-  'standing soleus press':'Élévations Mollets Debout','soleus press':'Élévations Mollets Debout'
+  'standing soleus press':'Élévations Mollets Debout','soleus press':'Élévations Mollets Debout',
+  // Stress-test « Niveau Expert » (2e vague GPT)
+  'ischios assis':'Leg Curl Assis Machine','ischio assis':'Leg Curl Assis Machine',
+  'hack':'Squat Hack (Hack Squat)','presse':'Press Jambes 45°',
+  'high pulley':'Tirage Poulie Haute','pulley wide':'Tirage Poulie Haute','wide pulley':'Tirage Poulie Haute'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
