@@ -1114,7 +1114,9 @@ Object.assign(_EX_EQUIV,{
   'dc bb':'Développé Couché','dev couche':'Développé Couché','cg bench':'Développé Couché',
   'push down':'Triceps Poulie','tri rope':'Triceps Corde Poulie',
   'butter fly':'Pec Deck','butter fly machine':'Pec Deck','pec machine':'Pec Deck','fly machine':'Pec Deck',
-  'lat machine':'Tirage Poulie Haute','lat pd':'Tirage Poulie Haute','row assis':'Rowing Cable'
+  'lat machine':'Tirage Poulie Haute','lat pd':'Tirage Poulie Haute','row assis':'Rowing Cable',
+  // 5e vague (rapport HELL MODE v2, validé GPT) : squat profond + presse mollets
+  'atg squat':'Squat à la Barre','mollet presse':'Presse Mollets (Leg Press)'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
