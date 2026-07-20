@@ -31,6 +31,41 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 📅 Résumé hebdo « Ta semaine passée » v2 — SPEC VALIDÉE (Michel + GPT + Claude, 20/07/2026)
+
+**Constat** : le résumé actuel (`checkWeeklySummary`, app.js) = **stats froides** (séances, volume,
+calories, badges). GPT : *« ce n'est pas un ticket de caisse, c'est une histoire racontée par Milo. »*
+Le résumé = 1ʳᵉ **prise de recul** hebdo → un pas vers la **brique 8 (Synthèse)** + contenu partageable.
+
+**Spec finale (à construire) — 2 niveaux, LOCAL D'ABORD :**
+- **A. Bloc LOCAL enrichi (0 IA, gratuit, s'affiche TOUJOURS)** :
+  - **Comparaison à la semaine d'avant** (séances + volume avec ▲/▼ et %).
+  - **Le fait marquant** (1 highlight par ordre de force) : record battu (nom+charge) · sinon meilleur
+    lift · sinon groupe le plus travaillé · sinon plus grosse séance.
+  - **Régularité** (mini-série hebdo : « 3ᵉ semaine de suite ≥2 séances 🔥 »).
+  - Garder séances/volume/calories/badges, mieux présentés. (Répartition muscles = optionnel.)
+- **B. Phrase de MILO (IA, GRATUITE POUR TOUS — décision GPT : ça fait partie de l'identité)** :
+  - Raconte l'**histoire** de la semaine + un **« moment de fierté »** (« je suis surtout fier de… »)
+    + **un objectif simple pour la semaine suivante** (⭐ **continuité de coaching** — réutilise la
+    mécanique d'objectif du débrief, version hebdo).
+  - **Local d'abord** : la phrase enrichit le bloc local ; si l'appel échoue le lundi matin (réseau),
+    le résumé local s'affiche quand même. Anti-blocage.
+- **Cible (exemple GPT)** : *« Cette semaine, tu as retrouvé ton rythme. Trois séances, un volume en
+  hausse de 12 % et un nouveau record au développé couché. Je suis surtout fier de ta régularité.
+  Objectif de la semaine prochaine : conserver ce rythme avec au moins deux séances. »*
+
+**⚠️ Garde-fous :**
+- **Zéro culpabilisation** (Constitution) : semaine légère (1 ou 0 séance) → ton neutre/bienveillant,
+  jamais de morale (« la vie passe avant, on repart quand tu veux »).
+- **Coût** : 1 appel IA/lundi/utilisateur (négligeable maintenant, à surveiller à l'échelle) —
+  accepté car c'est l'âme du produit, et le local protège.
+- **Checklist #11** (feature user-facing) : WHATS_NEW + red dot + aide `?` + aide détaillée à faire à la livraison.
+
+**⏳ PLUS TARD (Premium — brique 7/8)** : analyse poussée = **tendances multi-semaines**, évolution,
+recommandations avancées (le « premium débloque l'intelligence de la mémoire », pas son existence).
+
+---
+
 ## ⏱️ Timer de repos adapté à l'intensité RÉELLE + l'âge (réflexion Michel affinée, 20/07/2026)
 
 **Constat Michel** : quand on s'entraîne en **force** (charges lourdes, peu de reps), le timer de
