@@ -3199,8 +3199,38 @@ async function analyzeHistPhotos(){
   }
   if(failed)toast(failed+' lot'+(failed>1?'s':'')+' non lu'+(failed>1?'s':'')+' — vérifie l\'aperçu, tu pourras réimporter les pages manquantes','info');
   _histExtracted={sessions:allSessions};
+  _vmMatchHist();   // VM : rattache les exos aux références EXLIB (mêmes stats, pas de doublon) AVANT l'aperçu
   _renderHistPreview();
   histGoStep(4);
+}
+
+// VM → import HISTORIQUE : même logique que _vmMatchExtracted (programme), mais sur
+// _histExtracted.sessions[].exercises[]. Auto (≥90) = nom remplacé par la référence EXLIB
+// (original gardé pour « annuler ») ; confirm (zone grise) = proposé ; nouveau = laissé tel quel.
+// ⚠️ Câbler l'historique évite de fragmenter les stats/PRs (finalImportHist ne crée un exo perso
+// que pour un nom absent d'EXLIB → un rattachement auto vers un nom EXLIB supprime le doublon).
+function _vmMatchHist(){
+  if(typeof _matchExercise!=='function'||!_histExtracted)return;
+  (_histExtracted.sessions||[]).forEach(sess=>(sess.exercises||[]).forEach(ex=>{
+    if(!ex||!ex.name)return;
+    delete ex._vmFrom; delete ex._vmSuggest; delete ex._vmConf;
+    let r; try{ r=_matchExercise(ex.name); }catch(e){ return; }
+    if(!r||!r.match||r.match===ex.name)return;
+    if(r.tier==='auto'){ ex._vmFrom=ex.name; ex._vmConf=r.confidence; ex.name=r.match; }
+    else if(r.tier==='confirm'){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; }
+  }));
+}
+function histAcceptMatch(si,ei){
+  const ex=_histExtracted&&_histExtracted.sessions[si]&&(_histExtracted.sessions[si].exercises||[])[ei];
+  if(!ex||!ex._vmSuggest)return;
+  ex._vmFrom=ex.name; ex.name=ex._vmSuggest; delete ex._vmSuggest;
+  _renderHistPreview();
+}
+function histUndoMatch(si,ei){
+  const ex=_histExtracted&&_histExtracted.sessions[si]&&(_histExtracted.sessions[si].exercises||[])[ei];
+  if(!ex||!ex._vmFrom)return;
+  ex.name=ex._vmFrom; delete ex._vmFrom; delete ex._vmConf;
+  _renderHistPreview();
 }
 
 function _renderHistPreview(){
@@ -3228,6 +3258,12 @@ function _renderHistPreview(){
     const estBadge=sess.estimatedDate?'<span style="color:var(--gold);font-size:11px;margin-left:6px;">📅 estimée</span>':'';
     const exList=(sess.exercises||[]).slice(0,3).map(e=>e.name).join(', ')
       +((sess.exercises||[]).length>3?' +'+((sess.exercises||[]).length-3):'');
+    // Rattachements VM (seulement les exos concernés → aperçu compact)
+    const vmRows=(sess.exercises||[]).map((ex,ei)=>{
+      if(ex._vmFrom)return`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ « ${_escNote(ex._vmFrom)} » → <b>${_escNote(ex.name)}</b> · <span onclick="histUndoMatch(${i},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`;
+      if(ex._vmSuggest)return`<div style="font-size:11px;color:var(--gold);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">≈ « ${_escNote(ex.name)} » : rattacher à « ${_escNote(ex._vmSuggest)} » ? <button onclick="histAcceptMatch(${i},${ei})" style="background:var(--gold);border:none;color:#000;border-radius:6px;padding:1px 9px;font-size:11px;font-weight:700;cursor:pointer;">Oui</button></div>`;
+      return'';
+    }).filter(Boolean).join('');
     const conflictHtml=conflict?`
       <div style="background:rgba(255,45,85,.08);border:1px solid rgba(255,45,85,.25);border-radius:8px;padding:8px 10px;margin-top:6px;">
         <div style="color:var(--red);font-weight:600;font-size:12px;margin-bottom:6px;">⚠️ Séance déjà existante ce jour</div>
@@ -3244,6 +3280,7 @@ function _renderHistPreview(){
       </div>
       <div style="font-size:12px;color:var(--t2);">${sess.label||''}</div>
       <div style="font-size:12px;color:var(--t3);margin-top:2px;">${exList}</div>
+      ${vmRows}
       ${conflictHtml}
     </div>`;
   }).join('');
