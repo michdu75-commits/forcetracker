@@ -1801,7 +1801,7 @@ const VC_PERSONAS = {
     resume:'Pratiquant CONFIRMÉ qui a DÉJÀ un coach humain — respect/complément (jamais remplacer) · testé sur Sonnet',
     // Il suit un vrai coach → on veut voir si Milo RESPECTE et COMPLÈTE, sans dénigrer ni imposer son propre programme.
     // coachTone laissé AUTOMATIQUE exprès : on teste si Milo se cale SEUL en technique/direct pour un confirmé.
-    apply:{ name:'Christophe', gender:'H', age:42, height:178, bw:82, goal:'force', discipline:'force', level:'confirme',
+    apply:{ name:'Christophe', gender:'H', age:42, height:178, bw:82, goal:'force', discipline:'powerlifting', level:'confirme',
       prs:{ 'Squat':{rm1:170,kg:150,reps:3,date:'2026-07-10'},
             'Développé Couché':{rm1:120,kg:105,reps:4,date:'2026-07-12'},
             'Soulevé de Terre':{rm1:200,kg:180,reps:3,date:'2026-07-08'} } },

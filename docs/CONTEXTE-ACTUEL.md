@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v509` (labo VC : + VC-002 Christophe [Sonnet] & VC-003 Emma [cycle/keto] · modèle-par-persona)
+- **Version en prod :** `ft-v510` (VC-002 Christophe & VC-003 Emma → runs réels **CONFORMES 2/2** ; fix fidélité discipline)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
