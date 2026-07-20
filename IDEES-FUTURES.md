@@ -16,6 +16,28 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🎓 VISION LONG TERME — « Mode Coach » / multi-rôles (Michel, 20/07/2026) — À GARDER, PAS PRIORITAIRE
+
+> ⚠️ **Ce n'est PAS un chantier immédiat.** La priorité reste l'industrialisation (VM · Confirm · couche Machine · tests). Cette vision se **documente** pour ne pas se peindre dans un coin, elle **ne se construit pas maintenant**.
+
+**L'idée (Michel, qui a connu les 2 mondes — sportif ET coach)** : **un seul produit** Force Tracker qui **adapte son interface selon le RÔLE** de l'utilisateur, pas deux apps séparées. Rôles envisagés : **Athlète · Coach**, puis éventuellement Préparateur physique · Kiné · Salle de sport.
+- **Le besoin du coach** ≠ juste créer des programmes : c'est **suivre plusieurs athlètes en même temps** — détecter les décrochages, mesurer la régularité, observer les progrès, **intervenir au bon moment**. Tableau de bord : progression · régularité · stats · alertes · historique · commentaires. Le **Gardien suggère/alerte**, mais **la décision reste au coach** (cohérent Principe 14).
+- **Le moteur reste UNIQUE** : VM · EXLIB · Gardien · Milo · couche Machine · stockage sont communs à tous les rôles. **Seules la présentation + les permissions changent.** ✅ (c'est le point rassurant : pas de 2ᵉ moteur.)
+
+**⚠️ Le vrai défi (analyse Claude) — ce n'est PAS le moteur, c'est DONNÉES + PERMISSIONS** :
+- Aujourd'hui Force Tracker est **local-first + mono-utilisateur** (tout rangé par l'email du propriétaire, dans son téléphone). Un coach qui voit les données de **plusieurs** athlètes = besoin d'un **modèle serveur de RELATIONS** (lien coach↔athlète, accès en lecture partagé) → ça **sort du pur local-first**.
+- **Consentement obligatoire de l'athlète** (données de santé privées — Constitution Principe 11) : l'athlète **choisit** de partager avec son coach, jamais imposé.
+- → Le Mode Coach est un **changement de « plateforme »**, pas une feature. Faisable, mais **gros**, et il touche le point le plus sensible (vie privée). Il rejoint la brique Phase 4 « base de données + hébergement ».
+
+**🛡️ LE GARDE-FOU À RESPECTER DÈS AUJOURD'HUI (gratuit, pour ne pas bloquer l'avenir)** — la phrase-clé de Michel : *« l'architecture doit gérer des ACTEURS, pas de simples UTILISATEURS. »*
+1. Ne jamais coder « **le seul utilisateur = le propriétaire de ces données** » comme une vérité absolue.
+2. Une donnée a un **propriétaire** (l'athlète) distinct de **qui la regarde** (lui, ou son coach avec accord).
+3. Les **permissions** = une couche à part (qui voit quoi), **jamais mélangées au moteur métier**.
+
+*(Doc source : « Vision à long terme – Mode Coach », note GPT/Michel. À relire avant tout choix d'archi structurant, pour vérifier qu'on ne ferme pas la porte.)*
+
+---
+
 # 🗺️ FEUILLE DE ROUTE (ordre des priorités)
 
 **Phase 1 — Stabiliser la fondation (AVANT tout le reste)**
@@ -38,6 +60,7 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 11. 🤖 Coach IA (mémoire premium, personnalité, proactif, sujets élargis).
 12. 👩 Thème femme (priorité produit). 🎤 Logging vocal. ⌚ Garmin.
 13. 🏗️ Base de données + hébergement adapté (quand le nombre d'utilisateurs le justifie).
+14. 🎓 **Mode Coach / multi-rôles** (voir la vision dédiée ci-dessous) — le plus gros, le plus tard.
 
 > Principe : **structurer avant d'empiler** (voir « Principe directeur » plus bas). Une chose à la fois, testée, sur branche Git.
 
