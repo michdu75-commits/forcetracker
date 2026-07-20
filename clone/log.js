@@ -998,7 +998,11 @@ function _findSimilar(name,all){const na=_normEx(name);let best=null,bestD=Infin
 // connue → recouvrement de mots (avec garde-fou sur les modificateurs qui CHANGENT
 // le mouvement). Renvoie {match, score, via} ou {match:null} (= exercice nouveau).
 // L'IA n'intervient QUE sur les cas ambigus (score dans la zone grise) — pas ici.
-const _EX_STOP=new Set(['de','du','des','la','le','les','a','au','aux','en','avec','sur','et','l','d','the','with','on','machine','exercice','musculation','barre','bar','barbell','poulie','cable','halteres','haltere','dumbbell','dumbbells','poids','gym']);
+const _EX_STOP=new Set(['de','du','des','la','le','les','a','au','aux','en','avec','sur','et','l','d','the','with','on','machine','exercice','musculation','barre','bar','barbell','poulie','cable','halteres','haltere','dumbbell','dumbbells','poids','gym',
+  // Bruit COMMERCIAL & marques (noms de salle : « Chest Press Evolution X900 », « Pendulum Elite »…) —
+  // ignorés pour la reconnaissance. Vérifié : aucun de ces mots n'apparaît dans un vrai nom EXLIB.
+  'evolution','ultra','deluxe','elite','infinite','signature','nitro','extreme','eagle','panther','smartline','station','master','motion','axis','smart','series','edition','plus','pro','max','evo','xt','dual','iso',
+  'technogym','life','fitness','panatta','matrix','cybex','nautilus','atlantis','watson','rhino','prime','hammerstrength']);
 // Groupes de modificateurs MUTUELLEMENT EXCLUSIFS : si deux noms portent chacun un
 // membre DIFFÉRENT du même groupe → mouvements distincts → JAMAIS fusionner auto.
 const _EX_MODGROUPS=[
@@ -1010,7 +1014,9 @@ const _EX_MODGROUPS=[
 ];
 // Léger : retire un 's' final (pluriel). Symétrique (appliqué des 2 côtés) → ne casse jamais un match.
 function _exStem(t){return (t.length>=4 && t.endsWith('s'))?t.slice(0,-1):t;}
-function _exTokens(s){return _normEx(s).split(' ').filter(t=>t&&!_EX_STOP.has(t)).map(_exStem);}
+// Filtre aussi les CODES MODÈLES (x900, v4, evo9…) — 1-3 lettres suivies de chiffres. Les
+// nombres seuls (« 45 ») sont GARDÉS (le 45° du Press Jambes 45° est signifiant).
+function _exTokens(s){return _normEx(s).split(' ').filter(t=>t&&!_EX_STOP.has(t)&&!/^[a-z]{1,3}\d+$/.test(t)).map(_exStem);}
 const _EX_MODS_ALL=new Set(_EX_MODGROUPS.reduce((a,g)=>a.concat(g),[]));
 // Conflit si un membre d'un groupe est présent d'UN seul côté (mouvements distincts).
 function _exModConflict(a,b){ for(const grp of _EX_MODGROUPS){ for(const m of grp){ if(a.has(m)!==b.has(m))return true; } } return false; }
@@ -1032,8 +1038,8 @@ const _MOV_PATTERNS=[
   {id:'flexion-genou',label:'Flexion de genou (ischios)',kw:['leg curl','curl ischio','ischio','nordic']}, // AVANT curl-biceps (« leg curl » ≠ curl de bras)
   {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['curl','preacher','biceps']},
   {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps']},
-  {id:'mollets',label:'Extension de cheville (mollets)',kw:['mollet','calf']},
-  {id:'extension-genou',label:'Extension de genou (quadriceps)',kw:['leg extension','extension quadriceps','sissy squat']},
+  {id:'mollets',label:'Extension de cheville (mollets)',kw:['mollet','calf','soleus','tibialis','tib raise']},
+  {id:'extension-genou',label:'Extension de genou (quadriceps)',kw:['leg extension','extension quadriceps','quad extension','quad ext','sissy squat']},
   {id:'gainage-abdos',label:'Gainage / abdominaux',kw:['gainage','planche','plank','crunch','abdo','releve de jambe','releve de genou','russian twist','sit up','vacuum','roue abdo','ab wheel']},
   {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','hyperextension','extension lombaire','ghd','glute ham','superman']},
   {id:'fente',label:'Fente',kw:['fente','lunge','split squat','bulgare','montee sur box','step up','cossack']},
@@ -1072,8 +1078,26 @@ const _EX_EQUIV={
 function _eqLookup(q,name){ if(_EX_EQUIV[q])return _EX_EQUIV[q];
   // Réduction : on enlève seulement les mots vides (dont « machine ») SANS stemmer
   // (« Leg press machine » → « leg press », pas « leg pres » qui corromprait la clé).
-  const core=_normEx(name).split(' ').filter(t=>t&&!_EX_STOP.has(t)).join(' ');
+  const core=_normEx(name).split(' ').filter(t=>t&&!_EX_STOP.has(t)&&!/^[a-z]{1,3}\d+$/.test(t)).join(' ');
   return (core&&core!==q&&_EX_EQUIV[core])?_EX_EQUIV[core]:null; }
+// ─── Enrichissement au fil du réel (stress-test programmes GPT, 20/07) : familles ratées + corrections ───
+Object.assign(_EX_EQUIV,{
+  // Famille leg press (était laissée « nouveau »)
+  'lp45':'Press Jambes 45°','leg press 45':'Press Jambes 45°','leg press hammer':'Press Jambes 45°','presse hammer':'Press Jambes 45°',
+  'horizontal leg press':'Press Jambes Horizontale','presse horizontale':'Press Jambes Horizontale',
+  'presse inclinee':'Press Jambes Inclinée','vertical leg press':'Press Jambes Verticale',
+  // Poulie croisée / écarté câble
+  'cable cross':'Croisé Poulie (Cable Crossover)','cable crossover':'Croisé Poulie (Cable Crossover)','cable fly low':'Croisé Poulie (Cable Crossover)','pecfly':'Pec Deck','pec fly':'Pec Deck',
+  // Dos poulie basse
+  'low row':'Rowing Cable',
+  // Machine fessier (hip thrust machine)
+  'booty builder':'Poussée de Hanche Machine','glute drive':'Poussée de Hanche Machine',
+  // CORRECTIONS de mauvais matchs révélés par le stress-test
+  'tirage devant':'Tirage Poulie Haute','lat pull':'Tirage Poulie Haute',
+  'reverse pec fly':'Machine Oiseau','reverse fly':'Machine Oiseau','reverse pec deck':'Machine Oiseau','ecarte inverse machine':'Machine Oiseau',
+  'quad extension':'Extension Quadriceps (Leg Extension)',
+  'standing soleus press':'Élévations Mollets Debout','soleus press':'Élévations Mollets Debout'
+});
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
   'cable hip abduction':'Abduction Cuisses (Leg Abduction)','standing hip abduction':'Abduction Cuisses (Leg Abduction)',
