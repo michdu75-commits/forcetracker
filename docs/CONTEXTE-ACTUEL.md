@@ -9,6 +9,8 @@
 - **Version en prod :** `ft-v525` (VM : ~378 alias GPT intégrés — reconnaissance tolérante au « machine », dicts d'alias familles 1-14 + spéciales ; table `_EX_EQUIV` = 406 clés ; 54 mauvais rattachements corrigés)
 
 - **🔭 TOUR DE TABLE IA EXTÉRIEURES (20/07) — décisions d'archi VM prises** (détail : CLAUDE.md, méthode : `docs/PROCESSUS-DEVELOPPEMENT.md`) : avis croisés GPT + Gemini + Mistral sur le chantier VM. **Méthode adoptée** : convergence de regards indépendants = décision d'archi ; divergence = débat. **2 décisions** : ① couche machine = **user-fed d'abord** (le risque = les médias, pas le code) ; ② graphe **simple & dérivé** (14 schémas, pas de parsing exhaustif). **+ Principe** : palier « confirm » de l'import = **un TAP, pas un formulaire**. **Prématuré → IDEES-FUTURES** : matériel connecté (montre), modèle éco approfondi, export JSON/CSV. **Prochaine brique quand on construira = la couche machine.**
+  - **🏛️ FRONTIÈRE VM / GARDIEN actée** (dernier doc GPT) : *le moteur VM identifie/structure les MOUVEMENTS ; le Gardien décide quoi FAIRE de cette connaissance* (remplacements, contre-indications, adaptations douleurs = métier du Gardien, pas du parsing). GPT propose d'en faire un **principe de Constitution** → **en attente ratification Michel**.
+  - **🏗️ CHANGEMENT DE PHASE proposé par GPT → en attente GO Michel** : fin de la phase « grandes idées », début de l'**industrialisation** (consolider EXLIB · finaliser VM · construire la couche machine · Confirm ultra-fluide · **tests réels avec programmes variés**).
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
