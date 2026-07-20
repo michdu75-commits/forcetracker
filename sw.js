@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v520'; // VC-002 (Christophe · a déjà un coach, testé sur Sonnet) + VC-003 (Emma · phase de règles/keto) ajoutés au labo VC ; harnais gère modèle-par-persona (coachEmail→Sonnet/Haiku) + cycle simulé (cycleStartDaysAgo) + keto. Précédent : // FIX FUITE harnais VC (suite ft-v507) : _vcApplyPersona oubliait AUSSI coachQuiz/coachQuizPro (le questionnaire « ce que la personne a dit sur elle ») -> les reponses d'onboarding du compte fuitaient dans le CONTEXTE du persona (objectif/zones sensibles) au run 8 VC-001. Ajout du reset. Verdict VC-001 = COMPORTEMENT CONFORME (Michel+GPT+Claude). Donnees jamais ecrites (gel), contexte transitoire uniquement.
+const CACHE = 'ft-v521'; // Machine importée sans image dédiée : bouton « 📷 Ajouter la photo de ta machine » dans la vue agrandie (toggleExGif) quand on retombe sur la figurine muscle → la vraie photo devient la vignette + le grand format (via changeExImg). Précédent ft-v520 : VC-002/VC-003 ajoutés au labo VC (modèle-par-persona coachEmail→Sonnet/Haiku, cycle simulé, keto).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

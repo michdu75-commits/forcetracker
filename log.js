@@ -4470,6 +4470,8 @@ function toggleExGif(ei,name){
     const ex=EXLIB.find(e=>e.n===name);
     html+=`<div style="text-align:center;padding:8px 0;"><img src="${file}" style="width:160px;height:auto;display:block;margin:0 auto;"></div>`;
     html+=`<div style="text-align:center;font-size:12px;color:var(--t3);margin-top:2px;">${ex?ex.g:'Muscle principal deviné'}</div>`;
+    // Machine importée sans image dédiée → proposer d'ajouter la vraie photo (deviendra la vignette + le grand format)
+    html+=`<button class="btn btn-bg2" style="width:100%;margin-top:10px;font-size:13px;" onclick="event.stopPropagation();changeExImg(${JSON.stringify(name)})">📷 Ajouter la photo de ta machine</button>`;
   }
   html+='</div>';
   panel.innerHTML=html;
