@@ -2996,7 +2996,7 @@ async function analyzeHistPhotos(){
   for(let b=0;b<batches.length;b++){
     if(statusEl)statusEl.textContent=batches.length>1
       ?`Analyse du lot ${b+1} / ${batches.length} (${batches[b].length} page${batches[b].length>1?'s':''})…`
-      :'Claude extrait les séances et leurs dates depuis tes pages';
+      :'Milo extrait les séances et leurs dates depuis tes pages';
     try{
       const sess=await _histAnalyzeBatch(batches[b]);
       // Coupure de séance entre 2 lots (une séance à cheval sur 2 pages) :
@@ -3014,7 +3014,7 @@ async function analyzeHistPhotos(){
       console.error('[ImportHist] Lot',b+1,'en échec :',lastErr);
     }
   }
-  if(statusEl)statusEl.textContent='Claude extrait les séances et leurs dates depuis tes pages';
+  if(statusEl)statusEl.textContent='Milo extrait les séances et leurs dates depuis tes pages';
   if(!allSessions.length){
     histGoStep(2);
     const dense=/JSON invalide|tronqu/i.test(lastErr);
