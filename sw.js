@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v522'; // VM : reconnaissance tolérante au mot « machine ». « Peck deck machine » → Pec Deck (on A le Pec Deck), « Chest incline machine pronation » → Chest Press Machine Inclinée, « Chest decline machine » → Chest Press Machine Déclinée. _eqLookup réduit le nom aux mots utiles (SANS stemmer → « Leg press machine » reste « leg press », pas « leg pres ») ; la clé complète gagne d'abord (« Écarté machine » intact). VM 21/21, 0 régression. Précédent ft-v521 : bouton « 📷 Ajouter la photo de ta machine » dans la vue agrandie (fallback muscle).
+const CACHE = 'ft-v523'; // VM : intégration des 5 dictionnaires d'alias GPT (EXLIB v3 — Poussées H, Tirages H/V, Squats, Hip Hinge) → 190 alias rattachés aux 56 exos EXLIB correspondants (Object.assign sur _EX_EQUIV, la table curatée reste prioritaire). Corrige 54 mauvais rattachements (« Barbell Row »→Rowing Barre au lieu de Rowing Cable ; « Développé haltères »→Développé Couché Haltères au lieu de Militaire ; « Cable Fly »→Écarté Poulie…) + ajoute les synonymes EN/marques. Testé : 190/191 alias OK, VM 21/21, 287/287 noms EXLIB se reconnaissent eux-mêmes (0 détournement), 0 erreur JS. ⏳ 32 noms canoniques GPT ≠ nos noms EXLIB (décision de nommage à prendre) non câblés. Précédent ft-v522 : reconnaissance tolérante au mot « machine ».
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

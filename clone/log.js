@@ -1074,6 +1074,66 @@ function _eqLookup(q,name){ if(_EX_EQUIV[q])return _EX_EQUIV[q];
   // (« Leg press machine » → « leg press », pas « leg pres » qui corromprait la clé).
   const core=_normEx(name).split(' ').filter(t=>t&&!_EX_STOP.has(t)).join(' ');
   return (core&&core!==q&&_EX_EQUIV[core])?_EX_EQUIV[core]:null; }
+// ─── EXLIB v3 — alias d'import (dicts GPT, 5 familles) → nom canonique EXLIB ───
+// Généré depuis les fiches d'alias GPT (Poussées H, Tirages H/V, Squats, Hip Hinge).
+// N'ajoute JAMAIS d'exercice : rattache un libellé importé au bon exo EXLIB (stats sur le canonique).
+// La table curatée _EX_EQUIV reste prioritaire (ces clés en sont exclues).
+Object.assign(_EX_EQUIV,{
+  'hip belt squat':'Belt Squat','machine belt squat':'Belt Squat',
+  'decline chest press':'Chest Press Machine Déclinée','decline machine press':'Chest Press Machine Déclinée',
+  'chest press':'Chest Press Machine Horizontale','developpe machine':'Chest Press Machine Horizontale','hammer chest press':'Chest Press Machine Horizontale','horizontal chest press':'Chest Press Machine Horizontale','machine chest press':'Chest Press Machine Horizontale','machine pectoraux':'Chest Press Machine Horizontale','matrix chest press':'Chest Press Machine Horizontale','panatta chest press':'Chest Press Machine Horizontale','presse poitrine':'Chest Press Machine Horizontale','seated chest press':'Chest Press Machine Horizontale','technogym chest press':'Chest Press Machine Horizontale',
+  'incline chest press':'Chest Press Machine Inclinée','incline hammer press':'Chest Press Machine Inclinée','incline machine press':'Chest Press Machine Inclinée','incline matrix press':'Chest Press Machine Inclinée',
+  'cable crossover':'Croisé Poulie (Cable Crossover)','cross over':'Croisé Poulie (Cable Crossover)','high cable fly':'Croisé Poulie (Cable Crossover)','low cable fly':'Croisé Poulie (Cable Crossover)','vis a vis':'Croisé Poulie (Cable Crossover)',
+  'bodyweight dips':'Dips','chest dips':'Dips','dips pectoraux':'Dips',
+  'assisted dip':'Dips Machine Assistée','assisted dip machine':'Dips Machine Assistée','machine dips assistes':'Dips Machine Assistée',
+  'parallel bar dip':'Dips Parallèles',
+  'barbell bench press':'Développé Couché','bb bench':'Développé Couché','bench':'Développé Couché','bench libre':'Développé Couché','bench press':'Développé Couché','dc':'Développé Couché','developpe barre':'Développé Couché','developpe couche barre':'Développé Couché','developpe poitrine barre':'Développé Couché','flat bench press':'Développé Couché',
+  'db bench':'Développé Couché Haltères','db bench press':'Développé Couché Haltères','developpe halteres':'Développé Couché Haltères','developpe poitrine halteres':'Développé Couché Haltères','dumbbell bench press':'Développé Couché Haltères','flat dumbbell press':'Développé Couché Haltères',
+  'decline barbell bench':'Développé Décliné','decline bench press':'Développé Décliné','developpe decline barre':'Développé Décliné',
+  'decline db press':'Développé Décliné Haltères','decline dumbbell press':'Développé Décliné Haltères',
+  'developpe incline barre':'Développé Incliné','incline barbell bench':'Développé Incliné','incline bench press':'Développé Incliné','incline bp':'Développé Incliné','incline press':'Développé Incliné',
+  'incline db press':'Développé Incliné Haltères','incline dumbbell bench':'Développé Incliné Haltères','incline dumbbell press':'Développé Incliné Haltères',
+  'barbell good morning':'Inclinaison Lombaire (Good Morning)','gm':'Inclinaison Lombaire (Good Morning)','good morning':'Inclinaison Lombaire (Good Morning)','good morning barbell':'Inclinaison Lombaire (Good Morning)',
+  'american swing':'Kettlebell Swing','kb swing':'Kettlebell Swing','russian swing':'Kettlebell Swing',
+  'landmine meadows row':'Meadows Row',
+  'ohs':'Overhead Squat','olympic overhead squat':'Overhead Squat',
+  'butterfly machine':'Pec Deck','chest fly machine':'Pec Deck','pec fly machine':'Pec Deck',
+  'pendulum':'Pendulum Squat','pendulum machine squat':'Pendulum Squat',
+  'diamond push up':'Pompes Diamant','diamond pushup':'Pompes Diamant',
+  'pompes avec lest':'Pompes Lestées','weighted push up':'Pompes Lestées','weighted pushup':'Pompes Lestées',
+  'bridge':'Pont Fessier (Glute Bridge)','floor bridge':'Pont Fessier (Glute Bridge)','glute bridge':'Pont Fessier (Glute Bridge)',
+  'barbell hip thrust':'Poussée de Hanche (Hip Thrust)','db hip thrust':'Poussée de Hanche (Hip Thrust)','dumbbell hip thrust':'Poussée de Hanche (Hip Thrust)','glute thrust':'Poussée de Hanche (Hip Thrust)','hip thrust':'Poussée de Hanche (Hip Thrust)','hip thrust barbell':'Poussée de Hanche (Hip Thrust)','hip thrust halteres':'Poussée de Hanche (Hip Thrust)',
+  'hip thrust machine':'Poussée de Hanche Machine','machine hip thrust':'Poussée de Hanche Machine',
+  'cable pullover':'Pull-over','pullover poulie':'Pull-over','straight arm lat pulldown':'Pull-over','straight arm pulldown':'Pull-over',
+  'machine pullover':'Pullover Machine','nautilus pullover':'Pullover Machine',
+  'barbell bent over row':'Rowing Barre','barbell row':'Rowing Barre','bb row':'Rowing Barre','bent over dumbbell row':'Rowing Barre','bent over row':'Rowing Barre','bent row':'Rowing Barre','db row':'Rowing Barre','dumbbell row':'Rowing Barre','rowing barre pronation':'Rowing Barre','rowing deux halteres':'Rowing Barre','rowing halteres':'Rowing Barre',
+  'chest supported row machine':'Rowing Machine','machine row':'Rowing Machine','row machine':'Rowing Machine','seated row machine':'Rowing Machine',
+  'chest supported t bar row':'Rowing T-Bar Machine','landmine row':'Rowing T-Bar Machine','rowing t bar':'Rowing T-Bar Machine','t bar row':'Rowing T-Bar Machine',
+  'safety squat bar':'Safety Bar Squat','ssb squat':'Safety Bar Squat',
+  'seal barbell row':'Seal Row','seal bench row':'Seal Row',
+  'bodyweight sissy squat':'Sissy Squat',
+  'bench smith':'Smith Machine Développé Couché','smith bench press':'Smith Machine Développé Couché','smith machine bench':'Smith Machine Développé Couché',
+  'smith machine back squat':'Smith Machine Squat','smith squat':'Smith Machine Squat',
+  'barbell deadlift':'Soulevé de Terre','conventional deadlift':'Soulevé de Terre','deadlift':'Soulevé de Terre','dl':'Soulevé de Terre','standard deadlift':'Soulevé de Terre',
+  'sldl':'Soulevé de Terre Jambes Tendues','stiff leg deadlift':'Soulevé de Terre Jambes Tendues','straight leg deadlift':'Soulevé de Terre Jambes Tendues',
+  'rdl':'Soulevé de Terre Roumain Barre','romanian barbell deadlift':'Soulevé de Terre Roumain Barre','romanian deadlift':'Soulevé de Terre Roumain Barre',
+  'db rdl':'Soulevé de Terre Roumain Haltères','dumbbell romanian deadlift':'Soulevé de Terre Roumain Haltères','romanian dumbbell deadlift':'Soulevé de Terre Roumain Haltères',
+  'one leg romanian deadlift':'Soulevé de Terre Roumain Unilatéral','single leg rdl':'Soulevé de Terre Roumain Unilatéral','single leg romanian deadlift':'Soulevé de Terre Roumain Unilatéral','sl rdl':'Soulevé de Terre Roumain Unilatéral',
+  'sumo deadlift':'Soulevé de Terre Sumo','wide stance deadlift':'Soulevé de Terre Sumo',
+  'hex bar deadlift':'Soulevé de Terre Trap Bar','trap bar deadlift':'Soulevé de Terre Trap Bar',
+  'barbell front squat':'Squat Avant','front squat':'Squat Avant','olympic front squat':'Squat Avant',
+  'dumbbell goblet squat':'Squat Gobelet (Goblet Squat)','goblet squat':'Squat Gobelet (Goblet Squat)','kettlebell goblet squat':'Squat Gobelet (Goblet Squat)',
+  'hack squat':'Squat Hack (Hack Squat)','machine hack squat':'Squat Hack (Hack Squat)','plate loaded hack squat':'Squat Hack (Hack Squat)',
+  'one leg squat':'Squat Pistol','pistol':'Squat Pistol','pistol squat':'Squat Pistol','single leg squat':'Squat Pistol',
+  'sumo squat':'Squat Sumo','wide stance squat':'Squat Sumo',
+  'back squat':'Squat à la Barre','barbell back squat':'Squat à la Barre','bb squat':'Squat à la Barre','high bar squat':'Squat à la Barre','low bar squat':'Squat à la Barre',
+  'behind neck lat pulldown':'Tirage Nuque','behind neck pulldown':'Tirage Nuque',
+  'front lat pulldown':'Tirage Poulie Haute','front pulldown':'Tirage Poulie Haute','lat pull front':'Tirage Poulie Haute',
+  'partial deadlift':'Tirage en Rack (Rack Pull)','pin pull':'Tirage en Rack (Rack Pull)','rack pull':'Tirage en Rack (Rack Pull)',
+  'assisted chin up':'Traction Assistée','assisted pull up':'Traction Assistée','pull up machine':'Traction Assistée','tractions assistees':'Traction Assistée',
+  'chest fly':'Écarté Haltères','db fly':'Écarté Haltères','dumbbell fly':'Écarté Haltères','ecarte poitrine halteres':'Écarté Haltères','pec fly':'Écarté Haltères',
+  'cable chest fly':'Écarté Poulie','cable fly':'Écarté Poulie','poulie vis a vis':'Écarté Poulie','standing cable fly':'Écarté Poulie',
+});
 // tier : 'auto' (≥90 → rattacher direct) · 'confirm' (grise → demander à l'utilisateur) · 'new' (<seuil → créer).
 function _matchExercise(name,opts){
   opts=opts||{}; const all=(typeof EXLIB!=='undefined')?EXLIB:[];
