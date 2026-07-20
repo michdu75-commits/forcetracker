@@ -2923,6 +2923,27 @@ function impUndoMatch(di,ei){
   ex.name=ex._vmFrom; delete ex._vmFrom; delete ex._vmConf;
   _renderImpConfirm();
 }
+// Refus d'une suggestion (zone grise) → on garde le nom importé tel quel (exo à part).
+function impRejectMatch(di,ei){
+  const ex=_impExtracted&&_impExtracted.days[di]&&_impExtracted.days[di].exercises[ei];
+  if(!ex)return;
+  delete ex._vmSuggest; delete ex._vmConf;
+  _renderImpConfirm();
+}
+// ── Confirm « en un geste » (étape 2 industrialisation) : montre la FIGURINE de l'exo
+// proposé (gif/photo si dispo, sinon muscle deviné) + ✓ Oui / ✕ Non explicites. Pensé
+// pour un sportif fatigué : décider d'un coup d'œil, aucun formulaire. Partagé programme+journal.
+// acceptCall / rejectCall = chaînes d'appel déjà construites (évite l'imbrication de gabarits).
+function _vmConfirmRow(suggest, acceptCall, rejectCall){
+  let thumb=''; try{ thumb=_exImg(suggest)||_exMuscleImg(suggest)||''; }catch(e){}
+  const img=thumb?`<img src="${thumb}" style="width:34px;height:34px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`:'';
+  return `<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">`
+    +img
+    +`<span style="font-size:11px;color:var(--gold);flex:1;min-width:110px;">≈ Rattacher à « <b>${_escNote(suggest)}</b> » ?</span>`
+    +`<button onclick="${acceptCall}" style="background:var(--green);border:none;color:#fff;border-radius:6px;padding:3px 12px;font-size:12px;font-weight:700;cursor:pointer;">✓ Oui</button>`
+    +`<button onclick="${rejectCall}" style="background:var(--bg3);border:1px solid var(--sep);color:var(--t2);border-radius:6px;padding:3px 12px;font-size:12px;font-weight:700;cursor:pointer;">✕ Non</button>`
+    +`</div>`;
+}
 function _renderImpConfirm(){
   const d=_impExtracted;if(!d)return;
   const nameEl=document.getElementById('imp-prog-name');
@@ -2938,7 +2959,7 @@ function _renderImpConfirm(){
               <div style="font-size:13px;font-weight:600;">${_escNote(ex.name)}</div>
               <div style="font-size:12px;color:var(--t2);">${ex.sets}×${ex.reps} reps${ex.kg?' · '+ex.kg+' kg':''}</div>
               ${ex._vmFrom?`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
-              ${ex._vmSuggest?`<div style="font-size:11px;color:var(--gold);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">≈ Rattacher à « ${_escNote(ex._vmSuggest)} » ? <button onclick="impAcceptMatch(${di},${ei})" style="background:var(--gold);border:none;color:#000;border-radius:6px;padding:2px 10px;font-size:11px;font-weight:700;cursor:pointer;">Oui</button></div>`:''}
+              ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')'):''}
               ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${_escNote(ex.note)}</div>`:''}
             </div>
             <button onclick="removeImpEx(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
@@ -3232,6 +3253,12 @@ function histUndoMatch(si,ei){
   ex.name=ex._vmFrom; delete ex._vmFrom; delete ex._vmConf;
   _renderHistPreview();
 }
+function histRejectMatch(si,ei){
+  const ex=_histExtracted&&_histExtracted.sessions[si]&&(_histExtracted.sessions[si].exercises||[])[ei];
+  if(!ex)return;
+  delete ex._vmSuggest; delete ex._vmConf;
+  _renderHistPreview();
+}
 
 function _renderHistPreview(){
   const sessions=(_histExtracted&&_histExtracted.sessions)||[];
@@ -3261,7 +3288,7 @@ function _renderHistPreview(){
     // Rattachements VM (seulement les exos concernés → aperçu compact)
     const vmRows=(sess.exercises||[]).map((ex,ei)=>{
       if(ex._vmFrom)return`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ « ${_escNote(ex._vmFrom)} » → <b>${_escNote(ex.name)}</b> · <span onclick="histUndoMatch(${i},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`;
-      if(ex._vmSuggest)return`<div style="font-size:11px;color:var(--gold);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">≈ « ${_escNote(ex.name)} » : rattacher à « ${_escNote(ex._vmSuggest)} » ? <button onclick="histAcceptMatch(${i},${ei})" style="background:var(--gold);border:none;color:#000;border-radius:6px;padding:1px 9px;font-size:11px;font-weight:700;cursor:pointer;">Oui</button></div>`;
+      if(ex._vmSuggest)return _vmConfirmRow(ex._vmSuggest,'histAcceptMatch('+i+','+ei+')','histRejectMatch('+i+','+ei+')');
       return'';
     }).filter(Boolean).join('');
     const conflictHtml=conflict?`
