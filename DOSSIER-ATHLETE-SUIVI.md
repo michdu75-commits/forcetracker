@@ -9,6 +9,47 @@
 
 ---
 
+## 🔢 REGISTRE / INDEX (mémoire de conception — suggestion GPT 20/07, tenu à jour par Claude)
+
+> **Un seul endroit pour voir tout d'un coup d'œil** (ID · version · statut). Léger,
+> maintenu automatiquement (règle #12) — pas une corvée pour Michel.
+> **Prod : `ft-v504`** · **Backup : ⭐ `backup-2026-07-20-pt001-valide-ft-v504`**
+
+**Briques Milo (destination = 8)**
+| # | Brique | Statut |
+|---|---|---|
+| 0 | Ton de Milo | ✅ clôturée (`ft-v457/458`) |
+| 1 | Mémoire (Registre) | ✅ clôturée (`ft-v459`) |
+| 2 | Cerveau (faits mesurés) | ✅ clôturée (`ft-v460`) |
+| 3 | État du jour (3A conv. + 3B structuré) | ✅ clôturée (`ft-v462/463/471`) |
+| 4A | ADN sportif (déclaré) | ✅ clôturée (`ft-v464`) · 4B (Milo retient seul) ⏳ |
+| 5A | Observations à valider | 🟠 bâtie (`ft-v465`) — **attente validation réelle** · 5B (IA) ⏳ |
+| 6A/6B | Le Gardien (par zone / par exercice) | 🟠 bâti (`ft-v468/470`) — **attente validation réelle** |
+| 7 | Mémoire vivante (« Ton histoire sportive ») | ⏳ à concevoir (finalité) |
+| 8 | Synthèse (prendre du recul) | ⏳ à concevoir (finalité) |
+
+**Chantier « débrief » (le cœur — un coach qui te suit)**
+| Étape | Quoi | Statut |
+|---|---|---|
+| 1 | Écran de fin de séance | ✅ (`ft-v492`) |
+| 2 | Mémoire durable des débriefs | ✅ (`ft-v495`) |
+| 3 | « Objectif tenu ? » (vérifie la fois d'avant) | ✅ (`ft-v496`) |
+| — | Débrief AUTO (Milo sort direct) | ✅ (`ft-v491`) |
+
+**Laboratoire — protocoles (VT technique · VC comportemental)**
+| ID | Cible | Statut |
+|---|---|---|
+| PT-001 (VT) | Continuité mémoire | ✅ **validé 1ᵉʳ run** (`ft-v497→504`) |
+| VC-001 | Persona Tatiana (comportement) | ⏳ à concevoir (format persona d'abord) |
+| PT/VT-002 | Le Gardien | ⏳ |
+| PT/VT-003 | Observations · profil | ⏳ |
+
+**Docs de gouvernance** : `CLAUDE.md` (accueil) · `docs/VISION-FORCE-TRACKER.md` · `CONSTITUTION-MILO.md` (**v1.4**) · `docs/PROCESSUS-DEVELOPPEMENT.md` · `docs/PRESENCE-MILO.md` · `docs/CONTEXTE-ACTUEL.md` · `DOSSIER-ATHLETE-SUIVI.md` · `IDEES-FUTURES.md` · `RETOURS-TESTEURS.md` · `README-IA.md`.
+
+> ⚠️ **Convention (GPT)** : toute nouvelle brique/protocole/persona reçoit un **ID + un statut + la version `ft-vNN`**. Claude met CE tableau à jour à chaque livraison.
+
+---
+
 ## 🎯 La vision (rappel)
 
 On sépare le cerveau de Milo en **couches** qui ont chacune un rôle :
