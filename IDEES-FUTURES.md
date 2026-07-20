@@ -31,21 +31,32 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
-## ⏱️ Timer de repos adapté à la FORCE (réflexion Michel, 20/07/2026)
+## ⏱️ Timer de repos adapté à l'intensité RÉELLE + l'âge (réflexion Michel affinée, 20/07/2026)
 
 **Constat Michel** : quand on s'entraîne en **force** (charges lourdes, peu de reps), le timer de
-repos **ne s'adapte pas** — il reste à ~1'30-2'00 max, alors qu'en force il faut **3 à 5 min**
-entre les séries lourdes.
+repos **ne s'adapte pas** — il reste à ~1'30-2'00 max, alors qu'en force il faut **3 à 5 min**.
 **État actuel** : le repos s'adapte par **type de série** (N=`defRest`~130 s, W=45 s, E/échec=240 s,
-D=20 s) + réglage manuel par exo (`S.exRestPref`, éditeur ft-v438) + ±15 s. Mais **aucune
-adaptation automatique à la DISCIPLINE / au but force**.
-**Pistes (à cadrer, pas encore lancé)** :
-- Repos par défaut qui **suit la discipline** : `S.discipline` = *force athlétique* ou *haltéro*
-  → défaut plus long (ex. 180-240 s) ; muscu/bodybuilding → défaut actuel.
-- Ou adapter selon **exo + plage de reps** (compound lourd, ≤5 reps → repos long auto).
-- Ou selon la **phase du cycle de force** (Intensification / Peak → repos long).
-- ⚠️ Toujours **laisser l'utilisateur régler à la main** (ne pas forcer). Le plus simple d'abord =
-  brancher le défaut sur `S.discipline`.
+D=20 s) + réglage manuel par exo (`S.exRestPref`, éditeur ft-v438) + ±15 s. Aucune adaptation
+automatique à l'**intensité réelle** ni à l'**âge**.
+
+**✅ Approche retenue (Michel, meilleure que « suivre la discipline déclarée ») : DÉDUIRE de la
+séance d'avant.** Les reps réellement faites sont un proxy fiable de l'intensité — marche tout
+seul même si le profil est vide. Data-driven > déclaré.
+
+**Règle proposée (v1)** — on lit les reps des séries de travail de **cet exo à la séance
+précédente** (`getPrev`, exclure W/É) :
+- ≤ 5 reps → **180 s** (force) · 6-8 → 150 s · 9-12 → 120 s · 13+ → 90 s
+- **+ bonus âge** (`S.age`) : ≥ 40 → +20 s · ≥ 50 → +40 s · ≥ 60 → +60 s
+- **Pas d'historique** (1ʳᵉ fois / 1ᵉʳ entraînement) → replier sur les reps de la **série du jour**,
+  sinon le **défaut par type**.
+
+**Garde-fous :**
+- ⚠️ **Suggestion, jamais imposé** — l'utilisateur règle toujours à la main par-dessus (existe déjà).
+- L'échec (type E) garde son 240 s ; ceci raffine surtout les séries **N** (normales).
+- ⏳ **Nuance v2 (plus tard)** : un exo d'**isolation** à 5 reps (ex. leg curl) n'a pas besoin
+  d'autant de repos qu'un **gros mouvement** à 5 reps (squat/soulevé) → affiner « reps **+** compound
+  ou pas » (on sait déjà deviner le muscle/l'exo via `_MEX`). Pour v1, reps seules = 80 % du bénéfice.
+- Petit chantier, à faire quand Michel veut (indépendant de la feuille de route mémoire/import).
 
 ## 🤖→🏋️ Milo propose une séance dans le chat → « charger dans ma séance » (precision de la priorité #4)
 
