@@ -31,6 +31,36 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🎯 Objectif unique → PRIORITÉS classées (vision Michel, proposée GPT, 20/07) — À DÉCIDER
+
+**Vision Michel** (déclenchée par le cas Tatiana) : *« un problème plus profond qui résout pas mal de
+choses »* — un sportif a **plusieurs priorités simultanées**, pas un objectif unique. GPT : remplacer
+« objectif » par des **priorités classées** (🥇 Priorité 1 · 🥈 2 · 🥉 3). Ex. **Michel** : 1) Force,
+2) Muscle, 3) Perte de gras · **Tatiana** : 1) Définition/perte, 2) Muscle. → Milo sait **quoi
+privilégier**, gère les **contradictions** par l'ordre, et devient **plus proche d'un coach humain**.
+
+**⭐ Point clé (Claude)** : cette évolution **SUBSUME la décision « défaut objectif muscle »** — plus
+besoin du drapeau « confirmé ? ». **Aucune priorité définie = objectif inconnu → Milo demande/observe**
+(le principe person-first marche enfin naturellement). Le problème profond **résout le petit**.
+
+**Garde-fous d'architecte (Claude) :**
+1. **Changement de fond** : touche profil + inscription + **nutrition** (macros calculées depuis
+   l'objectif unique) + contexte Milo + migration. Foundational, pas un patch.
+2. **Nutrition = point délicat** : décider ce qui **pilote les macros** (probablement **Priorité 1 →
+   phase**). Mapping priorités→macros à cadrer.
+3. **UX simple** (règles #7/#10) : classer 1-3 priorités doit rester facile ; **dégrader à 1** = objectif
+   unique ; défauts sensés ; pas d'usine à gaz (pas de poids/pourcentages en v1, juste l'ORDRE).
+4. **Séquencement** : à concevoir **AVEC l'onboarding** (priorité #1) — c'est là qu'on capture les
+   priorités. Pas en bolt-on.
+5. **Migration douce** : objectif unique existant → **Priorité 1 = [son objectif]**, zéro perturbation.
+
+**Statut** : direction validée conceptuellement (Michel + GPT + Claude), **à cadrer** (surtout nutrition
++ UX) et à **construire avec l'onboarding**. Pour l'immédiat (VC-001), les fixes légers suffisent
+(anti-invention + « priorités/objectif non définis → demande »). ⚠️ Ne PAS gonfler les 8 briques : c'est
+une **évolution de la couche Objectif/ADN** qui nourrit le raisonnement de Milo, pas une 9ᵉ brique.
+
+---
+
 ## 📅 Résumé hebdo « Ta semaine passée » v2 — SPEC VALIDÉE (Michel + GPT + Claude, 20/07/2026)
 
 **Constat** : le résumé actuel (`checkWeeklySummary`, app.js) = **stats froides** (séances, volume,
