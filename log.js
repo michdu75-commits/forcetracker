@@ -2756,6 +2756,12 @@ function _vmMatchExtracted(){
     else if(r.tier==='confirm'){ ex._vmSuggest=r.match; ex._vmConf=r.confidence; }
   }));
 }
+function _impSetDayLabel(di,val){
+  if(_impExtracted&&_impExtracted.days[di]) _impExtracted.days[di].label=(val||'').trim()||('Jour '+(di+1));
+}
+function _setProgDayLabel(di,val){
+  if(_editProgData&&_editProgData.days&&_editProgData.days[di]) _editProgData.days[di].label=(val||'').trim()||('Jour '+(di+1));
+}
 function impAcceptMatch(di,ei){
   const ex=_impExtracted&&_impExtracted.days[di]&&_impExtracted.days[di].exercises[ei];
   if(!ex||!ex._vmSuggest)return;
@@ -2775,7 +2781,7 @@ function _renderImpConfirm(){
   const el=document.getElementById('imp-preview');if(!el)return;
   el.innerHTML=(d.days||[]).map((day,di)=>`
     <div style="background:var(--bg3);border-radius:10px;padding:10px 12px;">
-      <div style="font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">${_escNote(day.label||'Jour '+(di+1))}</div>
+      <input value="${_escNote(day.label||'Jour '+(di+1)).replace(/"/g,'&quot;')}" onchange="_impSetDayLabel(${di},this.value)" title="Renomme la séance si besoin" style="width:100%;font-weight:700;font-size:13px;color:var(--red);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;background:transparent;border:none;border-bottom:1px dashed var(--sep);padding:2px 0;font-family:inherit;">
       <div id="imp-day-${di}">
         ${(day.exercises||[]).map((ex,ei)=>`
           <div id="imp-ex-${di}-${ei}" style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border-radius:8px;margin-bottom:5px;">
@@ -3673,7 +3679,7 @@ function _renderProgEdit(){
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
   if(isMulti){
     el.innerHTML=cycleSection+d.days.map((day,di)=>`<div style="margin-bottom:16px;">
-      <div style="font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">${_escNote(day.label)}</div>
+      <input value="${_escNote(day.label||'Jour '+(di+1)).replace(/"/g,'&quot;')}" onchange="_setProgDayLabel(${di},this.value)" title="Renomme la séance" style="width:100%;font-size:11px;font-weight:800;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;background:transparent;border:none;border-bottom:1px dashed var(--sep);padding:2px 0;font-family:inherit;">
       ${(day.exs||[]).map((ex,ei)=>exCard(ex,di,ei)).join('')}
       ${addBtn(di)}
     </div>${di<d.days.length-1?'<hr style="border:none;border-top:1px solid var(--sep);margin:0 0 16px;">':''}`).join('');
