@@ -2094,6 +2094,78 @@ async function exportVmText(){
   try{ const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('Rapport VM exporté','success'); }catch(e){ toast('Export impossible','error'); }
 }
 
+// ═══ MODE TEST VM — banc d'essai (idée GPT) : lot de programmes « tordus » passés dans
+// le moteur local, rapport de couverture (direct / alias / à confirmer / non reconnu) +
+// taux de réussite, exportable. Admin only. Fini les captures d'écran manuelles. ═══════
+const VM_BENCH={
+  'Salle commerciale':['Chest Press Evolution X900','Incline Press Matrix Ultra','Pec Deck Fly Pro','Shoulder Press SmartLine','Triceps Rope Station','Smith Bench Flat','Dual Cable Cross','Dip Assist Evolution','Lat Pulldown EVO Max','Low Row Iso Motion','High Pulley Close Grip','Reverse Pec Fly Station','Hammer Curl Machine','Preacher Curl Deluxe','Shrug Rack Elite','Leg Press 45 Infinite','Hack Squat XT','V-Squat Panther','Leg Extension Dual Axis','Seated Leg Curl Evo','Standing Calf Master','Hip Abductor Pro'],
+  'Coach américain':['BB Bench','Incl DB Press','HS Incline Press','Cable Fly Low','JM Press','Pushdown V-Bar','Skull Crusher EZ','Pull Up Assisted','Hammer Row','Seal Row','Chest Supported T-Bar','Straight Arm Pulldown','Face Pull','Spider Curl','Safety Bar Squat','Pendulum Squat','Belt Squat','RDL','Nordic Curl','Tib Raise','Donkey Calf Raise'],
+  'Cauchemar VM':['Panatta Super Horizontal Press','Hammer Iso Incline','Matrix Converging Press','Life Fitness Signature Chest','Atlantis Flat Press','Nautilus Nitro Fly','Prime Extreme Row','Cybex Eagle Pullover','Atlantis High Row','Watson Seal Row','Panatta Deltoid Machine','Prime Biceps Curl','Booty Builder V4','Pendulum Elite','Rhino Belt Squat','Glute Drive','Quad Extension Max','Iso Leg Curl','Standing Soleus Press'],
+  'Niveau Expert':['Tractions','Lat Pull','High Pulley','Tirage Devant','Pulley Wide','Row Assis','Low Row','T-Bar','Rear Delt','Oiseau Machine','Curl EZ','Curl Pupitre','ATG Squat','Presse','LP45','Leg Press','Hack','Ischios assis','Mollets Machine Debout','Abdos gainage','Bench BB','Chest BB','DC barre','Hack Sq','LP','Leg Ext','Front Squat','Deadlift Sumo','Hip Thrust Machine','Calf Press']
+};
+function startVmBench(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  if(typeof _matchExercise!=='function'){ toast('Moteur absent','error'); return; }
+  _vmBenchRun();
+}
+function _vmBenchRun(){
+  const ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+  const ver=(typeof _appVersion==='function')?_appVersion():'';
+  let tot=0,direct=0,alias=0,conf=0,neu=0;
+  const L=[];
+  L.push('═══════════════════════════════════════════');
+  L.push('  MODE TEST VM — BANC D\'ESSAI (reconnaissance d\'exercices, moteur LOCAL)');
+  L.push('  Aucun appel IA · '+ymd+(ver?'  ·  '+ver:''));
+  L.push('═══════════════════════════════════════════');
+  L.push('');
+  const detail=[];
+  for(const [prog,names] of Object.entries(VM_BENCH)){
+    detail.push('── '+prog+' ──');
+    names.forEach(n=>{
+      let r; try{ r=_matchExercise(n); }catch(e){ r={match:null,tier:'new',via:'erreur',confidence:0}; }
+      tot++; let cat,ic;
+      if(r.tier==='auto'){ if(/exact|synonyme/.test(r.via||'')){direct++;cat='direct';ic='🟢';} else {alias++;cat='alias ';ic='🟢';} }
+      else if(r.tier==='confirm'){conf++;cat='confirm';ic='🟡';}
+      else {neu++;cat='nouveau';ic='⚪';}
+      detail.push('  '+ic+' ['+cat+'] « '+n+' » → '+(r.match||'(nouveau)')+'  ('+r.confidence+'%)');
+    });
+    detail.push('');
+  }
+  const reconnu=direct+alias+conf;
+  const pctAuto=tot?Math.round((direct+alias)/tot*100):0;
+  const pctReconnu=tot?Math.round(reconnu/tot*100):0;
+  L.push('RÉSULTAT GLOBAL ('+tot+' exercices testés)');
+  L.push('  🟢 Reconnus AUTO      : '+(direct+alias)+'/'+tot+'  ('+pctAuto+'%)  — dont '+direct+' direct, '+alias+' par alias');
+  L.push('  🟡 À confirmer        : '+conf+'/'+tot);
+  L.push('  ⚪ Non reconnus       : '+neu+'/'+tot);
+  L.push('  ➜ Taux de reconnaissance (auto + confirm) : '+pctReconnu+'%');
+  L.push('');
+  L.push('── DÉTAIL PAR PROGRAMME ─────────────────────');
+  L.push(...detail);
+  L.push('── LECTURE ─────────────────────────────────');
+  L.push('🟢 direct = nom exact / synonyme anglais · 🟢 alias = équivalence ou recouvrement de mots');
+  L.push('🟡 confirm = zone grise, l\'app demande à l\'utilisateur (✓/✕) · ⚪ nouveau = exercice créé');
+  L.push('Un ⚪ « nouveau » n\'est PAS forcément une erreur : un vrai mouvement inconnu DOIT rester nouveau.');
+  L.push('Astuce : exporter ce rapport après chaque version pour comparer (avant/après une évolution du moteur).');
+  L.push('═══════════════════════════════════════════');
+  _vmReport={ text:L.join('\n'), ymd, pass:pctReconnu, total:100, bench:true };
+  // carte de résultat dans le Coach
+  try{
+    const msgs=document.getElementById('coach-msgs');
+    if(msgs){
+      goScreen('coach',document.getElementById('nb-coach')); try{_showCoachChat();}catch(e){}
+      const d=document.createElement('div'); d.className='msg-bubble msg-coach'; d.style.cssText='background:var(--bg3);border:1px solid var(--sep);';
+      d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧪 Mode Test VM — Banc d\'essai</p>'
+        +'<p style="margin:2px 0">'+tot+' exercices « tordus » testés (0 appel IA)</p>'
+        +'<p style="margin:6px 0 2px">🟢 Auto <b>'+(direct+alias)+'</b> ('+pctAuto+'%) &nbsp;·&nbsp; 🟡 Confirm <b>'+conf+'</b> &nbsp;·&nbsp; ⚪ Nouveau <b>'+neu+'</b></p>'
+        +'<p style="margin:2px 0;font-size:15px">➜ Reconnaissance : <b style="color:var(--green)">'+pctReconnu+'%</b></p>'
+        +'<button class="btn btn-bg2" style="width:100%;padding:10px;font-size:13px;margin-top:8px" onclick="exportVmText()">📤 Rapport complet (texte)</button>';
+      msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+    }
+  }catch(e){}
+  toast('Banc VM : '+pctReconnu+'% reconnus ('+tot+' exos)','info');
+}
+
 // ─── DRAWER ───────────────────────────────────────────────────
 function openDrawer(){
   const dr=document.getElementById('drawer');

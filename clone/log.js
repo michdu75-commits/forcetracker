@@ -1100,7 +1100,9 @@ Object.assign(_EX_EQUIV,{
   // Stress-test « Niveau Expert » (2e vague GPT)
   'ischios assis':'Leg Curl Assis Machine','ischio assis':'Leg Curl Assis Machine',
   'hack':'Squat Hack (Hack Squat)','presse':'Press Jambes 45°',
-  'high pulley':'Tirage Poulie Haute','pulley wide':'Tirage Poulie Haute','wide pulley':'Tirage Poulie Haute'
+  'high pulley':'Tirage Poulie Haute','pulley wide':'Tirage Poulie Haute','wide pulley':'Tirage Poulie Haute',
+  // Abréviations « cas pièges » (Niveau Expert)
+  'chest bb':'Développé Couché','hack sq':'Squat Hack (Hack Squat)','lp':'Press Jambes 45°'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
