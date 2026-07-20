@@ -1979,6 +1979,89 @@ async function exportVcText(){
   try{ const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('Rapport VC exporté','success'); }catch(e){ toast('Export impossible','error'); }
 }
 
+// ═══ LABORATOIRE MILO · VM — Validation MÉTIER (reconnaissance d'exercices) ═══
+// Teste le moteur LOCAL `_matchExercise` (aucun appel IA) sur un référentiel de cas
+// réels : un nom importé doit être rattaché au bon exercice EXLIB (VM-002), sans créer
+// de doublon (VM-003), et un vrai nouveau mouvement doit rester « nouveau » (VM-004).
+// Chaque cas déclare son attendu → le test est DÉTERMINISTE (juge automatique).
+let _vmReport=null;
+// input = nom importé ; expect = nom EXLIB attendu, ou null = doit rester « nouveau ».
+const VM_CASES=[
+  // — VM-002 : correspondance à la base (rattachement) —
+  {input:'Pec deck', expect:'Pec Deck', why:'même nom, casse différente'},
+  {input:'Presse à cuisses 45°', expect:'Press Jambes 45°', why:'nom FR différent, même machine'},
+  {input:'Leg press', expect:'Press Jambes 45°', why:'synonyme anglais'},
+  {input:'Bench press', expect:'Développé Couché', why:'synonyme EN (EX_EN)'},
+  {input:'Chest press pronation', expect:'Chest Press Machine Horizontale', why:'machine, mot en plus (Christophe)'},
+  {input:'Écarté machine', expect:'Pec Deck', why:'équivalence probable (GPT)'},
+  {input:'Chest press hammer', expect:'Chest Press Machine Horizontale', why:'même mouvement, marque (GPT)'},
+  {input:'Développé couché à la barre', expect:'Développé Couché', why:'précision « barre » ignorée'},
+  // — VM-003 : NE PAS fusionner deux mouvements distincts (cas pièges GPT) —
+  {input:'Développé incliné', expect:'Développé Incliné', why:'≠ Développé Couché (piège GPT)'},
+  {input:'Développé décliné haltères', expect:'Développé Décliné Haltères', why:'inclinaison + matériel distincts'},
+  {input:'Rowing haltère', expect:'Rowing Haltère', why:'≠ Rowing Barre'},
+  // — VM-004 : un vrai mouvement nouveau doit rester « nouveau » —
+  {input:'Extenseur de nuque manuel maison', expect:null, why:'mouvement inconnu → nouveau'},
+  {input:'Machine à vibration corps entier', expect:null, why:'pas un exercice de la base → nouveau'}
+];
+function startVmTest(){
+  if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
+  if(typeof _matchExercise!=='function'){ toast('Moteur de reconnaissance absent','error'); return; }
+  _vmRun();
+}
+function _vmRun(){
+  const L=[], ymd=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+  let pass=0; const rows=[];
+  VM_CASES.forEach(c=>{
+    let r; try{ r=_matchExercise(c.input); }catch(e){ r={match:null,score:0,via:'erreur:'+(e.message||'?')}; }
+    const ok=(r.match===c.expect);
+    if(ok)pass++;
+    rows.push({c,r,ok});
+  });
+  L.push('═══════════════════════════════════════════');
+  L.push('  LABORATOIRE MILO · VM — VALIDATION MÉTIER (reconnaissance d\'exercices)');
+  L.push('  Moteur LOCAL `_matchExercise` — aucun appel IA');
+  L.push('═══════════════════════════════════════════');
+  L.push('Date : '+ymd+'   ·   Score : '+pass+'/'+VM_CASES.length+' cas conformes');
+  L.push('');
+  rows.forEach((x,i)=>{
+    const exp=(x.c.expect===null)?'(nouveau)':x.c.expect;
+    const got=(x.r.match===null)?'(nouveau)':x.r.match;
+    L.push((x.ok?'✅':'❌')+' '+(i+1)+'. « '+x.c.input+' »');
+    L.push('     attendu : '+exp+'   ·   obtenu : '+got+'   ['+x.r.via+(x.r.score!=null?' '+x.r.score:'')+']');
+    L.push('     ('+x.c.why+')');
+  });
+  L.push('');
+  L.push('── LECTURE ─────────────────────────────────');
+  L.push('✅ = le moteur local a rattaché au bon exercice (ou a bien laissé « nouveau »).');
+  L.push('❌ = à corriger : soit un doublon manqué (rattachement raté), soit une fusion à tort');
+  L.push('     (deux mouvements distincts confondus), soit un « nouveau » mal détecté.');
+  L.push('Les cas marqués « ambigu → IA » sont ceux qu\'on laissera trancher au modèle (2e temps).');
+  L.push('═══════════════════════════════════════════');
+  _vmReport={ text:L.join('\n'), ymd, pass, total:VM_CASES.length };
+  // affiche une carte de résultat dans le Coach
+  try{
+    const msgs=document.getElementById('coach-msgs');
+    if(msgs){
+      goScreen('coach',document.getElementById('nb-coach')); try{_showCoachChat();}catch(e){}
+      const d=document.createElement('div'); d.className='msg-bubble msg-coach'; d.style.cssText='background:var(--bg3);border:1px solid var(--sep);';
+      const li=rows.map((x,i)=>'<li style="margin:3px 0">'+(x.ok?'✅':'❌')+' « '+x.c.input.replace(/</g,'&lt;')+' » → '+((x.r.match||'(nouveau)').replace(/</g,'&lt;'))+'</li>').join('');
+      d.innerHTML='<p style="font-weight:800;color:var(--red);margin:0 0 6px">🧩 VM — Reconnaissance d\'exercices (local)</p>'
+        +'<p style="margin:2px 0">Score : <b>'+_vmReport.pass+'/'+_vmReport.total+'</b> · moteur local, 0 appel IA</p>'
+        +'<ul style="margin:6px 0;padding-left:16px;font-size:12.5px">'+li+'</ul>'
+        +'<button class="btn btn-bg2" style="width:100%;padding:10px;font-size:13px;margin-top:6px" onclick="exportVmText()">📤 Rapport (texte)</button>';
+      msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+    }
+  }catch(e){}
+  toast('VM : '+pass+'/'+VM_CASES.length,'info');
+}
+async function exportVmText(){
+  if(!_vmReport){ toast('Aucun rapport VM','error'); return; }
+  const txt=_vmReport.text, fname='VM_reconnaissance_exercices_'+_vmReport.ymd+'.txt';
+  try{ const file=new File([txt],fname,{type:'text/plain'}); if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'VM'}); return; } }catch(e){ if(e&&e.name==='AbortError')return; }
+  try{ const blob=new Blob([txt],{type:'text/plain'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000); toast('Rapport VM exporté','success'); }catch(e){ toast('Export impossible','error'); }
+}
+
 // ─── DRAWER ───────────────────────────────────────────────────
 function openDrawer(){
   const dr=document.getElementById('drawer');

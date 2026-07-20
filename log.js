@@ -986,6 +986,60 @@ function confirmCancel(){const cb=_confirmAltCb;closeConfirm();if(cb)cb();}
 function _normEx(s){return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();}
 function _lev(a,b){if(a===b)return 0;const la=a.length,lb=b.length;if(!la)return lb;if(!lb)return la;let row=[...Array(lb+1).keys()];for(let i=1;i<=la;i++){let prev=row[0];row[0]=i;for(let j=1;j<=lb;j++){const t=row[j];row[j]=a[i-1]===b[j-1]?prev:1+Math.min(prev,row[j],row[j-1]);prev=t;}}return row[lb];}
 function _findSimilar(name,all){const na=_normEx(name);let best=null,bestD=Infinity;all.forEach(ex=>{const nb=_normEx(ex.n);if(nb===na){best=ex.n;bestD=0;return;}const minL=Math.min(na.length,nb.length);if(minL<5)return;const d=_lev(na,nb);if(d<=1&&d<bestD){best=ex.n;bestD=d;}});return best;}
+
+// ═══ VM — Reconnaissance d'exercices (LOCAL d'abord) ═══════════════════════════
+// Rattache un nom d'exercice (importé, mal nommé, marque, variante) à un exercice
+// EXLIB existant, SANS IA quand c'est possible : exact → synonyme EN → équivalence
+// connue → recouvrement de mots (avec garde-fou sur les modificateurs qui CHANGENT
+// le mouvement). Renvoie {match, score, via} ou {match:null} (= exercice nouveau).
+// L'IA n'intervient QUE sur les cas ambigus (score dans la zone grise) — pas ici.
+const _EX_STOP=new Set(['de','du','des','la','le','les','a','au','aux','en','avec','sur','et','l','d','the','with','on','machine','exercice','musculation','barre','bar','barbell','poulie','cable','halteres','haltere','dumbbell','dumbbells','poids','gym']);
+// Groupes de modificateurs MUTUELLEMENT EXCLUSIFS : si deux noms portent chacun un
+// membre DIFFÉRENT du même groupe → mouvements distincts → JAMAIS fusionner auto.
+const _EX_MODGROUPS=[
+  ['incline','inclinee','decline','declinee','couche','couchee','plat','horizontal','horizontale','vertical','verticale','45'], // inclinaison du banc/mouvement
+  ['pronation','supination','neutre','marteau','hammer','serree','serre','large','inversee','inverse'], // prise
+  ['assis','debout','allonge','genou'],                                 // position du corps
+  ['sumo','roumain','conventionnel','conventionnelle','deficit','bulgare','hack','front','arriere','nuque','unilateral','unilaterale','pistol','cossack','sissy','belt','safety','overhead','pendulum'] // variante lourde
+];
+function _exTokens(s){return _normEx(s).split(' ').filter(t=>t&&!_EX_STOP.has(t));}
+// Conflit si un membre d'un groupe est présent d'UN seul côté (mouvements distincts).
+function _exModConflict(a,b){ for(const grp of _EX_MODGROUPS){ for(const m of grp){ if(a.has(m)!==b.has(m))return true; } } return false; }
+// Jaccard entre 2 ensembles de tokens (0 si conflit de modificateurs).
+function _exJac(qset,cset){ if(!cset.size)return 0; if(_exModConflict(qset,cset))return 0; let inter=0; qset.forEach(t=>{if(cset.has(t))inter++;}); if(!inter)return 0; const uni=new Set([...qset,...cset]).size; return uni?inter/uni:0; }
+// Table d'équivalences SÉMANTIQUES connues (ce que le lexical ne peut pas deviner).
+// clé = forme normalisée d'entrée → nom EXLIB cible. À enrichir au fil des vrais imports.
+const _EX_EQUIV={
+  'pec deck':'Pec Deck','pec deck fly':'Pec Deck','peck deck':'Pec Deck','ecarte machine':'Pec Deck','ecarte assis machine':'Pec Deck','butterfly':'Pec Deck','pec dec':'Pec Deck',
+  'presse a cuisses':'Press Jambes 45°','presse a cuisses 45':'Press Jambes 45°','presse jambes':'Press Jambes 45°','leg press':'Press Jambes 45°','presse a jambes':'Press Jambes 45°','presse cuisse':'Press Jambes 45°',
+  'chest press hammer':'Chest Press Machine Horizontale','chest press pronation':'Chest Press Machine Horizontale','developpe convergent machine':'Chest Press Machine Horizontale','developpe convergent':'Chest Press Machine Horizontale',
+  'tirage poitrine':'Tirage Vertical Poitrine','lat pulldown':'Tirage Vertical Poitrine',
+  'leg curl':'Curl Ischio-jambiers (Leg Curl)','leg extension':'Extension Quadriceps (Leg Extension)'
+};
+function _matchExercise(name,opts){
+  opts=opts||{}; const all=(typeof EXLIB!=='undefined')?EXLIB:[];
+  const q=_normEx(name); if(!q)return{match:null,score:0,via:'vide'};
+  // 1) exact (après normalisation accents/casse/ponctuation)
+  for(const ex of all){ if(_normEx(ex.n)===q) return {match:ex.n,score:1,via:'exact'}; }
+  // 2) synonyme anglais EX_EN exact
+  if(typeof EX_EN!=='undefined'){ for(const ex of all){ const en=EX_EN[ex.n]; if(en&&_normEx(en)===q) return {match:ex.n,score:.96,via:'synonyme EN'}; } }
+  // 3) équivalence sémantique connue
+  if(_EX_EQUIV[q]){ return {match:_EX_EQUIV[q],score:.9,via:'équivalence connue'}; }
+  // 4) recouvrement de mots (Jaccard) contre le NOM FR *et* le synonyme EN, + garde-fou modificateurs
+  const qt=_exTokens(name); if(!qt.length)return{match:null,score:0,via:'aucun mot utile'};
+  const qset=new Set(qt); let best=null,bestScore=0;
+  const hasEN=(typeof EX_EN!=='undefined');
+  for(const ex of all){
+    const jN=_exJac(qset,new Set(_exTokens(ex.n)));                                   // vs nom français
+    const jE=hasEN&&EX_EN[ex.n]?_exJac(qset,new Set(_exTokens(EX_EN[ex.n]))):0;       // vs synonyme anglais
+    const jac=Math.max(jN,jE);
+    if(jac>bestScore){ best=ex.n; bestScore=jac; }
+  }
+  const TH=(opts.threshold!=null)?opts.threshold:.34;
+  if(best && bestScore>=TH) return {match:best,score:+bestScore.toFixed(2),via:'mots'};
+  if(best && bestScore>=.22) return {match:best,score:+bestScore.toFixed(2),via:'ambigu → IA',ambiguous:true};
+  return {match:null,score:+bestScore.toFixed(2),via:'nouveau'};
+}
 // Valide le set et focus automatiquement le kg du prochain set non-done
 function confirmSetAndNext(ei,si){
   toggleSet(ei,si);
