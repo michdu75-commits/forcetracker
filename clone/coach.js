@@ -1996,10 +1996,18 @@ const VM_CASES=[
   {input:'Écarté machine', expect:'Pec Deck', why:'équivalence probable (GPT)'},
   {input:'Chest press hammer', expect:'Chest Press Machine Horizontale', why:'même mouvement, marque (GPT)'},
   {input:'Développé couché à la barre', expect:'Développé Couché', why:'précision « barre » ignorée'},
+  {input:'Soulevé de terre classique', expect:'Soulevé de Terre', why:'« classique » = le SdT de base'},
+  {input:'Tirage poitrine', expect:'Tirage Poulie Haute', why:'lat pulldown vers la poitrine'},
   // — VM-003 : NE PAS fusionner deux mouvements distincts (cas pièges GPT) —
   {input:'Développé incliné', expect:'Développé Incliné', why:'≠ Développé Couché (piège GPT)'},
   {input:'Développé décliné haltères', expect:'Développé Décliné Haltères', why:'inclinaison + matériel distincts'},
   {input:'Rowing haltère', expect:'Rowing Haltère', why:'≠ Rowing Barre'},
+  {input:'Soulevé de terre roumain', expect:'Soulevé de Terre Roumain Barre', why:'≠ SdT classique (piège GPT)'},
+  {input:'Tirage nuque', expect:'Tirage Nuque', why:'≠ Tirage poitrine (piège GPT)'},
+  {input:'Traction pronation', expect:null, why:'≠ supination ; variante prise absente → nouveau (piège GPT)'},
+  {input:'Traction supination', expect:null, why:'≠ pronation ; variante prise absente → nouveau (piège GPT)'},
+  {input:'Squat barre haute', expect:null, why:'high bar ≠ low bar ; variante absente → nouveau (piège GPT)'},
+  {input:'Squat barre basse', expect:null, why:'low bar ≠ high bar ; variante absente → nouveau (piège GPT)'},
   // — VM-004 : un vrai mouvement nouveau doit rester « nouveau » —
   {input:'Extenseur de nuque manuel maison', expect:null, why:'mouvement inconnu → nouveau'},
   {input:'Machine à vibration corps entier', expect:null, why:'pas un exercice de la base → nouveau'}
@@ -2027,8 +2035,10 @@ function _vmRun(){
   rows.forEach((x,i)=>{
     const exp=(x.c.expect===null)?'(nouveau)':x.c.expect;
     const got=(x.r.match===null)?'(nouveau)':x.r.match;
+    const conf=(x.r.confidence!=null)?x.r.confidence+'%':'';
+    const tier=x.r.tier?({auto:'auto',confirm:'à confirmer',new:'nouveau'}[x.r.tier]||x.r.tier):'';
     L.push((x.ok?'✅':'❌')+' '+(i+1)+'. « '+x.c.input+' »');
-    L.push('     attendu : '+exp+'   ·   obtenu : '+got+'   ['+x.r.via+(x.r.score!=null?' '+x.r.score:'')+']');
+    L.push('     attendu : '+exp+'   ·   obtenu : '+got+'   ['+x.r.via+' · '+conf+' · '+tier+']');
     L.push('     ('+x.c.why+')');
   });
   L.push('');

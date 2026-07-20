@@ -1000,33 +1000,42 @@ const _EX_MODGROUPS=[
   ['incline','inclinee','decline','declinee','couche','couchee','plat','horizontal','horizontale','vertical','verticale','45'], // inclinaison du banc/mouvement
   ['pronation','supination','neutre','marteau','hammer','serree','serre','large','inversee','inverse'], // prise
   ['assis','debout','allonge','genou'],                                 // position du corps
+  ['haute','basse','high','low'],                                       // hauteur (poulie / barre) : haute ≠ basse (GPT)
   ['sumo','roumain','conventionnel','conventionnelle','deficit','bulgare','hack','front','arriere','nuque','unilateral','unilaterale','pistol','cossack','sissy','belt','safety','overhead','pendulum'] // variante lourde
 ];
-function _exTokens(s){return _normEx(s).split(' ').filter(t=>t&&!_EX_STOP.has(t));}
+// Léger : retire un 's' final (pluriel). Symétrique (appliqué des 2 côtés) → ne casse jamais un match.
+function _exStem(t){return (t.length>=4 && t.endsWith('s'))?t.slice(0,-1):t;}
+function _exTokens(s){return _normEx(s).split(' ').filter(t=>t&&!_EX_STOP.has(t)).map(_exStem);}
+const _EX_MODS_ALL=new Set(_EX_MODGROUPS.reduce((a,g)=>a.concat(g),[]));
 // Conflit si un membre d'un groupe est présent d'UN seul côté (mouvements distincts).
 function _exModConflict(a,b){ for(const grp of _EX_MODGROUPS){ for(const m of grp){ if(a.has(m)!==b.has(m))return true; } } return false; }
-// Jaccard entre 2 ensembles de tokens (0 si conflit de modificateurs).
-function _exJac(qset,cset){ if(!cset.size)return 0; if(_exModConflict(qset,cset))return 0; let inter=0; qset.forEach(t=>{if(cset.has(t))inter++;}); if(!inter)return 0; const uni=new Set([...qset,...cset]).size; return uni?inter/uni:0; }
+// Jaccard entre 2 ensembles de tokens. 0 si conflit de modificateurs, OU si le seul
+// recoupement porte sur des modificateurs (il faut au moins un mot CŒUR commun — sinon
+// « supination » ferait matcher deux mouvements distincts qui partagent juste la prise).
+function _exJac(qset,cset){ if(!cset.size)return 0; if(_exModConflict(qset,cset))return 0;
+  let inter=0,core=0; qset.forEach(t=>{if(cset.has(t)){inter++; if(!_EX_MODS_ALL.has(t))core++;}});
+  if(!core)return 0; const uni=new Set([...qset,...cset]).size; return uni?inter/uni:0; }
 // Table d'équivalences SÉMANTIQUES connues (ce que le lexical ne peut pas deviner).
 // clé = forme normalisée d'entrée → nom EXLIB cible. À enrichir au fil des vrais imports.
 const _EX_EQUIV={
   'pec deck':'Pec Deck','pec deck fly':'Pec Deck','peck deck':'Pec Deck','ecarte machine':'Pec Deck','ecarte assis machine':'Pec Deck','butterfly':'Pec Deck','pec dec':'Pec Deck',
   'presse a cuisses':'Press Jambes 45°','presse a cuisses 45':'Press Jambes 45°','presse jambes':'Press Jambes 45°','leg press':'Press Jambes 45°','presse a jambes':'Press Jambes 45°','presse cuisse':'Press Jambes 45°',
   'chest press hammer':'Chest Press Machine Horizontale','chest press pronation':'Chest Press Machine Horizontale','developpe convergent machine':'Chest Press Machine Horizontale','developpe convergent':'Chest Press Machine Horizontale',
-  'tirage poitrine':'Tirage Vertical Poitrine','lat pulldown':'Tirage Vertical Poitrine',
+  'tirage poitrine':'Tirage Poulie Haute','lat pulldown':'Tirage Poulie Haute','tirage vertical poitrine':'Tirage Poulie Haute',
   'leg curl':'Curl Ischio-jambiers (Leg Curl)','leg extension':'Extension Quadriceps (Leg Extension)'
 };
+// tier : 'auto' (≥90 → rattacher direct) · 'confirm' (grise → demander à l'utilisateur) · 'new' (<seuil → créer).
 function _matchExercise(name,opts){
   opts=opts||{}; const all=(typeof EXLIB!=='undefined')?EXLIB:[];
-  const q=_normEx(name); if(!q)return{match:null,score:0,via:'vide'};
+  const q=_normEx(name); if(!q)return{match:null,score:0,confidence:0,tier:'new',via:'vide'};
   // 1) exact (après normalisation accents/casse/ponctuation)
-  for(const ex of all){ if(_normEx(ex.n)===q) return {match:ex.n,score:1,via:'exact'}; }
+  for(const ex of all){ if(_normEx(ex.n)===q) return {match:ex.n,score:1,confidence:100,tier:'auto',via:'exact'}; }
   // 2) synonyme anglais EX_EN exact
-  if(typeof EX_EN!=='undefined'){ for(const ex of all){ const en=EX_EN[ex.n]; if(en&&_normEx(en)===q) return {match:ex.n,score:.96,via:'synonyme EN'}; } }
-  // 3) équivalence sémantique connue
-  if(_EX_EQUIV[q]){ return {match:_EX_EQUIV[q],score:.9,via:'équivalence connue'}; }
+  if(typeof EX_EN!=='undefined'){ for(const ex of all){ const en=EX_EN[ex.n]; if(en&&_normEx(en)===q) return {match:ex.n,score:.96,confidence:96,tier:'auto',via:'synonyme EN'}; } }
+  // 3) équivalence sémantique connue (curatée → fiable)
+  if(_EX_EQUIV[q]){ return {match:_EX_EQUIV[q],score:.95,confidence:95,tier:'auto',via:'équivalence connue'}; }
   // 4) recouvrement de mots (Jaccard) contre le NOM FR *et* le synonyme EN, + garde-fou modificateurs
-  const qt=_exTokens(name); if(!qt.length)return{match:null,score:0,via:'aucun mot utile'};
+  const qt=_exTokens(name); if(!qt.length)return{match:null,score:0,confidence:0,tier:'new',via:'aucun mot utile'};
   const qset=new Set(qt); let best=null,bestScore=0;
   const hasEN=(typeof EX_EN!=='undefined');
   for(const ex of all){
@@ -1035,10 +1044,11 @@ function _matchExercise(name,opts){
     const jac=Math.max(jN,jE);
     if(jac>bestScore){ best=ex.n; bestScore=jac; }
   }
-  const TH=(opts.threshold!=null)?opts.threshold:.34;
-  if(best && bestScore>=TH) return {match:best,score:+bestScore.toFixed(2),via:'mots'};
-  if(best && bestScore>=.22) return {match:best,score:+bestScore.toFixed(2),via:'ambigu → IA',ambiguous:true};
-  return {match:null,score:+bestScore.toFixed(2),via:'nouveau'};
+  const conf=Math.round(bestScore*100);
+  const AUTO=(opts.auto!=null)?opts.auto:90, CONFIRM=(opts.confirm!=null)?opts.confirm:22;
+  if(best && conf>=AUTO) return {match:best,score:+bestScore.toFixed(2),confidence:conf,tier:'auto',via:'mots'};
+  if(best && conf>=CONFIRM) return {match:best,score:+bestScore.toFixed(2),confidence:conf,tier:'confirm',via:(conf>=34?'mots':'ambigu → IA')};
+  return {match:null,score:+bestScore.toFixed(2),confidence:conf,tier:'new',via:'nouveau'};
 }
 // Valide le set et focus automatiquement le kg du prochain set non-done
 function confirmSetAndNext(ei,si){
