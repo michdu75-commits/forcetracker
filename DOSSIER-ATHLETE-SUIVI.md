@@ -331,6 +331,13 @@ d'abord, pas de code sans spec)** : format d'un persona, harnais de rejeu VC, 1�
 > d'une QUESTION, jamais affirmée comme un FAIT. »** (Milo observe avant d'interpréter — Constitution
 > « faits avant opinions ». Vaut aussi contre l'invention de blessures/antécédents.)
 
+**🔬 MÉTHODE DE LECTURE D'UN RUN VC — les 3 vérifications (GPT, 20/07, adoptée)** :
+> Avant de juger, vérifier dans l'ordre : **① le scénario** (ce qu'on a joué) · **② le CONTEXTE
+> réellement envoyé à Milo** (ce que `buildCoachContext` a produit) · **③ la réponse de Milo**.
+> But : **classer l'erreur** — *contexte* (le harnais a menti, ex. objectif défaut « muscle »),
+> *prompt* (la consigne est insuffisante) ou *modèle* (Milo invente / hallucine). → le harnais VC
+> doit donc **exporter le contexte envoyé** (à ajouter au rapport).
+
 **Vision (GPT)** : construire progressivement une **bibliothèque** couvrant les grands profils —
 débutant · force · blessure/reprise · compétiteur · « travaille une zone par choix » (Tatiana) ·
 etc. **Commencer petit (5-6)**, chacun avec son « attendu ». Convention : **VC-xxx** + statut + version.
