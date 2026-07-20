@@ -2245,12 +2245,24 @@ async function exportVmBenchCsv(){
 // Nettoie chaque ligne (retire puces, séries/reps/repos) puis lance le même rapport que le banc.
 function _vmCleanExName(line){
   let s=(''+line).trim();
-  s=s.replace(/^[\s•\-\*·▪◦>»→\d]+[\.\)]?\s*/,'');        // puces / numéros de liste
+  s=s.replace(/^[\s=\-\*#~_•·▪◦>»→\d]+[\.\)]?\s*/,'');     // puces / numéros / déco (=, #, ~…) en tête
+  s=s.replace(/[\s=\-\*#~_]+$/,'');                        // déco en fin (===== , ---)
   s=s.replace(/\s*[:\-–—]\s*\d.*$/,'');                    // « : 4x8 » / « - 90s »
   s=s.replace(/\s+\d+\s*[x×*]\s*\d+.*$/i,'');              // « 4x8 » / « 3 x 12 … »
   s=s.replace(/\s+\d+\s*(reps?|répétitions?|répét|séries?|sets?|s|sec|secondes?|min|kg)\b.*$/i,''); // « 12 reps », « 90s »
   s=s.replace(/\s{2,}/g,' ').trim();
   return s;
+}
+// Détecte une ligne d'EN-TÊTE (pas un exercice) : séparateurs, titres de section (PUSH/PULL/
+// LEGS…), lignes « PROGRAMME/JOUR/SÉANCE… ». Sert à ne PAS tester ces lignes dans « Mon programme ».
+const _VM_SECTION=/^(push|pull|legs?|jambes|upper|lower|haut|bas|full ?body|bonus|repos|rest|cardio|abs|superset|circuit|finisher|warm ?up|[ée]chauffement)$/i;
+function _vmIsHeader(orig, cleaned){
+  const t=(''+orig).trim();
+  if(!cleaned || cleaned.length<2) return true;
+  if(/={3,}|-{4,}|—{3,}|#{2,}|\*{3,}|~{3,}/.test(t)) return true;   // ligne de séparation
+  if(_VM_SECTION.test(cleaned)) return true;                        // mot de section EXACT (PUSH, LEGS…)
+  if(/^(programme|program|jour|day|s[ée]ance|workout|semaine|week|bloc|phase|niveau)\b/i.test(cleaned)) return true; // titre
+  return false;
 }
 function openVmBenchCustom(){
   if(!(typeof _isAdminUnlocked==='function' && _isAdminUnlocked())){ toast('Réservé à l\'admin','error'); return; }
@@ -2272,8 +2284,14 @@ function openVmBenchCustom(){
 }
 function _vmBenchCustomRun(){
   const ta=document.getElementById('vm-custom-ta'); if(!ta)return;
-  const names=ta.value.split('\n').map(_vmCleanExName).filter(x=>x&&x.length>1);
-  if(!names.length){ toast('Colle au moins un exercice','error'); return; }
+  const names=[];
+  ta.value.split('\n').forEach(line=>{
+    const c=_vmCleanExName(line);
+    if(!c || c.length<2) return;
+    if(_vmIsHeader(line, c)) return;               // ignore les en-têtes (PUSH, ===, PROGRAMME…)
+    names.push(c);
+  });
+  if(!names.length){ toast('Aucun exercice détecté (que des en-têtes ?)','error'); return; }
   const ov=document.getElementById('ov-vm-custom'); if(ov)ov.classList.remove('open');
   _vmBenchRun({'Mon programme':names}, false);   // pas de comparaison référence (programme ad hoc)
 }

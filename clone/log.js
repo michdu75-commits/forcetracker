@@ -1109,7 +1109,12 @@ Object.assign(_EX_EQUIV,{
   'close grip bench':'Développé Couché','incl db press':'Développé Incliné Haltères','bench bb':'Développé Couché','leg ext':'Extension Quadriceps (Leg Extension)',
   'converging press':'Chest Press Machine Horizontale','converging chest press':'Chest Press Machine Horizontale','horizontal press':'Chest Press Machine Horizontale',
   'hammer incline':'Chest Press Machine Inclinée','hammer iso incline':'Chest Press Machine Inclinée',
-  'high row':'Rowing Machine'
+  'high row':'Rowing Machine',
+  // 4e vague (rapport « Mon programme » HELL MODE) : abréviations + faux matchs
+  'dc bb':'Développé Couché','dev couche':'Développé Couché','cg bench':'Développé Couché',
+  'push down':'Triceps Poulie','tri rope':'Triceps Corde Poulie',
+  'butter fly':'Pec Deck','butter fly machine':'Pec Deck','pec machine':'Pec Deck','fly machine':'Pec Deck',
+  'lat machine':'Tirage Poulie Haute','lat pd':'Tirage Poulie Haute','row assis':'Rowing Cable'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
