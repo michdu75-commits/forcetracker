@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v521'; // Machine importée sans image dédiée : bouton « 📷 Ajouter la photo de ta machine » dans la vue agrandie (toggleExGif) quand on retombe sur la figurine muscle → la vraie photo devient la vignette + le grand format (via changeExImg). Précédent ft-v520 : VC-002/VC-003 ajoutés au labo VC (modèle-par-persona coachEmail→Sonnet/Haiku, cycle simulé, keto).
+const CACHE = 'ft-v522'; // VM : reconnaissance tolérante au mot « machine ». « Peck deck machine » → Pec Deck (on A le Pec Deck), « Chest incline machine pronation » → Chest Press Machine Inclinée, « Chest decline machine » → Chest Press Machine Déclinée. _eqLookup réduit le nom aux mots utiles (SANS stemmer → « Leg press machine » reste « leg press », pas « leg pres ») ; la clé complète gagne d'abord (« Écarté machine » intact). VM 21/21, 0 régression. Précédent ft-v521 : bouton « 📷 Ajouter la photo de ta machine » dans la vue agrandie (fallback muscle).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

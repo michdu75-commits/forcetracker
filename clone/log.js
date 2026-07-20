@@ -1060,9 +1060,20 @@ const _EX_EQUIV={
   'pec deck':'Pec Deck','pec deck fly':'Pec Deck','peck deck':'Pec Deck','ecarte machine':'Pec Deck','ecarte assis machine':'Pec Deck','butterfly':'Pec Deck','pec dec':'Pec Deck',
   'presse a cuisses':'Press Jambes 45°','presse a cuisses 45':'Press Jambes 45°','presse jambes':'Press Jambes 45°','leg press':'Press Jambes 45°','presse a jambes':'Press Jambes 45°','presse cuisse':'Press Jambes 45°',
   'chest press hammer':'Chest Press Machine Horizontale','chest press pronation':'Chest Press Machine Horizontale','developpe convergent machine':'Chest Press Machine Horizontale','developpe convergent':'Chest Press Machine Horizontale',
+  'chest incline':'Chest Press Machine Inclinée','chest press incline':'Chest Press Machine Inclinée','chest incline pronation':'Chest Press Machine Inclinée','developpe incline machine':'Chest Press Machine Inclinée',
+  'chest decline':'Chest Press Machine Déclinée','chest press decline':'Chest Press Machine Déclinée',
   'tirage poitrine':'Tirage Poulie Haute','lat pulldown':'Tirage Poulie Haute','tirage vertical poitrine':'Tirage Poulie Haute',
   'leg curl':'Curl Ischio-jambiers (Leg Curl)','leg extension':'Extension Quadriceps (Leg Extension)'
 };
+// Lookup équivalence tolérant au mot « machine » (et autres mots vides génériques) :
+// on tente la forme complète, puis la forme réduite aux mots utiles (_exTokens) —
+// « peck deck machine » → « peck deck » → Pec Deck. La forme complète gagne d'abord,
+// donc « ecarte machine » (clé directe) n'est jamais réduit à tort en « ecarte ».
+function _eqLookup(q,name){ if(_EX_EQUIV[q])return _EX_EQUIV[q];
+  // Réduction : on enlève seulement les mots vides (dont « machine ») SANS stemmer
+  // (« Leg press machine » → « leg press », pas « leg pres » qui corromprait la clé).
+  const core=_normEx(name).split(' ').filter(t=>t&&!_EX_STOP.has(t)).join(' ');
+  return (core&&core!==q&&_EX_EQUIV[core])?_EX_EQUIV[core]:null; }
 // tier : 'auto' (≥90 → rattacher direct) · 'confirm' (grise → demander à l'utilisateur) · 'new' (<seuil → créer).
 function _matchExercise(name,opts){
   opts=opts||{}; const all=(typeof EXLIB!=='undefined')?EXLIB:[];
@@ -1071,8 +1082,9 @@ function _matchExercise(name,opts){
   for(const ex of all){ if(_normEx(ex.n)===q) return {match:ex.n,score:1,confidence:100,tier:'auto',via:'exact'}; }
   // 2) synonyme anglais EX_EN exact
   if(typeof EX_EN!=='undefined'){ for(const ex of all){ const en=EX_EN[ex.n]; if(en&&_normEx(en)===q) return {match:ex.n,score:.96,confidence:96,tier:'auto',via:'synonyme EN'}; } }
-  // 3) équivalence sémantique connue (curatée → fiable)
-  if(_EX_EQUIV[q]){ return {match:_EX_EQUIV[q],score:.95,confidence:95,tier:'auto',via:'équivalence connue'}; }
+  // 3) équivalence sémantique connue (curatée → fiable), tolérante au mot « machine »
+  const eq=_eqLookup(q,name);
+  if(eq){ return {match:eq,score:.95,confidence:95,tier:'auto',via:'équivalence connue'}; }
   // 4) recouvrement de mots (Jaccard) contre le NOM FR *et* le synonyme EN, + garde-fou modificateurs
   const qt=_exTokens(name); if(!qt.length)return{match:null,score:0,confidence:0,tier:'new',via:'aucun mot utile'};
   const qset=new Set(qt); let best=null,bestScore=0;
