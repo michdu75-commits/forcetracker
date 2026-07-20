@@ -500,6 +500,9 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const doneSets=ex.sets.filter(s=>s.done);
   const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
   const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
+  const _cThumb=_exImg(ex.name)||_exMuscleImg(ex.name); // vignette repliée : photo/gif sinon muscle deviné
+  const _cReal=!!_exImg(ex.name);
+  const _cThumbHtml=(!_groupMode&&!inGroup)?`<img src="${_cThumb}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:40px;height:40px;object-fit:${_cReal?'cover':'contain'};${_cReal?'':'padding:2px;background:var(--bg2);'}border-radius:8px;flex-shrink:0;border:1px solid var(--sep);margin-right:9px;cursor:pointer;" loading="lazy">`:'';
   // En mode sélection, tout apparaît replié pour faciliter les taps
   // S.expandAll (option « tout dérouler », retour Emma) : tous les exercices ouverts en même temps
   const isExpanded=!_groupMode&&(S.expandAll||ei===_expandedEx||exCount===1);
@@ -517,7 +520,8 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       ?` onclick="toggleGroupSelect(${ei})" style="cursor:pointer;${selStyle}"`
       :` onclick="toggleExBlock(${ei})" style="cursor:pointer;${selStyle}"`;
     return`<div class="ex-block${inGroup?(isExpanded?' ss-active':' ss-inactive'):''}" id="ex-block-${ei}"${clickAttr}>`
-      +`<div class="ex-hdr" style="pointer-events:${_groupMode||inGroup?'none':'all'}">`
+      +`<div class="ex-hdr" style="pointer-events:${_groupMode||inGroup?'none':'all'};align-items:center;">`
+      +_cThumbHtml
       +`<div style="flex:1;min-width:0;">`
       +`<div class="ex-name" style="font-size:14px">${_escNote(ex.name)} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`

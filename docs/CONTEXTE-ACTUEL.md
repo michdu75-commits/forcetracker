@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en prod :** `ft-v518` (figurine muscle garantie pour toute machine importée + séances renommables + VM import)
+- **Version en prod :** `ft-v519` (vignette muscle sur chaque exo, replié ou déplié ; figurine garantie machine importée)
 - **Branche de travail :** `master` (déploiement direct GitHub Pages)
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
