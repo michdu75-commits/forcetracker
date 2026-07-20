@@ -2847,6 +2847,33 @@ async function _pdfToImages(f){
   }
   return pages;
 }
+// Extraction de la COUCHE TEXTE d'un PDF (100% local, 0 IA) — pour le Mode Test VM.
+// Regroupe les fragments par ligne via leur coordonnée Y. Renvoie [] si PDF scanné (pas de texte).
+async function _pdfToText(f){
+  await _loadPDFJS();
+  const buf=await f.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  const MAX_PAGES=15, lines=[];
+  for(let i=1;i<=Math.min(pdf.numPages,MAX_PAGES);i++){
+    const page=await pdf.getPage(i);
+    const tc=await page.getTextContent();
+    const rows=[];
+    tc.items.forEach(it=>{
+      const s=(it.str||''); if(!s.trim())return;
+      const y=Math.round(it.transform[5]);
+      let row=rows.find(r=>Math.abs(r.y-y)<=3);
+      if(!row){ row={y,parts:[]}; rows.push(row); }
+      row.parts.push({x:it.transform[4],s});
+    });
+    rows.sort((a,b)=>b.y-a.y);                        // haut → bas (Y décroissant en repère PDF)
+    rows.forEach(r=>{
+      r.parts.sort((a,b)=>a.x-b.x);
+      const txt=r.parts.map(p=>p.s).join(' ').replace(/\s+/g,' ').trim();
+      if(txt) lines.push(txt);
+    });
+  }
+  return lines;
+}
 async function addImportFile(input){
   const files=[...input.files];if(!files.length)return;
   const MAX_MB=15;

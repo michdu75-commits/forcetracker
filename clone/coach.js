@@ -2271,7 +2271,9 @@ function openVmBenchCustom(){
     ov=document.createElement('div'); ov.id='ov-vm-custom'; ov.className='overlay'; ov.style.zIndex='600';
     ov.innerHTML='<div class="modal" style="max-width:460px;width:92vw;">'
       +'<div style="font-weight:800;font-size:16px;margin-bottom:4px">🧪 Tester MON programme</div>'
-      +'<div style="font-size:12px;color:var(--t2);margin-bottom:8px">Colle une liste d\'exercices (un par ligne). Les séries/reps/repos sont ignorés automatiquement.</div>'
+      +'<div style="font-size:12px;color:var(--t2);margin-bottom:8px">Colle une liste d\'exercices (un par ligne) <b>ou</b> importe un PDF. Les séries/reps/repos et en-têtes sont ignorés automatiquement.</div>'
+      +'<input type="file" id="vm-custom-pdf" accept="application/pdf,.pdf" style="display:none" onchange="_vmCustomPdf(this)">'
+      +'<button class="btn btn-bg2" style="width:100%;margin-bottom:8px" onclick="document.getElementById(\'vm-custom-pdf\').click()">📄 Importer un PDF</button>'
       +'<textarea id="vm-custom-ta" rows="9" style="width:100%;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:10px;color:var(--t1);font-family:inherit;font-size:13px;line-height:1.5" placeholder="Développé Couché 4x8&#10;Peck deck machine 3x12&#10;Rowing barre 4x10&#10;..."></textarea>'
       +'<div style="display:flex;gap:8px;margin-top:10px">'
       +'<button class="btn btn-bg2" style="flex:1" onclick="document.getElementById(\'ov-vm-custom\').classList.remove(\'open\')">Fermer</button>'
@@ -2281,6 +2283,18 @@ function openVmBenchCustom(){
   }
   ov.classList.add('open');
   setTimeout(()=>{ const t=document.getElementById('vm-custom-ta'); if(t)t.focus(); },120);
+}
+async function _vmCustomPdf(input){
+  const f=input.files&&input.files[0]; if(!f)return; input.value='';
+  const ta=document.getElementById('vm-custom-ta'); if(!ta)return;
+  if(!(/\.pdf$/i.test(f.name)||f.type==='application/pdf')){ toast('Choisis un fichier PDF','error'); return; }
+  toast('Lecture du PDF…','info');
+  try{
+    const lines=await _pdfToText(f);
+    if(!lines.length){ toast('Ce PDF est une image scannée (aucun texte à lire) — colle la liste à la main.','error'); return; }
+    ta.value=lines.join('\n');
+    toast(lines.length+' lignes lues — vérifie puis « Lancer le test »','success');
+  }catch(e){ toast('Impossible de lire ce PDF','error'); }
 }
 function _vmBenchCustomRun(){
   const ta=document.getElementById('vm-custom-ta'); if(!ta)return;
