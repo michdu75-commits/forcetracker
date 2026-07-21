@@ -2920,6 +2920,7 @@ function _positionFab(){
 }
 // Appels multiples pour garantir un layout stable sur iOS PWA
 document.addEventListener('DOMContentLoaded',_positionFab);
+window.addEventListener('load',()=>{try{if(typeof _initSheetHandles==='function')_initSheetHandles();}catch(e){}}); // poignée glissable sur les overlays de contenu (reco UX GPT, ft-v550)
 window.addEventListener('load',_positionFab);
 window.addEventListener('load',()=>{setTimeout(_positionFab,300);});
 window.addEventListener('resize',_positionFab);

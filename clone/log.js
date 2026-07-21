@@ -1859,6 +1859,15 @@ function _makeSheetDraggable(handleEl,closeFn){
   handleEl.addEventListener('touchcancel',end);
   handleEl.addEventListener('mousedown',e=>{start(e.clientY);const mm=ev=>move(ev.clientY,ev);const mu=()=>{end();document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);};document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);e.preventDefault();});
 }
+// Branche la poignée glissable sur les overlays de CONTENU sûrs (poignée déjà présente).
+// ⚠️ Exclus volontairement : confirmations, inscription, murs premium, formulaires, imports, sélecteur d'exos → besoin d'un choix/geste explicite, pas d'un glissé.
+function _initSheetHandles(){
+  const map=[['ov-milo-knows','closeMiloKnows'],['mod-share','closeShareModal'],['ov-type-help','closeTypeHelp']];
+  map.forEach(([id,fn])=>{
+    const el=document.querySelector('#'+id+' .modal-handle');
+    if(el)_makeSheetDraggable(el,()=>{try{if(typeof window[fn]==='function')window[fn]();}catch(e){}});
+  });
+}
 
 // Volume de travail : exclut É (échauffement) et W (legacy)
 function _workVol(sess){
