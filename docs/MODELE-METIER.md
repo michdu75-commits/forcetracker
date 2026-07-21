@@ -1,4 +1,6 @@
-# 🧩 Modèle métier de Force Tracker — le langage commun (v0.1)
+# 🧩 Modèle métier de Force Tracker — le langage commun (v0.2)
+
+> **v0.2 (21/07/2026)** — intègre le 1ᵉʳ retour de GPT : 3ᵉ état **ANALYSÉ**, **Intention** extensible, **propriétés** portées par la fiche bibliothèque (VM relie, ne déduit pas — Principe 15), objet transversal **Connaissance** (futur), cadrage « le modèle **est une grammaire** ». Relations déjà présentes (section grammaire) — GPT n'avait vu que le PDF condensé.
 
 > **Le cap (Michel, 21/07/2026)** : arrêter de penser *uniquement* « fonctionnalités » et penser **« objets métier »**. Définir un **langage commun** que TOUS les modules parlent (VM · import PDF · générateur IA · mode coach · statistiques…). *« On n'ajoute plus des fonctions, on construit un langage capable de représenter la programmation sportive. »*
 >
@@ -21,14 +23,15 @@ Les programmes de vrais coachs (Cyril, Emma, Tatiana…) servent **uniquement de
 
 ---
 
-## Principe n°1 — PLANIFIÉ vs RÉALISÉ
+## Principe n°1 — PLANIFIÉ · RÉALISÉ · ANALYSÉ
 
-La distinction la plus importante. Les mêmes objets existent en **deux états** :
+La distinction la plus importante. Les mêmes objets existent en **trois états** *(le 3ᵉ ajouté sur suggestion GPT, 21/07)* :
 
 - **Planifié** (la prescription) : ce qui est **prévu** — un programme, une séance à faire, « 4×8 à 80 % ».
 - **Réalisé** (la performance) : ce qui a été **fait** — la séance loggée, « 4×8 à 82,5 kg, la 4ᵉ à l'échec ».
+- **Analysé** (le sens) : ce que **Milo en comprend** — débrief, tendances, objectif tenu ou non, score, observations. *(existe déjà : débriefs, `S.registre`, observations, score de récup.)*
 
-Force Tracker gère déjà les deux (aujourd'hui : `S.programmes` = planifié · `S.sessions` = réalisé). Le modèle doit **toujours** préciser de quel état on parle.
+Force Tracker gère les trois (`S.programmes` = planifié · `S.sessions` = réalisé · débriefs/Registre = analysé). Le modèle doit **toujours** préciser de quel état on parle. C'est l'incarnation de *« Force Tracker conserve les données, Milo leur donne du sens »*.
 
 ---
 
@@ -40,11 +43,11 @@ La personne. *(existe : profil `S`, `S.adn`, `S.registre`, `S.healthProfile`)*
 - **ADN sportif** (durable, déclaré), **Registre** (faits mesurés + observations), **Santé** (contraintes → le Gardien).
 - *poursuit* un ou plusieurs **Objectifs**.
 
-### 🎯 Objectif
+### 🎯 Objectif *(porte une Intention)*
 Ce que l'athlète vise. *(existe partiellement : `S.goal`, `S.targetWeight`, `S.level`)*
-- Type (force · hypertrophie · perte de gras · recomposition · endurance · perf datée…).
+- **Intention = liste OUVERTE/extensible** *(précision GPT)* : force · hypertrophie · perte de gras · recomposition · endurance · **réathlétisation** · **préparation militaire** · **santé** · perf datée… On en ajoute sans casser le modèle.
 - Cible (poids visé, 1RM visé…), échéance éventuelle.
-- Un programme **sert** un/des objectifs.
+- Un programme **sert** un/des objectifs ; l'intention nourrira le **niveau 3** (reconnaissance de l'intention d'un programme importé).
 
 ### 📋 Programme
 Un plan structuré d'entraînement. *(existe : `S.programmes[]`)*
@@ -77,9 +80,10 @@ Une série. *(existe : `sets[]` = `{kg, reps, type, rest, done, note}`)*
 - Reps **ou** temps ; charge (kg · %1RM · RPE · « max ») ; **type** (N normal · É échauffement · X échec · D dropset) ; repos ; note.
 
 ### 📚 Exercice-bibliothèque *(la référence)*
-Le mouvement canonique. *(existe : `EXLIB` + taxonomie VM)*
+Le mouvement canonique — **porteur de propriétés**. *(existe : `EXLIB` + taxonomie VM)*
 - Nom, groupe musculaire, muscles, **schéma moteur** (14 patterns), famille, **alias** (FR/EN/marques), média (gif/photo).
-- Le **moteur VM** relie un nom brut → cette référence (sans doublon).
+- **Propriétés enrichies** *(suggestion GPT R3)* : **matériel** (barre/haltères/machine/poulie/poids du corps…), **niveau technique** (débutant/confirmé), unilatéral/bilatéral…
+- Le **moteur VM** relie un nom brut → cette référence (sans doublon). ⚠️ **Frontière (Constitution, Principe 15)** : VM ne **déduit** pas ces propriétés du nom — il **relie** à une fiche qui les **porte déjà**. C'est la fiche qu'on enrichit, pas le parsing. « Le moteur comprend, le Gardien décide. »
 
 ---
 
@@ -99,9 +103,17 @@ Une instruction de coach attachée à un exercice/série. *(partiel : champs `no
 La **façon d'écrire** le volume/l'intensité. *(partiel : `reps`, `kg`, `maxi`, `repsPerSet`)*
 - `sets×reps` · `%1RM` · `RPE` · **tempo** (ex. 3-1-1) · `AMRAP` · « max » · reps montantes (ramping).
 
+### 🧠 Connaissance *(objet transversal — FUTUR, niveau 3)* *(suggestion GPT R6/R7)*
+La **capitalisation** : ce que Force Tracker apprend et accumule au fil du temps — **des principes, jamais des programmes** (Constitution, Principe 16). Deux facettes :
+- **Connaissance générique** : vocabulaire (alias VM), schémas moteurs, familles, principes de programmation, structures. C'est le **patrimoine** (public, réutilisable, local). *(existe déjà, épars : EXLIB, `_EX_EQUIV`, taxonomie, lexique de structures.)*
+- **Connaissance de l'athlète** : ce que Milo observe/relie sur SA personne (faits, corrélations, tendances). *(existe : `S.registre` — faits + observations.)*
+- ⚠️ **On ne construit PAS cet objet maintenant** (une brique à la fois) — on le **nomme** pour savoir où rangeront, à terme, la mémoire vivante (briques 7-8) et les enseignements des analyses IA. Enrichi par l'état **Analysé**, jamais par la copie d'une œuvre.
+
 ---
 
 ## La grammaire (relations)
+
+> Le modèle métier **EST une grammaire de la programmation sportive** *(formule GPT)* : un petit ensemble d'objets + des règles de composition qui permettent de **représenter n'importe quel programme**, comme une langue compose des phrases avec un vocabulaire fini.
 
 ```
 Athlète ── poursuit ──▶ Objectif
