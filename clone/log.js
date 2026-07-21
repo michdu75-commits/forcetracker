@@ -2520,10 +2520,11 @@ function _exPickRow(e){
     ?`<img src="${src}" onclick="event.stopPropagation();_viewExPhoto('${safe}')" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0;margin-right:8px;border:1px solid var(--sep);cursor:zoom-in;">`
     :`<span style="width:30px;flex-shrink:0;margin-right:8px;" aria-hidden="true"></span>`;
   const edit=e.custom?` <span onclick="event.stopPropagation();openEditCustomEx('${safe}')" title="Modifier" style="font-size:13px;color:var(--purp);cursor:pointer;padding:2px 6px;touch-action:manipulation;">✎</span>`:'';
+  const fav=(_exFavSet&&_exFavSet.has(e.n))?'<span style="color:var(--gold);margin-right:4px;font-size:12px;" title="Tu l\'utilises souvent">★</span>':'';
   const eqBadge=_exEqBadge(e.n);
   const mid=eqBadge
-    ?`<div class="ex-pick-mid"><span class="ex-pick-name">${_escNote(e.n)}${edit}</span>${eqBadge}</div>`
-    :`<span class="ex-pick-name">${_escNote(e.n)}${edit}</span>`;
+    ?`<div class="ex-pick-mid"><span class="ex-pick-name">${fav}${_escNote(e.n)}${edit}</span>${eqBadge}</div>`
+    :`<span class="ex-pick-name">${fav}${_escNote(e.n)}${edit}</span>`;
   return `<div class="ex-pick" onclick="addExercise('${safe}')" style="display:flex;align-items:center;">${thumb}${mid}<span class="ex-pick-grp">${e.g}</span></div>`;
 }
 function openExPicker(){
@@ -2533,10 +2534,20 @@ function openExPicker(){
   document.getElementById('mod-ex').classList.add('open');
 }
 function closeExPicker(){document.getElementById('mod-ex').classList.remove('open');hideCustomExForm();_exGrp=null;if(_exPickerMode==='replace'||_exPickerMode==='replaceSess'||_exPickerMode==='addSess'){_exPickerMode='workout';_replaceEi=null;}}
+// Favoris = exercices les plus utilisés (depuis l'historique) → remontés en tête de recherche + ★ (ft-v562)
+let _exFavSet=new Set();
+function _exUsageMap(){
+  const u={};
+  (S.sessions||[]).forEach(s=>{(s.exs||s.exercises||[]).forEach(e=>{if(e&&e.name)u[e.name]=(u[e.name]||0)+1;});});
+  return u;
+}
 function filterEx(){
   const q=(document.getElementById('ex-search').value||'').toLowerCase().trim();
   const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));
   const list=document.getElementById('ex-list');
+  // Usage (fréquence) → set des favoris (≥3 utilisations) : ★ affichée partout dans le sélecteur
+  const _usage=_exUsageMap();
+  _exFavSet=new Set(Object.keys(_usage).filter(n=>_usage[n]>=3));
   // Recherche active → liste plate
   if(q){
     _exGrp=null;
@@ -2546,6 +2557,8 @@ function filterEx(){
       const en=(typeof EX_EN!=='undefined'&&EX_EN[e.n])?EX_EN[e.n].toLowerCase():'';
       return e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q)||(en&&(en.includes(q)||_normEx(en).includes(qn)));
     });
+    // Favoris/plus utilisés en PREMIER (tri stable → alpha conservé à usage égal)
+    f.sort((a,b)=>(_usage[b.n]||0)-(_usage[a.n]||0));
     list.innerHTML=f.length?(_eqTestOn()?_renderExGrouped(f):f.map(_exPickRow).join('')):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
     return;
   }

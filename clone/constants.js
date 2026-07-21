@@ -185,9 +185,11 @@ const NEW_FEATURES=[
   {id:'photo-any-ex',   screen:'log',   desc:'Photo sur n\'importe quel exercice + tap sur la photo pour la voir en grand'},
   {id:'beginner-prog',  screen:'log',   desc:'Parcours débutant : programme sur mesure (choix 2/3 séances + style Full Body ou Split, machines guidées) — dans 📋 Mes Programmes'},
   {id:'prog-export',    screen:'log',   desc:'Exporter un programme en vrai PDF (bouton 📄 PDF sur chaque programme — partage iPhone ou téléchargement, marche hors-ligne)'},
+  {id:'ex-favorites',   screen:'log',   desc:'Nouveau : tes exercices favoris (les plus utilisés) remontent en tête de la recherche, avec une ★'},
   // Progrès — spot = id de l'élément (onglet) où poser le point rouge « ici »
   {id:'prog-chart-interactive', screen:'progress', spot:'ptab-exo', desc:'Nouveau : graphe 1RM interactif — périodes (3M/6M/1an/Tout) + tape un point → « Voir cette séance »'},
   {id:'strength-goal', screen:'progress', spot:'ptab-exo', desc:'Nouveau : fixe un OBJECTIF DE FORCE (1RM visé) par exercice → barre de progression + ligne repère sur le graphe'},
+  {id:'sess-filter', screen:'progress', spot:'ptab-exo', desc:'Nouveau : filtre ton historique de séances par groupe musculaire (chips sous « Historique séances »)'},
   {id:'weight-edit', screen:'progress', spot:'ptab-poids', desc:'Nouveau : tape un point du graphique de poids pour modifier/supprimer la pesée + navigation par période (1M/3M/6M/Tout)'},
   {id:'bodyfat-track', screen:'progress', spot:'ptab-poids', desc:'Nouveau : suivi de la masse grasse dans le temps (calcul US Navy ou saisie) + bascule Poids ↔ Masse grasse sur le graphique'},
   {id:'target-weight', screen:'progress', spot:'ptab-poids', desc:'Nouveau : fixe un poids objectif (ligne repère sur le graphique + kg restants)'},
@@ -235,9 +237,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v32/33/34 + WHATS_NEW_MAX=34) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v33/34/35 + WHATS_NEW_MAX=35) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:32, ic:'🔎', t:'Ton historique plus pratique', d:'Trois améliorations sur l\'onglet Progrès : ① tes cartes d\'historique sont plus claires — le MUSCLE travaillé (ou le nom de la séance) ressort en gros titre, les calories passent en petit ; ② tu peux maintenant FILTRER ton historique par groupe musculaire : tape « Pectoraux », « Quadriceps »… sous « Historique séances » pour retrouver une séance en un clin d\'œil ; ③ dans la recherche d\'exercices (en séance), tes FAVORIS — ceux que tu utilises le plus — remontent tout seuls en tête, avec une ★. 🔎'},
   {v:31, ic:'🎯', t:'Fixe-toi un objectif de force', d:'Nouveau dans Progrès (onglet Exercices) : pour chaque exercice, tu peux fixer un OBJECTIF de 1RM (le max que tu vises). L\'app affiche alors une barre de progression (« 87 % du chemin · encore 17 kg ») et une ligne verte repère sur ton graphe, à côté de ta vraie courbe. Un cap clair et motivant, mouvement par mouvement — que TOI tu choisis. 🎯'},
   {v:30, ic:'📅', t:'Ton calendrier se souvient de tes journées', d:'À partir de maintenant, ton check-in du jour (énergie, humeur, douleur) n\'est plus effacé chaque nuit : il est GARDÉ. Tape une semaine dans le calendrier de l\'Accueil → sous chaque jour tu revois ta séance ET comment tu te sentais (😴 sommeil · humeur · une éventuelle gêne). Dans quelques semaines, tu retrouveras d\'un coup d\'œil dans quel état tu étais le jour d\'un record. C\'est la 1re pierre de « Ton histoire sportive ». 📅'},
   {v:29, ic:'📈', t:'Ton graphe de progression, interactif', d:'Sur l\'onglet Progrès, le graphe d\'un exercice devient interactif : ① choisis la PÉRIODE (3 mois / 6 mois / 1 an / Tout) pour zoomer sur ta progression ; ② tape n\'importe quel point de la courbe → tu vois la date et la charge de ce jour-là, et un bouton « Voir cette séance » t\'ouvre direct le détail complet (tes séries, tes notes). Le graphe et ton historique sont enfin reliés. 📈'},
@@ -267,7 +270,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=31;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v32/33/34)
+const WHATS_NEW_MAX=32;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v33/34/35)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
