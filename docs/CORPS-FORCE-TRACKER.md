@@ -24,11 +24,12 @@ Si la réponse n'est pas évidente, c'est que la fonctionnalité **n'est pas ass
 | 🍽️ **Digestion** | **EXLIB + moteur VM** — ingérer un programme, reconnaître les exercices | 🟢 robuste muscu · 🟡 à nourrir ailleurs |
 | 🦴 **Colonne** | **Constitution + Vision + règles d'or** — ce qui tient tout droit | 🟢 solide, vivante (v1.6) |
 | 🧬 **Squelette / langage** | **Modèle métier** — le langage commun qui structure tout | 🟡 neuf, en consolidation (v0.4) |
-| 🩸 **Reins / foie** | **Garde-fous de données** — ne jamais écraser du plein par du vide | 🟢 solides |
+| 🩸 **Foie + Reins** | **Filtration + détoxification des données** — deux fonctions : ① *filtrer ce qui entre* (garde-fous : ne jamais écraser du plein par du vide) ② *détoxifier/renouveler dans la durée* (nettoyage, purge, **MIGRATIONS**) | 🟢 bon **filtre** à l'entrée · 🔴 **détox faible** (migrations « à la main ») |
 | 🛡️ **Système immunitaire** | **Le Labo (VT/VC/VM) + l'éthique** — se défendre des régressions, protéger le travail des coachs | 🟡 partiel (l'éthique *technique* manque) |
 | ⚡ **Système nerveux** | **Orchestration** — qui décide quel organe intervient, dans quel ordre | ⚪ implicite, à formaliser |
 | 💭 **Mémoire** | **Registre + ADN + état ANALYSÉ** — se souvenir de qui tu deviens | 🟡 en construction (Dossier Athlète) |
-| 🚽 **Élimination / Entretien** | **Nettoyage, purge, MIGRATIONS** de données | 🔴 **le point faible** (organe négligé) |
+
+> 🧠 **Précision biologique (Michel)** : ce sont bien le **foie et les reins** qui nettoient le corps (détoxification du sang). Le « nettoyage / migrations » n'est donc **pas un organe à part** — c'est **une fonction du foie/reins**. Notre foie/reins **filtre bien** ce qui entre (garde-fous solides), mais **détoxifie mal dans la durée** (migrations non systématisées) → c'est **cette fonction-là** qu'il faut soigner.
 
 ---
 
@@ -41,7 +42,7 @@ Si la réponse n'est pas évidente, c'est que la fonctionnalité **n'est pas ass
 
 ## Risques (organes faibles)
 
-1. 🔴 **Entretien atrophié** — migrations « à la main ». = l'**angle mort n°1 de Gemini** : faire évoluer le corps sans cet organe = risque de **corrompre l'historique**. Un corps qui n'élimine pas s'empoisonne.
+1. 🔴 **Détox du foie/reins déficiente** — les migrations de données sont faites « à la main ». = l'**angle mort n°1 de Gemini** : faire évoluer le corps sans une bonne détox = risque de **corrompre l'historique**. Un corps qui ne détoxifie pas s'empoisonne.
 2. 🟡 **Immunité incomplète** — l'éthique est une posture (Principe 16), pas encore une **défense technique** (anonymisation, non-repartage, traçabilité).
 3. 🟡 **Cerveau > corps** — tentation d'en demander trop à l'IA ; tenir « local d'abord ».
 4. ⚪ **Système nerveux implicite** — l'orchestration marche mais n'est pas nommée (deviendra critique au Mode Coach).
@@ -51,7 +52,7 @@ Si la réponse n'est pas évidente, c'est que la fonctionnalité **n'est pas ass
 Divergence : GPT = « continuer VM/Import (la digestion) d'abord, il nourrit tout » · Gemini/Claude = « soigner l'entretien (migrations) d'abord ». **Résolution — les deux ont raison à des moments différents** :
 
 1. **🍽️ MAINTENANT : nourrir la digestion (VM / Import)** — sûr (n'change pas le stockage), gros levier, continu. On enrichit sur les vrais programmes (Christophe/Cyril…).
-2. **🚽 JUSTE AVANT le chantier des STRUCTURES : soigner l'entretien** — le versionnage du schéma + migrations. Car c'est **le chantier structures** (circuits/EMOM → nouveaux champs stockés) qui **change le squelette** → il faut l'organe d'entretien **à ce moment-là**, pas avant.
+2. **🩸 JUSTE AVANT le chantier des STRUCTURES : soigner la détox du foie/reins** — le versionnage du schéma + migrations. Car c'est **le chantier structures** (circuits/EMOM → nouveaux champs stockés) qui **change le squelette** → il faut une bonne détox **à ce moment-là**, pas avant.
 3. **🛡️ En parallèle, progressivement : compléter l'immunité** (garde-fous éthiques techniques).
 4. **🧬 Continuer à consolider le squelette** (modèle métier) sur cas réels, sans le figer.
 5. **⚖️ Garder le cerveau proportionné** — l'IA seulement quand indispensable.
