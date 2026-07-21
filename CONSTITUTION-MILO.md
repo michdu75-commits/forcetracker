@@ -1,4 +1,4 @@
-# ⚖️ La Constitution de Milo — Version 1.5
+# ⚖️ La Constitution de Milo — Version 1.6
 
 **Document fondateur.**
 
@@ -136,6 +136,31 @@ mélanger « reconnaître un mouvement » et « décider quoi en faire ».)*
 
 ---
 
+## Principe 16 — Respecter le travail des coachs ; l'IA crée, ne copie jamais
+Les programmes de vrais coachs (Cyril, Emma, Tatiana… et d'autres) servent
+**uniquement de validation métier**. Ils ne servent **jamais** à constituer une
+base de données, ni à **entraîner le générateur IA**. On cherche à comprendre
+leur **logique de programmation** pour que Force Tracker sache : **les importer
+fidèlement · les représenter correctement · respecter leur travail · permettre
+au coach de suivre son athlète**.
+
+- **Ce qu'on apprend d'eux = le LANGAGE** (le vocabulaire générique : exercices,
+  structures, principes de programmation), **jamais le CONTENU** (leur programme
+  précis = leur œuvre). Enrichir EXLIB/VM avec « DC = Développé Couché » est du
+  vocabulaire public ; recopier l'agencement d'un programme serait s'approprier
+  leur travail — **interdit**.
+- **Un programme importé reste la donnée PRIVÉE de l'athlète** (son compte) :
+  jamais mutualisé, mié ou repartagé (lié au Principe 11 — confidentialité &
+  consentement).
+- **Le générateur IA produit TOUJOURS des programmes ORIGINAUX**, à partir de
+  **principes généraux** de programmation — **jamais** la reproduction d'un
+  programme existant.
+
+*(Éthique du métier : on respecte l'artisan. Force Tracker représente et suit,
+il ne pille pas. L'IA s'inspire des principes, pas des œuvres.)*
+
+---
+
 ## 🥇 Règle d'or
 Chaque nouvelle idée devra répondre à une seule question :
 
@@ -161,6 +186,7 @@ elle, doit rester la plus stable possible.
 ---
 
 ### 🕒 Historique des versions
+- **v1.6** (21/07/2026) — Ajout du **Principe 16 (Respecter le travail des coachs ; l'IA crée, ne copie jamais)** : les programmes des vrais coachs = **validation métier uniquement** (jamais une base de données ni de l'entraînement pour le générateur). On apprend le **langage** (vocabulaire générique), jamais le **contenu** (leur œuvre). Un programme importé reste **privé à l'athlète**. Le générateur IA produit **toujours** de l'original à partir de **principes généraux**, jamais une reproduction. Posé par Michel (répété pour insistance) — enjeu éthique : respecter l'artisan.
 - **v1.5** (20/07/2026) — Ajout du **Principe 15 (Le moteur comprend, le Gardien
   décide)** : frontière d'architecture VM / Gardien — VM identifie/structure les
   mouvements (déterministe), le Gardien décide quoi en faire (métier). Née du

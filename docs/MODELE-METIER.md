@@ -8,6 +8,19 @@
 
 ---
 
+## ⚖️ Éthique — à quoi servent (et ne servent PAS) les programmes de coach *(Constitution, Principe 16)*
+
+Les programmes de vrais coachs (Cyril, Emma, Tatiana…) servent **uniquement de validation métier** : comprendre leur **logique** pour savoir les **importer fidèlement · les représenter correctement · respecter leur travail · permettre au coach de suivre son athlète**.
+
+- ✅ **Ce qu'on distille = le LANGAGE** (le vocabulaire générique : noms d'exercices, structures, principes) → ça, ça enrichit EXLIB/VM/ce modèle.
+- ⛔ **Jamais le CONTENU** (leur programme = leur œuvre) : pas de base de données de programmes, **pas d'entraînement du générateur IA** sur leurs plans.
+- 🔒 Un programme importé reste **privé à l'athlète** (son compte), jamais mutualisé.
+- 🤖 **Le générateur IA produit TOUJOURS de l'original** à partir de principes généraux — **jamais** une reproduction.
+
+*« Force Tracker représente et suit, il ne pille pas. L'IA s'inspire des principes, pas des œuvres. »*
+
+---
+
 ## Principe n°1 — PLANIFIÉ vs RÉALISÉ
 
 La distinction la plus importante. Les mêmes objets existent en **deux états** :
