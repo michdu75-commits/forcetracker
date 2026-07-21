@@ -1617,16 +1617,17 @@ function setGoal(g){
   if(el)el.textContent=GOAL_DESCS[g]||'';
 }
 // Discipline pratiquée — nourrit le Coach IA + l'analyse morpho + la nutrition
-const DISC_LABELS={muscu:'Musculation',bodybuilding:'Bodybuilding / Culturisme',powerlifting:'Force athlétique / Powerlifting',haltero:'Haltérophilie'};
+const DISC_LABELS={muscu:'Musculation',bodybuilding:'Bodybuilding / Culturisme',powerbuilding:'Powerbuilding',powerlifting:'Force athlétique / Powerlifting',haltero:'Haltérophilie'};
 const DISC_DESCS={
   muscu:'Entraînement général force + esthétique, polyvalent et santé.',
   bodybuilding:'Priorité hypertrophie, symétrie et sèche — le coach cible tes points faibles et la contraction.',
+  powerbuilding:'Le meilleur des deux mondes : soulever lourd (force) ET construire du muscle (hypertrophie). Le coach équilibre gros mouvements et volume esthétique.',
   powerlifting:'Force maximale sur squat, développé couché et soulevé de terre (1RM).',
   haltero:'Arraché et épaulé-jeté : explosivité, mobilité et technique olympique.',
 };
 function setDiscipline(d){
   S.discipline=d;persist();
-  ['muscu','bodybuilding','powerlifting','haltero'].forEach(x=>{
+  ['muscu','bodybuilding','powerbuilding','powerlifting','haltero'].forEach(x=>{
     const el=document.getElementById('disc-'+x);if(el)el.classList.toggle('active',x===d);
   });
   const el=document.getElementById('disc-desc');
