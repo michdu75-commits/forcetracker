@@ -460,15 +460,23 @@ function _renderHomeHero(){
   }
   // ─── VERSION VISUELLE (mockup) : cadran circulaire + gros score + facteurs + CTA dégradé ───
   if(typeof _isVisualStyle==='function'&&_isVisualStyle()){
-    const r=34,C=2*Math.PI*r,gFrac=0.72,gLen=C*gFrac,rot=140.4;
+    // Cadran : arc dessiné en petits SEGMENTS colorés (couleur qui suit l'arc, rouge→vert via HSL) + profondeur (drop-shadow) + curseur relief.
+    const r=34,gFrac=0.72,rot=140.4,N=46;
+    let segs='';
+    for(let i=0;i<N;i++){
+      const a1=(rot+(i/N)*gFrac*360)*Math.PI/180,a2=(rot+((i+1)/N)*gFrac*360)*Math.PI/180;
+      const on=(score!==null&&(i/N)<=score/100);
+      const hue=(i/(N-1))*120; // 0=rouge → 120=vert (passe par orange/jaune)
+      const col=on?'hsl('+hue.toFixed(0)+',74%,53%)':'rgba(255,255,255,.06)';
+      segs+='<line x1="'+(50+r*Math.cos(a1)).toFixed(2)+'" y1="'+(50+r*Math.sin(a1)).toFixed(2)+'" x2="'+(50+r*Math.cos(a2)).toFixed(2)+'" y2="'+(50+r*Math.sin(a2)).toFixed(2)+'" stroke="'+col+'" stroke-width="8.5" stroke-linecap="round"/>';
+    }
     let knob='';
-    if(score!==null){const a=(rot+(score/100)*gFrac*360)*Math.PI/180;knob='<circle cx="'+(50+r*Math.cos(a)).toFixed(1)+'" cy="'+(50+r*Math.sin(a)).toFixed(1)+'" r="5.5" fill="#fff" stroke="'+ringColor+'" stroke-width="2"/>';}
-    const gauge='<svg viewBox="0 0 100 100" style="width:98px;height:98px;flex:none;"><defs><linearGradient id="ggrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22C55E"/><stop offset="0.5" stop-color="#EAB308"/><stop offset="1" stop-color="#FF3B4E"/></linearGradient></defs>'
-      +'<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--bg3)" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+gLen.toFixed(1)+' '+(C-gLen).toFixed(1)+'" transform="rotate('+rot+' 50 50)"/>'
-      +(score!==null?'<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="url(#ggrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+gLen.toFixed(1)+' '+(C-gLen).toFixed(1)+'" transform="rotate('+rot+' 50 50)"/>':'')
-      +'<polyline points="26,50 35,50 39,41 45,61 51,43 55,50 74,50" fill="none" stroke="'+ringColor+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
+    if(score!==null){const a=(rot+(score/100)*gFrac*360)*Math.PI/180;const kx=(50+r*Math.cos(a)).toFixed(1),ky=(50+r*Math.sin(a)).toFixed(1);knob='<circle cx="'+kx+'" cy="'+ky+'" r="7.5" fill="#0e1016"/><circle cx="'+kx+'" cy="'+ky+'" r="4.6" fill="#fff"/>';}
+    const gauge='<svg viewBox="0 0 100 100" style="width:104px;height:104px;flex:none;filter:drop-shadow(0 4px 7px rgba(0,0,0,.55));">'
+      +segs
+      +'<polyline points="27,50 35,50 39,42 45,60 51,44 55,50 73,50" fill="none" stroke="'+ringColor+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
       +knob+'</svg>';
-    el.innerHTML='<div class="ft-rise" style="padding:18px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.13),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);">'
+    el.innerHTML='<div class="ft-rise" style="padding:18px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.16),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.02),transparent),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep),inset 0 1px 0 rgba(255,255,255,.05),0 16px 34px -18px rgba(0,0,0,.75);">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'+pillHtml+'</div>'
       +'<div style="display:flex;align-items:center;gap:14px;margin-top:12px;">'
         +'<div style="flex:none;"><div style="display:flex;align-items:baseline;gap:2px;"><span style="font-family:var(--font-cond);font-size:46px;font-weight:800;color:var(--t1);line-height:.85;">'+(score!==null?score:'—')+'</span>'+(score!==null?'<span style="font-size:13px;color:var(--t3);font-weight:700;">/100</span>':'')+'</div>'
@@ -478,9 +486,9 @@ function _renderHomeHero(){
       +'</div>'
       +(detailHtml?'<div style="border-top:1px solid var(--sep);margin-top:6px;padding-top:6px;">'+detailHtml+'</div>':'')
       +warnHtml
-      +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:56px;border-radius:16px;background:linear-gradient(135deg,#FF5C6C,#E11D38);box-shadow:0 12px 30px -8px rgba(239,62,87,.6);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
-        +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
-        +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
+      +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:58px;border-radius:17px;background:linear-gradient(180deg,#FF5E6E 0%,#EF3E57 45%,#D91733 100%);box-shadow:0 12px 28px -6px rgba(239,62,87,.7),0 0 24px -2px rgba(239,62,87,.45),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -3px 7px rgba(120,0,20,.35);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
+        +'<svg width="19" height="19" viewBox="0 0 24 24" fill="#fff" style="filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
+        +'<span style="font-size:16.5px;font-weight:800;color:#fff;font-family:var(--font);letter-spacing:.2px;text-shadow:0 1px 2px rgba(120,0,20,.4);">'+ctaLabel+'</span></button></div>';
     return;
   }
   el.innerHTML='<div style="padding:20px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.10),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);" class="ft-rise">'
