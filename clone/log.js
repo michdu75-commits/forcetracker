@@ -1827,12 +1827,37 @@ function showMuscleMap(exs,cb){
                (sec.length?`<div style="margin-top:3px"><span style="color:#FF9500;font-weight:600">● Secondaires : </span>${sec.join(', ')}</div>`:'')+
                (indir.length?`<div style="margin-top:3px"><span style="color:#8FB4D8;font-weight:600">● Indirects : </span>${indir.join(', ')}</div>`:'');
   _mmCb=cb||null;
-  const mmBtn=document.getElementById('mm-btn');if(mmBtn)mmBtn.textContent=cb?'Continuer →':'Fermer';
+  // Flux (cb) → bouton d'action « Continuer → ». Standalone → pas de bouton : on ferme par la poignée (glisser) ou en tapant à l'extérieur (reco UX GPT).
+  const mmBtn=document.getElementById('mm-btn');if(mmBtn){mmBtn.textContent=cb?'Continuer →':'Fermer';mmBtn.style.display=cb?'':'none';}
   document.getElementById('ov-mm').classList.add('open');
+  _makeSheetDraggable(document.getElementById('mm-handle'),closeMuscleMap);
 }
 function closeMuscleMap(){
   document.getElementById('ov-mm').classList.remove('open');
   if(_mmCb){_mmCb();_mmCb=null;}
+}
+// Rend une feuille (bottom-sheet) glissable par sa poignée : suit le doigt, glisse vers le bas pour fermer (reco UX GPT). Réutilisable sur n'importe quel overlay ayant une .modal-handle. Idempotent.
+function _makeSheetDraggable(handleEl,closeFn){
+  if(!handleEl||handleEl._sheetBound)return;
+  const sheet=handleEl.closest('.modal');if(!sheet)return;
+  handleEl._sheetBound=true;
+  let startY=0,dy=0,drag=false;
+  const start=y=>{startY=y;dy=0;drag=true;sheet.style.transition='none';};
+  const move=(y,ev)=>{if(!drag)return;dy=Math.max(0,y-startY);sheet.style.transform='translateY('+dy+'px)';sheet.style.opacity=String(Math.max(.45,1-dy/650));if(ev&&ev.cancelable)ev.preventDefault();};
+  const end=()=>{if(!drag)return;drag=false;
+    sheet.style.transition='transform .26s cubic-bezier(.32,.72,0,1),opacity .26s';
+    if(dy>90){ // franchi le seuil → on ferme (glissement vers le bas)
+      sheet.style.transform='translateY(110%)';sheet.style.opacity='0';
+      setTimeout(()=>{if(closeFn)closeFn();sheet.style.transition='';sheet.style.transform='';sheet.style.opacity='';},230);
+    }else{ // pas assez → retour en place
+      sheet.style.transform='translateY(0)';sheet.style.opacity='1';
+      setTimeout(()=>{sheet.style.transition='';sheet.style.transform='';sheet.style.opacity='';},270);
+    }};
+  handleEl.addEventListener('touchstart',e=>start(e.touches[0].clientY),{passive:true});
+  handleEl.addEventListener('touchmove',e=>move(e.touches[0].clientY,e),{passive:false});
+  handleEl.addEventListener('touchend',end);
+  handleEl.addEventListener('touchcancel',end);
+  handleEl.addEventListener('mousedown',e=>{start(e.clientY);const mm=ev=>move(ev.clientY,ev);const mu=()=>{end();document.removeEventListener('mousemove',mm);document.removeEventListener('mouseup',mu);};document.addEventListener('mousemove',mm);document.addEventListener('mouseup',mu);e.preventDefault();});
 }
 
 // Volume de travail : exclut É (échauffement) et W (legacy)
