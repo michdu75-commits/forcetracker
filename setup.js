@@ -567,12 +567,18 @@ function showSessMuscleMap(i,ev){
   if(!s)return;
   showMuscleMap(s.exs||s.exercises||[],null);
 }
-// Filtre de l'historique par groupe musculaire (retour GPT, ft-v561)
+// Filtre de l'historique par groupe musculaire (retour GPT, ft-v561 ; logique présence ft-v563)
 let _sessFilter=null;
 function _sessTopMuscle(s){
   const sc=_mscScores(s.exs||s.exercises||[]);const _sc=sc.sc||{};
   let b='',bv=0;for(const g in _sc){if(_sc[g]>bv){bv=_sc[g];b=g;}}
   return b;
+}
+// Muscles réellement TRAVAILLÉS dans la séance (score ≥ 2 = primaire dans ≥1 exo, ou secondaire ≥2×)
+// → utilisé pour le FILTRE (présence), pas pour le titre. Chips = muscles dominants (jeu compact).
+function _sessMusclesPresent(s){
+  const sc=_mscScores(s.exs||s.exercises||[]).sc||{};
+  return Object.keys(sc).filter(m=>sc[m]>=2);
 }
 function setSessFilter(code){ _sessFilter=(_sessFilter===code?null:code); renderSessions(); }
 function renderSessions(){
@@ -592,7 +598,7 @@ function renderSessions(){
   // Sécurité : si le muscle filtré n'existe plus, on repasse sur « Tous »
   if(_sessFilter&&!present.includes(_sessFilter))_sessFilter=null;
   let flist=S.sessions;
-  if(_sessFilter)flist=flist.filter(s=>_sessTopMuscle(s)===_sessFilter);
+  if(_sessFilter)flist=flist.filter(s=>_sessMusclesPresent(s).includes(_sessFilter));
   flist=flist.slice(0,20);
   if(!flist.length){el.innerHTML='<div class="empty">Aucune séance pour ce muscle</div>';return;}
   el.innerHTML=flist.map((s)=>{
