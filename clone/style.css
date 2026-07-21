@@ -288,6 +288,11 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 /* ═══ STYLE VISUEL (nouvelle maquette, opt-in via #root.style-visuel) — construit par-dessus le Classique, qui reste intact ═══ */
 #root.style-visuel .nb-plus{border-radius:50%;background:radial-gradient(circle at 50% 35%,#FF4759,#D91E38);box-shadow:0 6px 18px -4px rgba(239,62,87,.75),0 0 0 4px rgba(239,62,87,.12);}
 #root.style-visuel.on-log .nb-plus{box-shadow:0 8px 22px -4px rgba(239,62,87,.9),0 0 0 5px rgba(239,62,87,.16);transform:scale(1.06);}
+/* Tuiles CE MOIS — version visuelle (icône colorée en haut, gros chiffre) */
+#root.style-visuel .vtile{background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px 13px;-webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;gap:9px;}
+#root.style-visuel .vtile-ic{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;}
+#root.style-visuel .vtile-val{font-family:var(--font-cond);font-size:24px;font-weight:800;line-height:1;color:var(--t1);}
+#root.style-visuel .vtile-lbl{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);line-height:1.3;}
 
 /* SCREENS */
 .screens{flex:1;overflow:hidden;position:relative;}

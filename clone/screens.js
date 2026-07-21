@@ -711,11 +711,18 @@ function renderHome(){try{
   const volDisp=vol>9999?(Math.round(vol/100)/10)+'k':Math.round(vol);
   const statsEl=document.getElementById('home-stats');
   // Restylage maquette : grille 2×2 de cartes (icône + chiffre + label) — mêmes données, mêmes clics
-  const _sc=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+  // Tuile CLASSIQUE : icône à gauche, chiffre à droite.
+  const _scC=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
     +'<div style="width:34px;height:34px;border-radius:10px;background:'+icBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
     +'<div style="text-align:right;min-width:0;">'
     +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:800;line-height:1;">'+valHtml+'</div>'
     +'<div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-top:5px;white-space:nowrap;">'+label+'</div></div></div>';
+  // Tuile VISUELLE (mockup) : icône colorée en HAUT, gros chiffre, label dessous.
+  const _scV=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'"':'')+' class="vtile" style="--vt:'+icStroke+';cursor:'+(oc?'pointer':'default')+';">'
+    +'<div class="vtile-ic" style="background:'+icBg+';"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
+    +'<div class="vtile-val">'+valHtml+'</div>'
+    +'<div class="vtile-lbl">'+label+'</div></div>';
+  const _sc=(typeof _isVisualStyle==='function'&&_isVisualStyle())?_scV:_scC;
   const _moName=now.toLocaleDateString('fr-FR',{month:'long'});
   if(statsEl)statsEl.innerHTML='<div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 3px 9px;"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'
