@@ -567,10 +567,36 @@ function showSessMuscleMap(i,ev){
   if(!s)return;
   showMuscleMap(s.exs||s.exercises||[],null);
 }
+// Filtre de l'historique par groupe musculaire (retour GPT, ft-v561)
+let _sessFilter=null;
+function _sessTopMuscle(s){
+  const sc=_mscScores(s.exs||s.exercises||[]);const _sc=sc.sc||{};
+  let b='',bv=0;for(const g in _sc){if(_sc[g]>bv){bv=_sc[g];b=g;}}
+  return b;
+}
+function setSessFilter(code){ _sessFilter=(_sessFilter===code?null:code); renderSessions(); }
 function renderSessions(){
   const el=document.getElementById('sess-list');
-  if(!S.sessions.length){el.innerHTML='<div class="empty">Aucune séance encore</div>';return;}
-  el.innerHTML=S.sessions.slice(0,20).map((s,i)=>{
+  const fEl=document.getElementById('sess-filter');
+  if(!S.sessions.length){if(fEl)fEl.innerHTML='';el.innerHTML='<div class="empty">Aucune séance encore</div>';return;}
+  // Muscles principaux présents dans l'historique → chips (triés par fréquence)
+  const counts={},present=[];
+  S.sessions.forEach(s=>{const m=_sessTopMuscle(s);if(m){counts[m]=(counts[m]||0)+1;if(!present.includes(m))present.push(m);}});
+  present.sort((a,b)=>counts[b]-counts[a]);
+  if(fEl){
+    if(present.length>=2){
+      fEl.innerHTML='<button class="sessf-chip'+(_sessFilter===null?' on':'')+'" onclick="setSessFilter(null)">Tous</button>'+
+        present.map(m=>'<button class="sessf-chip'+(_sessFilter===m?' on':'')+'" onclick="setSessFilter(\''+m+'\')">'+_escNote(_MG[m]?_MG[m].label:m)+'</button>').join('');
+    } else fEl.innerHTML='';
+  }
+  // Sécurité : si le muscle filtré n'existe plus, on repasse sur « Tous »
+  if(_sessFilter&&!present.includes(_sessFilter))_sessFilter=null;
+  let flist=S.sessions;
+  if(_sessFilter)flist=flist.filter(s=>_sessTopMuscle(s)===_sessFilter);
+  flist=flist.slice(0,20);
+  if(!flist.length){el.innerHTML='<div class="empty">Aucune séance pour ce muscle</div>';return;}
+  el.innerHTML=flist.map((s)=>{
+    const i=S.sessions.indexOf(s);
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
     const sync=s.synced?' <span class="synced-pill">☁️</span>':'';
     const sc=_mscScores(s.exs||s.exercises||[]);
