@@ -640,7 +640,11 @@ function _renderDayStateCard(){
   const painSet=new Set((d.pains||[]).map(p=>p&&p.zone));
   const enBtns=_DAY_ENERGY.map((e,i)=>'<button class="ds-en'+(d.energy===i?' on':'')+'" onclick="setDayEnergy('+i+')">'+e+'</button>').join('');
   const moBtns=_DAY_MOOD.map((e,i)=>'<button class="ds-en'+(d.mood===i?' on':'')+'" onclick="setDayMood('+i+')">'+e+'</button>').join('');
-  const zBtns=_DAY_ZONES.map(z=>'<button class="ds-z'+(painSet.has(z[0])?' on':'')+'" onclick="toggleDayPain(\''+z[0]+'\')">'+z[1]+'</button>').join('');
+  // Figurine anatomique cliquable (réutilise _mscSVG) : tape un muscle → il devient rouge.
+  const bodyFig=(typeof _painFig==='function')?_painFig(painSet):'';
+  // Articulations (pas des muscles) → boutons compacts sous la figurine.
+  const _DAY_JOINTS=[['cervicales','Nuque'],['coude','Coude'],['poignet','Poignet'],['genou','Genou'],['cheville','Cheville']];
+  const jBtns=_DAY_JOINTS.map(j=>'<button class="ds-z'+(painSet.has(j[0])?' on':'')+'" onclick="toggleDayPain(\''+j[0]+'\')">'+j[1]+'</button>').join('');
   // Côté (G/D/Les 2) — n'apparaît que pour les zones latérales sélectionnées.
   const latSel=(d.pains||[]).filter(p=>p&&_dayZoneLat(p.zone));
   let sideHtml='';
@@ -661,8 +665,10 @@ function _renderDayStateCard(){
     +'<div class="ds-row">'+enBtns+'</div>'
     +'<div class="ds-sub">Ton moral :</div>'
     +'<div class="ds-row">'+moBtns+'</div>'
-    +'<div class="ds-sub">Une gêne ou douleur ? Tape la zone :</div>'
-    +'<div class="ds-zrow">'+zBtns+'</div>'
+    +'<div class="ds-sub">Une gêne ou douleur ? Tape le muscle sur le corps :</div>'
+    +'<div style="max-width:230px;margin:6px auto 2px;">'+bodyFig+'</div>'
+    +'<div class="ds-sub" style="margin-top:6px;">…ou une articulation :</div>'
+    +'<div class="ds-zrow">'+jBtns+'</div>'
     +sideHtml
     +'<div class="ds-sub" style="margin-top:14px;opacity:.75;">💤 Ton sommeil de cette nuit est juste en dessous ⤵</div>'
     +'</div>';
