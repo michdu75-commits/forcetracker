@@ -458,40 +458,6 @@ function _renderHomeHero(){
     warnHtml='<div style="margin-top:10px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.32);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;gap:8px;align-items:flex-start;">'
       +'<span style="flex:none;">⚠️</span><span>Gêne signalée aujourd\'hui (<b>'+zTxt+'</b>) : ton corps est récupéré, mais <b>échauffe-toi bien</b> et allège les mouvements qui tirent si besoin. Tu peux t\'entraîner.</span></div>';
   }
-  // ─── VERSION VISUELLE (mockup) : cadran circulaire + gros score + facteurs + CTA dégradé ───
-  if(typeof _isVisualStyle==='function'&&_isVisualStyle()){
-    // Cadran (spec Flutter sleek_circular_slider fournie par Michel, reproduite en SVG) : arc 240° dep. 150°, trait épais, piste #232833, dégradé teal→vert→rouge sur la partie remplie, point blanc, score AU CENTRE, ombre.
-    const r=40,sw=12,N=48,A0=150,SPAN=240,filled=score!==null?score/100:0;
-    const _lerp=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
-    const _teal=[35,240,168],_grn=[14,209,140],_red=[255,59,48];
-    const _fill=t=>{const c=t<.5?_lerp(_teal,_grn,t*2):_lerp(_grn,_red,(t-.5)*2);return 'rgb('+c[0]+','+c[1]+','+c[2]+')';};
-    let segs='';
-    for(let i=0;i<N;i++){
-      const t0=i/N,a1=(A0+t0*SPAN)*Math.PI/180,a2=(A0+((i+1)/N)*SPAN)*Math.PI/180;
-      const on=score!==null&&t0<filled-1e-9;
-      const col=on?_fill(filled>0?t0/filled:0):'#232833';
-      segs+='<line x1="'+(50+r*Math.cos(a1)).toFixed(2)+'" y1="'+(50+r*Math.sin(a1)).toFixed(2)+'" x2="'+(50+r*Math.cos(a2)).toFixed(2)+'" y2="'+(50+r*Math.sin(a2)).toFixed(2)+'" stroke="'+col+'" stroke-width="'+sw+'" stroke-linecap="round"/>';
-    }
-    let knob='';
-    if(score!==null){const a=(A0+filled*SPAN)*Math.PI/180,kx=(50+r*Math.cos(a)).toFixed(1),ky=(50+r*Math.sin(a)).toFixed(1);knob='<circle cx="'+kx+'" cy="'+ky+'" r="'+(sw/2+2.5)+'" fill="#0e1016"/><circle cx="'+kx+'" cy="'+ky+'" r="'+(sw/2-1)+'" fill="#fff"/>';}
-    const gauge='<div style="position:relative;width:152px;height:152px;flex:none;">'
-      +'<svg viewBox="0 0 100 100" style="width:152px;height:152px;display:block;filter:drop-shadow(0 5px 9px rgba(0,0,0,.55));">'+segs+knob+'</svg>'
-      +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">'
-        +'<div style="font-family:var(--font-cond);font-size:44px;font-weight:800;color:var(--t1);line-height:.85;">'+(score!==null?score:'—')+'</div>'
-        +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--t3);margin-top:3px;">RÉCUPÉRATION</div></div></div>';
-    el.innerHTML='<div class="ft-rise" style="padding:18px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.16),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.02),transparent),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep),inset 0 1px 0 rgba(255,255,255,.05),0 16px 34px -18px rgba(0,0,0,.75);">'
-      +'<div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'+pillHtml+'</div>'
-      +'<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">'
-        +'<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:800;color:var(--t1);line-height:1.15;">'+heroLabel+'</div><div style="font-size:12px;color:var(--t2);line-height:1.4;margin-top:4px;">'+heroDesc+'</div></div>'
-        +gauge
-      +'</div>'
-      +(detailHtml?'<div style="border-top:1px solid var(--sep);margin-top:6px;padding-top:6px;">'+detailHtml+'</div>':'')
-      +warnHtml
-      +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:58px;border-radius:17px;background:linear-gradient(180deg,#FF5E6E 0%,#EF3E57 45%,#D91733 100%);box-shadow:0 12px 28px -6px rgba(239,62,87,.7),0 0 24px -2px rgba(239,62,87,.45),inset 0 1px 0 rgba(255,255,255,.4),inset 0 -3px 7px rgba(120,0,20,.35);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
-        +'<svg width="19" height="19" viewBox="0 0 24 24" fill="#fff" style="filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
-        +'<span style="font-size:16.5px;font-weight:800;color:#fff;font-family:var(--font);letter-spacing:.2px;text-shadow:0 1px 2px rgba(120,0,20,.4);">'+ctaLabel+'</span></button></div>';
-    return;
-  }
   el.innerHTML='<div style="padding:20px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.10),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);" class="ft-rise">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;">'
     +'<div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'
@@ -745,18 +711,11 @@ function renderHome(){try{
   const volDisp=vol>9999?(Math.round(vol/100)/10)+'k':Math.round(vol);
   const statsEl=document.getElementById('home-stats');
   // Restylage maquette : grille 2×2 de cartes (icône + chiffre + label) — mêmes données, mêmes clics
-  // Tuile CLASSIQUE : icône à gauche, chiffre à droite.
-  const _scC=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+  const _sc=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'" style="cursor:pointer;':' style="')+'background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:space-between;gap:10px;">'
     +'<div style="width:34px;height:34px;border-radius:10px;background:'+icBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
     +'<div style="text-align:right;min-width:0;">'
     +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:800;line-height:1;">'+valHtml+'</div>'
     +'<div style="font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin-top:5px;white-space:nowrap;">'+label+'</div></div></div>';
-  // Tuile VISUELLE (mockup) : icône colorée en HAUT, gros chiffre, label dessous.
-  const _scV=(oc,ic,icBg,icStroke,valHtml,label)=>'<div'+(oc?' onclick="'+oc+'"':'')+' class="vtile" style="--vt:'+icStroke+';cursor:'+(oc?'pointer':'default')+';">'
-    +'<div class="vtile-ic" style="background:'+icBg+';"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="'+icStroke+'" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+ic+'</svg></div>'
-    +'<div class="vtile-val">'+valHtml+'</div>'
-    +'<div class="vtile-lbl">'+label+'</div></div>';
-  const _sc=(typeof _isVisualStyle==='function'&&_isVisualStyle())?_scV:_scC;
   const _moName=now.toLocaleDateString('fr-FR',{month:'long'});
   if(statsEl)statsEl.innerHTML='<div style="display:flex;align-items:baseline;justify-content:space-between;padding:0 3px 9px;"><span style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--t3);">CE MOIS</span><span style="font-size:12.5px;color:var(--t3);text-transform:capitalize;">'+_moName+'</span></div>'
     +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">'

@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v557'; // Style Visuel - cadran recup reproduit d'apres la SPEC Flutter (sleek_circular_slider) fournie par Michel : arc 240 dep 150, trait epais 12, piste #232833, degrade teal->vert->rouge sur la partie remplie, point blanc, SCORE AU CENTRE, ombre. Reproduit en SVG (pas de Flutter - on reste PWA JS). Scope #root.style-visuel. Precedent ft-v556 : cadran segments HSL (corrige ici vers la spec exacte).
+const CACHE = 'ft-v558'; // ROLLBACK du chantier « Style Visuel » (ft-v553→557) — décision Michel : reproduire une maquette illustrée au pixel, à l'aveugle, ne convergeait pas. state.js/app.js/index.html/style.css/screens.js restaurés à l'état ft-v552 (fix calendrier + tout le reste conservés). Aucun impact prod (le Style Visuel était gaté sur le clone → jamais visible en prod). Leçon : pour un futur refresh visuel, partir d'une SPEC précise (valeurs hex/angles, ex. le widget Flutter fourni) ou d'un designer, pas d'une illustration à deviner.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
