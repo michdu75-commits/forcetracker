@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v552';
+  b.textContent='🧪 CLONE ft-v553';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
 });
@@ -2394,6 +2394,13 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       <div style="display:flex;gap:8px;">
         <button id="appr-dir-normal" onclick="setHaloDir('top')" class="appr-btn">⬆️ Normal</button>
         <button id="appr-dir-invert" onclick="setHaloDir('bottom')" class="appr-btn">⬇️ Inversé</button>
+      </div>
+      <div id="appr-style-row" style="display:none;margin-top:14px;border-top:1px solid var(--sep);padding-top:12px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin:0 0 6px;">Style de l'app (test)</div>
+        <div style="display:flex;gap:8px;">
+          <button id="appr-style-visuel" onclick="setUiStyle('visuel')" class="appr-btn">✨ Visuel</button>
+          <button id="appr-style-classic" onclick="setUiStyle('classic')" class="appr-btn">Classique</button>
+        </div>
       </div>
     </div>
     <!-- PREMIUM BANNER -->

@@ -24,6 +24,7 @@ let S={
   sleepLog:[],
   weightLog:[],
   dayStateLog:[],
+  uiStyle:'',   // '' = suit le défaut (Visuel sur le clone / Classique en prod pendant le dev) ; 'visuel'|'classic' = choix explicite
   name:'',
   coachFree:0,
   histImports:0,
@@ -92,6 +93,7 @@ function load(){
     S.dayState=JSON.parse(localStorage.getItem('ft4_daystate')||'null')||null;
     // Historique du check-in du jour (brique 7 « Ton histoire sportive ») : on GARDE chaque jour renseigné (énergie/moral/douleur) au lieu de l'effacer chaque nuit. [{date,energy,mood,pains,note}]
     S.dayStateLog=JSON.parse(localStorage.getItem('ft4_dayslog')||'[]');
+    S.uiStyle=localStorage.getItem('ft4_uistyle')||''; // choix de style visuel (vide = défaut évolutif)
     S.levelAuto=localStorage.getItem('ft4_levelAuto')==='1'; // true si le niveau a été promu automatiquement (évite de re-fêter)
     S.beginnerJourney=JSON.parse(localStorage.getItem('ft4_bjourney')||'null'); // parcours débutant : {style,freq,startDate,phase}
     S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
@@ -269,6 +271,7 @@ function persist(){
     localStorage.setItem('ft4_adn',JSON.stringify(S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''}));
     localStorage.setItem('ft4_daystate',JSON.stringify(S.dayState||null));
     localStorage.setItem('ft4_dayslog',JSON.stringify(S.dayStateLog||[]));
+    localStorage.setItem('ft4_uistyle',S.uiStyle||'');
     localStorage.setItem('ft4_levelAuto',S.levelAuto?'1':'0');
     localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));

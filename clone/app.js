@@ -294,6 +294,28 @@ function _applyHalo(){
     el.classList.toggle('active', S.halo!=='none' && el.getAttribute('data-rgb')===S.haloColor);
   });
 }
+// ── Style visuel de l'app : « Visuel » (nouvelle maquette) vs « Classique » (actuel, gardé) ──
+// Défaut PENDANT LE DEV : Visuel sur le CLONE, Classique en PROD (prod inchangée). À la PROMOTION → passer le défaut à Visuel partout (voir _isVisualStyle).
+function _isVisualStyle(){
+  if(S.uiStyle==='visuel')return true;
+  if(S.uiStyle==='classic')return false;
+  return !!window.__FT_CLONE__; // défaut évolutif : clone=Visuel, prod=Classique (à basculer sur `true` à la promotion)
+}
+function _applyUiStyle(){
+  const r=document.getElementById('root'); if(r)r.classList.toggle('style-visuel',_isVisualStyle());
+  const bv=document.getElementById('appr-style-visuel'),bc=document.getElementById('appr-style-classic');
+  if(bv)bv.classList.toggle('active',_isVisualStyle());
+  if(bc)bc.classList.toggle('active',!_isVisualStyle());
+  // Interrupteur de style visible sur le clone pendant le dev (en prod on l'ouvrira à la promotion).
+  const row=document.getElementById('appr-style-row'); if(row)row.style.display=window.__FT_CLONE__?'':'none';
+}
+function setUiStyle(mode){
+  S.uiStyle=(mode==='visuel')?'visuel':'classic';
+  try{localStorage.setItem('ft4_uistyle',S.uiStyle);}catch(e){}
+  persist(); _applyUiStyle();
+  try{if(typeof renderHome==='function')renderHome();}catch(e){}
+  toast(S.uiStyle==='visuel'?'Style : Visuel ✨':'Style : Classique','info');
+}
 function setTheme(mode){
   const isLight = mode==='light';
   const root=document.getElementById('root');
@@ -2211,6 +2233,7 @@ document.addEventListener('visibilitychange',()=>{
 document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 applyTheme();
 if(typeof _applyHalo==='function')_applyHalo();
+if(typeof _applyUiStyle==='function')_applyUiStyle();
 if(typeof _applyThemeBtns==='function')_applyThemeBtns();
 if(typeof _applyA11y==='function')_applyA11y();
 if(typeof _applyColorblind==='function')_applyColorblind();

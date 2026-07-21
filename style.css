@@ -285,6 +285,10 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .nb-plus svg{width:24px;height:24px;stroke:#fff;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;}
 #root.on-log .nb-plus{box-shadow:0 8px 20px -6px rgba(239,62,87,.85);transform:scale(1.06);}
 
+/* ═══ STYLE VISUEL (nouvelle maquette, opt-in via #root.style-visuel) — construit par-dessus le Classique, qui reste intact ═══ */
+#root.style-visuel .nb-plus{border-radius:50%;background:radial-gradient(circle at 50% 35%,#FF4759,#D91E38);box-shadow:0 6px 18px -4px rgba(239,62,87,.75),0 0 0 4px rgba(239,62,87,.12);}
+#root.style-visuel.on-log .nb-plus{box-shadow:0 8px 22px -4px rgba(239,62,87,.9),0 0 0 5px rgba(239,62,87,.16);transform:scale(1.06);}
+
 /* SCREENS */
 .screens{flex:1;overflow:hidden;position:relative;}
 .screen{position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:12px 14px calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);display:none;flex-direction:column;gap:10px;background:transparent;}
