@@ -756,15 +756,9 @@ function _renderHomeCalendar(){
   const y=_calDate.getFullYear(), m=_calDate.getMonth();
   const todayY=_calYmd(new Date());
   const moName=_calDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-  const first=new Date(y,m,1);
-  const startDow=(first.getDay()+6)%7;               // 0 = lundi
-  const daysInMonth=new Date(y,m+1,0).getDate();
-  const cells=[];
-  for(let i=0;i<startDow;i++){cells.push({d:new Date(y,m,1-(startDow-i)),inMonth:false});}
-  for(let day=1;day<=daysInMonth;day++){cells.push({d:new Date(y,m,day),inMonth:true});}
-  while(cells.length%7!==0){const last=cells[cells.length-1].d;cells.push({d:new Date(last.getFullYear(),last.getMonth(),last.getDate()+1),inMonth:false});}
-  const weeks=[];for(let i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
-  const navBtn=(dir,txt)=>'<button onclick="_calNav('+dir+')" style="width:34px;height:34px;border-radius:9px;border:none;background:var(--bg3);color:var(--t1);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;">'+txt+'</button>';
+  const weeks=_calWeeksFor(y,m);
+  // Flèches : en vue MOIS → change de mois ; en vue SEMAINE → change de semaine (fix Michel).
+  const navBtn=(dir,txt)=>'<button onclick="_calArrow('+dir+')" style="width:34px;height:34px;border-radius:9px;border:none;background:var(--bg3);color:var(--t1);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;touch-action:manipulation;">'+txt+'</button>';
   let html='<div style="background:var(--bg2);border-radius:16px;box-shadow:inset 0 0 0 1px var(--sep);padding:14px;">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">'
       +navBtn(-1,'‹')
@@ -826,7 +820,35 @@ function _calDayContext(ymd){
   }
   return parts.length?'<div style="font-size:11px;color:var(--t3);margin-top:2px;letter-spacing:.02em;">'+parts.join('&nbsp;&nbsp;')+'</div>':'';
 }
+// Grille de semaines (lundi→dimanche) d'un mois, avec les jours débordants des mois voisins.
+function _calWeeksFor(y,m){
+  const first=new Date(y,m,1);
+  const startDow=(first.getDay()+6)%7;               // 0 = lundi
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const cells=[];
+  for(let i=0;i<startDow;i++){cells.push({d:new Date(y,m,1-(startDow-i)),inMonth:false});}
+  for(let day=1;day<=daysInMonth;day++){cells.push({d:new Date(y,m,day),inMonth:true});}
+  while(cells.length%7!==0){const last=cells[cells.length-1].d;cells.push({d:new Date(last.getFullYear(),last.getMonth(),last.getDate()+1),inMonth:false});}
+  const weeks=[];for(let i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
+  return weeks;
+}
 function _calNav(dir){_calDate=new Date(_calDate.getFullYear(),_calDate.getMonth()+dir,1);_calZoomWeek=null;_renderHomeCalendar();}
+// Navigation SEMAINE (vue zoomée) : ±7 jours, en traversant les mois si besoin. Le mois affiché suit le jeudi de la semaine (mois dominant).
+function _calNavWeek(dir){
+  const weeks=_calWeeksFor(_calDate.getFullYear(),_calDate.getMonth());
+  const wk=weeks[_calZoomWeek];
+  if(!wk){_calNav(dir);return;}
+  const mon=wk[0].d;
+  const newMon=new Date(mon.getFullYear(),mon.getMonth(),mon.getDate()+dir*7);
+  const thu=new Date(newMon.getFullYear(),newMon.getMonth(),newMon.getDate()+3); // jeudi = mois dominant (ISO)
+  _calDate=new Date(thu.getFullYear(),thu.getMonth(),1);
+  const nw=_calWeeksFor(thu.getFullYear(),thu.getMonth());
+  let idx=nw.findIndex(w=>w.some(c=>_calYmd(c.d)===_calYmd(newMon)));
+  _calZoomWeek=idx<0?0:idx;
+  _renderHomeCalendar();
+}
+// Dispatcher des flèches : mois si vue mois, semaine si vue zoomée.
+function _calArrow(dir){ if(_calZoomWeek===null)_calNav(dir); else _calNavWeek(dir); }
 function _calZoom(wi){_calZoomWeek=wi;_renderHomeCalendar();}
 
 function updatePill(){
