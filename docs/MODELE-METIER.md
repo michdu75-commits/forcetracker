@@ -63,7 +63,8 @@ Ce que l'athlète vise. *(existe partiellement : `S.goal`, `S.targetWeight`, `S.
 
 ### 📋 Programme
 Un plan structuré d'entraînement. *(existe : `S.programmes[]`)*
-- Nom, **discipline/intention** (muscu · powerlifting · CrossFit… → *niveau 3 de la vision : reconnaissance de l'intention*), durée (semaines), auteur (coach humain · IA · perso).
+- Nom, **discipline/intention** (muscu · powerlifting · CrossFit… → *niveau 3 de la vision : reconnaissance de l'intention*), durée (semaines).
+- **🖋️ Auteur** *(GPT — objet à part entière)* : **qui a créé ce programme** — coach humain (nommé) · IA · l'utilisateur. C'est le **crochet concret de la traçabilité** (garde-fou éthique : savoir d'où vient un programme, et interdire de re-partager l'œuvre d'un tiers). Un programme généré par l'IA est marqué « original / IA », jamais « du coach X ».
 - **contient** des **Cycles** *ou* directement des **Séances**.
 
 ### 🔄 Cycle *(mésocycle)*
