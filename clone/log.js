@@ -1144,7 +1144,9 @@ Object.assign(_EX_EQUIV,{
   'tirage horizontal poulie':'Rowing Cable','tirage horizontal':'Rowing Cable',
   'step ups':'Montée sur Box (Step-up)','step up':'Montée sur Box (Step-up)',
   'extension triceps corde':'Triceps Corde Poulie',
-  'corde a sauter':'Sauts à la Corde'          // saut à la corde ≠ Triceps Corde (faux ami « corde »)
+  'corde a sauter':'Sauts à la Corde',         // saut à la corde ≠ Triceps Corde (faux ami « corde »)
+  // 11e vague (retour GPT prog femme) : un exo HALTÈRES ne doit pas tomber sur une MACHINE
+  'developpe epaules halteres':'Développé Haltères Assis'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
