@@ -89,6 +89,23 @@ workSec, restSec : N             // hiit
 
 ---
 
+## Cas réels observés (on remplit au fil des imports)
+
+**Import « Perte de Poids Femme » (clone ft-v543, 21/07)** — ce que la LECTURE a produit :
+
+| Structure du doc | Résultat de la lecture | Verdict |
+|---|---|---|
+| « Circuit A (3 tours) : Goblet Squat 15 reps… » | chaque exo en **3×15**, note `📋 Circuit A (3 tours)` | ✅ **bon** — « 3 tours » → `sets=3`, l'info circuit est dans la note (pas de « 99 » ici) |
+| « Finisher EMOM 10 min : Min1 = 12 Step Ups ; Min2 = 10 KB Swings » | **1 seul exo** « Finisher EMOM » 2×10, note = tout le détail | ⚠️ les 2 mouvements **ne sont pas séparés** (à trancher : les splitter ?) |
+| « HIIT 5 tours : 30s Burpees, 30s repos, 30s Mountain Climbers… » | exos séparés **« HIIT - Burpees »**, **« HIIT - Repos »**… en 5×30 | ⚠️ ① « repos » créé comme **faux exercice** ; ② préfixe « HIIT - » = **bruit** qui gêne le rattachement |
+| « Cardio : Vélo 20 min » | « Vélo » 1×20, note `Cardio 20 min` | 🟡 minutes lues comme reps (inoffensif) ; Vélo reste « nouveau » (cardio non couvert) |
+
+**Enseignements pour la LECTURE (prompt d'extraction, à tester iPhone)** :
+1. **Ne jamais créer un « repos » comme exercice** (HIIT/intervalles) — le repos est un paramètre, pas un mouvement.
+2. **Retirer les préfixes de bloc** des noms (« HIIT - », « Finisher EMOM », « Circuit A : ») → garder le nom d'exercice pur (le rattachement VM sera net).
+3. **EMOM/AMRAP** : décider si on éclate les mouvements en exercices distincts (probablement oui) ou un bloc unique.
+4. Le motif **« N tours » → `sets=N`** marche bien quand il est écrit clairement — à généraliser/fiabiliser (c'est le cas « 99 » du programme Force qui reste à mater).
+
 ## Méthode de test (à chaque nouveau PDF)
 
 1. **Axe ② (moi, en local)** : passer les noms dans le moteur VM → rapport reconnu/confirm/nouveau, corriger les vrais bugs.

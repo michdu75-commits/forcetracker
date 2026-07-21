@@ -1146,7 +1146,8 @@ Object.assign(_EX_EQUIV,{
   'extension triceps corde':'Triceps Corde Poulie',
   'corde a sauter':'Sauts à la Corde',         // saut à la corde ≠ Triceps Corde (faux ami « corde »)
   // 11e vague (retour GPT prog femme) : un exo HALTÈRES ne doit pas tomber sur une MACHINE
-  'developpe epaules halteres':'Développé Haltères Assis'
+  'developpe epaules halteres':'Développé Haltères Assis',
+  'assis abducteurs machine':'Abducteurs Machine Debout'  // le « assis » (position) ne doit pas gagner sur « abducteurs » (muscle)
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
@@ -3043,6 +3044,10 @@ function _impThumb(name){
   if(gif) return `<img src="${gif}" onerror="this.style.visibility='hidden'" style="${box}object-fit:cover;">`;
   let musc=''; try{ const {sc}=_mscScores([{name,sets:[{done:true}]}]); const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0]; if(top&&_MG_IMG[top[0]]) musc=_MG_IMG[top[0]]; }catch(e){}
   if(musc) return `<img src="${musc}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
+  // exo RÉEL de la biblio (sans gif ni muscle deviné) → silhouette de son GROUPE (figurine pertinente, jamais le défaut chest global)
+  let grp=''; try{ const ex=EXLIB.find(e=>e.n===name); if(ex&&_MUSCLE_FILE[ex.g]) grp=_MUSCLE_FILE[ex.g]; }catch(e){}
+  if(grp) return `<img src="${grp}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:4px;">`;
+  // vraiment inconnu (hors biblio) → icône haltère neutre
   return `<div style="${box}display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="M6 9v6M9 7v10M15 7v10M18 9v6M9 12h6"/></svg></div>`;
 }
 function _vmConfirmRow(suggest, acceptCall, rejectCall, noThumb){
