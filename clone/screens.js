@@ -154,7 +154,7 @@ const _HELP_DATA={
       {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
       {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas).'},
       {i:'📊',t:'« Historique du sommeil » (déplie le check-in, puis la barre repliable) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
-      {i:'🩹',t:'Pour une zone qui fait mal (trapèze, épaule, dos, cuisse, ischio, genou, mollet…), tape-la dans le check-in ; pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Le Gardien protège cette zone du jour en priorité dans les conseils de Milo.'},
+      {i:'🩹',t:'Pour une zone qui fait mal : dans le check-in, tape directement le MUSCLE sur la figurine anatomique (vue de face + de dos) — il devient rouge. Les articulations (nuque, coude, poignet, genou, cheville) sont en boutons juste en dessous. Pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Le Gardien protège cette zone du jour en priorité dans les conseils de Milo.'},
       {i:'💡',t:'Ton score de récup (sur NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui. Tape « Pourquoi ce score ? » juste en dessous pour voir, en clair, D\'OÙ il vient : sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison et son +/−. Il remonte au fil de la journée après une séance, et reste un simple repère — ton ressenti prime toujours.'},
       {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
@@ -640,7 +640,11 @@ function _renderDayStateCard(){
   const painSet=new Set((d.pains||[]).map(p=>p&&p.zone));
   const enBtns=_DAY_ENERGY.map((e,i)=>'<button class="ds-en'+(d.energy===i?' on':'')+'" onclick="setDayEnergy('+i+')">'+e+'</button>').join('');
   const moBtns=_DAY_MOOD.map((e,i)=>'<button class="ds-en'+(d.mood===i?' on':'')+'" onclick="setDayMood('+i+')">'+e+'</button>').join('');
-  const zBtns=_DAY_ZONES.map(z=>'<button class="ds-z'+(painSet.has(z[0])?' on':'')+'" onclick="toggleDayPain(\''+z[0]+'\')">'+z[1]+'</button>').join('');
+  // Figurine anatomique cliquable (réutilise _mscSVG) : tape un muscle → il devient rouge.
+  const bodyFig=(typeof _painFig==='function')?_painFig(painSet):'';
+  // Articulations (pas des muscles) → boutons compacts sous la figurine.
+  const _DAY_JOINTS=[['cervicales','Nuque'],['coude','Coude'],['poignet','Poignet'],['genou','Genou'],['cheville','Cheville']];
+  const jBtns=_DAY_JOINTS.map(j=>'<button class="ds-z'+(painSet.has(j[0])?' on':'')+'" onclick="toggleDayPain(\''+j[0]+'\')">'+j[1]+'</button>').join('');
   // Côté (G/D/Les 2) — n'apparaît que pour les zones latérales sélectionnées.
   const latSel=(d.pains||[]).filter(p=>p&&_dayZoneLat(p.zone));
   let sideHtml='';
@@ -661,8 +665,10 @@ function _renderDayStateCard(){
     +'<div class="ds-row">'+enBtns+'</div>'
     +'<div class="ds-sub">Ton moral :</div>'
     +'<div class="ds-row">'+moBtns+'</div>'
-    +'<div class="ds-sub">Une gêne ou douleur ? Tape la zone :</div>'
-    +'<div class="ds-zrow">'+zBtns+'</div>'
+    +'<div class="ds-sub">Une gêne ou douleur ? Tape le muscle sur le corps :</div>'
+    +'<div style="max-width:230px;margin:6px auto 2px;">'+bodyFig+'</div>'
+    +'<div class="ds-sub" style="margin-top:6px;">…ou une articulation :</div>'
+    +'<div class="ds-zrow">'+jBtns+'</div>'
     +sideHtml
     +'<div class="ds-sub" style="margin-top:14px;opacity:.75;">💤 Ton sommeil de cette nuit est juste en dessous ⤵</div>'
     +'</div>';

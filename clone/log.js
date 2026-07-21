@@ -1815,6 +1815,31 @@ function _mscSVG({sc,ind}){
   };
   return `<svg viewBox="-1 0 72 96" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block" stroke-linecap="round">${defs}${_FP.map(pt).join('')}${_BP.map(pt).join('')}<text x="17" y="94.5" text-anchor="middle" font-size="2.2" fill="#999" font-family="system-ui,sans-serif">VUE AVANT</text><text x="52" y="94.5" text-anchor="middle" font-size="2.2" fill="#999" font-family="system-ui,sans-serif">VUE ARRIÈRE</text></svg>`;
 }
+// ─── Figurine « douleur » : réutilise la vraie figurine anatomique (_mscSVG) pour
+//     SÉLECTIONNER une zone qui fait mal. Tape un muscle → il devient rouge. (retour Michel, ft-v565)
+const _GRP2PAIN={pec:'pectoraux','front-delt':'epaule','side-delt':'epaule','rear-delt':'epaule',traps:'trapeze',abs:'abdos',obliques:'abdos','hip-flexors':'hanche',quads:'cuisse','lower-back':'lombaires',glutes:'fessier',hamstrings:'ischio',calves:'mollet'};
+function _painFig(painSet){
+  painSet=painSet||new Set();
+  const p2z={};
+  Object.entries(_MG).forEach(([g,d])=>{const z=_GRP2PAIN[g];if(z)d.paths.forEach(id=>{p2z[id]=z;});});
+  p2z['adductors-left']='adducteur';p2z['adductors-right']='adducteur'; // les adducteurs sont dans le groupe hip-flexors → on les sépare
+  const defs=`<defs>
+    <linearGradient id="pg-skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#E8A888"/><stop offset="100%" stop-color="#B86848"/></linearGradient>
+    <linearGradient id="pg-base" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#C87868"/><stop offset="100%" stop-color="#7A3828"/></linearGradient>
+    <linearGradient id="pg-pain" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6868"/><stop offset="100%" stop-color="#C00020"/></linearGradient>
+    <filter id="pg-sh" x="-10%" y="-10%" width="120%" height="120%"><feDropShadow dx="0" dy="0.4" stdDeviation="0.7" flood-color="rgba(255,45,85,0.65)"/></filter>
+  </defs>`;
+  const pt=([id,d])=>{
+    if(!id)return `<path d="${d}" fill="url(#pg-skin)" stroke="#9A5838" stroke-width="0.15" stroke-linejoin="round"/>`;
+    const z=p2z[id];const on=z&&painSet.has(z);
+    const fill=on?'url(#pg-pain)':'url(#pg-base)';
+    const sk=on?'#880010':'#5A2818';
+    const filt=on?' filter="url(#pg-sh)"':'';
+    const click=z?` onclick="toggleDayPain('${z}')" style="cursor:pointer"`:'';
+    return `<path id="pn-${id}" d="${d}" fill="${fill}" stroke="${sk}" stroke-width="0.22" stroke-linejoin="round"${filt}${click}/>`;
+  };
+  return `<svg viewBox="-1 0 72 96" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block" stroke-linecap="round">${defs}${_FP.map(pt).join('')}${_BP.map(pt).join('')}<text x="17" y="94.5" text-anchor="middle" font-size="2.4" fill="var(--t3)" font-family="system-ui,sans-serif">VUE AVANT</text><text x="52" y="94.5" text-anchor="middle" font-size="2.4" fill="var(--t3)" font-family="system-ui,sans-serif">VUE ARRIÈRE</text></svg>`;
+}
 let _mmCb=null;
 function showMuscleMap(exs,cb){
   const {sc,ind}=_mscScores(exs);
