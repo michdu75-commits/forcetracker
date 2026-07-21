@@ -1119,7 +1119,10 @@ Object.assign(_EX_EQUIV,{
   'atg squat':'Squat à la Barre','mollet presse':'Presse Mollets (Leg Press)',
   // 6e vague (rapport TRX/poids du corps) : 3 suggestions absurdes corrigées (muscle faux)
   'trx ham curl':'Curl Ischio-jambiers (Leg Curl)','nordic curl':'Curl Ischio-jambiers (Leg Curl)',
-  'chin up':'Traction Prise Neutre'
+  'chin up':'Traction Prise Neutre',
+  // 7e vague (rapport CrossFit/haltéro) : 5 suggestions absurdes corrigées (muscle/mouvement faux)
+  'push press':'Développé Militaire','strict press':'Développé Militaire','push jerk':'Développé Militaire',
+  'chest to bar':'Traction Lestée','wall ball':'Thruster'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
