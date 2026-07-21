@@ -3027,9 +3027,20 @@ function impRejectMatch(di,ei){
 // proposé (gif/photo si dispo, sinon muscle deviné) + ✓ Oui / ✕ Non explicites. Pensé
 // pour un sportif fatigué : décider d'un coup d'œil, aucun formulaire. Partagé programme+journal.
 // acceptCall / rejectCall = chaînes d'appel déjà construites (évite l'imbrication de gabarits).
-function _vmConfirmRow(suggest, acceptCall, rejectCall){
-  let thumb=''; try{ thumb=_exImg(suggest)||_exMuscleImg(suggest)||''; }catch(e){}
-  const img=thumb?`<img src="${thumb}" style="width:34px;height:34px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`:'';
+// Vignette d'aperçu d'import : vraie image > muscle deviné SEULEMENT si fiable > icône haltère neutre
+// (ne tombe JAMAIS sur le défaut « chest.svg » de _exMuscleImg → plus de torse rouge pour un exo inconnu)
+function _impThumb(name){
+  const box='width:36px;height:36px;border-radius:8px;flex-shrink:0;background:var(--bg3);box-sizing:border-box;';
+  let gif=''; try{ gif=_exImg(name)||''; }catch(e){}
+  if(gif) return `<img src="${gif}" onerror="this.style.visibility='hidden'" style="${box}object-fit:cover;">`;
+  let musc=''; try{ const {sc}=_mscScores([{name,sets:[{done:true}]}]); const top=Object.entries(sc||{}).sort((a,b)=>b[1]-a[1])[0]; if(top&&_MG_IMG[top[0]]) musc=_MG_IMG[top[0]]; }catch(e){}
+  if(musc) return `<img src="${musc}" onerror="this.style.visibility='hidden'" style="${box}object-fit:contain;padding:3px;">`;
+  return `<div style="${box}display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="M6 9v6M9 7v10M15 7v10M18 9v6M9 12h6"/></svg></div>`;
+}
+function _vmConfirmRow(suggest, acceptCall, rejectCall, noThumb){
+  let img='';
+  if(!noThumb){ let thumb=''; try{ thumb=_exImg(suggest)||_exMuscleImg(suggest)||''; }catch(e){}
+    img=thumb?`<img src="${thumb}" style="width:34px;height:34px;border-radius:7px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">`:''; }
   return `<div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap;">`
     +img
     +`<span style="font-size:11px;color:var(--gold);flex:1;min-width:110px;">≈ Rattacher à « <b>${_escNote(suggest)}</b> » ?</span>`
@@ -3048,11 +3059,12 @@ function _renderImpConfirm(){
       <div id="imp-day-${di}">
         ${(day.exercises||[]).map((ex,ei)=>`
           <div id="imp-ex-${di}-${ei}" style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:var(--bg2);border-radius:8px;margin-bottom:5px;">
+            ${_impThumb(ex._vmSuggest||ex.name)}
             <div style="flex:1;min-width:0;">
               <div style="font-size:13px;font-weight:600;">${_escNote(ex.name)}</div>
               <div style="font-size:12px;color:var(--t2);">${ex.sets}×${ex.reps} reps${ex.kg?' · '+ex.kg+' kg':''}</div>
               ${ex._vmFrom?`<div style="font-size:11px;color:var(--green);margin-top:3px;">↔ reconnu depuis « ${_escNote(ex._vmFrom)} » · <span onclick="impUndoMatch(${di},${ei})" style="color:var(--t3);cursor:pointer;text-decoration:underline;">annuler</span></div>`:''}
-              ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')'):''}
+              ${ex._vmSuggest?_vmConfirmRow(ex._vmSuggest,'impAcceptMatch('+di+','+ei+')','impRejectMatch('+di+','+ei+')',true):''}
               ${ex.note?`<div style="font-size:11px;color:var(--gold);margin-top:2px;font-style:italic;">📋 ${_escNote(ex.note)}</div>`:''}
             </div>
             <button onclick="removeImpEx(${di},${ei})" style="background:none;border:none;color:var(--t3);font-size:16px;cursor:pointer;padding:4px;flex-shrink:0;line-height:1;">✕</button>
