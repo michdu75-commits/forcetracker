@@ -1138,7 +1138,13 @@ Object.assign(_EX_EQUIV,{
   'bs':'Squat à la Barre','fs':'Squat Avant','ghr':'Glute Ham Raise (GHD)',
   'comp bench':'Développé Couché','paused bench':'Développé Couché',
   'pendlay row':'Rowing Barre',               // row barre strict, PAS poulie
-  'conventional dl':'Soulevé de Terre','block pull':'Tirage en Rack (Rack Pull)'
+  'conventional dl':'Soulevé de Terre','block pull':'Tirage en Rack (Rack Pull)',
+  // 10e vague (rapport PERTE DE POIDS FEMME — fitness/muscu, PRIORITAIRE) : 5 exos qu'on A mais ratés
+  'abducteurs machine':'Abducteurs Machine Debout',
+  'tirage horizontal poulie':'Rowing Cable','tirage horizontal':'Rowing Cable',
+  'step ups':'Montée sur Box (Step-up)','step up':'Montée sur Box (Step-up)',
+  'extension triceps corde':'Triceps Corde Poulie',
+  'corde a sauter':'Sauts à la Corde'          // saut à la corde ≠ Triceps Corde (faux ami « corde »)
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
