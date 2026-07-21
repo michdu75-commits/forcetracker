@@ -458,6 +458,31 @@ function _renderHomeHero(){
     warnHtml='<div style="margin-top:10px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.32);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;gap:8px;align-items:flex-start;">'
       +'<span style="flex:none;">⚠️</span><span>Gêne signalée aujourd\'hui (<b>'+zTxt+'</b>) : ton corps est récupéré, mais <b>échauffe-toi bien</b> et allège les mouvements qui tirent si besoin. Tu peux t\'entraîner.</span></div>';
   }
+  // ─── VERSION VISUELLE (mockup) : cadran circulaire + gros score + facteurs + CTA dégradé ───
+  if(typeof _isVisualStyle==='function'&&_isVisualStyle()){
+    const r=34,C=2*Math.PI*r,gFrac=0.72,gLen=C*gFrac,rot=140.4;
+    let knob='';
+    if(score!==null){const a=(rot+(score/100)*gFrac*360)*Math.PI/180;knob='<circle cx="'+(50+r*Math.cos(a)).toFixed(1)+'" cy="'+(50+r*Math.sin(a)).toFixed(1)+'" r="5.5" fill="#fff" stroke="'+ringColor+'" stroke-width="2"/>';}
+    const gauge='<svg viewBox="0 0 100 100" style="width:98px;height:98px;flex:none;"><defs><linearGradient id="ggrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22C55E"/><stop offset="0.5" stop-color="#EAB308"/><stop offset="1" stop-color="#FF3B4E"/></linearGradient></defs>'
+      +'<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var(--bg3)" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+gLen.toFixed(1)+' '+(C-gLen).toFixed(1)+'" transform="rotate('+rot+' 50 50)"/>'
+      +(score!==null?'<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="url(#ggrad)" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+gLen.toFixed(1)+' '+(C-gLen).toFixed(1)+'" transform="rotate('+rot+' 50 50)"/>':'')
+      +'<polyline points="26,50 35,50 39,41 45,61 51,43 55,50 74,50" fill="none" stroke="'+ringColor+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
+      +knob+'</svg>';
+    el.innerHTML='<div class="ft-rise" style="padding:18px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.13),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'+pillHtml+'</div>'
+      +'<div style="display:flex;align-items:center;gap:14px;margin-top:12px;">'
+        +'<div style="flex:none;"><div style="display:flex;align-items:baseline;gap:2px;"><span style="font-family:var(--font-cond);font-size:46px;font-weight:800;color:var(--t1);line-height:.85;">'+(score!==null?score:'—')+'</span>'+(score!==null?'<span style="font-size:13px;color:var(--t3);font-weight:700;">/100</span>':'')+'</div>'
+          +'<div style="font-family:var(--font-cond);font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--t3);margin-top:4px;">RÉCUPÉRATION</div></div>'
+        +'<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:700;color:var(--t1);line-height:1.15;">'+heroLabel+'</div><div style="font-size:12px;color:var(--t2);line-height:1.4;margin-top:3px;">'+heroDesc+'</div></div>'
+        +gauge
+      +'</div>'
+      +(detailHtml?'<div style="border-top:1px solid var(--sep);margin-top:6px;padding-top:6px;">'+detailHtml+'</div>':'')
+      +warnHtml
+      +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:56px;border-radius:16px;background:linear-gradient(135deg,#FF5C6C,#E11D38);box-shadow:0 12px 30px -8px rgba(239,62,87,.6);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
+        +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
+        +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
+    return;
+  }
   el.innerHTML='<div style="padding:20px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.10),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);" class="ft-rise">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;">'
     +'<div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'
