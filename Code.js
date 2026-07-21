@@ -379,6 +379,7 @@ function doGet(e) {
       sessions:       data.sessions       || [],
       weightLog:      data.weightLog      || [],
       sleepLog:       data.sleepLog       || [],
+      dayStateLog:    data.dayStateLog    || [],
       cycle:          data.cycle          || null,
       nutritionPhase: data.nutritionPhase || 'charge',
       coachMemory:    (data.profile && data.profile.coachMemory) || ''
@@ -405,6 +406,7 @@ function handleLoadProfilePost_(body) {
     sessions:       data.sessions       || [],
     weightLog:      data.weightLog      || [],
     sleepLog:       data.sleepLog       || [],
+    dayStateLog:    data.dayStateLog    || [],
     cycle:          data.cycle          || null,
     programmes:     data.programmes     || [],
     exRestPref:     data.exRestPref     || {},
@@ -718,6 +720,12 @@ function handleSaveProfile_(body) {
       if (inSL.length === 0 && exSL.length > 0) {
         Logger.log('[FT GARDE-FOU sleepLog] refusé : ' + exSL.length + ' entrées conservées');
       } else { existing.sleepLog = inSL; }
+    }
+    if (body.dayStateLog !== undefined) {
+      const inDL = body.dayStateLog || [], exDL = existing.dayStateLog || [];
+      if (inDL.length === 0 && exDL.length > 0) {
+        Logger.log('[FT GARDE-FOU dayStateLog] refusé : ' + exDL.length + ' entrées conservées');
+      } else { existing.dayStateLog = inDL; }
     }
     if (body.exRestPref !== undefined) existing.exRestPref = body.exRestPref;
     if (body.cycle      !== undefined) existing.cycle      = body.cycle; // null intentionnel OK

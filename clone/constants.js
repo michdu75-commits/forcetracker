@@ -173,6 +173,7 @@ const NEW_FEATURES=[
   {id:'day-state', screen:'home', spot:'home-daystate', desc:'Nouveau : « Comment tu te sens aujourd\'hui ? » — indique ton énergie et une éventuelle douleur du jour ; Milo adapte ses conseils et protège la zone douloureuse'},
   {id:'day-pain-detail', screen:'home', spot:'home-daystate', desc:'Nouveau : plus de zones de douleur (trapèze, cuisse, ischio, mollet…) + précise le côté (gauche/droite/les deux)'},
   {id:'day-mood', screen:'home', spot:'home-daystate', desc:'Nouveau : indique aussi ton MORAL du jour (😔 → 😄) — Milo t\'accompagne dans les coups de mou (dédramatise, valorise, sans jamais te juger)'},
+  {id:'calendar-memory', screen:'home', spot:'home-secondary', desc:'Nouveau : ton check-in du jour est gardé — tape une semaine du calendrier pour revoir, jour par jour, ta séance ET comment tu te sentais (sommeil, humeur, douleur)'},
   // Séance
   {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
@@ -233,9 +234,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v30/31/32 + WHATS_NEW_MAX=32) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v31/32/33 + WHATS_NEW_MAX=33) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:30, ic:'📅', t:'Ton calendrier se souvient de tes journées', d:'À partir de maintenant, ton check-in du jour (énergie, humeur, douleur) n\'est plus effacé chaque nuit : il est GARDÉ. Tape une semaine dans le calendrier de l\'Accueil → sous chaque jour tu revois ta séance ET comment tu te sentais (😴 sommeil · humeur · une éventuelle gêne). Dans quelques semaines, tu retrouveras d\'un coup d\'œil dans quel état tu étais le jour d\'un record. C\'est la 1re pierre de « Ton histoire sportive ». 📅'},
   {v:29, ic:'📈', t:'Ton graphe de progression, interactif', d:'Sur l\'onglet Progrès, le graphe d\'un exercice devient interactif : ① choisis la PÉRIODE (3 mois / 6 mois / 1 an / Tout) pour zoomer sur ta progression ; ② tape n\'importe quel point de la courbe → tu vois la date et la charge de ce jour-là, et un bouton « Voir cette séance » t\'ouvre direct le détail complet (tes séries, tes notes). Le graphe et ton historique sont enfin reliés. 📈'},
   {v:28, ic:'🌡️', t:'Ton « check-in du jour » regroupé', d:'Pour désencombrer ton Accueil, ton sommeil et ta carte « Comment tu te sens » sont maintenant réunis en UNE carte repliable : « Ton check-in du jour ». Repliée, tu vois un résumé en une ligne (😴 7h · 🙂 énergie · 😄 moral) ; tape dessus pour la déplier et renseigner ton sommeil, ton énergie, ton moral et une éventuelle douleur. Rien n\'a disparu — c\'est juste plus propre et ça respire. 🌡️'},
   {v:27, ic:'🤝', t:'Milo t\'accompagne dans les moments difficiles', d:'Nouveau sur ton Accueil : à côté de ton énergie, tu peux maintenant indiquer ton MORAL du jour (😔 → 😄), en un tap. Pourquoi ? Parce que le plus dur, ce n\'est pas de savoir quoi faire — c\'est de tenir dans les coups de fatigue ou de mou. Quand ton moral est bas, Milo se fait plus DOUX : il dédramatise un écart (sans jamais te culpabiliser), valorise tes progrès, et t\'aide à repartir calmement. ⚠️ Milo reste ton coach sportif, jamais un psy — il ne pose aucun diagnostic. Tout est optionnel. 🤝'},
@@ -263,7 +265,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=29;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v30/31/32)
+const WHATS_NEW_MAX=30;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v31/32/33)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

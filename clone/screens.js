@@ -149,7 +149,7 @@ const _HELP_DATA={
   home:{
     title:'🏠 Accueil',
     tips:[
-      {i:'📅',t:'Le calendrier de ton mois : tes jours de séance sont en rouge, les jours de RECORD cerclés en or 🏆. Les flèches ‹ › changent de mois, et tu peux taper une semaine pour voir le détail jour par jour.'},
+      {i:'📅',t:'Le calendrier de ton mois : tes jours de séance sont en rouge, les jours de RECORD cerclés en or 🏆. Les flèches ‹ › changent de mois, et tu peux taper une semaine pour voir le détail jour par jour — avec, sous chaque jour, ta séance ET comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
       {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas).'},
@@ -559,10 +559,21 @@ function _dayState(){
   if(!S.dayState||S.dayState.date!==t)S.dayState={date:t,energy:null,mood:null,pains:[],note:''};
   return S.dayState;
 }
-function setDayEnergy(v){const d=_dayState();d.energy=(d.energy===v?null:v);persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
-function setDayMood(v){const d=_dayState();d.mood=(d.mood===v?null:v);persist();_renderDayStateCard();} // moral : nourrit l'accompagnement de Milo, ne touche PAS au score de forme physique
-function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=>p&&p.zone===z);if(i>=0)d.pains.splice(i,1);else{d.pains=d.pains||[];d.pains.push({zone:z,side:_dayZoneLat(z)?'both':null});}persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
-function setDayPainSide(z,side){const d=_dayState();const p=(d.pains||[]).find(x=>x&&x.zone===z);if(!p)return;p.side=side;persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+// Historise le check-in du jour : upsert de S.dayState (aujourd'hui) dans S.dayStateLog, pour ne plus l'effacer chaque nuit (brique 7).
+function _saveDayStateToLog(){
+  const d=S.dayState;if(!d||!d.date)return;
+  const empty=(d.energy==null&&d.mood==null&&!(d.pains&&d.pains.length)&&!(d.note&&d.note.trim()));
+  S.dayStateLog=S.dayStateLog||[];
+  const i=S.dayStateLog.findIndex(e=>e&&e.date===d.date);
+  if(empty){ if(i>=0)S.dayStateLog.splice(i,1); return; } // jour vidé → on retire l'entrée
+  const entry={date:d.date,energy:d.energy,mood:d.mood,pains:JSON.parse(JSON.stringify(d.pains||[])),note:d.note||''};
+  if(i>=0)S.dayStateLog[i]=entry; else S.dayStateLog.push(entry);
+  if(S.dayStateLog.length>800)S.dayStateLog=S.dayStateLog.slice(-800); // garde-fou taille (~2 ans)
+}
+function setDayEnergy(v){const d=_dayState();d.energy=(d.energy===v?null:v);_saveDayStateToLog();persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+function setDayMood(v){const d=_dayState();d.mood=(d.mood===v?null:v);_saveDayStateToLog();persist();_renderDayStateCard();} // moral : nourrit l'accompagnement de Milo, ne touche PAS au score de forme physique
+function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=>p&&p.zone===z);if(i>=0)d.pains.splice(i,1);else{d.pains=d.pains||[];d.pains.push({zone:z,side:_dayZoneLat(z)?'both':null});}_saveDayStateToLog();persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+function setDayPainSide(z,side){const d=_dayState();const p=(d.pains||[]).find(x=>x&&x.zone===z);if(!p)return;p.side=side;_saveDayStateToLog();persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
 // Check-in du jour = sommeil + énergie/moral/douleur regroupés en UNE carte, repliée par défaut (désencombre l'Accueil).
 // ⚠️ On regroupe l'AFFICHAGE, pas les logiques : le sommeil nourrit le score de récup, l'énergie/moral/douleur NON (ft-v472/473).
 let _checkinOpen=false; // par session (non persisté)
@@ -788,15 +799,32 @@ function _renderHomeCalendar(){
       const ymd=_calYmd(c.d), isToday=ymd===todayY, isPr=prSet[ymd];
       const daySess=(S.sessions||[]).filter(s=>s.date===ymd);
       const dow=c.d.toLocaleDateString('fr-FR',{weekday:'short'});
+      const ctx=_calDayContext(ymd);
       html+='<div onclick="'+(daySess.length?'goSessionsHistory()':'')+'" style="display:flex;align-items:center;gap:10px;padding:10px 6px;border-bottom:1px solid var(--sep);'+(isToday?'background:rgba(255,45,85,.06);':'')+(daySess.length?'cursor:pointer;':'')+'">'
         +'<div style="width:44px;text-align:center;flex-shrink:0;"><div style="font-size:10px;color:var(--t3);text-transform:capitalize;">'+dow+'</div><div style="font-size:17px;font-weight:800;color:'+(c.inMonth?'var(--t1)':'var(--t3)')+';">'+c.d.getDate()+'</div></div>'
-        +'<div style="flex:1;min-width:0;font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?('💪 '+_escFood(daySess.map(_calSessLabel).join(', '))+(isPr?' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-1px;"></span> <span style="color:var(--gold);font-weight:800;">Record !</span>':'')):'Repos')+'</div>'
-        +(daySess.length?'<span style="font-size:11px;color:var(--red);font-weight:700;flex-shrink:0;">'+daySess.length+'×</span>':'')
+        +'<div style="flex:1;min-width:0;">'
+          +'<div style="font-size:12.5px;'+(daySess.length?'color:var(--t1);font-weight:600;':'color:var(--t3);')+'">'+(daySess.length?('💪 '+_escFood(daySess.map(_calSessLabel).join(', '))+(isPr?' <span style="display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-1px;"></span> <span style="color:var(--gold);font-weight:800;">Record !</span>':'')):'Repos')+'</div>'
+          +ctx
+        +'</div>'
+        +(daySess.length?'<span style="font-size:11px;color:var(--red);font-weight:700;flex-shrink:0;align-self:flex-start;margin-top:2px;">'+daySess.length+'×</span>':'')
         +'</div>';
     });
   }
   html+='</div>';
   el.innerHTML=html;
+}
+// Contexte d'un jour dans le calendrier (brique 7) : sommeil + humeur/énergie + douleur, s'ils ont été notés ce jour-là.
+function _calDayContext(ymd){
+  const parts=[];
+  const sl=(S.sleepLog||[]).find(e=>e&&e.date===ymd);
+  if(sl&&sl.hours)parts.push('😴 '+sl.hours+'h');
+  const ds=(S.dayStateLog||[]).find(e=>e&&e.date===ymd);
+  if(ds){
+    if(ds.energy!=null&&_DAY_ENERGY[ds.energy])parts.push(_DAY_ENERGY[ds.energy]);
+    if(ds.mood!=null&&_DAY_MOOD[ds.mood])parts.push(_DAY_MOOD[ds.mood]);
+    if(ds.pains&&ds.pains.length)parts.push('⚠️'+(ds.pains.length>1?ds.pains.length:''));
+  }
+  return parts.length?'<div style="font-size:11px;color:var(--t3);margin-top:2px;letter-spacing:.02em;">'+parts.join('&nbsp;&nbsp;')+'</div>':'';
 }
 function _calNav(dir){_calDate=new Date(_calDate.getFullYear(),_calDate.getMonth()+dir,1);_calZoomWeek=null;_renderHomeCalendar();}
 function _calZoom(wi){_calZoomWeek=wi;_renderHomeCalendar();}

@@ -295,6 +295,7 @@ function _cloudSync(){
       prs:S.prs||{},
       weightLog:(S.weightLog||[]).slice(-4000), // historique complet (~11 ans de pesées quotidiennes) — entrées minuscules, pas seulement 1 an
       sleepLog:(S.sleepLog||[]).slice(-4000),
+      dayStateLog:(S.dayStateLog||[]).slice(-800), // historique du check-in du jour (brique 7) — 1 entrée/jour, ~2 ans
       cycle:S.cycle||null,
       programmes:S.programmes||[],
       exRestPref:S.exRestPref||{},
@@ -1852,7 +1853,7 @@ function saveProfile(){
 
 function _applyRestoreData(raw){
   // Extrait les sous-objets selon le format reçu
-  let d, prs, sessions, weightLog, sleepLog;
+  let d, prs, sessions, weightLog, sleepLog, dayStateLog;
   try{
     if(raw&&typeof raw.profile==='object'){
       d=raw.profile||{};
@@ -1860,14 +1861,16 @@ function _applyRestoreData(raw){
       sessions=raw.sessions||[];
       weightLog=raw.weightLog||[];
       sleepLog=raw.sleepLog||[];
+      dayStateLog=raw.dayStateLog||[];
     }else{
       d=raw||{};
       prs=d.prs||{};
       sessions=d.sessions||[];
       weightLog=d.weightLog||[];
       sleepLog=d.sleepLog||[];
+      dayStateLog=d.dayStateLog||[];
     }
-  }catch(e){console.error('[FT restore] parse structure',e);d={};prs={};sessions=[];weightLog=[];sleepLog=[];}
+  }catch(e){console.error('[FT restore] parse structure',e);d={};prs={};sessions=[];weightLog=[];sleepLog=[];dayStateLog=[];}
 
   const hasProfile=d.name||d.bw||d.age||d.gender||d.goal;
   if(!hasProfile)throw new Error('Aucun profil trouvé sur le serveur pour cet email.');
@@ -1945,6 +1948,7 @@ function _applyRestoreData(raw){
   // Poids / sommeil — prend le plus complet (un cloud plus petit ne doit JAMAIS écraser un local plus fourni)
   try{if(weightLog&&weightLog.length>=(S.weightLog||[]).length)S.weightLog=weightLog;}catch(e){}
   try{if(sleepLog&&sleepLog.length>=(S.sleepLog||[]).length)S.sleepLog=sleepLog;}catch(e){}
+  try{if(dayStateLog&&dayStateLog.length>=(S.dayStateLog||[]).length)S.dayStateLog=dayStateLog;}catch(e){}
   try{if(raw&&raw.cycle)S.cycle=raw.cycle;}catch(e){}
   // Programmes — local-first
   try{if(raw&&raw.programmes&&raw.programmes.length&&(!S.programmes||!S.programmes.length)){S.programmes=raw.programmes;console.log('[FT restore] programmes:',raw.programmes.length);}}catch(e){console.warn('[FT restore] programmes',e);}
