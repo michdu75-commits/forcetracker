@@ -151,9 +151,10 @@ const _HELP_DATA={
     tips:[
       {i:'📅',t:'Le calendrier de ton mois : tes jours de séance sont en rouge, les jours de RECORD cerclés en or 🏆. Les flèches ‹ › changent de mois, et tu peux taper une semaine pour voir le détail jour par jour.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
-      {i:'😴',t:'Ton sommeil se note directement sur l\'Accueil (juste sous le score de récup) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération.'},
-      {i:'📊',t:'« Historique du sommeil » (la barre repliable, tape la flèche) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
-      {i:'🌡️',t:'« Comment tu te sens aujourd\'hui ? » (optionnel) : en 1-2 taps, indique ton énergie ET ton MORAL du jour (😔 → 😄), et si besoin une gêne/douleur. Tape la zone (trapèze, épaule, dos, cuisse, ischio, genou, mollet…) ; pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
+      {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
+      {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas).'},
+      {i:'📊',t:'« Historique du sommeil » (déplie le check-in, puis la barre repliable) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
+      {i:'🩹',t:'Pour une zone qui fait mal (trapèze, épaule, dos, cuisse, ischio, genou, mollet…), tape-la dans le check-in ; pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Le Gardien protège cette zone du jour en priorité dans les conseils de Milo.'},
       {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
@@ -562,9 +563,37 @@ function setDayEnergy(v){const d=_dayState();d.energy=(d.energy===v?null:v);pers
 function setDayMood(v){const d=_dayState();d.mood=(d.mood===v?null:v);persist();_renderDayStateCard();} // moral : nourrit l'accompagnement de Milo, ne touche PAS au score de forme physique
 function toggleDayPain(z){const d=_dayState();const i=(d.pains||[]).findIndex(p=>p&&p.zone===z);if(i>=0)d.pains.splice(i,1);else{d.pains=d.pains||[];d.pains.push({zone:z,side:_dayZoneLat(z)?'both':null});}persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
 function setDayPainSide(z,side){const d=_dayState();const p=(d.pains||[]).find(x=>x&&x.zone===z);if(!p)return;p.side=side;persist();_renderDayStateCard();try{_renderHomeHero();}catch(e){}}
+// Check-in du jour = sommeil + énergie/moral/douleur regroupés en UNE carte, repliée par défaut (désencombre l'Accueil).
+// ⚠️ On regroupe l'AFFICHAGE, pas les logiques : le sommeil nourrit le score de récup, l'énergie/moral/douleur NON (ft-v472/473).
+let _checkinOpen=false; // par session (non persisté)
+function toggleCheckin(){_checkinOpen=!_checkinOpen;_renderDayStateCard();try{if(typeof renderLogSleep==='function')renderLogSleep();}catch(e){}}
+function _checkinSummary(){
+  const d=_dayState();
+  const ts=(S.sleepLog||[]).find(e=>e.date===today());
+  const nPain=(d.pains||[]).length;
+  if(d.energy==null&&d.mood==null&&!(ts&&ts.hours)&&!nPain)return ''; // rien renseigné → invite complète
+  const parts=[(ts&&ts.hours)?('😴 '+ts.hours+'h'):'😴 à noter'];
+  if(d.energy!=null)parts.push(_DAY_ENERGY[d.energy]+' énergie');
+  if(d.mood!=null)parts.push(_DAY_MOOD[d.mood]+' moral');
+  let s=parts.join(' · ');
+  if(nPain)s+='  ·  ⚠️ '+nPain+' gêne'+(nPain>1?'s':'');
+  return s;
+}
 function _renderDayStateCard(){
   const el=document.getElementById('home-daystate');if(!el)return;
   const d=_dayState();
+  // La carte sommeil (#log-sleep) est la partie basse du check-in : visible uniquement quand le check-in est déplié.
+  const sleepEl=document.getElementById('log-sleep');if(sleepEl)sleepEl.style.display=_checkinOpen?'':'none';
+  if(!_checkinOpen){
+    const sum=_checkinSummary();
+    const chev='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>';
+    el.innerHTML='<div class="ds-card" onclick="toggleCheckin()" style="cursor:pointer;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">'
+      +'<div style="min-width:0;"><div class="ds-ttl" style="margin:0;">🌡️ Ton check-in du jour</div>'
+      +'<div class="ds-sub" style="margin-top:4px;'+(sum?'color:var(--t1);font-weight:600;':'')+'">'+(sum||'Note ton énergie, ton moral et ton sommeil')+'</div></div>'
+      +chev+'</div></div>';
+    return;
+  }
   const painSet=new Set((d.pains||[]).map(p=>p&&p.zone));
   const enBtns=_DAY_ENERGY.map((e,i)=>'<button class="ds-en'+(d.energy===i?' on':'')+'" onclick="setDayEnergy('+i+')">'+e+'</button>').join('');
   const moBtns=_DAY_MOOD.map((e,i)=>'<button class="ds-en'+(d.mood===i?' on':'')+'" onclick="setDayMood('+i+')">'+e+'</button>').join('');
@@ -580,15 +609,19 @@ function _renderDayStateCard(){
     }).join('');
     sideHtml='<div class="ds-sub" style="margin-top:11px;">Un côté en particulier ?</div>'+rows;
   }
+  const chevOpen='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>';
   el.innerHTML='<div class="ds-card">'
-    +'<div class="ds-ttl">🌡️ Comment tu te sens aujourd\'hui ? <span class="ds-opt">(optionnel)</span></div>'
-    +'<div class="ds-sub" style="margin-top:0;">Ton énergie :</div>'
+    +'<div onclick="toggleCheckin()" style="display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;">'
+    +'<div class="ds-ttl" style="margin:0;">🌡️ Ton check-in du jour <span class="ds-opt">(optionnel)</span></div>'
+    +chevOpen+'</div>'
+    +'<div class="ds-sub">Ton énergie :</div>'
     +'<div class="ds-row">'+enBtns+'</div>'
     +'<div class="ds-sub">Ton moral :</div>'
     +'<div class="ds-row">'+moBtns+'</div>'
     +'<div class="ds-sub">Une gêne ou douleur ? Tape la zone :</div>'
     +'<div class="ds-zrow">'+zBtns+'</div>'
     +sideHtml
+    +'<div class="ds-sub" style="margin-top:14px;opacity:.75;">💤 Ton sommeil de cette nuit est juste en dessous ⤵</div>'
     +'</div>';
 }
 // « Ce que Milo sait de toi » — liste des observations validées (supprimables)

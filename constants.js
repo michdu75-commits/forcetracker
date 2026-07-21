@@ -232,9 +232,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v28/29/30 + WHATS_NEW_MAX=30) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v29/30/31 + WHATS_NEW_MAX=31) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:28, ic:'🌡️', t:'Ton « check-in du jour » regroupé', d:'Pour désencombrer ton Accueil, ton sommeil et ta carte « Comment tu te sens » sont maintenant réunis en UNE carte repliable : « Ton check-in du jour ». Repliée, tu vois un résumé en une ligne (😴 7h · 🙂 énergie · 😄 moral) ; tape dessus pour la déplier et renseigner ton sommeil, ton énergie, ton moral et une éventuelle douleur. Rien n\'a disparu — c\'est juste plus propre et ça respire. 🌡️'},
   {v:27, ic:'🤝', t:'Milo t\'accompagne dans les moments difficiles', d:'Nouveau sur ton Accueil : à côté de ton énergie, tu peux maintenant indiquer ton MORAL du jour (😔 → 😄), en un tap. Pourquoi ? Parce que le plus dur, ce n\'est pas de savoir quoi faire — c\'est de tenir dans les coups de fatigue ou de mou. Quand ton moral est bas, Milo se fait plus DOUX : il dédramatise un écart (sans jamais te culpabiliser), valorise tes progrès, et t\'aide à repartir calmement. ⚠️ Milo reste ton coach sportif, jamais un psy — il ne pose aucun diagnostic. Tout est optionnel. 🤝'},
   {v:26, ic:'🏁', t:'Ton écran de fin de séance', d:'Dès que tu termines une séance, tu arrives sur un vrai écran de bilan : tes exercices (avec leurs images), tes chiffres (volume, records battus 🏆, durée, calories)… et juste en dessous, MILO DÉBRIEFE TA SÉANCE tout seul — pas un « Bravo » générique, mais une vraie analyse (progression, points d\'attention, et un objectif concret pour la prochaine fois). Puis il te demande comment tu t\'es senti. L\'impression qu\'un vrai coach vient de regarder ta séance. 🏁'},
   {v:25, ic:'🎯', t:'Tes douleurs, en plus précis', d:'La carte « Comment tu te sens aujourd\'hui ? » (sur l\'Accueil) et l\'écran des blessures à l\'inscription reconnaissent maintenant BEAUCOUP plus de zones (trapèze, pectoraux, cuisse, ischio, fessier, adducteur, mollet, abdos… en plus des articulations). Et pour une zone comme le genou ou l\'épaule, tu peux préciser le CÔTÉ : gauche, droite ou les deux. Résultat : Milo protège encore plus finement la bonne zone. 🎯 (Merci Christophe pour l\'idée !)'},
@@ -260,7 +261,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=27;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v28/29/30)
+const WHATS_NEW_MAX=28;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v29/30/31)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

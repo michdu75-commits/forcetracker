@@ -1756,6 +1756,8 @@ function renderLogSleep(){
     +_sleepHistInner()
     +'</div>';
   if(!isCompact)updateSleepQualBtns();
+  // La carte sommeil = partie basse du « check-in du jour » : cachée tant que le check-in est replié (ft-v547).
+  try{if(typeof _checkinOpen!=='undefined')el.style.display=_checkinOpen?'':'none';}catch(e){}
 }
 
 // Bouton « Enregistrer » du sommeil : visible seulement quand une valeur d'heures est saisie.
