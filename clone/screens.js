@@ -581,7 +581,7 @@ function _renderObsCard(){
 // énergie du jour + douleurs du jour (zones). Ponctuel : repart à zéro chaque jour.
 // Nourrit Milo (dosage) + le Gardien (protège une douleur DU JOUR en priorité).
 // [zone, libellé, latéral?] — latéral = peut avoir un côté (gauche/droite/les deux).
-const _DAY_ZONES=[['epaule','Épaule',1],['trapeze','Trapèze',1],['cervicales','Nuque',0],['pectoraux','Pectoraux',1],['coude','Coude',1],['poignet','Poignet',1],['lombaires','Bas du dos',0],['abdos','Abdos',0],['hanche','Hanche',1],['fessier','Fessier',1],['cuisse','Cuisse',1],['ischio','Ischio',1],['adducteur','Adducteur',1],['genou','Genou',1],['mollet','Mollet',1],['cheville','Cheville',1]];
+const _DAY_ZONES=[['epaule','Épaule',1],['trapeze','Trapèze',1],['cervicales','Nuque',0],['pectoraux','Pectoraux',1],['dorsaux','Dorsaux',1],['biceps','Biceps',1],['triceps','Triceps',1],['avantbras','Avant-bras',1],['coude','Coude',1],['poignet','Poignet',1],['lombaires','Bas du dos',0],['abdos','Abdos',0],['hanche','Hanche',1],['fessier','Fessier',1],['cuisse','Cuisse',1],['ischio','Ischio',1],['adducteur','Adducteur',1],['genou','Genou',1],['mollet','Mollet',1],['cheville','Cheville',1]];
 const _DAY_ENERGY=['😴','😐','🙂','⚡']; // 0=très fatigué → 3=plein d'énergie
 const _DAY_MOOD=['😔','😕','🙂','😄'];   // 0=moral bas → 3=excellent moral (accompagnement, PAS un diagnostic — Constitution Principe 17)
 function _dayZoneLat(z){const e=_DAY_ZONES.find(x=>x[0]===z);return e?!!e[2]:false;}

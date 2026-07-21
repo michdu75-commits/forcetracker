@@ -1817,7 +1817,7 @@ function _mscSVG({sc,ind}){
 }
 // ─── Figurine « douleur » : réutilise la vraie figurine anatomique (_mscSVG) pour
 //     SÉLECTIONNER une zone qui fait mal. Tape un muscle → il devient rouge. (retour Michel, ft-v565)
-const _GRP2PAIN={pec:'pectoraux','front-delt':'epaule','side-delt':'epaule','rear-delt':'epaule',traps:'trapeze',abs:'abdos',obliques:'abdos','hip-flexors':'hanche',quads:'cuisse','lower-back':'lombaires',glutes:'fessier',hamstrings:'ischio',calves:'mollet'};
+const _GRP2PAIN={pec:'pectoraux','front-delt':'epaule','side-delt':'epaule','rear-delt':'epaule',traps:'trapeze',abs:'abdos',obliques:'abdos',biceps:'biceps',triceps:'triceps',forearms:'avantbras',lats:'dorsaux','hip-flexors':'hanche',quads:'cuisse',tibialis:'mollet','lower-back':'lombaires',glutes:'fessier',hamstrings:'ischio',calves:'mollet'};
 function _painFig(painSet){
   painSet=painSet||new Set();
   const p2z={};

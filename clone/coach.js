@@ -608,7 +608,10 @@ const _GARDIEN_ZONE={
   cuisse:"ménage les quadriceps — réduis charge et volume sur squats/presses/extensions, amplitude sans douleur",
   ischio:"ménage les ischio-jambiers — prudence sur soulevé jambes tendues/leg curl/good morning, contrôle le tempo, évite l'étirement brusque",
   adducteur:"ménage les adducteurs — évite les grands écarts et la machine adducteur lourde, amplitude contrôlée",
-  mollet:"ménage les mollets — évite le travail balistique et les sauts, extensions contrôlées sans douleur"
+  mollet:"ménage les mollets — évite le travail balistique et les sauts, extensions contrôlées sans douleur",
+  biceps:"ménage les biceps — allège curls et tractions lourdes, évite l'étirement brusque en bas du mouvement, contrôle le tempo",
+  triceps:"ménage les triceps — allège extensions/dips/développés serrés lourds, réduis le volume bras, tempo contrôlé",
+  avantbras:"ménage les avant-bras — allège le travail de grip et les curls de poignet, utilise des sangles, évite les prises douloureuses"
 };
 const _GARDIEN_COND={
   arthrite:"arthrose/arthrite — mouvements contrôlés, amplitude SANS douleur, évite l'impact (sauts, course), échauffement long et progressif",
@@ -619,7 +622,7 @@ const _GARDIEN_COND={
 };
 // 6B — CONTRAINTES DU MOUVEMENT (sollicitations articulaires), déduites du nom de l'exercice.
 // Chaque contrainte : zones sollicitées · libellé · regex (nom normalisé) · exemples à alléger · alternative plus douce.
-const _GARDIEN_ZLABEL={epaule:'épaule',genou:'genou',lombaires:'bas du dos (lombaires)',dorsaux:'haut du dos',cervicales:'cou/cervicales',coude:'coude',poignet:'poignet',hanche:'hanche',cheville:'cheville',trapeze:'trapèzes',pectoraux:'pectoraux',abdos:'abdominaux',fessier:'fessiers',cuisse:'cuisses (quadriceps)',ischio:'ischio-jambiers',adducteur:'adducteurs',mollet:'mollets'};
+const _GARDIEN_ZLABEL={epaule:'épaule',genou:'genou',lombaires:'bas du dos (lombaires)',dorsaux:'dorsaux (haut du dos)',cervicales:'cou/cervicales',coude:'coude',poignet:'poignet',hanche:'hanche',cheville:'cheville',trapeze:'trapèzes',pectoraux:'pectoraux',abdos:'abdominaux',fessier:'fessiers',cuisse:'cuisses (quadriceps)',ischio:'ischio-jambiers',adducteur:'adducteurs',mollet:'mollets',biceps:'biceps',triceps:'triceps',avantbras:'avant-bras'};
 const _GARDIEN_CONSTRAINTS=[
   {zones:['epaule','cervicales'],sollicite:'les mouvements au-dessus de la tête',rx:/militaire|overhead|nuque|arnold|au.?dessus|elevation frontale|developpe epaule|epaules? (halter|barre)|thruster|landmine press|pike|hand ?stand/,avoid:'développé militaire/nuque, développé épaules debout, élévations très hautes',alt:'développé épaules à la machine ou assis avec dossier, élévations latérales sous la ligne de l\'épaule'},
   {zones:['lombaires'],sollicite:'la charge sur la colonne (flexion/compression du dos)',rx:/souleve de terre|deadlift|good morning|squat|rowing barre|rowing penche|pendlay|t.?bar|clean|arrache|epaule.?jete|zercher|front squat|hack|bent.?over/,avoid:'soulevé de terre lourd, good morning, squat barre lourd, rowing penché',alt:'rowing poitrine soutenue/machine, tirage machine, hip thrust, gainage'},
@@ -660,7 +663,11 @@ function _gardienZonesFromText(t){
   if(/cuisse|quadri/.test(s))out.push('cuisse');
   if(/ischio|hamstring/.test(s))out.push('ischio');
   if(/adducteur/.test(s))out.push('adducteur');
-  if(/mollet|soleaire|jumeaux/.test(s))out.push('mollet');
+  if(/mollet|soleaire|jumeaux|tibial/.test(s))out.push('mollet');
+  if(/dorsaux|grand dorsal|\bdos\b|lats?\b/.test(s))out.push('dorsaux');
+  if(/biceps/.test(s))out.push('biceps');
+  if(/triceps/.test(s))out.push('triceps');
+  if(/avant.?bras|forearm/.test(s))out.push('avantbras');
   return out;
 }
 function _gardienRules(){
