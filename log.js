@@ -1122,7 +1122,18 @@ Object.assign(_EX_EQUIV,{
   'chin up':'Traction Prise Neutre',
   // 7e vague (rapport CrossFit/haltéro) : 5 suggestions absurdes corrigées (muscle/mouvement faux)
   'push press':'Développé Militaire','strict press':'Développé Militaire','push jerk':'Développé Militaire',
-  'chest to bar':'Traction Lestée','wall ball':'Thruster'
+  'chest to bar':'Traction Lestée','wall ball':'Thruster',
+  // 8e vague (rapport OLD SCHOOL — muscu classique, PRIORITAIRE)
+  // abréviations FR de musclé (DC marchait déjà, ses cousins non)
+  'di':'Développé Incliné','dd':'Développé Décliné','dm':'Développé Militaire','el':'Élévations Latérales',
+  'sdt jt':'Soulevé de Terre Roumain Barre',
+  'incline bb':'Développé Incliné','incline bench':'Développé Incliné','decline bench':'Développé Décliné',
+  // suggestions fausses corrigées
+  'lat raise':'Élévations Latérales',       // « lat » = latéral, PAS latissimus (≠ Lat Pull)
+  'planche':'Gainage',                       // planche FR = plank, PAS Planche de Préhension (grip)
+  'pec deck inverse':'Machine Oiseau','extension corde':'Triceps Corde Poulie','shoulder bb':'Développé Militaire',
+  // corrects mais à fiabiliser (confirm → auto)
+  'mollets presse':'Presse Mollets (Leg Press)','row poulie':'Rowing Cable','cable row':'Rowing Cable','t bar':'Rowing T-Bar Machine'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
