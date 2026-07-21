@@ -7,6 +7,9 @@ constants.js
 state.js
 setup.js
 tracking.js
+food-health.js
+translations.js
+worker.js
 style.css
 index.html
 sw.js

@@ -4,6 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
+// Déploiement backend : fix .claspignore (worker.js/food-health.js/translations.js ne doivent PAS partir dans Apps Script — worker.js contient `export` → cassait clasp push depuis mi-juillet). Ce commit re-déclenche le déploiement des changements backend accumulés (ADN sportif @ft-v464 + dayStateLog @ft-v549).
 // ═══════════════════════════════════════════════════════════
 // Force Tracker — Google Apps Script v3.5
 // (re-sync clasp : projet backend = Code.js + appsscript.json uniquement)
