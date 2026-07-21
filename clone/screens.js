@@ -155,6 +155,7 @@ const _HELP_DATA={
       {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas).'},
       {i:'📊',t:'« Historique du sommeil » (déplie le check-in, puis la barre repliable) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
       {i:'🩹',t:'Pour une zone qui fait mal (trapèze, épaule, dos, cuisse, ischio, genou, mollet…), tape-la dans le check-in ; pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Le Gardien protège cette zone du jour en priorité dans les conseils de Milo.'},
+      {i:'💡',t:'Ton score de récup (sur NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui. Tape « Pourquoi ce score ? » juste en dessous pour voir, en clair, D\'OÙ il vient : sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison et son +/−. Il remonte au fil de la journée après une séance, et reste un simple repère — ton ressenti prime toujours.'},
       {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
@@ -450,6 +451,7 @@ function _renderHomeHero(){
     }).join('<span style="color:var(--sep);margin:0 1px;">·</span>');
     const tipsHtml=(detail.tips||[]).map(t=>'<div style="display:flex;gap:6px;"><span>💡</span><span>'+t+'</span></div>').join('');
     detailHtml='<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px 7px;font-size:11px;color:var(--t3);align-items:center;">'+fx+'</div>'
+      +'<button onclick="openRecoWhy()" style="margin-top:9px;background:none;border:none;padding:0;color:var(--blue);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;display:flex;align-items:center;gap:3px;-webkit-tap-highlight-color:transparent;">Pourquoi ce score ?<span style="font-size:12px;">›</span></button>'
       +(tipsHtml?'<div style="margin-top:9px;background:var(--bg3);border-radius:10px;padding:9px 11px;font-size:12px;color:var(--t2);line-height:1.5;display:flex;flex-direction:column;gap:5px;">'+tipsHtml+'</div>':'');
   }
   // Bandeau contextuel « gêne du jour » (brique 3B) : une douleur ne fait PAS baisser
@@ -478,6 +480,33 @@ function _renderHomeHero(){
     +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
     +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
 }
+
+// ─── « Pourquoi ce score ? » — explication claire de la récup (retour GPT, ft-v564) ──
+function openRecoWhy(){
+  const d=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():null;
+  const body=document.getElementById('reco-why-body');
+  if(!d||d.score==null||!body)return;
+  const info=getRecoveryInfo(d.score);
+  const factorsHtml=(d.factors||[]).map(f=>{
+    const col=f.base?'var(--t2)':(f.val>0?'#34D399':'#FF8A72');
+    const valTxt=f.base?(f.val+' /100'):((f.val>0?'+':'')+f.val);
+    return '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--sep);">'
+      +'<span style="font-size:18px;flex:none;line-height:1.3;">'+f.ic+'</span>'
+      +'<div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;">'
+      +'<b style="font-size:13.5px;color:var(--t1);">'+f.label+'</b>'
+      +'<b style="font-size:13.5px;color:'+col+';white-space:nowrap;">'+valTxt+'</b></div>'
+      +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:2px;">'+(f.why||'')+'</div></div></div>';
+  }).join('');
+  body.innerHTML=
+    '<div style="text-align:center;margin:4px 0 2px;"><div style="font-family:var(--font-cond);font-size:42px;font-weight:800;color:'+info.color+';line-height:1;">'+d.score+'<span style="font-size:16px;color:var(--t3);font-weight:700;">/100</span></div>'
+    +'<div style="font-size:14px;font-weight:700;color:'+info.color+';margin-top:2px;">'+info.label+'</div></div>'
+    +'<div style="font-size:13px;color:var(--t2);line-height:1.5;margin:12px 0 8px;">Ce score estime à quel point ton corps est <b>prêt à s\'entraîner</b> aujourd\'hui (100 = parfaitement frais). Voici ce qui l\'a fait bouger :</div>'
+    +factorsHtml
+    +'<div style="margin-top:14px;background:var(--bg3);border-radius:12px;padding:11px 13px;font-size:13px;color:var(--t2);line-height:1.5;">'+info.rec+'</div>'
+    +'<div style="margin-top:10px;font-size:11.5px;color:var(--t3);line-height:1.5;text-align:center;">Il se recalcule chaque jour et remonte au fil de la journée. Ce n\'est qu\'un repère — <b>ton ressenti prime toujours</b>.</div>';
+  document.getElementById('ov-reco-why').classList.add('open');
+}
+function closeRecoWhy(){const o=document.getElementById('ov-reco-why');if(o)o.classList.remove('open');}
 
 // ─── Coach proactif — petit mot de Milo sur l'Accueil (brique 4) ──────────
 // Choisit LE message le plus pertinent du jour à partir des données locales

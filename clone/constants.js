@@ -174,6 +174,7 @@ const NEW_FEATURES=[
   {id:'day-pain-detail', screen:'home', spot:'home-daystate', desc:'Nouveau : plus de zones de douleur (trapèze, cuisse, ischio, mollet…) + précise le côté (gauche/droite/les deux)'},
   {id:'day-mood', screen:'home', spot:'home-daystate', desc:'Nouveau : indique aussi ton MORAL du jour (😔 → 😄) — Milo t\'accompagne dans les coups de mou (dédramatise, valorise, sans jamais te juger)'},
   {id:'calendar-memory', screen:'home', spot:'home-secondary', desc:'Nouveau : ton check-in du jour est gardé — tape une semaine du calendrier pour revoir, jour par jour, ta séance ET comment tu te sentais (sommeil, humeur, douleur)'},
+  {id:'reco-why', screen:'home', spot:'home-hero', desc:'Nouveau : « Pourquoi ce score ? » sous ta récup — une fiche claire explique ce que le chiffre veut dire et d\'où il vient (sommeil, séance récente, âge…)'},
   // Séance
   {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
@@ -237,9 +238,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v33/34/35 + WHATS_NEW_MAX=35) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v34/35/36 + WHATS_NEW_MAX=36) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:33, ic:'💡', t:'« Pourquoi ce score ? » — ta récup expliquée', d:'Ton score de récupération (sur l\'Accueil) t\'a toujours un peu intrigué ? Tape « Pourquoi ce score ? » juste en dessous : une fiche claire t\'explique en français simple ce que le chiffre veut dire (à quel point ton corps est prêt à s\'entraîner aujourd\'hui) et D\'OÙ il vient — sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison. Fini le chiffre mystère. Et rappel : ce n\'est qu\'un repère, ton ressenti prime toujours. 💡'},
   {v:32, ic:'🔎', t:'Ton historique plus pratique', d:'Trois améliorations sur l\'onglet Progrès : ① tes cartes d\'historique sont plus claires — le MUSCLE travaillé (ou le nom de la séance) ressort en gros titre, les calories passent en petit ; ② tu peux maintenant FILTRER ton historique par groupe musculaire : tape « Pectoraux », « Quadriceps »… sous « Historique séances » pour retrouver une séance en un clin d\'œil ; ③ dans la recherche d\'exercices (en séance), tes FAVORIS — ceux que tu utilises le plus — remontent tout seuls en tête, avec une ★. 🔎'},
   {v:31, ic:'🎯', t:'Fixe-toi un objectif de force', d:'Nouveau dans Progrès (onglet Exercices) : pour chaque exercice, tu peux fixer un OBJECTIF de 1RM (le max que tu vises). L\'app affiche alors une barre de progression (« 87 % du chemin · encore 17 kg ») et une ligne verte repère sur ton graphe, à côté de ta vraie courbe. Un cap clair et motivant, mouvement par mouvement — que TOI tu choisis. 🎯'},
   {v:30, ic:'📅', t:'Ton calendrier se souvient de tes journées', d:'À partir de maintenant, ton check-in du jour (énergie, humeur, douleur) n\'est plus effacé chaque nuit : il est GARDÉ. Tape une semaine dans le calendrier de l\'Accueil → sous chaque jour tu revois ta séance ET comment tu te sentais (😴 sommeil · humeur · une éventuelle gêne). Dans quelques semaines, tu retrouveras d\'un coup d\'œil dans quel état tu étais le jour d\'un record. C\'est la 1re pierre de « Ton histoire sportive ». 📅'},
@@ -270,7 +272,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=32;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v33/34/35)
+const WHATS_NEW_MAX=33;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v34/35/36)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

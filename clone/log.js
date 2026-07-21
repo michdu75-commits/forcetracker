@@ -1862,7 +1862,7 @@ function _makeSheetDraggable(handleEl,closeFn){
 // Branche la poignée glissable sur les overlays de CONTENU sûrs (poignée déjà présente).
 // ⚠️ Exclus volontairement : confirmations, inscription, murs premium, formulaires, imports, sélecteur d'exos → besoin d'un choix/geste explicite, pas d'un glissé.
 function _initSheetHandles(){
-  const map=[['ov-milo-knows','closeMiloKnows'],['mod-share','closeShareModal'],['ov-type-help','closeTypeHelp']];
+  const map=[['ov-milo-knows','closeMiloKnows'],['mod-share','closeShareModal'],['ov-type-help','closeTypeHelp'],['ov-reco-why','closeRecoWhy']];
   map.forEach(([id,fn])=>{
     const el=document.querySelector('#'+id+' .modal-handle');
     if(el)_makeSheetDraggable(el,()=>{try{if(typeof window[fn]==='function')window[fn]();}catch(e){}});

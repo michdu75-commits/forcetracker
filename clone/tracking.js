@@ -1878,14 +1878,18 @@ function calcRecoveryDetail(){
   const base=Math.round(wScore);
   const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj+dayEnergyAdj)));
   // Détail des facteurs (pour afficher le « pourquoi » sous le score)
-  const factors=[{ic:'😴',label:hasSleep?'Sommeil':'Récup de base',val:base,base:true}];
-  if(sessAdj) factors.push({ic:sessAdj<0?'🏋️':'🛌',label:sessAdj<0?'Séance récente':'Repos',val:sessAdj});
-  if(ageAdj) factors.push({ic:'🎂',label:'Âge',val:ageAdj});
-  if(cycleAdj) factors.push({ic:'🌙',label:'Cycle'+(cpPhase?' ('+cpPhase+')':''),val:cycleAdj});
-  if(accumAdj) factors.push({ic:'🔥',label:'Jours enchaînés',val:accumAdj});
-  if(smokerAdj) factors.push({ic:'🚬',label:'Tabac',val:smokerAdj});
-  if(energyAdj) factors.push({ic:'⚡',label:'Énergie',val:energyAdj});
-  if(dayEnergyAdj) factors.push({ic:'🌡️',label:'Forme du jour',val:dayEnergyAdj});
+  // `why` = raison en clair (français simple), utilisée par l'explication « Pourquoi ce score ? ».
+  const factors=[{ic:'😴',label:hasSleep?'Sommeil':'Récup de base',val:base,base:true,
+    why:hasSleep?'Le point de départ : la qualité et la durée de tes 3 dernières nuits.':'Tu n\'as pas encore renseigné ton sommeil, donc on part d\'une base neutre. Renseigne-le pour un score plus juste.'}];
+  if(sessAdj) factors.push({ic:sessAdj<0?'🏋️':'🛌',label:sessAdj<0?'Séance récente':'Repos',val:sessAdj,
+    why:sessAdj<0?'Tu as une séance récente : tes muscles récupèrent encore. Ce malus s\'efface petit à petit au fil de la journée.':'Des jours de repos depuis ta dernière séance : ton corps est plus frais.'});
+  if(ageAdj) factors.push({ic:'🎂',label:'Âge',val:ageAdj,why:'La récupération ralentit un peu avec l\'âge.'});
+  if(cycleAdj) factors.push({ic:'🌙',label:'Cycle'+(cpPhase?' ('+cpPhase+')':''),val:cycleAdj,
+    why:cycleAdj<0?'Ta phase de cycle demande plus de récup en ce moment.':'Ta phase de cycle est plutôt favorable à la performance.'});
+  if(accumAdj) factors.push({ic:'🔥',label:'Jours enchaînés',val:accumAdj,why:'Tu enchaînes plusieurs jours de suite : la fatigue s\'accumule.'});
+  if(smokerAdj) factors.push({ic:'🚬',label:'Tabac',val:smokerAdj,why:'Le tabac freine un peu la récupération.'});
+  if(energyAdj) factors.push({ic:'⚡',label:'Énergie',val:energyAdj,why:'Ton niveau d\'énergie noté au dernier check-in de séance.'});
+  if(dayEnergyAdj) factors.push({ic:'🌡️',label:'Forme du jour',val:dayEnergyAdj,why:'Comment tu te sens aujourd\'hui (ton check-in du jour sur l\'Accueil).'});
   // Conseils pour remonter le score (les plus pertinents)
   const tips=[];
   if(!hasSleep) tips.push('💤 Renseigne ton sommeil pour un score personnalisé et plus précis.');
