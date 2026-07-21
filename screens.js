@@ -460,28 +460,29 @@ function _renderHomeHero(){
   }
   // ─── VERSION VISUELLE (mockup) : cadran circulaire + gros score + facteurs + CTA dégradé ───
   if(typeof _isVisualStyle==='function'&&_isVisualStyle()){
-    // Cadran : arc dessiné en petits SEGMENTS colorés (couleur qui suit l'arc, rouge→vert via HSL) + profondeur (drop-shadow) + curseur relief.
-    const r=34,gFrac=0.72,rot=140.4,N=46;
+    // Cadran (spec Flutter sleek_circular_slider fournie par Michel, reproduite en SVG) : arc 240° dep. 150°, trait épais, piste #232833, dégradé teal→vert→rouge sur la partie remplie, point blanc, score AU CENTRE, ombre.
+    const r=40,sw=12,N=48,A0=150,SPAN=240,filled=score!==null?score/100:0;
+    const _lerp=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+    const _teal=[35,240,168],_grn=[14,209,140],_red=[255,59,48];
+    const _fill=t=>{const c=t<.5?_lerp(_teal,_grn,t*2):_lerp(_grn,_red,(t-.5)*2);return 'rgb('+c[0]+','+c[1]+','+c[2]+')';};
     let segs='';
     for(let i=0;i<N;i++){
-      const a1=(rot+(i/N)*gFrac*360)*Math.PI/180,a2=(rot+((i+1)/N)*gFrac*360)*Math.PI/180;
-      const on=(score!==null&&(i/N)<=score/100);
-      const hue=(i/(N-1))*120; // 0=rouge → 120=vert (passe par orange/jaune)
-      const col=on?'hsl('+hue.toFixed(0)+',74%,53%)':'rgba(255,255,255,.06)';
-      segs+='<line x1="'+(50+r*Math.cos(a1)).toFixed(2)+'" y1="'+(50+r*Math.sin(a1)).toFixed(2)+'" x2="'+(50+r*Math.cos(a2)).toFixed(2)+'" y2="'+(50+r*Math.sin(a2)).toFixed(2)+'" stroke="'+col+'" stroke-width="8.5" stroke-linecap="round"/>';
+      const t0=i/N,a1=(A0+t0*SPAN)*Math.PI/180,a2=(A0+((i+1)/N)*SPAN)*Math.PI/180;
+      const on=score!==null&&t0<filled-1e-9;
+      const col=on?_fill(filled>0?t0/filled:0):'#232833';
+      segs+='<line x1="'+(50+r*Math.cos(a1)).toFixed(2)+'" y1="'+(50+r*Math.sin(a1)).toFixed(2)+'" x2="'+(50+r*Math.cos(a2)).toFixed(2)+'" y2="'+(50+r*Math.sin(a2)).toFixed(2)+'" stroke="'+col+'" stroke-width="'+sw+'" stroke-linecap="round"/>';
     }
     let knob='';
-    if(score!==null){const a=(rot+(score/100)*gFrac*360)*Math.PI/180;const kx=(50+r*Math.cos(a)).toFixed(1),ky=(50+r*Math.sin(a)).toFixed(1);knob='<circle cx="'+kx+'" cy="'+ky+'" r="7.5" fill="#0e1016"/><circle cx="'+kx+'" cy="'+ky+'" r="4.6" fill="#fff"/>';}
-    const gauge='<svg viewBox="0 0 100 100" style="width:104px;height:104px;flex:none;filter:drop-shadow(0 4px 7px rgba(0,0,0,.55));">'
-      +segs
-      +'<polyline points="27,50 35,50 39,42 45,60 51,44 55,50 73,50" fill="none" stroke="'+ringColor+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>'
-      +knob+'</svg>';
+    if(score!==null){const a=(A0+filled*SPAN)*Math.PI/180,kx=(50+r*Math.cos(a)).toFixed(1),ky=(50+r*Math.sin(a)).toFixed(1);knob='<circle cx="'+kx+'" cy="'+ky+'" r="'+(sw/2+2.5)+'" fill="#0e1016"/><circle cx="'+kx+'" cy="'+ky+'" r="'+(sw/2-1)+'" fill="#fff"/>';}
+    const gauge='<div style="position:relative;width:152px;height:152px;flex:none;">'
+      +'<svg viewBox="0 0 100 100" style="width:152px;height:152px;display:block;filter:drop-shadow(0 5px 9px rgba(0,0,0,.55));">'+segs+knob+'</svg>'
+      +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">'
+        +'<div style="font-family:var(--font-cond);font-size:44px;font-weight:800;color:var(--t1);line-height:.85;">'+(score!==null?score:'—')+'</div>'
+        +'<div style="font-size:9.5px;font-weight:700;letter-spacing:.12em;color:var(--t3);margin-top:3px;">RÉCUPÉRATION</div></div></div>';
     el.innerHTML='<div class="ft-rise" style="padding:18px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.16),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.02),transparent),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep),inset 0 1px 0 rgba(255,255,255,.05),0 16px 34px -18px rgba(0,0,0,.75);">'
       +'<div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'+pillHtml+'</div>'
-      +'<div style="display:flex;align-items:center;gap:14px;margin-top:12px;">'
-        +'<div style="flex:none;"><div style="display:flex;align-items:baseline;gap:2px;"><span style="font-family:var(--font-cond);font-size:46px;font-weight:800;color:var(--t1);line-height:.85;">'+(score!==null?score:'—')+'</span>'+(score!==null?'<span style="font-size:13px;color:var(--t3);font-weight:700;">/100</span>':'')+'</div>'
-          +'<div style="font-family:var(--font-cond);font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--t3);margin-top:4px;">RÉCUPÉRATION</div></div>'
-        +'<div style="flex:1;min-width:0;"><div style="font-size:15px;font-weight:700;color:var(--t1);line-height:1.15;">'+heroLabel+'</div><div style="font-size:12px;color:var(--t2);line-height:1.4;margin-top:3px;">'+heroDesc+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-top:6px;">'
+        +'<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:800;color:var(--t1);line-height:1.15;">'+heroLabel+'</div><div style="font-size:12px;color:var(--t2);line-height:1.4;margin-top:4px;">'+heroDesc+'</div></div>'
         +gauge
       +'</div>'
       +(detailHtml?'<div style="border-top:1px solid var(--sep);margin-top:6px;padding-top:6px;">'+detailHtml+'</div>':'')
