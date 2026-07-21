@@ -185,6 +185,7 @@ const NEW_FEATURES=[
   {id:'beginner-prog',  screen:'log',   desc:'Parcours débutant : programme sur mesure (choix 2/3 séances + style Full Body ou Split, machines guidées) — dans 📋 Mes Programmes'},
   {id:'prog-export',    screen:'log',   desc:'Exporter un programme en vrai PDF (bouton 📄 PDF sur chaque programme — partage iPhone ou téléchargement, marche hors-ligne)'},
   // Progrès — spot = id de l'élément (onglet) où poser le point rouge « ici »
+  {id:'prog-chart-interactive', screen:'progress', spot:'ptab-exo', desc:'Nouveau : graphe 1RM interactif — périodes (3M/6M/1an/Tout) + tape un point → « Voir cette séance »'},
   {id:'weight-edit', screen:'progress', spot:'ptab-poids', desc:'Nouveau : tape un point du graphique de poids pour modifier/supprimer la pesée + navigation par période (1M/3M/6M/Tout)'},
   {id:'bodyfat-track', screen:'progress', spot:'ptab-poids', desc:'Nouveau : suivi de la masse grasse dans le temps (calcul US Navy ou saisie) + bascule Poids ↔ Masse grasse sur le graphique'},
   {id:'target-weight', screen:'progress', spot:'ptab-poids', desc:'Nouveau : fixe un poids objectif (ligne repère sur le graphique + kg restants)'},
@@ -232,9 +233,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v29/30/31 + WHATS_NEW_MAX=31) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v30/31/32 + WHATS_NEW_MAX=32) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:29, ic:'📈', t:'Ton graphe de progression, interactif', d:'Sur l\'onglet Progrès, le graphe d\'un exercice devient interactif : ① choisis la PÉRIODE (3 mois / 6 mois / 1 an / Tout) pour zoomer sur ta progression ; ② tape n\'importe quel point de la courbe → tu vois la date et la charge de ce jour-là, et un bouton « Voir cette séance » t\'ouvre direct le détail complet (tes séries, tes notes). Le graphe et ton historique sont enfin reliés. 📈'},
   {v:28, ic:'🌡️', t:'Ton « check-in du jour » regroupé', d:'Pour désencombrer ton Accueil, ton sommeil et ta carte « Comment tu te sens » sont maintenant réunis en UNE carte repliable : « Ton check-in du jour ». Repliée, tu vois un résumé en une ligne (😴 7h · 🙂 énergie · 😄 moral) ; tape dessus pour la déplier et renseigner ton sommeil, ton énergie, ton moral et une éventuelle douleur. Rien n\'a disparu — c\'est juste plus propre et ça respire. 🌡️'},
   {v:27, ic:'🤝', t:'Milo t\'accompagne dans les moments difficiles', d:'Nouveau sur ton Accueil : à côté de ton énergie, tu peux maintenant indiquer ton MORAL du jour (😔 → 😄), en un tap. Pourquoi ? Parce que le plus dur, ce n\'est pas de savoir quoi faire — c\'est de tenir dans les coups de fatigue ou de mou. Quand ton moral est bas, Milo se fait plus DOUX : il dédramatise un écart (sans jamais te culpabiliser), valorise tes progrès, et t\'aide à repartir calmement. ⚠️ Milo reste ton coach sportif, jamais un psy — il ne pose aucun diagnostic. Tout est optionnel. 🤝'},
   {v:26, ic:'🏁', t:'Ton écran de fin de séance', d:'Dès que tu termines une séance, tu arrives sur un vrai écran de bilan : tes exercices (avec leurs images), tes chiffres (volume, records battus 🏆, durée, calories)… et juste en dessous, MILO DÉBRIEFE TA SÉANCE tout seul — pas un « Bravo » générique, mais une vraie analyse (progression, points d\'attention, et un objectif concret pour la prochaine fois). Puis il te demande comment tu t\'es senti. L\'impression qu\'un vrai coach vient de regarder ta séance. 🏁'},
@@ -261,7 +263,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=28;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v29/30/31)
+const WHATS_NEW_MAX=29;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v30/31/32)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

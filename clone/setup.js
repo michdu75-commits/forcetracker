@@ -6,6 +6,11 @@
  */
 // ─── PROGRESS SCREEN ─────────────────────────────────────────
 let _progEx=BIG4[0];
+let _progRange='all';   // vue par période du graphe 1RM (retour GPT) : all/3m/6m/1y
+let _ttSid=null;        // id de la séance du point sélectionné (→ « Voir cette séance »)
+const _PROG_RANGES=[['3m','3 mois',90],['6m','6 mois',180],['1y','1 an',365],['all','Tout',0]];
+function setProgRange(r){_progRange=r;renderChart();}
+function openChartSession(){if(_ttSid)openSessDetail(_ttSid);} // tap point → ouvre le détail de cette séance
 
 function _renderProgChips(chips){
   const exos=S.progExos||BIG4;
@@ -151,23 +156,33 @@ function renderChart(){
   const name=_progEx,box=document.getElementById('chart-box');
   if(!box)return;
   if(!name){box.innerHTML='<div class="empty">Sélectionne un exercice</div>';return;}
+  // Filtre de période (retour GPT) : ne garde que les séances récentes selon _progRange (all = tout).
+  const _rDays=(_PROG_RANGES.find(r=>r[0]===_progRange)||['all','',0])[2];
+  let _cut=null;
+  if(_rDays){const dc=new Date();dc.setDate(dc.getDate()-_rDays);_cut=dc.toISOString().slice(0,10);}
+  const _inRange=d=>!_cut||d>=_cut;
+  const pr=S.prs[name];const prStr=pr?fmt(pr.rm1)+' kg':'—'; // ⭐ PR = record ABSOLU (jamais filtré par période)
+  // Barre de périodes (visible dès qu'il y a des données) — réutilise le style .wrange-chip du poids.
+  const chipsHtml='<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;">'
+    +_PROG_RANGES.map(r=>'<button class="wrange-chip'+(_progRange===r[0]?' active':'')+'" onclick="setProgRange(\''+r[0]+'\')">'+r[1]+'</button>').join('')+'</div>';
   const pts=[];
   [...S.sessions].reverse().forEach(s=>{
+    if(!_inRange(s.date))return;
     const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
     const best=(ex.sets||[]).filter(s=>s.done!==false&&s.kg&&s.reps&&s.type!=='É'&&s.type!=='W').reduce((b,s)=>{const r=bz(s.kg,s.reps);return r>(b?bz(b.kg,b.reps):0)?s:b;},null);
-    if(best)pts.push({date:s.date,kg:best.kg,reps:best.reps,rm1:bz(best.kg,best.reps)});
+    if(best)pts.push({date:s.date,kg:best.kg,reps:best.reps,rm1:bz(best.kg,best.reps),sid:(s.ts||s.id)});
   });
-  // Charge max RÉELLE soulevée (poids le plus lourd sur la barre) — distinct du 1RM estimé
+  // Charge max RÉELLE soulevée (poids le plus lourd sur la barre) — distinct du 1RM estimé, respecte la période
   let maxLoad=null;
   S.sessions.forEach(s=>{
+    if(!_inRange(s.date))return;
     const ex=(s.exs||s.exercises||[]).find(e=>e.name===name);if(!ex)return;
     (ex.sets||[]).forEach(set=>{
       if(set.done===false||!set.kg||!set.reps||set.type==='É'||set.type==='W')return;
       if(!maxLoad||set.kg>maxLoad.kg||(set.kg===maxLoad.kg&&set.reps>maxLoad.reps))maxLoad={kg:set.kg,reps:set.reps};
     });
   });
-  const pr=S.prs[name];const prStr=pr?fmt(pr.rm1)+' kg':'—';
-  if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div><div class="empty" style="padding:20px 0;">Aucune donnée — commence à logger !</div>`;return;}
+  if(!pts.length){box.innerHTML=`<div class="chart-hdr"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>${chipsHtml}<div class="empty" style="padding:20px 0;">${_cut?'Aucune séance sur cette période — choisis « Tout ».':'Aucune donnée — commence à logger !'}</div>`;return;}
   _chartPts=pts;
   const last=pts[pts.length-1],maxPt=pts.reduce((m,p)=>p.rm1>m.rm1?p:m,pts[0]);
   const delta=pts.length>1?fmt(last.rm1-pts[0].rm1):null;
@@ -195,7 +210,8 @@ function renderChart(){
   const prIdx=vals.indexOf(Math.max(...vals));
   const trend=pts.length>1?(pos?'📈 +':'📉 ')+fmt(last.rm1-pts[0].rm1)+' kg':'—';
   box.innerHTML=`
-<div class="chart-hdr" style="margin-bottom:16px;"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>
+<div class="chart-hdr" style="margin-bottom:12px;"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>
+${chipsHtml}
 <div style="display:flex;margin-bottom:16px;">
   <div style="flex:1;text-align:center;">
     <div style="font-family:var(--font-cond);font-size:25px;font-weight:900;color:var(--t1);line-height:1;">${fmt(last.rm1)}<span style="font-size:13px;color:var(--t3);font-weight:700;"> kg</span></div>
@@ -236,6 +252,7 @@ ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;fl
     <div style="font-size:13px;color:var(--t2);" id="tt-set"></div>
   </div>
 </div>
+<button id="tt-see" onclick="openChartSession()" class="ft-press" style="display:none;width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:rgba(41,121,255,.12);color:var(--blue);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;">Voir cette séance ›</button>
 <div class="chart-meta" style="margin-top:10px;"><span>${pts.length} séance${pts.length>1?'s':''}</span><span>${trend}</span></div>`;
 }
 function showChartTooltip(i){
@@ -246,6 +263,10 @@ function showChartTooltip(i){
   if(rm)rm.textContent=fmt(p.rm1)+' kg 1RM';
   if(set)set.textContent=p.reps+' reps × '+p.kg+' kg';
   if(vals)vals.style.display='block';
+  // « Voir cette séance » : visible seulement si on connaît la séance d'origine (retour GPT : lier le graphe à l'historique)
+  _ttSid=p.sid||null;
+  const see=document.getElementById('tt-see');
+  if(see)see.style.display=(_ttSid&&S.sessions.some(s=>(s.ts||s.id)===_ttSid))?'block':'none';
 }
 // ─── SESSION DETAIL / EDIT ───────────────────────────────────
 let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
