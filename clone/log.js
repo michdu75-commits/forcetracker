@@ -1133,7 +1133,12 @@ Object.assign(_EX_EQUIV,{
   'planche':'Gainage',                       // planche FR = plank, PAS Planche de Préhension (grip)
   'pec deck inverse':'Machine Oiseau','extension corde':'Triceps Corde Poulie','shoulder bb':'Développé Militaire',
   // corrects mais à fiabiliser (confirm → auto)
-  'mollets presse':'Presse Mollets (Leg Press)','row poulie':'Rowing Cable','cable row':'Rowing Cable','t bar':'Rowing T-Bar Machine'
+  'mollets presse':'Presse Mollets (Leg Press)','row poulie':'Rowing Cable','cable row':'Rowing Cable','t bar':'Rowing T-Bar Machine',
+  // 9e vague (rapport FORCE/HALTÉRO — powerlifting classique)
+  'bs':'Squat à la Barre','fs':'Squat Avant','ghr':'Glute Ham Raise (GHD)',
+  'comp bench':'Développé Couché','paused bench':'Développé Couché',
+  'pendlay row':'Rowing Barre',               // row barre strict, PAS poulie
+  'conventional dl':'Soulevé de Terre','block pull':'Tirage en Rack (Rack Pull)'
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
