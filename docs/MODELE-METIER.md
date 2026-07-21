@@ -1,6 +1,7 @@
-# 🧩 Modèle métier de Force Tracker — le langage commun (v0.2)
+# 🧩 Modèle métier de Force Tracker — le langage commun (v0.3)
 
-> **v0.2 (21/07/2026)** — intègre le 1ᵉʳ retour de GPT : 3ᵉ état **ANALYSÉ**, **Intention** extensible, **propriétés** portées par la fiche bibliothèque (VM relie, ne déduit pas — Principe 15), objet transversal **Connaissance** (futur), cadrage « le modèle **est une grammaire** ». Relations déjà présentes (section grammaire) — GPT n'avait vu que le PDF condensé.
+> **v0.3 (21/07/2026)** — intègre le retour **Mistral** : **garde-fous opérationnels éthiques** (consentement · traçabilité · mode privé) + honnêteté « l'import envoie le doc à l'IA » ; **réconciliation de l'état ANALYSÉ** (GPT ajoute / Mistral fusionne → état conceptuel, couche dérivée) ; tempo **structuré** ; hiérarchie de **variantes** ; boucle d'enrichissement VM+IA **avec validation** ; items **dynamiques différés** (blocs conditionnels, règles, CRDT, crowdsourcing). ⏳ En attente du retour **Gemini** pour la synthèse finale à 3 voix.
+> **v0.2 (21/07/2026)** — 1ᵉʳ retour GPT : 3ᵉ état **ANALYSÉ**, **Intention** extensible, **propriétés** portées par la fiche (VM relie, ne déduit pas — Principe 15), objet **Connaissance** (futur), « le modèle **est une grammaire** ».
 
 > **Le cap (Michel, 21/07/2026)** : arrêter de penser *uniquement* « fonctionnalités » et penser **« objets métier »**. Définir un **langage commun** que TOUS les modules parlent (VM · import PDF · générateur IA · mode coach · statistiques…). *« On n'ajoute plus des fonctions, on construit un langage capable de représenter la programmation sportive. »*
 >
@@ -21,6 +22,13 @@ Les programmes de vrais coachs (Cyril, Emma, Tatiana…) servent **uniquement de
 
 *« Force Tracker représente et suit, il ne pille pas. L'IA s'inspire des principes, pas des œuvres. »*
 
+### Garde-fous opérationnels — à mettre en place *(retour Mistral, 21/07)*
+La posture (Principe 16) ne suffit pas : il faut des **garanties concrètes**. À implémenter :
+- **Consentement explicite** au moment d'importer/partager un programme (cohérent avec le Mode Coach — l'athlète accepte le lien coach↔athlète).
+- **Traçabilité** : logger la source (« importé du coach X le JJ/MM »).
+- **Mode privé** : programme gardé **local**, aucune analyse IA sauf demande explicite.
+- ⚠️ **Honnêteté à assumer** : aujourd'hui, l'**import envoie le document à l'IA** (serveur) pour le *lire* → un coach's programme **quitte** donc le téléphone à l'import. Un vrai « mode privé » exigerait une **lecture locale** (OCR local, plus difficile) — à évaluer. Ne pas prétendre « 100 % local » tant que ce n'est pas le cas.
+
 ---
 
 ## Principe n°1 — PLANIFIÉ · RÉALISÉ · ANALYSÉ
@@ -32,6 +40,8 @@ La distinction la plus importante. Les mêmes objets existent en **trois états*
 - **Analysé** (le sens) : ce que **Milo en comprend** — débrief, tendances, objectif tenu ou non, score, observations. *(existe déjà : débriefs, `S.registre`, observations, score de récup.)*
 
 Force Tracker gère les trois (`S.programmes` = planifié · `S.sessions` = réalisé · débriefs/Registre = analysé). Le modèle doit **toujours** préciser de quel état on parle. C'est l'incarnation de *« Force Tracker conserve les données, Milo leur donne du sens »*.
+
+> ⚖️ **Réconciliation GPT (ajouter) vs Mistral (fusionner)** : ANALYSÉ est un **état CONCEPTUEL** (il dit *qui* a produit l'info : coach = planifié · athlète = réalisé · Milo = analysé) mais, **techniquement, une couche DÉRIVÉE et optionnelle** attachée au réalisé — **jamais une copie parallèle** des données. On garde la clarté conceptuelle de GPT sans la lourdeur que craignait Mistral.
 
 ---
 
@@ -154,7 +164,10 @@ Série ── décrit ──▶ reps/temps · charge · type · repos
 | Consigne technique : champ libre ou vocabulaire structuré ? | libre d'abord, structurer si récurrent | Christophe/Emma |
 | Cycle : toujours explicite, ou déduit (semaines + progression) ? | optionnel — un programme simple n'a pas de cycle | — |
 | Charge : kg / %1RM / RPE / « max » — un champ unifié ? | `valeur` + `unité` | Force (%1RM), Femme (max) |
-| Tempo (3-1-1) : notation dédiée ? | oui, champ `tempo` sur la série/exercice | Christophe (probable) |
+| Tempo (3-1-1) : notation dédiée ? | oui, champ `tempo` **structuré** (`{phase, durée, unité}`) — validable, lisible par Milo | Christophe (probable) · *Mistral* |
+| Variantes d'exercice : hiérarchie dans la biblio (Squat → bulgare/avant) ? | famille + parent/enfant ; les **synonymes marchent déjà** (VM) | *Mistral* |
+| **FUTUR (programmes dynamiques / Mode Coach — pas maintenant)** : blocs **conditionnels** (« si RPE<7 → +1 série »), **dépendances entre séances** (auto-régulation), moteur de **règles** Milo, **CRDT** (sync multi-écritures), **crowdsourcing** du lexique | pertinents surtout hors muscu classique → **différés** (une brique à la fois) | *Mistral* |
+| Boucle d'enrichissement VM+IA (un cas résolu par l'IA enrichit le lexique) | oui, **avec validation** (palier « confirm ») — **jamais d'ajout auto aveugle** (garde le déterminisme) | *Mistral* |
 
 ---
 
