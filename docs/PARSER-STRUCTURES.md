@@ -67,6 +67,7 @@ workSec, restSec : N             // hiit
 ## Découpage en jalons (on avance pas à pas)
 
 - **M0 — le contrat** *(ce doc)* : figer le modèle ci-dessus. Rétro-compatible : un exo normal (sans structure) se comporte **exactement** comme avant.
+- **M0.5 — reconnaître AVANT d'interpréter** *(suggestion GPT, adoptée)* : une étape qui **identifie le TYPE de structure + ses paramètres** (`5 tours`, `EMOM`, `AMRAP`, `For Time`, `Tabata`, `HIIT`, `Superset`, `Giant Set`, `Dropset`, `Rest-Pause`…) **sans encore transformer** les données — exactement la philosophie du moteur VM (reconnaître d'abord, agir ensuite). **Raffinement Claude : cette couche est en grande partie LOCALE** — un `_STRUCT_LEXICON` (mots-clés + extraction de params via regex) qui lit le texte/les notes → **déterministe, testable en banc** (« local d'abord »), l'IA ne servant qu'à ce que le local ne sait pas trancher. Sépare proprement « détecter la structure » de « la traduire en séries/reps » (= M1+).
 - **M1 — le fix « 99 » (priorité)** : apprendre à la LECTURE que **« N tours » → `sets = N`** et que le nombre à côté d'un exo = ses **reps** (ex. « 5 tours : 10 KB Swings » → KB Swings `5×10`). **Interdire le sentinelle « 99 »** ; un temps sans reps → défaut raisonnable (ou champ vide), **jamais 99**. → gros gain visuel immédiat, même sans rendu spécial.
 - **M2 — le rendu** : aperçu d'import + écran séance affichent un bloc circuit/EMOM groupé avec l'info « N tours » / « X min ». (Frontend → **testable en local**.)
 - **M3 — les minuteurs** : EMOM/HIIT branchés sur le chrono (à la minute / effort-repos). Plus tard.
@@ -88,6 +89,16 @@ workSec, restSec : N             // hiit
 | Reps « max » / AMRAP : quel champ ? | `set.maxi` (existe déjà, ft-v409) | — |
 
 ---
+
+## Vision 3 niveaux (GPT, adoptée) — où va le moteur
+
+Le moteur d'import raisonnera à terme sur **trois niveaux de reconnaissance**, empilés (chacun s'appuie sur le précédent) :
+
+1. **Reconnaissance des EXERCICES** — VM, `_matchExercise`. ✅ mûr (11 vagues, ~100 % muscu classique).
+2. **Reconnaissance des STRUCTURES** — ce chantier (circuit/EMOM/AMRAP/HIIT/superset/dropset). 🟡 en cours.
+3. **Reconnaissance de l'INTENTION du programme** — force / hypertrophie / CrossFit / bodybuilding / conditioning… 🔮 futur.
+
+Cohérent avec l'**architecture hybride** (algos métier d'abord, IA ciblée) : chaque niveau est **local d'abord**, l'IA en renfort. Le niveau 3 (intention) permettra plus tard d'adapter Milo / le Gardien au style réel du programme.
 
 ## Cas réels observés (on remplit au fil des imports)
 
