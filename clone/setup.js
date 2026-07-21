@@ -190,7 +190,9 @@ function renderChart(){
   const pos=delta!==null&&parseFloat(delta)>=0;
   const W=340,H=170,pad={t:18,r:14,b:32,l:44},iW=W-pad.l-pad.r,iH=H-pad.t-pad.b;
   const vals=pts.map(p=>p.rm1);
-  const minY=Math.floor(Math.min(...vals)*.94),maxY=Math.ceil(Math.max(...vals)*1.06),rY=maxY-minY||1;
+  const goal=(S.strengthGoals&&S.strengthGoals[name])||0; // objectif de force (1RM visé) pour cet exercice
+  const rangeVals=vals.concat(goal>0?[goal]:[]);
+  const minY=Math.floor(Math.min(...rangeVals)*.94),maxY=Math.ceil(Math.max(...rangeVals)*1.06),rY=maxY-minY||1;
   const xS=pts.length>1?iW/(pts.length-1):0;
   const toX=i=>pad.l+(pts.length>1?i*xS:iW/2);
   const toY=v=>pad.t+iH-((v-minY)/rY)*iH;
@@ -209,6 +211,22 @@ function renderChart(){
   const xIdxs=[...new Set(pts.length===1?[0]:Array.from({length:n},(_,i)=>Math.round(i*(pts.length-1)/(n-1))))];
   const prIdx=vals.indexOf(Math.max(...vals));
   const trend=pts.length>1?(pos?'📈 +':'📉 ')+fmt(last.rm1-pts[0].rm1)+' kg':'—';
+  // Carte « Objectif de force » : 1RM visé par exercice + barre de progression (retour maquettes Gemini/GPT)
+  const curRm=last.rm1;
+  const gPct=goal>0?Math.min(100,Math.round(curRm/goal*100)):0;
+  const gRem=goal>0?Math.round((goal-curRm)*10)/10:0;
+  const gReached=goal>0&&curRm>=goal;
+  const goalCard='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:12px 13px;margin-top:12px;">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">'
+      +'<div style="font-size:13.5px;font-weight:800;color:var(--t1);">🎯 Objectif de force</div>'
+      +'<div style="display:flex;gap:7px;align-items:center;flex-shrink:0;">'
+        +'<input type="number" id="strgoal-inp" value="'+(goal||'')+'" placeholder="kg" step="0.5" min="1" max="600" inputmode="decimal" style="width:66px;padding:8px 9px;border-radius:8px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);text-align:center;">'
+        +'<button class="ft-press" onclick="setStrengthGoal()" style="background:linear-gradient(135deg,#22C55E,#16A34A);color:#fff;border:none;border-radius:8px;padding:9px 12px;font-size:15px;font-weight:700;cursor:pointer;">✓</button>'
+      +'</div></div>'
+    +(goal>0?('<div style="margin-top:10px;height:8px;border-radius:5px;background:var(--bg3);overflow:hidden;"><div style="height:100%;width:'+gPct+'%;background:linear-gradient(90deg,#22C55E,#5BE39A);border-radius:5px;"></div></div>'
+      +'<div style="margin-top:7px;font-size:12.5px;color:var(--t2);display:flex;justify-content:space-between;gap:8px;"><span><b style="color:var(--t1);">'+fmt(curRm)+'</b> / '+fmt(goal)+' kg · '+gPct+'%</span><span style="font-weight:700;color:'+(gReached?'var(--green)':'var(--t2)')+';">'+(gReached?'🎉 Atteint !':'encore '+gRem+' kg')+'</span></div>')
+      :'<div style="margin-top:6px;font-size:12px;color:var(--t3);">Fixe le 1RM que tu vises — une ligne repère verte apparaît sur ton graphe.</div>')
+    +'</div>';
   box.innerHTML=`
 <div class="chart-hdr" style="margin-bottom:12px;"><span class="chart-title">${_escNote(name)}</span><span class="badge-gold">⭐ PR ${prStr}</span></div>
 ${chipsHtml}
@@ -242,6 +260,7 @@ ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;fl
   ${ticks.filter((_,i)=>i%2===0).map(v=>`<text x="${pad.l-6}" y="${(toY(v)+3.5).toFixed(1)}" text-anchor="end" style="fill:var(--t3);font-size:9.5px;font-family:-apple-system,sans-serif;font-weight:600;">${Math.round(v)}</text>`).join('')}
   <path d="${area}" fill="url(#cg)"/>
   <path d="${line}" style="stroke:var(--red);" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  ${goal>0?`<line x1="${pad.l}" y1="${toY(goal).toFixed(1)}" x2="${W-pad.r}" y2="${toY(goal).toFixed(1)}" style="stroke:#22C55E;" stroke-width="1.5" stroke-dasharray="5 4" opacity=".9"/><text x="${W-pad.r}" y="${(toY(goal)-4).toFixed(1)}" text-anchor="end" style="fill:#22C55E;font-size:9px;font-weight:700;font-family:-apple-system,sans-serif;">Objectif ${fmt(goal)}</text>`:''}
   ${pts.map((p,i)=>{const cx=toX(i).toFixed(1),cy=toY(p.rm1).toFixed(1),isPR=i===prIdx;return(isPR?`<circle cx="${cx}" cy="${cy}" r="11" fill="rgba(255,214,0,.18)"/>`:'')+'<circle cx="'+cx+'" cy="'+cy+'" r="'+(isPR?6:4)+'" style="fill:'+(isPR?'var(--gold)':'var(--red)')+';stroke:var(--bg);" stroke-width="2.5"/><circle cx="'+cx+'" cy="'+cy+'" r="16" fill="transparent" style="cursor:pointer;" onclick="showChartTooltip('+i+')"/>';}).join('')}
   ${xIdxs.map(i=>`<text x="${toX(i).toFixed(1)}" y="${H-6}" text-anchor="middle" style="fill:var(--t3);font-size:9px;font-family:-apple-system,sans-serif;">${new Date(pts[i].date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'short'})}</text>`).join('')}
 </svg>
@@ -253,7 +272,18 @@ ${maxLoad?`<div style="display:flex;align-items:center;justify-content:center;fl
   </div>
 </div>
 <button id="tt-see" onclick="openChartSession()" class="ft-press" style="display:none;width:100%;margin-top:8px;padding:11px;border:none;border-radius:10px;background:rgba(41,121,255,.12);color:var(--blue);font-family:var(--font);font-size:14px;font-weight:700;cursor:pointer;">Voir cette séance ›</button>
+${goalCard}
 <div class="chart-meta" style="margin-top:10px;"><span>${pts.length} séance${pts.length>1?'s':''}</span><span>${trend}</span></div>`;
+}
+// Objectif de force par exercice : fixe/retire le 1RM visé pour l'exo affiché
+function setStrengthGoal(){
+  const name=_progEx; if(!name)return;
+  const v=parseFloat((document.getElementById('strgoal-inp')||{}).value);
+  S.strengthGoals=S.strengthGoals||{};
+  if(!v){delete S.strengthGoals[name];persist();renderChart();toast('Objectif retiré','info');return;}
+  if(v<1||v>600){toast('Objectif invalide (1–600 kg)','error');return;}
+  S.strengthGoals[name]=v;persist();renderChart();
+  toast('Objectif '+name+' : '+v+' kg 🎯','success');
 }
 function showChartTooltip(i){
   const p=_chartPts[i];if(!p)return;
@@ -281,7 +311,7 @@ function _cloudSync(){
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
       ...(_adnFilled()?{adn:S.adn}:{}),
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
-      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
+      neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,strengthGoals:S.strengthGoals||{},manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
@@ -1894,6 +1924,7 @@ function _applyRestoreData(raw){
   try{if(d.smoker!==undefined)S.smoker=!!d.smoker;}catch(e){console.warn('[FT restore] smoker',e);}
   try{if(d.neck)S.neck=parseFloat(d.neck)||0;}catch(e){}
   try{if(d.targetWeight)S.targetWeight=parseFloat(d.targetWeight)||0;}catch(e){}
+  try{if(d.strengthGoals&&typeof d.strengthGoals==='object')S.strengthGoals=d.strengthGoals;}catch(e){}
   try{if(d.manualKcal)S.manualKcal=parseFloat(d.manualKcal)||0;}catch(e){}
   try{if(d.waist)S.waist=parseFloat(d.waist)||0;}catch(e){}
   try{if(d.hip)S.hip=parseFloat(d.hip)||0;}catch(e){}

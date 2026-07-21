@@ -213,6 +213,7 @@ const _HELP_DATA={
     title:'📈 Progrès',
     tips:[
       {i:'💪',t:'Le graphique affiche ton 1RM estimé (Brzycki) par exercice — sans avoir besoin de tester à l\'échec. Les boutons 3 mois / 6 mois / 1 an / Tout choisissent la période. Et tape un point de la courbe : tu vois la date + la charge, puis « Voir cette séance » t\'ouvre directement le détail de ce jour-là.'},
+      {i:'🎯',t:'« Objectif de force » (sous le graphe d\'un exercice) : fixe le 1RM que tu vises (ex. Squat → 130 kg). Une barre de progression te montre où tu en es (« 87 % · encore 17 kg ») et une ligne verte repère apparaît sur ton graphe. C\'est TON objectif, tu le changes ou le retires quand tu veux (laisse vide + ✓).'},
       {i:'⚖️',t:'Log ton poids régulièrement (idéalement le matin à jeun) pour une courbe fiable. Tap sur une entrée pour la corriger.'},
       {i:'🏅',t:'18 badges en 4 catégories : évolution, performance, streak, spécial. Vérifie l\'onglet Badges pour les débloquer.'},
       {i:'📋',t:'Tap sur une séance passée dans l\'historique pour voir et modifier les kg/reps de chaque série. Sur chaque exercice de cette séance, l\'icône 📊 t\'ouvre sa progression (ton poids sur les dernières séances).'},

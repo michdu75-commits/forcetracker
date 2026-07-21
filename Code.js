@@ -648,6 +648,7 @@ function handleSaveProfile_(body) {
     if (body.waist         !== undefined) profile.waist         = _pn_(body.waist,         profile.waist);
     if (body.hip           !== undefined) profile.hip           = _pn_(body.hip,           profile.hip);
     if (body.targetWeight  !== undefined) profile.targetWeight  = _pn_(body.targetWeight,  profile.targetWeight);
+    if (body.strengthGoals !== undefined) profile.strengthGoals = _po_(body.strengthGoals, profile.strengthGoals);
     if (body.manualKcal    !== undefined) profile.manualKcal    = _pn_(body.manualKcal,    profile.manualKcal);
     // Booleans : false est une valeur valide — toujours écrire
     if (body.smoker        !== undefined) profile.smoker        = body.smoker;

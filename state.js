@@ -24,6 +24,7 @@ let S={
   sleepLog:[],
   weightLog:[],
   dayStateLog:[],
+  strengthGoals:{},
   name:'',
   coachFree:0,
   histImports:0,
@@ -96,6 +97,7 @@ function load(){
     S.beginnerJourney=JSON.parse(localStorage.getItem('ft4_bjourney')||'null'); // parcours débutant : {style,freq,startDate,phase}
     S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
     S.weightLog=JSON.parse(localStorage.getItem('ft4_wlog')||'[]');
+    S.strengthGoals=JSON.parse(localStorage.getItem('ft4_strgoals')||'{}'); // objectif de 1RM par exercice {nom:kg}
     S.name=localStorage.getItem('ft4_name')||'';
     S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
     S.progExos=JSON.parse(localStorage.getItem('ft4_progexos')||'null')||[...BIG4];
@@ -273,6 +275,7 @@ function persist(){
     localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));
     localStorage.setItem('ft4_wlog',JSON.stringify(S.weightLog||[]));
+    localStorage.setItem('ft4_strgoals',JSON.stringify(S.strengthGoals||{}));
     localStorage.setItem('ft4_name',S.name||'');
     localStorage.setItem('ft4_progs',JSON.stringify(S.programmes||[]));
     localStorage.setItem('ft4_tester_ideas',JSON.stringify(S.testerIdeas||[]));
