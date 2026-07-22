@@ -751,6 +751,21 @@ function buildCoachContext() {
     ? Object.entries(S.prs).map(([ex, d]) => `${ex}: ${d.kg}kg×${d.reps} (~${fmt(d.rm1)}kg 1RM)`).join(', ')
     : 'Aucun PR enregistré';
 
+  // Objectifs FIXÉS par l'athlète (force par exercice + poids) — pour que Milo puisse répondre
+  // « est-ce atteignable / en combien de temps » (retour Michel : Milo ne connaissait pas
+  // l'objectif de 130 kg au couché → il parlait du record à la place). Cerveau 1 = COMPRENDRE.
+  const _sg = (typeof S!=='undefined' && S.strengthGoals) ? S.strengthGoals : {};
+  const _sgLines = Object.entries(_sg).filter(([,kg]) => kg > 0).map(([ex, kg]) => {
+    const rm = (S.prs[ex] && S.prs[ex].rm1) ? S.prs[ex].rm1 : null;
+    if (rm == null) return `${ex}: objectif ${kg} kg (pas encore de record sur cet exo)`;
+    const gap = kg - rm;
+    return `${ex}: objectif ${kg} kg (actuel ~${fmt(rm)} kg 1RM${gap > 0 ? `, encore ~${fmt(gap)} kg` : ' — DÉJÀ ATTEINT 🎉'})`;
+  });
+  const objectivesText = [
+    _sgLines.length ? `Objectifs de FORCE (1RM visé par exercice): ${_sgLines.join(' | ')}` : '',
+    (S.targetWeight > 0) ? `Poids objectif: ${S.targetWeight} kg (poids actuel: ${S.bw} kg)` : ''
+  ].filter(Boolean).join('\n') || 'Aucun objectif chiffré fixé pour l\'instant';
+
   // Historique détaillé : le kg×reps de CHAQUE série (pas juste le nb de séries + volume total),
   // sinon Milo ne peut pas parler des charges réellement soulevées (retour Michel : « il prend
   // la charge totale mais pas chaque exercice »). É = échauffement, X = échec.
@@ -995,6 +1010,10 @@ ${(()=>{
 })()}
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}
+
+OBJECTIFS FIXÉS PAR L'ATHLÈTE:
+${objectivesText}
+→ Quand il/elle parle d'« atteindre son objectif » (ex. « combien de temps ? », « c'est possible ? »), APPUIE-TOI sur ces cibles ET sur son 1RM actuel : donne une estimation RÉALISTE et HONNÊTE (la force progresse lentement, ~2 à 5 kg par mois sur un gros mouvement quand tout va bien, et jamais de façon linéaire ; ça dépend du niveau, de la régularité, de la récup et de la nutrition). Explique ce qui accélère (fréquence, technique, décharge, sommeil, apport protéique) et ce qui freine — mais ne PROMETS JAMAIS une date certaine. Si aucun objectif chiffré n'est fixé, tu peux lui proposer d'en définir un dans l'onglet Progrès.
 
 CYCLE DE FORCE:
 ${S.cycle && S.cycle.active ? `Actif - Semaine ${curWeek}/${S.cycle.weeks} - Phase ${cyclePlan ? cyclePlan.phase : '—'} - ${cyclePlan ? cyclePlan.sets+'×'+cyclePlan.reps+' @ '+cyclePlan.pct+'%' : '—'}` : 'Aucun cycle actif'}
@@ -1882,7 +1901,7 @@ function _vcApplyPersona(p){
   S.activityLevel=a.activityLevel||'modéré'; S.workType=''; S.smoker=false;
   S.coachTone=a.coachTone||'';
   // — Morphologie / composition / mensurations —
-  S.morpho=a.morpho||''; S.morphotype=a.morphotype||''; S.targetWeight=a.targetWeight||0;
+  S.morpho=a.morpho||''; S.morphotype=a.morphotype||''; S.targetWeight=a.targetWeight||0; S.strengthGoals=a.strengthGoals||{};
   S.neck=a.neck||0; S.waist=a.waist||0; S.hip=a.hip||0; S.scaleType=a.scaleType||'';
   // — ADN / santé —
   S.adn=a.adn||{motivation:'',modeVie:'',prefs:'',experience:''};
