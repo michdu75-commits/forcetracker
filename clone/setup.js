@@ -606,7 +606,7 @@ function renderSessions(){
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
     const sync=s.synced?' <span class="synced-pill">☁️</span>':'';
     const sc=_mscScores(s.exs||s.exercises||[]);
-    const mini=_mscSVGmini(sc);
+    const mini=_mscSVGmini(sc).replace('width:32px','width:46px'); // figurine plus grande sur les cartes (retour GPT, ft-v570)
     // Étiquette : nom de la séance du programme si dispo, sinon muscle le plus travaillé → devient le TITRE de la carte
     let _topLbl='';{let _b='',_bv=0;const _sc=sc.sc||{};for(const g in _sc){if(_sc[g]>_bv){_bv=_sc[g];_b=g;}}if(_b&&_MG[_b])_topLbl=_MG[_b].label;}
     const _tag=s.progLabel?('🗂️ '+s.progLabel):(_topLbl?('💪 '+_topLbl):'');
@@ -617,8 +617,22 @@ function renderSessions(){
     parts.push('<span class="sess-vol2">'+Math.round(s.volume||0)+' kg</span>');
     if(s.calories)parts.push('<span class="sess-cal2">🔥'+s.calories+' kcal</span>');
     const metaHtml=parts.join('<span style="opacity:.4">·</span>')+sync;
-    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div><div class="sess-exs2">${_escNote(exs)||'—'}</div></div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
+    // Liste d'exos repliable (retour GPT, ft-v570) : clampée à 2 lignes, dépliable inline si beaucoup d'exos.
+    const _exsArr=(s.exs||s.exercises||[]).map(e=>e.name);
+    const _exsStr=_exsArr.join(', ');
+    const _canExpand=_exsArr.length>4||_exsStr.length>70;
+    const _exsHtml='<div class="sess-exs2" id="sess-exs-'+i+'">'+(_escNote(_exsStr)||'—')+'</div>'
+      +(_canExpand?'<button class="sess-exs-more" id="sess-exs-'+i+'-b" onclick="toggleSessExs('+i+',event)">voir tout ›</button>':'');
+    return`<div class="sess-card" onclick="openSessDetail(${s.ts||s.id||0})" style="cursor:pointer;padding:12px 14px;"><div style="display:flex;align-items:flex-start;gap:10px;"><div style="flex:1;min-width:0;"><div class="sess-title">${_escNote(headline)}</div><div class="sess-meta">${metaHtml}</div>${_exsHtml}</div><div onclick="showSessMuscleMap(${i},event)" style="cursor:zoom-in;flex-shrink:0">${mini}</div></div></div>`;
   }).join('');
+}
+// Déplie/replie la liste d'exos d'une carte d'historique sans ouvrir le détail (retour GPT, ft-v570)
+function toggleSessExs(i,ev){
+  ev&&ev.stopPropagation();
+  const d=document.getElementById('sess-exs-'+i),b=document.getElementById('sess-exs-'+i+'-b');
+  if(!d)return;
+  const open=d.classList.toggle('expanded');
+  if(b)b.textContent=open?'replier ▴':'voir tout ›';
 }
 
 // ─── 1RM CALCULATOR ──────────────────────────────────────────
