@@ -89,6 +89,12 @@ Sa qualité vient autant de ce qu'il sait **NE PAS conclure** que de ce qu'il sa
   isolation/mouvement secondaire. Injectée dans `buildCoachContext` (bloc « STRUCTURER UN PROGRAMME » +
   étiquetage [ancre]/[accessoire] des exos de la séance en cours) → Milo construit AUTOUR des ancres,
   diagnostique une stagnation d'ancre autrement qu'un manque de volume d'accessoires.
-- ⏭️ **Pièces à venir** (chacune une brique du moteur, une à la fois) : Observations (Cerveau 1 qui affine
-  + Cerveau 2 qui réévalue) · profil conversationnel (Cerveau 1) · générateur de programme (sortie du
-  Cerveau 2).
+- ✅ **2ᵉ pièce — profil CONVERSATIONNEL, étape 1 « le comportement »** (`buildCoachContext`, coach.js,
+  ft-v573) : connaissance du **Cerveau 1** (COMPRENDRE), prompt-only. Bloc « APPRENDRE À CONNAÎTRE LA
+  PERSONNE EN DISCUTANT » : profil VIVANT, poser 1 bonne question au bon moment (aide d'abord), écouter +
+  montrer qu'on retient (adapte selon ce que la personne confie), relier au profil/ADN/historique,
+  respecter le rythme (jamais un interrogatoire). Concrétise le Principe 18. ⏳ **Étape 2 (plus tard)** =
+  mémoire DURABLE de ce que Milo apprend (extraction + validation, façon Observations).
+- ⏭️ **Pièces à venir** (chacune une brique du moteur, une à la fois) : mémoire durable du profil appris
+  (étape 2 ci-dessus) · Observations (Cerveau 1 qui affine + Cerveau 2 qui réévalue) · générateur de
+  programme (sortie du Cerveau 2).
