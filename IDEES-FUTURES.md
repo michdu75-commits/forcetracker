@@ -4,6 +4,26 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🧭 LE FILTRE DE PRIORISATION (GPT 22/07/2026, adopté) — « améliore-t-il les décisions de Milo ? »
+
+**Le constat (GPT, en relisant ce backlog) :** Force Tracker **change de nature** — au départ une app de musculation, aujourd'hui une **plateforme qui cherche à faire raisonner Milo comme un coach**. Le backlog « raconte une histoire » : on voit une **direction**, plus une liste d'idées.
+
+**La question-filtre (adoptée pour prioriser) :**
+> **« Est-ce que cette brique améliore la QUALITÉ DES DÉCISIONS de Milo ? »**
+> Si OUI → assez haut dans le backlog. Si NON → ça peut souvent attendre.
+
+Vont clairement **EN HAUT** (elles améliorent le raisonnement de Milo, = là où Force Tracker se différencie) : **profil conversationnel · Observations · continuité · exercices « ancre » vs « accessoire » · priorités musculaires**.
+
+**⚠️ Nuance Claude (à garder) :** ce filtre range les briques à VALEUR AJOUTÉE COACHING, mais il ne remplace pas la **piste FONDATIONS / SÉCURITÉ** (règle d'or n°3 « zéro perte de séance », sécurisation avant grand public, RGPD, robustesse quand l'app grossit). Ces briques n'améliorent pas le raisonnement de Milo mais restent **non négociables**. → **Deux pistes en parallèle** : (1) « le cerveau de Milo » (priorisée par le filtre GPT), (2) « les fondations » (must-do de leur côté, indépendamment du filtre).
+
+**Positions actées (GPT 22/07, avec nos nuances) :**
+- **Objets connectés** : ne PAS lutter contre les limites de plateforme (Apple Santé & co peu accessibles en PWA). On enrichit Milo à la place ; la brique attendra que la techno le permette (import de fichier reste l'option honnête entre-temps).
+- **Multilingue** : ce n'est pas une fonctionnalité, c'est une **capacité de plateforme** — ne plus la repousser, avancer tranquillement (« on regrette toujours de l'avoir trop tardé »). Reste DERRIÈRE le cerveau de Milo en priorité, mais on garde l'architecture i18n vivante.
+- **Réseau social** : **garde-fou** — Force Tracker ne doit PAS devenir un réseau social. Si un jour du communautaire, il reste centré **coaching / progression / entraide**, JAMAIS la visibilité ni la validation sociale (aligné Vision + Constitution « la personne d'abord »).
+- **« Super Premium »** : à creuser, mais positionné comme **« plus de MAÎTRISE »**, pas « plus de fonctionnalités » — analyses avancées de progression, exports complets, comparaisons de cycles, stats détaillées, historique long terme, outils pour passionnés/coachs. Cible = ceux qui veulent exploiter à fond leurs données. Cohérent avec le modèle « le premium débloque l'**intelligence** de la mémoire ».
+
+---
+
 ## 💪 PRIORITÉS MUSCULAIRES — décidé (Michel + GPT + Claude, 22/07/2026), Phase 1 EN COURS
 
 **Constat (Michel, sur les vrais programmes de Cyril Staal : Tatiana/Emma/Christophe)** : un coach ne programme pas qu'autour de l'OBJECTIF, mais autour des **priorités physiques** de l'athlète (retards/points forts). Deux personnes « hypertrophie » n'ont pas le même programme si l'une veut les épaules et l'autre rattraper ses quadriceps. → **c'est un enrichissement du cerveau de coaching, pas un gadget d'interface** (catégorie « améliore la qualité du coaching », pas « ajoute de la complexité » — distinction GPT).
