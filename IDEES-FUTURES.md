@@ -901,6 +901,8 @@ Le **Coach IA** en tient compte (adapte exos/charges, évite contre-indications)
 
 ## ⌚ Connexion objets connectés (Garmin, Fitbit, Apple Santé, Samsung Health)
 
+> 🏛️ **Cadre d'archi (cap Michel 22/07) : `MODELE-METIER.md` Principe n°2 « Toute donnée a une SOURCE ».** On ne code PAS ces intégrations maintenant, mais on prépare le modèle : chaque donnée porte un champ `source` → une nouvelle app/appareil = un **adaptateur**, jamais une réécriture. La 1ʳᵉ brique nutrition (journal) doit déjà porter une `source` par entrée.
+
 Relier l'app aux montres/trackers pour récupérer FC, sommeil, calories, activité → nourrir le Coach et la récup.
 
 **Réalité du chantier (par plateforme, pas un seul projet) :**

@@ -89,6 +89,11 @@ gratuits** ; estimation **par catégorie** pour le fait-maison ; chiffres en **f
 faux-précis) ; détail au gramme **en option** (niveau 3/4). Cible : **peu de friction = tenu = fiable**.
 Le coaching fin vient APRÈS le journal.
 
+> ⚠️ **Exigence d'architecture (cap Michel, `MODELE-METIER.md` Principe n°2)** : chaque entrée du
+> journal doit porter un champ **`source`** (`manuel` · `scan` · `import` · `photo-ia` · plus tard
+> `myfitnesspal`, montre…). On **ne code pas** ces imports maintenant, mais le modèle doit être
+> **compatible dès le départ** pour qu'un futur import externe se greffe **sans réécriture**.
+
 *(À valider comme prochaine brique — on cadre l'esprit d'abord, on choisit/priorise ensuite avec Michel.)*
 
 ---

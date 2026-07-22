@@ -1,5 +1,6 @@
-# 🧩 Modèle métier de Force Tracker — le langage commun (v0.4)
+# 🧩 Modèle métier de Force Tracker — le langage commun (v0.5)
 
+> **v0.5 (22/07/2026)** — ajout du **Principe n°2 « Toute donnée a une SOURCE » (architecture ouverte aux entrées externes)** (cap Michel) : chaque donnée porte un champ `source` (manuel par défaut · scan · import · csv · photo-ia · garmin/apple-health/google-fit/balance/myfitnesspal…) ; séparer la donnée de son canal ; une nouvelle source = un adaptateur, jamais une réécriture ; la source informe la fiabilité (P19) ; formats standards (Open Food Facts, FIT/TCX/GPX, CSV) déjà partiellement utilisés. **Ne pas coder les intégrations maintenant, mais ne rien coder qui les empêche** — impact immédiat : le journal nutrition doit porter une `source` par entrée.
 > **v0.4 (21/07/2026)** — intègre le retour **Gemini** (3ᵉ voix, tour de table complet) : **ANALYSÉ confirmé** (« abstraction brillante », = couche de métadonnées **non destructive** → débat GPT/Mistral clos) ; **Série à métriques flexibles** (temps/distance/calories/puissance, pas que reps/kg — pour endurance/CrossFit) ; **fuzzy matching** avant « inconnu » (existe déjà : `_lev`/Jaccard, à renforcer) ; **garde-fous éthiques TECHNIQUES** (anonymisation import · interdiction de re-partager un programme tiers · charte de transparence) ; et surtout l'**angle mort n°1 : versionnage du schéma de données + migrations client** (garantie technique de la rétro-compat / zéro perte).
 > **v0.3 (21/07/2026)** — retour **Mistral** : garde-fous opérationnels éthiques + honnêteté « l'import envoie le doc à l'IA » ; réconciliation ANALYSÉ ; tempo structuré ; hiérarchie variantes ; boucle VM+IA avec validation ; items dynamiques différés.
 > **v0.2 (21/07/2026)** — 1ᵉʳ retour GPT : 3ᵉ état **ANALYSÉ**, **Intention** extensible, **propriétés** portées par la fiche (VM relie, ne déduit pas — Principe 15), objet **Connaissance** (futur), « le modèle **est une grammaire** ».
@@ -44,6 +45,34 @@ La distinction la plus importante. Les mêmes objets existent en **trois états*
 Force Tracker gère les trois (`S.programmes` = planifié · `S.sessions` = réalisé · débriefs/Registre = analysé). Le modèle doit **toujours** préciser de quel état on parle. C'est l'incarnation de *« Force Tracker conserve les données, Milo leur donne du sens »*.
 
 > ⚖️ **Débat tranché (GPT + Gemini + nous : garder ; Mistral : ne pas dupliquer → satisfait)** : ANALYSÉ est un **état CONCEPTUEL** (il dit *qui* a produit l'info : coach = planifié · athlète = réalisé · Milo = analysé) mais, **techniquement, une couche de MÉTADONNÉES NON DESTRUCTIVE** posée par-dessus le réalisé — **jamais une copie, jamais une altération de l'historique brut** (formulation Gemini). On garde la clarté conceptuelle de GPT, sans la lourdeur que craignait Mistral, avec la garantie technique de Gemini.
+
+---
+
+## Principe n°2 — Toute donnée a une SOURCE (architecture ouverte aux entrées externes)
+
+*(Cap Michel, 22/07/2026 — « préparer pour le futur les entrées pour applications externes ; que l'architecture soit compatible ».)*
+
+Chaque donnée mesurée (poids, nutrition, sommeil, activité, fréquence cardiaque, mensurations…)
+doit pouvoir porter un champ **`source`** — d'où elle vient : `manuel` (défaut, rétrocompatible) ·
+`scan` · `import` · `csv` · `photo-ia` · ou une app/appareil (`garmin`, `apple-health`,
+`google-fit`, `balance`, `myfitnesspal`…).
+
+- **Séparer la DONNÉE (le fait mesuré) de son CANAL d'entrée.** Une nouvelle source = un
+  **adaptateur** qui normalise vers nos objets métier, **jamais** une réécriture du cœur.
+- **Ne rien coder qui EMPÊCHE les entrées externes.** Ne jamais supposer « toute donnée = saisie
+  manuelle par le seul utilisateur ». *(Pendant, côté DONNÉES, du garde-fou Mode Coach « l'architecture
+  gère des ACTEURS, pas de simples utilisateurs ».)*
+- **La source informe la FIABILITÉ** (rejoint le Principe 19 « pertinence ») : une mesure d'un
+  appareil fiable ≠ une saisie approximative ≠ une estimation IA. Milo peut en tenir compte.
+- **Formats standards** quand ils existent : Open Food Facts (aliments), FIT/TCX/GPX (activité),
+  CSV / Apple Health / Google Fit (poids/sommeil/FC). **On en utilise déjà** (Open Food Facts pour le
+  code-barres, CSV pour l'import balance) → on formalise, on ne part pas de zéro.
+- **Traçabilité + consentement** : la source est loguée ; chaque connexion externe suppose un
+  **consentement explicite** (Principe 11) ; honnêteté sur ce qui quitte le téléphone.
+- ⚠️ **On ne code PAS les intégrations maintenant** — on rend le modèle **compatible dès le départ**.
+  **Impact immédiat** : la 1ʳᵉ brique nutrition (le journal) doit porter une `source` par entrée, pour
+  qu'un futur import (MyFitnessPal, montre…) se greffe **sans réécriture**. Détail des intégrations
+  possibles : `IDEES-FUTURES.md` (Garmin/Apple/Google/Withings…).
 
 ---
 
