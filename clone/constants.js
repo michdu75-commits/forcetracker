@@ -204,6 +204,7 @@ const NEW_FEATURES=[
   {id:'coach-share', screen:'coach',    desc:'Nouveau : partager ou copier une réponse du Coach'},
   {id:'body-study',  screen:'coach',    desc:'Nouveau : Étude du corps — 4 photos, bilan posture/insertions/équilibre + exercices (📐 Premium)'},
   {id:'force-prog',  screen:'coach', spot:'coach-action-force', desc:'Nouveau : Gagner en force (Big 3) — Milo te génère un programme powerlifting à enregistrer (🏋️)'},
+  {id:'milo-start-session', screen:'coach', desc:'Nouveau : dis à Milo ta séance du jour → un bouton « ⚡ Commencer cette séance » l\'ouvre direct dans l\'onglet Séance, poids pré-remplis'},
   {id:'coach-quiz',  screen:'coach', spot:'coach-quiz-card', desc:'Nouveau : réponds au questionnaire « Milo apprend à te connaître » (gratuit, ça ne compte pas dans tes questions) — Milo te donne des conseils bien plus personnalisés'},
   {id:'milo-natural',screen:'coach', desc:'Nouveau : Milo (Coach IA) tient compte de l\'heure qu\'il est et du temps écoulé depuis votre dernière discussion — il t\'accueille naturellement'},
   {id:'milo-coach-pro',screen:'coach', desc:'Nouveau : Milo coache comme un vrai coach — il t\'évalue, croise tes données, justifie ses choix et s\'adapte à ta vie (horaires, travail, temps)'},
@@ -241,9 +242,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v37/38/39 + WHATS_NEW_MAX=39) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v38/39/40 + WHATS_NEW_MAX=40) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:37, ic:'⚡', t:'Milo démarre ta séance', d:'Nouveau dans le Coach 💬 : dis à Milo ta séance du jour (« Développé Couché 4×8, Rowing 4×10, Curl 3×12… ») OU demande-lui une séance à faire maintenant — un bouton « ⚡ Commencer cette séance » apparaît sous sa réponse. Tape-le et ta séance s\'ouvre DIRECT dans l\'onglet Séance, prête à logger : les bons exercices, les séries, et tes poids déjà pré-remplis avec ta dernière fois. De la discussion à la barre, en un clic. ⚡'},
   {v:36, ic:'💪', t:'Dis à Milo tes muscles prioritaires', d:'Nouveau dans Profil → Objectif : tu peux indiquer les muscles que tu veux développer EN PRIORITÉ (jusqu\'à 2, ex. pectoraux + épaules). Comme un vrai coach qui programme autour des priorités de l\'athlète, Milo donnera alors PLUS de fréquence, de volume et de variantes à ces muscles — dans ses conseils et les programmes qu\'il te génère — tout en maintenant le reste. Ton objectif reste le pilote et ta nutrition n\'est pas touchée : c\'est juste pour cibler OÙ tu veux progresser. 💪'},
   {v:35, ic:'🎯', t:'Choisis DEUX objectifs', d:'Dans ton Profil → Objectif, tu peux maintenant ajouter une « priorité complémentaire » à ton objectif principal. Exemple : principal « Force maximale » + complémentaire « Prise de muscle ». Ton objectif PRINCIPAL pilote toujours ta nutrition (calories, macros, repas) ; la priorité complémentaire, elle, affine les conseils de Milo et ton entraînement. (Pour « perdre du gras ET prendre du muscle » en même temps, l\'objectif « Perte de gras + muscle » est fait pour ça.) 🎯'},
   {v:34, ic:'🩹', t:'Tes douleurs, en tapant sur le corps', d:'Fini la liste de boutons : dans « Ton check-in du jour » (Accueil), pour signaler une gêne tu tapes maintenant directement le MUSCLE sur une vraie figurine anatomique (vue de face + de dos) — il devient rouge. Les articulations (nuque, coude, poignet, genou, cheville) restent en boutons juste en dessous, et tu précises toujours le côté (gauche/droite/les deux). Plus visuel, plus clair — et Milo protège la zone en priorité. 🩹'},
@@ -278,7 +280,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=36;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v37/38/39)
+const WHATS_NEW_MAX=37;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v38/39/40)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
