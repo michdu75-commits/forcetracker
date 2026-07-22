@@ -6,7 +6,9 @@
 
 ---
 
-- **Version en prod :** `ft-v576` (🧠 **MOTEUR DE RAISONNEMENT DE MILO** — le « cerveau », posé pièce par pièce ft-v571→576 · voir bloc dédié ci-dessous)
+- **Version en prod :** `ft-v577` (🍽️ **ESPRIT NUTRITION gravé** — Constitution **Principe 21 (v2.0)** + `docs/NUTRITION-PHILOSOPHIE.md` ; philosophie cadrée, **aucune feature codée** ; prochaine étape = choisir la 1ʳᵉ brique nutrition. Avant : 🧠 moteur de raisonnement de Milo ft-v571→576, voir bloc dédié ci-dessous)
+
+- **🍽️ NUTRITION — esprit gravé (ft-v577, croisement Gemini + Mistral + Claude + synthèse Michel)** : phrase-boussole *« la nutrition est un moyen d'améliorer santé/récup/perf ; jamais une source de stress > bénéfice »* (**P21**). Principes : levier au service de l'objectif · optionnelle jamais bloquante · **précision au CHOIX (4 niveaux : qualitatif → portions → macros → suivi précis)** · fiabilité > exhaustivité (±20-50 %, tendances + fourchettes) · local d'abord + fallback fait-maison · qualité gratuite Nutri-Score/NOVA · anti-TCA (Gardien nutrition = seuils d'alerte). **1ʳᵉ brique proposée** = journal léger « à la portion » sur Open Food Facts. **⏭️ Prochaine étape avec Michel : choisir/prioriser cette 1ʳᵉ brique à coder.** Détail : `docs/NUTRITION-PHILOSOPHIE.md`.
 
 - **🧠 CHANTIER ACTIF — LE MOTEUR DE RAISONNEMENT DE MILO (le « cerveau »)** *(réflexion fondatrice Michel 22/07, cadre : `docs/MOTEUR-RAISONNEMENT-MILO.md`)* : passer du « générateur de programmes » au **raisonnement** (Compréhension → **Diagnostic** → décision → explication). Chaque brique = une **PIÈCE** du moteur, prompt-only (0 backend), invisible à l'utilisateur. **Pièces posées :**
   - `ft-v571` — **base du moteur** : bloc « savoir raisonner + savoir s'arrêter » (Constitution **Principe 18**).
