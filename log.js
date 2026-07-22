@@ -1060,6 +1060,22 @@ function _movResist(name){ const q=_normEx(name);
   if(/traction|pompe|dips|gainage|planche|pull up/.test(q))return'poids-du-corps';
   if(/barre|barbell/.test(q))return'barre'; return null; }
 function _exTaxo(name){ return {pattern:_movPattern(name), resistance:_movResist(name)}; }
+// ─── ANCRE vs ACCESSOIRE (connaissance métier du « cerveau de Milo », brique) ──
+// Rôle d'un exercice DANS un programme, dérivé du schéma moteur (0 IA, déterministe).
+//  • ANCRE = grand mouvement polyarticulaire de BASE qui PORTE la progression
+//    (squat, hip hinge, poussée horizontale/verticale, tirage horizontal/vertical) —
+//    fait en 1er, lourd, peu de reps, progression de charge suivie.
+//  • ACCESSOIRE = isolation OU mouvement secondaire (curls, extensions, élévations,
+//    leg curl/extension, mollets, écarté/pec deck, fentes, gainage) — volume, cible
+//    un muscle, complète l'ancre. Un exo inconnu → accessoire (choix prudent).
+// Garde-fou : une isolation mono-articulaire rangée dans un schéma « poussée/tirage »
+// (écarté, pec deck, croisé poulie, pull-over, face pull) reste un ACCESSOIRE.
+const _EX_ANCRE_PATTERNS=['squat','hip-hinge','poussee-horizontale','poussee-verticale','tirage-horizontal','tirage-vertical'];
+function _exRole(name){
+  const q=_normEx(name||'');
+  if(/ecarte|\bfly\b|pec deck|peck deck|croise poulie|crossover|butterfly|pull ?over|face pull|tirage visage/.test(q)) return 'accessoire';
+  return _EX_ANCRE_PATTERNS.includes(_movPattern(name)) ? 'ancre' : 'accessoire';
+}
 // Table d'équivalences SÉMANTIQUES connues (ce que le lexical ne peut pas deviner).
 // clé = forme normalisée d'entrée → nom EXLIB cible. À enrichir au fil des vrais imports.
 const _EX_EQUIV={

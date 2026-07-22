@@ -83,6 +83,12 @@ Sa qualité vient autant de ce qu'il sait **NE PAS conclure** que de ce qu'il sa
 - ✅ **Prompt de Milo enrichi** (`buildCoachContext`, coach.js, ft-v571) : pipeline diagnostic + causes types
   + « fiabilité avant intelligence / savoir s'arrêter » + posture d'humilité (1-2 questions).
 - ✅ **Constitution · Principe 18** (v1.8).
-- ⏭️ **Pièces à venir** (chacune une brique du moteur, une à la fois) : exercices « ancre » vs « accessoire »
-  (connaissance du Cerveau 2) · Observations (Cerveau 1 qui affine + Cerveau 2 qui réévalue) · profil
-  conversationnel (Cerveau 1) · générateur de programme (sortie du Cerveau 2).
+- ✅ **1ʳᵉ pièce — exercices « ANCRE » vs « ACCESSOIRE »** (`_exRole`, log.js, ft-v572) : connaissance
+  déterministe du **Cerveau 2** (dérivée du schéma moteur, 0 IA). ANCRE = grand polyarticulaire de base
+  qui porte la progression (squat/hip-hinge/poussée horiz.+vert./tirage horiz.+vert.) ; ACCESSOIRE =
+  isolation/mouvement secondaire. Injectée dans `buildCoachContext` (bloc « STRUCTURER UN PROGRAMME » +
+  étiquetage [ancre]/[accessoire] des exos de la séance en cours) → Milo construit AUTOUR des ancres,
+  diagnostique une stagnation d'ancre autrement qu'un manque de volume d'accessoires.
+- ⏭️ **Pièces à venir** (chacune une brique du moteur, une à la fois) : Observations (Cerveau 1 qui affine
+  + Cerveau 2 qui réévalue) · profil conversationnel (Cerveau 1) · générateur de programme (sortie du
+  Cerveau 2).
