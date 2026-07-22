@@ -214,6 +214,7 @@ const NEW_FEATURES=[
   {id:'profil-accordion',screen:'setup', anchor:'menu-row-profil', desc:'Profil réorganisé en sections repliables'},
   {id:'level-evolutif',screen:'setup', anchor:'menu-row-profil', desc:'Ton niveau (débutant/intermédiaire/confirmé) dans Profil → Discipline — le Coach s\'adapte et ton niveau évolue tout seul avec tes séances'},
   {id:'goal2', screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : dans Profil → Objectif, ajoute une « priorité complémentaire » à ton objectif principal (Milo et ton entraînement en tiennent compte ; la nutrition suit le principal)'},
+  {id:'muscle-priorities', screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : dans Profil → Objectif, choisis jusqu\'à 2 muscles à développer EN PRIORITÉ — Milo leur donne plus de fréquence/volume/variantes (comme un vrai coach)'},
   {id:'adn-sportif', screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : « Mon ADN sportif » dans ton Profil — dis à Milo ce qui te caractérise durablement (motivation, mode de vie, préférences, expérience) pour des conseils vraiment personnels'},
   {id:'work-actif',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : niveau de travail « Actif » (serveuse, infirmier, vendeur : debout + en déplacement) dans ton Profil — tes calories et macros sont plus justes'},
   {id:'app-guide',   screen:'setup', anchor:'menu-row-appguide', desc:'Nouveau : Menu → « Guide de l\'application » — un diaporama qui explique comment marche l\'app (séance, programmes, Milo, photos…)'},
@@ -240,9 +241,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v36/37/38 + WHATS_NEW_MAX=38) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v37/38/39 + WHATS_NEW_MAX=39) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:36, ic:'💪', t:'Dis à Milo tes muscles prioritaires', d:'Nouveau dans Profil → Objectif : tu peux indiquer les muscles que tu veux développer EN PRIORITÉ (jusqu\'à 2, ex. pectoraux + épaules). Comme un vrai coach qui programme autour des priorités de l\'athlète, Milo donnera alors PLUS de fréquence, de volume et de variantes à ces muscles — dans ses conseils et les programmes qu\'il te génère — tout en maintenant le reste. Ton objectif reste le pilote et ta nutrition n\'est pas touchée : c\'est juste pour cibler OÙ tu veux progresser. 💪'},
   {v:35, ic:'🎯', t:'Choisis DEUX objectifs', d:'Dans ton Profil → Objectif, tu peux maintenant ajouter une « priorité complémentaire » à ton objectif principal. Exemple : principal « Force maximale » + complémentaire « Prise de muscle ». Ton objectif PRINCIPAL pilote toujours ta nutrition (calories, macros, repas) ; la priorité complémentaire, elle, affine les conseils de Milo et ton entraînement. (Pour « perdre du gras ET prendre du muscle » en même temps, l\'objectif « Perte de gras + muscle » est fait pour ça.) 🎯'},
   {v:34, ic:'🩹', t:'Tes douleurs, en tapant sur le corps', d:'Fini la liste de boutons : dans « Ton check-in du jour » (Accueil), pour signaler une gêne tu tapes maintenant directement le MUSCLE sur une vraie figurine anatomique (vue de face + de dos) — il devient rouge. Les articulations (nuque, coude, poignet, genou, cheville) restent en boutons juste en dessous, et tu précises toujours le côté (gauche/droite/les deux). Plus visuel, plus clair — et Milo protège la zone en priorité. 🩹'},
   {v:33, ic:'💡', t:'« Pourquoi ce score ? » — ta récup expliquée', d:'Ton score de récupération (sur l\'Accueil) t\'a toujours un peu intrigué ? Tape « Pourquoi ce score ? » juste en dessous : une fiche claire t\'explique en français simple ce que le chiffre veut dire (à quel point ton corps est prêt à s\'entraîner aujourd\'hui) et D\'OÙ il vient — sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison. Fini le chiffre mystère. Et rappel : ce n\'est qu\'un repère, ton ressenti prime toujours. 💡'},
@@ -276,7 +278,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=35;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v36/37/38)
+const WHATS_NEW_MAX=36;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v37/38/39)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

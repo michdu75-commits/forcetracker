@@ -4,6 +4,24 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 💪 PRIORITÉS MUSCULAIRES — décidé (Michel + GPT + Claude, 22/07/2026), Phase 1 EN COURS
+
+**Constat (Michel, sur les vrais programmes de Cyril Staal : Tatiana/Emma/Christophe)** : un coach ne programme pas qu'autour de l'OBJECTIF, mais autour des **priorités physiques** de l'athlète (retards/points forts). Deux personnes « hypertrophie » n'ont pas le même programme si l'une veut les épaules et l'autre rattraper ses quadriceps. → **c'est un enrichissement du cerveau de coaching, pas un gadget d'interface** (catégorie « améliore la qualité du coaching », pas « ajoute de la complexité » — distinction GPT).
+
+**Découpage (validé, ne pas mélanger) :**
+- **Phase 1 (EN COURS)** : l'utilisateur déclare **jusqu'à 2 groupes musculaires prioritaires** (dans le Profil, durable, comme les autres axes) → injecté dans le contexte de Milo → il adapte fréquence/volume/variantes/conseils + les programmes qu'il génère. **L'objectif reste le pilote.** Rétrocompatible (0 choisi = identique).
+- **Phase 2 (PLUS TARD → brique « Observations »)** : Milo **analyse la progression** dans le temps et **suggère** de nouvelles priorités (« tes quadris +8 %, tes pecs +1 %, on priorise les pecs ? »). Plus ambitieux ; ne PAS mélanger avec la Phase 1.
+
+**La carte des 4 axes (framing GPT, gravé — chacun répond à une question DIFFÉRENTE, zéro doublon) :**
+- **Objectif** → *pourquoi je m'entraîne ?* (force, hypertrophie, perte…) — pilote la nutrition.
+- **Priorité complémentaire** (goal2, ft-v568) → *qu'est-ce que je veux développer en plus ?* (un 2ᵉ but d'entraînement).
+- **Morphologie** → *qui suis-je aujourd'hui ?* (morphotype, proportions, limitations).
+- **Priorités musculaires** → *où je veux progresser en priorité ?* (pecs, quads, épaules…).
+
+**Méthode** : une brique à la fois (Phase 1 seule maintenant). Michel : ne pas retarder le projet en attendant un designer pour le polish → avancer sur les **fondations métier** qui enrichissent Milo, fidèle à la méthode.
+
+---
+
 ## 🔭 Issues du tour de table IA extérieures (20/07/2026) — pertinent mais PRÉMATURÉ
 
 *(Contexte : après l'intégration des alias VM, avis croisés GPT + Gemini + Mistral. Les décisions d'archi retenues sont dans CLAUDE.md ; ci-dessous ce qui est bon mais pas maintenant.)*

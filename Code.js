@@ -628,6 +628,7 @@ function handleSaveProfile_(body) {
     if (body.gender        !== undefined) profile.gender        = _ps_(body.gender,        profile.gender);
     if (body.goal          !== undefined) profile.goal          = _ps_(body.goal,          profile.goal);
     if (body.goal2         !== undefined) profile.goal2         = _ps_(body.goal2,         profile.goal2);
+    if (body.priorities    !== undefined) profile.priorities    = _pa_(body.priorities,    profile.priorities);
     if (body.workType      !== undefined) profile.workType      = _ps_(body.workType,      profile.workType);
     if (body.nutritionPhase!== undefined) profile.nutritionPhase= _ps_(body.nutritionPhase,profile.nutritionPhase);
     if (body.mensCycleStart!== undefined) profile.mensCycleStart= _ps_(body.mensCycleStart,profile.mensCycleStart);

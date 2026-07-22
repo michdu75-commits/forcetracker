@@ -308,7 +308,7 @@ function _cloudSync(){
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
       action:'saveProfile',email:S.email,authCode:_authCode(),
-      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
+      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',priorities:S.priorities||[],discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
       ...(_adnFilled()?{adn:S.adn}:{}),
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,strengthGoals:S.strengthGoals||{},manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
@@ -1642,6 +1642,31 @@ function _renderGoal2(){
     +'<div class="goal2-note">La nutrition (calories, macros, repas) suit <b>uniquement ton objectif principal</b>. La priorité complémentaire adapte les conseils de Milo et ton entraînement.</div>'
     +nudge;
 }
+// Priorités musculaires (Phase 1, retour Michel/GPT — brique « vrai coach ») : jusqu'à 2 groupes
+// que l'utilisateur veut développer en priorité → injecté dans Milo (fréquence/volume/variantes/conseils).
+// L'objectif reste le pilote ; la nutrition n'est PAS touchée. Répond à « où je veux progresser ? ».
+const PRIORITY_MUSCLES=[['pec','Pectoraux'],['dos','Dos'],['epaules','Épaules'],['biceps','Biceps'],['triceps','Triceps'],['quads','Quadriceps'],['ischios','Ischios'],['fessiers','Fessiers'],['mollets','Mollets'],['abdos','Abdominaux']];
+const PRIORITY_MAX=2;
+function _priorityLbl(c){const e=PRIORITY_MUSCLES.find(x=>x[0]===c);return e?e[1]:c;}
+function togglePriority(c){
+  S.priorities=S.priorities||[];
+  const i=S.priorities.indexOf(c);
+  if(i>=0)S.priorities.splice(i,1);
+  else{ if(S.priorities.length>=PRIORITY_MAX){toast('2 muscles prioritaires maximum','info');return;} S.priorities.push(c); }
+  persist();_renderPriorities();
+}
+function _renderPriorities(){
+  const el=document.getElementById('priorities-section');if(!el)return;
+  S.priorities=S.priorities||[];
+  const chips=PRIORITY_MUSCLES.map(m=>{
+    const on=S.priorities.indexOf(m[0])>=0;
+    return '<button class="prio-chip'+(on?' on':'')+'" onclick="togglePriority(\''+m[0]+'\')">'+m[1]+'</button>';
+  }).join('');
+  const n=S.priorities.length;
+  el.innerHTML='<div class="goal2-hdr">💪 Muscles à développer en priorité <span style="font-weight:400;color:var(--t3);">(jusqu\'à 2, optionnel)</span></div>'
+    +'<div class="goal2-grid">'+chips+'</div>'
+    +'<div class="goal2-note">Milo augmentera la fréquence, le volume et les variantes sur '+(n?'ces muscles':'les muscles que tu choisis')+', en maintenant le reste. Ça n\'affecte pas ta nutrition — c\'est pour cibler <b>où tu veux progresser</b>.</div>';
+}
 // Discipline pratiquée — nourrit le Coach IA + l'analyse morpho + la nutrition
 const DISC_LABELS={muscu:'Musculation',bodybuilding:'Bodybuilding / Culturisme',powerbuilding:'Powerbuilding',powerlifting:'Force athlétique / Powerlifting',haltero:'Haltérophilie'};
 const DISC_DESCS={
@@ -1880,6 +1905,7 @@ function renderSetup(){
   const _gr=document.getElementById('g-recomp');
   if(_gr)_gr.style.display=((typeof _isNutriBeta==='function')&&_isNutriBeta())?'':'none';
   setGoal(S.goal||'muscle');
+  _renderPriorities();
   setDiscipline(S.discipline||'muscu');
   _renderLevelSel();
   _renderCoachToneSel();
@@ -1979,6 +2005,7 @@ function _applyRestoreData(raw){
   try{if(d.gender)S.gender=d.gender;}catch(e){console.warn('[FT restore] gender',e);}
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
   try{if(d.goal2!==undefined)S.goal2=d.goal2;}catch(e){console.warn('[FT restore] goal2',e);}
+  try{if(Array.isArray(d.priorities))S.priorities=d.priorities;}catch(e){console.warn('[FT restore] priorities',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
   try{if(d.coachTone!==undefined)S.coachTone=d.coachTone;}catch(e){console.warn('[FT restore] coachTone',e);}
   try{if(d.registre&&(Object.keys(d.registre.facts||{}).length||(d.registre.observations||[]).length||(d.registre.sessionLog||[]).length))S.registre=d.registre;}catch(e){console.warn('[FT restore] registre',e);}
