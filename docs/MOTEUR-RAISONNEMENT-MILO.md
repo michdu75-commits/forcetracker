@@ -101,8 +101,13 @@ Sa qualité vient autant de ce qu'il sait **NE PAS conclure** que de ce qu'il sa
   ft-v573) : connaissance du **Cerveau 1** (COMPRENDRE), prompt-only. Bloc « APPRENDRE À CONNAÎTRE LA
   PERSONNE EN DISCUTANT » : profil VIVANT, poser 1 bonne question au bon moment (aide d'abord), écouter +
   montrer qu'on retient (adapte selon ce que la personne confie), relier au profil/ADN/historique,
-  respecter le rythme (jamais un interrogatoire). Concrétise le Principe 18. ⏳ **Étape 2 (plus tard)** =
-  mémoire DURABLE de ce que Milo apprend (extraction + validation, façon Observations).
-- ⏭️ **Pièces à venir** (chacune une brique du moteur, une à la fois) : mémoire durable du profil appris
-  (étape 2 ci-dessus) · Observations (Cerveau 1 qui affine + Cerveau 2 qui réévalue) · générateur de
-  programme (sortie du Cerveau 2).
+  respecter le rythme (jamais un interrogatoire). Concrétise le Principe 18.
+- ✅ **2ᵉ pièce — profil CONVERSATIONNEL, étape 2 « la mémoire durable »** (`coach.js`, ft-v582) :
+  quand la personne confie un trait DURABLE en discutant (horaires, matériel, préférence forte,
+  contrainte de vie, motivation), Milo PROPOSE de le retenir via un bloc caché `{"retiens":[…]}` →
+  ligne « 🧠 Je retiens : … ? [Oui][Non] » → validé = rangé dans `S.registre.observations`
+  (`status:'validated'`, `source:'conversation'`) → réutilise l'injection contexte + « Ce que Milo
+  sait de toi ». **Rien mémorisé sans accord** (Principe 3), jamais un état du jour, jamais inventer.
+  Réutilise l'infra Observations (une seule mémoire durable). 0 backend (Registre déjà cloud-sync).
+- ⏭️ **Pièces à venir** (chacune une brique du moteur, une à la fois) : Observations (Cerveau 1 qui
+  affine + Cerveau 2 qui réévalue) · générateur de programme (sortie du Cerveau 2).

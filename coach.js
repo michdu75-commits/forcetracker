@@ -495,6 +495,67 @@ function _extractDaySession(reply){
     return {sess,clean};
   }catch(e){console.warn('[milo séance] parse',e);return null;}
 }
+// ─── MÉMOIRE DURABLE (profil conversationnel, étape 2 — demande Michel) ────────
+// Milo peut terminer par un bloc caché {"retiens":["...","..."]} (retiré par _stripCoachTech).
+// On le propose à la VALIDATION (rien mémorisé sans accord, Principe 3). Validé → stocké comme
+// observation confirmée dans S.registre.observations (réutilise l'injection contexte + « Ce que Milo sait de toi »).
+var _pendingMiloMemory=[];   // traits proposés en attente de validation (index → texte)
+function _slugTrait(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim().slice(0,60);}
+function _extractMemory(reply){
+  try{
+    let m=reply.match(/```json\s*([\s\S]*?)```/i);
+    let jsonStr=m?m[1]:null;
+    if(!jsonStr){const m2=reply.match(/\{[\s\S]*?"retiens"[\s\S]*\}/i);jsonStr=m2?m2[0]:null;}
+    if(!jsonStr||!/"retiens"/i.test(jsonStr))return null;
+    const obj=JSON.parse(jsonStr.trim());
+    const arr=obj&&obj.retiens;
+    if(!Array.isArray(arr))return null;
+    const traits=arr.map(t=>String(t||'').trim()).filter(Boolean).slice(0,3);
+    return traits.length?traits:null;
+  }catch(e){console.warn('[milo mémoire] parse',e);return null;}
+}
+// Ajoute, sous la dernière bulle de Milo, une ligne « Je retiens : … ? [Oui] [Non] » par trait NOUVEAU.
+function _appendMemoryBtns(traits){
+  const r=(typeof S!=='undefined')&&S.registre;
+  const known=new Set(((r&&r.observations)||[]).map(o=>o&&o.key).filter(Boolean));
+  const fresh=traits.filter(t=>!known.has(_slugTrait(t)));
+  if(!fresh.length)return;
+  const msgs=document.getElementById('coach-msgs');if(!msgs)return;
+  const bubbles=msgs.querySelectorAll('.msg-coach');
+  const last=bubbles[bubbles.length-1];if(!last)return;
+  const wrap=document.createElement('div');
+  wrap.className='coach-prog-save';
+  wrap.innerHTML=fresh.map(t=>{
+    const idx=_pendingMiloMemory.push(t)-1;
+    return '<div style="margin-top:9px;padding:9px 11px;background:var(--bg3);border-radius:12px;">'
+      +'<div style="font-size:13px;color:var(--t1);margin-bottom:7px;">🧠 Je retiens : <b>'+((typeof _escNote==='function')?_escNote(t):t)+'</b> ?</div>'
+      +'<div style="display:flex;gap:8px;">'
+      +'<button class="ft-press" onclick="_confirmMiloMemory('+idx+',true,this)" style="flex:1;padding:8px;border-radius:10px;background:#FF2D55;border:none;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Oui, retiens</button>'
+      +'<button class="ft-press" onclick="_confirmMiloMemory('+idx+',false,this)" style="flex:1;padding:8px;border-radius:10px;background:var(--bg2);border:1px solid var(--sep);color:var(--t2);font-size:13px;cursor:pointer;">Non</button>'
+      +'</div></div>';
+  }).join('');
+  last.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function _confirmMiloMemory(idx,ok,btn){
+  const t=_pendingMiloMemory[idx];
+  if(!t){return;}
+  if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+  if(!Array.isArray(S.registre.observations))S.registre.observations=[];
+  const key=_slugTrait(t);
+  if(!S.registre.observations.some(o=>o&&o.key===key)){
+    S.registre.observations.push({id:'cm'+Date.now().toString(36),key:key,fact:t,ask:t,
+      status:ok?'validated':'rejected',source:'conversation',proposedAt:(typeof today==='function'?today():''),
+      validatedAt:ok?(typeof today==='function'?today():''):undefined});
+  }
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  if(typeof _renderMiloKnows==='function')_renderMiloKnows();
+  const row=btn&&btn.closest('div[style*="background"]');
+  if(row)row.innerHTML='<div style="font-size:13px;color:'+(ok?'var(--green,#22c55e)':'var(--t3)')+';">'+(ok?'✅ Retenu — Milo te connaît un peu mieux 👊':'Noté, j\'oublie ça.')+'</div>';
+  if(typeof toast==='function')toast(ok?'Milo te connaît un peu mieux 👊':'Noté, j\'oublie ça.',ok?'success':'info');
+}
+
 // Ajoute le bouton « ⚡ Commencer cette séance » sous la dernière bulle de Milo
 function _appendStartSessionBtn(sess){
   if(typeof _normalizeMiloSession!=='function')return;
@@ -914,6 +975,16 @@ APPRENDRE À CONNAÎTRE LA PERSONNE EN DISCUTANT (ta connaissance de l'athlète 
 - RELIE à ce que tu sais déjà (profil, ADN, historique, séances, récup) : connecte la nouvelle info à l'ensemble pour affiner ton diagnostic, au lieu de la traiter isolément. C'est ce lien qui fait qu'on te sent « présent » et pas générique.
 - RESPECTE SON RYTHME : si elle veut juste agir, ou ne pas répondre, n'insiste pas — tu t'effaces et tu reviendras à ta question une autre fois. Tu accompagnes, tu n'interroges pas.
 
+RETENIR DURABLEMENT CE QUE TU APPRENDS (mémoire — avec l'accord de la personne) :
+- Quand la personne te confie une info DURABLE et utile sur elle — ses horaires d'entraînement, son matériel, une préférence forte (aime/déteste), une contrainte de vie, sa motivation profonde — tu peux PROPOSER de la retenir pour de bon. (PAS un état passager du jour : « je suis crevé aujourd'hui » ne se retient pas.)
+- Pour ça : réponds normalement, PUIS termine ton message par un bloc CACHÉ (non affiché) au format EXACT :
+\`\`\`json
+{"retiens":["tu t'entraînes le matin avant le travail","tu n'as que des haltères chez toi"]}
+\`\`\`
+- Chaque élément = une phrase COURTE, factuelle, à la 2e personne (« tu … »). Au plus 1-2 par message. N'émets ce bloc QUE pour une info vraiment DURABLE et NOUVELLE (ne re-propose pas ce que tu sais déjà via le Registre/l'ADN).
+- La personne verra « 🧠 Je retiens : … ? [Oui] [Non] » sous ton message → RIEN n'est mémorisé sans son accord (Principe 3). Ne parle JAMAIS du bloc, ne l'explique pas, ne le commente pas.
+- N'INVENTE jamais : ne propose de retenir que ce que la personne a réellement dit ou clairement confirmé.
+
 STRUCTURER UN PROGRAMME — EXERCICES « ANCRE » vs « ACCESSOIRE » (comment un vrai coach organise une séance) :
 - Un ANCRE = grand mouvement polyarticulaire de BASE qui PORTE la progression : squat, soulevé de terre / charnière de hanche, développé couché, développé militaire, rowing, traction / tirage. On le place en PREMIER (reposé), plus lourd, sur peu de reps, et on SUIT sa progression de charge dans le temps. Peu d'ancres par séance (souvent 1 à 3).
 - Un ACCESSOIRE = isolation ou mouvement secondaire : curls, extensions triceps, élévations, leg curl / leg extension, mollets, écarté / pec deck, fentes, gainage. Il sert à CIBLER un muscle, ajouter du VOLUME, combler un point faible ou une priorité. Plus de reps, plus de marge (on peut varier sans casser la logique).
@@ -1237,8 +1308,8 @@ function _stripCoachTech(text){
   let t = String(text||'');
   t = t.replace(/```[\s\S]*?```/g, '');                       // blocs de code fermés
   t = t.replace(/```[a-zA-Z]*[\s\S]*$/g, '');                 // bloc de code non fermé (tronqué)
-  t = t.replace(/\{[\s\S]*?"(?:days|exs|sets|weeks)"[\s\S]*\}/g, ''); // objet JSON programme (fermé)
-  t = t.replace(/\{(?=[\s\S]*?"(?:days|exs|sets|weeks)")[\s\S]*$/, ''); // objet JSON programme tronqué
+  t = t.replace(/\{[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens)"[\s\S]*\}/g, ''); // objet JSON technique (fermé)
+  t = t.replace(/\{(?=[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens)")[\s\S]*$/, ''); // objet JSON technique tronqué
   return t.replace(/\n{3,}/g, '\n\n').trim();
 }
 function renderCoachMsg(role, text) {
@@ -1534,9 +1605,12 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     // Séance du jour : Milo peut l'injecter directement dans l'écran Séance (demande Michel).
     // Distinct du programme force (clé "seance" ≠ "days"/"exs") → ne se déclenche que si Milo l'émet.
     if (!_fp) { const dsx = _extractDaySession(reply); if (dsx && dsx.sess) { _ds = dsx.sess; if (dsx.clean) _disp = dsx.clean; } }
+    // Mémoire durable : Milo peut proposer de retenir un trait durable (avec validation, Principe 3)
+    const _mem = _extractMemory(reply);
     renderCoachMsg('coach', _disp);
     if (_fp) _appendSaveProgBtn(_fp);
     if (_ds) _appendStartSessionBtn(_ds);
+    if (_mem) _appendMemoryBtns(_mem);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
     if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
     coachHistory.push({ role: 'assistant', content: reply });
