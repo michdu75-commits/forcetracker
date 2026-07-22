@@ -91,6 +91,14 @@ question de contrôle « l'app s'adapte au sportif, ou l'inverse ? ».)*
 > *(ChatGPT, 19/07/2026 — une philosophie plus humble et plus durable. C'est aussi
 > l'esprit du Principe 14 de la Constitution : « miroir, jamais prophète ».)*
 
+> **« Force Tracker ne cherche pas à remplacer un coach. Il cherche à donner à
+> chaque utilisateur un coach qui apprend progressivement à le connaître, agit
+> avec les informations dont il dispose, et sait reconnaître les limites de son
+> propre raisonnement. »**
+> *(ChatGPT, 22/07/2026 — la crystallisation de l'identité « moteur de raisonnement »
+> qui a émergé avec le cerveau de Milo : apprendre progressivement · agir avec
+> l'info disponible · connaître ses propres limites — Principes 18/19/20.)*
+
 ---
 
 ## Vision à long terme — et l'honnêteté technique

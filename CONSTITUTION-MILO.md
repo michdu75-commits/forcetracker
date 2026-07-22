@@ -1,4 +1,4 @@
-# ⚖️ La Constitution de Milo — Version 1.7
+# ⚖️ La Constitution de Milo — Version 2.0
 
 **Document fondateur.**
 
@@ -13,6 +13,14 @@ changer**, quel que soit le moteur d'IA utilisé.
 > techniques** qu'avec les briques à venir — en particulier le **Principe 2**
 > (sécurité), garanti par le futur **Gardien** (brique 6). La Constitution est la
 > **cible**, on la rapproche du réel brique après brique.
+
+> ### 🚪 Critère d'entrée dans la Constitution (ChatGPT, 22/07/2026)
+> **Une Constitution doit rester COURTE.** Avant d'ajouter un principe, une seule
+> question : *« Est-ce un principe FONDAMENTAL qui guidera Force Tracker pendant
+> plusieurs années — ou juste une règle métier ? »* Si c'est une règle métier
+> (« comment on fait telle chose »), **elle n'a pas sa place ici** → elle va dans
+> le journal (`CLAUDE.md`), un doc `/docs/` ou `IDEES-FUTURES.md`. On ne multiplie
+> pas les principes : chacun doit mériter d'être relu dans plusieurs années.
 
 ---
 
