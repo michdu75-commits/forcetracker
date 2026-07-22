@@ -1,6 +1,6 @@
 # 🧩 Modèle métier de Force Tracker — le langage commun (v0.5)
 
-> **v0.5 (22/07/2026)** — ajout du **Principe n°2 « Toute donnée a une SOURCE » (architecture ouverte aux entrées externes)** (cap Michel) : chaque donnée porte un champ `source` (manuel par défaut · scan · import · csv · photo-ia · garmin/apple-health/google-fit/balance/myfitnesspal…) ; séparer la donnée de son canal ; une nouvelle source = un adaptateur, jamais une réécriture ; la source informe la fiabilité (P19) ; formats standards (Open Food Facts, FIT/TCX/GPX, CSV) déjà partiellement utilisés. **Ne pas coder les intégrations maintenant, mais ne rien coder qui les empêche** — impact immédiat : le journal nutrition doit porter une `source` par entrée.
+> **v0.5 (22/07/2026)** — ajout du **Principe n°2 « Le modèle de données est INDÉPENDANT de son mode d'acquisition »** (cap Michel, approfondi) : le modèle est construit autour du **besoin fonctionnel**, pas des limites de la PWA du moment → il doit pouvoir accueillir **n'importe quelle source future** même non encore accessible techniquement. *La PWA = contrainte de plateforme ; le modèle métier = décision d'architecture ; les deux restent indépendants.* Mécanisme : chaque donnée porte un champ `source` (manuel par défaut · scan · import · csv · photo-ia · garmin/apple-health/health-connect/google-fit/polar/fitbit/balance/myfitnesspal…) ; une nouvelle source = un **adaptateur d'entrée**, **jamais une refonte du modèle** ; la source informe la fiabilité (P19). **Ne pas coder les intégrations maintenant, mais ne rien coder qui les empêche** — impact immédiat : le journal nutrition doit porter une `source` par entrée.
 > **v0.4 (21/07/2026)** — intègre le retour **Gemini** (3ᵉ voix, tour de table complet) : **ANALYSÉ confirmé** (« abstraction brillante », = couche de métadonnées **non destructive** → débat GPT/Mistral clos) ; **Série à métriques flexibles** (temps/distance/calories/puissance, pas que reps/kg — pour endurance/CrossFit) ; **fuzzy matching** avant « inconnu » (existe déjà : `_lev`/Jaccard, à renforcer) ; **garde-fous éthiques TECHNIQUES** (anonymisation import · interdiction de re-partager un programme tiers · charte de transparence) ; et surtout l'**angle mort n°1 : versionnage du schéma de données + migrations client** (garantie technique de la rétro-compat / zéro perte).
 > **v0.3 (21/07/2026)** — retour **Mistral** : garde-fous opérationnels éthiques + honnêteté « l'import envoie le doc à l'IA » ; réconciliation ANALYSÉ ; tempo structuré ; hiérarchie variantes ; boucle VM+IA avec validation ; items dynamiques différés.
 > **v0.2 (21/07/2026)** — 1ᵉʳ retour GPT : 3ᵉ état **ANALYSÉ**, **Intention** extensible, **propriétés** portées par la fiche (VM relie, ne déduit pas — Principe 15), objet **Connaissance** (futur), « le modèle **est une grammaire** ».
@@ -48,14 +48,23 @@ Force Tracker gère les trois (`S.programmes` = planifié · `S.sessions` = réa
 
 ---
 
-## Principe n°2 — Toute donnée a une SOURCE (architecture ouverte aux entrées externes)
+## Principe n°2 — Le modèle de données est INDÉPENDANT de son mode d'acquisition
 
-*(Cap Michel, 22/07/2026 — « préparer pour le futur les entrées pour applications externes ; que l'architecture soit compatible ».)*
+*(Cap Michel, 22/07/2026 — approfondi : « le modèle métier ne doit pas être construit autour des limitations actuelles de la PWA, mais autour du besoin fonctionnel ».)*
 
-Chaque donnée mesurée (poids, nutrition, sommeil, activité, fréquence cardiaque, mensurations…)
-doit pouvoir porter un champ **`source`** — d'où elle vient : `manuel` (défaut, rétrocompatible) ·
-`scan` · `import` · `csv` · `photo-ia` · ou une app/appareil (`garmin`, `apple-health`,
-`google-fit`, `balance`, `myfitnesspal`…).
+> **Le principe (le POURQUOI) :** le modèle de données doit pouvoir accueillir **n'importe quelle
+> source future**, même si cette source n'est **pas encore accessible techniquement**.
+> **La PWA est une contrainte de plateforme. Le modèle métier est une décision d'architecture.
+> Ces deux notions restent INDÉPENDANTES.** Ainsi, le jour où Force Tracker aura une version
+> native/hybride ou un connecteur de plus (Apple Health, Health Connect, Garmin, Polar, Fitbit,
+> balance connectée…), **aucune refonte du modèle n'est nécessaire** : il suffit d'**ajouter un
+> nouvel adaptateur d'entrée**. C'est le rôle d'une bonne architecture : ne pas dépendre des
+> contraintes techniques du moment, tout en restant **simple à implémenter aujourd'hui**.
+
+**Le mécanisme (le COMMENT) :** chaque donnée mesurée (poids, nutrition, sommeil, activité,
+fréquence cardiaque, mensurations…) porte un champ **`source`** — d'où elle vient : `manuel`
+(défaut, rétrocompatible) · `scan` · `import` · `csv` · `photo-ia` · ou une app/appareil (`garmin`,
+`apple-health`, `health-connect`, `google-fit`, `polar`, `fitbit`, `balance`, `myfitnesspal`…).
 
 - **Séparer la DONNÉE (le fait mesuré) de son CANAL d'entrée.** Une nouvelle source = un
   **adaptateur** qui normalise vers nos objets métier, **jamais** une réécriture du cœur.
