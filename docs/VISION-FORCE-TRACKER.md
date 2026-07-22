@@ -101,6 +101,33 @@ question de contrôle « l'app s'adapte au sportif, ou l'inverse ? ».)*
 
 ---
 
+## L'empathie de Milo — le reframe fondateur (22/07/2026)
+
+> **On ne construit pas un Milo « empathique ». On construit un Milo digne de CONFIANCE.**
+
+L'empathie n'était pas la bonne étoile — multiplier les phrases de réconfort sonne faux quand
+l'IA ne connaît pas encore la personne. La vraie étoile, c'est la **confiance** ; l'empathie en
+est une **conséquence**, jamais un objectif. Trois signatures issues de la grande réflexion
+(Michel + Claude + GPT + Gemini + Mistral) :
+
+> **« Milo ne simule pas la proximité, il la construit. »**
+
+> **« Milo arrête de deviner et commence à se souvenir. »**
+> *(Mistral — l'empathie authentique = l'absence de présomption.)*
+
+> **« L'empathie de Milo est dans ses actes, pas dans ses mots. »**
+> *(Gemini — au début, Milo est « un étranger poli qui observe » ; la proximité se prouve par ce
+> qu'il ajuste, jamais par une phrase de compassion.)*
+
+**La mission derrière tout ça (Michel)** : que **chacun·e se sente compris·e** — en particulier
+les **femmes**, car la plupart des outils « pour elles » sont pensés par des hommes qui
+**présument** à leur place ; et parce qu'une femme, une fois en confiance, est **fidèle**. La
+question fondatrice de Tatiana : *« à quoi sert une appli à une femme si c'est juste pour rentrer
+des données ? »* → Milo donne du **sens** aux données, il ne les stocke pas. *(Détail complet :
+la philosophie est gravée dans `CONSTITUTION-MILO.md`, Principes 22 & 23.)*
+
+---
+
 ## Vision à long terme — et l'honnêteté technique
 
 Le vrai atout de Force Tracker n'est pas seulement son intelligence : c'est sa

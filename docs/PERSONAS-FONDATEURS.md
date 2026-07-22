@@ -36,6 +36,22 @@ progresser ? »**
 
 ---
 
+## 🎯 La dimension Tatiana, approfondie (22/07/2026)
+
+La grande réflexion « philosophie de Milo » a confirmé que **Tatiana n'est pas un persona de test
+parmi d'autres : elle porte la dimension la plus stratégique du produit.** Sa phrase fondatrice :
+
+> **« À quoi sert une appli à une femme si c'est juste pour rentrer des données ? »**
+
+Elle dit en une ligne **pourquoi Milo existe** : donner du **sens** aux données, pas les stocker.
+Et elle porte la **mission** de Michel : que **chacun·e se sente compris·e** — en particulier les
+**femmes**, car la plupart des outils « pour elles » sont pensés par des hommes qui **présument** à
+leur place (et parce qu'une femme, une fois en confiance, est **fidèle**). C'est de cette dimension
+que sont nés les **Principes 22 & 23** de la Constitution (respect de la liberté · ne pas confisquer
+le récit · l'humilité · le réconfort jamais une stratégie) et le retour terrain fondateur du
+**Principe 17** (« le mental, c'est le seul problème »). Sa dimension = **personnalisation + zéro
+présupposé + le sens avant la donnée**.
+
 ## Pourquoi c'est plus fort qu'une liste de testeurs
 
 - **Ça relie chaque évolution technique à un besoin humain** : VM existe *à cause de*

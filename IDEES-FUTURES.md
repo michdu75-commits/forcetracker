@@ -255,7 +255,7 @@ prénom/sexe/objectif/niveau/blessures. Ci-dessous ce qui est VRAIMENT nouveau �
 - **À RE-CONFIRMER régulièrement** : ce qui a une durée de vie (« tu t'entraînais le matin — c'est toujours le cas ? »).
 - **ARCHIVABLE automatiquement** : ce qui n'a plus servi une décision depuis longtemps (cohérent Principe 4 « chaque info doit être utile »).
 
-**⚠️ Ce n'est PAS un chantier à ouvrir maintenant** (GPT + Claude d'accord : « je le noterais comme futur principe, je ne le développerais pas »). On note, on ne construit pas.
+**⚠️ MISE À JOUR (22/07/2026)** : le **principe** est désormais **GRAVÉ** (le risque « mémoire = prison » de Mistral a été élevé en garde-fou actif → Constitution **Principe 22** « la mémoire est un tremplin, jamais une prison » + `PRESENCE-MILO`). Ce qui reste **futur**, c'est le **MÉCANISME** (le cycle de vie : marquer permanent/temporaire/à-re-confirmer/archivable, vieillir/re-questionner/archiver au bon moment). On a le principe ; on n'a pas encore l'outil. On note, on ne construit pas le mécanisme maintenant.
 
 **Nuance d'architecture (Claude)** : le *mécanisme* d'oubli existe déjà en embryon, on n'ajoute pas de silo —
 - l'**état du jour** (`S.dayState`, `dayStateLog`) est **éphémère par nature** (remis à zéro chaque nuit) → le « temporaire » est déjà séparé du durable ;
