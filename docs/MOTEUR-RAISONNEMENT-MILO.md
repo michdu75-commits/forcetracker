@@ -83,6 +83,14 @@ Sa qualité vient autant de ce qu'il sait **NE PAS conclure** que de ce qu'il sa
 - ✅ **Prompt de Milo enrichi** (`buildCoachContext`, coach.js, ft-v571) : pipeline diagnostic + causes types
   + « fiabilité avant intelligence / savoir s'arrêter » + posture d'humilité (1-2 questions).
 - ✅ **Constitution · Principe 18** (v1.8).
+- ✅ **Principes 19 & 20** (v1.9, ft-v575) — nés du sujet IMC, croisement GPT/Gemini/Mistral/Claude :
+  **19 « La pertinence avant la disponibilité »** (une donnée n'est utilisée que si elle améliore la
+  décision ; pertinence contextuelle ; ≠ minimalisme ; **deux étages** Milo raisonne / Gardien protège ;
+  transparence ciblée) et **20 « La cohérence avant la réactivité »** (raisonner sur les tendances, pas sur
+  le bruit ponctuel). Gravés dans le prompt de Milo (`buildCoachContext`) + le Gardien (`_gardienRules`
+  → seuils absolus IMC ≥ 40 · tour de taille > 120 cm). ⏳ **Couche future** : veille longitudinale des
+  signaux faibles sur plusieurs semaines (dérive sommeil / FC repos) + données de **montre connectée**
+  (FC, pas) — non collectées aujourd'hui → liées à la brique « mémoire vivante ».
 - ✅ **1ʳᵉ pièce — exercices « ANCRE » vs « ACCESSOIRE »** (`_exRole`, log.js, ft-v572) : connaissance
   déterministe du **Cerveau 2** (dérivée du schéma moteur, 0 IA). ANCRE = grand polyarticulaire de base
   qui porte la progression (squat/hip-hinge/poussée horiz.+vert./tirage horiz.+vert.) ; ACCESSOIRE =
