@@ -3660,6 +3660,55 @@ function openDaySel(progIdx){
 
 function closeDaySel(){document.getElementById('ov-day-sel').classList.remove('open');}
 
+// ─── SÉANCE DU JOUR proposée par Milo → injection directe dans S.wkt (demande Michel) ───
+// _pendingMiloSessions est rempli côté coach.js ; ces 2 fonctions vivent ici pour accéder
+// aux globals de la séance (getPrev, today, _expandedEx, renderExBlocks…).
+function _normalizeMiloSession(sess){
+  const T={N:1,'É':1,X:1,D:1,W:1}; // types de série valides
+  const norm=ex=>({
+    name:String(ex.name||'Exercice'),
+    note:'',
+    sets:(Array.isArray(ex.sets)?ex.sets:[]).map(s=>({
+      reps:s.maxi?0:(parseInt(s.reps)||10),
+      kg:parseFloat(s.kg)||0,
+      maxi:!!s.maxi,
+      type:(s&&T[s.type])?s.type:'N',
+      rest:parseInt(s.rest)||0
+    }))
+  });
+  return {
+    label:String(sess.label||'Séance de Milo'),
+    exs:(Array.isArray(sess.exs)?sess.exs:[]).filter(e=>e&&e.name).map(norm).filter(e=>e.sets.length)
+  };
+}
+function _startSessionFromMilo(idx,btn){
+  const data=(typeof _pendingMiloSessions!=='undefined')?_pendingMiloSessions[idx]:null;
+  if(!data){toast('Séance introuvable','error');return;}
+  // Construit les exercices avec pré-remplissage PAR SÉRIE depuis la dernière séance (comme loadProgDay).
+  const buildEx=e=>{
+    const prev=(typeof getPrev==='function')?(getPrev(e.name)||[]):[];
+    return {name:e.name,note:'',sets:(e.sets||[]).map((s,i)=>{
+      const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
+      return {kg:pp?pp.kg:(s.kg||0),reps:s.maxi?0:(pp?pp.reps:(s.reps||10)),maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:s.rest||0};
+    })};
+  };
+  const newExs=(data.exs||[]).map(buildEx);
+  if(!newExs.length){toast('Aucun exercice à ajouter','error');return;}
+  const active=S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
+  if(active){
+    S.wkt.exs=S.wkt.exs.concat(newExs); // séance en cours → on AJOUTE (jamais d'écrasement — règle #3)
+  }else{
+    S.wkt={date:today(),progLabel:data.label||'Séance de Milo',exs:newExs,startHour:new Date().getHours(),startTs:Date.now()};
+    _expandedEx=0;
+  }
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  if(btn){btn.textContent='✅ Ajouté à ta séance';btn.disabled=true;btn.style.opacity='.7';}
+  goScreen('log',document.getElementById('nb-log'));
+  if(typeof renderLog==='function')renderLog();else if(typeof renderExBlocks==='function')renderExBlocks();
+  toast(active?(newExs.length+' exercice'+(newExs.length>1?'s':'')+' ajouté'+(newExs.length>1?'s':'')+' 💪'):'Séance prête — c\'est parti ! 💪','success');
+}
+
 function loadProgDay(progIdx,dayIdx){
   const prog=(S.programmes||[])[progIdx];
   if(!prog||!prog.days||!prog.days[dayIdx])return;

@@ -402,6 +402,7 @@ function coachAction(type){
 // ─── Progresser en force (Big 3) — programme téléchargeable ───────────────
 let _forceProgReq=false;      // vrai le temps d'une génération de programme force
 let _pendingForceProgs=[];    // programmes parsés en attente d'enregistrement
+var _pendingMiloSessions=[];  // séances « du jour » parsées, en attente d'injection dans S.wkt (bouton « Commencer »)
 function _forceRM(n){const p=S.prs&&S.prs[n];return p&&p.rm1?Math.round(p.rm1):null;}
 function _forceDisplayMsg(){
   const sq=_forceRM('Squat à la Barre'),dc=_forceRM('Développé Couché'),sdt=_forceRM('Soulevé de Terre');
@@ -475,6 +476,40 @@ function _saveForceProgram(idx,btn){
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   if(btn){btn.textContent='✅ Enregistré dans Mes programmes';btn.disabled=true;btn.style.opacity='.7';}
   toast('"'+name+'" ajouté à Mes programmes 💪','success');
+}
+
+// ─── SÉANCE DU JOUR : Milo → écran Séance en 1 clic (demande Michel) ───────────
+// Milo peut terminer sa réponse par un bloc caché {"seance":{label,exs:[{name,sets:[{reps,kg,type}]}]}}
+// (retiré de l'affichage par _stripCoachTech). On l'extrait ici pour proposer « ⚡ Commencer cette séance ».
+function _extractDaySession(reply){
+  try{
+    let m=reply.match(/```json\s*([\s\S]*?)```/i);
+    let jsonStr=m?m[1]:null;
+    if(!jsonStr){const m2=reply.match(/\{[\s\S]*?"seance"[\s\S]*\}/i);jsonStr=m2?m2[0]:null;}
+    if(!jsonStr||!/"seance"/i.test(jsonStr))return null;
+    const obj=JSON.parse(jsonStr.trim());
+    const sess=obj&&obj.seance;
+    if(!sess||!Array.isArray(sess.exs)||!sess.exs.length)return null;
+    let clean=reply.replace(/```json[\s\S]*?```/i,'').replace(/```[\s\S]*?```/g,'').trim();
+    if(!clean)clean=reply.replace(/\{[\s\S]*\}/,'').trim();
+    return {sess,clean};
+  }catch(e){console.warn('[milo séance] parse',e);return null;}
+}
+// Ajoute le bouton « ⚡ Commencer cette séance » sous la dernière bulle de Milo
+function _appendStartSessionBtn(sess){
+  if(typeof _normalizeMiloSession!=='function')return;
+  const norm=_normalizeMiloSession(sess);
+  if(!norm||!norm.exs||!norm.exs.length)return;
+  const idx=_pendingMiloSessions.push(norm)-1;
+  const msgs=document.getElementById('coach-msgs');if(!msgs)return;
+  const bubbles=msgs.querySelectorAll('.msg-coach');
+  const last=bubbles[bubbles.length-1];if(!last)return;
+  const n=norm.exs.length;
+  const wrap=document.createElement('div');
+  wrap.className='coach-prog-save';
+  wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_startSessionFromMilo('+idx+',this)">⚡ Commencer cette séance ('+n+(n>1?' exercices':' exercice')+')</button>';
+  last.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
 }
 
 function updateCoachHeader() {
@@ -915,6 +950,15 @@ MODÈLE DE PROGRAMME PRO (le format des meilleurs coachs — reproduis CE niveau
 - 4 à 6 séances/sem splittées par groupes musculaires (ex. S1 Dorsaux+Triceps+Abdos · S2 Épaules+Ischios · S3 Quadriceps+Fessiers+Lombaires · S4 Dos+Trapèzes+Abdos · S5 Pectoraux+Mollets · S6 Bras+Abdos). Abdos, lombaires et mollets répartis sur la semaine. Chaque séance démarre par 2-3 min de cardio + échauffement.
 - Pour CHAQUE exercice, donne : le mouvement précis (angle/prise), le nombre de SÉRIES × REPS, le REPOS, un CUE d'exécution technique (« ne pas arrondir les lombaires », « contracter fort les dorsaux sans balancer », « coudes serrés dans l'axe des poignets ») et parfois une MÉTHODE nommée (isométrie 2-5'' en début ou pendant, excentrique lent 3'', complète/partielle « 1 complète + 1 partielle », dégressif, bras/bras unilatéral, double contraction).
 - Notations utiles : « 5''+8 » = 5 s d'isométrie puis 8 reps ; « 10x2 » = 10 reps par côté (bras/bras, jambe/jambe) ; « 12/10/8/8 » = reps dégressives série par série (charge qui monte). Progression : montée en charge sur le cycle, semaine de décharge à la fin.
+
+INTÉGRER LA SÉANCE DU JOUR DIRECTEMENT DANS L'APP (action concrète — quand l'utilisateur FIXE sa séance du jour ou te demande une séance à faire MAINTENANT) :
+- Quand la personne te dicte sa séance du jour, OU te demande quoi faire aujourd'hui et que tu lui proposes une séance concrète À FAIRE MAINTENANT, présente-la normalement (en clair, avec tes explications), PUIS termine ton message par un bloc technique CACHÉ (il ne sera PAS affiché à l'écran) au format EXACT :
+\`\`\`json
+{"seance":{"label":"<nom court, ex. Push, Jambes, Haut du corps>","exs":[{"name":"<nom d'exercice reconnaissable>","sets":[{"reps":8,"kg":60,"type":"N"},{"reps":8,"kg":60,"type":"N"}]}]}}
+\`\`\`
+- Règles du bloc : \`name\` = un nom d'exercice le plus proche possible de la bibliothèque (ex. « Développé Couché », « Squat », « Rowing Barre »). Une entrée dans \`sets\` PAR série. \`type\` = "N" (normal), "É" (échauffement), "X" (échec/à fond) ou "D" (dropset) — "N" par défaut. \`kg\` peut valoir 0 si tu ne connais pas la charge (l'app la pré-remplit avec la dernière fois). Si la charge est « au ressenti/max », mets \`"reps":0,"maxi":true\`.
+- N'émets ce bloc QUE pour une séance à faire AUJOURD'HUI / MAINTENANT. (Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas ce bloc-là.)
+- Un bouton « ⚡ Commencer cette séance » apparaîtra automatiquement sous ton message pour l'injecter dans l'écran Séance. Ne parle JAMAIS du JSON, ne l'explique pas, ne le commente pas — l'utilisateur ne voit que ta séance en clair + le bouton.
 
 MOMENT PRÉSENT (heure locale de la personne) :
 - On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}${_coachGapText()}
@@ -1478,14 +1522,18 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     }
     hideTyping();
     // Programme de force : extraire le bloc JSON pour proposer un enregistrement
-    let _disp = reply, _fp = null;
+    let _disp = reply, _fp = null, _ds = null;
     if (_forceProgReq) {
       _forceProgReq = false;
       const ext = _extractForceProgram(reply);
       if (ext && ext.prog) { _fp = ext.prog; if (ext.clean) _disp = ext.clean; }
     }
+    // Séance du jour : Milo peut l'injecter directement dans l'écran Séance (demande Michel).
+    // Distinct du programme force (clé "seance" ≠ "days"/"exs") → ne se déclenche que si Milo l'émet.
+    if (!_fp) { const dsx = _extractDaySession(reply); if (dsx && dsx.sess) { _ds = dsx.sess; if (dsx.clean) _disp = dsx.clean; } }
     renderCoachMsg('coach', _disp);
     if (_fp) _appendSaveProgBtn(_fp);
+    if (_ds) _appendStartSessionBtn(_ds);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
     if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
     coachHistory.push({ role: 'assistant', content: reply });
