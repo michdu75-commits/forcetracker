@@ -13,7 +13,7 @@
 
 > **Un seul endroit pour voir tout d'un coup d'œil** (ID · version · statut). Léger,
 > maintenu automatiquement (règle #12) — pas une corvée pour Michel.
-> **Prod : `ft-v504`** · **Backup : ⭐ `backup-2026-07-20-pt001-valide-ft-v504`**
+> **Prod : `ft-v576`** · **Backup : ⭐ `backup-2026-07-20-pt001-valide-ft-v504`** (dernier backup branché ; le cerveau ft-v571→576 = prompt-only, faible risque)
 
 **Briques Milo (destination = 8)**
 | # | Brique | Statut |
@@ -36,6 +36,17 @@
 | 3 | « Objectif tenu ? » (vérifie la fois d'avant) | ✅ (`ft-v496`) |
 | — | Débrief AUTO (Milo sort direct) | ✅ (`ft-v491`) |
 
+**🧠 Moteur de raisonnement de Milo (le « cerveau » — prompt-only, invisible)**
+| Pièce | Quoi | Statut |
+|---|---|---|
+| Base | Savoir raisonner + savoir s'arrêter (Constitution P18) | ✅ (`ft-v571`) |
+| 1 (Cerveau 2) | Exercices « ancre » vs « accessoire » (`_exRole`) | ✅ (`ft-v572`) |
+| 2 (Cerveau 1) | Profil conversationnel — étape 1 « comportement » | ✅ (`ft-v573`) · étape 2 (mémoire durable) ⏳ |
+| — | Objectifs chiffrés (force/exo + poids) injectés à Milo | ✅ (`ft-v574`) |
+| Principe | « La pertinence avant la disponibilité » + « la cohérence avant la réactivité » (P19/P20, deux étages Milo/Gardien) | ✅ (`ft-v575`) |
+| Nuance | « Répondre d'abord, proposer ensuite » (absence = opportunité) | ✅ (`ft-v576`) |
+| ⏭️ | Observations · profil conv. étape 2 · générateur de programme | ⏳ à concevoir |
+
 **Laboratoire — protocoles (VT technique · VC comportemental)**
 | ID | Cible | Statut |
 |---|---|---|
@@ -44,7 +55,7 @@
 | PT/VT-002 | Le Gardien | ⏳ |
 | PT/VT-003 | Observations · profil | ⏳ |
 
-**Docs de gouvernance** : `CLAUDE.md` (accueil) · `docs/VISION-FORCE-TRACKER.md` · `CONSTITUTION-MILO.md` (**v1.4**) · `docs/PROCESSUS-DEVELOPPEMENT.md` · `docs/PRESENCE-MILO.md` · `docs/CONTEXTE-ACTUEL.md` · `DOSSIER-ATHLETE-SUIVI.md` · `IDEES-FUTURES.md` · `RETOURS-TESTEURS.md` · `README-IA.md`.
+**Docs de gouvernance** : `CLAUDE.md` (accueil) · `docs/VISION-FORCE-TRACKER.md` · `CONSTITUTION-MILO.md` (**v1.9**) · `docs/MOTEUR-RAISONNEMENT-MILO.md` · `docs/PROCESSUS-DEVELOPPEMENT.md` · `docs/PRESENCE-MILO.md` · `docs/CONTEXTE-ACTUEL.md` · `DOSSIER-ATHLETE-SUIVI.md` · `IDEES-FUTURES.md` · `RETOURS-TESTEURS.md` · `README-IA.md`.
 
 > ⚠️ **Convention (GPT)** : toute nouvelle brique/protocole/persona reçoit un **ID + un statut + la version `ft-vNN`**. Claude met CE tableau à jour à chaque livraison.
 

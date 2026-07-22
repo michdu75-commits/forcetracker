@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en prod :** `ft-v526` (INDUSTRIALISATION étape 1/5 : VM câblé sur l'import HISTORIQUE — `_vmMatchHist`, plus de doublons dans le journal ; ~378 alias GPT intégrés, `_EX_EQUIV`=406 clés)
+- **Version en prod :** `ft-v576` (🧠 **MOTEUR DE RAISONNEMENT DE MILO** — le « cerveau », posé pièce par pièce ft-v571→576 · voir bloc dédié ci-dessous)
+
+- **🧠 CHANTIER ACTIF — LE MOTEUR DE RAISONNEMENT DE MILO (le « cerveau »)** *(réflexion fondatrice Michel 22/07, cadre : `docs/MOTEUR-RAISONNEMENT-MILO.md`)* : passer du « générateur de programmes » au **raisonnement** (Compréhension → **Diagnostic** → décision → explication). Chaque brique = une **PIÈCE** du moteur, prompt-only (0 backend), invisible à l'utilisateur. **Pièces posées :**
+  - `ft-v571` — **base du moteur** : bloc « savoir raisonner + savoir s'arrêter » (Constitution **Principe 18**).
+  - `ft-v572` — **1ʳᵉ pièce (Cerveau 2)** : exercices **« ancre » vs « accessoire »** (`_exRole`, déterministe) — construire autour des ancres.
+  - `ft-v573` — **2ᵉ pièce (Cerveau 1)** : **profil conversationnel** (étape 1 « comportement ») — Milo apprend en discutant, ⏳ étape 2 (mémoire durable) plus tard.
+  - `ft-v574` — Milo connaît enfin tes **objectifs chiffrés** (force par exo + poids objectif) → répond à « c'est atteignable en combien de temps ? ».
+  - `ft-v575` — **PRINCIPE DE CONCEPTION** « **La pertinence avant la disponibilité** » (+ « la cohérence avant la réactivité ») — né du sujet IMC, croisement GPT/Gemini/Mistral/Claude. **DEUX ÉTAGES : Milo raisonne · le Gardien protège** (seuils absolus IMC ≥ 40 · tour de taille > 120). Constitution **Principes 19 & 20 (v1.9)**.
+  - `ft-v576` — nuance UX « **répondre d'abord, proposer ensuite** » : l'absence d'une donnée = une opportunité, jamais un blocage (corollaire P19).
+  - ⏭️ **Prochaine pièce** : Observations (Cerveau 1 affine + Cerveau 2 réévalue) · profil conversationnel **étape 2** (mémoire durable) · générateur de programme. ⏳ **Couche future** : veille longitudinale des signaux faibles + montre connectée (non collectées).
+- *(⏸️ parqué en arrière-plan : INDUSTRIALISATION VM — étapes 1/2 faites `ft-v526/527` ; restent ③ couche machine user-fed · ④ tests réels · ⑤ enrichir EXLIB. À reprendre après le cerveau.)*
+- *(ancienne note ft-v526 : VM câblé sur l'import HISTORIQUE — `_vmMatchHist`, plus de doublons ; ~378 alias GPT, `_EX_EQUIV`=406 clés)*
   - **🏗️ Phase industrialisation lancée (GO Michel)** — ordre : **① VM finalisé ✅ (import historique câblé, ft-v526)** → **② Confirm en un geste ✅ (figurine + ✓/✕, import prog+journal, ft-v527)** → ③ couche machine (MVP user-fed) → ④ tests réels programmes variés → ⑤ enrichir EXLIB au fil du réel. **⏳ À TESTER PAR MICHEL (iPhone)** : importer un vrai programme + un vrai journal → vérifier les rattachements auto (verts) + les propositions ✓/✕.
 
 - **🔭 TOUR DE TABLE IA EXTÉRIEURES (20/07) — décisions d'archi VM prises** (détail : CLAUDE.md, méthode : `docs/PROCESSUS-DEVELOPPEMENT.md`) : avis croisés GPT + Gemini + Mistral sur le chantier VM. **Méthode adoptée** : convergence de regards indépendants = décision d'archi ; divergence = débat. **2 décisions** : ① couche machine = **user-fed d'abord** (le risque = les médias, pas le code) ; ② graphe **simple & dérivé** (14 schémas, pas de parsing exhaustif). **+ Principe** : palier « confirm » de l'import = **un TAP, pas un formulaire**. **Prématuré → IDEES-FUTURES** : matériel connecté (montre), modèle éco approfondi, export JSON/CSV. **Prochaine brique quand on construira = la couche machine.**
@@ -84,12 +95,15 @@
   - **Le Gardien (brique 6) ADAPTE, il n'interdit pas** — adaptation par défaut,
     arrêt total = exception (Principe 13). Pas de « moteur de décision » séparé :
     c'est le rôle du Gardien.
-  - Constitution de Milo **v1.4** (14 principes — Principe 12 « écouter,
-    comprendre, contextualiser » + Principe 13 « l'adaptation avant l'interdiction »
-    + **Principe 14 « Miroir, jamais prophète »** : Milo reflète l'histoire du
-    sportif et l'aide à réfléchir, il ne prescrit ni ne prédit jamais — il enrichit
-    le jugement, ne le remplace pas ; garde-fou vital des briques 7 & 8) ·
-    question de contrôle · Processus officiel adopté.
+  - Constitution de Milo **v1.9** (20 principes). Derniers en date (22/07) :
+    **P15** « Le moteur comprend, le Gardien décide » · **P16** respecter le
+    travail des coachs · **P17** l'accompagnement jamais la thérapie · **P18**
+    fiabilité avant intelligence (savoir raisonner + savoir s'arrêter) · **P19
+    « La pertinence avant la disponibilité »** (une donnée n'est utilisée que si
+    elle améliore la décision ; deux étages Milo/Gardien ; transparence ciblée ;
+    l'absence d'une donnée = opportunité, répondre d'abord proposer ensuite) ·
+    **P20 « La cohérence avant la réactivité »** (raisonner sur les tendances, pas
+    le bruit). Rappel P14 « Miroir, jamais prophète » (garde-fou des briques 7 & 8).
   - Méthode de documentation : CLAUDE.md = page d'accueil, détails dans `/docs/`.
   - **Vision d'identité « présence de Milo »** (`docs/PRESENCE-MILO.md`) : Milo → App,
     présence sans gadget, jamais un passage obligé — **cerveau d'abord, présence ensuite**.
