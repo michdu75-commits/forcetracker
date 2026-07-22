@@ -1018,11 +1018,14 @@ ${(()=>{
 })()}
 ${(()=>{
   const hp=S.healthProfile;
-  if(!hp||(!(hp.conditions||[]).length&&!(hp.injuries||[]).length&&!(hp.notes||'').trim()))return '';
+  if(!hp||(!(hp.conditions||[]).length&&!(hp.injuries||[]).length&&!(hp.notes||'').trim()&&!hp.trt))return '';
   const cL={cardio:'Cardiologie/HTA',diabete:'Diabète',hernie:'Hernie discale',asthme:'Asthme',arthrite:'Arthrose/Arthrite',osteo:'Ostéoporose',epilepsie:'Épilepsie',migraine:'Migraines (éviter les efforts très intenses en apnée/Valsalva qui peuvent déclencher une crise, bien s\'hydrater — adapter en cas de crise)',endometriose:'Endométriose (peut freiner la perte de poids et jouer sur la fatigue/inflammation — en tenir compte pour la nutrition et l\'intensité)'};
   const zL={epaule_d:'Épaule D',epaule_g:'Épaule G',genou_d:'Genou D',genou_g:'Genou G',dos_bas:'Lombaires',dos_haut:'Dorsaux',hanche_d:'Hanche D',hanche_g:'Hanche G',cheville_d:'Cheville D',cheville_g:'Cheville G',coude_d:'Coude D',coude_g:'Coude G',poignet_d:'Poignet D',poignet_g:'Poignet G',cou:'Cou/Cervicales',autre:'Autre'};
   const sL={active:'active ⚠️',recente:'récente',ancienne:'ancienne/guérie'};
   const parts=[];
+  // TRT — traitement de testostérone PRESCRIT par un médecin (déclaré dans le Profil Santé). Contexte médical
+  // légitime : Milo adapte l'entraînement/la récup, mais NE conseille JAMAIS sur le traitement lui-même.
+  if(hp.trt)parts.push('⚕️ TRT : cet athlète suit un TRAITEMENT DE TESTOSTÉRONE PRESCRIT PAR SON MÉDECIN (contexte médical légitime). Tiens-en compte pour la RÉCUPÉRATION (souvent meilleure), la capacité de progression et des attentes RÉALISTES, et rappelle l\'importance d\'un SUIVI MÉDICAL régulier + bilan sanguin. ⛔ NE DONNE JAMAIS de conseil sur le traitement lui-même (dose, molécule, ajustement, fréquence) — c\'est le domaine EXCLUSIF de son médecin/endocrinologue, renvoie-l\'y systématiquement. N\'encourage jamais un usage non prescrit. Reste sur ton terrain : entraînement, récupération, nutrition, sommeil.');
   if((hp.conditions||[]).length)parts.push('Conditions: '+(hp.conditions||[]).map(c=>cL[c]||c).join(', '));
   if((hp.injuries||[]).length)parts.push('Blessures: '+(hp.injuries||[]).map(i=>`${zL[i.zone]||i.zone} (${sL[i.status]||i.status})`).join(', '));
   if((hp.notes||'').trim())parts.push('Notes: '+hp.notes.trim());

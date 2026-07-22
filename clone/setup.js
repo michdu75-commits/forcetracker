@@ -840,9 +840,17 @@ function _renderHealthSection(){
     </div>
   </div>`:`<button onclick="openHI()" style="padding:8px 14px;border-radius:8px;border:1.5px dashed var(--sep);background:var(--bg3);font-size:13px;font-weight:600;cursor:pointer;color:var(--t2);width:100%;">+ Ajouter une blessure</button>`;
 
+  // TRT — réservé à l'admin pour l'instant (traitement de testostérone PRESCRIT par un médecin).
+  // Info santé privée : Milo l'utilise pour adapter l'entraînement/la récup, et renvoie toujours au médecin.
+  const trtHtml=(typeof _isAdminUnlocked==='function'&&_isAdminUnlocked())?`
+    <div style="font-size:13px;font-weight:700;color:var(--t2);margin-top:14px;margin-bottom:6px;">Traitement médical (privé)</div>
+    <button onclick="toggleTrt()" style="padding:8px 12px;border-radius:20px;border:1.5px solid ${hp.trt?'#FF2D55':'var(--sep)'};background:${hp.trt?'rgba(255,45,85,.12)':'var(--bg3)'};font-size:12px;font-weight:600;cursor:pointer;color:${hp.trt?'#FF2D55':'var(--t2)'};display:inline-flex;align-items:center;gap:5px;">⚕️ Sous TRT (prescrit par un médecin)</button>
+    <div style="font-size:11px;color:var(--t3);margin-top:5px;line-height:1.4;">Milo en tient compte pour ta récupération et ton entraînement, et te renvoie toujours à ton médecin. Il ne parle jamais de doses. Privé et synchronisé avec ton compte.</div>`:'';
+
   el.innerHTML=`
     <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:6px;">Conditions médicales</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;">${condHtml}</div>
+    ${trtHtml}
     <div style="font-size:13px;font-weight:700;color:var(--t2);margin-top:14px;margin-bottom:6px;">Blessures & douleurs</div>
     <div style="display:flex;flex-direction:column;gap:6px;">${injHtml}</div>
     <div style="margin-top:8px;">${addFormHtml}</div>
@@ -851,6 +859,12 @@ function _renderHealthSection(){
   `;
 }
 
+function toggleTrt(){
+  if(typeof _isAdminUnlocked==='function'&&!_isAdminUnlocked())return; // sécurité : admin uniquement pour l'instant
+  const hp=_getHP();hp.trt=!hp.trt;
+  persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();_renderHealthSection();
+  if(typeof toast==='function')toast(hp.trt?'TRT enregistré — Milo en tient compte (privé)':'TRT retiré','success');
+}
 function toggleHC(id){
   const hp=_getHP();const idx=(hp.conditions||[]).indexOf(id);
   if(idx>=0)hp.conditions.splice(idx,1);else(hp.conditions=hp.conditions||[]).push(id);
