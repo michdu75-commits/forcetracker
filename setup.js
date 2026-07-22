@@ -308,7 +308,7 @@ function _cloudSync(){
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body:JSON.stringify({
       action:'saveProfile',email:S.email,authCode:_authCode(),
-      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
+      name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
       ...(_adnFilled()?{adn:S.adn}:{}),
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,strengthGoals:S.strengthGoals||{},manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
@@ -1615,6 +1615,32 @@ function setGoal(g){
   });
   const el=document.getElementById('goal-desc');
   if(el)el.textContent=GOAL_DESCS[g]||'';
+  _renderGoal2();
+}
+// Priorité complémentaire (2e objectif, retour GPT — option A) : pilote SEULEMENT Milo + l'entraînement,
+// jamais la nutrition (qui ne suit qu'une seule direction calorique). On masque les objectifs incompatibles
+// avec le principal, et muscle+perte → on propose « recomposition » (mode dédié déjà existant).
+function _goal2Options(){
+  const p=S.goal||'muscle';
+  const excl={muscle:['muscle','perte'],perte:['perte','muscle'],recomp:['recomp','muscle','perte']};
+  const ex=excl[p]||[p];
+  return ['muscle','perte','recomp','force','equilibre','endurance'].filter(g=>ex.indexOf(g)<0);
+}
+function setGoal2(g){
+  S.goal2=(S.goal2===g?'':g);persist();_renderGoal2();
+}
+function _renderGoal2(){
+  const el=document.getElementById('goal2-section');if(!el)return;
+  const opts=_goal2Options();
+  if(S.goal2&&opts.indexOf(S.goal2)<0){S.goal2='';persist();} // devenu incompatible → on retire
+  const chips=opts.map(g=>'<button class="goal2-chip'+(S.goal2===g?' on':'')+'" onclick="setGoal2(\''+g+'\')">'+GOAL_LABELS[g]+'</button>').join('');
+  const nudge=(S.goal==='muscle'||S.goal==='perte')
+    ? '<div class="goal2-nudge" onclick="setGoal(\'recomp\')">Tu veux <b>perdre du gras ET prendre du muscle</b> ? → choisis l\'objectif principal « Perte de gras + muscle » (recomposition).</div>'
+    : '';
+  el.innerHTML='<div class="goal2-hdr">💡 Priorité complémentaire <span style="font-weight:400;color:var(--t3);">(optionnelle)</span></div>'
+    +'<div class="goal2-grid">'+chips+'</div>'
+    +'<div class="goal2-note">La nutrition (calories, macros, repas) suit <b>uniquement ton objectif principal</b>. La priorité complémentaire adapte les conseils de Milo et ton entraînement.</div>'
+    +nudge;
 }
 // Discipline pratiquée — nourrit le Coach IA + l'analyse morpho + la nutrition
 const DISC_LABELS={muscu:'Musculation',bodybuilding:'Bodybuilding / Culturisme',powerbuilding:'Powerbuilding',powerlifting:'Force athlétique / Powerlifting',haltero:'Haltérophilie'};
@@ -1952,6 +1978,7 @@ function _applyRestoreData(raw){
   // _obDataRestored=true est déjà positionné avant l'appel, donc finishOnboarding() les ignore
   try{if(d.gender)S.gender=d.gender;}catch(e){console.warn('[FT restore] gender',e);}
   try{if(d.goal)S.goal=d.goal;}catch(e){console.warn('[FT restore] goal',e);}
+  try{if(d.goal2!==undefined)S.goal2=d.goal2;}catch(e){console.warn('[FT restore] goal2',e);}
   try{if(d.discipline)S.discipline=d.discipline;}catch(e){console.warn('[FT restore] discipline',e);}
   try{if(d.coachTone!==undefined)S.coachTone=d.coachTone;}catch(e){console.warn('[FT restore] coachTone',e);}
   try{if(d.registre&&(Object.keys(d.registre.facts||{}).length||(d.registre.observations||[]).length||(d.registre.sessionLog||[]).length))S.registre=d.registre;}catch(e){console.warn('[FT restore] registre',e);}

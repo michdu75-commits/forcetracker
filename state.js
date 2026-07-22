@@ -21,6 +21,7 @@ let S={
   customExercises:[],exPhotos:{},
   neck:0,waist:0,hip:0,
   goal:'muscle',
+  goal2:'',
   sleepLog:[],
   weightLog:[],
   dayStateLog:[],
@@ -80,6 +81,7 @@ function load(){
     S.targetWeight=parseFloat(localStorage.getItem('ft4_target')||'0')||0;
     S.manualKcal=parseFloat(localStorage.getItem('ft4_manualkcal')||'0')||0; // 0 = calories auto
     S.goal=localStorage.getItem('ft4_goal')||'muscle';
+    S.goal2=localStorage.getItem('ft4_goal2')||'';
     S.discipline=localStorage.getItem('ft4_discipline')||'muscu';
     S.level=localStorage.getItem('ft4_level')||''; // '' | 'debutant' | 'intermediaire' | 'confirme' (niveau déclaré, évolue avec les séances)
     S.coachTone=localStorage.getItem('ft4_coachtone')||''; // '' (défaut, comportement actuel) | 'cool' | 'classique' | 'dynamique' | 'scientifique' — ton de Milo (Dossier Athlète, brique 0)
@@ -264,6 +266,7 @@ function persist(){
     localStorage.setItem('ft4_target',S.targetWeight||0);
     localStorage.setItem('ft4_manualkcal',S.manualKcal||0);
     localStorage.setItem('ft4_goal',S.goal||'muscle');
+    localStorage.setItem('ft4_goal2',S.goal2||'');
     localStorage.setItem('ft4_discipline',S.discipline||'muscu');
     localStorage.setItem('ft4_level',S.level||'');
     localStorage.setItem('ft4_coachtone',S.coachTone||'');

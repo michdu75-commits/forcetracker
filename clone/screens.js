@@ -171,7 +171,7 @@ const _HELP_DATA={
     tips:[
       {i:'📂',t:'Le Profil est organisé en sections repliables (Identité · Objectif · Discipline · Composition · Morphologie · Santé · Cycle · Accessibilité) : tape un titre pour l\'ouvrir. Le bouton "Enregistrer" confirme par une notification verte.'},
       {i:'⚖️',t:'Poids, taille et âge sont indispensables pour calculer ton TDEE (besoins caloriques) dans Nutrition.'},
-      {i:'🎯',t:'L\'objectif (muscle, perte de poids, force, rééquilibrage...) adapte tes macros et les conseils du Coach IA.'},
+      {i:'🎯',t:'L\'objectif principal (muscle, perte de poids, force, rééquilibrage...) adapte tes macros et les conseils du Coach IA. Tu peux aussi ajouter une « priorité complémentaire » (2e objectif) : elle affine les conseils de Milo et ton entraînement, mais la NUTRITION suit toujours l\'objectif principal (elle ne peut viser qu\'une seule direction de calories). Pour « perdre du gras ET prendre du muscle », prends l\'objectif « Perte de gras + muscle ».'},
       {i:'🎽',t:'Discipline : choisis ta pratique (musculation, bodybuilding, powerbuilding, force athlétique, haltérophilie) — le Coach IA adapte ses conseils à ta discipline.'},
       {i:'🥉',t:'Ton niveau (Débutant/Intermédiaire/Confirmé, dans la section Discipline) : le Coach s\'adapte, et il évolue tout seul avec tes séances et tes records — l\'app te félicite quand tu passes au niveau supérieur.'},
       {i:'🧬',t:'« Mon ADN sportif » (optionnel) : ce qui te caractérise DURABLEMENT dans ta pratique — ta motivation, ton mode de vie (temps/lieu/matériel), tes préférences (exos aimés/détestés, style), ton expérience. Milo s\'en sert pour des conseils vraiment personnels et réalistes. (Tes zones fragiles/blessures, elles, vont dans la section Santé.) 🔒 Privé.'},
