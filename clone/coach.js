@@ -548,12 +548,27 @@ function _confirmMiloMemory(idx,ok,btn){
       status:ok?'validated':'rejected',source:'conversation',proposedAt:(typeof today==='function'?today():''),
       validatedAt:ok?(typeof today==='function'?today():''):undefined});
   }
+  // 🩹 CLONE : si le trait retenu nomme une ZONE du corps (conséquence d'une blessure/accident), on l'ajoute
+  //    AUSSI au Profil Santé (notes) → le GARDIEN la protège dans TOUTES les séances/programmes, pas juste
+  //    « Milo le sait quand on en parle ». Automatique au « Oui, retiens » (l'accord est déjà donné).
+  //    ⚠️ Domaine délicat : ça alimente le Gardien (qui ADAPTE/protège, jamais ne diagnostique) — Milo reste dans son couloir.
+  var _toHealth=false;
+  if(ok && (typeof window!=='undefined'&&window.__FT_CLONE__) && typeof _gardienZonesFromText==='function'){
+    try{
+      if(_gardienZonesFromText(t).length){
+        if(!S.healthProfile||typeof S.healthProfile!=='object')S.healthProfile={injuries:[],conditions:[],notes:''};
+        var _cur=S.healthProfile.notes||'';
+        if(_cur.toLowerCase().indexOf(t.toLowerCase())<0){ S.healthProfile.notes=(_cur?_cur+'\n':'')+t; _toHealth=true; }
+      }
+    }catch(e){console.warn('[milo mémoire→santé]',e);}
+  }
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   if(typeof _renderMiloKnows==='function')_renderMiloKnows();
+  const _okMsg=_toHealth?'✅ Retenu — j\'en tiens compte pour protéger ta zone 🛡️':'✅ Retenu — Milo te connaît un peu mieux 👊';
   const row=btn&&btn.closest('div[style*="background"]');
-  if(row)row.innerHTML='<div style="font-size:13px;color:'+(ok?'var(--green,#22c55e)':'var(--t3)')+';">'+(ok?'✅ Retenu — Milo te connaît un peu mieux 👊':'Noté, j\'oublie ça.')+'</div>';
-  if(typeof toast==='function')toast(ok?'Milo te connaît un peu mieux 👊':'Noté, j\'oublie ça.',ok?'success':'info');
+  if(row)row.innerHTML='<div style="font-size:13px;color:'+(ok?'var(--green,#22c55e)':'var(--t3)')+';">'+(ok?_okMsg:'Noté, j\'oublie ça.')+'</div>';
+  if(typeof toast==='function')toast(ok?(_toHealth?'Zone ajoutée à ta santé — Milo la protège 🛡️':'Milo te connaît un peu mieux 👊'):'Noté, j\'oublie ça.',ok?'success':'info');
 }
 
 // ─── Réponses rapides (« question guidée ») — Milo pose UNE question et propose 2-4 réponses tappables.
@@ -1024,7 +1039,8 @@ RETENIR DURABLEMENT CE QUE TU APPRENDS (mémoire — avec l'accord de la personn
 - Chaque élément = une phrase COURTE, factuelle, à la 2e personne (« tu … »). Au plus 1-2 par message. N'émets ce bloc QUE pour une info vraiment DURABLE et NOUVELLE (ne re-propose pas ce que tu sais déjà via le Registre/l'ADN).
 - La personne verra « 🧠 Je retiens : … ? [Oui] [Non] » sous ton message → RIEN n'est mémorisé sans son accord (Principe 3). Ne parle JAMAIS du bloc, ne l'explique pas, ne le commente pas.
 - N'INVENTE jamais : ne propose de retenir que ce que la personne a réellement dit ou clairement confirmé.
-
+${(typeof window!=='undefined'&&window.__FT_CLONE__)?`- BLESSURE / ACCIDENT / SANTÉ : retiens la CONSÉQUENCE DURABLE (la ZONE touchée + la limitation), PAS l'anecdote — ex. « épaule fragile / limitée » plutôt que « accident de moto il y a X ans » (l'événement seul n'aide pas à coacher, et il ne protège rien). Nomme toujours la ZONE (épaule, genou, dos, poignet, cou…) : c'est ce qui permet de PROTÉGER la personne dans ses séances. Et une fois noté, ENCHAÎNE : tiens-en compte tout de suite (protège la zone, adapte les mouvements) — ne t'arrête pas à « c'est noté ».
+`:''}
 STRUCTURER UN PROGRAMME — EXERCICES « ANCRE » vs « ACCESSOIRE » (comment un vrai coach organise une séance) :
 - Un ANCRE = grand mouvement polyarticulaire de BASE qui PORTE la progression : squat, soulevé de terre / charnière de hanche, développé couché, développé militaire, rowing, traction / tirage. On le place en PREMIER (reposé), plus lourd, sur peu de reps, et on SUIT sa progression de charge dans le temps. Peu d'ancres par séance (souvent 1 à 3).
 - Un ACCESSOIRE = isolation ou mouvement secondaire : curls, extensions triceps, élévations, leg curl / leg extension, mollets, écarté / pec deck, fentes, gainage. Il sert à CIBLER un muscle, ajouter du VOLUME, combler un point faible ou une priorité. Plus de reps, plus de marge (on peut varier sans casser la logique).
