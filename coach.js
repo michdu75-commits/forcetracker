@@ -587,7 +587,8 @@ function _appendQuickReplies(reps){
     b.style.cssText='padding:8px 13px;border-radius:16px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:13px;cursor:pointer;';
     b.onclick=function(){
       try{document.querySelectorAll('.coach-qr').forEach(e=>e.remove());}catch(e){} // un seul tap, puis on nettoie
-      if(typeof sendToCoach==='function')sendToCoach(t);                            // le tap = un message envoyé
+      // Répondre à une question POSÉE PAR Milo ne coûte pas une question gratuite (ce n'est pas TOI qui interroges) — noQuota
+      if(typeof sendToCoach==='function')sendToCoach(t,null,{noQuota:true});
     };
     wrap.appendChild(b);
   });
