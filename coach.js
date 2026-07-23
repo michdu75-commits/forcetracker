@@ -1385,13 +1385,51 @@ function _stripCoachTech(text){
   t = t.replace(/\{(?=[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens|reponses)")[\s\S]*$/, ''); // objet JSON technique tronqué
   return t.replace(/\n{3,}/g, '\n\n').trim();
 }
+// 🛡️ GARDIEN DE LA CONSTITUTION — Étage 1 (déterministe, local, 0 IA, 0 coût).
+// Couche de conformité AVANT l'affichage (symétrique au Gardien de SÉCURITÉ qui agit à l'ENTRÉE).
+// Il ne raisonne PAS à la place de Milo : il attrape ce qui est DÉTECTABLE PAR MOTIF dans la sortie.
+//   • bloc_technique : un bloc JSON/code a fuité (déjà nettoyé par _stripCoachTech) → on le SIGNALE.
+//   • interrogatoire : une LISTE de questions numérotées/à puces (≥2) → viole « répondre d'abord » (P19).
+//   • diagnostic     : une formulation de DIAGNOSTIC médical → viole « accompagner, jamais diagnostiquer » (P17).
+// ⚠️ Honnêteté (cf. docs/MOTEUR-RAISONNEMENT-MILO.md) : l'Étage 1 n'attrape QUE le détectable par motif.
+// Le SÉMANTIQUE (inventer un détail, présenter une hypothèse comme un fait) reste au prompt (Étage 2 = futur).
+// Seule réparation SÛRE = retirer les blocs qui fuient (déjà fait). Interrogatoire/diagnostic = SIGNALÉS
+// (on ne charcute pas la phrase), pour rendre les dérives VISIBLES et mesurables (badge clone-only).
+function _gardienSortie(text){
+  const raw = String(text||'');
+  const clean = _stripCoachTech(raw);
+  const flags = [];
+  // 1) un bloc technique a-t-il fuité (puis été retiré) ?
+  if (/```/.test(raw) || /\{[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens|reponses)"/.test(raw)) {
+    flags.push({ code:'bloc_technique', label:'bloc technique retiré de l’affichage' });
+  }
+  // 2) interrogatoire : ≥2 lignes numérotées/à puces contenant une question
+  let listQ = 0;
+  clean.split('\n').forEach(function(ln){
+    if (/^\s*(?:\d+[.)]|[-–•*])\s+/.test(ln) && /\?/.test(ln)) listQ++;
+  });
+  if (listQ >= 2) flags.push({ code:'interrogatoire', label: listQ + ' questions en liste' });
+  // 3) diagnostic médical (formulations affirmatives, conservatrices pour éviter les faux positifs)
+  if (/\b(je (te )?diagnostique|tu souffres d|tu es (en |atteint)|tu fais (une |un |de l)|c'est (une |un |de l')?(d[ée]pression|burn ?out|arthrose|tendinite|hernie|pathologie|maladie|un trouble))/i.test(clean)) {
+    flags.push({ code:'diagnostic', label:'formulation de diagnostic médical' });
+  }
+  return { text: clean, flags: flags };
+}
 function renderCoachMsg(role, text) {
   const msgs = document.getElementById('coach-msgs');
   if (!msgs) return;
   const div = document.createElement('div');
   div.className = 'msg-bubble ' + (role === 'user' ? 'msg-user' : 'msg-coach');
+  let _gFlags = [];
   if (role === 'coach') {
-    text = _stripCoachTech(text); // jamais de JSON brut à l'écran ni au partage (dataset.raw)
+    // Gardien de la Constitution (Étage 1) sur le CLONE ; en prod, comportement identique (_stripCoachTech verbatim)
+    if (typeof window !== 'undefined' && window.__FT_CLONE__ && typeof _gardienSortie === 'function') {
+      const _g = _gardienSortie(text);
+      text = _g.text; _gFlags = _g.flags;
+      if (_gFlags.length) { try { console.warn('[Gardien-sortie]', _gFlags.map(f=>f.code).join(', ')); } catch(e){} }
+    } else {
+      text = _stripCoachTech(text); // jamais de JSON brut à l'écran ni au partage (dataset.raw)
+    }
     div.innerHTML = text
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/^- (.+)$/gm, '<li>$1</li>')
@@ -1409,6 +1447,13 @@ function renderCoachMsg(role, text) {
       foot.innerHTML = '<button class="coach-share-btn" onclick="exportCoachPdf(this)" aria-label="Exporter en PDF"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>PDF</button>'
         + '<button class="coach-share-btn" onclick="shareCoachReply(this)" aria-label="Partager cette réponse"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Partager</button>';
       div.appendChild(foot);
+    }
+    // Badge dev clone-only : rend visibles les dérives détectées (jamais en prod)
+    if (_gFlags.length && typeof window !== 'undefined' && window.__FT_CLONE__) {
+      const badge = document.createElement('div');
+      badge.className = 'gardien-flag';
+      badge.textContent = '🛡️ Gardien : ' + _gFlags.map(function(f){ return f.label; }).join(' · ');
+      div.appendChild(badge);
     }
   } else {
     div.textContent = text;

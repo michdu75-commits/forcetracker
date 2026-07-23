@@ -147,9 +147,19 @@ raisonne pas à la place de l'IA ; elle **vérifie** que la réponse respecte le
 
 **La rigueur honnête (deux étages)** — « déterministe, pas une IA » ne couvre qu'une PARTIE :
 - **Étage 1 — contrôle DÉTERMINISTE (local, 0 IA, peu coûteux)** : attrape ce qui est **détectable
-  par motif** — blocs techniques qui fuient (**déjà fait** : `_stripCoachTech`), une **liste numérotée**
-  de questions (interrogatoire), un mot de **diagnostic médical** interdit. Correction = **nettoyer/
-  retirer**, pas régénérer (donc pas de coût). ⏳ **À construire** (généraliser `_stripCoachTech`).
+  par motif** — blocs techniques qui fuient (`_stripCoachTech`), une **liste de questions**
+  (interrogatoire), un mot de **diagnostic médical** interdit. Correction = **nettoyer/retirer**, pas
+  régénérer (donc pas de coût). ✅ **CONSTRUIT le 23/07/2026 (`ft-v591`, clone d'abord)** :
+  `_gardienSortie(text)` (coach.js) enveloppe `_stripCoachTech` et renvoie `{text, flags}` — trois
+  détecteurs : `bloc_technique` (un bloc JSON/code a fuité puis a été retiré), `interrogatoire`
+  (≥2 lignes numérotées/à puces contenant une question → viole P19 « répondre d'abord »),
+  `diagnostic` (formulation affirmative de diagnostic médical, regex conservatrice anti-faux-positifs
+  → viole P17). **Seule réparation SÛRE = retirer les blocs qui fuient** (déjà fait) ; interrogatoire
+  et diagnostic sont **SIGNALÉS** (on ne charcute pas la phrase) → **badge dev `🛡️ Gardien` sous la
+  bulle + `console.warn`, uniquement sur le clone** (`__FT_CLONE__`) pour rendre les dérives VISIBLES
+  et MESURABLES. **PROD inchangée** (`renderCoachMsg` garde `_stripCoachTech` verbatim). Testé
+  (9 cas unitaires + Playwright prod/clone). Prochain pas = mesurer les vraies dérives sur le clone,
+  puis décider quoi auto-réparer vs promouvoir en prod.
 - **Étage 2 — validation IA (option future, coût assumé)** : les bugs qui font le plus mal (inventer
   un détail, présenter une hypothèse comme un fait) sont **SÉMANTIQUES** → impossibles à attraper de
   façon fiable sans **comprendre le sens** = soit le **prompt** (imparfait), soit une **2ᵉ passe IA**
