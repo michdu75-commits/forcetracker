@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v594'; // 🧪 Clone : bouton ADMIN pour basculer illimité ⇄ 10 questions (retour Michel « si je teste sur le clone autant qu'il ne soit pas illimité »). Par DÉFAUT le clone repasse RÉALISTE (10 questions gratuites, comme un vrai nouvel utilisateur → pour tester la vraie découverte + le mur premium au bon moment). Un bouton dans l'Admin du clone (carte « 💬 Questions Milo (clone) ») bascule en illimité (♾️) pour les longues conversations de test, et revient en normal (🔒). Techniquement : COACH_FREE_LIMIT redevient const 10 ; `_coachFreeLimit()`/`_cloneUnlimitedOn()` lisent le flag localStorage 'ftCloneUnlimited' (clone-only, préfixé cl_). PROD strictement inchangée (10, aucun flag).
+const CACHE = 'ft-v595'; // 🌟 Fix « Milo me comprend » (retour Michel, clone) : Milo REDEMANDAIT le matériel/type de salle DÉJÀ renseigné à l'inscription (le questionnaire « ce que la personne a dit sur elle » est pourtant injecté dans son contexte). Casse le moment « Milo me comprend ». Fix (prod+clone, buildCoachContext) : ⛔ « NE REDEMANDE JAMAIS CE QUE TU SAIS DÉJÀ » — avant de poser une question, vérifier le questionnaire/profil/ADN/records ; si l'info y est (matériel, lieu, temps, objectif, fréquence…), l'UTILISER et MONTRER qu'il la connaît, jamais la redemander (redemander casse la confiance). + ligne « connaissance jamais via un questionnaire » corrigée en « pas SEULEMENT via un questionnaire » (elle faisait sous-estimer les données déjà renseignées).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
