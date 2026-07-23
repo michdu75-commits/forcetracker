@@ -32,6 +32,39 @@ construit **avant** d'enrichir sa présence.
 
 ---
 
+## 🌟 Les DEUX moments Milo (le cœur de la découverte — Michel + Claude + GPT, 23/07/2026)
+
+La question fondatrice (GPT) n'est pas *« combien de messages gratuits ? »* mais
+*« à quel moment un nouvel utilisateur comprend-il ce qu'EST Milo ? »*. La réponse est
+qu'il n'y a **pas un instant unique, mais DEUX moments** — et cette distinction **réconcilie
+la découverte du produit avec la valeur de la mémoire** (l'une des forces de Milo).
+
+- **① Premier contact → « Milo me comprend ».** Au tout premier échange, Milo ne connaît
+  encore **rien** de la personne : il ne peut donc PAS créer d'effet « waouh » par le souvenir.
+  Son premier déclic vient de sa **capacité à comprendre vite, à apporter de la valeur
+  immédiatement, et à éviter l'interrogatoire**. (C'est de la **compréhension**, pas de la mémoire.)
+- **② Premier retour → « Milo se souvient de moi ».** C'est seulement au **retour** que la
+  mémoire prend tout son sens : l'utilisateur réalise que Milo n'est pas *une IA qui répond*,
+  mais *un coach qui apprend*. **Le vrai attachement ne se crée pas pendant la première session,
+  il se crée au premier retour.**
+
+**Conséquence économique (majeure).** Le but de la découverte n'est **pas de vendre pendant
+la première session**. Il est plus simple : **faire revenir l'utilisateur une deuxième fois** —
+car sans 2ᵉ session, la mémoire n'a jamais l'occasion de démontrer sa valeur. La *north star*
+du gratuit devient donc le **taux de RETOUR**, pas le taux de conversion au 1ᵉʳ échange. Et le
+mur premium ne doit **jamais** tomber d'une façon qui empêche un premier retour.
+
+**Garde-fou (Michel) : PAS de gros onboarding.** On ne force pas le moment ② au contact ① avec
+un questionnaire — ce serait contraire à tous nos principes (P24, anti-interrogatoire, « valeur
+d'abord »). **Onboarding extrêmement léger** (quelques infos), puis Milo **apprend naturellement
+au fil des conversations**. Un onboarding lourd *simulerait* « Milo me connaît » (le faux) ;
+le laisser se construire rend le moment « Milo se souvient » **authentique** quand il arrive.
+
+*(Lié : la promesse premium « réactif → proactif · il te connaît » — la chose qui fait COMPRENDRE
+Milo est la même que celle qui fait vouloir le GARDER. Constitution P24 « engagement responsable ».)*
+
+---
+
 ## Les 5 piliers de la présence (sans gadget)
 
 La présence de Milo ne repose **pas** sur un avatar ni des animations. Elle

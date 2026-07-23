@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v592'; // 🧪 Clone = labo : plus de mur premium pendant les tests. COACH_FREE_LIMIT passe à 9999 UNIQUEMENT sur le clone (window.__FT_CLONE__), badge « ∞ questions (clone test) ». PROD inchangée (10 questions gratuites). Permet de tester le Gardien / la question guidée / Milo sans être bloqué au bout de 10 messages.
+const CACHE = 'ft-v593'; // 🌟 MOMENT 1 « Milo me comprend » — fix comportemental de la découverte. ① (prod+clone, cohérence P19/P17) : sur un signal d'état/douleur, Milo RECONNAÎT + AIDE d'abord (adapter/alléger la séance), PUIS au plus UNE question douce — jamais une question avant d'aider, jamais un interrogatoire ; ⛔ pour une douleur (ventre/tête…) il ne joue PAS au docteur, n'exige jamais qu'on DÉCRIVE/QUALIFIE la douleur (triage médical = pas son rôle), reste sur l'entraînement et oriente vers un pro si fort/persistant. ② (clone d'abord) bloc « CRÉER LE PREMIER MOMENT MILO » : au 1er contact (zéro mémoire), le déclic vient de la COMPRÉHENSION + valeur immédiate, pas d'un questionnaire ; but = donner envie de REVENIR (le 2e moment « Milo se souvient » se construit au fil des échanges, sans le simuler). Doc : Constitution P24 + docs/PRESENCE-MILO.md (les DEUX moments Milo). À VALIDER sur le clone (cas « mal au ventre ») → puis promotion en prod.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
