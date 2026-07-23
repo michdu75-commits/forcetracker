@@ -45,5 +45,6 @@ lib/**
 # Dossiers dev
 .git/**
 node_modules/**
+tests/**
 design_handoff_coach_ia/**
 design_handoff_force_tracker/**
