@@ -1621,6 +1621,23 @@ function _initCloneTools(){
   if(!window.__FT_CLONE__)return;
   const c=document.getElementById('admin-clone-reset-card');
   if(c)c.style.display='flex';
+  const u=document.getElementById('admin-clone-unlimited-card');
+  if(u)u.style.display='flex';
+  _syncCloneUnlimBtn();
+}
+// Bouton admin (clone) : bascule le mode illimité des questions Milo (localStorage 'ftCloneUnlimited', préfixé cl_)
+function _syncCloneUnlimBtn(){
+  const b=document.getElementById('admin-clone-unlim-btn');if(!b)return;
+  let on=false;try{on=localStorage.getItem('ftCloneUnlimited')==='1';}catch(e){}
+  b.textContent = on ? '🔒 Repasser en 10 questions (réaliste)' : '♾️ Passer en illimité';
+}
+function toggleCloneUnlimited(){
+  if(!window.__FT_CLONE__){toast('Réservé au clone de test','error');return;}
+  let on=false;try{on=localStorage.getItem('ftCloneUnlimited')==='1';}catch(e){}
+  try{ if(on) localStorage.removeItem('ftCloneUnlimited'); else localStorage.setItem('ftCloneUnlimited','1'); }catch(e){}
+  _syncCloneUnlimBtn();
+  if(typeof updateCoachHeader==='function')updateCoachHeader();
+  toast(on?'Clone repassé en 10 questions (réaliste)':'Clone en illimité (test long)','success');
 }
 // Efface les données de CE clone et relance l'inscription depuis zéro (comme un nouvel inscrit, sans email).
 function resetOnboardingTest(){

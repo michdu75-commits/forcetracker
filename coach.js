@@ -5,7 +5,10 @@
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
 // ─── COACH IA ─────────────────────────────────────────────────
-const COACH_FREE_LIMIT = (typeof window!=='undefined' && window.__FT_CLONE__) ? 9999 : 10; // clone = labo : pas de mur pendant les tests (prod inchangée = 10)
+const COACH_FREE_LIMIT = 10; // prod : 10 questions gratuites
+// Clone-only : bascule « illimité » via l'admin du clone (localStorage 'ftCloneUnlimited', préfixé cl_ par le shim du clone). Par défaut le clone est RÉALISTE (10), pour tester la vraie découverte/mur.
+function _cloneUnlimitedOn(){ try{ return typeof window!=='undefined' && window.__FT_CLONE__ && localStorage.getItem('ftCloneUnlimited')==='1'; }catch(e){ return false; } }
+function _coachFreeLimit(){ return _cloneUnlimitedOn() ? 9999 : COACH_FREE_LIMIT; }
 let coachHistory = [];
 let coachBusy = false;
 let _coachHistLoaded = false;
@@ -393,7 +396,7 @@ function coachAction(type){
     morpho:null
   };
   if(type==='morpho'){openMorphoAnalysis();return;}
-  if(!S.premium&&(S.coachFree||0)>=COACH_FREE_LIMIT){showPremiumWall();return;}
+  if(!S.premium&&(S.coachFree||0)>=_coachFreeLimit()){showPremiumWall();return;}
   _showCoachChat();
   if(type==='force'){ _forceProgReq=true; sendToCoach(_buildForceMessage(),_forceDisplayMsg()); return; }
   sendToCoach(prompts[type]);
@@ -666,10 +669,10 @@ function updateCoachHeader() {
       badge.innerHTML = '<div class="coach-quota is-premium">⭐ Premium</div>';
     }
   } else {
-    if (typeof window!=='undefined' && window.__FT_CLONE__) {
-      badge.innerHTML = '<div class="coach-quota">∞ questions (clone test)</div>';
+    if (_cloneUnlimitedOn()) {
+      badge.innerHTML = '<div class="coach-quota">∞ questions (clone illimité)</div>';
     } else {
-      const left = Math.max(0, COACH_FREE_LIMIT - (S.coachFree || 0));
+      const left = Math.max(0, _coachFreeLimit() - (S.coachFree || 0));
       badge.innerHTML = `<div class="coach-quota">${left} question${left!==1?'s':''} gratuite${left!==1?'s':''}</div>`;
     }
   }
@@ -1639,7 +1642,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
   if (!opts.noQuota && typeof document !== 'undefined' && document.querySelector && document.querySelector('.coach-qr')) opts.noQuota = true;
 
   // Vérifier quota avant d'ouvrir l'input — un débrief auto (opts.noQuota) ne consomme pas de question
-  if (!S.premium && !opts.noQuota && (S.coachFree || 0) >= COACH_FREE_LIMIT) {
+  if (!S.premium && !opts.noQuota && (S.coachFree || 0) >= _coachFreeLimit()) {
     if (window._premiumPending) {
       toast('Vérification premium en cours…', 'info'); return;
     }
@@ -1765,7 +1768,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       S.coachFree = (S.coachFree || 0) + 1;
       persist();
       updateCoachHeader();
-      if (S.coachFree >= COACH_FREE_LIMIT) {
+      if (S.coachFree >= _coachFreeLimit()) {
         setTimeout(showPremiumWall, 1200);
       }
     }
