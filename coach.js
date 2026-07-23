@@ -556,6 +556,45 @@ function _confirmMiloMemory(idx,ok,btn){
   if(typeof toast==='function')toast(ok?'Milo te connaît un peu mieux 👊':'Noté, j\'oublie ça.',ok?'success':'info');
 }
 
+// ─── Réponses rapides (« question guidée ») — Milo pose UNE question et propose 2-4 réponses tappables.
+// Garde-fous (Constitution P17/P22/P23) : une seule question à la fois, réponses OPTIONNELLES (le champ
+// texte reste toujours dispo), jamais un sondage, on peut toujours ne pas répondre. Milo émet un bloc caché
+// ```json {"reponses":["Récent","Il y a des mois","Il y a des années"]}``` retiré de l'affichage par _stripCoachTech.
+function _extractQuickReplies(reply){
+  try{
+    let m=reply.match(/```json\s*([\s\S]*?)```/i);
+    let jsonStr=m?m[1]:null;
+    if(!jsonStr){const m2=reply.match(/\{[\s\S]*?"reponses"[\s\S]*\}/i);jsonStr=m2?m2[0]:null;}
+    if(!jsonStr||!/"reponses"/i.test(jsonStr))return null;
+    const obj=JSON.parse(jsonStr.trim());
+    const arr=obj&&obj.reponses;
+    if(!Array.isArray(arr))return null;
+    const reps=arr.map(t=>String(t||'').trim()).filter(Boolean).slice(0,4);
+    return reps.length?reps:null;
+  }catch(e){console.warn('[milo réponses rapides] parse',e);return null;}
+}
+function _appendQuickReplies(reps){
+  const msgs=document.getElementById('coach-msgs');if(!msgs)return;
+  const bubbles=msgs.querySelectorAll('.msg-coach');
+  const last=bubbles[bubbles.length-1];if(!last)return;
+  const wrap=document.createElement('div');
+  wrap.className='coach-qr';
+  wrap.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;';
+  reps.forEach(t=>{
+    const b=document.createElement('button');
+    b.className='ft-press coach-qr-chip';
+    b.textContent=t;                 // textContent = 0 injection HTML
+    b.style.cssText='padding:8px 13px;border-radius:16px;background:var(--bg2);border:1px solid var(--sep);color:var(--t1);font-size:13px;cursor:pointer;';
+    b.onclick=function(){
+      try{document.querySelectorAll('.coach-qr').forEach(e=>e.remove());}catch(e){} // un seul tap, puis on nettoie
+      if(typeof sendToCoach==='function')sendToCoach(t);                            // le tap = un message envoyé
+    };
+    wrap.appendChild(b);
+  });
+  last.appendChild(wrap);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
 // Ajoute le bouton « ⚡ Commencer cette séance » sous la dernière bulle de Milo
 function _appendStartSessionBtn(sess){
   if(typeof _normalizeMiloSession!=='function')return;
@@ -1030,7 +1069,14 @@ INTÉGRER LA SÉANCE DU JOUR DIRECTEMENT DANS L'APP (action concrète — quand 
 - Règles du bloc : \`name\` = un nom d'exercice le plus proche possible de la bibliothèque (ex. « Développé Couché », « Squat », « Rowing Barre »). Une entrée dans \`sets\` PAR série. \`type\` = "N" (normal), "É" (échauffement), "X" (échec/à fond) ou "D" (dropset) — "N" par défaut. \`kg\` peut valoir 0 si tu ne connais pas la charge (l'app la pré-remplit avec la dernière fois). Si la charge est « au ressenti/max », mets \`"reps":0,"maxi":true\`.
 - N'émets ce bloc QUE pour une séance à faire AUJOURD'HUI / MAINTENANT. (Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas ce bloc-là.)
 - Un bouton « ⚡ Commencer cette séance » apparaîtra automatiquement sous ton message pour l'injecter dans l'écran Séance. Ne parle JAMAIS du JSON, ne l'explique pas, ne le commente pas — l'utilisateur ne voit que ta séance en clair + le bouton.
-
+${(typeof window!=='undefined'&&window.__FT_CLONE__)?`
+QUESTION GUIDÉE — PROPOSER DES RÉPONSES RAPIDES À TAPER (facultatif, pour aider la personne à répondre sans tout écrire) :
+- Quand tu poses une question qui a quelques réponses courtes naturelles, tu PEUX proposer 2 à 4 réponses rapides tappables. Pose ta question normalement, PUIS termine ton message par un bloc CACHÉ (non affiché) au format EXACT :
+\`\`\`json
+{"reponses":["Récent","Il y a des mois","Il y a des années"]}
+\`\`\`
+- RÈGLES STRICTES : ① UNE seule question à la fois — JAMAIS une liste de questions numérotées (pas d'interrogatoire). ② Les réponses rapides sont une AIDE, jamais une obligation : la personne peut toujours écrire librement, ou ne pas répondre du tout. ③ Réponses TRÈS courtes (1 à 4 mots chacune). ④ Si le sujet est personnel/intime (corps, moral, santé, blessure), inclus une porte de sortie douce (ex. « je préfère pas en parler ») et n'insiste JAMAIS. ⑤ N'émets ce bloc QUE quand la question a vraiment quelques réponses naturelles — pas à chaque message, jamais pour meubler. ⑥ Ne parle jamais du bloc, ne l'explique pas.
+`:''}
 MOMENT PRÉSENT (heure locale de la personne) :
 - On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}${_coachGapText()}
 
@@ -1308,8 +1354,8 @@ function _stripCoachTech(text){
   let t = String(text||'');
   t = t.replace(/```[\s\S]*?```/g, '');                       // blocs de code fermés
   t = t.replace(/```[a-zA-Z]*[\s\S]*$/g, '');                 // bloc de code non fermé (tronqué)
-  t = t.replace(/\{[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens)"[\s\S]*\}/g, ''); // objet JSON technique (fermé)
-  t = t.replace(/\{(?=[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens)")[\s\S]*$/, ''); // objet JSON technique tronqué
+  t = t.replace(/\{[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens|reponses)"[\s\S]*\}/g, ''); // objet JSON technique (fermé)
+  t = t.replace(/\{(?=[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens|reponses)")[\s\S]*$/, ''); // objet JSON technique tronqué
   return t.replace(/\n{3,}/g, '\n\n').trim();
 }
 function renderCoachMsg(role, text) {
@@ -1526,6 +1572,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
 
   coachBusy = true;
   if (inp) inp.value = '';
+  try{document.querySelectorAll('.coach-qr').forEach(e=>e.remove());}catch(e){} // les réponses rapides d'avant ne traînent pas
   clearCoachImg();
   const sendBtn = document.getElementById('coach-send-btn');
   if (sendBtn) sendBtn.disabled = true;
@@ -1607,10 +1654,13 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     if (!_fp) { const dsx = _extractDaySession(reply); if (dsx && dsx.sess) { _ds = dsx.sess; if (dsx.clean) _disp = dsx.clean; } }
     // Mémoire durable : Milo peut proposer de retenir un trait durable (avec validation, Principe 3)
     const _mem = _extractMemory(reply);
+    // Question guidée : Milo peut proposer des réponses rapides à taper (facultatif, une question à la fois)
+    const _qr = _extractQuickReplies(reply);
     renderCoachMsg('coach', _disp);
     if (_fp) _appendSaveProgBtn(_fp);
     if (_ds) _appendStartSessionBtn(_ds);
     if (_mem) _appendMemoryBtns(_mem);
+    if (_qr) _appendQuickReplies(_qr);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
     if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
     coachHistory.push({ role: 'assistant', content: reply });
