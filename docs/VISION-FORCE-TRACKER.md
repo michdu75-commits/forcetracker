@@ -128,6 +128,29 @@ la philosophie est gravée dans `CONSTITUTION-MILO.md`, Principes 22 & 23.)*
 
 ---
 
+## L'humilité du concepteur (principe fondateur — Michel, 23/07/2026)
+
+> **« L'humilité qu'on demande à Milo envers l'utilisateur, nous devons nous la demander à
+> nous-mêmes envers le produit. »**
+
+C'est une **symétrie** : de même que Milo ne doit jamais *sembler* tout savoir (Principe 22, Milo
+« diagnostique la barre, jamais l'âme »), **nous, concepteurs, ne cherchons pas à créer une IA qui
+semble tout savoir — mais une IA qui sait RESPECTER SES LIMITES.**
+
+- Notre conception reste **perfectible et évolutive**. Un bug n'est pas un échec : c'est une
+  **règle de conception qui manquait** (→ voir le `docs/BUGS-DE-PHILOSOPHIE.md`).
+- On ne refait pas l'architecture à chaque problème : on part du principe qu'elle est **solide**,
+  et les progrès viennent désormais de la **gouvernance du système** (organiser la connaissance),
+  pas de l'accumulation de fonctionnalités.
+- Ce principe guide la **façon même de construire** Force Tracker : rester honnête sur ce que le
+  système sait faire et ne sait pas encore faire (ex. le contrôle déterministe n'attrape pas le
+  sémantique — on le dit, on ne se croit pas protégé à 100 %).
+
+*(Né de la réflexion « Force Tracker devient un système » — Michel, 23/07/2026. C'est le pendant,
+côté ÉQUIPE, de l'humilité qu'on grave côté MILO.)*
+
+---
+
 ## Vision à long terme — et l'honnêteté technique
 
 Le vrai atout de Force Tracker n'est pas seulement son intelligence : c'est sa

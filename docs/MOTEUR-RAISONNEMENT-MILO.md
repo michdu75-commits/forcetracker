@@ -127,3 +127,33 @@ attribuer une cause » s'applique à la PERSONNE, **pas** à la fonte — sinon 
   Réutilise l'infra Observations (une seule mémoire durable). 0 backend (Registre déjà cloud-sync).
 - ⏭️ **Pièces à venir** (chacune une brique du moteur, une à la fois) : Observations (Cerveau 1 qui
   affine + Cerveau 2 qui réévalue) · générateur de programme (sortie du Cerveau 2).
+
+---
+
+## 🛡️ Le GARDIEN DE LA CONSTITUTION — une couche de conformité AVANT l'affichage (concept, GPT 23/07/2026)
+
+**Le diagnostic (juste)** : la plupart de nos bugs récents ne sont **pas des erreurs de RAISONNEMENT**
+mais des erreurs de **COMPORTEMENT**, au niveau de la **réponse finale** (voir `docs/BUGS-DE-PHILOSOPHIE.md`).
+Le raisonnement est bon ; c'est la **sortie** qui trahit parfois la Constitution.
+
+**L'idée** : une couche de **contrôle de conformité** entre la génération et l'affichage. Elle ne
+raisonne pas à la place de l'IA ; elle **vérifie** que la réponse respecte les principes fondamentaux.
+
+**Symétrie d'architecture (à ne pas confondre)** :
+- **Le Gardien** (déjà là, `_gardienRules`) agit **À L'ENTRÉE** : il protège le **CORPS** (lit la
+  santé / les zones fragiles → adapte le contexte).
+- **Le Gardien de la Constitution** (nouveau, sortie) agirait **À LA SORTIE** : il protège la
+  **PAROLE** (vérifie la conformité de la réponse aux principes).
+
+**La rigueur honnête (deux étages)** — « déterministe, pas une IA » ne couvre qu'une PARTIE :
+- **Étage 1 — contrôle DÉTERMINISTE (local, 0 IA, peu coûteux)** : attrape ce qui est **détectable
+  par motif** — blocs techniques qui fuient (**déjà fait** : `_stripCoachTech`), une **liste numérotée**
+  de questions (interrogatoire), un mot de **diagnostic médical** interdit. Correction = **nettoyer/
+  retirer**, pas régénérer (donc pas de coût). ⏳ **À construire** (généraliser `_stripCoachTech`).
+- **Étage 2 — validation IA (option future, coût assumé)** : les bugs qui font le plus mal (inventer
+  un détail, présenter une hypothèse comme un fait) sont **SÉMANTIQUES** → impossibles à attraper de
+  façon fiable sans **comprendre le sens** = soit le **prompt** (imparfait), soit une **2ᵉ passe IA**
+  (fiable mais coûte un appel + latence, gênant pour le gratuit). **À activer seulement si** le prompt
+  continue d'échouer sur device.
+
+⚠️ **Ne pas se croire protégé à 100 % par le seul Étage 1** (c'est l'humilité du concepteur, Vision).
