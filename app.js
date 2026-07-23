@@ -1053,11 +1053,14 @@ const _OB_INJ_LAT={'épaule':1,'trapèze':1,'pectoraux':1,'coude':1,'poignet':1,
 let _obInjuries=[];
 let _obInjSide={}; // zone -> 'L'|'R'|'both'
 function obToggleInjury(zone){
+  let added=false;
   if(zone==='none'){_obInjuries=[];_obInjSide={};}
-  else{const i=_obInjuries.indexOf(zone);if(i>=0){_obInjuries.splice(i,1);delete _obInjSide[zone];}else{_obInjuries.push(zone);if(_OB_INJ_LAT[zone])_obInjSide[zone]='both';}}
+  else{const i=_obInjuries.indexOf(zone);if(i>=0){_obInjuries.splice(i,1);delete _obInjSide[zone];}else{_obInjuries.push(zone);added=true;if(_OB_INJ_LAT[zone])_obInjSide[zone]='both';}}
   const none=document.getElementById('ob-inj-none');if(none)none.classList.toggle('ob-sel',_obInjuries.length===0);
   Object.keys(_OB_INJ_BTN).forEach(z=>{const el=document.getElementById(_OB_INJ_BTN[z]);if(el)el.classList.toggle('ob-sel',_obInjuries.indexOf(z)>=0);});
   _obRenderInjSide();
+  // Quand on sélectionne une zone latérale, amener le sélecteur G/D à l'écran (fini le « il faut descendre »).
+  if(added&&_OB_INJ_LAT[zone]){try{setTimeout(()=>{const b=document.getElementById('ob-inj-side');if(b&&b.scrollIntoView)b.scrollIntoView({behavior:'smooth',block:'nearest'});},60);}catch(e){}}
 }
 function obSetInjSide(zone,side){_obInjSide[zone]=side;_obRenderInjSide();}
 function _obRenderInjSide(){
