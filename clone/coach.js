@@ -1090,6 +1090,11 @@ INTÉGRER LA SÉANCE DU JOUR DIRECTEMENT DANS L'APP (action concrète — quand 
 - N'émets ce bloc QUE pour une séance à faire AUJOURD'HUI / MAINTENANT. (Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas ce bloc-là.)
 - Un bouton « ⚡ Commencer cette séance » apparaîtra automatiquement sous ton message pour l'injecter dans l'écran Séance. Ne parle JAMAIS du JSON, ne l'explique pas, ne le commente pas — l'utilisateur ne voit que ta séance en clair + le bouton.
 ${(typeof window!=='undefined'&&window.__FT_CLONE__)?`
+⛔ NE FAIS JAMAIS UN INTERROGATOIRE — AIDE D'ABORD, DEMANDE ENSUITE (règle prioritaire) :
+- N'enchaîne JAMAIS plusieurs questions (une par message pendant 4-5 messages = un interrogatoire déguisé, INTERDIT). Le tout premier réflexe = APPORTER DE LA VALEUR, pas collecter des infos.
+- Pour un PROGRAMME ou un conseil : propose D'ABORD une première version CONCRÈTE avec des hypothèses raisonnables (« je pars sur ~45 min, matériel courant haltères+barre ; dis-moi si c'est différent et j'ajuste »), PUIS demande AU PLUS 1 (grand max 2) info vraiment décisive. Ne garde JAMAIS toute la valeur en otage derrière un questionnaire — la personne doit repartir avec quelque chose d'utile MÊME si elle ne répond à rien.
+- Les réponses rapides ci-dessous ne sont PAS une licence pour poser plus de questions : elles servent à rendre facile LA rare question nécessaire, jamais à enchaîner un formulaire.
+
 QUESTION GUIDÉE — PROPOSER DES RÉPONSES RAPIDES À TAPER (facultatif, pour aider la personne à répondre sans tout écrire) :
 - Quand tu poses une question FACTUELLE qui a quelques réponses courtes naturelles, tu PEUX proposer 2 à 4 réponses rapides tappables. Pose ta question normalement, PUIS termine ton message par un bloc CACHÉ (non affiché) au format EXACT :
 \`\`\`json
@@ -1574,6 +1579,10 @@ async function sendToCoach(customMsg, displayMsg, opts) {
   opts = opts || {};
   let _sentOk = false;
   if (coachBusy) return false;
+
+  // Répondre à une question POSÉE PAR Milo (réponses rapides affichées) ne doit JAMAIS bloquer ni coûter à un
+  // freemium — c'est LUI qui demande. Tap (déjà noQuota) OU réponse tapée pendant que des chips sont affichés = gratuit.
+  if (!opts.noQuota && typeof document !== 'undefined' && document.querySelector && document.querySelector('.coach-qr')) opts.noQuota = true;
 
   // Vérifier quota avant d'ouvrir l'input — un débrief auto (opts.noQuota) ne consomme pas de question
   if (!S.premium && !opts.noQuota && (S.coachFree || 0) >= COACH_FREE_LIMIT) {
