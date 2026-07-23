@@ -43,6 +43,17 @@ La brique doit rester **simple et indépendante** (anti « puisqu'on y est »).
 - Les remarques sont discutées, les améliorations intégrées.
 - **La validation finale appartient toujours à Michel.**
 
+> **🧪 Les 3 critères d'évaluation d'une proposition** *(grille permanente, apport Michel 23/07/2026)* —
+> avant de figer quoi que ce soit, toute proposition passe ces trois filtres :
+> 1. **Améliore-t-elle réellement l'expérience utilisateur ?**
+> 2. **Est-elle soutenable économiquement à grande échelle ?** (une excellente idée qui double les
+>    coûts LLM n'est probablement pas une bonne idée produit.)
+> 3. **Existe-t-il une solution plus simple qui apporte 80 % du bénéfice pour 20 % du coût ?**
+>
+> Corollaire décisif : **séparer le PRINCIPE de son IMPLÉMENTATION.** On grave un principe quand il
+> est mûr ; on ne fige pas une architecture sur une simple intuition. Transformer trop vite une bonne
+> intuition en implémentation est un piège récurrent.
+
 ### 4. Développement
 - **Sauvegarde d'abord** (point de restauration — voir « Adaptation Force
   Tracker » ci-dessous).

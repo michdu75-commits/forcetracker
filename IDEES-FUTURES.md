@@ -4,6 +4,30 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 💰 « Engagement responsable » — IMPLÉMENTATION à valider (principe déjà gravé, Constitution P24)
+
+**Le PRINCIPE est gravé** (Constitution v2.2, Principe 24) : *« Milo ne s'engage jamais dans une
+conversation qu'il estime ne pas pouvoir mener jusqu'à un point d'arrêt utile — et il réévalue à
+chaque tour. »* **L'implémentation, elle, est délibérément LAISSÉE OUVERTE** (décision Michel :
+graver le principe, ne pas figer l'architecture sur une intuition).
+
+**La piste minimale (à tester UN JOUR, pas maintenant)** — issue du croisement Michel + GPT + Gemini
++ Mistral :
+- **Ne PAS construire d'« estimateur » au 1ᵉʳ message** (la complexité n'est pas fiable au départ ;
+  un 2ᵉ appel doublerait le coût → casse le critère « soutenable »). Écarté.
+- **La bonne piste = donner à Milo la conscience de son BUDGET restant** (injecté dans son contexte,
+  déterministe, 1 nombre) + une **consigne de transparence CIBLÉE** : s'il voit qu'une grosse demande
+  dépasse le budget **tendu**, il l'annonce d'emblée (chaleureux, jamais vendeur) et donne quand même
+  une première version utile. La **réévaluation à chaque tour est gratuite** (elle tient dans la
+  réponse que Milo produit de toute façon).
+- **Le message reste l'unité** de facturation (simple, compréhensible). On ne change pas l'unité ;
+  on change l'honnêteté sur le périmètre.
+- **Garde-fous** : ne s'active que budget tendu (un premium n'est jamais concerné) ; jamais une
+  pression à payer (P23) ; à tester **sur le clone d'abord** (y simuler un budget bas).
+- **À passer par les 3 critères** (`docs/PROCESSUS-DEVELOPPEMENT.md`) avant de coder.
+
+---
+
 ## 🧭 LE FILTRE DE PRIORISATION (GPT 22/07/2026, adopté) — « améliore-t-il les décisions de Milo ? »
 
 **Le constat (GPT, en relisant ce backlog) :** Force Tracker **change de nature** — au départ une app de musculation, aujourd'hui une **plateforme qui cherche à faire raisonner Milo comme un coach**. Le backlog « raconte une histoire » : on voit une **direction**, plus une liste d'idées.
