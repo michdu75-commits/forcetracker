@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v591'; // 🛡️ Gardien de la Constitution — Étage 1 (déterministe, clone-only) : contrôleur de conformité AVANT l'affichage (symétrique au Gardien de sécurité qui agit à l'ENTRÉE). `_gardienSortie(text)` (coach.js) enveloppe `_stripCoachTech` et SIGNALE les dérives détectables par motif : bloc technique qui a fuité · interrogatoire (≥2 questions en liste) · formulation de diagnostic médical → badge dev « 🛡️ Gardien » sous la bulle + console.warn, UNIQUEMENT sur le clone (__FT_CLONE__). PROD inchangée (renderCoachMsg garde `_stripCoachTech` verbatim). Honnête : l'Étage 1 n'attrape que le détectable par motif ; le sémantique (inventer un détail, hypothèse-comme-fait) reste au prompt (Étage 2 IA = futur). Doc : docs/MOTEUR-RAISONNEMENT-MILO.md + docs/BUGS-DE-PHILOSOPHIE.md.
+const CACHE = 'ft-v592'; // 🧪 Clone = labo : plus de mur premium pendant les tests. COACH_FREE_LIMIT passe à 9999 UNIQUEMENT sur le clone (window.__FT_CLONE__), badge « ∞ questions (clone test) ». PROD inchangée (10 questions gratuites). Permet de tester le Gardien / la question guidée / Milo sans être bloqué au bout de 10 messages.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

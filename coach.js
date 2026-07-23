@@ -5,7 +5,7 @@
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
 // ─── COACH IA ─────────────────────────────────────────────────
-const COACH_FREE_LIMIT = 10;
+const COACH_FREE_LIMIT = (typeof window!=='undefined' && window.__FT_CLONE__) ? 9999 : 10; // clone = labo : pas de mur pendant les tests (prod inchangée = 10)
 let coachHistory = [];
 let coachBusy = false;
 let _coachHistLoaded = false;
@@ -666,8 +666,12 @@ function updateCoachHeader() {
       badge.innerHTML = '<div class="coach-quota is-premium">⭐ Premium</div>';
     }
   } else {
-    const left = Math.max(0, COACH_FREE_LIMIT - (S.coachFree || 0));
-    badge.innerHTML = `<div class="coach-quota">${left} question${left!==1?'s':''} gratuite${left!==1?'s':''}</div>`;
+    if (typeof window!=='undefined' && window.__FT_CLONE__) {
+      badge.innerHTML = '<div class="coach-quota">∞ questions (clone test)</div>';
+    } else {
+      const left = Math.max(0, COACH_FREE_LIMIT - (S.coachFree || 0));
+      badge.innerHTML = `<div class="coach-quota">${left} question${left!==1?'s':''} gratuite${left!==1?'s':''}</div>`;
+    }
   }
 }
 
