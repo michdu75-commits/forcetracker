@@ -440,7 +440,7 @@ function _renderHomeHero(){
   const hasPending=S.wkt&&S.wkt.exs&&S.wkt.exs.length;
   const ctaLabel=hasPending?'↩ Reprendre la séance':'Commencer une séance';
   const heroLabel=score===null?'Enregistre ton sommeil':score>=80?'Prêt à performer':score>=60?'Bonne récupération':score>=40?'Récupération modérée':'Fatigué';
-  const heroDesc=score===null?'Renseigne ton sommeil ce soir pour obtenir ton score de récupération.':info.rec.length>90?info.rec.substring(0,90)+'…':info.rec;
+  const heroDesc=score===null?'Renseigne ton sommeil ce soir pour obtenir ton score de récupération.':info.rec.length>90?info.rec.substring(0,90).replace(/\s+\S*$/,'')+'…':info.rec;
   const pillHtml=score!==null?'<div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:'+ringColor+';box-shadow:0 0 8px '+ringColor+';"></span><span style="font-size:12px;font-weight:700;color:'+ringColor+';">Récup '+info.label+'</span></div>':'';
   // Restylage maquette : gros chiffre + barre de progression (au lieu de l'anneau). Mêmes données, CTA conservé.
   const barW=score!==null?score:0;
@@ -514,6 +514,16 @@ function closeRecoWhy(){const o=document.getElementById('ov-reco-why');if(o)o.cl
 // ─── Coach proactif — petit mot de Milo sur l'Accueil (brique 4) ──────────
 // Choisit LE message le plus pertinent du jour à partir des données locales
 // (aucun backend). Fermable, jamais 2× le même message le même jour.
+// Jour lisible en français pour une date ISO (aujourd'hui / demain / lundi… / le JJ/MM) — ft-v601
+function _frDayLabel(dateStr){
+  const t=today();
+  const diff=Math.round((new Date(dateStr+'T12:00:00')-new Date(t+'T12:00:00'))/864e5);
+  if(diff===0)return 'aujourd\'hui';
+  if(diff===1)return 'demain';
+  const days=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  if(diff>=2&&diff<=6)return days[new Date(dateStr+'T12:00:00').getDay()];
+  return 'le '+dateStr.split('-').reverse().slice(0,2).join('/');
+}
 function _miloMessage(){
   const sess=(S.sessions||[]).filter(s=>s.date);
   const tStr=today();
@@ -525,6 +535,21 @@ function _miloMessage(){
   const monK=mon.toISOString().slice(0,10);
   const weekCount=[...new Set(sess.map(s=>s.date))].filter(d=>d>=monK).length;
   const rec=(typeof calcRecoveryScore==='function')?calcRecoveryScore():null;
+  // Prochaine séance ANNONCÉE à Milo (ft-v601) : cohérence chat ↔ Accueil (« Milo se souvient de moi »).
+  // Priorité HAUTE → tant qu'une séance est prévue, Milo ne relance PLUS « ça fait X jours ».
+  const np=S.nextPlanned;
+  if(np&&np.date){
+    const pdiff=Math.round((new Date(np.date+'T12:00:00')-new Date(tStr+'T12:00:00'))/864e5);
+    const doneSince=lastDate&&lastDate>=np.date; // une séance a été enregistrée le jour prévu ou après → annonce honorée
+    if(isNaN(pdiff)||pdiff<0||doneSince){
+      try{S.nextPlanned=null;persist();}catch(e){} // annonce périmée : on nettoie, on retombe sur la logique normale
+    }else{
+      const lab=np.label?(' '+np.label):'';
+      if(pdiff===0)return {id:'prevu-jour',txt:'C\'est le jour de ta séance'+lab+' 💪 On la prépare ?'};
+      const when=(typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date;
+      return {id:'prevu',txt:'Séance'+lab+' prévue '+when+' 💪 Je m\'en souviens — repose-toi bien d\'ici là.'};
+    }
+  }
   // Priorité : réengagement > relance > récup > lendemain > régularité
   if(daysSince!==null&&daysSince>=10)
     return {id:'retour',txt:'Content de te revoir 👋 On reprend tranquille — pas de record aujourd\'hui, on remet la machine en route.'};

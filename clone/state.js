@@ -69,6 +69,7 @@ function load(){
     S.sessions=JSON.parse(localStorage.getItem('ft4_sessions')||'[]');
     S.prs=JSON.parse(localStorage.getItem('ft4_prs')||'{}');
     S.wkt=JSON.parse(localStorage.getItem('ft4_wkt')||'null');
+    S.nextPlanned=JSON.parse(localStorage.getItem('ft4_nextplanned')||'null'); // séance annoncée à Milo (ft-v601) : {date:'YYYY-MM-DD',label}
     S.url=DEFAULT_URL;
     S.email=localStorage.getItem('ft4_email')||'';
     S.connected=localStorage.getItem('ft4_ok')==='1';
@@ -238,6 +239,7 @@ function persist(){
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
     localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
     localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
+    localStorage.setItem('ft4_nextplanned',JSON.stringify(S.nextPlanned||null)); // séance annoncée à Milo (ft-v601)
     localStorage.setItem('ft4_cycle',JSON.stringify(S.cycle||null)); // cycle de force : local-first (était lu mais jamais écrit)
     // Brouillon de secours — effacé quand séance vide ou après sauvegarde dans finishWorkout()
     if(S.wkt&&S.wkt.exs&&S.wkt.exs.length){

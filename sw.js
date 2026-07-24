@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v600'; // 🔧 Re-déclenchement du déploiement GitHub Pages (incident 24/07) : Pages avait CESSÉ de déployer après ft-v593 (aucun build pour v594→v599 — limite de builds atteinte pendant la session). Le site live était réellement bloqué sur ft-v593 (≠ cache device). Ce push vise à relancer le build Pages. Contenu = tout l'accumulé v594→v599 (bouton clone illimité, fix « Milo me comprend », framework de tests, fix visuels Suivant/côté, promesse inscription clone, safe-area, auto-détecteur de version du clone).
+const CACHE = 'ft-v601'; // 🐛 Accueil : fix mot « records » coupé (« rec… ») → coupure au mot entier. 🌟 CLONE : « Milo se souvient de ta prochaine séance » — quand tu annonces à Milo quand tu t'entraînes (« lundi »), l'Accueil arrête de te relancer « ça fait X jours » et devient cohérent (« Séance prévue lundi 💪 »). Bloc caché {"prevu"} gaté clone, S.nextPlanned local, auto-nettoyage quand la séance est passée/faite.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',

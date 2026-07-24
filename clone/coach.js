@@ -591,6 +591,27 @@ function _extractQuickReplies(reply){
     return reps.length?reps:null;
   }catch(e){console.warn('[milo réponses rapides] parse',e);return null;}
 }
+// ─── PROCHAINE SÉANCE ANNONCÉE (cohérence chat ↔ Accueil, ft-v601 — retour Michel) ────────
+// Quand l'utilisateur DIT à Milo quand il compte s'entraîner (« je m'entraîne lundi »), Milo termine
+// par un bloc caché ```json {"prevu":{"date":"YYYY-MM-DD","label":"..."}}``` (retiré par _stripCoachTech).
+// On le stocke dans S.nextPlanned → l'Accueil arrête de relancer « ça fait X jours » et devient cohérent
+// (« Milo se souvient de moi »). Rien inventé : c'est ce que la PERSONNE a dit. Silencieux (pas de bouton).
+function _extractPlannedSession(reply){
+  try{
+    let m=reply.match(/```json\s*([\s\S]*?)```/i);
+    let jsonStr=m?m[1]:null;
+    if(!jsonStr){const m2=reply.match(/\{[\s\S]*?"prevu"[\s\S]*\}/i);jsonStr=m2?m2[0]:null;}
+    if(!jsonStr||!/"prevu"/i.test(jsonStr))return null;
+    const obj=JSON.parse(jsonStr.trim());
+    const p=obj&&obj.prevu;
+    if(!p||!p.date||!/^\d{4}-\d{2}-\d{2}$/.test(String(p.date)))return null;
+    const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    const diff=Math.round((new Date(p.date+'T12:00:00')-new Date(t+'T12:00:00'))/864e5);
+    if(isNaN(diff)||diff<0||diff>14)return null; // garde-fou : aujourd'hui → +14 j max (une annonce plausible)
+    let label=String(p.label||'').trim().replace(/[<>{}]/g,'').slice(0,40);
+    return {date:p.date,label:label||''};
+  }catch(e){console.warn('[milo prochaine séance] parse',e);return null;}
+}
 function _appendQuickReplies(reps){
   const msgs=document.getElementById('coach-msgs');if(!msgs)return;
   const bubbles=msgs.querySelectorAll('.msg-coach');
@@ -1098,6 +1119,13 @@ INTÉGRER LA SÉANCE DU JOUR DIRECTEMENT DANS L'APP (action concrète — quand 
 - N'émets ce bloc QUE pour une séance à faire AUJOURD'HUI / MAINTENANT. (Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas ce bloc-là.)
 - Un bouton « ⚡ Commencer cette séance » apparaîtra automatiquement sous ton message pour l'injecter dans l'écran Séance. Ne parle JAMAIS du JSON, ne l'explique pas, ne le commente pas — l'utilisateur ne voit que ta séance en clair + le bouton.
 ${(typeof window!=='undefined'&&window.__FT_CLONE__)?`
+SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvient de moi ») :
+- Quand la personne t'annonce QUAND elle compte s'entraîner (« je m'entraîne lundi », « demain séance jambes », « ma prochaine séance c'est jeudi »), accuse réception naturellement en une phrase (« super, c'est noté 💪 »), PUIS termine ton message par un bloc technique CACHÉ (jamais affiché) au format EXACT :
+\`\`\`json
+{"prevu":{"date":"YYYY-MM-DD","label":"<groupe/type si donné, ex. pecs, jambes ; sinon vide>"}}
+\`\`\`
+- \`date\` = la date ISO RÉELLE du jour annoncé. Aujourd'hui = ${(typeof today==='function'?today():new Date().toISOString().slice(0,10))} (${_dateStr}) — calcule le bon jour à venir (au plus 14 jours). Si la personne ne donne AUCUN jour précis, N'ÉMETS PAS ce bloc.
+- Ce bloc rend l'Accueil COHÉRENT : il l'empêche de la relancer « ça fait X jours » alors qu'elle t'a dit quand elle revient. Ne parle JAMAIS du bloc, ne le commente pas — l'utilisateur ne voit que ta phrase en clair.
 ⛔ NE FAIS JAMAIS UN INTERROGATOIRE — AIDE D'ABORD, DEMANDE ENSUITE (règle prioritaire) :
 - N'enchaîne JAMAIS plusieurs questions (une par message pendant 4-5 messages = un interrogatoire déguisé, INTERDIT). Le tout premier réflexe = APPORTER DE LA VALEUR, pas collecter des infos.
 - Pour un PROGRAMME ou un conseil : propose D'ABORD une première version CONCRÈTE avec des hypothèses raisonnables (« je pars sur ~45 min, matériel courant haltères+barre ; dis-moi si c'est différent et j'ajuste »), PUIS demande AU PLUS 1 (grand max 2) info vraiment décisive. Ne garde JAMAIS toute la valeur en otage derrière un questionnaire — la personne doit repartir avec quelque chose d'utile MÊME si elle ne répond à rien.
@@ -1394,8 +1422,8 @@ function _stripCoachTech(text){
   let t = String(text||'');
   t = t.replace(/```[\s\S]*?```/g, '');                       // blocs de code fermés
   t = t.replace(/```[a-zA-Z]*[\s\S]*$/g, '');                 // bloc de code non fermé (tronqué)
-  t = t.replace(/\{[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens|reponses)"[\s\S]*\}/g, ''); // objet JSON technique (fermé)
-  t = t.replace(/\{(?=[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens|reponses)")[\s\S]*$/, ''); // objet JSON technique tronqué
+  t = t.replace(/\{[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens|reponses|prevu)"[\s\S]*\}/g, ''); // objet JSON technique (fermé)
+  t = t.replace(/\{(?=[\s\S]*?"(?:days|exs|sets|weeks|seance|retiens|reponses|prevu)")[\s\S]*$/, ''); // objet JSON technique tronqué
   return t.replace(/\n{3,}/g, '\n\n').trim();
 }
 // 🛡️ GARDIEN DE LA CONSTITUTION — Étage 1 (déterministe, local, 0 IA, 0 coût).
@@ -1745,6 +1773,9 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     const _mem = _extractMemory(reply);
     // Question guidée : Milo peut proposer des réponses rapides à taper (facultatif, une question à la fois)
     const _qr = _extractQuickReplies(reply);
+    // Prochaine séance annoncée (ft-v601) : l'Accueil arrête de relancer « ça fait X jours » et devient cohérent
+    const _plan = _extractPlannedSession(reply);
+    if (_plan) { try { S.nextPlanned = _plan; persist(); if (typeof _cloudSyncDebounced==='function') _cloudSyncDebounced(); } catch(e){} }
     renderCoachMsg('coach', _disp);
     if (_fp) _appendSaveProgBtn(_fp);
     if (_ds) _appendStartSessionBtn(_ds);
