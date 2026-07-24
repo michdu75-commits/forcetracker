@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v599'; // 🔄 Clone : AUTO-DÉTECTEUR DE VERSION (retour Michel « quand je réinstalle je pars du principe que ça vide le cache mais non »). Le clone vérifie discrètement à l'ouverture s'il existe une version plus récente en ligne (fetch index.html no-store → compare le badge ft-vNN) et, si oui, se RECHARGE tout seul UNE fois (anti-boucle sessionStorage) → fini de rester coincé sur un ancien cache iOS de l'icône. Clone-only (la prod a déjà son système de maj via SW versionné + controllerchange, ft-v191). ⚠️ Michel doit charger CETTE version (ft-v599) UNE fois à la main (Safari privé) ; ensuite le clone s'auto-met à jour.
+const CACHE = 'ft-v600'; // 🔧 Re-déclenchement du déploiement GitHub Pages (incident 24/07) : Pages avait CESSÉ de déployer après ft-v593 (aucun build pour v594→v599 — limite de builds atteinte pendant la session). Le site live était réellement bloqué sur ft-v593 (≠ cache device). Ce push vise à relancer le build Pages. Contenu = tout l'accumulé v594→v599 (bouton clone illimité, fix « Milo me comprend », framework de tests, fix visuels Suivant/côté, promesse inscription clone, safe-area, auto-détecteur de version du clone).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
