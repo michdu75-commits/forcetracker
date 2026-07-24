@@ -605,7 +605,7 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 #ov-confirm{z-index:500;}
 .modal{background:var(--bg2);border-radius:24px 24px 0 0;padding:22px;width:100%;max-width:430px;max-height:85dvh;overflow-y:auto;border-top:1px solid var(--sep);}
 /* Guide de l'appli & questionnaire : le contenu défile, la barre du bas (Suivant/Précédent) reste TOUJOURS visible (fix « Suivant coupé » sur petits écrans). */
-#ov-appguide .modal, #ov-coach-quiz .modal{ display:flex; flex-direction:column; overflow:hidden; }
+#ov-appguide .modal, #ov-coach-quiz .modal{ display:flex; flex-direction:column; overflow:hidden; padding-bottom:calc(22px + env(safe-area-inset-bottom)); }
 #ov-appguide #ag-slide{ flex:1 1 auto; min-height:0; overflow-y:auto; }
 #ov-appguide #ag-dots, #ov-appguide #ag-nav{ flex:0 0 auto; }
 #ov-coach-quiz #cq-step{ flex:1 1 auto; min-height:0 !important; overflow-y:auto; }

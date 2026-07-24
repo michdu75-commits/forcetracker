@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v597'; // 🌱 La PROMESSE à l'inscription (retour Michel+GPT, EN TEST CLONE) : au tout 1er écran (« Bienvenue »), une beat émotionnelle avec les mots DÉJÀ VALIDÉS (Guide/aide/Vision) — « Pas une appli de muscu de plus : ta mémoire sportive · Milo apprend à te connaître séance après séance · Il se souvient de qui tu es devenu ». C'est la GRAINE du 1er moment Milo, semée AVANT la 1re conversation (cf. docs/PRESENCE-MILO). Les 3 « pourquoi » (niveau/blessures/email = sauvegarde) existaient DÉJÀ. Gaté clone via `html.is-clone` (_initCloneTools) + classe `.ob-clone-only` → PROD inchangée, à valider le rendu sur le clone puis promotion. Fichiers : index.html, style.css, app.js.
+const CACHE = 'ft-v598'; // 🐛 Renfort du fix « Suivant coupé » : marge safe-area en bas des modales Guide/Questionnaire (padding-bottom += env(safe-area-inset-bottom)) → le bouton Précédent/Suivant ne passe JAMAIS sous la barre home de l'iPhone, même sur les écrans à encoche. Complète le passage en flex-colonne de ft-v596. (⚠️ le « Suivant coupé » vu par Michel venait d'un clone bloqué sur ft-v593 en cache iOS — la version en ligne était déjà corrigée.)
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
