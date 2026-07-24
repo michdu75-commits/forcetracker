@@ -1622,6 +1622,7 @@ function _agPremiumCta(){
 // Affiche les éléments réservés au clone (le clone pose window.__FT_CLONE__=true dans son shim).
 function _initCloneTools(){
   if(!window.__FT_CLONE__)return;
+  try{document.documentElement.classList.add('is-clone');}catch(e){} // marqueur pour les éléments en test clone-only (ex. .ob-clone-only)
   const c=document.getElementById('admin-clone-reset-card');
   if(c)c.style.display='flex';
   const u=document.getElementById('admin-clone-unlimited-card');

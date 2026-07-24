@@ -609,6 +609,13 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 #ov-appguide #ag-slide{ flex:1 1 auto; min-height:0; overflow-y:auto; }
 #ov-appguide #ag-dots, #ov-appguide #ag-nav{ flex:0 0 auto; }
 #ov-coach-quiz #cq-step{ flex:1 1 auto; min-height:0 !important; overflow-y:auto; }
+/* Éléments en TEST clone-only (marqueur html.is-clone posé par _initCloneTools) — ex. la « promesse » d'inscription */
+.ob-clone-only{ display:none; }
+html.is-clone .ob-clone-only{ display:block; }
+.ob-promise{ width:100%; text-align:center; margin:4px 0 2px; }
+.ob-promise-lead{ font-size:15px; font-weight:800; color:var(--t1); line-height:1.4; }
+.ob-promise-sub{ font-size:13px; color:var(--t2); line-height:1.45; margin-top:6px; }
+.ob-promise-sig{ font-size:12.5px; font-style:italic; color:var(--t3); line-height:1.5; margin-top:8px; }
 .modal-handle{width:40px;height:4px;background:var(--t3);border-radius:2px;margin:0 auto 10px;cursor:grab;padding:14px 60px;background-clip:content-box;box-sizing:content-box;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;}
 .modal-handle:active{cursor:grabbing;}
 .modal h2{font-family:var(--font-cond);font-size:20px;font-weight:900;margin-bottom:16px;letter-spacing:.3px;}

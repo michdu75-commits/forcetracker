@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v596'; // 🐛 2 fix visuels (retour Michel) : ① le bouton « Suivant » du Guide de l'appli (et du questionnaire d'inscription) était COUPÉ / poussé hors écran quand le contenu est haut → les modales `#ov-appguide` / `#ov-coach-quiz` passent en flex-colonne (le contenu défile, la barre Précédent/Suivant reste TOUJOURS visible en bas). ② Sur l'écran des zones fragiles de l'inscription (Épaule…), le sélecteur de côté G/D/Les 2 était enterré sous la grille → il faut scroller pour le voir (« Cuisse semblait manquer ») : `obToggleInjury` amène maintenant `#ob-inj-side` à l'écran (scrollIntoView) dès qu'on sélectionne une zone latérale. CSS + HTML (#ag-nav) + app.js. Aucun impact backend/prompt.
+const CACHE = 'ft-v597'; // 🌱 La PROMESSE à l'inscription (retour Michel+GPT, EN TEST CLONE) : au tout 1er écran (« Bienvenue »), une beat émotionnelle avec les mots DÉJÀ VALIDÉS (Guide/aide/Vision) — « Pas une appli de muscu de plus : ta mémoire sportive · Milo apprend à te connaître séance après séance · Il se souvient de qui tu es devenu ». C'est la GRAINE du 1er moment Milo, semée AVANT la 1re conversation (cf. docs/PRESENCE-MILO). Les 3 « pourquoi » (niveau/blessures/email = sauvegarde) existaient DÉJÀ. Gaté clone via `html.is-clone` (_initCloneTools) + classe `.ob-clone-only` → PROD inchangée, à valider le rendu sur le clone puis promotion. Fichiers : index.html, style.css, app.js.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
