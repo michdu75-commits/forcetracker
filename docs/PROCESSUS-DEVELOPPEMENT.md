@@ -22,6 +22,44 @@ développée · testée · documentée · puis clôturée.**
 
 ---
 
+## 🪶 Gouvernance légère — « la gouvernance sert le produit, jamais l'inverse » (Michel, 24/07/2026)
+
+La phase **« cohérence »** (rendre Milo **fiable** avant de le rendre plus intelligent — de la
+logique de *développement* à la logique de *gouvernance*) a un **piège** : une gouvernance si bien
+pensée qu'elle **ralentit** le produit. Garde-fous :
+
+- **La gouvernance est soumise à SA PROPRE loi.** Chaque règle, test ou étape de process doit
+  *mériter sa place* en réduisant un **risque** OU une **charge mentale**. Sinon → on le coupe. Le
+  « −10 % » ne vaut pas que pour le prompt : il vaut aussi pour le **framework et le process**.
+- **La mesure du succès** n'est PAS le nombre de documents produits, mais que **valider la prochaine
+  évolution de Milo soit plus simple, plus sûre et plus rapide qu'aujourd'hui.** Corollaire : si le
+  framework nous fait réfléchir *davantage* à chaque évolution, c'est le signal qu'il est devenu trop
+  complexe → on le simplifie lui aussi.
+- **Prompt vs doc — deux natures d'objets :**
+  - le **prompt** = objet **opérationnel** (lu par Milo à chaque message, les règles s'y
+    concurrencent) → reste **maigre** : *une règle entre, une règle sort — ou on justifie clairement
+    pourquoi elle reste*.
+  - la **doc** = objet de **mémoire** (garde le *pourquoi* des décisions) → on ne la plafonne pas,
+    mais on la **jardine** régulièrement (restructuration) pour qu'elle ne devienne pas un empilement
+    que plus personne ne relit.
+
+### 👥 Retours des vrais utilisateurs — anti-sur-ajustement (3 paliers)
+
+Ne jamais transformer un retour **isolé** en règle. Seule la **récurrence** fait monter d'un palier :
+
+| Palier | Décision | Où ça vit |
+|---|---|---|
+| **1 retour isolé** | on **observe** | `RETOURS-TESTEURS.md` |
+| **2-3 retours indépendants, même sujet** | on **enquête** | note / `docs/BUGS-DE-PHILOSOPHIE.md` |
+| **problème reproductible / récurrent** | **scénario permanent** | `tests/milo/scenarios.js` |
+
+> Angle mort à surveiller : à force de travailler notre propre logique, ne plus assez confronter Milo
+> à de **vrais utilisateurs**. **Séparer les rôles** : les utilisateurs **génèrent la surprise**
+> (→ le corpus de tests, via la récurrence ci-dessus) ; l'humain de l'équipe **juge le ressenti** (ce
+> qu'aucun test déterministe ne capte). **La machine garde les régressions, l'humain garde le ressenti.**
+
+---
+
 ## 🔁 Le cycle d'une brique
 
 ### 1. Réflexion
