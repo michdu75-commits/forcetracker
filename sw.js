@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v601'; // 🐛 Accueil : fix mot « records » coupé (« rec… ») → coupure au mot entier. 🌟 CLONE : « Milo se souvient de ta prochaine séance » — quand tu annonces à Milo quand tu t'entraînes (« lundi »), l'Accueil arrête de te relancer « ça fait X jours » et devient cohérent (« Séance prévue lundi 💪 »). Bloc caché {"prevu"} gaté clone, S.nextPlanned local, auto-nettoyage quand la séance est passée/faite.
+const CACHE = 'ft-v602'; // 🛑 CLONE : anti-interrogatoire DURCI — Milo PROPOSE d'abord (règle non négociable, prime sur « profil non renseigné → demande »), interdit d'ouvrir par des questions / une liste de questions, hypothèses par défaut + 1 question max APRÈS la proposition (retour Michel : Milo posait 4 questions numérotées avant tout plan). Embarque aussi ft-v601 (fix mot « records » coupé + « Milo se souvient de ta prochaine séance »). Ce push re-déclenche le build GitHub Pages (bloqué depuis ft-v600).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
