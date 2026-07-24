@@ -60,6 +60,29 @@ d'abord »). **Onboarding extrêmement léger** (quelques infos), puis Milo **ap
 au fil des conversations**. Un onboarding lourd *simulerait* « Milo me connaît » (le faux) ;
 le laisser se construire rend le moment « Milo se souvient » **authentique** quand il arrive.
 
+### L'amorce : le premier moment se SÈME dès l'inscription (retour GPT, 24/07/2026)
+
+**Le premier « moment Milo » peut commencer AVANT la première conversation — non pas avec une
+fonctionnalité, mais avec une PROMESSE.** L'onboarding ne devrait pas seulement *récupérer des
+informations* ; il devrait déjà *commencer à créer la relation*. Concrètement :
+
+- **Une promesse simple, pas marketing** (ex. : *« Je ne suis pas là pour te donner un programme
+  générique. Je vais apprendre à te connaître séance après séance. Plus tu avances, plus je
+  personnalise. »*) → l'utilisateur comprend d'emblée qu'il ne télécharge pas *une appli de muscu de
+  plus*, mais qu'il rencontre **un coach qui apprend**. C'est la **graine** du moment ① (« Milo me
+  comprend »), plantée avant même le premier échange.
+- **Le « pourquoi » de chaque info demandée** transforme le formulaire en relation : *niveau →*
+  « pour adapter les charges et les exercices » ; *blessures →* « pour ne jamais te proposer un
+  mouvement qui aggrave une douleur » ; *email →* **reframé en SAUVEGARDE** (« retrouve tout ton
+  historique, même en changeant de téléphone ») — ce n'est plus un email qu'on réclame, c'est une
+  garantie de ne jamais repartir de zéro (la Vision).
+- **Cohérence, pas émotion plaquée** : le but n'est pas d'ajouter du pathos, c'est que **CHAQUE écran
+  raconte la même histoire** — *« Milo est un coach qui apprend à te connaître »*. C'est cette
+  cohérence de bout en bout qui donne au produit une **identité forte** (au-delà du design/de la
+  fluidité, déjà excellents ; l'**émotion** est le dernier différenciateur).
+- ⚠️ **Respecte le garde-fou ci-dessus** : une seule *beat* émotionnelle (un écran, une promesse) ≠
+  un gros onboarding. On plante une graine, on ne simule pas une relation qui n'existe pas encore.
+
 *(Lié : la promesse premium « réactif → proactif · il te connaît » — la chose qui fait COMPRENDRE
 Milo est la même que celle qui fait vouloir le GARDER. Constitution P24 « engagement responsable ».)*
 
