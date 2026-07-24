@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v598'; // 🐛 Renfort du fix « Suivant coupé » : marge safe-area en bas des modales Guide/Questionnaire (padding-bottom += env(safe-area-inset-bottom)) → le bouton Précédent/Suivant ne passe JAMAIS sous la barre home de l'iPhone, même sur les écrans à encoche. Complète le passage en flex-colonne de ft-v596. (⚠️ le « Suivant coupé » vu par Michel venait d'un clone bloqué sur ft-v593 en cache iOS — la version en ligne était déjà corrigée.)
+const CACHE = 'ft-v599'; // 🔄 Clone : AUTO-DÉTECTEUR DE VERSION (retour Michel « quand je réinstalle je pars du principe que ça vide le cache mais non »). Le clone vérifie discrètement à l'ouverture s'il existe une version plus récente en ligne (fetch index.html no-store → compare le badge ft-vNN) et, si oui, se RECHARGE tout seul UNE fois (anti-boucle sessionStorage) → fini de rester coincé sur un ancien cache iOS de l'icône. Clone-only (la prod a déjà son système de maj via SW versionné + controllerchange, ft-v191). ⚠️ Michel doit charger CETTE version (ft-v599) UNE fois à la main (Safari privé) ; ensuite le clone s'auto-met à jour.
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
