@@ -31,6 +31,35 @@ régularité/adhérence · absence de progression planifiée · priorité mal ci
 
 ---
 
+## 🧠 Le cerveau de Milo n'est PAS le prompt — il est DISTRIBUÉ (Michel, 25/07/2026 — le plus grand apprentissage de la semaine)
+
+**Le « cerveau » de Milo ne se limite pas au prompt.** Il est **réparti** sur plusieurs couches :
+
+`onboarding · données disponibles · mémoire · coach.js (logique) · hiérarchie des règles · prompt`
+
+Conséquence : un « bug de Milo » n'est **pas** un réflexe « je réécris le prompt ». C'est un **diagnostic à
+travers les couches**. On a passé la semaine à comprendre qu'on avait parfois essayé de résoudre **avec le
+prompt** des problèmes qui étaient en réalité **structurels** (l'exemple type : Milo redemande sans cesse le
+lieu/la durée/la fréquence — non par mauvais prompt, mais parce que **l'inscription ne collecte jamais ces
+données**).
+
+> **Un prompt ne compensera JAMAIS une information qui n'existe pas.** Si la donnée n'est pas collectée, le
+> vrai correctif est dans l'**interface**, pas dans le cerveau de Milo.
+
+### Les 3 questions AVANT toute correction (ordre = du plus fiable au moins fiable)
+
+Avant de toucher au prompt, on répond à ces **3 questions** :
+1. **Est-ce un problème de STRUCTURE ?** (UI, onboarding, donnée manquante) → fix **déterministe et définitif**.
+2. **Est-ce un problème de HIÉRARCHIE ?** (deux règles qui se concurrencent) → fix **déterministe** (on réordonne).
+3. **Est-ce SEULEMENT un problème de prompt ?** → fix **probabiliste** (le modèle *peut* obéir… ou pas).
+
+**Tant qu'on n'a pas répondu aux trois, on ne touche pas au prompt. Le prompt est le DERNIER levier, pas le
+premier.** *(Nuance : un problème peut toucher plusieurs couches à la fois — on répare la plus basse d'abord,
+PUIS on re-regarde si le prompt a encore besoin d'être touché ; souvent, non.)* La maturation qu'on vit :
+de « prompt engineering » à **« conception de système »**.
+
+---
+
 ## Les deux cerveaux (mappés sur notre architecture existante)
 
 Ce cadre n'est **pas à construire de zéro** : c'est une **lentille** sur ce qu'on fait déjà.

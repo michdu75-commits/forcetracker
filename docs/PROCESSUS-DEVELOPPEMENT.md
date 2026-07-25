@@ -60,6 +60,28 @@ Ne jamais transformer un retour **isolé** en règle. Seule la **récurrence** f
 
 ---
 
+## 🧠 Le prompt est le DERNIER levier, pas le premier (Michel, 25/07/2026)
+
+Apprentissage majeur de la semaine : on a parfois essayé de résoudre **avec le prompt** des problèmes qui
+étaient en réalité **structurels**. Le **cerveau de Milo est distribué** (onboarding · données · mémoire ·
+`coach.js` · hiérarchie des règles · prompt) — cadre complet dans `docs/MOTEUR-RAISONNEMENT-MILO.md`.
+
+**Discipline — avant TOUTE correction, répondre aux 3 questions** (du plus fiable au moins fiable) :
+1. **STRUCTURE ?** (UI, onboarding, donnée manquante) — fix déterministe et définitif.
+2. **HIÉRARCHIE ?** (deux règles qui se concurrencent) — fix déterministe (on réordonne).
+3. **PROMPT seul ?** — fix probabiliste (le modèle peut obéir… ou pas).
+
+**Tant qu'on n'a pas répondu aux trois, on ne touche pas au prompt.** Corollaire gravé : **un prompt ne
+compense jamais une donnée absente** — si Milo redemande toujours le lieu/la durée/la fréquence parce qu'ils
+ne sont jamais collectés, le vrai correctif est dans l'**interface**, pas dans le cerveau de Milo.
+
+**Et quand on doit VRAIMENT toucher au prompt** : pas de grand ménage. On garde le **noyau cardinal intact**,
+on retire **uniquement les redondances évidentes, une par une, avec validation après chaque suppression**
+(noyau dur + IA + test humain). *« Dix petites coupes validées valent mieux qu'une grosse simplification qui
+changerait subtilement le comportement de Milo. »*
+
+---
+
 ## 🔁 Le cycle d'une brique
 
 ### 1. Réflexion
