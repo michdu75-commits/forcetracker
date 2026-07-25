@@ -954,6 +954,7 @@ function updateProteinBar() {
 
 // ─── ONBOARDING ──────────────────────────────────────────────
 let _obStep=1,_obGender='H',_obGoal='muscle',_obLevel='',_obDataRestored=false;
+let _obPlace='',_obTime='',_obFreq=''; // écran « Ton entraînement » (ft-v604) → écrit dans S.coachQuiz.answers
 const _OB_GOALS={muscle:'ob-gm',perte:'ob-gp',recomp:'ob-gr',force:'ob-gf',equilibre:'ob-ge',endurance:'ob-gen'};
 const _OB_LEVELS={debutant:'ob-lv-d',intermediaire:'ob-lv-i',confirme:'ob-lv-c'};
 
@@ -971,7 +972,7 @@ function _initOb0(){
   const ob0=document.getElementById('ob-0');
   if(ob0)ob0.classList.add('ob-active');
   _obStep=0;
-  for(let i=1;i<=5;i++){const d=document.getElementById('od-'+i);if(d)d.classList.remove('ob-active');}
+  for(let i=1;i<=7;i++){const d=document.getElementById('od-'+i);if(d)d.classList.remove('ob-active');}
 }
 
 function ob0Install(){
@@ -1015,10 +1016,10 @@ function obGoTo(step){
   if(next){next.classList.add('ob-active');}
   if(step===5){const ef=document.getElementById('ob-email-final');if(ef&&S.email)ef.value=S.email;}
   _obStep=step;
-  // ordre : ob-1 (compte) → ob-3 (prénom+sexe) → ob-4 (objectif) → ob-2 (niveau) → ob-6 (blessure) → ob-5 (email)
-  const dotMap={1:1,3:2,4:3,2:4,6:5,5:6};
+  // ordre : ob-1 (compte) → ob-3 (prénom+sexe) → ob-4 (objectif) → ob-2 (niveau) → ob-6 (blessure) → ob-7 (entraînement) → ob-5 (email)
+  const dotMap={1:1,3:2,4:3,2:4,6:5,7:6,5:7};
   const dotNum=dotMap[step]||0;
-  for(let i=1;i<=6;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',dotNum>0&&i===dotNum);}
+  for(let i=1;i<=7;i++){const d=document.getElementById('od-'+i);if(d)d.classList.toggle('ob-active',dotNum>0&&i===dotNum);}
 }
 
 function obNext(step){
@@ -1039,6 +1040,9 @@ function obNext(step){
   }else if(_obStep===6){
     // étape Blessure/zone fragile → Profil Santé (le Gardien la lira)
     _obApplyInjuries();
+  }else if(_obStep===7){
+    // étape « Ton entraînement » → questionnaire (Milo l'a d'emblée, ne redemande plus)
+    _obApplyTraining();
   }
   if(step===5){
     const emailSec=document.getElementById('ob-email-section');
@@ -1080,6 +1084,31 @@ function _obApplyInjuries(){
   const parts=_obInjuries.map(z=>{const s=_obInjSide[z];return z+(s==='L'?' (côté gauche)':s==='R'?' (côté droit)':'');});
   const txt='Zones fragiles : '+parts.join(', ')+'.';
   S.healthProfile.notes=S.healthProfile.notes?(S.healthProfile.notes+' '+txt):txt;
+}
+
+// Écran « Ton entraînement » (ft-v604) — lieu / durée / fréquence, boutons cliquables.
+// On réutilise les questions EXISTANTES du questionnaire (place/time/freq) → Milo les lit
+// déjà via _coachQuizContext. But : Milo a l'info d'emblée et ne redemande plus (fix structurel).
+function _obTrainPick(kind,val,ids){
+  if(kind==='place')_obPlace=(_obPlace===val?'':val);
+  else if(kind==='time')_obTime=(_obTime===val?'':val);
+  else if(kind==='freq')_obFreq=(_obFreq===val?'':val);
+  const cur=kind==='place'?_obPlace:kind==='time'?_obTime:_obFreq;
+  Object.entries(ids).forEach(([v,id])=>{const el=document.getElementById(id);if(el)el.classList.toggle('ob-sel',v===cur);});
+}
+function obSetPlace(v){_obTrainPick('place',v,{salle:'ob-pl-salle',basic:'ob-pl-basic',maison:'ob-pl-maison',pdc:'ob-pl-pdc'});}
+function obSetTime(v){_obTrainPick('time',v,{'30':'ob-tm-30','45':'ob-tm-45','60':'ob-tm-60','90':'ob-tm-90'});}
+function obSetFreq(v){_obTrainPick('freq',v,{'1':'ob-fr-1','3':'ob-fr-3','4':'ob-fr-4','5':'ob-fr-5'});}
+function _obApplyTraining(){
+  const ans={};
+  if(_obPlace)ans.place=_obPlace;
+  if(_obTime)ans.time=_obTime;
+  if(_obFreq)ans.freq=_obFreq;
+  if(!Object.keys(ans).length)return; // rien renseigné → on ne force rien (écran optionnel)
+  S.coachQuiz=S.coachQuiz||{answers:{},done:false};
+  S.coachQuiz.answers=Object.assign({},S.coachQuiz.answers||{},ans);
+  if(!S.coachQuiz.date)S.coachQuiz.date=(typeof today==='function'?today():new Date().toISOString().slice(0,10));
+  try{persist();}catch(e){}
 }
 
 function obSetGender(g){

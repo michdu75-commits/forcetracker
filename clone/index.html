@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v603';
+  b.textContent='🧪 CLONE ft-v604';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -136,6 +136,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div class="ob-dot" id="od-4"></div>
     <div class="ob-dot" id="od-5"></div>
     <div class="ob-dot" id="od-6"></div>
+    <div class="ob-dot" id="od-7"></div>
   </div>
   <div class="ob-wrap">
 
@@ -325,8 +326,47 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <div id="ob-inj-side" style="width:100%;"></div>
       </div>
       <div class="ob-footer">
-        <button class="btn btn-red" onclick="obNext(5)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-red" onclick="obNext(7)" style="font-size:17px;padding:16px;">Continuer →</button>
         <button class="btn btn-bg2" onclick="obGoTo(2)" style="font-size:14px;">← Retour</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 7 : Ton entraînement (lieu / durée / fréquence) — pour que Milo propose direct -->
+    <div class="ob-step" id="ob-7">
+      <div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:10px;padding-top:16px;text-align:center;">
+        <div style="display:flex;align-items:center;gap:10px;width:100%;">
+          <span style="font-size:32px;line-height:1;">🏋️</span>
+          <div class="ob-title" style="font-size:26px;text-align:left;">Ton entraînement</div>
+        </div>
+        <div class="ob-sub" style="text-align:left;width:100%;font-size:14px;">Quelques infos pour que Milo te propose un plan <b>direct</b>, sans avoir à te questionner. Optionnel — tu peux ajuster plus tard.</div>
+
+        <div class="ob-sub" style="text-align:left;width:100%;font-weight:700;color:var(--t1);margin-top:6px;">Où tu t'entraînes ?</div>
+        <div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button class="ob-gbtn" id="ob-pl-salle" onclick="obSetPlace('salle')">Salle complète</button>
+          <button class="ob-gbtn" id="ob-pl-basic" onclick="obSetPlace('basic')">Salle basique</button>
+          <button class="ob-gbtn" id="ob-pl-maison" onclick="obSetPlace('maison')">Maison + matériel</button>
+          <button class="ob-gbtn" id="ob-pl-pdc" onclick="obSetPlace('pdc')">Poids du corps</button>
+        </div>
+
+        <div class="ob-sub" style="text-align:left;width:100%;font-weight:700;color:var(--t1);margin-top:6px;">Durée d'une séance ?</div>
+        <div style="width:100%;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">
+          <button class="ob-gbtn" id="ob-tm-30" onclick="obSetTime('30')">~30 min</button>
+          <button class="ob-gbtn" id="ob-tm-45" onclick="obSetTime('45')">~45 min</button>
+          <button class="ob-gbtn" id="ob-tm-60" onclick="obSetTime('60')">~1 h</button>
+          <button class="ob-gbtn" id="ob-tm-90" onclick="obSetTime('90')">1h30+</button>
+        </div>
+
+        <div class="ob-sub" style="text-align:left;width:100%;font-weight:700;color:var(--t1);margin-top:6px;">Séances par semaine ?</div>
+        <div style="width:100%;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">
+          <button class="ob-gbtn" id="ob-fr-1" onclick="obSetFreq('1')">1-2×</button>
+          <button class="ob-gbtn" id="ob-fr-3" onclick="obSetFreq('3')">3×</button>
+          <button class="ob-gbtn" id="ob-fr-4" onclick="obSetFreq('4')">4×</button>
+          <button class="ob-gbtn" id="ob-fr-5" onclick="obSetFreq('5')">5×+</button>
+        </div>
+      </div>
+      <div class="ob-footer">
+        <button class="btn btn-red" onclick="obNext(5)" style="font-size:17px;padding:16px;">Continuer →</button>
+        <button class="btn btn-bg2" onclick="obGoTo(6)" style="font-size:14px;">← Retour</button>
       </div>
     </div>
 
@@ -345,7 +385,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       </div>
       <div class="ob-footer">
 <button class="btn btn-red" id="ob-start-btn" onclick="obCheckEmailAndFinish()" style="font-size:20px;padding:20px;letter-spacing:.5px;">⚡ COMMENCER</button>
-        <button class="btn btn-bg2" onclick="obGoTo(6)" style="font-size:14px;">← Retour</button>
+        <button class="btn btn-bg2" onclick="obGoTo(7)" style="font-size:14px;">← Retour</button>
       </div>
     </div>
 

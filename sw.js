@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v603'; // 🛡️ CLONE : FIX SÉCURITÉ — l'anti-interrogatoire ft-v602 disait « PRIORITAIRE sur TOUTES les consignes » → Milo proposait un plan de force (squat/SDT/fentes) SANS protéger les zones fragiles DÉCLARÉES (genou/lombaires/fessier). Bug trouvé en test réel (Michel). La règle est re-bornée SOUS la sécurité (hiérarchie gravée : Constitution/sécurité > noyau cardinal) + « la proposition doit TOUJOURS protéger les blessures déclarées, jamais un mouvement contre-indiqué ».
+const CACHE = 'ft-v604'; // 🧱 INSCRIPTION (fix STRUCTUREL, pas prompt) : nouvel écran « Ton entraînement » à l'onboarding (ob-7) — 3 questions CLIQUABLES (où : salle/basique/maison/pdc · durée : 30/45/60/90 · fréquence : 1-2/3/4/5) → écrites dans S.coachQuiz.answers (mêmes valeurs que COACH_QUIZ place/time/freq) → Milo les a D'EMBLÉE (buildCoachContext lit déjà _coachQuizContext) et ne redemande plus lieu/durée/fréquence. Applique le principe gravé « un prompt ne compense jamais une donnée absente » : la donnée manquait à l'INTERFACE, pas au prompt. Écran OPTIONNEL (rien renseigné → rien forcé).
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
