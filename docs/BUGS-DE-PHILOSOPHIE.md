@@ -71,6 +71,25 @@ du Gardien de sécurité qui agit **à l'entrée**). Détail : `docs/MOTEUR-RAIS
   Ne jamais faire franchir 95 % d'un parcours à quelqu'un qui sera bloqué avant le bénéfice.
   Répondre à une question **posée par Milo** ne coûte/ne bloque **jamais** un freemium.
 
+### PB-005 — Une permission trop large déborde sur un domaine sensible *(2026-07-25, corrigé `ft-v605`)*
+- **Symptôme** : photo d'une boîte d'**Imodium** (anti-diarrhée) envoyée à Milo → il répond
+  « assure-toi de bien manger **même avec le gastro qui traîne** ». Le mot « gastro » n'est **écrit
+  nulle part** (ni sur la boîte, ni dans le profil) : Milo a **inventé une maladie / une cause**.
+- **Ce qui est troublant** (et instructif) : sur la **prod**, la photo d'un **complément** donnait une
+  analyse **parfaite** (il lit l'étiquette + croise les vrais faits du profil, zéro invention). Le
+  dérapage n'arrivait **que sur le clone** — qui porte la règle « propose vite, **fais des hypothèses
+  par défaut** » (pensée pour l'entraînement). Milo a **généralisé** cette permission de « supposer »
+  à la **santé**.
+- **Le raisonnement était bon, la sortie non** : ce n'est PAS une règle « n'invente pas » manquante
+  (elle existe, elle tient en prod). C'est une **permission mal bornée** qui a gagné le conflit.
+  Même famille que PB-002 et que le bug de sécurité `ft-v603` : **une règle « agir vite » qui déborde
+  par-dessus une règle de fiabilité / de sécurité**.
+- **Règle de conception qui en sort** : *« Une permission n'est jamais globale : elle doit dire QUOI
+  on a le droit de supposer ET dans quel DOMAINE. »* On **hiérarchise les permissions** comme les
+  interdictions (Constitution v2.4). Frontière photo produit : décrire + usage général + lien profil
+  connu ; **jamais** déduire le pourquoi ni inventer une maladie. Pour un **médicament**, on constate,
+  on ne spécule pas (terrain du médecin).
+
 ---
 
 ## Comment utiliser ce journal

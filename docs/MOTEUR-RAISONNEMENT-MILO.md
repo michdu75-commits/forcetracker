@@ -58,6 +58,21 @@ premier.** *(Nuance : un problème peut toucher plusieurs couches à la fois —
 PUIS on re-regarde si le prompt a encore besoin d'être touché ; souvent, non.)* La maturation qu'on vit :
 de « prompt engineering » à **« conception de système »**.
 
+### 🧭 Les permissions sont BORNÉES (le versant qu'on avait oublié) — Michel + ChatGPT, 25/07
+
+On sait hiérarchiser les **interdictions** (la hiérarchie à 3 étages). Le bug `ft-v605` (photo d'un
+médicament → Milo **invente** une maladie) a révélé le versant manquant : il faut aussi **borner les
+permissions**. Le problème n'était pas une règle « n'invente pas » absente (elle existe, elle tient en
+prod), mais une **permission trop large** — « fais des hypothèses par défaut », pensée pour
+l'entraînement — qui a **débordé** sur la santé. C'est un **conflit de hiérarchie** (question 2), pas un
+manque de donnée : la permission trop générale gagnait contre l'anti-invention.
+
+**Toute permission de supposer doit répondre à deux questions :** *« qu'ai-je le droit de supposer ? »*
+et *« dans quel DOMAINE ? »*. Trois niveaux : **FAITS** (jamais d'hypothèse) · **PARAMÈTRES
+D'ENTRAÎNEMENT** (hypothèses OK, affichées) · **DOMAINES SENSIBLES** santé/sécurité/médicaments/blessures
+(aucune hypothèse ; si incertain, le dire). *Une bonne idée dans un contexte devient un bug dans un autre
+dès qu'une permission n'a pas de frontière de domaine.* (Gravé aussi : Constitution v2.4, PB-005.)
+
 ---
 
 ## Les deux cerveaux (mappés sur notre architecture existante)
