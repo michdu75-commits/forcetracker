@@ -4,7 +4,7 @@
  * totale ou partielle, est INTERDITE sans autorisation écrite de l'auteur.
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
-const CACHE = 'ft-v602'; // 🛑 CLONE : anti-interrogatoire DURCI — Milo PROPOSE d'abord (règle non négociable, prime sur « profil non renseigné → demande »), interdit d'ouvrir par des questions / une liste de questions, hypothèses par défaut + 1 question max APRÈS la proposition (retour Michel : Milo posait 4 questions numérotées avant tout plan). Embarque aussi ft-v601 (fix mot « records » coupé + « Milo se souvient de ta prochaine séance »). Ce push re-déclenche le build GitHub Pages (bloqué depuis ft-v600).
+const CACHE = 'ft-v603'; // 🛡️ CLONE : FIX SÉCURITÉ — l'anti-interrogatoire ft-v602 disait « PRIORITAIRE sur TOUTES les consignes » → Milo proposait un plan de force (squat/SDT/fentes) SANS protéger les zones fragiles DÉCLARÉES (genou/lombaires/fessier). Bug trouvé en test réel (Michel). La règle est re-bornée SOUS la sécurité (hiérarchie gravée : Constitution/sécurité > noyau cardinal) + « la proposition doit TOUJOURS protéger les blessures déclarées, jamais un mouvement contre-indiqué ».
 const PRECACHE = [
   './', './index.html', './style.css', './confidentialite.html',
   './constants.js', './state.js', './screens.js', './log.js',
