@@ -23,7 +23,7 @@ confirme** au fil des échanges. Chaque petite question de Milo relève d'un de 
 | **Compléter** | Un champ est **VIDE** (zappé à l'inscription, ancien compte) | On **écrit** le champ | « Tu t'entraînes plutôt où ? » |
 | **Enrichir** | La base est là, on va **plus loin** | On **ajoute** une info nouvelle | « Tu fais un autre sport à côté ? » |
 | **Mettre à jour** | Une info est **ancienne**, ou l'app détecte un **écart** déclaré/réalisé | On **change** la valeur (avec accord) | « Je pars sur du volume plutôt que de la force pure ? » |
-| **Confirmer** | Une info **encore fiable** mais à re-valider | On **ne change RIEN** : on repousse juste la *date de dernière confirmation* et on remonte la fiabilité | « Tu fais toujours 4 séances/sem ? » → « Oui » |
+| **Confirmer** ✅ (`ft-v617`) | Une info **encore fiable** mais à re-valider (> 90 j) | On **ne change RIEN** : on repousse juste la *date de dernière confirmation* et on remonte la fiabilité | « Tu t'entraînes toujours en salle basique ? » → « Oui, toujours » |
 
 > **Le mode Confirmer (ajout de Michel) est distinct de Mettre à jour** : « Oui » ne modifie pas la donnée,
 > il la **rafraîchit**. Ça évite de re-poser sans cesse les mêmes questions.
@@ -159,12 +159,14 @@ anti-nag par niveau observé). ⏭️ Détecteurs suivants : **autre sport déte
 - Détecter l'**écart déclaré/réalisé** (fréquence mesurée vs déclarée, signature d'entraînement force vs
   hypertrophie…) sur une **fenêtre stable**.
 
-**Ordre de construction** : ① mode **Compléter** ✅ (`ft-v612`) → ② **Confirmer/Mettre à jour** *(à venir —
-réutilise la date + la fiabilité)* → ③ détection **déclaré/réalisé** ✅ *(fréquence, `ft-v614` ; suivants :
-autre sport/poids/style)* → ④ **Enrichir** ✅ *(1ʳᵉ question « autre sport », `ft-v615` ; stock à élargir)*.
-Une tranche à la fois, testée à fond avant prod. **Reste à faire** : le mode **Confirmer** (le seul des 4
-non encore livré) + la **fiabilité par champ** (étoiles) + d'autres détecteurs contextuels + d'autres
-questions d'enrichissement.
+**Ordre de construction** : ① mode **Compléter** ✅ (`ft-v612`) → ② **Confirmer** ✅ (`ft-v617` — réutilise
+la *date de dernière confirmation* + le backbone `S.coachQuiz.confirmedAt` ; « Oui » rafraîchit la date sans
+rien changer, « Non » bascule vers Compléter/Enrichir via `gapForce` ; > 90 j, proactif ≤1/sem, `freq` exclu
+car couvert par ③, lazy-init pour ne pas harceler les comptes existants au déploiement) → ③ détection
+**déclaré/réalisé** ✅ *(fréquence, `ft-v614` ; suivants : poids/style)* → ④ **Enrichir** ✅ *(1ʳᵉ question
+« autre sport », `ft-v615` ; stock à élargir)*. **Les 4 modes sont désormais livrés.** **Reste à faire** :
+la **fiabilité par champ** (étoiles) + d'autres **détecteurs contextuels** (dérive de poids, style
+force/hypertrophie = intention → questionner, jamais trancher) + d'autres questions d'enrichissement.
 
 ---
 

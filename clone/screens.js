@@ -160,6 +160,7 @@ const _HELP_DATA={
       {i:'🌱',t:'Milo complète ton profil tout seul : s\'il manque une info de base (où tu t\'entraînes, combien de séances/semaine, la durée), il te propose de la remplir en 1 tap sur l\'Accueil — de vrais boutons, rien à écrire. Ta réponse va direct dans ton profil et ses conseils deviennent plus justes. Pas envie maintenant ? « Plus tard » et il te le redemandera une autre fois. (Utile surtout si tu as sauté ces questions à l\'inscription.)'},
       {i:'🔎',t:'Milo s\'adapte à ce que tu fais vraiment : il compare ce que tu as déclaré (ex. ta fréquence de séances) à ce qu\'il MESURE dans tes vraies séances. S\'il repère un changement DURABLE (pas juste une semaine chargée), il te fait une petite vérification sur l\'Accueil (« tu t\'entraînes plutôt 5×/sem maintenant, ça a changé ? ») → « Oui, mets à jour » ou « Non, garde comme ça ». Il ne change JAMAIS rien tout seul — il constate et te laisse décider.'},
       {i:'🚴',t:'Milo tient compte de tes autres sports : de temps en temps il te demande sur l\'Accueil si tu pratiques un autre sport (vélo, course, foot, natation…) — un tap pour répondre (« Aucun » est valable). Un autre sport change ta récupération ET ta dépense d\'énergie (donc tes calories), et Milo en tiendra compte dans ses conseils.'},
+      {i:'🌿',t:'Milo garde ton profil à jour : une info peut vieillir (tu as changé de salle, tes séances sont plus courtes…). De temps en temps il te fait une petite vérification sur l\'Accueil (« toujours en salle basique ? »). « Oui, toujours » ne change RIEN — il note juste que c\'est à jour ; « Non, ça a changé » → tu choisis la nouvelle réponse en 1 tap. Au plus une petite question par semaine, et « Plus tard » est toujours possible : jamais de harcèlement.'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
       {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Consulte l\'onglet Badges dans Progrès pour tout voir.'},
@@ -655,7 +656,24 @@ function _renderObsCard(){
         +'</div>';
       return;
     }
-    // 5. Sinon, proposer une observation dérivée des données.
+    // 5. Mode CONFIRMER (profil vivant) : une info ENCORE là mais ANCIENNE → on la re-valide en douceur.
+    //    « Oui » ne change RIEN (rafraîchit juste la date) ; « Non » → bascule vers Compléter/Enrichir.
+    const cf=(typeof _pendingConfirm==='function')?_pendingConfirm():null;
+    if(cf){
+      el.style.padding='14px 14px 0';
+      const ask=(typeof _confirmPromptOf==='function')?_confirmPromptOf(cf.field,cf.label):("C'est toujours d'actualité : "+cf.label+" ?");
+      el.innerHTML='<div class="obs-card">'
+        +'<div class="obs-head">'+avatar+'<div class="obs-lead">'+name+' — petite vérification 😊</div></div>'
+        +'<div class="obs-txt">'+_obsEsc(ask)+'</div>'
+        +'<div class="obs-btns">'
+        +'<button class="obs-yes ft-press" onclick="confirmField(\''+cf.field+'\')">Oui, toujours</button>'
+        +'<button class="obs-no ft-press" onclick="unconfirmField(\''+cf.field+'\')">Non, ça a changé</button>'
+        +'</div>'
+        +'<button class="gap-later ft-press" onclick="skipConfirm(\''+cf.field+'\')">Plus tard</button>'
+        +'</div>';
+      return;
+    }
+    // 6. Sinon, proposer une observation dérivée des données.
     try{if(typeof maybeProposeObservation==='function')maybeProposeObservation();}catch(e){}
     o=(typeof _pendingObs==='function')?_pendingObs():null;
   }

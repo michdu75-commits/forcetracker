@@ -179,6 +179,7 @@ const NEW_FEATURES=[
   {id:'milo-fill-profile', screen:'home', desc:'Nouveau : Milo complète ton profil tout seul — s\'il manque une info de base (lieu, fréquence, durée d\'entraînement), il te propose de la remplir en 1 tap sur l\'Accueil. Ta réponse va direct dans ton profil'},
   {id:'milo-declared-realized', screen:'home', desc:'Nouveau : Milo compare ce que tu as déclaré à ce que tu fais VRAIMENT — si ta fréquence de séances change durablement, il te propose (jamais tout seul) de mettre ton profil à jour. Un coach qui se cale sur ta réalité'},
   {id:'milo-othersport', screen:'home', desc:'Nouveau : Milo te demande de temps en temps si tu pratiques un autre sport (vélo, course, foot, natation…) — ça change ta récup et tes calories, il en tient compte. Optionnel, en 1 tap sur l\'Accueil'},
+  {id:'milo-confirm-profile', screen:'home', desc:'Nouveau : Milo garde ton profil à jour — de temps en temps il te fait une petite vérification (« toujours en salle basique ? », « toujours ~45 min ? »). « Oui » ne change rien (il note juste que c\'est à jour), « Non » → tu corriges en 1 tap. Jamais plus d\'une petite question par semaine'},
   // Séance
   {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
@@ -247,9 +248,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v43/44/45 + WHATS_NEW_MAX=45) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v44/45/46 + WHATS_NEW_MAX=46) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:43, ic:'🌿', t:'Milo garde ton profil à jour', d:'De temps en temps, Milo te fait une petite vérification sur l\'Accueil : « Tu t\'entraînes toujours en salle basique ? », « Une séance dure toujours ~45 min ? »… Si rien n\'a changé, tu tapes « Oui, toujours » (ça ne modifie rien — Milo note juste que c\'est à jour) ; si ça a changé, « Non, ça a changé » et tu choisis la nouvelle réponse en 1 tap. Comme ça, ton coach ne te connaît pas seulement au jour de l\'inscription : il reste à jour avec toi, sans jamais te harceler (au plus une petite question par semaine, et « Plus tard » est toujours possible). 🌿'},
   {v:42, ic:'🚴', t:'Milo tient compte de tes autres sports', d:'Tu fais du vélo, de la course, du foot, de la natation… à côté de la muscu ? Milo te pose la question de temps en temps sur l\'Accueil (1 tap) — parce qu\'un autre sport change ta récupération ET ta dépense d\'énergie (donc tes calories). Il en tiendra compte dans ses conseils. Optionnel, et « Aucun » est une réponse tout à fait valable. 🚴'},
   {v:41, ic:'🔎', t:'Milo s\'adapte à ce que tu fais vraiment', d:'Milo ne se contente plus de ce que tu as déclaré : il REGARDE tes vraies séances. S\'il voit un vrai changement durable — par exemple tu avais dit 3 séances/semaine mais tu en fais plutôt 5 depuis plusieurs semaines — il te fait une petite vérification sur l\'Accueil : « Ça a changé ? ». Tu réponds « Oui, mets à jour » ou « Non, garde comme ça ». Il ne modifie JAMAIS rien tout seul, et il ne se base que sur une vraie tendance (pas une semaine exceptionnelle). C\'est le début d\'un coach qui se cale sur ta réalité, pas sur une fiche figée. 🔎'},
   {v:40, ic:'🌱', t:'Milo complète ton profil tout seul', d:'S\'il manque une info de base sur ton entraînement (où tu t\'entraînes, combien de séances par semaine, la durée d\'une séance), Milo te propose maintenant de la remplir en 1 tap sur l\'Accueil — de vrais boutons, rien à écrire. Ta réponse va DIRECT dans ton profil, et ses conseils (et tes calories/macros) deviennent plus justes. Pas envie sur le moment ? « Plus tard », et il te le redemandera une autre fois — jamais deux jours de suite, jamais de rafale. Surtout utile si tu as sauté ces questions à l\'inscription. 🌱'},
@@ -290,7 +292,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=42;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v43/44/45)
+const WHATS_NEW_MAX=43;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v44/45/46)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

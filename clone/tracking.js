@@ -1536,6 +1536,13 @@ function _pendingGap(){
   try{
     if(!S.registre)return null;
     const ans=(S.coachQuiz&&S.coachQuiz.answers)||{};
+    // Priorité absolue : un champ que l'utilisateur vient de déclarer « changé » (mode Confirmer → Non) → on
+    // affiche ses options TOUT DE SUITE (bypass du plafond hebdo, c'est la suite directe de son action).
+    const gf=S.registre.gapForce;
+    if(gf&&!ans[gf]){
+      const spec=_profileGapSpecs().find(g=>g.field===gf);
+      if(spec)return {field:spec.field, ask:spec.ask, options:spec.q.opts};
+    }
     // le bon moment : quelques séances derrière soi (pas dès le tout 1er jour)
     if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
     // PROACTIF : au plus 1 question par SEMAINE (filet de sécurité — cf. docs/PROFIL-VIVANT.md).
@@ -1553,13 +1560,18 @@ function _pendingGap(){
     return null;
   }catch(e){return null;}
 }
+// Backbone du profil vivant : date de dernière confirmation par champ (pilote le mode « Confirmer » + la fiabilité).
+function _stampConfirmed(field){
+  try{ S.coachQuiz=S.coachQuiz||{answers:{},done:false}; S.coachQuiz.confirmedAt=S.coachQuiz.confirmedAt||{}; S.coachQuiz.confirmedAt[field]=today(); }catch(e){}
+}
 function fillGap(field,value){
   try{
     S.coachQuiz=S.coachQuiz||{answers:{},done:false};
     S.coachQuiz.answers=S.coachQuiz.answers||{};
     S.coachQuiz.answers[field]=value;
     if(!S.coachQuiz.date)S.coachQuiz.date=today();
-    if(S.registre){S.registre.lastObsAt=today(); if(S.registre.gapSkips)delete S.registre.gapSkips[field];}
+    _stampConfirmed(field);
+    if(S.registre){S.registre.lastObsAt=today(); if(S.registre.gapSkips)delete S.registre.gapSkips[field]; if(S.registre.gapForce===field)S.registre.gapForce=null;}
     persist();
     if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     if(typeof _renderObsCard==='function')_renderObsCard();
@@ -1573,6 +1585,7 @@ function skipGap(field){
     if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
     if(!S.registre.gapSkips)S.registre.gapSkips={};
     S.registre.gapSkips[field]=today();
+    if(S.registre.gapForce===field)S.registre.gapForce=null;
     S.registre.lastObsAt=today();                     // respecte le plafond (pas d'autre question avant 3 jours)
     persist();
     if(typeof _renderObsCard==='function')_renderObsCard();
@@ -1624,6 +1637,7 @@ function applyFreqContext(observed){
     if(!S.coachQuiz)S.coachQuiz={answers:{},done:false};
     if(!S.coachQuiz.answers)S.coachQuiz.answers={};
     S.coachQuiz.answers.freq=observed;
+    _stampConfirmed('freq');
     if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
     S.registre.ctxFreq={bucket:observed,at:today(),result:'updated'};
     S.registre.lastObsAt=today();
@@ -1658,6 +1672,12 @@ function _pendingEnrich(){
   try{
     if(!S.registre)return null;
     const ans=(S.coachQuiz&&S.coachQuiz.answers)||{};
+    // Priorité : un champ que l'utilisateur vient de déclarer « changé » (Confirmer → Non) → options tout de suite.
+    const gf=S.registre.gapForce;
+    if(gf&&!ans[gf]){
+      const spec=_enrichSpecs().find(g=>g.field===gf);
+      if(spec)return {field:spec.field, ask:spec.ask, options:spec.options};
+    }
     if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
     const last=S.registre.lastObsAt;                                  // PROACTIF : au plus 1 question/semaine (partagé)
     if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return null;}
@@ -1677,7 +1697,8 @@ function fillEnrich(field,value){
     S.coachQuiz.answers=S.coachQuiz.answers||{};
     S.coachQuiz.answers[field]=value;
     if(!S.coachQuiz.date)S.coachQuiz.date=today();
-    if(S.registre){S.registre.lastObsAt=today(); if(S.registre.gapSkips)delete S.registre.gapSkips[field];}
+    _stampConfirmed(field);
+    if(S.registre){S.registre.lastObsAt=today(); if(S.registre.gapSkips)delete S.registre.gapSkips[field]; if(S.registre.gapForce===field)S.registre.gapForce=null;}
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     if(typeof _renderObsCard==='function')_renderObsCard();
     let msg='Noté 👍 Milo en tient compte.';
@@ -1690,12 +1711,94 @@ function skipEnrich(field){
     if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
     if(!S.registre.gapSkips)S.registre.gapSkips={};
     S.registre.gapSkips[field]=today();
+    if(S.registre.gapForce===field)S.registre.gapForce=null;
     S.registre.lastObsAt=today();
     persist();
     if(typeof _renderObsCard==='function')_renderObsCard();
     if(typeof toast==='function')toast("Pas de souci, on verra plus tard.",'info');
   }catch(e){console.warn('[FT enrich] skip',e);}
 }
+
+// ─── PROFIL VIVANT — mode « CONFIRMER » (docs/PROFIL-VIVANT.md) ───
+// Une info ENCORE là mais ANCIENNE : Milo la re-valide en douceur. « Oui » ne change RIEN — il rafraîchit
+// juste la date de dernière confirmation (backbone) → on évite de re-poser sans cesse les mêmes questions.
+// « Non » → bascule direct vers COMPLÉTER (les options réapparaissent tout de suite via gapForce).
+// Proactif (partage le plafond hebdo). N'agit PAS sur la fréquence (déjà couverte par déclaré/réalisé).
+const _CONFIRM_AGE_DAYS=90;                                        // au-delà, on re-valide (fiabilité qui décroît avec le temps)
+function _confirmLabelOf(field,value){
+  if(field==='othersport')return _OTHERSPORT_LBL[value]||value;
+  const spec=_profileGapSpecs().find(g=>g.field===field);
+  if(spec){const o=(spec.q.opts||[]).find(x=>x[0]===value);if(o)return o[1];}
+  return value;
+}
+function _confirmPromptOf(field,label){
+  if(field==='place')return "Tu t'entraînes toujours plutôt en "+label+" ?";
+  if(field==='time')return "Une séance dure toujours à peu près "+label+" ?";
+  if(field==='othersport')return (label&&label!=='aucun autre sport')
+    ? ("Tu pratiques toujours "+label+" à côté ?")
+    : "Toujours pas d'autre sport à côté de la muscu ?";
+  return "C'est toujours d'actualité : "+label+" ?";
+}
+function _pendingConfirm(){
+  try{
+    if(!S.registre)return null;
+    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
+    const ans=(S.coachQuiz&&S.coachQuiz.answers)||{};
+    const conf=(S.coachQuiz&&S.coachQuiz.confirmedAt)||{};
+    const last=S.registre.lastObsAt;                               // PROACTIF : ≤1 question/semaine (partagé)
+    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return null;}
+    const skips=S.registre.confirmSkips||{};
+    let lazy=false;
+    for(const field of ['place','time','othersport']){
+      const v=ans[field];
+      if(v===undefined||v===null||v==='')continue;                 // vide → c'est COMPLÉTER, pas Confirmer
+      if(!conf[field]){ _stampConfirmed(field); lazy=true; continue; } // pas de date → on l'ancre à aujourd'hui (aucune question immédiate)
+      const age=(new Date(today())-new Date(conf[field]))/864e5;
+      if(age<_CONFIRM_AGE_DAYS)continue;                            // encore frais → rien
+      const sk=skips[field];
+      if(sk){const dl=(new Date(today())-new Date(sk))/864e5;if(dl>=0&&dl<30)continue;} // « Plus tard » → ~1 mois
+      return {field, value:v, label:_confirmLabelOf(field,v)};
+    }
+    if(lazy){ try{persist();}catch(e){} }                          // enregistre les dates ancrées à aujourd'hui
+    return null;
+  }catch(e){return null;}
+}
+function confirmField(field){
+  try{
+    _stampConfirmed(field);                                        // « Oui » : on ne change RIEN, on rafraîchit la date
+    if(S.registre){S.registre.lastObsAt=today(); if(S.registre.confirmSkips)delete S.registre.confirmSkips[field];}
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    if(typeof toast==='function')toast("Parfait, c'est toujours à jour 👍",'success');
+  }catch(e){console.warn('[FT confirm] yes',e);}
+}
+function unconfirmField(field){
+  try{
+    S.coachQuiz=S.coachQuiz||{answers:{},done:false};
+    if(S.coachQuiz.answers)delete S.coachQuiz.answers[field];      // « Non » : la valeur n'est plus valable
+    if(S.coachQuiz.confirmedAt)delete S.coachQuiz.confirmedAt[field];
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    S.registre.gapForce=field;                                     // → les options réapparaissent TOUT DE SUITE (Compléter/Enrichir)
+    if(S.registre.gapSkips)delete S.registre.gapSkips[field];
+    if(S.registre.confirmSkips)delete S.registre.confirmSkips[field];
+    S.registre.lastObsAt=today();
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    if(typeof toast==='function')toast("Ok, dis-moi ce qui a changé 👍",'info');
+  }catch(e){console.warn('[FT confirm] no',e);}
+}
+function skipConfirm(field){
+  try{
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    if(!S.registre.confirmSkips)S.registre.confirmSkips={};
+    S.registre.confirmSkips[field]=today();
+    S.registre.lastObsAt=today();
+    persist();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    if(typeof toast==='function')toast("Pas de souci, on verra plus tard.",'info');
+  }catch(e){console.warn('[FT confirm] skip',e);}
+}
+
 function renderWeightCorrelations(el,pts){
   if(!pts||pts.length<3){el.innerHTML='';return;}
   const cards=[];
