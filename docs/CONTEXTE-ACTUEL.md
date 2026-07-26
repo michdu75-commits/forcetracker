@@ -8,12 +8,13 @@
 
 - **Version en ligne (live) :** `ft-v605`. Sont **déjà en prod pour tous** : fixes sécurité/qualité Milo (⛔ ne joue pas au docteur / répond d'abord ft-v593 · ⛔ ne redemande pas une info connue ft-v595 · anti-invention ft-v589 · **🧭 permissions bornées ft-v605** = ne suppose jamais un fait de santé, frontière photo produit) · **inscription « Ton entraînement » ft-v604** (écran ob-7 où/durée/fréquence → S.coachQuiz) · allègement CLAUDE.md · gouvernance (P24, Constitution v2.4, les 2 moments Milo). **Encore CLONE-ONLY** (exprès) : le comportement « moment Milo » (positif) · la question guidée (chips) · le badge Gardien · le toggle questions illimitées · l'anti-interrogatoire durci.
 
-> ### 🔁 REPRISE 26/07 (Michel rentre de vacances, refait tout au propre) — À TESTER SUR LE CLONE (badge ft-v605)
-> 1. **Inscription propre** en cliquant bien le nouvel écran **« Ton entraînement »** (où/durée/fréquence) → puis parler à Milo : il ne doit **PLUS** redemander ces 3 infos.
-> 2. **Re-photo Imodium** : il doit constater l'anti-diarrhée **sans inventer de maladie** (« gastro » = mort ✅) **et sans repartir en liste de questions numérotées**.
-> - **Question ouverte de Michel (à trancher demain)** : sur le compte clone testé le 25/07, l'interrogatoire (« 1. où · 2. durée · 3. fréquence ») venait-il d'un **manque de donnée** (compte clone ancien, ob-7 jamais rempli) OU d'un **vrai bug** (il redemande une info qu'il a) ? → refaire une inscription propre tranche.
-> - **2ᵉ point à resserrer quoi qu'il arrive** : l'anti-interrogatoire **refuit en milieu de conversation** (liste numérotée de questions avant de proposer). À durcir.
-> - **⏭️ Prochaine brique (idée Michel validée GPT)** : 📸 **photo d'un produit → Milo propose « je retiens que tu prends X ? »** (jamais automatique, réutilise le « ✅ Retenu »).
+> ### 🔁 REPRISE 26/07 — état après la session (badge live ft-v606)
+> - ✅ **ft-v604 VALIDÉ sur device** : réinscription propre (écran « Ton entraînement ») → Milo connaît « 4×/sem, ~1h, salle » + protège épaule/fessiers, **ne redemande plus**. **Question ouverte tranchée** : l'interrogatoire du 25/07 venait d'un **manque de donnée** (vieux compte clone sans ob-7), pas d'un bug de règle.
+> - ✅ **ft-v605 (permissions bornées / photo Imodium)** en ligne → à re-confirmer sur device (« gastro » ne doit plus apparaître).
+> - ✅ **ft-v606 (LA VALEUR AVANT LA QUESTION)** : anti-interrogatoire durci (plan direct dès le 1ᵉʳ message · pas de « je reviens avec un plan » · 1 seule question qui PERSONNALISE · montrer le COMMENT sur la blessure). **⚠️ À RE-TESTER sur le clone** (« je veux faire de la force » → doit donner un vrai plan direct + 1 seule question, pas 2).
+> - ⏭️ **Si validé** → **promotion en prod** du lot anti-interrogatoire (aujourd'hui clone-only) + **checklist #11 de ft-v604** (validé device) + checklist #11 du lot promu.
+> - ⏭️ **Prochaine brique (idée Michel validée GPT)** : 📸 **photo d'un produit → Milo propose « je retiens que tu prends X ? »** (jamais automatique, réutilise le « ✅ Retenu »).
+> - 📝 **En attente (retour GPT, doc-only)** : review du **Guide de l'appli** (15 diapos) — lot sûr = bouton Suivant −15-20 % · progression « Étape X sur 15 » · alléger Profil/Séance/Bilan · Premium en bénéfices. (#4 réordonner = déconseillé ; #6 slide « habitude quotidienne » = plus tard, capture requise.)
 
 ---
 

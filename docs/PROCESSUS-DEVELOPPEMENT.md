@@ -80,6 +80,18 @@ on retire **uniquement les redondances évidentes, une par une, avec validation 
 (noyau dur + IA + test humain). *« Dix petites coupes validées valent mieux qu'une grosse simplification qui
 changerait subtilement le comportement de Milo. »*
 
+### 🎯 Le bon indicateur : « combien de valeur AVANT la première question ? » (Michel, 26/07/2026)
+
+Raffinement du noyau cardinal ① (aider avant de questionner), né d'un vrai test (« je veux faire de la
+force » → Milo pose 2 questions avant de proposer). **Le bon indicateur de qualité d'un échange n'est PAS
+le nombre de questions posées, mais : *combien de valeur la personne a-t-elle reçue AVANT la première
+question ?*** Chaque premier message doit contenir un conseil déjà **exploitable**. Corollaires (gravés
+aussi dans le prompt, `buildCoachContext`) : **Milo n'a pas peur de faire un premier choix** quand il a
+assez d'infos ; **une fois l'orientation crédible posée, les questions restantes ne débloquent plus rien —
+elles ne font que PERSONNALISER** (différence fondamentale) ; sur une blessure connue, il **montre qu'il
+sait quoi en faire** (« amplitude contrôlée, progression adaptée »), pas seulement qu'il s'en souvient.
+C'est ce qui fait sentir un **coach** et non un assistant qui collecte des infos.
+
 ---
 
 ## 🔁 Le cycle d'une brique
