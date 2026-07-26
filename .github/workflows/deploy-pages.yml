@@ -1,0 +1,39 @@
+name: Déployer le site sur GitHub Pages
+
+# Déploiement FIABLE de la PWA via GitHub Actions (remplace le "Deploy from a branch"
+# qui se bloquait par intermittence — site coincé à ft-v600 puis ft-v616 sans prévenir).
+# Se déclenche à chaque push sur master, ET peut être relancé à la main (workflow_dispatch).
+on:
+  push:
+    branches: [master]
+  workflow_dispatch: {}
+
+# Permissions nécessaires au déploiement Pages via Actions.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Un seul déploiement à la fois ; ne pas annuler un déploiement déjà en cours.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+      - name: Configurer Pages (bascule le build en mode "GitHub Actions" si besoin)
+        uses: actions/configure-pages@v5
+      - name: Empaqueter le site (tout le repo, .git/.github exclus automatiquement)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: Déployer sur GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
