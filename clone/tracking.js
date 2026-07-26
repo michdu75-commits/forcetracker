@@ -1642,6 +1642,60 @@ function dismissFreqContext(observed){
     if(typeof toast==='function')toast("Ok, je garde ce que tu avais indiqué 👍",'info');
   }catch(e){console.warn('[FT ctx] freq dismiss',e);}
 }
+
+// ─── PROFIL VIVANT — mode « ENRICHIR » (docs/PROFIL-VIVANT.md) ───
+// Des infos qu'on ne peut PAS déduire des données (donc Milo DEMANDE, il ne détecte pas) mais qui enrichissent
+// le coaching. 1ʳᵉ : un AUTRE SPORT pratiqué (foot/vélo/course… → influe sur la récup et la dépense énergétique,
+// cf. NUTRITION-PHILOSOPHIE). Proactif (partage le plafond hebdo), 1 tap, écrit dans S.coachQuiz.answers.
+const _OTHERSPORT_LBL={aucun:'aucun autre sport',velo:'vélo',course:'course à pied',foot:'foot',natation:'natation',martiaux:'arts martiaux',rando:'randonnée',autre:'un autre sport'};
+function _enrichSpecs(){
+  return [
+    {field:'othersport', ask:"Tu pratiques un autre sport à côté de la muscu ? Ça m'aide à ajuster ta récup et tes calories.",
+     options:[['aucun','Aucun'],['velo','Vélo'],['course','Course'],['foot','Foot'],['natation','Natation'],['martiaux','Arts martiaux'],['rando','Rando'],['autre','Un autre']]},
+  ];
+}
+function _pendingEnrich(){
+  try{
+    if(!S.registre)return null;
+    const ans=(S.coachQuiz&&S.coachQuiz.answers)||{};
+    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
+    const last=S.registre.lastObsAt;                                  // PROACTIF : au plus 1 question/semaine (partagé)
+    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return null;}
+    const skips=S.registre.gapSkips||{};
+    for(const g of _enrichSpecs()){
+      if(ans[g.field])continue;                                       // déjà répondu → on ne redemande pas
+      const sk=skips[g.field];
+      if(sk){const dl=(new Date(today())-new Date(sk))/864e5;if(dl>=0&&dl<7)continue;}
+      return {field:g.field, ask:g.ask, options:g.options};
+    }
+    return null;
+  }catch(e){return null;}
+}
+function fillEnrich(field,value){
+  try{
+    S.coachQuiz=S.coachQuiz||{answers:{},done:false};
+    S.coachQuiz.answers=S.coachQuiz.answers||{};
+    S.coachQuiz.answers[field]=value;
+    if(!S.coachQuiz.date)S.coachQuiz.date=today();
+    if(S.registre){S.registre.lastObsAt=today(); if(S.registre.gapSkips)delete S.registre.gapSkips[field];}
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    let msg='Noté 👍 Milo en tient compte.';
+    if(field==='othersport')msg=(value==='aucun')?'Noté 👍':('Top 👍 Milo tiendra compte de ton '+(_OTHERSPORT_LBL[value]||'autre sport')+' (récup + calories).');
+    if(typeof toast==='function')toast(msg,'success');
+  }catch(e){console.warn('[FT enrich] fill',e);}
+}
+function skipEnrich(field){
+  try{
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    if(!S.registre.gapSkips)S.registre.gapSkips={};
+    S.registre.gapSkips[field]=today();
+    S.registre.lastObsAt=today();
+    persist();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    if(typeof toast==='function')toast("Pas de souci, on verra plus tard.",'info');
+  }catch(e){console.warn('[FT enrich] skip',e);}
+}
 function renderWeightCorrelations(el,pts){
   if(!pts||pts.length<3){el.innerHTML='';return;}
   const cards=[];

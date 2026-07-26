@@ -159,9 +159,12 @@ anti-nag par niveau observé). ⏭️ Détecteurs suivants : **autre sport déte
 - Détecter l'**écart déclaré/réalisé** (fréquence mesurée vs déclarée, signature d'entraînement force vs
   hypertrophie…) sur une **fenêtre stable**.
 
-**Ordre de construction proposé** : ① mode **Compléter** (le plus concret) → ② **Confirmer/Mettre à jour**
-(réutilise la date + la fiabilité) → ③ détection **déclaré/réalisé** → ④ **Enrichir** (stock de questions).
-Une tranche à la fois, testée sur le clone.
+**Ordre de construction** : ① mode **Compléter** ✅ (`ft-v612`) → ② **Confirmer/Mettre à jour** *(à venir —
+réutilise la date + la fiabilité)* → ③ détection **déclaré/réalisé** ✅ *(fréquence, `ft-v614` ; suivants :
+autre sport/poids/style)* → ④ **Enrichir** ✅ *(1ʳᵉ question « autre sport », `ft-v615` ; stock à élargir)*.
+Une tranche à la fois, testée à fond avant prod. **Reste à faire** : le mode **Confirmer** (le seul des 4
+non encore livré) + la **fiabilité par champ** (étoiles) + d'autres détecteurs contextuels + d'autres
+questions d'enrichissement.
 
 ---
 

@@ -159,6 +159,7 @@ const _HELP_DATA={
       {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🌱',t:'Milo complète ton profil tout seul : s\'il manque une info de base (où tu t\'entraînes, combien de séances/semaine, la durée), il te propose de la remplir en 1 tap sur l\'Accueil — de vrais boutons, rien à écrire. Ta réponse va direct dans ton profil et ses conseils deviennent plus justes. Pas envie maintenant ? « Plus tard » et il te le redemandera une autre fois. (Utile surtout si tu as sauté ces questions à l\'inscription.)'},
       {i:'🔎',t:'Milo s\'adapte à ce que tu fais vraiment : il compare ce que tu as déclaré (ex. ta fréquence de séances) à ce qu\'il MESURE dans tes vraies séances. S\'il repère un changement DURABLE (pas juste une semaine chargée), il te fait une petite vérification sur l\'Accueil (« tu t\'entraînes plutôt 5×/sem maintenant, ça a changé ? ») → « Oui, mets à jour » ou « Non, garde comme ça ». Il ne change JAMAIS rien tout seul — il constate et te laisse décider.'},
+      {i:'🚴',t:'Milo tient compte de tes autres sports : de temps en temps il te demande sur l\'Accueil si tu pratiques un autre sport (vélo, course, foot, natation…) — un tap pour répondre (« Aucun » est valable). Un autre sport change ta récupération ET ta dépense d\'énergie (donc tes calories), et Milo en tiendra compte dans ses conseils.'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
       {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Consulte l\'onglet Badges dans Progrès pour tout voir.'},
@@ -628,7 +629,20 @@ function _renderObsCard(){
         +'</div>';
       return;
     }
-    // 3. Sinon, proposer une observation dérivée des données.
+    // 4. Mode ENRICHIR (profil vivant) : une info non déductible des données (ex. un autre sport) que Milo DEMANDE.
+    const enr=(typeof _pendingEnrich==='function')?_pendingEnrich():null;
+    if(enr){
+      el.style.padding='14px 14px 0';
+      const opts=enr.options.map(op=>'<button class="gap-opt ft-press" onclick="fillEnrich(\''+enr.field+'\',\''+_obsEsc(op[0])+'\')">'+_obsEsc(op[1])+'</button>').join('');
+      el.innerHTML='<div class="obs-card">'
+        +'<div class="obs-head">'+avatar+'<div class="obs-lead">'+name+' — pour mieux te connaître</div></div>'
+        +'<div class="obs-txt">'+_obsEsc(enr.ask)+'</div>'
+        +'<div class="gap-opts">'+opts+'</div>'
+        +'<button class="gap-later ft-press" onclick="skipEnrich(\''+enr.field+'\')">Plus tard</button>'
+        +'</div>';
+      return;
+    }
+    // 5. Sinon, proposer une observation dérivée des données.
     try{if(typeof maybeProposeObservation==='function')maybeProposeObservation();}catch(e){}
     o=(typeof _pendingObs==='function')?_pendingObs():null;
   }
