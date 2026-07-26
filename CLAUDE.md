@@ -148,7 +148,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v608`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v609`** — voir le journal des versions) |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `appsscript.json` | Manifest Apps Script (scopes OAuth, timezone, webapp config) |
@@ -385,10 +385,12 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v608`** (prochaine : `ft-v609`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v609`** (prochaine : `ft-v610`). Historique complet (ft-v128→574 + gouvernance
 > antérieure) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > ~30 entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien supprimer).
+
+**ft-v609 — 🧪 CLONE : topbar compacte pour donner plus de place au chat (retour Michel « plus de visibilité au chat avec Milo »)** — Michel note que le bandeau global « Force Tracker » (`.topbar`) mange de la hauteur. Il ne peut pas monter *plus haut* (déjà collé sous la barre d'état de l'iPhone — l'heure/batterie), mais on le rend plus **compact** : logo **56→42 px** + marge basse **14→8 px** → ~**20 px** de contenu gagnés sur TOUS les écrans. Gaté **`html.is-clone`** (posé uniquement dans `/clone/` par `_initCloneTools`) → **PROD strictement inchangée**, à valider sur le clone puis promouvoir. Fichiers : `style.css` (2 règles clone-only), `sw.js`, `clone/*`, `CLAUDE.md`. Testé Playwright : PROD logo **56px** (inchangé) / avec `is-clone` **42px** (compact) ✅ + noyau dur non impacté. ⏳ Si Michel valide → promotion (retirer le gate `html.is-clone`). sw.js ft-v609. |
 
 **ft-v608 — 📖 Guide de l'appli : diapo « Milo va droit au but » (clôt la checklist #11 de ft-v607)** — Michel a validé l'aperçu. Comme son compte perso est trop avancé (Opus + vrais records) pour reproduire l'exemple « débutante », on a pris la capture du **clone** (le rendu qu'un vrai nouvel utilisateur voit) et **recadré pour retirer le bandeau « 🧪 CLONE »** (contenu identique à la prod, même code — juste le marqueur de test enlevé) → `guide/milo-direct.jpg` (780px, recadré au-dessus de la ligne « Milo »). Diapo ajoutée à `APP_GUIDE_SLIDES` (app.js) **après la diapo Coach** (sans doigt animé — c'est une diapo « qualité de réponse », pas une action à taper) : montre le plan direct « Full Body » + « amplitude contrôlée pour protéger ton épaule droite ». + ajoutée au PRECACHE (sw.js). Guide passe de 15 à **16 diapos**. → **checklist #11 de ft-v607 COMPLÈTE à 100 %** (pop-up v39 + red dot + `?` + aide détaillée + guide). Fichiers : `app.js`, `guide/milo-direct.jpg`, `sw.js`, `clone/*`, `CLAUDE.md`. Testé : `node --check` OK + noyau dur 10/10. sw.js ft-v608. |
 

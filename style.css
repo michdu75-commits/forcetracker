@@ -100,6 +100,9 @@ html.no-halo #root{ background:var(--bg); } /* Apparence \00ab Fond uni \00bb */
 .tb-title{font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:#FF5A64;}
 .tb-sub{font-size:13.5px;color:#F2F3F5;margin-top:1px;font-weight:500;opacity:.75;}
 .topbar button{color:#F2F3F5;}
+/* 🧪 CLONE-ONLY (test ft-v609) — topbar compacte : logo plus petit + moins de marge → plus de place pour le contenu (le chat Milo notamment). Gaté html.is-clone (posé uniquement dans /clone/ par _initCloneTools) → PROD inchangée. À promouvoir si Michel valide. */
+html.is-clone .topbar{ padding-top:max(env(safe-area-inset-top),36px); padding-bottom:8px; }
+html.is-clone #tb-logo{ height:42px !important; width:42px !important; }
 .sync-pill{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:999px;border:none;background:rgba(242,243,245,.08);color:#F2F3F5;font-size:12px;cursor:pointer;font-family:var(--font);font-weight:600;transition:all .2s;}
 .sync-pill.ok{color:#5be3b4;background:rgba(52,211,153,.1);}
 #s-home{padding:0 0 calc(max(env(safe-area-inset-bottom,0px),8px) + 170px);gap:0;}
