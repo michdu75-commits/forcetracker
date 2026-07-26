@@ -694,7 +694,12 @@ function updateCoachHeader() {
       badge.innerHTML = '<div class="coach-quota">∞ questions (clone illimité)</div>';
     } else {
       const left = Math.max(0, _coachFreeLimit() - (S.coachFree || 0));
-      badge.innerHTML = `<div class="coach-quota">${left} question${left!==1?'s':''} gratuite${left!==1?'s':''}</div>`;
+      // 🧪 CLONE-ONLY (ft-v611) : badge plus compact (« 8 questions » au lieu de « 8 questions gratuites »)
+      // pour gagner un peu de place dans le header. PROD garde le libellé complet. Gaté __FT_CLONE__.
+      const _compact = (typeof window!=='undefined' && window.__FT_CLONE__);
+      badge.innerHTML = _compact
+        ? `<div class="coach-quota">${left} question${left!==1?'s':''}</div>`
+        : `<div class="coach-quota">${left} question${left!==1?'s':''} gratuite${left!==1?'s':''}</div>`;
     }
   }
 }

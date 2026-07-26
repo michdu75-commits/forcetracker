@@ -148,7 +148,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v610`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v611`** — voir le journal des versions) |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `appsscript.json` | Manifest Apps Script (scopes OAuth, timezone, webapp config) |
@@ -385,10 +385,12 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v610`** (prochaine : `ft-v611`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v611`** (prochaine : `ft-v612`). Historique complet (ft-v128→574 + gouvernance
 > antérieure) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > ~30 entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien supprimer).
+
+**ft-v611 — 🧪 CLONE : badge quota compact + refonte header PARKÉE (choix « meilleur + sécur », délégué par Michel)** — Michel : « fais ce qu'il y a de meilleur et de plus sûr ». Décision : ① **gain safe tout de suite** — le badge quota passe à « **8 questions** » (au lieu de « 8 questions gratuites ») sur le clone (gaté `__FT_CLONE__`, `updateCoachHeader` coach.js ~697 ; **PROD garde le libellé complet**) ; ② **la grosse refonte du header** proposée (déplacer badge quota + horloge + `+` sur la ligne de la **date**, boutons d'action sur leur propre rangée) est **PARKÉE pour une session dédiée** : c'est un vrai chantier (déménager des contrôles du Coach vers le bandeau **global**, 2 rangées, conditionnel à l'écran Coach) — faisable (les contrôles sont retrouvés par ID donc la logique ne casse pas) mais **visuel** (Michel voudra itérer au pixel) et il touche **tous les écrans** → à faire proprement, pas en hack clone fragile (le header se redessine). Testé Playwright : prod « 8 questions gratuites » / clone « 8 questions » ✅ + `node --check` OK. ⏭️ **À faire ensemble** : la refonte 2-rangées du header (spec de Michel gardée). sw.js ft-v611. |
 
 **ft-v610 — 🧪 CLONE : header compacté v2 — garder le LOGO (identité), gagner via les espacements (cadrage GPT)** — GPT affine ft-v609 : **ne pas toucher au logo/titre/boutons** (ils portent l'identité premium) — on gagne la place autrement. Révision : le shrink logo de ft-v609 est **remplacé** par de la compaction d'**espacements**, toujours **clone-only** (`html.is-clone`, PROD inchangée) : `.topbar` marge basse **14→8** · `.coach-header` **8/12→2/6** (resserre l'espace date→bloc Milo) · `.coach-header-sub` « Ton coach IA · S'adapte à toi » **12→11px** + line-height serré · `.coach-quota` (« 8 questions gratuites ») padding plus fin. **Honnêteté** : l'espace *au-dessus* du logo = la **barre d'état iPhone** (heure/batterie), non réductible sans passer dessous → on ne le touche pas. Gain ~**20-30px** pour le chat. Testé Playwright : **logo 56px partout** (prod ET clone), coach-header compacté **seulement** en clone (prod 8/12, clone 2/6) ✅ + noyau dur 10/10. **Idée future notée** (`IDEES-FUTURES.md`) : **header adaptatif** (compact au scroll, façon iOS/Apple Music — waouh à l'ouverture, place max ensuite). Fichiers : `style.css`, `sw.js`, `IDEES-FUTURES.md`, `clone/*`, `CLAUDE.md`. ⏳ Si Michel valide → promotion (retirer le gate). sw.js ft-v610. |
 
