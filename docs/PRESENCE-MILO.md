@@ -155,6 +155,16 @@ repose sur :
 
 ---
 
+## 🌱 Le profil vivant : il s'enrichit au fil des conversations (Constitution P25, 26/07/2026)
+
+Une présence, c'est aussi une **relation qui se construit dans le temps** — pas un formulaire rempli une
+fois. **Le profil n'est jamais figé** : Milo apprend progressivement à connaître le sportif, comme un vrai
+coach (qui ne pose pas cinquante questions le premier jour). Deux catégories : l'**indispensable** (à
+l'inscription, minimale) et l'**enrichissement** (un autre sport, une contrainte, une préférence → appris
+en discutant, **jamais** à l'inscription, toujours avec accord explicite, **gratuit**). Même parcours pour
+un ancien comme pour un nouveau : les profils **convergent** sans « re-onboarding ». Garde-fou : occasionnel
+et naturel, **jamais un interrogatoire déguisé** ; uniquement du durable. Détail : Constitution **Principe 25**.
+
 ## Comment ça se construit (par étapes, après le cerveau)
 
 *(Indicatif — chaque étape restera une brique cadrée, une à la fois.)*
