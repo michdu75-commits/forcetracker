@@ -790,7 +790,50 @@ function openMiloKnows(){
   try{_markAnchorSeen('menu-row-miloknows');}catch(e){} // le point rouge « nouveauté » disparaît une fois la rubrique ouverte
 }
 function closeMiloKnows(){const ov=document.getElementById('ov-milo-knows');if(ov)ov.classList.remove('open');}
+// ─── PROFIL VIVANT — Brique « fiabilité par champ » : la PHRASE-BÉNÉFICE (docs/PROFIL-VIVANT.md) ───
+// Choix de Michel : PAS de % ni de score — une phrase orientée BÉNÉFICE (« ce que Milo est capable de
+// faire pour toi »), l'utilisateur ne doit JAMAIS se sentir évalué. Le niveau reflète l'ÉTENDUE de ce que
+// Milo sait ; il ne fait que MONTER (high-water mark `S.registre.knowPeak`) → jamais punitif si tu effaces
+// une info ou dis « ça a changé ». La fiabilité/fraîcheur par champ (qui, elle, décroît) reste INTERNE et
+// ne sert qu'à piloter les questions (mode Confirmer) — jamais affichée.
+const _MILO_LEVELS=[
+  {min:0, phrase:'Milo apprend à te connaître',        sub:'Réponds à ses petites questions sur l\'Accueil — il te connaîtra un peu plus à chaque fois.'},
+  {min:2, phrase:'Milo commence à bien te connaître',  sub:'Profil personnalisé.'},
+  {min:4, phrase:'Milo te connaît bien',               sub:'Conseils personnalisés.'},
+  {min:6, phrase:'Milo connaît très bien ton profil',  sub:'Conseils sur-mesure.'},
+];
+// Compte l'ÉTENDUE des connaissances (nb de choses importantes que Milo détient) — pas leur fraîcheur.
+function _miloKnowledgeCount(){
+  let n=0;
+  const a=(S.coachQuiz&&S.coachQuiz.answers)||{};
+  ['place','freq','time','othersport'].forEach(k=>{const v=a[k];if(v!==undefined&&v!==null&&v!=='')n++;}); // « aucun » (autre sport) = une info connue
+  if(S.goal)n++;
+  const hp=S.healthProfile||{};
+  if((hp.injuries&&hp.injuries.length)||(hp.conditions&&hp.conditions.length)||(hp.notes&&String(hp.notes).trim()))n++;
+  const obs=(typeof _validatedObs==='function')?_validatedObs():[];
+  n+=obs.length;                                     // chaque chose confiée/confirmée compte
+  return n;
+}
+// Niveau visible = basé sur le MAX jamais atteint (jamais de régression → règle « ça ne redescend jamais »).
+function _miloKnowledgeLevel(){
+  const n=_miloKnowledgeCount();
+  let peak=(S.registre&&S.registre.knowPeak)||0;
+  if(n>peak){ if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''}; S.registre.knowPeak=n; peak=n; try{persist();}catch(e){} }
+  let lv=_MILO_LEVELS[0];
+  for(const L of _MILO_LEVELS){ if(peak>=L.min)lv=L; }
+  return lv;
+}
+function _renderMiloLevel(){
+  const el=document.getElementById('milo-knows-level');if(!el)return;
+  const lv=_miloKnowledgeLevel();
+  el.innerHTML='<div class="mk-level">'
+    +'<span class="mk-level-dot"></span>'
+    +'<div class="mk-level-txt"><b>'+_obsEsc(lv.phrase)+'</b>'
+    +(lv.sub?'<span class="mk-level-sub">'+_obsEsc(lv.sub)+'</span>':'')
+    +'</div></div>';
+}
 function _renderMiloKnows(){
+  _renderMiloLevel();
   const box=document.getElementById('milo-knows-list');if(!box)return;
   const list=(typeof _validatedObs==='function')?_validatedObs():[];
   if(!list.length){box.innerHTML='<div class="mk-empty">Milo n\'a encore rien retenu sur toi. Au fil de tes séances, il te posera de petites questions sur l\'Accueil — chaque fois que tu confirmes, il apprend à mieux te connaître. Rien n\'est mémorisé sans ton accord.</div>';return;}

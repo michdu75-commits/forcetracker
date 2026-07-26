@@ -111,6 +111,15 @@ La personne doit **sentir** que son coach évolue avec elle (c'est très valoris
 La sensation « mon coach me connaît » vient du **concret visible**, pas d'un « il te connaît très bien »
 balancé dans le vide.
 
+> ✅ **Étape 1 livrée (`ft-v618`) — la PHRASE-BÉNÉFICE.** Nuance décisive de Michel : **pas un %/score**
+> (l'utilisateur ne cherche pas un taux de complétude, il veut savoir si Milo peut lui donner de
+> **meilleurs conseils**) → une **phrase orientée bénéfice** en haut de « Ce que Milo sait de toi »
+> (« Milo apprend à te connaître » → … → « connaît très bien ton profil — conseils sur-mesure »). Elle
+> **ne fait que MONTER** (high-water mark `S.registre.knowPeak`) → **jamais punitive**. La
+> **fiabilité/fraîcheur par champ reste INTERNE** (elle décroît et pilote QUELLES questions Milo pose,
+> mode Confirmer) — **jamais affichée** (anti-« score » anxiogène, anti-flicage). ⏭️ Étape 2 = « Milo a
+> appris quelque chose » (la liste vivante des infos récemment apprises).
+
 ---
 
 ## Déclenchement : DEUX mécanismes complémentaires (Michel, 26/07)
