@@ -98,6 +98,31 @@ Le coaching fin vient APRÈS le journal.
 
 ---
 
+## 🌱 Nutrition &amp; profil vivant (croisement ChatGPT, 26/07/2026)
+
+La nutrition n'est pas figée : elle **suit** l'évolution du sportif (cf. `docs/PROFIL-VIVANT.md`). Cinq
+précisions pour renforcer le système :
+
+1. **Observé vs déclaré.** Le **niveau d'activité** peut être *observé* (nombre réel de séances) ;
+   l'**objectif** reste une *intention*. Si Milo constate un écart durable entre l'objectif déclaré et le
+   comportement réel, il **ne modifie JAMAIS l'objectif tout seul** — il propose (« ton entraînement
+   ressemble davantage à de la force qu'à une prise de masse, tu veux mettre ton objectif à jour ? »).
+   L'utilisateur reste décisionnaire.
+2. **Les changements de vie déclenchent une re-vérification** du calcul nutritionnel : nouveau travail,
+   arrêt/reprise du tabac, blessure, reprise d'un autre sport, hausse du nombre de séances… → Milo propose
+   de recalibrer (jamais en douce).
+3. **Les AUTRES SPORTS influencent le TDEE** (levier important, aujourd'hui absent). Le niveau d'activité est
+   surtout calé sur la muscu ; or football, vélo, course, natation, arts martiaux, randonnée, CrossFit… font
+   une **grosse différence** de dépense — même avec seulement 2 séances de muscu. → À terme, les autres
+   sports pratiqués doivent **remonter la dépense énergétique**. *(C'est aussi une question d'enrichissement
+   du profil vivant : « tu fais un autre sport à côté ? »)*
+4. **Calcul auto vs calories verrouillées.** Quand l'utilisateur fixe ses calories à la main, Milo **continue
+   de recalculer les besoins en arrière-plan** mais **ne change jamais** les calories tant que le mode manuel
+   est actif — il peut **uniquement proposer** (« tes besoins ont bougé, tu veux que je réajuste ? »).
+5. **Tout doit rester explicable.** L'utilisateur doit **toujours pouvoir comprendre POURQUOI** Milo
+   recommande tel nombre de calories ou telle répartition de macros. La confiance vient de cette
+   **transparence** (chaque levier dit ce qu'il influence — cf. le récap « ce qui influence la nutrition »).
+
 ## ⏳ Couche future (honnêteté — données qu'on n'a pas encore)
 
 **Chronobiologie** (impact d'un nutriment selon l'horloge biologique), **flexibilité métabolique**,

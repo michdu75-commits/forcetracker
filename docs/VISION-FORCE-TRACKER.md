@@ -119,6 +119,10 @@ est une **conséquence**, jamais un objectif. Trois signatures issues de la gran
 > *(Gemini — au début, Milo est « un étranger poli qui observe » ; la proximité se prouve par ce
 > qu'il ajuste, jamais par une phrase de compassion.)*
 
+> **« Plus tu utilises Force Tracker, plus Milo te connaît vraiment. »**
+> *(Michel, 26/07 — la phrase-signature du **profil vivant** : Milo apprend, vérifie, corrige et
+> évolue avec le sportif. Détail : `docs/PROFIL-VIVANT.md`.)*
+
 **La mission derrière tout ça (Michel)** : que **chacun·e se sente compris·e** — en particulier
 les **femmes**, car la plupart des outils « pour elles » sont pensés par des hommes qui
 **présument** à leur place ; et parce qu'une femme, une fois en confiance, est **fidèle**. La

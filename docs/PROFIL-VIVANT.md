@@ -1,0 +1,148 @@
+# 🌱 Le PROFIL VIVANT — Milo apprend, vérifie, corrige et évolue
+
+> **Document de conception (vivant).** Prolonge la **Constitution — Principe 25** (« le profil n'est
+> jamais figé ») et le **Cerveau 1 « comprendre »** (`docs/MOTEUR-RAISONNEMENT-MILO.md`). Croisement
+> Michel + ChatGPT + Claude (26/07/2026).
+
+> ### 🧭 L'idée en une phrase
+> *« Toutes les IA répondent à des questions. Milo, lui, **apprend, vérifie, corrige et évolue** avec son
+> utilisateur. Ce n'est plus une simple mémoire : c'est une **connaissance vivante du sportif**. »*
+>
+> **Phrase-signature (Vision / marketing) :** **« Plus tu utilises Force Tracker, plus Milo te connaît
+> vraiment. »**
+
+---
+
+## Les 4 modes du profil vivant
+
+Le profil ne se remplit pas une fois pour toutes : il se **complète, s'enrichit, se met à jour et se
+confirme** au fil des échanges. Chaque petite question de Milo relève d'un de ces 4 modes.
+
+| Mode | Déclencheur | Effet sur le profil | Exemple |
+|---|---|---|---|
+| **Compléter** | Un champ est **VIDE** (zappé à l'inscription, ancien compte) | On **écrit** le champ | « Tu t'entraînes plutôt où ? » |
+| **Enrichir** | La base est là, on va **plus loin** | On **ajoute** une info nouvelle | « Tu fais un autre sport à côté ? » |
+| **Mettre à jour** | Une info est **ancienne**, ou l'app détecte un **écart** déclaré/réalisé | On **change** la valeur (avec accord) | « Je pars sur du volume plutôt que de la force pure ? » |
+| **Confirmer** | Une info **encore fiable** mais à re-valider | On **ne change RIEN** : on repousse juste la *date de dernière confirmation* et on remonte la fiabilité | « Tu fais toujours 4 séances/sem ? » → « Oui » |
+
+> **Le mode Confirmer (ajout de Michel) est distinct de Mettre à jour** : « Oui » ne modifie pas la donnée,
+> il la **rafraîchit**. Ça évite de re-poser sans cesse les mêmes questions.
+
+---
+
+## Déclaré vs Réalisé — la réalité prime (avec l'accord de la personne)
+
+Deux vérités coexistent :
+- **Déclaré** = ce que la personne a dit (« je fais 3 séances/sem »).
+- **Réalisé** = ce que l'app **mesure** dans les séances enregistrées (5/sem).
+
+Un vrai coach ne se base pas que sur la fiche : il regarde ce qu'il **voit**. Le déclaré est un **point de
+départ** ; la réalité mesurée doit primer. C'est l'esprit **« il se souvient de qui tu es DEVENU »**.
+
+- ⚠️ **Seulement sur une tendance STABLE**, jamais un pic isolé (« la cohérence avant la réactivité »,
+  Constitution P20) : 1 semaine à 5 séances = peut-être exceptionnel → on ne dit rien ; 4-5 semaines
+  régulières → signal.
+- ⚠️ **Observé ≠ intention.** Le **niveau d'activité** s'observe (nombre réel de séances). L'**objectif**
+  reste une **intention** : le *style* observé (volume/hypertrophie) est un **indice fort**, pas une preuve.
+  Milo **ne bascule JAMAIS l'objectif tout seul** — il constate et demande :
+  > *« J'observe que ton entraînement ressemble davantage à une prépa force qu'à une prise de masse.
+  > Souhaites-tu mettre ton objectif à jour ? »*
+
+---
+
+## Le principe cardinal : « Milo ne pilote JAMAIS à ta place »
+
+**Milo ne change jamais rien automatiquement** — ni l'objectif, ni la nutrition, ni les exercices. Son
+cycle est toujours :
+
+> **Observer → Expliquer la conséquence → Proposer → Laisser l'utilisateur décider.**
+
+La **valeur** n'est pas la mise à jour elle-même, c'est la **prise de conscience**. Et **tout se répercute**
+(surtout sur la nutrition — cf. `docs/NUTRITION-PHILOSOPHIE.md` : passer de 3 à 5 séances augmente la
+dépense → les calories doivent suivre). Milo est un **miroir qui explique**, pas un pilote automatique.
+
+---
+
+## La fiabilité par champ (le moteur qui décide QUOI re-demander)
+
+Chaque information porte un **niveau de fiabilité** (idée « étoiles » de Michel) et une **date de dernière
+confirmation**. Milo ne re-pose pas au hasard : il vise la donnée **la moins fiable** ou **contredite par le
+réalisé**.
+
+La fiabilité **décroît différemment selon la nature du champ** :
+- **Stable** (âge, sexe, taille) → ne décroît quasi jamais → on ne re-demande presque pas. *(ex. ★★★★★)*
+- **Qui dérive** (fréquence, matériel, objectif) → décroît avec le **temps** ET peut être **contredite par
+  l'observé**. *(ex. ★★★☆☆)*
+
+Formule mentale : **fiabilité = nature du champ × temps depuis confirmation × écart observé.**
+
+> ⚠️ **Blessures = domaine SENSIBLE** (permissions bornées, Constitution v2.4). Leur fiabilité peut baisser
+> (une blessure guérit), mais re-demander doit être **encore plus délicat** — jamais insistant, jamais un
+> interrogatoire médical. On reste sur son terrain (entraînement), on oriente vers un pro si besoin.
+
+---
+
+## Le TON : curiosité humble, JAMAIS surveillance (le point de vigilance n°1)
+
+Le plus grand risque de tout ce système, c'est de donner une **impression de flicage**. Deux règles strictes :
+
+1. **Ne JAMAIS empiler** les tournures « je vois que… / j'ai remarqué… / tu fais… ». Deux d'affilée = flicage.
+2. **Registre = la curiosité HUMBLE**, pas la surveillance. Milo **doute de lui**, il ne te surprend pas en
+   faute. Un **stock d'ouvertures variées** est tiré au sort, jamais deux fois la même formule :
+   - « Petite vérification 😊 »
+   - « C'est toujours d'actualité ? »
+   - « J'ai peut-être faux, mais… »
+   - « Ça a changé depuis la dernière fois ? »
+
+C'est l'application directe du principe d'**humilité** (« Milo ne cherche pas à comprendre mieux que toi »,
+Constitution P22). Discrétion absolue : mieux vaut une question de moins qu'une de trop.
+
+---
+
+## Rendre l'évolution PERCEPTIBLE — mais MÉRITÉE
+
+La personne doit **sentir** que son coach évolue avec elle (c'est très valorisant, ça crée l'attachement) :
+> « Ton profil est devenu beaucoup plus précis. » · « 🧠 Milo te connaît de mieux en mieux. »
+
+⚠️ **Mais gagné, jamais creux.** On **ancre sur du réel**, pas une flatterie vague :
+- « Ton profil est **complet à 80 %** » · « Milo a appris **12 choses** sur toi »…
+- Réutiliser la page **« Ce que Milo sait de toi »** comme une **jauge qui se remplit**.
+
+La sensation « mon coach me connaît » vient du **concret visible**, pas d'un « il te connaît très bien »
+balancé dans le vide.
+
+---
+
+## Déclenchement &amp; cadence
+
+- **Moments naturels d'abord** (idée ChatGPT — la question tombe juste) : après une séance, une pesée, un
+  record, une reprise après une pause, ou quand un **écart** est détecté.
+- **Plancher** : au moins ~**1×/semaine** s'il reste une question utile (pour ne jamais se taire).
+- **Plafond** : minimum ~**3 jours** entre deux questions (jamais de rafale).
+- **Une seule** question à la fois · **« Pas maintenant »** toujours possible · **uniquement du durable** ·
+  **s'arrêter** si la personne ignore plusieurs fois.
+
+---
+
+## Le backbone technique (à construire)
+
+- Chaque info du profil : `valeur` + `fiabilité` + `dateDeDerniereConfirmation` + `source` (déclaré /
+  observé / confirmé). **Bonne nouvelle** : les petites questions actuelles (Registre, `maybeProposeObservation`)
+  portent **déjà** une confiance + une date → on **étend** un mécanisme existant, on ne repart pas de zéro.
+- Détecter l'**écart déclaré/réalisé** (fréquence mesurée vs déclarée, signature d'entraînement force vs
+  hypertrophie…) sur une **fenêtre stable**.
+
+**Ordre de construction proposé** : ① mode **Compléter** (le plus concret) → ② **Confirmer/Mettre à jour**
+(réutilise la date + la fiabilité) → ③ détection **déclaré/réalisé** → ④ **Enrichir** (stock de questions).
+Une tranche à la fois, testée sur le clone.
+
+---
+
+## Pourquoi c'est différenciant
+
+On ne construit plus un chatbot, mais **un vrai coach qui apprend progressivement à connaître son athlète**.
+Aucune appli de muscu ne réconcilie ce que tu **dis** avec ce que tu **fais**. À condition de rester
+**discret** et de **ne jamais donner l'impression de surveiller**, c'est **l'un des plus gros points forts**
+de Force Tracker.
+
+*Résumé de la philosophie : **observer → expliquer → proposer → laisser l'utilisateur décider.***
