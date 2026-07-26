@@ -583,9 +583,22 @@ function _renderMiloCard(){
   window._miloGoTarget=m.go||null;
   el.innerHTML='<div class="milo-card ft-press" onclick="_miloCardTap()">'
     +'<div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'
-    +'<div style="flex:1;min-width:0;"><div class="milo-name">'+name+'</div><div class="milo-txt">'+m.txt+'</div></div>'
+    +'<div style="flex:1;min-width:0;"><div class="milo-name">'+name+'</div><div class="milo-txt">'+m.txt+'</div>'
+    +((m.id==='relance'||m.id==='retour')?'<button class="milo-plan ft-press" onclick="event.stopPropagation();_planTomorrow()">📅 J\'y vais demain</button>':'')
+    +'</div>'
     +'<button class="milo-x" onclick="event.stopPropagation();_dismissMilo(\''+m.id+'\')" aria-label="Fermer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
     +'</div>';
+}
+// Fix déterministe (ft-v616) : « Milo me relance alors que je vais au sport demain ». Le chat→Accueil (ft-v601)
+// dépend de Milo qui émet un marqueur caché (pas fiable). Ici un bouton pose directement la séance de demain.
+function _planTomorrow(){
+  try{
+    const d=new Date(today()+'T12:00:00'); d.setDate(d.getDate()+1);
+    S.nextPlanned={date:d.toISOString().slice(0,10),label:''};
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    if(typeof _renderMiloCard==='function')_renderMiloCard();
+    if(typeof toast==='function')toast('Noté 💪 Séance prévue demain — je te laisse tranquille d\'ici là.','success');
+  }catch(e){}
 }
 function _dismissMilo(id){
   try{localStorage.setItem('ft4_milo',JSON.stringify({date:today(),id}));}catch(e){}
