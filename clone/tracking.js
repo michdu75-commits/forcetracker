@@ -1517,6 +1517,66 @@ function deleteObs(id){
   persist();
   if(typeof _renderMiloKnows==='function')_renderMiloKnows();
 }
+
+// ─── PROFIL VIVANT — mode « COMPLÉTER » (docs/PROFIL-VIVANT.md) ───
+// Les champs de base (lieu/fréquence/durée d'entraînement) sont normalement posés à l'inscription (écran
+// ob-7). S'ils sont VIDES (inscription zappée, ancien compte), Milo les rattrape en douceur sur l'Accueil,
+// en 1 tap, et écrit DIRECTEMENT dans S.coachQuiz.answers (déjà persisté + synchronisé cloud → 0 backend).
+// Réutilise EXACTEMENT les options de l'inscription (COACH_QUIZ) → une seule source de vérité.
+function _profileGapSpecs(){
+  const q=(typeof COACH_QUIZ!=='undefined')?COACH_QUIZ:[];
+  const byId=id=>q.find(x=>x&&x.id===id);
+  return [
+    {field:'place', ask:"Pour mieux te conseiller — où t'entraînes-tu le plus souvent ?", q:byId('place')},
+    {field:'freq',  ask:"Combien de séances par semaine tu tiens, en général ?",          q:byId('freq')},
+    {field:'time',  ask:"Et une séance, ça dure combien de temps chez toi ?",              q:byId('time')},
+  ].filter(g=>g.q&&Array.isArray(g.q.opts)&&g.q.opts.length);
+}
+function _pendingGap(){
+  try{
+    if(!S.registre)return null;
+    const ans=(S.coachQuiz&&S.coachQuiz.answers)||{};
+    // le bon moment : quelques séances derrière soi (pas dès le tout 1er jour)
+    if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
+    // plafond : jamais deux questions (gap OU observation) à moins de 3 jours d'écart
+    const last=S.registre.lastObsAt;
+    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<3)return null;}
+    const skips=S.registre.gapSkips||{};
+    for(const g of _profileGapSpecs()){
+      if(ans[g.field])continue;                       // déjà rempli → ce n'est plus un manque
+      const sk=skips[g.field];                         // « Plus tard » → on laisse ~7 jours avant de re-proposer
+      if(sk){const dl=(new Date(today())-new Date(sk))/864e5;if(dl>=0&&dl<7)continue;}
+      return {field:g.field, ask:g.ask, options:g.q.opts};
+    }
+    return null;
+  }catch(e){return null;}
+}
+function fillGap(field,value){
+  try{
+    S.coachQuiz=S.coachQuiz||{answers:{},done:false};
+    S.coachQuiz.answers=S.coachQuiz.answers||{};
+    S.coachQuiz.answers[field]=value;
+    if(!S.coachQuiz.date)S.coachQuiz.date=today();
+    if(S.registre){S.registre.lastObsAt=today(); if(S.registre.gapSkips)delete S.registre.gapSkips[field];}
+    persist();
+    if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    // feedback de VALEUR (profil vivant) : montrer que la réponse sert vraiment
+    const msg={place:'Parfait 👍 Milo en tient compte pour tes séances.',freq:'Noté 👍 Milo cale ses conseils sur ce rythme.',time:'Top 👍 Milo adapte la durée de tes séances.'}[field]||'Parfait 👍 Profil mis à jour.';
+    if(typeof toast==='function')toast(msg,'success');
+  }catch(e){console.warn('[FT gap] fill',e);}
+}
+function skipGap(field){
+  try{
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    if(!S.registre.gapSkips)S.registre.gapSkips={};
+    S.registre.gapSkips[field]=today();
+    S.registre.lastObsAt=today();                     // respecte le plafond (pas d'autre question avant 3 jours)
+    persist();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    if(typeof toast==='function')toast("Pas de souci, on verra plus tard.",'info');
+  }catch(e){console.warn('[FT gap] skip',e);}
+}
 function renderWeightCorrelations(el,pts){
   if(!pts||pts.length<3){el.innerHTML='';return;}
   const cards=[];

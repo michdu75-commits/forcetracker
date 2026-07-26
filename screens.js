@@ -157,6 +157,7 @@ const _HELP_DATA={
       {i:'🩹',t:'Pour une zone qui fait mal : dans le check-in, tape directement le MUSCLE sur la figurine anatomique (vue de face + de dos) — il devient rouge. Les articulations (nuque, coude, poignet, genou, cheville) sont en boutons juste en dessous. Pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Le Gardien protège cette zone du jour en priorité dans les conseils de Milo.'},
       {i:'💡',t:'Ton score de récup (sur NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui. Tape « Pourquoi ce score ? » juste en dessous pour voir, en clair, D\'OÙ il vient : sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison et son +/−. Il remonte au fil de la journée après une séance, et reste un simple repère — ton ressenti prime toujours.'},
       {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
+      {i:'🌱',t:'Milo complète ton profil tout seul : s\'il manque une info de base (où tu t\'entraînes, combien de séances/semaine, la durée), il te propose de la remplir en 1 tap sur l\'Accueil — de vrais boutons, rien à écrire. Ta réponse va direct dans ton profil et ses conseils deviennent plus justes. Pas envie maintenant ? « Plus tard » et il te le redemandera une autre fois. (Utile surtout si tu as sauté ces questions à l\'inscription.)'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
       {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Consulte l\'onglet Badges dans Progrès pour tout voir.'},
@@ -592,14 +593,32 @@ function _dismissMilo(id){
 function _obsEsc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function _renderObsCard(){
   const el=document.getElementById('home-obs');if(!el)return;
-  try{if(typeof maybeProposeObservation==='function')maybeProposeObservation();}catch(e){}
-  const o=(typeof _pendingObs==='function')?_pendingObs():null;
+  const name=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
+  const avatar='<div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>';
+  // 1. Une observation DÉJÀ posée (on finit ce qui est commencé).
+  let o=(typeof _pendingObs==='function')?_pendingObs():null;
+  if(!o){
+    // 2. Mode COMPLÉTER (profil vivant) : un champ de base manquant → PRIORITAIRE sur une nouvelle observation.
+    const gap=(typeof _pendingGap==='function')?_pendingGap():null;
+    if(gap){
+      el.style.padding='14px 14px 0';
+      const opts=gap.options.map(op=>'<button class="gap-opt ft-press" onclick="fillGap(\''+gap.field+'\',\''+_obsEsc(op[0])+'\')">'+_obsEsc(op[1])+'</button>').join('');
+      el.innerHTML='<div class="obs-card">'
+        +'<div class="obs-head">'+avatar+'<div class="obs-lead">'+name+' — pour mieux te conseiller</div></div>'
+        +'<div class="obs-txt">'+_obsEsc(gap.ask)+'</div>'
+        +'<div class="gap-opts">'+opts+'</div>'
+        +'<button class="gap-later ft-press" onclick="skipGap(\''+gap.field+'\')">Plus tard</button>'
+        +'</div>';
+      return;
+    }
+    // 3. Sinon, proposer une observation dérivée des données.
+    try{if(typeof maybeProposeObservation==='function')maybeProposeObservation();}catch(e){}
+    o=(typeof _pendingObs==='function')?_pendingObs():null;
+  }
   if(!o){el.innerHTML='';el.style.padding='0';return;}
   el.style.padding='14px 14px 0';
-  const name=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
   el.innerHTML='<div class="obs-card">'
-    +'<div class="obs-head"><div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'
-    +'<div class="obs-lead">'+name+' a une petite question…</div></div>'
+    +'<div class="obs-head">'+avatar+'<div class="obs-lead">'+name+' a une petite question…</div></div>'
     +'<div class="obs-txt">'+_obsEsc(o.ask||o.text||'')+'</div>'
     +'<div class="obs-btns">'
     +'<button class="obs-yes ft-press" onclick="validateObs(\''+o.id+'\')">Oui, c\'est vrai</button>'

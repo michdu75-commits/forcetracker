@@ -176,6 +176,7 @@ const NEW_FEATURES=[
   {id:'pain-body', screen:'home', spot:'home-daystate', desc:'Nouveau : pour signaler une gêne, tape directement le muscle sur une figurine anatomique (face + dos) ; articulations en boutons dessous'},
   {id:'calendar-memory', screen:'home', spot:'home-secondary', desc:'Nouveau : ton check-in du jour est gardé — tape une semaine du calendrier pour revoir, jour par jour, ta séance ET comment tu te sentais (sommeil, humeur, douleur)'},
   {id:'reco-why', screen:'home', spot:'home-hero', desc:'Nouveau : « Pourquoi ce score ? » sous ta récup — une fiche claire explique ce que le chiffre veut dire et d\'où il vient (sommeil, séance récente, âge…)'},
+  {id:'milo-fill-profile', screen:'home', desc:'Nouveau : Milo complète ton profil tout seul — s\'il manque une info de base (lieu, fréquence, durée d\'entraînement), il te propose de la remplir en 1 tap sur l\'Accueil. Ta réponse va direct dans ton profil'},
   // Séance
   {id:'chain-sets',  screen:'log',      desc:'Chaînes d\'exercices : super set, drop set, pyramide'},
   {id:'ex-history',  screen:'log',      desc:'Mini graphique historique poids par exercice (📊)'},
@@ -244,9 +245,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v40/41/42 + WHATS_NEW_MAX=42) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v41/42/43 + WHATS_NEW_MAX=43) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:40, ic:'🌱', t:'Milo complète ton profil tout seul', d:'S\'il manque une info de base sur ton entraînement (où tu t\'entraînes, combien de séances par semaine, la durée d\'une séance), Milo te propose maintenant de la remplir en 1 tap sur l\'Accueil — de vrais boutons, rien à écrire. Ta réponse va DIRECT dans ton profil, et ses conseils (et tes calories/macros) deviennent plus justes. Pas envie sur le moment ? « Plus tard », et il te le redemandera une autre fois — jamais deux jours de suite, jamais de rafale. Surtout utile si tu as sauté ces questions à l\'inscription. 🌱'},
   {v:39, ic:'💬', t:'Milo va droit au but', d:'Milo, ton Coach IA, t\'AIDE maintenant au lieu de te questionner : dès ton premier message, il te propose un vrai point de départ concret (une structure, des exercices), adapté à ce qu\'il sait déjà de toi ET à tes zones fragiles (il te montre comment il les protège) — puis, au plus, UNE question pour affiner. Quand une question a quelques réponses simples, il t\'affiche aussi des BOUTONS de réponse rapide à taper (tu peux toujours écrire à la place, ou ne pas répondre). Et répondre à une question de Milo ne coûte JAMAIS de question gratuite. 💬'},
   {v:38, ic:'🧠', t:'Milo retient ce que tu lui confies', d:'Quand tu confies à Milo un truc DURABLE sur toi en discutant (« je m\'entraîne le matin », « j\'ai que des haltères chez moi », « une vieille tendinite à l\'épaule »…), il te propose maintenant de le RETENIR pour de bon : une ligne « 🧠 Je retiens : … ? [Oui, retiens] [Non] » apparaît sous sa réponse. Tu valides → il s\'en souvient dans TOUTES vos prochaines discussions, et ses conseils deviennent plus personnels. Rien n\'est gardé sans ton accord, et tu peux tout revoir ou effacer dans Menu → « Ce que Milo sait de toi ». (Différent de la page d\'Accueil où c\'est LUI qui te pose des questions : ici, c\'est ce que TOI tu lui dis.) 🧠'},
   {v:37, ic:'⚡', t:'Milo démarre ta séance', d:'Nouveau dans le Coach 💬 : dis à Milo ta séance du jour (« Développé Couché 4×8, Rowing 4×10, Curl 3×12… ») OU demande-lui une séance à faire maintenant — un bouton « ⚡ Commencer cette séance » apparaît sous sa réponse. Tape-le et ta séance s\'ouvre DIRECT dans l\'onglet Séance, prête à logger : les bons exercices, les séries, et tes poids déjà pré-remplis avec ta dernière fois. De la discussion à la barre, en un clic. ⚡'},
@@ -284,7 +286,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=39;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v40/41/42)
+const WHATS_NEW_MAX=40;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v41/42/43)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
