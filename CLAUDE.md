@@ -148,7 +148,7 @@ npx clasp deploy -i AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNq
 | `coach.js` | Chat IA : `sendToCoach()`, `buildCoachContext()`, `showPremiumWall()`, morpho |
 | `setup.js` | Profil : `renderProgress()`, `renderChart()`, `_cloudSync()`, éditeur programmes |
 | `tracking.js` | Cycle de force, badges, check-in, sommeil, `toast()` |
-| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v609`** — voir le journal des versions) |
+| `sw.js` | Service Worker (cache-first HTML navigation, cache-first assets) — cache versionné `ft-vNN`, bumpé à chaque release (**actuel : `ft-v610`** — voir le journal des versions) |
 | `Code.js` | Backend Google Apps Script v3.5 @57 (sync cloud, coach IA, premium, import programme) |
 | `manifest.json` | Config PWA (icône, couleurs, display:standalone) |
 | `appsscript.json` | Manifest Apps Script (scopes OAuth, timezone, webapp config) |
@@ -385,10 +385,12 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v609`** (prochaine : `ft-v610`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v610`** (prochaine : `ft-v611`). Historique complet (ft-v128→574 + gouvernance
 > antérieure) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > ~30 entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien supprimer).
+
+**ft-v610 — 🧪 CLONE : header compacté v2 — garder le LOGO (identité), gagner via les espacements (cadrage GPT)** — GPT affine ft-v609 : **ne pas toucher au logo/titre/boutons** (ils portent l'identité premium) — on gagne la place autrement. Révision : le shrink logo de ft-v609 est **remplacé** par de la compaction d'**espacements**, toujours **clone-only** (`html.is-clone`, PROD inchangée) : `.topbar` marge basse **14→8** · `.coach-header` **8/12→2/6** (resserre l'espace date→bloc Milo) · `.coach-header-sub` « Ton coach IA · S'adapte à toi » **12→11px** + line-height serré · `.coach-quota` (« 8 questions gratuites ») padding plus fin. **Honnêteté** : l'espace *au-dessus* du logo = la **barre d'état iPhone** (heure/batterie), non réductible sans passer dessous → on ne le touche pas. Gain ~**20-30px** pour le chat. Testé Playwright : **logo 56px partout** (prod ET clone), coach-header compacté **seulement** en clone (prod 8/12, clone 2/6) ✅ + noyau dur 10/10. **Idée future notée** (`IDEES-FUTURES.md`) : **header adaptatif** (compact au scroll, façon iOS/Apple Music — waouh à l'ouverture, place max ensuite). Fichiers : `style.css`, `sw.js`, `IDEES-FUTURES.md`, `clone/*`, `CLAUDE.md`. ⏳ Si Michel valide → promotion (retirer le gate). sw.js ft-v610. |
 
 **ft-v609 — 🧪 CLONE : topbar compacte pour donner plus de place au chat (retour Michel « plus de visibilité au chat avec Milo »)** — Michel note que le bandeau global « Force Tracker » (`.topbar`) mange de la hauteur. Il ne peut pas monter *plus haut* (déjà collé sous la barre d'état de l'iPhone — l'heure/batterie), mais on le rend plus **compact** : logo **56→42 px** + marge basse **14→8 px** → ~**20 px** de contenu gagnés sur TOUS les écrans. Gaté **`html.is-clone`** (posé uniquement dans `/clone/` par `_initCloneTools`) → **PROD strictement inchangée**, à valider sur le clone puis promouvoir. Fichiers : `style.css` (2 règles clone-only), `sw.js`, `clone/*`, `CLAUDE.md`. Testé Playwright : PROD logo **56px** (inchangé) / avec `is-clone` **42px** (compact) ✅ + noyau dur non impacté. ⏳ Si Michel valide → promotion (retirer le gate `html.is-clone`). sw.js ft-v609. |
 

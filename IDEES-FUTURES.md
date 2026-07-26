@@ -4,6 +4,20 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 📱 Header adaptatif (compact au scroll, façon iOS / Apple Music) — idée GPT + Michel (26/07/2026)
+
+Née de l'optimisation du header (ft-v610, compaction statique testée sur le clone). L'idée d'évolution :
+un **header à deux états**.
+- **À l'ouverture** : header actuel, esthétique et « premium » (l'effet waouh).
+- **Dès que l'utilisateur fait défiler la conversation** : le header se **compacte automatiquement**
+  (logo/titre qui rapetissent en douceur, comme iOS ou Apple Music) → maximise la place pour le chat,
+  qui est le cœur de l'expérience.
+On garde ainsi le premier contact soigné ET le confort de lecture. **Rien codé** — brique à cadrer
+plus tard (écouteur de scroll + transition CSS, à faire proprement, tester iOS Safari). La compaction
+STATIQUE (ft-v610) est la 1ʳᵉ marche ; l'adaptatif serait la 2ᵉ.
+
+---
+
 ## 💰 « Engagement responsable » — IMPLÉMENTATION à valider (principe déjà gravé, Constitution P24)
 
 **Le PRINCIPE est gravé** (Constitution v2.2, Principe 24) : *« Milo ne s'engage jamais dans une
