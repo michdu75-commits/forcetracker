@@ -67,13 +67,28 @@ Apprentissage majeur de la semaine : on a parfois essayé de résoudre **avec le
 `coach.js` · hiérarchie des règles · prompt) — cadre complet dans `docs/MOTEUR-RAISONNEMENT-MILO.md`.
 
 **Discipline — avant TOUTE correction, répondre aux 3 questions** (du plus fiable au moins fiable) :
-1. **STRUCTURE ?** (UI, onboarding, donnée manquante) — fix déterministe et définitif.
+1. **STRUCTURE ?** (UI, onboarding, donnée manquante, **ET le NIVEAU DE MODÈLE**) — fix déterministe et définitif.
 2. **HIÉRARCHIE ?** (deux règles qui se concurrencent) — fix déterministe (on réordonne).
 3. **PROMPT seul ?** — fix probabiliste (le modèle peut obéir… ou pas).
 
 **Tant qu'on n'a pas répondu aux trois, on ne touche pas au prompt.** Corollaire gravé : **un prompt ne
 compense jamais une donnée absente** — si Milo redemande toujours le lieu/la durée/la fréquence parce qu'ils
 ne sont jamais collectés, le vrai correctif est dans l'**interface**, pas dans le cerveau de Milo.
+
+### 🎚️ Le NIVEAU DE MODÈLE est une variable STRUCTURELLE (26/07/2026 — la « variable cachée »)
+
+Cas fondateur : on a durci le prompt anti-interrogatoire **trois fois** (ft-v602/603/606), le comportement
+revenait. La vraie cause n'était pas le prompt mais le **modèle** : le coach tournait sur un modèle **léger
+par défaut** (qui suit mal les consignes fines), alors que le fondateur testait sur un modèle **haut de
+gamme**. Un modèle léger ne tient pas la nuance ; le prompt fin ne « prend » que sur un modèle capable.
+Le **choix du modèle est donc une couche du cerveau distribué**, au même titre que les données ou la mémoire —
+et c'est un fix **structurel** (déterministe), pas un énième patch de prompt.
+
+**Règle de gouvernance qui en sort (Michel + ChatGPT) :** *« On évalue Milo sur le modèle réellement utilisé
+par les VRAIS utilisateurs, pas sur le modèle premium du fondateur. »* Sinon on **corrige le mauvais cerveau**
+— on optimise pendant des jours une expérience que la majorité ne voit pas. Corollaire : le **gratuit / la
+découverte** (là où se joue la conversion) doit tourner sur un modèle **capable** ; les tâches **utilitaires**
+(code-barres, résumés, lecture d'étiquette) peuvent rester sur le modèle léger.
 
 **Et quand on doit VRAIMENT toucher au prompt** : pas de grand ménage. On garde le **noyau cardinal intact**,
 on retire **uniquement les redondances évidentes, une par une, avec validation après chaque suppression**

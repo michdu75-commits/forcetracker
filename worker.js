@@ -239,10 +239,14 @@ async function coach(body, apiKey) {
   const messages = history.concat([{ role: 'user', content: userContent }]);
   const system = String(ctx) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory : '');
   // Modèle selon l'utilisateur (comme Code.js, mais en dur ici — pas d'accès aux Script Properties)
+  // ⚠️ DÉFAUT = Sonnet (et NON Haiku) depuis le 26/07/2026 : un modèle léger suivait mal les consignes fines
+  // du coach (l'« interrogatoire » revenait malgré 3 durcissements de prompt ft-v602/603/606). La vraie variable
+  // était STRUCTURELLE (le niveau de modèle), pas le prompt. Le gratuit/la découverte = là où se joue la conversion
+  // → tous les utilisateurs de la CONVERSATION coach doivent avoir un modèle capable. (Les tâches utilitaires —
+  // code-barres, résumés, lecture d'étiquette — restent sur Haiku ailleurs dans ce fichier.)
   const em = String(body.email || '').toLowerCase().trim();
-  let model = 'claude-haiku-4-5';
+  let model = 'claude-sonnet-4-6';
   if (em === 'michdu75@gmail.com') model = 'claude-opus-4-6';
-  else if (em === 'christophe@famillelanglois.fr') model = 'claude-sonnet-4-6';
   const d = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system, messages });
   // _diag = diagnostic technique (ignoré par l'app normale, lu par PT-001 / le laboratoire).
   // On NE change PAS le message utilisateur : Milo dit toujours « Désolé, réessaie. » si vide.

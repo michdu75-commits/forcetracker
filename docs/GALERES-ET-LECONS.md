@@ -37,6 +37,7 @@
 | ☀️ **Mode jour illisible** | Textes jaunes sur fond clair, blanc qui « pète les yeux » | Couleurs **écrites en dur** (pas de variable thème) + blanc pur | `var(--gold/--t1…)` + blanc adouci | v181→v183 | ✅ Résolu |
 | 🕵️ **Fuite d'email sur le clone (iOS)** | L'email prod apparaissait sur le clone de test | La redéfinition de `localStorage` **échoue sur Safari iOS** | Fallback : préfixe `cl_` sur `Storage.prototype` + `__FT_CLONE__` posé en premier | 1 session | ✅ Résolu |
 | 🔴 **Point rouge « nouveauté » qui reste** | Le point ne disparaissait pas après ouverture d'une rubrique | Oubli d'appeler `_markAnchorSeen()` à l'ouverture | Ajouté dans `openMiloKnows()` | 1 version | ✅ Résolu (v466) |
+| 🎚️ **On optimisait un Milo que personne ne voyait** | L'« interrogatoire » revenait malgré **3 durcissements de prompt** (ft-v602/603/606) | **La variable cachée = le MODÈLE** : coach en modèle **léger par défaut** (suit mal les consignes fines), mais le fondateur testait sur le **haut de gamme** → on peaufinait une expérience que la majorité n'avait pas | **Défaut de la conversation coach monté au modèle intermédiaire** (worker.js) ; tâches utilitaires laissées sur le léger + **règle : évaluer Milo sur le modèle des VRAIS utilisateurs, pas celui du fondateur** | Plusieurs jours de prompt « pour rien » | ✅ Résolu (26/07) |
 
 ---
 
