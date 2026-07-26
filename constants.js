@@ -206,6 +206,7 @@ const NEW_FEATURES=[
   {id:'force-prog',  screen:'coach', spot:'coach-action-force', desc:'Nouveau : Gagner en force (Big 3) — Milo te génère un programme powerlifting à enregistrer (🏋️)'},
   {id:'milo-start-session', screen:'coach', desc:'Nouveau : dis à Milo ta séance du jour → un bouton « ⚡ Commencer cette séance » l\'ouvre direct dans l\'onglet Séance, poids pré-remplis'},
   {id:'milo-remember', screen:'coach', desc:'Nouveau : confie un truc durable à Milo en discutant (« je m\'entraîne le matin », « une vieille tendinite à l\'épaule »…) → il te propose de le RETENIR (« 🧠 Je retiens : … ? Oui/Non »). Retrouve tout dans Menu → « Ce que Milo sait de toi »'},
+  {id:'milo-value-first', screen:'coach', desc:'Nouveau : Milo t\'aide d\'abord — il te propose un vrai plan dès ton 1er message (plus d\'interrogatoire), protège tes zones fragiles en te montrant comment, et t\'affiche parfois des réponses rapides à taper (répondre ne coûte pas de question gratuite)'},
   {id:'coach-quiz',  screen:'coach', spot:'coach-quiz-card', desc:'Nouveau : réponds au questionnaire « Milo apprend à te connaître » (gratuit, ça ne compte pas dans tes questions) — Milo te donne des conseils bien plus personnalisés'},
   {id:'milo-natural',screen:'coach', desc:'Nouveau : Milo (Coach IA) tient compte de l\'heure qu\'il est et du temps écoulé depuis votre dernière discussion — il t\'accueille naturellement'},
   {id:'milo-coach-pro',screen:'coach', desc:'Nouveau : Milo coache comme un vrai coach — il t\'évalue, croise tes données, justifie ses choix et s\'adapte à ta vie (horaires, travail, temps)'},
@@ -243,9 +244,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v39/40/41 + WHATS_NEW_MAX=41) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v40/41/42 + WHATS_NEW_MAX=42) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:39, ic:'💬', t:'Milo va droit au but', d:'Milo, ton Coach IA, t\'AIDE maintenant au lieu de te questionner : dès ton premier message, il te propose un vrai point de départ concret (une structure, des exercices), adapté à ce qu\'il sait déjà de toi ET à tes zones fragiles (il te montre comment il les protège) — puis, au plus, UNE question pour affiner. Quand une question a quelques réponses simples, il t\'affiche aussi des BOUTONS de réponse rapide à taper (tu peux toujours écrire à la place, ou ne pas répondre). Et répondre à une question de Milo ne coûte JAMAIS de question gratuite. 💬'},
   {v:38, ic:'🧠', t:'Milo retient ce que tu lui confies', d:'Quand tu confies à Milo un truc DURABLE sur toi en discutant (« je m\'entraîne le matin », « j\'ai que des haltères chez moi », « une vieille tendinite à l\'épaule »…), il te propose maintenant de le RETENIR pour de bon : une ligne « 🧠 Je retiens : … ? [Oui, retiens] [Non] » apparaît sous sa réponse. Tu valides → il s\'en souvient dans TOUTES vos prochaines discussions, et ses conseils deviennent plus personnels. Rien n\'est gardé sans ton accord, et tu peux tout revoir ou effacer dans Menu → « Ce que Milo sait de toi ». (Différent de la page d\'Accueil où c\'est LUI qui te pose des questions : ici, c\'est ce que TOI tu lui dis.) 🧠'},
   {v:37, ic:'⚡', t:'Milo démarre ta séance', d:'Nouveau dans le Coach 💬 : dis à Milo ta séance du jour (« Développé Couché 4×8, Rowing 4×10, Curl 3×12… ») OU demande-lui une séance à faire maintenant — un bouton « ⚡ Commencer cette séance » apparaît sous sa réponse. Tape-le et ta séance s\'ouvre DIRECT dans l\'onglet Séance, prête à logger : les bons exercices, les séries, et tes poids déjà pré-remplis avec ta dernière fois. De la discussion à la barre, en un clic. ⚡'},
   {v:36, ic:'💪', t:'Dis à Milo tes muscles prioritaires', d:'Nouveau dans Profil → Objectif : tu peux indiquer les muscles que tu veux développer EN PRIORITÉ (jusqu\'à 2, ex. pectoraux + épaules). Comme un vrai coach qui programme autour des priorités de l\'athlète, Milo donnera alors PLUS de fréquence, de volume et de variantes à ces muscles — dans ses conseils et les programmes qu\'il te génère — tout en maintenant le reste. Ton objectif reste le pilote et ta nutrition n\'est pas touchée : c\'est juste pour cibler OÙ tu veux progresser. 💪'},
@@ -282,7 +284,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=38;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v39/40/41)
+const WHATS_NEW_MAX=39;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v40/41/42)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
