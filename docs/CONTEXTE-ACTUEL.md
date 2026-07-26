@@ -6,20 +6,17 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v605`. Sont **déjà en prod pour tous** : fixes sécurité/qualité Milo (⛔ ne joue pas au docteur / répond d'abord ft-v593 · ⛔ ne redemande pas une info connue ft-v595 · anti-invention ft-v589 · **🧭 permissions bornées ft-v605** = ne suppose jamais un fait de santé, frontière photo produit) · **inscription « Ton entraînement » ft-v604** (écran ob-7 où/durée/fréquence → S.coachQuiz) · allègement CLAUDE.md · gouvernance (P24, Constitution v2.4, les 2 moments Milo). **Encore CLONE-ONLY** (exprès) : le comportement « moment Milo » (positif) · la question guidée (chips) · le badge Gardien · le toggle questions illimitées · l'anti-interrogatoire durci.
+- **Version en ligne (live) :** `ft-v619`. **Déploiement Pages désormais via GitHub Actions** (`.github/workflows/deploy-pages.yml`) — le « Deploy from a branch » se bloquait par intermittence (site coincé à ft-v600 puis ft-v616 ; cf. `docs/GALERES-ET-LECONS.md`). Fiable + relançable à la main.
 
-> ### 🔁 REPRISE 26/07 — état après la session (badge live ft-v607)
-> - 🎚️ **LA GRANDE DÉCOUVERTE DU JOUR** : l'« interrogatoire » ne venait PAS du prompt mais du **MODÈLE**. Le coach tournait sur **Haiku par défaut** (léger, suit mal les consignes fines) ; le fondateur testait sur Opus. **Fix backend** : défaut coach → **Sonnet** (worker.js). Re-test « je veux faire de la force » sans email → **plan direct + protection blessure montrée + 1 question + boutons** = tout marche. Preuve que le prompt était juste, il fallait un modèle capable. Règle gravée : *« évaluer Milo sur le modèle des vrais utilisateurs, pas celui du fondateur »*.
-> - 🚀 **ft-v607 = PROMOTION EN PROD** du lot anti-interrogatoire (retrait du gate `__FT_CLONE__`) : valeur-avant-question, montrer-le-comment sur la blessure, moment Milo, question guidée, mémoire prochaine séance → **tous les utilisateurs**. Checklist #11 faite (WHATS_NEW v39, red dot, aide `?`, aide détaillée). ⏳ **Diapo du Guide** = capture Michel.
-> - ⏳ **Restent clone-only** (test) : badge Gardien, questions illimitées, couplage blessure-retenue→Santé (ft-v588, promotion séparée).
-> - ⏭️ **Prochaine brique (idée Michel validée GPT)** : 📸 photo produit → « je retiens que tu prends X ? » (Constitution P25 « le profil n'est jamais figé »).
-> - ⏮️ **Ancien état (fait) :**
-> - ✅ **ft-v604 VALIDÉ sur device** : réinscription propre (écran « Ton entraînement ») → Milo connaît « 4×/sem, ~1h, salle » + protège épaule/fessiers, **ne redemande plus**. **Question ouverte tranchée** : l'interrogatoire du 25/07 venait d'un **manque de donnée** (vieux compte clone sans ob-7), pas d'un bug de règle.
-> - ✅ **ft-v605 (permissions bornées / photo Imodium)** en ligne → à re-confirmer sur device (« gastro » ne doit plus apparaître).
-> - ✅ **ft-v606 (LA VALEUR AVANT LA QUESTION)** : anti-interrogatoire durci (plan direct dès le 1ᵉʳ message · pas de « je reviens avec un plan » · 1 seule question qui PERSONNALISE · montrer le COMMENT sur la blessure). **⚠️ À RE-TESTER sur le clone** (« je veux faire de la force » → doit donner un vrai plan direct + 1 seule question, pas 2).
-> - ⏭️ **Si validé** → **promotion en prod** du lot anti-interrogatoire (aujourd'hui clone-only) + **checklist #11 de ft-v604** (validé device) + checklist #11 du lot promu.
-> - ⏭️ **Prochaine brique (idée Michel validée GPT)** : 📸 **photo d'un produit → Milo propose « je retiens que tu prends X ? »** (jamais automatique, réutilise le « ✅ Retenu »).
-> - 📝 **En attente (retour GPT, doc-only)** : review du **Guide de l'appli** (15 diapos) — lot sûr = bouton Suivant −15-20 % · progression « Étape X sur 15 » · alléger Profil/Séance/Bilan · Premium en bénéfices. (#4 réordonner = déconseillé ; #6 slide « habitude quotidienne » = plus tard, capture requise.)
+> ### 🔁 REPRISE 26/07 (soir) — état après la session (badge live ft-v619)
+> - 🌱 **PROFIL VIVANT : les 4 modes sont LIVRÉS** (docs/PROFIL-VIVANT.md) : Compléter (ft-v612) · déclaré/réalisé = fréquence (ft-v614) · Enrichir = autre sport (ft-v615) · **Confirmer (ft-v617)**, le 4ᵉ et dernier — re-valide une info ancienne (>90j), « Oui » ne change rien (rafraîchit la date), « Non » → bascule Compléter/Enrichir.
+> - 🧠 **Brique « fiabilité par champ » — ÉTAPE 1 : la PHRASE-BÉNÉFICE (ft-v618)** en prod, **validée sur le device de Michel** (bandeau vert 🟢 « Milo connaît très bien ton profil » sur « Ce que Milo sait de toi »). Design Michel : **orienté bénéfice, jamais un score**, ne redescend jamais (high-water mark), la fraîcheur par champ reste INTERNE.
+> - 📚 **ft-v619 = aides de la phrase-bénéfice** (aide `?` Accueil 🟢 + aide détaillée Menu→Aide 🟢) + **fix déploiement** (Actions).
+> - ⏭️ **PROCHAINE BRIQUE = Brique 2 « Milo a appris quelque chose »** (la liste vivante des infos récemment apprises, 2ᵉ idée de Michel) → et c'est **avec elle** qu'on fera le **pop-up « Quoi de neuf »** (annonce forte « ta page *Ce que Milo sait de toi* devient vivante » — le pop-up de la phrase-bénéfice est VOLONTAIREMENT reporté).
+> - ⏭️ **Ensuite** : la fiabilité par champ pourra piloter plus finement les questions · autres détecteurs contextuels (dérive de poids, style force/hypertrophie = intention → questionner) · la refonte 2-rangées du header (parkée, session dédiée).
+> - ⏳ **Restent clone-only** (test, ne pas promouvoir tel quel) : badge Gardien, questions illimitées, couplage blessure-retenue→Santé (ft-v588).
+> - ⏳ **Diapos du Guide** (ft-v612/614/615/617) = en attente de captures de Michel.
+> - ⏮️ **Ancien état encore valable** : ft-v607 a promu en prod le lot anti-interrogatoire (découverte clé : c'était le **MODÈLE** du coach, pas le prompt — cf. GALERES §1). Idée en file : 📸 photo produit → « je retiens que tu prends X ? » (Constitution P25).
 
 ---
 

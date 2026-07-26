@@ -173,9 +173,15 @@ la *date de dernière confirmation* + le backbone `S.coachQuiz.confirmedAt` ; «
 rien changer, « Non » bascule vers Compléter/Enrichir via `gapForce` ; > 90 j, proactif ≤1/sem, `freq` exclu
 car couvert par ③, lazy-init pour ne pas harceler les comptes existants au déploiement) → ③ détection
 **déclaré/réalisé** ✅ *(fréquence, `ft-v614` ; suivants : poids/style)* → ④ **Enrichir** ✅ *(1ʳᵉ question
-« autre sport », `ft-v615` ; stock à élargir)*. **Les 4 modes sont désormais livrés.** **Reste à faire** :
-la **fiabilité par champ** (étoiles) + d'autres **détecteurs contextuels** (dérive de poids, style
-force/hypertrophie = intention → questionner, jamais trancher) + d'autres questions d'enrichissement.
+« autre sport », `ft-v615` ; stock à élargir)*. **Les 4 modes sont désormais livrés.** **Fiabilité par champ — ÉTAPE 1 livrée** (`ft-v618`/`ft-v619`) :
+la **phrase-bénéfice** visible en haut de « Ce que Milo sait de toi » (orientée bénéfice, jamais un
+score, **ne redescend jamais** via le high-water mark `S.registre.knowPeak`) + ses **aides** (`?` Accueil
+🟢 + aide détaillée). Le **moteur de fiabilité/fraîcheur par champ** (celui qui décroît et pilote QUELLES
+questions poser) reste **interne** — backbone en place (`S.coachQuiz.confirmedAt`), à exploiter plus
+finement ensuite. **Reste à faire** : la **Brique 2 « Milo a appris quelque chose »** (liste vivante des
+infos récemment apprises — c'est avec elle que se fera le pop-up « Quoi de neuf ») + d'autres **détecteurs
+contextuels** (dérive de poids, style force/hypertrophie = intention → questionner, jamais trancher) +
+d'autres questions d'enrichissement.
 
 ---
 
