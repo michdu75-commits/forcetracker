@@ -1485,8 +1485,8 @@ function maybeProposeObservation(){
     const obs=S.registre.observations;
     if(obs.some(o=>o&&o.status==='pending'))return;                 // une à la fois
     if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<4)return; // le bon moment (baissé de 8 → 4)
-    const last=S.registre.lastObsAt;                                 // espacement ≥ 3 jours
-    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<3)return;}
+    const last=S.registre.lastObsAt;                                 // PROACTIF : au plus 1 question/semaine
+    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return;}
     const known=new Set(obs.map(o=>o&&o.key));                       // ne jamais re-proposer une clé déjà décidée
     const cands=_obsCandidates().filter(c=>c.confidence>=0.7&&!known.has(c.key));
     if(!cands.length)return;
@@ -1538,9 +1538,11 @@ function _pendingGap(){
     const ans=(S.coachQuiz&&S.coachQuiz.answers)||{};
     // le bon moment : quelques séances derrière soi (pas dès le tout 1er jour)
     if((S.sessions||[]).filter(s=>s&&(s.date||s.ts)).length<3)return null;
-    // plafond : jamais deux questions (gap OU observation) à moins de 3 jours d'écart
+    // PROACTIF : au plus 1 question par SEMAINE (filet de sécurité — cf. docs/PROFIL-VIVANT.md).
+    // Partagé (via lastObsAt) avec les observations → jamais deux questions proactives la même semaine.
+    // (Les futures questions CONTEXTUELLES — déclaré/réalisé — pourront passer outre ce plafond.)
     const last=S.registre.lastObsAt;
-    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<3)return null;}
+    if(last){const dl=(new Date(today())-new Date(last))/864e5;if(dl>=0&&dl<7)return null;}
     const skips=S.registre.gapSkips||{};
     for(const g of _profileGapSpecs()){
       if(ans[g.field])continue;                       // déjà rempli → ce n'est plus un manque

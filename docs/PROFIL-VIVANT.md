@@ -113,14 +113,37 @@ balancé dans le vide.
 
 ---
 
-## Déclenchement &amp; cadence
+## Déclenchement : DEUX mécanismes complémentaires (Michel, 26/07)
 
-- **Moments naturels d'abord** (idée ChatGPT — la question tombe juste) : après une séance, une pesée, un
-  record, une reprise après une pause, ou quand un **écart** est détecté.
-- **Plancher** : au moins ~**1×/semaine** s'il reste une question utile (pour ne jamais se taire).
-- **Plafond** : minimum ~**3 jours** entre deux questions (jamais de rafale).
-- **Une seule** question à la fois · **« Pas maintenant »** toujours possible · **uniquement du durable** ·
-  **s'arrêter** si la personne ignore plusieurs fois.
+La fréquence hebdomadaire n'est **pas une règle absolue**, c'est un **filet de sécurité**. Deux mécanismes
+se complètent :
+
+### 1. Questions PROACTIVES (le filet)
+**Au plus UNE question proactive par semaine**, tant qu'il reste une info utile à **compléter / enrichir /
+confirmer**. But : faire **vivre** le profil **sans jamais donner l'impression d'un questionnaire**. C'est le
+fond de tableau, discret.
+
+### 2. Questions CONTEXTUELLES (prioritaires — liées à un événement)
+Certaines situations méritent une question **tout de suite**, **même si** une question a été posée récemment,
+parce qu'elle est **directement liée à ce que la personne vient de faire** (elle paraît alors naturelle,
+jamais « parce que c'est lundi ») :
+- un **écart durable** entre le déclaré et le réalisé ;
+- un **nouveau sport** détecté ;
+- une **forte hausse** du nombre de séances ;
+- une **variation de poids** importante ;
+- un **changement de comportement** évident.
+
+**Règle simple** : *max 1 proactive/semaine · mais une contextuelle passe **outre** ce plafond quand un
+événement important le justifie.*
+
+> ⚠️ **Garde-fous communs (valent pour les DEUX)** : **une seule question à la fois** (deux événements proches
+> ne déclenchent qu'une question) · **« Pas maintenant »** toujours possible · **uniquement du durable** ·
+> **s'arrêter** si la personne ignore plusieurs fois. L'objectif : *« la bonne question au bon moment, comme
+> un vrai coach »* — **jamais** « parce que c'est lundi ».
+
+*Note d'implémentation : le mécanisme **contextuel** = essentiellement la tranche **« déclaré vs réalisé »**
+(détecter un écart stable, un pic de séances, une dérive de poids). La **tranche 1** livrée (mode Compléter,
+`ft-v612`) est **PROACTIVE** (max 1/semaine) ; le contextuel arrive avec la détection d'événements.*
 
 ---
 
