@@ -1579,6 +1579,69 @@ function skipGap(field){
     if(typeof toast==='function')toast("Pas de souci, on verra plus tard.",'info');
   }catch(e){console.warn('[FT gap] skip',e);}
 }
+
+// ─── PROFIL VIVANT — questions CONTEXTUELLES : « déclaré vs réalisé » (docs/PROFIL-VIVANT.md) ───
+// Le super-pouvoir : l'app MESURE la réalité (séances loggées) et la compare au DÉCLARÉ. Sur un écart
+// STABLE (pas un pic — « la cohérence avant la réactivité »), Milo PROPOSE de mettre à jour (jamais auto).
+// 1ʳᵉ détection = la FRÉQUENCE (factuelle, mesurable). Contextuel = passe OUTRE le plafond hebdo proactif,
+// mais garde son propre anti-nag (on ne redemande pas pour un écart déjà tranché).
+const _FREQ_RANGE={'1':[1,2],'3':[3,3],'4':[4,4],'5':[5,99]};       // déclaré → nb de séances/sem
+function _freqBucketOf(n){return n<=2?'1':n===3?'3':n===4?'4':'5';}
+function _freqBucketLabel(b){return{'1':'1 à 2 fois','3':'3 fois','4':'4 fois','5':'5 fois ou plus'}[b]||b;}
+function _weeklyCounts(nWeeks){
+  const counts=new Array(nWeeks).fill(0);
+  const now=new Date(today()+'T12:00:00');
+  (S.sessions||[]).forEach(s=>{
+    const ds=s&&(s.date||(s.ts?new Date(s.ts).toISOString().slice(0,10):null));
+    if(!ds)return;
+    const d=new Date(ds+'T12:00:00'); if(isNaN(d))return;
+    const wk=Math.floor((now-d)/864e5/7);
+    if(wk>=0&&wk<nWeeks)counts[wk]++;
+  });
+  return counts; // [semaine 0 = 7 derniers jours, 1, 2, 3]
+}
+function _pendingFreqContext(){
+  try{
+    const declared=(S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.freq)||'';
+    if(!declared||!_FREQ_RANGE[declared])return null;                 // pas de déclaré → c'est le mode Compléter
+    const wk=_weeklyCounts(4);
+    if(wk.filter(c=>c>0).length<3)return null;                        // pas assez d'historique pour juger une tendance
+    const[dMin,dMax]=_FREQ_RANGE[declared];
+    const more=wk.filter(c=>c>dMax).length;                           // semaines où il s'entraîne PLUS que déclaré
+    const less=wk.filter(c=>c<dMin).length;                           // … MOINS que déclaré
+    let dir=null;
+    if(more>=3&&less===0)dir='up'; else if(less>=3&&more===0)dir='down'; else return null; // exige la STABILITÉ (≥3/4 même sens)
+    const avg=wk.reduce((a,b)=>a+b,0)/wk.length;
+    const observed=_freqBucketOf(Math.round(avg));
+    if(observed===declared)return null;                               // même « case » → pas de vrai changement
+    const cx=S.registre&&S.registre.ctxFreq;                          // anti-nag : déjà tranché pour CE niveau observé
+    if(cx&&cx.bucket===observed)return null;
+    return {declared, observed, observedLabel:_freqBucketLabel(observed), declaredLabel:_freqBucketLabel(declared), dir};
+  }catch(e){return null;}
+}
+function applyFreqContext(observed){
+  try{
+    if(!S.coachQuiz)S.coachQuiz={answers:{},done:false};
+    if(!S.coachQuiz.answers)S.coachQuiz.answers={};
+    S.coachQuiz.answers.freq=observed;
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    S.registre.ctxFreq={bucket:observed,at:today(),result:'updated'};
+    S.registre.lastObsAt=today();
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    if(typeof toast==='function')toast('Mis à jour 👍 Je cale mes conseils et ta récup sur ce rythme.','success');
+  }catch(e){console.warn('[FT ctx] freq apply',e);}
+}
+function dismissFreqContext(observed){
+  try{
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    S.registre.ctxFreq={bucket:observed,at:today(),result:'kept'};    // on ne redemandera pas pour CE niveau
+    S.registre.lastObsAt=today();
+    persist();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    if(typeof toast==='function')toast("Ok, je garde ce que tu avais indiqué 👍",'info');
+  }catch(e){console.warn('[FT ctx] freq dismiss',e);}
+}
 function renderWeightCorrelations(el,pts){
   if(!pts||pts.length<3){el.innerHTML='';return;}
   const cards=[];

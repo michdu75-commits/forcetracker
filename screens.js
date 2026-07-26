@@ -158,6 +158,7 @@ const _HELP_DATA={
       {i:'💡',t:'Ton score de récup (sur NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui. Tape « Pourquoi ce score ? » juste en dessous pour voir, en clair, D\'OÙ il vient : sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison et son +/−. Il remonte au fil de la journée après une séance, et reste un simple repère — ton ressenti prime toujours.'},
       {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🌱',t:'Milo complète ton profil tout seul : s\'il manque une info de base (où tu t\'entraînes, combien de séances/semaine, la durée), il te propose de la remplir en 1 tap sur l\'Accueil — de vrais boutons, rien à écrire. Ta réponse va direct dans ton profil et ses conseils deviennent plus justes. Pas envie maintenant ? « Plus tard » et il te le redemandera une autre fois. (Utile surtout si tu as sauté ces questions à l\'inscription.)'},
+      {i:'🔎',t:'Milo s\'adapte à ce que tu fais vraiment : il compare ce que tu as déclaré (ex. ta fréquence de séances) à ce qu\'il MESURE dans tes vraies séances. S\'il repère un changement DURABLE (pas juste une semaine chargée), il te fait une petite vérification sur l\'Accueil (« tu t\'entraînes plutôt 5×/sem maintenant, ça a changé ? ») → « Oui, mets à jour » ou « Non, garde comme ça ». Il ne change JAMAIS rien tout seul — il constate et te laisse décider.'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
       {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Consulte l\'onglet Badges dans Progrès pour tout voir.'},
@@ -598,7 +599,23 @@ function _renderObsCard(){
   // 1. Une observation DÉJÀ posée (on finit ce qui est commencé).
   let o=(typeof _pendingObs==='function')?_pendingObs():null;
   if(!o){
-    // 2. Mode COMPLÉTER (profil vivant) : un champ de base manquant → PRIORITAIRE sur une nouvelle observation.
+    // 2. CONTEXTUEL (profil vivant) : écart déclaré/réalisé (ex. fréquence) → PRIORITAIRE, passe outre le plafond hebdo.
+    const cx=(typeof _pendingFreqContext==='function')?_pendingFreqContext():null;
+    if(cx){
+      el.style.padding='14px 14px 0';
+      const ask=cx.dir==='up'
+        ? "J'ai l'impression que tu t'entraînes plutôt <b>"+_obsEsc(cx.observedLabel)+"</b> par semaine ces temps-ci — j'avais noté <b>"+_obsEsc(cx.declaredLabel)+"</b>. Ça a changé ?"
+        : "On dirait que tu t'entraînes plutôt <b>"+_obsEsc(cx.observedLabel)+"</b> par semaine en ce moment — j'avais noté <b>"+_obsEsc(cx.declaredLabel)+"</b>. C'est le nouveau rythme ?";
+      el.innerHTML='<div class="obs-card">'
+        +'<div class="obs-head">'+avatar+'<div class="obs-lead">'+name+' — petite vérification 😊</div></div>'
+        +'<div class="obs-txt">'+ask+'</div>'
+        +'<div class="obs-btns">'
+        +'<button class="obs-yes ft-press" onclick="applyFreqContext(\''+_obsEsc(cx.observed)+'\')">Oui, mets à jour</button>'
+        +'<button class="obs-no ft-press" onclick="dismissFreqContext(\''+_obsEsc(cx.observed)+'\')">Non, garde comme ça</button>'
+        +'</div></div>';
+      return;
+    }
+    // 3. Mode COMPLÉTER (profil vivant) : un champ de base manquant → PRIORITAIRE sur une nouvelle observation.
     const gap=(typeof _pendingGap==='function')?_pendingGap():null;
     if(gap){
       el.style.padding='14px 14px 0';

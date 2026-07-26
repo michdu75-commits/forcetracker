@@ -143,7 +143,11 @@ jamais « parce que c'est lundi ») :
 
 *Note d'implémentation : le mécanisme **contextuel** = essentiellement la tranche **« déclaré vs réalisé »**
 (détecter un écart stable, un pic de séances, une dérive de poids). La **tranche 1** livrée (mode Compléter,
-`ft-v612`) est **PROACTIVE** (max 1/semaine) ; le contextuel arrive avec la détection d'événements.*
+`ft-v612`) est **PROACTIVE** (max 1/semaine). **1ᵉʳ détecteur contextuel livré (`ft-v614`) : la FRÉQUENCE**
+— l'app mesure les séances/semaine sur 4 semaines, exige un écart **stable** (≥3 semaines du même sens,
+jamais un pic), et propose la mise à jour (`_pendingFreqContext`/`applyFreqContext`/`dismissFreqContext`,
+anti-nag par niveau observé). ⏭️ Détecteurs suivants : **autre sport détecté**, **dérive de poids**,
+**style force/hypertrophie** (celui-ci = intention → on questionne, jamais on ne tranche).*
 
 ---
 
