@@ -81,6 +81,25 @@ précis : « 54 » a été gravé dans ce fichier et annoncé à Michel avant d'
 *« pourquoi c'est comme ça ? »*, Michel répond → **on l'écrit dans le commentaire, tout de suite**. Ça
 vaut plus que n'importe quel audit.
 
+**🔎 DÉCOUVERTE DU 27/07 (soir) — L'INVENTAIRE EXISTE DÉJÀ, IL A CESSÉ D'ÊTRE ALIMENTÉ.**
+En remontant au **tout premier `CLAUDE.md` (30/06/2026, 27 Ko)** via Git, constat : la période des débuts
+(ft-v1 → ft-v127) n'a **jamais** eu de journal version par version — elle était documentée **autrement**,
+par un **catalogue de fonctionnalités rangé par THÈME** (Entraînement · Cloud sync · Nutrition · Cycle de
+force · Badges · EXLIB · Programmes…), avec les dates. **C'est exactement l'inventaire décrit ci-dessus.**
+
+**Vérification faite : les 32 sections de ce premier fichier sont TOUTES encore présentes aujourd'hui**
+(dans `docs/JOURNAL-ARCHIVE.md` et `CLAUDE.md`). **Rien n'a été perdu** dans les allègements successifs.
+
+**➡️ Conséquence : le chantier est bien plus petit qu'annoncé.** Il ne s'agit pas de *créer* un
+inventaire, mais de **reprendre celui qui existe** — il s'arrête vers **ft-v441**, soit ~190 versions de
+retard. C'est la règle **R13** (enrichir l'existant plutôt que créer un système nouveau), et on a failli
+y manquer en concevant un nouvel outil alors que l'ancien dormait dans l'archive.
+
+**⚠️ Et ça corrige une mesure de la soirée** : le « trou » ft-v1 → ft-v127 n'en était pas vraiment un —
+je cherchais des entrées de version dans une période qui utilisait un **autre format**. Troisième fois de
+la soirée qu'un détecteur mal calibré donne un chiffre trop noir (54 → 2 · 57 % → 99 % · ce trou-ci).
+**Leçon confirmée : avant de croire un chiffre, vérifier qu'il mesure la bonne chose.**
+
 **Statut** : pas urgent, mais c'est le **seul** vrai manque documentaire identifié (la proposition de
 réorganisation de GPT décrivait surtout des documents qui existaient déjà). À faire un jour calme.
 
