@@ -833,8 +833,60 @@ function _renderMiloLevel(){
     +(lv.sub?'<span class="mk-level-sub">'+_obsEsc(lv.sub)+'</span>':'')
     +'</div></div>';
 }
+// ─── PROFIL VIVANT — Brique 2 : « Milo a appris récemment » (docs/PROFIL-VIVANT.md) ───
+// Liste VIVANTE des dernières choses apprises, la + récente en haut. LIT le profil unique (observations
+// validées + infos de base réellement apprises via S.registre.learnedAt) — ne stocke RIEN de neuf
+// (respecte « le profil vivant = source de vérité »). Dates honnêtes : les vieux champs (lazy-init) n'ont
+// pas de learnedAt → n'apparaissent pas avec une fausse date « aujourd'hui ».
+function _relLearned(d){
+  if(!d)return '';
+  const days=Math.round((new Date(today())-new Date(d))/864e5);
+  if(isNaN(days))return '';
+  if(days<=0)return "aujourd'hui";
+  if(days===1)return "hier";
+  if(days<7)return "il y a "+days+" j";
+  if(days<31)return "il y a "+Math.max(1,Math.round(days/7))+" sem";
+  return "il y a "+Math.max(1,Math.round(days/30))+" mois";
+}
+function _recentLearnedItems(){
+  const items=[];
+  const a=(S.coachQuiz&&S.coachQuiz.answers)||{};
+  const learned=(S.registre&&S.registre.learnedAt)||{};
+  const lbl=(f,v)=>(typeof _confirmLabelOf==='function')?_confirmLabelOf(f,v):v;
+  const OS=(typeof _OTHERSPORT_LBL!=='undefined')?_OTHERSPORT_LBL:{};
+  const freqLbl=v=>(typeof _freqBucketLabel==='function')?_freqBucketLabel(v):(String(lbl('freq',v))+' fois');
+  const phrase={
+    place: v=>'Tu t\'entraînes plutôt en '+String(lbl('place',v)).toLowerCase(),
+    freq:  v=>'Tu t\'entraînes '+freqLbl(v)+' par semaine',
+    time:  v=>'Tes séances durent '+String(lbl('time',v)),          // le libellé contient déjà « ~ » (ex. « ~45 min »)
+    othersport: v=>(v==='aucun')?'Pas d\'autre sport que la muscu':('Tu fais aussi du '+(OS[v]||'sport')),
+  };
+  ['place','freq','time','othersport'].forEach(f=>{
+    const v=a[f]; if(v===undefined||v===null||v==='')return;
+    if(!learned[f])return;                                   // pas de VRAIE date d'apprentissage → on n'invente pas
+    items.push({text:phrase[f](v), date:learned[f]});
+  });
+  ((typeof _validatedObs==='function')?_validatedObs():[]).forEach(o=>{
+    const t=(o.fact||o.ask||'').trim(); if(!t)return;
+    items.push({text:t, date:o.validatedAt||''});
+  });
+  items.sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
+  return items;
+}
+function _renderMiloRecent(){
+  const el=document.getElementById('milo-knows-recent');if(!el)return;
+  const items=_recentLearnedItems().slice(0,3);
+  if(!items.length){el.innerHTML='';return;}
+  el.innerHTML='<div class="mk-recent"><div class="mk-recent-hd">🧠 Milo a appris récemment</div>'
+    +items.map(it=>'<div class="mk-recent-row"><span class="mk-recent-dot"></span>'
+      +'<span class="mk-recent-txt">'+_obsEsc(it.text)+'</span>'
+      +(it.date?'<span class="mk-recent-when">'+_obsEsc(_relLearned(it.date))+'</span>':'')
+      +'</div>').join('')
+    +'</div>';
+}
 function _renderMiloKnows(){
   _renderMiloLevel();
+  _renderMiloRecent();
   const box=document.getElementById('milo-knows-list');if(!box)return;
   const list=(typeof _validatedObs==='function')?_validatedObs():[];
   if(!list.length){box.innerHTML='<div class="mk-empty">Milo n\'a encore rien retenu sur toi. Au fil de tes séances, il te posera de petites questions sur l\'Accueil — chaque fois que tu confirmes, il apprend à mieux te connaître. Rien n\'est mémorisé sans ton accord.</div>';return;}
