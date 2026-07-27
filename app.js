@@ -232,7 +232,17 @@ function renderCalorieBreakdown(calData) {
 }
 
 
+// ⏸️ MODE JOUR EN PAUSE — décision Michel, 27/07/2026 (ft-v638).
+// RIEN n'est supprimé : tout le CSS `.light-mode` reste dans style.css, les fonctions
+// ci-dessous restent entières, et le sélecteur Nuit/Jour est seulement MASQUÉ dans
+// index.html (#appr-theme). Pour le remettre : passer ce drapeau à false + retirer le
+// `display:none` du bloc #appr-theme. Rien d'autre à refaire.
+// ⚠️ On n'efface JAMAIS la clé `ft4_theme` : quelqu'un qui était en mode jour retrouvera
+// son réglage tel quel le jour où on rouvrira — on force juste l'affichage en nuit.
+const LIGHT_MODE_PAUSED = true;
+
 function toggleTheme(btn) {
+  if (LIGHT_MODE_PAUSED) return;
   const root = document.getElementById('root');
   const isLight = root.classList.toggle('light-mode');
   document.documentElement.classList.toggle('light-mode', isLight);
@@ -243,6 +253,14 @@ function toggleTheme(btn) {
 function applyTheme() {
   const saved = localStorage.getItem('ft4_theme');
   const btn = document.getElementById('theme-toggle-btn');
+  if (LIGHT_MODE_PAUSED) {
+    // Quelqu'un qui était en mode jour repasse en nuit au prochain lancement,
+    // sans que son choix soit perdu (la clé reste en place).
+    const r = document.getElementById('root');
+    if (r) r.classList.remove('light-mode');
+    document.documentElement.classList.remove('light-mode');
+    return;
+  }
   if (saved === 'light') {
     document.getElementById('root').classList.add('light-mode');
     document.documentElement.classList.add('light-mode');
@@ -295,6 +313,7 @@ function _applyHalo(){
   });
 }
 function setTheme(mode){
+  if (LIGHT_MODE_PAUSED && mode==='light') return;   // mode jour en pause (voir applyTheme)
   const isLight = mode==='light';
   const root=document.getElementById('root');
   root.classList.toggle('light-mode', isLight);

@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v637';
+  b.textContent='🧪 CLONE ft-v638';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -2456,12 +2456,17 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t2);"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
         Apparence
       </div>
-      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Thème</div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button id="appr-nuit" onclick="setTheme('dark')" class="appr-btn"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>🌙 Nuit</button>
-        <button id="appr-jour" onclick="setTheme('light')" class="appr-btn"><span class="appr-sw" style="background:#F2F3F5;box-shadow:inset 0 0 0 1px var(--sep);"></span>☀️ Jour</button>
+      <!-- ⏸️ Sélecteur Nuit/Jour MASQUÉ (mode jour en pause, décision Michel 27/07/2026, ft-v638).
+           Le bloc reste ENTIER : pour rouvrir le mode jour, retirer le display:none ci-dessous
+           et repasser LIGHT_MODE_PAUSED à false dans app.js. Ne pas supprimer. -->
+      <div id="appr-theme" style="display:none;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Thème</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button id="appr-nuit" onclick="setTheme('dark')" class="appr-btn"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>🌙 Nuit</button>
+          <button id="appr-jour" onclick="setTheme('light')" class="appr-btn"><span class="appr-sw" style="background:#F2F3F5;box-shadow:inset 0 0 0 1px var(--sep);"></span>☀️ Jour</button>
+        </div>
       </div>
-      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Fond <span style="text-transform:none;font-weight:500;">(en mode nuit)</span></div>
+      <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Fond</div>
       <button id="appr-none" onclick="setHalo('none')" class="appr-btn" style="width:100%;justify-content:center;margin-bottom:12px;"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>Fond uni (noir)</button>
       <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:8px;">Couleur du halo</div>
       <div class="appr-colors">
