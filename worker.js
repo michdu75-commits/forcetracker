@@ -24,17 +24,31 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec';
 const ANTHROPIC_URL   = 'https://api.anthropic.com/v1/messages';
 
+// 🛡️ VERROU ANTI-ABUS (audit 27/07/2026) : SEULE cette origine peut consommer l'IA.
+// Couvre la prod ET le clone (même domaine github.io). Avant : CORS '*' + zéro vérif
+// → n'importe qui avec l'URL pouvait consommer l'API Anthropic aux frais de Michel.
+// ⚠️ Pour AJOUTER une origine un jour (ex. un clone *.pages.dev), il faudra refléter
+// l'origine par requête — procédure : docs/worker-securise-PROPOSITION.txt.
+const ALLOWED_ORIGIN = 'https://michdu75-commits.github.io';
+
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
   'Access-Control-Max-Age': '86400',
+  'Vary': 'Origin',
 };
 
 export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
     if (request.method !== 'POST')    return json({ status: 'error', error: 'Utilise POST.' }, 405);
+    // 🛡️ Origine absente (curl/scripts) ou inconnue (autre site) → refus. Les navigateurs
+    // envoient TOUJOURS l'en-tête Origin sur un fetch cross-origin (PWA installée comprise).
+    const _origin = request.headers.get('Origin') || '';
+    if (_origin !== ALLOWED_ORIGIN) {
+      return json({ status: 'error', error: 'origin', reply: 'Accès refusé.' }, 403);
+    }
 
     const raw = await request.text();
     let body = {};
