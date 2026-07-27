@@ -227,6 +227,7 @@ const NEW_FEATURES=[
   {id:'work-actif',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : niveau de travail « Actif » (serveuse, infirmier, vendeur : debout + en déplacement) dans ton Profil — tes calories et macros sont plus justes'},
   {id:'app-guide',   screen:'setup', anchor:'menu-row-appguide', desc:'Nouveau : Menu → « Guide de l\'application » — un diaporama qui explique comment marche l\'app (séance, programmes, Milo, photos…)'},
   {id:'milo-knows',  screen:'setup', anchor:'menu-row-miloknows', desc:'Nouveau : Milo apprend à te connaître — il te pose de petites questions sur l\'Accueil, et tu retrouves tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi »'},
+  {id:'recup-ring', screen:'home', desc:'Nouveau : ton score de récup s\'affiche dans un anneau — appuie dessus pour revoir le chiffre grimper de 0 à ton score'},
   {id:'whatsnew-history', screen:'setup', anchor:'menu-row-whatsnew', desc:'Nouveau : Menu → « Nouveautés » — toutes les nouveautés de l\'app restent consultables quand tu veux, même si tu passes la pop-up de lancement'},
   {id:'milo-knows-alive', screen:'setup', anchor:'menu-row-miloknows', desc:'Nouveau : ta page « Ce que Milo sait de toi » devient vivante — une phrase en haut te dit à quel point Milo peut te conseiller (elle monte, ne redescend jamais), et « 🧠 Milo a appris récemment » liste les dernières choses qu\'il a retenues sur toi'},
   {id:'coach-history', screen:'coach', desc:'Nouveau : Milo se souvient de vos échanges (même en gratuit) + le bouton « + » range tes discussions dans « Mes discussions » (icône horloge) au lieu de les effacer'},
@@ -256,6 +257,7 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  {v:50, ic:'🎯', t:'Ta récup passe en anneau', d:'Sur l\'Accueil, ton score de récup s\'affiche maintenant dans un anneau coloré. Appuie dessus : le chiffre se rejoue de 0 à ton score. ✨'},
   {v:49, ic:'✨', t:'Les nouveautés restent consultables', d:'Menu → « Nouveautés » : tu peux relire toutes les nouveautés quand tu veux. Du coup, la pop-up de lancement se passe d\'un tap si tu es pressé — tu ne rates rien. ✨'},
   {v:48, ic:'🎯', t:'Nouvel objectif : « Perte de gras + muscle »', d:'Un nouvel objectif dans Profil : perdre du gras ET prendre du muscle en même temps. Tes calories et tes macros sont calculées pour ça, et Milo adapte ses conseils. 🎯'},
   {v:47, ic:'✏️', t:'Règle tes calories et macros à la main', d:'Dans Nutrition, un bouton sous l\'anneau te laisse fixer toi-même tes calories et tes macros, au lieu du calcul automatique. Utile si tu suis un plan précis. Retour à l\'auto quand tu veux. ✏️'},
@@ -303,7 +305,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=49;     // = plus grand `v` ci-dessus
+const WHATS_NEW_MAX=50;     // = plus grand `v` ci-dessus
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

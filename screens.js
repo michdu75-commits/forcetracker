@@ -453,12 +453,29 @@ function _renderHomeHdr(){
   el.innerHTML='';
 }
 
+// Rejoue l'animation de l'anneau de récup : le chiffre défile de 0 au score
+// pendant que l'arc se remplit, sur la MÊME courbe (sinon les deux se décalent).
+function ringReplay(){
+  try{
+    const w=document.getElementById('recup-ring'), n=document.getElementById('rr-num');
+    if(!w||!n)return;
+    const cible=parseInt(n.textContent,10); if(isNaN(cible))return;
+    if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    w.classList.remove('ring-go'); void w.offsetWidth; w.classList.add('ring-go');
+    const t0=performance.now(), D=1150;
+    (function step(t){
+      const k=Math.min(1,(t-t0)/D), e=1-Math.pow(1-k,3);
+      n.textContent=Math.round(cible*e);
+      if(k<1)requestAnimationFrame(step); else n.textContent=cible;
+    })(t0);
+  }catch(e){}
+}
 function _renderHomeHero(){
   const el=document.getElementById('home-hero');if(!el)return;
   const detail=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():{score:calcRecoveryScore(),factors:[],tips:[]};
   const score=detail.score;
   const info=getRecoveryInfo(score);
-  const circ=188.5;
+  const circ=+(2*Math.PI*34).toFixed(1);   // r=34 → circonférence de l'arc
   const offset=score!==null?+(circ*(1-score/100)).toFixed(1):circ;
   const ringColor=score!==null?info.color:'var(--t3)';
   let accent='52,211,153';
@@ -498,14 +515,44 @@ function _renderHomeHero(){
     +'<div style="display:flex;align-items:center;justify-content:space-between;">'
     +'<div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'
     +pillHtml+'</div>'
-    +'<div style="display:flex;align-items:flex-start;gap:16px;margin-top:14px;">'
-    +'<div style="flex:none;display:flex;align-items:baseline;gap:2px;">'
-    +'<span style="font-family:var(--font-cond);font-size:'+(score!==null?42:30)+'px;font-weight:800;color:var(--t1);line-height:.9;">'+(score!==null?score:'—')+'</span>'
-    +(score!==null?'<span style="font-size:13px;color:var(--t3);font-weight:700;">/100</span>':'')
-    +'</div>'
-    +'<div style="flex:1;"><div style="font-size:16px;font-weight:700;color:var(--t1);">'+heroLabel+'</div>'
+    // ── ANNEAU DE RÉCUP (ft-v636) — remplace le gros chiffre + la barre plate.
+    // Le cercle avait existé (ft-v555/556) puis été retiré au rollback ft-v558 : le rendu
+    // manquait de profondeur. Ici : rainure creusée (ombre interne) + dégradé sur l'arc +
+    // halo + reflet, et un reflet qui PARCOURT l'arc en boucle (« vivant », demande Michel).
+    // Au tap : le chiffre défile de 0 au score pendant que l'arc se remplit (ringReplay()).
+    +'<div style="display:flex;align-items:center;gap:18px;margin-top:14px;">'
+    +(score!==null
+      ? '<div id="recup-ring" onclick="ringReplay()" class="ft-press" style="--rr-circ:'+circ+';--rr-run:-'+Math.max(circ-offset-24,1).toFixed(1)+'px;position:relative;flex:none;width:100px;height:100px;cursor:pointer;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45));">'
+        +'<svg width="100" height="100" viewBox="0 0 96 96" style="display:block;">'
+        +'<defs>'
+          +'<filter id="rrIn" x="-50%" y="-50%" width="200%" height="200%">'
+          +'<feOffset dx="0" dy="2"/><feGaussianBlur stdDeviation="2" result="o"/>'
+          +'<feComposite in="SourceGraphic" in2="o" operator="out" result="i"/>'
+          +'<feColorMatrix in="i" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0"/>'
+          +'<feBlend in2="SourceGraphic"/></filter>'
+          +'<linearGradient id="rrG" x1="0" y1="0" x2="1" y2="1">'
+          +'<stop offset="0" stop-color="'+ringColor+'"/><stop offset=".55" stop-color="'+ringColor+'" stop-opacity=".85"/>'
+          +'<stop offset="1" stop-color="'+ringColor+'" stop-opacity=".45"/></linearGradient>'
+          +'<filter id="rrGlow" x="-60%" y="-60%" width="220%" height="220%">'
+          +'<feDropShadow dx="0" dy="1.5" stdDeviation="4.5" flood-color="'+ringColor+'" flood-opacity=".65"/></filter>'
+          +'<filter id="rrSoft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.6"/></filter>'
+        +'</defs>'
+        +'<g transform="rotate(-90 48 48)">'
+        +'<circle cx="48" cy="48" r="34" fill="none" stroke="var(--bg3)" stroke-width="10" filter="url(#rrIn)"/>'
+        +'<circle id="rr-arc" cx="48" cy="48" r="34" fill="none" stroke="url(#rrG)" stroke-width="10" stroke-linecap="round"'
+        +' stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" filter="url(#rrGlow)"/>'
+        +'<circle id="rr-hi" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"'
+        +' stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" opacity=".26" transform="translate(0,-2.2)" style="mix-blend-mode:screen;"/>'
+        +'<circle id="rr-trav" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"'
+        +' stroke-dasharray="24 '+circ+'" stroke-dashoffset="0" opacity="0" filter="url(#rrSoft)" style="mix-blend-mode:screen;"/>'
+        +'</g></svg>'
+        +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">'
+        +'<span id="rr-num" style="font-family:var(--font-cond);font-size:32px;font-weight:900;color:var(--t1);line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.5);">'+score+'</span>'
+        +'<span style="font-size:10px;color:var(--t3);font-weight:700;">/100</span>'
+        +'</div></div>'
+      : '<div style="flex:none;width:100px;text-align:center;font-family:var(--font-cond);font-size:30px;font-weight:800;color:var(--t3);">—</div>')
+    +'<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:700;color:var(--t1);">'+heroLabel+'</div>'
     +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:3px;">'+heroDesc+'</div></div></div>'
-    +'<div style="margin-top:14px;height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;"><div style="height:100%;width:'+barW+'%;background:'+ringColor+';border-radius:4px;transition:width .4s;"></div></div>'
     +detailHtml+warnHtml
     +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
     +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'

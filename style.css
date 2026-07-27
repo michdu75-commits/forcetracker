@@ -1137,3 +1137,31 @@ html.ob-done #onboarding{display:none;}
   --fh-orange:var(--orange); --fh-red:var(--red);
   max-width:100%!important; font-family:var(--font)!important;
 }
+
+/* ── Anneau de récup (ft-v636) ────────────────────────────────────────────────
+   Deux animations DISTINCTES (demande de Michel) :
+   ① au tap  → l'arc se remplit de 0 au score (ringReplay() fait défiler le chiffre en parallèle)
+   ② au repos → un reflet PARCOURT l'arc en boucle, flouté et fondu (il ne clignote pas, il traverse)
+   La longueur de l'arc dépend du score → les keyframes sont posées en ligne par _renderHomeHero
+   pour ①, et ② n'a besoin que d'une variable (--rr-run) que le rendu fournit.
+   ⚠️ « Réduire les animations » (iOS/Android) fige tout — accessibilité + sensibilité au mouvement. */
+#recup-ring #rr-trav{ animation:rr-travel 6.5s cubic-bezier(.45,0,.55,1) infinite; }
+@keyframes rr-travel{
+  0%   { stroke-dashoffset:0;               opacity:0;   }
+  14%  { opacity:.22; }
+  30%  { opacity:.42; }
+  46%  { opacity:.48; }
+  62%  { opacity:.42; }
+  78%  { opacity:.20; }
+  88%  { stroke-dashoffset:var(--rr-run,-120px); opacity:0; }
+  100% { stroke-dashoffset:var(--rr-run,-120px); opacity:0; }
+}
+#recup-ring.ring-go #rr-arc, #recup-ring.ring-go #rr-hi{
+  animation:rr-fill 1.15s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes rr-fill{ from{ stroke-dashoffset:var(--rr-circ,213.6); } }
+#recup-ring.ring-go #rr-trav{ animation-delay:1.15s; }   /* le reflet attend la fin du remplissage */
+@media (prefers-reduced-motion:reduce){
+  #recup-ring #rr-trav{ animation:none!important; opacity:0!important; }
+  #recup-ring.ring-go #rr-arc, #recup-ring.ring-go #rr-hi{ animation:none!important; }
+}
