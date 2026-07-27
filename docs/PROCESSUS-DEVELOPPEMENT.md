@@ -152,6 +152,17 @@ La brique doit rester **simple et indépendante** (anti « puisqu'on y est »).
 > est mûr ; on ne fige pas une architecture sur une simple intuition. Transformer trop vite une bonne
 > intuition en implémentation est un piège récurrent.
 
+> **🎯 4ᵉ filtre — le COMPORTEMENT OBSERVABLE** *(GPT + Michel, 27/07/2026 ; né des 4 bugs Milo→Séance)* —
+> pour toute brique qui **ajoute une connaissance** au profil vivant, répondre AVANT de coder :
+> **① qui la produit · ② qui l'exploite · ③ quel comportement CONCRET change dans l'app ?**
+> Si on ne sait répondre à aucune → on n'ajoute pas (ou pas encore). *« Une connaissance qui ne change
+> rien au comportement de l'app est une connaissance inutile. »*
+> ⚠️ **Nuance** : le comportement peut être **différé**, mais il doit être **NOMMABLE** (« ça servira à la
+> brique 7 dans quelques mois » = valide ; « on verra bien » = non) — sinon on tuerait la mémoire longue,
+> qui est l'ADN du produit. Détail + contre-exemples : `docs/PROFIL-VIVANT.md`.
+> 💡 Cette grille sert **aussi à l'envers**, en audit : *où cette info ressort-elle concrètement ?* — c'est
+> comme ça qu'on a trouvé les 4 bugs de restitution (`ft-v625→628`).
+
 ### 4. Développement
 - **Sauvegarde d'abord** (point de restauration — voir « Adaptation Force
   Tracker » ci-dessous).

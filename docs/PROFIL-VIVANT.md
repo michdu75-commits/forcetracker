@@ -38,6 +38,56 @@ aussi ce qui rend la sync cloud et la restauration fiables (un seul profil à sa
 
 ---
 
+## 🎯 RÈGLE D'ARCHITECTURE — toute connaissance doit produire un COMPORTEMENT OBSERVABLE (GPT + Michel, 27/07/2026)
+
+> **« Toute connaissance stockée dans le profil vivant doit produire au moins un comportement observable
+> dans l'application. Une connaissance qui ne change rien au comportement de l'app est une connaissance
+> inutile. »**
+
+**D'où ça vient (une vraie découverte de terrain, pas une théorie).** Le 27/07, Michel teste en pleine
+séance et remonte **4 bugs qui n'en font qu'un** : Milo raisonnait parfaitement dans le chat (charges
+`4×6 — 60/70/80/85`, repos « 3 min », ordre des exercices, consignes « omoplates serrées ») **mais une
+partie de cette intelligence ne descendait pas jusqu'aux données réellement utilisées par l'app** (cf.
+`ft-v625→628`). *L'information existait. Le raisonnement existait. L'app ne s'en servait pas.* → Le maillon
+faible n'est ni la **collecte** ni le **raisonnement**, c'est la **RESTITUTION**.
+
+**Les 3 questions à se poser AVANT d'ajouter une information au profil** (grille GPT) :
+1. **Qui la PRODUIT ?** (l'utilisateur · Milo · un futur coach · les séances · les check-ins · les analyses
+   biologiques · une habitude détectée)
+2. **Qui l'EXPLOITE ?** (Milo · le générateur de programmes · la nutrition · la récupération · le mode
+   Coach · les analyses/statistiques)
+3. **Quel comportement CONCRET change dans l'app ?** (une reco différente · un exercice remplacé · un
+   programme adapté · la nutrition ajustée · une synthèse enrichie · la récup modifiée)
+
+**Si on ne sait répondre à aucune des trois → on n'ajoute pas la donnée (ou pas encore).** Le profil vivant
+n'est pas une base de **stockage**, c'est une base de **connaissances ACTIVE**.
+
+> ### ⚠️ Nuance d'architecte (Claude) — le comportement peut être DIFFÉRÉ, mais il doit être NOMMABLE
+> Appliquée trop littéralement (« la donnée doit changer quelque chose **tout de suite** »), cette règle se
+> retournerait contre l'ADN du produit : la **mémoire longue**. Contre-exemples internes bien réels —
+> une **pesée isolée** ne change rien (c'est la *tendance* sur des semaines qui parle) ; le **journal du
+> check-in quotidien** (`dayStateLog`) a été construit en sachant que sa valeur n'apparaîtrait qu'après des
+> mois (« retrouver dans quel état tu étais le jour d'un record ») ; la **date de dernière confirmation**
+> ne fait rien en soi, elle pilote *plus tard* le mode Confirmer ; et les **briques 7-8** (mémoire vivante,
+> synthèse) reposent **entièrement** sur des données accumulées à valeur différée.
+>
+> **Formulation retenue** : on doit pouvoir **NOMMER le comportement qu'elle changera — et QUAND**. Une
+> échéance lointaine (« brique 7, dans plusieurs mois ») est légitime ; un « on verra bien à quoi ça
+> servira » ne l'est pas. C'est la version compatible avec *« il se souvient de qui tu es devenu »*.
+>
+> **Bonus — la règle marche aussi À L'ENVERS (audit).** C'est en se demandant « où cette info ressort-elle
+> concrètement ? » qu'on a trouvé les 4 bugs. À faire un jour sur l'existant : passer en revue chaque donnée
+> déjà stockée et repérer les **données mortes** (stockées, jamais exploitées) — soit on les branche, soit
+> on les retire.
+
+**Application aux « pratiques d'entraînement »** (cardio, mobilité, pilates, préhab — cf.
+`IDEES-FUTURES.md`) : elles ne s'ajoutent pas « pour faire joli ». Elles passent la grille — le **cardio**
+influence récupération + dépense énergétique + conseils + nutrition + analyses ; la **mobilité** influence
+les exercices proposés et les échauffements ; la **prévention** (genou/épaules/lombaires) influence les
+programmes, les alertes de surcharge et les adaptations. ✅
+
+---
+
 ## Les 4 modes du profil vivant
 
 Le profil ne se remplit pas une fois pour toutes : il se **complète, s'enrichit, se met à jour et se
