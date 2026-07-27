@@ -3667,7 +3667,9 @@ function _normalizeMiloSession(sess){
   const T={N:1,'É':1,X:1,D:1,W:1}; // types de série valides
   const norm=ex=>({
     name:String(ex.name||'Exercice'),
-    note:'',
+    // 💬 ft-v628 : la CONSIGNE de Milo (cue technique : « omoplates serrées », « amplitude contrôlée »…)
+    // devient la note de l'exercice — avant, elle était jetée (`note:''`) alors que Milo la donne dans le chat.
+    note:String(ex.note||'').slice(0,300),
     sets:(Array.isArray(ex.sets)?ex.sets:[]).map(s=>({
       // 0 = « Milo n'a rien précisé » (le repli sur l'historique se décide dans _startSessionFromMilo).
       // ⚠️ Ne PAS mettre 10 par défaut ici : on ne pourrait plus distinguer « Milo a dit 10 » de « Milo n'a rien dit ».
@@ -3695,7 +3697,7 @@ function _startSessionFromMilo(idx,btn){
   // (Différent d'un PROGRAMME, qui dit « 4×8 » sans charge → là, le pré-remplissage garde tout son sens.)
   const buildEx=e=>{
     const prev=(typeof getPrev==='function')?(getPrev(e.name)||[]):[];
-    return {name:e.name,note:'',sets:(e.sets||[]).map((s,i)=>{
+    return {name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
       const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
       const kg=(s.kg>0)?s.kg:(pp?pp.kg:0);                                   // Milo d'abord, sinon la dernière fois
       const reps=s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10));               // idem (série « maxi » = vide, à saisir)
