@@ -530,6 +530,25 @@ function _frDayLabel(dateStr){
   if(diff>=2&&diff<=6)return days[new Date(dateStr+'T12:00:00').getDay()];
   return 'le '+dateStr.split('-').reverse().slice(0,2).join('/');
 }
+// ─── MOMENT 2 « Milo se souvient de moi » (docs/PRESENCE-MILO.md — le 2ᵉ moment) ───
+// Au RETOUR après une pause, Milo ressort un souvenir tiré de la mémoire existante (source de vérité :
+// observations validées + autre sport + objectif) → le retour devient chaleureux au lieu d'un « ça fait X
+// jours » froid. 100 % déterministe, LIT le profil, ne stocke rien. Rien en mémoire → message froid (0 régression).
+function _miloReturnHints(){
+  const out=[];
+  ((typeof _validatedObs==='function')?_validatedObs():[]).forEach(o=>{
+    const t=(o.fact||o.ask||'').trim(); if(t)out.push('Je me souviens : « '+t+' »');
+  });
+  const os=S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.othersport;
+  if(os&&os!=='aucun'){ const lbl=(typeof _OTHERSPORT_LBL!=='undefined'&&_OTHERSPORT_LBL[os])||'un autre sport'; out.push('Je me souviens que tu fais aussi du '+lbl); }
+  if(S.goal&&typeof GOAL_LABELS!=='undefined'&&GOAL_LABELS[S.goal]) out.push('Ton objectif « '+GOAL_LABELS[S.goal]+' » est toujours là');
+  return out;
+}
+function _miloReturnHint(){
+  const h=_miloReturnHints(); if(!h.length)return null;
+  const idx=(new Date(today()+'T12:00:00').getDate())%h.length;   // rotation par jour → on varie l'ouverture
+  return h[idx];
+}
 function _miloMessage(){
   const sess=(S.sessions||[]).filter(s=>s.date);
   const tStr=today();
@@ -557,10 +576,17 @@ function _miloMessage(){
     }
   }
   // Priorité : réengagement > relance > récup > lendemain > régularité
-  if(daysSince!==null&&daysSince>=10)
+  // MOMENT 2 « Milo se souvient de moi » : au retour, un souvenir réchauffe le message (sinon → version froide).
+  if(daysSince!==null&&daysSince>=10){
+    const hint=_miloReturnHint();
+    if(hint)return {id:'retour',txt:'Content de te revoir 👋 '+hint+'. On reprend tranquille — pas de record aujourd\'hui, on remet la machine en route.'};
     return {id:'retour',txt:'Content de te revoir 👋 On reprend tranquille — pas de record aujourd\'hui, on remet la machine en route.'};
-  if(daysSince!==null&&daysSince>=4)
+  }
+  if(daysSince!==null&&daysSince>=4){
+    const hint=_miloReturnHint();
+    if(hint)return {id:'relance',txt:'Content de te revoir 👋 '+hint+'. On se refait une séance ?'};
     return {id:'relance',txt:'Ça fait '+daysSince+' jours 👀 On se refait une séance aujourd\'hui ?'};
+  }
   if(rec!==null&&rec<40&&daysSince!==null&&daysSince>=1)
     return {id:'recup',txt:'Nuit courte ces derniers jours — vise plutôt une séance légère aujourd\'hui, et dors tôt ce soir. 😴'};
   // Relance PROFIL : tant qu'il est incomplet, Milo insiste (c'est ce qui rend ses conseils sur-mesure)

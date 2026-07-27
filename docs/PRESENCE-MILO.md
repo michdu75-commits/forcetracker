@@ -47,6 +47,15 @@ la découverte du produit avec la valeur de la mémoire** (l'une des forces de M
   mémoire prend tout son sens : l'utilisateur réalise que Milo n'est pas *une IA qui répond*,
   mais *un coach qui apprend*. **Le vrai attachement ne se crée pas pendant la première session,
   il se crée au premier retour.**
+  > **✅ 1ʳᵉ implémentation livrée (v1, `ft-v621`) — sur l'Accueil.** Au retour après une pause,
+  > le message de Milo devient chaleureux et **basé sur la mémoire** : au lieu du froid « Ça fait
+  > X jours 👀 », il ressort un **souvenir** (une chose confiée « Je me souviens : … », l'autre
+  > sport, l'objectif) → *« Content de te revoir 👋 … On se refait une séance ? »*. 100 %
+  > **déterministe** (LIT le profil unique, ne stocke rien), **rotation** pour varier, et **fallback**
+  > sur le message froid si Milo n'a encore aucun souvenir (0 régression pour un nouveau).
+  > **Pas de pop-up** (choix assumé) : ce moment se **ressent**, l'annoncer casserait la surprise —
+  > cohérent avec « présence sans gadget ». ⏭️ v2 possible : le même « je me souviens de toi » à
+  > l'**ouverture du Coach**.
 
 **Conséquence économique (majeure).** Le but de la découverte n'est **pas de vendre pendant
 la première session**. Il est plus simple : **faire revenir l'utilisateur une deuxième fois** —
