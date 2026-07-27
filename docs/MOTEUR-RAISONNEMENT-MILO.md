@@ -91,6 +91,28 @@ données déterministes + mémoire), **l'IA raisonne** (Cerveau 2). Les parties 
 **connaissance** (ancre/accessoire, biomécanique, EXLIB, VM) et les **données** ; le raisonnement se
 **guide** par le prompt, il ne se code pas comme un moteur figé.
 
+### 🧩 Le cerveau = une couche de DÉCISION PARTAGÉE — « une seule mémoire, une seule voix » (GPT 27/07 + nuance Claude)
+
+Prolongement direct du principe **« le profil vivant = source de vérité »** (`docs/PROFIL-VIVANT.md`) :
+- **une seule DONNÉE** = le profil vivant ;
+- **une seule DÉCISION** = le Cerveau 2. Les modules (Coach, Programmes, Nutrition, Récupération,
+  Notifications, futurs modules) deviennent des **« clients »** de ce cerveau : ils **ne relisent jamais le
+  profil brut pour re-décider chacun dans leur coin**. Bénéfices (GPT) : pas de logique dupliquée, des
+  réponses cohérentes entre modules, des évolutions plus faciles — *tout le produit parle d'une seule voix*.
+
+> ⚠️ **Nuance d'architecte (Claude, honnête) — ÉMERGENT, pas big-bang.** On ne **construit pas** ce moteur
+> central d'un seul bloc au départ : pour une PWA sans framework, maintenue à deux, ce serait de la
+> **sur-ingénierie prématurée**. On le fait **émerger**. Son **embryon existe déjà** (le **Gardien** décide
+> de la sécurité, `buildCoachContext` décide pour le Coach, `_exRole` classe les exercices…). La règle
+> qu'on adopte **maintenant** (gratuite, zéro refacto) :
+>
+> **🧭 Tout nouveau module passe par la couche de raisonnement / le Gardien — il ne ré-implémente JAMAIS sa
+> propre logique sur le profil brut.**
+>
+> On obtient la « voix unique » tout de suite, et le moteur central **se consolide avec le temps** au lieu
+> d'être posé à vide. Cohérent avec la **gouvernance légère** (`docs/PROCESSUS-DEVELOPPEMENT.md`). *(Question
+> ouverte renvoyée à GPT : voit-il un risque concret à cette approche émergente ? — en attente.)*
+
 ---
 
 ## La limite volontaire : fiabilité AVANT intelligence (Constitution · Principe 18)

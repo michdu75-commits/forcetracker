@@ -43,6 +43,17 @@ pensée qu'elle **ralentit** le produit. Garde-fous :
     mais on la **jardine** régulièrement (restructuration) pour qu'elle ne devienne pas un empilement
     que plus personne ne relit.
 
+### 🎮 Garde-fou de priorisation : la gamification vient APRÈS les fondations (GPT + Michel, 27/07/2026)
+
+Risque nommé clairement : la tentation d'ajouter **trop tôt** des **badges, succès, défis, animations,
+gamification**. Ces éléments sont sympas mais **ne créent pas la valeur principale** de Force Tracker — qui
+est son **intelligence personnalisée** (la connaissance progressive de l'utilisateur). Règle : *on ne pose
+pas de vernis de gamification tant que les fondations (profil vivant, cerveau, cohérence) ne sont pas
+solides.* La gamification viendra **naturellement** ensuite, et sera **meilleure** parce qu'ancrée sur une
+vraie mémoire (un « défi » sur mesure vaut mille badges génériques). Cohérent avec l'identité « figurines
+muscles » (on ne copie pas Hevy/JEFIT) et avec le filtre de priorisation (« est-ce que ça améliore les
+décisions de Milo ? »).
+
 ### 👥 Retours des vrais utilisateurs — anti-sur-ajustement (3 paliers)
 
 Ne jamais transformer un retour **isolé** en règle. Seule la **récurrence** fait monter d'un palier :

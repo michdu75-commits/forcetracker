@@ -191,6 +191,15 @@ modèles changent de prix, se déprécient, tombent parfois (cf. la galère 4G/C
 **moteur de calcul + la mémoire + les bases de données**. C'est le **vrai patrimoine** de
 Force Tracker, celui que personne ne peut retirer.
 
+> **🧬 Le cœur du patrimoine = le PROFIL VIVANT (GPT + Michel, 27/07/2026).** À terme, la
+> fonctionnalité la plus importante ne sera **ni Milo, ni les programmes, ni la nutrition** :
+> ce sera le **profil vivant** — cette connaissance qui apprend réellement à connaître son
+> utilisateur. Tout le reste (Milo, programmes, nutrition, récupération, notifications, futurs
+> modules) devient un **« client »** de cette intelligence centrale. C'est cette architecture
+> — *une seule mémoire, une seule voix* — qui rend Force Tracker **cohérent, pertinent et très
+> difficile à copier**. On change de catégorie : d'une **appli de suivi** vers **une intelligence
+> qui apprend à te connaître**. *(Détail archi : `docs/MOTEUR-RAISONNEMENT-MILO.md`.)*
+
 **Exemple — la nutrition.** Les valeurs nutritionnelles ne doivent pas venir de l'IA à
 chaque fois, mais d'une **vraie base d'aliments** (l'app utilise déjà **Open Food Facts**,
 gratuite et ouverte, pour les codes-barres). Les calculs de macros sont **locaux**. L'IA

@@ -30,6 +30,12 @@ mécanismes prévus** (les 4 modes ci-dessous, la mémoire validée…). Il ne c
 parallèle de « où s'entraîne l'utilisateur » ou « son objectif ». **Une info = un seul endroit.** C'est
 aussi ce qui rend la sync cloud et la restauration fiables (un seul profil à sauvegarder).
 
+> **Complément (GPT 27/07) — une seule donnée, une seule décision.** La source de vérité concerne la
+> **DONNÉE** ; son jumeau concerne la **DÉCISION** : les modules ne lisent pas le profil brut pour re-décider
+> chacun dans leur coin, ils passent par le **cerveau** (Cerveau 2 / Gardien) → *« une seule mémoire, une
+> seule voix »*. Cette couche de décision se construit **émergentiellement** (pas d'un bloc). Détail :
+> `docs/MOTEUR-RAISONNEMENT-MILO.md` § « couche de décision partagée ».
+
 ---
 
 ## Les 4 modes du profil vivant
