@@ -2432,7 +2432,8 @@ function _renderWhatsNew(){
   var f=_wnItems[_wnIdx];if(!f)return;
   var multi=_wnItems.length>1;
   var box=document.getElementById('whatsnew-list');
-  if(box) box.innerHTML='<div class="sw-feat"><span>'+f.ic+'</span><div><b>'+f.t+'</b><small>'+f.d+'</small></div></div>';
+  // .sw-solo : la carte est seule à l'écran → elle a la place d'expliquer (ft-v631)
+  if(box) box.innerHTML='<div class="sw-feat sw-solo"><span>'+f.ic+'</span><div><b>'+f.t+'</b><small>'+f.d+'</small></div></div>';
   var sub=document.getElementById('whatsnew-sub');
   if(sub) sub.textContent=multi?('Nouveauté '+(_wnIdx+1)+' sur '+_wnItems.length+' 👇'):'Une nouveauté pour toi 👇';
   var dots=document.getElementById('wn-dots');
