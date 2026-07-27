@@ -32,6 +32,27 @@ vit → depuis quelle version*, relancé à chaque livraison. À croiser une foi
 retrouver les fonctionnalités « orphelines » (dans le code, absentes de la doc) — la prise de sang
 n'est probablement pas la seule.
 
+**📏 MESURE FAITE LE 27/07 (échantillon, 2 min)** — Michel : *« on ne notait que 90 %, je me trompe ? »*
+→ **il ne se trompait pas : mesuré à ~85 %** sur les actions du backend (33 dans le code, 5 jamais
+citées dans le journal). ⚠️ Ordre de grandeur, pas une note : le test cherche des noms techniques et
+rate les cas où la doc décrit la fonctionnalité avec d'autres mots (faux positifs constatés).
+
+**Le trou n'est PAS réparti au hasard** — il se concentre sur deux profils :
+1. **Outils d'admin / maintenance** (`adminRestore`, `adminUnlockAuth`, `listUsers`, `migrateBackups`) —
+   acceptable, personne ne va demander de les reconstruire.
+2. **Petites fonctionnalités construites dans l'élan** (`logCustomExercise`, l'import de prise de sang) —
+   **c'est ça le vrai trou**. Profil identifié par Michel lui-même : *« je sortais des idées à fond, on
+   codait, j'essayais »*, puis on passait à la suivante sans écrire l'entrée.
+
+**⚠️ Interprétation à ne pas se tromper** : ce n'est **pas** un défaut de rigueur, c'est le **coût normal
+d'une phase de création rapide**. Documenter à 100 % en temps réel aurait divisé par deux ce qui a été
+construit — le choix était bon à ce moment-là. Ce qui change, c'est que l'app est maintenant assez
+grosse pour que les 15 % coûtent (le 27/07 : un audit a affirmé à tort qu'une fonctionnalité manquait).
+
+**➡️ Conséquence sur la solution** : ce n'est PAS « être plus discipliné ». La discipline ne rattrape pas
+le passé et craque justement dans les phases intenses — celles où on crée le plus. C'est pour ça que
+l'inventaire doit être **généré depuis le code**.
+
 **Statut** : pas urgent, mais c'est le **seul** vrai manque documentaire identifié (la proposition de
 réorganisation de GPT décrivait surtout des documents qui existaient déjà). À faire un jour calme.
 
