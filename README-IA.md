@@ -51,3 +51,24 @@ Le dépôt est **public** :
 ---
 
 *Ce fichier est référencé depuis `CLAUDE.md`. Le garder à jour si l'organisation de la doc change.*
+
+---
+
+## 🎭 Ce qu'on partage avec une IA extérieure — et ce qu'on garde (27/07/2026, décision Michel)
+
+> **Tout n'est volontairement pas partagé.** Ce n'est pas de la rétention, c'est ce qui donne sa valeur
+> à l'avis extérieur.
+
+**Règle : retenir nos CONCLUSIONS, partager nos CONTRAINTES.**
+
+| | Quoi | Pourquoi |
+|---|---|---|
+| 🔒 **On garde** | nos arbitrages, ce qu'on a déjà tranché et pourquoi | C'est ce qui préserve l'**indépendance**. Le 27/07, GPT est arrivé seul à *« informer sans bloquer »* — la valeur du signal venait **entièrement** du fait qu'il ignorait qu'on avait tranché pareil 3 h plus tôt. Lui dire aurait transformé une confirmation en acquiescement. |
+| 📤 **On donne** | les faits : ce qui existe déjà, ce qui contraint techniquement | Un avis extérieur qui ignore les contraintes produit des propositions **élégamment fausses**. Sa réorganisation documentaire du 27/07 était à ~60 % une description de l'existant, faute de savoir qu'il y avait 28 documents. |
+
+**Le risque à surveiller** : si on ne lui renvoie que nos objections, il finit par **s'aligner** — et on
+perd le contrepoids. *Deux conseillers d'accord, ça n'en fait qu'un.* Le but n'est pas de le convaincre :
+c'est Michel qui arbitre, et la divergence est **utile**, pas un problème à résoudre.
+
+*(Même principe que ce qu'on demande à Milo depuis ft-v595 : ne jamais redemander ce qu'on sait déjà.)*
+
