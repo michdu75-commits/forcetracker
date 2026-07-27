@@ -98,6 +98,28 @@ Vont clairement **EN HAUT** (elles améliorent le raisonnement de Milo, = là o�
 
 ---
 
+## 📅 « Milo prépare ta séance de DEMAIN » — brique courte, valeur immédiate (découvert en test, 27/07/2026)
+
+**Le constat (test réel de Michel)** : après sa séance pecs, il demande conseil → Milo lui prépare une **excellente séance pour DEMAIN** (bas du corps, 6 exercices, charges + repos + cues détaillés). **Mais elle est perdue** : le bouton « ⚡ Commencer cette séance » n'apparaît pas, car la consigne dit *« n'émets ce bloc QUE pour une séance à faire AUJOURD'HUI/MAINTENANT »* (règle **saine** : on ne veut pas qu'une séance future écrase la séance du jour). Résultat : Michel devra **tout redemander demain**, et Milo pourrait proposer autre chose. Du travail de qualité jeté.
+
+**L'idée** : quand Milo prépare une séance pour un jour FUTUR, la **garder au chaud** au lieu de la perdre → le lendemain, elle est **prête** (« Milo t'avait préparé ta séance bas du corps 💪 [La charger] »).
+
+**✅ Le mécanisme existe DÉJÀ à moitié** : `S.nextPlanned` (ft-v601/616) mémorise *quand* la prochaine séance est prévue (date + label) et l'Accueil l'affiche (« Séance prévue demain 💪 Je m'en souviens »). Il suffirait d'y **attacher le contenu** de la séance (le même bloc que `_startSessionFromMilo` consomme déjà) → à l'ouverture le jour J, un bouton la charge. **Peu de code, forte valeur** : la continuité devient tangible, et ça sert le Moment 2 (« Milo se souvient de moi »).
+
+**Points à cadrer** : ① ne JAMAIS écraser une séance en cours (règle d'or #3 — même garde-fou qu'aujourd'hui : on AJOUTE) ; ② péremption (si la séance annoncée n'est pas faite dans les ~2 jours, on l'oublie — sinon on charge un truc obsolète) ; ③ Milo doit pouvoir **réviser** son plan le jour J (l'état du jour a pu changer : fatigue, douleur) → la séance gardée est une **proposition**, pas un contrat.
+
+---
+
+## 📐 Fraîcheur de l'ÉTUDE DU CORPS (« faut creuser ça », Michel, 27/07/2026)
+
+**Le constat** : le résumé de l'étude du corps (4 photos → stature, insertions, équilibre, points forts/faibles) **est bien injecté** dans le contexte de Milo, avec une consigne ferme de s'en servir. ✅ *(Vérifié : ce n'est pas une « donnée morte », et le résumé lu est bien le plus récent.)* **MAIS il est DATÉ, et Milo n'en tient pas compte** : si le bilan a 6 mois, il raisonne sur un corps d'il y a 6 mois **sans le signaler**. Les photos, elles, ne sont pas conservées (choix de vie privée assumé) → il n'a que le compte rendu écrit.
+
+**Pourquoi ça compte** : c'est exactement le problème de **fiabilité/fraîcheur** qu'on a résolu pour le reste du profil (mode **Confirmer**, ft-v617) — mais l'étude du corps **n'a pas ce garde-fou**. Or un corps évolue (c'est même le but).
+
+**Pistes (à cadrer, pas codées)** : ① Milo **mentionne la date** quand le bilan est ancien (« ton bilan date de mars — ça a pu évoluer ») au lieu de l'énoncer comme un fait présent ; ② au-delà d'un certain âge, il **propose d'en refaire un** (via le mécanisme Confirmer/Enrichir, jamais insistant) ; ③ à terme, exploiter la **comparaison** entre bilans (le champ `evolution` existe déjà) pour raconter le chemin parcouru — pile l'esprit brique 7. ⚠️ Domaine **sensible** (corps, image de soi) : ton doux, jamais de jugement, cf. Constitution P17/P22.
+
+---
+
 ## 🤸 VISION LONG TERME — « Les PRATIQUES d'entraînement » (cardio, mobilité, préhab…) — GPT + Michel, 27/07/2026
 
 > ⚠️ **À NE PAS développer maintenant.** L'objectif de cette note est de **vérifier que l'architecture actuelle pourra accueillir cette évolution sans refonte** (question posée par GPT). ✅ **Réponse : OUI — et une partie existe déjà** (audit du code, 27/07).
