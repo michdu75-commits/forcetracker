@@ -302,6 +302,30 @@ psychologique »*.
 
 ---
 
+## 🔍 Audit des « loupés » (27/07) — moins nombreux que craint
+
+Michel, en découvrant ce document : *« y'a eu des loupés de fou »*. Vérification faite en croisant ses
+**demandes explicites** (104 messages contenant *« il faudra »*, *« n'oublie pas »*, *« j'aimerais
+que »*…) avec **l'état réel du code** :
+
+| Demande | État vérifié |
+|---|---|
+| Endométriose au profil femme · poids objectif · ligne menu « techniques » · photos d'accessoires · taille du cache affichée · audit du mode jour · offre débutant · compléments (créatine/whey + interactions) | ✅ **faites** |
+| Mode compétition (force/body) · montres connectées (Strava/Garmin/Fitbit) | 📝 **notées dans `IDEES-FUTURES.md`** — parkées volontairement, pas oubliées |
+| *« il faudra réaméliorer le logo, il est moche finalement »* (6/07) | ❌ **le seul oubli sec** — cosmétique |
+
+**➡️ Conclusion** : les demandes de **fonctionnalités** ont été suivies. Les vrais loupés sont d'une
+autre nature — ce sont des **loupés de MÉTHODE** :
+1. le **pourquoi** explicitement demandé le 18/07 (règle #12), jamais tenu → 70 % des versions sans raison ;
+2. la règle « avis extérieur, pas exécutant » énoncée le 20/07, **gravée seulement le 27/07**.
+
+*Autrement dit : ce qui se perd n'est pas ce que Michel demande de **construire**, c'est ce qu'il demande
+de **retenir**.* Une consigne de construction a un résultat visible (la fonctionnalité existe ou pas) ;
+une consigne de mémoire n'en a aucun — personne ne voit qu'elle n'a pas été appliquée. **D'où la
+nécessité d'outils qui le rendent visible** : `tools/inventaire.py`, et ce document.
+
+---
+
 ## ⏳ Ce qui reste à retrouver
 
 Ce document couvre maintenant **l'ensemble du 2 au 27 juillet** (les 26 jours de transcription
