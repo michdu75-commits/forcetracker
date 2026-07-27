@@ -258,6 +258,18 @@ souviendra plus non plus.*
 par GPT (« les fonctionnalités changent, les principes doivent durer des années ») et par Michel
 (« dans 2 ans je ne vais plus m'en souvenir »).*
 
+### R28 — Une limite non vérifiée devient une règle de conception silencieuse
+Quand quelqu'un affirme *« on ne peut pas »*, *« on est limité par… »*, **vérifier dans le code avant
+d'accepter**. Une contrainte imaginaire ne casse rien, ne remonte dans aucun test, dans aucun retour
+utilisateur — **elle se manifeste seulement par ce qui n'est jamais demandé**, et rien ne mesure ça.
+**Cas réel** : Michel a conçu l'app pendant des semaines en croyant qu'elle était bridée graphiquement
+(« on est limité avec canvas »). Vérification du 27/07 : l'interface est en **SVG + CSS** (104 `<svg>`),
+canvas ne sert qu'à traiter des **images**. Tout était faisable depuis le début. *« Je pensais que
+j'étais limité, donc je me limitais dans mon idée du graphisme. »*
+**Plus grave qu'un bug** : un bug coûte une correction, une fausse limite coûte tout ce qu'on n'a jamais
+imaginé.
+*Origine : 27/07/2026 · détail : `docs/GALERES-ET-LECONS.md`*
+
 ## 🔗 Où va le reste
 
 | Sujet | Document |

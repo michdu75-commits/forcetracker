@@ -194,3 +194,35 @@
 
 *Fichier vivant — à compléter à chaque nouvelle galère (§1), décision structurante
 (§6), fausse bonne idée (§7), et à chaque problème ouvert du §3 qui se résout.*
+
+---
+
+## 🎨 La contrainte IMAGINAIRE — « je pensais qu'on était limité en graphisme » (27/07/2026)
+
+**La galère la plus coûteuse du projet, et personne ne l'avait vue** — parce qu'elle ne produisait
+aucun bug, aucune erreur, aucun symptôme.
+
+**Ce qui s'est passé.** Michel a conçu Force Tracker pendant des semaines en croyant que l'app était
+**bridée graphiquement** (« on est vachement limité avec canvas »). Conséquence, dans ses mots :
+*« depuis le début je pensais que j'étais limité, et donc je me limitais dans mon idée du graphisme »*.
+Une maquette a même été rejetée le 21/07 (*« le cercle n'a rien à voir, il n'y a pas de profondeur »*)
+en attribuant l'échec à une limite technique.
+
+**La vérité, vérifiée le 27/07 :** l'app n'utilise **pas** `<canvas>` pour son interface.
+**104 `<svg>`** dans `index.html` ; les 17 `getContext('2d')` servent uniquement à **traiter des images**
+(redimensionner une photo, masquer le bilan sanguin, la caméra, le logo). Dégradés, ombres, halos,
+profondeur, flou d'arrière-plan, animations, formes organiques : **tout était faisable depuis le début**,
+en CSS et SVG, pour un coût nul.
+
+**Pourquoi ça n'a pas été détecté plus tôt** : une contrainte imaginaire ne casse rien. Elle ne remonte
+ni dans les tests, ni dans les retours utilisateurs, ni dans les audits. **Elle se manifeste uniquement
+par ce qui n'est PAS demandé** — et ça, aucun outil ne le mesure.
+
+### ➡️ Le réflexe à garder
+Quand quelqu'un dit *« on ne peut pas »*, *« on est limité par… »* ou *« ça, c'est pas possible avec
+notre techno »* — **vérifier dans le code avant d'accepter**. Une limite non vérifiée devient une règle
+de conception silencieuse, et elle ne coûte pas une heure : elle coûte tout ce qu'on n'a jamais imaginé.
+
+*(Même famille que les 8 détecteurs trop grossiers de la même soirée, mais bien plus grave : là, c'est
+une croyance qui a orienté le produit, pas un chiffre faux dans un rapport.)*
+
