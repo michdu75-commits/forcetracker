@@ -1,6 +1,7 @@
 ═══════════════════════════════════════════════════════════════════════════
 🛡️ PROPOSITION (audit 27/07/2026) — Verrouiller le serveur IA (worker.js)
-   ✅ APPLIQUÉE le 27/07/2026 (Michel présent, clone github.io confirmé, tests locaux 9/9)
+   ✅ APPLIQUÉE + VALIDÉE SUR DEVICE le 27/07/2026 (Michel présent, tests locaux 9/9 ;
+   validation réelle : Milo a produit un débrief de fin de séance normalement après déploiement)
    Reste utile pour : ajouter une 2ᵉ origine un jour + la règle de rate-limiting dashboard.
 ═══════════════════════════════════════════════════════════════════════════
 

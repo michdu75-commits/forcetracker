@@ -8,6 +8,26 @@
 
 ---
 
+## 🧑‍💻 Michel (fondateur) — test en conditions réelles du 27/07/2026
+
+> ⭐ **LE « moment signature » validé en vrai** (`docs/VISION` : le débrief de fin de séance).
+> Michel, après sa séance : *« par contre super débriefing à la fin de la séance »*.
+
+**Ce que Milo a produit** (séance pecs de reprise, après 8 jours de coupure) — et **ce que ça valide** :
+- *« 🎯 Objectif précédent : couché 105×1 — **TENU**, et largement dépassé (105×2) »* → la **CONTINUITÉ** fonctionne : Milo se souvient de l'objectif que **lui-même** avait fixé la fois d'avant (`S.registre.sessionLog`, les 3 derniers débriefs injectés dans le contexte).
+- *« 60×10, vs 56×10 le **19/07** »* · *« 68×10 le **22/06** »* → il va chercher les **vrais records datés** (zéro invention, cf. anti-invention ft-v589).
+- *« après 8 jours sans toucher une barre… la surcompensation a fait son taf »* → il tient compte du **contexte réel** (la coupure), pas seulement des chiffres.
+- *« vers ton **objectif 130** »* → les **objectifs de force chiffrés** (`S.strengthGoals`, ft-v574 — brique née précisément parce qu'il les ignorait).
+- *« paliers de **2,5 kg**, pas besoin de griller les étapes »* → prudence cohérente avec l'épaule à protéger.
+- Il **refixe un objectif** pour la prochaine séance → la boucle de continuité se referme.
+- **Résultat sportif** : 3 records en séance de reprise (105×2, 60×10 incliné, 68×12 pec deck).
+
+**🛡️ Validation implicite majeure** : Milo a répondu normalement → **le verrou anti-abus du Worker déployé le même jour ne casse rien** (c'était le dernier point « en attente de validation device » de l'audit sécurité).
+
+**Ce que ça confirme** : la mémoire, la continuité, les records et les objectifs chiffrés **travaillent ensemble**. Le débrief n'est plus une intention de la Vision — c'est du réel, sur une vraie séance. *(À rapprocher des 4 bugs Milo→Séance trouvés le même jour : le débrief, lui, restitue parfaitement ; c'était l'**injection** de la séance qui perdait l'info — cf. ft-v625→628.)*
+
+---
+
 ## 👩‍🦱 Tatiana (Tanna Valery) — `tanna.valery.studio@gmail.com`
 **Profil** : testeuse ET **coach sportive** (clientèle, dont russophone). Ex-athlète de
 **force athlétique en compétition (28→34 ans)**, sport de combat plus jeune, muscu depuis
