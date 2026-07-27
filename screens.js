@@ -477,6 +477,12 @@ function _renderHomeHero(){
   const info=getRecoveryInfo(score);
   const circ=+(2*Math.PI*34).toFixed(1);   // r=34 → circonférence de l'arc
   const offset=score!==null?+(circ*(1-score/100)).toFixed(1):circ;
+  // Reflet « vivant » : une NAPPE large, pas un point. Un segment court qui se déplace se lit
+  // comme une bestiole qui rampe (retour Michel : « on dirait un ver ») ; une zone large et floue
+  // se lit comme de la lumière qui bouge. D'où 55 % de l'arc, très flou, très discret.
+  const arcLen=+(circ-offset).toFixed(1);
+  const trav=+Math.max(arcLen*0.55,40).toFixed(1);      // longueur de la nappe
+  const travRun=+(arcLen+trav*0.5).toFixed(1);          // elle entre ET sort de l'arc
   const ringColor=score!==null?info.color:'var(--t3)';
   let accent='52,211,153';
   if(score!==null&&score<40)accent='255,106,115';
@@ -535,7 +541,7 @@ function _renderHomeHero(){
           +'<stop offset="1" stop-color="'+ringColor+'" stop-opacity=".45"/></linearGradient>'
           +'<filter id="rrGlow" x="-60%" y="-60%" width="220%" height="220%">'
           +'<feDropShadow dx="0" dy="1.5" stdDeviation="4.5" flood-color="'+ringColor+'" flood-opacity=".65"/></filter>'
-          +'<filter id="rrSoft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.6"/></filter>'
+          +'<filter id="rrSoft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4.2"/></filter>'
         +'</defs>'
         +'<g transform="rotate(-90 48 48)">'
         +'<circle cx="48" cy="48" r="34" fill="none" stroke="var(--bg3)" stroke-width="10" filter="url(#rrIn)"/>'
@@ -543,8 +549,8 @@ function _renderHomeHero(){
         +' stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" filter="url(#rrGlow)"/>'
         +'<circle id="rr-hi" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"'
         +' stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" opacity=".26" transform="translate(0,-2.2)" style="mix-blend-mode:screen;"/>'
-        +'<circle id="rr-trav" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round"'
-        +' stroke-dasharray="24 '+circ+'" stroke-dashoffset="0" opacity="0" filter="url(#rrSoft)" style="mix-blend-mode:screen;"/>'
+        +'<circle id="rr-trav" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"'
+        +' stroke-dasharray="'+trav+' '+circ+'" stroke-dashoffset="0" opacity="0" filter="url(#rrSoft)" style="mix-blend-mode:screen;"/>'
         +'</g></svg>'
         +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">'
         +'<span id="rr-num" style="font-family:var(--font-cond);font-size:32px;font-weight:900;color:var(--t1);line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.5);">'+score+'</span>'

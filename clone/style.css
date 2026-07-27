@@ -1148,11 +1148,11 @@ html.ob-done #onboarding{display:none;}
 #recup-ring #rr-trav{ animation:rr-travel 6.5s cubic-bezier(.45,0,.55,1) infinite; }
 @keyframes rr-travel{
   0%   { stroke-dashoffset:0;               opacity:0;   }
-  14%  { opacity:.22; }
-  30%  { opacity:.42; }
-  46%  { opacity:.48; }
-  62%  { opacity:.42; }
-  78%  { opacity:.20; }
+  14%  { opacity:.14; }
+  30%  { opacity:.26; }
+  46%  { opacity:.30; }   /* discret : il éclaire, il ne brille pas */
+  62%  { opacity:.26; }
+  78%  { opacity:.13; }
   88%  { stroke-dashoffset:var(--rr-run,-120px); opacity:0; }
   100% { stroke-dashoffset:var(--rr-run,-120px); opacity:0; }
 }
