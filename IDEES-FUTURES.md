@@ -118,6 +118,19 @@ Vont clairement **EN HAUT** (elles améliorent le raisonnement de Milo, = là o�
 
 *(Doc source : « Vision à long terme – Mode Coach », note GPT/Michel. À relire avant tout choix d'archi structurant, pour vérifier qu'on ne ferme pas la porte.)*
 
+### 🧪 UN PROTOTYPE RÉEL EXISTE / ARRIVE — l'app coaching « coach↔clients » (Michel, 27/07/2026)
+
+**Michel développe une application de coaching à distance POUR une cliente coach** (qui suit ~6 personnes) — un **projet séparé** (travail client), qu'il **fera sûrement évoluer** et qui **servira peut-être à Force Tracker** (au Mode Coach). C'est **exactement la couche que FT n'a jamais construite** : la relation **coach↔client**, asynchrone, multi-tenant et sécurisée.
+
+- **Ce que c'est (périmètre B, minimal & discipliné)** : messagerie (1 fil par client), envoi de **PDF** (programme = doc fabriqué hors app), **check-in hebdo** (poids/tour de taille/photos + 4 échelles 1-5 + commentaire), boîte de réception coach. **Zéro IA** — un *canal*, pas un cerveau.
+- **Stack** : **Supabase** (Postgres + Auth + Storage, région **EU** pour la santé) + **PWA** + hébergement statique. → **Serveur d'abord** (l'opposé du local-first de FT) — c'est justement ce qui en fait un banc d'essai du Mode Coach.
+- **Ce que ça prouve/apprend pour FT** : ① le **modèle serveur de relations** (`profils` avec `coach_id`, `messages`, `checkins`) + ② la **sécurité multi-tenant** (RLS stricte : un client ne lit que ses lignes, une coach que celles de ses clients ; bucket **privé** + URL signées courtes) — pile les points « DONNÉES + PERMISSIONS » identifiés comme *le vrai défi* ci-dessus. Michel note d'ailleurs le **nommage FR réutilisable** (« ces noms serviront à un autre projet ») → **pont conscient** vers le Mode Coach.
+- **⚠️ Garde-fous stratégiques (analyse Claude, 27/07)** :
+  - **Garder les 2 produits SÉPARÉS pour l'instant** (stacks différentes : vanilla/Apps Script vs Supabase). Ne PAS chercher à partager du **code** prématurément (= fausse bonne idée). Le pont FT↔coaching se fera **plus tard, par le MODÈLE DE DONNÉES commun**, pas par le code.
+  - **Périmètre A ≠ B.** Le « périmètre A » (constructeur de programmes, saisie de séance, suivi nutrition, agenda, finance) **duplique le cœur de Force Tracker** → le recoder from scratch = réinventer FT. **B est le bon choix** (complémentaire, non-redondant). Si un jour on veut « A », la vraie voie = **brancher ce canal coach↔client sur FT**, pas rebâtir FT sur Supabase.
+  - **Focus** : c'est du travail client distinct → cloisonner, ne pas diluer la roadmap FT (et inversement).
+- **En une phrase** : *ça ne change pas l'approche de FT (qui reste local-first / mono-utilisateur / Milo), mais c'est le **prototype idéal du futur Mode Coach** — à condition de rester en périmètre B et de ponter par les DONNÉES, jamais par le code.*
+
 ---
 
 # 🗺️ FEUILLE DE ROUTE (ordre des priorités)
