@@ -91,6 +91,37 @@ données déterministes + mémoire), **l'IA raisonne** (Cerveau 2). Les parties 
 **connaissance** (ancre/accessoire, biomécanique, EXLIB, VM) et les **données** ; le raisonnement se
 **guide** par le prompt, il ne se code pas comme un moteur figé.
 
+### 📚 Le CATALOGUE DES SOURCES DE CONTEXTE (Cerveau 1 « comprendre », formalisé — retour GPT 27/07)
+
+GPT a proposé de définir « une architecture des sources que Milo consulte avant de répondre » (un **moteur
+de contexte**). Excellente idée — et **elle est déjà en place à ~100 %** : `buildCoachContext()` (coach.js)
+assemble déjà ces sources. Ce catalogue **rend explicite** ce qui était enfoui dans le code (référence
+commune pour tout futur module — cf. « les modules sont des clients du cerveau »). **Il ne demande AUCUN
+nouveau code.**
+
+| # | Source de contexte | Où c'est injecté dans Milo | Statut |
+|---|---|---|---|
+| 1 | **Profil vivant** (âge/taille/poids/objectif/matériel/blessures/autres sports/habitudes) | `PROFIL ATHLÈTE` + `ADN SPORTIF` + `coachQuiz` (lieu/fréq/durée/autre sport) + Registre/Observations | ✅ |
+| 2 | **Données d'entraînement** (séances, charges, volume, fréquence, records, progression) | `RECORDS PERSONNELS` (1RM), historique séances, détecteur fréquence/style | ✅ |
+| 3 | **Suivi physique** (pesées **en TENDANCE**, composition) | `POIDS & COMPOSITION` (kg/sem via régression, pas juste le poids du jour) + bilans balance (`bodyScans`) | ✅ |
+| 4 | **Récupération** (sommeil, fatigue, douleurs, motivation, check-in) | `RÉCUPÉRATION & SOMMEIL` (score + moyenne 3j) + **état du jour** + check-ins séances | ✅ |
+| 5 | **Nutrition** (calories, macros, plan) | Cadre nutrition injecté (partiel — la vraie brique nutrition viendra) | ◑ partiel |
+| 6 | **Documents de santé** (analyses de sang : ferritine, vit. D, glycémie, TSH…) | `BILAN SANGUIN` (import photo labo → marqueurs ; **contextualise, JAMAIS de diagnostic**, oriente vers le médecin) + `PROFIL SANTÉ` | ✅ |
+| 7 | **Contexte de vie** (travail de nuit, stress, changement de salle, arrêt…) | `ADN` (mode de vie/contraintes) + Observations + détecteurs déclaré/réalisé | ✅ |
+
+**La règle qui pilote le tout = Principe 19 « La pertinence avant la disponibilité »** (Constitution, ft-v575) :
+*avant chaque réponse, la bonne question est « quelles infos sont PERTINENTES pour CETTE personne, ICI ? »* —
+une donnée n'est utilisée que si elle améliore la décision, jamais parce qu'elle existe (+ Principe 20 :
+raisonner sur les **tendances**, pas le bruit). Le point de GPT sur les **pesées en tendance** est donc
+**déjà** satisfait (source 3).
+
+> ⚠️ **Nuance honnête (Claude).** Avec un LLM on ne **sélectionne** pas les sources de façon déterministe :
+> on **assemble** le contexte et le modèle **pondère** le pertinent (guidé par le Principe 19 dans le prompt).
+> Le « moteur de contexte » = **catalogue complet des sources + règle de pertinence**, pas un aiguilleur
+> magique. Bilan : les 7 sources sont couvertes (bilan sanguin **compris**, corrigé le 27/07 — je l'avais
+> d'abord cru absent) → **rien à construire, tout à garder cohérent** quand on ajoute une source (elle
+> entre dans ce catalogue + passe par la règle de pertinence).
+
 ### 🧩 Le cerveau = une couche de DÉCISION PARTAGÉE — « une seule mémoire, une seule voix » (GPT 27/07 + nuance Claude)
 
 Prolongement direct du principe **« le profil vivant = source de vérité »** (`docs/PROFIL-VIVANT.md`) :
