@@ -951,12 +951,11 @@ function _isTester(){
   const e=(S.email||'').trim().toLowerCase();
   return !!e && typeof TESTER_EMAILS!=='undefined' && TESTER_EMAILS.indexOf(e)>=0;
 }
-// ─── VERROU « BÊTA TESTEUR » pour les features nutrition/séance issues des retours testeuses ───
-// Réglage manuel des calories, objectif « Perte de gras + muscle » (recomposition) et « maxi » reps
-// sont EN PROD mais visibles UNIQUEMENT pour les testeurs pour l'instant.
-// 👉 POUR OUVRIR À TOUT LE MONDE : remplacer le corps par `return true;` (+ réactiver le pop-up
-//    « Quoi de neuf » v15/16/17 et les red dots manual-kcal/goal-recomp/reps-maxi dans constants.js).
-function _isNutriBeta(){ return (typeof _isTester==='function' && _isTester()); }
+// ─── (ANCIEN VERROU « BÊTA TESTEUR ») — OUVERT À TOUT LE MONDE depuis ft-v623 ───
+// Réglage manuel des calories/macros, objectif « Perte de gras + muscle » (recomposition), « maxi » reps
+// et pointeur Journal : longtemps réservés aux testeurs, désormais visibles pour TOUS (décision Michel).
+// Le verrou reste une fonction (au lieu d'inliner `true`) pour ne pas avoir à rechercher tous les usages.
+function _isNutriBeta(){ return true; }
 // « Super testeur » (Christophe pour l'instant) : accès à l'Espace Testeur (analyse photos approfondie + boîte à idées).
 function _isSuperTester(){
   const e=(S.email||'').trim().toLowerCase();

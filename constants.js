@@ -234,7 +234,10 @@ const NEW_FEATURES=[
   {id:'food-barcode', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : scan d\'un code-barres dans le journal — le produit est reconnu automatiquement (base mondiale)'},
   {id:'food-score',   screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : le score santé des produits (Nutri-Score + niveau de transformation) au code-barres — gratuit pour tout le monde'},
   {id:'food-bc-photo', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : photographie le code-barres, l\'IA lit les chiffres pour toi (plus besoin de les taper)'},
-  // ⏳ Réservé testeurs — red dots manual-kcal/goal-recomp/reps-maxi à réactiver à l'ouverture générale.
+  // Ouverts à tous depuis ft-v623 (étaient réservés testeurs) :
+  {id:'goal-recomp', screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : objectif « Perte de gras + muscle » (recomposition) dans Profil → Objectif — pour perdre du gras ET prendre du muscle en même temps (léger déficit + protéines hautes)'},
+  {id:'manual-kcal', screen:'nutrition', desc:'Nouveau : tu peux régler tes calories et macros À LA MAIN dans Nutrition (bouton sous l\'anneau) — pratique si tu suis un plan précis ; retour à l\'automatique quand tu veux'},
+  {id:'reps-maxi',   screen:'log',     desc:'Nouveau : mets « maxi » comme nombre de reps dans l\'éditeur de programme — pour une série « au maximum » (AMRAP)'},
   {id:'meal-import',  screen:'nutrition', desc:'Nouveau : importer le plan alimentaire de ta diététicienne (photo/PDF) — l\'IA range les repas'},
   // Accueil — Sommeil déplacé ici + historique (spot = la barre « Historique du sommeil »)
   {id:'sleep-home',    screen:'home', spot:'sleep-hist-toggle', desc:'Nouveau : ton sommeil est maintenant sur l\'Accueil (juste sous ton score de récup) + tu peux noter un jour oublié'},
@@ -249,10 +252,12 @@ const NEW_FEATURES=[
 // un utilisateur à jour ne voit que la (ou les) toute(s) dernière(s).
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
-// ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v46/47/48 + WHATS_NEW_MAX=48) quand on ouvre à tout le monde.
-//    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
+// ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
+//    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  {v:48, ic:'🎯', t:'Nouvel objectif : « Perte de gras + muscle »', d:'Dans Profil → Objectif (et à l\'inscription), un nouvel objectif « Perte de gras + muscle » (recomposition) : pour perdre du gras ET prendre du muscle EN MÊME TEMPS. Tes calories et macros sont calculées pour ça (léger déficit + protéines hautes), et Milo adapte ses conseils. Idéal si tu veux te raffermir sans « sécher » ni « prendre » franchement. 🎯'},
+  {v:47, ic:'✏️', t:'Règle tes calories et macros à la main', d:'Dans Nutrition, tu peux maintenant AJUSTER toi-même tes calories et tes macros (protéines / glucides / lipides), au lieu de laisser le calcul automatique. Pratique si tu suis un plan précis (diététicien, préférence perso). Un bouton sous l\'anneau te fait basculer entre « automatique » et « manuel » — et tu reviens à l\'auto quand tu veux. ✏️'},
+  {v:46, ic:'💯', t:'« maxi » dans tes répétitions', d:'Dans l\'éditeur de programme, tu peux mettre « maxi » comme nombre de répétitions (au lieu d\'un chiffre) — pour une série « au maximum » (AMRAP : autant de reps que possible, avec la technique propre). Pratique pour les séries de test ou de fin d\'exercice. 💯'},
   {v:45, ic:'🏋️', t:'Milo repère ton style d\'entraînement', d:'Milo regarde comment tu t\'entraînes VRAIMENT (tes séries, tes répétitions). S\'il voit que ton entraînement ressemble plutôt à du travail de FORCE (séries lourdes, peu de reps) alors que ton objectif est « prise de muscle » — ou l\'inverse — il te fait une petite observation sur l\'Accueil et te PROPOSE de mettre ton objectif à jour. Il ne change JAMAIS rien tout seul : c\'est toi qui décides (« Oui, mets à jour » / « Non, garde comme ça »), et il ne se base que sur une vraie tendance (plusieurs séances, pas un jour). Comme un vrai coach qui remarque que tes actes et ton objectif ne disent pas tout à fait la même chose. 🏋️'},
   {v:44, ic:'🧠', t:'Ta page « Ce que Milo sait de toi » devient vivante', d:'Ouvre Menu → « Ce que Milo sait de toi » : tout en haut, une phrase te dit à quel point Milo peut te conseiller — et elle MONTE au fil du temps, sans jamais redescendre (ce n\'est pas un score, tu n\'es jamais « évalué »). Juste en dessous, « 🧠 Milo a appris récemment » te montre les dernières choses qu\'il a retenues sur toi (tes habitudes, un autre sport, une gêne…), la plus récente en premier. Plus tu utilises Force Tracker, plus Milo te connaît vraiment — et maintenant, ça se voit. 🧠'},
   {v:43, ic:'🌿', t:'Milo garde ton profil à jour', d:'De temps en temps, Milo te fait une petite vérification sur l\'Accueil : « Tu t\'entraînes toujours en salle basique ? », « Une séance dure toujours ~45 min ? »… Si rien n\'a changé, tu tapes « Oui, toujours » (ça ne modifie rien — Milo note juste que c\'est à jour) ; si ça a changé, « Non, ça a changé » et tu choisis la nouvelle réponse en 1 tap. Comme ça, ton coach ne te connaît pas seulement au jour de l\'inscription : il reste à jour avec toi, sans jamais te harceler (au plus une petite question par semaine, et « Plus tard » est toujours possible). 🌿'},
@@ -296,7 +301,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=45;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v46/47/48)
+const WHATS_NEW_MAX=48;     // = plus grand `v` ci-dessus
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
