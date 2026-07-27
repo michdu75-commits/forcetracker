@@ -53,6 +53,29 @@ grosse pour que les 15 % coûtent (le 27/07 : un audit a affirmé à tort qu'une
 le passé et craque justement dans les phases intenses — celles où on crée le plus. C'est pour ça que
 l'inventaire doit être **généré depuis le code**.
 
+**🚨 LA HIÉRARCHIE DU RISQUE (mesurée le 27/07)** — Michel : *« dans ces 15 % il peut y avoir des infos
+super importantes »*. Il a raison, mais le risque n'est **pas** là où on croit. Quatre niveaux :
+
+| Niveau | État mesuré | Récupérable ? |
+|---|---|---|
+| ① **Ce qui existe** (le *quoi*) | ~85 % documenté | ✅ **Oui, à 100 %** — le code *est* la liste. Un inventaire généré ne peut pas mentir. |
+| ② **Où sont les zones dangereuses** | **75 avertissements** dans le code (`log.js` 18 · `coach.js` 16 · `app.js` 10 — concentrés au bon endroit) | ✅ Déjà couvert |
+| ③ **POURQUOI c'est dangereux** | **21 sur 75 seulement (28 %)** l'expliquent · **2 sur 75 (3 %)** renvoient à une version | ❌ **LE VRAI TROU** — le code ne peut PAS le redonner |
+| ④ Ce qui n'est écrit nulle part | dans la tête de Michel | ❌ Aucun script ne peut le trouver |
+
+**Pourquoi le niveau ③ est le plus grave** : *« ne pas toucher »* sans *« sinon X casse »* protège d'une
+modification distraite, mais **ne survit pas à une raison légitime de changer** — le jour où il faut
+vraiment toucher là, personne ne peut peser le risque. Et une barrière dont plus personne ne connaît la
+raison finit par être retirée « puisqu'elle ne sert à rien ».
+
+**➡️ Bonne nouvelle : c'est FINI et CHIFFRÉ** — **54 commentaires** à compléter, pas un chantier infini.
+Et c'est celui qui se **dégrade le plus vite** (il dépend de la mémoire) → à faire **avant** l'inventaire
+du niveau ①, qui lui ne se périme pas.
+
+**Pour le niveau ④, pas de projet : une HABITUDE.** Quand Claude touche à quelque chose et demande
+*« pourquoi c'est comme ça ? »*, Michel répond → **on l'écrit dans le commentaire, tout de suite**. Ça
+vaut plus que n'importe quel audit.
+
 **Statut** : pas urgent, mais c'est le **seul** vrai manque documentaire identifié (la proposition de
 réorganisation de GPT décrivait surtout des documents qui existaient déjà). À faire un jour calme.
 
