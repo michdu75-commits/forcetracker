@@ -158,7 +158,7 @@ const _HELP_DATA={
       {i:'💡',t:'Ton score de récup (sur NN/100) estime à quel point ton corps est prêt à s\'entraîner aujourd\'hui. Tape « Pourquoi ce score ? » juste en dessous pour voir, en clair, D\'OÙ il vient : sommeil, séance récente, âge, jours enchaînés… chaque facteur avec sa raison et son +/−. Il remonte au fil de la journée après une séance, et reste un simple repère — ton ressenti prime toujours.'},
       {i:'🧠',t:'Milo apprend à te connaître : de temps en temps, il te pose une petite question sur l\'Accueil (« tu t\'entraînes plutôt le matin, non ? »). Tu réponds « Oui, c\'est vrai » ou « Pas vraiment » — rien n\'est retenu sans ton accord. Tout ce qu\'il a retenu est consultable et effaçable dans Menu → « Ce que Milo sait de toi ».'},
       {i:'🌱',t:'Milo complète ton profil tout seul : s\'il manque une info de base (où tu t\'entraînes, combien de séances/semaine, la durée), il te propose de la remplir en 1 tap sur l\'Accueil — de vrais boutons, rien à écrire. Ta réponse va direct dans ton profil et ses conseils deviennent plus justes. Pas envie maintenant ? « Plus tard » et il te le redemandera une autre fois. (Utile surtout si tu as sauté ces questions à l\'inscription.)'},
-      {i:'🔎',t:'Milo s\'adapte à ce que tu fais vraiment : il compare ce que tu as déclaré (ex. ta fréquence de séances) à ce qu\'il MESURE dans tes vraies séances. S\'il repère un changement DURABLE (pas juste une semaine chargée), il te fait une petite vérification sur l\'Accueil (« tu t\'entraînes plutôt 5×/sem maintenant, ça a changé ? ») → « Oui, mets à jour » ou « Non, garde comme ça ». Il ne change JAMAIS rien tout seul — il constate et te laisse décider.'},
+      {i:'🔎',t:'Milo s\'adapte à ce que tu fais vraiment : il compare ce que tu as déclaré à ce qu\'il MESURE dans tes vraies séances. ① Ta FRÉQUENCE : s\'il repère un changement DURABLE (pas juste une semaine chargée), il te fait une petite vérification (« tu t\'entraînes plutôt 5×/sem maintenant, ça a changé ? »). ② Ton STYLE d\'entraînement : s\'il voit que tu t\'entraînes plutôt en FORCE (séries lourdes, peu de reps) alors que ton objectif est « prise de muscle » — ou l\'inverse — il te propose d\'ajuster ton objectif. Dans les deux cas : « Oui, mets à jour » ou « Non, garde comme ça ». Il ne change JAMAIS rien tout seul — il constate et te laisse décider.'},
       {i:'🚴',t:'Milo tient compte de tes autres sports : de temps en temps il te demande sur l\'Accueil si tu pratiques un autre sport (vélo, course, foot, natation…) — un tap pour répondre (« Aucun » est valable). Un autre sport change ta récupération ET ta dépense d\'énergie (donc tes calories), et Milo en tiendra compte dans ses conseils.'},
       {i:'🌿',t:'Milo garde ton profil à jour : une info peut vieillir (tu as changé de salle, tes séances sont plus courtes…). De temps en temps il te fait une petite vérification sur l\'Accueil (« toujours en salle basique ? »). « Oui, toujours » ne change RIEN — il note juste que c\'est à jour ; « Non, ça a changé » → tu choisis la nouvelle réponse en 1 tap. Au plus une petite question par semaine, et « Plus tard » est toujours possible : jamais de harcèlement.'},
       {i:'🟢',t:'Milo te connaît de mieux en mieux : ouvre Menu → « Ce que Milo sait de toi ». Tout en haut, une phrase te dit — simplement — à quel point Milo peut te conseiller (de « il apprend à te connaître » à « il connaît très bien ton profil — conseils sur-mesure »). Ce n\'est PAS une note ni un score : ça monte au fil de ce que tu lui apportes (tes séances, tes réponses à ses questions, ce que tu lui confies) et ça ne redescend JAMAIS, même si tu effaces une info. Juste en dessous, « 🧠 Milo a appris récemment » liste les dernières choses qu\'il a retenues sur toi (la plus récente en haut). Et tout en bas, la liste complète — tu peux en effacer. 🔒 Privé.'},
@@ -654,6 +654,21 @@ function _renderObsCard(){
         +'<div class="obs-btns">'
         +'<button class="obs-yes ft-press" onclick="applyFreqContext(\''+_obsEsc(cx.observed)+'\')">Oui, mets à jour</button>'
         +'<button class="obs-no ft-press" onclick="dismissFreqContext(\''+_obsEsc(cx.observed)+'\')">Non, garde comme ça</button>'
+        +'</div></div>';
+      return;
+    }
+    // 2 bis. CONTEXTUEL : style observé (force/hypertrophie) ≠ objectif déclaré → Milo CONSTATE et DEMANDE
+    //         (⚠️ « observé ≠ intention » : jamais de bascule auto de l'objectif — l'utilisateur décide).
+    const sx=(typeof _pendingStyleContext==='function')?_pendingStyleContext():null;
+    if(sx){
+      el.style.padding='14px 14px 0';
+      const ask="J'observe que ton entraînement ressemble plutôt à du <b>"+_obsEsc(sx.styleLabel)+"</b>, alors que ton objectif est « <b>"+_obsEsc(sx.goalLabel)+"</b> ». Souhaites-tu passer sur « <b>"+_obsEsc(sx.newGoalLabel)+"</b> » ? (ça n'a rien d'obligatoire)";
+      el.innerHTML='<div class="obs-card">'
+        +'<div class="obs-head">'+avatar+'<div class="obs-lead">'+name+' — petite observation 😊</div></div>'
+        +'<div class="obs-txt">'+ask+'</div>'
+        +'<div class="obs-btns">'
+        +'<button class="obs-yes ft-press" onclick="applyStyleContext(\''+_obsEsc(sx.newGoal)+'\',\''+_obsEsc(sx.observed)+'\')">Oui, mets à jour</button>'
+        +'<button class="obs-no ft-press" onclick="dismissStyleContext(\''+_obsEsc(sx.observed)+'\')">Non, garde comme ça</button>'
         +'</div></div>';
       return;
     }

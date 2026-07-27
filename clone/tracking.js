@@ -1664,6 +1664,69 @@ function dismissFreqContext(observed){
   }catch(e){console.warn('[FT ctx] freq dismiss',e);}
 }
 
+// ─── PROFIL VIVANT — détecteur CONTEXTUEL « style » : force vs hypertrophie (docs/PROFIL-VIVANT.md) ───
+// L'app OBSERVE la signature d'entraînement (reps des séries faites). ⚠️ « observé ≠ intention » : le style
+// est un INDICE FORT, jamais une preuve → Milo ne bascule JAMAIS l'objectif tout seul (Constitution), il
+// CONSTATE et DEMANDE. Ne s'active que si l'objectif est muscle/force ET que le style observé est clairement
+// l'AUTRE (stable sur plusieurs séances). Anti-nag : une fois tranché pour un style, on ne redemande pas.
+function _sessionStyleStats(nSess){
+  let force=0,hyp=0,endur=0,tot=0;
+  const sess=(S.sessions||[]).filter(s=>s&&(s.date||s.ts)).slice(0,nSess); // sessions récentes (unshift → les + récentes en tête)
+  sess.forEach(s=>{
+    (s.exs||s.exercises||[]).forEach(ex=>{
+      (ex.sets||[]).forEach(st=>{
+        if(!st||!st.done)return;
+        if(st.type==='É'||st.type==='W')return;                // échauffement exclu
+        const r=+st.reps; if(!r||r<=0)return;                  // « maxi »/vide exclu
+        tot++;
+        if(r<=5)force++; else if(r<=12)hyp++; else endur++;
+      });
+    });
+  });
+  return {force,hyp,endur,tot};
+}
+function _pendingStyleContext(){
+  try{
+    const goal=S.goal||'';
+    if(goal!=='muscle'&&goal!=='force')return null;            // le style ne « mappe » l'objectif que sur ces 2
+    const st=_sessionStyleStats(10);
+    if(st.tot<25)return null;                                  // pas assez de séries pour juger une signature
+    const fPct=st.force/st.tot, hPct=st.hyp/st.tot;
+    let observed=null, newGoal=null;
+    if(goal==='muscle'&&fPct>=0.60)      { observed='force'; newGoal='force'; }   // s'entraîne en force mais vise le muscle
+    else if(goal==='force'&&hPct>=0.60)  { observed='hyp';   newGoal='muscle'; }  // s'entraîne en volume mais vise la force
+    else return null;
+    const cx=S.registre&&S.registre.ctxStyle;                  // anti-nag : déjà tranché pour CE style observé
+    if(cx&&cx.observed===observed)return null;
+    const GL=(typeof GOAL_LABELS!=='undefined')?GOAL_LABELS:{muscle:'prise de muscle',force:'force'};
+    return {observed, newGoal, goalLabel:(GL[goal]||goal), newGoalLabel:(GL[newGoal]||newGoal),
+            styleLabel:(observed==='force'?'travail de force (séries lourdes, peu de reps)':'travail de volume / hypertrophie (séries plus longues)')};
+  }catch(e){return null;}
+}
+function applyStyleContext(newGoal,observed){
+  try{
+    S.goal=newGoal;                                            // ⚠️ seulement sur action explicite de l'utilisateur
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    S.registre.ctxStyle={observed,at:today(),result:'updated'};
+    S.registre.lastObsAt=today();
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    if(typeof renderNutrition==='function'){try{renderNutrition();}catch(e){}}  // les macros suivent l'objectif
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    const GL=(typeof GOAL_LABELS!=='undefined')?GOAL_LABELS:{};
+    if(typeof toast==='function')toast('Objectif mis à jour 👍 « '+((GL[newGoal])||newGoal)+' » — j\'adapte conseils et nutrition.','success');
+  }catch(e){console.warn('[FT ctx] style apply',e);}
+}
+function dismissStyleContext(observed){
+  try{
+    if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
+    S.registre.ctxStyle={observed,at:today(),result:'kept'};  // on garde l'objectif déclaré, on ne redemande pas
+    S.registre.lastObsAt=today();
+    persist();
+    if(typeof _renderObsCard==='function')_renderObsCard();
+    if(typeof toast==='function')toast('Ok, je garde ton objectif actuel 👍','info');
+  }catch(e){console.warn('[FT ctx] style dismiss',e);}
+}
+
 // ─── PROFIL VIVANT — mode « ENRICHIR » (docs/PROFIL-VIVANT.md) ───
 // Des infos qu'on ne peut PAS déduire des données (donc Milo DEMANDE, il ne détecte pas) mais qui enrichissent
 // le coaching. 1ʳᵉ : un AUTRE SPORT pratiqué (foot/vélo/course… → influe sur la récup et la dépense énergétique,

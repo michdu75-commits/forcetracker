@@ -180,8 +180,10 @@ jamais « parce que c'est lundi ») :
 `ft-v612`) est **PROACTIVE** (max 1/semaine). **1ᵉʳ détecteur contextuel livré (`ft-v614`) : la FRÉQUENCE**
 — l'app mesure les séances/semaine sur 4 semaines, exige un écart **stable** (≥3 semaines du même sens,
 jamais un pic), et propose la mise à jour (`_pendingFreqContext`/`applyFreqContext`/`dismissFreqContext`,
-anti-nag par niveau observé). ⏭️ Détecteurs suivants : **autre sport détecté**, **dérive de poids**,
-**style force/hypertrophie** (celui-ci = intention → on questionne, jamais on ne tranche).*
+anti-nag par niveau observé). **2ᵉ détecteur livré (`ft-v622`) : le STYLE** (force vs hypertrophie) —
+signature d'entraînement (reps des séries faites) comparée à l'objectif ; **intention → on QUESTIONNE,
+jamais on ne tranche** (`S.goal` ne change qu'au tap de l'utilisateur ; anti-nag `ctxStyle`). ⏭️ Détecteurs
+suivants : **dérive de poids** *(reporté : action ambiguë, lié à la nutrition pas encore construite)*.*
 
 ---
 
@@ -206,8 +208,9 @@ questions poser) reste **interne** — backbone en place (`S.coachQuiz.confirmed
 finement ensuite. **Brique 2 « Milo a appris récemment » ✅ livrée** (`ft-v620`) : la liste vivante des
 dernières infos apprises (obs validées + infos de base via `S.registre.learnedAt`, dates honnêtes), en
 haut de « Ce que Milo sait de toi » — **c'est avec elle** qu'a été fait le pop-up « Quoi de neuf » (v44,
-l'annonce forte des Briques 1+2). **Reste à faire** : d'autres **détecteurs contextuels** (dérive de poids,
-style force/hypertrophie = intention → questionner, jamais trancher) + exploiter la **fiabilité interne**
+l'annonce forte des Briques 1+2). **Détecteurs contextuels : fréquence ✅ (ft-v614) + style ✅ (ft-v622,
+= intention → questionner, jamais trancher).** **Reste à faire** : le détecteur **dérive de poids** *(reporté
+— action ambiguë, lié à la nutrition à venir)* + exploiter la **fiabilité interne**
 pour prioriser plus finement les questions + d'autres questions d'enrichissement.
 
 ---

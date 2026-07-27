@@ -178,6 +178,7 @@ const NEW_FEATURES=[
   {id:'reco-why', screen:'home', spot:'home-hero', desc:'Nouveau : « Pourquoi ce score ? » sous ta récup — une fiche claire explique ce que le chiffre veut dire et d\'où il vient (sommeil, séance récente, âge…)'},
   {id:'milo-fill-profile', screen:'home', desc:'Nouveau : Milo complète ton profil tout seul — s\'il manque une info de base (lieu, fréquence, durée d\'entraînement), il te propose de la remplir en 1 tap sur l\'Accueil. Ta réponse va direct dans ton profil'},
   {id:'milo-declared-realized', screen:'home', desc:'Nouveau : Milo compare ce que tu as déclaré à ce que tu fais VRAIMENT — si ta fréquence de séances change durablement, il te propose (jamais tout seul) de mettre ton profil à jour. Un coach qui se cale sur ta réalité'},
+  {id:'milo-style-detect', screen:'home', desc:'Nouveau : Milo repère ton STYLE d\'entraînement (force vs prise de muscle) d\'après tes séries/reps. Si ça ne colle pas avec ton objectif, il te propose (jamais tout seul) de le mettre à jour'},
   {id:'milo-othersport', screen:'home', desc:'Nouveau : Milo te demande de temps en temps si tu pratiques un autre sport (vélo, course, foot, natation…) — ça change ta récup et tes calories, il en tient compte. Optionnel, en 1 tap sur l\'Accueil'},
   {id:'milo-confirm-profile', screen:'home', desc:'Nouveau : Milo garde ton profil à jour — de temps en temps il te fait une petite vérification (« toujours en salle basique ? », « toujours ~45 min ? »). « Oui » ne change rien (il note juste que c\'est à jour), « Non » → tu corriges en 1 tap. Jamais plus d\'une petite question par semaine'},
   // Séance
@@ -249,9 +250,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v45/46/47 + WHATS_NEW_MAX=47) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v46/47/48 + WHATS_NEW_MAX=48) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:45, ic:'🏋️', t:'Milo repère ton style d\'entraînement', d:'Milo regarde comment tu t\'entraînes VRAIMENT (tes séries, tes répétitions). S\'il voit que ton entraînement ressemble plutôt à du travail de FORCE (séries lourdes, peu de reps) alors que ton objectif est « prise de muscle » — ou l\'inverse — il te fait une petite observation sur l\'Accueil et te PROPOSE de mettre ton objectif à jour. Il ne change JAMAIS rien tout seul : c\'est toi qui décides (« Oui, mets à jour » / « Non, garde comme ça »), et il ne se base que sur une vraie tendance (plusieurs séances, pas un jour). Comme un vrai coach qui remarque que tes actes et ton objectif ne disent pas tout à fait la même chose. 🏋️'},
   {v:44, ic:'🧠', t:'Ta page « Ce que Milo sait de toi » devient vivante', d:'Ouvre Menu → « Ce que Milo sait de toi » : tout en haut, une phrase te dit à quel point Milo peut te conseiller — et elle MONTE au fil du temps, sans jamais redescendre (ce n\'est pas un score, tu n\'es jamais « évalué »). Juste en dessous, « 🧠 Milo a appris récemment » te montre les dernières choses qu\'il a retenues sur toi (tes habitudes, un autre sport, une gêne…), la plus récente en premier. Plus tu utilises Force Tracker, plus Milo te connaît vraiment — et maintenant, ça se voit. 🧠'},
   {v:43, ic:'🌿', t:'Milo garde ton profil à jour', d:'De temps en temps, Milo te fait une petite vérification sur l\'Accueil : « Tu t\'entraînes toujours en salle basique ? », « Une séance dure toujours ~45 min ? »… Si rien n\'a changé, tu tapes « Oui, toujours » (ça ne modifie rien — Milo note juste que c\'est à jour) ; si ça a changé, « Non, ça a changé » et tu choisis la nouvelle réponse en 1 tap. Comme ça, ton coach ne te connaît pas seulement au jour de l\'inscription : il reste à jour avec toi, sans jamais te harceler (au plus une petite question par semaine, et « Plus tard » est toujours possible). 🌿'},
   {v:42, ic:'🚴', t:'Milo tient compte de tes autres sports', d:'Tu fais du vélo, de la course, du foot, de la natation… à côté de la muscu ? Milo te pose la question de temps en temps sur l\'Accueil (1 tap) — parce qu\'un autre sport change ta récupération ET ta dépense d\'énergie (donc tes calories). Il en tiendra compte dans ses conseils. Optionnel, et « Aucun » est une réponse tout à fait valable. 🚴'},
@@ -294,7 +296,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=44;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v45/46/47)
+const WHATS_NEW_MAX=45;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v46/47/48)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
