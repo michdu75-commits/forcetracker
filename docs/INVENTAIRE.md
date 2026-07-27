@@ -18,7 +18,7 @@
 |---|---|---|
 | Écrans | 7 | 0 |
 | Lignes de menu | 4 | 0 |
-| Fenêtres (modales) | 50 | 10 |
+| Fenêtres (modales) | 50 | 2 |
 | Actions du serveur | 33 | 0 |
 | Fonctions JS | 496 | — |
 | Nouveautés annoncées | 46 | — |
@@ -95,8 +95,8 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-appguide` | ✅ |
 | `ov-super-welcome` | ✅ |
 | `ov-billoute` | ✅ |
-| `ov-christophe-photos` | ❓ |
-| `ov-emma-welcome` | ❓ |
+| `ov-christophe-photos` | ✅ |
+| `ov-emma-welcome` | ✅ |
 | `ov-kcal-edit` | ✅ |
 | `ov-tester-guide` | ✅ |
 | `ov-whatsnew` | ✅ |
@@ -109,7 +109,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `mod-share` | ✅ |
 | `mod-plate` | ❓ |
 | `mod-ex` | ✅ |
-| `ov-mm` | ❓ |
+| `ov-mm` | ✅ |
 | `ov-confirm` | ✅ |
 | `ov-reco-why` | ✅ |
 | `ov-type-help` | ✅ |
@@ -120,17 +120,17 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-food-wall` | ✅ |
 | `ov-import-hist` | ✅ |
 | `ov-hist-wall` | ✅ |
-| `ov-day-sel` | ❓ |
+| `ov-day-sel` | ✅ |
 | `ov-morpho-analysis` | ✅ |
 | `ov-weigh-edit` | ✅ |
 | `ov-bs-scan` | ✅ |
-| `ov-bodyscan-form` | ❓ |
-| `ov-blood-redact` | ❓ |
-| `ov-blood-test` | ❓ |
+| `ov-bodyscan-form` | ✅ |
+| `ov-blood-redact` | ✅ |
+| `ov-blood-test` | ✅ |
 | `ov-body-study` | ✅ |
 | `ov-photo-menu` | ✅ |
 | `ov-coach-quiz` | ✅ |
-| `ov-body-series` | ❓ |
+| `ov-body-series` | ✅ |
 | `ov-morpho-loading` | ✅ |
 | `mod-prog` | ✅ |
 | `ov-beginner-setup` | ✅ |
