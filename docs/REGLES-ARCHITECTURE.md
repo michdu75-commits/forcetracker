@@ -67,7 +67,7 @@ connaissances **techniques** (p. ex. un temps de repos), jamais à ce qui la con
 Demander « où cette information ressort-elle **concrètement** ? » est ce qui a permis de trouver les
 4 bugs ci-dessus. À faire périodiquement sur l'existant : les **données mortes** (stockées, jamais
 exploitées) doivent être soit branchées, soit retirées.
-*Origine : GPT + Claude, 27/07/2026 · ⏳ audit « données mortes » pas encore fait*
+*Origine : GPT + Claude, 27/07/2026.* ✅ **AUDIT FAIT le 27/07 au soir** — périmètre : **110 clés de stockage** (110 écrites / 110 relues), **90 champs de `S`**, **17 sous-champs** des objets riches (`registre`, `coachQuiz`, `healthProfile`). **Résultat : UNE seule donnée morte** — `S.registre.updatedAt`, une date maintenue à chaque changement du registre et **jamais lue** (elle partait même dans le cloud sans être consultée). **Décision : gardée et NOMMÉE** plutôt que retirée — elle a un usage futur précis (départager deux appareils qui synchronisent le registre, au lieu d'écraser au hasard), donc elle relève du « différé mais nommable ». Le commentaire est posé aux 2 endroits où elle est écrite, avec la consigne : *si ce besoin disparaît, la retirer*. ⚠️ **Leçon de méthode** : l'audit a demandé **4 tentatives** — les 3 premières donnaient des dizaines de faux positifs (les alias `r`, `e`, `s`… sont des noms de variables courants ; `hp.style` est un élément HTML, pas une donnée). **Seul le motif non ambigu `S.objet.champ` est fiable.**
 
 ---
 

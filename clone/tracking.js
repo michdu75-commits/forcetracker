@@ -1428,7 +1428,10 @@ function computeRegistreFacts(){
       F.anciennete={label:'Ancienneté (depuis la 1re séance)',value:`${anc} · ${sess.length} séances`};
     }
     S.registre.facts=F;
-    S.registre.updatedAt=today();
+    S.registre.updatedAt=today();   // usage NOMMÉ (audit données mortes 27/07) : rien ne la lit aujourd'hui.
+    // Elle existe pour le jour où le registre sera synchronisé entre DEUX appareils :
+    // c'est elle qui dira lequel est le plus frais, au lieu d'écraser au hasard (règle R3 :
+    // comportement DIFFÉRÉ mais NOMMABLE). Si ce besoin disparaît → la retirer.
   }catch(e){console.warn('[FT registre] computeRegistreFacts',e);}
 }
 

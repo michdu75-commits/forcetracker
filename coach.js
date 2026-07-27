@@ -1439,7 +1439,10 @@ function _recordDebriefMemory(reply, sess){
       ts: Date.now()
     });
     if(S.registre.sessionLog.length>40) S.registre.sessionLog = S.registre.sessionLog.slice(-40);
-    S.registre.updatedAt = (typeof today==='function')?today():'';
+    S.registre.updatedAt = (typeof today==='function')?today():'';   // usage NOMMÉ (audit données mortes 27/07) : rien ne la lit aujourd'hui.
+    // Elle existe pour le jour où le registre sera synchronisé entre DEUX appareils :
+    // c'est elle qui dira lequel est le plus frais, au lieu d'écraser au hasard (règle R3 :
+    // comportement DIFFÉRÉ mais NOMMABLE). Si ce besoin disparaît → la retirer.
     if(typeof persist==='function') persist(); // local + cloud (le Registre voyage déjà)
     return true;
   }catch(err){ console.warn('[FT debrief mem]', err); return false; }
