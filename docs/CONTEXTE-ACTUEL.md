@@ -6,20 +6,26 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v620`. **Déploiement Pages via GitHub Actions** (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main (le « Deploy from a branch » se bloquait ; cf. `docs/GALERES-ET-LECONS.md`).
+- **Version en ligne (live) :** `ft-v633`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
-> ### 🔁 REPRISE 26/07 (soir) — état après la session (badge live ft-v619)
-> - 🌱 **PROFIL VIVANT : les 4 modes sont LIVRÉS** (docs/PROFIL-VIVANT.md) : Compléter (ft-v612) · déclaré/réalisé = fréquence (ft-v614) · Enrichir = autre sport (ft-v615) · **Confirmer (ft-v617)**, le 4ᵉ et dernier — re-valide une info ancienne (>90j), « Oui » ne change rien (rafraîchit la date), « Non » → bascule Compléter/Enrichir.
-> - 🧠 **Brique « fiabilité par champ » — ÉTAPE 1 : la PHRASE-BÉNÉFICE (ft-v618)** en prod, **validée sur le device de Michel** (bandeau vert 🟢 « Milo connaît très bien ton profil » sur « Ce que Milo sait de toi »). Design Michel : **orienté bénéfice, jamais un score**, ne redescend jamais (high-water mark), la fraîcheur par champ reste INTERNE.
-> - 📚 **ft-v619 = aides de la phrase-bénéfice** (aide `?` Accueil 🟢 + aide détaillée Menu→Aide 🟢) + **fix déploiement** (Actions).
-> - 🧠 **ft-v620 = Brique 2 « Milo a appris récemment »** (liste vivante des dernières infos apprises, en haut de « Ce que Milo sait de toi », dates honnêtes via `learnedAt`) + **l'ANNONCE FORTE** des Briques 1+2 (WHATS_NEW v44 + red dot + aides). **Validée par capture** (rendu OK, « go » Michel). → **la couche VISIBLE de la fiabilité par champ est complète** (phrase-bénéfice + liste vivante).
-> - 🫂 **ft-v621 = MOMENT 2 « Milo se souvient de moi »** (Phase A entamée) : au retour après une pause, l'Accueil devient chaleureux + basé sur la mémoire (souvenir : obs validée / autre sport / objectif) au lieu du froid « ça fait X jours ». Déterministe, lit le profil, fallback froid si pas de mémoire (0 régression). **Pas de pop-up** (se ressent). ⏭️ v2 possible : même chose à l'ouverture du Coach.
-> - 🏋️ **ft-v622 = détecteur contextuel « STYLE »** (force vs hypertrophie) : l'app observe la signature (reps des séries faites), et si le style ≠ objectif (muscle/force) sur une tendance stable, Milo PROPOSE d'ajuster l'objectif (jamais auto — « observé ≠ intention »). Checklist #11 (WHATS_NEW v45). **Détecteurs déclaré/réalisé : fréquence ✅ + style ✅.** ⏳ **Dérive de poids REPORTÉE** (action ambiguë, liée à la nutrition à venir).
-> - 🗺️ **ROADMAP arbitrée (Michel + GPT + Claude, 27/07)** — ordre : **A)** finir le cœur relationnel = **Moment 2 « Milo se souvient de moi »** (le payoff) + détecteurs contextuels (poids, style) → **B)** ouvrir la nutrition MAIS **entrelacée** avec le Coach (retour GPT adopté : *Profil → Coach V1 → **Nutrition V1** → Coach enrichi → Nutrition avancée* — les deux s'enrichissent) → **C)** inscription « Faisons connaissance » (gros levier conversion, GPT : « ne pas sous-estimer ») → **D)** confort/qualité en continu → **E)** VM/natif/multilingue → **F)** briques 7-8 (destination). **Garde-fou gravé** : pas de **gamification** avant que les fondations soient solides (`docs/PROCESSUS-DEVELOPPEMENT.md`). **Archi gravée** : le profil vivant = source de vérité (données) + le cerveau = décision unique, les modules = « clients » — construit **émergentiellement** (`docs/MOTEUR-RAISONNEMENT-MILO.md`). ⏳ Question renvoyée à GPT : risque de l'approche émergente ?
-> - ⏭️ **Ensuite (détail Phase A)** : détecteurs contextuels (dérive de poids, style force/hypertrophie = intention → questionner) · exploiter la fiabilité INTERNE pour prioriser plus finement les questions · la refonte 2-rangées du header (parkée, session dédiée) · les diapos Guide (captures Michel).
-> - ⏳ **Restent clone-only** (test, ne pas promouvoir tel quel) : badge Gardien, questions illimitées, couplage blessure-retenue→Santé (ft-v588).
-> - ⏳ **Diapos du Guide** (ft-v612/614/615/617) = en attente de captures de Michel.
-> - ⏮️ **Ancien état encore valable** : ft-v607 a promu en prod le lot anti-interrogatoire (découverte clé : c'était le **MODÈLE** du coach, pas le prompt — cf. GALERES §1). Idée en file : 📸 photo produit → « je retiens que tu prends X ? » (Constitution P25).
+> ### 🔁 ÉTAT AU 27/07 (soir) — remplace la photo précédente
+> ⚠️ **Ce bloc se REMPLACE, il ne s'empile pas.** C'est un instantané, pas un journal (le journal est dans `CLAUDE.md`). Un fichier « à lire en premier » qui s'allonge cesse d'être lu.
+>
+> **🔥 Ce qui a occupé la journée**
+> - 🛡️ **Sécurité** : audit complet (ft-v624) → 3 fixes sans risque (XSS chat, XSS carte Milo, lecture localStorage résiliente) + **le verrou anti-abus du serveur IA DÉPLOYÉ** avec Michel (origine vérifiée avant tout appel payant). ⏳ Reste à faire **par Michel** : une règle de limitation de débit côté Cloudflare (pas urgent).
+> - 🐛 **4 bugs Milo→Séance corrigés et CONFIRMÉS SUR DEVICE** (ft-v625 charges écrasées · ft-v626 repos · ft-v627 ordre · ft-v628 consignes). Ils formaient **un seul** problème : l'info était dans le TEXTE de Milo, pas dans la DONNÉE (→ règle R4).
+> - 🔓 **ft-v623** : les 4 features ex-« réservées testeurs » ouvertes à tout le monde (« tout pour tout le monde », Michel).
+> - 🧪 **2 retours de Christophe traités le jour même** : ft-v629 (pop-up fermée au doigt qui revenait — chemin de fermeture sans marqueur, → règle R15) et ft-v630 (**carrousel** « Quoi de neuf », une nouveauté par écran).
+> - ✂️ **ft-v631/632/633** : la carte respire → Michel corrige (*« trop d'infos en une pop-up c'est pas bon »*) → **règle gravée : la pop-up ANNONCE, l'aide EXPLIQUE** (4-5 lignes max) → puis **Menu → « Nouveautés »** (historique consultable) + lien « Passer » (retour GPT).
+> - 🏛️ **`docs/REGLES-ARCHITECTURE.md` créé** (proposition GPT) : 22 règles de construction, chacune née d'un événement réel. **Importé automatiquement** par `CLAUDE.md` (`@docs/REGLES-ARCHITECTURE.md`) → lu à chaque session. ⚠️ Ne PAS multiplier les imports (dilution, cf. R20).
+>
+> **⏭️ La suite (roadmap inchangée)** : **A)** cœur relationnel (fait : Moment 2 ft-v621, détecteurs fréquence + style) → **B)** **nutrition entrelacée avec le Coach** ← *c'est ici qu'on reprend* → **C)** inscription « Faisons connaissance » → **D)** confort/qualité → **E)** natif/multilingue → **F)** briques 7-8. Garde-fou : pas de gamification avant des fondations solides.
+>
+> **🧠 Le gros chantier identifié aujourd'hui (spécifié, PAS commencé)** : *« chaque séance doit enrichir le profil vivant »* (retour GPT) — Milo produit de la connaissance sur la personne (récupération, tolérance articulaire, réponse aux montées progressives) qui reste dans le texte et n'est jamais mémorisée. **4 garde-fous écrits dans `IDEES-FUTURES.md`** (jamais auto · une séance ne prouve rien · domaine sensible · grille des 3 questions). À placer après la nutrition.
+>
+> **⏳ En attente de Michel** : les captures pour les diapos du Guide (ft-v612/614/615/617/620/622) · la règle de débit Cloudflare.
+> **⏳ Dettes connues** : ① **ce fichier doit être retaillé à 1 vraie page** (il fait ~8 pages : de vieilles photos empilées plus bas) ② l'**audit « données mortes »** (infos stockées mais jamais exploitées) ③ refonte 2-rangées du header (parkée, session dédiée).
+> **⏳ Restent clone-only** (ne pas promouvoir tel quel) : badge Gardien, questions illimitées, couplage blessure-retenue→Santé (ft-v588).
 
 ---
 
