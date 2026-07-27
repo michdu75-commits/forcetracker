@@ -69,6 +69,7 @@ Super testeur, là **depuis le début**. Retours marquants : douleurs plus préc
 (gauche/droite/les deux + plus de zones → `ft-v484`) ; bug boîte à idées photos absentes du
 mail (→ `ft-v481`, puis `ft-v397`) ; « + Série » qui repart à vide (→ `ft-v290`) ; superset
 par glisser-déposer (→ `ft-v398`). Phase 2 douleurs (intensité 1-5 + « depuis quand ») = à faire.
+**27/07/2026** — 🐛 *« quand je balance la pop-up vers le bas, elle revient à la réouverture de l'app »* → **vrai bug, 8 pop-ups concernées** : le glissement ne posait pas le marqueur « vu ». Corrigé **ft-v629** (`_OVERLAY_CLOSERS` + `_closeOverlayProper`). Encore un bug de **chemin de fermeture oublié** — comme son retour sur le point rouge. 👏
 
 ## 👩 Emma — `emma.david16@gmail.com`
 Retours (→ `ft-v438`) : repos réglable à la main en séance, option « tout dérouler » les exos,

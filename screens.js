@@ -377,6 +377,28 @@ function _blockEdgeBackSwipe(){
 }
 
 // ─── PULL-TO-DISMISS ─────────────────────────────────────────
+// 🐛 FIX ft-v629 (retour Christophe) : fermer une pop-up EN LA GLISSANT vers le bas ne la marquait
+// pas comme « vue » → elle revenait au lancement suivant. Le glissement se contentait de retirer la
+// classe `open`, sans appeler la vraie fonction de fermeture (qui, elle, écrit le marqueur).
+// ⚠️ AJOUTER ICI toute nouvelle pop-up « à effet de bord » (marqueur vu, cooldown…), sinon elle
+// reviendra en boucle quand on la ferme au doigt.
+const _OVERLAY_CLOSERS={
+  'ov-whatsnew':'closeWhatsNew',                   // marque les nouveautés comme vues
+  'ov-super-welcome':'closeSuperWelcome',
+  'ov-emma-welcome':'closeEmmaWelcome',
+  'ov-tester-guide':'closeTesterGuide',
+  'ov-tester-eq':'closeTesterEq',
+  'ov-tester-3b':'closeTester3B',
+  'ov-billoute':'closeBilloute',
+  'ov-christophe-photos':'closeChristophePhotos',
+};
+function _closeOverlayProper(ov){
+  try{
+    const fn=ov&&ov.id?_OVERLAY_CLOSERS[ov.id]:null;
+    if(fn&&typeof window[fn]==='function'){window[fn]();return;}   // fermeture propre (pose le marqueur)
+  }catch(e){console.warn('[FT dismiss]',e);}
+  if(ov)ov.classList.remove('open');                                // sinon, comportement d'origine
+}
 function _initPullToDismiss(){
   let _p0y=null,_p0x=null,_pOv=null,_pCnt=null,_pLocked=false;
 
@@ -416,7 +438,7 @@ function _initPullToDismiss(){
     if(dy>100){
       cnt.style.transform='translateY('+window.innerHeight+'px)';
       cnt.style.opacity='0';
-      setTimeout(()=>{ov.classList.remove('open');cnt.style.transform='';cnt.style.opacity='';cnt.style.transition='';},260);
+      setTimeout(()=>{_closeOverlayProper(ov);cnt.style.transform='';cnt.style.opacity='';cnt.style.transition='';},260);
     }else{
       cnt.style.transform='';cnt.style.opacity='';
       setTimeout(()=>{cnt.style.transition='';},260);
