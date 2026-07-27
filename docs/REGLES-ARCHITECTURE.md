@@ -241,6 +241,23 @@ faite ou comprise, **changer le format** marche mieux que **forcer le passage**.
 fait lire ; six écrans obligatoires font fermer l'app.
 *Origine : ft-v630*
 
+### R27 — On s'applique à nous-mêmes ce qu'on promet à l'utilisateur
+La promesse du produit est *« tu ne repars jamais de zéro »* (`docs/VISION-FORCE-TRACKER.md`). Le
+**projet** doit tenir la même promesse envers lui-même : ne pas repartir de zéro sur sa propre histoire
+à chaque session.
+**Constat du 27/07** : on demandait à Milo de se souvenir pour le sportif sans se l'appliquer — 3
+versions sur 10 sans trace lisible, une fonctionnalité déclarée manquante alors qu'elle existait depuis
+3 semaines, et **Michel comme seule mémoire vivante**. Ce n'est pas tenable : *dans deux ans, il ne s'en
+souviendra plus non plus.*
+**Ce qui en découle concrètement** :
+- l'inventaire est **généré depuis le code** (`tools/inventaire.py`) → il ne peut pas se périmer ;
+- le **pourquoi** s'écrit **dans le code**, à côté de ce qu'il protège (89 % des avertissements le font
+  déjà) — pas dans un document qu'on oublie d'ouvrir ;
+- une explication donnée en conversation s'écrit **tout de suite**, sinon elle disparaît avec la session.
+*Origine : 27/07/2026, soirée de reconstruction du journal (57 % → 99 %) · argument long terme relevé
+par GPT (« les fonctionnalités changent, les principes doivent durer des années ») et par Michel
+(« dans 2 ans je ne vais plus m'en souvenir »).*
+
 ## 🔗 Où va le reste
 
 | Sujet | Document |
