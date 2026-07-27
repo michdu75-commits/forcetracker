@@ -33,6 +33,7 @@ Michel conçoit l'appli avec l'aide de Claude (design/réflexion/prompts), il ne
 - **Prévenir avant tout truc risqué** et proposer un backup + une méthode de rollback simple, **avant** d'agir.
 - **Ne jamais supposer** qu'il sait lancer une commande — le guider pas à pas, une étape à la fois.
 - **Une chose à la fois**, testée et validée avant de passer à la suivante.
+- ✂️ **COURT PAR DÉFAUT** (27/07/2026) — Michel lit tout, mais il lit **le soir, fatigué** : *« des fois il sort des romans, laisse tomber »* (à propos d'une autre IA, qu'il doit rationner — et c'est une perte : un bon avis qu'on n'a plus l'énergie de lire ne sert à rien). **La règle R25 s'applique AUSSI à la façon de lui parler** : la réponse **d'abord**, en quelques lignes ; le détail (tableaux, mesures, alternatives) **seulement s'il le demande**. Écrire long n'est pas être rigoureux, c'est déplacer l'effort sur le lecteur.
 
 **11. 📣 À CHAQUE fonctionnalité mise en PROD — prévenir l'utilisateur (checklist OBLIGATOIRE, ne jamais zapper).**
 Une feature n'est PAS finie tant que l'utilisateur n'est pas informé. Avant de considérer une feature comme livrée en prod, faire **les 5** :
