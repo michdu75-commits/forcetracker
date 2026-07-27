@@ -131,6 +131,22 @@ Vont clairement **EN HAUT** (elles améliorent le raisonnement de Milo, = là o�
   - **Focus** : c'est du travail client distinct → cloisonner, ne pas diluer la roadmap FT (et inversement).
 - **En une phrase** : *ça ne change pas l'approche de FT (qui reste local-first / mono-utilisateur / Milo), mais c'est le **prototype idéal du futur Mode Coach** — à condition de rester en périmètre B et de ponter par les DONNÉES, jamais par le code.*
 
+### 🧭 LES 2 PROPOSITIONS DE GPT + LA SYNTHÈSE ARBITRÉE (27/07/2026, Michel + Claude)
+
+GPT a proposé **2 possibilités** pour le Mode Coach. Constat : elles sont **identiques à ~95 %**, et ce 95 % commun **confirme exactement ce qu'on a déjà gravé** — une seule app / **deux rôles** (Sportif · Coach), le **Profil Vivant = source de vérité unique appartenant au client**, le coach obtient une **VUE** (jamais une copie, aucun moteur parallèle) **avec l'autorisation du client**, révocable (changement de coach → l'historique reste attaché au client), permissions = couche à part. Le coach **ne remplace jamais Milo**, il **collabore** et peut **enrichir** le Profil Vivant (blessure chronique, restriction…) → immédiatement exploitable par Milo/programmes/nutrition/analyses. **Positionnement différenciant** : construit autour du **sportif**, pas du coach.
+
+**La seule vraie différence = l'interface principale du coach :**
+- **Prop 1 — conversationnelle** : le coach *demande* à Milo (« quels clients ont besoin de moi ? », « résume-moi la semaine de X »). Milo = assistant.
+- **Prop 2 — tableau de bord** : une **liste de clients priorisée** (🔴 attention · 🟡 à surveiller · 🟢 RAS), on creuse ensuite.
+
+**Décision arbitrée (Claude, validée Michel) — Prop 2 comme CADRE, Prop 1 comme MOTEUR dedans** *(ce n'est pas un « ou »)* :
+1. **La structure = Prop 2 (tableau de bord priorisé)** — parce que ① c'est le **vrai métier** d'un coach qui suit N personnes (voir d'un coup d'œil qui décroche, PUIS creuser — jamais interroger un par un) ; ② **Michel en construit déjà l'embryon** dans son app coaching (boîte de réception dense, non-lus en premier, « chaque ligne affiche assez pour décider sans ouvrir »). Signal fort.
+2. **L'intelligence dedans = Prop 1 (Milo-assistant)** — quand le coach ouvre un client, c'est Milo qui génère la **synthèse** (« 7 derniers jours : fatigue en hausse, sommeil en baisse, nutrition 92 %, 2 records, poids stable ») et répond à ses questions. **Prop 2 = squelette, Prop 1 = muscles.**
+3. **⚠️ Précision d'architecte (gravée) : les pastilles 🔴🟡🟢 sont DÉTERMINISTES** — calculées par nos **moteurs existants** (score de récup, tendance de poids, régularité, adhérence), **jamais inventées par le LLM**. Milo ajoute le **récit** (le « pourquoi »), les moteurs donnent le **fait** (le flag). C'est la règle « les faits viennent des moteurs, jamais du LLM » — et ça évite un appel IA par client (coût + Principe 24 « engagement responsable »).
+4. **Timing : PAS maintenant.** On finit l'app individuelle (Profil Vivant, Milo, nutrition, récup) ; le tableau de bord n'a de valeur que si les moteurs qui l'alimentent sont solides. Le Mode Coach se greffe **ensuite**, naturellement.
+
+> **Résumé** : structure Prop 2 (tableau de bord priorisé = métier réel du coach, prototype déjà en cours) · animée par le Milo-assistant de Prop 1 · pastilles calculées par les moteurs déterministes · **après** les fondations individuelles.
+
 ---
 
 # 🗺️ FEUILLE DE ROUTE (ordre des priorités)
