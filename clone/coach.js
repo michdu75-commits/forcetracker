@@ -1493,7 +1493,11 @@ function renderCoachMsg(role, text) {
     } else {
       text = _stripCoachTech(text); // jamais de JSON brut à l'écran ni au partage (dataset.raw)
     }
+    // 🛡️ Sécurité (audit 27/07) : on ÉCHAPPE le HTML AVANT le markdown — une balise dans la réponse de
+    // l'IA (ex. glissée via un document importé piégé) s'affiche comme du texte, ne s'exécute jamais.
+    // `text` reste brut pour dataset.raw (partage/PDF, qui passent par _coachPlain, du texte pur).
     div.innerHTML = text
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/^- (.+)$/gm, '<li>$1</li>')
       .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')

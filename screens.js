@@ -537,7 +537,8 @@ function _frDayLabel(dateStr){
 function _miloReturnHints(){
   const out=[];
   ((typeof _validatedObs==='function')?_validatedObs():[]).forEach(o=>{
-    const t=(o.fact||o.ask||'').trim(); if(t)out.push('Je me souviens : « '+t+' »');
+    // 🛡️ _obsEsc : le fait vient d'un texte écrit par l'IA → échappé car m.txt part dans innerHTML
+    const t=_obsEsc((o.fact||o.ask||'').trim()); if(t)out.push('Je me souviens : « '+t+' »');
   });
   const os=S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.othersport;
   if(os&&os!=='aucun'){ const lbl=(typeof _OTHERSPORT_LBL!=='undefined'&&_OTHERSPORT_LBL[os])||'un autre sport'; out.push('Je me souviens que tu fais aussi du '+lbl); }

@@ -43,6 +43,17 @@ let S={
   leftHand:false
 };
 
+// 🛡️ Lecture JSON sécurisée (audit 27/07) : une clé localStorage corrompue rend SA valeur par défaut
+// au lieu de faire échouer tout load() — l'app ne démarre plus jamais « vidée » à cause d'une seule clé.
+function _lsJson(k,fb){
+  try{
+    const raw=localStorage.getItem(k);
+    if(raw===null||raw===undefined)return fb;
+    const v=JSON.parse(raw);
+    return (v===null||v===undefined)?fb:v;
+  }catch(e){try{console.warn('[FT load] clé illisible, valeur par défaut :',k,e);}catch(_){}return fb;}
+}
+
 function load(){
   try{
     S.bw=parseFloat(localStorage.getItem('ft4_bw')||'0')||0;
@@ -66,17 +77,19 @@ function load(){
     S.contraception=localStorage.getItem('ft4_contra')||'';
     S.morpho=localStorage.getItem('ft4_morpho')||'';
     S.morphotype=localStorage.getItem('ft4_morphot')||'';
-    S.sessions=JSON.parse(localStorage.getItem('ft4_sessions')||'[]');
-    S.prs=JSON.parse(localStorage.getItem('ft4_prs')||'{}');
-    S.wkt=JSON.parse(localStorage.getItem('ft4_wkt')||'null');
-    S.nextPlanned=JSON.parse(localStorage.getItem('ft4_nextplanned')||'null'); // séance annoncée à Milo (ft-v601) : {date:'YYYY-MM-DD',label}
+    // 🛡️ Audit 27/07 : chaque GROSSE clé est lue dans son propre try (_lsJson) → une clé corrompue
+    // ne court-circuite plus le chargement de tout le reste (l'app semblait « vidée » sans raison).
+    S.sessions=_lsJson('ft4_sessions',[]);
+    S.prs=_lsJson('ft4_prs',{});
+    S.wkt=_lsJson('ft4_wkt',null);
+    S.nextPlanned=_lsJson('ft4_nextplanned',null); // séance annoncée à Milo (ft-v601) : {date:'YYYY-MM-DD',label}
     S.url=DEFAULT_URL;
     S.email=localStorage.getItem('ft4_email')||'';
     S.connected=localStorage.getItem('ft4_ok')==='1';
-    S.cycle=JSON.parse(localStorage.getItem('ft4_cycle')||'null');
+    S.cycle=_lsJson('ft4_cycle',null);
     S.nutritionPhase=localStorage.getItem('ft4_nphase')||'charge';
-    S.customExercises=JSON.parse(localStorage.getItem('ft4_cuex')||'[]');
-    S.exPhotos=JSON.parse(localStorage.getItem('ft4_exphotos')||'{}');
+    S.customExercises=_lsJson('ft4_cuex',[]);
+    S.exPhotos=_lsJson('ft4_exphotos',{});
     S.neck=parseFloat(localStorage.getItem('ft4_neck')||'0')||0;
     S.waist=parseFloat(localStorage.getItem('ft4_waist')||'0')||0;
     S.hip=parseFloat(localStorage.getItem('ft4_hip')||'0')||0;
@@ -91,22 +104,22 @@ function load(){
     S.coachTone=localStorage.getItem('ft4_coachtone')||''; // '' (défaut, comportement actuel) | 'cool' | 'classique' | 'dynamique' | 'scientifique' — ton de Milo (Dossier Athlète, brique 0)
     // Registre Athlète (Dossier Athlète, brique 1) : mémoire durable consultée par Milo.
     // facts = faits mesurés (brique 2, à venir) ; observations = observations validées (brique 5, à venir). Vide pour l'instant.
-    S.registre=JSON.parse(localStorage.getItem('ft4_registre')||'null')||{facts:{},observations:[],updatedAt:''};
+    S.registre=_lsJson('ft4_registre',null)||{facts:{},observations:[],updatedAt:''};
     // ADN sportif (Dossier Athlète, brique 4A) : portrait DURABLE déclaré par l'utilisateur, injecté dans le briefing de Milo.
     // Différent du profil (déclaré général), des faits (mesurés) et de l'état du jour (ponctuel). Tout optionnel, vide = comportement identique.
-    S.adn=JSON.parse(localStorage.getItem('ft4_adn')||'null')||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};
+    S.adn=_lsJson('ft4_adn',null)||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''};
     // État du jour (Dossier Athlète, brique 3B) : énergie + douleurs du JOUR (ponctuel, repart à zéro chaque jour). Optionnel.
-    S.dayState=JSON.parse(localStorage.getItem('ft4_daystate')||'null')||null;
+    S.dayState=_lsJson('ft4_daystate',null);
     // Historique du check-in du jour (brique 7 « Ton histoire sportive ») : on GARDE chaque jour renseigné (énergie/moral/douleur) au lieu de l'effacer chaque nuit. [{date,energy,mood,pains,note}]
-    S.dayStateLog=JSON.parse(localStorage.getItem('ft4_dayslog')||'[]');
+    S.dayStateLog=_lsJson('ft4_dayslog',[]);
     S.levelAuto=localStorage.getItem('ft4_levelAuto')==='1'; // true si le niveau a été promu automatiquement (évite de re-fêter)
-    S.beginnerJourney=JSON.parse(localStorage.getItem('ft4_bjourney')||'null'); // parcours débutant : {style,freq,startDate,phase}
-    S.sleepLog=JSON.parse(localStorage.getItem('ft4_sleep')||'[]');
-    S.weightLog=JSON.parse(localStorage.getItem('ft4_wlog')||'[]');
-    S.strengthGoals=JSON.parse(localStorage.getItem('ft4_strgoals')||'{}'); // objectif de 1RM par exercice {nom:kg}
+    S.beginnerJourney=_lsJson('ft4_bjourney',null); // parcours débutant : {style,freq,startDate,phase}
+    S.sleepLog=_lsJson('ft4_sleep',[]);
+    S.weightLog=_lsJson('ft4_wlog',[]);
+    S.strengthGoals=_lsJson('ft4_strgoals',{}); // objectif de 1RM par exercice {nom:kg}
     S.name=localStorage.getItem('ft4_name')||'';
-    S.programmes=JSON.parse(localStorage.getItem('ft4_progs')||'[]');
-    S.progExos=JSON.parse(localStorage.getItem('ft4_progexos')||'null')||[...BIG4];
+    S.programmes=_lsJson('ft4_progs',[]);
+    S.progExos=_lsJson('ft4_progexos',null)||[...BIG4];
     S.seenFeatures=JSON.parse(localStorage.getItem('ft4_seen_ft')||'[]');
     S.menuAck=JSON.parse(localStorage.getItem('ft4_menu_ack')||'[]'); // features setup « vues au niveau onglet Menu » (le point onglet s'éteint à l'ouverture du Menu ; les points de ligne restent)
     S.reportedCustomEx=JSON.parse(localStorage.getItem('ft4_rep_cex')||'[]');
@@ -327,8 +340,11 @@ function persist(){
         localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
         localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
         localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
-        if(typeof toast==='function')toast('Stockage presque plein — données allégées automatiquement','info');
+        if(typeof toast==='function')toast('⚠️ Stockage du téléphone plein — historique local allégé (tes séances restent sauvegardées dans le cloud)','error');
       }catch(e2){}
+    }else{
+      // 🛡️ Audit 27/07 : une erreur NON-quota était 100 % silencieuse → au moins une trace console
+      try{console.warn('[FT persist] échec de sauvegarde locale :',e);}catch(_){}
     }
   }
   // Rechargement de mise à jour reporté pendant la séance (app.js) — la séance vient de se terminer/annuler

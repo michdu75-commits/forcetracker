@@ -1,0 +1,82 @@
+═══════════════════════════════════════════════════════════════════════════
+🛡️ PROPOSITION (audit 27/07/2026) — Verrouiller le serveur IA (worker.js)
+   ⚠️ PAS ENCORE APPLIQUÉE — à activer AVEC Michel (test sur téléphone requis)
+═══════════════════════════════════════════════════════════════════════════
+
+LE PROBLÈME (constat d'audit)
+─────────────────────────────
+Le Worker Cloudflare accepte les requêtes de N'IMPORTE QUI :
+- Access-Control-Allow-Origin: '*' et AUCUNE vérification d'origine ;
+- AUCUN quota ni limite de débit (le quota IA d'Apps Script n'est pas sur ce
+  chemin : le Worker appelle l'API Anthropic en direct).
+→ Quiconque trouve l'URL peut appeler {action:'coach'} en boucle (modèle
+  Sonnet, import jusqu'à 8192 tokens) : c'est Michel qui paie la facture.
+
+POURQUOI CE N'EST PAS APPLIQUÉ AUTOMATIQUEMENT
+──────────────────────────────────────────────
+worker.js se déploie TOUT SEUL au push sur master (deploy-worker.yml).
+Une erreur d'allowlist = Milo en panne pour tous, sans test possible depuis
+l'environnement Claude (réseau sortant bridé). → Règles d'or #6 et #10 :
+on l'active ensemble, avec un test de 2 minutes sur le téléphone.
+
+LE PATCH (à reporter dans worker.js)
+────────────────────────────────────
+1) Remplacer le bloc CORS + le début de fetch() par :
+
+    // Origines AUTORISÉES à consommer l'IA (verrou anti-abus, audit 27/07)
+    const ALLOWED_ORIGINS = [
+      'https://michdu75-commits.github.io',
+      // ⚠️ AJOUTER ICI le domaine du clone Cloudflare Pages s'il appelle le
+      // Worker directement (ex. 'https://<ton-projet>.pages.dev') :
+    ];
+
+    function corsFor(origin){
+      const ok = ALLOWED_ORIGINS.indexOf(origin) >= 0;
+      return {
+        'Access-Control-Allow-Origin': ok ? origin : ALLOWED_ORIGINS[0],
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Max-Age': '86400',
+        'Vary': 'Origin',
+      };
+    }
+
+    export default {
+      async fetch(request, env) {
+        const origin = request.headers.get('Origin') || '';
+        const CORS = corsFor(origin);
+        if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+        if (request.method !== 'POST')    return json({ status: 'error', error: 'Utilise POST.' }, 405);
+        // 🛡️ VERROU : refuse toute origine inconnue OU absente (curl/scripts).
+        if (ALLOWED_ORIGINS.indexOf(origin) < 0) {
+          return json({ status: 'error', error: 'origin' }, 403);
+        }
+        ... (suite inchangée — mais `json()` doit utiliser le CORS calculé,
+             donc passer CORS en paramètre ou en variable de module)
+
+2) Adapter la fonction json() du bas du fichier pour utiliser corsFor(origin)
+   (aujourd'hui elle référence la constante globale CORS).
+
+PROCÉDURE D'ACTIVATION (2 minutes, avec Michel présent)
+───────────────────────────────────────────────────────
+0. AVANT : tag de backup →  git tag backup-avant-verrou-worker && git push origin backup-avant-verrou-worker
+1. Compléter ALLOWED_ORIGINS (domaine du clone Pages si besoin).
+2. Appliquer le patch dans worker.js → push master → deploy-worker.yml part.
+3. TESTER SUR LE TÉLÉPHONE : poser une question à Milo (prod) ✅
+   + scanner un code-barres ✅ + tester le clone ✅.
+4. Vérifier le blocage : depuis un terminal,
+   curl -X POST <URL-worker> -d '{"action":"coach","message":"test"}'
+   → doit renvoyer {"status":"error","error":"origin"} (403). ✅
+5. Si le moindre souci : ROLLBACK EN 1 LIGNE →
+   git revert HEAD && git push   (le workflow redéploie l'ancien Worker ~1 min)
+
+LIMITES HONNÊTES (à savoir)
+───────────────────────────
+- Un attaquant DÉTERMINÉ peut falsifier l'en-tête Origin hors navigateur.
+  Ce verrou bloque 95 % des abus « faciles » (sites tiers, scripts naïfs).
+- Le complément SOLIDE = une règle de « rate limiting » dans le tableau de
+  bord Cloudflare (Security → WAF → Rate limiting rules, dispo en gratuit) :
+  ex. max 30 requêtes / minute / IP sur la route du Worker. À faire par
+  Michel dans le dashboard (guide pas à pas le moment venu).
+- Étape encore plus tard (optionnelle) : quota par email côté Worker (KV).
+═══════════════════════════════════════════════════════════════════════════
