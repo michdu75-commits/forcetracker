@@ -60,7 +60,7 @@ super importantes »*. Il a raison, mais le risque n'est **pas** là où on croi
 |---|---|---|
 | ① **Ce qui existe** (le *quoi*) | ~85 % documenté | ✅ **Oui, à 100 %** — le code *est* la liste. Un inventaire généré ne peut pas mentir. |
 | ② **Où sont les zones dangereuses** | **75 avertissements** dans le code (`log.js` 18 · `coach.js` 16 · `app.js` 10 — concentrés au bon endroit) | ✅ Déjà couvert |
-| ③ **POURQUOI c'est dangereux** | **21 sur 75 seulement (28 %)** l'expliquent · **2 sur 75 (3 %)** renvoient à une version | ❌ **LE VRAI TROU** — le code ne peut PAS le redonner |
+| ③ **POURQUOI c'est dangereux** | ✅ **CORRIGÉ le 27/07 : 56 blocs sur 63 (89 %) expliquent déjà.** ⚠️ Les chiffres annoncés d'abord (« 28 % », « 54 à compléter ») étaient **FAUX** : le détecteur comptait **ligne par ligne** alors qu'un commentaire est un **BLOC** — la moitié des explications étaient à la ligne suivante. Sur les 7 restants, 5 s'expliquaient d'eux-mêmes ; **2 vrais trous** trouvés et comblés (mur premium qui clignote → ft-v446 · trigger de backup quotidien = le filet de sécurité des données). | ✅ Fait |
 | ④ Ce qui n'est écrit nulle part | dans la tête de Michel | ❌ Aucun script ne peut le trouver |
 
 **Pourquoi le niveau ③ est le plus grave** : *« ne pas toucher »* sans *« sinon X casse »* protège d'une
@@ -68,9 +68,14 @@ modification distraite, mais **ne survit pas à une raison légitime de changer*
 vraiment toucher là, personne ne peut peser le risque. Et une barrière dont plus personne ne connaît la
 raison finit par être retirée « puisqu'elle ne sert à rien ».
 
-**➡️ Bonne nouvelle : c'est FINI et CHIFFRÉ** — **54 commentaires** à compléter, pas un chantier infini.
-Et c'est celui qui se **dégrade le plus vite** (il dépend de la mémoire) → à faire **avant** l'inventaire
-du niveau ①, qui lui ne se périme pas.
+**➡️ RÉSULTAT (fait le 27/07)** : le chantier n'existait quasiment pas. Le code est **bien commenté** —
+89 % des avertissements disent déjà ce qui casse. Deux vrais trous comblés, terminé.
+
+**🎓 La leçon de méthode vaut plus que le chantier** : trois mesures successives ont donné **54 → 33 → 7**.
+Les deux premières étaient fausses parce que **l'unité de mesure ne correspondait pas à l'unité de sens**
+(la ligne au lieu du bloc de commentaire). Un chiffre produit par un script n'est fiable que si on a
+vérifié qu'il mesure la **bonne chose** — et un mauvais chiffre est d'autant plus dangereux qu'il est
+précis : « 54 » a été gravé dans ce fichier et annoncé à Michel avant d'être vérifié.
 
 **Pour le niveau ④, pas de projet : une HABITUDE.** Quand Claude touche à quelque chose et demande
 *« pourquoi c'est comme ça ? »*, Michel répond → **on l'écrit dans le commentaire, tout de suite**. Ça

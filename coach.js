@@ -723,7 +723,9 @@ function checkPremiumExpiry() {
 }
 
 function showPremiumWall() {
-  // Ne pas afficher avant que le check serveur ait répondu
+  // Ne pas afficher avant que le check serveur ait répondu : sinon un abonné
+  // PREMIUM voit le mur payant clignoter au démarrage (autoConnect n'a pas encore
+  // reçu son statut) — c'est le bug historique corrigé en ft-v446.
   if (window._premiumPending) return;
   const wall = document.getElementById('coach-wall');
   if (wall) wall.style.display = 'flex';

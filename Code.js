@@ -206,7 +206,10 @@ function doGet(e) {
       try {
         const allTriggers = ScriptApp.getProjectTriggers();
         const trigLog = allTriggers.map(t => t.getHandlerFunction() + '/' + t.getEventType()).join(', ');
-        // Ne pas supprimer le trigger backup quotidien
+        // Ne pas supprimer le trigger backup quotidien (backupAllUserData_, 2 h du
+        // matin) : c'est LE filet de sécurité des données de tous les utilisateurs
+        // (sauvegarde JSON quotidienne sur Drive). Sans lui, plus aucun backup et
+        // personne ne s'en aperçoit — la purge ci-dessous efface tous les AUTRES.
         allTriggers.forEach(t => {
           if (t.getHandlerFunction() !== 'backupAllUserData_') ScriptApp.deleteTrigger(t);
         });
