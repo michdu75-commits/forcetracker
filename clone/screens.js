@@ -528,14 +528,9 @@ function _renderHomeHero(){
     // Au tap : le chiffre défile de 0 au score pendant que l'arc se remplit (ringReplay()).
     +'<div style="display:flex;align-items:center;gap:18px;margin-top:14px;">'
     +(score!==null
-      ? '<div id="recup-ring" onclick="ringReplay()" class="ft-press" style="--rr-circ:'+circ+';--rr-run:-'+Math.max(circ-offset-24,1).toFixed(1)+'px;position:relative;flex:none;width:100px;height:100px;cursor:pointer;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45));">'
+      ? '<div id="recup-ring" onclick="ringReplay()" class="ft-press" style="--rr-circ:'+circ+';--rr-run:-'+travRun+'px;position:relative;flex:none;width:100px;height:100px;cursor:pointer;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45));">'
         +'<svg width="100" height="100" viewBox="0 0 96 96" style="display:block;">'
         +'<defs>'
-          +'<filter id="rrIn" x="-50%" y="-50%" width="200%" height="200%">'
-          +'<feOffset dx="0" dy="2"/><feGaussianBlur stdDeviation="2" result="o"/>'
-          +'<feComposite in="SourceGraphic" in2="o" operator="out" result="i"/>'
-          +'<feColorMatrix in="i" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .55 0"/>'
-          +'<feBlend in2="SourceGraphic"/></filter>'
           +'<linearGradient id="rrG" x1="0" y1="0" x2="1" y2="1">'
           +'<stop offset="0" stop-color="'+ringColor+'"/><stop offset=".55" stop-color="'+ringColor+'" stop-opacity=".85"/>'
           +'<stop offset="1" stop-color="'+ringColor+'" stop-opacity=".45"/></linearGradient>'
@@ -544,7 +539,15 @@ function _renderHomeHero(){
           +'<filter id="rrSoft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4.2"/></filter>'
         +'</defs>'
         +'<g transform="rotate(-90 48 48)">'
-        +'<circle cx="48" cy="48" r="34" fill="none" stroke="var(--bg3)" stroke-width="10" filter="url(#rrIn)"/>'
+        // ⚠️ LA RAINURE GRISE FAIT LE TOUR COMPLET (360°) : c'est elle qui montre le « reste »
+        // du score. Elle est dessinée avec de simples cercles, SANS filtre SVG : l'ombre interne
+        // d'origine (feComposite operator="out") s'appliquait à un TRACÉ, ce que Safari iOS rend
+        // mal — le tour gris devenait invisible sur le téléphone alors qu'il s'affichait sur
+        // ordinateur. Trois passes suffisent à creuser : bord sombre, fond de rainure, puis un
+        // voile clair qui rend le gris franchement lisible sur le fond de la carte.
+        +'<circle cx="48" cy="48" r="34" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="12.5"/>'
+        +'<circle cx="48" cy="48" r="34" fill="none" stroke="var(--bg3)" stroke-width="10"/>'
+        +'<circle cx="48" cy="48" r="34" fill="none" stroke="rgba(255,255,255,.085)" stroke-width="10"/>'
         +'<circle id="rr-arc" cx="48" cy="48" r="34" fill="none" stroke="url(#rrG)" stroke-width="10" stroke-linecap="round"'
         +' stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" filter="url(#rrGlow)"/>'
         +'<circle id="rr-hi" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"'
