@@ -149,7 +149,7 @@ const _HELP_DATA={
   home:{
     title:'🏠 Accueil',
     tips:[
-      {i:'📅',t:'Le calendrier de ton mois : tes jours de séance sont en rouge, les jours de RECORD cerclés en or 🏆. Les flèches ‹ › changent de mois, et tu peux taper une semaine pour voir le détail jour par jour — avec, sous chaque jour, ta séance ET comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
+      {i:'📅',t:'Le calendrier de ton mois, qui se lit d\'un coup d\'œil : <b>plus une case est foncée, plus tu as soulevé lourd ce jour-là</b>. Le petit trait sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body), et l\'étoile ⭐ marque un RECORD. À gauche, le n° de semaine avec ton tonnage — tape-le pour voir la semaine entière. <b>Tape un jour</b> et son détail s\'ouvre dessous : tonnage, séries, exercices, et comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
       {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas).'},
@@ -1109,6 +1109,86 @@ function _calPrDays(){
   });});});
   return prDays;
 }
+// ─── CALENDRIER v2 : volume, région travaillée, jour sélectionné ──────────
+let _calSelDay=null;   // ymd du jour ouvert dans le panneau de détail (null = aucun)
+
+// Volume (kg × reps) d'une séance — mêmes exclusions que les PR : séries non faites, É (échauffement), W
+function _calSessVol(s){
+  let v=0;
+  (s.exs||[]).forEach(ex=>{(ex.sets||[]).forEach(st=>{
+    if(!st.done||!st.kg||!st.reps||st.type==='É'||st.type==='W')return;
+    v+=st.kg*st.reps;
+  });});
+  return v;
+}
+function _calVolByDay(){
+  const o={};
+  (S.sessions||[]).forEach(s=>{if(s&&s.date)o[s.date]=(o[s.date]||0)+_calSessVol(s);});
+  return o;
+}
+// Régions définies sur les CLÉS de _MG (stables) — surtout PAS sur les libellés français
+// ('Grand dorsal' ne contient pas « dos », 'Deltoïdes' ne contient pas « épaule »).
+const _CAL_REGIONS={
+  haut: ['pec','front-delt','side-delt','triceps'],
+  dos:  ['lats','traps','rear-delt','biceps','forearms','lower-back'],
+  bas:  ['quads','hamstrings','glutes','calves','hip-flexors','tibialis'],
+  tronc:['abs','obliques']
+};
+const _CAL_REGION_COLOR={haut:'var(--red)',dos:'var(--blue)',bas:'var(--purp)',tronc:'var(--orange)',full:'var(--green)'};
+const _calColorCache={};   // _mscScores est coûteux et le calendrier se redessine à chaque flèche
+function _calSessColor(s){
+  if(!s||!s.date)return 'var(--red)';
+  // ⚠️ la clé doit tenir compte de TOUS les exercices : deux séances du même jour avec
+  // le même nombre d'exos et le même premier exo partageraient sinon la même couleur
+  // (trouvé par CAL-003 : « Squat + DC + Rowing » héritait de la couleur de « Squat + Presse + Leg Curl »).
+  const key=s.date+'|'+(s.exs||[]).map(e=>(e&&e.name)||'').join('~');
+  if(_calColorCache[key])return _calColorCache[key];
+  let col='var(--red)';
+  try{
+    if(typeof _mscScores==='function'){
+      const sc=(_mscScores(s.exs||[])||{}).sc||{};
+      const tot={haut:0,dos:0,bas:0,tronc:0}; let grand=0;
+      for(const g in sc){
+        for(const r in _CAL_REGIONS){
+          if(_CAL_REGIONS[r].indexOf(g)>=0){tot[r]+=sc[g];grand+=sc[g];break;}
+        }
+      }
+      if(grand>0){
+        // Full body = le HAUT du corps ET le BAS sont tous deux vraiment sollicités.
+        // ⚠️ Ne PAS se fier à « aucune région ne domine » : le bas du dos et les avant-bras
+        // s'allument à chaque squat ou rowing, ce qui gonfle artificiellement la région « dos ».
+        // Le critère haut/bas, lui, sépare proprement les 7 archétypes (voir CAL-003).
+        const hautCorps=(tot.haut+tot.dos)/grand, basCorps=tot.bas/grand;
+        if(hautCorps>=.25&&basCorps>=.25)col=_CAL_REGION_COLOR.full;
+        else{
+          let best='',bv=0;for(const r in tot){if(tot[r]>bv){bv=tot[r];best=r;}}
+          col=_CAL_REGION_COLOR[best]||'var(--red)';
+        }
+      }
+    }
+  }catch(e){}
+  _calColorCache[key]=col;
+  return col;
+}
+function _calFmtT(kg){return (kg/1000).toFixed(1).replace('.',',')+'t';}
+// N° de semaine ISO (formule standard, en UTC pour ne pas se faire piéger par l'heure d'été)
+function _calIsoWeek(monday){
+  const d=new Date(Date.UTC(monday.getFullYear(),monday.getMonth(),monday.getDate()));
+  d.setUTCDate(d.getUTCDate()+4-(d.getUTCDay()||7));
+  const y0=new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  return Math.ceil((((d-y0)/864e5)+1)/7);
+}
+// Fond d'une case. La 1re ligne est le repli si color-mix n'est pas supporté (vieux Safari) :
+// la 2e l'écrase quand il l'est. Avec color-mix, le rouge éclaircit en sombre et fonce en clair.
+function _calHeatBg(ratio){
+  const pct = ratio<.40 ? 20 : ratio<.70 ? 36 : 55;
+  return 'background:rgba(255,45,85,'+(pct/260).toFixed(2)+');'
+        +'background:color-mix(in srgb, var(--red) '+pct+'%, var(--bg2));';
+}
+function _calSelect(ymd){
+  _calSelDay=(_calSelDay===ymd?null:ymd);
+  _renderHomeCalendar();
+}
 function _renderHomeCalendar(){
   const el=document.getElementById('home-secondary');if(!el)return;
   const sessSet={};(S.sessions||[]).forEach(s=>{if(s&&s.date)sessSet[s.date]=(sessSet[s.date]||0)+1;});
@@ -1126,26 +1206,66 @@ function _renderHomeCalendar(){
       +navBtn(1,'›')
     +'</div>';
   if(_calZoomWeek===null){
-    html+='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px;">'
-      +['L','M','M','J','V','S','D'].map(w=>'<div style="text-align:center;font-size:10px;color:var(--t3);font-weight:700;">'+w+'</div>').join('')+'</div>';
+    const volByDay=_calVolByDay();
+    let maxVol=0;
+    weeks.forEach(wk=>wk.forEach(c=>{if(c.inMonth){const v=volByDay[_calYmd(c.d)]||0;if(v>maxVol)maxVol=v;}}));
+
+    html+='<div style="display:grid;grid-template-columns:26px repeat(7,1fr);gap:3px;">';
+    html+='<div></div>'+['L','M','M','J','V','S','D']
+      .map(w=>'<div style="text-align:center;font-size:10.5px;color:var(--t3);font-weight:700;letter-spacing:.06em;">'+w+'</div>').join('');
+
     weeks.forEach((wk,wi)=>{
-      html+='<div onclick="_calZoom('+wi+')" class="ft-press" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px;cursor:pointer;border-radius:8px;">';
+      const wVol=wk.reduce((a,c)=>a+(volByDay[_calYmd(c.d)]||0),0);
+      const wSess=wk.filter(c=>sessSet[_calYmd(c.d)]).length;   // une séance au poids du corps pèse 0 kg : ce n'est PAS du repos
+      html+='<div onclick="_calZoom('+wi+')" class="ft-press" style="display:flex;flex-direction:column;justify-content:center;gap:2px;cursor:pointer;">'
+        +'<span style="font-family:var(--font-cond);font-size:11.5px;font-weight:700;color:var(--t3);line-height:1;">S'+_calIsoWeek(wk[0].d)+'</span>'
+        +'<span style="font-size:8.5px;font-weight:700;line-height:1;color:'+(wSess?'var(--red)':'var(--t3)')+';">'
+          +(wSess?(wVol?_calFmtT(wVol):wSess+'×'):'repos')+'</span>'
+        +'</div>';
+
       wk.forEach(c=>{
-        const ymd=_calYmd(c.d), has=sessSet[ymd], isPr=has&&prSet[ymd], isToday=ymd===todayY, num=c.d.getDate();
-        // anneau : record = doré ; aujourd'hui = rouge ; les deux = doré (extérieur) + rouge (intérieur)
-        const ring=(isPr&&isToday)?'box-shadow:inset 0 0 0 2px var(--gold),inset 0 0 0 3.5px var(--red);'
-          :isPr?'box-shadow:inset 0 0 0 2px var(--gold);'
-          :isToday?'box-shadow:inset 0 0 0 1.5px var(--red);':'';
-        html+='<div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:12.5px;'
-          +(c.inMonth?'color:var(--t1);':'color:var(--t3);opacity:.35;')
-          +ring
-          +(has?'background:rgba(255,45,85,.16);font-weight:800;':'')
-          +'">'+num+((has&&!isPr)?'<span style="width:4px;height:4px;border-radius:50%;background:var(--red);margin-top:2px;"></span>':'')+'</div>';
+        const ymd=_calYmd(c.d), num=c.d.getDate();
+        const vol=volByDay[ymd]||0, has=!!sessSet[ymd];
+        const isPr=has&&prSet[ymd], isToday=ymd===todayY, isSel=ymd===_calSelDay;
+        const sess=has?(S.sessions||[]).find(s=>s.date===ymd):null;
+        const rat=maxVol?vol/maxVol:0;
+
+        let st='position:relative;min-height:46px;display:flex;flex-direction:column;align-items:center;'
+             +'justify-content:center;gap:5px;border-radius:var(--r-sm);';
+        if(!c.inMonth)      st+='color:var(--t3);opacity:.35;';
+        else if(has)        st+=_calHeatBg(rat)+'cursor:pointer;';
+        else                st+='box-shadow:inset 0 0 0 1px var(--sep);';
+        if(isToday)         st+='outline:1.5px solid var(--red2);outline-offset:-1.5px;';
+        if(isSel)           st+='outline:2px solid var(--t1);outline-offset:2px;';
+
+        html+='<div'+(has?' onclick="_calSelect(\''+ymd+'\')" class="ft-press"':'')+' style="'+st+'">'
+          +(isPr?'<span style="position:absolute;top:3px;right:4px;line-height:0;">'
+                +'<svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2Z"/></svg></span>':'')
+          +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:800;line-height:1;color:'
+            +(c.inMonth?'var(--t1)':'var(--t3)')+';">'+num+'</span>'
+          +(has?'<span style="width:'+(10+Math.round(9*rat))+'px;height:3px;border-radius:2px;background:'+_calSessColor(sess)+';"></span>'
+               :(isToday?'<span style="font-size:7.5px;font-weight:800;letter-spacing:.06em;line-height:1;color:var(--red);">AUJ</span>':''))
+          +'</div>';
       });
-      html+='</div>';
     });
-    html+='<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:8px;">Tape une semaine pour la voir en détail 🔍</div>';
-    if(Object.keys(prSet).length)html+='<div style="font-size:10.5px;color:var(--t3);text-align:center;margin-top:3px;"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--gold);vertical-align:-2px;"></span> = séance avec un nouveau record</div>';
+    html+='</div>';
+
+    html+='<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 11px;margin-top:11px;font-size:9.5px;font-weight:600;color:var(--t3);">'
+      +'<span style="display:flex;align-items:center;gap:4px;">Volume'
+        +'<span style="width:12px;height:12px;border-radius:4px;background:rgba(255,45,85,.08);background:color-mix(in srgb,var(--red) 20%,var(--bg2));"></span>'
+        +'<span style="width:12px;height:12px;border-radius:4px;background:rgba(255,45,85,.14);background:color-mix(in srgb,var(--red) 36%,var(--bg2));"></span>'
+        +'<span style="width:12px;height:12px;border-radius:4px;background:rgba(255,45,85,.21);background:color-mix(in srgb,var(--red) 55%,var(--bg2));"></span></span>'
+      +[['var(--red)','Haut'],['var(--blue)','Dos'],['var(--purp)','Bas'],['var(--orange)','Tronc'],['var(--green)','Full']]
+        .map(g=>'<span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:3px;border-radius:2px;background:'+g[0]+';"></span>'+g[1]+'</span>').join('')
+      +'<span style="display:flex;align-items:center;gap:4px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="var(--gold)"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1L12 2Z"/></svg>Record</span>'
+      +'</div>';
+
+    html+=_calDayPanel(volByDay,prSet);
+
+    html+='<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:8px;">'
+      +(_calSelDay?'Tape le n° de semaine à gauche pour la voir en entier'
+                  :'Tape un jour pour voir la séance · le n° de semaine pour la semaine entière')
+      +'</div>';
   }else{
     const wk=weeks[_calZoomWeek]||[];
     html+='<button onclick="_calZoom(null)" style="width:100%;padding:8px;margin-bottom:8px;border:none;border-radius:9px;background:var(--bg3);color:var(--blue);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation;">‹ Retour au mois</button>';
@@ -1166,6 +1286,38 @@ function _renderHomeCalendar(){
   }
   html+='</div>';
   el.innerHTML=html;
+}
+// Détail du jour sélectionné, sous la grille. Réutilise _calDayContext (sommeil/moral/douleur).
+function _calDayPanel(volByDay,prSet){
+  if(!_calSelDay)return '';
+  const sess=(S.sessions||[]).filter(s=>s&&s.date===_calSelDay);
+  if(!sess.length)return '';
+  const d=new Date(_calSelDay+'T12:00:00');
+  const titre=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  const vol=volByDay[_calSelDay]||0;
+  let sets=0,exs=0;
+  sess.forEach(s=>{(s.exs||[]).forEach(ex=>{exs++;(ex.sets||[]).forEach(st=>{if(st.done&&st.type!=='É'&&st.type!=='W')sets++;});});});
+  const isPr=!!(prSet||{})[_calSelDay];
+  const cell=(v,l)=>'<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">'
+    +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:800;color:var(--t1);line-height:1;">'+v+'</span>'
+    +'<span style="font-size:8px;font-weight:700;letter-spacing:.08em;color:var(--t3);">'+l+'</span></div>';
+  const sep='<div style="width:1px;background:var(--sep);"></div>';
+  return '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--sep);">'
+    +'<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px;">'
+      +'<span style="width:8px;height:8px;border-radius:3px;flex:none;background:'+_calSessColor(sess[0])+';"></span>'
+      +'<span style="font-family:var(--font-cond);font-size:16px;font-weight:800;color:var(--t1);line-height:1;text-transform:capitalize;">'+titre+'</span>'
+      +'<span style="flex:1;"></span>'
+      +(isPr?'<span style="font-size:9.5px;font-weight:800;letter-spacing:.06em;color:var(--bg);background:var(--gold);border-radius:5px;padding:3px 7px;line-height:1;">RECORD</span>':'')
+    +'</div>'
+    +'<div style="font-size:12.5px;font-weight:600;color:var(--t2);margin-bottom:10px;">'+_escFood(sess.map(s=>_calSessLabel(s)).join(', '))+'</div>'
+    +'<div style="display:flex;background:var(--bg3);border-radius:var(--r-sm);padding:9px 0;">'
+      +cell(vol?_calFmtT(vol):'—','TONNAGE')+sep+cell(sets,'SÉRIES')+sep+cell(exs,'EXOS')
+    +'</div>'
+    +_calDayContext(_calSelDay)
+    +'<div onclick="goSessionsHistory()" class="ft-press" style="margin-top:11px;height:42px;border-radius:var(--r);background:var(--bg3);display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;">'
+      +'<span style="font-size:13px;font-weight:700;color:var(--t1);">Revoir la séance</span>'
+      +'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--t1)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>'
+    +'</div></div>';
 }
 // Contexte d'un jour dans le calendrier (brique 7) : sommeil + humeur/énergie + douleur, s'ils ont été notés ce jour-là.
 function _calDayContext(ymd){
@@ -1192,7 +1344,7 @@ function _calWeeksFor(y,m){
   const weeks=[];for(let i=0;i<cells.length;i+=7)weeks.push(cells.slice(i,i+7));
   return weeks;
 }
-function _calNav(dir){_calDate=new Date(_calDate.getFullYear(),_calDate.getMonth()+dir,1);_calZoomWeek=null;_renderHomeCalendar();}
+function _calNav(dir){_calDate=new Date(_calDate.getFullYear(),_calDate.getMonth()+dir,1);_calZoomWeek=null;_calSelDay=null;_renderHomeCalendar();}
 // Navigation SEMAINE (vue zoomée) : ±7 jours, en traversant les mois si besoin. Le mois affiché suit le jeudi de la semaine (mois dominant).
 function _calNavWeek(dir){
   const weeks=_calWeeksFor(_calDate.getFullYear(),_calDate.getMonth());
@@ -1205,6 +1357,7 @@ function _calNavWeek(dir){
   const nw=_calWeeksFor(thu.getFullYear(),thu.getMonth());
   let idx=nw.findIndex(w=>w.some(c=>_calYmd(c.d)===_calYmd(newMon)));
   _calZoomWeek=idx<0?0:idx;
+  _calSelDay=null;
   _renderHomeCalendar();
 }
 // Dispatcher des flèches : mois si vue mois, semaine si vue zoomée.
