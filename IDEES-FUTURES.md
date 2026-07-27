@@ -4,6 +4,58 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🧠➡️💾 « CHAQUE SÉANCE DOIT ENRICHIR LE PROFIL VIVANT » — retour GPT sur le débrief de Milo (27/07/2026)
+
+> **Le constat de GPT** (après lecture du programme de reprise + du débrief) : *« Milo écrit énormément
+> d'informations pertinentes, mais ces informations restent principalement dans le TEXTE. Elles devraient
+> progressivement devenir des connaissances persistantes. »*
+> Exemples qu'il cite : bonne réponse physiologique après une semaine de repos · l'épaule droite tolère bien
+> l'incliné en amplitude contrôlée · les perfs max sont meilleures après plusieurs jours de récup · les montées
+> progressives donnent de meilleurs résultats que les montées agressives.
+
+**⚠️ C'est EXACTEMENT la famille de bugs ft-v625→628** (« l'information est dans le TEXTE de Milo, pas dans la
+DONNÉE que l'app reçoit »), mais **d'un cran au-dessus** : là c'était la séance du jour, ici c'est
+l'**apprentissage sur la personne**. Et c'est aussi la règle du **comportement observable** (gravée le 27/07)
+appliquée à la source : Milo *produit* de la connaissance qui n'est **exploitée par personne**.
+
+**Ce qui existe déjà** (ne pas reconstruire) : le mécanisme de mémoire validée (`retiens` → observations
+`validated`, ft-v582) et le `sessionLog` des débriefs. **Ce qui manque** : Milo ne propose **jamais** de retenir
+une **règle de réaction physiologique** — seulement des faits déclaratifs.
+
+**Garde-fous avant de coder** (Claude) :
+- ⛔ **Jamais automatique** — « Milo ne pilote jamais » (`docs/PROFIL-VIVANT.md`) : ce sont des **hypothèses sur
+  le corps de quelqu'un**, donc mode *proposer → l'utilisateur valide*, comme les observations.
+- ⛔ **Une seule séance ne prouve rien** — exiger une **tendance** (cf. « la cohérence avant la réactivité », P20).
+  « Tu as bien récupéré une fois » n'est pas « tu récupères bien ».
+- ⛔ **Domaine sensible** (blessures, tolérance articulaire) → permissions bornées (ft-v605) : constater, jamais
+  conclure médicalement.
+- ✅ Passer la **grille des 3 questions** : qui produit · qui exploite · quel comportement change.
+
+**Statut** : chantier de fond, **pas une brique courte**. À placer après la nutrition, ou comme évolution du
+profil vivant une fois la base stabilisée. GPT : *« probablement l'évolution la plus importante de Force Tracker »* —
+d'accord sur le fond, mais ça ne se bricole pas en une session.
+
+---
+
+## ✨ Nouveautés — les 2 idées GPT NON retenues tout de suite (27/07/2026)
+
+Livrées le même jour : le carrousel (ft-v630), la discipline de longueur (ft-v632), l'historique + « Passer »
+(ft-v633). **Restent en réserve** :
+
+1. **Différencier mise à jour MAJEURE vs MINEURE** (GPT : 2-5 cartes pour une grosse évolution, 1 carte pour un
+   correctif). *Bonne idée sur le fond* — mais elle demande un **champ de plus** dans `WHATS_NEW` et surtout un
+   **jugement à chaque livraison** (« celle-ci est-elle majeure ? »). Or `WHATS_NEW_SHOW_MAX=6` fait déjà
+   l'essentiel du travail, et la règle ft-v632 (4-5 lignes) empêche déjà le pavé. → **à faire le jour où on
+   sentira vraiment le besoin**, pas avant (gouvernance légère : chaque élément doit réduire un risque ou une
+   charge mentale).
+2. **L'intro au ton de Milo** (« 👋 Salut ! Pendant ton absence, j'ai quelques nouveautés à te montrer » →
+   *Voir* / *Plus tard*). *Séduisant et très aligné* avec `docs/PRESENCE-MILO.md`. **Réserve** : Milo qui annonce
+   des mises à jour logicielles, c'est Milo qui parle **du produit** et non **de toi** — le risque est le
+   **gadget** (précisément ce que la doc de présence interdit). → à reprendre quand on saura le formuler comme
+   une **présence** et pas comme un habillage marketing.
+
+---
+
 ## 📱 Header adaptatif (compact au scroll, façon iOS / Apple Music) — idée GPT + Michel (26/07/2026)
 
 Née de l'optimisation du header (ft-v610, compaction statique testée sur le clone). L'idée d'évolution :

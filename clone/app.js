@@ -2407,20 +2407,35 @@ var _wnItems=[],_wnIdx=0,_wnSwipeInit=false;
 function showWhatsNew(){
   var items=_whatsNewUnseen();
   if(!items.length){_whatsNewMarkSeen();return;}
+  _wnHistory=false;
   _wnItems=items;_wnIdx=0;_renderWhatsNew();
+  _wnOpen();
+}
+function _wnOpen(){
   var o=document.getElementById('ov-whatsnew');if(o)o.classList.add('open');
-  if(!_wnSwipeInit){
-    var sl=document.getElementById('whatsnew-list');
-    if(sl){
-      var x0=null;
-      sl.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;},{passive:true});
-      sl.addEventListener('touchend',function(e){
-        if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;x0=null;
-        if(Math.abs(dx)>45)_wnGo(dx<0?1:-1);
-      },{passive:true});
-    }
-    _wnSwipeInit=true;
+  if(_wnSwipeInit)return;
+  var sl=document.getElementById('whatsnew-list');
+  if(sl){
+    var x0=null;
+    sl.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;},{passive:true});
+    sl.addEventListener('touchend',function(e){
+      if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;x0=null;
+      if(Math.abs(dx)>45)_wnGo(dx<0?1:-1);
+    },{passive:true});
   }
+  _wnSwipeInit=true;
+}
+// Menu → « Nouveautés » : l'HISTORIQUE complet, consultable quand on veut (ft-v633).
+// C'est ce qui rend « Passer » honnête : on ne perd rien, on lit plus tard.
+// _wnHistory=true → aucun marqueur « vu » n'est posé (on ne consulte pas, on relit).
+var _wnHistory=false;
+function openWhatsNewHistory(){
+  if(typeof WHATS_NEW==='undefined'||!WHATS_NEW.length)return;
+  try{if(typeof _markAnchorSeen==='function')_markAnchorSeen('menu-row-whatsnew');}catch(e){}
+  _wnHistory=true;
+  _wnItems=WHATS_NEW.slice().sort(function(a,b){return b.v-a.v;});   // la plus récente d'abord
+  _wnIdx=0;_renderWhatsNew();
+  _wnOpen();
 }
 function _wnGo(d){
   var n=_wnIdx+d;
@@ -2435,16 +2450,28 @@ function _renderWhatsNew(){
   // .sw-solo : la carte est seule à l'écran → elle a la place d'expliquer (ft-v631)
   if(box) box.innerHTML='<div class="sw-feat sw-solo"><span>'+f.ic+'</span><div><b>'+f.t+'</b><small>'+f.d+'</small></div></div>';
   var sub=document.getElementById('whatsnew-sub');
-  if(sub) sub.textContent=multi?('Nouveauté '+(_wnIdx+1)+' sur '+_wnItems.length+' 👇'):'Une nouveauté pour toi 👇';
+  if(sub) sub.textContent=_wnHistory
+    ? ('Toutes les nouveautés — '+(_wnIdx+1)+' sur '+_wnItems.length)
+    : (multi?('Nouveauté '+(_wnIdx+1)+' sur '+_wnItems.length+' 👇'):'Une nouveauté pour toi 👇');
+  var ttl=document.getElementById('whatsnew-title');
+  if(ttl) ttl.textContent=_wnHistory?'Nouveautés':'Quoi de neuf ?';
+  // « Passer » : seulement à l'annonce, et seulement s'il y a plusieurs cartes
+  // (une seule carte = « C'est parti » est déjà un seul tap). Jamais dans l'historique.
+  var skip=document.getElementById('wn-skip');
+  if(skip) skip.style.display=(!_wnHistory&&multi)?'':'none';
   var dots=document.getElementById('wn-dots');
   if(dots) dots.innerHTML=multi?_wnItems.map(function(_,i){return '<span class="ag-dot'+(i===_wnIdx?' on':'')+'"></span>';}).join(''):'';
   var prev=document.getElementById('wn-prev');
   if(prev){prev.style.display=multi?'':'none';prev.style.visibility=_wnIdx===0?'hidden':'visible';}
   var next=document.getElementById('wn-next');
-  if(next) next.textContent=(_wnIdx===_wnItems.length-1)?"C'est parti 💪":'Suivant →';
+  if(next) next.textContent=(_wnIdx===_wnItems.length-1)?(_wnHistory?'Fermer':"C'est parti 💪"):'Suivant →';
 }
 function _whatsNewMarkSeen(){try{localStorage.setItem('ft4_wn_seen',String(typeof WHATS_NEW_MAX==='number'?WHATS_NEW_MAX:0));localStorage.setItem('ft4_whatsnew_v2','1');}catch(e){}}
-function closeWhatsNew(){_whatsNewMarkSeen();const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}
+function closeWhatsNew(){
+  if(!_wnHistory)_whatsNewMarkSeen();   // historique = simple consultation, aucun marqueur
+  _wnHistory=false;
+  const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');
+}
 // ─── Pop testeurs : différenciation des types de matériel (test, une seule fois) ──
 function checkTesterEq(){
   try{
