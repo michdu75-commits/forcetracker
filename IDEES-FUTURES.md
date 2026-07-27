@@ -4,6 +4,39 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 📒 INVENTAIRE DES FONCTIONNALITÉS EXISTANTES — le document qui manque vraiment (27/07/2026)
+
+> **Né d'une vraie erreur** : lors de l'audit du 27/07, j'ai conclu qu'une fonctionnalité manquait
+> (l'import de prise de sang). Michel a corrigé : *« mais la prise de sang on l'a déjà faite »*.
+> Vérification faite : elle est bien dans le code (4 fichiers) — mais elle n'a **aucune** entrée de
+> journal. Elle n'apparaît qu'en note incidente, dans une entrée sur autre chose, écrite des semaines
+> après. **Elle était invisible dans la doc.** (→ règle R23)
+
+**Le manque exact** : on a un excellent **journal** (que s'est-il passé, quand, pourquoi) mais **aucun
+inventaire** (qu'est-ce qui existe aujourd'hui ?). Ce sont deux questions différentes, et le journal
+répond mal à la seconde : pour savoir si une chose existe, il faut lire 500 entrées chronologiques.
+
+**Conséquences concrètes du manque** :
+- on re-propose une fonctionnalité déjà construite ;
+- on affirme à tort qu'une chose manque (le cas ci-dessus) ;
+- devant un bug, on ne remonte pas à la modification ancienne qui l'a causé ;
+- Michel doit servir de mémoire vivante — ce qui n'est pas tenable.
+
+**Le principe de conception, s'il est construit** : le dériver du **CODE**, pas de la mémoire.
+Un inventaire écrit à la main redeviendra faux en trois semaines (exactement comme le fichier de
+contexte). Un inventaire **généré** (les écrans, les entrées de menu, les actions du backend, les
+fonctions publiques) est **vérifiable** et ne peut pas mentir sur ce qui existe.
+
+**Piste concrète** : un petit script qui scanne le code et produit un tableau *fonctionnalité → où elle
+vit → depuis quelle version*, relancé à chaque livraison. À croiser une fois avec le journal pour
+retrouver les fonctionnalités « orphelines » (dans le code, absentes de la doc) — la prise de sang
+n'est probablement pas la seule.
+
+**Statut** : pas urgent, mais c'est le **seul** vrai manque documentaire identifié (la proposition de
+réorganisation de GPT décrivait surtout des documents qui existaient déjà). À faire un jour calme.
+
+---
+
 ## 🧠➡️💾 « CHAQUE SÉANCE DOIT ENRICHIR LE PROFIL VIVANT » — retour GPT sur le débrief de Milo (27/07/2026)
 
 > **Le constat de GPT** (après lecture du programme de reprise + du débrief) : *« Milo écrit énormément

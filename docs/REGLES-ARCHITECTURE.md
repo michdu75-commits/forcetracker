@@ -154,6 +154,20 @@ c'est arrivé deux fois, l'app est restée bloquée plusieurs versions en arriè
 Vérifier le run, et le numéro de version affiché dans l'app.
 *Origine : ft-v600 et ft-v619 · détail : `docs/GALERES-ET-LECONS.md`*
 
+### R23 — Une fonctionnalité livrée SANS entrée de journal devient INVISIBLE
+Elle est dans le code, absente de la doc — donc personne (ni humain ni IA) ne sait qu'elle existe. On
+la re-propose, on la re-construit, ou on affirme à tort qu'elle manque.
+**Cas réel** : l'import de prise de sang existe dans 4 fichiers du code, mais n'a **aucune** entrée de
+journal ; elle n'apparaît qu'en note incidente dans une entrée de migration technique écrite des
+semaines plus tard. Le 27/07, un audit a conclu qu'elle manquait — Michel a dû corriger.
+**Corollaire pour les documents d'ÉTAT** : les tailler ne coûte rien **si et seulement si** ce qu'on
+retire existe déjà dans le journal. *Tailler ≠ supprimer* : une ligne dont c'est la seule trace se
+**déplace**, elle ne se jette pas.
+**Ce qui manque encore** : un **inventaire de ce qui existe** (réponse à *« est-ce que c'est déjà
+construit ? »*) — le journal répond à *« que s'est-il passé et pourquoi ? »*, ce n'est pas la même
+question. Idéalement dérivé du **code** (vérifiable) et non de la mémoire.
+*Origine : 27/07/2026, cas de la prise de sang*
+
 ---
 
 ## 4. La gouvernance (les règles qui s'appliquent aux règles)
