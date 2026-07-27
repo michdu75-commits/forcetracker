@@ -98,6 +98,30 @@ Vont clairement **EN HAUT** (elles améliorent le raisonnement de Milo, = là o�
 
 ---
 
+## 🤸 VISION LONG TERME — « Les PRATIQUES d'entraînement » (cardio, mobilité, préhab…) — GPT + Michel, 27/07/2026
+
+> ⚠️ **À NE PAS développer maintenant.** L'objectif de cette note est de **vérifier que l'architecture actuelle pourra accueillir cette évolution sans refonte** (question posée par GPT). ✅ **Réponse : OUI — et une partie existe déjà** (audit du code, 27/07).
+
+**L'idée** : la plupart des applis demandent juste « tu fais du cardio ? combien de minutes ? ». Or le cardio influence la **récupération**, la **nutrition/dépense**, les **performances** et donc **tous les conseils de Milo**. Il mérite une modélisation plus riche : **type · moment · intensité · durée · objectif · fréquence**. Le **moment** est le plus discriminant (*« 30 min de vélo APRÈS la muscu ≠ 30 min de HIIT AVANT une séance jambes »*).
+
+**Le vrai saut conceptuel (GPT)** : ne pas faire « un module cardio », mais un concept général — **les PRATIQUES d'entraînement** : 🏋️ musculation · ❤️ cardio · 🧘 mobilité · 🤸 pilates · 🧘 yoga · 🛡️ prévention/préhab · 🏃 autres sports. Chaque pratique a **ses propres caractéristiques** (le cardio : type/intensité/durée/fréquence/moment/objectif ; la mobilité : fréquence/durée/objectif ; la préhab : zones — genou, épaules, lombaires, chevilles…). Aujourd'hui ces pratiques sont **quasi invisibles** dans les applis de suivi, alors qu'elles **racontent énormément** sur un sportif. Résultat : quelqu'un n'a plus « 4 séances », il a un **vrai profil d'entraînement** (4 muscu + 2 sorties vélo + 15 min de gainage après chaque séance + mobilité épaules avant le haut du corps) → Milo peut alors dire *« tu fais du HIIT avant chaque séance jambes ; pour ton objectif force ça peut te coûter cher — on le déplace après, ou sur un jour séparé ? »*.
+
+### ✅ Vérification d'architecture (Claude, 27/07) — ce qui existe DÉJÀ
+- **Le cardio est déjà structuré** : `S.wkt.cardio = {type, intensity, duration}` → **3 des 6 caractéristiques** demandées sont là (type · intensité · durée), il est **rattaché à la séance**, **conservé dans l'historique** (`sess.cardio`) et **alimente déjà les calories** (`calcCardioKcal`). Une **séance de cardio seul** (sans muscu) est possible depuis ft-v7.
+- **Le déclaratif existe** : `coachQuiz.cardio` (« ta relation avec le cardio ») + **`othersport`** (ft-v615, mode Enrichir) + `S.adn` (mode de vie, préférences, zones fragiles).
+- **Le profil vivant est un objet OUVERT** : `S.coachQuiz.answers` = dictionnaire clé/valeur, `S.registre.observations` = liste. **Ajouter une pratique = ajouter des clés, pas refondre.** Et `_coachQuizContext()` **injecte automatiquement** ce qui s'y trouve → Milo en profite sans nouveau plumbing.
+- **Les principes sont déjà posés** : « le profil vivant = source de vérité unique » (tout module est un client), le **catalogue des sources de contexte** (`docs/MOTEUR-RAISONNEMENT-MILO.md`) prévoit déjà une entrée *contexte de vie / autres sports*, et le mode **Enrichir** est **fait pour ça** (`othersport` en est le premier exemple).
+
+**→ Conclusion : aucune refonte nécessaire.** Ce qui manquerait : le **moment** (avant/après muscu, jour séparé), l'**objectif** du cardio, la **fréquence**, et les pratiques non-cardio (mobilité, yoga, pilates, préhab par zone).
+
+### ⚠️ Les 2 garde-fous à respecter le jour où on le construira (Claude)
+1. **JAMAIS un questionnaire à rallonge.** 6 caractéristiques × 7 pratiques = **42 questions** → exactement l'**interrogatoire** qu'on combat (P19, anti-interrogatoire ft-v607). Ça doit passer par le mode **Enrichir** (≤ 1 question proactive/semaine, une seule à la fois) et/ou par une question **contextuelle** (quand un événement la rend naturelle).
+2. **OBSERVER avant de DEMANDER** (déclaré vs réalisé). Le cardio *fait* est **déjà mesuré** dans les séances (`S.wkt.cardio` : type, intensité, durée, et sa position dans la séance) → Milo peut **déduire** une bonne partie (fréquence, type dominant, moment) au lieu de la demander. On ne demande que ce qui n'est **pas déductible** — typiquement l'**objectif** (« pourquoi tu fais ce cardio ? ») et les pratiques non loggées (mobilité, yoga). Cohérent avec « observé ≠ intention ».
+
+*Priorité : évolution LONG TERME, ne ralentit pas le développement actuel. À rapprocher de la Phase B (nutrition entrelacée) — le cardio pèse sur la dépense énergétique, donc les deux sujets se croiseront naturellement.*
+
+---
+
 ## 🎓 VISION LONG TERME — « Mode Coach » / multi-rôles (Michel, 20/07/2026) — À GARDER, PAS PRIORITAIRE
 
 > ⚠️ **Ce n'est PAS un chantier immédiat.** La priorité reste l'industrialisation (VM · Confirm · couche Machine · tests). Cette vision se **documente** pour ne pas se peindre dans un coin, elle **ne se construit pas maintenant**.
