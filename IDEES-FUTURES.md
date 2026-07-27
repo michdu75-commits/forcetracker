@@ -108,6 +108,31 @@ une **règle de réaction physiologique** — seulement des faits déclaratifs.
   conclure médicalement.
 - ✅ Passer la **grille des 3 questions** : qui produit · qui exploite · quel comportement change.
 
+**➕ 5ᵉ GARDE-FOU (GPT, 27/07) — « toute connaissance doit pouvoir être RÉÉVALUÉE »**
+> *« Le profil vivant ne doit pas uniquement apprendre. Un sportif évolue, son corps évolue, ses
+> réactions évoluent. Une connaissance ne devrait jamais être considérée comme définitivement vraie :
+> elle doit pouvoir être confirmée, renforcée, affaiblie, réévaluée. »*
+
+**✅ Adopté — et c'est le point le plus fort de son retour.** Deux précisions honnêtes :
+
+- **Ce n'est pas nouveau chez nous, pour les faits DÉCLARÉS.** Le mécanisme existe déjà : le mode
+  **Confirmer** (ft-v617) rafraîchit la date sans changer la valeur, la **fiabilité par champ** décroît
+  avec le temps, et *« la mémoire peut devenir une prison »* est déjà gravé (Constitution P22, apport de
+  Mistral). Son vocabulaire est **complémentaire** au nôtre, pas redondant : nos 4 modes agissent sur le
+  **contenu** (Compléter · Enrichir · Mettre à jour · Confirmer), ses 4 verbes agissent sur la
+  **confiance** (confirmer · renforcer · affaiblir · réévaluer).
+
+- **⚠️ Mais pour les RÈGLES APPRISES, c'est nettement plus dur — et c'est là que ça devient le cœur du
+  problème, pas un garde-fou de plus.** Affaiblir un fait déclaré est simple : on redemande. Affaiblir
+  *« il récupère bien après une semaine de coupure »* demande des **contre-observations** — donc de
+  savoir reconnaître qu'une séance s'est mal passée *pour cette raison-là*, ce qu'on ne sait pas faire
+  aujourd'hui. **Sans mécanisme d'affaiblissement, une règle apprise devient une prophétie** : Milo
+  planifierait selon une réaction que le corps n'a plus.
+
+**➡️ Conclusion de conception** : ce 5ᵉ point n'est pas à ajouter *après*, il **conditionne** le
+chantier. Une règle apprise ne doit pas être mémorisée tant qu'on ne sait pas comment elle pourra être
+remise en cause. *Si on ne sait pas l'affaiblir, on ne l'apprend pas encore.*
+
 **Statut** : chantier de fond, **pas une brique courte**. À placer après la nutrition, ou comme évolution du
 profil vivant une fois la base stabilisée. GPT : *« probablement l'évolution la plus importante de Force Tracker »* —
 d'accord sur le fond, mais ça ne se bricole pas en une session.

@@ -52,6 +52,17 @@ la structure de données que l'app utilise, **elle n'existe pas**. Le maillon fa
 collecte ni le raisonnement : c'est la **RESTITUTION**.
 *Origine : ft-v625 (charges écrasées) · ft-v626 (repos) · ft-v627 (ordre) · ft-v628 (consignes)*
 
+### R4b — Le CHEMIN complet de l'intelligence de Milo (généralisation de R4)
+GPT généralise R4 au-delà des séances, et il a raison — toute intelligence produite par Milo devrait
+suivre ce chemin :
+**Conversation → Compréhension → Connaissance PROPOSÉE → Validation → Profil vivant → Comportement futur**
+*« Une bonne réponse ne suffit plus : elle doit améliorer le comportement futur de l'application. »*
+**⚠️ Correction apportée à sa formulation** : il écrit « validation *si nécessaire* ». Chez nous, dès
+que la connaissance porte **sur la personne**, la validation n'est pas optionnelle — c'est le Principe 3
+de la Constitution (rien n'est mémorisé sans accord). Le « si nécessaire » ne s'applique qu'aux
+connaissances **techniques** (p. ex. un temps de repos), jamais à ce qui la concerne.
+*Origine : GPT, 27/07/2026 · nuance : Constitution P3*
+
 ### R5 — La règle marche À L'ENVERS : c'est un outil d'audit
 Demander « où cette information ressort-elle **concrètement** ? » est ce qui a permis de trouver les
 4 bugs ci-dessus. À faire périodiquement sur l'existant : les **données mortes** (stockées, jamais
@@ -197,6 +208,38 @@ un scénario de test permanent. Anti-sur-ajustement : ne pas réécrire l'archit
 *Origine : 24/07/2026*
 
 ---
+
+---
+
+## 5. Le produit (l'expérience)
+
+> **Pourquoi cette section existe** : GPT proposait (27/07) de séparer « règles d'architecture » et
+> « règles de conception » dans **deux fichiers**. Le **fond** est juste — une règle sur *le système*
+> et une règle sur *l'expérience* ne se ressemblent pas. La **forme** ne l'est pas : deux fichiers
+> imposent, à chaque nouvelle règle, un arbitrage *« architecture ou conception ? »* que personne ne
+> saura appliquer deux fois de la même façon — et on finit avec des règles introuvables dans les deux.
+> **Une section coûte zéro, une frontière coûte cher.** (Cohérent avec R19 et R21.)
+
+### R24 — Informer sans BLOQUER
+Une information (nouveauté, conseil, rappel) ne doit jamais se mettre **en travers** de ce que la
+personne est venue faire. Le **format** peut inciter à lire ; il ne doit pas **emprisonner**. Toujours
+laisser une sortie — et la rendre **visible**, pas seulement possible.
+*Origine : ft-v630 — un testeur proposait de forcer le passage par toutes les cartes de nouveautés ;
+refusé au nom de l'ouverture instantanée à la salle. GPT est arrivé indépendamment à la même conclusion
+(« informer sans bloquer »), ce qui a confirmé l'arbitrage. Complété par ft-v633 (sortie rendue visible).*
+
+### R25 — La POP-UP annonce, l'AIDE explique
+Ce qui interrompt doit être **court** (4-5 lignes) ; le détail va là où on le consulte **quand on en a
+besoin** (l'aide contextuelle, l'aide détaillée). **Gagner de la place n'autorise jamais à écrire plus
+long** — un pavé bien présenté reste un pavé.
+*Origine : ft-v632 — Michel, juste après qu'on ait agrandi les cartes : « donner trop d'infos en une
+seule pop-up c'est pas bon ». Mesuré : les entrées en attente faisaient 14 et 11 lignes.*
+
+### R26 — Le format INCITE, la contrainte braque
+Corollaire des deux précédentes, et garde-fou pour la suite : quand on veut qu'une chose soit lue,
+faite ou comprise, **changer le format** marche mieux que **forcer le passage**. Une carte par écran
+fait lire ; six écrans obligatoires font fermer l'app.
+*Origine : ft-v630*
 
 ## 🔗 Où va le reste
 
