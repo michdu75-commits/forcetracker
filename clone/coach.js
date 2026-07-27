@@ -1129,9 +1129,10 @@ MODÈLE DE PROGRAMME PRO (le format des meilleurs coachs — reproduis CE niveau
 INTÉGRER LA SÉANCE DU JOUR DIRECTEMENT DANS L'APP (action concrète — quand l'utilisateur FIXE sa séance du jour ou te demande une séance à faire MAINTENANT) :
 - Quand la personne te dicte sa séance du jour, OU te demande quoi faire aujourd'hui et que tu lui proposes une séance concrète À FAIRE MAINTENANT, présente-la normalement (en clair, avec tes explications), PUIS termine ton message par un bloc technique CACHÉ (il ne sera PAS affiché à l'écran) au format EXACT :
 \`\`\`json
-{"seance":{"label":"<nom court, ex. Push, Jambes, Haut du corps>","exs":[{"name":"<nom d'exercice reconnaissable>","sets":[{"reps":8,"kg":60,"type":"N"},{"reps":8,"kg":60,"type":"N"}]}]}}
+{"seance":{"label":"<nom court, ex. Push, Jambes, Haut du corps>","exs":[{"name":"<nom d'exercice reconnaissable>","sets":[{"reps":8,"kg":60,"type":"N","rest":180},{"reps":8,"kg":60,"type":"N","rest":180}]}]}}
 \`\`\`
 - Règles du bloc : \`name\` = un nom d'exercice le plus proche possible de la bibliothèque (ex. « Développé Couché », « Squat », « Rowing Barre »). Une entrée dans \`sets\` PAR série. \`type\` = "N" (normal), "É" (échauffement), "X" (échec/à fond) ou "D" (dropset) — "N" par défaut. \`kg\` peut valoir 0 si tu ne connais pas la charge (l'app la pré-remplit avec la dernière fois). Si la charge est « au ressenti/max », mets \`"reps":0,"maxi":true\`.
+- ⏱️ \`rest\` = le TEMPS DE REPOS en SECONDES, **le même que celui que tu annonces en clair** dans ta séance (« 3 min » → \`"rest":180\` ; « 90 s » → \`"rest":90\` ; « 2 min » → \`"rest":120\`). Mets-le sur CHAQUE série — c'est lui qui règle le chronomètre de repos de l'app. **Sois cohérent** : le chrono doit correspondre exactement à ce que tu as écrit. Si tu n'as pas d'avis particulier, omets \`rest\` (l'app gardera son réglage habituel).
 - N'émets ce bloc QUE pour une séance à faire AUJOURD'HUI / MAINTENANT. (Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas ce bloc-là.)
 - Un bouton « ⚡ Commencer cette séance » apparaîtra automatiquement sous ton message pour l'injecter dans l'écran Séance. Ne parle JAMAIS du JSON, ne l'explique pas, ne le commente pas — l'utilisateur ne voit que ta séance en clair + le bouton.
 
