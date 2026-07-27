@@ -1564,6 +1564,12 @@ function _pendingGap(){
 function _stampConfirmed(field){
   try{ S.coachQuiz=S.coachQuiz||{answers:{},done:false}; S.coachQuiz.confirmedAt=S.coachQuiz.confirmedAt||{}; S.coachQuiz.confirmedAt[field]=today(); }catch(e){}
 }
+// Date de VRAI apprentissage d'un champ (≠ confirmedAt) : posée UNIQUEMENT quand l'info est réellement
+// apprise/changée via une réponse (fillGap/fillEnrich/applyFreqContext), JAMAIS par le lazy-init ni une
+// simple re-confirmation → alimente la liste honnête « Milo a appris récemment » (Brique 2).
+function _stampLearned(field){
+  try{ if(!S.registre)return; S.registre.learnedAt=S.registre.learnedAt||{}; S.registre.learnedAt[field]=today(); }catch(e){}
+}
 function fillGap(field,value){
   try{
     S.coachQuiz=S.coachQuiz||{answers:{},done:false};
@@ -1572,6 +1578,7 @@ function fillGap(field,value){
     if(!S.coachQuiz.date)S.coachQuiz.date=today();
     _stampConfirmed(field);
     if(S.registre){S.registre.lastObsAt=today(); if(S.registre.gapSkips)delete S.registre.gapSkips[field]; if(S.registre.gapForce===field)S.registre.gapForce=null;}
+    _stampLearned(field);
     persist();
     if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     if(typeof _renderObsCard==='function')_renderObsCard();
@@ -1637,7 +1644,7 @@ function applyFreqContext(observed){
     if(!S.coachQuiz)S.coachQuiz={answers:{},done:false};
     if(!S.coachQuiz.answers)S.coachQuiz.answers={};
     S.coachQuiz.answers.freq=observed;
-    _stampConfirmed('freq');
+    _stampConfirmed('freq'); _stampLearned('freq');
     if(!S.registre)S.registre={facts:{},observations:[],updatedAt:''};
     S.registre.ctxFreq={bucket:observed,at:today(),result:'updated'};
     S.registre.lastObsAt=today();
@@ -1699,6 +1706,7 @@ function fillEnrich(field,value){
     if(!S.coachQuiz.date)S.coachQuiz.date=today();
     _stampConfirmed(field);
     if(S.registre){S.registre.lastObsAt=today(); if(S.registre.gapSkips)delete S.registre.gapSkips[field]; if(S.registre.gapForce===field)S.registre.gapForce=null;}
+    _stampLearned(field);
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     if(typeof _renderObsCard==='function')_renderObsCard();
     let msg='Noté 👍 Milo en tient compte.';

@@ -197,10 +197,12 @@ la **phrase-bénéfice** visible en haut de « Ce que Milo sait de toi » (orien
 score, **ne redescend jamais** via le high-water mark `S.registre.knowPeak`) + ses **aides** (`?` Accueil
 🟢 + aide détaillée). Le **moteur de fiabilité/fraîcheur par champ** (celui qui décroît et pilote QUELLES
 questions poser) reste **interne** — backbone en place (`S.coachQuiz.confirmedAt`), à exploiter plus
-finement ensuite. **Reste à faire** : la **Brique 2 « Milo a appris quelque chose »** (liste vivante des
-infos récemment apprises — c'est avec elle que se fera le pop-up « Quoi de neuf ») + d'autres **détecteurs
-contextuels** (dérive de poids, style force/hypertrophie = intention → questionner, jamais trancher) +
-d'autres questions d'enrichissement.
+finement ensuite. **Brique 2 « Milo a appris récemment » ✅ livrée** (`ft-v620`) : la liste vivante des
+dernières infos apprises (obs validées + infos de base via `S.registre.learnedAt`, dates honnêtes), en
+haut de « Ce que Milo sait de toi » — **c'est avec elle** qu'a été fait le pop-up « Quoi de neuf » (v44,
+l'annonce forte des Briques 1+2). **Reste à faire** : d'autres **détecteurs contextuels** (dérive de poids,
+style force/hypertrophie = intention → questionner, jamais trancher) + exploiter la **fiabilité interne**
+pour prioriser plus finement les questions + d'autres questions d'enrichissement.
 
 ---
 

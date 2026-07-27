@@ -161,7 +161,7 @@ const _HELP_DATA={
       {i:'🔎',t:'Milo s\'adapte à ce que tu fais vraiment : il compare ce que tu as déclaré (ex. ta fréquence de séances) à ce qu\'il MESURE dans tes vraies séances. S\'il repère un changement DURABLE (pas juste une semaine chargée), il te fait une petite vérification sur l\'Accueil (« tu t\'entraînes plutôt 5×/sem maintenant, ça a changé ? ») → « Oui, mets à jour » ou « Non, garde comme ça ». Il ne change JAMAIS rien tout seul — il constate et te laisse décider.'},
       {i:'🚴',t:'Milo tient compte de tes autres sports : de temps en temps il te demande sur l\'Accueil si tu pratiques un autre sport (vélo, course, foot, natation…) — un tap pour répondre (« Aucun » est valable). Un autre sport change ta récupération ET ta dépense d\'énergie (donc tes calories), et Milo en tiendra compte dans ses conseils.'},
       {i:'🌿',t:'Milo garde ton profil à jour : une info peut vieillir (tu as changé de salle, tes séances sont plus courtes…). De temps en temps il te fait une petite vérification sur l\'Accueil (« toujours en salle basique ? »). « Oui, toujours » ne change RIEN — il note juste que c\'est à jour ; « Non, ça a changé » → tu choisis la nouvelle réponse en 1 tap. Au plus une petite question par semaine, et « Plus tard » est toujours possible : jamais de harcèlement.'},
-      {i:'🟢',t:'Milo te connaît de mieux en mieux : ouvre Menu → « Ce que Milo sait de toi ». Tout en haut, une phrase te dit — simplement — à quel point Milo peut te conseiller (de « il apprend à te connaître » à « il connaît très bien ton profil — conseils sur-mesure »). Ce n\'est PAS une note ni un score : ça monte au fil de ce que tu lui apportes (tes séances, tes réponses à ses questions, ce que tu lui confies) et ça ne redescend JAMAIS, même si tu effaces une info. En dessous, la liste de tout ce qu\'il a retenu — tu peux en effacer. 🔒 Privé.'},
+      {i:'🟢',t:'Milo te connaît de mieux en mieux : ouvre Menu → « Ce que Milo sait de toi ». Tout en haut, une phrase te dit — simplement — à quel point Milo peut te conseiller (de « il apprend à te connaître » à « il connaît très bien ton profil — conseils sur-mesure »). Ce n\'est PAS une note ni un score : ça monte au fil de ce que tu lui apportes (tes séances, tes réponses à ses questions, ce que tu lui confies) et ça ne redescend JAMAIS, même si tu effaces une info. Juste en dessous, « 🧠 Milo a appris récemment » liste les dernières choses qu\'il a retenues sur toi (la plus récente en haut). Et tout en bas, la liste complète — tu peux en effacer. 🔒 Privé.'},
       {i:'🏆',t:'Les PRs se mettent à jour automatiquement. Le Big 3 (Squat + DC + SDT) est ton indicateur de force globale.'},
       {i:'🔄',t:'Le cycle de force (Accumulation → Intensification → Peak → Décharge) se configure dans Profil → Cycle de force.'},
       {i:'🏅',t:'Tes badges débloqués récemment apparaissent ici. Consulte l\'onglet Badges dans Progrès pour tout voir.'},
@@ -833,8 +833,60 @@ function _renderMiloLevel(){
     +(lv.sub?'<span class="mk-level-sub">'+_obsEsc(lv.sub)+'</span>':'')
     +'</div></div>';
 }
+// ─── PROFIL VIVANT — Brique 2 : « Milo a appris récemment » (docs/PROFIL-VIVANT.md) ───
+// Liste VIVANTE des dernières choses apprises, la + récente en haut. LIT le profil unique (observations
+// validées + infos de base réellement apprises via S.registre.learnedAt) — ne stocke RIEN de neuf
+// (respecte « le profil vivant = source de vérité »). Dates honnêtes : les vieux champs (lazy-init) n'ont
+// pas de learnedAt → n'apparaissent pas avec une fausse date « aujourd'hui ».
+function _relLearned(d){
+  if(!d)return '';
+  const days=Math.round((new Date(today())-new Date(d))/864e5);
+  if(isNaN(days))return '';
+  if(days<=0)return "aujourd'hui";
+  if(days===1)return "hier";
+  if(days<7)return "il y a "+days+" j";
+  if(days<31)return "il y a "+Math.max(1,Math.round(days/7))+" sem";
+  return "il y a "+Math.max(1,Math.round(days/30))+" mois";
+}
+function _recentLearnedItems(){
+  const items=[];
+  const a=(S.coachQuiz&&S.coachQuiz.answers)||{};
+  const learned=(S.registre&&S.registre.learnedAt)||{};
+  const lbl=(f,v)=>(typeof _confirmLabelOf==='function')?_confirmLabelOf(f,v):v;
+  const OS=(typeof _OTHERSPORT_LBL!=='undefined')?_OTHERSPORT_LBL:{};
+  const freqLbl=v=>(typeof _freqBucketLabel==='function')?_freqBucketLabel(v):(String(lbl('freq',v))+' fois');
+  const phrase={
+    place: v=>'Tu t\'entraînes plutôt en '+String(lbl('place',v)).toLowerCase(),
+    freq:  v=>'Tu t\'entraînes '+freqLbl(v)+' par semaine',
+    time:  v=>'Tes séances durent '+String(lbl('time',v)),          // le libellé contient déjà « ~ » (ex. « ~45 min »)
+    othersport: v=>(v==='aucun')?'Pas d\'autre sport que la muscu':('Tu fais aussi du '+(OS[v]||'sport')),
+  };
+  ['place','freq','time','othersport'].forEach(f=>{
+    const v=a[f]; if(v===undefined||v===null||v==='')return;
+    if(!learned[f])return;                                   // pas de VRAIE date d'apprentissage → on n'invente pas
+    items.push({text:phrase[f](v), date:learned[f]});
+  });
+  ((typeof _validatedObs==='function')?_validatedObs():[]).forEach(o=>{
+    const t=(o.fact||o.ask||'').trim(); if(!t)return;
+    items.push({text:t, date:o.validatedAt||''});
+  });
+  items.sort((x,y)=>String(y.date||'').localeCompare(String(x.date||'')));
+  return items;
+}
+function _renderMiloRecent(){
+  const el=document.getElementById('milo-knows-recent');if(!el)return;
+  const items=_recentLearnedItems().slice(0,3);
+  if(!items.length){el.innerHTML='';return;}
+  el.innerHTML='<div class="mk-recent"><div class="mk-recent-hd">🧠 Milo a appris récemment</div>'
+    +items.map(it=>'<div class="mk-recent-row"><span class="mk-recent-dot"></span>'
+      +'<span class="mk-recent-txt">'+_obsEsc(it.text)+'</span>'
+      +(it.date?'<span class="mk-recent-when">'+_obsEsc(_relLearned(it.date))+'</span>':'')
+      +'</div>').join('')
+    +'</div>';
+}
 function _renderMiloKnows(){
   _renderMiloLevel();
+  _renderMiloRecent();
   const box=document.getElementById('milo-knows-list');if(!box)return;
   const list=(typeof _validatedObs==='function')?_validatedObs():[];
   if(!list.length){box.innerHTML='<div class="mk-empty">Milo n\'a encore rien retenu sur toi. Au fil de tes séances, il te posera de petites questions sur l\'Accueil — chaque fois que tu confirmes, il apprend à mieux te connaître. Rien n\'est mémorisé sans ton accord.</div>';return;}

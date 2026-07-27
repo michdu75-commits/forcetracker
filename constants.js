@@ -226,6 +226,7 @@ const NEW_FEATURES=[
   {id:'work-actif',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : niveau de travail « Actif » (serveuse, infirmier, vendeur : debout + en déplacement) dans ton Profil — tes calories et macros sont plus justes'},
   {id:'app-guide',   screen:'setup', anchor:'menu-row-appguide', desc:'Nouveau : Menu → « Guide de l\'application » — un diaporama qui explique comment marche l\'app (séance, programmes, Milo, photos…)'},
   {id:'milo-knows',  screen:'setup', anchor:'menu-row-miloknows', desc:'Nouveau : Milo apprend à te connaître — il te pose de petites questions sur l\'Accueil, et tu retrouves tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi »'},
+  {id:'milo-knows-alive', screen:'setup', anchor:'menu-row-miloknows', desc:'Nouveau : ta page « Ce que Milo sait de toi » devient vivante — une phrase en haut te dit à quel point Milo peut te conseiller (elle monte, ne redescend jamais), et « 🧠 Milo a appris récemment » liste les dernières choses qu\'il a retenues sur toi'},
   {id:'coach-history', screen:'coach', desc:'Nouveau : Milo se souvient de vos échanges (même en gratuit) + le bouton « + » range tes discussions dans « Mes discussions » (icône horloge) au lieu de les effacer'},
   // Nutrition — spot = onglet où poser le point rouge « ici »
   {id:'food-journal', screen:'nutrition', spot:'ntab-journal', desc:'Nouveau : Journal alimentaire — note tes repas et suis tes calories/macros du jour vs ton objectif'},
@@ -248,9 +249,10 @@ const NEW_FEATURES=[
 // ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
 //    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
 // ⏳ Réservé testeurs (calories manuelles, objectif recomposition, « maxi ») —
-//    à RÉACTIVER (remettre les 3 entrées en v44/45/46 + WHATS_NEW_MAX=46) quand on ouvre à tout le monde.
+//    à RÉACTIVER (remettre les 3 entrées en v45/46/47 + WHATS_NEW_MAX=47) quand on ouvre à tout le monde.
 //    (v15 = excuses réseau 4G ; v16 = sommeil ; v17 = ADN ; v18 = Milo apprend ; v19 = Milo veille sur ta sécurité ; v20 = état du jour ; v24 = mémoire pour tous + historique discussions ; v25 = douleurs précises gauche/droite ; v26 = écran de fin de séance ; v27 = Milo t'accompagne (moral du jour) — déjà pour tout le monde.)
 const WHATS_NEW=[
+  {v:44, ic:'🧠', t:'Ta page « Ce que Milo sait de toi » devient vivante', d:'Ouvre Menu → « Ce que Milo sait de toi » : tout en haut, une phrase te dit à quel point Milo peut te conseiller — et elle MONTE au fil du temps, sans jamais redescendre (ce n\'est pas un score, tu n\'es jamais « évalué »). Juste en dessous, « 🧠 Milo a appris récemment » te montre les dernières choses qu\'il a retenues sur toi (tes habitudes, un autre sport, une gêne…), la plus récente en premier. Plus tu utilises Force Tracker, plus Milo te connaît vraiment — et maintenant, ça se voit. 🧠'},
   {v:43, ic:'🌿', t:'Milo garde ton profil à jour', d:'De temps en temps, Milo te fait une petite vérification sur l\'Accueil : « Tu t\'entraînes toujours en salle basique ? », « Une séance dure toujours ~45 min ? »… Si rien n\'a changé, tu tapes « Oui, toujours » (ça ne modifie rien — Milo note juste que c\'est à jour) ; si ça a changé, « Non, ça a changé » et tu choisis la nouvelle réponse en 1 tap. Comme ça, ton coach ne te connaît pas seulement au jour de l\'inscription : il reste à jour avec toi, sans jamais te harceler (au plus une petite question par semaine, et « Plus tard » est toujours possible). 🌿'},
   {v:42, ic:'🚴', t:'Milo tient compte de tes autres sports', d:'Tu fais du vélo, de la course, du foot, de la natation… à côté de la muscu ? Milo te pose la question de temps en temps sur l\'Accueil (1 tap) — parce qu\'un autre sport change ta récupération ET ta dépense d\'énergie (donc tes calories). Il en tiendra compte dans ses conseils. Optionnel, et « Aucun » est une réponse tout à fait valable. 🚴'},
   {v:41, ic:'🔎', t:'Milo s\'adapte à ce que tu fais vraiment', d:'Milo ne se contente plus de ce que tu as déclaré : il REGARDE tes vraies séances. S\'il voit un vrai changement durable — par exemple tu avais dit 3 séances/semaine mais tu en fais plutôt 5 depuis plusieurs semaines — il te fait une petite vérification sur l\'Accueil : « Ça a changé ? ». Tu réponds « Oui, mets à jour » ou « Non, garde comme ça ». Il ne modifie JAMAIS rien tout seul, et il ne se base que sur une vraie tendance (pas une semaine exceptionnelle). C\'est le début d\'un coach qui se cale sur ta réalité, pas sur une fiche figée. 🔎'},
@@ -292,7 +294,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=43;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v44/45/46)
+const WHATS_NEW_MAX=44;     // = plus grand `v` ci-dessus (les features testeurs réactivées prendront v45/46/47)
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

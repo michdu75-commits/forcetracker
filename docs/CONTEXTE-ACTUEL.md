@@ -6,14 +6,14 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v619`. **Déploiement Pages désormais via GitHub Actions** (`.github/workflows/deploy-pages.yml`) — le « Deploy from a branch » se bloquait par intermittence (site coincé à ft-v600 puis ft-v616 ; cf. `docs/GALERES-ET-LECONS.md`). Fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v620`. **Déploiement Pages via GitHub Actions** (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main (le « Deploy from a branch » se bloquait ; cf. `docs/GALERES-ET-LECONS.md`).
 
 > ### 🔁 REPRISE 26/07 (soir) — état après la session (badge live ft-v619)
 > - 🌱 **PROFIL VIVANT : les 4 modes sont LIVRÉS** (docs/PROFIL-VIVANT.md) : Compléter (ft-v612) · déclaré/réalisé = fréquence (ft-v614) · Enrichir = autre sport (ft-v615) · **Confirmer (ft-v617)**, le 4ᵉ et dernier — re-valide une info ancienne (>90j), « Oui » ne change rien (rafraîchit la date), « Non » → bascule Compléter/Enrichir.
 > - 🧠 **Brique « fiabilité par champ » — ÉTAPE 1 : la PHRASE-BÉNÉFICE (ft-v618)** en prod, **validée sur le device de Michel** (bandeau vert 🟢 « Milo connaît très bien ton profil » sur « Ce que Milo sait de toi »). Design Michel : **orienté bénéfice, jamais un score**, ne redescend jamais (high-water mark), la fraîcheur par champ reste INTERNE.
 > - 📚 **ft-v619 = aides de la phrase-bénéfice** (aide `?` Accueil 🟢 + aide détaillée Menu→Aide 🟢) + **fix déploiement** (Actions).
-> - ⏭️ **PROCHAINE BRIQUE = Brique 2 « Milo a appris quelque chose »** (la liste vivante des infos récemment apprises, 2ᵉ idée de Michel) → et c'est **avec elle** qu'on fera le **pop-up « Quoi de neuf »** (annonce forte « ta page *Ce que Milo sait de toi* devient vivante » — le pop-up de la phrase-bénéfice est VOLONTAIREMENT reporté).
-> - ⏭️ **Ensuite** : la fiabilité par champ pourra piloter plus finement les questions · autres détecteurs contextuels (dérive de poids, style force/hypertrophie = intention → questionner) · la refonte 2-rangées du header (parkée, session dédiée).
+> - 🧠 **ft-v620 = Brique 2 « Milo a appris récemment »** (liste vivante des dernières infos apprises, en haut de « Ce que Milo sait de toi », dates honnêtes via `learnedAt`) + **l'ANNONCE FORTE** des Briques 1+2 (WHATS_NEW v44 + red dot + aides). **Validée par capture** (rendu OK, « go » Michel). → **la couche VISIBLE de la fiabilité par champ est complète** (phrase-bénéfice + liste vivante).
+> - ⏭️ **Ensuite** : détecteurs contextuels (dérive de poids, style force/hypertrophie = intention → questionner) · exploiter la fiabilité INTERNE pour prioriser plus finement les questions · la refonte 2-rangées du header (parkée, session dédiée) · les diapos Guide (captures Michel).
 > - ⏳ **Restent clone-only** (test, ne pas promouvoir tel quel) : badge Gardien, questions illimitées, couplage blessure-retenue→Santé (ft-v588).
 > - ⏳ **Diapos du Guide** (ft-v612/614/615/617) = en attente de captures de Michel.
 > - ⏮️ **Ancien état encore valable** : ft-v607 a promu en prod le lot anti-interrogatoire (découverte clé : c'était le **MODÈLE** du coach, pas le prompt — cf. GALERES §1). Idée en file : 📸 photo produit → « je retiens que tu prends X ? » (Constitution P25).
