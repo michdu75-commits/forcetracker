@@ -70,6 +70,7 @@ Super testeur, là **depuis le début**. Retours marquants : douleurs plus préc
 mail (→ `ft-v481`, puis `ft-v397`) ; « + Série » qui repart à vide (→ `ft-v290`) ; superset
 par glisser-déposer (→ `ft-v398`). Phase 2 douleurs (intensité 1-5 + « depuis quand ») = à faire.
 **27/07/2026** — 🐛 *« quand je balance la pop-up vers le bas, elle revient à la réouverture de l'app »* → **vrai bug, 8 pop-ups concernées** : le glissement ne posait pas le marqueur « vu ». Corrigé **ft-v629** (`_OVERLAY_CLOSERS` + `_closeOverlayProper`). Encore un bug de **chemin de fermeture oublié** — comme son retour sur le point rouge. 👏
+**27/07/2026 (2)** — 💡 **proposition UX acceptée** : *« quand on fait beaucoup de mises à jour ça fait une seule pop-up et les gens, je pense que ça les saoule de descendre jusqu'en bas ; si on met une pop-up ensuite, on doit slider pour voir la deuxième — les gens vont peut-être plus lire »*. **Juste** : une liste empilée se scrolle sans se lire, un écran par nouveauté se lit. Livré **ft-v630** (carrousel « Quoi de neuf » : 1 nouveauté/écran, points, Suivant/Précédent, glissement latéral). **Nuance gardée** (règle d'or #4) : le format suffit à faire lire, on ne **bloque** donc pas l'entrée dans l'app — le glissement vers le bas reste une sortie (quelqu'un qui arrive à la salle ne doit pas être retenu par 6 écrans). 👏 **2 retours utiles dans la même journée.**
 
 ## 👩 Emma — `emma.david16@gmail.com`
 Retours (→ `ft-v438`) : repos réglable à la main en séance, option « tout dérouler » les exos,

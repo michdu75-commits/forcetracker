@@ -2398,18 +2398,49 @@ function _whatsNewUnseen(){
   if(typeof WHATS_NEW_SHOW_MAX==='number') list=list.slice(0,WHATS_NEW_SHOW_MAX);
   return list;
 }
+// ── « Quoi de neuf » en CARROUSEL (ft-v630, idée de Christophe) ────────────────
+// Avant : toutes les nouveautés empilées dans une seule pop-up → il fallait scroller
+// jusqu'en bas, et personne ne lisait. Maintenant : UNE nouveauté par écran, on
+// avance avec « Suivant » (ou en glissant du doigt) jusqu'à « C'est parti 💪 ».
+// Même composant que le Guide de l'appli (_agGo/_renderAppGuide) : dots + nav.
+var _wnItems=[],_wnIdx=0,_wnSwipeInit=false;
 function showWhatsNew(){
   var items=_whatsNewUnseen();
   if(!items.length){_whatsNewMarkSeen();return;}
-  var box=document.getElementById('whatsnew-list');
-  if(box){
-    box.innerHTML=items.map(function(f){
-      return '<div class="sw-feat"><span>'+f.ic+'</span><div><b>'+f.t+'</b><small>'+f.d+'</small></div></div>';
-    }).join('');
-  }
-  var sub=document.getElementById('whatsnew-sub');
-  if(sub) sub.textContent=items.length>1?('Voici les '+items.length+' dernières nouveautés 👇'):'Une nouveauté pour toi 👇';
+  _wnItems=items;_wnIdx=0;_renderWhatsNew();
   var o=document.getElementById('ov-whatsnew');if(o)o.classList.add('open');
+  if(!_wnSwipeInit){
+    var sl=document.getElementById('whatsnew-list');
+    if(sl){
+      var x0=null;
+      sl.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;},{passive:true});
+      sl.addEventListener('touchend',function(e){
+        if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;x0=null;
+        if(Math.abs(dx)>45)_wnGo(dx<0?1:-1);
+      },{passive:true});
+    }
+    _wnSwipeInit=true;
+  }
+}
+function _wnGo(d){
+  var n=_wnIdx+d;
+  if(n<0)return;
+  if(n>=_wnItems.length){closeWhatsNew();return;}   // dernière diapo → on entre dans l'app
+  _wnIdx=n;_renderWhatsNew();
+}
+function _renderWhatsNew(){
+  var f=_wnItems[_wnIdx];if(!f)return;
+  var multi=_wnItems.length>1;
+  var box=document.getElementById('whatsnew-list');
+  if(box) box.innerHTML='<div class="sw-feat"><span>'+f.ic+'</span><div><b>'+f.t+'</b><small>'+f.d+'</small></div></div>';
+  var sub=document.getElementById('whatsnew-sub');
+  if(sub) sub.textContent=multi?('Nouveauté '+(_wnIdx+1)+' sur '+_wnItems.length+' 👇'):'Une nouveauté pour toi 👇';
+  var dots=document.getElementById('wn-dots');
+  if(dots) dots.innerHTML=multi?_wnItems.map(function(_,i){return '<span class="ag-dot'+(i===_wnIdx?' on':'')+'"></span>';}).join(''):'';
+  var prev=document.getElementById('wn-prev');
+  if(prev){prev.style.display=multi?'':'none';prev.style.visibility=_wnIdx===0?'hidden':'visible';}
+  var next=document.getElementById('wn-next');
+  if(next) next.textContent=(_wnIdx===_wnItems.length-1)?"C'est parti 💪":'Suivant →';
 }
 function _whatsNewMarkSeen(){try{localStorage.setItem('ft4_wn_seen',String(typeof WHATS_NEW_MAX==='number'?WHATS_NEW_MAX:0));localStorage.setItem('ft4_whatsnew_v2','1');}catch(e){}}
 function closeWhatsNew(){_whatsNewMarkSeen();const o=document.getElementById('ov-whatsnew');if(o)o.classList.remove('open');}

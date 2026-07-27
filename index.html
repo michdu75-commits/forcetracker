@@ -1401,7 +1401,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div style="font-size:22px;font-weight:900;color:var(--red);margin-top:8px;">Quoi de neuf ?</div>
     <div id="whatsnew-sub" style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Voici les dernières nouveautés 👇</div>
     <div id="whatsnew-list" style="text-align:left;margin-top:16px;display:flex;flex-direction:column;gap:12px;"></div>
-    <button class="btn btn-red" onclick="closeWhatsNew()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">C'est parti 💪</button>
+    <div id="wn-dots" style="display:flex;gap:6px;justify-content:center;margin:14px 0 0;flex-wrap:wrap;"></div>
+    <div id="wn-nav" style="display:flex;gap:8px;margin-top:14px;">
+      <button id="wn-prev" class="btn btn-bg2" onclick="_wnGo(-1)" style="flex:1;">← Précédent</button>
+      <button id="wn-next" class="btn btn-red" onclick="_wnGo(1)" style="flex:2;">Suivant →</button>
+    </div>
   </div>
 </div>
 
