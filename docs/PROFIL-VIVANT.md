@@ -13,6 +13,25 @@
 
 ---
 
+## 🏛️ Le profil vivant est la SOURCE DE VÉRITÉ de l'application (principe d'architecture — GPT, 27/07)
+
+> **Tous les moteurs — Milo, nutrition, récupération, programmes, analyses — s'appuient sur le profil
+> vivant.** Il n'existe **qu'UN seul profil**, cohérent, partagé par toute l'application.
+
+Pourquoi c'est capital : ça empêche que chaque module se mette, un jour, à **stocker ses propres infos
+dans son coin** — des silos qui divergent et finissent par se contredire (la nutrition qui « croit » une
+fréquence, Milo qui en « croit » une autre…). Toute l'app doit **raisonner à partir d'un profil unique**.
+
+*Traduction concrète (garde-fou d'archi, Claude) :* aujourd'hui ce profil vit dans quelques clés de l'état
+partagé `S` — `S.coachQuiz.answers` (lieu/fréquence/durée/autre sport…), `S.registre` (observations
+validées, mémoire), `S.healthProfile` (zones fragiles/santé), `S.goal`/`targetWeight`, + les **faits
+mesurés** (séances, poids, sommeil). La règle : un module **LIT** ce profil commun et y **écrit via les
+mécanismes prévus** (les 4 modes ci-dessous, la mémoire validée…). Il ne crée **JAMAIS** une copie
+parallèle de « où s'entraîne l'utilisateur » ou « son objectif ». **Une info = un seul endroit.** C'est
+aussi ce qui rend la sync cloud et la restauration fiables (un seul profil à sauvegarder).
+
+---
+
 ## Les 4 modes du profil vivant
 
 Le profil ne se remplit pas une fois pour toutes : il se **complète, s'enrichit, se met à jour et se
