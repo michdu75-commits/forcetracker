@@ -3669,7 +3669,9 @@ function _normalizeMiloSession(sess){
     name:String(ex.name||'Exercice'),
     note:'',
     sets:(Array.isArray(ex.sets)?ex.sets:[]).map(s=>({
-      reps:s.maxi?0:(parseInt(s.reps)||10),
+      // 0 = « Milo n'a rien précisé » (le repli sur l'historique se décide dans _startSessionFromMilo).
+      // ⚠️ Ne PAS mettre 10 par défaut ici : on ne pourrait plus distinguer « Milo a dit 10 » de « Milo n'a rien dit ».
+      reps:s.maxi?0:(parseInt(s.reps)||0),
       kg:parseFloat(s.kg)||0,
       maxi:!!s.maxi,
       type:(s&&T[s.type])?s.type:'N',
@@ -3684,12 +3686,20 @@ function _normalizeMiloSession(sess){
 function _startSessionFromMilo(idx,btn){
   const data=(typeof _pendingMiloSessions!=='undefined')?_pendingMiloSessions[idx]:null;
   if(!data){toast('Séance introuvable','error');return;}
-  // Construit les exercices avec pré-remplissage PAR SÉRIE depuis la dernière séance (comme loadProgDay).
+  // 🐛 FIX ft-v625 (retour Michel) : CE QUE MILO DIT PRIME sur l'historique.
+  // Avant, on copiait le pré-remplissage de loadProgDay (`pp ? pp.kg : s.kg`) → dès qu'une séance
+  // précédente existait, elle ÉCRASAIT la proposition de Milo (il annonçait 4×6 à 60/70/80/85 kg
+  // et l'écran Séance affichait l'ancienne séance). Or Milo choisit ses charges/reps EXPRÈS
+  // (reprise après coupure, épaule à protéger, « pas de tentative 105 aujourd'hui »…).
+  // Règle : si Milo a précisé une valeur → on la respecte ; sinon SEULEMENT, on reprend la dernière fois.
+  // (Différent d'un PROGRAMME, qui dit « 4×8 » sans charge → là, le pré-remplissage garde tout son sens.)
   const buildEx=e=>{
     const prev=(typeof getPrev==='function')?(getPrev(e.name)||[]):[];
     return {name:e.name,note:'',sets:(e.sets||[]).map((s,i)=>{
       const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
-      return {kg:pp?pp.kg:(s.kg||0),reps:s.maxi?0:(pp?pp.reps:(s.reps||10)),maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:s.rest||0};
+      const kg=(s.kg>0)?s.kg:(pp?pp.kg:0);                                   // Milo d'abord, sinon la dernière fois
+      const reps=s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10));               // idem (série « maxi » = vide, à saisir)
+      return {kg,reps,maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:s.rest||0};
     })};
   };
   const newExs=(data.exs||[]).map(buildEx);
