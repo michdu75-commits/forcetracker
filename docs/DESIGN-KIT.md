@@ -104,6 +104,19 @@ ANNEAU DE PROGRESSION (le cas le plus demandé) — deux techniques, pas une
   3. Le TOUR GRIS doit être un peu PLUS LARGE que l'arc coloré (trou 76 % contre 78 %),
      sinon la couleur le recouvre et le cercle ne se lit plus comme complet.
 
+LA COULEUR DE L'ANNEAU — 4 repères exacts, ne pas en inventer d'autres
+  0 %   #FF4D5E  (rouge)
+  33 %  #FF8A72  (corail)
+  66 %  #EAB308  (doré)
+  100 % #34D399  (vert)
+  (3 repères ne suffisent pas : le passage orange -> vert vire au kaki.)
+
+  ⚠️ Le dégradé couvre TOUJOURS les 360° de l'échelle (0 -> 100), même si le score
+  n'en montre qu'une partie. Un score de 57 doit donc afficher un arc qui va du rouge
+  au doré — JAMAIS un arc d'une seule couleur, ni le dégradé complet étiré sur la
+  portion visible (sinon un score de 25 apparaîtrait déjà vert au bout).
+  Repères de contrôle : 25 -> #FF7B6D · 50 -> #F49F3B · 75 -> #BABB2E · 88 -> #74C866.
+
 RÈGLES DE STYLE
 - L'accent rouge est l'identité : le garder pour l'action principale, ne pas le diluer partout.
 - Les chiffres importants en Space Grotesk, gros, avec l'unité en plus petit et en --t3.
