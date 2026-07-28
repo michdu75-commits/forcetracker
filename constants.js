@@ -227,6 +227,7 @@ const NEW_FEATURES=[
   {id:'work-actif',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : niveau de travail « Actif » (serveuse, infirmier, vendeur : debout + en déplacement) dans ton Profil — tes calories et macros sont plus justes'},
   {id:'app-guide',   screen:'setup', anchor:'menu-row-appguide', desc:'Nouveau : Menu → « Guide de l\'application » — un diaporama qui explique comment marche l\'app (séance, programmes, Milo, photos…)'},
   {id:'milo-knows',  screen:'setup', anchor:'menu-row-miloknows', desc:'Nouveau : Milo apprend à te connaître — il te pose de petites questions sur l\'Accueil, et tu retrouves tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi »'},
+  {id:'checkin-tuiles', screen:'home', desc:'Ton check-in se lit d\'un coup d\'œil : trois tuiles sommeil / énergie / moral'},
   {id:'recup-moniteur', screen:'menu', desc:'Nouveau : deux styles pour ta carte récup — Menu → Apparence'},
   {id:'calendrier-chaleur', screen:'home', desc:'Nouveau : ton calendrier montre le volume de chaque jour, le groupe travaillé, et le détail d\'un jour au tap'},
   {id:'recup-ring', screen:'home', desc:'Nouveau : ton score de récup s\'affiche dans un anneau — appuie dessus pour revoir le chiffre grimper de 0 à ton score'},

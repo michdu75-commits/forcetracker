@@ -225,6 +225,41 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   t('le haut de la jauge est au niveau de « AUJOURD\'HUI »', a!==null&&Math.abs(a)<=2, 'écart '+a+'px');
   await q.c.close();
 }
+// ── ft-v650 : les 3 tuiles du check-in (sommeil · énergie · moral) ──────────
+{
+  const iso=new Date().toISOString().slice(0,10);
+  // a) rempli
+  const q=await page({ft4_sleep:JSON.stringify([{date:iso,hours:6,quality:3}])},null,64);
+  const r=await q.p.evaluate(()=>{
+    const st=_dayState(); st.energy=1; st.mood=3; _renderDayStateCard();
+    const el=document.getElementById('home-daystate');
+    const lbl=[...el.querySelectorAll('div')].map(d=>d.textContent.trim())
+      .map(x=>x.toUpperCase())
+      .filter(x=>x==='SOMMEIL'||x==='ÉNERGIE'||x==='MORAL');
+    const jauges=[...el.querySelectorAll('div')].filter(d=>d.children.length===4&&[...d.children].every(c=>c.tagName==='I'));
+    return {nbTuiles:lbl.length, libelles:lbl, nbJauges:jauges.length,
+            traitsParJauge:jauges.map(j=>j.children.length),
+            allumes:jauges.map(j=>[...j.children].filter(c=>!/255, 255, 255/.test(c.style.background)).length),
+            texte:(el.innerText||'').replace(/\n/g,' | '), sale:/NaN|undefined/.test(el.innerText||'')};
+  });
+  t('3 tuiles affichées', r.nbTuiles===3, JSON.stringify(r).slice(0,150));
+  t('4 traits par tuile (pas 5 : les échelles ont 4 niveaux)',
+    r.traitsParJauge.length===3 && r.traitsParJauge.every(n=>n===4), JSON.stringify(r.traitsParJauge));
+  t('les traits allumés suivent le niveau (qualité 3 · énergie 1 · moral 3)',
+    JSON.stringify(r.allumes)===JSON.stringify([3,2,4]), JSON.stringify(r.allumes));
+  t('pas de NaN dans le check-in', r.sale===false, r.texte.slice(0,80));
+  await q.c.close();
+  // b) rien noté -> pas de plantage, invitation affichée
+  const q2=await page(null,null,64);
+  const r2=await q2.p.evaluate(()=>{
+    const el=document.getElementById('home-daystate');
+    return {txt:el.innerText||'', sale:/NaN|undefined/.test(el.innerText||'')};
+  });
+  t('aucune donnée -> invitation, pas de plantage',
+    !r2.sale && /Note ton énergie/.test(r2.txt), r2.txt.slice(0,70));
+  t('0 erreur JS (check-in)', q2.errs.length===0, q2.errs.join(' | '));
+  await q2.c.close();
+}
 // ── ft-v646 : la carte ne doit JAMAIS afficher « NaN » ou « undefined » ─────
 // Bug réel arrivé en prod : dans un ternaire, un « + » en tête de ligne devient
 // un plus UNAIRE appliqué à une chaîne -> NaN, et le bloc concerné disparaît.

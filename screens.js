@@ -152,7 +152,7 @@ const _HELP_DATA={
       {i:'📅',t:'Le calendrier de ton mois, qui se lit d\'un coup d\'œil : <b>plus une case est foncée, plus tu as soulevé lourd ce jour-là</b>. Le petit trait sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body), et l\'étoile ⭐ marque un RECORD. À gauche, le n° de semaine avec ton tonnage — tape-le pour voir la semaine entière. <b>Tape un jour</b> et son détail s\'ouvre dessous : tonnage, séries, exercices, et comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
       {i:'💚',t:'Ta carte récup existe en <b>deux styles</b> — Menu → Apparence → Carte récup : l\'anneau (par défaut) ou le moniteur, avec ton score en gros et un tracé cardiaque. Mêmes données, mise en forme différente.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
-      {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
+      {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) se lit d\'un coup d\'œil : <b>trois tuiles</b> — un lit violet pour le <b>sommeil</b>, un éclair orange pour l\'<b>énergie</b>, un visage pour le <b>moral</b> (vert content, ambre moyen, rouge bas). Sous chaque icône, quatre petits traits montrent le niveau. Il regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
       {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas).'},
       {i:'📊',t:'« Historique du sommeil » (déplie le check-in, puis la barre repliable) : un mini-graphique sur 7 ou 30 jours + la liste nuit par nuit. Tape une barre ou une ligne pour ajouter/corriger cette nuit. Les jours vides affichent « ＋ à renseigner ».'},
       {i:'🩹',t:'Pour une zone qui fait mal : dans le check-in, tape directement le MUSCLE sur la figurine anatomique (vue de face + de dos) — il devient rouge. Les articulations (nuque, coude, poignet, genou, cheville) sont en boutons juste en dessous. Pour une zone comme le genou ou l\'épaule tu peux préciser le CÔTÉ (gauche/droite/les deux). Le Gardien protège cette zone du jour en priorité dans les conseils de Milo.'},
@@ -886,6 +886,55 @@ function _checkinSummary(){
   if(nPain)s+='  ·  ⚠️ '+nPain+' gêne'+(nPain>1?'s':'');
   return s;
 }
+// ── Les 3 tuiles du check-in replié (ft-v650, conception Michel) ────────────
+// Une icône + 4 traits de niveau, dans la couleur de l'icône. Remplace le résumé
+// en texte : on lit son état d'un coup d'œil, sans lire.
+// ⚠️ 4 traits et pas 5 : les trois échelles de l'app ont 4 niveaux (sommeil
+// Mauvais→Excellent, énergie 😴→⚡, moral 😔→😄). Un 5e trait qui ne se remplit
+// jamais donne l'impression qu'il manque toujours quelque chose.
+const _CK_LIT='<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="CUR" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M2 16h20"/><path d="M6 10V7a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3"/></svg>';
+const _CK_ECL='<svg width="23" height="23" viewBox="0 0 24 24" fill="CUR" stroke="none"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>';
+function _ckVisage(c,niv){
+  const bouche = niv==null ? '<path d="M8.4 15h7.2"/>'
+    : niv>=2 ? '<path d="M8 14.6a5 5 0 0 0 8 0"/>'
+    : niv===1 ? '<path d="M8.4 15h7.2"/>'
+    : '<path d="M8 16a5 5 0 0 1 8 0"/>';
+  return '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="'+c+'" stroke-width="1.9" stroke-linecap="round">'
+    +'<circle cx="12" cy="12" r="9.2"/><circle cx="8.8" cy="10" r=".9" fill="'+c+'" stroke="none"/>'
+    +'<circle cx="15.2" cy="10" r=".9" fill="'+c+'" stroke="none"/>'+bouche+'</svg>';
+}
+function _ckTuile(ico,coul,niv,val,lgd){
+  // niv = 0..3 (ou null si rien noté) -> niv+1 traits allumés
+  const n = niv==null ? 0 : Math.max(0,Math.min(4,niv+1));
+  let j=''; for(let i=0;i<4;i++){
+    j+='<i style="display:block;width:9px;height:4px;border-radius:2px;background:'
+      +(i<n ? coul+';box-shadow:0 0 6px '+coul+'55;' : 'rgba(255,255,255,.12);')+'"></i>';
+  }
+  return '<div style="background:var(--bg3);border-radius:12px;padding:10px 6px 9px;display:flex;'
+    +'flex-direction:column;align-items:center;gap:6px;">'
+    +'<div style="height:24px;display:flex;align-items:center;">'+ico+'</div>'
+    +'<div style="display:flex;gap:3px;">'+j+'</div>'
+    +'<div style="font-size:11px;font-weight:700;color:'+(niv==null?'var(--t3)':coul)+';white-space:nowrap;">'+val+'</div>'
+    +'<div style="font-size:9.5px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;font-weight:700;">'+lgd+'</div>'
+    +'</div>';
+}
+function _ckTuiles(){
+  const d=_dayState();
+  const ts=(S.sleepLog||[]).find(e=>e.date===today());
+  // Sommeil : le NIVEAU vient de la qualité (1-4), la valeur affichée reste les heures.
+  const q = (ts&&ts.quality) ? ts.quality-1 : null;
+  const vSom = (ts&&ts.hours) ? (String(ts.hours).replace('.',',')+' h') : '—';
+  const cSom = q==null ? 'var(--t3)' : 'var(--purp)';
+  // Moral : la couleur porte le sens (vert content · ambre moyen · rouge bas).
+  const cMor = d.mood==null ? 'var(--t3)' : d.mood>=2 ? 'var(--green)' : d.mood===1 ? 'var(--gold)' : 'var(--red)';
+  const lblMor=['Bas','Moyen','Bien','Content'], lblEne=['Faible','Basse','Bonne','Au top'];
+  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px;">'
+    + _ckTuile(_CK_LIT.replace(/CUR/g,cSom), 'var(--purp)', q, vSom, 'Sommeil')
+    + _ckTuile(_CK_ECL.replace(/CUR/g, d.energy==null?'var(--t3)':'var(--orange)'), 'var(--orange)',
+               d.energy, d.energy==null?'—':lblEne[d.energy], 'Énergie')
+    + _ckTuile(_ckVisage(cMor,d.mood), cMor, d.mood, d.mood==null?'—':lblMor[d.mood], 'Moral')
+    +'</div>';
+}
 function _renderDayStateCard(){
   const el=document.getElementById('home-daystate');if(!el)return;
   const d=_dayState();
@@ -893,12 +942,16 @@ function _renderDayStateCard(){
   const sleepEl=document.getElementById('log-sleep');if(sleepEl)sleepEl.style.display=_checkinOpen?'':'none';
   if(!_checkinOpen){
     const sum=_checkinSummary();
+    const nPain=((_dayState().pains)||[]).length;
     const chev='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>';
     el.innerHTML='<div class="ds-card" onclick="toggleCheckin()" style="cursor:pointer;">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">'
       +'<div style="min-width:0;"><div class="ds-ttl" style="margin:0;">🌡️ Ton check-in du jour</div>'
-      +'<div class="ds-sub" style="margin-top:4px;'+(sum?'color:var(--t1);font-weight:600;':'')+'">'+(sum||'Note ton énergie, ton moral et ton sommeil')+'</div></div>'
-      +chev+'</div></div>';
+      +(sum?'':'<div class="ds-sub" style="margin-top:4px;">Note ton énergie, ton moral et ton sommeil</div>')+'</div>'
+      +chev+'</div>'
+      +_ckTuiles()
+      +(nPain?'<div style="margin-top:9px;font-size:11.5px;color:var(--gold);">⚠️ '+nPain+' gêne'+(nPain>1?'s':'')+' signalée'+(nPain>1?'s':'')+'</div>':'')
+      +'</div>';
     return;
   }
   const painSet=new Set((d.pains||[]).map(p=>p&&p.zone));
