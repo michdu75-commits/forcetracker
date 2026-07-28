@@ -227,6 +227,7 @@ const NEW_FEATURES=[
   {id:'work-actif',  screen:'setup', anchor:'menu-row-profil', desc:'Nouveau : niveau de travail « Actif » (serveuse, infirmier, vendeur : debout + en déplacement) dans ton Profil — tes calories et macros sont plus justes'},
   {id:'app-guide',   screen:'setup', anchor:'menu-row-appguide', desc:'Nouveau : Menu → « Guide de l\'application » — un diaporama qui explique comment marche l\'app (séance, programmes, Milo, photos…)'},
   {id:'milo-knows',  screen:'setup', anchor:'menu-row-miloknows', desc:'Nouveau : Milo apprend à te connaître — il te pose de petites questions sur l\'Accueil, et tu retrouves tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi »'},
+  {id:'recup-moniteur', screen:'menu', desc:'Nouveau : deux styles pour ta carte récup — Menu → Apparence'},
   {id:'calendrier-chaleur', screen:'home', desc:'Nouveau : ton calendrier montre le volume de chaque jour, le groupe travaillé, et le détail d\'un jour au tap'},
   {id:'recup-ring', screen:'home', desc:'Nouveau : ton score de récup s\'affiche dans un anneau — appuie dessus pour revoir le chiffre grimper de 0 à ton score'},
   {id:'whatsnew-history', screen:'setup', anchor:'menu-row-whatsnew', desc:'Nouveau : Menu → « Nouveautés » — toutes les nouveautés de l\'app restent consultables quand tu veux, même si tu passes la pop-up de lancement'},
@@ -258,6 +259,7 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  {v:52, ic:'💚', t:'Deux styles pour ta récup', d:'Menu → Apparence → Carte récup : garde l\'anneau, ou passe au style Moniteur — ton score en gros à gauche, une jauge ouverte à droite et un vrai tracé de cœur qui défile. 🩺'},
   {v:51, ic:'📅', t:'Ton calendrier se lit d\'un coup d\'œil', d:'Plus une case est foncée, plus tu as soulevé lourd ce jour-là. Le trait sous le chiffre dit ce que tu as travaillé, et le n° de semaine affiche ton tonnage. Tape un jour : son détail s\'ouvre dessous. 📊'},
   {v:50, ic:'🎯', t:'Ta récup passe en anneau', d:'Sur l\'Accueil, ton score de récup s\'affiche maintenant dans un anneau coloré. Appuie dessus : le chiffre se rejoue de 0 à ton score. ✨'},
   {v:49, ic:'✨', t:'Les nouveautés restent consultables', d:'Menu → « Nouveautés » : tu peux relire toutes les nouveautés quand tu veux. Du coup, la pop-up de lancement se passe d\'un tap si tu es pressé — tu ne rates rien. ✨'},
@@ -307,7 +309,7 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=51;     // = plus grand `v` ci-dessus
+const WHATS_NEW_MAX=52;     // = plus grand `v` ci-dessus
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────

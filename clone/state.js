@@ -70,6 +70,9 @@ function load(){
     if(S.halo==='blue')S.halo='on';                 // migration ancien nom
     if(S.halo!=='none'&&S.halo!=='on')S.halo='on';
     S.haloColor=localStorage.getItem('ft4_haloColor')||'59,130,246';
+    // Apparence de la carte récup : 'anneau' (défaut, ft-v642) | 'moniteur' (ft-v645).
+    // Défaut volontaire : personne ne change d'apparence sans l'avoir choisi.
+    S.ringStyle=localStorage.getItem('ft4_ringstyle')==='moniteur'?'moniteur':'anneau';
     S.haloDir=localStorage.getItem('ft4_haloDir')||'top';
     S.smoker=localStorage.getItem('ft4_smoker')==='1';
     S.mensCycleStart=localStorage.getItem('ft4_mcstart')||'';

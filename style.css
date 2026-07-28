@@ -1215,4 +1215,74 @@ html.ob-done #onboarding{display:none;}
   #rr-shine,#rr-glint{ animation:none!important; opacity:0!important; }
 }
 
+/* ── Style « MONITEUR » de la carte récup (ft-v645) ───────────────────────────
+   Deuxième apparence au choix (Menu → Apparence → Anneau de récup). L'anneau
+   classique ci-dessus reste le défaut : personne ne voit ce style sans l'avoir
+   choisi.
+
+   Différences de forme : le chiffre SORT du cercle (à gauche), le cercle est
+   OUVERT de 15 % en bas, son fond est rouge et le curseur vert le recouvre à
+   hauteur du score, avec un point lumineux au bout. Au centre, un tracé d'ECG.
+
+   ⚠️ Mêmes contraintes que l'anneau classique : masques IMBRIQUÉS (jamais
+   mask-composite), --p piloté en JS, relief de tube posé dans la même couche
+   que la couleur. Et le RAYON DU POINT doit valoir le MILIEU de la bande —
+   si on change l'épaisseur, il faut le recalculer, sinon il se décolle. */
+#rj{ position:relative; width:118px; height:118px; flex:none; cursor:pointer;
+  --deb:207deg; --arc:306deg; --r:54.6px;      /* (0.85 × 59 + 59) / 2 */
+  filter:drop-shadow(0 5px 12px rgba(0,0,0,.55)); }
+#rj-arcwrap{ position:absolute; inset:0; border-radius:50%;
+  -webkit-mask:conic-gradient(from var(--deb),#000 0 var(--arc),transparent 0);
+          mask:conic-gradient(from var(--deb),#000 0 var(--arc),transparent 0); }
+/* ⚠️ le creux est un ANNEAU, pas un disque : un disque clippé par l'arc
+   noircit tout l'intérieur du cercle (constaté à l'écran). */
+#rj-creux{ position:absolute; inset:0; border-radius:50%; background:#07080B;
+  -webkit-mask:radial-gradient(closest-side,transparent 82.5%,#000 83%);
+          mask:radial-gradient(closest-side,transparent 82.5%,#000 83%); }
+#rj-piste,#rj-prog{ position:absolute; inset:0; border-radius:50%;
+  -webkit-mask:radial-gradient(closest-side,transparent 85%,#000 85.5%);
+          mask:radial-gradient(closest-side,transparent 85%,#000 85.5%); }
+#rj-piste{ background:
+  radial-gradient(closest-side,rgba(0,0,0,.6) 85%,rgba(0,0,0,.15) 87.5%,
+    rgba(255,255,255,.22) 91%,rgba(0,0,0,.10) 95.5%,rgba(0,0,0,.55) 100%),
+  conic-gradient(from var(--deb),#8E1E2C 0deg,#C8253A var(--arc)); }
+#rj-progwrap{ position:absolute; inset:0; border-radius:50%;
+  -webkit-mask:conic-gradient(from var(--deb),#000 0 calc(var(--arc) * var(--p,0) / 100),transparent 0);
+          mask:conic-gradient(from var(--deb),#000 0 calc(var(--arc) * var(--p,0) / 100),transparent 0); }
+#rj-prog{ background:
+  radial-gradient(closest-side,rgba(0,0,0,.5) 85%,rgba(0,0,0,.05) 87.5%,
+    rgba(255,255,255,.38) 91%,rgba(255,255,255,.05) 95.5%,rgba(0,0,0,.45) 100%),
+  conic-gradient(from var(--deb),#0E9E6B 0deg,#3FE9AC var(--arc)); }
+#rj-point{ position:absolute; left:50%; top:50%; width:9px; height:9px; border-radius:50%; margin:-4.5px;
+  background:radial-gradient(circle at 35% 30%,#EAFFF6,#4BE7B0 60%,#18A578);
+  box-shadow:0 0 13px 5px rgba(52,211,153,.55), 0 4px 9px rgba(0,0,0,.75);
+  transform-origin:50% 50%;
+  transform:rotate(calc(var(--deb) + var(--arc) * var(--p,0) / 100)) translateY(calc(-1 * var(--r))); }
+/* L'ECG : deux battements complets (onde P · complexe QRS · onde T), tracés de
+   gauche à droite puis EFFACÉS DANS LE MÊME SENS — c'est ce balayage qui fait
+   « vrai moniteur ». Lent volontairement : un tracé rapide devient un gadget.
+   pathLength="100" normalise la longueur, le rythme se règle en pourcentage. */
+#rj-ecg{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  pointer-events:none; }
+#rj-ecg svg{ width:74px; height:34px; overflow:visible; }
+#rj-ecg path{ fill:none; stroke:#5BF0B8; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round;
+  filter:drop-shadow(0 0 5px rgba(52,211,153,.85));
+  stroke-dasharray:100; stroke-dashoffset:100;
+  animation:rj-ecg 5.5s linear infinite; }
+@keyframes rj-ecg{
+  0%   { stroke-dashoffset:100; }   /* rien */
+  50%  { stroke-dashoffset:0;   }   /* tracé complet */
+  100% { stroke-dashoffset:-100;}   /* effacé dans le même sens */
+}
+.rj-num{ font-family:var(--font-cond); font-size:52px; font-weight:900; color:var(--t1);
+  line-height:.95; letter-spacing:-2px; }
+.rj-num i{ font-size:19px; font-weight:800; color:var(--t3); font-style:normal; letter-spacing:0; }
+.rj-lab{ font-size:14.5px; font-weight:500; color:#6DF3C0; margin-top:7px; }
+.rj-haut{ font-family:var(--font-cond); font-size:11px; font-weight:600; letter-spacing:.2em;
+  color:#6DF3C0; }
+@media (prefers-reduced-motion:reduce){
+  #rj-ecg path{ animation:none!important; stroke-dashoffset:0!important; }
+}
+
+
 

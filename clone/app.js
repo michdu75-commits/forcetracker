@@ -322,6 +322,22 @@ function setTheme(mode){
   _applyThemeBtns();
   const tb=document.getElementById('theme-toggle-btn'); if(tb) tb.innerHTML = isLight?'🌙 Mode Nuit':'☀️ Mode Jour';
 }
+// ── Apparence de la carte récup : 'anneau' (défaut) | 'moniteur' (ft-v645) ──
+// Deux mises en forme des MÊMES données. Le défaut ne change pour personne :
+// il faut venir le choisir dans Menu → Apparence.
+function setRingStyle(mode){
+  S.ringStyle = (mode==='moniteur') ? 'moniteur' : 'anneau';
+  try{ localStorage.setItem('ft4_ringstyle', S.ringStyle); }catch(e){}
+  persist();
+  _applyRingBtns();
+  try{ if(typeof _renderHomeHero==='function') _renderHomeHero(); }catch(e){}
+  toast(S.ringStyle==='moniteur' ? 'Récup : style Moniteur 💚' : 'Récup : style Anneau ⭕', 'info');
+}
+function _applyRingBtns(){
+  const a=document.getElementById('appr-ring-anneau'), m=document.getElementById('appr-ring-moniteur');
+  if(a) a.classList.toggle('active', S.ringStyle!=='moniteur');
+  if(m) m.classList.toggle('active', S.ringStyle==='moniteur');
+}
 function _applyThemeBtns(){
   const isLight=document.getElementById('root') && document.getElementById('root').classList.contains('light-mode');
   const j=document.getElementById('appr-jour'), n=document.getElementById('appr-nuit');
@@ -1592,6 +1608,7 @@ const APP_GUIDE_SLIDES=[
   {icon:'🔒', t:'Ton histoire t\'appartient', cap:'Force Tracker ne garde pas juste des chiffres : il construit <b>ton histoire sportive</b>. Et elle est <b>à toi</b> — tes séances, tes progrès, tes infos restent <b>privés</b>, utilisés seulement pour t\'aider à progresser. Tu peux même <b>protéger ton compte avec un code perso</b>.'},
   {img:'../guide/home.jpg',       tap:[.5,.945],  t:'Ton accueil',            cap:'Tes stats du mois et ta <b>récup du jour</b> d\'un coup d\'œil. Juste en dessous, note ton <b>sommeil</b> (et son <b>historique</b>). Le gros <b>+</b> démarre une séance.'},
   {img:'../guide/calendrier.jpg', tap:[.65,.46], t:'Ton mois d\'un coup d\'œil 📅', cap:'Sur l\'Accueil, le calendrier raconte ton mois <b>sans rien ouvrir</b> : plus une case est <b>foncée</b>, plus tu as soulevé lourd ce jour-là. Le <b>trait</b> sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body) et l\'<b>étoile ⭐</b> marque un record. À gauche, le <b>n° de semaine</b> avec ton tonnage. <b>Tape un jour</b> : son détail s\'ouvre dessous.'},
+  {img:'../guide/recup-moniteur.jpg', t:'Ta récup, deux styles 💚', cap:'<b>Menu → Apparence → Carte récup</b> : garde l\'<b>anneau</b>, ou passe au <b>moniteur</b> — ton score en gros, une jauge où le <b>rouge</b> est ce qu\'il te reste à récupérer et le <b>vert</b> ce que tu as récupéré, avec un vrai tracé de cœur qui défile. Mêmes données, à toi de choisir.'},
   {img:'../guide/etat-du-jour.jpg',tap:[.5,.38],  t:'Comment tu te sens aujourd\'hui ?', cap:'En 1-2 taps sur l\'Accueil : ton <b>énergie</b>, ton <b>moral</b> (😔 → 😄) et une éventuelle <b>gêne/douleur</b> (tape la zone). <b>Milo</b> adapte ses conseils du jour — il protège une zone qui fait mal, et si ton moral est bas il se fait plus <b>doux</b> (jamais un psy). Optionnel, ça repart à zéro chaque jour.'},
   {img:'../guide/profil.jpg',     tap:[.5,.60],   t:'Remplis bien ton profil ⭐', cap:'<b>Le plus important !</b> Plus ton profil est complet, plus <b>Milo, ton coach IA</b>, est précis et personnalisé (récup et calories aussi). Un <b>% de remplissage</b> t\'aide à ne rien oublier.'},
   {img:'../guide/seance.jpg',     tap:[.875,.305],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche. Tes <b>records</b> se calculent tout seuls.'},
@@ -2288,6 +2305,7 @@ document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr
 applyTheme();
 if(typeof _applyHalo==='function')_applyHalo();
 if(typeof _applyThemeBtns==='function')_applyThemeBtns();
+if(typeof _applyRingBtns==='function')_applyRingBtns();
 if(typeof _applyA11y==='function')_applyA11y();
 if(typeof _applyColorblind==='function')_applyColorblind();
 if(typeof _applyLeftHand==='function')_applyLeftHand();

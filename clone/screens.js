@@ -150,6 +150,7 @@ const _HELP_DATA={
     title:'🏠 Accueil',
     tips:[
       {i:'📅',t:'Le calendrier de ton mois, qui se lit d\'un coup d\'œil : <b>plus une case est foncée, plus tu as soulevé lourd ce jour-là</b>. Le petit trait sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body), et l\'étoile ⭐ marque un RECORD. À gauche, le n° de semaine avec ton tonnage — tape-le pour voir la semaine entière. <b>Tape un jour</b> et son détail s\'ouvre dessous : tonnage, séries, exercices, et comment tu te sentais (sommeil, énergie, humeur, douleur) si tu l\'as noté. Le calendrier devient ta mémoire.'},
+      {i:'💚',t:'Ta carte récup existe en <b>deux styles</b> — Menu → Apparence → Carte récup : l\'anneau (par défaut) ou le moniteur, avec ton score en gros et un tracé cardiaque. Mêmes données, mise en forme différente.'},
       {i:'📊',t:'Les 4 stats du mois (volume, Big3, séances, poids) se calculent depuis tes séances et ton journal de poids.'},
       {i:'🌡️',t:'« Ton check-in du jour » (en haut de l\'Accueil, optionnel, repliable) regroupe tout ce qui te concerne AUJOURD\'HUI : ton sommeil de la nuit, ton énergie, ton moral (😔 → 😄) et une éventuelle gêne/douleur. Replié, tu vois un résumé (😴 7h · 🙂 énergie · 😄 moral) ; tape pour le déplier et renseigner. Milo adapte ses conseils du jour — s\'il y a une douleur, le Gardien PROTÈGE cette zone en priorité ; si ton moral est bas, Milo se fait plus DOUX (dédramatise, valorise, sans jamais te juger — il reste ton coach sportif, jamais un psy). Ça repart à zéro chaque jour ; le ressenti prime toujours.'},
       {i:'😴',t:'Ton sommeil se note dans « Ton check-in du jour » (déplie la carte, en haut de l\'Accueil) : choisis la qualité + les heures. Oublié un jour ? Change la date (ex. hier) ou tape « ＋ Noter un jour oublié ». Un bon sommeil fait remonter ton score de récupération (contrairement au moral/à la douleur, qui n\'y touchent pas).'},
@@ -460,11 +461,15 @@ function ringReplay(){
   // sur la même courbe. --p est piloté ici (et pas par une animation CSS) parce qu'animer
   // une variable CSS demanderait @property, trop récent pour être sûr sur tous les iPhone.
   try{
-    const w=document.getElementById('recup-ring'), n=document.getElementById('rr-num');
+    const w=document.getElementById('recup-ring')||document.getElementById('rj');
+    const n=document.getElementById('rr-num');
     if(!w||!n)return;
     const cible=parseInt(n.textContent,10); if(isNaN(cible))return;
     if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
     w.classList.remove('ring-go'); void w.offsetWidth; w.classList.add('ring-go');
+    // apparence « moniteur » : le tracé d'ECG repart aussi du début
+    const ecg=w.querySelector('#rj-ecg path');
+    if(ecg){ ecg.style.animation='none'; void ecg.offsetWidth; ecg.style.animation=''; }
     const t0=performance.now(), D=1150;
     (function step(t){
       const k=Math.min(1,(t-t0)/D), e=1-Math.pow(1-k,3);
@@ -533,13 +538,41 @@ function _renderHomeHero(){
   }
   el.innerHTML='<div style="padding:20px;border-radius:20px;background:radial-gradient(130% 100% at 0% 0%,rgba('+accent+',.10),transparent 55%),var(--bg2);box-shadow:inset 0 0 0 1px var(--sep);" class="ft-rise">'
     +'<div style="display:flex;align-items:center;justify-content:space-between;">'
-    +'<div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'
-    +pillHtml+'</div>'
-    // ── ANNEAU DE RÉCUP (ft-v636) — remplace le gros chiffre + la barre plate.
-    // Le cercle avait existé (ft-v555/556) puis été retiré au rollback ft-v558 : le rendu
-    // manquait de profondeur. Ici : rainure creusée (ombre interne) + dégradé sur l'arc +
-    // halo + reflet, et un reflet qui PARCOURT l'arc en boucle (« vivant », demande Michel).
-    // Au tap : le chiffre défile de 0 au score pendant que l'arc se remplit (ringReplay()).
+    +(S.ringStyle==='moniteur'
+      ? '<div class="rj-haut">AUJOURD\'HUI</div>'   // la pastille « Récup … » disparaît :
+                                                  // le libellé sous le chiffre dit déjà la même chose
+      : '<div style="font-family:var(--font-cond);font-size:11px;font-weight:700;letter-spacing:.18em;color:var(--t3);">AUJOURD\'HUI</div>'+pillHtml)
+    +'</div>'
+    // ── VISUEL DE LA RÉCUP — deux apparences au choix (Menu → Apparence) ──
+    // 'anneau'   = l'anneau complet (défaut, ft-v636 → 642)
+    // 'moniteur' = le chiffre à gauche, jauge ouverte à droite, tracé d'ECG (ft-v645)
+    // Les DONNÉES sont les mêmes : seule la mise en forme change.
+    +(S.ringStyle==='moniteur'
+      ? (score!==null
+        ? '<div style="display:flex;align-items:center;gap:14px;margin-top:12px;">'
+          +'<div style="flex:1;min-width:0;">'
+            +'<div class="rj-num"><span id="rr-num">'+score+'</span><i>/100</i></div>'
+            +'<div class="rj-lab">'+heroLabel+'</div>'
+          +'</div>'
+          // ⚠️ Structure imposée par la technique (voir style.css) : #rj-arcwrap découpe
+          // l'arc de 306°, #rj-progwrap le score, chaque enfant creuse le trou.
+          +'<div id="rj" onclick="ringReplay()" class="ft-press" style="--p:'+score+';">'
+            +'<div id="rj-arcwrap">'
+              +'<div id="rj-creux"></div><div id="rj-piste"></div>'
+              +'<div id="rj-progwrap"><div id="rj-prog"></div></div>'
+            +'</div>'
+            +'<div id="rj-point"></div>'
+            +'<div id="rj-ecg"><svg viewBox="0 0 100 40" preserveAspectRatio="none">'
+              +'<path pathLength="100" d="M0 20 h4 q2.5 -4 5 0 h4 l2 2.5 l2.5 -15 l2.5 21 l2 -8.5 h4 q3.5 -5.5 7 0 h17'
+              +' h4 q2.5 -4 5 0 h4 l2 2.5 l2.5 -15 l2.5 21 l2 -8.5 h4 q3.5 -5.5 7 0 h17"/></svg></div>'
+          +'</div></div>'
+          +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:10px;">'+heroDesc+'</div>'
+        : '<div style="margin-top:12px;"><div class="rj-num"><span id="rr-num">—</span></div>'
+          +'<div class="rj-lab">'+heroLabel+'</div>'
+          +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:8px;">'+heroDesc+'</div></div>')
+      : ''
+     )
+    +(S.ringStyle==='moniteur' ? '' :
     +'<div style="display:flex;align-items:center;gap:18px;margin-top:14px;">'
     +(score!==null
       ? '<div id="recup-ring" onclick="ringReplay()" class="ft-press" style="--p:'+score+';">'
@@ -558,6 +591,7 @@ function _renderHomeHero(){
       : '<div style="flex:none;width:100px;text-align:center;font-family:var(--font-cond);font-size:30px;font-weight:800;color:var(--t3);">—</div>')
     +'<div style="flex:1;min-width:0;"><div style="font-size:16px;font-weight:700;color:var(--t1);">'+heroLabel+'</div>'
     +'<div style="font-size:12.5px;color:var(--t2);line-height:1.45;margin-top:3px;">'+heroDesc+'</div></div></div>'
+     )
     +detailHtml+warnHtml
     +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
     +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'

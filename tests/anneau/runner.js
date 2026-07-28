@@ -188,6 +188,58 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   t('« réduire les animations » fige le reflet', a.anim==='none'||a.op==='0', JSON.stringify(a));
   await q.c.close();
 }
+// ── ft-v645 : la 2e apparence « moniteur » (Menu → Apparence) ───────────────
+{
+  const q=await page(null,null,87);          // aucun réglage -> défaut
+  const d=await q.p.evaluate(()=>({anneau:!!document.getElementById('recup-ring'),
+                                   moniteur:!!document.getElementById('rj'), style:S.ringStyle}));
+  t('par défaut, personne ne voit la nouvelle apparence',
+    d.anneau===true && d.moniteur===false && d.style==='anneau', JSON.stringify(d));
+  await q.c.close();
+}
+{
+  const q=await page({ft4_ringstyle:'moniteur'},null,87);
+  const r=await q.p.evaluate(()=>{
+    const j=document.getElementById('rj'); if(!j)return {no:1};
+    const cs=n=>getComputedStyle(document.getElementById(n));
+    const mk=n=>(cs(n).webkitMaskImage||cs(n).maskImage||'');
+    // ⚠️ LE PIÈGE DE ft-v645 : le rayon du point doit valoir le MILIEU de la bande.
+    // Michel l'avait vu à l'œil sur la maquette — ici on le MESURE.
+    const rj=j.getBoundingClientRect(), pt=document.getElementById('rj-point').getBoundingClientRect();
+    const dist=Math.hypot((pt.x+pt.width/2)-(rj.x+rj.width/2),(pt.y+pt.height/2)-(rj.y+rj.height/2));
+    const int=0.85*(rj.width/2), ext=rj.width/2;
+    return {
+      anneauAbsent:!document.getElementById('recup-ring'),
+      chiffre:(document.getElementById('rr-num')||{}).textContent,
+      arcOuvert:/conic-gradient/.test(mk('rj-arcwrap')),
+      trouEnfant:/radial-gradient/.test(mk('rj-piste')),
+      pointDansLaBande: dist>int && dist<ext,
+      ecart:+(dist-(int+ext)/2).toFixed(2),
+      ecg:cs('rj-ecg').display!=='none',
+      ecgDuree:getComputedStyle(document.querySelector('#rj-ecg path')).animationDuration
+    };
+  });
+  t('style choisi -> jauge affichée, anneau retiré', r.anneauAbsent&&r.chiffre==='87', JSON.stringify(r));
+  t('le cercle est OUVERT en bas (masque conique de 306°)', r.arcOuvert===true);
+  t('masques imbriqués : trou sur l\'enfant', r.trouEnfant===true);
+  t('le point est PILE au milieu de la bande', r.pointDansLaBande&&Math.abs(r.ecart)<0.5, 'écart '+r.ecart+'px');
+  t('l\'ECG tourne en continu, lentement (5,5 s)', r.ecg&&r.ecgDuree==='5.5s', r.ecgDuree);
+  t('0 erreur JS (moniteur)', q.errs.length===0, q.errs.join(' | '));
+  await q.c.close();
+}
+{
+  const q=await page({ft4_ringstyle:'moniteur'},'reduce',87);
+  const a=await q.p.evaluate(()=>getComputedStyle(document.querySelector('#rj-ecg path')).animationName);
+  t('« réduire les animations » fige l\'ECG', a==='none', a);
+  await q.c.close();
+}
+{
+  const q=await page(null,null,87);
+  const r=await q.p.evaluate(()=>{ setRingStyle('moniteur');
+    return {jauge:!!document.getElementById('rj'), cle:localStorage.getItem('ft4_ringstyle')}; });
+  t('le réglage bascule la carte et se retient', r.jauge===true&&r.cle==='moniteur', JSON.stringify(r));
+  await q.c.close();
+}
 console.log('──────────────────────────────────────────────────────────');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
 await b.close(); srv.close(); process.exit(ko?1:0);
