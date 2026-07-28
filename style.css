@@ -1138,57 +1138,67 @@ html.ob-done #onboarding{display:none;}
   max-width:100%!important; font-family:var(--font)!important;
 }
 
-/* ── Anneau de récup (ft-v642 — dégradé CONIQUE) ──────────────────────────────
-   Pourquoi du CSS et plus du SVG : un dégradé SVG est LINÉAIRE, il ne peut pas
-   tourner avec l'arc — le rouge tombait n'importe où sur le cercle (ft-v641).
-   conic-gradient est la seule technique où la couleur SUIT le cercle.
+/* ── Anneau de récup (ft-v643 — dégradé conique + relief de TUBE) ─────────────
+   Technique : conic-gradient, seule façon d'avoir une couleur qui SUIT le cercle
+   (un dégradé SVG est linéaire — il ne peut pas tourner avec l'arc).
 
    ⚠️ LA RECETTE, à ne pas « simplifier » :
    - deux masques IMBRIQUÉS, jamais mask-composite (mal supporté sur Safari iOS) :
      le parent (#rr-arcwrap) découpe la PART, l'enfant creuse le TROU ;
-   - --p (0 à 100) est piloté en JS (ringReplay), PAS via @property : pas de
-     dépendance à une fonctionnalité récente ;
-   - le tour gris est plus LARGE que l'arc coloré, sinon la couleur le recouvre
-     et le cercle ne se lit plus comme complet (retour Michel, ft-v641).
+   - --p (0 à 100) est piloté en JS (ringReplay), PAS via @property ;
+   - le TUBE se fait avec un radial-gradient posé DANS LA MÊME couche que la
+     couleur : le masque coupe la bande, le radial l'ombre sur son épaisseur
+     (bord sombre -> crête claire -> bord sombre). Aucun filtre : Safari iOS rend
+     mal les filtres sur ce genre de forme (leçon ft-v640).
+   - le tour gris doit rester CLAIR et plus LARGE que l'arc : en dessous de ce
+     contraste il devient invisible sur un iPhone (retour Michel, deux fois).
 
-   Deux animations distinctes (demande de Michel, ft-v636) :
+   Deux animations (demande de Michel, ft-v636) :
    ① au tap  → l'arc se remplit de 0 au score, le chiffre défile en parallèle ;
-   ② au repos → un reflet TRAVERSE l'arc en boucle (il ne clignote pas).
+   ② au repos → une lueur TRAVERSE l'arc en boucle.
    « Réduire les animations » fige tout — accessibilité. */
 #recup-ring{ position:relative; width:100px; height:100px; flex:none; cursor:pointer;
-  filter:drop-shadow(0 6px 12px rgba(0,0,0,.45)); }
-#rr-groove,#rr-track,#rr-arcwrap{ position:absolute; inset:0; border-radius:50%; }
-/* la rainure : un bord sombre légèrement plus large, qui creuse */
-#rr-groove{ background:rgba(0,0,0,.5);
-  -webkit-mask:radial-gradient(closest-side,transparent 70%,#000 70.5%);
-          mask:radial-gradient(closest-side,transparent 70%,#000 70.5%); }
-/* le tour gris — visible sur 360°, c'est lui qui montre le « reste » du score */
-#rr-track{ background:var(--bg3); box-shadow:none;
-  -webkit-mask:radial-gradient(closest-side,transparent 72%,#000 72.5%);
-          mask:radial-gradient(closest-side,transparent 72%,#000 72.5%); }
-#rr-track::after{ content:''; position:absolute; inset:0; border-radius:50%;
-  background:rgba(255,255,255,.10);
-  -webkit-mask:radial-gradient(closest-side,transparent 72%,#000 72.5%);
-          mask:radial-gradient(closest-side,transparent 72%,#000 72.5%); }
-/* la PART : ce masque conique coupe tout ce qui dépasse du score */
-#rr-arcwrap{ inset:1.5px;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.5)); }
+#rr-track,#rr-arcwrap{ position:absolute; inset:0; border-radius:50%; }
+
+/* LE TOUR GRIS — relief de tube sur toute l'épaisseur de la bande.
+   Volontairement clair : c'est lui qui montre le « reste » du score. */
+#rr-track{
+  background:radial-gradient(closest-side,
+    rgba(0,0,0,0) 71%, #0F1116 71.5%, #23272F 75%, #454B59 82%,
+    #363B47 88%, #1A1D24 95%, #0C0D11 100%);
+  -webkit-mask:radial-gradient(closest-side,transparent 71%,#000 71.5%);
+          mask:radial-gradient(closest-side,transparent 71%,#000 71.5%); }
+
+/* LA PART : ce masque conique coupe tout ce qui dépasse du score */
+#rr-arcwrap{ inset:2px;
   -webkit-mask:conic-gradient(from 0deg,#000 calc(var(--p,0) * 1%),transparent 0);
           mask:conic-gradient(from 0deg,#000 calc(var(--p,0) * 1%),transparent 0); }
 #rr-arc,#rr-shine{ position:absolute; inset:0; border-radius:50%;
-  -webkit-mask:radial-gradient(closest-side,transparent 77.3%,#000 78%);
-          mask:radial-gradient(closest-side,transparent 77.3%,#000 78%); }
-/* la couleur SUIT le cercle : rouge à 0, vert à 100 */
-/* ⚠️ Pas de drop-shadow coloré sur l'arc : l'ombre d'un anneau masqué se projette AUSSI
-   vers l'intérieur et remplit le centre d'une tache colorée (constaté à l'écran, ft-v642). */
-#rr-arc{ background:conic-gradient(from 0deg,
-  #FF4D5E 0%, #FF8A72 33%, #EAB308 66%, #34D399 100%); }
-/* ② le reflet : une bande douce qui tourne, découpée par la part -> elle entre et sort */
+  -webkit-mask:radial-gradient(closest-side,transparent 76.5%,#000 77%);
+          mask:radial-gradient(closest-side,transparent 76.5%,#000 77%); }
+
+/* L'ARC : la couleur SUIT le cercle (rouge à 0, vert à 100), et le radial posé
+   par-dessus lui donne le galbe. Les deux dans la même déclaration = une seule
+   couche masquée, donc aucun débordement. */
+#rr-arc{ background:
+  radial-gradient(closest-side,
+    rgba(0,0,0,.55) 76.5%, rgba(0,0,0,.18) 80%, rgba(255,255,255,.30) 86%,
+    rgba(255,255,255,.06) 92%, rgba(0,0,0,.45) 100%),
+  conic-gradient(from 0deg,
+    #FF4D5E 0%, #FF8A72 33%, #EAB308 66%, #34D399 100%); }
+
+/* ② la lueur : une bande blanche qui tourne, découpée par la part -> elle entre
+   dans l'arc, le traverse, et en ressort. Assez marquée pour se voir sur un
+   téléphone en plein jour (retour Michel : « pas assez prononcée »). */
 #rr-shine{ background:conic-gradient(from 0deg,
-  transparent 0%, rgba(255,255,255,.26) 9%, transparent 20%, transparent 100%);
-  animation:rr-turn 6.5s linear infinite; }
+  transparent 0%, rgba(255,255,255,.10) 5%, rgba(255,255,255,.58) 11%,
+  rgba(255,255,255,.10) 17%, transparent 23%, transparent 100%);
+  animation:rr-turn 5s linear infinite; }
 @keyframes rr-turn{ to{ transform:rotate(360deg); } }
-#recup-ring.ring-go #rr-shine{ animation-delay:1.15s; }  /* il attend la fin du remplissage */
+#recup-ring.ring-go #rr-shine{ animation-delay:1.15s; }
 @media (prefers-reduced-motion:reduce){
   #rr-shine{ animation:none!important; opacity:0!important; }
 }
+
 

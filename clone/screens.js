@@ -547,7 +547,7 @@ function _renderHomeHero(){
         // conique qui découpe la PART, #rr-arc et #rr-shine portent celui qui creuse le TROU.
         // Ne pas aplatir ces niveaux : sans l'imbrication il faudrait mask-composite,
         // que Safari iOS gère mal.
-        +'<div id="rr-groove"></div><div id="rr-track"></div>'
+        +'<div id="rr-track"></div>'
         +'<div id="rr-arcwrap">'
           +'<div id="rr-arc"></div><div id="rr-shine"></div>'
         +'</div>'

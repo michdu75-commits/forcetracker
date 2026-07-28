@@ -66,7 +66,7 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   t('le tour gris fait 360° (aucune découpe conique dessus)', r.tourConique===false&&r.tourRadial===true, JSON.stringify(r));
   t('la couleur SUIT le cercle (dégradé conique, pas linéaire)', r.couleurSuitLeCercle===true);
   t('masques IMBRIQUÉS : part sur le parent, trou sur l\'enfant', r.wrapConique&&r.arcRadial&&r.arcEnfantDuWrap, JSON.stringify(r));
-  t('le reflet tourne en boucle (6,5 s)', r.reflet==='6.5s', r.reflet);
+  t('la lueur tourne en boucle (5 s)', r.reflet==='5s', r.reflet);
   t('0 erreur JS', q.errs.length===0, q.errs.join(' | '));
   await q.c.close();
 }
@@ -83,6 +83,25 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   });
   t('le tour gris est plus large que l\'arc (visible tout autour)',
     l.trou!==null&&l.trouArc!==null&&l.trou<l.trouArc, JSON.stringify(l));
+  // ⚠️ Sur iPhone, un tour gris trop sombre devient INVISIBLE (retour Michel, deux fois).
+  // On vérifie qu'il porte un relief avec une crête CLAIRE, pas un aplat foncé.
+  const relief=await q.p.evaluate(()=>{
+    const bg=getComputedStyle(document.getElementById('rr-track')).backgroundImage;
+    const nums=(bg.match(/rgb\((\d+), (\d+), (\d+)\)/g)||[])
+      .map(c=>c.match(/\d+/g).map(Number)).map(c=>(c[0]+c[1]+c[2])/3);
+    return {radial:/radial-gradient/.test(bg), crete:nums.length?Math.max.apply(null,nums):0};
+  });
+  t('le tour gris a un relief de tube (dégradé sur son épaisseur)', relief.radial===true);
+  t('sa crête est assez claire pour se voir sur un téléphone', relief.crete>=60, JSON.stringify(relief));
+  const lueur=await q.p.evaluate(()=>{
+    const bg=getComputedStyle(document.getElementById('rr-shine')).backgroundImage;
+    const m=(bg.match(/rgba\(255, 255, 255, ([\d.]+)\)/g)||[]).map(x=>parseFloat(x.match(/[\d.]+(?=\)$)/)[0]));
+    return m.length?Math.max.apply(null,m):0;
+  });
+  t('la lueur est franchement visible (opacité >= .45)', lueur>=.45, 'max='+lueur);
+  const galbe=await q.p.evaluate(()=>getComputedStyle(document.getElementById('rr-arc')).backgroundImage);
+  t('l\'arc coloré a le même galbe de tube',
+    /radial-gradient/.test(galbe)&&/conic-gradient/.test(galbe));
   await q.c.close();
 }
 
