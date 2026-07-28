@@ -92,6 +92,21 @@ du Gardien de sécurité qui agit **à l'entrée**). Détail : `docs/MOTEUR-RAIS
 
 ---
 
+### PB-006 — Milo INVENTE un prénom quand on ne lui en donne pas *(2026-07-28, corrigé `ft-v652`)*
+- **Symptôme** : Milo appelle l'utilisateur **« Sam »**. Repris (« on tu m'appelles sam lol »), il
+  répond : *« pardon mec, je sais pas d'où j'ai sorti ça 😂 — je n'ai pas ton prénom en fait »*.
+- **Ce qui est remarquable** : il **sait** qu'il ne l'a pas, et il en a inventé un quand même.
+- **La cause n'est PAS dans son comportement** : son prompt lui demandait explicitement de commencer
+  par *« Salut [son prénom] »*, mais le prénom **ne lui était jamais transmis**. On lui a demandé de
+  remplir un trou sans lui donner de quoi le remplir — il l'a comblé.
+- **Principe trahi** : P4 (ne jamais présenter une invention comme un fait) — mais par **construction**,
+  pas par dérive. Et **R8** : *un prompt ne compense jamais une donnée absente.*
+- **Règle qui en sort** : *quand une consigne du prompt s'appuie sur une donnée, vérifier que la donnée
+  est réellement transmise — et prévoir explicitement le cas où elle manque.* Un modèle à qui l'on
+  demande d'employer une information qu'il n'a pas ne dit pas « je ne l'ai pas » : il **remplit**.
+  Le correctif ne se limite donc pas à transmettre le prénom : quand il est inconnu, Milo est
+  maintenant **explicitement prévenu de ne pas faire de formule à vide**.
+
 ## Comment utiliser ce journal
 - À chaque **dérive de comportement** de Milo repérée (souvent via un « piège » d'un testeur ou de
   Michel) : ajouter une entrée **PB-NNN** (symptôme · principe trahi · **règle qui en sort** · version
