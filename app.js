@@ -333,10 +333,21 @@ function setRingStyle(mode){
   try{ if(typeof _renderHomeHero==='function') _renderHomeHero(); }catch(e){}
   toast(S.ringStyle==='moniteur' ? 'Récup : style Moniteur 💚' : 'Récup : style Anneau ⭕', 'info');
 }
+function setEcgStill(v){
+  S.ecgStill = !!v;
+  try{ localStorage.setItem('ft4_ecgstill', S.ecgStill?'1':'0'); }catch(e){}
+  persist();
+  _applyRingBtns();
+  try{ if(typeof _renderHomeHero==='function') _renderHomeHero(); }catch(e){}
+  toast(S.ecgStill ? 'Tracé figé 🩺' : 'Tracé animé 💚', 'info');
+}
 function _applyRingBtns(){
   const a=document.getElementById('appr-ring-anneau'), m=document.getElementById('appr-ring-moniteur');
   if(a) a.classList.toggle('active', S.ringStyle!=='moniteur');
   if(m) m.classList.toggle('active', S.ringStyle==='moniteur');
+  const e=document.getElementById('appr-ecg');
+  if(e){ e.classList.toggle('active', !!S.ecgStill);
+         e.style.display = (S.ringStyle==='moniteur') ? '' : 'none'; }   // sans objet en style anneau
 }
 function _applyThemeBtns(){
   const isLight=document.getElementById('root') && document.getElementById('root').classList.contains('light-mode');

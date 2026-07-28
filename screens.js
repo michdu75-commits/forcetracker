@@ -468,7 +468,7 @@ function ringReplay(){
     if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
     w.classList.remove('ring-go'); void w.offsetWidth; w.classList.add('ring-go');
     // apparence « moniteur » : le tracé d'ECG repart aussi du début
-    const ecg=w.querySelector('#rj-ecg path');
+    const ecg=w.classList.contains('rj-fige')?null:w.querySelector('#rj-ecg path');
     if(ecg){ ecg.style.animation='none'; void ecg.offsetWidth; ecg.style.animation=''; }
     const t0=performance.now(), D=1150;
     (function step(t){
@@ -556,7 +556,7 @@ function _renderHomeHero(){
           +'</div>'
           // ⚠️ Structure imposée par la technique (voir style.css) : #rj-arcwrap découpe
           // l'arc de 306°, #rj-progwrap le score, chaque enfant creuse le trou.
-          +'<div id="rj" onclick="ringReplay()" class="ft-press" style="--p:'+score+';margin-top:-26px;">'
+          +'<div id="rj" onclick="ringReplay()" class="ft-press'+(S.ecgStill?' rj-fige':'')+'" style="--p:'+score+';margin-top:-26px;">'
             +'<div id="rj-arcwrap">'
               +'<div id="rj-creux"></div><div id="rj-piste"></div>'
               +'<div id="rj-progwrap"><div id="rj-prog"></div></div>'

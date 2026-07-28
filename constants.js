@@ -259,7 +259,7 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
-  {v:52, ic:'💚', t:'Deux styles pour ta récup', d:'Menu → Apparence → Carte récup : garde l\'anneau, ou passe au style Moniteur — ton score en gros à gauche, une jauge ouverte à droite et un vrai tracé de cœur qui défile. 🩺'},
+  {v:52, ic:'💚', t:'Deux styles pour ta récup', d:'Menu → Apparence → Carte récup : garde l\'anneau, ou passe au style Moniteur — ton score en gros à gauche, une jauge ouverte à droite et un vrai tracé de cœur qui défile. Tu peux le figer si tu préfères le calme. 🩺'},
   {v:51, ic:'📅', t:'Ton calendrier se lit d\'un coup d\'œil', d:'Plus une case est foncée, plus tu as soulevé lourd ce jour-là. Le trait sous le chiffre dit ce que tu as travaillé, et le n° de semaine affiche ton tonnage. Tape un jour : son détail s\'ouvre dessous. 📊'},
   {v:50, ic:'🎯', t:'Ta récup passe en anneau', d:'Sur l\'Accueil, ton score de récup s\'affiche maintenant dans un anneau coloré. Appuie dessus : le chiffre se rejoue de 0 à ton score. ✨'},
   {v:49, ic:'✨', t:'Les nouveautés restent consultables', d:'Menu → « Nouveautés » : tu peux relire toutes les nouveautés quand tu veux. Du coup, la pop-up de lancement se passe d\'un tap si tu es pressé — tu ne rates rien. ✨'},

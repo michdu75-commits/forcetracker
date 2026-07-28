@@ -73,6 +73,8 @@ function load(){
     // Apparence de la carte récup : 'anneau' (défaut, ft-v642) | 'moniteur' (ft-v645).
     // Défaut volontaire : personne ne change d'apparence sans l'avoir choisi.
     S.ringStyle=localStorage.getItem('ft4_ringstyle')==='moniteur'?'moniteur':'anneau';
+    // Tracé d'ECG figé (style moniteur). Défaut : il défile.
+    S.ecgStill=localStorage.getItem('ft4_ecgstill')==='1';
     S.haloDir=localStorage.getItem('ft4_haloDir')||'top';
     S.smoker=localStorage.getItem('ft4_smoker')==='1';
     S.mensCycleStart=localStorage.getItem('ft4_mcstart')||'';

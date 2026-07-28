@@ -188,6 +188,30 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   t('« réduire les animations » fige le reflet', a.anim==='none'||a.op==='0', JSON.stringify(a));
   await q.c.close();
 }
+// ── ft-v648 : on peut FIGER le tracé (Menu → Apparence) ─────────────────────
+{
+  const q=await page({ft4_ringstyle:'moniteur',ft4_ecgstill:'1'},null,87);
+  const r=await q.p.evaluate(()=>{
+    const st=getComputedStyle(document.querySelector('#rj-ecg path'));
+    return {anim:st.animationName, offset:st.strokeDashoffset,
+            visible:getComputedStyle(document.getElementById('rj-ecg')).display!=='none'};
+  });
+  t('tracé figé : plus d\'animation', r.anim==='none', r.anim);
+  t('mais il reste affiché EN ENTIER (pas un cercle vide)',
+    r.visible && parseFloat(r.offset)===0, JSON.stringify(r));
+  await q.c.close();
+}
+{
+  const q=await page({ft4_ringstyle:'moniteur'},null,87);
+  const r=await q.p.evaluate(()=>{ setEcgStill(true);
+    const a=getComputedStyle(document.querySelector('#rj-ecg path')).animationName;
+    setEcgStill(false);
+    const b=getComputedStyle(document.querySelector('#rj-ecg path')).animationName;
+    return {fige:a, anime:b, cle:localStorage.getItem('ft4_ecgstill')}; });
+  t('le réglage bascule dans les deux sens et se retient',
+    r.fige==='none' && r.anime==='rj-ecg' && r.cle==='0', JSON.stringify(r));
+  await q.c.close();
+}
 // ── ft-v647 : le sommet de la jauge s'aligne sur « AUJOURD'HUI » ────────────
 // Demande de Michel : « le cercle faut le monter un peu ». Une valeur en dur
 // se perd au premier réglage suivant -> on la mesure.
