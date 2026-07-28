@@ -239,7 +239,7 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
     const jauges=[...el.querySelectorAll('div')].filter(d=>d.children.length===4&&[...d.children].every(c=>c.tagName==='I'));
     return {nbTuiles:lbl.length, libelles:lbl, nbJauges:jauges.length,
             traitsParJauge:jauges.map(j=>j.children.length),
-            allumes:jauges.map(j=>[...j.children].filter(c=>!/255, 255, 255/.test(c.style.background)).length),
+            allumes:jauges.map(j=>[...j.children].filter(c=>c.classList.contains('on')).length),
             texte:(el.innerText||'').replace(/\n/g,' | '), sale:/NaN|undefined/.test(el.innerText||'')};
   });
   t('3 tuiles affichées', r.nbTuiles===3, JSON.stringify(r).slice(0,150));
@@ -247,6 +247,18 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
     r.traitsParJauge.length===3 && r.traitsParJauge.every(n=>n===4), JSON.stringify(r.traitsParJauge));
   t('les traits allumés suivent le niveau (qualité 3 · énergie 1 · moral 3)',
     JSON.stringify(r.allumes)===JSON.stringify([3,2,4]), JSON.stringify(r.allumes));
+  // ft-v651 : le relief doit rester (un aplat de couleur paraît plat à 9x5 px)
+  const relief=await q.p.evaluate(()=>{
+    const on=document.querySelector('.ck-b.on'), off=document.querySelector('.ck-b:not(.on)');
+    const ico=document.querySelector('.ck-ico');
+    if(!on||!off||!ico)return null;
+    const so=getComputedStyle(on), sf=getComputedStyle(off), si=getComputedStyle(ico);
+    return {allumeDegrade:/gradient/.test(so.backgroundImage), allumeOmbre:so.boxShadow!=='none',
+            eteintCreuse:/inset/.test(sf.boxShadow), icoOmbre:/drop-shadow/.test(si.filter)};
+  });
+  t('les traits ont du relief (dégradé + ombres)',
+    relief && relief.allumeDegrade && relief.allumeOmbre && relief.eteintCreuse, JSON.stringify(relief));
+  t('la figurine a une ombre portée', relief && relief.icoOmbre, JSON.stringify(relief));
   t('pas de NaN dans le check-in', r.sale===false, r.texte.slice(0,80));
   await q.c.close();
   // b) rien noté -> pas de plantage, invitation affichée

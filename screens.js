@@ -904,15 +904,12 @@ function _ckVisage(c,niv){
     +'<circle cx="15.2" cy="10" r=".9" fill="'+c+'" stroke="none"/>'+bouche+'</svg>';
 }
 function _ckTuile(ico,coul,niv,val,lgd){
-  // niv = 0..3 (ou null si rien noté) -> niv+1 traits allumés
+  // niv = 0..3 (ou null si rien noté) -> niv+1 traits allumés.
+  // Le relief vit dans style.css (.ck-b / .ck-ico / .ck-tuile) : --ck porte la couleur.
   const n = niv==null ? 0 : Math.max(0,Math.min(4,niv+1));
-  let j=''; for(let i=0;i<4;i++){
-    j+='<i style="display:block;width:9px;height:4px;border-radius:2px;background:'
-      +(i<n ? coul+';box-shadow:0 0 6px '+coul+'55;' : 'rgba(255,255,255,.12);')+'"></i>';
-  }
-  return '<div style="background:var(--bg3);border-radius:12px;padding:10px 6px 9px;display:flex;'
-    +'flex-direction:column;align-items:center;gap:6px;">'
-    +'<div style="height:24px;display:flex;align-items:center;">'+ico+'</div>'
+  let j=''; for(let i=0;i<4;i++) j+='<i class="ck-b'+(i<n?' on':'')+'"></i>';
+  return '<div class="ck-tuile" style="--ck:'+coul+';'+(niv==null?'':'--ck-glow:'+coul+';')+'">'
+    +'<div class="ck-ico">'+ico+'</div>'
     +'<div style="display:flex;gap:3px;">'+j+'</div>'
     +'<div style="font-size:11px;font-weight:700;color:'+(niv==null?'var(--t3)':coul)+';white-space:nowrap;">'+val+'</div>'
     +'<div style="font-size:9.5px;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;font-weight:700;">'+lgd+'</div>'

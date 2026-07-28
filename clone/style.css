@@ -1215,6 +1215,37 @@ html.ob-done #onboarding{display:none;}
   #rr-shine,#rr-glint{ animation:none!important; opacity:0!important; }
 }
 
+/* ── Tuiles du check-in (ft-v650) — relief (ft-v651) ──────────────────────────
+   Les traits font 9 × 5 px : à cette taille, un aplat de couleur paraît plat et
+   sale. Le relief se fait comme sur l'anneau — un dégradé sur l'ÉPAISSEUR
+   (clair en haut, sombre en bas) + une arête claire d'un côté. Aucun filtre :
+   ce sont de simples ombres, sûres sur Safari iOS. */
+.ck-b{ display:block; width:9px; height:5px; border-radius:3px;
+  background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(0,0,0,.25));
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.65), inset 0 -1px 0 rgba(255,255,255,.05); }
+/* allumé : la couleur passe en tube, avec une arête claire en haut et sa lueur */
+.ck-b.on{
+  background:linear-gradient(180deg,
+    color-mix(in srgb, var(--ck) 55%, #fff),
+    var(--ck) 55%,
+    color-mix(in srgb, var(--ck) 70%, #000));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 1px 2px rgba(0,0,0,.55),
+             0 0 7px color-mix(in srgb, var(--ck) 55%, transparent); }
+/* repli si color-mix n'est pas supporté : sans lui la déclaration saute et le
+   trait allumé deviendrait invisible (leçon du calendrier, ft-v639). */
+@supports not (background: color-mix(in srgb, red 50%, blue)){
+  .ck-b.on{ background:var(--ck);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5), 0 1px 2px rgba(0,0,0,.55); }
+}
+/* la figurine : ombre portée + halo léger de sa propre couleur -> elle décolle du fond */
+.ck-ico{ height:24px; display:flex; align-items:center;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.65)) drop-shadow(0 0 6px var(--ck-glow,transparent)); }
+/* la tuile elle-même : légèrement bombée, comme une touche */
+.ck-tuile{ background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(0,0,0,.12)), var(--bg3);
+  border-radius:12px; padding:10px 6px 9px; display:flex; flex-direction:column;
+  align-items:center; gap:6px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.07), 0 2px 5px rgba(0,0,0,.35); }
+
 /* ── Style « MONITEUR » de la carte récup (ft-v645) ───────────────────────────
    Deuxième apparence au choix (Menu → Apparence → Anneau de récup). L'anneau
    classique ci-dessus reste le défaut : personne ne voit ce style sans l'avoir
