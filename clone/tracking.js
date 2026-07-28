@@ -10,7 +10,7 @@
 // Appliqué à TOUTE séance, quelle qu'en soit l'origine (saisie normale,
 // brouillon récupéré, import, ancienne version de l'app).
 function _buildSyncRows(sess){
-  const today_=new Date().toISOString().split('T')[0];
+  const today_=today();   // date du TÉLÉPHONE (ft-v655) : une séance finie à 00 h 30 était datée de la veille
   const date=typeof sess.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(sess.date)?sess.date:today_;
   const bw=isFinite(Number(S.bw))&&Number(S.bw)>0?Number(S.bw):0;
   const gender=S.gender==='F'?'F':'H';
@@ -1093,7 +1093,7 @@ function openBodyScanForm(idx){
   const dateEl=document.getElementById('bs-date');
   const delBtn=document.getElementById('bs-del-btn');
   const sc=(idx>=0&&S.bodyScans&&S.bodyScans[idx])?S.bodyScans[idx]:null;
-  if(dateEl)dateEl.value=sc?sc.date:new Date().toISOString().slice(0,10);
+  if(dateEl)dateEl.value=sc?sc.date:today();   // date du TÉLÉPHONE (ft-v655)
   const inpHtml=f=>`<div>
     <label style="font-size:11px;color:var(--t3);display:block;margin-bottom:3px;">${f.l}${f.u?' ('+f.u+')':''}${f.req?' *':''}</label>
     <input type="number" id="bs-${f.k}" step="0.1" inputmode="decimal" value="${sc&&sc[f.k]!=null?sc[f.k]:''}" placeholder="—" style="width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">

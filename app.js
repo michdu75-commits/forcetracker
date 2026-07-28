@@ -2967,7 +2967,9 @@ if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('portrai
 function _logErr(o){
   try{
     const l=JSON.parse(localStorage.getItem('ft4_errlog')||'[]');
-    l.unshift(Object.assign({t:new Date().toISOString().slice(0,19).replace('T',' ')},o));
+    // heure LOCALE (ft-v655) : une erreur horodatée à l'heure de Greenwich est illisible
+    const _d=new Date(); const _t=new Date(_d.getTime()-_d.getTimezoneOffset()*6e4).toISOString().slice(0,19).replace('T',' ');
+    l.unshift(Object.assign({t:_t},o));
     localStorage.setItem('ft4_errlog', JSON.stringify(l.slice(0,8)));
   }catch(e){}
 }

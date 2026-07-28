@@ -177,7 +177,7 @@ function openWeeklyProQuestion(){
   _cqPrefillFromProfile();
   // marque "posée cette semaine" tout de suite → pas de relance même si fermée sans répondre
   if(!S.coachQuizPro)S.coachQuizPro={answers:{},done:false};
-  S.coachQuizPro.lastAsked=new Date().toISOString().slice(0,10);
+  S.coachQuizPro.lastAsked=today();   // date du TÉLÉPHONE (ft-v655) — cf. today() dans state.js
   if(typeof persist==='function')persist();
   const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.add('open');
   _renderCoachQuizStep();
@@ -252,17 +252,20 @@ function _coachQuizNext(skip){
   else { _finishCoachQuiz(); }
 }
 function _finishCoachQuiz(){
-  const today=new Date().toISOString().slice(0,10);
+  // ⚠️ la variable s'appelait « today » et MASQUAIT la fonction globale today() (state.js).
+  // Renommée en _tday (ft-v655) : window.today n'existe pas — un `const` de haut niveau n'est
+  // pas posé sur window. L'appeler ainsi aurait planté la validation du questionnaire.
+  const _tday=today();   // date du TÉLÉPHONE
   // En mode "1 question", marque la question posée (même si passée sans répondre) pour ne pas la reproposer
   if(_cqSingle){ const q=COACH_QUIZ_PRO[_cqIdx]; if(q&&_cqAns[q.id]===undefined)_cqAns[q.id]=''; }
   if(_cqSet==='pro'){
     const prev=S.coachQuizPro||{};
     S.coachQuizPro={ answers:JSON.parse(JSON.stringify(_cqAns)),
       done: COACH_QUIZ_PRO.every(q=>Object.prototype.hasOwnProperty.call(_cqAns,q.id)),
-      lastAsked: today, date: prev.date||today };
+      lastAsked: _tday, date: prev.date||_tday };
     _applyQuizToProfile(COACH_QUIZ_PRO,_cqAns);
   } else {
-    S.coachQuiz={ answers:JSON.parse(JSON.stringify(_cqAns)), done:true, date:today };
+    S.coachQuiz={ answers:JSON.parse(JSON.stringify(_cqAns)), done:true, date:_tday };
     _applyQuizToProfile(COACH_QUIZ,_cqAns);
   }
   if(typeof persist==='function')persist();
@@ -712,7 +715,7 @@ function updateCoachHeader() {
 
 function checkPremiumExpiry() {
   if (!S.premium || !S.premiumExpiry) return;
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = today();   // date du TÉLÉPHONE (ft-v655) : sinon le premium expirait 2 h trop tôt
   if (S.premiumExpiry < todayStr) {
     S.premium = false;
     S.premiumExpiry = '';

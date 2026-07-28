@@ -364,7 +364,13 @@ function persist(){
 // ─── UTILS ───────────────────────────────────────────────────
 const fmt=n=>Math.round(n*10)/10;
 const bz=(kg,r)=>(!kg||!r||r<1)?0:(r===1?kg:fmt(kg/(1.0278-0.0278*Math.min(r,20))));
-const today=()=>new Date().toISOString().split('T')[0];
+// ⚠️ LA DATE DU JOUR EST CELLE DU TÉLÉPHONE, JAMAIS CELLE DE GREENWICH (ft-v655).
+// toISOString() renvoie la date UTC : en France (UTC+2 l'été), entre MINUIT et 2 H du matin
+// il est encore « hier » à Greenwich → une séance finie à 00 h 30 était datée de la veille,
+// et le check-in / le sommeil / les badges tombaient dans le mauvais jour. Bug SILENCIEUX :
+// rien ne plante, la date est juste fausse. On décale de l'écart horaire local avant de couper.
+// 🚫 Ne JAMAIS revenir à `new Date().toISOString()` pour obtenir un jour calendaire.
+const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
 const fmtD=d=>d?new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
 
 // ─── PROCHAINE SÉANCE ANNONCÉE — la règle « cette annonce tient-elle encore ? » (ft-v654) ───
