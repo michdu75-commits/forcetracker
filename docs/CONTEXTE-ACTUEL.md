@@ -6,25 +6,29 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v633`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v653`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
-> ### 🔁 ÉTAT AU 27/07 (soir) — remplace la photo précédente
+> ### 🔁 ÉTAT AU 28/07 (soir) — remplace la photo précédente
 > ⚠️ **Ce bloc se REMPLACE, il ne s'empile pas.** C'est un instantané, pas un journal (le journal est dans `CLAUDE.md`). Un fichier « à lire en premier » qui s'allonge cesse d'être lu.
 >
-> **🔥 Ce qui a occupé la journée**
-> - 🛡️ **Sécurité** : audit complet (ft-v624) → 3 fixes sans risque (XSS chat, XSS carte Milo, lecture localStorage résiliente) + **le verrou anti-abus du serveur IA DÉPLOYÉ** avec Michel (origine vérifiée avant tout appel payant). ⏳ Reste à faire **par Michel** : une règle de limitation de débit côté Cloudflare (pas urgent).
-> - 🐛 **4 bugs Milo→Séance corrigés et CONFIRMÉS SUR DEVICE** (ft-v625 charges écrasées · ft-v626 repos · ft-v627 ordre · ft-v628 consignes). Ils formaient **un seul** problème : l'info était dans le TEXTE de Milo, pas dans la DONNÉE (→ règle R4).
-> - 🔓 **ft-v623** : les 4 features ex-« réservées testeurs » ouvertes à tout le monde (« tout pour tout le monde », Michel).
-> - 🧪 **2 retours de Christophe traités le jour même** : ft-v629 (pop-up fermée au doigt qui revenait — chemin de fermeture sans marqueur, → règle R15) et ft-v630 (**carrousel** « Quoi de neuf », une nouveauté par écran).
-> - ✂️ **ft-v631/632/633** : la carte respire → Michel corrige (*« trop d'infos en une pop-up c'est pas bon »*) → **règle gravée : la pop-up ANNONCE, l'aide EXPLIQUE** (4-5 lignes max) → puis **Menu → « Nouveautés »** (historique consultable) + lien « Passer » (retour GPT).
-> - 🏛️ **`docs/REGLES-ARCHITECTURE.md` créé** (proposition GPT) : 22 règles de construction, chacune née d'un événement réel. **Importé automatiquement** par `CLAUDE.md` (`@docs/REGLES-ARCHITECTURE.md`) → lu à chaque session. ⚠️ Ne PAS multiplier les imports (dilution, cf. R20).
+> **🔥 Ce qui a occupé les deux derniers jours**
+> - 💚 **La carte de récupération** : l'anneau fini (dégradé conique rouge→vert, relief de tube, lueur qui tourne, ft-v640→644) **puis une DEUXIÈME apparence au choix** dessinée par Michel — le style « moniteur » (chiffre à gauche, jauge ouverte à droite, tracé d'ECG au centre), ft-v645→648. **L'anneau reste le défaut** : ce n'est pas un remplacement, c'est un choix dans Menu → Apparence.
+> - 🧩 **Le check-in replié passe en 3 tuiles** (sommeil / énergie / moral) avec relief, ft-v650/651. On lit son état **sans lire**.
+> - ⚖️ **Règle d'or #11 amendée** (décision de Michel) : **la pop-up se mérite** — seulement si la personne doit *faire* quelque chose, ou si un repère a bougé. Les points 2 à 5 (point rouge · aide `?` · aide détaillée · guide) restent systématiques. Déclencheur : 3 pop-ups en deux jours, dont 2 sur la même carte.
+> - ✂️ **`CLAUDE.md` scindé en deux** : 33 000 → ~13 000 mots. Les 12 règles d'or **en entier** vivent désormais dans `docs/REGLES-OR.md` ; `CLAUDE.md` n'en garde qu'une ligne chacune. Cohérence vérifiée par `python3 tools/check_regles.py` (qui surveille aussi la longueur du journal récent).
+> - 🙋 **Le bug du PRÉNOM** (ft-v652) : Milo ne l'avait **jamais** reçu — alors que le prompt lui demandait de l'employer (R8 : *un prompt ne compense jamais une donnée absente*). Et le prénom était **introuvable dans l'écran Profil**. Les deux corrigés.
+> - 🛡️ **LE GARDE-FOU DES DONNÉES** (né de l'intuition de Michel après le prénom) : `node tests/donnees/runner.js` exige que **chaque** donnée chargée par `load()` soit classée face à Milo — transmise · exclue avec la raison écrite · trou connu. Une donnée non classée **bloque la livraison**. → règle **R4a**.
 >
-> **⏭️ La suite (roadmap inchangée)** : **A)** cœur relationnel (fait : Moment 2 ft-v621, détecteurs fréquence + style) → **B)** **nutrition entrelacée avec le Coach** ← *c'est ici qu'on reprend* → **C)** inscription « Faisons connaissance » → **D)** confort/qualité → **E)** natif/multilingue → **F)** briques 7-8. Garde-fou : pas de gamification avant des fondations solides.
+> **📏 Ce que la mesure a révélé — le sujet du moment**
+> Le contexte envoyé à Milo fait **~45 400 caractères** : **91 % de consignes**, **9 % de connaissance sur la personne** (144 lignes d'instructions, 42 « JAMAIS »), et il ne voit que les **5 dernières séances** (`S.sessions.slice(0, 5)`).
+> ⚠️ **À ne pas mal lire** : ce n'est pas « Milo n'a que 9 % de mémoire » — **48 des 90 données lui sont bien transmises**. Le 9 % est un volume de **texte**. Le problème, ce ne sont pas les 4 000 caractères de données, ce sont les 41 400 de consignes qui les **noient**.
 >
-> **🧠 Le gros chantier identifié aujourd'hui (spécifié, PAS commencé)** : *« chaque séance doit enrichir le profil vivant »* (retour GPT) — Milo produit de la connaissance sur la personne (récupération, tolérance articulaire, réponse aux montées progressives) qui reste dans le texte et n'est jamais mémorisée. **4 garde-fous écrits dans `IDEES-FUTURES.md`** (jamais auto · une séance ne prouve rien · domaine sensible · grille des 3 questions). À placer après la nutrition.
+> **⏭️ LA PROCHAINE GRANDE TÂCHE (spécifiée, PAS commencée)** : **le régime du prompt** — rendre les consignes **conditionnelles à la mission en cours** (pas besoin des règles de nutrition quand on demande une séance), **avec un plancher inconditionnel** : les règles de **sécurité** (blessures, contre-indications, Gardien) partent **toujours**.
 >
-> **⏳ En attente de Michel** : les captures pour les diapos du Guide (ft-v612/614/615/617/620/622) · la règle de débit Cloudflare.
-> **⏳ Dettes connues** : ① **ce fichier doit être retaillé à 1 vraie page** (il fait ~8 pages : de vieilles photos empilées plus bas) ② l'**audit « données mortes »** (infos stockées mais jamais exploitées) ③ refonte 2-rangées du header (parkée, session dédiée).
+> **🕳️ Les 4 trous connus, à combler** (dans l'ordre d'urgence) : ① **`nextPlanned`** — l'Accueil affiche « je m'en souviens » et le chat ne l'a pas ; Milo affirme se souvenir de ce qu'il n'a pas ② `programmes` (il ne connaît pas ton planning) ③ `customExercises` ④ `exRestPref`.
+>
+> **⏳ En attente de Michel** : les captures pour les diapos du Guide (ft-v612/614/615/617/620/622) · la règle de limitation de débit Cloudflare.
+> **⏳ Dettes connues** : ① **ce fichier doit être retaillé à 1 vraie page** (de vieilles photos empilées plus bas) ② refonte 2-rangées du header (parkée depuis ft-v611) ③ le logo (« il est moche », 6 juillet).
 > **⏳ Restent clone-only** (ne pas promouvoir tel quel) : badge Gardien, questions illimitées, couplage blessure-retenue→Santé (ft-v588).
 
 ---
@@ -69,7 +73,7 @@
 - **🔭 TOUR DE TABLE IA EXTÉRIEURES (20/07) — décisions d'archi VM prises** (détail : CLAUDE.md, méthode : `docs/PROCESSUS-DEVELOPPEMENT.md`) : avis croisés GPT + Gemini + Mistral sur le chantier VM. **Méthode adoptée** : convergence de regards indépendants = décision d'archi ; divergence = débat. **2 décisions** : ① couche machine = **user-fed d'abord** (le risque = les médias, pas le code) ; ② graphe **simple & dérivé** (14 schémas, pas de parsing exhaustif). **+ Principe** : palier « confirm » de l'import = **un TAP, pas un formulaire**. **Prématuré → IDEES-FUTURES** : matériel connecté (montre), modèle éco approfondi, export JSON/CSV. **Prochaine brique quand on construira = la couche machine.**
   - **🏛️ FRONTIÈRE VM / GARDIEN actée** (dernier doc GPT) : *le moteur VM identifie/structure les MOUVEMENTS ; le Gardien décide quoi FAIRE de cette connaissance* (remplacements, contre-indications, adaptations douleurs = métier du Gardien, pas du parsing). ✅ **Ratifiée par Michel → Constitution v1.5, Principe 15 « Le moteur comprend, le Gardien décide » (20/07)**.
   - **🏗️ CHANGEMENT DE PHASE — GO donné par GPT (20/07) → en attente GO Michel** : fin de la phase « grandes idées », début de l'**industrialisation**. **Ordre convenu (GPT + Claude)** : ① **finaliser VM** (câbler import historique) → ② **construire Confirm** (validation reconnaissance en un geste) → ③ **couche machine (MVP user-fed)** → ④ **tester avec de vrais programmes variés** → ⑤ **enrichir EXLIB uniquement à partir des cas réels**. Nuance actée : **Confirm AVANT Machine** (le confirm de reconnaissance ✓/✕ se construit d'abord, la photo machine s'y greffe ensuite). Conseil GPT : « ne plus chercher de grandes idées — le moteur doit apprendre du réel ». Les 4 IA (GPT/Gemini/Mistral/Claude) alignées sur « construire ».
-- **Branche de travail :** `claude/claude-md-docs-ytabnv` — **publiée aussi sur `master`** (donc live = ft-v595). *(session Claude Code web)*
+- **Branche de travail :** `claude/claude-md-docs-ytabnv` — **publiée aussi sur `master`** (donc live = ft-v653). *(session Claude Code web)*
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
 
