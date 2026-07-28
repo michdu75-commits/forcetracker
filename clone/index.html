@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v652';
+  b.textContent='🧪 CLONE ft-v653';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -2478,10 +2478,10 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       </div>
       <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Carte récup</div>
       <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <button id="appr-ring-anneau" onclick="setRingStyle('anneau')" class="appr-btn"><span class="appr-sw" style="background:conic-gradient(from 0deg,#FF4D5E,#EAB308,#34D399);"></span>⭕ Anneau</button>
-        <button id="appr-ring-moniteur" onclick="setRingStyle('moniteur')" class="appr-btn"><span class="appr-sw" style="background:conic-gradient(from 207deg,#34D399 0deg 240deg,#C8253A 240deg 306deg,transparent 306deg);"></span>💚 Moniteur</button>
+        <button id="appr-ring-anneau" onclick="setRingStyle('anneau')" class="appr-btn"><span class="appr-sw" style="background:conic-gradient(from 0deg,#FF4D5E,#FF8A72,#EAB308,#34D399,#FF4D5E);box-shadow:inset 0 0 0 5px var(--bg2);"></span>Anneau</button>
+        <button id="appr-ring-moniteur" onclick="setRingStyle('moniteur')" class="appr-btn"><span class="appr-sw" style="background:linear-gradient(180deg,#34D399 0 55%,#C8253A 55% 100%);"></span>Moniteur</button>
       </div>
-      <button id="appr-ecg" onclick="setEcgStill(!S.ecgStill)" class="appr-btn" style="width:100%;justify-content:center;margin-bottom:12px;"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>🩺 Figer le tracé du cœur</button>
+      <button id="appr-ecg" onclick="setEcgStill(!S.ecgStill)" class="appr-btn" style="width:100%;justify-content:center;margin-bottom:12px;"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>Figer le tracé du cœur</button>
       <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:6px;">Fond</div>
       <button id="appr-none" onclick="setHalo('none')" class="appr-btn" style="width:100%;justify-content:center;margin-bottom:12px;"><span class="appr-sw" style="background:#0e1016;box-shadow:inset 0 0 0 1px var(--sep);"></span>Fond uni (noir)</button>
       <div style="font-size:11px;font-weight:700;letter-spacing:.04em;color:var(--t3);text-transform:uppercase;margin-bottom:8px;">Couleur du halo</div>
