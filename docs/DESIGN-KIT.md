@@ -63,6 +63,33 @@ ANNEAU / JAUGE — le motif utilisé partout (SVG, pas canvas)
 (327 = circonférence ; dashoffset = 327 × (1 − pourcentage). Pour de la profondeur :
  <filter> avec feDropShadow, ou un <linearGradient> — jamais une image.)
 
+ANNEAU DE PROGRESSION (le cas le plus demandé) — deux techniques, pas une
+- SVG (<circle> + stroke-dasharray) : parfait pour la FORME et l'animation de remplissage,
+  mais son dégradé est LINÉAIRE — il ne peut pas tourner avec l'arc.
+- CSS conic-gradient : le seul moyen d'avoir une couleur qui SUIT le cercle
+  (ex. rouge à 0, vert à 100). Recette qui marche sur Safari iOS :
+
+.ring{position:relative;width:100px;height:100px;}
+.ring .track,.ring .arcwrap{position:absolute;inset:0;border-radius:50%;}
+.ring .track{background-color:var(--bg3);
+  -webkit-mask:radial-gradient(closest-side,transparent 76%,#000 76.5%);
+          mask:radial-gradient(closest-side,transparent 76%,#000 76.5%);}
+.ring .arcwrap{                                   /* la PART : --p = 0..100 */
+  -webkit-mask:conic-gradient(from 0deg,#000 calc(var(--p)*1%),transparent 0);
+          mask:conic-gradient(from 0deg,#000 calc(var(--p)*1%),transparent 0);}
+.ring .arc{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,#FF4D5E 0%,#FF8A72 33%,#EAB308 66%,#34D399 100%);
+  -webkit-mask:radial-gradient(closest-side,transparent 78%,#000 78.5%);
+          mask:radial-gradient(closest-side,transparent 78%,#000 78.5%);}
+
+  Trois pièges à éviter absolument :
+  1. NE PAS utiliser mask-composite / -webkit-mask-composite (mal supporté) : on IMBRIQUE
+     deux masques d'un seul calque (le parent découpe la part, l'enfant creuse le trou).
+  2. NE PAS animer --p avec @property : le piloter en JS (requestAnimationFrame), comme le
+     compteur du chiffre. Zéro dépendance à une fonctionnalité récente.
+  3. Le TOUR GRIS doit être un peu PLUS LARGE que l'arc coloré (trou 76 % contre 78 %),
+     sinon la couleur le recouvre et le cercle ne se lit plus comme complet.
+
 RÈGLES DE STYLE
 - L'accent rouge est l'identité : le garder pour l'action principale, ne pas le diluer partout.
 - Les chiffres importants en Space Grotesk, gros, avec l'unité en plus petit et en --t3.
@@ -80,6 +107,7 @@ RÈGLES DE STYLE
 | Du code **Flutter / React / Vue** | L'app est en HTML/CSS/JS purs, sans build. Rien n'est transposable. *(C'est ce qui est arrivé le 21/07 : du Flutter proposé pour une PWA.)* |
 | Des **polices Google** chargées en ligne | Règle d'or #4 : aucune dépendance réseau au démarrage. Les polices sont dans le projet. |
 | Des **images** pour des éléments d'interface | Les anneaux, jauges et icônes sont en SVG : nets à tout écran, recolorables par variable, et ils ne pèsent rien. |
+| Du **SVG** quand on demande une couleur qui tourne autour du cercle | Un dégradé SVG est droit : il pose les couleurs de travers sur un arc (constaté le 28/07 — le rouge tombait en bas de l'anneau). Pour ça, c'est `conic-gradient`. |
 | Une **refonte complète** d'un écran | Règle #7 : une chose à la fois, testée. Et l'identité « figurines muscles » ne se remplace pas par un thème générique. |
 
 ## 💡 L'alternative qui évite toute transposition
