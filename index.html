@@ -784,6 +784,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
       <button class="btn btn-bg2" onclick="debugRestore()" style="padding:11px;font-size:14px;color:var(--t3);">🔍 Voir réponse brute API</button>
     </div>
     <div class="status-row"><div class="sdot" id="setup-dot"></div><span id="setup-txt">En attente</span></div>
+    <!-- JOURNAL DES ERREURS (pour diagnostiquer ce qui n'arrive que sur un téléphone) -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🐞 Dernières erreurs</div>
+      <div id="admin-errlog" style="font-size:11.5px;color:var(--t2);line-height:1.5;background:var(--bg3);border-radius:8px;padding:10px 12px;font-family:'SF Mono',ui-monospace,monospace;word-break:break-word;max-height:220px;overflow:auto;">—</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-bg2" onclick="renderErrLog()" style="padding:10px;font-size:13px;">🔄 Rafraîchir</button>
+        <button class="btn btn-bg2" onclick="clearErrLog()" style="padding:10px;font-size:13px;color:var(--t3);">🗑️ Vider</button>
+      </div>
+    </div>
     <!-- CARTE DEBUG PREMIUM -->
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🔑 Statut Premium</div>

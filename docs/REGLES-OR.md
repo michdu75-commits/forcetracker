@@ -49,6 +49,23 @@ Michel conçoit l'appli avec l'aide de Claude (design/réflexion/prompts), il ne
 
 **11. 📣 À CHAQUE fonctionnalité mise en PROD — prévenir l'utilisateur (checklist OBLIGATOIRE, ne jamais zapper).**
 Une feature n'est PAS finie tant que l'utilisateur n'est pas informé. Avant de considérer une feature comme livrée en prod, faire **les 5** :
+
+> ### ⚖️ La POP-UP se mérite (décision Michel, 28/07/2026)
+> *« je pense qu'il y a des pop-up qu'on n'est pas obligé de faire… il faut choisir les pop-up quand il y a un gros changement »*.
+> **Le point 1 (pop-up) n'est PAS systématique. Les points 2 à 5 le restent** — ils informent sans interrompre,
+> et ce sont eux qui empêchent une fonctionnalité de devenir invisible (règle **R23**).
+>
+> **Pop-up seulement si l'une des deux est vraie :**
+> 1. la personne doit **faire quelque chose** pour en profiter (aller quelque part, activer un réglage) ;
+> 2. quelque chose qu'elle **connaissait** a changé de place, ou a disparu.
+>
+> **Pas de pop-up** pour : un correctif · un raffinement de ce qui vient d'être annoncé · un détail visuel ·
+> une option qui complète une nouveauté récente → dans ce dernier cas, **compléter le texte de l'entrée
+> existante** plutôt que d'en créer une deuxième (fait pour le tracé figé, ft-v648).
+>
+> **Le vrai risque n'est pas le nombre, c'est l'ACCUMULATION** : trois annonces d'un coup parce qu'on a
+> beaucoup livré en deux jours, et plus personne ne les lit. *Ce qui interrompt doit se mériter* (**R25**).
+
 1. **Pop-up « Quoi de neuf »** → ajouter une entrée dans `WHATS_NEW` (constants.js) avec `v = WHATS_NEW_MAX+1`, puis **incrémenter `WHATS_NEW_MAX`**. ⚠️ **LA POP-UP ANNONCE, L'AIDE EXPLIQUE** (règle de Michel, 27/07/2026 — *« donner trop d'infos en une seule pop-up c'est pas bon »*) : **~4-5 lignes MAXIMUM** (≈ 250 caractères) — *quoi* + *où* + le bénéfice en une phrase. Le **détail** (le comment, les cas d'usage, les garde-fous) va dans les points **3 et 4** de cette checklist (aide `?` + aide détaillée), **jamais** dans la pop-up : on la lit pour entrer dans l'app, pas pour apprendre. ⚠️ Le carrousel (ft-v630) donne de la **place**, ce n'est **pas** une autorisation d'écrire plus long — un pavé sur une diapo recrée exactement le problème qu'il corrigeait.
 2. **Point rouge « nouveauté »** → ajouter une entrée dans `NEW_FEATURES` (constants.js) : `{id, screen, desc}` (+ `spot`/`anchor` si on vise un élément précis).
 3. **Aide contextuelle « ? »** de l'onglet concerné → mettre à jour `_HELP_DATA` (screens.js) pour l'écran touché.

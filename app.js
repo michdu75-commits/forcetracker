@@ -1772,6 +1772,7 @@ function switchSetupTab(tab,btn){
     if(pr)pr.style.display='none';
     if(cx){cx.style.display='flex';cx.style.flexDirection='column';cx.style.gap='12px';}
     if(typeof _showAdminPremiumStatic==='function')_showAdminPremiumStatic();
+    if(typeof renderErrLog==='function')renderErrLog();
   } else {
     if(cx)cx.style.display='none';
     if(pr){pr.style.display='flex';pr.style.flexDirection='column';}
@@ -2959,15 +2960,42 @@ document.addEventListener('pointerdown',function(e){
 if(screen.orientation&&screen.orientation.lock){screen.orientation.lock('portrait').catch(()=>{});}
 
 // ─── GESTIONNAIRE D'ERREURS GLOBAL ───────────────────────────
+// ⚠️ On ENREGISTRE les erreurs, on ne se contente pas de les signaler.
+// Sans ça, une erreur qui n'arrive que sur le téléphone de quelqu'un est
+// impossible à diagnostiquer : le bandeau rouge dit qu'il y a un problème,
+// jamais lequel. Les 8 dernières sont lisibles dans Profil → Admin.
+function _logErr(o){
+  try{
+    const l=JSON.parse(localStorage.getItem('ft4_errlog')||'[]');
+    l.unshift(Object.assign({t:new Date().toISOString().slice(0,19).replace('T',' ')},o));
+    localStorage.setItem('ft4_errlog', JSON.stringify(l.slice(0,8)));
+  }catch(e){}
+}
 window.addEventListener('error',e=>{
   // Ignore les erreurs d'assets externes (images, scripts tiers)
   if(e.filename&&!e.filename.includes(location.hostname))return;
   console.error('[FT] Erreur JS non rattrapée:',e.message,'@',e.filename,e.lineno);
+  _logErr({m:String(e.message||'?').slice(0,180),
+           f:String(e.filename||'').split('/').pop().slice(0,40), l:e.lineno||0});
   if(typeof toast==='function')toast('Erreur — si l\'appli ne répond plus, rechargez la page','error');
 });
 window.addEventListener('unhandledrejection',e=>{
   console.error('[FT] Promise rejetée:',e.reason);
+  _logErr({m:'[promesse] '+String((e.reason&&e.reason.message)||e.reason||'?').slice(0,180),f:'',l:0});
 });
+// Affiche le journal dans l'onglet Admin (Profil → 🔧 Admin)
+function renderErrLog(){
+  const b=document.getElementById('admin-errlog'); if(!b)return;
+  let l=[]; try{ l=JSON.parse(localStorage.getItem('ft4_errlog')||'[]'); }catch(e){}
+  b.innerHTML = l.length
+    ? l.map(x=>'<div style="padding:6px 0;border-bottom:1px solid var(--sep);">'
+        +'<span style="color:var(--t3);">'+x.t+'</span><br>'
+        +'<span style="color:var(--red);">'+String(x.m).replace(/</g,'&lt;')+'</span>'
+        +(x.f?'<br><span style="color:var(--t3);">'+x.f+':'+x.l+'</span>':'')+'</div>').join('')
+    : '<span style="color:var(--t3);">Aucune erreur enregistrée ✅</span>';
+}
+function clearErrLog(){ try{localStorage.removeItem('ft4_errlog');}catch(e){} renderErrLog();
+  if(typeof toast==='function')toast('Journal vidé','info'); }
 
 // ─── SERVICE WORKER ──────────────────────────────────────────
 // Ne jamais recharger l'appli en pleine séance (perte de saisie / interruption d'un superset).
