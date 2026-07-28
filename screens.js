@@ -456,6 +456,9 @@ function _renderHomeHdr(){
 // Rejoue l'animation de l'anneau de récup : le chiffre défile de 0 au score
 // pendant que l'arc se remplit, sur la MÊME courbe (sinon les deux se décalent).
 function ringReplay(){
+  // Rejoue le remplissage : le chiffre défile de 0 au score PENDANT que l'arc se remplit,
+  // sur la même courbe. --p est piloté ici (et pas par une animation CSS) parce qu'animer
+  // une variable CSS demanderait @property, trop récent pour être sûr sur tous les iPhone.
   try{
     const w=document.getElementById('recup-ring'), n=document.getElementById('rr-num');
     if(!w||!n)return;
@@ -465,11 +468,14 @@ function ringReplay(){
     const t0=performance.now(), D=1150;
     (function step(t){
       const k=Math.min(1,(t-t0)/D), e=1-Math.pow(1-k,3);
+      w.style.setProperty('--p',(cible*e).toFixed(2));
       n.textContent=Math.round(cible*e);
-      if(k<1)requestAnimationFrame(step); else n.textContent=cible;
+      if(k<1)requestAnimationFrame(step);
+      else { w.style.setProperty('--p',cible); n.textContent=cible; }
     })(t0);
   }catch(e){}
 }
+
 // Échelle de couleur de l'anneau de récup : ROUGE à 0 -> VERT à 100 (demande Michel, ft-v641).
 // Le score n'est pas une note binaire : la couleur doit se déplacer PROGRESSIVEMENT sur l'échelle,
 // pas sauter d'un palier à l'autre. On interpole en RGB entre 4 repères.
@@ -489,22 +495,9 @@ function _renderHomeHero(){
   const detail=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():{score:calcRecoveryScore(),factors:[],tips:[]};
   const score=detail.score;
   const info=getRecoveryInfo(score);
-  const circ=+(2*Math.PI*34).toFixed(1);   // r=34 → circonférence de l'arc
-  const offset=score!==null?+(circ*(1-score/100)).toFixed(1):circ;
-  // Reflet « vivant » : une NAPPE large, pas un point. Un segment court qui se déplace se lit
-  // comme une bestiole qui rampe (retour Michel : « on dirait un ver ») ; une zone large et floue
-  // se lit comme de la lumière qui bouge. D'où 55 % de l'arc, très flou, très discret.
-  const arcLen=+(circ-offset).toFixed(1);
-  const trav=+Math.max(arcLen*0.55,40).toFixed(1);      // longueur de la nappe
-  const travRun=+(arcLen+trav*0.5).toFixed(1);          // elle entre ET sort de l'arc
   const ringColor=score!==null?info.color:'var(--t3)';
   // L'arc parcourt l'échelle : il DÉMARRE au rouge et arrive à la couleur du score.
-  // La TEINTE suit le score sur l'échelle rouge->vert (25 = rouge, 57 = ambre, 88 = vert) ;
-  // le dégradé le long de l'arc reste court (deux teintes voisines) pour la profondeur.
-  // ⚠️ Un dégradé SVG est linéaire : il ne peut pas tourner avec l'arc. Vouloir du rouge au
-  // départ et du vert à l'arrivée sur un même tracé donne des couleurs posées de travers
-  // (essayé : le rouge tombait en bas de l'anneau). Il faudrait découper l'arc en segments.
-  const arcA=_ringScale((score||0)*0.55), arcC=_ringScale(score||0);
+  const arcC=_ringScale(score||0);   // couleur du score : sert au halo et à la pastille
   let accent='52,211,153';
   if(score!==null&&score<40)accent='255,106,115';
   else if(score!==null&&score<60)accent='255,138,114';
@@ -549,32 +542,15 @@ function _renderHomeHero(){
     // Au tap : le chiffre défile de 0 au score pendant que l'arc se remplit (ringReplay()).
     +'<div style="display:flex;align-items:center;gap:18px;margin-top:14px;">'
     +(score!==null
-      ? '<div id="recup-ring" onclick="ringReplay()" class="ft-press" style="--rr-circ:'+circ+';--rr-run:-'+travRun+'px;position:relative;flex:none;width:100px;height:100px;cursor:pointer;filter:drop-shadow(0 6px 12px rgba(0,0,0,.45));">'
-        +'<svg width="100" height="100" viewBox="0 0 96 96" style="display:block;">'
-        +'<defs>'
-          +'<linearGradient id="rrG" x1="0" y1="0" x2="1" y2="1">'
-          +'<stop offset="0" stop-color="'+arcA+'"/><stop offset="1" stop-color="'+arcC+'"/></linearGradient>'
-          +'<filter id="rrGlow" x="-60%" y="-60%" width="220%" height="220%">'
-          +'<feDropShadow dx="0" dy="1.5" stdDeviation="4.5" flood-color="'+arcC+'" flood-opacity=".6"/></filter>'
-          +'<filter id="rrSoft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4.2"/></filter>'
-        +'</defs>'
-        +'<g transform="rotate(-90 48 48)">'
-        // ⚠️ LA RAINURE GRISE FAIT LE TOUR COMPLET (360°) : c'est elle qui montre le « reste »
-        // du score. Elle est dessinée avec de simples cercles, SANS filtre SVG : l'ombre interne
-        // d'origine (feComposite operator="out") s'appliquait à un TRACÉ, ce que Safari iOS rend
-        // mal — le tour gris devenait invisible sur le téléphone alors qu'il s'affichait sur
-        // ordinateur. Trois passes suffisent à creuser : bord sombre, fond de rainure, puis un
-        // voile clair qui rend le gris franchement lisible sur le fond de la carte.
-        +'<circle cx="48" cy="48" r="34" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="14"/>'
-        +'<circle cx="48" cy="48" r="34" fill="none" stroke="var(--bg3)" stroke-width="11.5"/>'
-        +'<circle cx="48" cy="48" r="34" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="11.5"/>'
-        +'<circle id="rr-arc" cx="48" cy="48" r="34" fill="none" stroke="url(#rrG)" stroke-width="8" stroke-linecap="round"'
-        +' stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" filter="url(#rrGlow)"/>'
-        +'<circle id="rr-hi" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"'
-        +' stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" opacity=".26" transform="translate(0,-2.2)" style="mix-blend-mode:screen;"/>'
-        +'<circle id="rr-trav" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round"'
-        +' stroke-dasharray="'+trav+' '+circ+'" stroke-dashoffset="0" opacity="0" filter="url(#rrSoft)" style="mix-blend-mode:screen;"/>'
-        +'</g></svg>'
+      ? '<div id="recup-ring" onclick="ringReplay()" class="ft-press" style="--p:'+score+';">'
+        // ⚠️ Structure IMPOSÉE par la technique (voir style.css) : #rr-arcwrap porte le masque
+        // conique qui découpe la PART, #rr-arc et #rr-shine portent celui qui creuse le TROU.
+        // Ne pas aplatir ces niveaux : sans l'imbrication il faudrait mask-composite,
+        // que Safari iOS gère mal.
+        +'<div id="rr-groove"></div><div id="rr-track"></div>'
+        +'<div id="rr-arcwrap">'
+          +'<div id="rr-arc"></div><div id="rr-shine"></div>'
+        +'</div>'
         +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">'
         +'<span id="rr-num" style="font-family:var(--font-cond);font-size:32px;font-weight:900;color:var(--t1);line-height:1;text-shadow:0 2px 6px rgba(0,0,0,.5);">'+score+'</span>'
         +'<span style="font-size:10px;color:var(--t3);font-weight:700;">/100</span>'

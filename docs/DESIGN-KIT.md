@@ -103,6 +103,9 @@ ANNEAU DE PROGRESSION (le cas le plus demandé) — deux techniques, pas une
      compteur du chiffre. Zéro dépendance à une fonctionnalité récente.
   3. Le TOUR GRIS doit être un peu PLUS LARGE que l'arc coloré (trou 76 % contre 78 %),
      sinon la couleur le recouvre et le cercle ne se lit plus comme complet.
+  4. NE PAS mettre de drop-shadow coloré sur l'anneau pour faire un halo : l'ombre d'un
+     anneau masqué se projette AUSSI vers l'intérieur et remplit le centre d'une tache
+     de couleur (constaté à l'écran). Si on veut un halo, le poser sur un calque séparé.
 
 LA COULEUR DE L'ANNEAU — 4 repères exacts, ne pas en inventer d'autres
   0 %   #FF4D5E  (rouge)

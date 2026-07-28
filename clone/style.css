@@ -1138,30 +1138,57 @@ html.ob-done #onboarding{display:none;}
   max-width:100%!important; font-family:var(--font)!important;
 }
 
-/* ── Anneau de récup (ft-v636) ────────────────────────────────────────────────
-   Deux animations DISTINCTES (demande de Michel) :
-   ① au tap  → l'arc se remplit de 0 au score (ringReplay() fait défiler le chiffre en parallèle)
-   ② au repos → un reflet PARCOURT l'arc en boucle, flouté et fondu (il ne clignote pas, il traverse)
-   La longueur de l'arc dépend du score → les keyframes sont posées en ligne par _renderHomeHero
-   pour ①, et ② n'a besoin que d'une variable (--rr-run) que le rendu fournit.
-   ⚠️ « Réduire les animations » (iOS/Android) fige tout — accessibilité + sensibilité au mouvement. */
-#recup-ring #rr-trav{ animation:rr-travel 6.5s cubic-bezier(.45,0,.55,1) infinite; }
-@keyframes rr-travel{
-  0%   { stroke-dashoffset:0;               opacity:0;   }
-  14%  { opacity:.14; }
-  30%  { opacity:.26; }
-  46%  { opacity:.30; }   /* discret : il éclaire, il ne brille pas */
-  62%  { opacity:.26; }
-  78%  { opacity:.13; }
-  88%  { stroke-dashoffset:var(--rr-run,-120px); opacity:0; }
-  100% { stroke-dashoffset:var(--rr-run,-120px); opacity:0; }
-}
-#recup-ring.ring-go #rr-arc, #recup-ring.ring-go #rr-hi{
-  animation:rr-fill 1.15s cubic-bezier(.22,1,.36,1) both;
-}
-@keyframes rr-fill{ from{ stroke-dashoffset:var(--rr-circ,213.6); } }
-#recup-ring.ring-go #rr-trav{ animation-delay:1.15s; }   /* le reflet attend la fin du remplissage */
+/* ── Anneau de récup (ft-v642 — dégradé CONIQUE) ──────────────────────────────
+   Pourquoi du CSS et plus du SVG : un dégradé SVG est LINÉAIRE, il ne peut pas
+   tourner avec l'arc — le rouge tombait n'importe où sur le cercle (ft-v641).
+   conic-gradient est la seule technique où la couleur SUIT le cercle.
+
+   ⚠️ LA RECETTE, à ne pas « simplifier » :
+   - deux masques IMBRIQUÉS, jamais mask-composite (mal supporté sur Safari iOS) :
+     le parent (#rr-arcwrap) découpe la PART, l'enfant creuse le TROU ;
+   - --p (0 à 100) est piloté en JS (ringReplay), PAS via @property : pas de
+     dépendance à une fonctionnalité récente ;
+   - le tour gris est plus LARGE que l'arc coloré, sinon la couleur le recouvre
+     et le cercle ne se lit plus comme complet (retour Michel, ft-v641).
+
+   Deux animations distinctes (demande de Michel, ft-v636) :
+   ① au tap  → l'arc se remplit de 0 au score, le chiffre défile en parallèle ;
+   ② au repos → un reflet TRAVERSE l'arc en boucle (il ne clignote pas).
+   « Réduire les animations » fige tout — accessibilité. */
+#recup-ring{ position:relative; width:100px; height:100px; flex:none; cursor:pointer;
+  filter:drop-shadow(0 6px 12px rgba(0,0,0,.45)); }
+#rr-groove,#rr-track,#rr-arcwrap{ position:absolute; inset:0; border-radius:50%; }
+/* la rainure : un bord sombre légèrement plus large, qui creuse */
+#rr-groove{ background:rgba(0,0,0,.5);
+  -webkit-mask:radial-gradient(closest-side,transparent 70%,#000 70.5%);
+          mask:radial-gradient(closest-side,transparent 70%,#000 70.5%); }
+/* le tour gris — visible sur 360°, c'est lui qui montre le « reste » du score */
+#rr-track{ background:var(--bg3); box-shadow:none;
+  -webkit-mask:radial-gradient(closest-side,transparent 72%,#000 72.5%);
+          mask:radial-gradient(closest-side,transparent 72%,#000 72.5%); }
+#rr-track::after{ content:''; position:absolute; inset:0; border-radius:50%;
+  background:rgba(255,255,255,.10);
+  -webkit-mask:radial-gradient(closest-side,transparent 72%,#000 72.5%);
+          mask:radial-gradient(closest-side,transparent 72%,#000 72.5%); }
+/* la PART : ce masque conique coupe tout ce qui dépasse du score */
+#rr-arcwrap{ inset:1.5px;
+  -webkit-mask:conic-gradient(from 0deg,#000 calc(var(--p,0) * 1%),transparent 0);
+          mask:conic-gradient(from 0deg,#000 calc(var(--p,0) * 1%),transparent 0); }
+#rr-arc,#rr-shine{ position:absolute; inset:0; border-radius:50%;
+  -webkit-mask:radial-gradient(closest-side,transparent 77.3%,#000 78%);
+          mask:radial-gradient(closest-side,transparent 77.3%,#000 78%); }
+/* la couleur SUIT le cercle : rouge à 0, vert à 100 */
+/* ⚠️ Pas de drop-shadow coloré sur l'arc : l'ombre d'un anneau masqué se projette AUSSI
+   vers l'intérieur et remplit le centre d'une tache colorée (constaté à l'écran, ft-v642). */
+#rr-arc{ background:conic-gradient(from 0deg,
+  #FF4D5E 0%, #FF8A72 33%, #EAB308 66%, #34D399 100%); }
+/* ② le reflet : une bande douce qui tourne, découpée par la part -> elle entre et sort */
+#rr-shine{ background:conic-gradient(from 0deg,
+  transparent 0%, rgba(255,255,255,.26) 9%, transparent 20%, transparent 100%);
+  animation:rr-turn 6.5s linear infinite; }
+@keyframes rr-turn{ to{ transform:rotate(360deg); } }
+#recup-ring.ring-go #rr-shine{ animation-delay:1.15s; }  /* il attend la fin du remplissage */
 @media (prefers-reduced-motion:reduce){
-  #recup-ring #rr-trav{ animation:none!important; opacity:0!important; }
-  #recup-ring.ring-go #rr-arc, #recup-ring.ring-go #rr-hi{ animation:none!important; }
+  #rr-shine{ animation:none!important; opacity:0!important; }
 }
+
