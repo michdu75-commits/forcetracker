@@ -1176,7 +1176,7 @@ MOMENT PRÉSENT (heure locale de la personne) :
 - On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}${_coachGapText()}
 
 PROFIL ATHLÈTE:
-- Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
+${S.name ? '- Prénom: '+S.name+' (utilise-le naturellement, sans le répéter à chaque phrase)\n' : '- Prénom: inconnu — ne dis PAS « Salut [prénom] » à vide, commence directement\n'}- Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal
 - Niveau activité sportive: ${S.activityLevel} | Type travail: ${{bureau:'Bureau/Sédentaire',debout:'Debout/Statique',actif:'Actif/En mouvement (serveur, infirmier…)',physique:'Travail Physique'}[S.workType]||'Bureau'} (+${calcWorkExtra()} kcal NEAT)
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}

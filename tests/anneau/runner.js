@@ -225,6 +225,40 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   t('le haut de la jauge est au niveau de « AUJOURD\'HUI »', a!==null&&Math.abs(a)<=2, 'écart '+a+'px');
   await q.c.close();
 }
+// ── ft-v652 : le PRÉNOM — visible dans le profil ET transmis à Milo ─────────
+// Deux bugs signalés par Michel : « Milo ne prenait pas mon prénom et il ne le
+// voit pas dans le profil ». Le prompt disait « Salut [son prénom] » alors que
+// le prénom n'était JAMAIS transmis (R8 : un prompt ne compense pas une donnée
+// absente), et le champ n'existait qu'à l'inscription.
+{
+  const q=await page({ft4_name:'Michel'},null,64);
+  const r=await q.p.evaluate(()=>{
+    goScreen('setup',null);
+    const inp=document.getElementById('name-inp');
+    return {champ:!!inp, prerempli:inp?inp.value:null,
+            ctx:(buildCoachContext().match(/- Prénom: [^\n]*/)||[''])[0]};
+  });
+  t('le prénom a un champ dans le profil', r.champ===true);
+  t('il est pré-rempli avec le prénom connu', r.prerempli==='Michel', JSON.stringify(r.prerempli));
+  t('Milo reçoit le prénom dans son contexte', /- Prénom: Michel/.test(r.ctx), r.ctx.slice(0,60));
+  const r2=await q.p.evaluate(()=>{
+    const inp=document.getElementById('name-inp'); inp.value='  Mich  '; saveProfile();
+    return {S:S.name, cle:localStorage.getItem('ft4_name'),
+            menu:(document.getElementById('menu-name-lbl')||{}).textContent,
+            ctx:(buildCoachContext().match(/- Prénom: [^\n]*/)||[''])[0]};
+  });
+  t('on peut le corriger : enregistré, nettoyé, et Milo suit',
+    r2.S==='Mich' && r2.cle==='Mich' && /- Prénom: Mich /.test(r2.ctx), JSON.stringify(r2));
+  t('le menu affiche le nouveau prénom', r2.menu==='Mich', JSON.stringify(r2.menu));
+  await q.c.close();
+  // sans prénom : Milo ne doit pas dire « Salut [prénom] » à vide
+  const q2=await page(null,null,64);
+  const r3=await q2.p.evaluate(()=>{ S.name='';
+    return (buildCoachContext().match(/- Prénom: [^\n]*/)||[''])[0]; });
+  t('sans prénom, Milo est prévenu de ne pas faire de formule à vide',
+    /inconnu/.test(r3), r3.slice(0,70));
+  await q2.c.close();
+}
 // ── ft-v650 : les 3 tuiles du check-in (sommeil · énergie · moral) ──────────
 {
   const iso=new Date().toISOString().slice(0,10);

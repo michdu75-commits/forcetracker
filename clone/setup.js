@@ -1903,6 +1903,7 @@ function renderSetup(){
   if(ro)ro.style.display=window._adminMode?'none':'flex';
   if(ed)ed.style.display=window._adminMode?'flex':'none';
   setGender(S.gender);
+  const nameEl=document.getElementById('name-inp');if(nameEl)nameEl.value=S.name||'';
   const ageEl=document.getElementById('age-inp');if(ageEl)ageEl.value=S.age||'';
   const htEl=document.getElementById('ht-inp');if(htEl)htEl.value=S.height||'';
   const bwEl=document.getElementById('bw-inp');if(bwEl)bwEl.value=S.bw||'';
@@ -1947,7 +1948,7 @@ function renderSetup(){
   _applyColorblind();
   _applyLeftHand();
   updSetup();
-  chainInputs(['age-inp','ht-inp','bw-inp'],saveProfile);
+  chainInputs(['name-inp','age-inp','ht-inp','bw-inp'],saveProfile);
   const bfIds=S.gender==='F'?['neck-inp','waist-inp','hip-inp']:['neck-inp','waist-inp'];
   chainInputs(bfIds,saveProfile);
 }
@@ -1964,6 +1965,14 @@ async function testConn(){
   }catch(e){S.connected=false;persist();updSetup();toast('Erreur de connexion : '+e.message,'error');}
 }
 function saveProfile(){
+  // ⚠️ Le prénom se saisissait UNIQUEMENT à l'inscription : une fois passé, il était
+  // invisible et impossible à corriger (bug signalé par Michel, ft-v652).
+  const nmEl=document.getElementById('name-inp');
+  if(nmEl){ const nm=nmEl.value.trim().slice(0,30);
+    if(nm!==S.name){ S.name=nm;
+      // le prénom s'affiche aussi en tête du menu : sans ça il restait « Athlète »
+      try{const mn=document.getElementById('menu-name-lbl');if(mn)mn.textContent=S.name||'Athlète';}catch(e){}
+    } }
   const age=parseInt(document.getElementById('age-inp').value);
   const ht=parseFloat(document.getElementById('ht-inp').value);
   const bw=parseFloat(document.getElementById('bw-inp').value);

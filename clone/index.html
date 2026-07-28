@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v651';
+  b.textContent='🧪 CLONE ft-v652';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -966,6 +966,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
           <button class="gtbtn" id="gt-f" onclick="setGender('F')">♀ Femme</button>
         </div>
       </div>
+      <div class="fg"><label>Prénom</label><input type="text" id="name-inp" placeholder="Ton prénom" autocomplete="given-name" autocapitalize="words" maxlength="30"></div>
       <div class="three-col">
         <div class="fg"><label>Âge</label><input type="number" id="age-inp" placeholder="30" min="14" max="80" inputmode="numeric"></div>
         <div class="fg"><label>Taille (cm)</label><input type="number" id="ht-inp" placeholder="175" inputmode="numeric"></div>
