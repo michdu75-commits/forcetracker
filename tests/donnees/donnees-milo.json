@@ -37,6 +37,7 @@
     "morphotype",
     "name",
     "neck",
+    "nextPlanned",
     "nutritionPhase",
     "prs",
     "registre",
@@ -51,7 +52,6 @@
     "workType"
   ],
   "manquant": {
-    "nextPlanned": "La séance que tu as annoncée. L'Accueil affiche « je m'en souviens » — le chat ne l'a pas. Le plus gênant : Milo affirme se souvenir de ce qu'il n'a pas.",
     "programmes": "Tes programmes enregistrés. Milo ne connaît pas ton planning quand tu lui demandes quoi faire.",
     "customExercises": "Tes exercices perso. Il peut prescrire du générique en ignorant ce que tu as créé.",
     "exRestPref": "Tes temps de repos réglés par exercice. Tu as mis 240 s au squat, il l'ignore."

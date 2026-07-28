@@ -62,7 +62,10 @@ que chacune soit classée : **transmise** · **exclue avec la raison écrite** �
 connu). Une donnée non classée **fait échouer la livraison**.
 *On ne peut plus oublier — on peut seulement décider.* Et une exclusion sans raison est refusée :
 une exclusion dont on a oublié le motif finit toujours par être contournée (R27).
-**État au 28/07** : 90 données · 48 transmises · 38 exclues · **4 trous connus**.
+**État au 28/07 (après ft-v654)** : 90 données · 49 transmises · 38 exclues · **3 trous connus**.
+Le 1ᵉʳ trou comblé (`nextPlanned`, ft-v654) a confirmé **R2** au passage : l'Accueil avait sa version
+de la règle « cette annonce tient-elle encore ? », le chat n'en avait aucune — elle vit maintenant
+dans **une seule** fonction que les deux lisent.
 
 ### R4b — Le CHEMIN complet de l'intelligence de Milo (généralisation de R4)
 GPT généralise R4 au-delà des séances, et il a raison — toute intelligence produite par Milo devrait

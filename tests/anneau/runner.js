@@ -376,6 +376,60 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   t('le réglage bascule la carte et se retient', r.jauge===true&&r.cle==='moniteur', JSON.stringify(r));
   await q.c.close();
 }
+// ─── PROCHAINE SÉANCE ANNONCÉE (ft-v654) ────────────────────────────────────
+// Le trou n°1 du garde-fou des données : l'Accueil affichait « je m'en souviens »
+// pendant que le chat n'avait JAMAIS reçu l'info. Ces tests figent la règle :
+// l'Accueil et Milo doivent TOUJOURS dire la même chose sur la séance annoncée.
+console.log('\n─── PROCHAINE SÉANCE ANNONCÉE ────────────────────────────');
+const jour=n=>{const d=new Date(now);d.setDate(d.getDate()+n);return iso(d);};
+// ⚠️ « PROCHAINE SÉANCE » tout court NE SUFFIT PAS : ces mots existent déjà dans le bloc qui
+// apprend à Milo à ÉMETTRE une annonce. On cherche le bloc qui la lui DONNE.
+const RECU=/PROCHAINE SÉANCE — il\/elle TE l'a annoncée/;
+const annonce=(d,lab)=>({ft4_nextplanned:JSON.stringify({date:d,label:lab||''})});
+async function accueilEtChat(extra){
+  const q=await page(extra,null,87);
+  const r=await q.p.evaluate(()=>{
+    let ctx='';try{ctx=buildCoachContext()||'';}catch(e){ctx='ERREUR: '+e.message;}
+    return {carte:(document.getElementById('home-milo')||{}).textContent||'', ctx:ctx};
+  });
+  await q.c.close(); return r;
+}
+{
+  const r=await accueilEtChat(annonce(jour(1),'jambes'));
+  t('Accueil : « séance prévue demain, je m\'en souviens »',
+    /prévue demain/i.test(r.carte)&&/je m'en souviens/i.test(r.carte), r.carte.slice(0,120));
+  t('⭐ LE FIX : Milo REÇOIT la séance annoncée', RECU.test(r.ctx));
+  t('   … avec le bon jour et le libellé', r.ctx.includes(jour(1))&&/DEMAIN/.test(r.ctx)&&/jambes/.test(r.ctx));
+  t('   … et la consigne de ne pas la redemander', /tu ne le redemandes pas/i.test(r.ctx));
+  t('   … et de ne pas relancer « ça fait X jours »', /ça fait X jours/i.test(r.ctx));
+  t('le contexte se construit sans erreur', !/^ERREUR:/.test(r.ctx), r.ctx.slice(0,80));
+}
+{
+  const r=await accueilEtChat(null);
+  t('aucune annonce → rien dans le contexte (0 régression)', !RECU.test(r.ctx));
+  t('aucune annonce → l\'Accueil n\'invente pas de séance prévue', !/prévue/i.test(r.carte), r.carte.slice(0,100));
+}
+{
+  const r=await accueilEtChat(annonce(jour(-3)));
+  t('annonce PÉRIMÉE : l\'Accueil n\'en parle plus', !/prévue/i.test(r.carte), r.carte.slice(0,100));
+  t('annonce PÉRIMÉE : Milo non plus (même règle des 2 côtés)', !RECU.test(r.ctx));
+}
+{
+  // séance enregistrée AUJOURD'HUI alors qu'elle était annoncée pour aujourd'hui → annonce honorée
+  const faite=[{date:iso(now),exs:[{name:'Squat',sets:[{kg:100,reps:5,done:true,type:'N'}]}]}].concat(ss);
+  const r=await accueilEtChat(Object.assign(annonce(iso(now)),{ft4_sessions:JSON.stringify(faite)}));
+  t('annonce HONORÉE (séance faite) : l\'Accueil passe à autre chose', !/On la prépare/i.test(r.carte), r.carte.slice(0,100));
+  t('annonce HONORÉE : Milo ne parle plus d\'une séance à venir', !RECU.test(r.ctx));
+}
+{
+  // le cas réel de Michel : une pause ANNONCÉE ne doit pas déclencher la relance
+  const vieux=[{date:jour(-6),exs:[{name:'Squat',sets:[{kg:100,reps:5,done:true,type:'N'}]}]}];
+  const r=await accueilEtChat(Object.assign(annonce(jour(2)),{ft4_sessions:JSON.stringify(vieux)}));
+  t('6 jours sans séance MAIS une annonce → pas de relance « ça fait 6 jours »',
+    !/ça fait 6 jours/i.test(r.carte)&&/prévue/i.test(r.carte), r.carte.slice(0,120));
+  t('Milo le sait aussi (une pause annoncée n\'est pas un abandon)',
+    RECU.test(r.ctx)&&/n'est pas un abandon/i.test(r.ctx));
+}
 console.log('──────────────────────────────────────────────────────────');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
 await b.close(); srv.close(); process.exit(ko?1:0);

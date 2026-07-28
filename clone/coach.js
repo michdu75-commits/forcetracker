@@ -1323,7 +1323,21 @@ ${S.cycle && S.cycle.active ? `Actif - Semaine ${curWeek}/${S.cycle.weeks} - Pha
 ${wktText}
 DERNIÈRES SÉANCES:
 ${recentSessions}
-
+${(()=>{
+  // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :
+  // l'Accueil affichait « je m'en souviens » et le chat n'avait JAMAIS reçu l'info. Milo affirmait
+  // se souvenir de ce qu'il n'avait pas. Même règle que l'Accueil (plannedSession, state.js) → R2.
+  const np=(typeof plannedSession==='function')?plannedSession():null;
+  if(!np)return '';
+  const when=np.days===0?'AUJOURD\'HUI':(np.days===1?'DEMAIN':((typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date)+(np.days>1?' (dans '+np.days+' jours)':''));
+  return `
+PROCHAINE SÉANCE — il/elle TE l'a annoncée:
+- Prévue ${when}${np.label?' — « '+np.label+' »':''} (${np.date})
+→ C'est LUI/ELLE qui te l'a dit : tu t'en souviens, tu ne le redemandes pas et tu ne t'en étonnes pas.
+→ Ne relance JAMAIS « ça fait X jours que tu n'es pas venu » tant que cette séance n'est pas passée : une pause ANNONCÉE n'est pas un abandon.
+→ Tu peux t'y référer naturellement (« pour ${when.toLowerCase()} », préparer la séance, adapter la récup d'ici là) — sans le répéter à chaque message.
+`;
+})()}
 RÉCUPÉRATION & SOMMEIL:
 ${(()=>{
   const score=calcRecoveryScore();

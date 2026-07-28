@@ -367,6 +367,26 @@ const bz=(kg,r)=>(!kg||!r||r<1)?0:(r===1?kg:fmt(kg/(1.0278-0.0278*Math.min(r,20)
 const today=()=>new Date().toISOString().split('T')[0];
 const fmtD=d=>d?new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
 
+// ─── PROCHAINE SÉANCE ANNONCÉE — la règle « cette annonce tient-elle encore ? » (ft-v654) ───
+// ⚠️ SOURCE DE VÉRITÉ UNIQUE (R2). L'Accueil ET le chat de Milo doivent répondre PAREIL :
+// jusqu'à ft-v654 l'Accueil disait « séance prévue lundi, je m'en souviens » pendant que le
+// chat n'avait jamais reçu l'info → Milo affirmait se souvenir de ce qu'il n'avait pas (R4a).
+// PURE et SANS EFFET DE BORD : elle ne nettoie rien (c'est l'Accueil qui nettoie, lui seul écrit).
+// Périmée = date passée, illisible, OU une séance déjà enregistrée le jour prévu ou après.
+function plannedSession(){
+  try{
+    const np=S.nextPlanned;
+    if(!np||!np.date)return null;
+    const t=today();
+    const days=Math.round((new Date(np.date+'T12:00:00')-new Date(t+'T12:00:00'))/864e5);
+    if(isNaN(days)||days<0)return null;
+    const sess=(S.sessions||[]).filter(s=>s.date);
+    const lastDate=sess.length?sess.map(s=>s.date).sort().slice(-1)[0]:null;
+    if(lastDate&&lastDate>=np.date)return null;   // annonce honorée : la séance a été faite
+    return {date:np.date,label:String(np.label||''),days:days};
+  }catch(e){return null;}
+}
+
 // ─── NUTRITION CALCULATIONS ──────────────────────────────────
 function calcBMR(){
   if(!S.bw||!S.height||!S.age) return 0;

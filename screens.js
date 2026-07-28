@@ -674,18 +674,18 @@ function _miloMessage(){
   const rec=(typeof calcRecoveryScore==='function')?calcRecoveryScore():null;
   // Prochaine séance ANNONCÉE à Milo (ft-v601) : cohérence chat ↔ Accueil (« Milo se souvient de moi »).
   // Priorité HAUTE → tant qu'une séance est prévue, Milo ne relance PLUS « ça fait X jours ».
-  const np=S.nextPlanned;
-  if(np&&np.date){
-    const pdiff=Math.round((new Date(np.date+'T12:00:00')-new Date(tStr+'T12:00:00'))/864e5);
-    const doneSince=lastDate&&lastDate>=np.date; // une séance a été enregistrée le jour prévu ou après → annonce honorée
-    if(isNaN(pdiff)||pdiff<0||doneSince){
-      try{S.nextPlanned=null;persist();}catch(e){} // annonce périmée : on nettoie, on retombe sur la logique normale
-    }else{
-      const lab=np.label?(' '+np.label):'';
-      if(pdiff===0)return {id:'prevu-jour',txt:'C\'est le jour de ta séance'+lab+' 💪 On la prépare ?'};
-      const when=(typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date;
-      return {id:'prevu',txt:'Séance'+lab+' prévue '+when+' 💪 Je m\'en souviens — repose-toi bien d\'ici là.'};
-    }
+  // ⚠️ La règle « cette annonce tient-elle encore ? » vit dans plannedSession() (state.js) — le chat de
+  // Milo lit EXACTEMENT la même (ft-v654). Ne pas la recopier ici : c'est comme ça que l'Accueil et le
+  // chat se sont mis à dire deux choses différentes. Ici on ne fait que RENDRE + nettoyer.
+  const np=(typeof plannedSession==='function')?plannedSession():null;
+  if(np){
+    const lab=np.label?(' '+np.label):'';
+    if(np.days===0)return {id:'prevu-jour',txt:'C\'est le jour de ta séance'+lab+' 💪 On la prépare ?'};
+    const when=(typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date;
+    return {id:'prevu',txt:'Séance'+lab+' prévue '+when+' 💪 Je m\'en souviens — repose-toi bien d\'ici là.'};
+  }
+  if(S.nextPlanned&&S.nextPlanned.date){
+    try{S.nextPlanned=null;persist();}catch(e){}  // annonce périmée : on nettoie, on retombe sur la logique normale
   }
   // Priorité : réengagement > relance > récup > lendemain > régularité
   // MOMENT 2 « Milo se souvient de moi » : au retour, un souvenir réchauffe le message (sinon → version froide).
