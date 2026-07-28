@@ -96,5 +96,36 @@ await r4.c.close();
   t('0 erreur JS (tour gris)', q.errs.length===0, q.errs.join(' | '));
   await q.c.close();
 }
+// ── ft-v641 : la TEINTE suit le score sur l'échelle rouge (0) -> vert (100) ──
+// Retour Michel : « il n'y a pas de dégradé de couleur du rouge 0 à vert pour 100 ».
+{
+  const q=await page();
+  const ech=await q.p.evaluate(()=>({
+    bas:_ringScale(10), milieu:_ringScale(50), haut:_ringScale(95),
+    zero:_ringScale(0), cent:_ringScale(100),
+    horsBornes:[_ringScale(-20),_ringScale(500),_ringScale(null),_ringScale(undefined)]
+  }));
+  const rgb=x=>x.match(/\d+/g).map(Number);
+  const b=rgb(ech.bas), h=rgb(ech.haut);
+  t('score bas = rouge dominant', b[0]>200 && b[1]<130, ech.bas);
+  t('score haut = vert dominant', h[1]>170 && h[0]<130, ech.haut);
+  t('la teinte se déplace bien entre les deux', ech.bas!==ech.milieu && ech.milieu!==ech.haut,
+    ech.bas+' / '+ech.milieu+' / '+ech.haut);
+  t('bornes et valeurs aberrantes gérées sans planter',
+    ech.horsBornes.every(c=>/^rgb\(\d+,\d+,\d+\)$/.test(c)), JSON.stringify(ech.horsBornes));
+  // le tour gris doit rester plus large que l'arc, sinon la boucle ne se lit pas en entier
+  const larg=await q.p.evaluate(()=>{
+    const w=document.getElementById('recup-ring');
+    const cs=[...w.querySelectorAll('circle')];
+    const tour=cs.filter(c=>!c.getAttribute('stroke-dasharray'))
+                 .map(c=>parseFloat(c.getAttribute('stroke-width')));
+    return {tour:Math.max.apply(null,tour.filter(x=>x<13)),
+            arc:parseFloat(document.getElementById('rr-arc').getAttribute('stroke-width'))};
+  });
+  t('le tour gris est plus large que l\'arc (la boucle se voit partout)',
+    larg.tour>larg.arc, JSON.stringify(larg));
+  t('0 erreur JS (échelle de couleur)', q.errs.length===0, q.errs.join(' | '));
+  await q.c.close();
+}
 console.log((ko?'❌':'✅')+' '+ok+'/'+(ok+ko));
 await b.close();srv.close();process.exit(ko?1:0);})();

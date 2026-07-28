@@ -470,6 +470,20 @@ function ringReplay(){
     })(t0);
   }catch(e){}
 }
+// Échelle de couleur de l'anneau de récup : ROUGE à 0 -> VERT à 100 (demande Michel, ft-v641).
+// Le score n'est pas une note binaire : la couleur doit se déplacer PROGRESSIVEMENT sur l'échelle,
+// pas sauter d'un palier à l'autre. On interpole en RGB entre 4 repères.
+const _RING_SCALE=[[0,255,77,94],[33,255,138,114],[66,234,179,8],[100,52,211,153]];
+function _ringScale(v){
+  const x=Math.max(0,Math.min(100,+v||0));
+  let a=_RING_SCALE[0], b=_RING_SCALE[_RING_SCALE.length-1];
+  for(let i=0;i<_RING_SCALE.length-1;i++){
+    if(x>=_RING_SCALE[i][0]&&x<=_RING_SCALE[i+1][0]){a=_RING_SCALE[i];b=_RING_SCALE[i+1];break;}
+  }
+  const k=(b[0]===a[0])?0:(x-a[0])/(b[0]-a[0]);
+  const c=i=>Math.round(a[i]+(b[i]-a[i])*k);
+  return 'rgb('+c(1)+','+c(2)+','+c(3)+')';
+}
 function _renderHomeHero(){
   const el=document.getElementById('home-hero');if(!el)return;
   const detail=(typeof calcRecoveryDetail==='function')?calcRecoveryDetail():{score:calcRecoveryScore(),factors:[],tips:[]};
@@ -484,6 +498,13 @@ function _renderHomeHero(){
   const trav=+Math.max(arcLen*0.55,40).toFixed(1);      // longueur de la nappe
   const travRun=+(arcLen+trav*0.5).toFixed(1);          // elle entre ET sort de l'arc
   const ringColor=score!==null?info.color:'var(--t3)';
+  // L'arc parcourt l'échelle : il DÉMARRE au rouge et arrive à la couleur du score.
+  // La TEINTE suit le score sur l'échelle rouge->vert (25 = rouge, 57 = ambre, 88 = vert) ;
+  // le dégradé le long de l'arc reste court (deux teintes voisines) pour la profondeur.
+  // ⚠️ Un dégradé SVG est linéaire : il ne peut pas tourner avec l'arc. Vouloir du rouge au
+  // départ et du vert à l'arrivée sur un même tracé donne des couleurs posées de travers
+  // (essayé : le rouge tombait en bas de l'anneau). Il faudrait découper l'arc en segments.
+  const arcA=_ringScale((score||0)*0.55), arcC=_ringScale(score||0);
   let accent='52,211,153';
   if(score!==null&&score<40)accent='255,106,115';
   else if(score!==null&&score<60)accent='255,138,114';
@@ -532,10 +553,9 @@ function _renderHomeHero(){
         +'<svg width="100" height="100" viewBox="0 0 96 96" style="display:block;">'
         +'<defs>'
           +'<linearGradient id="rrG" x1="0" y1="0" x2="1" y2="1">'
-          +'<stop offset="0" stop-color="'+ringColor+'"/><stop offset=".55" stop-color="'+ringColor+'" stop-opacity=".85"/>'
-          +'<stop offset="1" stop-color="'+ringColor+'" stop-opacity=".45"/></linearGradient>'
+          +'<stop offset="0" stop-color="'+arcA+'"/><stop offset="1" stop-color="'+arcC+'"/></linearGradient>'
           +'<filter id="rrGlow" x="-60%" y="-60%" width="220%" height="220%">'
-          +'<feDropShadow dx="0" dy="1.5" stdDeviation="4.5" flood-color="'+ringColor+'" flood-opacity=".65"/></filter>'
+          +'<feDropShadow dx="0" dy="1.5" stdDeviation="4.5" flood-color="'+arcC+'" flood-opacity=".6"/></filter>'
           +'<filter id="rrSoft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4.2"/></filter>'
         +'</defs>'
         +'<g transform="rotate(-90 48 48)">'
@@ -545,14 +565,14 @@ function _renderHomeHero(){
         // mal — le tour gris devenait invisible sur le téléphone alors qu'il s'affichait sur
         // ordinateur. Trois passes suffisent à creuser : bord sombre, fond de rainure, puis un
         // voile clair qui rend le gris franchement lisible sur le fond de la carte.
-        +'<circle cx="48" cy="48" r="34" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="12.5"/>'
-        +'<circle cx="48" cy="48" r="34" fill="none" stroke="var(--bg3)" stroke-width="10"/>'
-        +'<circle cx="48" cy="48" r="34" fill="none" stroke="rgba(255,255,255,.085)" stroke-width="10"/>'
-        +'<circle id="rr-arc" cx="48" cy="48" r="34" fill="none" stroke="url(#rrG)" stroke-width="10" stroke-linecap="round"'
+        +'<circle cx="48" cy="48" r="34" fill="none" stroke="rgba(0,0,0,.45)" stroke-width="14"/>'
+        +'<circle cx="48" cy="48" r="34" fill="none" stroke="var(--bg3)" stroke-width="11.5"/>'
+        +'<circle cx="48" cy="48" r="34" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="11.5"/>'
+        +'<circle id="rr-arc" cx="48" cy="48" r="34" fill="none" stroke="url(#rrG)" stroke-width="8" stroke-linecap="round"'
         +' stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" filter="url(#rrGlow)"/>'
-        +'<circle id="rr-hi" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"'
+        +'<circle id="rr-hi" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"'
         +' stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'" opacity=".26" transform="translate(0,-2.2)" style="mix-blend-mode:screen;"/>'
-        +'<circle id="rr-trav" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round"'
+        +'<circle id="rr-trav" cx="48" cy="48" r="34" fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round"'
         +' stroke-dasharray="'+trav+' '+circ+'" stroke-dashoffset="0" opacity="0" filter="url(#rrSoft)" style="mix-blend-mode:screen;"/>'
         +'</g></svg>'
         +'<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">'
