@@ -52,6 +52,18 @@ la structure de données que l'app utilise, **elle n'existe pas**. Le maillon fa
 collecte ni le raisonnement : c'est la **RESTITUTION**.
 *Origine : ft-v625 (charges écrasées) · ft-v626 (repos) · ft-v627 (ordre) · ft-v628 (consignes)*
 
+### R4a — GARDE-FOU : toute donnée doit être CLASSÉE face à Milo *(28/07/2026)*
+R4 était une intention ; elle se répétait quand même — **cinq fois** (charges ft-v625, repos ft-v626,
+ordre ft-v627, consignes ft-v628, prénom ft-v652). La cause n'est pas la négligence, c'est que
+**l'oubli est SILENCIEUX** : ajouter une donnée sans la transmettre ne plante pas, ne lève aucune
+erreur, ne casse aucun test. Milo répond juste un peu moins bien, et personne ne peut le voir.
+**Le garde-fou** (`tests/donnees/runner.js`) lit toutes les données chargées par `load()` et exige
+que chacune soit classée : **transmise** · **exclue avec la raison écrite** · **manquante** (trou
+connu). Une donnée non classée **fait échouer la livraison**.
+*On ne peut plus oublier — on peut seulement décider.* Et une exclusion sans raison est refusée :
+une exclusion dont on a oublié le motif finit toujours par être contournée (R27).
+**État au 28/07** : 90 données · 48 transmises · 38 exclues · **4 trous connus**.
+
 ### R4b — Le CHEMIN complet de l'intelligence de Milo (généralisation de R4)
 GPT généralise R4 au-delà des séances, et il a raison — toute intelligence produite par Milo devrait
 suivre ce chemin :
