@@ -188,6 +188,24 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   t('« réduire les animations » fige le reflet', a.anim==='none'||a.op==='0', JSON.stringify(a));
   await q.c.close();
 }
+// ── ft-v646 : la carte ne doit JAMAIS afficher « NaN » ou « undefined » ─────
+// Bug réel arrivé en prod : dans un ternaire, un « + » en tête de ligne devient
+// un plus UNAIRE appliqué à une chaîne -> NaN, et le bloc concerné disparaît.
+// Michel l'a vu sur son téléphone ; aucun test ne l'attrapait.
+{
+  for(const st of ['anneau','moniteur']){
+    for(const sc of [0,64,100,null]){
+      const q=await page({ft4_ringstyle:st},null,sc);
+      const r=await q.p.evaluate(()=>{
+        const h=document.getElementById('home-hero');
+        return {sale:/\bNaN\b|\bundefined\b|\[object/.test(h.innerText||''),
+                extrait:(h.innerText||'').slice(0,60).replace(/\n/g,' | ')};
+      });
+      t('carte propre — style '+st+', score '+sc, r.sale===false, r.extrait);
+      await q.c.close();
+    }
+  }
+}
 // ── ft-v645 : la 2e apparence « moniteur » (Menu → Apparence) ───────────────
 {
   const q=await page(null,null,87);          // aucun réglage -> défaut

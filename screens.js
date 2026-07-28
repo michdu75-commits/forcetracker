@@ -573,7 +573,10 @@ function _renderHomeHero(){
       : ''
      )
     +(S.ringStyle==='moniteur' ? '' :
-    +'<div style="display:flex;align-items:center;gap:18px;margin-top:14px;">'
+    // ⚠️ PAS de « + » en tête de cette ligne : à l'intérieur d'un ternaire il devient un
+    // plus UNAIRE appliqué à une chaîne, ce qui donne NaN et fait disparaître ce bloc.
+    // Bug réel arrivé en prod (ft-v646) : « NaN » s'affichait sur l'Accueil.
+    '<div style="display:flex;align-items:center;gap:18px;margin-top:14px;">'
     +(score!==null
       ? '<div id="recup-ring" onclick="ringReplay()" class="ft-press" style="--p:'+score+';">'
         // ⚠️ Structure IMPOSÉE par la technique (voir style.css) : #rr-arcwrap porte le masque
