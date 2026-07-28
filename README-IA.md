@@ -34,6 +34,16 @@
 ## 🧭 La règle qui fait que ça marche
 **Chaque** décision, idée abandonnée, feature livrée, retour testeur → **GRAVÉ dans le bon fichier, en temps réel** (règle d'or #12 de `CLAUDE.md`). C'est ça, la mémoire partagée : on n'oublie rien, et personne n'a besoin de répéter le contexte.
 
+## 🎨 Demander une MAQUETTE à une IA externe (Gemini, ChatGPT, un outil de design)
+**Une seule chose à faire : coller le bloc de `docs/DESIGN-KIT.md`** en tête de la demande.
+Il est **autosuffisant** — contraintes, couleurs réelles, composants existants, et surtout les
+**pièges déjà payés** (filtres SVG sur un tracé qui disparaissent sur Safari iOS, `mask-composite`,
+`color-mix` sans repli, dégradé SVG qui ne peut pas suivre un arc). Sans lui, l'outil travaille
+**à l'aveugle** : il invente une esthétique belle chez lui et **intransposable** ici, et il
+re-tombe dans des bugs qu'on a déjà corrigés.
+⚠️ Ces pièges sont dans le **bloc à coller**, pas dans le prompt de session : ils ne servent qu'aux
+demandes de maquette (règle **R20** — le prompt reste maigre, la doc se jardine).
+
 ## 🌐 Accès (pour une IA externe, ex. ChatGPT)
 Le dépôt est **public** :
 - **GitHub** : https://github.com/michdu75-commits/forcetracker

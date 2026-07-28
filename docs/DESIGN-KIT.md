@@ -13,14 +13,34 @@
 
 ## 📋 LE BLOC À COLLER
 
+> **Une seule chose à copier.** Tout ce qui suit part ensemble : les contraintes, les couleurs,
+> les composants ET les pièges déjà payés. C'est volontaire — une consigne qu'on doit **penser à
+> ajouter** finit toujours par être oubliée le soir où on est pressé (règle **R27** : on s'applique
+> ce qu'on promet à l'utilisateur, ne pas repartir de zéro à chaque fois).
+
 ```
 CONTRAINTES TECHNIQUES (à respecter strictement)
 - HTML + CSS purs. Aucun framework, aucune librairie, aucun build.
 - Application MOBILE : largeur maximale 430 px, une seule colonne.
 - Mode sombre par défaut ; le mode clair est une variante de la même page.
-- Pas de <canvas> pour l'interface : les anneaux, jauges et graphiques sont en SVG.
+- Pas de <canvas> pour l'interface : les anneaux, jauges et graphiques sont en SVG ou en CSS.
 - Les polices sont hébergées dans le projet : Manrope (texte), Space Grotesk (chiffres),
-  Pacifico (logo uniquement).
+  Pacifico (logo uniquement). N'en charge aucune depuis internet.
+- L'app doit fonctionner HORS LIGNE : aucune ressource externe, ni police, ni image, ni script.
+- Doit s'afficher correctement sur SAFARI iOS (iPhone) — c'est le navigateur de référence.
+- Rends-moi UN SEUL fichier HTML autonome, que je puisse ouvrir tel quel.
+
+PIÈGES DÉJÀ PAYÉS SUR CE PROJET — les respecter, ce ne sont pas des préférences
+- Safari iOS rend MAL un filtre SVG appliqué à un TRACÉ (ombre interne sur un stroke) :
+  l'élément devient quasi invisible sur iPhone alors qu'il s'affiche sur ordinateur.
+  Pour creuser une rainure, empiler des cercles simples plutôt qu'un <filter>.
+- Ne pas utiliser mask-composite / -webkit-mask-composite : imbriquer deux masques
+  d'un seul calque à la place.
+- Ne pas animer une variable CSS via @property : elle est pilotée en JavaScript.
+- Un dégradé SVG est LINÉAIRE : il ne peut pas suivre un arc de cercle. Pour une couleur
+  qui tourne (rouge à 0 -> vert à 100), c'est conic-gradient, pas SVG.
+- Toujours prévoir un repli quand une propriété récente peut ne pas être supportée
+  (ex. color-mix) : sinon la déclaration est ignorée et l'élément DISPARAÎT.
 
 SYSTÈME DE COULEURS — utiliser CES variables, ne pas en inventer d'autres
 
