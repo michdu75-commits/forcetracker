@@ -86,13 +86,26 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   // ⚠️ Sur iPhone, un tour gris trop sombre devient INVISIBLE (retour Michel, deux fois).
   // On vérifie qu'il porte un relief avec une crête CLAIRE, pas un aplat foncé.
   const relief=await q.p.evaluate(()=>{
-    const bg=getComputedStyle(document.getElementById('rr-track')).backgroundImage;
-    const nums=(bg.match(/rgb\((\d+), (\d+), (\d+)\)/g)||[])
-      .map(c=>c.match(/\d+/g).map(Number)).map(c=>(c[0]+c[1]+c[2])/3);
-    return {radial:/radial-gradient/.test(bg), crete:nums.length?Math.max.apply(null,nums):0};
+    const st=getComputedStyle(document.getElementById('rr-track'));
+    const bg=st.backgroundImage;
+    // le relief est en BLANC translucide : sur un iPhone, un gris sombre sur fond
+    // sombre ne se voit pas (retour Michel, trois fois). On mesure la crête blanche.
+    const w=(bg.match(/rgba\(255, 255, 255, ([\d.]+)\)/g)||[])
+      .map(x=>parseFloat(x.match(/[\d.]+(?=\)$)/)[0]));
+    return {radial:/radial-gradient/.test(bg), crete:w.length?Math.max.apply(null,w):0};
   });
   t('le tour gris a un relief de tube (dégradé sur son épaisseur)', relief.radial===true);
-  t('sa crête est assez claire pour se voir sur un téléphone', relief.crete>=60, JSON.stringify(relief));
+  t('sa crête est en blanc, assez marquée pour un iPhone (>= .25)', relief.crete>=.25, JSON.stringify(relief));
+  // la lueur doit AUSSI passer sur le gris, sinon il reste mort pendant que la couleur vit
+  const surGris=await q.p.evaluate(()=>{
+    const g=document.getElementById('rr-glint'); if(!g)return null;
+    const st=getComputedStyle(g);
+    return {conic:/conic-gradient/.test(st.backgroundImage),
+            masque:/radial-gradient/.test(st.webkitMaskImage||st.maskImage||''),
+            tourne:st.animationDuration};
+  });
+  t('la lueur passe aussi sur la partie grise',
+    surGris&&surGris.conic&&surGris.masque&&surGris.tourne==='5s', JSON.stringify(surGris));
   const lueur=await q.p.evaluate(()=>{
     const bg=getComputedStyle(document.getElementById('rr-shine')).backgroundImage;
     const m=(bg.match(/rgba\(255, 255, 255, ([\d.]+)\)/g)||[]).map(x=>parseFloat(x.match(/[\d.]+(?=\)$)/)[0]));

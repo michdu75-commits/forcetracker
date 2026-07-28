@@ -1164,11 +1164,25 @@ html.ob-done #onboarding{display:none;}
 /* LE TOUR GRIS — relief de tube sur toute l'épaisseur de la bande.
    Volontairement clair : c'est lui qui montre le « reste » du score. */
 #rr-track{
-  background:radial-gradient(closest-side,
-    rgba(0,0,0,0) 71%, #0F1116 71.5%, #23272F 75%, #454B59 82%,
-    #363B47 88%, #1A1D24 95%, #0C0D11 100%);
+  /* ⚠️ Le relief est fait en BLANC translucide, pas en gris opaque : sur l'écran d'un
+     iPhone, un gris sombre sur un fond sombre ne se voit tout simplement pas
+     (retour Michel, trois fois de suite). Le blanc, lui, ressort toujours. */
+  background-color:var(--bg3);
+  background-image:radial-gradient(closest-side,
+    rgba(255,255,255,0) 71%, rgba(255,255,255,.04) 71.5%, rgba(255,255,255,.13) 76%,
+    rgba(255,255,255,.30) 83%, rgba(255,255,255,.14) 90%, rgba(255,255,255,.02) 100%);
   -webkit-mask:radial-gradient(closest-side,transparent 71%,#000 71.5%);
           mask:radial-gradient(closest-side,transparent 71%,#000 71.5%); }
+
+/* La même lueur passe AUSSI sur la partie grise, en plus discret : sans ça le gris
+   reste mort pendant que la couleur vit (retour Michel : « toujours rien dans le gris »). */
+#rr-glint{ position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(from 0deg,
+    transparent 0%, rgba(255,255,255,.06) 5%, rgba(255,255,255,.22) 11%,
+    rgba(255,255,255,.06) 17%, transparent 23%, transparent 100%);
+  -webkit-mask:radial-gradient(closest-side,transparent 71%,#000 71.5%);
+          mask:radial-gradient(closest-side,transparent 71%,#000 71.5%);
+  animation:rr-turn 5s linear infinite; }
 
 /* LA PART : ce masque conique coupe tout ce qui dépasse du score */
 #rr-arcwrap{ inset:2px;
@@ -1196,9 +1210,9 @@ html.ob-done #onboarding{display:none;}
   rgba(255,255,255,.10) 17%, transparent 23%, transparent 100%);
   animation:rr-turn 5s linear infinite; }
 @keyframes rr-turn{ to{ transform:rotate(360deg); } }
-#recup-ring.ring-go #rr-shine{ animation-delay:1.15s; }
+#recup-ring.ring-go #rr-shine,#recup-ring.ring-go #rr-glint{ animation-delay:1.15s; }
 @media (prefers-reduced-motion:reduce){
-  #rr-shine{ animation:none!important; opacity:0!important; }
+  #rr-shine,#rr-glint{ animation:none!important; opacity:0!important; }
 }
 
 
