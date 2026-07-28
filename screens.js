@@ -556,7 +556,7 @@ function _renderHomeHero(){
           +'</div>'
           // ⚠️ Structure imposée par la technique (voir style.css) : #rj-arcwrap découpe
           // l'arc de 306°, #rj-progwrap le score, chaque enfant creuse le trou.
-          +'<div id="rj" onclick="ringReplay()" class="ft-press" style="--p:'+score+';">'
+          +'<div id="rj" onclick="ringReplay()" class="ft-press" style="--p:'+score+';margin-top:-26px;">'
             +'<div id="rj-arcwrap">'
               +'<div id="rj-creux"></div><div id="rj-piste"></div>'
               +'<div id="rj-progwrap"><div id="rj-prog"></div></div>'

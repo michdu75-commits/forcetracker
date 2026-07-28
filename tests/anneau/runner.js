@@ -188,6 +188,19 @@ console.log('\n─── ANNEAU DE RÉCUP ────────────�
   t('« réduire les animations » fige le reflet', a.anim==='none'||a.op==='0', JSON.stringify(a));
   await q.c.close();
 }
+// ── ft-v647 : le sommet de la jauge s'aligne sur « AUJOURD'HUI » ────────────
+// Demande de Michel : « le cercle faut le monter un peu ». Une valeur en dur
+// se perd au premier réglage suivant -> on la mesure.
+{
+  const q=await page({ft4_ringstyle:'moniteur'},null,87);
+  const a=await q.p.evaluate(()=>{
+    const h=document.querySelector('.rj-haut'), j=document.getElementById('rj');
+    if(!h||!j)return null;
+    return +(j.getBoundingClientRect().top - h.getBoundingClientRect().top).toFixed(1);
+  });
+  t('le haut de la jauge est au niveau de « AUJOURD\'HUI »', a!==null&&Math.abs(a)<=2, 'écart '+a+'px');
+  await q.c.close();
+}
 // ── ft-v646 : la carte ne doit JAMAIS afficher « NaN » ou « undefined » ─────
 // Bug réel arrivé en prod : dans un ternaire, un « + » en tête de ligne devient
 // un plus UNAIRE appliqué à une chaîne -> NaN, et le bloc concerné disparaît.
