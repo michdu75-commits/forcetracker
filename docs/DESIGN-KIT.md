@@ -22,7 +22,7 @@
 CONTRAINTES TECHNIQUES (à respecter strictement)
 - HTML + CSS purs. Aucun framework, aucune librairie, aucun build.
 - Application MOBILE : largeur maximale 430 px, une seule colonne.
-- Mode sombre par défaut ; le mode clair est une variante de la même page.
+- Mode SOMBRE uniquement. Ne propose pas de version claire : elle est en pause sur le projet.
 - Pas de <canvas> pour l'interface : les anneaux, jauges et graphiques sont en SVG ou en CSS.
 - Les polices sont hébergées dans le projet : Manrope (texte), Space Grotesk (chiffres),
   Pacifico (logo uniquement). N'en charge aucune depuis internet.
@@ -54,12 +54,6 @@ SYSTÈME DE COULEURS — utiliser CES variables, ne pas en inventer d'autres
   --r: 16px; --r-sm: 10px;                             /* arrondis */
   --font: 'Manrope', -apple-system, sans-serif;
   --font-cond: 'Space Grotesk', sans-serif;            /* chiffres, données */
-}
-/* Mode clair — mêmes noms, autres valeurs */
-.light-mode {
-  --bg:#E7E8EC; --bg2:#F6F6F9; --bg3:#DCDDE4; --sep:#CBCCD6;
-  --t1:#12121E; --t2:#4A4A6A; --t3:#8888AA;
-  --red:#D91843; --green:#00A856; --blue:#1565C0; --gold:#CC8800; --orange:#CC5200;
 }
 
 COMPOSANTS EXISTANTS — les réutiliser tels quels
@@ -115,7 +109,7 @@ RÈGLES DE STYLE
 - Les chiffres importants en Space Grotesk, gros, avec l'unité en plus petit et en --t3.
 - Hiérarchie par le CONTRASTE de texte (--t1 / --t2 / --t3), pas par des couleurs en plus.
 - Zones tactiles ≥ 44 px : l'app s'utilise debout, en salle, parfois les mains moites.
-- Toujours proposer le rendu en mode sombre ET en mode clair.
+- Rendu en mode sombre uniquement (le mode clair est en pause depuis le 28/07/2026).
 ```
 
 ---
