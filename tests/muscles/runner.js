@@ -167,6 +167,43 @@ console.log('     ℹ️  intensités : ' + Object.keys(met.par).sort().map(k=>k
 t('la valeur par défaut ne couvre plus la majorité du catalogue',
   (met.par['4']||0) < met.total/2, (met.par['4']||0)+' sur '+met.total);
 
+// ── SCHÉMAS DE MOUVEMENT : couverture + les pièges de mots-clés (ft-v670) ────
+// Taxonomie de référence : pousser · tirer · flexion de genou · charnière de hanche ·
+// rotation · PORTER. Il manquait « porter » et l'explosif → 27 exercices sans schéma,
+// donc « accessoire » par défaut pour Milo et garde-fou anti-fusion désactivé.
+const mov=await p.evaluate(()=>{
+  const noms=[...new Set((EXLIB||[]).map(e=>e&&e.n).filter(Boolean))];
+  const sans=noms.filter(n=>!_movPattern(n));
+  const g=n=>_movPattern(n)+'|'+_exRole(n);
+  return {total:noms.length, sans:sans.length, sansListe:sans,
+    rackPull:g('Tirage en Rack (Rack Pull)'), devAssis:g('Développé Haltères Assis'),
+    isoLat:g('Tirage Iso-Latéral Hammer Strength'), arrache:g('Arraché Haltère (Dumbbell Snatch)'),
+    cleanJerk:g('Clean & Jerk'), farmer:g("Farmer's Walk"), boxJump:g('Box Jump'),
+    burpee:g('Burpees'), hollow:g('Hollow Body'),
+    // ⚠️ les deux pièges : « wall sit » ne doit pas devenir du gainage, et une mobilité
+    // d'épaule ne doit pas devenir de l'haltérophilie ANCRE.
+    wallSit:g('Chaise (Wall Sit)'), passageEpaule:_movPattern("Passage d'Épaule Élastique"),
+    squat:g('Squat à la Barre'), dc:g('Développé Couché')};
+});
+console.log('     ℹ️  ' + mov.sans + ' exercice(s) sur ' + mov.total + ' sans schéma de mouvement (27 avant ft-v670)');
+t('⭐ moins de 10 exercices sans schéma de mouvement', mov.sans<10, mov.sansListe.join(', '));
+t('⭐ « Tirage en Rack » est une charnière de hanche, et une ANCRE', mov.rackPull==='hip-hinge|ancre', mov.rackPull);
+t('⭐ « Développé Haltères Assis » = poussée verticale, ANCRE', mov.devAssis==='poussee-verticale|ancre', mov.devAssis);
+t('⭐ « Tirage Iso-Latéral » = tirage horizontal, ANCRE', mov.isoLat==='tirage-horizontal|ancre', mov.isoLat);
+t('⭐ l\'arraché et l\'épaulé-jeté sont de l\'haltérophilie, et des ANCRES',
+  mov.arrache==='halterophilie|ancre'&&mov.cleanJerk==='halterophilie|ancre', mov.arrache+' / '+mov.cleanJerk);
+t('⭐ le farmer\'s walk est un PORTÉ — accessoire, pas une ancre', mov.farmer==='porte|accessoire', mov.farmer);
+t('⭐ box jump et burpees = saut/pliométrie, JAMAIS des ancres',
+  mov.boxJump==='saut-plyo|accessoire'&&mov.burpee==='saut-plyo|accessoire', mov.boxJump+' / '+mov.burpee);
+t('le hollow body est du gainage', mov.hollow==='gainage-abdos|accessoire', mov.hollow);
+// les deux pièges de mots-clés trop courts, chacun trouvé par ce test avant livraison
+t('⚠️ PIÈGE : « Chaise (Wall Sit) » reste un SQUAT (pas du gainage via « l sit »)',
+  mov.wallSit==='squat|ancre', mov.wallSit);
+t('⚠️ PIÈGE : une mobilité d\'épaule n\'est PAS de l\'haltérophilie',
+  mov.passageEpaule!=='halterophilie', 'reçu '+mov.passageEpaule);
+t('les fondamentaux ne bougent pas', mov.squat==='squat|ancre'&&mov.dc==='poussee-horizontale|ancre',
+  mov.squat+' / '+mov.dc);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

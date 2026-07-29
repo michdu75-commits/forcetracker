@@ -1036,18 +1036,33 @@ function _exJac(qset,cset){ if(!cset.size)return 0; if(_exModConflict(qset,cset)
 const _MOV_PATTERNS=[
   {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','haussement','shrug','croix de fer']},
   {id:'flexion-genou',label:'Flexion de genou (ischios)',kw:['leg curl','curl ischio','ischio','nordic']}, // AVANT curl-biceps (« leg curl » ≠ curl de bras)
-  {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['curl','preacher','biceps']},
+  {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['marteau','curl','preacher','biceps']},
   {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps']},
   {id:'mollets',label:'Extension de cheville (mollets)',kw:['mollet','calf','soleus','tibialis','tib raise']},
   {id:'extension-genou',label:'Extension de genou (quadriceps)',kw:['leg extension','extension quadriceps','quad extension','quad ext','sissy squat']},
-  {id:'gainage-abdos',label:'Gainage / abdominaux',kw:['gainage','planche','plank','crunch','abdo','releve de jambe','releve de genou','russian twist','sit up','vacuum','roue abdo','ab wheel']},
-  {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','hyperextension','extension lombaire','ghd','glute ham','superman']},
+  // ⚠️ PAS de mot-clé pour le L-Sit : « l sit » attraperait « wa·ll sit » (Chaise / Wall Sit),
+  // qui est un SQUAT isométrique. Même piège que `t.?bar` → « poignet barre » (ft-v669) : la
+  // recherche teste aussi SANS bornes, donc un mot-clé de 1-2 lettres est intenable ici. Le
+  // L-Sit reste sans schéma — il est de toute façon « accessoire », ce qui est juste.
+  {id:'gainage-abdos',label:'Gainage / abdominaux',kw:['hollow body','windshield','drapeau','dragon flag','grimpeur','mountain climber','chaise romaine','rotation obliques','rotation machine obliques','gainage','planche','plank','crunch','abdo','releve de jambe','releve de genou','russian twist','sit up','vacuum','roue abdo','ab wheel']},
+  {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['tirage en rack','rack pull','souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','hyperextension','extension lombaire','ghd','glute ham','superman']},
   {id:'fente',label:'Fente',kw:['fente','lunge','split squat','bulgare','montee sur box','step up','cossack']},
   {id:'squat',label:'Squat (flexion hanche+genou)',kw:['squat','press jambe','leg press','hack','pendulum','belt squat','presse a cuisse','wall sit','sled']},
-  {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster']},
+  {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe haltere assis','developpe assis','developpe landmine','developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster']},
   {id:'poussee-horizontale',label:'Poussée horizontale (pectoraux)',kw:['developpe couche','bench press','couche','chest press','ecarte','pec deck','pompe','push up','dips','croise poulie','crossover','decline','incline']},
   {id:'tirage-vertical',label:'Tirage vertical',kw:['tirage poulie haute','tirage vertical','pulldown','lat pull','traction','pull up','tirage nuque','tirage poitrine','rocky pull']},
-  {id:'tirage-horizontal',label:'Tirage horizontal',kw:['rowing','tirage horizontal','tirage poulie basse','seal row','meadows','yates','renegade','bent over','bucheron','pull over','pullover']}
+  {id:'tirage-horizontal',label:'Tirage horizontal',kw:['tirage iso','iso lateral','rowing','tirage horizontal','tirage poulie basse','seal row','meadows','yates','renegade','bent over','bucheron','pull over','pullover']},
+  // ── Deux schémas ajoutés le 29/07/2026 (ft-v670), sur demande de Michel et d'après la
+  // taxonomie de référence (pousser · tirer · flexion de genou · charnière de hanche ·
+  // ROTATION · PORTER). Il manquait « porter » et l'explosif : 6 exercices n'avaient
+  // AUCUN schéma, donc Milo les appelait « accessoire » par défaut et le garde-fou
+  // anti-fusion de l'import était désactivé pour eux.
+  {id:'porte',label:'Porté (carry)',kw:['farmer','fermier','porte','carry','yoke','valise','suitcase','overhead carry']},
+  // ⚠️ Les mouvements EXPLOSIFS sont séparés des sauts : l'arraché et l'épaulé-jeté sont
+  // des mouvements PRINCIPAUX (voir _EX_ANCRE_PATTERNS), un burpee ou un box jump est du
+  // conditionnement — les mélanger ferait bâtir une séance autour d'un burpee.
+  {id:'halterophilie',label:'Haltérophilie (explosif)',kw:['arrache','snatch','epaule jete','epaule barre','clean and jerk','clean jerk','clean','jerk','turkish','get up','thruster']},
+  {id:'saut-plyo',label:'Saut / pliométrie',kw:['box jump','saut sur box','burpee','saut a la corde','corde a sauter','jump','plyo','sprint','battle rope']}
 ];
 // Stemme les pluriels MAIS garde tous les mots (ne PAS retirer les mots vides ici :
 // sinon un mot-clé « curl haltère » se réduirait à « curl » et matcherait « leg curl »).
@@ -1070,7 +1085,11 @@ function _exTaxo(name){ return {pattern:_movPattern(name), resistance:_movResist
 //    un muscle, complète l'ancre. Un exo inconnu → accessoire (choix prudent).
 // Garde-fou : une isolation mono-articulaire rangée dans un schéma « poussée/tirage »
 // (écarté, pec deck, croisé poulie, pull-over, face pull) reste un ACCESSOIRE.
-const _EX_ANCRE_PATTERNS=['squat','hip-hinge','poussee-horizontale','poussee-verticale','tirage-horizontal','tirage-vertical'];
+// ⚠️ « halterophilie » ajoutée aux ANCRES (ft-v670) : un arraché ou un épaulé-jeté est un
+// mouvement PRINCIPAL, jamais un accessoire. En revanche « porte » et « saut-plyo » n'y sont
+// PAS : un farmer's walk ou un burpee est du conditionnement — en faire une ancre pousserait
+// Milo à bâtir une séance autour. (R29 : le droit de deviner dépend du coût de l'erreur.)
+const _EX_ANCRE_PATTERNS=['squat','hip-hinge','poussee-horizontale','poussee-verticale','tirage-horizontal','tirage-vertical','halterophilie'];
 function _exRole(name){
   const q=_normEx(name||'');
   if(/ecarte|\bfly\b|pec deck|peck deck|croise poulie|crossover|butterfly|pull ?over|face pull|tirage visage/.test(q)) return 'accessoire';
