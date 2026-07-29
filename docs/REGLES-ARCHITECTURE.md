@@ -111,6 +111,11 @@ Si Milo redemande sans cesse une information, ce n'est pas qu'il est mal instrui
 **l'interface ne la collecte pas**. Le fix est dans l'INTERFACE.
 *Origine : ft-v604 (écran « Ton entraînement » ajouté à l'inscription) — après des mois de durcissement
 de prompt sur le même symptôme*
+**Croisée 3 fois** : l'inscription (ft-v604) · le **prénom** que le prompt réclamait sans qu'on le
+transmette (ft-v652) · les **jours** (ft-v658 — Milo répond « demain mercredi » un mercredi ; on lui
+donnait la date d'aujourd'hui mais jamais ce qu'était « demain », donc il devait le calculer).
+**Le réflexe** : quand une réponse est fausse sur un point *factuel*, se demander d'abord **« est-ce
+qu'on lui a seulement donné le fait ? »** — avant de toucher au prompt.
 
 ### R9 — Le niveau de MODÈLE est une variable STRUCTURELLE
 On évalue Milo sur le modèle **réellement utilisé par les vrais utilisateurs**, jamais sur le modèle

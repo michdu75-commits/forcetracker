@@ -1074,6 +1074,24 @@ function buildCoachContext() {
   const _period = _h < 5 ? 'nuit' : _h < 12 ? 'matin' : _h < 18 ? 'après-midi' : _h < 22 ? 'soirée' : 'nuit';
   const _dateStr = _now.toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long'});
   const _timeStr = _h + 'h' + String(_now.getMinutes()).padStart(2, '0');
+  // ─── ON DONNE LES JOURS, MILO NE LES CALCULE PAS (ft-v658) ────────────────
+  // ⚠️ Michel, un MERCREDI : « c'est demain plutôt » → Milo répond « demain mercredi ».
+  // Il avait pourtant la bonne date d'aujourd'hui : ce qu'on lui demandait, c'était de
+  // DÉDUIRE le nom du jour de demain — et un modèle de langage se trompe sur ce calcul.
+  // R8 : un prompt ne compense jamais une donnée absente. Ici la donnée manquait.
+  const _jourISO = d => new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  const _jourFR  = d => d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  const _jourDe  = n => { const d=new Date(_now); d.setDate(d.getDate()+n); return d; };
+  const _calendrier = (()=>{
+    const l=[];
+    l.push('- hier = '+_jourFR(_jourDe(-1))+' ('+_jourISO(_jourDe(-1))+')');
+    l.push('- AUJOURD\'HUI = '+_jourFR(_now)+' ('+_jourISO(_now)+')');
+    l.push('- demain = '+_jourFR(_jourDe(1))+' ('+_jourISO(_jourDe(1))+')');
+    l.push('- après-demain = '+_jourFR(_jourDe(2))+' ('+_jourISO(_jourDe(2))+')');
+    const suite=[]; for(let i=3;i<=14;i++) suite.push(_jourFR(_jourDe(i))+' ('+_jourISO(_jourDe(i))+')');
+    l.push('- ensuite : '+suite.join(' · '));
+    return l.join('\n');
+  })();
 
   const prsText = Object.entries(S.prs).length > 0
     ? Object.entries(S.prs).map(([ex, d]) => `${ex}: ${d.kg}kg×${d.reps} (~${fmt(d.rm1)}kg 1RM)`).join(', ')
@@ -1264,7 +1282,7 @@ SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvien
 \`\`\`json
 {"prevu":{"date":"YYYY-MM-DD","label":"<groupe/type si donné, ex. pecs, jambes ; sinon vide>"}}
 \`\`\`
-- \`date\` = la date ISO RÉELLE du jour annoncé. Aujourd'hui = ${(typeof today==='function'?today():new Date().toISOString().slice(0,10))} (${_dateStr}) — calcule le bon jour à venir (au plus 14 jours). Si la personne ne donne AUCUN jour précis, N'ÉMETS PAS ce bloc.
+- \`date\` = la date ISO RÉELLE du jour annoncé, **recopiée depuis le CALENDRIER ci-dessus** (au plus 14 jours) — ne la calcule pas. Si la personne ne donne AUCUN jour précis, N'ÉMETS PAS ce bloc.
 - Ce bloc rend l'Accueil COHÉRENT : il l'empêche de la relancer « ça fait X jours » alors qu'elle t'a dit quand elle revient. Ne parle JAMAIS du bloc, ne le commente pas — l'utilisateur ne voit que ta phrase en clair.
 ⛔⛔ INTERDICTION ABSOLUE D'INTERROGATOIRE — TU PROPOSES D'ABORD, TOUJOURS (règle NON négociable, PRIORITAIRE sur les consignes qui te poussent à DEMANDER — « profil non renseigné → demande », etc. — MAIS JAMAIS au-dessus de la SÉCURITÉ, qui reste au sommet de TOUT) :
 - 🛡️ SÉCURITÉ AVANT VITESSE (au-dessus de cette règle) : ta proposition (plan OU séance) doit TOUJOURS respecter les zones fragiles / blessures DÉJÀ DÉCLARÉES (voir PROFIL SANTÉ + les consignes du Gardien plus haut). Protège-les ACTIVEMENT dès la 1ʳᵉ proposition : n'inclus JAMAIS un mouvement contre-indiqué pour une zone déclarée (ex. squat/fentes PROFONDS lourds si genou fragile, soulevé de terre / good morning lourds si lombaires fragiles), NOMME la zone et propose une ALTERNATIVE. « Proposer vite » ne dispense JAMAIS de protéger — un plan qui ignore une blessure connue est un ÉCHEC, jamais une réussite. (Protéger une zone déclarée ≠ interroger : tu n'as pas besoin de poser de question pour ça, l'info est déjà là.) 💡 MONTRE que tu sais QUOI en faire, pas seulement que tu t'en souviens : au lieu de « je vais protéger ton épaule », explique COMMENT (« je pars sur une amplitude contrôlée et une progression adaptée pour développer ta force sans mettre ton épaule droite en difficulté »). La personne doit sentir que tu sais déjà AGIR sur la blessure, pas juste la mémoriser.
@@ -1292,6 +1310,10 @@ QUESTION GUIDÉE — PROPOSER DES RÉPONSES RAPIDES À TAPER (facultatif, pour a
 - RÈGLES STRICTES : ① UNE seule question à la fois — JAMAIS une liste de questions numérotées (pas d'interrogatoire). ② Les réponses rapides sont une AIDE, jamais une obligation : la personne peut toujours écrire librement, ou ne pas répondre du tout. ③ Réponses TRÈS courtes (1 à 4 mots chacune). ④ Si le sujet est personnel/intime (corps, moral, santé, blessure), inclus une porte de sortie douce (ex. « je préfère pas en parler ») et n'insiste JAMAIS. ⑤ N'émets ce bloc QUE quand la question s'y prête vraiment (voir ✅) — **pas à chaque message, jamais pour meubler**. ⑥ Ne parle jamais du bloc, ne l'explique pas.
 
 MOMENT PRÉSENT (heure locale de la personne) :
+CALENDRIER — LIS-LE, NE CALCULE JAMAIS UN JOUR TOI-MÊME:
+${_calendrier}
+→ Quand la personne dit « demain », « lundi », « dans 3 jours »… trouve le jour DANS CETTE LISTE. Ne déduis jamais un nom de jour de tête : c'est la seule source qui fait foi.
+
 - On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}${_coachGapText()}
 
 PROFIL ATHLÈTE:
