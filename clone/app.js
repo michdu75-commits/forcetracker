@@ -166,15 +166,40 @@ const MET_OLYMPIC = 8.0; // Arraché, Épaulé-jeté
 const MET_ISO = 4.0;    // Isolation: curl, extension...
 const MET_REST = 2.0;   // Entre les séries (position debout/assis)
 
-const LOWER_KW = ['Squat','Soulevé','Romanian','Hip Thrust','Leg Press','Hack','Leg Curl','Leg Ext'];
-const UPPER_KW = ['Développé','Militaire','Rowing','Traction','Dips','Incliné','Écarté','Face Pull','Tirage'];
-const OLYMPIC_KW = ['Arraché','Épaulé','Jeté'];
-
+// ⚠️ L'INTENSITÉ SE DÉDUIT DES MUSCLES, PLUS D'UNE 2ᵉ LISTE DE MOTS-CLÉS (ft-v668).
+// Avant : `LOWER_KW`/`UPPER_KW`, une liste de 16 mots-clés **parallèle** à `_MEX` — donc
+// condamnée à divergter. Mesuré le 29/07/2026 : **142 exercices sur 249 (57 %)** tombaient
+// sur la valeur par défaut « isolation », dont **56 gros mouvements** manifestement faux
+// (toutes les fentes, toutes les presses à jambes, kettlebell swing, hyperextensions,
+// good morning, pompes, Meadows/Seal row, thruster…). 4.0 au lieu de 6.5 = **38 % de
+// calories en moins** sur une séance de fentes. Retour Michel : « le calcul des calories
+// est bien respecté avec les anciens et nouveaux exercices ? » — non.
+// MAINTENANT : une seule source de vérité, la table des muscles (R2).
+//   · polyarticulaire = **3 muscles ou plus** sollicités (le développé couché en a 3,
+//     un curl en a 2) — c'est ça qui distingue un gros mouvement d'un exercice d'isolation ;
+//   · la région dominante décide ensuite entre bas du corps (6.5) et haut (5.5).
+// L'haltérophilie garde sa liste de mots : ce qui la définit est le caractère EXPLOSIF
+// du mouvement, pas les muscles qu'il utilise.
+const OLYMPIC_KW = ['Arraché','Épaulé','Jeté','Snatch','Clean','Jerk','Thruster','Turkish','Get-Up'];
+const _MET_REGIONS = {
+  bas: ['quads','hamstrings','glutes','calves','hip-flexors','tibialis'],
+  haut:['pec','front-delt','side-delt','triceps','lats','traps','rear-delt','biceps','forearms']
+};
 function getExerciseMET(name) {
-  if (OLYMPIC_KW.some(k => name.includes(k))) return MET_OLYMPIC;
-  if (LOWER_KW.some(k => name.includes(k))) return MET_LOWER;
-  if (UPPER_KW.some(k => name.includes(k))) return MET_UPPER;
-  return MET_ISO;
+  const n = name || '';
+  if (OLYMPIC_KW.some(k => n.toLowerCase().includes(k.toLowerCase()))) return MET_OLYMPIC;
+  try {
+    if (typeof _mscScores === 'function') {
+      const sc = (_mscScores([{name:n, sets:[{done:true}]}]) || {}).sc || {};
+      const noms = Object.keys(sc);
+      // moins de 3 muscles sollicités → exercice d'isolation
+      if (noms.length < 3) return MET_ISO;
+      let bas = 0, tot = 0;
+      for (const m of noms) { tot += sc[m]; if (_MET_REGIONS.bas.indexOf(m) >= 0) bas += sc[m]; }
+      return (tot > 0 && bas / tot >= 0.5) ? MET_LOWER : MET_UPPER;
+    }
+  } catch (e) {}
+  return MET_ISO;   // exercice inconnu du moteur : on n'invente pas une grosse dépense
 }
 
 function calcSessionCalories(session) {

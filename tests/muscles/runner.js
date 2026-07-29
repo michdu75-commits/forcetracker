@@ -117,6 +117,40 @@ t('la presse à cuisses reste des quadriceps', temoins.presseCuisses.quads===2, 
 t('⚠️ la DERNIÈRE règle de _MEX est bien le rattrapage générique (sinon règle morte)',
   temoins.derniereAttrape===true, 'nb règles : '+temoins.nbRegles);
 
+// ── L'INTENSITÉ (MET) se déduit des MUSCLES, plus d'une 2ᵉ liste (ft-v668) ───
+// Avant : 142 exercices sur 249 tombaient sur « isolation » par défaut, dont 56 gros
+// mouvements. Retour Michel : « le calcul des calories est bien respecté ? » — non.
+const met=await p.evaluate(()=>{
+  const noms=[...new Set((EXLIB||[]).map(e=>e&&e.n).filter(Boolean))];
+  const par={}; for(const n of noms){ const m=getExerciseMET(n); par[m]=(par[m]||0)+1; }
+  const g=n=>getExerciseMET(n);
+  return {par, total:noms.length,
+    squat:g('Squat à la Barre'), dc:g('Développé Couché'), souleve:g('Soulevé de Terre'),
+    fentes:g('Fentes'), presse:g('Presse à Cuisses'), thruster:g('Thruster'),
+    curl:g('Curl Biceps'), curlIncline:g('Curl Incliné'), legExt:g('Extension Quadriceps (Leg Extension)'),
+    presseMollets:g('Presse Mollets (Leg Press)'), elevLat:g('Élévations Latérales'),
+    inconnu:g('Un exercice qui n\'existe pas')};
+});
+t('⭐ le squat reste à l\'intensité « bas du corps » (6,5)', met.squat===6.5, 'reçu '+met.squat);
+t('⭐ le développé couché reste « haut du corps » (5,5)', met.dc===5.5, 'reçu '+met.dc);
+t('le soulevé de terre reste à 6,5', met.souleve===6.5, 'reçu '+met.souleve);
+t('⭐ CORRIGÉ : les fentes passent d\'isolation à « bas du corps »', met.fentes===6.5, 'reçu '+met.fentes);
+t('⭐ CORRIGÉ : la presse à cuisses est un gros mouvement', met.presse===6.5, 'reçu '+met.presse);
+t('⭐ CORRIGÉ : le thruster passe en haltérophilie (8)', met.thruster===8, 'reçu '+met.thruster);
+t('un curl de biceps reste de l\'isolation (4)', met.curl===4, 'reçu '+met.curl);
+t('⭐ CORRIGÉ : « Curl Incliné » n\'est plus pris pour un développé incliné',
+  met.curlIncline===4, 'reçu '+met.curlIncline);
+t('⭐ CORRIGÉ : le leg extension est bien de l\'isolation', met.legExt===4, 'reçu '+met.legExt);
+t('⭐ CORRIGÉ : « Presse Mollets » n\'est plus prise pour une presse à jambes',
+  met.presseMollets===4, 'reçu '+met.presseMollets);
+t('les élévations latérales restent de l\'isolation', met.elevLat===4, 'reçu '+met.elevLat);
+t('un exercice inconnu ne se voit PAS attribuer une grosse dépense',
+  met.inconnu===4, 'reçu '+met.inconnu);
+console.log('     ℹ️  intensités : ' + Object.keys(met.par).sort().map(k=>k+' → '+met.par[k]).join(' · ')
+            + '   (avant ft-v668 : 4 → 142)');
+t('la valeur par défaut ne couvre plus la majorité du catalogue',
+  (met.par['4']||0) < met.total/2, (met.par['4']||0)+' sur '+met.total);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');
