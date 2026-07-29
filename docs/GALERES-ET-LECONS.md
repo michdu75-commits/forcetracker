@@ -106,6 +106,10 @@
 
 ## 5. Leçons transverses (réflexes pour Claude)
 
+- **🔀 Deux chemins vers le MÊME écran doivent se comporter pareil** (ft-v657). La série avancée du questionnaire reprenait à la 1ʳᵉ question non répondue ; la série gratuite repartait de zéro. Même carte, même modale, deux règles — et c'est la version « gratuite » (donc celle que tous les utilisateurs voient) qui était la mauvaise. → Quand deux variantes partagent un écran, **vérifier qu'elles partagent aussi la règle**. C'est R2 appliqué au comportement, pas seulement aux données.
+
+- **🚨 Un retour qui arrive juste après une livraison n'est pas forcément causé par elle** (ft-v657). Le bug est tombé au lendemain de la correction des dates, à 00 h 01 — la tentation de conclure « c'est ma faute » était forte. **Vérifié avant de coder** : le questionnaire ne s'ouvre jamais seul (testé à 00 h 01 et à midi) et la fonction touchée enregistre correctement. C'était un défaut présent depuis toujours. → **Écarter la régression par la mesure, pas par l'intuition** — dans les deux sens : ne pas s'accuser à tort, ne pas s'innocenter non plus.
+
 - **👁️ Ce qui est AFFICHÉ n'est pas ce qui est GARDÉ** (ft-v656). Le fil de Milo était coupé à 20 messages **en direct**, mais les bulles restaient à l'écran (elles vivent dans la page, pas en mémoire) — donc la perte était **invisible jusqu'à la réouverture**. → Quand on cherche une perte de données, **ne jamais se fier à ce que montre l'écran** : lire ce qui est réellement stocké. Corollaire : mon diagnostic de la veille (« c'est fermer l'app qui coupe ») était faux, et je ne l'ai vu qu'en lisant le code ligne à ligne au lieu de raisonner sur le symptôme.
 
 - **🤫 Un `catch(e){}` sur une écriture de stockage, c'est une perte totale programmée** (ft-v656). Si le téléphone manque de place, l'ancien code avalait l'erreur : **tout le fil disparaissait**, sans un mot. → Toute écriture qui peut échouer doit **dégrader** (réduire et réessayer), jamais abandonner en silence.

@@ -94,14 +94,21 @@ function _applyQuizToProfile(quiz,ans){
 
 // ── UI du questionnaire ──────────────────────────────────────────────────
 let _cqSet='free';      // 'free' | 'pro'
+let _cqReview=false;    // on est dans le RÉCAPITULATIF (voir/modifier ses réponses, ft-v657)
 let _cqIdx=0;
 let _cqAns={};          // copie de travail
 let _cqSingle=false;    // mode "1 seule question" (question de la semaine premium)
 function _cqQuiz(){return _cqSet==='pro'?COACH_QUIZ_PRO:COACH_QUIZ;}
-// Première question avancée sans réponse (clé absente) — null si toutes posées
+// Première question sans réponse (clé absente) — null si toutes posées.
+// ⚠️ Vaut pour les DEUX séries (ft-v657) : la série gratuite repartait de la question 1 à
+// chaque ouverture et repromenait dans les 13 questions — Michel a tout refait un soir,
+// et il a résumé l'enjeu : « ça fait pas très sérieux avec des clients ».
+function _nextUnanswered(quiz,ans){
+  const a=ans||{};
+  return quiz.find(q=>!Object.prototype.hasOwnProperty.call(a,q.id))||null;
+}
 function _nextProUnanswered(){
-  const a=(S.coachQuizPro&&S.coachQuizPro.answers)||{};
-  return COACH_QUIZ_PRO.find(q=>!Object.prototype.hasOwnProperty.call(a,q.id))||null;
+  return _nextUnanswered(COACH_QUIZ_PRO,(S.coachQuizPro&&S.coachQuizPro.answers)||{});
 }
 function _proAnsweredCount(){
   const a=(S.coachQuizPro&&S.coachQuizPro.answers)||{};
@@ -157,16 +164,46 @@ function _renderCoachQuizCard(){
 }
 function openCoachQuiz(set){
   if(set==='pro'&&!S.premium){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
-  _cqSet=set; _cqSingle=false;
+  _cqSet=set; _cqSingle=false; _cqReview=false;
   const store=set==='pro'?S.coachQuizPro:S.coachQuiz;
   _cqAns=(store&&store.answers)?JSON.parse(JSON.stringify(store.answers)):{};
-  // reprend à la 1re question avancée non posée (sinon au début)
-  if(set==='pro'){ const nx=_nextProUnanswered(); _cqIdx=nx?COACH_QUIZ_PRO.indexOf(nx):0; }
-  else _cqIdx=0;
-  _cqPrefillFromProfile();
+  const quiz=_cqQuiz(), nx=_nextUnanswered(quiz,_cqAns);   // ⚠️ AVANT le pré-remplissage :
+  _cqPrefillFromProfile();                                  // sinon la série avancée changerait de règle
   const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.add('open');
+  // ⚠️ On ne repart JAMAIS de la question 1 quand des réponses existent (ft-v657) :
+  //   · il reste des questions → on reprend à la 1ʳᵉ non répondue ;
+  //   · tout est rempli → RÉCAPITULATIF (la carte promet « revoir ou modifier tes réponses »,
+  //     pas un nouveau tour de piste). C'est ce tour de piste que Michel a subi.
+  if(!nx){ _openQuizRecap(); return; }
+  _cqIdx=quiz.indexOf(nx);
   _renderCoachQuizStep();
 }
+// ─── RÉCAPITULATIF : voir ses réponses, en changer UNE (ft-v657) ─────────────
+// Réutilise le mode « 1 question » déjà en place pour la question de la semaine (R13),
+// plutôt que d'inventer un second écran d'édition.
+function _openQuizRecap(){
+  _cqReview=true; _cqSingle=false;
+  const quiz=_cqQuiz();
+  const titleEl=document.getElementById('cq-title');
+  if(titleEl)titleEl.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Tes réponses <span style="color:var(--t3);font-weight:600;font-size:13px;">'+quiz.length+'</span>';
+  const fill=document.getElementById('cq-progress-fill'); if(fill)fill.style.width='100%';
+  const step=document.getElementById('cq-step');
+  if(step){
+    step.innerHTML='<div class="cq-hint" style="margin-bottom:10px;">Tape une ligne pour changer cette réponse — les autres ne bougent pas.</div>'
+      +quiz.map((q,i)=>{
+        const v=_cqAns[q.id];
+        const vide=(v===undefined||v===''||(Array.isArray(v)&&!v.length));
+        const lbl=vide?'<i style="color:var(--t3);">non renseigné</i>'
+                      :((typeof _escNote==='function')?_escNote(String(_cqLabel(quiz,q.id,v))):String(_cqLabel(quiz,q.id,v)));
+        return '<button class="cq-recap ft-press" onclick="_cqEditOne('+i+')">'
+          +'<div class="cq-recap-q">'+q.q+'</div><div class="cq-recap-a">'+lbl+'</div></button>';
+      }).join('');
+  }
+  const prev=document.getElementById('cq-prev'); if(prev)prev.style.visibility='hidden';
+  const next=document.getElementById('cq-next'); if(next)next.innerHTML='Fermer';
+  const skip=document.getElementById('cq-skip'); if(skip)skip.style.display='none';
+}
+function _cqEditOne(i){ _cqSingle=true; _cqIdx=i; _renderCoachQuizStep(); }
 // Question de la semaine premium : une seule question (la prochaine non posée)
 function openWeeklyProQuestion(){
   if(!S.premium){ if(typeof showPremiumWall==='function')showPremiumWall(); return; }
@@ -190,14 +227,17 @@ function _cqPrefillFromProfile(){
     try{ const v=m.from&&m.from(); if(v)_cqAns[q.id]=v; }catch(e){}
   });
 }
-function closeCoachQuiz(){ const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.remove('open'); _cqSingle=false; }
+function closeCoachQuiz(){ const ov=document.getElementById('ov-coach-quiz'); if(ov)ov.classList.remove('open'); _cqSingle=false; _cqReview=false; }
 function _renderCoachQuizStep(){
   const quiz=_cqQuiz();
   const total=quiz.length;
   const q=quiz[_cqIdx];
   const titleEl=document.getElementById('cq-title');
   if(titleEl){
-    if(_cqSingle){
+    if(_cqSingle&&_cqReview){
+      // depuis le récapitulatif : on corrige UNE réponse, ce n'est pas « la question de la semaine »
+      titleEl.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Modifier ta réponse';
+    } else if(_cqSingle){
       titleEl.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Question de la semaine';
     } else {
       titleEl.innerHTML=(_cqSet==='pro'
@@ -246,6 +286,7 @@ function _coachQuizPick(qid,val,multi){
 }
 function _coachQuizPrev(){ if(_cqIdx>0){_cqIdx--;_renderCoachQuizStep();} }
 function _coachQuizNext(skip){
+  if(_cqReview&&!_cqSingle){ closeCoachQuiz(); return; }   // depuis le récap, « Fermer » ferme
   if(_cqSingle){ _finishCoachQuiz(); return; }
   const quiz=_cqQuiz();
   if(_cqIdx<quiz.length-1){ _cqIdx++; _renderCoachQuizStep(); }
@@ -257,7 +298,9 @@ function _finishCoachQuiz(){
   // pas posé sur window. L'appeler ainsi aurait planté la validation du questionnaire.
   const _tday=today();   // date du TÉLÉPHONE
   // En mode "1 question", marque la question posée (même si passée sans répondre) pour ne pas la reproposer
-  if(_cqSingle){ const q=COACH_QUIZ_PRO[_cqIdx]; if(q&&_cqAns[q.id]===undefined)_cqAns[q.id]=''; }
+  // ⚠️ _cqQuiz() et non COACH_QUIZ_PRO en dur : le mode « 1 question » sert aussi à corriger
+  // UNE réponse de la série gratuite depuis le récapitulatif (ft-v657).
+  if(_cqSingle){ const q=_cqQuiz()[_cqIdx]; if(q&&_cqAns[q.id]===undefined)_cqAns[q.id]=''; }
   if(_cqSet==='pro'){
     const prev=S.coachQuizPro||{};
     S.coachQuizPro={ answers:JSON.parse(JSON.stringify(_cqAns)),
@@ -271,6 +314,11 @@ function _finishCoachQuiz(){
   if(typeof persist==='function')persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   const single=_cqSingle;
+  if(_cqReview){                       // correction d'une seule réponse : on revient à la liste
+    _cqSingle=false; _renderCoachQuizCard(); _openQuizRecap();
+    if(typeof toast==='function')toast('Réponse mise à jour 👍','success');
+    return;
+  }
   closeCoachQuiz();
   _renderCoachQuizCard();
   if(typeof toast==='function')toast(single?'Merci ! Milo en sait un peu plus 👍':(_cqSet==='pro'?'Milo en sait encore plus sur toi 💪':'Milo te connaît mieux maintenant 💪'),'success');
