@@ -106,6 +106,8 @@
 
 ## 5. Leçons transverses (réflexes pour Claude)
 
+- **📊 Quand on connaît le chiffre, on DONNE le chiffre** (ft-v664). L'app affichait « plutôt bas du corps » alors qu'elle calcule la répartition **au pourcentage près**. Michel : *« ça fait genre il ne connaît pas l'anatomie »*. Un adverbe (« plutôt », « environ », « globalement ») posé à la place d'une donnée qu'on possède ne rassure pas — **il fait douter de la compétence**. → Résumer une mesure exacte en mot vague, c'est l'abîmer. Réserver le flou aux cas où on est vraiment incertain (et là, se taire est souvent mieux : R29).
+
 - **🏷️ Un nom de classe CSS se choisit comme un nom de fonction : en vérifiant qu'il n'existe pas déjà** (ft-v661). J'ai nommé les nouveaux boutons du check-in `.ds-opt` — nom **déjà pris** par le `(optionnel)` du titre. Résultat : un simple mot est devenu un gros bouton pleine largeur. Rien n'a planté, aucun test existant n'a bronché : **c'est la capture d'écran qui l'a montré**. → `grep` le nom avant de l'utiliser, et préfixer par famille (`ck-`, `ds-`, `cconv-`).
 
 - **🔀 Deux chemins vers le MÊME écran doivent se comporter pareil** (ft-v657). La série avancée du questionnaire reprenait à la 1ʳᵉ question non répondue ; la série gratuite repartait de zéro. Même carte, même modale, deux règles — et c'est la version « gratuite » (donc celle que tous les utilisateurs voient) qui était la mauvaise. → Quand deux variantes partagent un écran, **vérifier qu'elles partagent aussi la règle**. C'est R2 appliqué au comportement, pas seulement aux données.

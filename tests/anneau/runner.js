@@ -515,7 +515,15 @@ const seanceDuJour=[{date:iso(now),exs:[{name:'Squat',sets:[{kg:120,reps:5,done:
       {name:'Presse à Cuisses',sets:[{kg:200,reps:10,done:true,type:'N'}]}]}].concat(ss))}),null,64);
   const r=await q.p.evaluate(()=>(document.getElementById('home-milo')||{}).textContent||'');
   t('la carte MONTRE les exercices du jour', /Squat à la Barre/.test(r), r.slice(0,170));
-  t('… et la région dominante (squat = bas du corps)', /plutôt bas du corps/.test(r), r.slice(0,170));
+  // ⚠️ Michel : « plutôt bas du corps, ça fait genre il ne connaît pas l'anatomie ».
+  // On vérifie qu'il y a de VRAIS pourcentages, cohérents, et que ça fait bien ~100 %.
+  t('… et la RÉPARTITION en pourcentages, pas un « plutôt » flou',
+    /\d+ % bas du corps/.test(r)&&!/plutôt/.test(r), r.slice(0,190));
+  const pcs=(r.match(/(\d+) %/g)||[]).map(x=>parseInt(x,10));
+  t('… les pourcentages affichés totalisent ~100 %',
+    pcs.length>=1&&pcs.reduce((a,b)=>a+b,0)>=92&&pcs.reduce((a,b)=>a+b,0)<=100, JSON.stringify(pcs));
+  t('… le bas du corps domine (séance de jambes)',
+    /8[0-9] % bas du corps|9[0-9] % bas du corps/.test(r), r.slice(0,190));
   t('… mais elle DEMANDE quand même, elle ne tranche pas', /c'était celle-là/i.test(r));
   await q.c.close();
 }
@@ -538,7 +546,7 @@ const seanceDuJour=[{date:iso(now),exs:[{name:'Squat',sets:[{kg:120,reps:5,done:
               imgInjectee:!!el.querySelector('img')};
     });
     t(nom+' → la question reste posée', /c'était celle-là/i.test(r.txt), r.txt.slice(0,130));
-    t('  … sans région inventée', !/plutôt (bas|haut|dos|gainage)/.test(r.txt)||nom.indexOf('piégé')>=0, r.txt.slice(0,130));
+    t('  … sans pourcentage inventé', !/\d+ % (bas|haut|dos|gainage)/.test(r.txt), r.txt.slice(0,130));
     t('  … sans texte parasite', !/NaN|undefined|\[object/.test(r.txt), r.txt.slice(0,130));
     if(nom.indexOf('injection')>=0)
       t('  … et le nom piégé est ÉCHAPPÉ (aucune balise exécutée)', r.imgInjectee===false);

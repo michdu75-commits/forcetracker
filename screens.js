@@ -695,9 +695,7 @@ function _miloMessage(){
         const noms=[]; sj.forEach(x=>(x.exs||x.exercises||[]).forEach(e=>{
           const n=(e&&e.name||'').trim(); if(n&&noms.indexOf(n)<0)noms.push(n);
         }));
-        const reg=(typeof _calSessRegion==='function')?_calSessRegion(sj[0]):null;
-        const mot={bas:'plutôt bas du corps',haut:'plutôt haut du corps',dos:'plutôt dos',
-                   tronc:'plutôt gainage',full:'haut et bas mélangés'}[reg]||'';
+        const mot=(typeof _calSessMixTxt==='function')?_calSessMixTxt(sj[0]):'';
         // le nom d'affichage : on retire le rappel entre parenthèses (« Curl Ischio-jambiers
         // (Leg Curl) ») qui alourdit la phrase sans rien apprendre.
         const court=n=>_obsEsc(n.replace(/\s*\([^)]*\)/g,'').trim()).slice(0,26);
@@ -1291,14 +1289,14 @@ const _calColorCache={};   // _mscScores est coûteux et le calendrier se redess
 // (exercice perso ou importé que le moteur ne reconnaît pas : il rend {}).
 // Ne JAMAIS remplacer ce null par une valeur par défaut : dire « bas du corps » à tort
 // est pire que ne rien dire.
-function _calSessRegion(s){
+function _calSessMix(s){
   if(!s||!s.date)return null;
   // ⚠️ la clé doit tenir compte de TOUS les exercices : deux séances du même jour avec
   // le même nombre d'exos et le même premier exo partageraient sinon la même couleur
   // (trouvé par CAL-003 : « Squat + DC + Rowing » héritait de la couleur de « Squat + Presse + Leg Curl »).
   const key=s.date+'|'+(s.exs||[]).map(e=>(e&&e.name)||'').join('~');
   if(key in _calColorCache)return _calColorCache[key];
-  let reg=null;
+  let mix=null;
   try{
     if(typeof _mscScores==='function'){
       const sc=(_mscScores(s.exs||[])||{}).sc||{};
@@ -1314,21 +1312,37 @@ function _calSessRegion(s){
         // s'allument à chaque squat ou rowing, ce qui gonfle artificiellement la région « dos ».
         // Le critère haut/bas, lui, sépare proprement les 7 archétypes (voir CAL-003).
         const hautCorps=(tot.haut+tot.dos)/grand, basCorps=tot.bas/grand;
+        let reg;
         if(hautCorps>=.25&&basCorps>=.25)reg='full';
         else{
           let best='',bv=0;for(const r in tot){if(tot[r]>bv){bv=tot[r];best=r;}}
           reg=best||null;
         }
+        // La RÉPARTITION en % (ft-v664) : Michel trouvait « plutôt bas du corps » flou —
+        // « ça fait genre il ne connaît pas l'anatomie ». On a le chiffre exact, autant le dire.
+        const pc={}; for(const r in tot) pc[r]=Math.round(tot[r]/grand*100);
+        if(reg) mix={reg:reg,pc:pc};
       }
     }
-  }catch(e){ reg=null; }
-  _calColorCache[key]=reg;
-  return reg;
+  }catch(e){ mix=null; }
+  _calColorCache[key]=mix;
+  return mix;
 }
+function _calSessRegion(s){ const m=_calSessMix(s); return m?m.reg:null; }
 function _calSessColor(s){
   // Le calendrier a toujours besoin d'UNE couleur : faute de mieux, le rouge par défaut.
   const r=_calSessRegion(s);
   return (r&&_CAL_REGION_COLOR[r])||'var(--red)';
+}
+// Répartition lisible : « 86 % bas du corps · 14 % dos ». Rend '' si on ne sait pas.
+// ⚠️ On n'affiche pas les régions sous 8 % : à ce niveau c'est du bruit de mesure,
+// et une ligne à rallonge se lit moins bien qu'un chiffre net.
+const _REG_LBL={bas:'bas du corps',haut:'haut du corps',dos:'dos',tronc:'gainage'};
+function _calSessMixTxt(s){
+  const m=_calSessMix(s); if(!m||!m.pc)return '';
+  return Object.keys(m.pc).map(r=>[r,m.pc[r]]).filter(e=>e[1]>=8)
+    .sort((a,b)=>b[1]-a[1]).slice(0,3)
+    .map(e=>e[1]+' % '+(_REG_LBL[e[0]]||e[0])).join(' · ');
 }
 function _calFmtT(kg){return (kg/1000).toFixed(1).replace('.',',')+'t';}
 // N° de semaine ISO (formule standard, en UTC pour ne pas se faire piéger par l'heure d'été)
