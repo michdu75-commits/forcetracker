@@ -680,6 +680,13 @@ function _miloMessage(){
   const np=(typeof plannedSession==='function')?plannedSession():null;
   if(np){
     const lab=np.label?(' '+np.label):'';
+    // ⚠️ « C'ÉTAIT CELLE-LÀ ? » (ft-v662) — cas réel de Michel : il annonce « bas du corps demain »
+    // puis la fait le JOUR MÊME. plannedSession() compare des DATES, pas ce qui a été fait → l'Accueil
+    // et Milo continuaient d'annoncer une séance déjà faite. On ne DEVINE pas en rapprochant le libellé
+    // des muscles travaillés (ça se tromperait un jour sur deux) : on DEMANDE, en un tap.
+    if(np.days>=1&&lastDate===tStr)
+      return {id:'seance-faite',txt:'Bien joué pour ta séance 💪 Tu avais annoncé une séance'+lab+' pour '
+        +((typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date)+' — c\'était celle-là ?'};
     if(np.days===0)return {id:'prevu-jour',txt:'C\'est le jour de ta séance'+lab+' 💪 On la prépare ?'};
     const when=(typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date;
     return {id:'prevu',txt:'Séance'+lab+' prévue '+when+' 💪 Je m\'en souviens — repose-toi bien d\'ici là.'};
@@ -725,6 +732,7 @@ function _renderMiloCard(){
     +'<div class="milo-av"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>'
     +'<div style="flex:1;min-width:0;"><div class="milo-name">'+name+'</div><div class="milo-txt">'+m.txt+'</div>'
     +((m.id==='relance'||m.id==='retour')?'<button class="milo-plan ft-press" onclick="event.stopPropagation();_planTomorrow()">📅 J\'y vais demain</button>':'')
+    +(m.id==='seance-faite'?'<button class="milo-plan ft-press" onclick="event.stopPropagation();_confirmPlannedDone()">✅ Oui, c\'était celle-là</button>':'')
     +'</div>'
     +'<button class="milo-x" onclick="event.stopPropagation();_dismissMilo(\''+m.id+'\')" aria-label="Fermer"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
     +'</div>';
@@ -738,6 +746,18 @@ function _planTomorrow(){
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     if(typeof _renderMiloCard==='function')_renderMiloCard();
     if(typeof toast==='function')toast('Noté 💪 Séance prévue demain — je te laisse tranquille d\'ici là.','success');
+  }catch(e){}
+}
+// « Oui, c'était celle-là » : l'annonce est honorée, on la retire (ft-v662).
+// C'est la PERSONNE qui tranche — l'app ne déduit rien du libellé. Fermer la carte
+// avec la croix vaut « non, elle tient toujours » : l'annonce reste, on ne redemande
+// pas aujourd'hui, et la question ne peut revenir qu'un jour où tu t'entraînes.
+function _confirmPlannedDone(){
+  try{
+    S.nextPlanned=null;
+    persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+    if(typeof _renderMiloCard==='function')_renderMiloCard();
+    if(typeof toast==='function')toast('Noté 👍 Séance faite, je la retire de tes prévisions.','success');
   }catch(e){}
 }
 function _dismissMilo(id){

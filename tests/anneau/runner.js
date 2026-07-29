@@ -477,6 +477,45 @@ console.log('\n─── CHECK-IN DÉPLIÉ ────────────�
   await q.c.close();
 }
 
+// ─── « C'ÉTAIT CELLE-LÀ ? » (ft-v662) ───────────────────────────────────────
+// Cas réel : Michel annonce « bas du corps demain » puis la fait le JOUR MÊME.
+// La règle compare des DATES, pas ce qui a été fait → l'Accueil annonçait une
+// séance déjà faite. On ne devine pas, on demande — en un tap.
+console.log('\n─── « C\'ÉTAIT CELLE-LÀ ? » ────────────────────────────────');
+const seanceDuJour=[{date:iso(now),exs:[{name:'Squat',sets:[{kg:120,reps:5,done:true,type:'N'}]}],volume:3000}];
+{
+  const q=await page(Object.assign(annonce(jour(1),'bas du corps'),
+    {ft4_sessions:JSON.stringify(seanceDuJour.concat(ss))}),null,64);
+  const r=await q.p.evaluate(()=>{
+    const el=document.getElementById('home-milo');
+    return {txt:el.textContent||'', bouton:!!el.querySelector('button.milo-plan')};
+  });
+  t('⭐ séance faite aujourd\'hui + annonce pour demain → Milo DEMANDE',
+    /c'était celle-là/i.test(r.txt)&&/bas du corps/i.test(r.txt), r.txt.slice(0,140));
+  t('… avec un bouton en un tap', r.bouton===true);
+  // et une fois confirmé, les DEUX côtés se taisent
+  const apres=await q.p.evaluate(()=>{
+    _confirmPlannedDone();
+    let ctx=''; try{ctx=buildCoachContext()||'';}catch(e){}
+    return {carte:(document.getElementById('home-milo')||{}).textContent||'',
+            reste:!!(S.nextPlanned&&S.nextPlanned.date),
+            miloEnParle:/PROCHAINE SÉANCE — il\/elle TE l'a annoncée/.test(ctx)};
+  });
+  t('… « oui » retire l\'annonce', apres.reste===false);
+  t('… et l\'Accueil ne la propose plus', !/c'était celle-là/i.test(apres.carte), apres.carte.slice(0,100));
+  t('… Milo non plus (les deux côtés d\'accord)', apres.miloEnParle===false);
+  t('0 erreur JS', q.errs.length===0, q.errs.join(' | '));
+  await q.c.close();
+}
+{
+  // 0 régression : annonce pour demain SANS séance aujourd'hui → message inchangé
+  const q=await page(annonce(jour(1),'bas du corps'),null,64);
+  const r=await q.p.evaluate(()=>(document.getElementById('home-milo')||{}).textContent||'');
+  t('pas de séance aujourd\'hui → on garde « prévue demain », aucune question',
+    /prévue demain/i.test(r)&&!/c'était celle-là/i.test(r), r.slice(0,120));
+  await q.c.close();
+}
+
 console.log('──────────────────────────────────────────────────────────');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
 await b.close(); srv.close(); process.exit(ko?1:0);
