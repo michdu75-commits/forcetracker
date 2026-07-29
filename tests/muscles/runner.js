@@ -117,6 +117,22 @@ t('la presse à cuisses reste des quadriceps', temoins.presseCuisses.quads===2, 
 t('⚠️ la DERNIÈRE règle de _MEX est bien le rattrapage générique (sinon règle morte)',
   temoins.derniereAttrape===true, 'nb règles : '+temoins.nbRegles);
 
+// ── Les motifs TROP LARGES : deux bugs trouvés en auditant les tables (ft-v669) ──
+const larges=await p.evaluate(()=>{
+  const E=n=>({name:n,sets:[{done:true}]});
+  const sc=n=>(_mscScores([E(n)])||{}).sc||{};
+  return {extPoignet:sc('Extension Poignet Barre'), curlPoignet:sc('Curl Poignet Barre'),
+          tbarMachine:sc('Rowing T-Bar Machine'), tbarLandmine:sc('Rowing Landmine (T-Bar)')};
+});
+// `t.?bar` (écrit pour le T-Bar Row) attrapait « poigneT BARre » → dorsaux/trapèzes.
+t('⭐ « Extension Poignet Barre » = avant-bras (pas du dos !)',
+  larges.extPoignet.forearms===2&&!larges.extPoignet.lats, JSON.stringify(larges.extPoignet));
+t('⭐ « Curl Poignet Barre » = avant-bras (ni dos, ni biceps)',
+  larges.curlPoignet.forearms===2&&!larges.curlPoignet.lats&&!larges.curlPoignet.biceps,
+  JSON.stringify(larges.curlPoignet));
+t('… et les VRAIS T-Bar Row restent du dos', larges.tbarMachine.lats===2&&larges.tbarLandmine.lats===2,
+  JSON.stringify(larges.tbarMachine));
+
 // ── L'INTENSITÉ (MET) se déduit des MUSCLES, plus d'une 2ᵉ liste (ft-v668) ───
 // Avant : 142 exercices sur 249 tombaient sur « isolation » par défaut, dont 56 gros
 // mouvements. Retour Michel : « le calcul des calories est bien respecté ? » — non.

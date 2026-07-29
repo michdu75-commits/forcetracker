@@ -1547,7 +1547,11 @@ const _MEX=[
   // Dos — verticaux / tractions
   {re:/traction|pull.?up|chin.?up|tirage vertical|lat pulldown|tirage poulie haute/i, p:['lats','biceps'],             s:['traps','rear-delt','forearms']},
   // Dos — rowings / tirages horizontaux / bûcheron
-  {re:/rowing|row barre|\brow\b|t.?bar|tirage horizontal|tirage bucheron|bucheron/i, p:['lats','traps','rear-delt'],   s:['biceps','lower-back','forearms']},
+  // ⚠️ `\bt[-\s]?bar` et NON `t.?bar` : sans la limite de mot, le motif attrapait
+  // « poigne**t bar**re » — « Curl Poignet Barre » et « Extension Poignet Barre » étaient
+  // classés en DORSAUX/TRAPÈZES au lieu d'avant-bras (bug trouvé le 29/07/2026 en auditant
+  // les tables de classification). Les vrais « Rowing T-Bar » continuent de matcher.
+  {re:/rowing|row barre|\brow\b|\bt[-\s]?bar|tirage horizontal|tirage bucheron|bucheron/i, p:['lats','traps','rear-delt'],   s:['biceps','lower-back','forearms']},
   // Dos — bras tendu / pull-over
   {re:/bras tendu|straight.?arm|pull.?over/i,                                   p:['lats'],                             s:['triceps','pec']},
   // Biceps
@@ -1611,9 +1615,11 @@ const _MEX=[
   {re:/tirage menton|upright row/i,                                            p:['side-delt','traps'],                s:['biceps']},
   {re:/rotation.* epaule|rotation (interne|externe)|passage d.epaule|face pull|\by raise|\bw raise/i, p:['rear-delt'], s:['traps']},
   {re:/ecarte arriere|reverse fly|oiseau/i,                                    p:['rear-delt'],                        s:['traps']},
-  // — Biceps : tous les curls de BRAS. ⚠️ on exclut explicitement les curls de JAMBES
-  //   (leg curl / ischio) — ils ont leur règle plus haut, mais la garde est écrite noir sur blanc.
-  {re:/^(?!.*(leg curl|ischio|jambier)).*(curl|marteau|hammer curl|zottman)/i,  p:['biceps'],                           s:['forearms']},
+  // — Biceps : tous les curls de BRAS. ⚠️ DEUX exclusions écrites noir sur blanc :
+  //   · les curls de JAMBES (leg curl / ischio) → ce sont des ischio-jambiers ;
+  //   · les curls de POIGNET → ce sont des avant-bras, pas du biceps.
+  //   Sans elles, « Leg Curl » et « Curl Poignet Barre » seraient classés en biceps.
+  {re:/^(?!.*(leg curl|ischio|jambier|poignet|wrist)).*(curl|marteau|hammer curl|zottman)/i, p:['biceps'],               s:['forearms']},
   // — Triceps : barre au front, extensions nuque
   {re:/barre au front|skull ?crusher|extension nuque|extension triceps|french press/i, p:['triceps'],                    s:['front-delt']},
   // — Avant-bras
