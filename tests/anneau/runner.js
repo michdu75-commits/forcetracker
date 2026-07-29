@@ -430,6 +430,53 @@ async function accueilEtChat(extra){
   t('Milo le sait aussi (une pause annoncée n\'est pas un abandon)',
     RECU.test(r.ctx)&&/n'est pas un abandon/i.test(r.ctx));
 }
+// ─── LE CHECK-IN DÉPLIÉ PARLE LE LANGAGE DES TUILES (ft-v661) ───────────────
+// Retour Michel : « quand on rentre dedans ça reste avec des petits bonhommes,
+// c'est pas en adéquation avec ce qu'on a modifié ».
+console.log('\n─── CHECK-IN DÉPLIÉ ──────────────────────────────────────');
+{
+  const q=await page(null,null,64);
+  const r=await q.p.evaluate(()=>{
+    setDayEnergy(3); setDayMood(1);
+    _checkinOpen=true; _renderDayStateCard();
+    const el=document.getElementById('home-daystate');
+    const opts=[...el.querySelectorAll('.ck-opt')];
+    const on=el.querySelectorAll('.ck-opt.on');
+    const coul=n=>getComputedStyle(n).getPropertyValue('--ck').trim();
+    return {
+      nb:opts.length,
+      plusDEmoji:!/😴|😐|🙂|⚡|😔|😕|😄/.test(el.textContent),
+      mots:opts.map(o=>o.textContent.trim()),
+      traits:el.querySelectorAll('.ck-opt-b .ck-b').length,
+      visages:el.querySelectorAll('.ck-opt svg circle').length>0,
+      // ⚠️ getPropertyValue rend la couleur RÉSOLUE (#FF8A72), pas « var(--orange) » :
+      // on résout donc aussi les variables de référence pour comparer des choses comparables.
+      selCouls:[...on].map(coul),
+      refs:{orange:coul(el).trim()||getComputedStyle(el).getPropertyValue('--orange').trim(),
+            or:getComputedStyle(el).getPropertyValue('--gold').trim(),
+            org:getComputedStyle(el).getPropertyValue('--orange').trim(),
+            rouge:getComputedStyle(el).getPropertyValue('--red').trim()},
+      // ⚠️ « (optionnel) » du titre : j'avais nommé ma classe .ds-opt, déjà prise —
+      // le mot devenait un gros bouton. Il doit rester du simple texte.
+      optionnelEstUnBouton:!!el.querySelector('.ds-opt.ck-opt') || getComputedStyle(el.querySelector('.ds-opt')).display==='flex',
+      sale:/NaN|undefined|\[object/.test(el.textContent)
+    };
+  });
+  t('8 options (4 énergie + 4 moral), plus de boutons emoji', r.nb===8&&r.plusDEmoji===true, JSON.stringify({n:r.nb,e:r.plusDEmoji}));
+  t('les mêmes mots que les tuiles du replié',
+    ['Faible','Basse','Bonne','Au top','Bas','Moyen','Bien','Content'].every(m=>r.mots.includes(m)), r.mots.join('|'));
+  t('l\'énergie se lit aux TRAITS (4 par option)', r.traits===16, 'reçu '+r.traits);
+  t('le moral porte un VISAGE dessiné', r.visages===true);
+  t('⭐ le choix s\'allume dans SA couleur, plus en rouge pour tout',
+    r.selCouls.length===2 && r.selCouls.includes(r.refs.org) && r.selCouls.includes(r.refs.or)
+    && !r.selCouls.includes(r.refs.rouge),
+    r.selCouls.join(' · ')+'  (attendu '+r.refs.org+' + '+r.refs.or+')');
+  t('« (optionnel) » reste du texte, pas un bouton', r.optionnelEstUnBouton===false);
+  t('aucun texte parasite dans la carte', r.sale===false);
+  t('0 erreur JS (check-in déplié)', q.errs.length===0, q.errs.join(' | '));
+  await q.c.close();
+}
+
 console.log('──────────────────────────────────────────────────────────');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
 await b.close(); srv.close(); process.exit(ko?1:0);

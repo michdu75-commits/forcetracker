@@ -932,6 +932,21 @@ function _ckTuiles(){
     + _ckTuile(_ckVisage(cMor,d.mood), cMor, d.mood, d.mood==null?'—':lblMor[d.mood], 'Moral')
     +'</div>';
 }
+// ── Le check-in DÉPLIÉ parle le MÊME langage que les tuiles (ft-v661) ───────
+// ⚠️ Retour Michel : « quand on rentre dedans ça reste avec des petits bonhommes,
+// c'est pas en adéquation avec ce qu'on a modifié ». Le replié était passé en tuiles
+// (icône + 4 traits + mot) et le déplié était resté sur des emojis avec, en prime, un
+// contour ROUGE quel que soit le niveau choisi — donc « au top » s'allumait en rouge.
+// On réutilise les MÊMES briques (_ckVisage, .ck-b, --ck) : zéro nouveau vocabulaire.
+function _ckBarres(niv){
+  let j=''; for(let i=0;i<4;i++) j+='<i class="ck-b'+(i<=niv?' on':'')+'"></i>';
+  return '<div class="ck-opt-b">'+j+'</div>';
+}
+function _ckOpt(niv,sel,coul,visuel,mot,fn){
+  return '<button class="ck-opt'+(sel?' on':'')+'" style="--ck:'+coul+';" '
+    +'onclick="'+fn+'('+niv+')" aria-pressed="'+(sel?'true':'false')+'">'
+    +visuel+'<span class="ck-opt-l">'+mot+'</span></button>';
+}
 function _renderDayStateCard(){
   const el=document.getElementById('home-daystate');if(!el)return;
   const d=_dayState();
@@ -952,8 +967,15 @@ function _renderDayStateCard(){
     return;
   }
   const painSet=new Set((d.pains||[]).map(p=>p&&p.zone));
-  const enBtns=_DAY_ENERGY.map((e,i)=>'<button class="ds-en'+(d.energy===i?' on':'')+'" onclick="setDayEnergy('+i+')">'+e+'</button>').join('');
-  const moBtns=_DAY_MOOD.map((e,i)=>'<button class="ds-en'+(d.mood===i?' on':'')+'" onclick="setDayMood('+i+')">'+e+'</button>').join('');
+  // Mêmes mots et mêmes couleurs que les tuiles du replié — une seule source de vérité.
+  const _lblEne=['Faible','Basse','Bonne','Au top'], _lblMor=['Bas','Moyen','Bien','Content'];
+  const _cMor=n=>n>=2?'var(--green)':n===1?'var(--gold)':'var(--red)';
+  // Énergie : le niveau se lit aux TRAITS (l'éclair, lui, est dans le titre de la rangée).
+  const enBtns=_lblEne.map((mot,i)=>
+    _ckOpt(i, d.energy===i, 'var(--orange)', _ckBarres(i), mot, 'setDayEnergy')).join('');
+  // Moral : c'est le VISAGE qui porte le sens, dans sa couleur (vert · ambre · rouge).
+  const moBtns=_lblMor.map((mot,i)=>
+    _ckOpt(i, d.mood===i, _cMor(i), _ckVisage(_cMor(i),i), mot, 'setDayMood')).join('');
   // Figurine anatomique cliquable (réutilise _mscSVG) : tape un muscle → il devient rouge.
   const bodyFig=(typeof _painFig==='function')?_painFig(painSet):'';
   // Articulations (pas des muscles) → boutons compacts sous la figurine.
@@ -975,9 +997,9 @@ function _renderDayStateCard(){
     +'<div onclick="toggleCheckin()" style="display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;">'
     +'<div class="ds-ttl" style="margin:0;">🌡️ Ton check-in du jour <span class="ds-opt">(optionnel)</span></div>'
     +chevOpen+'</div>'
-    +'<div class="ds-sub">Ton énergie :</div>'
+    +'<div class="ds-sub ds-sub-ic">'+_CK_ECL.replace(/CUR/g,'var(--orange)').replace('width="23" height="23"','width="15" height="15"')+'Ton énergie</div>'
     +'<div class="ds-row">'+enBtns+'</div>'
-    +'<div class="ds-sub">Ton moral :</div>'
+    +'<div class="ds-sub ds-sub-ic">'+_ckVisage('var(--t3)',null).replace('width="23" height="23"','width="15" height="15"')+'Ton moral</div>'
     +'<div class="ds-row">'+moBtns+'</div>'
     +'<div class="ds-sub">Une gêne ou douleur ? Tape le muscle sur le corps :</div>'
     +'<div style="max-width:230px;margin:6px auto 2px;">'+bodyFig+'</div>'
