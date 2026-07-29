@@ -284,16 +284,49 @@ function _loadCoachHist(){
     if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr)) coachHistory = arr; }
   }catch(e){ coachHistory = []; }
 }
+// ─── COMBIEN DE CONVERSATION ON GARDE (ft-v656) ─────────────────────────────
+// ⚠️ AVANT : le fil était coupé à 20 messages EN DIRECT — dès le 21ᵉ, le plus ancien était
+// JETÉ. Les bulles restaient à l'écran (elles sont dans la page), donc rien ne se voyait ;
+// mais à la réouverture elles avaient disparu, et elles n'avaient jamais pu être rangées
+// dans « Mes discussions » puisqu'elles étaient déjà parties. Perte SILENCIEUSE (R16).
+// MAINTENANT : on borne par la PLACE, pas par un nombre de messages. Une conversation
+// normale tient entièrement ; seule une conversation énorme finit par se tailler du début.
+const _HIST_MAX_MSG = 400;      // filet de sécurité (400 messages = déjà une énorme conversation)
+const _HIST_BUDGET  = 150000;   // caractères gardés pour le fil EN COURS (~180 messages)
+const _CONVS_BUDGET = 500000;   // caractères gardés pour TOUTES les discussions rangées
+const _CONVS_MAX    = 30;       // nombre de discussions rangées
+
+// Garde les messages LES PLUS RÉCENTS qui tiennent dans le budget (jamais moins d'un).
+function _fitBudget(msgs, budget){
+  const out=[]; let n=0;
+  for(let i=msgs.length-1;i>=0;i--){
+    const w=JSON.stringify(msgs[i]).length;
+    if(n+w>budget && out.length) break;
+    out.unshift(msgs[i]); n+=w;
+  }
+  return out;
+}
+// Coupe le fil en mémoire — filet de sécurité, plus la règle de tous les jours.
+function _trimCoachHistory(){
+  if(coachHistory.length>_HIST_MAX_MSG) coachHistory=coachHistory.slice(-_HIST_MAX_MSG);
+}
+// Version légère d'un message pour le stockage (les photos deviennent « [photo] »).
+function _lightMsg(m){
+  return {
+    role: m.role,
+    content: (typeof m.content === 'string') ? m.content
+           : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : ''),
+    ...(m._silent?{_silent:true}:{}) // consigne interne (débrief auto) : gardée pour le contexte, jamais affichée
+  };
+}
 function _saveCoachHist(){
-  try{
-    const light = coachHistory.slice(-20).map(m=>({
-      role: m.role,
-      content: (typeof m.content === 'string') ? m.content
-             : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text ? '[photo] ' + (m.content.find(p=>p&&p.type==='text').text) : '[photo]') : ''),
-      ...(m._silent?{_silent:true}:{}) // consigne interne (débrief auto) : gardée pour le contexte, jamais affichée
-    }));
-    localStorage.setItem('ft4_coach_hist', JSON.stringify(light));
-  }catch(e){}
+  // ⚠️ Si le téléphone n'a plus de place, l'ancien code avalait l'erreur et on perdait TOUT
+  // le fil d'un coup. Ici on réduit de moitié et on réessaie : on perd le début, jamais le reste.
+  let keep=_fitBudget(coachHistory.map(_lightMsg), _HIST_BUDGET);
+  for(let i=0;i<6;i++){
+    try{ localStorage.setItem('ft4_coach_hist', JSON.stringify(keep)); return; }
+    catch(e){ if(keep.length<=1) return; keep=keep.slice(Math.ceil(keep.length/2)); }
+  }
 }
 // Reconstruit les bulles à l'écran depuis coachHistory (à l'ouverture de l'appli)
 function _renderCoachThread(){
@@ -312,13 +345,21 @@ function _renderCoachThread(){
 // ─── Historique des discussions ───────────────────────────────────
 // Le « + » ne SUPPRIME plus le fil : il le RANGE dans une liste (S.coachConversations,
 // local — comme ft4_coach_hist) et ouvre une discussion neuve. Rien n'est perdu.
-function _persistCoachConvs(){ try{ localStorage.setItem('ft4_coach_convs', JSON.stringify(S.coachConversations||[])); }catch(e){} }
+function _persistCoachConvs(){
+  // On borne l'ensemble par la PLACE : au-delà, ce sont les discussions les PLUS ANCIENNES
+  // qui sortent (jamais la plus récente). Et si le téléphone refuse d'écrire, on retire une
+  // discussion et on réessaie — plutôt que d'avaler l'erreur et de tout perdre.
+  let list=(S.coachConversations||[]).slice(0,_CONVS_MAX);
+  while(list.length>1 && JSON.stringify(list).length>_CONVS_BUDGET) list=list.slice(0,-1);
+  for(let i=0;i<8;i++){
+    try{ localStorage.setItem('ft4_coach_convs', JSON.stringify(list)); S.coachConversations=list; return; }
+    catch(e){ if(list.length<=1) return; list=list.slice(0,-1); }
+  }
+}
 function _convLightMsgs(){
-  return coachHistory.slice(-40).map(m=>({
-    role: m.role,
-    content: (typeof m.content === 'string') ? m.content
-           : (Array.isArray(m.content) ? (((m.content.find(p=>p&&p.type==='text')||{}).text) ? '[photo] '+(m.content.find(p=>p&&p.type==='text').text) : '[photo]') : '')
-  }));
+  // tout le fil (borné par la place), plus seulement les 40 derniers : ce qu'on range
+  // doit être ce qu'on avait, sinon « ranger » redevient « perdre une partie ».
+  return _fitBudget(coachHistory.map(m=>({role:m.role, content:_lightMsg(m).content})), _HIST_BUDGET);
 }
 function _convTitle(msgs){
   const fu=(msgs||[]).find(m=>m.role==='user'&&typeof m.content==='string'&&m.content.trim());
@@ -333,8 +374,7 @@ function _archiveCurrentConv(){
   if(!light.some(m=>m.role==='user')) return;
   S.coachConversations = S.coachConversations || [];
   S.coachConversations.unshift({ id:'c'+Date.now()+Math.floor(Math.random()*1000), title:_convTitle(light), ts:Date.now(), messages:light });
-  if(S.coachConversations.length>30) S.coachConversations=S.coachConversations.slice(0,30);
-  _persistCoachConvs();
+  _persistCoachConvs();   // applique le plafond (nombre ET place)
 }
 function newCoachChat(){
   _archiveCurrentConv();                       // range la discussion en cours (plus de perte)
@@ -349,8 +389,28 @@ function closeCoachConvs(){ const o=document.getElementById('ov-coach-convs'); i
 function _renderCoachConvs(){
   const el=document.getElementById('coach-convs-list'); if(!el) return;
   const list=S.coachConversations||[];
-  if(!list.length){ el.innerHTML='<div class="cconv-empty">Aucune discussion enregistrée pour l\'instant.<br>Quand tu appuies sur « + », ta discussion en cours est rangée ici — tu pourras la rouvrir quand tu veux.</div>'; return; }
-  el.innerHTML=list.map(c=>{
+  // ⚠️ La discussion EN COURS doit figurer ici (ft-v656). Sans elle, le panneau s'ouvrait sur
+  // « aucune discussion » alors qu'une conversation était à l'écran — Michel a cru à un bug,
+  // à juste titre : un bouton ne doit jamais s'ouvrir sur du vide.
+  const cur=_convLightMsgs();
+  const nCur=cur.filter(m=>m.role==='user').length;
+  let head='';
+  if(nCur){
+    const tc=(typeof _escNote==='function')?_escNote(_convTitle(cur)):_convTitle(cur);
+    // ⚠️ la pastille est SŒUR du titre, pas dedans : le titre est coupé aux « … » quand il est
+    // long, et la pastille disparaissait avec lui (vu sur la 1ʳᵉ capture).
+    head='<div class="cconv-row now"><div class="cconv-main">'
+      +'<div class="cconv-hd"><div class="cconv-title">'+tc+'</div><span class="cconv-badge">EN COURS</span></div>'
+      +'<div class="cconv-sub">'+nCur+' question'+(nCur>1?'s':'')+' · appuie sur « + » pour la ranger</div>'
+      +'</div></div>';
+  }
+  if(!list.length){
+    el.innerHTML=head+'<div class="cconv-empty">'
+      +(nCur?'Aucune AUTRE discussion rangée pour l\'instant.':'Aucune discussion enregistrée pour l\'instant.')
+      +'<br>Quand tu appuies sur « + », ta discussion en cours est rangée ici — tu pourras la rouvrir quand tu veux.</div>';
+    return;
+  }
+  el.innerHTML=head+list.map(c=>{
     const d=new Date(c.ts||Date.now());
     const dt=d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' · '+d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
     const n=(c.messages||[]).filter(m=>m.role==='user').length;
@@ -670,7 +730,15 @@ function updateCoachHeader() {
   if(S.premium){const wall=document.getElementById('coach-wall');if(wall)wall.style.display='none';}
   // Bouton « Mes discussions » (historique) : visible dès qu'il y a des discussions rangées OU un fil en cours
   const histBtn=document.getElementById('coach-hist-btn');
-  if(histBtn) histBtn.style.display=(((S.coachConversations&&S.coachConversations.length)||coachHistory.length)?'flex':'none');
+  // ⚠️ Le bouton ne s'affiche que s'il y a VRAIMENT quelque chose à montrer (ft-v656) :
+  // une discussion rangée, ou un fil en cours où la personne a réellement parlé. Un fil qui ne
+  // contient que des consignes internes n'est pas une conversation — sinon le bouton s'ouvre
+  // sur « aucune discussion », ce qui a fait croire à un bug (retour Michel, 28/07).
+  if(histBtn){
+    const aRange=!!(S.coachConversations&&S.coachConversations.length);
+    const aParle=(coachHistory||[]).some(m=>m&&m.role==='user'&&!m._silent);
+    histBtn.style.display=(aRange||aParle)?'flex':'none';
+  }
   // Afficher accueil ou chat selon l'historique
   const newBtn=document.getElementById('coach-new-btn');
   if(coachHistory.length===0){
@@ -1835,7 +1903,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)
     if (opts.debriefSess) { try { _recordDebriefMemory(reply, { id: opts.debriefSess }); } catch(e){} }
     coachHistory.push({ role: 'assistant', content: reply });
-    if (coachHistory.length > 20) coachHistory = coachHistory.slice(-20);
+    _trimCoachHistory();   // ⚠️ borne de sécurité (400), plus la coupe à 20 qui perdait le début
     _saveCoachHist(); // fil persisté (survit à la fermeture de l'appli)
     try { localStorage.setItem('ft4_coach_lastts', String(Date.now())); } catch(e) {} // horodatage du dernier échange (pour la notion de délai)
     const newBtn=document.getElementById('coach-new-btn'); if(newBtn)newBtn.style.display='flex';
@@ -2013,7 +2081,7 @@ async function _pt001Run(allSessions){
       // Continuité dans le fil (le prochain débrief voit l'objectif précédent)
       coachHistory.push({role:'user',content:instr,_silent:true});
       coachHistory.push({role:'assistant',content:res.reply});
-      if(coachHistory.length>20)coachHistory=coachHistory.slice(-20);
+      _trimCoachHistory();
       rows.push({ i:i+1, date:s.date||'?', ok:true, kind:'valid', ms:res.ms, status:res.status, err:'',
         len:res.reply.length, parsed:!!mem,
         objectif:mem?mem.objectif:'', decision:mem?mem.decision:'', tenu:mem?(mem.objectifTenu||''):'',

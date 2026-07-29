@@ -106,6 +106,10 @@
 
 ## 5. Leçons transverses (réflexes pour Claude)
 
+- **👁️ Ce qui est AFFICHÉ n'est pas ce qui est GARDÉ** (ft-v656). Le fil de Milo était coupé à 20 messages **en direct**, mais les bulles restaient à l'écran (elles vivent dans la page, pas en mémoire) — donc la perte était **invisible jusqu'à la réouverture**. → Quand on cherche une perte de données, **ne jamais se fier à ce que montre l'écran** : lire ce qui est réellement stocké. Corollaire : mon diagnostic de la veille (« c'est fermer l'app qui coupe ») était faux, et je ne l'ai vu qu'en lisant le code ligne à ligne au lieu de raisonner sur le symptôme.
+
+- **🤫 Un `catch(e){}` sur une écriture de stockage, c'est une perte totale programmée** (ft-v656). Si le téléphone manque de place, l'ancien code avalait l'erreur : **tout le fil disparaissait**, sans un mot. → Toute écriture qui peut échouer doit **dégrader** (réduire et réessayer), jamais abandonner en silence.
+
 - **🕛 L'heure de Greenwich n'est pas l'heure de l'utilisateur** (ft-v655). `new Date().toISOString()` donne la date **UTC** : en France l'été, entre minuit et 2 h du matin, une séance était datée de **la veille**. Rien ne plante, la date est juste fausse. → **Un jour calendaire se calcule TOUJOURS à l'heure de l'appareil.** Figé par `tests/dates/runner.js` (horloge gelée sur les instants pièges + garde-fou de motif).
 
 - **🧨 Un `const` de haut niveau n'est PAS sur `window`** (ft-v655, piège évité de justesse). En corrigeant une variable locale qui **masquait** la fonction globale `today()`, j'ai d'abord écrit `window.today()` — ça aurait planté la validation du questionnaire. Seuls `var` et les déclarations de fonction créent une propriété de `window`. → **Ne jamais « déshadower » avec `window.x` : renommer la variable locale.** Et ce genre de piège **ne se voit pas à la relecture, il se voit en exécutant**.
