@@ -684,9 +684,30 @@ function _miloMessage(){
     // puis la fait le JOUR MÊME. plannedSession() compare des DATES, pas ce qui a été fait → l'Accueil
     // et Milo continuaient d'annoncer une séance déjà faite. On ne DEVINE pas en rapprochant le libellé
     // des muscles travaillés (ça se tromperait un jour sur deux) : on DEMANDE, en un tap.
-    if(np.days>=1&&lastDate===tStr)
-      return {id:'seance-faite',txt:'Bien joué pour ta séance 💪 Tu avais annoncé une séance'+lab+' pour '
+    if(np.days>=1&&lastDate===tStr){
+      // On MONTRE ce que l'app voit (exercices + région dominante) et la personne tranche —
+      // on ne rapproche JAMAIS le libellé tapé (« bas du corps ») des muscles travaillés :
+      // ça se tromperait sur les séances mixtes, celles où Michel lui-même hésite (29/07).
+      // ⚠️ Tout est FACULTATIF : si l'app ne reconnaît pas les exercices, elle se tait.
+      let vu='';
+      try{
+        const sj=sess.filter(x=>x.date===tStr);
+        const noms=[]; sj.forEach(x=>(x.exs||x.exercises||[]).forEach(e=>{
+          const n=(e&&e.name||'').trim(); if(n&&noms.indexOf(n)<0)noms.push(n);
+        }));
+        const reg=(typeof _calSessRegion==='function')?_calSessRegion(sj[0]):null;
+        const mot={bas:'plutôt bas du corps',haut:'plutôt haut du corps',dos:'plutôt dos',
+                   tronc:'plutôt gainage',full:'haut et bas mélangés'}[reg]||'';
+        // le nom d'affichage : on retire le rappel entre parenthèses (« Curl Ischio-jambiers
+        // (Leg Curl) ») qui alourdit la phrase sans rien apprendre.
+        const court=n=>_obsEsc(n.replace(/\s*\([^)]*\)/g,'').trim()).slice(0,26);
+        const liste=noms.slice(0,3).map(court).filter(Boolean).join(', ')+(noms.length>3?'…':'');
+        if(liste||mot) vu=[liste,mot].filter(Boolean).join(' — ')+'. ';
+      }catch(e){ vu=''; }   // au moindre doute, on n'affiche rien plutôt qu'une bêtise
+      return {id:'seance-faite',txt:'Bien joué pour ta séance 💪 '+vu
+        +'Tu avais annoncé une séance'+lab+' pour '
         +((typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date)+' — c\'était celle-là ?'};
+    }
     if(np.days===0)return {id:'prevu-jour',txt:'C\'est le jour de ta séance'+lab+' 💪 On la prépare ?'};
     const when=(typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date;
     return {id:'prevu',txt:'Séance'+lab+' prévue '+when+' 💪 Je m\'en souviens — repose-toi bien d\'ici là.'};
@@ -1264,14 +1285,20 @@ const _CAL_REGIONS={
 };
 const _CAL_REGION_COLOR={haut:'var(--red)',dos:'var(--blue)',bas:'var(--purp)',tronc:'var(--orange)',full:'var(--green)'};
 const _calColorCache={};   // _mscScores est coûteux et le calendrier se redessine à chaque flèche
-function _calSessColor(s){
-  if(!s||!s.date)return 'var(--red)';
+// ⚠️ SOURCE DE VÉRITÉ UNIQUE de « à quelle région appartient cette séance ? » (ft-v663).
+// Le calendrier s'en sert pour la COULEUR, la carte de Milo pour DIRE ce qu'il voit.
+// Renvoie 'haut'|'dos'|'bas'|'tronc'|'full' — ou **null quand on ne sait pas**
+// (exercice perso ou importé que le moteur ne reconnaît pas : il rend {}).
+// Ne JAMAIS remplacer ce null par une valeur par défaut : dire « bas du corps » à tort
+// est pire que ne rien dire.
+function _calSessRegion(s){
+  if(!s||!s.date)return null;
   // ⚠️ la clé doit tenir compte de TOUS les exercices : deux séances du même jour avec
   // le même nombre d'exos et le même premier exo partageraient sinon la même couleur
   // (trouvé par CAL-003 : « Squat + DC + Rowing » héritait de la couleur de « Squat + Presse + Leg Curl »).
   const key=s.date+'|'+(s.exs||[]).map(e=>(e&&e.name)||'').join('~');
-  if(_calColorCache[key])return _calColorCache[key];
-  let col='var(--red)';
+  if(key in _calColorCache)return _calColorCache[key];
+  let reg=null;
   try{
     if(typeof _mscScores==='function'){
       const sc=(_mscScores(s.exs||[])||{}).sc||{};
@@ -1287,16 +1314,21 @@ function _calSessColor(s){
         // s'allument à chaque squat ou rowing, ce qui gonfle artificiellement la région « dos ».
         // Le critère haut/bas, lui, sépare proprement les 7 archétypes (voir CAL-003).
         const hautCorps=(tot.haut+tot.dos)/grand, basCorps=tot.bas/grand;
-        if(hautCorps>=.25&&basCorps>=.25)col=_CAL_REGION_COLOR.full;
+        if(hautCorps>=.25&&basCorps>=.25)reg='full';
         else{
           let best='',bv=0;for(const r in tot){if(tot[r]>bv){bv=tot[r];best=r;}}
-          col=_CAL_REGION_COLOR[best]||'var(--red)';
+          reg=best||null;
         }
       }
     }
-  }catch(e){}
-  _calColorCache[key]=col;
-  return col;
+  }catch(e){ reg=null; }
+  _calColorCache[key]=reg;
+  return reg;
+}
+function _calSessColor(s){
+  // Le calendrier a toujours besoin d'UNE couleur : faute de mieux, le rouge par défaut.
+  const r=_calSessRegion(s);
+  return (r&&_CAL_REGION_COLOR[r])||'var(--red)';
 }
 function _calFmtT(kg){return (kg/1000).toFixed(1).replace('.',',')+'t';}
 // N° de semaine ISO (formule standard, en UTC pour ne pas se faire piéger par l'heure d'été)

@@ -295,6 +295,26 @@ j'étais limité, donc je me limitais dans mon idée du graphisme. »*
 imaginé.
 *Origine : 27/07/2026 · détail : `docs/GALERES-ET-LECONS.md`*
 
+### R29 — Le droit de DEVINER dépend du COÛT DE L'ERREUR
+Toutes les approximations ne se valent pas. Avant de laisser l'app trancher à la place de la
+personne, se demander **ce que coûte une erreur** :
+- **Erreur gratuite → devine.** Une couleur de calendrier, un tri, une suggestion : si c'est faux,
+  personne ne le remarque et rien n'est perdu.
+- **Erreur qui touche la personne → demande.** Un fait sur elle, une mémoire, une donnée de santé,
+  l'effacement de quelque chose qu'elle a dit : là on **montre ce qu'on voit** et **elle tranche**.
+**Le corollaire qui rend la règle utilisable** : quand l'app renonce à trancher, elle ne doit pas
+poser une question à l'aveugle — elle **affiche les éléments** qu'elle a (ce qui a été fait, ce
+qu'elle en déduit) pour que la décision soit facile. *Informer sans décider.*
+**Et si elle ne sait pas, elle se tait** : une fonction de classement doit pouvoir rendre « je ne
+sais pas » (`null`), et ce `null` ne doit JAMAIS être remplacé par une valeur par défaut.
+**Cas réel** : Michel annonce « bas du corps » puis fait une séance ; faut-il considérer l'annonce
+honorée ? Rapprocher son libellé des muscles travaillés se tromperait sur les séances **mixtes** —
+et quand on lui a posé la question (développé couché + squat, on met quoi ?) il a répondu lui-même
+*« j'avoue tu me poses une colle »*. **Si l'expert hésite, l'algorithme se trompera plus souvent que
+lui.** (ft-v662 → ft-v663.)
+*Origine : 29/07/2026, conversation Michel ↔ Claude · voisine de R10 (permissions bornées) et de
+R24 (informer sans bloquer).*
+
 ## 🔗 Où va le reste
 
 | Sujet | Document |

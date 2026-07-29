@@ -508,6 +508,44 @@ const seanceDuJour=[{date:iso(now),exs:[{name:'Squat',sets:[{kg:120,reps:5,done:
   await q.c.close();
 }
 {
+  // ── Ce que l'app VOIT (ft-v663) : elle montre, elle ne devine pas ──────────
+  const q=await page(Object.assign(annonce(jour(1),'bas du corps'),
+    {ft4_sessions:JSON.stringify([{date:iso(now),volume:3000,exs:[
+      {name:'Squat à la Barre',sets:[{kg:120,reps:5,done:true,type:'N'}]},
+      {name:'Presse à Cuisses',sets:[{kg:200,reps:10,done:true,type:'N'}]}]}].concat(ss))}),null,64);
+  const r=await q.p.evaluate(()=>(document.getElementById('home-milo')||{}).textContent||'');
+  t('la carte MONTRE les exercices du jour', /Squat à la Barre/.test(r), r.slice(0,170));
+  t('… et la région dominante (squat = bas du corps)', /plutôt bas du corps/.test(r), r.slice(0,170));
+  t('… mais elle DEMANDE quand même, elle ne tranche pas', /c'était celle-là/i.test(r));
+  await q.c.close();
+}
+{
+  // ⚠️ LES 4 PIÈGES QUE MICHEL A SENTIS (29/07) — l'app doit SE TAIRE, pas inventer.
+  const cas=[
+    ['exercice perso inconnu du moteur',
+      [{name:'Mon exo à moi',sets:[{kg:50,reps:10,done:true,type:'N'}]}]],
+    ['aucun exercice (cardio seul)', []],
+    ['nom d\'exercice vide', [{name:'',sets:[{kg:50,reps:10,done:true,type:'N'}]}]],
+    ['nom piégé (injection HTML)',
+      [{name:'<img src=x onerror=alert(1)>',sets:[{kg:50,reps:10,done:true,type:'N'}]}]]
+  ];
+  for(const [nom,exs] of cas){
+    const q=await page(Object.assign(annonce(jour(1),'bas du corps'),
+      {ft4_sessions:JSON.stringify([{date:iso(now),volume:1000,exs}].concat(ss))}),null,64);
+    const r=await q.p.evaluate(()=>{
+      const el=document.getElementById('home-milo');
+      return {txt:el.textContent||'', html:el.innerHTML||'',
+              imgInjectee:!!el.querySelector('img')};
+    });
+    t(nom+' → la question reste posée', /c'était celle-là/i.test(r.txt), r.txt.slice(0,130));
+    t('  … sans région inventée', !/plutôt (bas|haut|dos|gainage)/.test(r.txt)||nom.indexOf('piégé')>=0, r.txt.slice(0,130));
+    t('  … sans texte parasite', !/NaN|undefined|\[object/.test(r.txt), r.txt.slice(0,130));
+    if(nom.indexOf('injection')>=0)
+      t('  … et le nom piégé est ÉCHAPPÉ (aucune balise exécutée)', r.imgInjectee===false);
+    await q.c.close();
+  }
+}
+{
   // 0 régression : annonce pour demain SANS séance aujourd'hui → message inchangé
   const q=await page(annonce(jour(1),'bas du corps'),null,64);
   const r=await q.p.evaluate(()=>(document.getElementById('home-milo')||{}).textContent||'');
