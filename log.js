@@ -1585,6 +1585,64 @@ const _MEX=[
   {re:/grip|prehension|dead ?hang/i,                                            p:['forearms'],                         s:['traps','quads']},
   // Jambes — farmer's walk / marche du fermier / portés : muscle principal = les cuisses (retour Michel)
   {re:/farmers?|fermier|portes|carry/i,                                         p:['quads','glutes'],                   s:['forearms','traps']},
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // RATTRAPAGE PAR FAMILLE DE MOUVEMENT — ft-v667
+  // ⚠️ CES RÈGLES DOIVENT RESTER LES DERNIÈRES DE `_MEX`. Le moteur s'arrête au
+  // PREMIER motif qui correspond (`break`) : tant qu'elles sont en fin de liste,
+  // les règles précises au-dessus gagnent toujours → zéro régression possible.
+  // ⚠️ NE JAMAIS insérer une nouvelle règle précise APRÈS ce bloc.
+  //
+  // Pourquoi ce bloc existe : le 29/07/2026, Michel demande « sur tous les mouvements
+  // tu as vérifié ? ». Passage des 287 exercices → **86 (30 %) n'avaient AUCUNE
+  // correspondance** : figurine vide, aucune région déduite, calendrier rouge par
+  // défaut. Presque tous étaient des VARIANTES dont la version de base était mappée
+  // (« Écarté Couché » marchait, « Écarté Haltères » non). Le correctif de ft-v169
+  // avait traité les exercices d'ALORS ; le catalogue a grossi depuis.
+  // ══════════════════════════════════════════════════════════════════════════
+
+  // — Pectoraux : tout écarté / fly / crossover, et toutes les pompes
+  {re:/ecarte|butterfly|\bfly\b|crossover|croise poulie/i,                     p:['pec'],                              s:['front-delt']},
+  {re:/pompe|push.?up|dips? entre|dips? banc/i,                                 p:['pec','triceps'],                    s:['front-delt']},
+  // — Épaules : élévations latérales, tirage menton, rotations, développés restants
+  //   ⚠️ « laterale » AVANT le développé générique (une élévation n'est pas un développé)
+  {re:/elevation.? laterale|lateral raise|croix de fer/i,                       p:['side-delt'],                        s:['traps']},
+  {re:/elevation.? frontale|front raise/i,                                     p:['front-delt'],                       s:['pec']},
+  {re:/tirage menton|upright row/i,                                            p:['side-delt','traps'],                s:['biceps']},
+  {re:/rotation.* epaule|rotation (interne|externe)|passage d.epaule|face pull|\by raise|\bw raise/i, p:['rear-delt'], s:['traps']},
+  {re:/ecarte arriere|reverse fly|oiseau/i,                                    p:['rear-delt'],                        s:['traps']},
+  // — Biceps : tous les curls de BRAS. ⚠️ on exclut explicitement les curls de JAMBES
+  //   (leg curl / ischio) — ils ont leur règle plus haut, mais la garde est écrite noir sur blanc.
+  {re:/^(?!.*(leg curl|ischio|jambier)).*(curl|marteau|hammer curl|zottman)/i,  p:['biceps'],                           s:['forearms']},
+  // — Triceps : barre au front, extensions nuque
+  {re:/barre au front|skull ?crusher|extension nuque|extension triceps|french press/i, p:['triceps'],                    s:['front-delt']},
+  // — Avant-bras
+  {re:/pronation|supination|poignet|wrist/i,                                   p:['forearms'],                         s:[]},
+  // — Dos : tous les tirages restants (poulie basse, nuque, machine, incliné)
+  {re:/tirage en rack|rack pull/i,                                             p:['lower-back','traps'],               s:['lats','glutes','hamstrings']},
+  {re:/tirage|pulldown|\brow\b|sled pull/i,                                    p:['lats'],                             s:['biceps','rear-delt','traps']},
+  // — Chaîne postérieure : hyperextensions, GHD, Jefferson, kettlebell swing
+  {re:/hyperextension|back extension|reverse hyper|jefferson|glute ham|\bghd\b/i, p:['lower-back','glutes'],           s:['hamstrings']},
+  {re:/kettlebell swing|swing kettlebell/i,                                    p:['glutes','hamstrings'],              s:['lower-back','quads']},
+  // — Fessiers : poussée de hanche et kickbacks restants
+  {re:/poussee de hanche|hip thrust|pont fessier|glute bridge/i,                p:['glutes'],                           s:['hamstrings']},
+  {re:/kickback|extension fessier/i,                                           p:['glutes'],                           s:['hamstrings']},
+  // — Jambes : montées sur box, chaise, presse restante, sled push, box jump
+  {re:/montee sur box|step.?up|box jump|saut sur box/i,                         p:['quads','glutes'],                   s:['calves','hamstrings']},
+  {re:/chaise|wall sit/i,                                                      p:['quads'],                            s:['glutes','abs']},
+  {re:/presse a cuisse|leg press|hack/i,                                       p:['quads','glutes'],                   s:['hamstrings','calves']},
+  {re:/sled push|pousse traineau/i,                                            p:['quads','glutes'],                   s:['calves','abs']},
+  {re:/corde a sauter|sauts? a la corde|jump rope/i,                           p:['calves'],                           s:['quads']},
+  // — Gainage / abdos : les mouvements de tronc restants
+  {re:/hollow|l.?sit|windshield|obliques|chaise romaine|roue abdominale|ab ?wheel|dragon flag|drapeau|mountain climber|grimpeur/i,
+                                                                               p:['abs','obliques'],                   s:['hip-flexors','front-delt']},
+  // — Haltérophilie / full body : arraché, épaulé-jeté, thruster, burpees, TGU, battle rope
+  {re:/thruster|burpee|arrache|snatch|clean|jerk|turkish|battle ?rope/i,        p:['quads','front-delt'],               s:['glutes','traps','abs','triceps']},
+  // — DERNIER RECOURS : tout « développé » non attrapé plus haut est un développé d'ÉPAULES
+  //   (Haltères Assis, Arnold, Nuque, Landmine). Les développés de PECS — couché, incliné,
+  //   décliné, poitrine machine — ont déjà leur règle bien avant : rien de pectoral ne peut
+  //   arriver jusqu'ici. ⚠️ Cette règle doit rester la TOUTE DERNIÈRE de `_MEX`.
+  {re:/developpe|shoulder press|overhead press/i,                              p:['front-delt','side-delt','triceps'], s:['traps']},
 ];
 const _MG={
   pec:           {paths:['chest-upper-left','chest-upper-right','chest-lower-left','chest-lower-right'],                                                                                          label:'Pectoraux'},

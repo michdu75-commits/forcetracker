@@ -9,11 +9,17 @@
  * catalogue, 4 changeaient bel et bien de couleur.
  * *Tester des archétypes n'est pas tester le catalogue.*
  *
- * Il fige trois choses :
+ * Ce passage a révélé que **86 exercices sur 287 (30 %)** n'avaient AUCUNE
+ * correspondance musculaire — comblé en ft-v667 (rattrapage par famille).
+ *
+ * Il fige quatre choses :
  *   1. la FIGURINE ne dépend jamais du découpage en régions (elle lit les muscles) ;
  *   2. les 4 exercices de fessiers restent classés « bas du corps » (et non full body) ;
- *   3. le nombre d'exercices SANS correspondance musculaire ne doit pas AUGMENTER
- *      (86 aujourd'hui — trou connu, voir docs/CONTEXTE-ACTUEL.md).
+ *   3. **TOUT** le catalogue a une correspondance musculaire — ce compte ne doit
+ *      jamais remonter au-dessus de 0 ;
+ *   4. les EXCLUSIONS des règles génériques tiennent (le « leg curl » n'est pas
+ *      du biceps, le développé couché n'est pas de l'épaule) — et la règle de
+ *      rattrapage reste la DERNIÈRE de `_MEX`, sinon elle serait morte.
  *
  * Lancer : node tests/muscles/runner.js
  */
@@ -29,9 +35,10 @@ const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]
 let ok=0,ko=0;
 const t=(n,c,x)=>{c?(ok++,console.log('  ✅ '+n)):(ko++,console.log('  ❌ '+n+(x?'\n       → '+x:'')));};
 
-// Trou connu au 29/07/2026 : 86 exercices du catalogue n'ont aucune correspondance
-// musculaire (figurine vide, aucune région déduite). Ce chiffre doit BAISSER, jamais monter.
-const SANS_MUSCLES_CONNUS = 86;
+// ✅ ft-v667 : le trou est COMBLÉ — 0 exercice sans correspondance musculaire.
+// Ce chiffre ne doit JAMAIS remonter : tout exercice ajouté au catalogue doit être
+// attrapé par `_MEX` (au pire par une règle générique de fin de liste).
+const SANS_MUSCLES_CONNUS = 0;
 
 (async()=>{
 await new Promise(r=>srv.listen(0,r));
@@ -75,12 +82,41 @@ t('le squat reste « bas du corps »', r.regions['Squat à la Barre']==='bas', '
 t('le développé couché reste « haut du corps »', r.regions['Développé Couché']==='haut', 'reçu '+r.regions['Développé Couché']);
 t('le soulevé de terre reste « full body »', r.regions['Soulevé de Terre']==='full', 'reçu '+r.regions['Soulevé de Terre']);
 
-// ── Le trou connu : il ne doit pas grandir ──────────────────────────────────
-console.log('     ℹ️  ' + r.sansMuscles.length + ' exercices sur ' + r.total +
-            ' sans correspondance musculaire (figurine vide) — trou connu');
-t('les exercices sans muscles ne sont pas PLUS nombreux qu\'au constat (' + SANS_MUSCLES_CONNUS + ')',
+// ── Aucune figurine vide : le trou de 86 exercices est comblé (ft-v667) ─────
+console.log('     ℹ️  ' + r.sansMuscles.length + ' exercice(s) sur ' + r.total +
+            ' sans correspondance musculaire (86 avant ft-v667)');
+t('⭐ TOUT le catalogue a une correspondance musculaire (aucune figurine vide)',
   r.sansMuscles.length<=SANS_MUSCLES_CONNUS,
   'reçu ' + r.sansMuscles.length + ' — nouveaux non mappés : ' + r.sansMuscles.slice(0,6).join(', '));
+// ── Les exclusions qui doivent TENIR malgré les règles génériques (ft-v667) ──
+// ⚠️ Le piège du rattrapage : une règle « curl » trop large attraperait le LEG curl
+// (ischio-jambiers) et le classerait en biceps. Ces témoins figent les cas limites.
+const temoins=await p.evaluate(()=>{
+  const E=n=>({name:n,sets:[{kg:100,reps:8,done:true,type:'N'}]});
+  const sc=n=>(_mscScores([E(n)])||{}).sc||{};
+  return {
+    legCurl:sc('Leg Curl Couché Machine'), curlIschio:sc('Curl Ischio-jambiers (Leg Curl)'),
+    curlBiceps:sc('Curl Barre'), dcCouche:sc('Développé Couché'),
+    dArnold:sc('Développé Arnold (Arnold Press)'), presseCuisses:sc('Presse à Cuisses'),
+    // la dernière règle de _MEX doit rester le rattrapage « développé » (sinon règle morte)
+    nbRegles:(typeof _MEX!=='undefined')?_MEX.length:0,
+    derniereAttrape:(typeof _MEX!=='undefined')&&_MEX[_MEX.length-1].re.test('developpe halteres assis')
+  };
+});
+t('⚠️ le LEG curl reste des ISCHIOS (pas du biceps)',
+  temoins.legCurl.hamstrings===2&&!temoins.legCurl.biceps, JSON.stringify(temoins.legCurl));
+t('⚠️ « Curl Ischio-jambiers » aussi', temoins.curlIschio.hamstrings===2&&!temoins.curlIschio.biceps,
+  JSON.stringify(temoins.curlIschio));
+t('un curl de BRAS est bien du biceps', temoins.curlBiceps.biceps===2, JSON.stringify(temoins.curlBiceps));
+t('le développé COUCHÉ reste des pectoraux', temoins.dcCouche.pec===2&&!temoins.dcCouche['side-delt'],
+  JSON.stringify(temoins.dcCouche));
+t('un développé d\'ÉPAULES est bien des épaules',
+  temoins.dArnold['front-delt']===2&&temoins.dArnold['side-delt']===2&&!temoins.dArnold.pec,
+  JSON.stringify(temoins.dArnold));
+t('la presse à cuisses reste des quadriceps', temoins.presseCuisses.quads===2, JSON.stringify(temoins.presseCuisses));
+t('⚠️ la DERNIÈRE règle de _MEX est bien le rattrapage générique (sinon règle morte)',
+  temoins.derniereAttrape===true, 'nb règles : '+temoins.nbRegles);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');
