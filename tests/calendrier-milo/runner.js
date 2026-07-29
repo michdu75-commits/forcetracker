@@ -58,8 +58,11 @@ console.log('\n─── MILO NE CALCULE PLUS LES JOURS ────────
     (ctx.match(/- demain = .*/)||['(absent)'])[0]);
   t('… « aujourd\'hui » est bien mercredi', /- AUJOURD'HUI = mercredi 29 juillet \(2026-07-29\)/.test(ctx));
   t('… « hier » est bien mardi (la séance jambes)', /- hier = mardi 28 juillet \(2026-07-28\)/.test(ctx));
+  // ⚠️ on teste le FOND, pas la formulation exacte : le texte a été raccourci une fois
+  // (ft-v658) et ces deux tests ont cassé pour rien. Ce qui compte : l'interdiction de
+  // calculer, et l'ordre de LIRE la liste.
   t('… et la consigne de ne PAS calculer est présente',
-    /NE CALCULE JAMAIS UN JOUR TOI-MÊME/.test(ctx)&&/Ne déduis jamais un nom de jour de tête/.test(ctx));
+    /ne calcule JAMAIS un jour/i.test(ctx)&&/jamais de tête/i.test(ctx));
   t('le contexte se construit sans erreur', !/^ERREUR:/.test(ctx)&&errs.length===0, errs.join(' | '));
 }
 
@@ -67,8 +70,9 @@ console.log('\n─── MILO NE CALCULE PLUS LES JOURS ────────
 {
   const {ctx}=await ctxLe('2026-07-29T08:11:00+02:00');
   t('après-demain est nommé', /- après-demain = vendredi 31 juillet \(2026-07-31\)/.test(ctx));
+  // le nom du jour ET sa date, pour le 3ᵉ et le 14ᵉ jour — c'est ce couple qui compte
   t('les 14 jours à venir sont listés (couvre la règle « au plus 14 jours »)',
-    /lundi 3 août \(2026-08-03\)/.test(ctx)&&/mercredi 12 août \(2026-08-12\)/.test(ctx));
+    /lundi 2026-08-03/.test(ctx)&&/mercredi 2026-08-12/.test(ctx));
   t('le bloc « séance annoncée » renvoie au calendrier au lieu de faire calculer',
     /recopiée depuis le CALENDRIER/.test(ctx)&&!/calcule le bon jour à venir/.test(ctx));
 }

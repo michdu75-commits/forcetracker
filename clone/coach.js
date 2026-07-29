@@ -1088,7 +1088,11 @@ function buildCoachContext() {
     l.push('- AUJOURD\'HUI = '+_jourFR(_now)+' ('+_jourISO(_now)+')');
     l.push('- demain = '+_jourFR(_jourDe(1))+' ('+_jourISO(_jourDe(1))+')');
     l.push('- après-demain = '+_jourFR(_jourDe(2))+' ('+_jourISO(_jourDe(2))+')');
-    const suite=[]; for(let i=3;i<=14;i++) suite.push(_jourFR(_jourDe(i))+' ('+_jourISO(_jourDe(i))+')');
+    // Pour les jours lointains, la forme française (« 3 août ») fait doublon avec la date ISO
+    // juste à côté : on ne garde que le NOM DU JOUR (la seule chose qu'il ne peut pas déduire)
+    // + la date. Même information, ~130 caractères de moins.
+    const _nomJour = d => d.toLocaleDateString('fr-FR',{weekday:'long'});
+    const suite=[]; for(let i=3;i<=14;i++) suite.push(_nomJour(_jourDe(i))+' '+_jourISO(_jourDe(i)));
     l.push('- ensuite : '+suite.join(' · '));
     return l.join('\n');
   })();
@@ -1310,9 +1314,9 @@ QUESTION GUIDÉE — PROPOSER DES RÉPONSES RAPIDES À TAPER (facultatif, pour a
 - RÈGLES STRICTES : ① UNE seule question à la fois — JAMAIS une liste de questions numérotées (pas d'interrogatoire). ② Les réponses rapides sont une AIDE, jamais une obligation : la personne peut toujours écrire librement, ou ne pas répondre du tout. ③ Réponses TRÈS courtes (1 à 4 mots chacune). ④ Si le sujet est personnel/intime (corps, moral, santé, blessure), inclus une porte de sortie douce (ex. « je préfère pas en parler ») et n'insiste JAMAIS. ⑤ N'émets ce bloc QUE quand la question s'y prête vraiment (voir ✅) — **pas à chaque message, jamais pour meubler**. ⑥ Ne parle jamais du bloc, ne l'explique pas.
 
 MOMENT PRÉSENT (heure locale de la personne) :
-CALENDRIER — LIS-LE, NE CALCULE JAMAIS UN JOUR TOI-MÊME:
+CALENDRIER — ne calcule JAMAIS un jour, lis-le ici:
 ${_calendrier}
-→ Quand la personne dit « demain », « lundi », « dans 3 jours »… trouve le jour DANS CETTE LISTE. Ne déduis jamais un nom de jour de tête : c'est la seule source qui fait foi.
+→ Un jour cité par la personne (« demain », « lundi », « dans 3 jours ») se LIT ici, jamais de tête.
 
 - On est ${_dateStr}, il est ${_timeStr} — c'est ${_period === 'nuit' && _h >= 22 ? 'le soir/la nuit (tard)' : _period}. Adapte ta salutation à l'heure (jamais « bonjour » le soir, plutôt « bonsoir » ; « salut » passe partout). ${_period === 'soirée' || _period === 'nuit' ? 'En soirée/la nuit : pense au sommeil et à la récupération ; une séance ou des stimulants (café, pré-workout) trop tard peuvent gêner l\'endormissement — mentionne-le avec tact si pertinent.' : _period === 'matin' ? 'Le matin : tu peux évoquer l\'énergie du réveil, un petit-déjeuner adapté avant/après séance.' : ''}${_coachGapText()}
 
