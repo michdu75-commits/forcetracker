@@ -1275,11 +1275,19 @@ function _calVolByDay(){
 }
 // Régions définies sur les CLÉS de _MG (stables) — surtout PAS sur les libellés français
 // ('Grand dorsal' ne contient pas « dos », 'Deltoïdes' ne contient pas « épaule »).
+// ⚠️ Les ÉRECTEURS DU RACHIS (lower-back) sont classés en GAINAGE, pas en « dos » (ft-v665).
+// C'est le vocabulaire des références du domaine : au squat ils ont un « rôle stabilisateur et
+// participent du gainage », ils travaillent en ISOMÉTRIE pour maintenir l'angle du buste — ils ne
+// sont pas un muscle « travaillé » comme les dorsaux. Les garder dans « dos » faisait lire
+// « 15 % dos » après une séance de jambes, ce qui n'a pas de sens pour le sportif (retour Michel).
+// ⚠️ Nuance assumée : au SOULEVÉ DE TERRE les érecteurs sont bien moteurs, pas stabilisateurs —
+// notre modèle ne distingue pas le rôle selon l'exercice. Vérifié : la couleur du calendrier ne
+// change sur AUCUN des 9 archétypes (le soulevé reste « full body »).
 const _CAL_REGIONS={
   haut: ['pec','front-delt','side-delt','triceps'],
-  dos:  ['lats','traps','rear-delt','biceps','forearms','lower-back'],
+  dos:  ['lats','traps','rear-delt','biceps','forearms'],
   bas:  ['quads','hamstrings','glutes','calves','hip-flexors','tibialis'],
-  tronc:['abs','obliques']
+  tronc:['abs','obliques','lower-back']
 };
 const _CAL_REGION_COLOR={haut:'var(--red)',dos:'var(--blue)',bas:'var(--purp)',tronc:'var(--orange)',full:'var(--green)'};
 const _calColorCache={};   // _mscScores est coûteux et le calendrier se redessine à chaque flèche
@@ -1337,6 +1345,8 @@ function _calSessColor(s){
 // Répartition lisible : « 86 % bas du corps · 14 % dos ». Rend '' si on ne sait pas.
 // ⚠️ On n'affiche pas les régions sous 8 % : à ce niveau c'est du bruit de mesure,
 // et une ligne à rallonge se lit moins bien qu'un chiffre net.
+// Vocabulaire aligné sur les références du domaine (ft-v665) : « moteurs » vs
+// « stabilisateurs ». Le tronc (abdos, obliques, érecteurs) = le GAINAGE.
 const _REG_LBL={bas:'bas du corps',haut:'haut du corps',dos:'dos',tronc:'gainage'};
 function _calSessMixTxt(s){
   const m=_calSessMix(s); if(!m||!m.pc)return '';

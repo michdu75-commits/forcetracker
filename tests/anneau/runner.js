@@ -524,6 +524,10 @@ const seanceDuJour=[{date:iso(now),exs:[{name:'Squat',sets:[{kg:120,reps:5,done:
     pcs.length>=1&&pcs.reduce((a,b)=>a+b,0)>=92&&pcs.reduce((a,b)=>a+b,0)<=100, JSON.stringify(pcs));
   t('… le bas du corps domine (séance de jambes)',
     /8[0-9] % bas du corps|9[0-9] % bas du corps/.test(r), r.slice(0,190));
+  // ⚠️ ft-v665 : après une séance de JAMBES on ne doit JAMAIS lire « dos ». Les érecteurs du
+  // rachis sont des STABILISATEURS (vocabulaire des références du domaine) → bucket gainage.
+  t('… et on ne lit pas « dos » après une séance de jambes',
+    !/% dos/.test(r)&&/% gainage/.test(r), r.slice(0,190));
   t('… mais elle DEMANDE quand même, elle ne tranche pas', /c'était celle-là/i.test(r));
   await q.c.close();
 }
