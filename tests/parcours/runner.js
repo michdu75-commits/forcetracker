@@ -1,0 +1,232 @@
+#!/usr/bin/env node
+/**
+ * LE PARCOURS COMPLET — tests CROISÉS (audit du 29-30/07/2026, demandé par Michel).
+ *
+ * Un vrai parcours de bout en bout par les VRAIES fonctions : profil →
+ * startWorkout() → séries → finishWorkout() → PR → badges → récup → Accueil →
+ * calendrier → Progrès → Nutrition → contexte de Milo → RECHARGEMENT de la page.
+ * Tous les écrans doivent raconter LA MÊME histoire (R2), et rien ne se perd.
+ *
+ * Contient aussi :
+ *   · le contrôle « autre sport / discipline » : ce qui atteint Milo (le texte)
+ *     et ce qui n'atteint PAS les chiffres (récup, TDEE) — constat R4 assumé ;
+ *   · la mesure de PERFORMANCE avec 200 séances chargées (Accueil < 50 ms,
+ *     contexte Milo < 50 ms, persist < 30 ms) — l'app ne doit jamais ralentir.
+ *
+ * Lancer : node tests/parcours/runner.js
+ */
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const http=require('http'), fs=require('fs'), path=require('path');
+const ROOT=path.resolve(__dirname,'../..');
+const M={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json',
+         '.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2'};
+const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]);if(p==='/')p='/index.html';
+  const f=path.join(ROOT,p);
+  if(!f.startsWith(ROOT)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){r.writeHead(404);return r.end('404');}
+  r.writeHead(200,{'Content-Type':M[path.extname(f)]||'application/octet-stream'});fs.createReadStream(f).pipe(r);});
+let ok=0,ko=0;
+const t=(n,c,x)=>{c?(ok++,console.log('  ✅ '+n)):(ko++,console.log('  ❌ '+n+(x?'\n       → '+x:'')));};
+
+function seedScript(extra){
+  const base={ft4_name:'Testeur',ft4_bw:'80',ft4_age:'30',ft4_ht:'178',ft4_gender:'H',
+    ft4_act:'1.55',ft4_work:'bureau',ft4_goal:'muscle',ft4_rest:'120'};
+  const all=Object.assign({},base,extra||{});
+  return `(()=>{try{${Object.entries(all).map(([k,v])=>`localStorage.setItem(${JSON.stringify(k)},${JSON.stringify(v)});`).join('')}
+    window._demoMode=true;}catch(e){}})();`;
+}
+
+(async()=>{
+await new Promise(r=>srv.listen(0,r));
+const PORT=srv.address().port;
+const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
+const c=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+const p=await c.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+await p.addInitScript(seedScript({}));
+await p.goto('http://localhost:'+PORT+'/index.html');
+await p.waitForTimeout(2500);
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n═══ A. PARCOURS CROISÉ : profil → séance → PR → accueil → Milo ═══');
+const A=await p.evaluate(async()=>{
+  const out={};
+  out.recAvant=calcRecoveryScore();
+  // 1. Démarrer une vraie séance par la vraie fonction
+  startWorkout();
+  out.wktCree=!!(S.wkt&&S.wkt.date&&typeof S.wkt.startHour==='number');
+  // 2. Deux exercices, saisis comme le ferait l'app
+  S.wkt.exs.push({name:'Développé Couché',sets:[
+    {kg:60,reps:10,done:true,type:'W'},
+    {kg:100,reps:5,done:true,type:'N'},
+    {kg:100,reps:5,done:true,type:'N'},
+    {kg:102.5,reps:3,done:true,type:'N'}]});
+  S.wkt.exs.push({name:'Curl Biceps',sets:[
+    {kg:20,reps:12,done:true,type:'N'},
+    {kg:20,reps:10,done:false,type:'N'}]});
+  // 3. Terminer par la vraie fonction (async : sync réseau coupée par _demoMode)
+  await finishWorkout();
+  const sess=S.sessions[0];
+  out.nSess=S.sessions.length;
+  out.sessDate=sess&&sess.date;
+  out.volume=sess&&sess.volume;                       // 100*5+100*5+102.5*3 + 20*12 = 1547.5 → 1548 (W exclu, série non faite exclue)
+  out.calories=sess&&sess.calories;
+  out.duration=typeof sess.duration==='number';
+  // 4. Le PR : la meilleure série AU SENS DU 1RM ESTIMÉ — 100×5 (112.5) bat 102.5×3 (108.5)
+  out.pr=S.prs['Développé Couché'];
+  out.bzAttendu=Math.max(bz(102.5,3),bz(100,5));
+  out.prCurl=S.prs['Curl Biceps'];                    // 20×12 (seule série FAITE)
+  out.curlAttendu=bz(20,12);
+  // l'échauffement (W) ne fait jamais un PR
+  out.prPasW=!(out.pr&&out.pr.kg===60);
+  // 5. Badges
+  out.badges=Object.keys(S.badges||{});
+  // 6. Le brouillon est vidé — renderLog() en recrée un VIDE dans la foulée (quirk, sans danger)
+  out.wktVide=!S.wkt||!(S.wkt.exs&&S.wkt.exs.length);
+  // 7. Récup APRÈS séance : doit avoir baissé
+  out.recApres=calcRecoveryScore();
+  // 8. Accueil + calendrier
+  try{renderHome();out.homeOk=true;}catch(e){out.homeOk=false;out.homeErr=e.message;}
+  out.region=_calSessRegion(sess);
+  out.mixTxt=_calSessMixTxt(sess);
+  out.couleur=!!_calSessColor(sess);
+  // 9. Progrès (graphique 1RM)
+  try{if(typeof renderProgress==='function'){renderProgress();}out.progOk=true;}catch(e){out.progOk=false;out.progErr=e.message;}
+  // 10. Le contexte de Milo raconte la MÊME histoire
+  const ctx=buildCoachContext();
+  out.ctxLen=ctx.length;
+  out.ctxNom=ctx.includes('Testeur');
+  out.ctxSeance=ctx.includes('Développé Couché');
+  out.ctxRecord=/Dernier RECORD en date/i.test(ctx);
+  out.ctxRecup=/Score récupération: \d+\/100/.test(ctx);
+  out.ctxCal=/CALENDRIER/.test(ctx);
+  out.ctxVol=ctx.includes(String(sess.volume));
+  const m=ctx.match(/Score récupération: (\d+)\/100/);
+  out.ctxRecVal=m?+m[1]:null;
+  // 11. Nutrition : l'écran affiche les MÊMES calories que le calcul (avec SA phase mémorisée)
+  const mac=calcMacros(S.nutritionPhase||'charge');
+  try{renderNutrition();out.nutriOk=true;}catch(e){out.nutriOk=false;}
+  const nEl=document.getElementById('s-nutrition');
+  out.nutriAffiche=nEl?nEl.textContent.includes(mac.calories.toLocaleString('fr-FR')):false; // « 3 190 » à la française
+  out.macCal=mac.calories;
+  return out;
+});
+t('la séance démarre par startWorkout() (date + heure posées)', A.wktCree);
+t('séance enregistrée : 1 séance en mémoire, datée aujourd\'hui', A.nSess===1&&!!A.sessDate);
+t('volume juste : échauffement et série non faite EXCLUS (1548 kg)', A.volume===1548, 'reçu '+A.volume);
+t('calories calculées et posées sur la séance', A.calories>0, 'reçu '+A.calories);
+t('durée réelle enregistrée', A.duration);
+t('PR Développé Couché = le MEILLEUR 1RM estimé (100×5 bat 102.5×3)', A.pr&&A.pr.rm1===A.bzAttendu,
+  JSON.stringify(A.pr)+' vs '+A.bzAttendu);
+t('PR Curl = bz(20,12) — la série non faite ne compte pas', A.prCurl&&A.prCurl.rm1===A.curlAttendu,
+  JSON.stringify(A.prCurl));
+t('l\'échauffement ne fait jamais un PR', A.prPasW);
+t('badges débloqués dans la foulée : 1ʳᵉ séance + 1ᵉʳ PR', A.badges.includes('first_session')&&A.badges.includes('first_pr'),
+  JSON.stringify(A.badges));
+t('le brouillon de séance est vidé après enregistrement', A.wktVide);
+t('la récupération BAISSE après la séance ('+A.recAvant+' → '+A.recApres+')', A.recApres<A.recAvant);
+t('l\'Accueil se rend sans erreur', A.homeOk, A.homeErr);
+t('calendrier : séance DC+curl classée « haut du corps »', A.region==='haut', 'reçu '+A.region);
+t('répartition en clair disponible (« '+A.mixTxt+' »)', !!A.mixTxt&&/%/.test(A.mixTxt));
+t('couleur de calendrier posée', A.couleur);
+t('l\'écran Progrès se rend sans erreur', A.progOk, A.progErr);
+t('MILO : reçoit le prénom', A.ctxNom);
+t('MILO : voit la séance du jour (Développé Couché)', A.ctxSeance);
+t('MILO : reçoit le dernier record daté', A.ctxRecord);
+t('MILO : reçoit le score de récupération', A.ctxRecup);
+t('MILO : score de récup du contexte = celui de l\'Accueil ('+A.ctxRecVal+' vs '+A.recApres+')', A.ctxRecVal===A.recApres);
+t('MILO : reçoit le calendrier (jours en clair)', A.ctxCal);
+t('Nutrition : l\'écran affiche les calories du calcul ('+A.macCal+')', A.nutriOk&&A.nutriAffiche);
+t('0 erreur JS sur tout le parcours', errs.length===0, errs.join(' | '));
+
+// ── Persistance : on recharge la page, rien ne se perd ──
+await p.reload(); await p.waitForTimeout(2200);
+const P=await p.evaluate(()=>({
+  nSess:(S.sessions||[]).length,
+  pr:S.prs&&S.prs['Développé Couché']&&S.prs['Développé Couché'].rm1,
+  badges:Object.keys(S.badges||{}).length,
+  cal:S.sessions[0]&&S.sessions[0].calories,
+}));
+t('après RECHARGEMENT : la séance est toujours là', P.nSess===1, 'reçu '+P.nSess);
+t('après rechargement : le PR est toujours là', !!P.pr);
+t('après rechargement : badges et calories conservés', P.badges>=2&&P.cal>0);
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n═══ B. DISCIPLINES / AUTRE SPORT → récup + calories (contrôle demandé) ═══');
+const B=await p.evaluate(()=>{
+  const out={};
+  // L'utilisateur déclare un autre sport (vélo)
+  S.coachQuiz=S.coachQuiz||{answers:{},done:false};S.coachQuiz.answers=S.coachQuiz.answers||{};
+  const avant={rec:calcRecoveryScore(),tdee:calcTDEE()};
+  S.coachQuiz.answers.othersport='velo';
+  const apres={rec:calcRecoveryScore(),tdee:calcTDEE()};
+  out.recChange=apres.rec!==avant.rec;
+  out.tdeeChange=apres.tdee!==avant.tdee;
+  const ctx=buildCoachContext();
+  out.ctxVelo=/Autre sport pratiqué → vélo/.test(ctx);
+  out.ctxConsigne=/récupération ET la dépense énergétique/.test(ctx);
+  // « aucun » ne doit PAS produire de ligne
+  S.coachQuiz.answers.othersport='aucun';
+  out.ctxAucun=!/Autre sport pratiqué/.test(buildCoachContext());
+  delete S.coachQuiz.answers.othersport;
+  // La discipline (muscu/powerlifting/haltéro) atteint Milo
+  S.discipline='halterophilie';
+  out.ctxDisc=/Discipline pratiquée/.test(buildCoachContext());
+  S.discipline='muscu';
+  // Les MET du cardio distinguent bien les types et intensités (monotone)
+  out.metMono=Object.entries(CARDIO_MET).every(([k,v])=>v.leger<v.modere&&v.modere<v.intense);
+  // Les MET de muscu distinguent les familles
+  out.mets={squat:getExerciseMET('Squat à la Barre'),dc:getExerciseMET('Développé Couché'),
+            curl:getExerciseMET('Curl Biceps'),arr:getExerciseMET('Arraché (Snatch)')};
+  return out;
+});
+t('⚠️ CONSTAT (R4) : l\'autre sport ne change PAS le CHIFFRE de récup', B.recChange===false);
+t('⚠️ CONSTAT (R4) : l\'autre sport ne change PAS le TDEE/calories', B.tdeeChange===false);
+t('mais Milo le reçoit bien (« vélo » + consigne récup/dépense)', B.ctxVelo&&B.ctxConsigne);
+t('« aucun autre sport » → aucune ligne parasite chez Milo', B.ctxAucun);
+t('la discipline déclarée atteint Milo', B.ctxDisc);
+t('cardio : léger < modéré < intense pour TOUS les types', B.metMono);
+t('muscu : MET par famille (squat 6.5 · DC 5.5 · curl 4.0 · arraché 8.0)',
+  B.mets.squat===6.5&&B.mets.dc===5.5&&B.mets.curl===4&&B.mets.arr===8, JSON.stringify(B.mets));
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n═══ C. PERFORMANCES — l\'app et Milo sont-ils ralentis ? ═══');
+// Profil réaliste chargé : 200 séances, 3 ans de sommeil/poids, historique de chat
+const C=await p.evaluate(()=>{
+  const out={};
+  const mk=(d,n)=>({date:d,ts:new Date(d+'T18:00:00').getTime(),volume:5000,calories:400,
+    exs:[{name:'Squat à la Barre',sets:[1,2,3,4].map(()=>({kg:100,reps:8,done:true,type:'N'}))},
+         {name:'Développé Couché',sets:[1,2,3,4].map(()=>({kg:90,reps:6,done:true,type:'N'}))},
+         {name:'Rowing T-Bar',sets:[1,2,3].map(()=>({kg:60,reps:10,done:true,type:'N'}))},
+         {name:'Curl Biceps',sets:[1,2].map(()=>({kg:20,reps:12,done:true,type:'N'}))}]});
+  const sess=[];const d0=new Date('2026-07-29T12:00:00');
+  for(let i=0;i<200;i++){const d=new Date(d0);d.setDate(d0.getDate()-i*2);sess.push(mk(d.toISOString().slice(0,10)));}
+  S.sessions=sess;
+  S.weightLog=[];S.sleepLog=[];
+  for(let i=0;i<400;i++){const d=new Date(d0);d.setDate(d0.getDate()-i);const ds=d.toISOString().slice(0,10);
+    S.weightLog.push({date:ds,kg:80+Math.sin(i/30)});S.sleepLog.push({date:ds,hours:7.5,quality:3});}
+  const time=(f,n)=>{const t0=performance.now();for(let i=0;i<n;i++)f();return Math.round((performance.now()-t0)/n*100)/100;};
+  out.persist=time(()=>persist(),5);
+  out.home=time(()=>renderHome(),10);
+  out.recov=time(()=>calcRecoveryScore(),50);
+  out.ctx=time(()=>buildCoachContext(),10);
+  out.ctxLen=buildCoachContext().length;
+  out.calSess=time(()=>calcSessionCalories(S.sessions[0]),50);
+  out.progress=time(()=>{try{renderProgress();}catch(e){}},5);
+  // taille du stockage
+  let sz=0;for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);sz+=k.length+(localStorage.getItem(k)||'').length;}
+  out.lsKo=Math.round(sz/1024);
+  return out;
+});
+console.log('     ℹ️  persist() : '+C.persist+' ms · renderHome() : '+C.home+' ms · récup : '+C.recov+' ms');
+console.log('     ℹ️  buildCoachContext() : '+C.ctx+' ms ('+C.ctxLen+' caractères) · calcSessionCalories : '+C.calSess+' ms');
+console.log('     ℹ️  renderProgress() : '+C.progress+' ms · localStorage : '+C.lsKo+' Ko');
+t('Accueil < 50 ms avec 200 séances (aucun ralentissement perceptible)', C.home<50, C.home+' ms');
+t('persist() < 30 ms (sauvegarde invisible)', C.persist<30, C.persist+' ms');
+t('score de récup < 5 ms', C.recov<5, C.recov+' ms');
+t('contexte de Milo construit < 50 ms', C.ctx<50, C.ctx+' ms');
+t('calories d\'une séance < 5 ms', C.calSess<5, C.calSess+' ms');
+t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+' Ko');
+
+await b.close(); srv.close();
+console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
+process.exit(ko?1:0);
+})().catch(e=>{console.error(e);process.exit(2);});
