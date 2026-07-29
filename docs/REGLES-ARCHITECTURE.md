@@ -111,9 +111,14 @@ Si Milo redemande sans cesse une information, ce n'est pas qu'il est mal instrui
 **l'interface ne la collecte pas**. Le fix est dans l'INTERFACE.
 *Origine : ft-v604 (écran « Ton entraînement » ajouté à l'inscription) — après des mois de durcissement
 de prompt sur le même symptôme*
-**Croisée 3 fois** : l'inscription (ft-v604) · le **prénom** que le prompt réclamait sans qu'on le
-transmette (ft-v652) · les **jours** (ft-v658 — Milo répond « demain mercredi » un mercredi ; on lui
-donnait la date d'aujourd'hui mais jamais ce qu'était « demain », donc il devait le calculer).
+**Croisée 4 fois** : l'inscription (ft-v604) · le **prénom** que le prompt réclamait sans qu'on le
+transmette (ft-v652) · les **jours à venir** (ft-v658 — « demain mercredi » un mercredi) · les **jours
+passés et les dates de records** (ft-v660 — une séance datée « lundi » alors qu'elle était mardi, et un
+maximal reproposé 2 jours après un record parce que les records n'avaient aucune date).
+⚠️ **Corollaire coûteux, appris à ft-v660** : en corrigeant ft-v658 je n'ai regardé QUE la question
+posée (« demain »). Le même manque existait à **trois autres endroits du même contexte**, et le retour
+suivant est tombé deux heures après. *Quand on trouve une donnée absente, chercher immédiatement ses
+jumelles ailleurs dans le même bloc — un oubli de ce type est rarement isolé.*
 **Le réflexe** : quand une réponse est fausse sur un point *factuel*, se demander d'abord **« est-ce
 qu'on lui a seulement donné le fait ? »** — avant de toucher au prompt.
 

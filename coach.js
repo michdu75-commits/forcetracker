@@ -1082,6 +1082,18 @@ function buildCoachContext() {
   const _jourISO = d => new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
   const _jourFR  = d => d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
   const _jourDe  = n => { const d=new Date(_now); d.setDate(d.getDate()+n); return d; };
+  // Même principe que le CALENDRIER, appliqué au PASSÉ (ft-v660) : Michel a vu Milo dater sa
+  // séance jambes « lundi » (c'était mardi) et son record « dimanche » (c'était lundi) —
+  // un jour d'écart, comme pour « demain ». On lui donnait la date ISO, il devait en déduire
+  // le jour de la semaine. On le lui DONNE, avec le repère relatif.
+  const _dateLisible = iso => {
+    if(!iso) return '';
+    const d=new Date(iso+'T12:00:00'); if(isNaN(d)) return iso;
+    const ecart=Math.round((new Date(_jourISO(_now)+'T12:00:00')-d)/864e5);
+    const rel = ecart===0?"aujourd'hui" : ecart===1?'hier' : ecart===2?'avant-hier'
+              : ecart>0?('il y a '+ecart+' jours') : '';
+    return d.toLocaleDateString('fr-FR',{weekday:'long'})+' '+iso+(rel?' ('+rel+')':'');
+  };
   const _calendrier = (()=>{
     const l=[];
     l.push('- hier = '+_jourFR(_jourDe(-1))+' ('+_jourISO(_jourDe(-1))+')');
@@ -1100,6 +1112,17 @@ function buildCoachContext() {
   const prsText = Object.entries(S.prs).length > 0
     ? Object.entries(S.prs).map(([ex, d]) => `${ex}: ${d.kg}kg×${d.reps} (~${fmt(d.rm1)}kg 1RM)`).join(', ')
     : 'Aucun PR enregistré';
+
+  // ⚠️ Le DERNIER record en date, nommé (ft-v660). Michel a demandé « tu me refais un lourd
+  // demain ? » deux jours après un record au couché — Milo avait proposé du lourd. Il ne
+  // pouvait pas juger : les records n'avaient AUCUNE date dans son contexte. Une seule ligne
+  // ciblée plutôt qu'une date sur chacun (le nombre de records peut être grand).
+  const _dernierPR = (()=>{
+    const av=Object.entries(S.prs||{}).filter(([,d])=>d&&d.date);
+    if(!av.length) return '';
+    const [ex,d]=av.sort((a,b)=>String(b[1].date).localeCompare(String(a[1].date)))[0];
+    return `\nDernier RECORD en date: ${ex} ${d.kg}kg×${d.reps} — ${_dateLisible(d.date)}`;
+  })();
 
   // Objectifs FIXÉS par l'athlète (force par exercice + poids) — pour que Milo puisse répondre
   // « est-ce atteignable / en combien de temps » (retour Michel : Milo ne connaissait pas
@@ -1127,7 +1150,7 @@ function buildCoachContext() {
         : '—';
       return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}`;
     }).join(' · ');
-    return `${s.date}: ${exStr} — ${s.volume}kg vol total`;
+    return `${_dateLisible(s.date)}: ${exStr} — ${s.volume}kg vol total`;
   }).join('\n') || 'Aucune séance';
 
   // Séance EN COURS (S.wkt) — permet au Coach d'aider PENDANT l'entraînement
@@ -1180,6 +1203,7 @@ TA MÉTHODE DE COACH (comment un vrai coach physique construit et coache — c'e
 - Bâtir une séance : échauffement 5-10 min OBLIGATOIRE (mobilité + 1-2 séries légères de montée en charge sur le 1er mouvement), un travail d'abdos/gainage régulier (2 à 4×/sem, court), puis 4 à 6 exercices. Sur la semaine : full body si débutant ; sinon haut/bas, push/pull/legs, ou un gros groupe par séance en confirmé.
 - Ordre : polyarticulaires lourds d'abord quand il est frais (squat, développé, soulevé, tractions), isolation ensuite. Jamais 3 grosses poussées lourdes à la suite.
 - Variété : varie les angles (incliné/plat/décliné, prise large/serrée), alterne barre/haltères/machine/poulie. Machines guidées pour débuter (sécurité) et pour finir un muscle. Fais tourner les exercices d'un bloc à l'autre pour éviter la stagnation.
+- ⚠️ APRÈS UN EFFORT MAXIMAL (record, série lourde à 1-3 reps près du max), compte 4 à 7 jours avant de reproposer un maximal sur le MÊME mouvement — le système nerveux met plus longtemps à récupérer que les muscles. Regarde « Dernier RECORD en date » AVANT de proposer du lourd : si c'est récent, propose du volume/technique et dis pourquoi.
 - Charges & reps selon l'objectif : force → 3-6 reps lourdes, repos 2-4 min ; muscle/hypertrophie → 8-15 reps, repos 60-90 s ; endurance/sèche → 15-20+ reps, repos court. Calibre depuis ses records (1RM) et son niveau.
 - Techniques d'intensification (dose-les, pas partout) : supersets (2 exos enchaînés sans repos), dropsets (à l'échec puis −20% sans repos), reps dégressives (12-10-8-6 en montant la charge), double contraction, tempo (descente lente 3-4 s, montée explosive), rest-pause, séries à l'échec avec parcimonie, unilatéral pour corriger un déséquilibre.
 - Cues d'exécution PRÉCIS, comme un coach à côté de lui : tempo, amplitude complète, gainage (« serre les abdos », « bassin fixe »), placement (« pieds serrés », « coudes rentrés »), connexion muscle-esprit, respiration. C'est ce qui fait vraiment la différence.
@@ -1456,7 +1480,7 @@ ${(()=>{
   return '\n📍 ÉTAT DU JOUR (AUJOURD\'HUI, ponctuel — ne définit PAS la personne, ne vaut que pour aujourd\'hui) : '+parts.join(' · ')+'.\n→ Adapte tes conseils DU JOUR : fatigue → allège/soutiens ; en forme → tu peux pousser ; une DOULEUR du jour → protège cette zone EN PRIORITÉ (le Gardien en tient déjà compte), allège ou propose une alternative. ⚠️ LE RESSENTI PRIME toujours sur les chiffres.'+acc+'\n';
 })()}
 RECORDS PERSONNELS (1RM estimés):
-${prsText}
+${prsText}${_dernierPR}
 
 OBJECTIFS FIXÉS PAR L'ATHLÈTE:
 ${objectivesText}

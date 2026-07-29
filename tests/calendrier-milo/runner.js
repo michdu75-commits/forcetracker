@@ -31,15 +31,15 @@ const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/ch
 
 // Le contexte est construit avec l'horloge GELÉE sur un instant précis : on peut donc
 // vérifier les VRAIS noms de jours, pas « ce que l'ordinateur pense être aujourd'hui ».
-async function ctxLe(instantISO){
+async function ctxLe(instantISO,extra){
   const c=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   await c.addInitScript(([s,fixe])=>{
     for(const k in s)localStorage.setItem(k,s[k]);
     const F=new Date(fixe), R=Date;
     window.Date=class extends R{constructor(...a){super(...(a.length?a:[F.getTime()]));}static now(){return F.getTime();}};
     window.Date.parse=R.parse; window.Date.UTC=R.UTC;
-  },[{ft4_name:'Michel',ft4_bw:'87',ft4_age:'45',ft4_height:'178',ft4_gender:'h',
-      ft4_ok:'1',ft4_premium:'1',ft4_email:'x@y.z'},instantISO]);
+  },[Object.assign({ft4_name:'Michel',ft4_bw:'87',ft4_age:'45',ft4_height:'178',ft4_gender:'h',
+      ft4_ok:'1',ft4_premium:'1',ft4_email:'x@y.z'},extra||{}),instantISO]);
   const p=await c.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
   await p.goto('http://localhost:'+srv.address().port+'/index.html');
   await p.waitForTimeout(2300);
@@ -96,6 +96,33 @@ console.log('\n─── MILO NE CALCULE PLUS LES JOURS ────────
     (ctx.match(/- AUJOURD'HUI = .*/)||[''])[0]);
   t('… et les deux façons de dire la date CONCORDENT',
     /- AUJOURD'HUI = mercredi 29 juillet/.test(ctx)&&/On est mercredi 29 juillet/.test(ctx));
+}
+
+// ── 5. LE PASSÉ AUSSI : les séances et le record portent leur jour (ft-v660) ──
+// 2ᵉ capture de Michel : Milo datait sa séance jambes « lundi » (c'était mardi) et son
+// record « dimanche » (c'était lundi). Un jour d'écart — le même bug que « demain ».
+{
+  const {ctx,errs}=await ctxLe('2026-07-29T09:21:00+02:00',{
+    ft4_sessions:JSON.stringify([
+      {date:'2026-07-28',exs:[{name:'Squat',sets:[{kg:120,reps:5,done:true,type:'N'}]}],volume:3000},
+      {date:'2026-07-27',exs:[{name:'Développé Couché',sets:[{kg:105,reps:2,done:true,type:'N'}]}],volume:2100}]),
+    ft4_prs:JSON.stringify({'Développé Couché':{kg:105,reps:2,rm1:111,date:'2026-07-27'}})});
+  t('⭐ la séance de la veille est datée MARDI, pas lundi',
+    /mardi 2026-07-28 \(hier\)/.test(ctx), (ctx.match(/^.*2026-07-28.*$/m)||['(absent)'])[0]);
+  t('⭐ celle d\'avant est datée LUNDI, pas dimanche',
+    /lundi 2026-07-27 \(avant-hier\)/.test(ctx), (ctx.match(/^.*2026-07-27.*vol total$/m)||['(absent)'])[0]);
+  t('le DERNIER RECORD est nommé, daté et situé dans le temps',
+    /Dernier RECORD en date: Développé Couché 105kg×2 — lundi 2026-07-27 \(avant-hier\)/.test(ctx),
+    (ctx.match(/Dernier RECORD en date:.*/)||['(absent)'])[0]);
+  t('… et la règle « on n\'enchaîne pas deux maximaux » est là',
+    /APRÈS UN EFFORT MAXIMAL/.test(ctx)&&/4 à 7 jours/.test(ctx));
+  t('aucune erreur JS', errs.length===0, errs.join(' | '));
+}
+// aucun record enregistré → pas de ligne inventée
+{
+  const {ctx}=await ctxLe('2026-07-29T09:21:00+02:00');
+  t('aucun record → aucune ligne « Dernier RECORD » (0 invention)',
+    !/Dernier RECORD en date:/.test(ctx));
 }
 
 console.log('──────────────────────────────────────────────────────────');
