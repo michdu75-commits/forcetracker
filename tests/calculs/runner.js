@@ -249,6 +249,24 @@ console.log('\n═══ 3 bis. APRÈS MINUIT — le bouton « Hier » et les re
 }
 
 // ════════════════════════════════════════════════════════════════════
+console.log('\n═══ 3 ter. Masse maigre calculée sur les ANCIENS bilans (migration 30/07) ═══');
+{
+  // 3 bilans en stock : ① leanMass ratée par le lecteur (cas Eline) ② leanMass DÉJÀ lue
+  // (ne doit jamais être écrasée) ③ poids manquant (on ne peut pas calculer → reste vide)
+  const scans=JSON.stringify([
+    {date:'2026-07-29',weight:51.85,fatMass:14.1,leanMass:null},
+    {date:'2026-06-15',weight:52.4,fatMass:14.8,leanMass:37.4},
+    {date:'2026-05-01',fatMass:15.2,leanMass:null},
+  ]);
+  const {c,p}=await boot(null,{ft4_bodyscans:scans});
+  const r=await p.evaluate(()=>({s:S.bodyScans.map(x=>x.leanMass)}));
+  t('⭐ bilan d\'Eline : masse maigre CALCULÉE (51.85 − 14.1 = 37.8)', r.s[0]===37.8, 'reçu '+r.s[0]);
+  t('une masse maigre déjà LUE n\'est jamais écrasée', r.s[1]===37.4, 'reçu '+r.s[1]);
+  t('poids manquant → on ne peut pas calculer, on n\'invente rien', r.s[2]==null, 'reçu '+r.s[2]);
+  await c.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ 4. Niveaux de force — getLevel ═══');
 {
   const {c,p}=await boot(null,{});

@@ -156,6 +156,18 @@ function load(){
     // d'historique mais un dernier bilan existe, on l'initialise avec ce bilan.
     S.bodyStudies=JSON.parse(localStorage.getItem('ft4_bodystudies')||'null')||(S.bodyStudy?[S.bodyStudy]:[]);
     S.bodyScans=JSON.parse(localStorage.getItem('ft4_bodyscans')||'[]');
+    // Migration 30/07/2026 (retour Eline, décision Michel : « si on peut le faire par calcul,
+    // le faire de suite et sur les anciennes pesées ») : masse maigre = poids − masse grasse.
+    // Complète les bilans DÉJÀ importés où le lecteur l'avait ratée — même formule que le
+    // backend (repli déterministe @auto 30/07). On ne touche jamais une valeur déjà lue.
+    (S.bodyScans||[]).forEach(sc=>{
+      if(sc&&(sc.leanMass==null||!isFinite(Number(sc.leanMass)))
+         &&isFinite(Number(sc.weight))&&Number(sc.weight)>0
+         &&isFinite(Number(sc.fatMass))&&Number(sc.fatMass)>0
+         &&Number(sc.fatMass)<Number(sc.weight)){
+        sc.leanMass=Math.round((Number(sc.weight)-Number(sc.fatMass))*10)/10;
+      }
+    });
     S.bloodTests=JSON.parse(localStorage.getItem('ft4_bloodtests')||'[]');
     S.coachQuiz=JSON.parse(localStorage.getItem('ft4_coachquiz')||'null');
     S.coachQuizPro=JSON.parse(localStorage.getItem('ft4_coachquizpro')||'null');
