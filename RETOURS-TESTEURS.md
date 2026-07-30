@@ -79,4 +79,29 @@ du cycle (fait `ft-v442`), plus de techniques (excentrique/partielles).
 
 ---
 
+## 📬 Boîte à idées OUVERTE et TRIÉE le 30/07/2026 (17 idées, Christophe ×16 · Eline ×1)
+
+> Michel a ouvert la boîte (`getIdees`) et collé le contenu ; tri vérifié **dans le code** avant
+> chaque verdict (règle R23 : ne jamais affirmer qu'une chose manque sans vérifier).
+
+**✅ Déjà fait depuis (6)** — la boîte datait surtout du 7-11/07 :
+- Chrono repos « 8 reps à 30 kg » (au lieu de « 30×8 ») → **implémenté** (`_fmtNextSet`, log.js).
+- Saisir soi-même ses repas (matin/midi/soir/collations) → **le journal « Noter ce que je mange »**.
+- Code-barres qui ne marche pas → **corrigé le lendemain** (ft-v393, lecture du numéro par IA).
+- Boîte à idées : photos séparées du texte → **corrigé** (ft-v397, photos en pièces jointes au mail).
+- Supprimer un aliment avec confirmation nommée → **existe** (« Supprimer l'aliment ? “50 g de concombre” »).
+- Voir la progression des poids d'un exercice → **bouton 📊 par exercice** (`openExHistory`) ; la vue en % n'existe pas (à discuter si toujours voulue).
+
+**⏳ À faire / à discuter (4)** :
+1. ⭐ **Superset par glisser-déposer** (demandé 2 fois, avec relance « super développeur ») — le vrai chantier de la boîte. L'import sait déjà lire les supersets ; c'est la CRÉATION manuelle en séance qui manque.
+2. **Swipe gauche/droite entre les jours** (29/07, demandé 2×, photo) — navigation dans le plan/journal alimentaire.
+3. **PDF téléchargeable** — préciser de QUOI (les réponses de Milo et l'étude du corps l'ont déjà).
+4. **Eline — masse maigre non lue** sur son rapport MyBodyCheck : la clé `leanMass` est bien demandée au lecteur, c'est le modèle (léger, choisi pour la vitesse) qui l'a ratée dans « Autres indicateurs ». **Fix proposé, déterministe** : si `leanMass` manque mais poids et masse grasse sont lus → la calculer (`poids − masse grasse` ; vérifié sur son rapport : 51,85 − 14,1 = 37,75 ≈ 37,8). Jamais d'IA là où une soustraction suffit.
+
+**❓ Illisibles sans contexte (2)** : « poids du précédent programme » (07/07 — l'import a été refait depuis, à reconfirmer par Christophe) · « comment associer les 2 ? » (photo jamais reçue).
+
+**🐛 Trouvé EN LISANT la boîte** : deux idées envoyées **en double** (à 18 s et à 2 s d'écart) → le bouton d'envoi n'a probablement pas d'anti-double-tap. Petit fix candidat.
+
+---
+
 *(À compléter à chaque nouveau retour testeur marquant. Garder le lien dans `CLAUDE.md`.)*
