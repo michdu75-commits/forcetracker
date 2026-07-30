@@ -1776,7 +1776,7 @@ function fillEnrich(field,value){
     persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
     if(typeof _renderObsCard==='function')_renderObsCard();
     let msg='Noté 👍 Milo en tient compte.';
-    if(field==='othersport')msg=(value==='aucun')?'Noté 👍':('Top 👍 Milo tiendra compte de ton '+(_OTHERSPORT_LBL[value]||'autre sport')+' (récup + calories).');
+    if(field==='othersport')msg=(value==='aucun')?'Noté 👍':('Top 👍 Ton '+(_OTHERSPORT_LBL[value]||'autre sport')+' est compté dans tes besoins caloriques, et Milo en tient compte pour ta récup.');
     if(typeof toast==='function')toast(msg,'success');
   }catch(e){console.warn('[FT enrich] fill',e);}
 }

@@ -404,7 +404,20 @@ function calcBMR(){
   return S.smoker?Math.round(bmr*1.07):bmr;
 }
 function calcWorkExtra(){return{bureau:0,debout:200,actif:325,physique:450}[S.workType]||0;}
-function calcTDEE(){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra());}
+// AUTRE SPORT déclaré (profil vivant, « vélo/course/foot… ») → la dépense DESCEND dans le chiffre
+// (audit 30/07, R4 : l'aide promettait « change tes calories » alors que rien ne bougeait).
+// +150 kcal/j : moyenne prudente d'une pratique loisir (~2-3 fois/sem), soit une DEMI-marche du
+// multiplicateur d'activité (~310 kcal). ⚠️ PAS de double comptage : à « Actif (5-6j) » ou
+// « Très actif » (≥ 1.725), les jours d'entraînement déclarés couvrent déjà l'autre sport → +0.
+// La RÉCUPÉRATION, elle, ne reçoit AUCUN malus aveugle : l'app ne sait pas QUAND la personne
+// pratique — inventer une fatigue permanente serait faire semblant de savoir (Principe 18, R29).
+// C'est Milo qui en tient compte dans ses conseils (il reçoit l'info dans son contexte).
+function calcSportExtra(){
+  const os=S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.othersport;
+  if(!os||os==='aucun')return 0;
+  return (S.activityLevel||1.55)>=1.725?0:150;
+}
+function calcTDEE(){return Math.round(calcBMR()*S.activityLevel+calcWorkExtra()+calcSportExtra());}
 
 // ── Régime alimentaire + restrictions (végé, halal, allergies…) ──
 const DIET_LABELS={omnivore:'Omnivore',vegetarien:'Végétarien',vegan:'Végan',pescetarien:'Pescétarien'};

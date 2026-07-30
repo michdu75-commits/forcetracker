@@ -159,10 +159,10 @@ const B=await p.evaluate(()=>{
   S.coachQuiz.answers.othersport='velo';
   const apres={rec:calcRecoveryScore(),tdee:calcTDEE()};
   out.recChange=apres.rec!==avant.rec;
-  out.tdeeChange=apres.tdee!==avant.tdee;
+  out.tdeeDelta=apres.tdee-avant.tdee;
   const ctx=buildCoachContext();
   out.ctxVelo=/Autre sport pratiqué → vélo/.test(ctx);
-  out.ctxConsigne=/récupération ET la dépense énergétique/.test(ctx);
+  out.ctxConsigne=/DÉJÀ compté dans ses besoins caloriques|couvert par son niveau d'activité/.test(ctx);
   // « aucun » ne doit PAS produire de ligne
   S.coachQuiz.answers.othersport='aucun';
   out.ctxAucun=!/Autre sport pratiqué/.test(buildCoachContext());
@@ -178,9 +178,11 @@ const B=await p.evaluate(()=>{
             curl:getExerciseMET('Curl Biceps'),arr:getExerciseMET('Arraché (Snatch)')};
   return out;
 });
-t('⚠️ CONSTAT (R4) : l\'autre sport ne change PAS le CHIFFRE de récup', B.recChange===false);
-t('⚠️ CONSTAT (R4) : l\'autre sport ne change PAS le TDEE/calories', B.tdeeChange===false);
-t('mais Milo le reçoit bien (« vélo » + consigne récup/dépense)', B.ctxVelo&&B.ctxConsigne);
+// Décision Michel 30/07 (audit, point 2) : les CALORIES descendent dans le chiffre (+150 kcal/j),
+// la RÉCUP reste chez Milo (l'app ne sait pas QUAND la personne pratique — pas de malus inventé).
+t('⭐ l\'autre sport DESCEND dans le TDEE : +150 kcal/j', B.tdeeDelta===150, 'reçu +'+B.tdeeDelta);
+t('la récup ne reçoit PAS de malus aveugle (décision assumée, pas un oubli)', B.recChange===false);
+t('Milo le reçoit + sait que les calories sont DÉJÀ comptées (pas de double ajout)', B.ctxVelo&&B.ctxConsigne);
 t('« aucun autre sport » → aucune ligne parasite chez Milo', B.ctxAucun);
 t('la discipline déclarée atteint Milo', B.ctxDisc);
 t('cardio : léger < modéré < intense pour TOUS les types', B.metMono);

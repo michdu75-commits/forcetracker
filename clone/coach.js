@@ -69,7 +69,13 @@ function _coachQuizContext(){
   const _os=(S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.othersport)||'';
   if(_os&&_os!=='aucun'){
     const _lbl=(typeof _OTHERSPORT_LBL!=='undefined'&&_OTHERSPORT_LBL[_os])?_OTHERSPORT_LBL[_os]:_os;
-    out.push('- Autre sport pratiqué → '+_lbl+' (prends-le en compte pour la récupération ET la dépense énergétique / les calories ; ne l\'ignore pas)');
+    // Depuis l'audit du 30/07, la dépense de l'autre sport est DÉJÀ dans le TDEE (+150 kcal/j,
+    // sauf niveau d'activité ≥ Actif où elle est couverte par le multiplicateur) → dire à Milo
+    // de ne PAS la recompter, sinon il conseillerait d'ajouter des calories une 2ᵉ fois.
+    const _dejaCompte=(typeof calcSportExtra==='function'&&calcSportExtra()>0)
+      ?'son surcoût énergétique est DÉJÀ compté dans ses besoins caloriques (+150 kcal/j) — ne le rajoute pas une deuxième fois'
+      :'côté calories il est déjà couvert par son niveau d\'activité déclaré';
+    out.push('- Autre sport pratiqué → '+_lbl+' (prends-le en compte pour la récupération et la fatigue ; '+_dejaCompte+')');
   }
   if(!out.length)return '';
   return '\n🗣️ CE QUE LA PERSONNE A DIT SUR ELLE (questionnaire) — utilise-le pour vraiment personnaliser (ne le récite pas bêtement, sers-t\'en) :\n'+out.join('\n')+'\n';

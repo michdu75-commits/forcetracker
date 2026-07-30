@@ -106,6 +106,12 @@ console.log('\n═══ 2. calcBMR / calcTDEE / macros (Mifflin-St Jeor) ══
       sums[g]=meals.reduce((a,x)=>a+x.kcal,0)/mm.calories;
     }
     S.goal='muscle';
+    // autre sport déclaré → +150 kcal/j, SAUF si le niveau d'activité le couvre déjà (≥ Actif)
+    S.coachQuiz={answers:{othersport:'velo'},done:false};
+    out.sportPlus=calcTDEE();
+    S.activityLevel=1.9; out.sportActif=Math.round(calcBMR()*1.9)-calcTDEE(); S.activityLevel=1.55;
+    S.coachQuiz.answers.othersport='aucun'; out.sportAucun=calcTDEE();
+    delete S.coachQuiz.answers.othersport;
     return out.sums=sums,out;
   });
   t('BMR homme 80kg/178cm/30ans = 1768 (Mifflin-St Jeor exact)', approx(r.bmrH,1768), 'reçu '+r.bmrH);
@@ -114,6 +120,9 @@ console.log('\n═══ 2. calcBMR / calcTDEE / macros (Mifflin-St Jeor) ══
   t('profil incomplet → BMR 0 (pas de chiffre inventé)', r.bmrSans===0);
   t('TDEE = BMR × 1.55 (activité) + 0 (bureau)', approx(r.tdee,Math.round(1767.5*1.55)), 'reçu '+r.tdee);
   t('travail physique : +450 kcal', r.tdeePhys-r.tdee===450, 'reçu +'+(r.tdeePhys-r.tdee));
+  t('autre sport déclaré (vélo) → +150 kcal/j dans le TDEE', r.sportPlus-r.tdee===150, 'reçu +'+(r.sportPlus-r.tdee));
+  t('niveau « Très actif » → PAS de double comptage (+0)', r.sportActif===0, 'reçu écart '+r.sportActif);
+  t('« aucun autre sport » → +0', r.sportAucun===r.tdee, r.sportAucun+' vs '+r.tdee);
   t('objectif muscle + phase charge : TDEE +350 +100', r.auto-r.tdee===450, 'reçu +'+(r.auto-r.tdee));
   t('phase sèche : −200 vs charge', r.auto-r.autoSeche===200, 'reçu '+(r.auto-r.autoSeche));
   t('objectif perte : TDEE −450 (déficit)', r.autoPerte-r.tdee===-350, 'reçu '+(r.autoPerte-r.tdee));
