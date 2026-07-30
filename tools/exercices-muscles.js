@@ -47,7 +47,9 @@ const data=await p.evaluate(()=>{
     // figurine RÉELLE de l'app, dédupliquée : même combinaison de muscles = même dessin
     const key=Object.keys(sc).sort().map(k=>k+sc[k]).join('|')||'vide';
     if(!svgs[key])svgs[key]={sc:sc,ind:d.ind||{}};
-    rows.push({n,prim,sec,reg:REG[reg]||'—',mov:MOV[mov]||(mov||'—'),key});
+    // démo animée (webp) de la bibliothèque — celle que l'app montre dans la séance
+    const demo=(typeof EX_YT!=='undefined'&&EX_YT[n]&&EX_YT[n].img)?EX_YT[n].img:'';
+    rows.push({n,prim,sec,reg:REG[reg]||'—',mov:MOV[mov]||(mov||'—'),key,demo});
   }
   return {rows, total:noms.length, combos:Object.keys(svgs), svgSpecs:svgs};
 });
@@ -112,6 +114,9 @@ td{padding:7px 8px;border-bottom:1px solid #1a1e26;vertical-align:middle}
 tr:nth-child(even) td{background:#11141b}
 .fig{width:52px;min-width:52px}
 .fg{width:48px;height:86px;background-size:contain;background-repeat:no-repeat;background-position:center;border-radius:6px}
+.demo{width:84px;min-width:84px}
+.demo img{width:80px;height:auto;display:block;border-radius:8px;background:#fff}
+.demo .no{color:#565c68;font-size:11px}
 ${figCss}
 .nom{font-weight:700;min-width:120px}
 .prim{color:#ff5a6e;font-weight:600}
@@ -122,13 +127,14 @@ ${figCss}
 </style></head><body>
 <h1>🗺️ Exercices → figurine → muscles</h1>
 <div class="sub">Généré depuis le code le ${today} · ${data.total} exercices · <i>node tools/exercices-muscles.js</i> pour régénérer.</div>
-<div class="legende"><span class="dot" style="background:#FF2D55"></span><b>Rouge</b> = muscles principaux &nbsp;·&nbsp; <span class="dot" style="background:#FF9500"></span><b>Orange</b> = secondaires. La figurine affichée est <b>exactement</b> celle que l'app dessine pour cet exercice (un exercice perso suit les mêmes règles, reconnu par son nom).</div>
+<div class="legende"><span class="dot" style="background:#FF2D55"></span><b>Rouge</b> = muscles principaux &nbsp;·&nbsp; <span class="dot" style="background:#FF9500"></span><b>Orange</b> = secondaires. La figurine affichée est <b>exactement</b> celle que l'app dessine pour cet exercice (un exercice perso suit les mêmes règles, reconnu par son nom). La colonne <b>Démo</b> montre l'animation de la bibliothèque (à ouvrir depuis le site en ligne pour la voir bouger ; « — » = pas encore de démo pour cet exercice).</div>
 `;
 for(const g of ordre){
   const rows=groupes[g];if(!rows||!rows.length)continue;
-  html+=`<h2>${g} — ${rows.length} exercices</h2>\n<table><tr><th>Figurine</th><th>Exercice</th><th>Muscles principaux</th><th>Secondaires</th><th>Mouvement</th></tr>\n`;
+  html+=`<h2>${g} — ${rows.length} exercices</h2>\n<table><tr><th>Démo</th><th>Figurine</th><th>Exercice</th><th>Muscles principaux</th><th>Secondaires</th><th>Mouvement</th></tr>\n`;
   for(const r of rows){
-    html+=`<tr><td class="fig"><div class="fg ${figCls[r.key]||''}"></div></td><td class="nom">${r.n}</td><td class="prim">${r.prim.join(', ')||'—'}</td><td class="sec">${r.sec.join(', ')||'—'}</td><td class="mov">${r.mov}</td></tr>\n`;
+    const demo=r.demo?`<img src="../${r.demo}" loading="lazy" alt="démo ${r.n}">`:'<span class="no">—</span>';
+    html+=`<tr><td class="demo">${demo}</td><td class="fig"><div class="fg ${figCls[r.key]||''}"></div></td><td class="nom">${r.n}</td><td class="prim">${r.prim.join(', ')||'—'}</td><td class="sec">${r.sec.join(', ')||'—'}</td><td class="mov">${r.mov}</td></tr>\n`;
   }
   html+=`</table>\n`;
 }
