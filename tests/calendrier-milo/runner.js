@@ -123,6 +123,10 @@ console.log('\n─── MILO NE CALCULE PLUS LES JOURS ────────
   const {ctx}=await ctxLe('2026-07-29T09:21:00+02:00');
   t('aucun record → aucune ligne « Dernier RECORD » (0 invention)',
     !/Dernier RECORD en date:/.test(ctx));
+  // 30/07 : Milo a appelé « Ta séance d'hier » une séance seulement PRÉPARÉE la veille (jamais
+  // faite — hier était un repos). La règle FAITE vs PRÉPARÉE doit accompagner la liste des séances.
+  t('⭐ la règle « séance FAITE ≠ séance PRÉPARÉE » accompagne les dernières séances',
+    /réellement FAITES/.test(ctx)&&/PRÉPARÉE/.test(ctx)&&/REPOS/.test(ctx));
 }
 
 console.log('──────────────────────────────────────────────────────────');

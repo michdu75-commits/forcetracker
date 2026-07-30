@@ -1498,6 +1498,7 @@ ${S.cycle && S.cycle.active ? `Actif - Semaine ${curWeek}/${S.cycle.weeks} - Pha
 ${wktText}
 DERNIÈRES SÉANCES:
 ${recentSessions}
+→ Ces séances sont les seules réellement FAITES (chacune avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si aucune séance n'est listée pour un jour, ce jour était un REPOS : dis-le tel quel. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
 ${(()=>{
   // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :
   // l'Accueil affichait « je m'en souviens » et le chat n'avait JAMAIS reçu l'info. Milo affirmait
