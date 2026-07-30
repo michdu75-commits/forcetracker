@@ -636,8 +636,38 @@ function openWeighEdit(date){
   const ki=document.getElementById('weigh-edit-kg');if(ki)ki.value=w.kg;
   const bi=document.getElementById('weigh-edit-bf');if(bi)bi.value=(w.bf!=null?w.bf:'');
   const ov=document.getElementById('ov-weigh-edit');if(ov)ov.classList.add('open');
+  if(typeof _weighNavUpd==='function')_weighNavUpd();  // état des flèches ‹ › + « Pesée 12 sur 42 »
 }
 function closeWeighEdit(){const ov=document.getElementById('ov-weigh-edit');if(ov)ov.classList.remove('open');_weighEditDate=null;}
+// ── Navigation entre pesées : flèches ‹ › + glissement gauche/droite (idée Christophe, boîte à
+// idées 29/07 — sa capture montrait cette fenêtre). S.weightLog est trié du plus RÉCENT au plus
+// ancien → index+1 = pesée plus ANCIENNE. Naviguer CHARGE la pesée visée (une modif non
+// enregistrée est abandonnée — les flèches servent à CONSULTER, « Enregistrer » reste explicite).
+function _weighIdx(){return (S.weightLog||[]).findIndex(x=>x.date===_weighEditDate);}
+function _weighNav(dir){ // +1 = plus ancienne (‹) · −1 = plus récente (›)
+  const log=S.weightLog||[];const i=_weighIdx();if(i<0)return;
+  const j=i+dir;if(j<0||j>=log.length)return;
+  openWeighEdit(log[j].date);
+}
+function _weighNavUpd(){
+  const log=S.weightLog||[];const i=_weighIdx();
+  const p=document.getElementById('weigh-nav-prev'),n=document.getElementById('weigh-nav-next');
+  const okP=i>=0&&i+1<log.length, okN=i>0;
+  if(p){p.style.opacity=okP?'1':'.25';p.style.pointerEvents=okP?'':'none';}
+  if(n){n.style.opacity=okN?'1':'.25';n.style.pointerEvents=okN?'':'none';}
+  const pos=document.getElementById('weigh-nav-pos');
+  if(pos)pos.textContent=(i>=0&&log.length>1)?('Pesée '+(log.length-i)+' sur '+log.length):'';
+}
+let _weighTouchX=null,_weighTouchY=null;
+function _weighTS(e){const t=e.touches&&e.touches[0];if(t){_weighTouchX=t.clientX;_weighTouchY=t.clientY;}}
+function _weighTE(e){
+  if(_weighTouchX==null)return;
+  const t=e.changedTouches&&e.changedTouches[0];if(!t)return;
+  const dx=t.clientX-_weighTouchX,dy=t.clientY-_weighTouchY;
+  _weighTouchX=null;_weighTouchY=null;
+  if(Math.abs(dx)<60||Math.abs(dx)<Math.abs(dy)*2)return;  // geste franc et bien HORIZONTAL (ne vole pas le glisser-fermer vertical)
+  _weighNav(dx>0?1:-1);                                     // glisser vers la droite = remonter vers la plus ancienne
+}
 function saveWeighEdit(){
   const kg=parseFloat((document.getElementById('weigh-edit-kg')||{}).value);
   const newDate=(document.getElementById('weigh-edit-date')||{}).value;

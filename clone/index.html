@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v675';
+  b.textContent='🧪 CLONE ft-v676';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -2143,8 +2143,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
 <div class="overlay" id="ov-weigh-edit" onclick="if(event.target===this)closeWeighEdit()">
   <div class="modal" style="max-width:360px;">
     <div class="modal-handle"></div>
-    <div style="font-weight:900;font-size:18px;margin-bottom:14px;text-align:center;">Modifier la pesée</div>
-    <div style="display:flex;flex-direction:column;gap:12px;">
+    <!-- ‹ › + glissement : naviguer d'une pesée à l'autre sans rouvrir le graphique (idée Christophe, boîte à idées) -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;" ontouchstart="_weighTS(event)" ontouchend="_weighTE(event)">
+      <button id="weigh-nav-prev" onclick="_weighNav(1)" aria-label="Pesée précédente" style="width:38px;height:38px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0;line-height:1;touch-action:manipulation;">‹</button>
+      <div style="flex:1;text-align:center;">
+        <div style="font-weight:900;font-size:18px;">Modifier la pesée</div>
+        <div id="weigh-nav-pos" style="font-size:11.5px;color:var(--t3);margin-top:2px;"></div>
+      </div>
+      <button id="weigh-nav-next" onclick="_weighNav(-1)" aria-label="Pesée suivante" style="width:38px;height:38px;border-radius:50%;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:20px;font-weight:700;cursor:pointer;flex-shrink:0;line-height:1;touch-action:manipulation;">›</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;" ontouchstart="_weighTS(event)" ontouchend="_weighTE(event)">
       <div>
         <label style="font-size:12px;color:var(--t3);display:block;margin-bottom:4px;">Date</label>
         <input type="date" id="weigh-edit-date" style="width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t1);font-size:16px;font-family:var(--font);box-sizing:border-box;">

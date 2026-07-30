@@ -190,6 +190,38 @@ t('muscu : MET par famille (squat 6.5 · DC 5.5 · curl 4.0 · arraché 8.0)',
   B.mets.squat===6.5&&B.mets.dc===5.5&&B.mets.curl===4&&B.mets.arr===8, JSON.stringify(B.mets));
 
 // ════════════════════════════════════════════════════════════════════
+console.log('\n═══ D. Navigation entre pesées — ‹ › + glissement (idée Christophe) ═══');
+const D=await p.evaluate(()=>{
+  const out={};
+  S.weightLog=[{date:'2026-07-29',kg:84.2},{date:'2026-07-27',kg:84.5,bf:17.2},{date:'2026-07-24',kg:85}];
+  openWeighEdit('2026-07-27');
+  const val=id=>String(document.getElementById(id).value);
+  out.ouvert={date:val('weigh-edit-date'),kg:val('weigh-edit-kg'),bf:val('weigh-edit-bf')};
+  out.pos=document.getElementById('weigh-nav-pos').textContent;
+  _weighNav(1);  out.ancienne=val('weigh-edit-date');       // ‹ = plus ancienne
+  _weighNav(1);  out.butoir=val('weigh-edit-date');         // déjà au bout → ne bouge pas
+  out.prevOff=document.getElementById('weigh-nav-prev').style.pointerEvents==='none';
+  _weighNav(-1);_weighNav(-1); out.recente=val('weigh-edit-date');
+  out.nextOff=document.getElementById('weigh-nav-next').style.pointerEvents==='none';
+  _weighTS({touches:[{clientX:200,clientY:300}]});          // glisser vers la DROITE = plus ancienne
+  _weighTE({changedTouches:[{clientX:290,clientY:305}]});
+  out.swipe=val('weigh-edit-date');
+  _weighTS({touches:[{clientX:200,clientY:100}]});          // glissement VERTICAL (fermeture) → ne navigue pas
+  _weighTE({changedTouches:[{clientX:230,clientY:400}]});
+  out.swipeVert=val('weigh-edit-date');
+  closeWeighEdit(); S.weightLog=[];
+  return out;
+});
+t('la pesée s\'ouvre pré-remplie (date, poids, masse grasse)',
+  D.ouvert.date==='2026-07-27'&&D.ouvert.kg==='84.5'&&D.ouvert.bf==='17.2', JSON.stringify(D.ouvert));
+t('compteur « Pesée 2 sur 3 »', D.pos==='Pesée 2 sur 3', D.pos);
+t('‹ recule vers la pesée plus ancienne', D.ancienne==='2026-07-24', D.ancienne);
+t('au bout de l\'historique : on ne bouge plus + flèche éteinte', D.butoir==='2026-07-24'&&D.prevOff===true);
+t('› revient jusqu\'à la plus récente + flèche éteinte', D.recente==='2026-07-29'&&D.nextOff===true);
+t('glisser vers la droite → pesée plus ancienne', D.swipe==='2026-07-27', D.swipe);
+t('un glissement VERTICAL (celui qui ferme) ne navigue PAS', D.swipeVert==='2026-07-27', D.swipeVert);
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ C. PERFORMANCES — l\'app et Milo sont-ils ralentis ? ═══');
 // Profil réaliste chargé : 200 séances, 3 ans de sommeil/poids, historique de chat
 const C=await p.evaluate(()=>{
