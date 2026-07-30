@@ -5,6 +5,7 @@
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
 // Déploiement backend : fix .claspignore (worker.js/food-health.js/translations.js ne doivent PAS partir dans Apps Script — worker.js contient `export` → cassait clasp push depuis mi-juillet). Ce commit re-déclenche le déploiement des changements backend accumulés (ADN sportif @ft-v464 + dayStateLog @ft-v549).
+// Rechute du MÊME piège le 30/07/2026 : tools/exercices-muscles.js (générateur de la carte des exercices, créé le jour même) n'était pas ignoré → clasp push KO (« Unexpected token ILLEGAL: tools/exercices-muscles.gs ») → le fix leanMass n'était pas parti. `tools/**` ajouté à .claspignore ; cette ligne force le re-push complet. RÈGLE : tout NOUVEAU fichier .js hors backend → .claspignore IMMÉDIATEMENT.
 // ═══════════════════════════════════════════════════════════
 // Force Tracker — Google Apps Script v3.5
 // (re-sync clasp : projet backend = Code.js + appsscript.json uniquement)
