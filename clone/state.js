@@ -371,6 +371,9 @@ const bz=(kg,r)=>(!kg||!r||r<1)?0:(r===1?kg:fmt(kg/(1.0278-0.0278*Math.min(r,20)
 // rien ne plante, la date est juste fausse. On décale de l'écart horaire local avant de couper.
 // 🚫 Ne JAMAIS revenir à `new Date().toISOString()` pour obtenir un jour calendaire.
 const today=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+// Jour calendaire LOCAL d'un timestamp (même règle que today() : l'heure du téléphone, pas Greenwich).
+// Sert aux replis « séance sans date » — un ts de 00 h 30 doit donner le jour d'aujourd'hui, pas la veille.
+const dayOfTs=ts=>{const d=new Date(ts);return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
 const fmtD=d=>d?new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'';
 
 // ─── PROCHAINE SÉANCE ANNONCÉE — la règle « cette annonce tient-elle encore ? » (ft-v654) ───

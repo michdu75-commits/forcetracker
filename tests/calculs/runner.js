@@ -176,8 +176,8 @@ console.log('\n═══ 3. Récupération — calcRecoveryDetail, horloge gelé
   t('3 nuits parfaites (8h, excellent) → 100', r.parfait.score===100, 'reçu '+r.parfait.score);
   t('3 nuits catastrophe (3h, mauvais) → score très bas (< 30)', r.cata.score<30, 'reçu '+r.cata.score);
   t('grosse séance la veille au soir → malus le matin', r.matinApres.score<70, 'reçu '+r.matinApres.score);
-  // séance il y a 4 jours calendaires, MAIS avant midi l'app compte d=3 (ancrage midi) → +9 pas +12
-  t('4 jours de repos, vu le MATIN → +9 (la marche de midi, quirk documenté)', r.repos4j.score===79, 'reçu '+r.repos4j.score);
+  // fin de la marche de midi (30/07) : 4 jours CALENDAIRES de repos = +12, crédités dès le matin
+  t('4 jours de repos, vu le MATIN → +12 dès le matin (fin de la marche de midi)', r.repos4j.score===82, 'reçu '+r.repos4j.score);
   t('60 ans → −9', r.age60.score===61, 'reçu '+r.age60.score);
   t('fumeur → −4', r.fumeur.score===66, 'reçu '+r.fumeur.score);
   t('check-in « crevé » → −10', r.creve.score===60, 'reçu '+r.creve.score);
@@ -186,18 +186,57 @@ console.log('\n═══ 3. Récupération — calcRecoveryDetail, horloge gelé
   t('pire scénario : borné ≥ 0, jamais négatif', r.pire.score>=0, 'reçu '+r.pire.score);
   await c.close();
 
-  // ⚠️ LA MARCHE DE MIDI : même séance d'hier soir, score à 11:59 vs 12:01
-  const m1=await boot('2026-07-29T11:59:00+02:00',{});
-  const m2=await boot('2026-07-29T12:01:00+02:00',{});
+  // ✅ FIN DE LA MARCHE DE MIDI (30/07, validé Michel) : la fatigue s'efface EN CONTINU sur 36 h.
+  // Le score ne doit plus SAUTER — ni à midi, ni à minuit.
   const seed=`(()=>{const sets=[];for(let i=0;i<4;i++)sets.push({kg:100,reps:8,done:true,type:'N'});
     const exs=[];for(let i=0;i<5;i++)exs.push({name:'Squat',sets:JSON.parse(JSON.stringify(sets))});
     S.sessions=[{date:'2026-07-28',ts:new Date('2026-07-28T20:00:00+02:00').getTime(),exs}];
     return calcRecoveryDetail().score;})()`;
+  const m1=await boot('2026-07-29T11:59:00+02:00',{});
+  const m2=await boot('2026-07-29T12:01:00+02:00',{});
   const s1=await m1.p.evaluate(seed), s2=await m2.p.evaluate(seed);
   console.log('     ℹ️  séance hier 20h → score à 11h59 = '+s1+' · à 12h01 = '+s2+' (écart '+(s2-s1)+')');
-  t('⚠️ QUIRK à documenter : le lendemain matin est traité comme « le jour même » avant midi',
-    true, '');
+  t('⭐ plus AUCUN saut à midi (11h59 et 12h01 : même score)', s1===s2, s1+' vs '+s2);
   await m1.c.close(); await m2.c.close();
+  const n1=await boot('2026-07-29T23:59:00+02:00',{});
+  const n2=await boot('2026-07-30T00:01:00+02:00',{});
+  const sn1=await n1.p.evaluate(seed), sn2=await n2.p.evaluate(seed);
+  t('⭐ plus aucun saut à MINUIT non plus (23h59 → 00h01 : écart ≤ 1)', Math.abs(sn2-sn1)<=1, sn1+' vs '+sn2);
+  await n1.c.close(); await n2.c.close();
+  // continuité globale : la fatigue s'efface progressivement, sans remonter puis redescendre
+  const heures=['2026-07-29T02:00:00+02:00','2026-07-29T08:00:00+02:00','2026-07-29T14:00:00+02:00',
+                '2026-07-29T20:00:00+02:00','2026-07-30T02:00:00+02:00','2026-07-30T09:00:00+02:00'];
+  const serie=[];
+  for(const h of heures){const bx=await boot(h,{});serie.push(await bx.p.evaluate(seed));await bx.c.close();}
+  console.log('     ℹ️  effacement de la fatigue (6h→37h après séance) : '+serie.join(' → '));
+  t('⭐ le score REMONTE de façon monotone après la séance (jamais de rechute)',
+    serie.every((v,i,a)=>i===0||v>=a[i-1]), serie.join(' → '));
+  // une vieille séance SANS heure (ts absent) garde l'ancien barème : hier = −8
+  const v1=await boot('2026-07-29T08:00:00+02:00',{});
+  const sv=await v1.p.evaluate(`(()=>{S.sessions=[{date:'2026-07-28',exs:[{name:'Squat',sets:[{kg:100,reps:8,done:true,type:'N'}]}]}];
+    return calcRecoveryDetail().score;})()`);
+  t('séance d\'hier SANS heure enregistrée → ancien barème conservé (−8 → 62)', sv===62, 'reçu '+sv);
+  await v1.c.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
+console.log('\n═══ 3 bis. APRÈS MINUIT — le bouton « Hier » et les replis de date ═══');
+{
+  // 00 h 30 : la fenêtre où l'heure de Greenwich donnait encore « hier » (bug corrigé le 30/07)
+  const {c,p}=await boot('2026-07-30T00:30:00+02:00',{});
+  const r=await p.evaluate(()=>{
+    const out={};
+    out.today=today();                                    // 2026-07-30 (l'heure du téléphone)
+    startWorkout();
+    setLogYesterday();                                    // « Hier » = le 29, PAS le 28
+    out.hier=S.wkt&&S.wkt.date;
+    out.dayOfTs=dayOfTs(new Date('2026-07-30T00:15:00+02:00').getTime()); // séance de 00h15 = aujourd'hui
+    return out;
+  });
+  t('à 00 h 30, today() = le bon jour (2026-07-30)', r.today==='2026-07-30', 'reçu '+r.today);
+  t('⭐ le bouton « Hier » date la séance du 29 — plus jamais d\'avant-hier', r.hier==='2026-07-29', 'reçu '+r.hier);
+  t('dayOfTs : un ts de 00 h 15 donne le jour d\'aujourd\'hui (repli séance sans date)', r.dayOfTs==='2026-07-30', 'reçu '+r.dayOfTs);
+  await c.close();
 }
 
 // ════════════════════════════════════════════════════════════════════

@@ -159,7 +159,7 @@ function renderChart(){
   // Filtre de période (retour GPT) : ne garde que les séances récentes selon _progRange (all = tout).
   const _rDays=(_PROG_RANGES.find(r=>r[0]===_progRange)||['all','',0])[2];
   let _cut=null;
-  if(_rDays){const dc=new Date();dc.setDate(dc.getDate()-_rDays);_cut=dc.toISOString().slice(0,10);}
+  if(_rDays){const dc=new Date(today()+'T12:00:00');dc.setDate(dc.getDate()-_rDays);_cut=dc.toISOString().slice(0,10);} // midi local : la coupure ne glisse plus d'un jour entre minuit et 2 h
   const _inRange=d=>!_cut||d>=_cut;
   const pr=S.prs[name];const prStr=pr?fmt(pr.rm1)+' kg':'—'; // ⭐ PR = record ABSOLU (jamais filtré par période)
   // Barre de périodes (visible dès qu'il y a des données) — réutilise le style .wrange-chip du poids.

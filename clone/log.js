@@ -110,7 +110,10 @@ function _setLogDate(d){
   const inp=document.getElementById('s-date');if(inp)inp.value=d;
 }
 function resetToday(){_setLogDate(today());}
-function setLogYesterday(){const d=new Date();d.setDate(d.getDate()-1);_setLogDate(d.toISOString().split('T')[0]);}
+// ⚠️ « Hier » s'ancre sur today() (l'heure du téléphone) et JAMAIS sur l'heure de Greenwich :
+// entre minuit et 2 h, l'ancien calcul datait la séance d'AVANT-HIER — pile le cas d'usage du
+// bouton (on rentre de la salle après minuit et on date la séance de la veille). Audit 30/07.
+function setLogYesterday(){const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()-1);_setLogDate(d.toISOString().split('T')[0]);}
 function renderLog(){
   if(!S.wkt) S.wkt={date:today(),exs:[]};
   const d=S.wkt.date||today();

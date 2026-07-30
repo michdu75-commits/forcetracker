@@ -1385,8 +1385,8 @@ function computeRegistreFacts(){
     const sdate=s=>new Date(s.date?s.date+'T12:00:00':new Date(s.ts).toISOString());
     // 1) Nombre de séances (total + ce mois)
     if(sess.length){
-      const ym=now.toISOString().slice(0,7);
-      const nMonth=sess.filter(s=>(s.date||new Date(s.ts).toISOString().slice(0,10)).slice(0,7)===ym).length;
+      const ym=today().slice(0,7); // mois LOCAL (le 1ᵉʳ du mois entre minuit et 2 h, l'UTC donnait encore le mois d'avant)
+      const nMonth=sess.filter(s=>(s.date||dayOfTs(s.ts)).slice(0,7)===ym).length;
       F.seances={label:'Séances',value:`${sess.length} au total, ${nMonth} ce mois-ci`};
     }
     // 2) Régularité (28 derniers jours / 4)
@@ -1615,7 +1615,7 @@ function _weeklyCounts(nWeeks){
   const counts=new Array(nWeeks).fill(0);
   const now=new Date(today()+'T12:00:00');
   (S.sessions||[]).forEach(s=>{
-    const ds=s&&(s.date||(s.ts?new Date(s.ts).toISOString().slice(0,10):null));
+    const ds=s&&(s.date||(s.ts?dayOfTs(s.ts):null)); // jour LOCAL du ts (une séance de 00 h 30 est d'aujourd'hui)
     if(!ds)return;
     const d=new Date(ds+'T12:00:00'); if(isNaN(d))return;
     const wk=Math.floor((now-d)/864e5/7);
@@ -2168,29 +2168,38 @@ function calcRecoveryDetail(){
     wScore=70; // base neutre par défaut (sommeil inconnu)
   }
   // Ajustement selon la dernière séance : entraîné récemment → fatigue, jours de repos → bonus.
-  // La pénalité du jour même est PROPORTIONNELLE au volume de la séance (nb de séries de travail),
-  // pondérée par l'intensité (échec ×1.5, drop ×1.3) → juste des abdos pénalise peu, un gros leg day pénalise beaucoup.
+  // La pénalité est PROPORTIONNELLE au volume de la séance (nb de séries de travail), pondérée
+  // par l'intensité (échec ×1.5, drop ×1.3) → juste des abdos pénalise peu, un gros leg day beaucoup.
+  // ⚠️ FIN DE LA « MARCHE DE MIDI » (audit 30/07, validé Michel) : avant, les jours écoulés se
+  // comptaient depuis MIDI de la date de séance → le score sautait de +7 points à 12 h 01, et les
+  // jours de repos se créditaient avec une demi-journée de retard. MAINTENANT :
+  //  · quand on connaît l'HEURE de la séance (ts), la fatigue s'efface EN CONTINU sur 36 h —
+  //    pleine juste après, ~ -8 à 27 h (comme l'ancien « lendemain »), nulle à 36 h. Aucun saut,
+  //    ni à midi ni à minuit ;
+  //  · les jours de REPOS se comptent en jours CALENDAIRES (today()), crédités dès le matin ;
+  //  · une vieille séance SANS heure garde l'ancien barème par jour (rien ne change pour elle).
   const lastSess=S.sessions&&S.sessions[0];
   let sessAdj=0;
   if(lastSess&&lastSess.date){
-    const d=Math.floor((new Date()-new Date(lastSess.date+'T12:00:00'))/864e5);
-    if(d<=0){
+    const dCal=Math.round((new Date(today()+'T12:00:00')-new Date(lastSess.date+'T12:00:00'))/864e5);
+    const tsSess=lastSess.ts||lastSess.id;
+    const calcPen0=()=>{
       let load=0;
       (lastSess.exs||lastSess.exercises||[]).forEach(ex=>(ex.sets||[]).forEach(s=>{
         if(!s.done||s.type==='W'||s.type==='É')return;      // exclut échauffement
         load += s.type==='E'?1.5:s.type==='D'?1.3:1;         // échec/drop = plus fatigant
       }));
-      let pen = Math.max(6,Math.min(30,Math.round(load*1.7))); // ~ -10 (abdos) à -30 (grosse séance), min -6
-      // La fatigue s'efface au fil des heures APRÈS la séance : le score remonte
-      // progressivement dans la journée (jusqu'à ~-50% de la pénalité ~14 h après).
-      const tsSess = lastSess.ts || lastSess.id;
-      if(tsSess){
-        const hrs = Math.max(0,(Date.now()-tsSess)/36e5);
-        pen = Math.max(4, Math.round(pen * (1 - Math.min(0.5, hrs/14*0.5))));
-      }
-      sessAdj = -pen;
-    } else if(d===1){ sessAdj=-8; }
-    else { sessAdj=Math.min(d,4)*3; }                          // 2j +6 · 3j +9 · 4j+ +12
+      return Math.max(6,Math.min(30,Math.round(load*1.7))); // ~ -10 (abdos) à -30 (grosse séance), min -6
+    };
+    if(tsSess){
+      const hrs=Math.max(0,(Date.now()-tsSess)/36e5);
+      if(hrs<36){ sessAdj=-Math.max(0,Math.round(calcPen0()*(36-hrs)/36)); }
+      else if(dCal>=2){ sessAdj=Math.min(dCal,4)*3; }        // 2j +6 · 3j +9 · 4j+ +12
+    } else {
+      if(dCal<=0){ sessAdj=-calcPen0(); }
+      else if(dCal===1){ sessAdj=-8; }
+      else { sessAdj=Math.min(dCal,4)*3; }
+    }
   }
   // Niveau : un débutant récupère plus lentement d'un même volume, un confirmé a plus de capacité de travail
   const lvlF = S.level==='debutant'?1.15 : S.level==='confirme'?0.85 : 1;
@@ -2205,7 +2214,7 @@ function calcRecoveryDetail(){
     if(cp&&cp.perf){ cycleAdj = cp.perf==='low'?-10 : cp.perf==='declining'?-5 : cp.perf==='peak'?4 : cp.perf==='rising'?2 : 0; cpPhase=cp.phase||''; }
   }catch(e){}
   // Fatigue accumulée : plusieurs séances sur les 3 derniers jours (enchaîner sans repos)
-  const recentDays=new Set((S.sessions||[]).filter(s=>s&&s.date&&(()=>{const dd=Math.floor((new Date()-new Date(s.date+'T12:00:00'))/864e5);return dd>=0&&dd<=2;})()).map(s=>s.date)).size;
+  const recentDays=new Set((S.sessions||[]).filter(s=>s&&s.date&&(()=>{const dd=Math.round((new Date(today()+'T12:00:00')-new Date(s.date+'T12:00:00'))/864e5);return dd>=0&&dd<=2;})()).map(s=>s.date)).size; // jours CALENDAIRES (fin de la marche de midi)
   const accumAdj = recentDays>=3?-8 : recentDays>=2?-4 : 0;
   // Tabac : la récupération est altérée
   const smokerAdj = S.smoker?-4:0;
@@ -2213,7 +2222,7 @@ function calcRecoveryDetail(){
   let energyAdj=0;
   const ls0=S.sessions&&S.sessions[0];
   if(ls0&&ls0.date&&ls0.checkin&&ls0.checkin.energy){
-    const dd=Math.floor((new Date()-new Date(ls0.date+'T12:00:00'))/864e5);
+    const dd=Math.round((new Date(today()+'T12:00:00')-new Date(ls0.date+'T12:00:00'))/864e5); // jours calendaires
     if(dd<=1) energyAdj = ls0.checkin.energy<=1?-6 : ls0.checkin.energy===2?-3 : ls0.checkin.energy>=4?4 : 0;
   }
   // État du jour ressenti (brique 3B). On SÉPARE deux natures (retour ChatGPT + Michel) :
@@ -2238,7 +2247,7 @@ function calcRecoveryDetail(){
   const factors=[{ic:'😴',label:hasSleep?'Sommeil':'Récup de base',val:base,base:true,
     why:hasSleep?'Le point de départ : la qualité et la durée de tes 3 dernières nuits.':'Tu n\'as pas encore renseigné ton sommeil, donc on part d\'une base neutre. Renseigne-le pour un score plus juste.'}];
   if(sessAdj) factors.push({ic:sessAdj<0?'🏋️':'🛌',label:sessAdj<0?'Séance récente':'Repos',val:sessAdj,
-    why:sessAdj<0?'Tu as une séance récente : tes muscles récupèrent encore. Ce malus s\'efface petit à petit au fil de la journée.':'Des jours de repos depuis ta dernière séance : ton corps est plus frais.'});
+    why:sessAdj<0?'Tu as une séance récente : tes muscles récupèrent encore. Ce malus s\'efface en continu au fil des heures (parti au bout de ~36 h).':'Des jours de repos depuis ta dernière séance : ton corps est plus frais.'});
   if(ageAdj) factors.push({ic:'🎂',label:'Âge',val:ageAdj,why:'La récupération ralentit un peu avec l\'âge.'});
   if(cycleAdj) factors.push({ic:'🌙',label:'Cycle'+(cpPhase?' ('+cpPhase+')':''),val:cycleAdj,
     why:cycleAdj<0?'Ta phase de cycle demande plus de récup en ce moment.':'Ta phase de cycle est plutôt favorable à la performance.'});

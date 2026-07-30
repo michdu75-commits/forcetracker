@@ -2004,8 +2004,11 @@ function checkWeeklySummary(){
   const thisMonday=today();
   if(S.lastWeekSummary===thisMonday)return;
   // Semaine précédente : lundi-dimanche
-  const prevMon=new Date(now);prevMon.setDate(now.getDate()-7);
-  const prevSun=new Date(now);prevSun.setDate(now.getDate()-1);
+  // fenêtre ancrée sur today() (midi local) : un lundi entre minuit et 2 h, l'ancienne version
+  // faisait glisser la semaine résumée d'un jour (dimanche→samedi au lieu de lundi→dimanche)
+  const noon=new Date(thisMonday+'T12:00:00');
+  const prevMon=new Date(noon);prevMon.setDate(noon.getDate()-7);
+  const prevSun=new Date(noon);prevSun.setDate(noon.getDate()-1);
   const ws=prevMon.toISOString().slice(0,10);
   const we=prevSun.toISOString().slice(0,10);
   const lastWeekSess=(S.sessions||[]).filter(s=>s.date&&s.date>=ws&&s.date<=we);
@@ -2229,7 +2232,8 @@ function finalImportMeal(){
   if(!d||!(d.days||[]).length){toast('Aucun repas à importer','error');return;}
   const td=today();
   const days=d.days.map((day,i)=>{
-    const dt=new Date();dt.setDate(dt.getDate()+i);
+    // ancré sur today() (midi local) : à 00 h 30, l'ancien calcul faisait démarrer le plan « hier »
+    const dt=new Date(td+'T12:00:00');dt.setDate(dt.getDate()+i);
     const date=dt.toISOString().slice(0,10);
     return{date,label:day.label||'',meals:(day.meals||[]).map(m=>({
       name:m.name||'Repas',foods:m.foods||[],kcal:m.kcal||0,prot:m.prot||0,carbs:m.carbs||0,fat:m.fat||0
