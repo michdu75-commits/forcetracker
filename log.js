@@ -1070,7 +1070,12 @@ const _MOV_PATTERNS=[
 // Stemme les pluriels MAIS garde tous les mots (ne PAS retirer les mots vides ici :
 // sinon un mot-clé « curl haltère » se réduirait à « curl » et matcherait « leg curl »).
 function _movNorm(s){return _normEx(s).split(' ').filter(Boolean).map(_exStem).join(' ');}
-function _movPattern(name){ const q=' '+_movNorm(name)+' '; for(const p of _MOV_PATTERNS){ for(const k of p.kw){ if(q.indexOf(' '+_movNorm(k)+' ')>=0 || q.indexOf(_movNorm(k))>=0) return p.id; } } return null; }
+function _movPattern(name){ const q=' '+_movNorm(name)+' ';
+  // Écarté/fly + penché/arrière/inverse = OISEAU (élévation d'épaule), jamais une poussée pectorale.
+  // Les mots-clés simples ne savent pas l'exprimer (« Écarté Haltères Buste Penché » a un mot au
+  // milieu) et le kw « ecarte » de la poussée horizontale l'attraperait — bug du 30/07 (capture).
+  if(/(ecarte|\bfly\b)/.test(q)&&/(penche|arriere|inverse|reverse)/.test(q)) return 'elevation-epaules';
+  for(const p of _MOV_PATTERNS){ for(const k of p.kw){ if(q.indexOf(' '+_movNorm(k)+' ')>=0 || q.indexOf(_movNorm(k))>=0) return p.id; } } return null; }
 function _movResist(name){ const q=_normEx(name);
   if(/kettlebell/.test(q))return'kettlebell'; if(/elastique|band/.test(q))return'elastique';
   if(/poulie|cable/.test(q))return'poulie'; if(/haltere|dumbbell/.test(q))return'halteres';
@@ -1558,6 +1563,13 @@ const _MEX=[
   {re:/developpe incline|incline bench|incline press|incline halter|chest incline/i, p:['pec'],                          s:['front-delt','triceps']},
   // Pectoraux — décliné (variantes d'écriture)
   {re:/developpe decline|decline barre|decline halter|chest decline|chest press decline/i, p:['pec'],                    s:['front-delt','triceps']},
+  // ⚠️ Écarté/fly BUSTE PENCHÉ ou ARRIÈRE = un OISEAU (arrière d'épaule), JAMAIS des pectoraux.
+  // Doit rester AVANT les règles « écarté → pec » : le 30/07, « Écarté Haltères Buste Penché »
+  // (exercice perso, capture de la fille de Michel) affichait la figurine des PECTORAUX — la
+  // règle de famille « ecarte » l'attrapait. « Écarté Arrière Élastique » (catalogue) avait le
+  // même défaut depuis toujours. Même piège que « poigneT BARre » : un motif trop large, et la
+  // règle précise placée APRÈS était morte.
+  {re:/(ecarte|\bfly\b).*(penche|arriere|inverse|reverse)|bent ?over.*\bfly\b/i, p:['rear-delt'],                      s:['traps','side-delt']},
   // Pectoraux — écartés / fly
   {re:/ecarte incline|cable fly|\bfly\b|pec deck/i,                             p:['pec'],                              s:['front-delt']},
   // Épaules — développé / press épaules

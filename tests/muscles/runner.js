@@ -204,6 +204,27 @@ t('⚠️ PIÈGE : une mobilité d\'épaule n\'est PAS de l\'haltérophilie',
 t('les fondamentaux ne bougent pas', mov.squat==='squat|ancre'&&mov.dc==='poussee-horizontale|ancre',
   mov.squat+' / '+mov.dc);
 
+// ── L'ÉCARTÉ BUSTE PENCHÉ n'est PAS un exercice de pectoraux (30/07, capture de la fille de
+// Michel) : la règle de famille « ecarte → pec » attrapait « Écarté Haltères Buste Penché »
+// (exercice PERSO → figurine des pecs) et « Écarté Arrière Élastique » (catalogue). Même
+// piège que « poigneT BARre » : la règle précise placée APRÈS la générique était morte.
+const ois=await p.evaluate(()=>{
+  const g=n=>{const d=_mscScores([{name:n,sets:[{done:true}]}])||{};return Object.keys(d.sc||{}).sort().join(',');};
+  return {perso:g('Écarté Haltères Buste Penché'), persoMov:_movPattern('Écarté Haltères Buste Penché'),
+          arriere:g('Écarté Arrière Élastique'), arriereMov:_movPattern('Écarté Arrière Élastique'),
+          temoin:g('Écarté Haltères'), temoinMov:_movPattern('Écarté Haltères'),
+          oiseau:_movPattern('Oiseau')};
+});
+t('⭐ « Écarté Haltères Buste Penché » (perso) = ARRIÈRE d\'épaule, plus jamais les pecs',
+  ois.perso==='rear-delt,side-delt,traps', 'reçu '+ois.perso);
+t('⭐ … et son schéma = élévation d\'épaule, pas une poussée pectorale',
+  ois.persoMov==='elevation-epaules', 'reçu '+ois.persoMov);
+t('⭐ « Écarté Arrière Élastique » (catalogue) = arrière d\'épaule aussi',
+  ois.arriere==='rear-delt,side-delt,traps'&&ois.arriereMov==='elevation-epaules', ois.arriere+' / '+ois.arriereMov);
+t('témoin : « Écarté Haltères » (couché) RESTE des pectoraux',
+  ois.temoin==='front-delt,pec'&&ois.temoinMov==='poussee-horizontale', ois.temoin+' / '+ois.temoinMov);
+t('témoin : l\'Oiseau garde son schéma élévation d\'épaule', ois.oiseau==='elevation-epaules', 'reçu '+ois.oiseau);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');
