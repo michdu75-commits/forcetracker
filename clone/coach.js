@@ -1696,6 +1696,10 @@ function renderCoachMsg(role, text) {
     div.innerHTML = text
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      // Italique markdown *…* — Milo l'utilise pour ses consignes techniques : sans cette ligne,
+      // les étoiles s'affichaient BRUTES à l'écran (« 3×10 *(coudes devant)* », capture 30/07).
+      // Exige un caractère non-espace collé aux étoiles (règle markdown) : « 3 * 5 » reste intact.
+      .replace(/\*(\S(?:[^*\n]*?\S)?)\*/g, '<em>$1</em>')
       .replace(/^- (.+)$/gm, '<li>$1</li>')
       .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
       .replace(/\n\n/g, '</p><p>')
@@ -1729,6 +1733,7 @@ function renderCoachMsg(role, text) {
 function _coachPlain(text){
   return _stripCoachTech(String(text||''))
     .replace(/\*\*(.*?)\*\*/g,'$1')
+    .replace(/\*(\S(?:[^*\n]*?\S)?)\*/g,'$1')   // italique *…* : étoiles retirées aussi du partage/PDF
     .replace(/^\s*-\s+/gm,'• ')
     .trim();
 }

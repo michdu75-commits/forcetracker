@@ -137,6 +137,26 @@ console.log('\n─── LA CONVERSATION NE SE PERD PLUS ───────�
   await q.c.close();
 }
 
+// ── 6. Le RENDU d'un message de Milo : l'italique *…* ne laisse plus d'étoiles ─
+// (capture 30/07 : « 3×10 *(coudes légèrement devant)* » s'affichait avec ses étoiles brutes —
+// le rendu convertissait le gras **…** mais pas l'italique *…*.)
+{
+  const q=await page();
+  const r=await q.p.evaluate(()=>{
+    renderCoachMsg('coach',"**Développé militaire** — 3×10 *(coudes légèrement devant, pas derrière les oreilles)*\nEt 3 * 5 * 2 = 30 reste tel quel.");
+    const bl=document.querySelectorAll('#coach-msgs .msg-coach');
+    const el=bl[bl.length-1];
+    return {txt:el.textContent, em:/<em>/.test(el.innerHTML), strong:/<strong>/.test(el.innerHTML),
+            plain:_coachPlain("3×10 *(coudes devant)* et **gras**")};
+  });
+  t('les consignes de Milo s\'affichent en italique, sans étoiles brutes',
+    r.em && !/\*\(/.test(r.txt), r.txt.slice(0,80));
+  t('le gras continue de marcher', r.strong);
+  t('une vraie multiplication « 3 * 5 * 2 » n\'est PAS mangée', r.txt.includes('3 * 5 * 2'));
+  t('le partage/PDF est nettoyé des étoiles aussi', !/\*/.test(r.plain), r.plain);
+  await q.c.close();
+}
+
 console.log('──────────────────────────────────────────────────────────');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
 await b.close(); srv.close(); process.exit(ko?1:0);
