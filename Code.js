@@ -1619,6 +1619,16 @@ function handleImportBodyScan_(body) {
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return json_({status:'error', error:'Lecture impossible. Réessaie avec une photo plus nette et bien cadrée.'});
     const data = JSON.parse(match[0]);
+    // 🩹 Repli DÉTERMINISTE (30/07/2026, rapport MyBodyCheck d'Eline) : le modèle de lecture
+    // rate parfois la « masse maigre » dans la section « Autres indicateurs ». Or elle se DÉDUIT :
+    // masse maigre = poids − masse grasse (vérifié sur son rapport : 51.85 − 14.1 = 37.75 ≈ 37.8).
+    // Jamais d'IA là où une soustraction suffit — on ne complète que si les deux sources sont lues.
+    if ((data.leanMass == null || !isFinite(Number(data.leanMass))) &&
+        isFinite(Number(data.weight)) && Number(data.weight) > 0 &&
+        isFinite(Number(data.fatMass)) && Number(data.fatMass) > 0 &&
+        Number(data.fatMass) < Number(data.weight)) {
+      data.leanMass = Math.round((Number(data.weight) - Number(data.fatMass)) * 10) / 10;
+    }
     return json_({status:'ok', data: data});
   } catch(err) {
     return json_({status:'error', error: err.message});
