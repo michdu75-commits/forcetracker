@@ -251,7 +251,25 @@ async function coach(body, apiKey) {
     userContent = String(body.message || '');
   }
   const messages = history.concat([{ role: 'user', content: userContent }]);
-  const system = String(ctx) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory : '');
+  // 💰 CACHE DE PROMPT (31/07/2026, « optimisation à fond » — Michel). Le contexte fait ~46 000
+  // caractères renvoyés à CHAQUE question ; sur Sonnet ça pèse ~4-5 centimes d'entrée par message.
+  // Le frontend termine désormais le contexte par « ═══ SITUATION DE L'INSTANT ═══ » (heure,
+  // récup — ce qui change à chaque message). Tout ce qui PRÉCÈDE est identique d'une question à
+  // l'autre → marqué cache_control ephemeral : facturé ~10× moins cher dès la 2ᵉ question d'une
+  // conversation (fenêtre ~5 min, relancée à chaque appel). La mémoire (stable pendant une
+  // conversation) rejoint le bloc caché ; l'instant reste hors cache. Ancienne appli sans
+  // marqueur → comportement d'origine, rien ne casse.
+  const CACHE_MARKER = "═══ SITUATION DE L'INSTANT ═══";
+  const _mi = String(ctx).indexOf(CACHE_MARKER);
+  let system;
+  if (_mi > 1000) {
+    system = [
+      { type: 'text', text: String(ctx).slice(0, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: String(ctx).slice(_mi) }
+    ];
+  } else {
+    system = String(ctx) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory : '');
+  }
   // Modèle selon l'utilisateur (comme Code.js, mais en dur ici — pas d'accès aux Script Properties)
   // ⚠️ DÉFAUT = Sonnet (et NON Haiku) depuis le 26/07/2026 : un modèle léger suivait mal les consignes fines
   // du coach (l'« interrogatoire » revenait malgré 3 durcissements de prompt ft-v602/603/606). La vraie variable

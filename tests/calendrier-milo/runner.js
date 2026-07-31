@@ -129,6 +129,27 @@ console.log('\n─── MILO NE CALCULE PLUS LES JOURS ────────
     /réellement FAITES/.test(ctx)&&/PRÉPARÉE/.test(ctx)&&/REPOS/.test(ctx));
 }
 
+// ── 💰 CACHE DE PROMPT (31/07) : tout ce qui précède « SITUATION DE L'INSTANT » est STABLE ──
+// Le Worker met en cache le préfixe du contexte (facturé ~10× moins cher). La garantie à tenir :
+// entre deux questions d'une même conversation, PAS UN OCTET ne doit changer avant le marqueur —
+// sinon le cache saute en silence et la facture triple sans que personne ne le voie.
+{
+  const M="═══ SITUATION DE L'INSTANT ═══";
+  const a=await ctxLe('2026-07-29T09:21:00+02:00');
+  const b=await ctxLe('2026-07-29T09:29:00+02:00');            // 8 minutes plus tard, même journée
+  const ia=a.ctx.indexOf(M), ib=b.ctx.indexOf(M);
+  t('le marqueur de cache existe, une seule fois, loin du début', ia>1000&&a.ctx.indexOf(M,ia+1)<0, 'index '+ia);
+  t('⭐ AVANT le marqueur : IDENTIQUE à 8 minutes d\'écart (le cache tiendra)',
+    ia===ib&&a.ctx.slice(0,ia)===b.ctx.slice(0,ib));
+  t('l\'heure et le score de récup vivent APRÈS le marqueur',
+    /il est \d+h\d+/.test(a.ctx.slice(ia))&&/Score récupération/.test(a.ctx.slice(ia)));
+  t('… et n\'apparaissent PLUS avant (rien de variable dans le bloc caché)',
+    !/il est \d+h\d+/.test(a.ctx.slice(0,ia))&&!/Score récupération/.test(a.ctx.slice(0,ia)));
+  const w=fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+  t('le Worker découpe sur ce marqueur EXACT et pose cache_control ephemeral',
+    w.indexOf(M)>=0&&/cache_control:\s*\{\s*type:\s*'ephemeral'\s*\}/.test(w));
+}
+
 console.log('──────────────────────────────────────────────────────────');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
 await b.close(); srv.close(); process.exit(ko?1:0);
