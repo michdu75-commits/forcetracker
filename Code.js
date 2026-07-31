@@ -309,6 +309,29 @@ function doGet(e) {
     return json_({status:'ok', count: arr.length, ideas: arr});
   }
 
+  // Santé du stockage (diagnostic 31/07 : plus AUCUNE écriture depuis le 29/07 — boîte à idées
+  // figée, MAIL_FAILS vide malgré les échecs. Suspect : la limite Google de 500 Ko TOTAL sur les
+  // Script Properties, où vivent les comptes. Cette sonde mesure le remplissage ET tente une
+  // écriture réelle pour lire l'erreur exacte.) — ?action=storeHealth&token=…
+  if (p.action === 'storeHealth') {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
+    var shp = PropertiesService.getScriptProperties();
+    var shKeys = shp.getKeys();
+    var shTot = 0, shItems = [];
+    for (var shI = 0; shI < shKeys.length; shI++) {
+      var shV = shp.getProperty(shKeys[shI]) || '';
+      shTot += shKeys[shI].length + shV.length;
+      shItems.push({ cle: shKeys[shI], octets: shV.length });
+    }
+    shItems.sort(function(a, b){ return b.octets - a.octets; });
+    var shWrite = 'ok';
+    try { shp.setProperty('PING_DIAG', new Date().toISOString()); }
+    catch(eW) { shWrite = 'ECHEC: ' + eW.message; }
+    return json_({status:'ok', nbCles: shKeys.length, totalOctets: shTot,
+                  limiteOctets: 512000, pourcentPlein: Math.round(shTot / 5120),
+                  testEcriture: shWrite, plusGrosses: shItems.slice(0, 15)});
+  }
+
   // Échecs d'envoi de mail (diagnostic panne silencieuse) — ?action=mailFails&token=…
   if (p.action === 'mailFails') {
     if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
