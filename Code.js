@@ -81,14 +81,38 @@ function _safeCell_(v) {
 }
 function _safeRow_(arr) { return (arr || []).map(_safeCell_); }
 
+// ── Compression des comptes (31/07/2026 — le réservoir Script Properties était PLEIN à 102 % :
+// plus AUCUNE écriture n'aboutissait depuis le 29/07 — sync de Christophe figée, boîte à idées
+// muette, mails morts). Les données d'un compte sont stockées gzip+base64 sous le préfixe 'GZ:'
+// (≈ 5× plus petit). TOUT lecteur passe par _unpackUser_ ; TOUT écrivain par _packUser_.
+// Un compte ancien non compressé reste lisible tel quel (rétrocompatible) et se compresse à sa
+// prochaine sauvegarde. _packUser_ s'AUTO-VÉRIFIE : le paquet n'est rendu que s'il se relit à
+// l'identique — sinon on garde le JSON en clair (jamais de compte illisible, quoi qu'il arrive).
+function _packUser_(json) {
+  try {
+    var gz = 'GZ:' + Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(json, 'application/octet-stream')).getBytes());
+    if (gz.length < json.length && _unpackUser_(gz) === json) return gz;
+  } catch(e) {}
+  return json;
+}
+function _unpackUser_(raw) {
+  if (!raw) return null;
+  if (raw.slice(0, 3) === 'GZ:') {
+    try {
+      return Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(raw.slice(3)), 'application/x-gzip')).getDataAsString();
+    } catch(e) { return null; }
+  }
+  return raw;
+}
+
 function loadUserData_(email) {
-  const raw = PropertiesService.getScriptProperties().getProperty(userKey_(email));
+  const raw = _unpackUser_(PropertiesService.getScriptProperties().getProperty(userKey_(email)));
   if (!raw) return null;
   try { return JSON.parse(raw); } catch(e) { return null; }
 }
 
 function saveUserData_(email, data) {
-  PropertiesService.getScriptProperties().setProperty(userKey_(email), JSON.stringify(data));
+  PropertiesService.getScriptProperties().setProperty(userKey_(email), _packUser_(JSON.stringify(data)));
 }
 
 // ─── Mirror Sheets — best-effort, jamais bloquant ───────────
@@ -330,6 +354,29 @@ function doGet(e) {
     return json_({status:'ok', nbCles: shKeys.length, totalOctets: shTot,
                   limiteOctets: 512000, pourcentPlein: Math.round(shTot / 5120),
                   testEcriture: shWrite, plusGrosses: shItems.slice(0, 15)});
+  }
+
+  // Migration one-shot (31/07) : compresse tous les comptes déjà stockés + supprime le compte
+  // de test michdu75+test (décision Michel). Chaque compte n'est réécrit que si le paquet
+  // compressé se relit à l'identique (vérification AVANT écriture). — ?action=compressStore&token=…
+  if (p.action === 'compressStore') {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
+    var csp = PropertiesService.getScriptProperties();
+    var csDeleted = false;
+    if (csp.getProperty('u_michdu75+test@gmail.com') != null) { csp.deleteProperty('u_michdu75+test@gmail.com'); csDeleted = true; }
+    try { csp.deleteProperty('PING_DIAG'); } catch(eD) {}
+    var csKeys = csp.getKeys().filter(function(k){ return k.indexOf('u_') === 0; });
+    var csBefore = 0, csAfter = 0, csDone = 0, csDeja = 0, csVerifKo = 0;
+    csKeys.forEach(function(k){
+      var raw = csp.getProperty(k) || '';
+      csBefore += raw.length;
+      if (raw.slice(0, 3) === 'GZ:') { csDeja++; csAfter += raw.length; return; }
+      var packed = _packUser_(raw);
+      if (packed !== raw && _unpackUser_(packed) === raw) { csp.setProperty(k, packed); csDone++; csAfter += packed.length; }
+      else { if (packed !== raw) csVerifKo++; csAfter += raw.length; }
+    });
+    return json_({status:'ok', comptes: csKeys.length, compresses: csDone, dejaCompresses: csDeja,
+                  verifEchouee: csVerifKo, testSupprime: csDeleted, avantOctets: csBefore, apresOctets: csAfter});
   }
 
   // Échecs d'envoi de mail (diagnostic panne silencieuse) — ?action=mailFails&token=…
@@ -2002,7 +2049,7 @@ function backupAllUserData_() {
     const users = [];
     userKeys.forEach(k => {
       try {
-        const data = JSON.parse(all[k]);
+        const data = JSON.parse(_unpackUser_(all[k]));
         users.push({ email: data.email || k.slice(2), data: data });
       } catch(e) {
         Logger.log('[FT backup] Parse err ' + k + ' : ' + e.message);
@@ -2159,7 +2206,7 @@ function handleListUsers_(body) {
   const users = [];
   Object.keys(props).filter(k => k.startsWith('u_')).forEach(k => {
     try {
-      const d = JSON.parse(props[k]);
+      const d = JSON.parse(_unpackUser_(props[k]));
       users.push({
         email: d.email || k.replace(/^u_/, ''),
         name: (d.profile && d.profile.name) || '?',

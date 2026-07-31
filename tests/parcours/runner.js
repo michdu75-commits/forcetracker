@@ -384,6 +384,16 @@ t('plus AUCUN vieux prix (« 4,99 » / « 2 mois ») dans tout le frontend — m
 // 31/07 : le message de Christophe n'est jamais arrivé — l'échec du mail de la boîte à idées
 // était avalé par un catch VIDE (panne invisible). Structurel : le mail part vers les 2 boîtes,
 // l'échec est TRACÉ (_logMailFail_), et la route de diagnostic mailFails existe.
+// 31/07 : le réservoir Script Properties était PLEIN (102 %) → plus aucune écriture depuis le
+// 29/07. Structurel : les comptes se stockent compressés (pack auto-vérifié), TOUS les lecteurs
+// décompressent (chargement, backup nocturne, liste admin), et la migration one-shot existe.
+t('comptes compressés : pack auto-vérifié + les 3 lecteurs décompressent + migration compressStore',
+  (()=>{const s=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+        return /_packUser_\(JSON\.stringify\(data\)\)/.test(s)
+            && /_unpackUser_\(PropertiesService\.getScriptProperties\(\)\.getProperty\(userKey_\(email\)\)\)/.test(s)
+            && (s.match(/JSON\.parse\(_unpackUser_\(/g)||[]).length>=2
+            && /_unpackUser_\(gz\) === json/.test(s)
+            && /action === 'compressStore'/.test(s);})());
 t('boîte à idées : échec de mail tracé (plus de catch vide) + 2 destinataires + route mailFails',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
         return !/catch \(eMail\) \{\}/.test(s)
