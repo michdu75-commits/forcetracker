@@ -334,6 +334,14 @@ t('⭐ le suivi photos vit dans le menu photos du Profil (super testeur seulemen
   FB.menuSuivi&&FB.menuLambda);
 t('⭐ l\'historique de l\'Étude du corps apparaît dès le PREMIER bilan (au singulier)',
   FB.histo1);
+// 31/07 : « c'est mal informé » (Michel cherchait ses bilans Étude du corps dans le Suivi photos).
+// Le Suivi photos VIDE doit dire où sont les bilans, et le menu photos doit dire qui garde quoi.
+t('⭐ le Suivi photos vide renvoie vers l\'Étude du corps (« c\'est mal informé », Michel 31/07)',
+  (()=>{const s=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
+        return /Tu cherches tes bilans « Étude du corps »/.test(s)
+            && /closeBodySeries\(\);openBodyStudy\(\);/.test(s)
+            && /photos gardées sur CE téléphone uniquement/.test(s)
+            && /historique de tes bilans/.test(s);})());
 
 // ════════════════════════════════════════════════════════════════════
 console.log('\n═══ G. Premium visible — ligne Menu + fiche « pourquoi » ═══');

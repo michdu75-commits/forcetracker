@@ -1052,7 +1052,7 @@ function _renderPhotoMenu(){
     +(prem?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>':badge)
     +'</button>';
   b.innerHTML=
-    opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5be3b4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 7l9-4 9 4M5 11l7-3 7 3"/></svg>','Étude du corps','4 photos · bilan posture, insertions, équilibre + exercices','openBodyStudy()')
+    opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5be3b4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 7l9-4 9 4M5 11l7-3 7 3"/></svg>','Étude du corps','4 photos · bilan posture/insertions/équilibre · 📚 historique de tes bilans','openBodyStudy()')
     +opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>','Analyser ma morphologie','3 photos · à faire une seule fois — définit ton type morpho','openMorphoAnalysis()')
     // Suivi photos (séries 4 photos, comparaison d'évolution) — SUPER TESTEURS uniquement.
     // Déplacé ici depuis l'Espace testeur le 31/07/2026 (la carte « avant-première » n'avait
@@ -1060,7 +1060,7 @@ function _renderPhotoMenu(){
     +((typeof _isSuperTester==='function'&&_isSuperTester())
       ?'<button class="pm-opt" onclick="closePhotoMenu();openBodySeries();">'
        +'<div class="pm-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>'
-       +'<div style="flex:1;min-width:0;text-align:left;"><div class="pm-title">Mon suivi photos</div><div class="pm-sub">Séries de 4 photos · jusqu\'à 4/mois · comparaison d\'évolution</div></div>'
+       +'<div style="flex:1;min-width:0;text-align:left;"><div class="pm-title">Mon suivi photos</div><div class="pm-sub">Séries comparées mois par mois · photos gardées sur CE téléphone uniquement</div></div>'
        +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>'
        +'</button>'
       :'');
@@ -1541,7 +1541,8 @@ function _renderBodySeries(){
       +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div></div>'
     ).join('');
   }else{
-    hist='<div style="font-size:13px;color:var(--t3);font-style:italic;text-align:center;padding:14px 0;">Aucune série pour l’instant — prends ta première série de 4 photos 📸</div>';
+    hist='<div style="font-size:13px;color:var(--t3);font-style:italic;text-align:center;padding:14px 0;">Aucune série pour l’instant — prends ta première série de 4 photos 📸</div>'
+      +'<div style="font-size:12px;color:var(--t3);text-align:center;padding:2px 0 8px;">Tu cherches tes bilans « Étude du corps » ? Ils ne sont pas ici → <span onclick="closeBodySeries();openBodyStudy();" style="color:var(--gold);font-weight:700;cursor:pointer;text-decoration:underline;">les voir 📚</span></div>';
   }
   body.innerHTML=
     '<div style="font-size:13px;color:var(--t2);line-height:1.5;margin-bottom:10px;">Prends une <b>série de 4 photos</b> (face relâché, face contracté, dos contracté, profil). L’IA fait un bilan complet et le <b>compare à ta série précédente</b> pour suivre ton évolution.</div>'
