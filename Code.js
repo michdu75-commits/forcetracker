@@ -309,6 +309,16 @@ function doGet(e) {
     return json_({status:'ok', count: arr.length, ideas: arr});
   }
 
+  // Échecs d'envoi de mail (diagnostic panne silencieuse) — ?action=mailFails&token=…
+  if (p.action === 'mailFails') {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
+    var mf = [];
+    try { mf = JSON.parse(PropertiesService.getScriptProperties().getProperty('MAIL_FAILS') || '[]'); } catch(e2) { mf = []; }
+    var quotaMail = null;
+    try { quotaMail = MailApp.getRemainingDailyQuota(); } catch(e3) {}
+    return json_({status:'ok', count: mf.length, fails: mf, quotaMailRestant: quotaMail});
+  }
+
   // Consommation IA du jour (garde-fou coût) — ?action=aiUsage&token=FT_IDEES_2026
   if (p.action === 'aiUsage') {
     if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
@@ -1728,7 +1738,10 @@ function handleTesterIdea_(body) {
           try { atts.push(Utilities.newBlob(Utilities.base64Decode(imgs[i].data), imgs[i].type || 'image/jpeg', 'idee-' + (i + 1) + '.jpg')); } catch (eB) {}
         }
       }
-      GmailApp.sendEmail('forcetracker.app@gmail.com',
+      // Les DEUX boîtes (31/07/2026) : Michel attendait le mail sur sa boîte perso — il ne
+      // surveillera pas deux boîtes. En dur comme PREMIUM_HARDCODED_ (les Script Properties
+      // libres ne persistent pas de façon fiable sur ce projet).
+      GmailApp.sendEmail('forcetracker.app@gmail.com,michdu75@gmail.com',
         '💡 Force Tracker — nouvelle idée' + (body.name ? ' de ' + body.name : ''),
         'Nouvelle idée dans la boîte à idées :\n\n'
         + 'Date : ' + (body.date || new Date().toISOString()) + '\n'
@@ -1737,11 +1750,26 @@ function handleTesterIdea_(body) {
         + '--- Idée ---\n' + (body.text || '(vide)') + '\n------------\n\n'
         + '— Force Tracker (boîte à idées automatique)',
         atts.length ? { attachments: atts } : {});
-    } catch (eMail) {}
+    } catch (eMail) { _logMailFail_('idee ' + (body.name || '?'), eMail); }
     return json_({status:'ok'});
   } catch(err) {
     return json_({status:'error', error: err.message});
   }
+}
+
+// ── Journal des ÉCHECS d'envoi de mail (31/07/2026, message de Christophe jamais reçu) ──
+// Avant : un échec de GmailApp était avalé par un catch VIDE → panne de mail INVISIBLE,
+// personne ne pouvait savoir qu'un maillon avait lâché. Maintenant chaque échec s'écrit
+// ici (les 50 derniers), lisible via ?action=mailFails&token=… (même token que getIdees).
+function _logMailFail_(quoi, err) {
+  try {
+    var sp = PropertiesService.getScriptProperties();
+    var arr = [];
+    try { arr = JSON.parse(sp.getProperty('MAIL_FAILS') || '[]'); } catch(e) { arr = []; }
+    arr.push({ date: new Date().toISOString(), quoi: String(quoi || ''), err: String((err && err.message) || err || '?') });
+    if (arr.length > 50) arr = arr.slice(-50);
+    sp.setProperty('MAIL_FAILS', JSON.stringify(arr));
+  } catch(e2) {}
 }
 
 // ───────────────────────────────────────────────────────────

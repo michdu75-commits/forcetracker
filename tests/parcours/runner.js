@@ -328,6 +328,15 @@ t('plus AUCUN vieux prix (« 4,99 » / « 2 mois ») dans tout le frontend — m
   ['index.html','app.js','screens.js','coach.js','tracking.js','log.js','setup.js','constants.js','state.js']
   .every(f=>{const s=fs.readFileSync(path.join(ROOT,f),'utf8').replace(/34,99/g,'');
              return !/4,99/.test(s)&&!/2 mois/.test(s);}));
+// 31/07 : le message de Christophe n'est jamais arrivé — l'échec du mail de la boîte à idées
+// était avalé par un catch VIDE (panne invisible). Structurel : le mail part vers les 2 boîtes,
+// l'échec est TRACÉ (_logMailFail_), et la route de diagnostic mailFails existe.
+t('boîte à idées : échec de mail tracé (plus de catch vide) + 2 destinataires + route mailFails',
+  (()=>{const s=fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+        return !/catch \(eMail\) \{\}/.test(s)
+            && /_logMailFail_\('idee/.test(s)
+            && /forcetracker\.app@gmail\.com,michdu75@gmail\.com/.test(s)
+            && /action === 'mailFails'/.test(s);})());
 t('⭐ la liste des avantages vient de PREMIUM_PERKS (source unique) : fiche ET mur du Coach au complet',
   G.nbFiche===G.nbPerks&&G.nbWall===G.nbPerks&&G.nbPerks>=10, JSON.stringify({perks:G.nbPerks,fiche:G.nbFiche,mur:G.nbWall}));
 t('les manques signalés par Michel y sont : récap séances · étude du corps 4 photos · nutrition IA · journal illimité',
