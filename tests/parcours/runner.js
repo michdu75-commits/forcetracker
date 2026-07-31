@@ -336,6 +336,13 @@ t('⭐ l\'historique de l\'Étude du corps apparaît dès le PREMIER bilan (au s
   FB.histo1);
 // 31/07 : « c'est mal informé » (Michel cherchait ses bilans Étude du corps dans le Suivi photos).
 // Le Suivi photos VIDE doit dire où sont les bilans, et le menu photos doit dire qui garde quoi.
+// 01/08 : « quand il y a une mise à jour, on repart sur le logo de départ » (Christophe + Michel).
+// Le reload auto post-MAJ pose ft4_just_updated AVANT de recharger → le splash iOS doit LIRE ce
+// flag et se sauter au redémarrage de mise à jour (double logo = double démarrage perçu).
+t('⭐ le splash iOS est SAUTÉ au redémarrage de mise à jour (flag ft4_just_updated lu en tête)',
+  (()=>{const s=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
+        const m=s.match(/navigator\.standalone===true&&localStorage\.getItem\('ft4_just_updated'\)!=='1'\)document\.documentElement\.classList\.add\('ios-boot'\)/);
+        return !!m;})());
 t('⭐ le Suivi photos vide renvoie vers l\'Étude du corps (« c\'est mal informé », Michel 31/07)',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'setup.js'),'utf8');
         return /Tu cherches tes bilans « Étude du corps »/.test(s)

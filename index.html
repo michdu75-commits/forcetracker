@@ -30,7 +30,11 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classList.add('no-halo');}catch(e){}
 // Splash iPhone (logo gris fixe) — uniquement en mode app installée (comme le splash natif Android).
 // Se ferme tout seul en CSS (jamais bloqué). Pas sur Safari navigateur, pas sur Android.
-try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)document.documentElement.classList.add('ios-boot');}catch(e){}
+// ⚠️ SAUTÉ au redémarrage de mise à jour (retour Christophe + Michel : « on repart sur le logo
+// de départ, c'est nul ») : le rechargement auto post-MAJ rejouait tout le démarrage → double
+// logo. Le flag ft4_just_updated est posé JUSTE AVANT ce rechargement (app.js/state.js) et
+// retiré plus tard par le badge « Application mise à jour » — ici on ne fait que le LIRE.
+try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&localStorage.getItem('ft4_just_updated')!=='1')document.documentElement.classList.add('ios-boot');}catch(e){}
 // Détection navigateur non compatible PWA — au plus tôt
 (function(){
   var ua=navigator.userAgent;

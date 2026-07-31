@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v690';
+  b.textContent='🧪 CLONE ft-v691';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -93,7 +93,11 @@ if(localStorage.getItem('ft4_ob2')==='1')document.documentElement.classList.add(
 try{if(localStorage.getItem('ft4_halo')==='none')document.documentElement.classList.add('no-halo');}catch(e){}
 // Splash iPhone (logo gris fixe) — uniquement en mode app installée (comme le splash natif Android).
 // Se ferme tout seul en CSS (jamais bloqué). Pas sur Safari navigateur, pas sur Android.
-try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)document.documentElement.classList.add('ios-boot');}catch(e){}
+// ⚠️ SAUTÉ au redémarrage de mise à jour (retour Christophe + Michel : « on repart sur le logo
+// de départ, c'est nul ») : le rechargement auto post-MAJ rejouait tout le démarrage → double
+// logo. Le flag ft4_just_updated est posé JUSTE AVANT ce rechargement (app.js/state.js) et
+// retiré plus tard par le badge « Application mise à jour » — ici on ne fait que le LIRE.
+try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&localStorage.getItem('ft4_just_updated')!=='1')document.documentElement.classList.add('ios-boot');}catch(e){}
 // Détection navigateur non compatible PWA — au plus tôt
 (function(){
   var ua=navigator.userAgent;
