@@ -392,6 +392,8 @@ const _OVERLAY_CLOSERS={
   'ov-tester-3b':'closeTester3B',
   'ov-billoute':'closeBilloute',
   'ov-christophe-photos':'closeChristophePhotos',
+  'ov-pesee-nav-c':'closePeseeNavC',               // annonce boîte à idées traitée (Christophe)
+  'ov-pesee-nav-e':'closePeseeNavE',               // annonce boîte à idées traitée (Eline)
 };
 function _closeOverlayProper(ov){
   try{

@@ -1349,6 +1349,27 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
   </div>
 </div>
 
+<!-- POP-UP perso Christophe — son idée « naviguer entre les pesées » est livrée (une seule fois) -->
+<div class="overlay" id="ov-pesee-nav-c" style="z-index:9999;">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:48px;line-height:1;">⚖️</div>
+    <div style="font-size:21px;font-weight:900;color:var(--gold);margin-top:8px;">Ton idée est dans l'app !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Salut Christophe ! Ton idée de la boîte — <i>« se déplacer de gauche à droite pour voir les jours suivants ou précédents »</i> — est <b>livrée</b> 👍<br><br>Dans la fenêtre de pesée (Progrès → tap sur un point de ta courbe de poids) : les <b>flèches ‹ ›</b> ou un <b>glissement du doigt</b> gauche/droite passent d'une pesée à l'autre, avec un compteur « Pesée 12 sur 42 ».</div>
+    <div style="font-size:13px;line-height:1.55;color:var(--t3);margin-top:12px;background:var(--bg3);border-radius:12px;padding:11px 13px;text-align:left;">Merci pour l'idée — continue de remplir la boîte, c'est comme ça que l'app avance 🙏</div>
+    <button class="btn btn-red" onclick="closePeseeNavC()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Compris, merci ! 👊</button>
+  </div>
+</div>
+
+<!-- POP-UP perso Eline — son retour « masse maigre » est traité + la navigation entre pesées (une seule fois) -->
+<div class="overlay" id="ov-pesee-nav-e" style="z-index:9999;">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:48px;line-height:1;">💪</div>
+    <div style="font-size:21px;font-weight:900;color:var(--gold);margin-top:8px;">Ton retour a été traité !</div>
+    <div style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;">Salut Eline ! Merci pour ton message dans la boîte à idées 🙏<br><br>① <b>La masse maigre de ton bilan</b> : c'est réglé — elle s'affiche maintenant sur ton bilan de balance, <b>sans rien refaire</b> (et les prochains imports la liront ou la calculeront tout seuls).<br><br>② Nouveau au passage : dans la fenêtre de pesée, les <b>flèches ‹ ›</b> ou un glissement gauche/droite passent d'une pesée à l'autre (une idée de Christophe).</div>
+    <button class="btn btn-red" onclick="closePeseeNavE()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">Super, merci ! 🙌</button>
+  </div>
+</div>
+
 <!-- POP-UP perso Emma — bienvenue Espace Testeur + boîte à idées (une seule fois) -->
 <div class="overlay" id="ov-emma-welcome" style="z-index:9999;">
   <div class="modal" style="max-width:400px;text-align:center;">

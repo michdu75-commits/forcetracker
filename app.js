@@ -2456,6 +2456,16 @@ function checkAnnouncements(){
       setTimeout(showChristophePhotos,1000);
       return;
     }
+    // Boîte à idées traitée (31/07, demande Michel : annoncer à Christophe et Eline SEULEMENT) :
+    // navigation entre pesées (idée Christophe, ft-v676) + masse maigre (retour Eline, ft-v677)
+    if(_isChristophe()&&!localStorage.getItem('ft4_pesee_nav_c_v1')){
+      setTimeout(showPeseeNavC,1000);
+      return;
+    }
+    if(_isEline()&&!localStorage.getItem('ft4_pesee_nav_e_v1')){
+      setTimeout(showPeseeNavE,1000);
+      return;
+    }
     if(_whatsNewUnseen().length) setTimeout(showWhatsNew,1000);
   }catch(e){}
 }
@@ -2463,6 +2473,11 @@ function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.cl
 function closeBilloute(){try{localStorage.setItem('ft4_billoute_v3','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
 function showChristophePhotos(){const o=document.getElementById('ov-christophe-photos');if(o)o.classList.add('open');}
 function closeChristophePhotos(){try{localStorage.setItem('ft4_christophe_photodel_v1','1');}catch(e){}const o=document.getElementById('ov-christophe-photos');if(o)o.classList.remove('open');}
+function _isEline(){return (S.email||'').trim().toLowerCase()==='elineazs32@gmail.com';}
+function showPeseeNavC(){const o=document.getElementById('ov-pesee-nav-c');if(o)o.classList.add('open');}
+function closePeseeNavC(){try{localStorage.setItem('ft4_pesee_nav_c_v1','1');}catch(e){}const o=document.getElementById('ov-pesee-nav-c');if(o)o.classList.remove('open');}
+function showPeseeNavE(){const o=document.getElementById('ov-pesee-nav-e');if(o)o.classList.add('open');}
+function closePeseeNavE(){try{localStorage.setItem('ft4_pesee_nav_e_v1','1');}catch(e){}const o=document.getElementById('ov-pesee-nav-e');if(o)o.classList.remove('open');}
 // ─── « Quoi de neuf » versionné : montre toutes les nouveautés non vues d'un coup ──
 function _whatsNewSeen(){
   try{
@@ -2579,7 +2594,7 @@ function checkTester3B(){
 }
 function showTester3B(){
   // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
-  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-tester-eq','ov-billoute','ov-christophe-photos','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-tester-eq','ov-billoute','ov-christophe-photos','ov-pesee-nav-c','ov-pesee-nav-e','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
   if(busy){setTimeout(showTester3B,2500);return;}
   const o=document.getElementById('ov-tester-3b');if(o)o.classList.add('open');
 }

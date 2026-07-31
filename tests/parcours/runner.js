@@ -245,6 +245,44 @@ t('un DOUBLE-TAP ne produit qu\'UN envoi', E.doubleTap===1, 'reçu '+E.doubleTap
 t('le verrou retombe : un envoi VOULU ensuite passe normalement', E.total===2, 'reçu '+E.total);
 
 // ════════════════════════════════════════════════════════════════════
+console.log('\n═══ F. Annonces CIBLÉES boîte à idées (Christophe + Eline seulement) ═══');
+const F=await p.evaluate(async()=>{
+  const out={};
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  const open=id=>{const o=document.getElementById(id);return !!(o&&o.classList.contains('open'));};
+  // R15 : les deux pop-ups DOIVENT être dans la table des fermetures propres
+  out.closers=!!(_OVERLAY_CLOSERS['ov-pesee-nav-c']&&_OVERLAY_CLOSERS['ov-pesee-nav-e']);
+  // un utilisateur LAMBDA ne voit RIEN
+  S.email='quelquun@example.com';localStorage.setItem('ft4_wn_seen','999');
+  checkAnnouncements();await wait(1300);
+  out.lambda=!open('ov-pesee-nav-c')&&!open('ov-pesee-nav-e');
+  // Christophe (ses pop-ups perso précédentes déjà vues) → la sienne s'ouvre
+  S.email='christophe@famillelanglois.fr';
+  localStorage.setItem('ft4_billoute_v3','1');localStorage.setItem('ft4_christophe_photodel_v1','1');
+  checkAnnouncements();await wait(1300);
+  out.chris=open('ov-pesee-nav-c')&&!open('ov-pesee-nav-e');
+  closePeseeNavC();
+  out.chrisMarque=localStorage.getItem('ft4_pesee_nav_c_v1')==='1';
+  checkAnnouncements();await wait(1300);
+  out.chrisUneFois=!open('ov-pesee-nav-c');
+  // Eline (guide testeuse déjà vu) → la sienne s'ouvre, avec le mot « masse maigre »
+  S.email='elineazs32@gmail.com';localStorage.setItem('ft4_tester_guide_v1','1');
+  checkAnnouncements();await wait(1300);
+  out.eline=open('ov-pesee-nav-e')&&!open('ov-pesee-nav-c');
+  out.elineTxt=(document.getElementById('ov-pesee-nav-e').textContent||'').includes('masse maigre');
+  closePeseeNavE();
+  out.elineUneFois=localStorage.getItem('ft4_pesee_nav_e_v1')==='1';
+  S.email='';
+  return out;
+});
+t('R15 : les 2 pop-ups sont dans la table des fermetures propres', F.closers);
+t('un utilisateur lambda ne voit AUCUNE des deux annonces', F.lambda);
+t('Christophe voit SON annonce (et pas celle d\'Eline)', F.chris);
+t('fermer pose le marqueur → l\'annonce ne revient pas', F.chrisMarque&&F.chrisUneFois);
+t('Eline voit LA SIENNE (masse maigre) et pas celle de Christophe', F.eline&&F.elineTxt);
+t('… et une seule fois aussi', F.elineUneFois);
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ C. PERFORMANCES — l\'app et Milo sont-ils ralentis ? ═══');
 // Profil réaliste chargé : 200 séances, 3 ans de sommeil/poids, historique de chat
 const C=await p.evaluate(()=>{
