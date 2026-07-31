@@ -856,8 +856,9 @@ function showPremiumWall() {
   if (wall) wall.style.display = 'flex';
 }
 
-async function activatePremium() {
-  const inp = document.getElementById('premium-code-inp');
+async function activatePremium(inpId) {
+  // inpId optionnel : le mur du Coach ('premium-code-inp', défaut) OU la fiche Menu → Premium ('premium-code-inp2')
+  const inp = document.getElementById(inpId || 'premium-code-inp');
   const code = (inp ? inp.value.trim() : '').toUpperCase();
   if (!code) { toast('Entre un code d\'accès', 'error'); return; }
   try {
@@ -872,12 +873,38 @@ async function activatePremium() {
       const wall = document.getElementById('coach-wall');
       if (wall) wall.style.display = 'none';
       updateCoachHeader();
+      if (typeof _premiumInfoRender === 'function') _premiumInfoRender(); // la fiche Premium passe en « actif »
       toast('🎉 Premium activé ! Coach IA illimité débloqué.', 'success');
     } else {
       toast('Code invalide ou expiré.', 'error');
     }
   } catch(e) { toast('Erreur de connexion', 'error'); }
 }
+
+// ─── Fiche « Pourquoi le Premium » (Menu → Premium — demande Michel 31/07) ───
+// La présentation VISIBLE du Premium : avant, on ne le découvrait qu'en se cognant
+// au mur de quota dans le Coach. La fiche montre le pourquoi + l'activation ; si le
+// Premium est déjà actif, elle le dit et masque l'appel à l'action.
+function _premiumInfoRender(){
+  const st=document.getElementById('premium-info-status');
+  const cta=document.getElementById('premium-info-cta');
+  const sub=document.getElementById('menu-premium-sub');
+  if(S.premium){
+    if(st)st.innerHTML='<div style="margin-top:12px;background:rgba(52,211,153,.10);box-shadow:inset 0 0 0 1px rgba(52,211,153,.3);border-radius:12px;padding:11px 13px;font-size:14px;font-weight:700;color:var(--green);text-align:center;">✅ Ton Premium est actif'
+      +(S.premiumExpiry?'<div style="font-size:12px;font-weight:500;color:var(--t2);margin-top:3px;">jusqu\'au '+fmtD(S.premiumExpiry)+'</div>':'<div style="font-size:12px;font-weight:500;color:var(--t2);margin-top:3px;">accès à vie 💎</div>')+'</div>';
+    if(cta)cta.style.display='none';
+    if(sub)sub.textContent='Actif ✓ — Milo en illimité';
+  }else{
+    if(st)st.innerHTML='';
+    if(cta)cta.style.display='';
+    if(sub)sub.textContent='Milo en illimité — découvre pourquoi';
+  }
+}
+function openPremiumInfo(){
+  _premiumInfoRender();
+  const ov=document.getElementById('ov-premium-info');if(ov)ov.classList.add('open');
+}
+function closePremiumInfo(){const ov=document.getElementById('ov-premium-info');if(ov)ov.classList.remove('open');}
 
 // Décrit le temps écoulé depuis le dernier échange avec Milo (pour qu'il reprenne naturellement)
 function _coachGapText() {

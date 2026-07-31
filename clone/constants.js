@@ -229,6 +229,7 @@ const NEW_FEATURES=[
   {id:'milo-knows',  screen:'setup', anchor:'menu-row-miloknows', desc:'Nouveau : Milo apprend à te connaître — il te pose de petites questions sur l\'Accueil, et tu retrouves tout ce qu\'il a retenu dans Menu → « Ce que Milo sait de toi »'},
   {id:'checkin-tuiles', screen:'home', desc:'Ton check-in se lit d\'un coup d\'œil : trois tuiles sommeil / énergie / moral'},
   {id:'recup-moniteur', screen:'menu', desc:'Nouveau : deux styles pour ta carte récup — Menu → Apparence'},
+  {id:'premium-menu', screen:'menu', desc:'Nouveau : le Premium a sa page — Menu → ⭐ Premium : ce qu\'il t\'apporte (Milo en illimité), le prix, et l\'activation d\'un code'},
   {id:'calendrier-chaleur', screen:'home', desc:'Nouveau : ton calendrier montre le volume de chaque jour, le groupe travaillé, et le détail d\'un jour au tap'},
   {id:'recup-ring', screen:'home', desc:'Nouveau : ton score de récup s\'affiche dans un anneau — appuie dessus pour revoir le chiffre grimper de 0 à ton score'},
   {id:'whatsnew-history', screen:'setup', anchor:'menu-row-whatsnew', desc:'Nouveau : Menu → « Nouveautés » — toutes les nouveautés de l\'app restent consultables quand tu veux, même si tu passes la pop-up de lancement'},

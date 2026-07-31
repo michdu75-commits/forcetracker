@@ -1791,7 +1791,7 @@ function openMenuDrawer(){
   const _mn=document.getElementById('menu-name-lbl');
   const _ms=document.getElementById('menu-profile-sub');
   const _ma=document.getElementById('menu-avatar');
-  const _mpb=document.getElementById('menu-premium-banner');
+  // (bannière premium retirée 31/07 → la ligne ⭐ Premium sous le profil se met à jour via _premiumInfoRender)
   if(_mn)_mn.textContent=S.name||'Athlète';
   if(_ma)_ma.textContent=(S.name||'A').charAt(0).toUpperCase();
   if(_ms){
@@ -1802,7 +1802,7 @@ function openMenuDrawer(){
     if(S.height)parts.push(S.height+' cm');
     _ms.textContent=parts.length?parts.join(' · '):'Profil non configuré';
   }
-  if(_mpb)_mpb.style.display=S.premium?'none':'flex';
+  if(typeof _premiumInfoRender==='function')_premiumInfoRender();
   // Points rouges « nouveauté » sur les lignes concernées (ex. carte Profil) → montre OÙ est le neuf
   if(typeof _updateMenuDots==='function')_updateMenuDots();
   // Ouvrir le Menu éteint le point rouge de l'ONGLET Menu (les points des lignes restent pour guider)
@@ -1885,7 +1885,7 @@ function renderSetup(){
   const _mn=document.getElementById('menu-name-lbl');
   const _ms=document.getElementById('menu-profile-sub');
   const _ma=document.getElementById('menu-avatar');
-  const _mpb=document.getElementById('menu-premium-banner');
+  // (bannière premium retirée 31/07 → la ligne ⭐ Premium sous le profil se met à jour via _premiumInfoRender)
   if(_mn)_mn.textContent=S.name||'Athlète';
   if(_ma)_ma.textContent=(S.name||'A').charAt(0).toUpperCase();
   if(_ms){
@@ -1896,7 +1896,7 @@ function renderSetup(){
     if(S.height)parts.push(S.height+' cm');
     _ms.textContent=parts.length?parts.join(' · '):'Profil non configuré';
   }
-  if(_mpb)_mpb.style.display=S.premium?'none':'flex';
+  if(typeof _premiumInfoRender==='function')_premiumInfoRender();
   _updateGenderRO(S.gender);
   const ro=document.getElementById('gender-ro');
   const ed=document.getElementById('gender-edit');

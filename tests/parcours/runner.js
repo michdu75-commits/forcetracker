@@ -283,6 +283,40 @@ t('Eline voit LA SIENNE (masse maigre) et pas celle de Christophe', F.eline&&F.e
 t('… et une seule fois aussi', F.elineUneFois);
 
 // ════════════════════════════════════════════════════════════════════
+console.log('\n═══ G. Premium visible — ligne Menu + fiche « pourquoi » ═══');
+const G=await p.evaluate(()=>{
+  const out={};
+  out.row=!!document.getElementById('menu-row-premium');
+  out.oldBanner=!document.getElementById('menu-premium-banner');
+  // pas premium → la fiche vend (prix + contact + code), aucun statut
+  S.premium=false;
+  openPremiumInfo();
+  const ov=document.getElementById('ov-premium-info');
+  out.open=ov.classList.contains('open');
+  out.prix=ov.textContent.includes('4,99');
+  out.code2=!!document.getElementById('premium-code-inp2');
+  out.ctaVisible=document.getElementById('premium-info-cta').style.display!=='none';
+  out.statutVide=(document.getElementById('premium-info-status').innerHTML||'')==='';
+  closePremiumInfo();
+  out.ferme=!ov.classList.contains('open');
+  // premium ACTIF → statut vert, plus d'appel à l'action, sous-titre du Menu à jour
+  S.premium=true;
+  openPremiumInfo();
+  out.actif=document.getElementById('premium-info-status').textContent.includes('actif');
+  out.ctaCache=document.getElementById('premium-info-cta').style.display==='none';
+  out.sub=document.getElementById('menu-premium-sub').textContent.includes('Actif');
+  closePremiumInfo();
+  S.premium=false;_premiumInfoRender();
+  return out;
+});
+t('la ligne ⭐ Premium existe dans le Menu (sous le profil)', G.row);
+t('l\'ancienne bannière « Coach IA Premium » a disparu (une seule porte, R2)', G.oldBanner);
+t('la fiche s\'ouvre : prix affiché + champ code + appel à l\'action', G.open&&G.prix&&G.code2&&G.ctaVisible&&G.statutVide);
+t('la fiche se ferme', G.ferme);
+t('déjà Premium → « actif » affiché, l\'appel à l\'action disparaît', G.actif&&G.ctaCache);
+t('… et le sous-titre du Menu passe à « Actif ✓ »', G.sub);
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ C. PERFORMANCES — l\'app et Milo sont-ils ralentis ? ═══');
 // Profil réaliste chargé : 200 séances, 3 ans de sommeil/poids, historique de chat
 const C=await p.evaluate(()=>{
