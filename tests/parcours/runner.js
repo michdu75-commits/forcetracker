@@ -293,7 +293,8 @@ const G=await p.evaluate(()=>{
   openPremiumInfo();
   const ov=document.getElementById('ov-premium-info');
   out.open=ov.classList.contains('open');
-  out.prix=ov.textContent.includes('6,99')&&/\/ mois/.test(ov.textContent)&&!/2 mois/.test(ov.textContent)&&/6 mois/.test(ov.textContent); // 4,99/mois + formule 6 mois (décision 31/07)
+  out.prix=ov.textContent.includes('6,99')&&/\/ mois/.test(ov.textContent)&&!/2 mois/.test(ov.textContent)&&/6 mois/.test(ov.textContent); // 6,99/mois + formule 6 mois (décision 31/07)
+  out.essai=ov.textContent.includes('1,99')&&!ov.textContent.includes('0,99'); // essai 3 jours à 1,99 € (0,99 impayable sur Ko-fi — décision Michel 31/07)
   out.code2=!!document.getElementById('premium-code-inp2');
   out.ctaVisible=document.getElementById('premium-info-cta').style.display!=='none';
   out.statutVide=(document.getElementById('premium-info-status').innerHTML||'')==='';
@@ -320,6 +321,7 @@ const G=await p.evaluate(()=>{
 t('la ligne ⭐ Premium existe dans le Menu (sous le profil)', G.row);
 t('l\'ancienne bannière « Coach IA Premium » a disparu (une seule porte, R2)', G.oldBanner);
 t('la fiche s\'ouvre : prix affiché + champ code + appel à l\'action', G.open&&G.prix&&G.code2&&G.ctaVisible&&G.statutVide);
+t('l\'essai est à 1,99 € (0,99 € impayable sur Ko-fi — décision Michel 31/07)', G.essai);
 t('⭐ la liste des avantages vient de PREMIUM_PERKS (source unique) : fiche ET mur du Coach au complet',
   G.nbFiche===G.nbPerks&&G.nbWall===G.nbPerks&&G.nbPerks>=10, JSON.stringify({perks:G.nbPerks,fiche:G.nbFiche,mur:G.nbWall}));
 t('les manques signalés par Michel y sont : récap séances · étude du corps 4 photos · nutrition IA · journal illimité',
