@@ -317,6 +317,7 @@ function _cloudSync(){
       bday:S.bday||'',badges:S.badges||{},
       histImports:S.histImports||0,
       bodyScanImports:S.bodyScanImports||0,
+      progImports:S.progImports||0,
       coachMemory:S.coachMemory||'',
       // Photos d'exercices = LOCAL SEULEMENT (n'alourdissent plus le store cloud de 9 Mo) :
       // on envoie les exos perso SANS leur photo (img), et on n'envoie plus exPhotos du tout.
@@ -2093,6 +2094,7 @@ function _applyRestoreData(raw){
   // Import journal : garder le compteur le plus élevé (local vs cloud) — évite de re-gagner un import gratuit après purge
   try{if(d.histImports!==undefined)S.histImports=Math.max(S.histImports||0,parseInt(d.histImports)||0);}catch(e){}
   try{if(d.bodyScanImports!==undefined)S.bodyScanImports=Math.max(S.bodyScanImports||0,parseInt(d.bodyScanImports)||0);}catch(e){}
+  try{if(d.progImports!==undefined)S.progImports=Math.max(S.progImports||0,parseInt(d.progImports)||0);}catch(e){}
   // customExercises restauré depuis le cloud SANS photo (local-only) → on réinjecte la photo locale
   // si on l'a encore (même exo par nom) pour ne perdre aucune photo sur le même appareil.
   try{if(d.customExercises&&d.customExercises.length){

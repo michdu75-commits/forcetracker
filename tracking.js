@@ -989,15 +989,16 @@ function _resizeReport(file,cb){
   reader.readAsDataURL(file);
 }
 function importBodyScanPhoto(){const inp=document.getElementById('bs-photo-input');if(inp){inp.value='';inp.click();}}
-const BODYSCAN_FREE_LIMIT=10; // lectures photo gratuites pour les non super-testeurs (saisie main/code toujours illimitée)
-function _bodyScanPhotoUnlimited(){return (typeof _isSuperTester==='function'&&_isSuperTester());}
+const BODYSCAN_FREE_LIMIT=2; // décision Michel 31/07 : 2 lectures photo gratuites, ILLIMITÉ en Premium (avant : 10 pour tous, le Premium ne levait même pas la limite). Saisie main/code toujours gratuite.
+function _bodyScanPhotoUnlimited(){return !!S.premium||(typeof _isSuperTester==='function'&&_isSuperTester());}
 function onBodyScanPhoto(input){
   const file=input.files&&input.files[0];if(!file)return;input.value='';
   if(!S.url){toast('Coach non configuré (Profil > Admin)','error');return;}
   // Lecture photo : illimitée pour super-testeurs (Michel/Christophe), 1 seule fois pour les autres. Saisie main/code = gratuite.
   const unlimited=_bodyScanPhotoUnlimited();
   if(!unlimited&&(S.bodyScanImports||0)>=BODYSCAN_FREE_LIMIT){
-    toast('Lecture photo : tes '+BODYSCAN_FREE_LIMIT+' lectures gratuites sont utilisées 🙂 Continue à la main ou par code (gratuit).','info');
+    toast('Lecture photo : tes '+BODYSCAN_FREE_LIMIT+' lectures gratuites sont utilisées 🙂 Illimitée en Premium — la saisie à la main reste gratuite.','info');
+    if(typeof openPremiumInfo==='function')setTimeout(openPremiumInfo,600);
     return;
   }
   _resizeReport(file,async(out)=>{
@@ -1174,8 +1175,10 @@ function deleteBodyScan(){
 
 // ─── BILAN SANGUIN (bêta : Michel + Christophe) — PDF/photo → masquage identité → lecture IA ───
 function _isBloodBeta(){
-  const e=(S.email||'').trim().toLowerCase();
-  return e==='michdu75@gmail.com' || e==='christophe@famillelanglois.fr';
+  // Décision Michel 31/07 : la carte prise de sang est VISIBLE PAR TOUS (fin de la bêta à
+  // 2 emails) — mais l'ANALYSE IA est réservée aux Premium (porte dans _analyzeBloodRedacted).
+  // Fonction gardée pour ne pas chasser les usages (même principe que _isNutriBeta).
+  return true;
 }
 let _bloodPages=[], _bloodRects=[], _bloodPageIdx=0, _bloodImg=null, _bloodEditIdx=-1;
 function _bloodOut(m){ if(!m||m.value==null)return false; if(m.low!=null&&m.value<m.low)return true; if(m.high!=null&&m.value>m.high)return true; return false; }
@@ -1255,6 +1258,14 @@ function _bloodBindTouch(cv){
 function _bloodApplyRedact(i){return new Promise(res=>{const img=new Image();img.onload=()=>{const cv=document.createElement('canvas');cv.width=img.naturalWidth;cv.height=img.naturalHeight;const ctx=cv.getContext('2d');ctx.drawImage(img,0,0);ctx.fillStyle='#000';(_bloodRects[i]||[]).forEach(r=>ctx.fillRect(r.x*cv.width,r.y*cv.height,r.w*cv.width,r.h*cv.height));res(cv.toDataURL('image/jpeg',0.85).split(',')[1]);};img.src='data:image/jpeg;base64,'+_bloodPages[i];});}
 async function _analyzeBloodRedacted(){
   if(!S.url){toast('Coach non configuré (Profil > Admin)','error');return;}
+  // Décision Michel 31/07 : visible par tous, mais l'ANALYSE (lecture IA) est Premium.
+  if(!S.premium){
+    if(window._premiumPending){toast('Vérification du statut premium…','info');return;}
+    closeBloodRedact();
+    toast('Analyse de prise de sang réservée aux membres Premium ⭐','info');
+    if(typeof openPremiumInfo==='function')setTimeout(openPremiumInfo,600);
+    return;
+  }
   const imgs=[];
   for(let i=0;i<_bloodPages.length;i++){ imgs.push({data:await _bloodApplyRedact(i),type:'image/jpeg'}); }
   closeBloodRedact();

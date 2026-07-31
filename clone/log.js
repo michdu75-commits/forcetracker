@@ -3131,9 +3131,19 @@ function removeImpPhoto(i){
   _renderImpThumbs();
 }
 
+// Décision Michel 31/07 : la lecture IA d'un programme utilise la clé API → 2 imports
+// gratuits, ILLIMITÉ en Premium (« sinon les gens vont mettre 200 programmes »).
+// Créer/éditer un programme À LA MAIN reste gratuit et illimité.
+const PROG_FREE_LIMIT=2;
 async function analyzeImportPhotos(){
   if(!_impPhotos.length){toast('Ajoute au moins une photo','error');return;}
   if(!S.url){toast('Connexion Apps Script requise','error');return;}
+  if(!S.premium&&(S.progImports||0)>=PROG_FREE_LIMIT){
+    if(window._premiumPending){toast('Vérification du statut premium…','info');return;}
+    toast('Tes '+PROG_FREE_LIMIT+' imports gratuits de programme sont utilisés 🙂 Illimité en Premium.','info');
+    if(typeof openPremiumInfo==='function')setTimeout(openPremiumInfo,600);
+    return;
+  }
   impGoStep(3);
   let _rawResp='';
   try{
@@ -3145,6 +3155,7 @@ async function analyzeImportPhotos(){
     const d=JSON.parse(_rawResp);
     if(d.status!=='ok'||!d.data)throw new Error(d.error||'Extraction échouée');
     _impExtracted=d.data;
+    if(!S.premium){S.progImports=(S.progImports||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();} // compte l'import réussi (limite gratuite)
     _mergeImportSeances(); // fusionne « Séance 1 - Dorsaux/Biceps/… » en UNE séance (groupes = sections internes)
     _vmMatchExtracted();   // VM : rattache aux références EXLIB (évite les doublons) AVANT l'aperçu
     _renderImpConfirm();

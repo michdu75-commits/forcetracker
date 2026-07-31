@@ -62,6 +62,7 @@
     "barW": "poids de la barre, sert au calculateur de plaques",
     "bday": "anniversaire — sert au message d'anniversaire, pas au coaching",
     "bodyScanImports": "compteur d'imports, technique",
+    "progImports": "compteur d'imports, technique",
     "bodySeries": "séries de photos — volumineux, et le résultat d'analyse (bodyStudy) est déjà transmis",
     "bodyStudies": "idem : historique des études, seul le résultat courant est transmis",
     "coachFree": "compteur de questions gratuites, technique",

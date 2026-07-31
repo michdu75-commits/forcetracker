@@ -686,6 +686,7 @@ function handleSaveProfile_(body) {
     if (body.bodyScans     !== undefined) profile.bodyScans     = _pa_(body.bodyScans,     profile.bodyScans);
     if (body.bloodTests    !== undefined) profile.bloodTests    = _pa_(body.bloodTests,    profile.bloodTests);
     if (body.bodyScanImports!== undefined) profile.bodyScanImports= _pn_(body.bodyScanImports, profile.bodyScanImports);
+    if (body.progImports !== undefined) profile.progImports = _pn_(body.progImports, profile.progImports); // imports IA de programme (limite gratuite, 31/07)
     if (body.coachQuiz     !== undefined) profile.coachQuiz     = _po_(body.coachQuiz,     profile.coachQuiz);
     if (body.coachQuizPro  !== undefined) profile.coachQuizPro  = _po_(body.coachQuizPro,  profile.coachQuizPro);
     if (body.scaleType     !== undefined) profile.scaleType     = _ps_(body.scaleType,     profile.scaleType);

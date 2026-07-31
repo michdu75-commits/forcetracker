@@ -329,6 +329,36 @@ t('déjà Premium → « actif » affiché, l\'appel à l\'action disparaît', G
 t('… et le sous-titre du Menu passe à « Actif ✓ »', G.sub);
 
 // ════════════════════════════════════════════════════════════════════
+console.log('\n═══ H. Portes Premium (décisions Michel 31/07) ═══');
+const H=await p.evaluate(()=>{
+  const out={};
+  // Pesée photo : 2 gratuites, ILLIMITÉ en Premium (le Premium ne levait même pas l'ancienne limite)
+  S.premium=true;  out.bsPremium=_bodyScanPhotoUnlimited();
+  S.premium=false; out.bsGratuit=(typeof _isSuperTester==='function'&&_isSuperTester())?null:_bodyScanPhotoUnlimited();
+  // Prise de sang : visible par TOUS (fin de la bêta à 2 emails)
+  S.email='quelconque@example.com';
+  out.bloodVisible=_isBloodBeta();
+  // Compteur d'imports de programme : persisté + repart au cloud
+  S.progImports=2;persist();
+  out.progPersist=localStorage.getItem('ft4_progimports')==='2';
+  S.progImports=0;persist();
+  return out;
+});
+t('pesée photo : le Premium lève la limite (illimité)', H.bsPremium===true);
+t('pesée photo : un compte gratuit reste limité', H.bsGratuit===false, 'reçu '+H.bsGratuit);
+t('prise de sang : la carte est visible par TOUT LE MONDE', H.bloodVisible===true);
+t('compteur d\'imports de programme : persisté', H.progPersist);
+// vérifications STRUCTURELLES (les portes sont dans le code, aux bons endroits)
+const _fs=require('fs'),_path=require('path');
+const _src=f=>_fs.readFileSync(_path.join(ROOT,f),'utf8');
+const _log=_src('log.js'),_trk=_src('tracking.js'),_cod=_src('Code.js');
+t('programmes : 2 imports gratuits puis Premium (porte posée avant la lecture IA)',
+  /PROG_FREE_LIMIT=2/.test(_log)&&/S\.progImports\|\|0\)>=PROG_FREE_LIMIT/.test(_log));
+t('pesée : la limite gratuite est bien 2', /BODYSCAN_FREE_LIMIT=2;/.test(_trk));
+t('prise de sang : l\'ANALYSE est verrouillée Premium', /_analyzeBloodRedacted\(\)\{[\s\S]{0,400}?if\(!S\.premium\)/.test(_trk));
+t('le compteur de programmes part au cloud (backend)', /body\.progImports/.test(_cod));
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ C. PERFORMANCES — l\'app et Milo sont-ils ralentis ? ═══');
 // Profil réaliste chargé : 200 séances, 3 ans de sommeil/poids, historique de chat
 const C=await p.evaluate(()=>{

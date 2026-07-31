@@ -186,6 +186,9 @@ const PREMIUM_PERKS=[
   {i:'📖', t:'<b>Import de ton journal de séances</b> en illimité (1 offert en gratuit)'},
   {i:'🎯', t:'<b>Questionnaire avancé + question de la semaine</b> — Milo affine ton profil'},
   {i:'📊', t:'<b>Analyse de progression</b> personnalisée'},
+  {i:'📋', t:'<b>Import de programmes en illimité</b> — scan photo/PDF lu par l\'IA (2 offerts en gratuit)'},
+  {i:'⚖️', t:'<b>Pesée / bilan corporel en photo</b> en illimité — la balance lue par l\'IA (2 offertes ; la saisie à la main reste gratuite)'},
+  {i:'🩸', t:'<b>Analyse de prise de sang</b> — lecture IA de ton bilan, résultats expliqués et connus de Milo'},
 ];
 
 const NEW_FEATURES=[
@@ -251,6 +254,7 @@ const NEW_FEATURES=[
   {id:'checkin-tuiles', screen:'home', desc:'Ton check-in se lit d\'un coup d\'œil : trois tuiles sommeil / énergie / moral'},
   {id:'recup-moniteur', screen:'menu', desc:'Nouveau : deux styles pour ta carte récup — Menu → Apparence'},
   {id:'premium-menu', screen:'menu', desc:'Nouveau : le Premium a sa page — Menu → ⭐ Premium : ce qu\'il t\'apporte (Milo en illimité), le prix, et l\'activation d\'un code'},
+  {id:'blood-for-all', screen:'setup', desc:'Nouveau : l\'import de ta prise de sang est ouvert à tous (Profil → Santé) — tu masques ton identité au doigt avant l\'envoi ; l\'analyse IA des marqueurs est réservée Premium, et Milo en tient compte'},
   {id:'calendrier-chaleur', screen:'home', desc:'Nouveau : ton calendrier montre le volume de chaque jour, le groupe travaillé, et le détail d\'un jour au tap'},
   {id:'recup-ring', screen:'home', desc:'Nouveau : ton score de récup s\'affiche dans un anneau — appuie dessus pour revoir le chiffre grimper de 0 à ton score'},
   {id:'whatsnew-history', screen:'setup', anchor:'menu-row-whatsnew', desc:'Nouveau : Menu → « Nouveautés » — toutes les nouveautés de l\'app restent consultables quand tu veux, même si tu passes la pop-up de lancement'},
