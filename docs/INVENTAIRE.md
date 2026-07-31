@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v672`, dernier commit 2026-07-30).
+> Généré depuis **le code** (version `ft-v691`, dernier commit 2026-07-31).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -17,10 +17,10 @@
 | Élément | Nombre | Absents de la doc |
 |---|---|---|
 | Écrans | 7 | 0 |
-| Lignes de menu | 4 | 0 |
-| Fenêtres (modales) | 50 | 2 |
-| Actions du serveur | 33 | 0 |
-| Fonctions JS | 503 | — |
+| Lignes de menu | 5 | 1 |
+| Fenêtres (modales) | 53 | 5 |
+| Actions du serveur | 36 | 0 |
+| Fonctions JS | 509 | — |
 | Nouveautés annoncées | 49 | — |
 
 ## 🖥️ Écrans
@@ -40,6 +40,7 @@
 | Libellé | id | ouvre | doc |
 |---|---|---|---|
 | **Anatomie du corps humain** | `menu-row-profil` | `closeMenuDrawer` | ✅ |
+| **Anatomie du corps humain** | `menu-row-premium` | `closeMenuDrawer` | ❓ |
 | **Guide de l'application** | `menu-row-appguide` | `openAppGuide` | ✅ |
 | **Ce que Milo sait de toi** | `menu-row-miloknows` | `closeMenuDrawer` | ✅ |
 | **Nouveautés** | `menu-row-whatsnew` | `closeMenuDrawer` | ✅ |
@@ -57,6 +58,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `bodyStudy` | ✅ |
 | `checkBackup` | ✅ |
 | `coach` | ✅ |
+| `compressStore` | ✅ |
 | `estimateFood` | ✅ |
 | `foodLabel` | ✅ |
 | `generateMealPlan` | ✅ |
@@ -71,12 +73,14 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `loadProfile` | ✅ |
 | `logCustomExercise` | ✅ |
 | `logSession` | ✅ |
+| `mailFails` | ✅ |
 | `migrateBackups` | ✅ |
 | `morphoAnalysis` | ✅ |
 | `readBarcode` | ✅ |
 | `saveProfile` | ✅ |
 | `sendConfirmCode` | ✅ |
 | `setAccessCode` | ✅ |
+| `storeHealth` | ✅ |
 | `summarizeCoach` | ✅ |
 | `test` | ✅ |
 | `testGardeFou` | ✅ |
@@ -96,6 +100,8 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-super-welcome` | ✅ |
 | `ov-billoute` | ✅ |
 | `ov-christophe-photos` | ✅ |
+| `ov-pesee-nav-c` | ❓ |
+| `ov-pesee-nav-e` | ❓ |
 | `ov-emma-welcome` | ✅ |
 | `ov-kcal-edit` | ✅ |
 | `ov-tester-guide` | ✅ |
@@ -122,6 +128,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-hist-wall` | ✅ |
 | `ov-day-sel` | ✅ |
 | `ov-morpho-analysis` | ✅ |
+| `ov-premium-info` | ❓ |
 | `ov-weigh-edit` | ✅ |
 | `ov-bs-scan` | ✅ |
 | `ov-bodyscan-form` | ✅ |

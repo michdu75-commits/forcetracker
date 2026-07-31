@@ -339,6 +339,19 @@ t('⭐ l\'historique de l\'Étude du corps apparaît dès le PREMIER bilan (au s
 // 01/08 : « quand il y a une mise à jour, on repart sur le logo de départ » (Christophe + Michel).
 // Le reload auto post-MAJ pose ft4_just_updated AVANT de recharger → le splash iOS doit LIRE ce
 // flag et se sauter au redémarrage de mise à jour (double logo = double démarrage perçu).
+// 01/08 : les animations abduction/adduction étaient INVERSÉES à la source (l'œil de Michel
+// en séance). Fichiers permutés sous des noms -v2 (le cache d'images ft-images ne se vide
+// jamais → un simple échange sur place aurait servi l'ancienne image inversée à l'infini).
+t('⭐ démos abduction/adduction remises à l\'endroit : fichiers -v2 mappés, présents, anciens noms partis',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const sw=fs.readFileSync(path.join(ROOT,'sw.js'),'utf8');
+        return /'Abduction Cuisses \(Leg Abduction\)':\{img:'exercises\/leg-abduction-machine-v2\.webp'\}/.test(lg)
+            && /'Adduction Cuisses \(Leg Adduction\)':\{img:'exercises\/leg-adduction-machine-v2\.webp'\}/.test(lg)
+            && fs.existsSync(path.join(ROOT,'exercises/leg-abduction-machine-v2.webp'))
+            && fs.existsSync(path.join(ROOT,'exercises/leg-adduction-machine-v2.webp'))
+            && !fs.existsSync(path.join(ROOT,'exercises/leg-abduction-machine.webp'))
+            && lg.indexOf("'exercises/leg-abduction-machine.webp'")<0
+            && sw.indexOf('leg-abduction-machine.webp')<0;})());
 t('⭐ le splash iOS est SAUTÉ au redémarrage de mise à jour (flag ft4_just_updated lu en tête)',
   (()=>{const s=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
         const m=s.match(/navigator\.standalone===true&&localStorage\.getItem\('ft4_just_updated'\)!=='1'\)document\.documentElement\.classList\.add\('ios-boot'\)/);

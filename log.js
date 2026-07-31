@@ -4819,8 +4819,12 @@ const EX_YT={
   'Presse à Cuisses Iso-Latérale': {img:'exercises/presse-cuisse-iso-laterale-hammer-stenght.webp'},
   'Sled Push':                     {img:'exercises/sled-push-hyrox.webp'},
   'Croix de Fer Haltères':         {img:'exercises/croix-de-fer-halteres.webp'},
-  'Abduction Cuisses (Leg Abduction)':{img:'exercises/leg-abduction-machine.webp'},
-  'Adduction Cuisses (Leg Adduction)':{img:'exercises/leg-adduction-machine.webp'},
+  // ⚠️ Fichiers -v2 (01/08/2026, l'œil de Michel en séance) : les DEUX animations d'origine
+  // étaient INVERSÉES à la source (le fichier « abduction » montrait une adduction et vice
+  // versa). Renommés en -v2 plutôt que permutés sur place : le cache d'images des téléphones
+  // (ft-images, jamais vidé) aurait continué de servir l'ancienne image inversée à l'infini.
+  'Abduction Cuisses (Leg Abduction)':{img:'exercises/leg-abduction-machine-v2.webp'},
+  'Adduction Cuisses (Leg Adduction)':{img:'exercises/leg-adduction-machine-v2.webp'},
   'Chest Press Machine Déclinée':  {img:'exercises/chest-press-machine-declinee.webp'},
   'Dips Parallèles':               {img:'exercises/dips-triceps-paralleles.webp'},
   'Montée sur Box Haltères':       {img:'exercises/montees-banc-lateral-halteres.webp'},

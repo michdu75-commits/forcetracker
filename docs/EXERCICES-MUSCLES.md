@@ -2,7 +2,7 @@
 
 > **⚙️ FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer : `node tools/exercices-muscles.js`
 > (il interroge les vraies fonctions de l'app : `_mscScores` / `_calSessRegion` / `_movPattern`).
-> Dernière génération : 2026-07-30 · **249 exercices** du catalogue.
+> Dernière génération : 2026-07-31 · **249 exercices** du catalogue.
 >
 > **Comment lire :** les muscles **principaux** sont ceux que la figurine colorie le plus fort,
 > les *secondaires* sont coloriés plus doux. La **région** est celle utilisée par la couleur du
@@ -10,7 +10,7 @@
 > mêmes règles (il est reconnu par son nom).
 
 
-## Bas du corps (72 exercices)
+## Bas du corps (73 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -27,7 +27,7 @@
 | Élévations Mollets Debout | **Mollets** | — | Extension de cheville (mollets) |
 | Élévations Mollets Penché (Donkey Calf Raise) | **Mollets** | — | Extension de cheville (mollets) |
 | Élévations Mollets Unilatéral | **Mollets** | — | Extension de cheville (mollets) |
-| Extension Fessiers Arrière (Kickback) | **Fessiers** | Ischio-jambiers, Bas du dos | Extension du coude (triceps) |
+| Extension Fessiers Arrière (Kickback) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 | Extension Quadriceps (Leg Extension) | **Quadriceps** | — | Extension de genou (quadriceps) |
 | Extension Quadriceps Unilatérale | **Quadriceps** | — | Extension de genou (quadriceps) |
 | Fentes | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
@@ -43,12 +43,14 @@
 | Hyperextension Lestée | **Bas du dos, Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Hyperextension Machine | **Bas du dos, Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Inclinaison Lombaire (Good Morning) | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Charnière de hanche (hip hinge) |
+| Jefferson Curl | **Bas du dos, Fessiers** | Ischio-jambiers | Flexion du coude (biceps) |
 | Kettlebell Swing | **Fessiers, Ischio-jambiers** | Bas du dos, Quadriceps | Charnière de hanche (hip hinge) |
-| Kickback Cable | **Fessiers** | Ischio-jambiers | Extension du coude (triceps) |
-| Kickback Machine | **Fessiers** | Ischio-jambiers | Extension du coude (triceps) |
+| Kickback Cable | **Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
+| Kickback Machine | **Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Leg Curl Assis Machine | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Flexion de genou (ischios) |
 | Leg Curl Couché Machine | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Flexion de genou (ischios) |
 | Leg Curl Élastique | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Flexion de genou (ischios) |
+| Leg Curl Haltère | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Flexion de genou (ischios) |
 | Leg Curl Inversé | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Flexion de genou (ischios) |
 | Leg Curl Unilatéral Debout | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Flexion de genou (ischios) |
 | Mollets Machine Assise | **Mollets** | — | Extension de cheville (mollets) |
@@ -69,7 +71,6 @@
 | Press Jambes Verticale | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets | Squat (flexion hanche+genou) |
 | Presse à Cuisses Iso-Latérale | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets | Squat (flexion hanche+genou) |
 | Presse Mollets (Leg Press) | **Mollets** | — | Extension de cheville (mollets) |
-| Rotation Externe Épaule Abduction | **Fessiers** | — | Élévation / rotation épaule |
 | Safety Bar Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Sauts à la Corde | **Mollets** | Quadriceps | Saut / pliométrie |
 | Sissy Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Extension de genou (quadriceps) |
@@ -162,7 +163,7 @@
 | Triceps Poulie | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Triceps Poulie Basse | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 
-## Dos (61 exercices)
+## Dos (60 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -186,14 +187,13 @@
 | Haussements d'Épaules Câble | **Trapèzes** | Avant-bras | Élévation / rotation épaule |
 | Haussements d'Épaules Haltères | **Trapèzes** | Avant-bras | Élévation / rotation épaule |
 | Haussements d'Épaules Overhead | **Trapèzes** | Avant-bras | Élévation / rotation épaule |
-| Jefferson Curl | **Biceps** | Avant-bras | Flexion du coude (biceps) |
-| Leg Curl Haltère | **Biceps** | Avant-bras | Flexion de genou (ischios) |
 | Marteau | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Meadows Row | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Passage d'Épaule Élastique | **Deltoïdes post.** | Trapèzes | — |
 | Pronation Supination Haltère | **Avant-bras** | — | — |
 | Renegade Row | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rocky Pull-up | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
+| Rotation Externe Épaule Abduction | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 | Rotation Externe Épaule Élastique | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 | Rotation Externe Épaule Haltère | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 | Rotation Interne 90° Poulie | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
@@ -211,7 +211,7 @@
 | Rowing Yates (Supination) | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Seal Row | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Sled Pull | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Squat (flexion hanche+genou) |
-| Tirage Incliné Poulie Haute | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Poussée horizontale (pectoraux) |
+| Tirage Incliné Poulie Haute | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage vertical |
 | Tirage Iso-Latéral Hammer Strength | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
 | Tirage Menton | **Deltoïdes lat., Trapèzes** | Biceps | Élévation / rotation épaule |
 | Tirage Menton Élastique | **Deltoïdes lat., Trapèzes** | Biceps | Élévation / rotation épaule |
@@ -221,7 +221,7 @@
 | Tirage Poulie Haute | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Tirage Poulie Haute Prise Inversée | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Tirage Poulie Haute Prise Serrée | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
-| Tirage Vertical (Upright Row) | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
+| Tirage Vertical (Upright Row) | **Deltoïdes lat., Trapèzes** | Biceps | Élévation / rotation épaule |
 | Traction Assistée | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Traction Derrière la Nuque | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Traction Lestée | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
