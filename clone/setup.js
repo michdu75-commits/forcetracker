@@ -1053,7 +1053,17 @@ function _renderPhotoMenu(){
     +'</button>';
   b.innerHTML=
     opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5be3b4" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M3 7l9-4 9 4M5 11l7-3 7 3"/></svg>','Étude du corps','4 photos · bilan posture, insertions, équilibre + exercices','openBodyStudy()')
-    +opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>','Analyser ma morphologie','3 photos · à faire une seule fois — définit ton type morpho','openMorphoAnalysis()');
+    +opt('<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>','Analyser ma morphologie','3 photos · à faire une seule fois — définit ton type morpho','openMorphoAnalysis()')
+    // Suivi photos (séries 4 photos, comparaison d'évolution) — SUPER TESTEURS uniquement.
+    // Déplacé ici depuis l'Espace testeur le 31/07/2026 (la carte « avant-première » n'avait
+    // plus de sens depuis l'Étude du corps Premium). Pas de porte Premium : c'est un statut.
+    +((typeof _isSuperTester==='function'&&_isSuperTester())
+      ?'<button class="pm-opt" onclick="closePhotoMenu();openBodySeries();">'
+       +'<div class="pm-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>'
+       +'<div style="flex:1;min-width:0;text-align:left;"><div class="pm-title">Mon suivi photos</div><div class="pm-sub">Séries de 4 photos · jusqu\'à 4/mois · comparaison d\'évolution</div></div>'
+       +'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>'
+       +'</button>'
+      :'');
 }
 
 // ── Étude du corps — bilan morpho-postural (4 photos relâché + contracté) ──
@@ -1169,7 +1179,7 @@ function _renderBodyStudyReport(d,isRecall){
   res.innerHTML=''
     +(isRecall?'<div style="font-size:11px;color:var(--t3);margin-bottom:8px;">📅 '+(_isLatest?'Dernier bilan':'Ancien bilan')+' du '+_bsFmtDate(d.date)+(_isLatest?' — relance une analyse pour le mettre à jour.':'.')+'</div>'
       :'<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><div style="width:26px;height:26px;border-radius:50%;background:rgba(52,211,153,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><span style="font-weight:800;font-size:14px;color:#5be3b4;">Bilan de ton corps</span></div>')
-    +((S.bodyStudies||[]).length>1?'<button onclick="_openBodyStudyHistory()" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;">📚 Historique — '+(S.bodyStudies.length)+' bilans</button>'
+    +((S.bodyStudies||[]).length>0?'<button onclick="_openBodyStudyHistory()" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;">📚 Historique — '+(S.bodyStudies.length)+' bilan'+(S.bodyStudies.length>1?'s':'')+'</button>'
       +(!_isLatest?'<button onclick="_viewBodyStudyAt(0)" style="width:100%;margin-bottom:12px;padding:9px;font-size:12px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--blue);cursor:pointer;touch-action:manipulation;">‹ Revenir au dernier bilan</button>':''):'')
     +'<div id="bs-photos"></div>'
     +_bsSection('🧍','Stature & posture',esc(d.stature))

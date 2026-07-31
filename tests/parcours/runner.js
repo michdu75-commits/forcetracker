@@ -282,6 +282,35 @@ t('fermer pose le marqueur → l\'annonce ne revient pas', F.chrisMarque&&F.chri
 t('Eline voit LA SIENNE (masse maigre) et pas celle de Christophe', F.eline&&F.elineTxt);
 t('… et une seule fois aussi', F.elineUneFois);
 
+// ════ F bis. Espace testeur & suivi photos (31/07 : « ça n'a plus lieu d'être ») ════
+// La carte « Analyse approfondie — en avant-première rien que pour toi » datait d'avant
+// l'Étude du corps Premium. Retirée de l'Espace testeur ; le suivi photos des super
+// testeurs vit dans le menu photos du Profil ; l'historique de l'Étude du corps
+// apparaît dès le PREMIER bilan (avant : à partir de 2).
+const FB=await p.evaluate(()=>{
+  const out={};
+  S.email='christophe@famillelanglois.fr';
+  _renderTesterSpace();
+  const tsp=document.getElementById('tester-space-body').innerHTML;
+  out.carteRetiree=!/Analyse approfondie/.test(tsp);
+  out.boiteLa=/Envoyer à Michel/.test(tsp);
+  S.premium=true;_renderPhotoMenu();
+  out.menuSuivi=/Mon suivi photos/.test(document.getElementById('photo-menu-body').innerHTML);
+  S.email='quelquun@example.com';_renderPhotoMenu();
+  out.menuLambda=!/Mon suivi photos/.test(document.getElementById('photo-menu-body').innerHTML);
+  S.bodyStudies=[{date:'2026-07-30',stature:'x'}];S.bodyStudy=S.bodyStudies[0];
+  _renderBodyStudyReport(S.bodyStudies[0],true);
+  out.histo1=/Historique — 1 bilan</.test(document.getElementById('body-result').innerHTML);
+  S.email='';S.premium=false;S.bodyStudies=[];S.bodyStudy=null;
+  return out;
+});
+t('⭐ l\'Espace testeur ne contient PLUS la carte « Analyse approfondie » (la boîte à idées reste)',
+  FB.carteRetiree&&FB.boiteLa);
+t('⭐ le suivi photos vit dans le menu photos du Profil (super testeur seulement)',
+  FB.menuSuivi&&FB.menuLambda);
+t('⭐ l\'historique de l\'Étude du corps apparaît dès le PREMIER bilan (au singulier)',
+  FB.histo1);
+
 // ════════════════════════════════════════════════════════════════════
 console.log('\n═══ G. Premium visible — ligne Menu + fiche « pourquoi » ═══');
 const G=await p.evaluate(()=>{

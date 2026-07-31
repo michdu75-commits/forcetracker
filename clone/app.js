@@ -2535,29 +2535,23 @@ function showTester3B(){
 function closeTester3B(){try{localStorage.setItem('ft4_tester_3b_v1','1');}catch(e){}const o=document.getElementById('ov-tester-3b');if(o)o.classList.remove('open');}
 function openTesterSpace(){
   // L'Espace Testeur (dont la boîte à idées) est ouvert à TOUS les testeurs récompensés.
-  // Le suivi photos à l'intérieur reste réservé aux super testeurs (voir _renderTesterSpace).
+  // Le suivi photos n'est plus ici : il vit dans le menu photos du Profil (super testeurs).
   // Michel a le suivi photos via le panneau Admin.
   const isTester=(typeof _isTester==='function'&&_isTester());
   if(!isTester&&!(typeof _isSuperTester==='function'&&_isSuperTester())){toast('Espace réservé aux testeurs','info');return;}
   _renderTesterSpace();const o=document.getElementById('ov-tester-space');if(o)o.classList.add('open');}
 function closeTesterSpace(){const o=document.getElementById('ov-tester-space');if(o)o.classList.remove('open');}
-function _openTesterPhotoAnalysis(){ if(typeof openBodySeries==='function')openBodySeries(); else if(typeof openBodyStudy==='function')openBodyStudy(); else toast('Analyse photos bientôt disponible','info'); }
 function _renderTesterSpace(){
   const body=document.getElementById('tester-space-body');if(!body)return;
   const esc=(t)=>(typeof _escNote==='function'?_escNote(t):(t||'')).replace(/\n/g,'<br>');
   const ideas=(S.testerIdeas||[]).slice().reverse();
   const ideasHtml=ideas.length?ideas.map(it=>'<div class="tsp-idea">'+esc(it.text)+'<span class="tsp-idea-date">'+(it.date||'')+(it.photos?' · '+it.photos+' photo'+(it.photos>1?'s':''):'')+(it.sent?' · envoyée ✓':'')+'</span></div>').join(''):'';
-  // Le suivi photos approfondi reste réservé aux super testeurs (coûteux) ; la boîte à idées est pour tous les testeurs.
-  const photoCard=(typeof _isSuperTester==='function'&&_isSuperTester())
-    ? '<div class="tsp-card">'
-      +'<h4>🔬 Analyse approfondie de tes photos</h4>'
-      +'<p>En avant-première rien que pour toi. Prends une série de 4 photos (face relâché, face contracté, dos contracté, profil) — l’IA fait un bilan complet. <b>Jusqu’à 4 séries par mois</b>, comparées entre elles pour suivre ton évolution.</p>'
-      +'<button class="btn" onclick="closeTesterSpace();_openTesterPhotoAnalysis();" style="width:100%;padding:12px;background:rgba(234,179,8,.16);border:1px solid rgba(234,179,8,.42);color:var(--gold);font-weight:800;">📸 Mon suivi photos</button>'
-      +'</div>'
-    : '';
+  // La carte « Analyse approfondie de tes photos » a été RETIRÉE d'ici le 31/07/2026
+  // (décision Michel : « ça n'a plus lieu d'être ») : son discours « en avant-première rien
+  // que pour toi » datait d'avant l'Étude du corps Premium. Le suivi photos des super
+  // testeurs vit maintenant dans le menu photos du Profil (setup.js _renderPhotoMenu).
   body.innerHTML=
-    photoCard
-    +'<div class="tsp-card">'
+    '<div class="tsp-card">'
     +'<h4>💡 Ta boîte à idées</h4>'
     +'<p>Écris ce que tu aimerais, joins des photos ou des captures d’écran. Ça remonte direct à Michel.</p>'
     +'<textarea id="tester-idea-input" placeholder="Ton idée, une remarque, un bug, un truc qui te manque…" style="width:100%;min-height:72px;background:var(--bg2);border:1px solid var(--sep);border-radius:10px;padding:10px;color:var(--t1);font-family:var(--font);font-size:13.5px;resize:vertical;box-sizing:border-box;"></textarea>'
