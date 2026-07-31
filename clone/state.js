@@ -162,11 +162,28 @@ function load(){
     // Complète les bilans DÉJÀ importés où le lecteur l'avait ratée — même formule que le
     // backend (repli déterministe @auto 30/07). On ne touche jamais une valeur déjà lue.
     (S.bodyScans||[]).forEach(sc=>{
-      if(sc&&(sc.leanMass==null||!isFinite(Number(sc.leanMass)))
-         &&isFinite(Number(sc.weight))&&Number(sc.weight)>0
+      if(!sc)return;
+      const W=Number(sc.weight);
+      // Étendu 31/07/2026 (même famille que le bug d'Eline, audit) : la masse grasse en kg
+      // et le % de masse grasse se déduisent l'un de l'autre quand le poids est lu — beaucoup
+      // de balances n'affichent que l'un des deux. L'ordre compte : on complète fatMass/bf
+      // AVANT la masse maigre, pour que la chaîne aboutisse (bf → fatMass → leanMass).
+      if((sc.fatMass==null||!isFinite(Number(sc.fatMass)))
+         &&isFinite(W)&&W>0
+         &&isFinite(Number(sc.bf))&&Number(sc.bf)>0&&Number(sc.bf)<100){
+        sc.fatMass=Math.round(W*Number(sc.bf)/100*10)/10;
+      }
+      if((sc.bf==null||!isFinite(Number(sc.bf)))
+         &&isFinite(W)&&W>0
          &&isFinite(Number(sc.fatMass))&&Number(sc.fatMass)>0
-         &&Number(sc.fatMass)<Number(sc.weight)){
-        sc.leanMass=Math.round((Number(sc.weight)-Number(sc.fatMass))*10)/10;
+         &&Number(sc.fatMass)<W){
+        sc.bf=Math.round(Number(sc.fatMass)/W*1000)/10;
+      }
+      if((sc.leanMass==null||!isFinite(Number(sc.leanMass)))
+         &&isFinite(W)&&W>0
+         &&isFinite(Number(sc.fatMass))&&Number(sc.fatMass)>0
+         &&Number(sc.fatMass)<W){
+        sc.leanMass=Math.round((W-Number(sc.fatMass))*10)/10;
       }
     });
     S.bloodTests=JSON.parse(localStorage.getItem('ft4_bloodtests')||'[]');

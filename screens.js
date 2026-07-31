@@ -271,7 +271,7 @@ const _HELP_DATA={
       {i:'📸',t:'Bouton 📷 pour envoyer une photo (analyse corpo ou morphologie). Bouton 📸 "Analyser ma morphologie" pour l\'analyse 3 angles (Premium).'},
       {i:'📋',t:'Analyse de programme IA (bouton 🤖 dans Programmes) : le Coach évalue ton programme et propose des améliorations.'},
       {i:'🔗',t:'Bouton "Partager" sous chaque réponse : envoie-la (SMS, Notes, WhatsApp…) ou copie-la en un tap. Pratique pour garder un conseil ou l\'envoyer à un pote.'},
-      {i:'🔓',t:'10 questions gratuites, puis Premium illimité (4,99 € / 2 mois via Ko-fi).'},
+      {i:'🔓',t:'10 questions gratuites, puis Premium illimité (6,99 €/mois via Ko-fi — essai 3 jours à 1,99 €).'},
     ],
     female:[
       {i:'🌸',t:'Mentionne ta phase de cycle ("je suis en phase lutéale") pour des conseils nutrition et entraînement adaptés à ton moment.'},
@@ -1790,7 +1790,7 @@ function renderMealPlanIA(){
   if(!isPrem&&!imp){
     html+=`<div style="background:rgba(255,214,0,.07);border:1px solid rgba(255,214,0,.15);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
       <span style="font-size:18px;">⭐</span>
-      <div style="font-size:12px;color:var(--t2);">Premium : semaine complète + régénérations illimitées — <strong style="color:var(--gold);">4,99€/2 mois</strong></div>
+      <div style="font-size:12px;color:var(--t2);">Premium : semaine complète + régénérations illimitées — <strong style="color:var(--gold);">6,99 €/mois</strong></div>
     </div>`;
   }
   el.innerHTML=html+`</div>`;

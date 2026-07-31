@@ -267,6 +267,26 @@ console.log('\n═══ 3 ter. Masse maigre calculée sur les ANCIENS bilans (m
 }
 
 // ════════════════════════════════════════════════════════════════════
+console.log('\n═══ 3 quater. Masse grasse ↔ % de gras (audit 31/07, même famille qu\'Eline) ═══');
+{
+  // Beaucoup de balances n'affichent QUE le % de gras, ou QUE les kg. Les deux se déduisent
+  // l'un de l'autre quand le poids est lu — et la chaîne doit aboutir jusqu'à la masse maigre.
+  const scans=JSON.stringify([
+    {date:'2026-07-01',weight:80,bf:25,fatMass:null,leanMass:null},   // % seul → kg PUIS masse maigre
+    {date:'2026-06-01',weight:80,bf:null,fatMass:16,leanMass:null},   // kg seul → % déduit
+    {date:'2026-05-01',weight:80,bf:24,fatMass:20.5,leanMass:null},   // les DEUX lus → aucun n'est recalculé
+  ]);
+  const {c,p}=await boot(null,{ft4_bodyscans:scans});
+  const r=await p.evaluate(()=>({s:S.bodyScans.map(x=>({bf:x.bf,fm:x.fatMass,lm:x.leanMass}))}));
+  t('⭐ % de gras seul → masse grasse CALCULÉE (80 × 25 % = 20 kg)', r.s[0].fm===20, 'reçu '+r.s[0].fm);
+  t('⭐ … et la CHAÎNE aboutit : masse maigre = 80 − 20 = 60', r.s[0].lm===60, 'reçu '+r.s[0].lm);
+  t('masse grasse seule → % déduit (16/80 = 20 %)', r.s[1].bf===20, 'reçu '+r.s[1].bf);
+  t('les deux valeurs LUES ne sont jamais recalculées (24 % et 20.5 kg restent tels quels)',
+    r.s[2].bf===24&&r.s[2].fm===20.5, r.s[2].bf+' / '+r.s[2].fm);
+  await c.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ 4. Niveaux de force — getLevel ═══');
 {
   const {c,p}=await boot(null,{});

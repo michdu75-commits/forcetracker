@@ -1037,7 +1037,7 @@ function _exJac(qset,cset){ if(!cset.size)return 0; if(_exModConflict(qset,cset)
 // Niveau 3 = résistance (indicatif). Niveaux 2/4/5 = modificateurs / marques / alias
 // (déjà couverts par _EX_MODGROUPS et _EX_EQUIV). Ordre = du + spécifique au + générique.
 const _MOV_PATTERNS=[
-  {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','haussement','shrug','croix de fer']},
+  {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','upright row','haussement','shrug','croix de fer']},
   {id:'flexion-genou',label:'Flexion de genou (ischios)',kw:['leg curl','curl ischio','ischio','nordic']}, // AVANT curl-biceps (« leg curl » ≠ curl de bras)
   {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['marteau','curl','preacher','biceps']},
   {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps']},
@@ -1075,6 +1075,14 @@ function _movPattern(name){ const q=' '+_movNorm(name)+' ';
   // Les mots-clés simples ne savent pas l'exprimer (« Écarté Haltères Buste Penché » a un mot au
   // milieu) et le kw « ecarte » de la poussée horizontale l'attraperait — bug du 30/07 (capture).
   if(/(ecarte|\bfly\b)/.test(q)&&/(penche|arriere|inverse|reverse)/.test(q)) return 'elevation-epaules';
+  // Un kickback de FESSIERS n'est pas une extension de triceps : le kw 'kickback' (triceps)
+  // attrapait « Extension Fessiers Arrière », « Kickback Machine » et « Kickback Cable »
+  // (machines fessiers du catalogue). Même règle que _MEX : sans « triceps » dans le nom,
+  // un kickback est une extension de hanche (ft-v686).
+  if(/kickback/.test(q)&&!/tricep/.test(q)) return 'hip-hinge'; // /tricep/ sans s : le stemming réduit « triceps » → « tricep »
+  // Un TIRAGE n'est jamais une poussée : « Tirage Incliné Poulie Haute » contenait « incliné »
+  // → attrapé par la poussée horizontale (kw 'incline'). Poulie haute → vertical, sinon horizontal (ft-v686).
+  if(/(^| )tirage /.test(q)&&/(incline|decline)/.test(q)) return /poulie haute/.test(q)?'tirage-vertical':'tirage-horizontal';
   for(const p of _MOV_PATTERNS){ for(const k of p.kw){ if(q.indexOf(' '+_movNorm(k)+' ')>=0 || q.indexOf(_movNorm(k))>=0) return p.id; } } return null; }
 function _movResist(name){ const q=_normEx(name);
   if(/kettlebell/.test(q))return'kettlebell'; if(/elastique|band/.test(q))return'elastique';
@@ -1579,21 +1587,21 @@ const _MEX=[
   // Épaules — latéral / arrière / oiseau / écarté inverse / around the world
   {re:/elevation laterale|lateral raise|face pull|rear delt|oiseau|ecarte inverse|reverse fly|around the world/i, p:['side-delt','rear-delt'], s:['front-delt','traps']},
   // Dos — verticaux / tractions
-  {re:/traction|pull.?up|chin.?up|tirage vertical|lat pulldown|tirage poulie haute/i, p:['lats','biceps'],             s:['traps','rear-delt','forearms']},
+  {re:/^(?!.*(upright|menton)).*(traction|pull.?up|chin.?up|tirage vertical|lat pulldown|tirage poulie haute)/i, p:['lats','biceps'],             s:['traps','rear-delt','forearms']}, // ⚠️ « Tirage Vertical (Upright Row) » = épaules/trapèzes, PAS un tirage dorsal — sa règle précise vit plus bas (ft-v686)
   // Dos — rowings / tirages horizontaux / bûcheron
   // ⚠️ `\bt[-\s]?bar` et NON `t.?bar` : sans la limite de mot, le motif attrapait
   // « poigne**t bar**re » — « Curl Poignet Barre » et « Extension Poignet Barre » étaient
   // classés en DORSAUX/TRAPÈZES au lieu d'avant-bras (bug trouvé le 29/07/2026 en auditant
   // les tables de classification). Les vrais « Rowing T-Bar » continuent de matcher.
-  {re:/rowing|row barre|\brow\b|\bt[-\s]?bar|tirage horizontal|tirage bucheron|bucheron/i, p:['lats','traps','rear-delt'],   s:['biceps','lower-back','forearms']},
+  {re:/^(?!.*(upright|menton)).*(rowing|row barre|\brow\b|\bt[-\s]?bar|tirage horizontal|tirage bucheron|bucheron)/i, p:['lats','traps','rear-delt'],   s:['biceps','lower-back','forearms']}, // ⚠️ \brow\b attrapait « Upright ROW » (épaules/trapèzes, règle précise plus bas — ft-v686)
   // Dos — bras tendu / pull-over
   {re:/bras tendu|straight.?arm|pull.?over/i,                                   p:['lats'],                             s:['triceps','pec']},
   // Biceps
-  {re:/curl bicep|bicep curl|curl halter|preacher|curl marteau|hammer curl|curl biceps/i, p:['biceps'],                s:['forearms']},
+  {re:/^(?!.*(leg curl|ischio|jambier)).*(curl bicep|bicep curl|curl halter|preacher|curl marteau|hammer curl|curl biceps)/i, p:['biceps'],                s:['forearms']}, // ⚠️ exclusion : « Leg Curl Haltère » contient « curl halter » — un curl de JAMBE n'est pas un biceps (même maladie que poignet/leg curl, ft-v686)
   // Triceps
   {re:/tricep|skull crusher|extension tricep|barre front/i,                     p:['triceps'],                          s:['front-delt']},
   // Abducteurs / adducteurs (fessiers/hanche) — remplace l'ancien mapping erroné
-  {re:/abducteur|abduction/i,                                                   p:['glutes'],                           s:[]},
+  {re:/^(?!.*(epaule|shoulder|rotation)).*(abducteur|abduction)/i,              p:['glutes'],                           s:[]}, // ⚠️ « Rotation Externe Épaule Abduction » = coiffe des rotateurs, pas les fessiers (ft-v686)
   {re:/adducteur|adduction/i,                                                   p:['glutes'],                           s:['quads']},
   // Jambes — presse (toutes variantes fr/en)
   {re:/leg press|presse cuisse|press jambe|presse jambe|presse horizontale|presse verticale/i, p:['quads','glutes'],   s:['hamstrings','calves']},
@@ -1653,7 +1661,7 @@ const _MEX=[
   //   · les curls de JAMBES (leg curl / ischio) → ce sont des ischio-jambiers ;
   //   · les curls de POIGNET → ce sont des avant-bras, pas du biceps.
   //   Sans elles, « Leg Curl » et « Curl Poignet Barre » seraient classés en biceps.
-  {re:/^(?!.*(leg curl|ischio|jambier|poignet|wrist)).*(curl|marteau|hammer curl|zottman)/i, p:['biceps'],               s:['forearms']},
+  {re:/^(?!.*(leg curl|ischio|jambier|poignet|wrist|jefferson)).*(curl|marteau|hammer curl|zottman)/i, p:['biceps'],               s:['forearms']}, // 'jefferson' exclu : le Jefferson Curl est une flexion de colonne (lombaires/ischios), sa règle vit plus bas (ft-v686)
   // — Triceps : barre au front, extensions nuque
   {re:/barre au front|skull ?crusher|extension nuque|extension triceps|french press/i, p:['triceps'],                    s:['front-delt']},
   // — Avant-bras

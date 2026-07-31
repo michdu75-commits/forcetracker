@@ -225,6 +225,41 @@ t('témoin : « Écarté Haltères » (couché) RESTE des pectoraux',
   ois.temoin==='front-delt,pec'&&ois.temoinMov==='poussee-horizontale', ois.temoin+' / '+ois.temoinMov);
 t('témoin : l\'Oiseau garde son schéma élévation d\'épaule', ois.oiseau==='elevation-epaules', 'reçu '+ois.oiseau);
 
+// ── AUDIT DU 31/07 (demande Michel : « revérifie bien les exercices ») : 6 exercices de plus
+// avaient la MÊME maladie (règle générique avant la précise). Chacun figé ici, avec son témoin.
+const au=await p.evaluate(()=>{
+  const g=n=>{const d=_mscScores([{name:n,sets:[{done:true}]}])||{};return Object.keys(d.sc||{}).sort().join(',');};
+  return {legCurlH:g('Leg Curl Haltère'),                  legCurlHMov:_movPattern('Leg Curl Haltère'),
+          curlH:g('Curl Haltères'),
+          rotAbd:g('Rotation Externe Épaule Abduction'),
+          abdCuisses:g('Abduction Cuisses (Leg Abduction)'),
+          upright:g('Tirage Vertical (Upright Row)'),      uprightMov:_movPattern('Tirage Vertical (Upright Row)'),
+          traction:g('Traction Lestée'),                   rowing:g('Rowing Barre'),
+          jeff:g('Jefferson Curl'),
+          kbFess:_movPattern('Extension Fessiers Arrière (Kickback)'),
+          kbMachine:_movPattern('Kickback Machine'),
+          kbTri:_movPattern('Extension Triceps Arrière (Kickback)'),
+          tirInc:_movPattern('Tirage Incliné Poulie Haute')};
+});
+t('⭐ « Leg Curl Haltère » = ISCHIOS, plus jamais le biceps (« curl halter » l\'attrapait)',
+  au.legCurlH==='calves,glutes,hamstrings,lower-back'&&au.legCurlHMov==='flexion-genou', au.legCurlH+' / '+au.legCurlHMov);
+t('témoin : « Curl Haltères » reste un biceps', au.curlH==='biceps,forearms', 'reçu '+au.curlH);
+t('⭐ « Rotation Externe Épaule Abduction » = coiffe des rotateurs, plus jamais les FESSIERS',
+  au.rotAbd==='rear-delt,traps', 'reçu '+au.rotAbd);
+t('témoin : « Abduction Cuisses » reste des fessiers', au.abdCuisses.indexOf('glutes')===0, 'reçu '+au.abdCuisses);
+t('⭐ « Tirage Vertical (Upright Row) » = épaules/trapèzes + élévation, plus jamais un tirage dorsal',
+  au.upright==='biceps,side-delt,traps'&&au.uprightMov==='elevation-epaules', au.upright+' / '+au.uprightMov);
+t('témoins : traction et rowing restent des dorsaux',
+  au.traction.indexOf('lats')>=0&&au.rowing.indexOf('lats')>=0, au.traction+' / '+au.rowing);
+t('⭐ « Jefferson Curl » = lombaires/ischios (mobilité), plus jamais un biceps',
+  au.jeff==='glutes,hamstrings,lower-back', 'reçu '+au.jeff);
+t('⭐ un kickback de FESSIERS = charnière de hanche, plus jamais une extension de triceps',
+  au.kbFess==='hip-hinge'&&au.kbMachine==='hip-hinge', au.kbFess+' / '+au.kbMachine);
+t('témoin : le kickback TRICEPS garde son schéma (malgré le stemming « triceps » → « tricep »)',
+  au.kbTri==='extension-triceps', 'reçu '+au.kbTri);
+t('⭐ « Tirage Incliné Poulie Haute » = un TIRAGE, plus jamais une poussée (kw « incline »)',
+  au.tirInc==='tirage-vertical', 'reçu '+au.tirInc);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

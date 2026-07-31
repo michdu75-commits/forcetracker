@@ -322,6 +322,12 @@ t('la ligne ⭐ Premium existe dans le Menu (sous le profil)', G.row);
 t('l\'ancienne bannière « Coach IA Premium » a disparu (une seule porte, R2)', G.oldBanner);
 t('la fiche s\'ouvre : prix affiché + champ code + appel à l\'action', G.open&&G.prix&&G.code2&&G.ctaVisible&&G.statutVide);
 t('l\'essai est à 1,99 € (0,99 € impayable sur Ko-fi — décision Michel 31/07)', G.essai);
+// Audit 31/07 : le mur des COMBINAISONS de suppléments affichait encore « 4,99€ / 2 mois »
+// (échappé au balayage ft-v684). Test STRUCTUREL : plus aucun vieux prix dans AUCUN fichier.
+t('plus AUCUN vieux prix (« 4,99 » / « 2 mois ») dans tout le frontend — mur des combos compris',
+  ['index.html','app.js','screens.js','coach.js','tracking.js','log.js','setup.js','constants.js','state.js']
+  .every(f=>{const s=fs.readFileSync(path.join(ROOT,f),'utf8').replace(/34,99/g,'');
+             return !/4,99/.test(s)&&!/2 mois/.test(s);}));
 t('⭐ la liste des avantages vient de PREMIUM_PERKS (source unique) : fiche ET mur du Coach au complet',
   G.nbFiche===G.nbPerks&&G.nbWall===G.nbPerks&&G.nbPerks>=10, JSON.stringify({perks:G.nbPerks,fiche:G.nbFiche,mur:G.nbWall}));
 t('les manques signalés par Michel y sont : récap séances · étude du corps 4 photos · nutrition IA · journal illimité',

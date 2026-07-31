@@ -1625,10 +1625,26 @@ function handleImportBodyScan_(body) {
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) return json_({status:'error', error:'Lecture impossible. Réessaie avec une photo plus nette et bien cadrée.'});
     const data = JSON.parse(match[0]);
-    // 🩹 Repli DÉTERMINISTE (30/07/2026, rapport MyBodyCheck d'Eline) : le modèle de lecture
+    // 🩹 Replis DÉTERMINISTES — jamais d'IA là où une multiplication suffit, on ne complète
+    // que depuis des valeurs réellement LUES, et on n'écrase jamais une valeur lue.
+    // Étendus le 31/07/2026 (audit « famille du bug d'Eline ») : la masse grasse en kg et le
+    // % de masse grasse se déduisent l'un de l'autre quand le poids est lu — beaucoup de
+    // balances n'affichent que l'un des deux. L'ordre compte : fatMass/bf AVANT leanMass,
+    // pour que la chaîne aboutisse (bf → fatMass → leanMass). Même règle côté app (state.js).
+    if ((data.fatMass == null || !isFinite(Number(data.fatMass))) &&
+        isFinite(Number(data.weight)) && Number(data.weight) > 0 &&
+        isFinite(Number(data.bf)) && Number(data.bf) > 0 && Number(data.bf) < 100) {
+      data.fatMass = Math.round(Number(data.weight) * Number(data.bf) / 100 * 10) / 10;
+    }
+    if ((data.bf == null || !isFinite(Number(data.bf))) &&
+        isFinite(Number(data.weight)) && Number(data.weight) > 0 &&
+        isFinite(Number(data.fatMass)) && Number(data.fatMass) > 0 &&
+        Number(data.fatMass) < Number(data.weight)) {
+      data.bf = Math.round(Number(data.fatMass) / Number(data.weight) * 1000) / 10;
+    }
+    // (30/07/2026, rapport MyBodyCheck d'Eline) : le modèle de lecture
     // rate parfois la « masse maigre » dans la section « Autres indicateurs ». Or elle se DÉDUIT :
     // masse maigre = poids − masse grasse (vérifié sur son rapport : 51.85 − 14.1 = 37.75 ≈ 37.8).
-    // Jamais d'IA là où une soustraction suffit — on ne complète que si les deux sources sont lues.
     if ((data.leanMass == null || !isFinite(Number(data.leanMass))) &&
         isFinite(Number(data.weight)) && Number(data.weight) > 0 &&
         isFinite(Number(data.fatMass)) && Number(data.fatMass) > 0 &&

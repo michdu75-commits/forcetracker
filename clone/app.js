@@ -7,77 +7,11 @@
 // ─── SUPPLÉMENTS & PROTÉINES ──────────────────────────────────
 let creatPhase = 'charge';
 
-function updateProteinBar() {
-  const macros = calcMacros(S.nutritionPhase || 'charge');
-  const target = macros.prot_g || 0;
-  const eaten = parseFloat(document.getElementById('prot-eaten')?.value) || 0;
-  const pct = target > 0 ? Math.min(Math.round(eaten / target * 100), 100) : 0;
-  const remaining = Math.max(0, target - eaten);
-
-  const bar = document.getElementById('prot-bar');
-  const pctDisp = document.getElementById('prot-pct-disp');
-  const remDisp = document.getElementById('prot-remaining');
-  const targDisp = document.getElementById('prot-target-disp');
-
-  if (bar) bar.style.width = pct + '%';
-  if (bar) bar.style.background = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--gold)' : 'var(--red)';
-  if (pctDisp) { pctDisp.textContent = pct + '%'; pctDisp.style.color = pct >= 100 ? 'var(--green)' : pct >= 70 ? 'var(--gold)' : 'var(--red)'; }
-  if (remDisp) remDisp.textContent = remaining + ' g';
-  if (targDisp) targDisp.textContent = target + ' g';
-}
-
-function setCreatPhase(phase, btn) {
-  creatPhase = phase;
-  document.querySelectorAll('.phase-toggle-small .ptbtn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  renderSupplements();
-}
-
-function renderSupplements() {
-  renderCreatine();
-  renderWhey();
-  updateProteinBar();
-}
-
-function renderCreatine() {
-  const el = document.getElementById('creat-content');
-  if (!el) return;
-  const bw = S.bw || 80;
-
-  if (creatPhase === 'charge') {
-    const dailyDose = 20; // standard loading
-    const perDose = 5;
-    el.innerHTML = `
-      <div class="dose-row"><span class="dose-label">Dose quotidienne</span><span class="dose-val" style="color:var(--blue);">${dailyDose}g / jour</span></div>
-      <div class="dose-row"><span class="dose-label">Nombre de prises</span><span class="dose-val">${dailyDose/perDose}× ${perDose}g</span></div>
-      <div class="dose-row"><span class="dose-label">Durée phase charge</span><span class="dose-val">5 à 7 jours</span></div>
-      <div class="dose-row" style="border-bottom:none;"><span class="dose-label">Moment</span><span class="dose-val" style="font-size:13px;">Avec repas</span></div>
-      <div class="tip-box">💡 Prends <strong>5g</strong> avec chaque repas principal (petit-déj, déjeuner, collation, dîner). Les glucides améliorent l'absorption. Après 5-7j, passe en maintenance.</div>`;
-  } else {
-    const dose = Math.round(bw * 0.05 * 10) / 10;
-    const rounded = Math.min(Math.max(dose, 3), 5);
-    el.innerHTML = `
-      <div class="dose-row"><span class="dose-label">Dose quotidienne</span><span class="dose-val" style="color:var(--green);">${rounded}g / jour</span></div>
-      <div class="dose-row"><span class="dose-label">Prise recommandée</span><span class="dose-val">1× ${rounded}g</span></div>
-      <div class="dose-row" style="border-bottom:none;"><span class="dose-label">Moment idéal</span><span class="dose-val" style="font-size:13px;">Post-workout</span></div>
-      <div class="tip-box">✅ Prends <strong>${rounded}g</strong> chaque jour, même les jours sans entraînement. Avec un repas ou post-workout. La constance est clé — les effets sont cumulatifs.</div>`;
-  }
-}
-
-function renderWhey() {
-  const el = document.getElementById('whey-content');
-  if (!el) return;
-  const bw = S.bw || 80;
-  const dose = Math.round(bw * 0.4);
-  const daily = calcMacros(S.nutritionPhase || 'charge').prot_g || 0;
-
-  el.innerHTML = `
-    <div class="dose-row"><span class="dose-label">Dose post-workout</span><span class="dose-val" style="color:var(--orange);">${dose}g</span></div>
-    <div class="dose-row"><span class="dose-label">Fenêtre anabolique</span><span class="dose-val" style="font-size:13px;">0-60 min</span></div>
-    <div class="dose-row" style="border-bottom:none;"><span class="dose-label">Contribution protéines</span><span class="dose-val">${dose}g / ${daily}g objectif</span></div>
-    <div class="tip-box">🥤 <strong>${dose}g de whey</strong> dans 300ml d'eau ou lait écrémé, dans l'heure qui suit ta séance. Ajoute une banane pour les glucides rapides en phase de charge.</div>`;
-}
-
+// ⚠️ Les 5 fonctions suppléments (renderSupplements, renderCreatine, renderWhey,
+// setCreatPhase, updateProteinBar) vivent PLUS BAS dans ce fichier (une seule
+// définition chacune). Un premier jeu de définitions vivait ici : il était MORT
+// (écrasé silencieusement par le second) — retiré le 31/07/2026 (ft-v686), sinon
+// on éditait la version fantôme sans effet.
 
 // ─── CARDIO ───────────────────────────────────────────────────
 const CARDIO_MET={
@@ -897,7 +831,7 @@ function renderSupplCombos() {
       <div style="font-size:28px;margin-bottom:2px;">🔒</div>
       <div style="font-family:var(--font-cond);font-size:18px;font-weight:900;color:var(--t1);">Combinaisons réservées aux membres Premium</div>
       <div style="font-size:13px;color:var(--t2);line-height:1.5;max-width:280px;">Stacks sur-mesure par objectif : dosages précis, timing optimal, synergies et contre-indications.</div>
-      <button class="btn" style="background:linear-gradient(135deg,#FFB800,#FF6D00);color:#fff;font-weight:800;font-size:15px;padding:13px 26px;border-radius:14px;margin-top:4px;box-shadow:0 8px 22px -8px rgba(255,109,0,.5);" onclick="showPremiumWall()">⭐ Débloquer Premium — 4,99€ / 2 mois</button>
+      <button class="btn" style="background:linear-gradient(135deg,#FFB800,#FF6D00);color:#fff;font-weight:800;font-size:15px;padding:13px 26px;border-radius:14px;margin-top:4px;box-shadow:0 8px 22px -8px rgba(255,109,0,.5);" onclick="openPremiumInfo()">⭐ Débloquer Premium — 6,99 € / mois</button>
     </div>`;
     return;
   }
