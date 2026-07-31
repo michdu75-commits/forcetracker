@@ -297,6 +297,14 @@ const G=await p.evaluate(()=>{
   out.code2=!!document.getElementById('premium-code-inp2');
   out.ctaVisible=document.getElementById('premium-info-cta').style.display!=='none';
   out.statutVide=(document.getElementById('premium-info-status').innerHTML||'')==='';
+  // la liste des avantages : SOURCE UNIQUE (PREMIUM_PERKS) → fiche et mur identiques et complets
+  out.nbPerks=PREMIUM_PERKS.length;
+  out.nbFiche=document.getElementById('premium-info-perks').childElementCount;
+  if(typeof showPremiumWall==='function'){window._premiumPending=false;_renderPremiumPerks();}
+  out.nbWall=document.getElementById('coach-wall-perks').childElementCount;
+  const txt=document.getElementById('premium-info-perks').textContent;
+  out.recap=/récap/i.test(txt); out.etude=/Étude du corps/i.test(txt);
+  out.nutri=/Nutrition IA/i.test(txt); out.journal=/journal de séances/i.test(txt);
   closePremiumInfo();
   out.ferme=!ov.classList.contains('open');
   // premium ACTIF → statut vert, plus d'appel à l'action, sous-titre du Menu à jour
@@ -312,6 +320,10 @@ const G=await p.evaluate(()=>{
 t('la ligne ⭐ Premium existe dans le Menu (sous le profil)', G.row);
 t('l\'ancienne bannière « Coach IA Premium » a disparu (une seule porte, R2)', G.oldBanner);
 t('la fiche s\'ouvre : prix affiché + champ code + appel à l\'action', G.open&&G.prix&&G.code2&&G.ctaVisible&&G.statutVide);
+t('⭐ la liste des avantages vient de PREMIUM_PERKS (source unique) : fiche ET mur du Coach au complet',
+  G.nbFiche===G.nbPerks&&G.nbWall===G.nbPerks&&G.nbPerks>=10, JSON.stringify({perks:G.nbPerks,fiche:G.nbFiche,mur:G.nbWall}));
+t('les manques signalés par Michel y sont : récap séances · étude du corps 4 photos · nutrition IA · journal illimité',
+  G.recap&&G.etude&&G.nutri&&G.journal);
 t('la fiche se ferme', G.ferme);
 t('déjà Premium → « actif » affiché, l\'appel à l\'action disparaît', G.actif&&G.ctaCache);
 t('… et le sous-titre du Menu passe à « Actif ✓ »', G.sub);

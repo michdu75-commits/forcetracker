@@ -847,11 +847,22 @@ function checkPremiumExpiry() {
   }
 }
 
+// Remplit les listes d'avantages depuis PREMIUM_PERKS (source unique, constants.js) —
+// le mur du Coach et la fiche Menu → Premium affichent EXACTEMENT la même liste (R2).
+function _renderPremiumPerks(){
+  try{
+    const wall=document.getElementById('coach-wall-perks');
+    if(wall&&!wall.childElementCount)wall.innerHTML=PREMIUM_PERKS.map(p=>'<div class="coach-wall-perk"><span class="pi">'+p.i+'</span> <span>'+p.t+'</span></div>').join('');
+    const fiche=document.getElementById('premium-info-perks');
+    if(fiche&&!fiche.childElementCount)fiche.innerHTML=PREMIUM_PERKS.map(p=>'<div style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--t1);line-height:1.45;"><span>'+p.i+'</span><span>'+p.t+'</span></div>').join('');
+  }catch(e){}
+}
 function showPremiumWall() {
   // Ne pas afficher avant que le check serveur ait répondu : sinon un abonné
   // PREMIUM voit le mur payant clignoter au démarrage (autoConnect n'a pas encore
   // reçu son statut) — c'est le bug historique corrigé en ft-v446.
   if (window._premiumPending) return;
+  _renderPremiumPerks();
   const wall = document.getElementById('coach-wall');
   if (wall) wall.style.display = 'flex';
 }
@@ -901,6 +912,7 @@ function _premiumInfoRender(){
   }
 }
 function openPremiumInfo(){
+  _renderPremiumPerks();
   _premiumInfoRender();
   const ov=document.getElementById('ov-premium-info');if(ov)ov.classList.add('open');
 }

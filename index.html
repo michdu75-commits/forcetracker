@@ -1120,13 +1120,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     <div class="coach-wall-title">Coach IA Premium</div>
     <div class="coach-wall-sub">Tu as utilisé tes 10 questions gratuites</div>
     <div class="coach-wall-price">4,99€ <span>/ 2 mois</span></div>
-    <div class="coach-wall-card">
-      <div class="coach-wall-perk"><span class="pi">♾️</span> Questions illimitées</div>
-      <div class="coach-wall-perk"><span class="pi">🧠</span> Contexte complet : profil, PRs, cycle, nutrition</div>
-      <div class="coach-wall-perk"><span class="pi">💪</span> Programme sur mesure généré par l'IA</div>
-      <div class="coach-wall-perk"><span class="pi">📊</span> Analyse de progression personnalisée</div>
-      <div class="coach-wall-perk"><span class="pi">📸</span> Analyse morphologique par photos (3 angles)</div>
-    </div>
+    <!-- rempli depuis PREMIUM_PERKS (source unique, constants.js) par _renderPremiumPerks -->
+    <div class="coach-wall-card" id="coach-wall-perks"></div>
     <a href="mailto:michdu75@gmail.com?subject=Force%20Tracker%20Premium&body=Bonjour%2C%20je%20souhaite%20acc%C3%A9der%20au%20Coach%20IA%20Premium." style="width:100%;text-decoration:none;">
       <button class="btn btn-red" style="width:100%;padding:15px;font-size:16px;">✉️ Contacter pour le Premium</button>
     </a>
@@ -2106,13 +2101,8 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true)d
     </div>
     <div id="premium-info-status"></div>
     <div style="font-size:14px;line-height:1.6;color:var(--t2);margin-top:12px;">L'appli est <b style="color:var(--t1);">gratuite</b> et le restera : séances, progrès, records, calendrier, nutrition… <b style="color:var(--t1);">Le Premium débloque Milo, ton coach IA, en illimité</b> — celui qui connaît ton historique, tes records et tes objectifs. Tu as <b style="color:var(--t1);">10 questions offertes</b> pour l'essayer.</div>
-    <div style="margin-top:14px;background:var(--bg3);border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:9px;">
-      <div style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--t1);"><span>♾️</span><span><b>Questions illimitées</b> à Milo, à toute heure</span></div>
-      <div style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--t1);"><span>🧠</span><span><b>Contexte complet</b> : profil, records, cycle, nutrition — il te connaît vraiment</span></div>
-      <div style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--t1);"><span>💪</span><span><b>Programme sur mesure</b> généré et ajusté avec toi</span></div>
-      <div style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--t1);"><span>📊</span><span><b>Analyse de progression</b> personnalisée</span></div>
-      <div style="display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--t1);"><span>📸</span><span><b>Analyse morphologique</b> par photos (3 angles)</span></div>
-    </div>
+    <!-- rempli depuis PREMIUM_PERKS (source unique, constants.js) par _renderPremiumPerks -->
+    <div id="premium-info-perks" style="margin-top:14px;background:var(--bg3);border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:9px;"></div>
     <div id="premium-info-cta">
       <div style="text-align:center;margin-top:14px;font-size:24px;font-weight:900;color:var(--t1);">4,99€ <span style="font-size:13px;color:var(--t3);font-weight:600;">/ 2 mois</span></div>
       <a href="mailto:michdu75@gmail.com?subject=Force%20Tracker%20Premium&body=Bonjour%2C%20je%20souhaite%20acc%C3%A9der%20au%20Coach%20IA%20Premium." style="width:100%;text-decoration:none;display:block;margin-top:10px;">

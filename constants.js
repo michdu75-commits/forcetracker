@@ -167,6 +167,27 @@ const SET_TYPE_LABELS={N:'Normal',É:'Échauffement',X:'Échec'};
 // ─── NOUVELLES FONCTIONNALITÉS (indicateur pastille) ─────────
 // Ajouter ici chaque nouvelle feature avec un id unique + l'écran concerné.
 // La pastille disparaît au premier accès à l'écran.
+// ─── AVANTAGES PREMIUM — SOURCE UNIQUE (R2, 31/07/2026) ──────────────────────
+// Servie par le mur du Coach ET la fiche Menu → Premium (_renderPremiumPerks, coach.js).
+// AVANT : le mur listait 5 avantages en dur pendant que le vrai périmètre en comptait
+// le double — la liste avait divergé de la réalité. Retour Michel : « il manque des
+// trucs pour le premium et pas qu'un peu ». ⚠️ N'ajouter ici QUE des choses réellement
+// réservées au Premium dans le code (vérifier la porte S.premium correspondante).
+const PREMIUM_PERKS=[
+  {i:'♾️', t:'<b>Milo en illimité</b> — questions, séances, conseils, à toute heure'},
+  {i:'📝', t:'<b>Le récap de chaque séance</b> — Milo débriefe tes perfs et fixe le prochain objectif'},
+  {i:'🧠', t:'<b>Contexte complet</b> — profil, records, cycle, nutrition : il te connaît vraiment'},
+  {i:'💪', t:'<b>Programme sur mesure</b> — généré et ajusté avec toi, envoyé dans ta séance'},
+  {i:'🤖', t:'<b>Analyse IA de tes programmes</b> importés (équilibre, volume, conseils)'},
+  {i:'🧍', t:'<b>Étude du corps</b> par photos (4 angles) — posture, équilibres, exercices conseillés'},
+  {i:'📸', t:'<b>Analyse morphologique</b> par photos (3 angles)'},
+  {i:'🍽️', t:'<b>Nutrition IA en illimité</b> — étiquette en photo, repas estimé en une phrase, plan de repas'},
+  {i:'🥗', t:'<b>Combinaisons d\'aliments</b> Premium'},
+  {i:'📖', t:'<b>Import de ton journal de séances</b> en illimité (1 offert en gratuit)'},
+  {i:'🎯', t:'<b>Questionnaire avancé + question de la semaine</b> — Milo affine ton profil'},
+  {i:'📊', t:'<b>Analyse de progression</b> personnalisée'},
+];
+
 const NEW_FEATURES=[
   // Accueil
   {id:'home-calendar', screen:'home', desc:'Nouveau : un calendrier de ton mois sur l\'Accueil — tes jours de séance en rouge, les jours de RECORD cerclés en or. Navigue sur les mois, tape une semaine pour le détail'},
