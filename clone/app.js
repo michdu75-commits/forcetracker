@@ -2637,10 +2637,15 @@ function _renderTesterIdeaThumbs(){
   el.innerHTML=thumbs;
 }
 function removeTesterIdeaPhoto(i){_testerIdeaFiles.splice(i,1);_renderTesterIdeaThumbs();}
+let _sendingIdea=false; // 🛡️ anti double-envoi : 2 idées de Christophe sont parties EN DOUBLE (taps à 2 s
+// et 18 s d'écart) — pendant le redimensionnement des photos + l'envoi, un 2ᵉ tap relançait tout.
 async function sendTesterIdea(){
   const inp=document.getElementById('tester-idea-input');
   const txt=inp?(inp.value||'').trim():'';
   if(!txt&&!_testerIdeaFiles.length){toast('Écris ton idée ou joins une photo 🙂','info');return;}
+  if(_sendingIdea){toast('Envoi déjà en cours…','info');return;}
+  _sendingIdea=true;
+  try{
   const who=(S.name||'Testeur');
   const nPhotos=_testerIdeaFiles.length;
   toast(nPhotos?'Envoi de ton idée + photos…':'Envoi de ton idée…','info');
@@ -2671,6 +2676,7 @@ async function sendTesterIdea(){
     _testerIdeaMailto('💡 Idée Force Tracker — '+who,'Idée de '+who+' ('+(S.email||'')+') :\n\n'+(txt||'(voir photos)')+'\n\n— boîte à idées Force Tracker',nPhotos);
     toast('Réseau injoignable — idée envoyée par mail (texte, ajoute la photo à la main)','info');
   }
+  }finally{_sendingIdea=false;} // le verrou saute TOUJOURS, même si l'envoi plante (sinon la boîte serait morte)
 }
 // Partage optionnel des photos/captures (bouton séparé) — l'utilisateur choisit Mail/Messages.
 function shareTesterPhotos(){

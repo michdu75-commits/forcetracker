@@ -222,6 +222,29 @@ t('glisser vers la droite → pesée plus ancienne', D.swipe==='2026-07-27', D.s
 t('un glissement VERTICAL (celui qui ferme) ne navigue PAS', D.swipeVert==='2026-07-27', D.swipeVert);
 
 // ════════════════════════════════════════════════════════════════════
+console.log('\n═══ E. Boîte à idées — anti double-envoi ═══');
+// 2 idées de Christophe sont parties EN DOUBLE (taps rapprochés pendant l'envoi) : un verrou
+// doit garantir qu'un double-tap ne produit qu'UN seul envoi serveur.
+const E=await p.evaluate(async()=>{
+  let envois=0;
+  const orig=window.fetch;
+  window.fetch=(u,o)=>{if(o&&o.body&&String(o.body).indexOf('testerIdea')>=0)envois++;
+    return new Promise(r=>setTimeout(()=>r({}),250));};
+  if(!document.getElementById('tester-idea-input'))
+    document.body.insertAdjacentHTML('beforeend','<textarea id="tester-idea-input"></textarea>');
+  document.getElementById('tester-idea-input').value='essai double-tap';
+  const p1=sendTesterIdea(); const p2=sendTesterIdea();   // double-tap : 2 appels quasi simultanés
+  await Promise.all([p1,p2]);
+  const apres=envois;
+  document.getElementById('tester-idea-input').value='second envoi voulu';
+  await sendTesterIdea();                                  // après l'envoi, le verrou doit être RETOMBÉ
+  window.fetch=orig;
+  return {doubleTap:apres, total:envois};
+});
+t('un DOUBLE-TAP ne produit qu\'UN envoi', E.doubleTap===1, 'reçu '+E.doubleTap);
+t('le verrou retombe : un envoi VOULU ensuite passe normalement', E.total===2, 'reçu '+E.total);
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ C. PERFORMANCES — l\'app et Milo sont-ils ralentis ? ═══');
 // Profil réaliste chargé : 200 séances, 3 ans de sommeil/poids, historique de chat
 const C=await p.evaluate(()=>{
