@@ -301,9 +301,33 @@ const FB=await p.evaluate(()=>{
   S.bodyStudies=[{date:'2026-07-30',stature:'x'}];S.bodyStudy=S.bodyStudies[0];
   _renderBodyStudyReport(S.bodyStudies[0],true);
   out.histo1=/Historique — 1 bilan</.test(document.getElementById('body-result').innerHTML);
-  S.email='';S.premium=false;S.bodyStudies=[];S.bodyStudy=null;
+  // 31/07 : « je ne trouve pas l'historique » (Michel, 2 bilans) — le bilan et son bouton
+  // Historique vivaient SOUS les 4 cases photos, un écran plus bas. L'accès vit maintenant
+  // AUSSI tout en haut de la fenêtre, et il suit le nombre de bilans.
+  S.bodyStudies=[{date:'2026-07-30',stature:'x'},{date:'2026-07-20',stature:'y'}];S.bodyStudy=S.bodyStudies[0];
+  openBodyStudy();
+  out.topBtn=/2 bilans/.test(document.getElementById('body-history-top').innerHTML);
+  out.ouvert=document.getElementById('ov-body-study').classList.contains('open');
+  closeBodyStudy();
+  // bodyStudy PERDU mais l'historique existe → le plus récent est rappelé quand même
+  S.bodyStudy=null;
+  openBodyStudy();
+  out.rappelSansDernier=document.getElementById('body-result').style.display!=='none'
+    &&/Historique/.test(document.getElementById('body-result').innerHTML);
+  closeBodyStudy();
+  // aucun bilan → pas de bouton en haut
+  S.bodyStudies=[];S.bodyStudy=null;
+  openBodyStudy();
+  out.topVide=(document.getElementById('body-history-top').innerHTML||'')==='';
+  closeBodyStudy();
+  S.email='';S.premium=false;
   return out;
 });
+t('⭐ l\'accès à l\'historique vit AUSSI en HAUT de l\'Étude du corps (« 2 bilans » visibles sans défiler)',
+  FB.topBtn&&FB.ouvert);
+t('bodyStudy perdu mais historique présent → le dernier bilan est rappelé quand même',
+  FB.rappelSansDernier);
+t('aucun bilan → pas de bouton en haut', FB.topVide);
 t('⭐ l\'Espace testeur ne contient PLUS la carte « Analyse approfondie » (la boîte à idées reste)',
   FB.carteRetiree&&FB.boiteLa);
 t('⭐ le suivi photos vit dans le menu photos du Profil (super testeur seulement)',

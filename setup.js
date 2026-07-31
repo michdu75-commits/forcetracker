@@ -1085,8 +1085,17 @@ function openBodyStudy(){
   });
   const res=document.getElementById('body-result');if(res){res.style.display='none';res.innerHTML='';}
   const btn=document.getElementById('body-analyze-btn');if(btn){btn.textContent='🔍 Analyser mon corps';btn.disabled=false;}
-  // Rappelle le dernier bilan s'il existe
+  // Rappelle le dernier bilan s'il existe — et si bodyStudy a été perdu (vieille restauration)
+  // mais que l'historique existe, on rappelle le plus récent de l'historique : sans ça, le
+  // bouton Historique (qui vit DANS le bilan affiché) devenait inaccessible.
   if(S.bodyStudy)_renderBodyStudyReport(S.bodyStudy,true);
+  else if((S.bodyStudies||[]).length)_renderBodyStudyReport(S.bodyStudies[0],true);
+  // 31/07/2026 (Michel : « je ne trouve pas l'historique » — il avait 2 bilans) : le bilan et son
+  // bouton Historique s'affichent SOUS les 4 cases photos, soit un écran entier plus bas — invisible
+  // sans faire défiler. L'accès à l'historique vit maintenant AUSSI tout en haut de la fenêtre.
+  const _ht=document.getElementById('body-history-top');
+  if(_ht){const n=(S.bodyStudies||[]).length;
+    _ht.innerHTML=n?'<button onclick="_openBodyStudyHistory()" style="width:100%;margin:10px 0 2px;padding:10px;font-size:12.5px;font-weight:700;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);cursor:pointer;touch-action:manipulation;">📚 Mes bilans précédents — '+n+' bilan'+(n>1?'s':'')+' <span style="color:var(--t3);font-weight:600;">(le dernier est affiché plus bas)</span></button>':'';}
   document.getElementById('ov-body-study').classList.add('open');
 }
 function closeBodyStudy(){document.getElementById('ov-body-study').classList.remove('open');}
@@ -1224,6 +1233,9 @@ async function _openBodyStudyHistory(){
         +'<button onclick="deleteBodyStudy('+i+')" title="Supprimer ce bilan" style="flex:none;background:none;border:1px solid var(--sep);border-radius:12px;padding:0 11px;cursor:pointer;color:var(--red);"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>'
         +'</div>';
     }).join('');
+  // La liste se dessine sous les 4 cases photos → on y amène l'écran (sinon, ouverte depuis le
+  // bouton du HAUT, elle resterait hors de vue — exactement le problème qu'on vient de corriger).
+  try{res.scrollIntoView({behavior:'smooth',block:'start'});}catch(e){}
 }
 function _viewBodyStudyAt(i){
   const d=(S.bodyStudies||[])[i];if(!d)return;
