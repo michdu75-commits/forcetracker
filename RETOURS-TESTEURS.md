@@ -92,11 +92,11 @@ du cycle (fait `ft-v442`), plus de techniques (excentrique/partielles).
 - Supprimer un aliment avec confirmation nommée → **existe** (« Supprimer l'aliment ? “50 g de concombre” »).
 - Voir la progression des poids d'un exercice → **bouton 📊 par exercice** (`openExHistory`) ; la vue en % n'existe pas (à discuter si toujours voulue).
 
-**⏳ À faire / à discuter (4)** :
-1. ⭐ **Superset par glisser-déposer** (demandé 2 fois, avec relance « super développeur ») — le vrai chantier de la boîte. L'import sait déjà lire les supersets ; c'est la CRÉATION manuelle en séance qui manque.
-2. **Swipe gauche/droite entre les jours** (29/07, demandé 2×, photo) — navigation dans le plan/journal alimentaire.
-3. **PDF téléchargeable** — préciser de QUOI (les réponses de Milo et l'étude du corps l'ont déjà).
-4. **Eline — masse maigre non lue** sur son rapport MyBodyCheck : la clé `leanMass` est bien demandée au lecteur, c'est le modèle (léger, choisi pour la vitesse) qui l'a ratée dans « Autres indicateurs ». **Fix proposé, déterministe** : si `leanMass` manque mais poids et masse grasse sont lus → la calculer (`poids − masse grasse` ; vérifié sur son rapport : 51,85 − 14,1 = 37,75 ≈ 37,8). Jamais d'IA là où une soustraction suffit.
+**Suites données (30-31/07)** :
+1. **Superset par glisser-déposer** (demandé 2 fois) → **❌ DÉCISION MICHEL (31/07) : « je suis pas chaud pour les supersets »** — pas de chantier. L'import de programmes continue de LIRE les supersets ; la création manuelle en séance n'est pas retenue. Si le retour revient avec insistance, re-passer par Michel (retours à 3 paliers, R22).
+2. **Swipe gauche/droite** — sa capture montrait la fenêtre de PESÉE → **✅ LIVRÉ ft-v676** (flèches ‹ › + glissement + compteur « Pesée 12 sur 42 »).
+3. **PDF téléchargeable** — préciser de QUOI (les réponses de Milo et l'étude du corps l'ont déjà) → en attente d'un cas concret.
+4. **Eline — masse maigre non lue** sur son rapport MyBodyCheck → **✅ LIVRÉ** : repli déterministe au backend (@auto 30/07, nouveaux imports : `leanMass = poids − masse grasse`) + migration frontend **ft-v677** (les anciens bilans en stock sont complétés pareil ; une valeur déjà lue n'est jamais écrasée).
 
 **❓ Illisibles sans contexte (2)** : « poids du précédent programme » (07/07 — l'import a été refait depuis, à reconfirmer par Christophe) · « comment associer les 2 ? » (photo jamais reçue).
 
