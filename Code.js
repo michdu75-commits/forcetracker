@@ -541,7 +541,10 @@ function doPost(e) {
 
 // ───────────────────────────────────────────────────────────
 // Webhook Ko-fi — déclenché automatiquement à chaque paiement
-// 0.99€ → 3 jours (essai)  |  4.99€ → 61 jours (~2 mois)
+// Tarifs (décision Michel 31/07/2026 — « 4,99 €/2 mois c'est trop léger », formule longue plafonnée à 6 mois) :
+// 0.99€ → 3 jours (essai)  |  6.99€ → 31 jours (1 mois)  |  34.99€ → 184 jours (6 mois, ~−17 %)
+// (un ancien paiement 4.99 déclenche encore le mois : personne ne paie dans le vide)
+// ⚠️ Les abonnements DÉJÀ accordés gardent leur date d'expiration acquise (on ne reprend rien).
 // Ko-fi > Settings > API > Webhook URL = URL de ce script déployé
 function handleKofiWebhook_(dataStr) {
   try {
@@ -561,8 +564,9 @@ function handleKofiWebhook_(dataStr) {
     const amount = parseFloat(data.amount || '0');
     let days = 0;
     let tier = '';
-    if (amount >= 4.0)      { days = 61; tier = 'monthly'; }  // 4.99€ → ~2 mois
-    else if (amount >= 0.9) { days = 3;  tier = 'trial';   }  // 0.99€ → 3 jours
+    if (amount >= 30.0)     { days = 184; tier = 'semiannual'; } // 34.99€ → 6 mois
+    else if (amount >= 4.0) { days = 31;  tier = 'monthly';    } // 6.99€ → 1 mois (≥ 4 : un ancien lien 4.99 donne aussi le mois)
+    else if (amount >= 0.9) { days = 3;   tier = 'trial';      } // 0.99€ → 3 jours
 
     let expiryStr = '';
     if (days > 0) {

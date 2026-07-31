@@ -293,7 +293,7 @@ const G=await p.evaluate(()=>{
   openPremiumInfo();
   const ov=document.getElementById('ov-premium-info');
   out.open=ov.classList.contains('open');
-  out.prix=ov.textContent.includes('4,99');
+  out.prix=ov.textContent.includes('6,99')&&/\/ mois/.test(ov.textContent)&&!/2 mois/.test(ov.textContent)&&/6 mois/.test(ov.textContent); // 4,99/mois + formule 6 mois (décision 31/07)
   out.code2=!!document.getElementById('premium-code-inp2');
   out.ctaVisible=document.getElementById('premium-info-cta').style.display!=='none';
   out.statutVide=(document.getElementById('premium-info-status').innerHTML||'')==='';
