@@ -345,6 +345,10 @@ t('⭐ l\'historique de l\'Étude du corps apparaît dès le PREMIER bilan (au s
 // 01/08 : le dossier source de Michel contenait 7 animations jamais branchées (les presses à
 // cuisses et le hack squat n'avaient que des PHOTOS FIXES, le Squat Avant montrait la version
 // haltères, l'épaulé-jeté et les mollets machine n'avaient RIEN).
+t('les 3 variantes de pompes ont leur démo (déficit, diamant, lestées — envoi Michel 01/08)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        return ['pompes-deficit','pompes-diamant','pompes-lestees']
+          .every(f=>lg.indexOf("exercises/"+f+".webp")>=0&&fs.existsSync(path.join(ROOT,'exercises/'+f+'.webp')));})());
 t('⭐ les 7 animations du zip de Michel sont branchées et présentes (presses, hack, front squat barre, épaulé-jeté, mollets)',
   (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
         const files=['presse-a-cuisse-exercice-musculation','presse-a-cuisses-inclinee','presse-a-cuisses-verticale',

@@ -4863,6 +4863,9 @@ const EX_YT={
   'Mollets Machine Debout':{img:'../exercises/shrug-machine-mollets.webp'},
   // Les 14 exercices AJOUTÉS au catalogue le 01/08 (animations du dossier source de Michel) :
   'Pompes':{img:'../exercises/pompe-musculation.webp'},
+  'Pompes Déficit (Deficit Push-up)':{img:'../exercises/pompes-deficit.webp'},
+  'Pompes Diamant':{img:'../exercises/pompes-diamant.webp'},
+  'Pompes Lestées':{img:'../exercises/pompes-lestees.webp'},
   'Développé Couché avec Chaînes':{img:'../exercises/developpe-couche-avec-chaines.webp'},
   'Développé Couché Larsen (Larsen Press)':{img:'../exercises/developpe-couche-larsen.webp'},
   'Développé Couché Unilatéral Kettlebell':{img:'../exercises/developpe-couche-unilateral-kettlebell.webp'},
