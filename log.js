@@ -4880,7 +4880,15 @@ const EX_YT={
   'Passage d\'Épaule Élastique':{img:'exercises/passage-depaule-avec-elastique.webp'},
   // Deux exercices qui n'avaient AUCUNE démo — trouvées dans le dossier source de Michel (01/08) :
   'Clean & Jerk':{img:'exercises/epaule-jete-halterophilie.webp'},
-  'Mollets Machine Debout':{img:'exercises/shrug-machine-mollets.webp'},
+  // ⚠️ CORRIGÉ le 01/08 : cette ligne pointait sur `shrug-machine-mollets.webp` — une animation qui
+  // montre un HAUSSEMENT D'ÉPAULES (trapèzes en rouge) fait SUR la machine à mollets, pas une
+  // élévation de mollets. Le nom du fichier le disait déjà. Erreur posée en ft-v693, repérée en
+  // vérifiant le contenu à l'arrivée du vrai fichier. L'ancien fichier reste sur le disque, débranché.
+  // (Nouveau NOM de fichier obligatoire : le cache d'images des téléphones ne se vide jamais — ft-v437.)
+  'Mollets Machine Debout':{img:'exercises/elevations-mollets-debout-machine.webp'},
+  'Mollets Machine Assise':{img:'exercises/elevations-mollets-assis-machine.webp'},
+  'Élévations Mollets Penché (Donkey Calf Raise)':{img:'exercises/elevations-mollets-donkey.webp'},
+  'Presse Mollets (Leg Press)':{img:'exercises/elevations-mollets-presse-45.webp'},
   // Les 14 exercices AJOUTÉS au catalogue le 01/08 (animations du dossier source de Michel) :
   'Pompes':{img:'exercises/pompe-musculation.webp'},
   'Hip Thrust Barre (Poussée de Hanche)':{img:'exercises/hip-thrust-barre.webp'}, // la version BARRE (envoi Michel 01/08 — la machine, elle, vit sur « Poussée de Hanche Machine »)

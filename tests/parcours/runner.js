@@ -400,10 +400,23 @@ t('lot mollets + triceps (01/08 soir) : les 3 démos branchées et présentes',
         return Object.entries(map).every(([n,f])=>
           lg.indexOf("'"+n+"':{img:'exercises/"+f+".webp'}")>=0
           && fs.existsSync(path.join(ROOT,'exercises/'+f+'.webp')));})());
+t('⭐ la famille MOLLETS au complet — dont la démo « machine debout » CORRIGÉE (c\'était un shrug)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const map={'Mollets Machine Debout':'elevations-mollets-debout-machine',
+                   'Mollets Machine Assise':'elevations-mollets-assis-machine',
+                   'Élévations Mollets Penché (Donkey Calf Raise)':'elevations-mollets-donkey',
+                   'Presse Mollets (Leg Press)':'elevations-mollets-presse-45'};
+        return Object.entries(map).every(([n,f])=>
+                 lg.indexOf("'"+n+"':{img:'exercises/"+f+".webp'}")>=0
+                 && fs.existsSync(path.join(ROOT,'exercises/'+f+'.webp')))
+            // le fichier fautif ne doit plus être branché nulle part (il reste sur le disque, débranché)
+            && lg.indexOf("'exercises/shrug-machine-mollets.webp'")<0;})());
 t('⭐ les 7 animations du zip de Michel sont branchées et présentes (presses, hack, front squat barre, épaulé-jeté, mollets)',
   (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        // « shrug-machine-mollets » a quitté cette liste le 01/08 : c'était un HAUSSEMENT D'ÉPAULES
+        // branché par erreur sur Mollets Machine Debout (corrigé, voir le test « famille MOLLETS »).
         const files=['presse-a-cuisse-exercice-musculation','presse-a-cuisses-inclinee','presse-a-cuisses-verticale',
-                     'hack-squat','squat-barre-devant-front','epaule-jete-halterophilie','shrug-machine-mollets'];
+                     'hack-squat','squat-barre-devant-front','epaule-jete-halterophilie'];
         return files.every(f=>lg.indexOf("exercises/"+f+".webp")>=0&&fs.existsSync(path.join(ROOT,'exercises/'+f+'.webp')))
             && /'Clean & Jerk':\{img:/.test(lg)
             && /'Mollets Machine Debout':\{img:/.test(lg)
