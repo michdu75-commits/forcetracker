@@ -1047,13 +1047,13 @@ const _MOV_PATTERNS=[
   // qui est un SQUAT isométrique. Même piège que `t.?bar` → « poignet barre » (ft-v669) : la
   // recherche teste aussi SANS bornes, donc un mot-clé de 1-2 lettres est intenable ici. Le
   // L-Sit reste sans schéma — il est de toute façon « accessoire », ce qui est juste.
-  {id:'gainage-abdos',label:'Gainage / abdominaux',kw:['hollow body','windshield','drapeau','dragon flag','grimpeur','mountain climber','chaise romaine','rotation obliques','rotation machine obliques','gainage','planche','plank','crunch','abdo','releve de jambe','releve de genou','russian twist','sit up','vacuum','roue abdo','ab wheel']},
+  {id:'gainage-abdos',label:'Gainage / abdominaux',kw:['hollow body','windshield','drapeau','dragon flag','grimpeur','mountain climber','chaise romaine','rotation obliques','rotation machine obliques','gainage','planche','plank','crunch','abdo','releve de jambe','releve de genou','russian twist','sit up','vacuum','roue abdo','ab wheel','bird dog']},
   {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['tirage en rack','rack pull','souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','hyperextension','extension lombaire','ghd','glute ham','superman']},
   {id:'fente',label:'Fente',kw:['fente','lunge','split squat','bulgare','montee sur box','step up','cossack']},
   {id:'squat',label:'Squat (flexion hanche+genou)',kw:['squat','press jambe','leg press','hack','pendulum','belt squat','presse a cuisse','wall sit','sled']},
   {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe haltere assis','developpe assis','developpe landmine','developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster','handstand']},
   {id:'poussee-horizontale',label:'Poussée horizontale (pectoraux)',kw:['developpe couche','bench press','couche','chest press','ecarte','pec deck','pompe','push up','dips','croise poulie','crossover','decline','incline','hex press','svend']},
-  {id:'tirage-vertical',label:'Tirage vertical',kw:['tirage poulie haute','tirage vertical','pulldown','lat pull','traction','pull up','tirage nuque','tirage poitrine','rocky pull']},
+  {id:'tirage-vertical',label:'Tirage vertical',kw:['tirage poulie haute','tirage vertical','pulldown','lat pull','traction','pull up','tirage nuque','tirage poitrine','rocky pull','muscle up','dead hang','suspension passive']},
   {id:'tirage-horizontal',label:'Tirage horizontal',kw:['tirage iso','iso lateral','rowing','tirage horizontal','tirage poulie basse','seal row','meadows','yates','renegade','bent over','bucheron','pull over','pullover']},
   // ── Deux schémas ajoutés le 29/07/2026 (ft-v670), sur demande de Michel et d'après la
   // taxonomie de référence (pousser · tirer · flexion de genou · charnière de hanche ·
@@ -1588,6 +1588,8 @@ const _MEX=[
   // Épaules — latéral / arrière / oiseau / écarté inverse / around the world
   {re:/elevation laterale|lateral raise|face pull|rear delt|oiseau|ecarte inverse|reverse fly|around the world/i, p:['side-delt','rear-delt'], s:['front-delt','traps']},
   // Dos — verticaux / tractions
+  {re:/muscle.?up/i,                                                            p:['lats','biceps'],                    s:['triceps','pec','front-delt']}, // traction explosive + passage au-dessus de la barre — mesuré MUET au dump du 01/08
+  {re:/dead ?hang|suspension passive/i,                                         p:['forearms','lats'],                  s:['traps']}, // suspension bras tendus : avant-bras + dorsaux (grip work)
   {re:/^(?!.*(upright|menton)).*(traction|pull.?up|chin.?up|tirage vertical|lat pulldown|tirage poulie haute)/i, p:['lats','biceps'],             s:['traps','rear-delt','forearms']}, // ⚠️ « Tirage Vertical (Upright Row) » = épaules/trapèzes, PAS un tirage dorsal — sa règle précise vit plus bas (ft-v686)
   // Dos — rowings / tirages horizontaux / bûcheron
   // ⚠️ `\bt[-\s]?bar` et NON `t.?bar` : sans la limite de mot, le motif attrapait
@@ -1600,6 +1602,8 @@ const _MEX=[
   // Biceps
   {re:/^(?!.*(leg curl|ischio|jambier)).*(curl bicep|bicep curl|curl halter|preacher|curl marteau|hammer curl|curl biceps)/i, p:['biceps'],                s:['forearms']}, // ⚠️ exclusion : « Leg Curl Haltère » contient « curl halter » — un curl de JAMBE n'est pas un biceps (même maladie que poignet/leg curl, ft-v686)
   // Triceps
+  {re:/planche inversee|reverse plank/i,                                       p:['glutes','lower-back'],              s:['abs','rear-delt','hamstrings']}, // planche INVERSÉE (face au plafond) : chaîne postérieure — mesuré MUET au dump du 01/08
+  {re:/bird ?dog/i,                                                            p:['lower-back','abs'],                 s:['glutes','obliques']}, // quadrupédie bras/jambe opposés — mesuré sans schéma au dump
   {re:/tate press/i,                                                           p:['triceps'],                          s:['front-delt']}, // Tate press : haltères allongé, coudes ouverts — mesuré MUET au dump du 01/08
   {re:/tricep|skull crusher|extension tricep|barre front/i,                     p:['triceps'],                          s:['front-delt']},
   // Abducteurs / adducteurs (fessiers/hanche) — remplace l'ancien mapping erroné
@@ -1673,7 +1677,7 @@ const _MEX=[
   {re:/tirage en rack|rack pull/i,                                             p:['lower-back','traps'],               s:['lats','glutes','hamstrings']},
   {re:/tirage|pulldown|\brow\b|sled pull/i,                                    p:['lats'],                             s:['biceps','rear-delt','traps']},
   // — Chaîne postérieure : hyperextensions, GHD, Jefferson, kettlebell swing
-  {re:/hyperextension|back extension|reverse hyper|jefferson|glute ham|\bghd\b/i, p:['lower-back','glutes'],           s:['hamstrings']},
+  {re:/hyperextension|back extension|reverse hyper|jefferson|glute ham|\bghd\b|extension lombaire/i, p:['lower-back','glutes'],           s:['hamstrings']},
   {re:/kettlebell swing|swing kettlebell/i,                                    p:['glutes','hamstrings'],              s:['lower-back','quads']},
   // — Fessiers : poussée de hanche et kickbacks restants
   {re:/poussee de hanche|hip thrust|pont fessier|glute bridge/i,                p:['glutes'],                           s:['hamstrings']},
@@ -4791,7 +4795,12 @@ const EX_YT={
   'Tirage Poulie Haute':           {img:'../exercises/tirage-vertical-poitrine.webp'},
   'Tirage Poulie Haute Prise Serrée':{img:'../exercises/tirage-vertical-prise-serree.webp'},
   'Tirage Poulie Basse Prise Large':{img:'../exercises/tirage-horizontal-prise-large.webp'},
-  'Traction Lestée':               {img:'../exercises/traction-musculation-dos.webp'},
+  // ⚠️ CORRIGÉ le 01/08 : cette ligne portait `traction-musculation-dos.webp`, qui montre une
+  // traction CLASSIQUE sans lest. La cause : « Tractions (Pull-up) » n'existait pas au catalogue,
+  // la démo de la traction de base s'était donc posée sur la variante lestée, faute de place.
+  // Les deux ont maintenant chacune la leur (nouveau nom de fichier — cache d'images, ft-v437).
+  'Traction Lestée':               {img:'../exercises/traction-lestee-vraie.webp'},
+  'Tractions (Pull-up)':           {img:'../exercises/traction-musculation-dos.webp'},
   'Traction Assistée':             {img:'../exercises/traction-assistee-machine.webp'},
   'Traction Prise Neutre':         {img:'../exercises/traction-prise-neutre.webp'},
   'Pull-over Haltère':             {img:'../exercises/pullover-haltere.webp'},
@@ -4910,6 +4919,40 @@ const EX_YT={
   'Soulevé de Terre Roumain Haltères':{img:'../exercises/souleve-de-terre-roumain-halteres.webp'},
   'Soulevé de Terre Roumain Unilatéral':{img:'../exercises/souleve-de-terre-roumain-unilateral.webp'}, // style vidéo sombre (seule dispo) — à remplacer si mieux un jour
   'Hip Thrust Unilatéral (Poussée de Hanche)':{img:'../exercises/hip-thrust-barre-unilateral.webp'},
+  // Lots « dos », « épaules » et « pecs » du 01/08 (fin de soirée) — beaucoup d'ÉLASTIQUE et de
+  // TRX : le matériel est dans le nom, une vignette élastique sur l'exercice classique mentirait.
+  'Traction Supination (Chin-up)':{img:'../exercises/traction-supination-chin-up.webp'},
+  'Muscle-up':{img:'../exercises/muscle-up.webp'},
+  'Tractions aux Anneaux':{img:'../exercises/tractions-aux-anneaux.webp'},
+  'Traction Australienne (Poids du Corps)':{img:'../exercises/traction-australienne.webp'},
+  'Traction Assistée avec Banc':{img:'../exercises/traction-assistee-avec-banc.webp'},
+  'Suspension Passive (Dead Hang)':{img:'../exercises/suspension-passive-dead-hang.webp'},
+  'Rowing Inversé sous une Table':{img:'../exercises/rowing-inverse-sous-table.webp'},
+  'Rowing Buste Penché Élastique':{img:'../exercises/rowing-buste-penche-elastique.webp'},
+  'Rowing Horizontal Élastique':{img:'../exercises/rowing-horizontal-elastique.webp'},
+  'Rowing Unilatéral Élastique':{img:'../exercises/rowing-unilateral-elastique.webp'},
+  'Tirage Vertical Alterné Élastique':{img:'../exercises/tirage-vertical-alterne-elastique.webp'},
+  'Rowing TRX (Sangles)':{img:'../exercises/rowing-trx-sangles.webp'},
+  'Traction Australienne TRX (Sangles)':{img:'../exercises/traction-australienne-trx-sangles.webp'},
+  'Bird Dog':{img:'../exercises/bird-dog.webp'},
+  'Extension Lombaire sur Ballon':{img:'../exercises/extension-lombaire-ballon.webp'},
+  'Planche Inversée':{img:'../exercises/planche-inversee.webp'},
+  'Développé Épaules Élastique':{img:'../exercises/developpe-epaules-elastique.webp'},
+  'Développé Épaules Assis Élastique':{img:'../exercises/developpe-epaules-assis-elastique.webp'},
+  'Développé Épaules Unilatéral Élastique':{img:'../exercises/developpe-epaules-unilateral-elastique.webp'},
+  'Élévations Latérales Unilatérale Poulie':{img:'../exercises/elevations-laterales-unilaterale-poulie.webp'},
+  'Oiseau Élastique':{img:'../exercises/oiseau-elastique.webp'},
+  'Oiseau Inversé TRX (Sangles)':{img:'../exercises/oiseau-inverse-trx-sangles.webp'},
+  'Rotation Externe Épaule Poulie':{img:'../exercises/rotation-externe-epaule-poulie.webp'},
+  'Handstand Push-up Suspendu (Sangles)':{img:'../exercises/handstand-push-up-suspendu.webp'},
+  'Développé Couché au Sol (Floor Press)':{img:'../exercises/developpe-couche-au-sol-floor-press.webp'},
+  'Développé Couché Élastique':{img:'../exercises/developpe-couche-elastique.webp'},
+  'Développé Décliné Élastique':{img:'../exercises/developpe-decline-elastique.webp'},
+  'Écarté Poulie Haute à Genoux':{img:'../exercises/ecarte-poulie-haute-a-genoux.webp'},
+  'Écarté Élastique':{img:'../exercises/ecarte-elastique.webp'},
+  'Écarté TRX (Sangles)':{img:'../exercises/ecarte-trx-sangles.webp'},
+  'Chest Press TRX (Sangles)':{img:'../exercises/chest-press-trx-sangles.webp'},
+  'Pompes Inclinées TRX (Sangles)':{img:'../exercises/pompes-inclinees-trx-sangles.webp'},
   // Lot « triceps » du 01/08 — ① 11 exercices du catalogue qui n'avaient AUCUNE démo (le plus gros
   // rattrapage du soir : la famille triceps était presque entièrement muette) ; ② 11 nouveaux.
   // Restent volontairement SANS démo, faute de fichier correspondant : Dips Lestés · Skull Crusher
@@ -5072,6 +5115,24 @@ const EX_EN={
   'Extension Triceps Arrière (Kickback)':'triceps kickback dumbbell',
   'Triceps Haltère':'triceps overhead extension dumbbell','Triceps Machine':'triceps machine',
   // Jambes
+  // — les 32 nouveaux des lots dos / épaules / pecs (01/08) —
+  'Tractions (Pull-up)':'pull up','Traction Supination (Chin-up)':'chin up','Muscle-up':'muscle up bar',
+  'Tractions aux Anneaux':'ring pull up','Traction Australienne (Poids du Corps)':'australian pull up',
+  'Traction Assistée avec Banc':'assisted pull up bench','Suspension Passive (Dead Hang)':'dead hang',
+  'Rowing Inversé sous une Table':'inverted row under table','Rowing Buste Penché Élastique':'bent over row resistance band',
+  'Rowing Horizontal Élastique':'seated row resistance band','Rowing Unilatéral Élastique':'single arm row resistance band',
+  'Tirage Vertical Alterné Élastique':'alternating lat pulldown resistance band','Rowing TRX (Sangles)':'trx row',
+  'Traction Australienne TRX (Sangles)':'trx inverted row','Bird Dog':'bird dog exercise',
+  'Extension Lombaire sur Ballon':'back extension stability ball','Planche Inversée':'reverse plank',
+  'Développé Épaules Élastique':'shoulder press resistance band','Développé Épaules Assis Élastique':'seated shoulder press resistance band',
+  'Développé Épaules Unilatéral Élastique':'single arm shoulder press resistance band',
+  'Élévations Latérales Unilatérale Poulie':'single arm cable lateral raise','Oiseau Élastique':'reverse fly resistance band',
+  'Oiseau Inversé TRX (Sangles)':'trx reverse fly','Rotation Externe Épaule Poulie':'cable external rotation',
+  'Handstand Push-up Suspendu (Sangles)':'suspended handstand push up',
+  'Développé Couché au Sol (Floor Press)':'floor press barbell','Développé Couché Élastique':'bench press resistance band',
+  'Développé Décliné Élastique':'decline press resistance band','Écarté Poulie Haute à Genoux':'kneeling high cable fly',
+  'Écarté Élastique':'chest fly resistance band','Écarté TRX (Sangles)':'trx chest fly',
+  'Chest Press TRX (Sangles)':'trx chest press','Pompes Inclinées TRX (Sangles)':'trx incline push up',
   // — les 11 nouveaux du lot « triceps » (01/08) —
   'Dips aux Anneaux':'ring dips','Dips entre Deux Bancs':'bench dips between two benches',
   'Tate Press':'tate press dumbbell','Handstand Push-up (ATR)':'handstand push up',

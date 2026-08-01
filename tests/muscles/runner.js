@@ -372,6 +372,53 @@ t('le Tate Press n\'est plus MUET (triceps + extension du coude)',
 t('le Handstand Push-up = ÉPAULES en poussée verticale (pas une pompe)',
   tri.atr==='front-delt,traps,triceps'&&tri.atrPat==='poussee-verticale', tri.atr+' / '+tri.atrPat);
 
+// ── LOTS « DOS · ÉPAULES · PECS » du 01/08 (fin de soirée) : 33 nouveaux, très majoritairement
+// des versions ÉLASTIQUE et TRX. ⚠️ Le trou le plus gênant trouvé ce soir : « Tractions (Pull-up) »
+// n'existait PAS au catalogue — la démo de la traction classique s'était donc posée sur
+// « Traction Lestée », qui montrait une traction SANS lest. 5 exercices étaient MUETS à la mesure.
+const dep=await p.evaluate(()=>{
+  const noms=['Tractions (Pull-up)','Traction Supination (Chin-up)','Muscle-up','Tractions aux Anneaux',
+    'Traction Australienne (Poids du Corps)','Traction Assistée avec Banc','Suspension Passive (Dead Hang)',
+    'Rowing Inversé sous une Table','Rowing Buste Penché Élastique','Rowing Horizontal Élastique',
+    'Rowing Unilatéral Élastique','Tirage Vertical Alterné Élastique','Rowing TRX (Sangles)',
+    'Traction Australienne TRX (Sangles)','Bird Dog','Extension Lombaire sur Ballon','Planche Inversée',
+    'Développé Épaules Élastique','Développé Épaules Assis Élastique','Développé Épaules Unilatéral Élastique',
+    'Élévations Latérales Unilatérale Poulie','Oiseau Élastique','Oiseau Inversé TRX (Sangles)',
+    'Rotation Externe Épaule Poulie','Handstand Push-up Suspendu (Sangles)',
+    'Développé Couché au Sol (Floor Press)','Développé Couché Élastique','Développé Décliné Élastique',
+    'Écarté Poulie Haute à Genoux','Écarté Élastique','Écarté TRX (Sangles)','Chest Press TRX (Sangles)',
+    'Pompes Inclinées TRX (Sangles)'];
+  const g=n=>{const d=_mscScores([{name:n,sets:[{done:true}]}])||{};return Object.keys(d.sc||{}).sort().join(',');};
+  const out={n:noms.length,dansExlib:0,avecMuscles:0,avecPattern:0,muets:[]};
+  for(const n of noms){
+    if((EXLIB||[]).some(e=>e&&e.n===n))out.dansExlib++;
+    const m=g(n), pt=_movPattern(n);
+    if(m.length)out.avecMuscles++; if(pt)out.avecPattern++;
+    if(!m.length||!pt)out.muets.push(n);
+  }
+  out.muscleUp=g('Muscle-up'); out.muscleUpPat=_movPattern('Muscle-up');
+  out.birdDog=g('Bird Dog');
+  out.oiseauElast=g('Oiseau Élastique');
+  out.oiseauClass=g('Oiseau (Rear Delt Fly)')||g('Machine Oiseau');
+  return out;
+});
+t('⭐ les 33 exercices dos/épaules/pecs sont au catalogue, TOUS avec muscles ET schéma',
+  dep.dansExlib===33&&dep.avecMuscles===33&&dep.avecPattern===33, JSON.stringify(dep.muets));
+t('le Muscle-up n\'est plus MUET (dorsaux + biceps, tirage vertical)',
+  dep.muscleUp==='biceps,front-delt,lats,pec,triceps'&&dep.muscleUpPat==='tirage-vertical',
+  dep.muscleUp+' / '+dep.muscleUpPat);
+t('le Bird Dog n\'est plus MUET (lombaires + abdos)',
+  dep.birdDog==='abs,glutes,lower-back,obliques', dep.birdDog);
+t('l\'Oiseau ÉLASTIQUE se classe comme l\'oiseau classique (arrière d\'épaule)',
+  dep.oiseauElast.indexOf('rear-delt')>=0, dep.oiseauElast);
+// La correction du soir : chaque traction a SA vignette (la lestée montrait une traction sans lest)
+const trac=await p.evaluate(()=>({
+  lestee:(EX_YT['Traction Lestée']||{}).img,
+  classique:(EX_YT['Tractions (Pull-up)']||{}).img}));
+t('⭐ « Traction Lestée » et « Tractions (Pull-up) » ont chacune LEUR démo (correction 01/08)',
+  trac.lestee==='exercises/traction-lestee-vraie.webp'
+  &&trac.classique==='exercises/traction-musculation-dos.webp', JSON.stringify(trac));
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

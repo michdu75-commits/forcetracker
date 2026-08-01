@@ -20,6 +20,15 @@ const EXLIB=[
   {n:'Pompes',g:'Pectoraux'},
   {n:'Développé Couché avec Chaînes',g:'Pectoraux'},{n:'Développé Couché Larsen (Larsen Press)',g:'Pectoraux'},
   {n:'Développé Couché Unilatéral Kettlebell',g:'Pectoraux'},{n:'Développé Incliné Poulie',g:'Pectoraux'},
+  // — Lots « pecs » et « épaules » du 01/08 : beaucoup d'élastique et de TRX (matériel dans le NOM) —
+  {n:'Développé Couché au Sol (Floor Press)',g:'Pectoraux'},{n:'Développé Couché Élastique',g:'Pectoraux'},
+  {n:'Développé Décliné Élastique',g:'Pectoraux'},{n:'Écarté Poulie Haute à Genoux',g:'Pectoraux'},
+  {n:'Écarté Élastique',g:'Pectoraux'},{n:'Écarté TRX (Sangles)',g:'Pectoraux'},
+  {n:'Chest Press TRX (Sangles)',g:'Pectoraux'},{n:'Pompes Inclinées TRX (Sangles)',g:'Pectoraux'},
+  {n:'Développé Épaules Élastique',g:'Épaules'},{n:'Développé Épaules Assis Élastique',g:'Épaules'},
+  {n:'Développé Épaules Unilatéral Élastique',g:'Épaules'},{n:'Élévations Latérales Unilatérale Poulie',g:'Épaules'},
+  {n:'Oiseau Élastique',g:'Épaules'},{n:'Oiseau Inversé TRX (Sangles)',g:'Épaules'},
+  {n:'Rotation Externe Épaule Poulie',g:'Épaules'},{n:'Handstand Push-up Suspendu (Sangles)',g:'Épaules'},
   {n:'Écarté Incliné Haltères',g:'Pectoraux'},{n:'Écarté Décliné Haltères',g:'Pectoraux'},{n:'Écarté Hyght (Hyght Fly)',g:'Pectoraux'},
   {n:'Hex Press Smith Machine',g:'Pectoraux'},{n:'Chest Press Poulie Assis',g:'Pectoraux'},
   {n:'Svend Press (Serrage de Plaque)',g:'Pectoraux'},
@@ -39,6 +48,16 @@ const EXLIB=[
   {n:'Rowing Haltères Buste Penché',g:'Dos'},{n:'Meadows Row',g:'Dos'},{n:'Seal Row',g:'Dos'},{n:'Renegade Row',g:'Dos'},
   {n:'Tirage Iso-Latéral Hammer Strength',g:'Dos'},{n:'Tirage Incliné Poulie Haute',g:'Dos'},{n:'Tirage Poulie Haute Prise Inversée',g:'Dos'},
   {n:'Traction Derrière la Nuque',g:'Dos'},{n:'Rocky Pull-up',g:'Dos'},{n:'Sled Pull',g:'Dos'},
+  // — Lot « dos » du 01/08. ⚠️ « Tractions (Pull-up) » MANQUAIT au catalogue : il n'y avait que les
+  //   variantes (lestée, assistée, prise neutre, nuque) — et la démo de la traction CLASSIQUE se
+  //   retrouvait collée sur « Traction Lestée », qui montrait donc une traction sans lest.
+  {n:'Tractions (Pull-up)',g:'Dos'},{n:'Traction Supination (Chin-up)',g:'Dos'},
+  {n:'Muscle-up',g:'Dos'},{n:'Tractions aux Anneaux',g:'Dos'},
+  {n:'Traction Australienne (Poids du Corps)',g:'Dos'},{n:'Traction Assistée avec Banc',g:'Dos'},
+  {n:'Suspension Passive (Dead Hang)',g:'Dos'},{n:'Rowing Inversé sous une Table',g:'Dos'},
+  {n:'Rowing Buste Penché Élastique',g:'Dos'},{n:'Rowing Horizontal Élastique',g:'Dos'},
+  {n:'Rowing Unilatéral Élastique',g:'Dos'},{n:'Tirage Vertical Alterné Élastique',g:'Dos'},
+  {n:'Rowing TRX (Sangles)',g:'Dos'},{n:'Traction Australienne TRX (Sangles)',g:'Dos'},
   // ── Trapèzes ───────────────────────────────────────────────
   {n:'Haussements d\'Épaules (Shrugs)',g:'Trapèzes'},{n:'Haussements d\'Épaules Barre',g:'Trapèzes'},
   {n:'Haussements d\'Épaules Haltères',g:'Trapèzes'},{n:'Haussements d\'Épaules Câble',g:'Trapèzes'},
@@ -144,6 +163,7 @@ const EXLIB=[
   // ── Lombaires ──────────────────────────────────────────────
   {n:'Hyperextension (Back Extension)',g:'Lombaires'},{n:'Hyperextension Inverse (Reverse Hyper)',g:'Lombaires'},
   {n:'Hyperextension Lestée',g:'Lombaires'},{n:'Hyperextension Machine',g:'Lombaires'},
+  {n:'Bird Dog',g:'Lombaires'},{n:'Extension Lombaire sur Ballon',g:'Lombaires'},{n:'Planche Inversée',g:'Abdominaux'},
   {n:'Inclinaison Lombaire (Good Morning)',g:'Lombaires'}, // « Good Morning Haltères » supprimé le 01/08 (décision Michel)
   {n:'Soulevé de Terre',g:'Lombaires'},{n:'Soulevé de Terre Roumain Barre',g:'Lombaires'},
   {n:'Jefferson Curl',g:'Lombaires'},{n:'Tirage en Rack (Rack Pull)',g:'Lombaires'},

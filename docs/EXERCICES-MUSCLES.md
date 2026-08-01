@@ -2,7 +2,7 @@
 
 > **⚙️ FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer : `node tools/exercices-muscles.js`
 > (il interroge les vraies fonctions de l'app : `_mscScores` / `_calSessRegion` / `_movPattern`).
-> Dernière génération : 2026-08-01 · **293 exercices** du catalogue.
+> Dernière génération : 2026-08-01 · **326 exercices** du catalogue.
 >
 > **Comment lire :** les muscles **principaux** sont ceux que la figurine colorie le plus fort,
 > les *secondaires* sont coloriés plus doux. La **région** est celle utilisée par la couleur du
@@ -10,7 +10,7 @@
 > mêmes règles (il est reconnu par son nom).
 
 
-## Bas du corps (91 exercices)
+## Bas du corps (93 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -28,6 +28,7 @@
 | Élévations Mollets Penché (Donkey Calf Raise) | **Mollets** | — | Extension de cheville (mollets) |
 | Élévations Mollets Unilatéral | **Mollets** | — | Extension de cheville (mollets) |
 | Extension Fessiers Arrière (Kickback) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
+| Extension Lombaire sur Ballon | **Bas du dos, Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Extension Quadriceps (Leg Extension) | **Quadriceps** | — | Extension de genou (quadriceps) |
 | Extension Quadriceps Élastique | **Quadriceps** | — | Extension de genou (quadriceps) |
 | Extension Quadriceps Unilatérale | **Quadriceps** | — | Extension de genou (quadriceps) |
@@ -70,6 +71,7 @@
 | Overhead Squat Haltères | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Pendulum Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Pin Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Planche Inversée | **Fessiers, Bas du dos** | Abdominaux, Deltoïdes post., Ischio-jambiers | Gainage / abdominaux |
 | Pont Fessier (Glute Bridge) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 | Press Jambes 45° | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets | Squat (flexion hanche+genou) |
 | Press Jambes Horizontale | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets | Squat (flexion hanche+genou) |
@@ -106,7 +108,7 @@
 | Squat TRX (Sangles) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Tirage Cable Fessiers (Cable Pull Through) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 
-## Haut du corps (92 exercices)
+## Haut du corps (107 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -116,19 +118,26 @@
 | Chest Press Machine Horizontale | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Chest Press Machine Inclinée | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Chest Press Poulie Assis | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
+| Chest Press TRX (Sangles) | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Croisé Poulie (Cable Crossover) | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Croix de Fer Haltères | **Deltoïdes lat.** | Trapèzes | Élévation / rotation épaule |
 | Développé Arnold (Arnold Press) | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Développé Couché | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
+| Développé Couché au Sol (Floor Press) | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Développé Couché avec Chaînes | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
+| Développé Couché Élastique | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Développé Couché Haltères | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Développé Couché Larsen (Larsen Press) | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Développé Couché Unilatéral Kettlebell | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Développé Décliné | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
+| Développé Décliné Élastique | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Développé Décliné Haltères | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
+| Développé Épaules Assis Élastique | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Développé Épaules Assis Machine (Shoulder Press) | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
+| Développé Épaules Élastique | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Développé Épaules Kettlebell | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Développé Épaules Machine | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
+| Développé Épaules Unilatéral Élastique | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Développé Haltères Assis | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Développé Incliné | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Développé Incliné Haltères | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
@@ -145,10 +154,13 @@
 | Dips Machine Assistée | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Dips Parallèles | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Écarté Décliné Haltères | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
+| Écarté Élastique | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Écarté Haltères | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Écarté Hyght (Hyght Fly) | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Écarté Incliné Haltères | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Écarté Poulie | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
+| Écarté Poulie Haute à Genoux | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
+| Écarté TRX (Sangles) | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Élévation Frontale Allongée Barre | **Deltoïdes ant.** | Deltoïdes lat. | Élévation / rotation épaule |
 | Élévation Frontale Banc Incliné | **Deltoïdes ant.** | Deltoïdes lat. | Élévation / rotation épaule |
 | Élévation Latérale Inclinée Haltère | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
@@ -161,6 +173,7 @@
 | Élévations Latérales Câble | **Deltoïdes lat.** | Trapèzes | Élévation / rotation épaule |
 | Élévations Latérales Kettlebell | **Deltoïdes lat.** | Trapèzes | Élévation / rotation épaule |
 | Élévations Latérales Machine | **Deltoïdes lat.** | Trapèzes | Élévation / rotation épaule |
+| Élévations Latérales Unilatérale Poulie | **Deltoïdes lat.** | Trapèzes | Élévation / rotation épaule |
 | Extension Nuque Haltère | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Extension Nuque Poulie Haute | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Extension Triceps | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
@@ -175,14 +188,18 @@
 | Extension Triceps Verticale Élastique | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Face Pull Couché Poulie | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
 | Handstand Push-up (ATR) | **Deltoïdes ant.** | Triceps, Trapèzes | Poussée verticale (au-dessus de la tête) |
+| Handstand Push-up Suspendu (Sangles) | **Deltoïdes ant.** | Triceps, Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Hex Press Smith Machine | **Pectoraux** | Triceps, Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Machine Oiseau | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
 | Oiseau | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
+| Oiseau Élastique | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
+| Oiseau Inversé TRX (Sangles) | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
 | Oiseau Poulie 45° | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
 | Pec Deck | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Pompes | **Pectoraux, Triceps** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Pompes Déficit (Deficit Push-up) | **Pectoraux, Triceps** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Pompes Diamant | **Pectoraux, Triceps** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
+| Pompes Inclinées TRX (Sangles) | **Pectoraux, Triceps** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Pompes Lestées | **Pectoraux, Triceps** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Pull-over | **Grand dorsal** | Triceps, Pectoraux | Tirage horizontal |
 | Pull-over Barre | **Grand dorsal** | Triceps, Pectoraux | Tirage horizontal |
@@ -203,7 +220,7 @@
 | Triceps Poulie | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Triceps Poulie Basse | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 
-## Dos (62 exercices)
+## Dos (77 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -230,6 +247,7 @@
 | Haussements d'Épaules Overhead | **Trapèzes** | Avant-bras | Élévation / rotation épaule |
 | Marteau | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Meadows Row | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
+| Muscle-up | **Grand dorsal, Biceps** | Triceps, Pectoraux, Deltoïdes ant. | Tirage vertical |
 | Passage d'Épaule Élastique | **Deltoïdes post.** | Trapèzes | — |
 | Pronation Supination Haltère | **Avant-bras** | — | — |
 | Renegade Row | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
@@ -237,21 +255,28 @@
 | Rotation Externe Épaule Abduction | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 | Rotation Externe Épaule Élastique | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 | Rotation Externe Épaule Haltère | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
+| Rotation Externe Épaule Poulie | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 | Rotation Interne 90° Poulie | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 | Rotation Interne Épaule Élastique | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 | Rowing Barre | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
+| Rowing Buste Penché Élastique | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing Cable | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing Haltère | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing Haltères Buste Penché | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing Hammer Strength | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
+| Rowing Horizontal Élastique | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
+| Rowing Inversé sous une Table | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing Landmine (T-Bar) | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing Machine | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing Poitrine Appuyée (Chest Supported) | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing Smith Machine | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing T-Bar Machine | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
+| Rowing TRX (Sangles) | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
+| Rowing Unilatéral Élastique | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rowing Yates (Supination) | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Seal Row | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Sled Pull | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Squat (flexion hanche+genou) |
+| Suspension Passive (Dead Hang) | **Avant-bras, Grand dorsal** | Trapèzes | Tirage vertical |
 | Tirage Incliné Poulie Haute | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage vertical |
 | Tirage Iso-Latéral Hammer Strength | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
 | Tirage Menton | **Deltoïdes lat., Trapèzes** | Biceps | Élévation / rotation épaule |
@@ -263,17 +288,25 @@
 | Tirage Poulie Haute Prise Inversée | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Tirage Poulie Haute Prise Serrée | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Tirage Vertical (Upright Row) | **Deltoïdes lat., Trapèzes** | Biceps | Élévation / rotation épaule |
+| Tirage Vertical Alterné Élastique | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Traction Assistée | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
+| Traction Assistée avec Banc | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
+| Traction Australienne (Poids du Corps) | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
+| Traction Australienne TRX (Sangles) | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Traction Derrière la Nuque | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Traction Lestée | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Traction Prise Neutre | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
+| Traction Supination (Chin-up) | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
+| Tractions (Pull-up) | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
+| Tractions aux Anneaux | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Waiter Curl | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Y Raise / W Raise | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 
-## Gainage (18 exercices)
+## Gainage (19 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
+| Bird Dog | **Bas du dos, Abdominaux** | Fessiers, Obliques | Gainage / abdominaux |
 | Câble Crunch | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
 | Crunch | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
 | Crunch Machine | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
