@@ -4874,6 +4874,7 @@ const EX_YT={
   'Écarté Incliné Haltères':{img:'exercises/ecartes-incline-avec-halteres.webp'},
   'Écarté Décliné Haltères':{img:'exercises/ecartes-decline-avec-halteres.webp'},
   'Développé Décliné Haltères':{img:'exercises/developpe-decline-halteres.webp'},
+  'Soulevé de Terre Roumain Barre':{img:'exercises/souleve-de-terre-roumain-barre.webp'},
   'Écarté Hyght (Hyght Fly)':{img:'exercises/hyght-dumbell-fly.webp'},
   'Hex Press Smith Machine':{img:'exercises/hex-press-a-la-smith-machine.webp'},
   'Chest Press Poulie Assis':{img:'exercises/chest-press-poulie-assis.webp'},
