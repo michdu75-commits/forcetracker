@@ -4038,7 +4038,10 @@ function saveAsProg(){
   const prog={
     id:'p'+Date.now(),name,
     exs:S.wkt.exs.map(ex=>{
+      // note conservée : sous le MÊME nom, saveAsProg REMPLACE le programme — sans elle, la
+      // consigne posée dans l'éditeur serait détruite au premier « Sauvegarder » (perte silencieuse).
       const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:s.rest||0}))};
+      if(ex.note)o.note=String(ex.note).slice(0,300);
       if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
       return o;
     })
@@ -4059,7 +4062,9 @@ function loadProg(idx){
     exs:(prog.exs||[]).map(e=>{
       const prev=getPrev(e.name);
       // Pré-remplissage PAR SÉRIE depuis la séance précédente (voir loadProgDay).
-      const obj={name:e.name,sets:(e.sets||[]).map((s,i)=>{
+      // note : recopiée comme dans loadProgDay — elle manquait ICI seulement (trouvé 01/08
+      // en ajoutant le champ 💬 de l'éditeur : un programme à 1 jour perdait son commentaire).
+      const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
         const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
         return {
           kg:pp?pp.kg:(s.kg||0),
@@ -4273,6 +4278,10 @@ function _renderProgEdit(){
       <button onclick="_addProgSet(${di},${ei})" style="padding:5px 12px;background:transparent;border:1px dashed var(--sep);border-radius:8px;color:var(--t2);font-size:12px;cursor:pointer;">+ série</button>
       ${hasNext?`<button onclick="_toggleProgSuperset(${di},${ei})" style="padding:5px 12px;border-radius:8px;font-size:12px;cursor:pointer;background:${linkedNext?'rgba(255,109,0,.14)':'transparent'};border:1px ${linkedNext?'solid var(--orange)':'dashed var(--sep)'};color:${linkedNext?'var(--orange)':'var(--t2)'};">⚡ ${linkedNext?'En superset ✓':'Superset avec le suivant'}</button>`:''}
     </div>
+    <div style="display:flex;align-items:flex-start;gap:6px;margin-top:6px;padding-top:4px;border-top:1px dashed var(--sep);">
+      <span style="font-size:13px;color:var(--t3);padding-top:5px;flex-shrink:0;">💬</span>
+      <textarea id="prog-note-${di}-${ei}" rows="1" placeholder="Commentaire / consigne (ex : dos calé, cran 4, prise serrée…)" oninput="_setProgExNote(${di},${ei},this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px'" style="flex:1;resize:none;overflow:hidden;border:none;background:transparent;color:var(--t2);font-size:12px;font-family:inherit;padding:4px 2px;line-height:1.4;min-height:24px;outline:none;caret-color:var(--red);">${(ex.note||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
+    </div>
   </div>`;};
   const addBtn=(di)=>`<button onclick="_openExPickerForProg(${di})" style="width:100%;padding:10px;background:transparent;border:1px dashed var(--sep);border-radius:10px;color:var(--t2);font-size:13px;cursor:pointer;margin-top:2px;">+ Ajouter un exercice</button>`;
   // Bouton « rattacher » (VM) — dans l'éditeur, pas sur la carte (évite d'empiler les boutons)
@@ -4286,6 +4295,8 @@ function _renderProgEdit(){
   }else{
     el.innerHTML=cleanupBtn+cycleSection+(d.exs||[]).map((ex,ei)=>exCard(ex,0,ei)).join('')+addBtn(0);
   }
+  // Un commentaire existant peut faire plusieurs lignes : ajuste la hauteur des champs 💬 au rendu
+  el.querySelectorAll('textarea[id^="prog-note-"]').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
 }
 // VM sur un programme DÉJÀ enregistré (dans l'éditeur) : rattache les exos aux références EXLIB
 // (palier auto ≥90 uniquement → sûr). N'écrit que dans la copie d'édition → validé par « Enregistrer ».
@@ -4313,6 +4324,14 @@ function _progEditEx(di,ei){
 function _setProgSetRest(di,ei,si,val){
   const ex=_progEditEx(di,ei);if(!ex||!ex.sets||!ex.sets[si])return;
   ex.sets[si].rest=parseInt(val)||0;
+}
+// Édite le commentaire/consigne d'un exercice du programme (retour Christophe + Michel, 01/08).
+// Pas de re-render (garde le focus). Même plafond de 300 caractères que l'import de programme.
+// Le commentaire suit l'exercice quand le programme est chargé en séance (recopié dans wkt.exs[].note).
+function _setProgExNote(di,ei,val){
+  const ex=_progEditEx(di,ei);if(!ex)return;
+  const v=(val||'').trim();
+  if(v)ex.note=v.slice(0,300);else delete ex.note;
 }
 // Édite les reps d'une série — pas de re-render (garde le focus)
 function _setProgSetReps(di,ei,si,val){

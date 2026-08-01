@@ -200,6 +200,7 @@ const PREMIUM_PERKS=[
 ];
 
 const NEW_FEATURES=[
+  {id:'prog-note', screen:'log', desc:'Nouveau : un champ 💬 Commentaire par exercice dans l\'éditeur de programme (✏️ dans Mes Programmes) — écris ta consigne (réglage machine, prise, posture…), elle s\'affiche à chaque séance. Et rappel : la colonne « Repos » y règle le temps de repos série par série'},
   {id:'exos-aout', screen:'log', desc:'Nouveau : 14 exercices ajoutés au catalogue avec leurs animations (Pompes, Larsen press, Svend press, Hex press, écartés inclinés/Hyght, presses à cuisses, Hack Squat assis, Overhead Squat haltères, Muscle Snatch…) — et les presses à cuisses + le Hack Squat ont maintenant de vraies animations'},
   // Accueil
   {id:'home-calendar', screen:'home', desc:'Nouveau : un calendrier de ton mois sur l\'Accueil — tes jours de séance en rouge, les jours de RECORD cerclés en or. Navigue sur les mois, tape une semaine pour le détail'},

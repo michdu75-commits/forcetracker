@@ -252,6 +252,7 @@ const _HELP_DATA={
       {i:'🗑️',t:'Bouton "Vider" : retire tous les exercices d\'un coup si tu as chargé le mauvais programme. La séance reste ouverte et ton historique n\'est pas touché. (Le "✕" à côté annule complètement la séance.)'},
       {i:'📷',t:'Photo sur n\'importe quel exercice : tape le ⋯ sur un exercice (perso OU de la bibliothèque) → "Ajouter/Changer la photo". Pratique pour coller la photo de TA machine sur un exercice existant. Dans la liste de choix, tape la petite photo à gauche pour la voir en grand (ça n\'ajoute pas l\'exercice). Ta photo reste privée à ton compte.'},
       {i:'✏️',t:'Modifier un exercice perso : tape le ⋯ sur l\'exercice → "Modifier l\'exercice" (ou le ✎ dans la liste). Tu peux changer le nom, le groupe et les muscles — sans perdre ton historique ni tes records. Ne marche que sur TES exercices perso (les autres restent intacts).'},
+      {i:'💬',t:'Modifier un programme enregistré : dans 📋 Mes Programmes, le bouton ✏️ ouvre l\'éditeur — reps, TEMPS DE REPOS (colonne « Repos », série par série) et le champ 💬 Commentaire de chaque exercice (consigne, réglage machine, prise…). Le commentaire s\'affiche sous l\'exercice à chaque séance. En séance, le champ 💬 sous un exercice reste une note du JOUR (elle part dans l\'historique, pas dans le programme).'},
     ],
     female:[]
   },

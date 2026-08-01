@@ -525,6 +525,50 @@ t('prise de sang : l\'ANALYSE est verrouillée Premium', /_analyzeBloodRedacted\
 t('le compteur de programmes part au cloud (backend)', /body\.progImports/.test(_cod));
 
 // ════════════════════════════════════════════════════════════════════
+console.log('\n═══ B ter. COMMENTAIRE d\'exercice dans l\'éditeur de programme (Christophe + Michel, 01/08) ═══');
+const N=await p.evaluate(()=>{
+  const out={};
+  // Un programme enregistré (1 seul jour), sans commentaire au départ
+  S.programmes=[{id:'pN',name:'Prog Note',exs:[
+    {name:'Développé Couché',sets:[{kg:80,reps:8,type:'N'},{kg:80,reps:8,type:'N'}]},
+    {name:'Curl Biceps',sets:[{kg:20,reps:12,type:'N'}]}]}];
+  persist();
+  // 1. L'éditeur s'ouvre et montre un champ 💬 par exercice
+  editProg(0);
+  out.champ0=!!document.getElementById('prog-note-0-0');
+  out.champ1=!!document.getElementById('prog-note-0-1');
+  // 2. La consigne écrite survit à un re-render de l'éditeur (ajout de série, superset…)
+  _setProgExNote(0,0,'Dos calé, cran 4, prise serrée');
+  _renderProgEdit();
+  out.reRender=(document.getElementById('prog-note-0-0')||{}).value==='Dos calé, cran 4, prise serrée';
+  // 3. Plafond 300 caractères (le même que l'import de programme) + champ vidé = note retirée
+  _setProgExNote(0,1,'x'.repeat(400));
+  out.cap=(_progEditEx(0,1).note||'').length===300;
+  _setProgExNote(0,1,'   ');
+  out.vide=_progEditEx(0,1).note===undefined;
+  // 4. « Enregistrer » écrit la consigne dans le programme
+  saveProgEdit();
+  out.sauve=S.programmes[0].exs[0].note==='Dos calé, cran 4, prise serrée';
+  out.sansNote=S.programmes[0].exs[1].note===undefined;
+  // 5. Programme 1 jour chargé en séance : la consigne SUIT (bug jumeau de loadProgDay, corrigé 01/08)
+  loadProg(0);
+  out.enSeance=!!(S.wkt&&S.wkt.exs&&S.wkt.exs[0].note==='Dos calé, cran 4, prise serrée');
+  // 6. « Sauvegarder comme programme » sous le MÊME nom remplace le programme : la consigne survit
+  const inp=document.getElementById('prog-name-inp');if(inp)inp.value='Prog Note';
+  saveAsProg();
+  out.survitResave=S.programmes.length===1&&S.programmes[0].exs[0].note==='Dos calé, cran 4, prise serrée';
+  S.wkt=null;S.programmes=[];persist(); // nettoyage pour la suite
+  return out;
+});
+t('l\'éditeur montre un champ 💬 par exercice', N.champ0&&N.champ1);
+t('la consigne survit à un re-render de l\'éditeur', N.reRender);
+t('plafond 300 caractères (comme l\'import)', N.cap);
+t('champ vidé = note retirée du programme', N.vide);
+t('« Enregistrer » écrit la consigne dans le programme (et pas ailleurs)', N.sauve&&N.sansNote);
+t('programme 1 jour chargé en séance : la consigne suit (bug jumeau loadProg corrigé)', N.enSeance);
+t('re-sauvegarder sous le même nom garde la consigne (pas de perte silencieuse)', N.survitResave);
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ C. PERFORMANCES — l\'app et Milo sont-ils ralentis ? ═══');
 // Profil réaliste chargé : 200 séances, 3 ans de sommeil/poids, historique de chat
 const C=await p.evaluate(()=>{
