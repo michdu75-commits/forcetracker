@@ -4878,6 +4878,8 @@ const EX_YT={
   // Roumain Haltères : animation FABRIQUÉE (01/08) depuis l'infographie de Michel (2 poses + fondu)
   // — la vraie animation 12 images n'existe pas chez sa source ; à remplacer si elle apparaît un jour.
   'Soulevé de Terre Roumain Haltères':{img:'../exercises/souleve-de-terre-roumain-halteres.webp'},
+  'Soulevé de Terre Roumain Unilatéral':{img:'../exercises/souleve-de-terre-roumain-unilateral.webp'}, // style vidéo sombre (seule dispo) — à remplacer si mieux un jour
+  'Hip Thrust Unilatéral (Poussée de Hanche)':{img:'../exercises/hip-thrust-barre-unilateral.webp'},
   'Écarté Hyght (Hyght Fly)':{img:'../exercises/hyght-dumbell-fly.webp'},
   'Hex Press Smith Machine':{img:'../exercises/hex-press-a-la-smith-machine.webp'},
   'Chest Press Poulie Assis':{img:'../exercises/chest-press-poulie-assis.webp'},
@@ -4916,7 +4918,7 @@ const EX_EN={
   'Pompes':'push up','Développé Couché avec Chaînes':'bench press with chains',
   'Développé Couché Larsen (Larsen Press)':'larsen press','Développé Couché Unilatéral Kettlebell':'single arm kettlebell bench press',
   'Développé Incliné Poulie':'incline cable press','Écarté Incliné Haltères':'incline dumbbell fly',
-  'Écarté Hyght (Hyght Fly)':'hyght dumbbell fly','Écarté Décliné Haltères':'decline dumbbell fly','Hex Press Smith Machine':'hex press smith machine',
+  'Écarté Hyght (Hyght Fly)':'hyght dumbbell fly','Écarté Décliné Haltères':'decline dumbbell fly','Hip Thrust Unilatéral (Poussée de Hanche)':'single leg barbell hip thrust','Hex Press Smith Machine':'hex press smith machine',
   'Chest Press Poulie Assis':'seated cable chest press','Svend Press (Serrage de Plaque)':'svend press plate',
   'Presse à Cuisses sur le Côté':'side leg press machine','Hack Squat Assis':'seated hack squat machine',
   'Overhead Squat Haltères':'dumbbell overhead squat','Arraché Debout (Muscle Snatch)':'barbell muscle snatch',
