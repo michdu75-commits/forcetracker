@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v714';
+  b.textContent='🧪 CLONE ft-v715';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -898,6 +898,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Lis toutes les idées <strong>directement dans l'app</strong>, sans ouvrir tes mails. Les <strong>photos</strong>, elles, restent dans <strong>forcetracker.app@gmail.com</strong> (le mail te prévient).</div>
       <button class="btn btn-bg2" onclick="loadTesterIdeasAdmin()" style="padding:11px;font-size:14px;">📥 Voir les idées reçues</button>
       <div id="admin-ideas-list" style="margin-top:4px;"></div>
+    </div>
+    <!-- Les exercices que les gens créent eux-mêmes : la remontée existait depuis longtemps, mais
+         seulement dans un onglet du Google Sheet. Michel (02/08) : « je ne vais jamais dans Google
+         Sheet » — une donnée rangée où personne ne va n'existe pas. On la ramène ici. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🏋️ Exercices créés par les utilisateurs</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Ce que les gens ont dû <strong>créer eux-mêmes</strong> parce qu'il manquait au catalogue — <strong>les plus demandés en haut</strong>. Quand quelqu'un a coché les muscles, ils sont affichés : l'exercice peut entrer au catalogue <strong>déjà classé</strong>.</div>
+      <button class="btn btn-bg2" onclick="loadCustomExAdmin()" style="padding:11px;font-size:14px;">🏋️ Voir les exercices demandés</button>
+      <div id="admin-cex-list" style="margin-top:4px;"></div>
     </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🧪 Laboratoire Milo · PT-001 (continuité)</div>

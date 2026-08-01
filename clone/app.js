@@ -2686,6 +2686,46 @@ async function loadTesterIdeasAdmin(){
   }
 }
 
+// ─── EXERCICES CRÉÉS PAR LES UTILISATEURS (admin) ────────────
+// La remontée existe depuis longtemps (`_reportCustomEx` → onglet « Exercices manquants » du
+// Sheet), mais Michel (02/08) : « je ne vais jamais dans Google Sheet ». Une donnée rangée où
+// personne ne va n'existe pas — c'est le pendant de « une règle noyée dans un fichier qu'on ne
+// lit plus n'est plus une règle ». On la ramène DANS l'app, à côté de la boîte à idées (R13).
+async function loadCustomExAdmin(){
+  const box=document.getElementById('admin-cex-list');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Chargement…</div>';
+  try{
+    const r=await fetch(S.url+'?action=getCustomEx&token=FT_IDEES_2026',{method:'GET'});
+    const d=await r.json();
+    if(!d||d.status!=='ok'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Erreur : '+_escIdea(d&&d.error||'inconnue')+' — réessaie.</div>'; return; }
+    const arr=d.exercices||[];
+    if(!arr.length){ box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Personne n\'a encore créé d\'exercice perso.</div>'; return; }
+    const nPlus=arr.filter(e=>e.count>1).length;
+    let h='<div style="font-size:11.5px;color:var(--t3);margin:2px 0 8px;">'+arr.length+' exercice'+(arr.length>1?'s':'')
+      +(nPlus?' — dont <b style="color:var(--gold);">'+nPlus+' demandé'+(nPlus>1?'s':'')+' par plusieurs personnes</b>':'')+'</div>';
+    arr.forEach(e=>{
+      const plusieurs=e.count>1;
+      const mus=[e.musclesP,e.musclesS].filter(Boolean).join(' · ');
+      h+='<div style="background:var(--bg2);border:1px solid '+(plusieurs?'var(--gold)':'var(--sep)')+';border-radius:12px;padding:10px 12px;margin-bottom:8px;">'
+        +'<div style="display:flex;justify-content:space-between;gap:8px;align-items:baseline;">'
+        +'<div style="font-weight:700;color:var(--t1);font-size:13px;">'+_escIdea(e.name||'')+'</div>'
+        +'<div style="font-size:11px;font-weight:700;white-space:nowrap;color:'+(plusieurs?'var(--gold)':'var(--t3)')+';">'
+        +e.count+'×</div></div>'
+        +'<div style="font-size:11.5px;color:var(--t3);margin-top:2px;">'+_escIdea(e.group||'—')
+        +(e.last?' · vu le '+_escIdea(e.last):'')+'</div>'
+        // Les muscles cochés par la personne : c'est ce qui permet de l'ajouter DÉJÀ classé.
+        +(mus?'<div style="font-size:12px;color:var(--t2);margin-top:5px;">💪 '+_escIdea(mus)+'</div>'
+             :'<div style="font-size:11.5px;color:var(--t3);margin-top:5px;font-style:italic;">muscles non renseignés</div>')
+        +'</div>';
+    });
+    box.innerHTML=h;
+  }catch(e){
+    box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réseau injoignable — réessaie.</div>';
+  }
+}
+
 // ─── DÉDICACE ANNIVERSAIRE — Eline (2 juillet) ───────────────
 let _bdayCandlesLeft=19;
 const _bdayCandles=[];

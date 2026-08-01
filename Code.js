@@ -333,6 +333,30 @@ function doGet(e) {
     return json_({status:'ok', count: arr.length, ideas: arr});
   }
 
+  // Exercices perso créés par les utilisateurs — ?action=getCustomEx&token=…
+  // Michel, 02/08 : « je ne vais jamais dans Google Sheet ». La remontée existait depuis
+  // longtemps, mais dans un onglet qu'il n'ouvre pas — donc elle n'existait pas en pratique.
+  // Cette route la ramène DANS l'app (onglet Admin), à côté de la boîte à idées.
+  if (p.action === 'getCustomEx') {
+    if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
+    try {
+      const sh = _getSheet_().getSheetByName('Exercices manquants');
+      if (!sh) return json_({status:'ok', count:0, exercices:[]});
+      const data = sh.getDataRange().getValues();
+      const out = [];
+      for (let i = 1; i < data.length; i++) {
+        const r = data[i];
+        if (!r[0]) continue;
+        out.push({name:r[0], group:r[1]||'', count:+(r[2]||1),
+                  first:_dstr_(r[4]), last:_dstr_(r[5]),
+                  musclesP:r[6]||'', musclesS:r[7]||''});
+      }
+      // les plus DEMANDÉS en premier, puis les plus récents : c'est l'ordre de décision
+      out.sort(function(a,b){ return (b.count-a.count) || String(b.last).localeCompare(String(a.last)); });
+      return json_({status:'ok', count: out.length, exercices: out});
+    } catch(e2) { return json_({status:'error', error:String(e2 && e2.message || e2)}); }
+  }
+
   // Santé du stockage (diagnostic 31/07 : plus AUCUNE écriture depuis le 29/07 — boîte à idées
   // figée, MAIL_FAILS vide malgré les échecs. Suspect : la limite Google de 500 Ko TOTAL sur les
   // Script Properties, où vivent les comptes. Cette sonde mesure le remplissage ET tente une
@@ -1033,6 +1057,13 @@ function authorizeMail() {
 }
 
 // ───────────────────────────────────────────────────────────
+// Une cellule de date du Sheet revient tantôt en texte, tantôt en objet Date selon comment
+// elle a été écrite — on normalise en AAAA-MM-JJ pour l'affichage dans l'app.
+function _dstr_(v) {
+  if (!v) return '';
+  if (Object.prototype.toString.call(v) === '[object Date]') return v.toISOString().slice(0,10);
+  return String(v).slice(0,10);
+}
 function handleLogCustomExercise_(body) {
   try {
     const name   = (body.name || '').trim();

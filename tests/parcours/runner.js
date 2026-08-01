@@ -665,6 +665,33 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('des muscles cochés ne déclenchent RIEN non plus', r.musclesCochesOk===false, String(r.musclesCochesOk));
   t('⭐ la personne est prévenue AVANT la création', r.prevenu&&r.rienCreeDansLeDos, JSON.stringify(r));
   t("on prévient sans BLOQUER : « Créer quand même » reste offert (R24)", r.sortiePossible, String(r.sortiePossible));
+
+  // ── Les exercices demandés remontent DANS L'APP (Michel : « je ne vais jamais dans Google
+  // Sheet »). La remontée existait, mais dans un onglet qu'il n'ouvre pas.
+  await p3.route('**/*exec*', route => route.fulfill({status:200,contentType:'application/json',
+    body: route.request().url().includes('getCustomEx')
+      ? JSON.stringify({status:'ok',count:2,exercices:[
+          {name:'Presse Oblique Technogym',group:'Jambes',count:3,last:'2026-08-01',musclesP:'quads',musclesS:'glutes'},
+          {name:'Machin Bizarre',group:'Dos',count:1,last:'2026-08-01',musclesP:'',musclesS:''}]})
+      : '{"status":"ok"}'}));
+  const adm=await p3.evaluate(async()=>{
+   try{
+    if(typeof loadCustomExAdmin!=='function')return {erreur:'loadCustomExAdmin absente'};
+    S.url=S.url||'https://example.invalid/exec';
+    localStorage.setItem('ft4_admin_ok','1');   // c'est ce que lit _isAdminUnlocked()
+    await loadCustomExAdmin();
+    const box=document.getElementById('admin-cex-list'); const t=box.textContent||'';
+    return {lignes:(box.innerHTML.match(/margin-bottom:8px/g)||[]).length,
+            trie:t.indexOf('Presse Oblique')<t.indexOf('Machin Bizarre'),
+            muscles:/quads/.test(t), signale:/muscles non renseignés/.test(t),
+            compte:/3×/.test(t)};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ les exercices demandés s\'affichent DANS l\'app (plus besoin du Google Sheet)',
+    adm.lignes===2, JSON.stringify(adm));
+  t('les plus demandés en haut, avec leur nombre', adm.trie&&adm.compte, JSON.stringify(adm));
+  t('les muscles cochés sont montrés · ceux qui manquent sont signalés',
+    adm.muscles&&adm.signale, JSON.stringify(adm));
   await c3.close();
 }
 
