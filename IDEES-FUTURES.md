@@ -1370,6 +1370,29 @@ Le dossier local du projet est en désordre. À réorganiser proprement :
 
 ---
 
+## 🌐 EN-TÊTES `no-cache` sur sw.js + index.html — à faire LE JOUR DU DOMAINE (noté 01/08/2026)
+
+> Idée venue du projet de Tatiana (leçon croisée déjà notée dans `docs/GALERES-ET-LECONS.md`) :
+> le dernier étage d'un mécanisme de mise à jour béton, c'est le **serveur** qui dit au navigateur
+> « ces 2 fichiers-là, ne les garde jamais en cache » (`Cache-Control: no-cache` sur `sw.js` et
+> `index.html` UNIQUEMENT — tout le reste peut rester caché longtemps).
+
+- **Ce qu'on a déjà** (l'essentiel, c'est de chez nous que la recette vient) : version `ft-vNNN` dans
+  le SW, `updateViaCache:'none'`, vérification au démarrage / 5 min / retour dans l'app / retour du
+  réseau, rechargement auto (sans double logo depuis ft-v691), jamais pendant une séance.
+- **Le morceau manquant** : les en-têtes serveur. **GitHub Pages ne permet PAS de les régler** —
+  c'est une limite de l'hébergeur, pas un oubli. En pratique le délai résiduel est de quelques
+  minutes au pire : gain réel faible AUJOURD'HUI, d'où le « plus tard ».
+- **Quand le faire** : le jour où on prend un **vrai nom de domaine** (mise en vente) — passer le
+  domaine par **Cloudflare** (Pages ou proxy devant GitHub Pages) donne les en-têtes gratuitement,
+  via un fichier `_headers`. Les deux chantiers vont ensemble, ne pas faire l'un sans l'autre.
+- **⚠️ À vérifier ce jour-là** (les 2 trous vus sur le projet de Tatiana) : ① contrôler que les
+  en-têtes sont **réellement servis en prod** (`curl -sI` sur sw.js — un réglage posé mais pas
+  déployé = rien) ; ② un appareil déjà coincé sur une vieille version ne se répare pas tout seul —
+  prévoir UN dernier nettoyage manuel par appareil, puis plus jamais.
+
+---
+
 ## 👩 PROFIL FEMME / THÈME FEMME — à approfondir (priorité produit, Michel 2026-07-08)
 
 Michel : « améliore le profil femme, faudra vraiment qu'on le fasse aussi, il reste pas mal de choses à faire et pas mal de tests ». → gros chantier transverse (profil + nutrition + coach + visuels), à découper en petites étapes testées, **une à la fois**, avec de **vraies testeuses** (Eline, Emma).
