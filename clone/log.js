@@ -4718,11 +4718,11 @@ const EX_YT={
   'Chest Press Machine Inclinée':  {img:'../exercises/developpe-incline-machine-convergente-exercice-musculation.webp'},
   'Dips':                          {img:'../exercises/dips-pectoraux.webp'},
   'Pont Fessier (Glute Bridge)':   {img:'../exercises/glute-bridge.webp'},
-  'Press Jambes 45°':              {img:'../machine/press-jambes-1.png'},
+  'Press Jambes 45°':              {img:'../exercises/presse-a-cuisse-exercice-musculation.webp'}, // animation (zip Michel 01/08) — remplace la photo fixe
   'Press Jambes Horizontale':      {img:'../machine/press-jambes-2.jpg'},
-  'Press Jambes Verticale':        {img:'../machine/press-jambes-3.jpg'},
-  'Press Jambes Inclinée':         {img:'../machine/press-jambes-4.jpg'},
-  'Squat Hack (Hack Squat)':       {img:'../machine/press-jambes-5.jpg'},
+  'Press Jambes Verticale':        {img:'../exercises/presse-a-cuisses-verticale.webp'}, // animation (zip Michel 01/08)
+  'Press Jambes Inclinée':         {img:'../exercises/presse-a-cuisses-inclinee.webp'}, // animation (zip Michel 01/08)
+  'Squat Hack (Hack Squat)':       {img:'../exercises/hack-squat.webp'}, // animation (zip Michel 01/08)
   'Press Jambes Levier':           {img:'../machine/press-jambes-6.jpg'},
   // ── Fessiers / Ischios / Jambes / Soulevés de terre (lot 2026-07-04) ──
   'Soulevé de Terre':              {img:'../exercises/souleve-de-terre.webp'},
@@ -4731,7 +4731,7 @@ const EX_YT={
   'Inclinaison Lombaire (Good Morning)':{img:'../exercises/good-morning-exercice.webp'},
   'Hyperextension (Back Extension)':{img:'../exercises/extension-lombaire-au-banc-45.webp'},
   'Squat à la Barre':              {img:'../exercises/homme-faisant-un-squat-avec-barre.webp'},
-  'Squat Avant':                   {img:'../exercises/front-squat-avec-halteres.webp'},
+  'Squat Avant':                   {img:'../exercises/squat-barre-devant-front.webp'}, // la vraie version BARRE (zip Michel 01/08 — avant : version haltères)
   'Squat Gobelet (Goblet Squat)':  {img:'../exercises/squat-goblet-kettlebell.webp'},
   'Squat Sumo':                    {img:'../exercises/squat-sumo-avec-haltere.webp'},
   'Fentes':                        {img:'../exercises/fente-avant-barre-femme.webp'},
@@ -4857,6 +4857,9 @@ const EX_YT={
   'Face Pull Couché Poulie':{img:'../exercises/face-pull-couche-a-la-poulie.webp'},
   'Oiseau Poulie 45°':{img:'../exercises/oiseau-a-la-poulie-a-45.webp'},
   'Passage d\'Épaule Élastique':{img:'../exercises/passage-depaule-avec-elastique.webp'},
+  // Deux exercices qui n'avaient AUCUNE démo — trouvées dans le dossier source de Michel (01/08) :
+  'Clean & Jerk':{img:'../exercises/epaule-jete-halterophilie.webp'},
+  'Mollets Machine Debout':{img:'../exercises/shrug-machine-mollets.webp'},
   'Rotation Externe Épaule Abduction':{img:'../exercises/rotation-externe-de-epaule-en-abduction.webp'},
   'Rotation Externe Épaule Élastique':{img:'../exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp'},
   'Rotation Interne 90° Poulie':{img:'../exercises/rotation-interne-a-90-a-la-poulie.webp'},

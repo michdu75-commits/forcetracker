@@ -342,6 +342,17 @@ t('⭐ l\'historique de l\'Étude du corps apparaît dès le PREMIER bilan (au s
 // 01/08 : les animations abduction/adduction étaient INVERSÉES à la source (l'œil de Michel
 // en séance). Fichiers permutés sous des noms -v2 (le cache d'images ft-images ne se vide
 // jamais → un simple échange sur place aurait servi l'ancienne image inversée à l'infini).
+// 01/08 : le dossier source de Michel contenait 7 animations jamais branchées (les presses à
+// cuisses et le hack squat n'avaient que des PHOTOS FIXES, le Squat Avant montrait la version
+// haltères, l'épaulé-jeté et les mollets machine n'avaient RIEN).
+t('⭐ les 7 animations du zip de Michel sont branchées et présentes (presses, hack, front squat barre, épaulé-jeté, mollets)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const files=['presse-a-cuisse-exercice-musculation','presse-a-cuisses-inclinee','presse-a-cuisses-verticale',
+                     'hack-squat','squat-barre-devant-front','epaule-jete-halterophilie','shrug-machine-mollets'];
+        return files.every(f=>lg.indexOf("exercises/"+f+".webp")>=0&&fs.existsSync(path.join(ROOT,'exercises/'+f+'.webp')))
+            && /'Clean & Jerk':\{img:/.test(lg)
+            && /'Mollets Machine Debout':\{img:/.test(lg)
+            && lg.indexOf("'Squat Hack (Hack Squat)':       {img:'machine/")<0;})());
 t('⭐ démos abduction/adduction remises à l\'endroit : fichiers -v2 mappés, présents, anciens noms partis',
   (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
         const sw=fs.readFileSync(path.join(ROOT,'sw.js'),'utf8');
