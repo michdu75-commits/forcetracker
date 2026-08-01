@@ -4875,6 +4875,9 @@ const EX_YT={
   'Écarté Décliné Haltères':{img:'exercises/ecartes-decline-avec-halteres.webp'},
   'Développé Décliné Haltères':{img:'exercises/developpe-decline-halteres.webp'},
   'Soulevé de Terre Roumain Barre':{img:'exercises/souleve-de-terre-roumain-barre.webp'},
+  // Roumain Haltères : animation FABRIQUÉE (01/08) depuis l'infographie de Michel (2 poses + fondu)
+  // — la vraie animation 12 images n'existe pas chez sa source ; à remplacer si elle apparaît un jour.
+  'Soulevé de Terre Roumain Haltères':{img:'exercises/souleve-de-terre-roumain-halteres.webp'},
   'Écarté Hyght (Hyght Fly)':{img:'exercises/hyght-dumbell-fly.webp'},
   'Hex Press Smith Machine':{img:'exercises/hex-press-a-la-smith-machine.webp'},
   'Chest Press Poulie Assis':{img:'exercises/chest-press-poulie-assis.webp'},
