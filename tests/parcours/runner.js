@@ -628,7 +628,48 @@ t('contexte de Milo construit < 50 ms', C.ctx<50, C.ctx+' ms');
 t('calories d\'une séance < 5 ms', C.calSess<5, C.calSess+' ms');
 t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+' Ko');
 
+// ── EXERCICE PERSO « MUET » : l'app prévient avant de le créer ─────────────────
+// (02/08, question Michel sur une routine de vérification des exercices perso. Mesuré : un
+// exercice perso au nom non reconnu ET sans muscles cochés est muet — figurine grise, absent
+// du volume par muscle, calories au minimum, et Milo ne sait pas ce que c'est. Rien ne le
+// signalait. On PRÉVIENT sans bloquer : « Créer quand même » reste possible — R24.)
+{
+  const c3=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p3=await c3.newPage();
+  await p3.addInitScript(seedScript({}));
+  await p3.goto('http://localhost:'+PORT+'/index.html');
+  await p3.waitForTimeout(2200);
+  // ⚠️ try/catch : si la fonction disparaît, on veut un ❌ LISIBLE, pas un plantage du runner
+  // (constaté au contrôle négatif du 02/08 : le crash masquait le fait que le test discrimine).
+  const r=await p3.evaluate(()=>{
+   try{
+    const o={};
+    if(typeof _cexSeraitMuet!=='function')return {erreur:'_cexSeraitMuet absente'};
+    _cexMusclesP=[];_cexMusclesS=[];S.customExercises=[];
+    o.muet=_cexSeraitMuet('Machin Bizarre');
+    o.nomReconnuOk=_cexSeraitMuet('Presse à Cuisses Technogym');
+    _cexMusclesP=['pec']; o.musclesCochesOk=_cexSeraitMuet('Machin Bizarre'); _cexMusclesP=[];
+    const nm=document.getElementById('custom-ex-name'); if(nm)nm.value='Machin Bizarre';
+    const gp=document.getElementById('custom-ex-grp'); if(gp)gp.value='Dos';
+    saveCustomEx();
+    const cf=document.getElementById('ov-confirm')||document.querySelector('.overlay.open');
+    o.prevenu=!!(cf&&/muscle/i.test(cf.textContent||''));
+    o.rienCreeDansLeDos=(S.customExercises||[]).length===0;
+    o.sortiePossible=!!(cf&&/Créer quand même/i.test(cf.textContent||''));
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ un exercice perso qui serait MUET est détecté', r.muet, String(r.muet));
+  t("un nom que l'app reconnaît ne déclenche RIEN (pas de friction inutile)",
+    r.nomReconnuOk===false, String(r.nomReconnuOk));
+  t('des muscles cochés ne déclenchent RIEN non plus', r.musclesCochesOk===false, String(r.musclesCochesOk));
+  t('⭐ la personne est prévenue AVANT la création', r.prevenu&&r.rienCreeDansLeDos, JSON.stringify(r));
+  t("on prévient sans BLOQUER : « Créer quand même » reste offert (R24)", r.sortiePossible, String(r.sortiePossible));
+  await c3.close();
+}
+
 await b.close(); srv.close();
+
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
 })().catch(e=>{console.error(e);process.exit(2);});

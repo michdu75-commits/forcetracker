@@ -3018,7 +3018,30 @@ function saveCustomEx(){
     );
     return;
   }
+  if(_cexSeraitMuet(name)){
+    showConfirm(
+      'Ajoute ses muscles ?',
+      `L'app ne reconnaît pas « ${name} », et aucun muscle n'est coché. Sans ça il ne comptera pas dans tes statistiques par muscle, ni dans les couleurs de ton calendrier, et ses calories seront sous-estimées.\n\nCoche les muscles travaillés juste au-dessus — ça prend 5 secondes.`,
+      ()=>{},                       // « Je coche » → on referme, le formulaire est resté ouvert
+      'Je coche les muscles',
+      'Créer quand même',
+      ()=>_doCreateCustomEx(name,grp)
+    );
+    return;
+  }
   _doCreateCustomEx(name,grp);
+}
+// Un exercice perso dont le NOM n'est reconnu par aucune règle ET dont les muscles ne sont pas
+// cochés est « muet » : figurine grise, absent du volume par muscle et des couleurs du calendrier,
+// calories au minimum, et Milo ne sait pas ce que c'est. Mesuré le 02/08 (« Machin Bizarre » :
+// aucun muscle, aucun schéma). Rien ne le signalait — la personne ne pouvait pas le deviner.
+// ⚠️ On PRÉVIENT, on ne bloque pas (R24 « informer sans bloquer ») : elle peut créer quand même.
+function _cexSeraitMuet(name){
+  try{
+    if(_cexMusclesP.length||_cexMusclesS.length)return false;   // elle a coché : rien à signaler
+    const sc=(_mscScores([{name:name,sets:[{done:true}]}])||{}).sc||{};
+    return Object.keys(sc).length===0;
+  }catch(e){return false;}
 }
 function _doCreateCustomEx(name,grp){
   if(!S.customExercises)S.customExercises=[];

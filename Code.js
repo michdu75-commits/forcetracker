@@ -1046,9 +1046,9 @@ function handleLogCustomExercise_(body) {
     let sheet = ss.getSheetByName('Exercices manquants');
     if (!sheet) {
       sheet = ss.insertSheet('Exercices manquants');
-      sheet.appendRow(['Exercice','Groupe','Signalements','IDs anonymes','Première date','Dernière date']);
+      sheet.appendRow(['Exercice','Groupe','Signalements','IDs anonymes','Première date','Dernière date','Muscles principaux','Muscles secondaires']);
       sheet.setFrozenRows(1);
-      sheet.getRange(1,1,1,6).setFontWeight('bold');
+      sheet.getRange(1,1,1,8).setFontWeight('bold');
     }
 
     const data = sheet.getDataRange().getValues();
@@ -1057,14 +1057,22 @@ function handleLogCustomExercise_(body) {
       if ((data[i][0]||'').toLowerCase() === name.toLowerCase()) { rowIdx = i + 1; break; }
     }
 
+    // Les muscles cochés par la personne : jusqu'au 02/08 ils étaient envoyés par l'app puis
+    // JETÉS ici (reçus dans le body, écrits nulle part). C'est pourtant l'info qui permet
+    // d'ajouter l'exercice au catalogue déjà correctement classé, sans avoir à deviner.
+    const musP = (body.musclesP || []).join(', ');
+    const musS = (body.musclesS || []).join(', ');
+
     if (rowIdx > 0) {
       const row = data[rowIdx - 1];
       const count = (row[2] || 0) + 1;
       const ids = (row[3] || '').split(', ').filter(Boolean);
       if (anonId && !ids.includes(anonId)) ids.push(anonId);
-      sheet.getRange(rowIdx, 3, 1, 4).setValues([_safeRow_([count, ids.join(', '), row[4]||today, today])]);
+      // on n'écrase pas des muscles déjà renseignés par un envoi vide
+      const p2 = musP || (row[6] || ''), s2 = musS || (row[7] || '');
+      sheet.getRange(rowIdx, 3, 1, 6).setValues([_safeRow_([count, ids.join(', '), row[4]||today, today, p2, s2])]);
     } else {
-      sheet.appendRow(_safeRow_([name, grp, 1, anonId, today, today]));
+      sheet.appendRow(_safeRow_([name, grp, 1, anonId, today, today, musP, musS]));
     }
 
     return json_({status:'ok'});
