@@ -4900,6 +4900,13 @@ const EX_YT={
   'Soulevé de Terre Roumain Haltères':{img:'../exercises/souleve-de-terre-roumain-halteres.webp'},
   'Soulevé de Terre Roumain Unilatéral':{img:'../exercises/souleve-de-terre-roumain-unilateral.webp'}, // style vidéo sombre (seule dispo) — à remplacer si mieux un jour
   'Hip Thrust Unilatéral (Poussée de Hanche)':{img:'../exercises/hip-thrust-barre-unilateral.webp'},
+  // Lot mollets + triceps (01/08, envoi du soir) — chaque animation vérifiée AVANT branchement :
+  // le « barre au front » est bien la version allongée au banc (skull crusher), et les deux mollets
+  // sont les versions BARRE (debout sur les épaules / assis barre sur les genoux). Le mouvement est
+  // le même que sur machine → branchés sur les exercices génériques existants, rien à créer.
+  'Barre au Front':{img:'../exercises/barre-au-front-triceps.webp'},
+  'Élévations Mollets Debout':{img:'../exercises/elevations-mollets-debout-barre.webp'},
+  'Élévations Mollets Assis':{img:'../exercises/elevations-mollets-assis-barre.webp'},
   // Lot biceps (01/08) : 6 branchements + 2 nouveaux exercices
   'Curl Haltères':{img:'../exercises/curl-halteres-alterne.webp'},
   'Curl Incliné':{img:'../exercises/curl-haltere-incline.webp'},

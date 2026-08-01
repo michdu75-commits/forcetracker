@@ -392,6 +392,14 @@ t('les 3 variantes de pompes ont leur démo (déficit, diamant, lestées — env
   (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
         return ['pompes-deficit','pompes-diamant','pompes-lestees']
           .every(f=>lg.indexOf("exercises/"+f+".webp")>=0&&fs.existsSync(path.join(ROOT,'exercises/'+f+'.webp')));})());
+t('lot mollets + triceps (01/08 soir) : les 3 démos branchées et présentes',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        const map={'Barre au Front':'barre-au-front-triceps',
+                   'Élévations Mollets Debout':'elevations-mollets-debout-barre',
+                   'Élévations Mollets Assis':'elevations-mollets-assis-barre'};
+        return Object.entries(map).every(([n,f])=>
+          lg.indexOf("'"+n+"':{img:'exercises/"+f+".webp'}")>=0
+          && fs.existsSync(path.join(ROOT,'exercises/'+f+'.webp')));})());
 t('⭐ les 7 animations du zip de Michel sont branchées et présentes (presses, hack, front squat barre, épaulé-jeté, mollets)',
   (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
         const files=['presse-a-cuisse-exercice-musculation','presse-a-cuisses-inclinee','presse-a-cuisses-verticale',
