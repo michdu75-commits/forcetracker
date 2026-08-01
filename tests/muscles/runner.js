@@ -260,6 +260,34 @@ t('témoin : le kickback TRICEPS garde son schéma (malgré le stemming « trice
 t('⭐ « Tirage Incliné Poulie Haute » = un TIRAGE, plus jamais une poussée (kw « incline »)',
   au.tirInc==='tirage-vertical', 'reçu '+au.tirInc);
 
+// ── LES 14 EXERCICES AJOUTÉS le 01/08/2026 (animations du dossier source de Michel) :
+// chacun doit être classé (muscles + schéma) dès son entrée au catalogue — jamais d'exercice muet.
+const quatorze=await p.evaluate(()=>{
+  const noms=['Pompes','Développé Couché avec Chaînes','Développé Couché Larsen (Larsen Press)',
+    'Développé Couché Unilatéral Kettlebell','Développé Incliné Poulie','Écarté Incliné Haltères',
+    'Écarté Hyght (Hyght Fly)','Hex Press Smith Machine','Chest Press Poulie Assis',
+    'Svend Press (Serrage de Plaque)','Presse à Cuisses sur le Côté','Hack Squat Assis',
+    'Overhead Squat Haltères','Arraché Debout (Muscle Snatch)'];
+  const g=n=>{const d=_mscScores([{name:n,sets:[{done:true}]}])||{};return Object.keys(d.sc||{});};
+  const out={dansExlib:0,avecMuscles:0,avecPattern:0,details:{}};
+  for(const n of noms){
+    if((EXLIB||[]).some(e=>e&&e.n===n))out.dansExlib++;
+    const m=g(n); if(m.length)out.avecMuscles++;
+    if(_movPattern(n))out.avecPattern++;
+  }
+  out.svend=g('Svend Press (Serrage de Plaque)').sort().join(',');
+  out.ecarteIncline=g('Écarté Incliné Haltères').sort().join(',');
+  out.snatchPat=_movPattern('Arraché Debout (Muscle Snatch)');
+  return out;
+});
+t('⭐ les 14 exercices du 01/08 sont au catalogue, TOUS avec muscles ET schéma',
+  quatorze.dansExlib===14&&quatorze.avecMuscles===14&&quatorze.avecPattern===14,
+  JSON.stringify(quatorze));
+t('le Svend Press = pectoraux (nouvelle règle hex/svend)', quatorze.svend==='front-delt,pec,triceps', quatorze.svend);
+t('l\'Écarté Incliné reste un ÉCARTÉ (pas un développé — pec sans triceps)',
+  quatorze.ecarteIncline==='front-delt,pec', quatorze.ecarteIncline);
+t('le Muscle Snatch = haltérophilie', quatorze.snatchPat==='halterophilie', quatorze.snatchPat);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

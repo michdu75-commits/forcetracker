@@ -1052,7 +1052,7 @@ const _MOV_PATTERNS=[
   {id:'fente',label:'Fente',kw:['fente','lunge','split squat','bulgare','montee sur box','step up','cossack']},
   {id:'squat',label:'Squat (flexion hanche+genou)',kw:['squat','press jambe','leg press','hack','pendulum','belt squat','presse a cuisse','wall sit','sled']},
   {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe haltere assis','developpe assis','developpe landmine','developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster']},
-  {id:'poussee-horizontale',label:'Poussée horizontale (pectoraux)',kw:['developpe couche','bench press','couche','chest press','ecarte','pec deck','pompe','push up','dips','croise poulie','crossover','decline','incline']},
+  {id:'poussee-horizontale',label:'Poussée horizontale (pectoraux)',kw:['developpe couche','bench press','couche','chest press','ecarte','pec deck','pompe','push up','dips','croise poulie','crossover','decline','incline','hex press','svend']},
   {id:'tirage-vertical',label:'Tirage vertical',kw:['tirage poulie haute','tirage vertical','pulldown','lat pull','traction','pull up','tirage nuque','tirage poitrine','rocky pull']},
   {id:'tirage-horizontal',label:'Tirage horizontal',kw:['tirage iso','iso lateral','rowing','tirage horizontal','tirage poulie basse','seal row','meadows','yates','renegade','bent over','bucheron','pull over','pullover']},
   // ── Deux schémas ajoutés le 29/07/2026 (ft-v670), sur demande de Michel et d'après la
@@ -1568,7 +1568,8 @@ const _MEX=[
   // Pectoraux — couché / chest press / peck deck / butterfly
   {re:/developpe couche|bench press|chest press|ecarte couche|pec dec|peck deck|butterfly/i, p:['pec'],                  s:['front-delt','triceps'],             i:['lats','biceps','abs','lower-back']},
   // Pectoraux — incliné (variantes d'écriture)
-  {re:/developpe incline|incline bench|incline press|incline halter|chest incline/i, p:['pec'],                          s:['front-delt','triceps']},
+  {re:/^(?!.*ecarte).*(developpe incline|incline bench|incline press|incline halter|chest incline)/i, p:['pec'],            s:['front-delt','triceps']}, // sans « écarté » : l'Écarté Incliné Haltères est un ÉCARTÉ (règle plus bas), pas un développé (01/08)
+  {re:/hex press|svend|squeeze press/i,                                        p:['pec'],                              s:['triceps','front-delt']}, // hex/svend press : serrage de plaque ou haltères (ajout 01/08, les 14 du dossier Michel)
   // Pectoraux — décliné (variantes d'écriture)
   {re:/developpe decline|decline barre|decline halter|chest decline|chest press decline/i, p:['pec'],                    s:['front-delt','triceps']},
   // ⚠️ Écarté/fly BUSTE PENCHÉ ou ARRIÈRE = un OISEAU (arrière d'épaule), JAMAIS des pectoraux.
@@ -4860,6 +4861,21 @@ const EX_YT={
   // Deux exercices qui n'avaient AUCUNE démo — trouvées dans le dossier source de Michel (01/08) :
   'Clean & Jerk':{img:'exercises/epaule-jete-halterophilie.webp'},
   'Mollets Machine Debout':{img:'exercises/shrug-machine-mollets.webp'},
+  // Les 14 exercices AJOUTÉS au catalogue le 01/08 (animations du dossier source de Michel) :
+  'Pompes':{img:'exercises/pompe-musculation.webp'},
+  'Développé Couché avec Chaînes':{img:'exercises/developpe-couche-avec-chaines.webp'},
+  'Développé Couché Larsen (Larsen Press)':{img:'exercises/developpe-couche-larsen.webp'},
+  'Développé Couché Unilatéral Kettlebell':{img:'exercises/developpe-couche-unilateral-kettlebell.webp'},
+  'Développé Incliné Poulie':{img:'exercises/developpe-incline-poulie.webp'},
+  'Écarté Incliné Haltères':{img:'exercises/ecartes-incline-avec-halteres.webp'},
+  'Écarté Hyght (Hyght Fly)':{img:'exercises/hyght-dumbell-fly.webp'},
+  'Hex Press Smith Machine':{img:'exercises/hex-press-a-la-smith-machine.webp'},
+  'Chest Press Poulie Assis':{img:'exercises/chest-press-poulie-assis.webp'},
+  'Svend Press (Serrage de Plaque)':{img:'exercises/svend-press.webp'},
+  'Presse à Cuisses sur le Côté':{img:'exercises/presse-a-cuisse-sur-le-cote.webp'},
+  'Hack Squat Assis':{img:'exercises/hack-squat-assis.webp'},
+  'Overhead Squat Haltères':{img:'exercises/overhead-squat-halteres.webp'},
+  'Arraché Debout (Muscle Snatch)':{img:'exercises/muscle-snatch-halterophilie.webp'},
   'Rotation Externe Épaule Abduction':{img:'exercises/rotation-externe-de-epaule-en-abduction.webp'},
   'Rotation Externe Épaule Élastique':{img:'exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp'},
   'Rotation Interne 90° Poulie':{img:'exercises/rotation-interne-a-90-a-la-poulie.webp'},
@@ -4886,6 +4902,14 @@ const _MUSCLE_FILE={
 const EX_EN={
   // Pectoraux
   'Développé Couché':'bench press barbell','Développé Couché Haltères':'bench press dumbbell',
+  // — les 14 du 01/08/2026 —
+  'Pompes':'push up','Développé Couché avec Chaînes':'bench press with chains',
+  'Développé Couché Larsen (Larsen Press)':'larsen press','Développé Couché Unilatéral Kettlebell':'single arm kettlebell bench press',
+  'Développé Incliné Poulie':'incline cable press','Écarté Incliné Haltères':'incline dumbbell fly',
+  'Écarté Hyght (Hyght Fly)':'hyght dumbbell fly','Hex Press Smith Machine':'hex press smith machine',
+  'Chest Press Poulie Assis':'seated cable chest press','Svend Press (Serrage de Plaque)':'svend press plate',
+  'Presse à Cuisses sur le Côté':'side leg press machine','Hack Squat Assis':'seated hack squat machine',
+  'Overhead Squat Haltères':'dumbbell overhead squat','Arraché Debout (Muscle Snatch)':'barbell muscle snatch',
   'Développé Incliné':'incline bench press','Développé Incliné Haltères':'incline bench press dumbbell',
   'Développé Décliné':'decline bench press','Développé Décliné Haltères':'decline bench press dumbbell',
   'Écarté Haltères':'dumbbell fly chest','Écarté Poulie':'cable fly chest',

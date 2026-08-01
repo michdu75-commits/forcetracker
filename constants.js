@@ -16,6 +16,13 @@ const EXLIB=[
   {n:'Chest Press Machine Horizontale',g:'Pectoraux'},{n:'Chest Press Machine Inclinée',g:'Pectoraux'},{n:'Chest Press Machine Déclinée',g:'Pectoraux'},
   {n:'Dips',g:'Pectoraux'},{n:'Dips Parallèles',g:'Pectoraux'},{n:'Dips Machine Assistée',g:'Pectoraux'},{n:'Dips Assis Machine (Seated Dip)',g:'Pectoraux'},
   {n:'Pompes Lestées',g:'Pectoraux'},{n:'Pompes Déficit (Deficit Push-up)',g:'Pectoraux'},{n:'Pompes Diamant',g:'Pectoraux'},
+  // ── 14 exercices ajoutés le 01/08/2026 (animations du dossier source de Michel, décision « ok pour ajouter les 14 ») ──
+  {n:'Pompes',g:'Pectoraux'},
+  {n:'Développé Couché avec Chaînes',g:'Pectoraux'},{n:'Développé Couché Larsen (Larsen Press)',g:'Pectoraux'},
+  {n:'Développé Couché Unilatéral Kettlebell',g:'Pectoraux'},{n:'Développé Incliné Poulie',g:'Pectoraux'},
+  {n:'Écarté Incliné Haltères',g:'Pectoraux'},{n:'Écarté Hyght (Hyght Fly)',g:'Pectoraux'},
+  {n:'Hex Press Smith Machine',g:'Pectoraux'},{n:'Chest Press Poulie Assis',g:'Pectoraux'},
+  {n:'Svend Press (Serrage de Plaque)',g:'Pectoraux'},
   {n:'Smith Machine Développé Couché',g:'Pectoraux'},{n:'Smith Machine Développé Incliné',g:'Pectoraux'},
   // ── Dos / Dorsaux ──────────────────────────────────────────
   {n:'Soulevé de Terre',g:'Dos'},{n:'Soulevé de Terre Sumo',g:'Dos'},
@@ -84,7 +91,8 @@ const EXLIB=[
   {n:'Pendulum Squat',g:'Jambes'},{n:'Belt Squat',g:'Jambes'},{n:'Safety Bar Squat',g:'Jambes'},
   {n:'Overhead Squat',g:'Jambes'},{n:'Pin Squat',g:'Jambes'},{n:'Sissy Squat',g:'Jambes'},
   {n:'Cossack Squat',g:'Jambes'},{n:'Squat Bande Élastique',g:'Jambes'},{n:'Chaise (Wall Sit)',g:'Jambes'},
-  {n:'Presse à Cuisses Iso-Latérale',g:'Jambes'},{n:'Sled Push',g:'Jambes'},{n:'Croix de Fer Haltères',g:'Épaules'},
+  {n:'Presse à Cuisses Iso-Latérale',g:'Jambes'},
+  {n:'Presse à Cuisses sur le Côté',g:'Jambes'},{n:'Hack Squat Assis',g:'Jambes'},{n:'Overhead Squat Haltères',g:'Jambes'},{n:'Sled Push',g:'Jambes'},{n:'Croix de Fer Haltères',g:'Épaules'},
   // ── Fessiers ───────────────────────────────────────────────
   {n:'Poussée de Hanche (Hip Thrust)',g:'Fessiers'},{n:'Poussée de Hanche Haltère',g:'Fessiers'},{n:'Poussée de Hanche Machine',g:'Fessiers'},
   {n:'Pont Fessier (Glute Bridge)',g:'Fessiers'},
@@ -141,7 +149,7 @@ const EXLIB=[
   {n:'Farmer\'s Walk (Grip)',g:'Avant-bras'},{n:'Planche de Préhension',g:'Avant-bras'},
   // ── Full Body / Fonctionnel ────────────────────────────────
   {n:'Burpees',g:'Full Body'},{n:'Kettlebell Swing',g:'Full Body'},
-  {n:'Arraché Haltère (Dumbbell Snatch)',g:'Full Body'},{n:'Thrusters Haltères',g:'Full Body'},
+  {n:'Arraché Haltère (Dumbbell Snatch)',g:'Full Body'},{n:'Arraché Debout (Muscle Snatch)',g:'Full Body'},{n:'Thrusters Haltères',g:'Full Body'},
   {n:'Clean & Jerk',g:'Full Body'},{n:'Turkish Get-Up',g:'Full Body'},
   {n:'Battle Rope',g:'Full Body'},{n:'Box Jump',g:'Full Body'},
 ];
@@ -192,6 +200,7 @@ const PREMIUM_PERKS=[
 ];
 
 const NEW_FEATURES=[
+  {id:'exos-aout', screen:'log', desc:'Nouveau : 14 exercices ajoutés au catalogue avec leurs animations (Pompes, Larsen press, Svend press, Hex press, écartés inclinés/Hyght, presses à cuisses, Hack Squat assis, Overhead Squat haltères, Muscle Snatch…) — et les presses à cuisses + le Hack Squat ont maintenant de vraies animations'},
   // Accueil
   {id:'home-calendar', screen:'home', desc:'Nouveau : un calendrier de ton mois sur l\'Accueil — tes jours de séance en rouge, les jours de RECORD cerclés en or. Navigue sur les mois, tape une semaine pour le détail'},
   {id:'day-state', screen:'home', spot:'home-daystate', desc:'Nouveau : « Comment tu te sens aujourd\'hui ? » — indique ton énergie et une éventuelle douleur du jour ; Milo adapte ses conseils et protège la zone douloureuse'},
