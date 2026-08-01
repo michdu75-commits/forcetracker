@@ -345,6 +345,16 @@ t('⭐ l\'historique de l\'Étude du corps apparaît dès le PREMIER bilan (au s
 // 01/08 : le dossier source de Michel contenait 7 animations jamais branchées (les presses à
 // cuisses et le hack squat n'avaient que des PHOTOS FIXES, le Squat Avant montrait la version
 // haltères, l'épaulé-jeté et les mollets machine n'avaient RIEN).
+// 01/08 : « pourquoi à classer ? » (Michel) — les Press Jambes et l'Extension Quadriceps
+// Unilatérale tombaient dans le bac « ❓ À classer » (mots-clés manquants), et les fentes
+// y restent PAR CHOIX (décision Michel « les 3 ») → le bac s'assume en « 🔀 Polyvalent ».
+const EQ=await p.evaluate(()=>({
+  p45:_exEquip('Press Jambes 45°'), ext:_exEquip('Extension Quadriceps Unilatérale'),
+  fentes:_exEquip('Fentes'), lbl:_EQ_META.autre.lbl}));
+t('les Press Jambes et l\'Extension Quadriceps sont classés « Guidé »',
+  EQ.p45==='guide'&&EQ.ext==='guide', EQ.p45+' / '+EQ.ext);
+t('les Fentes restent volontairement multi-matériel, dans un bac assumé « Polyvalent »',
+  EQ.fentes==='autre'&&EQ.lbl==='Polyvalent', EQ.fentes+' / '+EQ.lbl);
 t('le Hip Thrust BARRE a sa démo (distincte de la machine — envoi Michel 01/08)',
   (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
         return lg.indexOf("'Hip Thrust Barre (Poussée de Hanche)':{img:'exercises/hip-thrust-barre.webp'}")>=0

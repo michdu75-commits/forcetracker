@@ -2621,12 +2621,12 @@ const _EQ_META={
   libre:{lbl:'Poids libre',    ic:'💪', c:'#5BA8FF', bg:'rgba(91,168,255,.13)'},
   guide:{lbl:'Guidé',          ic:'⚙️', c:'#A855F7', bg:'rgba(168,85,247,.13)'},
   corps:{lbl:'Poids du corps', ic:'🤸', c:'#34D399', bg:'rgba(52,211,153,.13)'},
-  autre:{lbl:'À classer',      ic:'❓', c:'#8A8F9C', bg:'rgba(255,255,255,.05)'}
+  autre:{lbl:'Polyvalent',     ic:'🔀', c:'#8A8F9C', bg:'rgba(255,255,255,.05)'} // ex-« À classer » : décision Michel 01/08 (« les 3 ») — les fentes se font barre, haltères OU poids du corps : pas UNE famille, un choix. Le bac est une catégorie assumée, plus un point d'interrogation.
 };
 function _exEquip(name){
   const s=_naz(name);
   // 1) Guidé / machine (le plus spécifique d'abord)
-  if(/machine|poulie|smith|guide|pec ?deck|peck ?deck|presse|leg press|leg extension|leg curl|leg abduction|leg adduction|tirage|chest press|hack|convergent|hammer|cable|câble|vis-a-vis|crossover|croise poulie|assist|butterfly|pendulum|belt squat|sled|iso.?laterale?|convergente/.test(s)) return 'guide';
+  if(/machine|poulie|smith|guide|pec ?deck|peck ?deck|presse|press[ -]?jambes|leg press|leg extension|extension quadriceps|leg curl|leg abduction|leg adduction|tirage|chest press|hack|convergent|hammer|cable|câble|vis-a-vis|crossover|croise poulie|assist|butterfly|pendulum|belt squat|sled|iso.?laterale?|convergente/.test(s)) return 'guide'; // + press jambes / extension quadriceps (01/08 : ils tombaient dans « à classer »)
   // 2) Poids du corps
   if(/traction|pull-?up|pull up|dips|pompe|push-?up|gainage|planche|plank|pistol|muscle-?up|chaise|wall sit|superman|l-sit|releve.*jambe|leg raise|crunch|russian twist|mountain climber|burpee|hollow|ghd|glute ham|nordic|box|montee/.test(s)) return 'corps';
   // 3) Poids libre (haltères / kettlebell)
