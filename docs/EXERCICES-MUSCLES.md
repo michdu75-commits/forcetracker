@@ -14,13 +14,12 @@
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
-| Abducteurs Machine Debout | **Fessiers** | — | — |
-| Abduction Cuisses (Leg Abduction) | **Fessiers** | — | — |
-| Adduction Cuisses (Leg Adduction) | **Fessiers** | Quadriceps | — |
+| Abducteurs Machine Debout | **Fessiers** | — | Abduction / adduction de hanche |
+| Abduction Cuisses (Leg Abduction) | **Fessiers** | — | Abduction / adduction de hanche |
+| Adduction Cuisses (Leg Adduction) | **Fessiers** | Quadriceps | Abduction / adduction de hanche |
 | Belt Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Box Jump | **Quadriceps, Fessiers** | Mollets, Ischio-jambiers | Saut / pliométrie |
 | Chaise (Wall Sit) | **Quadriceps** | Fessiers, Abdominaux | Squat (flexion hanche+genou) |
-| Chaise Romaine | **Quadriceps** | Fessiers, Abdominaux | Gainage / abdominaux |
 | Chariot — Fentes Arrière | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
 | Chariot — Poussée | **Quadriceps, Fessiers** | Mollets, Abdominaux | Tirage horizontal |
 | Chariot — Tirage Inversé Jambes | **Quadriceps** | Fessiers, Mollets | Tirage horizontal |
@@ -109,9 +108,10 @@
 | Squat Sauté (Jump Squat) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Squat Sumo | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Squat TRX (Sangles) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Superman | **Bas du dos, Fessiers** | Ischio-jambiers, Deltoïdes post. | Charnière de hanche (hip hinge) |
 | Tirage Cable Fessiers (Cable Pull Through) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 
-## Haut du corps (109 exercices)
+## Haut du corps (108 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -211,7 +211,6 @@
 | Pull-over Haltère | **Grand dorsal** | Triceps, Pectoraux | Tirage horizontal |
 | Pull-over Poulie | **Grand dorsal** | Triceps, Pectoraux | Tirage horizontal |
 | Pullover Machine | **Grand dorsal** | Triceps, Pectoraux | Tirage horizontal |
-| Russian Twist Développé Épaules | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Gainage / abdominaux |
 | Skull Crusher Barre EZ | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Smith Machine Développé Couché | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Smith Machine Développé Incliné | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
@@ -248,7 +247,7 @@
 | Curl Pupitre Machine | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Curl Zottman | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Écarté Arrière Élastique | **Deltoïdes post.** | Trapèzes, Deltoïdes lat. | Élévation / rotation épaule |
-| Extension Poignet Barre | **Avant-bras** | — | — |
+| Extension Poignet Barre | **Avant-bras** | — | Flexion / rotation du poignet |
 | Haussements d'Épaules (Shrugs) | **Trapèzes** | Avant-bras | Élévation / rotation épaule |
 | Haussements d'Épaules Barre | **Trapèzes** | Avant-bras | Élévation / rotation épaule |
 | Haussements d'Épaules Câble | **Trapèzes** | Avant-bras | Élévation / rotation épaule |
@@ -257,8 +256,8 @@
 | Marteau | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Meadows Row | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Muscle-up | **Grand dorsal, Biceps** | Triceps, Pectoraux, Deltoïdes ant. | Tirage vertical |
-| Passage d'Épaule Élastique | **Deltoïdes post.** | Trapèzes | — |
-| Pronation Supination Haltère | **Avant-bras** | — | — |
+| Passage d'Épaule Élastique | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
+| Pronation Supination Haltère | **Avant-bras** | — | Flexion / rotation du poignet |
 | Renegade Row | **Grand dorsal, Trapèzes, Deltoïdes post.** | Biceps, Bas du dos, Avant-bras | Tirage horizontal |
 | Rocky Pull-up | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Rotation Externe Épaule Abduction | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
@@ -311,12 +310,13 @@
 | Waiter Curl | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Y Raise / W Raise | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 
-## Gainage (19 exercices)
+## Gainage (20 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
 | Bird Dog | **Bas du dos, Abdominaux** | Fessiers, Obliques | Gainage / abdominaux |
 | Câble Crunch | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
+| Chaise Romaine | **Abdominaux, Fléchisseurs** | Obliques | Gainage / abdominaux |
 | Crunch | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
 | Crunch Machine | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
 | Crunch Oblique | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
@@ -325,14 +325,14 @@
 | Gainage | **Abdominaux, Bas du dos** | Obliques, Deltoïdes ant., Fessiers | Gainage / abdominaux |
 | Grimpeur (Mountain Climber) | **Abdominaux, Obliques** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
 | Hollow Body | **Abdominaux, Obliques** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
-| L-Sit | **Abdominaux, Obliques** | Fléchisseurs, Deltoïdes ant. | — |
+| L-Sit | **Abdominaux, Obliques** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
 | Planche Latérale (Side Plank) | **Abdominaux, Bas du dos** | Obliques, Deltoïdes ant., Fessiers | Gainage / abdominaux |
 | Relevé de Buste (Sit-up) | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
 | Relevé de Jambes | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
 | Rotation Machine Obliques | **Abdominaux, Obliques** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
-| Rotation Russe (Russian Twist) | **Abdominaux** | Obliques, Fléchisseurs | Gainage / abdominaux |
+| Rotation Russe (Russian Twist) | **Obliques, Abdominaux** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
 | Roue Abdominale (Ab Wheel) | **Abdominaux, Obliques** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
-| Superman | **Abdominaux, Bas du dos** | Obliques, Deltoïdes ant., Fessiers | Charnière de hanche (hip hinge) |
+| Russian Twist Développé Épaules | **Obliques, Abdominaux** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
 | Windshield Wiper | **Abdominaux, Obliques** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
 
 ## Full body (35 exercices)

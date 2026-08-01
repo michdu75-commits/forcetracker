@@ -97,6 +97,7 @@ function saveCardioEntry(){
 const MET_LOWER = 6.5;  // Squat, Deadlift, Hip Thrust, Leg Press
 const MET_UPPER = 5.5;  // Bench, OHP, Rowing, Pull-ups
 const MET_OLYMPIC = 8.0; // Arraché, Épaulé-jeté
+const MET_CARDIO  = 8.0; // Corde à sauter, burpees, air bike… (voir CARDIO_KW plus bas)
 const MET_ISO = 4.0;    // Isolation: curl, extension...
 const MET_REST = 2.0;   // Entre les séries (position debout/assis)
 
@@ -115,6 +116,19 @@ const MET_REST = 2.0;   // Entre les séries (position debout/assis)
 // L'haltérophilie garde sa liste de mots : ce qui la définit est le caractère EXPLOSIF
 // du mouvement, pas les muscles qu'il utilise.
 const OLYMPIC_KW = ['Arraché','Épaulé','Jeté','Snatch','Clean','Jerk','Thruster','Turkish','Get-Up'];
+// ⚠️ LE CARDIO AUSSI garde sa liste, et pour la MÊME raison que l'haltérophilie : ce qui le
+// définit n'est pas le nombre de muscles mais le caractère CONTINU et essoufflant.
+// Mesuré à l'audit du 02/08 : « Sauts à la Corde » n'active que 2 muscles (mollets, quadriceps)
+// → moins de 3 → il tombait sur MET_ISO = 4.0, **la valeur la plus basse du barème**, à égalité
+// avec un curl biceps. C'est le même piège qu'en ft-v668, sur une autre famille : la règle
+// « 3 muscles ou plus » distingue bien un polyarticulaire d'une isolation, mais elle ne sait
+// rien de l'ESSOUFFLEMENT. Un burpee et une corde à sauter coûtent cher avec peu de muscles.
+const CARDIO_KW = ['Corde à Sauter','Sauts à la Corde','Air Bike','Assault','Ski Erg','Ergomètre',
+  'Burpee','Jumping Jack','Bear Crawl','Marche de l\'Ours','Mountain Climber','Grimpeur',
+  'Battle Rope','Box Jump','Wall Ball','Rameur','Tapis','Elliptique'];
+// Le CHARIOT (sled) n'est PAS dans cette liste, volontairement : c'est de la force-endurance
+// lourde, déjà bien servie par la déduction (6,5 = bas du corps). Le bac « Cardio » du sélecteur
+// répond à « où le trouver ? » ; le MET répond à « combien ça coûte ? » — deux questions.
 const _MET_REGIONS = {
   bas: ['quads','hamstrings','glutes','calves','hip-flexors','tibialis'],
   haut:['pec','front-delt','side-delt','triceps','lats','traps','rear-delt','biceps','forearms']
@@ -122,6 +136,7 @@ const _MET_REGIONS = {
 function getExerciseMET(name) {
   const n = name || '';
   if (OLYMPIC_KW.some(k => n.toLowerCase().includes(k.toLowerCase()))) return MET_OLYMPIC;
+  if (CARDIO_KW.some(k => n.toLowerCase().includes(k.toLowerCase()))) return MET_CARDIO;
   try {
     if (typeof _mscScores === 'function') {
       const sc = (_mscScores([{name:n, sets:[{done:true}]}]) || {}).sc || {};

@@ -459,6 +459,71 @@ t('les 4 exercices cardio qui n\'avaient AUCUNE démo en ont une',
   !!(card.demos.burpees&&card.demos.corde&&card.demos.grimpeur&&card.demos.box),
   JSON.stringify(card.demos));
 
+// ══ AUDIT COMPLET DU CATALOGUE (Michel, 02/08 : « refais un tour complet d'analyse sur tous les
+// exercices ») — ce bloc fige les 6 constats de l'audit pour qu'ils ne puissent plus revenir.
+const aud=await p.evaluate(()=>{
+  const noms=[...new Set(EXLIB.map(e=>e.n))];
+  const mus=n=>Object.keys((_mscScores([{name:n,sets:[{done:true}]}])||{}).sc||{});
+  const o={total:noms.length,entrees:EXLIB.length,sansMus:[],sansPat:[],sansMet:[]};
+  noms.forEach(n=>{
+    if(!mus(n).length)o.sansMus.push(n);
+    if(!_movPattern(n))o.sansPat.push(n);
+    if(!getExerciseMET(n))o.sansMet.push(n);
+  });
+  // ① le sélecteur dédoublonne-t-il ? (37 exercices sont listés dans DEUX groupes)
+  document.getElementById('ex-search').value='squat'; filterEx();
+  const h=document.getElementById('ex-list').innerHTML;
+  o.ligneSquatBarre=(h.match(/class="ex-pick-name">Squat à la Barre</g)||[]).length;
+  document.getElementById('ex-search').value='';
+  const iF=EX_GROUPS.findIndex(g=>g.tags.indexOf('Fessiers')>=0);
+  _exGrp=iF; filterEx();
+  const h2=document.getElementById('ex-list').innerHTML;
+  o.ligneSDT=(h2.match(/class="ex-pick-name">Soulevé de Terre</g)||[]).length;
+  _exGrp=null;
+  // ② les 3 nouveaux bacs de matériel
+  o.eqSquatTrx=_exEquip('Squat TRX (Sangles)');
+  o.eqRowingTrx=_exEquip('Rowing TRX (Sangles)');
+  o.eqCurlElast=_exEquip('Curl Élastique')||_exEquip('Écarté Élastique');
+  o.eqCorde=_exEquip('Sauts à la Corde');
+  o.eqSquatBarre=_exEquip('Squat à la Barre');   // témoin : un vrai squat barre reste « barre »
+  // ③ les 3 erreurs de classement trouvées par l'audit
+  o.superman=mus('Superman').sort().join(',');
+  o.chaiseRom=mus('Chaise Romaine').sort().join(',');
+  o.rtEpaules=mus('Russian Twist Développé Épaules').sort().join(',');
+  // ④ calories du cardio
+  o.metCorde=getExerciseMET('Sauts à la Corde');
+  o.metBurpee=getExerciseMET('Burpees');
+  o.metCurl=getExerciseMET('Curl Haltères');      // témoin : une isolation reste à 4
+  o.metSquat=getExerciseMET('Squat à la Barre');  // témoin : le bas du corps reste à 6,5
+  // ⑤ le piège de sous-chaîne
+  o.patWallSit=_movPattern('Chaise (Wall Sit)');
+  o.patLSit=_movPattern('L-Sit');
+  return o;
+});
+t('⭐ AUDIT : les '+aud.total+' exercices ont TOUS muscles + schéma + calories',
+  aud.sansMus.length===0&&aud.sansPat.length===0&&aud.sansMet.length===0,
+  'muscles:'+aud.sansMus+' schéma:'+aud.sansPat+' met:'+aud.sansMet);
+t('⭐ le sélecteur DÉDOUBLONNE (un squat est listé dans Jambes ET Fessiers → une seule ligne)',
+  aud.ligneSquatBarre===1&&aud.ligneSDT===1,
+  'Squat à la Barre ×'+aud.ligneSquatBarre+' · Soulevé de Terre ×'+aud.ligneSDT);
+t('⭐ TRX, élastique et cardio ont leur propre bac (avant : « Squat TRX » était rangé en BARRE)',
+  aud.eqSquatTrx==='trx'&&aud.eqRowingTrx==='trx'&&aud.eqCurlElast==='elast'&&aud.eqCorde==='cardio',
+  [aud.eqSquatTrx,aud.eqRowingTrx,aud.eqCurlElast,aud.eqCorde].join(' / '));
+t('témoin : un vrai squat à la barre reste dans « Barre »', aud.eqSquatBarre==='barre', aud.eqSquatBarre);
+t('⭐ Superman = chaîne postérieure (il sortait en ABDOS)',
+  aud.superman==='glutes,hamstrings,lower-back,rear-delt', aud.superman);
+t('⭐ Chaise Romaine = abdos (elle sortait en QUADRICEPS, volée par la Chaise murale)',
+  aud.chaiseRom==='abs,hip-flexors,obliques', aud.chaiseRom);
+t('⭐ Russian Twist Développé Épaules = abdos (il sortait 100 % ÉPAULES)',
+  aud.rtEpaules.indexOf('obliques')>=0&&aud.rtEpaules.indexOf('abs')>=0, aud.rtEpaules);
+t('⭐ le cardio ne compte plus comme une isolation (corde à sauter : 4 → 8)',
+  aud.metCorde===8&&aud.metBurpee===8, 'corde='+aud.metCorde+' burpee='+aud.metBurpee);
+t('témoins calories : une isolation reste à 4 · un squat reste à 6,5',
+  aud.metCurl===4&&aud.metSquat===6.5, 'curl='+aud.metCurl+' squat='+aud.metSquat);
+t('⭐ piège de sous-chaîne : « waLL SIT » ne doit pas être happé par « l sit »',
+  aud.patWallSit==='squat'&&aud.patLSit==='gainage-abdos',
+  aud.patWallSit+' / '+aud.patLSit);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

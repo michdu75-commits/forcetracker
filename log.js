@@ -1037,7 +1037,7 @@ function _exJac(qset,cset){ if(!cset.size)return 0; if(_exModConflict(qset,cset)
 // Niveau 3 = résistance (indicatif). Niveaux 2/4/5 = modificateurs / marques / alias
 // (déjà couverts par _EX_MODGROUPS et _EX_EQUIV). Ordre = du + spécifique au + générique.
 const _MOV_PATTERNS=[
-  {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','upright row','haussement','shrug','croix de fer']},
+  {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','upright row','haussement','shrug','croix de fer','passage d epaule','passage epaule']},
   {id:'flexion-genou',label:'Flexion de genou (ischios)',kw:['leg curl','curl ischio','ischio','nordic']}, // AVANT curl-biceps (« leg curl » ≠ curl de bras)
   {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['marteau','curl','preacher','biceps']},
   {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps','tate press']},
@@ -1060,6 +1060,8 @@ const _MOV_PATTERNS=[
   // ROTATION · PORTER). Il manquait « porter » et l'explosif : 6 exercices n'avaient
   // AUCUN schéma, donc Milo les appelait « accessoire » par défaut et le garde-fou
   // anti-fusion de l'import était désactivé pour eux.
+  {id:'hanche-laterale',label:'Abduction / adduction de hanche',kw:['abduction','adduction','abducteur','adducteur']}, // n'avaient AUCUN schéma → invisibles à l'équilibre de séance (audit 02/08)
+  {id:'poignet',label:'Flexion / rotation du poignet',kw:['curl poignet','extension poignet','wrist','pronation','supination','avant-bras','avant bras']},
   {id:'porte',label:'Porté (carry)',kw:['farmer','fermier','porte','carry','yoke','valise','suitcase','overhead carry']},
   // Cardio machines et déplacements : ce ne sont pas des schémas de FORCE, mais les laisser sans
   // schéma les rendait invisibles à l'équilibre de séance (mesuré au dump du 01/08).
@@ -1082,6 +1084,9 @@ function _movPattern(name){ const q=' '+_movNorm(name)+' ';
   // attrapait « Extension Fessiers Arrière », « Kickback Machine » et « Kickback Cable »
   // (machines fessiers du catalogue). Même règle que _MEX : sans « triceps » dans le nom,
   // un kickback est une extension de hanche (ft-v686).
+  // ⚠️ « L-Sit » ne peut pas être un simple mot-clé : le matcheur teste aussi la SOUS-CHAÎNE,
+  // et « l sit » se retrouve dans « waLL SIT » → la Chaise partait en gainage (audit 02/08).
+  if(/(^| )l sit( |$)/.test(q)) return 'gainage-abdos';
   if(/kickback/.test(q)&&!/tricep/.test(q)) return 'hip-hinge'; // /tricep/ sans s : le stemming réduit « triceps » → « tricep »
   // Un TIRAGE n'est jamais une poussée : « Tirage Incliné Poulie Haute » contenait « incliné »
   // → attrapé par la poussée horizontale (kw 'incline'). Poulie haute → vertical, sinon horizontal (ft-v686).
@@ -1566,7 +1571,11 @@ function toggleExBlock(ei){
 // Ordre important : premier motif qui matche gagne (break). Les mollets passent AVANT
 // la presse (sinon « extension mollets sur presse » serait rangé en cuisses).
 const _MEX=[
-  // Mollets EN PREMIER (avant la presse, pour ne pas capter « presse mollets »)
+  // ⚠️ ROTATION RUSSE EN TOUT PREMIER : « Russian Twist Développé Épaules » est un exercice
+  // d'ABDOS. Placée plus bas, la règle « développé épaules » gagnait et il sortait 100 % épaules,
+  // sans le moindre abdominal (audit du 02/08). Le mouvement porte l'exercice, pas l'accessoire.
+  {re:/russian twist|rotation russe/i,                                          p:['obliques','abs'],                   s:['hip-flexors','front-delt']},
+  // Mollets (avant la presse, pour ne pas capter « presse mollets »)
   {re:/mollet|calf raise|talon|standing calf|extension mollet/i,                p:['calves'],                           s:[]},
   // Pectoraux — couché / chest press / peck deck / butterfly
   {re:/developpe couche|bench press|chest press|ecarte couche|pec dec|peck deck|butterfly/i, p:['pec'],                  s:['front-delt','triceps'],             i:['lats','biceps','abs','lower-back']},
@@ -1591,6 +1600,8 @@ const _MEX=[
   // Épaules — latéral / arrière / oiseau / écarté inverse / around the world
   {re:/elevation laterale|lateral raise|face pull|rear delt|oiseau|ecarte inverse|reverse fly|around the world/i, p:['side-delt','rear-delt'], s:['front-delt','traps']},
   // Dos — verticaux / tractions
+  {re:/superman/i,                                                              p:['lower-back','glutes'],              s:['hamstrings','rear-delt']}, // à plat VENTRE, bras/jambes levés : chaîne postérieure. Était happé par la règle « gainage|plank » → sortait en ABDOS (audit 02/08)
+  {re:/chaise romaine|captain.?s chair/i,                                      p:['abs','hip-flexors'],                s:['obliques']}, // relevé de jambes suspendu. Était happé par la règle de la « Chaise (Wall Sit) » → sortait en QUADRICEPS (audit 02/08)
   {re:/chariot.*(tirage )?epaule|sled shoulder/i,                               p:['front-delt','side-delt'],           s:['traps','biceps']}, // chariot : tirage bras tendus vers le haut = épaules (mesuré en DORSAUX au dump 01/08)
   {re:/chariot.*(inverse|arriere).*jambe|sled reverse drag/i,                   p:['quads'],                            s:['glutes','calves']}, // marche ARRIÈRE en tirant = quadriceps (mesuré en dorsaux)
   {re:/chariot.*(poussee|push)/i,                                              p:['quads','glutes'],                   s:['calves','abs']}, // même chose que « Sled Push », que la règle plus bas ne reconnaissait pas sous « Chariot »
@@ -2631,6 +2642,9 @@ let _exGrp=null;
 
 // ─── TYPE DE MATÉRIEL (test testeurs) — deviné du nom de l'exercice ──────
 const _EQ_META={
+  cardio:{lbl:'Cardio',        ic:'🏃', c:'#F43F5E', bg:'rgba(244,63,94,.13)'},
+  elast:{lbl:'Élastique',      ic:'🎗️', c:'#FBBF24', bg:'rgba(251,191,36,.13)'},
+  trx:{lbl:'TRX / Sangles',    ic:'🪢', c:'#22D3EE', bg:'rgba(34,211,238,.13)'},
   barre:{lbl:'Barre',          ic:'🏋️', c:'#FF6C00', bg:'rgba(255,108,0,.13)'},
   libre:{lbl:'Poids libre',    ic:'💪', c:'#5BA8FF', bg:'rgba(91,168,255,.13)'},
   guide:{lbl:'Guidé',          ic:'⚙️', c:'#A855F7', bg:'rgba(168,85,247,.13)'},
@@ -2639,6 +2653,12 @@ const _EQ_META={
 };
 function _exEquip(name){
   const s=_naz(name);
+  // 0) MATÉRIEL ÉCRIT DANS LE NOM — doit passer AVANT tout le reste (premier match gagnant) :
+  //    sans ça « Squat TRX » retombe sur la règle « squat » → 🏋️ Barre (mesuré le 02/08).
+  if(/trx|sangles|suspension/.test(s)) return 'trx';
+  if(/elastique|bande elastique|bandes elastiques/.test(s)) return 'elast';
+  // 0bis) CARDIO / conditionnement : ni charge ni série au sens muscu — un bac à part.
+  if(/air ?bike|assault|ski ?erg|ergometre|corde a sauter|saut a la corde|sauts a la corde|burpee|jumping jack|bear crawl|marche de l ours|wall ball|battle rope|box jump|jump box|mountain climber|grimpeur|rameur|tapis|elliptique|chariot|sled|traineau/.test(s)) return 'cardio';
   // 1) Guidé / machine (le plus spécifique d'abord)
   if(/machine|poulie|smith|guide|pec ?deck|peck ?deck|presse|press[ -]?jambes|leg press|leg extension|extension quadriceps|leg curl|leg abduction|leg adduction|tirage|chest press|hack|convergent|hammer|cable|câble|vis-a-vis|crossover|croise poulie|assist|butterfly|pendulum|belt squat|sled|iso.?laterale?|convergente/.test(s)) return 'guide'; // + press jambes / extension quadriceps (01/08 : ils tombaient dans « à classer »)
   // 2) Poids du corps
@@ -2658,7 +2678,7 @@ function _exEqBadge(name){
   return m?`<span class="ex-eq" style="color:${m.c};background:${m.bg};">${m.ic} ${m.lbl}</span>`:'';
 }
 // Rendu du sélecteur groupé par TYPE DE MATÉRIEL (titres de sous-sections colorés)
-const _EQ_ORDER=['barre','libre','guide','corps','autre'];
+const _EQ_ORDER=['barre','libre','guide','corps','elast','trx','cardio','autre'];  // maison (élastique/TRX) et cardio en fin de liste : ce sont des familles à part, pas des variantes de charge
 function _renderExGrouped(listArr){
   const buckets={};
   listArr.forEach(e=>{const k=_exEquip(e.n);(buckets[k]=buckets[k]||[]).push(e);});
@@ -2703,6 +2723,7 @@ function _exUsageMap(){
   (S.sessions||[]).forEach(s=>{(s.exs||s.exercises||[]).forEach(e=>{if(e&&e.name)u[e.name]=(u[e.name]||0)+1;});});
   return u;
 }
+function _exDedup(arr){ const vu=new Set(); return arr.filter(e=>{ if(vu.has(e.n))return false; vu.add(e.n); return true; }); }
 function filterEx(){
   const q=(document.getElementById('ex-search').value||'').toLowerCase().trim();
   const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));
@@ -2720,14 +2741,14 @@ function filterEx(){
       return e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q)||(en&&(en.includes(q)||_normEx(en).includes(qn)));
     });
     // Favoris/plus utilisés en PREMIER (tri stable → alpha conservé à usage égal)
-    f.sort((a,b)=>(_usage[b.n]||0)-(_usage[a.n]||0));
-    list.innerHTML=f.length?(_eqTestOn()?_renderExGrouped(f):f.map(_exPickRow).join('')):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
+    const fd=_exDedup(f);
+    list.innerHTML=fd.length?(_eqTestOn()?_renderExGrouped(fd):fd.map(_exPickRow).join('')):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
     return;
   }
   // Groupe sélectionné → exercices du groupe
   if(_exGrp!==null){
     const grp=EX_GROUPS[_exGrp];
-    const f=all.filter(e=>grp.tags.includes(e.g));
+    const f=_exDedup(all.filter(e=>grp.tags.includes(e.g)));  // un squat est listé dans Jambes ET Fessiers → une seule ligne
     const anatBtn=grp.anatomy
       ?`<button onclick="openAnatomyImg('${grp.anatomy.replace(/'/g,"\\'")}','${grp.label}')" style="background:rgba(255,45,85,.12);border:none;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--red);cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;">🫀 Anatomie</button>`
       :'';
