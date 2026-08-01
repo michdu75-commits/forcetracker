@@ -1054,18 +1054,21 @@ const _MOV_PATTERNS=[
   {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe haltere assis','developpe assis','developpe landmine','developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster','handstand']},
   {id:'poussee-horizontale',label:'Poussée horizontale (pectoraux)',kw:['developpe couche','bench press','couche','chest press','ecarte','pec deck','pompe','push up','dips','croise poulie','crossover','decline','incline','hex press','svend']},
   {id:'tirage-vertical',label:'Tirage vertical',kw:['tirage poulie haute','tirage vertical','pulldown','lat pull','traction','pull up','tirage nuque','tirage poitrine','rocky pull','muscle up','dead hang','suspension passive']},
-  {id:'tirage-horizontal',label:'Tirage horizontal',kw:['tirage iso','iso lateral','rowing','tirage horizontal','tirage poulie basse','seal row','meadows','yates','renegade','bent over','bucheron','pull over','pullover']},
+  {id:'tirage-horizontal',label:'Tirage horizontal',kw:['tirage iso','iso lateral','rowing','tirage horizontal','tirage poulie basse','seal row','meadows','yates','renegade','bent over','bucheron','pull over','pullover','chariot']},
   // ── Deux schémas ajoutés le 29/07/2026 (ft-v670), sur demande de Michel et d'après la
   // taxonomie de référence (pousser · tirer · flexion de genou · charnière de hanche ·
   // ROTATION · PORTER). Il manquait « porter » et l'explosif : 6 exercices n'avaient
   // AUCUN schéma, donc Milo les appelait « accessoire » par défaut et le garde-fou
   // anti-fusion de l'import était désactivé pour eux.
   {id:'porte',label:'Porté (carry)',kw:['farmer','fermier','porte','carry','yoke','valise','suitcase','overhead carry']},
+  // Cardio machines et déplacements : ce ne sont pas des schémas de FORCE, mais les laisser sans
+  // schéma les rendait invisibles à l'équilibre de séance (mesuré au dump du 01/08).
+  {id:'cardio',label:'Cardio / conditionnement',kw:['air bike','assault bike','ski erg','ergometre de ski','bear crawl','marche de l ours','rameur','tapis','elliptique','velo']},
   // ⚠️ Les mouvements EXPLOSIFS sont séparés des sauts : l'arraché et l'épaulé-jeté sont
   // des mouvements PRINCIPAUX (voir _EX_ANCRE_PATTERNS), un burpee ou un box jump est du
   // conditionnement — les mélanger ferait bâtir une séance autour d'un burpee.
   {id:'halterophilie',label:'Haltérophilie (explosif)',kw:['arrache','snatch','epaule jete','epaule barre','clean and jerk','clean jerk','clean','jerk','turkish','get up','thruster']},
-  {id:'saut-plyo',label:'Saut / pliométrie',kw:['box jump','saut sur box','burpee','saut a la corde','corde a sauter','jump','plyo','sprint','battle rope']}
+  {id:'saut-plyo',label:'Saut / pliométrie',kw:['box jump','saut sur box','burpee','saut a la corde','corde a sauter','jump','plyo','sprint','battle rope','jumping jack','wall ball']}
 ];
 // Stemme les pluriels MAIS garde tous les mots (ne PAS retirer les mots vides ici :
 // sinon un mot-clé « curl haltère » se réduirait à « curl » et matcherait « leg curl »).
@@ -1588,6 +1591,11 @@ const _MEX=[
   // Épaules — latéral / arrière / oiseau / écarté inverse / around the world
   {re:/elevation laterale|lateral raise|face pull|rear delt|oiseau|ecarte inverse|reverse fly|around the world/i, p:['side-delt','rear-delt'], s:['front-delt','traps']},
   // Dos — verticaux / tractions
+  {re:/chariot.*(tirage )?epaule|sled shoulder/i,                               p:['front-delt','side-delt'],           s:['traps','biceps']}, // chariot : tirage bras tendus vers le haut = épaules (mesuré en DORSAUX au dump 01/08)
+  {re:/chariot.*(inverse|arriere).*jambe|sled reverse drag/i,                   p:['quads'],                            s:['glutes','calves']}, // marche ARRIÈRE en tirant = quadriceps (mesuré en dorsaux)
+  {re:/chariot.*(poussee|push)/i,                                              p:['quads','glutes'],                   s:['calves','abs']}, // même chose que « Sled Push », que la règle plus bas ne reconnaissait pas sous « Chariot »
+  {re:/air ?bike|assault bike|ski ?erg|ergometre de ski/i,                      p:['quads','front-delt'],               s:['lats','abs','hamstrings']}, // cardio machines bras+jambes — mesurées MUETTES au dump 01/08
+  {re:/jumping ?jack|bear ?crawl|marche de l.ours|wall ?ball/i,                 p:['quads','front-delt'],               s:['glutes','abs','calves']}, // cardio poids du corps — mesurées MUETTES
   {re:/muscle.?up/i,                                                            p:['lats','biceps'],                    s:['triceps','pec','front-delt']}, // traction explosive + passage au-dessus de la barre — mesuré MUET au dump du 01/08
   {re:/dead ?hang|suspension passive/i,                                         p:['forearms','lats'],                  s:['traps']}, // suspension bras tendus : avant-bras + dorsaux (grip work)
   {re:/^(?!.*(upright|menton)).*(traction|pull.?up|chin.?up|tirage vertical|lat pulldown|tirage poulie haute)/i, p:['lats','biceps'],             s:['traps','rear-delt','forearms']}, // ⚠️ « Tirage Vertical (Upright Row) » = épaules/trapèzes, PAS un tirage dorsal — sa règle précise vit plus bas (ft-v686)
@@ -4919,6 +4927,26 @@ const EX_YT={
   'Soulevé de Terre Roumain Haltères':{img:'../exercises/souleve-de-terre-roumain-halteres.webp'},
   'Soulevé de Terre Roumain Unilatéral':{img:'../exercises/souleve-de-terre-roumain-unilateral.webp'}, // style vidéo sombre (seule dispo) — à remplacer si mieux un jour
   'Hip Thrust Unilatéral (Poussée de Hanche)':{img:'../exercises/hip-thrust-barre-unilateral.webp'},
+  // Lots « cardio » et « chariot » du 01/08 — dont 4 exercices du catalogue qui n'avaient AUCUNE
+  // démo (Burpees, Sauts à la Corde, Grimpeur, Box Jump) : le cardio était le parent pauvre.
+  'Burpees':{img:'../exercises/burpees.webp'},
+  'Sauts à la Corde':{img:'../exercises/sauts-a-la-corde.webp'},
+  'Grimpeur (Mountain Climber)':{img:'../exercises/grimpeur-mountain-climber.webp'},
+  'Box Jump':{img:'../exercises/box-jump.webp'},
+  'Assault Air Bike':{img:'../exercises/assault-air-bike.webp'},
+  'Ergomètre de Ski (Ski Erg)':{img:'../exercises/ergometre-de-ski.webp'},
+  'Jumping Jack':{img:'../exercises/jumping-jack.webp'},
+  'Marche de l\'Ours (Bear Crawl)':{img:'../exercises/marche-de-lours-bear-crawl.webp'},
+  'Wall Ball':{img:'../exercises/wall-ball.webp'},
+  'Chariot — Poussée':{img:'../exercises/chariot-poussee.webp'},
+  'Chariot — Tirage en Avançant':{img:'../exercises/chariot-tirage-avance.webp'},
+  'Chariot — Tirage Dos':{img:'../exercises/chariot-tirage-dos.webp'},
+  'Chariot — Tirage de Côté':{img:'../exercises/chariot-tirage-de-cote.webp'},
+  'Chariot — Tirage Inversé Jambes':{img:'../exercises/chariot-tirage-inverse-jambes.webp'},
+  'Chariot — Tirage Épaules':{img:'../exercises/chariot-tirage-epaules.webp'},
+  'Chariot — Fentes Arrière':{img:'../exercises/chariot-fentes-arriere.webp'},
+  'Chariot — Curl Biceps':{img:'../exercises/chariot-curl-biceps.webp'},
+  'Chariot — Extension Triceps':{img:'../exercises/chariot-extension-triceps.webp'},
   // Lots « dos », « épaules » et « pecs » du 01/08 (fin de soirée) — beaucoup d'ÉLASTIQUE et de
   // TRX : le matériel est dans le nom, une vignette élastique sur l'exercice classique mentirait.
   'Traction Supination (Chin-up)':{img:'../exercises/traction-supination-chin-up.webp'},
@@ -5115,6 +5143,14 @@ const EX_EN={
   'Extension Triceps Arrière (Kickback)':'triceps kickback dumbbell',
   'Triceps Haltère':'triceps overhead extension dumbbell','Triceps Machine':'triceps machine',
   // Jambes
+  // — cardio + chariot (01/08) —
+  'Assault Air Bike':'assault air bike','Ergomètre de Ski (Ski Erg)':'ski erg',
+  'Jumping Jack':'jumping jack','Marche de l\'Ours (Bear Crawl)':'bear crawl','Wall Ball':'wall ball shot',
+  'Chariot — Poussée':'sled push','Chariot — Tirage en Avançant':'sled pull forward',
+  'Chariot — Tirage Dos':'sled row','Chariot — Tirage de Côté':'sled lateral pull',
+  'Chariot — Tirage Inversé Jambes':'sled reverse drag','Chariot — Tirage Épaules':'sled shoulder raise',
+  'Chariot — Fentes Arrière':'sled reverse lunge','Chariot — Curl Biceps':'sled biceps curl',
+  'Chariot — Extension Triceps':'sled triceps extension',
   // — les 32 nouveaux des lots dos / épaules / pecs (01/08) —
   'Tractions (Pull-up)':'pull up','Traction Supination (Chin-up)':'chin up','Muscle-up':'muscle up bar',
   'Tractions aux Anneaux':'ring pull up','Traction Australienne (Poids du Corps)':'australian pull up',

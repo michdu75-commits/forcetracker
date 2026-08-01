@@ -192,6 +192,16 @@ const EXLIB=[
   {n:'Arraché Haltère (Dumbbell Snatch)',g:'Full Body'},{n:'Arraché Debout (Muscle Snatch)',g:'Full Body'},{n:'Thrusters Haltères',g:'Full Body'},
   {n:'Clean & Jerk',g:'Full Body'},{n:'Turkish Get-Up',g:'Full Body'},
   {n:'Battle Rope',g:'Full Body'},{n:'Box Jump',g:'Full Body'},
+  // — Lots « cardio » et « chariot » du 01/08 (fin de soirée). Le chariot de puissance (power sled)
+  //   sert à bien plus que pousser/tirer : une famille entière d'exercices s'y fait, d'où les 9. —
+  {n:'Assault Air Bike',g:'Full Body'},{n:'Ergomètre de Ski (Ski Erg)',g:'Full Body'},
+  {n:'Jumping Jack',g:'Full Body'},{n:'Marche de l\'Ours (Bear Crawl)',g:'Full Body'},
+  {n:'Wall Ball',g:'Full Body'},
+  {n:'Chariot — Poussée',g:'Full Body'},{n:'Chariot — Tirage en Avançant',g:'Full Body'},
+  {n:'Chariot — Tirage Dos',g:'Dos'},{n:'Chariot — Tirage de Côté',g:'Dos'},
+  {n:'Chariot — Tirage Inversé Jambes',g:'Jambes'},{n:'Chariot — Tirage Épaules',g:'Épaules'},
+  {n:'Chariot — Fentes Arrière',g:'Jambes'},{n:'Chariot — Curl Biceps',g:'Biceps'},
+  {n:'Chariot — Extension Triceps',g:'Triceps'},
 ];
 const BIG3=['Squat à la Barre','Développé Couché','Soulevé de Terre'];
 const BIG4=['Squat à la Barre','Soulevé de Terre','Développé Couché','Développé Militaire'];

@@ -2,7 +2,7 @@
 
 > **⚙️ FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer : `node tools/exercices-muscles.js`
 > (il interroge les vraies fonctions de l'app : `_mscScores` / `_calSessRegion` / `_movPattern`).
-> Dernière génération : 2026-08-01 · **326 exercices** du catalogue.
+> Dernière génération : 2026-08-01 · **340 exercices** du catalogue.
 >
 > **Comment lire :** les muscles **principaux** sont ceux que la figurine colorie le plus fort,
 > les *secondaires* sont coloriés plus doux. La **région** est celle utilisée par la couleur du
@@ -10,7 +10,7 @@
 > mêmes règles (il est reconnu par son nom).
 
 
-## Bas du corps (93 exercices)
+## Bas du corps (96 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -21,6 +21,9 @@
 | Box Jump | **Quadriceps, Fessiers** | Mollets, Ischio-jambiers | Saut / pliométrie |
 | Chaise (Wall Sit) | **Quadriceps** | Fessiers, Abdominaux | Squat (flexion hanche+genou) |
 | Chaise Romaine | **Quadriceps** | Fessiers, Abdominaux | Gainage / abdominaux |
+| Chariot — Fentes Arrière | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
+| Chariot — Poussée | **Quadriceps, Fessiers** | Mollets, Abdominaux | Tirage horizontal |
+| Chariot — Tirage Inversé Jambes | **Quadriceps** | Fessiers, Mollets | Tirage horizontal |
 | Cossack Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Fente |
 | Curl Ischio-jambiers (Leg Curl) | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Flexion de genou (ischios) |
 | Élévations Mollets Assis | **Mollets** | — | Extension de cheville (mollets) |
@@ -108,12 +111,14 @@
 | Squat TRX (Sangles) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Tirage Cable Fessiers (Cable Pull Through) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 
-## Haut du corps (107 exercices)
+## Haut du corps (109 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
 | Barre au Front | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Bench Dips | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
+| Chariot — Extension Triceps | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
+| Chariot — Tirage Épaules | **Deltoïdes ant., Deltoïdes lat.** | Trapèzes, Biceps | Tirage horizontal |
 | Chest Press Machine Déclinée | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Chest Press Machine Horizontale | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Chest Press Machine Inclinée | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
@@ -220,10 +225,14 @@
 | Triceps Poulie | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Triceps Poulie Basse | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 
-## Dos (77 exercices)
+## Dos (81 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
+| Chariot — Curl Biceps | **Biceps** | Avant-bras | Flexion du coude (biceps) |
+| Chariot — Tirage de Côté | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
+| Chariot — Tirage Dos | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
+| Chariot — Tirage en Avançant | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
 | Curl Araignée (Spider Curl) | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Curl Barre | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Curl Barre EZ Prise Large | **Biceps** | Avant-bras | Flexion du coude (biceps) |
@@ -326,17 +335,21 @@
 | Superman | **Abdominaux, Bas du dos** | Obliques, Deltoïdes ant., Fessiers | Charnière de hanche (hip hinge) |
 | Windshield Wiper | **Abdominaux, Obliques** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
 
-## Full body (30 exercices)
+## Full body (35 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
 | Arraché Debout (Muscle Snatch) | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Haltérophilie (explosif) |
 | Arraché Haltère (Dumbbell Snatch) | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Haltérophilie (explosif) |
+| Assault Air Bike | **Quadriceps, Deltoïdes ant.** | Grand dorsal, Abdominaux, Ischio-jambiers | Cardio / conditionnement |
 | Battle Rope | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Saut / pliométrie |
 | Burpees | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Saut / pliométrie |
 | Clean & Jerk | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Haltérophilie (explosif) |
+| Ergomètre de Ski (Ski Erg) | **Quadriceps, Deltoïdes ant.** | Grand dorsal, Abdominaux, Ischio-jambiers | Cardio / conditionnement |
 | Farmer's Walk | **Quadriceps, Fessiers** | Avant-bras, Trapèzes | Porté (carry) |
 | Farmer's Walk (Grip) | **Avant-bras** | Trapèzes, Quadriceps | Porté (carry) |
+| Jumping Jack | **Quadriceps, Deltoïdes ant.** | Fessiers, Abdominaux, Mollets | Saut / pliométrie |
+| Marche de l'Ours (Bear Crawl) | **Quadriceps, Deltoïdes ant.** | Fessiers, Abdominaux, Mollets | Cardio / conditionnement |
 | Planche de Préhension | **Avant-bras** | Trapèzes, Quadriceps | Gainage / abdominaux |
 | Reeves Deadlift | **Fessiers, Ischio-jambiers, Bas du dos** | Quadriceps, Trapèzes, Grand dorsal, Avant-bras | Charnière de hanche (hip hinge) |
 | Soulevé de Terre | **Fessiers, Ischio-jambiers, Bas du dos** | Quadriceps, Trapèzes, Grand dorsal, Avant-bras | Charnière de hanche (hip hinge) |
@@ -359,6 +372,7 @@
 | Thrusters Haltères | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Poussée verticale (au-dessus de la tête) |
 | Tirage en Rack (Rack Pull) | **Bas du dos, Trapèzes** | Grand dorsal, Fessiers, Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Turkish Get-Up | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Haltérophilie (explosif) |
+| Wall Ball | **Quadriceps, Deltoïdes ant.** | Fessiers, Abdominaux, Mollets | Saut / pliométrie |
 | Zercher Deadlift | **Fessiers, Ischio-jambiers, Bas du dos** | Quadriceps, Trapèzes, Grand dorsal, Avant-bras | Charnière de hanche (hip hinge) |
 
 ---

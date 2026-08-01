@@ -419,6 +419,46 @@ t('⭐ « Traction Lestée » et « Tractions (Pull-up) » ont chacune LEUR dém
   trac.lestee==='exercises/traction-lestee-vraie.webp'
   &&trac.classique==='exercises/traction-musculation-dos.webp', JSON.stringify(trac));
 
+// ── LOTS « CARDIO » et « CHARIOT » du 01/08 : 14 nouveaux + 4 démos sur des exercices qui n'en
+// avaient aucune (Burpees, Sauts à la Corde, Grimpeur, Box Jump — le cardio était le parent pauvre).
+// ⚠️ La famille CHARIOT a rappelé la maladie du « premier match gagne » : mes règles précises
+// étaient posées APRÈS la règle générique « tirage », donc jamais atteintes — « Tirage Épaules »
+// sortait en dorsaux. Elles sont remontées AVANT.
+const card=await p.evaluate(()=>{
+  const noms=['Assault Air Bike','Ergomètre de Ski (Ski Erg)','Jumping Jack','Marche de l\'Ours (Bear Crawl)',
+    'Wall Ball','Chariot — Poussée','Chariot — Tirage en Avançant','Chariot — Tirage Dos',
+    'Chariot — Tirage de Côté','Chariot — Tirage Inversé Jambes','Chariot — Tirage Épaules',
+    'Chariot — Fentes Arrière','Chariot — Curl Biceps','Chariot — Extension Triceps'];
+  const g=n=>{const d=_mscScores([{name:n,sets:[{done:true}]}])||{};return Object.keys(d.sc||{}).sort().join(',');};
+  const out={dansExlib:0,avecMuscles:0,avecPattern:0,muets:[]};
+  for(const n of noms){
+    if((EXLIB||[]).some(e=>e&&e.n===n))out.dansExlib++;
+    const m=g(n),pt=_movPattern(n);
+    if(m.length)out.avecMuscles++; if(pt)out.avecPattern++;
+    if(!m.length||!pt)out.muets.push(n);
+  }
+  out.chEpaules=g('Chariot — Tirage Épaules');
+  out.chJambes=g('Chariot — Tirage Inversé Jambes');
+  out.chDos=g('Chariot — Tirage Dos');           // témoin : le tirage DOS reste dorsal
+  out.airbike=_movPattern('Assault Air Bike');
+  out.demos={burpees:(EX_YT['Burpees']||{}).img,corde:(EX_YT['Sauts à la Corde']||{}).img,
+             grimpeur:(EX_YT['Grimpeur (Mountain Climber)']||{}).img,box:(EX_YT['Box Jump']||{}).img};
+  return out;
+});
+t('⭐ les 14 exercices cardio/chariot sont au catalogue, TOUS avec muscles ET schéma',
+  card.dansExlib===14&&card.avecMuscles===14&&card.avecPattern===14, JSON.stringify(card.muets));
+t('⭐ chariot : « Tirage Épaules » = épaules et « Tirage Inversé Jambes » = quadriceps (pas dorsaux)',
+  card.chEpaules.indexOf('front-delt')>=0&&card.chJambes.indexOf('quads')>=0
+  &&card.chEpaules.indexOf('lats')<0&&card.chJambes.indexOf('lats')<0,
+  card.chEpaules+' / '+card.chJambes);
+t('témoin : le « Chariot — Tirage Dos » reste bien dorsal',
+  card.chDos.indexOf('lats')>=0, card.chDos);
+t('les machines cardio ont un schéma « cardio » (plus invisibles à l\'équilibre de séance)',
+  card.airbike==='cardio', card.airbike);
+t('les 4 exercices cardio qui n\'avaient AUCUNE démo en ont une',
+  !!(card.demos.burpees&&card.demos.corde&&card.demos.grimpeur&&card.demos.box),
+  JSON.stringify(card.demos));
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');
