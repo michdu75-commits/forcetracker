@@ -250,6 +250,7 @@ const PREMIUM_PERKS=[
 ];
 
 const NEW_FEATURES=[
+  {id:'exos-materiel', screen:'log', desc:'La liste des exercices est maintenant rangée PAR MATÉRIEL pour tout le monde : 🏋️ Barre · 💪 Poids libre · ⚙️ Guidé · 🤸 Poids du corps · 🎗️ Élastique · 🪢 TRX/Sangles · 🏃 Cardio. Tu t\'entraînes à la maison ? Cherche « élastique » ou « TRX »'},
   {id:'exos-maison', screen:'log', desc:'Nouveau : 16 exercices jambes ajoutés avec leur animation — dont les versions ÉLASTIQUE et TRX (le matériel est écrit dans le nom : cherche « élastique » ou « TRX » pour les trouver d\'un coup). Pratique pour s\'entraîner à la maison'},
   {id:'prog-note', screen:'log', desc:'Nouveau : un champ 💬 Commentaire par exercice dans l\'éditeur de programme (✏️ dans Mes Programmes) — écris ta consigne (réglage machine, prise, posture…), elle s\'affiche à chaque séance. Et rappel : la colonne « Repos » y règle le temps de repos série par série'},
   {id:'exos-aout', screen:'log', desc:'Nouveau : 14 exercices ajoutés au catalogue avec leurs animations (Pompes, Larsen press, Svend press, Hex press, écartés inclinés/Hyght, presses à cuisses, Hack Squat assis, Overhead Squat haltères, Muscle Snatch…) — et les presses à cuisses + le Hack Squat ont maintenant de vraies animations'},

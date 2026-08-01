@@ -2670,7 +2670,12 @@ function _exEquip(name){
   return 'autre';
 }
 // Le test n'est visible que pour les testeurs + Michel (pas les utilisateurs normaux)
-function _eqTestOn(){try{return (typeof _isTester==='function'&&_isTester())||(typeof _isSuperTester==='function'&&_isSuperTester());}catch(e){return false;}}
+// ✅ OUVERT À TOUT LE MONDE le 02/08/2026 (décision Michel : « on ouvre à tlm »), après l'audit
+// qui a donné au classement ses 3 bacs manquants (Élastique · TRX/Sangles · Cardio) et corrigé
+// 59 rangements. C'était une expérimentation réservée aux testeurs depuis ft-v697.
+// La fonction est GARDÉE (elle ne renvoie plus que `true`) pour ne pas avoir à chasser ses usages
+// — même choix qu'à l'ouverture de la nutrition, `_isNutriBeta()` (ft-v623).
+function _eqTestOn(){return true;}
 let _eqHideBadge=false; // vrai pendant le rendu groupé : le titre de section porte déjà le type, pas besoin du badge par ligne
 function _exEqBadge(name){
   if(_eqHideBadge||!_eqTestOn())return'';

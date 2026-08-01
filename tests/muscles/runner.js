@@ -524,6 +524,23 @@ t('⭐ piège de sous-chaîne : « waLL SIT » ne doit pas être happé par « l
   aud.patWallSit==='squat'&&aud.patLSit==='gainage-abdos',
   aud.patWallSit+' / '+aud.patLSit);
 
+// ── OUVERT À TOUT LE MONDE (Michel, 02/08 : « on ouvre à tlm ») : le classement par matériel
+// était réservé aux testeurs depuis ft-v697. On vérifie avec un compte QUI N'EST PAS testeur.
+const ouvert=await p.evaluate(()=>{
+  S.email='quelquun.de.normal@example.com';
+  const o={estTesteur:(typeof _isTester==='function')?!!_isTester():null, materielVisible:_eqTestOn()};
+  document.getElementById('ex-search').value='trx'; filterEx();
+  const h=document.getElementById('ex-list').innerHTML;
+  o.aLesSousTitres=/ex-subhdr/.test(h);
+  o.bacTRX=/TRX \/ Sangles/.test(h);
+  document.getElementById('ex-search').value=''; _exGrp=null; filterEx();
+  return o;
+});
+t('⭐ le classement par matériel est visible par TOUT LE MONDE (pas seulement les testeurs)',
+  ouvert.estTesteur===false&&ouvert.materielVisible===true&&ouvert.aLesSousTitres,
+  JSON.stringify(ouvert));
+t('un compte normal voit bien le bac « TRX / Sangles »', ouvert.bacTRX, JSON.stringify(ouvert));
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');
