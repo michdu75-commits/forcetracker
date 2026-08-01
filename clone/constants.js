@@ -63,7 +63,7 @@ const EXLIB=[
   {n:'Curl Incliné',g:'Biceps'},{n:'Curl Concentré',g:'Biceps'},
   {n:'Curl Câble en Croix (Bayesian Curl)',g:'Biceps'},{n:'Curl Araignée (Spider Curl)',g:'Biceps'},
   {n:'Curl Zottman',g:'Biceps'},{n:'Marteau',g:'Biceps'},
-  {n:'Curl Machine',g:'Biceps'},{n:'Curl Pupitre Machine',g:'Biceps'},
+  {n:'Curl Machine',g:'Biceps'},{n:'Curl Pupitre Machine',g:'Biceps'},{n:'Curl Pupitre Barre EZ (Larry Scott)',g:'Biceps'},{n:'Waiter Curl',g:'Biceps'},
   // ── Triceps ────────────────────────────────────────────────
   {n:'Dips Lestés',g:'Triceps'},{n:'Bench Dips',g:'Triceps'},
   {n:'Barre au Front',g:'Triceps'},{n:'Skull Crusher Barre EZ',g:'Triceps'},

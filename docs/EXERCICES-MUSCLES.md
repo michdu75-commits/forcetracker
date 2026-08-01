@@ -2,7 +2,7 @@
 
 > **⚙️ FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer : `node tools/exercices-muscles.js`
 > (il interroge les vraies fonctions de l'app : `_mscScores` / `_calSessRegion` / `_movPattern`).
-> Dernière génération : 2026-08-01 · **264 exercices** du catalogue.
+> Dernière génération : 2026-08-01 · **266 exercices** du catalogue.
 >
 > **Comment lire :** les muscles **principaux** sont ceux que la figurine colorie le plus fort,
 > les *secondaires* sont coloriés plus doux. La **région** est celle utilisée par la couleur du
@@ -177,7 +177,7 @@
 | Triceps Poulie | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Triceps Poulie Basse | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 
-## Dos (60 exercices)
+## Dos (62 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -192,6 +192,7 @@
 | Curl Machine | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Curl Poignet Barre | **Avant-bras** | — | Flexion du coude (biceps) |
 | Curl Poulie | **Biceps** | Avant-bras | Flexion du coude (biceps) |
+| Curl Pupitre Barre EZ (Larry Scott) | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Curl Pupitre Machine | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Curl Zottman | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Écarté Arrière Élastique | **Deltoïdes post.** | Trapèzes, Deltoïdes lat. | Élévation / rotation épaule |
@@ -240,6 +241,7 @@
 | Traction Derrière la Nuque | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Traction Lestée | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
 | Traction Prise Neutre | **Grand dorsal, Biceps** | Trapèzes, Deltoïdes post., Avant-bras | Tirage vertical |
+| Waiter Curl | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Y Raise / W Raise | **Deltoïdes post.** | Trapèzes | Élévation / rotation épaule |
 
 ## Gainage (18 exercices)
