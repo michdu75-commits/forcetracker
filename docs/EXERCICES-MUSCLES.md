@@ -2,7 +2,7 @@
 
 > **⚙️ FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer : `node tools/exercices-muscles.js`
 > (il interroge les vraies fonctions de l'app : `_mscScores` / `_calSessRegion` / `_movPattern`).
-> Dernière génération : 2026-08-01 · **282 exercices** du catalogue.
+> Dernière génération : 2026-08-01 · **293 exercices** du catalogue.
 >
 > **Comment lire :** les muscles **principaux** sont ceux que la figurine colorie le plus fort,
 > les *secondaires* sont coloriés plus doux. La **région** est celle utilisée par la couleur du
@@ -106,7 +106,7 @@
 | Squat TRX (Sangles) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Tirage Cable Fessiers (Cable Pull Through) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 
-## Haut du corps (81 exercices)
+## Haut du corps (92 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -139,6 +139,8 @@
 | Développé Nuque | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Dips | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Dips Assis Machine (Seated Dip) | **Pectoraux** | Triceps, Deltoïdes ant. | Poussée horizontale (pectoraux) |
+| Dips aux Anneaux | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
+| Dips entre Deux Bancs | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Dips Lestés | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Dips Machine Assistée | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Dips Parallèles | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
@@ -162,9 +164,17 @@
 | Extension Nuque Haltère | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Extension Nuque Poulie Haute | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Extension Triceps | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
+| Extension Triceps Allongée TRX (Sangles) | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Extension Triceps Arrière (Kickback) | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
+| Extension Triceps Banc Incliné Haltères | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
+| Extension Triceps Concentrée Poulie | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Extension Triceps Couché Haltères | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
+| Extension Triceps Décliné Haltères | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
+| Extension Triceps Nuque Élastique | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
+| Extension Triceps TRX (Sangles) | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
+| Extension Triceps Verticale Élastique | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Face Pull Couché Poulie | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
+| Handstand Push-up (ATR) | **Deltoïdes ant.** | Triceps, Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Hex Press Smith Machine | **Pectoraux** | Triceps, Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Machine Oiseau | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
 | Oiseau | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
@@ -185,6 +195,7 @@
 | Smith Machine Développé Incliné | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Smith Machine Développé Militaire | **Deltoïdes ant., Deltoïdes lat., Triceps** | Trapèzes | Poussée verticale (au-dessus de la tête) |
 | Svend Press (Serrage de Plaque) | **Pectoraux** | Triceps, Deltoïdes ant. | Poussée horizontale (pectoraux) |
+| Tate Press | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Tirage Visage (Face Pull) | **Deltoïdes lat., Deltoïdes post.** | Deltoïdes ant., Trapèzes | Élévation / rotation épaule |
 | Triceps Corde Poulie | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Triceps Haltère | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |

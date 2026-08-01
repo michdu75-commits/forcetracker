@@ -335,6 +335,43 @@ t('témoin : « Élastique » ne change pas le schéma de mouvement (bulgare = f
 t('« TRX (Sangles) » reste un squat · le Soulevé de Terre Valise est une charnière de hanche',
   quadri.trxSquat==='squat'&&quadri.valise==='hip-hinge', quadri.trxSquat+' / '+quadri.valise);
 
+// ── LOT « TRICEPS » du 01/08 : 11 nouveaux — et 2 pièges attrapés PAR LA MESURE, pas par l'œil.
+// ① la règle des développés inclinés/déclinés happait les EXTENSIONS TRICEPS sur banc (3e fois
+//    qu'elle attrape une isolation : écarté incliné ft-v694, écarté décliné ft-v698, celle-ci) ;
+// ② le Tate Press était MUET (aucun muscle, aucun schéma) ; ③ le Handstand Push-up partait en
+//    « pompe » (pectoraux, poussée horizontale) alors que c'est un développé militaire inversé.
+const tri=await p.evaluate(()=>{
+  const noms=['Dips aux Anneaux','Dips entre Deux Bancs','Tate Press','Handstand Push-up (ATR)',
+    'Extension Triceps Banc Incliné Haltères','Extension Triceps Décliné Haltères',
+    'Extension Triceps Concentrée Poulie','Extension Triceps Nuque Élastique',
+    'Extension Triceps Verticale Élastique','Extension Triceps TRX (Sangles)',
+    'Extension Triceps Allongée TRX (Sangles)'];
+  const g=n=>{const d=_mscScores([{name:n,sets:[{done:true}]}])||{};return Object.keys(d.sc||{}).sort().join(',');};
+  const out={dansExlib:0,avecMuscles:0,avecPattern:0};
+  for(const n of noms){
+    if((EXLIB||[]).some(e=>e&&e.n===n))out.dansExlib++;
+    if(g(n).length)out.avecMuscles++;
+    if(_movPattern(n))out.avecPattern++;
+  }
+  out.triIncline=g('Extension Triceps Banc Incliné Haltères');
+  out.triDecline=g('Extension Triceps Décliné Haltères');
+  out.devIncline=g('Développé Incliné');            // témoin : le vrai développé ne bouge pas
+  out.tate=g('Tate Press'); out.tatePat=_movPattern('Tate Press');
+  out.atr=g('Handstand Push-up (ATR)'); out.atrPat=_movPattern('Handstand Push-up (ATR)');
+  return out;
+});
+t('⭐ les 11 exercices « triceps » sont au catalogue, TOUS avec muscles ET schéma',
+  tri.dansExlib===11&&tri.avecMuscles===11&&tri.avecPattern===11, JSON.stringify(tri));
+t('⭐ une EXTENSION TRICEPS sur banc incliné/décliné n\'est PAS un développé (pas de pec)',
+  tri.triIncline==='front-delt,triceps'&&tri.triDecline==='front-delt,triceps',
+  tri.triIncline+' / '+tri.triDecline);
+t('témoin : le vrai Développé Incliné reste un développé (pec + triceps)',
+  tri.devIncline==='front-delt,pec,triceps', tri.devIncline);
+t('le Tate Press n\'est plus MUET (triceps + extension du coude)',
+  tri.tate==='front-delt,triceps'&&tri.tatePat==='extension-triceps', tri.tate+' / '+tri.tatePat);
+t('le Handstand Push-up = ÉPAULES en poussée verticale (pas une pompe)',
+  tri.atr==='front-delt,traps,triceps'&&tri.atrPat==='poussee-verticale', tri.atr+' / '+tri.atrPat);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

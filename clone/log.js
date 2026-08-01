@@ -1040,7 +1040,7 @@ const _MOV_PATTERNS=[
   {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','upright row','haussement','shrug','croix de fer']},
   {id:'flexion-genou',label:'Flexion de genou (ischios)',kw:['leg curl','curl ischio','ischio','nordic']}, // AVANT curl-biceps (« leg curl » ≠ curl de bras)
   {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['marteau','curl','preacher','biceps']},
-  {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps']},
+  {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps','tate press']},
   {id:'mollets',label:'Extension de cheville (mollets)',kw:['mollet','calf','soleus','tibialis','tib raise']},
   {id:'extension-genou',label:'Extension de genou (quadriceps)',kw:['leg extension','extension quadriceps','quad extension','quad ext','sissy squat']},
   // ⚠️ PAS de mot-clé pour le L-Sit : « l sit » attraperait « wa·ll sit » (Chaise / Wall Sit),
@@ -1051,7 +1051,7 @@ const _MOV_PATTERNS=[
   {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['tirage en rack','rack pull','souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','hyperextension','extension lombaire','ghd','glute ham','superman']},
   {id:'fente',label:'Fente',kw:['fente','lunge','split squat','bulgare','montee sur box','step up','cossack']},
   {id:'squat',label:'Squat (flexion hanche+genou)',kw:['squat','press jambe','leg press','hack','pendulum','belt squat','presse a cuisse','wall sit','sled']},
-  {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe haltere assis','developpe assis','developpe landmine','developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster']},
+  {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe haltere assis','developpe assis','developpe landmine','developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster','handstand']},
   {id:'poussee-horizontale',label:'Poussée horizontale (pectoraux)',kw:['developpe couche','bench press','couche','chest press','ecarte','pec deck','pompe','push up','dips','croise poulie','crossover','decline','incline','hex press','svend']},
   {id:'tirage-vertical',label:'Tirage vertical',kw:['tirage poulie haute','tirage vertical','pulldown','lat pull','traction','pull up','tirage nuque','tirage poitrine','rocky pull']},
   {id:'tirage-horizontal',label:'Tirage horizontal',kw:['tirage iso','iso lateral','rowing','tirage horizontal','tirage poulie basse','seal row','meadows','yates','renegade','bent over','bucheron','pull over','pullover']},
@@ -1568,10 +1568,10 @@ const _MEX=[
   // Pectoraux — couché / chest press / peck deck / butterfly
   {re:/developpe couche|bench press|chest press|ecarte couche|pec dec|peck deck|butterfly/i, p:['pec'],                  s:['front-delt','triceps'],             i:['lats','biceps','abs','lower-back']},
   // Pectoraux — incliné (variantes d'écriture)
-  {re:/^(?!.*ecarte).*(developpe incline|incline bench|incline press|incline halter|chest incline)/i, p:['pec'],            s:['front-delt','triceps']}, // sans « écarté » : l'Écarté Incliné Haltères est un ÉCARTÉ (règle plus bas), pas un développé (01/08)
+  {re:/^(?!.*(ecarte|tricep)).*(developpe incline|incline bench|incline press|incline halter|chest incline)/i, p:['pec'],            s:['front-delt','triceps']}, // sans « écarté » ni « triceps » : l'Écarté Incliné et l'Extension Triceps Banc Incliné ne sont PAS des développés (01/08 — 3e fois que cette règle attrape une isolation)
   {re:/hex press|svend|squeeze press/i,                                        p:['pec'],                              s:['triceps','front-delt']}, // hex/svend press : serrage de plaque ou haltères (ajout 01/08, les 14 du dossier Michel)
   // Pectoraux — décliné (variantes d'écriture)
-  {re:/^(?!.*ecarte).*(developpe decline|decline barre|decline halter|chest decline|chest press decline)/i, p:['pec'],     s:['front-delt','triceps']}, // sans « écarté » : l'Écarté Décliné Haltères est un ÉCARTÉ, pas un développé (01/08 — même piège que l'incliné)
+  {re:/^(?!.*(ecarte|tricep)).*(developpe decline|decline barre|decline halter|chest decline|chest press decline)/i, p:['pec'],     s:['front-delt','triceps']}, // sans « écarté » ni « triceps » : idem incliné (Écarté Décliné · Extension Triceps Décliné Haltères)
   // ⚠️ Écarté/fly BUSTE PENCHÉ ou ARRIÈRE = un OISEAU (arrière d'épaule), JAMAIS des pectoraux.
   // Doit rester AVANT les règles « écarté → pec » : le 30/07, « Écarté Haltères Buste Penché »
   // (exercice perso, capture de la fille de Michel) affichait la figurine des PECTORAUX — la
@@ -1600,6 +1600,7 @@ const _MEX=[
   // Biceps
   {re:/^(?!.*(leg curl|ischio|jambier)).*(curl bicep|bicep curl|curl halter|preacher|curl marteau|hammer curl|curl biceps)/i, p:['biceps'],                s:['forearms']}, // ⚠️ exclusion : « Leg Curl Haltère » contient « curl halter » — un curl de JAMBE n'est pas un biceps (même maladie que poignet/leg curl, ft-v686)
   // Triceps
+  {re:/tate press/i,                                                           p:['triceps'],                          s:['front-delt']}, // Tate press : haltères allongé, coudes ouverts — mesuré MUET au dump du 01/08
   {re:/tricep|skull crusher|extension tricep|barre front/i,                     p:['triceps'],                          s:['front-delt']},
   // Abducteurs / adducteurs (fessiers/hanche) — remplace l'ancien mapping erroné
   {re:/^(?!.*(epaule|shoulder|rotation)).*(abducteur|abduction)/i,              p:['glutes'],                           s:[]}, // ⚠️ « Rotation Externe Épaule Abduction » = coiffe des rotateurs, pas les fessiers (ft-v686)
@@ -1650,6 +1651,7 @@ const _MEX=[
 
   // — Pectoraux : tout écarté / fly / crossover, et toutes les pompes
   {re:/ecarte|butterfly|\bfly\b|crossover|croise poulie/i,                     p:['pec'],                              s:['front-delt']},
+  {re:/handstand|atr/i,                                                        p:['front-delt'],                       s:['triceps','traps']}, // ATR = développé militaire inversé : épaules d'abord, pas des pectoraux (mesuré au dump 01/08)
   {re:/pompe|push.?up|dips? entre|dips? banc/i,                                 p:['pec','triceps'],                    s:['front-delt']},
   // — Épaules : élévations latérales, tirage menton, rotations, développés restants
   //   ⚠️ « laterale » AVANT le développé générique (une élévation n'est pas un développé)
@@ -4908,6 +4910,31 @@ const EX_YT={
   'Soulevé de Terre Roumain Haltères':{img:'../exercises/souleve-de-terre-roumain-halteres.webp'},
   'Soulevé de Terre Roumain Unilatéral':{img:'../exercises/souleve-de-terre-roumain-unilateral.webp'}, // style vidéo sombre (seule dispo) — à remplacer si mieux un jour
   'Hip Thrust Unilatéral (Poussée de Hanche)':{img:'../exercises/hip-thrust-barre-unilateral.webp'},
+  // Lot « triceps » du 01/08 — ① 11 exercices du catalogue qui n'avaient AUCUNE démo (le plus gros
+  // rattrapage du soir : la famille triceps était presque entièrement muette) ; ② 11 nouveaux.
+  // Restent volontairement SANS démo, faute de fichier correspondant : Dips Lestés · Skull Crusher
+  // Barre EZ · Triceps Corde Poulie (pushdown à la corde) — mieux vaut aucune vignette qu'une fausse.
+  'Bench Dips':{img:'../exercises/bench-dips-sur-banc.webp'},
+  'Extension Nuque Haltère':{img:'../exercises/extension-nuque-haltere-assis.webp'},
+  'Extension Nuque Poulie Haute':{img:'../exercises/extension-nuque-poulie-haute-corde.webp'},
+  'Extension Triceps':{img:'../exercises/extension-triceps-verticale-haltere.webp'},
+  'Extension Triceps Arrière (Kickback)':{img:'../exercises/triceps-kickback-debout-halteres.webp'},
+  'Extension Triceps Couché Haltères':{img:'../exercises/extension-triceps-couche-halteres.webp'},
+  'Triceps Poulie':{img:'../exercises/triceps-poulie-haute-barre.webp'},
+  'Triceps Haltère':{img:'../exercises/triceps-haltere-un-bras.webp'},
+  'Triceps Machine':{img:'../exercises/triceps-machine.webp'},
+  'Triceps Poulie Basse':{img:'../exercises/triceps-poulie-basse-verticale.webp'},
+  'Dips aux Anneaux':{img:'../exercises/dips-aux-anneaux.webp'},
+  'Dips entre Deux Bancs':{img:'../exercises/dips-entre-deux-bancs.webp'},
+  'Tate Press':{img:'../exercises/tate-press.webp'},
+  'Handstand Push-up (ATR)':{img:'../exercises/handstand-push-up.webp'},
+  'Extension Triceps Banc Incliné Haltères':{img:'../exercises/extension-triceps-banc-incline-halteres.webp'},
+  'Extension Triceps Décliné Haltères':{img:'../exercises/extension-triceps-decline-halteres.webp'},
+  'Extension Triceps Concentrée Poulie':{img:'../exercises/extension-triceps-concentree-poulie.webp'},
+  'Extension Triceps Nuque Élastique':{img:'../exercises/extension-triceps-nuque-elastique.webp'},
+  'Extension Triceps Verticale Élastique':{img:'../exercises/extension-triceps-verticale-elastique.webp'},
+  'Extension Triceps TRX (Sangles)':{img:'../exercises/extension-triceps-trx-sangles.webp'},
+  'Extension Triceps Allongée TRX (Sangles)':{img:'../exercises/extension-triceps-trx-allonge.webp'},
   // Lot « quadri » du 01/08 : 16 exercices qui ENTRENT au catalogue avec leur animation (8 vrais
   // manquants + 5 élastique + 3 TRX). Le matériel est dans le nom — une vignette élastique sur un
   // exercice classique mentirait sur l'exercice (leçon du curl incliné poulie, ft-v703).
@@ -5045,6 +5072,15 @@ const EX_EN={
   'Extension Triceps Arrière (Kickback)':'triceps kickback dumbbell',
   'Triceps Haltère':'triceps overhead extension dumbbell','Triceps Machine':'triceps machine',
   // Jambes
+  // — les 11 nouveaux du lot « triceps » (01/08) —
+  'Dips aux Anneaux':'ring dips','Dips entre Deux Bancs':'bench dips between two benches',
+  'Tate Press':'tate press dumbbell','Handstand Push-up (ATR)':'handstand push up',
+  'Extension Triceps Banc Incliné Haltères':'incline dumbbell triceps extension',
+  'Extension Triceps Décliné Haltères':'decline dumbbell triceps extension',
+  'Extension Triceps Concentrée Poulie':'concentration cable triceps extension',
+  'Extension Triceps Nuque Élastique':'overhead triceps extension resistance band',
+  'Extension Triceps Verticale Élastique':'triceps pushdown resistance band',
+  'Extension Triceps TRX (Sangles)':'trx triceps extension','Extension Triceps Allongée TRX (Sangles)':'trx lying triceps extension',
   // — les 16 du lot « quadri » (01/08) —
   'Squat Poids du Corps (Air Squat)':'air squat bodyweight','Fentes Croisées (Curtsy Lunge)':'curtsy lunge',
   'Jefferson Squat':'jefferson squat','Soulevé de Terre Valise (Suitcase)':'suitcase deadlift',

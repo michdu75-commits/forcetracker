@@ -72,6 +72,13 @@ const EXLIB=[
   {n:'Triceps Poulie',g:'Triceps'},{n:'Triceps Corde Poulie',g:'Triceps'},{n:'Triceps Poulie Basse',g:'Triceps'},
   {n:'Extension Triceps Arrière (Kickback)',g:'Triceps'},{n:'Triceps Haltère',g:'Triceps'},
   {n:'Triceps Machine',g:'Triceps'},
+  // — Lot « triceps » du 01/08 (même principe que le lot quadri : matériel dans le NOM) —
+  {n:'Dips aux Anneaux',g:'Triceps'},{n:'Dips entre Deux Bancs',g:'Triceps'},
+  {n:'Tate Press',g:'Triceps'},{n:'Handstand Push-up (ATR)',g:'Épaules'},
+  {n:'Extension Triceps Banc Incliné Haltères',g:'Triceps'},{n:'Extension Triceps Décliné Haltères',g:'Triceps'},
+  {n:'Extension Triceps Concentrée Poulie',g:'Triceps'},
+  {n:'Extension Triceps Nuque Élastique',g:'Triceps'},{n:'Extension Triceps Verticale Élastique',g:'Triceps'},
+  {n:'Extension Triceps TRX (Sangles)',g:'Triceps'},{n:'Extension Triceps Allongée TRX (Sangles)',g:'Triceps'},
   // ── Jambes ─────────────────────────────────────────────────
   {n:'Squat à la Barre',g:'Jambes'},{n:'Squat Avant',g:'Jambes'},{n:'Squat Bulgare',g:'Jambes'},
   {n:'Squat Gobelet (Goblet Squat)',g:'Jambes'},{n:'Squat Sumo',g:'Jambes'},
