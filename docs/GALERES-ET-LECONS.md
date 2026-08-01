@@ -172,6 +172,31 @@
 
 ---
 
+### 🔁 Leçon croisée avec le projet de Tatiana (01/08/2026) — les mises à jour de PWA, vues deux fois
+
+En aidant l'autre projet (même symptôme que nous en juillet : « il faut vider le cache pour
+mettre à jour »), l'échange avec l'IA d'en face a produit **trois idées qui nous manquent ou
+qu'on ne fait qu'à moitié** :
+
+1. **Le cache se règle aussi CÔTÉ SERVEUR** (`Cache-Control: no-cache` sur `sw.js` et
+   `index.html` uniquement — le reste garde son cache long). `updateViaCache:'none'` ne protège
+   que les appareils qui ont DÉJÀ la version qui le porte ; l'en-tête serveur protège tout le
+   monde. ⚠️ **GitHub Pages ne permet PAS d'en-têtes personnalisés** (cache ~10 min imposé) —
+   c'est une des raisons de considérer Cloudflare Pages si on migre un jour l'hébergement.
+2. **« Prouvé par sabotage »** : chaque protection doit avoir un test qu'on a VU échouer en
+   cassant le code exprès — une vérification qui n'a jamais crié ne vérifie rien. (Nous : c'est
+   notre « contrôle négatif », à maintenir systématique.)
+3. **Un écran ne doit jamais mentir** : liste vide ≠ échec de lecture ; une erreur doit se voir
+   (même un simple ⚠ à côté du numéro de version) ; un écran muet est pire qu'un écran qui se
+   trompe. À garder en tête pour chaque nouvel écran.
+
+**Et l'anti-mythe, dit honnêtement** : « c'est la dernière fois qu'on vide le cache » n'est vrai
+que pour LA panne couverte (le cache HTTP de `sw.js`). Un appareil coincé sur une version
+d'AVANT le correctif doit être débloqué à la main UNE fois — aucun nouveau code ne peut sauver
+un appareil qui refuse d'aller le chercher. Et il reste des cas hors de portée : iOS qui purge
+le stockage, un service worker cassé livré par erreur, quelqu'un qui re-casse les en-têtes plus
+tard (d'où le n° de version toujours visible + les tests par sabotage).
+
 ## 6. ✅ Décisions qu'on ne regrette PAS (les choix structurants)
 
 > Les choix qui ont **réellement** rendu Force Tracker meilleur / plus fiable.
