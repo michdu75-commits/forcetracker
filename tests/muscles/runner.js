@@ -286,6 +286,18 @@ t('⭐ les 14 exercices du 01/08 sont au catalogue, TOUS avec muscles ET schéma
 t('le Svend Press = pectoraux (nouvelle règle hex/svend)', quatorze.svend==='front-delt,pec,triceps', quatorze.svend);
 t('l\'Écarté Incliné reste un ÉCARTÉ (pas un développé — pec sans triceps)',
   quatorze.ecarteIncline==='front-delt,pec', quatorze.ecarteIncline);
+// 01/08 après-midi (envoi Michel « sans rien te dire ») : le Développé Décliné Haltères a sa
+// démo, et l'Écarté Décliné Haltères ENTRE au catalogue — même piège que l'incliné : la règle
+// des développés déclinés l'attrapait (triceps + MET 5,5 pour une isolation).
+const decl=await p.evaluate(()=>{
+  const g=n=>{const d=_mscScores([{name:n,sets:[{done:true}]}])||{};return Object.keys(d.sc||{}).sort().join(',');};
+  return {ecarte:g('Écarté Décliné Haltères'),
+          dev:g('Développé Décliné Haltères'),
+          dansExlib:(EXLIB||[]).some(e=>e&&e.n==='Écarté Décliné Haltères')};
+});
+t('⭐ l\'Écarté DÉCLINÉ est au catalogue, classé ÉCARTÉ (pec sans triceps)',
+  decl.dansExlib&&decl.ecarte==='front-delt,pec', decl.ecarte);
+t('témoin : le Développé Décliné Haltères reste un développé', decl.dev==='front-delt,pec,triceps', decl.dev);
 t('le Muscle Snatch = haltérophilie', quatorze.snatchPat==='halterophilie', quatorze.snatchPat);
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));

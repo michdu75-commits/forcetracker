@@ -20,7 +20,7 @@ const EXLIB=[
   {n:'Pompes',g:'Pectoraux'},
   {n:'Développé Couché avec Chaînes',g:'Pectoraux'},{n:'Développé Couché Larsen (Larsen Press)',g:'Pectoraux'},
   {n:'Développé Couché Unilatéral Kettlebell',g:'Pectoraux'},{n:'Développé Incliné Poulie',g:'Pectoraux'},
-  {n:'Écarté Incliné Haltères',g:'Pectoraux'},{n:'Écarté Hyght (Hyght Fly)',g:'Pectoraux'},
+  {n:'Écarté Incliné Haltères',g:'Pectoraux'},{n:'Écarté Décliné Haltères',g:'Pectoraux'},{n:'Écarté Hyght (Hyght Fly)',g:'Pectoraux'},
   {n:'Hex Press Smith Machine',g:'Pectoraux'},{n:'Chest Press Poulie Assis',g:'Pectoraux'},
   {n:'Svend Press (Serrage de Plaque)',g:'Pectoraux'},
   {n:'Smith Machine Développé Couché',g:'Pectoraux'},{n:'Smith Machine Développé Incliné',g:'Pectoraux'},

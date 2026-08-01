@@ -1571,7 +1571,7 @@ const _MEX=[
   {re:/^(?!.*ecarte).*(developpe incline|incline bench|incline press|incline halter|chest incline)/i, p:['pec'],            s:['front-delt','triceps']}, // sans « écarté » : l'Écarté Incliné Haltères est un ÉCARTÉ (règle plus bas), pas un développé (01/08)
   {re:/hex press|svend|squeeze press/i,                                        p:['pec'],                              s:['triceps','front-delt']}, // hex/svend press : serrage de plaque ou haltères (ajout 01/08, les 14 du dossier Michel)
   // Pectoraux — décliné (variantes d'écriture)
-  {re:/developpe decline|decline barre|decline halter|chest decline|chest press decline/i, p:['pec'],                    s:['front-delt','triceps']},
+  {re:/^(?!.*ecarte).*(developpe decline|decline barre|decline halter|chest decline|chest press decline)/i, p:['pec'],     s:['front-delt','triceps']}, // sans « écarté » : l'Écarté Décliné Haltères est un ÉCARTÉ, pas un développé (01/08 — même piège que l'incliné)
   // ⚠️ Écarté/fly BUSTE PENCHÉ ou ARRIÈRE = un OISEAU (arrière d'épaule), JAMAIS des pectoraux.
   // Doit rester AVANT les règles « écarté → pec » : le 30/07, « Écarté Haltères Buste Penché »
   // (exercice perso, capture de la fille de Michel) affichait la figurine des PECTORAUX — la
@@ -4872,6 +4872,8 @@ const EX_YT={
   'Développé Couché Unilatéral Kettlebell':{img:'exercises/developpe-couche-unilateral-kettlebell.webp'},
   'Développé Incliné Poulie':{img:'exercises/developpe-incline-poulie.webp'},
   'Écarté Incliné Haltères':{img:'exercises/ecartes-incline-avec-halteres.webp'},
+  'Écarté Décliné Haltères':{img:'exercises/ecartes-decline-avec-halteres.webp'},
+  'Développé Décliné Haltères':{img:'exercises/developpe-decline-halteres.webp'},
   'Écarté Hyght (Hyght Fly)':{img:'exercises/hyght-dumbell-fly.webp'},
   'Hex Press Smith Machine':{img:'exercises/hex-press-a-la-smith-machine.webp'},
   'Chest Press Poulie Assis':{img:'exercises/chest-press-poulie-assis.webp'},
@@ -4910,7 +4912,7 @@ const EX_EN={
   'Pompes':'push up','Développé Couché avec Chaînes':'bench press with chains',
   'Développé Couché Larsen (Larsen Press)':'larsen press','Développé Couché Unilatéral Kettlebell':'single arm kettlebell bench press',
   'Développé Incliné Poulie':'incline cable press','Écarté Incliné Haltères':'incline dumbbell fly',
-  'Écarté Hyght (Hyght Fly)':'hyght dumbbell fly','Hex Press Smith Machine':'hex press smith machine',
+  'Écarté Hyght (Hyght Fly)':'hyght dumbbell fly','Écarté Décliné Haltères':'decline dumbbell fly','Hex Press Smith Machine':'hex press smith machine',
   'Chest Press Poulie Assis':'seated cable chest press','Svend Press (Serrage de Plaque)':'svend press plate',
   'Presse à Cuisses sur le Côté':'side leg press machine','Hack Squat Assis':'seated hack squat machine',
   'Overhead Squat Haltères':'dumbbell overhead squat','Arraché Debout (Muscle Snatch)':'barbell muscle snatch',

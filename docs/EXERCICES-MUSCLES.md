@@ -2,7 +2,7 @@
 
 > **⚙️ FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer : `node tools/exercices-muscles.js`
 > (il interroge les vraies fonctions de l'app : `_mscScores` / `_calSessRegion` / `_movPattern`).
-> Dernière génération : 2026-08-01 · **263 exercices** du catalogue.
+> Dernière génération : 2026-08-01 · **264 exercices** du catalogue.
 >
 > **Comment lire :** les muscles **principaux** sont ceux que la figurine colorie le plus fort,
 > les *secondaires* sont coloriés plus doux. La **région** est celle utilisée par la couleur du
@@ -91,7 +91,7 @@
 | Squat Sumo | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Tirage Cable Fessiers (Cable Pull Through) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 
-## Haut du corps (80 exercices)
+## Haut du corps (81 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -127,6 +127,7 @@
 | Dips Lestés | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Dips Machine Assistée | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Dips Parallèles | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
+| Écarté Décliné Haltères | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Écarté Haltères | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Écarté Hyght (Hyght Fly) | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
 | Écarté Incliné Haltères | **Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
