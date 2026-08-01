@@ -62,7 +62,8 @@ que chacune soit classée : **transmise** · **exclue avec la raison écrite** �
 connu). Une donnée non classée **fait échouer la livraison**.
 *On ne peut plus oublier — on peut seulement décider.* Et une exclusion sans raison est refusée :
 une exclusion dont on a oublié le motif finit toujours par être contournée (R27).
-**État au 28/07 (après ft-v654)** : 90 données · 49 transmises · 38 exclues · **3 trous connus**.
+**État au 02/08 (après ft-v713)** : 50 transmises · 39 exclues · **2 trous connus** (`programmes`,
+`exRestPref`). `customExercises` comblé en ft-v713 : les exercices perso partent avec le catalogue.
 Le 1ᵉʳ trou comblé (`nextPlanned`, ft-v654) a confirmé **R2** au passage : l'Accueil avait sa version
 de la règle « cette annonce tient-elle encore ? », le chat n'en avait aucune — elle vit maintenant
 dans **une seule** fonction que les deux lisent.
@@ -111,10 +112,16 @@ Si Milo redemande sans cesse une information, ce n'est pas qu'il est mal instrui
 **l'interface ne la collecte pas**. Le fix est dans l'INTERFACE.
 *Origine : ft-v604 (écran « Ton entraînement » ajouté à l'inscription) — après des mois de durcissement
 de prompt sur le même symptôme*
-**Croisée 4 fois** : l'inscription (ft-v604) · le **prénom** que le prompt réclamait sans qu'on le
+**Croisée 5 fois** : l'inscription (ft-v604) · le **prénom** que le prompt réclamait sans qu'on le
 transmette (ft-v652) · les **jours à venir** (ft-v658 — « demain mercredi » un mercredi) · les **jours
 passés et les dates de records** (ft-v660 — une séance datée « lundi » alors qu'elle était mardi, et un
 maximal reproposé 2 jours après un record parce que les records n'avaient aucune date).
+**5ᵉ fois — le CATALOGUE d'exercices (ft-v713)** : le prompt demandait à Milo d'employer « un nom
+d'exercice le plus proche possible de la **bibliothèque** »… qu'on ne lui envoyait pas. Mesuré :
+« élastique » et « TRX » apparaissaient **0 fois** dans ses 47 420 caractères de contexte, pour un
+catalogue de 340 exercices. *Le signe qui aurait dû alerter : une consigne qui NOMME une source
+(« la bibliothèque », « ton planning », « ses records ») sans que cette source soit dans le contexte.*
+**À vérifier périodiquement** : pour chaque source citée par le prompt, chercher si elle y est vraiment.
 ⚠️ **Corollaire coûteux, appris à ft-v660** : en corrigeant ft-v658 je n'ai regardé QUE la question
 posée (« demain »). Le même manque existait à **trois autres endroits du même contexte**, et le retour
 suivant est tombé deux heures après. *Quand on trouve une donnée absente, chercher immédiatement ses

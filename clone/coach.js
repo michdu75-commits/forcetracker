@@ -53,6 +53,51 @@ function _cqLabel(quiz,qid,val){
   return Array.isArray(val)?val.map(find).join(', '):find(val);
 }
 // Bloc de contexte injecté dans buildCoachContext
+// ─── LE CATALOGUE D'EXERCICES DE L'APP, FILTRÉ SELON LE LIEU D'ENTRAÎNEMENT ──────────────
+// Michel, 02/08 : « Milo pourrait les proposer ? » — mesuré ce jour-là : NON. Sur les 47 420
+// caractères de contexte, « élastique » apparaissait 0 fois et « TRX » 0 fois, alors que le
+// prompt demandait déjà : « name = un nom d'exercice le plus proche possible de la bibliothèque ».
+// ⚠️ On demandait à Milo de viser une bibliothèque qu'on ne lui montrait pas → R8 (« un prompt ne
+// compense jamais une donnée absente »), pour la 5ᵉ fois du projet.
+// FILTRÉ, pas en entier (décision Michel) : envoyer les 340 noms coûterait +18 % de contexte, or
+// l'audit du 28/07 a montré que les consignes (91 % du texte) noient déjà les infos sur la personne
+// — c'est R20 appliqué au prompt de Milo. Filtré par le lieu : +4 % à la maison, +13 % en salle.
+// Le tri réutilise `_exEquip()` (log.js), le rangement par matériel de ft-v697/711 — R13 (enrichir
+// l'existant) : aucune 2ᵉ liste à maintenir, donc rien qui puisse diverger (R2).
+const _CAT_LIEUX={
+  salle:{lbl:'Salle complète',      bacs:['barre','libre','guide','corps','elast','trx','cardio','autre']},
+  basic:{lbl:'Salle basique',       bacs:['barre','libre','corps','elast','trx','cardio','autre']}, // peu de machines → on retire « guidé »
+  maison:{lbl:'Maison avec matériel',bacs:['elast','trx','corps','libre','autre']},
+  pdc:{lbl:'Maison sans matériel',  bacs:['corps']}
+};
+function _catalogueContext(){
+  if(typeof EXLIB==='undefined'||typeof _exEquip!=='function')return '';
+  const place=(S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.place)||'';
+  const cfg=_CAT_LIEUX[place]||null;
+  const noms=[...new Set(EXLIB.map(e=>e.n))];           // EXLIB liste un squat 2× (Jambes + Fessiers)
+  const bacs={};
+  noms.forEach(n=>{
+    const eq=_exEquip(n);
+    if(cfg&&cfg.bacs.indexOf(eq)<0)return;
+    (bacs[eq]=bacs[eq]||[]).push(n);
+  });
+  const LBL={barre:'Barre',libre:'Haltères / kettlebell',guide:'Machines et poulies',
+             corps:'Poids du corps',elast:'Élastique',trx:'TRX / sangles',cardio:'Cardio',autre:'Polyvalent'};
+  const lignes=Object.keys(LBL).filter(k=>bacs[k]&&bacs[k].length)
+    .map(k=>`- ${LBL[k]} : ${bacs[k].sort((a,b)=>a.localeCompare(b,'fr')).join(' · ')}`);
+  if(!lignes.length)return '';
+  // Les exercices PERSO de la personne comptent autant que la bibliothèque : ils étaient jusqu'ici
+  // un « trou connu » du garde-fou des données (R4a). Ils partent quel que soit le lieu : elle les
+  // a créés exprès, c'est donc qu'elle peut les faire.
+  const perso=(S.customExercises||[]).map(e=>e&&e.n).filter(Boolean);
+  const entete = cfg
+    ? `Il s'entraîne : ${cfg.lbl} → voici ce qu'il peut faire (les autres exercices de l'app ne lui servent pas ici).`
+    : `Son lieu d'entraînement n'est pas renseigné → voici TOUT le catalogue. Ne suppose pas son matériel : si ça compte pour ta réponse, demande-lui.`;
+  return '\n🏋️ EXERCICES DISPONIBLES DANS SON APPLICATION — '+entete
+    +'\n⚠️ Quand tu proposes un exercice, prends-le dans cette liste et écris son nom EXACTEMENT : c\'est ce qui permet à l\'app de le reconnaître, d\'afficher sa démonstration et de suivre ses records. Si ce dont il a besoin n\'y est pas, dis-le simplement.\n'
+    +lignes.join('\n')
+    +(perso.length?`\n- SES exercices perso (créés par lui, à privilégier) : ${perso.join(' · ')}`:'');
+}
 function _coachQuizContext(){
   const out=[];
   const fmt=(quiz,ans)=>{
@@ -1475,6 +1520,7 @@ ${(()=>{
   return '\n📐 ÉTUDE DU CORPS DE L\'UTILISATEUR — tu AS ce bilan (résumé texte de ses photos, réalisé le '+(bs.date||'?')+'). Tu DOIS t\'en servir pour cibler ses déséquilibres et proposer des exercices correctifs. NE DIS JAMAIS que tu n\'as pas accès à son bilan ni à ses photos : tu en as le résumé complet ci-dessous.\n- '+L.join('\n- ');
 })()}
 ${_coachQuizContext()}
+${_catalogueContext()}
 ${(()=>{
   // REGISTRE ATHLÈTE (Dossier Athlète, brique 1 = socle) — mémoire durable.
   // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.

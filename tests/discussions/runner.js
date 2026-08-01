@@ -157,6 +157,45 @@ console.log('\n─── LA CONVERSATION NE SE PERD PLUS ───────�
   await q.c.close();
 }
 
+// ── 7. LE CATALOGUE D'EXERCICES est-il transmis à Milo, filtré selon le lieu ? ────
+// (Michel, 02/08 : « Milo pourrait les proposer ? » — mesuré : NON. « élastique » et « TRX »
+// apparaissaient 0 fois dans les 47 420 caractères, alors que le prompt lui demandait déjà
+// d'employer « un nom d'exercice le plus proche possible de la bibliothèque ». R8.)
+{
+  const q=await page();
+  const r=await q.p.evaluate(()=>{
+    const mes=(place)=>{ S.coachQuiz={answers:place?{place}:{}}; S.customExercises=[];
+      const c=buildCoachContext();
+      return {taille:c.length, entete:/EXERCICES DISPONIBLES DANS SON APPLICATION/.test(c),
+              elast:/Écarté Élastique/.test(c), trx:/Squat TRX \(Sangles\)/.test(c),
+              machine:/Leg Press/.test(c), barre:/Squat à la Barre/.test(c),
+              nePasSupposer:/Ne suppose pas son matériel/.test(c)}; };
+    const o={maison:mes('maison'), pdc:mes('pdc'), salle:mes('salle'), inconnu:mes('')};
+    S.coachQuiz={answers:{place:'maison'}}; S.customExercises=[{n:'Ma Machine Perso',g:'Dos'}];
+    o.perso=/Ma Machine Perso/.test(buildCoachContext());
+    S.customExercises=[];
+    return o;
+  });
+  t('⭐ Milo reçoit le catalogue d\'exercices de l\'app',
+    r.maison.entete&&r.salle.entete&&r.pdc.entete, JSON.stringify(r.maison));
+  t('⭐ « maison » → il voit l\'élastique et le TRX, PAS les machines ni la barre',
+    r.maison.elast&&r.maison.trx&&!r.maison.machine&&!r.maison.barre, JSON.stringify(r.maison));
+  t('« maison sans matériel » → poids du corps seul (ni élastique, ni TRX, ni machine)',
+    !r.pdc.elast&&!r.pdc.trx&&!r.pdc.machine&&!r.pdc.barre, JSON.stringify(r.pdc));
+  t('« salle complète » → il voit tout, machines et barre comprises',
+    r.salle.machine&&r.salle.barre&&r.salle.elast, JSON.stringify(r.salle));
+  t('lieu NON renseigné → tout le catalogue, et la consigne de ne pas supposer le matériel',
+    r.inconnu.machine&&r.inconnu.elast&&r.inconnu.nePasSupposer, JSON.stringify(r.inconnu));
+  t('⭐ les exercices PERSO de la personne partent aussi (ex-trou du garde-fou des données)',
+    r.perso, String(r.perso));
+  // Garde-fou de coût : le contexte ne doit pas exploser (l'audit du 28/07 a montré que les
+  // consignes noient déjà les infos sur la personne — R20 appliqué au prompt de Milo).
+  t('le coût reste borné : « maison » sous 55 000 et « salle » sous 60 000 caractères',
+    r.maison.taille<55000&&r.salle.taille<60000,
+    'maison='+r.maison.taille+' salle='+r.salle.taille);
+  await q.c.close();
+}
+
 console.log('──────────────────────────────────────────────────────────');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
 await b.close(); srv.close(); process.exit(ko?1:0);
