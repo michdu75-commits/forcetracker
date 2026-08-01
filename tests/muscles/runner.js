@@ -300,6 +300,41 @@ t('⭐ l\'Écarté DÉCLINÉ est au catalogue, classé ÉCARTÉ (pec sans tricep
 t('témoin : le Développé Décliné Haltères reste un développé', decl.dev==='front-delt,pec,triceps', decl.dev);
 t('le Muscle Snatch = haltérophilie', quatorze.snatchPat==='halterophilie', quatorze.snatchPat);
 
+// ── LOT « QUADRI » du 01/08 (soir) : 16 exercices jambes, dont 5 ÉLASTIQUE et 3 TRX.
+// Le matériel est dans le NOM (décision Michel) — donc ces noms passent par les mêmes règles que
+// les exercices classiques : on vérifie que « élastique »/« TRX » ne dérègle RIEN au classement.
+const quadri=await p.evaluate(()=>{
+  const noms=['Squat Poids du Corps (Air Squat)','Fentes Croisées (Curtsy Lunge)','Jefferson Squat',
+    'Soulevé de Terre Valise (Suitcase)','Squat Sauté (Jump Squat)','Squat avec Rotation du Tronc',
+    'Sissy Squat Machine','Extension Quadriceps Unilatérale Machine à Dips','Squat Bulgare Élastique',
+    'Extension Quadriceps Élastique','Overhead Squat Élastique','Split Squat Élastique (Fente Statique)',
+    'Squat Barre avec Bandes Élastiques','Squat TRX (Sangles)','Split Squat TRX (Sangles)',
+    'Squat Pistol TRX (Sangles)'];
+  const g=n=>{const d=_mscScores([{name:n,sets:[{done:true}]}])||{};return Object.keys(d.sc||{}).sort().join(',');};
+  const out={dansExlib:0,avecMuscles:0,avecPattern:0};
+  for(const n of noms){
+    if((EXLIB||[]).some(e=>e&&e.n===n))out.dansExlib++;
+    if(g(n).length)out.avecMuscles++;
+    if(_movPattern(n))out.avecPattern++;
+  }
+  // la version élastique doit se classer comme sa version classique (même mouvement, autre charge)
+  out.legExtElast=g('Extension Quadriceps Élastique');
+  out.legExtClass=g('Extension Quadriceps (Leg Extension)');
+  out.bulgareElast=_movPattern('Squat Bulgare Élastique');
+  out.bulgareClass=_movPattern('Squat Bulgare');
+  out.trxSquat=_movPattern('Squat TRX (Sangles)');
+  out.valise=_movPattern('Soulevé de Terre Valise (Suitcase)');
+  return out;
+});
+t('⭐ les 16 exercices « quadri » sont au catalogue, TOUS avec muscles ET schéma',
+  quadri.dansExlib===16&&quadri.avecMuscles===16&&quadri.avecPattern===16, JSON.stringify(quadri));
+t('la version ÉLASTIQUE se classe comme la version classique (leg extension = quads seuls)',
+  quadri.legExtElast==='quads'&&quadri.legExtClass==='quads', quadri.legExtElast+' vs '+quadri.legExtClass);
+t('témoin : « Élastique » ne change pas le schéma de mouvement (bulgare = fente des 2 côtés)',
+  quadri.bulgareElast==='fente'&&quadri.bulgareClass==='fente', quadri.bulgareElast+' vs '+quadri.bulgareClass);
+t('« TRX (Sangles) » reste un squat · le Soulevé de Terre Valise est une charnière de hanche',
+  quadri.trxSquat==='squat'&&quadri.valise==='hip-hinge', quadri.trxSquat+' / '+quadri.valise);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

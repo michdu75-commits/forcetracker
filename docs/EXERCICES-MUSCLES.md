@@ -2,7 +2,7 @@
 
 > **⚙️ FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer : `node tools/exercices-muscles.js`
 > (il interroge les vraies fonctions de l'app : `_mscScores` / `_calSessRegion` / `_movPattern`).
-> Dernière génération : 2026-08-01 · **266 exercices** du catalogue.
+> Dernière génération : 2026-08-01 · **282 exercices** du catalogue.
 >
 > **Comment lire :** les muscles **principaux** sont ceux que la figurine colorie le plus fort,
 > les *secondaires* sont coloriés plus doux. La **région** est celle utilisée par la couleur du
@@ -10,7 +10,7 @@
 > mêmes règles (il est reconnu par son nom).
 
 
-## Bas du corps (76 exercices)
+## Bas du corps (91 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -29,9 +29,12 @@
 | Élévations Mollets Unilatéral | **Mollets** | — | Extension de cheville (mollets) |
 | Extension Fessiers Arrière (Kickback) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 | Extension Quadriceps (Leg Extension) | **Quadriceps** | — | Extension de genou (quadriceps) |
+| Extension Quadriceps Élastique | **Quadriceps** | — | Extension de genou (quadriceps) |
 | Extension Quadriceps Unilatérale | **Quadriceps** | — | Extension de genou (quadriceps) |
+| Extension Quadriceps Unilatérale Machine à Dips | **Quadriceps** | — | Extension de genou (quadriceps) |
 | Fentes | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
 | Fentes Arrière | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
+| Fentes Croisées (Curtsy Lunge) | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
 | Fentes Kettlebell | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
 | Fentes Latérales | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
 | Fentes Marchées | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
@@ -48,6 +51,7 @@
 | Hyperextension Machine | **Bas du dos, Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Inclinaison Lombaire (Good Morning) | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Charnière de hanche (hip hinge) |
 | Jefferson Curl | **Bas du dos, Fessiers** | Ischio-jambiers | Flexion du coude (biceps) |
+| Jefferson Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Kettlebell Swing | **Fessiers, Ischio-jambiers** | Bas du dos, Quadriceps | Charnière de hanche (hip hinge) |
 | Kickback Cable | **Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Kickback Machine | **Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
@@ -62,6 +66,7 @@
 | Montée sur Box (Step-up) | **Quadriceps, Fessiers** | Mollets, Ischio-jambiers | Fente |
 | Montée sur Box Haltères | **Quadriceps, Fessiers** | Mollets, Ischio-jambiers | Fente |
 | Overhead Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Overhead Squat Élastique | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Overhead Squat Haltères | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Pendulum Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Pin Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
@@ -77,18 +82,28 @@
 | Safety Bar Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Sauts à la Corde | **Mollets** | Quadriceps | Saut / pliométrie |
 | Sissy Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Extension de genou (quadriceps) |
+| Sissy Squat Machine | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Extension de genou (quadriceps) |
 | Sled Push | **Quadriceps, Fessiers** | Mollets, Abdominaux | Squat (flexion hanche+genou) |
 | Smith Machine Fentes | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
 | Smith Machine Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Split Squat Élastique (Fente Statique) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Fente |
+| Split Squat TRX (Sangles) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Fente |
 | Squat à la Barre | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Squat Avant | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Squat avec Rotation du Tronc | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Squat Bande Élastique | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Squat Barre avec Bandes Élastiques | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Squat Bulgare | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Fente |
+| Squat Bulgare Élastique | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Fente |
 | Squat Gobelet (Goblet Squat) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Squat Hack (Hack Squat) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Squat Kettlebell | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Squat Pistol | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Squat Pistol TRX (Sangles) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Squat Poids du Corps (Air Squat) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Squat Sauté (Jump Squat) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Squat Sumo | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Squat TRX (Sangles) | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Tirage Cable Fessiers (Cable Pull Through) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 
 ## Haut du corps (81 exercices)
@@ -267,7 +282,7 @@
 | Superman | **Abdominaux, Bas du dos** | Obliques, Deltoïdes ant., Fessiers | Charnière de hanche (hip hinge) |
 | Windshield Wiper | **Abdominaux, Obliques** | Fléchisseurs, Deltoïdes ant. | Gainage / abdominaux |
 
-## Full body (29 exercices)
+## Full body (30 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -294,6 +309,7 @@
 | Soulevé de Terre Sumo Kettlebell | **Fessiers, Ischio-jambiers, Bas du dos** | Quadriceps, Trapèzes, Grand dorsal, Avant-bras | Charnière de hanche (hip hinge) |
 | Soulevé de Terre Sumo Landmine | **Fessiers, Ischio-jambiers, Bas du dos** | Quadriceps, Trapèzes, Grand dorsal, Avant-bras | Charnière de hanche (hip hinge) |
 | Soulevé de Terre Trap Bar | **Fessiers, Ischio-jambiers, Bas du dos** | Quadriceps, Trapèzes, Grand dorsal, Avant-bras | Charnière de hanche (hip hinge) |
+| Soulevé de Terre Valise (Suitcase) | **Fessiers, Ischio-jambiers, Bas du dos** | Quadriceps, Trapèzes, Grand dorsal, Avant-bras | Charnière de hanche (hip hinge) |
 | Thruster | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Poussée verticale (au-dessus de la tête) |
 | Thruster Kettlebell | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Poussée verticale (au-dessus de la tête) |
 | Thrusters Haltères | **Quadriceps, Deltoïdes ant.** | Fessiers, Trapèzes, Abdominaux, Triceps | Poussée verticale (au-dessus de la tête) |

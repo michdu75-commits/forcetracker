@@ -4908,6 +4908,25 @@ const EX_YT={
   'Soulevé de Terre Roumain Haltères':{img:'../exercises/souleve-de-terre-roumain-halteres.webp'},
   'Soulevé de Terre Roumain Unilatéral':{img:'../exercises/souleve-de-terre-roumain-unilateral.webp'}, // style vidéo sombre (seule dispo) — à remplacer si mieux un jour
   'Hip Thrust Unilatéral (Poussée de Hanche)':{img:'../exercises/hip-thrust-barre-unilateral.webp'},
+  // Lot « quadri » du 01/08 : 16 exercices qui ENTRENT au catalogue avec leur animation (8 vrais
+  // manquants + 5 élastique + 3 TRX). Le matériel est dans le nom — une vignette élastique sur un
+  // exercice classique mentirait sur l'exercice (leçon du curl incliné poulie, ft-v703).
+  'Squat Poids du Corps (Air Squat)':{img:'../exercises/squat-poids-du-corps-air-squat.webp'},
+  'Fentes Croisées (Curtsy Lunge)':{img:'../exercises/fentes-croisees-curtsy-lunge.webp'},
+  'Jefferson Squat':{img:'../exercises/jefferson-squat.webp'},
+  'Soulevé de Terre Valise (Suitcase)':{img:'../exercises/souleve-de-terre-valise.webp'},
+  'Squat Sauté (Jump Squat)':{img:'../exercises/squat-saute-jump-squat.webp'},
+  'Squat avec Rotation du Tronc':{img:'../exercises/squat-avec-rotation-du-tronc.webp'},
+  'Sissy Squat Machine':{img:'../exercises/sissy-squat-machine.webp'},
+  'Extension Quadriceps Unilatérale Machine à Dips':{img:'../exercises/extension-quadriceps-unilaterale-machine-dips.webp'},
+  'Squat Bulgare Élastique':{img:'../exercises/squat-bulgare-elastique.webp'},
+  'Extension Quadriceps Élastique':{img:'../exercises/extension-quadriceps-elastique.webp'},
+  'Overhead Squat Élastique':{img:'../exercises/overhead-squat-elastique.webp'},
+  'Split Squat Élastique (Fente Statique)':{img:'../exercises/split-squat-elastique.webp'},
+  'Squat Barre avec Bandes Élastiques':{img:'../exercises/squat-barre-avec-bandes-elastiques.webp'},
+  'Squat TRX (Sangles)':{img:'../exercises/squat-trx-sangles.webp'},
+  'Split Squat TRX (Sangles)':{img:'../exercises/split-squat-trx-sangles.webp'},
+  'Squat Pistol TRX (Sangles)':{img:'../exercises/squat-pistol-trx-sangles.webp'},
   // Lot mollets + triceps (01/08, envoi du soir) — chaque animation vérifiée AVANT branchement :
   // le « barre au front » est bien la version allongée au banc (skull crusher), et les deux mollets
   // sont les versions BARRE (debout sur les épaules / assis barre sur les genoux). Le mouvement est
@@ -5026,6 +5045,15 @@ const EX_EN={
   'Extension Triceps Arrière (Kickback)':'triceps kickback dumbbell',
   'Triceps Haltère':'triceps overhead extension dumbbell','Triceps Machine':'triceps machine',
   // Jambes
+  // — les 16 du lot « quadri » (01/08) —
+  'Squat Poids du Corps (Air Squat)':'air squat bodyweight','Fentes Croisées (Curtsy Lunge)':'curtsy lunge',
+  'Jefferson Squat':'jefferson squat','Soulevé de Terre Valise (Suitcase)':'suitcase deadlift',
+  'Squat Sauté (Jump Squat)':'jump squat','Squat avec Rotation du Tronc':'squat with torso rotation',
+  'Sissy Squat Machine':'sissy squat machine','Extension Quadriceps Unilatérale Machine à Dips':'single leg extension assisted dip machine',
+  'Squat Bulgare Élastique':'bulgarian split squat resistance band','Extension Quadriceps Élastique':'leg extension resistance band',
+  'Overhead Squat Élastique':'overhead squat resistance band','Split Squat Élastique (Fente Statique)':'split squat resistance band',
+  'Squat Barre avec Bandes Élastiques':'banded barbell squat',
+  'Squat TRX (Sangles)':'trx squat','Split Squat TRX (Sangles)':'trx split squat','Squat Pistol TRX (Sangles)':'trx pistol squat',
   'Squat à la Barre':'squat barbell','Squat Avant':'front squat','Squat Bulgare':'bulgarian split squat',
   'Squat Gobelet (Goblet Squat)':'goblet squat','Squat Sumo':'sumo squat',
   'Smith Machine Squat':'smith machine squat','Squat Hack (Hack Squat)':'hack squat',

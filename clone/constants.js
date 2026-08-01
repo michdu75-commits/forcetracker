@@ -93,6 +93,19 @@ const EXLIB=[
   {n:'Cossack Squat',g:'Jambes'},{n:'Squat Bande Élastique',g:'Jambes'},{n:'Chaise (Wall Sit)',g:'Jambes'},
   {n:'Presse à Cuisses Iso-Latérale',g:'Jambes'},
   {n:'Presse à Cuisses sur le Côté',g:'Jambes'},{n:'Hack Squat Assis',g:'Jambes'},{n:'Overhead Squat Haltères',g:'Jambes'},{n:'Sled Push',g:'Jambes'},{n:'Croix de Fer Haltères',g:'Épaules'},
+  // — Lot « quadri » du 01/08 (décision Michel : « on ajoute les 8 exercices et mettre une indication
+  //   élastique et TRX »). Le MATÉRIEL est écrit dans le NOM : on peut s'entraîner à la maison, et la
+  //   recherche « élastique » ou « TRX » les trouve tous d'un coup. Chacun est classé dès son entrée
+  //   (muscles, schéma de mouvement, calories, terme YouTube) — jamais d'exercice muet.
+  {n:'Squat Poids du Corps (Air Squat)',g:'Jambes'},{n:'Fentes Croisées (Curtsy Lunge)',g:'Jambes'},
+  {n:'Jefferson Squat',g:'Jambes'},{n:'Soulevé de Terre Valise (Suitcase)',g:'Jambes'},
+  {n:'Squat Sauté (Jump Squat)',g:'Jambes'},{n:'Squat avec Rotation du Tronc',g:'Jambes'},
+  {n:'Sissy Squat Machine',g:'Jambes'},{n:'Extension Quadriceps Unilatérale Machine à Dips',g:'Jambes'},
+  {n:'Squat Bulgare Élastique',g:'Jambes'},{n:'Extension Quadriceps Élastique',g:'Jambes'},
+  {n:'Overhead Squat Élastique',g:'Jambes'},{n:'Split Squat Élastique (Fente Statique)',g:'Jambes'},
+  {n:'Squat Barre avec Bandes Élastiques',g:'Jambes'},
+  {n:'Squat TRX (Sangles)',g:'Jambes'},{n:'Split Squat TRX (Sangles)',g:'Jambes'},
+  {n:'Squat Pistol TRX (Sangles)',g:'Jambes'},
   // ── Fessiers ───────────────────────────────────────────────
   {n:'Hip Thrust Barre (Poussée de Hanche)',g:'Fessiers'},{n:'Hip Thrust Haltère (Poussée de Hanche)',g:'Fessiers'},{n:'Hip Thrust Machine (Poussée de Hanche)',g:'Fessiers'},{n:'Hip Thrust Unilatéral (Poussée de Hanche)',g:'Fessiers'},
   {n:'Pont Fessier (Glute Bridge)',g:'Fessiers'},
@@ -200,6 +213,7 @@ const PREMIUM_PERKS=[
 ];
 
 const NEW_FEATURES=[
+  {id:'exos-maison', screen:'log', desc:'Nouveau : 16 exercices jambes ajoutés avec leur animation — dont les versions ÉLASTIQUE et TRX (le matériel est écrit dans le nom : cherche « élastique » ou « TRX » pour les trouver d\'un coup). Pratique pour s\'entraîner à la maison'},
   {id:'prog-note', screen:'log', desc:'Nouveau : un champ 💬 Commentaire par exercice dans l\'éditeur de programme (✏️ dans Mes Programmes) — écris ta consigne (réglage machine, prise, posture…), elle s\'affiche à chaque séance. Et rappel : la colonne « Repos » y règle le temps de repos série par série'},
   {id:'exos-aout', screen:'log', desc:'Nouveau : 14 exercices ajoutés au catalogue avec leurs animations (Pompes, Larsen press, Svend press, Hex press, écartés inclinés/Hyght, presses à cuisses, Hack Squat assis, Overhead Squat haltères, Muscle Snatch…) — et les presses à cuisses + le Hack Squat ont maintenant de vraies animations'},
   // Accueil
