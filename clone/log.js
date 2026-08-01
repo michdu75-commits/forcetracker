@@ -4828,7 +4828,8 @@ const EX_YT={
   'Adduction Cuisses (Leg Adduction)':{img:'../exercises/leg-adduction-machine-v2.webp'},
   'Chest Press Machine Déclinée':  {img:'../exercises/chest-press-machine-declinee.webp'},
   'Dips Parallèles':               {img:'../exercises/dips-triceps-paralleles.webp'},
-  'Montée sur Box Haltères':       {img:'../exercises/montees-banc-lateral-halteres.webp'},
+  'Montée sur Box (Step-up)':      {img:'../exercises/montee-sur-box-barre.webp'}, // version barre (envoi Michel 01/08)
+  'Montée sur Box Haltères':       {img:'../exercises/montee-sur-box-halteres-classique.webp'}, // la montée CLASSIQUE remplace l'ancienne démo latérale (01/08)
   'Dips Machine Assistée':         {img:'../exercises/dips-assiste-machine.webp'},
   'Dips Assis Machine (Seated Dip)':{img:'../exercises/dips-assis-machine-avec-poids.webp'},
   'Développé Nuque':               {img:'../exercises/developpe-nuque-barre-guidee.webp'},

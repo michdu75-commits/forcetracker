@@ -2,7 +2,7 @@
 
 > **⚙️ FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer : `node tools/exercices-muscles.js`
 > (il interroge les vraies fonctions de l'app : `_mscScores` / `_calSessRegion` / `_movPattern`).
-> Dernière génération : 2026-08-01 · **265 exercices** du catalogue.
+> Dernière génération : 2026-08-01 · **264 exercices** du catalogue.
 >
 > **Comment lire :** les muscles **principaux** sont ceux que la figurine colorie le plus fort,
 > les *secondaires* sont coloriés plus doux. La **région** est celle utilisée par la couleur du
@@ -10,7 +10,7 @@
 > mêmes règles (il est reconnu par son nom).
 
 
-## Bas du corps (77 exercices)
+## Bas du corps (76 exercices)
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
@@ -36,7 +36,6 @@
 | Fentes Latérales | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
 | Fentes Marchées | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
 | Glute Ham Raise (GHD) | **Bas du dos, Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
-| Good Morning Haltères | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Charnière de hanche (hip hinge) |
 | Hack Squat Assis | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Hack Squat Inversé | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Hip Thrust Barre (Poussée de Hanche) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |

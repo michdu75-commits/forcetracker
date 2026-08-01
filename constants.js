@@ -124,7 +124,7 @@ const EXLIB=[
   // ── Lombaires ──────────────────────────────────────────────
   {n:'Hyperextension (Back Extension)',g:'Lombaires'},{n:'Hyperextension Inverse (Reverse Hyper)',g:'Lombaires'},
   {n:'Hyperextension Lestée',g:'Lombaires'},{n:'Hyperextension Machine',g:'Lombaires'},
-  {n:'Inclinaison Lombaire (Good Morning)',g:'Lombaires'},{n:'Good Morning Haltères',g:'Lombaires'},
+  {n:'Inclinaison Lombaire (Good Morning)',g:'Lombaires'}, // « Good Morning Haltères » supprimé le 01/08 (décision Michel)
   {n:'Soulevé de Terre',g:'Lombaires'},{n:'Soulevé de Terre Roumain Barre',g:'Lombaires'},
   {n:'Jefferson Curl',g:'Lombaires'},{n:'Tirage en Rack (Rack Pull)',g:'Lombaires'},
   {n:'Superman',g:'Lombaires'},
