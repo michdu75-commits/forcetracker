@@ -345,6 +345,39 @@ t('⭐ l\'historique de l\'Étude du corps apparaît dès le PREMIER bilan (au s
 // 01/08 : le dossier source de Michel contenait 7 animations jamais branchées (les presses à
 // cuisses et le hack squat n'avaient que des PHOTOS FIXES, le Squat Avant montrait la version
 // haltères, l'épaulé-jeté et les mollets machine n'avaient RIEN).
+t('le Hip Thrust BARRE a sa démo (distincte de la machine — envoi Michel 01/08)',
+  (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
+        return lg.indexOf("'Hip Thrust Barre (Poussée de Hanche)':{img:'exercises/hip-thrust-barre.webp'}")>=0
+            && lg.indexOf("'Hip Thrust Machine (Poussée de Hanche)':")>=0
+            && fs.existsSync(path.join(ROOT,'exercises/hip-thrust-barre.webp'));})());
+
+// ════ Renommage Hip Thrust (01/08, Michel : « des noms chelou c'est galère ») ════
+// L'historique est rangé par NOM : une séance/un record sous l'ANCIEN nom doit migrer
+// au chargement — sinon les records et les courbes se déconnectent du nouveau nom.
+{
+  const c2=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p2=await c2.newPage();
+  await p2.addInitScript(seedScript({
+    ft4_sessions:JSON.stringify([{date:'2026-07-20',exs:[{name:'Poussée de Hanche (Hip Thrust)',sets:[{kg:80,reps:10,done:true,type:'N'}]}],volume:800}]),
+    ft4_prs:JSON.stringify({'Poussée de Hanche (Hip Thrust)':{rm1:106.7,kg:80,reps:10,date:'2026-07-20'}}),
+    ft4_exRp:JSON.stringify({'Poussée de Hanche Machine':90}),
+  }));
+  await p2.goto('http://localhost:'+PORT+'/index.html');
+  await p2.waitForTimeout(2200);
+  const M2=await p2.evaluate(()=>({
+    sess:S.sessions[0].exs[0].name,
+    pr:Object.keys(S.prs)[0],
+    prVal:S.prs['Hip Thrust Barre (Poussée de Hanche)']&&S.prs['Hip Thrust Barre (Poussée de Hanche)'].rm1,
+    rest:Object.keys(S.exRestPref)[0],
+  }));
+  t('⭐ une vieille séance « Poussée de Hanche (Hip Thrust) » migre vers le nouveau nom',
+    M2.sess==='Hip Thrust Barre (Poussée de Hanche)', 'reçu '+M2.sess);
+  t('⭐ le RECORD migre avec sa valeur (les courbes ne se déconnectent pas)',
+    M2.pr==='Hip Thrust Barre (Poussée de Hanche)'&&M2.prVal===106.7, M2.pr+' / '+M2.prVal);
+  t('le repos préféré de la version Machine migre aussi',
+    M2.rest==='Hip Thrust Machine (Poussée de Hanche)', 'reçu '+M2.rest);
+  await c2.close();
+}
 t('les 3 variantes de pompes ont leur démo (déficit, diamant, lestées — envoi Michel 01/08)',
   (()=>{const lg=fs.readFileSync(path.join(ROOT,'log.js'),'utf8');
         return ['pompes-deficit','pompes-diamant','pompes-lestees']

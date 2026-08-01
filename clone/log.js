@@ -1142,7 +1142,7 @@ Object.assign(_EX_EQUIV,{
   // Dos poulie basse
   'low row':'Rowing Cable',
   // Machine fessier (hip thrust machine)
-  'booty builder':'Poussée de Hanche Machine','glute drive':'Poussée de Hanche Machine',
+  'booty builder':'Hip Thrust Machine (Poussée de Hanche)','glute drive':'Hip Thrust Machine (Poussée de Hanche)',
   // CORRECTIONS de mauvais matchs révélés par le stress-test
   'tirage devant':'Tirage Poulie Haute','lat pull':'Tirage Poulie Haute',
   'reverse pec fly':'Machine Oiseau','reverse fly':'Machine Oiseau','reverse pec deck':'Machine Oiseau','ecarte inverse machine':'Machine Oiseau',
@@ -1300,8 +1300,8 @@ Object.assign(_EX_EQUIV,{
   'diamond push up':'Pompes Diamant','diamond pushup':'Pompes Diamant',
   'pompes avec lest':'Pompes Lestées','weighted push up':'Pompes Lestées','weighted pushup':'Pompes Lestées',
   'bridge':'Pont Fessier (Glute Bridge)','floor bridge':'Pont Fessier (Glute Bridge)','glute bridge':'Pont Fessier (Glute Bridge)',
-  'barbell hip thrust':'Poussée de Hanche (Hip Thrust)','db hip thrust':'Poussée de Hanche (Hip Thrust)','dumbbell hip thrust':'Poussée de Hanche (Hip Thrust)','glute thrust':'Poussée de Hanche (Hip Thrust)','hip thrust':'Poussée de Hanche (Hip Thrust)','hip thrust barbell':'Poussée de Hanche (Hip Thrust)','hip thrust halteres':'Poussée de Hanche (Hip Thrust)',
-  'hip thrust machine':'Poussée de Hanche Machine','machine hip thrust':'Poussée de Hanche Machine',
+  'barbell hip thrust':'Hip Thrust Barre (Poussée de Hanche)','db hip thrust':'Hip Thrust Barre (Poussée de Hanche)','dumbbell hip thrust':'Hip Thrust Barre (Poussée de Hanche)','glute thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust':'Hip Thrust Barre (Poussée de Hanche)','hip thrust barbell':'Hip Thrust Barre (Poussée de Hanche)','hip thrust halteres':'Hip Thrust Barre (Poussée de Hanche)',
+  'hip thrust machine':'Hip Thrust Machine (Poussée de Hanche)','machine hip thrust':'Hip Thrust Machine (Poussée de Hanche)',
   'cable pullover':'Pull-over','pullover poulie':'Pull-over','straight arm lat pulldown':'Pull-over','straight arm pulldown':'Pull-over',
   'machine pullover':'Pullover Machine','nautilus pullover':'Pullover Machine',
   'barbell bent over row':'Rowing Barre','barbell row':'Rowing Barre','bb row':'Rowing Barre','bent over dumbbell row':'Rowing Barre','bent over row':'Rowing Barre','bent row':'Rowing Barre','db row':'Rowing Barre','dumbbell row':'Rowing Barre','rowing barre pronation':'Rowing Barre','rowing deux halteres':'Rowing Barre','rowing halteres':'Rowing Barre',
@@ -3882,7 +3882,7 @@ function _beginnerProg(gender, style, freq){
     if(freq===3){
       // Push / Pull / Legs
       name='Premiers pas — Push/Pull/Legs';
-      const legs=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Poussée de Hanche Machine')];
+      const legs=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Hip Thrust Machine (Poussée de Hanche)')];
       if(F)legs.push(ex('Abduction Cuisses (Leg Abduction)'));
       legs.push(ex('Gainage',30));
       days=[
@@ -3893,7 +3893,7 @@ function _beginnerProg(gender, style, freq){
     }else{
       // Haut / Bas (2 jours)
       name='Premiers pas — Haut/Bas';
-      const bas=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Poussée de Hanche Machine')];
+      const bas=[ex('Press Jambes 45°'),ex('Leg Curl Assis Machine'),ex('Extension Quadriceps (Leg Extension)'),ex('Hip Thrust Machine (Poussée de Hanche)')];
       if(F)bas.push(ex('Abduction Cuisses (Leg Abduction)'));
       bas.push(ex('Gainage',30));
       days=[
@@ -3905,7 +3905,7 @@ function _beginnerProg(gender, style, freq){
     // Full Body (tout le corps à chaque séance)
     name='Premiers pas — Full Body';
     const fb1=[ex('Press Jambes 45°'),ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute'),ex('Développé Épaules Machine')];
-    if(F)fb1.push(ex('Poussée de Hanche Machine'));
+    if(F)fb1.push(ex('Hip Thrust Machine (Poussée de Hanche)'));
     fb1.push(ex('Gainage',30));
     const fb2=[ex('Leg Curl Assis Machine'),ex('Pec Deck'),ex('Rowing Machine'),ex('Curl Machine'),ex('Crunch Machine',15)];
     const fb3=[ex('Extension Quadriceps (Leg Extension)'),ex('Chest Press Machine Inclinée'),ex('Tirage Poulie Haute Prise Serrée'),ex('Triceps Machine'),ex('Gainage',30)];
@@ -4803,7 +4803,7 @@ const EX_YT={
   'Extension Quadriceps (Leg Extension)':{img:'../exercises/leg-extension-exercice-musculation.webp'},
   'Fentes Marchées':               {img:'../exercises/fentes-marchees-avec-sandbag.webp'},
   'Smith Machine Fentes':          {img:'../exercises/split-squat-smith-machine.webp'},
-  'Poussée de Hanche Machine':     {img:'../exercises/hip-thrust-a-la-machine.webp'},
+  'Hip Thrust Machine (Poussée de Hanche)':     {img:'../exercises/hip-thrust-a-la-machine.webp'},
   'Farmer\'s Walk':                {img:'../exercises/marche-du-fermier-avec-kettlebells.webp'},
   // Nouveaux exercices cuisses
   'Extension Quadriceps Unilatérale':{img:'../exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.webp'},
@@ -4863,6 +4863,7 @@ const EX_YT={
   'Mollets Machine Debout':{img:'../exercises/shrug-machine-mollets.webp'},
   // Les 14 exercices AJOUTÉS au catalogue le 01/08 (animations du dossier source de Michel) :
   'Pompes':{img:'../exercises/pompe-musculation.webp'},
+  'Hip Thrust Barre (Poussée de Hanche)':{img:'../exercises/hip-thrust-barre.webp'}, // la version BARRE (envoi Michel 01/08 — la machine, elle, vit sur « Poussée de Hanche Machine »)
   'Pompes Déficit (Deficit Push-up)':{img:'../exercises/pompes-deficit.webp'},
   'Pompes Diamant':{img:'../exercises/pompes-diamant.webp'},
   'Pompes Lestées':{img:'../exercises/pompes-lestees.webp'},
@@ -4986,8 +4987,8 @@ const EX_EN={
   'Abduction Cuisses (Leg Abduction)':'hip abduction machine',
   'Adduction Cuisses (Leg Adduction)':'hip adduction machine',
   // Fessiers
-  'Poussée de Hanche (Hip Thrust)':'hip thrust barbell','Poussée de Hanche Haltère':'hip thrust dumbbell',
-  'Poussée de Hanche Machine':'hip thrust machine',
+  'Hip Thrust Barre (Poussée de Hanche)':'hip thrust barbell','Hip Thrust Haltère (Poussée de Hanche)':'hip thrust dumbbell',
+  'Hip Thrust Machine (Poussée de Hanche)':'hip thrust machine',
   'Pont Fessier (Glute Bridge)':'glute bridge',
   'Extension Fessiers Arrière (Kickback)':'glute kickback cable',
   'Kickback Machine':'glute kickback machine','Kickback Cable':'cable glute kickback',

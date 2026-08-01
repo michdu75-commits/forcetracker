@@ -71,7 +71,7 @@ t('⭐ la FIGURINE se rend pour TOUS les exercices reconnus (stable, non vide)',
 // ── Les 4 exercices de FESSIERS : « bas du corps », jamais « full body » ─────
 // Avant ft-v665 ils étaient classés full body parce que le bas du dos gonflait la
 // part « haut+dos ». Un hip thrust n'est pas une séance full body.
-for(const ex of ['Poussée de Hanche (Hip Thrust)','Pont Fessier (Glute Bridge)',
+for(const ex of ['Hip Thrust Barre (Poussée de Hanche)','Pont Fessier (Glute Bridge)',
                  'Extension Fessiers Arrière (Kickback)','Tirage Cable Fessiers (Cable Pull Through)']){
   const reg=r.regions[ex];
   t('« '+ex.replace(/\s*\(.*\)/,'')+' » = bas du corps (et non full body)',

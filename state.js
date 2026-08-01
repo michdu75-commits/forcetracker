@@ -141,6 +141,27 @@ function load(){
     if(typeof _isClientPremium==='function'&&_isClientPremium())S.premium=true;
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
     S.exRestPref=JSON.parse(localStorage.getItem('ft4_exRp')||'{}');
+    // ── Renommages d'exercices (01/08/2026, Michel : « des noms chelou, c'est galère à retrouver ») ──
+    // TOUT l'historique est rangé par NOM d'exercice : à chaque renommage du catalogue, les données
+    // locales migrent ici (séances, records, programmes, brouillon, photos, repos préférés).
+    // Le cloud suit à la prochaine sauvegarde. Table à compléter à chaque futur renommage.
+    (function(){
+      const R={'Poussée de Hanche (Hip Thrust)':'Hip Thrust Barre (Poussée de Hanche)',
+               'Poussée de Hanche Haltère':'Hip Thrust Haltère (Poussée de Hanche)',
+               'Poussée de Hanche Machine':'Hip Thrust Machine (Poussée de Hanche)'};
+      const ren=n=>R[n]||n;
+      const renKeys=o=>{if(!o)return o;const out={};Object.keys(o).forEach(k=>{out[ren(k)]=o[k];});return out;};
+      try{
+        (S.sessions||[]).forEach(sess=>(sess.exs||[]).forEach(e=>{if(e&&e.name)e.name=ren(e.name);}));
+        S.prs=renKeys(S.prs);
+        (S.programmes||[]).forEach(p=>{if(!p)return;
+          (p.exs||[]).forEach(e=>{if(e&&e.name)e.name=ren(e.name);});
+          (p.days||[]).forEach(d=>((d&&d.exs)||[]).forEach(e=>{if(e&&e.name)e.name=ren(e.name);}));});
+        if(S.wkt&&S.wkt.exs)S.wkt.exs.forEach(e=>{if(e&&e.name)e.name=ren(e.name);});
+        S.exPhotos=renKeys(S.exPhotos);
+        S.exRestPref=renKeys(S.exRestPref);
+      }catch(e){console.warn('[FT renames]',e);}
+    })();
     S.badges=JSON.parse(localStorage.getItem('ft4_badges')||'{}');
     S.testerIdeas=JSON.parse(localStorage.getItem('ft4_tester_ideas')||'[]'); // boîte à idées (super testeur)
     S.bodySeries=JSON.parse(localStorage.getItem('ft4_body_series')||'[]'); // séries photos (super testeur) — local uniquement (photos lourdes)

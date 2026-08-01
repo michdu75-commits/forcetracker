@@ -94,7 +94,7 @@ const EXLIB=[
   {n:'Presse à Cuisses Iso-Latérale',g:'Jambes'},
   {n:'Presse à Cuisses sur le Côté',g:'Jambes'},{n:'Hack Squat Assis',g:'Jambes'},{n:'Overhead Squat Haltères',g:'Jambes'},{n:'Sled Push',g:'Jambes'},{n:'Croix de Fer Haltères',g:'Épaules'},
   // ── Fessiers ───────────────────────────────────────────────
-  {n:'Poussée de Hanche (Hip Thrust)',g:'Fessiers'},{n:'Poussée de Hanche Haltère',g:'Fessiers'},{n:'Poussée de Hanche Machine',g:'Fessiers'},
+  {n:'Hip Thrust Barre (Poussée de Hanche)',g:'Fessiers'},{n:'Hip Thrust Haltère (Poussée de Hanche)',g:'Fessiers'},{n:'Hip Thrust Machine (Poussée de Hanche)',g:'Fessiers'},
   {n:'Pont Fessier (Glute Bridge)',g:'Fessiers'},
   {n:'Extension Fessiers Arrière (Kickback)',g:'Fessiers'},{n:'Kickback Machine',g:'Fessiers'},{n:'Kickback Cable',g:'Fessiers'},
   {n:'Soulevé de Terre',g:'Fessiers'},

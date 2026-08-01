@@ -39,6 +39,9 @@
 | Good Morning Haltères | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Charnière de hanche (hip hinge) |
 | Hack Squat Assis | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Hack Squat Inversé | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
+| Hip Thrust Barre (Poussée de Hanche) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
+| Hip Thrust Haltère (Poussée de Hanche) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
+| Hip Thrust Machine (Poussée de Hanche) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
 | Hyperextension (Back Extension) | **Bas du dos, Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Hyperextension Inverse (Reverse Hyper) | **Bas du dos, Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Hyperextension Lestée | **Bas du dos, Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
@@ -63,9 +66,6 @@
 | Pendulum Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Pin Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Pont Fessier (Glute Bridge) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
-| Poussée de Hanche (Hip Thrust) | **Fessiers** | Ischio-jambiers, Bas du dos | Charnière de hanche (hip hinge) |
-| Poussée de Hanche Haltère | **Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
-| Poussée de Hanche Machine | **Fessiers** | Ischio-jambiers | Charnière de hanche (hip hinge) |
 | Press Jambes 45° | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets | Squat (flexion hanche+genou) |
 | Press Jambes Horizontale | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets | Squat (flexion hanche+genou) |
 | Press Jambes Inclinée | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets | Squat (flexion hanche+genou) |
