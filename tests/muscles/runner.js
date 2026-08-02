@@ -560,6 +560,63 @@ t('⭐ le classement par matériel est visible par TOUT LE MONDE (pas seulement 
   JSON.stringify(ouvert));
 t('un compte normal voit bien le bac « TRX / Sangles »', ouvert.bacTRX, JSON.stringify(ouvert));
 
+// ── RECHERCHE PAR SCHÉMA DE MOUVEMENT (retour de Tatiana, 02/08) ──────────────────
+// Elle tape « Tirage horizontal » dans le sélecteur → « Aucun résultat ». Or l'app
+// CONNAÎT ce terme depuis toujours : c'est le libellé d'un de ses schémas de mouvement
+// (`_MOV_PATTERNS`), qui l'a même dans ses mots-clés. Le mot existait, il ne descendait
+// simplement pas jusqu'à la recherche (R4 : l'info doit descendre jusqu'à la DONNÉE).
+// Les témoins comptent autant que le cas : une recherche qui ne correspond à rien doit
+// toujours rendre 0, et une recherche par nom ne doit pas se mettre à tout ramener.
+const rech=await p.evaluate(()=>{
+  const cherche=q=>{
+    const i=document.getElementById('ex-search'); i.value=q; _exGrp=null;
+    const t0=performance.now(); filterEx(); const ms=performance.now()-t0;
+    const h=document.getElementById('ex-list').innerHTML;
+    const n=(h.match(/class="ex-pick-name"/g)||[]).length;   // une occurrence par LIGNE
+    return {n:n, ms:Math.round(ms), vide:/Aucun résultat/.test(h), h:h};
+  };
+  const o={};
+  const th=cherche('Tirage horizontal');
+  o.tirageH=th.n; o.tirageHvide=th.vide; o.tirageHms=th.ms;
+  o.tirageHaRowing=/Rowing/.test(th.h);          // le mouvement qu'elle cherchait
+  o.tirageHaTraction=/Traction/.test(th.h);      // ⚠️ NE doit PAS y être : c'est vertical
+  const pv=cherche('poussée verticale');
+  o.poussV=pv.n; o.poussVaDevEp=/Développé Épaules|Développé Militaire/.test(pv.h);
+  const ch=cherche('charnière de hanche');
+  o.charn=ch.n; o.charnaSDT=/Soulevé de Terre/.test(ch.h);
+  // témoins
+  const sq=cherche('squat');  o.squat=sq.n; o.squataSquat=/Squat/.test(sq.h);
+  const zz=cherche('zzzz');   o.rien=zz.n;  o.rienVide=zz.vide;
+  const cu=cherche('curl');   o.curl=cu.n;
+  const i=document.getElementById('ex-search'); i.value=''; _exGrp=null; filterEx();
+  return o;
+});
+t('⭐ RETOUR TATIANA : « Tirage horizontal » sort les rowings (avant : « Aucun résultat »)',
+  rech.tirageH>=20&&!rech.tirageHvide&&rech.tirageHaRowing,
+  rech.tirageH+' résultats · vide='+rech.tirageHvide+' · rowing='+rech.tirageHaRowing);
+t('… et il ne ramasse PAS les tirages VERTICAUX (une traction n\'est pas un tirage horizontal)',
+  rech.tirageHaTraction===false, 'traction présente='+rech.tirageHaTraction);
+t('les autres familles de mouvement marchent aussi (« poussée verticale », « charnière de hanche »)',
+  rech.poussV>=10&&rech.poussVaDevEp&&rech.charn>=15&&rech.charnaSDT,
+  'poussée verticale='+rech.poussV+'/'+rech.poussVaDevEp+' · charnière='+rech.charn+'/'+rech.charnaSDT);
+t('témoin : une recherche qui ne correspond à rien rend toujours 0 (pas de faux positif)',
+  rech.rien===0&&rech.rienVide, rech.rien+' résultats');
+t('témoin : la recherche par NOM n\'a pas changé (« squat », « curl »)',
+  rech.squat>=25&&rech.squataSquat&&rech.curl>=15&&rech.curl<60,
+  'squat='+rech.squat+' curl='+rech.curl);
+t('la recherche reste instantanée (< 250 ms sur le catalogue entier)',
+  rech.tirageHms<250, rech.tirageHms+' ms');
+
+// La promesse écrite dans l'aide doit correspondre à ce que l'app fait VRAIMENT :
+// l'aide « Quel poids noter ? » renvoyait encore au calculateur de plaques, retiré en
+// ft-v726. Une promesse fausse à l'utilisateur, comme le plan de repas de ft-v723.
+const aide=await p.evaluate(()=>{
+  const txt=(_HELP_DATA.log.tips||[]).map(x=>x.t).join(' ');
+  return {parlePlaques:/calculateur de plaques/i.test(txt), parlePoids:/Quel poids noter/i.test(txt)};
+});
+t('l\'aide Séance ne promet plus le calculateur de plaques (retiré en ft-v726, R30)',
+  aide.parlePlaques===false&&aide.parlePoids===true, JSON.stringify(aide));
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

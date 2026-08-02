@@ -2741,7 +2741,27 @@ function filterEx(){
   // Recherche active → liste plate
   if(q){
     _exGrp=null;
-    const qn=_normEx(q);const f=all.filter(e=>{
+    const qn=_normEx(q);
+    // ── RECHERCHE PAR SCHÉMA DE MOUVEMENT (retour Tatiana, 02/08) ────────────────
+    // Elle tape « Tirage horizontal » → « Aucun résultat ». Or l'app CONNAÎT ce terme :
+    // c'est le nom d'un de ses schémas de mouvement (_MOV_PATTERNS), qui a même « tirage
+    // horizontal » dans ses mots-clés. Le mot existait, il ne descendait pas jusqu'à la
+    // recherche. On regarde donc aussi le SCHÉMA : taper « tirage horizontal » sort tous
+    // les rowings, « poussée verticale » tous les développés épaules, etc.
+    // C'est le vocabulaire de salle, celui qu'on emploie naturellement.
+    let _patCible=null;
+    try{
+      if(typeof _MOV_PATTERNS!=='undefined' && qn.length>=4){
+        const p2=_MOV_PATTERNS.find(P=>{
+          const lab=_normEx(P.label||'');
+          if(lab&&(lab.indexOf(qn)>=0||qn.indexOf(lab)>=0))return true;
+          return (P.kw||[]).some(k=>{const kn=_normEx(k);return kn.length>=4&&(kn===qn||qn===kn);});
+        });
+        if(p2)_patCible=p2.id;
+      }
+    }catch(e){}
+    const f=all.filter(e=>{
+      if(_patCible){ try{ if(_movPattern(e.n)===_patCible) return true; }catch(x){} }
       // Cherche aussi dans les termes ANGLAIS (EX_EN) → « shoulder press », « bench press », « leg press »…
       // trouvent l'exercice même si son nom français ne contient pas le mot anglais.
       const en=(typeof EX_EN!=='undefined'&&EX_EN[e.n])?EX_EN[e.n].toLowerCase():'';
