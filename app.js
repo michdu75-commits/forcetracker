@@ -2852,6 +2852,17 @@ async function loadHealthAdmin(){
         +(ecr?' · écriture OK':' · <b>ÉCRITURE IMPOSSIBLE</b> — plus rien ne se sauvegarde')
         +(pct>=75?'<br>⚠️ Au-delà de 100 %, toutes les sauvegardes s\'arrêtent en silence (c\'est ce qui est arrivé le 29/07).':''));
     } else h+=_healthRow('💾','Stockage des comptes','ko','Sonde injoignable : '+_escIdea((st&&st.error)||'?'));
+    // ①bis Historiques protégés — le garde-fou du 02/08. Une alerte qui ne remonte nulle part
+    // ne sert à personne : si un appareil envoie un historique amputé, ça doit se VOIR ici.
+    if(st&&st.status==='ok'){
+      const refus=st.histRefus||[];
+      h+=_healthRow('🛡️','Historiques protégés', refus.length?'warn':'ok',
+        refus.length
+          ? '<b>'+refus.length+' sauvegarde(s) refusée(s)</b> parce qu\'elles auraient réduit un historique :<br>'
+            + refus.slice(0,4).map(r=>'· '+_escIdea(String(r.e||'?'))+' — '+r.recues+' séances envoyées contre <b>'+r.enBase+'</b> en base ('+String(r.d||'').slice(0,10)+')').join('<br>')
+            + '<br>Rien n\'est perdu : le serveur a gardé la version complète. L\'appareil concerné doit faire « Restaurer ».'
+          : 'Aucun rétrécissement d\'historique refusé — les sauvegardes de séances sont cohérentes.');
+    }
     // ② Sauvegardes de la nuit
     if(bk&&bk.status==='ok'){
       const dernier=(bk.lastFiles&&bk.lastFiles.length)?bk.lastFiles[bk.lastFiles.length-1]:'';

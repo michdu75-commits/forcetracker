@@ -148,6 +148,9 @@ function load(){
     if(typeof _isClientPremium==='function'&&_isClientPremium())S.premium=true;
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
     S.exRestPref=JSON.parse(localStorage.getItem('ft4_exRp')||'{}');
+    // Drapeau « historique local incomplet » (posé quand le stockage du téléphone a saturé).
+    // Il protège la sauvegarde cloud tant qu'on n'a pas restauré : voir persist() et _cloudSync().
+    S.histTronque=localStorage.getItem('ft4_hist_tronque')==='1';
     // ── Renommages d'exercices (01/08/2026, Michel : « des noms chelou, c'est galère à retrouver ») ──
     // TOUT l'historique est rangé par NOM d'exercice : à chaque renommage du catalogue, les données
     // locales migrent ici (séances, records, programmes, brouillon, photos, repos préférés).
@@ -422,10 +425,15 @@ function persist(){
     if(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22)){
       try{
         // Fallback : allège les sessions à 50 et réessaie les clés critiques
+        // ⚠️ 02/08 : on POSE UN DRAPEAU. Sans lui, au redémarrage suivant l'app ne connaissait
+        // plus que 50 séances, les renvoyait au serveur, et le cloud était écrasé par la version
+        // tronquée — alors que le message ci-dessous promet l'inverse. Tant que ce drapeau est
+        // levé, `_cloudSync` n'envoie PLUS les séances (règle d'or n°1 : zéro perte).
         localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,50)));
+        localStorage.setItem('ft4_hist_tronque','1'); S.histTronque=true;
         localStorage.setItem('ft4_prs',JSON.stringify(S.prs));
         localStorage.setItem('ft4_wkt',JSON.stringify(S.wkt));
-        if(typeof toast==='function')toast('⚠️ Stockage du téléphone plein — historique local allégé (tes séances restent sauvegardées dans le cloud)','error');
+        if(typeof toast==='function')toast('⚠️ Stockage du téléphone plein — seules tes 50 dernières séances restent SUR LE TÉLÉPHONE. Ta sauvegarde en ligne est intacte et protégée : fais « Restaurer » dans Profil pour tout récupérer.','error');
       }catch(e2){}
     }else{
       // 🛡️ Audit 27/07 : une erreur NON-quota était 100 % silencieuse → au moins une trace console

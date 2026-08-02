@@ -177,6 +177,30 @@ Le vrai correctif est de déménager les comptes vers le Drive, qui n'a pas de p
 
 ---
 
+## 5bis. 💾 La sauvegarde écrasée par une version tronquée *(02/08/2026)*
+
+**Le mécanisme, en quatre étapes dont aucune n'est absurde :**
+
+1. le stockage du téléphone sature → l'app ramène l'historique **local** à 50 séances et affiche
+   *« tes séances restent sauvegardées dans le cloud »* ;
+2. au redémarrage, l'app ne relit que ces 50 ;
+3. à la première sauvegarde, elle les **envoie au serveur** ;
+4. le garde-fou serveur ne refusait **que les envois VIDES** → 50 séances remplaçaient 500,
+   **en silence**.
+
+**Ce qui rend ce bug exemplaire** : chaque étape est un comportement *raisonnable*. La troncature
+protège l'app d'un crash. Le renvoi est une sauvegarde normale. Le garde-fou existait. C'est leur
+**enchaînement** qui détruit les données — et le message affiché devenait **faux** à l'étape 4.
+
+⚠️ **Impossible de savoir s'il a frappé** : rien ne le traçait. C'est précisément le problème.
+
+### 🛡️ Ce qui protège (ft-v732)
+Un **drapeau** qui empêche l'envoi tant que le local est incomplet · un garde-fou serveur qui
+refuse tout **rétrécissement brutal** (pas seulement le vide) · et une ligne **« Historiques
+protégés »** dans la carte Santé, parce qu'*une alerte qui ne remonte nulle part ne sert à personne*.
+
+---
+
 ## 6. 📶 Les seuils en marche d'escalier
 
 **Le mécanisme.** Un score calculé par paliers produit des **sauts absurdes** au voisinage du seuil.

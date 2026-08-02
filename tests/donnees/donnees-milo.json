@@ -97,6 +97,7 @@
   "scaleType": "réglage d'affichage",
   "seenFeatures": "nouveautés vues, technique",
   "testerIdeas": "boîte à idées, technique",
-  "url": "adresse du serveur, jamais envoyée au modèle"
+  "url": "adresse du serveur, jamais envoyée au modèle",
+  "histTronque": "Drapeau technique : l'historique LOCAL a été tronqué faute de place sur le téléphone. Il protège la sauvegarde cloud (on n'envoie plus les séances tant qu'il est levé). Rien à dire à Milo : ce n'est pas une information sur la personne, et l'historique qu'il reçoit reste celui du cloud une fois restauré."
  }
 }

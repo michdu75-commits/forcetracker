@@ -735,8 +735,12 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   });
   await scenario('ok');   await deploys('ok');   const hOk=await lire();
   await scenario('panne'); await deploys('panne'); const hKo=await lire();
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 (pas une régression) : la carte compte une 6ᵉ ligne,
+  // « 🛡️ Historiques protégés », qui remonte les sauvegardes refusées par le garde-fou.
   t('⭐ le tableau de santé s\'affiche et tout est vert quand tout va bien',
-    hOk.verts===5&&hOk.rouges===0, JSON.stringify(hOk).slice(0,200));
+    hOk.verts===6&&hOk.rouges===0, JSON.stringify(hOk).slice(0,200));
+  t('⭐ la carte montre la ligne « Historiques protégés » (le garde-fou zéro perte)',
+    /Historiques protégés/.test(hOk.txt), hOk.txt.slice(0,160));
   t('⭐ un déploiement RATÉ est visible (il ne prévient personne autrement)',
     /ÉCHEC/.test(hKo.txt)&&/tes changements ne partent pas/.test(hKo.txt),
     JSON.stringify(hKo).slice(0,240));
@@ -840,6 +844,54 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('… et son réglage de poids de barre ne traîne plus dans l\'interface',
     pc.champBarre===false, String(pc.champBarre));
   await c5.close();
+}
+
+
+// ═══ ZÉRO PERTE : le stockage du téléphone sature (règle d'or n°1) ═══════════════
+// LE CHEMIN RÉEL, trouvé le 02/08 en vérifiant une intuition de Michel :
+//   1. le stockage du téléphone se remplit → l'app ramène l'historique LOCAL à 50 séances
+//   2. au redémarrage, l'app ne connaît plus que ces 50
+//   3. à la première sauvegarde, elle les envoie au serveur
+//   4. le serveur ne refusait QUE les envois vides → 50 remplaçaient 500, en silence
+// Et le message affiché promettait « tes séances restent sauvegardées dans le cloud » :
+// une promesse qui devenait fausse à l'étape 4.
+{
+  const c6=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p6=await c6.newPage();
+  await p6.goto('http://localhost:'+PORT+'/index.html'); await p6.waitForTimeout(2200);
+  const r=await p6.evaluate(()=>{
+   try{
+    const o={};
+    // ① la troncature de secours pose le drapeau
+    localStorage.setItem('ft4_hist_tronque','1');
+    load();
+    o.drapeauRelu = S.histTronque===true;
+    // ② tant qu'il est levé, la sauvegarde cloud n'envoie PLUS les séances.
+    //    On intercepte l'appel réseau au lieu de le laisser partir.
+    S.sessions=[{date:'2026-08-01',exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true}]}],vol:2000}];
+    let corps=null; const vraiFetch=window.fetch;
+    window.fetch=(u,opt)=>{ if(opt&&opt.body)corps=opt.body; return Promise.resolve({ok:true,text:()=>Promise.resolve('')}); };
+    S.url='https://exemple.invalid/exec'; S.email='test@example.com';
+    _cloudSync();
+    window.fetch=vraiFetch;
+    o.aEnvoye = !!corps;
+    o.sessionsDansPayload = corps ? (JSON.parse(corps).sessions!==undefined) : null;
+    // ③ témoin : SANS le drapeau, les séances repartent normalement
+    S.histTronque=false; localStorage.removeItem('ft4_hist_tronque');
+    corps=null; window.fetch=(u,opt)=>{ if(opt&&opt.body)corps=opt.body; return Promise.resolve({ok:true,text:()=>Promise.resolve('')}); };
+    _cloudSync();
+    window.fetch=vraiFetch;
+    o.temoinSessionsEnvoyees = corps ? (JSON.parse(corps).sessions||[]).length : null;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ ZÉRO PERTE : le drapeau « historique tronqué » est relu au démarrage',
+    r.drapeauRelu===true, JSON.stringify(r));
+  t('⭐ ZÉRO PERTE : tant qu\'il est levé, la sauvegarde N\'ENVOIE PLUS les séances (le cloud est protégé)',
+    r.aEnvoye===true && r.sessionsDansPayload===false, JSON.stringify(r));
+  t('témoin : sans le drapeau, les séances repartent normalement au cloud',
+    r.temoinSessionsEnvoyees===1, JSON.stringify(r));
+  await c6.close();
 }
 
 await b.close(); srv.close();

@@ -380,9 +380,14 @@ function doGet(e) {
     var shWrite = 'ok';
     try { shp.setProperty('PING_DIAG', new Date().toISOString()); }
     catch(eW) { shWrite = 'ECHEC: ' + eW.message; }
+    // Refus de rétrécissement d'historique (garde-fou sessions, 02/08) : une alerte qui ne
+    // remonte nulle part ne sert à personne — c'est la leçon de la panne du 29/07.
+    var shShrink = [];
+    try { shShrink = JSON.parse(shp.getProperty('HIST_SHRINK') || '[]'); } catch(eS) {}
     return json_({status:'ok', nbCles: shKeys.length, totalOctets: shTot,
                   limiteOctets: 512000, pourcentPlein: Math.round(shTot / 5120),
-                  testEcriture: shWrite, plusGrosses: shItems.slice(0, 15)});
+                  testEcriture: shWrite, plusGrosses: shItems.slice(0, 15),
+                  histRefus: shShrink.slice(0, 10)});
   }
 
   // Migration one-shot (31/07) : compresse tous les comptes déjà stockés + supprime le compte
@@ -727,6 +732,23 @@ function _pa_(b, e){ if(b===undefined)return e; const bi=b||[],ei=e||[]; return(
 function _po_(b, e){ if(b===undefined)return e; const bk=Object.keys(b||{}).length,ek=Object.keys(e||{}).length; return(bk>0||ek===0)?b:e; }
 
 // ───────────────────────────────────────────────────────────
+
+/**
+ * Journalise un refus de rétrécissement d'historique (garde-fou sessions, 02/08/2026).
+ * Sans trace, ce refus serait invisible : on saurait que les données sont sauvées, mais pas
+ * qu'un appareil est en train d'envoyer un historique amputé — ce qui EST le symptôme utile.
+ * Lisible via ?action=storeHealth (carte « Santé du système » de l'onglet Admin).
+ */
+function _logHistShrink_(email, recues, enBase) {
+  try {
+    const P = PropertiesService.getScriptProperties();
+    const l = JSON.parse(P.getProperty('HIST_SHRINK') || '[]');
+    l.unshift({ d: new Date().toISOString(), e: String(email || '').slice(0, 60),
+                recues: recues, enBase: enBase });
+    P.setProperty('HIST_SHRINK', JSON.stringify(l.slice(0, 30)));
+  } catch (e) {}
+}
+
 function handleSaveProfile_(body) {
   try {
     const email = (body.email || '').toLowerCase().trim();
@@ -815,8 +837,19 @@ function handleSaveProfile_(body) {
     // Tableaux entraînement : [] n'écrase pas des données existantes
     if (body.sessions !== undefined) {
       const inSess = body.sessions || [], exSess = existing.sessions || [];
-      if (inSess.length === 0 && exSess.length > 0) {
-        Logger.log('[FT GARDE-FOU sessions] refusé : ' + exSess.length + ' séances conservées');
+      // ⚠️ GARDE-FOU ÉLARGI le 02/08. Il ne refusait qu'un envoi VIDE — donc un envoi de 50
+      // séances remplaçait sans broncher un historique de 500. Chemin réel : le stockage du
+      // téléphone sature, l'app tronque l'historique local à 50, et la sauvegarde suivante
+      // écrasait le cloud. On refuse maintenant tout RÉTRÉCISSEMENT BRUTAL (règle d'or n°1).
+      // Seuils : on ne juge que si le cloud a déjà un vrai historique (>= 30 séances), et on
+      // laisse passer les suppressions ordinaires (jusqu'à 40 % en une fois).
+      const SEUIL_MINI = 30, PART_MINI = 0.6;
+      const vide      = inSess.length === 0 && exSess.length > 0;
+      const retreci   = exSess.length >= SEUIL_MINI && inSess.length < exSess.length * PART_MINI;
+      if (vide || retreci) {
+        Logger.log('[FT GARDE-FOU sessions] refusé : ' + inSess.length + ' reçues contre ' +
+                   exSess.length + ' en base — historique conservé');
+        _logHistShrink_(email, inSess.length, exSess.length);
       } else { existing.sessions = inSess; }
     }
     if (body.prs !== undefined) {

@@ -324,7 +324,10 @@ function _cloudSync(){
       // Photos d'exercices = LOCAL SEULEMENT (n'alourdissent plus le store cloud de 9 Mo) :
       // on envoie les exos perso SANS leur photo (img), et on n'envoie plus exPhotos du tout.
       customExercises:(S.customExercises||[]).map(function(e){var c={};for(var k in e){if(k!=='img')c[k]=e[k];}return c;}),
-      sessions:(S.sessions||[]).slice(0,2000), // ~8-10 ans de seances — plus limite a 100 (historique complet sauvegarde)
+      // ⚠️ Si le stockage du téléphone a saturé, l'historique LOCAL a été ramené à 50 séances.
+      // L'envoyer écraserait la sauvegarde cloud complète par la version tronquée. On omet
+      // donc le champ : le serveur laisse alors les séances existantes intactes (02/08).
+      sessions:S.histTronque?undefined:(S.sessions||[]).slice(0,2000), // ~8-10 ans de séances
       prs:S.prs||{},
       weightLog:(S.weightLog||[]).slice(-4000), // historique complet (~11 ans de pesées quotidiennes) — entrées minuscules, pas seulement 1 an
       sleepLog:(S.sleepLog||[]).slice(-4000),
@@ -2144,6 +2147,12 @@ function _applyRestoreData(raw){
   try{if(prs&&Object.keys(prs).length&&(!S.prs||!Object.keys(S.prs).length)){S.prs=prs;console.log('[FT restore] prs:',Object.keys(prs).length);}else if(prs&&Object.keys(prs).length>Object.keys(S.prs||{}).length){S.prs=prs;console.log('[FT restore] prs cloud plus complet:',Object.keys(prs).length);}}catch(e){console.warn('[FT restore] prs',e);}
   // Sessions — prend le plus complet
   try{if(sessions&&sessions.length&&(!S.sessions||S.sessions.length===0)){S.sessions=sessions;console.log('[FT restore] sessions:',sessions.length);}else if(sessions&&sessions.length>0&&S.sessions&&sessions.length>S.sessions.length){S.sessions=sessions;console.log('[FT restore] sessions cloud plus complet:',sessions.length);}}catch(e){console.warn('[FT restore] sessions',e);}
+  // ⚠️ Le drapeau « historique tronqué » se LÈVE dès qu'une restauration a rendu l'historique
+  // complet : sans ça, l'app cesserait pour toujours d'envoyer ses séances au cloud (02/08).
+  try{ if(S.histTronque && (S.sessions||[]).length > 50){
+    S.histTronque=false; localStorage.removeItem('ft4_hist_tronque');
+    console.log('[FT restore] historique complet retrouvé — la sauvegarde cloud reprend');
+  } }catch(e){}
   // Poids / sommeil — prend le plus complet (un cloud plus petit ne doit JAMAIS écraser un local plus fourni)
   try{if(weightLog&&weightLog.length>=(S.weightLog||[]).length)S.weightLog=weightLog;}catch(e){}
   try{if(sleepLog&&sleepLog.length>=(S.sleepLog||[]).length)S.sleepLog=sleepLog;}catch(e){}
