@@ -308,20 +308,20 @@ A(encadre([
 ], couleur=colors.HexColor('#fdf0ee'), bordure=ROUGE))
 A(Spacer(1, 6))
 A(Paragraph("Autres limites identifiées", H2))
-A(Paragraph("&bull; <b>Les tables d'attente sont écrites à la main.</b> Le croisement 4 dit par exemple "
+A(Paragraph("&mdash;&nbsp;<b>Les tables d'attente sont écrites à la main.</b> Le croisement 4 dit par exemple "
   "que le groupe &laquo; Jambes &raquo; accepte quadriceps, fessiers, ischios ou mollets. Si cette "
   "table est trop permissive, de vraies erreurs passent. <b>Personne n'a validé ces tables.</b>", PC))
-A(Paragraph("&bull; <b>55 exercices n'ont pas d'animation</b> et <b>82 n'ont pas de terme anglais</b> : "
+A(Paragraph("&mdash;&nbsp;<b>55 exercices n'ont pas d'animation</b> et <b>82 n'ont pas de terme anglais</b> : "
   "ils échappent mécaniquement aux croisements 2 et 3.", PC))
-A(Paragraph("&bull; <b>Le classement fin n'est pas vérifié.</b> L'application distingue trois portions "
+A(Paragraph("&mdash;&nbsp;<b>Le classement fin n'est pas vérifié.</b> L'application distingue trois portions "
   "du deltoïde ; aucune source consultée n'a été utilisée pour arbitrer systématiquement laquelle "
   "domine, exercice par exercice.", PC))
-A(Paragraph("&bull; <b>La hiérarchie principal/secondaire est binaire.</b> Un muscle est &laquo; 2 &raquo; "
+A(Paragraph("&mdash;&nbsp;<b>La hiérarchie principal/secondaire est binaire.</b> Un muscle est &laquo; 2 &raquo; "
   "ou &laquo; 1 &raquo;. La réalité est continue, et les sources se contredisent souvent sur ce point.", PC))
-A(Paragraph("&bull; <b>Les calories dépendent des muscles.</b> Corriger une attribution musculaire "
+A(Paragraph("&mdash;&nbsp;<b>Les calories dépendent des muscles.</b> Corriger une attribution musculaire "
   "déplace donc la dépense estimée. Un cas a été traité explicitement (farmer's walk, qui serait passé "
   "de 6,5 à 5,5 MET) &mdash; mais rien ne garantit qu'il n'y en ait pas d'autres.", PC))
-A(Paragraph("&bull; <b>Un doute assumé :</b> l'adduction de cuisses reste classée &laquo; fessiers &raquo; "
+A(Paragraph("&mdash;&nbsp;<b>Un doute assumé :</b> l'adduction de cuisses reste classée &laquo; fessiers &raquo; "
   "alors que les sources disent &laquo; adducteurs &raquo;. Corriger demande d'ajouter un muscle à la "
   "silhouette anatomique affichée : décision produit non tranchée.", PC))
 

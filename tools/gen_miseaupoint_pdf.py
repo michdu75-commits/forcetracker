@@ -96,7 +96,7 @@ A(Paragraph("PARCOURS DEPUIS L'INSCRIPTION :<br/>"
   "(reprise le 13 juillet 2026)</b><br/>"
   "- Volume cumulé : 188 tonnes soulevées depuis le début<br/>"
   "- Progression sur ses exercices principaux :<br/>"
-  "&nbsp;&nbsp;&middot; Squat à la Barre : 90 &rarr; 113 kg estimés (+25 %, 91 séances)", CODE))
+  "&nbsp;&nbsp;&middot; Squat à la Barre : 90 &ndash;&gt; 113 kg estimés (+25 %, 91 séances)", CODE))
 A(Paragraph("Coût mesuré : environ <b>650 caractères</b>, soit ~1 % d'un contexte de 57 700 "
   "caractères. Construction en 14 ms sur 366 séances.", PETIT))
 
@@ -153,16 +153,16 @@ A(Paragraph("n : le nom&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;g : le groupe musculaire", 
 A(Paragraph("<b>Il n'existe aucun identifiant.</b> Muscles, schéma de mouvement, matériel et "
   "calories sont <b>recalculés à la volée à partir du nom</b>, à chaque affichage. Trois "
   "conséquences directes, toutes observées le 2 août :", P))
-A(Paragraph("&bull; <b>Le nom est la clé primaire de l'historique.</b> Renommer un exercice impose "
+A(Paragraph("&mdash;&nbsp;<b>Le nom est la clé primaire de l'historique.</b> Renommer un exercice impose "
   "une table de migration (records, séances passées, programmes). Utilisée trois fois dans la journée.", PC))
-A(Paragraph("&bull; <b>Ajouter un mot à un nom modifie un calcul.</b> Ajouter la traduction "
+A(Paragraph("&mdash;&nbsp;<b>Ajouter un mot à un nom modifie un calcul.</b> Ajouter la traduction "
   "&laquo; (Tirage Horizontal) &raquo; à &laquo; Rowing Barre &raquo; l'a fait basculer de la "
   "catégorie <i>barre</i> à la catégorie <i>machine</i>, silencieusement.", PC))
-A(Paragraph("&bull; <b>Les statistiques passées ne sont pas figées.</b> Les muscles ne sont pas "
+A(Paragraph("&mdash;&nbsp;<b>Les statistiques passées ne sont pas figées.</b> Les muscles ne sont pas "
   "stockés dans les séances : ils sont recalculés. Corriger une règle aujourd'hui change donc ce que "
   "les séances d'il y a un an &laquo; ont travaillé &raquo;. Utile pour propager un correctif, "
   "gênant pour la reproductibilité.", PC))
-A(Paragraph("&bull; <b>Ce qu'on ne peut pas modéliser aujourd'hui</b>, faute d'endroit où le mettre : "
+A(Paragraph("&mdash;&nbsp;<b>Ce qu'on ne peut pas modéliser aujourd'hui</b>, faute d'endroit où le mettre : "
   "unilatéral / bilatéral, côté travaillé, amplitude, tempo, variantes d'un même mouvement, "
   "pondération continue des muscles (la hiérarchie est binaire : principal ou secondaire).", PC))
 
