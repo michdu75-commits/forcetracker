@@ -111,6 +111,7 @@ A(tab([
  ["VIII", "L'audit du 2 août : méthode et résultats", "3 méthodes, dont une échouée"],
  ["VIII bis", "Analyse causale des 19 défauts", "Données ? règles ? modèle ? cas isolé ?"],
  ["VIII ter", "Confiance, audit des règles, empreinte", "82 % sans ambiguïté · 18 % dépendants de l'ordre"],
+ ["VIII quater", "L'identifiant stable, étape 1/3", "La dette principale, entamée le soir même"],
  ["IX", "Les limites connues, mesurées", "La partie la plus importante"],
  ["X", "Les questions posées au relecteur", "9 questions"],
 ], [14*mm, 68*mm, 78*mm]))
@@ -570,6 +571,8 @@ A(tab([
  ["ft-v731", "<b>Couverture des croisements mesurée</b> : deux trous comblés, limites restantes écrites"],
  ["ft-v732", "<b>Zéro perte</b> : le chemin par lequel l'historique cloud pouvait être écrasé"],
  ["ft-v733", "<b>Rang de pertinence</b> de la recherche (le défaut décrit en partie VIII)"],
+ ["ft-v734", "<b>Indicateur de confiance</b> et empreinte du catalogue (partie VIII ter)"],
+ ["ft-v735", "<b>Identifiant stable</b> des exercices, étape 1/3 (partie VIII quater)"],
 ], [20*mm, 137*mm]))
 
 A(PageBreak())
@@ -626,6 +629,74 @@ A(Paragraph("Une <b>empreinte</b> du catalogue a été créée : pour chacun des
 A(Paragraph("<b>Vérifié en cassant volontairement</b> : en retirant la règle du deltoïde "
   "postérieur, le test échoue et affiche <font face='Courier'>Machine Oiseau &ndash;&gt; muscles "
   "vides</font>. Jusqu'ici, modifier une règle ne montrait <b>jamais</b> qui d'autre était touché.", P))
+
+A(PageBreak())
+
+# ═══════════════ VIII quater ═══════════════
+A(partie("VIII quater", "L'identifiant stable — la dette principale, entamée"))
+A(Spacer(1, 6))
+A(Paragraph("Le dossier précédent identifiait l'absence d'identifiant d'exercice comme la dette "
+  "structurelle principale, et posait la question de son urgence. <b>Le chantier a été lancé le "
+  "soir même</b> (version ft-v735). Cette partie décrit ce qui a été fait, et surtout <b>ce qui ne "
+  "l'a pas été</b>.", P))
+
+A(Paragraph("Le problème, rappelé en une ligne", H2))
+A(Paragraph("Le <b>nom</b> d'un exercice était sa clé primaire : l'historique, les records, les "
+  "programmes et les temps de repos étaient tous rangés par nom. Trois conséquences, toutes "
+  "constatées dans la même journée : renommer cassait le lien avec le passé (trois tables de "
+  "migration ont dû être écrites) · deux exercices ne pouvaient pas porter le même nom · "
+  "<b>ajouter un mot dans un nom modifiait ses calculs en silence</b>.", P))
+
+A(Paragraph("La décision de conception, et pourquoi elle n'est pas anodine", H2))
+A(enc([
+ Paragraph("<b>Le sens de la table est toute la décision.</b>", ENC),
+ Paragraph("La table va de l'<b>identifiant</b> vers les <b>noms</b>, jamais l'inverse :", ENC),
+ Paragraph("'rowing-barre-tirage-horizontal' :<br/>"
+  "&nbsp;&nbsp;&nbsp;&nbsp;[ 'Rowing Barre (Tirage Horizontal)',&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+  "&lt;- ce qui s'affiche<br/>"
+  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Rowing Barre' ]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+  "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;- l'ancien nom", CODE),
+ Paragraph("Une table rangée <b>par nom</b> aurait cassé au premier renommage &mdash; exactement le "
+  "défaut qu'on cherchait à supprimer. Ici l'identifiant est la clé ; le nom n'est qu'une valeur, "
+  "qu'on a le droit de changer. Et la liste porte <b>l'histoire des noms</b> : c'est elle qui fait "
+  "qu'une séance enregistrée il y a un an retrouve sa fiche.", ENC),
+]))
+
+A(Paragraph("Le gain immédiat, qui n'était pas l'objectif visé", H2))
+A(Paragraph("La table de migration qui vivait dans le code de chargement <b>disparaît</b>. Elle "
+  "faisait doublon avec la nouvelle, elle était rangée par nom, et il fallait penser à la tenir à "
+  "jour <b>à deux endroits</b>. Renommer un exercice, désormais, c'est <b>une ligne à modifier</b> "
+  "au lieu de deux.", P))
+
+A(Paragraph("Ce qui a été livré, et ce qui ne l'a pas été", H2))
+A(tab([
+ ["Étape", "État", "Contenu"],
+ ["1 &mdash; L'identité existe", "<b>Fait</b> (ft-v735)",
+  "337 identifiants figés, uniques · 351 noms couverts (actuels et anciens) · trois fonctions de "
+  "résolution · un exercice créé par l'utilisateur rend <b>null</b>, jamais un identifiant inventé"],
+ ["2 &mdash; L'écriture", "<b>Non fait</b>",
+  "Écrire l'identifiant dans les nouvelles séances, à côté du nom. Additif, sans risque."],
+ ["3 &mdash; La lecture", "<b>Non fait</b>",
+  "Faire lire l'historique, les records et les programmes par identifiant plutôt que par nom. "
+  "C'est l'étape qui touche réellement aux données des utilisateurs."],
+], [40*mm, 30*mm, 87*mm]))
+A(Paragraph("<b>Autrement dit : l'identifiant existe, mais rien ne l'utilise encore.</b> "
+  "Vérification faite exercice par exercice : <b>337/337 sans le moindre changement</b> de "
+  "classement, de calories ou de schéma. C'était le but &mdash; une étape structurelle qui ne se "
+  "voit pas est une étape réussie.", P))
+
+A(Paragraph("Une erreur de méthode, commise en écrivant ces tests", H2))
+A(enc([
+ Paragraph("Le premier contrôle négatif de cette version affichait <b>zéro échec</b>. Il aurait pu "
+  "se lire comme un succès. En réalité, le programme de test <b>plantait</b> au lieu d'échouer "
+  "&mdash; et un plantage ressemble à un test qui passe.", ENC),
+ Paragraph("C'est très exactement la famille d'erreur n° 12 du catalogue de bugs du projet… écrite "
+  "la veille. Elle a donc été reproduite par celui qui venait de la documenter. Corrigé : le test "
+  "échoue maintenant lisiblement, avec <b>6 échecs nommés</b>.", ENC),
+ Paragraph("<b>Ce cas est laissé dans le dossier volontairement</b> : il illustre mieux que tout "
+  "argument pourquoi la question 6 (« quel biais de méthode est encore à l'œuvre ? ») reste "
+  "ouverte.", ENC),
+], fond=colors.HexColor('#fdf6e8'), bord=colors.HexColor('#b8860b')))
 
 # ═══════════════ IX ═══════════════
 A(partie("IX", "Les limites connues — la partie la plus importante"))
@@ -729,11 +800,8 @@ A(Paragraph("Reprise, stagnation, montée en charge, changement de fréquence, r
   "produire de faux signaux</b> ? (Le projet a déjà une règle : ne jamais sur-réagir au bruit — "
   "84,8 kg puis 84,5 kg n'est pas une tendance.)", P))
 
-A(Paragraph("Q8. L'absence d'identifiant est-elle une dette à rembourser maintenant ?", QUEST))
-A(Paragraph("Argument pour attendre : 337 fiches à renseigner, historique indexé par nom, aucun "
-  "utilisateur public à ce jour. Argument pour agir : chaque mois ajoute des données indexées par une "
-  "clé instable, et les fonctionnalités prévues (remplacement intelligent d'exercices, programmes "
-  "automatiques, mode coach) en dépendent toutes.", P))
+A(Paragraph("Q8. L'identifiant stable : la suite est-elle bien découpée ?", QUEST))
+A(Paragraph("La question du dossier précédent (« faut-il rembourser cette dette maintenant ? ») a été tranchée : oui, et l'étape 1 est faite. La question devient donc opérationnelle. Le découpage retenu est : ① créer l'identité sans que rien ne l'utilise · ② écrire l'identifiant à côté du nom dans les nouvelles données · ③ basculer les lectures. <b>Ce découpage est-il le bon ?</b> Y a-t-il un ordre plus sûr, ou une étape intermédiaire manquante ? Contrainte : les données des utilisateurs existent déjà et sont indexées par nom, et elles vivent à la fois sur le téléphone et sur un serveur.", P))
 
 A(Paragraph("Q9. Les statistiques recalculées : défaut ou propriété ?", QUEST))
 A(Paragraph("Les muscles ne sont pas figés dans l'historique. Corriger une règle change donc le passé. "
