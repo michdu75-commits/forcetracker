@@ -2188,6 +2188,23 @@ function renderLogFinish(){
   </div>`;
 }
 
+// Note de sommeil selon la DURÉE — interpolation linéaire entre points d'ancrage, donc
+// AUCUN saut : une minute de sommeil en plus ne peut jamais valoir 24 points (bug du 02/08).
+// Les ancres disent le barème en clair : 6 h est insuffisant (55), 7 h correct sans plus (72),
+// 8 h bien (90), 9 h optimal (100) ; au-delà, dormir beaucoup n'est pas un gain (fatigue/maladie).
+const _SLEEP_ANCHORS=[[0,0],[4,18],[5,35],[6,55],[7,72],[8,90],[9,100],[10,96],[12,85]];
+function _sleepCurve(h){
+  const A=_SLEEP_ANCHORS;
+  if(h<=A[0][0])return A[0][1];
+  if(h>=A[A.length-1][0])return A[A.length-1][1];
+  for(let i=1;i<A.length;i++){
+    if(h<=A[i][0]){
+      const [x0,y0]=A[i-1],[x1,y1]=A[i];
+      return Math.round(y0+(y1-y0)*(h-x0)/(x1-x0));
+    }
+  }
+  return 70;
+}
 function calcRecoveryDetail(){
   // Sommeil non renseigné → base neutre « invisible » (70) : le score reste
   // fonctionnel pour tout le monde, les autres facteurs (séance, âge, cycle…)
@@ -2198,8 +2215,16 @@ function calcRecoveryDetail(){
     const sorted=S.sleepLog.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
     const scores=sorted.map(e=>{
       const h=e.hours||0;
-      const hScore=h<4?5:h<6?35:h<7?60:h<=9?100:85;
-      const qScore=((e.quality||2)/4)*100;
+      // ⚠️ COURBE CONTINUE (02/08, retour Michel : « le prêt à performer est trop optimiste »).
+      // AVANT, un barème en PALIERS : h<7 → 60, h>=7 → 100. Mesuré : 6 h 54 donnait 53 et
+      // 7 h 00 donnait 77 — **24 points pour six minutes de sommeil**. C'est exactement le
+      // défaut de la « marche de midi » corrigée le 30/07 : un saut au lieu d'une pente.
+      // Et 7 h valait la note MAXIMALE, alors que c'est le minimum recommandé, pas l'optimum :
+      // il faut maintenant 8 h pour approcher le haut du barème, 9 h pour l'atteindre.
+      const hScore=_sleepCurve(h);
+      // La QUALITÉ ressentie pèse plus lourd dans le bas : dire « j'ai mal dormi » (1/4) ne
+      // doit pas laisser un score flatteur. Avant, 1/4 valait encore 25 points sur 100.
+      const qScore=[15,15,45,75,100][Math.max(0,Math.min(4,Math.round(e.quality||2)))];
       return Math.round(hScore*0.6+qScore*0.4);
     });
     const weights=[0.6,0.3,0.1].slice(0,scores.length);
@@ -2230,15 +2255,19 @@ function calcRecoveryDetail(){
         if(!s.done||s.type==='W'||s.type==='É')return;      // exclut échauffement
         load += s.type==='E'?1.5:s.type==='D'?1.3:1;         // échec/drop = plus fatigant
       }));
-      return Math.max(6,Math.min(30,Math.round(load*1.7))); // ~ -10 (abdos) à -30 (grosse séance), min -6
+      // Plafond relevé de 30 à 38 (02/08) : mesuré, une séance de 24 séries de squat la veille
+      // ne coûtait que 10 points — l'app affichait « Bonne récup » le lendemain d'un gros leg day.
+      return Math.max(6,Math.min(38,Math.round(load*1.7))); // ~ -10 (abdos) à -38 (grosse séance), min -6
     };
     if(tsSess){
+      // Effacement sur 48 h et non 36 h (02/08) : à 36 h, une grosse séance de jambes pesait
+      // déjà zéro. 48 h correspond mieux à ce qu'on ressent réellement après du lourd.
       const hrs=Math.max(0,(Date.now()-tsSess)/36e5);
-      if(hrs<36){ sessAdj=-Math.max(0,Math.round(calcPen0()*(36-hrs)/36)); }
-      else if(dCal>=2){ sessAdj=Math.min(dCal,4)*3; }        // 2j +6 · 3j +9 · 4j+ +12
+      if(hrs<48){ sessAdj=-Math.max(0,Math.round(calcPen0()*(48-hrs)/48)); }
+      else if(dCal>=2){ sessAdj=Math.min(dCal,4)*3; }        // 2j +6 · 3j +9 · 4j+ +12 (inchangé)
     } else {
       if(dCal<=0){ sessAdj=-calcPen0(); }
-      else if(dCal===1){ sessAdj=-8; }
+      else if(dCal===1){ sessAdj=-12; }   // séance d'hier sans heure connue : alignée sur le nouveau barème
       else { sessAdj=Math.min(dCal,4)*3; }
     }
   }

@@ -182,7 +182,10 @@ console.log('\n═══ 3. Récupération — calcRecoveryDetail, horloge gelé
     return out;
   });
   t('aucune donnée → base neutre 70', r.vide.score===70, 'reçu '+r.vide.score);
-  t('3 nuits parfaites (8h, excellent) → 100', r.parfait.score===100, 'reçu '+r.parfait.score);
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 (« le prêt à performer est trop optimiste ») : 8 h ne vaut plus
+  // la note maximale — il faut 9 h pour ça. 8 h en qualité 4/4 → 94, ce qui reste « Prêt à
+  // performer » (seuil 80) : le haut du barème est atteignable, il se mérite juste un peu plus.
+  t('3 nuits parfaites (8 h, excellent) → 94 (100 réservé à 9 h)', r.parfait.score===94, 'reçu '+r.parfait.score);
   t('3 nuits catastrophe (3h, mauvais) → score très bas (< 30)', r.cata.score<30, 'reçu '+r.cata.score);
   t('grosse séance la veille au soir → malus le matin', r.matinApres.score<70, 'reçu '+r.matinApres.score);
   // fin de la marche de midi (30/07) : 4 jours CALENDAIRES de repos = +12, crédités dès le matin
@@ -224,7 +227,49 @@ console.log('\n═══ 3. Récupération — calcRecoveryDetail, horloge gelé
   const v1=await boot('2026-07-29T08:00:00+02:00',{});
   const sv=await v1.p.evaluate(`(()=>{S.sessions=[{date:'2026-07-28',exs:[{name:'Squat',sets:[{kg:100,reps:8,done:true,type:'N'}]}]}];
     return calcRecoveryDetail().score;})()`);
-  t('séance d\'hier SANS heure enregistrée → ancien barème conservé (−8 → 62)', sv===62, 'reçu '+sv);
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 : la pénalité d'une séance de la veille passe de −8 à −12,
+  // pour rester cohérente avec le barème horaire (qui s'efface désormais sur 48 h, pas 36 h).
+  t('séance d\'hier SANS heure enregistrée → barème par jour (−12 → 58)', sv===58, 'reçu '+sv);
+
+  // ── LE SCORE ÉTAIT TROP OPTIMISTE (02/08, retour Michel) — 4 défauts mesurés, figés ici ──
+  {
+    const {c:cc,p:pp}=await boot('2026-07-29T08:00:00+02:00',{});
+    const r2=await pp.evaluate(()=>{
+      const o={};
+      const sc=(h,q)=>{ S.sleepLog=[{date:'2026-07-28',hours:h,quality:q}]; S.sessions=[];
+                        S.dayState=null; S.age=30; S.smoker=false; return calcRecoveryDetail().score; };
+      // ① LA MARCHE DES 7 H : avant, 6 h 54 → 53 et 7 h 00 → 77. 24 points pour six minutes.
+      o.avant7=sc(6.9,2); o.pile7=sc(7,2); o.saut=Math.abs(o.pile7-o.avant7);
+      // le balayage complet : plus AUCUN saut brutal sur toute la plage utile
+      let pire=0,prev=null;
+      for(let h=3;h<=11.01;h+=0.05){ const v=sc(+h.toFixed(2),3);
+        if(prev!==null) pire=Math.max(pire,Math.abs(v-prev)); prev=v; }
+      o.pireSaut=pire;
+      // ② 7 h n'est plus la note maximale · ③ une mauvaise qualité pèse vraiment
+      o.h7q2=sc(7,2); o.h8q3=sc(8,3); o.h9q4=sc(9,4); o.h7q1=sc(7,1);
+      // ④ une grosse séance de la veille coûte plus que 10 points
+      S.sleepLog=[{date:'2026-07-28',hours:8,quality:3}];
+      const sets=[];for(let i=0;i<24;i++)sets.push({kg:100,reps:8,done:true,type:'N'});
+      S.sessions=[{date:'2026-07-28',ts:new Date('2026-07-28T08:00:00+02:00').getTime(),
+                   exs:[{name:'Squat à la Barre',sets}]}];
+      o.grosseSeanceHier=calcRecoveryDetail().score;
+      S.sessions=[]; o.memeNuitSansSeance=calcRecoveryDetail().score;
+      o.coutSeance=o.memeNuitSansSeance-o.grosseSeanceHier;
+      return o;
+    });
+    t('⭐ plus de MARCHE à 7 h : 6 h 54 et 7 h 00 se tiennent (≤ 2 points d\'écart)',
+      r2.saut<=2, '6h54='+r2.avant7+' · 7h00='+r2.pile7+' → écart '+r2.saut);
+    t('⭐ aucun saut brutal sur toute la courbe de sommeil (3 h → 11 h)',
+      r2.pireSaut<=2, 'plus gros saut mesuré : '+r2.pireSaut+' points pour 3 min');
+    t('7 h n\'est plus la note maximale — il faut 8-9 h pour le haut du barème',
+      r2.h7q2<r2.h8q3 && r2.h8q3<r2.h9q4, [r2.h7q2,r2.h8q3,r2.h9q4].join(' < '));
+    t('une nuit de mauvaise QUALITÉ n\'est plus une « bonne récup »',
+      r2.h7q1<60, '7 h qualité 1/4 → '+r2.h7q1);
+    t('⭐ une grosse séance la veille coûte vraiment (plus de 10 points)',
+      r2.coutSeance>15, 'coût mesuré : '+r2.coutSeance+' points ('+r2.memeNuitSansSeance+' → '+r2.grosseSeanceHier+')');
+    t('témoin : bien dormir 9 h reste « Prêt à performer »', r2.h9q4>=80, '9 h qualité 4/4 → '+r2.h9q4);
+    await cc.close();
+  }
   await v1.c.close();
 }
 
