@@ -259,6 +259,64 @@ t('⭐ MIGRATION : les séances passées aussi',
   migr.sess.indexOf("Farmer's Walk")>=0 && migr.sess.indexOf("Haussements d'Épaules Barre")>=0,
   migr.sess.join(' · '));
 
+
+// ═══ ⑦ L'EMPREINTE DU CATALOGUE — la régression silencieuse ═══════════════════════
+// Idée venue de la relecture externe : « peut-on détecter automatiquement une régression
+// après une modification de règle ? »  Mesuré le 02/08 : **60 exercices sur 337 (18 %)**
+// sont classés de façon FRAGILE — plusieurs règles leur correspondent en donnant des
+// muscles DIFFÉRENTS. Ils sont justes aujourd'hui uniquement parce que la bonne règle est
+// placée avant. Insérer une règle au mauvais endroit les fait basculer EN SILENCE : c'est
+// exactement ce qui est arrivé aux oiseaux (10 exercices) et aux élévations latérales.
+// L'empreinte fige le classement des 337 ; toute dérive se voit ici, voulue ou non.
+// ⚠️ Changement VOULU → relancer `node tools/gen_reference_catalogue.js`, et le diff git
+//    montre exactement quels exercices ont bougé. C'est la revue qui manquait.
+const REF=require('./catalogue-reference.json');
+const emp=await p.evaluate(()=>{
+  const noms=[...new Set((EXLIB||[]).map(e=>e.n))].sort();
+  const naz=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const N=_MEX.length;
+  const sig=r=>(r.p||[]).slice().sort().join('+')+'|'+(r.s||[]).slice().sort().join('+');
+  const ex={}; let fragiles=0;
+  noms.forEach(n=>{
+    const d=_mscScores([E(n)])||{}, sc=d.sc||{};
+    const q=naz(n); const match=[];
+    for(let k=0;k<N;k++) if(_MEX[k].re.test(q)) match.push(k);
+    if([...new Set(match.map(k=>sig(_MEX[k])))].length>1) fragiles++;
+    ex[n]={p:Object.keys(sc).filter(k=>sc[k]===2).sort().join(','),
+           s:Object.keys(sc).filter(k=>sc[k]===1).sort().join(','),
+           pat:_movPattern(n)||'', eq:_exEquip(n), met:getExerciseMET(n)};
+  });
+  return {ex, total:noms.length, fragiles};
+});
+const bouge=[], dispar=[], nouveaux=[];
+Object.keys(REF.ex).forEach(n=>{
+  const a=REF.ex[n], b2=emp.ex[n];
+  if(!b2){ dispar.push(n); return; }
+  ['p','s','pat','eq','met'].forEach(k=>{
+    if(String(a[k])!==String(b2[k])) bouge.push(n+' · '+k+' : '+a[k]+' → '+b2[k]);
+  });
+});
+Object.keys(emp.ex).forEach(n=>{ if(!REF.ex[n]) nouveaux.push(n); });
+t('⭐ ⑦ EMPREINTE : aucun exercice n\'a changé de classement sans qu\'on le veuille',
+  bouge.length===0, bouge.slice(0,10).join('\n         ')
+  + (bouge.length>10?'\n         … et '+(bouge.length-10)+' autres':'')
+  + '\n         → si c\'est VOULU : node tools/gen_reference_catalogue.js');
+t('⑦ EMPREINTE : le catalogue n\'a ni perdu ni gagné d\'exercice en douce',
+  dispar.length===0&&nouveaux.length===0,
+  'disparus : '+dispar.join(', ')+' · nouveaux : '+nouveaux.join(', '));
+
+// ═══ ⑧ L'INDICATEUR DE CONFIANCE ═════════════════════════════════════════════════
+// « Fragile » = plusieurs règles correspondent en donnant des muscles différents, donc le
+// résultat dépend de l'ORDRE. Ce n'est PAS une erreur : c'est une surface de risque. Elle
+// ne doit pas grandir sans qu'on le décide — chaque point de plus, c'est un exercice de
+// plus qui basculera au prochain ajout de règle.
+const partFrag=Math.round(100*emp.fragiles/emp.total);
+console.log('     ℹ️  confiance : '+(emp.total-emp.fragiles)+'/'+emp.total+' classés sans ambiguïté ('
+  +(100-partFrag)+' %) · '+emp.fragiles+' dépendent de l\'ordre des règles ('+partFrag+' %)');
+t('⭐ ⑧ CONFIANCE : la part d\'exercices dont le classement dépend de l\'ordre ne grandit pas',
+  emp.fragiles<=REF.fragiles, emp.fragiles+' aujourd\'hui contre '+REF.fragiles+' à la référence');
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('══════════════════════════════════════════════════════════');

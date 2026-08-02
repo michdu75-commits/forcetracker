@@ -1,0 +1,2704 @@
+{
+ "genere": "2026-08-02",
+ "total": 337,
+ "nbRegles": 69,
+ "fragiles": 60,
+ "ex": {
+  "Abducteurs Machine Debout": {
+   "p": "glutes",
+   "s": "",
+   "pat": "hanche-laterale",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Abduction Cuisses (Leg Abduction)": {
+   "p": "glutes",
+   "s": "",
+   "pat": "hanche-laterale",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Adduction Cuisses (Leg Adduction)": {
+   "p": "glutes",
+   "s": "quads",
+   "pat": "hanche-laterale",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Arraché Debout (Muscle Snatch)": {
+   "p": "front-delt,quads",
+   "s": "abs,glutes,traps,triceps",
+   "pat": "halterophilie",
+   "eq": "autre",
+   "met": 8,
+   "frag": 0
+  },
+  "Arraché Haltère (Dumbbell Snatch)": {
+   "p": "front-delt,quads",
+   "s": "abs,glutes,traps,triceps",
+   "pat": "halterophilie",
+   "eq": "libre",
+   "met": 8,
+   "frag": 0
+  },
+  "Assault Air Bike": {
+   "p": "front-delt,quads",
+   "s": "abs,hamstrings,lats",
+   "pat": "cardio",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Barre au Front": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Battle Rope": {
+   "p": "front-delt,quads",
+   "s": "abs,glutes,traps,triceps",
+   "pat": "saut-plyo",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Belt Squat": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Bench Dips": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Bird Dog": {
+   "p": "abs,lower-back",
+   "s": "glutes,obliques",
+   "pat": "gainage-abdos",
+   "eq": "autre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Box Jump": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "saut-plyo",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Burpees": {
+   "p": "front-delt,quads",
+   "s": "abs,glutes,traps,triceps",
+   "pat": "saut-plyo",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Chaise (Wall Sit)": {
+   "p": "quads",
+   "s": "abs,glutes",
+   "pat": "squat",
+   "eq": "corps",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Chaise Romaine": {
+   "p": "abs,hip-flexors",
+   "s": "obliques",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Chariot de Puissance — Curl Biceps": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "cardio",
+   "met": 4,
+   "frag": 0
+  },
+  "Chariot de Puissance — Extension Triceps": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "cardio",
+   "met": 4,
+   "frag": 0
+  },
+  "Chariot de Puissance — Fentes Arrière": {
+   "p": "glutes,quads",
+   "s": "hamstrings",
+   "pat": "fente",
+   "eq": "cardio",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Chariot de Puissance — Poussée": {
+   "p": "glutes,quads",
+   "s": "abs,calves",
+   "pat": "squat",
+   "eq": "cardio",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Chariot de Puissance — Tirage Dos": {
+   "p": "lats",
+   "s": "biceps,rear-delt,traps",
+   "pat": "tirage-horizontal",
+   "eq": "cardio",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Chariot de Puissance — Tirage Inversé Jambes": {
+   "p": "quads",
+   "s": "calves,glutes",
+   "pat": "squat",
+   "eq": "cardio",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Chariot de Puissance — Tirage de Côté": {
+   "p": "lats",
+   "s": "biceps,rear-delt,traps",
+   "pat": "tirage-horizontal",
+   "eq": "cardio",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Chariot de Puissance — Tirage en Avançant": {
+   "p": "lats",
+   "s": "biceps,rear-delt,traps",
+   "pat": "tirage-horizontal",
+   "eq": "cardio",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Chariot de Puissance — Tirage Épaules": {
+   "p": "front-delt,side-delt",
+   "s": "biceps,traps",
+   "pat": "elevation-epaules",
+   "eq": "cardio",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Chest Press Machine Déclinée": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Chest Press Machine Horizontale": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Chest Press Machine Inclinée": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Chest Press Poulie Assis": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Chest Press TRX (Sangles)": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "trx",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Clean & Jerk": {
+   "p": "front-delt,quads",
+   "s": "abs,glutes,traps,triceps",
+   "pat": "halterophilie",
+   "eq": "autre",
+   "met": 8,
+   "frag": 0
+  },
+  "Cossack Squat": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "fente",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Croisé Poulie (Cable Crossover)": {
+   "p": "pec",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Croix de Fer Haltères": {
+   "p": "side-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Crunch": {
+   "p": "abs",
+   "s": "hip-flexors,obliques",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Crunch Machine": {
+   "p": "abs",
+   "s": "hip-flexors,obliques",
+   "pat": "gainage-abdos",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Crunch Oblique": {
+   "p": "abs",
+   "s": "hip-flexors,obliques",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Crunch Poulie": {
+   "p": "abs",
+   "s": "hip-flexors,obliques",
+   "pat": "gainage-abdos",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Curl Araignée (Spider Curl)": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Barre": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Barre EZ Prise Large": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Concentré": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Câble en Croix (Bayesian Curl)": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl EZ": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Haltères": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Incliné": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Machine": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Poignet Barre": {
+   "p": "forearms",
+   "s": "",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Poulie": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Pupitre Barre EZ (Larry Scott)": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Pupitre Machine": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Curl Zottman": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Câble Crunch": {
+   "p": "abs",
+   "s": "hip-flexors,obliques",
+   "pat": "gainage-abdos",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Dips": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Dips Assis Machine (Seated Dip)": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Dips Lestés": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Dips Machine Assistée": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Dips Parallèles": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Dips aux Anneaux": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Dips entre Deux Bancs": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Drapeau (Dragon Flag)": {
+   "p": "abs,obliques",
+   "s": "front-delt,hip-flexors",
+   "pat": "gainage-abdos",
+   "eq": "autre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Arnold (Arnold Press)": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Couché": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Couché Haltères": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Couché Larsen (Larsen Press)": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Couché Unilatéral Kettlebell": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Couché au Sol (Floor Press)": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Couché avec Chaînes": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Couché Élastique": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Décliné": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Décliné Haltères": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Décliné Élastique": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Haltères Assis": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Incliné": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Incliné Haltères": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Incliné Poulie": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Développé Landmine (Épaules)": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Militaire": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Militaire Haltères": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Nuque": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Épaules Assis Machine (Shoulder Press)": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Épaules Assis Élastique": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Épaules Kettlebell": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Épaules Machine": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Épaules Unilatéral Élastique": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Développé Épaules Élastique": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Ergomètre de Ski (Ski Erg)": {
+   "p": "front-delt,quads",
+   "s": "abs,hamstrings,lats",
+   "pat": "cardio",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Extension Fessiers Arrière (Kickback)": {
+   "p": "glutes",
+   "s": "hamstrings,lower-back",
+   "pat": "hip-hinge",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Extension Lombaire sur Ballon": {
+   "p": "glutes,lower-back",
+   "s": "hamstrings",
+   "pat": "hip-hinge",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Extension Nuque Haltère": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Nuque Poulie Haute": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Poignet Barre": {
+   "p": "forearms",
+   "s": "",
+   "pat": "poignet",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Quadriceps (Leg Extension)": {
+   "p": "quads",
+   "s": "",
+   "pat": "extension-genou",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Quadriceps Unilatérale": {
+   "p": "quads",
+   "s": "",
+   "pat": "extension-genou",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Quadriceps Unilatérale Machine à Dips": {
+   "p": "quads",
+   "s": "",
+   "pat": "extension-genou",
+   "eq": "guide",
+   "met": 4,
+   "frag": 1
+  },
+  "Extension Quadriceps Élastique": {
+   "p": "quads",
+   "s": "",
+   "pat": "extension-genou",
+   "eq": "elast",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Triceps": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Triceps Allongée TRX (Sangles)": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "trx",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Triceps Arrière (Kickback)": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "autre",
+   "met": 4,
+   "frag": 1
+  },
+  "Extension Triceps Banc Incliné Haltères": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Triceps Concentrée Poulie": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Triceps Couché Haltères": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Triceps Décliné Haltères": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Triceps Nuque Élastique": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "elast",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Triceps TRX (Sangles)": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "trx",
+   "met": 4,
+   "frag": 0
+  },
+  "Extension Triceps Verticale Élastique": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "elast",
+   "met": 4,
+   "frag": 0
+  },
+  "Face Pull Couché Poulie": {
+   "p": "rear-delt",
+   "s": "side-delt,traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Farmer's Walk": {
+   "p": "forearms,traps",
+   "s": "abs,glutes,quads",
+   "pat": "porte",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Fentes": {
+   "p": "glutes,quads",
+   "s": "hamstrings",
+   "pat": "fente",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Fentes Arrière": {
+   "p": "glutes,quads",
+   "s": "hamstrings",
+   "pat": "fente",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Fentes Croisées (Curtsy Lunge)": {
+   "p": "glutes,quads",
+   "s": "hamstrings",
+   "pat": "fente",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Fentes Kettlebell": {
+   "p": "glutes,quads",
+   "s": "hamstrings",
+   "pat": "fente",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Fentes Latérales": {
+   "p": "glutes,quads",
+   "s": "hamstrings",
+   "pat": "fente",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Fentes Marchées": {
+   "p": "glutes,quads",
+   "s": "hamstrings",
+   "pat": "fente",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Gainage": {
+   "p": "abs,lower-back",
+   "s": "front-delt,glutes,obliques",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Glute Ham Raise (GHD)": {
+   "p": "glutes,hamstrings",
+   "s": "calves,lower-back",
+   "pat": "hip-hinge",
+   "eq": "corps",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Grimpeur (Mountain Climber)": {
+   "p": "abs,obliques",
+   "s": "front-delt,hip-flexors",
+   "pat": "gainage-abdos",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Hack Squat Assis": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Hack Squat Inversé": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Handstand Push-up (ATR)": {
+   "p": "front-delt",
+   "s": "traps,triceps",
+   "pat": "poussee-verticale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Handstand Push-up Suspendu (Sangles)": {
+   "p": "front-delt",
+   "s": "traps,triceps",
+   "pat": "poussee-verticale",
+   "eq": "trx",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Haussements d'Épaules Barre": {
+   "p": "traps",
+   "s": "forearms",
+   "pat": "elevation-epaules",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Haussements d'Épaules Câble": {
+   "p": "traps",
+   "s": "forearms",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Haussements d'Épaules Haltères": {
+   "p": "traps",
+   "s": "forearms",
+   "pat": "elevation-epaules",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Haussements d'Épaules Overhead": {
+   "p": "traps",
+   "s": "forearms",
+   "pat": "elevation-epaules",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Hex Press Smith Machine": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Hip Thrust Barre (Poussée de Hanche)": {
+   "p": "glutes",
+   "s": "hamstrings,lower-back",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Hip Thrust Haltère (Poussée de Hanche)": {
+   "p": "glutes",
+   "s": "hamstrings,lower-back",
+   "pat": "hip-hinge",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Hip Thrust Machine (Poussée de Hanche)": {
+   "p": "glutes",
+   "s": "hamstrings,lower-back",
+   "pat": "hip-hinge",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Hip Thrust Unilatéral (Poussée de Hanche)": {
+   "p": "glutes",
+   "s": "hamstrings,lower-back",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Hollow Body": {
+   "p": "abs,obliques",
+   "s": "front-delt,hip-flexors",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Hyperextension (Back Extension)": {
+   "p": "glutes,lower-back",
+   "s": "hamstrings",
+   "pat": "hip-hinge",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Hyperextension Inverse (Reverse Hyper)": {
+   "p": "glutes,lower-back",
+   "s": "hamstrings",
+   "pat": "hip-hinge",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Hyperextension Lestée": {
+   "p": "glutes,lower-back",
+   "s": "hamstrings",
+   "pat": "hip-hinge",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Hyperextension Machine": {
+   "p": "glutes,lower-back",
+   "s": "hamstrings",
+   "pat": "hip-hinge",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Inclinaison Lombaire (Good Morning)": {
+   "p": "glutes,hamstrings",
+   "s": "calves,lower-back",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Jefferson Curl": {
+   "p": "glutes,lower-back",
+   "s": "hamstrings",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Jefferson Squat": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Jumping Jack": {
+   "p": "front-delt,quads",
+   "s": "abs,calves,glutes",
+   "pat": "saut-plyo",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Kettlebell Swing": {
+   "p": "glutes,hamstrings",
+   "s": "lower-back,quads",
+   "pat": "hip-hinge",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Kickback Cable": {
+   "p": "glutes",
+   "s": "hamstrings",
+   "pat": "hip-hinge",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Kickback Machine": {
+   "p": "glutes",
+   "s": "hamstrings",
+   "pat": "hip-hinge",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "L-Sit": {
+   "p": "abs,obliques",
+   "s": "front-delt,hip-flexors",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Leg Curl Assis Machine": {
+   "p": "hamstrings",
+   "s": "calves,glutes",
+   "pat": "flexion-genou",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Leg Curl Couché Machine": {
+   "p": "hamstrings",
+   "s": "calves,glutes",
+   "pat": "flexion-genou",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Leg Curl Haltère": {
+   "p": "hamstrings",
+   "s": "calves,glutes",
+   "pat": "flexion-genou",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Leg Curl Inversé": {
+   "p": "hamstrings",
+   "s": "calves,glutes",
+   "pat": "flexion-genou",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Leg Curl Unilatéral Debout": {
+   "p": "hamstrings",
+   "s": "calves,glutes",
+   "pat": "flexion-genou",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Leg Curl Élastique": {
+   "p": "hamstrings",
+   "s": "calves,glutes",
+   "pat": "flexion-genou",
+   "eq": "elast",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Machine Oiseau": {
+   "p": "rear-delt",
+   "s": "side-delt,traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Marche de l'Ours (Bear Crawl)": {
+   "p": "front-delt,quads",
+   "s": "abs,calves,glutes",
+   "pat": "cardio",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Marteau": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Meadows Row": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Mollets Machine Assise": {
+   "p": "calves",
+   "s": "",
+   "pat": "mollets",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Mollets Machine Debout": {
+   "p": "calves",
+   "s": "",
+   "pat": "mollets",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Montée sur Box (Step-up)": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "fente",
+   "eq": "corps",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Montée sur Box Haltères": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "fente",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Muscle-up": {
+   "p": "biceps,lats",
+   "s": "front-delt,pec,triceps",
+   "pat": "tirage-vertical",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Oiseau": {
+   "p": "rear-delt",
+   "s": "side-delt,traps",
+   "pat": "elevation-epaules",
+   "eq": "autre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Oiseau Inversé TRX (Sangles)": {
+   "p": "rear-delt",
+   "s": "side-delt,traps",
+   "pat": "elevation-epaules",
+   "eq": "trx",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Oiseau Poulie 45°": {
+   "p": "rear-delt",
+   "s": "side-delt,traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Oiseau Élastique": {
+   "p": "rear-delt",
+   "s": "side-delt,traps",
+   "pat": "elevation-epaules",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Overhead Squat": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Overhead Squat Haltères": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Overhead Squat Élastique": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "elast",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Passage d'Épaule Élastique": {
+   "p": "rear-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "elast",
+   "met": 4,
+   "frag": 0
+  },
+  "Pec Deck": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Pendulum Squat": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Pin Squat": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Planche Inversée": {
+   "p": "glutes,lower-back",
+   "s": "abs,hamstrings,rear-delt",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Planche Latérale (Side Plank)": {
+   "p": "obliques",
+   "s": "abs,front-delt,glutes,lower-back",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Planche de Préhension": {
+   "p": "forearms",
+   "s": "quads,traps",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pompes (Push-up)": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pompes Diamant": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pompes Déficit (Deficit Push-up)": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pompes Inclinées TRX (Sangles)": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "trx",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pompes Lestées": {
+   "p": "pec,triceps",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pont Fessier (Glute Bridge)": {
+   "p": "glutes",
+   "s": "hamstrings,lower-back",
+   "pat": "hip-hinge",
+   "eq": "autre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Press Jambes 45°": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Press Jambes Horizontale": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Press Jambes Inclinée": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Press Jambes Levier": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Press Jambes Verticale": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Presse Mollets (Leg Press)": {
+   "p": "calves",
+   "s": "",
+   "pat": "mollets",
+   "eq": "guide",
+   "met": 4,
+   "frag": 1
+  },
+  "Presse à Cuisses Iso-Latérale": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Presse à Cuisses sur le Côté": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Pronation Supination Haltère": {
+   "p": "forearms",
+   "s": "",
+   "pat": "poignet",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Pull-over": {
+   "p": "lats",
+   "s": "pec,triceps",
+   "pat": "tirage-horizontal",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pull-over Barre": {
+   "p": "lats",
+   "s": "pec,triceps",
+   "pat": "tirage-horizontal",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pull-over Haltère": {
+   "p": "lats",
+   "s": "pec,triceps",
+   "pat": "tirage-horizontal",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pull-over Poulie": {
+   "p": "lats",
+   "s": "pec,triceps",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Pullover Machine": {
+   "p": "lats",
+   "s": "pec,triceps",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Reeves Deadlift": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Relevé de Buste (Sit-up)": {
+   "p": "abs",
+   "s": "hip-flexors,obliques",
+   "pat": "gainage-abdos",
+   "eq": "autre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Relevé de Jambes": {
+   "p": "abs",
+   "s": "hip-flexors,obliques",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Renegade Row": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Rocky Pull-up": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rotation Externe Épaule Abduction": {
+   "p": "rear-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Rotation Externe Épaule Haltère": {
+   "p": "rear-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Rotation Externe Épaule Poulie": {
+   "p": "rear-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Rotation Externe Épaule Élastique": {
+   "p": "rear-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "elast",
+   "met": 4,
+   "frag": 0
+  },
+  "Rotation Interne 90° Poulie": {
+   "p": "rear-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Rotation Interne Épaule Élastique": {
+   "p": "rear-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "elast",
+   "met": 4,
+   "frag": 0
+  },
+  "Rotation Machine Obliques": {
+   "p": "abs,obliques",
+   "s": "front-delt,hip-flexors",
+   "pat": "gainage-abdos",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rotation Russe (Russian Twist)": {
+   "p": "abs,obliques",
+   "s": "front-delt,hip-flexors",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Roue Abdominale (Ab Wheel)": {
+   "p": "abs,obliques",
+   "s": "front-delt,hip-flexors",
+   "pat": "gainage-abdos",
+   "eq": "autre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Barre (Tirage Horizontal)": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Rowing Buste Penché Élastique": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Câble (Tirage Horizontal)": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Rowing Haltère (Tirage Horizontal)": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Rowing Haltères Buste Penché": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Hammer Strength": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Horizontal Élastique": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Inversé sous une Table": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Landmine (T-Bar)": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Machine (Tirage Horizontal)": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Rowing Poitrine Appuyée (Chest Supported)": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Smith Machine": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing T-Bar Machine": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing TRX (Sangles)": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "trx",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Unilatéral Élastique": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Rowing Yates (Supination)": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Russian Twist Développé Épaules": {
+   "p": "abs,obliques",
+   "s": "front-delt,hip-flexors",
+   "pat": "gainage-abdos",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Safety Bar Squat": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Sauts à la Corde": {
+   "p": "calves",
+   "s": "quads",
+   "pat": "saut-plyo",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Seal Row": {
+   "p": "lats,rear-delt,traps",
+   "s": "biceps,forearms,lower-back",
+   "pat": "tirage-horizontal",
+   "eq": "barre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Sissy Squat": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "extension-genou",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Sissy Squat Machine": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "extension-genou",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Skull Crusher Barre EZ": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Sled Pull": {
+   "p": "lats",
+   "s": "biceps,rear-delt,traps",
+   "pat": "tirage-horizontal",
+   "eq": "cardio",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Sled Push": {
+   "p": "glutes,quads",
+   "s": "abs,calves",
+   "pat": "squat",
+   "eq": "cardio",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Smith Machine Développé Couché": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Smith Machine Développé Incliné": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Smith Machine Développé Militaire": {
+   "p": "front-delt,side-delt,triceps",
+   "s": "traps",
+   "pat": "poussee-verticale",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Smith Machine Fentes": {
+   "p": "glutes,quads",
+   "s": "hamstrings",
+   "pat": "fente",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Smith Machine Squat": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Jambes Tendues": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Machine": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Roumain Barre": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Roumain Haltères": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Roumain Kettlebell": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Roumain Landmine": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Roumain Unilatéral": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Sumo": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Sumo Haltères": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Sumo Kettlebell": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Sumo Landmine": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Trap Bar": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre Valise (Suitcase)": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Soulevé de Terre avec Déficit": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Split Squat TRX (Sangles)": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "fente",
+   "eq": "trx",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Split Squat Élastique (Fente Statique)": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "fente",
+   "eq": "elast",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Squat Avant": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Bande Élastique": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "elast",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Barre avec Bandes Élastiques": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "elast",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Bulgare": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "fente",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Bulgare Élastique": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "fente",
+   "eq": "elast",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Gobelet (Goblet Squat)": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Hack (Hack Squat)": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Squat Kettlebell": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "libre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Pistol": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "corps",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Pistol TRX (Sangles)": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "trx",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Poids du Corps (Air Squat)": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Sauté (Jump Squat)": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat Sumo": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat TRX (Sangles)": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "trx",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat avec Rotation du Tronc": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Squat à la Barre": {
+   "p": "glutes,quads",
+   "s": "calves,hamstrings,lower-back",
+   "pat": "squat",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Superman": {
+   "p": "glutes,lower-back",
+   "s": "hamstrings,rear-delt",
+   "pat": "hip-hinge",
+   "eq": "corps",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Suspension Passive (Dead Hang)": {
+   "p": "forearms,lats",
+   "s": "traps",
+   "pat": "tirage-vertical",
+   "eq": "trx",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Svend Press (Serrage de Plaque)": {
+   "p": "pec",
+   "s": "front-delt,triceps",
+   "pat": "poussee-horizontale",
+   "eq": "autre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Tate Press": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Thruster": {
+   "p": "front-delt,quads",
+   "s": "abs,glutes,traps,triceps",
+   "pat": "poussee-verticale",
+   "eq": "barre",
+   "met": 8,
+   "frag": 0
+  },
+  "Thruster Kettlebell": {
+   "p": "front-delt,quads",
+   "s": "abs,glutes,traps,triceps",
+   "pat": "poussee-verticale",
+   "eq": "libre",
+   "met": 8,
+   "frag": 0
+  },
+  "Thrusters Haltères": {
+   "p": "front-delt,quads",
+   "s": "abs,glutes,traps,triceps",
+   "pat": "poussee-verticale",
+   "eq": "libre",
+   "met": 8,
+   "frag": 0
+  },
+  "Tirage Cable Fessiers (Cable Pull Through)": {
+   "p": "glutes",
+   "s": "hamstrings,lower-back",
+   "pat": "hip-hinge",
+   "eq": "guide",
+   "met": 6.5,
+   "frag": 1
+  },
+  "Tirage Incliné Poulie Haute": {
+   "p": "lats",
+   "s": "biceps,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Tirage Iso-Latéral Hammer Strength": {
+   "p": "lats",
+   "s": "biceps,rear-delt,traps",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Tirage Menton": {
+   "p": "side-delt,traps",
+   "s": "biceps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Tirage Menton Kettlebell": {
+   "p": "side-delt,traps",
+   "s": "biceps",
+   "pat": "elevation-epaules",
+   "eq": "libre",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Tirage Menton Élastique": {
+   "p": "side-delt,traps",
+   "s": "biceps",
+   "pat": "elevation-epaules",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Tirage Nuque": {
+   "p": "lats",
+   "s": "biceps,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Tirage Poulie Basse Prise Large": {
+   "p": "lats",
+   "s": "biceps,rear-delt,traps",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Tirage Poulie Basse Prise Serrée": {
+   "p": "lats",
+   "s": "biceps,rear-delt,traps",
+   "pat": "tirage-horizontal",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Tirage Poulie Haute (Lat Pulldown)": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Tirage Poulie Haute Prise Inversée": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Tirage Poulie Haute Prise Serrée": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Tirage Vertical Alterné Élastique": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Tirage Visage (Face Pull)": {
+   "p": "rear-delt",
+   "s": "side-delt,traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Tirage en Rack (Rack Pull)": {
+   "p": "lower-back,traps",
+   "s": "glutes,hamstrings,lats",
+   "pat": "hip-hinge",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Traction Assistée": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Traction Assistée avec Banc": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "guide",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Traction Australienne (Poids du Corps)": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Traction Australienne TRX (Sangles)": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "trx",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Traction Derrière la Nuque": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Traction Lestée": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Traction Prise Neutre": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Traction Supination (Chin-up)": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Tractions (Pull-up)": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Tractions aux Anneaux": {
+   "p": "biceps,lats",
+   "s": "forearms,rear-delt,traps",
+   "pat": "tirage-vertical",
+   "eq": "corps",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Triceps Corde Poulie": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Triceps Haltère": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Triceps Machine": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Triceps Poulie": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Triceps Poulie Basse": {
+   "p": "triceps",
+   "s": "front-delt",
+   "pat": "extension-triceps",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Turkish Get-Up": {
+   "p": "front-delt,quads",
+   "s": "abs,glutes,traps,triceps",
+   "pat": "halterophilie",
+   "eq": "autre",
+   "met": 8,
+   "frag": 0
+  },
+  "Waiter Curl": {
+   "p": "biceps",
+   "s": "forearms",
+   "pat": "curl-biceps",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Wall Ball": {
+   "p": "front-delt,quads",
+   "s": "abs,calves,glutes",
+   "pat": "saut-plyo",
+   "eq": "cardio",
+   "met": 8,
+   "frag": 0
+  },
+  "Windshield Wiper": {
+   "p": "abs,obliques",
+   "s": "front-delt,hip-flexors",
+   "pat": "gainage-abdos",
+   "eq": "autre",
+   "met": 5.5,
+   "frag": 0
+  },
+  "Y Raise / W Raise": {
+   "p": "rear-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Zercher Deadlift": {
+   "p": "glutes,hamstrings,lower-back",
+   "s": "forearms,lats,quads,traps",
+   "pat": "hip-hinge",
+   "eq": "barre",
+   "met": 6.5,
+   "frag": 0
+  },
+  "Écarté Arrière Élastique": {
+   "p": "rear-delt",
+   "s": "side-delt,traps",
+   "pat": "elevation-epaules",
+   "eq": "elast",
+   "met": 5.5,
+   "frag": 1
+  },
+  "Écarté Décliné Haltères": {
+   "p": "pec",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Écarté Haltères": {
+   "p": "pec",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Écarté Hyght (Hyght Fly)": {
+   "p": "pec",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Écarté Incliné Haltères": {
+   "p": "pec",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Écarté Poulie": {
+   "p": "pec",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Écarté Poulie Haute à Genoux": {
+   "p": "pec",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Écarté TRX (Sangles)": {
+   "p": "pec",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "trx",
+   "met": 4,
+   "frag": 0
+  },
+  "Écarté Élastique": {
+   "p": "pec",
+   "s": "front-delt",
+   "pat": "poussee-horizontale",
+   "eq": "elast",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévation Frontale Allongée Barre": {
+   "p": "front-delt",
+   "s": "side-delt",
+   "pat": "elevation-epaules",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévation Frontale Banc Incliné": {
+   "p": "front-delt",
+   "s": "side-delt",
+   "pat": "elevation-epaules",
+   "eq": "barre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévation Latérale Inclinée Haltère": {
+   "p": "side-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévation Latérale Landmine": {
+   "p": "side-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévation Latérale Poulie Inclinée": {
+   "p": "side-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Frontales": {
+   "p": "front-delt",
+   "s": "side-delt",
+   "pat": "elevation-epaules",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Frontales Câble": {
+   "p": "front-delt",
+   "s": "side-delt",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Frontales Machine": {
+   "p": "front-delt",
+   "s": "side-delt",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Latérales (Lateral Raise)": {
+   "p": "side-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Latérales Câble": {
+   "p": "side-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Latérales Kettlebell": {
+   "p": "side-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "libre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Latérales Machine": {
+   "p": "side-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Latérales Unilatérale Poulie": {
+   "p": "side-delt",
+   "s": "traps",
+   "pat": "elevation-epaules",
+   "eq": "guide",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Mollets Assis": {
+   "p": "calves",
+   "s": "",
+   "pat": "mollets",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Mollets Debout": {
+   "p": "calves",
+   "s": "",
+   "pat": "mollets",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Mollets Penché (Donkey Calf Raise)": {
+   "p": "calves",
+   "s": "",
+   "pat": "mollets",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  },
+  "Élévations Mollets Unilatéral": {
+   "p": "calves",
+   "s": "",
+   "pat": "mollets",
+   "eq": "autre",
+   "met": 4,
+   "frag": 0
+  }
+ }
+}

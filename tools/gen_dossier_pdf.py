@@ -110,6 +110,7 @@ A(tab([
  ["VII", "La méthode de travail du projet", "Règles, journal, catalogue de bugs"],
  ["VIII", "L'audit du 2 août : méthode et résultats", "3 méthodes, dont une échouée"],
  ["VIII bis", "Analyse causale des 19 défauts", "Données ? règles ? modèle ? cas isolé ?"],
+ ["VIII ter", "Confiance, audit des règles, empreinte", "82 % sans ambiguïté · 18 % dépendants de l'ordre"],
  ["IX", "Les limites connues, mesurées", "La partie la plus importante"],
  ["X", "Les questions posées au relecteur", "9 questions"],
 ], [14*mm, 68*mm, 78*mm]))
@@ -570,6 +571,61 @@ A(tab([
  ["ft-v732", "<b>Zéro perte</b> : le chemin par lequel l'historique cloud pouvait être écrasé"],
  ["ft-v733", "<b>Rang de pertinence</b> de la recherche (le défaut décrit en partie VIII)"],
 ], [20*mm, 137*mm]))
+
+A(PageBreak())
+
+# ═══════════════ VIII ter ═══════════════
+A(partie("VIII ter", "Indicateur de confiance et audit des règles"))
+A(Spacer(1, 6))
+A(Paragraph("Cette partie répond à une demande du relecteur : <i>&laquo; peut-on mesurer la "
+  "fiabilité du catalogue ? auditer les règles elles-mêmes ? détecter automatiquement une "
+  "régression après une modification ? &raquo;</i> Les trois ont été mis en place et mesurés.", P))
+
+A(Paragraph("L'indicateur de confiance", H2))
+A(Paragraph("<b>Définition retenue</b>, volontairement stricte : un exercice est classé "
+  "<b>sans ambiguïté</b> si <b>toutes</b> les règles qui lui correspondent donnent le même "
+  "résultat ; il est <b>fragile</b> si plusieurs règles lui correspondent en donnant des muscles "
+  "<b>différents</b> &mdash; auquel cas sa justesse ne tient qu'à l'<b>ordre</b> des règles.", P))
+A(tab([
+ ["Mesure", "Exercices", "Part"],
+ ["Classés <b>sans ambiguïté</b> (indépendants de l'ordre)", "277", "<b>82 %</b>"],
+ ["Classés de façon <b>fragile</b> (le résultat dépend de l'ordre)", "60", "18 %"],
+ ["Sans aucun classement", "0", "0 %"],
+], [90*mm, 30*mm, 25*mm]))
+A(enc([
+ Paragraph("<b>Lecture indispensable de ce 18 %</b>", ENC),
+ Paragraph("Ce n'est <b>pas un taux d'erreur</b>. Les 60 exercices fragiles sont <b>corrects "
+  "aujourd'hui</b> &mdash; le développé couché sort bien en pectoraux et non en épaules. C'est une "
+  "<b>surface de risque</b> : ces 60 basculent silencieusement si une règle est insérée au mauvais "
+  "endroit. C'est précisément ce qui est arrivé aux oiseaux (10 exercices) et aux élévations "
+  "latérales.", ENC),
+]))
+
+A(Paragraph("L'audit des règles : le masquage partiel", H2))
+A(Paragraph("Le dispositif détectait les règles <b>totalement</b> mortes. Il ne voyait pas les "
+  "règles <b>partiellement</b> masquées : celles qui capturent une partie de ce qui leur revient, "
+  "le reste étant pris par une règle placée avant, avec un classement <b>différent</b>.", P))
+A(tab([
+ ["Constat", "Valeur"],
+ ["Règles totalement mortes", "0"],
+ ["Règles <b>partiellement</b> masquées", "<b>19 sur 69</b>"],
+ ["La plus touchée : <font face='Courier'>tirage | pulldown | row</font>",
+  "capture 9 exercices, <b>19 lui échappent</b> avec un autre classement"],
+ ["Deuxième : <font face='Courier'>developpe | shoulder press</font>",
+  "capture 4 exercices, <b>16 lui échappent</b>"],
+], [95*mm, 62*mm]))
+A(Paragraph("Dans la plupart des cas le masquage est <b>voulu</b> (une règle précise doit passer "
+  "avant une règle large). Ce qui manquait, c'est de le <b>voir</b>.", PETIT))
+
+A(Paragraph("La détection automatique de régression", H2))
+A(Paragraph("Une <b>empreinte</b> du catalogue a été créée : pour chacun des 337 exercices, ses "
+  "muscles principaux et secondaires, son schéma de mouvement, sa catégorie de matériel et sa "
+  "dépense calorique. Le test la compare à chaque version et <b>nomme</b> tout exercice qui bouge. "
+  "Quand le changement est voulu, on régénère l'empreinte et l'historique du code montre exactement "
+  "quels exercices ont été affectés.", P))
+A(Paragraph("<b>Vérifié en cassant volontairement</b> : en retirant la règle du deltoïde "
+  "postérieur, le test échoue et affiche <font face='Courier'>Machine Oiseau &ndash;&gt; muscles "
+  "vides</font>. Jusqu'ici, modifier une règle ne montrait <b>jamais</b> qui d'autre était touché.", P))
 
 # ═══════════════ IX ═══════════════
 A(partie("IX", "Les limites connues — la partie la plus importante"))
