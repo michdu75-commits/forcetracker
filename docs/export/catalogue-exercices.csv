@@ -1,0 +1,338 @@
+﻿nom;groupe;musclesPrincipauxFr;musclesSecondairesFr;schemaLibelle;materielLibelle;met;role;termeAnglais;classementCertain
+Abducteurs Machine Debout;Fessiers;Fessiers;;Abduction / adduction de hanche;"Guidé (machine, poulie)";4;accessoire;standing hip abduction machine;true
+Abduction Cuisses (Leg Abduction);Fessiers;Fessiers;;Abduction / adduction de hanche;"Guidé (machine, poulie)";4;accessoire;hip abduction machine;true
+Adduction Cuisses (Leg Adduction);Jambes;Fessiers;Quadriceps;Abduction / adduction de hanche;"Guidé (machine, poulie)";4;accessoire;hip adduction machine;true
+Arraché Debout (Muscle Snatch);Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Fessiers + Trapèzes + Triceps;Haltérophilie (explosif);Polyvalent / non déterminé;8;ancre;barbell muscle snatch;true
+Arraché Haltère (Dumbbell Snatch);Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Fessiers + Trapèzes + Triceps;Haltérophilie (explosif);"Poids libre (haltères, kettlebell)";8;ancre;dumbbell snatch;true
+Assault Air Bike;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Ischio-jambiers + Grand dorsal;Cardio / conditionnement;Cardio / conditionnement;8;accessoire;assault air bike;true
+Barre au Front;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Barre;4;accessoire;skull crusher;true
+Battle Rope;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Fessiers + Trapèzes + Triceps;Saut / pliométrie;Cardio / conditionnement;8;accessoire;battle rope waves;true
+Belt Squat;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;;true
+Bench Dips;Triceps;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;bench dip;true
+Bird Dog;Lombaires;Abdominaux + Lombaires;Fessiers + Obliques;Gainage / abdominaux;Polyvalent / non déterminé;5.5;accessoire;bird dog exercise;false
+Box Jump;Full Body;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Saut / pliométrie;Cardio / conditionnement;8;accessoire;box jump plyometric;true
+Burpees;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Fessiers + Trapèzes + Triceps;Saut / pliométrie;Cardio / conditionnement;8;accessoire;burpee;true
+Câble Crunch;Abdominaux;Abdominaux;Fléchisseurs de hanche + Obliques;Gainage / abdominaux;"Guidé (machine, poulie)";5.5;accessoire;cable crunch abdominal;true
+Chaise (Wall Sit);Jambes;Quadriceps;Abdominaux + Fessiers;Squat (flexion hanche+genou);Poids du corps;6.5;ancre;;false
+Chaise Romaine;Abdominaux;Abdominaux + Fléchisseurs de hanche;Obliques;Gainage / abdominaux;Poids du corps;5.5;accessoire;captain chair leg raise;false
+Chariot de Puissance — Curl Biceps;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Cardio / conditionnement;4;accessoire;power sled biceps curl;true
+Chariot de Puissance — Extension Triceps;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Cardio / conditionnement;4;accessoire;power sled triceps extension;true
+Chariot de Puissance — Fentes Arrière;Jambes;Fessiers + Quadriceps;Ischio-jambiers;Fente;Cardio / conditionnement;6.5;accessoire;power sled reverse lunge;true
+Chariot de Puissance — Poussée;Full Body;Fessiers + Quadriceps;Abdominaux + Mollets;Squat (flexion hanche+genou);Cardio / conditionnement;6.5;ancre;power sled push;true
+Chariot de Puissance — Tirage de Côté;Dos;Grand dorsal;Biceps + Deltoïde postérieur + Trapèzes;Tirage horizontal;Cardio / conditionnement;5.5;ancre;power sled lateral pull;true
+Chariot de Puissance — Tirage Dos;Dos;Grand dorsal;Biceps + Deltoïde postérieur + Trapèzes;Tirage horizontal;Cardio / conditionnement;5.5;ancre;power sled row;true
+Chariot de Puissance — Tirage en Avançant;Full Body;Grand dorsal;Biceps + Deltoïde postérieur + Trapèzes;Tirage horizontal;Cardio / conditionnement;5.5;ancre;power sled pull forward;true
+Chariot de Puissance — Tirage Épaules;Épaules;Deltoïde antérieur + Deltoïde moyen;Biceps + Trapèzes;Élévation / rotation épaule;Cardio / conditionnement;5.5;accessoire;power sled shoulder raise;false
+Chariot de Puissance — Tirage Inversé Jambes;Jambes;Quadriceps;Mollets + Fessiers;Squat (flexion hanche+genou);Cardio / conditionnement;6.5;ancre;power sled reverse drag;false
+Chest Press Machine Déclinée;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;decline chest press machine;true
+Chest Press Machine Horizontale;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;chest press machine;true
+Chest Press Machine Inclinée;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;incline chest press machine;true
+Chest Press Poulie Assis;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;seated cable chest press;true
+Chest Press TRX (Sangles);Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Sangles / TRX;5.5;ancre;trx chest press;true
+Clean & Jerk;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Fessiers + Trapèzes + Triceps;Haltérophilie (explosif);Polyvalent / non déterminé;8;ancre;clean and jerk;true
+Cossack Squat;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Fente;Barre;6.5;accessoire;;true
+Croisé Poulie (Cable Crossover);Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";4;accessoire;cable crossover;true
+Croix de Fer Haltères;Épaules;Deltoïde moyen;Trapèzes;Élévation / rotation épaule;"Poids libre (haltères, kettlebell)";4;accessoire;;true
+Crunch;Abdominaux;Abdominaux;Fléchisseurs de hanche + Obliques;Gainage / abdominaux;Poids du corps;5.5;accessoire;crunch abdominal;true
+Crunch Machine;Abdominaux;Abdominaux;Fléchisseurs de hanche + Obliques;Gainage / abdominaux;"Guidé (machine, poulie)";5.5;accessoire;crunch machine;true
+Crunch Oblique;Abdominaux;Abdominaux;Fléchisseurs de hanche + Obliques;Gainage / abdominaux;Poids du corps;5.5;accessoire;oblique crunch;true
+Crunch Poulie;Abdominaux;Abdominaux;Fléchisseurs de hanche + Obliques;Gainage / abdominaux;"Guidé (machine, poulie)";5.5;accessoire;cable crunch;true
+Curl Araignée (Spider Curl);Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Barre;4;accessoire;spider curl;true
+Curl Barre;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Barre;4;accessoire;barbell bicep curl;true
+Curl Barre EZ Prise Large;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Barre;4;accessoire;ez bar curl wide grip;true
+Curl Câble en Croix (Bayesian Curl);Biceps;Biceps;Avant-bras;Flexion du coude (biceps);"Guidé (machine, poulie)";4;accessoire;bayesian curl cable;true
+Curl Concentré;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Barre;4;accessoire;concentration curl;true
+Curl EZ;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Barre;4;accessoire;ez bar curl;true
+Curl Haltères;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);"Poids libre (haltères, kettlebell)";4;accessoire;dumbbell bicep curl;true
+Curl Incliné;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Barre;4;accessoire;incline dumbbell curl;true
+Curl Machine;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);"Guidé (machine, poulie)";4;accessoire;bicep curl machine;true
+Curl Poignet Barre;Avant-bras;Avant-bras;;Flexion du coude (biceps);Barre;4;accessoire;wrist curl barbell;true
+Curl Poulie;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);"Guidé (machine, poulie)";4;accessoire;cable bicep curl;true
+Curl Pupitre Barre EZ (Larry Scott);Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Barre;4;accessoire;ez bar preacher curl;true
+Curl Pupitre Machine;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);"Guidé (machine, poulie)";4;accessoire;preacher curl machine;true
+Curl Zottman;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Barre;4;accessoire;zottman curl;true
+Développé Arnold (Arnold Press);Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);"Poids libre (haltères, kettlebell)";5.5;ancre;arnold press;true
+Développé Couché;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Barre;5.5;ancre;bench press barbell;false
+Développé Couché au Sol (Floor Press);Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Barre;5.5;ancre;floor press barbell;false
+Développé Couché avec Chaînes;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Barre;5.5;ancre;bench press with chains;false
+Développé Couché Élastique;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Élastique;5.5;ancre;bench press resistance band;false
+Développé Couché Haltères;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Poids libre (haltères, kettlebell)";5.5;ancre;bench press dumbbell;false
+Développé Couché Larsen (Larsen Press);Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Barre;5.5;ancre;larsen press;false
+Développé Couché Unilatéral Kettlebell;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Poids libre (haltères, kettlebell)";5.5;ancre;single arm kettlebell bench press;false
+Développé Décliné;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Barre;5.5;ancre;decline bench press;false
+Développé Décliné Élastique;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Élastique;5.5;ancre;decline press resistance band;false
+Développé Décliné Haltères;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Poids libre (haltères, kettlebell)";5.5;ancre;decline bench press dumbbell;false
+Développé Épaules Assis Élastique;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);Élastique;5.5;ancre;seated shoulder press resistance band;true
+Développé Épaules Assis Machine (Shoulder Press);Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);"Guidé (machine, poulie)";5.5;ancre;seated machine shoulder press;true
+Développé Épaules Élastique;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);Élastique;5.5;ancre;shoulder press resistance band;true
+Développé Épaules Kettlebell;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);"Poids libre (haltères, kettlebell)";5.5;ancre;;true
+Développé Épaules Machine;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);"Guidé (machine, poulie)";5.5;ancre;shoulder press machine;true
+Développé Épaules Unilatéral Élastique;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);Élastique;5.5;ancre;single arm shoulder press resistance band;true
+Développé Haltères Assis;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);"Poids libre (haltères, kettlebell)";5.5;ancre;seated dumbbell press;true
+Développé Incliné;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Barre;5.5;ancre;incline bench press;false
+Développé Incliné Haltères;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Poids libre (haltères, kettlebell)";5.5;ancre;incline bench press dumbbell;false
+Développé Incliné Poulie;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;incline cable press;false
+Développé Landmine (Épaules);Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);"Poids libre (haltères, kettlebell)";5.5;ancre;;true
+Développé Militaire;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);Barre;5.5;ancre;overhead press barbell;true
+Développé Militaire Haltères;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);"Poids libre (haltères, kettlebell)";5.5;ancre;overhead press dumbbell;true
+Développé Nuque;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);Barre;5.5;ancre;;true
+Dips;Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;chest dips;true
+Dips Assis Machine (Seated Dip);Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;seated dip machine;false
+Dips aux Anneaux;Triceps;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;ring dips;true
+Dips entre Deux Bancs;Triceps;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;bench dips between two benches;true
+Dips Lestés;Triceps;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;dips weighted;true
+Dips Machine Assistée;Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;assisted dip machine;true
+Dips Parallèles;Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;parallel bar dip;true
+Drapeau (Dragon Flag);Abdominaux;Abdominaux + Obliques;Deltoïde antérieur + Fléchisseurs de hanche;Gainage / abdominaux;Polyvalent / non déterminé;5.5;accessoire;dragon flag;true
+Écarté Arrière Élastique;Épaules;Deltoïde postérieur;Deltoïde moyen + Trapèzes;Élévation / rotation épaule;Élastique;5.5;accessoire;;false
+Écarté Décliné Haltères;Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);"Poids libre (haltères, kettlebell)";4;accessoire;decline dumbbell fly;true
+Écarté Élastique;Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);Élastique;4;accessoire;chest fly resistance band;true
+Écarté Haltères;Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);"Poids libre (haltères, kettlebell)";4;accessoire;dumbbell fly chest;true
+Écarté Hyght (Hyght Fly);Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);Polyvalent / non déterminé;4;accessoire;hyght dumbbell fly;true
+Écarté Incliné Haltères;Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);"Poids libre (haltères, kettlebell)";4;accessoire;incline dumbbell fly;true
+Écarté Poulie;Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";4;accessoire;cable fly chest;true
+Écarté Poulie Haute à Genoux;Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";4;accessoire;kneeling high cable fly;true
+Écarté TRX (Sangles);Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);Sangles / TRX;4;accessoire;trx chest fly;true
+Élévation Frontale Allongée Barre;Épaules;Deltoïde antérieur;Deltoïde moyen;Élévation / rotation épaule;Barre;4;accessoire;;true
+Élévation Frontale Banc Incliné;Épaules;Deltoïde antérieur;Deltoïde moyen;Élévation / rotation épaule;Barre;4;accessoire;;true
+Élévation Latérale Inclinée Haltère;Épaules;Deltoïde moyen;Trapèzes;Élévation / rotation épaule;"Poids libre (haltères, kettlebell)";4;accessoire;;true
+Élévation Latérale Landmine;Épaules;Deltoïde moyen;Trapèzes;Élévation / rotation épaule;"Poids libre (haltères, kettlebell)";4;accessoire;;true
+Élévation Latérale Poulie Inclinée;Épaules;Deltoïde moyen;Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";4;accessoire;;true
+Élévations Frontales;Épaules;Deltoïde antérieur;Deltoïde moyen;Élévation / rotation épaule;Polyvalent / non déterminé;4;accessoire;front raise dumbbell;true
+Élévations Frontales Câble;Épaules;Deltoïde antérieur;Deltoïde moyen;Élévation / rotation épaule;"Guidé (machine, poulie)";4;accessoire;cable front raise;true
+Élévations Frontales Machine;Épaules;Deltoïde antérieur;Deltoïde moyen;Élévation / rotation épaule;"Guidé (machine, poulie)";4;accessoire;machine front raise;true
+Élévations Latérales (Lateral Raise);Épaules;Deltoïde moyen;Trapèzes;Élévation / rotation épaule;Polyvalent / non déterminé;4;accessoire;lateral raise dumbbell;true
+Élévations Latérales Câble;Épaules;Deltoïde moyen;Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";4;accessoire;cable lateral raise;true
+Élévations Latérales Kettlebell;Épaules;Deltoïde moyen;Trapèzes;Élévation / rotation épaule;"Poids libre (haltères, kettlebell)";4;accessoire;;true
+Élévations Latérales Machine;Épaules;Deltoïde moyen;Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";4;accessoire;machine lateral raise;true
+Élévations Latérales Unilatérale Poulie;Épaules;Deltoïde moyen;Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";4;accessoire;single arm cable lateral raise;true
+Élévations Mollets Assis;Mollets;Mollets;;Extension de cheville (mollets);Polyvalent / non déterminé;4;accessoire;seated calf raise;true
+Élévations Mollets Debout;Mollets;Mollets;;Extension de cheville (mollets);Polyvalent / non déterminé;4;accessoire;standing calf raise;true
+Élévations Mollets Penché (Donkey Calf Raise);Mollets;Mollets;;Extension de cheville (mollets);Polyvalent / non déterminé;4;accessoire;donkey calf raise;true
+Élévations Mollets Unilatéral;Mollets;Mollets;;Extension de cheville (mollets);Polyvalent / non déterminé;4;accessoire;single leg calf raise;true
+Ergomètre de Ski (Ski Erg);Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Ischio-jambiers + Grand dorsal;Cardio / conditionnement;Cardio / conditionnement;8;accessoire;ski erg;true
+Extension Fessiers Arrière (Kickback);Fessiers;Fessiers;Ischio-jambiers + Lombaires;Charnière de hanche (hip hinge);Polyvalent / non déterminé;6.5;ancre;glute kickback cable;false
+Extension Lombaire sur Ballon;Lombaires;Fessiers + Lombaires;Ischio-jambiers;Charnière de hanche (hip hinge);Polyvalent / non déterminé;6.5;ancre;back extension stability ball;true
+Extension Nuque Haltère;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Poids libre (haltères, kettlebell)";4;accessoire;overhead triceps extension dumbbell;true
+Extension Nuque Poulie Haute;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;overhead cable triceps extension;true
+Extension Poignet Barre;Avant-bras;Avant-bras;;Flexion / rotation du poignet;Barre;4;accessoire;wrist extension barbell;true
+Extension Quadriceps (Leg Extension);Jambes;Quadriceps;;Extension de genou (quadriceps);"Guidé (machine, poulie)";4;accessoire;leg extension machine;true
+Extension Quadriceps Élastique;Jambes;Quadriceps;;Extension de genou (quadriceps);Élastique;4;accessoire;leg extension resistance band;true
+Extension Quadriceps Unilatérale;Jambes;Quadriceps;;Extension de genou (quadriceps);"Guidé (machine, poulie)";4;accessoire;;true
+Extension Quadriceps Unilatérale Machine à Dips;Jambes;Quadriceps;;Extension de genou (quadriceps);"Guidé (machine, poulie)";4;accessoire;single leg extension assisted dip machine;false
+Extension Triceps;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Polyvalent / non déterminé;4;accessoire;triceps extension overhead;true
+Extension Triceps Allongée TRX (Sangles);Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Sangles / TRX;4;accessoire;trx lying triceps extension;true
+Extension Triceps Arrière (Kickback);Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Polyvalent / non déterminé;4;accessoire;triceps kickback dumbbell;false
+Extension Triceps Banc Incliné Haltères;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Poids libre (haltères, kettlebell)";4;accessoire;incline dumbbell triceps extension;true
+Extension Triceps Concentrée Poulie;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;concentration cable triceps extension;true
+Extension Triceps Couché Haltères;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Poids libre (haltères, kettlebell)";4;accessoire;lying triceps extension dumbbell;true
+Extension Triceps Décliné Haltères;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Poids libre (haltères, kettlebell)";4;accessoire;decline dumbbell triceps extension;true
+Extension Triceps Nuque Élastique;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Élastique;4;accessoire;overhead triceps extension resistance band;true
+Extension Triceps TRX (Sangles);Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Sangles / TRX;4;accessoire;trx triceps extension;true
+Extension Triceps Verticale Élastique;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Élastique;4;accessoire;triceps pushdown resistance band;true
+Face Pull Couché Poulie;Épaules;Deltoïde postérieur;Deltoïde moyen + Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";5.5;accessoire;;false
+Farmer's Walk;Avant-bras;Avant-bras + Trapèzes;Abdominaux + Fessiers + Quadriceps;Porté (carry);"Poids libre (haltères, kettlebell)";6.5;accessoire;farmers walk;true
+Fentes;Jambes;Fessiers + Quadriceps;Ischio-jambiers;Fente;Polyvalent / non déterminé;6.5;accessoire;lunge barbell;true
+Fentes Arrière;Jambes;Fessiers + Quadriceps;Ischio-jambiers;Fente;Polyvalent / non déterminé;6.5;accessoire;reverse lunge;true
+Fentes Croisées (Curtsy Lunge);Jambes;Fessiers + Quadriceps;Ischio-jambiers;Fente;Polyvalent / non déterminé;6.5;accessoire;curtsy lunge;true
+Fentes Kettlebell;Jambes;Fessiers + Quadriceps;Ischio-jambiers;Fente;"Poids libre (haltères, kettlebell)";6.5;accessoire;;true
+Fentes Latérales;Jambes;Fessiers + Quadriceps;Ischio-jambiers;Fente;Polyvalent / non déterminé;6.5;accessoire;lateral lunge;true
+Fentes Marchées;Jambes;Fessiers + Quadriceps;Ischio-jambiers;Fente;Polyvalent / non déterminé;6.5;accessoire;walking lunge;true
+Gainage;Abdominaux;Abdominaux + Lombaires;Deltoïde antérieur + Fessiers + Obliques;Gainage / abdominaux;Poids du corps;5.5;accessoire;plank core;true
+Glute Ham Raise (GHD);Fessiers;Fessiers + Ischio-jambiers;Mollets + Lombaires;Charnière de hanche (hip hinge);Poids du corps;6.5;ancre;;true
+Grimpeur (Mountain Climber);Abdominaux;Abdominaux + Obliques;Deltoïde antérieur + Fléchisseurs de hanche;Gainage / abdominaux;Cardio / conditionnement;8;accessoire;mountain climber;true
+Hack Squat Assis;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;seated hack squat machine;false
+Hack Squat Inversé;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;;false
+Handstand Push-up (ATR);Épaules;Deltoïde antérieur;Trapèzes + Triceps;Poussée verticale (au-dessus de la tête);Poids du corps;5.5;ancre;handstand push up;false
+Handstand Push-up Suspendu (Sangles);Épaules;Deltoïde antérieur;Trapèzes + Triceps;Poussée verticale (au-dessus de la tête);Sangles / TRX;5.5;ancre;suspended handstand push up;false
+Haussements d'Épaules Barre;Trapèzes;Trapèzes;Avant-bras;Élévation / rotation épaule;Barre;4;accessoire;barbell shrug;true
+Haussements d'Épaules Câble;Trapèzes;Trapèzes;Avant-bras;Élévation / rotation épaule;"Guidé (machine, poulie)";4;accessoire;cable shrug;true
+Haussements d'Épaules Haltères;Trapèzes;Trapèzes;Avant-bras;Élévation / rotation épaule;"Poids libre (haltères, kettlebell)";4;accessoire;dumbbell shrug;true
+Haussements d'Épaules Overhead;Trapèzes;Trapèzes;Avant-bras;Élévation / rotation épaule;Barre;4;accessoire;;true
+Hex Press Smith Machine;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;hex press smith machine;true
+Hip Thrust Barre (Poussée de Hanche);Fessiers;Fessiers;Ischio-jambiers + Lombaires;Charnière de hanche (hip hinge);Barre;6.5;ancre;hip thrust barbell;true
+Hip Thrust Haltère (Poussée de Hanche);Fessiers;Fessiers;Ischio-jambiers + Lombaires;Charnière de hanche (hip hinge);"Poids libre (haltères, kettlebell)";6.5;ancre;hip thrust dumbbell;true
+Hip Thrust Machine (Poussée de Hanche);Fessiers;Fessiers;Ischio-jambiers + Lombaires;Charnière de hanche (hip hinge);"Guidé (machine, poulie)";6.5;ancre;hip thrust machine;true
+Hip Thrust Unilatéral (Poussée de Hanche);Fessiers;Fessiers;Ischio-jambiers + Lombaires;Charnière de hanche (hip hinge);Barre;6.5;ancre;single leg barbell hip thrust;true
+Hollow Body;Abdominaux;Abdominaux + Obliques;Deltoïde antérieur + Fléchisseurs de hanche;Gainage / abdominaux;Poids du corps;5.5;accessoire;hollow body hold;true
+Hyperextension (Back Extension);Lombaires;Fessiers + Lombaires;Ischio-jambiers;Charnière de hanche (hip hinge);Polyvalent / non déterminé;6.5;ancre;;true
+Hyperextension Inverse (Reverse Hyper);Lombaires;Fessiers + Lombaires;Ischio-jambiers;Charnière de hanche (hip hinge);Polyvalent / non déterminé;6.5;ancre;;true
+Hyperextension Lestée;Lombaires;Fessiers + Lombaires;Ischio-jambiers;Charnière de hanche (hip hinge);Polyvalent / non déterminé;6.5;ancre;;true
+Hyperextension Machine;Lombaires;Fessiers + Lombaires;Ischio-jambiers;Charnière de hanche (hip hinge);"Guidé (machine, poulie)";6.5;ancre;;true
+Inclinaison Lombaire (Good Morning);Fessiers;Fessiers + Ischio-jambiers;Mollets + Lombaires;Charnière de hanche (hip hinge);Barre;6.5;ancre;good morning barbell;true
+Jefferson Curl;Lombaires;Fessiers + Lombaires;Ischio-jambiers;Charnière de hanche (hip hinge);Barre;6.5;ancre;;true
+Jefferson Squat;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Charnière de hanche (hip hinge);Barre;6.5;ancre;jefferson squat;false
+Jumping Jack;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Mollets + Fessiers;Saut / pliométrie;Cardio / conditionnement;8;accessoire;jumping jack;true
+Kettlebell Swing;Fessiers;Fessiers + Ischio-jambiers;Lombaires + Quadriceps;Charnière de hanche (hip hinge);"Poids libre (haltères, kettlebell)";6.5;ancre;kettlebell swing;true
+Kickback Cable;Fessiers;Fessiers;Ischio-jambiers;Charnière de hanche (hip hinge);"Guidé (machine, poulie)";4;ancre;cable glute kickback;true
+Kickback Machine;Fessiers;Fessiers;Ischio-jambiers;Charnière de hanche (hip hinge);"Guidé (machine, poulie)";4;ancre;glute kickback machine;true
+L-Sit;Abdominaux;Abdominaux + Obliques;Deltoïde antérieur + Fléchisseurs de hanche;Gainage / abdominaux;Poids du corps;5.5;accessoire;l-sit;true
+Leg Curl Assis Machine;Fessiers;Ischio-jambiers;Mollets + Fessiers;Flexion de genou (ischios);"Guidé (machine, poulie)";6.5;accessoire;seated leg curl machine;true
+Leg Curl Couché Machine;Fessiers;Ischio-jambiers;Mollets + Fessiers;Flexion de genou (ischios);"Guidé (machine, poulie)";6.5;accessoire;lying leg curl machine;true
+Leg Curl Élastique;Fessiers;Ischio-jambiers;Mollets + Fessiers;Flexion de genou (ischios);Élastique;6.5;accessoire;;true
+Leg Curl Haltère;Fessiers;Ischio-jambiers;Mollets + Fessiers;Flexion de genou (ischios);"Poids libre (haltères, kettlebell)";6.5;accessoire;;true
+Leg Curl Inversé;Fessiers;Ischio-jambiers;Mollets + Fessiers;Flexion de genou (ischios);"Guidé (machine, poulie)";6.5;accessoire;;true
+Leg Curl Unilatéral Debout;Fessiers;Ischio-jambiers;Mollets + Fessiers;Flexion de genou (ischios);"Guidé (machine, poulie)";6.5;accessoire;;true
+Machine Oiseau;Épaules;Deltoïde postérieur;Deltoïde moyen + Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";5.5;accessoire;rear delt fly machine;true
+Marche de l'Ours (Bear Crawl);Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Mollets + Fessiers;Cardio / conditionnement;Cardio / conditionnement;8;accessoire;bear crawl;true
+Marteau;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Polyvalent / non déterminé;4;accessoire;hammer curl;true
+Meadows Row;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Barre;5.5;ancre;;false
+Mollets Machine Assise;Mollets;Mollets;;Extension de cheville (mollets);"Guidé (machine, poulie)";4;accessoire;seated calf raise machine;true
+Mollets Machine Debout;Mollets;Mollets;;Extension de cheville (mollets);"Guidé (machine, poulie)";4;accessoire;standing calf raise machine;true
+Montée sur Box (Step-up);Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Fente;Poids du corps;6.5;accessoire;box step up;true
+Montée sur Box Haltères;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Fente;"Poids libre (haltères, kettlebell)";6.5;accessoire;step up dumbbell;true
+Muscle-up;Dos;Biceps + Grand dorsal;Deltoïde antérieur + Pectoraux + Triceps;Tirage vertical;Poids du corps;5.5;ancre;muscle up bar;true
+Oiseau;Épaules;Deltoïde postérieur;Deltoïde moyen + Trapèzes;Élévation / rotation épaule;Polyvalent / non déterminé;5.5;accessoire;rear delt fly dumbbell;true
+Oiseau Élastique;Épaules;Deltoïde postérieur;Deltoïde moyen + Trapèzes;Élévation / rotation épaule;Élastique;5.5;accessoire;reverse fly resistance band;true
+Oiseau Inversé TRX (Sangles);Épaules;Deltoïde postérieur;Deltoïde moyen + Trapèzes;Élévation / rotation épaule;Sangles / TRX;5.5;accessoire;trx reverse fly;true
+Oiseau Poulie 45°;Épaules;Deltoïde postérieur;Deltoïde moyen + Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";5.5;accessoire;;true
+Overhead Squat;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Barre;6.5;ancre;;true
+Overhead Squat Élastique;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Élastique;6.5;ancre;overhead squat resistance band;true
+Overhead Squat Haltères;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);"Poids libre (haltères, kettlebell)";6.5;ancre;dumbbell overhead squat;true
+Passage d'Épaule Élastique;Épaules;Deltoïde postérieur;Trapèzes;Élévation / rotation épaule;Élastique;4;accessoire;;true
+Pec Deck;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;accessoire;pec deck fly;false
+Pendulum Squat;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;;true
+Pin Squat;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Barre;6.5;ancre;;true
+Planche de Préhension;Avant-bras;Avant-bras;Quadriceps + Trapèzes;Gainage / abdominaux;Poids du corps;5.5;accessoire;dead hang grip;true
+Planche Inversée;Abdominaux;Fessiers + Lombaires;Abdominaux + Ischio-jambiers + Deltoïde postérieur;Gainage / abdominaux;Poids du corps;5.5;accessoire;reverse plank;true
+Planche Latérale (Side Plank);Abdominaux;Obliques;Abdominaux + Deltoïde antérieur + Fessiers + Lombaires;Gainage / abdominaux;Poids du corps;5.5;accessoire;side plank;false
+Pompes (Push-up);Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;push up;true
+Pompes Déficit (Deficit Push-up);Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;deficit push up;true
+Pompes Diamant;Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;diamond push up;true
+Pompes Inclinées TRX (Sangles);Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Sangles / TRX;5.5;ancre;trx incline push up;true
+Pompes Lestées;Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;push up weighted;true
+Pont Fessier (Glute Bridge);Fessiers;Fessiers;Ischio-jambiers + Lombaires;Charnière de hanche (hip hinge);Polyvalent / non déterminé;6.5;ancre;glute bridge;true
+Press Jambes 45°;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;;true
+Press Jambes Horizontale;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;;true
+Press Jambes Inclinée;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;;true
+Press Jambes Levier;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;;true
+Press Jambes Verticale;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;;true
+Presse à Cuisses Iso-Latérale;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;;true
+Presse à Cuisses sur le Côté;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;side leg press machine;true
+Presse Mollets (Leg Press);Mollets;Mollets;;Extension de cheville (mollets);"Guidé (machine, poulie)";4;accessoire;calf press leg press;false
+Pronation Supination Haltère;Avant-bras;Avant-bras;;Flexion / rotation du poignet;"Poids libre (haltères, kettlebell)";4;accessoire;forearm rotation dumbbell;true
+Pull-over;Dos;Grand dorsal;Pectoraux + Triceps;Tirage horizontal;Barre;5.5;accessoire;pullover barbell;true
+Pull-over Barre;Dos;Grand dorsal;Pectoraux + Triceps;Tirage horizontal;Barre;5.5;accessoire;;true
+Pull-over Haltère;Dos;Grand dorsal;Pectoraux + Triceps;Tirage horizontal;"Poids libre (haltères, kettlebell)";5.5;accessoire;pullover dumbbell;true
+Pull-over Poulie;Dos;Grand dorsal;Pectoraux + Triceps;Tirage horizontal;"Guidé (machine, poulie)";5.5;accessoire;;true
+Pullover Machine;Dos;Grand dorsal;Pectoraux + Triceps;Tirage horizontal;"Guidé (machine, poulie)";5.5;accessoire;pullover machine;true
+Reeves Deadlift;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;;true
+Relevé de Buste (Sit-up);Abdominaux;Abdominaux;Fléchisseurs de hanche + Obliques;Gainage / abdominaux;Polyvalent / non déterminé;5.5;accessoire;sit up;true
+Relevé de Jambes;Abdominaux;Abdominaux;Fléchisseurs de hanche + Obliques;Gainage / abdominaux;Poids du corps;5.5;accessoire;hanging leg raise;true
+Renegade Row;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;"Poids libre (haltères, kettlebell)";5.5;ancre;;false
+Rocky Pull-up;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;;true
+Rotation Externe Épaule Abduction;Épaules;Deltoïde postérieur;Trapèzes;Élévation / rotation épaule;Polyvalent / non déterminé;4;accessoire;;true
+Rotation Externe Épaule Élastique;Épaules;Deltoïde postérieur;Trapèzes;Élévation / rotation épaule;Élastique;4;accessoire;;true
+Rotation Externe Épaule Haltère;Épaules;Deltoïde postérieur;Trapèzes;Élévation / rotation épaule;"Poids libre (haltères, kettlebell)";4;accessoire;;true
+Rotation Externe Épaule Poulie;Épaules;Deltoïde postérieur;Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";4;accessoire;cable external rotation;true
+Rotation Interne 90° Poulie;Épaules;Deltoïde postérieur;Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";4;accessoire;;true
+Rotation Interne Épaule Élastique;Épaules;Deltoïde postérieur;Trapèzes;Élévation / rotation épaule;Élastique;4;accessoire;;true
+Rotation Machine Obliques;Abdominaux;Abdominaux + Obliques;Deltoïde antérieur + Fléchisseurs de hanche;Gainage / abdominaux;"Guidé (machine, poulie)";5.5;accessoire;oblique twist machine;true
+Rotation Russe (Russian Twist);Abdominaux;Abdominaux + Obliques;Deltoïde antérieur + Fléchisseurs de hanche;Gainage / abdominaux;Poids du corps;5.5;accessoire;russian twist;false
+Roue Abdominale (Ab Wheel);Abdominaux;Abdominaux + Obliques;Deltoïde antérieur + Fléchisseurs de hanche;Gainage / abdominaux;Polyvalent / non déterminé;5.5;accessoire;ab wheel rollout;true
+Rowing Barre (Tirage Horizontal);Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Barre;5.5;ancre;barbell row bent over;false
+Rowing Buste Penché Élastique;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Élastique;5.5;ancre;bent over row resistance band;true
+Rowing Câble (Tirage Horizontal);Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;"Guidé (machine, poulie)";5.5;ancre;cable row seated;false
+Rowing Haltère (Tirage Horizontal);Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;"Poids libre (haltères, kettlebell)";5.5;ancre;dumbbell row one arm;false
+Rowing Haltères Buste Penché;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;"Poids libre (haltères, kettlebell)";5.5;ancre;;true
+Rowing Hammer Strength;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;"Guidé (machine, poulie)";5.5;ancre;hammer strength row;true
+Rowing Horizontal Élastique;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Élastique;5.5;ancre;seated row resistance band;true
+Rowing Inversé sous une Table;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Barre;5.5;ancre;inverted row under table;true
+Rowing Landmine (T-Bar);Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;"Poids libre (haltères, kettlebell)";5.5;ancre;;true
+Rowing Machine (Tirage Horizontal);Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;"Guidé (machine, poulie)";5.5;ancre;seated row machine;false
+Rowing Poitrine Appuyée (Chest Supported);Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Barre;5.5;ancre;chest supported row;true
+Rowing Smith Machine;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;"Guidé (machine, poulie)";5.5;ancre;;true
+Rowing T-Bar Machine;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;"Guidé (machine, poulie)";5.5;ancre;;true
+Rowing TRX (Sangles);Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Sangles / TRX;5.5;ancre;trx row;true
+Rowing Unilatéral Élastique;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Élastique;5.5;ancre;single arm row resistance band;true
+Rowing Yates (Supination);Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Barre;5.5;ancre;yates row barbell;false
+Russian Twist Développé Épaules;Abdominaux;Abdominaux + Obliques;Deltoïde antérieur + Fléchisseurs de hanche;Gainage / abdominaux;Poids du corps;5.5;accessoire;;false
+Safety Bar Squat;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Barre;6.5;ancre;;true
+Sauts à la Corde;Mollets;Mollets;Quadriceps;Saut / pliométrie;Cardio / conditionnement;8;accessoire;jump rope;true
+Seal Row;Dos;Grand dorsal + Deltoïde postérieur + Trapèzes;Biceps + Avant-bras + Lombaires;Tirage horizontal;Barre;5.5;ancre;;false
+Sissy Squat;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Extension de genou (quadriceps);Barre;6.5;accessoire;;true
+Sissy Squat Machine;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Extension de genou (quadriceps);"Guidé (machine, poulie)";6.5;accessoire;sissy squat machine;true
+Skull Crusher Barre EZ;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Barre;4;accessoire;skull crusher ez bar;true
+Sled Pull;Dos;Grand dorsal;Biceps + Deltoïde postérieur + Trapèzes;Tirage horizontal;Cardio / conditionnement;5.5;ancre;;true
+Sled Push;Jambes;Fessiers + Quadriceps;Abdominaux + Mollets;Squat (flexion hanche+genou);Cardio / conditionnement;6.5;ancre;;true
+Smith Machine Développé Couché;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;smith machine bench press;false
+Smith Machine Développé Incliné;Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;smith machine incline bench press;false
+Smith Machine Développé Militaire;Épaules;Deltoïde antérieur + Deltoïde moyen + Triceps;Trapèzes;Poussée verticale (au-dessus de la tête);"Guidé (machine, poulie)";5.5;ancre;smith machine overhead press;true
+Smith Machine Fentes;Jambes;Fessiers + Quadriceps;Ischio-jambiers;Fente;"Guidé (machine, poulie)";6.5;accessoire;smith machine lunge;true
+Smith Machine Squat;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;smith machine squat;true
+Soulevé de Terre;Dos;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;deadlift conventional;true
+Soulevé de Terre avec Déficit;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;;true
+Soulevé de Terre Jambes Tendues;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;;true
+Soulevé de Terre Machine;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);"Guidé (machine, poulie)";6.5;ancre;;true
+Soulevé de Terre Roumain Barre;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;romanian deadlift barbell;true
+Soulevé de Terre Roumain Haltères;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);"Poids libre (haltères, kettlebell)";6.5;ancre;romanian deadlift dumbbell;true
+Soulevé de Terre Roumain Kettlebell;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);"Poids libre (haltères, kettlebell)";6.5;ancre;;true
+Soulevé de Terre Roumain Landmine;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);"Poids libre (haltères, kettlebell)";6.5;ancre;;true
+Soulevé de Terre Roumain Unilatéral;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;single leg romanian deadlift;true
+Soulevé de Terre Sumo;Dos;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;sumo deadlift;true
+Soulevé de Terre Sumo Haltères;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);"Poids libre (haltères, kettlebell)";6.5;ancre;;true
+Soulevé de Terre Sumo Kettlebell;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);"Poids libre (haltères, kettlebell)";6.5;ancre;;true
+Soulevé de Terre Sumo Landmine;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);"Poids libre (haltères, kettlebell)";6.5;ancre;;true
+Soulevé de Terre Trap Bar;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;;true
+Soulevé de Terre Valise (Suitcase);Jambes;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;suitcase deadlift;true
+Split Squat Élastique (Fente Statique);Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Fente;Élastique;6.5;accessoire;split squat resistance band;false
+Split Squat TRX (Sangles);Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Fente;Sangles / TRX;6.5;accessoire;trx split squat;false
+Squat à la Barre;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Barre;6.5;ancre;squat barbell;true
+Squat Avant;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Barre;6.5;ancre;front squat;true
+Squat avec Rotation du Tronc;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Barre;6.5;ancre;squat with torso rotation;true
+Squat Bande Élastique;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Élastique;6.5;ancre;;true
+Squat Barre avec Bandes Élastiques;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Élastique;6.5;ancre;banded barbell squat;true
+Squat Bulgare;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Fente;Barre;6.5;accessoire;bulgarian split squat;true
+Squat Bulgare Élastique;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Fente;Élastique;6.5;accessoire;bulgarian split squat resistance band;true
+Squat Gobelet (Goblet Squat);Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);"Poids libre (haltères, kettlebell)";6.5;ancre;goblet squat;true
+Squat Hack (Hack Squat);Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);"Guidé (machine, poulie)";6.5;ancre;hack squat;false
+Squat Kettlebell;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);"Poids libre (haltères, kettlebell)";6.5;ancre;;true
+Squat Pistol;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Poids du corps;6.5;ancre;;true
+Squat Pistol TRX (Sangles);Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Sangles / TRX;6.5;ancre;trx pistol squat;true
+Squat Poids du Corps (Air Squat);Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Barre;6.5;ancre;air squat bodyweight;true
+Squat Sauté (Jump Squat);Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Barre;6.5;ancre;jump squat;true
+Squat Sumo;Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Barre;6.5;ancre;sumo squat;true
+Squat TRX (Sangles);Jambes;Fessiers + Quadriceps;Mollets + Ischio-jambiers + Lombaires;Squat (flexion hanche+genou);Sangles / TRX;6.5;ancre;trx squat;true
+Superman;Lombaires;Fessiers + Lombaires;Ischio-jambiers + Deltoïde postérieur;Charnière de hanche (hip hinge);Poids du corps;6.5;ancre;;false
+Suspension Passive (Dead Hang);Dos;Avant-bras + Grand dorsal;Trapèzes;Tirage vertical;Sangles / TRX;5.5;ancre;dead hang;false
+Svend Press (Serrage de Plaque);Pectoraux;Pectoraux;Deltoïde antérieur + Triceps;Poussée horizontale (pectoraux);Polyvalent / non déterminé;5.5;ancre;svend press plate;true
+Tate Press;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);Polyvalent / non déterminé;4;accessoire;tate press dumbbell;true
+Thruster;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Fessiers + Trapèzes + Triceps;Poussée verticale (au-dessus de la tête);Barre;8;ancre;;true
+Thruster Kettlebell;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Fessiers + Trapèzes + Triceps;Poussée verticale (au-dessus de la tête);"Poids libre (haltères, kettlebell)";8;ancre;;true
+Thrusters Haltères;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Fessiers + Trapèzes + Triceps;Poussée verticale (au-dessus de la tête);"Poids libre (haltères, kettlebell)";8;ancre;dumbbell thruster;true
+Tirage Cable Fessiers (Cable Pull Through);Fessiers;Fessiers;Ischio-jambiers + Lombaires;Charnière de hanche (hip hinge);"Guidé (machine, poulie)";6.5;ancre;cable pull through glute;false
+Tirage en Rack (Rack Pull);Dos;Lombaires + Trapèzes;Fessiers + Ischio-jambiers + Grand dorsal;Charnière de hanche (hip hinge);"Guidé (machine, poulie)";5.5;ancre;rack pull barbell;false
+Tirage Incliné Poulie Haute;Dos;Grand dorsal;Biceps + Deltoïde postérieur + Trapèzes;Tirage vertical;"Guidé (machine, poulie)";5.5;ancre;;true
+Tirage Iso-Latéral Hammer Strength;Dos;Grand dorsal;Biceps + Deltoïde postérieur + Trapèzes;Tirage horizontal;"Guidé (machine, poulie)";5.5;ancre;;true
+Tirage Menton;Trapèzes;Deltoïde moyen + Trapèzes;Biceps;Élévation / rotation épaule;"Guidé (machine, poulie)";5.5;accessoire;upright row barbell;false
+Tirage Menton Élastique;Trapèzes;Deltoïde moyen + Trapèzes;Biceps;Élévation / rotation épaule;Élastique;5.5;accessoire;;false
+Tirage Menton Kettlebell;Épaules;Deltoïde moyen + Trapèzes;Biceps;Élévation / rotation épaule;"Poids libre (haltères, kettlebell)";5.5;accessoire;upright row kettlebell;false
+Tirage Nuque;Dos;Grand dorsal;Biceps + Deltoïde postérieur + Trapèzes;Tirage vertical;"Guidé (machine, poulie)";5.5;ancre;behind neck pulldown;true
+Tirage Poulie Basse Prise Large;Dos;Grand dorsal;Biceps + Deltoïde postérieur + Trapèzes;Tirage horizontal;"Guidé (machine, poulie)";5.5;ancre;seated cable row wide grip;true
+Tirage Poulie Basse Prise Serrée;Dos;Grand dorsal;Biceps + Deltoïde postérieur + Trapèzes;Tirage horizontal;"Guidé (machine, poulie)";5.5;ancre;seated cable row close grip;true
+Tirage Poulie Haute (Lat Pulldown);Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;"Guidé (machine, poulie)";5.5;ancre;lat pulldown cable;false
+Tirage Poulie Haute Prise Inversée;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;"Guidé (machine, poulie)";5.5;ancre;;false
+Tirage Poulie Haute Prise Serrée;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;"Guidé (machine, poulie)";5.5;ancre;lat pulldown close grip;false
+Tirage Vertical Alterné Élastique;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Élastique;5.5;ancre;alternating lat pulldown resistance band;false
+Tirage Visage (Face Pull);Épaules;Deltoïde postérieur;Deltoïde moyen + Trapèzes;Élévation / rotation épaule;"Guidé (machine, poulie)";5.5;accessoire;face pull cable;false
+Traction Assistée;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;"Guidé (machine, poulie)";5.5;ancre;assisted pull up machine;true
+Traction Assistée avec Banc;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;"Guidé (machine, poulie)";5.5;ancre;assisted pull up bench;true
+Traction Australienne (Poids du Corps);Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;australian pull up;true
+Traction Australienne TRX (Sangles);Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Sangles / TRX;5.5;ancre;trx inverted row;true
+Traction Derrière la Nuque;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;;true
+Traction Lestée;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;pull-up weighted;true
+Traction Prise Neutre;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;neutral grip pull up;true
+Traction Supination (Chin-up);Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;chin up;false
+Tractions (Pull-up);Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;pull up;true
+Tractions aux Anneaux;Dos;Biceps + Grand dorsal;Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;ring pull up;true
+Triceps Corde Poulie;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;triceps rope pushdown;true
+Triceps Haltère;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Poids libre (haltères, kettlebell)";4;accessoire;triceps overhead extension dumbbell;true
+Triceps Machine;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;triceps machine;true
+Triceps Poulie;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;triceps pushdown cable;true
+Triceps Poulie Basse;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;low cable triceps extension;true
+Turkish Get-Up;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Fessiers + Trapèzes + Triceps;Haltérophilie (explosif);Polyvalent / non déterminé;8;ancre;turkish get up;true
+Waiter Curl;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Barre;4;accessoire;waiter curl dumbbell;true
+Wall Ball;Full Body;Deltoïde antérieur + Quadriceps;Abdominaux + Mollets + Fessiers;Saut / pliométrie;Cardio / conditionnement;8;accessoire;wall ball shot;true
+Windshield Wiper;Abdominaux;Abdominaux + Obliques;Deltoïde antérieur + Fléchisseurs de hanche;Gainage / abdominaux;Polyvalent / non déterminé;5.5;accessoire;windshield wiper ab;true
+Y Raise / W Raise;Épaules;Deltoïde postérieur;Trapèzes;Élévation / rotation épaule;Polyvalent / non déterminé;4;accessoire;y raise band;true
+Zercher Deadlift;Fessiers;Fessiers + Ischio-jambiers + Lombaires;Avant-bras + Grand dorsal + Quadriceps + Trapèzes;Charnière de hanche (hip hinge);Barre;6.5;ancre;;true
