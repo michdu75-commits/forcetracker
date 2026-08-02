@@ -220,6 +220,26 @@ un truc qui nous a échappé. »* La lecture linéaire (les 69 règles, une par 
 La 12ᵉ famille de tests, **`tests/croises/`**, rejoue les 6 diagonales à chaque version. Elle a
 attrapé un 14ᵉ bug **dès son premier lancement**.
 
+### ⚠️ Ce que ce contrôle NE voit PAS — à lire avant de se croire couvert
+**Un croisement ne détecte qu'une CONTRADICTION.** Si deux sources sont fausses **de la même
+façon**, il se tait. Un exercice dont le groupe, les muscles et le schéma sont tous les trois
+cohérents *et tous les trois faux* reste invisible — seule une vérification **externe** (anatomie,
+littérature) l'attrape, et elle n'a été faite que sur une poignée d'exercices, pas sur les 337.
+
+Couverture réelle, mesurée le 02/08 :
+
+| Croisement | Couvre | Pourquoi pas 100 % |
+|---|---|---|
+| ① règles mortes | **337/337** | — |
+| ④ groupe ⟷ muscles | **337/337** | — |
+| ⑤ schéma ⟷ muscles | **337/337** | — |
+| ② animation en double | 282/337 (83 %) | **55 exercices n'ont pas d'animation** |
+| ③ terme anglais en double | 255/337 (75 %) | **82 exercices n'ont pas de terme anglais** |
+| ⑥ matériel ⟷ nom | 143/337 (42 %) | ne juge que si **un seul** matériel est écrit dans le nom |
+
+*Les trous de ② et ③ ne sont pas des trous du contrôle mais des trous de DONNÉE : ajouter une
+animation ou un terme anglais élargit mécaniquement la détection.*
+
 ---
 
 ## 8. 🤥 La promesse écrite à l'utilisateur, et fausse

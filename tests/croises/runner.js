@@ -136,6 +136,12 @@ const grpKo=ex.filter(e=>{
 });
 t('⭐ ④ le GROUPE choisi à la main ne contredit pas les MUSCLES calculés',
   grpKo.length===0, grpKo.map(e=>e.nom+' ['+e.groupe+'] → '+e.p.join(',')).join('\n         '));
+// « Full Body » n'a pas de muscle attendu — mais il ne peut pas être une ISOLATION : un
+// exercice annoncé comme complet qui ne toucherait qu'un muscle serait mal rangé. Sans ce
+// contrôle, les 17 exercices du groupe échappaient entièrement au croisement ④.
+const fbKo=ex.filter(e=>e.groupe==='Full Body'&&e.p.length&&(e.p.length+e.s.length)<3);
+t('⭐ ④bis un exercice « Full Body » sollicite au moins 3 muscles (jamais une isolation)',
+  fbKo.length===0, fbKo.map(e=>e.nom+' → '+e.p.concat(e.s).join(',')).join('\n         '));
 
 // ── ⑤ LE SCHÉMA DE MOUVEMENT NE CONTREDIT PAS LES MUSCLES ───────────────────
 // C'est ce croisement qui a attrapé le chariot de puissance : « Poussée » classée en
@@ -152,7 +158,14 @@ const PAT={'squat':['quads','glutes'],'fente':['quads','glutes'],
  'extension-genou':['quads'],'flexion-genou':['hamstrings'],
  'mollets':['calves'],'extension-cheville':['calves'],
  'elevation-epaules':['front-delt','side-delt','rear-delt','traps'],
- 'flexion-poignet':['forearms'],'abduction-hanche':['glutes']};
+ 'flexion-poignet':['forearms'],'abduction-hanche':['glutes'],
+ // ── 6 schémas ajoutés à la table le 02/08 : ils existaient dans l'app mais PAS ici, donc
+ //    19 exercices échappaient au croisement ⑤ sans que rien ne le dise. Un croisement qui
+ //    ne couvre pas tout doit le dire — sinon on croit avoir tout vérifié.
+ 'porte':['forearms','traps'],'poignet':['forearms'],'hanche-laterale':['glutes'],
+ 'saut-plyo':['quads','glutes','calves','hamstrings'],
+ 'halterophilie':['quads','glutes','front-delt','traps','hamstrings','lower-back'],
+ 'cardio':['quads','glutes','calves','front-delt','lats','abs','hamstrings']};
 const patKo=ex.filter(e=>{
   const a=PAT[e.pat]; if(!a||!e.p.length) return false;
   if(TOLERE.schema[e.nom]) return false;
