@@ -429,8 +429,8 @@
    "frag": 0
   },
   "Dips Assis Machine (Seated Dip)": {
-   "p": "triceps",
-   "s": "front-delt,lats,pec",
+   "p": "pec,triceps",
+   "s": "front-delt",
    "pat": "poussee-horizontale",
    "eq": "guide",
    "met": 5.5,

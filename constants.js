@@ -959,11 +959,19 @@ const EX_MUSCLES={
  'pompes-inclinees-trx-sangles':          {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
  // ✏️ CORRECTION : mains serrées = le TRICEPS devient le moteur, le pectoral suit.
  'pompes-diamant':                        {p:['triceps','pec'], s:['front-delt','abs'], vu:'2026-08-02'},
- // ✏️ CORRECTION FRANCHE : « Dips Assis Machine » était classé PECTORAUX en principal.
- //    Son animation (dips-assis-machine-avec-poids.webp) montre sans ambiguïté les TRICEPS
- //    et le dos : on pousse vers le BAS, bras le long du corps. C'est une machine à triceps,
- //    pas un dips de pectoraux. Trouvé en regardant l'animation, pas le nom.
- 'dips-assis-machine-seated-dip':         {p:['triceps'], s:['pec','front-delt','lats'], vu:'2026-08-02'},
+ // ✏️ CORRECTION — mais PAS celle que j'avais faite d'abord, et l'histoire vaut d'être écrite.
+ //    ① Constat de départ, juste : la fiche disait `p:['pec']` seul, le triceps relégué en
+ //       secondaire. Or sur une machine à dips, le triceps est bien un MOTEUR.
+ //    ② Ma première correction, FAUSSE : j'avais mis `p:['triceps']` seul, en me fiant à
+ //       l'animation du catalogue (dips-assis-machine-avec-poids.webp) où seuls les triceps
+ //       et le dos sont colorés. Michel a vérifié : la recherche « Dips Assis Machine muscle »
+ //       montre la MÊME machine avec les PECTORAUX en rouge chez Fitwill comme chez Strength
+ //       Level. Notre animation est l'exception, pas la règle.
+ //    ③ Le bon classement est celui des autres dips : pectoraux ET triceps moteurs.
+ //    ⚠️ LA LEÇON : je me suis fié à UNE source (une image) contre le consensus. C'est le
+ //       travers listé dans BUGS.md — et il a suffi d'une vérification de Michel pour le voir.
+ //    ⏭️ Reste un doute SUR L'ANIMATION elle-même : elle montre peut-être une autre machine.
+ 'dips-assis-machine-seated-dip':         {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
 };
 
 /** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou

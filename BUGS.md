@@ -434,6 +434,16 @@ conclure faux avec assurance.
 - **Se fier à une source externe non vérifiée** (02/08) : pour auditer le catalogue, j'ai comparé
   nos 340 exercices à une base publique de 873. Elle classe le **développé couché** en « triceps »
   principal. **Résultat inutilisable** — l'essentiel des « désaccords » était du bruit.
+- **🖼️ Se fier à une source UNIQUE contre le consensus** (02/08, ft-v737) : en relisant les
+  pectoraux, j'ai reclassé le **« Dips Assis Machine »** en *triceps* — sur la foi d'**une seule
+  image**, l'animation du catalogue, où seuls les triceps et le dos sont colorés. Michel a
+  vérifié en trente secondes : la recherche « Dips Assis Machine muscle » montre la **même
+  machine avec les PECTORAUX en rouge** chez Fitwill comme chez Strength Level.
+  **C'est notre animation qui est l'exception, pas la règle.**
+  ⭐ *Une image vaut mieux qu'un nom — mais une image ne vaut pas un consensus.* Et le piège est
+  d'autant plus vicieux que la méthode « regarder l'animation » avait très bien marché deux fois
+  avant (le tirage menton, l'écarté décliné) : **une méthode qui a marché inspire une confiance
+  qu'elle ne mérite pas toujours.**
 - **Chercher un symptôme là où il n'y en a pas** (ft-v727) : je voulais tailler dans les consignes
   de Milo parce qu'elles occupaient 78 % du contexte. Michel : *« tu me fais flipper là, parce que
   franchement Milo il est au top »*. Rien n'était cassé. **« Ça marche » est une raison suffisante

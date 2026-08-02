@@ -56,12 +56,6 @@ const TOLERE={
   groupe:{
     // le sélecteur range cet exercice là où on le CHERCHE, pas là où ça tire
     'Planche Inversée':'rangée dans Abdominaux parce qu\'on la cherche avec les gainages ; ses muscles moteurs sont bien fessiers + lombaires',
-    // ⏭️ EN ATTENTE D'ARBITRAGE (02/08) : la relecture des pectoraux a montré que c'est une
-    // machine à TRICEPS (son animation le montre sans ambiguïté), pas un dips de pectoraux.
-    // Ses muscles sont corrigés ; son GROUPE ne l'est pas encore, parce que déplacer un
-    // exercice change ce que voit l'utilisateur dans le sélecteur — c'est la décision de
-    // Michel, pas la mienne (R29). À lever quand le groupe Triceps sera basculé lui aussi.
-    'Dips Assis Machine (Seated Dip)':'muscles corrigés en triceps ; groupe encore Pectoraux, déplacement en attente de décision',
   },
   // ⑤ schémas volontairement différents des muscles
   schema:{
