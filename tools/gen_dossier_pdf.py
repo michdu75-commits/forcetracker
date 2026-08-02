@@ -109,6 +109,7 @@ A(tab([
  ["VI", "Le dispositif de vérification", "12 familles de tests — ce qu'elles couvrent et ne couvrent pas"],
  ["VII", "La méthode de travail du projet", "Règles, journal, catalogue de bugs"],
  ["VIII", "L'audit du 2 août : méthode et résultats", "3 méthodes, dont une échouée"],
+ ["VIII bis", "Analyse causale des 19 défauts", "Données ? règles ? modèle ? cas isolé ?"],
  ["IX", "Les limites connues, mesurées", "La partie la plus importante"],
  ["X", "Les questions posées au relecteur", "9 questions"],
 ], [14*mm, 68*mm, 78*mm]))
@@ -451,6 +452,60 @@ A(Paragraph("Ces six croisements ont été transformés en <b>famille de tests p
   "attrapé un 14ᵉ défaut <b>dès son premier lancement</b> : le <i>Jefferson Curl</i>, une flexion "
   "vertébrale chargée, était classé comme un curl de biceps.", P))
 
+A(Paragraph("Second audit (soir) — la trouvabilité, déclenchée par le même retour", H2))
+A(Paragraph("Michel revient sur le déclencheur : <i>&laquo; une adhérente n'a pas trouvé un "
+  "exercice. Je ne veux pas corriger uniquement ce cas. Je veux comprendre si ce bug révèle une "
+  "faiblesse de l'architecture. &raquo;</i> Une seconde mesure a donc été faite, sur la "
+  "<b>trouvabilité</b> plutôt que sur la classification.", P))
+A(Paragraph("<b>Protocole</b> : pour chacun des 337 exercices, simuler une recherche par le "
+  "<b>premier mot de son nom</b>, puis relever le nombre de résultats et la <b>position</b> de "
+  "l'exercice cherché dans la liste.", PETIT))
+A(tab([
+ ["Mesure", "Avant correctif", "Après correctif"],
+ ["Exercices apparaissant au-delà du 20<super>e</super> résultat", "<b>73</b>", "22"],
+ ["Exercices au-delà du 30<super>e</super> résultat", "32", "&mdash;"],
+ ["Recherche &laquo; pec deck &raquo; (un nom d'exercice unique)", "<b>45 résultats</b>, "
+  "l'exercice en <b>dernière</b> position", "<b>1</b>"],
+ ["Recherche &laquo; svend &raquo;", "45 résultats, en dernière position", "1"],
+ ["Recherches &laquo; yates &raquo; et &laquo; meadows &raquo;", "31 résultats chacune", "1"],
+ ["Recherche &laquo; développé couché &raquo;", "45 résultats dont <b>8 seulement</b> contenaient "
+  "ces mots", "8, tous pertinents"],
+], [66*mm, 50*mm, 41*mm]))
+A(enc([
+ Paragraph("<b>La cause, et elle est structurelle</b>", ENC),
+ Paragraph("La recherche est un <b>FILTRE</b> (oui / non) dont le résultat est affiché dans "
+  "l'ordre <b>ALPHABÉTIQUE</b>. Elle n'a <b>aucune notion de « à quel point ça correspond »</b>.", ENC),
+ Paragraph("Tant que le filtre restait étroit, le défaut était invisible. En l'élargissant aux "
+  "familles de mouvement pour réparer le cas de la testeuse, le bruit est devenu ingérable : "
+  "<b>chaque élargissement du filtre aggrave le problème, faute d'un tri pour le compenser</b>. "
+  "Le correctif d'un symptôme avait donc créé un défaut plus large que celui qu'il réparait.", ENC),
+], fond=colors.HexColor('#fdf0ee'), bord=ROUGE))
+A(Paragraph("Corrigé (ft-v733) par deux mesures : un <b>rang de pertinence</b> explicite (nom exact "
+  "&gt; commence par &gt; contient &gt; terme anglais &gt; groupe &gt; famille de mouvement), et un "
+  "élargissement par famille qui ne se déclenche plus que sur le <b>libellé</b> d'une famille — "
+  "jamais sur un mot-clé isolé, car ces mots-clés contiennent des noms d'exercices précis "
+  "(&laquo; svend &raquo;, &laquo; pec deck &raquo;, &laquo; yates &raquo;).", P))
+A(Paragraph("<b>Un piège dans le piège, qui mérite d'être signalé</b> : une fois le tri écrit, il "
+  "ne se voyait toujours pas — l'affichage <b>regroupe les résultats par matériel</b>, et ce "
+  "regroupement imposait son propre ordre. L'exercice avait beau être classé premier, il repartait "
+  "dans sa catégorie, affichée plus bas. <i>Un tri ne sert à rien s'il ne traverse pas la mise en "
+  "forme.</i>", P))
+
+A(Paragraph("Trouvabilité : les portes d'entrée de chaque exercice", H2))
+A(Paragraph("Mesure complémentaire : par combien de chemins <b>différents</b> un exercice "
+  "peut-il être atteint (son nom, son groupe musculaire, son terme anglais, sa famille de "
+  "mouvement, sa catégorie de matériel) ?", PETIT))
+A(tab([
+ ["Portes d'entrée", "Exercices"],
+ ["5 portes", "225"],
+ ["4 portes", "108"],
+ ["3 portes", "4"],
+ ["2 portes ou moins", "<b>0</b>"],
+], [60*mm, 30*mm]))
+A(Paragraph("<b>Aucun exercice n'est orphelin.</b> Les manques restants sont des trous de "
+  "<b>donnée</b> et non de conception : 82 exercices n'ont pas de terme anglais, 34 ont un matériel "
+  "indéterminé.", P))
+
 A(Paragraph("Couverture réelle de chaque croisement", H2))
 A(tab([
  ["Croisement", "Couverture", "Limite"],
@@ -463,6 +518,58 @@ A(tab([
 ], [42*mm, 30*mm, 85*mm]))
 
 A(PageBreak())
+
+# ═══════════════ VIII bis ═══════════════
+A(partie("VIII bis", "Analyse causale des 19 défauts"))
+A(Spacer(1, 6))
+A(Paragraph("Michel demande explicitement de ne pas s'arrêter à la liste des défauts : "
+  "<i>&laquo; je veux identifier les causes. Est-ce un problème de données ? une limite des "
+  "règles ? une limite du modèle ? un cas isolé ? une famille complète d'erreurs "
+  "potentielles ? &raquo;</i> Voici la répartition, défaut par défaut.", P))
+A(tab([
+ ["Cause", "Défauts", "Exemples", "Portée"],
+ ["<b>Limite des règles</b><br/>(ordre de parcours)", "9",
+  "Le &laquo; premier match gagnant &raquo; : une règle générale placée avant une règle précise la "
+  "rend inatteignable. Oiseaux classés deltoïde moyen, Jefferson Curl classé curl de biceps.",
+  "<b>Famille entière</b> — au moins 12 occurrences historiques"],
+ ["<b>Limite du modèle</b><br/>(tout se déduit du nom)", "6",
+  "Ajouter une traduction dans un nom change sa catégorie de matériel. Deux fiches ne peuvent pas "
+  "porter le même nom. Renommer casse le lien avec l'historique.",
+  "<b>Structurelle</b> — ne se résout pas par des correctifs"],
+ ["<b>Limite du modèle</b><br/>(recherche sans pertinence)", "1",
+  "Un filtre oui/non affiché par ordre alphabétique : chaque élargissement aggrave le bruit.",
+  "<b>Famille entière</b> — toute requête précise dont le mot figure dans une liste de mots-clés"],
+ ["<b>Problème de données</b>", "3",
+  "Doublons (deux fiches pour le même exercice), animation associée au mauvais exercice.",
+  "Ponctuel, mais <b>invisible</b> sans croisement"],
+ ["<b>Cas isolé</b>", "0", "&mdash;", "Aucun des défauts trouvés n'était réellement isolé."],
+], [34*mm, 14*mm, 62*mm, 47*mm]))
+A(enc([
+ Paragraph("<b>Le résultat le plus important de cette analyse</b>", ENC),
+ Paragraph("<b>Aucun des 19 défauts n'était un cas isolé.</b> Chacun appartenait à une famille "
+  "&mdash; c'est-à-dire que d'autres exercices étaient touchés par le même mécanisme, sans qu'on le "
+  "sache. C'est ce qui justifie de corriger les causes plutôt que les cas.", ENC),
+ Paragraph("Et deux défauts sur trois relèvent de la <b>même racine</b> : le nom de l'exercice est "
+  "à la fois l'étiquette affichée, l'entrée de cinq calculs, et la clé primaire de l'historique. "
+  "<b>Une seule chaîne de caractères porte trois responsabilités incompatibles.</b>", ENC),
+]))
+
+A(Paragraph("Chronologie de la journée du 2 août", H2))
+A(Paragraph("Sept versions livrées en une journée. Elle est donnée parce qu'elle explique la plupart "
+  "des malentendus possibles : une observation du matin peut être exacte et périmée le soir.", PETIT))
+A(tab([
+ ["Version", "Ce qui a changé"],
+ ["ft-v727", "<b>Mémoire longue</b> : Milo reçoit tout le parcours depuis l'inscription, et plus "
+  "seulement 5 séances"],
+ ["ft-v728", "Recherche par <b>famille de mouvement</b> (correctif du cas de la testeuse) &mdash; "
+  "<i>qui a introduit le défaut de pertinence</i>"],
+ ["ft-v729", "<b>Les deux noms</b> (français et anglais) sur les exercices les plus répandus"],
+ ["ft-v730", "<b>Les croisements</b> : 14 défauts invisibles trouvés, 12<super>e</super> famille de "
+  "tests créée, fichier des bugs créé"],
+ ["ft-v731", "<b>Couverture des croisements mesurée</b> : deux trous comblés, limites restantes écrites"],
+ ["ft-v732", "<b>Zéro perte</b> : le chemin par lequel l'historique cloud pouvait être écrasé"],
+ ["ft-v733", "<b>Rang de pertinence</b> de la recherche (le défaut décrit en partie VIII)"],
+], [20*mm, 137*mm]))
 
 # ═══════════════ IX ═══════════════
 A(partie("IX", "Les limites connues — la partie la plus importante"))
@@ -576,6 +683,13 @@ A(Paragraph("Q9. Les statistiques recalculées : défaut ou propriété ?", QUES
 A(Paragraph("Les muscles ne sont pas figés dans l'historique. Corriger une règle change donc le passé. "
   "Faut-il figer les muscles au moment de l'enregistrement (statistiques reproductibles mais erreurs "
   "gravées), ou conserver le recalcul (correctifs propagés mais passé mouvant) ?", P))
+
+A(Paragraph("Q10. Un correctif qui aggrave le défaut qu'il répare : comment l'éviter ?", QUEST))
+A(Paragraph("Le cas est documenté dans ce dossier : élargir la recherche pour aider une testeuse a "
+  "rendu les recherches précises inutilisables, et personne ne l'a vu pendant deux versions parce "
+  "que les tests vérifiaient le <b>nombre</b> de résultats et jamais leur <b>ordre</b>. Quelle "
+  "classe de test aurait attrapé cela ? Plus généralement : <b>comment teste-t-on la pertinence "
+  "d'un classement</b>, par opposition à son exactitude ?", P))
 
 A(Spacer(1, 10))
 A(enc([
