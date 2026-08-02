@@ -2801,11 +2801,11 @@ const VM_CASES=[
   {input:'Chest press hammer', expect:'Chest Press Machine Horizontale', why:'même mouvement, marque (GPT)'},
   {input:'Développé couché à la barre', expect:'Développé Couché', why:'précision « barre » ignorée'},
   {input:'Soulevé de terre classique', expect:'Soulevé de Terre', why:'« classique » = le SdT de base'},
-  {input:'Tirage poitrine', expect:'Tirage Poulie Haute', why:'lat pulldown vers la poitrine'},
+  {input:'Tirage poitrine', expect:'Tirage Poulie Haute (Lat Pulldown)', why:'lat pulldown vers la poitrine'},
   // — VM-003 : NE PAS fusionner deux mouvements distincts (cas pièges GPT) —
   {input:'Développé incliné', expect:'Développé Incliné', why:'≠ Développé Couché (piège GPT)'},
   {input:'Développé décliné haltères', expect:'Développé Décliné Haltères', why:'inclinaison + matériel distincts'},
-  {input:'Rowing haltère', expect:'Rowing Haltère', why:'≠ Rowing Barre'},
+  {input:'Rowing haltère', expect:'Rowing Haltère (Tirage Horizontal)', why:'≠ Rowing Barre'},
   {input:'Soulevé de terre roumain', expect:'Soulevé de Terre Roumain Barre', why:'≠ SdT classique (piège GPT)'},
   {input:'Tirage nuque', expect:'Tirage Nuque', why:'≠ Tirage poitrine (piège GPT)'},
   {input:'Traction pronation', expect:null, why:'≠ supination ; variante prise absente → nouveau (piège GPT)'},
@@ -2820,13 +2820,13 @@ const VM_CASES=[
 const VM_TAXO_CASES=[
   {input:'Développé Couché', pattern:'poussee-horizontale'},
   {input:'Développé Militaire', pattern:'poussee-verticale'},
-  {input:'Tirage Poulie Haute', pattern:'tirage-vertical'},
-  {input:'Rowing Barre', pattern:'tirage-horizontal'},
+  {input:'Tirage Poulie Haute (Lat Pulldown)', pattern:'tirage-vertical'},
+  {input:'Rowing Barre (Tirage Horizontal)', pattern:'tirage-horizontal'},
   {input:'Squat à la Barre', pattern:'squat'},
   {input:'Soulevé de Terre Roumain Barre', pattern:'hip-hinge'},
   {input:'Leg Curl Assis Machine', pattern:'flexion-genou'},
   {input:'Extension Quadriceps (Leg Extension)', pattern:'extension-genou'},
-  {input:'Élévations Latérales', pattern:'elevation-epaules'},
+  {input:'Élévations Latérales (Lateral Raise)', pattern:'elevation-epaules'},
   {input:'Technogym Pulldown', pattern:'tirage-vertical'},              // marque → toujours tirage vertical
   {input:'Hammer Strength Chest Press', pattern:'poussee-horizontale'}  // marque → toujours poussée horizontale
 ];

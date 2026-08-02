@@ -17,7 +17,7 @@ const EXLIB=[
   {n:'Dips',g:'Pectoraux'},{n:'Dips Parallèles',g:'Pectoraux'},{n:'Dips Machine Assistée',g:'Pectoraux'},{n:'Dips Assis Machine (Seated Dip)',g:'Pectoraux'},
   {n:'Pompes Lestées',g:'Pectoraux'},{n:'Pompes Déficit (Deficit Push-up)',g:'Pectoraux'},{n:'Pompes Diamant',g:'Pectoraux'},
   // ── 14 exercices ajoutés le 01/08/2026 (animations du dossier source de Michel, décision « ok pour ajouter les 14 ») ──
-  {n:'Pompes',g:'Pectoraux'},
+  {n:'Pompes (Push-up)',g:'Pectoraux'},
   {n:'Développé Couché avec Chaînes',g:'Pectoraux'},{n:'Développé Couché Larsen (Larsen Press)',g:'Pectoraux'},
   {n:'Développé Couché Unilatéral Kettlebell',g:'Pectoraux'},{n:'Développé Incliné Poulie',g:'Pectoraux'},
   // — Lots « pecs » et « épaules » du 01/08 : beaucoup d'élastique et de TRX (matériel dans le NOM) —
@@ -36,10 +36,10 @@ const EXLIB=[
   // ── Dos / Dorsaux ──────────────────────────────────────────
   {n:'Soulevé de Terre',g:'Dos'},{n:'Soulevé de Terre Sumo',g:'Dos'},
   {n:'Tirage en Rack (Rack Pull)',g:'Dos'},{n:'Inclinaison Lombaire (Good Morning)',g:'Dos'},
-  {n:'Rowing Barre',g:'Dos'},{n:'Rowing Haltère',g:'Dos'},{n:'Rowing Cable',g:'Dos'},
+  {n:'Rowing Barre (Tirage Horizontal)',g:'Dos'},{n:'Rowing Haltère (Tirage Horizontal)',g:'Dos'},{n:'Rowing Câble (Tirage Horizontal)',g:'Dos'},
   {n:'Rowing Yates (Supination)',g:'Dos'},{n:'Rowing Poitrine Appuyée (Chest Supported)',g:'Dos'},
-  {n:'Rowing Machine',g:'Dos'},{n:'Rowing Hammer Strength',g:'Dos'},
-  {n:'Tirage Poulie Haute',g:'Dos'},{n:'Tirage Poulie Haute Prise Serrée',g:'Dos'},{n:'Tirage Nuque',g:'Dos'},
+  {n:'Rowing Machine (Tirage Horizontal)',g:'Dos'},{n:'Rowing Hammer Strength',g:'Dos'},
+  {n:'Tirage Poulie Haute (Lat Pulldown)',g:'Dos'},{n:'Tirage Poulie Haute Prise Serrée',g:'Dos'},{n:'Tirage Nuque',g:'Dos'},
   {n:'Tirage Poulie Basse Prise Large',g:'Dos'},{n:'Tirage Poulie Basse Prise Serrée',g:'Dos'},
   {n:'Traction Lestée',g:'Dos'},{n:'Traction Assistée',g:'Dos'},{n:'Traction Prise Neutre',g:'Dos'},
   {n:'Pull-over',g:'Dos'},{n:'Pull-over Haltère',g:'Dos'},{n:'Pullover Machine',g:'Dos'},
@@ -67,7 +67,7 @@ const EXLIB=[
   {n:'Développé Militaire',g:'Épaules'},{n:'Développé Militaire Haltères',g:'Épaules'},
   {n:'Développé Haltères Assis',g:'Épaules'},{n:'Développé Arnold (Arnold Press)',g:'Épaules'},
   {n:'Développé Épaules Machine',g:'Épaules'},{n:'Smith Machine Développé Militaire',g:'Épaules'},
-  {n:'Élévations Latérales',g:'Épaules'},{n:'Élévations Latérales Câble',g:'Épaules'},{n:'Élévations Latérales Machine',g:'Épaules'},
+  {n:'Élévations Latérales (Lateral Raise)',g:'Épaules'},{n:'Élévations Latérales Câble',g:'Épaules'},{n:'Élévations Latérales Machine',g:'Épaules'},
   {n:'Élévations Frontales',g:'Épaules'},{n:'Élévations Frontales Câble',g:'Épaules'},{n:'Élévations Frontales Machine',g:'Épaules'},
   {n:'Oiseau',g:'Épaules'},{n:'Machine Oiseau',g:'Épaules'},
   {n:'Tirage Visage (Face Pull)',g:'Épaules'},{n:'Tirage Vertical (Upright Row)',g:'Épaules'},
@@ -250,6 +250,7 @@ const PREMIUM_PERKS=[
 ];
 
 const NEW_FEATURES=[
+  {id:'exos-2langues', screen:'log', desc:'Les exercices les plus répandus portent maintenant LES DEUX NOMS — celui qu\'on dit à la salle, et l\'autre langue entre parenthèses : « Rowing Barre (Tirage Horizontal) », « Tirage Poulie Haute (Lat Pulldown) », « Pompes (Push-up) », « Élévations Latérales (Lateral Raise) ». Tu les trouves donc en cherchant dans la langue que tu veux. Tes records et tes séances passées ont suivi automatiquement — rien n\'est perdu.'},
   {id:'modes-alim', screen:'nutrition', desc:'Nouveaux modes alimentaires : Cétogène · Low carb · Paléo · Méditerranéen — et le jeûne intermittent (16/8, 18/6, 20/4). Tes macros ET tes repas suggérés s\'adaptent'},
   {id:'cardio-2moments', screen:'log', desc:'Le cardio se note maintenant AVANT (échauffement) ET APRÈS ta séance — les deux séparément, avec leurs calories additionnées. Parce que 10 min de vélo pour t\'échauffer et 25 min de tapis en fin de séance, ce n\'est pas la même chose'},
   {id:'exos-materiel', screen:'log', desc:'La liste des exercices est maintenant rangée PAR MATÉRIEL pour tout le monde : 🏋️ Barre · 💪 Poids libre · ⚙️ Guidé · 🤸 Poids du corps · 🎗️ Élastique · 🪢 TRX/Sangles · 🏃 Cardio. Tu t\'entraînes à la maison ? Cherche « élastique » ou « TRX »'},

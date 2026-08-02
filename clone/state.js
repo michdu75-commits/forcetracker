@@ -155,7 +155,17 @@ function load(){
     (function(){
       const R={'Poussée de Hanche (Hip Thrust)':'Hip Thrust Barre (Poussée de Hanche)',
                'Poussée de Hanche Haltère':'Hip Thrust Haltère (Poussée de Hanche)',
-               'Poussée de Hanche Machine':'Hip Thrust Machine (Poussée de Hanche)'};
+               'Poussée de Hanche Machine':'Hip Thrust Machine (Poussée de Hanche)',
+               // ── 02/08/2026 : les DEUX noms, français + anglais (décision Michel, après le
+               // retour de Tatiana « Tirage horizontal → aucun résultat »). Le nom principal
+               // reste celui qu'on dit à la salle ; l'autre langue va entre parenthèses.
+               'Rowing Barre':'Rowing Barre (Tirage Horizontal)',
+               'Rowing Haltère':'Rowing Haltère (Tirage Horizontal)',
+               'Rowing Cable':'Rowing Câble (Tirage Horizontal)',
+               'Rowing Machine':'Rowing Machine (Tirage Horizontal)',
+               'Tirage Poulie Haute':'Tirage Poulie Haute (Lat Pulldown)',
+               'Élévations Latérales':'Élévations Latérales (Lateral Raise)',
+               'Pompes':'Pompes (Push-up)'};
       const ren=n=>R[n]||n;
       const renKeys=o=>{if(!o)return o;const out={};Object.keys(o).forEach(k=>{out[ren(k)]=o[k];});return out;};
       try{

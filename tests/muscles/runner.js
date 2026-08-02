@@ -144,7 +144,7 @@ const met=await p.evaluate(()=>{
     squat:g('Squat à la Barre'), dc:g('Développé Couché'), souleve:g('Soulevé de Terre'),
     fentes:g('Fentes'), presse:g('Presse à Cuisses'), thruster:g('Thruster'),
     curl:g('Curl Biceps'), curlIncline:g('Curl Incliné'), legExt:g('Extension Quadriceps (Leg Extension)'),
-    presseMollets:g('Presse Mollets (Leg Press)'), elevLat:g('Élévations Latérales'),
+    presseMollets:g('Presse Mollets (Leg Press)'), elevLat:g('Élévations Latérales (Lateral Raise)'),
     inconnu:g('Un exercice qui n\'existe pas')};
 });
 t('⭐ le squat reste à l\'intensité « bas du corps » (6,5)', met.squat===6.5, 'reçu '+met.squat);
@@ -234,7 +234,7 @@ const au=await p.evaluate(()=>{
           rotAbd:g('Rotation Externe Épaule Abduction'),
           abdCuisses:g('Abduction Cuisses (Leg Abduction)'),
           upright:g('Tirage Vertical (Upright Row)'),      uprightMov:_movPattern('Tirage Vertical (Upright Row)'),
-          traction:g('Traction Lestée'),                   rowing:g('Rowing Barre'),
+          traction:g('Traction Lestée'),                   rowing:g('Rowing Barre (Tirage Horizontal)'),
           jeff:g('Jefferson Curl'),
           kbFess:_movPattern('Extension Fessiers Arrière (Kickback)'),
           kbMachine:_movPattern('Kickback Machine'),
@@ -263,7 +263,7 @@ t('⭐ « Tirage Incliné Poulie Haute » = un TIRAGE, plus jamais une poussée 
 // ── LES 14 EXERCICES AJOUTÉS le 01/08/2026 (animations du dossier source de Michel) :
 // chacun doit être classé (muscles + schéma) dès son entrée au catalogue — jamais d'exercice muet.
 const quatorze=await p.evaluate(()=>{
-  const noms=['Pompes','Développé Couché avec Chaînes','Développé Couché Larsen (Larsen Press)',
+  const noms=['Pompes (Push-up)','Développé Couché avec Chaînes','Développé Couché Larsen (Larsen Press)',
     'Développé Couché Unilatéral Kettlebell','Développé Incliné Poulie','Écarté Incliné Haltères',
     'Écarté Hyght (Hyght Fly)','Hex Press Smith Machine','Chest Press Poulie Assis',
     'Svend Press (Serrage de Plaque)','Presse à Cuisses sur le Côté','Hack Squat Assis',
@@ -616,6 +616,93 @@ const aide=await p.evaluate(()=>{
 });
 t('l\'aide Séance ne promet plus le calculateur de plaques (retiré en ft-v726, R30)',
   aide.parlePlaques===false&&aide.parlePoids===true, JSON.stringify(aide));
+
+// ── LES DEUX NOMS, FRANÇAIS + ANGLAIS (décision Michel, 02/08) ────────────────────
+// « c'est le problème d'avoir des noms en anglais et des noms en français » : 2/3 du
+// catalogue portait un mot anglais, et selon l'exercice c'est le français OU l'anglais
+// qui trouvait. On écrit désormais les deux — nom courant + l'autre langue entre
+// parenthèses — sur les exercices les plus répandus.
+// ⚠️ CE QUE CES TESTS PROTÈGENT VRAIMENT : tout le classement de l'app LIT LE NOM.
+// Ajouter « (Tirage Horizontal) » a fait basculer le rowing barre en ⚙️ Guidé, et
+// « (Lateral Raise) » a donné 4 muscles à une isolation. Corrigé par deux règles
+// précises — ces témoins interdisent que ça revienne au prochain renommage.
+const deuxNoms=await p.evaluate(()=>{
+  const N=['Rowing Barre (Tirage Horizontal)','Rowing Haltère (Tirage Horizontal)',
+           'Rowing Câble (Tirage Horizontal)','Rowing Machine (Tirage Horizontal)',
+           'Tirage Poulie Haute (Lat Pulldown)','Élévations Latérales (Lateral Raise)',
+           'Pompes (Push-up)'];
+  const noms=new Set((EXLIB||[]).map(e=>e.n));
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const o={present:N.filter(n=>noms.has(n)).length, attendus:N.length,
+    // les anciens noms ne doivent plus exister dans le catalogue
+    anciens:['Rowing Barre','Rowing Cable','Rowing Machine','Tirage Poulie Haute','Pompes',
+             'Élévations Latérales'].filter(n=>noms.has(n)),
+    // le matériel réel vient du nom principal, JAMAIS de la traduction
+    eqRowBarre:_exEquip('Rowing Barre (Tirage Horizontal)'),
+    eqRowHalt:_exEquip('Rowing Haltère (Tirage Horizontal)'),
+    eqRowMach:_exEquip('Rowing Machine (Tirage Horizontal)'),   // témoin : celui-là EST guidé
+    eqPompes:_exEquip('Pompes (Push-up)'),
+    // une élévation latérale reste une ISOLATION du deltoïde moyen
+    musElev:Object.keys((_mscScores([E('Élévations Latérales (Lateral Raise)')])||{}).sc||{}).sort().join(','),
+    metElev:getExerciseMET('Élévations Latérales (Lateral Raise)'),
+    // témoin : la règle du deltoïde ARRIÈRE n'a pas été abîmée en retirant « lateral raise »
+    musFacePull:Object.keys((_mscScores([E('Tirage Visage (Face Pull)')])||{}).sc||{}).sort().join(','),
+    // les schémas de mouvement ne bougent pas
+    patRow:_movPattern('Rowing Barre (Tirage Horizontal)'),
+    patLat:_movPattern('Tirage Poulie Haute (Lat Pulldown)'),
+    demos:N.filter(n=>typeof EX_YT!=='undefined'&&EX_YT[n]).length};
+  // les DEUX langues doivent trouver l'exercice
+  const ch=q=>{const i=document.getElementById('ex-search');i.value=q;_exGrp=null;filterEx();
+    return document.getElementById('ex-list').innerHTML;};
+  o.frTrouve=['tirage horizontal|Rowing Barre (Tirage Horizontal)','lat pulldown|Tirage Poulie Haute (Lat Pulldown)',
+              'lateral raise|Élévations Latérales (Lateral Raise)','push up|Pompes (Push-up)',
+              'rowing|Rowing Barre (Tirage Horizontal)','pompes|Pompes (Push-up)',
+              'élévations latérales|Élévations Latérales (Lateral Raise)']
+    .filter(x=>{const[q,att]=x.split('|');return ch(q).indexOf(att)>=0;}).length;
+  const i=document.getElementById('ex-search');i.value='';_exGrp=null;filterEx();
+  return o;
+});
+t('⭐ les 7 exercices portent les DEUX noms (français + anglais)',
+  deuxNoms.present===deuxNoms.attendus&&deuxNoms.anciens.length===0,
+  deuxNoms.present+'/'+deuxNoms.attendus+' · anciens restants : '+deuxNoms.anciens.join(', '));
+t('⭐ le MATÉRIEL vient du nom principal, pas de la traduction (« Tirage » n\'en fait pas une poulie)',
+  deuxNoms.eqRowBarre==='barre'&&deuxNoms.eqRowHalt==='libre'&&deuxNoms.eqPompes==='corps',
+  'barre='+deuxNoms.eqRowBarre+' haltère='+deuxNoms.eqRowHalt+' pompes='+deuxNoms.eqPompes);
+t('témoin : le rowing MACHINE, lui, reste bien rangé en « Guidé »',
+  deuxNoms.eqRowMach==='guide', deuxNoms.eqRowMach);
+t('⭐ l\'élévation latérale reste une ISOLATION du deltoïde moyen (elle avait gagné 2 muscles)',
+  deuxNoms.musElev==='side-delt,traps'&&deuxNoms.metElev===4,
+  deuxNoms.musElev+' · MET '+deuxNoms.metElev);
+t('témoin : la règle du deltoïde ARRIÈRE (face pull, oiseau) n\'a pas été abîmée',
+  deuxNoms.musFacePull.indexOf('rear-delt')>=0, deuxNoms.musFacePull);
+t('les schémas de mouvement ne bougent pas (horizontal reste horizontal)',
+  deuxNoms.patRow==='tirage-horizontal'&&deuxNoms.patLat==='tirage-vertical',
+  deuxNoms.patRow+' / '+deuxNoms.patLat);
+t('les démos suivent le renommage (aucune vignette perdue)',
+  deuxNoms.demos===7, deuxNoms.demos+'/7');
+t('⭐ les DEUX langues trouvent l\'exercice (7 recherches sur 7)',
+  deuxNoms.frTrouve===7, deuxNoms.frTrouve+'/7');
+
+// ── LA MIGRATION : renommer ne doit RIEN faire perdre ─────────────────────────────
+// Tout l'historique est rangé par NOM. Sans la table de renommage de `state.js`, un
+// record enregistré sous « Rowing Barre » deviendrait orphelin et l'exercice
+// apparaîtrait deux fois dans les progrès.
+const migr=await p.evaluate(()=>{
+  localStorage.setItem('ft4_prs',JSON.stringify({'Rowing Barre':{rm1:95,kg:80,reps:8,date:'2026-06-01'}}));
+  localStorage.setItem('ft4_sessions',JSON.stringify([{date:'2026-06-01',exs:[
+    {name:'Rowing Barre',sets:[{kg:80,reps:8,done:true,type:'N'}]},
+    {name:'Tirage Poulie Haute',sets:[{kg:60,reps:10,done:true,type:'N'}]}],vol:1240}]));
+  localStorage.setItem('ft4_exRp',JSON.stringify({'Pompes':90}));
+  load();
+  return {pr:S.prs['Rowing Barre (Tirage Horizontal)'], ancienPr:S.prs['Rowing Barre'],
+          sess:(S.sessions[0].exs||[]).map(e=>e.name),
+          repos:S.exRestPref['Pompes (Push-up)']};
+});
+t('⭐ MIGRATION : un record enregistré sous l\'ancien nom SUIT le renommage',
+  !!(migr.pr&&migr.pr.kg===80)&&!migr.ancienPr, JSON.stringify(migr.pr)+' · orphelin='+JSON.stringify(migr.ancienPr));
+t('⭐ MIGRATION : les séances passées et les repos préférés suivent aussi',
+  migr.sess[0]==='Rowing Barre (Tirage Horizontal)'&&migr.sess[1]==='Tirage Poulie Haute (Lat Pulldown)'&&migr.repos===90,
+  migr.sess.join(' / ')+' · repos='+migr.repos);
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 

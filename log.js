@@ -1127,7 +1127,7 @@ const _EX_EQUIV={
   'chest press hammer':'Chest Press Machine Horizontale','chest press pronation':'Chest Press Machine Horizontale','developpe convergent machine':'Chest Press Machine Horizontale','developpe convergent':'Chest Press Machine Horizontale',
   'chest incline':'Chest Press Machine Inclinée','chest press incline':'Chest Press Machine Inclinée','chest incline pronation':'Chest Press Machine Inclinée','developpe incline machine':'Chest Press Machine Inclinée',
   'chest decline':'Chest Press Machine Déclinée','chest press decline':'Chest Press Machine Déclinée',
-  'tirage poitrine':'Tirage Poulie Haute','lat pulldown':'Tirage Poulie Haute','tirage vertical poitrine':'Tirage Poulie Haute',
+  'tirage poitrine':'Tirage Poulie Haute (Lat Pulldown)','lat pulldown':'Tirage Poulie Haute (Lat Pulldown)','tirage vertical poitrine':'Tirage Poulie Haute (Lat Pulldown)',
   'leg curl':'Curl Ischio-jambiers (Leg Curl)','leg extension':'Extension Quadriceps (Leg Extension)'
 };
 // Lookup équivalence tolérant au mot « machine » (et autres mots vides génériques) :
@@ -1148,18 +1148,18 @@ Object.assign(_EX_EQUIV,{
   // Poulie croisée / écarté câble
   'cable cross':'Croisé Poulie (Cable Crossover)','cable crossover':'Croisé Poulie (Cable Crossover)','cable fly low':'Croisé Poulie (Cable Crossover)','pecfly':'Pec Deck','pec fly':'Pec Deck',
   // Dos poulie basse
-  'low row':'Rowing Cable',
+  'low row':'Rowing Câble (Tirage Horizontal)',
   // Machine fessier (hip thrust machine)
   'booty builder':'Hip Thrust Machine (Poussée de Hanche)','glute drive':'Hip Thrust Machine (Poussée de Hanche)',
   // CORRECTIONS de mauvais matchs révélés par le stress-test
-  'tirage devant':'Tirage Poulie Haute','lat pull':'Tirage Poulie Haute',
+  'tirage devant':'Tirage Poulie Haute (Lat Pulldown)','lat pull':'Tirage Poulie Haute (Lat Pulldown)',
   'reverse pec fly':'Machine Oiseau','reverse fly':'Machine Oiseau','reverse pec deck':'Machine Oiseau','ecarte inverse machine':'Machine Oiseau',
   'quad extension':'Extension Quadriceps (Leg Extension)',
   'standing soleus press':'Élévations Mollets Debout','soleus press':'Élévations Mollets Debout',
   // Stress-test « Niveau Expert » (2e vague GPT)
   'ischios assis':'Leg Curl Assis Machine','ischio assis':'Leg Curl Assis Machine',
   'hack':'Squat Hack (Hack Squat)','presse':'Press Jambes 45°',
-  'high pulley':'Tirage Poulie Haute','pulley wide':'Tirage Poulie Haute','wide pulley':'Tirage Poulie Haute',
+  'high pulley':'Tirage Poulie Haute (Lat Pulldown)','pulley wide':'Tirage Poulie Haute (Lat Pulldown)','wide pulley':'Tirage Poulie Haute (Lat Pulldown)',
   // Abréviations « cas pièges » (Niveau Expert)
   'chest bb':'Développé Couché','hack sq':'Squat Hack (Hack Squat)','lp':'Press Jambes 45°',
   // 3e vague (rapport banc d'essai) : « nouveau » + confirm faux à rattacher
@@ -1168,12 +1168,12 @@ Object.assign(_EX_EQUIV,{
   'close grip bench':'Développé Couché','incl db press':'Développé Incliné Haltères','bench bb':'Développé Couché','leg ext':'Extension Quadriceps (Leg Extension)',
   'converging press':'Chest Press Machine Horizontale','converging chest press':'Chest Press Machine Horizontale','horizontal press':'Chest Press Machine Horizontale',
   'hammer incline':'Chest Press Machine Inclinée','hammer iso incline':'Chest Press Machine Inclinée',
-  'high row':'Rowing Machine',
+  'high row':'Rowing Machine (Tirage Horizontal)',
   // 4e vague (rapport « Mon programme » HELL MODE) : abréviations + faux matchs
   'dc bb':'Développé Couché','dev couche':'Développé Couché','cg bench':'Développé Couché',
   'push down':'Triceps Poulie','tri rope':'Triceps Corde Poulie',
   'butter fly':'Pec Deck','butter fly machine':'Pec Deck','pec machine':'Pec Deck','fly machine':'Pec Deck',
-  'lat machine':'Tirage Poulie Haute','lat pd':'Tirage Poulie Haute','row assis':'Rowing Cable',
+  'lat machine':'Tirage Poulie Haute (Lat Pulldown)','lat pd':'Tirage Poulie Haute (Lat Pulldown)','row assis':'Rowing Câble (Tirage Horizontal)',
   // 5e vague (rapport HELL MODE v2, validé GPT) : squat profond + presse mollets
   'atg squat':'Squat à la Barre','mollet presse':'Presse Mollets (Leg Press)',
   // 6e vague (rapport TRX/poids du corps) : 3 suggestions absurdes corrigées (muscle faux)
@@ -1184,23 +1184,23 @@ Object.assign(_EX_EQUIV,{
   'chest to bar':'Traction Lestée','wall ball':'Thruster',
   // 8e vague (rapport OLD SCHOOL — muscu classique, PRIORITAIRE)
   // abréviations FR de musclé (DC marchait déjà, ses cousins non)
-  'di':'Développé Incliné','dd':'Développé Décliné','dm':'Développé Militaire','el':'Élévations Latérales',
+  'di':'Développé Incliné','dd':'Développé Décliné','dm':'Développé Militaire','el':'Élévations Latérales (Lateral Raise)',
   'sdt jt':'Soulevé de Terre Roumain Barre',
   'incline bb':'Développé Incliné','incline bench':'Développé Incliné','decline bench':'Développé Décliné',
   // suggestions fausses corrigées
-  'lat raise':'Élévations Latérales',       // « lat » = latéral, PAS latissimus (≠ Lat Pull)
+  'lat raise':'Élévations Latérales (Lateral Raise)',       // « lat » = latéral, PAS latissimus (≠ Lat Pull)
   'planche':'Gainage',                       // planche FR = plank, PAS Planche de Préhension (grip)
   'pec deck inverse':'Machine Oiseau','extension corde':'Triceps Corde Poulie','shoulder bb':'Développé Militaire',
   // corrects mais à fiabiliser (confirm → auto)
-  'mollets presse':'Presse Mollets (Leg Press)','row poulie':'Rowing Cable','cable row':'Rowing Cable','t bar':'Rowing T-Bar Machine',
+  'mollets presse':'Presse Mollets (Leg Press)','row poulie':'Rowing Câble (Tirage Horizontal)','cable row':'Rowing Câble (Tirage Horizontal)','t bar':'Rowing T-Bar Machine',
   // 9e vague (rapport FORCE/HALTÉRO — powerlifting classique)
   'bs':'Squat à la Barre','fs':'Squat Avant','ghr':'Glute Ham Raise (GHD)',
   'comp bench':'Développé Couché','paused bench':'Développé Couché',
-  'pendlay row':'Rowing Barre',               // row barre strict, PAS poulie
+  'pendlay row':'Rowing Barre (Tirage Horizontal)',               // row barre strict, PAS poulie
   'conventional dl':'Soulevé de Terre','block pull':'Tirage en Rack (Rack Pull)',
   // 10e vague (rapport PERTE DE POIDS FEMME — fitness/muscu, PRIORITAIRE) : 5 exos qu'on A mais ratés
   'abducteurs machine':'Abducteurs Machine Debout',
-  'tirage horizontal poulie':'Rowing Cable','tirage horizontal':'Rowing Cable',
+  'tirage horizontal poulie':'Rowing Câble (Tirage Horizontal)','tirage horizontal':'Rowing Câble (Tirage Horizontal)',
   'step ups':'Montée sur Box (Step-up)','step up':'Montée sur Box (Step-up)',
   'extension triceps corde':'Triceps Corde Poulie',
   'corde a sauter':'Sauts à la Corde',         // saut à la corde ≠ Triceps Corde (faux ami « corde »)
@@ -1277,7 +1277,7 @@ Object.assign(_EX_EQUIV,{
   'machine triceps':'Triceps Poulie','seated triceps machine':'Triceps Poulie',
   'tgu':'Turkish Get-Up',
   'db front raise':'Élévations Frontales','front raise':'Élévations Frontales',
-  'db lateral raise':'Élévations Latérales','lateral raise':'Élévations Latérales',
+  'db lateral raise':'Élévations Latérales (Lateral Raise)','lateral raise':'Élévations Latérales (Lateral Raise)',
   'donkey calf machine':'Élévations Mollets Penché (Donkey Calf Raise)','donkey calf raise':'Élévations Mollets Penché (Donkey Calf Raise)','donkey raise':'Élévations Mollets Penché (Donkey Calf Raise)',
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, 5 familles) → nom canonique EXLIB ───
@@ -1312,8 +1312,8 @@ Object.assign(_EX_EQUIV,{
   'hip thrust machine':'Hip Thrust Machine (Poussée de Hanche)','machine hip thrust':'Hip Thrust Machine (Poussée de Hanche)',
   'cable pullover':'Pull-over','pullover poulie':'Pull-over','straight arm lat pulldown':'Pull-over','straight arm pulldown':'Pull-over',
   'machine pullover':'Pullover Machine','nautilus pullover':'Pullover Machine',
-  'barbell bent over row':'Rowing Barre','barbell row':'Rowing Barre','bb row':'Rowing Barre','bent over dumbbell row':'Rowing Barre','bent over row':'Rowing Barre','bent row':'Rowing Barre','db row':'Rowing Barre','dumbbell row':'Rowing Barre','rowing barre pronation':'Rowing Barre','rowing deux halteres':'Rowing Barre','rowing halteres':'Rowing Barre',
-  'chest supported row machine':'Rowing Machine','machine row':'Rowing Machine','row machine':'Rowing Machine','seated row machine':'Rowing Machine',
+  'barbell bent over row':'Rowing Barre (Tirage Horizontal)','barbell row':'Rowing Barre (Tirage Horizontal)','bb row':'Rowing Barre (Tirage Horizontal)','bent over dumbbell row':'Rowing Barre (Tirage Horizontal)','bent over row':'Rowing Barre (Tirage Horizontal)','bent row':'Rowing Barre (Tirage Horizontal)','db row':'Rowing Barre (Tirage Horizontal)','dumbbell row':'Rowing Barre (Tirage Horizontal)','rowing barre pronation':'Rowing Barre (Tirage Horizontal)','rowing deux halteres':'Rowing Barre (Tirage Horizontal)','rowing halteres':'Rowing Barre (Tirage Horizontal)',
+  'chest supported row machine':'Rowing Machine (Tirage Horizontal)','machine row':'Rowing Machine (Tirage Horizontal)','row machine':'Rowing Machine (Tirage Horizontal)','seated row machine':'Rowing Machine (Tirage Horizontal)',
   'chest supported t bar row':'Rowing T-Bar Machine','landmine row':'Rowing T-Bar Machine','rowing t bar':'Rowing T-Bar Machine','t bar row':'Rowing T-Bar Machine',
   'safety squat bar':'Safety Bar Squat','ssb squat':'Safety Bar Squat',
   'seal barbell row':'Seal Row','seal bench row':'Seal Row',
@@ -1334,7 +1334,7 @@ Object.assign(_EX_EQUIV,{
   'sumo squat':'Squat Sumo','wide stance squat':'Squat Sumo',
   'back squat':'Squat à la Barre','barbell back squat':'Squat à la Barre','bb squat':'Squat à la Barre','high bar squat':'Squat à la Barre','low bar squat':'Squat à la Barre',
   'behind neck lat pulldown':'Tirage Nuque','behind neck pulldown':'Tirage Nuque',
-  'front lat pulldown':'Tirage Poulie Haute','front pulldown':'Tirage Poulie Haute','lat pull front':'Tirage Poulie Haute',
+  'front lat pulldown':'Tirage Poulie Haute (Lat Pulldown)','front pulldown':'Tirage Poulie Haute (Lat Pulldown)','lat pull front':'Tirage Poulie Haute (Lat Pulldown)',
   'partial deadlift':'Tirage en Rack (Rack Pull)','pin pull':'Tirage en Rack (Rack Pull)','rack pull':'Tirage en Rack (Rack Pull)',
   'assisted chin up':'Traction Assistée','assisted pull up':'Traction Assistée','pull up machine':'Traction Assistée','tractions assistees':'Traction Assistée',
   'chest fly':'Écarté Haltères','db fly':'Écarté Haltères','dumbbell fly':'Écarté Haltères','ecarte poitrine halteres':'Écarté Haltères','pec fly':'Écarté Haltères',
@@ -1598,7 +1598,13 @@ const _MEX=[
   // Épaules — élévation frontale (front delt en priorité)
   {re:/elevation frontale|front raise|elevations frontales/i,                   p:['front-delt'],                       s:['side-delt']},
   // Épaules — latéral / arrière / oiseau / écarté inverse / around the world
-  {re:/elevation laterale|lateral raise|face pull|rear delt|oiseau|ecarte inverse|reverse fly|around the world/i, p:['side-delt','rear-delt'], s:['front-delt','traps']},
+  // ⚠️ « lateral raise » RETIRÉ d'ici le 02/08 : cette règle est celle du deltoïde ARRIÈRE
+  // (face pull, oiseau, écarté inversé). Une élévation latérale simple est une isolation du
+  // deltoïde MOYEN — elle a sa propre règle, plus bas et plus précise. Tant que les exercices
+  // s'appelaient « Élévations Latérales », le français ne matchait pas ici et tout allait bien ;
+  // en ajoutant la traduction « (Lateral Raise) » au nom, l'exercice s'est mis à tomber sur
+  // CETTE règle-ci (première gagnante) et gagnait deltoïdes avant + arrière.
+  {re:/elevation laterale|face pull|rear delt|oiseau|ecarte inverse|reverse fly|around the world/i, p:['side-delt','rear-delt'], s:['front-delt','traps']},
   // Dos — verticaux / tractions
   {re:/superman/i,                                                              p:['lower-back','glutes'],              s:['hamstrings','rear-delt']}, // à plat VENTRE, bras/jambes levés : chaîne postérieure. Était happé par la règle « gainage|plank » → sortait en ABDOS (audit 02/08)
   {re:/chaise romaine|captain.?s chair/i,                                      p:['abs','hip-flexors'],                s:['obliques']}, // relevé de jambes suspendu. Était happé par la règle de la « Chaise (Wall Sit) » → sortait en QUADRICEPS (audit 02/08)
@@ -2661,6 +2667,14 @@ function _exEquip(name){
   if(/elastique|bande elastique|bandes elastiques/.test(s)) return 'elast';
   // 0bis) CARDIO / conditionnement : ni charge ni série au sens muscu — un bac à part.
   if(/air ?bike|assault|ski ?erg|ergometre|corde a sauter|saut a la corde|sauts a la corde|burpee|jumping jack|bear crawl|marche de l ours|wall ball|battle rope|box jump|jump box|mountain climber|grimpeur|rameur|tapis|elliptique|chariot|sled|traineau/.test(s)) return 'cardio';
+  // 0ter) ⚠️ Un ROWING à la barre ou aux haltères est un POIDS LIBRE, pas une machine.
+  //    Depuis qu'on écrit le nom français dans le nom (« Rowing Barre (Tirage Horizontal) »),
+  //    le mot « tirage » de la TRADUCTION le faisait basculer en ⚙️ Guidé (mesuré le 02/08).
+  //    Le matériel réel est dans le nom principal — la traduction ne doit pas le contredire.
+  if(/rowing/.test(s)&&!/machine|poulie|smith|cable|hammer|landmine|t ?bar|assist/.test(s)){
+    if(/haltere/.test(s)) return 'libre';
+    if(/barre/.test(s))   return 'barre';
+  }
   // 1) Guidé / machine (le plus spécifique d'abord)
   if(/machine|poulie|smith|guide|pec ?deck|peck ?deck|presse|press[ -]?jambes|leg press|leg extension|extension quadriceps|leg curl|leg abduction|leg adduction|tirage|chest press|hack|convergent|hammer|cable|câble|vis-a-vis|crossover|croise poulie|assist|butterfly|pendulum|belt squat|sled|iso.?laterale?|convergente/.test(s)) return 'guide'; // + press jambes / extension quadriceps (01/08 : ils tombaient dans « à classer »)
   // 2) Poids du corps
@@ -3972,7 +3986,7 @@ function _beginnerProg(gender, style, freq){
       legs.push(ex('Gainage',30));
       days=[
         {label:'Poussée',exs:[ex('Chest Press Machine Horizontale'),ex('Pec Deck'),ex('Développé Épaules Machine'),ex('Élévations Latérales Machine'),ex('Triceps Machine')]},
-        {label:'Tirage',exs:[ex('Tirage Poulie Haute'),ex('Rowing Machine'),ex('Tirage Poulie Haute Prise Serrée'),ex('Curl Machine'),ex('Curl Incliné')]},
+        {label:'Tirage',exs:[ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Rowing Machine (Tirage Horizontal)'),ex('Tirage Poulie Haute Prise Serrée'),ex('Curl Machine'),ex('Curl Incliné')]},
         {label:'Jambes',exs:legs},
       ];
     }else{
@@ -3982,17 +3996,17 @@ function _beginnerProg(gender, style, freq){
       if(F)bas.push(ex('Abduction Cuisses (Leg Abduction)'));
       bas.push(ex('Gainage',30));
       days=[
-        {label:'Haut du corps',exs:[ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute'),ex('Développé Épaules Machine'),ex('Curl Machine'),ex('Triceps Machine')]},
+        {label:'Haut du corps',exs:[ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Développé Épaules Machine'),ex('Curl Machine'),ex('Triceps Machine')]},
         {label:'Bas du corps',exs:bas},
       ];
     }
   }else{
     // Full Body (tout le corps à chaque séance)
     name='Premiers pas — Full Body';
-    const fb1=[ex('Press Jambes 45°'),ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute'),ex('Développé Épaules Machine')];
+    const fb1=[ex('Press Jambes 45°'),ex('Chest Press Machine Horizontale'),ex('Tirage Poulie Haute (Lat Pulldown)'),ex('Développé Épaules Machine')];
     if(F)fb1.push(ex('Hip Thrust Machine (Poussée de Hanche)'));
     fb1.push(ex('Gainage',30));
-    const fb2=[ex('Leg Curl Assis Machine'),ex('Pec Deck'),ex('Rowing Machine'),ex('Curl Machine'),ex('Crunch Machine',15)];
+    const fb2=[ex('Leg Curl Assis Machine'),ex('Pec Deck'),ex('Rowing Machine (Tirage Horizontal)'),ex('Curl Machine'),ex('Crunch Machine',15)];
     const fb3=[ex('Extension Quadriceps (Leg Extension)'),ex('Chest Press Machine Inclinée'),ex('Tirage Poulie Haute Prise Serrée'),ex('Triceps Machine'),ex('Gainage',30)];
     days=(freq===2)?[{label:'Séance A',exs:fb1},{label:'Séance B',exs:fb2}]
                    :[{label:'Séance A',exs:fb1},{label:'Séance B',exs:fb2},{label:'Séance C',exs:fb3}];
@@ -4865,13 +4879,13 @@ const EX_YT={
   'Leg Curl Inversé':              {img:'exercises/leg-curl-inverse-machine-tirage-vertical.webp'},
   'Leg Curl Unilatéral Debout':    {img:'exercises/leg-curl-unilateral-debout-machine.webp'},
   // ── Dos / Trapèzes / Lombaires (lot 2026-07-04) ──
-  'Rowing Barre':                  {img:'exercises/rowing-barre.webp'},
-  'Rowing Haltère':                {img:'exercises/rowing-haltere-un-bras.webp'},
-  'Rowing Cable':                  {img:'exercises/tirage-horizontal-poulie.webp'},
-  'Rowing Machine':                {img:'exercises/rowing-assis-machine-prise-pronation.webp'},
+  'Rowing Barre (Tirage Horizontal)':                  {img:'exercises/rowing-barre.webp'},
+  'Rowing Haltère (Tirage Horizontal)':                {img:'exercises/rowing-haltere-un-bras.webp'},
+  'Rowing Câble (Tirage Horizontal)':                  {img:'exercises/tirage-horizontal-poulie.webp'},
+  'Rowing Machine (Tirage Horizontal)':                {img:'exercises/rowing-assis-machine-prise-pronation.webp'},
   'Rowing Hammer Strength':        {img:'exercises/rowing-assis-machine-hammer-strenght.webp'},
   'Rowing Poitrine Appuyée (Chest Supported)':{img:'exercises/rowing-halteres-banc-incline-prise-neutre.webp'},
-  'Tirage Poulie Haute':           {img:'exercises/tirage-vertical-poitrine.webp'},
+  'Tirage Poulie Haute (Lat Pulldown)':           {img:'exercises/tirage-vertical-poitrine.webp'},
   'Tirage Poulie Haute Prise Serrée':{img:'exercises/tirage-vertical-prise-serree.webp'},
   'Tirage Poulie Basse Prise Large':{img:'exercises/tirage-horizontal-prise-large.webp'},
   // ⚠️ CORRIGÉ le 01/08 : cette ligne portait `traction-musculation-dos.webp`, qui montre une
@@ -4948,7 +4962,7 @@ const EX_YT={
   'Développé Militaire':{img:'exercises/developpe-militaire-exercice-musculation.webp'},
   'Élévations Latérales Machine':{img:'exercises/elevation-laterale-machine.webp'},
   'Élévations Frontales':{img:'exercises/elevations-frontales-exercice-musculation.webp'},
-  'Élévations Latérales':{img:'exercises/elevations-laterales-exercice-musculation.webp'},
+  'Élévations Latérales (Lateral Raise)':{img:'exercises/elevations-laterales-exercice-musculation.webp'},
   'Élévations Latérales Câble':{img:'exercises/elevations-laterales-poulie.webp'},
   'Tirage Visage (Face Pull)':{img:'exercises/face-pull.webp'},
   'Machine Oiseau':{img:'exercises/pec-deck-inverse.webp'},
@@ -4980,7 +4994,7 @@ const EX_YT={
   'Élévations Mollets Penché (Donkey Calf Raise)':{img:'exercises/elevations-mollets-donkey.webp'},
   'Presse Mollets (Leg Press)':{img:'exercises/elevations-mollets-presse-45.webp'},
   // Les 14 exercices AJOUTÉS au catalogue le 01/08 (animations du dossier source de Michel) :
-  'Pompes':{img:'exercises/pompe-musculation.webp'},
+  'Pompes (Push-up)':{img:'exercises/pompe-musculation.webp'},
   'Hip Thrust Barre (Poussée de Hanche)':{img:'exercises/hip-thrust-barre.webp'}, // la version BARRE (envoi Michel 01/08 — la machine, elle, vit sur « Poussée de Hanche Machine »)
   'Pompes Déficit (Deficit Push-up)':{img:'exercises/pompes-deficit.webp'},
   'Pompes Diamant':{img:'exercises/pompes-diamant.webp'},
@@ -5147,7 +5161,7 @@ const EX_EN={
   // Pectoraux
   'Développé Couché':'bench press barbell','Développé Couché Haltères':'bench press dumbbell',
   // — les 14 du 01/08/2026 —
-  'Pompes':'push up','Développé Couché avec Chaînes':'bench press with chains',
+  'Pompes (Push-up)':'push up','Développé Couché avec Chaînes':'bench press with chains',
   'Développé Couché Larsen (Larsen Press)':'larsen press','Développé Couché Unilatéral Kettlebell':'single arm kettlebell bench press',
   'Développé Incliné Poulie':'incline cable press','Écarté Incliné Haltères':'incline dumbbell fly',
   'Écarté Hyght (Hyght Fly)':'hyght dumbbell fly','Écarté Décliné Haltères':'decline dumbbell fly','Hip Thrust Unilatéral (Poussée de Hanche)':'single leg barbell hip thrust','Curl Pupitre Barre EZ (Larry Scott)':'ez bar preacher curl','Waiter Curl':'waiter curl dumbbell','Hex Press Smith Machine':'hex press smith machine',
@@ -5168,11 +5182,11 @@ const EX_EN={
   'Soulevé de Terre':'deadlift conventional','Soulevé de Terre Sumo':'sumo deadlift',
   'Tirage en Rack (Rack Pull)':'rack pull barbell',
   'Inclinaison Lombaire (Good Morning)':'good morning barbell',
-  'Rowing Barre':'barbell row bent over','Rowing Haltère':'dumbbell row one arm','Rowing Cable':'cable row seated',
+  'Rowing Barre (Tirage Horizontal)':'barbell row bent over','Rowing Haltère (Tirage Horizontal)':'dumbbell row one arm','Rowing Câble (Tirage Horizontal)':'cable row seated',
   'Rowing Yates (Supination)':'yates row barbell',
   'Rowing Poitrine Appuyée (Chest Supported)':'chest supported row',
-  'Rowing Machine':'seated row machine','Rowing Hammer Strength':'hammer strength row',
-  'Tirage Poulie Haute':'lat pulldown cable','Tirage Poulie Haute Prise Serrée':'lat pulldown close grip',
+  'Rowing Machine (Tirage Horizontal)':'seated row machine','Rowing Hammer Strength':'hammer strength row',
+  'Tirage Poulie Haute (Lat Pulldown)':'lat pulldown cable','Tirage Poulie Haute Prise Serrée':'lat pulldown close grip',
   'Tirage Nuque':'behind neck pulldown',
   'Tirage Poulie Basse Prise Large':'seated cable row wide grip','Tirage Poulie Basse Prise Serrée':'seated cable row close grip',
   'Traction Lestée':'pull-up weighted','Traction Assistée':'assisted pull up machine','Traction Prise Neutre':'neutral grip pull up',
@@ -5188,7 +5202,7 @@ const EX_EN={
   'Développé Arnold (Arnold Press)':'arnold press','Développé Épaules Machine':'shoulder press machine',
   'Développé Épaules Assis Machine (Shoulder Press)':'seated machine shoulder press',
   'Smith Machine Développé Militaire':'smith machine overhead press',
-  'Élévations Latérales':'lateral raise dumbbell','Élévations Latérales Câble':'cable lateral raise',
+  'Élévations Latérales (Lateral Raise)':'lateral raise dumbbell','Élévations Latérales Câble':'cable lateral raise',
   'Élévations Latérales Machine':'machine lateral raise',
   'Élévations Frontales':'front raise dumbbell','Élévations Frontales Câble':'cable front raise',
   'Élévations Frontales Machine':'machine front raise',

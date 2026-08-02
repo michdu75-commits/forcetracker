@@ -53,12 +53,12 @@ const t=(id,label,cond,detail)=>{
     const S1=(d,names)=>({date:d,exs:names.map(mk)});
     return {
       push:      _calSessColor(S1('2026-07-01',['Développé Couché','Développé Militaire','Extension Triceps Poulie'])),
-      pull:      _calSessColor(S1('2026-07-02',['Rowing Barre','Tractions','Curl Barre'])),
+      pull:      _calSessColor(S1('2026-07-02',['Rowing Barre (Tirage Horizontal)','Tractions','Curl Barre'])),
       jambes:    _calSessColor(S1('2026-07-03',['Squat','Presse à Cuisses','Leg Curl'])),
       abdos:     _calSessColor(S1('2026-07-04',['Crunch','Gainage'])),
-      full:      _calSessColor(S1('2026-07-05',['Squat','Développé Couché','Rowing Barre'])),
+      full:      _calSessColor(S1('2026-07-05',['Squat','Développé Couché','Rowing Barre (Tirage Horizontal)'])),
       full2:     _calSessColor(S1('2026-07-06',['Soulevé de Terre','Développé Couché','Tractions','Squat'])),
-      hautCorps: _calSessColor(S1('2026-07-07',['Développé Couché','Rowing Barre','Curl Barre','Élévations Latérales']))
+      hautCorps: _calSessColor(S1('2026-07-07',['Développé Couché','Rowing Barre (Tirage Horizontal)','Curl Barre','Élévations Latérales (Lateral Raise)']))
     };
   });
   t('CAL-002','séance de DOS → bleu (et pas rouge)',cols.pull==='var(--blue)',cols.pull);
