@@ -388,6 +388,56 @@ t('⭐ ⑨ AUCUN identifiant n\'a disparu (il emporterait tout l\'historique ran
 if(idRenommes.length) console.log('     ℹ️  '+idRenommes.length+' exercice(s) renommé(s) depuis la référence — '
   +'normal si c\'est voulu : '+idRenommes.slice(0,3).map(i=>REFID.ids[i]+' → '+idsActuels[i]).join(' · '));
 
+
+// ═══ ⑩ LES EXERCICES SOCLES — écrits en dur, jamais régénérables ══════════════════
+// POURQUOI EN PLUS DE L'EMPREINTE. L'empreinte ⑦ couvre les 337, mais elle se REGÉNÈRE
+// (`node tools/gen_reference_catalogue.js`). Quelqu'un de pressé peut donc la régénérer
+// sans lire le diff, et un basculement du développé couché passerait inaperçu.
+// Ces attentes-ci sont écrites À LA MAIN : les modifier est un acte VOLONTAIRE et visible.
+//
+// LE CHOIX DES EXERCICES N'EST PAS UNE OPINION. Mesuré le 02/08 : les 60 exercices dont le
+// classement dépend de l'ORDRE des règles ne sont pas des cas obscurs — ils se concentrent
+// sur les familles les plus courantes (13 « Développé », 10 « Tirage », 5 « Rowing »), et
+// **le Développé Couché en fait partie** alors qu'il sert de référence au niveau de force.
+// C'est logique : ce sont justement les familles où une règle précise doit battre une règle
+// large. Donc la surface de risque est concentrée là où ça coûte le plus cher.
+const socles=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>{const sc=(_mscScores([E(n)])||{}).sc||{};
+    return {p:Object.keys(sc).filter(k=>sc[k]===2).sort().join(','), pat:_movPattern(n), eq:_exEquip(n)};};
+  const o={};
+  ['Développé Couché','Squat à la Barre','Soulevé de Terre','Développé Militaire',
+   'Tirage Poulie Haute (Lat Pulldown)','Rowing Barre (Tirage Horizontal)','Curl Barre',
+   'Tractions (Pull-up)','Dips','Élévations Latérales (Lateral Raise)'].forEach(n=>{o[n]=f(n);});
+  return o;
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+// Les attentes, écrites à la main. Toute modification ici doit être un choix assumé.
+const ATTENDU_SOCLE={
+  'Développé Couché':                   {p:'pec',                    pat:'poussee-horizontale', eq:'barre'},
+  'Squat à la Barre':                   {p:'glutes,quads',           pat:'squat',               eq:'barre'},
+  'Soulevé de Terre':                   {p:'glutes,hamstrings,lower-back', pat:'hip-hinge',     eq:'barre'},
+  'Développé Militaire':                {p:'front-delt,side-delt,triceps', pat:'poussee-verticale', eq:'barre'},
+  'Tirage Poulie Haute (Lat Pulldown)': {p:'biceps,lats',            pat:'tirage-vertical',     eq:'guide'},
+  'Rowing Barre (Tirage Horizontal)':   {p:'lats,rear-delt,traps',   pat:'tirage-horizontal',   eq:'barre'},
+  'Curl Barre':                         {p:'biceps',                 pat:'curl-biceps',         eq:'barre'},
+  'Tractions (Pull-up)':                {p:'biceps,lats',            pat:'tirage-vertical',     eq:'corps'},
+  'Dips':                               {p:'pec,triceps',            pat:'poussee-horizontale', eq:'corps'},
+  'Élévations Latérales (Lateral Raise)':{p:'side-delt',             pat:'elevation-epaules',   eq:'autre'}
+};
+const soclesKo=[];
+Object.keys(ATTENDU_SOCLE).forEach(n=>{
+  const a=ATTENDU_SOCLE[n], b2=socles[n];
+  if(!b2){ soclesKo.push(n+' : ABSENT du catalogue'); return; }
+  ['p','pat','eq'].forEach(k=>{ if(a[k]!==b2[k]) soclesKo.push(n+' · '+k+' : attendu '+a[k]+', reçu '+b2[k]); });
+});
+t('⭐ ⑩ SOCLES : les 10 exercices de base gardent EXACTEMENT leur classement',
+  soclesKo.length===0 && !socles.erreur,
+  (socles.erreur?'runner en erreur : '+socles.erreur+'\n         ':'')
+  + soclesKo.join('\n         ')
+  + '\n         → ces attentes sont écrites À LA MAIN dans le test : les changer doit être un choix.');
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('══════════════════════════════════════════════════════════');

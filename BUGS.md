@@ -105,6 +105,19 @@ donnent le même résultat ; il est **fragile** si plusieurs correspondent en do
 de risque** : ce sont eux qui basculent si on insère une règle au mauvais endroit. Un test
 vérifie que cette part **ne grandit pas**.
 
+⚠️⚠️ **Et il faut savoir LESQUELS — sinon le chiffre rassure à tort.** Mesuré : les 60 fragiles
+ne sont **pas** des exercices obscurs, ils se concentrent sur les familles les plus courantes —
+**13 « Développé »** (dont le **Développé Couché**, qui sert de référence au niveau de force),
+**10 « Tirage »**, **5 « Rowing »**. C'est logique et donc durable : ce sont précisément les
+familles où une règle précise doit battre une règle large. *La surface de risque est concentrée
+là où elle coûte le plus cher.*
+
+**Protection ajoutée en conséquence** (`tests/croises/` ⑩) : les **10 exercices socles** ont
+leur classement écrit **à la main** dans le test, pas dans un fichier régénérable. L'empreinte ⑦
+peut être régénérée sans qu'on lise le diff ; ces attentes-ci ne peuvent être modifiées que
+volontairement. Vérifié en neutralisant la règle du développé couché : le test affiche
+*« attendu pec, reçu front-delt,side-delt,triceps »*.
+
 ### 🛡️ Ce qui protège
 - `tests/croises/` ① : **aucune règle de classement ne doit être morte**. C'est ce test qui a
   révélé que les oiseaux recevaient le mauvais muscle depuis toujours.
