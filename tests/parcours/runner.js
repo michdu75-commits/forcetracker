@@ -811,67 +811,34 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c4.close();
 }
 
-// ── POIDS DE LA BARRE (Michel 02/08 : « on peut le mettre ? ») ─────────────────
-// Il EXISTAIT dans le code (S.barW, ft4_bar, lu par le calculateur de plaques) mais son champ
-// avait disparu de l'interface : setup.js cherchait un `bar-inp` introuvable → la barre restait
-// figée à 20 kg pour tout le monde, y compris avec une olympique femme (15 kg) ou une EZ.
+// ── LE CALCULATEUR DE PLAQUES EST VOLONTAIREMENT INACCESSIBLE (décision Michel, 02/08) ──
+// Il avait été RETIRÉ exprès (« ça ne servait à rien »). Je l'ai remis en ft-v725 en croyant
+// réparer un oubli — c'était une décision, pas un bug. Ce test fige le choix pour qu'il ne soit
+// pas « réparé » une troisième fois : le code de la modale reste (rien à nettoyer d'urgent),
+// mais AUCUN chemin de l'app ne doit y mener.
 {
   const c5=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
   const p5=await c5.newPage();
   await p5.addInitScript(seedScript({}));
   await p5.goto('http://localhost:'+PORT+'/index.html');
   await p5.waitForTimeout(2200);
-  const br=await p5.evaluate(()=>{
+  const pc=await p5.evaluate(()=>{
    try{
-    if(typeof setBarWeight!=='function')return {erreur:'setBarWeight absente'};
-    const o={};
-    openPlateCalc(60,null);
-    o.champ=!!document.getElementById('bar-inp');
-    setBarWeight(15);
-    o.val=S.barW; o.stocke=localStorage.getItem('ft4_bar'); o.disp=(document.getElementById('bar-disp')||{}).textContent;
-    document.getElementById('plate-kg').value='55'; renderPlates();
-    o.plaques15=document.getElementById('plate-result').textContent;
-    setBarWeight(20); document.getElementById('plate-kg').value='55'; renderPlates();
-    o.plaques20=document.getElementById('plate-result').textContent;
-    setBarWeight(999); o.max=S.barW;
-    setBarWeight(15);
-    // ⚠️ enregistrer le PROFIL ne doit PAS réécrire le poids de la barre (une donnée, un
-    // seul propriétaire — sinon le champ de la modale, resté à 20, écraserait le réglage).
-    o.avant=S.barW;
-    try{ if(typeof saveProfile==='function') saveProfile(); }catch(e){}
-    o.apres=S.barW;
-    return o;
-   }catch(e){ return {erreur:String(e&&e.message||e)}; }
-  });
-  t('⭐ le poids de la barre est RÉGLABLE (le champ avait disparu de l\'interface)',
-    br.champ&&br.val===15, JSON.stringify(br).slice(0,180));
-  t('il est retenu pour les prochaines fois', br.stocke==='15'&&br.disp==='15', 'stocké '+br.stocke+' · affiché '+br.disp);
-  t('⭐ le calcul de plaques suit le poids de la barre',
-    /20kg = 55kg/.test(br.plaques15||'')&&/15kg\+2.5kg = 55kg/.test(br.plaques20||''),
-    'barre 15 → '+br.plaques15+' | barre 20 → '+br.plaques20);
-  t('valeur aberrante bornée (999 → 60 kg max)', br.max===60, 'reçu '+br.max);
-  t('⭐ enregistrer le profil n\'écrase PAS le réglage (une donnée, un seul propriétaire)',
-    br.avant===15&&br.apres===15, br.avant+' → '+br.apres);
-  // Michel après test réel : « le poids de la barre je ne vois pas ». Cause : le CALCULATEUR
-  // lui-même n'était appelé de NULLE PART — modale et fonction présentes, aucun bouton.
-  const acc=await p5.evaluate(()=>{
-   try{
-    // la modale du test précédent est restée ouverte : sans ça, « .overlay.open » la renvoie
-    // à la place du menu (faux négatif constaté le 02/08).
     document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
     S.wkt={exs:[{name:'Squat à la Barre',sets:[{kg:80,reps:8,done:true,type:'N'}]}],start:Date.now()};
     goScreen('s-log'); renderLog(); openExMenu(0,false);
     const menu=document.getElementById('ov-exmenu')||document.querySelector('.overlay.open');
-    const dansLeMenu=/Calculateur de plaques/.test(menu?menu.textContent:'');
-    closeExMenu(); openPlateCalc(_lastKgOf(0),0);
-    return {dansLeMenu, ouvre:document.getElementById('mod-plate').classList.contains('open'),
-            preRempli:document.getElementById('plate-kg').value,
-            champBarre:!!document.getElementById('bar-inp')};
+    const dansMenu=/plaque/i.test(menu?menu.textContent:'');
+    closeExMenu();
+    // et aucun bouton ailleurs dans l'app ne doit appeler openPlateCalc
+    const html=document.documentElement.innerHTML;
+    return {dansMenu, ailleurs:/openPlateCalc\s*\(/.test(html), champBarre:!!document.getElementById('bar-inp')};
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
-  t('⭐ le calculateur de plaques est ACCESSIBLE (menu ⋯ d\'un exercice)',
-    acc.dansLeMenu&&acc.ouvre&&acc.champBarre, JSON.stringify(acc));
-  t('il s\'ouvre pré-rempli avec la dernière charge saisie', acc.preRempli==='80', 'reçu '+acc.preRempli);
+  t('⭐ le calculateur de plaques reste INACCESSIBLE (retrait volontaire de Michel)',
+    pc.dansMenu===false&&pc.ailleurs===false, JSON.stringify(pc));
+  t('… et son réglage de poids de barre ne traîne plus dans l\'interface',
+    pc.champBarre===false, String(pc.champBarre));
   await c5.close();
 }
 

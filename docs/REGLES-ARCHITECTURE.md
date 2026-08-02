@@ -211,6 +211,24 @@ construit ? »*) — le journal répond à *« que s'est-il passé et pourquoi ?
 question. Idéalement dérivé du **code** (vérifiable) et non de la mémoire.
 *Origine : 27/07/2026, cas de la prise de sang*
 
+### R30 — Un RETRAIT volontaire doit être écrit, sinon il redevient un bug
+R23 dit qu'une fonctionnalité livrée sans entrée de journal devient invisible. **Le miroir est
+plus dangereux** : une fonctionnalité **retirée exprès** ne laisse, elle, qu'un **code orphelin**
+— une modale sans bouton, une fonction sans appelant. Or c'est exactement à quoi ressemble un
+oubli. Le suivant « répare » donc une décision.
+**Cas réel (02/08/2026)** : Michel avait retiré le **calculateur de plaques** (« ça ne servait à
+rien »). Trois mois plus tard, je trouve `openPlateCalc` sans aucun appelant, je conclus au bug
+— d'autant que **la veille**, le champ `bar-inp` était bel et bien un vrai orphelin — et je le
+remets. Michel : *« dans mes souvenirs je l'avais retiré »*. Ni le journal, ni l'historique git
+disponible n'en gardaient trace.
+**Ce qu'on en fait** :
+- un retrait s'écrit dans le journal **avec sa raison**, comme un ajout ;
+- et se **fige par un test** qui vérifie que le chemin reste fermé — un test peut protéger une
+  absence aussi bien qu'une présence ;
+- ⚠️ **corollaire** : du code orphelin ne prouve rien. Avant de « réparer », chercher la décision
+  (journal, git) — et si on ne trouve rien, **demander** au lieu de supposer.
+*Origine : 02/08/2026 · miroir de R23 · voisine de R28 (une limite non vérifiée).*
+
 ---
 
 ## 4. La gouvernance (les règles qui s'appliquent aux règles)

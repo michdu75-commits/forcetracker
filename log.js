@@ -699,12 +699,6 @@ function _buildExHistChart(data){
   return s+'</svg>';
 }
 // ─── MENU CONTEXTUEL EXERCICE (⋯) ────────────────────────────────────────────
-// Dernière charge saisie sur l'exercice — pré-remplit le calculateur (évite de retaper).
-function _lastKgOf(ei){
-  try{ const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]; if(!ex)return 0;
-    const avecKg=(ex.sets||[]).filter(s=>s&&s.kg); return avecKg.length?avecKg[avecKg.length-1].kg:0;
-  }catch(e){ return 0; }
-}
 let _exMenuCtx=null;
 function openExMenu(ei,hasGif){
   const ex=S.wkt.exs[ei];if(!ex)return;
@@ -734,10 +728,6 @@ function openExMenu(ei,hasGif){
     +(hasUserPhoto?mRow('🖼️','Voir la photo',`closeExMenu();_viewExPhoto('${safeNm}')`):'')
     +(hasUserPhoto?mRow('🗑️','Retirer la photo',`closeExMenu();removeExImg('${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
-    // 🔢 Le calculateur de plaques était devenu INACCESSIBLE : la modale et la fonction
-    // existaient, mais plus aucun bouton ne les ouvrait (constaté le 02/08 — Michel :
-    // « le poids de la barre je ne vois pas »). C'est aussi là qu'on règle le poids de sa barre.
-    +mRow('🔢','Calculateur de plaques',`closeExMenu();openPlateCalc(_lastKgOf(${ei}),${ei})`)
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
     +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchmove="event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;">`
     +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">🗑️</span>`
@@ -5380,20 +5370,7 @@ function toggleExGif(ei,name){
 
 // ─── PLATE CALCULATOR ────────────────────────────────────────
 let plateExIdx=null;
-// Le poids de la barre : réglable depuis le calculateur, et RETENU (ft4_bar). Le champ avait
-// disparu de l'interface alors que le code le lisait toujours (`bar-inp`) → la barre restait
-// figée à 20 kg pour tout le monde, y compris avec une barre olympique femme (15 kg) ou une EZ.
-function setBarWeight(v){
-  const n=Math.max(1,Math.min(60,parseFloat(v)||20));
-  S.barW=n;
-  try{localStorage.setItem('ft4_bar',String(n));}catch(e){}
-  const inp=document.getElementById('bar-inp');
-  if(inp&&parseFloat(inp.value)!==n)inp.value=n;      // clic sur un raccourci → refléter dans le champ
-  const disp=document.getElementById('bar-disp'); if(disp)disp.textContent=n;
-  renderPlates();
-  if(typeof persist==='function')persist();           // part aussi dans la sauvegarde cloud
-}
-function openPlateCalc(kg,ei){plateExIdx=ei;document.getElementById('plate-kg').value=kg||'';document.getElementById('bar-disp').textContent=S.barW;const _bi=document.getElementById('bar-inp');if(_bi)_bi.value=S.barW;document.getElementById('plate-apply').style.display=ei!==null&&ei!==undefined?'':'none';renderPlates();document.getElementById('mod-plate').classList.add('open');}
+function openPlateCalc(kg,ei){plateExIdx=ei;document.getElementById('plate-kg').value=kg||'';document.getElementById('bar-disp').textContent=S.barW;document.getElementById('plate-apply').style.display=ei!==null&&ei!==undefined?'':'none';renderPlates();document.getElementById('mod-plate').classList.add('open');}
 function closePlate(){document.getElementById('mod-plate').classList.remove('open');}
 function calcPlatesArr(t,bar){const ps=[25,20,15,10,5,2.5,1.25,0.5];let r=(t-bar)/2;if(r<0)return null;const res=[];for(const p of ps){while(r>=p-.001){res.push(p);r=Math.round((r-p)*1000)/1000;}}return res;}
 function plateCls(p){return p>=25?'p25':p>=20?'p20':p>=15?'p15':p>=10?'p10':p>=5?'p5':p>=2?'p2':'p1';}
