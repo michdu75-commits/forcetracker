@@ -177,8 +177,11 @@ t('⭐ ⑤ le SCHÉMA DE MOUVEMENT ne contredit pas les MUSCLES',
 
 // ── ⑥ LE MATÉRIEL DÉDUIT NE CONTREDIT PAS LE NOM ────────────────────────────
 // Si « haltère » est écrit dans le nom, l'exercice ne peut pas être rangé en machine.
+// ⚠️ « poids du corps » ajouté le 02/08 : c'est le mot qui manquait, et son absence a laissé
+//    passer « Squat Poids du Corps (Air Squat) » rangé en 🏋️ BARRE pendant tout ce temps.
+//    Un croisement ne voit que ce qu'on lui a appris à lire (BUGS.md, famille 12).
 const MOT={'barre':'barre','haltere':'libre','kettlebell':'libre','machine':'guide',
- 'poulie':'guide','elastique':'elast','trx':'trx','smith':'guide'};
+ 'poulie':'guide','elastique':'elast','trx':'trx','smith':'guide','poids du corps':'corps'};
 const eqKo=ex.filter(e=>{
   if(TOLERE.materiel[e.nom]) return false;
   const s=e.nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');

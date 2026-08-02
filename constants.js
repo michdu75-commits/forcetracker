@@ -1181,6 +1181,125 @@ const EX_MUSCLES={
  // ✏️ CORRECTION : tirer de CÔTÉ met les obliques en jeu — c'est ce qui le distingue du
  //    tirage dos, et les deux fiches étaient identiques.
  'chariot-de-puissance-tirage-de-cote':   {p:['lats','traps'], s:['rear-delt','biceps','forearms','obliques'], vu:'2026-08-02'},
+
+ // ─── JAMBES (58) — relues une par une le 02/08/2026 ──────────────────────────────
+ // ⭐ LE FIL DU GROUPE : les 40 squats disaient tous la même chose. Or ce qui distingue un
+ //    squat d'un autre, c'est presque toujours ce qui tient le TRONC — barre sur le dos,
+ //    charge devant, dos appuyé sur un chariot, ou rien du tout. Cette information n'était
+ //    nulle part.
+ //
+ // ⚠️ LIMITE DU GROUPE, écrite une fois pour toutes : les ADDUCTEURS n'existent pas dans la
+ //    figurine (17 muscles). Ils sont pourtant moteurs au squat sumo, au cossack, aux fentes
+ //    latérales et à l'adduction de cuisses. On ne les invente pas ailleurs : la fiche reste
+ //    honnête et le manque est nommé. ⏭️ Ajouter un muscle change ce que voit l'utilisateur,
+ //    donc c'est l'arbitrage de Michel (R29) — déjà signalé le 02/08.
+ //
+ // ─── SQUATS À LA BARRE, colonne chargée : les érecteurs travaillent, c'est normal.
+ 'squat-a-la-barre':                      {p:['quads','glutes'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
+ 'smith-machine-squat':                   {p:['quads','glutes'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
+ 'safety-bar-squat':                      {p:['quads','glutes'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
+ 'pin-squat':                             {p:['quads','glutes'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
+ 'squat-bande-elastique':                 {p:['quads','glutes'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
+ 'squat-barre-avec-bandes-elastiques':    {p:['quads','glutes'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
+ // Le SUMO ouvre les hanches : les fessiers passent devant. (Adducteurs : voir la limite ci-dessus.)
+ 'squat-sumo':                            {p:['glutes','quads'], s:['hamstrings','calves','lower-back'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le SQUAT AVANT n'est pas un squat arrière avec la barre devant. La barre
+ //    posée sur les épaules doit être RETENUE — le haut du dos et les abdos empêchent le buste
+ //    de plonger, et c'est ce qui limite la charge. Aucun des deux n'était compté.
+ 'squat-avant':                           {p:['quads','glutes'], s:['hamstrings','calves','lower-back','abs','traps'], vu:'2026-08-02'},
+ // Charge tenue DEVANT le corps : même demande de gainage, en plus léger.
+ 'squat-gobelet-goblet-squat':            {p:['quads','glutes'], s:['hamstrings','calves','lower-back','abs'], vu:'2026-08-02'},
+ 'squat-kettlebell':                      {p:['quads','glutes'], s:['hamstrings','calves','lower-back','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : l'OVERHEAD SQUAT se fait barre TENDUE AU-DESSUS DE LA TÊTE — ce sont les
+ //    ÉPAULES et le gainage qui lâchent en premier, jamais les cuisses. Ils manquaient tous
+ //    les trois : c'est pourtant tout ce qui distingue cet exercice d'un squat ordinaire.
+ 'overhead-squat':                        {p:['quads','glutes'], s:['hamstrings','calves','lower-back','abs','front-delt','traps'], vu:'2026-08-02'},
+ 'overhead-squat-halteres':               {p:['quads','glutes'], s:['hamstrings','calves','lower-back','abs','front-delt','traps'], vu:'2026-08-02'},
+ 'overhead-squat-elastique':              {p:['quads','glutes'], s:['hamstrings','calves','lower-back','abs','front-delt','traps'], vu:'2026-08-02'},
+ // ✏️✏️ CORRECTION SYMÉTRIQUE DE CELLE DES ROWINGS À POITRINE APPUYÉE : sur un HACK SQUAT, un
+ //    PENDULUM ou un BELT SQUAT, le dos est appuyé sur un chariot (ou la charge pend à la
+ //    ceinture) — la colonne n'est PAS chargée, c'est même la raison d'être de ces machines.
+ //    Elles comptaient pourtant le bas du dos. Les presses à jambes, elles, étaient déjà justes :
+ //    deux traitements différents pour la même situation, dans le même groupe.
+ 'squat-hack-hack-squat':                 {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'hack-squat-inverse':                    {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'hack-squat-assis':                      {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'pendulum-squat':                        {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'belt-squat':                            {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ // ─── PRESSES À JAMBES : dos calé, aucun travail des érecteurs. C'était déjà juste.
+ 'press-jambes-45':                       {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'press-jambes-horizontale':              {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'press-jambes-verticale':                {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'press-jambes-inclinee':                 {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'press-jambes-levier':                   {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'presse-a-cuisses-sur-le-cote':          {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ // Presse à une jambe : le bassin doit rester droit, le tronc retient.
+ 'presse-a-cuisses-iso-laterale':         {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ // ─── SQUAT AU POIDS DU CORPS : rien sur la colonne.
+ 'squat-poids-du-corps-air-squat':        {p:['quads','glutes'], s:['hamstrings','calves'], vu:'2026-08-02'},
+ 'squat-trx-sangles':                     {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : à UNE JAMBE (pistol), c'est l'équilibre qui limite — le gainage manquait.
+ 'squat-pistol':                          {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'squat-pistol-trx-sangles':              {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le SQUAT SAUTÉ retombe et repart — les mollets propulsent, le tronc encaisse.
+ 'squat-saute-jump-squat':                {p:['quads','glutes'], s:['calves','hamstrings','abs'], vu:'2026-08-02'},
+ // ✏️✏️ LA CORRECTION LA PLUS NETTE DU GROUPE : le SISSY SQUAT comptait les FESSIERS et les
+ //    ISCHIOS en muscles de travail. C'est le contraire de ce que fait l'exercice : la hanche
+ //    reste ÉTENDUE du début à la fin (on ne s'assoit pas, on bascule en arrière sur les
+ //    genoux). Les fessiers y sont verrouillés, pas moteurs — c'est une isolation du
+ //    quadriceps, et c'est même le seul exercice au poids du corps qui le fasse.
+ 'sissy-squat':                           {p:['quads'], s:['abs','calves'], vu:'2026-08-02'},
+ 'sissy-squat-machine':                   {p:['quads'], s:['abs','calves'], vu:'2026-08-02'},
+ // La CHAISE est un maintien : quadriceps en isométrie, fessiers et gainage en soutien. Juste.
+ 'chaise-wall-sit':                       {p:['quads'], s:['glutes','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le JEFFERSON SQUAT se fait à cheval sur la barre, tenue à bout de bras —
+ //    la PRISE et l'ANTI-ROTATION (position asymétrique) manquaient tous les deux.
+ 'jefferson-squat':                       {p:['quads','glutes'], s:['hamstrings','lower-back','obliques','forearms'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : la ROTATION DU TRONC est dans le nom, les obliques n'étaient pas dans la fiche.
+ 'squat-avec-rotation-du-tronc':          {p:['quads','glutes'], s:['hamstrings','calves','obliques','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le SOULEVÉ VALISE se porte d'UN SEUL CÔTÉ — tout l'exercice consiste à ne
+ //    pas pencher. Les obliques manquaient, et la prise aussi comptait moins qu'elle ne devrait.
+ //    (Le grand dorsal est retiré : les bras pendent le long du corps, il n'y a rien à retenir.)
+ 'souleve-de-terre-valise-suitcase':      {p:['glutes','hamstrings','lower-back'], s:['quads','forearms','traps','obliques'], vu:'2026-08-02'},
+ // ─── FENTES ET MOUVEMENTS À UNE JAMBE : le gainage et les mollets tiennent l'équilibre —
+ //     ils manquaient tous les deux, alors que les montées sur box, elles, avaient les mollets.
+ 'fentes':                                {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'fentes-marchees':                       {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'fentes-arriere':                        {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'fentes-kettlebell':                     {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'smith-machine-fentes':                  {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'chariot-de-puissance-fentes-arriere':   {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ // Fentes LATÉRALES et CROISÉES : le déplacement se fait sur le côté (adducteurs — voir limite).
+ 'fentes-laterales':                      {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'fentes-croisees-curtsy-lunge':          {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'cossack-squat':                         {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'squat-bulgare':                         {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'squat-bulgare-elastique':               {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'split-squat-elastique-fente-statique':  {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'split-squat-trx-sangles':               {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'montee-sur-box-step-up':                {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ 'montee-sur-box-halteres':               {p:['quads','glutes'], s:['hamstrings','calves','abs'], vu:'2026-08-02'},
+ // ─── EXTENSIONS DE QUADRICEPS : isolation pure, un seul muscle. C'était déjà juste, et il
+ //     ne faut RIEN y ajouter — un 3ᵉ muscle ferait passer l'exercice pour polyarticulaire
+ //     et doublerait presque sa dépense (4 → 5,5).
+ 'extension-quadriceps-leg-extension':    {p:['quads'], s:[], vu:'2026-08-02'},
+ 'extension-quadriceps-unilaterale':      {p:['quads'], s:[], vu:'2026-08-02'},
+ 'extension-quadriceps-elastique':        {p:['quads'], s:[], vu:'2026-08-02'},
+ 'extension-quadriceps-unilaterale-machine-a-d':{p:['quads'], s:[], vu:'2026-08-02'},
+ // ⚠️⚠️ ADDUCTION DE CUISSES — LAISSÉ TEL QUEL, EXPRÈS, ET C'EST LE POINT LE PLUS HONNÊTE
+ //    DU GROUPE. Le muscle qui travaille est l'ADDUCTEUR, qui n'existe pas dans la figurine.
+ //    Le fessier moyen est même son ANTAGONISTE (il ABduit) — c'est exactement le défaut
+ //    corrigé sur les rotations internes d'épaule. Mais ici il n'y a AUCUN code disponible
+ //    qui soit moins faux : le remplacer par « ischios » ou « quadriceps » serait échanger
+ //    une erreur contre une autre, sans rien gagner.
+ //    ⏭️ ARBITRAGE MICHEL : ajouter les adducteurs à la figurine. Signalé le 02/08, toujours
+ //    ouvert. Tant que ce n'est pas tranché, la fiche est fausse ET on le sait — c'est
+ //    préférable à une fiche fausse dont personne ne se souvient.
+ 'adduction-cuisses-leg-adduction':       {p:['glutes'], s:['quads'], vu:'2026-08-02'},
+ // ─── CHARIOT DE PUISSANCE : la poussée et le tirage inversé sont deux exercices différents,
+ //     et ils étaient déjà distingués correctement (le tirage inversé est quadriceps-dominant).
+ 'sled-push':                             {p:['quads','glutes'], s:['calves','abs'], vu:'2026-08-02'},
+ 'chariot-de-puissance-tirage-inverse-jambes':{p:['quads'], s:['glutes','calves'], vu:'2026-08-02'},
 };
 
 /** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou

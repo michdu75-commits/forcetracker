@@ -2,7 +2,7 @@
  "genere": "2026-08-02",
  "total": 337,
  "nbRegles": 69,
- "fragiles": 21,
+ "fragiles": 12,
  "ex": {
   "Abducteurs Machine Debout": {
    "p": "glutes",
@@ -70,7 +70,7 @@
   },
   "Belt Squat": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "calves,hamstrings",
    "pat": "squat",
    "eq": "guide",
    "met": 6.5,
@@ -114,7 +114,7 @@
    "pat": "squat",
    "eq": "corps",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Chaise Romaine": {
    "p": "abs,hip-flexors",
@@ -142,7 +142,7 @@
   },
   "Chariot de Puissance — Fentes Arrière": {
    "p": "glutes,quads",
-   "s": "hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "cardio",
    "met": 6.5,
@@ -170,7 +170,7 @@
    "pat": "squat",
    "eq": "cardio",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Chariot de Puissance — Tirage de Côté": {
    "p": "lats,traps",
@@ -246,9 +246,9 @@
   },
   "Cossack Squat": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
-   "eq": "barre",
+   "eq": "corps",
    "met": 6.5,
    "frag": 0
   },
@@ -754,7 +754,7 @@
    "pat": "extension-genou",
    "eq": "guide",
    "met": 4,
-   "frag": 1
+   "frag": 0
   },
   "Extension Quadriceps Élastique": {
    "p": "quads",
@@ -862,7 +862,7 @@
   },
   "Fentes": {
    "p": "glutes,quads",
-   "s": "hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "autre",
    "met": 6.5,
@@ -870,7 +870,7 @@
   },
   "Fentes Arrière": {
    "p": "glutes,quads",
-   "s": "hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "autre",
    "met": 6.5,
@@ -878,7 +878,7 @@
   },
   "Fentes Croisées (Curtsy Lunge)": {
    "p": "glutes,quads",
-   "s": "hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "autre",
    "met": 6.5,
@@ -886,7 +886,7 @@
   },
   "Fentes Kettlebell": {
    "p": "glutes,quads",
-   "s": "hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "libre",
    "met": 6.5,
@@ -894,7 +894,7 @@
   },
   "Fentes Latérales": {
    "p": "glutes,quads",
-   "s": "hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "autre",
    "met": 6.5,
@@ -902,7 +902,7 @@
   },
   "Fentes Marchées": {
    "p": "glutes,quads",
-   "s": "hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "autre",
    "met": 6.5,
@@ -934,19 +934,19 @@
   },
   "Hack Squat Assis": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "calves,hamstrings",
    "pat": "squat",
    "eq": "guide",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Hack Squat Inversé": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "calves,hamstrings",
    "pat": "squat",
    "eq": "guide",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Handstand Push-up (ATR)": {
    "p": "front-delt",
@@ -1094,11 +1094,11 @@
   },
   "Jefferson Squat": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "forearms,hamstrings,lower-back,obliques",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Jumping Jack": {
    "p": "front-delt,quads",
@@ -1238,7 +1238,7 @@
   },
   "Montée sur Box (Step-up)": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "corps",
    "met": 6.5,
@@ -1246,7 +1246,7 @@
   },
   "Montée sur Box Haltères": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "libre",
    "met": 6.5,
@@ -1294,7 +1294,7 @@
   },
   "Overhead Squat": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,front-delt,hamstrings,lower-back,traps",
    "pat": "squat",
    "eq": "barre",
    "met": 6.5,
@@ -1302,7 +1302,7 @@
   },
   "Overhead Squat Haltères": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,front-delt,hamstrings,lower-back,traps",
    "pat": "squat",
    "eq": "libre",
    "met": 6.5,
@@ -1310,7 +1310,7 @@
   },
   "Overhead Squat Élastique": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,front-delt,hamstrings,lower-back,traps",
    "pat": "squat",
    "eq": "elast",
    "met": 6.5,
@@ -1334,7 +1334,7 @@
   },
   "Pendulum Squat": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "calves,hamstrings",
    "pat": "squat",
    "eq": "guide",
    "met": 6.5,
@@ -1470,7 +1470,7 @@
   },
   "Presse à Cuisses Iso-Latérale": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "squat",
    "eq": "guide",
    "met": 6.5,
@@ -1805,16 +1805,16 @@
    "frag": 0
   },
   "Sissy Squat": {
-   "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "p": "quads",
+   "s": "abs,calves",
    "pat": "extension-genou",
-   "eq": "barre",
+   "eq": "corps",
    "met": 6.5,
    "frag": 0
   },
   "Sissy Squat Machine": {
-   "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "p": "quads",
+   "s": "abs,calves",
    "pat": "extension-genou",
    "eq": "guide",
    "met": 6.5,
@@ -1870,7 +1870,7 @@
   },
   "Smith Machine Fentes": {
    "p": "glutes,quads",
-   "s": "hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "guide",
    "met": 6.5,
@@ -1990,7 +1990,7 @@
   },
   "Soulevé de Terre Valise (Suitcase)": {
    "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "s": "forearms,obliques,quads,traps",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -2006,23 +2006,23 @@
   },
   "Split Squat TRX (Sangles)": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "trx",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Split Squat Élastique (Fente Statique)": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "elast",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Squat Avant": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings,lower-back,traps",
    "pat": "squat",
    "eq": "barre",
    "met": 6.5,
@@ -2046,7 +2046,7 @@
   },
   "Squat Bulgare": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "barre",
    "met": 6.5,
@@ -2054,7 +2054,7 @@
   },
   "Squat Bulgare Élastique": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings",
    "pat": "fente",
    "eq": "elast",
    "met": 6.5,
@@ -2062,7 +2062,7 @@
   },
   "Squat Gobelet (Goblet Squat)": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings,lower-back",
    "pat": "squat",
    "eq": "libre",
    "met": 6.5,
@@ -2070,15 +2070,15 @@
   },
   "Squat Hack (Hack Squat)": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "calves,hamstrings",
    "pat": "squat",
    "eq": "guide",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Squat Kettlebell": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings,lower-back",
    "pat": "squat",
    "eq": "libre",
    "met": 6.5,
@@ -2086,7 +2086,7 @@
   },
   "Squat Pistol": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings",
    "pat": "squat",
    "eq": "corps",
    "met": 6.5,
@@ -2094,7 +2094,7 @@
   },
   "Squat Pistol TRX (Sangles)": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings",
    "pat": "squat",
    "eq": "trx",
    "met": 6.5,
@@ -2102,17 +2102,17 @@
   },
   "Squat Poids du Corps (Air Squat)": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "calves,hamstrings",
    "pat": "squat",
-   "eq": "barre",
+   "eq": "corps",
    "met": 6.5,
    "frag": 0
   },
   "Squat Sauté (Jump Squat)": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings",
    "pat": "squat",
-   "eq": "barre",
+   "eq": "corps",
    "met": 6.5,
    "frag": 0
   },
@@ -2126,7 +2126,7 @@
   },
   "Squat TRX (Sangles)": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings",
    "pat": "squat",
    "eq": "trx",
    "met": 6.5,
@@ -2134,7 +2134,7 @@
   },
   "Squat avec Rotation du Tronc": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings,lower-back",
+   "s": "abs,calves,hamstrings,obliques",
    "pat": "squat",
    "eq": "barre",
    "met": 6.5,

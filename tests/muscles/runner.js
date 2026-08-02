@@ -854,6 +854,57 @@ t('⭐ une TRACTION AUSTRALIENNE est un tirage HORIZONTAL (le corps est à l\'ho
 t('témoin : une vraie traction reste un tirage VERTICAL',
   !ds.erreur && ds.traction==='tirage-vertical', String(ds.traction));
 
+// ── JAMBES : les corrections trouvées en relisant les 58 fiches une par une (02/08).
+const jb=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>(_mscScores([E(n)])||{}).sc||{};
+  return {sissy:f('Sissy Squat'), sissyM:f('Sissy Squat Machine'), squat:f('Squat à la Barre'),
+          hack:f('Squat Hack (Hack Squat)'), belt:f('Belt Squat'), presse:f('Press Jambes 45°'),
+          avant:f('Squat Avant'), ohs:f('Overhead Squat'), valise:f('Soulevé de Terre Valise (Suitcase)'),
+          jeff:f('Jefferson Squat'), rot:f('Squat avec Rotation du Tronc'), fente:f('Fentes'),
+          legext:f('Extension Quadriceps (Leg Extension)'),
+          eqAir:_exEquip('Squat Poids du Corps (Air Squat)'),
+          eqSaut:_exEquip('Squat Sauté (Jump Squat)'),
+          eqSissy:_exEquip('Sissy Squat'), eqSissyM:_exEquip('Sissy Squat Machine'),
+          eqSquat:_exEquip('Squat à la Barre'),
+          metLegext:getExerciseMET('Extension Quadriceps (Leg Extension)'),
+          metSissy:getExerciseMET('Sissy Squat')};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(jb.erreur) console.log('     ⚠️  bloc jambes en ERREUR : '+jb.erreur);
+t('⭐ le SISSY SQUAT est une isolation du QUADRICEPS (la hanche reste étendue)',
+  // comparé au squat : un test qui regarde le sissy seul ne prouverait pas la distinction.
+  !jb.erreur && jb.sissy.quads===2 && !jb.sissy.glutes && !jb.sissy.hamstrings
+  && jb.sissyM.quads===2 && !jb.sissyM.glutes && jb.squat.glutes===2,
+  'sissy '+JSON.stringify(jb.sissy)+' · témoin squat glutes='+jb.squat.glutes);
+t('⭐ dos APPUYÉ (hack, pendulum, belt squat) → plus de bas du dos, comme les presses',
+  !jb.erreur && !jb.hack['lower-back'] && !jb.belt['lower-back'] && !jb.presse['lower-back']
+  && jb.squat['lower-back']===1,
+  'hack '+JSON.stringify(jb.hack)+' · témoin squat barre lower-back='+jb.squat['lower-back']);
+t('⭐ le SQUAT AVANT retient la barre devant (haut du dos + gainage)',
+  !jb.erreur && jb.avant.abs===1 && jb.avant.traps===1 && !jb.squat.abs,
+  'avant '+JSON.stringify(jb.avant));
+t('⭐ l\'OVERHEAD SQUAT tient la barre au-dessus de la tête (épaules + gainage)',
+  !jb.erreur && jb.ohs['front-delt']===1 && jb.ohs.abs===1, JSON.stringify(jb.ohs));
+t('⭐ le SOULEVÉ VALISE est un ANTI-INCLINAISON (chargé d\'un seul côté)',
+  !jb.erreur && jb.valise.obliques===1 && jb.valise.forearms===1 && !jb.valise.lats,
+  JSON.stringify(jb.valise));
+t('le Jefferson Squat et le squat avec rotation ont bien des OBLIQUES',
+  !jb.erreur && jb.jeff.obliques===1 && jb.rot.obliques===1,
+  'jefferson '+JSON.stringify(jb.jeff));
+t('une FENTE demande de l\'équilibre : mollets et gainage (ils manquaient)',
+  !jb.erreur && jb.fente.calves===1 && jb.fente.abs===1, JSON.stringify(jb.fente));
+t('⭐ MATÉRIEL : « Squat Poids du Corps » n\'est plus rangé en BARRE',
+  !jb.erreur && jb.eqAir==='corps' && jb.eqSaut==='corps' && jb.eqSissy==='corps',
+  'air='+jb.eqAir+' sauté='+jb.eqSaut+' sissy='+jb.eqSissy);
+t('témoins : le Sissy Squat MACHINE reste guidé, le Squat à la Barre reste une barre',
+  !jb.erreur && jb.eqSissyM==='guide' && jb.eqSquat==='barre',
+  'sissy machine='+jb.eqSissyM+' squat barre='+jb.eqSquat);
+t('les extensions de quadriceps restent une ISOLATION (aucun 3ᵉ muscle ajouté)',
+  !jb.erreur && Object.keys(jb.legext).length===1 && jb.metLegext===4 && jb.metSissy===6.5,
+  JSON.stringify(jb.legext)+' · MET '+jb.metLegext+' · sissy MET '+jb.metSissy);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

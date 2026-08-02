@@ -72,6 +72,11 @@ l'erreur** — l'exercice est juste classé autrement, sans message, sans planta
 | **Oiseau / Face Pull** | deltoïde **moyen** en principal | la règle précise « deltoïde arrière » était **morte** | 02/08 |
 | **Jefferson Curl** | curl de biceps | le mot-clé `curl` | 02/08 |
 
+- **« Squat Poids du Corps (Air Squat) » rangé en 🏋️ BARRE** (02/08, ft-v741) : la règle « squat »
+  du bac *Barre* passait avant la règle « poids du corps ». Le mot était **écrit dans le nom** et
+  n'a servi à rien. Conséquence visible : qui filtre *« je m'entraîne à la maison »* ne voyait pas
+  l'air squat. Idem squat sauté, sissy squat, cossack squat.
+
 ### 🔎 Comment le reconnaître
 - un exercice sort dans un groupe musculaire qui n'a rien à voir ;
 - **ou** — beaucoup plus discret — une règle de la liste ne se déclenche **jamais**.
@@ -464,6 +469,13 @@ conclure faux avec assurance.
   ne vit jamais dans un seul groupe.* Quand une correction porte sur la façon de classer et non
   sur un exercice, chercher immédiatement ses jumelles ailleurs — c'est le corollaire de **R8**,
   appliqué cette fois aux données et non au contexte de Milo.
+- **🕶️ Un croisement ne voit que ce qu'on lui a APPRIS à lire** (02/08, ft-v741) : le croisement ⑥
+  compare le matériel déduit aux mots du nom (« haltère », « machine », « poulie »…). Il n'a jamais
+  signalé que **« Squat Poids du Corps (Air Squat) » était rangé en Barre** — parce que
+  *« poids du corps »* ne faisait pas partie de son vocabulaire. Le contrôle tournait au vert sur
+  un exercice manifestement mal rangé. ⭐ *Un contrôle silencieux ne prouve rien tant qu'on n'a
+  pas vérifié CE QU'IL REGARDE* — c'est la même leçon que les 19 schémas de mouvement inconnus de
+  la table de correspondance (ft-v731), qui passaient en silence.
 - **Chercher un symptôme là où il n'y en a pas** (ft-v727) : je voulais tailler dans les consignes
   de Milo parce qu'elles occupaient 78 % du contexte. Michel : *« tu me fais flipper là, parce que
   franchement Milo il est au top »*. Rien n'était cassé. **« Ça marche » est une raison suffisante

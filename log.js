@@ -2741,7 +2741,12 @@ function _exEquip(name){
   // 1) Guidé / machine (le plus spécifique d'abord)
   if(/machine|poulie|smith|guide|pec ?deck|peck ?deck|presse|press[ -]?jambes|leg press|leg extension|extension quadriceps|leg curl|leg abduction|leg adduction|tirage|chest press|hack|convergent|hammer|cable|câble|vis-a-vis|crossover|croise poulie|assist|butterfly|pendulum|belt squat|sled|iso.?laterale?|convergente/.test(s)) return 'guide'; // + press jambes / extension quadriceps (01/08 : ils tombaient dans « à classer »)
   // 2) Poids du corps
-  if(/traction|pull-?up|pull up|dips|pompe|push-?up|gainage|planche|plank|pistol|muscle-?up|chaise|wall sit|superman|l-sit|releve.*jambe|leg raise|crunch|russian twist|mountain climber|burpee|hollow|ghd|glute ham|nordic|box|montee/.test(s)) return 'corps';
+  // ⚠️ « Squat Poids du Corps (Air Squat) » était rangé en 🏋️ BARRE — le mot « poids du corps »
+  //    est pourtant ÉCRIT dans son nom, mais la règle « squat » (bac Barre) le happait avant.
+  //    Conséquence concrète : quelqu'un qui filtre « je m'entraîne à la maison » ne voyait pas
+  //    l'air squat. Même cas pour le squat sauté, le sissy squat et le cossack squat.
+  //    (Les versions MACHINE restent guidées : la règle 1 passe avant celle-ci.)
+  if(/traction|pull-?up|pull up|dips|pompe|push-?up|gainage|planche|plank|pistol|muscle-?up|chaise|wall sit|superman|l-sit|releve.*jambe|leg raise|crunch|russian twist|mountain climber|burpee|hollow|ghd|glute ham|nordic|box|montee|poids du corps|air squat|squat saute|jump squat|sissy|cossack/.test(s)) return 'corps';
   // 3) Poids libre (haltères / kettlebell)
   if(/haltere|dumbbell|kettlebell|goblet|landmine|croix de fer|farmer|marche du fermier|swing|arnold|renegade/.test(s)) return 'libre';
   // 4) Barre (classiques : couché/incliné, squat, soulevé, rowing, militaire, curl…)
