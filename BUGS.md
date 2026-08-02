@@ -25,18 +25,21 @@
 
 | # | Famille | Occurrences connues | Ce qui protège aujourd'hui |
 |---|---|---|---|
-| 1 | **Le premier match gagnant** | ≥ 12 | `tests/muscles/` + `tests/croises/` ① |
+| 1 | **Le premier match gagnant** | ≥ 14 | `tests/croises/` ① (règles mortes) + ⑦ (**empreinte**) |
 | 2 | **L'info n'atteint jamais la donnée** | 11 | `tests/donnees/` (garde-fou R4a) |
 | 3 | **Le temps et les fuseaux horaires** | ≥ 6 | `tests/dates/` |
 | 4 | **Le déploiement silencieux** | 3 | carte 🩺 Santé du système (ft-v717) |
 | 5 | **La panne muette côté serveur** | 2 | sondes `storeHealth` / `mailFails` |
+| 5bis | **La sauvegarde écrasée par une version tronquée** | 1 | drapeau local + garde-fou serveur + carte Santé |
+| 5ter | **Le filtre sans pertinence** | 1 | `tests/muscles/` (ordre des résultats) |
 | 6 | **Les seuils en marche d'escalier** | 3 | `tests/calculs/` (balayages continus) |
 | 7 | **Deux sources qui se contredisent** | 14 | `tests/croises/` (les 6 diagonales) |
 | 8 | **La promesse écrite et fausse** | 2 | tests qui relisent les textes d'aide |
 | 9 | **Le code orphelin** | 2 | règles R23 / R30 |
 | 10 | **Le marqueur non posé** | 2 | règle R15 |
 | 11 | **Le comportement copié hors contexte** | 2 | règle R14 |
-| 12 | **Les erreurs de MÉTHODE** (mesure fausse) | ≥ 5 | — *le plus dangereux, voir §12* |
+| 12 | **Les erreurs de MÉTHODE** (mesure fausse) | ≥ 7 | — *le plus dangereux, voir §12* |
+| 13 | **Le NOM comme clé primaire** | *racine de 6 défauts* | identifiant stable (ft-v735, **étape 1/3**) |
 
 ---
 
@@ -72,9 +75,44 @@ l'erreur** — l'exercice est juste classé autrement, sans message, sans planta
 - un exercice sort dans un groupe musculaire qui n'a rien à voir ;
 - **ou** — beaucoup plus discret — une règle de la liste ne se déclenche **jamais**.
 
+### ⚠️ Le masquage PARTIEL — la moitié invisible de cette famille *(trouvé le 02/08, ft-v734)*
+
+Le contrôle ne voyait que les règles **totalement** mortes. Une règle **à moitié mangée** —
+qui capture une partie de ce qui lui revient, le reste étant pris par une règle placée avant
+avec un **autre** classement — était parfaitement invisible.
+
+**Mesuré : 19 règles sur 69 sont dans ce cas.** La pire (`tirage|pulldown|row`) capture
+9 exercices et **19 lui échappent**. Dans la plupart des cas c'est **voulu** (une règle précise
+doit passer avant une règle large) — ce qui manquait, c'était de le **voir**.
+
+> 💡 **Le corollaire, plus large que ce projet** : quand un contrôle cherche une condition
+> *absolue* (« jamais déclenchée »), il rate systématiquement la version *graduelle* du même
+> défaut. Chercher aussi la forme partielle.
+
+### 📐 L'indicateur de confiance *(ft-v734)*
+
+Définition retenue : un exercice est **robuste** si **toutes** les règles qui lui correspondent
+donnent le même résultat ; il est **fragile** si plusieurs correspondent en donnant des muscles
+**différents** — sa justesse ne tient alors qu'à l'**ordre**.
+
+| | Exercices | |
+|---|---|---|
+| Robustes (indépendants de l'ordre) | 277 | **82 %** |
+| **Fragiles** (dépendants de l'ordre) | 60 | 18 % |
+| Sans classement | 0 | — |
+
+⚠️ **Ce 18 % n'est pas un taux d'erreur.** Les 60 sont corrects aujourd'hui. C'est une **surface
+de risque** : ce sont eux qui basculent si on insère une règle au mauvais endroit. Un test
+vérifie que cette part **ne grandit pas**.
+
 ### 🛡️ Ce qui protège
-`tests/croises/` croisement ① : **aucune règle de classement ne doit être morte**. C'est ce test
-qui a révélé que les oiseaux recevaient le mauvais muscle depuis toujours.
+- `tests/croises/` ① : **aucune règle de classement ne doit être morte**. C'est ce test qui a
+  révélé que les oiseaux recevaient le mauvais muscle depuis toujours.
+- `tests/croises/` ⑦ **l'empreinte du catalogue** *(ft-v734)* : les 337 exercices avec leurs
+  muscles, schéma, matériel et calories sont **figés dans un fichier**. Toute dérive est signalée
+  **avec le nom des exercices qui bougent**. Vérifié en cassant volontairement : retirer la règle
+  du deltoïde postérieur affiche *« Machine Oiseau : rear-delt → (vide) »*.
+  Changement voulu → `node tools/gen_reference_catalogue.js`, et le diff montre qui a bougé.
 
 > ⚠️ **Règle absolue** : ne JAMAIS insérer une règle précise APRÈS le bloc de rattrapage générique
 > de `_MEX` — elle serait morte à la seconde où on l'écrit.
@@ -360,6 +398,14 @@ conclure faux avec assurance.
 - **Un contrôle négatif à 0 rouge** (ft-v714) : je vérifiais qu'un test échoue bien sans le
   correctif — il affichait **0 échec**. Le runner **plantait** au lieu d'échouer, et le crash
   masquait tout. *Un test qui plante n'est pas un test qui passe.*
+- **🔁 LA MÊME, RECOMMENCÉE LE SOIR MÊME OÙ CE FICHIER A ÉTÉ ÉCRIT** (ft-v735) : le contrôle
+  négatif des tests d'identifiants affichait **0 échec**. Même cause exactement — une variable
+  absente faisait planter le runner. Corrigé par des `try/catch` → **6 échecs lisibles**.
+  ⭐ **Ce que ça prouve, et c'est le passage le plus utile de ce fichier** : *documenter un bug
+  ne protège pas de ce bug*. J'avais écrit cette ligne la veille et je l'ai refaite le lendemain.
+  **Seul un test protège ; un document ne fait que rendre le diagnostic plus rapide.** C'est la
+  raison d'être de la règle R17 (chaque bug devient un test permanent) — et la limite honnête
+  de `BUGS.md`.
 - **Tester des archétypes au lieu du catalogue** (ft-v666) : j'avais vérifié un changement sur
   « 9 types de séances » et conclu « aucune couleur ne change ». Michel : *« sur tous les mouvements
   tu as vérifié ? »* — non. Sur les 287 exercices, **4 changeaient**. Ce passage a révélé au
@@ -381,7 +427,52 @@ conclure faux avec assurance.
 
 ---
 
-## 🧭 Les 6 réflexes qui sortent de tout ça
+## 13. 🔑 Le NOM comme clé primaire — *la racine commune*
+
+**Ce n'est pas un bug, c'est ce qui en produit.** Sur les 19 défauts trouvés le 02/08, **6
+viennent directement de là** — c'est la seule « famille » de ce fichier qui soit une cause
+d'architecture plutôt qu'un accident.
+
+**Le mécanisme.** Le nom d'un exercice porte **trois responsabilités incompatibles** :
+
+1. c'est **l'étiquette affichée** — donc on veut pouvoir la changer, la traduire, la préciser ;
+2. c'est **l'entrée de cinq calculs** (muscles, schéma, matériel, calories, rôle) — donc la
+   changer modifie des statistiques ;
+3. c'est **la clé primaire de l'historique** (séances, records, programmes, temps de repos) —
+   donc la changer casse le lien avec le passé.
+
+**Les trois se contredisent.** Toute amélioration du nom est un risque pour les deux autres.
+
+### Les cas réels
+
+| Ce qu'on voulait faire | Ce que ça a cassé |
+|---|---|
+| Ajouter la traduction : « Rowing Barre » → « Rowing Barre **(Tirage Horizontal)** » | Il est passé de 🏋️ **Barre** à ⚙️ **Guidé** — le mot « tirage » évoque une poulie |
+| Ajouter « (Lateral Raise) » aux élévations latérales | L'isolation a gagné **2 muscles** et est devenue polyarticulaire pour les calories |
+| Renommer 9 exercices « Chariot » → « Chariot de Puissance » | Rien, mais il a fallu **écrire une table de migration** pour ne pas orpheliner l'historique |
+| Fusionner 3 doublons | Idem — sans migration, les records disparaissaient |
+
+### 🔎 Comment le reconnaître
+Un changement **cosmétique** (renommer, traduire, préciser) qui modifie une **statistique**.
+Si toucher au libellé change un chiffre, c'est ce défaut.
+
+### 🛡️ Ce qui protège *(en cours, ft-v735 = étape 1 sur 3)*
+Chaque exercice a désormais un **identifiant stable** qui ne changera jamais, et la table
+`EX_IDS` porte **l'histoire de ses noms** (`['nom actuel', ...anciens noms]`).
+
+> ⚠️ **Le sens de la table est toute la décision** : elle va de **l'identifiant vers les noms**.
+> Rangée par nom, elle aurait cassé au premier renommage — soit exactement le défaut à supprimer.
+
+**Effet immédiat** : la table de migration qui vivait dans le code de chargement a disparu, elle
+faisait doublon et devait être tenue à jour à deux endroits (**R2**).
+
+**⏭️ Ce qui reste** : ② écrire l'identifiant dans les nouvelles séances · ③ faire lire
+l'historique, les records et les programmes par identifiant. **Tant que ③ n'est pas fait, le nom
+reste la clé** — la dette est entamée, pas remboursée.
+
+---
+
+## 🧭 Les 8 réflexes qui sortent de tout ça
 
 1. **Avant de dire qu'une chose manque** → la chercher dans le code et dans `docs/INVENTAIRE.md`.
 2. **Avant de « réparer » du code orphelin** → chercher la décision. Sinon, demander.
@@ -391,8 +482,13 @@ conclure faux avec assurance.
    qu'elle se déclenche vraiment.
 5. **Quand on trouve un oubli** → chercher ses jumeaux dans le même bloc. Ils sont rarement seuls.
 6. **Quand un contrôle négatif ne rougit pas** → c'est le test qui est cassé, pas le code qui est bon.
+7. **Quand un contrôle cherche une condition ABSOLUE** (« jamais déclenchée », « toujours vide ») →
+   chercher aussi sa forme **graduelle**. C'est ce qui a caché 19 règles partiellement masquées
+   derrière un test qui ne voyait que les règles totalement mortes.
+8. **Quand un changement COSMÉTIQUE modifie un chiffre** → c'est que le libellé sert aussi de clé
+   ou d'entrée de calcul. Voir la famille 13.
 
 ---
 
-*Dernière mise à jour : 02/08/2026. À compléter à chaque nouveau bug — symptôme, cause, famille,
+*Dernière mise à jour : 02/08/2026 (soir, après ft-v735). À compléter à chaque nouveau bug — symptôme, cause, famille,
 et ce qui le protège désormais.*
