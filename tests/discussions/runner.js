@@ -196,6 +196,71 @@ console.log('\n─── LA CONVERSATION NE SE PERD PLUS ───────�
   await q.c.close();
 }
 
+// ── 8. LA MÉMOIRE LONGUE : Milo connaît tout le parcours, pas juste 5 séances ────
+// (Michel, 02/08 : « la mémoire doit venir à partir du moment où on s'est inscrit ». Avant,
+// `S.sessions.slice(0,5)` — à 4 séances/semaine, Milo ne voyait que la semaine écoulée. Il ne
+// pouvait donc pas dire « ton squat est passé de 100 à 122 kg depuis mai ».)
+{
+  const q=await page();
+  const r=await q.p.evaluate(()=>{
+   try{
+    if(typeof _memoireLongue!=='function')return {erreur:'_memoireLongue absente'};
+    const j=d=>{const x=new Date();x.setDate(x.getDate()-d);return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const faire=(jours,pas,coupure)=>{
+      const out=[];
+      for(let i=jours;i>=0;i-=pas){
+        if(coupure&&i<=coupure[1]&&i>=coupure[0])continue;
+        const p=(jours-i)/jours;
+        out.push({date:j(i),ts:Date.now()-i*864e5,volume:2800+Math.round(p*900),
+          exs:[{name:'Squat à la Barre',sets:[{kg:100+Math.round(p*22.5),reps:5,done:true,type:'N'}]},
+               {name:'Développé Couché',sets:[{kg:80,reps:5,done:true,type:'N'}]}]});
+      }
+      return out.reverse();
+    };
+    const o={};
+    // ① 3 mois d'historique avec une coupure de 18 jours
+    S.sessions=faire(90,3,[44,62]);
+    const t0=performance.now(); const ctx=buildCoachContext(); o.ms=Math.round(performance.now()-t0);
+    o.aLeBloc=/SA MÉMOIRE LONGUE/.test(ctx);
+    o.voitLaProgression=/Squat à la Barre : \d+ → \d+ kg estimés/.test(ctx);
+    o.voitLaStagnation=/Développé Couché : stable/.test(ctx);
+    o.voitLaCoupure=/plus longue coupure : \d+ jours/.test(ctx);
+    o.voitLeDebut=/Première séance enregistrée/.test(ctx);
+    o.voitLeVolume=/tonnes soulevées depuis le début/.test(ctx);
+    const i=ctx.indexOf('SA MÉMOIRE LONGUE');
+    o.taille=i>=0?ctx.slice(i,ctx.indexOf('\n\n',i)).length:0;
+    o.pctContexte=Math.round(1000*o.taille/ctx.length)/10;
+    // ② un gros historique ne doit ni ralentir ni gonfler le bloc
+    S.sessions=faire(730,2,null);
+    const t1=performance.now(); const ctx2=buildCoachContext(); o.msGros=Math.round(performance.now()-t1);
+    const i2=ctx2.indexOf('SA MÉMOIRE LONGUE');
+    o.tailleGros=i2>=0?ctx2.slice(i2,ctx2.indexOf('\n\n',i2)).length:0;
+    o.nbGros=S.sessions.length;
+    // ③ quelqu'un qui revient après une longue pause doit être signalé
+    S.sessions=faire(200,4,[0,40]);
+    o.signalePause=/revient après une pause/.test(buildCoachContext());
+    // ④ TÉMOIN : trop peu de séances → pas de bloc du tout (on ne commente pas du bruit)
+    S.sessions=faire(6,3,null).slice(0,2);
+    o.pasDeBlocSiPeu=!/SA MÉMOIRE LONGUE/.test(buildCoachContext());
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ Milo reçoit la MÉMOIRE LONGUE (tout le parcours, plus seulement 5 séances)',
+    r.aLeBloc&&r.voitLeDebut, JSON.stringify(r).slice(0,200));
+  t('⭐ il voit la PROGRESSION sur ses exercices principaux',
+    r.voitLaProgression&&r.voitLaStagnation, 'progression:'+r.voitLaProgression+' stagnation:'+r.voitLaStagnation);
+  t('il voit les coupures et le volume cumulé', r.voitLaCoupure&&r.voitLeVolume,
+    'coupure:'+r.voitLaCoupure+' volume:'+r.voitLeVolume);
+  t('quelqu\'un qui revient après une longue pause est signalé', r.signalePause, String(r.signalePause));
+  t('⭐ le bloc reste COURT (moins de 2 % du contexte) — on résume, on ne déverse pas',
+    r.pctContexte<2, r.taille+' car. = '+r.pctContexte+' % du contexte');
+  t('⭐ '+r.nbGros+' séances (2 ans) : toujours court et rapide',
+    r.tailleGros<1200&&r.msGros<80, r.tailleGros+' car. · '+r.msGros+' ms');
+  t('TÉMOIN : avec moins de 3 séances, aucun bloc (on ne commente pas du bruit)',
+    r.pasDeBlocSiPeu, String(r.pasDeBlocSiPeu));
+  await q.c.close();
+}
+
 console.log('──────────────────────────────────────────────────────────');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
 await b.close(); srv.close(); process.exit(ko?1:0);

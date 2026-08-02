@@ -53,6 +53,85 @@ function _cqLabel(quiz,qid,val){
   return Array.isArray(val)?val.map(find).join(', '):find(val);
 }
 // Bloc de contexte injecté dans buildCoachContext
+// ─── LA MÉMOIRE LONGUE — DEPUIS L'INSCRIPTION ────────────────────────────────────────────
+// Michel, 02/08 : « la mémoire doit venir à partir du moment où on s'est inscrit ». Jusqu'ici
+// Milo ne voyait que les **5 dernières séances** (`S.sessions.slice(0,5)`) : à 4 séances par
+// semaine, il ne connaissait que la semaine écoulée. Il ne pouvait donc PAS dire « ton squat est
+// passé de 100 à 122 kg depuis mai » — l'information existait dans l'app, mais pas dans sa tête.
+// C'est le cœur de la promesse du produit : *« le sportif ne repart jamais de zéro »*.
+//
+// ⚠️ On RÉSUME, on n'envoie pas tout : 200 séances brutes noieraient le reste (R20). Quelques
+// lignes denses — début, régularité, progression par exercice, coupures — suffisent à donner
+// le TEMPS LONG, ce qui manquait. Coût mesuré : ~1 % du contexte.
+function _memoireLongue(){
+  try{
+    const S_ = (typeof S!=='undefined')?S:null; if(!S_)return '';
+    const sess=(S_.sessions||[]).filter(s=>s&&s.date);
+    if(sess.length<3)return '';   // en dessous, la « tendance » n'aurait aucun sens (R12)
+    // les séances sont stockées les plus RÉCENTES en premier — on travaille sur une copie triée
+    const parDate=sess.slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+    const debut=parDate[0].date, fin=parDate[parDate.length-1].date;
+    // Date ABSOLUE et lisible (« 17 juin 2026 ») : pour du long terme, « il y a 3 jours » ne dit
+    // rien. `_dateLisible` de buildCoachContext fait du RELATIF et vit dans une autre portée —
+    // ce n'est pas le même besoin, d'où ce formateur court.
+    const _dateLongue=iso=>{ const d=new Date(iso+'T12:00:00');
+      return isNaN(d)?iso:d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}); };
+    // ⚠️ L'ancienneté se compte jusqu'à AUJOURD'HUI (today() = la date du téléphone, règle
+    // ft-v655), pas jusqu'à la dernière séance : une longue interruption doit rester visible.
+    const auj=(typeof today==='function')?today():fin;
+    const jours=Math.max(1,Math.round((Date.parse(auj+'T12:00:00')-Date.parse(debut+'T12:00:00'))/864e5));
+    const joursActifs=Math.max(1,Math.round((Date.parse(fin+'T12:00:00')-Date.parse(debut+'T12:00:00'))/864e5));
+    const semaines=Math.max(1,joursActifs/7);
+    const parSem=(sess.length/semaines);
+    // ① PROGRESSION par exercice : on compare le 1RM estimé du DÉBUT à celui de la FIN.
+    //    Seuls les exercices vus au moins 3 fois comptent — sinon on commenterait du bruit.
+    const parEx={};
+    parDate.forEach(s=>{
+      (s.exs||s.exercices||[]).forEach(e=>{
+        if(!e||!e.name)return;
+        let best=0;
+        (e.sets||[]).forEach(x=>{ if(!x||!x.done||x.type==='É'||x.type==='W')return;
+          const r=(typeof bz==='function')?bz(x.kg||0,x.reps||0):0; if(r>best)best=r; });
+        if(best>0)(parEx[e.name]=parEx[e.name]||[]).push({d:s.date,rm:best});
+      });
+    });
+    const progs=[];
+    Object.keys(parEx).forEach(n=>{
+      const a=parEx[n]; if(a.length<3)return;
+      const p0=a[0].rm, p1=a[a.length-1].rm;
+      const pct=p0>0?Math.round((p1-p0)/p0*100):0;
+      progs.push({n, p0:Math.round(p0), p1:Math.round(p1), pct, n1:a.length, depuis:a[0].d});
+    });
+    progs.sort((x,y)=>y.n1-x.n1);           // les exercices les plus pratiqués d'abord
+    const top=progs.slice(0,5).map(p=>{
+      if(Math.abs(p.pct)<3) return `${p.n} : stable autour de ${p.p1} kg (1RM estimé, ${p.n1} séances)`;
+      return `${p.n} : ${p.p0} → ${p.p1} kg estimés (${p.pct>0?'+':''}${p.pct} %, ${p.n1} séances)`;
+    });
+    // ② COUPURES : le plus long trou entre deux séances. Un vrai fait sur son parcours —
+    //    et surtout quelque chose qu'on ne devine pas en regardant la semaine écoulée.
+    let trou=0, trouFin='';
+    for(let i=1;i<parDate.length;i++){
+      const d=Math.round((Date.parse(parDate[i].date+'T12:00:00')-Date.parse(parDate[i-1].date+'T12:00:00'))/864e5);
+      if(d>trou){trou=d;trouFin=parDate[i].date;}
+    }
+    // ③ VOLUME total — le chiffre qui dit « tu as fait du chemin »
+    let tonnes=0;
+    parDate.forEach(s=>{ tonnes += (+s.volume||+s.vol||0); });
+    const L=[];
+    L.push(`- Première séance enregistrée : ${_dateLongue(debut)} (il y a ${jours} jours) · ${sess.length} séances au total`);
+    // Silence prolongé : un fait important que la fenêtre des 5 dernières séances ne montre pas
+    const depuisDerniere=Math.round((Date.parse(auj+'T12:00:00')-Date.parse(fin+'T12:00:00'))/864e5);
+    if(depuisDerniere>=14)L.push(`- ⚠️ Dernière séance il y a ${depuisDerniere} jours (${_dateLongue(fin)}) — il/elle revient après une pause.`);
+    L.push(`- Régularité : ${parSem.toFixed(1).replace('.',',')} séance${parSem>=2?'s':''} par semaine en moyenne`
+      +(trou>=10?` · plus longue coupure : ${trou} jours (reprise le ${_dateLongue(trouFin)})`:''));
+    if(tonnes>0)L.push(`- Volume cumulé : ${Math.round(tonnes/1000)} tonnes soulevées depuis le début`);
+    if(top.length)L.push('- Progression sur ses exercices principaux :\n  · '+top.join('\n  · '));
+    return '\n📜 SA MÉMOIRE LONGUE — TOUT SON PARCOURS DEPUIS L\'INSCRIPTION (sers-t\'en pour situer '
+      +'où il/elle en est : c\'est ce qui te distingue d\'un simple carnet. Ne récite pas ces chiffres, '
+      +'utilise-les pour comprendre le chemin parcouru) :\n'+L.join('\n');
+  }catch(e){ return ''; }
+}
+
 // ─── LE CATALOGUE D'EXERCICES DE L'APP, FILTRÉ SELON LE LIEU D'ENTRAÎNEMENT ──────────────
 // Michel, 02/08 : « Milo pourrait les proposer ? » — mesuré ce jour-là : NON. Sur les 47 420
 // caractères de contexte, « élastique » apparaissait 0 fois et « TRX » 0 fois, alors que le
@@ -1534,6 +1613,7 @@ ${(()=>{
 })()}
 ${_coachQuizContext()}
 ${_catalogueContext()}
+${_memoireLongue()}
 ${(()=>{
   // REGISTRE ATHLÈTE (Dossier Athlète, brique 1 = socle) — mémoire durable.
   // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.
