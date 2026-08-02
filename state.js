@@ -558,6 +558,122 @@ function calcMacros(phase){
   return{calories,prot_g:m.prot_g,fat_g:m.fat_g,carbs_g:m.carbs_g,autoCalories:auto,isManual:!!manual};
 }
 
+// ─── LES REPAS SUGGÉRÉS DOIVENT RESPECTER LE RÉGIME (02/08, retour Emma via Michel) ──────
+// Mesuré avant correction : Emma est en KÉTO (18 g de glucides autorisés) et l'app lui proposait
+// « pain complet », « légumineuses » et « quinoa » — 5 repas sur 6 contredisaient son régime.
+// Un VÉGAN se voyait proposer œufs, yaourt et poulet (5 sur 6). L'app collectait le régime,
+// calculait juste, le disait à Milo… et l'oubliait au moment de suggérer. C'est R4 : l'info doit
+// descendre jusqu'au bout, sinon elle n'existe pas.
+//
+// Deux mécanismes, volontairement différents :
+//  · le KÉTO a son PROPRE plan — substituer mot à mot donnerait « Œufs brouillés + œufs » ;
+//  · les autres régimes gardent la structure du plan et changent l'ALIMENT (une source de
+//    protéines reste une source de protéines) — c'est suffisant et ça reste maintenable.
+const KETO_MEALS=[
+  [0.25,'🌅 Petit-déjeuner','Œufs brouillés au beurre + avocat — Démarrage sans glucides'],
+  [0.10,'🥜 Collation','Amandes + fromage à pâte dure — Lipides et satiété'],
+  [0.30,'🍽️ Déjeuner','Poulet à la crème + brocolis + huile d\'olive — Repas complet cétogène'],
+  [0.10,'🧀 Collation 2','Yaourt grec entier + noix de macadamia'],
+  [0.25,'🌙 Dîner','Saumon + épinards à la crème + avocat — Riche en oméga-3'],
+];
+// [contrainte, ce qu'on remplace, par quoi]. Appliqué dans l'ordre : le premier qui matche gagne
+// pour un aliment donné, donc on met les régimes les plus restrictifs en premier.
+const _DIET_SWAPS=[
+  // Végan : plus aucun produit animal
+  ['vegan',/Œufs entiers|Œufs/gi,'Tofu brouillé'],['vegan',/Poulet\/thon|Poulet|Dinde/gi,'Tempeh'],
+  ['vegan',/Saumon\/bœuf|Bœuf|Saumon|Poisson maigre|Poisson/gi,'Pois chiches'],
+  ['vegan',/Whey|whey/gi,'protéine de pois'],['vegan',/Yaourt grec|Fromage blanc 0%|Fromage blanc/gi,'Yaourt de soja'],
+  ['vegan',/lait entier/gi,'lait de soja'],
+  // Les aliments du plan KÉTO (fromage, beurre, crème) : sans eux, le cas croisé kéto + végan
+  // laissait passer « Amandes + fromage à pâte dure » — trouvé par le test croisé, pas à l'œil.
+  ['vegan',/fromage à pâte dure/gi,'noix de cajou'],['vegan',/au beurre/gi,"à l'huile de coco"],
+  ['vegan',/à la crème(?! de coco)/gi,'à la crème de coco'],
+  ['sanslactose',/fromage à pâte dure/gi,'fromage affiné (sans lactose)'],
+  ['sanslactose',/au beurre/gi,"à l'huile d'olive"],['sanslactose',/à la crème(?! de coco)/gi,'à la crème de coco'],
+  // Végétarien : ni viande ni poisson, mais œufs et laitages restent
+  ['vegetarien',/Poulet\/thon|Poulet|Dinde/gi,'Tofu'],['vegetarien',/Saumon\/bœuf|Bœuf|Saumon|Poisson maigre|Poisson/gi,'Œufs'],
+  // Pescétarien : plus de viande, le poisson reste
+  ['pescetarien',/Poulet\/thon|Poulet|Dinde/gi,'Poisson blanc'],['pescetarien',/Saumon\/bœuf|Bœuf/gi,'Saumon'],
+  // Restrictions
+  ['sansgluten',/pain complet|Pain complet/gi,'pain sans gluten'],['sansgluten',/Pâtes/gi,'Pâtes de riz'],
+  ['sansgluten',/flocons d\'avoine|Avoine/gi,'Flocons de sarrasin'],['sansgluten',/céréale complète/gi,'riz complet'],
+  ['sanslactose',/Yaourt grec|Fromage blanc 0%|Fromage blanc/gi,'Yaourt de soja'],
+  ['sanslactose',/lait entier/gi,'lait sans lactose'],['sanslactose',/Whey|whey/gi,'protéine de pois'],
+  ['sansporc',/Jambon/gi,'Blanc de dinde'],
+  ['sansboeuf',/Saumon\/bœuf/gi,'Saumon'],['sansboeuf',/Bœuf/gi,'Poulet'],
+];
+// ─── ALIMENTS À ÉVITER (champ libre « Allergies / aliments à éviter ») ───────────────────
+// Michel, 02/08 : « dans le profil aussi on met les aliments qu'on ne mange pas ». Mesuré :
+// Emma déclarait « fruits à coque » et le plan kéto lui proposait « Amandes + fromage » puis
+// « noix de macadamia » — 2 repas sur 5 contenaient précisément son allergène. Et la carte
+// du profil PROMET juste en dessous : « jamais un aliment que tu ne manges pas ».
+//
+// ⚠️ Ici l'erreur peut être GRAVE (allergie) : on ne devine donc pas à sa place (R29).
+//  · quand un remplacement évident existe, on l'applique ;
+//  · dans TOUS les cas où l'aliment reste présent, on le SIGNALE au lieu de faire semblant.
+// Une catégorie déclarée (« fruits à coque ») doit attraper ses membres (amandes, noix…) :
+// sans ça, écrire la catégorie ne servirait à rien.
+const _ALLERGENES={
+  'fruits a coque':['amande','noix','noisette','macadamia','cajou','pistache','pecan'],
+  'fruits de mer':['crevette','moule','huitre','crabe','homard','gambas','saint-jacques'],
+  'arachide':['arachide','cacahuete'],
+  'poisson':['saumon','thon','poisson','cabillaud','maquereau','sardine'],
+  'oeuf':['oeuf','œuf'],
+  'soja':['soja','tofu','tempeh','edamame'],
+  'lactose':['lait','yaourt','fromage','whey','creme'],
+  'gluten':['pain','pate','avoine','ble','seigle','orge','semoule','couscous'],
+};
+// Remplacements sûrs quand l'aliment évité apparaît dans NOS plans (jamais une invention :
+// si on ne sait pas par quoi remplacer, on ne remplace pas — on signale).
+const _EVIT_SWAPS=[
+  [/amandes?/gi,'graines de courge'],[/noix de macadamia/gi,'olives'],[/noix de cajou/gi,'graines de tournesol'],
+  [/\bnoix\b/gi,'graines de courge'],
+];
+function _normAli(t){return (t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();}
+// Les termes réellement à éviter = ce que la personne a écrit + les membres des catégories.
+function _termesAEviter(){
+  const brut=_normAli(S.dietNotes||'').split(/[,;]/).map(x=>x.trim()).filter(x=>x.length>2);
+  const out=[];
+  brut.forEach(t=>{
+    out.push(t);
+    Object.keys(_ALLERGENES).forEach(cat=>{
+      // « fruits à coque » écrit → on ajoute amande, noix, macadamia… ; et l'inverse marche aussi
+      if(t.indexOf(cat)>=0||cat.indexOf(t)>=0) _ALLERGENES[cat].forEach(m=>out.push(m));
+    });
+  });
+  return [...new Set(out)];
+}
+// Ce qui reste d'interdit dans une suggestion, APRÈS remplacement — sert à afficher l'alerte.
+function mealAlertes(desc){
+  const termes=_termesAEviter(); if(!termes.length)return [];
+  const d=_normAli(desc);
+  return termes.filter(t=>d.indexOf(t)>=0);
+}
+function _adaptMealDesc(desc){
+  const actifs=[S.diet||'', ...(S.dietRestrictions||[])].filter(Boolean);
+  let out=desc;
+  // La casse du mot d'origine est conservée : « poulet » au milieu d'une phrase ne doit pas
+  // devenir « Tofu » avec une majuscule parachutée.
+  // Dans les DEUX sens : « poulet » ne doit pas devenir « Tofu » au milieu d'une phrase, et
+  // « Amandes » en début de ligne ne doit pas devenir « graines de courge » en minuscule.
+  const memeCasse=(orig,rempl)=>(/^[a-zàâäéèêëïîôöùûüç]/.test(orig)
+    ? rempl.charAt(0).toLowerCase()+rempl.slice(1)
+    : rempl.charAt(0).toUpperCase()+rempl.slice(1));
+  _DIET_SWAPS.forEach(([contrainte,rx,par])=>{
+    if(actifs.indexOf(contrainte)<0)return;
+    out=out.replace(rx,m=>memeCasse(m,par));
+  });
+  // Aliments à éviter : on remplace SEULEMENT ce qu'on sait remplacer sans inventer.
+  const evit=_termesAEviter();
+  if(evit.length){
+    _EVIT_SWAPS.forEach(([rx,par])=>{
+      const test=_normAli(rx.source.replace(/\\b|\?|s\?/g,''));
+      if(evit.some(t=>test.indexOf(t)>=0||t.indexOf(test.split(' ')[0])>=0))
+        out=out.replace(rx,m=>memeCasse(m,par));
+    });
+  }
+  return out;
+}
 function getMeals(macros,phase){
   const goal=S.goal||'muscle';
   const plans={
@@ -597,8 +713,11 @@ function getMeals(macros,phase){
       [0.15,'🌙 Dîner','Riz + poulet + légumes — Reconstruction musculaire nocturne'],
     ],
   };
-  const plan=plans[goal]||(goal==='recomp'?plans.perte:plans.muscle); // recomp → plan orienté satiété/perte de gras
-  return plan.map(([pct,name,desc])=>{
+  // Le KÉTO prime sur l'objectif : sa structure de repas est dictée par les macros (5/15/80),
+  // pas par le but recherché — un plan « force » plein de riz n'aurait aucun sens en cétogène.
+  const plan=S.keto?KETO_MEALS:(plans[goal]||(goal==='recomp'?plans.perte:plans.muscle)); // recomp → plan orienté satiété/perte de gras
+  return plan.map(([pct,name,desc0])=>{
+    const desc=_adaptMealDesc(desc0);
     const kcal=Math.round(macros.calories*pct);
     const prot=Math.round(macros.prot_g*pct);
     const carbs=Math.round(macros.carbs_g*pct);

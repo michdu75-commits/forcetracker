@@ -479,6 +479,93 @@ console.log('\n═══ 8. Cycle de force ═══');
   await c.close();
 }
 
+console.log('\n═══ 9. Les repas suggérés respectent le RÉGIME (kéto, végé, végan, restrictions) ═══');
+// (02/08, demande d'Emma via Michel. Mesuré AVANT : Emma en kéto — 18 g de glucides autorisés —
+// se voyait proposer pain complet, légumineuses et quinoa : 5 repas sur 6 contredisaient son
+// régime. Un végan : œufs, yaourt, poulet. L'app collectait le régime, calculait juste, le
+// disait à Milo… et l'oubliait au moment de suggérer. R4.)
+{
+  const {c,p}=await boot('2026-08-02T09:00:00+02:00',{});
+  const r=await p.evaluate(()=>{
+   try{
+    const GLUC=/avoine|riz|banane|pâtes|pain(?! sans gluten| aux graines)|patate|quinoa|dattes|légumineuses|lentilles|céréale/i;
+    const VIANDE=/poulet|bœuf|thon|saumon|poisson|dinde|jambon/i;
+    const ANIMAL=/œuf|yaourt(?! de soja)|fromage(?! blanc sans)|whey|lait(?! de soja| sans lactose)|poulet|bœuf|thon|saumon|poisson|dinde|jambon/i;
+    const essai=(setup,filtre)=>{
+      S.keto=false;S.diet='';S.dietRestrictions=[];S.goal='muscle';S.bw=60;setup();
+      const meals=getMeals(calcMacros('normal'),'normal');
+      return {n:meals.length, ko:meals.filter(m=>filtre.test(m.desc)).map(m=>m.desc.split('—')[0].trim()),
+              descs:meals.map(m=>m.desc)};
+    };
+    const o={};
+    o.keto=essai(()=>{S.keto=true;},GLUC);
+    o.vegetarien=essai(()=>{S.diet='vegetarien';},VIANDE);
+    o.vegan=essai(()=>{S.diet='vegan';},ANIMAL);
+    o.sansGluten=essai(()=>{S.dietRestrictions=['sansgluten'];},/pain complet|pâtes(?! de riz)|avoine/i);
+    o.sansLactose=essai(()=>{S.dietRestrictions=['sanslactose'];},/yaourt grec|fromage blanc 0|whey/i);
+    // CAS CROISÉ : kéto ET végan (le plan kéto doit AUSSI passer par les substitutions)
+    o.ketoVegan=essai(()=>{S.keto=true;S.diet='vegan';},ANIMAL);
+    // TÉMOIN : sans aucun régime, les plans classiques ne doivent PAS être dénaturés
+    o.temoin=essai(()=>{},/tofu|tempeh|pois chiches|soja/i);
+    // la casse : « poulet » en minuscule doit être remplacé comme « Poulet »
+    o.casse=essai(()=>{S.diet='vegetarien';},/poulet/i).ko.length;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ KÉTO : aucun repas riche en glucides (avant : 5 sur 6)',
+    r.keto&&r.keto.ko.length===0, JSON.stringify(r.keto&&r.keto.ko));
+  t('le plan kéto est un plan DÉDIÉ (pas une substitution mot à mot)',
+    r.keto&&/avocat/i.test(r.keto.descs.join(' ')), (r.keto&&r.keto.descs[0])||'');
+  t('⭐ VÉGAN : plus aucun produit animal (avant : 5 sur 6)',
+    r.vegan&&r.vegan.ko.length===0, JSON.stringify(r.vegan&&r.vegan.ko));
+  t('VÉGÉTARIEN : plus de viande ni de poisson', r.vegetarien&&r.vegetarien.ko.length===0,
+    JSON.stringify(r.vegetarien&&r.vegetarien.ko));
+  t('SANS GLUTEN et SANS LACTOSE respectés',
+    r.sansGluten&&r.sansGluten.ko.length===0&&r.sansLactose&&r.sansLactose.ko.length===0,
+    JSON.stringify([r.sansGluten&&r.sansGluten.ko,r.sansLactose&&r.sansLactose.ko]));
+  t('⭐ cas croisé KÉTO + VÉGAN : les deux tiennent en même temps',
+    r.ketoVegan&&r.ketoVegan.ko.length===0, JSON.stringify(r.ketoVegan&&r.ketoVegan.ko));
+  t('la casse est gérée (« poulet » en minuscule aussi remplacé)', r.casse===0, 'restants : '+r.casse);
+  t('TÉMOIN : sans régime déclaré, les plans classiques restent intacts',
+    r.temoin&&r.temoin.ko.length===0, JSON.stringify(r.temoin&&r.temoin.ko));
+
+  // ── ALIMENTS À ÉVITER (Michel : « dans le profil aussi on met les aliments qu'on ne mange pas »)
+  // Mesuré AVANT : Emma déclarait « fruits à coque » et le plan kéto lui proposait « Amandes »
+  // puis « noix de macadamia ». La carte du profil promet pourtant : « jamais un aliment que
+  // tu ne manges pas ». Erreur potentiellement GRAVE (allergie) → on remplace quand c'est sûr,
+  // et on SIGNALE dans tous les autres cas plutôt que d'inventer (R29).
+  const al=await p.evaluate(()=>{
+   try{
+    if(typeof mealAlertes!=='function')return {erreur:'mealAlertes absente'};
+    const o={};
+    const pose=(notes,keto)=>{ S.keto=!!keto;S.diet='';S.dietRestrictions=[];S.dietNotes=notes;S.bw=58;S.goal='perte';
+      const m=getMeals(calcMacros('normal'),'normal');
+      return {descs:m.map(x=>x.desc), alertes:m.map(x=>mealAlertes(x.desc)).filter(a=>a.length)}; };
+    // ① une CATÉGORIE déclarée doit attraper ses membres (fruits à coque → amandes, macadamia)
+    const a1=pose('fruits à coque',true);
+    o.plusDeFruitsACoque=!a1.descs.some(d=>/amande|macadamia|noix de cajou/i.test(d));
+    o.aucuneAlerteRestante=a1.alertes.length===0;
+    o.casse=a1.descs.some(d=>/^Graines de courge/.test(d));   // majuscule conservée en début de ligne
+    // ② un aliment qu'on ne sait PAS remplacer doit être signalé, pas ignoré
+    const a2=pose('brocolis',true);
+    o.signale=a2.alertes.length>0&&a2.alertes[0].indexOf('brocolis')>=0;
+    // ③ TÉMOIN : sans rien déclarer, aucune alerte et le plan n'est pas dénaturé
+    const a3=pose('',true);
+    o.temoinAucuneAlerte=a3.alertes.length===0;
+    o.temoinPlanIntact=a3.descs.some(d=>/Amandes/.test(d));
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ une CATÉGORIE déclarée attrape ses membres (« fruits à coque » → amandes, macadamia)',
+    al.plusDeFruitsACoque&&al.aucuneAlerteRestante, JSON.stringify(al).slice(0,180));
+  t('l\'aliment de remplacement garde la casse en début de ligne', al.casse, String(al.casse));
+  t('⭐ un aliment qu\'on ne sait PAS remplacer est SIGNALÉ, pas ignoré (R29)',
+    al.signale, JSON.stringify(al).slice(0,180));
+  t('TÉMOIN : sans aliment à éviter, aucune alerte et le plan reste intact',
+    al.temoinAucuneAlerte&&al.temoinPlanIntact, JSON.stringify(al).slice(0,180));
+  await c.close();
+}
+
 await b.close(); srv.close();
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);

@@ -1737,15 +1737,20 @@ function renderNutrition(){try{
 
   // Meal plan statique
   const meals=getMeals(macros,S.nutritionPhase);
-  document.getElementById('meal-plan').innerHTML=meals.map(m=>`
+  document.getElementById('meal-plan').innerHTML=meals.map(m=>{
+    // Un aliment déclaré « à éviter » qu'on ne sait pas remplacer sans inventer : on le SIGNALE
+    // au lieu de faire comme si de rien n'était (R29 — l'erreur peut être une allergie).
+    const al=(typeof mealAlertes==='function')?mealAlertes(m.desc):[];
+    return `
     <div class="meal-row">
       <div style="flex:1;">
         <div class="meal-name">${_escNote(m.name)}</div>
         <div class="meal-detail">${_escNote(m.desc)}</div>
+        ${al.length?`<div class="meal-detail" style="margin-top:3px;color:var(--gold);">⚠️ contient ${_escNote(al.join(', '))} — tu as indiqué l'éviter, remplace-le</div>`:''}
         <div class="meal-detail" style="margin-top:3px;color:var(--t3);">P: ${m.prot}g · G: ${m.carbs}g · L: ${m.fat}g</div>
       </div>
       <div class="meal-kcal">${m.kcal} kcal</div>
-    </div>`).join('');
+    </div>`;}).join('');
   try{if(typeof _renderDietCard==='function')_renderDietCard();}catch(e){}
   renderMealPlanIA();
 }catch(e){console.error('[FT] renderNutrition:',e);}}
