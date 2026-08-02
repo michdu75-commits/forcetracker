@@ -1039,7 +1039,10 @@ function _exJac(qset,cset){ if(!cset.size)return 0; if(_exModConflict(qset,cset)
 const _MOV_PATTERNS=[
   {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','upright row','haussement','shrug','croix de fer','passage d epaule','passage epaule']},
   {id:'flexion-genou',label:'Flexion de genou (ischios)',kw:['leg curl','curl ischio','ischio','nordic']}, // AVANT curl-biceps (« leg curl » ≠ curl de bras)
-  {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['marteau','curl','preacher','biceps']},
+  // ⚠️ « jefferson » exclu le 02/08 : le Jefferson Curl est une flexion vertébrale chargée
+  // (fessiers + lombaires), pas un curl de bras — le mot-clé « curl » l'attrapait. Trouvé
+  // par le croisement schéma × muscles, dès le premier lancement de la famille.
+  {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['marteau','curl','preacher','biceps'],non:['jefferson','leg curl','ischio']},
   {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps','tate press']},
   {id:'mollets',label:'Extension de cheville (mollets)',kw:['mollet','calf','soleus','tibialis','tib raise']},
   {id:'extension-genou',label:'Extension de genou (quadriceps)',kw:['leg extension','extension quadriceps','quad extension','quad ext','sissy squat']},
@@ -1048,7 +1051,7 @@ const _MOV_PATTERNS=[
   // recherche teste aussi SANS bornes, donc un mot-clé de 1-2 lettres est intenable ici. Le
   // L-Sit reste sans schéma — il est de toute façon « accessoire », ce qui est juste.
   {id:'gainage-abdos',label:'Gainage / abdominaux',kw:['hollow body','windshield','drapeau','dragon flag','grimpeur','mountain climber','chaise romaine','rotation obliques','rotation machine obliques','gainage','planche','plank','crunch','abdo','releve de jambe','releve de genou','russian twist','sit up','vacuum','roue abdo','ab wheel','bird dog']},
-  {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['tirage en rack','rack pull','souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','hyperextension','extension lombaire','ghd','glute ham','superman']},
+  {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['tirage en rack','rack pull','souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','jefferson','hyperextension','extension lombaire','ghd','glute ham','superman']},
   {id:'fente',label:'Fente',kw:['fente','lunge','split squat','bulgare','montee sur box','step up','cossack']},
   {id:'squat',label:'Squat (flexion hanche+genou)',kw:['squat','press jambe','leg press','hack','pendulum','belt squat','presse a cuisse','wall sit','sled']},
   {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe haltere assis','developpe assis','developpe landmine','developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster','handstand']},
@@ -1087,11 +1090,29 @@ function _movPattern(name){ const q=' '+_movNorm(name)+' ';
   // ⚠️ « L-Sit » ne peut pas être un simple mot-clé : le matcheur teste aussi la SOUS-CHAÎNE,
   // et « l sit » se retrouve dans « waLL SIT » → la Chaise partait en gainage (audit 02/08).
   if(/(^| )l sit( |$)/.test(q)) return 'gainage-abdos';
+  // ⚠️ LE CHARIOT DE PUISSANCE (sled) — trouvé le 02/08 en CROISANT le schéma avec les muscles.
+  // Le mot-clé générique « chariot » rangeait TOUTE la famille en tirage horizontal, y compris
+  // la POUSSÉE et le tirage d'ÉPAULES : l'app croyait qu'on avait tiré alors qu'on avait poussé,
+  // et l'équilibre de séance s'en trouvait faussé. Idem « sled » côté squat, qui happait le
+  // « Sled Pull ». Le geste est ÉCRIT dans le nom — on le lit au lieu de le deviner.
+  if(/chariot|sled|traineau/.test(q)){
+    if(/poussee|push/.test(q))   return 'squat';              // poussée entraînée par les jambes
+    if(/epaule/.test(q))         return 'elevation-epaules';
+    if(/jambe/.test(q))          return 'squat';
+    if(/curl/.test(q))           return 'curl-biceps';
+    if(/tricep/.test(q))         return 'extension-triceps';
+    if(/fente/.test(q))          return 'fente';
+    return 'tirage-horizontal';                                // tirage dos / de côté / en avançant
+  }
   if(/kickback/.test(q)&&!/tricep/.test(q)) return 'hip-hinge'; // /tricep/ sans s : le stemming réduit « triceps » → « tricep »
   // Un TIRAGE n'est jamais une poussée : « Tirage Incliné Poulie Haute » contenait « incliné »
   // → attrapé par la poussée horizontale (kw 'incline'). Poulie haute → vertical, sinon horizontal (ft-v686).
   if(/(^| )tirage /.test(q)&&/(incline|decline)/.test(q)) return /poulie haute/.test(q)?'tirage-vertical':'tirage-horizontal';
-  for(const p of _MOV_PATTERNS){ for(const k of p.kw){ if(q.indexOf(' '+_movNorm(k)+' ')>=0 || q.indexOf(_movNorm(k))>=0) return p.id; } } return null; }
+  for(const p of _MOV_PATTERNS){
+    // `non` = mots qui DISQUALIFIENT le schéma (ex. « jefferson » pour le curl de biceps)
+    if(p.non&&p.non.some(x=>q.indexOf(_movNorm(x))>=0)) continue;
+    for(const k of p.kw){ if(q.indexOf(' '+_movNorm(k)+' ')>=0 || q.indexOf(_movNorm(k))>=0) return p.id; }
+  } return null; }
 function _movResist(name){ const q=_normEx(name);
   if(/kettlebell/.test(q))return'kettlebell'; if(/elastique|band/.test(q))return'elastique';
   if(/poulie|cable/.test(q))return'poulie'; if(/haltere|dumbbell/.test(q))return'halteres';
@@ -1604,7 +1625,13 @@ const _MEX=[
   // s'appelaient « Élévations Latérales », le français ne matchait pas ici et tout allait bien ;
   // en ajoutant la traduction « (Lateral Raise) » au nom, l'exercice s'est mis à tomber sur
   // CETTE règle-ci (première gagnante) et gagnait deltoïdes avant + arrière.
-  {re:/elevation laterale|face pull|rear delt|oiseau|ecarte inverse|reverse fly|around the world/i, p:['side-delt','rear-delt'], s:['front-delt','traps']},
+  // ⚠️ « elevation laterale » RETIRÉ d'ici le 02/08 (croisement) : cette règle est celle du
+  // deltoïde ARRIÈRE. Elle donnait le deltoïde MOYEN en muscle principal aux oiseaux, écartés
+  // inversés et face pull — or ce sont des mouvements d'arrière d'épaule (abduction
+  // horizontale), pas de côté. Une règle précise `/ecarte arriere|reverse fly|oiseau/` existait
+  // plus bas et n'était JAMAIS atteinte : elle était cachée derrière celle-ci.
+  // Les élévations latérales, elles, tombent maintenant sur leur propre règle (deltoïde moyen).
+  {re:/face pull|rear delt|oiseau|ecarte inverse|reverse fly|around the world/i, p:['rear-delt'], s:['traps','side-delt']},
   // Dos — verticaux / tractions
   {re:/superman/i,                                                              p:['lower-back','glutes'],              s:['hamstrings','rear-delt']}, // à plat VENTRE, bras/jambes levés : chaîne postérieure. Était happé par la règle « gainage|plank » → sortait en ABDOS (audit 02/08)
   {re:/chaise romaine|captain.?s chair/i,                                      p:['abs','hip-flexors'],                s:['obliques']}, // relevé de jambes suspendu. Était happé par la règle de la « Chaise (Wall Sit) » → sortait en QUADRICEPS (audit 02/08)
@@ -1643,7 +1670,11 @@ const _MEX=[
   // Jambes — leg extension (quadriceps)
   {re:/leg extension|extension quadricep|extensions? de jambe/i,                p:['quads'],                            s:[]},
   // Ischios — leg curl / RDL
-  {re:/romanian deadlift|rdl|good morning|leg curl|nordic/i,                    p:['hamstrings','glutes'],              s:['lower-back','calves']},
+  // ⚠️ Le LEG CURL a sa propre règle depuis le 02/08 : il partageait celle du soulevé roumain,
+  // qui met les FESSIERS en muscle principal. Or une flexion de genou isole les ischios —
+  // les fessiers ne font que stabiliser (NASM, BarBend). 7 exercices étaient sur-attribués.
+  {re:/leg curl|curl ischio|curl des ischio|nordic/i,                           p:['hamstrings'],                       s:['glutes','calves']},
+  {re:/romanian deadlift|rdl|good morning/i,                                   p:['hamstrings','glutes'],              s:['lower-back','calves']},
   // Fessiers — hip thrust / pont
   {re:/hip thrust|glute bridge|fessier|hip extension|pont fessier/i,            p:['glutes'],                           s:['hamstrings','lower-back']},
   // Soulevé de terre
@@ -1655,13 +1686,20 @@ const _MEX=[
   // Trapèzes — shrug
   {re:/shrug|hausse|haussement|trapeze iso/i,                                   p:['traps'],                            s:['forearms']},
   // Abdos — gainage
+  // ⚠️ La PLANCHE LATÉRALE sort du gainage générique (02/08) : le gainage de face travaille
+  // les abdos, la version LATÉRALE travaille les OBLIQUES (EMG jusqu'à 107 % d'activation).
+  // On les mettait en muscle secondaire — c'est pourtant l'exercice d'obliques par excellence.
+  {re:/planche laterale|side plank|gainage lateral/i,                          p:['obliques'],                         s:['abs','glutes','front-delt','lower-back']},
   {re:/gainage|plank|superman|bird.?dog/i,                                      p:['abs','lower-back'],                 s:['obliques','front-delt','glutes']},
   // Abdos — crunch / relevés / twist
   {re:/crunch|abdos|sit.?up|hanging leg|releves? de jambe|releves? de genou|leg raise|twist/i, p:['abs'],               s:['obliques','hip-flexors']},
   // Avant-bras — grip / préhension (Farmer's Walk Grip, dead hang) : la préhension domine
   {re:/grip|prehension|dead ?hang/i,                                            p:['forearms'],                         s:['traps','quads']},
   // Jambes — farmer's walk / marche du fermier / portés : muscle principal = les cuisses (retour Michel)
-  {re:/farmers?|fermier|portes|carry/i,                                         p:['quads','glutes'],                   s:['forearms','traps']},
+  // ⚠️ 02/08 : le farmer's walk existait en DOUBLE, une fiche classée avant-bras et l'autre
+  // cuisses — deux vérités contradictoires pour le même exercice. Les fiches sont fusionnées ;
+  // ce qui limite un farmer's walk c'est la PRISE, pas les jambes (les sources sont unanimes).
+  {re:/farmers?|fermier|portes|carry/i,                                         p:['forearms','traps'],                 s:['quads','glutes','abs']},
 
   // ══════════════════════════════════════════════════════════════════════════
   // RATTRAPAGE PAR FAMILLE DE MOUVEMENT — ft-v667
@@ -1685,10 +1723,10 @@ const _MEX=[
   // — Épaules : élévations latérales, tirage menton, rotations, développés restants
   //   ⚠️ « laterale » AVANT le développé générique (une élévation n'est pas un développé)
   {re:/elevation.? laterale|lateral raise|croix de fer/i,                       p:['side-delt'],                        s:['traps']},
-  {re:/elevation.? frontale|front raise/i,                                     p:['front-delt'],                       s:['pec']},
+
   {re:/tirage menton|upright row/i,                                            p:['side-delt','traps'],                s:['biceps']},
   {re:/rotation.* epaule|rotation (interne|externe)|passage d.epaule|face pull|\by raise|\bw raise/i, p:['rear-delt'], s:['traps']},
-  {re:/ecarte arriere|reverse fly|oiseau/i,                                    p:['rear-delt'],                        s:['traps']},
+
   // — Biceps : tous les curls de BRAS. ⚠️ DEUX exclusions écrites noir sur blanc :
   //   · les curls de JAMBES (leg curl / ischio) → ce sont des ischio-jambiers ;
   //   · les curls de POIGNET → ce sont des avant-bras, pas du biceps.
@@ -1702,10 +1740,13 @@ const _MEX=[
   {re:/tirage en rack|rack pull/i,                                             p:['lower-back','traps'],               s:['lats','glutes','hamstrings']},
   {re:/tirage|pulldown|\brow\b|sled pull/i,                                    p:['lats'],                             s:['biceps','rear-delt','traps']},
   // — Chaîne postérieure : hyperextensions, GHD, Jefferson, kettlebell swing
-  {re:/hyperextension|back extension|reverse hyper|jefferson|glute ham|\bghd\b|extension lombaire/i, p:['lower-back','glutes'],           s:['hamstrings']},
+  // ⚠️ Le GLUTE HAM RAISE sort de la règle des hyperextensions (02/08) : c'est L'exercice
+  // d'ischio-jambiers (flexion de genou + extension de hanche en même temps), pas un
+  // mouvement lombaire. On l'avait à l'envers : lombaires en principal, ischios en second.
+  {re:/glute ham|\bghr\b|\bghd\b/i,                                              p:['hamstrings','glutes'],              s:['lower-back','calves']},
+  {re:/hyperextension|back extension|reverse hyper|jefferson|extension lombaire/i, p:['lower-back','glutes'],           s:['hamstrings']},
   {re:/kettlebell swing|swing kettlebell/i,                                    p:['glutes','hamstrings'],              s:['lower-back','quads']},
   // — Fessiers : poussée de hanche et kickbacks restants
-  {re:/poussee de hanche|hip thrust|pont fessier|glute bridge/i,                p:['glutes'],                           s:['hamstrings']},
   {re:/kickback|extension fessier/i,                                           p:['glutes'],                           s:['hamstrings']},
   // — Jambes : montées sur box, chaise, presse restante, sled push, box jump
   {re:/montee sur box|step.?up|box jump|saut sur box/i,                         p:['quads','glutes'],                   s:['calves','hamstrings']},
@@ -2675,6 +2716,10 @@ function _exEquip(name){
     if(/haltere/.test(s)) return 'libre';
     if(/barre/.test(s))   return 'barre';
   }
+  // 0quater) ⚠️ Un matériel ÉCRIT dans le nom prime sur la FAMILLE de l'exercice (croisement 02/08) :
+  //    « Leg Curl Haltère » partait en ⚙️ Guidé (à cause de « leg curl ») et « Montée sur Box
+  //    Haltères » en 🤸 Poids du corps (à cause de « box ») — alors que les deux disent « haltère ».
+  if(/haltere|kettlebell/.test(s)&&!/machine|poulie|smith|guide|cable|convergent|hammer|levier|presse/.test(s)) return 'libre';
   // 1) Guidé / machine (le plus spécifique d'abord)
   if(/machine|poulie|smith|guide|pec ?deck|peck ?deck|presse|press[ -]?jambes|leg press|leg extension|extension quadriceps|leg curl|leg abduction|leg adduction|tirage|chest press|hack|convergent|hammer|cable|câble|vis-a-vis|crossover|croise poulie|assist|butterfly|pendulum|belt squat|sled|iso.?laterale?|convergente/.test(s)) return 'guide'; // + press jambes / extension quadriceps (01/08 : ils tombaient dans « à classer »)
   // 2) Poids du corps
@@ -4830,7 +4875,9 @@ const EX_YT={
   'Développé Incliné':             {img:'exercises/developpe-incline-barre.webp'},
   'Développé Incliné Haltères':    {img:'exercises/developpe-incline-halteres-exercice-musculation.webp'},
   'Écarté Poulie':                 {img:'exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp'},
-  'Écarté Haltères':               {img:'exercises/ecartes-decline-avec-halteres.webp'},
+  // ⚠️ 02/08 : « Écarté Haltères » affichait l'animation de l'écarté DÉCLINÉ — les deux fiches
+  // pointaient le même fichier (trouvé en croisant les animations). Aucune animation vaut
+  // mieux qu'une fausse ; à rebrancher le jour où on a une vraie démo d'écarté à plat.
   'Croisé Poulie (Cable Crossover)':{img:'exercises/ecartes-poulie-vis-a-vis.webp'},
   'Pec Deck':                      {img:'exercises/pec-deck-butterfly-exercice-musculation.webp'},
   'Chest Press Machine Horizontale':{img:'exercises/developpe-machine-assis-pectoraux.webp'},
@@ -4970,7 +5017,7 @@ const EX_YT={
   'Y Raise / W Raise':{img:'exercises/elevation-en-y-a-la-poulie.webp'},
   'Oiseau':{img:'exercises/oiseau-assis-sur-banc.webp'},
   'Tirage Menton':{img:'exercises/tirage-menton-machine-guidee.webp'},
-  'Tirage Vertical (Upright Row)':{img:'exercises/tirage-menton-avec-kettlebell.webp'},
+  'Tirage Menton Kettlebell':{img:'exercises/tirage-menton-avec-kettlebell.webp'},
   'Développé Épaules Kettlebell':{img:'exercises/developpe-epaule-avec-kettlebell.webp'},
   'Développé Landmine (Épaules)':{img:'exercises/developpe-landmine.webp'},
   'Écarté Arrière Élastique':{img:'exercises/ecarte-arriere-elastique.webp'},
@@ -5207,7 +5254,7 @@ const EX_EN={
   'Élévations Frontales':'front raise dumbbell','Élévations Frontales Câble':'cable front raise',
   'Élévations Frontales Machine':'machine front raise',
   'Oiseau':'rear delt fly dumbbell','Machine Oiseau':'rear delt fly machine',
-  'Tirage Visage (Face Pull)':'face pull cable','Tirage Vertical (Upright Row)':'upright row barbell',
+  'Tirage Visage (Face Pull)':'face pull cable','Tirage Menton Kettlebell':'upright row kettlebell',
   'Y Raise / W Raise':'y raise band',
   // Biceps
   'Curl Barre':'barbell bicep curl','Curl Haltères':'dumbbell bicep curl',

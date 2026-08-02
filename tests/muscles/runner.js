@@ -233,7 +233,7 @@ const au=await p.evaluate(()=>{
           curlH:g('Curl Haltères'),
           rotAbd:g('Rotation Externe Épaule Abduction'),
           abdCuisses:g('Abduction Cuisses (Leg Abduction)'),
-          upright:g('Tirage Vertical (Upright Row)'),      uprightMov:_movPattern('Tirage Vertical (Upright Row)'),
+          upright:g('Tirage Menton Kettlebell'),      uprightMov:_movPattern('Tirage Menton Kettlebell'),
           traction:g('Traction Lestée'),                   rowing:g('Rowing Barre (Tirage Horizontal)'),
           jeff:g('Jefferson Curl'),
           kbFess:_movPattern('Extension Fessiers Arrière (Kickback)'),
@@ -242,7 +242,10 @@ const au=await p.evaluate(()=>{
           tirInc:_movPattern('Tirage Incliné Poulie Haute')};
 });
 t('⭐ « Leg Curl Haltère » = ISCHIOS, plus jamais le biceps (« curl halter » l\'attrapait)',
-  au.legCurlH==='calves,glutes,hamstrings,lower-back'&&au.legCurlHMov==='flexion-genou', au.legCurlH+' / '+au.legCurlHMov);
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 (pas une régression) : le leg curl a désormais SA règle, il
+  // ne partage plus celle du soulevé roumain — donc plus de « lombaires », et les fessiers
+  // passent en stabilisateur. Ce que ce test protège reste le même : ce n'est PAS du biceps.
+  au.legCurlH==='calves,glutes,hamstrings'&&au.legCurlHMov==='flexion-genou', au.legCurlH+' / '+au.legCurlHMov);
 t('témoin : « Curl Haltères » reste un biceps', au.curlH==='biceps,forearms', 'reçu '+au.curlH);
 t('⭐ « Rotation Externe Épaule Abduction » = coiffe des rotateurs, plus jamais les FESSIERS',
   au.rotAbd==='rear-delt,traps', 'reçu '+au.rotAbd);

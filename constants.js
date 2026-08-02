@@ -35,7 +35,7 @@ const EXLIB=[
   {n:'Smith Machine Développé Couché',g:'Pectoraux'},{n:'Smith Machine Développé Incliné',g:'Pectoraux'},
   // ── Dos / Dorsaux ──────────────────────────────────────────
   {n:'Soulevé de Terre',g:'Dos'},{n:'Soulevé de Terre Sumo',g:'Dos'},
-  {n:'Tirage en Rack (Rack Pull)',g:'Dos'},{n:'Inclinaison Lombaire (Good Morning)',g:'Dos'},
+  {n:'Tirage en Rack (Rack Pull)',g:'Dos'},{n:'Inclinaison Lombaire (Good Morning)',g:'Fessiers'},
   {n:'Rowing Barre (Tirage Horizontal)',g:'Dos'},{n:'Rowing Haltère (Tirage Horizontal)',g:'Dos'},{n:'Rowing Câble (Tirage Horizontal)',g:'Dos'},
   {n:'Rowing Yates (Supination)',g:'Dos'},{n:'Rowing Poitrine Appuyée (Chest Supported)',g:'Dos'},
   {n:'Rowing Machine (Tirage Horizontal)',g:'Dos'},{n:'Rowing Hammer Strength',g:'Dos'},
@@ -59,9 +59,9 @@ const EXLIB=[
   {n:'Rowing Unilatéral Élastique',g:'Dos'},{n:'Tirage Vertical Alterné Élastique',g:'Dos'},
   {n:'Rowing TRX (Sangles)',g:'Dos'},{n:'Traction Australienne TRX (Sangles)',g:'Dos'},
   // ── Trapèzes ───────────────────────────────────────────────
-  {n:'Haussements d\'Épaules (Shrugs)',g:'Trapèzes'},{n:'Haussements d\'Épaules Barre',g:'Trapèzes'},
+  {n:'Haussements d\'Épaules Barre',g:'Trapèzes'},
   {n:'Haussements d\'Épaules Haltères',g:'Trapèzes'},{n:'Haussements d\'Épaules Câble',g:'Trapèzes'},
-  {n:'Tirage Menton',g:'Trapèzes'},{n:'Farmer\'s Walk',g:'Jambes'},
+  {n:'Tirage Menton',g:'Trapèzes'},{n:'Farmer\'s Walk',g:'Avant-bras'},
   {n:'Haussements d\'Épaules Overhead',g:'Trapèzes'},
   // ── Épaules ────────────────────────────────────────────────
   {n:'Développé Militaire',g:'Épaules'},{n:'Développé Militaire Haltères',g:'Épaules'},
@@ -70,7 +70,7 @@ const EXLIB=[
   {n:'Élévations Latérales (Lateral Raise)',g:'Épaules'},{n:'Élévations Latérales Câble',g:'Épaules'},{n:'Élévations Latérales Machine',g:'Épaules'},
   {n:'Élévations Frontales',g:'Épaules'},{n:'Élévations Frontales Câble',g:'Épaules'},{n:'Élévations Frontales Machine',g:'Épaules'},
   {n:'Oiseau',g:'Épaules'},{n:'Machine Oiseau',g:'Épaules'},
-  {n:'Tirage Visage (Face Pull)',g:'Épaules'},{n:'Tirage Vertical (Upright Row)',g:'Épaules'},
+  {n:'Tirage Visage (Face Pull)',g:'Épaules'},{n:'Tirage Menton Kettlebell',g:'Épaules'},
   {n:'Y Raise / W Raise',g:'Épaules'},{n:'Développé Nuque',g:'Épaules'},
   // Épaules + Trapèzes — figurines (lot 2026-07-06)
   {n:'Développé Épaules Kettlebell',g:'Épaules'}, {n:'Développé Landmine (Épaules)',g:'Épaules'}, {n:'Écarté Arrière Élastique',g:'Épaules'}, {n:'Élévation Frontale Allongée Barre',g:'Épaules'}, {n:'Élévation Latérale Poulie Inclinée',g:'Épaules'}, {n:'Élévation Latérale Landmine',g:'Épaules'}, {n:'Élévations Latérales Kettlebell',g:'Épaules'}, {n:'Rotation Interne Épaule Élastique',g:'Épaules'}, {n:'Face Pull Couché Poulie',g:'Épaules'}, {n:'Oiseau Poulie 45°',g:'Épaules'}, {n:'Passage d\'Épaule Élastique',g:'Épaules'}, {n:'Rotation Externe Épaule Abduction',g:'Épaules'}, {n:'Rotation Externe Épaule Élastique',g:'Épaules'}, {n:'Rotation Interne 90° Poulie',g:'Épaules'},
@@ -140,7 +140,7 @@ const EXLIB=[
   {n:'Soulevé de Terre Roumain Barre',g:'Fessiers'},{n:'Soulevé de Terre Roumain Haltères',g:'Fessiers'},
   {n:'Soulevé de Terre Roumain Unilatéral',g:'Fessiers'},{n:'Soulevé de Terre Sumo',g:'Fessiers'},
   {n:'Tirage Cable Fessiers (Cable Pull Through)',g:'Fessiers'},
-  {n:'Curl Ischio-jambiers (Leg Curl)',g:'Fessiers'},
+  
   {n:'Abducteurs Machine Debout',g:'Fessiers'},
   {n:'Soulevé de Terre Jambes Tendues',g:'Fessiers'},
   {n:'Soulevé de Terre Roumain Kettlebell',g:'Fessiers'},{n:'Soulevé de Terre Roumain Landmine',g:'Fessiers'},
@@ -186,7 +186,7 @@ const EXLIB=[
   // ── Avant-bras ─────────────────────────────────────────────
   {n:'Curl Poignet Barre',g:'Avant-bras'},{n:'Extension Poignet Barre',g:'Avant-bras'},
   {n:'Pronation Supination Haltère',g:'Avant-bras'},
-  {n:'Farmer\'s Walk (Grip)',g:'Avant-bras'},{n:'Planche de Préhension',g:'Avant-bras'},
+  {n:'Planche de Préhension',g:'Avant-bras'},
   // ── Full Body / Fonctionnel ────────────────────────────────
   {n:'Burpees',g:'Full Body'},{n:'Kettlebell Swing',g:'Full Body'},
   {n:'Arraché Haltère (Dumbbell Snatch)',g:'Full Body'},{n:'Arraché Debout (Muscle Snatch)',g:'Full Body'},{n:'Thrusters Haltères',g:'Full Body'},

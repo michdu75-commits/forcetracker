@@ -174,6 +174,12 @@ function getExerciseMET(name) {
   const n = name || '';
   if (OLYMPIC_KW.some(k => n.toLowerCase().includes(k.toLowerCase()))) return MET_OLYMPIC;
   if (CARDIO_KW.some(k => n.toLowerCase().includes(k.toLowerCase()))) return MET_CARDIO;
+  // ⚠️ Les PORTÉS (farmer's walk & co) : le MET se déduit de la région des muscles, or on a
+  // corrigé le 02/08 le farmer's walk en « avant-bras + trapèzes » (c'est la PRISE qui lâche,
+  // pas les jambes). Effet de bord : il serait passé de 6,5 à 5,5 — alors que marcher chargé
+  // reste une dépense de tout le corps. On le fixe donc explicitement, au lieu de laisser la
+  // correction musculaire déplacer les calories sans qu'on l'ait voulu.
+  if (/farmer|fermier|\bcarry\b|porte lourd|suitcase carry/i.test(n)) return MET_LOWER;
   try {
     if (typeof _mscScores === 'function') {
       const sc = (_mscScores([{name:n, sets:[{done:true}]}]) || {}).sc || {};

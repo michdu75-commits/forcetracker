@@ -165,7 +165,18 @@ function load(){
                'Rowing Machine':'Rowing Machine (Tirage Horizontal)',
                'Tirage Poulie Haute':'Tirage Poulie Haute (Lat Pulldown)',
                'Élévations Latérales':'Élévations Latérales (Lateral Raise)',
-               'Pompes':'Pompes (Push-up)'};
+               'Pompes':'Pompes (Push-up)',
+               // ── 02/08 (soir) : 3 DOUBLONS fusionnés + 1 variante mal nommée, trouvés en
+               // croisant les animations et les termes anglais (deux fiches qui pointent le
+               // même fichier vidéo = le même mouvement). La fiche qui disparaît renvoie vers
+               // celle qui reste, donc records et séances passées se REJOIGNENT au lieu de
+               // rester orphelins sous un nom qui n'existe plus.
+               'Curl Ischio-jambiers (Leg Curl)':'Leg Curl Couché Machine',
+               "Haussements d'Épaules (Shrugs)":"Haussements d'Épaules Barre",
+               "Farmer's Walk (Grip)":"Farmer's Walk",
+               // pas un doublon : un tirage MENTON au kettlebell qui portait le nom d'un autre
+               // mouvement (« tirage vertical » = lat pulldown pour tout le monde).
+               'Tirage Vertical (Upright Row)':'Tirage Menton Kettlebell'};
       const ren=n=>R[n]||n;
       const renKeys=o=>{if(!o)return o;const out={};Object.keys(o).forEach(k=>{out[ren(k)]=o[k];});return out;};
       try{
@@ -240,7 +251,7 @@ function load(){
       const _REN={'Rack Pull':'Tirage en Rack (Rack Pull)','Good Morning':'Inclinaison Lombaire (Good Morning)',
         'Rowing Chest Supported':'Rowing Poitrine Appuyée (Chest Supported)','Shrugs':'Haussements d\'Épaules (Shrugs)',
         'Arnold Press':'Développé Arnold (Arnold Press)','Face Pull':'Tirage Visage (Face Pull)',
-        'Upright Row':'Tirage Vertical (Upright Row)','Kickback Triceps':'Extension Triceps Arrière (Kickback)',
+        'Upright Row':'Tirage Menton Kettlebell','Kickback Triceps':'Extension Triceps Arrière (Kickback)',
         'Hack Squat':'Squat Hack (Hack Squat)','Step-up':'Montée sur Box (Step-up)',
         'Leg Extension':'Extension Quadriceps (Leg Extension)','Leg Abduction':'Abduction Cuisses (Leg Abduction)',
         'Leg Adduction':'Adduction Cuisses (Leg Adduction)','Hip Thrust':'Poussée de Hanche (Hip Thrust)',
