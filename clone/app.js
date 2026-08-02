@@ -2740,6 +2740,37 @@ function _healthRow(icone,titre,etat,detail){
     +'<div style="font-weight:700;color:var(--t1);font-size:13px;">'+icone+' '+titre+'</div>'
     +'<div style="font-size:12px;color:'+c+';margin-top:2px;line-height:1.45;">'+detail+'</div></div></div>';
 }
+// Les deux déploiements qui font vivre l'app. Un échec ici est TOTALEMENT silencieux — et c'est
+// déjà arrivé deux fois : le site bloqué plusieurs versions en arrière (ft-v600, ft-v619) et le
+// backend qui ne partait plus depuis mi-juillet (rechute worker.js, vue seulement le 21/07).
+const _DEPLOYS=[
+  {path:'.github/workflows/deploy-pages.yml',      lbl:'Le site (l\'app elle-même)'},
+  {path:'.github/workflows/deploy-appsscript.yml', lbl:'Le serveur (Milo, sync, premium)'}
+];
+async function _healthDeploys(){
+  try{
+    const r=await fetch('https://api.github.com/repos/michdu75-commits/forcetracker/actions/runs?per_page=30&branch=master');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const runs=d.workflow_runs||[];
+    let pire='ok', lignes=[];
+    _DEPLOYS.forEach(w=>{
+      const run=runs.find(x=>x&&x.path===w.path);
+      if(!run){ lignes.push('· '+w.lbl+' : <b>aucun déploiement trouvé</b>'); if(pire==='ok')pire='warn'; return; }
+      const enCours=run.status!=='completed';
+      const ok=run.conclusion==='success';
+      if(!ok&&!enCours) pire='ko'; else if(enCours&&pire==='ok') pire='warn';
+      const quand=run.created_at?new Date(run.created_at).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+      lignes.push('· '+w.lbl+' : '+(enCours?'⏳ en cours':(ok?'✅ OK':'<b>❌ ÉCHEC</b>'))+(quand?' — '+quand:''));
+    });
+    return _healthRow('🚀','Mises en ligne', pire,
+      lignes.join('<br>')
+      +(pire==='ko'?'<br>⚠️ Tant que c\'est rouge, <b>tes changements ne partent pas</b> — l\'app reste sur l\'ancienne version.':''));
+  }catch(e){
+    // Dépôt passé en privé, coupure réseau, ou plafond GitHub atteint : on le dit, on n'invente pas.
+    return _healthRow('🚀','Mises en ligne','warn','État non lisible ('+_escIdea(String(e&&e.message||e))+') — à vérifier sur l\'onglet Actions de GitHub.');
+  }
+}
 async function loadHealthAdmin(){
   const box=document.getElementById('admin-health');
   if(!box)return;
@@ -2790,6 +2821,13 @@ async function loadHealthAdmin(){
       const u=ai.used!==undefined?ai.used:(ai.count!==undefined?ai.count:null);
       h+=_healthRow('🤖','Consommation IA','ok', u!==null?('<b>'+u+'</b> appels comptés'+(ai.limit?' (plafond '+ai.limit+')':'')):'Compteur lu, rien d\'anormal');
     } else h+=_healthRow('🤖','Consommation IA','warn','Sonde injoignable : '+_escIdea((ai&&ai.error)||'?'));
+    // ⑤ Les DÉPLOIEMENTS — le silence le plus coûteux du projet : un déploiement rouge ne
+    // prévient personne. En juillet, le backend a échoué à partir depuis MI-JUILLET sans que
+    // personne le voie (rechute `worker.js`) : les changements s'accumulaient sans jamais
+    // arriver en ligne. Lu via l'API PUBLIQUE de GitHub — le dépôt est public, donc aucun jeton
+    // n'est nécessaire (et il ne faut JAMAIS en mettre ici). Plafond : 60 appels/h par IP,
+    // largement suffisant pour un bouton qu'on presse de temps en temps.
+    h+=await _healthDeploys();
     box.innerHTML=h+'<div style="font-size:11px;color:var(--t3);margin-top:8px;">Vérifié le '+new Date().toLocaleString('fr-FR')+'</div>';
   }catch(e){
     box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réseau injoignable — réessaie.</div>';

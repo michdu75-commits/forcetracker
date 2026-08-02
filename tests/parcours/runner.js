@@ -714,6 +714,13 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     if(u.includes('aiUsage')) return J({status:'ok',used:127,limit:1000});
     return J({status:'ok'});
   });
+  // Les MISES EN LIGNE sont lues sur l'API publique de GitHub (dépôt public, aucun jeton).
+  // Un déploiement raté est totalement silencieux : c'est arrivé 3 fois (ft-v600, ft-v619, et
+  // le backend qui ne partait plus depuis mi-juillet, vu seulement le 21/07).
+  const deploys = (nom) => p3.route('https://api.github.com/**', route =>
+    route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({workflow_runs:[
+      {path:'.github/workflows/deploy-pages.yml',status:'completed',conclusion:(nom==='ok'?'success':'failure'),created_at:'2026-08-02T00:01:43Z'},
+      {path:'.github/workflows/deploy-appsscript.yml',status:'completed',conclusion:'success',created_at:'2026-08-02T00:01:43Z'}]})}));
   const lire=async()=>p3.evaluate(async()=>{
    try{
     if(typeof loadHealthAdmin!=='function')return {erreur:'loadHealthAdmin absente'};
@@ -726,15 +733,20 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
             txt:(box.textContent||'').replace(/\s+/g,' ')};
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
-  await scenario('ok');   const hOk=await lire();
-  await scenario('panne'); const hKo=await lire();
+  await scenario('ok');   await deploys('ok');   const hOk=await lire();
+  await scenario('panne'); await deploys('panne'); const hKo=await lire();
   t('⭐ le tableau de santé s\'affiche et tout est vert quand tout va bien',
-    hOk.verts===4&&hOk.rouges===0, JSON.stringify(hOk).slice(0,200));
+    hOk.verts===5&&hOk.rouges===0, JSON.stringify(hOk).slice(0,200));
+  t('⭐ un déploiement RATÉ est visible (il ne prévient personne autrement)',
+    /ÉCHEC/.test(hKo.txt)&&/tes changements ne partent pas/.test(hKo.txt),
+    JSON.stringify(hKo).slice(0,240));
+  t('témoin : quand les 2 déploiements passent, la ligne est verte',
+    /Le site.*OK/.test(hOk.txt)&&/Le serveur.*OK/.test(hOk.txt), hOk.txt.slice(-170));
   t('⭐ la panne du 29/07 (stockage plein, écriture impossible) serait VUE',
     hKo.rouges>=1&&/102 %/.test(hKo.txt)&&/ÉCRITURE IMPOSSIBLE/.test(hKo.txt),
     JSON.stringify(hKo).slice(0,200));
   t('sauvegardes arrêtées et mails en échec sont signalés en rouge',
-    hKo.rouges===3&&/AUCUNE programmation/.test(hKo.txt)&&/2 échecs/.test(hKo.txt),
+    hKo.rouges===4&&/AUCUNE programmation/.test(hKo.txt)&&/2 échecs/.test(hKo.txt),
     JSON.stringify(hKo).slice(0,220));
   t('une sauvegarde faite aujourd\'hui se lit « aujourd\'hui », pas « il y a 1 j »',
     /aujourd/.test(hOk.txt)&&!/il y a 1 j/.test(hOk.txt), hOk.txt.slice(0,160));
