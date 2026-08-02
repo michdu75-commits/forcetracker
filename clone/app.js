@@ -29,10 +29,20 @@ function calcCardioKcal(c){
   const met=(CARDIO_MET[c.type||'elliptique']||CARDIO_MET.autre)[c.intensity||'modere'];
   return Math.round(met*(S.bw||80)*(c.duration/60));
 }
-function setCardioField(field,val){
+// Deux moments de cardio (02/08) : l'échauffement AVANT et le cardio APRÈS la muscu ne sont
+// pas la même chose — ni la même intention, ni la même durée. `cardio` = APRÈS (champ
+// historique, inchangé pour toutes les séances déjà enregistrées) · `cardioAvant` = nouveau.
+const _CK={avant:'cardioAvant', apres:'cardio'};
+function _cardioObj(moment,creer){
+  const k=_CK[moment]||'cardio';
+  if(!S.wkt)return null;
+  if(!S.wkt[k]&&creer)S.wkt[k]={type:'elliptique',intensity:'modere',duration:0};
+  return S.wkt[k]||null;
+}
+function setCardioField(field,val,moment){
   if(!S.wkt)return;
-  if(!S.wkt.cardio)S.wkt.cardio={type:'elliptique',intensity:'modere',duration:0};
-  S.wkt.cardio[field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
+  const c=_cardioObj(moment||'apres',true);
+  c[field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
   persist();
   // Durée : NE PAS re-render (sinon l'input est détruit à chaque chiffre → focus perdu sur mobile → saisie impossible).
   // On met juste à jour le résumé ; les boutons type/intensité, eux, re-render pour refléter la sélection.
@@ -40,12 +50,25 @@ function setCardioField(field,val){
   else renderCardioBlock();
   if(typeof renderLogFinish==='function')renderLogFinish(); // le cardio seul suffit pour valider → afficher/màj le bouton
 }
+// Total des deux moments — utilisé partout où l'on parle des calories du cardio.
+function calcCardioKcalTotal(src){
+  const o=src||S.wkt||{};
+  return (typeof calcCardioKcal==='function')
+    ? calcCardioKcal(o.cardioAvant||null)+calcCardioKcal(o.cardio||null) : 0;
+}
+function _cardioResume(){
+  const a=S.wkt&&S.wkt.cardioAvant, b=S.wkt&&S.wkt.cardio;
+  const bout=[];
+  if(a&&a.duration)bout.push(`avant ${a.duration}min`);
+  if(b&&b.duration)bout.push(`après ${b.duration}min`);
+  if(!bout.length)return 'optionnel';
+  return bout.join(' · ')+` · ~${calcCardioKcalTotal()}kcal`;
+}
 function _updateCardioSummary(){
-  const c=S.wkt&&S.wkt.cardio;if(!c)return;
   const el=document.getElementById('cardio-summary');
   if(el){
-    const kcal=calcCardioKcal(c);
-    el.textContent=c.duration?`${CARDIO_LABELS[c.type||'elliptique']} · ${c.duration}min · ~${kcal}kcal`:'optionnel';
+    const kcal=calcCardioKcalTotal();
+    el.textContent=_cardioResume();
     el.style.color=kcal?'var(--green)':'var(--t3)';
   }
   // Bouton « Enregistrer le cardio » : visible dès qu'une durée est saisie (sans re-render → focus gardé)
@@ -57,37 +80,51 @@ function toggleCardio(){_cardioOpen=!_cardioOpen;renderCardioBlock();}
 function renderCardioBlock(){
   const el=document.getElementById('log-cardio');if(!el)return;
   if(!S.wkt){el.innerHTML='';return;}
-  if(!S.wkt.cardio)S.wkt.cardio={type:'elliptique',intensity:'modere',duration:0};
-  const c=S.wkt.cardio;
-  const kcal=calcCardioKcal(c);
+  const kcal=calcCardioKcalTotal();
   const types=Object.keys(CARDIO_LABELS);
-  const summary=c.duration?`${CARDIO_LABELS[c.type||'elliptique']} · ${c.duration}min · ~${kcal}kcal`:'optionnel';
+  // Un sous-bloc par MOMENT. L'échauffement est présenté en premier parce que c'est l'ordre
+  // dans lequel ça se passe — et son libellé dit à quoi il sert, pour ne pas le confondre
+  // avec le cardio de fin de séance.
+  const volet=(moment,titre,aide)=>{
+    const c=_cardioObj(moment,false)||{type:'elliptique',intensity:'modere',duration:0};
+    const k=calcCardioKcal(c.duration?c:null);
+    return `<div style="margin-top:10px;">
+      <div style="display:flex;align-items:baseline;gap:7px;margin-bottom:6px;">
+        <span style="font-size:12.5px;font-weight:700;color:var(--t1);">${titre}</span>
+        <span style="font-size:11px;color:var(--t3);flex:1;">${aide}</span>
+        ${k?`<span style="font-size:11.5px;color:var(--green);font-weight:700;">~${k} kcal</span>`:''}
+      </div>
+      <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
+        ${types.map(t=>`<button onclick="setCardioField('type','${t}','${moment}')" style="flex-shrink:0;padding:5px 11px;border-radius:20px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.type===t?'var(--red)':'var(--bg2)'};color:${c.type===t?'#fff':'var(--t2)'};">${CARDIO_LABELS[t]}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:5px;align-items:center;margin-top:8px;">
+        ${['leger','modere','intense'].map((iv,i)=>{const lbl=['Léger','Modéré','Intense'][i];return`<button onclick="setCardioField('intensity','${iv}','${moment}')" style="flex:1;padding:6px 0;border-radius:8px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.intensity===iv?'var(--red)':'var(--bg2)'};color:${c.intensity===iv?'#fff':'var(--t2)'};">${lbl}</button>`;}).join('')}
+        <div style="display:flex;align-items:center;gap:6px;margin-left:6px;">
+          <label style="font-size:12px;color:var(--t2);white-space:nowrap;">Durée</label>
+          <input type="number" inputmode="numeric" min="0" max="300" value="${c.duration||''}" placeholder="0" oninput="setCardioField('duration',this.value,'${moment}')" style="width:52px;padding:5px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;font-family:var(--font);text-align:center;">
+          <span style="font-size:12px;color:var(--t3);">min</span>
+        </div>
+      </div>
+    </div>`;
+  };
+  const aUnCardio=kcal>0;
   el.innerHTML=`<div style="background:var(--bg2);border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
   <div onclick="toggleCardio()" style="display:flex;align-items:center;gap:13px;padding:12px 16px;cursor:pointer;touch-action:manipulation;">
     <div class="home-row-ic" style="background:rgba(255,138,114,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M10 12L8 20"/><path d="M10 12L13 17L16 12"/><path d="M6 12L8 10L12 12L16 10L18 12"/></svg></div>
     <span class="home-row-ttl" style="flex:1;">Cardio</span>
-    <span id="cardio-summary" style="font-size:12px;color:${kcal?'var(--green)':'var(--t3)'};">${summary}</span>
+    <span id="cardio-summary" style="font-size:12px;color:${aUnCardio?'var(--green)':'var(--t3)'};">${_cardioResume()}</span>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--t3);transition:transform .2s;transform:rotate(${_cardioOpen?-90:0}deg);flex-shrink:0;"><polyline points="6 9 12 15 18 9"/></svg>
   </div>
-  ${_cardioOpen?`<div style="padding:0 12px 12px;border-top:1px solid var(--sep);padding-top:10px;">
-    <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;">
-      ${types.map(t=>`<button onclick="setCardioField('type','${t}')" style="flex-shrink:0;padding:5px 11px;border-radius:20px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.type===t?'var(--red)':'var(--bg2)'};color:${c.type===t?'#fff':'var(--t2)'};">${CARDIO_LABELS[t]}</button>`).join('')}
-    </div>
-    <div style="display:flex;gap:5px;align-items:center;margin-top:8px;">
-      ${['leger','modere','intense'].map((iv,i)=>{const lbl=['Léger','Modéré','Intense'][i];return`<button onclick="setCardioField('intensity','${iv}')" style="flex:1;padding:6px 0;border-radius:8px;border:none;font-size:12px;font-family:var(--font);cursor:pointer;background:${c.intensity===iv?'var(--red)':'var(--bg2)'};color:${c.intensity===iv?'#fff':'var(--t2)'};">${lbl}</button>`;}).join('')}
-      <div style="display:flex;align-items:center;gap:6px;margin-left:6px;">
-        <label style="font-size:12px;color:var(--t2);white-space:nowrap;">Durée</label>
-        <input type="number" inputmode="numeric" min="0" max="300" value="${c.duration||''}" placeholder="0" oninput="setCardioField('duration',this.value)" style="width:52px;padding:5px 8px;border-radius:8px;border:1px solid var(--sep);background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;font-family:var(--font);text-align:center;">
-        <span style="font-size:12px;color:var(--t3);">min</span>
-      </div>
-    </div>
-    <button id="cardio-save-btn" class="btn btn-red ft-press" onclick="saveCardioEntry()" style="width:100%;margin-top:10px;padding:10px;font-size:14px;display:${c.duration>0?'block':'none'};">✓ Enregistrer le cardio</button>
+  ${_cardioOpen?`<div style="padding:0 12px 12px;border-top:1px solid var(--sep);padding-top:4px;">
+    ${volet('avant','🔥 Avant la séance','échauffement')}
+    ${volet('apres','🧊 Après la séance','cardio de fin')}
+    <button id="cardio-save-btn" class="btn btn-red ft-press" onclick="saveCardioEntry()" style="width:100%;margin-top:12px;padding:10px;font-size:14px;display:${aUnCardio?'block':'none'};">✓ Enregistrer le cardio</button>
   </div>`:''}
 </div>`;
 }
 // Valide le cardio : replie le bloc (le résumé reste visible dans l'en-tête) — pas besoin de scroller.
 function saveCardioEntry(){
-  if(!S.wkt||!S.wkt.cardio||!S.wkt.cardio.duration){toast('Entre une durée de cardio','info');return;}
+  if(!S.wkt||!calcCardioKcalTotal()){toast('Entre une durée de cardio','info');return;}
   _cardioOpen=false;persist();renderCardioBlock();
   if(typeof renderLogFinish==='function')renderLogFinish();
   toast('Cardio enregistré ✅','success');

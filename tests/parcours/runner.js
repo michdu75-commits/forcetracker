@@ -753,6 +753,64 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c3.close();
 }
 
+// ── CARDIO : DEUX MOMENTS (Michel 02/08 : « avant et après séance ce n'est pas pareil ») ──
+// L'échauffement d'avant et le cardio de fin ne sont ni la même intention ni la même durée.
+// `cardio` reste le champ historique (= APRÈS) → toutes les séances déjà enregistrées sont
+// intactes ; `cardioAvant` est le nouveau. Vérifié : addition des calories, résumé qui NOMME
+// les deux, échauffement seul suffisant pour valider, et transmission à Milo.
+{
+  const c4=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p4=await c4.newPage();
+  await p4.addInitScript(seedScript({}));
+  await p4.goto('http://localhost:'+PORT+'/index.html');
+  await p4.waitForTimeout(2200);
+  const cd=await p4.evaluate(()=>{
+   try{
+    if(typeof calcCardioKcalTotal!=='function')return {erreur:'calcCardioKcalTotal absente'};
+    const o={};
+    S.wkt={exs:[],start:Date.now()};
+    setCardioField('type','velo','avant');setCardioField('intensity','leger','avant');setCardioField('duration','10','avant');
+    setCardioField('type','tapis','apres');setCardioField('intensity','modere','apres');setCardioField('duration','25','apres');
+    o.deuxNotes=!!(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration===10&&S.wkt.cardio&&S.wkt.cardio.duration===25);
+    o.kAv=calcCardioKcal(S.wkt.cardioAvant);o.kAp=calcCardioKcal(S.wkt.cardio);
+    o.total=calcCardioKcalTotal(); o.addition=(o.total===o.kAv+o.kAp);
+    o.resume=_cardioResume();
+    renderLogFinish();
+    o.finish=(document.getElementById('log-finish')||{textContent:''}).textContent.replace(/\s+/g,' ');
+    // RÉTROCOMPATIBILITÉ : une séance d'avant n'a que `cardio` → elle compte toujours
+    S.wkt={exs:[],cardio:{type:'tapis',intensity:'modere',duration:20},start:Date.now()};
+    o.ancienKcal=calcCardioKcalTotal(); o.ancienResume=_cardioResume();
+    // un échauffement SEUL doit permettre de valider la séance
+    S.wkt={exs:[],cardioAvant:{type:'velo',intensity:'leger',duration:10},start:Date.now()};
+    renderLogFinish();
+    o.echauffSeul=/cardio/i.test((document.getElementById('log-finish')||{textContent:''}).textContent);
+    // ce que MILO en voit
+    const j=(()=>{const x=new Date();return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10);})();
+    S.wkt=null;
+    S.sessions=[{date:j,exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:8,done:true,type:'N'}]}],
+      cardioAvant:{type:'velo',intensity:'leger',duration:10},
+      cardio:{type:'tapis',intensity:'modere',duration:25},volume:800}];
+    const ctx=buildCoachContext();
+    o.miloTapis=/Tapis 25min/.test(ctx); o.miloEchauff=/échauffement Vélo 10min/.test(ctx);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ on peut noter un cardio AVANT et un cardio APRÈS dans la même séance',
+    cd.deuxNotes, JSON.stringify(cd).slice(0,200));
+  t('les calories des deux moments s\'additionnent', cd.addition,
+    cd.kAv+' + '+cd.kAp+' = '+cd.total);
+  t('le résumé NOMME les deux moments (pas un total muet)',
+    /avant 10min/.test(cd.resume||'')&&/après 25min/.test(cd.resume||''), cd.resume);
+  t('l\'écran de fin de séance affiche les deux',
+    /avant 10min/.test(cd.finish||'')&&/après 25min/.test(cd.finish||''), (cd.finish||'').slice(0,120));
+  t('⭐ RÉTROCOMPATIBLE : une séance d\'avant (un seul cardio) compte toujours',
+    cd.ancienKcal>0&&/après 20min/.test(cd.ancienResume||''), cd.ancienResume+' → '+cd.ancienKcal+' kcal');
+  t('un échauffement SEUL suffit à valider la séance', cd.echauffSeul, String(cd.echauffSeul));
+  t('⭐ Milo voit le cardio de la séance, et sait lequel est l\'échauffement',
+    cd.miloTapis&&cd.miloEchauff, 'tapis:'+cd.miloTapis+' échauffement:'+cd.miloEchauff);
+  await c4.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

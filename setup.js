@@ -429,23 +429,34 @@ function _renderSessDetailContent(){
   }).join('');
   // Ajouter un exercice oublié à cette séance passée
   html+=`<button class="btn btn-bg2" style="width:100%;margin-bottom:10px;padding:11px;font-size:14px;font-weight:700;color:var(--red)" onclick="openSessAddEx()">+ Ajouter un exercice</button>`;
-  // Cardio de la séance
-  const c=_sessEdits.cardio||null;
-  const ckcal=(c&&c.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(c):0;
+  // Cardio de la séance — DEUX moments depuis le 02/08 (« avant et après séance ce n'est pas
+  // pareil »). `cardio` = APRÈS (champ historique) · `cardioAvant` = échauffement. Une séance
+  // enregistrée avant ce jour n'a que `cardio` : elle s'affiche donc dans « Après », inchangée.
+  const ckTot=(typeof calcCardioKcal==='function')
+    ? calcCardioKcal(_sessEdits.cardioAvant||null)+calcCardioKcal(_sessEdits.cardio||null) : 0;
   const selSty='padding:6px 8px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:13px;font-family:var(--font)';
+  const voletSess=(moment,titre)=>{
+    const c=(moment==='avant'?_sessEdits.cardioAvant:_sessEdits.cardio)||null;
+    const k=(c&&c.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(c):0;
+    return `<div style="margin-top:7px;">
+      <div style="font-size:12px;font-weight:700;color:var(--t2);margin-bottom:5px;">${titre}${k?` <span style="font-weight:600;color:var(--green)">· ~${k} kcal</span>`:''}</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <select onchange="setSessCardio('type',this.value,'${moment}')" style="${selSty}">
+          ${Object.keys(CARDIO_LABELS).map(t=>`<option value="${t}" ${(c?c.type:'elliptique')===t?'selected':''}>${CARDIO_LABELS[t]}</option>`).join('')}
+        </select>
+        <select onchange="setSessCardio('intensity',this.value,'${moment}')" style="${selSty}">
+          ${[['leger','Léger'],['modere','Modéré'],['intense','Intense']].map(([v,l])=>`<option value="${v}" ${(c?c.intensity:'modere')===v?'selected':''}>${l}</option>`).join('')}
+        </select>
+        <input type="number" min="0" max="300" inputmode="numeric" value="${c&&c.duration?c.duration:''}" placeholder="min" onchange="setSessCardio('duration',this.value,'${moment}')" style="width:56px;padding:6px 4px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:14px;text-align:center;font-family:var(--font)">
+        <span style="font-size:12px;color:var(--t3)">min</span>
+        ${c&&c.duration?`<button class="btn btn-bg2" style="padding:3px 9px;font-size:11px;color:var(--red)" onclick="setSessCardio('duration',0,'${moment}')">Retirer</button>`:''}
+      </div>
+    </div>`;
+  };
   html+=`<div class="card" style="margin-bottom:8px;padding:10px 12px">
-    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🏃 Cardio ${ckcal?`<span style="font-weight:600;font-size:12px;color:var(--green)">· ~${ckcal} kcal</span>`:'<span style="font-weight:500;font-size:12px;color:var(--t3)">(optionnel)</span>'}</div>
-    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-      <select onchange="setSessCardio('type',this.value)" style="${selSty}">
-        ${Object.keys(CARDIO_LABELS).map(t=>`<option value="${t}" ${(c?c.type:'elliptique')===t?'selected':''}>${CARDIO_LABELS[t]}</option>`).join('')}
-      </select>
-      <select onchange="setSessCardio('intensity',this.value)" style="${selSty}">
-        ${[['leger','Léger'],['modere','Modéré'],['intense','Intense']].map(([v,l])=>`<option value="${v}" ${(c?c.intensity:'modere')===v?'selected':''}>${l}</option>`).join('')}
-      </select>
-      <input type="number" min="0" max="300" inputmode="numeric" value="${c&&c.duration?c.duration:''}" placeholder="min" onchange="setSessCardio('duration',this.value)" style="width:56px;padding:6px 4px;border-radius:8px;border:1px solid var(--bg3);background:var(--bg2);color:var(--t1);font-size:14px;text-align:center;font-family:var(--font)">
-      <span style="font-size:12px;color:var(--t3)">min</span>
-      ${c&&c.duration?`<button class="btn btn-bg2" style="padding:3px 9px;font-size:11px;color:var(--red)" onclick="setSessCardio('duration',0)">Retirer</button>`:''}
-    </div>
+    <div style="font-weight:700;font-size:14px;">🏃 Cardio ${ckTot?`<span style="font-weight:600;font-size:12px;color:var(--green)">· ~${ckTot} kcal au total</span>`:'<span style="font-weight:500;font-size:12px;color:var(--t3)">(optionnel)</span>'}</div>
+    ${voletSess('avant','🔥 Avant la séance')}
+    ${voletSess('apres','🧊 Après la séance')}
   </div>`;
   el.innerHTML=html;
 }
@@ -470,11 +481,12 @@ function _addSessExPick(name){
   _updateSdMuscles(_sessEdits);
   toast(name+' ajouté — remplis les séries puis Enregistre','info');
 }
-function setSessCardio(field,val){
+function setSessCardio(field,val,moment){
   if(!_sessEdits)return;
-  if(!_sessEdits.cardio)_sessEdits.cardio={type:'elliptique',intensity:'modere',duration:0};
-  _sessEdits.cardio[field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
-  if(field==='duration'&&!_sessEdits.cardio.duration)delete _sessEdits.cardio; // 0 → pas de cardio
+  const k=(moment==='avant')?'cardioAvant':'cardio';
+  if(!_sessEdits[k])_sessEdits[k]={type:'elliptique',intensity:'modere',duration:0};
+  _sessEdits[k][field]=field==='duration'?Math.max(0,Math.min(300,parseInt(val)||0)):val;
+  if(field==='duration'&&!_sessEdits[k].duration)delete _sessEdits[k]; // 0 → pas de cardio
   _renderSessDetailContent();
 }
 
@@ -541,7 +553,7 @@ function saveSessEdits(){
     }
   }));
   const calData=calcSessionCalories(_sessEdits);
-  const cardioKcal=(_sessEdits.cardio&&_sessEdits.cardio.duration&&typeof calcCardioKcal==='function')?calcCardioKcal(_sessEdits.cardio):0;
+  const cardioKcal=(typeof calcCardioKcal==='function')?(calcCardioKcal(_sessEdits.cardioAvant||null)+calcCardioKcal(_sessEdits.cardio||null)):0;
   if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
   _sessEdits.calories=calData.total;
   _sessEdits.calData=calData;

@@ -2060,7 +2060,7 @@ async function finishWorkout(){
   _releaseWakeLock();
   _stopWktChrono();
   if(!S.wkt){_finishing=false;return;}
-  const _hasCardio=!!(S.wkt.cardio&&S.wkt.cardio.duration);
+  const _hasCardio=!!((S.wkt.cardio&&S.wkt.cardio.duration)||(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration));  // un échauffement SEUL suffit aussi à valider (02/08)
   const _hasExs=!!(S.wkt.exs&&S.wkt.exs.length);
   if(!_hasExs&&!_hasCardio){toast('Ajoute un exercice ou un cardio !','error');_finishing=false;return;}
   const hasDone=_hasExs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
@@ -2089,9 +2089,11 @@ async function finishWorkout(){
   }));
   const _prCount=_prExs.size;
   stopRest();
+  // Deux moments possibles (02/08) : `cardio` = APRÈS (champ historique), `cardioAvant` = échauffement.
   if(S.wkt?.cardio?.duration) sess.cardio={...S.wkt.cardio};
+  if(S.wkt?.cardioAvant?.duration) sess.cardioAvant={...S.wkt.cardioAvant};
   const calData=calcSessionCalories(sess);
-  const cardioKcal=calcCardioKcal(sess.cardio||null);
+  const cardioKcal=calcCardioKcal(sess.cardioAvant||null)+calcCardioKcal(sess.cardio||null);
   if(cardioKcal){calData.total+=cardioKcal;calData.cardio=cardioKcal;}
   sess.calories=calData.total;sess.calData=calData;
 

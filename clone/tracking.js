@@ -2166,7 +2166,7 @@ function _toggleSleepSaveBtn(v){
 function renderLogFinish(){
   const el=document.getElementById('log-finish');if(!el)return;
   if(!S.wkt){el.innerHTML='';return;}
-  const hasCardio=!!(S.wkt.cardio&&S.wkt.cardio.duration);
+  const hasCardio=!!((S.wkt.cardio&&S.wkt.cardio.duration)||(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration));
   const hasDone=!!(S.wkt.exs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done)));
   if(!hasDone&&!hasCardio){el.innerHTML='';return;} // rien à enregistrer (ni série validée, ni cardio)
   let summary='';
@@ -2177,8 +2177,13 @@ function renderLogFinish(){
     summary=`${nEx} exercice${nEx>1?'s':''} · ${nSets} série${nSets>1?'s':''} · ${vol} kg de volume`;
   }
   if(hasCardio){
-    const c=S.wkt.cardio, kcal=(typeof calcCardioKcal==='function'?calcCardioKcal(c):0);
-    const cardioTxt=`🏃 Cardio ${c.duration}min${kcal?` · ~${kcal}kcal`:''}`;
+    // Les deux moments sont nommés dans le résumé : « avant 10min · après 20min » — sans ça,
+    // deux cardios se seraient additionnés en silence sous un seul chiffre.
+    const kcal=(typeof calcCardioKcalTotal==='function')?calcCardioKcalTotal():0;
+    const bouts=[];
+    if(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration)bouts.push('avant '+S.wkt.cardioAvant.duration+'min');
+    if(S.wkt.cardio&&S.wkt.cardio.duration)bouts.push('après '+S.wkt.cardio.duration+'min');
+    const cardioTxt=`🏃 Cardio ${bouts.join(' · ')}${kcal?` · ~${kcal}kcal`:''}`;
     summary = summary ? summary+' · '+cardioTxt : cardioTxt;
   }
   const label = hasDone ? '🏁 Terminer la séance' : '🏁 Enregistrer le cardio';

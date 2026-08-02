@@ -1240,7 +1240,16 @@ function buildCoachContext() {
         : '—';
       return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}`;
     }).join(' · ');
-    return `${_dateLisible(s.date)}: ${exStr} — ${s.volume}kg vol total`;
+    // Le CARDIO de la séance (mesuré le 02/08 : il n'était PAS transmis — Milo ignorait
+    // 25 min de tapis notées après la muscu). Les deux moments sont nommés, parce qu'un
+    // échauffement de 10 min et 25 min de tapis en fin de séance ne veulent pas dire la
+    // même chose sur l'intention de la personne (R4 : l'info doit descendre jusqu'à la donnée).
+    const _cLbl=(typeof CARDIO_LABELS!=='undefined')?CARDIO_LABELS:{};
+    const _cTxt=c=>c&&c.duration?`${_cLbl[c.type]||c.type||'cardio'} ${c.duration}min${c.intensity?' ('+c.intensity+')':''}`:'';
+    const _cav=_cTxt(s.cardioAvant), _cap=_cTxt(s.cardio);
+    const cardioStr=[_cav?'échauffement '+_cav:'', _cap?'après séance '+_cap:''].filter(Boolean).join(' + ');
+    return `${_dateLisible(s.date)}: ${exStr} — ${s.volume}kg vol total`
+      +(cardioStr?` — cardio: ${cardioStr}`:'');
   }).join('\n') || 'Aucune séance';
 
   // Séance EN COURS (S.wkt) — permet au Coach d'aider PENDANT l'entraînement
