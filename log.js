@@ -699,6 +699,12 @@ function _buildExHistChart(data){
   return s+'</svg>';
 }
 // ─── MENU CONTEXTUEL EXERCICE (⋯) ────────────────────────────────────────────
+// Dernière charge saisie sur l'exercice — pré-remplit le calculateur (évite de retaper).
+function _lastKgOf(ei){
+  try{ const ex=S.wkt&&S.wkt.exs&&S.wkt.exs[ei]; if(!ex)return 0;
+    const avecKg=(ex.sets||[]).filter(s=>s&&s.kg); return avecKg.length?avecKg[avecKg.length-1].kg:0;
+  }catch(e){ return 0; }
+}
 let _exMenuCtx=null;
 function openExMenu(ei,hasGif){
   const ex=S.wkt.exs[ei];if(!ex)return;
@@ -728,6 +734,10 @@ function openExMenu(ei,hasGif){
     +(hasUserPhoto?mRow('🖼️','Voir la photo',`closeExMenu();_viewExPhoto('${safeNm}')`):'')
     +(hasUserPhoto?mRow('🗑️','Retirer la photo',`closeExMenu();removeExImg('${safeNm}')`):'')
     +mRow('📊','Statistiques',`closeExMenu();openExHistory('${safeNm}')`)
+    // 🔢 Le calculateur de plaques était devenu INACCESSIBLE : la modale et la fonction
+    // existaient, mais plus aucun bouton ne les ouvrait (constaté le 02/08 — Michel :
+    // « le poids de la barre je ne vois pas »). C'est aussi là qu'on règle le poids de sa barre.
+    +mRow('🔢','Calculateur de plaques',`closeExMenu();openPlateCalc(_lastKgOf(${ei}),${ei})`)
     +mRow('ℹ️','Types de série','closeExMenu();openTypeHelp()')
     +`<button ontouchstart="_rmHoldStart(this,${ei});event.preventDefault()" ontouchmove="event.preventDefault()" ontouchend="_rmHoldEnd(this)" ontouchcancel="_rmHoldEnd(this)" onmousedown="_rmHoldStart(this,${ei})" onmouseup="_rmHoldEnd(this)" onmouseleave="_rmHoldEnd(this)" style="display:flex;align-items:center;gap:14px;width:100%;padding:13px 18px;background:none;border:none;border-top:1px solid var(--sep);text-align:left;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;">`
     +`<span style="font-size:19px;width:26px;text-align:center;flex-shrink:0;">🗑️</span>`

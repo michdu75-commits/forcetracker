@@ -2045,6 +2045,7 @@ function _renderDietCard(){
       <input id="diet-notes-inp" type="text" value="${(S.dietNotes||'').replace(/"/g,'&quot;')}" oninput="saveDietNotes(this.value)" placeholder="ex. fruits à coque, fruits de mer…" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--sep);background:var(--bg2);color:var(--t1);font-family:var(--font);font-size:13.5px;box-sizing:border-box;">
     </div>
     <div style="font-size:11px;color:var(--t3);line-height:1.45;">🥗 Milo et le plan de repas respectent tout ça — jamais un aliment que tu ne manges pas.</div>
+    ${S.foodMode?`<div style="font-size:11.5px;color:var(--green);line-height:1.45;">✅ Ton mode <b>${(typeof FOOD_MODE_LABELS!=='undefined'&&FOOD_MODE_LABELS[S.foodMode])||S.foodMode}</b> est actif — ces réglages s'appliquent <b>en plus</b> : tes repas sont d'abord adaptés au mode, puis à ton type d'alimentation et à tes restrictions.</div>`:''}
     ${diet==='vegan'?'<div style="font-size:11.5px;color:var(--gold);line-height:1.45;">💊 Végan : protéine végétale (pois/riz) au lieu de la whey · pense B12, oméga-3 (algues), vitamine D, fer.</div>':diet==='vegetarien'?'<div style="font-size:11.5px;color:var(--gold);line-height:1.45;">💊 Végétarien : whey/œufs OK · surveille le fer et la B12.</div>':''}
   </div>`;
 }
@@ -2814,9 +2815,25 @@ async function loadHealthAdmin(){
   if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
   box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Vérification…</div>';
   const TOK='FT_IDEES_2026';
-  const get=async a=>{ try{ const r=await fetch(S.url+'?action='+a+'&token='+TOK,{method:'GET'}); return await r.json(); }catch(e){ return {status:'error',error:'réseau'}; } };
+  // ⚠️ EN SÉRIE, pas en parallèle (constaté le 02/08 sur le téléphone de Michel : 3 sondes sur 5
+  // en « réseau »). Google Apps Script traite les requêtes d'un MÊME compte une par une : lancer
+  // les 4 d'un coup fait attendre les suivantes jusqu'au délai d'expiration. C'est plus lent
+  // (quelques secondes) mais ça répond vraiment — et un diagnostic qui ne répond pas ne sert à rien.
+  const get=async a=>{
+    try{
+      const ctl=('AbortController' in window)?new AbortController():null;
+      const to=setTimeout(()=>{try{ctl&&ctl.abort();}catch(e){}},25000);
+      const r=await fetch(S.url+'?action='+a+'&token='+TOK,{method:'GET',...(ctl?{signal:ctl.signal}:{})});
+      clearTimeout(to);
+      return await r.json();
+    }catch(e){ return {status:'error',error:(e&&e.name==='AbortError')?'trop lent (>25 s)':'réseau'}; }
+  };
   try{
-    const [st,bk,mf,ai]=await Promise.all([get('storeHealth'),get('checkBackup'),get('mailFails'),get('aiUsage')]);
+    box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Vérification… (4 contrôles, quelques secondes)</div>';
+    const st=await get('storeHealth');
+    const bk=await get('checkBackup');
+    const mf=await get('mailFails');
+    const ai=await get('aiUsage');
     let h='';
     // ① Stockage — c'est CE réservoir qui a lâché le 29/07 (512 Ko partagés par tous les comptes)
     if(st&&st.status==='ok'){

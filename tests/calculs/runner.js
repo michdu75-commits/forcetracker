@@ -604,6 +604,30 @@ console.log('\n═══ 9. Les repas suggérés respectent le RÉGIME (kéto, v
     JSON.stringify(md.jeuneKeto&&[md.jeuneKeto.G,md.jeuneKeto.noms[0]]));
   t('les modes sont EXCLUSIFS · re-cliquer sur le mode actif le désactive',
     md.exclusif==='lowcarb'&&md.retapeDesactive==='', md.exclusif+' → '+md.retapeDesactive);
+
+  // ── Retour de Michel après test réel : « mon régime alimentaire ne sert plus à rien dès qu'on
+  // sélectionne le kéto ». Il agit BIEN — mais rien ne le disait, et une substitution laissait
+  // une faute visible (« Tofu brouillé brouillés »).
+  const cr=await p.evaluate(()=>{
+   try{
+    const plan=(mode,diet,restr)=>{S.foodMode=mode;S.keto=(mode==='keto');S.diet=diet||'';
+      S.dietRestrictions=restr||[];S.dietNotes='';S.fasting='';S.bw=80;S.goal='muscle';
+      return getMeals(calcMacros('normal'),'normal').map(m=>m.desc).join(' | ');};
+    return {ketoVegan:plan('keto','vegan'), ketoLactose:plan('keto','',['sanslactose']),
+            ketoSeul:plan('keto','')};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ la carte RÉGIME agit toujours quand un mode est actif (kéto + végan → tofu, tempeh)',
+    /Tofu/.test(cr.ketoVegan)&&/Tempeh/.test(cr.ketoVegan)&&!/Poulet|Saumon/.test(cr.ketoVegan),
+    (cr.ketoVegan||'').slice(0,110));
+  t('⭐ plus de « Tofu brouillé brouillés » (le mot d\'origine était remplacé à moitié)',
+    !/brouillé brouillé/i.test(cr.ketoVegan||''), (cr.ketoVegan||'').slice(0,60));
+  t('kéto + sans lactose : beurre et crème remplacés',
+    /huile d'olive \+ avocat/.test(cr.ketoLactose)&&/crème de coco/.test(cr.ketoLactose),
+    (cr.ketoLactose||'').slice(0,110));
+  t('TÉMOIN : kéto seul garde bien œufs, beurre et fromage',
+    /Œufs brouillés au beurre/.test(cr.ketoSeul)&&/fromage à pâte dure/.test(cr.ketoSeul),
+    (cr.ketoSeul||'').slice(0,80));
   await c.close();
 }
 

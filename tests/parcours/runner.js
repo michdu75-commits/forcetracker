@@ -852,6 +852,26 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('valeur aberrante bornée (999 → 60 kg max)', br.max===60, 'reçu '+br.max);
   t('⭐ enregistrer le profil n\'écrase PAS le réglage (une donnée, un seul propriétaire)',
     br.avant===15&&br.apres===15, br.avant+' → '+br.apres);
+  // Michel après test réel : « le poids de la barre je ne vois pas ». Cause : le CALCULATEUR
+  // lui-même n'était appelé de NULLE PART — modale et fonction présentes, aucun bouton.
+  const acc=await p5.evaluate(()=>{
+   try{
+    // la modale du test précédent est restée ouverte : sans ça, « .overlay.open » la renvoie
+    // à la place du menu (faux négatif constaté le 02/08).
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    S.wkt={exs:[{name:'Squat à la Barre',sets:[{kg:80,reps:8,done:true,type:'N'}]}],start:Date.now()};
+    goScreen('s-log'); renderLog(); openExMenu(0,false);
+    const menu=document.getElementById('ov-exmenu')||document.querySelector('.overlay.open');
+    const dansLeMenu=/Calculateur de plaques/.test(menu?menu.textContent:'');
+    closeExMenu(); openPlateCalc(_lastKgOf(0),0);
+    return {dansLeMenu, ouvre:document.getElementById('mod-plate').classList.contains('open'),
+            preRempli:document.getElementById('plate-kg').value,
+            champBarre:!!document.getElementById('bar-inp')};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ le calculateur de plaques est ACCESSIBLE (menu ⋯ d\'un exercice)',
+    acc.dansLeMenu&&acc.ouvre&&acc.champBarre, JSON.stringify(acc));
+  t('il s\'ouvre pré-rempli avec la dernière charge saisie', acc.preRempli==='80', 'reçu '+acc.preRempli);
   await c5.close();
 }
 

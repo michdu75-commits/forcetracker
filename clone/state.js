@@ -629,7 +629,9 @@ const _MODE_MEALS={keto:KETO_MEALS,lowcarb:LOWCARB_MEALS,paleo:PALEO_MEALS,medit
 // pour un aliment donné, donc on met les régimes les plus restrictifs en premier.
 const _DIET_SWAPS=[
   // Végan : plus aucun produit animal
-  ['vegan',/Œufs entiers|Œufs/gi,'Tofu brouillé'],['vegan',/Poulet\/thon|Poulet|Dinde/gi,'Tempeh'],
+  // ⚠️ « Œufs brouillés » d'abord, sinon seul « Œufs » est remplacé et « brouillés » reste
+  //    derrière : « Tofu brouillé brouillés » (vu au test croisé kéto + végan du 02/08).
+  ['vegan',/Œufs brouillés/gi,'Tofu brouillé'],['vegan',/Œufs entiers|Œufs/gi,'Tofu'],['vegan',/Poulet\/thon|Poulet|Dinde/gi,'Tempeh'],
   ['vegan',/Saumon\/bœuf|Bœuf|Saumon|Poisson maigre|Poisson/gi,'Pois chiches'],
   ['vegan',/Whey|whey/gi,'protéine de pois'],['vegan',/Yaourt grec|Fromage blanc 0%|Fromage blanc/gi,'Yaourt de soja'],
   ['vegan',/lait entier/gi,'lait de soja'],
