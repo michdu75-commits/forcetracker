@@ -2745,12 +2745,26 @@ function _exEqBadge(name){
 }
 // Rendu du sélecteur groupé par TYPE DE MATÉRIEL (titres de sous-sections colorés)
 const _EQ_ORDER=['barre','libre','guide','corps','elast','trx','cardio','autre'];  // maison (élastique/TRX) et cardio en fin de liste : ce sont des familles à part, pas des variantes de charge
-function _renderExGrouped(listArr){
+// `rangs` (optionnel) = tableau parallèle des rangs de pertinence, fourni pendant une RECHERCHE.
+// ⚠️ Sans lui, le regroupement par matériel imposait son propre ordre et ANNULAIT le tri par
+// pertinence : on avait beau classer « Pec Deck » premier, il repartait dans le bac ⚙️ Guidé,
+// affiché après 🏋️ Barre. Mesuré le 02/08. Pendant une recherche, les BACS sont donc ordonnés
+// par leur meilleur résultat ; hors recherche, l'ordre fixe habituel est conservé.
+function _renderExGrouped(listArr, rangs){
   const buckets={};
-  listArr.forEach(e=>{const k=_exEquip(e.n);(buckets[k]=buckets[k]||[]).push(e);});
+  listArr.forEach((e,i)=>{const k=_exEquip(e.n);(buckets[k]=buckets[k]||[]).push(e);
+    if(rangs){e.__r=rangs[i];}});
   let html='';
   _eqHideBadge=true; // les lignes n'affichent pas le badge (le titre de section le porte)
-  _EQ_ORDER.forEach(k=>{
+  let ordre=_EQ_ORDER;
+  if(rangs){
+    const best={}; Object.keys(buckets).forEach(k=>{
+      best[k]=Math.min.apply(null,buckets[k].map(e=>e.__r==null?9:e.__r));
+      buckets[k].sort((a,b)=>(a.__r==null?9:a.__r)-(b.__r==null?9:b.__r));
+    });
+    ordre=_EQ_ORDER.slice().sort((a,b)=>(best[a]==null?9:best[a])-(best[b]==null?9:best[b]));
+  }
+  ordre.forEach(k=>{
     const arr=buckets[k];if(!arr||!arr.length)return;
     const m=_EQ_META[k];
     html+=`<div class="ex-subhdr" style="color:${m.c};background:${m.bg};"><span>${m.ic} ${m.lbl}</span><span class="ex-subhdr-n">${arr.length}</span></div>`
@@ -2811,24 +2825,49 @@ function filterEx(){
     let _patCible=null;
     try{
       if(typeof _MOV_PATTERNS!=='undefined' && qn.length>=4){
+        // ⚠️ On n'élargit QUE sur le LIBELLÉ d'une famille (« tirage horizontal », « poussée
+        // verticale »…), jamais sur un simple mot-clé. Correctif du 02/08 : les mots-clés
+        // contiennent des noms d'exercices PRÉCIS (« svend », « pec deck », « yates »,
+        // « meadows », « sled ») — taper l'un d'eux déclenchait l'élargissement et rendait
+        // 45 résultats au lieu de 1. Le libellé, lui, EST une intention de famille.
         const p2=_MOV_PATTERNS.find(P=>{
           const lab=_normEx(P.label||'');
-          if(lab&&(lab.indexOf(qn)>=0||qn.indexOf(lab)>=0))return true;
-          return (P.kw||[]).some(k=>{const kn=_normEx(k);return kn.length>=4&&(kn===qn||qn===kn);});
+          return !!(lab&&(lab.indexOf(qn)>=0||qn.indexOf(lab)>=0));
         });
         if(p2)_patCible=p2.id;
       }
     }catch(e){}
+    // ── LE RANG DE PERTINENCE (02/08, correctif d'une régression que j'avais créée) ──────
+    // La recherche était un FILTRE (oui/non) affiché dans l'ordre ALPHABÉTIQUE, sans aucune
+    // notion de « à quel point ça correspond ». Tant que le filtre était étroit, ça passait.
+    // En l'élargissant (familles de mouvement, ft-v728), le bruit est devenu ingérable :
+    // mesuré, taper « développé couché » rendait 45 résultats dont 8 seulement contenaient
+    // ces mots, et « pec deck » ou « svend » — des noms d'exercices PRÉCIS — rendaient 45
+    // résultats avec l'exercice cherché en DERNIÈRE position (ces mots sont aussi des
+    // mots-clés de famille). Chaque élargissement du filtre aggravait le problème, faute
+    // d'un tri pour le compenser.
+    // On classe donc par pertinence décroissante ; l'élargissement par famille reste utile
+    // mais passe APRÈS tout ce qui correspond vraiment au nom.
+    const _rang=e=>{
+      const nn=_normEx(e.n);
+      if(nn===qn) return 0;                                   // le nom exact
+      if(nn.indexOf(qn)===0) return 1;                        // le nom COMMENCE par la recherche
+      if(nn.indexOf(qn)>=0) return 2;                         // le nom la CONTIENT
+      const en=(typeof EX_EN!=='undefined'&&EX_EN[e.n])?_normEx(EX_EN[e.n]):'';
+      if(en&&en.indexOf(qn)>=0) return 3;                     // le terme anglais
+      if(_normEx(e.g).indexOf(qn)>=0) return 4;               // le groupe musculaire
+      return 5;                                               // même famille de mouvement
+    };
     const f=all.filter(e=>{
       if(_patCible){ try{ if(_movPattern(e.n)===_patCible) return true; }catch(x){} }
       // Cherche aussi dans les termes ANGLAIS (EX_EN) → « shoulder press », « bench press », « leg press »…
       // trouvent l'exercice même si son nom français ne contient pas le mot anglais.
       const en=(typeof EX_EN!=='undefined'&&EX_EN[e.n])?EX_EN[e.n].toLowerCase():'';
       return e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q)||(en&&(en.includes(q)||_normEx(en).includes(qn)));
-    });
+    }).sort((a,b)=>_rang(a)-_rang(b));   // tri STABLE → l'ordre alphabétique est conservé à rang égal
     // Favoris/plus utilisés en PREMIER (tri stable → alpha conservé à usage égal)
     const fd=_exDedup(f);
-    list.innerHTML=fd.length?(_eqTestOn()?_renderExGrouped(fd):fd.map(_exPickRow).join('')):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
+    list.innerHTML=fd.length?(_eqTestOn()?_renderExGrouped(fd,fd.map(_rang)):fd.map(_exPickRow).join('')):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
     return;
   }
   // Groupe sélectionné → exercices du groupe

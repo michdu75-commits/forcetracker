@@ -201,6 +201,36 @@ protégés »** dans la carte Santé, parce qu'*une alerte qui ne remonte nulle 
 
 ---
 
+## 5ter. 🔎 Le filtre sans pertinence *(02/08/2026)*
+
+**Le mécanisme.** Une recherche qui répond **oui/non** et affiche le résultat dans l'ordre
+**alphabétique** n'a aucune notion de *« à quel point ça correspond »*. Tant que le filtre est
+étroit, personne ne le remarque. **Chaque élargissement du filtre aggrave alors le bruit**, sans
+qu'aucun tri ne vienne le compenser.
+
+**Cas réel.** Une testeuse ne trouve pas un exercice → on élargit la recherche aux familles de
+mouvement (ft-v728) → deux versions plus tard, taper **« pec deck »** rend **45 résultats** avec
+le Pec Deck en **dernière position**, et **« développé couché »** rend 45 résultats dont 8
+seulement contiennent ces mots.
+
+**Le piège dans le piège** : le tri par pertinence, une fois écrit, ne se voyait toujours pas —
+parce que l'affichage **regroupe par matériel**, et que ce regroupement imposait son propre ordre.
+*Un tri ne sert à rien s'il ne traverse pas la mise en forme.*
+
+### 🔎 Comment le reconnaître
+Un mot très précis (un nom propre, une marque, un nom d'exercice unique) rend beaucoup de
+résultats. C'est le signe qu'un élargissement se déclenche là où il ne devrait pas.
+
+### 🛡️ Ce qui protège (ft-v733)
+Un rang de pertinence explicite, transmis jusqu'au rendu · et un élargissement qui ne se
+déclenche que sur une **intention de famille** (le libellé), jamais sur un mot-clé isolé.
+
+> ⚠️ **La leçon de méthode** : les tests de ft-v728 vérifiaient le **nombre** de résultats et
+> l'absence de faux positif — **jamais leur ORDRE**. *Un test qui compte ne dit rien de ce que
+> l'utilisateur voit en premier.*
+
+---
+
 ## 6. 📶 Les seuils en marche d'escalier
 
 **Le mécanisme.** Un score calculé par paliers produit des **sauts absurdes** au voisinage du seuil.

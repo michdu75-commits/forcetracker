@@ -707,6 +707,52 @@ t('⭐ MIGRATION : les séances passées et les repos préférés suivent aussi'
   migr.sess[0]==='Rowing Barre (Tirage Horizontal)'&&migr.sess[1]==='Tirage Poulie Haute (Lat Pulldown)'&&migr.repos===90,
   migr.sess.join(' / ')+' · repos='+migr.repos);
 
+
+// ── LA PERTINENCE DE LA RECHERCHE (02/08, après le retour « je n'ai pas trouvé ») ──────
+// La recherche était un FILTRE (oui/non) rendu dans l'ordre ALPHABÉTIQUE : aucune notion de
+// « à quel point ça correspond ». Tant que le filtre restait étroit ça passait ; en
+// l'élargissant aux familles de mouvement (ft-v728), le bruit est devenu ingérable.
+// MESURÉ AVANT correctif : « pec deck » et « svend » — des noms d'exercices PRÉCIS —
+// rendaient 45 résultats avec l'exercice cherché en DERNIÈRE position, parce que ces mots
+// sont aussi des mots-clés de famille. « développé couché » rendait 45 résultats dont 8
+// seulement contenaient ces mots.
+// Deux correctifs : ① un rang de pertinence (nom exact > commence par > contient > terme
+// anglais > groupe > famille), qui traverse aussi le regroupement par matériel ;
+// ② l'élargissement par famille ne se déclenche QUE sur le libellé d'une famille.
+const pert=await p.evaluate(()=>{
+  const i=document.getElementById('ex-search');
+  const ch=q=>{i.value=q;_exGrp=null;filterEx();
+    const h=document.getElementById('ex-list').innerHTML;
+    const l=[...h.matchAll(/class="ex-pick-name"[^>]*>([^<]+)</g)].map(z=>z[1].trim());
+    return {n:l.length, premier:l[0]||null};};
+  const o={};
+  [['svend','Svend Press (Serrage de Plaque)'],['pec deck','Pec Deck'],
+   ['yates','Rowing Yates (Supination)'],['meadows','Meadows Row'],
+   ['développé couché','Développé Couché'],['squat à la barre','Squat à la Barre']]
+    .forEach(([q,att])=>{const r=ch(q);o[q]={n:r.n, bon:r.premier===att, premier:r.premier};});
+  // les familles doivent continuer de marcher (le retour qui a tout déclenché)
+  const th=ch('tirage horizontal'); o.familleN=th.n; o.familleRowing=/Rowing/.test(th.premier||'');
+  const pv=ch('poussée verticale'); o.poussV=pv.n;
+  o.rien=ch('zzzz').n;
+  i.value='';_exGrp=null;filterEx();
+  return o;
+});
+t('⭐ taper le nom d\'un exercice le met en PREMIER (il arrivait en 45ᵉ position)',
+  pert['svend'].bon&&pert['pec deck'].bon&&pert['yates'].bon&&pert['meadows'].bon,
+  ['svend→'+pert['svend'].premier,'pec deck→'+pert['pec deck'].premier,
+   'yates→'+pert['yates'].premier,'meadows→'+pert['meadows'].premier].join(' · '));
+t('⭐ … et ne rend plus 45 résultats pour un nom précis',
+  pert['svend'].n<=3&&pert['pec deck'].n<=3&&pert['yates'].n<=3&&pert['meadows'].n<=3,
+  'svend='+pert['svend'].n+' pec deck='+pert['pec deck'].n+' yates='+pert['yates'].n+' meadows='+pert['meadows'].n);
+t('⭐ « développé couché » ne rend que des développés couchés (45 → 8)',
+  pert['développé couché'].n<=12&&pert['développé couché'].bon, 
+  pert['développé couché'].n+' résultats · 1er : '+pert['développé couché'].premier);
+t('le Big 3 se trouve en tapant son nom', pert['squat à la barre'].bon, pert['squat à la barre'].premier);
+t('⭐ la recherche par FAMILLE marche toujours (le retour de Tatiana)',
+  pert.familleN>=20&&pert.familleRowing&&pert.poussV>=10,
+  'tirage horizontal='+pert.familleN+' rowing 1er='+pert.familleRowing+' poussée verticale='+pert.poussV);
+t('témoin : une recherche qui ne correspond à rien rend toujours 0', pert.rien===0, String(pert.rien));
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');
