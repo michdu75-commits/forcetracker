@@ -2726,6 +2726,76 @@ async function loadCustomExAdmin(){
   }
 }
 
+// ─── SANTÉ DU SYSTÈME (admin) ────────────────────────────────
+// Les 4 sondes existaient depuis longtemps côté serveur, mais il fallait taper une URL avec un
+// jeton à la main : donc personne ne les consultait. La panne du 29/07 — réservoir de stockage
+// plein à 102 %, plus AUCUNE écriture pendant 2 jours (sync figée, boîte à idées muette, mails
+// morts) — était lisible par `storeHealth` dès le premier jour. Elle a été vue 2 jours plus tard.
+// Même leçon que le Google Sheet : *une donnée rangée où personne ne va n'existe pas.*
+function _healthRow(icone,titre,etat,detail){
+  const c={ok:'var(--green)',warn:'var(--gold)',ko:'var(--red)'}[etat]||'var(--t3)';
+  const pastille={ok:'🟢',warn:'🟠',ko:'🔴'}[etat]||'⚪';
+  return '<div style="display:flex;gap:9px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--sep);">'
+    +'<div style="font-size:14px;line-height:1.3;">'+pastille+'</div><div style="flex:1;min-width:0;">'
+    +'<div style="font-weight:700;color:var(--t1);font-size:13px;">'+icone+' '+titre+'</div>'
+    +'<div style="font-size:12px;color:'+c+';margin-top:2px;line-height:1.45;">'+detail+'</div></div></div>';
+}
+async function loadHealthAdmin(){
+  const box=document.getElementById('admin-health');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Vérification…</div>';
+  const TOK='FT_IDEES_2026';
+  const get=async a=>{ try{ const r=await fetch(S.url+'?action='+a+'&token='+TOK,{method:'GET'}); return await r.json(); }catch(e){ return {status:'error',error:'réseau'}; } };
+  try{
+    const [st,bk,mf,ai]=await Promise.all([get('storeHealth'),get('checkBackup'),get('mailFails'),get('aiUsage')]);
+    let h='';
+    // ① Stockage — c'est CE réservoir qui a lâché le 29/07 (512 Ko partagés par tous les comptes)
+    if(st&&st.status==='ok'){
+      const pct=+st.pourcentPlein||0;
+      const et=pct>=90?'ko':(pct>=75?'warn':'ok');
+      const ecr=(st.testEcriture==='ok');
+      h+=_healthRow('💾','Stockage des comptes',
+        (!ecr?'ko':et),
+        'Rempli à <b>'+pct+' %</b> ('+Math.round((st.totalOctets||0)/1024)+' Ko sur 500) · '+(st.nbCles||0)+' clés'
+        +(ecr?' · écriture OK':' · <b>ÉCRITURE IMPOSSIBLE</b> — plus rien ne se sauvegarde')
+        +(pct>=75?'<br>⚠️ Au-delà de 100 %, toutes les sauvegardes s\'arrêtent en silence (c\'est ce qui est arrivé le 29/07).':''));
+    } else h+=_healthRow('💾','Stockage des comptes','ko','Sonde injoignable : '+_escIdea((st&&st.error)||'?'));
+    // ② Sauvegardes de la nuit
+    if(bk&&bk.status==='ok'){
+      const dernier=(bk.lastFiles&&bk.lastFiles.length)?bk.lastFiles[bk.lastFiles.length-1]:'';
+      const m=dernier.match(/(\d{4}-\d{2}-\d{2})/);
+      // La date du jour vient de `today()` — celle du TÉLÉPHONE, jamais celle de Greenwich :
+      // c'est la règle du projet née du bug ft-v655, et un test permanent la fait respecter.
+      // (Le nom du fichier est écrit côté serveur en UTC : dans la fenêtre minuit → 2 h du matin
+      // à Paris, l'écart peut donc afficher un jour de plus. Assumé — mieux vaut ce décalage
+      // cosmétique qu'une exception à une règle née d'un vrai bug de dates.)
+      const jours=m?Math.round((Date.parse(today()+'T00:00:00Z')-Date.parse(m[1]+'T00:00:00Z'))/86400000):null;
+      const et=(!bk.triggersInstalled||jours===null||jours>2)?'ko':(jours>1?'warn':'ok');
+      h+=_healthRow('🌙','Sauvegardes automatiques', et,
+        (bk.triggersInstalled?'Programmée chaque nuit':'<b>AUCUNE programmation</b> — plus de sauvegarde !')
+        +' · '+(bk.fileCount||0)+' fichiers'
+        +(dernier?'<br>Dernière : <b>'+_escIdea(dernier)+'</b>'+(jours===null?'':(jours<=0?' (aujourd\'hui)':(jours===1?' (hier)':' (il y a '+jours+' j)'))):'<br><b>Aucune sauvegarde trouvée</b>'));
+    } else h+=_healthRow('🌙','Sauvegardes automatiques','ko','Sonde injoignable : '+_escIdea((bk&&bk.error)||'?'));
+    // ③ Mails — c'est ce qui a fait perdre le message de Christophe
+    if(mf&&mf.status==='ok'){
+      const n=(mf.fails&&mf.fails.length)||mf.count||0;
+      const reste=(mf.quotaRestant!==undefined)?mf.quotaRestant:null;
+      h+=_healthRow('✉️','Envoi des mails', n>0?'ko':'ok',
+        n>0?('<b>'+n+' échec'+(n>1?'s':'')+'</b> — des messages de testeurs ont pu se perdre')
+           :('Aucun échec'+(reste!==null?' · quota restant : '+reste:'')));
+    } else h+=_healthRow('✉️','Envoi des mails','warn','Sonde injoignable : '+_escIdea((mf&&mf.error)||'?'));
+    // ④ Consommation IA (le coût)
+    if(ai&&ai.status==='ok'){
+      const u=ai.used!==undefined?ai.used:(ai.count!==undefined?ai.count:null);
+      h+=_healthRow('🤖','Consommation IA','ok', u!==null?('<b>'+u+'</b> appels comptés'+(ai.limit?' (plafond '+ai.limit+')':'')):'Compteur lu, rien d\'anormal');
+    } else h+=_healthRow('🤖','Consommation IA','warn','Sonde injoignable : '+_escIdea((ai&&ai.error)||'?'));
+    box.innerHTML=h+'<div style="font-size:11px;color:var(--t3);margin-top:8px;">Vérifié le '+new Date().toLocaleString('fr-FR')+'</div>';
+  }catch(e){
+    box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réseau injoignable — réessaie.</div>';
+  }
+}
+
 // ─── DÉDICACE ANNIVERSAIRE — Eline (2 juillet) ───────────────
 let _bdayCandlesLeft=19;
 const _bdayCandles=[];

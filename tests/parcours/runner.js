@@ -692,6 +692,52 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('les plus demandés en haut, avec leur nombre', adm.trie&&adm.compte, JSON.stringify(adm));
   t('les muscles cochés sont montrés · ceux qui manquent sont signalés',
     adm.muscles&&adm.signale, JSON.stringify(adm));
+
+  // ── SANTÉ DU SYSTÈME : les 4 sondes existaient, mais il fallait taper une URL avec un jeton
+  // à la main → jamais consultées. La panne du 29/07 (stockage plein à 102 %, plus aucune
+  // écriture pendant 2 jours) était lisible dès le 1ᵉʳ jour par `storeHealth`.
+  // ⚠️ la date doit venir de la PAGE (fuseau Europe/Paris), pas du conteneur Node (UTC) :
+  // sinon le test échoue entre minuit et 2 h du matin — constaté le 02/08.
+  const aujPage = await p3.evaluate(()=>today());
+  const scenario = (nom) => p3.route('**/*exec*', route => {
+    const u=route.request().url();
+    const J=o=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(o)});
+    const auj=aujPage;
+    if(u.includes('storeHealth')) return J(nom==='ok'
+      ? {status:'ok',pourcentPlein:41,totalOctets:210000,nbCles:38,testEcriture:'ok'}
+      : {status:'ok',pourcentPlein:102,totalOctets:524000,nbCles:44,testEcriture:'ECHEC: quota'});
+    if(u.includes('checkBackup')) return J(nom==='ok'
+      ? {status:'ok',triggersInstalled:1,fileCount:34,lastFiles:['backup-'+auj+'.json']}
+      : {status:'ok',triggersInstalled:0,fileCount:12,lastFiles:['backup-2026-07-20.json']});
+    if(u.includes('mailFails')) return J(nom==='ok'
+      ? {status:'ok',fails:[],quotaRestant:98} : {status:'ok',fails:[{d:'a'},{d:'b'}]});
+    if(u.includes('aiUsage')) return J({status:'ok',used:127,limit:1000});
+    return J({status:'ok'});
+  });
+  const lire=async()=>p3.evaluate(async()=>{
+   try{
+    if(typeof loadHealthAdmin!=='function')return {erreur:'loadHealthAdmin absente'};
+    S.url='https://example.invalid/exec';
+    localStorage.setItem('ft4_admin_ok','1');
+    await loadHealthAdmin();
+    const box=document.getElementById('admin-health');
+    return {rouges:(box.innerHTML.match(/🔴/g)||[]).length,
+            verts:(box.innerHTML.match(/🟢/g)||[]).length,
+            txt:(box.textContent||'').replace(/\s+/g,' ')};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  await scenario('ok');   const hOk=await lire();
+  await scenario('panne'); const hKo=await lire();
+  t('⭐ le tableau de santé s\'affiche et tout est vert quand tout va bien',
+    hOk.verts===4&&hOk.rouges===0, JSON.stringify(hOk).slice(0,200));
+  t('⭐ la panne du 29/07 (stockage plein, écriture impossible) serait VUE',
+    hKo.rouges>=1&&/102 %/.test(hKo.txt)&&/ÉCRITURE IMPOSSIBLE/.test(hKo.txt),
+    JSON.stringify(hKo).slice(0,200));
+  t('sauvegardes arrêtées et mails en échec sont signalés en rouge',
+    hKo.rouges===3&&/AUCUNE programmation/.test(hKo.txt)&&/2 échecs/.test(hKo.txt),
+    JSON.stringify(hKo).slice(0,220));
+  t('une sauvegarde faite aujourd\'hui se lit « aujourd\'hui », pas « il y a 1 j »',
+    /aujourd/.test(hOk.txt)&&!/il y a 1 j/.test(hOk.txt), hOk.txt.slice(0,160));
   await c3.close();
 }
 

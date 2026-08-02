@@ -844,6 +844,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadCustomExAdmin()" style="padding:11px;font-size:14px;">🏋️ Voir les exercices demandés</button>
       <div id="admin-cex-list" style="margin-top:4px;"></div>
     </div>
+    <!-- Les 4 sondes de diagnostic existaient déjà, mais il fallait taper une URL avec un jeton
+         à la main — donc personne ne les consultait. La panne du 29/07 (réservoir plein à 102 %,
+         plus aucune écriture pendant 2 jours) était visible par `storeHealth` : elle n'a été vue
+         que 2 jours plus tard. Même leçon que le Google Sheet : la donnée doit venir à toi. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🩺 Santé du système</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Les 4 alertes qui ne préviennent personne : le <strong>stockage</strong> (c'est lui qui a lâché le 29 juillet), les <strong>sauvegardes</strong> de la nuit, les <strong>mails</strong> qui ne partent pas, et la <strong>consommation IA</strong>. À regarder de temps en temps.</div>
+      <button class="btn btn-bg2" onclick="loadHealthAdmin()" style="padding:11px;font-size:14px;">🩺 Vérifier maintenant</button>
+      <div id="admin-health" style="margin-top:4px;"></div>
+    </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🧪 Laboratoire Milo · PT-001 (continuité)</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Rejoue <strong>tout ton historique</strong> de séances dans l'ordre : Milo débriefe chacune et <strong>vérifie l'objectif de la fois d'avant</strong>. Sert à valider la <strong>continuité de sa mémoire</strong> et à voir si <strong>ça sature</strong> sur un gros historique. À la fin : la question « Qui suis-je en tant que sportif&nbsp;? » + un <strong>rapport exportable</strong> (texte + PDF). Prend plusieurs minutes, coûte quelques appels au modèle. Aucune donnée effacée.</div>

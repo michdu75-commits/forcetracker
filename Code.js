@@ -313,7 +313,12 @@ function doGet(e) {
 
   // Vérification état backup Drive — ?action=checkBackup&token=<BACKUP_TOKEN>
   if (p.action === 'checkBackup') {
-    if (!_checkTok_('BACKUP_TOKEN', p.token)) return json_({status:'error', error:'unauthorized'});
+    // Accepte AUSSI le jeton des idées (hash en dur, fiable) : `BACKUP_TOKEN` est une Script
+    // Property, et sur ce projet elles ne persistent pas (c'est exactement pourquoi IDEES_TOKEN
+    // a dû passer en hash codé en dur, @auto 2026-07-12). Sans ça la sonde des sauvegardes est
+    // inutilisable — donc jamais consultée. L'ancien jeton reste accepté (rétrocompatible).
+    if (!_checkTok_('BACKUP_TOKEN', p.token) && !_checkIdeesTok_(p.token))
+      return json_({status:'error', error:'unauthorized'});
     try {
       const cnt = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'backupAllUserData_').length;
       const folder = _getDriveBackupFolder_();
