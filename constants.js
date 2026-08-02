@@ -197,11 +197,11 @@ const EXLIB=[
   {n:'Assault Air Bike',g:'Full Body'},{n:'Ergomètre de Ski (Ski Erg)',g:'Full Body'},
   {n:'Jumping Jack',g:'Full Body'},{n:'Marche de l\'Ours (Bear Crawl)',g:'Full Body'},
   {n:'Wall Ball',g:'Full Body'},
-  {n:'Chariot — Poussée',g:'Full Body'},{n:'Chariot — Tirage en Avançant',g:'Full Body'},
-  {n:'Chariot — Tirage Dos',g:'Dos'},{n:'Chariot — Tirage de Côté',g:'Dos'},
-  {n:'Chariot — Tirage Inversé Jambes',g:'Jambes'},{n:'Chariot — Tirage Épaules',g:'Épaules'},
-  {n:'Chariot — Fentes Arrière',g:'Jambes'},{n:'Chariot — Curl Biceps',g:'Biceps'},
-  {n:'Chariot — Extension Triceps',g:'Triceps'},
+  {n:'Chariot de Puissance — Poussée',g:'Full Body'},{n:'Chariot de Puissance — Tirage en Avançant',g:'Full Body'},
+  {n:'Chariot de Puissance — Tirage Dos',g:'Dos'},{n:'Chariot de Puissance — Tirage de Côté',g:'Dos'},
+  {n:'Chariot de Puissance — Tirage Inversé Jambes',g:'Jambes'},{n:'Chariot de Puissance — Tirage Épaules',g:'Épaules'},
+  {n:'Chariot de Puissance — Fentes Arrière',g:'Jambes'},{n:'Chariot de Puissance — Curl Biceps',g:'Biceps'},
+  {n:'Chariot de Puissance — Extension Triceps',g:'Triceps'},
 ];
 const BIG3=['Squat à la Barre','Développé Couché','Soulevé de Terre'];
 const BIG4=['Squat à la Barre','Soulevé de Terre','Développé Couché','Développé Militaire'];

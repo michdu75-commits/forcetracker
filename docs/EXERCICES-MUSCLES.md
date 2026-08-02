@@ -2,7 +2,7 @@
 
 > **⚙️ FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer : `node tools/exercices-muscles.js`
 > (il interroge les vraies fonctions de l'app : `_mscScores` / `_calSessRegion` / `_movPattern`).
-> Dernière génération : 2026-08-01 · **340 exercices** du catalogue.
+> Dernière génération : 2026-08-02 · **340 exercices** du catalogue.
 >
 > **Comment lire :** les muscles **principaux** sont ceux que la figurine colorie le plus fort,
 > les *secondaires* sont coloriés plus doux. La **région** est celle utilisée par la couleur du
@@ -20,9 +20,9 @@
 | Belt Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Squat (flexion hanche+genou) |
 | Box Jump | **Quadriceps, Fessiers** | Mollets, Ischio-jambiers | Saut / pliométrie |
 | Chaise (Wall Sit) | **Quadriceps** | Fessiers, Abdominaux | Squat (flexion hanche+genou) |
-| Chariot — Fentes Arrière | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
-| Chariot — Poussée | **Quadriceps, Fessiers** | Mollets, Abdominaux | Tirage horizontal |
-| Chariot — Tirage Inversé Jambes | **Quadriceps** | Fessiers, Mollets | Tirage horizontal |
+| Chariot de Puissance — Fentes Arrière | **Quadriceps, Fessiers** | Ischio-jambiers | Fente |
+| Chariot de Puissance — Poussée | **Quadriceps, Fessiers** | Mollets, Abdominaux | Tirage horizontal |
+| Chariot de Puissance — Tirage Inversé Jambes | **Quadriceps** | Fessiers, Mollets | Tirage horizontal |
 | Cossack Squat | **Quadriceps, Fessiers** | Ischio-jambiers, Mollets, Bas du dos | Fente |
 | Curl Ischio-jambiers (Leg Curl) | **Ischio-jambiers, Fessiers** | Bas du dos, Mollets | Flexion de genou (ischios) |
 | Élévations Mollets Assis | **Mollets** | — | Extension de cheville (mollets) |
@@ -117,8 +117,8 @@
 |---|---|---|---|
 | Barre au Front | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
 | Bench Dips | **Triceps, Pectoraux** | Deltoïdes ant. | Poussée horizontale (pectoraux) |
-| Chariot — Extension Triceps | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
-| Chariot — Tirage Épaules | **Deltoïdes ant., Deltoïdes lat.** | Trapèzes, Biceps | Tirage horizontal |
+| Chariot de Puissance — Extension Triceps | **Triceps** | Deltoïdes ant. | Extension du coude (triceps) |
+| Chariot de Puissance — Tirage Épaules | **Deltoïdes ant., Deltoïdes lat.** | Trapèzes, Biceps | Tirage horizontal |
 | Chest Press Machine Déclinée | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Chest Press Machine Horizontale | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
 | Chest Press Machine Inclinée | **Pectoraux** | Deltoïdes ant., Triceps | Poussée horizontale (pectoraux) |
@@ -228,10 +228,10 @@
 
 | Exercice | Muscles principaux (figurine) | Muscles secondaires | Schéma de mouvement |
 |---|---|---|---|
-| Chariot — Curl Biceps | **Biceps** | Avant-bras | Flexion du coude (biceps) |
-| Chariot — Tirage de Côté | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
-| Chariot — Tirage Dos | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
-| Chariot — Tirage en Avançant | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
+| Chariot de Puissance — Curl Biceps | **Biceps** | Avant-bras | Flexion du coude (biceps) |
+| Chariot de Puissance — Tirage de Côté | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
+| Chariot de Puissance — Tirage Dos | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
+| Chariot de Puissance — Tirage en Avançant | **Grand dorsal** | Biceps, Deltoïdes post., Trapèzes | Tirage horizontal |
 | Curl Araignée (Spider Curl) | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Curl Barre | **Biceps** | Avant-bras | Flexion du coude (biceps) |
 | Curl Barre EZ Prise Large | **Biceps** | Avant-bras | Flexion du coude (biceps) |

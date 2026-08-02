@@ -426,9 +426,9 @@ t('⭐ « Traction Lestée » et « Tractions (Pull-up) » ont chacune LEUR dém
 // sortait en dorsaux. Elles sont remontées AVANT.
 const card=await p.evaluate(()=>{
   const noms=['Assault Air Bike','Ergomètre de Ski (Ski Erg)','Jumping Jack','Marche de l\'Ours (Bear Crawl)',
-    'Wall Ball','Chariot — Poussée','Chariot — Tirage en Avançant','Chariot — Tirage Dos',
-    'Chariot — Tirage de Côté','Chariot — Tirage Inversé Jambes','Chariot — Tirage Épaules',
-    'Chariot — Fentes Arrière','Chariot — Curl Biceps','Chariot — Extension Triceps'];
+    'Wall Ball','Chariot de Puissance — Poussée','Chariot de Puissance — Tirage en Avançant','Chariot de Puissance — Tirage Dos',
+    'Chariot de Puissance — Tirage de Côté','Chariot de Puissance — Tirage Inversé Jambes','Chariot de Puissance — Tirage Épaules',
+    'Chariot de Puissance — Fentes Arrière','Chariot de Puissance — Curl Biceps','Chariot de Puissance — Extension Triceps'];
   const g=n=>{const d=_mscScores([{name:n,sets:[{done:true}]}])||{};return Object.keys(d.sc||{}).sort().join(',');};
   const out={dansExlib:0,avecMuscles:0,avecPattern:0,muets:[]};
   for(const n of noms){
@@ -437,9 +437,9 @@ const card=await p.evaluate(()=>{
     if(m.length)out.avecMuscles++; if(pt)out.avecPattern++;
     if(!m.length||!pt)out.muets.push(n);
   }
-  out.chEpaules=g('Chariot — Tirage Épaules');
-  out.chJambes=g('Chariot — Tirage Inversé Jambes');
-  out.chDos=g('Chariot — Tirage Dos');           // témoin : le tirage DOS reste dorsal
+  out.chEpaules=g('Chariot de Puissance — Tirage Épaules');
+  out.chJambes=g('Chariot de Puissance — Tirage Inversé Jambes');
+  out.chDos=g('Chariot de Puissance — Tirage Dos');           // témoin : le tirage DOS reste dorsal
   out.airbike=_movPattern('Assault Air Bike');
   out.demos={burpees:(EX_YT['Burpees']||{}).img,corde:(EX_YT['Sauts à la Corde']||{}).img,
              grimpeur:(EX_YT['Grimpeur (Mountain Climber)']||{}).img,box:(EX_YT['Box Jump']||{}).img};
@@ -451,7 +451,26 @@ t('⭐ chariot : « Tirage Épaules » = épaules et « Tirage Inversé Jambes �
   card.chEpaules.indexOf('front-delt')>=0&&card.chJambes.indexOf('quads')>=0
   &&card.chEpaules.indexOf('lats')<0&&card.chJambes.indexOf('lats')<0,
   card.chEpaules+' / '+card.chJambes);
-t('témoin : le « Chariot — Tirage Dos » reste bien dorsal',
+// ── NOM DE LA MACHINE (retour Michel 02/08, photo de sa source à l'appui : « EXERCICES AVEC
+// POWER SLED ») : « Chariot » tout court était imprécis → « Chariot de Puissance ». On vérifie
+// que les 4 façons de la chercher marchent, y compris le terme anglais de la machine.
+const chariot=await p.evaluate(()=>{
+  const noms=[...new Set(EXLIB.map(e=>e.n))].filter(n=>/Chariot/.test(n));
+  const cherche=q=>{document.getElementById('ex-search').value=q;filterEx();
+    const n=(document.getElementById('ex-list').innerHTML.match(/class="ex-pick-name">Chariot/g)||[]).length;
+    document.getElementById('ex-search').value='';filterEx();return n;};
+  return {nb:noms.length, ancienNom:noms.some(n=>!/Chariot de Puissance/.test(n)),
+          demos:noms.filter(n=>EX_YT[n]).length,
+          chariot:cherche('chariot'), puissance:cherche('puissance'),
+          powerSled:cherche('power sled'), sled:cherche('sled')};
+});
+t('⭐ les 9 exercices s\'appellent « Chariot de Puissance » (plus « Chariot » seul)',
+  chariot.nb===9&&!chariot.ancienNom, JSON.stringify(chariot));
+t('⭐ ils se trouvent par « chariot », « puissance », « sled » ET « power sled »',
+  chariot.chariot===9&&chariot.puissance===9&&chariot.sled===9&&chariot.powerSled===9,
+  JSON.stringify(chariot));
+t('le renommage n\'a fait perdre aucune démo', chariot.demos===9, 'démos : '+chariot.demos+'/9');
+t('témoin : le « Chariot de Puissance — Tirage Dos » reste bien dorsal',
   card.chDos.indexOf('lats')>=0, card.chDos);
 t('les machines cardio ont un schéma « cardio » (plus invisibles à l\'équilibre de séance)',
   card.airbike==='cardio', card.airbike);
