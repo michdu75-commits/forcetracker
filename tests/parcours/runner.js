@@ -811,6 +811,50 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c4.close();
 }
 
+// ── POIDS DE LA BARRE (Michel 02/08 : « on peut le mettre ? ») ─────────────────
+// Il EXISTAIT dans le code (S.barW, ft4_bar, lu par le calculateur de plaques) mais son champ
+// avait disparu de l'interface : setup.js cherchait un `bar-inp` introuvable → la barre restait
+// figée à 20 kg pour tout le monde, y compris avec une olympique femme (15 kg) ou une EZ.
+{
+  const c5=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const p5=await c5.newPage();
+  await p5.addInitScript(seedScript({}));
+  await p5.goto('http://localhost:'+PORT+'/index.html');
+  await p5.waitForTimeout(2200);
+  const br=await p5.evaluate(()=>{
+   try{
+    if(typeof setBarWeight!=='function')return {erreur:'setBarWeight absente'};
+    const o={};
+    openPlateCalc(60,null);
+    o.champ=!!document.getElementById('bar-inp');
+    setBarWeight(15);
+    o.val=S.barW; o.stocke=localStorage.getItem('ft4_bar'); o.disp=(document.getElementById('bar-disp')||{}).textContent;
+    document.getElementById('plate-kg').value='55'; renderPlates();
+    o.plaques15=document.getElementById('plate-result').textContent;
+    setBarWeight(20); document.getElementById('plate-kg').value='55'; renderPlates();
+    o.plaques20=document.getElementById('plate-result').textContent;
+    setBarWeight(999); o.max=S.barW;
+    setBarWeight(15);
+    // ⚠️ enregistrer le PROFIL ne doit PAS réécrire le poids de la barre (une donnée, un
+    // seul propriétaire — sinon le champ de la modale, resté à 20, écraserait le réglage).
+    o.avant=S.barW;
+    try{ if(typeof saveProfile==='function') saveProfile(); }catch(e){}
+    o.apres=S.barW;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ le poids de la barre est RÉGLABLE (le champ avait disparu de l\'interface)',
+    br.champ&&br.val===15, JSON.stringify(br).slice(0,180));
+  t('il est retenu pour les prochaines fois', br.stocke==='15'&&br.disp==='15', 'stocké '+br.stocke+' · affiché '+br.disp);
+  t('⭐ le calcul de plaques suit le poids de la barre',
+    /20kg = 55kg/.test(br.plaques15||'')&&/15kg\+2.5kg = 55kg/.test(br.plaques20||''),
+    'barre 15 → '+br.plaques15+' | barre 20 → '+br.plaques20);
+  t('valeur aberrante bornée (999 → 60 kg max)', br.max===60, 'reçu '+br.max);
+  t('⭐ enregistrer le profil n\'écrase PAS le réglage (une donnée, un seul propriétaire)',
+    br.avant===15&&br.apres===15, br.avant+' → '+br.apres);
+  await c5.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

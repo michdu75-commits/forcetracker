@@ -2013,16 +2013,14 @@ function saveProfile(){
   const ht=parseFloat(document.getElementById('ht-inp').value);
   const bw=parseFloat(document.getElementById('bw-inp').value);
   const actEl=document.getElementById('act-sel');
-  const barEl=document.getElementById('bar-inp');
   const restEl=document.getElementById('rest-sel');
   const act=actEl?parseFloat(actEl.value):S.activityLevel;
-  const bar=barEl?parseFloat(barEl.value):S.barW;
   const rest=restEl?parseInt(restEl.value):S.defRest;
   if(age){if(age>13&&age<100)S.age=age;else{toast('Âge invalide (14–99 ans)','error');return;}}
   if(ht){if(ht>100&&ht<230)S.height=ht;else{toast('Taille invalide (100–229 cm)','error');return;}}
   if(bw){if(bw>20&&bw<300)S.bw=bw;else{toast('Poids invalide (20–299 kg)','error');return;}}
   if(act) S.activityLevel=act;
-  if(bar&&bar>0) S.barW=bar;
+  // (poids de la barre : propriétaire unique = setBarWeight(), dans le calculateur de plaques)
   if(rest) S.defRest=rest;
   const csEl=document.getElementById('cycle-start-inp');
   const cdEl=document.getElementById('cycle-dur-inp');

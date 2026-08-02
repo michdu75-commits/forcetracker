@@ -5370,7 +5370,20 @@ function toggleExGif(ei,name){
 
 // ─── PLATE CALCULATOR ────────────────────────────────────────
 let plateExIdx=null;
-function openPlateCalc(kg,ei){plateExIdx=ei;document.getElementById('plate-kg').value=kg||'';document.getElementById('bar-disp').textContent=S.barW;document.getElementById('plate-apply').style.display=ei!==null&&ei!==undefined?'':'none';renderPlates();document.getElementById('mod-plate').classList.add('open');}
+// Le poids de la barre : réglable depuis le calculateur, et RETENU (ft4_bar). Le champ avait
+// disparu de l'interface alors que le code le lisait toujours (`bar-inp`) → la barre restait
+// figée à 20 kg pour tout le monde, y compris avec une barre olympique femme (15 kg) ou une EZ.
+function setBarWeight(v){
+  const n=Math.max(1,Math.min(60,parseFloat(v)||20));
+  S.barW=n;
+  try{localStorage.setItem('ft4_bar',String(n));}catch(e){}
+  const inp=document.getElementById('bar-inp');
+  if(inp&&parseFloat(inp.value)!==n)inp.value=n;      // clic sur un raccourci → refléter dans le champ
+  const disp=document.getElementById('bar-disp'); if(disp)disp.textContent=n;
+  renderPlates();
+  if(typeof persist==='function')persist();           // part aussi dans la sauvegarde cloud
+}
+function openPlateCalc(kg,ei){plateExIdx=ei;document.getElementById('plate-kg').value=kg||'';document.getElementById('bar-disp').textContent=S.barW;const _bi=document.getElementById('bar-inp');if(_bi)_bi.value=S.barW;document.getElementById('plate-apply').style.display=ei!==null&&ei!==undefined?'':'none';renderPlates();document.getElementById('mod-plate').classList.add('open');}
 function closePlate(){document.getElementById('mod-plate').classList.remove('open');}
 function calcPlatesArr(t,bar){const ps=[25,20,15,10,5,2.5,1.25,0.5];let r=(t-bar)/2;if(r<0)return null;const res=[];for(const p of ps){while(r>=p-.001){res.push(p);r=Math.round((r-p)*1000)/1000;}}return res;}
 function plateCls(p){return p>=25?'p25':p>=20?'p20':p>=15?'p15':p>=10?'p10':p>=5?'p5':p>=2?'p2':'p1';}
