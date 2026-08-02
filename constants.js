@@ -250,6 +250,7 @@ const PREMIUM_PERKS=[
 ];
 
 const NEW_FEATURES=[
+  {id:'modes-alim', screen:'nutrition', desc:'Nouveaux modes alimentaires : Cétogène · Low carb · Paléo · Méditerranéen — et le jeûne intermittent (16/8, 18/6, 20/4). Tes macros ET tes repas suggérés s\'adaptent'},
   {id:'cardio-2moments', screen:'log', desc:'Le cardio se note maintenant AVANT (échauffement) ET APRÈS ta séance — les deux séparément, avec leurs calories additionnées. Parce que 10 min de vélo pour t\'échauffer et 25 min de tapis en fin de séance, ce n\'est pas la même chose'},
   {id:'exos-materiel', screen:'log', desc:'La liste des exercices est maintenant rangée PAR MATÉRIEL pour tout le monde : 🏋️ Barre · 💪 Poids libre · ⚙️ Guidé · 🤸 Poids du corps · 🎗️ Élastique · 🪢 TRX/Sangles · 🏃 Cardio. Tu t\'entraînes à la maison ? Cherche « élastique » ou « TRX »'},
   {id:'exos-maison', screen:'log', desc:'Nouveau : 16 exercices jambes ajoutés avec leur animation — dont les versions ÉLASTIQUE et TRX (le matériel est écrit dans le nom : cherche « élastique » ou « TRX » pour les trouver d\'un coup). Pratique pour s\'entraîner à la maison'},

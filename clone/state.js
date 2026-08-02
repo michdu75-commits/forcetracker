@@ -60,7 +60,14 @@ function load(){
     S.barW=parseFloat(localStorage.getItem('ft4_bar')||'20')||20;
     S.defRest=parseInt(localStorage.getItem('ft4_rest')||'130')||130;
     S.expandAll=localStorage.getItem('ft4_expandall')==='1'; // option « tout dérouler » les exercices en séance (retour Emma)
-    S.keto=localStorage.getItem('ft4_keto')==='1'; // régime cétogène : macros 5/15/80 (retour Emma)
+    // MODE alimentaire — un seul à la fois : ils se contredisent (on n'est pas kéto ET low carb).
+    // '' | keto | lowcarb | paleo | mediterraneen. ⚠️ RÉTROCOMPAT : les comptes qui avaient
+    // l'ancien interrupteur `ft4_keto` basculent en mode 'keto' sans rien perdre.
+    S.foodMode=localStorage.getItem('ft4_foodmode')||(localStorage.getItem('ft4_keto')==='1'?'keto':'');
+    S.keto=(S.foodMode==='keto'); // alias conservé : plusieurs endroits le lisent encore
+    // JEÛNE INTERMITTENT — indépendant du mode : c'est une question d'HORAIRES, pas de macros.
+    // '' | 16-8 | 18-6 | 20-4 (heures de jeûne / fenêtre où l'on mange).
+    S.fasting=localStorage.getItem('ft4_fasting')||'';
     S.gender=localStorage.getItem('ft4_gender')||'H';
     S.age=parseInt(localStorage.getItem('ft4_age')||'0')||0;
     S.height=parseFloat(localStorage.getItem('ft4_ht')||'0')||0;
@@ -302,7 +309,7 @@ function persist(){
   if(window._demoMode)return;
   try{
     localStorage.setItem('ft4_bw',S.bw);localStorage.setItem('ft4_bar',S.barW);
-    localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_keto',S.keto?'1':'0');localStorage.setItem('ft4_gender',S.gender);
+    localStorage.setItem('ft4_rest',S.defRest);localStorage.setItem('ft4_expandall',S.expandAll?'1':'0');localStorage.setItem('ft4_keto',S.keto?'1':'0');localStorage.setItem('ft4_foodmode',S.foodMode||'');localStorage.setItem('ft4_fasting',S.fasting||'');localStorage.setItem('ft4_gender',S.gender);
     localStorage.setItem('ft4_age',S.age);localStorage.setItem('ft4_ht',S.height);
     localStorage.setItem('ft4_act',S.activityLevel);
     localStorage.setItem('ft4_sessions',JSON.stringify((S.sessions||[]).slice(0,1500)));
@@ -521,12 +528,24 @@ function macrosForKcal(kcal){
   const goal=S.goal||'muscle';
   // Régime cétogène (keto, retour Emma) : répartition par POURCENTAGES de calories au lieu du g/kg
   // — 5% glucides / 15% protéines / 80% lipides (standard keto, celui de sa nutritionniste).
-  if(S.keto){
+  if(S.foodMode==='keto'||S.keto){
     const carbs_g=Math.max(0,Math.round(kcal*0.05/4));
     const prot_g =Math.max(0,Math.round(kcal*0.15/4));
     const fat_g  =Math.max(0,Math.round(kcal*0.80/9));
     return{prot_g,fat_g,carbs_g};
   }
+  // LOW CARB : glucides réduits SANS viser la cétose — 25 % glucides / 30 % protéines / 45 % lipides.
+  // C'est le choix de ceux à qui le kéto est trop dur à tenir : on garde assez de glucides pour
+  // l'entraînement en force, ce que 5 % ne permet pas confortablement.
+  if(S.foodMode==='lowcarb'){
+    const carbs_g=Math.max(0,Math.round(kcal*0.25/4));
+    const prot_g =Math.max(0,Math.round(kcal*0.30/4));
+    const fat_g  =Math.max(0,Math.round(kcal*0.45/9));
+    return{prot_g,fat_g,carbs_g};
+  }
+  // PALÉO et MÉDITERRANÉEN ne fixent PAS de répartition de macros : ce sont des choix
+  // d'ALIMENTS. On garde donc le calcul normal et on change seulement les repas suggérés —
+  // inventer une répartition « paléo » serait un faux-précis (principe 5 de la philosophie).
   const cp=getMensCyclePhase();
   const lutealProt=cp&&cp.phase==='Lutéale'?0.2:0;
   const protRatio=({muscle:2.2,perte:2.5,recomp:2.6,force:2.0,equilibre:2.0,endurance:1.7}[goal]||2.2)+lutealProt;
@@ -569,6 +588,8 @@ function calcMacros(phase){
 //  · le KÉTO a son PROPRE plan — substituer mot à mot donnerait « Œufs brouillés + œufs » ;
 //  · les autres régimes gardent la structure du plan et changent l'ALIMENT (une source de
 //    protéines reste une source de protéines) — c'est suffisant et ça reste maintenable.
+const FOOD_MODE_LABELS={keto:'Cétogène (keto)',lowcarb:'Low carb',paleo:'Paléo',mediterraneen:'Méditerranéen'};
+const FASTING_LABELS={'16-8':'16/8 (fenêtre de 8 h)','18-6':'18/6 (fenêtre de 6 h)','20-4':'20/4 (fenêtre de 4 h)'};
 const KETO_MEALS=[
   [0.25,'🌅 Petit-déjeuner','Œufs brouillés au beurre + avocat — Démarrage sans glucides'],
   [0.10,'🥜 Collation','Amandes + fromage à pâte dure — Lipides et satiété'],
@@ -576,6 +597,34 @@ const KETO_MEALS=[
   [0.10,'🧀 Collation 2','Yaourt grec entier + noix de macadamia'],
   [0.25,'🌙 Dîner','Saumon + épinards à la crème + avocat — Riche en oméga-3'],
 ];
+// LOW CARB : moins strict que le kéto — les glucides restent, mais peu et bien placés
+// (autour de l'entraînement, là où ils servent).
+const LOWCARB_MEALS=[
+  [0.25,'🌅 Petit-déjeuner','Œufs + avocat + quelques fruits rouges — Peu de glucides au réveil'],
+  [0.10,'🥜 Collation','Fromage blanc + noix — Protéines et satiété'],
+  [0.30,'🍽️ Déjeuner','Poulet + légumes verts + une portion de riz — Glucides mesurés'],
+  [0.10,'⚡ Autour de la séance','Fruit + protéine — Les glucides là où ils servent'],
+  [0.25,'🌙 Dîner','Poisson + légumes rôtis + huile d\'olive — Léger le soir'],
+];
+// PALÉO : ni céréales, ni laitages, ni produits transformés. Pas de répartition macro imposée —
+// c'est une liste d'aliments, donc seuls les repas changent.
+const PALEO_MEALS=[
+  [0.25,'🌅 Petit-déjeuner','Œufs + patate douce + fruits — Sans céréales ni laitage'],
+  [0.10,'🥜 Collation','Fruits à coque + fruit de saison'],
+  [0.30,'🍽️ Déjeuner','Viande ou poisson + légumes + huile d\'olive — Aliments bruts'],
+  [0.10,'🥑 Collation 2','Avocat + amandes'],
+  [0.25,'🌙 Dîner','Poisson + légumes racines rôtis — Simple et non transformé'],
+];
+// MÉDITERRANÉEN : beaucoup de végétaux, poisson, huile d'olive. Le mieux documenté côté santé
+// cardio-vasculaire — d'où sa place ici, sans en faire une promesse médicale.
+const MEDITERRANEEN_MEALS=[
+  [0.25,'🌅 Petit-déjeuner','Pain complet + huile d\'olive + tomates + fromage de brebis'],
+  [0.10,'🍎 Collation','Fruits frais + une poignée de noix'],
+  [0.30,'🍽️ Déjeuner','Poisson + légumes + pois chiches + huile d\'olive — Le cœur du modèle'],
+  [0.10,'🫒 Collation 2','Yaourt nature + olives'],
+  [0.25,'🌙 Dîner','Légumes farcis + lentilles + filet d\'huile d\'olive'],
+];
+const _MODE_MEALS={keto:KETO_MEALS,lowcarb:LOWCARB_MEALS,paleo:PALEO_MEALS,mediterraneen:MEDITERRANEEN_MEALS};
 // [contrainte, ce qu'on remplace, par quoi]. Appliqué dans l'ordre : le premier qui matche gagne
 // pour un aliment donné, donc on met les régimes les plus restrictifs en premier.
 const _DIET_SWAPS=[
@@ -715,8 +764,24 @@ function getMeals(macros,phase){
   };
   // Le KÉTO prime sur l'objectif : sa structure de repas est dictée par les macros (5/15/80),
   // pas par le but recherché — un plan « force » plein de riz n'aurait aucun sens en cétogène.
-  const plan=S.keto?KETO_MEALS:(plans[goal]||(goal==='recomp'?plans.perte:plans.muscle)); // recomp → plan orienté satiété/perte de gras
-  return plan.map(([pct,name,desc0])=>{
+  // Le MODE alimentaire prime sur l'objectif : un plan « force » plein de riz n'aurait aucun
+  // sens en cétogène, ni un petit-déjeuner de céréales en paléo.
+  const plan=_MODE_MEALS[S.foodMode]||(S.keto?KETO_MEALS:null)||(plans[goal]||(goal==='recomp'?plans.perte:plans.muscle)); // recomp → plan orienté satiété/perte de gras
+  // ── JEÛNE INTERMITTENT : ce n'est PAS une question de macros mais d'HORAIRES. Les calories
+  // de la journée ne changent pas — elles se concentrent dans la fenêtre où l'on mange. Le
+  // petit-déjeuner disparaît donc, et ses calories sont redistribuées sur les repas restants
+  // (sinon on afficherait une journée incomplète, ce qui pousserait à sous-manger).
+  let plan2=plan;
+  if(S.fasting){
+    const FEN={'16-8':'12 h → 20 h','18-6':'13 h → 19 h','20-4':'15 h → 19 h'}[S.fasting]||'';
+    const restants=plan.filter(([,nom])=>!/petit-déjeuner/i.test(nom));
+    if(restants.length){
+      const perdu=plan.filter(([,nom])=>/petit-déjeuner/i.test(nom)).reduce((a,[p])=>a+p,0);
+      const bonus=perdu/restants.length;
+      plan2=restants.map(([p,nom,d],i)=>[p+bonus, (i===0?'⏳ Rupture du jeûne'+(FEN?' ('+FEN.split('→')[0].trim()+')':''):nom), d]);
+    }
+  }
+  return plan2.map(([pct,name,desc0])=>{
     const desc=_adaptMealDesc(desc0);
     const kcal=Math.round(macros.calories*pct);
     const prot=Math.round(macros.prot_g*pct);

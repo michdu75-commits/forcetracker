@@ -313,6 +313,8 @@ function _cloudSync(){
       activityLevel:S.activityLevel,workType:S.workType,smoker:S.smoker,
       neck:S.neck,waist:S.waist,hip:S.hip,targetWeight:S.targetWeight||0,strengthGoals:S.strengthGoals||{},manualKcal:S.manualKcal||0,nutritionPhase:S.nutritionPhase,
       barW:S.barW,defRest:S.defRest,mensCycleStart:S.mensCycleStart,mensCycleDur:S.mensCycleDur,contraception:S.contraception||'',
+      foodMode:S.foodMode||'',fasting:S.fasting||'',   // mode alimentaire + jeûne (02/08)
+
       morpho:S.morpho||'',morphotype:S.morphotype||'',
       bday:S.bday||'',badges:S.badges||{},
       histImports:S.histImports||0,
@@ -2093,6 +2095,8 @@ function _applyRestoreData(raw){
   try{if(d.hip)S.hip=parseFloat(d.hip)||0;}catch(e){}
   try{if(d.nutritionPhase)S.nutritionPhase=d.nutritionPhase;}catch(e){}
   try{if(d.barW)S.barW=parseFloat(d.barW)||20;}catch(e){}
+  try{if(d.foodMode!==undefined){S.foodMode=d.foodMode||'';S.keto=(S.foodMode==='keto');}}catch(e){}
+  try{if(d.fasting!==undefined)S.fasting=d.fasting||'';}catch(e){}
   try{if(d.defRest)S.defRest=parseInt(d.defRest)||120;}catch(e){}
   try{if(d.mensCycleStart)S.mensCycleStart=d.mensCycleStart;}catch(e){}
   try{if(d.mensCycleDur)S.mensCycleDur=parseInt(d.mensCycleDur)||28;}catch(e){}

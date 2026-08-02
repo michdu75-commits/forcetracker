@@ -1460,6 +1460,10 @@ ${(()=>{const bmi=(S.bw&&S.height)?S.bw/((S.height/100)**2):0;return (bmi>=28||S
 - Calories cible: ${macros.calories || '—'} kcal | Protéines: ${macros.prot_g || '—'}g | Glucides: ${macros.carbs_g || '—'}g | Lipides: ${macros.fat_g || '—'}g
 ${(typeof dietSummary==='function'&&dietSummary())?`- ⚠️ RÉGIME ALIMENTAIRE À RESPECTER: ${dietSummary()} — ne propose JAMAIS d'aliment ou de supplément non conforme (ex. végan → pas de whey/œufs, propose protéine végétale + B12 ; halal/sans porc → aucun porc/gélatine porcine ni alcool si sans alcool).`:''}
 ${S.keto?`- ⚠️ RÉGIME CÉTOGÈNE (KETO): très peu de glucides (~5%), beaucoup de lipides (~80%). Ne propose JAMAIS d'aliments riches en glucides (riz, pâtes, pain, avoine, fruits sucrés, sucre) ni de compléments sucrés. Privilégie viandes/poissons gras, œufs, avocat, fromage, oléagineux, huiles, légumes verts pauvres en glucides.`:''}
+${S.foodMode==='lowcarb'?`- ⚠️ LOW CARB: glucides réduits (~25% des calories) SANS viser la cétose. Garde des glucides autour de l'entraînement, où ils servent. Ne propose pas de gros plats de pâtes/riz.`:''}
+${S.foodMode==='paleo'?`- ⚠️ PALÉO: ni céréales (blé, riz, avoine, maïs), ni légumineuses, ni laitages, ni produits transformés. Viandes, poissons, œufs, légumes, fruits, oléagineux, patate douce.`:''}
+${S.foodMode==='mediterraneen'?`- ⚠️ MÉDITERRANÉEN: beaucoup de végétaux, poisson, huile d'olive, légumineuses, céréales complètes ; viande rouge rare. Ne présente jamais ça comme un traitement médical.`:''}
+${S.fasting?`- ⏳ JEÛNE INTERMITTENT ${S.fasting} : il/elle ne mange que dans une fenêtre réduite. Les calories de la journée NE CHANGENT PAS, elles se concentrent. Ne propose pas de petit-déjeuner, et cale la nutrition autour de l'entraînement dans cette fenêtre.`:''}
 ${(()=>{
   const bf_n=S.neck,bf_w=S.waist,bf_h=S.hip,bf_ht=S.height;
   let bf=null;

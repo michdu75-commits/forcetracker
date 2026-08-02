@@ -563,6 +563,58 @@ console.log('\n═══ 9. Les repas suggérés respectent le RÉGIME (kéto, v
     al.signale, JSON.stringify(al).slice(0,180));
   t('TÉMOIN : sans aliment à éviter, aucune alerte et le plan reste intact',
     al.temoinAucuneAlerte&&al.temoinPlanIntact, JSON.stringify(al).slice(0,180));
+
+  // ── LES 4 MODES ALIMENTAIRES + LE JEÛNE (Michel, 02/08 : « lance les autres régimes ») ──
+  // Modes EXCLUSIFS entre eux (on n'est pas kéto ET low carb) ; le jeûne est INDÉPENDANT :
+  // c'est un horaire, pas des macros — les calories du jour ne changent pas.
+  const md=await p.evaluate(()=>{
+   try{
+    if(typeof setFoodMode!=='function')return {erreur:'setFoodMode absente'};
+    const pose=(mode,fast)=>{ S.foodMode=mode||'';S.keto=(mode==='keto');S.fasting=fast||'';
+      S.diet='';S.dietRestrictions=[];S.dietNotes='';S.bw=75;S.goal='muscle';S.age=35;S.height=178;S.activityLevel=1.55;
+      const m=calcMacros('normal'), meals=getMeals(m,'normal');
+      return {kcal:m.calories,P:m.prot_g,L:m.fat_g,G:m.carbs_g,n:meals.length,
+              noms:meals.map(x=>x.name),descs:meals.map(x=>x.desc).join(' | ')}; };
+    const o={};
+    o.aucun=pose(''); o.keto=pose('keto'); o.lowcarb=pose('lowcarb');
+    o.paleo=pose('paleo'); o.medit=pose('mediterraneen');
+    o.jeune=pose('','16-8'); o.jeuneKeto=pose('keto','20-4');
+    // exclusivité : activer un mode puis un autre ne laisse QUE le dernier
+    S.foodMode=''; setFoodMode('keto'); setFoodMode('lowcarb'); o.exclusif=S.foodMode;
+    setFoodMode('lowcarb'); o.retapeDesactive=S.foodMode;  // re-cliquer désactive
+    S.foodMode=''; S.keto=false; S.fasting='';
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ LOW CARB : glucides réduits mais bien plus qu\'en kéto (il reste de quoi s\'entraîner)',
+    md.lowcarb&&md.keto&&md.lowcarb.G>md.keto.G*3&&md.lowcarb.G<md.aucun.G,
+    'kéto '+(md.keto&&md.keto.G)+' g · low carb '+(md.lowcarb&&md.lowcarb.G)+' g · normal '+(md.aucun&&md.aucun.G)+' g');
+  t('PALÉO et MÉDITERRANÉEN ne changent PAS les macros (ce sont des choix d\'aliments)',
+    md.paleo&&md.paleo.G===md.aucun.G&&md.medit&&md.medit.G===md.aucun.G,
+    'paléo '+(md.paleo&&md.paleo.G)+' · médit '+(md.medit&&md.medit.G)+' · normal '+(md.aucun&&md.aucun.G));
+  t('… mais ils changent bien les REPAS suggérés',
+    md.paleo&&!/avoine|pain complet/i.test(md.paleo.descs)&&md.medit&&/huile d'olive/i.test(md.medit.descs),
+    (md.paleo&&md.paleo.descs.slice(0,60))+' ‖ '+(md.medit&&md.medit.descs.slice(0,60)));
+  t('⭐ JEÛNE : plus de petit-déjeuner, mais les CALORIES du jour ne changent pas',
+    md.jeune&&md.jeune.kcal===md.aucun.kcal&&md.jeune.n===md.aucun.n-1
+    &&!md.jeune.noms.some(n=>/petit-déjeuner/i.test(n))&&md.jeune.noms.some(n=>/jeûne/i.test(n)),
+    JSON.stringify(md.jeune&&md.jeune.noms));
+  t('jeûne ET mode se combinent (kéto 20/4)',
+    md.jeuneKeto&&md.jeuneKeto.G<40&&!md.jeuneKeto.noms.some(n=>/petit-déjeuner/i.test(n)),
+    JSON.stringify(md.jeuneKeto&&[md.jeuneKeto.G,md.jeuneKeto.noms[0]]));
+  t('les modes sont EXCLUSIFS · re-cliquer sur le mode actif le désactive',
+    md.exclusif==='lowcarb'&&md.retapeDesactive==='', md.exclusif+' → '+md.retapeDesactive);
+  await c.close();
+}
+
+// ── RÉTROCOMPATIBILITÉ : un compte qui avait l'ANCIEN interrupteur kéto (ft4_keto=1) doit se
+// retrouver en mode 'keto', sans rien perdre. C'est le seul vrai risque du changement.
+{
+  const {c,p}=await boot('2026-08-02T09:00:00+02:00',{ft4_keto:'1'});
+  const r=await p.evaluate(()=>({mode:S.foodMode,alias:S.keto,
+    glucides:(S.bw=75,S.height=178,S.age=35,S.activityLevel=1.55,calcMacros('normal').carbs_g)}));
+  t('⭐ RÉTROCOMPAT : un compte déjà en kéto retrouve son régime (ancien interrupteur)',
+    r.mode==='keto'&&r.alias===true&&r.glucides<40, JSON.stringify(r));
   await c.close();
 }
 

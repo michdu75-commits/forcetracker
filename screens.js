@@ -1579,11 +1579,23 @@ function setNuPhase(phase){
   renderNutrition();
 }
 // Régime cétogène (keto, retour Emma) : bascule les macros en 5% glucides / 15% prot / 80% lipides
-function toggleKeto(){
-  S.keto=!S.keto; persist();
+// Un mode alimentaire à la fois : re-cliquer sur le mode actif le désactive (pas de piège).
+// `S.keto` reste synchronisé — plusieurs endroits du code le lisent encore (rétrocompatibilité).
+function setFoodMode(v){
+  S.foodMode=(S.foodMode===v?'':v);
+  S.keto=(S.foodMode==='keto');
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   renderNutrition();
-  if(typeof toast==='function')toast(S.keto?'🥑 Régime cétogène activé':'Régime cétogène désactivé','info');
 }
+function setFasting(v){
+  S.fasting=(S.fasting===v?'':v);
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  renderNutrition();
+}
+function toggleKeto(){ setFoodMode('keto'); }  // ancien nom : gardé, des raccourcis peuvent l'appeler
+
 
 // ─── Réglage manuel des calories/macros (retour testeuse : « pouvoir corriger moi-même ») ──
 function openKcalEdit(){
@@ -1654,16 +1666,26 @@ function renderNutrition(){try{
   document.getElementById('nu-total-cal').textContent=(sessCals>0?totalCals:tdee).toLocaleString('fr-FR')+' kcal';
   document.getElementById('nu-hydra').textContent=hydra;
 
-  // Régime cétogène (keto, retour Emma) : bascule visible par tous
+  // ── MODE ALIMENTAIRE + JEÛNE (02/08) ────────────────────────────────────────
+  // Remplace l'ancien interrupteur kéto seul : les modes sont EXCLUSIFS entre eux (on n'est pas
+  // kéto ET low carb), alors que le jeûne est INDÉPENDANT — c'est un horaire, pas des macros.
   const ketoEl=document.getElementById('nu-keto');
   if(ketoEl){
-    const on=!!S.keto;
-    ketoEl.innerHTML='<div onclick="toggleKeto()" style="display:flex;align-items:center;gap:10px;cursor:pointer;background:'+(on?'rgba(52,199,89,.1)':'var(--bg2)')+';border:1px solid '+(on?'rgba(52,199,89,.35)':'var(--sep)')+';border-radius:12px;padding:10px 12px;margin-bottom:10px;">'
-      +'<span style="font-size:20px;">🥑</span>'
-      +'<div style="flex:1;line-height:1.3;"><div style="font-size:13.5px;font-weight:800;color:var(--t1);">Régime cétogène (keto)</div>'
-      +'<div style="font-size:11.5px;color:var(--t3);">'+(on?'Actif — 5% glucides · 15% protéines · 80% lipides':'Très peu de glucides, beaucoup de lipides')+'</div></div>'
-      +'<div style="width:42px;height:24px;border-radius:12px;background:'+(on?'var(--green)':'var(--sep)')+';position:relative;flex-shrink:0;transition:background .2s;"><div style="width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:'+(on?'20px':'2px')+';transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3);"></div></div>'
-      +'</div>';
+    const mode=S.foodMode||'';
+    const DESC={keto:'5 % glucides · 15 % protéines · 80 % lipides',
+                lowcarb:'Glucides réduits, sans viser la cétose',
+                paleo:'Ni céréales, ni laitages, ni transformé',
+                mediterraneen:'Végétaux, poisson, huile d\'olive'};
+    const ICO={keto:'🥑',lowcarb:'🥩',paleo:'🍖',mediterraneen:'🫒'};
+    const btn=(v,l)=>`<button onclick="setFoodMode('${v}')" style="flex:1 1 46%;padding:9px 6px;border-radius:10px;border:1.5px solid ${mode===v?'var(--green)':'var(--sep)'};background:${mode===v?'rgba(52,199,89,.10)':'var(--bg2)'};color:${mode===v?'var(--t1)':'var(--t2)'};font-family:var(--font);font-size:12.5px;font-weight:${mode===v?'800':'600'};cursor:pointer;">${ICO[v]||''} ${l}</button>`;
+    const fBtn=(v,l)=>`<button onclick="setFasting('${v}')" style="flex:0 0 auto;padding:7px 12px;border-radius:18px;border:1.5px solid ${S.fasting===v?'var(--green)':'var(--sep)'};background:${S.fasting===v?'rgba(52,199,89,.10)':'var(--bg2)'};color:${S.fasting===v?'var(--t1)':'var(--t2)'};font-family:var(--font);font-size:12px;font-weight:${S.fasting===v?'800':'600'};cursor:pointer;">${l}</button>`;
+    ketoEl.innerHTML=
+       '<div style="font-size:12px;color:var(--t3);margin-bottom:6px;">Mode alimentaire (un seul — retape pour désactiver)</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:6px;">'+btn('keto','Cétogène')+btn('lowcarb','Low carb')+btn('paleo','Paléo')+btn('mediterraneen','Méditerranéen')+'</div>'
+      +(mode?'<div style="font-size:11.5px;color:var(--green);margin-top:6px;">'+(ICO[mode]||'')+' '+DESC[mode]+'</div>':'')
+      +'<div style="font-size:12px;color:var(--t3);margin:12px 0 6px;">Jeûne intermittent — les calories ne changent pas, elles se concentrent sur la fenêtre</div>'
+      +'<div style="display:flex;flex-wrap:wrap;gap:6px;">'+fBtn('16-8','16/8')+fBtn('18-6','18/6')+fBtn('20-4','20/4')+'</div>'
+      +'<div style="font-size:11px;color:var(--t3);margin-top:10px;line-height:1.45;">Ces réglages changent tes macros et tes repas suggérés. Ils ne remplacent jamais l\'avis de ton médecin ou d\'un diététicien.</div>';
   }
 
   const macros=calcMacros(S.nutritionPhase);
