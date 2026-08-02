@@ -56,6 +56,12 @@ const TOLERE={
   groupe:{
     // le sélecteur range cet exercice là où on le CHERCHE, pas là où ça tire
     'Planche Inversée':'rangée dans Abdominaux parce qu\'on la cherche avec les gainages ; ses muscles moteurs sont bien fessiers + lombaires',
+    // ⏭️ EN ATTENTE D'ARBITRAGE (02/08) : la relecture des pectoraux a montré que c'est une
+    // machine à TRICEPS (son animation le montre sans ambiguïté), pas un dips de pectoraux.
+    // Ses muscles sont corrigés ; son GROUPE ne l'est pas encore, parce que déplacer un
+    // exercice change ce que voit l'utilisateur dans le sélecteur — c'est la décision de
+    // Michel, pas la mienne (R29). À lever quand le groupe Triceps sera basculé lui aussi.
+    'Dips Assis Machine (Seated Dip)':'muscles corrigés en triceps ; groupe encore Pectoraux, déplacement en attente de décision',
   },
   // ⑤ schémas volontairement différents des muscles
   schema:{
@@ -437,6 +443,58 @@ t('⭐ ⑩ SOCLES : les 10 exercices de base gardent EXACTEMENT leur classement'
   (socles.erreur?'runner en erreur : '+socles.erreur+'\n         ':'')
   + soclesKo.join('\n         ')
   + '\n         → ces attentes sont écrites À LA MAIN dans le test : les changer doit être un choix.');
+
+
+// ═══ ⑪ LES INTERDICTIONS — la donnée écrite prime, et rien ne se fige sans relecture ═══
+// Demandées par Michel en lançant la bascule : « il va falloir mettre en place des
+// interdictions ». Elles ferment les trois portes par lesquelles la migration pourrait
+// se retourner contre nous.
+const inter=await p.evaluate(()=>{
+ try{
+  const noms=[...new Set((EXLIB||[]).map(e=>e.n))];
+  const ids=Object.keys(EX_MUSCLES||{});
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  // ① la donnée écrite doit ÊTRE celle qu'on utilise — pas celle des règles
+  const divergents=[];
+  ids.forEach(id=>{
+    const nom=exNom(id); if(!nom) return;
+    const attendu=EX_MUSCLES[id];
+    const sc=(_mscScores([E(nom)])||{}).sc||{};
+    const p2=Object.keys(sc).filter(k=>sc[k]===2).sort().join(',');
+    const s2=Object.keys(sc).filter(k=>sc[k]===1).sort().join(',');
+    if(p2!==(attendu.p||[]).slice().sort().join(',') || s2!==(attendu.s||[]).slice().sort().join(','))
+      divergents.push(nom+' : écrit ['+attendu.p+'] / obtenu ['+p2+']');
+  });
+  // ② aucune entrée sans marque de relecture
+  const sansVu=ids.filter(i=>!/^\d{4}-\d{2}-\d{2}$/.test(EX_MUSCLES[i].vu||''));
+  // ③ aucune donnée orpheline (identifiant qui ne correspond à aucun exercice)
+  const orphelins=ids.filter(i=>!exNom(i));
+  // ④ un groupe basculé doit l'être EN ENTIER — sinon deux vérités coexistent dedans
+  const parGroupe={};
+  noms.forEach(n=>{ const g=(EXLIB.find(e=>e.n===n)||{}).g;
+    (parGroupe[g]=parGroupe[g]||{tot:0,ecrits:0}); parGroupe[g].tot++;
+    if(exMuscles(n)) parGroupe[g].ecrits++; });
+  const moities=Object.keys(parGroupe).filter(g=>{
+    const x=parGroupe[g]; return x.ecrits>0 && x.ecrits<x.tot;
+  }).map(g=>g+' : '+parGroupe[g].ecrits+'/'+parGroupe[g].tot);
+  return {divergents, sansVu, orphelins, moities, nbEcrits:ids.length, nbTotal:noms.length,
+          groupes:Object.keys(parGroupe).filter(g=>parGroupe[g].ecrits===parGroupe[g].tot&&parGroupe[g].ecrits>0)};
+ }catch(e){ return {erreur:String(e&&e.message||e), divergents:['(runner en erreur)'],
+   sansVu:[], orphelins:[], moities:[], nbEcrits:-1, nbTotal:-1, groupes:[] }; }
+});
+if(inter.erreur) console.log('     ⚠️  bloc interdictions en ERREUR : '+inter.erreur);
+console.log('     ℹ️  muscles ÉCRITS : '+inter.nbEcrits+'/'+inter.nbTotal
+  +' exercices · groupes entièrement basculés : '+(inter.groupes.join(', ')||'aucun'));
+t('⭐ ⑪ INTERDIT : un exercice dont les muscles sont ÉCRITS ne passe jamais par les règles',
+  inter.divergents.length===0, inter.divergents.slice(0,6).join('\n         '));
+t('⭐ ⑪ INTERDIT : figer un classement sans l\'avoir RELU (chaque entrée porte sa date)',
+  inter.sansVu.length===0, inter.sansVu.slice(0,8).join(', ')
+  +'\n         → une entrée sans `vu` graverait une erreur au lieu de la corriger.');
+t('⑪ INTERDIT : une donnée écrite pour un exercice qui n\'existe pas',
+  inter.orphelins.length===0, inter.orphelins.slice(0,8).join(', '));
+t('⭐ ⑪ INTERDIT : basculer un groupe À MOITIÉ (deux vérités cohabiteraient dedans)',
+  inter.moities.length===0, inter.moities.join(' · ')
+  +'\n         → un groupe se bascule en entier, ou pas du tout.');
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 

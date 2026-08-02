@@ -230,7 +230,7 @@
   },
   "Chest Press TRX (Sangles)": {
    "p": "pec",
-   "s": "front-delt,triceps",
+   "s": "abs,front-delt,triceps",
    "pat": "poussee-horizontale",
    "eq": "trx",
    "met": 5.5,
@@ -429,8 +429,8 @@
    "frag": 0
   },
   "Dips Assis Machine (Seated Dip)": {
-   "p": "pec",
-   "s": "front-delt,triceps",
+   "p": "triceps",
+   "s": "front-delt,lats,pec",
    "pat": "poussee-horizontale",
    "eq": "guide",
    "met": 5.5,
@@ -518,15 +518,15 @@
   },
   "Développé Couché Unilatéral Kettlebell": {
    "p": "pec",
-   "s": "front-delt,triceps",
+   "s": "abs,front-delt,obliques,triceps",
    "pat": "poussee-horizontale",
    "eq": "libre",
    "met": 5.5,
    "frag": 1
   },
   "Développé Couché au Sol (Floor Press)": {
-   "p": "pec",
-   "s": "front-delt,triceps",
+   "p": "pec,triceps",
+   "s": "front-delt",
    "pat": "poussee-horizontale",
    "eq": "barre",
    "met": 5.5,
@@ -1326,10 +1326,10 @@
   },
   "Pec Deck": {
    "p": "pec",
-   "s": "front-delt,triceps",
+   "s": "front-delt",
    "pat": "poussee-horizontale",
    "eq": "guide",
-   "met": 5.5,
+   "met": 4,
    "frag": 1
   },
   "Pendulum Squat": {
@@ -1374,7 +1374,7 @@
   },
   "Pompes (Push-up)": {
    "p": "pec,triceps",
-   "s": "front-delt",
+   "s": "abs,front-delt",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -1382,7 +1382,7 @@
   },
   "Pompes Diamant": {
    "p": "pec,triceps",
-   "s": "front-delt",
+   "s": "abs,front-delt",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -1390,7 +1390,7 @@
   },
   "Pompes Déficit (Deficit Push-up)": {
    "p": "pec,triceps",
-   "s": "front-delt",
+   "s": "abs,front-delt",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -1398,7 +1398,7 @@
   },
   "Pompes Inclinées TRX (Sangles)": {
    "p": "pec,triceps",
-   "s": "front-delt",
+   "s": "abs,front-delt",
    "pat": "poussee-horizontale",
    "eq": "trx",
    "met": 5.5,
@@ -1406,7 +1406,7 @@
   },
   "Pompes Lestées": {
    "p": "pec,triceps",
-   "s": "front-delt",
+   "s": "abs,front-delt",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -2550,10 +2550,10 @@
   },
   "Écarté TRX (Sangles)": {
    "p": "pec",
-   "s": "front-delt",
+   "s": "abs,front-delt",
    "pat": "poussee-horizontale",
    "eq": "trx",
-   "met": 4,
+   "met": 5.5,
    "frag": 0
   },
   "Écarté Élastique": {

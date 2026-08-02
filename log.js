@@ -1964,6 +1964,18 @@ function _mscScores(exs){
   (exs||[]).forEach(ex=>{
     if(!(ex.sets||[]).some(s=>s.done))return;
     let matched=false;
+    // ── LA DONNÉE ÉCRITE PASSE AVANT LES RÈGLES (02/08/2026) ──────────────────────────
+    // Si l'exercice a ses muscles ÉCRITS dans `EX_MUSCLES`, on les prend et on s'arrête là.
+    // Les règles ne sont même pas consultées : il n'y a donc plus d'ordre à se tromper, plus
+    // de règle à masquer, plus de fragilité — pas parce qu'on les a corrigés, parce qu'ils
+    // n'ont plus lieu d'être. Les règles restent pour ce qu'on ne connaît pas (exercices
+    // créés par l'utilisateur, noms arrivés par import).
+    const _ecrit=(typeof exMuscles==='function')?exMuscles(ex.name):null;
+    if(_ecrit){
+      (_ecrit.p||[]).forEach(m=>{sc[m]=(sc[m]||0)+2;});
+      (_ecrit.s||[]).forEach(m=>{sc[m]=(sc[m]||0)+1;});
+      return;
+    }
     const _nm=_naz(ex.name);
     for(const r of _MEX){if(r.re.test(_nm)){r.p.forEach(m=>{sc[m]=(sc[m]||0)+2;});r.s.forEach(m=>{sc[m]=(sc[m]||0)+1;});(r.i||[]).forEach(m=>{ind[m]=true;});matched=true;break;}}
     if(!matched){

@@ -867,3 +867,109 @@ function exNom(id){ const l=id&&EX_IDS[id]; return (l&&l[0])||null; }
 /** Nom actuel correspondant à un nom éventuellement ancien — remplace la table de migration.
  *  Rend le nom inchangé si l'exercice est inconnu (exercice perso : on n'y touche pas). */
 function exNomActuel(nom){ const id=exId(nom); return id?exNom(id):nom; }
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// LES MUSCLES ÉCRITS — la donnée, pas la devinette (02/08/2026, décision Michel)
+// ═══════════════════════════════════════════════════════════════════════════════════
+// POURQUOI. Jusqu'ici les muscles étaient DÉDUITS du nom par 69 règles parcourues dans
+// l'ordre. Ça a permis au catalogue de grandir vite (71 exercices en 5 jours, classés
+// gratuitement) — mais ça a produit la famille de bugs la plus fréquente du projet
+// (« premier match gagnant », au moins 14 fois), et 60 exercices dont la justesse ne
+// tient qu'à la POSITION d'une règle dans une liste, dont le DÉVELOPPÉ COUCHÉ.
+//
+// Michel, après une journée passée à construire de quoi SURVEILLER cette devinette :
+// « des fois on veut faire compliqué et plus simple est mieux ». Il a raison — et ce qui
+// disparaît en écrivant les muscles n'est pas corrigé, il devient IMPOSSIBLE : il n'y a
+// plus d'ordre où se tromper, plus de règle à masquer, plus de fragilité.
+//
+// ⚠️ LE DANGER, repéré par Michel lui-même : figer ce que les règles produisent
+// aujourd'hui reviendrait à graver les erreurs actuelles dans le marbre — on aurait
+// échangé une devinette instable contre une erreur stable. Chaque ligne ci-dessous a donc
+// été RELUE une par une, et les corrections trouvées sont notées en commentaire.
+//
+// LES RÈGLES NE DISPARAISSENT PAS : elles restent pour ce qu'on ne connaît pas — les
+// exercices créés par les utilisateurs, et les noms qui arrivent par l'import. Elles
+// passent de « la vérité pour ce qu'on connaît » à « une approximation pour ce qu'on
+// ignore ». Une règle doit deviner ce qu'on ignore, pas ce qu'on sait.
+//
+// FORMAT : identifiant -> {p:[principaux], s:[secondaires], vu:'AAAA-MM-JJ'}
+// `vu` = date de RELECTURE humaine. Une entrée sans `vu` est refusée par les tests : c'est
+// l'interdiction qui empêche de figer une erreur sans l'avoir regardée.
+const EX_MUSCLES={
+ // ─── PECTORAUX (41) — relus un par un le 02/08/2026 ──────────────────────────────
+ // Développés couchés à plat : pectoraux moteurs, deltoïde antérieur et triceps en soutien.
+ 'developpe-couche':                      {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'developpe-couche-halteres':             {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'developpe-couche-larsen-larsen-press':  {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'developpe-couche-avec-chaines':         {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'developpe-couche-elastique':            {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'smith-machine-developpe-couche':        {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : au sol, l'amplitude est écourtée et le TRICEPS travaille davantage
+ //    (le coude s'arrête au sol) — il passe donc au même rang que le pectoral.
+ 'developpe-couche-au-sol-floor-press':   {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : à une main, c'est un exercice ANTI-ROTATION — le tronc empêche le corps
+ //    de basculer. Les obliques et les abdos manquaient complètement.
+ 'developpe-couche-unilateral-kettlebell':{p:['pec'], s:['front-delt','triceps','obliques','abs'], vu:'2026-08-02'},
+ // Inclinés : haut des pectoraux, deltoïde antérieur nettement plus sollicité qu'à plat.
+ 'developpe-incline':                     {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'developpe-incline-halteres':            {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'developpe-incline-poulie':              {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'smith-machine-developpe-incline':       {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ // Déclinés : bas des pectoraux, deltoïde antérieur MOINS sollicité qu'à plat (ordre inversé).
+ 'developpe-decline':                     {p:['pec'], s:['triceps','front-delt'], vu:'2026-08-02'},
+ 'developpe-decline-halteres':            {p:['pec'], s:['triceps','front-delt'], vu:'2026-08-02'},
+ 'developpe-decline-elastique':           {p:['pec'], s:['triceps','front-delt'], vu:'2026-08-02'},
+ // Machines de poussée : même chose, trajectoire guidée.
+ 'chest-press-machine-horizontale':       {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'chest-press-machine-inclinee':          {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'chest-press-machine-declinee':          {p:['pec'], s:['triceps','front-delt'], vu:'2026-08-02'},
+ 'chest-press-poulie-assis':              {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'hex-press-smith-machine':               {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ 'svend-press-serrage-de-plaque':         {p:['pec'], s:['front-delt','triceps'], vu:'2026-08-02'},
+ // Aux sangles, le corps est en planche : la demande de gainage fait partie de l'exercice.
+ 'chest-press-trx-sangles':               {p:['pec'], s:['front-delt','triceps','abs'], vu:'2026-08-02'},
+ // ─── ÉCARTÉS : le coude reste FIXE, donc AUCUN triceps. C'est ce qui les distingue d'un
+ //     développé, et c'est vrai pour tous — machine comprise.
+ 'ecarte-halteres':                       {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
+ 'ecarte-incline-halteres':               {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
+ 'ecarte-decline-halteres':               {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
+ 'ecarte-poulie':                         {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
+ 'ecarte-elastique':                      {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
+ 'ecarte-hyght-hyght-fly':                {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
+ 'croise-poulie-cable-crossover':         {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
+ // ⚠️ PAS d'abdos ici, volontairement : à genoux, le tronc n'est pas plus sollicité que
+ //    debout. L'ajouter faisait passer l'exercice de 4 à 5,5 en calories (l'app compte
+ //    3 muscles = polyarticulaire) — un simple stabilisateur ne doit pas changer la dépense.
+ 'ecarte-poulie-haute-a-genoux':          {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
+ // Aux sangles en revanche le corps est en planche : le gainage est réel, et les calories
+ //    montent avec — c'est justifié.
+ 'ecarte-trx-sangles':                    {p:['pec'], s:['front-delt','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION LA PLUS NETTE : le PEC DECK avait « triceps » en secondaire alors que les
+ //    9 autres écartés n'en ont pas. C'est pourtant le même geste, coude fixe : le triceps
+ //    n'y travaille pas. Incohérence interne, trouvée en relisant les 41 d'affilée.
+ //    Effet : il redevient une isolation (calories 5,5 → 4), ce qu'il a toujours été.
+ 'pec-deck':                              {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
+ // ─── DIPS ET POMPES : pectoraux ET triceps moteurs tous les deux.
+ 'dips':                                  {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'dips-paralleles':                       {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'dips-machine-assistee':                 {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'pompes-push-up':                        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
+ 'pompes-lestees':                        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
+ 'pompes-deficit-deficit-push-up':        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
+ 'pompes-inclinees-trx-sangles':          {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : mains serrées = le TRICEPS devient le moteur, le pectoral suit.
+ 'pompes-diamant':                        {p:['triceps','pec'], s:['front-delt','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION FRANCHE : « Dips Assis Machine » était classé PECTORAUX en principal.
+ //    Son animation (dips-assis-machine-avec-poids.webp) montre sans ambiguïté les TRICEPS
+ //    et le dos : on pousse vers le BAS, bras le long du corps. C'est une machine à triceps,
+ //    pas un dips de pectoraux. Trouvé en regardant l'animation, pas le nom.
+ 'dips-assis-machine-seated-dip':         {p:['triceps'], s:['pec','front-delt','lats'], vu:'2026-08-02'},
+};
+
+/** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou
+ *  exercice créé par l'utilisateur). Le null n'est jamais remplacé par une valeur par
+ *  défaut : on retombe alors sur les règles, qui devinent (R29). */
+function exMuscles(nom){
+  const id=(typeof exId==='function')?exId(nom):null;
+  return (id&&EX_MUSCLES[id])||null;
+}

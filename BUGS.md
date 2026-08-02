@@ -40,6 +40,7 @@
 | 11 | **Le comportement copié hors contexte** | 2 | règle R14 |
 | 12 | **Les erreurs de MÉTHODE** (mesure fausse) | ≥ 7 | — *le plus dangereux, voir §12* |
 | 13 | **Le NOM comme clé primaire** | *racine de 6 défauts* | identifiant stable (ft-v735, **étape 1/3**) |
+| 14 | **Mesurer au lieu de supprimer** | 1 (toute la journée du 02/08) | la question des 3 réponses, voir §14 |
 
 ---
 
@@ -485,7 +486,47 @@ reste la clé** — la dette est entamée, pas remboursée.
 
 ---
 
-## 🧭 Les 8 réflexes qui sortent de tout ça
+## 14. 🏗️ Mesurer un problème qu'on aurait pu SUPPRIMER
+
+**La forme la plus coûteuse de l'usine à gaz**, parce qu'elle a l'air vertueuse.
+
+**Le cas, vécu le 02/08.** Les muscles de chaque exercice étaient *devinés* à partir du nom
+par 69 règles ordonnées. Cette devinette produisait la famille de bugs n° 1 du projet. Réponse
+apportée pendant toute une journée : des croisements, une empreinte, un indicateur de fragilité,
+un audit des règles, un audit du masquage — **~350 lignes d'infrastructure pour surveiller une
+déduction**.
+
+Michel : *« des fois on veut faire compliqué et plus simple est mieux »*. Le plus simple était
+d'**écrire les muscles**. Et ce qui disparaît alors n'est pas corrigé : il devient **impossible**.
+Plus d'ordre où se tromper, plus de règle à masquer, plus de fragilité.
+
+### 🔎 Comment le reconnaître
+On construit un **outil de mesure** pour surveiller un mécanisme… qu'on pourrait remplacer par
+une **donnée**. Le signe : l'appareil de surveillance devient plus gros que ce qu'il surveille.
+
+> ⚠️ **Un appareil de mesure est une couche, lui aussi.** Une usine à gaz faite de tests reste
+> une usine à gaz — et elle a un défaut propre : elle **fige le comportement actuel**, erreurs
+> comprises.
+
+### 🛡️ La règle à se poser, dans cet ordre
+Face à un problème, trois réponses possibles :
+
+| | Effet |
+|---|---|
+| Réarchitecturer | **plus** de complexité |
+| Mieux mesurer | plus d'observabilité, **mais une couche de plus à maintenir** |
+| **Supprimer la cause** | **moins de tout** |
+
+**L'ordre naturel est celui-là ; l'ordre efficace est l'inverse.**
+
+⚠️ **Nuance qui compte** : mesurer était le bon choix *tant que le catalogue grossissait vite*
+(71 exercices ajoutés en 5 jours, classés gratuitement). Ce qui change, c'est que la valeur de la
+devinette baisse quand le catalogue se stabilise, **alors que le coût de la surveillance reste**.
+*Une règle doit deviner ce qu'on ignore, pas ce qu'on sait.*
+
+---
+
+## 🧭 Les 9 réflexes qui sortent de tout ça
 
 1. **Avant de dire qu'une chose manque** → la chercher dans le code et dans `docs/INVENTAIRE.md`.
 2. **Avant de « réparer » du code orphelin** → chercher la décision. Sinon, demander.
@@ -500,6 +541,8 @@ reste la clé** — la dette est entamée, pas remboursée.
    derrière un test qui ne voyait que les règles totalement mortes.
 8. **Quand un changement COSMÉTIQUE modifie un chiffre** → c'est que le libellé sert aussi de clé
    ou d'entrée de calcul. Voir la famille 13.
+9. **Avant d'ajouter une couche** (une règle, un test, un indicateur) → se demander si on peut en
+   **RETIRER** une. Mesurer un problème qu'on aurait pu supprimer, c'est le rendre permanent.
 
 ---
 
