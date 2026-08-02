@@ -317,6 +317,77 @@ console.log('     ℹ️  confiance : '+(emp.total-emp.fragiles)+'/'+emp.total+'
 t('⭐ ⑧ CONFIANCE : la part d\'exercices dont le classement dépend de l\'ordre ne grandit pas',
   emp.fragiles<=REF.fragiles, emp.fragiles+' aujourd\'hui contre '+REF.fragiles+' à la référence');
 
+
+// ═══ ⑨ L'IDENTITÉ DES EXERCICES — la clé stable (02/08) ═══════════════════════════
+// Le NOM était la clé primaire de tout l'historique. `EX_IDS` donne à chaque exercice un
+// identifiant qui, lui, ne changera JAMAIS — et porte la liste de ses anciens noms.
+// Ces tests protègent trois promesses : les identifiants ne bougent pas · chaque exercice
+// du catalogue en a un · un ancien nom retrouve toujours sa fiche.
+const idt=await p.evaluate(()=>{
+ // ⚠️ try/catch OBLIGATOIRE : sans lui, une variable absente fait PLANTER le runner au lieu
+ // de le faire échouer — et un contrôle négatif affiche alors « 0 rouge », ce qui se lit
+ // comme un succès. C'est la famille n°12 de BUGS.md, reproduite en écrivant ce test-ci.
+ try{
+  const noms=[...new Set((EXLIB||[]).map(e=>e.n))];
+  const ids=Object.keys(EX_IDS||{});
+  const tousNoms=[]; ids.forEach(i=>EX_IDS[i].forEach(n=>tousNoms.push(n)));
+  return {
+    nbIds:ids.length, nbExercices:noms.length,
+    idsUniques:new Set(ids).size===ids.length,
+    nomsUniques:new Set(tousNoms).size===tousNoms.length,
+    // tout exercice du catalogue a un identifiant, et le nom affiché est bien le PREMIER
+    sansId:noms.filter(n=>!exId(n)),
+    nomPasEnTete:noms.filter(n=>{const i=exId(n);return i&&EX_IDS[i][0]!==n;}),
+    // tout identifiant pointe vers un exercice qui existe vraiment
+    idsOrphelins:ids.filter(i=>noms.indexOf(EX_IDS[i][0])<0),
+    // les allers-retours
+    arDevCouche:exNom(exId('Développé Couché')),
+    ancienRowing:exId('Rowing Barre'),                       // ancien nom
+    ancienResolu:exNomActuel('Rowing Barre'),
+    ancienPompes:exNomActuel('Pompes'),
+    fusionLegCurl:exNomActuel('Curl Ischio-jambiers (Leg Curl)'),
+    // un exercice PERSO n'a pas d'identifiant, et son nom n'est pas inventé
+    persoId:exId('Mon Exercice à Moi'), persoNom:exNomActuel('Mon Exercice à Moi'),
+    inconnuNom:exNom('identifiant-qui-nexiste-pas')
+  };
+ }catch(e){ return {erreur:String(e&&e.message||e), sansId:['(runner en erreur)'], nomPasEnTete:[],
+   idsOrphelins:[], nbIds:-1, nbExercices:-1, idsUniques:false, nomsUniques:false}; }
+});
+if(idt.erreur) console.log('     ⚠️  bloc identité en ERREUR : '+idt.erreur);
+t('⭐ ⑨ chaque exercice du catalogue a un identifiant STABLE',
+  idt.sansId.length===0&&idt.nbIds===idt.nbExercices,
+  idt.nbIds+' identifiants pour '+idt.nbExercices+' exercices · sans id : '+idt.sansId.slice(0,5).join(', '));
+t('⑨ les identifiants sont uniques, et les noms ne sont jamais partagés entre deux fiches',
+  idt.idsUniques&&idt.nomsUniques, 'ids uniques='+idt.idsUniques+' noms uniques='+idt.nomsUniques);
+t('⑨ le nom AFFICHÉ est toujours le premier de la liste (les suivants sont les anciens)',
+  idt.nomPasEnTete.length===0, idt.nomPasEnTete.slice(0,5).join(', '));
+t('⑨ aucun identifiant ne pointe vers un exercice disparu du catalogue',
+  idt.idsOrphelins.length===0, idt.idsOrphelins.slice(0,5).join(', '));
+t('⭐ ⑨ un ANCIEN nom retrouve sa fiche actuelle (c\'est ce qui sauve l\'historique)',
+  idt.ancienRowing==='rowing-barre-tirage-horizontal'
+  && idt.ancienResolu==='Rowing Barre (Tirage Horizontal)'
+  && idt.ancienPompes==='Pompes (Push-up)'
+  && idt.fusionLegCurl==='Leg Curl Couché Machine',
+  [idt.ancienResolu, idt.ancienPompes, idt.fusionLegCurl].join(' · '));
+t('⑨ l\'aller-retour nom → identifiant → nom est fidèle',
+  idt.arDevCouche==='Développé Couché', String(idt.arDevCouche));
+t('⭐ ⑨ un exercice PERSO n\'a pas d\'identifiant, et son nom n\'est pas inventé (R29)',
+  idt.persoId===null && idt.persoNom==='Mon Exercice à Moi' && idt.inconnuNom===null,
+  'id='+idt.persoId+' nom='+idt.persoNom+' inconnu='+idt.inconnuNom);
+
+// L'EMPREINTE DES IDENTIFIANTS : un identifiant ne doit JAMAIS changer, sinon tout
+// l'historique rangé sous l'ancien devient orphelin. On les fige ici.
+const REFID=require('./identifiants-reference.json');
+const idsActuels=await p.evaluate(()=>{
+  try{ const o={}; Object.keys(EX_IDS).forEach(i=>{o[i]=EX_IDS[i][0];}); return o; }catch(e){ return {}; }
+});
+const idPerdus=Object.keys(REFID.ids).filter(i=>!idsActuels[i]);
+const idRenommes=Object.keys(REFID.ids).filter(i=>idsActuels[i]&&idsActuels[i]!==REFID.ids[i]);
+t('⭐ ⑨ AUCUN identifiant n\'a disparu (il emporterait tout l\'historique rangé dessous)',
+  idPerdus.length===0, idPerdus.slice(0,8).join(', '));
+if(idRenommes.length) console.log('     ℹ️  '+idRenommes.length+' exercice(s) renommé(s) depuis la référence — '
+  +'normal si c\'est voulu : '+idRenommes.slice(0,3).map(i=>REFID.ids[i]+' → '+idsActuels[i]).join(' · '));
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('══════════════════════════════════════════════════════════');

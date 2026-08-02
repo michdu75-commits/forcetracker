@@ -154,33 +154,17 @@ function load(){
     // ── Renommages d'exercices (01/08/2026, Michel : « des noms chelou, c'est galère à retrouver ») ──
     // TOUT l'historique est rangé par NOM d'exercice : à chaque renommage du catalogue, les données
     // locales migrent ici (séances, records, programmes, brouillon, photos, repos préférés).
-    // Le cloud suit à la prochaine sauvegarde. Table à compléter à chaque futur renommage.
+    // Le cloud suit à la prochaine sauvegarde.
+    // ⚠️ Depuis le 02/08, la liste des anciens noms se tient dans `EX_IDS` (constants.js) et
+    // NULLE PART AILLEURS : renommer un exercice = modifier son nom dans EX_IDS et pousser
+    // l'ancien derrière. Cette boucle n'a plus rien à maintenir.
     (function(){
-      const R={'Poussée de Hanche (Hip Thrust)':'Hip Thrust Barre (Poussée de Hanche)',
-               'Poussée de Hanche Haltère':'Hip Thrust Haltère (Poussée de Hanche)',
-               'Poussée de Hanche Machine':'Hip Thrust Machine (Poussée de Hanche)',
-               // ── 02/08/2026 : les DEUX noms, français + anglais (décision Michel, après le
-               // retour de Tatiana « Tirage horizontal → aucun résultat »). Le nom principal
-               // reste celui qu'on dit à la salle ; l'autre langue va entre parenthèses.
-               'Rowing Barre':'Rowing Barre (Tirage Horizontal)',
-               'Rowing Haltère':'Rowing Haltère (Tirage Horizontal)',
-               'Rowing Cable':'Rowing Câble (Tirage Horizontal)',
-               'Rowing Machine':'Rowing Machine (Tirage Horizontal)',
-               'Tirage Poulie Haute':'Tirage Poulie Haute (Lat Pulldown)',
-               'Élévations Latérales':'Élévations Latérales (Lateral Raise)',
-               'Pompes':'Pompes (Push-up)',
-               // ── 02/08 (soir) : 3 DOUBLONS fusionnés + 1 variante mal nommée, trouvés en
-               // croisant les animations et les termes anglais (deux fiches qui pointent le
-               // même fichier vidéo = le même mouvement). La fiche qui disparaît renvoie vers
-               // celle qui reste, donc records et séances passées se REJOIGNENT au lieu de
-               // rester orphelins sous un nom qui n'existe plus.
-               'Curl Ischio-jambiers (Leg Curl)':'Leg Curl Couché Machine',
-               "Haussements d'Épaules (Shrugs)":"Haussements d'Épaules Barre",
-               "Farmer's Walk (Grip)":"Farmer's Walk",
-               // pas un doublon : un tirage MENTON au kettlebell qui portait le nom d'un autre
-               // mouvement (« tirage vertical » = lat pulldown pour tout le monde).
-               'Tirage Vertical (Upright Row)':'Tirage Menton Kettlebell'};
-      const ren=n=>R[n]||n;
+      // ⚠️ La table des renommages VIT DÉSORMAIS DANS `EX_IDS` (constants.js), rangée par
+      // IDENTIFIANT : ['nom actuel', ...anciens noms]. Elle était ici en double, rangée par nom
+      // — donc elle cassait au renommage suivant, et il fallait penser à la tenir à jour à deux
+      // endroits (R2 : une information, un seul propriétaire). `exNomActuel` la lit pour nous ;
+      // un exercice inconnu (perso) est rendu inchangé, jamais deviné.
+      const ren=(typeof exNomActuel==='function')?exNomActuel:(function(n){return n;});
       const renKeys=o=>{if(!o)return o;const out={};Object.keys(o).forEach(k=>{out[ren(k)]=o[k];});return out;};
       try{
         (S.sessions||[]).forEach(sess=>(sess.exs||[]).forEach(e=>{if(e&&e.name)e.name=ren(e.name);}));
