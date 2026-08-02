@@ -444,6 +444,18 @@ conclure faux avec assurance.
   d'autant plus vicieux que la méthode « regarder l'animation » avait très bien marché deux fois
   avant (le tirage menton, l'écarté décliné) : **une méthode qui a marché inspire une confiance
   qu'elle ne mérite pas toujours.**
+- **📉 Un indicateur qui ne peut JAMAIS baisser** (02/08, ft-v739) : l'« indicateur de fragilité »
+  comptait les exercices dont le classement dépend de l'ordre des règles. Depuis qu'on **écrit**
+  les muscles de certains exercices, ces exercices-là ne dépendent plus de l'ordre du tout — mais
+  l'indicateur continuait de les compter. Il serait donc resté à 18 % **même en basculant tout le
+  catalogue**. ⭐ *Un indicateur qui ne peut pas bouger dans le bon sens ne mesure plus rien : il
+  décore.* Corrigé → 60 → 36. **Le réflexe** : quand on change la façon dont une chose est
+  produite, vérifier que ce qui la MESURE a suivi — sinon on pilote avec un cadran mort.
+- **🧪 Un test qui ne distingue pas l'exception de la règle** (02/08, ft-v739) : mon test du
+  « Développé Nuque » vérifiait qu'il a bien le deltoïde latéral en muscle moteur. Il passait au
+  vert — **et il passait AUSSI avec l'ancien classement**, où les 13 développés étaient identiques.
+  Le contrôle négatif l'a montré (il est resté vert quand tout le reste rougissait). *Un test qui
+  décrit l'exception sans la comparer à la règle ne prouve rien.* Réécrit en comparant les deux.
 - **Chercher un symptôme là où il n'y en a pas** (ft-v727) : je voulais tailler dans les consignes
   de Milo parce qu'elles occupaient 78 % du contexte. Michel : *« tu me fais flipper là, parce que
   franchement Milo il est au top »*. Rien n'était cassé. **« Ça marche » est une raison suffisante

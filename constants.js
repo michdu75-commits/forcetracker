@@ -972,6 +972,116 @@ const EX_MUSCLES={
  //       travers listé dans BUGS.md — et il a suffi d'une vérification de Michel pour le voir.
  //    ⏭️ Reste un doute SUR L'ANIMATION elle-même : elle montre peut-être une autre machine.
  'dips-assis-machine-seated-dip':         {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
+
+ // ─── ÉPAULES (47) — relues une par une le 02/08/2026 ─────────────────────────────
+ // ⭐ LA CORRECTION QUI TOUCHE LE PLUS DE MONDE : les 13 DÉVELOPPÉS avaient le deltoïde
+ //    LATÉRAL en muscle MOTEUR, à égalité avec l'antérieur. C'est faux : en poussée
+ //    verticale le deltoïde ANTÉRIEUR est le moteur, le latéral n'est qu'un assistant
+ //    (ExRx, Strength Level, mesures EMG concordent). Conséquence concrète, et elle
+ //    explique un vrai problème de salle : quelqu'un qui ne fait que des développés
+ //    voyait ses deltoïdes latéraux affichés comme bien travaillés — alors que ce sont
+ //    précisément eux qui restent en retard sans élévations latérales.
+ 'developpe-militaire':                   {p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ 'developpe-militaire-halteres':          {p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ 'developpe-halteres-assis':              {p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ 'developpe-epaules-machine':             {p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ 'smith-machine-developpe-militaire':     {p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ 'developpe-epaules-assis-machine-shoulder-pre':{p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ 'developpe-epaules-elastique':           {p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ 'developpe-epaules-assis-elastique':     {p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ 'developpe-epaules-kettlebell':          {p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ // La rotation de l'Arnold recrute davantage le latéral qu'un développé classique, mais
+ // l'antérieur reste le moteur : il monte d'un cran dans l'ordre, pas de rang.
+ 'developpe-arnold-arnold-press':         {p:['front-delt'], s:['side-delt','triceps','traps'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le DÉVELOPPÉ NUQUE est le seul du lot où le latéral est vraiment moteur —
+ //    les bras y travaillent dans le plan frontal, pas devant le corps. C'est justement ce
+ //    qui en fait un exercice exigeant pour l'épaule. Il ne doit donc PAS être rangé comme
+ //    les 12 autres, ce qu'il était.
+ 'developpe-nuque':                       {p:['front-delt','side-delt'], s:['triceps','traps'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : à un bras, la charge tire le buste de côté — le tronc retient. Même
+ //    raisonnement que le développé couché unilatéral (pectoraux), pour la même raison.
+ 'developpe-epaules-unilateral-elastique':{p:['front-delt'], s:['side-delt','triceps','traps','obliques','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le développé LANDMINE se pousse en diagonale, pas à la verticale — le
+ //    HAUT DU PECTORAL y travaille réellement, il manquait. Et il se fait debout à un bras :
+ //    le gainage fait partie de l'exercice.
+ 'developpe-landmine-epaules':            {p:['front-delt'], s:['pec','triceps','traps','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : en équilibre sur les mains, le TRONC tient tout le corps aligné — le
+ //    gainage manquait complètement, et c'est pourtant ce qui limite la plupart des gens.
+ 'handstand-push-up-atr':                 {p:['front-delt'], s:['side-delt','triceps','traps','abs'], vu:'2026-08-02'},
+ 'handstand-push-up-suspendu-sangles':    {p:['front-delt'], s:['side-delt','triceps','traps','abs'], vu:'2026-08-02'},
+ // ─── ÉLÉVATIONS LATÉRALES : isolation du deltoïde latéral, trapèzes en soutien.
+ //     Rien à corriger — les 9 étaient justes et cohérentes entre elles.
+ 'elevations-laterales-lateral-raise':    {p:['side-delt'], s:['traps'], vu:'2026-08-02'},
+ 'elevations-laterales-cable':            {p:['side-delt'], s:['traps'], vu:'2026-08-02'},
+ 'elevations-laterales-machine':          {p:['side-delt'], s:['traps'], vu:'2026-08-02'},
+ 'elevations-laterales-unilaterale-poulie':{p:['side-delt'], s:['traps'], vu:'2026-08-02'},
+ 'elevations-laterales-kettlebell':       {p:['side-delt'], s:['traps'], vu:'2026-08-02'},
+ 'elevation-laterale-poulie-inclinee':    {p:['side-delt'], s:['traps'], vu:'2026-08-02'},
+ 'elevation-laterale-landmine':           {p:['side-delt'], s:['traps'], vu:'2026-08-02'},
+ 'elevation-laterale-inclinee-haltere':   {p:['side-delt'], s:['traps'], vu:'2026-08-02'},
+ 'croix-de-fer-halteres':                 {p:['side-delt'], s:['traps'], vu:'2026-08-02'},
+ // ─── ÉLÉVATIONS FRONTALES : isolation du deltoïde antérieur. Justes également.
+ //     ⚠️ Le haut du pectoral participe, mais on ne l'ajoute PAS : ce serait un 3ᵉ muscle,
+ //     et l'app compterait alors l'exercice comme polyarticulaire (4 → 5,5 en calories).
+ //     Même arbitrage que pour l'écarté à la poulie haute (pectoraux).
+ 'elevations-frontales':                  {p:['front-delt'], s:['side-delt'], vu:'2026-08-02'},
+ 'elevations-frontales-cable':            {p:['front-delt'], s:['side-delt'], vu:'2026-08-02'},
+ 'elevations-frontales-machine':          {p:['front-delt'], s:['side-delt'], vu:'2026-08-02'},
+ 'elevation-frontale-allongee-barre':     {p:['front-delt'], s:['side-delt'], vu:'2026-08-02'},
+ 'elevation-frontale-banc-incline':       {p:['front-delt'], s:['side-delt'], vu:'2026-08-02'},
+ // ─── OISEAUX : deltoïde postérieur moteur, latéral et trapèzes en soutien. Justes.
+ //     ⚠️ LIMITE CONNUE, écrite ici plutôt que maquillée : ces 3 muscles font compter
+ //     l'oiseau comme polyarticulaire (5,5 en calories, autant qu'un développé couché)
+ //     alors que c'est une isolation à coude fixe. Retirer le deltoïde latéral rendrait
+ //     le chiffre plus joli mais la donnée FAUSSE — on ne triche pas avec l'anatomie pour
+ //     arranger un calcul. Le défaut est dans le modèle de calories (« 3 muscles =
+ //     polyarticulaire »), pas dans ces fiches. À traiter à part.
+ 'oiseau':                                {p:['rear-delt'], s:['side-delt','traps'], vu:'2026-08-02'},
+ 'oiseau-elastique':                      {p:['rear-delt'], s:['side-delt','traps'], vu:'2026-08-02'},
+ 'oiseau-poulie-45':                      {p:['rear-delt'], s:['side-delt','traps'], vu:'2026-08-02'},
+ 'machine-oiseau':                        {p:['rear-delt'], s:['side-delt','traps'], vu:'2026-08-02'},
+ 'ecarte-arriere-elastique':              {p:['rear-delt'], s:['side-delt','traps'], vu:'2026-08-02'},
+ // Aux sangles le corps est en appui incliné : le gainage est réel (même règle que les
+ // pectoraux au TRX).
+ 'oiseau-inverse-trx-sangles':            {p:['rear-delt'], s:['side-delt','traps','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le FACE PULL plie le coude, contrairement à l'oiseau — le biceps y
+ //    travaille, il manquait. C'est ce qui distingue les deux mouvements.
+ 'tirage-visage-face-pull':               {p:['rear-delt'], s:['side-delt','traps','biceps'], vu:'2026-08-02'},
+ 'face-pull-couche-poulie':               {p:['rear-delt'], s:['side-delt','traps','biceps'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le Y RAISE est L'exercice du trapèze INFÉRIEUR — c'est même sa seule
+ //    raison d'être. Les trapèzes n'y sont pas un soutien, ils sont moteurs.
+ 'y-raise-w-raise':                       {p:['traps','rear-delt'], s:[], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le tirage menton monte les coudes DEVANT le corps — le deltoïde
+ //    antérieur y participe, il manquait.
+ 'tirage-menton-kettlebell':              {p:['side-delt','traps'], s:['biceps','front-delt'], vu:'2026-08-02'},
+ // ─── COIFFE DES ROTATEURS — ⚠️ LE POINT LE PLUS HONNÊTE DE CE GROUPE.
+ //     Les vrais muscles de la coiffe (sus-épineux, sous-épineux, petit rond, SOUS-SCAPULAIRE)
+ //     n'existent PAS dans la figurine : elle ne connaît que 17 muscles. On approche donc,
+ //     et on l'écrit — plutôt que de laisser croire à une précision qu'on n'a pas.
+ //     ROTATION EXTERNE : le deltoïde POSTÉRIEUR est bien un rotateur externe → l'approximation
+ //     tient.
+ 'rotation-externe-epaule-poulie':        {p:['rear-delt'], s:['traps'], vu:'2026-08-02'},
+ 'rotation-externe-epaule-elastique':     {p:['rear-delt'], s:['traps'], vu:'2026-08-02'},
+ 'rotation-externe-epaule-haltere':       {p:['rear-delt'], s:['traps'], vu:'2026-08-02'},
+ 'rotation-externe-epaule-abduction':     {p:['rear-delt'], s:['traps'], vu:'2026-08-02'},
+ // ✏️✏️ LA CORRECTION LA PLUS NETTE DU GROUPE : les deux ROTATIONS **INTERNES** étaient
+ //     classées EXACTEMENT comme les externes — deltoïde postérieur. Or ce sont des
+ //     mouvements OPPOSÉS : le deltoïde postérieur est l'ANTAGONISTE d'une rotation
+ //     interne, il freine le mouvement, il ne le produit pas. L'app comptait donc du
+ //     volume sur le muscle que l'exercice n'entraîne pas. Les vrais moteurs (sous-
+ //     scapulaire, grand pectoral, grand dorsal, deltoïde antérieur) → on garde les deux
+ //     qui existent dans la figurine.
+ //     ⭐ Personne ne pouvait le voir : la règle lisait le mot « rotation … épaule » et
+ //     ne distinguait pas « externe » de « interne ». Deux exercices contraires, une seule
+ //     réponse — c'est exactement ce que la relecture une par une sert à trouver.
+ 'rotation-interne-epaule-elastique':     {p:['front-delt'], s:['pec'], vu:'2026-08-02'},
+ 'rotation-interne-90-poulie':            {p:['front-delt'], s:['pec'], vu:'2026-08-02'},
+ // Mobilité (passage de bâton/élastique au-dessus de la tête) : amplitude, pas de charge.
+ 'passage-d-epaule-elastique':            {p:['rear-delt'], s:['traps'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le BICEPS n'a rien à faire ici — il venait du mot « tirage » dans le nom.
+ //    On tire le chariot bras tendus devant soi : c'est une élévation frontale lestée, et
+ //    le corps entier résiste à la traction (gainage).
+ 'chariot-de-puissance-tirage-epaules':   {p:['front-delt'], s:['side-delt','traps','abs'], vu:'2026-08-02'},
 };
 
 /** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou

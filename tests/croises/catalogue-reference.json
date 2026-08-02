@@ -2,7 +2,7 @@
  "genere": "2026-08-02",
  "total": 337,
  "nbRegles": 69,
- "fragiles": 60,
+ "fragiles": 36,
  "ex": {
   "Abducteurs Machine Debout": {
    "p": "glutes",
@@ -189,12 +189,12 @@
    "frag": 0
   },
   "Chariot de Puissance — Tirage Épaules": {
-   "p": "front-delt,side-delt",
-   "s": "biceps,traps",
+   "p": "front-delt",
+   "s": "abs,side-delt,traps",
    "pat": "elevation-epaules",
    "eq": "cardio",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Chest Press Machine Déclinée": {
    "p": "pec",
@@ -434,7 +434,7 @@
    "pat": "poussee-horizontale",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Dips Lestés": {
    "p": "pec,triceps",
@@ -485,8 +485,8 @@
    "frag": 0
   },
   "Développé Arnold (Arnold Press)": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "libre",
    "met": 5.5,
@@ -498,7 +498,7 @@
    "pat": "poussee-horizontale",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Couché Haltères": {
    "p": "pec",
@@ -506,7 +506,7 @@
    "pat": "poussee-horizontale",
    "eq": "libre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Couché Larsen (Larsen Press)": {
    "p": "pec",
@@ -514,7 +514,7 @@
    "pat": "poussee-horizontale",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Couché Unilatéral Kettlebell": {
    "p": "pec",
@@ -522,7 +522,7 @@
    "pat": "poussee-horizontale",
    "eq": "libre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Couché au Sol (Floor Press)": {
    "p": "pec,triceps",
@@ -530,7 +530,7 @@
    "pat": "poussee-horizontale",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Couché avec Chaînes": {
    "p": "pec",
@@ -538,7 +538,7 @@
    "pat": "poussee-horizontale",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Couché Élastique": {
    "p": "pec",
@@ -546,7 +546,7 @@
    "pat": "poussee-horizontale",
    "eq": "elast",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Décliné": {
    "p": "pec",
@@ -554,7 +554,7 @@
    "pat": "poussee-horizontale",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Décliné Haltères": {
    "p": "pec",
@@ -562,7 +562,7 @@
    "pat": "poussee-horizontale",
    "eq": "libre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Décliné Élastique": {
    "p": "pec",
@@ -570,11 +570,11 @@
    "pat": "poussee-horizontale",
    "eq": "elast",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Haltères Assis": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "libre",
    "met": 5.5,
@@ -586,7 +586,7 @@
    "pat": "poussee-horizontale",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Incliné Haltères": {
    "p": "pec",
@@ -594,7 +594,7 @@
    "pat": "poussee-horizontale",
    "eq": "libre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Incliné Poulie": {
    "p": "pec",
@@ -602,83 +602,83 @@
    "pat": "poussee-horizontale",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Développé Landmine (Épaules)": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "abs,pec,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "libre",
    "met": 5.5,
    "frag": 0
   },
   "Développé Militaire": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "barre",
    "met": 5.5,
    "frag": 0
   },
   "Développé Militaire Haltères": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "libre",
    "met": 5.5,
    "frag": 0
   },
   "Développé Nuque": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt,side-delt",
+   "s": "traps,triceps",
    "pat": "poussee-verticale",
    "eq": "barre",
    "met": 5.5,
    "frag": 0
   },
   "Développé Épaules Assis Machine (Shoulder Press)": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Développé Épaules Assis Élastique": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "elast",
    "met": 5.5,
    "frag": 0
   },
   "Développé Épaules Kettlebell": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "libre",
    "met": 5.5,
    "frag": 0
   },
   "Développé Épaules Machine": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Développé Épaules Unilatéral Élastique": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "abs,obliques,side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "elast",
    "met": 5.5,
    "frag": 0
   },
   "Développé Épaules Élastique": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "elast",
    "met": 5.5,
@@ -846,11 +846,11 @@
   },
   "Face Pull Couché Poulie": {
    "p": "rear-delt",
-   "s": "side-delt,traps",
+   "s": "biceps,side-delt,traps",
    "pat": "elevation-epaules",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Farmer's Walk": {
    "p": "forearms,traps",
@@ -950,19 +950,19 @@
   },
   "Handstand Push-up (ATR)": {
    "p": "front-delt",
-   "s": "traps,triceps",
+   "s": "abs,side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "corps",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Handstand Push-up Suspendu (Sangles)": {
    "p": "front-delt",
-   "s": "traps,triceps",
+   "s": "abs,side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "trx",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Haussements d'Épaules Barre": {
    "p": "traps",
@@ -1270,7 +1270,7 @@
   },
   "Oiseau Inversé TRX (Sangles)": {
    "p": "rear-delt",
-   "s": "side-delt,traps",
+   "s": "abs,side-delt,traps",
    "pat": "elevation-epaules",
    "eq": "trx",
    "met": 5.5,
@@ -1330,7 +1330,7 @@
    "pat": "poussee-horizontale",
    "eq": "guide",
    "met": 4,
-   "frag": 1
+   "frag": 0
   },
   "Pendulum Squat": {
    "p": "glutes,quads",
@@ -1605,16 +1605,16 @@
    "frag": 0
   },
   "Rotation Interne 90° Poulie": {
-   "p": "rear-delt",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "pec",
    "pat": "elevation-epaules",
    "eq": "guide",
    "met": 4,
    "frag": 0
   },
   "Rotation Interne Épaule Élastique": {
-   "p": "rear-delt",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "pec",
    "pat": "elevation-epaules",
    "eq": "elast",
    "met": 4,
@@ -1850,7 +1850,7 @@
    "pat": "poussee-horizontale",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Smith Machine Développé Incliné": {
    "p": "pec",
@@ -1858,11 +1858,11 @@
    "pat": "poussee-horizontale",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Smith Machine Développé Militaire": {
-   "p": "front-delt,side-delt,triceps",
-   "s": "traps",
+   "p": "front-delt",
+   "s": "side-delt,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "guide",
    "met": 5.5,
@@ -2238,11 +2238,11 @@
   },
   "Tirage Menton Kettlebell": {
    "p": "side-delt,traps",
-   "s": "biceps",
+   "s": "biceps,front-delt",
    "pat": "elevation-epaules",
    "eq": "libre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Tirage Menton Élastique": {
    "p": "side-delt,traps",
@@ -2310,11 +2310,11 @@
   },
   "Tirage Visage (Face Pull)": {
    "p": "rear-delt",
-   "s": "side-delt,traps",
+   "s": "biceps,side-delt,traps",
    "pat": "elevation-epaules",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Tirage en Rack (Rack Pull)": {
    "p": "lower-back,traps",
@@ -2477,8 +2477,8 @@
    "frag": 0
   },
   "Y Raise / W Raise": {
-   "p": "rear-delt",
-   "s": "traps",
+   "p": "rear-delt,traps",
+   "s": "",
    "pat": "elevation-epaules",
    "eq": "autre",
    "met": 4,
@@ -2498,7 +2498,7 @@
    "pat": "elevation-epaules",
    "eq": "elast",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Écarté Décliné Haltères": {
    "p": "pec",

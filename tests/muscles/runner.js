@@ -111,7 +111,10 @@ t('un curl de BRAS est bien du biceps', temoins.curlBiceps.biceps===2, JSON.stri
 t('le développé COUCHÉ reste des pectoraux', temoins.dcCouche.pec===2&&!temoins.dcCouche['side-delt'],
   JSON.stringify(temoins.dcCouche));
 t('un développé d\'ÉPAULES est bien des épaules',
-  temoins.dArnold['front-delt']===2&&temoins.dArnold['side-delt']===2&&!temoins.dArnold.pec,
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 (pas une régression) : en poussée verticale le deltoïde
+  // ANTÉRIEUR est le moteur, le LATÉRAL n'est qu'un assistant — il passe donc de 2 à 1.
+  // Ce que ce test protège n'a pas changé : c'est bien un exercice d'épaules, pas de pecs.
+  temoins.dArnold['front-delt']===2&&temoins.dArnold['side-delt']===1&&!temoins.dArnold.pec,
   JSON.stringify(temoins.dArnold));
 t('la presse à cuisses reste des quadriceps', temoins.presseCuisses.quads===2, JSON.stringify(temoins.presseCuisses));
 t('⚠️ la DERNIÈRE règle de _MEX est bien le rattrapage générique (sinon règle morte)',
@@ -251,7 +254,11 @@ t('⭐ « Rotation Externe Épaule Abduction » = coiffe des rotateurs, plus jam
   au.rotAbd==='rear-delt,traps', 'reçu '+au.rotAbd);
 t('témoin : « Abduction Cuisses » reste des fessiers', au.abdCuisses.indexOf('glutes')===0, 'reçu '+au.abdCuisses);
 t('⭐ « Tirage Vertical (Upright Row) » = épaules/trapèzes + élévation, plus jamais un tirage dorsal',
-  au.upright==='biceps,side-delt,traps'&&au.uprightMov==='elevation-epaules', au.upright+' / '+au.uprightMov);
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 : le deltoïde ANTÉRIEUR a été ajouté (les coudes montent
+  // DEVANT le corps, il y participe). ⭐ Au passage ce test prouve la table d'identité :
+  // « Tirage Vertical (Upright Row) » est l'ANCIEN nom de « Tirage Menton Kettlebell », et
+  // il retrouve bien les muscles ÉCRITS de sa fiche actuelle.
+  au.upright==='biceps,front-delt,side-delt,traps'&&au.uprightMov==='elevation-epaules', au.upright+' / '+au.uprightMov);
 t('témoins : traction et rowing restent des dorsaux',
   au.traction.indexOf('lats')>=0&&au.rowing.indexOf('lats')>=0, au.traction+' / '+au.rowing);
 t('⭐ « Jefferson Curl » = lombaires/ischios (mobilité), plus jamais un biceps',
@@ -373,7 +380,10 @@ t('témoin : le vrai Développé Incliné reste un développé (pec + triceps)',
 t('le Tate Press n\'est plus MUET (triceps + extension du coude)',
   tri.tate==='front-delt,triceps'&&tri.tatePat==='extension-triceps', tri.tate+' / '+tri.tatePat);
 t('le Handstand Push-up = ÉPAULES en poussée verticale (pas une pompe)',
-  tri.atr==='front-delt,traps,triceps'&&tri.atrPat==='poussee-verticale', tri.atr+' / '+tri.atrPat);
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 : le GAINAGE et le deltoïde latéral ont été ajoutés — en
+  // équilibre sur les mains, le tronc tient tout le corps aligné, et c'est ce qui limite la
+  // plupart des gens. Ce que ce test protège reste le même : ce n'est pas une pompe.
+  tri.atr==='abs,front-delt,side-delt,traps,triceps'&&tri.atrPat==='poussee-verticale', tri.atr+' / '+tri.atrPat);
 
 // ── LOTS « DOS · ÉPAULES · PECS » du 01/08 (fin de soirée) : 33 nouveaux, très majoritairement
 // des versions ÉLASTIQUE et TRX. ⚠️ Le trou le plus gênant trouvé ce soir : « Tractions (Pull-up) »
@@ -752,6 +762,45 @@ t('⭐ la recherche par FAMILLE marche toujours (le retour de Tatiana)',
   pert.familleN>=20&&pert.familleRowing&&pert.poussV>=10,
   'tirage horizontal='+pert.familleN+' rowing 1er='+pert.familleRowing+' poussée verticale='+pert.poussV);
 t('témoin : une recherche qui ne correspond à rien rend toujours 0', pert.rien===0, String(pert.rien));
+
+// ── ÉPAULES : les 5 corrections trouvées en relisant les 47 fiches une par une (02/08).
+// Elles sont FIGÉES ici, en plus de l'empreinte : l'empreinte se régénère d'une commande,
+// ces attentes-ci demandent qu'on les réécrive à la main. (R17 : un bug trouvé devient un test.)
+const ep=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>{const sc=(_mscScores([E(n)])||{}).sc||{}; return sc;};
+  return {rotExt:f('Rotation Externe Épaule Élastique'), rotInt:f('Rotation Interne Épaule Élastique'),
+          nuque:f('Développé Nuque'), militaire:f('Développé Militaire'),
+          y:f('Y Raise / W Raise'), chariot:f('Chariot de Puissance — Tirage Épaules'),
+          atrAbs:f('Handstand Push-up (ATR)').abs, landmine:f('Développé Landmine (Épaules)').pec,
+          latDroit:f('Élévations Latérales (Lateral Raise)')};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(ep.erreur) console.log('     ⚠️  bloc épaules en ERREUR : '+ep.erreur);
+t('⭐ ROTATION INTERNE ≠ ROTATION EXTERNE (elles avaient EXACTEMENT le même classement)',
+  !ep.erreur && ep.rotExt['rear-delt']===2 && ep.rotInt['front-delt']===2 && !ep.rotInt['rear-delt'],
+  'externe '+JSON.stringify(ep.rotExt)+' · interne '+JSON.stringify(ep.rotInt)
+  +'\n         → le deltoïde postérieur est l\'ANTAGONISTE d\'une rotation interne : il la freine, il ne la produit pas.');
+t('⭐ en poussée verticale, seul le deltoïde ANTÉRIEUR est moteur',
+  !ep.erreur && ep.militaire['front-delt']===2 && ep.militaire['side-delt']===1 && ep.militaire.triceps===1,
+  JSON.stringify(ep.militaire));
+t('⭐ … SAUF le Développé NUQUE, où les bras travaillent dans le plan frontal',
+  // ⚠️ Ce test compare le nuque au militaire au lieu de le regarder seul : sinon il passait
+  //    AUSSI avec l'ancien classement (où les 13 développés étaient identiques), et un test
+  //    qui ne distingue pas l'exception de la règle ne protège rien.
+  !ep.erreur && ep.nuque['front-delt']===2 && ep.nuque['side-delt']===2
+  && ep.militaire['side-delt']===1,
+  'nuque '+JSON.stringify(ep.nuque)+' · militaire '+JSON.stringify(ep.militaire));
+t('témoin : l\'élévation latérale reste LA source du deltoïde latéral (isolation intacte)',
+  !ep.erreur && ep.latDroit['side-delt']===2 && Object.keys(ep.latDroit).length===2,
+  JSON.stringify(ep.latDroit));
+t('⭐ le Y Raise est un exercice de TRAPÈZES (c\'est sa seule raison d\'être)',
+  !ep.erreur && ep.y.traps===2, JSON.stringify(ep.y));
+t('le chariot « Tirage Épaules » n\'a plus de BICEPS (il venait du mot « tirage »)',
+  !ep.erreur && !ep.chariot.biceps && ep.chariot.abs===1, JSON.stringify(ep.chariot));
+t('le gainage manquait : handstand push-up et développé landmine',
+  !ep.erreur && ep.atrAbs===1 && ep.landmine===1, 'atr.abs='+ep.atrAbs+' landmine.pec='+ep.landmine);
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 

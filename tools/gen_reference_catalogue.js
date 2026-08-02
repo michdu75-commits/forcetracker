@@ -43,7 +43,9 @@ const out=await p.evaluate(()=>{
     const d=_mscScores([E(n)])||{}, sc=d.sc||{};
     const s=naz(n); const match=[];
     for(let k=0;k<N;k++) if(_MEX[k].re.test(s)) match.push(k);
-    const avis=[...new Set(match.map(k=>sig(_MEX[k])))].length;
+    // Muscles ÉCRITS → l'ordre des règles ne s'applique plus : l'exercice sort du compte.
+    const ecrit=(typeof exMuscles==='function')&&exMuscles(n);
+    const avis=ecrit?1:[...new Set(match.map(k=>sig(_MEX[k])))].length;
     if(avis>1) fragiles++;
     ex[n]={p:Object.keys(sc).filter(k=>sc[k]===2).sort().join(','),
            s:Object.keys(sc).filter(k=>sc[k]===1).sort().join(','),

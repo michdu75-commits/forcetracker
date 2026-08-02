@@ -282,7 +282,12 @@ const emp=await p.evaluate(()=>{
     const d=_mscScores([E(n)])||{}, sc=d.sc||{};
     const q=naz(n); const match=[];
     for(let k=0;k<N;k++) if(_MEX[k].re.test(q)) match.push(k);
-    if([...new Set(match.map(k=>sig(_MEX[k])))].length>1) fragiles++;
+    // ⭐ Un exercice dont les muscles sont ÉCRITS n'est plus fragile : l'ordre des règles
+    //    ne le concerne plus du tout. Sans cette ligne, l'indicateur mesurerait un risque
+    //    qui n'existe plus — et il ne descendrait JAMAIS, même en basculant tout le
+    //    catalogue. C'est ce qui en fait une jauge d'avancement et pas un chiffre décoratif.
+    const ecrit=(typeof exMuscles==='function')&&exMuscles(n);
+    if(!ecrit && [...new Set(match.map(k=>sig(_MEX[k])))].length>1) fragiles++;
     ex[n]={p:Object.keys(sc).filter(k=>sc[k]===2).sort().join(','),
            s:Object.keys(sc).filter(k=>sc[k]===1).sort().join(','),
            pat:_movPattern(n)||'', eq:_exEquip(n), met:getExerciseMET(n)};
@@ -418,7 +423,12 @@ const ATTENDU_SOCLE={
   'Développé Couché':                   {p:'pec',                    pat:'poussee-horizontale', eq:'barre'},
   'Squat à la Barre':                   {p:'glutes,quads',           pat:'squat',               eq:'barre'},
   'Soulevé de Terre':                   {p:'glutes,hamstrings,lower-back', pat:'hip-hinge',     eq:'barre'},
-  'Développé Militaire':                {p:'front-delt,side-delt,triceps', pat:'poussee-verticale', eq:'barre'},
+  // ⚠️ ATTENTE CHANGÉE VOLONTAIREMENT le 02/08, à la relecture des 47 épaules : le deltoïde
+  //    LATÉRAL et le TRICEPS ne sont plus moteurs, seul l'ANTÉRIEUR l'est (ExRx, Strength
+  //    Level et l'EMG concordent). C'est la correction la plus visible du groupe — elle
+  //    explique pourquoi quelqu'un qui ne fait que des développés voyait ses deltoïdes
+  //    latéraux affichés comme travaillés alors que ce sont eux qui restent en retard.
+  'Développé Militaire':                {p:'front-delt',             pat:'poussee-verticale',   eq:'barre'},
   'Tirage Poulie Haute (Lat Pulldown)': {p:'biceps,lats',            pat:'tirage-vertical',     eq:'guide'},
   'Rowing Barre (Tirage Horizontal)':   {p:'lats,rear-delt,traps',   pat:'tirage-horizontal',   eq:'barre'},
   'Curl Barre':                         {p:'biceps',                 pat:'curl-biceps',         eq:'barre'},
