@@ -418,7 +418,9 @@ const dep=await p.evaluate(()=>{
 t('⭐ les 33 exercices dos/épaules/pecs sont au catalogue, TOUS avec muscles ET schéma',
   dep.dansExlib===33&&dep.avecMuscles===33&&dep.avecPattern===33, JSON.stringify(dep.muets));
 t('le Muscle-up n\'est plus MUET (dorsaux + biceps, tirage vertical)',
-  dep.muscleUp==='biceps,front-delt,lats,pec,triceps'&&dep.muscleUpPat==='tirage-vertical',
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 : le GAINAGE a été ajouté — la transition d'un muscle-up
+  //    (passer au-dessus de la barre) est ce qui demande le plus de tronc.
+  dep.muscleUp==='abs,biceps,front-delt,lats,pec,triceps'&&dep.muscleUpPat==='tirage-vertical',
   dep.muscleUp+' / '+dep.muscleUpPat);
 t('le Bird Dog n\'est plus MUET (lombaires + abdos)',
   dep.birdDog==='abs,glutes,lower-back,obliques', dep.birdDog);
@@ -592,7 +594,11 @@ const rech=await p.evaluate(()=>{
   const th=cherche('Tirage horizontal');
   o.tirageH=th.n; o.tirageHvide=th.vide; o.tirageHms=th.ms;
   o.tirageHaRowing=/Rowing/.test(th.h);          // le mouvement qu'elle cherchait
-  o.tirageHaTraction=/Traction/.test(th.h);      // ⚠️ NE doit PAS y être : c'est vertical
+  // ⚠️ Les vraies tractions (verticales) NE doivent PAS y être. La « Traction Australienne »
+  //    fait exception : malgré son nom, le corps est à l'horizontale — c'est un rowing,
+  //    reclassé le 02/08. On l'exclut du test pour qu'il continue de dire ce qu'il visait.
+  o.tirageHaTraction=/Traction(?! Australienne)/.test(th.h);
+  o.tirageHaAustralienne=/Traction Australienne/.test(th.h);
   const pv=cherche('poussée verticale');
   o.poussV=pv.n; o.poussVaDevEp=/Développé Épaules|Développé Militaire/.test(pv.h);
   const ch=cherche('charnière de hanche');
@@ -609,6 +615,8 @@ t('⭐ RETOUR TATIANA : « Tirage horizontal » sort les rowings (avant : « Auc
   rech.tirageH+' résultats · vide='+rech.tirageHvide+' · rowing='+rech.tirageHaRowing);
 t('… et il ne ramasse PAS les tirages VERTICAUX (une traction n\'est pas un tirage horizontal)',
   rech.tirageHaTraction===false, 'traction présente='+rech.tirageHaTraction);
+t('… mais il ramasse bien la TRACTION AUSTRALIENNE, qui est un rowing malgré son nom',
+  rech.tirageHaAustralienne===true, String(rech.tirageHaAustralienne));
 t('les autres familles de mouvement marchent aussi (« poussée verticale », « charnière de hanche »)',
   rech.poussV>=10&&rech.poussVaDevEp&&rech.charn>=15&&rech.charnaSDT,
   'poussée verticale='+rech.poussV+'/'+rech.poussVaDevEp+' · charnière='+rech.charn+'/'+rech.charnaSDT);
@@ -801,6 +809,50 @@ t('le chariot « Tirage Épaules » n\'a plus de BICEPS (il venait du mot « tir
   !ep.erreur && !ep.chariot.biceps && ep.chariot.abs===1, JSON.stringify(ep.chariot));
 t('le gainage manquait : handstand push-up et développé landmine',
   !ep.erreur && ep.atrAbs===1 && ep.landmine===1, 'atr.abs='+ep.atrAbs+' landmine.pec='+ep.landmine);
+
+// ── DOS : les corrections trouvées en relisant les 52 fiches une par une (02/08).
+const ds=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>(_mscScores([E(n)])||{}).sc||{};
+  return {row:f('Rowing Barre (Tirage Horizontal)'), seal:f('Seal Row'),
+          chest:f('Rowing Poitrine Appuyée (Chest Supported)'),
+          pulldown:f('Tirage Poulie Haute (Lat Pulldown)'), chin:f('Traction Supination (Chin-up)'),
+          renegade:f('Renegade Row'), hang:f('Suspension Passive (Dead Hang)'),
+          sumo:f('Soulevé de Terre Sumo'), conv:f('Soulevé de Terre'),
+          austral:_movPattern('Traction Australienne (Poids du Corps)'),
+          australTrx:_movPattern('Traction Australienne TRX (Sangles)'),
+          table:_movPattern('Rowing Inversé sous une Table'),
+          traction:_movPattern('Tractions (Pull-up)')};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(ds.erreur) console.log('     ⚠️  bloc dos en ERREUR : '+ds.erreur);
+t('⭐ dans un ROWING, le deltoïde postérieur ASSISTE, il n\'est plus moteur',
+  !ds.erreur && ds.row.lats===2 && ds.row.traps===2 && ds.row['rear-delt']===1, JSON.stringify(ds.row));
+t('⭐ dans un TIRAGE VERTICAL, le BICEPS assiste, il n\'est plus moteur',
+  !ds.erreur && ds.pulldown.lats===2 && ds.pulldown.biceps===1, JSON.stringify(ds.pulldown));
+t('⭐ … SAUF en prise SUPINÉE (chin-up), où il l\'est vraiment',
+  // comparé au tirage pronation : un test qui regarde le chin-up seul ne prouverait rien.
+  !ds.erreur && ds.chin.biceps===2 && ds.pulldown.biceps===1,
+  'chin '+JSON.stringify(ds.chin)+' · pulldown '+JSON.stringify(ds.pulldown));
+t('⭐ un rowing à POITRINE APPUYÉE ne compte plus le bas du dos (c\'est ce qu\'il supprime)',
+  !ds.erreur && !ds.seal['lower-back'] && !ds.chest['lower-back'] && ds.row['lower-back']===1,
+  'seal '+JSON.stringify(ds.seal)+' · témoin rowing libre lower-back='+ds.row['lower-back']);
+t('le Renegade Row est un ANTI-ROTATION (gainage, pas de lombaires)',
+  !ds.erreur && ds.renegade.abs===1 && ds.renegade.obliques===1 && !ds.renegade['lower-back'],
+  JSON.stringify(ds.renegade));
+t('⭐ en SUSPENSION PASSIVE on TIENT, on ne tire pas : la prise est le moteur',
+  !ds.erreur && ds.hang.forearms===2 && ds.hang.lats===1, JSON.stringify(ds.hang));
+t('⭐ le SUMO n\'est pas un soulevé conventionnel (quadriceps moteurs, ischios en soutien)',
+  !ds.erreur && ds.sumo.quads===2 && ds.sumo.hamstrings===1
+  && ds.conv.hamstrings===2 && ds.conv.quads===1,
+  'sumo '+JSON.stringify(ds.sumo)+' · conventionnel '+JSON.stringify(ds.conv));
+t('⭐ une TRACTION AUSTRALIENNE est un tirage HORIZONTAL (le corps est à l\'horizontale)',
+  !ds.erreur && ds.austral==='tirage-horizontal' && ds.australTrx==='tirage-horizontal'
+  && ds.table==='tirage-horizontal',
+  'australienne='+ds.austral+' trx='+ds.australTrx+' table='+ds.table);
+t('témoin : une vraie traction reste un tirage VERTICAL',
+  !ds.erreur && ds.traction==='tirage-vertical', String(ds.traction));
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 

@@ -456,6 +456,14 @@ conclure faux avec assurance.
   vert — **et il passait AUSSI avec l'ancien classement**, où les 13 développés étaient identiques.
   Le contrôle négatif l'a montré (il est resté vert quand tout le reste rougissait). *Un test qui
   décrit l'exception sans la comparer à la règle ne prouve rien.* Réécrit en comparant les deux.
+- **🪞 Corriger un cas et ne pas chercher son MIROIR** (02/08, ft-v739 → ft-v740) : aux épaules,
+  j'ai trouvé que le deltoïde latéral était compté comme *moteur* dans les développés alors qu'il
+  n'est qu'un assistant. J'ai corrigé, livré, et je suis passé au groupe suivant — où **la même
+  erreur attendait deux fois** : le deltoïde postérieur moteur dans les 18 rowings, le biceps
+  moteur dans les 13 tirages verticaux. ⭐ *Une erreur de MODÈLE (« trop de muscles moteurs »)
+  ne vit jamais dans un seul groupe.* Quand une correction porte sur la façon de classer et non
+  sur un exercice, chercher immédiatement ses jumelles ailleurs — c'est le corollaire de **R8**,
+  appliqué cette fois aux données et non au contexte de Milo.
 - **Chercher un symptôme là où il n'y en a pas** (ft-v727) : je voulais tailler dans les consignes
   de Milo parce qu'elles occupaient 78 % du contexte. Michel : *« tu me fais flipper là, parce que
   franchement Milo il est au top »*. Rien n'était cassé. **« Ça marche » est une raison suffisante

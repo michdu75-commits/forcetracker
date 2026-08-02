@@ -1082,6 +1082,105 @@ const EX_MUSCLES={
  //    On tire le chariot bras tendus devant soi : c'est une élévation frontale lestée, et
  //    le corps entier résiste à la traction (gainage).
  'chariot-de-puissance-tirage-epaules':   {p:['front-delt'], s:['side-delt','traps','abs'], vu:'2026-08-02'},
+
+ // ─── DOS (52) — relus un par un le 02/08/2026 ────────────────────────────────────
+ // ⭐ LES DEUX CORRECTIONS QUI TOUCHENT LE PLUS DE MONDE, et elles sont symétriques :
+ //    ① sur les 18 ROWINGS, le deltoïde POSTÉRIEUR était moteur à égalité avec le grand
+ //       dorsal. C'est un assistant (ExRx : « synergist »), pas un moteur.
+ //    ② sur les 12 TIRAGES VERTICAUX et TRACTIONS, le BICEPS était moteur à égalité avec
+ //       le grand dorsal. Même erreur, autre muscle : quelqu'un qui enchaîne tractions et
+ //       tirages voyait ses biceps comptés comme un gros volume de travail direct.
+ //    ⭐ Les deux ont leur EXCEPTION RÉELLE, et c'est ce qui rend la distinction utile :
+ //       en prise SUPINÉE (chin-up, prise inversée) le biceps est bel et bien co-moteur.
+ //
+ // ⭐ LA DISTINCTION QUI N'EXISTAIT PAS : rowing ≠ tirage vertical côté TRAPÈZES. Un rowing
+ //    RÉTRACTE les omoplates (trapèzes moyens et rhomboïdes = moteurs) ; un tirage vertical
+ //    les ABAISSE (le grand dorsal domine, les trapèzes assistent). Les 52 fiches disaient
+ //    la même chose pour les deux gestes.
+ //
+ // ─── SOULEVÉS DE TERRE
+ 'souleve-de-terre':                      {p:['glutes','hamstrings','lower-back'], s:['quads','traps','forearms','lats'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le SUMO n'est pas un soulevé conventionnel avec les pieds écartés. La
+ //    position ouverte fait travailler davantage les QUADRICEPS et moins les ischios et le
+ //    bas du dos — c'est même la raison pour laquelle beaucoup s'y mettent. Les deux fiches
+ //    étaient identiques. (Les adducteurs, très sollicités, n'existent pas dans la figurine.)
+ 'souleve-de-terre-sumo':                 {p:['glutes','quads','lower-back'], s:['hamstrings','traps','forearms','lats'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : au rack pull la barre est lourde et l'amplitude courte — les FESSIERS sont
+ //    moteurs et la PRISE (avant-bras) est ce qui lâche en premier. Les deux manquaient.
+ 'tirage-en-rack-rack-pull':              {p:['lower-back','glutes','traps'], s:['hamstrings','lats','forearms'], vu:'2026-08-02'},
+ // ─── ROWINGS BUSTE PENCHÉ (non soutenu) : le bas du dos tient la position, il compte.
+ 'rowing-barre-tirage-horizontal':        {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'rowing-haltere-tirage-horizontal':      {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'rowing-cable-tirage-horizontal':        {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'rowing-yates-supination':               {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'rowing-smith-machine':                  {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'rowing-landmine-t-bar':                 {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'rowing-halteres-buste-penche':          {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'meadows-row':                           {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'rowing-buste-penche-elastique':         {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'rowing-unilateral-elastique':           {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'rowing-horizontal-elastique':           {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'tirage-poulie-basse-prise-large':       {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ 'tirage-poulie-basse-prise-serree':      {p:['lats','traps'], s:['rear-delt','biceps','forearms','lower-back'], vu:'2026-08-02'},
+ // ✏️✏️ CORRECTION QUI SE VOIT À L'ŒIL UNE FOIS DITE : les rowings à POITRINE APPUYÉE
+ //    comptaient le BAS DU DOS… alors que c'est précisément ce qu'ils servent à supprimer.
+ //    On s'allonge sur un banc pour que les lombaires ne travaillent PAS — l'app créditait
+ //    l'exercice du travail qu'il est conçu pour éviter. Six fiches concernées.
+ 'rowing-poitrine-appuyee-chest-supported':{p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
+ 'seal-row':                              {p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
+ 'rowing-machine-tirage-horizontal':      {p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
+ 'rowing-hammer-strength':                {p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
+ 'rowing-t-bar-machine':                  {p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
+ 'tirage-iso-lateral-hammer-strength':    {p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le RENEGADE ROW se fait en position de planche, sur deux haltères — c'est
+ //    d'abord un ANTI-ROTATION. Il n'avait aucun gainage, et il comptait du bas du dos.
+ 'renegade-row':                          {p:['lats','traps'], s:['rear-delt','biceps','forearms','abs','obliques'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : les tirages HORIZONTAUX au poids du corps (table, TRX, australienne) se
+ //    font corps gainé en planche inversée — le gainage manquait, et le bas du dos n'y est
+ //    pas moteur.
+ 'rowing-inverse-sous-une-table':         {p:['lats','traps'], s:['rear-delt','biceps','forearms','abs'], vu:'2026-08-02'},
+ 'rowing-trx-sangles':                    {p:['lats','traps'], s:['rear-delt','biceps','forearms','abs'], vu:'2026-08-02'},
+ 'traction-australienne-poids-du-corps':  {p:['lats','traps'], s:['rear-delt','biceps','forearms','abs'], vu:'2026-08-02'},
+ 'traction-australienne-trx-sangles':     {p:['lats','traps'], s:['rear-delt','biceps','forearms','abs'], vu:'2026-08-02'},
+ // ─── TIRAGES VERTICAUX ET TRACTIONS (prise pronation ou neutre) : le grand dorsal domine,
+ //     les trapèzes et le biceps assistent.
+ 'tirage-poulie-haute-lat-pulldown':      {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'tirage-poulie-haute-prise-serree':      {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'tirage-nuque':                          {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'tirage-incline-poulie-haute':           {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'tirage-vertical-alterne-elastique':     {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'tractions-pull-up':                     {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'traction-lestee':                       {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'traction-assistee':                     {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'traction-assistee-avec-banc':           {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'traction-prise-neutre':                 {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'traction-derriere-la-nuque':            {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'tractions-aux-anneaux':                 {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'rocky-pull-up':                         {p:['lats'], s:['biceps','traps','rear-delt','forearms'], vu:'2026-08-02'},
+ // ⭐ L'EXCEPTION RÉELLE : en prise SUPINÉE, le coude part fléchi et le biceps est vraiment
+ //    co-moteur. C'est même la seule raison de choisir cette prise. Deux fiches, et elles
+ //    étaient rangées comme les onze autres.
+ 'traction-supination-chin-up':           {p:['lats','biceps'], s:['traps','rear-delt','forearms'], vu:'2026-08-02'},
+ 'tirage-poulie-haute-prise-inversee':    {p:['lats','biceps'], s:['traps','rear-delt','forearms'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le MUSCLE-UP est une traction PUIS un dips — la transition demande un
+ //    gainage considérable, qui manquait.
+ 'muscle-up':                             {p:['lats','biceps'], s:['front-delt','pec','triceps','abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : en SUSPENSION PASSIVE on ne tire pas, on TIENT. C'est un exercice de
+ //    PRISE : le grand dorsal s'étire, il n'est pas moteur. Il était à égalité avec l'avant-bras.
+ 'suspension-passive-dead-hang':          {p:['forearms'], s:['lats','traps'], vu:'2026-08-02'},
+ // ─── PULL-OVERS : grand dorsal moteur, pectoral et longue portion du triceps en soutien
+ //     (le triceps y travaille comme extenseur d'ÉPAULE, pas du coude). Justes.
+ 'pull-over':                             {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
+ 'pull-over-barre':                       {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
+ 'pull-over-haltere':                     {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
+ 'pull-over-poulie':                      {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
+ 'pullover-machine':                      {p:['lats'], s:['pec','triceps'], vu:'2026-08-02'},
+ // ─── CHARIOT DE PUISSANCE : on tire une charge en reculant ou de côté.
+ 'sled-pull':                             {p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
+ 'chariot-de-puissance-tirage-dos':       {p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : tirer de CÔTÉ met les obliques en jeu — c'est ce qui le distingue du
+ //    tirage dos, et les deux fiches étaient identiques.
+ 'chariot-de-puissance-tirage-de-cote':   {p:['lats','traps'], s:['rear-delt','biceps','forearms','obliques'], vu:'2026-08-02'},
 };
 
 /** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou

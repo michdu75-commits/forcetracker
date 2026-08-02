@@ -60,6 +60,7 @@ const TOLERE={
   // ⑤ schémas volontairement différents des muscles
   schema:{
     'Planche de Préhension':'un maintien de prise : le SCHÉMA est un gainage (rien ne bouge), les MUSCLES sont les avant-bras. Les deux sont justes.',
+    'Suspension Passive (Dead Hang)':'même cas : on est SUSPENDU à une barre (schéma tirage vertical) mais on ne tire pas — c\'est la PRISE qui travaille. Le grand dorsal s\'étire sans être moteur. Les deux sont justes ; il n\'existe pas de schéma « suspension ».',
     'Sled Pull':'',    // corrigé le 02/08 — ne doit plus apparaître
   },
   // ⑥ matériel : noms contenant deux matériels, ou un mot trompeur
@@ -429,10 +430,14 @@ const ATTENDU_SOCLE={
   //    explique pourquoi quelqu'un qui ne fait que des développés voyait ses deltoïdes
   //    latéraux affichés comme travaillés alors que ce sont eux qui restent en retard.
   'Développé Militaire':                {p:'front-delt',             pat:'poussee-verticale',   eq:'barre'},
-  'Tirage Poulie Haute (Lat Pulldown)': {p:'biceps,lats',            pat:'tirage-vertical',     eq:'guide'},
-  'Rowing Barre (Tirage Horizontal)':   {p:'lats,rear-delt,traps',   pat:'tirage-horizontal',   eq:'barre'},
+  // ⚠️ ATTENTES CHANGÉES VOLONTAIREMENT le 02/08, à la relecture des 52 exercices de dos :
+  //    le BICEPS n'est plus moteur dans un tirage vertical (il assiste — sauf en prise
+  //    supinée) et le deltoïde POSTÉRIEUR n'est plus moteur dans un rowing. Les deux
+  //    étaient comptés à égalité avec le grand dorsal, ce qui gonflait leur volume.
+  'Tirage Poulie Haute (Lat Pulldown)': {p:'lats',                   pat:'tirage-vertical',     eq:'guide'},
+  'Rowing Barre (Tirage Horizontal)':   {p:'lats,traps',             pat:'tirage-horizontal',   eq:'barre'},
   'Curl Barre':                         {p:'biceps',                 pat:'curl-biceps',         eq:'barre'},
-  'Tractions (Pull-up)':                {p:'biceps,lats',            pat:'tirage-vertical',     eq:'corps'},
+  'Tractions (Pull-up)':                {p:'lats',                   pat:'tirage-vertical',     eq:'corps'},
   'Dips':                               {p:'pec,triceps',            pat:'poussee-horizontale', eq:'corps'},
   'Élévations Latérales (Lateral Raise)':{p:'side-delt',             pat:'elevation-epaules',   eq:'autre'}
 };

@@ -2,7 +2,7 @@
  "genere": "2026-08-02",
  "total": 337,
  "nbRegles": 69,
- "fragiles": 36,
+ "fragiles": 21,
  "ex": {
   "Abducteurs Machine Debout": {
    "p": "glutes",
@@ -157,8 +157,8 @@
    "frag": 0
   },
   "Chariot de Puissance — Tirage Dos": {
-   "p": "lats",
-   "s": "biceps,rear-delt,traps",
+   "p": "lats,traps",
+   "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "cardio",
    "met": 5.5,
@@ -173,8 +173,8 @@
    "frag": 1
   },
   "Chariot de Puissance — Tirage de Côté": {
-   "p": "lats",
-   "s": "biceps,rear-delt,traps",
+   "p": "lats,traps",
+   "s": "biceps,forearms,obliques,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "cardio",
    "met": 5.5,
@@ -1213,12 +1213,12 @@
    "frag": 0
   },
   "Meadows Row": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Mollets Machine Assise": {
    "p": "calves",
@@ -1254,7 +1254,7 @@
   },
   "Muscle-up": {
    "p": "biceps,lats",
-   "s": "front-delt,pec,triceps",
+   "s": "abs,front-delt,pec,triceps",
    "pat": "tirage-vertical",
    "eq": "corps",
    "met": 5.5,
@@ -1557,16 +1557,16 @@
    "frag": 0
   },
   "Renegade Row": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "abs,biceps,forearms,obliques,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "libre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Rocky Pull-up": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "corps",
    "met": 5.5,
@@ -1645,132 +1645,132 @@
    "frag": 0
   },
   "Rowing Barre (Tirage Horizontal)": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Rowing Buste Penché Élastique": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "elast",
    "met": 5.5,
    "frag": 0
   },
   "Rowing Câble (Tirage Horizontal)": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Rowing Haltère (Tirage Horizontal)": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "libre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Rowing Haltères Buste Penché": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "libre",
    "met": 5.5,
    "frag": 0
   },
   "Rowing Hammer Strength": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Rowing Horizontal Élastique": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "elast",
    "met": 5.5,
    "frag": 0
   },
   "Rowing Inversé sous une Table": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "abs,biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "barre",
    "met": 5.5,
    "frag": 0
   },
   "Rowing Landmine (T-Bar)": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "libre",
    "met": 5.5,
    "frag": 0
   },
   "Rowing Machine (Tirage Horizontal)": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Rowing Poitrine Appuyée (Chest Supported)": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "barre",
    "met": 5.5,
    "frag": 0
   },
   "Rowing Smith Machine": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Rowing T-Bar Machine": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Rowing TRX (Sangles)": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "abs,biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "trx",
    "met": 5.5,
    "frag": 0
   },
   "Rowing Unilatéral Élastique": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "elast",
    "met": 5.5,
    "frag": 0
   },
   "Rowing Yates (Supination)": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Russian Twist Développé Épaules": {
    "p": "abs,obliques",
@@ -1797,12 +1797,12 @@
    "frag": 0
   },
   "Seal Row": {
-   "p": "lats,rear-delt,traps",
-   "s": "biceps,forearms,lower-back",
+   "p": "lats,traps",
+   "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "barre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Sissy Squat": {
    "p": "glutes,quads",
@@ -1829,8 +1829,8 @@
    "frag": 0
   },
   "Sled Pull": {
-   "p": "lats",
-   "s": "biceps,rear-delt,traps",
+   "p": "lats,traps",
+   "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "cardio",
    "met": 5.5,
@@ -1949,8 +1949,8 @@
    "frag": 0
   },
   "Soulevé de Terre Sumo": {
-   "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "p": "glutes,lower-back,quads",
+   "s": "forearms,hamstrings,lats,traps",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -2157,12 +2157,12 @@
    "frag": 1
   },
   "Suspension Passive (Dead Hang)": {
-   "p": "forearms,lats",
-   "s": "traps",
+   "p": "forearms",
+   "s": "lats,traps",
    "pat": "tirage-vertical",
    "eq": "trx",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Svend Press (Serrage de Plaque)": {
    "p": "pec",
@@ -2214,15 +2214,15 @@
   },
   "Tirage Incliné Poulie Haute": {
    "p": "lats",
-   "s": "biceps,rear-delt,traps",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Tirage Iso-Latéral Hammer Strength": {
-   "p": "lats",
-   "s": "biceps,rear-delt,traps",
+   "p": "lats,traps",
+   "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
@@ -2254,35 +2254,35 @@
   },
   "Tirage Nuque": {
    "p": "lats",
-   "s": "biceps,rear-delt,traps",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Tirage Poulie Basse Prise Large": {
-   "p": "lats",
-   "s": "biceps,rear-delt,traps",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Tirage Poulie Basse Prise Serrée": {
-   "p": "lats",
-   "s": "biceps,rear-delt,traps",
+   "p": "lats,traps",
+   "s": "biceps,forearms,lower-back,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Tirage Poulie Haute (Lat Pulldown)": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Tirage Poulie Haute Prise Inversée": {
    "p": "biceps,lats",
@@ -2290,23 +2290,23 @@
    "pat": "tirage-vertical",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Tirage Poulie Haute Prise Serrée": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Tirage Vertical Alterné Élastique": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "elast",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Tirage Visage (Face Pull)": {
    "p": "rear-delt",
@@ -2317,64 +2317,64 @@
    "frag": 0
   },
   "Tirage en Rack (Rack Pull)": {
-   "p": "lower-back,traps",
-   "s": "glutes,hamstrings,lats",
+   "p": "glutes,lower-back,traps",
+   "s": "forearms,hamstrings,lats",
    "pat": "hip-hinge",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Traction Assistée": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Traction Assistée avec Banc": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "guide",
    "met": 5.5,
    "frag": 0
   },
   "Traction Australienne (Poids du Corps)": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
-   "pat": "tirage-vertical",
+   "p": "lats,traps",
+   "s": "abs,biceps,forearms,rear-delt",
+   "pat": "tirage-horizontal",
    "eq": "corps",
    "met": 5.5,
    "frag": 0
   },
   "Traction Australienne TRX (Sangles)": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
-   "pat": "tirage-vertical",
+   "p": "lats,traps",
+   "s": "abs,biceps,forearms,rear-delt",
+   "pat": "tirage-horizontal",
    "eq": "trx",
    "met": 5.5,
    "frag": 0
   },
   "Traction Derrière la Nuque": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "corps",
    "met": 5.5,
    "frag": 0
   },
   "Traction Lestée": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "corps",
    "met": 5.5,
    "frag": 0
   },
   "Traction Prise Neutre": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "corps",
    "met": 5.5,
@@ -2386,19 +2386,19 @@
    "pat": "tirage-vertical",
    "eq": "corps",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Tractions (Pull-up)": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "corps",
    "met": 5.5,
    "frag": 0
   },
   "Tractions aux Anneaux": {
-   "p": "biceps,lats",
-   "s": "forearms,rear-delt,traps",
+   "p": "lats",
+   "s": "biceps,forearms,rear-delt,traps",
    "pat": "tirage-vertical",
    "eq": "corps",
    "met": 5.5,

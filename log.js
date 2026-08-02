@@ -1108,6 +1108,12 @@ function _movPattern(name){ const q=' '+_movNorm(name)+' ';
   // Un TIRAGE n'est jamais une poussée : « Tirage Incliné Poulie Haute » contenait « incliné »
   // → attrapé par la poussée horizontale (kw 'incline'). Poulie haute → vertical, sinon horizontal (ft-v686).
   if(/(^| )tirage /.test(q)&&/(incline|decline)/.test(q)) return /poulie haute/.test(q)?'tirage-vertical':'tirage-horizontal';
+  // ⚠️ La TRACTION AUSTRALIENNE porte le mot « traction » mais le corps est HORIZONTAL : c'est
+  // un rowing, pas un tirage vertical. Trouvé le 02/08 en relisant les 52 exercices de dos —
+  // le « Rowing Inversé sous une Table », qui est EXACTEMENT le même geste, était bien rangé
+  // en horizontal. Deux fiches du même mouvement, deux schémas : c'est la contradiction qui
+  // l'a rendu visible, jamais la lecture d'une fiche seule.
+  if(/australien|inverted row|rowing inverse/.test(q)) return 'tirage-horizontal';
   for(const p of _MOV_PATTERNS){
     // `non` = mots qui DISQUALIFIENT le schéma (ex. « jefferson » pour le curl de biceps)
     if(p.non&&p.non.some(x=>q.indexOf(_movNorm(x))>=0)) continue;
