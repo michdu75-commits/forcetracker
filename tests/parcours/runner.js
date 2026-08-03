@@ -1169,6 +1169,51 @@ console.log('\n═══ K. Créer son exercice — tous les groupes du catalogu
   await c11.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// L. LES ANNONCES AUX UTILISATEURS (règle d'or #11) — une annonce invisible ne prévient personne
+// Trouvé le 04/08 en livrant les annonces du chantier figurine : 2 points rouges portaient
+// screen:'menu', valeur comparée NULLE PART → jamais affichés depuis leur écriture.
+console.log('\n═══ L. Les annonces aux utilisateurs — aucune ne doit être invisible ═══');
+{
+  const c12=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p12=await c12.newPage();
+  await p12.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p12.waitForTimeout(2200);
+  const r=await p12.evaluate(()=>{
+   try{
+    const o={};
+    const VALIDES=['home','progress','log','nutrition','coach','setup'];
+    o.ecransInconnus=[...new Set(NEW_FEATURES.map(f=>f.screen))].filter(s=>!VALIDES.includes(s));
+    const ids=NEW_FEATURES.map(f=>f.id);
+    o.idsEnDouble=ids.filter((x,i)=>ids.indexOf(x)!==i);
+    o.sansDesc=NEW_FEATURES.filter(f=>!f.desc||!f.desc.trim()).map(f=>f.id);
+    const vs=WHATS_NEW.map(w=>w.v);
+    o.versionsEnDouble=vs.filter((x,i)=>vs.indexOf(x)!==i);
+    // R25 : la pop-up ANNONCE (court), l'aide EXPLIQUE. 600 caractères ≈ le pavé.
+    // ⚠️ R25 (« la pop-up ANNONCE, l'aide EXPLIQUE ») a été adoptée à ft-v632, le 28/07 — donc
+    // APRÈS l'écriture des annonces v1→v48. On applique la règle aux nouvelles, on ne réécrit
+    // pas en douce des textes déjà validés et déjà lus par les utilisateurs.
+    // Mesuré le 04/08 : 19 entrées anciennes dépassent 420 caractères, dont une (v38) 639.
+    // C'est un ménage à faire avec Michel, pas une correction de nuit.
+    o.popupsTropLongues=WHATS_NEW.filter(w=>w.v>=49&&(w.d||'').length>600).map(w=>w.v);
+    o.legacyLongues=WHATS_NEW.filter(w=>w.v<49&&(w.d||'').length>420).length;
+    o.toutesOntTitre=WHATS_NEW.every(w=>w.t&&w.ic);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ aucun point rouge ne vise un écran inexistant (il ne s\'afficherait jamais)',
+    Array.isArray(r.ecransInconnus) && r.ecransInconnus.length===0, 'inconnus : '+JSON.stringify(r.ecransInconnus));
+  t('aucun identifiant de point rouge en double', Array.isArray(r.idsEnDouble)&&r.idsEnDouble.length===0, JSON.stringify(r.idsEnDouble));
+  t('aucun point rouge sans texte', Array.isArray(r.sansDesc)&&r.sansDesc.length===0, JSON.stringify(r.sansDesc));
+  t('aucune version « Quoi de neuf » en double', Array.isArray(r.versionsEnDouble)&&r.versionsEnDouble.length===0, JSON.stringify(r.versionsEnDouble));
+  t('⭐ R25 : les NOUVELLES pop-ups annoncent sans expliquer (≤ 600 caractères)',
+    Array.isArray(r.popupsTropLongues)&&r.popupsTropLongues.length===0, 'trop longues : '+JSON.stringify(r.popupsTropLongues));
+  t('CONSTAT (pas un échec) : 19 annonces d\'avant la règle R25 restent longues',
+    r.legacyLongues===19, 'mesuré : '+r.legacyLongues+' — si ce nombre BAISSE, mets-le à jour ; s\'il MONTE, une nouvelle est passée par la mauvaise porte');
+  t('chaque « Quoi de neuf » a son titre et son icône', r.toutesOntTitre===true, JSON.stringify(r));
+  await c12.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
