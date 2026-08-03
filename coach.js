@@ -95,17 +95,33 @@ function _memoireLongue(){
         if(best>0)(parEx[e.name]=parEx[e.name]||[]).push({d:s.date,rm:best});
       });
     });
+    // ⚠️⚠️ ON COMPARE DES MÉDIANES, PAS DEUX POINTS — retour de Michel du 03/08, capture à l'appui.
+    // La 1ʳᵉ version comparait la TOUTE PREMIÈRE séance à la TOUTE DERNIÈRE. Mesuré : pour une
+    // progression réelle et régulière de 100 → 123 kg sur 24 séances, le verdict annoncé passait
+    // de **+23 %** à **−20 %** selon que la dernière séance était allégée ou non. Une mauvaise
+    // nuit, une séance de récup, et Milo annonce une régression — puis en construit un DIAGNOSTIC
+    // (« la fréquence », « le sommeil »). C'est R12 (tendance, pas bruit) que j'avais écrite sans
+    // me l'appliquer, et surtout c'est DÉMOTIVANT : « je trouve ça super vache » (Michel).
+    // La médiane d'une fenêtre de 3 ignore complètement UNE séance atypique, dans les deux sens.
+    const _med=arr=>{ const t=arr.slice().sort((x,y)=>x-y), m=t.length>>1;
+      return t.length%2 ? t[m] : (t[m-1]+t[m])/2; };
     const progs=[];
     Object.keys(parEx).forEach(n=>{
-      const a=parEx[n]; if(a.length<3)return;
-      const p0=a[0].rm, p1=a[a.length-1].rm;
+      const a=parEx[n];
+      // Moins de 5 passages : aucune tendance honnête à dégager, on ne parle pas de %.
+      if(a.length<5)return;
+      const w=Math.min(3, Math.floor(a.length/2));           // fenêtre : 3 max, jamais chevauchante
+      const p0=_med(a.slice(0,w).map(x=>x.rm));
+      const p1=_med(a.slice(-w).map(x=>x.rm));
       const pct=p0>0?Math.round((p1-p0)/p0*100):0;
       progs.push({n, p0:Math.round(p0), p1:Math.round(p1), pct, n1:a.length, depuis:a[0].d});
     });
     progs.sort((x,y)=>y.n1-x.n1);           // les exercices les plus pratiqués d'abord
+    // Bande « stable » élargie à 5 % : en dessous, sur des séries de travail, c'est du bruit —
+    // et annoncer « −4 % » à quelqu'un qui s'entraîne bien ne l'aide en rien.
     const top=progs.slice(0,5).map(p=>{
-      if(Math.abs(p.pct)<3) return `${p.n} : stable autour de ${p.p1} kg (1RM estimé, ${p.n1} séances)`;
-      return `${p.n} : ${p.p0} → ${p.p1} kg estimés (${p.pct>0?'+':''}${p.pct} %, ${p.n1} séances)`;
+      if(Math.abs(p.pct)<5) return `${p.n} : stable autour de ${p.p1} kg (${p.n1} séances)`;
+      return `${p.n} : ${p.p0} → ${p.p1} kg (${p.pct>0?'+':''}${p.pct} %, ${p.n1} séances)`;
     });
     // ② COUPURES : le plus long trou entre deux séances. Un vrai fait sur son parcours —
     //    et surtout quelque chose qu'on ne devine pas en regardant la semaine écoulée.
@@ -125,7 +141,15 @@ function _memoireLongue(){
     L.push(`- Régularité : ${parSem.toFixed(1).replace('.',',')} séance${parSem>=2?'s':''} par semaine en moyenne`
       +(trou>=10?` · plus longue coupure : ${trou} jours (reprise le ${_dateLongue(trouFin)})`:''));
     if(tonnes>0)L.push(`- Volume cumulé : ${Math.round(tonnes/1000)} tonnes soulevées depuis le début`);
-    if(top.length)L.push('- Progression sur ses exercices principaux :\n  · '+top.join('\n  · '));
+    // ⚠️ Ces chiffres sont le NIVEAU DE TRAVAIL habituel, PAS le record — sans cette précision
+    // Milo annonçait « Squat +3 % (85→87 kg) » puis « Squat actuel ~101 kg » dans LA MÊME réponse
+    // (capture Michel, 03/08). Deux nombres pour la même chose : il faut dire lequel est lequel.
+    if(top.length)L.push('- Progression sur ses exercices principaux (niveau de travail HABITUEL, '
+      +'médiane du début vs celle d\'aujourd\'hui — ce n\'est PAS son record, qui est donné à part : '
+      +'ne mélange jamais les deux dans une même réponse) :\n  · '+top.join('\n  · ')
+      +'\n  ⚠️ Une baisse ici peut simplement venir d\'une phase allégée, d\'une reprise ou d\'une '
+      +'semaine fatiguée : ne conclus JAMAIS à une régression sans un autre signe, et n\'en fais pas '
+      +'un diagnostic. Ces chiffres situent le chemin parcouru, ils ne jugent pas.');
     return '\n📜 SA MÉMOIRE LONGUE — TOUT SON PARCOURS DEPUIS L\'INSCRIPTION (sers-t\'en pour situer '
       +'où il/elle en est : c\'est ce qui te distingue d\'un simple carnet. Ne récite pas ces chiffres, '
       +'utilise-les pour comprendre le chemin parcouru) :\n'+L.join('\n');

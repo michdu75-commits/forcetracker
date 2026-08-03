@@ -303,6 +303,34 @@ saut ne dépasse un maximum.
 
 ---
 
+## 6bis. 📉 L'indicateur calculé sur DEUX POINTS *(03/08/2026)*
+
+**Le mécanisme.** Une tendance mesurée en comparant **la première valeur à la dernière** n'est pas
+une tendance : c'est un tirage au sort sur deux échantillons. Une seule séance atypique — un jour
+de récup, une mauvaise nuit, une reprise — renverse le verdict.
+
+- **La progression de la mémoire longue (ft-v753)** : pour une progression réelle et régulière de
+  **100 → 123 kg sur 24 séances**, le chiffre annoncé passait de **+23 %** à **−20 %** selon que la
+  dernière séance était allégée. **43 points d'écart pour un seul entraînement.** Corrigé par la
+  **médiane d'une fenêtre de 3** au début et à la fin : le même test donne désormais +21 % / +20 %.
+- **Ce qui rendait le bug coûteux, ce n'est pas le chiffre — c'est ce que Milo en faisait.** Il
+  bâtissait un **diagnostic** sur la fausse baisse (« la cause probable : la fréquence, le
+  sommeil »). Michel : *« je trouve ça super vache et hyper démotivant »*. Un indicateur faux qui
+  décourage quelqu'un qui progresse coûte plus cher qu'un indicateur absent.
+- **Famille voisine, même réponse** : c'est **R12** (raisonner sur des tendances, pas sur du bruit),
+  écrite dans les règles d'architecture… et non appliquée à ce calcul-là.
+
+### 🛡️ Ce qui protège
+`tests/parcours/` rejoue **la même progression avec et sans séance allégée** et exige que l'écart
+entre les deux verdicts reste ≤ 3 points. Un exercice vu moins de 5 fois ne produit plus aucun
+pourcentage. Et le chiffre est désormais **nommé** (« niveau de travail habituel ») pour ne plus
+être confondu avec le record — Milo donnait les deux dans la même réponse.
+
+**Le réflexe.** Devant tout indicateur d'évolution : *combien de points le premier chiffre
+résume-t-il ? et le dernier ?* Si la réponse est « un », ce n'est pas une tendance.
+
+---
+
 ## 7. 🔀 Deux sources qui se contredisent — *la famille trouvée le 02/08*
 
 **Le mécanisme, et pourquoi il est spécial.** L'app connaît **plusieurs choses indépendantes** sur

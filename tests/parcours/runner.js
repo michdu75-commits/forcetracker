@@ -1015,6 +1015,62 @@ console.log('\n═══ H. La mémoire de Milo — la fenêtre étroite ne doit
   await c8.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// I. LA PROGRESSION NE DOIT PLUS BASCULER SUR UNE SEULE SÉANCE
+// Retour de Michel, 03/08, capture à l'appui : « je trouve ça super vache et hyper démotivant ».
+// La 1ʳᵉ version comparait la TOUTE PREMIÈRE séance à la TOUTE DERNIÈRE. Mesuré : pour une même
+// progression réelle de 100 → 123 kg sur 24 séances, le verdict passait de +23 % à −20 % selon
+// que la dernière séance était allégée. Milo en construisait ensuite un DIAGNOSTIC.
+console.log('\n═══ I. La progression de la mémoire longue — tendance, pas bruit (R12) ═══');
+{
+  const c9=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p9=await c9.newPage();
+  await p9.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p9.waitForTimeout(2200);
+  const r=await p9.evaluate(()=>{
+   try{
+    const pose=(deload,nb)=>{
+      const sess=[]; const d0=new Date('2026-06-01T12:00:00');
+      for(let i=0;i<nb;i++){
+        const d=new Date(d0.getTime()+i*2*86400000);
+        let kg=100+i;                       // progression réelle, régulière
+        if(deload&&i===nb-1)kg=80;          // dernière séance allégée
+        sess.push({date:d.toISOString().slice(0,10),volume:5000,
+          exs:[{name:'Squat',sets:[{kg,reps:5,done:true,type:'N'}]}]});
+      }
+      sess.reverse(); S.sessions=sess;
+      const m=_memoireLongue(), x=m.match(/Squat : ([^\n]+)/);
+      return {ligne:x?x[1]:'', pct:(()=>{const y=/([+-]\d+) %/.exec(x?x[1]:'');return y?+y[1]:null;})(), bloc:m};
+    };
+    const o={};
+    const normal=pose(false,24), deload=pose(true,24);
+    o.pctNormal=normal.pct; o.pctDeload=deload.pct;
+    o.ecart=(normal.pct!=null&&deload.pct!=null)?Math.abs(normal.pct-deload.pct):null;
+    o.resteMontant = deload.pct!=null && deload.pct>0;   // une vraie progression reste une progression
+    // moins de 5 passages : aucun pourcentage annoncé (on ne commente pas du bruit)
+    const court=pose(false,4);
+    o.pasDePctSiPeu = !/Squat :/.test(court.bloc);
+    // les libellés qui empêchent de confondre avec le RECORD, et le garde-fou anti-diagnostic
+    o.ditHabituel = /niveau de travail HABITUEL/.test(normal.bloc);
+    o.ditPasLeRecord = /ce n'est PAS son record/.test(normal.bloc);
+    o.antiDiagnostic = /ne conclus JAMAIS à une régression sans un autre signe/.test(normal.bloc);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ une séance allégée ne renverse plus le verdict (écart ≤ 3 points)',
+    r.ecart!=null && r.ecart<=3, JSON.stringify(r));
+  t('⭐⭐ … et une vraie progression reste annoncée comme une progression',
+    r.resteMontant===true, JSON.stringify(r));
+  t('⭐ moins de 5 passages sur un exercice → aucun pourcentage (R12 : pas de bruit)',
+    r.pasDePctSiPeu===true, JSON.stringify(r));
+  t('⭐ le chiffre est nommé « niveau de travail habituel »…', r.ditHabituel===true, JSON.stringify(r));
+  t('… et explicitement distingué du RECORD (Milo donnait les 2 dans la même réponse)',
+    r.ditPasLeRecord===true, JSON.stringify(r));
+  t('⭐ interdiction d\'ériger une baisse en diagnostic (c\'est ce qui démotive)',
+    r.antiDiagnostic===true, JSON.stringify(r));
+  await c9.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

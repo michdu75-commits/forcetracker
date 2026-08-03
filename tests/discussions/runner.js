@@ -222,7 +222,10 @@ console.log('\n─── LA CONVERSATION NE SE PERD PLUS ───────�
     S.sessions=faire(90,3,[44,62]);
     const t0=performance.now(); const ctx=buildCoachContext(); o.ms=Math.round(performance.now()-t0);
     o.aLeBloc=/SA MÉMOIRE LONGUE/.test(ctx);
-    o.voitLaProgression=/Squat à la Barre : \d+ → \d+ kg estimés/.test(ctx);
+    // ⚠️ Format changé en ft-v753 : le mot « estimés » a sauté, le chiffre est maintenant nommé
+    // « niveau de travail habituel » (il était confondu avec le RECORD dans la même réponse).
+    // L'intention du test ne bouge pas : Milo doit voir une progression chiffrée sur le squat.
+    o.voitLaProgression=/Squat à la Barre : \d+ → \d+ kg \([+-]\d+ %/.test(ctx);
     o.voitLaStagnation=/Développé Couché : stable/.test(ctx);
     o.voitLaCoupure=/plus longue coupure : \d+ jours/.test(ctx);
     o.voitLeDebut=/Première séance enregistrée/.test(ctx);
