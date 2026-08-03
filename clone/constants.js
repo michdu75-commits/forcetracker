@@ -947,7 +947,11 @@ const EX_MUSCLES={
  //    Effet : il redevient une isolation (calories 5,5 → 4), ce qu'il a toujours été.
  'pec-deck':                              {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
  // ─── DIPS ET POMPES : pectoraux ET triceps moteurs tous les deux.
- 'dips':                                  {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
+ // ✏️ CORRECTION (03/08, sur sources apportées par Michel) : suspendu aux barres, on doit
+ //    TENIR le corps — la sangle abdominale empêche les jambes de partir devant. Le gainage
+ //    manquait sur les dips LIBRES ; il était déjà là aux anneaux, où rien n'est fixe.
+ //    ⚠️ Pas sur les versions ASSISTÉE et ASSISE : là on est calé, le tronc ne retient rien.
+ 'dips':                                  {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-03'},
  // ✏️ CORRECTION (03/08) : « Dips » et « Dips Parallèles » disaient EXACTEMENT la même chose,
  //    alors que leurs animations et leurs termes anglais trahissaient deux variantes voulues
  //    différentes (`dips-pectoraux` / *chest dips* · `dips-triceps-paralleles` / *parallel bar
@@ -955,7 +959,7 @@ const EX_MUSCLES={
  //    le triceps qui fait le travail — exactement le raisonnement tenu sur les dips sur banc.
  //    Renommé « Dips Triceps (Buste Droit) » : « parallèles » ne distinguait rien, tous les dips
  //    se font sur des barres parallèles.
- 'dips-paralleles':                       {p:['triceps'], s:['front-delt','pec'], vu:'2026-08-03'},
+ 'dips-paralleles':                       {p:['triceps'], s:['front-delt','pec','abs'], vu:'2026-08-03'},
  'dips-machine-assistee':                 {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
  'pompes-push-up':                        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
  'pompes-lestees':                        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
@@ -1441,7 +1445,7 @@ const EX_MUSCLES={
  //     fournit pas, et que personne ne pouvait voir puisque les 25 fiches étaient identiques.
  'extension-triceps-arriere-kickback':    {p:['triceps'], s:['rear-delt'], vu:'2026-08-02'},
  // ─── DIPS : aux barres parallèles, on peut se pencher en avant → pectoraux ET triceps.
- 'dips-lestes':                           {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'dips-lestes':                           {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-03'},
  // ✏️ CORRECTION : aux ANNEAUX, rien n'est fixe — tenir les anneaux immobiles est la moitié
  //    du travail. Le gainage manquait. (Ici il ne change pas les calories : l'exercice a
  //    déjà 3 muscles, il est donc déjà compté comme polyarticulaire.)

@@ -1145,6 +1145,7 @@ const fus=await p.evaluate(()=>{
   ['Câble Crunch','Kickback Cable','Triceps Haltère','Dips Parallèles'].forEach(n=>{
     r.mig[n]=exNomActuel(n); r.rech[n]=cherche(n); });
   r.dipsPec=f('Dips'); r.dipsTri=f('Dips Triceps (Buste Droit)');
+  r.dipsLest=f('Dips Lestés'); r.dipsMach=f('Dips Machine Assistée');
   const i=document.getElementById('ex-search'); i.value=''; _exGrp=null; filterEx();
   return r;
  }catch(e){ return {erreur:String(e&&e.message||e)}; }
@@ -1164,6 +1165,12 @@ t('⭐ … et TAPER l\'ancien nom le retrouve aussi (il ne disparaît pas de la 
 t('⭐ les deux DIPS ne disent plus la même chose (penché = pec · buste droit = triceps)',
   !fus.erreur && fus.dipsPec.pec===2 && fus.dipsTri.triceps===2 && fus.dipsTri.pec===1,
   'dips '+JSON.stringify(fus.dipsPec)+' · buste droit '+JSON.stringify(fus.dipsTri));
+t('⭐ les dips LIBRES demandent du gainage — pas les versions calées sur une machine',
+  // sources apportées par Michel (03/08) : suspendu aux barres, la sangle abdominale
+  // empêche les jambes de partir devant. Sur la machine assistée, on est calé : rien à tenir.
+  !fus.erreur && fus.dipsPec.abs===1 && fus.dipsTri.abs===1
+  && fus.dipsLest.abs===1 && !fus.dipsMach.abs,
+  'dips '+JSON.stringify(fus.dipsPec)+' · témoin machine assistée '+JSON.stringify(fus.dipsMach));
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 

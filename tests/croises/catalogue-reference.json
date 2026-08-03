@@ -414,7 +414,7 @@
   },
   "Dips": {
    "p": "pec,triceps",
-   "s": "front-delt",
+   "s": "abs,front-delt",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -430,7 +430,7 @@
   },
   "Dips Lestés": {
    "p": "pec,triceps",
-   "s": "front-delt",
+   "s": "abs,front-delt",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -446,7 +446,7 @@
   },
   "Dips Triceps (Buste Droit)": {
    "p": "triceps",
-   "s": "front-delt,pec",
+   "s": "abs,front-delt,pec",
    "pat": "extension-triceps",
    "eq": "corps",
    "met": 5.5,

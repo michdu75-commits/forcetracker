@@ -2630,6 +2630,7 @@
     "triceps"
    ],
    "musclesSecondaires": [
+    "abs",
     "front-delt"
    ],
    "schemaMouvement": "poussee-horizontale",
@@ -2640,7 +2641,7 @@
    "termeAnglais": "chest dips",
    "animation": "exercises/dips-pectoraux.webp",
    "musclesEcrits": true,
-   "relueLe": "2026-08-02",
+   "relueLe": "2026-08-03",
    "classementCertain": true,
    "animationExiste": true,
    "musclesPrincipauxFr": [
@@ -2648,6 +2649,7 @@
     "Triceps"
    ],
    "musclesSecondairesFr": [
+    "Abdominaux",
     "Deltoïde antérieur"
    ],
    "materielLibelle": "Poids du corps"
@@ -2760,6 +2762,7 @@
     "triceps"
    ],
    "musclesSecondaires": [
+    "abs",
     "front-delt"
    ],
    "schemaMouvement": "poussee-horizontale",
@@ -2770,7 +2773,7 @@
    "termeAnglais": "dips weighted",
    "animation": null,
    "musclesEcrits": true,
-   "relueLe": "2026-08-02",
+   "relueLe": "2026-08-03",
    "classementCertain": true,
    "animationExiste": false,
    "musclesPrincipauxFr": [
@@ -2778,6 +2781,7 @@
     "Triceps"
    ],
    "musclesSecondairesFr": [
+    "Abdominaux",
     "Deltoïde antérieur"
    ],
    "materielLibelle": "Poids du corps"
@@ -2825,6 +2829,7 @@
     "triceps"
    ],
    "musclesSecondaires": [
+    "abs",
     "front-delt",
     "pec"
    ],
@@ -2843,6 +2848,7 @@
     "Triceps"
    ],
    "musclesSecondairesFr": [
+    "Abdominaux",
     "Deltoïde antérieur",
     "Pectoraux"
    ],
