@@ -265,7 +265,9 @@ t('⭐ « Tirage Vertical (Upright Row) » = épaules/trapèzes + élévation, p
 t('témoins : traction et rowing restent des dorsaux',
   au.traction.indexOf('lats')>=0&&au.rowing.indexOf('lats')>=0, au.traction+' / '+au.rowing);
 t('⭐ « Jefferson Curl » = lombaires/ischios (mobilité), plus jamais un biceps',
-  au.jeff==='glutes,hamstrings,lower-back', 'reçu '+au.jeff);
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 : la PRISE est ajoutée (on tient une charge à bout de bras
+  // pendant tout le déroulé). Ce que ce test protège reste le même : ce n'est PAS un biceps.
+  au.jeff==='forearms,glutes,hamstrings,lower-back', 'reçu '+au.jeff);
 t('⭐ un kickback de FESSIERS = charnière de hanche, plus jamais une extension de triceps',
   au.kbFess==='hip-hinge'&&au.kbMachine==='hip-hinge', au.kbFess+' / '+au.kbMachine);
 t('témoin : le kickback TRICEPS garde son schéma (malgré le stemming « triceps » → « tricep »)',
@@ -1076,6 +1078,53 @@ t('un THRUSTER est un squat COMPLET : les fessiers sont moteurs',
   !fb.erreur && fb.thruster.glutes===2 && fb.thruster['front-delt']===2, JSON.stringify(fb.thruster));
 t('les 4 tirages de CHARIOT disent enfin la même chose',
   !fb.erreur && fb.sled.traps===2 && fb.sledDos.traps===2, JSON.stringify(fb.sled));
+
+// ── LES 5 DERNIERS GROUPES (biceps · lombaires · mollets · trapèzes · avant-bras), 02/08.
+//    Avec eux, le catalogue est ENTIÈREMENT écrit : 337/337.
+const fin=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>(_mscScores([E(n)])||{}).sc||{};
+  const noms=[...new Set((EXLIB||[]).map(e=>e.n))];
+  return {marteau:f('Marteau'), zottman:f('Curl Zottman'), curl:f('Curl Haltères'),
+          reverse:f('Hyperextension Inverse (Reverse Hyper)'), hyper:f('Hyperextension (Back Extension)'),
+          jeff:f('Jefferson Curl'), pince:f('Planche de Préhension'),
+          menton:f('Tirage Menton'), mentonKb:f('Tirage Menton Kettlebell'),
+          metPince:getExerciseMET('Planche de Préhension'),
+          patPoignet:_movPattern('Curl Poignet Barre'), patExt:_movPattern('Extension Poignet Barre'),
+          patCurl:_movPattern('Curl Barre'), patSuper:_movPattern('Superman'),
+          patBird:_movPattern('Bird Dog'), patSouleve:_movPattern('Soulevé de Terre'),
+          ecrits:noms.filter(n=>exMuscles(n)).length, total:noms.length};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(fin.erreur) console.log('     ⚠️  bloc final en ERREUR : '+fin.erreur);
+t('⭐⭐ LE CATALOGUE ENTIER a ses muscles ÉCRITS — plus un seul exercice deviné',
+  !fin.erreur && fin.ecrits===fin.total && fin.total===337,
+  fin.ecrits+'/'+fin.total+' — si ce test rougit, c\'est qu\'un exercice a été ajouté sans sa fiche.');
+t('⭐ le MARTEAU et le ZOTTMAN font travailler l\'avant-bras en MOTEUR, pas en soutien',
+  // comparé au curl classique : sans lui, le test passerait aussi à l'ancien code.
+  !fin.erreur && fin.marteau.forearms===2 && fin.zottman.forearms===2 && fin.curl.forearms===1,
+  'marteau '+JSON.stringify(fin.marteau)+' · témoin curl '+JSON.stringify(fin.curl));
+t('⭐ à l\'HYPEREXTENSION INVERSE ce sont les JAMBES qui montent (fessiers + ischios moteurs)',
+  !fin.erreur && fin.reverse.hamstrings===2 && fin.reverse['lower-back']===1
+  && fin.hyper['lower-back']===2,
+  'inverse '+JSON.stringify(fin.reverse)+' · témoin hyperextension '+JSON.stringify(fin.hyper));
+t('le JEFFERSON CURL tient une charge à bout de bras (la prise manquait)',
+  !fin.erreur && fin.jeff.forearms===1 && fin.jeff.hamstrings===2, JSON.stringify(fin.jeff));
+t('⭐ la PLANCHE DE PRÉHENSION n\'a plus de QUADRICEPS (on est debout, immobile)',
+  !fin.erreur && !fin.pince.quads && fin.metPince===4,
+  JSON.stringify(fin.pince)+' · MET '+fin.metPince);
+t('les 3 TIRAGES MENTON disent enfin la même chose',
+  !fin.erreur && fin.menton['front-delt']===1 && fin.mentonKb['front-delt']===1,
+  JSON.stringify(fin.menton));
+t('⭐ SCHÉMA : un CURL DE POIGNET n\'est pas une flexion du coude (le mot « curl » l\'attrapait)',
+  // le même correctif existait dans _MEX depuis ft-v669 — mais pas dans la table des schémas.
+  !fin.erreur && fin.patPoignet==='poignet' && fin.patExt==='poignet' && fin.patCurl==='curl-biceps',
+  'curl poignet='+fin.patPoignet+' · extension poignet='+fin.patExt+' · témoin curl barre='+fin.patCurl);
+t('⭐ SCHÉMA : le SUPERMAN est un MAINTIEN, pas une charnière de hanche',
+  !fin.erreur && fin.patSuper==='gainage-abdos' && fin.patBird==='gainage-abdos'
+  && fin.patSouleve==='hip-hinge',
+  'superman='+fin.patSuper+' · témoin soulevé de terre='+fin.patSouleve);
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 

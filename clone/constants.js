@@ -1566,6 +1566,87 @@ const EX_MUSCLES={
  //    les trois autres tirages de chariot ont dorsal + trapèzes. Même geste, deux réponses.
  'chariot-de-puissance-poussee':          {p:['quads','glutes'], s:['calves','abs'], vu:'2026-08-02'},
  'chariot-de-puissance-tirage-en-avancant':{p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
+
+ // ─── BICEPS (16) — relus un par un le 02/08/2026 ─────────────────────────────────
+ // ⚠️ LIMITE DU GROUPE : le BRACHIAL et le LONG SUPINATEUR (brachio-radial) n'existent pas
+ //    dans la figurine — or ce sont eux qui distinguent réellement un curl marteau d'un curl
+ //    classique. On les approche par « avant-bras », le code le plus proche, et on l'écrit.
+ // Les 14 curls en prise supinée : biceps moteur, avant-bras en soutien. C'était juste.
+ 'curl-barre':                            {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-halteres':                         {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-ez':                               {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-barre-ez-prise-large':             {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-poulie':                           {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-machine':                          {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-incline':                          {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-concentre':                        {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-cable-en-croix-bayesian-curl':     {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-araignee-spider-curl':             {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-pupitre-machine':                  {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'curl-pupitre-barre-ez-larry-scott':     {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'waiter-curl':                           {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ 'chariot-de-puissance-curl-biceps':      {p:['biceps'], s:['forearms'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le MARTEAU se fait en prise NEUTRE et le ZOTTMAN redescend en prise
+ //    PRONATÉE — dans les deux cas l'avant-bras n'est pas un assistant, c'est un MOTEUR.
+ //    C'est même la seule raison de les choisir plutôt qu'un curl ordinaire. Les 16 fiches
+ //    étaient identiques, donc ces deux-là ne se distinguaient de rien.
+ 'marteau':                               {p:['biceps','forearms'], s:[], vu:'2026-08-02'},
+ 'curl-zottman':                          {p:['biceps','forearms'], s:[], vu:'2026-08-02'},
+ // ─── LOMBAIRES (8) — relus un par un le 02/08/2026 ───────────────────────────────
+ // Les hyperextensions : érecteurs et fessiers moteurs, ischios en soutien. C'était juste.
+ 'hyperextension-back-extension':         {p:['lower-back','glutes'], s:['hamstrings'], vu:'2026-08-02'},
+ 'hyperextension-lestee':                 {p:['lower-back','glutes'], s:['hamstrings'], vu:'2026-08-02'},
+ 'hyperextension-machine':                {p:['lower-back','glutes'], s:['hamstrings'], vu:'2026-08-02'},
+ 'extension-lombaire-sur-ballon':         {p:['lower-back','glutes'], s:['hamstrings'], vu:'2026-08-02'},
+ // À l'INVERSE (reverse hyper), ce sont les JAMBES qui montent, buste fixe : les fessiers
+ // et les ischios font le mouvement, les érecteurs tiennent.
+ 'hyperextension-inverse-reverse-hyper':  {p:['glutes','hamstrings'], s:['lower-back'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le JEFFERSON CURL est un mouvement de MOBILITÉ — on déroule la colonne
+ //    vertèbre par vertèbre avec une charge tenue à bout de bras. Les érecteurs travaillent
+ //    en freinant, les ischios sont étirés à fond, et la PRISE manquait complètement.
+ 'jefferson-curl':                        {p:['lower-back','hamstrings'], s:['glutes','forearms'], vu:'2026-08-02'},
+ // Le SUPERMAN et le BIRD DOG sont des MAINTIENS, pas des charnières de hanche (leur schéma
+ // a été corrigé le 02/08 : on est allongé, la hanche ne se plie pas).
+ 'superman':                              {p:['lower-back','glutes'], s:['hamstrings','rear-delt'], vu:'2026-08-02'},
+ 'bird-dog':                              {p:['abs','lower-back'], s:['glutes','obliques'], vu:'2026-08-02'},
+ // ─── MOLLETS (8) — relus un par un le 02/08/2026 ─────────────────────────────────
+ // ⚠️ LIMITE DU GROUPE : la figurine ne connaît qu'un seul code « mollets ». Or debout
+ //    (genou tendu) c'est le JUMEAU qui travaille, assis (genou plié) c'est le SOLÉAIRE —
+ //    c'est toute la raison d'avoir les deux machines. On ne peut pas le distinguer ici.
+ 'elevations-mollets-debout':             {p:['calves'], s:[], vu:'2026-08-02'},
+ 'elevations-mollets-assis':              {p:['calves'], s:[], vu:'2026-08-02'},
+ 'elevations-mollets-unilateral':         {p:['calves'], s:[], vu:'2026-08-02'},
+ 'elevations-mollets-penche-donkey-calf-raise':{p:['calves'], s:[], vu:'2026-08-02'},
+ 'mollets-machine-debout':                {p:['calves'], s:[], vu:'2026-08-02'},
+ 'mollets-machine-assise':                {p:['calves'], s:[], vu:'2026-08-02'},
+ 'presse-mollets-leg-press':              {p:['calves'], s:[], vu:'2026-08-02'},
+ 'sauts-a-la-corde':                      {p:['calves'], s:['quads'], vu:'2026-08-02'},
+ // ─── TRAPÈZES (6) — relus un par un le 02/08/2026 ────────────────────────────────
+ // Les haussements d'épaules : trapèzes moteurs, la PRISE en soutien (c'est elle qui lâche
+ // en premier sur les charges lourdes). C'était juste.
+ 'haussements-d-epaules-barre':           {p:['traps'], s:['forearms'], vu:'2026-08-02'},
+ 'haussements-d-epaules-halteres':        {p:['traps'], s:['forearms'], vu:'2026-08-02'},
+ 'haussements-d-epaules-cable':           {p:['traps'], s:['forearms'], vu:'2026-08-02'},
+ // ⚠️ L'OVERHEAD SHRUG sollicite surtout le trapèze INFÉRIEUR (bras au-dessus de la tête),
+ //    mais la figurine n'a qu'un seul code « trapèzes ». Et on n'ajoute PAS les épaules :
+ //    elles ne font que TENIR la barre en l'air — un stabilisateur ne doit pas doubler la
+ //    dépense (4 → 5,5). Même arbitrage qu'à l'extension triceps TRX (ft-v743).
+ 'haussements-d-epaules-overhead':        {p:['traps'], s:['forearms'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : les deux TIRAGES MENTON n'avaient pas le deltoïde ANTÉRIEUR, alors que le
+ //    « Tirage Menton Kettlebell » — le même mouvement — l'a reçu il y a six versions.
+ //    Trois fiches du même geste, deux réponses.
+ 'tirage-menton':                         {p:['side-delt','traps'], s:['biceps','front-delt'], vu:'2026-08-02'},
+ 'tirage-menton-elastique':               {p:['side-delt','traps'], s:['biceps','front-delt'], vu:'2026-08-02'},
+ // ─── AVANT-BRAS (5) — relus un par un le 02/08/2026 ──────────────────────────────
+ // Le FARMER'S WALK : c'est la PRISE qui lâche, pas les jambes (corrigé en ft-v730).
+ 'farmer-s-walk':                         {p:['forearms','traps'], s:['abs','glutes','quads'], vu:'2026-08-02'},
+ 'curl-poignet-barre':                    {p:['forearms'], s:[], vu:'2026-08-02'},
+ 'extension-poignet-barre':               {p:['forearms'], s:[], vu:'2026-08-02'},
+ 'pronation-supination-haltere':          {p:['forearms'], s:[], vu:'2026-08-02'},
+ // ✏️ CORRECTION : la PLANCHE DE PRÉHENSION comptait les QUADRICEPS. On est debout, immobile,
+ //    à serrer deux disques : les jambes ne font rien du tout. C'est un maintien de prise —
+ //    et il coûtait 5,5 en calories, autant qu'un développé couché.
+ 'planche-de-prehension':                 {p:['forearms'], s:['traps'], vu:'2026-08-02'},
 };
 
 /** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou

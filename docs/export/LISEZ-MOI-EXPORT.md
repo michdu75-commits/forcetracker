@@ -4,9 +4,9 @@
 > **identifiant stable**, leurs muscles, leur schéma de mouvement, leur matériel, leur coût
 > énergétique et le **fichier de leur animation**.
 >
-> ⚠️ **Lis ce fichier en entier avant d'utiliser les données.** Les muscles de **277 exercices sur
-> 337** ont été **écrits et relus un par un** ; les **60 autres** sont encore **déduits du nom** par
-> un moteur de règles. La section « Fiabilité » dit lesquels, et ce que ça implique.
+> ⚠️ **Lis ce fichier en entier avant d'utiliser les données.** Les muscles des **337 exercices**
+> ont été **écrits et relus un par un** — plus aucun n'est deviné à partir de son nom. La section
+> « Fiabilité » dit ce qui a été vérifié, et ce qui ne l'a pas été.
 
 ---
 
@@ -98,29 +98,33 @@ bouge pas, des crunchs qui comptaient les fléchisseurs de hanche…
 
 | | Exercices | |
 |---|---|---|
-| Muscles **écrits et relus à la main** (`musclesEcrits: true`) | **277** | **82 %** |
-| Encore déduits par règles, classement **robuste** | 55 | 16 % |
-| Encore déduits par règles, classement **fragile** (`classementCertain: false`) | **5** | 1 % |
-| Sans aucun classement | **0** | — |
+| Muscles **écrits et relus à la main** (`musclesEcrits: true`) | **337** | **100 %** |
+| Encore déduits par règles | 0 | — |
+| Sans aucun classement | 0 | — |
 
-**7 groupes sont entièrement relus** : Pectoraux · Épaules · Dos · Jambes · Fessiers · Triceps ·
-Abdominaux. Restent à relire : Full Body, Biceps, Lombaires, Mollets, Trapèzes, Avant-bras.
+**Les 13 groupes sont entièrement relus** : Pectoraux · Épaules · Dos · Jambes · Fessiers ·
+Triceps · Abdominaux · Full Body · Biceps · Lombaires · Mollets · Trapèzes · Avant-bras.
 
-**« Fragile » ne veut pas dire faux.** Ça veut dire que *plusieurs règles correspondent à cet
-exercice en donnant des muscles différents*, et que le résultat retenu dépend de **l'ordre** des
-règles. Les 5 sont corrects aujourd'hui — mais si tu réécris les règles, **ce sont eux qui
-basculent d'abord**. Ils sont nommés dans le JSON.
+Le moteur de 69 règles **existe toujours**, mais il ne sert plus qu'à ce qu'on ne connaît pas :
+les exercices créés par un utilisateur, et les noms qui arrivent par l'import. *Une règle doit
+deviner ce qu'on ignore, pas ce qu'on sait.*
 
 ### Ce qui a été vérifié, et ce qui ne l'a pas été
 
-- ✅ **Relecture anatomique** : 277 exercices, un par un, sur sources (ExRx, Strength Level, EMG),
+- ✅ **Relecture anatomique** : les 337, un par un, sur sources (ExRx, Strength Level, EMG),
   chacun portant sa date de relecture (`relueLe`).
 - ✅ **Cohérence interne** : 337/337. Aucun exercice dont le groupe contredit ses muscles, ou dont
   le schéma de mouvement contredit ses muscles.
 - ✅ **Aucun doublon** : deux exercices ne partagent ni le même terme anglais ni la même animation.
 - ✅ **Animations** : chaque chemin annoncé a été **vérifié sur le disque** au moment de l'export.
-- ⚠️ **Les 60 non relus** n'ont bénéficié d'aucune vérification externe. Traite-les comme des
-  approximations.
+- ⚠️ **Ce qui reste imprécis, et c'est écrit dans le code** : la figurine ne connaît que **17
+  muscles**. Il manque donc les **adducteurs** (l'adduction de cuisses est classée « fessiers »,
+  alors que le fessier moyen en est l'antagoniste), la **coiffe des rotateurs**, le **brachial**
+  (le vrai muscle du curl marteau), et la distinction **jumeau / soléaire** (mollets debout vs
+  assis). Chaque cas est signalé à l'endroit concerné plutôt que maquillé.
+- ⚠️ **Le modèle de calories reste grossier** : un exercice à 3 muscles ou plus est compté comme
+  polyarticulaire. C'est assumé, mais ça veut dire qu'ajouter un simple stabilisateur à une fiche
+  peut doubler sa dépense — plusieurs arbitrages du catalogue viennent de là.
 
 ---
 

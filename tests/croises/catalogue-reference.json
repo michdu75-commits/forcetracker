@@ -2,7 +2,7 @@
  "genere": "2026-08-03",
  "total": 337,
  "nbRegles": 69,
- "fragiles": 5,
+ "fragiles": 0,
  "ex": {
   "Abducteurs Machine Debout": {
    "p": "glutes",
@@ -90,7 +90,7 @@
    "pat": "gainage-abdos",
    "eq": "autre",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Box Jump": {
    "p": "glutes,quads",
@@ -375,7 +375,7 @@
   "Curl Poignet Barre": {
    "p": "forearms",
    "s": "",
-   "pat": "curl-biceps",
+   "pat": "poignet",
    "eq": "barre",
    "met": 4,
    "frag": 0
@@ -405,8 +405,8 @@
    "frag": 0
   },
   "Curl Zottman": {
-   "p": "biceps",
-   "s": "forearms",
+   "p": "biceps,forearms",
+   "s": "",
    "pat": "curl-biceps",
    "eq": "barre",
    "met": 4,
@@ -1053,8 +1053,8 @@
    "frag": 0
   },
   "Hyperextension Inverse (Reverse Hyper)": {
-   "p": "glutes,lower-back",
-   "s": "hamstrings",
+   "p": "glutes,hamstrings",
+   "s": "lower-back",
    "pat": "hip-hinge",
    "eq": "autre",
    "met": 6.5,
@@ -1085,8 +1085,8 @@
    "frag": 0
   },
   "Jefferson Curl": {
-   "p": "glutes,lower-back",
-   "s": "hamstrings",
+   "p": "hamstrings,lower-back",
+   "s": "forearms,glutes",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -1205,8 +1205,8 @@
    "frag": 0
   },
   "Marteau": {
-   "p": "biceps",
-   "s": "forearms",
+   "p": "biceps,forearms",
+   "s": "",
    "pat": "curl-biceps",
    "eq": "autre",
    "met": 4,
@@ -1366,10 +1366,10 @@
   },
   "Planche de Préhension": {
    "p": "forearms",
-   "s": "quads,traps",
+   "s": "traps",
    "pat": "gainage-abdos",
    "eq": "corps",
-   "met": 5.5,
+   "met": 4,
    "frag": 0
   },
   "Pompes (Push-up)": {
@@ -1466,7 +1466,7 @@
    "pat": "mollets",
    "eq": "guide",
    "met": 4,
-   "frag": 1
+   "frag": 0
   },
   "Presse à Cuisses Iso-Latérale": {
    "p": "glutes,quads",
@@ -2151,10 +2151,10 @@
   "Superman": {
    "p": "glutes,lower-back",
    "s": "hamstrings,rear-delt",
-   "pat": "hip-hinge",
+   "pat": "gainage-abdos",
    "eq": "corps",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Suspension Passive (Dead Hang)": {
    "p": "forearms",
@@ -2230,11 +2230,11 @@
   },
   "Tirage Menton": {
    "p": "side-delt,traps",
-   "s": "biceps",
+   "s": "biceps,front-delt",
    "pat": "elevation-epaules",
    "eq": "guide",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Tirage Menton Kettlebell": {
    "p": "side-delt,traps",
@@ -2246,11 +2246,11 @@
   },
   "Tirage Menton Élastique": {
    "p": "side-delt,traps",
-   "s": "biceps",
+   "s": "biceps,front-delt",
    "pat": "elevation-epaules",
    "eq": "elast",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Tirage Nuque": {
    "p": "lats",

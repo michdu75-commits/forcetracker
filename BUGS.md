@@ -485,6 +485,17 @@ conclure faux avec assurance.
   ⭐ *Quand on corrige une donnée, vérifier ce qui la LIT* : ici les calories, ailleurs le
   calendrier, la figurine ou l'équilibre de séance. Le réflexe qui l'attrape : comparer les MET
   avant/après sur les 337, systématiquement, même quand on n'a « touché qu'aux muscles ».
+- **👯 Un correctif appliqué à une table et pas à sa JUMELLE** (02/08, deux fois la même semaine) :
+  l'app décrit un exercice dans **plusieurs tables indépendantes** — ses muscles (`_MEX`), son
+  schéma de mouvement (`_MOV_PATTERNS`), son matériel (`_exEquip`). Corriger l'une ne corrige pas
+  les autres, et rien ne le signale. **Cas 1 (ft-v740)** : le chariot de puissance avait ses
+  *muscles* vérifiés en ft-v719, mais pas son *schéma* — sa poussée est restée classée en
+  « tirage » deux jours. **Cas 2 (ft-v746)** : l'exclusion `poignet|wrist` de la règle « curl »
+  avait été posée dans `_MEX` en **ft-v669**… et jamais dans `_MOV_PATTERNS` — « Curl Poignet
+  Barre » est resté classé en *flexion du coude* pendant des mois. ⭐ **Le réflexe** : quand on
+  corrige la façon dont un nom est interprété, chercher **toutes** les tables qui lisent ce nom.
+  C'est ce que le croisement ⑤ (schéma ⟷ muscles) attrape aujourd'hui — il a trouvé seul le
+  schéma « saut » de la corde ondulatoire, sur laquelle on ne saute pas (ft-v745).
 - **Chercher un symptôme là où il n'y en a pas** (ft-v727) : je voulais tailler dans les consignes
   de Milo parce qu'elles occupaient 78 % du contexte. Michel : *« tu me fais flipper là, parce que
   franchement Milo il est au top »*. Rien n'était cassé. **« Ça marche » est une raison suffisante

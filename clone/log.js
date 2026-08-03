@@ -1042,7 +1042,12 @@ const _MOV_PATTERNS=[
   // ⚠️ « jefferson » exclu le 02/08 : le Jefferson Curl est une flexion vertébrale chargée
   // (fessiers + lombaires), pas un curl de bras — le mot-clé « curl » l'attrapait. Trouvé
   // par le croisement schéma × muscles, dès le premier lancement de la famille.
-  {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['marteau','curl','preacher','biceps'],non:['jefferson','leg curl','ischio']},
+  // ⚠️ `poignet`/`wrist` exclus le 02/08 : « Curl Poignet Barre » était classé en FLEXION DU
+  //    COUDE parce que le mot « curl » arrive avant la règle du poignet (premier match gagnant),
+  //    alors que « Extension Poignet Barre », lui, était bien rangé. Même partie du corps, deux
+  //    schémas. ⭐ La même exclusion avait déjà été posée dans `_MEX` (les muscles) en ft-v669 —
+  //    mais pas dans cette table-ci. Un correctif appliqué à une table et pas à sa jumelle.
+  {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['marteau','curl','preacher','biceps'],non:['jefferson','leg curl','ischio','poignet','wrist']},
   {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps','tate press']},
   {id:'mollets',label:'Extension de cheville (mollets)',kw:['mollet','calf','soleus','tibialis','tib raise']},
   {id:'extension-genou',label:'Extension de genou (quadriceps)',kw:['leg extension','extension quadriceps','quad extension','quad ext','sissy squat']},
@@ -1050,8 +1055,12 @@ const _MOV_PATTERNS=[
   // qui est un SQUAT isométrique. Même piège que `t.?bar` → « poignet barre » (ft-v669) : la
   // recherche teste aussi SANS bornes, donc un mot-clé de 1-2 lettres est intenable ici. Le
   // L-Sit reste sans schéma — il est de toute façon « accessoire », ce qui est juste.
-  {id:'gainage-abdos',label:'Gainage / abdominaux',kw:['hollow body','windshield','drapeau','dragon flag','grimpeur','mountain climber','chaise romaine','rotation obliques','rotation machine obliques','gainage','planche','plank','crunch','abdo','releve de jambe','releve de genou','russian twist','sit up','vacuum','roue abdo','ab wheel','bird dog']},
-  {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['tirage en rack','rack pull','souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','jefferson','hyperextension','extension lombaire','ghd','glute ham','superman']},
+  // ⚠️ Le SUPERMAN est passé de « charnière de hanche » à « gainage » le 02/08 : on est allongé
+  //    à plat ventre, la hanche ne se plie pas — c'est un MAINTIEN en extension, l'équivalent
+  //    postérieur de la planche. Il gonflait le compte des charnières dans l'équilibre de séance.
+  //    Rangé avec le Bird Dog, qui est exactement de la même nature.
+  {id:'gainage-abdos',label:'Gainage / abdominaux',kw:['hollow body','windshield','drapeau','dragon flag','grimpeur','mountain climber','chaise romaine','rotation obliques','rotation machine obliques','gainage','planche','plank','crunch','abdo','releve de jambe','releve de genou','russian twist','sit up','vacuum','roue abdo','ab wheel','bird dog','superman']},
+  {id:'hip-hinge',label:'Charnière de hanche (hip hinge)',kw:['tirage en rack','rack pull','souleve de terre','deadlift','good morning','hip thrust','poussee de hanche','glute bridge','pont fessier','roumain','romanian','kettlebell swing','swing','pull through','jefferson','hyperextension','extension lombaire','ghd','glute ham']},
   {id:'fente',label:'Fente',kw:['fente','lunge','split squat','bulgare','montee sur box','step up','cossack']},
   {id:'squat',label:'Squat (flexion hanche+genou)',kw:['squat','press jambe','leg press','hack','pendulum','belt squat','presse a cuisse','wall sit','sled']},
   {id:'poussee-verticale',label:'Poussée verticale (au-dessus de la tête)',kw:['developpe haltere assis','developpe assis','developpe landmine','developpe militaire','militaire','developpe epaule','shoulder press','overhead press','developpe nuque','arnold','developpe assis machine','landmine press','thruster','handstand']},
