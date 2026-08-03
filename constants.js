@@ -1393,6 +1393,64 @@ const EX_MUSCLES={
  // ✏️ CORRECTION : au SWING la kettlebell tire vers l'avant à chaque répétition — la PRISE et
  //    le GAINAGE (la « planche debout » en haut du mouvement) manquaient tous les deux.
  'kettlebell-swing':                      {p:['glutes','hamstrings'], s:['lower-back','quads','abs','forearms'], vu:'2026-08-02'},
+
+ // ─── TRICEPS (25) — relus un par un le 02/08/2026 ────────────────────────────────
+ // ⭐ LE FIL DU GROUPE : les 25 fiches disaient TOUTES « triceps + deltoïde antérieur ».
+ //    Or ce qui distingue une extension de triceps d'une autre, c'est OÙ EST LE BRAS —
+ //    au-dessus de la tête, le long du corps, ou derrière. Et selon le cas, ce n'est pas
+ //    le même deltoïde qui tient la position… voire aucun.
+ //
+ // ─── BRAS AU-DESSUS DE LA TÊTE ou À LA VERTICALE : l'épaule est maintenue fléchie, le
+ //     deltoïde ANTÉRIEUR tient la position pendant toute la série. Il a sa place ici.
+ 'extension-nuque-haltere':               {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'extension-nuque-poulie-haute':          {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'extension-triceps-nuque-elastique':     {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'extension-triceps-verticale-elastique': {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'triceps-poulie-basse':                  {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'triceps-haltere':                       {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'extension-triceps':                     {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'chariot-de-puissance-extension-triceps':{p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ // ─── ALLONGÉ, BRAS À LA VERTICALE : même chose, l'épaule est tenue fléchie à 90°.
+ 'barre-au-front':                        {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'skull-crusher-barre-ez':                {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'extension-triceps-couche-halteres':     {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'extension-triceps-banc-incline-halteres':{p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'extension-triceps-decline-halteres':    {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'tate-press':                            {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ // Aux sangles, le corps est en planche — mais on n'ajoute PAS les abdos : ce 3ᵉ muscle
+ // ferait passer l'exercice de 4 à 5,5 en calories (l'app compte « 3 muscles =
+ // polyarticulaire »), et un simple stabilisateur ne doit pas changer la dépense. Même
+ // arbitrage qu'à l'écarté à la poulie haute à genoux (ft-v737).
+ 'extension-triceps-trx-sangles':         {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ 'extension-triceps-allongee-trx-sangles':{p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
+ // ─── BRAS LE LONG DU CORPS (poussées à la poulie) : ⭐ CORRECTION — l'épaule ne bouge pas
+ //     et n'est pas maintenue en l'air, le coude est collé au buste. Le deltoïde ANTÉRIEUR
+ //     n'y travaille pas du tout : c'est une extension du coude, point. Les références
+ //     (ExRx) ne listent d'ailleurs AUCUN muscle synergiste sur un pushdown.
+ 'triceps-poulie':                        {p:['triceps'], s:[], vu:'2026-08-02'},
+ 'triceps-corde-poulie':                  {p:['triceps'], s:[], vu:'2026-08-02'},
+ 'triceps-machine':                       {p:['triceps'], s:[], vu:'2026-08-02'},
+ 'extension-triceps-concentree-poulie':   {p:['triceps'], s:[], vu:'2026-08-02'},
+ // ─── BRAS DERRIÈRE LE CORPS : ⭐⭐ LA CORRECTION LA PLUS NETTE DU GROUPE. Au KICKBACK, le
+ //     bras est tenu EN ARRIÈRE, épaule en EXTENSION — c'est le deltoïde POSTÉRIEUR qui
+ //     maintient cette position, pas l'antérieur. L'antérieur en est même l'ANTAGONISTE :
+ //     il ramènerait le bras vers l'avant. C'est exactement le défaut corrigé sur les
+ //     rotations internes d'épaule (ft-v739) — un muscle crédité pour un travail qu'il ne
+ //     fournit pas, et que personne ne pouvait voir puisque les 25 fiches étaient identiques.
+ 'extension-triceps-arriere-kickback':    {p:['triceps'], s:['rear-delt'], vu:'2026-08-02'},
+ // ─── DIPS : aux barres parallèles, on peut se pencher en avant → pectoraux ET triceps.
+ 'dips-lestes':                           {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : aux ANNEAUX, rien n'est fixe — tenir les anneaux immobiles est la moitié
+ //    du travail. Le gainage manquait. (Ici il ne change pas les calories : l'exercice a
+ //    déjà 3 muscles, il est donc déjà compté comme polyarticulaire.)
+ 'dips-aux-anneaux':                      {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
+ // ✏️✏️ CORRECTION : les DIPS SUR BANC (mains derrière soi, pieds devant) étaient rangés
+ //    comme des dips aux barres — pectoraux moteurs à égalité. C'est faux : dans cette
+ //    position le buste reste VERTICAL et on ne peut pas se pencher en avant, donc le
+ //    pectoral ne peut pas prendre le relais. C'est le triceps qui fait tout le travail —
+ //    et c'est aussi pour ça que cet exercice tire autant sur l'épaule.
+ 'bench-dips':                            {p:['triceps'], s:['front-delt','pec'], vu:'2026-08-02'},
+ 'dips-entre-deux-bancs':                 {p:['triceps'], s:['front-delt','pec'], vu:'2026-08-02'},
 };
 
 /** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou

@@ -963,6 +963,39 @@ t('⚠️ témoin honnête : l\'ABDUCTION est juste (moyen fessier), l\'ADDUCTIO
   !fs2.erreur && fs2.abd.glutes===2 && fs2.add.glutes===2,
   'abduction '+JSON.stringify(fs2.abd)+' · adduction '+JSON.stringify(fs2.add));
 
+// ── TRICEPS : les corrections trouvées en relisant les 25 fiches une par une (02/08).
+const tr2=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>(_mscScores([E(n)])||{}).sc||{};
+  return {kick:f('Extension Triceps Arrière (Kickback)'), nuque:f('Extension Nuque Haltère'),
+          pushdown:f('Triceps Poulie'), corde:f('Triceps Corde Poulie'),
+          benchDips:f('Bench Dips'), dips:f('Dips Lestés'), anneaux:f('Dips aux Anneaux'),
+          trx:f('Extension Triceps TRX (Sangles)'),
+          metTrx:getExerciseMET('Extension Triceps TRX (Sangles)'),
+          metAnneaux:getExerciseMET('Dips aux Anneaux'), metPush:getExerciseMET('Triceps Poulie')};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(tr2.erreur) console.log('     ⚠️  bloc triceps en ERREUR : '+tr2.erreur);
+t('⭐ le KICKBACK triceps tient le bras DERRIÈRE : c\'est le deltoïde POSTÉRIEUR',
+  // comparé à l'extension nuque : le test doit distinguer les deux positions de bras,
+  // sinon il passerait aussi avec l'ancien classement (les 25 fiches étaient identiques).
+  !tr2.erreur && tr2.kick['rear-delt']===1 && !tr2.kick['front-delt']
+  && tr2.nuque['front-delt']===1,
+  'kickback '+JSON.stringify(tr2.kick)+' · témoin nuque '+JSON.stringify(tr2.nuque));
+t('⭐ un PUSHDOWN n\'a pas de deltoïde antérieur (le coude est collé au buste)',
+  !tr2.erreur && Object.keys(tr2.pushdown).length===1 && Object.keys(tr2.corde).length===1
+  && tr2.metPush===4,
+  JSON.stringify(tr2.pushdown)+' · MET '+tr2.metPush);
+t('⭐ les DIPS SUR BANC sont un exercice de TRICEPS, pas de pectoraux',
+  !tr2.erreur && tr2.benchDips.triceps===2 && tr2.benchDips.pec===1 && tr2.dips.pec===2,
+  'bench '+JSON.stringify(tr2.benchDips)+' · témoin dips barres pec='+tr2.dips.pec);
+t('les DIPS AUX ANNEAUX demandent du gainage (rien n\'est fixe) — sans changer les calories',
+  !tr2.erreur && tr2.anneaux.abs===1 && tr2.metAnneaux===5.5,
+  JSON.stringify(tr2.anneaux)+' · MET '+tr2.metAnneaux);
+t('⚠️ … mais PAS l\'extension triceps TRX : le 3ᵉ muscle doublerait sa dépense (4 → 5,5)',
+  !tr2.erreur && !tr2.trx.abs && tr2.metTrx===4, JSON.stringify(tr2.trx)+' · MET '+tr2.metTrx);
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');

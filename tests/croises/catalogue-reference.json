@@ -2,7 +2,7 @@
  "genere": "2026-08-03",
  "total": 337,
  "nbRegles": 69,
- "fragiles": 10,
+ "fragiles": 9,
  "ex": {
   "Abducteurs Machine Debout": {
    "p": "glutes",
@@ -77,8 +77,8 @@
    "frag": 0
   },
   "Bench Dips": {
-   "p": "pec,triceps",
-   "s": "front-delt",
+   "p": "triceps",
+   "s": "front-delt,pec",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -462,15 +462,15 @@
   },
   "Dips aux Anneaux": {
    "p": "pec,triceps",
-   "s": "front-delt",
+   "s": "abs,front-delt",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
    "frag": 0
   },
   "Dips entre Deux Bancs": {
-   "p": "pec,triceps",
-   "s": "front-delt",
+   "p": "triceps",
+   "s": "front-delt,pec",
    "pat": "poussee-horizontale",
    "eq": "corps",
    "met": 5.5,
@@ -782,11 +782,11 @@
   },
   "Extension Triceps Arrière (Kickback)": {
    "p": "triceps",
-   "s": "front-delt",
+   "s": "rear-delt",
    "pat": "extension-triceps",
    "eq": "autre",
    "met": 4,
-   "frag": 1
+   "frag": 0
   },
   "Extension Triceps Banc Incliné Haltères": {
    "p": "triceps",
@@ -798,7 +798,7 @@
   },
   "Extension Triceps Concentrée Poulie": {
    "p": "triceps",
-   "s": "front-delt",
+   "s": "",
    "pat": "extension-triceps",
    "eq": "guide",
    "met": 4,
@@ -2406,7 +2406,7 @@
   },
   "Triceps Corde Poulie": {
    "p": "triceps",
-   "s": "front-delt",
+   "s": "",
    "pat": "extension-triceps",
    "eq": "guide",
    "met": 4,
@@ -2422,7 +2422,7 @@
   },
   "Triceps Machine": {
    "p": "triceps",
-   "s": "front-delt",
+   "s": "",
    "pat": "extension-triceps",
    "eq": "guide",
    "met": 4,
@@ -2430,7 +2430,7 @@
   },
   "Triceps Poulie": {
    "p": "triceps",
-   "s": "front-delt",
+   "s": "",
    "pat": "extension-triceps",
    "eq": "guide",
    "met": 4,
