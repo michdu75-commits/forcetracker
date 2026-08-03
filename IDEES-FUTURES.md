@@ -1488,3 +1488,20 @@ Idée : donner une **couleur par groupe musculaire** pour repérer d'un coup d'�
 - **Où l'appliquer** : d'abord la **séance** (blocs d'exercice) + l'**historique/programmes** (là où scanner aide). Le sélecteur a déjà ses icônes de muscles → pas prioritaire.
 - **Méthode** : prototyper **sur le clone** (`/clone/`) sur UN écran (blocs séance), version « barre de couleur à gauche », **testé jour + nuit + affichage agrandi**, Michel valide sur iPhone → si OK, promotion en prod. Sinon on annule sans risque.
 - Le groupe d'un exercice se lit dans `EXLIB` (`.g`) ; certains exos sont dans 2 groupes (squat = Jambes+Fessiers) → décider quelle couleur montrer (le 1er groupe ? le muscle principal ?).
+
+---
+
+## ⛔ ÉCARTÉ le 03/08/2026 — enrichir le catalogue d'exercices « maison »
+
+**La proposition** : j'avais mesuré les trous du catalogue et proposé de combler les plus criants —
+**0 curl élastique** sur 16 biceps, **0 mollets au poids du corps** sur 8, **2 exercices de fessiers
+à la maison** sur 33. Sur 335 exercices, seuls 80 se font sans machine.
+
+**La réponse de Michel** : *« les 3 exercices tu les retires, on en a déjà beaucoup. »*
+
+**Décision : on n'ajoute pas.** Le catalogue est jugé suffisamment fourni. La mesure reste vraie —
+si le besoin revient (un retour de testeuse qui s'entraîne à la maison, par exemple), elle est ici
+et il n'y aura pas à la refaire.
+
+⚠️ **Ne pas re-proposer sans un déclencheur nouveau.** Une idée écartée qui revient toute seule fait
+perdre du temps aux deux (R30 : un retrait volontaire doit être écrit, sinon il redevient un bug).
