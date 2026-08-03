@@ -14,7 +14,7 @@ const EXLIB=[
   {n:'Croisé Poulie (Cable Crossover)',g:'Pectoraux'},
   {n:'Pec Deck',g:'Pectoraux'},
   {n:'Chest Press Machine Horizontale',g:'Pectoraux'},{n:'Chest Press Machine Inclinée',g:'Pectoraux'},{n:'Chest Press Machine Déclinée',g:'Pectoraux'},
-  {n:'Dips',g:'Pectoraux'},{n:'Dips Triceps (Buste Droit)',g:'Pectoraux'},{n:'Dips Machine Assistée',g:'Pectoraux'},{n:'Dips Assis Machine (Seated Dip)',g:'Pectoraux'},
+  {n:'Dips',g:'Pectoraux'},{n:'Dips Triceps (Buste Droit)',g:'Triceps'},{n:'Dips Machine Assistée',g:'Pectoraux'},{n:'Dips Assis Machine (Seated Dip)',g:'Pectoraux'},
   {n:'Pompes Lestées',g:'Pectoraux'},{n:'Pompes Déficit (Deficit Push-up)',g:'Pectoraux'},{n:'Pompes Diamant',g:'Pectoraux'},
   // ── 14 exercices ajoutés le 01/08/2026 (animations du dossier source de Michel, décision « ok pour ajouter les 14 ») ──
   {n:'Pompes (Push-up)',g:'Pectoraux'},
@@ -73,7 +73,7 @@ const EXLIB=[
   {n:'Tirage Visage (Face Pull)',g:'Épaules'},{n:'Tirage Menton Kettlebell',g:'Épaules'},
   {n:'Y Raise / W Raise',g:'Épaules'},{n:'Développé Nuque',g:'Épaules'},
   // Épaules + Trapèzes — figurines (lot 2026-07-06)
-  {n:'Développé Épaules Kettlebell',g:'Épaules'}, {n:'Développé Landmine (Épaules)',g:'Épaules'}, {n:'Écarté Arrière Élastique',g:'Épaules'}, {n:'Élévation Frontale Allongée Barre',g:'Épaules'}, {n:'Élévation Latérale Poulie Inclinée',g:'Épaules'}, {n:'Élévation Latérale Landmine',g:'Épaules'}, {n:'Élévations Latérales Kettlebell',g:'Épaules'}, {n:'Rotation Interne Épaule Élastique',g:'Épaules'}, {n:'Face Pull Couché Poulie',g:'Épaules'}, {n:'Oiseau Poulie 45°',g:'Épaules'}, {n:'Passage d\'Épaule Élastique',g:'Épaules'}, {n:'Rotation Externe Épaule Abduction',g:'Épaules'}, {n:'Rotation Externe Épaule Élastique',g:'Épaules'}, {n:'Rotation Interne 90° Poulie',g:'Épaules'},
+  {n:'Développé Épaules Kettlebell',g:'Épaules'}, {n:'Développé Landmine (Épaules)',g:'Épaules'}, {n:'Écarté Arrière Élastique',g:'Épaules'}, {n:'Élévation Frontale Allongée Barre',g:'Épaules'}, {n:'Élévation Latérale Poulie Inclinée',g:'Épaules'}, {n:'Élévation Latérale Landmine',g:'Épaules'}, {n:'Élévations Latérales Kettlebell',g:'Épaules'}, {n:'Rotation Interne Épaule Élastique',g:'Épaules'}, {n:'Face Pull Couché Poulie',g:'Épaules'}, {n:'Oiseau Poulie 45°',g:'Épaules'}, {n:'Passage d\'Épaule Élastique',g:'Épaules'},{n:'Glissement au Mur (Wall Slide)',g:'Épaules'}, {n:'Rotation Externe Épaule Abduction',g:'Épaules'}, {n:'Rotation Externe Épaule Élastique',g:'Épaules'}, {n:'Rotation Interne 90° Poulie',g:'Épaules'},
   // Épaules + Trapèzes — figurines 2e partie (lot 2026-07-06)
   {n:'Élévation Frontale Banc Incliné',g:'Épaules'}, {n:'Élévation Latérale Inclinée Haltère',g:'Épaules'}, {n:'Rotation Externe Épaule Haltère',g:'Épaules'}, {n:'Tirage Menton Élastique',g:'Trapèzes'}, {n:'Thruster',g:'Full Body'}, {n:'Thruster Kettlebell',g:'Full Body'}, {n:'Russian Twist Développé Épaules',g:'Abdominaux'}, {n:'Développé Épaules Assis Machine (Shoulder Press)',g:'Épaules'},
   // ── Biceps ─────────────────────────────────────────────────
@@ -697,6 +697,7 @@ const EX_IDS={
  'overhead-squat-elastique':["Overhead Squat Élastique"],
  'overhead-squat-halteres':["Overhead Squat Haltères"],
  'passage-d-epaule-elastique':["Passage d'Épaule Élastique"],
+ 'glissement-au-mur-wall-slide':["Glissement au Mur (Wall Slide)"],
  'pec-deck':["Pec Deck"],
  'pendulum-squat':["Pendulum Squat"],
  'pin-squat':["Pin Squat"],
@@ -1086,6 +1087,13 @@ const EX_MUSCLES={
  'rotation-interne-90-poulie':            {p:['front-delt'], s:['pec'], vu:'2026-08-02'},
  // Mobilité (passage de bâton/élastique au-dessus de la tête) : amplitude, pas de charge.
  'passage-d-epaule-elastique':            {p:['rear-delt'], s:['traps'], vu:'2026-08-02'},
+ // ✨ AJOUTÉ le 03/08 (demande de Michel) : le GLISSEMENT AU MUR — dos et bras plaqués contre
+ //    le mur, les bras montent et descendent en gardant le contact. C'est la mobilité d'épaule
+ //    de référence, et l'exercice du TRAPÈZE INFÉRIEUR (sonnette externe de l'omoplate). On
+ //    n'avait presque rien dans ce registre — juste le passage d'épaule. Aligné sur le Y Raise,
+ //    qui est le même geste en chargé. ⚠️ Pas de 3ᵉ muscle : un exercice de MOBILITÉ ne doit
+ //    pas coûter autant qu'un développé couché (l'app compte « 3 muscles = polyarticulaire »).
+ 'glissement-au-mur-wall-slide':          {p:['traps','rear-delt'], s:[], vu:'2026-08-03'},
  // ✏️ CORRECTION : le BICEPS n'a rien à faire ici — il venait du mot « tirage » dans le nom.
  //    On tire le chariot bras tendus devant soi : c'est une élévation frontale lestée, et
  //    le corps entier résiste à la traction (gainage).

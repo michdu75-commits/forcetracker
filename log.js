@@ -1037,7 +1037,7 @@ function _exJac(qset,cset){ if(!cset.size)return 0; if(_exModConflict(qset,cset)
 // Niveau 3 = résistance (indicatif). Niveaux 2/4/5 = modificateurs / marques / alias
 // (déjà couverts par _EX_MODGROUPS et _EX_EQUIV). Ordre = du + spécifique au + générique.
 const _MOV_PATTERNS=[
-  {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','upright row','haussement','shrug','croix de fer','passage d epaule','passage epaule']},
+  {id:'elevation-epaules',label:'Élévation / rotation épaule',kw:['elevation laterale','elevation frontale','oiseau','face pull','tirage visage','y raise','around the world','rotation externe','rotation interne','tirage menton','upright row','haussement','shrug','croix de fer','passage d epaule','passage epaule','wall slide','glissement au mur']},
   {id:'flexion-genou',label:'Flexion de genou (ischios)',kw:['leg curl','curl ischio','ischio','nordic']}, // AVANT curl-biceps (« leg curl » ≠ curl de bras)
   // ⚠️ « jefferson » exclu le 02/08 : le Jefferson Curl est une flexion vertébrale chargée
   // (fessiers + lombaires), pas un curl de bras — le mot-clé « curl » l'attrapait. Trouvé
@@ -1048,7 +1048,13 @@ const _MOV_PATTERNS=[
   //    schémas. ⭐ La même exclusion avait déjà été posée dans `_MEX` (les muscles) en ft-v669 —
   //    mais pas dans cette table-ci. Un correctif appliqué à une table et pas à sa jumelle.
   {id:'curl-biceps',label:'Flexion du coude (biceps)',kw:['marteau','curl','preacher','biceps'],non:['jefferson','leg curl','ischio','poignet','wrist']},
-  {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps','tate press']},
+  // ⚠️ `dips` EXCLU (03/08) : un dips est une POUSSÉE, jamais une extension isolée du coude.
+  // Le mot-clé large « triceps » l'attrapait depuis que « Dips Parallèles » a été renommé
+  // « Dips Triceps (Buste Droit) » la veille — ajouter un mot dans un nom avait changé son
+  // schéma EN SILENCE, et le contrôle de l'empreinte ne l'a pas vu parce qu'un renommage s'y
+  // lit comme « un exercice disparu + un nouveau ». C'est EXACTEMENT le défaut qui a motivé
+  // l'identifiant stable (le nom ne doit pas piloter les calculs) — pris la main dans le sac.
+  {id:'extension-triceps',label:'Extension du coude (triceps)',kw:['extension triceps','barre au front','skull crusher','kickback','pushdown','extension nuque','triceps','tate press'],non:['dips','dip ']},
   {id:'mollets',label:'Extension de cheville (mollets)',kw:['mollet','calf','soleus','tibialis','tib raise']},
   {id:'extension-genou',label:'Extension de genou (quadriceps)',kw:['leg extension','extension quadriceps','quad extension','quad ext','sissy squat']},
   // ⚠️ PAS de mot-clé pour le L-Sit : « l sit » attraperait « wa·ll sit » (Chaise / Wall Sit),
@@ -2758,7 +2764,7 @@ function _exEquip(name){
   //    Conséquence concrète : quelqu'un qui filtre « je m'entraîne à la maison » ne voyait pas
   //    l'air squat. Même cas pour le squat sauté, le sissy squat et le cossack squat.
   //    (Les versions MACHINE restent guidées : la règle 1 passe avant celle-ci.)
-  if(/traction|pull-?up|pull up|dips|pompe|push-?up|gainage|planche|plank|pistol|muscle-?up|chaise|wall sit|superman|l-sit|releve.*jambe|leg raise|crunch|russian twist|mountain climber|burpee|hollow|ghd|glute ham|nordic|box|montee|poids du corps|air squat|squat saute|jump squat|sissy|cossack/.test(s)) return 'corps';
+  if(/traction|pull-?up|pull up|dips|pompe|push-?up|gainage|planche|plank|pistol|muscle-?up|chaise|wall sit|superman|l-sit|releve.*jambe|leg raise|crunch|russian twist|mountain climber|burpee|hollow|ghd|glute ham|nordic|box|montee|poids du corps|air squat|squat saute|jump squat|sissy|cossack|wall slide|glissement au mur/.test(s)) return 'corps';
   // 3) Poids libre (haltères / kettlebell)
   if(/haltere|dumbbell|kettlebell|goblet|landmine|croix de fer|farmer|marche du fermier|swing|arnold|renegade/.test(s)) return 'libre';
   // 4) Barre (classiques : couché/incliné, squat, soulevé, rowing, militaire, curl…)
@@ -5339,7 +5345,7 @@ const EX_EN={
   'Élévations Frontales Machine':'machine front raise',
   'Oiseau':'rear delt fly dumbbell','Machine Oiseau':'rear delt fly machine',
   'Tirage Visage (Face Pull)':'face pull cable','Tirage Menton Kettlebell':'upright row kettlebell',
-  'Y Raise / W Raise':'y raise band',
+  'Y Raise / W Raise':'y raise band','Glissement au Mur (Wall Slide)':'wall slide scapular',
   // Biceps
   'Curl Barre':'barbell bicep curl','Curl Haltères':'dumbbell bicep curl',
   'Curl Poulie':'cable bicep curl','Curl EZ':'ez bar curl',

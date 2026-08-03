@@ -56,7 +56,6 @@ const TOLERE={
   groupe:{
     // le sélecteur range cet exercice là où on le CHERCHE, pas là où ça tire
     'Planche Inversée':'rangée dans Abdominaux parce qu\'on la cherche avec les gainages ; ses muscles moteurs sont bien fessiers + lombaires',
-    'Dips Triceps (Buste Droit)':'rangé dans Pectoraux avec les autres dips, parce qu\'on l\'y cherche — mais buste droit c\'est le TRICEPS qui mène (03/08). ⏭️ Devrait sans doute passer en Triceps, comme Bench Dips : c\'est un changement visible par l\'utilisateur, donc l\'arbitrage de Michel (R29).',
   },
   // ⑤ schémas volontairement différents des muscles
   schema:{

@@ -496,6 +496,17 @@ conclure faux avec assurance.
   corrige la façon dont un nom est interprété, chercher **toutes** les tables qui lisent ce nom.
   C'est ce que le croisement ⑤ (schéma ⟷ muscles) attrape aujourd'hui — il a trouvé seul le
   schéma « saut » de la corde ondulatoire, sur laquelle on ne saute pas (ft-v745).
+- **🏷️ Un contrôle indexé par NOM devient aveugle le jour où le nom change** (03/08, ft-v749) :
+  en renommant « Dips Parallèles » en « Dips **Triceps** (Buste Droit) », le mot ajouté a fait
+  basculer son schéma de mouvement de *poussée horizontale* à *extension du coude* — le moteur
+  lit le nom. C'est le défaut même qui a motivé l'identifiant stable (ft-v735), refait par
+  moi-même 14 versions plus tard. **Et l'empreinte du catalogue (croisement ⑦) ne l'a pas vu** :
+  elle compare fiche à fiche **par nom**, donc un renommage s'y lit comme *« un exercice disparu
+  + un nouveau »* et la comparaison des champs ne se fait jamais.
+  ⭐ *Un renommage est le seul changement qui échappe à un contrôle indexé par nom — c'est-à-dire
+  exactement le changement le plus risqué.* Le réflexe, tant que l'identifiant stable n'est pas
+  branché partout : après tout renommage, comparer **à la main** l'ancienne et la nouvelle ligne
+  de l'empreinte.
 - **Chercher un symptôme là où il n'y en a pas** (ft-v727) : je voulais tailler dans les consignes
   de Milo parce qu'elles occupaient 78 % du contexte. Michel : *« tu me fais flipper là, parce que
   franchement Milo il est au top »*. Rien n'était cassé. **« Ça marche » est une raison suffisante

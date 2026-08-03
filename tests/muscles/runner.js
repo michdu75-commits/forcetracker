@@ -1146,6 +1146,12 @@ const fus=await p.evaluate(()=>{
     r.mig[n]=exNomActuel(n); r.rech[n]=cherche(n); });
   r.dipsPec=f('Dips'); r.dipsTri=f('Dips Triceps (Buste Droit)');
   r.dipsLest=f('Dips Lestés'); r.dipsMach=f('Dips Machine Assistée');
+  r.patDipsTri=_movPattern('Dips Triceps (Buste Droit)'); r.patKick=_movPattern('Extension Triceps Arrière (Kickback)');
+  r.groupeDipsTri=(EXLIB.find(e=>e.n==='Dips Triceps (Buste Droit)')||{}).g;
+  r.wall=f('Glissement au Mur (Wall Slide)'); r.metWall=getExerciseMET('Glissement au Mur (Wall Slide)');
+  r.patWall=_movPattern('Glissement au Mur (Wall Slide)'); r.eqWall=_exEquip('Glissement au Mur (Wall Slide)');
+  r.patWallSit=_movPattern('Chaise (Wall Sit)'); r.patWallBall=_movPattern('Wall Ball');
+  r.rechWall=cherche('wall slide'); r.rechGliss=cherche('glissement');
   const i=document.getElementById('ex-search'); i.value=''; _exGrp=null; filterEx();
   return r;
  }catch(e){ return {erreur:String(e&&e.message||e)}; }
@@ -1171,6 +1177,26 @@ t('⭐ les dips LIBRES demandent du gainage — pas les versions calées sur une
   !fus.erreur && fus.dipsPec.abs===1 && fus.dipsTri.abs===1
   && fus.dipsLest.abs===1 && !fus.dipsMach.abs,
   'dips '+JSON.stringify(fus.dipsPec)+' · témoin machine assistée '+JSON.stringify(fus.dipsMach));
+
+t('⭐⭐ un DIPS reste une POUSSÉE, même renommé « Dips Triceps »',
+  // ⚠️ Le renommage de la veille avait fait basculer son schéma en « extension du coude » :
+  //    le mot « triceps » ajouté dans le nom pilotait le calcul. C'est le défaut même qui a
+  //    motivé l'identifiant stable, pris la main dans le sac. Le kickback, lui, reste une
+  //    extension — c'est le témoin qui prouve que l'exclusion ne va pas trop loin.
+  !fus.erreur && fus.patDipsTri==='poussee-horizontale' && fus.patKick==='extension-triceps',
+  'dips='+fus.patDipsTri+' · témoin kickback='+fus.patKick);
+t('le Dips Triceps est rangé dans le groupe TRICEPS (arbitrage Michel, 03/08)',
+  !fus.erreur && fus.groupeDipsTri==='Triceps', String(fus.groupeDipsTri));
+t('⭐ le GLISSEMENT AU MUR est au catalogue (mobilité d\'épaule, trapèze inférieur)',
+  !fus.erreur && fus.wall.traps===2 && fus.wall['rear-delt']===2 && fus.metWall===4
+  && fus.patWall==='elevation-epaules' && fus.eqWall==='corps',
+  JSON.stringify(fus.wall)+' · MET '+fus.metWall+' · '+fus.patWall+' · '+fus.eqWall);
+t('… et il se trouve en tapant « wall slide » comme « glissement »',
+  !fus.erreur && fus.rechWall==='Glissement au Mur (Wall Slide)' && fus.rechGliss==='Glissement au Mur (Wall Slide)',
+  'wall slide → '+fus.rechWall+' · glissement → '+fus.rechGliss);
+t('témoins : « Wall Sit » reste un squat et « Wall Ball » un saut (le mot « wall » ne déborde pas)',
+  !fus.erreur && fus.patWallSit==='squat' && fus.patWallBall==='saut-plyo',
+  'wall sit='+fus.patWallSit+' · wall ball='+fus.patWallBall);
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 

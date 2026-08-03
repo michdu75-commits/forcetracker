@@ -81,7 +81,7 @@ Dips aux Anneaux;dips-aux-anneaux;Triceps;exercises/dips-aux-anneaux.webp;true;r
 Dips entre Deux Bancs;dips-entre-deux-bancs;Triceps;exercises/dips-entre-deux-bancs.webp;true;bench dips between two benches
 Dips Lestés;dips-lestes;Triceps;;false;dips weighted
 Dips Machine Assistée;dips-machine-assistee;Pectoraux;exercises/dips-assiste-machine.webp;true;assisted dip machine
-Dips Triceps (Buste Droit);dips-paralleles;Pectoraux;exercises/dips-triceps-paralleles.webp;true;parallel bar dip
+Dips Triceps (Buste Droit);dips-paralleles;Triceps;exercises/dips-triceps-paralleles.webp;true;parallel bar dip
 Drapeau (Dragon Flag);drapeau-dragon-flag;Abdominaux;;false;dragon flag
 Écarté Arrière Élastique;ecarte-arriere-elastique;Épaules;exercises/ecarte-arriere-elastique.webp;true;
 Écarté Décliné Haltères;ecarte-decline-halteres;Pectoraux;exercises/ecartes-decline-avec-halteres.webp;true;decline dumbbell fly
@@ -138,6 +138,7 @@ Fentes Kettlebell;fentes-kettlebell;Jambes;exercises/fentes-avant-kettlebell.web
 Fentes Latérales;fentes-laterales;Jambes;;false;lateral lunge
 Fentes Marchées;fentes-marchees;Jambes;exercises/fentes-marchees-avec-sandbag.webp;true;walking lunge
 Gainage;gainage;Abdominaux;;false;plank core
+Glissement au Mur (Wall Slide);glissement-au-mur-wall-slide;Épaules;;false;wall slide scapular
 Glute Ham Raise (GHD);glute-ham-raise-ghd;Fessiers;exercises/glute-ham-developer-ghd.webp;true;
 Grimpeur (Mountain Climber);grimpeur-mountain-climber;Abdominaux;exercises/grimpeur-mountain-climber.webp;true;mountain climber
 Hack Squat Assis;hack-squat-assis;Jambes;exercises/hack-squat-assis.webp;true;seated hack squat machine

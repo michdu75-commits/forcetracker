@@ -1,7 +1,7 @@
 {
  "source": "Force Tracker",
  "exporte": "2026-08-03",
- "nbExercices": 334,
+ "nbExercices": 335,
  "avertissement": "LIRE LISEZ-MOI-EXPORT.md avant utilisation : ces données sont DÉDUITES du nom de chaque exercice par 69 règles, elles ne sont pas saisies à la main. Voir la section « Fiabilité » pour ce que le champ classementCertain signifie.",
  "vocabulaire": {
   "muscles": {
@@ -117,6 +117,7 @@
   ],
   "groupes": [
    "Pectoraux",
+   "Triceps",
    "Épaules",
    "Dos",
    "Fessiers",
@@ -125,7 +126,6 @@
    "Full Body",
    "Abdominaux",
    "Biceps",
-   "Triceps",
    "Jambes",
    "Lombaires",
    "Mollets"
@@ -2824,7 +2824,7 @@
    "anciensNoms": [
     "Dips Parallèles"
    ],
-   "groupe": "Pectoraux",
+   "groupe": "Triceps",
    "musclesPrincipaux": [
     "triceps"
    ],
@@ -2833,11 +2833,11 @@
     "front-delt",
     "pec"
    ],
-   "schemaMouvement": "extension-triceps",
-   "schemaLibelle": "Extension du coude (triceps)",
+   "schemaMouvement": "poussee-horizontale",
+   "schemaLibelle": "Poussée horizontale (pectoraux)",
    "materiel": "corps",
    "met": 5.5,
-   "role": "accessoire",
+   "role": "ancre",
    "termeAnglais": "parallel bar dip",
    "animation": "exercises/dips-triceps-paralleles.webp",
    "musclesEcrits": true,
@@ -4574,6 +4574,34 @@
     "Lombaires",
     "Obliques"
    ],
+   "materielLibelle": "Poids du corps"
+  },
+  {
+   "nom": "Glissement au Mur (Wall Slide)",
+   "identifiant": "glissement-au-mur-wall-slide",
+   "anciensNoms": [],
+   "groupe": "Épaules",
+   "musclesPrincipaux": [
+    "rear-delt",
+    "traps"
+   ],
+   "musclesSecondaires": [],
+   "schemaMouvement": "elevation-epaules",
+   "schemaLibelle": "Élévation / rotation épaule",
+   "materiel": "corps",
+   "met": 4,
+   "role": "accessoire",
+   "termeAnglais": "wall slide scapular",
+   "animation": null,
+   "musclesEcrits": true,
+   "relueLe": "2026-08-03",
+   "classementCertain": true,
+   "animationExiste": false,
+   "musclesPrincipauxFr": [
+    "Deltoïde postérieur",
+    "Trapèzes"
+   ],
+   "musclesSecondairesFr": [],
    "materielLibelle": "Poids du corps"
   },
   {

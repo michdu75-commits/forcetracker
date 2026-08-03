@@ -1,6 +1,6 @@
 {
  "genere": "2026-08-02",
- "nb": 334,
+ "nb": 335,
  "ids": {
   "abducteurs-machine-debout": "Abducteurs Machine Debout",
   "abduction-cuisses-leg-abduction": "Abduction Cuisses (Leg Abduction)",
@@ -335,7 +335,8 @@
   "wall-ball": "Wall Ball",
   "windshield-wiper": "Windshield Wiper",
   "y-raise-w-raise": "Y Raise / W Raise",
-  "zercher-deadlift": "Zercher Deadlift"
+  "zercher-deadlift": "Zercher Deadlift",
+  "glissement-au-mur-wall-slide": "Glissement au Mur (Wall Slide)"
  },
  "note": "3 identifiants RETIRÉS le 03/08/2026 (cable-crunch, kickback-cable, triceps-haltere) : c'étaient des DOUBLONS, fusionnés dans crunch-poulie, extension-fessiers-arriere-kickback et extension-nuque-haltere. Leur NOM est conservé comme ancien nom du gardien, donc l'historique suit. Retrait VOLONTAIRE — si un identifiant disparaît sans cette note, c'est un bug."
 }
