@@ -1451,6 +1451,64 @@ const EX_MUSCLES={
  //    et c'est aussi pour ça que cet exercice tire autant sur l'épaule.
  'bench-dips':                            {p:['triceps'], s:['front-delt','pec'], vu:'2026-08-02'},
  'dips-entre-deux-bancs':                 {p:['triceps'], s:['front-delt','pec'], vu:'2026-08-02'},
+
+ // ─── ABDOMINAUX (20) — relus un par un le 02/08/2026 ─────────────────────────────
+ // ⭐ LE FIL DU GROUPE : les 20 fiches confondaient FLÉCHIR LE TRONC et FLÉCHIR LA HANCHE.
+ //    Les deux se ressemblent de l'extérieur, mais ce ne sont pas les mêmes muscles — et
+ //    c'est précisément ce qui distingue un CRUNCH d'un RELEVÉ DE BUSTE.
+ //
+ // ─── CRUNCHS : on décolle les OMOPLATES, le bassin ne bouge pas.
+ // ✏️✏️ CORRECTION : ils comptaient tous les FLÉCHISSEURS DE HANCHE. Or dans un crunch la
+ //    hanche ne bouge PAS — c'est exactement ce qui le distingue du relevé de buste, où l'on
+ //    remonte tout le buste et où les fléchisseurs travaillent vraiment.
+ //    ⭐ Conséquence : ce 3ᵉ muscle fantôme faisait compter un crunch comme POLYARTICULAIRE
+ //    (5,5 en calories — autant qu'un développé couché). Il redevient l'isolation qu'il est.
+ 'crunch':                                {p:['abs'], s:['obliques'], vu:'2026-08-02'},
+ 'crunch-poulie':                         {p:['abs'], s:['obliques'], vu:'2026-08-02'},
+ 'crunch-machine':                        {p:['abs'], s:['obliques'], vu:'2026-08-02'},
+ 'cable-crunch':                          {p:['abs'], s:['obliques'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le crunch OBLIQUE avait les obliques en simple soutien — le mot est
+ //    pourtant dans son nom, et la rotation EST le mouvement.
+ 'crunch-oblique':                        {p:['obliques','abs'], s:[], vu:'2026-08-02'},
+ // Le RELEVÉ DE BUSTE, lui, remonte le tronc en entier : les fléchisseurs de hanche y sont
+ // bien moteurs. C'est la seule fiche du lot qui devait les garder.
+ 'releve-de-buste-sit-up':                {p:['abs'], s:['hip-flexors','obliques'], vu:'2026-08-02'},
+ // ─── RELEVÉS DE JAMBES : ⭐ l'inverse — c'est la HANCHE qui bouge, pas le tronc. Les
+ //     fléchisseurs de hanche sont les moteurs, les abdos empêchent le bas du dos de creuser.
+ // ✏️ CORRECTION : « Relevé de Jambes » et « Chaise Romaine » sont LE MÊME mouvement, et ils
+ //    étaient rangés différemment (l'un avec les fléchisseurs en soutien, l'autre en moteur).
+ 'releve-de-jambes':                      {p:['abs','hip-flexors'], s:['obliques'], vu:'2026-08-02'},
+ 'chaise-romaine':                        {p:['abs','hip-flexors'], s:['obliques'], vu:'2026-08-02'},
+ // ─── ROTATIONS : les OBLIQUES sont moteurs, pas de simples assistants.
+ // ✏️ CORRECTION : sur la machine à rotation, les jambes sont bloquées et les bras ne font
+ //    que tenir les coussins — ni fléchisseurs de hanche, ni épaules. C'est une isolation
+ //    des obliques (elle coûtait 5,5, autant qu'un développé couché).
+ 'rotation-machine-obliques':             {p:['obliques'], s:['abs'], vu:'2026-08-02'},
+ 'rotation-russe-russian-twist':          {p:['obliques','abs'], s:['hip-flexors','front-delt'], vu:'2026-08-02'},
+ 'russian-twist-developpe-epaules':       {p:['obliques','abs'], s:['front-delt','hip-flexors'], vu:'2026-08-02'},
+ 'windshield-wiper':                      {p:['obliques','abs'], s:['hip-flexors','front-delt'], vu:'2026-08-02'},
+ // ─── GAINAGES : rien ne bouge, on RÉSISTE.
+ // ✏️ CORRECTION : au gainage ventral les érecteurs ne sont pas moteurs — ils co-contractent
+ //    pour tenir la colonne neutre pendant que les abdos empêchent le bassin de basculer.
+ //    C'est l'abdomen qui définit l'exercice.
+ 'gainage':                               {p:['abs'], s:['obliques','front-delt','glutes','lower-back'], vu:'2026-08-02'},
+ // La planche LATÉRALE était juste : obliques moteurs, et le moyen fessier tient la hanche en l'air.
+ 'planche-laterale-side-plank':           {p:['obliques'], s:['abs','front-delt','glutes','lower-back'], vu:'2026-08-02'},
+ // ⚠️ La planche INVERSÉE est rangée dans Abdominaux parce qu'on l'y cherche, mais ses muscles
+ //    moteurs sont bien les fessiers et les érecteurs (on est face au ciel). Exception assumée,
+ //    déjà écrite dans les croisements.
+ 'planche-inversee':                      {p:['glutes','lower-back'], s:['abs','hamstrings','rear-delt'], vu:'2026-08-02'},
+ 'hollow-body':                           {p:['abs'], s:['obliques','hip-flexors','front-delt'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : au L-SIT, on est en appui SUR LES MAINS, coudes verrouillés — ce sont les
+ //    triceps et les épaules qui lâchent en premier, et les fléchisseurs de hanche qui tiennent
+ //    les jambes à l'horizontale. Rien de tout ça n'était compté.
+ 'l-sit':                                 {p:['abs','hip-flexors'], s:['triceps','front-delt','obliques'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : à la ROUE ABDOMINALE et au DRAPEAU, ce sont les BRAS TENDUS et le GRAND
+ //    DORSAL qui ramènent le corps — sans eux on ne remonte pas. Ils manquaient tous les deux.
+ 'roue-abdominale-ab-wheel':              {p:['abs'], s:['obliques','lats','front-delt'], vu:'2026-08-02'},
+ 'drapeau-dragon-flag':                   {p:['abs'], s:['obliques','hip-flexors','lats','front-delt'], vu:'2026-08-02'},
+ // Le GRIMPEUR est du cardio : ses calories viennent de sa nature, pas de ses muscles.
+ 'grimpeur-mountain-climber':             {p:['abs','obliques'], s:['hip-flexors','front-delt','quads'], vu:'2026-08-02'},
 };
 
 /** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou

@@ -225,8 +225,12 @@ t('témoin : l\'hyperextension reste lombaires + fessiers',
 
 t('⭐ la PLANCHE LATÉRALE est un exercice d\'OBLIQUES',
   F('Planche Latérale (Side Plank)','p')==='obliques', F('Planche Latérale (Side Plank)','p'));
-t('témoin : le gainage de face reste abdos + lombaires',
-  F('Gainage','p')==='abs,lower-back', F('Gainage','p'));
+t('témoin : le gainage de face reste un exercice d\'ABDOS (pas d\'obliques)',
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 : les érecteurs passent en soutien. Au gainage ventral ils ne
+  // sont pas moteurs — ils co-contractent pour tenir la colonne neutre pendant que les abdos
+  // empêchent le bassin de basculer. Ce que ce témoin protège n'a pas changé : le gainage de
+  // FACE ne doit pas se confondre avec la planche LATÉRALE, qui est un exercice d'obliques.
+  F('Gainage','p')==='abs', F('Gainage','p'));
 
 t('⭐ le FARMER\'S WALK est un exercice de PRISE (il était classé cuisses)',
   F("Farmer's Walk",'p')==='forearms,traps', F("Farmer's Walk",'p'));

@@ -2,7 +2,7 @@
  "genere": "2026-08-03",
  "total": 337,
  "nbRegles": 69,
- "fragiles": 9,
+ "fragiles": 5,
  "ex": {
   "Abducteurs Machine Debout": {
    "p": "glutes",
@@ -122,7 +122,7 @@
    "pat": "gainage-abdos",
    "eq": "corps",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Chariot de Puissance — Curl Biceps": {
    "p": "biceps",
@@ -270,34 +270,34 @@
   },
   "Crunch": {
    "p": "abs",
-   "s": "hip-flexors,obliques",
+   "s": "obliques",
    "pat": "gainage-abdos",
    "eq": "corps",
-   "met": 5.5,
+   "met": 4,
    "frag": 0
   },
   "Crunch Machine": {
    "p": "abs",
-   "s": "hip-flexors,obliques",
+   "s": "obliques",
    "pat": "gainage-abdos",
    "eq": "guide",
-   "met": 5.5,
+   "met": 4,
    "frag": 0
   },
   "Crunch Oblique": {
-   "p": "abs",
-   "s": "hip-flexors,obliques",
+   "p": "abs,obliques",
+   "s": "",
    "pat": "gainage-abdos",
    "eq": "corps",
-   "met": 5.5,
+   "met": 4,
    "frag": 0
   },
   "Crunch Poulie": {
    "p": "abs",
-   "s": "hip-flexors,obliques",
+   "s": "obliques",
    "pat": "gainage-abdos",
    "eq": "guide",
-   "met": 5.5,
+   "met": 4,
    "frag": 0
   },
   "Curl Araignée (Spider Curl)": {
@@ -414,10 +414,10 @@
   },
   "Câble Crunch": {
    "p": "abs",
-   "s": "hip-flexors,obliques",
+   "s": "obliques",
    "pat": "gainage-abdos",
    "eq": "guide",
-   "met": 5.5,
+   "met": 4,
    "frag": 0
   },
   "Dips": {
@@ -477,8 +477,8 @@
    "frag": 0
   },
   "Drapeau (Dragon Flag)": {
-   "p": "abs,obliques",
-   "s": "front-delt,hip-flexors",
+   "p": "abs",
+   "s": "front-delt,hip-flexors,lats,obliques",
    "pat": "gainage-abdos",
    "eq": "autre",
    "met": 5.5,
@@ -909,8 +909,8 @@
    "frag": 0
   },
   "Gainage": {
-   "p": "abs,lower-back",
-   "s": "front-delt,glutes,obliques",
+   "p": "abs",
+   "s": "front-delt,glutes,lower-back,obliques",
    "pat": "gainage-abdos",
    "eq": "corps",
    "met": 5.5,
@@ -926,7 +926,7 @@
   },
   "Grimpeur (Mountain Climber)": {
    "p": "abs,obliques",
-   "s": "front-delt,hip-flexors",
+   "s": "front-delt,hip-flexors,quads",
    "pat": "gainage-abdos",
    "eq": "cardio",
    "met": 8,
@@ -1037,8 +1037,8 @@
    "frag": 0
   },
   "Hollow Body": {
-   "p": "abs,obliques",
-   "s": "front-delt,hip-flexors",
+   "p": "abs",
+   "s": "front-delt,hip-flexors,obliques",
    "pat": "gainage-abdos",
    "eq": "corps",
    "met": 5.5,
@@ -1133,8 +1133,8 @@
    "frag": 0
   },
   "L-Sit": {
-   "p": "abs,obliques",
-   "s": "front-delt,hip-flexors",
+   "p": "abs,hip-flexors",
+   "s": "front-delt,obliques,triceps",
    "pat": "gainage-abdos",
    "eq": "corps",
    "met": 5.5,
@@ -1362,7 +1362,7 @@
    "pat": "gainage-abdos",
    "eq": "corps",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Planche de Préhension": {
    "p": "forearms",
@@ -1549,8 +1549,8 @@
    "frag": 0
   },
   "Relevé de Jambes": {
-   "p": "abs",
-   "s": "hip-flexors,obliques",
+   "p": "abs,hip-flexors",
+   "s": "obliques",
    "pat": "gainage-abdos",
    "eq": "corps",
    "met": 5.5,
@@ -1621,11 +1621,11 @@
    "frag": 0
   },
   "Rotation Machine Obliques": {
-   "p": "abs,obliques",
-   "s": "front-delt,hip-flexors",
+   "p": "obliques",
+   "s": "abs",
    "pat": "gainage-abdos",
    "eq": "guide",
-   "met": 5.5,
+   "met": 4,
    "frag": 0
   },
   "Rotation Russe (Russian Twist)": {
@@ -1634,11 +1634,11 @@
    "pat": "gainage-abdos",
    "eq": "corps",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Roue Abdominale (Ab Wheel)": {
-   "p": "abs,obliques",
-   "s": "front-delt,hip-flexors",
+   "p": "abs",
+   "s": "front-delt,lats,obliques",
    "pat": "gainage-abdos",
    "eq": "autre",
    "met": 5.5,
@@ -1778,7 +1778,7 @@
    "pat": "gainage-abdos",
    "eq": "corps",
    "met": 5.5,
-   "frag": 1
+   "frag": 0
   },
   "Safety Bar Squat": {
    "p": "glutes,quads",

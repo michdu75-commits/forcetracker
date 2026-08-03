@@ -996,6 +996,42 @@ t('les DIPS AUX ANNEAUX demandent du gainage (rien n\'est fixe) — sans changer
 t('⚠️ … mais PAS l\'extension triceps TRX : le 3ᵉ muscle doublerait sa dépense (4 → 5,5)',
   !tr2.erreur && !tr2.trx.abs && tr2.metTrx===4, JSON.stringify(tr2.trx)+' · MET '+tr2.metTrx);
 
+// ── ABDOMINAUX : les corrections trouvées en relisant les 20 fiches une par une (02/08).
+const ab=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>(_mscScores([E(n)])||{}).sc||{};
+  return {crunch:f('Crunch'), situp:f('Relevé de Buste (Sit-up)'), oblique:f('Crunch Oblique'),
+          jambes:f('Relevé de Jambes'), chaise:f('Chaise Romaine'), rota:f('Rotation Machine Obliques'),
+          gainage:f('Gainage'), lsit:f('L-Sit'), roue:f('Roue Abdominale (Ab Wheel)'),
+          metCrunch:getExerciseMET('Crunch'), metSitup:getExerciseMET('Relevé de Buste (Sit-up)'),
+          metRota:getExerciseMET('Rotation Machine Obliques'),
+          metGrimpeur:getExerciseMET('Grimpeur (Mountain Climber)')};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(ab.erreur) console.log('     ⚠️  bloc abdos en ERREUR : '+ab.erreur);
+t('⭐ un CRUNCH n\'a pas de fléchisseurs de hanche — c\'est ce qui le distingue du SIT-UP',
+  // comparé au sit-up : seul le rapprochement prouve la distinction (les 6 fiches étaient
+  // identiques avant, donc un test qui regarde le crunch seul passerait aussi à l'ancien code).
+  !ab.erreur && !ab.crunch['hip-flexors'] && ab.situp['hip-flexors']===1,
+  'crunch '+JSON.stringify(ab.crunch)+' · sit-up '+JSON.stringify(ab.situp));
+t('⭐ … et le crunch redevient une ISOLATION (il coûtait autant qu\'un développé couché)',
+  !ab.erreur && ab.metCrunch===4 && ab.metSitup===5.5 && ab.metRota===4,
+  'crunch '+ab.metCrunch+' · sit-up '+ab.metSitup+' · rotation machine '+ab.metRota);
+t('⭐ le crunch OBLIQUE et la machine à rotation sont des exercices d\'OBLIQUES',
+  !ab.erreur && ab.oblique.obliques===2 && ab.rota.obliques===2 && !ab.rota['hip-flexors'],
+  'oblique '+JSON.stringify(ab.oblique)+' · machine '+JSON.stringify(ab.rota));
+t('⭐ « Relevé de Jambes » et « Chaise Romaine » sont le MÊME mouvement, enfin rangés pareil',
+  !ab.erreur && ab.jambes['hip-flexors']===2 && ab.chaise['hip-flexors']===2,
+  'jambes '+JSON.stringify(ab.jambes)+' · chaise '+JSON.stringify(ab.chaise));
+t('au GAINAGE les érecteurs ne sont pas moteurs (ils co-contractent)',
+  !ab.erreur && ab.gainage.abs===2 && ab.gainage['lower-back']===1, JSON.stringify(ab.gainage));
+t('le L-SIT tient sur les MAINS (triceps) et la ROUE ramène avec les DORSAUX',
+  !ab.erreur && ab.lsit.triceps===1 && ab.lsit['hip-flexors']===2 && ab.roue.lats===1,
+  'l-sit '+JSON.stringify(ab.lsit)+' · roue '+JSON.stringify(ab.roue));
+t('témoin : le grimpeur reste du CARDIO (ses calories ne viennent pas de ses muscles)',
+  !ab.erreur && ab.metGrimpeur===8, String(ab.metGrimpeur));
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');
