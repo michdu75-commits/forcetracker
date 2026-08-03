@@ -79,6 +79,26 @@ du cycle (fait `ft-v442`), plus de techniques (excentrique/partielles).
 
 ---
 
+## 🌡️ Où en est chacun — point de Michel du 03/08/2026
+
+> Noté tel qu'il me l'a dit, sans interprétation. Ce sont des **observations d'usage**, pas des
+> jugements : *« Eline s'y met et Tatiana a du mal »*. Ce qui compte ici n'est pas le classement,
+> c'est de savoir **où porte l'effort** — une personne qui décroche ne le dira pas d'elle-même.
+
+| Personne | État au 03/08 | Ce que ça suggère |
+|---|---|---|
+| **Christophe** | Le plus actif · 16 idées sur 17 dans la boîte · compte le plus lourd (278 Ko) | C'est lui qui trouve les vrais manques. Premier servi sur la **mémoire élargie** (ft-v754), prévenu par pop-up perso. |
+| **Eline** | **S'y met** (03/08) | Le moment le plus fragile : c'est maintenant que l'app doit être simple, pas complète. À surveiller sans la solliciter. |
+| **Tatiana** | **A du mal** (03/08) | ⚠️ Le signal le plus important du lot. Sa validation du 19/07 était très positive — l'écart entre « ça me plaît » et « je m'en sers » se joue ailleurs que dans les fonctionnalités. **Cause à comprendre avant d'ajouter quoi que ce soit pour elle** (R22 : un retour isolé, on observe). |
+| **Emma** | Nombre de séances **inconnu** | ⏭️ La donnée existe côté serveur (`listUsers` renvoie le compte par personne) mais **n'est branchée nulle part dans l'app** et demande le jeton admin. **À faire : l'afficher dans Profil → Admin**, pour arrêter de deviner qui utilise vraiment l'app. |
+
+**⭐ Ce que ce tableau révèle sur nous, pas sur eux** : au 03/08, on livre 15 versions en deux jours
+sans savoir **combien de séances chacun a faites**. On mesure le temps de réponse de Milo, la taille
+du contexte, le nombre de tracés de la figurine — et pas la seule chose qui dit si le produit sert :
+**est-ce qu'ils s'en servent ?** C'est l'angle mort à combler en premier.
+
+---
+
 ## 📬 Boîte à idées OUVERTE et TRIÉE le 30/07/2026 (17 idées, Christophe ×16 · Eline ×1)
 
 > Michel a ouvert la boîte (`getIdees`) et collé le contenu ; tri vérifié **dans le code** avant

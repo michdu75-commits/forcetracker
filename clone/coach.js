@@ -63,6 +63,64 @@ function _cqLabel(quiz,qid,val){
 // ⚠️ On RÉSUME, on n'envoie pas tout : 200 séances brutes noieraient le reste (R20). Quelques
 // lignes denses — début, régularité, progression par exercice, coupures — suffisent à donner
 // le TEMPS LONG, ce qui manquait. Coût mesuré : ~1 % du contexte.
+// ─── L'ÉTAGE DU MILIEU — le DÉTAIL au-delà des 5 dernières séances ───────────────────────────
+// Michel, 03/08 : « oui tu peux élargir à moi et Christophe ». Jusqu'ici la mémoire de Milo avait
+// deux étages et un trou entre les deux : le DÉTAIL série par série (5 séances ≈ une semaine) et
+// le RÉSUMÉ du parcours (des moyennes). Entre les deux, rien — il ne pouvait pas répondre « le
+// 15 juillet tu as fait squat 110×5 », alors que l'app le sait.
+// ⚠️ ON RESTE COMPACT, c'est tout l'enjeu : une ligne par séance, les 3 exercices les plus lourds
+// avec leur meilleure série. Pas les séries d'échauffement, pas les notes. Le budget du prompt est
+// le grand chantier ouvert (91 % de consignes / 9 % de connaissance) — on n'y ajoute pas 20 000
+// caractères pour le confort.
+// 🔒 Réservé pour l'instant (michdu75 + christophe) : on mesure le coût réel sur deux comptes
+// bien remplis avant d'ouvrir à tout le monde. Gardée en FONCTION comme `_isNutriBeta()` : le jour
+// où on ouvre, c'est une ligne à changer, pas une chasse aux usages.
+const MEMOIRE_LARGE_EMAILS=['michdu75@gmail.com','christophe@famillelanglois.fr'];
+function _memoireLargeOn(){
+  try{ const e=((typeof S!=='undefined'&&S.email)||'').trim().toLowerCase();
+    return !!e && MEMOIRE_LARGE_EMAILS.indexOf(e)>=0; }catch(e){ return false; }
+}
+function _historiqueCompact(){
+  try{
+    if(!_memoireLargeOn())return '';
+    const S_=(typeof S!=='undefined')?S:null; if(!S_)return '';
+    const sess=(S_.sessions||[]).filter(s=>s&&s.date);
+    // Les 5 premières sont déjà envoyées EN DÉTAIL — on ne les répète pas (R2 : jamais deux fois
+    // la même information, sinon les deux versions finissent par diverger).
+    const reste=sess.slice(5);
+    if(!reste.length)return '';
+    // ⚠️ Ne pas écrire « 2 m·o·i·s » ici : le test des prix traque cette formule dans tout le
+    // frontend (ancien tarif premium) et un simple commentaire le fait rougir. Vécu le 03/08.
+    const JOURS=60, MAX=30;                    // ~8 semaines en arrière, 30 lignes au plus
+    const auj=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    const t0=Date.parse(auj+'T12:00:00');
+    const lignes=[];
+    for(const s of reste){
+      if(lignes.length>=MAX)break;
+      const age=Math.round((t0-Date.parse(s.date+'T12:00:00'))/864e5);
+      if(age>JOURS)break;                      // les séances sont déjà triées, la plus récente d'abord
+      const exs=[];
+      (s.exs||s.exercices||[]).forEach(e=>{
+        if(!e||!e.name)return;
+        let kg=0,reps=0;
+        (e.sets||[]).forEach(x=>{ if(!x||!x.done||x.type==='É'||x.type==='W')return;
+          if((+x.kg||0)>kg){kg=+x.kg||0;reps=+x.reps||0;} });
+        if(kg>0)exs.push({n:e.name,kg,reps});
+      });
+      if(!exs.length)continue;
+      exs.sort((a,b)=>b.kg-a.kg);
+      const jm=s.date.slice(8,10)+'/'+s.date.slice(5,7);
+      lignes.push(`${jm} ${exs.slice(0,3).map(e=>`${e.n} ${e.kg}×${e.reps}`).join(', ')}`);
+    }
+    if(!lignes.length)return '';
+    return '\n📖 SES SÉANCES PLUS ANCIENNES (résumé d\'une ligne chacune, du plus récent au plus '
+      +'ancien — la meilleure série de ses 3 exercices les plus lourds, échauffements exclus). '
+      +'Sers-t\'en pour répondre à « qu\'est-ce que j\'ai fait le 15 juillet ? » ou pour comparer '
+      +'une charge d\'aujourd\'hui à celle d\'il y a un mois. ⚠️ Ce n\'est PAS le détail complet : '
+      +'si on te demande toutes les séries d\'une de ces séances, dis simplement que tu as le '
+      +'résumé et pas le détail, ne l\'invente pas.\n  · '+lignes.join('\n  · ');
+  }catch(e){ return ''; }
+}
 function _memoireLongue(){
   try{
     const S_ = (typeof S!=='undefined')?S:null; if(!S_)return '';
@@ -1652,6 +1710,7 @@ ${(()=>{
 ${_coachQuizContext()}
 ${_catalogueContext()}
 ${_memoireLongue()}
+${_historiqueCompact()}
 ${(()=>{
   // REGISTRE ATHLÈTE (Dossier Athlète, brique 1 = socle) — mémoire durable.
   // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.

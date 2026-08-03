@@ -2469,9 +2469,18 @@ function checkAnnouncements(){
       setTimeout(showPeseeNavE,1000);
       return;
     }
+    // ⚠️ EN DERNIER parmi les pop-ups perso : une annonce déjà en attente passe AVANT la
+    // nouvelle (sinon on double la file et l'ancienne est repoussée d'un lancement).
+    // Attrapé le 03/08 par le test « Christophe voit SON annonce », qui est passé rouge.
+    if(_isChristophe()&&!localStorage.getItem('ft4_memoire_c_v1')){
+      setTimeout(showMemoireC,1000);
+      return;
+    }
     if(_whatsNewUnseen().length) setTimeout(showWhatsNew,1000);
   }catch(e){}
 }
+function showMemoireC(){const o=document.getElementById('ov-memoire-c');if(o)o.classList.add('open');}
+function closeMemoireC(){try{localStorage.setItem('ft4_memoire_c_v1','1');}catch(e){}const o=document.getElementById('ov-memoire-c');if(o)o.classList.remove('open');}
 function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
 function closeBilloute(){try{localStorage.setItem('ft4_billoute_v3','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
 function showChristophePhotos(){const o=document.getElementById('ov-christophe-photos');if(o)o.classList.add('open');}
@@ -2597,7 +2606,7 @@ function checkTester3B(){
 }
 function showTester3B(){
   // Ne pas s'empiler sur une autre pop-up de démarrage : on réessaie un peu plus tard
-  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-tester-eq','ov-billoute','ov-christophe-photos','ov-pesee-nav-c','ov-pesee-nav-e','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
+  const busy=['ov-whatsnew','ov-super-welcome','ov-emma-welcome','ov-tester-guide','ov-tester-eq','ov-billoute','ov-christophe-photos','ov-memoire-c','ov-pesee-nav-c','ov-pesee-nav-e','ov-bday'].some(function(id){var el=document.getElementById(id);return el&&el.classList.contains('open');});
   if(busy){setTimeout(showTester3B,2500);return;}
   const o=document.getElementById('ov-tester-3b');if(o)o.classList.add('open');
 }

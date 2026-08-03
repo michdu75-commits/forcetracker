@@ -1071,6 +1071,67 @@ console.log('\n═══ I. La progression de la mémoire longue — tendance, p
   await c9.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// J. L'ÉTAGE DU MILIEU — le détail au-delà des 5 dernières séances (michdu75 + christophe)
+// Michel, 03/08 : « oui tu peux élargir à moi et Christophe ». Milo avait le DÉTAIL sur ~1 semaine
+// et un RÉSUMÉ du parcours, avec un trou entre les deux : impossible de répondre « le 15 juillet
+// tu as fait squat 110×5 ». ⚠️ Le budget du prompt est le grand chantier ouvert — donc on mesure.
+console.log('\n═══ J. L\'étage du milieu — les séances plus anciennes, en une ligne chacune ═══');
+{
+  const c10=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p10=await c10.newPage();
+  await p10.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p10.waitForTimeout(2200);
+  const r=await p10.evaluate(()=>{
+   try{
+    const j=d=>{const x=new Date();x.setDate(x.getDate()-d);return new Date(x.getTime()-x.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
+    const sess=[];
+    for(let i=0;i<120;i++){                       // 8 mois d'historique, compte bien rempli
+      sess.push({date:j(i*2),volume:5200,exs:[
+        {name:'Squat à la Barre',sets:[{kg:60,reps:8,done:true,type:'É'},{kg:110,reps:5,done:true,type:'N'}]},
+        {name:'Développé Couché',sets:[{kg:85,reps:6,done:true,type:'N'}]},
+        {name:'Rowing Barre',sets:[{kg:70,reps:10,done:true,type:'N'}]},
+        {name:'Curl Biceps Haltères',sets:[{kg:14,reps:12,done:true,type:'N'}]}]});
+    }
+    S.sessions=sess;
+    const o={};
+    S.email='quelquun@exemple.com';
+    const sans=buildCoachContext(); o.tailleSans=sans.length;
+    o.absentPourLesAutres=!/SÉANCES PLUS ANCIENNES/.test(sans);
+    S.email='michdu75@gmail.com';
+    const avec=buildCoachContext(); o.tailleAvec=avec.length;
+    o.presentPourMichel=/SÉANCES PLUS ANCIENNES/.test(avec);
+    o.surcoutPct=Math.round(100*(avec.length-sans.length)/sans.length);
+    const i=avec.indexOf('📖 SES SÉANCES PLUS ANCIENNES');
+    const blocSeul=avec.slice(i, avec.indexOf('\n\n',i));     // ⚠️ borné au bloc : un témoin
+    o.nbLignes=(blocSeul.match(/\n  · /g)||[]).length;        // qui déborde mesure autre chose
+    o.pasDechauffement=!/60×8/.test(blocSeul);                // (attrapé en le mesurant, 03/08)
+    o.aUneDate=/\n  · \d\d\/\d\d /.test(blocSeul);
+    o.antiInvention=/ne l'invente pas/.test(blocSeul);
+    // ⚠️ pas de doublon avec les 5 séances DÉTAILLÉES juste après (R2)
+    const j5=avec.indexOf('DERNIÈRES SÉANCES:');
+    const dates5=(avec.slice(j5,j5+900).match(/\d{4}-(\d\d)-(\d\d)/g)||[]).map(d=>d.slice(8)+'/'+d.slice(5,7));
+    o.aucunDoublon=dates5.every(d=>!blocSeul.includes('\n  · '+d+' '));
+    S.email='christophe@famillelanglois.fr';
+    o.presentPourChristophe=/SÉANCES PLUS ANCIENNES/.test(buildCoachContext());
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ Milo reçoit une ligne par séance au-delà des 5 détaillées', r.presentPourMichel===true, JSON.stringify(r));
+  t('⭐ … et Christophe l\'a aussi', r.presentPourChristophe===true, JSON.stringify(r));
+  t('⭐ TÉMOIN : personne d\'autre ne l\'a (réservé, le temps de mesurer)',
+    r.absentPourLesAutres===true, JSON.stringify(r));
+  t('⭐⭐ le surcoût reste sous 8 % du contexte (le budget du prompt est un chantier ouvert)',
+    r.surcoutPct!=null && r.surcoutPct<=8, 'surcoût +'+r.surcoutPct+' %');
+  t('borné : 30 lignes au plus, même avec 120 séances', r.nbLignes>0 && r.nbLignes<=30, JSON.stringify(r));
+  t('⭐ les séries d\'ÉCHAUFFEMENT sont exclues (on donne la vraie charge de travail)',
+    r.pasDechauffement===true, JSON.stringify(r));
+  t('chaque ligne porte sa date (c\'est tout l\'intérêt : « le 15 juillet »)', r.aUneDate===true, JSON.stringify(r));
+  t('⭐ aucune séance en double avec les 5 détaillées (R2)', r.aucunDoublon===true, JSON.stringify(r));
+  t('interdiction d\'inventer le détail des séries qu\'il n\'a pas', r.antiInvention===true, JSON.stringify(r));
+  await c10.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
