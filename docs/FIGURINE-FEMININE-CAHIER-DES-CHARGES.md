@@ -3,6 +3,39 @@
 > Document à transmettre tel quel à qui fournira l'illustration (banque d'images médicales,
 > illustrateur, outil de maquettage). Généré depuis le code de Force Tracker le 03/08/2026.
 
+## ⚡ Le plus simple : partir du GABARIT
+
+Un fichier **`figurine-gabarit.svg`** accompagne ce document. C'est un **formulaire déjà
+étiqueté** : les 82 emplacements portent leur nom définitif et leurs attributs, et **66 sont
+déjà dessinés** (repris de la figurine actuelle). **Il ne reste que 16 formes à créer.**
+
+![Le gabarit tel qu'il s'ouvre](figurine-gabarit.png)
+
+**Les 16 à dessiner** — tout le reste est fourni :
+
+| Muscle | Ce qu'il faut faire |
+|---|---|
+| `pectoralis_middle` (×2) | subdiviser le pectoral existant en trois bandes |
+| `rectus_middle` (×2) | idem pour le grand droit |
+| `vastus_lateralis`, `vastus_medialis` (×4) | subdiviser le quadriceps existant en trois |
+| `brachialis` (×2) | une bande sous le biceps |
+| `oblique_internal` (×2) | sous l'oblique externe existant |
+| `rhomboid` (×2) | entre les omoplates |
+| `teres_major` (×2) | sous l'arrière de l'épaule |
+
+**Règle absolue : ne rien renommer.** Les identifiants et les attributs `data-*` sont ce qui
+permet à l'application de savoir quoi colorier.
+
+**Le fichier rendu se vérifie automatiquement** — `node tools/verif_figurine.js <fichier.svg>`
+dit en une seconde ce qui manque, ce qui est vide, et si le fichier est une image déguisée.
+À faire **avant de valider la livraison**.
+
+⚠️ **Un muscle manque dans la liste d'origine** : le **fléchisseur de hanche** (psoas). Il est
+utilisé par le relevé de jambes, le sit-up, la chaise romaine et le L-sit. Il a été gardé dans
+le gabarit sous `hip_flexor_left` / `hip_flexor_right` — il est déjà dessiné.
+
+---
+
 ## En une phrase
 
 **Une planche anatomique VECTORIELLE (SVG), vues AVANT et ARRIÈRE d'un corps féminin, avec
