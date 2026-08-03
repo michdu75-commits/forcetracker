@@ -1,0 +1,338 @@
+﻿nom;identifiant;groupe;animation;animationExiste;termeAnglais
+Abducteurs Machine Debout;abducteurs-machine-debout;Fessiers;;false;standing hip abduction machine
+Abduction Cuisses (Leg Abduction);abduction-cuisses-leg-abduction;Fessiers;exercises/leg-abduction-machine-v2.webp;true;hip abduction machine
+Adduction Cuisses (Leg Adduction);adduction-cuisses-leg-adduction;Jambes;exercises/leg-adduction-machine-v2.webp;true;hip adduction machine
+Arraché Debout (Muscle Snatch);arrache-debout-muscle-snatch;Full Body;exercises/muscle-snatch-halterophilie.webp;true;barbell muscle snatch
+Arraché Haltère (Dumbbell Snatch);arrache-haltere-dumbbell-snatch;Full Body;;false;dumbbell snatch
+Assault Air Bike;assault-air-bike;Full Body;exercises/assault-air-bike.webp;true;assault air bike
+Barre au Front;barre-au-front;Triceps;exercises/barre-au-front-triceps.webp;true;skull crusher
+Battle Rope;battle-rope;Full Body;;false;battle rope waves
+Belt Squat;belt-squat;Jambes;exercises/belt-squat.webp;true;
+Bench Dips;bench-dips;Triceps;exercises/bench-dips-sur-banc.webp;true;bench dip
+Bird Dog;bird-dog;Lombaires;exercises/bird-dog.webp;true;bird dog exercise
+Box Jump;box-jump;Full Body;exercises/box-jump.webp;true;box jump plyometric
+Burpees;burpees;Full Body;exercises/burpees.webp;true;burpee
+Câble Crunch;cable-crunch;Abdominaux;;false;cable crunch abdominal
+Chaise (Wall Sit);chaise-wall-sit;Jambes;exercises/squat-statique-contre-mur-exercice-chaise.webp;true;
+Chaise Romaine;chaise-romaine;Abdominaux;;false;captain chair leg raise
+Chariot de Puissance — Curl Biceps;chariot-de-puissance-curl-biceps;Biceps;exercises/chariot-curl-biceps.webp;true;power sled biceps curl
+Chariot de Puissance — Extension Triceps;chariot-de-puissance-extension-triceps;Triceps;exercises/chariot-extension-triceps.webp;true;power sled triceps extension
+Chariot de Puissance — Fentes Arrière;chariot-de-puissance-fentes-arriere;Jambes;exercises/chariot-fentes-arriere.webp;true;power sled reverse lunge
+Chariot de Puissance — Poussée;chariot-de-puissance-poussee;Full Body;exercises/chariot-poussee.webp;true;power sled push
+Chariot de Puissance — Tirage de Côté;chariot-de-puissance-tirage-de-cote;Dos;exercises/chariot-tirage-de-cote.webp;true;power sled lateral pull
+Chariot de Puissance — Tirage Dos;chariot-de-puissance-tirage-dos;Dos;exercises/chariot-tirage-dos.webp;true;power sled row
+Chariot de Puissance — Tirage en Avançant;chariot-de-puissance-tirage-en-avancant;Full Body;exercises/chariot-tirage-avance.webp;true;power sled pull forward
+Chariot de Puissance — Tirage Épaules;chariot-de-puissance-tirage-epaules;Épaules;exercises/chariot-tirage-epaules.webp;true;power sled shoulder raise
+Chariot de Puissance — Tirage Inversé Jambes;chariot-de-puissance-tirage-inverse-jambes;Jambes;exercises/chariot-tirage-inverse-jambes.webp;true;power sled reverse drag
+Chest Press Machine Déclinée;chest-press-machine-declinee;Pectoraux;exercises/chest-press-machine-declinee.webp;true;decline chest press machine
+Chest Press Machine Horizontale;chest-press-machine-horizontale;Pectoraux;exercises/developpe-machine-assis-pectoraux.webp;true;chest press machine
+Chest Press Machine Inclinée;chest-press-machine-inclinee;Pectoraux;exercises/developpe-incline-machine-convergente-exercice-musculation.webp;true;incline chest press machine
+Chest Press Poulie Assis;chest-press-poulie-assis;Pectoraux;exercises/chest-press-poulie-assis.webp;true;seated cable chest press
+Chest Press TRX (Sangles);chest-press-trx-sangles;Pectoraux;exercises/chest-press-trx-sangles.webp;true;trx chest press
+Clean & Jerk;clean-jerk;Full Body;exercises/epaule-jete-halterophilie.webp;true;clean and jerk
+Cossack Squat;cossack-squat;Jambes;exercises/cossack-squat.webp;true;
+Croisé Poulie (Cable Crossover);croise-poulie-cable-crossover;Pectoraux;exercises/ecartes-poulie-vis-a-vis.webp;true;cable crossover
+Croix de Fer Haltères;croix-de-fer-halteres;Épaules;exercises/croix-de-fer-halteres.webp;true;
+Crunch;crunch;Abdominaux;;false;crunch abdominal
+Crunch Machine;crunch-machine;Abdominaux;;false;crunch machine
+Crunch Oblique;crunch-oblique;Abdominaux;;false;oblique crunch
+Crunch Poulie;crunch-poulie;Abdominaux;;false;cable crunch
+Curl Araignée (Spider Curl);curl-araignee-spider-curl;Biceps;exercises/curl-araignee-spider.webp;true;spider curl
+Curl Barre;curl-barre;Biceps;;false;barbell bicep curl
+Curl Barre EZ Prise Large;curl-barre-ez-prise-large;Biceps;;false;ez bar curl wide grip
+Curl Câble en Croix (Bayesian Curl);curl-cable-en-croix-bayesian-curl;Biceps;;false;bayesian curl cable
+Curl Concentré;curl-concentre;Biceps;exercises/curl-concentre.webp;true;concentration curl
+Curl EZ;curl-ez;Biceps;;false;ez bar curl
+Curl Haltères;curl-halteres;Biceps;exercises/curl-halteres-alterne.webp;true;dumbbell bicep curl
+Curl Incliné;curl-incline;Biceps;exercises/curl-haltere-incline.webp;true;incline dumbbell curl
+Curl Machine;curl-machine;Biceps;;false;bicep curl machine
+Curl Poignet Barre;curl-poignet-barre;Avant-bras;;false;wrist curl barbell
+Curl Poulie;curl-poulie;Biceps;;false;cable bicep curl
+Curl Pupitre Barre EZ (Larry Scott);curl-pupitre-barre-ez-larry-scott;Biceps;exercises/curl-pupitre-barre-ez-larry-scott.webp;true;ez bar preacher curl
+Curl Pupitre Machine;curl-pupitre-machine;Biceps;exercises/curl-pupitre-machine.webp;true;preacher curl machine
+Curl Zottman;curl-zottman;Biceps;;false;zottman curl
+Développé Arnold (Arnold Press);developpe-arnold-arnold-press;Épaules;exercises/developpe-arnold-exercice-musculation.webp;true;arnold press
+Développé Couché;developpe-couche;Pectoraux;exercises/developpe-couche.webp;true;bench press barbell
+Développé Couché au Sol (Floor Press);developpe-couche-au-sol-floor-press;Pectoraux;exercises/developpe-couche-au-sol-floor-press.webp;true;floor press barbell
+Développé Couché avec Chaînes;developpe-couche-avec-chaines;Pectoraux;exercises/developpe-couche-avec-chaines.webp;true;bench press with chains
+Développé Couché Élastique;developpe-couche-elastique;Pectoraux;exercises/developpe-couche-elastique.webp;true;bench press resistance band
+Développé Couché Haltères;developpe-couche-halteres;Pectoraux;exercises/developpe-couche-halteres-exercice-musculation.webp;true;bench press dumbbell
+Développé Couché Larsen (Larsen Press);developpe-couche-larsen-larsen-press;Pectoraux;exercises/developpe-couche-larsen.webp;true;larsen press
+Développé Couché Unilatéral Kettlebell;developpe-couche-unilateral-kettlebell;Pectoraux;exercises/developpe-couche-unilateral-kettlebell.webp;true;single arm kettlebell bench press
+Développé Décliné;developpe-decline;Pectoraux;exercises/developpe-decline-barre.webp;true;decline bench press
+Développé Décliné Élastique;developpe-decline-elastique;Pectoraux;exercises/developpe-decline-elastique.webp;true;decline press resistance band
+Développé Décliné Haltères;developpe-decline-halteres;Pectoraux;exercises/developpe-decline-halteres.webp;true;decline bench press dumbbell
+Développé Épaules Assis Élastique;developpe-epaules-assis-elastique;Épaules;exercises/developpe-epaules-assis-elastique.webp;true;seated shoulder press resistance band
+Développé Épaules Assis Machine (Shoulder Press);developpe-epaules-assis-machine-shoulder-pre;Épaules;exercises/shoulder-press-machine.webp;true;seated machine shoulder press
+Développé Épaules Élastique;developpe-epaules-elastique;Épaules;exercises/developpe-epaules-elastique.webp;true;shoulder press resistance band
+Développé Épaules Kettlebell;developpe-epaules-kettlebell;Épaules;exercises/developpe-epaule-avec-kettlebell.webp;true;
+Développé Épaules Machine;developpe-epaules-machine;Épaules;exercises/presse-epaule-exercice-musculation.webp;true;shoulder press machine
+Développé Épaules Unilatéral Élastique;developpe-epaules-unilateral-elastique;Épaules;exercises/developpe-epaules-unilateral-elastique.webp;true;single arm shoulder press resistance band
+Développé Haltères Assis;developpe-halteres-assis;Épaules;;false;seated dumbbell press
+Développé Incliné;developpe-incline;Pectoraux;exercises/developpe-incline-barre.webp;true;incline bench press
+Développé Incliné Haltères;developpe-incline-halteres;Pectoraux;exercises/developpe-incline-halteres-exercice-musculation.webp;true;incline bench press dumbbell
+Développé Incliné Poulie;developpe-incline-poulie;Pectoraux;exercises/developpe-incline-poulie.webp;true;incline cable press
+Développé Landmine (Épaules);developpe-landmine-epaules;Épaules;exercises/developpe-landmine.webp;true;
+Développé Militaire;developpe-militaire;Épaules;exercises/developpe-militaire-exercice-musculation.webp;true;overhead press barbell
+Développé Militaire Haltères;developpe-militaire-halteres;Épaules;exercises/developpe-epaule-halteres.webp;true;overhead press dumbbell
+Développé Nuque;developpe-nuque;Épaules;exercises/developpe-nuque-barre-guidee.webp;true;
+Dips;dips;Pectoraux;exercises/dips-pectoraux.webp;true;chest dips
+Dips Assis Machine (Seated Dip);dips-assis-machine-seated-dip;Pectoraux;exercises/dips-assis-machine-avec-poids.webp;true;seated dip machine
+Dips aux Anneaux;dips-aux-anneaux;Triceps;exercises/dips-aux-anneaux.webp;true;ring dips
+Dips entre Deux Bancs;dips-entre-deux-bancs;Triceps;exercises/dips-entre-deux-bancs.webp;true;bench dips between two benches
+Dips Lestés;dips-lestes;Triceps;;false;dips weighted
+Dips Machine Assistée;dips-machine-assistee;Pectoraux;exercises/dips-assiste-machine.webp;true;assisted dip machine
+Dips Parallèles;dips-paralleles;Pectoraux;exercises/dips-triceps-paralleles.webp;true;parallel bar dip
+Drapeau (Dragon Flag);drapeau-dragon-flag;Abdominaux;;false;dragon flag
+Écarté Arrière Élastique;ecarte-arriere-elastique;Épaules;exercises/ecarte-arriere-elastique.webp;true;
+Écarté Décliné Haltères;ecarte-decline-halteres;Pectoraux;exercises/ecartes-decline-avec-halteres.webp;true;decline dumbbell fly
+Écarté Élastique;ecarte-elastique;Pectoraux;exercises/ecarte-elastique.webp;true;chest fly resistance band
+Écarté Haltères;ecarte-halteres;Pectoraux;;false;dumbbell fly chest
+Écarté Hyght (Hyght Fly);ecarte-hyght-hyght-fly;Pectoraux;exercises/hyght-dumbell-fly.webp;true;hyght dumbbell fly
+Écarté Incliné Haltères;ecarte-incline-halteres;Pectoraux;exercises/ecartes-incline-avec-halteres.webp;true;incline dumbbell fly
+Écarté Poulie;ecarte-poulie;Pectoraux;exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp;true;cable fly chest
+Écarté Poulie Haute à Genoux;ecarte-poulie-haute-a-genoux;Pectoraux;exercises/ecarte-poulie-haute-a-genoux.webp;true;kneeling high cable fly
+Écarté TRX (Sangles);ecarte-trx-sangles;Pectoraux;exercises/ecarte-trx-sangles.webp;true;trx chest fly
+Élévation Frontale Allongée Barre;elevation-frontale-allongee-barre;Épaules;exercises/elevation-frontale-allongee-a-la-barre.webp;true;
+Élévation Frontale Banc Incliné;elevation-frontale-banc-incline;Épaules;exercises/elevation-frontale-banc-incline.webp;true;
+Élévation Latérale Inclinée Haltère;elevation-laterale-inclinee-haltere;Épaules;exercises/elevation-laterale-incline-haltere.webp;true;
+Élévation Latérale Landmine;elevation-laterale-landmine;Épaules;exercises/elevation-laterale-landmine-exercice-musculation.webp;true;
+Élévation Latérale Poulie Inclinée;elevation-laterale-poulie-inclinee;Épaules;exercises/elevation-laterale-a-la-poulie-en-inclinaison.webp;true;
+Élévations Frontales;elevations-frontales;Épaules;exercises/elevations-frontales-exercice-musculation.webp;true;front raise dumbbell
+Élévations Frontales Câble;elevations-frontales-cable;Épaules;exercises/elevation-frontale-poulie-basse.webp;true;cable front raise
+Élévations Frontales Machine;elevations-frontales-machine;Épaules;;false;machine front raise
+Élévations Latérales (Lateral Raise);elevations-laterales-lateral-raise;Épaules;exercises/elevations-laterales-exercice-musculation.webp;true;lateral raise dumbbell
+Élévations Latérales Câble;elevations-laterales-cable;Épaules;exercises/elevations-laterales-poulie.webp;true;cable lateral raise
+Élévations Latérales Kettlebell;elevations-laterales-kettlebell;Épaules;exercises/elevation-laterales-avec-kettlebell.webp;true;
+Élévations Latérales Machine;elevations-laterales-machine;Épaules;exercises/elevation-laterale-machine.webp;true;machine lateral raise
+Élévations Latérales Unilatérale Poulie;elevations-laterales-unilaterale-poulie;Épaules;exercises/elevations-laterales-unilaterale-poulie.webp;true;single arm cable lateral raise
+Élévations Mollets Assis;elevations-mollets-assis;Mollets;exercises/elevations-mollets-assis-barre.webp;true;seated calf raise
+Élévations Mollets Debout;elevations-mollets-debout;Mollets;exercises/elevations-mollets-debout-barre.webp;true;standing calf raise
+Élévations Mollets Penché (Donkey Calf Raise);elevations-mollets-penche-donkey-calf-raise;Mollets;exercises/elevations-mollets-donkey.webp;true;donkey calf raise
+Élévations Mollets Unilatéral;elevations-mollets-unilateral;Mollets;;false;single leg calf raise
+Ergomètre de Ski (Ski Erg);ergometre-de-ski-ski-erg;Full Body;exercises/ergometre-de-ski.webp;true;ski erg
+Extension Fessiers Arrière (Kickback);extension-fessiers-arriere-kickback;Fessiers;;false;glute kickback cable
+Extension Lombaire sur Ballon;extension-lombaire-sur-ballon;Lombaires;exercises/extension-lombaire-ballon.webp;true;back extension stability ball
+Extension Nuque Haltère;extension-nuque-haltere;Triceps;exercises/extension-nuque-haltere-assis.webp;true;overhead triceps extension dumbbell
+Extension Nuque Poulie Haute;extension-nuque-poulie-haute;Triceps;exercises/extension-nuque-poulie-haute-corde.webp;true;overhead cable triceps extension
+Extension Poignet Barre;extension-poignet-barre;Avant-bras;;false;wrist extension barbell
+Extension Quadriceps (Leg Extension);extension-quadriceps-leg-extension;Jambes;exercises/leg-extension-exercice-musculation.webp;true;leg extension machine
+Extension Quadriceps Élastique;extension-quadriceps-elastique;Jambes;exercises/extension-quadriceps-elastique.webp;true;leg extension resistance band
+Extension Quadriceps Unilatérale;extension-quadriceps-unilaterale;Jambes;exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.webp;true;
+Extension Quadriceps Unilatérale Machine à Dips;extension-quadriceps-unilaterale-machine-a-d;Jambes;exercises/extension-quadriceps-unilaterale-machine-dips.webp;true;single leg extension assisted dip machine
+Extension Triceps;extension-triceps;Triceps;exercises/extension-triceps-verticale-haltere.webp;true;triceps extension overhead
+Extension Triceps Allongée TRX (Sangles);extension-triceps-allongee-trx-sangles;Triceps;exercises/extension-triceps-trx-allonge.webp;true;trx lying triceps extension
+Extension Triceps Arrière (Kickback);extension-triceps-arriere-kickback;Triceps;exercises/triceps-kickback-debout-halteres.webp;true;triceps kickback dumbbell
+Extension Triceps Banc Incliné Haltères;extension-triceps-banc-incline-halteres;Triceps;exercises/extension-triceps-banc-incline-halteres.webp;true;incline dumbbell triceps extension
+Extension Triceps Concentrée Poulie;extension-triceps-concentree-poulie;Triceps;exercises/extension-triceps-concentree-poulie.webp;true;concentration cable triceps extension
+Extension Triceps Couché Haltères;extension-triceps-couche-halteres;Triceps;exercises/extension-triceps-couche-halteres.webp;true;lying triceps extension dumbbell
+Extension Triceps Décliné Haltères;extension-triceps-decline-halteres;Triceps;exercises/extension-triceps-decline-halteres.webp;true;decline dumbbell triceps extension
+Extension Triceps Nuque Élastique;extension-triceps-nuque-elastique;Triceps;exercises/extension-triceps-nuque-elastique.webp;true;overhead triceps extension resistance band
+Extension Triceps TRX (Sangles);extension-triceps-trx-sangles;Triceps;exercises/extension-triceps-trx-sangles.webp;true;trx triceps extension
+Extension Triceps Verticale Élastique;extension-triceps-verticale-elastique;Triceps;exercises/extension-triceps-verticale-elastique.webp;true;triceps pushdown resistance band
+Face Pull Couché Poulie;face-pull-couche-poulie;Épaules;exercises/face-pull-couche-a-la-poulie.webp;true;
+Farmer's Walk;farmer-s-walk;Avant-bras;exercises/marche-du-fermier-avec-kettlebells.webp;true;farmers walk
+Fentes;fentes;Jambes;exercises/fente-avant-barre-femme.webp;true;lunge barbell
+Fentes Arrière;fentes-arriere;Jambes;;false;reverse lunge
+Fentes Croisées (Curtsy Lunge);fentes-croisees-curtsy-lunge;Jambes;exercises/fentes-croisees-curtsy-lunge.webp;true;curtsy lunge
+Fentes Kettlebell;fentes-kettlebell;Jambes;exercises/fentes-avant-kettlebell.webp;true;
+Fentes Latérales;fentes-laterales;Jambes;;false;lateral lunge
+Fentes Marchées;fentes-marchees;Jambes;exercises/fentes-marchees-avec-sandbag.webp;true;walking lunge
+Gainage;gainage;Abdominaux;;false;plank core
+Glute Ham Raise (GHD);glute-ham-raise-ghd;Fessiers;exercises/glute-ham-developer-ghd.webp;true;
+Grimpeur (Mountain Climber);grimpeur-mountain-climber;Abdominaux;exercises/grimpeur-mountain-climber.webp;true;mountain climber
+Hack Squat Assis;hack-squat-assis;Jambes;exercises/hack-squat-assis.webp;true;seated hack squat machine
+Hack Squat Inversé;hack-squat-inverse;Jambes;exercises/hack-squat-inverse.webp;true;
+Handstand Push-up (ATR);handstand-push-up-atr;Épaules;exercises/handstand-push-up.webp;true;handstand push up
+Handstand Push-up Suspendu (Sangles);handstand-push-up-suspendu-sangles;Épaules;exercises/handstand-push-up-suspendu.webp;true;suspended handstand push up
+Haussements d'Épaules Barre;haussements-d-epaules-barre;Trapèzes;exercises/shrug-barre.webp;true;barbell shrug
+Haussements d'Épaules Câble;haussements-d-epaules-cable;Trapèzes;exercises/shrug-poulie-haussement-epaules.webp;true;cable shrug
+Haussements d'Épaules Haltères;haussements-d-epaules-halteres;Trapèzes;exercises/shrugs-avec-halteres.webp;true;dumbbell shrug
+Haussements d'Épaules Overhead;haussements-d-epaules-overhead;Trapèzes;exercises/overhead-shrug.webp;true;
+Hex Press Smith Machine;hex-press-smith-machine;Pectoraux;exercises/hex-press-a-la-smith-machine.webp;true;hex press smith machine
+Hip Thrust Barre (Poussée de Hanche);hip-thrust-barre-poussee-de-hanche;Fessiers;exercises/hip-thrust-barre.webp;true;hip thrust barbell
+Hip Thrust Haltère (Poussée de Hanche);hip-thrust-haltere-poussee-de-hanche;Fessiers;;false;hip thrust dumbbell
+Hip Thrust Machine (Poussée de Hanche);hip-thrust-machine-poussee-de-hanche;Fessiers;exercises/hip-thrust-a-la-machine.webp;true;hip thrust machine
+Hip Thrust Unilatéral (Poussée de Hanche);hip-thrust-unilateral-poussee-de-hanche;Fessiers;exercises/hip-thrust-barre-unilateral.webp;true;single leg barbell hip thrust
+Hollow Body;hollow-body;Abdominaux;;false;hollow body hold
+Hyperextension (Back Extension);hyperextension-back-extension;Lombaires;exercises/extension-lombaire-au-banc-45.webp;true;
+Hyperextension Inverse (Reverse Hyper);hyperextension-inverse-reverse-hyper;Lombaires;;false;
+Hyperextension Lestée;hyperextension-lestee;Lombaires;;false;
+Hyperextension Machine;hyperextension-machine;Lombaires;exercises/extension-lombaire-a-la-machine.webp;true;
+Inclinaison Lombaire (Good Morning);inclinaison-lombaire-good-morning;Fessiers;exercises/good-morning-exercice.webp;true;good morning barbell
+Jefferson Curl;jefferson-curl;Lombaires;;false;
+Jefferson Squat;jefferson-squat;Jambes;exercises/jefferson-squat.webp;true;jefferson squat
+Jumping Jack;jumping-jack;Full Body;exercises/jumping-jack.webp;true;jumping jack
+Kettlebell Swing;kettlebell-swing;Fessiers;exercises/kettlebell-swing.webp;true;kettlebell swing
+Kickback Cable;kickback-cable;Fessiers;;false;cable glute kickback
+Kickback Machine;kickback-machine;Fessiers;;false;glute kickback machine
+L-Sit;l-sit;Abdominaux;;false;l-sit
+Leg Curl Assis Machine;leg-curl-assis-machine;Fessiers;exercises/leg-curl-assis-machine.webp;true;seated leg curl machine
+Leg Curl Couché Machine;leg-curl-couche-machine;Fessiers;exercises/leg-curl-allonge.webp;true;lying leg curl machine
+Leg Curl Élastique;leg-curl-elastique;Fessiers;exercises/leg-curl-avec-elastique-musculation.webp;true;
+Leg Curl Haltère;leg-curl-haltere;Fessiers;exercises/leg-curl-decline-haltere.webp;true;
+Leg Curl Inversé;leg-curl-inverse;Fessiers;exercises/leg-curl-inverse-machine-tirage-vertical.webp;true;
+Leg Curl Unilatéral Debout;leg-curl-unilateral-debout;Fessiers;exercises/leg-curl-unilateral-debout-machine.webp;true;
+Machine Oiseau;machine-oiseau;Épaules;exercises/pec-deck-inverse.webp;true;rear delt fly machine
+Marche de l'Ours (Bear Crawl);marche-de-l-ours-bear-crawl;Full Body;exercises/marche-de-lours-bear-crawl.webp;true;bear crawl
+Marteau;marteau;Biceps;exercises/curl-marteau.webp;true;hammer curl
+Meadows Row;meadows-row;Dos;exercises/rowing-unilateral-landmine-meadows-row.webp;true;
+Mollets Machine Assise;mollets-machine-assise;Mollets;exercises/elevations-mollets-assis-machine.webp;true;seated calf raise machine
+Mollets Machine Debout;mollets-machine-debout;Mollets;exercises/elevations-mollets-debout-machine.webp;true;standing calf raise machine
+Montée sur Box (Step-up);montee-sur-box-step-up;Jambes;exercises/montee-sur-box-barre.webp;true;box step up
+Montée sur Box Haltères;montee-sur-box-halteres;Jambes;exercises/montee-sur-box-halteres-classique.webp;true;step up dumbbell
+Muscle-up;muscle-up;Dos;exercises/muscle-up.webp;true;muscle up bar
+Oiseau;oiseau;Épaules;exercises/oiseau-assis-sur-banc.webp;true;rear delt fly dumbbell
+Oiseau Élastique;oiseau-elastique;Épaules;exercises/oiseau-elastique.webp;true;reverse fly resistance band
+Oiseau Inversé TRX (Sangles);oiseau-inverse-trx-sangles;Épaules;exercises/oiseau-inverse-trx-sangles.webp;true;trx reverse fly
+Oiseau Poulie 45°;oiseau-poulie-45;Épaules;exercises/oiseau-a-la-poulie-a-45.webp;true;
+Overhead Squat;overhead-squat;Jambes;exercises/overhead-squat.webp;true;
+Overhead Squat Élastique;overhead-squat-elastique;Jambes;exercises/overhead-squat-elastique.webp;true;overhead squat resistance band
+Overhead Squat Haltères;overhead-squat-halteres;Jambes;exercises/overhead-squat-halteres.webp;true;dumbbell overhead squat
+Passage d'Épaule Élastique;passage-d-epaule-elastique;Épaules;exercises/passage-depaule-avec-elastique.webp;true;
+Pec Deck;pec-deck;Pectoraux;exercises/pec-deck-butterfly-exercice-musculation.webp;true;pec deck fly
+Pendulum Squat;pendulum-squat;Jambes;exercises/pendulum-squat.webp;true;
+Pin Squat;pin-squat;Jambes;exercises/pin-squat.webp;true;
+Planche de Préhension;planche-de-prehension;Avant-bras;;false;dead hang grip
+Planche Inversée;planche-inversee;Abdominaux;exercises/planche-inversee.webp;true;reverse plank
+Planche Latérale (Side Plank);planche-laterale-side-plank;Abdominaux;;false;side plank
+Pompes (Push-up);pompes-push-up;Pectoraux;exercises/pompe-musculation.webp;true;push up
+Pompes Déficit (Deficit Push-up);pompes-deficit-deficit-push-up;Pectoraux;exercises/pompes-deficit.webp;true;deficit push up
+Pompes Diamant;pompes-diamant;Pectoraux;exercises/pompes-diamant.webp;true;diamond push up
+Pompes Inclinées TRX (Sangles);pompes-inclinees-trx-sangles;Pectoraux;exercises/pompes-inclinees-trx-sangles.webp;true;trx incline push up
+Pompes Lestées;pompes-lestees;Pectoraux;exercises/pompes-lestees.webp;true;push up weighted
+Pont Fessier (Glute Bridge);pont-fessier-glute-bridge;Fessiers;exercises/glute-bridge.webp;true;glute bridge
+Press Jambes 45°;press-jambes-45;Jambes;exercises/presse-a-cuisse-exercice-musculation.webp;true;
+Press Jambes Horizontale;press-jambes-horizontale;Jambes;machine/press-jambes-2.jpg;true;
+Press Jambes Inclinée;press-jambes-inclinee;Jambes;exercises/presse-a-cuisses-inclinee.webp;true;
+Press Jambes Levier;press-jambes-levier;Jambes;machine/press-jambes-6.jpg;true;
+Press Jambes Verticale;press-jambes-verticale;Jambes;exercises/presse-a-cuisses-verticale.webp;true;
+Presse à Cuisses Iso-Latérale;presse-a-cuisses-iso-laterale;Jambes;exercises/presse-cuisse-iso-laterale-hammer-stenght.webp;true;
+Presse à Cuisses sur le Côté;presse-a-cuisses-sur-le-cote;Jambes;exercises/presse-a-cuisse-sur-le-cote.webp;true;side leg press machine
+Presse Mollets (Leg Press);presse-mollets-leg-press;Mollets;exercises/elevations-mollets-presse-45.webp;true;calf press leg press
+Pronation Supination Haltère;pronation-supination-haltere;Avant-bras;;false;forearm rotation dumbbell
+Pull-over;pull-over;Dos;;false;pullover barbell
+Pull-over Barre;pull-over-barre;Dos;exercises/pull-over-barre.webp;true;
+Pull-over Haltère;pull-over-haltere;Dos;exercises/pullover-haltere.webp;true;pullover dumbbell
+Pull-over Poulie;pull-over-poulie;Dos;exercises/pull-over-poulie.webp;true;
+Pullover Machine;pullover-machine;Dos;exercises/musculation-pull-over-assis-machine.webp;true;pullover machine
+Reeves Deadlift;reeves-deadlift;Fessiers;exercises/reeves-deadlift.webp;true;
+Relevé de Buste (Sit-up);releve-de-buste-sit-up;Abdominaux;;false;sit up
+Relevé de Jambes;releve-de-jambes;Abdominaux;;false;hanging leg raise
+Renegade Row;renegade-row;Dos;exercises/renegade-row.webp;true;
+Rocky Pull-up;rocky-pull-up;Dos;exercises/rocky-pull-up.webp;true;
+Rotation Externe Épaule Abduction;rotation-externe-epaule-abduction;Épaules;exercises/rotation-externe-de-epaule-en-abduction.webp;true;
+Rotation Externe Épaule Élastique;rotation-externe-epaule-elastique;Épaules;exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp;true;
+Rotation Externe Épaule Haltère;rotation-externe-epaule-haltere;Épaules;exercises/rotation-externe-epaule-haltere.webp;true;
+Rotation Externe Épaule Poulie;rotation-externe-epaule-poulie;Épaules;exercises/rotation-externe-epaule-poulie.webp;true;cable external rotation
+Rotation Interne 90° Poulie;rotation-interne-90-poulie;Épaules;exercises/rotation-interne-a-90-a-la-poulie.webp;true;
+Rotation Interne Épaule Élastique;rotation-interne-epaule-elastique;Épaules;exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp;true;
+Rotation Machine Obliques;rotation-machine-obliques;Abdominaux;;false;oblique twist machine
+Rotation Russe (Russian Twist);rotation-russe-russian-twist;Abdominaux;;false;russian twist
+Roue Abdominale (Ab Wheel);roue-abdominale-ab-wheel;Abdominaux;;false;ab wheel rollout
+Rowing Barre (Tirage Horizontal);rowing-barre-tirage-horizontal;Dos;exercises/rowing-barre.webp;true;barbell row bent over
+Rowing Buste Penché Élastique;rowing-buste-penche-elastique;Dos;exercises/rowing-buste-penche-elastique.webp;true;bent over row resistance band
+Rowing Câble (Tirage Horizontal);rowing-cable-tirage-horizontal;Dos;exercises/tirage-horizontal-poulie.webp;true;cable row seated
+Rowing Haltère (Tirage Horizontal);rowing-haltere-tirage-horizontal;Dos;exercises/rowing-haltere-un-bras.webp;true;dumbbell row one arm
+Rowing Haltères Buste Penché;rowing-halteres-buste-penche;Dos;exercises/bent-over-row-avec-halteres.webp;true;
+Rowing Hammer Strength;rowing-hammer-strength;Dos;exercises/rowing-assis-machine-hammer-strenght.webp;true;hammer strength row
+Rowing Horizontal Élastique;rowing-horizontal-elastique;Dos;exercises/rowing-horizontal-elastique.webp;true;seated row resistance band
+Rowing Inversé sous une Table;rowing-inverse-sous-une-table;Dos;exercises/rowing-inverse-sous-table.webp;true;inverted row under table
+Rowing Landmine (T-Bar);rowing-landmine-t-bar;Dos;exercises/rowing-barre-t-landmine.webp;true;
+Rowing Machine (Tirage Horizontal);rowing-machine-tirage-horizontal;Dos;exercises/rowing-assis-machine-prise-pronation.webp;true;seated row machine
+Rowing Poitrine Appuyée (Chest Supported);rowing-poitrine-appuyee-chest-supported;Dos;exercises/rowing-halteres-banc-incline-prise-neutre.webp;true;chest supported row
+Rowing Smith Machine;rowing-smith-machine;Dos;exercises/rowing-smith-machine.webp;true;
+Rowing T-Bar Machine;rowing-t-bar-machine;Dos;exercises/rowing-t-bar-machine.webp;true;
+Rowing TRX (Sangles);rowing-trx-sangles;Dos;exercises/rowing-trx-sangles.webp;true;trx row
+Rowing Unilatéral Élastique;rowing-unilateral-elastique;Dos;exercises/rowing-unilateral-elastique.webp;true;single arm row resistance band
+Rowing Yates (Supination);rowing-yates-supination;Dos;;false;yates row barbell
+Russian Twist Développé Épaules;russian-twist-developpe-epaules;Abdominaux;exercises/russian-twist-avec-developpe-epaule.webp;true;
+Safety Bar Squat;safety-bar-squat;Jambes;exercises/safety-bar-squat.webp;true;
+Sauts à la Corde;sauts-a-la-corde;Mollets;exercises/sauts-a-la-corde.webp;true;jump rope
+Seal Row;seal-row;Dos;exercises/seal-row-halteres.webp;true;
+Sissy Squat;sissy-squat;Jambes;exercises/sissy-squat.webp;true;
+Sissy Squat Machine;sissy-squat-machine;Jambes;exercises/sissy-squat-machine.webp;true;sissy squat machine
+Skull Crusher Barre EZ;skull-crusher-barre-ez;Triceps;;false;skull crusher ez bar
+Sled Pull;sled-pull;Dos;exercises/sled-pull.webp;true;
+Sled Push;sled-push;Jambes;exercises/sled-push-hyrox.webp;true;
+Smith Machine Développé Couché;smith-machine-developpe-couche;Pectoraux;exercises/developpe-couche-smith-machine.webp;true;smith machine bench press
+Smith Machine Développé Incliné;smith-machine-developpe-incline;Pectoraux;;false;smith machine incline bench press
+Smith Machine Développé Militaire;smith-machine-developpe-militaire;Épaules;exercises/developpe-epaules-smith-machine.webp;true;smith machine overhead press
+Smith Machine Fentes;smith-machine-fentes;Jambes;exercises/split-squat-smith-machine.webp;true;smith machine lunge
+Smith Machine Squat;smith-machine-squat;Jambes;exercises/squat-smith-machine-exercice-musculation.webp;true;smith machine squat
+Soulevé de Terre;souleve-de-terre;Dos;exercises/souleve-de-terre.webp;true;deadlift conventional
+Soulevé de Terre avec Déficit;souleve-de-terre-avec-deficit;Fessiers;exercises/souleve-de-terre-avec-deficit.webp;true;
+Soulevé de Terre Jambes Tendues;souleve-de-terre-jambes-tendues;Fessiers;exercises/souleve-de-terre-jambes-tendues.webp;true;
+Soulevé de Terre Machine;souleve-de-terre-machine;Fessiers;exercises/souleve-de-terre-avec-machine.webp;true;
+Soulevé de Terre Roumain Barre;souleve-de-terre-roumain-barre;Fessiers;exercises/souleve-de-terre-roumain-barre.webp;true;romanian deadlift barbell
+Soulevé de Terre Roumain Haltères;souleve-de-terre-roumain-halteres;Fessiers;exercises/souleve-de-terre-roumain-halteres.webp;true;romanian deadlift dumbbell
+Soulevé de Terre Roumain Kettlebell;souleve-de-terre-roumain-kettlebell;Fessiers;exercises/souleve-de-terre-roumain-kettlebell.webp;true;
+Soulevé de Terre Roumain Landmine;souleve-de-terre-roumain-landmine;Fessiers;exercises/souleve-de-terre-roumain-landmine.webp;true;
+Soulevé de Terre Roumain Unilatéral;souleve-de-terre-roumain-unilateral;Fessiers;exercises/souleve-de-terre-roumain-unilateral.webp;true;single leg romanian deadlift
+Soulevé de Terre Sumo;souleve-de-terre-sumo;Dos;exercises/souleve-de-terre-sumo.webp;true;sumo deadlift
+Soulevé de Terre Sumo Haltères;souleve-de-terre-sumo-halteres;Fessiers;exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.webp;true;
+Soulevé de Terre Sumo Kettlebell;souleve-de-terre-sumo-kettlebell;Fessiers;exercises/souleve-de-terre-sumo-kettlebell.webp;true;
+Soulevé de Terre Sumo Landmine;souleve-de-terre-sumo-landmine;Fessiers;exercises/souleve-de-terre-sumo-landmine.webp;true;
+Soulevé de Terre Trap Bar;souleve-de-terre-trap-bar;Fessiers;exercises/souleve-de-terre-a-la-trap-bar.webp;true;
+Soulevé de Terre Valise (Suitcase);souleve-de-terre-valise-suitcase;Jambes;exercises/souleve-de-terre-valise.webp;true;suitcase deadlift
+Split Squat Élastique (Fente Statique);split-squat-elastique-fente-statique;Jambes;exercises/split-squat-elastique.webp;true;split squat resistance band
+Split Squat TRX (Sangles);split-squat-trx-sangles;Jambes;exercises/split-squat-trx-sangles.webp;true;trx split squat
+Squat à la Barre;squat-a-la-barre;Jambes;exercises/homme-faisant-un-squat-avec-barre.webp;true;squat barbell
+Squat Avant;squat-avant;Jambes;exercises/squat-barre-devant-front.webp;true;front squat
+Squat avec Rotation du Tronc;squat-avec-rotation-du-tronc;Jambes;exercises/squat-avec-rotation-du-tronc.webp;true;squat with torso rotation
+Squat Bande Élastique;squat-bande-elastique;Jambes;exercises/squat-bande-elastique.webp;true;
+Squat Barre avec Bandes Élastiques;squat-barre-avec-bandes-elastiques;Jambes;exercises/squat-barre-avec-bandes-elastiques.webp;true;banded barbell squat
+Squat Bulgare;squat-bulgare;Jambes;exercises/squat-bulgare-halteres-exercice-musculation.webp;true;bulgarian split squat
+Squat Bulgare Élastique;squat-bulgare-elastique;Jambes;exercises/squat-bulgare-elastique.webp;true;bulgarian split squat resistance band
+Squat Gobelet (Goblet Squat);squat-gobelet-goblet-squat;Jambes;exercises/squat-goblet-kettlebell.webp;true;goblet squat
+Squat Hack (Hack Squat);squat-hack-hack-squat;Jambes;exercises/hack-squat.webp;true;hack squat
+Squat Kettlebell;squat-kettlebell;Jambes;exercises/kettlebell-back-squat.webp;true;
+Squat Pistol;squat-pistol;Jambes;exercises/squat-pistol.webp;true;
+Squat Pistol TRX (Sangles);squat-pistol-trx-sangles;Jambes;exercises/squat-pistol-trx-sangles.webp;true;trx pistol squat
+Squat Poids du Corps (Air Squat);squat-poids-du-corps-air-squat;Jambes;exercises/squat-poids-du-corps-air-squat.webp;true;air squat bodyweight
+Squat Sauté (Jump Squat);squat-saute-jump-squat;Jambes;exercises/squat-saute-jump-squat.webp;true;jump squat
+Squat Sumo;squat-sumo;Jambes;exercises/squat-sumo-avec-haltere.webp;true;sumo squat
+Squat TRX (Sangles);squat-trx-sangles;Jambes;exercises/squat-trx-sangles.webp;true;trx squat
+Superman;superman;Lombaires;exercises/superman.webp;true;
+Suspension Passive (Dead Hang);suspension-passive-dead-hang;Dos;exercises/suspension-passive-dead-hang.webp;true;dead hang
+Svend Press (Serrage de Plaque);svend-press-serrage-de-plaque;Pectoraux;exercises/svend-press.webp;true;svend press plate
+Tate Press;tate-press;Triceps;exercises/tate-press.webp;true;tate press dumbbell
+Thruster;thruster;Full Body;exercises/thruster.webp;true;
+Thruster Kettlebell;thruster-kettlebell;Full Body;exercises/thruster-kettlebell.webp;true;
+Thrusters Haltères;thrusters-halteres;Full Body;;false;dumbbell thruster
+Tirage Cable Fessiers (Cable Pull Through);tirage-cable-fessiers-cable-pull-through;Fessiers;;false;cable pull through glute
+Tirage en Rack (Rack Pull);tirage-en-rack-rack-pull;Dos;exercises/rack-pull.webp;true;rack pull barbell
+Tirage Incliné Poulie Haute;tirage-incline-poulie-haute;Dos;exercises/tirage-incline-poulie-haute.webp;true;
+Tirage Iso-Latéral Hammer Strength;tirage-iso-lateral-hammer-strength;Dos;exercises/tirage-avant-iso-laterale-hammer-strength.webp;true;
+Tirage Menton;tirage-menton;Trapèzes;exercises/tirage-menton-machine-guidee.webp;true;upright row barbell
+Tirage Menton Élastique;tirage-menton-elastique;Trapèzes;exercises/tirage-menton-avec-elastique.webp;true;
+Tirage Menton Kettlebell;tirage-menton-kettlebell;Épaules;exercises/tirage-menton-avec-kettlebell.webp;true;upright row kettlebell
+Tirage Nuque;tirage-nuque;Dos;;false;behind neck pulldown
+Tirage Poulie Basse Prise Large;tirage-poulie-basse-prise-large;Dos;exercises/tirage-horizontal-prise-large.webp;true;seated cable row wide grip
+Tirage Poulie Basse Prise Serrée;tirage-poulie-basse-prise-serree;Dos;;false;seated cable row close grip
+Tirage Poulie Haute (Lat Pulldown);tirage-poulie-haute-lat-pulldown;Dos;exercises/tirage-vertical-poitrine.webp;true;lat pulldown cable
+Tirage Poulie Haute Prise Inversée;tirage-poulie-haute-prise-inversee;Dos;exercises/tirage-vertical-prise-inversee.webp;true;
+Tirage Poulie Haute Prise Serrée;tirage-poulie-haute-prise-serree;Dos;exercises/tirage-vertical-prise-serree.webp;true;lat pulldown close grip
+Tirage Vertical Alterné Élastique;tirage-vertical-alterne-elastique;Dos;exercises/tirage-vertical-alterne-elastique.webp;true;alternating lat pulldown resistance band
+Tirage Visage (Face Pull);tirage-visage-face-pull;Épaules;exercises/face-pull.webp;true;face pull cable
+Traction Assistée;traction-assistee;Dos;exercises/traction-assistee-machine.webp;true;assisted pull up machine
+Traction Assistée avec Banc;traction-assistee-avec-banc;Dos;exercises/traction-assistee-avec-banc.webp;true;assisted pull up bench
+Traction Australienne (Poids du Corps);traction-australienne-poids-du-corps;Dos;exercises/traction-australienne.webp;true;australian pull up
+Traction Australienne TRX (Sangles);traction-australienne-trx-sangles;Dos;exercises/traction-australienne-trx-sangles.webp;true;trx inverted row
+Traction Derrière la Nuque;traction-derriere-la-nuque;Dos;exercises/traction-barre-derriere-rear-oull-up.webp;true;
+Traction Lestée;traction-lestee;Dos;exercises/traction-lestee-vraie.webp;true;pull-up weighted
+Traction Prise Neutre;traction-prise-neutre;Dos;exercises/traction-prise-neutre.webp;true;neutral grip pull up
+Traction Supination (Chin-up);traction-supination-chin-up;Dos;exercises/traction-supination-chin-up.webp;true;chin up
+Tractions (Pull-up);tractions-pull-up;Dos;exercises/traction-musculation-dos.webp;true;pull up
+Tractions aux Anneaux;tractions-aux-anneaux;Dos;exercises/tractions-aux-anneaux.webp;true;ring pull up
+Triceps Corde Poulie;triceps-corde-poulie;Triceps;;false;triceps rope pushdown
+Triceps Haltère;triceps-haltere;Triceps;exercises/triceps-haltere-un-bras.webp;true;triceps overhead extension dumbbell
+Triceps Machine;triceps-machine;Triceps;exercises/triceps-machine.webp;true;triceps machine
+Triceps Poulie;triceps-poulie;Triceps;exercises/triceps-poulie-haute-barre.webp;true;triceps pushdown cable
+Triceps Poulie Basse;triceps-poulie-basse;Triceps;exercises/triceps-poulie-basse-verticale.webp;true;low cable triceps extension
+Turkish Get-Up;turkish-get-up;Full Body;;false;turkish get up
+Waiter Curl;waiter-curl;Biceps;exercises/waiter-curl.webp;true;waiter curl dumbbell
+Wall Ball;wall-ball;Full Body;exercises/wall-ball.webp;true;wall ball shot
+Windshield Wiper;windshield-wiper;Abdominaux;;false;windshield wiper ab
+Y Raise / W Raise;y-raise-w-raise;Épaules;exercises/elevation-en-y-a-la-poulie.webp;true;y raise band
+Zercher Deadlift;zercher-deadlift;Fessiers;exercises/zercher-deadlift.webp;true;

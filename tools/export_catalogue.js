@@ -57,18 +57,33 @@ const brut=await p.evaluate(()=>{
       for(let k=0;k<N;k++) if(_MEX[k].re.test(q)) match.push(k);
       const avis=[...new Set(match.map(k=>sig(_MEX[k])))].length;
       const pat=_movPattern(n);
-      return {nom:n, groupe:(EXLIB.find(x=>x.n===n)||{}).g,
+      const id=(typeof exId==='function')?exId(n):null;
+      const ecrit=(typeof exMuscles==='function')?exMuscles(n):null;
+      const yt=(typeof EX_YT!=='undefined'&&EX_YT[n])||null;
+      return {nom:n, identifiant:id,
+        anciensNoms:(id&&EX_IDS[id]?EX_IDS[id].slice(1):[]),
+        groupe:(EXLIB.find(x=>x.n===n)||{}).g,
         musclesPrincipaux:Object.keys(sc).filter(k=>sc[k]===2).sort(),
         musclesSecondaires:Object.keys(sc).filter(k=>sc[k]===1).sort(),
         schemaMouvement:pat||null, schemaLibelle:pat?patLbl[pat]:null,
         materiel:_exEquip(n), met:getExerciseMET(n),
         role:(typeof _exRole==='function')?_exRole(n):null,
         termeAnglais:(typeof EX_EN!=='undefined'&&EX_EN[n])||null,
-        classementCertain: avis<=1};
+        animation:(yt&&yt.img)||null,
+        musclesEcrits:!!ecrit, relueLe:(ecrit&&ecrit.vu)||null,
+        classementCertain: !!ecrit || avis<=1};
     })};
 });
 await b.close(); srv.close();
 
+// ⚠️ On VÉRIFIE sur le disque que chaque animation annoncée existe : une correspondance
+// qui pointe un fichier absent est pire qu'une case vide — elle se découvre chez l'autre.
+// ⚠️⚠️ Le chemin est résolu DEPUIS LA RACINE, pas depuis `exercises/` : deux fiches pointent
+//      vers `machine/`. Ma première version ne regardait qu'un seul dossier et les déclarait
+//      cassées — un contrôle qui ne dit pas ce qu'il NE regarde pas (BUGS.md, famille 12).
+brut.ex.forEach(e=>{
+  e.animationExiste = e.animation ? fs.existsSync(path.join(ROOT, e.animation)) : false;
+});
 const D=new Date().toISOString().slice(0,10);
 const ex=brut.ex.map(e=>Object.assign({}, e, {
   musclesPrincipauxFr:e.musclesPrincipaux.map(m=>MUSCLES[m]||m),
@@ -88,16 +103,33 @@ fs.mkdirSync(path.join(ROOT,'docs/export'),{recursive:true});
 fs.writeFileSync(path.join(ROOT,'docs/export/catalogue-exercices.json'), JSON.stringify(json,null,1));
 
 const esc=v=>{const s=String(v==null?'':v); return /[",;\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
-const cols=['nom','groupe','musclesPrincipauxFr','musclesSecondairesFr','schemaLibelle',
-            'materielLibelle','met','role','termeAnglais','classementCertain'];
+const cols=['nom','identifiant','groupe','musclesPrincipauxFr','musclesSecondairesFr','schemaLibelle',
+            'materielLibelle','met','role','termeAnglais','animation','musclesEcrits','classementCertain'];
 const csv=[cols.join(';')].concat(ex.map(e=>cols.map(k=>{
   const v=e[k]; return esc(Array.isArray(v)?v.join(' + '):v);
 }).join(';'))).join('\n');
 fs.writeFileSync(path.join(ROOT,'docs/export/catalogue-exercices.csv'), '﻿'+csv);
 
+// ─── FICHIER DÉDIÉ : la correspondance NOM EXACT ⟷ ANIMATION, et rien d'autre.
+//     C'est ce qu'on demande quand on veut réutiliser les visuels ailleurs : le fichier
+//     d'un côté, le nom qui doit s'afficher en face de l'autre.
+const colsA=['nom','identifiant','groupe','animation','animationExiste','termeAnglais'];
+const csvA=[colsA.join(';')].concat(ex.map(e=>colsA.map(k=>esc(e[k])).join(';'))).join('\n');
+fs.writeFileSync(path.join(ROOT,'docs/export/animations-exercices.csv'), '\ufeff'+csvA);
+const avecAnim=ex.filter(e=>e.animationExiste).length;
+const casses=ex.filter(e=>e.animation&&!e.animationExiste);
+const utilises=new Set(ex.filter(e=>e.animation).map(e=>e.animation));
+const orphelins=['exercises','machine'].filter(d=>fs.existsSync(path.join(ROOT,d)))
+  .flatMap(d=>fs.readdirSync(path.join(ROOT,d)).map(f=>d+'/'+f))
+  .filter(f=>/\.(webp|gif|mp4|jpg|png)$/i.test(f) && !utilises.has(f));
+
 const certains=ex.filter(e=>e.classementCertain).length;
+console.log('animations :', avecAnim+'/'+ex.length, 'exercices en ont une ·',
+  casses.length, 'pointent un fichier ABSENT ·', orphelins.length, 'fichiers non utilisés');
+if(casses.length) console.log('  ⚠️ cassées : '+casses.map(e=>e.nom+' → '+e.animation).join(', '));
 console.log('export écrit :', ex.length, 'exercices ·', certains, 'au classement certain ('
   +Math.round(100*certains/ex.length)+' %)');
 console.log('  docs/export/catalogue-exercices.json');
 console.log('  docs/export/catalogue-exercices.csv');
+console.log('  docs/export/animations-exercices.csv');
 })().catch(e=>{console.error(e);process.exit(2);});
