@@ -892,9 +892,14 @@ function _appendStartSessionBtn(sess){
   const bubbles=msgs.querySelectorAll('.msg-coach');
   const last=bubbles[bubbles.length-1];if(!last)return;
   const n=norm.exs.length;
+  // ⚠️ Le libellé dit ce qui va VRAIMENT se passer (ft-v750) : tant qu'une séance est en cours,
+  // le bouton ne « commence » rien — il ouvre la question « ajouter ou remplacer ? ». Avant, il
+  // annonçait « Commencer cette séance » et ajoutait en silence : une promesse fausse.
+  const enCours=(typeof S!=='undefined')&&S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
+  const lbl=enCours?'⚡ Utiliser cette séance':'⚡ Commencer cette séance';
   const wrap=document.createElement('div');
   wrap.className='coach-prog-save';
-  wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_startSessionFromMilo('+idx+',this)">⚡ Commencer cette séance ('+n+(n>1?' exercices':' exercice')+')</button>';
+  wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_startSessionFromMilo('+idx+',this)">'+lbl+' ('+n+(n>1?' exercices':' exercice')+')</button>';
   last.appendChild(wrap);
   msgs.scrollTop=msgs.scrollHeight;
 }

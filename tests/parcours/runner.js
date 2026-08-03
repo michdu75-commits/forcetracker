@@ -894,6 +894,68 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c6.close();
 }
 
+// ═══ MILO PROPOSE UNE SÉANCE ALORS QU'UNE SÉANCE EST DÉJÀ EN COURS (ft-v750) ═══
+// Retour de Michel EN PLEINE SÉANCE : « je lui ai demandé de changer l'exercice, il me propose
+// bien une nouvelle séance mais ça ne met pas à jour la séance actuelle ». Le bouton ne savait
+// qu'AJOUTER — l'échange que Milo avait compris n'atteignait jamais la donnée (R4).
+{
+  const c7=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p7=await c7.newPage();
+  await p7.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p7.waitForTimeout(2200);
+  const r=await p7.evaluate(()=>{
+   try{
+    const o={};
+    const propose={label:'Séance allégée',exs:[{name:'Développé Couché',sets:[{kg:60,reps:10}]},
+                                                {name:'Rowing Barre (Tirage Horizontal)',sets:[{kg:50,reps:10}]}]};
+    // ① AUCUNE séance en cours → ça démarre directement, sans rien demander
+    S.wkt=null; _pendingMiloSessions=[propose];
+    _startSessionFromMilo(0,null);
+    o.demarreSeul = !!(S.wkt&&S.wkt.exs&&S.wkt.exs.length===2);
+    o.pasDeQuestion = !document.getElementById('ov-milo-seance').classList.contains('open');
+    // ② SÉANCE EN COURS → on ne touche à RIEN, on demande
+    const t0=Date.now()-1800000;   // commencée il y a 30 minutes
+    S.wkt={date:today(),progLabel:'Ma séance',startTs:t0,startHour:9,
+           exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true},{kg:100,reps:5,done:true}]}]};
+    _pendingMiloSessions=[propose];
+    _startSessionFromMilo(0,null);
+    o.demandeConfirmation = document.getElementById('ov-milo-seance').classList.contains('open');
+    o.rienModifie = S.wkt.exs.length===1 && S.wkt.exs[0].name==='Squat à la Barre';
+    o.avertit = /2 séries déjà validées/.test(document.getElementById('milo-seance-avert').textContent);
+    o.etatLu = /1 exercice/.test(document.getElementById('milo-seance-etat').textContent);
+    // ③ « Ajouter » → les exercices s'empilent, le chrono ne bouge pas
+    _applyMiloSession('add');
+    o.ajout = S.wkt.exs.length===3 && S.wkt.exs[0].name==='Squat à la Barre';
+    o.chronoIntactAdd = S.wkt.startTs===t0;
+    // ④ « Remplacer » → les exercices sont remplacés, MAIS le chrono est conservé
+    S.wkt={date:today(),progLabel:'Ma séance',startTs:t0,startHour:9,
+           exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true}]}]};
+    _pendingMiloSessions=[propose]; _startSessionFromMilo(0,null);
+    _applyMiloSession('replace');
+    o.remplace = S.wkt.exs.length===2 && S.wkt.exs[0].name==='Développé Couché';
+    o.chronoIntactRempl = S.wkt.startTs===t0;
+    // ⑤ « Annuler » → rien ne bouge
+    S.wkt={date:today(),progLabel:'Ma séance',startTs:t0,exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5}]}]};
+    _pendingMiloSessions=[propose]; _startSessionFromMilo(0,null);
+    closeMiloSeance();
+    o.annuleSansRien = S.wkt.exs.length===1 && S.wkt.exs[0].name==='Squat à la Barre';
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ sans séance en cours, la séance de Milo démarre directement (0 régression)',
+    r.demarreSeul===true && r.pasDeQuestion===true, JSON.stringify(r));
+  t('⭐⭐ AVEC une séance en cours, Milo DEMANDE au lieu d\'ajouter en silence',
+    r.demandeConfirmation===true && r.rienModifie===true, JSON.stringify(r));
+  t('⭐ la question MONTRE ce qui est en jeu (exercices en cours, séries déjà validées)',
+    r.etatLu===true && r.avertit===true, JSON.stringify(r));
+  t('« Ajouter » empile les exercices', r.ajout===true, JSON.stringify(r));
+  t('⭐ « Remplacer » remplace les exercices…', r.remplace===true, JSON.stringify(r));
+  t('⭐⭐ … SANS remettre le chrono à zéro (on n\'a pas recommencé sa séance)',
+    r.chronoIntactRempl===true && r.chronoIntactAdd===true, JSON.stringify(r));
+  t('« Annuler » ne touche à rien', r.annuleSansRien===true, JSON.stringify(r));
+  await c7.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

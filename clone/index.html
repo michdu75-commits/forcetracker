@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v749';
+  b.textContent='🧪 CLONE ft-v750';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -2124,6 +2124,24 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div id="day-sel-prog-name" style="font-size:13px;color:var(--t2);text-align:center;margin-bottom:16px;"></div>
     <div id="day-sel-btns" style="display:flex;flex-direction:column;gap:8px;"></div>
     <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeDaySel()">Annuler</button>
+  </div>
+</div>
+
+<!-- OVERLAY: Milo propose une séance alors qu'une séance est DÉJÀ EN COURS -->
+<!-- ⚠️ Avant ft-v750, le bouton de Milo AJOUTAIT toujours, sans demander — et son libellé disait
+     « Commencer cette séance » alors qu'il ajoutait. Quand Michel demandait à Milo de CHANGER un
+     exercice, la séance corrigée venait donc s'empiler sur l'ancienne. On demande maintenant. -->
+<div class="overlay" id="ov-milo-seance" onclick="if(event.target===this)closeMiloSeance()">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:17px;margin-bottom:6px;text-align:center;">Tu as déjà une séance en cours</div>
+    <div id="milo-seance-etat" style="font-size:13px;color:var(--t2);text-align:center;margin-bottom:16px;line-height:1.5;"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-red" style="width:100%;" onclick="_applyMiloSession('add')">➕ Ajouter à ma séance</button>
+      <button class="btn btn-bg2" style="width:100%;" onclick="_applyMiloSession('replace')">🔄 Remplacer ma séance</button>
+    </div>
+    <div id="milo-seance-avert" style="font-size:12px;color:var(--red);text-align:center;margin-top:10px;line-height:1.45;"></div>
+    <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeMiloSeance()">Annuler</button>
   </div>
 </div>
 

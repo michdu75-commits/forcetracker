@@ -4060,18 +4060,79 @@ function _startSessionFromMilo(idx,btn){
   const newExs=(data.exs||[]).map(buildEx);
   if(!newExs.length){toast('Aucun exercice à ajouter','error');return;}
   const active=S.wkt&&Array.isArray(S.wkt.exs)&&S.wkt.exs.length;
-  if(active){
-    S.wkt.exs=S.wkt.exs.concat(newExs); // séance en cours → on AJOUTE (jamais d'écrasement — règle #3)
+  // ─── SÉANCE DÉJÀ EN COURS → ON DEMANDE (ft-v750, retour de Michel EN PLEINE SÉANCE) ───
+  // Avant : on AJOUTAIT toujours, sans rien demander. L'intention était bonne (règle d'or #3,
+  // ne jamais écraser une séance en cours) mais elle rendait un cas impossible : quand on
+  // demande à Milo de CHANGER un exercice, il renvoie la séance corrigée… qui venait s'empiler
+  // sur l'ancienne. L'échange qu'il avait parfaitement compris n'atteignait jamais la donnée (R4).
+  // Et le bouton disait « Commencer cette séance » alors qu'il ajoutait — une promesse fausse.
+  // Désormais : c'est la personne qui tranche, avec sous les yeux ce qu'elle risque de perdre (R29).
+  if(active){ _miloPendingIdx=idx; _miloPendingBtn=btn||null; _askMiloSeanceMode(newExs.length); return; }
+  _appliqueMiloSession(newExs, data, 'start', btn);
+}
+
+let _miloPendingIdx=-1, _miloPendingBtn=null;
+
+/** Ouvre la question « ajouter ou remplacer ? » en montrant l'état RÉEL de la séance en cours.
+ *  On n'interdit rien : on AFFICHE ce qui est en jeu et la personne décide (R29 — informer sans
+ *  décider). Une séance dont aucune série n'est validée ne se remplace pas au même prix qu'une
+ *  séance où l'on a déjà travaillé 40 minutes. */
+function _askMiloSeanceMode(nNew){
+  const exs=(S.wkt&&S.wkt.exs)||[];
+  let faites=0; exs.forEach(e=>(e.sets||[]).forEach(st=>{if(st.done)faites++;}));
+  const et=document.getElementById('milo-seance-etat');
+  const av=document.getElementById('milo-seance-avert');
+  if(et)et.innerHTML='Ta séance en cours a <b>'+exs.length+' exercice'+(exs.length>1?'s':'')+'</b>'
+    +(faites?' et <b>'+faites+' série'+(faites>1?'s':'')+' déjà validée'+(faites>1?'s':'')+'</b>':'')
+    +'.<br>Milo t\'en propose <b>'+nNew+'</b>.';
+  if(av)av.textContent=faites?('⚠️ Remplacer effacera tes '+faites+' série'+(faites>1?'s':'')+' déjà validée'+(faites>1?'s':'')+'.'):'';
+  const ov=document.getElementById('ov-milo-seance'); if(ov)ov.classList.add('open');
+}
+function closeMiloSeance(){
+  const ov=document.getElementById('ov-milo-seance'); if(ov)ov.classList.remove('open');
+  _miloPendingIdx=-1; _miloPendingBtn=null;
+}
+function _applyMiloSession(mode){
+  const idx=_miloPendingIdx, btn=_miloPendingBtn;
+  const data=(typeof _pendingMiloSessions!=='undefined')?_pendingMiloSessions[idx]:null;
+  closeMiloSeance();
+  if(!data){toast('Séance introuvable','error');return;}
+  const prev=(typeof getPrev==='function')?getPrev:null;
+  const newExs=(data.exs||[]).map(e=>{
+    const pv=prev?(prev(e.name)||[]):[];
+    return {name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
+      const pp=pv.length?(pv[i]||pv[pv.length-1]):null;
+      return {kg:(s.kg>0)?s.kg:(pp?pp.kg:0),
+              reps:s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10)),
+              maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:s.rest||0};
+    })};
+  });
+  _appliqueMiloSession(newExs, data, mode, btn);
+}
+/** L'écriture elle-même. `mode` : 'start' (aucune séance) · 'add' · 'replace'. */
+function _appliqueMiloSession(newExs, data, mode, btn){
+  if(mode==='add'){
+    S.wkt.exs=S.wkt.exs.concat(newExs);
+  }else if(mode==='replace'){
+    // ⚠️ On remplace les EXERCICES, pas la séance : le chrono, l'heure de début et le cardio
+    // déjà noté sont conservés. Quelqu'un qui échange un exercice au bout de 40 minutes ne
+    // recommence pas sa séance à zéro.
+    S.wkt.exs=newExs;
+    if(data.label)S.wkt.progLabel=data.label;
+    _expandedEx=0;
   }else{
     S.wkt={date:today(),progLabel:data.label||'Séance de Milo',exs:newExs,startHour:new Date().getHours(),startTs:Date.now()};
     _expandedEx=0;
   }
   persist();
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
-  if(btn){btn.textContent='✅ Ajouté à ta séance';btn.disabled=true;btn.style.opacity='.7';}
+  if(btn){btn.textContent=(mode==='replace')?'✅ Séance remplacée':'✅ Ajouté à ta séance';btn.disabled=true;btn.style.opacity='.7';}
   goScreen('log',document.getElementById('nb-log'));
   if(typeof renderLog==='function')renderLog();else if(typeof renderExBlocks==='function')renderExBlocks();
-  toast(active?(newExs.length+' exercice'+(newExs.length>1?'s':'')+' ajouté'+(newExs.length>1?'s':'')+' 💪'):'Séance prête — c\'est parti ! 💪','success');
+  const n=newExs.length;
+  toast(mode==='add'?(n+' exercice'+(n>1?'s':'')+' ajouté'+(n>1?'s':'')+' 💪')
+       :mode==='replace'?'Séance remplacée — c\'est reparti ! 💪'
+       :'Séance prête — c\'est parti ! 💪','success');
 }
 
 function loadProgDay(progIdx,dayIdx){

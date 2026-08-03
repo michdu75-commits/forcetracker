@@ -2063,6 +2063,24 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   </div>
 </div>
 
+<!-- OVERLAY: Milo propose une séance alors qu'une séance est DÉJÀ EN COURS -->
+<!-- ⚠️ Avant ft-v750, le bouton de Milo AJOUTAIT toujours, sans demander — et son libellé disait
+     « Commencer cette séance » alors qu'il ajoutait. Quand Michel demandait à Milo de CHANGER un
+     exercice, la séance corrigée venait donc s'empiler sur l'ancienne. On demande maintenant. -->
+<div class="overlay" id="ov-milo-seance" onclick="if(event.target===this)closeMiloSeance()">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:17px;margin-bottom:6px;text-align:center;">Tu as déjà une séance en cours</div>
+    <div id="milo-seance-etat" style="font-size:13px;color:var(--t2);text-align:center;margin-bottom:16px;line-height:1.5;"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn btn-red" style="width:100%;" onclick="_applyMiloSession('add')">➕ Ajouter à ma séance</button>
+      <button class="btn btn-bg2" style="width:100%;" onclick="_applyMiloSession('replace')">🔄 Remplacer ma séance</button>
+    </div>
+    <div id="milo-seance-avert" style="font-size:12px;color:var(--red);text-align:center;margin-top:10px;line-height:1.45;"></div>
+    <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeMiloSeance()">Annuler</button>
+  </div>
+</div>
+
 <!-- OVERLAY: Analyse morphologique -->
 <div class="overlay" id="ov-morpho-analysis" onclick="if(event.target===this)closeMorphoAnalysis()">
   <div class="modal" style="max-width:400px;">
