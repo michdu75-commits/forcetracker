@@ -18,6 +18,18 @@ donc pouvoir désigner *le deltoïde postérieur droit* et lui seul.
 d'une photo, le code posait des rectangles de couleur par-dessus — rendu inutilisable. Et sur
 iPhone, une image placée dans un SVG ne peut de toute façon pas être teintée.
 
+## Le modèle à égaler — la figurine masculine actuelle
+
+![Figurine de référence, vues avant et arrière](figurine-reference-neutre.png)
+
+*Version neutre (aucun muscle sollicité). Fichier vectoriel : `figurine-reference-neutre.svg`.*
+
+![Exemple coloré](figurine-exemple-seance.png)
+
+*La même figurine après une séance développé couché + squat + rowing : **rouge** = muscle moteur,
+**orange** = muscle en soutien, **brun** = non sollicité. C'est ce découpage qui rend le coloriage
+possible — chaque zone colorée ici est un tracé distinct dans le fichier.*
+
 ## Ce que fait la version masculine existante (le modèle à égaler)
 
 | | |
