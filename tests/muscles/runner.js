@@ -248,7 +248,10 @@ t('⭐ « Leg Curl Haltère » = ISCHIOS, plus jamais le biceps (« curl halter 
   // ⚠️ ATTENTE RÉVISÉE le 02/08 (pas une régression) : le leg curl a désormais SA règle, il
   // ne partage plus celle du soulevé roumain — donc plus de « lombaires », et les fessiers
   // passent en stabilisateur. Ce que ce test protège reste le même : ce n'est PAS du biceps.
-  au.legCurlH==='calves,glutes,hamstrings'&&au.legCurlHMov==='flexion-genou', au.legCurlH+' / '+au.legCurlHMov);
+  // ⚠️ ATTENTE RÉVISÉE le 02/08 (2ᵉ fois, et pas une régression) : les FESSIERS sont retirés —
+  // au leg curl la hanche ne bouge pas, le fessier n'y a rien à faire. Ce que ce test protège
+  // reste le même depuis le début : ce n'est PAS du biceps.
+  au.legCurlH==='calves,hamstrings'&&au.legCurlHMov==='flexion-genou', au.legCurlH+' / '+au.legCurlHMov);
 t('témoin : « Curl Haltères » reste un biceps', au.curlH==='biceps,forearms', 'reçu '+au.curlH);
 t('⭐ « Rotation Externe Épaule Abduction » = coiffe des rotateurs, plus jamais les FESSIERS',
   au.rotAbd==='rear-delt,traps', 'reçu '+au.rotAbd);
@@ -904,6 +907,61 @@ t('témoins : le Sissy Squat MACHINE reste guidé, le Squat à la Barre reste un
 t('les extensions de quadriceps restent une ISOLATION (aucun 3ᵉ muscle ajouté)',
   !jb.erreur && Object.keys(jb.legext).length===1 && jb.metLegext===4 && jb.metSissy===6.5,
   JSON.stringify(jb.legext)+' · MET '+jb.metLegext+' · sissy MET '+jb.metSissy);
+
+// ── FESSIERS : les corrections trouvées en relisant les 34 fiches une par une (02/08).
+const fs2=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>(_mscScores([E(n)])||{}).sc||{};
+  const m=n=>getExerciseMET(n);
+  return {curl:f('Leg Curl Couché Machine'), ext:f('Extension Quadriceps (Leg Extension)'),
+          metCurl:m('Leg Curl Couché Machine'), metExt:m('Extension Quadriceps (Leg Extension)'),
+          kbA:f('Extension Fessiers Arrière (Kickback)'), kbB:f('Kickback Machine'),
+          metKbA:m('Extension Fessiers Arrière (Kickback)'), metKbB:m('Kickback Machine'),
+          rdl:f('Soulevé de Terre Roumain Barre'), conv:f('Soulevé de Terre'),
+          metRdl:m('Soulevé de Terre Roumain Barre'), metRack:m('Tirage en Rack (Rack Pull)'),
+          rdlUni:f('Soulevé de Terre Roumain Unilatéral'),
+          sumoH:f('Soulevé de Terre Sumo Haltères'), sumoB:f('Soulevé de Terre Sumo'),
+          trap:f('Soulevé de Terre Trap Bar'), zercher:f('Zercher Deadlift'),
+          reeves:f('Reeves Deadlift'), gm:f('Inclinaison Lombaire (Good Morning)'),
+          swing:f('Kettlebell Swing'), hipU:f('Hip Thrust Unilatéral (Poussée de Hanche)'),
+          abd:f('Abduction Cuisses (Leg Abduction)'), add:f('Adduction Cuisses (Leg Adduction)')};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(fs2.erreur) console.log('     ⚠️  bloc fessiers en ERREUR : '+fs2.erreur);
+t('⭐ le LEG CURL ne compte plus les FESSIERS (la hanche ne bouge pas)',
+  !fs2.erreur && fs2.curl.hamstrings===2 && !fs2.curl.glutes && fs2.curl.calves===1,
+  JSON.stringify(fs2.curl));
+t('⭐ … et il redevient une ISOLATION, comme l\'extension de quadriceps (son miroir)',
+  !fs2.erreur && fs2.metCurl===4 && fs2.metExt===4, 'curl MET '+fs2.metCurl+' · extension MET '+fs2.metExt);
+t('⭐ les 3 KICKBACKS sont enfin traités pareil (ils étaient 6,5 et 4 pour le même geste)',
+  !fs2.erreur && fs2.metKbA===4 && fs2.metKbB===4 && !fs2.kbA['lower-back'] && !fs2.kbB['lower-back'],
+  'MET '+fs2.metKbA+' / '+fs2.metKbB);
+t('⭐ le ROUMAIN n\'a plus de QUADRICEPS (pas de poussée des jambes : c\'est sa définition)',
+  !fs2.erreur && !fs2.rdl.quads && fs2.conv.quads===1,
+  'roumain '+JSON.stringify(fs2.rdl)+' · témoin conventionnel quads='+fs2.conv.quads);
+t('⭐ … sans que ça déplace ses CALORIES : une charnière de hanche reste un mouvement du bas',
+  !fs2.erreur && fs2.metRdl===6.5 && fs2.metRack===6.5, 'roumain '+fs2.metRdl+' · rack pull '+fs2.metRack);
+t('le roumain UNILATÉRAL est aussi un exercice d\'équilibre (obliques + gainage)',
+  !fs2.erreur && fs2.rdlUni.obliques===1 && fs2.rdlUni.abs===1, JSON.stringify(fs2.rdlUni));
+t('⭐ les variantes SUMO disent enfin la même chose que le sumo à la barre',
+  !fs2.erreur && fs2.sumoH.quads===2 && fs2.sumoB.quads===2 && fs2.sumoH.hamstrings===1,
+  'haltères '+JSON.stringify(fs2.sumoH));
+t('le TRAP BAR est quadriceps-dominant, le ZERCHER n\'a pas d\'avant-bras (barre aux coudes)',
+  !fs2.erreur && fs2.trap.quads===2 && !fs2.zercher.forearms && fs2.zercher.biceps===1,
+  'trap '+JSON.stringify(fs2.trap)+' · zercher '+JSON.stringify(fs2.zercher));
+t('le REEVES tient les DISQUES : la prise et le haut du dos sont ce qui lâche',
+  !fs2.erreur && fs2.reeves.forearms===1 && fs2.reeves['rear-delt']===1, JSON.stringify(fs2.reeves));
+t('au GOOD MORNING les érecteurs sont MOTEURS, et le SWING a prise + gainage',
+  !fs2.erreur && fs2.gm['lower-back']===2 && fs2.swing.forearms===1 && fs2.swing.abs===1,
+  'good morning '+JSON.stringify(fs2.gm)+' · swing '+JSON.stringify(fs2.swing));
+t('le hip thrust UNILATÉRAL retient le bassin (obliques), le bilatéral a le quadriceps',
+  !fs2.erreur && fs2.hipU.obliques===1 && fs2.hipU.quads===1, JSON.stringify(fs2.hipU));
+t('⚠️ témoin honnête : l\'ABDUCTION est juste (moyen fessier), l\'ADDUCTION reste fausse',
+  // l'adducteur n'existe pas dans la figurine — arbitrage Michel en attente (R29).
+  // Ce test FIGE le fait qu'on le sait : le jour où les adducteurs entrent, il rougit.
+  !fs2.erreur && fs2.abd.glutes===2 && fs2.add.glutes===2,
+  'abduction '+JSON.stringify(fs2.abd)+' · adduction '+JSON.stringify(fs2.add));
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 

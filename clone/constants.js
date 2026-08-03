@@ -1300,6 +1300,99 @@ const EX_MUSCLES={
  //     et ils étaient déjà distingués correctement (le tirage inversé est quadriceps-dominant).
  'sled-push':                             {p:['quads','glutes'], s:['calves','abs'], vu:'2026-08-02'},
  'chariot-de-puissance-tirage-inverse-jambes':{p:['quads'], s:['glutes','calves'], vu:'2026-08-02'},
+
+ // ─── FESSIERS (34) — relus un par un le 02/08/2026 ───────────────────────────────
+ // ⭐ LE FIL DU GROUPE : trois exercices identiques rangés de trois façons différentes, et
+ //    des muscles crédités qui ne travaillent pas. C'est le groupe où les incohérences
+ //    INTERNES sautent le plus aux yeux quand on lit les 34 d'affilée.
+ //
+ // ─── LEG CURLS : flexion du GENOU, et rien d'autre.
+ // ✏️✏️ CORRECTION LA PLUS NETTE : les 7 leg curls comptaient les FESSIERS. Or au leg curl la
+ //    HANCHE NE BOUGE PAS — le fessier est un extenseur de hanche, il n'a strictement rien à
+ //    y faire. (Le mollet, lui, fléchit bien le genou : il reste.)
+ // ⭐ CONSÉQUENCE, et c'est une INCOHÉRENCE INTERNE qu'on ne voit qu'en comparant : avec ce
+ //    3ᵉ muscle fantôme, l'app comptait le leg curl comme POLYARTICULAIRE (6,5 en calories)
+ //    alors que l'extension de quadriceps — son miroir exact, même machine, même articulation
+ //    — était bien comptée comme une isolation (4). Deux mouvements symétriques, deux coûts
+ //    différents. Le leg curl redevient une isolation, comme il l'a toujours été.
+ 'leg-curl-couche-machine':               {p:['hamstrings'], s:['calves'], vu:'2026-08-02'},
+ 'leg-curl-assis-machine':                {p:['hamstrings'], s:['calves'], vu:'2026-08-02'},
+ 'leg-curl-unilateral-debout':            {p:['hamstrings'], s:['calves'], vu:'2026-08-02'},
+ 'leg-curl-haltere':                      {p:['hamstrings'], s:['calves'], vu:'2026-08-02'},
+ 'leg-curl-elastique':                    {p:['hamstrings'], s:['calves'], vu:'2026-08-02'},
+ 'leg-curl-inverse':                      {p:['hamstrings'], s:['calves'], vu:'2026-08-02'},
+ // ─── ABDUCTION : là, c'est JUSTE — le moyen fessier est bien LE muscle abducteur.
+ //     ⚠️ À comparer avec l'ADDUCTION (groupe Jambes), où le même fessier est crédité alors
+ //     qu'il est l'ANTAGONISTE. Les deux machines se font face dans toutes les salles, et
+ //     l'app en classait une bien et l'autre à l'envers.
+ 'abduction-cuisses-leg-abduction':       {p:['glutes'], s:[], vu:'2026-08-02'},
+ 'abducteurs-machine-debout':             {p:['glutes'], s:[], vu:'2026-08-02'},
+ // ─── HIP THRUSTS ET PONT FESSIER : extension de hanche, genou fléchi.
+ // ✏️ CORRECTION : le QUADRICEPS manquait — genou plié à 90°, c'est lui qui tient le tibia
+ //    vertical pendant toute la série.
+ 'hip-thrust-barre-poussee-de-hanche':    {p:['glutes'], s:['hamstrings','quads','lower-back'], vu:'2026-08-02'},
+ 'hip-thrust-haltere-poussee-de-hanche':  {p:['glutes'], s:['hamstrings','quads','lower-back'], vu:'2026-08-02'},
+ 'hip-thrust-machine-poussee-de-hanche':  {p:['glutes'], s:['hamstrings','quads','lower-back'], vu:'2026-08-02'},
+ 'pont-fessier-glute-bridge':             {p:['glutes'], s:['hamstrings','quads','lower-back'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : à UNE JAMBE, le bassin veut tourner — tout l'exercice consiste à l'en
+ //    empêcher. Les obliques et le gainage manquaient.
+ 'hip-thrust-unilateral-poussee-de-hanche':{p:['glutes'], s:['hamstrings','quads','lower-back','obliques','abs'], vu:'2026-08-02'},
+ // ─── KICKBACKS : isolation du fessier, hanche seule.
+ // ✏️✏️ INCOHÉRENCE INTERNE FLAGRANTE : « Extension Fessiers Arrière (Kickback) » comptait le
+ //    BAS DU DOS et coûtait 6,5 en calories, tandis que « Kickback Machine » et « Kickback
+ //    Cable » — LE MÊME MOUVEMENT — n'avaient que fessiers + ischios et coûtaient 4. Trois
+ //    fiches du même geste, deux traitements. Les trois s'alignent sur le bon : c'est une
+ //    isolation, et on est calé sur un banc ou une machine, les lombaires ne travaillent pas.
+ 'extension-fessiers-arriere-kickback':   {p:['glutes'], s:['hamstrings'], vu:'2026-08-02'},
+ 'kickback-machine':                      {p:['glutes'], s:['hamstrings'], vu:'2026-08-02'},
+ 'kickback-cable':                        {p:['glutes'], s:['hamstrings'], vu:'2026-08-02'},
+ // Le pull-through est un hip hinge à la poulie : charnière complète, pas une isolation.
+ 'tirage-cable-fessiers-cable-pull-through':{p:['glutes'], s:['hamstrings','lower-back'], vu:'2026-08-02'},
+ // ─── SOULEVÉS ROUMAINS ET JAMBES TENDUES
+ // ✏️ CORRECTION : ils étaient la copie conforme du soulevé conventionnel, QUADRICEPS COMPRIS.
+ //    Or l'absence de poussée des jambes est la DÉFINITION du roumain : les genoux restent
+ //    quasi tendus, on descend en poussant les hanches en arrière. C'est même à ça qu'on
+ //    reconnaît qu'il est bien exécuté. Le quadriceps n'y a pas sa place.
+ 'souleve-de-terre-roumain-barre':        {p:['hamstrings','glutes','lower-back'], s:['forearms','traps','lats'], vu:'2026-08-02'},
+ 'souleve-de-terre-roumain-halteres':     {p:['hamstrings','glutes','lower-back'], s:['forearms','traps','lats'], vu:'2026-08-02'},
+ 'souleve-de-terre-roumain-kettlebell':   {p:['hamstrings','glutes','lower-back'], s:['forearms','traps','lats'], vu:'2026-08-02'},
+ 'souleve-de-terre-roumain-landmine':     {p:['hamstrings','glutes','lower-back'], s:['forearms','traps','lats'], vu:'2026-08-02'},
+ 'souleve-de-terre-jambes-tendues':       {p:['hamstrings','glutes','lower-back'], s:['forearms','traps','lats'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le roumain à UNE JAMBE est d'abord un exercice d'ÉQUILIBRE — le bassin
+ //    veut s'ouvrir, les obliques le retiennent. Rien de tout ça n'était compté.
+ 'souleve-de-terre-roumain-unilateral':   {p:['hamstrings','glutes','lower-back'], s:['forearms','traps','obliques','abs'], vu:'2026-08-02'},
+ // ─── SUMO : ⭐ les 3 variantes étaient restées la copie du conventionnel, alors que le sumo
+ //     À LA BARRE a été corrigé hier (position ouverte = plus de quadriceps, moins d'ischios
+ //     et de bas du dos). Une correction faite à moitié laisse deux vérités dans le catalogue —
+ //     exactement ce que l'interdiction « pas de groupe à moitié » sert à empêcher.
+ 'souleve-de-terre-sumo-halteres':        {p:['glutes','quads','lower-back'], s:['hamstrings','traps','forearms','lats'], vu:'2026-08-02'},
+ 'souleve-de-terre-sumo-kettlebell':      {p:['glutes','quads','lower-back'], s:['hamstrings','traps','forearms','lats'], vu:'2026-08-02'},
+ 'souleve-de-terre-sumo-landmine':        {p:['glutes','quads','lower-back'], s:['hamstrings','traps','forearms','lats'], vu:'2026-08-02'},
+ // ─── AUTRES SOULEVÉS
+ // ✏️ CORRECTION : au TRAP BAR le buste est plus droit et les genoux plus fléchis — c'est le
+ //    plus quadriceps-dominant des soulevés, et c'est pour ça qu'on le conseille aux débutants.
+ //    Il était rangé comme un conventionnel. (Poignées sur les côtés : rien à retenir avec le
+ //    grand dorsal.)
+ 'souleve-de-terre-trap-bar':             {p:['glutes','quads','lower-back'], s:['hamstrings','traps','forearms'], vu:'2026-08-02'},
+ 'souleve-de-terre-avec-deficit':         {p:['glutes','hamstrings','lower-back'], s:['quads','forearms','traps','lats'], vu:'2026-08-02'},
+ 'souleve-de-terre-machine':              {p:['glutes','hamstrings','lower-back'], s:['quads','forearms','traps'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : au ZERCHER la barre est tenue dans le PLI DES COUDES — il n'y a rien dans
+ //    les mains, donc rien pour les avant-bras. Ce sont les BICEPS et le GAINAGE qui la
+ //    retiennent, et le buste très droit rend le mouvement quadriceps-dominant.
+ 'zercher-deadlift':                      {p:['glutes','quads','lower-back'], s:['hamstrings','traps','abs','biceps'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : au REEVES on attrape les DISQUES, bras très écartés — la prise et le haut
+ //    du dos sont ce qui lâche, c'est toute la raison d'être de cette variante.
+ 'reeves-deadlift':                       {p:['glutes','hamstrings','lower-back'], s:['forearms','traps','rear-delt','quads'], vu:'2026-08-02'},
+ // ─── LE RESTE
+ // Le GLUTE HAM RAISE combine flexion du genou ET extension de hanche : c'est L'exercice
+ // d'ischios, ils passent devant (le mollet fléchit le genou avec eux).
+ 'glute-ham-raise-ghd':                   {p:['hamstrings','glutes'], s:['calves','lower-back'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : le GOOD MORNING met la barre sur le dos avec un très long bras de levier —
+ //    les érecteurs y sont MOTEURS, pas de simples stabilisateurs. Et le mollet n'y fait rien.
+ 'inclinaison-lombaire-good-morning':     {p:['hamstrings','glutes','lower-back'], s:['abs'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : au SWING la kettlebell tire vers l'avant à chaque répétition — la PRISE et
+ //    le GAINAGE (la « planche debout » en haut du mouvement) manquaient tous les deux.
+ 'kettlebell-swing':                      {p:['glutes','hamstrings'], s:['lower-back','quads','abs','forearms'], vu:'2026-08-02'},
 };
 
 /** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou

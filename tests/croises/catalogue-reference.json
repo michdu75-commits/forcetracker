@@ -1,8 +1,8 @@
 {
- "genere": "2026-08-02",
+ "genere": "2026-08-03",
  "total": 337,
  "nbRegles": 69,
- "fragiles": 12,
+ "fragiles": 10,
  "ex": {
   "Abducteurs Machine Debout": {
    "p": "glutes",
@@ -694,11 +694,11 @@
   },
   "Extension Fessiers Arrière (Kickback)": {
    "p": "glutes",
-   "s": "hamstrings,lower-back",
+   "s": "hamstrings",
    "pat": "hip-hinge",
    "eq": "autre",
-   "met": 6.5,
-   "frag": 1
+   "met": 4,
+   "frag": 0
   },
   "Extension Lombaire sur Ballon": {
    "p": "glutes,lower-back",
@@ -1006,7 +1006,7 @@
   },
   "Hip Thrust Barre (Poussée de Hanche)": {
    "p": "glutes",
-   "s": "hamstrings,lower-back",
+   "s": "hamstrings,lower-back,quads",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -1014,7 +1014,7 @@
   },
   "Hip Thrust Haltère (Poussée de Hanche)": {
    "p": "glutes",
-   "s": "hamstrings,lower-back",
+   "s": "hamstrings,lower-back,quads",
    "pat": "hip-hinge",
    "eq": "libre",
    "met": 6.5,
@@ -1022,7 +1022,7 @@
   },
   "Hip Thrust Machine (Poussée de Hanche)": {
    "p": "glutes",
-   "s": "hamstrings,lower-back",
+   "s": "hamstrings,lower-back,quads",
    "pat": "hip-hinge",
    "eq": "guide",
    "met": 6.5,
@@ -1030,7 +1030,7 @@
   },
   "Hip Thrust Unilatéral (Poussée de Hanche)": {
    "p": "glutes",
-   "s": "hamstrings,lower-back",
+   "s": "abs,hamstrings,lower-back,obliques,quads",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -1077,8 +1077,8 @@
    "frag": 0
   },
   "Inclinaison Lombaire (Good Morning)": {
-   "p": "glutes,hamstrings",
-   "s": "calves,lower-back",
+   "p": "glutes,hamstrings,lower-back",
+   "s": "abs",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -1110,7 +1110,7 @@
   },
   "Kettlebell Swing": {
    "p": "glutes,hamstrings",
-   "s": "lower-back,quads",
+   "s": "abs,forearms,lower-back,quads",
    "pat": "hip-hinge",
    "eq": "libre",
    "met": 6.5,
@@ -1142,50 +1142,50 @@
   },
   "Leg Curl Assis Machine": {
    "p": "hamstrings",
-   "s": "calves,glutes",
+   "s": "calves",
    "pat": "flexion-genou",
    "eq": "guide",
-   "met": 6.5,
+   "met": 4,
    "frag": 0
   },
   "Leg Curl Couché Machine": {
    "p": "hamstrings",
-   "s": "calves,glutes",
+   "s": "calves",
    "pat": "flexion-genou",
    "eq": "guide",
-   "met": 6.5,
+   "met": 4,
    "frag": 0
   },
   "Leg Curl Haltère": {
    "p": "hamstrings",
-   "s": "calves,glutes",
+   "s": "calves",
    "pat": "flexion-genou",
    "eq": "libre",
-   "met": 6.5,
+   "met": 4,
    "frag": 0
   },
   "Leg Curl Inversé": {
    "p": "hamstrings",
-   "s": "calves,glutes",
+   "s": "calves",
    "pat": "flexion-genou",
    "eq": "guide",
-   "met": 6.5,
+   "met": 4,
    "frag": 0
   },
   "Leg Curl Unilatéral Debout": {
    "p": "hamstrings",
-   "s": "calves,glutes",
+   "s": "calves",
    "pat": "flexion-genou",
    "eq": "guide",
-   "met": 6.5,
+   "met": 4,
    "frag": 0
   },
   "Leg Curl Élastique": {
    "p": "hamstrings",
-   "s": "calves,glutes",
+   "s": "calves",
    "pat": "flexion-genou",
    "eq": "elast",
-   "met": 6.5,
+   "met": 4,
    "frag": 0
   },
   "Machine Oiseau": {
@@ -1414,7 +1414,7 @@
   },
   "Pont Fessier (Glute Bridge)": {
    "p": "glutes",
-   "s": "hamstrings,lower-back",
+   "s": "hamstrings,lower-back,quads",
    "pat": "hip-hinge",
    "eq": "autre",
    "met": 6.5,
@@ -1534,7 +1534,7 @@
   },
   "Reeves Deadlift": {
    "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "s": "forearms,quads,rear-delt,traps",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -1894,7 +1894,7 @@
   },
   "Soulevé de Terre Jambes Tendues": {
    "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "s": "forearms,lats,traps",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -1902,7 +1902,7 @@
   },
   "Soulevé de Terre Machine": {
    "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "s": "forearms,quads,traps",
    "pat": "hip-hinge",
    "eq": "guide",
    "met": 6.5,
@@ -1910,7 +1910,7 @@
   },
   "Soulevé de Terre Roumain Barre": {
    "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "s": "forearms,lats,traps",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -1918,7 +1918,7 @@
   },
   "Soulevé de Terre Roumain Haltères": {
    "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "s": "forearms,lats,traps",
    "pat": "hip-hinge",
    "eq": "libre",
    "met": 6.5,
@@ -1926,7 +1926,7 @@
   },
   "Soulevé de Terre Roumain Kettlebell": {
    "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "s": "forearms,lats,traps",
    "pat": "hip-hinge",
    "eq": "libre",
    "met": 6.5,
@@ -1934,7 +1934,7 @@
   },
   "Soulevé de Terre Roumain Landmine": {
    "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "s": "forearms,lats,traps",
    "pat": "hip-hinge",
    "eq": "libre",
    "met": 6.5,
@@ -1942,7 +1942,7 @@
   },
   "Soulevé de Terre Roumain Unilatéral": {
    "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "s": "abs,forearms,obliques,traps",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -1957,32 +1957,32 @@
    "frag": 0
   },
   "Soulevé de Terre Sumo Haltères": {
-   "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "p": "glutes,lower-back,quads",
+   "s": "forearms,hamstrings,lats,traps",
    "pat": "hip-hinge",
    "eq": "libre",
    "met": 6.5,
    "frag": 0
   },
   "Soulevé de Terre Sumo Kettlebell": {
-   "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "p": "glutes,lower-back,quads",
+   "s": "forearms,hamstrings,lats,traps",
    "pat": "hip-hinge",
    "eq": "libre",
    "met": 6.5,
    "frag": 0
   },
   "Soulevé de Terre Sumo Landmine": {
-   "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "p": "glutes,lower-back,quads",
+   "s": "forearms,hamstrings,lats,traps",
    "pat": "hip-hinge",
    "eq": "libre",
    "met": 6.5,
    "frag": 0
   },
   "Soulevé de Terre Trap Bar": {
-   "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "p": "glutes,lower-back,quads",
+   "s": "forearms,hamstrings,traps",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
@@ -2210,7 +2210,7 @@
    "pat": "hip-hinge",
    "eq": "guide",
    "met": 6.5,
-   "frag": 1
+   "frag": 0
   },
   "Tirage Incliné Poulie Haute": {
    "p": "lats",
@@ -2321,7 +2321,7 @@
    "s": "forearms,hamstrings,lats",
    "pat": "hip-hinge",
    "eq": "guide",
-   "met": 5.5,
+   "met": 6.5,
    "frag": 0
   },
   "Traction Assistée": {
@@ -2485,8 +2485,8 @@
    "frag": 0
   },
   "Zercher Deadlift": {
-   "p": "glutes,hamstrings,lower-back",
-   "s": "forearms,lats,quads,traps",
+   "p": "glutes,lower-back,quads",
+   "s": "abs,biceps,hamstrings,traps",
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,

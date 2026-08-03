@@ -476,6 +476,15 @@ conclure faux avec assurance.
   un exercice manifestement mal rangé. ⭐ *Un contrôle silencieux ne prouve rien tant qu'on n'a
   pas vérifié CE QU'IL REGARDE* — c'est la même leçon que les 19 schémas de mouvement inconnus de
   la table de correspondance (ft-v731), qui passaient en silence.
+- **⚖️ Une correction ANATOMIQUE qui déplace les CALORIES par effet de bord** (02/08, ft-v742,
+  déjà vu au farmer's walk en ft-v730) : retirer le quadriceps du soulevé **roumain** — il n'y
+  travaille pas, les genoux restent tendus — a fait tomber les 6 roumains de **6,5 à 5,5**, soit
+  le coût d'un développé couché pour l'exercice de chaîne postérieure le plus lourd du catalogue.
+  Cause : le modèle de calories déduit la région des muscles, et `lower-back` n'appartient à
+  **aucune** des deux régions — il gonfle donc le dénominateur sans jamais compter côté « bas ».
+  ⭐ *Quand on corrige une donnée, vérifier ce qui la LIT* : ici les calories, ailleurs le
+  calendrier, la figurine ou l'équilibre de séance. Le réflexe qui l'attrape : comparer les MET
+  avant/après sur les 337, systématiquement, même quand on n'a « touché qu'aux muscles ».
 - **Chercher un symptôme là où il n'y en a pas** (ft-v727) : je voulais tailler dans les consignes
   de Milo parce qu'elles occupaient 78 % du contexte. Michel : *« tu me fais flipper là, parce que
   franchement Milo il est au top »*. Rien n'était cassé. **« Ça marche » est une raison suffisante

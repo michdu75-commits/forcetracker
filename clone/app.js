@@ -186,6 +186,16 @@ function getExerciseMET(name) {
       const noms = Object.keys(sc);
       // moins de 3 muscles sollicités → exercice d'isolation
       if (noms.length < 3) return MET_ISO;
+      // ⚠️ UNE CHARNIÈRE DE HANCHE EST UN MOUVEMENT DU BAS DU CORPS, par définition — soulevés,
+      // roumains, good morning, rack pull. Sans cette ligne, la déduction par région se trompe :
+      // `lower-back` n'appartient à AUCUNE des deux régions ci-dessous, donc il gonfle le
+      // dénominateur sans jamais compter côté « bas » et tire la moyenne vers le haut du corps.
+      // Mesuré le 02/08 : en retirant le quadriceps du soulevé ROUMAIN (il n'y travaille pas,
+      // les genoux restent tendus), les 6 roumains basculaient de 6,5 à 5,5 — le coût d'un
+      // développé couché pour l'exercice de chaîne postérieure le plus lourd du catalogue.
+      // Une correction ANATOMIQUE ne doit pas déplacer les calories par effet de bord (même
+      // leçon que le farmer's walk, ft-v730). Touche exactement 7 exercices, tous des hinges.
+      if (typeof _movPattern === 'function' && _movPattern(n) === 'hip-hinge') return MET_LOWER;
       let bas = 0, tot = 0;
       for (const m of noms) { tot += sc[m]; if (_MET_REGIONS.bas.indexOf(m) >= 0) bas += sc[m]; }
       return (tot > 0 && bas / tot >= 0.5) ? MET_LOWER : MET_UPPER;
