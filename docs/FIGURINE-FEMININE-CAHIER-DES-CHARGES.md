@@ -7,11 +7,27 @@
 
 Un fichier **`figurine-gabarit.svg`** accompagne ce document. C'est un **formulaire déjà
 étiqueté** : les 82 emplacements portent leur nom définitif et leurs attributs, et **66 sont
-déjà dessinés** (repris de la figurine actuelle). **Il ne reste que 16 formes à créer.**
+déjà dessinés** (repris de la figurine actuelle).
+
+> ### ⚠️ CORRECTION DU 04/08/2026 — ce document sous-estimait le travail
+> Il annonçait **« il ne reste que 16 formes à créer »**. C'est **faux**, et un devis fondé
+> dessus aurait été faux aussi. La réalisation (livrée depuis, voir ft-v751) a montré que
+> **6 formes déjà dessinées doivent en plus être RE-DÉCOUPÉES** : on ne peut pas ajouter
+> `pectoralis_middle` sans retailler le pectoral existant, ni `vastus_lateralis` sans
+> retailler le quadriceps. Une subdivision n'est pas un ajout : c'est un **remplacement de
+> la forme d'origine par trois formes qui se raccordent**.
+>
+> **Le compte honnête : 16 formes à créer + 6 à re-découper = 22 formes touchées.**
+>
+> Et un point que le mot « subdiviser » cachait : les trois bandes doivent **se raccorder sans
+> trou ni chevauchement**, sinon la figurine laisse voir la peau entre deux muscles.
+>
+> *Une estimation optimiste dans un cahier des charges ne se paie pas au moment où on l'écrit :
+> elle se paie chez le fournisseur, en fin de travail.*
 
 ![Le gabarit tel qu'il s'ouvre](figurine-gabarit.png)
 
-**Les 16 à dessiner** — tout le reste est fourni :
+**Les 16 à dessiner** (+ les 6 à re-découper, voir l'encadré ci-dessus) :
 
 | Muscle | Ce qu'il faut faire |
 |---|---|
