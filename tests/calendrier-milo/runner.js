@@ -125,8 +125,14 @@ console.log('\n─── MILO NE CALCULE PLUS LES JOURS ────────
     !/Dernier RECORD en date:/.test(ctx));
   // 30/07 : Milo a appelé « Ta séance d'hier » une séance seulement PRÉPARÉE la veille (jamais
   // faite — hier était un repos). La règle FAITE vs PRÉPARÉE doit accompagner la liste des séances.
+  // ⚠️ La formulation a changé en ft-v752 : « ces séances sont les SEULES réellement FAITES »
+  // faisait croire à Milo que son historique s'arrêtait à 5 séances. L'INTENTION du test ne
+  // change pas (la règle faite/préparée doit accompagner la liste) — seuls les mots visés
+  // changent, et on vérifie en plus que la fenêtre ne se fait plus passer pour tout l'historique.
   t('⭐ la règle « séance FAITE ≠ séance PRÉPARÉE » accompagne les dernières séances',
-    /réellement FAITES/.test(ctx)&&/PRÉPARÉE/.test(ctx)&&/REPOS/.test(ctx));
+    /bien été FAITE/.test(ctx)&&/PRÉPARÉE/.test(ctx)&&/REPOS/.test(ctx));
+  t('⭐ … sans laisser croire que ces séances sont tout son historique (ft-v752)',
+    !/sont les seules réellement FAITES/.test(ctx)&&/PAS SON HISTORIQUE/.test(ctx));
 }
 
 // ── 💰 CACHE DE PROMPT (31/07) : tout ce qui précède « SITUATION DE L'INSTANT » est STABLE ──

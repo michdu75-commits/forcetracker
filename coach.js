@@ -1316,7 +1316,16 @@ function buildCoachContext() {
   // Historique détaillé : le kg×reps de CHAQUE série (pas juste le nb de séries + volume total),
   // sinon Milo ne peut pas parler des charges réellement soulevées (retour Michel : « il prend
   // la charge totale mais pas chaque exercice »). É = échauffement, X = échec.
-  const recentSessions = S.sessions.slice(0, 5).map(s => {
+  // ⚠️ CETTE FENÊTRE EST ÉTROITE, ET IL FAUT LE DIRE À MILO — sinon il la prend pour tout
+  // l'historique (bug du 03/08 : « je vois tes séances sur les 5 dernières… donc environ une
+  // semaine en arrière », alors que la mémoire longue lui donne le parcours depuis l'inscription).
+  // D'où ces 2 repères, utilisés dans le prompt juste sous la liste : combien il en voit, et
+  // depuis quand. Deux sources qui se contredisent → il croit toujours la plus restrictive.
+  const _NB_DETAIL = 5;
+  const _sessVues = S.sessions.slice(0, _NB_DETAIL);
+  const _nbTotalSess = (S.sessions||[]).length;
+  const _depuisQuand = _sessVues.length ? _sessVues[_sessVues.length-1].date : '';
+  const recentSessions = _sessVues.map(s => {
     const exStr = (s.exs||s.exercises||[]).map(e => {
       const ds = (e.sets||[]).filter(x => x.done);
       const setsStr = ds.length
@@ -1678,7 +1687,8 @@ ${S.cycle && S.cycle.active ? `Actif - Semaine ${curWeek}/${S.cycle.weeks} - Pha
 ${wktText}
 DERNIÈRES SÉANCES:
 ${recentSessions}
-→ Ces séances sont les seules réellement FAITES (chacune avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si aucune séance n'est listée pour un jour, ce jour était un REPOS : dis-le tel quel. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
+→ ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans SA MÉMOIRE LONGUE plus bas. ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
+→ Parmi ces séances, chacune a bien été FAITE (avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si un jour COMPRIS DANS LA PÉRIODE ci-dessus n'a aucune séance listée, ce jour était un REPOS : dis-le tel quel. ⚠️ Mais ne conclus JAMAIS « repos » pour un jour PLUS ANCIEN que cette période — tu ne l'as pas sous les yeux, ce n'est pas la même chose que ne rien avoir fait. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
 ${(()=>{
   // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :
   // l'Accueil affichait « je m'en souviens » et le chat n'avait JAMAIS reçu l'info. Milo affirmait

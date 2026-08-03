@@ -956,6 +956,65 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c7.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// H. LA MÉMOIRE DE MILO — il ne doit PLUS croire qu'il ne voit qu'une semaine
+// Bug du 03/08 (capture de Michel) : « Je vois tes séances sur les 5 dernières… donc environ
+// une semaine en arrière. » Or la mémoire longue lui donne TOUT le parcours depuis l'inscription.
+// Cause : deux sources qui se contredisent — juste sous la liste, le prompt affirmait « ces
+// séances sont les SEULES réellement FAITES ». Il croit toujours la plus restrictive.
+// ⚠️ Et la même phrase disait « si aucune séance n'est listée pour un jour, c'était un REPOS » :
+// au-delà de la fenêtre, Milo déclarait donc en repos des jours d'entraînement.
+console.log('\n═══ H. La mémoire de Milo — la fenêtre étroite ne doit plus passer pour tout l\'historique ═══');
+{
+  const c8=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p8=await c8.newPage();
+  await p8.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p8.waitForTimeout(2200);
+  const r=await p8.evaluate(()=>{
+   try{
+    const o={};
+    // 24 séances étalées du 17 juin au 3 août — bien au-delà de la fenêtre de détail
+    const sess=[]; const d0=new Date('2026-06-17T12:00:00');
+    for(let i=0;i<40;i++){
+      const d=new Date(d0.getTime()+i*2*86400000);
+      if(d>new Date('2026-08-03T12:00:00'))break;
+      sess.push({date:d.toISOString().slice(0,10),volume:5000,
+        exs:[{name:'Squat',sets:[{kg:100+i,reps:5,done:true,type:'N'}]}]});
+    }
+    sess.reverse(); S.sessions=sess; o.nb=sess.length;
+    const ctx=buildCoachContext();
+    o.plusDeSeules = !/sont les seules réellement FAITES/.test(ctx);
+    o.ditLeTotal   = new RegExp('a fait '+sess.length+' séances au total').test(ctx);
+    o.interditUneSemaine = /Ne dis JAMAIS que tu ne vois qu'une semaine/.test(ctx);
+    o.reposBorne  = /ne conclus JAMAIS « repos » pour un jour PLUS ANCIEN/.test(ctx);
+    o.memoireLongue = /MÉMOIRE LONGUE/.test(ctx);
+    // le repos reste affirmable DANS la fenêtre (on n'a pas cassé le correctif du 30/07)
+    o.reposDansFenetre = /COMPRIS DANS LA PÉRIODE ci-dessus.{0,80}REPOS/s.test(ctx);
+    // TÉMOIN : avec moins de séances que la fenêtre, on n'annonce pas un total trompeur
+    S.sessions=sess.slice(0,3);
+    // ⚠️ viser NOTRE phrase et pas « X séances au total » tout court : la mémoire longue
+    // emploie les mêmes mots, le témoin rougissait sur elle (attrapé le 03/08).
+    o.peuDeSeances = !/a fait \d+ séances au total/.test(buildCoachContext());
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ la phrase « ces séances sont les SEULES faites » a disparu du contexte',
+    r.plusDeSeules===true, JSON.stringify(r));
+  t('⭐ Milo reçoit le NOMBRE TOTAL de séances, pas seulement les 5 détaillées',
+    r.ditLeTotal===true, JSON.stringify(r));
+  t('⭐ il lui est explicitement interdit de dire « je ne vois qu\'une semaine »',
+    r.interditUneSemaine===true, JSON.stringify(r));
+  t('⭐⭐ il ne peut plus conclure « repos » pour un jour hors de la fenêtre',
+    r.reposBorne===true, JSON.stringify(r));
+  t('… mais le repos reste affirmable DANS la fenêtre (correctif du 30/07 intact)',
+    r.reposDansFenetre===true, JSON.stringify(r));
+  t('la mémoire longue est bien là, à côté (les 2 sources ne se contredisent plus)',
+    r.memoireLongue===true, JSON.stringify(r));
+  t('TÉMOIN : avec 3 séances seulement, aucun « X séances au total » trompeur',
+    r.peuDeSeances===true, JSON.stringify(r));
+  await c8.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
