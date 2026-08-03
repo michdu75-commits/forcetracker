@@ -12,7 +12,6 @@ Bench Dips;bench-dips;Triceps;exercises/bench-dips-sur-banc.webp;true;bench dip
 Bird Dog;bird-dog;Lombaires;exercises/bird-dog.webp;true;bird dog exercise
 Box Jump;box-jump;Full Body;exercises/box-jump.webp;true;box jump plyometric
 Burpees;burpees;Full Body;exercises/burpees.webp;true;burpee
-Câble Crunch;cable-crunch;Abdominaux;;false;cable crunch abdominal
 Chaise (Wall Sit);chaise-wall-sit;Jambes;exercises/squat-statique-contre-mur-exercice-chaise.webp;true;
 Chaise Romaine;chaise-romaine;Abdominaux;;false;captain chair leg raise
 Chariot de Puissance — Curl Biceps;chariot-de-puissance-curl-biceps;Biceps;exercises/chariot-curl-biceps.webp;true;power sled biceps curl
@@ -82,7 +81,7 @@ Dips aux Anneaux;dips-aux-anneaux;Triceps;exercises/dips-aux-anneaux.webp;true;r
 Dips entre Deux Bancs;dips-entre-deux-bancs;Triceps;exercises/dips-entre-deux-bancs.webp;true;bench dips between two benches
 Dips Lestés;dips-lestes;Triceps;;false;dips weighted
 Dips Machine Assistée;dips-machine-assistee;Pectoraux;exercises/dips-assiste-machine.webp;true;assisted dip machine
-Dips Parallèles;dips-paralleles;Pectoraux;exercises/dips-triceps-paralleles.webp;true;parallel bar dip
+Dips Triceps (Buste Droit);dips-paralleles;Pectoraux;exercises/dips-triceps-paralleles.webp;true;parallel bar dip
 Drapeau (Dragon Flag);drapeau-dragon-flag;Abdominaux;;false;dragon flag
 Écarté Arrière Élastique;ecarte-arriere-elastique;Épaules;exercises/ecarte-arriere-elastique.webp;true;
 Écarté Décliné Haltères;ecarte-decline-halteres;Pectoraux;exercises/ecartes-decline-avec-halteres.webp;true;decline dumbbell fly
@@ -164,7 +163,6 @@ Jefferson Curl;jefferson-curl;Lombaires;;false;
 Jefferson Squat;jefferson-squat;Jambes;exercises/jefferson-squat.webp;true;jefferson squat
 Jumping Jack;jumping-jack;Full Body;exercises/jumping-jack.webp;true;jumping jack
 Kettlebell Swing;kettlebell-swing;Fessiers;exercises/kettlebell-swing.webp;true;kettlebell swing
-Kickback Cable;kickback-cable;Fessiers;;false;cable glute kickback
 Kickback Machine;kickback-machine;Fessiers;;false;glute kickback machine
 L-Sit;l-sit;Abdominaux;;false;l-sit
 Leg Curl Assis Machine;leg-curl-assis-machine;Fessiers;exercises/leg-curl-assis-machine.webp;true;seated leg curl machine
@@ -326,7 +324,6 @@ Traction Supination (Chin-up);traction-supination-chin-up;Dos;exercises/traction
 Tractions (Pull-up);tractions-pull-up;Dos;exercises/traction-musculation-dos.webp;true;pull up
 Tractions aux Anneaux;tractions-aux-anneaux;Dos;exercises/tractions-aux-anneaux.webp;true;ring pull up
 Triceps Corde Poulie;triceps-corde-poulie;Triceps;;false;triceps rope pushdown
-Triceps Haltère;triceps-haltere;Triceps;exercises/triceps-haltere-un-bras.webp;true;triceps overhead extension dumbbell
 Triceps Machine;triceps-machine;Triceps;exercises/triceps-machine.webp;true;triceps machine
 Triceps Poulie;triceps-poulie;Triceps;exercises/triceps-poulie-haute-barre.webp;true;triceps pushdown cable
 Triceps Poulie Basse;triceps-poulie-basse;Triceps;exercises/triceps-poulie-basse-verticale.webp;true;low cable triceps extension

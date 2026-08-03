@@ -12,7 +12,6 @@ Bench Dips;bench-dips;Triceps;Triceps;Deltoïde antérieur + Pectoraux;Poussée 
 Bird Dog;bird-dog;Lombaires;Abdominaux + Lombaires;Fessiers + Obliques;Gainage / abdominaux;Polyvalent / non déterminé;5.5;accessoire;bird dog exercise;exercises/bird-dog.webp;true;true
 Box Jump;box-jump;Full Body;Fessiers + Quadriceps;Abdominaux + Mollets + Ischio-jambiers;Saut / pliométrie;Cardio / conditionnement;8;accessoire;box jump plyometric;exercises/box-jump.webp;true;true
 Burpees;burpees;Full Body;Fessiers + Quadriceps;Abdominaux + Mollets + Deltoïde antérieur + Pectoraux + Triceps;Saut / pliométrie;Cardio / conditionnement;8;accessoire;burpee;exercises/burpees.webp;true;true
-Câble Crunch;cable-crunch;Abdominaux;Abdominaux;Obliques;Gainage / abdominaux;"Guidé (machine, poulie)";4;accessoire;cable crunch abdominal;;true;true
 Chaise (Wall Sit);chaise-wall-sit;Jambes;Quadriceps;Abdominaux + Fessiers;Squat (flexion hanche+genou);Poids du corps;6.5;ancre;;exercises/squat-statique-contre-mur-exercice-chaise.webp;true;true
 Chaise Romaine;chaise-romaine;Abdominaux;Abdominaux + Fléchisseurs de hanche;Obliques;Gainage / abdominaux;Poids du corps;5.5;accessoire;captain chair leg raise;;true;true
 Chariot de Puissance — Curl Biceps;chariot-de-puissance-curl-biceps;Biceps;Biceps;Avant-bras;Flexion du coude (biceps);Cardio / conditionnement;4;accessoire;power sled biceps curl;exercises/chariot-curl-biceps.webp;true;true
@@ -82,7 +81,7 @@ Dips aux Anneaux;dips-aux-anneaux;Triceps;Pectoraux + Triceps;Abdominaux + Delto
 Dips entre Deux Bancs;dips-entre-deux-bancs;Triceps;Triceps;Deltoïde antérieur + Pectoraux;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;bench dips between two benches;exercises/dips-entre-deux-bancs.webp;true;true
 Dips Lestés;dips-lestes;Triceps;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;dips weighted;;true;true
 Dips Machine Assistée;dips-machine-assistee;Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);"Guidé (machine, poulie)";5.5;ancre;assisted dip machine;exercises/dips-assiste-machine.webp;true;true
-Dips Parallèles;dips-paralleles;Pectoraux;Pectoraux + Triceps;Deltoïde antérieur;Poussée horizontale (pectoraux);Poids du corps;5.5;ancre;parallel bar dip;exercises/dips-triceps-paralleles.webp;true;true
+Dips Triceps (Buste Droit);dips-paralleles;Pectoraux;Triceps;Deltoïde antérieur + Pectoraux;Extension du coude (triceps);Poids du corps;5.5;accessoire;parallel bar dip;exercises/dips-triceps-paralleles.webp;true;true
 Drapeau (Dragon Flag);drapeau-dragon-flag;Abdominaux;Abdominaux;Deltoïde antérieur + Fléchisseurs de hanche + Grand dorsal + Obliques;Gainage / abdominaux;Polyvalent / non déterminé;5.5;accessoire;dragon flag;;true;true
 Écarté Arrière Élastique;ecarte-arriere-elastique;Épaules;Deltoïde postérieur;Deltoïde moyen + Trapèzes;Élévation / rotation épaule;Élastique;5.5;accessoire;;exercises/ecarte-arriere-elastique.webp;true;true
 Écarté Décliné Haltères;ecarte-decline-halteres;Pectoraux;Pectoraux;Deltoïde antérieur;Poussée horizontale (pectoraux);"Poids libre (haltères, kettlebell)";4;accessoire;decline dumbbell fly;exercises/ecartes-decline-avec-halteres.webp;true;true
@@ -164,7 +163,6 @@ Jefferson Curl;jefferson-curl;Lombaires;Ischio-jambiers + Lombaires;Avant-bras +
 Jefferson Squat;jefferson-squat;Jambes;Fessiers + Quadriceps;Avant-bras + Ischio-jambiers + Lombaires + Obliques;Charnière de hanche (hip hinge);Barre;6.5;ancre;jefferson squat;exercises/jefferson-squat.webp;true;true
 Jumping Jack;jumping-jack;Full Body;Mollets + Deltoïde moyen;Abdominaux + Deltoïde antérieur + Fessiers + Quadriceps;Saut / pliométrie;Cardio / conditionnement;8;accessoire;jumping jack;exercises/jumping-jack.webp;true;true
 Kettlebell Swing;kettlebell-swing;Fessiers;Fessiers + Ischio-jambiers;Abdominaux + Avant-bras + Lombaires + Quadriceps;Charnière de hanche (hip hinge);"Poids libre (haltères, kettlebell)";6.5;ancre;kettlebell swing;exercises/kettlebell-swing.webp;true;true
-Kickback Cable;kickback-cable;Fessiers;Fessiers;Ischio-jambiers;Charnière de hanche (hip hinge);"Guidé (machine, poulie)";4;ancre;cable glute kickback;;true;true
 Kickback Machine;kickback-machine;Fessiers;Fessiers;Ischio-jambiers;Charnière de hanche (hip hinge);"Guidé (machine, poulie)";4;ancre;glute kickback machine;;true;true
 L-Sit;l-sit;Abdominaux;Abdominaux + Fléchisseurs de hanche;Deltoïde antérieur + Obliques + Triceps;Gainage / abdominaux;Poids du corps;5.5;accessoire;l-sit;;true;true
 Leg Curl Assis Machine;leg-curl-assis-machine;Fessiers;Ischio-jambiers;Mollets;Flexion de genou (ischios);"Guidé (machine, poulie)";4;accessoire;seated leg curl machine;exercises/leg-curl-assis-machine.webp;true;true
@@ -326,7 +324,6 @@ Traction Supination (Chin-up);traction-supination-chin-up;Dos;Biceps + Grand dor
 Tractions (Pull-up);tractions-pull-up;Dos;Grand dorsal;Biceps + Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;pull up;exercises/traction-musculation-dos.webp;true;true
 Tractions aux Anneaux;tractions-aux-anneaux;Dos;Grand dorsal;Biceps + Avant-bras + Deltoïde postérieur + Trapèzes;Tirage vertical;Poids du corps;5.5;ancre;ring pull up;exercises/tractions-aux-anneaux.webp;true;true
 Triceps Corde Poulie;triceps-corde-poulie;Triceps;Triceps;;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;triceps rope pushdown;;true;true
-Triceps Haltère;triceps-haltere;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Poids libre (haltères, kettlebell)";4;accessoire;triceps overhead extension dumbbell;exercises/triceps-haltere-un-bras.webp;true;true
 Triceps Machine;triceps-machine;Triceps;Triceps;;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;triceps machine;exercises/triceps-machine.webp;true;true
 Triceps Poulie;triceps-poulie;Triceps;Triceps;;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;triceps pushdown cable;exercises/triceps-poulie-haute-barre.webp;true;true
 Triceps Poulie Basse;triceps-poulie-basse;Triceps;Triceps;Deltoïde antérieur;Extension du coude (triceps);"Guidé (machine, poulie)";4;accessoire;low cable triceps extension;exercises/triceps-poulie-basse-verticale.webp;true;true

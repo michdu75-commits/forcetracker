@@ -56,6 +56,7 @@ const TOLERE={
   groupe:{
     // le sélecteur range cet exercice là où on le CHERCHE, pas là où ça tire
     'Planche Inversée':'rangée dans Abdominaux parce qu\'on la cherche avec les gainages ; ses muscles moteurs sont bien fessiers + lombaires',
+    'Dips Triceps (Buste Droit)':'rangé dans Pectoraux avec les autres dips, parce qu\'on l\'y cherche — mais buste droit c\'est le TRICEPS qui mène (03/08). ⏭️ Devrait sans doute passer en Triceps, comme Bench Dips : c\'est un changement visible par l\'utilisateur, donc l\'arbitrage de Michel (R29).',
   },
   // ⑤ schémas volontairement différents des muscles
   schema:{
@@ -118,9 +119,14 @@ t('⭐ ② deux exercices ne partagent jamais la même ANIMATION',
   imgDbl.length===0, imgDbl.map(([k,v])=>k+' → '+v.join(' = ')).join('\n         '));
 
 // ── ③ PAS DEUX EXERCICES SUR LE MÊME TERME ANGLAIS ──────────────────────────
-const parEn={}; ex.forEach(e=>{ if(e.en) (parEn[e.en]=parEn[e.en]||[]).push(e.nom); });
+// ⚠️ On compare l'ENSEMBLE DES MOTS, pas la chaîne. Mesuré le 03/08 : « cable glute
+// kickback » et « glute kickback cable » désignaient le même exercice et passaient au
+// travers, parce que le contrôle comparait caractère par caractère. Deux fiches avec les
+// mêmes mots dans un autre ordre, c'est le même exercice — il n'y a pas d'autre lecture.
+const motsEn=s2=>[...new Set((s2||'').match(/[a-z]+/g)||[])].sort().join(' ');
+const parEn={}; ex.forEach(e=>{ if(e.en) (parEn[motsEn(e.en)]=parEn[motsEn(e.en)]||[]).push(e.nom); });
 const enDbl=Object.entries(parEn).filter(([,v])=>v.length>1);
-t('⭐ ③ deux exercices ne partagent jamais le même TERME ANGLAIS',
+t('⭐ ③ deux exercices ne portent jamais les mêmes MOTS anglais (même dans un autre ordre)',
   enDbl.length===0, enDbl.map(([k,v])=>'« '+k+' » → '+v.join(' = ')).join('\n         '));
 
 // ── ④ LE GROUPE NE CONTREDIT PAS LES MUSCLES ────────────────────────────────

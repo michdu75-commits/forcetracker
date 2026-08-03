@@ -1,6 +1,6 @@
 {
  "genere": "2026-08-02",
- "nb": 337,
+ "nb": 334,
  "ids": {
   "abducteurs-machine-debout": "Abducteurs Machine Debout",
   "abduction-cuisses-leg-abduction": "Abduction Cuisses (Leg Abduction)",
@@ -15,7 +15,6 @@
   "bird-dog": "Bird Dog",
   "box-jump": "Box Jump",
   "burpees": "Burpees",
-  "cable-crunch": "Câble Crunch",
   "chaise-romaine": "Chaise Romaine",
   "chaise-wall-sit": "Chaise (Wall Sit)",
   "chariot-de-puissance-curl-biceps": "Chariot de Puissance — Curl Biceps",
@@ -85,7 +84,7 @@
   "dips-entre-deux-bancs": "Dips entre Deux Bancs",
   "dips-lestes": "Dips Lestés",
   "dips-machine-assistee": "Dips Machine Assistée",
-  "dips-paralleles": "Dips Parallèles",
+  "dips-paralleles": "Dips Triceps (Buste Droit)",
   "drapeau-dragon-flag": "Drapeau (Dragon Flag)",
   "ecarte-arriere-elastique": "Écarté Arrière Élastique",
   "ecarte-decline-halteres": "Écarté Décliné Haltères",
@@ -167,7 +166,6 @@
   "jefferson-squat": "Jefferson Squat",
   "jumping-jack": "Jumping Jack",
   "kettlebell-swing": "Kettlebell Swing",
-  "kickback-cable": "Kickback Cable",
   "kickback-machine": "Kickback Machine",
   "l-sit": "L-Sit",
   "leg-curl-assis-machine": "Leg Curl Assis Machine",
@@ -329,7 +327,6 @@
   "tractions-aux-anneaux": "Tractions aux Anneaux",
   "tractions-pull-up": "Tractions (Pull-up)",
   "triceps-corde-poulie": "Triceps Corde Poulie",
-  "triceps-haltere": "Triceps Haltère",
   "triceps-machine": "Triceps Machine",
   "triceps-poulie": "Triceps Poulie",
   "triceps-poulie-basse": "Triceps Poulie Basse",
@@ -339,5 +336,6 @@
   "windshield-wiper": "Windshield Wiper",
   "y-raise-w-raise": "Y Raise / W Raise",
   "zercher-deadlift": "Zercher Deadlift"
- }
+ },
+ "note": "3 identifiants RETIRÉS le 03/08/2026 (cable-crunch, kickback-cable, triceps-haltere) : c'étaient des DOUBLONS, fusionnés dans crunch-poulie, extension-fessiers-arriere-kickback et extension-nuque-haltere. Leur NOM est conservé comme ancien nom du gardien, donc l'historique suit. Retrait VOLONTAIRE — si un identifiant disparaît sans cette note, c'est un bug."
 }

@@ -1,6 +1,6 @@
 {
  "genere": "2026-08-03",
- "total": 337,
+ "total": 334,
  "nbRegles": 69,
  "fragiles": 0,
  "ex": {
@@ -412,14 +412,6 @@
    "met": 4,
    "frag": 0
   },
-  "Câble Crunch": {
-   "p": "abs",
-   "s": "obliques",
-   "pat": "gainage-abdos",
-   "eq": "guide",
-   "met": 4,
-   "frag": 0
-  },
   "Dips": {
    "p": "pec,triceps",
    "s": "front-delt",
@@ -452,10 +444,10 @@
    "met": 5.5,
    "frag": 0
   },
-  "Dips Parallèles": {
-   "p": "pec,triceps",
-   "s": "front-delt",
-   "pat": "poussee-horizontale",
+  "Dips Triceps (Buste Droit)": {
+   "p": "triceps",
+   "s": "front-delt,pec",
+   "pat": "extension-triceps",
    "eq": "corps",
    "met": 5.5,
    "frag": 0
@@ -1114,14 +1106,6 @@
    "pat": "hip-hinge",
    "eq": "libre",
    "met": 6.5,
-   "frag": 0
-  },
-  "Kickback Cable": {
-   "p": "glutes",
-   "s": "hamstrings",
-   "pat": "hip-hinge",
-   "eq": "guide",
-   "met": 4,
    "frag": 0
   },
   "Kickback Machine": {
@@ -2409,14 +2393,6 @@
    "s": "",
    "pat": "extension-triceps",
    "eq": "guide",
-   "met": 4,
-   "frag": 0
-  },
-  "Triceps Haltère": {
-   "p": "triceps",
-   "s": "front-delt",
-   "pat": "extension-triceps",
-   "eq": "libre",
    "met": 4,
    "frag": 0
   },

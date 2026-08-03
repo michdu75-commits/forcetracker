@@ -1332,7 +1332,6 @@ Object.assign(_EX_EQUIV,{
   'cable crossover':'Croisé Poulie (Cable Crossover)','cross over':'Croisé Poulie (Cable Crossover)','high cable fly':'Croisé Poulie (Cable Crossover)','low cable fly':'Croisé Poulie (Cable Crossover)','vis a vis':'Croisé Poulie (Cable Crossover)',
   'bodyweight dips':'Dips','chest dips':'Dips','dips pectoraux':'Dips',
   'assisted dip':'Dips Machine Assistée','assisted dip machine':'Dips Machine Assistée','machine dips assistes':'Dips Machine Assistée',
-  'parallel bar dip':'Dips Parallèles',
   'barbell bench press':'Développé Couché','bb bench':'Développé Couché','bench':'Développé Couché','bench libre':'Développé Couché','bench press':'Développé Couché','dc':'Développé Couché','developpe barre':'Développé Couché','developpe couche barre':'Développé Couché','developpe poitrine barre':'Développé Couché','flat bench press':'Développé Couché',
   'db bench':'Développé Couché Haltères','db bench press':'Développé Couché Haltères','developpe halteres':'Développé Couché Haltères','developpe poitrine halteres':'Développé Couché Haltères','dumbbell bench press':'Développé Couché Haltères','flat dumbbell press':'Développé Couché Haltères',
   'decline barbell bench':'Développé Décliné','decline bench press':'Développé Décliné','developpe decline barre':'Développé Décliné',
@@ -2840,6 +2839,15 @@ function _exUsageMap(){
   return u;
 }
 function _exDedup(arr){ const vu=new Set(); return arr.filter(e=>{ if(vu.has(e.n))return false; vu.add(e.n); return true; }); }
+// ⚠️ LES ANCIENS NOMS RESTENT CHERCHABLES. Quand on renomme ou qu'on fusionne un exercice,
+// son ancien nom disparaît de la liste — et quelqu'un qui l'a toujours en tête ne le trouve
+// plus. Mesuré le 03/08 : après la fusion des doublons, taper « Triceps Haltère » ou
+// « Dips Parallèles » ne rendait plus AUCUN résultat. La table d'identité garde pourtant tous
+// les anciens noms ; il suffisait de les lire. Vaut pour tous les renommages, passés et à venir.
+function _anciensNoms(nom){
+  try{ const id=(typeof exId==='function')?exId(nom):null;
+       return (id&&EX_IDS[id])?EX_IDS[id].slice(1):[]; }catch(e){ return []; }
+}
 function filterEx(){
   const q=(document.getElementById('ex-search').value||'').toLowerCase().trim();
   const all=[...EXLIB,...(S.customExercises||[])].sort((a,b)=>a.n.localeCompare(b.n,'fr'));
@@ -2891,15 +2899,17 @@ function filterEx(){
       if(nn.indexOf(qn)>=0) return 2;                         // le nom la CONTIENT
       const en=(typeof EX_EN!=='undefined'&&EX_EN[e.n])?_normEx(EX_EN[e.n]):'';
       if(en&&en.indexOf(qn)>=0) return 3;                     // le terme anglais
-      if(_normEx(e.g).indexOf(qn)>=0) return 4;               // le groupe musculaire
-      return 5;                                               // même famille de mouvement
+      if(_anciensNoms(e.n).some(a=>_normEx(a).indexOf(qn)>=0)) return 4;  // un ANCIEN nom
+      if(_normEx(e.g).indexOf(qn)>=0) return 5;               // le groupe musculaire
+      return 6;                                               // même famille de mouvement
     };
     const f=all.filter(e=>{
       if(_patCible){ try{ if(_movPattern(e.n)===_patCible) return true; }catch(x){} }
       // Cherche aussi dans les termes ANGLAIS (EX_EN) → « shoulder press », « bench press », « leg press »…
       // trouvent l'exercice même si son nom français ne contient pas le mot anglais.
       const en=(typeof EX_EN!=='undefined'&&EX_EN[e.n])?EX_EN[e.n].toLowerCase():'';
-      return e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q)||(en&&(en.includes(q)||_normEx(en).includes(qn)));
+      return e.n.toLowerCase().includes(q)||_normEx(e.n).includes(qn)||e.g.toLowerCase().includes(q)||(en&&(en.includes(q)||_normEx(en).includes(qn)))
+        ||_anciensNoms(e.n).some(a=>a.toLowerCase().includes(q)||_normEx(a).includes(qn));
     }).sort((a,b)=>_rang(a)-_rang(b));   // tri STABLE → l'ordre alphabétique est conservé à rang égal
     // Favoris/plus utilisés en PREMIER (tri stable → alpha conservé à usage égal)
     const fd=_exDedup(f);
@@ -5072,7 +5082,7 @@ const EX_YT={
   'Abduction Cuisses (Leg Abduction)':{img:'exercises/leg-abduction-machine-v2.webp'},
   'Adduction Cuisses (Leg Adduction)':{img:'exercises/leg-adduction-machine-v2.webp'},
   'Chest Press Machine Déclinée':  {img:'exercises/chest-press-machine-declinee.webp'},
-  'Dips Parallèles':               {img:'exercises/dips-triceps-paralleles.webp'},
+  'Dips Triceps (Buste Droit)':    {img:'exercises/dips-triceps-paralleles.webp'},
   'Montée sur Box (Step-up)':      {img:'exercises/montee-sur-box-barre.webp'}, // version barre (envoi Michel 01/08)
   'Montée sur Box Haltères':       {img:'exercises/montee-sur-box-halteres-classique.webp'}, // la montée CLASSIQUE remplace l'ancienne démo latérale (01/08)
   'Dips Machine Assistée':         {img:'exercises/dips-assiste-machine.webp'},
@@ -5199,7 +5209,6 @@ const EX_YT={
   'Extension Triceps Arrière (Kickback)':{img:'exercises/triceps-kickback-debout-halteres.webp'},
   'Extension Triceps Couché Haltères':{img:'exercises/extension-triceps-couche-halteres.webp'},
   'Triceps Poulie':{img:'exercises/triceps-poulie-haute-barre.webp'},
-  'Triceps Haltère':{img:'exercises/triceps-haltere-un-bras.webp'},
   'Triceps Machine':{img:'exercises/triceps-machine.webp'},
   'Triceps Poulie Basse':{img:'exercises/triceps-poulie-basse-verticale.webp'},
   'Dips aux Anneaux':{img:'exercises/dips-aux-anneaux.webp'},
@@ -5296,7 +5305,7 @@ const EX_EN={
   'Croisé Poulie (Cable Crossover)':'cable crossover',
   'Pec Deck':'pec deck fly','Chest Press Machine Horizontale':'chest press machine',
   'Chest Press Machine Inclinée':'incline chest press machine','Chest Press Machine Déclinée':'decline chest press machine',
-  'Dips':'chest dips','Dips Parallèles':'parallel bar dip','Dips Assis Machine (Seated Dip)':'seated dip machine',
+  'Dips':'chest dips','Dips Triceps (Buste Droit)':'parallel bar dip','Dips Assis Machine (Seated Dip)':'seated dip machine',
   'Dips Machine Assistée':'assisted dip machine',
   'Pompes Lestées':'push up weighted','Pompes Déficit (Deficit Push-up)':'deficit push up','Pompes Diamant':'diamond push up',
   'Smith Machine Développé Couché':'smith machine bench press','Smith Machine Développé Incliné':'smith machine incline bench press',
@@ -5348,7 +5357,7 @@ const EX_EN={
   'Triceps Poulie':'triceps pushdown cable','Triceps Corde Poulie':'triceps rope pushdown',
   'Triceps Poulie Basse':'low cable triceps extension',
   'Extension Triceps Arrière (Kickback)':'triceps kickback dumbbell',
-  'Triceps Haltère':'triceps overhead extension dumbbell','Triceps Machine':'triceps machine',
+  'Triceps Machine':'triceps machine',
   // Jambes
   // — cardio + chariot (01/08) —
   'Assault Air Bike':'assault air bike','Ergomètre de Ski (Ski Erg)':'ski erg',
@@ -5411,7 +5420,7 @@ const EX_EN={
   'Hip Thrust Machine (Poussée de Hanche)':'hip thrust machine',
   'Pont Fessier (Glute Bridge)':'glute bridge',
   'Extension Fessiers Arrière (Kickback)':'glute kickback cable',
-  'Kickback Machine':'glute kickback machine','Kickback Cable':'cable glute kickback',
+  'Kickback Machine':'glute kickback machine',
   'Soulevé de Terre Roumain Barre':'romanian deadlift barbell',
   'Soulevé de Terre Roumain Haltères':'romanian deadlift dumbbell',
   'Soulevé de Terre Roumain Unilatéral':'single leg romanian deadlift',
@@ -5423,7 +5432,7 @@ const EX_EN={
   'Hollow Body':'hollow body hold','L-Sit':'l-sit',
   'Windshield Wiper':'windshield wiper ab',
   'Crunch':'crunch abdominal','Crunch Poulie':'cable crunch','Crunch Oblique':'oblique crunch',
-  'Crunch Machine':'crunch machine','Câble Crunch':'cable crunch abdominal',
+  'Crunch Machine':'crunch machine',
   'Rotation Machine Obliques':'oblique twist machine',
   'Relevé de Jambes':'hanging leg raise','Relevé de Buste (Sit-up)':'sit up',
   'Chaise Romaine':'captain chair leg raise',

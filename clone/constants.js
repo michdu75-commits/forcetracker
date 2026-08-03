@@ -14,7 +14,7 @@ const EXLIB=[
   {n:'Croisé Poulie (Cable Crossover)',g:'Pectoraux'},
   {n:'Pec Deck',g:'Pectoraux'},
   {n:'Chest Press Machine Horizontale',g:'Pectoraux'},{n:'Chest Press Machine Inclinée',g:'Pectoraux'},{n:'Chest Press Machine Déclinée',g:'Pectoraux'},
-  {n:'Dips',g:'Pectoraux'},{n:'Dips Parallèles',g:'Pectoraux'},{n:'Dips Machine Assistée',g:'Pectoraux'},{n:'Dips Assis Machine (Seated Dip)',g:'Pectoraux'},
+  {n:'Dips',g:'Pectoraux'},{n:'Dips Triceps (Buste Droit)',g:'Pectoraux'},{n:'Dips Machine Assistée',g:'Pectoraux'},{n:'Dips Assis Machine (Seated Dip)',g:'Pectoraux'},
   {n:'Pompes Lestées',g:'Pectoraux'},{n:'Pompes Déficit (Deficit Push-up)',g:'Pectoraux'},{n:'Pompes Diamant',g:'Pectoraux'},
   // ── 14 exercices ajoutés le 01/08/2026 (animations du dossier source de Michel, décision « ok pour ajouter les 14 ») ──
   {n:'Pompes (Push-up)',g:'Pectoraux'},
@@ -89,7 +89,7 @@ const EXLIB=[
   {n:'Extension Triceps',g:'Triceps'},{n:'Extension Triceps Couché Haltères',g:'Triceps'},
   {n:'Extension Nuque Haltère',g:'Triceps'},{n:'Extension Nuque Poulie Haute',g:'Triceps'},
   {n:'Triceps Poulie',g:'Triceps'},{n:'Triceps Corde Poulie',g:'Triceps'},{n:'Triceps Poulie Basse',g:'Triceps'},
-  {n:'Extension Triceps Arrière (Kickback)',g:'Triceps'},{n:'Triceps Haltère',g:'Triceps'},
+  {n:'Extension Triceps Arrière (Kickback)',g:'Triceps'},
   {n:'Triceps Machine',g:'Triceps'},
   // — Lot « triceps » du 01/08 (même principe que le lot quadri : matériel dans le NOM) —
   {n:'Dips aux Anneaux',g:'Triceps'},{n:'Dips entre Deux Bancs',g:'Triceps'},
@@ -135,7 +135,7 @@ const EXLIB=[
   // ── Fessiers ───────────────────────────────────────────────
   {n:'Hip Thrust Barre (Poussée de Hanche)',g:'Fessiers'},{n:'Hip Thrust Haltère (Poussée de Hanche)',g:'Fessiers'},{n:'Hip Thrust Machine (Poussée de Hanche)',g:'Fessiers'},{n:'Hip Thrust Unilatéral (Poussée de Hanche)',g:'Fessiers'},
   {n:'Pont Fessier (Glute Bridge)',g:'Fessiers'},
-  {n:'Extension Fessiers Arrière (Kickback)',g:'Fessiers'},{n:'Kickback Machine',g:'Fessiers'},{n:'Kickback Cable',g:'Fessiers'},
+  {n:'Extension Fessiers Arrière (Kickback)',g:'Fessiers'},{n:'Kickback Machine',g:'Fessiers'},
   {n:'Soulevé de Terre',g:'Fessiers'},
   {n:'Soulevé de Terre Roumain Barre',g:'Fessiers'},{n:'Soulevé de Terre Roumain Haltères',g:'Fessiers'},
   {n:'Soulevé de Terre Roumain Unilatéral',g:'Fessiers'},{n:'Soulevé de Terre Sumo',g:'Fessiers'},
@@ -172,7 +172,7 @@ const EXLIB=[
   {n:'Gainage',g:'Abdominaux'},{n:'Planche Latérale (Side Plank)',g:'Abdominaux'},{n:'Hollow Body',g:'Abdominaux'},
   {n:'L-Sit',g:'Abdominaux'},{n:'Windshield Wiper',g:'Abdominaux'},
   {n:'Crunch',g:'Abdominaux'},{n:'Crunch Poulie',g:'Abdominaux'},{n:'Crunch Oblique',g:'Abdominaux'},{n:'Crunch Machine',g:'Abdominaux'},
-  {n:'Câble Crunch',g:'Abdominaux'},{n:'Rotation Machine Obliques',g:'Abdominaux'},
+  {n:'Rotation Machine Obliques',g:'Abdominaux'},
   {n:'Relevé de Jambes',g:'Abdominaux'},{n:'Relevé de Buste (Sit-up)',g:'Abdominaux'},
   {n:'Chaise Romaine',g:'Abdominaux'},
   {n:'Roue Abdominale (Ab Wheel)',g:'Abdominaux'},{n:'Rotation Russe (Russian Twist)',g:'Abdominaux'},
@@ -521,7 +521,6 @@ const EX_IDS={
  'bird-dog':["Bird Dog"],
  'box-jump':["Box Jump"],
  'burpees':["Burpees"],
- 'cable-crunch':["Câble Crunch"],
  'chaise-romaine':["Chaise Romaine"],
  'chaise-wall-sit':["Chaise (Wall Sit)"],
  'chariot-de-puissance-curl-biceps':["Chariot de Puissance — Curl Biceps"],
@@ -545,7 +544,7 @@ const EX_IDS={
  'crunch':["Crunch"],
  'crunch-machine':["Crunch Machine"],
  'crunch-oblique':["Crunch Oblique"],
- 'crunch-poulie':["Crunch Poulie"],
+ 'crunch-poulie':["Crunch Poulie","Câble Crunch"],
  'curl-araignee-spider-curl':["Curl Araignée (Spider Curl)"],
  'curl-barre':["Curl Barre"],
  'curl-barre-ez-prise-large':["Curl Barre EZ Prise Large"],
@@ -591,7 +590,7 @@ const EX_IDS={
  'dips-entre-deux-bancs':["Dips entre Deux Bancs"],
  'dips-lestes':["Dips Lestés"],
  'dips-machine-assistee':["Dips Machine Assistée"],
- 'dips-paralleles':["Dips Parallèles"],
+ 'dips-paralleles':["Dips Triceps (Buste Droit)","Dips Parallèles"],
  'drapeau-dragon-flag':["Drapeau (Dragon Flag)"],
  'ecarte-arriere-elastique':["Écarté Arrière Élastique"],
  'ecarte-decline-halteres':["Écarté Décliné Haltères"],
@@ -620,9 +619,9 @@ const EX_IDS={
  'elevations-mollets-penche-donkey-calf-raise':["Élévations Mollets Penché (Donkey Calf Raise)"],
  'elevations-mollets-unilateral':["Élévations Mollets Unilatéral"],
  'ergometre-de-ski-ski-erg':["Ergomètre de Ski (Ski Erg)"],
- 'extension-fessiers-arriere-kickback':["Extension Fessiers Arrière (Kickback)"],
+ 'extension-fessiers-arriere-kickback':["Extension Fessiers Arrière (Kickback)","Kickback Cable"],
  'extension-lombaire-sur-ballon':["Extension Lombaire sur Ballon"],
- 'extension-nuque-haltere':["Extension Nuque Haltère"],
+ 'extension-nuque-haltere':["Extension Nuque Haltère","Triceps Haltère"],
  'extension-nuque-poulie-haute':["Extension Nuque Poulie Haute"],
  'extension-poignet-barre':["Extension Poignet Barre"],
  'extension-quadriceps-elastique':["Extension Quadriceps Élastique"],
@@ -673,7 +672,6 @@ const EX_IDS={
  'jefferson-squat':["Jefferson Squat"],
  'jumping-jack':["Jumping Jack"],
  'kettlebell-swing':["Kettlebell Swing"],
- 'kickback-cable':["Kickback Cable"],
  'kickback-machine':["Kickback Machine"],
  'l-sit':["L-Sit"],
  'leg-curl-assis-machine':["Leg Curl Assis Machine"],
@@ -835,7 +833,6 @@ const EX_IDS={
  'tractions-aux-anneaux':["Tractions aux Anneaux"],
  'tractions-pull-up':["Tractions (Pull-up)"],
  'triceps-corde-poulie':["Triceps Corde Poulie"],
- 'triceps-haltere':["Triceps Haltère"],
  'triceps-machine':["Triceps Machine"],
  'triceps-poulie':["Triceps Poulie"],
  'triceps-poulie-basse':["Triceps Poulie Basse"],
@@ -951,7 +948,14 @@ const EX_MUSCLES={
  'pec-deck':                              {p:['pec'], s:['front-delt'], vu:'2026-08-02'},
  // ─── DIPS ET POMPES : pectoraux ET triceps moteurs tous les deux.
  'dips':                                  {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
- 'dips-paralleles':                       {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
+ // ✏️ CORRECTION (03/08) : « Dips » et « Dips Parallèles » disaient EXACTEMENT la même chose,
+ //    alors que leurs animations et leurs termes anglais trahissaient deux variantes voulues
+ //    différentes (`dips-pectoraux` / *chest dips* · `dips-triceps-paralleles` / *parallel bar
+ //    dip*). Penché en AVANT, le pectoral mène ; buste DROIT, on ne peut pas se pencher et c'est
+ //    le triceps qui fait le travail — exactement le raisonnement tenu sur les dips sur banc.
+ //    Renommé « Dips Triceps (Buste Droit) » : « parallèles » ne distinguait rien, tous les dips
+ //    se font sur des barres parallèles.
+ 'dips-paralleles':                       {p:['triceps'], s:['front-delt','pec'], vu:'2026-08-03'},
  'dips-machine-assistee':                 {p:['pec','triceps'], s:['front-delt'], vu:'2026-08-02'},
  'pompes-push-up':                        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
  'pompes-lestees':                        {p:['pec','triceps'], s:['front-delt','abs'], vu:'2026-08-02'},
@@ -1345,7 +1349,6 @@ const EX_MUSCLES={
  //    isolation, et on est calé sur un banc ou une machine, les lombaires ne travaillent pas.
  'extension-fessiers-arriere-kickback':   {p:['glutes'], s:['hamstrings'], vu:'2026-08-02'},
  'kickback-machine':                      {p:['glutes'], s:['hamstrings'], vu:'2026-08-02'},
- 'kickback-cable':                        {p:['glutes'], s:['hamstrings'], vu:'2026-08-02'},
  // Le pull-through est un hip hinge à la poulie : charnière complète, pas une isolation.
  'tirage-cable-fessiers-cable-pull-through':{p:['glutes'], s:['hamstrings','lower-back'], vu:'2026-08-02'},
  // ─── SOULEVÉS ROUMAINS ET JAMBES TENDUES
@@ -1407,7 +1410,6 @@ const EX_MUSCLES={
  'extension-triceps-nuque-elastique':     {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
  'extension-triceps-verticale-elastique': {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
  'triceps-poulie-basse':                  {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
- 'triceps-haltere':                       {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
  'extension-triceps':                     {p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
  'chariot-de-puissance-extension-triceps':{p:['triceps'], s:['front-delt'], vu:'2026-08-02'},
  // ─── ALLONGÉ, BRAS À LA VERTICALE : même chose, l'épaule est tenue fléchie à 90°.
@@ -1466,7 +1468,6 @@ const EX_MUSCLES={
  'crunch':                                {p:['abs'], s:['obliques'], vu:'2026-08-02'},
  'crunch-poulie':                         {p:['abs'], s:['obliques'], vu:'2026-08-02'},
  'crunch-machine':                        {p:['abs'], s:['obliques'], vu:'2026-08-02'},
- 'cable-crunch':                          {p:['abs'], s:['obliques'], vu:'2026-08-02'},
  // ✏️ CORRECTION : le crunch OBLIQUE avait les obliques en simple soutien — le mot est
  //    pourtant dans son nom, et la rotation EST le mouvement.
  'crunch-oblique':                        {p:['obliques','abs'], s:[], vu:'2026-08-02'},

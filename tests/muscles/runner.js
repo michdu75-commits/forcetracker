@@ -1099,7 +1099,11 @@ const fin=await p.evaluate(()=>{
 });
 if(fin.erreur) console.log('     ⚠️  bloc final en ERREUR : '+fin.erreur);
 t('⭐⭐ LE CATALOGUE ENTIER a ses muscles ÉCRITS — plus un seul exercice deviné',
-  !fin.erreur && fin.ecrits===fin.total && fin.total===337,
+  // ⚠️ On ne fige PLUS le nombre (il était à 337, il est à 334 depuis la fusion des doublons
+  //    du 03/08). Le catalogue a le droit de bouger ; ce qui ne doit jamais bouger, c'est que
+  //    CHAQUE exercice ait sa fiche. La protection contre un rétrécissement en douce est déjà
+  //    portée par les croisements ⑦ (empreinte) et ⑨ (identifiants), à leur place.
+  !fin.erreur && fin.ecrits===fin.total && fin.total>300,
   fin.ecrits+'/'+fin.total+' — si ce test rougit, c\'est qu\'un exercice a été ajouté sans sa fiche.');
 t('⭐ le MARTEAU et le ZOTTMAN font travailler l\'avant-bras en MOTEUR, pas en soutien',
   // comparé au curl classique : sans lui, le test passerait aussi à l'ancien code.
@@ -1125,6 +1129,41 @@ t('⭐ SCHÉMA : le SUPERMAN est un MAINTIEN, pas une charnière de hanche',
   !fin.erreur && fin.patSuper==='gainage-abdos' && fin.patBird==='gainage-abdos'
   && fin.patSouleve==='hip-hinge',
   'superman='+fin.patSuper+' · témoin soulevé de terre='+fin.patSouleve);
+
+// ── LES DOUBLONS FUSIONNÉS (03/08) — trouvés par Michel, plus un par le contrôle renforcé.
+const fus=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>(_mscScores([E(n)])||{}).sc||{};
+  const noms=new Set((EXLIB||[]).map(e=>e.n));
+  const cherche=q=>{const i=document.getElementById('ex-search'); i.value=q; _exGrp=null; filterEx();
+    const h=document.getElementById('ex-list').innerHTML;
+    const l=[...h.matchAll(/class="ex-pick-name"[^>]*>([^<]+)</g)].map(z=>z[1].trim());
+    return l[0]||null;};
+  const r={ retires:['Câble Crunch','Kickback Cable','Triceps Haltère','Dips Parallèles'].filter(n=>noms.has(n)),
+    mig:{}, rech:{} };
+  ['Câble Crunch','Kickback Cable','Triceps Haltère','Dips Parallèles'].forEach(n=>{
+    r.mig[n]=exNomActuel(n); r.rech[n]=cherche(n); });
+  r.dipsPec=f('Dips'); r.dipsTri=f('Dips Triceps (Buste Droit)');
+  const i=document.getElementById('ex-search'); i.value=''; _exGrp=null; filterEx();
+  return r;
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(fus.erreur) console.log('     ⚠️  bloc fusions en ERREUR : '+fus.erreur);
+t('⭐ les 3 doublons ont disparu du catalogue',
+  !fus.erreur && fus.retires.length===0, 'encore présents : '+(fus.retires||[]).join(', '));
+t('⭐⭐ ZÉRO PERTE : un record enregistré sous l\'ancien nom retrouve sa fiche',
+  !fus.erreur && fus.mig['Câble Crunch']==='Crunch Poulie'
+  && fus.mig['Kickback Cable']==='Extension Fessiers Arrière (Kickback)'
+  && fus.mig['Triceps Haltère']==='Extension Nuque Haltère'
+  && fus.mig['Dips Parallèles']==='Dips Triceps (Buste Droit)', JSON.stringify(fus.mig));
+t('⭐ … et TAPER l\'ancien nom le retrouve aussi (il ne disparaît pas de la recherche)',
+  !fus.erreur && fus.rech['Triceps Haltère']==='Extension Nuque Haltère'
+  && fus.rech['Dips Parallèles']==='Dips Triceps (Buste Droit)'
+  && fus.rech['Câble Crunch']==='Crunch Poulie', JSON.stringify(fus.rech));
+t('⭐ les deux DIPS ne disent plus la même chose (penché = pec · buste droit = triceps)',
+  !fus.erreur && fus.dipsPec.pec===2 && fus.dipsTri.triceps===2 && fus.dipsTri.pec===1,
+  'dips '+JSON.stringify(fus.dipsPec)+' · buste droit '+JSON.stringify(fus.dipsTri));
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 

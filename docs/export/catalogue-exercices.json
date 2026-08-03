@@ -1,7 +1,7 @@
 {
  "source": "Force Tracker",
  "exporte": "2026-08-03",
- "nbExercices": 337,
+ "nbExercices": 334,
  "avertissement": "LIRE LISEZ-MOI-EXPORT.md avant utilisation : ces données sont DÉDUITES du nom de chaque exercice par 69 règles, elles ne sont pas saisies à la main. Voir la section « Fiabilité » pour ce que le champ classementCertain signifie.",
  "vocabulaire": {
   "muscles": {
@@ -581,36 +581,6 @@
     "Triceps"
    ],
    "materielLibelle": "Cardio / conditionnement"
-  },
-  {
-   "nom": "Câble Crunch",
-   "identifiant": "cable-crunch",
-   "anciensNoms": [],
-   "groupe": "Abdominaux",
-   "musclesPrincipaux": [
-    "abs"
-   ],
-   "musclesSecondaires": [
-    "obliques"
-   ],
-   "schemaMouvement": "gainage-abdos",
-   "schemaLibelle": "Gainage / abdominaux",
-   "materiel": "guide",
-   "met": 4,
-   "role": "accessoire",
-   "termeAnglais": "cable crunch abdominal",
-   "animation": null,
-   "musclesEcrits": true,
-   "relueLe": "2026-08-02",
-   "classementCertain": true,
-   "animationExiste": false,
-   "musclesPrincipauxFr": [
-    "Abdominaux"
-   ],
-   "musclesSecondairesFr": [
-    "Obliques"
-   ],
-   "materielLibelle": "Guidé (machine, poulie)"
   },
   {
    "nom": "Chaise (Wall Sit)",
@@ -1373,7 +1343,9 @@
   {
    "nom": "Crunch Poulie",
    "identifiant": "crunch-poulie",
-   "anciensNoms": [],
+   "anciensNoms": [
+    "Câble Crunch"
+   ],
    "groupe": "Abdominaux",
    "musclesPrincipaux": [
     "abs"
@@ -2843,34 +2815,36 @@
    "materielLibelle": "Guidé (machine, poulie)"
   },
   {
-   "nom": "Dips Parallèles",
+   "nom": "Dips Triceps (Buste Droit)",
    "identifiant": "dips-paralleles",
-   "anciensNoms": [],
+   "anciensNoms": [
+    "Dips Parallèles"
+   ],
    "groupe": "Pectoraux",
    "musclesPrincipaux": [
-    "pec",
     "triceps"
    ],
    "musclesSecondaires": [
-    "front-delt"
+    "front-delt",
+    "pec"
    ],
-   "schemaMouvement": "poussee-horizontale",
-   "schemaLibelle": "Poussée horizontale (pectoraux)",
+   "schemaMouvement": "extension-triceps",
+   "schemaLibelle": "Extension du coude (triceps)",
    "materiel": "corps",
    "met": 5.5,
-   "role": "ancre",
+   "role": "accessoire",
    "termeAnglais": "parallel bar dip",
    "animation": "exercises/dips-triceps-paralleles.webp",
    "musclesEcrits": true,
-   "relueLe": "2026-08-02",
+   "relueLe": "2026-08-03",
    "classementCertain": true,
    "animationExiste": true,
    "musclesPrincipauxFr": [
-    "Pectoraux",
     "Triceps"
    ],
    "musclesSecondairesFr": [
-    "Deltoïde antérieur"
+    "Deltoïde antérieur",
+    "Pectoraux"
    ],
    "materielLibelle": "Poids du corps"
   },
@@ -3723,7 +3697,9 @@
   {
    "nom": "Extension Fessiers Arrière (Kickback)",
    "identifiant": "extension-fessiers-arriere-kickback",
-   "anciensNoms": [],
+   "anciensNoms": [
+    "Kickback Cable"
+   ],
    "groupe": "Fessiers",
    "musclesPrincipaux": [
     "glutes"
@@ -3785,7 +3761,9 @@
   {
    "nom": "Extension Nuque Haltère",
    "identifiant": "extension-nuque-haltere",
-   "anciensNoms": [],
+   "anciensNoms": [
+    "Triceps Haltère"
+   ],
    "groupe": "Triceps",
    "musclesPrincipaux": [
     "triceps"
@@ -5445,36 +5423,6 @@
     "Quadriceps"
    ],
    "materielLibelle": "Poids libre (haltères, kettlebell)"
-  },
-  {
-   "nom": "Kickback Cable",
-   "identifiant": "kickback-cable",
-   "anciensNoms": [],
-   "groupe": "Fessiers",
-   "musclesPrincipaux": [
-    "glutes"
-   ],
-   "musclesSecondaires": [
-    "hamstrings"
-   ],
-   "schemaMouvement": "hip-hinge",
-   "schemaLibelle": "Charnière de hanche (hip hinge)",
-   "materiel": "guide",
-   "met": 4,
-   "role": "ancre",
-   "termeAnglais": "cable glute kickback",
-   "animation": null,
-   "musclesEcrits": true,
-   "relueLe": "2026-08-02",
-   "classementCertain": true,
-   "animationExiste": false,
-   "musclesPrincipauxFr": [
-    "Fessiers"
-   ],
-   "musclesSecondairesFr": [
-    "Ischio-jambiers"
-   ],
-   "materielLibelle": "Guidé (machine, poulie)"
   },
   {
    "nom": "Kickback Machine",
@@ -11115,36 +11063,6 @@
    ],
    "musclesSecondairesFr": [],
    "materielLibelle": "Guidé (machine, poulie)"
-  },
-  {
-   "nom": "Triceps Haltère",
-   "identifiant": "triceps-haltere",
-   "anciensNoms": [],
-   "groupe": "Triceps",
-   "musclesPrincipaux": [
-    "triceps"
-   ],
-   "musclesSecondaires": [
-    "front-delt"
-   ],
-   "schemaMouvement": "extension-triceps",
-   "schemaLibelle": "Extension du coude (triceps)",
-   "materiel": "libre",
-   "met": 4,
-   "role": "accessoire",
-   "termeAnglais": "triceps overhead extension dumbbell",
-   "animation": "exercises/triceps-haltere-un-bras.webp",
-   "musclesEcrits": true,
-   "relueLe": "2026-08-02",
-   "classementCertain": true,
-   "animationExiste": true,
-   "musclesPrincipauxFr": [
-    "Triceps"
-   ],
-   "musclesSecondairesFr": [
-    "Deltoïde antérieur"
-   ],
-   "materielLibelle": "Poids libre (haltères, kettlebell)"
   },
   {
    "nom": "Triceps Machine",
