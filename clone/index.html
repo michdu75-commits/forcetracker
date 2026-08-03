@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v754';
+  b.textContent='🧪 CLONE ft-v755';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -1724,6 +1724,14 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
           <option value="Fessiers">Fessiers</option>
           <option value="Abdominaux">Abdominaux</option>
           <option value="Mollets">Mollets</option>
+          <!-- ⚠️ CES 3 GROUPES MANQUAIENT (idée de Christophe, 04/08) : ils existent dans le
+               catalogue (Lombaires 12 exercices · Full Body 18 · Avant-bras 5) mais on ne pouvait
+               pas les CHOISIR en créant son propre exercice. Christophe voulait ranger son
+               « Extension lombaires sur Booty Builder » et n'avait aucune case juste.
+               👉 Règle : cette liste doit contenir TOUS les groupes de EXLIB — un test le vérifie. -->
+          <option value="Lombaires">Lombaires</option>
+          <option value="Avant-bras">Avant-bras</option>
+          <option value="Full Body">Full Body</option>
         </select>
         <div style="font-size:12px;color:var(--t2);font-weight:600;margin-top:2px;">💪 Muscles principaux <span style="font-weight:400;color:var(--t3)">(optionnel)</span></div>
         <div id="cex-muscles-p" style="display:flex;flex-wrap:wrap;gap:4px;"></div>

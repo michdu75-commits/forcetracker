@@ -79,6 +79,31 @@ du cycle (fait `ft-v442`), plus de techniques (excentrique/partielles).
 
 ---
 
+## 💡 Christophe, 04/08/2026 — *« Il manque lombaires, je n'ai pas vérifié »*
+
+**Son idée, en une ligne.** Il crée son exercice (« Extension lombaires sur Booty Builder machine »)
+et le menu des groupes ne lui offre **aucune case juste**.
+
+**Ce que la vérification a donné : il en manquait TROIS.** Le menu proposait **10** groupes, le
+catalogue en compte **13** — *Lombaires* (12 exercices), *Full Body* (18) et *Avant-bras* (5)
+étaient inchoisissables. Des groupes qu'on **voit écrits** en face des exercices dans la liste, et
+qu'on ne peut pas sélectionner pour le sien.
+
+**Et un deuxième bug derrière**, que personne n'aurait signalé : à l'édition, un groupe absent de la
+liste était refusé **sans erreur** par le navigateur, et la sauvegarde écrivait le groupe affiché.
+Modifier un exercice pouvait le **reclasser tout seul**. Corrigé, et figé par un test.
+
+**⭐ Ce que ce retour dit de notre méthode.** On venait de passer **dix versions** à relire les 337
+exercices un par un. On a audité le **contenu** du catalogue sans jamais ouvrir **l'écran qui sert à
+en créer un**. *Un audit exhaustif d'un domaine ne dit rien de la porte d'entrée de ce domaine.*
+C'est la meilleure illustration de pourquoi les retours de vrais utilisateurs ne se remplacent pas
+par des tests, si complets soient-ils. → livré **ft-v755**.
+
+**Sa prudence mérite d'être notée** : *« je n'ai pas vérifié »*. Il signale sans affirmer. C'est
+exactement le bon réflexe côté testeur — et c'est à nous de mesurer, pas à lui.
+
+---
+
 ## 🌡️ Où en est chacun — point de Michel du 03/08/2026
 
 > Noté tel qu'il me l'a dit, sans interprétation. Ce sont des **observations d'usage**, pas des

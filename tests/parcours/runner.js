@@ -1132,6 +1132,43 @@ console.log('\n═══ J. L\'étage du milieu — les séances plus anciennes,
   await c10.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// K. CRÉER SON PROPRE EXERCICE — la liste des groupes doit être COMPLÈTE
+// Idée de Christophe (04/08) : « il manque lombaires ». Vérifié : il en manquait TROIS —
+// Lombaires (12 exercices au catalogue), Full Body (18) et Avant-bras (5). Un groupe existait
+// donc dans l'app sans qu'on puisse le choisir en créant son exercice.
+console.log('\n═══ K. Créer son exercice — tous les groupes du catalogue doivent être proposés ═══');
+{
+  const c11=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p11=await c11.newPage();
+  await p11.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p11.waitForTimeout(2200);
+  const r=await p11.evaluate(()=>{
+   try{
+    const o={};
+    const sel=document.getElementById('custom-ex-grp');
+    const opts=[...sel.options].map(x=>x.value);
+    const cat=[...new Set((EXLIB||[]).map(e=>e.g))];
+    o.manquants=cat.filter(g=>!opts.includes(g));
+    o.nbOptions=opts.length; o.nbGroupes=cat.length;
+    o.lombaires=opts.includes('Lombaires');
+    // ⚠️ le bug silencieux : un groupe hors liste est refusé sans erreur, et la sauvegarde
+    // écrivait alors le groupe affiché → l'exercice changeait de groupe tout seul.
+    S.customExercises=[{n:'Mon Exo Exotique',g:'Groupe Inconnu',muscles:{p:[],s:[]}}];
+    openEditCustomEx('Mon Exo Exotique');
+    o.grpConserve=document.getElementById('custom-ex-grp').value;
+    o.pasReclasse=(o.grpConserve==='Groupe Inconnu');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ tous les groupes du catalogue sont proposés à la création (idée Christophe)',
+    Array.isArray(r.manquants) && r.manquants.length===0, 'manquants : '+JSON.stringify(r.manquants));
+  t('⭐ « Lombaires » est bien là — c\'est ce qu\'il cherchait', r.lombaires===true, JSON.stringify(r));
+  t('⭐⭐ modifier un exercice ne le RECLASSE plus en silence (groupe hors liste)',
+    r.pasReclasse===true, 'groupe après ouverture : '+r.grpConserve);
+  await c11.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

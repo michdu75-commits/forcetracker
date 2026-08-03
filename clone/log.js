@@ -3115,7 +3115,16 @@ function openEditCustomEx(name){
   showCustomExForm();
   _editingCustomExName=name;
   const ni=document.getElementById('custom-ex-name');if(ni)ni.value=c.n;
-  const gs=document.getElementById('custom-ex-grp');if(gs)gs.value=c.g;
+  // ⚠️ Un groupe ABSENT de la liste est refusé EN SILENCE par le navigateur : `gs.value` ne
+  // change pas, le menu reste sur l'option précédente… et la sauvegarde écrit CE groupe-là.
+  // Modifier un exercice le reclassait donc sans rien dire. On ajoute l'option au besoin.
+  const gs=document.getElementById('custom-ex-grp');
+  if(gs){
+    if(c.g && ![...gs.options].some(o=>o.value===c.g)){
+      const o=document.createElement('option'); o.value=c.g; o.textContent=c.g; gs.appendChild(o);
+    }
+    gs.value=c.g;
+  }
   _cexMusclesP=(c.muscles&&c.muscles.p)?[...c.muscles.p]:[];
   _cexMusclesS=(c.muscles&&c.muscles.s)?[...c.muscles.s]:[];
   _cexImg=c.img||null;
