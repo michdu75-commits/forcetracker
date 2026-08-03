@@ -1198,6 +1198,41 @@ t('témoins : « Wall Sit » reste un squat et « Wall Ball » un saut (le mot �
   !fus.erreur && fus.patWallSit==='squat' && fus.patWallBall==='saut-plyo',
   'wall sit='+fus.patWallSit+' · wall ball='+fus.patWallBall);
 
+// ── LA FIGURINE v2.1 (03/08) : le dessin passe de 18 zones à 41 muscles.
+const fg=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const d=_mscScores([E('Squat à la Barre')])||{};
+  const svg=_mscSVG({sc:d.sc||{}, ind:d.ind||{}});
+  const ids=[...svg.matchAll(/<path id="([^"]+)"/g)].map(m=>m[1]);
+  const rouges=[...svg.matchAll(/<path id="([^"]+)"[^>]*url\(#g-prim\)/g)].map(m=>m[1]);
+  return {nbTraces:_FP.length+_BP.length, nbIds:ids.length,
+    codes:Object.keys(_MG).length,
+    lbls:Object.keys(_MSC_LBL).length,
+    sansLbl:ids.filter(i=>!_MSC_LBL[i]),
+    // les 9 découpages qui comptent existent-ils comme TRACÉS ?
+    fins:['adductor','soleus','trapezius_lower','triceps_long','rhomboid','teres_major',
+          'pectoralis_middle','vastus_medialis','forearm_flexor']
+         .filter(k=>ids.some(i=>i.indexOf(k)>=0)).length,
+    quadsRouges:rouges.filter(i=>/vastus|rectus_femoris/.test(i)).length,
+    lblPrecis:_MSC_LBL['front_pectoralis_upper_left']||null,
+    mini:(typeof _mscSVGmini==='function')?_mscSVGmini({sc:d.sc||{},ind:d.ind||{}}).length>500:null};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(fg.erreur) console.log('     ⚠️  bloc figurine en ERREUR : '+fg.erreur);
+t('⭐⭐ la FIGURINE v2.1 est branchée : 41 muscles dessinés au lieu de 18 zones',
+  !fg.erreur && fg.nbTraces>=95 && fg.fins===9,
+  fg.nbTraces+' tracés · '+fg.fins+'/9 découpages fins présents');
+t('⭐ l\'app pilote toujours ses 18 codes (le dessin a pris de l\'avance, pas les données)',
+  !fg.erreur && fg.codes===18, String(fg.codes));
+t('⭐ taper un muscle donne son nom PRÉCIS, pas celui du groupe',
+  !fg.erreur && fg.lblPrecis==='Pectoral supérieur' && fg.sansLbl.length===0,
+  'exemple : '+fg.lblPrecis+' · sans libellé : '+(fg.sansLbl||[]).slice(0,5).join(', '));
+t('⭐ un squat allume bien les TROIS faisceaux du quadriceps',
+  !fg.erreur && fg.quadsRouges===6, fg.quadsRouges+' tracés (3 muscles × 2 côtés)');
+t('la figurine MINI (cartes d\'historique) suit le nouveau dessin',
+  !fg.erreur && fg.mini===true, String(fg.mini));
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');
