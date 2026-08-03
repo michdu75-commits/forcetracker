@@ -79,6 +79,37 @@ de la Constitution (rien n'est mémorisé sans accord). Le « si nécessaire » 
 connaissances **techniques** (p. ex. un temps de repos), jamais à ce qui la concerne.
 *Origine : GPT, 27/07/2026 · nuance : Constitution P3*
 
+### R31 — La FIGURINE est le vocabulaire du système : sa finesse est le PLAFOND de tout le reste
+*« Tout découle de cette figurine, puisque le code lui-même est basé sur la figurine »* (Michel,
+03/08/2026). **C'est exact, et c'est mesurable.** Les codes musculaires ne servent pas qu'à
+colorier : ils sont produits par `_mscScores` et **relus à 13 endroits**, dans 4 fichiers — la
+figurine, la **couleur du calendrier**, le calcul des **calories** (`_MET_REGIONS`), l'écran
+Progrès, et le contexte envoyé à **Milo**. Aucun de ces modules ne peut être plus précis que le
+vocabulaire qu'il reçoit.
+**Conséquence pratique** : enrichir la figurine n'est pas un travail « visuel », c'est **relever le
+plafond de précision de toute l'application**. Et inversement, un muscle absent du vocabulaire est
+un muscle dont *aucun* module ne pourra jamais parler — l'imprécision se propage en silence, sans
+bug, sans test rouge.
+**Corollaire, et c'est ce qui rend la règle opérationnelle** : avant de déclarer qu'une distinction
+est impossible (« on ne peut pas séparer le soléaire du jumeau »), **ouvrir le DESSIN**, pas
+seulement la table qui nomme. Mesuré le 03/08 : le dessin distingue **34 structures anatomiques**
+là où le code n'en nomme que **18**. Les adducteurs, le soléaire, le trapèze inférieur, la longue
+portion du triceps, les fléchisseurs et extenseurs du poignet **étaient déjà dessinés** — rattachés
+au mauvais groupe.
+*Origine : 03/08/2026 · cas vécu : j'ai écrit six fois dans le code « les adducteurs n'existent pas
+dans la figurine » sans jamais ouvrir le dessin, et j'ai même figé cette fausse limite par un test.
+C'est **R28** (une limite non vérifiée devient une règle de conception silencieuse) appliquée à
+moi-même, après que Michel l'ait vécue avec canvas. · voisine de R1 (source de vérité unique) et
+de R3 (toute connaissance doit produire un comportement observable).*
+
+**⭐ Et l'argument de Michel va plus loin que la technique**, il vaut d'être gardé tel quel :
+*« plus on se rapproche d'une réalité, plus c'est fiabilisé ; plus c'est fiabilisé, plus les gens
+vont avoir confiance dans ce que j'ai fait »*. Une correction anatomique n'est pas un détail
+d'expert : c'est ce qui fait qu'un sportif qui S'Y CONNAÎT ne prend pas l'app en défaut. La
+figurine est la **marque de fabrique** du produit — elle se voit avant tout le reste, et elle est
+jugée par des gens qui savent où sont leurs muscles. *Ce qui est le plus visible est ce qui doit
+être le moins bâclé.*
+
 ### R5 — La règle marche À L'ENVERS : c'est un outil d'audit
 Demander « où cette information ressort-elle **concrètement** ? » est ce qui a permis de trouver les
 4 bugs ci-dessus. À faire périodiquement sur l'existant : les **données mortes** (stockées, jamais
