@@ -1509,6 +1509,63 @@ const EX_MUSCLES={
  'drapeau-dragon-flag':                   {p:['abs'], s:['obliques','hip-flexors','lats','front-delt'], vu:'2026-08-02'},
  // Le GRIMPEUR est du cardio : ses calories viennent de sa nature, pas de ses muscles.
  'grimpeur-mountain-climber':             {p:['abs','obliques'], s:['hip-flexors','front-delt','quads'], vu:'2026-08-02'},
+
+ // ─── FULL BODY (17) — relus un par un le 02/08/2026 ──────────────────────────────
+ // ⭐⭐ LE PLUS GROS BLOC IDENTIQUE DE TOUT LE CATALOGUE : **13 fiches sur 17** disaient
+ //    EXACTEMENT la même chose — « deltoïde antérieur + quadriceps » moteurs, « abdos +
+ //    fessiers + trapèzes + triceps » en soutien. La même réponse pour un Turkish Get-Up,
+ //    une corde ondulatoire, un ergomètre de ski, un jumping jack et un épaulé-jeté.
+ //    C'était la règle de rattrapage générique, appliquée à un groupe qui n'a par définition
+ //    aucun mouvement en commun. *Quand 13 fiches sont identiques, ce n'est pas un
+ //    classement — c'est l'absence de classement.*
+ //
+ // ─── SQUAT + POUSSÉE AU-DESSUS DE LA TÊTE (thrusters, wall ball)
+ // ✏️ CORRECTION : les FESSIERS passent moteurs — c'est un squat COMPLET, pas une flexion
+ //    de genoux. Ils étaient en simple soutien.
+ 'thruster':                              {p:['quads','glutes','front-delt'], s:['triceps','abs','traps'], vu:'2026-08-02'},
+ 'thruster-kettlebell':                   {p:['quads','glutes','front-delt'], s:['triceps','abs','traps'], vu:'2026-08-02'},
+ 'thrusters-halteres':                    {p:['quads','glutes','front-delt'], s:['triceps','abs','traps'], vu:'2026-08-02'},
+ 'wall-ball':                             {p:['quads','glutes','front-delt'], s:['triceps','abs','calves'], vu:'2026-08-02'},
+ // ─── HALTÉROPHILIE : ⭐ un ARRACHÉ et un ÉPAULÉ partent d'une CHARNIÈRE DE HANCHE, pas
+ //     d'un squat. Les ISCHIOS et les TRAPÈZES (le tirage, le haussement) sont les moteurs —
+ //     les ischios ne figuraient nulle part, et les trapèzes étaient en simple soutien.
+ 'arrache-haltere-dumbbell-snatch':       {p:['glutes','hamstrings','traps'], s:['quads','front-delt','side-delt','abs','forearms'], vu:'2026-08-02'},
+ 'arrache-debout-muscle-snatch':          {p:['glutes','hamstrings','traps'], s:['quads','front-delt','side-delt','abs','forearms'], vu:'2026-08-02'},
+ 'clean-jerk':                            {p:['glutes','quads','traps'], s:['hamstrings','front-delt','triceps','abs','forearms'], vu:'2026-08-02'},
+ // ✏️✏️ CORRECTION LA PLUS NETTE : le TURKISH GET-UP se fait avec une charge tenue À BOUT DE
+ //    BRAS AU-DESSUS DE LA TÊTE pendant tout le mouvement, en passant par des positions de
+ //    côté. C'est un exercice d'ÉPAULE et d'OBLIQUES — et les obliques n'y étaient PAS.
+ //    Se lever du sol n'est que la moitié visible du geste.
+ 'turkish-get-up':                        {p:['front-delt','abs','obliques'], s:['glutes','quads','triceps','traps'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : dans les BURPEES il y a une POMPE — les pectoraux n'étaient nulle part,
+ //    alors qu'ils sont ce qui fait échouer la série.
+ 'burpees':                               {p:['quads','glutes'], s:['pec','triceps','front-delt','abs','calves'], vu:'2026-08-02'},
+ // ✏️✏️ CORRECTION : la CORDE ONDULATOIRE avait les QUADRICEPS en muscle moteur. On y est en
+ //    demi-flexion, jambes immobiles : elles tiennent la position, elles ne produisent rien.
+ //    Ce sont les ÉPAULES, les BRAS et le GAINAGE qui travaillent — et le grand dorsal, qui
+ //    ramène la corde vers le bas, n'était même pas compté.
+ 'battle-rope':                           {p:['front-delt','abs'], s:['lats','biceps','triceps','forearms','quads'], vu:'2026-08-02'},
+ // ✏️✏️ CORRECTION : l'ERGOMÈTRE DE SKI est un mouvement de TIRAGE vers le bas — grand dorsal,
+ //    triceps et gainage. Il était classé « deltoïde antérieur + quadriceps », c'est-à-dire
+ //    l'inverse de ce qu'on y fait.
+ 'ergometre-de-ski-ski-erg':              {p:['lats','abs','triceps'], s:['glutes','hamstrings','quads','forearms'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : au JUMPING JACK les bras montent SUR LES CÔTÉS (deltoïde MOYEN, pas
+ //    antérieur) et ce sont les MOLLETS qui font les sauts. Les quadriceps n'y sont pas moteurs.
+ 'jumping-jack':                          {p:['calves','side-delt'], s:['quads','glutes','abs','front-delt'], vu:'2026-08-02'},
+ // ✏️ CORRECTION : la MARCHE DE L'OURS se fait genoux décollés du sol — tout le travail
+ //    consiste à empêcher le bassin de tourner. Le gainage passe moteur, les obliques
+ //    apparaissent.
+ 'marche-de-l-ours-bear-crawl':           {p:['abs','front-delt','quads'], s:['obliques','triceps','glutes','calves'], vu:'2026-08-02'},
+ // Le VÉLO À BRAS pédale ET tire/pousse les bras : quadriceps et épaules ensemble, c'est
+ // bien ce qui le caractérise. La fiche était déjà proche.
+ 'assault-air-bike':                      {p:['quads','front-delt'], s:['hamstrings','glutes','lats','abs'], vu:'2026-08-02'},
+ // Le BOX JUMP était juste : fessiers et quadriceps moteurs, mollets et ischios en soutien.
+ 'box-jump':                              {p:['glutes','quads'], s:['calves','hamstrings','abs'], vu:'2026-08-02'},
+ // ─── CHARIOT DE PUISSANCE : alignés sur les autres chariots (déjà écrits).
+ // ✏️ CORRECTION : le tirage EN AVANÇANT n'avait que le grand dorsal en moteur, alors que
+ //    les trois autres tirages de chariot ont dorsal + trapèzes. Même geste, deux réponses.
+ 'chariot-de-puissance-poussee':          {p:['quads','glutes'], s:['calves','abs'], vu:'2026-08-02'},
+ 'chariot-de-puissance-tirage-en-avancant':{p:['lats','traps'], s:['rear-delt','biceps','forearms'], vu:'2026-08-02'},
 };
 
 /** Muscles ÉCRITS d'un exercice, ou null s'il n'en a pas encore (bascule en cours, ou

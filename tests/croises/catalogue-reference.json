@@ -29,16 +29,16 @@
    "frag": 0
   },
   "Arraché Debout (Muscle Snatch)": {
-   "p": "front-delt,quads",
-   "s": "abs,glutes,traps,triceps",
+   "p": "glutes,hamstrings,traps",
+   "s": "abs,forearms,front-delt,quads,side-delt",
    "pat": "halterophilie",
    "eq": "autre",
    "met": 8,
    "frag": 0
   },
   "Arraché Haltère (Dumbbell Snatch)": {
-   "p": "front-delt,quads",
-   "s": "abs,glutes,traps,triceps",
+   "p": "glutes,hamstrings,traps",
+   "s": "abs,forearms,front-delt,quads,side-delt",
    "pat": "halterophilie",
    "eq": "libre",
    "met": 8,
@@ -46,7 +46,7 @@
   },
   "Assault Air Bike": {
    "p": "front-delt,quads",
-   "s": "abs,hamstrings,lats",
+   "s": "abs,glutes,hamstrings,lats",
    "pat": "cardio",
    "eq": "cardio",
    "met": 8,
@@ -61,9 +61,9 @@
    "frag": 0
   },
   "Battle Rope": {
-   "p": "front-delt,quads",
-   "s": "abs,glutes,traps,triceps",
-   "pat": "saut-plyo",
+   "p": "abs,front-delt",
+   "s": "biceps,forearms,lats,quads,triceps",
+   "pat": "cardio",
    "eq": "cardio",
    "met": 8,
    "frag": 0
@@ -94,15 +94,15 @@
   },
   "Box Jump": {
    "p": "glutes,quads",
-   "s": "calves,hamstrings",
+   "s": "abs,calves,hamstrings",
    "pat": "saut-plyo",
    "eq": "cardio",
    "met": 8,
    "frag": 0
   },
   "Burpees": {
-   "p": "front-delt,quads",
-   "s": "abs,glutes,traps,triceps",
+   "p": "glutes,quads",
+   "s": "abs,calves,front-delt,pec,triceps",
    "pat": "saut-plyo",
    "eq": "cardio",
    "met": 8,
@@ -181,8 +181,8 @@
    "frag": 0
   },
   "Chariot de Puissance — Tirage en Avançant": {
-   "p": "lats",
-   "s": "biceps,rear-delt,traps",
+   "p": "lats,traps",
+   "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
    "eq": "cardio",
    "met": 5.5,
@@ -237,8 +237,8 @@
    "frag": 0
   },
   "Clean & Jerk": {
-   "p": "front-delt,quads",
-   "s": "abs,glutes,traps,triceps",
+   "p": "glutes,quads,traps",
+   "s": "abs,forearms,front-delt,hamstrings,triceps",
    "pat": "halterophilie",
    "eq": "autre",
    "met": 8,
@@ -685,8 +685,8 @@
    "frag": 0
   },
   "Ergomètre de Ski (Ski Erg)": {
-   "p": "front-delt,quads",
-   "s": "abs,hamstrings,lats",
+   "p": "abs,lats,triceps",
+   "s": "forearms,glutes,hamstrings,quads",
    "pat": "cardio",
    "eq": "cardio",
    "met": 8,
@@ -1101,8 +1101,8 @@
    "frag": 0
   },
   "Jumping Jack": {
-   "p": "front-delt,quads",
-   "s": "abs,calves,glutes",
+   "p": "calves,side-delt",
+   "s": "abs,front-delt,glutes,quads",
    "pat": "saut-plyo",
    "eq": "cardio",
    "met": 8,
@@ -1197,8 +1197,8 @@
    "frag": 0
   },
   "Marche de l'Ours (Bear Crawl)": {
-   "p": "front-delt,quads",
-   "s": "abs,calves,glutes",
+   "p": "abs,front-delt,quads",
+   "s": "calves,glutes,obliques,triceps",
    "pat": "cardio",
    "eq": "cardio",
    "met": 8,
@@ -2181,24 +2181,24 @@
    "frag": 0
   },
   "Thruster": {
-   "p": "front-delt,quads",
-   "s": "abs,glutes,traps,triceps",
+   "p": "front-delt,glutes,quads",
+   "s": "abs,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "barre",
    "met": 8,
    "frag": 0
   },
   "Thruster Kettlebell": {
-   "p": "front-delt,quads",
-   "s": "abs,glutes,traps,triceps",
+   "p": "front-delt,glutes,quads",
+   "s": "abs,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "libre",
    "met": 8,
    "frag": 0
   },
   "Thrusters Haltères": {
-   "p": "front-delt,quads",
-   "s": "abs,glutes,traps,triceps",
+   "p": "front-delt,glutes,quads",
+   "s": "abs,traps,triceps",
    "pat": "poussee-verticale",
    "eq": "libre",
    "met": 8,
@@ -2445,8 +2445,8 @@
    "frag": 0
   },
   "Turkish Get-Up": {
-   "p": "front-delt,quads",
-   "s": "abs,glutes,traps,triceps",
+   "p": "abs,front-delt,obliques",
+   "s": "glutes,quads,traps,triceps",
    "pat": "halterophilie",
    "eq": "autre",
    "met": 8,
@@ -2461,8 +2461,8 @@
    "frag": 0
   },
   "Wall Ball": {
-   "p": "front-delt,quads",
-   "s": "abs,calves,glutes",
+   "p": "front-delt,glutes,quads",
+   "s": "abs,calves,triceps",
    "pat": "saut-plyo",
    "eq": "cardio",
    "met": 8,

@@ -1068,12 +1068,16 @@ const _MOV_PATTERNS=[
   {id:'porte',label:'Porté (carry)',kw:['farmer','fermier','porte','carry','yoke','valise','suitcase','overhead carry']},
   // Cardio machines et déplacements : ce ne sont pas des schémas de FORCE, mais les laisser sans
   // schéma les rendait invisibles à l'équilibre de séance (mesuré au dump du 01/08).
-  {id:'cardio',label:'Cardio / conditionnement',kw:['air bike','assault bike','ski erg','ergometre de ski','bear crawl','marche de l ours','rameur','tapis','elliptique','velo']},
+  {id:'cardio',label:'Cardio / conditionnement',kw:['air bike','assault bike','ski erg','ergometre de ski','bear crawl','marche de l ours','rameur','tapis','elliptique','velo','battle rope','corde ondulatoire']},
   // ⚠️ Les mouvements EXPLOSIFS sont séparés des sauts : l'arraché et l'épaulé-jeté sont
   // des mouvements PRINCIPAUX (voir _EX_ANCRE_PATTERNS), un burpee ou un box jump est du
   // conditionnement — les mélanger ferait bâtir une séance autour d'un burpee.
   {id:'halterophilie',label:'Haltérophilie (explosif)',kw:['arrache','snatch','epaule jete','epaule barre','clean and jerk','clean jerk','clean','jerk','turkish','get up','thruster']},
-  {id:'saut-plyo',label:'Saut / pliométrie',kw:['box jump','saut sur box','burpee','saut a la corde','corde a sauter','jump','plyo','sprint','battle rope','jumping jack','wall ball']}
+  // ⚠️ La CORDE ONDULATOIRE (battle rope) est passée de « saut / pliométrie » à « cardio »
+  //    le 02/08 : on n'y saute pas, les pieds ne quittent jamais le sol. C'est le croisement
+  //    ⑤ (schéma ⟷ muscles) qui l'a signalé, en voyant un schéma de saut sur un exercice
+  //    dont les muscles sont les épaules et le gainage.
+  {id:'saut-plyo',label:'Saut / pliométrie',kw:['box jump','saut sur box','burpee','saut a la corde','corde a sauter','jump','plyo','sprint','jumping jack','wall ball']}
 ];
 // Stemme les pluriels MAIS garde tous les mots (ne PAS retirer les mots vides ici :
 // sinon un mot-clé « curl haltère » se réduirait à « curl » et matcherait « leg curl »).

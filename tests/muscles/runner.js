@@ -1032,6 +1032,51 @@ t('le L-SIT tient sur les MAINS (triceps) et la ROUE ramène avec les DORSAUX',
 t('témoin : le grimpeur reste du CARDIO (ses calories ne viennent pas de ses muscles)',
   !ab.erreur && ab.metGrimpeur===8, String(ab.metGrimpeur));
 
+// ── FULL BODY : les corrections trouvées en relisant les 17 fiches une par une (02/08).
+//    C'était le plus gros bloc identique du catalogue : 13 fiches sur 17 disaient la même chose.
+const fb=await p.evaluate(()=>{
+ try{
+  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
+  const f=n=>(_mscScores([E(n)])||{}).sc||{};
+  return {tgu:f('Turkish Get-Up'), rope:f('Battle Rope'), ski:f('Ergomètre de Ski (Ski Erg)'),
+          burpee:f('Burpees'), jack:f('Jumping Jack'), ours:f('Marche de l\'Ours (Bear Crawl)'),
+          snatch:f('Arraché Haltère (Dumbbell Snatch)'), thruster:f('Thruster'),
+          sled:f('Chariot de Puissance — Tirage en Avançant'),
+          sledDos:f('Chariot de Puissance — Tirage Dos'),
+          patRope:_movPattern('Battle Rope'), patCorde:_movPattern('Sauts à la Corde'),
+          metRope:getExerciseMET('Battle Rope'), metTgu:getExerciseMET('Turkish Get-Up')};
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(fb.erreur) console.log('     ⚠️  bloc full body en ERREUR : '+fb.erreur);
+t('⭐ les 13 fiches identiques ne le sont plus : chaque mouvement a ses muscles',
+  !fb.erreur && JSON.stringify(fb.tgu)!==JSON.stringify(fb.rope)
+  && JSON.stringify(fb.rope)!==JSON.stringify(fb.ski)
+  && JSON.stringify(fb.ski)!==JSON.stringify(fb.jack),
+  'tgu '+JSON.stringify(fb.tgu)+' · rope '+JSON.stringify(fb.rope));
+t('⭐ le TURKISH GET-UP est un exercice d\'ÉPAULE et d\'OBLIQUES (ils manquaient)',
+  !fb.erreur && fb.tgu.obliques===2 && fb.tgu['front-delt']===2, JSON.stringify(fb.tgu));
+t('⭐ la CORDE ONDULATOIRE n\'a plus les QUADRICEPS en moteur (les jambes tiennent, elles ne produisent rien)',
+  !fb.erreur && fb.rope.quads===1 && fb.rope['front-delt']===2 && fb.rope.lats===1,
+  JSON.stringify(fb.rope));
+t('⭐ … et ce n\'est pas un SAUT : les pieds ne quittent jamais le sol',
+  // témoin : la corde à sauter, elle, reste bien un saut.
+  !fb.erreur && fb.patRope==='cardio' && fb.patCorde==='saut-plyo' && fb.metRope===8,
+  'battle rope='+fb.patRope+' · témoin corde à sauter='+fb.patCorde);
+t('⭐ l\'ERGOMÈTRE DE SKI est un TIRAGE (il était classé épaules + quadriceps)',
+  !fb.erreur && fb.ski.lats===2 && fb.ski.triceps===2 && fb.ski.quads===1, JSON.stringify(fb.ski));
+t('il y a une POMPE dans les burpees (les pectoraux n\'étaient nulle part)',
+  !fb.erreur && fb.burpee.pec===1 && fb.burpee.quads===2, JSON.stringify(fb.burpee));
+t('au JUMPING JACK les bras montent SUR LES CÔTÉS (deltoïde moyen) et les MOLLETS sautent',
+  !fb.erreur && fb.jack['side-delt']===2 && fb.jack.calves===2, JSON.stringify(fb.jack));
+t('la MARCHE DE L\'OURS est d\'abord un anti-rotation (gainage moteur, obliques)',
+  !fb.erreur && fb.ours.abs===2 && fb.ours.obliques===1, JSON.stringify(fb.ours));
+t('un ARRACHÉ part d\'une charnière de hanche : les ISCHIOS et les TRAPÈZES sont moteurs',
+  !fb.erreur && fb.snatch.hamstrings===2 && fb.snatch.traps===2, JSON.stringify(fb.snatch));
+t('un THRUSTER est un squat COMPLET : les fessiers sont moteurs',
+  !fb.erreur && fb.thruster.glutes===2 && fb.thruster['front-delt']===2, JSON.stringify(fb.thruster));
+t('les 4 tirages de CHARIOT disent enfin la même chose',
+  !fb.erreur && fb.sled.traps===2 && fb.sledDos.traps===2, JSON.stringify(fb.sled));
+
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
 console.log('──────────────────────────────────────────────────────────');
