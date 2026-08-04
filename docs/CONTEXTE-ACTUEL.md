@@ -19,6 +19,12 @@
 > - 🧠 **Trois bugs de mémoire chez Milo**, tous signalés par Michel sur capture : il croyait ne voir qu'une semaine (**ft-v752**, une phrase du prompt niait la mémoire longue) · sa progression basculait sur UNE séance, +23 % ou −20 % au choix (**ft-v753**) · il n'avait aucun détail entre la semaine écoulée et les moyennes (**ft-v754**).
 > - 📣 **La règle #11 enfin appliquée** (ft-v756) — et 2 annonces découvertes **jamais affichées** (`screen:'menu'`, comparé nulle part).
 >
+> **✋ DEUX GESTES QUE MICHEL DOIT FAIRE (dit « je vois ça en rentrant », 04/08 soir)**
+> 1. **🛟 Réinstaller le trigger de sauvegarde** — `…/exec?action=installDailyBackup&t=FT_BACKUP_INIT_2026`. Doit répondre `1 trigger(s) actif(s)`. ⚠️ **Puis REVÉRIFIER LE LENDEMAIN** dans Santé du système : une sauvegarde manuelle qui marche ne prouve pas que la NOCTURNE est repartie (même leçon que R18 — on vérifie le résultat, pas le geste).
+> 2. **💸 Passer son compte en Sonnet** — Script Properties → `COACH_MODEL_MICHEL` = `claude-sonnet-4-6` (la valeur éprouvée, celle de Christophe). Aucun déploiement nécessaire, effet immédiat. Diviserait sa facture par ~5. ⚠️ Ne PAS photographier cette page : elle affiche `ANTHROPIC_API_KEY` et `ADMIN_TOKEN` en clair.
+>
+> ⚠️ **Et ce que le passage en Sonnet NE règle pas** (R9) : Michel verra alors Milo comme un utilisateur *premium*, toujours pas comme Eline sur Haiku. L'interrupteur « voir Milo comme un utilisateur normal », proposé le 29/07, n'est **toujours pas construit** — c'est lui qui aurait montré le bug du bouton de sa fille.
+
 > **🔴 CONSTATÉ LE 04/08 (16 h 58), NON TRAITÉ — décision de Michel de laisser pour l'instant**
 > - **🛟 LES SAUVEGARDES NE TOURNENT PLUS DEPUIS 36 JOURS.** Panneau Santé, point rouge : dernier fichier `backup-migration-2026-06-29-2003.json`. La sauvegarde nocturne (2 h du matin, `backupAllUserData_`) n'a rien produit depuis le 29 juin. Le stockage est à 31 % et tout va bien **aujourd'hui** — mais s'il retombe comme le 29/07, **il n'y a aucun filet**. C'est le point le plus grave ouvert.
 > - **💸 Le coût de l'IA, c'est Michel.** Facture du 03/08 : **5,65 $**, dont **5,26 $ d'Opus (93 %)** — son propre compte (`COACH_MODEL_MICHEL`). Christophe (Sonnet) : 0,27 $. **Tous les autres testeurs réunis (Haiku) : 0,12 $.** ⚠️ Et le contexte a grossi le 04/08 (45 000 → 59 600 caractères) : chaque question lui coûte plus qu'avant. Leviers : passer son compte en Sonnet (une Script Property), ou finir le **régime du prompt**.
