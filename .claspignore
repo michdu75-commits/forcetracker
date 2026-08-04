@@ -1,51 +1,35 @@
-# Frontend JS (ne pas pousser dans Apps Script)
-app.js
-screens.js
-log.js
-coach.js
-constants.js
-state.js
-setup.js
-tracking.js
-food-health.js
-translations.js
-worker.js
-style.css
-index.html
-sw.js
-manifest.json
+# ══════════════════════════════════════════════════════════════════════════════
+# TOUT EST IGNORÉ, SAUF DEUX FICHIERS. Ne pas revenir à une liste de fichiers.
+#
+# ⚠️ POURQUOI CETTE FORME, ET PAS UNE LISTE. Le projet Apps Script ne doit contenir
+# QUE `Code.js` + `appsscript.json`. Tout fichier frontend poussé là-bas utilise
+# `window`/`document` → Apps Script refuse de charger le projet → TOUT LE BACKEND
+# TOMBE (Milo, sync, premium) pour tout le monde.
+#
+# Ce fichier était une LISTE de ce qu'il ne faut PAS pousser. Une liste est ouverte
+# par le bas : elle est juste le jour où on l'écrit, et fausse dès qu'on crée un
+# fichier. Le même bug est revenu QUATRE fois, à chaque fois pour un fichier neuf :
+#   · 07/07/2026 — `clone/**` et `lib/**` (backend KO en @66/@67)
+#   · 21/07/2026 — `worker.js` : le déploiement backend échouait DEPUIS MI-JUILLET
+#     sans que personne ne le voie ; des semaines de changements backend ne partaient
+#     plus (persistance de l'ADN sportif, dayStateLog)
+#   · 04/08/2026 — `dashboard.html` + `dashboard.js` : les deux s'appelleraient
+#     `dashboard` dans Apps Script → collision → `clasp push` refuse net.
+#     (`supabase.js` et `confidentialite.html` manquaient aussi.)
+#
+# La consigne « ajouter chaque nouveau fichier .js à la racine IMMÉDIATEMENT » était
+# écrite noir sur blanc dans CLAUDE.md. Elle n'a pas suffi — parce qu'elle demande
+# de se souvenir, au moment précis où on pense à autre chose.
+#
+# 👉 On inverse : on interdit tout, on autorise deux fichiers. Un fichier neuf est
+#    désormais ignoré PAR DÉFAUT. On ne peut plus casser le backend en créant un
+#    fichier ; on ne peut que décider d'en ajouter un ici, exprès.
+#
+# ⚠️ CONTRÔLE À FAIRE À CHAQUE DÉPLOIEMENT BACKEND : dans le journal du run,
+#    `clasp push` ne doit lister QUE `appsscript.json` et `Code.js`. Rien d'autre.
+# ══════════════════════════════════════════════════════════════════════════════
 
-# Assets
-logo.png
-female-body.png
-*.png
-*.jpg
-*.gif
-*.webp
-*.svg
+**/**
 
-# Docs & divers
-*.md
-*.xlsx
-*.docx
-appsscript.gs
-
-# Dossiers assets
-exercises/**
-machine/**
-muscles/**
-anatomy/**
-
-# Clone (bac à sable frontend — NE JAMAIS pousser dans Apps Script, utilise window)
-clone/**
-
-# Libs frontend (jsPDF pour l'export PDF)
-lib/**
-
-# Dossiers dev
-.git/**
-node_modules/**
-tests/**
-tools/**
-design_handoff_coach_ia/**
-design_handoff_force_tracker/**
+!Code.js
+!appsscript.json
