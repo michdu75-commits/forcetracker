@@ -863,6 +863,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadHealthAdmin()" style="padding:11px;font-size:14px;">🩺 Vérifier maintenant</button>
       <div id="admin-health" style="margin-top:4px;"></div>
     </div>
+    <!-- Le miroir Supabase (04/08). Une sauvegarde dont on ne vérifie jamais qu'elle écrit
+         n'est pas une sauvegarde : c'est exactement ce qui s'est passé avec la sauvegarde
+         nocturne, arrêtée pendant 36 jours sans que personne ne le voie. D'où un bouton qui
+         écrit POUR DE VRAI plutôt qu'un voyant vert décoratif. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🪞 Copie miroir Supabase</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Une <strong>deuxième copie</strong> des comptes, à côté de Google. Google reste la source de vérité — Supabase ne fait que <strong>recevoir</strong>. <strong>Écriture seule</strong> : la clé publiée dans l'app ne peut pas <em>relire</em> les comptes. Le bouton écrit une ligne de test <strong>pour de vrai</strong> et dit ce qui cloche si ça rate.</div>
+      <button class="btn btn-bg2" onclick="loadSbAdmin()" style="padding:11px;font-size:14px;">🪞 Tester la copie miroir</button>
+      <div id="admin-sb" style="margin-top:4px;"></div>
+    </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🧪 Laboratoire Milo · PT-001 (continuité)</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Rejoue <strong>tout ton historique</strong> de séances dans l'ordre : Milo débriefe chacune et <strong>vérifie l'objectif de la fois d'avant</strong>. Sert à valider la <strong>continuité de sa mémoire</strong> et à voir si <strong>ça sature</strong> sur un gros historique. À la fin : la question « Qui suis-je en tant que sportif&nbsp;? » + un <strong>rapport exportable</strong> (texte + PDF). Prend plusieurs minutes, coûte quelques appels au modèle. Aucune donnée effacée.</div>

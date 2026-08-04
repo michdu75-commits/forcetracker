@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v762';
+  b.textContent='🧪 CLONE ft-v763';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -926,6 +926,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Les 5 alertes qui ne préviennent personne : le <strong>stockage</strong> (c'est lui qui a lâché le 29 juillet), les <strong>sauvegardes</strong> de la nuit, les <strong>mails</strong> qui ne partent pas, la <strong>consommation IA</strong>, et les <strong>mises en ligne</strong> (un déploiement raté est totalement silencieux). À regarder de temps en temps.</div>
       <button class="btn btn-bg2" onclick="loadHealthAdmin()" style="padding:11px;font-size:14px;">🩺 Vérifier maintenant</button>
       <div id="admin-health" style="margin-top:4px;"></div>
+    </div>
+    <!-- Le miroir Supabase (04/08). Une sauvegarde dont on ne vérifie jamais qu'elle écrit
+         n'est pas une sauvegarde : c'est exactement ce qui s'est passé avec la sauvegarde
+         nocturne, arrêtée pendant 36 jours sans que personne ne le voie. D'où un bouton qui
+         écrit POUR DE VRAI plutôt qu'un voyant vert décoratif. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🪞 Copie miroir Supabase</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Une <strong>deuxième copie</strong> des comptes, à côté de Google. Google reste la source de vérité — Supabase ne fait que <strong>recevoir</strong>. <strong>Écriture seule</strong> : la clé publiée dans l'app ne peut pas <em>relire</em> les comptes. Le bouton écrit une ligne de test <strong>pour de vrai</strong> et dit ce qui cloche si ça rate.</div>
+      <button class="btn btn-bg2" onclick="loadSbAdmin()" style="padding:11px;font-size:14px;">🪞 Tester la copie miroir</button>
+      <div id="admin-sb" style="margin-top:4px;"></div>
     </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🧪 Laboratoire Milo · PT-001 (continuité)</div>

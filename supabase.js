@@ -43,8 +43,16 @@
 //     données deviennent lisibles par n'importe qui.
 //     👉 On ne prend jamais le risque de faire fuiter les données d'un autre produit
 //        pour sauvegarder celles de celui-ci. Deux projets : c'est gratuit et ça isole.
-let SB_URL  = '';   // ex. https://xxxxxxxx.supabase.co
-let SB_ANON = '';   // la clé « anon / public »
+let SB_URL  = 'https://lervuzqicoevwvdlpocq.supabase.co';
+let SB_ANON = 'sb_publishable_WWBz0rnck2fG8lEOBjEM6Q_Dm4oXKWg';
+// ℹ️ Le préfixe `sb_publishable_` est le NOUVEAU format de clé publique Supabase
+//    (l'équivalent de l'ancienne `anon`). Elle est faite pour être publiée : elle
+//    n'ouvre que ce que les règles RLS de la table autorisent — ici, écrire, jamais lire.
+//
+// ⚠️ LE CLONE (`clone/supabase.js`) GARDE CES DEUX VALEURS **VIDES**, EXPRÈS.
+//    Le clone est un bac à sable de restylage : ses données de test n'ont rien à
+//    faire dans la sauvegarde miroir des vrais comptes. Si un jour on veut l'y
+//    brancher, il lui faut sa PROPRE table, pas celle-ci.
 
 // Permet aux TESTS de pointer vers un faux serveur — et à toi de configurer depuis la
 // console du navigateur pour un essai, sans toucher au fichier. En production, ce sont
@@ -90,6 +98,44 @@ function sbMirror(payload){
       try{ localStorage.setItem('ft4_sb_last', JSON.stringify(_sbDernier)); }catch(e){}
     });
   }catch(e){ /* jamais bloquant */ }
+}
+
+/**
+ * TEST RÉEL de la copie miroir, pour la carte Admin.
+ *
+ * ⚠️ POURQUOI CE BOUTON EXISTE. Le domaine Supabase est bloqué depuis la session
+ * Claude — impossible de vérifier l'écriture de l'extérieur. Or « c'est poussé » ne
+ * veut pas dire « ça marche » (R18) : un miroir de sauvegarde qui n'écrit pas est
+ * PIRE que pas de miroir, parce qu'on croit être couvert. Ce bouton écrit pour de
+ * vrai et rend le code HTTP, qui dit exactement ce qui cloche :
+ *   201/204 → ça marche · 404 → la table n'existe pas · 401/403 → RLS ou clé
+ * La ligne écrite porte une adresse de TEST bien visible, à supprimer d'un clic
+ * dans la console Supabase.
+ */
+async function sbTest(){
+  if(!_sbActif())return {ok:false, texte:'Miroir non configuré (SB_URL / SB_ANON vides).'};
+  try{
+    const r=await fetch(SB_URL.replace(/\/+$/,'')+'/rest/v1/'+SB_TABLE, {
+      method:'POST',
+      headers:{
+        'apikey': SB_ANON,
+        'Authorization': 'Bearer '+SB_ANON,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ email:'test@forcetracker.test',
+                             data:{ test:true, quand:new Date().toISOString() },
+                             updated_at:new Date().toISOString() })
+    });
+    if(r.ok)return {ok:true, texte:'✅ Écriture réussie (HTTP '+r.status+'). La ligne « test@forcetracker.test » est dans la table.'};
+    let d=''; try{ d=(await r.text()).slice(0,200); }catch(e){}
+    const aide = r.status===404 ? ' → la table `ft_comptes` n\'existe pas : le SQL n\'a pas été exécuté.'
+              : (r.status===401||r.status===403) ? ' → la clé ou les règles RLS refusent l\'écriture (règles INSERT/UPDATE pour `anon`).'
+              : '';
+    return {ok:false, texte:'❌ HTTP '+r.status+aide+(d?('\n'+d):'')};
+  }catch(e){
+    return {ok:false, texte:'❌ Aucune réponse (réseau, ou URL du projet incorrecte).'};
+  }
 }
 
 /** État du miroir, pour la carte Admin. Aucune donnée personnelle. */

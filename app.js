@@ -2486,6 +2486,22 @@ function checkAnnouncements(){
 }
 function showMemoireC(){const o=document.getElementById('ov-memoire-c');if(o)o.classList.add('open');}
 function closeMemoireC(){try{localStorage.setItem('ft4_memoire_c_v1','1');}catch(e){}const o=document.getElementById('ov-memoire-c');if(o)o.classList.remove('open');}
+// ── ADMIN : la copie miroir Supabase (04/08) ──────────────────────────────────────
+// On ÉCRIT vraiment plutôt que d'afficher un voyant : la sauvegarde nocturne s'était
+// arrêtée 36 jours sans que rien ne l'indique. Un indicateur qui ne teste pas ce qu'il
+// annonce finit toujours par mentir.
+async function loadSbAdmin(){
+  const box=document.getElementById('admin-sb');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  if(typeof sbTest!=='function'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">supabase.js non chargé.</div>'; return; }
+  box.innerHTML='<div style="font-size:12.5px;color:var(--t2);">Écriture de test en cours…</div>';
+  const r=await sbTest();
+  let etat=null; try{ etat=sbEtat(); }catch(e){}
+  box.innerHTML='<div style="font-size:12.5px;line-height:1.6;color:'+(r.ok?'var(--t1)':'var(--red)')+';white-space:pre-wrap;">'
+    +_escIdea(r.texte)+'</div>'
+    +(etat?'<div style="font-size:11.5px;color:var(--t2);margin-top:8px;line-height:1.5;">'+_escIdea(etat.texte)+'</div>':'');
+}
 // ── ADMIN : qui a POSÉ un code d'accès perso (04/08) ──────────────────────────────
 // Né de la découverte du 04/08 : `loadProfile` sert un compte ENTIER quand la personne
 // n'a pas de code perso (`_authCheck_` renvoie ok:true dans ce cas — invariant de

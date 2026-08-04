@@ -869,19 +869,34 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     // ② tant qu'il est levé, la sauvegarde cloud n'envoie PLUS les séances.
     //    On intercepte l'appel réseau au lieu de le laisser partir.
     S.sessions=[{date:'2026-08-01',exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true}]}],vol:2000}];
-    let corps=null; const vraiFetch=window.fetch;
-    window.fetch=(u,opt)=>{ if(opt&&opt.body)corps=opt.body; return Promise.resolve({ok:true,text:()=>Promise.resolve('')}); };
+    // ⚠️ DEPUIS ft-v763, `_cloudSync` déclenche DEUX appels réseau : Apps Script puis le
+    // miroir Supabase. Un intercepteur qui garde « le dernier corps vu » mesurerait donc
+    // le mauvais. On range par DESTINATION. (Le test avait rougi exactement là-dessus :
+    // il était juste la veille, il est devenu faux le jour où une 2ᵉ destination est née.)
+    const vraiFetch=window.fetch;
+    let vus={};
+    const espion=(u,opt)=>{ const url=String(u||'');
+      const ou = url.indexOf('exemple.invalid')>=0 ? 'apps' : (url.indexOf('supabase')>=0 ? 'sb' : 'autre');
+      if(opt&&opt.body)vus[ou]=opt.body;
+      return Promise.resolve({ok:true,status:201,text:()=>Promise.resolve('')}); };
+    window.fetch=espion;
     S.url='https://exemple.invalid/exec'; S.email='test@example.com';
     _cloudSync();
     window.fetch=vraiFetch;
-    o.aEnvoye = !!corps;
-    o.sessionsDansPayload = corps ? (JSON.parse(corps).sessions!==undefined) : null;
+    o.aEnvoye = !!vus.apps;
+    o.sessionsDansPayload = vus.apps ? (JSON.parse(vus.apps).sessions!==undefined) : null;
+    // ⭐ LE MIROIR HÉRITE DE LA PROTECTION, il ne la contourne pas. C'est gratuit
+    //    parce que le corps est construit UNE SEULE FOIS et servi aux deux (R2) —
+    //    mais si un jour quelqu'un le reconstruit pour Supabase, ce témoin rougira.
+    o.miroirAppele = !!vus.sb;
+    o.miroirSansSessions = vus.sb ? (JSON.parse(vus.sb).data.sessions===undefined) : null;
     // ③ témoin : SANS le drapeau, les séances repartent normalement
     S.histTronque=false; localStorage.removeItem('ft4_hist_tronque');
-    corps=null; window.fetch=(u,opt)=>{ if(opt&&opt.body)corps=opt.body; return Promise.resolve({ok:true,text:()=>Promise.resolve('')}); };
+    vus={}; window.fetch=espion;
     _cloudSync();
     window.fetch=vraiFetch;
-    o.temoinSessionsEnvoyees = corps ? (JSON.parse(corps).sessions||[]).length : null;
+    o.temoinSessionsEnvoyees = vus.apps ? (JSON.parse(vus.apps).sessions||[]).length : null;
+    o.temoinMiroirSessions   = vus.sb   ? (JSON.parse(vus.sb).data.sessions||[]).length : null;
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
@@ -891,6 +906,10 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     r.aEnvoye===true && r.sessionsDansPayload===false, JSON.stringify(r));
   t('témoin : sans le drapeau, les séances repartent normalement au cloud',
     r.temoinSessionsEnvoyees===1, JSON.stringify(r));
+  t('⭐ MIROIR : le miroir Supabase reçoit AUSSI la sauvegarde',
+    r.miroirAppele===true && r.temoinMiroirSessions===1, JSON.stringify(r));
+  t('⭐ MIROIR : il HÉRITE de la protection « historique tronqué » (aucune séance envoyée non plus)',
+    r.miroirSansSessions===true, JSON.stringify(r));
   await c6.close();
 }
 

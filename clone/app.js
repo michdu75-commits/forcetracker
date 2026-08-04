@@ -1639,27 +1639,27 @@ function exitDemoMode(){
   toast('✅ Tes vraies données sont de retour','success');
 }
 // ── GUIDE DE L'APPLICATION (diaporama, Menu → Outils) ────────
-// Guide-film : chaque slide = un vrai écran de l'app (../guide/*.jpg) + un doigt animé (tap) + une phrase.
+// Guide-film : chaque slide = un vrai écran de l'app (guide/*.jpg) + un doigt animé (tap) + une phrase.
 const APP_GUIDE_SLIDES=[
   {icon:'🧭', t:'Tu ne repars jamais de zéro', cap:'Chaque séance, chaque record, chaque sensation s\'inscrit dans <b>ton histoire</b>. Force Tracker s\'en souvient pour toi — et <b>plus tu l\'utilises, plus il t\'aide à progresser</b>. Ce n\'est pas une appli de muscu de plus : c\'est <b>ta mémoire sportive</b>.'},
   {icon:'🤖', t:'Un coach qui te connaît vraiment', cap:'<b>Milo</b> répond à tes questions, te fait des programmes, des conseils — en tenant compte de <b>TOI</b> (ton profil, tes séances, ton ressenti) et de <b>ta vie</b>. Sa règle : <b>t\'aider à continuer, jamais te bloquer</b>. Il protège tes zones fragiles, et plus tu l\'utilises, mieux il te connaît.'},
   {icon:'🔒', t:'Ton histoire t\'appartient', cap:'Force Tracker ne garde pas juste des chiffres : il construit <b>ton histoire sportive</b>. Et elle est <b>à toi</b> — tes séances, tes progrès, tes infos restent <b>privés</b>, utilisés seulement pour t\'aider à progresser. Tu peux même <b>protéger ton compte avec un code perso</b>.'},
-  {img:'../guide/home.jpg',       tap:[.5,.945],  t:'Ton accueil',            cap:'Tes stats du mois et ta <b>récup du jour</b> d\'un coup d\'œil. Juste en dessous, note ton <b>sommeil</b> (et son <b>historique</b>). Le gros <b>+</b> démarre une séance.'},
-  {img:'../guide/calendrier.jpg', tap:[.65,.46], t:'Ton mois d\'un coup d\'œil 📅', cap:'Sur l\'Accueil, le calendrier raconte ton mois <b>sans rien ouvrir</b> : plus une case est <b>foncée</b>, plus tu as soulevé lourd ce jour-là. Le <b>trait</b> sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body) et l\'<b>étoile ⭐</b> marque un record. À gauche, le <b>n° de semaine</b> avec ton tonnage. <b>Tape un jour</b> : son détail s\'ouvre dessous.'},
-  {img:'../guide/recup-moniteur.jpg', t:'Ta récup, deux styles 💚', cap:'<b>Menu → Apparence → Carte récup</b> : garde l\'<b>anneau</b>, ou passe au <b>moniteur</b> — ton score en gros, une jauge où le <b>rouge</b> est ce qu\'il te reste à récupérer et le <b>vert</b> ce que tu as récupéré, avec un vrai tracé de cœur qui défile. Mêmes données, à toi de choisir.'},
-  {img:'../guide/etat-du-jour.jpg',tap:[.5,.38],  t:'Comment tu te sens aujourd\'hui ?', cap:'En 1-2 taps sur l\'Accueil : ton <b>énergie</b>, ton <b>moral</b> (😔 → 😄) et une éventuelle <b>gêne/douleur</b> (tape la zone). <b>Milo</b> adapte ses conseils du jour — il protège une zone qui fait mal, et si ton moral est bas il se fait plus <b>doux</b> (jamais un psy). Optionnel, ça repart à zéro chaque jour.'},
-  {img:'../guide/profil.jpg',     tap:[.5,.60],   t:'Remplis bien ton profil ⭐', cap:'<b>Le plus important !</b> Plus ton profil est complet, plus <b>Milo, ton coach IA</b>, est précis et personnalisé (récup et calories aussi). Un <b>% de remplissage</b> t\'aide à ne rien oublier.'},
-  {img:'../guide/seance.jpg',     tap:[.875,.305],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche. Tes <b>records</b> se calculent tout seuls.'},
-  {img:'../guide/programmes.jpg', tap:[.5,.42],   t:'Tes programmes',         cap:'Crée, <b>importe</b> (photo/Word/PDF) ou charge un programme en 1 tap. Le bouton <b>✏️</b> modifie un programme enregistré : reps, <b>temps de repos</b> série par série, et un <b>💬 commentaire</b> par exercice (consigne, réglage machine…). Débutant ? Un parcours guidé t\'attend.'},
-  {img:'../guide/progres.jpg',    tap:[.5,.32],   t:'Tes progrès',            cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs.'},
-  {img:'../guide/bilan.jpg',      tap:[.5,.72],   t:'Ton bilan corporel',     cap:'Balance pro (impédance) ? Enregistre tes chiffres — <b>📷 photo</b>, à la main ou code. Poids, graisse, muscle, métabolisme… Tu suis l\'<b>évolution</b> et <b>Milo s\'en sert</b>.'},
-  {img:'../guide/coach.jpg',      tap:[.5,.86],   t:'Milo, ton coach IA',     cap:'Une <b>question</b> ? Besoin d\'un <b>conseil</b> ou d\'un guide ? Milo répond à tout — il connaît ton profil.'},
-  {img:'../guide/milo-direct.jpg',                t:'Milo va droit au but',   cap:'Dis-lui ton objectif (« je veux faire de la force ») et Milo t\'<b>aide direct</b> : dès son 1er message il te propose un <b>vrai plan</b> (structure, exercices), adapté à ce qu\'il sait déjà de toi ET à tes <b>zones fragiles</b> — il te montre <b>comment</b> il les protège (« amplitude contrôlée pour ton épaule »). Puis, au plus, <b>UNE</b> question — parfois avec des <b>boutons</b> de réponse rapide. Plus d\'interrogatoire.'},
-  {img:'../guide/milo-seance.jpg',tap:[.5,.45],   t:'Milo démarre ta séance ⚡', cap:'Dis à Milo ta <b>séance du jour</b> (« Développé Couché 4×8, Rowing 4×10… ») ou demande-lui quoi faire maintenant. Un bouton <b>« ⚡ Commencer cette séance »</b> apparaît → tape-le et ta séance s\'ouvre <b>direct dans l\'onglet Séance</b>, poids <b>pré-remplis</b>. De la discussion à la barre, en un clic.'},
-  {img:'../guide/milo-completer.jpg', tap:[.28,.34], t:'Milo te pose de petites questions', cap:'De temps en temps, sur l\'Accueil, Milo te demande <b>une</b> chose pour mieux te conseiller : où tu t\'entraînes, combien de temps, si tu fais <b>un autre sport</b>… Tu réponds <b>en 1 tap</b>, ou tu tapes « Plus tard ». <b>Jamais un questionnaire</b> : une seule question, et au plus une par semaine.'},
-  {img:'../guide/milo-frequence.jpg', tap:[.28,.53], t:'Il remarque ce que tu fais VRAIMENT', cap:'Milo compare ce que tu as <b>déclaré</b> et ce que tu fais <b>réellement</b> (ta fréquence, ton style d\'entraînement). S\'il voit un écart <b>durable</b>, il te le dit et te <b>propose</b> d\'ajuster — <b>il ne change jamais rien tout seul</b>, c\'est toi qui décides. Et il attend une vraie tendance, jamais une seule séance.'},
-  {img:'../guide/milo-apprend.jpg', t:'Tu vois tout ce qu\'il a appris', cap:'<b>Menu → « Ce que Milo sait de toi »</b> : une phrase te dit à quel point il peut te conseiller (elle <b>monte</b> et ne redescend jamais), et <b>« 🧠 Milo a appris récemment »</b> liste ses dernières découvertes, la plus récente en haut. Tout est <b>effaçable</b> d\'un tap. 🔒 Privé.'},
-  {img:'../guide/milo-memoire.jpg',tap:[.26,.63], t:'Milo retient ce que tu lui confies 🧠', cap:'Confie un truc <b>durable</b> à Milo en discutant (« je m\'entraîne le matin », « j\'ai que des haltères »…). Il te propose de le <b>retenir</b> : <b>« 🧠 Je retiens : … ? »</b> → tape <b>Oui, retiens</b> et il s\'en souvient dans toutes vos discussions. Rien sans ton accord ; tu revois tout dans <b>Menu → « Ce que Milo sait de toi »</b>.'},
+  {img:'guide/home.jpg',       tap:[.5,.945],  t:'Ton accueil',            cap:'Tes stats du mois et ta <b>récup du jour</b> d\'un coup d\'œil. Juste en dessous, note ton <b>sommeil</b> (et son <b>historique</b>). Le gros <b>+</b> démarre une séance.'},
+  {img:'guide/calendrier.jpg', tap:[.65,.46], t:'Ton mois d\'un coup d\'œil 📅', cap:'Sur l\'Accueil, le calendrier raconte ton mois <b>sans rien ouvrir</b> : plus une case est <b>foncée</b>, plus tu as soulevé lourd ce jour-là. Le <b>trait</b> sous le chiffre dit ce que tu as travaillé (rouge = haut, bleu = dos, violet = bas, orange = tronc, vert = full body) et l\'<b>étoile ⭐</b> marque un record. À gauche, le <b>n° de semaine</b> avec ton tonnage. <b>Tape un jour</b> : son détail s\'ouvre dessous.'},
+  {img:'guide/recup-moniteur.jpg', t:'Ta récup, deux styles 💚', cap:'<b>Menu → Apparence → Carte récup</b> : garde l\'<b>anneau</b>, ou passe au <b>moniteur</b> — ton score en gros, une jauge où le <b>rouge</b> est ce qu\'il te reste à récupérer et le <b>vert</b> ce que tu as récupéré, avec un vrai tracé de cœur qui défile. Mêmes données, à toi de choisir.'},
+  {img:'guide/etat-du-jour.jpg',tap:[.5,.38],  t:'Comment tu te sens aujourd\'hui ?', cap:'En 1-2 taps sur l\'Accueil : ton <b>énergie</b>, ton <b>moral</b> (😔 → 😄) et une éventuelle <b>gêne/douleur</b> (tape la zone). <b>Milo</b> adapte ses conseils du jour — il protège une zone qui fait mal, et si ton moral est bas il se fait plus <b>doux</b> (jamais un psy). Optionnel, ça repart à zéro chaque jour.'},
+  {img:'guide/profil.jpg',     tap:[.5,.60],   t:'Remplis bien ton profil ⭐', cap:'<b>Le plus important !</b> Plus ton profil est complet, plus <b>Milo, ton coach IA</b>, est précis et personnalisé (récup et calories aussi). Un <b>% de remplissage</b> t\'aide à ne rien oublier.'},
+  {img:'guide/seance.jpg',     tap:[.875,.305],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche. Tes <b>records</b> se calculent tout seuls.'},
+  {img:'guide/programmes.jpg', tap:[.5,.42],   t:'Tes programmes',         cap:'Crée, <b>importe</b> (photo/Word/PDF) ou charge un programme en 1 tap. Le bouton <b>✏️</b> modifie un programme enregistré : reps, <b>temps de repos</b> série par série, et un <b>💬 commentaire</b> par exercice (consigne, réglage machine…). Débutant ? Un parcours guidé t\'attend.'},
+  {img:'guide/progres.jpg',    tap:[.5,.32],   t:'Tes progrès',            cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs.'},
+  {img:'guide/bilan.jpg',      tap:[.5,.72],   t:'Ton bilan corporel',     cap:'Balance pro (impédance) ? Enregistre tes chiffres — <b>📷 photo</b>, à la main ou code. Poids, graisse, muscle, métabolisme… Tu suis l\'<b>évolution</b> et <b>Milo s\'en sert</b>.'},
+  {img:'guide/coach.jpg',      tap:[.5,.86],   t:'Milo, ton coach IA',     cap:'Une <b>question</b> ? Besoin d\'un <b>conseil</b> ou d\'un guide ? Milo répond à tout — il connaît ton profil.'},
+  {img:'guide/milo-direct.jpg',                t:'Milo va droit au but',   cap:'Dis-lui ton objectif (« je veux faire de la force ») et Milo t\'<b>aide direct</b> : dès son 1er message il te propose un <b>vrai plan</b> (structure, exercices), adapté à ce qu\'il sait déjà de toi ET à tes <b>zones fragiles</b> — il te montre <b>comment</b> il les protège (« amplitude contrôlée pour ton épaule »). Puis, au plus, <b>UNE</b> question — parfois avec des <b>boutons</b> de réponse rapide. Plus d\'interrogatoire.'},
+  {img:'guide/milo-seance.jpg',tap:[.5,.45],   t:'Milo démarre ta séance ⚡', cap:'Dis à Milo ta <b>séance du jour</b> (« Développé Couché 4×8, Rowing 4×10… ») ou demande-lui quoi faire maintenant. Un bouton <b>« ⚡ Commencer cette séance »</b> apparaît → tape-le et ta séance s\'ouvre <b>direct dans l\'onglet Séance</b>, poids <b>pré-remplis</b>. De la discussion à la barre, en un clic.'},
+  {img:'guide/milo-completer.jpg', tap:[.28,.34], t:'Milo te pose de petites questions', cap:'De temps en temps, sur l\'Accueil, Milo te demande <b>une</b> chose pour mieux te conseiller : où tu t\'entraînes, combien de temps, si tu fais <b>un autre sport</b>… Tu réponds <b>en 1 tap</b>, ou tu tapes « Plus tard ». <b>Jamais un questionnaire</b> : une seule question, et au plus une par semaine.'},
+  {img:'guide/milo-frequence.jpg', tap:[.28,.53], t:'Il remarque ce que tu fais VRAIMENT', cap:'Milo compare ce que tu as <b>déclaré</b> et ce que tu fais <b>réellement</b> (ta fréquence, ton style d\'entraînement). S\'il voit un écart <b>durable</b>, il te le dit et te <b>propose</b> d\'ajuster — <b>il ne change jamais rien tout seul</b>, c\'est toi qui décides. Et il attend une vraie tendance, jamais une seule séance.'},
+  {img:'guide/milo-apprend.jpg', t:'Tu vois tout ce qu\'il a appris', cap:'<b>Menu → « Ce que Milo sait de toi »</b> : une phrase te dit à quel point il peut te conseiller (elle <b>monte</b> et ne redescend jamais), et <b>« 🧠 Milo a appris récemment »</b> liste ses dernières découvertes, la plus récente en haut. Tout est <b>effaçable</b> d\'un tap. 🔒 Privé.'},
+  {img:'guide/milo-memoire.jpg',tap:[.26,.63], t:'Milo retient ce que tu lui confies 🧠', cap:'Confie un truc <b>durable</b> à Milo en discutant (« je m\'entraîne le matin », « j\'ai que des haltères »…). Il te propose de le <b>retenir</b> : <b>« 🧠 Je retiens : … ? »</b> → tape <b>Oui, retiens</b> et il s\'en souvient dans toutes vos discussions. Rien sans ton accord ; tu revois tout dans <b>Menu → « Ce que Milo sait de toi »</b>.'},
   {secure:true, t:'Protège ton compte 🔒', cap:'Ajoute un <b>code perso</b> pour que <b>toi seul</b> accèdes à tes données — même depuis un autre téléphone. Va dans <b>Profil → 🔒 Protéger mon compte</b> : on vérifie ton email une fois (pense à tes spams), puis tu choisis ton code. Ça protège tes séances, ton poids et tes infos.'},
   {premium:true, t:'Passe au niveau supérieur ⭐', cap:'Avec <b>Premium</b> : Milo en <b>illimité</b> + les <b>analyses photo</b> (morphologie, étude du corps) pour un vrai coaching perso.'},
 ];
@@ -2345,7 +2345,12 @@ stopRest();
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&restStartTs&&_restLeft()<=-5)stopRest();
 });
-document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+// ⚠️ Élément optionnel : `app.js` est aussi chargé par `dashboard.html` (la version
+// ordinateur), qui n'a pas la barre du haut de l'app. Sans cette garde, la page lève une
+// erreur et la fin du fichier ne s'exécute pas. Une brique partagée ne doit jamais supposer
+// que TOUS les éléments d'un écran existent (constaté le 04/08).
+{ const _tbd=document.getElementById('tb-date');
+  if(_tbd)_tbd.textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); }
 applyTheme();
 if(typeof _applyHalo==='function')_applyHalo();
 if(typeof _applyThemeBtns==='function')_applyThemeBtns();
@@ -2481,6 +2486,22 @@ function checkAnnouncements(){
 }
 function showMemoireC(){const o=document.getElementById('ov-memoire-c');if(o)o.classList.add('open');}
 function closeMemoireC(){try{localStorage.setItem('ft4_memoire_c_v1','1');}catch(e){}const o=document.getElementById('ov-memoire-c');if(o)o.classList.remove('open');}
+// ── ADMIN : la copie miroir Supabase (04/08) ──────────────────────────────────────
+// On ÉCRIT vraiment plutôt que d'afficher un voyant : la sauvegarde nocturne s'était
+// arrêtée 36 jours sans que rien ne l'indique. Un indicateur qui ne teste pas ce qu'il
+// annonce finit toujours par mentir.
+async function loadSbAdmin(){
+  const box=document.getElementById('admin-sb');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  if(typeof sbTest!=='function'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">supabase.js non chargé.</div>'; return; }
+  box.innerHTML='<div style="font-size:12.5px;color:var(--t2);">Écriture de test en cours…</div>';
+  const r=await sbTest();
+  let etat=null; try{ etat=sbEtat(); }catch(e){}
+  box.innerHTML='<div style="font-size:12.5px;line-height:1.6;color:'+(r.ok?'var(--t1)':'var(--red)')+';white-space:pre-wrap;">'
+    +_escIdea(r.texte)+'</div>'
+    +(etat?'<div style="font-size:11.5px;color:var(--t2);margin-top:8px;line-height:1.5;">'+_escIdea(etat.texte)+'</div>':'');
+}
 // ── ADMIN : qui a POSÉ un code d'accès perso (04/08) ──────────────────────────────
 // Né de la découverte du 04/08 : `loadProfile` sert un compte ENTIER quand la personne
 // n'a pas de code perso (`_authCheck_` renvoie ok:true dans ce cas — invariant de
