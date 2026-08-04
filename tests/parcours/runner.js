@@ -913,6 +913,55 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c6.close();
 }
 
+// ═══ LE CATALOGUE N'EST ENVOYÉ QUE QUAND IL SERT (ft-v764) ═══════════════════════════════
+// Mesuré le 04/08 en exécutant l'app : le contexte fait 60 085 caractères et part EN ENTIER
+// à chaque message ; le catalogue d'exercices en pèse 9 507 (16 %), le plus gros bloc du
+// prompt. Il ne sert à rien quand la personne écrit « j'ai mal dormi ».
+// ⚠️ CE QUE CE TEST PROTÈGE, ET C'EST L'ESSENTIEL : l'erreur n'est PAS symétrique (R29).
+// Envoyer le catalogue pour rien ne coûte que des caractères ; l'OUBLIER quand Milo
+// construit une séance lui fait nommer un exercice que l'app ne reconnaît pas — le bug que
+// ft-v713 avait corrigé (R8). Donc on vérifie D'ABORD les faux négatifs, jamais l'inverse.
+{
+  const c7=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p7=await c7.newPage();
+  await p7.goto('http://localhost:'+PORT+'/index.html'); await p7.waitForTimeout(2200);
+  const r=await p7.evaluate(()=>{
+   try{
+    // Un historique + un échange déjà entamé : sans ça on envoie tout par prudence (voulu).
+    S.sessions=[]; for(let i=0;i<10;i++)S.sessions.push({date:'2026-07-0'+(i%9+1),vol:3000,
+      exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}]});
+    if(typeof coachHistory!=='undefined'){coachHistory.length=0;
+      coachHistory.push({role:'user',content:'a'},{role:'assistant',content:'b'});}
+    const DOIT=["fais-moi une séance pour aujourd'hui s'il te plaît",
+      "je voudrais un programme sur 4 semaines pour progresser",
+      "tu peux me remplacer le développé couché par autre chose ?",
+      "j'aimerais travailler mes épaules et mon dos cette semaine",
+      "quoi faire à la salle ce soir, j'ai 45 minutes devant moi",
+      "je stagne au squat depuis un mois, une idée pour débloquer ?",
+      "je n'ai qu'un élastique chez moi, tu proposes quoi comme routine",
+      "salut","ok",""];
+    const HORS=["j'ai très mal dormi cette nuit, je suis complètement épuisé aujourd'hui",
+      "je suis stressé par le boulot en ce moment et ça me pèse beaucoup"];
+    return {
+      manques: DOIT.filter(m=>!_ctxEntrainement(m)),
+      retires: HORS.filter(m=>!_ctxEntrainement(m)).length,
+      avec: buildCoachContext("fais-moi une séance jambes pour ce soir stp").length,
+      sans: buildCoachContext("j'ai très mal dormi cette nuit, je suis complètement épuisé aujourd'hui").length,
+      sansArg: buildCoachContext().length
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ PROMPT : le catalogue est TOUJOURS envoyé dès qu\'il peut servir (10 messages témoins)',
+    Array.isArray(r.manques) && r.manques.length===0, JSON.stringify(r.manques||r));
+  t('PROMPT : il est retiré sur un message franchement hors sujet',
+    r.retires===2, JSON.stringify(r));
+  t('PROMPT : le gain est réel (> 5 000 caractères en moins)',
+    (r.avec-r.sans)>5000, 'avec='+r.avec+' sans='+r.sans);
+  t('⭐ PROMPT : un appelant SANS message reçoit le contexte COMPLET (diagnostic, laboratoire)',
+    r.sansArg===r.avec, 'sansArg='+r.sansArg+' avec='+r.avec);
+  await c7.close();
+}
+
 // ═══ MILO PROPOSE UNE SÉANCE ALORS QU'UNE SÉANCE EST DÉJÀ EN COURS (ft-v750) ═══
 // Retour de Michel EN PLEINE SÉANCE : « je lui ai demandé de changer l'exercice, il me propose
 // bien une nouvelle séance mais ça ne met pas à jour la séance actuelle ». Le bouton ne savait

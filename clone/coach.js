@@ -231,6 +231,54 @@ const _CAT_LIEUX={
   maison:{lbl:'Maison avec matériel',bacs:['elast','trx','corps','libre','autre']},
   pdc:{lbl:'Maison sans matériel',  bacs:['corps']}
 };
+// ─── N'ENVOYER LES GROS BLOCS QUE QUAND ILS SERVENT (04/08/2026) ─────────────────────────
+// MESURÉ ce soir, en exécutant l'app : le contexte fait **60 085 caractères**, et il part
+// EN ENTIER À CHAQUE MESSAGE. Le catalogue d'exercices en pèse **9 507 (16 %)** — le plus
+// gros bloc du prompt, devant tout le reste. Or il ne sert à rien quand la personne écrit
+// « salut », « j'ai mal au dos » ou « j'ai mal dormi ».
+//
+// POURQUOI ÇA COMPTE DOUBLE :
+//   ① le coût — sur août : 2 005 554 tokens ENTRANTS pour 47 748 sortants, soit 42 pour 1.
+//      98 % de la facture, c'est ce qu'on ENVOIE à Milo, pas ce qu'il répond ;
+//   ② la qualité — les règles d'un prompt ne s'additionnent pas, elles se CONCURRENCENT.
+//      Sur un modèle plus léger (Michel est passé d'Opus à Sonnet le 04/08), un contexte
+//      touffu dilue chaque consigne. Alléger, c'est aussi rendre Milo plus obéissant.
+//
+// ⚠️ ON PENCHE TOUJOURS DU CÔTÉ DE L'INCLUSION, et c'est le cœur de la décision.
+// L'erreur n'est PAS symétrique (**R29** : le droit de deviner dépend du coût de l'erreur) :
+//   · envoyer le catalogue pour rien → ça coûte des caractères, rien d'autre ;
+//   · l'oublier alors que Milo construit une séance → il nomme un exercice que l'app ne
+//     reconnaît pas, la démonstration et le suivi des records tombent. C'est exactement le
+//     bug que ft-v713 avait corrigé (**R8** : un prompt ne compense jamais une donnée absente).
+// Donc : au moindre doute — message vide, très court, premier échange, ou le moindre mot
+// qui touche à l'entraînement — **on envoie tout**. On ne coupe que sur du franchement
+// hors-sujet.
+const _MOTS_ENTRAINEMENT = new RegExp(
+  's[ée]anc|entra[îi]n|programm|exercice|muscu|s[ée]rie|r[ée]p[ée]t|charge|kg|reps|1rm|record|pr\\b'
+  +'|squat|d[ée]velopp|soulev|terre|traction|tirage|curl|press|rowing|fente|gainage|planche'
+  +'|[ée]l[ée]vation|extension|flexion|dips|pompe|burpee|kettlebell|halt[èe]re|barre|poulie|machine'
+  +'|[ée]lastique|trx|sangle|poids du corps|cardio|course|v[ée]lo|rameur|corde'
+  +'|[ée]chauff|repos|split|full ?body|push|pull|upper|lower|jambe|dos|pec|[ée]paule|bras'
+  +'|biceps|triceps|abdo|fessier|mollet|ischio|quadri|trap[èe]ze|lombaire|avant-bras|deltoïde'
+  +'|remplac|alternativ|propos|quoi faire|routine|planning|volume|intensit|technique|forme'
+  +'|salle|gym|entrainement|workout|muscle', 'i');
+
+/**
+ * Faut-il envoyer les blocs liés à l'ENTRAÎNEMENT (catalogue d'exercices) ?
+ * @param {string|undefined} msg — le message que la personne vient d'écrire.
+ *        `undefined` = appelant qui n'a pas de message (diagnostic, laboratoire) → on envoie TOUT.
+ */
+function _ctxEntrainement(msg){
+  try{
+    if(msg===undefined || msg===null)return true;            // appelant sans message → tout
+    const m=String(msg).trim();
+    if(m.length<25)return true;                               // trop court pour trancher → tout
+    if(!(S.sessions||[]).length)return true;                  // début de parcours → tout
+    if(typeof coachHistory!=='undefined' && (coachHistory||[]).length<2)return true; // 1ᵉʳ échange
+    return _MOTS_ENTRAINEMENT.test(m);
+  }catch(e){ return true; }                                   // en cas de pépin : on envoie
+}
+
 function _catalogueContext(){
   if(typeof EXLIB==='undefined'||typeof _exEquip!=='function')return '';
   const place=(S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.place)||'';
@@ -869,6 +917,7 @@ function _extractDaySession(reply){
     let jsonStr=m?m[1]:null;
     if(!jsonStr){const m2=reply.match(/\{[\s\S]*?"seance"[\s\S]*\}/i);jsonStr=m2?m2[0]:null;}
     if(!jsonStr||!/"seance"/i.test(jsonStr)){
+      // Pas de bloc caché → on tente de lire la séance dans le texte visible.
       const t=_seanceDepuisTexte(reply);
       return t?{sess:t, clean:reply, fromText:true}:null;
     }
@@ -1373,7 +1422,10 @@ function _coachHistPayload(n){
     .filter(m => m && (m.role==='user'||m.role==='assistant') && m.content!=null && m.content!=='')
     .map(m => ({ role: m.role, content: m.content }));
 }
-function buildCoachContext() {
+// @param {string|undefined} msg — le message que la personne vient d'écrire. Sert UNIQUEMENT
+//        à décider si les gros blocs liés à l'entraînement sont utiles (voir _ctxEntrainement).
+//        Non fourni = on envoie TOUT (appelants de diagnostic, laboratoire PT-001).
+function buildCoachContext(msg) {
   const bmr = calcBMR ? calcBMR() : '—';
   const tdee = calcTDEE ? calcTDEE() : '—';
   const macros = calcMacros ? calcMacros(S.nutritionPhase || 'charge') : {};
@@ -1503,7 +1555,7 @@ function buildCoachContext() {
     wktText=`\nSÉANCE EN COURS — l'athlète s'entraîne MAINTENANT${_wkt.progLabel?' (programme: '+_wkt.progLabel+')':''}. Aide-le en DIRECT : proposer un exercice équivalent si une machine est prise, ajuster une charge (ex. "+2,5 kg vs la dernière fois"), conseiller l'ordre des exercices, gérer la fatigue.\n${exLines}\n`;
   }
 
-  return _gardienRules() + `Tu es ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, le coach personnel de cet athlète (expert en force athlétique et musculation). Tu réponds TOUJOURS en ${(typeof LANG_COACH!=='undefined'&&LANG_COACH[window._LANG])||'français'}${(typeof window!=='undefined'&&window._LANG&&window._LANG!=='fr')?' — IMPORTANT : toutes tes consignes internes ci-dessous sont rédigées en français, mais tu DOIS répondre à la personne dans cette langue, avec une langue soignée, naturelle et idiomatique (pas une traduction mot à mot)':''}. Maximum 200 mots sauf si l'athlète demande plus de détails.
+  return _gardienRules() + `Tu es ${(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo')}, le coach personnel de cet athlète (expert en force athlétique et musculation). Tu réponds TOUJOURS en français. Maximum 200 mots sauf si l'athlète demande plus de détails.
 
 TA PERSONNALITÉ :
 - Ton naturel : franc, direct, avec un brin d'humour — jamais langue de bois, mais TOUJOURS bienveillant, jamais méchant ni rabaissant.
@@ -1764,7 +1816,7 @@ ${(()=>{
   return '\n📐 ÉTUDE DU CORPS DE L\'UTILISATEUR — tu AS ce bilan (résumé texte de ses photos, réalisé le '+(bs.date||'?')+'). Tu DOIS t\'en servir pour cibler ses déséquilibres et proposer des exercices correctifs. NE DIS JAMAIS que tu n\'as pas accès à son bilan ni à ses photos : tu en as le résumé complet ci-dessous.\n- '+L.join('\n- ');
 })()}
 ${_coachQuizContext()}
-${_catalogueContext()}
+${_ctxEntrainement(msg)?_catalogueContext():''}
 ${_memoireLongue()}
 ${_historiqueCompact()}
 ${(()=>{
@@ -2297,7 +2349,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
         action: 'coach',
         email: S.email || '',
         message: msg || 'Analyse cette photo de mon corps.',
-        context: buildCoachContext(),
+        context: buildCoachContext(msg),
         history: _coachHistPayload(8), // ⚠️ ne JAMAIS envoyer _silent/champs parasites à l'API (400 invalid_request_error)
         coachMemory: S.coachMemory||''
       };
@@ -2459,7 +2511,7 @@ const _PT001_MAX_TRIES=2;        // 1 réessai (au lieu de 2) → beaucoup plus 
 async function _pt001Ask(instr){
   const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
   const t0=_now();
-  const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:_coachHistPayload(8),coachMemory:S.coachMemory||''};
+  const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(instr),history:_coachHistPayload(8),coachMemory:S.coachMemory||''};
   let lastErr='inconnue', lastKind='error', status=0;
   for(let a=1;a<=_PT001_MAX_TRIES;a++){
     const last=(a>=_PT001_MAX_TRIES);
@@ -3287,17 +3339,17 @@ const _DRAWER_CONTENT = {
     title:'🫀 Anatomie du corps humain',
     html:(()=>{
       const groups=[
-        {name:'Corps entier',    img:'../anatomy/corps entier/schema homme entier face avant arriere et côté.png', full:true},
-        {name:'Pectoraux',       img:'../anatomy/pectoreaux/schema pectoreaux.png'},
-        {name:'Dos & Trapèzes',  img:'../anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png'},
-        {name:'Épaules',         img:'../anatomy/epaules/schéma epaule arriere.png'},
-        {name:'Bras & Avant-bras',img:'../anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
-        {name:'Abdominaux',      img:'../anatomy/abdominaux/schema abdominaux.png'},
-        {name:'Jambes (avant)',  img:'../anatomy/jambes/jambes avant/jambes face avant.png'},
-        {name:'Jambes & Mollets',img:'../anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
-        {name:'Fessiers & Lombaires',img:'../anatomy/fessiers lombaires/schema lombaires fessiers.png'},
-        {name:'Vue des Nerfs',       img:'../anatomy/Vue des Nerfs/vue nerf.png'},
-        {name:'Os & Nerfs sciatiques',img:'../anatomy/Vue des Os avec nerfs sciatiques/os et nerfs.png'},
+        {name:'Corps entier',    img:'anatomy/corps entier/schema homme entier face avant arriere et côté.png', full:true},
+        {name:'Pectoraux',       img:'anatomy/pectoreaux/schema pectoreaux.png'},
+        {name:'Dos & Trapèzes',  img:'anatomy/dos_dorsaux/schema dorsaux arriere + trapeze.png'},
+        {name:'Épaules',         img:'anatomy/epaules/schéma epaule arriere.png'},
+        {name:'Bras & Avant-bras',img:'anatomy/bras biceps triceps/schema muscles bras et avant bras.png'},
+        {name:'Abdominaux',      img:'anatomy/abdominaux/schema abdominaux.png'},
+        {name:'Jambes (avant)',  img:'anatomy/jambes/jambes avant/jambes face avant.png'},
+        {name:'Jambes & Mollets',img:'anatomy/jambes/jambes arrieres mollets/arriere cuisses mollets.png'},
+        {name:'Fessiers & Lombaires',img:'anatomy/fessiers lombaires/schema lombaires fessiers.png'},
+        {name:'Vue des Nerfs',       img:'anatomy/Vue des Nerfs/vue nerf.png'},
+        {name:'Os & Nerfs sciatiques',img:'anatomy/Vue des Os avec nerfs sciatiques/os et nerfs.png'},
       ];
       const card=(g)=>g.img
         ?`<div onclick="openAnatomyImg('${g.img.replace(/'/g,"\\'")}','${g.name}')" style="background:var(--bg3);border-radius:12px;overflow:hidden;cursor:pointer;border:1px solid var(--sep);${g.full?'grid-column:span 2;':''}" >
@@ -3383,13 +3435,13 @@ const _DRAWER_CONTENT = {
         +card('🤸','Fitness / Cross-training','Condition physique GÉNÉRALE : on mélange muscu, cardio, gainage et circuits. Objectif polyvalence, endurance et santé plutôt que la performance pure sur un lift.')
         +card('🧗','Callisthénie / Street workout','Musculation au POIDS DU CORPS (tractions, dips, pompes, figures). Force relative, contrôle et mobilité. Peu de matériel, beaucoup de progression.')
         +sec('🎒 Le matériel — tes outils')
-        +pcard('🎗️','Ceinture de force','Elle t\'aide à GAINER le tronc sur les gros soulevés (squat, soulevé de terre lourds). Tu pousses le ventre contre la ceinture → plus de pression = dos plus stable. À garder pour les séries lourdes, pas pour l\'échauffement. Il en existe plusieurs : <b>souple</b> (nylon, confort, polyvalente) et <b>cuir rigide</b> avec fermeture à <b>levier</b> (rapide à mettre/enlever) ou à <b>ardillon/boucle</b> (réglage plus précis).',[{src:'../accessoires/ceinture-souple.jpg',cap:'Souple (nylon)'},{src:'../accessoires/ceinture-cuir-levier.jpg',cap:'Cuir · levier'},{src:'../accessoires/ceinture-cuir-ardillon.jpg',cap:'Cuir · ardillon'}])
-        +pcard('🤚','Bandes de poignets (wrist wraps)','Soutiennent le poignet sur les pressions lourdes (développé couché, militaire). Elles évitent que le poignet parte en arrière. Utiles quand ça charge, inutiles léger.',[{src:'../accessoires/wrist-wraps.jpg'}])
-        +pcard('🦵','Genouillères / bandes de genoux','Manchons (sleeves) : chaleur + maintien + un peu de rebond au squat, protègent l\'articulation. Bandes (wraps) : très serrées, gros rebond, réservées à la force athlétique lourde.',[{src:'../accessoires/genouilleres.jpg'}])
-        +pcard('🪢','Sangles / straps (grip)','Elles accrochent la barre à tes poignets quand tes mains lâchent avant tes muscles (tirages, soulevés, shrugs lourds). Pratique pour le dos — mais travaille aussi ta prise sans, pour ne pas la négliger.',[{src:'../accessoires/sangles.jpg'}])
+        +pcard('🎗️','Ceinture de force','Elle t\'aide à GAINER le tronc sur les gros soulevés (squat, soulevé de terre lourds). Tu pousses le ventre contre la ceinture → plus de pression = dos plus stable. À garder pour les séries lourdes, pas pour l\'échauffement. Il en existe plusieurs : <b>souple</b> (nylon, confort, polyvalente) et <b>cuir rigide</b> avec fermeture à <b>levier</b> (rapide à mettre/enlever) ou à <b>ardillon/boucle</b> (réglage plus précis).',[{src:'accessoires/ceinture-souple.jpg',cap:'Souple (nylon)'},{src:'accessoires/ceinture-cuir-levier.jpg',cap:'Cuir · levier'},{src:'accessoires/ceinture-cuir-ardillon.jpg',cap:'Cuir · ardillon'}])
+        +pcard('🤚','Bandes de poignets (wrist wraps)','Soutiennent le poignet sur les pressions lourdes (développé couché, militaire). Elles évitent que le poignet parte en arrière. Utiles quand ça charge, inutiles léger.',[{src:'accessoires/wrist-wraps.jpg'}])
+        +pcard('🦵','Genouillères / bandes de genoux','Manchons (sleeves) : chaleur + maintien + un peu de rebond au squat, protègent l\'articulation. Bandes (wraps) : très serrées, gros rebond, réservées à la force athlétique lourde.',[{src:'accessoires/genouilleres.jpg'}])
+        +pcard('🪢','Sangles / straps (grip)','Elles accrochent la barre à tes poignets quand tes mains lâchent avant tes muscles (tirages, soulevés, shrugs lourds). Pratique pour le dos — mais travaille aussi ta prise sans, pour ne pas la négliger.',[{src:'accessoires/sangles.jpg'}])
         +card('👕','Maillot / combinaison de force','En force athlétique « équipée » : des combinaisons/chemises très rigides qui renvoient de la force. Il y a un modèle <b>par mouvement</b> — une chemise pour le <b>développé couché</b>, une combinaison pour le <b>squat</b> et une pour le <b>soulevé de terre</b>. C\'est un monde à part (compétitions spécifiques), pas nécessaire pour progresser.')
-        +pcard('👟','Les chaussures','Haltéro/squat : chaussure à talon rigide (meilleure profondeur, buste plus droit). Soulevé de terre : semelle PLATE et fine (chausson, Converse) pour être stable et proche du sol. Évite les grosses semelles moelleuses sous la barre.',[{src:'../accessoires/chaussures.jpg'}])
-        +pcard('🧗‍♂️','Craie / magnésie','Assèche les mains → bien meilleure prise sur la barre. Indispensable sur les soulevés lourds. Existe en <b>bloc/poudre</b> (le plus efficace) ou en <b>version liquide</b>, plus propre et souvent autorisée quand ta salle interdit la poudre.',[{src:'../accessoires/magnesie-bloc.jpg',cap:'Bloc / poudre'},{src:'../accessoires/magnesie-liquide.jpg',cap:'Liquide'}])
+        +pcard('👟','Les chaussures','Haltéro/squat : chaussure à talon rigide (meilleure profondeur, buste plus droit). Soulevé de terre : semelle PLATE et fine (chausson, Converse) pour être stable et proche du sol. Évite les grosses semelles moelleuses sous la barre.',[{src:'accessoires/chaussures.jpg'}])
+        +pcard('🧗‍♂️','Craie / magnésie','Assèche les mains → bien meilleure prise sur la barre. Indispensable sur les soulevés lourds. Existe en <b>bloc/poudre</b> (le plus efficace) ou en <b>version liquide</b>, plus propre et souvent autorisée quand ta salle interdit la poudre.',[{src:'accessoires/magnesie-bloc.jpg',cap:'Bloc / poudre'},{src:'accessoires/magnesie-liquide.jpg',cap:'Liquide'}])
         +sec('🔥 Les techniques — monte en intensité')
         +card('⚡','Superset','Deux exercices ENCHAÎNÉS sans repos (ex. biceps + triceps). Gain de temps + grosse congestion. Dans Force Tracker : bouton « ⚡ Grouper » en séance, ou « Superset » dans l\'éditeur de programme.')
         +card('📉','Drop set','Tu vas à l\'échec, puis tu BAISSES la charge (~20%) et tu continues sans repos, une ou plusieurs fois. Brutal pour finir un muscle. Dispo via le bouton 📉 Drop.')
@@ -3506,7 +3558,7 @@ const _DRAWER_CONTENT = {
       // Remplit la taille du stockage (asynchrone)
       if(typeof _fillStorageInfo==='function')setTimeout(_fillStorageInfo,50);
       return`<div style="text-align:center;padding:10px 0 20px;">
-      <img src="../logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
+      <img src="logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
       <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;">Force Tracker</div>
       <div id="_about-ver" style="display:inline-block;background:rgba(255,45,85,.12);color:var(--red);font-family:var(--font-cond);font-size:15px;font-weight:800;padding:5px 16px;border-radius:20px;letter-spacing:.05em;border:1px solid rgba(255,45,85,.22);margin-bottom:20px;">…</div>
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--t2);">

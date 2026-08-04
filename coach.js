@@ -231,6 +231,54 @@ const _CAT_LIEUX={
   maison:{lbl:'Maison avec matériel',bacs:['elast','trx','corps','libre','autre']},
   pdc:{lbl:'Maison sans matériel',  bacs:['corps']}
 };
+// ─── N'ENVOYER LES GROS BLOCS QUE QUAND ILS SERVENT (04/08/2026) ─────────────────────────
+// MESURÉ ce soir, en exécutant l'app : le contexte fait **60 085 caractères**, et il part
+// EN ENTIER À CHAQUE MESSAGE. Le catalogue d'exercices en pèse **9 507 (16 %)** — le plus
+// gros bloc du prompt, devant tout le reste. Or il ne sert à rien quand la personne écrit
+// « salut », « j'ai mal au dos » ou « j'ai mal dormi ».
+//
+// POURQUOI ÇA COMPTE DOUBLE :
+//   ① le coût — sur août : 2 005 554 tokens ENTRANTS pour 47 748 sortants, soit 42 pour 1.
+//      98 % de la facture, c'est ce qu'on ENVOIE à Milo, pas ce qu'il répond ;
+//   ② la qualité — les règles d'un prompt ne s'additionnent pas, elles se CONCURRENCENT.
+//      Sur un modèle plus léger (Michel est passé d'Opus à Sonnet le 04/08), un contexte
+//      touffu dilue chaque consigne. Alléger, c'est aussi rendre Milo plus obéissant.
+//
+// ⚠️ ON PENCHE TOUJOURS DU CÔTÉ DE L'INCLUSION, et c'est le cœur de la décision.
+// L'erreur n'est PAS symétrique (**R29** : le droit de deviner dépend du coût de l'erreur) :
+//   · envoyer le catalogue pour rien → ça coûte des caractères, rien d'autre ;
+//   · l'oublier alors que Milo construit une séance → il nomme un exercice que l'app ne
+//     reconnaît pas, la démonstration et le suivi des records tombent. C'est exactement le
+//     bug que ft-v713 avait corrigé (**R8** : un prompt ne compense jamais une donnée absente).
+// Donc : au moindre doute — message vide, très court, premier échange, ou le moindre mot
+// qui touche à l'entraînement — **on envoie tout**. On ne coupe que sur du franchement
+// hors-sujet.
+const _MOTS_ENTRAINEMENT = new RegExp(
+  's[ée]anc|entra[îi]n|programm|exercice|muscu|s[ée]rie|r[ée]p[ée]t|charge|kg|reps|1rm|record|pr\\b'
+  +'|squat|d[ée]velopp|soulev|terre|traction|tirage|curl|press|rowing|fente|gainage|planche'
+  +'|[ée]l[ée]vation|extension|flexion|dips|pompe|burpee|kettlebell|halt[èe]re|barre|poulie|machine'
+  +'|[ée]lastique|trx|sangle|poids du corps|cardio|course|v[ée]lo|rameur|corde'
+  +'|[ée]chauff|repos|split|full ?body|push|pull|upper|lower|jambe|dos|pec|[ée]paule|bras'
+  +'|biceps|triceps|abdo|fessier|mollet|ischio|quadri|trap[èe]ze|lombaire|avant-bras|deltoïde'
+  +'|remplac|alternativ|propos|quoi faire|routine|planning|volume|intensit|technique|forme'
+  +'|salle|gym|entrainement|workout|muscle', 'i');
+
+/**
+ * Faut-il envoyer les blocs liés à l'ENTRAÎNEMENT (catalogue d'exercices) ?
+ * @param {string|undefined} msg — le message que la personne vient d'écrire.
+ *        `undefined` = appelant qui n'a pas de message (diagnostic, laboratoire) → on envoie TOUT.
+ */
+function _ctxEntrainement(msg){
+  try{
+    if(msg===undefined || msg===null)return true;            // appelant sans message → tout
+    const m=String(msg).trim();
+    if(m.length<25)return true;                               // trop court pour trancher → tout
+    if(!(S.sessions||[]).length)return true;                  // début de parcours → tout
+    if(typeof coachHistory!=='undefined' && (coachHistory||[]).length<2)return true; // 1ᵉʳ échange
+    return _MOTS_ENTRAINEMENT.test(m);
+  }catch(e){ return true; }                                   // en cas de pépin : on envoie
+}
+
 function _catalogueContext(){
   if(typeof EXLIB==='undefined'||typeof _exEquip!=='function')return '';
   const place=(S.coachQuiz&&S.coachQuiz.answers&&S.coachQuiz.answers.place)||'';
@@ -1374,7 +1422,10 @@ function _coachHistPayload(n){
     .filter(m => m && (m.role==='user'||m.role==='assistant') && m.content!=null && m.content!=='')
     .map(m => ({ role: m.role, content: m.content }));
 }
-function buildCoachContext() {
+// @param {string|undefined} msg — le message que la personne vient d'écrire. Sert UNIQUEMENT
+//        à décider si les gros blocs liés à l'entraînement sont utiles (voir _ctxEntrainement).
+//        Non fourni = on envoie TOUT (appelants de diagnostic, laboratoire PT-001).
+function buildCoachContext(msg) {
   const bmr = calcBMR ? calcBMR() : '—';
   const tdee = calcTDEE ? calcTDEE() : '—';
   const macros = calcMacros ? calcMacros(S.nutritionPhase || 'charge') : {};
@@ -1765,7 +1816,7 @@ ${(()=>{
   return '\n📐 ÉTUDE DU CORPS DE L\'UTILISATEUR — tu AS ce bilan (résumé texte de ses photos, réalisé le '+(bs.date||'?')+'). Tu DOIS t\'en servir pour cibler ses déséquilibres et proposer des exercices correctifs. NE DIS JAMAIS que tu n\'as pas accès à son bilan ni à ses photos : tu en as le résumé complet ci-dessous.\n- '+L.join('\n- ');
 })()}
 ${_coachQuizContext()}
-${_catalogueContext()}
+${_ctxEntrainement(msg)?_catalogueContext():''}
 ${_memoireLongue()}
 ${_historiqueCompact()}
 ${(()=>{
@@ -2298,7 +2349,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
         action: 'coach',
         email: S.email || '',
         message: msg || 'Analyse cette photo de mon corps.',
-        context: buildCoachContext(),
+        context: buildCoachContext(msg),
         history: _coachHistPayload(8), // ⚠️ ne JAMAIS envoyer _silent/champs parasites à l'API (400 invalid_request_error)
         coachMemory: S.coachMemory||''
       };
@@ -2460,7 +2511,7 @@ const _PT001_MAX_TRIES=2;        // 1 réessai (au lieu de 2) → beaucoup plus 
 async function _pt001Ask(instr){
   const _now=()=>(typeof performance!=='undefined'?performance.now():Date.now());
   const t0=_now();
-  const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(),history:_coachHistPayload(8),coachMemory:S.coachMemory||''};
+  const payload={action:'coach',email:S.email||'',message:instr,context:buildCoachContext(instr),history:_coachHistPayload(8),coachMemory:S.coachMemory||''};
   let lastErr='inconnue', lastKind='error', status=0;
   for(let a=1;a<=_PT001_MAX_TRIES;a++){
     const last=(a>=_PT001_MAX_TRIES);
