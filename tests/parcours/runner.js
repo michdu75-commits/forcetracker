@@ -997,6 +997,18 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   // dire à Milo ce qu'il ne doit pas dire commence par lui demander ses règles.
   // ⚠️ Ce n'est PAS étanche (une consigne de prompt se contourne) : c'est un ralentisseur.
   // La vraie réponse est le Gardien de la Constitution en SORTIE, déterministe (cf. CLAUDE.md).
+  // ⚠️ CONTRADICTION, pas doublon (05/08) — trouvée en vérifiant l'audit que Milo a fait de son
+  // propre prompt. Il disait DEUX choses opposées : « POSE 1 ou 2 questions ciblées AVANT de
+  // trancher » (Méthode de coaching, Savoir raisonner) contre « AU PLUS UNE question, APRÈS ta
+  // proposition seulement, UNE seule, jamais deux » (Interdiction d'interrogatoire). Opposées
+  // sur le NOMBRE et sur le MOMENT. C'est le bug de l'« interrogatoire » qui avait résisté à
+  // trois durcissements de prompt (ft-v602/603/606) : on avait conclu « c'est le modèle » (R9),
+  // c'était vrai — ET il y avait une contradiction dedans. Un modèle puissant tranche entre deux
+  // règles opposées ; un modèle léger, non. Michel venait de passer en Sonnet.
+  t('⭐⭐ PROMPT : plus AUCUNE consigne « 1 ou 2 questions » (elle contredisait « au plus UNE »)',
+    !/1 ou 2 questions/i.test(r.texteAvec||''), 'occurrences trouvées');
+  t('PROMPT : la règle cardinale « au plus UNE question » est toujours là',
+    /AU PLUS UNE question/i.test(r.texteAvec||''), 'règle cardinale absente !');
   t('⭐ SÉCURITÉ : pour TOUT LE MONDE, le texte des consignes est interdit… avec le sourire',
     r.secretAutre && r.secretAutre.interdit===true && r.secretAutre.blague===true,
     JSON.stringify(r.secretAutre));
