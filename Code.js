@@ -1078,6 +1078,15 @@ function handleAuthStatus_(body) {
     if (!email) return json_({status:'error', error:'email'});
     var sp = PropertiesService.getScriptProperties();
     var hasCode = (sp.getProperty('auth_' + email) || '').length >= 20;
+    // ⚠️ light:true → on NE CHARGE PAS le compte. Mesuré le 04/08 : la carte admin « qui a protégé
+    // son compte » renvoyait « non vérifié » sur 4 comptes sur 5, dont un dont on avait PROUVÉ
+    // qu'il était protégé. Cause : le `loadUserData_` ci-dessous décompresse le compte ENTIER
+    // (Christophe = 278 Ko) uniquement pour lire `emailVerified` — dont l'appelant ne se sert pas.
+    // Sur les gros comptes la requête n'aboutissait pas. `hasCode` ne demande qu'une propriété.
+    // ⚠️ En mode light, `emailVerified` ne vient QUE de la propriété `confirmed_` : c'est moins
+    // complet (le drapeau miroir du profil n'est pas lu), donc à n'utiliser que quand seul
+    // `hasCode` compte. Le chemin normal, lui, ne change pas d'un octet.
+    if (body.light) return json_({status:'ok', hasCode: hasCode, emailVerified: !!sp.getProperty('confirmed_' + email), light: true});
     var data = loadUserData_(email);
     var verified = !!(data && data.profile && data.profile.emailVerified) || !!sp.getProperty('confirmed_' + email);
     return json_({status:'ok', hasCode: hasCode, emailVerified: verified});
