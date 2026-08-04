@@ -1,4 +1,4 @@
-# 🔴 ALERTE SÉCURITÉ — trois failles
+# 🔴 ALERTE SÉCURITÉ — trois failles (1 corrigée, 2 restantes)
 
 > **Trouvé le 04/08/2026.** La première (la boîte à idées) a été trouvée en cherchant à lire les
 > idées depuis la session Claude ; **la seconde (les comptes entiers) en vérifiant la première** —
@@ -7,7 +7,7 @@
 
 ---
 
-# ⚠️ FAILLE N°0 — SEPT anciens déploiements toujours EN LIGNE *(la plus concrète)*
+# ✅ FAILLE N°0 — SEPT anciens déploiements en ligne *(la plus concrète — **CORRIGÉE le 04/08**)*
 
 > **Trouvée le 04/08 au soir, en cherchant autre chose.** C'est la seule des trois qui ne demande
 > **rien** : ni jeton, ni adresse connue — juste l'URL, qui ne change jamais.
@@ -59,21 +59,29 @@ Dans chaque projet : **Déployer → Gérer les déploiements → sélectionner 
 icône « archiver »**. Répéter pour les 7. *C'est l'archivage qui coupe l'URL* — la suppression du
 projet vient après, si on veut.
 
-## ✅ Où on en est (04/08, tard)
+## ✅ FERMÉE le 04/08/2026 au soir
 
-| Projet | État constaté sur capture |
+| Projet | État |
 |---|---|
-| **v3.1** (`1shyXEpGt4…`) | ✅ **FERMÉ** — « Actif : Aucun déploiement actif ». « Force tracker » est passé sous *Archivé*, et son URL est devenue une **Bibliothèque** au lieu d'une *Application Web* : c'est la preuve visible que le service ne répond plus. |
-| **v3.2** (`1iXZo4_kii…`) | 🔄 En cours — « v3.4 - sauvegarde » archivé ; restaient **5 actifs** (2× « Sans titre », 3× « force tracker ») au dernier point. Michel a poursuivi ; **à reconfirmer** que la colonne *Actif* affiche « Aucun déploiement actif ». |
+| **v3.1** (`1shyXEpGt4…`) | ✅ **« Aucun déploiement actif »** — vérifié sur capture. L'URL est devenue une *Bibliothèque* au lieu d'une *Application Web*. |
+| **v3.2** (`1iXZo4_kii…`) | ✅ **« Aucun déploiement actif »** — les 6 archivés un par un. |
 
-⚠️ **Le repère fiable, pour la prochaine fois** : ne pas se fier au geste, se fier à l'**affichage**.
-La colonne « Actif » doit dire *« Aucun déploiement actif »*. Tant qu'un nom y figure, l'URL répond.
+**Les 7 URL sont coupées.** Aucune n'était celle de la production : l'application n'a pas bougé.
 
-⚠️ **Et le piège qu'on s'est tendu tout seuls, à ne pas refaire** : archiver le **PROJET** (rangement)
-n'est pas archiver le **DÉPLOIEMENT** (coupure du service). Le premier test qu'on a fait était un
-faux négatif — l'URL avait été recopiée tronquée, et Google renvoie *« le fichier n'existe pas »*
-aussi bien pour une URL invalide que pour un déploiement fermé. **Deux causes, un seul message :
-seule l'URL exacte, copiée avec le bouton « Copier », prouve quelque chose.**
+⚠️ **Les projets ne sont PAS supprimés, et c'est bien.** Ils gardent leurs Script Properties (des
+comptes de juin) hors ligne. Si un jour on veut vraiment faire le ménage, on supprimera — mais rien
+ne presse, et un projet supprimé emporte ses données avec lui.
+
+### Les deux repères, pour ne pas s'y reprendre à quatre fois la prochaine fois
+
+1. **Archiver le PROJET n'est pas archiver le DÉPLOIEMENT.** Le premier range, le second coupe le
+   service. Seul le second ferme la porte.
+2. **Google renvoie le même message** — *« Désolé, le fichier que vous avez demandé n'existe pas »* —
+   pour une **URL invalide** et pour un **déploiement fermé**. Notre premier test a donc conclu
+   « c'est fermé » alors que rien ne l'était : l'URL avait été recopiée **tronquée**. *Un test dont
+   deux causes différentes produisent le même résultat ne teste rien.*
+
+**Le repère qui, lui, ne ment pas** : la colonne **Actif** doit afficher *« Aucun déploiement actif »*.
 
 ## La leçon, plus large que le cas
 
