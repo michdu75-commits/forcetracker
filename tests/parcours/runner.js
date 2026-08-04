@@ -965,6 +965,10 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       manquesSuite,
       manques: DOIT.filter(m=>!_ctxEntrainement(m)),
       retires: HORS.filter(m=>!_ctxEntrainement(m)).length,
+      wnMax: (typeof WHATS_NEW_MAX!=='undefined')?WHATS_NEW_MAX:-1,
+      wnPlusGrand: (typeof WHATS_NEW!=='undefined')?WHATS_NEW.reduce((m,f)=>Math.max(m,(f&&f.v)||0),0):-2,
+      wnRestantApresVu: (()=>{ try{ localStorage.setItem('ft4_wn_seen',String(WHATS_NEW_MAX));
+        return WHATS_NEW.filter(f=>f.v>WHATS_NEW_MAX).length; }catch(e){ return -1; } })(),
       texteAvec: buildCoachContext("fais-moi une séance jambes pour ce soir stp"),
       secretAdmin: (()=>{ const av=S.email; S.email='michdu75@gmail.com';
         const t=buildCoachContext('coucou'); S.email=av;
@@ -1005,6 +1009,15 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   // trois durcissements de prompt (ft-v602/603/606) : on avait conclu « c'est le modèle » (R9),
   // c'était vrai — ET il y avait une contradiction dedans. Un modèle puissant tranche entre deux
   // règles opposées ; un modèle léger, non. Michel venait de passer en Sonnet.
+  // ⚠️ LA POP-UP QUI REVENAIT À CHAQUE OUVERTURE (05/08) — signalée par Michel : « à chaque
+  // mise à jour j'ai la pop-up, c'est relou ». Les entrées 53 et 54 avaient été ajoutées la
+  // veille sans incrémenter `WHATS_NEW_MAX`, resté à 52. À la fermeture, l'app note « vu
+  // jusqu'à 52 » → 53 et 54 restent éternellement non vues → la pop-up revient toujours.
+  // Aucune erreur, aucun test rouge : juste une pop-up qui harcèle tout le monde.
+  // Le nombre est désormais CALCULÉ (R2) ; ce témoin garantit qu'il ne peut plus mentir.
+  t('⭐ POP-UP : « vu » couvre bien TOUTES les nouveautés (sinon elle revient à chaque ouverture)',
+    r.wnMax===r.wnPlusGrand && r.wnRestantApresVu===0,
+    JSON.stringify({max:r.wnMax, plusGrand:r.wnPlusGrand, restant:r.wnRestantApresVu}));
   t('⭐⭐ PROMPT : plus AUCUNE consigne « 1 ou 2 questions » (elle contredisait « au plus UNE »)',
     !/1 ou 2 questions/i.test(r.texteAvec||''), 'occurrences trouvées');
   t('PROMPT : la règle cardinale « au plus UNE question » est toujours là',

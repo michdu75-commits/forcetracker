@@ -356,8 +356,9 @@ const NEW_FEATURES=[
 // numéro vu par l'utilisateur (localStorage ft4_wn_seen). Donc quelqu'un qui n'a pas
 // ouvert l'app depuis longtemps voit TOUTES les nouveautés manquées d'un seul coup ;
 // un utilisateur à jour ne voit que la (ou les) toute(s) dernière(s).
-// ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec v = WHATS_NEW_MAX+1,
-//    puis incrémente WHATS_NEW_MAX. Ne jamais réutiliser un ancien numéro.
+// ➕ Pour annoncer une nouveauté : ajoute une entrée en HAUT avec un `v` supérieur à tous les
+//    autres. Ne jamais réutiliser un ancien numéro. ⚠️ Il n'y a PLUS rien à incrémenter à côté :
+//    `WHATS_NEW_MAX` se calcule tout seul depuis cette liste (voir sa définition, plus bas).
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
@@ -413,7 +414,17 @@ const WHATS_NEW=[
   {v:2, ic:'🤖', t:'Estimation par l\'IA', d:'Décris ton repas (« 200g poulet, riz, brocolis ») et l\'IA remplit les calories. 25 gratuites, illimité en Premium. La saisie à la main reste gratuite.'},
   {v:1, ic:'📥', t:'Importer un plan diététicien', d:'Une photo ou un PDF de ta diététicienne → l\'IA range tous les repas, jour par jour.'},
 ];
-const WHATS_NEW_MAX=52;     // = plus grand `v` ci-dessus
+// ⚠️ CALCULÉ, PLUS JAMAIS ÉCRIT À LA MAIN (05/08/2026). C'était `52` en dur alors que les
+// entrées 53 et 54 existaient — ajoutées la veille en oubliant d'incrémenter ce nombre.
+// CONSÉQUENCE, et elle était vicieuse : à la fermeture, l'app note « vu jusqu'à 52 » ; les
+// nouveautés 53 et 54 restent donc **éternellement non vues** et la pop-up revient À CHAQUE
+// OUVERTURE, pour tout le monde. Michel : « à chaque mise à jour j'ai la pop-up, c'est relou ».
+// Aucune erreur, aucun test rouge : juste une pop-up qui harcèle — et une nouveauté qui crie
+// tout le temps ne dit plus rien (ft-v760).
+// 👉 Le nombre se DÉDUIT de la liste : deux endroits qui portent la même information finissent
+//    toujours par diverger (**R2**). Il ne peut plus être faux, et le commentaire au-dessus de
+//    la liste (« puis incrémente WHATS_NEW_MAX ») n'a plus lieu d'être.
+const WHATS_NEW_MAX = WHATS_NEW.reduce((m,f)=>Math.max(m, (f&&f.v)||0), 0);
 const WHATS_NEW_SHOW_MAX=6; // n'affiche jamais plus de N nouveautés d'un coup (évite une pop-up à rallonge)
 
 // ─── ACCÈS ADMIN ─────────────────────────────────────────────
