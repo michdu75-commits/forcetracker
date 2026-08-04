@@ -30,8 +30,19 @@
 // ⚠️ À REMPLIR par Michel (Project Settings → API). Tant que c'est vide, ce fichier
 // ne fait STRICTEMENT RIEN — l'app fonctionne exactement comme avant.
 // La clé `anon` est faite pour être publique : c'est RLS qui protège, pas le secret.
+//
 // ⛔ NE JAMAIS METTRE ICI la clé `service_role` : elle contourne RLS et donnerait à
 //    n'importe quel visiteur un accès total à la base.
+//
+// ⛔⛔ ET SURTOUT : CE PROJET SUPABASE DOIT ÊTRE **SÉPARÉ** DE CELUI DE L'APPLI DE
+//     TATIANA (décision de Michel, 04/08/2026). La clé `anon` est **par PROJET**, pas
+//     par table — et celle-ci sera publiée dans un dépôt public et servie sur le site.
+//     Mettre les deux applis dans le même projet reviendrait donc à publier la clé du
+//     projet qui héberge les données des CLIENTES de Tatiana. Si une seule de ses tables
+//     n'a pas RLS — ce qui arrive vite quand on monte une appli en une soirée — leurs
+//     données deviennent lisibles par n'importe qui.
+//     👉 On ne prend jamais le risque de faire fuiter les données d'un autre produit
+//        pour sauvegarder celles de celui-ci. Deux projets : c'est gratuit et ça isole.
 let SB_URL  = '';   // ex. https://xxxxxxxx.supabase.co
 let SB_ANON = '';   // la clé « anon / public »
 
