@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Force Tracker — Tableau de bord</title>
+<!--
+  ╔════════════════════════════════════════════════════════════════════════════╗
+  ║  TABLEAU DE BORD ORDINATEUR — première brique (04/08/2026)                 ║
+  ╚════════════════════════════════════════════════════════════════════════════╝
+
+  POURQUOI CETTE PAGE EXISTE. L'app est dessinée pour le pouce : `#root` est
+  bridé à 430 px. Sur un écran de 1440 px, elle occupe moins d'un tiers de la
+  largeur, le reste est noir. Michel (04/08) : « je veux un truc énorme, une
+  vitrine ». Le contenu ne change pas — c'est sa MISE EN PAGE qui change.
+
+  ⚠️ RÈGLE DE CONSTRUCTION, la plus importante de ce fichier :
+  cette page charge EXACTEMENT les mêmes fichiers que l'app (constants.js,
+  state.js, …) et lit EXACTEMENT les mêmes données (localStorage `ft4_*`).
+  On ne recopie QUE la mise en page, JAMAIS la logique — c'est R2, et c'est la
+  leçon du /clone/ : deux copies de code finissent toujours par diverger.
+  Corollaire concret : le jour où un calcul est corrigé dans l'app, ce tableau
+  de bord en profite le jour même, sans qu'on y touche.
+
+  ⚠️ LES COULEURS SONT CELLES DE FORCE TRACKER, pas celles de la maquette.
+  La maquette d'origine était BLEUE ; l'identité est ROUGE (--red #FF6A73) sur
+  fond #0C0D11. C'est l'échec du 21/07 (`docs/DESIGN-KIT.md`) : un outil externe
+  produit une belle image avec SA palette, et le résultat n'est plus l'app.
+  Aucune couleur n'est écrite en dur ici : tout passe par les variables de
+  `style.css`, donc le mode clair fonctionne sans effort.
+
+  ⚠️ PAS DE MILO. Décision de Michel : la version web n'a pas d'onglet Coach.
+-->
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ── La page ordinateur. Volontairement PEU de CSS : tout ce qui peut venir
+        de style.css en vient (couleurs, polices, cartes, rayons). ─────────── */
+  body{margin:0;background:var(--bg);color:var(--t1);font-family:var(--font,system-ui,sans-serif);}
+  /* ⚠️ INDISPENSABLE : `style.css` bride #root à 430 px — c'est ce qui donne la colonne
+     de téléphone au milieu de l'écran. On garde l'identifiant (le mode clair s'y accroche)
+     et on retire le carcan. Sans cette ligne, tout le tableau de bord tient dans 430 px. */
+  #root{max-width:none;width:100%;margin:0;padding:0;}
+  .dash{display:grid;grid-template-columns:248px 1fr;min-height:100vh;}
+
+  /* Barre latérale — la navigation du bas de l'app passe à GAUCHE sur un écran
+     large : c'est le seul endroit où l'œil la cherche sur un ordinateur. */
+  .side{background:var(--bg2);border-right:1px solid var(--sep);padding:22px 16px;
+        display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;}
+  .side-logo{display:flex;align-items:center;gap:11px;padding:0 8px 22px;}
+  .side-logo img{width:38px;height:38px;border-radius:10px;}
+  .side-logo b{font-size:15px;letter-spacing:.04em;line-height:1.15;}
+  .side-logo b small{display:block;font-weight:600;color:var(--t2);font-size:12.5px;letter-spacing:.12em;}
+  .nav-i{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:11px;
+         color:var(--t2);font-size:14.5px;font-weight:600;cursor:pointer;border:none;background:none;
+         width:100%;text-align:left;font-family:inherit;transition:background .15s,color .15s;}
+  .nav-i:hover{background:var(--bg3);color:var(--t1);}
+  .nav-i.on{background:var(--red);color:#fff;box-shadow:0 6px 18px -6px var(--red);}
+  .nav-i svg{width:19px;height:19px;flex:none;}
+  .side-foot{margin-top:auto;padding-top:16px;border-top:1px solid var(--sep);}
+
+  /* Le contenu */
+  .main{padding:26px 30px 40px;max-width:1720px;}
+  .hello{font-size:31px;font-weight:900;margin:0;letter-spacing:-.02em;}
+  .hello-d{color:var(--t2);font-size:14px;margin-top:3px;}
+
+  /* La bande de tuiles du haut. `auto-fit` : sur un écran plus étroit, elles se
+     replient toutes seules — pas de seconde mise en page à maintenir. */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:14px;margin-top:22px;}
+  .kpi{background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:15px 16px;
+       display:flex;flex-direction:column;gap:9px;min-height:150px;}
+  .kpi-t{font-size:11px;font-weight:800;letter-spacing:.09em;color:var(--t3);text-transform:uppercase;}
+  .kpi-v{font-size:29px;font-weight:900;line-height:1;letter-spacing:-.02em;}
+  .kpi-v small{font-size:14px;font-weight:700;color:var(--t2);margin-left:3px;}
+  .kpi-s{font-size:12.5px;color:var(--t2);}
+  .kpi-ic{width:34px;height:34px;border-radius:10px;background:var(--bg3);
+          display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .spark{height:30px;margin-top:auto;}
+
+  /* L'anneau de récup — repris du principe de l'app (dégradé rouge→vert). */
+  .ring-wrap{display:flex;align-items:center;gap:14px;}
+  .ring{width:84px;height:84px;flex:none;}
+  .ring-n{font-size:25px;font-weight:900;fill:var(--t1);}
+  .ring-u{font-size:9px;font-weight:700;fill:var(--t3);}
+
+  /* ── Les grands blocs ─────────────────────────────────────────────────── */
+  .grid{display:grid;gap:14px;margin-top:14px;}
+  .g-3{grid-template-columns:minmax(0,1.35fr) minmax(0,1fr) minmax(0,.95fr);}
+  .g-4{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,.95fr);}
+  .card2{background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:16px 18px;min-width:0;}
+  .card2 h3{margin:0 0 14px;font-size:11px;font-weight:800;letter-spacing:.09em;
+            color:var(--t3);text-transform:uppercase;}
+  .chart{width:100%;height:210px;display:block;}
+  .bars{width:100%;height:190px;display:block;}
+  /* Calendrier — mêmes repères que dans l'app : le jour est cerclé, les séances pointées. */
+  .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center;}
+  .cal b{font-size:10.5px;color:var(--t3);font-weight:700;padding-bottom:4px;}
+  .cal i{font-style:normal;font-size:13px;padding:7px 0 9px;border-radius:9px;position:relative;color:var(--t2);}
+  .cal i.off{color:var(--t3);opacity:.35;}
+  .cal i.today{background:var(--red);color:#fff;font-weight:800;}
+  .cal i.did::after{content:'';position:absolute;left:50%;bottom:3px;transform:translateX(-50%);
+                    width:4px;height:4px;border-radius:50%;background:var(--red);}
+  .cal i.today.did::after{background:#fff;}
+  .lst{display:flex;flex-direction:column;gap:1px;}
+  .lst div{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--sep);font-size:13px;}
+  .lst div:last-child{border-bottom:none;}
+  .lst .n{flex:1;color:var(--t1);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lst .v{font-weight:800;}
+  .lst .d{color:var(--t3);font-size:11.5px;min-width:44px;text-align:right;}
+  .obj{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13px;}
+  .obj .n{width:86px;color:var(--t2);font-weight:600;}
+  .obj .bar{flex:1;height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;}
+  .obj .bar span{display:block;height:100%;border-radius:4px;}
+  .obj .p{width:40px;text-align:right;font-weight:800;font-size:12px;}
+  .fig{max-width:250px;margin:0 auto;}
+  .mus{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:12.5px;}
+  .mus .n{width:104px;color:var(--t2);font-weight:600;}
+  .mus .bar{flex:1;height:6px;border-radius:3px;background:var(--bg3);overflow:hidden;}
+  .mus .bar span{display:block;height:100%;background:var(--red);border-radius:3px;}
+  .mus .p{width:34px;text-align:right;font-weight:800;font-size:11.5px;color:var(--t2);}
+  @media (max-width:1400px){ .g-3,.g-4{grid-template-columns:1fr 1fr;} }
+  @media (max-width:900px){ .g-3,.g-4{grid-template-columns:1fr;} }
+
+  .vide{color:var(--t3);font-size:13px;font-style:italic;}
+  .note{margin-top:26px;padding:14px 16px;border:1px dashed var(--sep);border-radius:14px;
+        color:var(--t2);font-size:13px;line-height:1.6;background:var(--bg2);}
+  @media (max-width:900px){ .dash{grid-template-columns:1fr;} .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;} }
+</style>
+</head>
+<body>
+<div id="root">
+<div class="dash">
+
+  <aside class="side">
+    <div class="side-logo">
+      <img src="logo.png" alt="" onerror="this.style.display='none'">
+      <b>FORCE<small>TRACKER</small></b>
+    </div>
+    <nav id="dash-nav"></nav>
+    <div class="side-foot">
+      <div style="display:flex;align-items:center;gap:11px;padding:6px 8px;">
+        <div style="width:34px;height:34px;border-radius:50%;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:16px;">💪</div>
+        <div><div id="dash-user" style="font-size:14px;font-weight:800;">—</div>
+             <div id="dash-plan" style="font-size:11px;color:var(--t3);font-weight:700;"></div></div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <h1 class="hello" id="dash-hello">Bonjour</h1>
+    <div class="hello-d" id="dash-date"></div>
+    <div class="kpis" id="dash-kpis"></div>
+    <div id="dash-blocs"></div>
+    <div class="note" id="dash-note"></div>
+  </main>
+
+</div>
+</div>
+
+<!-- ⚠️ LES MÊMES FICHIERS QUE L'APP, DANS LE MÊME ORDRE. Ne pas en retirer :
+     `state.js` a besoin de `constants.js`, `tracking.js` fournit le score de
+     récupération, `log.js` fournit la figurine musculaire. coach.js est chargé
+     lui aussi (il porte le questionnaire et l'aide), mais AUCUN écran Milo
+     n'est affiché ici — c'est la décision « version web sans Milo ». -->
+<script src="constants.js"></script>
+<script src="state.js"></script>
+<script src="screens.js"></script>
+<script src="log.js"></script>
+<script src="setup.js"></script>
+<script src="tracking.js"></script>
+<script src="coach.js"></script>
+<script src="food-health.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>
