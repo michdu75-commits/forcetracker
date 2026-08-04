@@ -2223,9 +2223,40 @@ function scheduleOneTimeBackup_() {
   Logger.log('Déclencheur one-shot créé — backup dans ~1 min');
 }
 
+// ⭐ LE BOUTON « RÉPARER LA SAUVEGARDE », visible dans l'IDE (04/08/2026).
+//
+// ⚠️ POURQUOI CETTE FONCTION EXISTE, et pourquoi elle n'a PAS d'underscore final.
+// On a découvert le 04/08 que la sauvegarde nocturne ne tournait plus depuis 36 JOURS,
+// sans le moindre signal. Deux chemins étaient censés la réinstaller, et AUCUN des DEUX
+// ne marchait :
+//   ① l'URL `?action=installDailyBackup&t=…` → refusée, parce que le jeton est comparé à
+//      la Script Property `BACKUP_TOKEN` qui ne contient pas cette valeur. Pire : quand le
+//      jeton est faux, le `if` retombe sur le fourre-tout et répond « Unknown GET action ».
+//      Un jeton invalide devient donc INDISCERNABLE d'une route inexistante — on cherche
+//      un bug de route pendant que c'est un problème d'authentification.
+//   ② « depuis l'IDE, Run > installDailyBackupTrigger_ » — consigne écrite juste ici, et
+//      qui NE PEUT PAS marcher : dans Apps Script, une fonction dont le nom finit par `_`
+//      est privée et n'apparaît JAMAIS dans le menu déroulant d'exécution.
+//
+// Autrement dit, le filet de sécurité avait deux cordes et les deux étaient coupées. Une
+// procédure de secours qu'on ne teste jamais n'est pas une procédure de secours.
+// D'où cette fonction PUBLIQUE (sans underscore) qui fait tout d'un coup et écrit le
+// résultat dans les journaux, pour qu'on puisse VOIR qu'elle a marché.
+function reparerSauvegardeNuit() {
+  installDailyBackupTrigger_();
+  var n = ScriptApp.getProjectTriggers()
+            .filter(function(t){ return t.getHandlerFunction() === 'backupAllUserData_'; }).length;
+  var res;
+  try { res = backupAllUserData_(); } catch (e) { res = 'ERREUR pendant la sauvegarde : ' + e; }
+  var msg = '[FT] Déclencheurs de sauvegarde actifs : ' + n
+          + ' (attendu : 1) — sauvegarde immédiate : ' + JSON.stringify(res);
+  Logger.log(msg); console.log(msg);
+  return msg;
+}
+
 // ── Trigger backup QUOTIDIEN ─────────────────────────────────
-// Idempotent — à appeler via ?action=installDailyBackup&t=FT_BACKUP_INIT_2026
-// OU depuis l'IDE Apps Script (Run > installDailyBackupTrigger_)
+// ⚠️ Nom terminé par `_` = fonction PRIVÉE : elle n'apparaît PAS dans le menu d'exécution
+// de l'IDE. Pour la lancer à la main, passer par `reparerSauvegardeNuit()` ci-dessus.
 function installDailyBackupTrigger_() {
   // Supprimer les anciens triggers backupAllUserData_ avant d'en créer un nouveau
   ScriptApp.getProjectTriggers().forEach(t => {
