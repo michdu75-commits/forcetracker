@@ -399,6 +399,7 @@ const _OVERLAY_CLOSERS={
   'ov-billoute':'closeBilloute',
   'ov-christophe-photos':'closeChristophePhotos',
   'ov-memoire-c':'closeMemoireC',
+  'ov-health-lock':'closeHealthLock',
   'ov-pesee-nav-c':'closePeseeNavC',               // annonce boîte à idées traitée (Christophe)
   'ov-pesee-nav-e':'closePeseeNavE',               // annonce boîte à idées traitée (Eline)
 };

@@ -1,3 +1,50 @@
+// ═══ VERROU SANTÉ — protéger son compte est OBLIGATOIRE pour les données de santé ═══
+// Décision de Michel, 04/08/2026 : « à partir du moment qu'une personne veut mettre dans
+// l'application une donnée santé, il doit protéger son compte obligatoirement ».
+//
+// POURQUOI CE DÉCOUPAGE, et pas un mot de passe pour tout le monde. Le code d'accès existe
+// depuis longtemps mais il est OPTIONNEL — et une protection optionnelle n'est pas une
+// protection, c'est une possibilité : sans code, `_authCheck_` côté serveur répond « autorisé »
+// et `loadProfile` sert le compte entier à qui connaît l'adresse e-mail.
+// Imposer un code à tout le monde ferait fuir quelqu'un venu noter trois séries de squat
+// (et casserait l'ouverture instantanée, règle d'or #4). Mais quelqu'un qui importe un BILAN
+// SANGUIN comprend immédiatement pourquoi on lui demande de verrouiller. C'est R29 : le droit
+// de deviner — ici, d'être laxiste — dépend du COÛT DE L'ERREUR, et il monte d'un cran dès que
+// la donnée devient médicale.
+//
+// ⚠️ EN CAS DE DOUTE, ON BLOQUE. Un verrou qui s'ouvre quand il n'arrive pas à vérifier n'est
+// pas un verrou. Mais on ne bloque JAMAIS sans dire pourquoi ni comment en sortir (R24).
+// La réponse « ce compte a un code » est mémorisée localement : une fois protégé, plus aucun
+// appel réseau n'est nécessaire — l'app reste utilisable hors ligne.
+function _healthLockKnown(){ try{ return localStorage.getItem('ft4_hascode')==='1'; }catch(e){ return false; } }
+function _healthLockRemember(){ try{ localStorage.setItem('ft4_hascode','1'); }catch(e){} }
+async function _healthGate(){
+  if(_healthLockKnown())return true;
+  if(!S.email){ _healthLockMsg('email'); return false; }
+  let d=null;
+  try{ d=await _protectPost({action:'authStatus',email:S.email}); }catch(e){ d=null; }
+  if(d&&d.status==='ok'&&d.hasCode){ _healthLockRemember(); return true; }
+  // ⚠️ « pas de code » et « pas pu joindre le serveur » ne se confondent pas : on bloque dans
+  // les deux cas, mais on ne raconte pas la même chose à la personne.
+  _healthLockMsg((d&&d.status==='ok')?'nocode':'offline');
+  return false;
+}
+function _healthLockMsg(cas){
+  const o=document.getElementById('ov-health-lock'); if(!o)return;
+  const t=document.getElementById('health-lock-txt');
+  const b=document.getElementById('health-lock-btn');
+  if(t){
+    t.innerHTML = cas==='email'
+      ? 'Pour protéger ton compte, il faut d\'abord renseigner ton <b>adresse e-mail</b> dans le Profil — c\'est elle qui reçoit le code de vérification.'
+      : cas==='offline'
+      ? 'Impossible de vérifier si ton compte est protégé (pas de réseau). Par précaution, on n\'enregistre pas de donnée de santé tant qu\'on n\'en est pas sûr. <b>Réessaie quand tu as du réseau.</b>'
+      : 'Les données de santé — bilan sanguin, bilan corporel — sont ce que tu as de plus personnel dans l\'application.<br><br>Tant que ton compte n\'a pas de <b>code d\'accès</b>, elles ne sont pas verrouillées côté serveur. <b>On te demande donc de le protéger avant de les enregistrer.</b><br><br>Ça prend 30 secondes : tu reçois un code par e-mail pour confirmer ton adresse, puis tu choisis ton propre code. Personne ne peut le lire, pas même moi — il est chiffré.';
+  }
+  if(b)b.style.display=(cas==='offline')?'none':'';
+  o.classList.add('open');
+}
+function closeHealthLock(){const o=document.getElementById('ov-health-lock');if(o)o.classList.remove('open');}
+function goProtectFromHealth(){ closeHealthLock(); if(typeof openProtect==='function')openProtect(); }
 /*!
  * Force Tracker — © 2026 Michel (michdu75@gmail.com). Tous droits réservés.
  * Code propriétaire. Toute reproduction, copie, distribution ou réutilisation,
@@ -1118,7 +1165,8 @@ function pasteBodyScan(){
   _BS_FIELDS.forEach(f=>{const e=document.getElementById('bs-'+f.k);if(e&&o[f.k]!=null)e.value=o[f.k];});
   toast('Vérifie puis Enregistre ✅','info');
 }
-function openBodyScanForm(idx){
+async function openBodyScanForm(idx){
+  if(!await _healthGate())return;
   _bsEditIdx=idx;
   const grid=document.getElementById('bs-grid');
   const dateEl=document.getElementById('bs-date');
@@ -1211,7 +1259,10 @@ function renderBloodCard(){
   html+=`<button class="btn btn-red" style="width:100%;" onclick="openBloodImport()">🩸 Importer un bilan sanguin</button>`;
   el.innerHTML=html;
 }
-function openBloodImport(){const inp=document.getElementById('blood-file-input');if(inp){inp.value='';inp.click();}}
+async function openBloodImport(){
+  if(!await _healthGate())return;
+  const inp=document.getElementById('blood-file-input');if(inp){inp.value='';inp.click();}
+}
 async function onBloodFile(input){
   const f=input.files&&input.files[0];if(!f)return;input.value='';
   toast('Préparation du fichier…','info');
@@ -1292,7 +1343,8 @@ function _saveBloodTest(d){
   toast(markers.length+' marqueurs enregistrés ✅','success');
   openBloodTest(S.bloodTests.indexOf(obj));
 }
-function openBloodTest(idx){
+async function openBloodTest(idx){
+  if(!await _healthGate())return;
   _bloodEditIdx=idx;const t=(S.bloodTests||[])[idx];if(!t)return;
   const prev=(S.bloodTests||[]).filter(x=>x!==t&&(x.date||'')<(t.date||'')).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||null;
   const dEl=document.getElementById('blood-test-date');if(dEl)dEl.textContent=t.date?new Date(t.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';

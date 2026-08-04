@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v757';
+  b.textContent='🧪 CLONE ft-v758';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -2297,6 +2297,19 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   </div>
 </div>
 <!-- OVERLAY: Bilan corporel (saisie balance pro / impédancemètre) -->
+<!-- VERROU SANTÉ (04/08) — protéger son compte est obligatoire pour les données de santé.
+     Décision Michel : « à partir du moment qu'une personne veut mettre une donnée santé, il doit
+     protéger son compte obligatoirement ». On bloque, mais on dit POURQUOI et COMMENT en sortir. -->
+<div class="overlay" id="ov-health-lock" style="z-index:9999;">
+  <div class="modal" style="max-width:400px;text-align:center;">
+    <div style="font-size:48px;line-height:1;">🔒</div>
+    <div style="font-size:21px;font-weight:900;color:var(--t1);margin-top:8px;">Protège ton compte d'abord</div>
+    <div id="health-lock-txt" style="font-size:14.5px;line-height:1.6;color:var(--t2);margin-top:12px;text-align:left;"></div>
+    <button id="health-lock-btn" class="btn btn-red" onclick="goProtectFromHealth()" style="width:100%;margin-top:18px;padding:13px;font-size:15px;">🔐 Protéger mon compte</button>
+    <button class="btn btn-bg2" onclick="closeHealthLock()" style="width:100%;margin-top:8px;padding:11px;font-size:14px;">Plus tard</button>
+  </div>
+</div>
+
 <div class="overlay" id="ov-bodyscan-form" onclick="if(event.target===this)closeBodyScanForm()">
   <div class="modal" style="max-width:400px;max-height:88vh;overflow-y:auto;">
     <div class="modal-handle"></div>

@@ -162,6 +162,26 @@ Dès qu'un code existe, `_authCheck_` bascule en mode vérification et `loadProf
 ⚠️ **À faire compte par compte** : le sien, puis demander à Christophe, Eline, Emma et Tatiana de le
 faire. Un compte sans code reste ouvert.
 
+## 🔒 Mesure prise le 04/08 (ft-v758) — le verrou santé
+
+**Décision de Michel** : *« à partir du moment qu'une personne veut mettre dans l'application une
+donnée santé, il doit protéger son compte obligatoirement »*.
+
+Les **3 portes** de la santé sont désormais fermées tant que le compte n'a pas de code : import de
+bilan sanguin, consultation d'un bilan, bilan corporel.
+
+**Pourquoi ce découpage et pas un mot de passe pour tous** : imposer un code à quelqu'un venu noter
+trois séries de squat le fait fuir et casse l'ouverture instantanée (règle d'or #4) ; quelqu'un qui
+importe un bilan sanguin, lui, **veut** ce verrou. C'est **R29** — l'exigence monte avec le coût de
+l'erreur, et ce coût monte quand la donnée devient médicale.
+
+⚠️ **Ce que ça NE règle pas** :
+- les données de santé **déjà enregistrées** sur un compte sans code ;
+- les autres données (séances, poids, mesures) d'un compte sans code ;
+- la faille elle-même, qui reste côté serveur.
+
+*C'est une réduction de l'exposition future, pas un correctif.*
+
 ## Le vrai correctif (nécessite un déploiement vérifié)
 
 Inverser l'invariant pour la **lecture** : un compte sans code ne doit plus être lisible par un
@@ -226,8 +246,12 @@ personnelles, mais ce sont des informations d'exploitation.
 
 Décision prise le 04/08 au soir, Michel absent :
 
-1. **Impossible de vérifier un déploiement backend depuis la session Claude web** — le domaine
-   `script.google.com` est bloqué par la politique réseau de l'environnement (403 du proxy).
+1. **Vérification indirecte seulement** — le domaine `script.google.com` est bloqué depuis la
+   session Claude (403 du proxy). ⚠️ **Correction du 04/08** : j'ai d'abord écrit « impossible de
+   vérifier », c'était trop catégorique. Le workflow `deploy-appsscript.yml` appelle bien `?test=1`
+   après le déploiement et son journal est lisible — c'est le *navigateur* qui est bloqué, pas le
+   robot GitHub. **Réserve** : cette étape finit par `|| true`, donc elle n'échoue jamais le run ;
+   il faut LIRE le journal, pas se fier au feu vert (à corriger aussi).
    Or la règle d'or n°1 et **R18** disent la même chose : on vérifie le *déploiement*, pas le push.
    Déployer une modification d'**authentification** sans pouvoir appeler `?test=1` derrière, c'est
    accepter de couper le backend pour tout le monde sans le savoir.

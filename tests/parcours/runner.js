@@ -1264,6 +1264,61 @@ console.log('\n═══ M. Admin : qui a protégé son compte (aucune donnée p
   await c13.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// N. VERROU SANTÉ — protéger son compte est OBLIGATOIRE pour une donnée de santé
+// Décision de Michel, 04/08 : « à partir du moment qu'une personne veut mettre dans
+// l'application une donnée santé, il doit protéger son compte obligatoirement ».
+console.log('\n═══ N. Verrou santé — pas de bilan sanguin ni corporel sur un compte ouvert ═══');
+{
+  const c14=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p14=await c14.newPage();
+  await p14.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p14.waitForTimeout(2200);
+  const r=await p14.evaluate(async()=>{
+   try{
+    const o={}; const ouv=()=>document.getElementById('ov-health-lock').classList.contains('open');
+    S.email='test@exemple.com'; S.bodyScans=[]; S.bloodTests=[{date:'2026-07-01',markers:[]}];
+    localStorage.removeItem('ft4_hascode');
+    // ① compte SANS code → les 3 portes sont fermées
+    window._protectPost=async()=>({status:'ok',hasCode:false});
+    await openBodyScanForm(-1);
+    o.bloqueBodyScan=ouv() && !document.getElementById('ov-bodyscan-form').classList.contains('open');
+    o.expliquePourquoi=/code d.accès/.test(document.getElementById('health-lock-txt').textContent);
+    closeHealthLock();
+    await openBloodTest(0);   o.bloqueBilan=ouv();  closeHealthLock();
+    await openBloodImport();  o.bloqueImport=ouv(); closeHealthLock();
+    // ② ⚠️ réseau en panne → on bloque AUSSI (un verrou qui s'ouvre quand il ne sait pas n'en
+    //    est pas un), mais le message est différent et le bouton « protéger » est masqué.
+    window._protectPost=async()=>{throw new Error('réseau');};
+    await openBodyScanForm(-1);
+    o.bloqueSiPanne=ouv();
+    o.messageDePanne=/pas de réseau/.test(document.getElementById('health-lock-txt').textContent);
+    o.pasDeBoutonSiPanne=document.getElementById('health-lock-btn').style.display==='none';
+    closeHealthLock();
+    // ③ compte AVEC code → ça passe, et c'est mémorisé (l'app reste utilisable hors ligne)
+    window._protectPost=async()=>({status:'ok',hasCode:true});
+    await openBodyScanForm(-1);
+    o.passeAvecCode=!ouv() && document.getElementById('ov-bodyscan-form').classList.contains('open');
+    closeBodyScanForm();
+    let appels=0; window._protectPost=async()=>{appels++;return {status:'ok',hasCode:true};};
+    await openBodyScanForm(-1); o.plusAucunAppel=(appels===0);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ compte SANS code : le bilan corporel ne s\'ouvre pas', r.bloqueBodyScan===true, JSON.stringify(r));
+  t('⭐ … le bilan sanguin non plus (consultation)', r.bloqueBilan===true, JSON.stringify(r));
+  t('⭐ … ni son import', r.bloqueImport===true, JSON.stringify(r));
+  t('on explique POURQUOI, on ne bloque pas en silence (R24)', r.expliquePourquoi===true, JSON.stringify(r));
+  t('⭐⭐ réseau en panne : on bloque AUSSI (un verrou qui s\'ouvre dans le doute n\'en est pas un)',
+    r.bloqueSiPanne===true, JSON.stringify(r));
+  t('⭐ … mais avec un message de panne, sans proposer de poser un code',
+    r.messageDePanne===true && r.pasDeBoutonSiPanne===true, JSON.stringify(r));
+  t('⭐ compte AVEC code : rien ne change, ça s\'ouvre', r.passeAvecCode===true, JSON.stringify(r));
+  t('⭐ une fois vérifié, plus aucun appel réseau (utilisable hors ligne, règle d\'or #4)',
+    r.plusAucunAppel===true, JSON.stringify(r));
+  await c14.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
