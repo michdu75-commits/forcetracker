@@ -2499,8 +2499,14 @@ async function loadAuthStatusAdmin(){
   box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Vérification…</div>';
   const lignes=[];
   for(const em of liste){
+    // ⚠️ 2 ESSAIS. Mesuré le 04/08 sur capture : 4 comptes sur 5 en « non vérifié », dont un dont
+    // on avait PROUVÉ qu'il était protégé. Cause : `authStatus` charge tout le compte côté serveur
+    // (loadUserData_) juste pour lire un booléen dont on ne se sert pas ici — les gros comptes
+    // n'aboutissent pas. Le 2ᵉ essai rattrape le transitoire ; le vrai correctif est côté serveur.
     let d=null;
-    try{ d=await _protectPost({action:'authStatus',email:em}); }catch(e){ d=null; }
+    for(let essai=0; essai<2 && !d; essai++){
+      try{ d=await _protectPost({action:'authStatus',email:em,light:true}); }catch(e){ d=null; }
+    }
     const ok=!!(d&&d.status==='ok');
     const prot=ok&&d.hasCode;
     // ⚠️ On distingue « pas protégé » de « on n'a pas pu vérifier » : afficher un ✅ ou un ❌
@@ -2512,10 +2518,14 @@ async function loadAuthStatusAdmin(){
       +(!ok?'non vérifié':(prot?'protégé':'OUVERT'))+'</span></div>');
   }
   const nbOuv=lignes.filter(l=>l.includes('OUVERT')).length;
+  const nbInc=lignes.filter(l=>l.includes('non vérifié')).length;
+  // ⚠️ Le résumé doit dire les DEUX chiffres. « 1 compte sans code » à côté de 4 inconnus laisse
+  // croire que le reste est protégé — c'est exactement l'erreur qu'un « je ne sais pas » évite.
   box.innerHTML=lignes.join('')
     +'<div style="font-size:12px;color:var(--t2);margin-top:9px;line-height:1.5;">'
     +(nbOuv?('🔓 <strong>'+nbOuv+' compte'+(nbOuv>1?'s':'')+' sans code</strong> — leurs données sont lisibles côté serveur par qui connaît l\'adresse. Demande-leur : Profil → « protéger mon compte ».')
-           :'🔒 Tous les comptes vérifiés ont un code perso.')
+           :(nbInc?'':'🔒 Tous les comptes ont un code perso.'))
+    +(nbInc?('<br>⚠️ <strong>'+nbInc+' non vérifié'+(nbInc>1?'s':'')+'</strong> — le serveur n\'a pas répondu. <b>On ne sait pas</b> s\'ils sont protégés : relance la vérification, ne conclus rien.'):'')
     +'</div>';
 }
 function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}

@@ -1248,6 +1248,14 @@ console.log('\n═══ M. Admin : qui a protégé son compte (aucune donnée p
     o.pannePasConfondue=/emma\.david16[\s\S]{0,240}non vérifié/.test(h);
     // 3 ouverts dans ce scénario : eline + tanna + michdu75 (le cas par défaut du simulateur)
     o.compteLesOuverts=/3 comptes sans code/.test(h);
+    // ⚠️ le résumé doit AUSSI annoncer les non vérifiés — « 1 sans code » à côté de 4 inconnus
+    // laisse croire que le reste est protégé (capture Michel, 04/08).
+    o.diteLesInconnus=/1 non vérifié/.test(h) && /On ne sait pas/.test(h);
+    // 2 essais avant de déclarer « non vérifié » : un échec transitoire ne doit pas trancher
+    let n=0; window._protectPost=async(pl)=>{ n++; if(n===1) throw new Error('transitoire');
+                                              return {status:'ok',hasCode:true}; };
+    await loadAuthStatusAdmin();
+    o.reessaie=!/non vérifié/.test(document.getElementById('admin-auth-list').innerHTML);
     o.aucuneDonneePerso=!/kg|séance|poids|bilan/i.test(h);
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
@@ -1261,6 +1269,10 @@ console.log('\n═══ M. Admin : qui a protégé son compte (aucune donnée p
   t('le nombre de comptes ouverts est annoncé', r.compteLesOuverts===true, JSON.stringify(r));
   t('⭐ AUCUNE donnée personnelle n\'est lue ni affichée (authStatus ne renvoie que hasCode)',
     r.aucuneDonneePerso===true, JSON.stringify(r));
+  t('⭐⭐ le résumé annonce AUSSI les non vérifiés (sinon on croit le reste protégé)',
+    r.diteLesInconnus===true, JSON.stringify(r));
+  t('⭐ un échec transitoire ne fait pas conclure « non vérifié » (2 essais)',
+    r.reessaie===true, JSON.stringify(r));
   await c13.close();
 }
 
