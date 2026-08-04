@@ -2340,6 +2340,39 @@ function preuveDeclencheur(e) {
 // Les deux fonctions affichent l'ANCIENNE valeur avant de changer, pour pouvoir revenir.
 function passerMiloEnSonnet()   { return _reglerModeleMilo_('claude-sonnet-4-6'); }
 function remettreMiloEnOpus()   { return _reglerModeleMilo_('claude-opus-4-6'); }
+// ⭐ LISTER LA CONFIG SANS EXPOSER UN SEUL SECRET (04/08/2026).
+//
+// ⚠️ POURQUOI. Michel est certain d'avoir réglé son modèle sur Opus ; la propriété
+// `COACH_MODEL_MICHEL` est pourtant absente. Avant d'accuser qui que ce soit, il faut
+// REGARDER — mais la page des Script Properties affiche `ANTHROPIC_API_KEY`, `ADMIN_TOKEN`
+// et `KOFI_TOKEN` **en clair**, donc on ne l'ouvre pas pour une simple vérification.
+// Cette fonction ne rend que les **NOMS** et une **empreinte** (longueur + 3 premiers
+// caractères pour les valeurs non sensibles) : assez pour savoir ce qui existe, jamais
+// assez pour divulguer une clé.
+// ⚠️ Les comptes utilisateurs (`u_`, `auth_`, `prem_`, `confirmed_`) sont comptés, pas listés :
+//    ce sont des adresses e-mail, elles n'ont rien à faire dans un journal d'exécution.
+function listerConfig() {
+  var sp = PropertiesService.getScriptProperties();
+  var toutes = sp.getProperties();
+  var SENSIBLES = ['ANTHROPIC_API_KEY', 'ADMIN_TOKEN', 'KOFI_TOKEN', 'BACKUP_TOKEN', 'IDEES_TOKEN'];
+  var lignes = [], comptes = 0;
+  Object.keys(toutes).sort().forEach(function (k) {
+    if (/^(u_|auth_|prem_|confirmed_|pending_)/.test(k)) { comptes++; return; }
+    var v = String(toutes[k] == null ? '' : toutes[k]);
+    if (SENSIBLES.indexOf(k) >= 0) {
+      lignes.push('  · ' + k + ' = [PRÉSENT, ' + v.length + ' caractères — valeur masquée]');
+    } else {
+      lignes.push('  · ' + k + ' = ' + (v.length > 60 ? (v.slice(0, 57) + '…(' + v.length + ')') : v));
+    }
+  });
+  var m = '[FT] CONFIG — ' + lignes.length + ' propriété(s) de configuration, '
+        + comptes + ' clé(s) de comptes (non listées) :\n' + lignes.join('\n')
+        + '\n[FT] COACH_MODEL_MICHEL : ' + (toutes.COACH_MODEL_MICHEL ? 'PRÉSENT' : '❌ ABSENT')
+        + '  ·  COACH_MODEL_CHRISTOPHE : ' + (toutes.COACH_MODEL_CHRISTOPHE ? 'PRÉSENT' : '❌ ABSENT');
+  Logger.log(m); console.log(m);
+  return m;
+}
+
 function voirModeleMilo() {
   var v = PropertiesService.getScriptProperties().getProperty('COACH_MODEL_MICHEL');
   var m = '[FT] Modèle de Milo pour michdu75@gmail.com : ' + (v || '(non défini → Haiku par défaut)');
