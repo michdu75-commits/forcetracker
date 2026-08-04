@@ -1,10 +1,87 @@
-# 🔴 ALERTE SÉCURITÉ — la boîte à idées est lisible par n'importe qui
+# 🔴 ALERTE SÉCURITÉ — deux failles, dont une GRAVE
 
-> **Trouvé le 04/08/2026**, en cherchant comment lire les idées depuis la session Claude.
-> **État : NON CORRIGÉ. Correctif prêt ci-dessous, à déployer depuis un poste qui peut vérifier.**
-> Ce fichier se supprime le jour où c'est réglé.
+> **Trouvé le 04/08/2026.** La première (la boîte à idées) a été trouvée en cherchant à lire les
+> idées depuis la session Claude ; **la seconde (les comptes entiers) en vérifiant la première** —
+> et c'est la plus grave des deux.
+> **État : NON CORRIGÉ.** Ce fichier se supprime le jour où c'est réglé.
 
 ---
+
+# ⚠️ FAILLE N°1 (LA PLUS GRAVE) — n'importe qui peut télécharger un compte entier
+
+## Ce qui est accessible
+
+Un simple appel **GET, sans aucun jeton** :
+
+```
+…/exec?action=loadProfile&email=UNE_ADRESSE
+```
+
+renvoie **tout le compte** de cette personne : `profile`, `prs`, `sessions`, `weightLog`,
+`sleepLog`, `dayStateLog`, `cycle`, `programmes`, `nutritionPhase`…
+
+Et l'objet `profile` contient **54 champs**, dont :
+
+| Catégorie | Champs |
+|---|---|
+| **Santé** | `bloodTests` (bilans sanguins) · `healthProfile` · `bodyScans` · `bodyStudies` · `smoker` |
+| **Intime** | `contraception` · `mensCycleStart` · `mensCycleDur` · `gender` · `bday` |
+| **Corps** | `bw` · `waist` · `hip` · `neck` · `morpho` · `targetWeight` |
+| **Mémoire de Milo** | `registre` · `coachMemory` · `adn` · `coachQuiz` |
+| **Identité** | `name` · `age` · `workType` |
+
+## Pourquoi ce n'est pas protégé
+
+`_authCheck_` (Code.js) applique cet invariant, écrit exprès pour la rétrocompatibilité :
+
+```js
+if (stored.length < 20) return {ok:true, opted:false};   // pas de code → accès libre
+```
+
+**Un compte sans code d'accès personnel n'a AUCUNE protection.** Le code perso est **optionnel** —
+donc presque personne ne l'a posé. L'invariant était un choix assumé (« ne jamais casser un compte
+existant ») ; ce qui n'a pas été vu, c'est qu'il laisse la **lecture** ouverte, pas seulement
+l'écriture.
+
+## Ce qui rend l'exploitation triviale
+
+**Six adresses e-mail réelles sont écrites en clair dans le dépôt public** :
+
+- `Code.js` → `PREMIUM_HARDCODED_` : michdu75, elineazs32, christophe@famillelanglois.fr, apollonone75
+- `constants.js` → `TESTER_EMAILS` : + emma.david16, tanna.valery.studio
+
+Il n'y a donc même pas à deviner : **le dépôt publie les adresses, et l'API sert les comptes
+correspondants.**
+
+## 🚑 CE QUE MICHEL PEUT FAIRE TOUT DE SUITE, SANS DÉPLOIEMENT
+
+**Poser un code d'accès personnel sur chaque compte.** C'est la seule mesure qui ferme la porte
+immédiatement, et elle existe déjà dans l'app :
+
+> Profil → « protéger mon compte » → vérification de l'e-mail → code (4 caractères minimum)
+
+Dès qu'un code existe, `_authCheck_` bascule en mode vérification et `loadProfile` refuse sans lui.
+
+⚠️ **À faire compte par compte** : le sien, puis demander à Christophe, Eline, Emma et Tatiana de le
+faire. Un compte sans code reste ouvert.
+
+## Le vrai correctif (nécessite un déploiement vérifié)
+
+Inverser l'invariant pour la **lecture** : un compte sans code ne doit plus être lisible par un
+simple GET. Deux pistes, à trancher par Michel :
+
+1. **Exiger un secret d'appareil** — l'app en pose un au premier lancement et l'envoie à chaque
+   `loadProfile`. Transparent pour l'utilisateur, ferme la porte à un tiers.
+2. **Rendre le code d'accès obligatoire** à la prochaine ouverture. Plus sûr, mais impose une
+   action à tout le monde — et la règle d'or n°3 dit que rien ne doit bloquer l'accès à ses données.
+
+⚠️ Dans les deux cas, prévoir le chemin de **récupération** (e-mail de vérification, déjà en place)
+avant de fermer quoi que ce soit — sinon on protège les données en les rendant inaccessibles à leur
+propriétaire.
+
+---
+
+# ⚠️ FAILLE N°2 — la boîte à idées est lisible par n'importe qui
 
 ## Ce qui fuit, exactement
 
