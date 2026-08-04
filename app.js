@@ -2345,7 +2345,12 @@ stopRest();
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&restStartTs&&_restLeft()<=-5)stopRest();
 });
-document.getElementById('tb-date').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+// ⚠️ Élément optionnel : `app.js` est aussi chargé par `dashboard.html` (la version
+// ordinateur), qui n'a pas la barre du haut de l'app. Sans cette garde, la page lève une
+// erreur et la fin du fichier ne s'exécute pas. Une brique partagée ne doit jamais supposer
+// que TOUS les éléments d'un écran existent (constaté le 04/08).
+{ const _tbd=document.getElementById('tb-date');
+  if(_tbd)_tbd.textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}); }
 applyTheme();
 if(typeof _applyHalo==='function')_applyHalo();
 if(typeof _applyThemeBtns==='function')_applyThemeBtns();

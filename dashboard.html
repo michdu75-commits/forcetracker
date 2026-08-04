@@ -60,6 +60,11 @@
 
   /* Le contenu */
   .main{padding:26px 30px 40px;max-width:1720px;}
+.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+  .topact{display:flex;gap:8px;flex-wrap:wrap;}
+  .tb{border:1px solid var(--sep);background:var(--bg2);color:var(--t2);font-family:inherit;
+      font-size:13px;font-weight:700;padding:9px 14px;border-radius:10px;cursor:pointer;}
+  .tb:hover{color:var(--t1);background:var(--bg3);}
   .hello{font-size:31px;font-weight:900;margin:0;letter-spacing:-.02em;}
   .hello-d{color:var(--t2);font-size:14px;margin-top:3px;}
 
@@ -120,6 +125,10 @@
   @media (max-width:1400px){ .g-3,.g-4{grid-template-columns:1fr 1fr;} }
   @media (max-width:900px){ .g-3,.g-4{grid-template-columns:1fr;} }
 
+.seg{border:none;background:none;color:var(--t2);font-family:inherit;font-size:12px;font-weight:700;
+       padding:5px 11px;border-radius:7px;cursor:pointer;}
+  .seg.on{background:var(--red);color:#fff;}
+  .seg:hover:not(.on){color:var(--t1);}
   .vide{color:var(--t3);font-size:13px;font-style:italic;}
   .note{margin-top:26px;padding:14px 16px;border:1px dashed var(--sep);border-radius:14px;
         color:var(--t2);font-size:13px;line-height:1.6;background:var(--bg2);}
@@ -146,8 +155,18 @@
   </aside>
 
   <main class="main">
-    <h1 class="hello" id="dash-hello">Bonjour</h1>
-    <div class="hello-d" id="dash-date"></div>
+    <div class="topbar">
+      <div>
+        <h1 class="hello" id="dash-hello">Bonjour</h1>
+        <div class="hello-d" id="dash-date"></div>
+      </div>
+      <div class="topact">
+        <button class="tb" title="Bientôt">🔔</button>
+        <button class="tb" title="Bientôt">Partager</button>
+        <button class="tb" title="Bientôt">Personnaliser</button>
+        <button class="tb" title="Bientôt">Profil</button>
+      </div>
+    </div>
     <div class="kpis" id="dash-kpis"></div>
     <div id="dash-blocs"></div>
     <div class="note" id="dash-note"></div>
@@ -169,6 +188,12 @@
 <script src="tracking.js"></script>
 <script src="coach.js"></script>
 <script src="food-health.js"></script>
+<!-- ⚠️ `app.js` N'EST PAS chargé ici, et c'est délibéré. Il porte le DÉMARRAGE de l'app
+     (recherche d'exercices, navigation, ping réseau) et suppose les éléments de l'écran
+     mobile : sur cette page il lève des erreurs en cascade. On y perdrait la tuile
+     « Calories » de l'année (`calcSessionCalories` y vit) — on préfère 4 chiffres justes
+     à 5 dont un obtenu en déstabilisant l'app. À rouvrir le jour où ce démarrage sera
+     séparé des fonctions de calcul. -->
 <script src="dashboard.js"></script>
 </body>
 </html>

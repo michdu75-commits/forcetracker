@@ -133,6 +133,13 @@ function _dCourbe(sess){
 }
 
 // Barres : le volume (kg soulevés) de chaque séance.
+// Courbe du poids de corps — même rendu, autre donnée.
+function _dCourbePoids(){
+  const w=(S.weightLog||[]).slice().sort((a,b)=>String(a.date).localeCompare(String(b.date)))
+    .filter(x=>+x.kg||+x.bw);
+  if(w.length<2)return '<div class="vide">Pas assez de pesées pour tracer une courbe.</div>';
+  return _dCourbe(w.map(x=>({date:x.date,exs:[{sets:[{kg:+x.kg||+x.bw,reps:1,done:true,type:'N'}]}]})));
+}
 function _dBarres(sess){
   const v=sess.map(s=>+s.volume||+s.vol||0).filter(x=>x>=0);
   if(!v.length)return '<div class="vide">Aucun volume enregistré.</div>';
@@ -165,26 +172,130 @@ function _dCal(){
 }
 
 // La figurine — ⚠️ celle de l'app (`_mscSVG`, 41 muscles depuis ft-v751).
+// ⚠️ `_mscScores` attend des EXERCICES, pas des séances. Je lui passais des séances :
+// la figurine restait quasi vierge et la liste des muscles sortait vide, sans aucune
+// erreur JS. Une fonction qui reçoit le mauvais type et rend un résultat plausible est
+// plus difficile à repérer qu'une qui plante (trouvé le 04/08 en regardant le rendu).
+function _dExsDe(sess){ const o=[]; sess.forEach(s=>(s.exs||s.exercices||[]).forEach(e=>o.push(e))); return o; }
 function _dFigurine(sess){
   if(typeof _mscScores!=='function'||typeof _mscSVG!=='function')
     return '<div class="vide">Figurine indisponible.</div>';
-  const d=_mscScores(sess.slice(-12))||{};
+  const douze=sess.slice(-12), exs=_dExsDe(douze);
+  if(!exs.length)return '<div class="vide">Aucune séance récente à représenter.</div>';
+  const d=_mscScores(exs)||{};
   const svg=`<div class="fig">${_mscSVG({sc:d.sc||{},ind:d.ind||{}})}</div>`;
-  // Les groupes les plus sollicités, en clair à côté du dessin.
-  const noms=(typeof _MG!=='undefined')?_MG:{};
-  const cnt={}; sess.slice(-12).forEach(s=>{ const x=_mscScores([s])||{};
+  // Combien de fois chaque groupe a été sollicité sur ces 12 séances, en % du plus travaillé.
+  const noms=(typeof _MG!=='undefined')?_MG:{}, cnt={};
+  douze.forEach(s=>{ const x=_mscScores(_dExsDe([s]))||{};
     Object.entries(x.sc||{}).forEach(([k,v])=>{ cnt[k]=(cnt[k]||0)+(v>=2?2:1); }); });
-  const tot=Math.max(1,...Object.values(cnt));
-  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,6)
-    .map(([k,v])=>`<div class="mus"><span class="n">${(noms[k]&&noms[k].label)||k}</span>
-      <span class="bar"><span style="width:${Math.round(100*v/tot)}%"></span></span>
-      <span class="p">${Math.round(100*v/tot)}%</span></div>`).join('');
-  return svg+(top?`<div style="margin-top:12px">${top}</div>`:'');
+  const mx=Math.max(1,...Object.values(cnt));
+  const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,7)
+    .map(([k,v])=>{const p=Math.round(100*v/mx);
+      return `<div class="mus"><span class="n">${(noms[k]&&noms[k].label)||k}</span>
+        <span class="bar"><span style="width:${p}%"></span></span><span class="p">${p}%</span></div>`;}).join('');
+  return svg+(top?`<div style="margin-top:14px">${top}</div>`:'');
+}
+
+// ── La fenêtre de la courbe, pilotée par les boutons (7J … Tout) ────────────
+let _dPer=90, _dMet='force';
+const _D_PER=[{j:7,t:'7J'},{j:30,t:'1M'},{j:90,t:'3M'},{j:180,t:'6M'},{j:365,t:'1A'},{j:99999,t:'Tout'}];
+function _dSetPer(j){ _dPer=j; renderDashBlocs(); }
+function _dSetMet(m){ _dMet=m; renderDashBlocs(); }
+function _dSeg(){
+  return `<div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+    <div style="display:flex;gap:3px;background:var(--bg3);border-radius:9px;padding:3px">
+      ${['force','volume','poids'].map(m=>`<button onclick="_dSetMet('${m}')" class="seg${_dMet===m?' on':''}">${m[0].toUpperCase()+m.slice(1)}</button>`).join('')}
+    </div>
+    <div style="display:flex;gap:3px;margin-left:auto;background:var(--bg3);border-radius:9px;padding:3px">
+      ${_D_PER.map(p=>`<button onclick="_dSetPer(${p.j})" class="seg${_dPer===p.j?' on':''}">${p.t}</button>`).join('')}
+    </div></div>`;
+}
+
+
+// Médiane — même principe qu'en ft-v753 : on ne compare jamais deux points isolés,
+// une seule séance atypique renverserait le verdict.
+function _dMed(a){ const t=a.slice().sort((x,y)=>x-y), m=t.length>>1;
+  return t.length?(t.length%2?t[m]:(t[m-1]+t[m])/2):0; }
+function _dEvol(vals){
+  if(vals.length<5)return null;                       // sous 5 points, pas de tendance honnête
+  const w=Math.min(3,Math.floor(vals.length/2));
+  const a=_dMed(vals.slice(0,w)), b=_dMed(vals.slice(-w));
+  return a>0?Math.round((b-a)/a*100):null;
+}
+function _dPct(v){ return v==null?'—':(v>0?'+':'')+v+' %'; }
+
+// La rangée du bas : 4 indicateurs sur 30 jours + la bande de l'année.
+function _dBas(){
+  const s30=_dSess(30);
+  const rm=[],vol=[];
+  s30.forEach(s=>{ let best=0;
+    (s.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(!x||!x.done||x.type==='É'||x.type==='W')return;
+      const r=(typeof bz==='function')?bz(+x.kg||0,+x.reps||0):0; if(r>best)best=r; }));
+    if(best>0)rm.push(best); vol.push(+s.volume||+s.vol||0); });
+  // Régularité = semaines avec au moins une séance, sur les 8 dernières.
+  // ⚠️ Définition écrite exprès : « 94 % » ne veut rien dire si on ne dit pas de quoi.
+  const sem=new Set(); _dSess(56).forEach(s=>{ const d=new Date(s.date+'T12:00:00');
+    const t=new Date(d); t.setDate(d.getDate()-((d.getDay()+6)%7)); sem.add(t.toISOString().slice(0,10)); });
+  const reg=Math.round(100*Math.min(8,sem.size)/8);
+  const charge=vol.reduce((a,b)=>a+b,0);
+  const T=[['Force',_dPct(_dEvol(rm)),'sur 30 jours'],
+           ['Volume',_dPct(_dEvol(vol)),'sur 30 jours'],
+           ['Régularité',reg+' %','semaines avec séance (8 dern.)'],
+           ['Charge totale',(charge/1000).toFixed(1)+' T','sur 30 jours']];
+  // Bande de l'année. Les calories viennent de `calcSessionCalories` (app.js) — la MÊME
+  // fonction que l'app, avec les MET par exercice. Si elle n'est pas disponible, la tuile
+  // n'est pas affichée : on préfère 4 chiffres justes à 5 dont un inventé.
+  const an=new Date().getFullYear();
+  const sa=(S.sessions||[]).filter(s=>s&&s.date&&+s.date.slice(0,4)===an);
+  const min=sa.reduce((a,s)=>a+(+s.duration||0),0);
+  const volAn=sa.reduce((a,s)=>a+(+s.volume||+s.vol||0),0);
+  let cardio=0; sa.forEach(s=>['cardio','cardioPre','cardioPost'].forEach(k=>{const c=s[k];
+    if(c&&typeof c==='object'&&+c.min)cardio+=+c.min; else if(+c)cardio+=+c;}));
+  let kcal=null;
+  if(typeof calcSessionCalories==='function'){
+    try{ kcal=sa.reduce((a,s)=>{const c=calcSessionCalories(s); return a+(+c||0);},0); }catch(e){ kcal=null; }
+  }
+  const A=[['Séances',sa.length],['Temps',Math.round(min/60)+' h'],
+           ['Volume',(volAn/1000).toFixed(1)+' T']];
+  if(kcal!=null&&kcal>0)A.push(['Calories',Math.round(kcal).toLocaleString('fr-FR')+' kcal']);
+  A.push(['Cardio',Math.round(cardio/60)+' h']);
+  return `<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr))">
+      ${T.map(x=>`<div class="card2"><h3>${x[0]}</h3>
+        <div class="kpi-v">${x[1]}</div><div class="kpi-s">${x[2]}</div></div>`).join('')}
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(170px,1fr))">
+      ${A.map(x=>`<div class="card2" style="padding:13px 16px"><h3 style="margin-bottom:8px">${x[0]} — ${an}</h3>
+        <div class="kpi-v" style="font-size:23px">${x[1]}</div></div>`).join('')}
+    </div>`;
+}
+
+// « Top records » — les plus LOURDS. À ne pas confondre avec « derniers records »,
+// qui sont les plus RÉCENTS : deux listes, deux questions différentes.
+function _dTop(){
+  const p=Object.entries(S.prs||{}).map(([n,x])=>({n,kg:+((x&&(x.kg||x.rm1))||0),
+      ev:(x&&x.delta)||null})).filter(x=>x.kg>0).sort((a,b)=>b.kg-a.kg).slice(0,5);
+  if(!p.length)return '';
+  return `<div class="card2" style="margin-top:14px"><h3>Top records</h3><div class="lst">${
+    p.map(x=>`<div><span class="n">${x.n}</span><span class="v">${Math.round(x.kg)} kg</span></div>`).join('')
+  }</div></div>`;
+}
+
+// La carte « prochaine séance », avec ses exercices.
+function _dProchaine(){
+  let n=null; try{ n=(typeof _nextPlannedActive==='function')?_nextPlannedActive():(S.nextPlanned||null); }catch(e){ n=S.nextPlanned||null; }
+  if(!n||!n.label)return `<div class="card2"><h3>Prochaine séance</h3>
+    <div class="vide">Rien d'annoncé. Dis-le à l'app et ça s'affichera ici.</div></div>`;
+  const ex=(n.exs||n.exercices||[]).slice(0,6)
+    .map(e=>`<div style="padding:5px 0;font-size:13px;color:var(--t1)">• ${(e.name||e)||''}</div>`).join('');
+  return `<div class="card2"><h3>Prochaine séance</h3>
+    <div style="font-size:19px;font-weight:900;margin-bottom:2px">${n.label}</div>
+    <div class="kpi-s" style="margin-bottom:10px">${n.date?new Date(n.date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'}):''}</div>
+    ${ex||'<div class="vide">Les exercices ne sont pas encore détaillés.</div>'}</div>`;
 }
 
 function renderDashBlocs(){
   const box=document.getElementById('dash-blocs'); if(!box)return;
-  const s90=_dSess(90), s30=_dSess(30);
+  const sPer=_dSess(_dPer);
 
   // ── Records (les 4 plus récents) ─────────────────────────────────────────
   const prs=Object.entries(S.prs||{})
@@ -219,18 +330,26 @@ function renderDashBlocs(){
         <span class="p">${o.p}%</span></div><div style="font-size:11.5px;color:var(--t3);margin:-6px 0 4px 96px">${o.t}</div>`).join('')
     : '<div class="vide">Aucun objectif chiffré. Tu peux en fixer dans le Profil.</div>';
 
+  // ── La disposition suit le schéma fourni par Michel le 04/08 (fil de discussion).
+  //    Un schéma en texte vaut mieux qu'une image : il dit la STRUCTURE sans imposer
+  //    une esthétique qui ne serait pas celle de l'app.
   box.innerHTML=`
-    <div class="grid g-3">
-      <div class="card2"><h3>Progression globale — 90 jours</h3>${_dCourbe(s90)}</div>
-      <div class="card2"><h3>Volume d'entraînement</h3>${_dBarres(s90)}</div>
-      <div class="card2"><h3>Calendrier</h3>${_dCal()}</div>
+    <div class="grid" style="grid-template-columns:1fr 1fr">
+      <div class="card2"><h3>Progression</h3>${_dSeg()}
+        ${_dMet==='volume'?_dBarres(sPer):(_dMet==='poids'?_dCourbePoids():_dCourbe(sPer))}</div>
+      <div class="card2"><h3>Volume d'entraînement</h3>${_dBarres(sPer)}</div>
     </div>
     <div class="grid g-4">
-      <div class="card2"><h3>Répartition musculaire — 12 dernières séances</h3>${_dFigurine(s90)}</div>
+      <div class="card2"><h3>Silhouette musculaire — 12 dernières séances</h3>${_dFigurine(_dSess(365))}</div>
       <div class="card2"><h3>Derniers records</h3>${recHtml}</div>
       <div class="card2"><h3>Dernières séances</h3>${derHtml}</div>
       <div class="card2"><h3>Objectifs</h3>${objHtml}</div>
-    </div>`;
+    </div>
+    <div class="grid" style="grid-template-columns:minmax(0,2.1fr) minmax(0,1fr)">
+      <div class="card2"><h3>Calendrier d'entraînement</h3>${_dCal()}</div>
+      <div>${_dProchaine()}${_dTop()}</div>
+    </div>
+    ${_dBas()}`;
 }
 
 function renderDashboard(){
