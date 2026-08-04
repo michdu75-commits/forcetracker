@@ -6,9 +6,47 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v762`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v767`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
 > 🌙 **AUDIT NOCTURNE du 29-30/07 (demandé par Michel) : TOUT l'ancien code vérifié** — 2 nouvelles familles permanentes (`tests/calculs/` 79/79 linéaires · `tests/parcours/` 40/40 croisés + perfs), les 9 familles existantes re-passées vertes, retouches quantifiées. **Verdict : les formules fondatrices sont justes, aucun ralentissement.** Trouvailles : bouton « Hier » = bug de Greenwich (minuit-2 h) + 5 cousins **✅ corrigés ft-v671** · « marche de midi » de la récup **✅ corrigée ft-v671** (fatigue en continu sur 36 h, repos en jours calendaires) · « autre sport » **✅ corrigé ft-v672** (+150 kcal/j dans le TDEE, anti-double-comptage ; la récup reste chez Milo — décision assumée, pas de fatigue inventée). **Les 3 trouvailles de l'audit sont closes.** **Tout le détail : `docs/AUDIT-NOCTURNE-2026-07-29.md`.**
+
+> ### 🌅 À LIRE AU RÉVEIL — nuit du 04 au 05/08 (Michel : « rappelle-moi tout ça demain »)
+>
+> **✅ CE QUI A ÉTÉ FAIT PENDANT QUE TU DORMAIS**
+>
+> | | Quoi | Preuve |
+> |---|---|---|
+> | 🛟 | **Sauvegarde de nuit RÉPARÉE** — elle ne tournait plus depuis 36 jours | 1 déclencheur · `backup-2026-08-04-23-20.json`, **811 Ko**, écrit **par le planificateur** à 23h20 |
+> | 🔌 | **Miroir Supabase branché** (ft-v763) | projet **séparé** de celui de Tatiana · table en écriture seule |
+> | 🚪 | **`.claspignore` refermé par défaut** — le bug qui cassait le déploiement backend tous les 15 jours | run vert, `Pushed 2 files` |
+> | 💸 | **Ton compte est passé en Sonnet** | dans `worker.js`, PAS dans les Script Properties (voir ci-dessous) |
+> | ✂️ | **Prompt allégé de 9 507 caractères** (ft-v764/765) | 60 085 → 49 362 sur un message hors sujet |
+> | 🔐 | **Milo ne récite plus ses consignes, sauf à toi** (ft-v766/767) | 205 tests verts, les 2 branches |
+>
+> **🎯 LES 3 CHOSES À FAIRE AUJOURD'HUI**
+> 1. **Vérifier que la sauvegarde de 2h est bien passée** → Profil → Admin → 🩺 Santé du système. Elle doit être datée de **cette nuit**. C'est le seul contrôle qui reste.
+> 2. **Tester la copie miroir Supabase** → Profil → Admin → 🪞 (il faut que le SQL de la table `ft_comptes` soit passé). ✅ = ça marche · 404 = SQL non lancé · 401/403 = règles RLS.
+> 3. **Vérifier dans la console Anthropic** qu'il n'y a plus de barre `claude-opus-4-6` à partir du 5/08.
+>
+> **🧨 LA DÉCOUVERTE DE LA NUIT, à retenir** : **DEUX endroits prétendaient régler le modèle de Milo, un seul agissait.** La Script Property `COACH_MODEL_MICHEL` est **du code mort** depuis que le coach passe par le Worker Cloudflare — le modèle est **en dur dans `worker.js`** (constante `MODELE_MICHEL`). J'ai cherché une heure du mauvais côté, et le bouton que j'avais fabriqué côté Apps Script t'aurait affiché un « ✅ Sonnet » **sans rien changer**. Supprimé.
+>
+> **📏 DEUX CHIFFRES QUE J'AVAIS ANNONCÉS FAUX** (corrigés par la mesure) : la nutrition ne fait pas 26 % du prompt mais **3,7 %** · filtrer le catalogue par lieu d'entraînement ne te ferait gagner que **29 caractères** (tu es en salle complète).
+>
+> **⏭️ LE CHANTIER SUIVANT — le régime du prompt, mesuré et priorisé**
+> | Bloc | Poids | Piste |
+> |---|---:|---|
+> | `TA MÉTHODE DE COACH` | 6 322 | redondance avec 3 autres blocs |
+> | `INTERDICTION D'INTERROGATOIRE` | 4 769 | dit 3 fois ailleurs — **priorité n°1**, désignée par ChatGPT ET par Milo |
+> | `INTÉGRER LA SÉANCE` | 3 198 | même conditionnement que le catalogue |
+> | `ÉTAT DU JOUR` | 2 832 | à condenser |
+>
+> ⚠️ **La règle de méthode qui sort de la nuit** : **l'audit se délègue, la coupe non.** ChatGPT a bien audité (il a trouvé le catalogue), puis a proposé **−85 %** sur un bloc en faisant disparaître, sans les mentionner, des règles nées de vrais bugs. Michel : *« tu déconnes sur ce coup là sérieux »*. Milo a produit le même audit, de l'intérieur. **Les trois lectures convergent sur les mêmes cibles** — ça, c'est utilisable. Les coupes se font ici, où l'on sait de quel incident est née chaque ligne.
+>
+> **🐛 EN ATTENTE — les 4 bugs d'affichage du Créateur de programme (version web)** signalés par Michel avec capture : alignement en haut, cases qui débordent à droite, sélecteur de type de poids qui déborde, et la date de début chevauchée par le nombre de semaines. **Non traités.**
+>
+> **🔒 Toujours ouvert (sécurité)** : `loadProfile` sert un compte entier sans code perso · le jeton de la boîte à idées est en clair dans `app.js`. Correctifs prêts, **non déployés** — c'est la production, ça se fait avec toi.
+>
+> **↩️ Rollback de la nuit** : `git reset --hard sauvegarde-avant-allegement` *(⚠️ sur ce dépôt, les **tags** sont refusés — on utilise une **branche**.)*
 
 > ### 🔁 ÉTAT AU 04/08 (nuit) — remplace la photo précédente
 > ⚠️ **Ce bloc se REMPLACE, il ne s'empile pas.** Instantané, pas journal.

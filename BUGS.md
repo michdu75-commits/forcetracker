@@ -542,6 +542,46 @@ conclure faux avec assurance.
 
 ---
 
+## 12bis. 🕵️ L'AUDIT QUI NE REGARDE QUE CE QU'IL SAIT CHERCHER *(05/08/2026)*
+
+> *« Et nos audits n'ont pas vu ce point de sécurité »* — Michel, 05/08/2026, 1h du matin.
+
+**Le cas.** Un audit de sécurité a été mené le 10/07. Le 04/08, trois failles ont été trouvées
+et traitées (déploiements Apps Script fantômes, `loadProfile` sans authentification, jeton de la
+boîte à idées en clair). **Aucun de ces passages n'a vu que n'importe qui pouvait demander à Milo
+de réciter ses propres consignes** — c'est-à-dire de lire **les garde-fous eux-mêmes** (santé,
+blessures, limites de rôle). Ce n'est pas une fuite de données (0 clé, 0 e-mail, 0 donnée d'un
+autre utilisateur : mesuré), mais *qui lit les garde-fous sait par où passer*.
+
+**Pourquoi personne ne l'a vu.** Un audit cherche là où il sait chercher : les **fichiers**, les
+**routes**, les **droits d'accès**. Le prompt, lui, n'est ni un fichier ni une route — c'est du
+**texte envoyé à un modèle**, et personne ne le range mentalement dans la surface d'attaque. Il a
+d'ailleurs fallu que Milo **audite son propre prompt sous les yeux de Michel** pour que la question
+se pose : *« c'est chelou, tout le monde peut faire ça ? »*.
+
+**⚠️ Et j'ai d'abord répondu à côté** : « ce n'est pas ta sécurité, c'est ton savoir-faire — deux
+lignes par pudeur ». Michel a insisté : *« si c'est le cas c'est un point de sécurité »*. Il avait
+raison, et l'écart entre les deux lectures tient à une seule chose : je regardais **ce qui fuit**
+(rien de sensible), il regardait **ce que ça permet** (contourner les protections).
+
+### 🔎 Comment la reconnaître
+- L'audit énumère des **fichiers, des routes, des clés** — jamais des **entrées** ni des **sorties**
+  de modèle.
+- Personne n'a écrit la phrase *« qu'est-ce qu'un utilisateur curieux peut obtenir en le DEMANDANT
+  simplement ? »*.
+- On raisonne « qu'est-ce qui fuit ? » sans jamais poser « qu'est-ce que ça permet ensuite ? ».
+
+### 🛡️ Ce qui protège
+- Faire figurer **le prompt** dans le périmètre d'audit, au même titre qu'un fichier servi.
+- Poser systématiquement les **deux** questions : *qu'est-ce qui fuit ?* **et** *à quoi ça sert
+  à celui qui l'obtient ?*
+- ⚠️ Et se souvenir qu'une consigne de prompt **se contourne** : c'est un ralentisseur, jamais une
+  serrure. La serrure est **déterministe** et vit dans le code (Gardien de sortie).
+- ft-v766 puis ft-v767 : consigne posée, puis réservée au **super-admin** — avec un test des deux
+  branches (autorisé / interdit), parce qu'une protection sans test n'est qu'un souhait.
+
+---
+
 ## 13. 🔑 Le NOM comme clé primaire — *la racine commune*
 
 **Ce n'est pas un bug, c'est ce qui en produit.** Sur les 19 défauts trouvés le 02/08, **6
