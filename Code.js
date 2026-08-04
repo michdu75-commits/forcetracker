@@ -2247,9 +2247,31 @@ function reparerSauvegardeNuit() {
   var n = ScriptApp.getProjectTriggers()
             .filter(function(t){ return t.getHandlerFunction() === 'backupAllUserData_'; }).length;
   var res;
-  try { res = backupAllUserData_(); } catch (e) { res = 'ERREUR pendant la sauvegarde : ' + e; }
+  try { backupAllUserData_(); } catch (e) { res = 'ERREUR pendant la sauvegarde : ' + e; }
+
+  // ⚠️ ON NE FAIT PAS CONFIANCE À LA VALEUR DE RETOUR : `backupAllUserData_` ne renvoie
+  // RIEN (elle journalise). Une première version affichait donc « sauvegarde immédiate :
+  // undefined » — un mot creux, là où on attendait la seule preuve qui compte. On va
+  // DONC RELIRE le dossier Drive : le fichier le plus récent, sa date, sa taille.
+  // Vérifier l'effet, jamais le retour de la fonction qui prétend l'avoir produit.
+  if (!res) {
+    try {
+      var recent = null;
+      var it = _getDriveBackupFolder_().getFiles();
+      while (it.hasNext()) {
+        var f = it.next();
+        if (!recent || f.getDateCreated() > recent.getDateCreated()) recent = f;
+      }
+      res = recent
+        ? ('dernier fichier « ' + recent.getName() + ' » du '
+           + Utilities.formatDate(recent.getDateCreated(), 'Europe/Paris', 'dd/MM/yyyy à HH:mm')
+           + ' — ' + Math.round(recent.getSize() / 1024) + ' Ko')
+        : '⚠️ AUCUN fichier dans le dossier de sauvegarde !';
+    } catch (e) { res = 'dossier Drive illisible : ' + e; }
+  }
+
   var msg = '[FT] Déclencheurs de sauvegarde actifs : ' + n
-          + ' (attendu : 1) — sauvegarde immédiate : ' + JSON.stringify(res);
+          + ' (attendu : 1) — ' + res;
   Logger.log(msg); console.log(msg);
   return msg;
 }
