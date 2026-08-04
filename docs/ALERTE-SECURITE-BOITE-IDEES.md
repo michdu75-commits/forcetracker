@@ -1,4 +1,4 @@
-# 🔴 ALERTE SÉCURITÉ — deux failles, dont une GRAVE
+# 🔴 ALERTE SÉCURITÉ — trois failles
 
 > **Trouvé le 04/08/2026.** La première (la boîte à idées) a été trouvée en cherchant à lire les
 > idées depuis la session Claude ; **la seconde (les comptes entiers) en vérifiant la première** —
@@ -7,7 +7,67 @@
 
 ---
 
-# ⚠️ FAILLE N°1 (LA PLUS GRAVE) — n'importe qui peut télécharger un compte entier
+# ⚠️ FAILLE N°0 — SEPT anciens déploiements toujours EN LIGNE *(la plus concrète)*
+
+> **Trouvée le 04/08 au soir, en cherchant autre chose.** C'est la seule des trois qui ne demande
+> **rien** : ni jeton, ni adresse connue — juste l'URL, qui ne change jamais.
+
+## Ce qui a été constaté
+
+Sur le compte **michdu75@gmail.com** (et non `forcetracker.app@gmail.com` qui porte la production),
+**deux anciens projets Apps Script** sont restés en place :
+
+| Projet | Identifiant | Déploiements ACTIFS |
+|---|---|---|
+| Force Tracker v3.1 | `1shyXEpGt4wS1jcyFafP6-9C9etXhXOIqZ0WFV1LaQdFgQrWOmutVwQK6` | **1** (« Force tracker », 12 juin 2026) |
+| Force Tracker v3.2 | `1iXZo4_kiiYYJ8uPeJQuU18L8NZ3clf1d9lyo1k6FFHYywTvf4gQZGnSq` | **6** (v3.4, 2× « Sans titre », 3× « force tracker ») |
+
+**Les deux contiennent des clés `u_…` — donc de vrais comptes utilisateurs.** (Moins que la v3.5 :
+la plupart des comptes se sont créés après juin.)
+
+## Pourquoi c'est pire que les deux autres
+
+Le code de la v3.1 est visible sur la capture du 04/08 :
+
+```js
+if (p.action === 'loadProfile' && p.email) {
+  const email = (p.email || '').toLowerCase().trim();
+  const data = loadUserData_(email);      // ← AUCUN _authCheck_
+```
+
+Le **code d'accès personnel n'existait pas** en juin. Donc :
+
+> ⚠️ **Un compte protégé aujourd'hui ne l'est PAS sur ces déploiements.** La protection vit dans les
+> Script Properties du projet v3.5 ; ces projets-là ont les leurs, sans aucun verrou.
+
+**Un déploiement Apps Script reste en ligne indéfiniment.** Personne ne le surveille, il n'apparaît
+dans aucun tableau de bord, et il continue de répondre des années après qu'on l'a oublié.
+
+## Ce qui limite la casse
+
+Les données datent du **12-14 juin**. Les fonctions de santé sont arrivées en **juillet** (import de
+bilan sanguin ft-v313 le 08/07 · bilan corporel @69 le 07/07). Ces projets **ne peuvent donc pas
+contenir** de bilans sanguins, de bilans corporels ni de données de cycle : profil de base, séances,
+records et poids de juin.
+
+## Le correctif — 2 minutes, aucun risque
+
+Aucune des 7 URL n'est celle de la production (`AKfycbwUsEFIlmx…`) : **les couper n'a aucun effet sur
+l'application.**
+
+Dans chaque projet : **Déployer → Gérer les déploiements → sélectionner un déploiement actif →
+icône « archiver »**. Répéter pour les 7. *C'est l'archivage qui coupe l'URL* — la suppression du
+projet vient après, si on veut.
+
+## La leçon, plus large que le cas
+
+*Une version qu'on abandonne ne s'arrête pas toute seule.* On a migré de v3.1 → v3.2 → v3.5 en
+laissant chaque étage allumé derrière soi. **À ajouter au rituel de migration : archiver l'ancien
+déploiement fait partie du déménagement, pas des finitions.**
+
+---
+
+# ⚠️ FAILLE N°1 — n'importe qui peut télécharger un compte entier
 
 ## Ce qui est accessible
 
