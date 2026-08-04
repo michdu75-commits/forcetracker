@@ -38,7 +38,35 @@ jobs:
           ID=AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA
           clasp create-deployment -i "$ID" -d "Auto-deploy GitHub" || clasp deploy -i "$ID" -d "Auto-deploy GitHub"
 
-      - name: Vérifier que le backend répond
+      # ⚠️ CETTE ÉTAPE NE VÉRIFIAIT RIEN (constaté le 04/08/2026, run @124).
+      # Deux défauts qui se cumulaient :
+      #   ① `curl -s` sans -L ne SUIT PAS la redirection — or Apps Script redirige toujours vers
+      #      googleusercontent.com. Le journal affichait « Moved Temporarily », jamais la réponse.
+      #   ② `|| true` : l'étape ne pouvait pas échouer, donc le feu vert ne prouvait rien.
+      # C'est la famille « un contrôle qui ne peut pas échouer ne contrôle rien » (BUGS.md §12),
+      # et ça vide la règle R18 de son sens : on vérifiait le push, pas le déploiement.
+      - name: Vérifier que le backend répond VRAIMENT
         run: |
           sleep 5
-          curl -s "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec?test=1" || true
+          REP=$(curl -sSL --max-time 30 "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec?test=1")
+          echo "Réponse du backend : $REP"
+          echo "$REP" | grep -q '"status":"online"' || {
+            echo "::error::Le backend ne répond PAS « online » après déploiement — l'app est peut-être cassée pour tout le monde."
+            exit 1
+          }
+          echo "✅ Backend en ligne."
+
+      # Contrôle ciblé du correctif du 04/08 : authStatus en mode light doit répondre sans
+      # charger le compte. Sur une adresse inexistante, la réponse doit rester structurée.
+      - name: Vérifier authStatus (mode light)
+        run: |
+          REP=$(curl -sSL --max-time 30 -X POST \
+            -H "Content-Type: text/plain;charset=utf-8" \
+            --data '{"action":"authStatus","email":"controle-deploiement@exemple.invalid","light":true}' \
+            "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec")
+          echo "Réponse authStatus : $REP"
+          echo "$REP" | grep -q '"hasCode"' || {
+            echo "::error::authStatus ne répond pas comme attendu."
+            exit 1
+          }
+          echo "✅ authStatus répond."
