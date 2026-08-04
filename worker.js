@@ -276,9 +276,26 @@ async function coach(body, apiKey) {
   // était STRUCTURELLE (le niveau de modèle), pas le prompt. Le gratuit/la découverte = là où se joue la conversion
   // → tous les utilisateurs de la CONVERSATION coach doivent avoir un modèle capable. (Les tâches utilitaires —
   // code-barres, résumés, lecture d'étiquette — restent sur Haiku ailleurs dans ce fichier.)
+  // ⚠️⚠️ C'EST **ICI** QUE SE DÉCIDE LE MODÈLE DE MILO, ET NULLE PART AILLEURS.
+  // `Code.js` a un mécanisme jumeau (Script Properties `COACH_MODEL_MICHEL` /
+  // `COACH_MODEL_CHRISTOPHE`) qui, lui, N'EST PLUS JAMAIS CONSULTÉ pour la conversation :
+  // `'coach'` fait partie de `AI_PROXY_ACTIONS` (constants.js), donc tous les échanges avec
+  // Milo passent par ce Worker. Cherché le 04/08 pendant une heure du mauvais côté — la
+  // propriété était absente, Opus tournait quand même, et la contradiction venait de là.
+  // 👉 Deux endroits qui prétendent régler la même chose, dont un seul agit : c'est R2
+  //    (ne jamais dupliquer une information) qui se venge. Si tu changes le modèle, c'est
+  //    cette ligne-ci. Le réglage côté Apps Script ne fera qu'afficher un faux vert.
+  //
+  // 04/08/2026 — Michel passe d'Opus à Sonnet, pour deux raisons :
+  //   ① le coût : 76 % de ses tokens d'août étaient en Opus ;
+  //   ② R9 — il évaluait Milo sur un modèle que PERSONNE d'autre n'utilise, donc il ne
+  //      pouvait pas voir les défauts que voient les vrais utilisateurs (le bouton
+  //      « Commencer cette séance » absent chez sa fille, ft-v761).
+  // ↩️ Pour revenir en arrière : remettre 'claude-opus-4-6' sur la ligne ci-dessous.
+  const MODELE_MICHEL = 'claude-sonnet-4-6';
   const em = String(body.email || '').toLowerCase().trim();
   let model = 'claude-sonnet-4-6';
-  if (em === 'michdu75@gmail.com') model = 'claude-opus-4-6';
+  if (em === 'michdu75@gmail.com') model = MODELE_MICHEL;
   const d = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system, messages });
   // _diag = diagnostic technique (ignoré par l'app normale, lu par PT-001 / le laboratoire).
   // On NE change PAS le message utilisateur : Milo dit toujours « Désolé, réessaie. » si vide.

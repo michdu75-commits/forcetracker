@@ -2338,8 +2338,6 @@ function preuveDeclencheur(e) {
 // (R9 : on doit juger Milo sur le modèle RÉELLEMENT utilisé). `claude-sonnet-4-6` est déjà
 // employé ailleurs dans ce fichier : l'identifiant est éprouvé.
 // Les deux fonctions affichent l'ANCIENNE valeur avant de changer, pour pouvoir revenir.
-function passerMiloEnSonnet()   { return _reglerModeleMilo_('claude-sonnet-4-6'); }
-function remettreMiloEnOpus()   { return _reglerModeleMilo_('claude-opus-4-6'); }
 // ⭐ LISTER LA CONFIG SANS EXPOSER UN SEUL SECRET (04/08/2026).
 //
 // ⚠️ POURQUOI. Michel est certain d'avoir réglé son modèle sur Opus ; la propriété
@@ -2373,21 +2371,26 @@ function listerConfig() {
   return m;
 }
 
+// ⚠️⚠️ IL N'Y A **PAS** DE BOUTON POUR CHANGER LE MODÈLE DE MILO ICI, ET C'EST VOLONTAIRE.
+//
+// J'en avais écrit un le 04/08 (`passerMiloEnSonnet`) : il écrivait la Script Property
+// `COACH_MODEL_MICHEL`, relisait la valeur, affichait un beau ✅… et **ne changeait
+// strictement rien**. Parce que `'coach'` fait partie de `AI_PROXY_ACTIONS` (constants.js) :
+// toutes les conversations avec Milo passent par le **Worker Cloudflare**, et le Worker
+// choisit le modèle EN DUR (`worker.js`, constante MODELE_MICHEL). Le mécanisme de ce
+// fichier est du code mort pour la conversation depuis que le Worker existe.
+//
+// *Un réglage qui ne pilote pas ce qu'il prétend piloter est pire qu'un réglage absent* :
+// il fait croire que c'est fait. Même travers que le déclencheur de sauvegarde qu'on
+// croyait posé pendant 36 jours. Retiré plutôt que corrigé — deux endroits qui règlent
+// la même chose finiront toujours par diverger (**R2**).
+// 👉 Pour changer le modèle : `worker.js`, constante `MODELE_MICHEL`.
 function voirModeleMilo() {
   var v = PropertiesService.getScriptProperties().getProperty('COACH_MODEL_MICHEL');
-  var m = '[FT] Modèle de Milo pour michdu75@gmail.com : ' + (v || '(non défini → Haiku par défaut)');
-  Logger.log(m); console.log(m);
-  return m;
-}
-function _reglerModeleMilo_(modele) {
-  var sp = PropertiesService.getScriptProperties();
-  var avant = sp.getProperty('COACH_MODEL_MICHEL');
-  sp.setProperty('COACH_MODEL_MICHEL', modele);
-  // On RELIT après écriture : on vérifie l'effet, jamais le fait d'avoir appelé la fonction.
-  var apres = sp.getProperty('COACH_MODEL_MICHEL');
-  var m = (apres === modele ? '[FT] ✅ ' : '[FT] ❌ ÉCHEC — ')
-        + 'Modèle de Milo : ' + (avant || '(aucun)') + ' → ' + apres
-        + '. (Pour revenir : ' + (modele.indexOf('sonnet') >= 0 ? 'remettreMiloEnOpus()' : 'passerMiloEnSonnet()') + ')';
+  var m = '[FT] ⚠️ Cette propriété NE PILOTE PLUS la conversation avec Milo — elle est '
+        + 'ignorée depuis que le coach passe par le Worker Cloudflare. Le modèle se règle '
+        + 'dans worker.js (constante MODELE_MICHEL).\n'
+        + '[FT] Valeur résiduelle de COACH_MODEL_MICHEL : ' + (v || '(absente)');
   Logger.log(m); console.log(m);
   return m;
 }
