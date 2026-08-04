@@ -2302,7 +2302,22 @@ function testerDeclencheur() {
 }
 
 // Lancée PAR le déclencheur, jamais à la main. Elle n'écrit qu'une date, puis se retire.
-function preuveDeclencheur() {
+//
+// ⚠️ ET ELLE REFUSE DE TOURNER À LA MAIN, ce n'est pas une simple consigne. Michel a posé
+// la bonne question en voyant les trois fonctions dans le menu : « et preuveDeclencheur ? »
+// Si on la lance soi-même, on écrit la date soi-même — et `voirResultatDeclencheur()`
+// affiche alors un ✅ qui ne prouve RIEN. *Un test qu'on peut réussir en le faisant
+// soi-même ne teste rien*, et un faux vert sur une sauvegarde est exactement le genre de
+// mensonge qui a coûté 36 jours. Un appel par déclencheur reçoit un événement `e` ; un
+// appel manuel n'en reçoit pas. On s'appuie donc sur le mécanisme, pas sur la mémoire.
+function preuveDeclencheur(e) {
+  if (!e) {
+    var m = '[FT] ⛔ Ne lance PAS cette fonction à la main : c\'est Google qui doit la lancer, '
+          + 'c\'est tout l\'objet du test. Lance testerDeclencheur(), attends 2 minutes, '
+          + 'puis voirResultatDeclencheur().';
+    Logger.log(m); console.log(m);
+    return m;
+  }
   PropertiesService.getScriptProperties()
     .setProperty('PREUVE_DECLENCHEUR', new Date().toISOString());
   ScriptApp.getProjectTriggers().forEach(function (t) {
