@@ -2325,6 +2325,40 @@ function preuveDeclencheur(e) {
   });
 }
 
+// ⭐ CHANGER LE MODÈLE DE MILO POUR MICHEL — sans ouvrir la page des propriétés (04/08/2026).
+//
+// ⚠️ POURQUOI PASSER PAR UNE FONCTION. La valeur vit dans la Script Property
+// `COACH_MODEL_MICHEL`, et cette page affiche AUSSI `ANTHROPIC_API_KEY`, `ADMIN_TOKEN` et
+// `KOFI_TOKEN` **en clair**. Y envoyer quelqu'un pour changer un mot, c'est lui faire ouvrir
+// ses secrets sans raison — et une soirée de captures d'écran suffit à en faire fuiter un.
+// *Une opération courante ne doit jamais obliger à exposer un secret.*
+//
+// Le contexte : le compte de Michel tourne sur Opus et pèse ~93 % de la facture IA, alors
+// que les vrais utilisateurs sont sur Haiku — ce qui est aussi un problème d'évaluation
+// (R9 : on doit juger Milo sur le modèle RÉELLEMENT utilisé). `claude-sonnet-4-6` est déjà
+// employé ailleurs dans ce fichier : l'identifiant est éprouvé.
+// Les deux fonctions affichent l'ANCIENNE valeur avant de changer, pour pouvoir revenir.
+function passerMiloEnSonnet()   { return _reglerModeleMilo_('claude-sonnet-4-6'); }
+function remettreMiloEnOpus()   { return _reglerModeleMilo_('claude-opus-4-6'); }
+function voirModeleMilo() {
+  var v = PropertiesService.getScriptProperties().getProperty('COACH_MODEL_MICHEL');
+  var m = '[FT] Modèle de Milo pour michdu75@gmail.com : ' + (v || '(non défini → Haiku par défaut)');
+  Logger.log(m); console.log(m);
+  return m;
+}
+function _reglerModeleMilo_(modele) {
+  var sp = PropertiesService.getScriptProperties();
+  var avant = sp.getProperty('COACH_MODEL_MICHEL');
+  sp.setProperty('COACH_MODEL_MICHEL', modele);
+  // On RELIT après écriture : on vérifie l'effet, jamais le fait d'avoir appelé la fonction.
+  var apres = sp.getProperty('COACH_MODEL_MICHEL');
+  var m = (apres === modele ? '[FT] ✅ ' : '[FT] ❌ ÉCHEC — ')
+        + 'Modèle de Milo : ' + (avant || '(aucun)') + ' → ' + apres
+        + '. (Pour revenir : ' + (modele.indexOf('sonnet') >= 0 ? 'remettreMiloEnOpus()' : 'passerMiloEnSonnet()') + ')';
+  Logger.log(m); console.log(m);
+  return m;
+}
+
 // ⭐ LE TEST LE PLUS PROCHE DU RÉEL : la VRAIE sauvegarde, lancée par le PLANIFICATEUR.
 //
 // ⚠️ POURQUOI IL NE FAIT PAS DOUBLON avec `testerDeclencheur()`. Celui-là prouve que Google
