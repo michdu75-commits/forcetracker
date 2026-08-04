@@ -2276,6 +2276,59 @@ function reparerSauvegardeNuit() {
   return msg;
 }
 
+// ⭐ PROUVER QUE LE PLANIFICATEUR TOURNE — sans attendre 2h du matin (04/08/2026).
+//
+// ⚠️ LA DISTINCTION QUI COMPTE, et qui a coûté 36 jours. Lancer `reparerSauvegardeNuit()`
+// à la main prouve que le CODE de sauvegarde marche. Ça ne prouve PAS que Google
+// DÉCLENCHE quoi que ce soit sur ce projet — or c'est exactement ce qui était mort :
+// le déclencheur avait disparu et personne ne s'en apercevait, parce que tout ce qu'on
+// vérifiait, c'était le code. *Vérifier la pièce ne vérifie pas le mécanisme qui l'actionne.*
+//
+// Ces deux fonctions posent un déclencheur à 1 minute qui n'écrit qu'une DATE, puis se
+// supprime lui-même. Coût nul, aucune sauvegarde parasite, et la réponse en 2 minutes :
+//   1. Exécuter `testerDeclencheur()`   → arme le test
+//   2. Attendre ~2 minutes
+//   3. Exécuter `voirResultatDeclencheur()` → dit si Google l'a lancé, et à quelle heure
+function testerDeclencheur() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'preuveDeclencheur') ScriptApp.deleteTrigger(t);
+  });
+  PropertiesService.getScriptProperties().deleteProperty('PREUVE_DECLENCHEUR');
+  ScriptApp.newTrigger('preuveDeclencheur').timeBased().after(60 * 1000).create();
+  var msg = '[FT] Test armé — déclencheur posé pour dans ~1 minute. '
+          + 'Attends 2 minutes puis exécute voirResultatDeclencheur().';
+  Logger.log(msg); console.log(msg);
+  return msg;
+}
+
+// Lancée PAR le déclencheur, jamais à la main. Elle n'écrit qu'une date, puis se retire.
+function preuveDeclencheur() {
+  PropertiesService.getScriptProperties()
+    .setProperty('PREUVE_DECLENCHEUR', new Date().toISOString());
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'preuveDeclencheur') ScriptApp.deleteTrigger(t);
+  });
+}
+
+function voirResultatDeclencheur() {
+  var v = PropertiesService.getScriptProperties().getProperty('PREUVE_DECLENCHEUR');
+  var msg;
+  if (v) {
+    msg = '[FT] ✅ LE PLANIFICATEUR TOURNE — déclenché le '
+        + Utilities.formatDate(new Date(v), 'Europe/Paris', 'dd/MM/yyyy à HH:mm:ss')
+        + '. La sauvegarde de 2h partira donc bien.';
+  } else {
+    var arme = ScriptApp.getProjectTriggers()
+      .filter(function (t) { return t.getHandlerFunction() === 'preuveDeclencheur'; }).length;
+    msg = arme
+      ? '[FT] ⏳ Pas encore déclenché — le test est toujours armé. Attends encore une minute.'
+      : '[FT] ⚠️ RIEN. Ni preuve, ni test armé : soit tu n\'as pas lancé testerDeclencheur(), '
+        + 'soit Google N\'EXÉCUTE PAS les déclencheurs de ce projet — et la sauvegarde de 2h ne partira pas.';
+  }
+  Logger.log(msg); console.log(msg);
+  return msg;
+}
+
 // ── Trigger backup QUOTIDIEN ─────────────────────────────────
 // ⚠️ Nom terminé par `_` = fonction PRIVÉE : elle n'apparaît PAS dans le menu d'exécution
 // de l'IDE. Pour la lancer à la main, passer par `reparerSauvegardeNuit()` ci-dessus.
