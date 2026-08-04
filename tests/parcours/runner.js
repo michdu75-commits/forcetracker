@@ -942,7 +942,27 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       "salut","ok",""];
     const HORS=["j'ai très mal dormi cette nuit, je suis complètement épuisé aujourd'hui",
       "je suis stressé par le boulot en ce moment et ça me pèse beaucoup"];
+    // ⚠️ LE CAS QUI AVAIT ÉTÉ RATÉ — trouvé sur une question de Michel (« tu es sûr de toi ? »).
+    // La 1ʳᵉ version ne lisait que le message du moment : au 2ᵉ tour, après que Milo vient de
+    // proposer une séance, 6 réponses réelles sur 10 perdaient le catalogue — dont « tu me
+    // changes ça ? » et « je ne peux pas faire le deuxième, j'ai mal », c'est-à-dire
+    // précisément les messages où Milo doit nommer un exercice de remplacement (ft-v750).
+    const SUITE=["ok mais je préfère quelque chose de plus court",
+      "c'est un peu trop pour aujourd'hui, tu peux alléger ?",
+      "j'aime pas trop le premier, tu me changes ça ?",
+      "et sinon je fais quoi à la place",
+      "je ne peux pas faire le deuxième, j'ai mal",
+      "tu peux m'en mettre un autre pour le haut",
+      "plutôt trois fois par semaine"];
+    coachHistory.length=0;
+    coachHistory.push({role:'user',content:'fais-moi une séance jambes'},
+                      {role:'assistant',content:'ok voilà'},
+                      {role:'user',content:'x'},{role:'assistant',content:'y'});
+    const manquesSuite = SUITE.filter(m=>!_ctxEntrainement(m));
+    coachHistory.length=0;
+    coachHistory.push({role:'user',content:'a'},{role:'assistant',content:'b'});
     return {
+      manquesSuite,
       manques: DOIT.filter(m=>!_ctxEntrainement(m)),
       retires: HORS.filter(m=>!_ctxEntrainement(m)).length,
       avec: buildCoachContext("fais-moi une séance jambes pour ce soir stp").length,
@@ -953,6 +973,8 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   });
   t('⭐ PROMPT : le catalogue est TOUJOURS envoyé dès qu\'il peut servir (10 messages témoins)',
     Array.isArray(r.manques) && r.manques.length===0, JSON.stringify(r.manques||r));
+  t('⭐⭐ PROMPT : la CONVERSATION EN COURS compte, pas le seul message (« tu me changes ça ? »)',
+    Array.isArray(r.manquesSuite) && r.manquesSuite.length===0, JSON.stringify(r.manquesSuite||r));
   t('PROMPT : il est retiré sur un message franchement hors sujet',
     r.retires===2, JSON.stringify(r));
   t('PROMPT : le gain est réel (> 5 000 caractères en moins)',

@@ -275,7 +275,18 @@ function _ctxEntrainement(msg){
     if(m.length<25)return true;                               // trop court pour trancher → tout
     if(!(S.sessions||[]).length)return true;                  // début de parcours → tout
     if(typeof coachHistory!=='undefined' && (coachHistory||[]).length<2)return true; // 1ᵉʳ échange
-    return _MOTS_ENTRAINEMENT.test(m);
+    if(_MOTS_ENTRAINEMENT.test(m))return true;
+    // ⚠️⚠️ ET SURTOUT : ON REGARDE LA CONVERSATION EN COURS, PAS LE SEUL MESSAGE.
+    // Trou trouvé le 04/08 sur une question de Michel — « tu es sûr de toi ? ». Ma première
+    // version ne lisait que le message du moment : sur 10 réponses réelles au 2ᵉ tour, une
+    // fois que Milo venait de proposer une séance, **6 perdaient le catalogue** — dont
+    // « j'aime pas trop le premier, tu me changes ça ? », « je ne peux pas faire le deuxième,
+    // j'ai mal », « et sinon je fais quoi à la place ». Ce sont EXACTEMENT les messages où
+    // Milo doit nommer un exercice de remplacement — le cas signalé par Michel en pleine
+    // séance (ft-v750). *Une conversation ne se juge pas sur une phrase isolée* : le sujet
+    // vit dans les tours précédents, pas dans le mot qu'on vient de taper.
+    const h=(typeof coachHistory!=='undefined'&&coachHistory)?coachHistory.slice(-4):[];
+    return h.some(x=>x&&_MOTS_ENTRAINEMENT.test(String(x.content||'')));
   }catch(e){ return true; }                                   // en cas de pépin : on envoie
 }
 
