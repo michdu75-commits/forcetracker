@@ -304,9 +304,10 @@ let _sessId=null,_sessEdits=null,_sdDelConfirm=false,_sdDelTimer=null;
 function _cloudSync(){
   if(window._demoMode)return; // mode démo : aucune écriture cloud
   if(!S.email||!S.url)return;
-  fetch(S.url,{method:'POST',mode:'no-cors',
-    headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body:JSON.stringify({
+  // ⚠️ Le corps du message est construit UNE SEULE FOIS et servi aux DEUX destinations
+  // (Apps Script + miroir Supabase). Deux constructions séparées finiraient par diverger,
+  // et on enverrait deux versions différentes du même compte (R2).
+  const _corpsSync={
       action:'saveProfile',email:S.email,authCode:_authCode(),
       name:S.name,bw:S.bw,age:S.age,height:S.height,gender:S.gender,goal:S.goal,goal2:S.goal2||'',priorities:S.priorities||[],discipline:S.discipline,level:S.level||'',coachTone:S.coachTone||'',registre:S.registre||{facts:{},observations:[]},
       ...(_adnFilled()?{adn:S.adn}:{}),
@@ -352,8 +353,15 @@ function _cloudSync(){
       a11y:S.a11y||false,
       colorblind:S.colorblind||'',
       leftHand:S.leftHand||false
-    })
+  };
+  fetch(S.url,{method:'POST',mode:'no-cors',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify(_corpsSync)
   }).catch(()=>{});
+  // MIROIR SUPABASE — deuxième copie, en écriture seule. Apps Script reste la source de
+  // vérité ; ceci n'ajoute qu'un filet. Non configuré ou injoignable → il ne se passe rien,
+  // et surtout : ça ne retarde ni ne bloque JAMAIS la sauvegarde principale (règle d'or #3).
+  try{ if(typeof sbMirror==='function')sbMirror(_corpsSync); }catch(e){}
 }
 // Alias pour compatibilité
 function _cloudSyncSessions(){_cloudSync();}
