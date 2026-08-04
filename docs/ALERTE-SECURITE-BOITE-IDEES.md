@@ -59,6 +59,22 @@ Dans chaque projet : **Déployer → Gérer les déploiements → sélectionner 
 icône « archiver »**. Répéter pour les 7. *C'est l'archivage qui coupe l'URL* — la suppression du
 projet vient après, si on veut.
 
+## ✅ Où on en est (04/08, tard)
+
+| Projet | État constaté sur capture |
+|---|---|
+| **v3.1** (`1shyXEpGt4…`) | ✅ **FERMÉ** — « Actif : Aucun déploiement actif ». « Force tracker » est passé sous *Archivé*, et son URL est devenue une **Bibliothèque** au lieu d'une *Application Web* : c'est la preuve visible que le service ne répond plus. |
+| **v3.2** (`1iXZo4_kii…`) | 🔄 En cours — « v3.4 - sauvegarde » archivé ; restaient **5 actifs** (2× « Sans titre », 3× « force tracker ») au dernier point. Michel a poursuivi ; **à reconfirmer** que la colonne *Actif* affiche « Aucun déploiement actif ». |
+
+⚠️ **Le repère fiable, pour la prochaine fois** : ne pas se fier au geste, se fier à l'**affichage**.
+La colonne « Actif » doit dire *« Aucun déploiement actif »*. Tant qu'un nom y figure, l'URL répond.
+
+⚠️ **Et le piège qu'on s'est tendu tout seuls, à ne pas refaire** : archiver le **PROJET** (rangement)
+n'est pas archiver le **DÉPLOIEMENT** (coupure du service). Le premier test qu'on a fait était un
+faux négatif — l'URL avait été recopiée tronquée, et Google renvoie *« le fichier n'existe pas »*
+aussi bien pour une URL invalide que pour un déploiement fermé. **Deux causes, un seul message :
+seule l'URL exacte, copiée avec le bouton « Copier », prouve quelque chose.**
+
 ## La leçon, plus large que le cas
 
 *Une version qu'on abandonne ne s'arrête pas toute seule.* On a migré de v3.1 → v3.2 → v3.5 en
