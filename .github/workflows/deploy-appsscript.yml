@@ -60,7 +60,12 @@ jobs:
       # charger le compte. Sur une adresse inexistante, la réponse doit rester structurée.
       - name: Vérifier authStatus (mode light)
         run: |
-          REP=$(curl -sSL --max-time 30 -X POST \
+          # ⚠️ PAS de -X POST ici : avec -X, curl REJOUE la requête en POST sur l'adresse de
+          # redirection de Google (qui n'accepte que des GET) → « unable to open the file ».
+          # Sans -X, `--data` suffit à faire un POST, et curl bascule en GET après la redirection.
+          # Piège vécu le 04/08 : le run a échoué en désignant le backend, alors que le backend
+          # allait bien — c'était le contrôle qui était faux.
+          REP=$(curl -sSL --max-time 30 \
             -H "Content-Type: text/plain;charset=utf-8" \
             --data '{"action":"authStatus","email":"controle-deploiement@exemple.invalid","light":true}' \
             "https://script.google.com/macros/s/AKfycbxWUsEFIlmx-Jxh9jWmEkvXl6rYXk5pR__u5i_GhnOtXua_f6W8wPNqCztZNDMD9N4qbA/exec")
