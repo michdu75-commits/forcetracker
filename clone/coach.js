@@ -813,15 +813,71 @@ function _saveForceProgram(idx,btn){
 // ─── SÉANCE DU JOUR : Milo → écran Séance en 1 clic (demande Michel) ───────────
 // Milo peut terminer sa réponse par un bloc caché {"seance":{label,exs:[{name,sets:[{reps,kg,type}]}]}}
 // (retiré de l'affichage par _stripCoachTech). On l'extrait ici pour proposer « ⚡ Commencer cette séance ».
+// ─── REPLI : LIRE LA SÉANCE DANS LE TEXTE VISIBLE (04/08/2026) ───────────────
+// LE PROBLÈME. Le bouton « ⚡ Commencer cette séance » n'apparaît que si Milo termine sa
+// réponse par un bloc caché {"seance":…}. C'est une consigne de FORMAT — et un modèle léger
+// la suit mal. Résultat vécu le 04/08 : Michel (sur Opus) a toujours le bouton, sa FILLE
+// (sur Haiku) ne l'a jamais. Elle demande une séance, Milo la lui écrit très bien… et elle
+// ne peut pas la lancer.
+// ⚠️ C'est R9 (« le niveau de modèle est une variable structurelle ») et R7 (« le prompt est
+// le DERNIER levier ») : durcir la consigne ne ferait que déplacer le problème d'un cran.
+// LA RÉPONSE. Milo écrit DÉJÀ la séance en clair (« Développé couché 4×8 »). On la lit dans
+// le texte quand le bloc manque → ça marche sur tous les modèles, sans un centime de plus.
+// ⚠️ ON NE REMPLACE JAMAIS UN NOM PAR UN AUTRE. Un nom reconnu à l'identique est normalisé
+// sur le catalogue ; sinon on garde le texte TEL QUEL (l'app sait gérer un exercice hors
+// catalogue). Ce qu'on refuse, c'est le « à peu près » : proposer un exercice DIFFÉRENT de
+// celui que Milo a écrit ferait travailler la personne sur autre chose (R29).
+// Il faut au moins 2 exercices pour parler d'une séance.
+function _seanceDepuisTexte(reply){
+  try{
+    if(!reply||typeof _matchExercise!=='function')return null;
+    // « 4×8 », « 4x8 », « 3 séries de 10 » — avec un poids éventuel « @ 80 kg », « 80kg ».
+    const RE=/^\s*(?:[-•*–]|\d+[.)])?\s*(.{3,60}?)\s*[:—–-]?\s*(\d{1,2})\s*(?:[x×*]|\s+s[ée]ries?\s+de\s+)\s*(\d{1,3})\s*(?:reps?)?\s*(?:@?\s*(\d{1,3}(?:[.,]\d)?)\s*kg)?\s*$/i;
+    const exs=[];
+    String(reply).split(/\n+/).forEach(l=>{
+      const t=l.replace(/\*\*/g,'').trim(); if(!t||t.length>90)return;
+      const m=t.match(RE); if(!m)return;
+      const brut=m[1].replace(/[:–—-]+$/,'').trim();
+      const nb=+m[2], reps=+m[3], kg=m[4]?parseFloat(String(m[4]).replace(',','.')):0;
+      if(!(nb>=1&&nb<=12)||!(reps>=1&&reps<=100))return;
+      const r=_matchExercise(brut)||{};
+      // ⚠️ SEULEMENT `via:'exact'`. Le rapprochement « par mots » est trop permissif ici :
+      // mesuré le 04/08, il transformait « Curl Biceps Haltères » en « Curl Barre » et
+      // « Élévations Latérales » en « Élévations Latérales Câble ». Sur une suggestion de
+      // recherche c'est acceptable ; pour CONSTRUIRE une séance, non — la personne
+      // s'entraînerait sur un autre exercice que celui que Milo lui a conseillé.
+      // On préfère laisser tomber la ligne (donc parfois tout le bouton) plutôt que
+      // proposer faux : le coût de l'erreur n'est pas le même dans les deux sens (R29).
+      if(!r.match||r.via!=='exact'){
+        // Nom non reconnu à l'identique : on le garde TEL QUEL. L'app sait vivre avec un
+        // exercice hors catalogue (c'est le mécanisme des exercices perso) — mais on
+        // n'invente pas un exercice DIFFÉRENT de celui qui est écrit.
+        exs.push({name:brut.slice(0,48), sets:Array.from({length:nb},()=>({reps,kg,type:'N'}))});
+        return;
+      }
+      exs.push({name:r.match, sets:Array.from({length:nb},()=>({reps,kg,type:'N'}))});
+    });
+    if(exs.length<2)return null;                 // une seule ligne ≠ une séance
+    const lab=(String(reply).match(/s[ée]ance\s+(?:du\s+jour\s+)?[:—–-]?\s*([^\n.!?]{3,40})/i)||[])[1];
+    return {label:(lab||'Séance proposée par Milo').trim().slice(0,40), exs, fromText:true};
+  }catch(e){ console.warn('[milo séance texte]',e); return null; }
+}
+
 function _extractDaySession(reply){
   try{
     let m=reply.match(/```json\s*([\s\S]*?)```/i);
     let jsonStr=m?m[1]:null;
     if(!jsonStr){const m2=reply.match(/\{[\s\S]*?"seance"[\s\S]*\}/i);jsonStr=m2?m2[0]:null;}
-    if(!jsonStr||!/"seance"/i.test(jsonStr))return null;
+    if(!jsonStr||!/"seance"/i.test(jsonStr)){
+      const t=_seanceDepuisTexte(reply);
+      return t?{sess:t, clean:reply, fromText:true}:null;
+    }
     const obj=JSON.parse(jsonStr.trim());
     const sess=obj&&obj.seance;
-    if(!sess||!Array.isArray(sess.exs)||!sess.exs.length)return null;
+    if(!sess||!Array.isArray(sess.exs)||!sess.exs.length){
+      const t=_seanceDepuisTexte(reply);
+      return t?{sess:t, clean:reply, fromText:true}:null;
+    }
     let clean=reply.replace(/```json[\s\S]*?```/i,'').replace(/```[\s\S]*?```/g,'').trim();
     if(!clean)clean=reply.replace(/\{[\s\S]*\}/,'').trim();
     return {sess,clean};

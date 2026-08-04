@@ -1378,6 +1378,56 @@ console.log('\n═══ O. Service worker — un échec de mise à jour ne doit
   await c15.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// P. LA SÉANCE DE MILO LUE DANS LE TEXTE — pour que ça marche sur TOUS les modèles
+// Retour de Michel (04/08) : sa FILLE demande une séance à Milo, Milo la lui écrit très
+// bien, et le bouton « Commencer cette séance » n'apparaît pas. Cause : le bouton dépend
+// d'un bloc JSON caché que seul un modèle capable produit fidèlement — lui est sur Opus,
+// elle sur Haiku. C'est R9 (le modèle est une variable structurelle) et R7 (le prompt est
+// le dernier levier). La réponse : lire la séance dans le TEXTE VISIBLE.
+console.log('\n═══ P. La séance de Milo lue dans le texte (tous modèles) ═══');
+{
+  const c16=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p16=await c16.newPage();
+  await p16.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p16.waitForTimeout(2200);
+  const r=await p16.evaluate(()=>{
+   try{
+    const o={};
+    const rep="Voici ta séance du jour : Haut du corps\n\n- Développé Couché 4×8 @ 60 kg\n"
+      +"- Rowing Barre 4x10\n- Élévations Latérales 3 séries de 12\n- Curl Biceps Haltères 3×12\n\nBonne séance !";
+    const a=_extractDaySession(rep);
+    o.trouve=!!a; o.viaTexte=!!(a&&a.fromText); o.nb=a?a.sess.exs.length:0;
+    o.noms=a?a.sess.exs.map(e=>e.name).join('|'):'';
+    o.series=a?a.sess.exs[0].sets.length:0; o.kg=a?a.sess.exs[0].sets[0].kg:null;
+    // ⚠️ AUCUNE SUBSTITUTION : mesuré le 04/08, le rapprochement « par mots » changeait
+    // « Curl Biceps Haltères » en « Curl Barre ». On travaillerait sur un autre exercice.
+    o.pasDeSubstitution=/Curl Biceps Haltères/.test(o.noms)&&!/Curl Barre/.test(o.noms);
+    // TÉMOINS : ne rien proposer quand il n'y a pas de séance
+    o.bavardage=!_extractDaySession("Salut ! Comment tu te sens ? On peut parler de ton sommeil.");
+    o.uneLigne=!_extractDaySession("Tu peux faire du Développé Couché 4×8 aujourd'hui.");
+    // un nom hors catalogue est GARDÉ tel quel, jamais remplacé
+    const inc=_extractDaySession("- Machin Truc 4×8\n- Bidule Chose 3×10");
+    o.gardeLeNom=!!(inc&&inc.sess.exs[0].name==='Machin Truc');
+    // le bloc caché reste prioritaire quand il est là (0 régression)
+    const j=_extractDaySession('Voilà.\n```json\n{"seance":{"label":"Test","exs":[{"name":"Squat à la Barre","sets":[{"reps":5,"kg":100,"type":"N"}]}]}}\n```');
+    o.jsonPrioritaire=!!(j&&!j.fromText&&j.sess.label==='Test');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ une séance écrite en TEXTE par Milo est reconnue (le cas de la fille de Michel)',
+    r.trouve===true && r.viaTexte===true && r.nb===4, JSON.stringify(r));
+  t('⭐⭐ aucun exercice n\'est remplacé par un autre (« Curl Biceps Haltères » reste lui-même)',
+    r.pasDeSubstitution===true, r.noms);
+  t('les séries et la charge sont lues (4 séries, 60 kg)', r.series===4&&r.kg===60, JSON.stringify(r));
+  t('TÉMOIN : une simple conversation ne propose aucune séance', r.bavardage===true, JSON.stringify(r));
+  t('TÉMOIN : une seule ligne ne fait pas une séance', r.uneLigne===true, JSON.stringify(r));
+  t('⭐ un exercice hors catalogue garde SON nom, il n\'est pas inventé', r.gardeLeNom===true, JSON.stringify(r));
+  t('⭐ 0 RÉGRESSION : le bloc caché reste prioritaire quand Milo le fournit',
+    r.jsonPrioritaire===true, JSON.stringify(r));
+  await c16.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
