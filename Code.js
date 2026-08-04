@@ -2325,7 +2325,64 @@ function preuveDeclencheur(e) {
   });
 }
 
+// ⭐ LE TEST LE PLUS PROCHE DU RÉEL : la VRAIE sauvegarde, lancée par le PLANIFICATEUR.
+//
+// ⚠️ POURQUOI IL NE FAIT PAS DOUBLON avec `testerDeclencheur()`. Celui-là prouve que Google
+// lance une fonction *bidon*. Celui-ci prouve qu'il arrive à lancer `backupAllUserData_`,
+// qui doit **écrire sur le Drive**. Or un déclencheur ne s'exécute PAS avec le même contexte
+// d'autorisation qu'un lancement manuel depuis l'IDE : une sauvegarde peut très bien marcher
+// à la main à 23h et échouer à 2h du matin pour un scope refusé. C'est le dernier écart entre
+// « ça marche quand je le fais » et « ça marche quand personne ne le fait ».
+// Le déclencheur est à usage unique et se supprime lui-même — le compte reste à 1.
+function testerSauvegardeReelle() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'backupParDeclencheur') ScriptApp.deleteTrigger(t);
+  });
+  PropertiesService.getScriptProperties().deleteProperty('PREUVE_BACKUP_AUTO');
+  ScriptApp.newTrigger('backupParDeclencheur').timeBased().after(60 * 1000).create();
+  var msg = '[FT] Vraie sauvegarde armée — Google la lancera dans ~1 minute. '
+          + 'Attends 2 minutes puis exécute voirResultatDeclencheur().';
+  Logger.log(msg); console.log(msg);
+  return msg;
+}
+
+// Lancée PAR le déclencheur uniquement (même garde-fou que preuveDeclencheur).
+function backupParDeclencheur(e) {
+  if (!e) {
+    var m = '[FT] ⛔ Ne lance PAS cette fonction à la main : tout l\'intérêt est que ce soit '
+          + 'Google qui la lance. Utilise testerSauvegardeReelle().';
+    Logger.log(m); console.log(m);
+    return m;
+  }
+  var res;
+  try {
+    backupAllUserData_();
+    // On relit le dossier : on vérifie l'EFFET, pas le retour (qui n'existe pas).
+    var recent = null, it = _getDriveBackupFolder_().getFiles();
+    while (it.hasNext()) {
+      var f = it.next();
+      if (!recent || f.getDateCreated() > recent.getDateCreated()) recent = f;
+    }
+    res = recent
+      ? ('✅ « ' + recent.getName() + ' » écrit le '
+         + Utilities.formatDate(recent.getDateCreated(), 'Europe/Paris', 'dd/MM à HH:mm')
+         + ' — ' + Math.round(recent.getSize() / 1024) + ' Ko')
+      : '⚠️ la sauvegarde a tourné mais le dossier est VIDE';
+  } catch (err) {
+    res = '❌ ÉCHEC sous déclencheur : ' + err;   // le cas qu'on cherche justement à voir
+  }
+  PropertiesService.getScriptProperties().setProperty('PREUVE_BACKUP_AUTO', res);
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'backupParDeclencheur') ScriptApp.deleteTrigger(t);
+  });
+}
+
 function voirResultatDeclencheur() {
+  var vb = PropertiesService.getScriptProperties().getProperty('PREUVE_BACKUP_AUTO');
+  if (vb) {
+    var mb = '[FT] VRAIE SAUVEGARDE lancée par le planificateur : ' + vb;
+    Logger.log(mb); console.log(mb);
+  }
   var v = PropertiesService.getScriptProperties().getProperty('PREUVE_DECLENCHEUR');
   var msg;
   if (v) {
