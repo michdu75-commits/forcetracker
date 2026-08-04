@@ -137,6 +137,19 @@ l'écriture.
 Il n'y a donc même pas à deviner : **le dépôt publie les adresses, et l'API sert les comptes
 correspondants.**
 
+## 🔎 Comment SAVOIR qui est protégé (livré ft-v757)
+
+**Profil → Admin → « 🔐 Qui a protégé son compte »** : la liste des testeurs avec, pour chacun,
+🔒 protégé · 🔓 **OUVERT** · ⚠️ non vérifié.
+
+Elle s'appuie sur la route **`authStatus`**, qui ne renvoie **que** `{hasCode, emailVerified}` :
+aucune donnée personnelle ne transite, rien n'est lu du compte.
+
+> ⚠️ **N'utilise PAS les Script Properties pour ça.** Cette page affiche aussi
+> `ANTHROPIC_API_KEY`, `ADMIN_TOKEN` et `KOFI_TOKEN` **en clair** — et donc toute capture d'écran
+> de cette page fait fuiter tes secrets. *Chercher qui est protégé ne doit pas obliger à exposer
+> ses clés.*
+
 ## 🚑 CE QUE MICHEL PEUT FAIRE TOUT DE SUITE, SANS DÉPLOIEMENT
 
 **Poser un code d'accès personnel sur chaque compte.** C'est la seule mesure qui ferme la porte

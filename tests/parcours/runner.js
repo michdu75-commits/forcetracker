@@ -1214,6 +1214,56 @@ console.log('\n═══ L. Les annonces aux utilisateurs — aucune ne doit êt
   await c12.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// M. QUI A PROTÉGÉ SON COMPTE — la carte Admin née de la faille du 04/08
+// `loadProfile` sert un compte ENTIER quand la personne n'a pas de code perso. Il fallait
+// pouvoir savoir QUI est protégé — sans ouvrir les Script Properties (qui affichent aussi
+// ANTHROPIC_API_KEY en clair) et sans lire la moindre donnée personnelle.
+console.log('\n═══ M. Admin : qui a protégé son compte (aucune donnée personnelle lue) ═══');
+{
+  const c13=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p13=await c13.newPage();
+  await p13.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p13.waitForTimeout(2200);
+  const r=await p13.evaluate(async()=>{
+   try{
+    const o={};
+    o.carte=!!document.getElementById('admin-auth-list');
+    // ① réservé à l'admin
+    window._isAdminUnlocked=()=>false;
+    await loadAuthStatusAdmin();
+    o.refuseSansAdmin=/Réservé à l/.test(document.getElementById('admin-auth-list').innerHTML);
+    // ② trois cas : protégé · ouvert · injoignable
+    window._isAdminUnlocked=()=>true;
+    const rep={'christophe@famillelanglois.fr':{status:'ok',hasCode:true},
+               'elineazs32@gmail.com':{status:'ok',hasCode:false}};
+    window._protectPost=async(pl)=>{ if(pl.email==='emma.david16@gmail.com') throw new Error('réseau');
+                                     return rep[pl.email]||{status:'ok',hasCode:false}; };
+    await loadAuthStatusAdmin();
+    const h=document.getElementById('admin-auth-list').innerHTML;
+    o.protege=/christophe[\s\S]{0,240}protégé/.test(h);
+    o.ouvert=/elineazs32[\s\S]{0,240}OUVERT/.test(h);
+    // ⚠️ le point qui compte : une PANNE ne doit pas s'afficher comme « protégé » NI comme
+    // « ouvert » — on agirait sur du faux dans les deux sens.
+    o.pannePasConfondue=/emma\.david16[\s\S]{0,240}non vérifié/.test(h);
+    // 3 ouverts dans ce scénario : eline + tanna + michdu75 (le cas par défaut du simulateur)
+    o.compteLesOuverts=/3 comptes sans code/.test(h);
+    o.aucuneDonneePerso=!/kg|séance|poids|bilan/i.test(h);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐ la carte « qui a protégé son compte » existe dans l\'Admin', r.carte===true, JSON.stringify(r));
+  t('⭐ elle est refusée sans déverrouillage admin', r.refuseSansAdmin===true, JSON.stringify(r));
+  t('un compte AVEC code est marqué protégé', r.protege===true, JSON.stringify(r));
+  t('⭐ un compte SANS code est marqué OUVERT', r.ouvert===true, JSON.stringify(r));
+  t('⭐⭐ une panne réseau n\'est confondue NI avec protégé NI avec ouvert',
+    r.pannePasConfondue===true, JSON.stringify(r));
+  t('le nombre de comptes ouverts est annoncé', r.compteLesOuverts===true, JSON.stringify(r));
+  t('⭐ AUCUNE donnée personnelle n\'est lue ni affichée (authStatus ne renvoie que hasCode)',
+    r.aucuneDonneePerso===true, JSON.stringify(r));
+  await c13.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

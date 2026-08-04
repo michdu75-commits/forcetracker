@@ -829,6 +829,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">La même boîte à idées que les testeurs, pour <strong>tester en direct</strong> — reproduire les bugs, vérifier l'envoi des photos… Ce que tu envoies part vers <strong>forcetracker.app@gmail.com</strong>.</div>
       <button class="btn btn-bg2" onclick="openTesterSpace()" style="padding:11px;font-size:14px;">💡 Ouvrir la boîte à idées</button>
     </div>
+    <!-- Qui a VRAIMENT protégé son compte (04/08) — né de la découverte que loadProfile sert un
+         compte entier quand la personne n'a pas posé de code perso. Cette carte ne lit AUCUNE
+         donnée : la route authStatus ne renvoie que {hasCode, emailVerified}. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">🔐 Qui a protégé son compte</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Un compte <strong>sans code perso</strong> est lisible côté serveur par qui connaît l'adresse. Cette liste dit qui en a un — <strong>sans lire aucune donnée personnelle</strong>.</div>
+      <button class="btn btn-bg2" onclick="loadAuthStatusAdmin()" style="padding:11px;font-size:14px;">🔐 Vérifier les comptes</button>
+      <div id="admin-auth-list" style="margin-top:4px;"></div>
+    </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">📥 Idées reçues des testeurs</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Lis toutes les idées <strong>directement dans l'app</strong>, sans ouvrir tes mails. Les <strong>photos</strong>, elles, restent dans <strong>forcetracker.app@gmail.com</strong> (le mail te prévient).</div>

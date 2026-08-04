@@ -2481,6 +2481,43 @@ function checkAnnouncements(){
 }
 function showMemoireC(){const o=document.getElementById('ov-memoire-c');if(o)o.classList.add('open');}
 function closeMemoireC(){try{localStorage.setItem('ft4_memoire_c_v1','1');}catch(e){}const o=document.getElementById('ov-memoire-c');if(o)o.classList.remove('open');}
+// ── ADMIN : qui a POSÉ un code d'accès perso (04/08) ──────────────────────────────
+// Né de la découverte du 04/08 : `loadProfile` sert un compte ENTIER quand la personne
+// n'a pas de code perso (`_authCheck_` renvoie ok:true dans ce cas — invariant de
+// rétrocompatibilité). Il fallait donc savoir QUI est protégé, sans avoir à ouvrir les
+// Script Properties (qui affichent aussi ANTHROPIC_API_KEY et les autres secrets en clair).
+// ⚠️ La route `authStatus` ne renvoie QUE {hasCode, emailVerified} : aucune donnée
+// personnelle ne transite ici. C'est ce qui rend cette carte acceptable.
+async function loadAuthStatusAdmin(){
+  const box=document.getElementById('admin-auth-list');
+  if(!box)return;
+  if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
+  const liste=[...new Set([].concat(
+    (typeof TESTER_EMAILS!=='undefined'?TESTER_EMAILS:[]),
+    (S.email?[S.email]:[])
+  ).map(e=>String(e||'').trim().toLowerCase()).filter(Boolean))];
+  box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Vérification…</div>';
+  const lignes=[];
+  for(const em of liste){
+    let d=null;
+    try{ d=await _protectPost({action:'authStatus',email:em}); }catch(e){ d=null; }
+    const ok=!!(d&&d.status==='ok');
+    const prot=ok&&d.hasCode;
+    // ⚠️ On distingue « pas protégé » de « on n'a pas pu vérifier » : afficher un ✅ ou un ❌
+    // à la place d'une panne réseau serait pire que ne rien afficher (on agirait sur du faux).
+    lignes.push('<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--sep);font-size:13px;">'
+      +'<span style="font-size:15px;">'+(!ok?'⚠️':(prot?'🔒':'🔓'))+'</span>'
+      +'<span style="flex:1;color:var(--t1);word-break:break-all;">'+_escIdea(em)+'</span>'
+      +'<span style="font-size:11.5px;color:'+(!ok?'var(--t3)':(prot?'var(--green,#2ecc71)':'var(--red)'))+';font-weight:700;">'
+      +(!ok?'non vérifié':(prot?'protégé':'OUVERT'))+'</span></div>');
+  }
+  const nbOuv=lignes.filter(l=>l.includes('OUVERT')).length;
+  box.innerHTML=lignes.join('')
+    +'<div style="font-size:12px;color:var(--t2);margin-top:9px;line-height:1.5;">'
+    +(nbOuv?('🔓 <strong>'+nbOuv+' compte'+(nbOuv>1?'s':'')+' sans code</strong> — leurs données sont lisibles côté serveur par qui connaît l\'adresse. Demande-leur : Profil → « protéger mon compte ».')
+           :'🔒 Tous les comptes vérifiés ont un code perso.')
+    +'</div>';
+}
 function showBilloute(){const o=document.getElementById('ov-billoute');if(o)o.classList.add('open');}
 function closeBilloute(){try{localStorage.setItem('ft4_billoute_v3','1');}catch(e){}const o=document.getElementById('ov-billoute');if(o)o.classList.remove('open');}
 function showChristophePhotos(){const o=document.getElementById('ov-christophe-photos');if(o)o.classList.add('open');}
