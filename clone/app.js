@@ -3297,18 +3297,31 @@ if('serviceWorker' in navigator){
     // updateViaCache:'none' → le navigateur NE met JAMAIS le fichier sw.js en cache HTTP
     // pour les vérifs de mise à jour. Corrige le bug iOS « app collée à l'ancienne version »
     // (GitHub Pages cachait sw.js ~10 min → les updates n'étaient pas détectées tout de suite).
+    // ⚠️ CHAQUE appel doit avaler son échec. Une vérification de mise à jour qui n'aboutit pas
+    // (réseau faible, 4G dans le métro, Pages momentanément indisponible) n'est PAS une erreur :
+    // c'est le fonctionnement normal d'une app local-first, qui continue depuis son cache
+    // (règle d'or #4). Sans `catch`, la promesse rejetée remontait dans `unhandledrejection`
+    // et s'écrivait dans le journal d'erreurs de l'Admin.
+    // Constaté le 04/08 sur la capture de Michel : « Script …/sw.js load failed » répété à
+    // 14:22, 15:08, et la veille à 18:06 — soit le rythme des re-vérifications (5 min + retour
+    // sur l'app + retour réseau). ⚠️ LE VRAI DÉGÂT N'EST PAS L'ERREUR, C'EST LE BRUIT :
+    // un journal de diagnostic rempli d'événements attendus rend les vraies pannes invisibles.
+    const _swMaj=reg=>{ try{ const p=reg.update(); if(p&&p.catch)p.catch(()=>{}); }catch(e){} };
     navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
       if(!reg)return; // garde-fou : certains contextes résolvent sans registration
-      reg.update(); // vérification immédiate au démarrage (PWA standalone inclus)
-      setInterval(()=>reg.update(), 5*60*1000); // re-vérif toutes les 5 min
+      _swMaj(reg); // vérification immédiate au démarrage (PWA standalone inclus)
+      setInterval(()=>_swMaj(reg), 5*60*1000); // re-vérif toutes les 5 min
       document.addEventListener('visibilitychange',()=>{
-        if(document.visibilityState==='visible')reg.update();
+        if(document.visibilityState==='visible')_swMaj(reg);
       });
       window.addEventListener('online',()=>{
-        reg.update(); // vérifie si nouveau SW disponible
+        _swMaj(reg); // vérifie si nouveau SW disponible
         // Retour réseau → retry des séances non synchronisées (délai 1s pour stabilisation)
         setTimeout(()=>{if(typeof _retrySheetQueue==='function')_retrySheetQueue();},1000);
       });
+    }).catch(()=>{
+      // L'enregistrement lui-même a échoué : l'app fonctionne quand même (elle est déjà en
+      // cache, ou elle ira au réseau). On ne pollue pas le journal avec ça.
     });
     navigator.serviceWorker.addEventListener('controllerchange',_reloadForUpdate);
     navigator.serviceWorker.addEventListener('message',e=>{

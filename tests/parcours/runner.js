@@ -1331,6 +1331,53 @@ console.log('\n═══ N. Verrou santé — pas de bilan sanguin ni corporel s
   await c14.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// O. LE JOURNAL D'ERREURS NE DOIT PAS SE REMPLIR DE BRUIT ATTENDU
+// Capture de Michel (04/08) : « Script …/sw.js load failed » répété à 14:22, 15:08 et la veille
+// à 18:06 — le rythme des re-vérifications du service worker (5 min + retour sur l'app + retour
+// réseau). Aucun de ces appels n'avait de `catch` : chaque échec réseau finissait dans le
+// journal. Une vérification qui n'aboutit pas hors réseau est le fonctionnement NORMAL d'une
+// app local-first (règle d'or #4) — le dégât n'est pas l'erreur, c'est le bruit qui masque les
+// vraies pannes.
+console.log('\n═══ O. Service worker — un échec de mise à jour ne doit pas polluer le journal ═══');
+{
+  const c15=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p15=await c15.newPage();
+  await p15.goto('http://localhost:'+srv.address().port+'/index.html');
+  await p15.waitForTimeout(2200);
+  // ⚠️ CE TEST LIT LE CODE RÉELLEMENT SERVI, pas une copie. Première version écrite le 04/08 :
+  // elle rejouait le helper recopié dans le test → le contrôle négatif donnait 0 rouge, donc
+  // le test ne testait rien. *Un test qui contient sa propre copie du code teste sa copie.*
+  const srcApp=await p15.evaluate(async()=>{ const r=await fetch('app.js'); return await r.text(); });
+  const r=await p15.evaluate(async()=>{
+   try{
+    const o={};
+    const nb=()=>(JSON.parse(localStorage.getItem('ft4_errlog')||'[]')).length;
+    const av2=nb();
+    if(typeof _logErr==='function')_logErr({m:'erreur de contrôle',f:'',l:0});
+    o.vraieErreurJournalisee=(nb()>av2);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  // ① l'enregistrement du service worker doit avoir son .catch
+  const zone=srcApp.slice(srcApp.indexOf("serviceWorker.register('./sw.js'"), srcApp.indexOf("serviceWorker.register('./sw.js'")+1400);
+  t('⭐⭐ l\'enregistrement du service worker a un .catch (sinon l\'échec part dans le journal)',
+    /\}\)\.catch\(/.test(zone), 'extrait : '+zone.slice(0,80));
+  // ② plus aucun `reg.update()` nu — ils passent tous par le helper qui avale l'échec
+  // ⚠️ on retire d'abord la ligne du helper : SON `reg.update()` est celui qui est rattrapé,
+  // c'est le seul légitime. Première version de l'assertion : elle le comptait aussi et rougissait
+  // à tort. *Quand un test rougit, la 1ʳᵉ question reste « qui a tort, le code ou le test ? »*
+  const sansHelper=srcApp.split('\n').filter(l=>!/const _swMaj=/.test(l)).join('\n');
+  const nus=(sansHelper.match(/(?<![_\w])reg\.update\(\)/g)||[]).length;
+  t('⭐⭐ aucun reg.update() nu hors du helper (tous avalent leur échec)',
+    nus===0, nus+' appel(s) nu(s) restant(s)');
+  t('le helper _swMaj existe et rattrape la promesse',
+    /const _swMaj=reg=>\{[^}]*p\.catch\(\(\)=>\{\}\)/.test(srcApp.replace(/\n/g,' ')), '');
+  t('TÉMOIN : une vraie erreur est toujours journalisée (on n\'a pas rendu le journal aveugle)',
+    r.vraieErreurJournalisee===true, JSON.stringify(r));
+  await c15.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
