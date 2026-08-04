@@ -8,6 +8,10 @@ on:
     paths:
       - 'Code.js'
       - 'appsscript.json'
+      # `.claspignore` décide de CE QUI PART en prod : le corriger doit redéployer.
+      # Ajouté le 04/08 après un correctif de `.claspignore` qui n'a relancé aucun
+      # run — le déploiement restait donc cassé, en silence, sans que rien ne l'indique.
+      - '.claspignore'
   workflow_dispatch: {}
 
 jobs:
