@@ -42,8 +42,7 @@
 >
 > ⚠️ **La règle de méthode qui sort de la nuit** : **l'audit se délègue, la coupe non.** ChatGPT a bien audité (il a trouvé le catalogue), puis a proposé **−85 %** sur un bloc en faisant disparaître, sans les mentionner, des règles nées de vrais bugs. Michel : *« tu déconnes sur ce coup là sérieux »*. Milo a produit le même audit, de l'intérieur. **Les trois lectures convergent sur les mêmes cibles** — ça, c'est utilisable. Les coupes se font ici, où l'on sait de quel incident est née chaque ligne.
 >
-> **🐛 EN ATTENTE — les 4 bugs d'affichage du Créateur de programme (version web)** signalés par Michel avec capture : alignement en haut, cases qui débordent à droite, sélecteur de type de poids qui déborde, et la date de début chevauchée par le nombre de semaines. **Non traités.**
->
+> **✅ MIROIR SUPABASE OPÉRATIONNEL** (05/08, 8h) — testé en vert depuis l'app. Quatrième copie des comptes, sur une infrastructure indépendante de Google. *(Les bugs d'affichage du « Créateur de programme » signalés le 04/08 au soir concernaient le projet de Tatiana, pas Force Tracker — retirés d'ici.)*
 > **🔒 Toujours ouvert (sécurité)** : `loadProfile` sert un compte entier sans code perso · le jeton de la boîte à idées est en clair dans `app.js`. Correctifs prêts, **non déployés** — c'est la production, ça se fait avec toi.
 >
 > **↩️ Rollback de la nuit** : `git reset --hard sauvegarde-avant-allegement` *(⚠️ sur ce dépôt, les **tags** sont refusés — on utilise une **branche**.)*

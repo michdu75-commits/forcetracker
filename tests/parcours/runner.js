@@ -967,6 +967,26 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       retires: HORS.filter(m=>!_ctxEntrainement(m)).length,
       triNom: ['backup-2026-08-05.json','backup-migration-2026-06-29-2003.json','backup-2026-08-04.json']
                 .sort().slice(-1)[0],
+      // ⚠️ COHÉRENCE : les blocs « construire une séance » et le CATALOGUE d'exercices
+      // doivent voyager ENSEMBLE. Le bloc séance dit « un nom le plus proche possible de la
+      // bibliothèque » — s'il part sans la bibliothèque, on rejoue exactement R8 (une consigne
+      // qui nomme une source absente), c'est-à-dire le bug corrigé par ft-v713.
+      coherence: (()=>{ const av=coachHistory.slice();
+        coachHistory.length=0; for(let i=0;i<10;i++)coachHistory.push({role:'user',content:'la vie courante'});
+        const froid=buildCoachContext("j'ai très mal dormi cette nuit et je suis à plat");
+        const chaud=buildCoachContext("fais-moi une séance jambes pour ce soir stp");
+        coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
+        const a=t=>({seance:/INTÉGRER LA SÉANCE DU JOUR/.test(t), cat:/EXERCICES DISPONIBLES/.test(t)});
+        return {froid:a(froid), chaud:a(chaud), gain:chaud.length-froid.length}; })(),
+      // « CRÉER LE PREMIER MOMENT MILO » dit lui-même « au TOUT PREMIER échange » : il ne doit
+      // plus partir au 10ᵉ tour. 972 caractères sur la première impression, envoyés pour toujours.
+      momentMilo: (()=>{ const av=coachHistory.slice();
+        coachHistory.length=0;
+        const debut=/MOMENT MILO/.test(buildCoachContext('salut'));
+        for(let i=0;i<10;i++)coachHistory.push({role:'user',content:'x'});
+        const tard=/MOMENT MILO/.test(buildCoachContext('fais-moi une séance jambes ce soir'));
+        coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
+        return {debut, tard}; })(),
       wnMax: (typeof WHATS_NEW_MAX!=='undefined')?WHATS_NEW_MAX:-1,
       wnPlusGrand: (typeof WHATS_NEW!=='undefined')?WHATS_NEW.reduce((m,f)=>Math.max(m,(f&&f.v)||0),0):-2,
       wnRestantApresVu: (()=>{ try{ localStorage.setItem('ft4_wn_seen',String(WHATS_NEW_MAX));
@@ -1038,6 +1058,13 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐⭐ PROMPT : les blocs « construire une séance » voyagent AVEC le catalogue (jamais l\'un sans l\'autre)',
+    r.coherence && r.coherence.chaud.seance===true && r.coherence.chaud.cat===true
+                && r.coherence.froid.seance===false && r.coherence.froid.cat===false,
+    JSON.stringify(r.coherence));
+  t('⭐ PROMPT : « le premier MOMENT MILO » ne part plus qu\'au DÉBUT de la conversation',
+    r.momentMilo && r.momentMilo.debut===true && r.momentMilo.tard===false,
+    JSON.stringify(r.momentMilo));
   t('⭐ POP-UP : « vu » couvre bien TOUTES les nouveautés (sinon elle revient à chaque ouverture)',
     r.wnMax===r.wnPlusGrand && r.wnRestantApresVu===0,
     JSON.stringify({max:r.wnMax, plusGrand:r.wnPlusGrand, restant:r.wnRestantApresVu}));
