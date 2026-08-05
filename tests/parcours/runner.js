@@ -1022,6 +1022,13 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   // Le fichier de migration du 29 juin était donc annoncé « le plus récent » POUR TOUJOURS,
   // et le voyant serait resté rouge même avec des sauvegardes parfaites. Une alarme qui crie
   // pour rien est celle qu'on apprend à ignorer — c'est ce qui a coûté 36 jours sans filet.
+  // ⚠️ LE NUAGE BLANC (05/08) — la pastille « séance synchronisée » portait color:var(--green)
+  // mais contenait l'EMOJI ☁️, qui garde ses propres couleurs : nuage blanc sur fond vert.
+  // Un SVG hérite de `currentColor`, donc il suit la pastille en clair comme en sombre.
+  const srcSet=await p.evaluate(async()=>{ const r=await fetch('setup.js'); return await r.text(); });
+  t('⭐ HISTORIQUE : la pastille de synchro est un SVG (currentColor), plus un emoji non colorable',
+    /synced-pill[^]{0,200}<svg/.test(srcSet) && !/synced-pill">☁️/.test(srcSet),
+    'la pastille contient encore un emoji');
   t('⭐ SAUVEGARDE : le tri par NOM place bien la migration en dernier (le piège à figer)',
     r.triNom === 'backup-migration-2026-06-29-2003.json', JSON.stringify(r.triNom));
   // ⚠️ ON LIT LE VRAI `app.js` SERVI — surtout pas une copie de la logique dans le test.

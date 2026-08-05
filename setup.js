@@ -630,7 +630,17 @@ function renderSessions(){
   el.innerHTML=flist.map((s)=>{
     const i=S.sessions.indexOf(s);
     const exs=(s.exs||s.exercises||[]).map(e=>e.name).join(', ');
-    const sync=s.synced?' <span class="synced-pill">☁️</span>':'';
+    // ⚠️ NUAGE DESSINÉ, PAS L'EMOJI ☁️ (05/08/2026, signalé par Michel : « le petit nuage est
+    // blanc sur l'historique »). La pastille `.synced-pill` porte pourtant `color:var(--green)` —
+    // mais un EMOJI garde ses propres couleurs, `color` ne l'atteint jamais. On avait donc un
+    // nuage blanc sur un fond vert, ce qui ressemble à un bug de synchro alors que tout va bien.
+    // Le SVG, lui, hérite de `currentColor` : il suit la couleur de la pastille, en clair comme
+    // en sombre, et pour toujours. (Ailleurs dans l'app, l'emoji ☁️ reste très bien : il n'y est
+    // jamais censé prendre une couleur — c'est ici seulement qu'il devait être vert.)
+    const sync=s.synced?' <span class="synced-pill" title="Séance sauvegardée dans le cloud">'
+      +'<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">'
+      +'<path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13a5 5 0 0 0 .35-9.96z"/>'
+      +'</svg></span>':'';
     const sc=_mscScores(s.exs||s.exercises||[]);
     const mini=_mscSVGmini(sc).replace('width:32px','width:46px'); // figurine plus grande sur les cartes (retour GPT, ft-v570)
     // Étiquette : nom de la séance du programme si dispo, sinon muscle le plus travaillé → devient le TITRE de la carte
