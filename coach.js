@@ -977,6 +977,34 @@ function _extractDaySession(reply){
       const t=_seanceDepuisTexte(reply);
       return t?{sess:t, clean:reply, fromText:true}:null;
     }
+    // ⚠️ LE CODE VÉRIFIE LA COHÉRENCE, ON NE LA DEMANDE PLUS AU MODÈLE (05/08/2026).
+    // Le prompt dit « Vérifie avant d'envoyer : même nombre d'exercices, même ordre… » —
+    // autrement dit on demande au modèle de se relire lui-même. S'il oublie un exercice
+    // dans le bloc caché, la personne démarre une séance AMPUTÉE de ce qu'elle vient de
+    // lire, sans que rien ne le signale. Relevé par deux audits externes le 05/08.
+    //
+    // 👉 On compare le bloc au TEXTE VISIBLE (lecture déjà écrite pour ft-v761).
+    // ⚠️ ON NE BASCULE QUE DANS LE CAS CERTAIN : le texte trouve STRICTEMENT PLUS
+    //    d'exercices, ET tous ceux du bloc s'y retrouvent (le bloc est un sous-ensemble
+    //    tronqué). Le lecteur de texte est prudent — il sous-détecte plutôt qu'il
+    //    n'invente — donc s'il en voit PLUS, c'est que le bloc en a vraiment perdu.
+    //    Dans tous les autres cas on garde le bloc, qui est plus riche (repos, types).
+    //    *On ne corrige que ce qu'on est sûr de comprendre* (R29 : le droit de trancher
+    //    dépend du coût de l'erreur — ici, remplacer à tort une séance serait pire).
+    try{
+      const txt=_seanceDepuisTexte(reply);
+      if(txt && Array.isArray(txt.exs) && txt.exs.length > sess.exs.length){
+        const norm=n=>String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+        const dansTexte=new Set(txt.exs.map(e=>norm(e.name)));
+        const bloc=sess.exs.map(e=>norm(e.name));
+        const tousRetrouves=bloc.length>0 && bloc.every(n=>dansTexte.has(n));
+        if(tousRetrouves){
+          console.warn('[milo séance] bloc caché incomplet ('+sess.exs.length+' exercices) vs texte ('+txt.exs.length+') → on suit le texte');
+          let c2=reply.replace(/```json[\s\S]*?```/i,'').replace(/```[\s\S]*?```/g,'').trim();
+          return {sess:txt, clean:c2||reply, fromText:true, recolle:true};
+        }
+      }
+    }catch(_e){ /* jamais bloquant : au pire on garde le bloc */ }
     let clean=reply.replace(/```json[\s\S]*?```/i,'').replace(/```[\s\S]*?```/g,'').trim();
     if(!clean)clean=reply.replace(/\{[\s\S]*\}/,'').trim();
     return {sess,clean};

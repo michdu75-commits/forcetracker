@@ -1010,6 +1010,28 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
         const tard=/MOMENT MILO/.test(buildCoachContext('fais-moi une séance jambes ce soir'));
         coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
         return {debut, tard}; })(),
+      // ⚠️ LE BLOC CACHÉ INCOMPLET (05/08) — relevé par Gemini ET Mistral. Le prompt demande
+      // au modèle de se relire (« Vérifie avant d'envoyer : même nombre d'exercices… »).
+      // S'il oublie un exercice, la personne démarre une séance AMPUTÉE de ce qu'elle vient
+      // de lire, sans que rien ne le signale. Le code compare désormais au texte visible —
+      // et ne bascule QUE dans le cas certain : le texte en trouve strictement plus ET tous
+      // ceux du bloc s'y retrouvent (bloc tronqué). Sinon on garde le bloc, plus riche.
+      coherenceSeance: (()=>{
+        const txt='Voici ta séance :\n- Squat à la Barre 4×8 @ 100 kg\n- Développé Couché 4×8 @ 80 kg\n'
+                 +'- Rowing Barre 4×10 @ 60 kg\n- Curl Barre 3×12 @ 30 kg\n';
+        const bloc3='\n```json\n{"seance":{"label":"Full","exs":['
+          +'{"name":"Squat à la Barre","sets":[{"reps":8,"kg":100,"type":"N","rest":180}]},'
+          +'{"name":"Développé Couché","sets":[{"reps":8,"kg":80,"type":"N","rest":180}]},'
+          +'{"name":"Rowing Barre","sets":[{"reps":10,"kg":60,"type":"N","rest":120}]},'
+          +'{"name":"Curl Barre","sets":[{"reps":12,"kg":30,"type":"N","rest":90}]}]}}\n```';
+        const blocTronque='\n```json\n{"seance":{"label":"Full","exs":['
+          +'{"name":"Squat à la Barre","sets":[{"reps":8,"kg":100,"type":"N","rest":180}]},'
+          +'{"name":"Développé Couché","sets":[{"reps":8,"kg":80,"type":"N","rest":180}]}]}}\n```';
+        const complet=_extractDaySession(txt+bloc3);
+        const ampute =_extractDaySession(txt+blocTronque);
+        return { completGarde: !!complet && complet.sess.exs.length===4 && !complet.recolle,
+                 amputeRecolle: !!ampute && ampute.recolle===true && ampute.sess.exs.length===4 };
+      })(),
       // ⚠️ LA DATE ANNONCÉE, CALCULÉE PAR LE CODE (05/08). L'app n'acceptait que YYYY-MM-DD :
       // Milo devait traduire lui-même « mercredi » en date. Famille ft-v658/660 — et le pire
       // n'est pas qu'il échoue, c'est qu'il peut produire une date VALIDE mais FAUSSE, que
@@ -1118,6 +1140,10 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐⭐ SÉANCE : un bloc caché INCOMPLET est rattrapé par le texte visible (séance jamais amputée)',
+    r.coherenceSeance && r.coherenceSeance.amputeRecolle===true, JSON.stringify(r.coherenceSeance));
+  t('⭐ SÉANCE : quand le bloc est complet, on le garde (il est plus riche : repos, types)',
+    r.coherenceSeance && r.coherenceSeance.completGarde===true, JSON.stringify(r.coherenceSeance));
   t('⭐⭐ DATE : le CODE traduit « demain », « vendredi », « dans 3 jours » — Milo ne calcule plus',
     r.dateAnnoncee && r.dateAnnoncee.iso && r.dateAnnoncee.demain && r.dateAnnoncee.apres
       && r.dateAnnoncee.aujourdhui && r.dateAnnoncee.dans3 && r.dateAnnoncee.jour,
