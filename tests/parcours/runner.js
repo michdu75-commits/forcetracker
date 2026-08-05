@@ -967,6 +967,29 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       retires: HORS.filter(m=>!_ctxEntrainement(m)).length,
       triNom: ['backup-2026-08-05.json','backup-migration-2026-06-29-2003.json','backup-2026-08-04.json']
                 .sort().slice(-1)[0],
+      // ⚠️⚠️ L'INVARIANT DU CACHE DE PROMPT (05/08) — celui qui coûte le plus cher s'il casse.
+      // Le serveur IA met en cache TOUT ce qui précède « ═══ SITUATION DE L'INSTANT ═══ » :
+      // facturé ~10× moins cher, mais SEULEMENT si ce préfixe est RIGOUREUSEMENT identique
+      // d'un message à l'autre. Or l'injection conditionnelle livrée la veille (ft-v764→773)
+      // retirait des blocs AU-DESSUS du marqueur : mesuré, les préfixes faisaient 58 182 et
+      // 43 159 caractères selon le sujet → cache manqué à chaque changement de sujet, et une
+      // réécriture de cache facturée PLUS CHER qu'une entrée normale. L'allègement se battait
+      // contre le cache, et le cache pèse bien plus lourd. Les blocs conditionnels sont
+      // désormais SOUS le marqueur : on garde les deux gains.
+      // ⚠️ Un avertissement existait déjà dans le prompt — il interdisait d'AJOUTER une valeur
+      // changeante au-dessus. Personne n'avait prévu qu'on en RETIRE. Le garde-fou était écrit
+      // pour le mauvais sens ; ce test couvre les deux.
+      cachePrefixe: (()=>{ const MK="═══ SITUATION DE L'INSTANT ═══"; const av=coachHistory.slice();
+        const pre=t=>{ const i=t.indexOf(MK); return i<0?null:t.slice(0,i); };
+        coachHistory.length=0; for(let i=0;i<10;i++)coachHistory.push({role:'user',content:'squat séance jambes'});
+        const A=pre(buildCoachContext('fais-moi une séance jambes ce soir'));
+        coachHistory.length=0; for(let i=0;i<10;i++)coachHistory.push({role:'user',content:'la vie courante'});
+        const B=pre(buildCoachContext("j'ai très mal dormi cette nuit et je suis à plat"));
+        coachHistory.length=0;
+        const D=pre(buildCoachContext('salut'));
+        coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
+        return {trouve:A!==null&&B!==null&&D!==null, tailles:[A&&A.length,B&&B.length,D&&D.length],
+                identiques: A===B && A===D}; })(),
       // ⚠️ COHÉRENCE : les blocs « construire une séance » et le CATALOGUE d'exercices
       // doivent voyager ENSEMBLE. Le bloc séance dit « un nom le plus proche possible de la
       // bibliothèque » — s'il part sans la bibliothèque, on rejoue exactement R8 (une consigne
@@ -1058,6 +1081,9 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐⭐ CACHE : le préfixe mis en cache est IDENTIQUE quel que soit le sujet du message',
+    r.cachePrefixe && r.cachePrefixe.trouve===true && r.cachePrefixe.identiques===true,
+    JSON.stringify(r.cachePrefixe));
   t('⭐⭐ PROMPT : les blocs « construire une séance » voyagent AVEC le catalogue (jamais l\'un sans l\'autre)',
     r.coherence && r.coherence.chaud.seance===true && r.coherence.chaud.cat===true
                 && r.coherence.froid.seance===false && r.coherence.froid.cat===false,
