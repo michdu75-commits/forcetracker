@@ -1729,3 +1729,49 @@ function _secRepos(v){
   if((m=s.match(/^(\d+(?:\.\d+)?)$/)))return Math.round(+m[1]);
   return 0;
 }
+
+/* ─── LIRE UNE DATE ANNONCÉE, EN CHIFFRES OU EN TOUTES LETTRES (05/08/2026) ────────────
+ *
+ * ⚠️ POURQUOI. L'app n'acceptait que `YYYY-MM-DD` : Milo devait donc CALCULER lui-même
+ * que « mercredi » vaut 2026-08-12. C'est précisément la famille de bugs ft-v658/660
+ * (« demain mercredi » un mercredi, une séance datée « lundi » alors qu'elle était mardi).
+ * Et le pire n'est pas qu'il échoue : c'est qu'il peut produire une date VALIDE mais
+ * FAUSSE — l'app l'enregistre alors sans pouvoir s'en apercevoir.
+ *
+ * 👉 On ne demande plus le calcul, on le FAIT. `_dateAnnoncee()` comprend une date ISO,
+ *    « demain », « après-demain », « ce soir », un jour de la semaine (le PROCHAIN à
+ *    venir), « dans 3 jours ». Elle rend une date ISO, ou '' si c'est illisible — et dans
+ *    ce cas l'appelant ignore l'annonce plutôt que d'inventer (jamais de date devinée).
+ *
+ * ⚠️ La date « d'aujourd'hui » vient de `today()` — celle du TÉLÉPHONE, jamais celle de
+ *    Greenwich : règle née du bug ft-v655, protégée par un test permanent.
+ */
+const _JOURS_SEM = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+function _dateAnnoncee(v){
+  try{
+    const s=String(v==null?'':v).trim().toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'');
+    if(!s)return '';
+    if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;                      // déjà une date ISO
+    const base=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    const d0=new Date(base+'T12:00:00'); if(isNaN(d0))return '';
+    const iso=d=>{const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10);};
+    const plus=n=>{const d=new Date(d0); d.setDate(d.getDate()+n); return iso(d);};
+    if(/\b(aujourd'?hui|ce soir|ce matin|cet apres-midi|maintenant)\b/.test(s))return plus(0);
+    if(/\bapres-?demain\b/.test(s))return plus(2);
+    if(/\bdemain\b/.test(s))return plus(1);
+    let m=s.match(/\bdans\s+(\d{1,2})\s*jours?\b/);
+    if(m)return plus(Math.min(30,+m[1]));
+    // Un jour de la semaine → la PROCHAINE occurrence (aujourd'hui compte si on dit « ce X »)
+    for(let i=0;i<7;i++){
+      const j=_JOURS_SEM[i].normalize('NFD').replace(/[̀-ͯ]/g,'');
+      if(new RegExp('\\b'+j+'\\b').test(s)){
+        let ecart=(i-d0.getDay()+7)%7;
+        if(ecart===0 && !/\bce\b|\baujourd'?hui\b/.test(s))ecart=7;   // « mercredi » un mercredi = le prochain
+        if(/\bprochain\b/.test(s) && ecart<7)ecart+=0;                // « mercredi prochain » = le prochain aussi
+        return plus(ecart);
+      }
+    }
+    return '';                                                       // illisible → on n'invente pas
+  }catch(e){ return ''; }
+}

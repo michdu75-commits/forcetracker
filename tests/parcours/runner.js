@@ -1010,6 +1010,21 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
         const tard=/MOMENT MILO/.test(buildCoachContext('fais-moi une séance jambes ce soir'));
         coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
         return {debut, tard}; })(),
+      // ⚠️ LA DATE ANNONCÉE, CALCULÉE PAR LE CODE (05/08). L'app n'acceptait que YYYY-MM-DD :
+      // Milo devait traduire lui-même « mercredi » en date. Famille ft-v658/660 — et le pire
+      // n'est pas qu'il échoue, c'est qu'il peut produire une date VALIDE mais FAUSSE, que
+      // l'app enregistre sans pouvoir s'en apercevoir. Désormais le code traduit.
+      dateAnnoncee: (typeof _dateAnnoncee==='function') ? (()=>{
+        const t=today(); const j=n=>{const d=new Date(t+'T12:00:00'); d.setDate(d.getDate()+n);
+          const z=new Date(d.getTime()-d.getTimezoneOffset()*6e4); return z.toISOString().slice(0,10); };
+        return { iso:_dateAnnoncee('2026-12-25')==='2026-12-25',
+                 demain:_dateAnnoncee('demain')===j(1),
+                 apres:_dateAnnoncee('après-demain')===j(2),
+                 aujourdhui:_dateAnnoncee("aujourd'hui")===j(0),
+                 dans3:_dateAnnoncee('dans 3 jours')===j(3),
+                 jour:/^\d{4}-\d{2}-\d{2}$/.test(_dateAnnoncee('vendredi')),
+                 vide:_dateAnnoncee('')==='' , flou:_dateAnnoncee('bientôt')==='' };
+      })() : null,
       // ⚠️ L'AMBIGUÏTÉ DU TON (05/08) — relevée par Gemini ET Mistral, citations exactes des
       // deux côtés, vérifiées. Deux blocs employaient le mot « énergie » en sens OPPOSÉ :
       // « Miroir de son énergie, pas plus » (TA PERSONNALITÉ) contre « motivant si elle a
@@ -1103,6 +1118,13 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐⭐ DATE : le CODE traduit « demain », « vendredi », « dans 3 jours » — Milo ne calcule plus',
+    r.dateAnnoncee && r.dateAnnoncee.iso && r.dateAnnoncee.demain && r.dateAnnoncee.apres
+      && r.dateAnnoncee.aujourdhui && r.dateAnnoncee.dans3 && r.dateAnnoncee.jour,
+    JSON.stringify(r.dateAnnoncee));
+  t('DATE : ce qui est illisible ne produit AUCUNE date (on n\'invente jamais)',
+    r.dateAnnoncee && r.dateAnnoncee.vide===true && r.dateAnnoncee.flou===true,
+    JSON.stringify(r.dateAnnoncee));
   t('⭐ TON : la portée de chaque règle est NOMMÉE (registre de langage vs posture)',
     r.ton && r.ton.registre===true && r.ton.posture===true, JSON.stringify(r.ton));
   t('⭐ TON : face à quelqu\'un à plat, Milo ne se met pas à plat avec lui',

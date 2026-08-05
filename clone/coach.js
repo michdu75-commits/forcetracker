@@ -1088,12 +1088,19 @@ function _extractPlannedSession(reply){
     if(!jsonStr||!/"prevu"/i.test(jsonStr))return null;
     const obj=JSON.parse(jsonStr.trim());
     const p=obj&&obj.prevu;
-    if(!p||!p.date||!/^\d{4}-\d{2}-\d{2}$/.test(String(p.date)))return null;
+    // ⚠️ ON NE DEMANDE PLUS LA DATE CALCULÉE, ON LA CALCULE (05/08/2026). L'app n'acceptait
+    // que `YYYY-MM-DD` : Milo devait donc traduire lui-même « mercredi » en 2026-08-12.
+    // C'est la famille de bugs ft-v658/660 — et le pire n'est pas qu'il échoue, c'est qu'il
+    // peut produire une date VALIDE mais FAUSSE, que l'app enregistre sans pouvoir le voir.
+    // `_dateAnnoncee` comprend l'ISO ET « demain », « mercredi », « dans 3 jours »…
+    // et rend '' sur ce qui est illisible → on ignore l'annonce, on n'invente jamais.
+    const dISO=(typeof _dateAnnoncee==='function')?_dateAnnoncee(p&&p.date):'';
+    if(!p||!dISO)return null;
     const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
-    const diff=Math.round((new Date(p.date+'T12:00:00')-new Date(t+'T12:00:00'))/864e5);
+    const diff=Math.round((new Date(dISO+'T12:00:00')-new Date(t+'T12:00:00'))/864e5);
     if(isNaN(diff)||diff<0||diff>14)return null; // garde-fou : aujourd'hui → +14 j max (une annonce plausible)
     let label=String(p.label||'').trim().replace(/[<>{}]/g,'').slice(0,40);
-    return {date:p.date,label:label||''};
+    return {date:dISO,label:label||''};
   }catch(e){console.warn('[milo prochaine séance] parse',e);return null;}
 }
 function _appendQuickReplies(reps){
