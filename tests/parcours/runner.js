@@ -1070,6 +1070,13 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     JSON.stringify({max:r.wnMax, plusGrand:r.wnPlusGrand, restant:r.wnRestantApresVu}));
   t('⭐⭐ PROMPT : plus AUCUNE consigne « 1 ou 2 questions » (elle contredisait « au plus UNE »)',
     !/1 ou 2 questions/i.test(r.texteAvec||''), 'occurrences trouvées');
+  // ⚠️ 3ᵉ FORMULATION DU MÊME CONFLIT (05/08, trouvée par un audit externe et VÉRIFIÉE) :
+  // « S'il te manque une info clé, tu la DEMANDES avant de trancher » — dans le bloc que le
+  // prompt appelle lui-même « le plus important » — contre la règle cardinale « propose
+  // d'abord, AU PLUS UNE question APRÈS ». Mon correctif de ft-v768 ne l'avait pas vue :
+  // il cherchait « verbe + NOMBRE », et cette phrase-là n'a pas de nombre.
+  t('⭐⭐ PROMPT : plus aucune consigne « DEMANDE avant de trancher » (elle contredit « propose d\'abord »)',
+    !/DEMANDES?\s+avant de trancher/i.test(r.texteAvec||''), 'la formulation est revenue');
   t('PROMPT : la règle cardinale « au plus UNE question » est toujours là',
     /AU PLUS UNE question/i.test(r.texteAvec||''), 'règle cardinale absente !');
   t('⭐ SÉCURITÉ : pour TOUT LE MONDE, le texte des consignes est interdit… avec le sourire',

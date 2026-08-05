@@ -46,6 +46,14 @@ const CONTRADICTIONS = [
     a: /\bpos(e|es|er|ez)\b[^.;]{0,30}\b(1 ou 2|deux|2|plusieurs)\s+questions/i,
     b: /AU PLUS UNE question|UNE seule question|UNE question à la fois/i,
     pourquoi: "« pose 1 ou 2 questions » contre « au plus UNE » — le bug de l'interrogatoire (ft-v768)" },
+  // ⚠️ 3ᵉ FORMULATION DU MÊME CONFLIT, trouvée le 05/08 par un audit externe — pas par cet
+  // outil. Mon motif ci-dessus exige « verbe + NOMBRE » ; celle-ci n'a pas de nombre
+  // (« tu la DEMANDES avant de trancher ») et lui échappait donc complètement. C'est
+  // exactement la limite annoncée en tête de fichier : *il repère des motifs, pas du sens*.
+  { nom: 'demander avant de proposer',
+    a: /\bDEMANDE[SZ]?\b[^.;]{0,30}avant de (trancher|conseiller|proposer)/i,
+    b: /AU PLUS UNE question|propose[^.]{0,40}D'ABORD/i,
+    pourquoi: "« demande avant de trancher » contre « propose d'abord » — 3ᵉ tête du bug de l'interrogatoire (ft-v774)" },
   { nom: 'moment de la question',
     a: /questions? [^.]{0,40}AVANT de trancher/i,
     b: /APRÈS ta proposition|Jamais une question AVANT/i,
