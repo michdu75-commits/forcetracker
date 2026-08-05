@@ -11,9 +11,9 @@
    le compte vers Supabase. Apps Script reste la SOURCE DE VÉRITÉ : Supabase ne fait
    que recevoir. Si Supabase tombe, il ne se passe strictement rien.
 
-   ⚠️ ÉCRITURE SEULE, ET C'EST VOULU. La table a RLS activé avec des règles INSERT et
-   UPDATE, mais AUCUNE règle SELECT : la clé publique de l'app ne peut pas RELIRE les
-   comptes. C'est délibéré — on ne recrée pas dans une vraie base la faille qu'on
+   ⚠️ ÉCRITURE SEULE, ET C'EST VOULU — renforcé le 05/08. La clé publique n'a plus AUCUN
+   droit sur la table : elle ne peut qu'appeler la fonction `ft_miroir`, qui écrit à sa
+   place. Aucune lecture n'est possible, par aucun chemin. C'est délibéré — on ne recrée pas dans une vraie base la faille qu'on
    vient de trouver côté Apps Script (`loadProfile` sert un compte entier à qui
    connaît l'adresse). Michel lit depuis la console Supabase, personne d'autre ne lit.
    👉 Le jour où on voudra LIRE depuis l'app, il faudra une vraie authentification
@@ -60,6 +60,9 @@ let SB_ANON = 'sb_publishable_WWBz0rnck2fG8lEOBjEM6Q_Dm4oXKWg';
 function sbConfigurer(url, cle){ SB_URL=String(url||''); SB_ANON=String(cle||''); }
 
 const SB_TABLE = 'ft_comptes';
+// La FONCTION appelée pour écrire (voir le commentaire dans sbMirror). L'app ne touche
+// jamais la table directement : c'est elle qui a les droits, pas la clé publique.
+const SB_FN = 'ft_miroir';
 
 // Dernier résultat connu, pour la carte Admin (aucune donnée personnelle dedans).
 let _sbDernier = null;   // {ok:bool, quand:'ISO', info:'…'}
@@ -77,17 +80,23 @@ function sbMirror(payload){
     const email=String((payload&&payload.email)||'').trim().toLowerCase();
     if(!email)return;
 
-    // `resolution=merge-duplicates` = insertion OU mise à jour selon que la ligne existe.
-    // Sans ça, la 2ᵉ sauvegarde d'un même compte échouerait sur la clé primaire.
-    fetch(SB_URL.replace(/\/+$/,'')+'/rest/v1/'+SB_TABLE, {
+    // ⚠️ ON N'ÉCRIT PAS DANS LA TABLE, ON APPELLE UNE FONCTION (05/08/2026).
+    // L'écriture directe (`/rest/v1/ft_comptes` + `resolution=merge-duplicates`) était
+    // refusée par le RLS malgré des policies INSERT/UPDATE en `{public}` avec
+    // `WITH CHECK (true)` — vérifié dans `pg_policies`. Plutôt que de continuer à
+    // deviner, on est passé par une fonction `security definer` : elle écrit avec les
+    // droits de son propriétaire, donc plus aucune dépendance aux policies de la table.
+    // 👉 ET C'EST PLUS SÛR : la clé publiée dans l'app n'a plus AUCUN droit sur la table
+    //    (INSERT et UPDATE lui ont été retirés). Elle ne peut qu'appeler cette fonction,
+    //    qui ne sait faire qu'une chose. La lecture reste évidemment impossible.
+    fetch(SB_URL.replace(/\/+$/,'')+'/rest/v1/rpc/'+SB_FN, {
       method:'POST',
       headers:{
         'apikey': SB_ANON,
         'Authorization': 'Bearer '+SB_ANON,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates,return=minimal'
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ email, data: payload, updated_at: new Date().toISOString() })
+      body: JSON.stringify({ p_email: email, p_data: payload })
     }).then(r=>{
       _sbDernier={ok:r.ok, quand:new Date().toISOString(), info:r.ok?'écrit':('HTTP '+r.status)};
       try{ localStorage.setItem('ft4_sb_last', JSON.stringify(_sbDernier)); }catch(e){}
@@ -115,21 +124,19 @@ function sbMirror(payload){
 async function sbTest(){
   if(!_sbActif())return {ok:false, texte:'Miroir non configuré (SB_URL / SB_ANON vides).'};
   try{
-    const r=await fetch(SB_URL.replace(/\/+$/,'')+'/rest/v1/'+SB_TABLE, {
+    const r=await fetch(SB_URL.replace(/\/+$/,'')+'/rest/v1/rpc/'+SB_FN, {
       method:'POST',
       headers:{
         'apikey': SB_ANON,
         'Authorization': 'Bearer '+SB_ANON,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates,return=minimal'
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ email:'test@forcetracker.test',
-                             data:{ test:true, quand:new Date().toISOString() },
-                             updated_at:new Date().toISOString() })
+      body: JSON.stringify({ p_email:'test@forcetracker.test',
+                             p_data:{ test:true, quand:new Date().toISOString() } })
     });
     if(r.ok)return {ok:true, texte:'✅ Écriture réussie (HTTP '+r.status+'). La ligne « test@forcetracker.test » est dans la table.'};
     let d=''; try{ d=(await r.text()).slice(0,200); }catch(e){}
-    const aide = r.status===404 ? ' → la table `ft_comptes` n\'existe pas : le SQL n\'a pas été exécuté.'
+    const aide = r.status===404 ? ' → la fonction `ft_miroir` n\'existe pas : le SQL n\'a pas été exécuté.'
               : (r.status===401||r.status===403) ? ' → la clé ou les règles RLS refusent l\'écriture (règles INSERT/UPDATE pour `anon`).'
               : '';
     return {ok:false, texte:'❌ HTTP '+r.status+aide+(d?('\n'+d):'')};

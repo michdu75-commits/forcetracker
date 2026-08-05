@@ -889,14 +889,14 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     //    parce que le corps est construit UNE SEULE FOIS et servi aux deux (R2) —
     //    mais si un jour quelqu'un le reconstruit pour Supabase, ce témoin rougira.
     o.miroirAppele = !!vus.sb;
-    o.miroirSansSessions = vus.sb ? (JSON.parse(vus.sb).data.sessions===undefined) : null;
+    o.miroirSansSessions = vus.sb ? (JSON.parse(vus.sb).p_data.sessions===undefined) : null;
     // ③ témoin : SANS le drapeau, les séances repartent normalement
     S.histTronque=false; localStorage.removeItem('ft4_hist_tronque');
     vus={}; window.fetch=espion;
     _cloudSync();
     window.fetch=vraiFetch;
     o.temoinSessionsEnvoyees = vus.apps ? (JSON.parse(vus.apps).sessions||[]).length : null;
-    o.temoinMiroirSessions   = vus.sb   ? (JSON.parse(vus.sb).data.sessions||[]).length : null;
+    o.temoinMiroirSessions   = vus.sb   ? (JSON.parse(vus.sb).p_data.sessions||[]).length : null;
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
