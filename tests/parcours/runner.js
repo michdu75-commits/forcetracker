@@ -1010,6 +1010,18 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
         const tard=/MOMENT MILO/.test(buildCoachContext('fais-moi une séance jambes ce soir'));
         coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
         return {debut, tard}; })(),
+      // ⚠️ L'AMBIGUÏTÉ DU TON (05/08) — relevée par Gemini ET Mistral, citations exactes des
+      // deux côtés, vérifiées. Deux blocs employaient le mot « énergie » en sens OPPOSÉ :
+      // « Miroir de son énergie, pas plus » (TA PERSONNALITÉ) contre « motivant si elle a
+      // besoin d'énergie » (PROFIL ATHLÈTE). Ce n'est pas une contradiction — le premier parle
+      // du REGISTRE DE LANGAGE, le second de la POSTURE — mais rien ne le disait, et ça se joue
+      // là où ça compte : face à quelqu'un qui est à plat, faut-il refléter sa fatigue ou le
+      // porter ? Aucune règle retirée : on a NOMMÉ la portée de chacune.
+      ton: (()=>{ const r0=buildCoachContext('fais-moi une séance jambes pour ce soir stp'); return {
+        registre: /porte sur le REGISTRE DE LANGAGE/.test(r0||''),
+        posture:  /c'est la POSTURE, pas le registre/i.test(r0||''),
+        pasAPlat: /tu ne te mets pas à plat avec elle/.test(r0||'')
+      }; })(),
       // ⚠️ LE REPOS ÉCRIT EN CLAIR (05/08) — bug latent trouvé en déplaçant la logique vers
       // le code. L'app lisait `parseInt(s.rest)` ; si Milo écrit `"rest":"3 min"` au lieu de
       // 180 — ce qu'un modèle léger fait volontiers — parseInt vaut **3**, et le chronomètre
@@ -1091,6 +1103,10 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐ TON : la portée de chaque règle est NOMMÉE (registre de langage vs posture)',
+    r.ton && r.ton.registre===true && r.ton.posture===true, JSON.stringify(r.ton));
+  t('⭐ TON : face à quelqu\'un à plat, Milo ne se met pas à plat avec lui',
+    r.ton && r.ton.pasAPlat===true, JSON.stringify(r.ton));
   t('⭐⭐ REPOS : « 3 min » vaut 180 s, pas 3 (le chrono ne peut plus tomber à 3 secondes)',
     r.repos && r.repos.min3===180 && r.repos.min3c===180 && r.repos.n180===180 && r.repos.s180===180,
     JSON.stringify(r.repos));
