@@ -1692,3 +1692,40 @@ function exMuscles(nom){
   const id=(typeof exId==='function')?exId(nom):null;
   return (id&&EX_MUSCLES[id])||null;
 }
+
+/* ─── LIRE UNE DURÉE DE REPOS, QUELLE QUE SOIT SA FORME (05/08/2026) ──────────────────
+ *
+ * ⚠️ POURQUOI. L'app lisait le repos avec `parseInt(s.rest)`. Or Milo produit ce champ
+ * dans un bloc JSON, et le prompt lui explique en toutes lettres la conversion à faire :
+ * « 3 min » → `"rest":180`. Un modèle léger peut très bien écrire `"rest":"3 min"` —
+ * et alors `parseInt("3 min")` vaut **3**. Le chronomètre de repos passait donc à
+ * 3 SECONDES au lieu de 3 minutes, sans erreur, sans message : juste un chrono absurde
+ * que personne n'aurait su expliquer.
+ *
+ * 👉 LE BON GESTE N'EST PAS DE DURCIR LA CONSIGNE, C'EST DE RENDRE L'APP TOLÉRANTE.
+ *    C'est le patron de ft-v761 (lire la séance dans le texte quand le bloc caché manque) :
+ *    ça marche sur TOUS les modèles, et ça ne coûte pas un caractère de prompt.
+ *    Chaque calcul qu'on demande au modèle est un calcul qu'il peut rater ; celui-ci,
+ *    le code le fait sans jamais se tromper.
+ *
+ * Rend des SECONDES, ou 0 si c'est illisible (l'app garde alors son réglage habituel).
+ */
+function _secRepos(v){
+  if(v==null)return 0;
+  if(typeof v==='number')return v>0&&isFinite(v)?Math.round(v):0;
+  const s=String(v).trim().toLowerCase().replace(',','.');
+  if(!s)return 0;
+  let m;
+  // « 1:30 » ou « 1'30 » → minutes:secondes
+  if((m=s.match(/^(\d+)\s*[:'’]\s*(\d{1,2})$/)))return (+m[1])*60+(+m[2]);
+  // « 1 min 30 », « 1 minute 30 s »
+  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:min|minutes?|mn|m)\b\s*(\d{1,2})\s*(?:s|sec|secondes?)?$/)))
+    return Math.round((+m[1])*60)+(+m[2]);
+  // « 3 min », « 2.5 minutes », « 3mn »
+  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:min|minutes?|mn|m)\b$/)))return Math.round((+m[1])*60);
+  // « 90 s », « 90 sec », « 90 secondes »
+  if((m=s.match(/^(\d+(?:\.\d+)?)\s*(?:s|sec|secs?|secondes?)\b$/)))return Math.round(+m[1]);
+  // « 180 » tout court → déjà des secondes
+  if((m=s.match(/^(\d+(?:\.\d+)?)$/)))return Math.round(+m[1]);
+  return 0;
+}

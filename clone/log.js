@@ -3714,7 +3714,7 @@ function finalImportProg(){
         // Séries avec reps+kg par palier (dropsets) ou repsPerSet
         let sets;
         // Repos par série : backend peut fournir restPerSet[] (secondes) ou rest unique — sinon 0 (défaut par type)
-        const _restAt=si=>(ex.restPerSet&&ex.restPerSet[si]!=null?parseInt(ex.restPerSet[si])||0:(parseInt(ex.rest)||0));
+        const _restAt=si=>(ex.restPerSet&&ex.restPerSet[si]!=null?_secRepos(ex.restPerSet[si]):_secRepos(ex.rest));
         if(ex.repsPerSet&&ex.repsPerSet.length>0){
           sets=ex.repsPerSet.map((r,si)=>({
             kg:(ex.kgPerSet&&ex.kgPerSet[si]!=null?ex.kgPerSet[si]:(ex.kg||0)),
@@ -4158,7 +4158,7 @@ function _normalizeMiloSession(sess){
       kg:parseFloat(s.kg)||0,
       maxi:!!s.maxi,
       type:(s&&T[s.type])?s.type:'N',
-      rest:parseInt(s.rest)||0
+      rest:_secRepos(s.rest)
     }))
   });
   return {
@@ -4182,7 +4182,7 @@ function _startSessionFromMilo(idx,btn){
       const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
       const kg=(s.kg>0)?s.kg:(pp?pp.kg:0);                                   // Milo d'abord, sinon la dernière fois
       const reps=s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10));               // idem (série « maxi » = vide, à saisir)
-      return {kg,reps,maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:s.rest||0};
+      return {kg,reps,maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)};
     })};
   };
   const newExs=(data.exs||[]).map(buildEx);
@@ -4232,7 +4232,7 @@ function _applyMiloSession(mode){
       const pp=pv.length?(pv[i]||pv[pv.length-1]):null;
       return {kg:(s.kg>0)?s.kg:(pp?pp.kg:0),
               reps:s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10)),
-              maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:s.rest||0};
+              maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)};
     })};
   });
   _appliqueMiloSession(newExs, data, mode, btn);
@@ -4277,7 +4277,7 @@ function loadProgDay(progIdx,dayIdx){
         kg:pp?pp.kg:(s.kg||0),
         reps:s.maxi?0:(pp?pp.reps:(s.reps||10)), // série "maxi" : reps vide, elle saisit ce qu'elle a fait
         maxi:!!s.maxi,
-        type:s.type||'N',done:false,rm1:0,rest:s.rest||0
+        type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)
       };
     })};
     if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset
@@ -4464,7 +4464,7 @@ function saveAsProg(){
     exs:S.wkt.exs.map(ex=>{
       // note conservée : sous le MÊME nom, saveAsProg REMPLACE le programme — sans elle, la
       // consigne posée dans l'éditeur serait détruite au premier « Sauvegarder » (perte silencieuse).
-      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:s.rest||0}))};
+      const o={name:ex.name,sets:ex.sets.map(s=>({kg:s.kg||0,reps:s.reps||5,maxi:!!s.maxi,type:s.type||'N',rest:_secRepos(s.rest)}))};
       if(ex.note)o.note=String(ex.note).slice(0,300);
       if(ex.group){o.group=ex.group;o.groupType=ex.groupType||'super';} // conserve le superset
       return o;
@@ -4494,7 +4494,7 @@ function loadProg(idx){
           kg:pp?pp.kg:(s.kg||0),
           reps:s.maxi?0:(pp?pp.reps:(s.reps||5)),
           maxi:!!s.maxi,
-          type:s.type||'N',done:false,rm1:0,rest:s.rest||0
+          type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)
         };
       })};
       if(e.group){obj.group=e.group;obj.groupType=e.groupType||'super';} // propage le superset

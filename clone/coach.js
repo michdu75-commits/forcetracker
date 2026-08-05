@@ -869,7 +869,7 @@ function _extractForceProgram(reply){
 // Normalise le JSON du modèle vers la structure S.programmes
 function _normalizeForceProg(prog){
   const norm=ex=>({name:String(ex.name||'Exercice'),
-    sets:(Array.isArray(ex.sets)?ex.sets:[]).map(s=>({kg:parseFloat(s.kg)||0,reps:parseInt(s.reps)||5,type:(s.type==='W'?'W':'N'),rest:parseInt(s.rest)||0}))});
+    sets:(Array.isArray(ex.sets)?ex.sets:[]).map(s=>({kg:parseFloat(s.kg)||0,reps:parseInt(s.reps)||5,type:(s.type==='W'?'W':'N'),rest:_secRepos(s.rest)}))});
   const out={id:'p'+Date.now(),name:String(prog.name||'Programme Force'),force:true};
   if(Array.isArray(prog.days)&&prog.days.length){
     out.days=prog.days.map((d,i)=>({label:String(d.label||('Jour '+(i+1))),exs:(Array.isArray(d.exs)?d.exs:[]).map(norm)}));

@@ -1010,6 +1010,16 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
         const tard=/MOMENT MILO/.test(buildCoachContext('fais-moi une séance jambes ce soir'));
         coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
         return {debut, tard}; })(),
+      // ⚠️ LE REPOS ÉCRIT EN CLAIR (05/08) — bug latent trouvé en déplaçant la logique vers
+      // le code. L'app lisait `parseInt(s.rest)` ; si Milo écrit `"rest":"3 min"` au lieu de
+      // 180 — ce qu'un modèle léger fait volontiers — parseInt vaut **3**, et le chronomètre
+      // de repos passait à 3 SECONDES. Aucune erreur, aucun message : un chrono absurde.
+      // On ne durcit pas la consigne, on rend l'app tolérante (patron de ft-v761).
+      repos: (typeof _secRepos==='function') ? {
+        n180:_secRepos(180), s180:_secRepos('180'), min3:_secRepos('3 min'), min3c:_secRepos('3min'),
+        s90:_secRepos('90 s'), mixte:_secRepos('1 min 30'), deuxpts:_secRepos('1:30'),
+        vide:_secRepos(''), nul:_secRepos(null), texte:_secRepos('bientôt'), neg:_secRepos(-5)
+      } : null,
       wnMax: (typeof WHATS_NEW_MAX!=='undefined')?WHATS_NEW_MAX:-1,
       wnPlusGrand: (typeof WHATS_NEW!=='undefined')?WHATS_NEW.reduce((m,f)=>Math.max(m,(f&&f.v)||0),0):-2,
       wnRestantApresVu: (()=>{ try{ localStorage.setItem('ft4_wn_seen',String(WHATS_NEW_MAX));
@@ -1081,6 +1091,14 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐⭐ REPOS : « 3 min » vaut 180 s, pas 3 (le chrono ne peut plus tomber à 3 secondes)',
+    r.repos && r.repos.min3===180 && r.repos.min3c===180 && r.repos.n180===180 && r.repos.s180===180,
+    JSON.stringify(r.repos));
+  t('⭐ REPOS : les autres écritures humaines sont comprises (90 s · 1 min 30 · 1:30)',
+    r.repos && r.repos.s90===90 && r.repos.mixte===90 && r.repos.deuxpts===90, JSON.stringify(r.repos));
+  t('REPOS : ce qui est illisible rend 0 → l\'app garde son réglage habituel',
+    r.repos && r.repos.vide===0 && r.repos.nul===0 && r.repos.texte===0 && r.repos.neg===0,
+    JSON.stringify(r.repos));
   t('⭐⭐ CACHE : le préfixe mis en cache est IDENTIQUE quel que soit le sujet du message',
     r.cachePrefixe && r.cachePrefixe.trouve===true && r.cachePrefixe.identiques===true,
     JSON.stringify(r.cachePrefixe));
