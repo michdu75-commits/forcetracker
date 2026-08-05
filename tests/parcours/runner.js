@@ -965,6 +965,8 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       manquesSuite,
       manques: DOIT.filter(m=>!_ctxEntrainement(m)),
       retires: HORS.filter(m=>!_ctxEntrainement(m)).length,
+      triNom: ['backup-2026-08-05.json','backup-migration-2026-06-29-2003.json','backup-2026-08-04.json']
+                .sort().slice(-1)[0],
       wnMax: (typeof WHATS_NEW_MAX!=='undefined')?WHATS_NEW_MAX:-1,
       wnPlusGrand: (typeof WHATS_NEW!=='undefined')?WHATS_NEW.reduce((m,f)=>Math.max(m,(f&&f.v)||0),0):-2,
       wnRestantApresVu: (()=>{ try{ localStorage.setItem('ft4_wn_seen',String(WHATS_NEW_MAX));
@@ -1015,6 +1017,20 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   // jusqu'à 52 » → 53 et 54 restent éternellement non vues → la pop-up revient toujours.
   // Aucune erreur, aucun test rouge : juste une pop-up qui harcèle tout le monde.
   // Le nombre est désormais CALCULÉ (R2) ; ce témoin garantit qu'il ne peut plus mentir.
+  // ⚠️ LE VOYANT DE SAUVEGARDE QUI MENTAIT (05/08) — le serveur triait les fichiers par NOM :
+  // « backup-MIGRATION-2026-06-29 » passait APRÈS « backup-2026-08-05 » (car « m » > « 2 »).
+  // Le fichier de migration du 29 juin était donc annoncé « le plus récent » POUR TOUJOURS,
+  // et le voyant serait resté rouge même avec des sauvegardes parfaites. Une alarme qui crie
+  // pour rien est celle qu'on apprend à ignorer — c'est ce qui a coûté 36 jours sans filet.
+  t('⭐ SAUVEGARDE : le tri par NOM place bien la migration en dernier (le piège à figer)',
+    r.triNom === 'backup-migration-2026-06-29-2003.json', JSON.stringify(r.triNom));
+  // ⚠️ ON LIT LE VRAI `app.js` SERVI — surtout pas une copie de la logique dans le test.
+  // Première version de ce témoin : je rejouais le calcul ici → contrôle négatif à 0 rouge,
+  // c'est-à-dire un test qui teste sa propre copie (même erreur qu'à ft-v760, refaite).
+  const srcBk=await p.evaluate(async()=>{ const r=await fetch('app.js'); return await r.text(); });
+  t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
+    /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
+    'app.js ne lit pas bk.lastDate / bk.lastName');
   t('⭐ POP-UP : « vu » couvre bien TOUTES les nouveautés (sinon elle revient à chaque ouverture)',
     r.wnMax===r.wnPlusGrand && r.wnRestantApresVu===0,
     JSON.stringify({max:r.wnMax, plusGrand:r.wnPlusGrand, restant:r.wnRestantApresVu}));

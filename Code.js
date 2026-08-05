@@ -322,11 +322,25 @@ function doGet(e) {
     try {
       const cnt = ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'backupAllUserData_').length;
       const folder = _getDriveBackupFolder_();
-      const files = [];
+      // ⚠️ ON TRIE PAR DATE RÉELLE, PLUS JAMAIS PAR NOM (05/08/2026).
+      // Le tri alphabétique plaçait `backup-MIGRATION-2026-06-29-2003.json` APRÈS
+      // `backup-2026-08-05....json` — parce que « m » vient après « 2 ». Le fichier de
+      // migration du 29 juin était donc annoncé comme « le plus récent » POUR TOUJOURS,
+      // et le voyant serait resté ROUGE même avec des sauvegardes parfaites.
+      // C'est le pire défaut possible pour une alarme : à force de crier pour rien, on
+      // apprend à l'ignorer — et c'est exactement ce qui a coûté 36 jours sans sauvegarde.
+      // 👉 Un nom de fichier n'est pas une date. On demande sa date à Drive.
+      const infos = [];
       const iter = folder.getFiles();
-      while (iter.hasNext()) files.push(iter.next().getName());
-      files.sort();
-      return json_({status:'ok', triggersInstalled:cnt, driveFolder:'ForceTracker-Backups', folderId:folder.getId(), fileCount:files.length, lastFiles:files.slice(-5)});
+      while (iter.hasNext()) { const f = iter.next(); infos.push({n:f.getName(), d:f.getDateCreated().getTime()}); }
+      infos.sort((a,b) => a.d - b.d);
+      const files = infos.map(x => x.n);
+      const dernier = infos.length ? infos[infos.length-1] : null;
+      return json_({status:'ok', triggersInstalled:cnt, driveFolder:'ForceTracker-Backups',
+        folderId:folder.getId(), fileCount:files.length, lastFiles:files.slice(-5),
+        // Date du plus récent, donnée explicitement : l'app n'a plus à la deviner d'après un nom.
+        lastDate: dernier ? new Date(dernier.d).toISOString() : null,
+        lastName: dernier ? dernier.n : null});
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 

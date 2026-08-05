@@ -2952,8 +2952,16 @@ async function loadHealthAdmin(){
     }
     // ② Sauvegardes de la nuit
     if(bk&&bk.status==='ok'){
-      const dernier=(bk.lastFiles&&bk.lastFiles.length)?bk.lastFiles[bk.lastFiles.length-1]:'';
-      const m=dernier.match(/(\d{4}-\d{2}-\d{2})/);
+      // ⚠️ LA DATE VIENT DU SERVEUR, PLUS DU NOM DU FICHIER (05/08/2026).
+      // Deux bugs se cumulaient : le serveur triait les fichiers par NOM (« backup-MIGRATION-
+      // 2026-06-29 » passait après « backup-2026-08-05 », car « m » > « 2 »), et l'app lisait
+      // ensuite la date DANS ce nom. Résultat : le fichier de migration du 29 juin était
+      // annoncé « le plus récent » pour toujours, et le voyant serait resté ROUGE même avec
+      // des sauvegardes parfaites — l'alarme qui crie pour rien, celle qu'on finit par ignorer.
+      // `lastDate`/`lastName` sont désormais fournis par le serveur (date Drive réelle) ;
+      // le repli sur le nom ne sert qu'aux appareils qui parlent à un backend pas encore à jour.
+      const dernier=bk.lastName||((bk.lastFiles&&bk.lastFiles.length)?bk.lastFiles[bk.lastFiles.length-1]:'');
+      const m=bk.lastDate?[null,String(bk.lastDate).slice(0,10)]:dernier.match(/(\d{4}-\d{2}-\d{2})/);
       // La date du jour vient de `today()` — celle du TÉLÉPHONE, jamais celle de Greenwich :
       // c'est la règle du projet née du bug ft-v655, et un test permanent la fait respecter.
       // (Le nom du fichier est écrit côté serveur en UTC : dans la fenêtre minuit → 2 h du matin
