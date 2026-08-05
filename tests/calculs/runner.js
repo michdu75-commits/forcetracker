@@ -461,7 +461,14 @@ console.log('\n═══ 8. Cycle de force ═══');
     out.proj=projectRM(100,12);                    // débutant .009*1.1*12 = +11.9 %
     S.age=55; out.proj55=projectRM(100,12); S.age=30;
     out.round=[round25(101.2),round25(101.3),round25(98.7)];
-    S.cycle={startDate:'2026-07-29',weeks:12}; out.sem1=getCurrentCycleWeek();
+    // ⚠️ DATE CALCULÉE, PLUS JAMAIS ÉCRITE EN DUR (05/08/2026). C'était '2026-07-29' —
+    // ce qui voulait dire « aujourd'hui » le jour où le test a été écrit. Une semaine plus
+    // tard, le même test disait « aujourd'hui » et vérifiait « il y a 7 jours » : il est passé
+    // au ROUGE sans qu'une seule ligne de code ait changé. *Un test qui pourrit avec le
+    // calendrier est pire qu'un test absent* — on apprend à ignorer son rouge, exactement
+    // comme le voyant de sauvegarde de ft-v770. On utilise `today()` (la date du TÉLÉPHONE,
+    // jamais celle de Greenwich — règle née du bug ft-v655).
+    S.cycle={startDate:today(),weeks:12}; out.sem1=getCurrentCycleWeek();
     S.cycle={startDate:'2026-01-01',weeks:12}; out.semCap=getCurrentCycleWeek();
     S.cycle=null;
     return out;

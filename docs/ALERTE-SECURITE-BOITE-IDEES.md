@@ -131,7 +131,7 @@ l'écriture.
 
 **Six adresses e-mail réelles sont écrites en clair dans le dépôt public** :
 
-- `Code.js` → `PREMIUM_HARDCODED_` : michdu75, elineazs32, christophe@famillelanglois.fr, apollonone75
+- `Code.js` → `PREMIUM_HARDCODED_` : michdu75, elineazs32, christophe@famillelanglois.fr *(apollonone75 retiré le 05/08 — compte de test)*
 - `constants.js` → `TESTER_EMAILS` : + emma.david16, tanna.valery.studio
 
 Il n'y a donc même pas à deviner : **le dépôt publie les adresses, et l'API sert les comptes

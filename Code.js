@@ -179,7 +179,6 @@ const PREMIUM_HARDCODED_ = [
   'michdu75@gmail.com',
   'elineazs32@gmail.com',
   'christophe@famillelanglois.fr',
-  'apollonone75@gmail.com',
   'emma.david16@gmail.com',
   'tanna.valery.studio@gmail.com'
 ];
@@ -2337,6 +2336,36 @@ function preuveDeclencheur(e) {
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === 'preuveDeclencheur') ScriptApp.deleteTrigger(t);
   });
+}
+
+// ⭐ SUPPRIMER UN COMPTE DE TEST — étroit, explicite, à usage unique (05/08/2026).
+//
+// ⚠️ POURQUOI CETTE FONCTION EST NOMMÉE EN DUR, et ne prend PAS d'adresse en paramètre.
+// Une fonction « supprime le compte que tu veux » listée dans l'IDE, c'est une arme posée
+// sur la table : un jour quelqu'un la lance sur la mauvaise adresse et il n'y a pas de
+// retour en arrière. Ici l'adresse est écrite dans le code, relue à froid, et la fonction
+// ne sait faire que ça. Pour un autre compte : on modifie le code, on relit, on redéploie.
+//
+// Contexte : `apollonone75@gmail.com` était un compte de TEST, retiré des deux listes
+// premium le 05/08 (Code.js + constants.js, ce dernier étant servi publiquement — donc
+// n'importe qui pouvait taper l'adresse et obtenir le premium). Ses empreintes de code
+// d'accès ont par ailleurs circulé sur une photo. On efface tout ce qui le concerne.
+function supprimerCompteTest() {
+  var CIBLE = 'apollonone75@gmail.com';
+  var sp = PropertiesService.getScriptProperties();
+  var cles = ['u_' + CIBLE, 'auth_' + CIBLE, 'authfail_' + CIBLE, 'prem_' + CIBLE, 'confirmed_' + CIBLE];
+  var faits = [], absents = [];
+  cles.forEach(function (k) {
+    if (sp.getProperty(k) != null) { sp.deleteProperty(k); faits.push(k); }
+    else absents.push(k);
+  });
+  // On RELIT après suppression : on vérifie l'effet, jamais le fait d'avoir appelé la fonction.
+  var restants = cles.filter(function (k) { return sp.getProperty(k) != null; });
+  var m = '[FT] Compte de test « ' + CIBLE + ' » — supprimé : ' + (faits.join(', ') || '(rien)')
+        + ' · déjà absent : ' + (absents.join(', ') || '(aucun)')
+        + (restants.length ? ' · ⚠️ RESTE ENCORE : ' + restants.join(', ') : ' · ✅ plus rien ne subsiste.');
+  Logger.log(m); console.log(m);
+  return m;
 }
 
 // ⭐ CHANGER LE MODÈLE DE MILO POUR MICHEL — sans ouvrir la page des propriétés (04/08/2026).

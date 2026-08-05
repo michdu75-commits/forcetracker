@@ -456,7 +456,7 @@ const SUPER_TESTER_EMAILS=['christophe@famillelanglois.fr','michdu75@gmail.com',
 // erreur) et laisser le mur premium affiché alors qu'ils sont premium à vie.
 // « Anti-curieux » comme le reste : seul un email de cette liste devient premium.
 // ⚠️ Garder synchronisé avec PREMIUM_HARDCODED_ dans Code.js.
-const PREMIUM_CLIENT_EMAILS=['michdu75@gmail.com','elineazs32@gmail.com','christophe@famillelanglois.fr','apollonone75@gmail.com','emma.david16@gmail.com','tanna.valery.studio@gmail.com'];
+const PREMIUM_CLIENT_EMAILS=['michdu75@gmail.com','elineazs32@gmail.com','christophe@famillelanglois.fr','emma.david16@gmail.com','tanna.valery.studio@gmail.com'];
 function _isClientPremium(){ try{ const e=((typeof S!=='undefined'&&S.email)||'').trim().toLowerCase(); return !!e && PREMIUM_CLIENT_EMAILS.indexOf(e)>=0; }catch(_){ return false; } }
 // Email où remontent les idées de la boîte à idées → compte dédié de l'app (séparé du mail perso de Michel).
 const TESTER_FEEDBACK_EMAIL='forcetracker.app@gmail.com';

@@ -251,8 +251,7 @@ Trois couches vérifiées dans l'ordre :
 const PREMIUM_HARDCODED_ = [
   'michdu75@gmail.com',
   'elineazs32@gmail.com',
-  'christophe@famillelanglois.fr',
-  'apollonone75@gmail.com'
+  'christophe@famillelanglois.fr'
 ];
 ```
 
