@@ -1064,6 +1064,28 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
                    sansSilent: texte.indexOf('consigne interne')<0 };
         }catch(e){ return {erreur:String(e&&e.message||e)}; }
       })(),
+      // ⚠️ LA DURÉE DE CARDIO LEVAIT UNE ERREUR (07/08) — trouvée dans le journal d'erreurs de
+      // l'Admin, pas par un test : `ReferenceError: Can't find variable: c` (app.js:76). Le code
+      // lisait `c.duration` dans une fonction où `c` n'existe pas. L'erreur interrompait la suite
+      // de setCardioField(), donc `renderLogFinish()` n'était jamais appelé. ⚠️ Le témoin doit
+      // CRÉER le bouton : sans lui, `if(btn)` court-circuite et le bug ne se déclenche pas.
+      cardioDuree: (()=>{
+        const vw=S.wkt;
+        try{
+          S.wkt={exs:[],cardio:null,cardioAvant:null};
+          ['cardio-summary','cardio-save-btn'].forEach(id=>{
+            if(!document.getElementById(id)){
+              const d=document.createElement('div'); d.id=id; document.body.appendChild(d);
+            }
+          });
+          let err='';
+          try{ setCardioField('duration','12','apres'); }catch(e){ err=String(e&&e.message||e); }
+          const btn=document.getElementById('cardio-save-btn');
+          return { erreur:err, visible:btn?btn.style.display:'(absent)',
+                   duree:(S.wkt&&S.wkt.cardio&&S.wkt.cardio.duration)||0 };
+        }catch(e){ return {erreur:'test:'+String(e&&e.message||e)}; }
+        finally{ S.wkt=vw; }
+      })(),
       // ⚠️ « C'ÉTAIT CELLE-LÀ ? » POSÉE À TORT (06/08) — trouvé dans les VRAIES conversations
       // exportées par Michel : séance annoncée pour SAMEDI, faite le MERCREDI, et l'Accueil
       // demandait si celle de mercredi était celle de samedi. On appelle le VRAI `_miloMessage()`
@@ -1212,6 +1234,11 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐⭐ CARDIO : saisir une durée ne lève AUCUNE erreur (le « variable c » du journal Admin)',
+    r.cardioDuree && r.cardioDuree.erreur==='', JSON.stringify(r.cardioDuree));
+  t('CARDIO : le bouton « Enregistrer le cardio » apparaît dès qu\'une durée est saisie',
+    r.cardioDuree && r.cardioDuree.visible==='block' && r.cardioDuree.duree===12,
+    JSON.stringify(r.cardioDuree));
   t('⭐⭐ ACCUEIL : une séance annoncée DANS 3 JOURS ne déclenche plus « c\'était celle-là ? »',
     r.celleLa && r.celleLa.loinId==='prevu', JSON.stringify(r.celleLa));
   t('ACCUEIL : annoncée pour DEMAIN et faite aujourd\'hui → la question reste posée (non-régression)',

@@ -166,7 +166,8 @@ console.log('\n─── LA CONVERSATION NE SE PERD PLUS ───────�
   const r=await q.p.evaluate(()=>{
     const mes=(place)=>{ S.coachQuiz={answers:place?{place}:{}}; S.customExercises=[];
       const c=buildCoachContext();
-      return {taille:c.length, entete:/EXERCICES DISPONIBLES DANS SON APPLICATION/.test(c),
+      return {taille:c.length, avant:c.indexOf("SITUATION DE L'INSTANT"),
+              entete:/EXERCICES DISPONIBLES DANS SON APPLICATION/.test(c),
               elast:/Écarté Élastique/.test(c), trx:/Squat TRX \(Sangles\)/.test(c),
               machine:/Leg Press/.test(c), barre:/Squat à la Barre/.test(c),
               nePasSupposer:/Ne suppose pas son matériel/.test(c)}; };
@@ -190,9 +191,24 @@ console.log('\n─── LA CONVERSATION NE SE PERD PLUS ───────�
     r.perso, String(r.perso));
   // Garde-fou de coût : le contexte ne doit pas exploser (l'audit du 28/07 a montré que les
   // consignes noient déjà les infos sur la personne — R20 appliqué au prompt de Milo).
-  t('le coût reste borné : « maison » sous 55 000 et « salle » sous 60 000 caractères',
-    r.maison.taille<55000&&r.salle.taille<60000,
+  // ⚠️ CE SEUIL A ROUGI TOUT SEUL LE 06/08, À 22h13, SANS QU'UNE LIGNE DE PROMPT CHANGE.
+  // Mesuré : 54 987 caractères à 21h15, 55 003 à 22h13 — le contexte porte l'heure et le
+  // moment de la journée (« soirée » → « nuit »), donc il respire de quelques dizaines de
+  // caractères dans la journée. Le seuil avait été posé 13 caractères au-dessus de la valeur
+  // du jour : ce n'était pas un budget, c'était une PHOTO de la taille du moment, condamnée à
+  // basculer toute seule. C'est la famille « seuils en marche d'escalier » de BUGS.md.
+  // On lui donne donc une vraie marge (~2 000) : ça laisse respirer l'heure et la date, et ça
+  // attrape toujours ce qu'il doit attraper — la réapparition d'un bloc de plusieurs milliers
+  // de caractères (le catalogue en pesait 9 507 à lui seul).
+  t('le coût reste borné : « maison » sous 57 000 et « salle » sous 62 000 caractères',
+    r.maison.taille<57000&&r.salle.taille<62000,
     'maison='+r.maison.taille+' salle='+r.salle.taille);
+  // ⭐ LE VRAI GARDE-FOU DE COÛT est ICI, et il ne dépend PAS de l'heure : tout ce qui est
+  // AU-DESSUS du marqueur de cache est facturé à CHAQUE personne, et cette partie-là doit
+  // rester rigoureusement stable (c'est l'invariant de ft-v775/782). Mesuré identique à
+  // 21h15 et à 22h13 : 42 032 caractères. Seuil serré, parce qu'il PEUT l'être.
+  t('⭐⭐ la partie MISE EN CACHE (au-dessus du marqueur) reste sous 44 000 caractères',
+    r.maison.avant>1000 && r.maison.avant<44000, 'avant marqueur='+r.maison.avant);
   await q.c.close();
 }
 

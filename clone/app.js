@@ -64,23 +64,31 @@ function _cardioResume(){
   if(!bout.length)return 'optionnel';
   return bout.join(' · ')+` · ~${calcCardioKcalTotal()}kcal`;
 }
+// « Y a-t-il un cardio saisi ? » — UNE seule définition, lue par le rendu ET par la mise à jour
+// en direct (R2 : deux endroits qui répondent à la même question finissent par diverger).
+// ⚠️ Couvre les DEUX moments (avant + après) : le total suffit, ne pas regarder un seul objet.
+function _aUnCardio(){ return calcCardioKcalTotal()>0; }
 function _updateCardioSummary(){
   const el=document.getElementById('cardio-summary');
+  const oui=_aUnCardio();
   if(el){
-    const kcal=calcCardioKcalTotal();
     el.textContent=_cardioResume();
-    el.style.color=kcal?'var(--green)':'var(--t3)';
+    el.style.color=oui?'var(--green)':'var(--t3)';
   }
   // Bouton « Enregistrer le cardio » : visible dès qu'une durée est saisie (sans re-render → focus gardé)
+  // ⚠️ ft-v785 — ici on lisait `c.duration`, une variable qui n'existe PAS dans cette fonction
+  // (reste d'un remaniement, ft-v670). Chaque chiffre tapé dans la durée levait donc une erreur,
+  // qui interrompait la suite de setCardioField() : `renderLogFinish()` n'était jamais appelé, et
+  // le bouton « terminer la séance » n'apparaissait pas alors que le cardio seul suffit à valider.
+  // Silencieux à l'écran, visible seulement dans le journal d'erreurs de l'Admin.
   const btn=document.getElementById('cardio-save-btn');
-  if(btn)btn.style.display=(c.duration>0)?'block':'none';
+  if(btn)btn.style.display=oui?'block':'none';
 }
 let _cardioOpen=false;
 function toggleCardio(){_cardioOpen=!_cardioOpen;renderCardioBlock();}
 function renderCardioBlock(){
   const el=document.getElementById('log-cardio');if(!el)return;
   if(!S.wkt){el.innerHTML='';return;}
-  const kcal=calcCardioKcalTotal();
   const types=Object.keys(CARDIO_LABELS);
   // Un sous-bloc par MOMENT. L'échauffement est présenté en premier parce que c'est l'ordre
   // dans lequel ça se passe — et son libellé dit à quoi il sert, pour ne pas le confondre
@@ -107,7 +115,7 @@ function renderCardioBlock(){
       </div>
     </div>`;
   };
-  const aUnCardio=kcal>0;
+  const aUnCardio=_aUnCardio();   // même définition que la mise à jour en direct (R2)
   el.innerHTML=`<div style="background:var(--bg2);border-radius:12px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">
   <div onclick="toggleCardio()" style="display:flex;align-items:center;gap:13px;padding:12px 16px;cursor:pointer;touch-action:manipulation;">
     <div class="home-row-ic" style="background:rgba(255,138,114,.12);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="2"/><path d="M10 12L8 20"/><path d="M10 12L13 17L16 12"/><path d="M6 12L8 10L12 12L16 10L18 12"/></svg></div>
