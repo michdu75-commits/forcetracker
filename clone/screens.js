@@ -694,7 +694,14 @@ function _miloMessage(){
     // puis la fait le JOUR MÊME. plannedSession() compare des DATES, pas ce qui a été fait → l'Accueil
     // et Milo continuaient d'annoncer une séance déjà faite. On ne DEVINE pas en rapprochant le libellé
     // des muscles travaillés (ça se tromperait un jour sur deux) : on DEMANDE, en un tap.
-    if(np.days>=1&&lastDate===tStr){
+    // ⚠️ SEULEMENT « DEMAIN » (ft-v784) — cas réel relevé dans les conversations de Michel :
+    // il annonce une séance pour SAMEDI, s'entraîne le MERCREDI, et l'Accueil lui demande
+    // « tu avais annoncé une séance Larsen Press pour samedi — c'était celle-là ? ». Non :
+    // elle est dans 3 jours. La question n'a de sens que si l'annonce était pour DEMAIN et
+    // qu'elle a été avancée d'un jour. Au-delà, on retombe sur « prévue samedi, repose-toi
+    // d'ici là », qui est la bonne phrase. Une question absurde ne casse rien — c'est pire :
+    // elle démolit le « Milo se souvient de moi » qu'elle était censée servir.
+    if(np.days===1&&lastDate===tStr){
       // On MONTRE ce que l'app voit (exercices + région dominante) et la personne tranche —
       // on ne rapproche JAMAIS le libellé tapé (« bas du corps ») des muscles travaillés :
       // ça se tromperait sur les séances mixtes, celles où Michel lui-même hésite (29/07).

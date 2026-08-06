@@ -1064,6 +1064,24 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
                    sansSilent: texte.indexOf('consigne interne')<0 };
         }catch(e){ return {erreur:String(e&&e.message||e)}; }
       })(),
+      // ⚠️ « C'ÉTAIT CELLE-LÀ ? » POSÉE À TORT (06/08) — trouvé dans les VRAIES conversations
+      // exportées par Michel : séance annoncée pour SAMEDI, faite le MERCREDI, et l'Accueil
+      // demandait si celle de mercredi était celle de samedi. On appelle le VRAI `_miloMessage()`
+      // (pas une copie de sa logique dans le test — l'erreur de ft-v760/770) sur deux états.
+      celleLa: (()=>{
+        const vs=S.sessions, vn=S.nextPlanned;
+        const j=n=>{const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()+n);
+                    return d.toISOString().slice(0,10);};
+        try{
+          S.sessions=[{date:today(),exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:8,done:true}]}],vol:1}];
+          S.nextPlanned={date:j(3),label:'Larsen Press'};
+          const loin=_miloMessage();
+          S.nextPlanned={date:j(1),label:'bas du corps'};
+          const demain=_miloMessage();
+          return { loinId:(loin&&loin.id)||'', demainId:(demain&&demain.id)||'' };
+        }catch(e){ return {erreur:String(e&&e.message||e)}; }
+        finally{ S.sessions=vs; S.nextPlanned=vn; }
+      })(),
       // ⚠️ LE BLOC CACHÉ INCOMPLET (05/08) — relevé par Gemini ET Mistral. Le prompt demande
       // au modèle de se relire (« Vérifie avant d'envoyer : même nombre d'exercices… »).
       // S'il oublie un exercice, la personne démarre une séance AMPUTÉE de ce qu'elle vient
@@ -1194,6 +1212,10 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐⭐ ACCUEIL : une séance annoncée DANS 3 JOURS ne déclenche plus « c\'était celle-là ? »',
+    r.celleLa && r.celleLa.loinId==='prevu', JSON.stringify(r.celleLa));
+  t('ACCUEIL : annoncée pour DEMAIN et faite aujourd\'hui → la question reste posée (non-régression)',
+    r.celleLa && r.celleLa.demainId==='seance-faite', JSON.stringify(r.celleLa));
   t('⭐⭐ CACHE PARTAGÉ : la frontière « PROFIL ATHLÈTE: » existe et précède le marqueur d\'instant',
     r.blocCommun && r.blocCommun.trouve===true, JSON.stringify(r.blocCommun));
   t('⭐⭐ CACHE PARTAGÉ : AUCUNE donnée personnelle avant cette frontière (sinon le partage tombe)',
