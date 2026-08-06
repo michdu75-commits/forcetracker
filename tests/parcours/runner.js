@@ -1010,6 +1010,29 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
         const tard=/MOMENT MILO/.test(buildCoachContext('fais-moi une séance jambes ce soir'));
         coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
         return {debut, tard}; })(),
+      // ⚠️ EXPORT DES CONVERSATIONS (05/08, demande de Michel). Le fil vit UNIQUEMENT sur le
+      // téléphone : un changement d'appareil l'efface. On donne un fichier, on n'envoie rien
+      // sur un serveur — envoyer des conversations de santé dans la sauvegarde cloud serait
+      // aujourd'hui une mauvaise idée (`loadProfile` sert encore un compte à qui connaît
+      // l'adresse). Ce témoin vérifie le contenu ET l'invariant « ça ne part nulle part ».
+      exportConv: (()=>{
+        try{
+          localStorage.setItem('ft4_coach_hist', JSON.stringify([
+            {role:'user',content:'salut Milo'},
+            {role:'assistant',content:'Salut ! Comment tu vas ?'},
+            {role:'user',content:'consigne interne',_silent:true},
+            {role:'assistant',content:'Débrief automatique'}
+          ]));
+          let nom='', contenu='';
+          const vraiCreate=URL.createObjectURL, vraiA=document.createElement.bind(document);
+          URL.createObjectURL=(b)=>{ contenu='(blob)'; return 'blob:faux'; };
+          document.createElement=(t)=>{ const el=vraiA(t); if(t==='a'){ el.click=()=>{ nom=el.download; }; } return el; };
+          let envoye=false; const vf=window.fetch; window.fetch=()=>{ envoye=true; return Promise.resolve({ok:true,text:()=>Promise.resolve('')}); };
+          exporterConversationsMilo();
+          window.fetch=vf; URL.createObjectURL=vraiCreate; document.createElement=vraiA;
+          return { nomOk:/^mes-conversations-milo-\d{4}-\d{2}-\d{2}\.txt$/.test(nom), rienEnvoye:envoye===false };
+        }catch(e){ return {erreur:String(e&&e.message||e)}; }
+      })(),
       // ⚠️ LE BLOC CACHÉ INCOMPLET (05/08) — relevé par Gemini ET Mistral. Le prompt demande
       // au modèle de se relire (« Vérifie avant d'envoyer : même nombre d'exercices… »).
       // S'il oublie un exercice, la personne démarre une séance AMPUTÉE de ce qu'elle vient
@@ -1140,6 +1163,10 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐ EXPORT : « Exporter mes conversations » produit bien un fichier daté',
+    r.exportConv && r.exportConv.nomOk===true, JSON.stringify(r.exportConv));
+  t('⭐⭐ EXPORT : il n\'ENVOIE RIEN sur le réseau — les conversations ne quittent pas l\'appareil',
+    r.exportConv && r.exportConv.rienEnvoye===true, JSON.stringify(r.exportConv));
   t('⭐⭐ SÉANCE : un bloc caché INCOMPLET est rattrapé par le texte visible (séance jamais amputée)',
     r.coherenceSeance && r.coherenceSeance.amputeRecolle===true, JSON.stringify(r.coherenceSeance));
   t('⭐ SÉANCE : quand le bloc est complet, on le garde (il est plus riche : repos, types)',

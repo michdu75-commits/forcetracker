@@ -863,6 +863,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <button class="btn btn-bg2" onclick="loadHealthAdmin()" style="padding:11px;font-size:14px;">🩺 Vérifier maintenant</button>
       <div id="admin-health" style="margin-top:4px;"></div>
     </div>
+    <!-- Exporter ses propres conversations (05/08, demande de Michel). Le fil des échanges
+         vit UNIQUEMENT sur le téléphone : un changement d'appareil l'efface. On donne donc
+         un FICHIER que la personne emporte, plutôt que d'envoyer ses conversations sur un
+         serveur — la donnée sensible ne bouge pas, c'est elle qui décide. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">💬 Mes conversations avec Milo</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Tes échanges avec Milo vivent <strong>uniquement sur ce téléphone</strong> — ils ne partent sur aucun serveur, et c'est voulu. Mais du coup, <strong>un changement d'appareil les efface</strong>. Ce bouton te les donne dans un fichier texte que tu gardes où tu veux.</div>
+      <button class="btn btn-bg2" onclick="exporterConversationsMilo()" style="padding:11px;font-size:14px;">💬 Exporter mes conversations</button>
+    </div>
     <!-- Le miroir Supabase (04/08). Une sauvegarde dont on ne vérifie jamais qu'elle écrit
          n'est pas une sauvegarde : c'est exactement ce qui s'est passé avec la sauvegarde
          nocturne, arrêtée pendant 36 jours sans que personne ne le voie. D'où un bouton qui

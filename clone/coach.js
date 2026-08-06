@@ -686,6 +686,67 @@ function _saveCoachHist(){
     catch(e){ if(keep.length<=1) return; keep=keep.slice(Math.ceil(keep.length/2)); }
   }
 }
+/* ─── EXPORTER SES PROPRES CONVERSATIONS AVEC MILO (05/08/2026) ────────────────────────
+ *
+ * ⚠️ POURQUOI ÇA MANQUAIT, et pourquoi c'est un export et PAS une sauvegarde cloud.
+ * Le fil des échanges vit UNIQUEMENT sur le téléphone (`ft4_coach_hist`) : il ne part ni
+ * chez Google, ni sur le Drive, ni chez Supabase. C'est un CHOIX de conception — les gens
+ * parlent à Milo de leur corps, de leur moral, de leurs blessures — pas un oubli.
+ * Conséquence : un changement de téléphone ou un vidage du cache efface tout.
+ *
+ * 👉 On donne donc à la personne un FICHIER qu'elle emporte, plutôt que d'envoyer ses
+ *    conversations sur un serveur. La donnée sensible ne bouge pas ; c'est elle qui décide.
+ *    ⚠️ Envoyer ce fil dans la sauvegarde cloud serait aujourd'hui une MAUVAISE idée :
+ *    `loadProfile` sert encore un compte entier à qui connaît l'adresse e-mail (trou connu,
+ *    non corrigé) — on y mettrait donc les conversations de santé. À revoir quand les vrais
+ *    comptes existeront, pas avant.
+ *
+ * ⚠️ HONNÊTETÉ SUR CE QUI EST RÉCUPÉRABLE : on n'exporte que ce qui est ENCORE là. Le fil
+ *    est rogné au-delà de 150 000 caractères / 400 messages ; ce qui a déjà été coupé est
+ *    perdu et aucun export ne le fera revenir. On ne promet pas plus que ce qu'on a.
+ */
+function exporterConversationsMilo(){
+  try{
+    let fil=[];
+    try{ const raw=localStorage.getItem('ft4_coach_hist'); if(raw)fil=JSON.parse(raw)||[]; }catch(e){}
+    if(!Array.isArray(fil)||!fil.length){
+      if(typeof toast==='function')toast('Aucune conversation à exporter','info');
+      return;
+    }
+    // Les consignes internes (débrief automatique) ne sont pas des messages de la personne :
+    // elles ne s'affichent jamais à l'écran, elles n'ont rien à faire dans son export.
+    const visibles=fil.filter(m=>m&&!m._silent&&m.content);
+    const L=[];
+    L.push('Mes conversations avec Milo — Force Tracker');
+    L.push('Exporté le '+new Date().toLocaleString('fr-FR'));
+    L.push(visibles.length+' message'+(visibles.length>1?'s':''));
+    L.push('');
+    L.push('⚠️ Ce fichier contient des échanges personnels. Il ne quitte ton appareil que si');
+    L.push('   tu le partages toi-même.');
+    L.push('');
+    L.push('══════════════════════════════════════════════════════');
+    L.push('');
+    visibles.forEach(m=>{
+      const qui = m.role==='user' ? 'MOI' : 'MILO';
+      const txt = (typeof m.content==='string') ? m.content
+                : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
+      L.push('── '+qui+' ──');
+      L.push(String(txt).trim());
+      L.push('');
+    });
+    const nom='mes-conversations-milo-'+((typeof today==='function')?today():new Date().toISOString().slice(0,10))+'.txt';
+    const blob=new Blob([L.join('\n')],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download=nom;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000);
+    if(typeof toast==='function')toast(visibles.length+' messages exportés','success');
+  }catch(e){
+    console.warn('[export conversations]',e);
+    if(typeof toast==='function')toast('Export impossible','error');
+  }
+}
+
 // Reconstruit les bulles à l'écran depuis coachHistory (à l'ouverture de l'appli)
 function _renderCoachThread(){
   const msgs = document.getElementById('coach-msgs');

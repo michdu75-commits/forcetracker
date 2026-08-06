@@ -57,7 +57,7 @@
 /* Badge « CLONE » visible pour ne jamais confondre avec l'app réelle */
 document.addEventListener('DOMContentLoaded',function(){
   var b=document.createElement('div');
-  b.textContent='🧪 CLONE ft-v780';
+  b.textContent='🧪 CLONE ft-v781';
   b.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 2px);left:50%;transform:translateX(-50%);z-index:99999;background:rgba(255,45,85,.92);color:#fff;font:700 10px/1 system-ui,sans-serif;letter-spacing:.12em;padding:4px 10px;border-radius:0 0 8px 8px;pointer-events:none;';
   document.body.appendChild(b);
   // 🔄 AUTO-MAJ DU CLONE : si une version plus récente est EN LIGNE, se recharger UNE fois.
@@ -921,6 +921,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
          à la main — donc personne ne les consultait. La panne du 29/07 (réservoir plein à 102 %,
          plus aucune écriture pendant 2 jours) était visible par `storeHealth` : elle n'a été vue
          que 2 jours plus tard. Même leçon que le Google Sheet : la donnée doit venir à toi. -->
+    <!-- Exporter ses propres conversations (05/08, demande de Michel). Le fil des échanges
+         vit UNIQUEMENT sur le téléphone : un changement d'appareil l'efface. On donne donc
+         un FICHIER que la personne emporte, plutôt que d'envoyer ses conversations sur un
+         serveur — la donnée sensible ne bouge pas, c'est elle qui décide. -->
+    <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-weight:700;color:var(--t1);font-size:15px;">💬 Mes conversations avec Milo</div>
+      <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Tes échanges avec Milo vivent <strong>uniquement sur ce téléphone</strong> — ils ne partent sur aucun serveur, et c'est voulu. Mais du coup, <strong>un changement d'appareil les efface</strong>. Ce bouton te les donne dans un fichier texte que tu gardes où tu veux.</div>
+      <button class="btn btn-bg2" onclick="exporterConversationsMilo()" style="padding:11px;font-size:14px;">💬 Exporter mes conversations</button>
+    </div>
     <div class="card cp" style="display:flex;flex-direction:column;gap:10px;">
       <div style="font-weight:700;color:var(--t1);font-size:15px;">🩺 Santé du système</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">Les 5 alertes qui ne préviennent personne : le <strong>stockage</strong> (c'est lui qui a lâché le 29 juillet), les <strong>sauvegardes</strong> de la nuit, les <strong>mails</strong> qui ne partent pas, la <strong>consommation IA</strong>, et les <strong>mises en ligne</strong> (un déploiement raté est totalement silencieux). À regarder de temps en temps.</div>
