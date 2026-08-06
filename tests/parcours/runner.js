@@ -1036,6 +1036,11 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       // l'adresse). Ce témoin vérifie le contenu ET l'invariant « ça ne part nulle part ».
       exportConv: (()=>{
         try{
+          // ⚠️ Les discussions RANGÉES doivent être dans l'export aussi (corrigé le 05/08) :
+          // le « + » ne supprime pas le fil, il le range dans S.coachConversations (30 max).
+          // La 1ʳᵉ version n'exportait que le fil EN COURS — donc presque rien.
+          S.coachConversations=[{id:'c1',title:'Ma séance de mardi',ts:Date.now()-864e5,
+            messages:[{role:'user',content:'une vieille question rangée'},{role:'assistant',content:'une vieille réponse'}]}];
           localStorage.setItem('ft4_coach_hist', JSON.stringify([
             {role:'user',content:'salut Milo'},
             {role:'assistant',content:'Salut ! Comment tu vas ?'},
@@ -1047,9 +1052,16 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
           URL.createObjectURL=(b)=>{ contenu='(blob)'; return 'blob:faux'; };
           document.createElement=(t)=>{ const el=vraiA(t); if(t==='a'){ el.click=()=>{ nom=el.download; }; } return el; };
           let envoye=false; const vf=window.fetch; window.fetch=()=>{ envoye=true; return Promise.resolve({ok:true,text:()=>Promise.resolve('')}); };
+          let texte='';
+          const vraiBlob=window.Blob;
+          window.Blob=function(parts,opts){ texte=(parts&&parts[0])||''; return new vraiBlob(parts,opts); };
           exporterConversationsMilo();
+          window.Blob=vraiBlob;
           window.fetch=vf; URL.createObjectURL=vraiCreate; document.createElement=vraiA;
-          return { nomOk:/^mes-conversations-milo-\d{4}-\d{2}-\d{2}\.txt$/.test(nom), rienEnvoye:envoye===false };
+          return { nomOk:/^mes-conversations-milo-\d{4}-\d{2}-\d{2}\.txt$/.test(nom), rienEnvoye:envoye===false,
+                   contientRangee: texte.indexOf('une vieille question rangée')>=0,
+                   contientCourante: texte.indexOf('salut Milo')>=0,
+                   sansSilent: texte.indexOf('consigne interne')<0 };
         }catch(e){ return {erreur:String(e&&e.message||e)}; }
       })(),
       // ⚠️ LE BLOC CACHÉ INCOMPLET (05/08) — relevé par Gemini ET Mistral. Le prompt demande
@@ -1188,6 +1200,11 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     r.blocCommun && r.blocCommun.sansNom===true, JSON.stringify(r.blocCommun));
   t('⭐ EXPORT : « Exporter mes conversations » produit bien un fichier daté',
     r.exportConv && r.exportConv.nomOk===true, JSON.stringify(r.exportConv));
+  t('⭐⭐ EXPORT : les discussions RANGÉES y sont aussi, pas seulement le fil en cours',
+    r.exportConv && r.exportConv.contientRangee===true && r.exportConv.contientCourante===true,
+    JSON.stringify(r.exportConv));
+  t('EXPORT : les consignes internes (jamais affichées) en sont exclues',
+    r.exportConv && r.exportConv.sansSilent===true, JSON.stringify(r.exportConv));
   t('⭐⭐ EXPORT : il n\'ENVOIE RIEN sur le réseau — les conversations ne quittent pas l\'appareil',
     r.exportConv && r.exportConv.rienEnvoye===true, JSON.stringify(r.exportConv));
   t('⭐⭐ SÉANCE : un bloc caché INCOMPLET est rattrapé par le texte visible (séance jamais amputée)',

@@ -707,32 +707,55 @@ function _saveCoachHist(){
  */
 function exporterConversationsMilo(){
   try{
+    // ⚠️ ON EXPORTE AUSSI LES DISCUSSIONS RANGÉES (corrigé le 05/08, sur une question de
+    // Michel : « comment je désarchive la conversation avec Milo ? »). La 1ʳᵉ version ne
+    // lisait que `ft4_coach_hist` — le fil EN COURS. Or le « + » ne supprime rien : il RANGE
+    // le fil dans `S.coachConversations` (30 conservées). L'export en oubliait donc la quasi-
+    // totalité, alors que la demande était « récupérer LES conversations », au pluriel.
+    // *Un export incomplet est pire qu'aucun export : on croit avoir tout sauvegardé.*
     let fil=[];
     try{ const raw=localStorage.getItem('ft4_coach_hist'); if(raw)fil=JSON.parse(raw)||[]; }catch(e){}
-    if(!Array.isArray(fil)||!fil.length){
+    let rangees=[];
+    try{ rangees=(typeof S!=='undefined'&&Array.isArray(S.coachConversations))?S.coachConversations:[]; }catch(e){}
+    if((!Array.isArray(fil)||!fil.length) && !rangees.length){
       if(typeof toast==='function')toast('Aucune conversation à exporter','info');
       return;
     }
     // Les consignes internes (débrief automatique) ne sont pas des messages de la personne :
     // elles ne s'affichent jamais à l'écran, elles n'ont rien à faire dans son export.
-    const visibles=fil.filter(m=>m&&!m._silent&&m.content);
+    const propre=arr=>(arr||[]).filter(m=>m&&!m._silent&&m.content);
+    const visibles=propre(fil);
+    const total=visibles.length+rangees.reduce((n,c)=>n+propre(c&&c.messages).length,0);
     const L=[];
     L.push('Mes conversations avec Milo — Force Tracker');
     L.push('Exporté le '+new Date().toLocaleString('fr-FR'));
-    L.push(visibles.length+' message'+(visibles.length>1?'s':''));
+    L.push(total+' message'+(total>1?'s':'')+' · '+(rangees.length+(visibles.length?1:0))+' discussion'+((rangees.length+(visibles.length?1:0))>1?'s':''));
     L.push('');
     L.push('⚠️ Ce fichier contient des échanges personnels. Il ne quitte ton appareil que si');
     L.push('   tu le partages toi-même.');
     L.push('');
     L.push('══════════════════════════════════════════════════════');
     L.push('');
-    visibles.forEach(m=>{
-      const qui = m.role==='user' ? 'MOI' : 'MILO';
-      const txt = (typeof m.content==='string') ? m.content
-                : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
-      L.push('── '+qui+' ──');
-      L.push(String(txt).trim());
+    const ecrire=(titre,msgs)=>{
+      if(!msgs.length)return;
+      L.push('╔═══ '+titre+' ═══');
       L.push('');
+      msgs.forEach(m=>{
+        const qui = m.role==='user' ? 'MOI' : 'MILO';
+        const txt = (typeof m.content==='string') ? m.content
+                  : (Array.isArray(m.content) ? ((m.content.find(p=>p&&p.type==='text')||{}).text || '[photo]') : '');
+        L.push('── '+qui+' ──');
+        L.push(String(txt).trim());
+        L.push('');
+      });
+      L.push('');
+    };
+    ecrire('DISCUSSION EN COURS', visibles);
+    // Les rangées sont stockées de la plus récente à la plus ancienne : on les remet dans
+    // l'ordre du temps, c'est ainsi qu'on relit une histoire.
+    rangees.slice().reverse().forEach(c=>{
+      const d=c&&c.ts?new Date(c.ts).toLocaleDateString('fr-FR'):'?';
+      ecrire((c&&c.title?String(c.title):'Discussion')+' — '+d, propre(c&&c.messages));
     });
     const nom='mes-conversations-milo-'+((typeof today==='function')?today():new Date().toISOString().slice(0,10))+'.txt';
     const blob=new Blob([L.join('\n')],{type:'text/plain;charset=utf-8'});
@@ -740,7 +763,7 @@ function exporterConversationsMilo(){
     a.href=URL.createObjectURL(blob); a.download=nom;
     document.body.appendChild(a); a.click();
     setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000);
-    if(typeof toast==='function')toast(visibles.length+' messages exportés','success');
+    if(typeof toast==='function')toast(total+' messages exportés','success');
   }catch(e){
     console.warn('[export conversations]',e);
     if(typeof toast==='function')toast('Export impossible','error');
