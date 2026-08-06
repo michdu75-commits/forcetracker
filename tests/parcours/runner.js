@@ -1234,6 +1234,36 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  // ⚠️ LE DOUBLE DÉBRIEF (07/08) — trouvé dans l'export de conversations de Michel : Milo a
+  // débriefé DEUX FOIS la même séance, avec deux objectifs mémorisés contradictoires (le second,
+  // faux, écrasait le premier). Course entre `_runSeDebrief` (écran de fin) et `_maybeAutoDebrief`
+  // (écran Coach) : le premier ne rendait le jeton `ft4_pending_debrief` qu'APRÈS la réponse de
+  // l'IA, plusieurs secondes plus tard. ⚠️ On reproduit la course avec un appel réseau LENT —
+  // sans la lenteur, le bug ne se déclenche pas et le témoin serait vert des deux côtés.
+  const dbl=await p.evaluate(async()=>{
+    const vf=window.fetch, vs=S.url;
+    try{
+      S.url='https://exemple.invalide/exec';
+      localStorage.setItem('ft4_pending_debrief','SEANCE-TEST');
+      if(!document.getElementById('se-debrief')){
+        const d=document.createElement('div'); d.id='se-debrief'; document.body.appendChild(d);
+      }
+      let appels=0;
+      window.fetch=()=>{ appels++; return new Promise(r=>setTimeout(()=>r({
+        ok:true, json:()=>Promise.resolve({reply:'Débrief de test.'})
+      }),400)); };
+      const p1=_runSeDebrief({exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}],
+                              volume:500,id:'SEANCE-TEST'},0);
+      const p2=_maybeAutoDebrief();      // le Coach s'ouvre PENDANT que le premier attend
+      await Promise.all([p1,p2]);
+      return {appels:appels, jeton:localStorage.getItem('ft4_pending_debrief')};
+    }catch(e){ return {erreur:String(e&&e.message||e)}; }
+    finally{ window.fetch=vf; S.url=vs; localStorage.removeItem('ft4_pending_debrief'); }
+  });
+  t('⭐⭐ DÉBRIEF : la séance n\'est débriefée QU\'UNE FOIS, même si le Coach s\'ouvre pendant l\'appel',
+    dbl && dbl.appels===1, JSON.stringify(dbl));
+  t('DÉBRIEF : une fois fait, le jeton est consommé (pas de débrief au prochain lancement)',
+    dbl && dbl.jeton===null, JSON.stringify(dbl));
   t('⭐⭐ CARDIO : saisir une durée ne lève AUCUNE erreur (le « variable c » du journal Admin)',
     r.cardioDuree && r.cardioDuree.erreur==='', JSON.stringify(r.cardioDuree));
   t('CARDIO : le bouton « Enregistrer le cardio » apparaît dès qu\'une durée est saisie',

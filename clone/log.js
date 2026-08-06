@@ -2414,6 +2414,18 @@ async function _runSeDebrief(sess,prCount){
   const fallback='<p>'+nExs+' exercice'+(nExs>1?'s':'')+' · '+nSets+' série'+(nSets>1?'s':'')+' · '+(sess.volume||0)+' kg de volume.'+(prCount>0?' Nouveau record 💪 bien joué !':' Séance bouclée, continue comme ça 👊')+'</p>';
   // Pas de réseau → résumé local (le flag reste : le Coach débriefera à son ouverture)
   if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)){ slot.innerHTML=fallback; return; }
+  // ⚠️ LE FLAG EST UN JETON : QUI LE PREND FAIT LE DÉBRIEF (ft-v786).
+  // Trouvé dans l'export de conversations de Michel : Milo a débriefé DEUX FOIS la même séance,
+  // avec deux objectifs mémorisés CONTRADICTOIRES — le second (faux) écrasait le premier, et
+  // c'est lui qui lui a fait dire « on avait pas dit samedi les pecs ? ».
+  // La cause était une COURSE entre les deux chemins : ici on ne retirait le flag qu'APRÈS la
+  // réponse de l'IA (plusieurs secondes). Passer sur l'écran Coach pendant ce temps déclenchait
+  // `_maybeAutoDebrief()`, qui voyait le flag encore posé et lançait un DEUXIÈME débrief.
+  // On prend donc le jeton AVANT l'appel — exactement ce que fait déjà `_maybeAutoDebrief`
+  // (R2 : une seule règle, appliquée pareil des deux côtés) — et on le REND si l'appel échoue.
+  let _pid=null; try{ _pid=localStorage.getItem('ft4_pending_debrief'); }catch(e){}
+  if(!_pid){ slot.innerHTML=fallback; return; }   // le Coach a déjà débriefé : on ne repaie pas un appel
+  try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){}
   const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
     +'Débriefe-la MAINTENANT, directement : analyse-la (progression, stabilité, points d\'attention) '
     +'en t\'appuyant sur mes charges par exercice (tu les as), tiens compte d\'une éventuelle douleur du jour, et termine par UNE piste '
@@ -2445,11 +2457,11 @@ async function _runSeDebrief(sess,prCount){
       if(coachHistory.length>20)coachHistory=coachHistory.slice(-20);
       if(typeof _saveCoachHist==='function')_saveCoachHist();
       if(coachHistory.length>=4 && S.url && S.email && typeof _saveCoachMemory==='function')_saveCoachMemory();
-      localStorage.removeItem('ft4_pending_debrief'); // débrief fait ici → le Coach ne le refera pas
       const nb=document.getElementById('coach-new-btn'); if(nb)nb.style.display='flex';
     }catch(e){}
   }catch(e){
-    // Échec réseau → résumé local ; le flag ft4_pending_debrief reste → le Coach réessaiera à son ouverture
+    // Échec réseau → résumé local, et on REND le jeton pour que le Coach réessaie à son ouverture
+    try{ localStorage.setItem('ft4_pending_debrief', _pid); }catch(_){}
     slot.innerHTML=fallback;
   }
 }
