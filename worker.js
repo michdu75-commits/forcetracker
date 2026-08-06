@@ -261,8 +261,34 @@ async function coach(body, apiKey) {
   // marqueur → comportement d'origine, rien ne casse.
   const CACHE_MARKER = "═══ SITUATION DE L'INSTANT ═══";
   const _mi = String(ctx).indexOf(CACHE_MARKER);
+  // ⭐ DEUXIÈME COUPURE DE CACHE — LE BLOC COMMUN À TOUS LES UTILISATEURS (05/08/2026).
+  //
+  // Question de Michel : « il y a 9 % rien que pour moi ; demain une autre personne discute
+  // comme moi, il se passe quoi ? ». MESURÉ sur deux profils opposés (homme 35 ans prise de
+  // muscle / femme 44 ans perte de poids) : les **37 261 premiers caractères sont
+  // STRICTEMENT IDENTIQUES** — la divergence commence exactement au prénom, dans
+  // « PROFIL ATHLÈTE: ». C'est 84 % du préfixe mis en cache.
+  //
+  // ⚠️ AVEC UNE SEULE COUPURE, CHAQUE UTILISATEUR PAYAIT CE BLOC EN ENTIER. Le cache est un
+  // cache de PRÉFIXE : dès qu'on atteint le prénom, la suite est unique, donc l'entrée de
+  // cache l'est aussi. On facturait le même texte de consignes autant de fois qu'il y a de
+  // personnes. Avec deux coupures, le bloc commun devient UNE SEULE entrée partagée par
+  // tout le monde, et chacun ne paie plus que ses ~7 000 caractères personnels.
+  //
+  // ⚠️ PORTÉE HONNÊTE : le cache expire après ~5 minutes d'inactivité. Le gain est donc
+  //    proportionnel à l'USAGE — nul avec un seul utilisateur par jour, important dès que
+  //    plusieurs personnes discutent dans la même fenêtre. C'est exactement le cas que
+  //    Michel décrivait. Et il existe 2 variantes du bloc commun (admin / non-admin,
+  //    ft-v767) : 2 entrées de cache, pas N.
+  const _pi = String(ctx).indexOf('PROFIL ATHLÈTE:');
   let system;
-  if (_mi > 1000) {
+  if (_mi > 1000 && _pi > 1000 && _pi < _mi) {
+    system = [
+      { type: 'text', text: String(ctx).slice(0, _pi), cache_control: { type: 'ephemeral' } },          // commun à TOUS
+      { type: 'text', text: String(ctx).slice(_pi, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: { type: 'ephemeral' } },  // propre à la personne
+      { type: 'text', text: String(ctx).slice(_mi) }                                                    // l'instant, jamais caché
+    ];
+  } else if (_mi > 1000) {
     system = [
       { type: 'text', text: String(ctx).slice(0, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: { type: 'ephemeral' } },
       { type: 'text', text: String(ctx).slice(_mi) }

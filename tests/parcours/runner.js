@@ -1010,6 +1010,25 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
         const tard=/MOMENT MILO/.test(buildCoachContext('fais-moi une séance jambes ce soir'));
         coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
         return {debut, tard}; })(),
+      // ⚠️⚠️ LE BLOC COMMUN À TOUS LES UTILISATEURS (05/08) — question de Michel : « demain une
+      // autre personne discute comme moi, il se passe quoi ? ». Mesuré : les 37 261 premiers
+      // caractères sont STRICTEMENT identiques d'un profil à l'autre (84 % du préfixe caché) ;
+      // la divergence commence au prénom, dans « PROFIL ATHLÈTE: ». Le serveur IA pose donc
+      // une DEUXIÈME coupure de cache à cette frontière : le bloc de consignes devient UNE
+      // entrée partagée par tout le monde au lieu d'être refacturée par utilisateur.
+      // ⚠️ Ce témoin protège la FRONTIÈRE : si « PROFIL ATHLÈTE: » disparaissait, ou si une
+      // donnée personnelle remontait AVANT lui, le partage tomberait en silence.
+      blocCommun: (()=>{
+        const t=buildCoachContext('fais-moi une séance jambes ce soir');
+        const pi=t.indexOf('PROFIL ATHLÈTE:');
+        const mk=t.indexOf("═══ SITUATION DE L'INSTANT ═══");
+        const avant=t.slice(0,pi);
+        // aucune donnée personnelle ne doit apparaître avant la frontière
+        const nom=(S.name||'').trim();
+        return { trouve: pi>1000 && mk>pi,
+                 taille: pi,
+                 sansNom: !nom || avant.indexOf(nom)<0 };
+      })(),
       // ⚠️ EXPORT DES CONVERSATIONS (05/08, demande de Michel). Le fil vit UNIQUEMENT sur le
       // téléphone : un changement d'appareil l'efface. On donne un fichier, on n'envoie rien
       // sur un serveur — envoyer des conversations de santé dans la sauvegarde cloud serait
@@ -1163,6 +1182,10 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐ SAUVEGARDE : l\'app lit la date FOURNIE par le serveur (bk.lastDate), jamais celle du nom',
     /bk\.lastDate\s*\?/.test(srcBk) && /bk\.lastName\s*\|\|/.test(srcBk),
     'app.js ne lit pas bk.lastDate / bk.lastName');
+  t('⭐⭐ CACHE PARTAGÉ : la frontière « PROFIL ATHLÈTE: » existe et précède le marqueur d\'instant',
+    r.blocCommun && r.blocCommun.trouve===true, JSON.stringify(r.blocCommun));
+  t('⭐⭐ CACHE PARTAGÉ : AUCUNE donnée personnelle avant cette frontière (sinon le partage tombe)',
+    r.blocCommun && r.blocCommun.sansNom===true, JSON.stringify(r.blocCommun));
   t('⭐ EXPORT : « Exporter mes conversations » produit bien un fichier daté',
     r.exportConv && r.exportConv.nomOk===true, JSON.stringify(r.exportConv));
   t('⭐⭐ EXPORT : il n\'ENVOIE RIEN sur le réseau — les conversations ne quittent pas l\'appareil',
