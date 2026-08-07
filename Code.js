@@ -509,6 +509,20 @@ function doGet(e) {
     return json_({status:'ok', unlocked:_e});
   }
 
+  // « Ce compte est-il protégé ? » en LECTURE SIMPLE — ?action=authStatus&email=…
+  // ⚠️ Ouvert exprès en GET (07/08/2026, demande de Michel : un lien par personne pour vérifier
+  // qui est encore exposé). Ne renvoie QUE deux booléens : aucune donnée personnelle, aucun
+  // secret, et surtout PAS le code. La même route existe déjà en POST sans jeton depuis ft-v757 :
+  // ouvrir le GET n'expose donc rien de plus, ça évite juste de devoir bricoler une requête.
+  // ⚠️ Et c'est précisément pour ÉVITER d'utiliser `loadProfile` pour cette question : celui-là
+  // déverserait le compte entier (bilans sanguins compris) dans le navigateur, pour lire un
+  // oui/non. *On ne regarde pas la vie de quelqu'un pour savoir s'il a mis un mot de passe.*
+  // `light:true` forcé : on ne décompresse pas le compte pour lire un booléen (piège du 04/08,
+  // 4 comptes sur 5 en « non vérifié » parce que la requête n'aboutissait pas sur les gros).
+  if (p.action === 'authStatus' && p.email) {
+    return handleAuthStatus_({email: p.email, light: true});
+  }
+
   if (p.action === 'loadProfile' && p.email) {
     const email = (p.email || '').toLowerCase().trim();
     const _a = _authCheck_(email, p.authCode);
