@@ -2269,6 +2269,59 @@ function scheduleOneTimeBackup_() {
 // procédure de secours qu'on ne teste jamais n'est pas une procédure de secours.
 // D'où cette fonction PUBLIQUE (sans underscore) qui fait tout d'un coup et écrit le
 // résultat dans les journaux, pour qu'on puisse VOIR qu'elle a marché.
+// ─── JETON D'ADMINISTRATION — POSE ET VÉRIFICATION DEPUIS L'IDE ────────────────────────────
+// ⚠️ POURQUOI CETTE FONCTION EXISTE (07/08/2026). Michel, en posant la propriété à la main :
+// « google bloque à chaque fois ». Et c'est précisément cet argument — « les Script Properties
+// ne persistent pas sur ce projet » — qui avait fait choisir, le 12/07, un HASH EN DUR dans le
+// code… c'est-à-dire la faille elle-même. On ne peut donc pas se contenter d'espérer que le
+// formulaire tienne : un correctif de sécurité qui dépend d'un formulaire capricieux n'est pas
+// un correctif. Écrire la propriété DEPUIS LE CODE ne passe pas par ce formulaire du tout.
+//
+// ⚠️ ET LE SECRET NE TOUCHE JAMAIS LE DÉPÔT : la fonction le TIRE AU SORT et l'affiche dans le
+// journal d'exécution. Michel le recopie une fois sur son téléphone. Rien à écrire ici, donc
+// rien à faire fuiter — c'est exactement l'erreur qu'on est en train de réparer.
+function poserJetonAdmin() {
+  var P = PropertiesService.getScriptProperties();
+  var actuel = P.getProperty('IDEES_TOKEN2');
+  if (actuel && String(actuel).length >= 12) {
+    // On ne réaffiche JAMAIS un secret déjà posé : de quoi le reconnaître, pas de quoi le voler.
+    Logger.log('✅ DÉJÀ POSÉ — IDEES_TOKEN2 existe (' + String(actuel).length + ' caractères, '
+      + 'commence par « ' + String(actuel).slice(0, 3) + '… »). Rien à faire.');
+    Logger.log('   Pour en remettre un neuf : lance d\'abord effacerJetonAdmin(), puis relance celle-ci.');
+    return;
+  }
+  var al = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  var t = 'ft_';
+  for (var i = 0; i < 40; i++) t += al.charAt(Math.floor(Math.random() * al.length));
+  P.setProperty('IDEES_TOKEN2', t);
+  // ⚠️ ON RELIT AU LIEU DE CROIRE L'ÉCRITURE — c'est tout le sujet : la question n'est pas
+  // « a-t-on appelé setProperty ? » mais « la valeur est-elle VRAIMENT là ? ».
+  // On vérifie l'EFFET, jamais le retour de la fonction qui prétend l'avoir produit.
+  var relu = P.getProperty('IDEES_TOKEN2');
+  if (relu !== t) {
+    Logger.log('❌ ÉCHEC : la propriété ne s\'est pas enregistrée (relu : ' + (relu || 'rien') + ').');
+    Logger.log('   NE PAS déployer le correctif dans cet état — les routes d\'admin resteraient fermées.');
+    return;
+  }
+  Logger.log('✅ POSÉ ET RELU. Recopie ce jeton dans l\'app (Profil → Admin, il sera demandé une fois) :');
+  Logger.log('');
+  Logger.log('        ' + t);
+  Logger.log('');
+  Logger.log('⚠️ Ne le partage pas, ne le photographie pas avec autre chose à l\'écran.');
+}
+// Dit si le jeton est là, SANS le révéler. Sert à vérifier après coup qu'il a tenu.
+function verifierJetonAdmin() {
+  var v = PropertiesService.getScriptProperties().getProperty('IDEES_TOKEN2');
+  if (!v) { Logger.log('❌ ABSENT — les routes d\'administration sont FERMÉES (repli volontaire).'); return; }
+  if (String(v).length < 12) { Logger.log('⚠️ TROP COURT (' + String(v).length + ') — refusé par sécurité.'); return; }
+  Logger.log('✅ PRÉSENT — ' + String(v).length + ' caractères, commence par « ' + String(v).slice(0, 3) + '… ».');
+}
+// Retire le jeton. Referme les routes d'admin : à n'utiliser que pour en poser un neuf.
+function effacerJetonAdmin() {
+  PropertiesService.getScriptProperties().deleteProperty('IDEES_TOKEN2');
+  Logger.log('🗑️ Effacé. Les routes d\'administration sont fermées. Lance poserJetonAdmin() pour un nouveau.');
+}
+
 function reparerSauvegardeNuit() {
   installDailyBackupTrigger_();
   var n = ScriptApp.getProjectTriggers()
