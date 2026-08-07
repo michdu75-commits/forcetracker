@@ -1305,6 +1305,23 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     deuxCas && deuxCas.neufProtege===true && deuxCas.differents===true, JSON.stringify(deuxCas));
   t('SÉCURITÉ : un compte AVEC code, sur un appareil qui ne l\'a pas, se voit demander le code',
     deuxCas && deuxCas.connuDemandeCode===true, JSON.stringify(deuxCas));
+  // ⚠️ LE BOUTON DISAIT TOUJOURS LA MÊME CHOSE (ft-v790) — Michel : « je n'ai pas retiré mon code
+  // perso », alors que son compte ÉTAIT protégé. Le libellé était en dur dans index.html.
+  const btnProt = await p.evaluate(()=>{
+    const b=document.getElementById('btn-protect-account'); if(!b) return {absent:true};
+    // ⚠️ le témoin doit SURVIVRE à l'absence de la fonction : sans ce catch, le contrôle négatif
+    // fait planter tout le runner au lieu d'afficher un rouge (constaté en le lançant).
+    if(typeof _majBoutonProtect!=='function') return {absente:true};
+    const vs=(typeof _protectStatus!=='undefined')?_protectStatus:null;
+    try{
+      _protectStatus={hasCode:true};  _majBoutonProtect(); const oui=b.textContent;
+      _protectStatus={hasCode:false}; _majBoutonProtect(); const non=b.textContent;
+      return { protege:/protégé/i.test(oui), pasProtege:/Protéger mon compte/i.test(non), differents:oui!==non };
+    }catch(e){ return {erreur:String(e&&e.message||e)}; }
+    finally { _protectStatus=vs; }
+  });
+  t('⭐ PROTECTION : le bouton dit si le compte EST protégé (il affichait toujours la même chose)',
+    btnProt && btnProt.protege===true && btnProt.differents===true, JSON.stringify(btnProt));
   const srcPrem = await p.evaluate(async()=>{ const r=await fetch('app.js'); return await r.text(); });
   t('⭐ SÉCURITÉ : le premium ne tombe PAS avec la lecture (on ne punit pas deux fois)',
     /needsCode[^]{0,900}_isClientPremium/.test(srcPrem),

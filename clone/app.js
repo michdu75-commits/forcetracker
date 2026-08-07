@@ -1412,6 +1412,21 @@ function _protectErr(d){
   const m={nocode:'Demande d\'abord un code par email',expired:'Code expiré — redemande-en un',toomany:'Trop d\'essais — redemande un code',invalid:'Code email incorrect',court:'Ton code perso : au moins 4 chiffres',params:'Champs manquants'};
   return (d&&m[d.error])||'Une erreur est survenue';
 }
+// ⚠️ LE BOUTON DISAIT TOUJOURS LA MÊME CHOSE (ft-v790). Michel, capture à l'appui : « je n'ai pas
+// retiré mon code perso » — parce que le bouton affichait « Protéger mon compte avec un code »
+// alors que son compte ÉTAIT protégé (le serveur l'avait prouvé une heure plus tôt en refusant).
+// Le libellé était écrit EN DUR dans index.html et n'était jamais mis à jour : l'état réel ne se
+// voyait qu'en ouvrant la fenêtre. *Un écran qui n'affiche pas l'état fait douter de l'état* — et
+// sur une protection, douter revient à ne pas s'en servir.
+// On se fie au code présent SUR L'APPAREIL, puis à la réponse du serveur si on l'a déjà : aucun
+// appel réseau ajouté (règle d'or #4 — l'écran ne doit attendre personne).
+function _majBoutonProtect(){
+  const b=document.getElementById('btn-protect-account'); if(!b)return;
+  const protege = (typeof _protectStatus==='object'&&_protectStatus&&typeof _protectStatus.hasCode==='boolean')
+    ? _protectStatus.hasCode : !!(typeof _authCode==='function'&&_authCode());
+  b.textContent = protege ? '🔒 Compte protégé — gérer mon code'
+                          : '🔒 Protéger mon compte avec un code';
+}
 function openProtect(){
   if(!S.email){toast('Ajoute d\'abord ton email dans le Profil','info');return;}
   const ov=document.getElementById('ov-protect');if(!ov)return;
@@ -1419,8 +1434,8 @@ function openProtect(){
   const b=document.getElementById('protect-body');
   if(b)b.innerHTML='<div style="text-align:center;color:var(--t3);padding:24px 0;">Chargement…</div>';
   _protectPost({action:'authStatus',email:S.email})
-    .then(d=>{_protectStatus=d&&d.status==='ok'?d:{hasCode:!!_authCode(),emailVerified:!!S.emailVerified};_renderProtect();})
-    .catch(()=>{_protectStatus={hasCode:!!_authCode(),emailVerified:!!S.emailVerified};_renderProtect();});
+    .then(d=>{_protectStatus=d&&d.status==='ok'?d:{hasCode:!!_authCode(),emailVerified:!!S.emailVerified};_renderProtect();_majBoutonProtect();})
+    .catch(()=>{_protectStatus={hasCode:!!_authCode(),emailVerified:!!S.emailVerified};_renderProtect();_majBoutonProtect();});
 }
 function closeProtect(){const ov=document.getElementById('ov-protect');if(ov)ov.classList.remove('open');}
 function _renderProtect(mode){

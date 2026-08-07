@@ -2001,6 +2001,7 @@ function renderSetup(){
   renderBFCard();
   _renderProfileCompletion();
   try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
+  try{if(typeof _majBoutonProtect==='function')_majBoutonProtect();}catch(e){}
   _renderMorphoSection();
   _renderHealthSection();
   _applyA11y();
