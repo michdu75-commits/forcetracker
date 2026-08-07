@@ -1264,6 +1264,36 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     dbl && dbl.appels===1, JSON.stringify(dbl));
   t('DÉBRIEF : une fois fait, le jeton est consommé (pas de débrief au prochain lancement)',
     dbl && dbl.jeton===null, JSON.stringify(dbl));
+  // ⚠️ LE REFUS D'AUTHENTIFICATION NE DOIT JAMAIS ÊTRE SILENCIEUX (ft-v788). Avant de poser un
+  // code perso sur un compte, il fallait s'assurer qu'un appareil SANS le code le VOIE : le refus
+  // tombait dans un `else` vide, donc la synchro mourait sans un mot. Et `_cloudSync` envoie en
+  // `no-cors`, donc elle est aveugle par construction : ce contrôle du démarrage est le seul
+  // endroit qui peut voir le refus.
+  const refus = await p.evaluate(async()=>{
+    const vf=window.fetch, vs=S.url, ve=S.email;
+    try{
+      S.url='https://exemple.invalide/exec'; S.email='x@y.z';
+      const el=document.getElementById('email-verify-card');
+      let toasts=[]; const vt=window.toast; window.toast=(m)=>toasts.push(String(m));
+      window.fetch=()=>Promise.resolve({json:()=>Promise.resolve({status:'error',error:'auth'})});
+      // on rejoue le SEUL chemin qui voit le refus : la réponse est traitée par le même code
+      const r=await fetch(S.url); const d=await r.json();
+      let vu=false;
+      if(d.status==='error'&&d.error==='auth'){ _renderAuthRefusCard(); vu=true; }
+      window.toast=vt;
+      return { traite:vu, carte:!!(el&&/pause/i.test(el.innerHTML)),
+               local:(typeof _cloudSync==='function') };
+    }catch(e){ return {erreur:String(e&&e.message||e)}; }
+    finally{ window.fetch=vf; S.url=vs; S.email=ve; }
+  });
+  t('⭐⭐ SÉCURITÉ : un refus d\'authentification s\'AFFICHE (plus de synchro morte en silence)',
+    refus && refus.carte===true, JSON.stringify(refus));
+  const srcAuth = await p.evaluate(async()=>{ const r=await fetch('app.js'); return await r.text(); });
+  t('SÉCURITÉ : le démarrage traite bien le cas error/auth (le `else` vide est fermé)',
+    /d2\.error===['"]auth['"]/.test(srcAuth), 'app.js ne traite pas error:auth au démarrage');
+  t('SÉCURITÉ : le code saisi est VÉRIFIÉ avant d\'être enregistré (un code faux ne se fige pas)',
+    /_saisirCodeResync/.test(srcAuth) && /_setAuthCode\(c\)/.test(srcAuth),
+    'la saisie du code n\'est pas vérifiée avant enregistrement');
   // ⚠️ AUCUN SECRET DANS LES FICHIERS LIVRÉS (07/08) — le jeton d'administration `FT_IDEES_2026`
   // était écrit en clair dans `app.js`, servi publiquement par GitHub Pages et présent dans un
   // dépôt public : `?action=getIdees` livrait donc le nom, l'e-mail et le message de chaque

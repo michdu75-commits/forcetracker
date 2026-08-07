@@ -1361,6 +1361,41 @@ function _renderEmailVerifyCard(){
   el.innerHTML='<button class="btn" onclick="openEmailConfirm()" style="width:100%;background:rgba(234,179,8,.10);border:1.5px solid rgba(234,179,8,.4);color:var(--gold);font-size:13.5px;font-weight:700;padding:13px;border-radius:14px;touch-action:manipulation;">📧 Confirme ton email — sécurise ta sauvegarde</button>';
 }
 
+// ─── LE REFUS D'AUTHENTIFICATION SE VOIT (ft-v788) ───────────────────────────────────────
+// Le serveur refuse la lecture/écriture cloud quand le compte porte un code perso et que
+// l'appareil ne l'a pas. Avant, ce refus tombait dans un `else` vide : rien à l'écran, synchro
+// morte en silence. On réutilise l'emplacement de la carte « vérifier ton e-mail » (R13 :
+// enrichir l'existant plutôt que créer un deuxième bandeau qui lui ferait concurrence).
+// ⚠️ On ne touche à AUCUNE donnée locale : la séance du jour reste sur le téléphone, toujours
+// (règle d'or #3). Ce qui est en pause, c'est la copie en ligne — et on le dit.
+function _renderAuthRefusCard(){
+  const el=document.getElementById('email-verify-card'); if(!el)return;
+  el.innerHTML='<button class="btn" onclick="_saisirCodeResync()" style="width:100%;background:rgba(239,68,68,.10);'
+    +'border:1.5px solid rgba(239,68,68,.45);color:var(--red);font-size:13px;font-weight:700;padding:11px;text-align:left;line-height:1.45;">'
+    +'🔒 Sauvegarde en ligne en pause<br><span style="font-weight:500;color:var(--t2);font-size:12px;">'
+    +'Ce compte est protégé par un code. Tes données restent sur ce téléphone — appuie pour saisir le code.</span></button>';
+}
+// Saisie du code sur un appareil qui ne l'a pas. On le VÉRIFIE avant de l'enregistrer :
+// enregistrer un code faux rendrait le bandeau permanent sans jamais rien débloquer.
+async function _saisirCodeResync(){
+  const c=(typeof prompt==='function')?(prompt('Ton code perso (celui qui protège ce compte)')||'').trim():'';
+  if(!c)return;
+  try{
+    const r=await fetch(S.url,{method:'POST',redirect:'follow',headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'loadProfile',email:S.email,authCode:c})});
+    const d=await r.json();
+    if(d&&(d.status==='ok'||d.status==='not_found')){
+      _setAuthCode(c);
+      try{ localStorage.removeItem('ft4_auth_refus'); }catch(e){}
+      window._ftAuthRefusee=false;
+      toast('🔓 Code accepté — synchronisation rétablie','success');
+      try{ _renderEmailVerifyCard(); }catch(e){}
+      if(typeof _cloudSync==='function')_cloudSync();
+    } else if(d&&d.blocked){ toast('Trop d\'essais — réessaie demain','error'); }
+    else { toast('Code refusé — vérifie-le','error'); }
+  }catch(e){ toast('Réseau indisponible — réessaie','error'); }
+}
+
 // ─── PROTÉGER MON COMPTE (code perso) ────────────────────────
 let _protectStatus=null;
 function _protectPost(payload){
@@ -3255,6 +3290,23 @@ window._premiumPending=!!S.email;
         }
         // Réseau disponible → tenter la resynchro des séances en attente
         if(typeof _retrySheetQueue==='function')setTimeout(_retrySheetQueue,1500);
+      }else if(d2.status==='error'&&d2.error==='auth'){
+        // ⚠️ LE REFUS NE DOIT JAMAIS ÊTRE SILENCIEUX (ft-v788). Avant, ce cas tombait dans un
+        // `else` vide : le serveur refusait, et l'app n'affichait RIEN. La synchro mourait sans
+        // un mot — exactement la famille de pannes qu'on traque depuis le 27/07.
+        // ⚠️ ET C'EST LE SEUL ENDROIT QUI PEUT LE VOIR : `_cloudSync` envoie en `no-cors`, donc
+        // elle est AVEUGLE par construction et ne verra jamais un refus. Ce contrôle-ci tourne à
+        // CHAQUE ouverture : c'est notre unique canari.
+        window._premiumPending=false;
+        window._ftAuthRefusee=true;
+        try{ localStorage.setItem('ft4_auth_refus','1'); }catch(e){}
+        // Local d'abord (règle d'or #3) : on ne touche à AUCUNE donnée locale, on prévient.
+        // Le compte est protégé par un code perso : sans lui, ni lecture ni écriture cloud.
+        const _msg = d2.blocked
+          ? 'Trop d\'essais — réessaie demain.'
+          : 'Compte protégé : saisis ton code pour resynchroniser';
+        try{ toast('🔒 '+_msg,'error'); }catch(e){}
+        try{ if(typeof _renderAuthRefusCard==='function') _renderAuthRefusCard(); }catch(e){}
       }else{window._premiumPending=false;}
     }catch(e){
       console.warn('[FT premium check] échec réseau (timeout ou panne):',e.message);
