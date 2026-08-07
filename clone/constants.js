@@ -362,6 +362,10 @@ const NEW_FEATURES=[
 // ✅ v46/47/48 = les 3 features ex-testeurs (« maxi » · calories manuelles · objectif recomposition)
 //    OUVERTES À TOUT LE MONDE (ft-v623, décision Michel) + red dots reps-maxi/manual-kcal/goal-recomp réactivés.
 const WHATS_NEW=[
+  // ⚠️ CETTE POP-UP SE MÉRITE (règle d'or #11) : elle est là parce que la personne doit FAIRE
+  // quelque chose — sans code, sa sauvegarde en ligne reste en pause. On dit ce qui change pour
+  // elle, pas comment c'est fait ; la pop-up ANNONCE, l'aide EXPLIQUE (R25).
+  {v:55, ic:'🔒', t:'Protège ton compte — 2 minutes', d:'Tes données en ligne ne sont plus accessibles avec ta seule adresse e-mail : il faut désormais un code perso, que toi seul connais. 👉 Tant que tu ne l\'as pas posé, ton appli marche normalement et tes séances sont enregistrées sur ton téléphone — mais ta sauvegarde en ligne reste en pause. Pour l\'activer : Profil → « Protéger mon compte avec un code ». Tu reçois un code par mail, tu choisis le tien, c\'est fini. 🔐'},
   {v:54, ic:'🏷️', t:'Des exercices ont changé de nom', d:'Après relecture du catalogue, quelques doublons ont fusionné et « Dips Parallèles » est devenu « Dips Triceps (Buste Droit) » (rangé dans les Triceps). 🛡️ Tes records ont suivi tout seuls, et la recherche comprend encore les anciens noms — tape l\'ancien, tu le trouveras. 👊'},
   {v:53, ic:'🧍', t:'Ta figurine passe à 41 muscles', d:'Le pectoral est maintenant dessiné en 3 faisceaux, la cuisse en 3, le trapèze en 3 étages — et les adducteurs, le soléaire et le trapèze inférieur existent enfin. Tape un muscle : il te dit son nom précis. Ton ventre a changé d\'aspect, c\'est normal : l\'ancien découpage était mal nommé. 💪'},
   {v:52, ic:'💚', t:'Deux styles pour ta récup', d:'Menu → Apparence → Carte récup : garde l\'anneau, ou passe au style Moniteur — ton score en gros à gauche, une jauge ouverte à droite et un vrai tracé de cœur qui défile. Tu peux le figer si tu préfères le calme. 🩺'},
