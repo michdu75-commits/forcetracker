@@ -1462,16 +1462,45 @@ function _renderProtect(mode){
     +'<div style="font-size:13px;color:var(--t2);line-height:1.5;">'+intro+'</div>'
     +'<div style="font-size:12px;color:var(--t3);margin-top:10px;">📧 '+(_escNote(S.email||''))+'</div>'
     +'<button id="protect-send-btn" onclick="protectSendEmail()" style="'+btnG+'">📩 Recevoir le code par email</button>'
-    +'<div style="font-size:11px;color:var(--t3);margin-top:6px;text-align:center;">Pas reçu ? Regarde tes <b>spams</b> et marque « non-spam ».</div>'
+    +'<div style="font-size:11px;color:var(--t3);margin-top:6px;text-align:center;">💡 Le code est dans l\'<b>objet du mail</b> — tu peux le lire depuis la notification, <b>sans ouvrir ta boîte</b>.<br>Pas reçu ? Regarde tes <b>spams</b> et marque « non-spam ».</div>'
     +'<div style="font-weight:700;font-size:13px;color:var(--t1);margin-top:14px;">1️⃣ Le code reçu par email</div>'
     +'<div style="font-size:11.5px;color:var(--t3);margin-top:1px;">Les 6 chiffres du mail — temporaire, juste pour vérifier que c\'est toi.</div>'
     +'<input id="protect-emailcode" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="Ex : 483920" style="'+inpS+'">'
     +(isDisable?''
       :'<div style="font-weight:700;font-size:13px;color:var(--t1);margin-top:14px;">2️⃣ TON code perso</div>'
        +'<div style="font-size:11.5px;color:var(--t3);margin-top:1px;">Celui que tu inventes et que tu retiendras (min 4 chiffres).</div>'
-       +'<input id="protect-newcode" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Choisis ton code" style="'+inpS+'">')
+       +'<input id="protect-newcode" type="password" inputmode="numeric" autocomplete="new-password" placeholder="Choisis ton code" style="'+inpS+'">'
+       // ⚠️ « C'est chiant à faire » (Michel, sur le téléphone de Tatiana, 07/08). On ne touche
+       // PAS à la vérification par mail — c'est elle qui empêche quelqu'un de prendre le compte
+       // d'un autre en tapant juste son adresse. On enlève seulement ce qui fait RÉFLÉCHIR :
+       // inventer un code, et retaper 6 chiffres qu'on vient de lire.
+       +'<div style="display:flex;gap:8px;margin-top:8px;">'
+       +'<button onclick="_protectCollerCode()" style="flex:1;padding:10px;border:1.5px solid var(--sep);border-radius:10px;background:var(--bg3);color:var(--t2);font-weight:700;font-size:12.5px;cursor:pointer;">📋 Coller le code du mail</button>'
+       +'<button onclick="_protectProposerCode()" style="flex:1;padding:10px;border:1.5px solid var(--sep);border-radius:10px;background:var(--bg3);color:var(--t2);font-weight:700;font-size:12.5px;cursor:pointer;">🎲 M\'en proposer un</button>'
+       +'</div>')
     +'<button id="protect-activate-btn" onclick="'+(isDisable?'protectDisable()':'protectActivate()')+'" style="'+btnR+(isDisable?'background:var(--red);':'')+'">'+(isDisable?'🔓 Désactiver':(isChange?'✅ Changer mon code':'✅ Activer la protection'))+'</button>'
     +(st.hasCode?'<button onclick="_renderProtect()" style="'+btnG+'">‹ Retour</button>':'');
+}
+// Colle les 6 chiffres du presse-papier dans le champ « code reçu par email ».
+// ⚠️ On EXTRAIT les 6 chiffres au lieu de coller tel quel : on copie souvent la ligne entière
+// de l'objet du mail (« Force Tracker — ton code de confirmation : 483920 »).
+async function _protectCollerCode(){
+  try{
+    const t=await navigator.clipboard.readText();
+    const m=String(t||'').match(/\d{6}/);
+    if(!m){ toast('Pas de code à 6 chiffres dans le presse-papier','info'); return; }
+    const inp=document.getElementById('protect-emailcode');
+    if(inp){ inp.value=m[0]; toast('Code collé ✅','success'); }
+  }catch(e){ toast('Copie le code, puis réessaie','info'); }
+}
+// Propose un code perso au hasard et l'AFFICHE en clair : celui qui doit le retenir doit
+// pouvoir le lire. On ne l'impose pas — le champ reste modifiable.
+function _protectProposerCode(){
+  let c=''; for(let i=0;i<4;i++) c+=Math.floor(Math.random()*10);
+  const inp=document.getElementById('protect-newcode');
+  if(!inp)return;
+  inp.type='text'; inp.value=c;   // en clair : un code qu'on ne voit pas ne se retient pas
+  toast('Ton code : '+c+' — note-le','info');
 }
 function protectSendEmail(){
   const btn=document.getElementById('protect-send-btn');
