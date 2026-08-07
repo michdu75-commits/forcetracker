@@ -1,9 +1,10 @@
-# 🔴 ALERTE SÉCURITÉ — trois failles (1 corrigée, 2 restantes)
+# 🔴 ALERTE SÉCURITÉ — trois failles (2 corrigées, 1 restante)
 
 > **Trouvé le 04/08/2026.** La première (la boîte à idées) a été trouvée en cherchant à lire les
 > idées depuis la session Claude ; **la seconde (les comptes entiers) en vérifiant la première** —
 > et c'est la plus grave des deux.
-> **État : NON CORRIGÉ.** Ce fichier se supprime le jour où c'est réglé.
+> **État au 07/08/2026 : la n°0 et la n°2 sont FERMÉES. La n°1 — la plus grave — reste OUVERTE.**
+> Ce fichier se supprime le jour où les trois sont réglées.
 
 ---
 
@@ -198,7 +199,18 @@ propriétaire.
 
 ---
 
-# ⚠️ FAILLE N°2 — la boîte à idées est lisible par n'importe qui
+# ✅ FAILLE N°2 — la boîte à idées est lisible par n'importe qui *(**FERMÉE le 07/08/2026**, ft-v787)*
+
+> **Ce qui a été fait** : le jeton ne vit plus dans `app.js` (les 3 occurrences retirées) ; le serveur
+> lit la Script Property `IDEES_TOKEN2`, **repli FERMÉ** si elle manque ; le jeton se tape une fois sur
+> l'appareil et s'oublie s'il est refusé. **La pose se fait depuis l'IDE** (`poserJetonAdmin()`), parce
+> que le formulaire Google n'enregistrait pas la propriété — la fonction **tire le secret au sort** et
+> **le relit** avant de dire qu'il est posé. Un **test permanent** refuse désormais tout secret en clair
+> dans les fichiers servis : *ce qui a manqué ici n'était pas une idée, c'était un contrôle.*
+> ⚠️ **L'ancien jeton doit être REFUSÉ** — c'est ce test-là qui prouve la fermeture, pas le fait que les
+> nouveaux outils marchent.
+
+## Le détail de ce qui était ouvert (gardé pour mémoire)
 
 ## Ce qui fuit, exactement
 

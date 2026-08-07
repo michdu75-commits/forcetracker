@@ -2794,15 +2794,39 @@ function _testerIdeaMailto(subject,bodyM,nPhotos){
 // Les photos NE SONT PAS stockées côté serveur (seulement leur nombre) → elles restent
 // dans la boîte forcetracker.app@gmail.com. Le lecteur affiche le texte + « 📎 N photo(s) → mail ».
 function _escIdea(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// ─── JETON ADMIN — AUCUN SECRET NE VIT DANS LE FRONTEND (07/08/2026) ──────────────────────
+// 🔴 Avant, le jeton l'ancien jeton était écrit EN CLAIR ici, à trois endroits. Or ce fichier
+// est servi publiquement par GitHub Pages ET présent dans un dépôt public : le secret était
+// donc distribué avec l'application, et `?action=getIdees` livrait le NOM, l'E-MAIL et le
+// MESSAGE de chaque testeur à qui prenait la peine de lire `app.js`.
+// *Un secret livré avec le client n'est pas un secret* — le hacher côté serveur n'y change rien.
+// Le jeton se tape maintenant UNE fois et reste sur l'appareil de Michel. Il n'est plus nulle
+// part dans le code, donc plus rien à faire fuiter (un test refuse d'ailleurs son retour).
+function _adminTok(){
+  let t=''; try{ t=localStorage.getItem('ft4_admin_tok')||''; }catch(e){}
+  if(!t && typeof prompt==='function'){
+    t=(prompt('Jeton admin (une seule fois sur cet appareil)')||'').trim();
+    if(t){ try{ localStorage.setItem('ft4_admin_tok',t); }catch(e){} }
+  }
+  return t;
+}
+// ⚠️ Jeton refusé → on l'OUBLIE. Sans ça, une faute de frappe verrouillerait l'admin pour
+// toujours sur cet appareil, sans aucun moyen de se rattraper (R29 : on laisse toujours la
+// porte de sortie ouverte quand l'erreur est probable).
+function _adminTokRefuse(d){
+  if(d && d.error==='token'){ try{ localStorage.removeItem('ft4_admin_tok'); }catch(e){} return true; }
+  return false;
+}
 async function loadTesterIdeasAdmin(){
   const box=document.getElementById('admin-ideas-list');
   if(!box)return;
   if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
   box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Chargement des idées…</div>';
   try{
-    const url=S.url+'?action=getIdees&token=FT_IDEES_2026';
+    const url=S.url+'?action=getIdees&token='+encodeURIComponent(_adminTok());
     const r=await fetch(url,{method:'GET'});
     const d=await r.json();
+    if(_adminTokRefuse(d)){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Jeton refusé — relance, il te sera redemandé.</div>'; return; }
     if(!d||d.status!=='ok'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Erreur : '+_escIdea(d&&d.error||'inconnue')+' — réessaie.</div>'; return; }
     const arr=(d.ideas||[]).slice().reverse(); // plus récentes en haut
     if(!arr.length){ box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Aucune idée reçue pour l\'instant.</div>'; return; }
@@ -2836,8 +2860,9 @@ async function loadCustomExAdmin(){
   if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
   box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Chargement…</div>';
   try{
-    const r=await fetch(S.url+'?action=getCustomEx&token=FT_IDEES_2026',{method:'GET'});
+    const r=await fetch(S.url+'?action=getCustomEx&token='+encodeURIComponent(_adminTok()),{method:'GET'});
     const d=await r.json();
+    if(_adminTokRefuse(d)){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Jeton refusé — relance, il te sera redemandé.</div>'; return; }
     if(!d||d.status!=='ok'){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Erreur : '+_escIdea(d&&d.error||'inconnue')+' — réessaie.</div>'; return; }
     const arr=d.exercices||[];
     if(!arr.length){ box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Personne n\'a encore créé d\'exercice perso.</div>'; return; }
@@ -2915,7 +2940,7 @@ async function loadHealthAdmin(){
   if(!box)return;
   if(!_isAdminUnlocked()){ box.innerHTML='<div style="color:var(--red);font-size:12.5px;">Réservé à l\'admin.</div>'; return; }
   box.innerHTML='<div style="color:var(--t3);font-size:12.5px;padding:6px 0;">Vérification…</div>';
-  const TOK='FT_IDEES_2026';
+  const TOK=_adminTok();
   // ⚠️ EN SÉRIE, pas en parallèle (constaté le 02/08 sur le téléphone de Michel : 3 sondes sur 5
   // en « réseau »). Google Apps Script traite les requêtes d'un MÊME compte une par une : lancer
   // les 4 d'un coup fait attendre les suivantes jusqu'au délai d'expiration. C'est plus lent
@@ -2924,9 +2949,11 @@ async function loadHealthAdmin(){
     try{
       const ctl=('AbortController' in window)?new AbortController():null;
       const to=setTimeout(()=>{try{ctl&&ctl.abort();}catch(e){}},25000);
-      const r=await fetch(S.url+'?action='+a+'&token='+TOK,{method:'GET',...(ctl?{signal:ctl.signal}:{})});
+      const r=await fetch(S.url+'?action='+a+'&token='+encodeURIComponent(TOK),{method:'GET',...(ctl?{signal:ctl.signal}:{})});
       clearTimeout(to);
-      return await r.json();
+      const d=await r.json();
+      _adminTokRefuse(d);   // jeton mauvais → oublié, il sera redemandé au prochain passage
+      return d;
     }catch(e){ return {status:'error',error:(e&&e.name==='AbortError')?'trop lent (>25 s)':'réseau'}; }
   };
   try{

@@ -1264,6 +1264,31 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     dbl && dbl.appels===1, JSON.stringify(dbl));
   t('DÉBRIEF : une fois fait, le jeton est consommé (pas de débrief au prochain lancement)',
     dbl && dbl.jeton===null, JSON.stringify(dbl));
+  // ⚠️ AUCUN SECRET DANS LES FICHIERS LIVRÉS (07/08) — le jeton d'administration `FT_IDEES_2026`
+  // était écrit en clair dans `app.js`, servi publiquement par GitHub Pages et présent dans un
+  // dépôt public : `?action=getIdees` livrait donc le nom, l'e-mail et le message de chaque
+  // testeur à qui savait lire le fichier. Ce qui a manqué ici n'est pas une idée, c'est un
+  // CONTRÔLE — d'où ce témoin. On lit les fichiers RÉELLEMENT SERVIS, pas le disque.
+  const fichiersServis = {};
+  for (const f of ['app.js','constants.js','coach.js','setup.js','log.js','screens.js','state.js','tracking.js']) {
+    fichiersServis[f] = await p.evaluate(async n=>{ const r=await fetch(n); return await r.text(); }, f);
+  }
+  const motifsSecrets = [
+    [/FT_IDEES_2026/, 'l\'ancien jeton admin en clair'],
+    [/FT_BACKUP_INIT_\w+/, 'le jeton de sauvegarde en clair'],
+    [/sk-ant-[A-Za-z0-9]/, 'une clé API Anthropic'],
+    [/service_role/, 'la clé service_role de Supabase'],
+  ];
+  const fuites = [];
+  for (const [f, src] of Object.entries(fichiersServis))
+    for (const [re, quoi] of motifsSecrets)
+      if (re.test(src)) fuites.push(f + ' → ' + quoi);
+  t('⭐⭐ SÉCURITÉ : aucun secret en clair dans les fichiers servis publiquement',
+    fuites.length === 0, fuites.join(' · '));
+  t('SÉCURITÉ : le jeton admin est demandé une fois et gardé sur l\'appareil, jamais dans le code',
+    /_adminTok\s*\(\s*\)/.test(fichiersServis['app.js']) &&
+    /ft4_admin_tok/.test(fichiersServis['app.js']),
+    'app.js n\'utilise pas _adminTok()');
   t('⭐⭐ CARDIO : saisir une durée ne lève AUCUNE erreur (le « variable c » du journal Admin)',
     r.cardioDuree && r.cardioDuree.erreur==='', JSON.stringify(r.cardioDuree));
   t('CARDIO : le bouton « Enregistrer le cardio » apparaît dès qu\'une durée est saisie',

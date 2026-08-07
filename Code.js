@@ -47,14 +47,28 @@ function _sha256hex_(s){
   var raw=Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(s), Utilities.Charset.UTF_8);
   return raw.map(function(b){return ('0'+(b&0xff).toString(16)).slice(-2);}).join('');
 }
-// Token de la boîte à idées (lecture ?action=getIdees / aiUsage). Vérifié contre un
-// HASH en dur dans le code (immunisé contre les Script Properties qui ne persistent
-// pas sur ce projet) OU l'ancienne propriété IDEES_TOKEN si elle tient. Le token en
-// clair (FT_IDEES_2026) n'est PAS dans le repo public — seul son SHA-256 l'est.
-var IDEES_TOKEN_HASH_ = '678a434202beb8faf720d9f91c3f21387cf2cd4ad7083ff2435658578208ad92';
+// ─── Jeton des routes d'ADMINISTRATION (getIdees · getCustomEx · storeHealth · mailFails ·
+// aiUsage · checkBackup). Le secret ne vit QUE dans les Script Properties.
+//
+// 🔴 CE QUI ÉTAIT FAUX AVANT (corrigé le 07/08/2026, faille trouvée le 04/08) — la version
+// précédente vérifiait un HASH en dur, en croyant que « le token en clair n'est pas dans le
+// repo public ». C'était FAUX : l'ancien jeton était écrit en clair dans `app.js`, à trois
+// endroits — un fichier servi publiquement par GitHub Pages ET présent dans un dépôt public.
+// Le hash côté serveur ne protégeait donc RIEN, puisque la clé était distribuée avec
+// l'application. N'importe qui pouvait lire `?action=getIdees` → le NOM, l'E-MAIL et le
+// MESSAGE de chaque testeur (jusqu'à 300 entrées).
+// ⚠️ La leçon n'est pas « on a oublié » : c'est un défaut de conception. *Un secret distribué
+// avec le client n'est pas un secret* — hacher ne change rien à ça. Et la note de sécurité de
+// `CLAUDE.md` affirmait le contraire depuis le 12/07 : une note fausse est pire que pas de
+// note, elle clôt la question.
+//
+// ⚠️ LE REPLI EST `false`, ET C'EST LE CŒUR DU CORRECTIF. Le réflexe habituel (« si la config
+// manque, on laisse passer ») transformerait une propriété effacée en porte grande ouverte —
+// exactement le problème qu'on répare. Pas de propriété = route FERMÉE.
 function _checkIdeesTok_(given){
-  if (_checkTok_('IDEES_TOKEN', given)) return true;
-  return _sha256hex_(String(given == null ? '' : given).trim()) === IDEES_TOKEN_HASH_;
+  var want = PropertiesService.getScriptProperties().getProperty('IDEES_TOKEN2');
+  if (!want || String(want).length < 12) return false;   // absente ou trop courte → fermé
+  return String(given == null ? '' : given).trim() === String(want).trim();
 }
 // ─── Protection opt-in par code perso ─────────────────────────────────────────
 // INVARIANT ABSOLU : un compte SANS 'auth_{email}' se comporte EXACTEMENT comme
@@ -343,7 +357,7 @@ function doGet(e) {
     } catch(err) { return json_({status:'error', error:err.message}); }
   }
 
-  // Lecture des idées des testeurs (boîte à idées) — ?action=getIdees&token=FT_IDEES_2026
+  // Lecture des idées des testeurs (boîte à idées) — ?action=getIdees&token=…
   if (p.action === 'getIdees') {
     if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
     let arr = [];
@@ -436,7 +450,7 @@ function doGet(e) {
     return json_({status:'ok', count: mf.length, fails: mf, quotaMailRestant: quotaMail});
   }
 
-  // Consommation IA du jour (garde-fou coût) — ?action=aiUsage&token=FT_IDEES_2026
+  // Consommation IA du jour (garde-fou coût) — ?action=aiUsage&token=…
   if (p.action === 'aiUsage') {
     if (!_checkIdeesTok_(p.token)) return json_({status:'error', error:'token'});
     var sp = PropertiesService.getScriptProperties();
@@ -2255,6 +2269,59 @@ function scheduleOneTimeBackup_() {
 // procédure de secours qu'on ne teste jamais n'est pas une procédure de secours.
 // D'où cette fonction PUBLIQUE (sans underscore) qui fait tout d'un coup et écrit le
 // résultat dans les journaux, pour qu'on puisse VOIR qu'elle a marché.
+// ─── JETON D'ADMINISTRATION — POSE ET VÉRIFICATION DEPUIS L'IDE ────────────────────────────
+// ⚠️ POURQUOI CETTE FONCTION EXISTE (07/08/2026). Michel, en posant la propriété à la main :
+// « google bloque à chaque fois ». Et c'est précisément cet argument — « les Script Properties
+// ne persistent pas sur ce projet » — qui avait fait choisir, le 12/07, un HASH EN DUR dans le
+// code… c'est-à-dire la faille elle-même. On ne peut donc pas se contenter d'espérer que le
+// formulaire tienne : un correctif de sécurité qui dépend d'un formulaire capricieux n'est pas
+// un correctif. Écrire la propriété DEPUIS LE CODE ne passe pas par ce formulaire du tout.
+//
+// ⚠️ ET LE SECRET NE TOUCHE JAMAIS LE DÉPÔT : la fonction le TIRE AU SORT et l'affiche dans le
+// journal d'exécution. Michel le recopie une fois sur son téléphone. Rien à écrire ici, donc
+// rien à faire fuiter — c'est exactement l'erreur qu'on est en train de réparer.
+function poserJetonAdmin() {
+  var P = PropertiesService.getScriptProperties();
+  var actuel = P.getProperty('IDEES_TOKEN2');
+  if (actuel && String(actuel).length >= 12) {
+    // On ne réaffiche JAMAIS un secret déjà posé : de quoi le reconnaître, pas de quoi le voler.
+    Logger.log('✅ DÉJÀ POSÉ — IDEES_TOKEN2 existe (' + String(actuel).length + ' caractères, '
+      + 'commence par « ' + String(actuel).slice(0, 3) + '… »). Rien à faire.');
+    Logger.log('   Pour en remettre un neuf : lance d\'abord effacerJetonAdmin(), puis relance celle-ci.');
+    return;
+  }
+  var al = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  var t = 'ft_';
+  for (var i = 0; i < 40; i++) t += al.charAt(Math.floor(Math.random() * al.length));
+  P.setProperty('IDEES_TOKEN2', t);
+  // ⚠️ ON RELIT AU LIEU DE CROIRE L'ÉCRITURE — c'est tout le sujet : la question n'est pas
+  // « a-t-on appelé setProperty ? » mais « la valeur est-elle VRAIMENT là ? ».
+  // On vérifie l'EFFET, jamais le retour de la fonction qui prétend l'avoir produit.
+  var relu = P.getProperty('IDEES_TOKEN2');
+  if (relu !== t) {
+    Logger.log('❌ ÉCHEC : la propriété ne s\'est pas enregistrée (relu : ' + (relu || 'rien') + ').');
+    Logger.log('   NE PAS déployer le correctif dans cet état — les routes d\'admin resteraient fermées.');
+    return;
+  }
+  Logger.log('✅ POSÉ ET RELU. Recopie ce jeton dans l\'app (Profil → Admin, il sera demandé une fois) :');
+  Logger.log('');
+  Logger.log('        ' + t);
+  Logger.log('');
+  Logger.log('⚠️ Ne le partage pas, ne le photographie pas avec autre chose à l\'écran.');
+}
+// Dit si le jeton est là, SANS le révéler. Sert à vérifier après coup qu'il a tenu.
+function verifierJetonAdmin() {
+  var v = PropertiesService.getScriptProperties().getProperty('IDEES_TOKEN2');
+  if (!v) { Logger.log('❌ ABSENT — les routes d\'administration sont FERMÉES (repli volontaire).'); return; }
+  if (String(v).length < 12) { Logger.log('⚠️ TROP COURT (' + String(v).length + ') — refusé par sécurité.'); return; }
+  Logger.log('✅ PRÉSENT — ' + String(v).length + ' caractères, commence par « ' + String(v).slice(0, 3) + '… ».');
+}
+// Retire le jeton. Referme les routes d'admin : à n'utiliser que pour en poser un neuf.
+function effacerJetonAdmin() {
+  PropertiesService.getScriptProperties().deleteProperty('IDEES_TOKEN2');
+  Logger.log('🗑️ Effacé. Les routes d\'administration sont fermées. Lance poserJetonAdmin() pour un nouveau.');
+}
+
 function reparerSauvegardeNuit() {
   installDailyBackupTrigger_();
   var n = ScriptApp.getProjectTriggers()
