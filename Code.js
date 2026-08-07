@@ -86,6 +86,38 @@ function _authCheck_(email, code){
   }catch(e){ return {ok:true, opted:false}; }                     // fail-open : un bug ne bloque jamais un vrai utilisateur
 }
 
+// ─── LECTURE STRICTE : un compte SANS code perso n'est plus téléchargeable (07/08/2026) ────
+// 🔴 LA FAILLE : `?action=loadProfile&email=UNE_ADRESSE` renvoyait le compte ENTIER — profil,
+// séances, poids, mensurations, mémoire de Milo, et les données de SANTÉ (bilans sanguins,
+// bilans corporels, cycle menstruel). Sans jeton, sans mot de passe. Et six adresses réelles
+// sont écrites en clair dans le dépôt PUBLIC : il n'y avait même pas à deviner.
+// Mesuré le 07/08 : 4 comptes sur 5 étaient ouverts.
+//
+// ⚠️ POURQUOI SEULEMENT LA LECTURE, ET PAS L'ÉCRITURE. La fuite, c'est la lecture. Fermer aussi
+// l'écriture arrêterait la sauvegarde des séances de gens qui n'ont encore rien demandé — et la
+// règle d'or n°3 dit « zéro perte de séance, priorité n°1 absolue ». On ferme donc ce qui fuit,
+// on garde ce qui protège. Une fois le code posé, les DEUX sens sont verrouillés (_authCheck_).
+//
+// ⚠️ ET ON NE PEUT PAS S'ENFERMER DEHORS : `setAccessCode` et `sendConfirmCode` ne passent PAS
+// par cette vérification (constaté avant d'écrire une ligne). Poser son code reste donc possible
+// alors même que la lecture est fermée — sinon on protégerait les données en les rendant
+// inaccessibles à leur propriétaire, ce qui n'est pas protéger.
+//
+// 🔧 SOUPAPE : la Script Property `LECTURE_STRICTE` = 'off' rouvre tout, sans redéployer.
+// Absente = fermé (repli sûr). Voir ouvrirLectureTemporairement() / refermerLecture().
+function _lectureAutorisee_(email, code){
+  var a = _authCheck_(email, code);
+  if (!a.ok) return a;                       // code posé mais faux → refus (inchangé)
+  if (a.opted) return a;                     // code posé et bon → OK
+  try {
+    if (PropertiesService.getScriptProperties().getProperty('LECTURE_STRICTE') === 'off')
+      return a;                              // soupape ouverte : ancien comportement
+  } catch(e) {}
+  // Pas de code du tout → on ne sert plus le compte. `needsCode` permet à l'app de dire la
+  // bonne chose (« protège ton compte ») au lieu de réclamer un code qui n'existe pas.
+  return {ok:false, opted:false, needsCode:true, blocked:false};
+}
+
 // SÉCURITÉ Sheets : neutralise l'injection de formule (CSV injection). Une chaîne
 // qui commence par = + - @ (ou une tabulation) est exécutée comme formule quand on
 // ouvre le Sheet → on la préfixe d'une apostrophe (invisible, affichage identique).
@@ -525,8 +557,8 @@ function doGet(e) {
 
   if (p.action === 'loadProfile' && p.email) {
     const email = (p.email || '').toLowerCase().trim();
-    const _a = _authCheck_(email, p.authCode);
-    if (!_a.ok) return json_({status:'error', error:'auth', blocked:_a.blocked});
+    const _a = _lectureAutorisee_(email, p.authCode);
+    if (!_a.ok) return json_({status:'error', error:'auth', blocked:_a.blocked, needsCode:!!_a.needsCode});
     const data = loadUserData_(email);
     const prem = getPremiumStatus_(email);
     if (!data) return json_({status:'not_found', premium: prem.premium, premiumExpiry: prem.expiry});
@@ -552,8 +584,8 @@ function doGet(e) {
 function handleLoadProfilePost_(body) {
   const email = (body.email || '').toLowerCase().trim();
   if (!email) return json_({status:'error', error:'email required'});
-  const _a = _authCheck_(email, body.authCode);
-  if (!_a.ok) return json_({status:'error', error:'auth', blocked:_a.blocked});
+  const _a = _lectureAutorisee_(email, body.authCode);
+  if (!_a.ok) return json_({status:'error', error:'auth', blocked:_a.blocked, needsCode:!!_a.needsCode});
   const data = loadUserData_(email);
   const prem = getPremiumStatus_(email);
   if (!data) return json_({status:'not_found', premium: prem.premium, premiumExpiry: prem.expiry});
@@ -2283,6 +2315,35 @@ function scheduleOneTimeBackup_() {
 // procédure de secours qu'on ne teste jamais n'est pas une procédure de secours.
 // D'où cette fonction PUBLIQUE (sans underscore) qui fait tout d'un coup et écrit le
 // résultat dans les journaux, pour qu'on puisse VOIR qu'elle a marché.
+// ─── SOUPAPE DE LA LECTURE STRICTE — rouvrir en 30 s, sans redéployer ──────────────────────
+// Un correctif d'authentification qu'on ne peut pas annuler vite est un correctif dangereux :
+// si quelque chose se passe mal, il faut pouvoir rendre l'accès AVANT de comprendre pourquoi.
+// (C'est la règle d'or n°8 — « rollback en 1 ligne » — appliquée au backend.)
+function ouvrirLectureTemporairement() {
+  PropertiesService.getScriptProperties().setProperty('LECTURE_STRICTE', 'off');
+  var relu = PropertiesService.getScriptProperties().getProperty('LECTURE_STRICTE');
+  Logger.log(relu === 'off'
+    ? '🔓 LECTURE ROUVERTE (ancien comportement). ⚠️ La fuite est de nouveau ouverte : à refermer dès que possible.'
+    : '❌ ÉCHEC : la propriété ne s\'est pas enregistrée (relu : ' + relu + ').');
+}
+function refermerLecture() {
+  PropertiesService.getScriptProperties().deleteProperty('LECTURE_STRICTE');
+  var relu = PropertiesService.getScriptProperties().getProperty('LECTURE_STRICTE');
+  Logger.log(!relu ? '🔒 LECTURE STRICTE ACTIVE — un compte sans code perso n\'est plus téléchargeable.'
+                   : '❌ ÉCHEC : la propriété est toujours là (' + relu + ').');
+}
+// Dit qui est protégé et qui ne l'est pas, sans rien révéler d'autre qu'un oui/non.
+function quiEstProtege() {
+  var sp = PropertiesService.getScriptProperties();
+  var strict = sp.getProperty('LECTURE_STRICTE') !== 'off';
+  Logger.log('Lecture stricte : ' + (strict ? '🔒 ACTIVE' : '🔓 DÉSACTIVÉE (soupape ouverte)'));
+  PREMIUM_HARDCODED_.forEach(function(e){
+    var has = (sp.getProperty('auth_' + e) || '').length >= 20;
+    Logger.log((has ? '🔒 ' : '🔓 ') + e + (has ? ' — code posé' : ' — AUCUN code'
+      + (strict ? ' (lecture refusée, écriture toujours possible)' : ' (TÉLÉCHARGEABLE)')));
+  });
+}
+
 // ─── JETON D'ADMINISTRATION — POSE ET VÉRIFICATION DEPUIS L'IDE ────────────────────────────
 // ⚠️ POURQUOI CETTE FONCTION EXISTE (07/08/2026). Michel, en posant la propriété à la main :
 // « google bloque à chaque fois ». Et c'est précisément cet argument — « les Script Properties

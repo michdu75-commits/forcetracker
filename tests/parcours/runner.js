@@ -1288,6 +1288,27 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   });
   t('⭐⭐ SÉCURITÉ : un refus d\'authentification s\'AFFICHE (plus de synchro morte en silence)',
     refus && refus.carte===true, JSON.stringify(refus));
+  // ⚠️ DEUX CAS À NE PAS CONFONDRE (ft-v789) : réclamer « ton code » à quelqu'un qui n'en a
+  // jamais posé, c'est l'envoyer chercher un truc qui n'existe pas. Le serveur renvoie donc
+  // `needsCode`, et l'app doit proposer de PROTÉGER le compte, pas de saisir un code.
+  const deuxCas = await p.evaluate(()=>{
+    const el=document.getElementById('email-verify-card');
+    const lire=()=>el?el.innerHTML:'';
+    window._ftAuthNeedsCode=true;  _renderAuthRefusCard(); const neuf=lire();
+    window._ftAuthNeedsCode=false; _renderAuthRefusCard(); const connu=lire();
+    window._ftAuthNeedsCode=false;
+    return { neufProtege:/openProtect\(\)/.test(neuf) && /protèges ton compte/i.test(neuf),
+             connuDemandeCode:/_saisirCodeResync\(\)/.test(connu) && /saisir le code/i.test(connu),
+             differents: neuf!==connu };
+  });
+  t('⭐⭐ SÉCURITÉ : un compte SANS code se voit proposer de le protéger, pas de taper un code',
+    deuxCas && deuxCas.neufProtege===true && deuxCas.differents===true, JSON.stringify(deuxCas));
+  t('SÉCURITÉ : un compte AVEC code, sur un appareil qui ne l\'a pas, se voit demander le code',
+    deuxCas && deuxCas.connuDemandeCode===true, JSON.stringify(deuxCas));
+  const srcPrem = await p.evaluate(async()=>{ const r=await fetch('app.js'); return await r.text(); });
+  t('⭐ SÉCURITÉ : le premium ne tombe PAS avec la lecture (on ne punit pas deux fois)',
+    /needsCode[^]{0,900}_isClientPremium/.test(srcPrem),
+    'le repli premium client manque dans la branche de refus');
   const srcAuth = await p.evaluate(async()=>{ const r=await fetch('app.js'); return await r.text(); });
   t('SÉCURITÉ : le démarrage traite bien le cas error/auth (le `else` vide est fermé)',
     /d2\.error===['"]auth['"]/.test(srcAuth), 'app.js ne traite pas error:auth au démarrage');

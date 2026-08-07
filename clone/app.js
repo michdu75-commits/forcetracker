@@ -1370,10 +1370,17 @@ function _renderEmailVerifyCard(){
 // (règle d'or #3). Ce qui est en pause, c'est la copie en ligne — et on le dit.
 function _renderAuthRefusCard(){
   const el=document.getElementById('email-verify-card'); if(!el)return;
-  el.innerHTML='<button class="btn" onclick="_saisirCodeResync()" style="width:100%;background:rgba(239,68,68,.10);'
+  // ⚠️ DEUX MESSAGES, PAS UN (ft-v789). Réclamer « ton code » à quelqu'un qui n'en a jamais posé,
+  // c'est le laisser chercher un truc qui n'existe pas — la meilleure façon qu'il abandonne.
+  const neuf = !!window._ftAuthNeedsCode;
+  const action = neuf ? 'openProtect()' : '_saisirCodeResync()';
+  const texte  = neuf
+    ? 'Ta sauvegarde en ligne attend que tu protèges ton compte. Tes données restent sur ce téléphone — appuie pour le faire (2 min).'
+    : 'Ce compte est protégé par un code. Tes données restent sur ce téléphone — appuie pour saisir le code.';
+  el.innerHTML='<button class="btn" onclick="'+action+'" style="width:100%;background:rgba(239,68,68,.10);'
     +'border:1.5px solid rgba(239,68,68,.45);color:var(--red);font-size:13px;font-weight:700;padding:11px;text-align:left;line-height:1.45;">'
     +'🔒 Sauvegarde en ligne en pause<br><span style="font-weight:500;color:var(--t2);font-size:12px;">'
-    +'Ce compte est protégé par un code. Tes données restent sur ce téléphone — appuie pour saisir le code.</span></button>';
+    +texte+'</span></button>';
 }
 // Saisie du code sur un appareil qui ne l'a pas. On le VÉRIFIE avant de l'enregistrer :
 // enregistrer un code faux rendrait le bandeau permanent sans jamais rien débloquer.
@@ -3299,12 +3306,21 @@ window._premiumPending=!!S.email;
         // CHAQUE ouverture : c'est notre unique canari.
         window._premiumPending=false;
         window._ftAuthRefusee=true;
-        try{ localStorage.setItem('ft4_auth_refus','1'); }catch(e){}
+        window._ftAuthNeedsCode=!!d2.needsCode;
+        try{ localStorage.setItem('ft4_auth_refus', d2.needsCode?'new':'1'); }catch(e){}
+        // ⚠️ LE PREMIUM NE DOIT PAS TOMBER AVEC LA LECTURE (ft-v789) : le serveur ne répond plus,
+        // donc on retombe sur la liste client — sinon quelqu'un de premium perdrait son accès
+        // Coach juste parce qu'il n'a pas encore posé de code. On ne punit pas deux fois.
+        try{ if(typeof _isClientPremium==='function'&&_isClientPremium()){ S.premium=true; persist(); } }catch(e){}
+        try{ if(typeof checkPremiumExpiry==='function') checkPremiumExpiry(); }catch(e){}
+        try{ if(typeof updateCoachHeader==='function') updateCoachHeader(); }catch(e){}
         // Local d'abord (règle d'or #3) : on ne touche à AUCUNE donnée locale, on prévient.
-        // Le compte est protégé par un code perso : sans lui, ni lecture ni écriture cloud.
-        const _msg = d2.blocked
-          ? 'Trop d\'essais — réessaie demain.'
-          : 'Compte protégé : saisis ton code pour resynchroniser';
+        // Deux cas RADICALEMENT différents, et les confondre serait absurde :
+        //   · needsCode → le compte n'a AUCUN code : lui en réclamer un n'aurait aucun sens.
+        //   · sinon     → un code existe, cet appareil ne l'a pas.
+        const _msg = d2.blocked ? 'Trop d\'essais — réessaie demain.'
+          : (d2.needsCode ? 'Protège ton compte pour réactiver la sauvegarde en ligne'
+                          : 'Compte protégé : saisis ton code pour resynchroniser');
         try{ toast('🔒 '+_msg,'error'); }catch(e){}
         try{ if(typeof _renderAuthRefusCard==='function') _renderAuthRefusCard(); }catch(e){}
       }else{window._premiumPending=false;}
