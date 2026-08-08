@@ -696,6 +696,28 @@ function doPost(e) {
     }
   }
 
+  // ── 📊 COMPTAGE DES APPELS IA VENUS DU WORKER (08/08/2026) ─────────────
+  // Les 13 actions IA passent par le Worker Cloudflare depuis la migration 4G du 13/07 :
+  // le garde-fou ci-dessus ne voyait donc plus RIEN, et le panneau Admin → IA affichait
+  // une photo de mi-juillet. Le Worker appelle maintenant cette route pour que le compteur
+  // reparte — même propriété `ai_quota`, même panneau, aucun second compteur (R2).
+  //
+  // ⚠️ POURQUOI LE BLOCAGE EST DÉSACTIVÉ PAR DÉFAUT, et pourquoi ça ne contredit pas ft-v787 :
+  // l'URL Apps Script est publique (elle est dans constants.js, dépôt public). Sans secret
+  // partagé, n'importe qui pourrait appeler cette route 600 fois et COUPER Milo pour tout le
+  // monde — le blocage serait alors une arme, pas une protection. Le comptage, lui, est
+  // inoffensif : au pire un chiffre faux dans un panneau d'admin.
+  // Le jeton d'admin (ft-v787) protège une LECTURE de données personnelles → repli FERMÉ.
+  // Ici le risque est inversé → repli OUVERT. Poser `FT_COUNT_TOKEN` des deux côtés
+  // (Script Property + secret Cloudflare) active le plafond.
+  if (body.action === 'aiCount') {
+    var _tok = PropertiesService.getScriptProperties().getProperty('FT_COUNT_TOKEN') || '';
+    var _q2 = _aiQuotaBlock_(body.email);
+    var _arme = !!_tok && body.token === _tok;   // plafond actif seulement si le secret est posé DES DEUX CÔTÉS
+    return json_({status:'ok', counted:true, armed:_arme,
+                  blocked: _arme && _q2.blocked, scope:_q2.scope || ''});
+  }
+
   if (body.action === 'test')              return json_({status:'online', version:'3.5'});
   if (body.action === 'loadProfile')       return handleLoadProfilePost_(body);
   if (body.action === 'saveProfile')       return handleSaveProfile_(body);

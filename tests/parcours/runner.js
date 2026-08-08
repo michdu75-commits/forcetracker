@@ -1971,6 +1971,36 @@ console.log('\n═══ P. La séance de Milo lue dans le texte (tous modèles)
   await c16.close();
 }
 
+// ═══ P. Le compteur d'appels IA est branché sur le chemin RÉEL ═══
+// Le garde-fou de coût (600/jour) vivait dans Apps Script, où plus AUCUN appel IA ne passe
+// depuis la migration 4G du 13/07 : il n'a rien protégé pendant trois semaines, en silence.
+// Ces témoins figent le rebranchement — et surtout la DÉRIVE qui l'avait causé (deux listes
+// d'actions qui s'éloignent l'une de l'autre sans que rien ne le signale).
+console.log('\n═══ P. Compteur IA — branché là où passent vraiment les appels ═══');
+{
+  const w  = fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+  const cs = fs.readFileSync(path.join(ROOT,'constants.js'),'utf8');
+  const cj = fs.readFileSync(path.join(ROOT,'Code.js'),'utf8');
+  const lst = s => new Set((s.match(/'([a-zA-Z]+)'/g)||[]).map(x=>x.slice(1,-1)));
+  const proxy   = lst((cs.match(/AI_PROXY_ACTIONS\s*=\s*\[([^\]]*)\]/)||[,''])[1]);
+  const comptees= lst((w.match(/_ACTIONS_IA\s*=\s*new Set\(\[([\s\S]*?)\]\)/)||[,''])[1]);
+  const manquantes = [...proxy].filter(a=>!comptees.has(a));
+
+  t('⭐⭐ TOUTE action IA qui part vers le Worker y est comptée (la dérive du 13/07 ne peut plus revenir)',
+    proxy.size===13 && manquantes.length===0, 'non comptées : '+(manquantes.join(', ')||'aucune'));
+  t('⭐ le comptage ne retarde JAMAIS la réponse de Milo (waitUntil, règle d\'or #4)',
+    /ctx\.waitUntil\(\s*_compterIA\(/.test(w), 'waitUntil absent');
+  t('⭐⭐ REPLI OUVERT : une panne du compteur ne coupe pas Milo (règle d\'or #3)',
+    /catch\(e\)\{[^}]*repli ouvert/.test(w), 'le catch de _compterIA ne dit pas son intention');
+  t('le refus se lit sans appel réseau (zéro latence ajoutée)',
+    /if\s*\(_plafondAtteint\(\)\)/.test(w), '_plafondAtteint non consulté avant l\'appel');
+  t('⭐⭐ le plafond reste DÉSARMÉ tant que le secret partagé n\'est pas posé des deux côtés',
+    /var _arme = !!_tok && body\.token === _tok/.test(cj) && /blocked: _arme && _q2\.blocked/.test(cj),
+    'le blocage pourrait être déclenché par n\'importe qui — l\'URL Apps Script est publique');
+  t('le compteur réutilise `ai_quota` (celui que lit déjà le panneau Admin), pas un second compteur',
+    /action === 'aiCount'/.test(cj) && /_aiQuotaBlock_\(body\.email\)/.test(cj), 'route aiCount absente');
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
