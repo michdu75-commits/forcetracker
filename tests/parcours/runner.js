@@ -2049,6 +2049,38 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
       !/Christophe|Tatiana|Paul/.test(a.commun+b2.commun+c3.commun),
       'un prénom a été trouvé au-dessus de « PROFIL ATHLÈTE: »');
   }
+
+  // ⏰ LE BLOC COMMUN NE DOIT PAS DÉPENDRE DE L'HEURE (trouvé le 08/08 via une remarque de GPT).
+  // Le témoin ci-dessus compare 3 personnes AU MÊME INSTANT — il ne verrait pas une horloge
+  // glissée au-dessus du repère. Or le cache vit 5 minutes : un bloc qui change à l'HEURE casse
+  // le cache à CHAQUE message (la régression la plus chère possible), alors qu'un bloc qui change
+  // une fois par JOUR — comme le calendrier, qui existe pour ft-v658/660 — ne coûte rien.
+  // Donc : les seules différences autorisées entre deux heures sont des lignes de DATE.
+  {
+    const cx = await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg = await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_name:'Alex',ft4_gender:'H',ft4_email:'d@test.z'}));
+    await pg.goto('http://localhost:'+PORT+'/index.html');
+    await pg.waitForTimeout(2200);
+    const r = await pg.evaluate(()=>{
+      const tete = () => { const c = buildCoachContext('je fais quoi ?'); return c.slice(0, c.indexOf('PROFIL ATHLÈTE:')); };
+      const avant = tete();
+      const RD = Date, delta = 3*3600*1000;          // +3 h, même journée dans la grande majorité des cas
+      function FD(...a){ return a.length ? new RD(...a) : new RD(RD.now()+delta); }
+      FD.now = () => RD.now()+delta; FD.parse = RD.parse; FD.UTC = RD.UTC; FD.prototype = RD.prototype;
+      let apres;
+      try { window.Date = FD; apres = tete(); } finally { window.Date = RD; }
+      if(avant===apres) return {ecarts:[]};
+      const A = avant.split('\n'), B = apres.split('\n'), sB = new Set(B);
+      return {ecarts: A.filter(l => !sB.has(l) && l.trim()).slice(0,5)};
+    });
+    await cx.close();
+    // Une ligne de date (calendrier) a le droit de changer ; tout le reste, non.
+    const estDate = l => /20\d\d-\d\d-\d\d|hier|AUJOURD'HUI|demain|après-demain/i.test(l);
+    const fautifs = r.ecarts.filter(l => !estDate(l));
+    t('⭐⭐ le bloc commun ne dépend pas de l\'HEURE (sinon le cache saute à chaque message)',
+      fautifs.length===0, fautifs.map(l=>l.trim().slice(0,90)).join(' ⏐ '));
+  }
 }
 
 await b.close(); srv.close();
