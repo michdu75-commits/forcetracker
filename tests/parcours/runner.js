@@ -2139,6 +2139,37 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
     !av.erreur && /Remplacer l'exercice/.test(av.astuce), av.erreur?'—':av.astuce);
 }
 
+// ── UNE DISCUSSION ROUVERTE NE PART PLUS EN TRAVERS (bug Michel, 08/08) ────────────────
+// « Quand je reprends une archive de Milo l'image va dans tous les sens » — capture à l'appui :
+// les bulles coupées à GAUCHE. Deux causes empilées : ① `.msg-bubble` bornait la BULLE
+// (max-width:86%) mais pas son CONTENU — une barre « ═══ » écrite par Milo la traversait ;
+// ② `.coach-messages` n'avait qu'`overflow-y:scroll`, ce qui met l'axe horizontal en `auto`
+// tout seul → le fil devenait GLISSABLE de côté, avec le geste même qui sert à changer d'écran.
+{
+  const ov=await p.evaluate(()=>{
+   try{
+    goScreen('coach',document.getElementById('nb-coach'));
+    coachHistory=[];
+    S.coachConversations=[{id:'t-ovf',ts:Date.now()-86400000,messages:[
+      {role:'user',content:"Je fais quoi aujourd'hui ?"},
+      {role:'assistant',content:'Réponse.\n\n═══════════════════════════════════════ SÉANCE ═══\n\nhyperextensionlombairemachineinclineeavecmaintiendescuisses'}]}];
+    loadCoachConv('t-ovf');
+    const m=document.getElementById('coach-msgs');
+    const u=m.querySelector('.msg-user'), r=u?u.getBoundingClientRect():null;
+    return {axeH:getComputedStyle(m).overflowX, debord:m.scrollWidth-m.clientWidth,
+            gauche:r?Math.round(r.left):null, coupee:r?r.left<0:null};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(ov.erreur) console.log('     ⚠️  bloc « archive » en ERREUR : '+ov.erreur);
+  t('⭐⭐ une discussion rouverte ne déborde plus sur les côtés (barre « ═══ » + mot très long)',
+    !ov.erreur && ov.debord===0, ov.erreur?'—':(ov.debord+' px de débordement'));
+  t('⭐ le fil de discussion ne peut PLUS être glissé à l\'horizontale',
+    !ov.erreur && ov.axeH==='hidden',
+    ov.erreur?'—':('overflow-x = '+ov.axeH+" — `overflow-y:scroll` seul remet l'axe horizontal en auto"));
+  t('la bulle de l\'utilisateur reste entièrement visible (elle était coupée à gauche)',
+    !ov.erreur && ov.coupee===false, ov.erreur?'—':('bord gauche à '+ov.gauche+' px'));
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

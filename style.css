@@ -753,11 +753,25 @@ html.is-clone .ob-clone-only{ display:block; }
 .coach-header{padding:8px 16px 12px;border-bottom:none;background:transparent;flex-shrink:0;}
 .coach-header-title{font-family:var(--font-cond);font-size:21px;font-weight:800;letter-spacing:-.02em;color:var(--t1);}
 .coach-header-sub{font-size:12px;color:var(--t3);font-weight:600;margin-top:2px;}
-.coach-messages{flex:1;min-height:0;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding:14px 14px 8px;display:flex;flex-direction:column;gap:12px;}
+/* ⚠️ overflow-x:hidden EST OBLIGATOIRE, ce n'est pas un réglage cosmétique (bug Michel 08/08 :
+   « quand je reprends une archive de Milo l'image va dans tous les sens »).
+   En CSS, quand UN seul axe est `scroll`/`auto`, le navigateur passe l'autre en `auto` tout
+   seul : `overflow-y:scroll` rendait donc le fil GLISSABLE À L'HORIZONTALE. Dès qu'un message
+   dépassait (mesuré : 52 px), un glissement du doigt — le geste même qui sert à changer
+   d'écran — décalait toute la conversation, et les bulles `align-self:flex-end` se retrouvaient
+   coupées à GAUCHE. Le garde-fou reste, même une fois la cause traitée sur .msg-bubble :
+   il fait qu'AUCUN contenu futur ne pourra plus décaler le fil. */
+.coach-messages{flex:1;min-height:0;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:14px 14px 8px;display:flex;flex-direction:column;gap:12px;}
 /* Façon iMessage : les messages se collent en bas quand il y en a peu (margin-top:auto sur le 1er),
    et le scroll reste normal quand la conversation dépasse (l'auto se réduit à 0). */
 .coach-messages > *:first-child{margin-top:auto;}
-.msg-bubble{max-width:86%;padding:11px 14px;border-radius:18px;font-size:15px;line-height:1.6;font-weight:500;}
+/* LA CAUSE, elle, est ici : `max-width:86%` borne la BULLE, pas son CONTENU. Un mot que le
+   navigateur ne sait pas couper (barre « ═══════ » écrite par Milo, nom d'exercice collé,
+   adresse) traversait donc la bulle et poussait tout le fil. `anywhere` (et pas `break-word`)
+   parce que lui seul agit sur la largeur MINIMALE de l'élément — c'est ce qui permet à la
+   bulle de rétrécir au lieu de déborder. Mesuré le 08/08 : 138 px de débordement sur une
+   barre de séparation, 99 px sur un mot long. */
+.msg-bubble{max-width:86%;overflow-wrap:anywhere;padding:11px 14px;border-radius:18px;font-size:15px;line-height:1.6;font-weight:500;}
 .msg-user{align-self:flex-end;background:linear-gradient(135deg,#FF6A73,#EF3E57);color:#fff;border-bottom-right-radius:4px;}
 .msg-coach{align-self:flex-start;background:var(--bg2);color:var(--t1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);border-bottom-left-radius:4px;}
 .msg-typing{align-self:flex-start;background:var(--bg2);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);padding:12px 16px;border-radius:18px;border-bottom-left-radius:4px;display:flex;gap:5px;align-items:center;}
