@@ -27,10 +27,14 @@ aujourd'hui **5 utilisateurs réels** (le fondateur + 4 testeurs) et prépare un
 
 | Bloc | Caractères | Part | Mis en cache ? |
 |---|---|---|---|
-| Bloc **commun** (consignes, personnalité, règles) | 36 351 | 62 % | ✅ partagé par tous |
+| Bloc **commun** (consignes, personnalité, règles) | 37 237 | 62 % | ✅ partagé par tous |
 | Bloc **personnel** (profil, mémoire, records) | 4 592 | 8 % | ✅ par utilisateur |
 | **Jamais cachable** (voir détail) | **17 527** | **30 %** | ❌ plein tarif |
 | **TOTAL** | **58 470** | | ≈ 24 900 tokens |
+
+> ⚠️ Le total de 58 470 est mesuré sur le compte **admin** (bloc commun 36 351). Un utilisateur
+> normal reçoit **37 237** de bloc commun, soit **59 356** au total — 886 caractères de plus
+> (1,5 %). Aucune conclusion ne change ; le chiffre exact est celui-ci.
 
 Détail des 17 527 caractères jamais cachés :
 
