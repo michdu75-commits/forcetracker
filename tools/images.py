@@ -28,6 +28,7 @@ faire travailler quelqu'un sur un autre exercice — le coût de l'erreur n'est 
 USAGE
 -----
     python3 tools/images.py etat                    # que manque-t-il ? (aucune écriture)
+    python3 tools/images.py page                    # → docs/FIGURINES.html, la page à regarder sur le téléphone
     python3 tools/images.py proposer <dossier>      # rapproche + planche à regarder
     python3 tools/images.py convertir <fichier> <exercice>   # convertit + écrit la ligne EX_YT
 
@@ -255,12 +256,141 @@ def cmd_convertir(fichier, exercice):
     print(f"\n  ⏭️  Il reste à : bumper sw.js · lancer les tests · commiter.")
 
 
+
+# ── La page à REGARDER (demande de Michel, 08/08 : « fais la page ce qui manque par muscle ») ──
+# Elle répond à UNE question, celle qu'il se pose avant de m'envoyer une archive :
+# « qu'est-ce qu'il me manque, et dans quel groupe ? »
+#
+# ⚠️ ELLE EST GÉNÉRÉE, JAMAIS ÉCRITE À LA MAIN. C'est tout l'intérêt : une liste tapée à la
+# main redevient fausse en trois semaines, et personne ne s'en aperçoit (R27). Ici, la seule
+# source est le CODE — EXLIB pour les groupes, EX_YT pour les images. Si le catalogue bouge,
+# on relance la commande et la page dit de nouveau la vérité.
+#
+# ⚠️ Et elle ne touche PAS l'application : c'est un fichier de `docs/`, servi par GitHub Pages.
+def cmd_page():
+    noms, grp = catalogue()
+    img = images_declarees()
+    par = {}
+    for n in noms:
+        par.setdefault(grp.get(n, 'Autres'), []).append(n)
+    manquants_tot = [n for n in noms if n not in img]
+
+    # Les groupes les plus démunis EN PREMIER : la page sert à savoir quoi chercher.
+    ordre = sorted(par, key=lambda g: (-len([n for n in par[g] if n not in img]), g))
+
+    def esc(t):
+        return (t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                 .replace('"', '&quot;'))
+
+    blocs = []
+    for g in ordre:
+        exs = sorted(par[g])
+        abs_ = [n for n in exs if n not in img]
+        lignes = []
+        for n in exs:
+            manque = n not in img
+            if manque:
+                vign = '<span class="ko">?</span>'
+            else:
+                # la page vit dans docs/ → les images sont un cran au-dessus
+                vign = f'<img loading="lazy" src="../{esc(img[n])}" alt="">'
+            lignes.append(f'<li class="{"manque" if manque else "ok"}">{vign}'
+                          f'<span class="nom">{esc(n)}</span></li>')
+        blocs.append(
+            f'<section data-manque="{len(abs_)}">'
+            f'<h2><span>{esc(g)}</span>'
+            f'<b class="{"rouge" if abs_ else "vert"}">{len(abs_) or "✓"}</b></h2>'
+            f'<ul>{"".join(lignes)}</ul></section>')
+
+    liste_txt = esc("\n".join(f"{grp.get(n,'?')} — {n}" for n in sorted(manquants_tot)))
+    html = PAGE_GABARIT.format(
+        total=len(noms), illustres=len(noms) - len(manquants_tot),
+        manquants=len(manquants_tot),
+        pct=round(100 * (len(noms) - len(manquants_tot)) / max(len(noms), 1)),
+        blocs="".join(blocs), liste=liste_txt,
+        maj=__import__('datetime').date.today().strftime('%d/%m/%Y'))
+
+    dest = os.path.join(RACINE, 'docs', 'FIGURINES.html')
+    io.open(dest, 'w', encoding='utf-8').write(html)
+    print(f"\n  ✅ docs/FIGURINES.html — {len(noms)} exercices, "
+          f"{len(noms)-len(manquants_tot)} illustrés, {len(manquants_tot)} sans image")
+    print("  📱 https://michdu75-commits.github.io/forcetracker/docs/FIGURINES.html")
+
+
+PAGE_GABARIT = """<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Figurines — ce qui manque</title>
+<style>
+:root{{--bg:#0C0D11;--bg2:#14161C;--bg3:#1B1E26;--sep:rgba(255,255,255,.08);
+--t1:#F2F3F5;--t2:#8A8F99;--t3:#6B7180;--red:#FF6A73;--green:#34D399;}}
+*{{box-sizing:border-box;}}
+body{{margin:0;background:var(--bg);color:var(--t1);
+font:15px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+padding:16px 14px calc(env(safe-area-inset-bottom,0px) + 40px);
+max-width:430px;margin:0 auto;-webkit-text-size-adjust:100%;}}
+h1{{font-size:19px;font-weight:800;margin:0 0 2px;}}
+.maj{{color:var(--t3);font-size:12px;margin-bottom:14px;}}
+.bilan{{background:var(--bg2);border:1px solid var(--sep);border-radius:16px;
+padding:14px;margin-bottom:12px;display:flex;gap:10px;text-align:center;}}
+.bilan div{{flex:1;}}
+.bilan b{{display:block;font-size:22px;font-weight:800;line-height:1.2;}}
+.bilan span{{font-size:11px;color:var(--t2);}}
+.jauge{{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:14px;}}
+.jauge i{{display:block;height:100%;background:var(--green);width:{pct}%;}}
+button{{width:100%;padding:11px;border-radius:12px;border:1px solid var(--sep);
+background:var(--bg2);color:var(--t1);font-size:14px;font-weight:700;cursor:pointer;
+margin-bottom:8px;font-family:inherit;}}
+button.on{{background:var(--red);border-color:var(--red);color:#fff;}}
+section{{margin-top:18px;}}
+h2{{display:flex;align-items:center;justify-content:space-between;gap:8px;
+font-size:14px;font-weight:800;margin:0 0 8px;padding-bottom:6px;
+border-bottom:1px solid var(--sep);}}
+h2 b{{font-size:12px;padding:3px 9px;border-radius:20px;}}
+.rouge{{background:rgba(255,106,115,.15);color:var(--red);}}
+.vert{{background:rgba(52,211,153,.15);color:var(--green);}}
+ul{{list-style:none;margin:0;padding:0;}}
+li{{display:flex;align-items:center;gap:10px;padding:5px 0;}}
+li img{{width:40px;height:40px;border-radius:8px;object-fit:cover;
+background:#fff;flex-shrink:0;}}
+.ko{{width:40px;height:40px;border-radius:8px;flex-shrink:0;display:flex;
+align-items:center;justify-content:center;font-weight:800;color:var(--red);
+background:rgba(255,106,115,.10);border:1px dashed var(--red);}}
+.nom{{font-size:13.5px;overflow-wrap:anywhere;}}
+li.manque .nom{{color:var(--red);font-weight:700;}}
+li.ok .nom{{color:var(--t2);}}
+body.filtre li.ok{{display:none;}}
+body.filtre section[data-manque="0"]{{display:none;}}
+</style></head><body class="filtre">
+<h1>🖼️ Figurines — ce qui manque</h1>
+<div class="maj">Généré depuis le code le {maj} · groupes les plus démunis en premier</div>
+<div class="bilan">
+  <div><b>{total}</b><span>au catalogue</span></div>
+  <div><b style="color:#34D399">{illustres}</b><span>illustrés</span></div>
+  <div><b style="color:#FF6A73">{manquants}</b><span>sans image</span></div>
+</div>
+<div class="jauge"><i></i></div>
+<button id="f" class="on" onclick="document.body.classList.toggle('filtre');
+this.classList.toggle('on');
+this.textContent=document.body.classList.contains('filtre')
+ ?'👁️ Voir aussi ce qui existe déjà':'🎯 Ne montrer que ce qui manque';">👁️ Voir aussi ce qui existe déjà</button>
+<button onclick="navigator.clipboard.writeText(this.dataset.l).then(
+ ()=>this.textContent='✅ Liste copiée',()=>this.textContent='Copie impossible');"
+ data-l="{liste}">📋 Copier la liste des manquants</button>
+{blocs}
+</body></html>
+"""
+
+
 if __name__ == '__main__':
-    if len(sys.argv) < 2 or sys.argv[1] not in ('etat', 'proposer', 'convertir'):
+    if len(sys.argv) < 2 or sys.argv[1] not in ('etat', 'proposer', 'convertir', 'page'):
         print(__doc__)
         sys.exit(0)
     if sys.argv[1] == 'etat':
         cmd_etat()
+    elif sys.argv[1] == 'page':
+        cmd_page()
     elif sys.argv[1] == 'proposer':
         if len(sys.argv) < 3:
             print("  usage : python3 tools/images.py proposer <dossier>")

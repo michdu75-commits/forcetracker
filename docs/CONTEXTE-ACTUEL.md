@@ -18,9 +18,11 @@
 > erreur**. **Mais le besoin est réel** : voir d'un coup d'œil quoi chercher avant de m'envoyer une
 > archive. L'info EXISTE déjà (`python3 tools/images.py etat` : **41 sans image**, dont 7 Fessiers,
 > 7 Biceps, 5 Abdominaux) — mais elle est **enfermée dans un outil que Michel ne peut pas lancer**.
-> ⏭️ **À faire : une page à OUVRIR sur son téléphone** (servie par Pages, comme
-> `docs/EXERCICES-MUSCLES.html` — qui existe mais date du 03/08 et ne signale pas les manquants).
-> Zéro risque, ne touche pas l'app.
+> ✅ **FAIT le 08/08** — `docs/FIGURINES.html`, générée par `python3 tools/images.py page` :
+> https://michdu75-commits.github.io/forcetracker/docs/FIGURINES.html
+> Groupes les plus démunis en premier, filtre « ne montrer que ce qui manque » actif par défaut,
+> bouton « copier la liste ». **Générée depuis le code** (EXLIB + EX_YT) — à relancer après chaque
+> ajout d'images, sinon elle ment. Ne touche pas l'app.
 >
 > **② Les 8 fichiers image inutilisés (~700 Ko)** — mesurés le 08/08, décision non prise :
 > `front-squat-avec-halteres`, `montees-banc-lateral-halteres`, `shrug-machine-mollets`,
