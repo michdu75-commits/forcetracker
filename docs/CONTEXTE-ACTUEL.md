@@ -6,7 +6,34 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v767`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v796`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+
+> ## ⏳ EXPÉRIENCE EN COURS — verdict attendu le **11/08/2026**
+>
+> **Lancée le 08/08 (ft-v796), à la décision de Michel.** Le bloc **commun** du prompt de Milo est
+> passé en cache **1 heure** ; le bloc **personnel** reste en **5 minutes**. Rien ne change pour
+> l'utilisateur — **seule la facture bouge**.
+>
+> **⚠️ C'est un PARI** : écrire en 1 h coûte **2×** le tarif d'entrée contre **1,25×** en 5 min.
+> Il n'est gagné que si le bloc est **relu ≥ 2 fois par écriture** (seuil : `2 + 0,1N < N + 1` → N > 1,11).
+>
+> **🎯 COMMENT TRANCHER** — demander à Michel l'export de la console Anthropic (Usage → Tokens, CSV),
+> puis comparer sur les jours du 08 au 11 :
+> | | |
+> |---|---|
+> | `usage_input_tokens_cache_read` ≥ **1,11 ×** `usage_input_tokens_cache_write_1h` | ✅ **gagné, on garde** |
+> | en dessous | ❌ retirer `, ttl: '1h'` dans `worker.js` (une ligne, sans effet sur les réponses) |
+>
+> **📌 Contexte utile pour lire les chiffres** : la mesure du 1ᵉʳ au 6 août (0,08 lecture par écriture)
+> décrivait la fenêtre de **5 minutes** — elle ne dit rien de celle d'une heure. Elle était en plus
+> **polluée** par le laboratoire de personas (Profil → Admin), qui écrit à chaque appui un cache jamais
+> relu. Le compteur d'appels IA (ft-v793) sépare désormais les essais de l'usage réel : Profil → Admin → 🩺.
+>
+> **Repères mesurés le 08/08** (utiles pour tout calcul de coût) : prompt **59 356 car.** pour un
+> utilisateur normal (bloc commun **37 237** · perso **~4 600** · jamais cachable **17 527**, dont
+> **9 514** de catalogue d'exercices) · **~10,2 centimes** le message aujourd'hui, **~3,7** si le cache
+> est relu · un abonné à 6,99 € est rentable jusqu'à **2,4 messages/jour** (6,5 avec le cache).
+> Détail complet et briefing pour audit externe : **`docs/BRIEFING-GPT-COUT-IA.md`**.
 
 > 🌙 **AUDIT NOCTURNE du 29-30/07 (demandé par Michel) : TOUT l'ancien code vérifié** — 2 nouvelles familles permanentes (`tests/calculs/` 79/79 linéaires · `tests/parcours/` 40/40 croisés + perfs), les 9 familles existantes re-passées vertes, retouches quantifiées. **Verdict : les formules fondatrices sont justes, aucun ralentissement.** Trouvailles : bouton « Hier » = bug de Greenwich (minuit-2 h) + 5 cousins **✅ corrigés ft-v671** · « marche de midi » de la récup **✅ corrigée ft-v671** (fatigue en continu sur 36 h, repos en jours calendaires) · « autre sport » **✅ corrigé ft-v672** (+150 kcal/j dans le TDEE, anti-double-comptage ; la récup reste chez Milo — décision assumée, pas de fatigue inventée). **Les 3 trouvailles de l'audit sont closes.** **Tout le détail : `docs/AUDIT-NOCTURNE-2026-07-29.md`.**
 
