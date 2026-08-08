@@ -5360,6 +5360,22 @@ const EX_YT={
   'Burpees':{img:'exercises/burpees.webp'},
   'Sauts à la Corde':{img:'exercises/sauts-a-la-corde.webp'},
   'Grimpeur (Mountain Climber)':{img:'exercises/grimpeur-mountain-climber.webp'},
+  // ─── Abdominaux illustrés le 08/08/2026 (archive fournie par Michel) ──────────────────────
+  // Le groupe le plus démuni du catalogue : 16 exercices sur 19 sans démonstration, alors que
+  // ce sont les mouvements des débutants. Chaque image a été VUE avant d'être inscrite (planche
+  // de vignettes), jamais rattachée sur la foi du nom de fichier.
+  // GIF 700×700 (~700 Ko) → WebP animé 480 px : 7,1 Mo devenus 902 Ko, −88 %, animation intacte
+  // (règle d'or #4 : l'app doit s'ouvrir vite, même en 4G).
+  'Crunch':                     {img:'exercises/crunch-au-sol.webp'},
+  'Crunch Machine':             {img:'exercises/crunch-machine.webp'},
+  'Crunch Poulie':              {img:'exercises/crunch-poulie-haute.webp'},
+  'Drapeau (Dragon Flag)':      {img:'exercises/dragon-flag.webp'},
+  'Gainage':                    {img:'exercises/planche-gainage.webp'},
+  'Hollow Body':                {img:'exercises/hollow-hold.webp'},
+  'Planche Latérale (Side Plank)':{img:'exercises/planche-laterale.webp'},
+  'Roue Abdominale (Ab Wheel)': {img:'exercises/roue-abdominale.webp'},
+  'Chaise Romaine':             {img:'exercises/chaise-romaine-releve-jambes.webp'},
+  'Relevé de Jambes':           {img:'exercises/releve-de-jambes-suspendu.webp'},
   'Box Jump':{img:'exercises/box-jump.webp'},
   'Assault Air Bike':{img:'exercises/assault-air-bike.webp'},
   'Ergomètre de Ski (Ski Erg)':{img:'exercises/ergometre-de-ski.webp'},
