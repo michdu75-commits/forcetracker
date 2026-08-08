@@ -8,6 +8,30 @@
 
 - **Version en ligne (live) :** `ft-v796`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
+> ## 📌 EN ATTENTE DE MICHEL — posé le 08/08 (il était au sport : *« montre-moi plus tard »*)
+>
+> **① La page « ce qui existe / ce qui manque, par muscle ».** Née de sa question — *« tu peux pas
+> classer chaque exercice dans un sous-dossier ? »*. **Réponse donnée : les sous-dossiers, non** —
+> le groupe musculaire est **déjà** dans `EXLIB`, un dossier le redirait une 2ᵉ fois (**R2**), le
+> Squat appartient à Jambes **ET** Fessiers (le dossier force un choix que la donnée n'a pas), et
+> déplacer 296 fichiers = réécrire 294 chemins, dont une faute de frappe ne lèverait **aucune
+> erreur**. **Mais le besoin est réel** : voir d'un coup d'œil quoi chercher avant de m'envoyer une
+> archive. L'info EXISTE déjà (`python3 tools/images.py etat` : **41 sans image**, dont 7 Fessiers,
+> 7 Biceps, 5 Abdominaux) — mais elle est **enfermée dans un outil que Michel ne peut pas lancer**.
+> ⏭️ **À faire : une page à OUVRIR sur son téléphone** (servie par Pages, comme
+> `docs/EXERCICES-MUSCLES.html` — qui existe mais date du 03/08 et ne signale pas les manquants).
+> Zéro risque, ne touche pas l'app.
+>
+> **② Les 8 fichiers image inutilisés (~700 Ko)** — mesurés le 08/08, décision non prise :
+> `front-squat-avec-halteres`, `montees-banc-lateral-halteres`, `shrug-machine-mollets`,
+> `triceps-haltere-un-bras` (dans `exercises/`) + `press-jambes-1/3/4/5` (dans `machine/`).
+> **Aucun chemin cassé en revanche** : les 294 pointent tous vers un fichier existant.
+>
+> **③ Deux images en attente d'arbitrage** (depuis ft-v798) : `Crunch Oblique` (seule image
+> disponible = flexion latérale sur banc à 45°) et `Relevé de Buste (Sit-up)` (seul candidat =
+> sit-up **décliné**). Plus **~35 fichiers d'archive** ne correspondant à aucun exercice du
+> catalogue (Dead Bug, V-ups, Pallof Press, Swiss Ball, TRX…) → décision **produit**.
+
 > ## ⏳ EXPÉRIENCE EN COURS — verdict attendu le **11/08/2026**
 >
 > **Lancée le 08/08 (ft-v796), à la décision de Michel.** Le bloc **commun** du prompt de Milo est
