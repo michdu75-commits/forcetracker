@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v691`, dernier commit 2026-07-31).
+> Généré depuis **le code** (version `ft-v802`, dernier commit 2026-08-08).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -18,10 +18,10 @@
 |---|---|---|
 | Écrans | 7 | 0 |
 | Lignes de menu | 5 | 1 |
-| Fenêtres (modales) | 53 | 5 |
-| Actions du serveur | 36 | 0 |
-| Fonctions JS | 509 | — |
-| Nouveautés annoncées | 49 | — |
+| Fenêtres (modales) | 56 | 8 |
+| Actions du serveur | 38 | 1 |
+| Fonctions JS | 520 | — |
+| Nouveautés annoncées | 52 | — |
 
 ## 🖥️ Écrans
 
@@ -53,6 +53,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 |---|---|
 | `adminRestore` | ✅ |
 | `adminUnlockAuth` | ✅ |
+| `aiCount` | ❓ |
 | `aiUsage` | ✅ |
 | `authStatus` | ✅ |
 | `bodyStudy` | ✅ |
@@ -62,6 +63,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `estimateFood` | ✅ |
 | `foodLabel` | ✅ |
 | `generateMealPlan` | ✅ |
+| `getCustomEx` | ✅ |
 | `getIdees` | ✅ |
 | `importBloodTest` | ✅ |
 | `importBodyScan` | ✅ |
@@ -100,6 +102,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-super-welcome` | ✅ |
 | `ov-billoute` | ✅ |
 | `ov-christophe-photos` | ✅ |
+| `ov-memoire-c` | ❓ |
 | `ov-pesee-nav-c` | ❓ |
 | `ov-pesee-nav-e` | ❓ |
 | `ov-emma-welcome` | ✅ |
@@ -127,10 +130,12 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-import-hist` | ✅ |
 | `ov-hist-wall` | ✅ |
 | `ov-day-sel` | ✅ |
+| `ov-milo-seance` | ❓ |
 | `ov-morpho-analysis` | ✅ |
 | `ov-premium-info` | ❓ |
 | `ov-weigh-edit` | ✅ |
 | `ov-bs-scan` | ✅ |
+| `ov-health-lock` | ❓ |
 | `ov-bodyscan-form` | ✅ |
 | `ov-blood-redact` | ✅ |
 | `ov-blood-test` | ✅ |
@@ -152,6 +157,9 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 55 | 🔒 | Protège ton compte — 2 minutes |
+| 54 | 🏷️ | Des exercices ont changé de nom |
+| 53 | 🧍 | Ta figurine passe à 41 muscles |
 | 52 | 💚 | Deux styles pour ta récup |
 | 51 | 📅 | Ton calendrier se lit d'un coup d'œil |
 | 50 | 🎯 | Ta récup passe en anneau |

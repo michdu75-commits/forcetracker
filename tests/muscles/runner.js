@@ -776,6 +776,63 @@ t('⭐ la recherche par FAMILLE marche toujours (le retour de Tatiana)',
   'tirage horizontal='+pert.familleN+' rowing 1er='+pert.familleRowing+' poussée verticale='+pert.poussV);
 t('témoin : une recherche qui ne correspond à rien rend toujours 0', pert.rien===0, String(pert.rien));
 
+// ── LE VOCABULAIRE DE SALLE ATTEINT ENFIN LA RECHERCHE (retour Michel, 08/08) ─────────
+// Il tape « Butterfly » → « Aucun résultat ». Il crée donc un exercice PERSO « Butterfly »
+// rangé dans ÉPAULES, alors que c'est un exercice de PECTORAUX qui existe déjà sous le nom
+// « Pec Deck ». L'app SAVAIT (_EX_EQUIV['butterfly']='Pec Deck') mais cette table ne servait
+// qu'aux imports : elle n'atteignait pas l'écran. Mesuré avant correctif : **371 des 505
+// synonymes rendaient « Aucun résultat »** — 21 % seulement menaient au bon exercice.
+// Même famille que le retour de Tatiana juste au-dessus : le mot existait, il ne descendait
+// pas jusqu'à la recherche (R4/R8).
+const syn=await p.evaluate(()=>{
+ try{
+  const i=document.getElementById('ex-search');
+  const ch=q=>{i.value=q;_exGrp=null;filterEx();
+    const h=document.getElementById('ex-list').innerHTML;
+    const l=[...h.matchAll(/class="ex-pick-name"[^>]*>([^<]+)</g)].map(z=>z[1].trim());
+    return {n:l.length, premier:l[0]||null};};
+  const o={cas:{}};
+  ['butterfly','butterfly inversé','pec deck inversé','presse à cuisses','dc']
+    .forEach(q=>o.cas[q]=ch(q));
+  // Balayage COMPLET de la table : aucun synonyme ne doit rester muet, et chacun doit sortir
+  // sa cible. On compare au nom ACTUEL (la table vise parfois un ancien nom — sinon on
+  // mesurerait un faux rouge, ce qui est arrivé en écrivant ce test).
+  const muets=[], rates=[];
+  for(const k of Object.keys(_EX_EQUIV)){
+    i.value=k;_exGrp=null;filterEx();
+    const txt=document.getElementById('ex-list').textContent||'';
+    if(txt.indexOf('Aucun résultat')>=0){ muets.push(k); continue; }
+    const c=(typeof exNomActuel==='function')?exNomActuel(_EX_EQUIV[k]):_EX_EQUIV[k];
+    if(txt.indexOf(c)<0) rates.push(k+'→'+c);
+  }
+  o.total=Object.keys(_EX_EQUIV).length; o.muets=muets; o.rates=rates;
+  i.value='';_exGrp=null;filterEx();
+  return o;
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(syn.erreur) console.log('     ⚠️  bloc synonymes en ERREUR : '+syn.erreur);
+t('⭐⭐ « Butterfly » trouve le PEC DECK — et il est classé en PECTORAUX, pas en épaules',
+  !syn.erreur && syn.cas['butterfly'].premier==='Pec Deck',
+  'reçu : '+(syn.erreur?'—':syn.cas['butterfly'].premier)
+  +'\n         → sans ça, la personne crée un doublon perso : historique coupé en deux, figurine sur le mauvais muscle.');
+t('⭐ « Butterfly inversé » — le mot de Michel — trouve la MACHINE OISEAU',
+  !syn.erreur && syn.cas['butterfly inversé'].premier==='Machine Oiseau'
+             && syn.cas['pec deck inversé'].premier==='Machine Oiseau',
+  syn.erreur?'—':('butterfly inversé→'+syn.cas['butterfly inversé'].premier
+                  +' · pec deck inversé→'+syn.cas['pec deck inversé'].premier));
+t('⭐ le mot ENTIER bat le mot EN COURS DE FRAPPE (« butterfly » ≠ « butterfly inversé »)',
+  !syn.erreur && syn.cas['butterfly'].premier==='Pec Deck' && syn.cas['butterfly'].n>=2,
+  syn.erreur?'—':(syn.cas['butterfly'].n+' résultats, 1er : '+syn.cas['butterfly'].premier
+   +'\n         → en ajoutant « butterfly inversé », Machine Oiseau est passé PREMIER sur « butterfly ». Michel avait prévenu : « Butterfly c\'est les pecs attention ».'));
+t('les abréviations de salle à 2 lettres marchent (dc → Développé Couché)',
+  !syn.erreur && syn.cas['dc'].premier==='Développé Couché', syn.erreur?'—':syn.cas['dc'].premier);
+t('⭐⭐ AUCUN des '+(syn.total||'?')+' synonymes ne rend « Aucun résultat » (371 avant le 08/08)',
+  !syn.erreur && syn.muets.length===0,
+  syn.erreur?'—':(syn.muets.length+' muets : '+syn.muets.slice(0,10).join(', ')));
+t('⭐ … et chacun sort bien la cible que la table lui assigne',
+  !syn.erreur && syn.rates.length===0,
+  syn.erreur?'—':(syn.rates.length+' ratés : '+syn.rates.slice(0,8).join(', ')));
+
 // ── ÉPAULES : les 5 corrections trouvées en relisant les 47 fiches une par une (02/08).
 // Elles sont FIGÉES ici, en plus de l'empreinte : l'empreinte se régénère d'une commande,
 // ces attentes-ci demandent qu'on les réécrive à la main. (R17 : un bug trouvé devient un test.)

@@ -1200,6 +1200,12 @@ Object.assign(_EX_EQUIV,{
   // CORRECTIONS de mauvais matchs révélés par le stress-test
   'tirage devant':'Tirage Poulie Haute (Lat Pulldown)','lat pull':'Tirage Poulie Haute (Lat Pulldown)',
   'reverse pec fly':'Machine Oiseau','reverse fly':'Machine Oiseau','reverse pec deck':'Machine Oiseau','ecarte inverse machine':'Machine Oiseau',
+  // « Butterfly inversé » — le nom que Michel emploie spontanément (08/08), et le seul qu'il
+  // ait sous la main : *« son nom je ne le connais pas exactement »*. Nous, on l'appelle
+  // « Machine Oiseau ». Si le mot de la salle ne mène nulle part, la personne crée un doublon
+  // perso — c'est exactement ce qui vient de se passer avec « Butterfly ».
+  'butterfly inverse':'Machine Oiseau','butterfly inversee':'Machine Oiseau','reverse butterfly':'Machine Oiseau',
+  'butterfly arriere':'Machine Oiseau','butterfly epaules':'Machine Oiseau','butter fly inverse':'Machine Oiseau',
   'quad extension':'Extension Quadriceps (Leg Extension)',
   'standing soleus press':'Élévations Mollets Debout','soleus press':'Élévations Mollets Debout',
   // Stress-test « Niveau Expert » (2e vague GPT)
@@ -3018,6 +3024,45 @@ function filterEx(){
         if(p2)_patCible=p2.id;
       }
     }catch(e){}
+    // ── RECHERCHE PAR SYNONYME DE SALLE (_EX_EQUIV) — retour Michel, 08/08 ───────────────
+    // Il tape « Butterfly » → « Aucun résultat ». Il crée donc un exercice PERSO « Butterfly »
+    // et le range dans Épaules — alors que c'est un exercice de PECTORAUX qui existe déjà au
+    // catalogue sous le nom « Pec Deck ». Le coût n'est pas cosmétique : l'historique se coupe
+    // en deux (l'ancien Pec Deck d'un côté, le Butterfly perso de l'autre), la figurine se
+    // trompe de muscle, et une ligne de plus part dans la feuille « Exercices manquants ».
+    // ⚠️ ET L'APP SAVAIT DÉJÀ : _EX_EQUIV contient 'butterfly' → 'Pec Deck' (et
+    // 'pec deck inverse' → 'Machine Oiseau'). Cette table ne servait qu'aux IMPORTS
+    // (_matchExercise) ; elle ne descendait pas jusqu'à la RECHERCHE. Mesuré le 08/08 :
+    // **371 des 505 synonymes rendaient « Aucun résultat »** — 21 % seulement menaient au bon
+    // exercice. C'est mot pour mot le cas Tatiana du 02/08 juste au-dessus (« tirage
+    // horizontal ») : autre table, même cause — le mot existait, il n'atteignait pas l'écran.
+    // ⚠️ DEUX NIVEAUX, et la distinction n'est pas cosmétique. En ajoutant « butterfly inversé »
+    // (→ Machine Oiseau, un exercice d'ÉPAULES), taper « butterfly » s'est mis à sortir Machine
+    // Oiseau EN PREMIER — alors que Michel venait précisément de prévenir : *« Butterfly c'est
+    // les pecs attention »*. Le mot ENTIER doit donc toujours battre le mot EN COURS DE FRAPPE.
+    let _synExact=null, _synDebut=null;
+    try{
+      if(typeof _EX_EQUIV!=='undefined' && qn.length>=2){
+        const ex=new Set(), db=new Set();
+        // ⚠️ La table peut viser un ANCIEN nom : 'leg curl' → « Curl Ischio-jambiers (Leg Curl) »,
+        // qui n'est plus au catalogue depuis son renommage en « Leg Curl Couché Machine ». Sans
+        // exNomActuel, ce synonyme viserait le vide — le correctif serait mort en silence pour
+        // lui, sans erreur ni test rouge. (Seul cas au 08/08, vérifié sur les 505 clés.)
+        const cibleDe=k=>{const v=_EX_EQUIV[k];return (typeof exNomActuel==='function')?exNomActuel(v):v;};
+        for(const k in _EX_EQUIV){
+          if(k===qn){ const c=cibleDe(k); if(c)ex.add(c); }
+          // Le préfixe (frappe en cours) n'est ouvert qu'à partir de 3 caractères ; en dessous,
+          // SEUL le mot entier compte. Sinon « dc » sortirait tout ce qui commence par « dc »…
+          // mais les abréviations de salle à 2 lettres sont réelles et nombreuses (dc, lp, bs,
+          // fs, gm, di, dd, dm) : les refuser toutes reviendrait à rater ce que les gens tapent
+          // vraiment. On garde donc l'exact, on ferme l'à-peu-près.
+          else if(qn.length>=3&&k.indexOf(qn)===0){ const c=cibleDe(k); if(c)db.add(c); }
+        }
+        ex.forEach(c=>db.delete(c));            // un exact ne redescend jamais au rang « début de mot »
+        if(ex.size)_synExact=ex;
+        if(db.size)_synDebut=db;
+      }
+    }catch(e){_synExact=null;_synDebut=null;}
     // ── LE RANG DE PERTINENCE (02/08, correctif d'une régression que j'avais créée) ──────
     // La recherche était un FILTRE (oui/non) affiché dans l'ordre ALPHABÉTIQUE, sans aucune
     // notion de « à quel point ça correspond ». Tant que le filtre était étroit, ça passait.
@@ -3034,13 +3079,16 @@ function filterEx(){
       if(nn===qn) return 0;                                   // le nom exact
       if(nn.indexOf(qn)===0) return 1;                        // le nom COMMENCE par la recherche
       if(nn.indexOf(qn)>=0) return 2;                         // le nom la CONTIENT
+      if(_synExact&&_synExact.has(e.n)) return 3;              // synonyme de salle EXACT (« butterfly » → Pec Deck)
       const en=(typeof EX_EN!=='undefined'&&EX_EN[e.n])?_normEx(EX_EN[e.n]):'';
-      if(en&&en.indexOf(qn)>=0) return 3;                     // le terme anglais
-      if(_anciensNoms(e.n).some(a=>_normEx(a).indexOf(qn)>=0)) return 4;  // un ANCIEN nom
-      if(_normEx(e.g).indexOf(qn)>=0) return 5;               // le groupe musculaire
-      return 6;                                               // même famille de mouvement
+      if(en&&en.indexOf(qn)>=0) return 4;                     // le terme anglais
+      if(_synDebut&&_synDebut.has(e.n)) return 5;             // synonyme dont la frappe n'est pas finie
+      if(_anciensNoms(e.n).some(a=>_normEx(a).indexOf(qn)>=0)) return 6;  // un ANCIEN nom
+      if(_normEx(e.g).indexOf(qn)>=0) return 7;               // le groupe musculaire
+      return 8;                                               // même famille de mouvement
     };
     const f=all.filter(e=>{
+      if((_synExact&&_synExact.has(e.n))||(_synDebut&&_synDebut.has(e.n))) return true;
       if(_patCible){ try{ if(_movPattern(e.n)===_patCible) return true; }catch(x){} }
       // Cherche aussi dans les termes ANGLAIS (EX_EN) → « shoulder press », « bench press », « leg press »…
       // trouvent l'exercice même si son nom français ne contient pas le mot anglais.
