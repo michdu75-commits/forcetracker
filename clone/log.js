@@ -5219,6 +5219,10 @@ const EX_YT={
   'Leg Curl Unilatéral Debout':    {img:'exercises/leg-curl-unilateral-debout-machine.webp'},
   // ── Dos / Trapèzes / Lombaires (lot 2026-07-04) ──
   'Rowing Barre (Tirage Horizontal)':                  {img:'exercises/rowing-barre.webp'},
+  // Fourni par Michel le 08/08/2026 (GIF 700×700, 764 Ko) → converti en WebP animé 480 px, 111 Ko :
+  // 85 % de moins, au format des 283 autres (médiane 96 Ko). Un GIF brut dans le dossier ferait
+  // grossir le cache du service worker pour rien — l'app doit s'ouvrir vite, même en 4G (règle d'or #4).
+  'Rowing Yates (Supination)':                         {img:'exercises/rowing-yates-barre.webp'},
   'Rowing Haltère (Tirage Horizontal)':                {img:'exercises/rowing-haltere-un-bras.webp'},
   'Rowing Câble (Tirage Horizontal)':                  {img:'exercises/tirage-horizontal-poulie.webp'},
   'Rowing Machine (Tirage Horizontal)':                {img:'exercises/rowing-assis-machine-prise-pronation.webp'},
