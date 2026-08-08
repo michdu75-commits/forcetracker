@@ -2098,6 +2098,47 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
   }
 }
 
+// ── « REMPLACER MA SÉANCE » PRÉVIENT AVANT, PAS APRÈS (bug vécu par Michel, 08/08) ──────
+// En pleine séance, il demande à Milo de remplacer un exercice. La modale lui propose
+// « Ajouter » ou « Remplacer », il choisit Remplacer — et perd tout ce qu'il avait fait.
+// ⚠️ L'avertissement EXISTAIT depuis le début. Il était écrit SOUS les deux boutons : on ne
+// peut pas le lire après avoir tapé, la modale est déjà fermée. Et il ne s'affichait QUE si
+// au moins une série était validée — alors que « Remplacer » retire les exercices dans tous
+// les cas. Règle d'or #3 (zéro perte de séance) : la perte reste possible, elle doit être ANNONCÉE.
+{
+  const av=await p.evaluate(()=>{
+   try{
+    S.wkt={date:'2026-08-08',progLabel:'Test',startTs:Date.now(),exs:[
+      {name:'Développé Couché',sets:[{kg:80,reps:8,done:true},{kg:80,reps:8,done:true}]},
+      {name:'Rowing Barre (Tirage Horizontal)',sets:[{kg:60,reps:10,done:false}]}]};
+    _pendingMiloSessions=[{label:'Séance de Milo',exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5}]}]}];
+    _askMiloSeanceMode(1);
+    const m=document.getElementById('ov-milo-seance');
+    const html=m.innerHTML;
+    const iAv=html.indexOf('id="milo-seance-avert"'), iBtn=html.indexOf("_applyMiloSession('add')");
+    const o={avertAvantBoutons:iAv>=0&&iBtn>=0&&iAv<iBtn,
+             texte:(document.getElementById('milo-seance-avert')||{}).textContent||'',
+             astuce:(document.getElementById('milo-seance-astuce')||{}).textContent||''};
+    // même question, mais AUCUNE série validée : l'ancien code ne disait plus rien du tout
+    S.wkt.exs.forEach(e=>e.sets.forEach(s=>s.done=false));
+    _askMiloSeanceMode(1);
+    o.texteSansValidee=(document.getElementById('milo-seance-avert')||{}).textContent||'';
+    closeMiloSeance(); S.wkt=null;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(av.erreur) console.log('     ⚠️  bloc « remplacer » en ERREUR : '+av.erreur);
+  t('⭐⭐ l\'avertissement est AU-DESSUS des boutons (il était en dessous : illisible avant de décider)',
+    !av.erreur && av.avertAvantBoutons,
+    av.erreur?'—':'position avert/boutons incorrecte');
+  t('⭐ il annonce les séries validées qui seront effacées',
+    !av.erreur && /2 séries déjà validées/.test(av.texte), av.erreur?'—':av.texte);
+  t('⭐⭐ … et il prévient MÊME sans série validée (les exercices partent quand même)',
+    !av.erreur && /retire tes 2 exercices/.test(av.texteSansValidee), av.erreur?'—':av.texteSansValidee);
+  t('⭐ la modale rappelle qu\'on peut changer UN exercice sans rien perdre',
+    !av.erreur && /Remplacer l'exercice/.test(av.astuce), av.erreur?'—':av.astuce);
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

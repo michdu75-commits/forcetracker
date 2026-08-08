@@ -4273,7 +4273,23 @@ function _askMiloSeanceMode(nNew){
   if(et)et.innerHTML='Ta séance en cours a <b>'+exs.length+' exercice'+(exs.length>1?'s':'')+'</b>'
     +(faites?' et <b>'+faites+' série'+(faites>1?'s':'')+' déjà validée'+(faites>1?'s':'')+'</b>':'')
     +'.<br>Milo t\'en propose <b>'+nNew+'</b>.';
-  if(av)av.textContent=faites?('⚠️ Remplacer effacera tes '+faites+' série'+(faites>1?'s':'')+' déjà validée'+(faites>1?'s':'')+'.'):'';
+  // ⚠️ ON AVERTIT TOUJOURS, MÊME SANS SÉRIE VALIDÉE. L'ancien texte ne s'affichait que si
+  // `faites > 0` — or « Remplacer » RETIRE les exercices dans tous les cas. Quelqu'un qui a
+  // composé sa séance sans encore rien valider la perdait donc en silence.
+  // ⚠️ Et on ne compte QUE les séries validées : les autres sont PRÉ-REMPLIES depuis la séance
+  // précédente (kg et reps déjà renseignés, `done:false`). Les compter ferait annoncer « tu vas
+  // perdre 12 séries » à quelqu'un qui n'a rien fait — et une alerte qui crie au loup finit par
+  // ne plus être lue du tout.
+  if(av){
+    const s=faites>1?'s':'', e=exs.length>1?'s':'';
+    av.textContent='⚠️ « Remplacer » retire tes '+exs.length+' exercice'+e+' en cours'
+      +(faites?(' et efface tes '+faites+' série'+s+' déjà validée'+s):'')+'.';
+  }
+  // Ce que Michel cherchait vraiment le 08/08 : changer UN exercice, pas toute la séance. L'app
+  // sait déjà le faire sans rien perdre (⋯ → « Remplacer l'exercice », qui garde les séries) —
+  // mais rien ne le disait ICI, au moment précis où la question se pose.
+  const as=document.getElementById('milo-seance-astuce');
+  if(as)as.textContent='Pour changer un seul exercice sans rien perdre : ⋯ sur l\'exercice → « Remplacer l\'exercice ».';
   const ov=document.getElementById('ov-milo-seance'); if(ov)ov.classList.add('open');
 }
 function closeMiloSeance(){

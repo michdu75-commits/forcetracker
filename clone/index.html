@@ -2182,12 +2182,18 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   <div class="modal" style="max-width:400px;">
     <div class="modal-handle"></div>
     <div style="font-weight:800;font-size:17px;margin-bottom:6px;text-align:center;">Tu as déjà une séance en cours</div>
-    <div id="milo-seance-etat" style="font-size:13px;color:var(--t2);text-align:center;margin-bottom:16px;line-height:1.5;"></div>
+    <div id="milo-seance-etat" style="font-size:13px;color:var(--t2);text-align:center;margin-bottom:10px;line-height:1.5;"></div>
+    <!-- ⚠️ L'AVERTISSEMENT EST AU-DESSUS DES BOUTONS, ET CE N'EST PAS UN DÉTAIL DE MISE EN PAGE.
+         Bug vécu par Michel le 08/08, EN PLEINE SÉANCE : il choisit « Remplacer » et perd tout ce
+         qu'il avait fait. Le texte d'alerte EXISTAIT depuis le début — il était simplement écrit
+         SOUS les deux boutons. On ne peut pas lire après avoir décidé : la modale est déjà fermée.
+         *Un avertissement placé après le choix n'est pas un avertissement, c'est un constat.* -->
+    <div id="milo-seance-avert" style="font-size:12.5px;color:var(--red);text-align:center;margin-bottom:14px;line-height:1.45;font-weight:600;"></div>
     <div style="display:flex;flex-direction:column;gap:8px;">
       <button class="btn btn-red" style="width:100%;" onclick="_applyMiloSession('add')">➕ Ajouter à ma séance</button>
       <button class="btn btn-bg2" style="width:100%;" onclick="_applyMiloSession('replace')">🔄 Remplacer ma séance</button>
     </div>
-    <div id="milo-seance-avert" style="font-size:12px;color:var(--red);text-align:center;margin-top:10px;line-height:1.45;"></div>
+    <div id="milo-seance-astuce" style="font-size:11.5px;color:var(--t3);text-align:center;margin-top:10px;line-height:1.45;"></div>
     <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeMiloSeance()">Annuler</button>
   </div>
 </div>
