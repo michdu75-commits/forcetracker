@@ -5262,6 +5262,10 @@ const EX_YT={
   'Pull-over Barre':               {img:'exercises/pull-over-barre.webp'},
   'Pull-over Poulie':              {img:'exercises/pull-over-poulie.webp'},
   'Superman':                      {img:'exercises/superman.webp'},
+  // Fournie en PNG TRANSPARENT (08/08) — aplatie sur blanc avant intégration : les 293 autres images
+  // ont un fond blanc opaque, et l'app s'affiche en sombre par défaut. Laissée transparente, la
+  // figurine serait apparue sur fond noir, seule de son espèce. 185 Ko → 9 Ko.
+  'Jefferson Curl':                {img:'exercises/jefferson-curl.webp'},
   'Haussements d\'Épaules Overhead':{img:'exercises/overhead-shrug.webp'},
   // ── Cuisses / Quadriceps (lot 2026-07-04) ──
   'Squat Bulgare':                 {img:'exercises/squat-bulgare-halteres-exercice-musculation.webp'},
