@@ -2170,6 +2170,42 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
     !ov.erreur && ov.coupee===false, ov.erreur?'—':('bord gauche à '+ov.gauche+' px'));
 }
 
+// ── LA GRANDE DÉMO NE ROGNE PLUS LA FIGURINE (retour Michel, 09/08) ────────────────────
+// « Dommage problème de cadrage » — sur le Jefferson Curl, la TÊTE était coupée. Ce n'était
+// pas l'image (son dessin s'arrête à 8 px du bord) mais la boîte : width:100% + max-height:240
+// donne ~340×240 (rapport 1,42) alors que la médiane des figurines est 1,00. Avec `cover`, une
+// image carrée perdait 30 % de sa hauteur — mesuré : 269 des 294 figurines (91 %) rognées.
+// Une démonstration qui coupe le mouvement rate exactement ce pour quoi elle existe.
+{
+  const cad=await p.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    S.wkt={date:today(),progLabel:'T',startTs:Date.now(),startHour:0,
+      exs:[{name:'Jefferson Curl',sets:[{kg:0,reps:5,done:false,type:'N'}]}]};
+    _expandedEx=0; goScreen('log',document.getElementById('nb-log')); renderLog();
+    toggleExGif(0,'Jefferson Curl');
+    const im=document.querySelector('#ex-gif-0 img');
+    if(!im) return {erreur:"pas d'image dans le panneau"};
+    const cs=getComputedStyle(im);
+    // la VIGNETTE, elle, doit rester en `cover` : sur un carré, une image carrée n'y perd rien
+    const v=document.querySelector('.ex-head img, .exb-head img')||
+            [...document.querySelectorAll('#s-log img')].find(x=>x.clientWidth<=60&&x.clientWidth>0);
+    return {grande:cs.objectFit, fond:cs.backgroundColor,
+            vignette:v?getComputedStyle(v).objectFit:null};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(cad.erreur) console.log('     ⚠️  bloc « cadrage » en ERREUR : '+cad.erreur);
+  t('⭐⭐ la grande démo affiche la figurine ENTIÈRE (elle en rognait 30 % en hauteur)',
+    !cad.erreur && cad.grande==='contain',
+    cad.erreur?'—':('object-fit = '+cad.grande+" — `cover` recoupe 91 % des figurines"));
+  t('⭐ … sur fond blanc, pour que les bandes du « contain » se confondent avec l\'image',
+    !cad.erreur && /255,\s*255,\s*255/.test(cad.fond||''), cad.erreur?'—':String(cad.fond));
+  t('la petite vignette garde « cover » (un carré dans un carré ne perd rien)',
+    !cad.erreur && (cad.vignette===null || cad.vignette==='cover'),
+    cad.erreur?'—':String(cad.vignette));
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

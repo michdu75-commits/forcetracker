@@ -5827,7 +5827,17 @@ function toggleExGif(ei,name){
   const local=_exImg(name);
   let html='<div style="padding:10px;background:var(--bg3);border-radius:10px;">';
   if(local){
-    html+=`<img src="${local}" style="width:100%;border-radius:8px;max-height:240px;object-fit:cover;display:block;" loading="lazy">`;
+    // ⚠️ `contain`, JAMAIS `cover` — retour Michel 09/08 (« dommage problème de cadrage ») :
+    // sur le Jefferson Curl, la TÊTE était coupée. Ce n'était pas l'image (son dessin s'arrête
+    // à 8 px du bord) mais CETTE boîte : `width:100%` + `max-height:240px` donne un cadre de
+    // ~340×240 (rapport 1,42) alors que la médiane des figurines est **1,00**. Avec `cover`,
+    // une image carrée perdait **30 % de sa hauteur**, moitié en haut, moitié en bas.
+    // Mesuré : **269 des 294 figurines (91 %)** étaient rognées — têtes et pieds compris.
+    // C'est l'inverse du but d'une démonstration : on la montre pour voir le mouvement ENTIER.
+    // Le fond blanc est explicite : toutes les figurines ont un fond blanc opaque, donc les
+    // bandes latérales du `contain` se confondent avec l'image au lieu de faire des barres.
+    // (La vignette 40/48 px garde `cover`, elle : sur un carré, une image carrée n'y perd rien.)
+    html+=`<img src="${local}" style="width:100%;border-radius:8px;max-height:240px;object-fit:contain;background:#fff;display:block;" loading="lazy">`;
   } else {
     // Pas de photo/gif dédié → figurine du muscle deviné du nom (taxonomie) — jamais vide
     const file=_exMuscleImg(name);
