@@ -5262,9 +5262,16 @@ const EX_YT={
   'Pull-over Barre':               {img:'exercises/pull-over-barre.webp'},
   'Pull-over Poulie':              {img:'exercises/pull-over-poulie.webp'},
   'Superman':                      {img:'exercises/superman.webp'},
-  // Fournie en PNG TRANSPARENT (08/08) — aplatie sur blanc avant intégration : les 293 autres images
-  // ont un fond blanc opaque, et l'app s'affiche en sombre par défaut. Laissée transparente, la
-  // figurine serait apparue sur fond noir, seule de son espèce. 185 Ko → 9 Ko.
+  // Fournie en PNG FIXE et TRANSPARENT (08/08), avec les deux poses côte à côte. Trois corrections
+  // avant intégration, chacune trouvée en mesurant l'existant plutôt qu'en supposant :
+  //   ① fond APLATI sur blanc — les 296 autres images ont un fond blanc opaque, et l'app est sombre
+  //      par défaut : laissée transparente, la figurine serait apparue sur fond noir, seule du lot ;
+  //   ② rendue ANIMÉE (demande de Michel) — les deux poses découpées et alignées sur la marche, qui
+  //      ne bouge donc pas d'une image à l'autre ;
+  //   ③ recadrée en CARRÉ. La première version faisait 184×480 (rapport 0,38), la plus étroite des
+  //      296 — or la vignette est un carré en `object-fit:cover` (ligne ~508) : elle aurait ROGNÉ
+  //      la tête et la marche. La médiane des autres images est 1,00 : ce n'est pas un hasard.
+  // 185 Ko → 16 Ko.
   'Jefferson Curl':                {img:'exercises/jefferson-curl.webp'},
   'Haussements d\'Épaules Overhead':{img:'exercises/overhead-shrug.webp'},
   // ── Cuisses / Quadriceps (lot 2026-07-04) ──
