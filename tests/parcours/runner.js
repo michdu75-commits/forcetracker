@@ -2001,6 +2001,56 @@ console.log('\n═══ P. Compteur IA — branché là où passent vraiment le
     /action === 'aiCount'/.test(cj) && /_aiQuotaBlock_\(body\.email\)/.test(cj), 'route aiCount absente');
 }
 
+// ═══ Q. Le bloc COMMUN doit rester partageable entre TOUS les utilisateurs ═══
+// C'est la promesse de ft-v782 : les ~37 000 premiers caractères du contexte sont censés être
+// IDENTIQUES pour tout le monde, donc mis en cache UNE fois et relus par tous — 2,8× moins cher
+// à l'échelle (mesuré le 08/08 : 10,2 centimes le message sans, 3,7 avec).
+//
+// ⚠️ POURQUOI CE TÉMOIN EXISTE : ajouter au-dessus de « PROFIL ATHLÈTE: » la moindre ligne qui
+// dépend de la personne (prénom, sexe, objectif, niveau…) fait exploser le bloc commun en autant
+// d'entrées de cache qu'il y a d'utilisateurs. Ça ne casse RIEN, ça ne lève aucune erreur, Milo
+// répond pareil — seule la facture monte, en silence. C'est exactement la famille de bugs de la
+// semaine du 04/08 (sauvegarde morte 36 jours, garde-fou branché sur un chemin mort).
+// Vérifié le 08/08 : 2 empreintes seulement (admin / non-admin), la 2ᵉ partagée par 3 profils
+// opposés (homme 42 / femme 30 / homme 28, objectifs différents).
+console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═══');
+{
+  const empreinte = async (seed) => {
+    const cx = await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg = await cx.newPage();
+    await pg.addInitScript(seedScript(seed));
+    await pg.goto('http://localhost:'+PORT+'/index.html');
+    await pg.waitForTimeout(2200);
+    const r = await pg.evaluate(()=>{
+      if(typeof buildCoachContext!=='function') return {err:'buildCoachContext absent'};
+      const ctx = buildCoachContext('je fais quoi comme séance ?');
+      const i = ctx.indexOf('PROFIL ATHLÈTE:');
+      return i<1000 ? {err:'marqueur PROFIL ATHLÈTE introuvable'} : {commun: ctx.slice(0,i)};
+    });
+    await cx.close();
+    return r;
+  };
+  // Trois profils volontairement opposés, aucun admin.
+  const a = await empreinte({ft4_name:'Christophe',ft4_gender:'H',ft4_age:'42',ft4_bw:'80',ft4_goal:'muscle',   ft4_email:'a@test.z'});
+  const b2= await empreinte({ft4_name:'Tatiana',   ft4_gender:'F',ft4_age:'30',ft4_bw:'60',ft4_goal:'perte',    ft4_email:'b@test.z'});
+  const c3= await empreinte({ft4_name:'Paul',      ft4_gender:'H',ft4_age:'28',ft4_bw:'75',ft4_goal:'',         ft4_email:'c@test.z'});
+
+  const err = a.err||b2.err||c3.err;
+  t('le contexte de Milo se construit et porte son repère « PROFIL ATHLÈTE: »', !err, err||'');
+  if(!err){
+    t('⭐⭐ le bloc commun est IDENTIQUE pour 3 profils opposés (sinon le cache partagé meurt en silence)',
+      a.commun===b2.commun && b2.commun===c3.commun,
+      'tailles : '+[a,b2,c3].map(x=>x.commun.length).join(' / ')+' — une donnée personnelle est remontée au-dessus du repère');
+    // Garde-fou de taille : le bloc commun est le gros morceau, il ne doit pas dériver sans qu'on le voie.
+    t('le bloc commun garde une taille raisonnable (< 45 000 caractères)',
+      a.commun.length < 45000, a.commun.length+' caractères');
+    // Aucun prénom de test ne doit apparaître dans la partie censée être commune.
+    t('⭐ aucun prénom ne fuit dans le bloc commun',
+      !/Christophe|Tatiana|Paul/.test(a.commun+b2.commun+c3.commun),
+      'un prénom a été trouvé au-dessus de « PROFIL ATHLÈTE: »');
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
