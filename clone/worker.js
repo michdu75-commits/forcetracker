@@ -332,11 +332,33 @@ async function coach(body, apiKey) {
   //    plusieurs personnes discutent dans la même fenêtre. C'est exactement le cas que
   //    Michel décrivait. Et il existe 2 variantes du bloc commun (admin / non-admin,
   //    ft-v767) : 2 entrées de cache, pas N.
+  // ⏳ DEUX DURÉES DE CACHE, PAS UNE (08/08/2026) — décision de Michel, après lecture de trois
+  // articles et vérification de chacun. L'idée vient du premier ; les deux autres l'ont confirmée.
+  //
+  // Les deux blocs n'ont pas du tout le même rythme de vie :
+  //   · le bloc COMMUN (~37 000 car., ~15 800 tokens) est identique pour TOUT LE MONDE et ne
+  //     change qu'à minuit (le calendrier) → il mérite la fenêtre d'1 HEURE ;
+  //   · le bloc PERSONNEL (~4 600 car.) ne sert qu'à une personne → 5 minutes suffisent, et son
+  //     écriture est bon marché.
+  //
+  // ⚠️ C'EST UN PARI, PAS UN GAIN SÛR, et il faut le savoir avant de lire la facture :
+  // écrire en 1 h coûte **2×** le tarif d'entrée contre **1,25×** en 5 min. Le pari n'est gagné
+  // que si le bloc est relu **au moins 2 fois** par écriture (seuil calculé : 2 + 0,1N < N + 1
+  // → N > 1,11). Sur la mesure du 1ᵉʳ au 6 août on était à **0,08 lecture par écriture** — mais
+  // ce chiffre décrit la fenêtre de 5 MINUTES, pas celle d'une heure : il ne pouvait pas répondre
+  // à la question. L'expérience EST la mesure.
+  //
+  // 📊 COMMENT TRANCHER, DANS 3 JOURS : console Anthropic → export des tokens. Regarder la
+  // colonne `usage_input_tokens_cache_write_1h` contre `usage_input_tokens_cache_read`.
+  //   · lectures ≥ 1,11 × écritures  → gagné, on garde ;
+  //   · en dessous                    → revenir à 5 min en retirant `, ttl: '1h'` ci-dessous.
+  // Rollback : une seule ligne, aucun effet sur les réponses de Milo (seul le prix change).
+  const _TTL_COMMUN = { type: 'ephemeral', ttl: '1h' };
   const _pi = String(ctx).indexOf('PROFIL ATHLÈTE:');
   let system;
   if (_mi > 1000 && _pi > 1000 && _pi < _mi) {
     system = [
-      { type: 'text', text: String(ctx).slice(0, _pi), cache_control: { type: 'ephemeral' } },          // commun à TOUS
+      { type: 'text', text: String(ctx).slice(0, _pi), cache_control: _TTL_COMMUN },                    // commun à TOUS — 1 h
       { type: 'text', text: String(ctx).slice(_pi, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: { type: 'ephemeral' } },  // propre à la personne
       { type: 'text', text: String(ctx).slice(_mi) }                                                    // l'instant, jamais caché
     ];

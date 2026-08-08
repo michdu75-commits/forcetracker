@@ -2081,6 +2081,21 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
     t('⭐⭐ le bloc commun ne dépend pas de l\'HEURE (sinon le cache saute à chaque message)',
       fautifs.length===0, fautifs.map(l=>l.trim().slice(0,90)).join(' ⏐ '));
   }
+
+  // ⏳ Les DEUX durées de cache, dans le bon sens (08/08). Le bloc commun — partagé par tous et
+  // stable toute la journée — est en 1 h ; le bloc personnel reste en 5 min, son écriture étant
+  // bon marché. Inverser les deux coûterait plus cher sans rien apporter, et ne se verrait NULLE
+  // PART : mêmes réponses, aucun test rouge, seule la facture change. D'où ce témoin.
+  {
+    const w = fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+    t('⭐ le bloc COMMUN de Milo est mis en cache 1 h (le pari du 08/08)',
+      /_TTL_COMMUN\s*=\s*\{\s*type:\s*'ephemeral',\s*ttl:\s*'1h'\s*\}/.test(w)
+      && /slice\(0,\s*_pi\),\s*cache_control:\s*_TTL_COMMUN/.test(w),
+      'le bloc commun n\'est plus en 1 h — si c\'est voulu, mettre à jour ce témoin et le journal');
+    t('⭐ le bloc PERSONNEL reste en 5 min (son écriture est bon marché)',
+      /slice\(_pi,\s*_mi\)[\s\S]{0,200}?cache_control:\s*\{\s*type:\s*'ephemeral'\s*\}/.test(w),
+      'le bloc personnel a changé de durée — vérifier que c\'est intentionnel');
+  }
 }
 
 await b.close(); srv.close();
