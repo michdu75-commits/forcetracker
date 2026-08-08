@@ -5376,6 +5376,12 @@ const EX_YT={
   'Roue Abdominale (Ab Wheel)': {img:'exercises/roue-abdominale.webp'},
   'Chaise Romaine':             {img:'exercises/chaise-romaine-releve-jambes.webp'},
   'Relevé de Jambes':           {img:'exercises/releve-de-jambes-suspendu.webp'},
+  // ⚠️ Rattaché en DEUXIÈME lecture, après correction de Michel. À la vignette j'avais lu « rotation
+  // assise sur un banc » et je l'avais écartée ; en zoomant, la personne est assise AU SOL, buste
+  // incliné en arrière, **pieds bloqués sous les cales du banc**, un disque en main. Le banc ne sert
+  // qu'à caler les pieds : c'est la rotation russe classique. Une vignette de 200 px ne suffit pas
+  // toujours — quand un détail décide du rattachement, il faut zoomer.
+  'Rotation Russe (Russian Twist)':{img:'exercises/rotation-russe.webp'},
   'Box Jump':{img:'exercises/box-jump.webp'},
   'Assault Air Bike':{img:'exercises/assault-air-bike.webp'},
   'Ergomètre de Ski (Ski Erg)':{img:'exercises/ergometre-de-ski.webp'},
