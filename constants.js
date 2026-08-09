@@ -5,6 +5,12 @@
  * All Rights Reserved — unauthorized copying or reuse is prohibited.
  */
 // ─── EXERCISE LIBRARY ────────────────────────────────────────
+// ⚠️ RETIRÉS DU SÉLECTEUR le 09/08/2026, à la demande de Michel — faute de figurine trouvable :
+//   · Glissement au Mur (Wall Slide)   · Dips Lestés   · Turkish Get-Up
+// ⚠️ ON NE RETIRE QUE DE CETTE LISTE. Leur identifiant (EX_IDS) et leur correspondance
+// musculaire (_MEX) sont GARDÉS EXPRÈS : quelqu'un qui en a déjà dans son historique garde
+// sa figurine, ses couleurs de calendrier et ses calories. On les retire du CHOIX, pas de la
+// MÉMOIRE. (R30 : un retrait volontaire s'écrit, sinon le suivant le « répare ».)
 const EXLIB=[
   // ── Pectoraux ──────────────────────────────────────────────
   {n:'Développé Couché',g:'Pectoraux'},{n:'Développé Couché Haltères',g:'Pectoraux'},
@@ -73,7 +79,7 @@ const EXLIB=[
   {n:'Tirage Visage (Face Pull)',g:'Épaules'},{n:'Tirage Menton Kettlebell',g:'Épaules'},
   {n:'Y Raise / W Raise',g:'Épaules'},{n:'Développé Nuque',g:'Épaules'},
   // Épaules + Trapèzes — figurines (lot 2026-07-06)
-  {n:'Développé Épaules Kettlebell',g:'Épaules'}, {n:'Développé Landmine (Épaules)',g:'Épaules'}, {n:'Écarté Arrière Élastique',g:'Épaules'}, {n:'Élévation Frontale Allongée Barre',g:'Épaules'}, {n:'Élévation Latérale Poulie Inclinée',g:'Épaules'}, {n:'Élévation Latérale Landmine',g:'Épaules'}, {n:'Élévations Latérales Kettlebell',g:'Épaules'}, {n:'Rotation Interne Épaule Élastique',g:'Épaules'}, {n:'Face Pull Couché Poulie',g:'Épaules'}, {n:'Oiseau Poulie 45°',g:'Épaules'}, {n:'Passage d\'Épaule Élastique',g:'Épaules'},{n:'Glissement au Mur (Wall Slide)',g:'Épaules'}, {n:'Rotation Externe Épaule Abduction',g:'Épaules'}, {n:'Rotation Externe Épaule Élastique',g:'Épaules'}, {n:'Rotation Interne 90° Poulie',g:'Épaules'},
+  {n:'Développé Épaules Kettlebell',g:'Épaules'}, {n:'Développé Landmine (Épaules)',g:'Épaules'}, {n:'Écarté Arrière Élastique',g:'Épaules'}, {n:'Élévation Frontale Allongée Barre',g:'Épaules'}, {n:'Élévation Latérale Poulie Inclinée',g:'Épaules'}, {n:'Élévation Latérale Landmine',g:'Épaules'}, {n:'Élévations Latérales Kettlebell',g:'Épaules'}, {n:'Rotation Interne Épaule Élastique',g:'Épaules'}, {n:'Face Pull Couché Poulie',g:'Épaules'}, {n:'Oiseau Poulie 45°',g:'Épaules'}, {n:'Passage d\'Épaule Élastique',g:'Épaules'},{n:'Rotation Externe Épaule Abduction',g:'Épaules'}, {n:'Rotation Externe Épaule Élastique',g:'Épaules'}, {n:'Rotation Interne 90° Poulie',g:'Épaules'},
   // Épaules + Trapèzes — figurines 2e partie (lot 2026-07-06)
   {n:'Élévation Frontale Banc Incliné',g:'Épaules'}, {n:'Élévation Latérale Inclinée Haltère',g:'Épaules'}, {n:'Rotation Externe Épaule Haltère',g:'Épaules'}, {n:'Tirage Menton Élastique',g:'Trapèzes'}, {n:'Thruster',g:'Full Body'}, {n:'Thruster Kettlebell',g:'Full Body'}, {n:'Russian Twist Développé Épaules',g:'Abdominaux'}, {n:'Développé Épaules Assis Machine (Shoulder Press)',g:'Épaules'},
   // ── Biceps ─────────────────────────────────────────────────
@@ -84,7 +90,7 @@ const EXLIB=[
   {n:'Curl Zottman',g:'Biceps'},{n:'Marteau',g:'Biceps'},
   {n:'Curl Machine',g:'Biceps'},{n:'Curl Pupitre Machine',g:'Biceps'},{n:'Curl Pupitre Barre EZ (Larry Scott)',g:'Biceps'},{n:'Waiter Curl',g:'Biceps'},
   // ── Triceps ────────────────────────────────────────────────
-  {n:'Dips Lestés',g:'Triceps'},{n:'Bench Dips',g:'Triceps'},
+  {n:'Bench Dips',g:'Triceps'},
   {n:'Barre au Front',g:'Triceps'},{n:'Skull Crusher Barre EZ',g:'Triceps'},
   {n:'Extension Triceps',g:'Triceps'},{n:'Extension Triceps Couché Haltères',g:'Triceps'},
   {n:'Extension Nuque Haltère',g:'Triceps'},{n:'Extension Nuque Poulie Haute',g:'Triceps'},
@@ -190,7 +196,7 @@ const EXLIB=[
   // ── Full Body / Fonctionnel ────────────────────────────────
   {n:'Burpees',g:'Full Body'},{n:'Kettlebell Swing',g:'Full Body'},
   {n:'Arraché Haltère (Dumbbell Snatch)',g:'Full Body'},{n:'Arraché Debout (Muscle Snatch)',g:'Full Body'},{n:'Thrusters Haltères',g:'Full Body'},
-  {n:'Clean & Jerk',g:'Full Body'},{n:'Turkish Get-Up',g:'Full Body'},
+  {n:'Clean & Jerk',g:'Full Body'},
   {n:'Battle Rope',g:'Full Body'},{n:'Box Jump',g:'Full Body'},
   // — Lots « cardio » et « chariot » du 01/08 (fin de soirée). Le chariot de puissance (power sled)
   //   sert à bien plus que pousser/tirer : une famille entière d'exercices s'y fait, d'où les 9. —

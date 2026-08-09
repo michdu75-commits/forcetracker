@@ -1244,13 +1244,19 @@ t('⭐⭐ un DIPS reste une POUSSÉE, même renommé « Dips Triceps »',
   'dips='+fus.patDipsTri+' · témoin kickback='+fus.patKick);
 t('le Dips Triceps est rangé dans le groupe TRICEPS (arbitrage Michel, 03/08)',
   !fus.erreur && fus.groupeDipsTri==='Triceps', String(fus.groupeDipsTri));
-t('⭐ le GLISSEMENT AU MUR est au catalogue (mobilité d\'épaule, trapèze inférieur)',
+// ⚠️ RETIRÉ DU SÉLECTEUR le 09/08/2026 (Michel : « Glissement au Mur a retiré », faute de
+// figurine trouvable) — avec « Dips Lestés » et « Turkish Get-Up ». Ce test disait l'inverse
+// jusqu'à cette date ; il est RETOURNÉ plutôt que supprimé : R30 dit qu'un retrait volontaire
+// doit être FIGÉ par un test, sinon le suivant trouve du code orphelin et « répare » la décision.
+t('⭐ le GLISSEMENT AU MUR n\'est plus proposable (retrait volontaire du 09/08)',
+  !fus.erreur && fus.rechWall!=='Glissement au Mur (Wall Slide)'
+             && fus.rechGliss!=='Glissement au Mur (Wall Slide)',
+  'wall slide → '+fus.rechWall+' · glissement → '+fus.rechGliss);
+t('⭐⭐ … mais sa MÉMOIRE est intacte : qui l\'a dans son historique garde muscles, MET et figurine',
   !fus.erreur && fus.wall.traps===2 && fus.wall['rear-delt']===2 && fus.metWall===4
   && fus.patWall==='elevation-epaules' && fus.eqWall==='corps',
-  JSON.stringify(fus.wall)+' · MET '+fus.metWall+' · '+fus.patWall+' · '+fus.eqWall);
-t('… et il se trouve en tapant « wall slide » comme « glissement »',
-  !fus.erreur && fus.rechWall==='Glissement au Mur (Wall Slide)' && fus.rechGliss==='Glissement au Mur (Wall Slide)',
-  'wall slide → '+fus.rechWall+' · glissement → '+fus.rechGliss);
+  JSON.stringify(fus.wall)+' · MET '+fus.metWall+' · '+fus.patWall+' · '+fus.eqWall
+  +'\n         → on retire du CHOIX, jamais de la MÉMOIRE : sinon on casserait rétroactivement des séances déjà faites.');
 t('témoins : « Wall Sit » reste un squat et « Wall Ball » un saut (le mot « wall » ne déborde pas)',
   !fus.erreur && fus.patWallSit==='squat' && fus.patWallBall==='saut-plyo',
   'wall sit='+fus.patWallSit+' · wall ball='+fus.patWallBall);

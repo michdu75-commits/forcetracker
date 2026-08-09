@@ -372,15 +372,29 @@ const idt=await p.evaluate(()=>{
    idsOrphelins:[], nbIds:-1, nbExercices:-1, idsUniques:false, nomsUniques:false}; }
 });
 if(idt.erreur) console.log('     ⚠️  bloc identité en ERREUR : '+idt.erreur);
+// ⚠️ RETRAITS VOLONTAIRES DU 09/08/2026 (Michel, faute de figurine trouvable). Leur
+// identifiant est GARDÉ EXPRÈS : quelqu'un qui les a déjà dans son historique doit garder sa
+// figurine, ses couleurs de calendrier et ses calories. On retire du CHOIX, jamais de la
+// MÉMOIRE — d'où 3 identifiants de plus que d'exercices, et c'est VOULU.
+// Cette liste est la trace écrite du retrait (R30) : sans elle, le prochain qui verrait ces
+// identifiants orphelins conclurait au bug et « réparerait » la décision.
+const RETIRES_VOLONTAIREMENT = ['dips-lestes','glissement-au-mur-wall-slide','turkish-get-up'];
+const orphelinsInattendus = idt.idsOrphelins.filter(i=>RETIRES_VOLONTAIREMENT.indexOf(i)<0);
 t('⭐ ⑨ chaque exercice du catalogue a un identifiant STABLE',
-  idt.sansId.length===0&&idt.nbIds===idt.nbExercices,
-  idt.nbIds+' identifiants pour '+idt.nbExercices+' exercices · sans id : '+idt.sansId.slice(0,5).join(', '));
+  idt.sansId.length===0 && idt.nbIds===idt.nbExercices+RETIRES_VOLONTAIREMENT.length,
+  idt.nbIds+' identifiants pour '+idt.nbExercices+' exercices (+'+RETIRES_VOLONTAIREMENT.length
+  +' retirés volontairement) · sans id : '+idt.sansId.slice(0,5).join(', '));
 t('⑨ les identifiants sont uniques, et les noms ne sont jamais partagés entre deux fiches',
   idt.idsUniques&&idt.nomsUniques, 'ids uniques='+idt.idsUniques+' noms uniques='+idt.nomsUniques);
 t('⑨ le nom AFFICHÉ est toujours le premier de la liste (les suivants sont les anciens)',
   idt.nomPasEnTete.length===0, idt.nomPasEnTete.slice(0,5).join(', '));
-t('⑨ aucun identifiant ne pointe vers un exercice disparu du catalogue',
-  idt.idsOrphelins.length===0, idt.idsOrphelins.slice(0,5).join(', '));
+t('⑨ aucun identifiant ne pointe vers un exercice disparu du catalogue (hors retraits écrits)',
+  orphelinsInattendus.length===0, orphelinsInattendus.slice(0,5).join(', ')
+  +'\n         → un identifiant orphelin NON déclaré = un exercice perdu sans décision.');
+t('⭐⭐ ⑨ les 3 exercices retirés gardent leur identifiant (l\'historique de qui les a faits survit)',
+  RETIRES_VOLONTAIREMENT.every(i=>idt.idsOrphelins.indexOf(i)>=0),
+  'manquants : '+RETIRES_VOLONTAIREMENT.filter(i=>idt.idsOrphelins.indexOf(i)<0).join(', ')
+  +'\n         → si un de ces identifiants disparaît vraiment, les séances déjà faites deviennent orphelines.');
 t('⭐ ⑨ un ANCIEN nom retrouve sa fiche actuelle (c\'est ce qui sauve l\'historique)',
   idt.ancienRowing==='rowing-barre-tirage-horizontal'
   && idt.ancienResolu==='Rowing Barre (Tirage Horizontal)'

@@ -12,3 +12,4 @@ Thumbs.db
 *.log
 tests/milo/report.json
 tests/milo/report.md
+tools/__pycache__/

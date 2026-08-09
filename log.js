@@ -1327,7 +1327,7 @@ Object.assign(_EX_EQUIV,{
   'high pull upright':'Tirage Menton','rowing menton':'Tirage Menton','upright row':'Tirage Menton',
   'cable face pull':'Tirage Visage (Face Pull)','face pull':'Tirage Visage (Face Pull)','rope face pull':'Tirage Visage (Face Pull)',
   'machine triceps':'Triceps Poulie','seated triceps machine':'Triceps Poulie',
-  'tgu':'Turkish Get-Up',
+  // 'tgu' retiré le 09/08 avec l'exercice Turkish Get-Up (un synonyme sans cible = « Aucun résultat »)
   'db front raise':'Élévations Frontales','front raise':'Élévations Frontales',
   'db lateral raise':'Élévations Latérales (Lateral Raise)','lateral raise':'Élévations Latérales (Lateral Raise)',
   'donkey calf machine':'Élévations Mollets Penché (Donkey Calf Raise)','donkey calf raise':'Élévations Mollets Penché (Donkey Calf Raise)','donkey raise':'Élévations Mollets Penché (Donkey Calf Raise)',
@@ -5224,6 +5224,9 @@ function _genderGroupSvg(groupName){
 // Vidéos YouTube Demic — {id, s:true si Short, s:false si vidéo normale}
 // Images locales d'exercices (GIF/webp/png) — disponibles hors connexion
 const EX_YT={
+  'Smith Machine Développé Incliné': {img:'exercises/smith-machine-developpe-incline.webp'},
+  'Battle Rope':                   {img:'exercises/battle-rope.webp'},
+  'Hyperextension Inverse (Reverse Hyper)': {img:'exercises/hyperextension-inverse-reverse-hyper.webp'},
   'Développé Couché':              {img:'exercises/developpe-couche.webp'},
   'Développé Couché Haltères':     {img:'exercises/developpe-couche-halteres-exercice-musculation.webp'},
   'Smith Machine Développé Couché':{img:'exercises/developpe-couche-smith-machine.webp'},
@@ -5587,6 +5590,8 @@ const EX_YT={
   'Thruster':{img:'exercises/thruster.webp'},
   'Thruster Kettlebell':{img:'exercises/thruster-kettlebell.webp'},
   'Russian Twist Développé Épaules':{img:'exercises/russian-twist-avec-developpe-epaule.webp'},
+  'Développé Haltères Assis':{img:'exercises/developpe-halteres-assis.webp'},   // 2 poses animées — banc incliné, deltoïde ANTÉRIEUR en rouge (vérifié au zoom, 09/08)
+  'Skull Crusher Barre EZ':{img:'exercises/skull-crusher-barre-ez.webp'},   // 2 poses animées — barre EZ, ondulation vérifiée au zoom (09/08)
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={
