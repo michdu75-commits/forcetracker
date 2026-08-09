@@ -564,6 +564,34 @@ t('⭐ ⑪ INTERDIT : basculer un groupe À MOITIÉ (deux vérités cohabiteraie
 
 t('0 erreur JS', errs.length===0, errs.join(' | '));
 
+// ── UN NOM ABRÉGÉ RETROUVE SON EXERCICE (retour Michel, 09/08) ─────────────────────────
+// Sur un vrai programme de Milo, « Rowing Machine » et « Rowing Haltère » tombaient tous
+// les deux sur « Rowing Smith Machine ». Cause : `machine`, `haltère`, `barre`, `poulie` sont
+// des MOTS VIDES du moteur (mis là pour filtrer le bruit commercial) — or ce sont justement
+// eux qui distinguent ces exercices. Les deux se réduisaient à « rowing », la même question.
+// ⚠️ Ce témoin balaie TOUT le catalogue, il ne teste pas 3 cas choisis : chaque exercice à
+// parenthèse doit se retrouver quand on écrit son nom SANS la parenthèse.
+{
+  const ab=await p.evaluate(()=>{
+   try{
+    const noms=[...new Set(EXLIB.map(e=>e.n))];
+    const court=n=>n.replace(/\s*\([^)]*\)\s*$/,'').trim();
+    const avecPar=noms.filter(n=>court(n)!==n);
+    const faux=[];
+    avecPar.forEach(n=>{
+      let m=null; try{ const r=_matchExercise(court(n)); m=r&&r.match; }catch(e){}
+      if(m!==n) faux.push(court(n)+' → '+(m||'AUCUN')+' (attendu '+n+')');
+    });
+    return {total:avecPar.length, faux:faux.length, ex:faux.slice(0,6)};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(ab.erreur) console.log('     ⚠️  bloc « nom abrégé » en ERREUR : '+ab.erreur);
+  t('⭐⭐ les '+(ab.total||'?')+' exercices à parenthèse se retrouvent SANS elle (17 faux avant le 09/08)',
+    !ab.erreur && ab.faux===0,
+    ab.erreur?'—':(ab.faux+' mal rattachés : '+ab.ex.join(' · ')
+    +'\n         → un nom abrégé qui vise le mauvais exercice ne plante rien : il change juste ce qu\'on va faire.'));
+}
+
 console.log('══════════════════════════════════════════════════════════');
 console.log((ko?'❌ ':'✅ ')+ok+'/'+(ok+ko));
 await b.close(); srv.close(); process.exit(ko?1:0);

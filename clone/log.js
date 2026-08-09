@@ -1403,6 +1403,26 @@ function _matchExercise(name,opts){
   const q=_normEx(name); if(!q)return{match:null,score:0,confidence:0,tier:'new',via:'vide'};
   // 1) exact (après normalisation accents/casse/ponctuation)
   for(const ex of all){ if(_normEx(ex.n)===q) return {match:ex.n,score:1,confidence:100,tier:'auto',via:'exact'}; }
+  // 1bis) EXACT SUR LE NOM SANS SA PARENTHÈSE — 77 exercices du catalogue portent une
+  // parenthèse EXPLICATIVE (« Rowing Machine (Tirage Horizontal) », « Tractions (Pull-up) »,
+  // « Chaise (Wall Sit) »). Elle nomme la famille, elle ne distingue pas l'exercice.
+  // ⚠️ POURQUOI C'EST NÉCESSAIRE (retour Michel, 09/08, sur un vrai programme de Milo) :
+  // quand Milo écrit un récapitulatif compact, il abrège — « Rowing Machine » au lieu du nom
+  // complet. Or le recouvrement de mots jette `machine`, `haltère`, `barre`, `poulie` (ils
+  // avaient été mis dans les mots vides pour filtrer le bruit commercial type « Evolution
+  // X900 »). « Rowing Machine » et « Rowing Haltère » se réduisaient donc tous deux à
+  // « rowing » — la MÊME question — et tombaient sur « Rowing Smith Machine ».
+  // Mesuré : **17 des 77 (22 %)** se rattachaient au mauvais exercice une fois abrégés,
+  // dont 4 appliqués AUTOMATIQUEMENT à l'import (Élévations Latérales → …Câble,
+  // Hip Thrust Haltère → Hip Thrust Barre, Hyperextension → …Machine, Montée sur Box → …Haltères).
+  // ⚠️ VÉRIFIÉ AVANT D'ÉCRIRE CETTE RÈGLE : sur les 324 exercices, **zéro collision** — aucun
+  // nom sans parenthèse n'égale le nom complet d'un autre exercice, et deux exercices ne
+  // partagent jamais la même base. Sans cette vérification, la règle créerait des fusions.
+  for(const ex of all){
+    const base=_normEx(String(ex.n).replace(/\s*\([^)]*\)\s*$/,''));
+    if(base && base!==_normEx(ex.n) && base===q)
+      return {match:ex.n,score:1,confidence:100,tier:'auto',via:'exact (sans la parenthèse)'};
+  }
   // 2) synonyme anglais EX_EN exact
   if(typeof EX_EN!=='undefined'){ for(const ex of all){ const en=EX_EN[ex.n]; if(en&&_normEx(en)===q) return {match:ex.n,score:.96,confidence:96,tier:'auto',via:'synonyme EN'}; } }
   // 3) équivalence sémantique connue (curatée → fiable), tolérante au mot « machine »
