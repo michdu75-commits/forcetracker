@@ -1505,3 +1505,37 @@ et il n'y aura pas à la refaire.
 
 ⚠️ **Ne pas re-proposer sans un déclencheur nouveau.** Une idée écartée qui revient toute seule fait
 perdre du temps aux deux (R30 : un retrait volontaire doit être écrit, sinon il redevient un bug).
+
+---
+
+## 🌐 TRANSFORMER `dashboard.html` EN VRAI SITE (Michel, 09/08/2026 — « il faudra le transformer en vrai site »)
+
+**Ce que c'est aujourd'hui, et il ne faut pas s'y tromper** : `dashboard.html` est une **vue
+ordinateur de l'application**, pas un site. Elle charge les mêmes fichiers que l'app et lit les
+mêmes données locales (`ft4_*`) — c'est voulu (R2, la leçon du `/clone/`). Conséquence directe :
+**un visiteur qui n'a jamais utilisé Force Tracker n'y voit rien** — « Bonjour — », des compteurs
+à zéro, des blocs vides. Elle est faite pour quelqu'un qui a **déjà** des séances.
+
+**Ce qui manque vraiment, et c'est autre chose** : il n'existe **aucune page qui présente le
+produit**. Quelqu'un qui découvre Force Tracker arrive directement dans l'app, en colonne de
+430 px sur un écran de 1440. Rien ne dit ce que c'est, pour qui, ni pourquoi ce n'est pas une IA
+mais *une mémoire sportive* (`docs/VISION-FORCE-TRACKER.md`).
+
+**⚠️ NE PAS FUSIONNER LES DEUX.** Ce sont deux publics opposés :
+| | Pour qui | Ce qu'on y montre |
+|---|---|---|
+| **Site vitrine** (n'existe pas) | quelqu'un qui ne connaît pas | ce que c'est · pour qui · une capture · un bouton « essayer » |
+| **`dashboard.html`** (existe) | quelqu'un qui l'utilise déjà | SES séances, SES records, SA progression |
+
+Mettre les deux au même endroit donnerait une page qui rate les deux cibles.
+
+**La plus petite étape utile** : une page d'accueil (`accueil.html` ou la racine) — un titre, la
+phrase de la Vision, 3 captures, un bouton vers l'app, et le lien Confidentialité (déjà écrit).
+Aucune logique, aucune donnée, **aucun risque pour l'app** : c'est un fichier séparé.
+
+⚠️ **À faire AVANT toute communication publique**, et à coupler avec deux chantiers déjà notés
+ici : le **domaine** (§ en-têtes `no-cache` le jour du domaine) et le **nom** — vérifié le
+09/08 : aucune appli de sport ne s'appelle « Force Tracker » (les homonymes sont *Field Force
+Tracker*, un logiciel de gestion de techniciens, et *blue force tracking*, un terme militaire —
+autres secteurs, aucun conflit). Le vrai sujet n'est pas légal, il est d'**être trouvé** : deux
+mots très courants, noyés parmi Strong / StrongLifts / RepCount.
