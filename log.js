@@ -3139,7 +3139,32 @@ function filterEx(){
     }).sort((a,b)=>_rang(a)-_rang(b));   // tri STABLE → l'ordre alphabétique est conservé à rang égal
     // Favoris/plus utilisés en PREMIER (tri stable → alpha conservé à usage égal)
     const fd=_exDedup(f);
-    list.innerHTML=fd.length?(_eqTestOn()?_renderExGrouped(fd,fd.map(_rang)):fd.map(_exPickRow).join('')):'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
+    // ── LES « MÊME FAMILLE » PASSENT SOUS UNE LIGNE DE SÉPARATION (retour Michel, 09/08) ──
+    // Mesuré : taper « squat » rendait **44 résultats, dont 12 sans le mot « squat »** — les
+    // Press Jambes, les Presses à Cuisses, la Chaise, le Sled Push. Ils arrivent par FAMILLE
+    // de mouvement, ce qui est juste anatomiquement (une presse à cuisses EST un squat guidé)
+    // et parfois très utile — mais quelqu'un qui tape « squat » cherche un squat.
+    // ⚠️ ON NE LES RETIRE PAS, on les RANGE : c'est l'élargissement qui a sauvé le retour de
+    // Tatiana (« tirage horizontal » → aucun résultat). Le supprimer ferait revenir ce bug.
+    // Ils gardent juste leur place — après, sous un titre qui dit ce qu'ils sont (R24 :
+    // informer sans bloquer ; R26 : le format incite).
+    const _vrais=fd.filter(e=>_rang(e)<8), _famille=fd.filter(e=>_rang(e)===8);
+    let _html='';
+    if(fd.length){
+      // ⚠️ Si RIEN ne correspond au nom, c'est que la personne a tapé un nom de FAMILLE
+      // (« poussée verticale », « hip hinge ») — la famille EST alors sa réponse, pas un
+      // rattrapage. Dans ce cas on affiche normalement : un titre « même famille » posé
+      // au-dessus de la seule liste présente ne dirait rien d'utile.
+      const _queFamille = !_vrais.length;
+      const _liste = _queFamille ? _famille : _vrais;
+      _html = _eqTestOn()?_renderExGrouped(_liste,_liste.map(_rang)):_liste.map(_exPickRow).join('');
+      if(_famille.length && !_queFamille){
+        _html += `<div class="ex-subhdr" style="color:var(--t2);background:var(--bg3);margin-top:10px;">`
+              +  `<span>↘ Même famille de mouvement</span><span class="ex-subhdr-n">${_famille.length}</span></div>`
+              +  _famille.map(_exPickRow).join('');
+      }
+    }
+    list.innerHTML=_html||'<div style="padding:20px;text-align:center;color:var(--t3);">Aucun résultat</div>';
     return;
   }
   // Groupe sélectionné → exercices du groupe

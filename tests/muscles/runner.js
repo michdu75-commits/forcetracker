@@ -776,6 +776,40 @@ t('⭐ la recherche par FAMILLE marche toujours (le retour de Tatiana)',
   'tirage horizontal='+pert.familleN+' rowing 1er='+pert.familleRowing+' poussée verticale='+pert.poussV);
 t('témoin : une recherche qui ne correspond à rien rend toujours 0', pert.rien===0, String(pert.rien));
 
+// ── LES « MÊME FAMILLE » SOUS UNE LIGNE DE SÉPARATION (retour Michel, 09/08) ───────────
+// « squat » rendait 44 résultats dont 12 SANS le mot squat (Press Jambes, Chaise, Sled Push) :
+// ils arrivent par famille de mouvement, ce qui est juste anatomiquement mais noie les vrais.
+// ⚠️ On ne les RETIRE pas — c'est cet élargissement qui a réparé le retour de Tatiana
+// (« tirage horizontal » → aucun résultat). On les RANGE, sous un titre qui dit ce qu'ils sont.
+const fam=await p.evaluate(()=>{
+ try{
+  const i=document.getElementById('ex-search'), L=document.getElementById('ex-list');
+  const q=s=>{i.value=s;_exGrp=null;filterEx();
+    const h=L.innerHTML, sep=h.indexOf('Même famille de mouvement');
+    const n=(h.match(/class="ex-pick-name"/g)||[]).length;
+    const avant=sep>=0?(h.slice(0,sep).match(/class="ex-pick-name"/g)||[]).length:n;
+    const l=[...L.querySelectorAll('.ex-pick-name')].map(e=>e.textContent.replace(/[★✎]/g,'').trim());
+    return {total:n, vrais:avant, famille:sep>=0?n-avant:0, sep:sep>=0, premier:l[0]||null};};
+  const o={squat:q('squat'), th:q('tirage horizontal'), pv:q('poussée verticale'), sdt:q('soulevé de terre')};
+  i.value='';_exGrp=null;filterEx();
+  return o;
+ }catch(e){ return {erreur:String(e&&e.message||e)}; }
+});
+if(fam.erreur) console.log('     ⚠️  bloc « même famille » en ERREUR : '+fam.erreur);
+t('⭐⭐ « squat » : les vrais squats d\'abord, les cousins sous une séparation',
+  !fam.erreur && fam.squat.sep && fam.squat.vrais>=30 && fam.squat.famille>=8
+  && fam.squat.premier==='Squat à la Barre',
+  fam.erreur?'—':(fam.squat.vrais+' vrais + '+fam.squat.famille+' famille · 1er : '+fam.squat.premier));
+t('⭐ le retour de Tatiana tient toujours : « tirage horizontal » sort les Rowing EN PREMIER',
+  !fam.erreur && /Rowing/.test(fam.th.premier||'') && fam.th.total>=20,
+  fam.erreur?'—':(fam.th.total+' résultats · 1er : '+fam.th.premier));
+t('⭐ un nom de FAMILLE tapé exprès (« poussée verticale ») n\'est pas relégué sous la séparation',
+  !fam.erreur && !fam.pv.sep && fam.pv.total>=10,
+  fam.erreur?'—':(fam.pv.total+' résultats, séparation affichée : '+fam.pv.sep
+  +'\n         → là, la famille EST la réponse : un titre « même famille » au-dessus de la seule liste ne dirait rien.'));
+t('un nom précis ne déclenche aucune séparation (« soulevé de terre » = 15 vrais)',
+  !fam.erreur && !fam.sdt.sep && fam.sdt.total===15, fam.erreur?'—':(fam.sdt.total+' · sép='+fam.sdt.sep));
+
 // ── LE VOCABULAIRE DE SALLE ATTEINT ENFIN LA RECHERCHE (retour Michel, 08/08) ─────────
 // Il tape « Butterfly » → « Aucun résultat ». Il crée donc un exercice PERSO « Butterfly »
 // rangé dans ÉPAULES, alors que c'est un exercice de PECTORAUX qui existe déjà sous le nom
