@@ -50,6 +50,19 @@
 > sit-up **décliné**). Plus **~35 fichiers d'archive** ne correspondant à aucun exercice du
 > catalogue (Dead Bug, V-ups, Pallof Press, Swiss Ball, TRX…) → décision **produit**.
 
+> ## ✅ 09/08 — LE BLOC PERSONNEL PASSE EN 1 H AUSSI (ft-v815)
+>
+> **Michel a inventé la bonne mesure** : exporter la console Anthropic **avant** et **après** une
+> conversation — la différence EST son coût. Le total mensuel, lui, était inexploitable (**78 %**
+> venaient de nos essais des 3-5 août).
+>
+> **Ses 3 tests** : une conversation coûte **0,12 à 0,17 $**, et la répartition est constante —
+> **écriture du cache 5 min : 42-47 %**, texte jamais caché 33 %, réponse de Milo 17 %, lectures 8 %,
+> **écriture 1 h : 0 %**. Le bloc commun (passé en 1 h le 08/08) n'a été réécrit **aucune fois**.
+>
+> **⏭️ À MESURER MAINTENANT** : refaire un export avant/après. L'écriture 5 min doit s'effondrer.
+> Attendu ≈ **0,08 $** au lieu de 0,15 $. Rollback : retirer `, ttl: '1h'` de `_TTL_PERSO` (worker.js).
+
 > ## ⏳ EXPÉRIENCE EN COURS — verdict attendu le **11/08/2026**
 >
 > **Lancée le 08/08 (ft-v796), à la décision de Michel.** Le bloc **commun** du prompt de Milo est

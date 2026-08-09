@@ -353,18 +353,34 @@ async function coach(body, apiKey) {
   //   · lectures ≥ 1,11 × écritures  → gagné, on garde ;
   //   · en dessous                    → revenir à 5 min en retirant `, ttl: '1h'` ci-dessous.
   // Rollback : une seule ligne, aucun effet sur les réponses de Milo (seul le prix change).
+  // ⏱️ LE BLOC PERSONNEL PASSE EN 1 H AUSSI (09/08/2026) — et c'est le plus gros poste.
+  // MESURÉ sur les 3 conversations réelles de Michel (export console avant / après, sa méthode) :
+  // l'écriture du cache 5 min pèse **42 à 47 % du coût d'une conversation** — devant le texte
+  // jamais caché (33 %) et devant la réponse de Milo elle-même (17 %).
+  // LA CAUSE : 5 minutes s'écoulent pendant qu'on LIT une réponse longue. Le cache expire, et le
+  // bloc est réécrit au message suivant. On paie donc 1,25× à chaque message au lieu de 0,1×.
+  // L'ARBITRAGE, en unités de « prix normal » : écrire en 5 min = 1,25 · en 1 h = 2 · relire = 0,1.
+  //   · 1 seul message dans l'heure → 1,25 contre 2,00 → le 5 min gagne ;
+  //   · 2 messages                  → 2,50 contre 2,10 → le 1 h gagne ;
+  //   · 4 messages                  → 5,00 contre 2,30 → le 1 h gagne largement.
+  // Le basculement est à **2 messages**, et une conversation en fait toujours plus.
+  // ⚠️ ET ON A DÉJÀ LA PREUVE QUE LE 1 H TIENT SUR CE RYTHME : passé en 1 h le 08/08, le bloc
+  // COMMUN n'a été réécrit AUCUNE fois sur les 3 conversations (`cache_write_1h` à zéro à chaque
+  // export). On applique donc au bloc personnel ce qui est déjà démontré sur le bloc commun.
+  // Rollback : retirer `, ttl: '1h'` de _TTL_PERSO. Aucun effet sur les réponses de Milo.
   const _TTL_COMMUN = { type: 'ephemeral', ttl: '1h' };
+  const _TTL_PERSO  = { type: 'ephemeral', ttl: '1h' };
   const _pi = String(ctx).indexOf('PROFIL ATHLÈTE:');
   let system;
   if (_mi > 1000 && _pi > 1000 && _pi < _mi) {
     system = [
       { type: 'text', text: String(ctx).slice(0, _pi), cache_control: _TTL_COMMUN },                    // commun à TOUS — 1 h
-      { type: 'text', text: String(ctx).slice(_pi, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: { type: 'ephemeral' } },  // propre à la personne
+      { type: 'text', text: String(ctx).slice(_pi, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: _TTL_PERSO },  // propre à la personne — 1 h
       { type: 'text', text: String(ctx).slice(_mi) }                                                    // l'instant, jamais caché
     ];
   } else if (_mi > 1000) {
     system = [
-      { type: 'text', text: String(ctx).slice(0, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: { type: 'ephemeral' } },
+      { type: 'text', text: String(ctx).slice(0, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: _TTL_PERSO },
       { type: 'text', text: String(ctx).slice(_mi) }
     ];
   } else {

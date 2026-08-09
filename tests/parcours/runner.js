@@ -2092,9 +2092,18 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
       /_TTL_COMMUN\s*=\s*\{\s*type:\s*'ephemeral',\s*ttl:\s*'1h'\s*\}/.test(w)
       && /slice\(0,\s*_pi\),\s*cache_control:\s*_TTL_COMMUN/.test(w),
       'le bloc commun n\'est plus en 1 h — si c\'est voulu, mettre à jour ce témoin et le journal');
-    t('⭐ le bloc PERSONNEL reste en 5 min (son écriture est bon marché)',
-      /slice\(_pi,\s*_mi\)[\s\S]{0,200}?cache_control:\s*\{\s*type:\s*'ephemeral'\s*\}/.test(w),
-      'le bloc personnel a changé de durée — vérifier que c\'est intentionnel');
+    // ⏱️ RETOURNÉ le 09/08 : le bloc personnel passe en 1 h LUI AUSSI. Mesuré sur les 3
+    // conversations réelles de Michel — l'écriture 5 min pesait 42 à 47 % du coût, parce que
+    // les 5 minutes expirent pendant qu'on LIT la réponse. Le basculement 5 min → 1 h est
+    // rentable dès 2 messages dans l'heure, et une conversation en fait toujours plus.
+    // Le témoin est RETOURNÉ, pas supprimé (R30) : il fige la nouvelle décision.
+    t('⭐⭐ le bloc PERSONNEL est en 1 h lui aussi (il pesait 42-47 % du coût en 5 min)',
+      /_TTL_PERSO\s*=\s*\{\s*type:\s*'ephemeral',\s*ttl:\s*'1h'\s*\}/.test(w)
+      && /slice\(_pi,\s*_mi\)[\s\S]{0,200}?cache_control:\s*_TTL_PERSO/.test(w),
+      'le bloc personnel n\'est plus en 1 h — si c\'est voulu, mettre à jour ce témoin et le journal');
+    t('les DEUX blocs cachés ont une durée explicite (aucun ne repart en 5 min par défaut)',
+      /_TTL_COMMUN\s*=\s*\{[^}]*ttl:\s*'1h'/.test(w) && /_TTL_PERSO\s*=\s*\{[^}]*ttl:\s*'1h'/.test(w),
+      'une durée implicite = 5 min, et personne ne le verrait : mêmes réponses, seule la facture change');
   }
 }
 
