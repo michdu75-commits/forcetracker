@@ -378,7 +378,12 @@ if(idt.erreur) console.log('     ⚠️  bloc identité en ERREUR : '+idt.erreur
 // MÉMOIRE — d'où 3 identifiants de plus que d'exercices, et c'est VOULU.
 // Cette liste est la trace écrite du retrait (R30) : sans elle, le prochain qui verrait ces
 // identifiants orphelins conclurait au bug et « réparerait » la décision.
-const RETIRES_VOLONTAIREMENT = ['dips-lestes','glissement-au-mur-wall-slide','turkish-get-up'];
+const RETIRES_VOLONTAIREMENT = [
+  // 09/08 matin — faute de figurine trouvable
+  'dips-lestes','glissement-au-mur-wall-slide','turkish-get-up',
+  // 09/08 soir — même raison, après relecture de la page FIGURINES par Michel
+  'abducteurs-machine-debout','curl-cable-en-croix-bayesian-curl','curl-barre-ez-prise-large',
+  'windshield-wiper','releve-de-buste-sit-up','l-sit','crunch-oblique'];
 const orphelinsInattendus = idt.idsOrphelins.filter(i=>RETIRES_VOLONTAIREMENT.indexOf(i)<0);
 t('⭐ ⑨ chaque exercice du catalogue a un identifiant STABLE',
   idt.sansId.length===0 && idt.nbIds===idt.nbExercices+RETIRES_VOLONTAIREMENT.length,

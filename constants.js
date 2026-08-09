@@ -7,6 +7,9 @@
 // ─── EXERCISE LIBRARY ────────────────────────────────────────
 // ⚠️ RETIRÉS DU SÉLECTEUR le 09/08/2026, à la demande de Michel — faute de figurine trouvable :
 //   · Glissement au Mur (Wall Slide)   · Dips Lestés   · Turkish Get-Up
+// Puis le 09/08 au soir, même raison (Michel, après relecture de la page FIGURINES) :
+//   · Abducteurs Machine Debout · Curl Câble en Croix (Bayesian Curl) · Curl Barre EZ Prise Large
+//   · Windshield Wiper · Relevé de Buste (Sit-up) · L-Sit · Crunch Oblique
 // ⚠️ ON NE RETIRE QUE DE CETTE LISTE. Leur identifiant (EX_IDS) et leur correspondance
 // musculaire (_MEX) sont GARDÉS EXPRÈS : quelqu'un qui en a déjà dans son historique garde
 // sa figurine, ses couleurs de calendrier et ses calories. On les retire du CHOIX, pas de la
@@ -84,9 +87,8 @@ const EXLIB=[
   {n:'Élévation Frontale Banc Incliné',g:'Épaules'}, {n:'Élévation Latérale Inclinée Haltère',g:'Épaules'}, {n:'Rotation Externe Épaule Haltère',g:'Épaules'}, {n:'Tirage Menton Élastique',g:'Trapèzes'}, {n:'Thruster',g:'Full Body'}, {n:'Thruster Kettlebell',g:'Full Body'}, {n:'Russian Twist Développé Épaules',g:'Abdominaux'}, {n:'Développé Épaules Assis Machine (Shoulder Press)',g:'Épaules'},
   // ── Biceps ─────────────────────────────────────────────────
   {n:'Curl Barre',g:'Biceps'},{n:'Curl Haltères',g:'Biceps'},{n:'Curl Poulie',g:'Biceps'},
-  {n:'Curl EZ',g:'Biceps'},{n:'Curl Barre EZ Prise Large',g:'Biceps'},
-  {n:'Curl Incliné',g:'Biceps'},{n:'Curl Concentré',g:'Biceps'},
-  {n:'Curl Câble en Croix (Bayesian Curl)',g:'Biceps'},{n:'Curl Araignée (Spider Curl)',g:'Biceps'},
+  {n:'Curl EZ',g:'Biceps'},  {n:'Curl Incliné',g:'Biceps'},{n:'Curl Concentré',g:'Biceps'},
+  {n:'Curl Araignée (Spider Curl)',g:'Biceps'},
   {n:'Curl Zottman',g:'Biceps'},{n:'Marteau',g:'Biceps'},
   {n:'Curl Machine',g:'Biceps'},{n:'Curl Pupitre Machine',g:'Biceps'},{n:'Curl Pupitre Barre EZ (Larry Scott)',g:'Biceps'},{n:'Waiter Curl',g:'Biceps'},
   // ── Triceps ────────────────────────────────────────────────
@@ -147,8 +149,7 @@ const EXLIB=[
   {n:'Soulevé de Terre Roumain Unilatéral',g:'Fessiers'},{n:'Soulevé de Terre Sumo',g:'Fessiers'},
   {n:'Tirage Cable Fessiers (Cable Pull Through)',g:'Fessiers'},
   
-  {n:'Abducteurs Machine Debout',g:'Fessiers'},
-  {n:'Soulevé de Terre Jambes Tendues',g:'Fessiers'},
+    {n:'Soulevé de Terre Jambes Tendues',g:'Fessiers'},
   {n:'Soulevé de Terre Roumain Kettlebell',g:'Fessiers'},{n:'Soulevé de Terre Roumain Landmine',g:'Fessiers'},
   {n:'Soulevé de Terre Sumo Haltères',g:'Fessiers'},{n:'Soulevé de Terre Sumo Kettlebell',g:'Fessiers'},{n:'Soulevé de Terre Sumo Landmine',g:'Fessiers'},
   {n:'Soulevé de Terre Trap Bar',g:'Fessiers'},{n:'Soulevé de Terre avec Déficit',g:'Fessiers'},{n:'Soulevé de Terre Machine',g:'Fessiers'},
@@ -176,11 +177,9 @@ const EXLIB=[
   {n:'Superman',g:'Lombaires'},
   // ── Abdominaux ─────────────────────────────────────────────
   {n:'Gainage',g:'Abdominaux'},{n:'Planche Latérale (Side Plank)',g:'Abdominaux'},{n:'Hollow Body',g:'Abdominaux'},
-  {n:'L-Sit',g:'Abdominaux'},{n:'Windshield Wiper',g:'Abdominaux'},
-  {n:'Crunch',g:'Abdominaux'},{n:'Crunch Poulie',g:'Abdominaux'},{n:'Crunch Oblique',g:'Abdominaux'},{n:'Crunch Machine',g:'Abdominaux'},
+   {n:'Crunch',g:'Abdominaux'},{n:'Crunch Poulie',g:'Abdominaux'},{n:'Crunch Machine',g:'Abdominaux'},
   {n:'Rotation Machine Obliques',g:'Abdominaux'},
-  {n:'Relevé de Jambes',g:'Abdominaux'},{n:'Relevé de Buste (Sit-up)',g:'Abdominaux'},
-  {n:'Chaise Romaine',g:'Abdominaux'},
+  {n:'Relevé de Jambes',g:'Abdominaux'},  {n:'Chaise Romaine',g:'Abdominaux'},
   {n:'Roue Abdominale (Ab Wheel)',g:'Abdominaux'},{n:'Rotation Russe (Russian Twist)',g:'Abdominaux'},
   {n:'Drapeau (Dragon Flag)',g:'Abdominaux'},{n:'Grimpeur (Mountain Climber)',g:'Abdominaux'},
   // ── Mollets ────────────────────────────────────────────────

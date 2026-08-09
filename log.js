@@ -1251,14 +1251,14 @@ Object.assign(_EX_EQUIV,{
   'pendlay row':'Rowing Barre (Tirage Horizontal)',               // row barre strict, PAS poulie
   'conventional dl':'Soulevé de Terre','block pull':'Tirage en Rack (Rack Pull)',
   // 10e vague (rapport PERTE DE POIDS FEMME — fitness/muscu, PRIORITAIRE) : 5 exos qu'on A mais ratés
-  'abducteurs machine':'Abducteurs Machine Debout',
+  'abducteurs machine':'Abduction Cuisses (Leg Abduction)',   // la version DEBOUT est retirée (09/08) ; la machine assise reste
   'tirage horizontal poulie':'Rowing Câble (Tirage Horizontal)','tirage horizontal':'Rowing Câble (Tirage Horizontal)',
   'step ups':'Montée sur Box (Step-up)','step up':'Montée sur Box (Step-up)',
   'extension triceps corde':'Triceps Corde Poulie',
   'corde a sauter':'Sauts à la Corde',         // saut à la corde ≠ Triceps Corde (faux ami « corde »)
   // 11e vague (retour GPT prog femme) : un exo HALTÈRES ne doit pas tomber sur une MACHINE
   'developpe epaules halteres':'Développé Haltères Assis',
-  'assis abducteurs machine':'Abducteurs Machine Debout'  // le « assis » (position) ne doit pas gagner sur « abducteurs » (muscle)
+  'assis abducteurs machine':'Abduction Cuisses (Leg Abduction)'  // le « assis » (position) ne doit pas gagner sur « abducteurs » (muscle)
 });
 // ─── EXLIB v3 — alias d'import (dicts GPT, familles spéciales : Add/Abd hanche, Box Jump, Battle Rope, Farmer's) ───
 Object.assign(_EX_EQUIV,{
@@ -1281,7 +1281,8 @@ Object.assign(_EX_EQUIV,{
   'spider curl':'Curl Araignée (Spider Curl)','spider db curl':'Curl Araignée (Spider Curl)',
   'arm curl machine':'Curl Barre','barbell curl':'Curl Barre','bb curl':'Curl Barre','biceps curl machine':'Curl Barre','machine curl':'Curl Barre','standing barbell curl':'Curl Barre',
   'concentration curl':'Curl Concentré','concentration db curl':'Curl Concentré',
-  'bayesian cable curl':'Curl Câble en Croix (Bayesian Curl)','bayesian curl':'Curl Câble en Croix (Bayesian Curl)',
+  // Le Bayesian Curl est retiré du catalogue (09/08) : on redirige vers le curl à la poulie, dont il est une variante.
+  'bayesian cable curl':'Curl Poulie','bayesian curl':'Curl Poulie',
   'ez bar curl':'Curl EZ','ez curl':'Curl EZ',
   'db curl':'Curl Haltères','dumbbell curl':'Curl Haltères',
   'incline curl':'Curl Incliné','incline dumbbell curl':'Curl Incliné',
@@ -1313,7 +1314,11 @@ Object.assign(_EX_EQUIV,{
   'calf raise machine':'Mollets Machine Debout','mollets debout machine':'Mollets Machine Debout','standing calf machine':'Mollets Machine Debout','standing calf raise':'Mollets Machine Debout',
   'barbell step up':'Montée sur Box Haltères','bench step up':'Montée sur Box Haltères','box step up':'Montée sur Box Haltères','db step up':'Montée sur Box Haltères','dumbbell step up':'Montée sur Box Haltères','step up':'Montée sur Box Haltères','step up barre':'Montée sur Box Haltères','step up halteres':'Montée sur Box Haltères',
   'bent over reverse fly':'Oiseau','rear delt fly':'Oiseau','reverse fly':'Oiseau',
-  'ab sit up':'Relevé de Buste (Sit-up)','full sit up':'Relevé de Buste (Sit-up)','sit up':'Relevé de Buste (Sit-up)',
+  // Le Sit-up est retiré (09/08). « sit up » reste un mot de salle TRÈS courant : sans cible il
+  // rendrait « Aucun résultat » et la personne créerait un doublon perso. Redirigé vers le Crunch,
+  // le survivant le plus proche. ⚠️ Ce n'est pas le même mouvement (flexion complète vs partielle) :
+  // si Michel préfère qu'on ne redirige pas, retirer ces 3 lignes.
+  'ab sit up':'Crunch','full sit up':'Crunch','sit up':'Crunch',
   'medicine ball twist':'Rotation Russe (Russian Twist)','russian twist':'Rotation Russe (Russian Twist)','weighted russian twist':'Rotation Russe (Russian Twist)',
   'jump rope':'Sauts à la Corde','rope skipping':'Sauts à la Corde','skipping rope':'Sauts à la Corde',
   'weighted sissy squat':'Sissy Squat',
@@ -5224,6 +5229,9 @@ function _genderGroupSvg(groupName){
 // Vidéos YouTube Demic — {id, s:true si Short, s:false si vidéo normale}
 // Images locales d'exercices (GIF/webp/png) — disponibles hors connexion
 const EX_YT={
+  'Curl Zottman':                  {img:'exercises/curl-zottman.webp'},
+  'Curl Poulie':                   {img:'exercises/curl-poulie.webp'},
+  'Curl Barre':                    {img:'exercises/curl-barre.webp'},
   'Smith Machine Développé Incliné': {img:'exercises/smith-machine-developpe-incline.webp'},
   'Battle Rope':                   {img:'exercises/battle-rope.webp'},
   'Hyperextension Inverse (Reverse Hyper)': {img:'exercises/hyperextension-inverse-reverse-hyper.webp'},
@@ -5592,6 +5600,7 @@ const EX_YT={
   'Russian Twist Développé Épaules':{img:'exercises/russian-twist-avec-developpe-epaule.webp'},
   'Développé Haltères Assis':{img:'exercises/developpe-halteres-assis.webp'},   // 2 poses animées — banc incliné, deltoïde ANTÉRIEUR en rouge (vérifié au zoom, 09/08)
   'Skull Crusher Barre EZ':{img:'exercises/skull-crusher-barre-ez.webp'},   // 2 poses animées — barre EZ, ondulation vérifiée au zoom (09/08)
+  'Extension Fessiers Arrière (Kickback)':{img:'exercises/kickback-cable-fessiers.webp'},   // 2 poses CÔTE À CÔTE (pas animées : zooms et angles différents, la figurine sautait) · figurine féminine
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={

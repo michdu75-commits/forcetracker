@@ -1,17 +1,9 @@
 {
  "genere": "2026-08-09",
- "total": 332,
+ "total": 325,
  "nbRegles": 69,
  "fragiles": 0,
  "ex": {
-  "Abducteurs Machine Debout": {
-   "p": "glutes",
-   "s": "",
-   "pat": "hanche-laterale",
-   "eq": "guide",
-   "met": 4,
-   "frag": 0
-  },
   "Abduction Cuisses (Leg Abduction)": {
    "p": "glutes",
    "s": "",
@@ -284,14 +276,6 @@
    "met": 4,
    "frag": 0
   },
-  "Crunch Oblique": {
-   "p": "abs,obliques",
-   "s": "",
-   "pat": "gainage-abdos",
-   "eq": "corps",
-   "met": 4,
-   "frag": 0
-  },
   "Crunch Poulie": {
    "p": "abs",
    "s": "obliques",
@@ -316,27 +300,11 @@
    "met": 4,
    "frag": 0
   },
-  "Curl Barre EZ Prise Large": {
-   "p": "biceps",
-   "s": "forearms",
-   "pat": "curl-biceps",
-   "eq": "barre",
-   "met": 4,
-   "frag": 0
-  },
   "Curl Concentré": {
    "p": "biceps",
    "s": "forearms",
    "pat": "curl-biceps",
    "eq": "barre",
-   "met": 4,
-   "frag": 0
-  },
-  "Curl Câble en Croix (Bayesian Curl)": {
-   "p": "biceps",
-   "s": "forearms",
-   "pat": "curl-biceps",
-   "eq": "guide",
    "met": 4,
    "frag": 0
   },
@@ -1108,14 +1076,6 @@
    "met": 4,
    "frag": 0
   },
-  "L-Sit": {
-   "p": "abs,hip-flexors",
-   "s": "front-delt,obliques,triceps",
-   "pat": "gainage-abdos",
-   "eq": "corps",
-   "met": 5.5,
-   "frag": 0
-  },
   "Leg Curl Assis Machine": {
    "p": "hamstrings",
    "s": "calves",
@@ -1514,14 +1474,6 @@
    "pat": "hip-hinge",
    "eq": "barre",
    "met": 6.5,
-   "frag": 0
-  },
-  "Relevé de Buste (Sit-up)": {
-   "p": "abs",
-   "s": "hip-flexors,obliques",
-   "pat": "gainage-abdos",
-   "eq": "autre",
-   "met": 5.5,
    "frag": 0
   },
   "Relevé de Jambes": {
@@ -2426,14 +2378,6 @@
    "pat": "saut-plyo",
    "eq": "cardio",
    "met": 8,
-   "frag": 0
-  },
-  "Windshield Wiper": {
-   "p": "abs,obliques",
-   "s": "front-delt,hip-flexors",
-   "pat": "gainage-abdos",
-   "eq": "autre",
-   "met": 5.5,
    "frag": 0
   },
   "Y Raise / W Raise": {
