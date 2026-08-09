@@ -8,6 +8,22 @@
 
 - **Version en ligne (live) :** `ft-v796`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
+> ## 💡 IDÉE GARDÉE — « le dessin pour les muscles, la photo pour le geste » (09/08)
+>
+> Michel envoie une **photo** de Kickback poulie (vraie personne, fond noir, 2 poses) et propose :
+> *« sinon on met les 2, l'image fixe et l'animé qui est classe »*. **L'idée est bonne et elle est
+> pédagogique** : le **dessin** dit QUELS muscles travaillent (le rouge), la **photo** dit COMMENT
+> on fait le geste. Ce ne sont pas deux fois la même information.
+>
+> **Pourquoi ce n'est pas fait** : les 304 figurines sont des dessins sur fond BLANC ; une photo sur
+> fond noir serait la seule de son espèce et se verrait immédiatement (**règle d'or #7** — garder
+> l'identité « figurines muscles »). Ce n'est donc pas une décision « Kickback », c'est une décision
+> **catalogue** : soit une, soit toutes. Et une photo pèse ~2× une figurine (médiane 96 Ko).
+>
+> **Le seuil pour rouvrir le sujet** : une vingtaine de photos du même style, sur les mouvements où
+> la technique compte. En dessous, ça fait une exception ; au-dessus, ça devient un vrai parti pris.
+> La photo animée existe déjà (montée le 09/08 pour montrer le rendu, non intégrée).
+
 > ## 📌 EN ATTENTE DE MICHEL — posé le 08/08 (il était au sport : *« montre-moi plus tard »*)
 >
 > **① La page « ce qui existe / ce qui manque, par muscle ».** Née de sa question — *« tu peux pas
