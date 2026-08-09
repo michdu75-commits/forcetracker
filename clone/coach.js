@@ -1278,6 +1278,22 @@ function updateCoachHeader() {
     const aParle=(coachHistory||[]).some(m=>m&&m.role==='user'&&!m._silent);
     histBtn.style.display=(aRange||aParle)?'flex':'none';
   }
+  // ─── « GAGNER EN FORCE (BIG 3) » : SEULEMENT POUR QUI FAIT DE LA FORCE ──────────────
+  // Retour Michel (09/08) : *« l'appli était pour la force athlétique au départ, mais plus
+  // vraiment maintenant »*. Cette carte demande un programme de compétition périodisé sur
+  // Squat / Développé Couché / Soulevé de Terre — du powerlifting pur. Elle s'affichait
+  // pourtant à TOUT LE MONDE, y compris à quelqu'un qui fait du bodybuilding ou du fitness :
+  // ça donne à l'app un air de salle de force qu'elle n'a plus.
+  // ⚠️ ON PENCHE DU CÔTÉ DE L'AFFICHAGE quand on ne sait pas (R29 : le droit de deviner dépend
+  // du coût de l'erreur). Cacher à tort une fonctionnalité à quelqu'un qui la cherchait est
+  // pire que la montrer à quelqu'un qui l'ignorera : discipline non renseignée → on affiche.
+  // Même arbitrage que le catalogue d'exercices envoyé à Milo.
+  const forceBtn=document.getElementById('coach-action-force');
+  if(forceBtn){
+    const d=S.discipline||'';
+    const pourLaForce = !d || d==='powerlifting' || d==='powerbuilding' || d==='haltero';
+    forceBtn.style.display = pourLaForce ? '' : 'none';
+  }
   // Afficher accueil ou chat selon l'historique
   const newBtn=document.getElementById('coach-new-btn');
   if(coachHistory.length===0){

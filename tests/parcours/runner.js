@@ -2250,6 +2250,39 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
     !ch.erreur && ch.distinctes, ch.erreur?'—':'même couleur que les questions');
 }
 
+// ── « GAGNER EN FORCE (BIG 3) » SUIT LA DISCIPLINE (retour Michel, 09/08) ──────────────
+// « L'appli était pour la force athlétique au départ, mais plus vraiment maintenant. » Cette
+// carte demande un programme de COMPÉTITION périodisé sur Squat/DC/SDT — elle s'affichait à
+// tout le monde, y compris en bodybuilding ou fitness. ⚠️ Le témoin fige AUSSI le cas
+// « discipline non renseignée » → VISIBLE : cacher à tort ce que quelqu'un cherchait coûte
+// plus cher que de le montrer à qui l'ignorera (R29).
+{
+  const di=await p.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const o={};
+    ['','muscu','bodybuilding','powerbuilding','powerlifting','haltero'].forEach(d=>{
+      S.discipline=d; coachHistory=[];
+      goScreen('coach',document.getElementById('nb-coach'));
+      if(typeof updateCoachHeader==='function')updateCoachHeader();
+      const f=document.getElementById('coach-action-force');
+      o[d||'vide']= !!f && getComputedStyle(f).display!=='none';
+    });
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(di.erreur) console.log('     ⚠️  bloc « discipline » en ERREUR : '+di.erreur);
+  t('⭐⭐ le programme de FORCE ne s\'affiche plus en musculation / bodybuilding',
+    !di.erreur && di.muscu===false && di.bodybuilding===false,
+    di.erreur?'—':('muscu='+di.muscu+' · bodybuilding='+di.bodybuilding));
+  t('⭐ … et il reste pour force athlétique, powerbuilding et haltérophilie',
+    !di.erreur && di.powerlifting && di.powerbuilding && di.haltero,
+    di.erreur?'—':JSON.stringify(di));
+  t('⭐ discipline NON renseignée → on affiche quand même (on ne cache pas à l\'aveugle)',
+    !di.erreur && di.vide===true, di.erreur?'—':('vide='+di.vide));
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
