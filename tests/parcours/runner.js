@@ -1437,6 +1437,87 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c7.close();
 }
 
+// ═══ 🚧 LE HORS-SUJET EST REFUSÉ EN LOCAL, AVANT LE RÉSEAU (ft-v817) ═════════════════════
+// Michel : « les garde-fous c'est tout ce qui ne concerne pas le sport, à part pour moi »,
+// puis « ah merde si le premier message ne parle pas de sport ça me coûte quand même ».
+// ⚠️ CE QUE CE TEST PROTÈGE AVANT TOUT, ET DANS CET ORDRE : les FAUX POSITIFS. Refuser un
+// vrai sportif est bien plus grave que laisser passer un poème (R29). Une liste blanche
+// (« il faut un mot de sport ») bloquait 10 messages légitimes sur 10 — le contrôle
+// ci-dessous fige ces 10 cas pour que personne ne retente l'inversion.
+{
+  const c9=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p9=await c9.newPage();
+  await p9.goto('http://localhost:'+PORT+'/index.html'); await p9.waitForTimeout(2200);
+  const r=await p9.evaluate(()=>{
+   try{
+    S.email='pas-michel@exemple.fr';                       // surtout PAS le super-admin
+    const LEGIT=[
+      "j'ai mal dormi cette nuit et je suis vraiment épuisé",
+      "je suis stressé par le boulot en ce moment",
+      "je pars en vacances pendant deux semaines",
+      "je stagne depuis un mois et je ne comprends pas",
+      "combien de protéines est-ce que je dois manger par jour ?",
+      "je me sens nul, j'ai envie de tout arrêter",
+      "j'ai 45 ans, est-ce que c'est trop tard pour commencer ?",
+      "est-ce que la créatine vaut le coup ou pas ?",
+      "mon genou me lance depuis hier soir",
+      "je mange quoi avant d'y aller ?",
+      "donne-moi une recette de porridge s'il te plaît",   // nutrition = DANS le périmètre
+      "écris-moi un programme sur quatre semaines",         // « écris-moi » mais c'est du sport
+      "raconte-moi ta séance type pour le dos",             // « raconte-moi » idem
+      "dis-moi si je dois augmenter les charges"
+    ];
+    const HS=[
+      "écris-moi un poème sur l'automne s'il te plaît",
+      "tu peux m'aider pour mes devoirs de maths ?",
+      "traduis-moi ce texte en anglais",
+      "code-moi une fonction qui trie un tableau",
+      "raconte-moi une blague pour rigoler un peu",
+      "quel modèle d'IA est-ce que tu utilises exactement ?",
+      "tu es chatgpt ou pas ?",
+      "écris une chanson pour l'anniversaire de ma soeur"
+    ];
+    return {
+      fauxPositifs: LEGIT.filter(m=>_estHorsSujet(m,false,{})),
+      rates:        HS.filter(m=>!_estHorsSujet(m,false,{})),
+      // les portes de sortie, une par une
+      avecPhoto:    _estHorsSujet("écris-moi un poème sur l'automne", true, {}),
+      debriefAuto:  _estHorsSujet("écris-moi un poème sur l'automne", false, {silent:true}),
+      // Michel doit pouvoir tout tester
+      admin: (()=>{ const av=S.email; S.email='michdu75@gmail.com';
+        const v=_estHorsSujet("écris-moi un poème sur l'automne",false,{}); S.email=av; return v; })(),
+      // la consigne de recentrage est-elle dans le prompt ? et LARGE pour la vraie vie ?
+      prompt: (()=>{ const av=S.email; S.email='pas-michel@exemple.fr';
+        const t=buildCoachContext('salut'); S.email=av;
+        return { perimetre:/TON PÉRIMÈTRE, C'EST LE SPORT/.test(t),
+                 sourire:/RECENTRE AVEC LE SOURIRE/.test(t),
+                 vie:/TOUT CE QUE LA VIE DE LA PERSONNE FAIT À SON SPORT/.test(t) }; })(),
+      promptAdmin: (()=>{ const av=S.email; S.email='michdu75@gmail.com';
+        const t=buildCoachContext('salut'); S.email=av;
+        return /aucune restriction de sujet/.test(t); })()
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ AUCUN message légitime n\'est refusé (14 témoins, dont les 10 qu\'une liste blanche bloquait)',
+    Array.isArray(r.fauxPositifs) && r.fauxPositifs.length===0, JSON.stringify(r.fauxPositifs||r));
+  t('⭐ les demandes franchement hors sujet sont refusées EN LOCAL (zéro appel, zéro euro)',
+    Array.isArray(r.rates) && r.rates.length===0, JSON.stringify(r.rates||r));
+  t('une PHOTO n\'est jamais refusée (corps, repas, programme : c\'est du métier)',
+    r.avecPhoto===false, JSON.stringify(r));
+  t('un débrief automatique de l\'app n\'est jamais refusé',
+    r.debriefAuto===false, JSON.stringify(r));
+  t('⭐ MICHEL n\'est jamais bridé — il doit pouvoir tout tester',
+    r.admin===false, JSON.stringify(r));
+  t('⭐ PROMPT : la consigne de recentrage est bien envoyée à Milo',
+    r.prompt && r.prompt.perimetre===true && r.prompt.sourire===true, JSON.stringify(r.prompt));
+  t('⭐⭐ PROMPT : … et elle dit EXPLICITEMENT que la vie de la personne EST dans le périmètre',
+    r.prompt && r.prompt.vie===true,
+    'sans cette phrase, Milo recadre quelqu\'un qui parle de son boulot ou de ses vacances');
+  t('⭐ PROMPT : le super-admin reçoit la version sans restriction',
+    r.promptAdmin===true, JSON.stringify(r));
+  await c9.close();
+}
+
 // ═══ MILO PROPOSE UNE SÉANCE ALORS QU'UNE SÉANCE EST DÉJÀ EN COURS (ft-v750) ═══
 // Retour de Michel EN PLEINE SÉANCE : « je lui ai demandé de changer l'exercice, il me propose
 // bien une nouvelle séance mais ça ne met pas à jour la séance actuelle ». Le bouton ne savait
