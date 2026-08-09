@@ -1204,6 +1204,21 @@ Object.assign(_EX_EQUIV,{
   // ait sous la main : *« son nom je ne le connais pas exactement »*. Nous, on l'appelle
   // « Machine Oiseau ». Si le mot de la salle ne mène nulle part, la personne crée un doublon
   // perso — c'est exactement ce qui vient de se passer avec « Butterfly ».
+  // ── ABRÉVIATIONS DE SALLE FRANÇAISES (09/08) — Milo les emploie LUI-MÊME ─────────────
+  // Trouvé en relisant ses vrais programmes : il écrit « SDT Sumo + SDJT » dans ses récaps.
+  // Aucune ne résolvait. Dans un texte de résumé c'est sans conséquence ; dans un bloc de
+  // séance, la ligne serait purement ABANDONNÉE (le montage n'accepte que l'exact).
+  // ⚠️ « SDT Roumain » n'est PAS ajouté : le catalogue en a CINQ (barre, haltères, kettlebell,
+  // landmine, unilatéral) — choisir à sa place ferait travailler sur un autre matériel (R29).
+  'sdt':'Soulevé de Terre','sdt sumo':'Soulevé de Terre Sumo','sdjt':'Soulevé de Terre Jambes Tendues',
+  'sdt jambes tendues':'Soulevé de Terre Jambes Tendues','sdt trap bar':'Soulevé de Terre Trap Bar',
+  'sdt deficit':'Soulevé de Terre avec Déficit','sdt machine':'Soulevé de Terre Machine',
+  // « Curl marteau » : l'exercice s'appelle juste « Marteau » au catalogue — personne ne l'écrit comme ça.
+  'curl marteau':'Marteau','hammer curl':'Marteau','curl hammer':'Marteau',
+  // « Élévations lat » tombait sur le LAT PULLDOWN (« lat » a gagné contre « latérales ») :
+  // deux exercices sans rapport, muscles opposés. Le mot entier lève l'ambiguïté.
+  'elevations lat':'Élévations Latérales (Lateral Raise)','elev lat':'Élévations Latérales (Lateral Raise)',
+  'elevation lat':'Élévations Latérales (Lateral Raise)',
   'butterfly inverse':'Machine Oiseau','butterfly inversee':'Machine Oiseau','reverse butterfly':'Machine Oiseau',
   'butterfly arriere':'Machine Oiseau','butterfly epaules':'Machine Oiseau','butter fly inverse':'Machine Oiseau',
   'quad extension':'Extension Quadriceps (Leg Extension)',
