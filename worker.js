@@ -348,34 +348,38 @@ async function coach(body, apiKey) {
   // ce chiffre décrit la fenêtre de 5 MINUTES, pas celle d'une heure : il ne pouvait pas répondre
   // à la question. L'expérience EST la mesure.
   //
-  // 📊 COMMENT TRANCHER, DANS 3 JOURS : console Anthropic → export des tokens. Regarder la
-  // colonne `usage_input_tokens_cache_write_1h` contre `usage_input_tokens_cache_read`.
-  //   · lectures ≥ 1,11 × écritures  → gagné, on garde ;
-  //   · en dessous                    → revenir à 5 min en retirant `, ttl: '1h'` ci-dessous.
-  // Rollback : une seule ligne, aucun effet sur les réponses de Milo (seul le prix change).
-  // ⏱️ LE BLOC PERSONNEL PASSE EN 1 H AUSSI (09/08/2026) — et c'est le plus gros poste.
-  // MESURÉ sur les 3 conversations réelles de Michel (export console avant / après, sa méthode) :
-  // l'écriture du cache 5 min pèse **42 à 47 % du coût d'une conversation** — devant le texte
-  // jamais caché (33 %) et devant la réponse de Milo elle-même (17 %).
-  // LA CAUSE : 5 minutes s'écoulent pendant qu'on LIT une réponse longue. Le cache expire, et le
-  // bloc est réécrit au message suivant. On paie donc 1,25× à chaque message au lieu de 0,1×.
-  // L'ARBITRAGE, en unités de « prix normal » : écrire en 5 min = 1,25 · en 1 h = 2 · relire = 0,1.
-  //   · 1 seul message dans l'heure → 1,25 contre 2,00 → le 5 min gagne ;
-  //   · 2 messages                  → 2,50 contre 2,10 → le 1 h gagne ;
-  //   · 4 messages                  → 5,00 contre 2,30 → le 1 h gagne largement.
-  // Le basculement est à **2 messages**, et une conversation en fait toujours plus.
-  // ⚠️ ET ON A DÉJÀ LA PREUVE QUE LE 1 H TIENT SUR CE RYTHME : passé en 1 h le 08/08, le bloc
-  // COMMUN n'a été réécrit AUCUNE fois sur les 3 conversations (`cache_write_1h` à zéro à chaque
-  // export). On applique donc au bloc personnel ce qui est déjà démontré sur le bloc commun.
-  // Rollback : retirer `, ttl: '1h'` de _TTL_PERSO. Aucun effet sur les réponses de Milo.
+  // ✅ TRANCHÉ LE 09/08 POUR LE BLOC COMMUN : PARI GAGNÉ. Sur 3 conversations réelles,
+  // `cache_write_1h` est resté à **ZÉRO** à chaque export — le bloc commun n'a jamais été
+  // réécrit. C'est exactement ce qu'on attendait : son contenu ne bouge pas de la journée.
+  // ⚠️ Ce résultat vaut pour CE bloc-là, et pour lui seul (voir le bloc personnel plus bas).
+  // ⏱️ CE QUI A ÉTÉ ESSAYÉ SUR LE BLOC PERSONNEL (09/08/2026), ET POURQUOI ON EST REVENU.
+  // Le constat de départ était juste : sur les 3 conversations mesurées par Michel (export de la
+  // console AVANT / APRÈS une conversation — sa méthode, et c'est la bonne), l'écriture du cache
+  // 5 min pesait **42 à 47 % du coût**, devant le texte jamais caché (33 %) et devant la réponse
+  // de Milo elle-même (17 %). Le premier poste de dépense était bien « réécrire la même chose ».
+  // L'ARBITRAGE THÉORIQUE, en unités de « prix normal » : écrire 5 min = 1,25 · 1 h = 2 · relire = 0,1
+  //   → à partir de 2 messages dans l'heure, le 1 h devrait gagner.
+  // ⛔ IL A PERDU. Voir le bloc ⛔ ci-dessous : le calcul supposait que le bloc est RÉUTILISÉ tel
+  // quel d'un message à l'autre. Pour le bloc personnel, c'est faux — il change. On paie alors
+  // l'écriture chère (2) au lieu de l'écriture normale (1,25), sans jamais économiser de lecture.
   const _TTL_COMMUN = { type: 'ephemeral', ttl: '1h' };
-  const _TTL_PERSO  = { type: 'ephemeral', ttl: '1h' };
+  // ⛔ PARI PERDU, ANNULÉ LE 09/08 — mesuré, pas supposé. Conversation comparable :
+  //    avant 0,12-0,17 $ · après **0,43 $**, soit 2,5 à 3,6× PLUS CHER.
+  //    · écriture 5 min : 0,08 → 0,00 ✅ (l'effet attendu a bien eu lieu)
+  //    · écriture 1 h   : 0,00 → **0,29** ❌ tout est parti là.
+  // MON ERREUR DE RAISONNEMENT : j'ai lu « écriture 5 min élevée » comme « le cache EXPIRE
+  // pendant qu'on lit ». C'était une explication possible, pas la seule — l'autre, c'est que
+  // le bloc CHANGE d'un message à l'autre. Dans ce cas un TTL plus long n'évite aucune
+  // réécriture, il les rend juste 1,6× plus chères (2 au lieu de 1,25). C'est ce qui s'est passé.
+  // ⚠️ RÈGLE À RETENIR : allonger un cache ne sert que si le contenu est STABLE. Si le contenu
+  // bouge, un TTL long AGGRAVE. Le bloc commun est stable (il a tenu) ; le bloc personnel, non.
+  const _TTL_PERSO  = { type: 'ephemeral' };
   const _pi = String(ctx).indexOf('PROFIL ATHLÈTE:');
   let system;
   if (_mi > 1000 && _pi > 1000 && _pi < _mi) {
     system = [
       { type: 'text', text: String(ctx).slice(0, _pi), cache_control: _TTL_COMMUN },                    // commun à TOUS — 1 h
-      { type: 'text', text: String(ctx).slice(_pi, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: _TTL_PERSO },  // propre à la personne — 1 h
+      { type: 'text', text: String(ctx).slice(_pi, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: _TTL_PERSO },  // propre à la personne — 5 min (le 1 h a été essayé et perdu, voir ⛔)
       { type: 'text', text: String(ctx).slice(_mi) }                                                    // l'instant, jamais caché
     ];
   } else if (_mi > 1000) {

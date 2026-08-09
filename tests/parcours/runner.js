@@ -2092,18 +2092,22 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
       /_TTL_COMMUN\s*=\s*\{\s*type:\s*'ephemeral',\s*ttl:\s*'1h'\s*\}/.test(w)
       && /slice\(0,\s*_pi\),\s*cache_control:\s*_TTL_COMMUN/.test(w),
       'le bloc commun n\'est plus en 1 h — si c\'est voulu, mettre à jour ce témoin et le journal');
-    // ⏱️ RETOURNÉ le 09/08 : le bloc personnel passe en 1 h LUI AUSSI. Mesuré sur les 3
-    // conversations réelles de Michel — l'écriture 5 min pesait 42 à 47 % du coût, parce que
-    // les 5 minutes expirent pendant qu'on LIT la réponse. Le basculement 5 min → 1 h est
-    // rentable dès 2 messages dans l'heure, et une conversation en fait toujours plus.
-    // Le témoin est RETOURNÉ, pas supprimé (R30) : il fige la nouvelle décision.
-    t('⭐⭐ le bloc PERSONNEL est en 1 h lui aussi (il pesait 42-47 % du coût en 5 min)',
-      /_TTL_PERSO\s*=\s*\{\s*type:\s*'ephemeral',\s*ttl:\s*'1h'\s*\}/.test(w)
+    // ⏱️ RETOURNÉ DEUX FOIS, ET C'EST LA MESURE QUI TRANCHE (R30 — on retourne, on ne supprime pas).
+    //   08/08 → 5 min (état d'origine)
+    //   09/08 matin → 1 h (pari : « les 5 min expirent pendant qu'on LIT la réponse »)
+    //   09/08 soir → RETOUR à 5 min. Conversation comparable : avant 0,12-0,17 $, après **0,43 $**.
+    //     L'écriture 5 min est bien tombée à 0 — mais l'écriture 1 h a pris **0,29 $** à elle seule.
+    // ⚠️ LA RÈGLE APPRISE : allonger un cache ne sert QUE si le contenu est stable. Le bloc commun
+    // l'est (0 réécriture mesurée sur 3 conversations) ; le bloc PERSONNEL change d'un message à
+    // l'autre — un TTL long n'évite alors aucune réécriture, il les rend 1,6× plus chères (2 vs 1,25).
+    t('⭐⭐ le bloc PERSONNEL est en 5 min (le pari 1 h a été MESURÉ et PERDU le 09/08)',
+      /_TTL_PERSO\s*=\s*\{\s*type:\s*'ephemeral'\s*\}/.test(w)
+      && !/_TTL_PERSO\s*=\s*\{[^}]*ttl:/.test(w)
       && /slice\(_pi,\s*_mi\)[\s\S]{0,200}?cache_control:\s*_TTL_PERSO/.test(w),
-      'le bloc personnel n\'est plus en 1 h — si c\'est voulu, mettre à jour ce témoin et le journal');
-    t('les DEUX blocs cachés ont une durée explicite (aucun ne repart en 5 min par défaut)',
-      /_TTL_COMMUN\s*=\s*\{[^}]*ttl:\s*'1h'/.test(w) && /_TTL_PERSO\s*=\s*\{[^}]*ttl:\s*'1h'/.test(w),
-      'une durée implicite = 5 min, et personne ne le verrait : mêmes réponses, seule la facture change');
+      'le bloc personnel est repassé en 1 h — ça a été essayé le 09/08 et ça a coûté 2,5× plus cher');
+    t('la raison du retour en arrière est ÉCRITE dans worker.js (sinon on le refera)',
+      /PARI PERDU/.test(w) && /0,43/.test(w),
+      'sans la mesure écrite à côté du code, quelqu\'un retentera le 1 h dans six mois');
   }
 }
 
