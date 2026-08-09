@@ -2206,6 +2206,50 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
     cad.erreur?'—':String(cad.vignette));
 }
 
+// ── L'ACCUEIL DU COACH N'EST PLUS INATTEIGNABLE (retour Michel, 09/08) ─────────────────
+// « J'ai découvert ça en archivant ma conversation. Quand je discute avec Milo je ne le vois
+// pas. » L'accueil du Coach ne s'affiche que si `coachHistory.length===0` (coach.js:1284), et
+// l'historique est SAUVEGARDÉ → après la toute première discussion il ne revient jamais, sauf
+// à archiver. Le questionnaire et l'analyse morpho n'avaient pas d'autre entrée : elles
+// devenaient donc invisibles pour toujours (R23). Deux pastilles d'ACTION les ramènent dans la
+// barre déjà visible pendant le chat.
+{
+  const ch=await p.evaluate(()=>{
+   try{
+    document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    S.premium=true;
+    coachHistory=[{role:'user',content:'salut'},{role:'assistant',content:'Salut !'}];
+    goScreen('coach',document.getElementById('nb-coach'));
+    if(typeof updateCoachHeader==='function')updateCoachHeader();
+    const home=document.getElementById('coach-home'), suggs=document.getElementById('coach-suggs');
+    const act=[...suggs.querySelectorAll('.sugg-chip-act')];
+    const o={accueilCache:getComputedStyle(home).display==='none',
+             barreVisible:getComputedStyle(suggs).display!=='none',
+             n:act.length, libelles:act.map(e=>e.textContent.trim()),
+             // la couleur SÉPARE action et question : sans ça on tape en croyant écrire à Milo
+             distinctes: act.length? getComputedStyle(act[0]).color
+                         !== getComputedStyle(suggs.querySelector('.sugg-chip:not(.sugg-chip-act)')).color : false};
+    // et elles OUVRENT vraiment quelque chose
+    act[0].click(); o.ouvre1=[...document.querySelectorAll('.overlay.open')].some(x=>x.id==='ov-coach-quiz');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    act[1].click(); o.ouvre2=[...document.querySelectorAll('.overlay.open')].some(x=>x.id==='ov-morpho-analysis');
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(ch.erreur) console.log('     ⚠️  bloc « pastilles Coach » en ERREUR : '+ch.erreur);
+  t('⭐⭐ pendant une conversation, le questionnaire et la morpho restent ATTEIGNABLES',
+    !ch.erreur && ch.accueilCache && ch.barreVisible && ch.n===2,
+    ch.erreur?'—':('accueil caché='+ch.accueilCache+' · pastilles d\'action='+ch.n+' '+JSON.stringify(ch.libelles)
+    +'\n         → sans elles, ces deux écrans disparaissent dès la 1ʳᵉ discussion et ne reviennent qu\'en ARCHIVANT.'));
+  t('⭐ … et elles ouvrent vraiment leur écran (pas un message envoyé à Milo)',
+    !ch.erreur && ch.ouvre1 && ch.ouvre2,
+    ch.erreur?'—':('questionnaire='+ch.ouvre1+' · morpho='+ch.ouvre2));
+  t('une pastille d\'ACTION ne se confond pas avec une pastille de QUESTION (couleur)',
+    !ch.erreur && ch.distinctes, ch.erreur?'—':'même couleur que les questions');
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

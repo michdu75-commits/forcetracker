@@ -805,6 +805,9 @@ html.is-clone .ob-clone-only{ display:block; }
 .coach-suggestions{padding:8px 14px;display:flex;gap:8px;overflow-x:auto;flex-shrink:0;border-top:1px solid var(--sep);}
 .coach-suggestions::-webkit-scrollbar{display:none;}
 .sugg-chip{flex-shrink:0;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;border:none;box-shadow:inset 0 0 0 1px rgba(255,106,115,.35);background:rgba(255,106,115,.08);color:var(--red);cursor:pointer;font-family:var(--font);white-space:nowrap;touch-action:manipulation;transition:all .15s;-webkit-tap-highlight-color:transparent;}
+/* Pastille d'ACTION : elle OUVRE un écran au lieu d'envoyer un message à Milo. La couleur les
+   sépare à l'œil — sans ça, on tape en croyant poser une question et un écran s'ouvre. */
+.sugg-chip-act{box-shadow:inset 0 0 0 1px rgba(168,85,247,.40);background:rgba(168,85,247,.10);color:var(--purp);}
 .sugg-chip:active{background:rgba(255,106,115,.18);}
 .coach-input-row{display:flex;flex-direction:column;gap:8px;padding:8px 14px max(env(safe-area-inset-bottom),12px);border-top:1px solid rgba(255,255,255,.05);background:var(--bg);flex-shrink:0;}
 .coach-input-inner{display:flex;gap:8px;align-items:center;}

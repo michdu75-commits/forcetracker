@@ -1302,6 +1302,16 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">💪 Programme cette semaine</button>
     <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">😴 Comment récupérer ?</button>
     <button class="sugg-chip" onclick="sendSuggestion(this.textContent)">🎯 Objectif réaliste ?</button>
+    <!-- ⚠️ CES DEUX-LÀ N'ENVOIENT PAS DE MESSAGE, ELLES OUVRENT UN ÉCRAN — d'où la classe
+         `sugg-chip-act` (violet) qui les distingue des questions (rouge). Retour Michel 09/08 :
+         il a découvert l'accueil du Coach **en archivant sa conversation** (« quand je discute
+         avec Milo je ne le vois pas »). Cet accueil ne s'affiche que si `coachHistory.length===0`,
+         et l'historique est sauvegardé → après la 1ʳᵉ discussion, il ne revient JAMAIS, sauf à
+         archiver. Le questionnaire et l'analyse morpho y étaient les seules entrées : elles
+         devenaient donc inatteignables. (R23 : une fonctionnalité qu'on n'annonce pas au bon
+         moment n'existe pas.) La rangée défile déjà horizontalement — rien n'est poussé dehors. -->
+    <button class="sugg-chip sugg-chip-act" onclick="openCoachQuiz()">🧠 Ce que Milo sait de toi</button>
+    <button class="sugg-chip sugg-chip-act" onclick="openMorphoAnalysis()">📸 Analyser ma morphologie</button>
   </div>
   <div class="coach-input-row">
     <div id="coach-img-preview">
