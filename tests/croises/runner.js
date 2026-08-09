@@ -364,6 +364,8 @@ const idt=await p.evaluate(()=>{
     ancienResolu:exNomActuel('Rowing Barre'),
     ancienPompes:exNomActuel('Pompes'),
     fusionLegCurl:exNomActuel('Curl Ischio-jambiers (Leg Curl)'),
+    fusionCurlMachine:exNomActuel('Curl Machine'),   // fusion du 09/08
+    idCurlMachine:exId('Curl Machine'),
     // un exercice PERSO n'a pas d'identifiant, et son nom n'est pas inventé
     persoId:exId('Mon Exercice à Moi'), persoNom:exNomActuel('Mon Exercice à Moi'),
     inconnuNom:exNom('identifiant-qui-nexiste-pas')
@@ -400,6 +402,14 @@ t('⭐⭐ ⑨ les 3 exercices retirés gardent leur identifiant (l\'historique d
   RETIRES_VOLONTAIREMENT.every(i=>idt.idsOrphelins.indexOf(i)>=0),
   'manquants : '+RETIRES_VOLONTAIREMENT.filter(i=>idt.idsOrphelins.indexOf(i)<0).join(', ')
   +'\n         → si un de ces identifiants disparaît vraiment, les séances déjà faites deviennent orphelines.');
+// ⚠️ FUSION « Curl Machine » → « Curl Pupitre Machine » (décision Michel, 09/08 : c'était la
+// même machine sous deux noms). Une FUSION n'est pas un RETRAIT : le retrait laisse un
+// identifiant orphelin, la fusion doit faire MIGRER l'historique vers la fiche survivante.
+// Ce témoin vérifie la migration, pas la disparition — c'est ce qui distingue les deux.
+t('⭐⭐ ⑨ FUSION : l\'historique d\'un « Curl Machine » remonte sur « Curl Pupitre Machine »',
+  idt.fusionCurlMachine==='Curl Pupitre Machine' && idt.idCurlMachine==='curl-pupitre-machine',
+  'exId → '+idt.idCurlMachine+' · exNomActuel → '+idt.fusionCurlMachine
+  +'\n         → sans ça, les séances déjà faites sous « Curl Machine » deviendraient orphelines.');
 t('⭐ ⑨ un ANCIEN nom retrouve sa fiche actuelle (c\'est ce qui sauve l\'historique)',
   idt.ancienRowing==='rowing-barre-tirage-horizontal'
   && idt.ancienResolu==='Rowing Barre (Tirage Horizontal)'
@@ -420,8 +430,24 @@ const idsActuels=await p.evaluate(()=>{
 });
 const idPerdus=Object.keys(REFID.ids).filter(i=>!idsActuels[i]);
 const idRenommes=Object.keys(REFID.ids).filter(i=>idsActuels[i]&&idsActuels[i]!==REFID.ids[i]);
-t('⭐ ⑨ AUCUN identifiant n\'a disparu (il emporterait tout l\'historique rangé dessous)',
-  idPerdus.length===0, idPerdus.slice(0,8).join(', '));
+// ⚠️ UN IDENTIFIANT DISPARU N'EST PAS TOUJOURS UNE PERTE — il faut distinguer deux cas, et
+// c'est toute la différence entre une fusion réussie et un historique orphelin :
+//   · FUSION (sain)   : l'identifiant a fondu dans un autre, mais son NOM y est repris comme
+//                       ancien nom → exId() résout encore, les séances remontent sur la fiche
+//                       survivante. Cas de « curl-machine » → « curl-pupitre-machine » (09/08).
+//   · PERTE (danger)  : le nom ne résout plus nulle part → toutes les séances rangées dessous
+//                       deviennent orphelines, en silence.
+// Le test ne regardait que la disparition. Il regarde maintenant si le NOM survit.
+const absorbes=await p.evaluate((noms)=>{
+  const o={}; noms.forEach(n=>{ try{ o[n]=(typeof exId==='function')?exId(n):null; }catch(e){ o[n]=null; } });
+  return o;
+}, idPerdus.map(i=>REFID.ids[i]));
+const fusionnes = idPerdus.filter(i=>absorbes[REFID.ids[i]]);
+const vraimentPerdus = idPerdus.filter(i=>!absorbes[REFID.ids[i]]);
+if(fusionnes.length) console.log('     ℹ️  '+fusionnes.length+' identifiant(s) FUSIONNÉ(S), nom repris ailleurs : '
+  +fusionnes.map(i=>REFID.ids[i]+' → '+absorbes[REFID.ids[i]]).join(' · '));
+t('⭐ ⑨ AUCUN identifiant n\'a disparu SANS que son nom soit repris (sinon historique orphelin)',
+  vraimentPerdus.length===0, vraimentPerdus.slice(0,8).map(i=>REFID.ids[i]).join(', '));
 if(idRenommes.length) console.log('     ℹ️  '+idRenommes.length+' exercice(s) renommé(s) depuis la référence — '
   +'normal si c\'est voulu : '+idRenommes.slice(0,3).map(i=>REFID.ids[i]+' → '+idsActuels[i]).join(' · '));
 

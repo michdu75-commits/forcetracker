@@ -1315,9 +1315,10 @@ Object.assign(_EX_EQUIV,{
   'barbell step up':'Montée sur Box Haltères','bench step up':'Montée sur Box Haltères','box step up':'Montée sur Box Haltères','db step up':'Montée sur Box Haltères','dumbbell step up':'Montée sur Box Haltères','step up':'Montée sur Box Haltères','step up barre':'Montée sur Box Haltères','step up halteres':'Montée sur Box Haltères',
   'bent over reverse fly':'Oiseau','rear delt fly':'Oiseau','reverse fly':'Oiseau',
   // Le Sit-up est retiré (09/08). « sit up » reste un mot de salle TRÈS courant : sans cible il
-  // rendrait « Aucun résultat » et la personne créerait un doublon perso. Redirigé vers le Crunch,
-  // le survivant le plus proche. ⚠️ Ce n'est pas le même mouvement (flexion complète vs partielle) :
-  // si Michel préfère qu'on ne redirige pas, retirer ces 3 lignes.
+  // rendrait « Aucun résultat » et la personne créerait un doublon perso. Redirigé vers le Crunch.
+  // ✅ VALIDÉ PAR MICHEL le 09/08, et sa formule vaut mieux que mon hésitation :
+  //    « sit up c'est un crunch mais total ». Même mouvement, amplitude plus grande — la
+  //    redirection est donc juste, ce n'est pas un pis-aller.
   'ab sit up':'Crunch','full sit up':'Crunch','sit up':'Crunch',
   'medicine ball twist':'Rotation Russe (Russian Twist)','russian twist':'Rotation Russe (Russian Twist)','weighted russian twist':'Rotation Russe (Russian Twist)',
   'jump rope':'Sauts à la Corde','rope skipping':'Sauts à la Corde','skipping rope':'Sauts à la Corde',

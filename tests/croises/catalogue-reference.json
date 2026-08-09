@@ -1,6 +1,6 @@
 {
  "genere": "2026-08-09",
- "total": 325,
+ "total": 324,
  "nbRegles": 69,
  "fragiles": 0,
  "ex": {
@@ -329,14 +329,6 @@
    "s": "forearms",
    "pat": "curl-biceps",
    "eq": "barre",
-   "met": 4,
-   "frag": 0
-  },
-  "Curl Machine": {
-   "p": "biceps",
-   "s": "forearms",
-   "pat": "curl-biceps",
-   "eq": "guide",
    "met": 4,
    "frag": 0
   },
