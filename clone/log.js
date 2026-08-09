@@ -5637,6 +5637,7 @@ const EX_YT={
   'Développé Haltères Assis':{img:'../exercises/developpe-halteres-assis.webp'},   // 2 poses animées — banc incliné, deltoïde ANTÉRIEUR en rouge (vérifié au zoom, 09/08)
   'Skull Crusher Barre EZ':{img:'../exercises/skull-crusher-barre-ez.webp'},   // 2 poses animées — barre EZ, ondulation vérifiée au zoom (09/08)
   'Extension Fessiers Arrière (Kickback)':{img:'../exercises/kickback-cable-fessiers.webp'},   // 2 poses CÔTE À CÔTE (pas animées : zooms et angles différents, la figurine sautait) · figurine féminine
+  'Hip Thrust Haltère (Poussée de Hanche)':{img:'../exercises/hip-thrust-haltere.webp'},   // 2 poses ANIMÉES (même cadrage, banc immobile → alignement propre) · figurine féminine (2ᵉ du catalogue)
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={
