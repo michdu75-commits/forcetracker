@@ -2,6 +2,61 @@
 
 Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'est en cours.
 
+
+---
+
+## 🔀 EXERCICES UNILATÉRAUX — la liste à cocher par Michel (mise de côté le 10/08/2026)
+
+> **D'où ça vient** : Michel note son Rowing Haltère « 56 kg » alors qu'il a **28 kg dans une main**.
+> L'app n'a **aucune notion** d'unilatéral : elle compte le volume, les records et le 1RM comme si
+> c'était une charge à deux bras. *« L'exercice c'est le bon ? Parce que c'est unilatéral »* — et
+> *« Milo, lui, savait que sur certains exercices c'était à 1 bras »*. L'app, non.
+>
+> **⛔ POURQUOI ON NE DEVINE PAS D'APRÈS LE NOM** — c'est tout le sujet, et c'est vérifié :
+> « Haltère » au singulier **ne veut pas dire « un bras »** (Pull-over Haltère, Hip Thrust Haltère,
+> Leg Curl Haltère : deux mains sur un seul haltère). Un balayage par mots-clés sur les 355
+> exercices remonte « Écarté Haltères » et « Kettlebell Swing » (bilatéraux) et **rate « Rowing
+> Haltère »**, le cas qui a tout déclenché. Une liste **choisie à la main** est la seule option
+> (R29 : le droit de deviner dépend du coût de l'erreur — ici l'erreur fausse les records).
+
+**À faire quand Michel aura coché** : marquer ces exercices `uni:true` dans `EXLIB`, doubler le
+volume, afficher « par bras / par jambe » dans la séance, et le dire à Milo dans le format de séance.
+
+### ✅ Ceux dont je suis sûr (à confirmer quand même)
+
+| Groupe | Exercices |
+|---|---|
+| **Dos** | Rowing Haltère (Tirage Horizontal) · Rowing Unilatéral Élastique · Meadows Row · Renegade Row · Tirage Vertical Alterné Élastique |
+| **Épaules** | Développé Épaules Unilatéral Élastique · Élévations Latérales Unilatérale Poulie · Élévation Latérale Landmine · Élévation Latérale Inclinée Haltère · Rotation Externe Épaule (Poulie · Élastique · Haltère · Abduction) · Rotation Interne Épaule Élastique · Rotation Interne 90° Poulie |
+| **Triceps** | Extension Triceps Arrière (Kickback) · Extension Triceps Concentrée Poulie |
+| **Biceps** | Curl Concentré |
+| **Pectoraux** | Développé Couché Unilatéral Kettlebell |
+| **Jambes** | Squat Bulgare (+ Élastique) · Squat Pistol (+ TRX) · Fentes (Marchées · Arrière · Latérales · Croisées · Kettlebell · Smith Machine) · Chariot de Puissance — Fentes Arrière · Split Squat Élastique · Split Squat TRX · Montée sur Box (+ Haltères) · Extension Quadriceps Unilatérale (+ Machine à Dips) · Cossack Squat |
+| **Fessiers** | Hip Thrust Unilatéral · Soulevé de Terre Roumain Unilatéral · Leg Curl Unilatéral Debout · Extension Fessiers Arrière (Kickback) · Kickback Machine |
+| **Mollets** | Élévations Mollets Unilatéral |
+| **Full Body** | Arraché Haltère (Dumbbell Snatch) |
+
+### ❓ Ceux où j'hésite — c'est Michel qui tranche
+
+Ils se font **des deux façons** selon la personne ou la salle. Plutôt que de choisir à sa place :
+
+- **Extension Nuque Haltère** — une main ou deux mains sur le même haltère ?
+- **Curl Araignée (Spider Curl)** — souvent les deux bras en même temps.
+- **Rowing Landmine (T-Bar)** — deux mains sur la poignée, ou une main ?
+- **Tirage Iso-Latéral Hammer Strength** · **Presse à Cuisses Iso-Latérale** — « iso-latéral » veut
+  dire *bras/jambes indépendants*, pas forcément *un à la fois*.
+- **Presse à Cuisses sur le Côté** — une jambe ou deux ?
+- **Leg Curl Haltère** — haltère coincé entre les pieds = deux jambes, non ?
+- **Soulevé de Terre Valise (Suitcase)** — charge d'un seul côté, mais les deux jambes poussent :
+  est-ce qu'on double le volume ou pas ?
+
+### ⚠️ Et l'historique déjà saisi
+
+Ses anciennes séances de Rowing Haltère sont notées avec la charge **des deux côtés additionnée**
+(« 56 kg »). Si on change la règle, il faut décider : on laisse l'historique tel quel (une rupture
+dans la courbe), ou on le corrige. **À trancher avec lui aussi** — ne rien réécrire tout seul.
+
+
 ---
 
 ## 📒 INVENTAIRE DES FONCTIONNALITÉS EXISTANTES — le document qui manque vraiment (27/07/2026)
