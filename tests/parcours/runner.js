@@ -1595,6 +1595,85 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c10.close();
 }
 
+// ═══ 🔥 LA MONTÉE EN CHARGE EST CALCULÉE PAR LE CODE (ft-v822) ══════════════════════════
+// Cas réel du 10/08 : Milo propose « 70×5 (É) → 130×3 ». Michel signale, Milo dit « t'as
+// raison » et REPROPOSE LA MÊME CHOSE. Il n'avait rien zappé : la consigne disait « 1-2 séries
+// légères » — un NOMBRE FIXE là où il faut une PROGRESSION liée à la charge.
+// ⚠️ CE QUE CES TÉMOINS PROTÈGENT : un calcul déterministe ne doit plus dépendre du modèle
+// (même motif que `_dateAnnoncee`), parce qu'ici une erreur plausible coûte une blessure.
+{
+  const c12=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p12=await c12.newPage();
+  await p12.goto('http://localhost:'+PORT+'/index.html'); await p12.waitForTimeout(2200);
+  const r=await p12.evaluate(()=>{
+   try{
+    const T=130;
+    const m=_monteeEnCharge(T);
+    const kgs=m.map(s=>s.kg), reps=m.map(s=>s.reps);
+    const suite=kgs.concat([T]);
+    const ecarts=[]; for(let i=1;i<suite.length;i++)ecarts.push(Math.round(1000*(suite[i]-suite[i-1])/T)/10);
+    return {
+      // — le calcul lui-même —
+      paliers:kgs, reps:reps, ecarts:ecarts,
+      depart:Math.round(100*kgs[0]/T),
+      dernier:Math.round(100*kgs[kgs.length-1]/T),
+      repsDecroissantes: reps.every((v,i)=>i===0||v<=reps[i-1]),
+      arrondi: kgs.every(k=>Math.abs(k/2.5-Math.round(k/2.5))<1e-9),
+      jamaisAuDessus: kgs.every(k=>k<T),
+      // — les seuils —
+      legerAucune: _monteeEnCharge(25).length===0,
+      moyen: _monteeEnCharge(80).length,
+      lourd: _monteeEnCharge(130).length,
+      // — LA SÉANCE RÉELLE DU 10/08 : elle doit être jugée INSUFFISANTE —
+      seanceDeMichel: _monteeSuffisante(
+        [{kg:70,reps:5,type:'É'},{kg:100,reps:3,type:'É'},{kg:115,reps:3,type:'É'}], 130),
+      // … et une montée correcte doit être ACCEPTÉE telle quelle
+      monteeCorrecte: _monteeSuffisante(_monteeEnCharge(130), 130),
+      // — la complétion sur une séance entière —
+      complete: (()=>{
+        const s={label:'test',exs:[
+          {name:'Squat à la Barre', sets:[{kg:130,reps:3,type:'N'},{kg:130,reps:3,type:'N'}]},
+          {name:'Curl Haltères',    sets:[{kg:45,reps:10,type:'N'}]},          // isolation → intact
+          {name:'Développé Couché', sets:[{kg:30,reps:12,type:'N'}]}           // trop léger → intact
+        ]};
+        _completerMonteeEnCharge(s);
+        return { squatSets:s.exs[0].sets.length, squatMontee:!!s.exs[0]._montee,
+                 squatNote:/Montée en charge/.test(s.exs[0].note||''),
+                 curlSets:s.exs[1].sets.length, curlMontee:!!s.exs[1]._montee,
+                 legerSets:s.exs[2].sets.length, legerMontee:!!s.exs[2]._montee };
+      })()
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ RÈGLE : aucun écart ne dépasse 15 % de la charge (les sources disent 10-15 %)',
+    Array.isArray(r.ecarts) && r.ecarts.every(e=>e<=15.5), 'écarts : '+JSON.stringify(r.ecarts));
+  t('⭐ RÈGLE : on démarre entre 40 et 50 % de la charge du jour',
+    r.depart>=40 && r.depart<=50, 'départ à '+r.depart+' %');
+  t('⭐ RÈGLE : le dernier palier est 5-15 % SOUS la charge de travail',
+    r.dernier>=85 && r.dernier<=95, 'dernier palier à '+r.dernier+' %');
+  t('RÈGLE : les répétitions décroissent (5 → 3 → 2 → 1)',
+    r.repsDecroissantes===true, JSON.stringify(r.reps));
+  t('RÈGLE : les charges sont arrondies à 2,5 kg (des disques qui existent)',
+    r.arrondi===true, JSON.stringify(r.paliers));
+  t('RÈGLE : aucun palier n\'atteint la charge de travail',
+    r.jamaisAuDessus===true, JSON.stringify(r.paliers));
+  t('⭐ SEUILS : rien sous 40 kg · 3 paliers en moyen · 4 en lourd',
+    r.legerAucune===true && r.moyen===3 && r.lourd===4,
+    'léger='+r.legerAucune+' moyen='+r.moyen+' lourd='+r.lourd);
+  t('⭐⭐ LE CAS RÉEL DU 10/08 est bien jugé INSUFFISANT (trou de 23 % + 3 reps à 88 %)',
+    r.seanceDeMichel===false, 'la montée 70/100/115 → 130 a été acceptée, elle ne devrait pas');
+  t('⭐ … et une montée correcte est acceptée telle quelle (on ne réécrit pas pour rien)',
+    r.monteeCorrecte===true, JSON.stringify(r));
+  t('⭐⭐ SÉANCE : le gros mouvement lourd reçoit sa montée, ET l\'app le DIT',
+    r.complete && r.complete.squatSets===6 && r.complete.squatMontee===true
+                && r.complete.squatNote===true, JSON.stringify(r.complete));
+  t('⭐ SÉANCE : un mouvement d\'ISOLATION n\'est pas touché (un curl n\'a pas besoin de 4 paliers)',
+    r.complete && r.complete.curlSets===1 && r.complete.curlMontee===false, JSON.stringify(r.complete));
+  t('⭐ SÉANCE : une charge LÉGÈRE n\'est pas touchée non plus',
+    r.complete && r.complete.legerSets===1 && r.complete.legerMontee===false, JSON.stringify(r.complete));
+  await c12.close();
+}
+
 // ═══ 🧠 LE BLOC PERSONNEL EST STABLE — la mémoire n'est plus dedans (ft-v819) ════════════
 // L'explication qui manquait à ft-v816 : le pari du cache 1 h n'a pas échoué parce que « le
 // bloc personnel change par nature », mais parce qu'UNE LIGNE dedans changeait — la mémoire de
@@ -2204,7 +2283,17 @@ console.log('\n═══ P. La séance de Milo lue dans le texte (tous modèles)
     const a=_extractDaySession(rep);
     o.trouve=!!a; o.viaTexte=!!(a&&a.fromText); o.nb=a?a.sess.exs.length:0;
     o.noms=a?a.sess.exs.map(e=>e.name).join('|'):'';
-    o.series=a?a.sess.exs[0].sets.length:0; o.kg=a?a.sess.exs[0].sets[0].kg:null;
+    // ⚠️ ADAPTÉ le 10/08 : la séance reçoit désormais sa MONTÉE EN CHARGE (ft-v822), donc
+    // `sets` contient les paliers d'échauffement PUIS les séries de travail. Ce qu'on veut
+    // vérifier ici n'a pas changé — que le TEXTE a bien été lu — donc on compte les séries de
+    // TRAVAIL, et on vérifie séparément que la montée a bien été ajoutée. (R30 : on adapte le
+    // témoin à la nouvelle réalité, on ne le supprime pas.)
+    const _trav=a?a.sess.exs[0].sets.filter(x=>x.type!=='É'&&x.type!=='W'):[];
+    o.series=_trav.length; o.kg=_trav.length?_trav[0].kg:null;
+    o.monteeAjoutee=!!(a&&a.sess.exs[0]._montee);
+    o.monteeAvantTravail=!!(a&&a.sess.exs[0].sets[0]&&a.sess.exs[0].sets[0].type==='É');
+    // un mouvement d'isolation de la même séance ne doit RIEN recevoir
+    o.isoIntacte=!!(a&&a.sess.exs[3]&&!a.sess.exs[3]._montee);
     // ⚠️ AUCUNE SUBSTITUTION : mesuré le 04/08, le rapprochement « par mots » changeait
     // « Curl Biceps Haltères » en « Curl Barre ». On travaillerait sur un autre exercice.
     o.pasDeSubstitution=/Curl Biceps Haltères/.test(o.noms)&&!/Curl Barre/.test(o.noms);
@@ -2224,7 +2313,12 @@ console.log('\n═══ P. La séance de Milo lue dans le texte (tous modèles)
     r.trouve===true && r.viaTexte===true && r.nb===4, JSON.stringify(r));
   t('⭐⭐ aucun exercice n\'est remplacé par un autre (« Curl Biceps Haltères » reste lui-même)',
     r.pasDeSubstitution===true, r.noms);
-  t('les séries et la charge sont lues (4 séries, 60 kg)', r.series===4&&r.kg===60, JSON.stringify(r));
+  t('les séries de TRAVAIL et la charge sont lues (4 séries, 60 kg)',
+    r.series===4&&r.kg===60, JSON.stringify(r));
+  t('⭐⭐ … et la MONTÉE EN CHARGE a été ajoutée devant (60 kg sur un développé = gros mouvement)',
+    r.monteeAjoutee===true && r.monteeAvantTravail===true, JSON.stringify(r));
+  t('⭐ … sans toucher au Curl Biceps de la même séance (isolation)',
+    r.isoIntacte===true, JSON.stringify(r));
   t('TÉMOIN : une simple conversation ne propose aucune séance', r.bavardage===true, JSON.stringify(r));
   t('TÉMOIN : une seule ligne ne fait pas une séance', r.uneLigne===true, JSON.stringify(r));
   t('⭐ un exercice hors catalogue garde SON nom, il n\'est pas inventé', r.gardeLeNom===true, JSON.stringify(r));

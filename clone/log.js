@@ -1097,6 +1097,115 @@ const _MOV_PATTERNS=[
 // Stemme les pluriels MAIS garde tous les mots (ne PAS retirer les mots vides ici :
 // sinon un mot-clé « curl haltère » se réduirait à « curl » et matcherait « leg curl »).
 function _movNorm(s){return _normEx(s).split(' ').filter(Boolean).map(_exStem).join(' ');}
+// ─── 🔥 LA MONTÉE EN CHARGE — CALCULÉE PAR LE CODE (10/08/2026) ───────────────────────────
+// Michel, après une vraie séance : Milo lui propose « 70×5 (É) → 130×3 ». Il signale le trou,
+// Milo répond « t'as raison, j'ai zappé » — et repropose EXACTEMENT LA MÊME CHOSE. Il a fallu
+// que Michel écrive « 60 kg d'un coup » pour qu'il corrige.
+//
+// ⚠️ MILO N'AVAIT RIEN ZAPPÉ : il a suivi la consigne à la lettre. Elle disait
+// « échauffement (mobilité + **1-2 séries légères** de montée en charge) ». Une série légère à
+// 70, puis le travail — c'est littéralement ce qui était demandé. *Le problème n'était pas le
+// modèle, c'était la consigne* : « 1-2 séries » ne veut rien dire sans la charge. Pour 60 kg
+// une suffit ; pour 130 kg il en faut quatre. Un NOMBRE FIXE là où il faut une PROGRESSION.
+// Michel : « c'est plus un manque d'informations, donc c'est quelque chose qui manque dans le Code. »
+//
+// 👉 MÊME MOTIF QUE `_dateAnnoncee` : Milo peut produire un résultat PLAUSIBLE MAIS FAUX que
+// l'app enregistre sans pouvoir s'en apercevoir. Quand un calcul est déterministe, il revient
+// au CODE, pas au modèle. Ici l'erreur ne coûte pas une date fausse — elle coûte une blessure.
+//
+// 📚 LES RÈGLES, cherchées et croisées (Starting Strength · Bay Strength · Ironside · Hevy ·
+//    Wendler 5/3/1), parce qu'inventer des pourcentages sur un sujet de blessure n'est pas une
+//    option — c'est Michel qui a demandé la vérification, et il avait raison :
+//    · échauffer avec LE MÊME mouvement ;
+//    · partir de 40-50 % de la charge du jour ;
+//    · monter par paliers de 10-15 % de cette charge ;
+//    · dernier palier à 5-10 % SOUS la charge de travail ;
+//    · reps décroissantes (5 → 3 → 2 → 1) ;
+//    · 2-3 paliers si léger, 4-5 si lourd — au-delà de 5 on fatigue au lieu de préparer ;
+//    · au-delà de 85-90 % de la charge, ce n'est plus un échauffement mais une série de TRAVAIL.
+const _MONTEE_SEUIL_KG = 40;          // en dessous, une montée en 4 paliers n'a aucun sens
+// ⚠️ On réutilise `_movPattern` plutôt que d'écrire une seconde liste d'exercices (R2/R13) :
+// deux listes du même métier finiraient par diverger. Seuls les mouvements POLYARTICULAIRES
+// méritent une montée — un curl ou une extension de triceps, non.
+const _MOV_MONTEE = ['squat','hip-hinge','poussee-horizontale','poussee-verticale',
+                     'tirage-horizontal','tirage-vertical','fente','halterophilie'];
+
+/**
+ * Construit la montée en charge pour une charge de travail donnée.
+ * @param {number} kgTravail — la charge des séries de travail
+ * @param {number} [pas=2.5] — l'arrondi (2,5 kg = disques de 1,25 kg de chaque côté)
+ * @returns {Array<{kg:number,reps:number,type:'É'}>} — vide si la charge est trop légère
+ */
+function _monteeEnCharge(kgTravail, pas){
+  pas = pas || 2.5;
+  const T = +kgTravail || 0;
+  if(!(T >= _MONTEE_SEUIL_KG)) return [];
+  //  léger → 2 paliers · moyen → 3 · lourd → 4. Les écarts restent dans la fourchette 10-15 %.
+  const plan = T < 60  ? [[0.50,5],[0.75,3]]
+             : T < 100 ? [[0.45,5],[0.65,3],[0.85,2]]
+             :           [[0.45,5],[0.60,3],[0.75,2],[0.88,1]];
+  const out = [];
+  for(const [pct,reps] of plan){
+    const kg = Math.round(T*pct/pas)*pas;
+    if(kg <= 0 || kg >= T) continue;                      // jamais au-dessus de la charge du jour
+    if(out.length && kg <= out[out.length-1].kg) continue; // jamais deux paliers identiques
+    out.push({kg:kg, reps:reps, type:'É'});
+  }
+  return out;
+}
+
+/**
+ * La montée déjà présente est-elle acceptable ? Deux conditions, tirées des règles ci-dessus.
+ * ⚠️ Le seul test « le dernier palier est proche de la charge » ne suffit PAS : la séance de
+ * Michel du 10/08 le passait (115 → 130 = 11,5 %) alors qu'elle avait un trou de 23 % entre 70
+ * et 100, et 3 reps à 88 % de la charge. On vérifie donc CHAQUE écart, et les reps du haut.
+ */
+function _monteeSuffisante(echauffements, kgTravail){
+  const T = +kgTravail || 0;
+  const paliers = (echauffements||[]).map(s=>+s.kg||0).filter(k=>k>0).sort((a,b)=>a-b);
+  if(!paliers.length) return false;
+  if(paliers[0] > 0.55*T) return false;                    // on ne démarre pas assez bas
+  const suite = paliers.concat([T]);
+  for(let i=1;i<suite.length;i++){
+    if((suite[i]-suite[i-1])/T > 0.18) return false;        // un écart de plus de 18 % = un trou
+  }
+  // au-delà de 85 % de la charge, plus de 2 reps ce n'est plus un échauffement (fatigue inutile)
+  for(const s of (echauffements||[])){
+    if((+s.kg||0) >= 0.85*T && (+s.reps||0) > 2) return false;
+  }
+  return true;
+}
+
+/**
+ * Complète (ou rectifie) la montée en charge d'une séance proposée par Milo.
+ * ⚠️ L'app le DIT — elle n'ajoute jamais des séries en douce : `ex._montee` est posé, et la
+ * note de l'exercice le mentionne. Sinon la personne voit apparaître des séries que Milo n'a
+ * pas annoncées, et c'est la confiance qui part (R24 : informer sans bloquer).
+ */
+function _completerMonteeEnCharge(sess){
+  try{
+    if(!sess || !Array.isArray(sess.exs)) return sess;
+    sess.exs.forEach(function(ex){
+      const sets = Array.isArray(ex.sets) ? ex.sets : [];
+      const travail = sets.filter(s=>s && s.type!=='É' && s.type!=='W');
+      if(!travail.length) return;
+      const kgT = travail.reduce((m,s)=>Math.max(m, +s.kg||0), 0);
+      if(!(kgT >= _MONTEE_SEUIL_KG)) return;
+      let pat=null; try{ pat=_movPattern(ex.name); }catch(e){}
+      if(_MOV_MONTEE.indexOf(pat) < 0) return;              // mouvement d'isolation → on ne touche pas
+      const ech = sets.filter(s=>s && (s.type==='É'||s.type==='W'));
+      if(_monteeSuffisante(ech, kgT)) return;               // sa montée est bonne → on ne touche pas
+      const montee = _monteeEnCharge(kgT);
+      if(!montee.length) return;
+      ex.sets = montee.concat(travail);
+      ex._montee = true;
+      const dit = '⚡ Montée en charge ajustée par l\'app';
+      ex.note = ex.note ? (String(ex.note).slice(0,90) + ' · ' + dit) : dit;
+    });
+  }catch(e){ console.warn('[montée en charge]', e); }
+  return sess;
+}
+
 function _movPattern(name){ const q=' '+_movNorm(name)+' ';
   // Écarté/fly + penché/arrière/inverse = OISEAU (élévation d'épaule), jamais une poussée pectorale.
   // Les mots-clés simples ne savent pas l'exprimer (« Écarté Haltères Buste Penché » a un mot au
@@ -5290,114 +5399,114 @@ function _genderGroupSvg(groupName){
 // Vidéos YouTube Demic — {id, s:true si Short, s:false si vidéo normale}
 // Images locales d'exercices (GIF/webp/png) — disponibles hors connexion
 const EX_YT={
-  'Curl Zottman':                  {img:'../exercises/curl-zottman.webp'},
-  'Curl Poulie':                   {img:'../exercises/curl-poulie.webp'},
-  'Curl Barre':                    {img:'../exercises/curl-barre.webp'},
-  'Smith Machine Développé Incliné': {img:'../exercises/smith-machine-developpe-incline.webp'},
-  'Battle Rope':                   {img:'../exercises/battle-rope.webp'},
-  'Hyperextension Inverse (Reverse Hyper)': {img:'../exercises/hyperextension-inverse-reverse-hyper.webp'},
-  'Développé Couché':              {img:'../exercises/developpe-couche.webp'},
-  'Développé Couché Haltères':     {img:'../exercises/developpe-couche-halteres-exercice-musculation.webp'},
-  'Smith Machine Développé Couché':{img:'../exercises/developpe-couche-smith-machine.webp'},
-  'Développé Décliné':             {img:'../exercises/developpe-decline-barre.webp'},
-  'Développé Incliné':             {img:'../exercises/developpe-incline-barre.webp'},
-  'Développé Incliné Haltères':    {img:'../exercises/developpe-incline-halteres-exercice-musculation.webp'},
-  'Écarté Poulie':                 {img:'../exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp'},
+  'Curl Zottman':                  {img:'exercises/curl-zottman.webp'},
+  'Curl Poulie':                   {img:'exercises/curl-poulie.webp'},
+  'Curl Barre':                    {img:'exercises/curl-barre.webp'},
+  'Smith Machine Développé Incliné': {img:'exercises/smith-machine-developpe-incline.webp'},
+  'Battle Rope':                   {img:'exercises/battle-rope.webp'},
+  'Hyperextension Inverse (Reverse Hyper)': {img:'exercises/hyperextension-inverse-reverse-hyper.webp'},
+  'Développé Couché':              {img:'exercises/developpe-couche.webp'},
+  'Développé Couché Haltères':     {img:'exercises/developpe-couche-halteres-exercice-musculation.webp'},
+  'Smith Machine Développé Couché':{img:'exercises/developpe-couche-smith-machine.webp'},
+  'Développé Décliné':             {img:'exercises/developpe-decline-barre.webp'},
+  'Développé Incliné':             {img:'exercises/developpe-incline-barre.webp'},
+  'Développé Incliné Haltères':    {img:'exercises/developpe-incline-halteres-exercice-musculation.webp'},
+  'Écarté Poulie':                 {img:'exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp'},
   // ⚠️ 02/08 : « Écarté Haltères » affichait l'animation de l'écarté DÉCLINÉ — les deux fiches
   // pointaient le même fichier (trouvé en croisant les animations). Aucune animation vaut
   // mieux qu'une fausse ; à rebrancher le jour où on a une vraie démo d'écarté à plat.
-  'Croisé Poulie (Cable Crossover)':{img:'../exercises/ecartes-poulie-vis-a-vis.webp'},
-  'Pec Deck':                      {img:'../exercises/pec-deck-butterfly-exercice-musculation.webp'},
-  'Chest Press Machine Horizontale':{img:'../exercises/developpe-machine-assis-pectoraux.webp'},
-  'Chest Press Machine Inclinée':  {img:'../exercises/developpe-incline-machine-convergente-exercice-musculation.webp'},
-  'Dips':                          {img:'../exercises/dips-pectoraux.webp'},
-  'Pont Fessier (Glute Bridge)':   {img:'../exercises/glute-bridge.webp'},
-  'Press Jambes 45°':              {img:'../exercises/presse-a-cuisse-exercice-musculation.webp'}, // animation (zip Michel 01/08) — remplace la photo fixe
-  'Press Jambes Horizontale':      {img:'../machine/press-jambes-2.jpg'},
-  'Press Jambes Verticale':        {img:'../exercises/presse-a-cuisses-verticale.webp'}, // animation (zip Michel 01/08)
-  'Press Jambes Inclinée':         {img:'../exercises/presse-a-cuisses-inclinee.webp'}, // animation (zip Michel 01/08)
-  'Squat Hack (Hack Squat)':       {img:'../exercises/hack-squat.webp'}, // animation (zip Michel 01/08)
-  'Press Jambes Levier':           {img:'../machine/press-jambes-6.jpg'},
+  'Croisé Poulie (Cable Crossover)':{img:'exercises/ecartes-poulie-vis-a-vis.webp'},
+  'Pec Deck':                      {img:'exercises/pec-deck-butterfly-exercice-musculation.webp'},
+  'Chest Press Machine Horizontale':{img:'exercises/developpe-machine-assis-pectoraux.webp'},
+  'Chest Press Machine Inclinée':  {img:'exercises/developpe-incline-machine-convergente-exercice-musculation.webp'},
+  'Dips':                          {img:'exercises/dips-pectoraux.webp'},
+  'Pont Fessier (Glute Bridge)':   {img:'exercises/glute-bridge.webp'},
+  'Press Jambes 45°':              {img:'exercises/presse-a-cuisse-exercice-musculation.webp'}, // animation (zip Michel 01/08) — remplace la photo fixe
+  'Press Jambes Horizontale':      {img:'machine/press-jambes-2.jpg'},
+  'Press Jambes Verticale':        {img:'exercises/presse-a-cuisses-verticale.webp'}, // animation (zip Michel 01/08)
+  'Press Jambes Inclinée':         {img:'exercises/presse-a-cuisses-inclinee.webp'}, // animation (zip Michel 01/08)
+  'Squat Hack (Hack Squat)':       {img:'exercises/hack-squat.webp'}, // animation (zip Michel 01/08)
+  'Press Jambes Levier':           {img:'machine/press-jambes-6.jpg'},
   // ── Fessiers / Ischios / Jambes / Soulevés de terre (lot 2026-07-04) ──
-  'Soulevé de Terre':              {img:'../exercises/souleve-de-terre.webp'},
-  'Soulevé de Terre Sumo':         {img:'../exercises/souleve-de-terre-sumo.webp'},
-  'Tirage en Rack (Rack Pull)':    {img:'../exercises/rack-pull.webp'},
-  'Inclinaison Lombaire (Good Morning)':{img:'../exercises/good-morning-exercice.webp'},
-  'Hyperextension (Back Extension)':{img:'../exercises/extension-lombaire-au-banc-45.webp'},
-  'Squat à la Barre':              {img:'../exercises/homme-faisant-un-squat-avec-barre.webp'},
-  'Squat Avant':                   {img:'../exercises/squat-barre-devant-front.webp'}, // la vraie version BARRE (zip Michel 01/08 — avant : version haltères)
-  'Squat Gobelet (Goblet Squat)':  {img:'../exercises/squat-goblet-kettlebell.webp'},
-  'Squat Sumo':                    {img:'../exercises/squat-sumo-avec-haltere.webp'},
-  'Fentes':                        {img:'../exercises/fente-avant-barre-femme.webp'},
-  'Leg Curl Couché Machine':       {img:'../exercises/leg-curl-allonge.webp'},
-  'Curl Ischio-jambiers (Leg Curl)':{img:'../exercises/leg-curl-allonge.webp'},
-  'Leg Curl Assis Machine':        {img:'../exercises/leg-curl-assis-machine.webp'},
+  'Soulevé de Terre':              {img:'exercises/souleve-de-terre.webp'},
+  'Soulevé de Terre Sumo':         {img:'exercises/souleve-de-terre-sumo.webp'},
+  'Tirage en Rack (Rack Pull)':    {img:'exercises/rack-pull.webp'},
+  'Inclinaison Lombaire (Good Morning)':{img:'exercises/good-morning-exercice.webp'},
+  'Hyperextension (Back Extension)':{img:'exercises/extension-lombaire-au-banc-45.webp'},
+  'Squat à la Barre':              {img:'exercises/homme-faisant-un-squat-avec-barre.webp'},
+  'Squat Avant':                   {img:'exercises/squat-barre-devant-front.webp'}, // la vraie version BARRE (zip Michel 01/08 — avant : version haltères)
+  'Squat Gobelet (Goblet Squat)':  {img:'exercises/squat-goblet-kettlebell.webp'},
+  'Squat Sumo':                    {img:'exercises/squat-sumo-avec-haltere.webp'},
+  'Fentes':                        {img:'exercises/fente-avant-barre-femme.webp'},
+  'Leg Curl Couché Machine':       {img:'exercises/leg-curl-allonge.webp'},
+  'Curl Ischio-jambiers (Leg Curl)':{img:'exercises/leg-curl-allonge.webp'},
+  'Leg Curl Assis Machine':        {img:'exercises/leg-curl-assis-machine.webp'},
   // Nouveaux exercices (figurines fournies)
-  'Soulevé de Terre Jambes Tendues':{img:'../exercises/souleve-de-terre-jambes-tendues.webp'},
-  'Soulevé de Terre Roumain Kettlebell':{img:'../exercises/souleve-de-terre-roumain-kettlebell.webp'},
-  'Soulevé de Terre Roumain Landmine':{img:'../exercises/souleve-de-terre-roumain-landmine.webp'},
-  'Soulevé de Terre Sumo Haltères':{img:'../exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.webp'},
-  'Soulevé de Terre Sumo Kettlebell':{img:'../exercises/souleve-de-terre-sumo-kettlebell.webp'},
-  'Soulevé de Terre Sumo Landmine':{img:'../exercises/souleve-de-terre-sumo-landmine.webp'},
-  'Soulevé de Terre Trap Bar':     {img:'../exercises/souleve-de-terre-a-la-trap-bar.webp'},
-  'Soulevé de Terre avec Déficit': {img:'../exercises/souleve-de-terre-avec-deficit.webp'},
-  'Soulevé de Terre Machine':      {img:'../exercises/souleve-de-terre-avec-machine.webp'},
-  'Zercher Deadlift':              {img:'../exercises/zercher-deadlift.webp'},
-  'Reeves Deadlift':               {img:'../exercises/reeves-deadlift.webp'},
-  'Glute Ham Raise (GHD)':         {img:'../exercises/glute-ham-developer-ghd.webp'},
-  'Kettlebell Swing':              {img:'../exercises/kettlebell-swing.webp'},
-  'Squat Pistol':                  {img:'../exercises/squat-pistol.webp'},
-  'Squat Kettlebell':              {img:'../exercises/kettlebell-back-squat.webp'},
-  'Fentes Kettlebell':             {img:'../exercises/fentes-avant-kettlebell.webp'},
-  'Leg Curl Élastique':            {img:'../exercises/leg-curl-avec-elastique-musculation.webp'},
-  'Leg Curl Haltère':              {img:'../exercises/leg-curl-decline-haltere.webp'},
-  'Leg Curl Inversé':              {img:'../exercises/leg-curl-inverse-machine-tirage-vertical.webp'},
-  'Leg Curl Unilatéral Debout':    {img:'../exercises/leg-curl-unilateral-debout-machine.webp'},
+  'Soulevé de Terre Jambes Tendues':{img:'exercises/souleve-de-terre-jambes-tendues.webp'},
+  'Soulevé de Terre Roumain Kettlebell':{img:'exercises/souleve-de-terre-roumain-kettlebell.webp'},
+  'Soulevé de Terre Roumain Landmine':{img:'exercises/souleve-de-terre-roumain-landmine.webp'},
+  'Soulevé de Terre Sumo Haltères':{img:'exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.webp'},
+  'Soulevé de Terre Sumo Kettlebell':{img:'exercises/souleve-de-terre-sumo-kettlebell.webp'},
+  'Soulevé de Terre Sumo Landmine':{img:'exercises/souleve-de-terre-sumo-landmine.webp'},
+  'Soulevé de Terre Trap Bar':     {img:'exercises/souleve-de-terre-a-la-trap-bar.webp'},
+  'Soulevé de Terre avec Déficit': {img:'exercises/souleve-de-terre-avec-deficit.webp'},
+  'Soulevé de Terre Machine':      {img:'exercises/souleve-de-terre-avec-machine.webp'},
+  'Zercher Deadlift':              {img:'exercises/zercher-deadlift.webp'},
+  'Reeves Deadlift':               {img:'exercises/reeves-deadlift.webp'},
+  'Glute Ham Raise (GHD)':         {img:'exercises/glute-ham-developer-ghd.webp'},
+  'Kettlebell Swing':              {img:'exercises/kettlebell-swing.webp'},
+  'Squat Pistol':                  {img:'exercises/squat-pistol.webp'},
+  'Squat Kettlebell':              {img:'exercises/kettlebell-back-squat.webp'},
+  'Fentes Kettlebell':             {img:'exercises/fentes-avant-kettlebell.webp'},
+  'Leg Curl Élastique':            {img:'exercises/leg-curl-avec-elastique-musculation.webp'},
+  'Leg Curl Haltère':              {img:'exercises/leg-curl-decline-haltere.webp'},
+  'Leg Curl Inversé':              {img:'exercises/leg-curl-inverse-machine-tirage-vertical.webp'},
+  'Leg Curl Unilatéral Debout':    {img:'exercises/leg-curl-unilateral-debout-machine.webp'},
   // ── Dos / Trapèzes / Lombaires (lot 2026-07-04) ──
-  'Rowing Barre (Tirage Horizontal)':                  {img:'../exercises/rowing-barre.webp'},
+  'Rowing Barre (Tirage Horizontal)':                  {img:'exercises/rowing-barre.webp'},
   // Fourni par Michel le 08/08/2026 (GIF 700×700, 764 Ko) → converti en WebP animé 480 px, 111 Ko :
   // 85 % de moins, au format des 283 autres (médiane 96 Ko). Un GIF brut dans le dossier ferait
   // grossir le cache du service worker pour rien — l'app doit s'ouvrir vite, même en 4G (règle d'or #4).
-  'Rowing Yates (Supination)':                         {img:'../exercises/rowing-yates-barre.webp'},
-  'Rowing Haltère (Tirage Horizontal)':                {img:'../exercises/rowing-haltere-un-bras.webp'},
-  'Rowing Câble (Tirage Horizontal)':                  {img:'../exercises/tirage-horizontal-poulie.webp'},
-  'Rowing Machine (Tirage Horizontal)':                {img:'../exercises/rowing-assis-machine-prise-pronation.webp'},
-  'Rowing Hammer Strength':        {img:'../exercises/rowing-assis-machine-hammer-strenght.webp'},
-  'Rowing Poitrine Appuyée (Chest Supported)':{img:'../exercises/rowing-halteres-banc-incline-prise-neutre.webp'},
-  'Tirage Poulie Haute (Lat Pulldown)':           {img:'../exercises/tirage-vertical-poitrine.webp'},
-  'Tirage Poulie Haute Prise Serrée':{img:'../exercises/tirage-vertical-prise-serree.webp'},
-  'Tirage Poulie Basse Prise Large':{img:'../exercises/tirage-horizontal-prise-large.webp'},
+  'Rowing Yates (Supination)':                         {img:'exercises/rowing-yates-barre.webp'},
+  'Rowing Haltère (Tirage Horizontal)':                {img:'exercises/rowing-haltere-un-bras.webp'},
+  'Rowing Câble (Tirage Horizontal)':                  {img:'exercises/tirage-horizontal-poulie.webp'},
+  'Rowing Machine (Tirage Horizontal)':                {img:'exercises/rowing-assis-machine-prise-pronation.webp'},
+  'Rowing Hammer Strength':        {img:'exercises/rowing-assis-machine-hammer-strenght.webp'},
+  'Rowing Poitrine Appuyée (Chest Supported)':{img:'exercises/rowing-halteres-banc-incline-prise-neutre.webp'},
+  'Tirage Poulie Haute (Lat Pulldown)':           {img:'exercises/tirage-vertical-poitrine.webp'},
+  'Tirage Poulie Haute Prise Serrée':{img:'exercises/tirage-vertical-prise-serree.webp'},
+  'Tirage Poulie Basse Prise Large':{img:'exercises/tirage-horizontal-prise-large.webp'},
   // ⚠️ CORRIGÉ le 01/08 : cette ligne portait `traction-musculation-dos.webp`, qui montre une
   // traction CLASSIQUE sans lest. La cause : « Tractions (Pull-up) » n'existait pas au catalogue,
   // la démo de la traction de base s'était donc posée sur la variante lestée, faute de place.
   // Les deux ont maintenant chacune la leur (nouveau nom de fichier — cache d'images, ft-v437).
-  'Traction Lestée':               {img:'../exercises/traction-lestee-vraie.webp'},
-  'Tractions (Pull-up)':           {img:'../exercises/traction-musculation-dos.webp'},
-  'Traction Assistée':             {img:'../exercises/traction-assistee-machine.webp'},
-  'Traction Prise Neutre':         {img:'../exercises/traction-prise-neutre.webp'},
-  'Pull-over Haltère':             {img:'../exercises/pullover-haltere.webp'},
-  'Pullover Machine':              {img:'../exercises/musculation-pull-over-assis-machine.webp'},
-  'Haussements d\'Épaules Barre':  {img:'../exercises/shrug-barre.webp'},
-  'Haussements d\'Épaules Haltères':{img:'../exercises/shrugs-avec-halteres.webp'},
-  'Haussements d\'Épaules Câble':  {img:'../exercises/shrug-poulie-haussement-epaules.webp'},
-  'Hyperextension Machine':        {img:'../exercises/extension-lombaire-a-la-machine.webp'},
+  'Traction Lestée':               {img:'exercises/traction-lestee-vraie.webp'},
+  'Tractions (Pull-up)':           {img:'exercises/traction-musculation-dos.webp'},
+  'Traction Assistée':             {img:'exercises/traction-assistee-machine.webp'},
+  'Traction Prise Neutre':         {img:'exercises/traction-prise-neutre.webp'},
+  'Pull-over Haltère':             {img:'exercises/pullover-haltere.webp'},
+  'Pullover Machine':              {img:'exercises/musculation-pull-over-assis-machine.webp'},
+  'Haussements d\'Épaules Barre':  {img:'exercises/shrug-barre.webp'},
+  'Haussements d\'Épaules Haltères':{img:'exercises/shrugs-avec-halteres.webp'},
+  'Haussements d\'Épaules Câble':  {img:'exercises/shrug-poulie-haussement-epaules.webp'},
+  'Hyperextension Machine':        {img:'exercises/extension-lombaire-a-la-machine.webp'},
   // Nouveaux exercices Dos/Trapèzes/Lombaires
-  'Rowing Smith Machine':          {img:'../exercises/rowing-smith-machine.webp'},
-  'Rowing T-Bar Machine':          {img:'../exercises/rowing-t-bar-machine.webp'},
-  'Rowing Landmine (T-Bar)':       {img:'../exercises/rowing-barre-t-landmine.webp'},
-  'Rowing Haltères Buste Penché':  {img:'../exercises/bent-over-row-avec-halteres.webp'},
-  'Meadows Row':                   {img:'../exercises/rowing-unilateral-landmine-meadows-row.webp'},
-  'Seal Row':                      {img:'../exercises/seal-row-halteres.webp'},
-  'Renegade Row':                  {img:'../exercises/renegade-row.webp'},
-  'Tirage Iso-Latéral Hammer Strength':{img:'../exercises/tirage-avant-iso-laterale-hammer-strength.webp'},
-  'Tirage Incliné Poulie Haute':   {img:'../exercises/tirage-incline-poulie-haute.webp'},
-  'Tirage Poulie Haute Prise Inversée':{img:'../exercises/tirage-vertical-prise-inversee.webp'},
-  'Traction Derrière la Nuque':    {img:'../exercises/traction-barre-derriere-rear-oull-up.webp'},
-  'Rocky Pull-up':                 {img:'../exercises/rocky-pull-up.webp'},
-  'Sled Pull':                     {img:'../exercises/sled-pull.webp'},
-  'Pull-over Barre':               {img:'../exercises/pull-over-barre.webp'},
-  'Pull-over Poulie':              {img:'../exercises/pull-over-poulie.webp'},
-  'Superman':                      {img:'../exercises/superman.webp'},
+  'Rowing Smith Machine':          {img:'exercises/rowing-smith-machine.webp'},
+  'Rowing T-Bar Machine':          {img:'exercises/rowing-t-bar-machine.webp'},
+  'Rowing Landmine (T-Bar)':       {img:'exercises/rowing-barre-t-landmine.webp'},
+  'Rowing Haltères Buste Penché':  {img:'exercises/bent-over-row-avec-halteres.webp'},
+  'Meadows Row':                   {img:'exercises/rowing-unilateral-landmine-meadows-row.webp'},
+  'Seal Row':                      {img:'exercises/seal-row-halteres.webp'},
+  'Renegade Row':                  {img:'exercises/renegade-row.webp'},
+  'Tirage Iso-Latéral Hammer Strength':{img:'exercises/tirage-avant-iso-laterale-hammer-strength.webp'},
+  'Tirage Incliné Poulie Haute':   {img:'exercises/tirage-incline-poulie-haute.webp'},
+  'Tirage Poulie Haute Prise Inversée':{img:'exercises/tirage-vertical-prise-inversee.webp'},
+  'Traction Derrière la Nuque':    {img:'exercises/traction-barre-derriere-rear-oull-up.webp'},
+  'Rocky Pull-up':                 {img:'exercises/rocky-pull-up.webp'},
+  'Sled Pull':                     {img:'exercises/sled-pull.webp'},
+  'Pull-over Barre':               {img:'exercises/pull-over-barre.webp'},
+  'Pull-over Poulie':              {img:'exercises/pull-over-poulie.webp'},
+  'Superman':                      {img:'exercises/superman.webp'},
   // Fournie en PNG FIXE et TRANSPARENT (08/08), avec les deux poses côte à côte. Trois corrections
   // avant intégration, chacune trouvée en mesurant l'existant plutôt qu'en supposant :
   //   ① fond APLATI sur blanc — les 296 autres images ont un fond blanc opaque, et l'app est sombre
@@ -5408,261 +5517,261 @@ const EX_YT={
   //      296 — or la vignette est un carré en `object-fit:cover` (ligne ~508) : elle aurait ROGNÉ
   //      la tête et la marche. La médiane des autres images est 1,00 : ce n'est pas un hasard.
   // 185 Ko → 16 Ko.
-  'Jefferson Curl':                {img:'../exercises/jefferson-curl.webp'},
-  'Haussements d\'Épaules Overhead':{img:'../exercises/overhead-shrug.webp'},
+  'Jefferson Curl':                {img:'exercises/jefferson-curl.webp'},
+  'Haussements d\'Épaules Overhead':{img:'exercises/overhead-shrug.webp'},
   // ── Cuisses / Quadriceps (lot 2026-07-04) ──
-  'Squat Bulgare':                 {img:'../exercises/squat-bulgare-halteres-exercice-musculation.webp'},
-  'Smith Machine Squat':           {img:'../exercises/squat-smith-machine-exercice-musculation.webp'},
-  'Extension Quadriceps (Leg Extension)':{img:'../exercises/leg-extension-exercice-musculation.webp'},
-  'Fentes Marchées':               {img:'../exercises/fentes-marchees-avec-sandbag.webp'},
-  'Smith Machine Fentes':          {img:'../exercises/split-squat-smith-machine.webp'},
-  'Hip Thrust Machine (Poussée de Hanche)':     {img:'../exercises/hip-thrust-a-la-machine.webp'},
-  'Farmer\'s Walk':                {img:'../exercises/marche-du-fermier-avec-kettlebells.webp'},
+  'Squat Bulgare':                 {img:'exercises/squat-bulgare-halteres-exercice-musculation.webp'},
+  'Smith Machine Squat':           {img:'exercises/squat-smith-machine-exercice-musculation.webp'},
+  'Extension Quadriceps (Leg Extension)':{img:'exercises/leg-extension-exercice-musculation.webp'},
+  'Fentes Marchées':               {img:'exercises/fentes-marchees-avec-sandbag.webp'},
+  'Smith Machine Fentes':          {img:'exercises/split-squat-smith-machine.webp'},
+  'Hip Thrust Machine (Poussée de Hanche)':     {img:'exercises/hip-thrust-a-la-machine.webp'},
+  'Farmer\'s Walk':                {img:'exercises/marche-du-fermier-avec-kettlebells.webp'},
   // Nouveaux exercices cuisses
-  'Extension Quadriceps Unilatérale':{img:'../exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.webp'},
-  'Hack Squat Inversé':            {img:'../exercises/hack-squat-inverse.webp'},
-  'Pendulum Squat':                {img:'../exercises/pendulum-squat.webp'},
-  'Belt Squat':                    {img:'../exercises/belt-squat.webp'},
-  'Safety Bar Squat':              {img:'../exercises/safety-bar-squat.webp'},
-  'Overhead Squat':                {img:'../exercises/overhead-squat.webp'},
-  'Pin Squat':                     {img:'../exercises/pin-squat.webp'},
-  'Sissy Squat':                   {img:'../exercises/sissy-squat.webp'},
-  'Cossack Squat':                 {img:'../exercises/cossack-squat.webp'},
-  'Squat Bande Élastique':         {img:'../exercises/squat-bande-elastique.webp'},
-  'Chaise (Wall Sit)':             {img:'../exercises/squat-statique-contre-mur-exercice-chaise.webp'},
-  'Presse à Cuisses Iso-Latérale': {img:'../exercises/presse-cuisse-iso-laterale-hammer-stenght.webp'},
-  'Sled Push':                     {img:'../exercises/sled-push-hyrox.webp'},
-  'Croix de Fer Haltères':         {img:'../exercises/croix-de-fer-halteres.webp'},
+  'Extension Quadriceps Unilatérale':{img:'exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.webp'},
+  'Hack Squat Inversé':            {img:'exercises/hack-squat-inverse.webp'},
+  'Pendulum Squat':                {img:'exercises/pendulum-squat.webp'},
+  'Belt Squat':                    {img:'exercises/belt-squat.webp'},
+  'Safety Bar Squat':              {img:'exercises/safety-bar-squat.webp'},
+  'Overhead Squat':                {img:'exercises/overhead-squat.webp'},
+  'Pin Squat':                     {img:'exercises/pin-squat.webp'},
+  'Sissy Squat':                   {img:'exercises/sissy-squat.webp'},
+  'Cossack Squat':                 {img:'exercises/cossack-squat.webp'},
+  'Squat Bande Élastique':         {img:'exercises/squat-bande-elastique.webp'},
+  'Chaise (Wall Sit)':             {img:'exercises/squat-statique-contre-mur-exercice-chaise.webp'},
+  'Presse à Cuisses Iso-Latérale': {img:'exercises/presse-cuisse-iso-laterale-hammer-stenght.webp'},
+  'Sled Push':                     {img:'exercises/sled-push-hyrox.webp'},
+  'Croix de Fer Haltères':         {img:'exercises/croix-de-fer-halteres.webp'},
   // ⚠️ Fichiers -v2 (01/08/2026, l'œil de Michel en séance) : les DEUX animations d'origine
   // étaient INVERSÉES à la source (le fichier « abduction » montrait une adduction et vice
   // versa). Renommés en -v2 plutôt que permutés sur place : le cache d'images des téléphones
   // (ft-images, jamais vidé) aurait continué de servir l'ancienne image inversée à l'infini.
-  'Abduction Cuisses (Leg Abduction)':{img:'../exercises/leg-abduction-machine-v2.webp'},
-  'Adduction Cuisses (Leg Adduction)':{img:'../exercises/leg-adduction-machine-v2.webp'},
-  'Chest Press Machine Déclinée':  {img:'../exercises/chest-press-machine-declinee.webp'},
-  'Dips Triceps (Buste Droit)':    {img:'../exercises/dips-triceps-paralleles.webp'},
-  'Montée sur Box (Step-up)':      {img:'../exercises/montee-sur-box-barre.webp'}, // version barre (envoi Michel 01/08)
-  'Montée sur Box Haltères':       {img:'../exercises/montee-sur-box-halteres-classique.webp'}, // la montée CLASSIQUE remplace l'ancienne démo latérale (01/08)
-  'Dips Machine Assistée':         {img:'../exercises/dips-assiste-machine.webp'},
-  'Dips Assis Machine (Seated Dip)':{img:'../exercises/dips-assis-machine-avec-poids.webp'},
-  'Développé Nuque':               {img:'../exercises/developpe-nuque-barre-guidee.webp'},
+  'Abduction Cuisses (Leg Abduction)':{img:'exercises/leg-abduction-machine-v2.webp'},
+  'Adduction Cuisses (Leg Adduction)':{img:'exercises/leg-adduction-machine-v2.webp'},
+  'Chest Press Machine Déclinée':  {img:'exercises/chest-press-machine-declinee.webp'},
+  'Dips Triceps (Buste Droit)':    {img:'exercises/dips-triceps-paralleles.webp'},
+  'Montée sur Box (Step-up)':      {img:'exercises/montee-sur-box-barre.webp'}, // version barre (envoi Michel 01/08)
+  'Montée sur Box Haltères':       {img:'exercises/montee-sur-box-halteres-classique.webp'}, // la montée CLASSIQUE remplace l'ancienne démo latérale (01/08)
+  'Dips Machine Assistée':         {img:'exercises/dips-assiste-machine.webp'},
+  'Dips Assis Machine (Seated Dip)':{img:'exercises/dips-assis-machine-avec-poids.webp'},
+  'Développé Nuque':               {img:'exercises/developpe-nuque-barre-guidee.webp'},
   // ── Épaules + Trapèzes (lot 2026-07-06) ──
-  'Développé Arnold (Arnold Press)':{img:'../exercises/developpe-arnold-exercice-musculation.webp'},
-  'Développé Militaire Haltères':{img:'../exercises/developpe-epaule-halteres.webp'},
-  'Développé Militaire':{img:'../exercises/developpe-militaire-exercice-musculation.webp'},
-  'Élévations Latérales Machine':{img:'../exercises/elevation-laterale-machine.webp'},
-  'Élévations Frontales':{img:'../exercises/elevations-frontales-exercice-musculation.webp'},
-  'Élévations Latérales (Lateral Raise)':{img:'../exercises/elevations-laterales-exercice-musculation.webp'},
-  'Élévations Latérales Câble':{img:'../exercises/elevations-laterales-poulie.webp'},
-  'Tirage Visage (Face Pull)':{img:'../exercises/face-pull.webp'},
-  'Machine Oiseau':{img:'../exercises/pec-deck-inverse.webp'},
-  'Développé Épaules Machine':{img:'../exercises/presse-epaule-exercice-musculation.webp'},
-  'Y Raise / W Raise':{img:'../exercises/elevation-en-y-a-la-poulie.webp'},
-  'Oiseau':{img:'../exercises/oiseau-assis-sur-banc.webp'},
-  'Tirage Menton':{img:'../exercises/tirage-menton-machine-guidee.webp'},
-  'Tirage Menton Kettlebell':{img:'../exercises/tirage-menton-avec-kettlebell.webp'},
-  'Développé Épaules Kettlebell':{img:'../exercises/developpe-epaule-avec-kettlebell.webp'},
-  'Développé Landmine (Épaules)':{img:'../exercises/developpe-landmine.webp'},
-  'Écarté Arrière Élastique':{img:'../exercises/ecarte-arriere-elastique.webp'},
-  'Élévation Frontale Allongée Barre':{img:'../exercises/elevation-frontale-allongee-a-la-barre.webp'},
-  'Élévation Latérale Poulie Inclinée':{img:'../exercises/elevation-laterale-a-la-poulie-en-inclinaison.webp'},
-  'Élévation Latérale Landmine':{img:'../exercises/elevation-laterale-landmine-exercice-musculation.webp'},
-  'Élévations Latérales Kettlebell':{img:'../exercises/elevation-laterales-avec-kettlebell.webp'},
-  'Rotation Interne Épaule Élastique':{img:'../exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp'},
-  'Face Pull Couché Poulie':{img:'../exercises/face-pull-couche-a-la-poulie.webp'},
-  'Oiseau Poulie 45°':{img:'../exercises/oiseau-a-la-poulie-a-45.webp'},
-  'Passage d\'Épaule Élastique':{img:'../exercises/passage-depaule-avec-elastique.webp'},
+  'Développé Arnold (Arnold Press)':{img:'exercises/developpe-arnold-exercice-musculation.webp'},
+  'Développé Militaire Haltères':{img:'exercises/developpe-epaule-halteres.webp'},
+  'Développé Militaire':{img:'exercises/developpe-militaire-exercice-musculation.webp'},
+  'Élévations Latérales Machine':{img:'exercises/elevation-laterale-machine.webp'},
+  'Élévations Frontales':{img:'exercises/elevations-frontales-exercice-musculation.webp'},
+  'Élévations Latérales (Lateral Raise)':{img:'exercises/elevations-laterales-exercice-musculation.webp'},
+  'Élévations Latérales Câble':{img:'exercises/elevations-laterales-poulie.webp'},
+  'Tirage Visage (Face Pull)':{img:'exercises/face-pull.webp'},
+  'Machine Oiseau':{img:'exercises/pec-deck-inverse.webp'},
+  'Développé Épaules Machine':{img:'exercises/presse-epaule-exercice-musculation.webp'},
+  'Y Raise / W Raise':{img:'exercises/elevation-en-y-a-la-poulie.webp'},
+  'Oiseau':{img:'exercises/oiseau-assis-sur-banc.webp'},
+  'Tirage Menton':{img:'exercises/tirage-menton-machine-guidee.webp'},
+  'Tirage Menton Kettlebell':{img:'exercises/tirage-menton-avec-kettlebell.webp'},
+  'Développé Épaules Kettlebell':{img:'exercises/developpe-epaule-avec-kettlebell.webp'},
+  'Développé Landmine (Épaules)':{img:'exercises/developpe-landmine.webp'},
+  'Écarté Arrière Élastique':{img:'exercises/ecarte-arriere-elastique.webp'},
+  'Élévation Frontale Allongée Barre':{img:'exercises/elevation-frontale-allongee-a-la-barre.webp'},
+  'Élévation Latérale Poulie Inclinée':{img:'exercises/elevation-laterale-a-la-poulie-en-inclinaison.webp'},
+  'Élévation Latérale Landmine':{img:'exercises/elevation-laterale-landmine-exercice-musculation.webp'},
+  'Élévations Latérales Kettlebell':{img:'exercises/elevation-laterales-avec-kettlebell.webp'},
+  'Rotation Interne Épaule Élastique':{img:'exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp'},
+  'Face Pull Couché Poulie':{img:'exercises/face-pull-couche-a-la-poulie.webp'},
+  'Oiseau Poulie 45°':{img:'exercises/oiseau-a-la-poulie-a-45.webp'},
+  'Passage d\'Épaule Élastique':{img:'exercises/passage-depaule-avec-elastique.webp'},
   // Deux exercices qui n'avaient AUCUNE démo — trouvées dans le dossier source de Michel (01/08) :
-  'Clean & Jerk':{img:'../exercises/epaule-jete-halterophilie.webp'},
+  'Clean & Jerk':{img:'exercises/epaule-jete-halterophilie.webp'},
   // ⚠️ CORRIGÉ le 01/08 : cette ligne pointait sur `shrug-machine-mollets.webp` — une animation qui
   // montre un HAUSSEMENT D'ÉPAULES (trapèzes en rouge) fait SUR la machine à mollets, pas une
   // élévation de mollets. Le nom du fichier le disait déjà. Erreur posée en ft-v693, repérée en
   // vérifiant le contenu à l'arrivée du vrai fichier. L'ancien fichier reste sur le disque, débranché.
   // (Nouveau NOM de fichier obligatoire : le cache d'images des téléphones ne se vide jamais — ft-v437.)
-  'Mollets Machine Debout':{img:'../exercises/elevations-mollets-debout-machine.webp'},
-  'Mollets Machine Assise':{img:'../exercises/elevations-mollets-assis-machine.webp'},
-  'Élévations Mollets Penché (Donkey Calf Raise)':{img:'../exercises/elevations-mollets-donkey.webp'},
-  'Presse Mollets (Leg Press)':{img:'../exercises/elevations-mollets-presse-45.webp'},
+  'Mollets Machine Debout':{img:'exercises/elevations-mollets-debout-machine.webp'},
+  'Mollets Machine Assise':{img:'exercises/elevations-mollets-assis-machine.webp'},
+  'Élévations Mollets Penché (Donkey Calf Raise)':{img:'exercises/elevations-mollets-donkey.webp'},
+  'Presse Mollets (Leg Press)':{img:'exercises/elevations-mollets-presse-45.webp'},
   // Les 14 exercices AJOUTÉS au catalogue le 01/08 (animations du dossier source de Michel) :
-  'Pompes (Push-up)':{img:'../exercises/pompe-musculation.webp'},
-  'Hip Thrust Barre (Poussée de Hanche)':{img:'../exercises/hip-thrust-barre.webp'}, // la version BARRE (envoi Michel 01/08 — la machine, elle, vit sur « Poussée de Hanche Machine »)
-  'Pompes Déficit (Deficit Push-up)':{img:'../exercises/pompes-deficit.webp'},
-  'Pompes Diamant':{img:'../exercises/pompes-diamant.webp'},
-  'Pompes Lestées':{img:'../exercises/pompes-lestees.webp'},
-  'Développé Couché avec Chaînes':{img:'../exercises/developpe-couche-avec-chaines.webp'},
-  'Développé Couché Larsen (Larsen Press)':{img:'../exercises/developpe-couche-larsen.webp'},
-  'Développé Couché Unilatéral Kettlebell':{img:'../exercises/developpe-couche-unilateral-kettlebell.webp'},
-  'Développé Incliné Poulie':{img:'../exercises/developpe-incline-poulie.webp'},
-  'Écarté Incliné Haltères':{img:'../exercises/ecartes-incline-avec-halteres.webp'},
-  'Écarté Décliné Haltères':{img:'../exercises/ecartes-decline-avec-halteres.webp'},
-  'Développé Décliné Haltères':{img:'../exercises/developpe-decline-halteres.webp'},
-  'Soulevé de Terre Roumain Barre':{img:'../exercises/souleve-de-terre-roumain-barre.webp'},
+  'Pompes (Push-up)':{img:'exercises/pompe-musculation.webp'},
+  'Hip Thrust Barre (Poussée de Hanche)':{img:'exercises/hip-thrust-barre.webp'}, // la version BARRE (envoi Michel 01/08 — la machine, elle, vit sur « Poussée de Hanche Machine »)
+  'Pompes Déficit (Deficit Push-up)':{img:'exercises/pompes-deficit.webp'},
+  'Pompes Diamant':{img:'exercises/pompes-diamant.webp'},
+  'Pompes Lestées':{img:'exercises/pompes-lestees.webp'},
+  'Développé Couché avec Chaînes':{img:'exercises/developpe-couche-avec-chaines.webp'},
+  'Développé Couché Larsen (Larsen Press)':{img:'exercises/developpe-couche-larsen.webp'},
+  'Développé Couché Unilatéral Kettlebell':{img:'exercises/developpe-couche-unilateral-kettlebell.webp'},
+  'Développé Incliné Poulie':{img:'exercises/developpe-incline-poulie.webp'},
+  'Écarté Incliné Haltères':{img:'exercises/ecartes-incline-avec-halteres.webp'},
+  'Écarté Décliné Haltères':{img:'exercises/ecartes-decline-avec-halteres.webp'},
+  'Développé Décliné Haltères':{img:'exercises/developpe-decline-halteres.webp'},
+  'Soulevé de Terre Roumain Barre':{img:'exercises/souleve-de-terre-roumain-barre.webp'},
   // Roumain Haltères : animation FABRIQUÉE (01/08) depuis l'infographie de Michel (2 poses + fondu)
   // — la vraie animation 12 images n'existe pas chez sa source ; à remplacer si elle apparaît un jour.
-  'Soulevé de Terre Roumain Haltères':{img:'../exercises/souleve-de-terre-roumain-halteres.webp'},
-  'Soulevé de Terre Roumain Unilatéral':{img:'../exercises/souleve-de-terre-roumain-unilateral.webp'}, // style vidéo sombre (seule dispo) — à remplacer si mieux un jour
-  'Hip Thrust Unilatéral (Poussée de Hanche)':{img:'../exercises/hip-thrust-barre-unilateral.webp'},
+  'Soulevé de Terre Roumain Haltères':{img:'exercises/souleve-de-terre-roumain-halteres.webp'},
+  'Soulevé de Terre Roumain Unilatéral':{img:'exercises/souleve-de-terre-roumain-unilateral.webp'}, // style vidéo sombre (seule dispo) — à remplacer si mieux un jour
+  'Hip Thrust Unilatéral (Poussée de Hanche)':{img:'exercises/hip-thrust-barre-unilateral.webp'},
   // Lots « cardio » et « chariot » du 01/08 — dont 4 exercices du catalogue qui n'avaient AUCUNE
   // démo (Burpees, Sauts à la Corde, Grimpeur, Box Jump) : le cardio était le parent pauvre.
-  'Burpees':{img:'../exercises/burpees.webp'},
-  'Sauts à la Corde':{img:'../exercises/sauts-a-la-corde.webp'},
-  'Grimpeur (Mountain Climber)':{img:'../exercises/grimpeur-mountain-climber.webp'},
+  'Burpees':{img:'exercises/burpees.webp'},
+  'Sauts à la Corde':{img:'exercises/sauts-a-la-corde.webp'},
+  'Grimpeur (Mountain Climber)':{img:'exercises/grimpeur-mountain-climber.webp'},
   // ─── Abdominaux illustrés le 08/08/2026 (archive fournie par Michel) ──────────────────────
   // Le groupe le plus démuni du catalogue : 16 exercices sur 19 sans démonstration, alors que
   // ce sont les mouvements des débutants. Chaque image a été VUE avant d'être inscrite (planche
   // de vignettes), jamais rattachée sur la foi du nom de fichier.
   // GIF 700×700 (~700 Ko) → WebP animé 480 px : 7,1 Mo devenus 902 Ko, −88 %, animation intacte
   // (règle d'or #4 : l'app doit s'ouvrir vite, même en 4G).
-  'Crunch':                     {img:'../exercises/crunch-au-sol.webp'},
-  'Crunch Machine':             {img:'../exercises/crunch-machine.webp'},
-  'Crunch Poulie':              {img:'../exercises/crunch-poulie-haute.webp'},
-  'Drapeau (Dragon Flag)':      {img:'../exercises/dragon-flag.webp'},
-  'Gainage':                    {img:'../exercises/planche-gainage.webp'},
-  'Hollow Body':                {img:'../exercises/hollow-hold.webp'},
-  'Planche Latérale (Side Plank)':{img:'../exercises/planche-laterale.webp'},
-  'Roue Abdominale (Ab Wheel)': {img:'../exercises/roue-abdominale.webp'},
-  'Chaise Romaine':             {img:'../exercises/chaise-romaine-releve-jambes.webp'},
-  'Relevé de Jambes':           {img:'../exercises/releve-de-jambes-suspendu.webp'},
+  'Crunch':                     {img:'exercises/crunch-au-sol.webp'},
+  'Crunch Machine':             {img:'exercises/crunch-machine.webp'},
+  'Crunch Poulie':              {img:'exercises/crunch-poulie-haute.webp'},
+  'Drapeau (Dragon Flag)':      {img:'exercises/dragon-flag.webp'},
+  'Gainage':                    {img:'exercises/planche-gainage.webp'},
+  'Hollow Body':                {img:'exercises/hollow-hold.webp'},
+  'Planche Latérale (Side Plank)':{img:'exercises/planche-laterale.webp'},
+  'Roue Abdominale (Ab Wheel)': {img:'exercises/roue-abdominale.webp'},
+  'Chaise Romaine':             {img:'exercises/chaise-romaine-releve-jambes.webp'},
+  'Relevé de Jambes':           {img:'exercises/releve-de-jambes-suspendu.webp'},
   // ⚠️ Rattaché en DEUXIÈME lecture, après correction de Michel. À la vignette j'avais lu « rotation
   // assise sur un banc » et je l'avais écartée ; en zoomant, la personne est assise AU SOL, buste
   // incliné en arrière, **pieds bloqués sous les cales du banc**, un disque en main. Le banc ne sert
   // qu'à caler les pieds : c'est la rotation russe classique. Une vignette de 200 px ne suffit pas
   // toujours — quand un détail décide du rattachement, il faut zoomer.
-  'Rotation Russe (Russian Twist)':{img:'../exercises/rotation-russe.webp'},
-  'Box Jump':{img:'../exercises/box-jump.webp'},
-  'Assault Air Bike':{img:'../exercises/assault-air-bike.webp'},
-  'Ergomètre de Ski (Ski Erg)':{img:'../exercises/ergometre-de-ski.webp'},
-  'Jumping Jack':{img:'../exercises/jumping-jack.webp'},
-  'Marche de l\'Ours (Bear Crawl)':{img:'../exercises/marche-de-lours-bear-crawl.webp'},
-  'Wall Ball':{img:'../exercises/wall-ball.webp'},
-  'Chariot de Puissance — Poussée':{img:'../exercises/chariot-poussee.webp'},
-  'Chariot de Puissance — Tirage en Avançant':{img:'../exercises/chariot-tirage-avance.webp'},
-  'Chariot de Puissance — Tirage Dos':{img:'../exercises/chariot-tirage-dos.webp'},
-  'Chariot de Puissance — Tirage de Côté':{img:'../exercises/chariot-tirage-de-cote.webp'},
-  'Chariot de Puissance — Tirage Inversé Jambes':{img:'../exercises/chariot-tirage-inverse-jambes.webp'},
-  'Chariot de Puissance — Tirage Épaules':{img:'../exercises/chariot-tirage-epaules.webp'},
-  'Chariot de Puissance — Fentes Arrière':{img:'../exercises/chariot-fentes-arriere.webp'},
-  'Chariot de Puissance — Curl Biceps':{img:'../exercises/chariot-curl-biceps.webp'},
-  'Chariot de Puissance — Extension Triceps':{img:'../exercises/chariot-extension-triceps.webp'},
+  'Rotation Russe (Russian Twist)':{img:'exercises/rotation-russe.webp'},
+  'Box Jump':{img:'exercises/box-jump.webp'},
+  'Assault Air Bike':{img:'exercises/assault-air-bike.webp'},
+  'Ergomètre de Ski (Ski Erg)':{img:'exercises/ergometre-de-ski.webp'},
+  'Jumping Jack':{img:'exercises/jumping-jack.webp'},
+  'Marche de l\'Ours (Bear Crawl)':{img:'exercises/marche-de-lours-bear-crawl.webp'},
+  'Wall Ball':{img:'exercises/wall-ball.webp'},
+  'Chariot de Puissance — Poussée':{img:'exercises/chariot-poussee.webp'},
+  'Chariot de Puissance — Tirage en Avançant':{img:'exercises/chariot-tirage-avance.webp'},
+  'Chariot de Puissance — Tirage Dos':{img:'exercises/chariot-tirage-dos.webp'},
+  'Chariot de Puissance — Tirage de Côté':{img:'exercises/chariot-tirage-de-cote.webp'},
+  'Chariot de Puissance — Tirage Inversé Jambes':{img:'exercises/chariot-tirage-inverse-jambes.webp'},
+  'Chariot de Puissance — Tirage Épaules':{img:'exercises/chariot-tirage-epaules.webp'},
+  'Chariot de Puissance — Fentes Arrière':{img:'exercises/chariot-fentes-arriere.webp'},
+  'Chariot de Puissance — Curl Biceps':{img:'exercises/chariot-curl-biceps.webp'},
+  'Chariot de Puissance — Extension Triceps':{img:'exercises/chariot-extension-triceps.webp'},
   // Lots « dos », « épaules » et « pecs » du 01/08 (fin de soirée) — beaucoup d'ÉLASTIQUE et de
   // TRX : le matériel est dans le nom, une vignette élastique sur l'exercice classique mentirait.
-  'Traction Supination (Chin-up)':{img:'../exercises/traction-supination-chin-up.webp'},
-  'Muscle-up':{img:'../exercises/muscle-up.webp'},
-  'Tractions aux Anneaux':{img:'../exercises/tractions-aux-anneaux.webp'},
-  'Traction Australienne (Poids du Corps)':{img:'../exercises/traction-australienne.webp'},
-  'Traction Assistée avec Banc':{img:'../exercises/traction-assistee-avec-banc.webp'},
-  'Suspension Passive (Dead Hang)':{img:'../exercises/suspension-passive-dead-hang.webp'},
-  'Rowing Inversé sous une Table':{img:'../exercises/rowing-inverse-sous-table.webp'},
-  'Rowing Buste Penché Élastique':{img:'../exercises/rowing-buste-penche-elastique.webp'},
-  'Rowing Horizontal Élastique':{img:'../exercises/rowing-horizontal-elastique.webp'},
-  'Rowing Unilatéral Élastique':{img:'../exercises/rowing-unilateral-elastique.webp'},
-  'Tirage Vertical Alterné Élastique':{img:'../exercises/tirage-vertical-alterne-elastique.webp'},
-  'Rowing TRX (Sangles)':{img:'../exercises/rowing-trx-sangles.webp'},
-  'Traction Australienne TRX (Sangles)':{img:'../exercises/traction-australienne-trx-sangles.webp'},
-  'Bird Dog':{img:'../exercises/bird-dog.webp'},
-  'Extension Lombaire sur Ballon':{img:'../exercises/extension-lombaire-ballon.webp'},
-  'Planche Inversée':{img:'../exercises/planche-inversee.webp'},
-  'Développé Épaules Élastique':{img:'../exercises/developpe-epaules-elastique.webp'},
-  'Développé Épaules Assis Élastique':{img:'../exercises/developpe-epaules-assis-elastique.webp'},
-  'Développé Épaules Unilatéral Élastique':{img:'../exercises/developpe-epaules-unilateral-elastique.webp'},
-  'Élévations Latérales Unilatérale Poulie':{img:'../exercises/elevations-laterales-unilaterale-poulie.webp'},
-  'Oiseau Élastique':{img:'../exercises/oiseau-elastique.webp'},
-  'Oiseau Inversé TRX (Sangles)':{img:'../exercises/oiseau-inverse-trx-sangles.webp'},
-  'Rotation Externe Épaule Poulie':{img:'../exercises/rotation-externe-epaule-poulie.webp'},
-  'Handstand Push-up Suspendu (Sangles)':{img:'../exercises/handstand-push-up-suspendu.webp'},
-  'Développé Couché au Sol (Floor Press)':{img:'../exercises/developpe-couche-au-sol-floor-press.webp'},
-  'Développé Couché Élastique':{img:'../exercises/developpe-couche-elastique.webp'},
-  'Développé Décliné Élastique':{img:'../exercises/developpe-decline-elastique.webp'},
-  'Écarté Poulie Haute à Genoux':{img:'../exercises/ecarte-poulie-haute-a-genoux.webp'},
-  'Écarté Élastique':{img:'../exercises/ecarte-elastique.webp'},
-  'Écarté TRX (Sangles)':{img:'../exercises/ecarte-trx-sangles.webp'},
-  'Chest Press TRX (Sangles)':{img:'../exercises/chest-press-trx-sangles.webp'},
-  'Pompes Inclinées TRX (Sangles)':{img:'../exercises/pompes-inclinees-trx-sangles.webp'},
+  'Traction Supination (Chin-up)':{img:'exercises/traction-supination-chin-up.webp'},
+  'Muscle-up':{img:'exercises/muscle-up.webp'},
+  'Tractions aux Anneaux':{img:'exercises/tractions-aux-anneaux.webp'},
+  'Traction Australienne (Poids du Corps)':{img:'exercises/traction-australienne.webp'},
+  'Traction Assistée avec Banc':{img:'exercises/traction-assistee-avec-banc.webp'},
+  'Suspension Passive (Dead Hang)':{img:'exercises/suspension-passive-dead-hang.webp'},
+  'Rowing Inversé sous une Table':{img:'exercises/rowing-inverse-sous-table.webp'},
+  'Rowing Buste Penché Élastique':{img:'exercises/rowing-buste-penche-elastique.webp'},
+  'Rowing Horizontal Élastique':{img:'exercises/rowing-horizontal-elastique.webp'},
+  'Rowing Unilatéral Élastique':{img:'exercises/rowing-unilateral-elastique.webp'},
+  'Tirage Vertical Alterné Élastique':{img:'exercises/tirage-vertical-alterne-elastique.webp'},
+  'Rowing TRX (Sangles)':{img:'exercises/rowing-trx-sangles.webp'},
+  'Traction Australienne TRX (Sangles)':{img:'exercises/traction-australienne-trx-sangles.webp'},
+  'Bird Dog':{img:'exercises/bird-dog.webp'},
+  'Extension Lombaire sur Ballon':{img:'exercises/extension-lombaire-ballon.webp'},
+  'Planche Inversée':{img:'exercises/planche-inversee.webp'},
+  'Développé Épaules Élastique':{img:'exercises/developpe-epaules-elastique.webp'},
+  'Développé Épaules Assis Élastique':{img:'exercises/developpe-epaules-assis-elastique.webp'},
+  'Développé Épaules Unilatéral Élastique':{img:'exercises/developpe-epaules-unilateral-elastique.webp'},
+  'Élévations Latérales Unilatérale Poulie':{img:'exercises/elevations-laterales-unilaterale-poulie.webp'},
+  'Oiseau Élastique':{img:'exercises/oiseau-elastique.webp'},
+  'Oiseau Inversé TRX (Sangles)':{img:'exercises/oiseau-inverse-trx-sangles.webp'},
+  'Rotation Externe Épaule Poulie':{img:'exercises/rotation-externe-epaule-poulie.webp'},
+  'Handstand Push-up Suspendu (Sangles)':{img:'exercises/handstand-push-up-suspendu.webp'},
+  'Développé Couché au Sol (Floor Press)':{img:'exercises/developpe-couche-au-sol-floor-press.webp'},
+  'Développé Couché Élastique':{img:'exercises/developpe-couche-elastique.webp'},
+  'Développé Décliné Élastique':{img:'exercises/developpe-decline-elastique.webp'},
+  'Écarté Poulie Haute à Genoux':{img:'exercises/ecarte-poulie-haute-a-genoux.webp'},
+  'Écarté Élastique':{img:'exercises/ecarte-elastique.webp'},
+  'Écarté TRX (Sangles)':{img:'exercises/ecarte-trx-sangles.webp'},
+  'Chest Press TRX (Sangles)':{img:'exercises/chest-press-trx-sangles.webp'},
+  'Pompes Inclinées TRX (Sangles)':{img:'exercises/pompes-inclinees-trx-sangles.webp'},
   // Lot « triceps » du 01/08 — ① 11 exercices du catalogue qui n'avaient AUCUNE démo (le plus gros
   // rattrapage du soir : la famille triceps était presque entièrement muette) ; ② 11 nouveaux.
   // Restent volontairement SANS démo, faute de fichier correspondant : Dips Lestés · Skull Crusher
   // Barre EZ · Triceps Corde Poulie (pushdown à la corde) — mieux vaut aucune vignette qu'une fausse.
-  'Bench Dips':{img:'../exercises/bench-dips-sur-banc.webp'},
-  'Extension Nuque Haltère':{img:'../exercises/extension-nuque-haltere-assis.webp'},
-  'Extension Nuque Poulie Haute':{img:'../exercises/extension-nuque-poulie-haute-corde.webp'},
-  'Extension Triceps':{img:'../exercises/extension-triceps-verticale-haltere.webp'},
-  'Extension Triceps Arrière (Kickback)':{img:'../exercises/triceps-kickback-debout-halteres.webp'},
-  'Extension Triceps Couché Haltères':{img:'../exercises/extension-triceps-couche-halteres.webp'},
-  'Triceps Poulie':{img:'../exercises/triceps-poulie-haute-barre.webp'},
-  'Triceps Machine':{img:'../exercises/triceps-machine.webp'},
-  'Triceps Poulie Basse':{img:'../exercises/triceps-poulie-basse-verticale.webp'},
-  'Dips aux Anneaux':{img:'../exercises/dips-aux-anneaux.webp'},
-  'Dips entre Deux Bancs':{img:'../exercises/dips-entre-deux-bancs.webp'},
-  'Tate Press':{img:'../exercises/tate-press.webp'},
-  'Handstand Push-up (ATR)':{img:'../exercises/handstand-push-up.webp'},
-  'Extension Triceps Banc Incliné Haltères':{img:'../exercises/extension-triceps-banc-incline-halteres.webp'},
-  'Extension Triceps Décliné Haltères':{img:'../exercises/extension-triceps-decline-halteres.webp'},
-  'Extension Triceps Concentrée Poulie':{img:'../exercises/extension-triceps-concentree-poulie.webp'},
-  'Extension Triceps Nuque Élastique':{img:'../exercises/extension-triceps-nuque-elastique.webp'},
-  'Extension Triceps Verticale Élastique':{img:'../exercises/extension-triceps-verticale-elastique.webp'},
-  'Extension Triceps TRX (Sangles)':{img:'../exercises/extension-triceps-trx-sangles.webp'},
-  'Extension Triceps Allongée TRX (Sangles)':{img:'../exercises/extension-triceps-trx-allonge.webp'},
+  'Bench Dips':{img:'exercises/bench-dips-sur-banc.webp'},
+  'Extension Nuque Haltère':{img:'exercises/extension-nuque-haltere-assis.webp'},
+  'Extension Nuque Poulie Haute':{img:'exercises/extension-nuque-poulie-haute-corde.webp'},
+  'Extension Triceps':{img:'exercises/extension-triceps-verticale-haltere.webp'},
+  'Extension Triceps Arrière (Kickback)':{img:'exercises/triceps-kickback-debout-halteres.webp'},
+  'Extension Triceps Couché Haltères':{img:'exercises/extension-triceps-couche-halteres.webp'},
+  'Triceps Poulie':{img:'exercises/triceps-poulie-haute-barre.webp'},
+  'Triceps Machine':{img:'exercises/triceps-machine.webp'},
+  'Triceps Poulie Basse':{img:'exercises/triceps-poulie-basse-verticale.webp'},
+  'Dips aux Anneaux':{img:'exercises/dips-aux-anneaux.webp'},
+  'Dips entre Deux Bancs':{img:'exercises/dips-entre-deux-bancs.webp'},
+  'Tate Press':{img:'exercises/tate-press.webp'},
+  'Handstand Push-up (ATR)':{img:'exercises/handstand-push-up.webp'},
+  'Extension Triceps Banc Incliné Haltères':{img:'exercises/extension-triceps-banc-incline-halteres.webp'},
+  'Extension Triceps Décliné Haltères':{img:'exercises/extension-triceps-decline-halteres.webp'},
+  'Extension Triceps Concentrée Poulie':{img:'exercises/extension-triceps-concentree-poulie.webp'},
+  'Extension Triceps Nuque Élastique':{img:'exercises/extension-triceps-nuque-elastique.webp'},
+  'Extension Triceps Verticale Élastique':{img:'exercises/extension-triceps-verticale-elastique.webp'},
+  'Extension Triceps TRX (Sangles)':{img:'exercises/extension-triceps-trx-sangles.webp'},
+  'Extension Triceps Allongée TRX (Sangles)':{img:'exercises/extension-triceps-trx-allonge.webp'},
   // Lot « quadri » du 01/08 : 16 exercices qui ENTRENT au catalogue avec leur animation (8 vrais
   // manquants + 5 élastique + 3 TRX). Le matériel est dans le nom — une vignette élastique sur un
   // exercice classique mentirait sur l'exercice (leçon du curl incliné poulie, ft-v703).
-  'Squat Poids du Corps (Air Squat)':{img:'../exercises/squat-poids-du-corps-air-squat.webp'},
-  'Fentes Croisées (Curtsy Lunge)':{img:'../exercises/fentes-croisees-curtsy-lunge.webp'},
-  'Jefferson Squat':{img:'../exercises/jefferson-squat.webp'},
-  'Soulevé de Terre Valise (Suitcase)':{img:'../exercises/souleve-de-terre-valise.webp'},
-  'Squat Sauté (Jump Squat)':{img:'../exercises/squat-saute-jump-squat.webp'},
-  'Squat avec Rotation du Tronc':{img:'../exercises/squat-avec-rotation-du-tronc.webp'},
-  'Sissy Squat Machine':{img:'../exercises/sissy-squat-machine.webp'},
-  'Extension Quadriceps Unilatérale Machine à Dips':{img:'../exercises/extension-quadriceps-unilaterale-machine-dips.webp'},
-  'Squat Bulgare Élastique':{img:'../exercises/squat-bulgare-elastique.webp'},
-  'Extension Quadriceps Élastique':{img:'../exercises/extension-quadriceps-elastique.webp'},
-  'Overhead Squat Élastique':{img:'../exercises/overhead-squat-elastique.webp'},
-  'Split Squat Élastique (Fente Statique)':{img:'../exercises/split-squat-elastique.webp'},
-  'Squat Barre avec Bandes Élastiques':{img:'../exercises/squat-barre-avec-bandes-elastiques.webp'},
-  'Squat TRX (Sangles)':{img:'../exercises/squat-trx-sangles.webp'},
-  'Split Squat TRX (Sangles)':{img:'../exercises/split-squat-trx-sangles.webp'},
-  'Squat Pistol TRX (Sangles)':{img:'../exercises/squat-pistol-trx-sangles.webp'},
+  'Squat Poids du Corps (Air Squat)':{img:'exercises/squat-poids-du-corps-air-squat.webp'},
+  'Fentes Croisées (Curtsy Lunge)':{img:'exercises/fentes-croisees-curtsy-lunge.webp'},
+  'Jefferson Squat':{img:'exercises/jefferson-squat.webp'},
+  'Soulevé de Terre Valise (Suitcase)':{img:'exercises/souleve-de-terre-valise.webp'},
+  'Squat Sauté (Jump Squat)':{img:'exercises/squat-saute-jump-squat.webp'},
+  'Squat avec Rotation du Tronc':{img:'exercises/squat-avec-rotation-du-tronc.webp'},
+  'Sissy Squat Machine':{img:'exercises/sissy-squat-machine.webp'},
+  'Extension Quadriceps Unilatérale Machine à Dips':{img:'exercises/extension-quadriceps-unilaterale-machine-dips.webp'},
+  'Squat Bulgare Élastique':{img:'exercises/squat-bulgare-elastique.webp'},
+  'Extension Quadriceps Élastique':{img:'exercises/extension-quadriceps-elastique.webp'},
+  'Overhead Squat Élastique':{img:'exercises/overhead-squat-elastique.webp'},
+  'Split Squat Élastique (Fente Statique)':{img:'exercises/split-squat-elastique.webp'},
+  'Squat Barre avec Bandes Élastiques':{img:'exercises/squat-barre-avec-bandes-elastiques.webp'},
+  'Squat TRX (Sangles)':{img:'exercises/squat-trx-sangles.webp'},
+  'Split Squat TRX (Sangles)':{img:'exercises/split-squat-trx-sangles.webp'},
+  'Squat Pistol TRX (Sangles)':{img:'exercises/squat-pistol-trx-sangles.webp'},
   // Lot mollets + triceps (01/08, envoi du soir) — chaque animation vérifiée AVANT branchement :
   // le « barre au front » est bien la version allongée au banc (skull crusher), et les deux mollets
   // sont les versions BARRE (debout sur les épaules / assis barre sur les genoux). Le mouvement est
   // le même que sur machine → branchés sur les exercices génériques existants, rien à créer.
-  'Barre au Front':{img:'../exercises/barre-au-front-triceps.webp'},
-  'Élévations Mollets Debout':{img:'../exercises/elevations-mollets-debout-barre.webp'},
-  'Élévations Mollets Assis':{img:'../exercises/elevations-mollets-assis-barre.webp'},
+  'Barre au Front':{img:'exercises/barre-au-front-triceps.webp'},
+  'Élévations Mollets Debout':{img:'exercises/elevations-mollets-debout-barre.webp'},
+  'Élévations Mollets Assis':{img:'exercises/elevations-mollets-assis-barre.webp'},
   // Lot biceps (01/08) : 6 branchements + 2 nouveaux exercices
-  'Curl Haltères':{img:'../exercises/curl-halteres-alterne.webp'},
-  'Curl Incliné':{img:'../exercises/curl-haltere-incline.webp'},
-  'Curl Concentré':{img:'../exercises/curl-concentre.webp'},
-  'Curl Araignée (Spider Curl)':{img:'../exercises/curl-araignee-spider.webp'},
-  'Marteau':{img:'../exercises/curl-marteau.webp'},
-  'Curl Pupitre Machine':{img:'../exercises/curl-pupitre-machine.webp'},
-  'Curl Pupitre Barre EZ (Larry Scott)':{img:'../exercises/curl-pupitre-barre-ez-larry-scott.webp'},
-  'Waiter Curl':{img:'../exercises/waiter-curl.webp'},
-  'Écarté Hyght (Hyght Fly)':{img:'../exercises/hyght-dumbell-fly.webp'},
-  'Hex Press Smith Machine':{img:'../exercises/hex-press-a-la-smith-machine.webp'},
-  'Chest Press Poulie Assis':{img:'../exercises/chest-press-poulie-assis.webp'},
-  'Svend Press (Serrage de Plaque)':{img:'../exercises/svend-press.webp'},
-  'Presse à Cuisses sur le Côté':{img:'../exercises/presse-a-cuisse-sur-le-cote.webp'},
-  'Hack Squat Assis':{img:'../exercises/hack-squat-assis.webp'},
-  'Overhead Squat Haltères':{img:'../exercises/overhead-squat-halteres.webp'},
-  'Arraché Debout (Muscle Snatch)':{img:'../exercises/muscle-snatch-halterophilie.webp'},
-  'Rotation Externe Épaule Abduction':{img:'../exercises/rotation-externe-de-epaule-en-abduction.webp'},
-  'Rotation Externe Épaule Élastique':{img:'../exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp'},
-  'Rotation Interne 90° Poulie':{img:'../exercises/rotation-interne-a-90-a-la-poulie.webp'},
+  'Curl Haltères':{img:'exercises/curl-halteres-alterne.webp'},
+  'Curl Incliné':{img:'exercises/curl-haltere-incline.webp'},
+  'Curl Concentré':{img:'exercises/curl-concentre.webp'},
+  'Curl Araignée (Spider Curl)':{img:'exercises/curl-araignee-spider.webp'},
+  'Marteau':{img:'exercises/curl-marteau.webp'},
+  'Curl Pupitre Machine':{img:'exercises/curl-pupitre-machine.webp'},
+  'Curl Pupitre Barre EZ (Larry Scott)':{img:'exercises/curl-pupitre-barre-ez-larry-scott.webp'},
+  'Waiter Curl':{img:'exercises/waiter-curl.webp'},
+  'Écarté Hyght (Hyght Fly)':{img:'exercises/hyght-dumbell-fly.webp'},
+  'Hex Press Smith Machine':{img:'exercises/hex-press-a-la-smith-machine.webp'},
+  'Chest Press Poulie Assis':{img:'exercises/chest-press-poulie-assis.webp'},
+  'Svend Press (Serrage de Plaque)':{img:'exercises/svend-press.webp'},
+  'Presse à Cuisses sur le Côté':{img:'exercises/presse-a-cuisse-sur-le-cote.webp'},
+  'Hack Squat Assis':{img:'exercises/hack-squat-assis.webp'},
+  'Overhead Squat Haltères':{img:'exercises/overhead-squat-halteres.webp'},
+  'Arraché Debout (Muscle Snatch)':{img:'exercises/muscle-snatch-halterophilie.webp'},
+  'Rotation Externe Épaule Abduction':{img:'exercises/rotation-externe-de-epaule-en-abduction.webp'},
+  'Rotation Externe Épaule Élastique':{img:'exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp'},
+  'Rotation Interne 90° Poulie':{img:'exercises/rotation-interne-a-90-a-la-poulie.webp'},
   // ── Épaules + Trapèzes — 2e partie (lot 2026-07-06) ──
-  'Smith Machine Développé Militaire':{img:'../exercises/developpe-epaules-smith-machine.webp'},
-  'Élévations Frontales Câble':{img:'../exercises/elevation-frontale-poulie-basse.webp'},
-  'Élévation Frontale Banc Incliné':{img:'../exercises/elevation-frontale-banc-incline.webp'},
-  'Élévation Latérale Inclinée Haltère':{img:'../exercises/elevation-laterale-incline-haltere.webp'},
-  'Rotation Externe Épaule Haltère':{img:'../exercises/rotation-externe-epaule-haltere.webp'},
-  'Développé Épaules Assis Machine (Shoulder Press)':{img:'../exercises/shoulder-press-machine.webp'},
-  'Tirage Menton Élastique':{img:'../exercises/tirage-menton-avec-elastique.webp'},
-  'Thruster':{img:'../exercises/thruster.webp'},
-  'Thruster Kettlebell':{img:'../exercises/thruster-kettlebell.webp'},
-  'Russian Twist Développé Épaules':{img:'../exercises/russian-twist-avec-developpe-epaule.webp'},
-  'Développé Haltères Assis':{img:'../exercises/developpe-halteres-assis.webp'},   // 2 poses animées — banc incliné, deltoïde ANTÉRIEUR en rouge (vérifié au zoom, 09/08)
-  'Skull Crusher Barre EZ':{img:'../exercises/skull-crusher-barre-ez.webp'},   // 2 poses animées — barre EZ, ondulation vérifiée au zoom (09/08)
-  'Extension Fessiers Arrière (Kickback)':{img:'../exercises/kickback-cable-fessiers.webp'},   // 2 poses CÔTE À CÔTE (pas animées : zooms et angles différents, la figurine sautait) · figurine féminine
-  'Hip Thrust Haltère (Poussée de Hanche)':{img:'../exercises/hip-thrust-haltere.webp'},   // 2 poses ANIMÉES (même cadrage, banc immobile → alignement propre) · figurine féminine (2ᵉ du catalogue)
+  'Smith Machine Développé Militaire':{img:'exercises/developpe-epaules-smith-machine.webp'},
+  'Élévations Frontales Câble':{img:'exercises/elevation-frontale-poulie-basse.webp'},
+  'Élévation Frontale Banc Incliné':{img:'exercises/elevation-frontale-banc-incline.webp'},
+  'Élévation Latérale Inclinée Haltère':{img:'exercises/elevation-laterale-incline-haltere.webp'},
+  'Rotation Externe Épaule Haltère':{img:'exercises/rotation-externe-epaule-haltere.webp'},
+  'Développé Épaules Assis Machine (Shoulder Press)':{img:'exercises/shoulder-press-machine.webp'},
+  'Tirage Menton Élastique':{img:'exercises/tirage-menton-avec-elastique.webp'},
+  'Thruster':{img:'exercises/thruster.webp'},
+  'Thruster Kettlebell':{img:'exercises/thruster-kettlebell.webp'},
+  'Russian Twist Développé Épaules':{img:'exercises/russian-twist-avec-developpe-epaule.webp'},
+  'Développé Haltères Assis':{img:'exercises/developpe-halteres-assis.webp'},   // 2 poses animées — banc incliné, deltoïde ANTÉRIEUR en rouge (vérifié au zoom, 09/08)
+  'Skull Crusher Barre EZ':{img:'exercises/skull-crusher-barre-ez.webp'},   // 2 poses animées — barre EZ, ondulation vérifiée au zoom (09/08)
+  'Extension Fessiers Arrière (Kickback)':{img:'exercises/kickback-cable-fessiers.webp'},   // 2 poses CÔTE À CÔTE (pas animées : zooms et angles différents, la figurine sautait) · figurine féminine
+  'Hip Thrust Haltère (Poussée de Hanche)':{img:'exercises/hip-thrust-haltere.webp'},   // 2 poses ANIMÉES (même cadrage, banc immobile → alignement propre) · figurine féminine (2ᵉ du catalogue)
 };
 // Mapping groupe musculaire → SVG local (hors connexion)
 const _MUSCLE_FILE={

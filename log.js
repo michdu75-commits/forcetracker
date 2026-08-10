@@ -1097,6 +1097,115 @@ const _MOV_PATTERNS=[
 // Stemme les pluriels MAIS garde tous les mots (ne PAS retirer les mots vides ici :
 // sinon un mot-clé « curl haltère » se réduirait à « curl » et matcherait « leg curl »).
 function _movNorm(s){return _normEx(s).split(' ').filter(Boolean).map(_exStem).join(' ');}
+// ─── 🔥 LA MONTÉE EN CHARGE — CALCULÉE PAR LE CODE (10/08/2026) ───────────────────────────
+// Michel, après une vraie séance : Milo lui propose « 70×5 (É) → 130×3 ». Il signale le trou,
+// Milo répond « t'as raison, j'ai zappé » — et repropose EXACTEMENT LA MÊME CHOSE. Il a fallu
+// que Michel écrive « 60 kg d'un coup » pour qu'il corrige.
+//
+// ⚠️ MILO N'AVAIT RIEN ZAPPÉ : il a suivi la consigne à la lettre. Elle disait
+// « échauffement (mobilité + **1-2 séries légères** de montée en charge) ». Une série légère à
+// 70, puis le travail — c'est littéralement ce qui était demandé. *Le problème n'était pas le
+// modèle, c'était la consigne* : « 1-2 séries » ne veut rien dire sans la charge. Pour 60 kg
+// une suffit ; pour 130 kg il en faut quatre. Un NOMBRE FIXE là où il faut une PROGRESSION.
+// Michel : « c'est plus un manque d'informations, donc c'est quelque chose qui manque dans le Code. »
+//
+// 👉 MÊME MOTIF QUE `_dateAnnoncee` : Milo peut produire un résultat PLAUSIBLE MAIS FAUX que
+// l'app enregistre sans pouvoir s'en apercevoir. Quand un calcul est déterministe, il revient
+// au CODE, pas au modèle. Ici l'erreur ne coûte pas une date fausse — elle coûte une blessure.
+//
+// 📚 LES RÈGLES, cherchées et croisées (Starting Strength · Bay Strength · Ironside · Hevy ·
+//    Wendler 5/3/1), parce qu'inventer des pourcentages sur un sujet de blessure n'est pas une
+//    option — c'est Michel qui a demandé la vérification, et il avait raison :
+//    · échauffer avec LE MÊME mouvement ;
+//    · partir de 40-50 % de la charge du jour ;
+//    · monter par paliers de 10-15 % de cette charge ;
+//    · dernier palier à 5-10 % SOUS la charge de travail ;
+//    · reps décroissantes (5 → 3 → 2 → 1) ;
+//    · 2-3 paliers si léger, 4-5 si lourd — au-delà de 5 on fatigue au lieu de préparer ;
+//    · au-delà de 85-90 % de la charge, ce n'est plus un échauffement mais une série de TRAVAIL.
+const _MONTEE_SEUIL_KG = 40;          // en dessous, une montée en 4 paliers n'a aucun sens
+// ⚠️ On réutilise `_movPattern` plutôt que d'écrire une seconde liste d'exercices (R2/R13) :
+// deux listes du même métier finiraient par diverger. Seuls les mouvements POLYARTICULAIRES
+// méritent une montée — un curl ou une extension de triceps, non.
+const _MOV_MONTEE = ['squat','hip-hinge','poussee-horizontale','poussee-verticale',
+                     'tirage-horizontal','tirage-vertical','fente','halterophilie'];
+
+/**
+ * Construit la montée en charge pour une charge de travail donnée.
+ * @param {number} kgTravail — la charge des séries de travail
+ * @param {number} [pas=2.5] — l'arrondi (2,5 kg = disques de 1,25 kg de chaque côté)
+ * @returns {Array<{kg:number,reps:number,type:'É'}>} — vide si la charge est trop légère
+ */
+function _monteeEnCharge(kgTravail, pas){
+  pas = pas || 2.5;
+  const T = +kgTravail || 0;
+  if(!(T >= _MONTEE_SEUIL_KG)) return [];
+  //  léger → 2 paliers · moyen → 3 · lourd → 4. Les écarts restent dans la fourchette 10-15 %.
+  const plan = T < 60  ? [[0.50,5],[0.75,3]]
+             : T < 100 ? [[0.45,5],[0.65,3],[0.85,2]]
+             :           [[0.45,5],[0.60,3],[0.75,2],[0.88,1]];
+  const out = [];
+  for(const [pct,reps] of plan){
+    const kg = Math.round(T*pct/pas)*pas;
+    if(kg <= 0 || kg >= T) continue;                      // jamais au-dessus de la charge du jour
+    if(out.length && kg <= out[out.length-1].kg) continue; // jamais deux paliers identiques
+    out.push({kg:kg, reps:reps, type:'É'});
+  }
+  return out;
+}
+
+/**
+ * La montée déjà présente est-elle acceptable ? Deux conditions, tirées des règles ci-dessus.
+ * ⚠️ Le seul test « le dernier palier est proche de la charge » ne suffit PAS : la séance de
+ * Michel du 10/08 le passait (115 → 130 = 11,5 %) alors qu'elle avait un trou de 23 % entre 70
+ * et 100, et 3 reps à 88 % de la charge. On vérifie donc CHAQUE écart, et les reps du haut.
+ */
+function _monteeSuffisante(echauffements, kgTravail){
+  const T = +kgTravail || 0;
+  const paliers = (echauffements||[]).map(s=>+s.kg||0).filter(k=>k>0).sort((a,b)=>a-b);
+  if(!paliers.length) return false;
+  if(paliers[0] > 0.55*T) return false;                    // on ne démarre pas assez bas
+  const suite = paliers.concat([T]);
+  for(let i=1;i<suite.length;i++){
+    if((suite[i]-suite[i-1])/T > 0.18) return false;        // un écart de plus de 18 % = un trou
+  }
+  // au-delà de 85 % de la charge, plus de 2 reps ce n'est plus un échauffement (fatigue inutile)
+  for(const s of (echauffements||[])){
+    if((+s.kg||0) >= 0.85*T && (+s.reps||0) > 2) return false;
+  }
+  return true;
+}
+
+/**
+ * Complète (ou rectifie) la montée en charge d'une séance proposée par Milo.
+ * ⚠️ L'app le DIT — elle n'ajoute jamais des séries en douce : `ex._montee` est posé, et la
+ * note de l'exercice le mentionne. Sinon la personne voit apparaître des séries que Milo n'a
+ * pas annoncées, et c'est la confiance qui part (R24 : informer sans bloquer).
+ */
+function _completerMonteeEnCharge(sess){
+  try{
+    if(!sess || !Array.isArray(sess.exs)) return sess;
+    sess.exs.forEach(function(ex){
+      const sets = Array.isArray(ex.sets) ? ex.sets : [];
+      const travail = sets.filter(s=>s && s.type!=='É' && s.type!=='W');
+      if(!travail.length) return;
+      const kgT = travail.reduce((m,s)=>Math.max(m, +s.kg||0), 0);
+      if(!(kgT >= _MONTEE_SEUIL_KG)) return;
+      let pat=null; try{ pat=_movPattern(ex.name); }catch(e){}
+      if(_MOV_MONTEE.indexOf(pat) < 0) return;              // mouvement d'isolation → on ne touche pas
+      const ech = sets.filter(s=>s && (s.type==='É'||s.type==='W'));
+      if(_monteeSuffisante(ech, kgT)) return;               // sa montée est bonne → on ne touche pas
+      const montee = _monteeEnCharge(kgT);
+      if(!montee.length) return;
+      ex.sets = montee.concat(travail);
+      ex._montee = true;
+      const dit = '⚡ Montée en charge ajustée par l\'app';
+      ex.note = ex.note ? (String(ex.note).slice(0,90) + ' · ' + dit) : dit;
+    });
+  }catch(e){ console.warn('[montée en charge]', e); }
+  return sess;
+}
+
 function _movPattern(name){ const q=' '+_movNorm(name)+' ';
   // Écarté/fly + penché/arrière/inverse = OISEAU (élévation d'épaule), jamais une poussée pectorale.
   // Les mots-clés simples ne savent pas l'exprimer (« Écarté Haltères Buste Penché » a un mot au

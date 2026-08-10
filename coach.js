@@ -1146,6 +1146,12 @@ function _saveForceProgram(idx,btn){
 // catalogue). Ce qu'on refuse, c'est le « à peu près » : proposer un exercice DIFFÉRENT de
 // celui que Milo a écrit ferait travailler la personne sur autre chose (R29).
 // Il faut au moins 2 exercices pour parler d'une séance.
+// Toute séance qui sort d'ici passe par la montée en charge (log.js) : le calcul est
+// déterministe, il n'a rien à faire dans le modèle (même motif que `_dateAnnoncee`).
+function _montee(sess){
+  try{ return (typeof _completerMonteeEnCharge==='function') ? _completerMonteeEnCharge(sess) : sess; }
+  catch(e){ return sess; }                                  // jamais bloquant
+}
 function _seanceDepuisTexte(reply){
   try{
     if(!reply||typeof _matchExercise!=='function')return null;
@@ -1189,13 +1195,13 @@ function _extractDaySession(reply){
     if(!jsonStr||!/"seance"/i.test(jsonStr)){
       // Pas de bloc caché → on tente de lire la séance dans le texte visible.
       const t=_seanceDepuisTexte(reply);
-      return t?{sess:t, clean:reply, fromText:true}:null;
+      return t?{sess:_montee(t), clean:reply, fromText:true}:null;
     }
     const obj=JSON.parse(jsonStr.trim());
     const sess=obj&&obj.seance;
     if(!sess||!Array.isArray(sess.exs)||!sess.exs.length){
       const t=_seanceDepuisTexte(reply);
-      return t?{sess:t, clean:reply, fromText:true}:null;
+      return t?{sess:_montee(t), clean:reply, fromText:true}:null;
     }
     // ⚠️ LE CODE VÉRIFIE LA COHÉRENCE, ON NE LA DEMANDE PLUS AU MODÈLE (05/08/2026).
     // Le prompt dit « Vérifie avant d'envoyer : même nombre d'exercices, même ordre… » —
@@ -1221,13 +1227,13 @@ function _extractDaySession(reply){
         if(tousRetrouves){
           console.warn('[milo séance] bloc caché incomplet ('+sess.exs.length+' exercices) vs texte ('+txt.exs.length+') → on suit le texte');
           let c2=reply.replace(/```json[\s\S]*?```/i,'').replace(/```[\s\S]*?```/g,'').trim();
-          return {sess:txt, clean:c2||reply, fromText:true, recolle:true};
+          return {sess:_montee(txt), clean:c2||reply, fromText:true, recolle:true};
         }
       }
     }catch(_e){ /* jamais bloquant : au pire on garde le bloc */ }
     let clean=reply.replace(/```json[\s\S]*?```/i,'').replace(/```[\s\S]*?```/g,'').trim();
     if(!clean)clean=reply.replace(/\{[\s\S]*\}/,'').trim();
-    return {sess,clean};
+    return {sess:_montee(sess),clean};
   }catch(e){console.warn('[milo séance] parse',e);return null;}
 }
 // ─── MÉMOIRE DURABLE (profil conversationnel, étape 2 — demande Michel) ────────
@@ -1913,7 +1919,7 @@ COMPRENDRE AVANT DE CONSEILLER (c'est ce qui fait de toi un vrai BRAS DROIT, pas
 - SERS-t'en pour adapter tes conseils DU JOUR : énergie basse / fatigue → allège, propose plus léger ou du repos ; DOULEUR → n'aggrave pas, évite de charger cette zone, propose une alternative et oriente vers un professionnel de santé si besoin (Principe 2, la sécurité d'abord) ; moral bas → soutiens et encourage ; en forme et motivé → pousse-la.
 
 TA MÉTHODE DE COACH (comment un vrai coach physique construit et coache — c'est ton savoir-faire ; applique-le en l'ADAPTANT à CETTE personne, jamais un programme générique) :
-- Bâtir une séance : échauffement 5-10 min OBLIGATOIRE (mobilité + 1-2 séries légères de montée en charge sur le 1er mouvement), un travail d'abdos/gainage régulier (2 à 4×/sem, court), puis 4 à 6 exercices. Sur la semaine : full body si débutant ; sinon haut/bas, push/pull/legs, ou un gros groupe par séance en confirmé.
+- Bâtir une séance : échauffement 5-10 min OBLIGATOIRE (mobilité), puis une VRAIE MONTÉE EN CHARGE sur chaque gros mouvement (squat, développé, soulevé, rowing, tirage, fente) dès que la charge dépasse ~40 kg. ⚠️ NE SAUTE JAMAIS d'une série légère directement à la charge de travail : pars de 40-50 % de la charge du jour et monte par paliers de 10-15 % de cette charge, en RÉDUISANT les reps (5 → 3 → 2 → 1) ; le dernier palier doit être 5-10 % SOUS la charge de travail. Compte 2-3 paliers si c'est léger, 4-5 si c'est lourd — au-delà de 5 tu fatigues au lieu de préparer, et au-delà de 85-90 % de la charge ce n'est plus un échauffement mais une série de travail (donc 1-2 reps maximum). Exemple pour 130 kg : 57,5×5 → 77,5×3 → 97,5×2 → 115×1, puis les séries de travail. Un écart de plus de 20 % entre le dernier palier et la première série de travail, c'est une série non préparée — risque de blessure), un travail d'abdos/gainage régulier (2 à 4×/sem, court), puis 4 à 6 exercices. Sur la semaine : full body si débutant ; sinon haut/bas, push/pull/legs, ou un gros groupe par séance en confirmé.
 - Ordre : polyarticulaires lourds d'abord quand il est frais (squat, développé, soulevé, tractions), isolation ensuite. Jamais 3 grosses poussées lourdes à la suite.
 - Variété : varie les angles (incliné/plat/décliné, prise large/serrée), alterne barre/haltères/machine/poulie. Machines guidées pour débuter (sécurité) et pour finir un muscle. Fais tourner les exercices d'un bloc à l'autre pour éviter la stagnation.
 - ⚠️ APRÈS UN EFFORT MAXIMAL (record, série lourde à 1-3 reps près du max), compte 4 à 7 jours avant de reproposer un maximal sur le MÊME mouvement — le système nerveux met plus longtemps à récupérer que les muscles. Regarde « Dernier RECORD en date » AVANT de proposer du lourd : si c'est récent, propose du volume/technique et dis pourquoi.

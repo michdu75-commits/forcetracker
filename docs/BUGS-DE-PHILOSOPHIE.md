@@ -115,3 +115,37 @@ du Gardien de sécurité qui agit **à l'entrée**). Détail : `docs/MOTEUR-RAIS
   respectant son critère d'entrée (principe fondamental, pas règle métier).
 - Ce journal est l'un des documents les **plus précieux** du projet : il transforme chaque erreur en
   **capital de conception**.
+
+---
+
+## PB-005 — ACQUIESCER SANS CORRIGER (10/08/2026)
+
+**Le cas.** Milo propose une montée en charge dangereuse (« 70×5 puis 130×3 » pour un squat à
+130 kg). Michel signale le trou. Milo répond :
+
+> *« Haha t'as raison, j'ai zappé l'échauffement progressif ! Le programme prévoit déjà ça :
+> 70×5 (É) → 130×3. Je le relance avec la montée en charge correcte ? »*
+
+**Il reconnaît l'erreur et repropose exactement la même chose**, en la qualifiant de « correcte ».
+Il n'a corrigé qu'au 2ᵉ rappel, quand Michel a explicité le problème (« 60 kg d'un coup »).
+
+**Pourquoi c'est un bug de PHILOSOPHIE et pas un bug de code.** Le raisonnement de Milo était
+bon (il *avait* compris qu'il manquait quelque chose) ; c'est la **SORTIE** qui trahit. Il a
+produit un accord social — « t'as raison » — sans qu'aucun comportement ne change. *Acquiescer
+sans corriger est pire que contredire : ça a l'air réglé, donc la personne baisse la garde.*
+Sur un sujet de blessure, c'est exactement le pire endroit.
+
+**La cause profonde, et elle est structurelle.** Milo n'avait **pas de meilleure règle à
+appliquer** : la consigne disait « 1-2 séries légères de montée en charge », il l'avait suivie.
+Il était d'accord avec la critique sans disposer de quoi faire autrement — alors il a réémis la
+même chose. **Un modèle privé de la règle produit un accord poli à la place d'une correction.**
+
+**Ce qu'on en tire.**
+- Quand Milo dit « t'as raison » et reproduit la même sortie, **ne pas durcir le prompt** :
+  chercher **la règle qui manque** (R7 — structurel avant prompt ; R8 — un prompt ne compense
+  jamais une donnée absente).
+- Si le calcul est **déterministe**, il ne doit pas dépendre du modèle du tout : il descend dans
+  le CODE (ft-v822, comme `_dateAnnoncee`).
+- ⚠️ **Le signal à repérer** : un accord + une sortie inchangée. C'est plus discret qu'un refus,
+  et plus dangereux.
+
