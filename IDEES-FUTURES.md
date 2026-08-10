@@ -108,19 +108,39 @@ Et à l'inverse, une figurine **sans** marque ne prouve pas que l'exercice est b
 a pu être nommé sans y penser (ex. `curl-concentre.webp`, qui est pourtant à un bras).
 
 <!-- REVUE-UNILATERAL-DEBUT -->
-### ✔️ REVUE EN COURS — validée par Michel, figurine à l'appui (10/08/2026)
+### ✔️ REVUE TERMINÉE — 57 exercices tranchés par Michel (10/08/2026)
 
-> Méthode : je montre 2 figurines animées, il tranche. **16 faits sur 37.**
-> Les 15 repérées par leur nom de fichier (13 uni / 2 bi) sont déjà acquises et ne sont pas recomptées ici.
+> **Méthode** : 2 figurines **animées** à la fois, il tranche. Aucune supposition : chaque verdict
+> vient d'un dessin regardé, ou de son jugement quand il n'y a pas de figurine.
 
-**UNILATÉRAUX (12)** — Curl Concentré · Curl Araignée (Spider Curl) · Extension Triceps Concentrée Poulie · Élévation Latérale Landmine · Élévation Latérale Inclinée Haltère · Rotation Externe Épaule Poulie · Rotation Externe Épaule Haltère · Rotation Externe Épaule Élastique · Rotation Interne Épaule Élastique · Rotation Interne 90° Poulie · Rotation Externe Épaule Abduction · Renegade Row
+**⭐⭐ LE CRITÈRE, ET C'EST LUI QUI L'A DONNÉ** — sur le Soulevé de Terre Valise, où la charge est
+d'un seul côté mais où les deux jambes poussent : *« bah c'est entre les 2 lol… met uni vu que ça
+doit être fait de l'autre côté aussi. »* **C'est LA définition à coder** : ce qui compte n'est pas
+combien de membres travaillent, c'est **si la série se refait de l'autre côté** — parce que c'est
+exactement ce qui double le volume et ce qui rend la charge notée trompeuse.
 
-**BILATÉRAUX (4)** — Marteau · Curl Zottman · Extension Triceps Arrière (Kickback) · Rowing Landmine (T-Bar)
+#### 🔀 UNILATÉRAUX (48)
 
-⚠️ **Trois de mes paris étaient FAUX** et c'est Michel qui a tranché : le **Marteau** (les deux bras
-montent ensemble, *« même si c'est rare de le faire »*), l'**Extension Triceps Arrière (Kickback)**
-(deux haltères, deux bras) et le **Curl Araignée** (que je croyais à deux bras, il est à un).
-*Une liste faite de tête se serait trompée 3 fois sur 16.*
+Arraché Haltère (Dumbbell Snatch) · Chariot de Puissance — Fentes Arrière · Cossack Squat · Curl Araignée (Spider Curl) · Curl Concentré · Curl Haltères · Développé Couché Unilatéral Kettlebell · Développé Épaules Unilatéral Élastique · Extension Fessiers Arrière (Kickback) · Extension Quadriceps Unilatérale · Extension Quadriceps Unilatérale Machine à Dips · Extension Triceps Concentrée Poulie · Fentes · Fentes Arrière · Fentes Croisées (Curtsy Lunge) · Fentes Kettlebell · Fentes Latérales · Fentes Marchées · Hip Thrust Unilatéral (Poussée de Hanche) · Kickback Machine · Leg Curl Unilatéral Debout · Meadows Row · Montée sur Box (Step-up) · Montée sur Box Haltères · Presse à Cuisses sur le Côté · Renegade Row · Rotation Externe Épaule Abduction · Rotation Externe Épaule Haltère · Rotation Externe Épaule Poulie · Rotation Externe Épaule Élastique · Rotation Interne 90° Poulie · Rotation Interne Épaule Élastique · Rowing Haltère (Tirage Horizontal) · Rowing Unilatéral Élastique · Smith Machine Fentes · Soulevé de Terre Roumain Unilatéral · Soulevé de Terre Valise (Suitcase) · Split Squat TRX (Sangles) · Split Squat Élastique (Fente Statique) · Squat Bulgare · Squat Bulgare Élastique · Squat Pistol · Squat Pistol TRX (Sangles) · Tirage Vertical Alterné Élastique · Élévation Latérale Inclinée Haltère · Élévation Latérale Landmine · Élévations Latérales Unilatérale Poulie · Élévations Mollets Unilatéral
+
+#### ⚖️ BILATÉRAUX — les faux amis (9)
+
+Curl Zottman · Extension Triceps Arrière (Kickback) · Leg Curl Haltère · Marteau · Presse à Cuisses Iso-Latérale · Rowing Landmine (T-Bar) · Seal Row · Tirage Iso-Latéral Hammer Strength · Élévations Mollets Penché (Donkey Calf Raise)
+
+⚠️ **Ceux-là comptent autant que les autres** : les ranger en unilatéral aurait **divisé les charges
+par deux à tort**. Trois venaient de MES paris, corrigés par Michel ou par le dessin — le **Marteau**
+(*« en même temps, même si c'est rare de le faire »*), l'**Extension Triceps Arrière**, et les deux
+machines **« iso-latérales »** (iso-latéral = bras de levier indépendants, PAS un à la fois).
+*Une liste faite de tête se serait trompée sur 4 des 9.*
+
+#### ⚠️ LE CAS MIXTE, à ne pas oublier en codant
+
+**Squat Bulgare** : **une** jambe travaille, mais la personne tient **deux** haltères. Le poids noté
+est donc bien le total des deux — alors que la SÉRIE, elle, se refait de l'autre côté. « Unilatéral »
+ne dit donc pas à lui seul comment lire la charge : il faut aussi savoir **combien d'engins** sont
+tenus. Même chose au Cossack Squat (1 haltère à 2 mains) et à la Montée sur Box.
+→ C'est exactement pourquoi la question de la convention (**poids d'UN haltère ou TOTAL ?**) reste
+à trancher AVANT de coder : voir la section plus haut.
 <!-- REVUE-UNILATERAL-FIN -->
 
 ### ✅ Ceux dont je suis sûr (à confirmer quand même)
