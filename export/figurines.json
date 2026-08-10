@@ -1,0 +1,3394 @@
+[
+ {
+  "fichier": "assault-air-bike.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/assault-air-bike.webp",
+  "ko": 158,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Assault Air Bike"
+  ]
+ },
+ {
+  "fichier": "barre-au-front-triceps.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/barre-au-front-triceps.webp",
+  "ko": 98,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Barre au Front"
+  ]
+ },
+ {
+  "fichier": "battle-rope.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/battle-rope.webp",
+  "ko": 80,
+  "images": 12,
+  "largeur": 440,
+  "hauteur": 440,
+  "exercices": [
+   "Battle Rope"
+  ]
+ },
+ {
+  "fichier": "belt-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/belt-squat.webp",
+  "ko": 145,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Belt Squat",
+   "Belt Squat"
+  ]
+ },
+ {
+  "fichier": "bench-dips-sur-banc.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/bench-dips-sur-banc.webp",
+  "ko": 97,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Bench Dips"
+  ]
+ },
+ {
+  "fichier": "bent-over-row-avec-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/bent-over-row-avec-halteres.webp",
+  "ko": 98,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Haltères Buste Penché"
+  ]
+ },
+ {
+  "fichier": "bird-dog.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/bird-dog.webp",
+  "ko": 130,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 205,
+  "exercices": [
+   "Bird Dog"
+  ]
+ },
+ {
+  "fichier": "box-jump.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/box-jump.webp",
+  "ko": 121,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Box Jump"
+  ]
+ },
+ {
+  "fichier": "burpees.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/burpees.webp",
+  "ko": 167,
+  "images": 42,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Burpees"
+  ]
+ },
+ {
+  "fichier": "chaise-romaine-releve-jambes.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chaise-romaine-releve-jambes.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Chaise Romaine"
+  ]
+ },
+ {
+  "fichier": "chariot-curl-biceps.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-curl-biceps.webp",
+  "ko": 91,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 394,
+  "exercices": [
+   "Chariot de Puissance — Curl Biceps"
+  ]
+ },
+ {
+  "fichier": "chariot-extension-triceps.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-extension-triceps.webp",
+  "ko": 84,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 392,
+  "exercices": [
+   "Chariot de Puissance — Extension Triceps"
+  ]
+ },
+ {
+  "fichier": "chariot-fentes-arriere.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-fentes-arriere.webp",
+  "ko": 119,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 371,
+  "exercices": [
+   "Chariot de Puissance — Fentes Arrière"
+  ]
+ },
+ {
+  "fichier": "chariot-poussee.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-poussee.webp",
+  "ko": 69,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 232,
+  "exercices": [
+   "Chariot de Puissance — Poussée"
+  ]
+ },
+ {
+  "fichier": "chariot-tirage-avance.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-avance.webp",
+  "ko": 163,
+  "images": 42,
+  "largeur": 480,
+  "hauteur": 242,
+  "exercices": [
+   "Chariot de Puissance — Tirage en Avançant"
+  ]
+ },
+ {
+  "fichier": "chariot-tirage-de-cote.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-de-cote.webp",
+  "ko": 88,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 213,
+  "exercices": [
+   "Chariot de Puissance — Tirage de Côté"
+  ]
+ },
+ {
+  "fichier": "chariot-tirage-dos.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-dos.webp",
+  "ko": 104,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 406,
+  "exercices": [
+   "Chariot de Puissance — Tirage Dos"
+  ]
+ },
+ {
+  "fichier": "chariot-tirage-epaules.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-epaules.webp",
+  "ko": 95,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 378,
+  "exercices": [
+   "Chariot de Puissance — Tirage Épaules"
+  ]
+ },
+ {
+  "fichier": "chariot-tirage-inverse-jambes.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-inverse-jambes.webp",
+  "ko": 71,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 265,
+  "exercices": [
+   "Chariot de Puissance — Tirage Inversé Jambes"
+  ]
+ },
+ {
+  "fichier": "chest-press-machine-declinee.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chest-press-machine-declinee.webp",
+  "ko": 122,
+  "images": 12,
+  "largeur": 360,
+  "hauteur": 360,
+  "exercices": [
+   "Chest Press Machine Déclinée"
+  ]
+ },
+ {
+  "fichier": "chest-press-poulie-assis.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chest-press-poulie-assis.webp",
+  "ko": 84,
+  "images": 12,
+  "largeur": 360,
+  "hauteur": 360,
+  "exercices": [
+   "Chest Press Poulie Assis"
+  ]
+ },
+ {
+  "fichier": "chest-press-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/chest-press-trx-sangles.webp",
+  "ko": 102,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Chest Press TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "cossack-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/cossack-squat.webp",
+  "ko": 197,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Cossack Squat",
+   "Cossack Squat"
+  ]
+ },
+ {
+  "fichier": "croix-de-fer-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/croix-de-fer-halteres.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Croix de Fer Haltères"
+  ]
+ },
+ {
+  "fichier": "crunch-au-sol.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/crunch-au-sol.webp",
+  "ko": 101,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Crunch"
+  ]
+ },
+ {
+  "fichier": "crunch-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/crunch-machine.webp",
+  "ko": 140,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Crunch Machine"
+  ]
+ },
+ {
+  "fichier": "crunch-poulie-haute.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/crunch-poulie-haute.webp",
+  "ko": 90,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Crunch Poulie"
+  ]
+ },
+ {
+  "fichier": "curl-araignee-spider.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-araignee-spider.webp",
+  "ko": 98,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Curl Araignée (Spider Curl)"
+  ]
+ },
+ {
+  "fichier": "curl-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-barre.webp",
+  "ko": 101,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Curl Barre"
+  ]
+ },
+ {
+  "fichier": "curl-concentre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-concentre.webp",
+  "ko": 116,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Curl Concentré"
+  ]
+ },
+ {
+  "fichier": "curl-haltere-incline.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-haltere-incline.webp",
+  "ko": 128,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Curl Incliné"
+  ]
+ },
+ {
+  "fichier": "curl-halteres-alterne.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-halteres-alterne.webp",
+  "ko": 74,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Curl Haltères"
+  ]
+ },
+ {
+  "fichier": "curl-marteau.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-marteau.webp",
+  "ko": 77,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Marteau"
+  ]
+ },
+ {
+  "fichier": "curl-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-poulie.webp",
+  "ko": 99,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Curl Poulie"
+  ]
+ },
+ {
+  "fichier": "curl-pupitre-barre-ez-larry-scott.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-pupitre-barre-ez-larry-scott.webp",
+  "ko": 113,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Curl Pupitre Barre EZ (Larry Scott)"
+  ]
+ },
+ {
+  "fichier": "curl-pupitre-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-pupitre-machine.webp",
+  "ko": 135,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Curl Pupitre Machine"
+  ]
+ },
+ {
+  "fichier": "curl-zottman.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-zottman.webp",
+  "ko": 168,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Curl Zottman"
+  ]
+ },
+ {
+  "fichier": "deadlift-sumo-halteres-exercice-jambes-fessiers.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.webp",
+  "ko": 78,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Sumo Haltères"
+  ]
+ },
+ {
+  "fichier": "developpe-arnold-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-arnold-exercice-musculation.webp",
+  "ko": 91,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Arnold (Arnold Press)"
+  ]
+ },
+ {
+  "fichier": "developpe-couche-au-sol-floor-press.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-au-sol-floor-press.webp",
+  "ko": 90,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Couché au Sol (Floor Press)"
+  ]
+ },
+ {
+  "fichier": "developpe-couche-avec-chaines.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-avec-chaines.webp",
+  "ko": 124,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Couché avec Chaînes"
+  ]
+ },
+ {
+  "fichier": "developpe-couche-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-elastique.webp",
+  "ko": 135,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 440,
+  "exercices": [
+   "Développé Couché Élastique"
+  ]
+ },
+ {
+  "fichier": "developpe-couche-halteres-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-halteres-exercice-musculation.webp",
+  "ko": 111,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Couché Haltères"
+  ]
+ },
+ {
+  "fichier": "developpe-couche-larsen.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-larsen.webp",
+  "ko": 99,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 335,
+  "exercices": [
+   "Développé Couché Larsen (Larsen Press)"
+  ]
+ },
+ {
+  "fichier": "developpe-couche-smith-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-smith-machine.webp",
+  "ko": 105,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Smith Machine Développé Couché"
+  ]
+ },
+ {
+  "fichier": "developpe-couche-unilateral-kettlebell.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-unilateral-kettlebell.webp",
+  "ko": 90,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Couché Unilatéral Kettlebell"
+  ]
+ },
+ {
+  "fichier": "developpe-couche.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche.webp",
+  "ko": 118,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Couché"
+  ]
+ },
+ {
+  "fichier": "developpe-decline-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-decline-barre.webp",
+  "ko": 123,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Décliné"
+  ]
+ },
+ {
+  "fichier": "developpe-decline-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-decline-elastique.webp",
+  "ko": 91,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Décliné Élastique"
+  ]
+ },
+ {
+  "fichier": "developpe-decline-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-decline-halteres.webp",
+  "ko": 91,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Décliné Haltères"
+  ]
+ },
+ {
+  "fichier": "developpe-epaule-avec-kettlebell.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaule-avec-kettlebell.webp",
+  "ko": 94,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Épaules Kettlebell"
+  ]
+ },
+ {
+  "fichier": "developpe-epaule-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaule-halteres.webp",
+  "ko": 97,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Militaire Haltères"
+  ]
+ },
+ {
+  "fichier": "developpe-epaules-assis-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-assis-elastique.webp",
+  "ko": 91,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Épaules Assis Élastique"
+  ]
+ },
+ {
+  "fichier": "developpe-epaules-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-elastique.webp",
+  "ko": 88,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Épaules Élastique"
+  ]
+ },
+ {
+  "fichier": "developpe-epaules-smith-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-smith-machine.webp",
+  "ko": 95,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Smith Machine Développé Militaire"
+  ]
+ },
+ {
+  "fichier": "developpe-epaules-unilateral-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-unilateral-elastique.webp",
+  "ko": 72,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Épaules Unilatéral Élastique"
+  ]
+ },
+ {
+  "fichier": "developpe-halteres-assis.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-halteres-assis.webp",
+  "ko": 15,
+  "images": 2,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Haltères Assis"
+  ]
+ },
+ {
+  "fichier": "developpe-incline-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-barre.webp",
+  "ko": 118,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Incliné"
+  ]
+ },
+ {
+  "fichier": "developpe-incline-halteres-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-halteres-exercice-musculation.webp",
+  "ko": 85,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Incliné Haltères"
+  ]
+ },
+ {
+  "fichier": "developpe-incline-machine-convergente-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-machine-convergente-exercice-musculation.webp",
+  "ko": 133,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Chest Press Machine Inclinée"
+  ]
+ },
+ {
+  "fichier": "developpe-incline-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-poulie.webp",
+  "ko": 99,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 453,
+  "exercices": [
+   "Développé Incliné Poulie"
+  ]
+ },
+ {
+  "fichier": "developpe-landmine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-landmine.webp",
+  "ko": 71,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 358,
+  "exercices": [
+   "Développé Landmine (Épaules)"
+  ]
+ },
+ {
+  "fichier": "developpe-machine-assis-pectoraux.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-machine-assis-pectoraux.webp",
+  "ko": 130,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Chest Press Machine Horizontale"
+  ]
+ },
+ {
+  "fichier": "developpe-militaire-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-militaire-exercice-musculation.webp",
+  "ko": 87,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Militaire"
+  ]
+ },
+ {
+  "fichier": "developpe-nuque-barre-guidee.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-nuque-barre-guidee.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Nuque"
+  ]
+ },
+ {
+  "fichier": "dips-assis-machine-avec-poids.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-assis-machine-avec-poids.webp",
+  "ko": 137,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Dips Assis Machine (Seated Dip)"
+  ]
+ },
+ {
+  "fichier": "dips-assiste-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-assiste-machine.webp",
+  "ko": 78,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 451,
+  "exercices": [
+   "Dips Machine Assistée"
+  ]
+ },
+ {
+  "fichier": "dips-aux-anneaux.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-aux-anneaux.webp",
+  "ko": 56,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Dips aux Anneaux"
+  ]
+ },
+ {
+  "fichier": "dips-entre-deux-bancs.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-entre-deux-bancs.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 395,
+  "exercices": [
+   "Dips entre Deux Bancs"
+  ]
+ },
+ {
+  "fichier": "dips-pectoraux.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-pectoraux.webp",
+  "ko": 82,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Dips"
+  ]
+ },
+ {
+  "fichier": "dips-triceps-paralleles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-triceps-paralleles.webp",
+  "ko": 80,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Dips Triceps (Buste Droit)"
+  ]
+ },
+ {
+  "fichier": "dragon-flag.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/dragon-flag.webp",
+  "ko": 147,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 462,
+  "exercices": [
+   "Drapeau (Dragon Flag)"
+  ]
+ },
+ {
+  "fichier": "ecarte-arriere-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-arriere-elastique.webp",
+  "ko": 69,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Écarté Arrière Élastique"
+  ]
+ },
+ {
+  "fichier": "ecarte-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-elastique.webp",
+  "ko": 75,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Écarté Élastique"
+  ]
+ },
+ {
+  "fichier": "ecarte-poulie-haute-a-genoux.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-poulie-haute-a-genoux.webp",
+  "ko": 96,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Écarté Poulie Haute à Genoux"
+  ]
+ },
+ {
+  "fichier": "ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp",
+  "ko": 90,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Écarté Poulie"
+  ]
+ },
+ {
+  "fichier": "ecarte-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-trx-sangles.webp",
+  "ko": 90,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Écarté TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "ecartes-decline-avec-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/ecartes-decline-avec-halteres.webp",
+  "ko": 91,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Écarté Décliné Haltères"
+  ]
+ },
+ {
+  "fichier": "ecartes-incline-avec-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/ecartes-incline-avec-halteres.webp",
+  "ko": 97,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Écarté Incliné Haltères"
+  ]
+ },
+ {
+  "fichier": "ecartes-poulie-vis-a-vis.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/ecartes-poulie-vis-a-vis.webp",
+  "ko": 108,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Croisé Poulie (Cable Crossover)"
+  ]
+ },
+ {
+  "fichier": "elevation-en-y-a-la-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-en-y-a-la-poulie.webp",
+  "ko": 127,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Y Raise / W Raise"
+  ]
+ },
+ {
+  "fichier": "elevation-frontale-allongee-a-la-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-frontale-allongee-a-la-barre.webp",
+  "ko": 104,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévation Frontale Allongée Barre"
+  ]
+ },
+ {
+  "fichier": "elevation-frontale-banc-incline.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-frontale-banc-incline.webp",
+  "ko": 84,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévation Frontale Banc Incliné"
+  ]
+ },
+ {
+  "fichier": "elevation-frontale-poulie-basse.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-frontale-poulie-basse.webp",
+  "ko": 108,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 383,
+  "exercices": [
+   "Élévations Frontales Câble"
+  ]
+ },
+ {
+  "fichier": "elevation-laterale-a-la-poulie-en-inclinaison.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-a-la-poulie-en-inclinaison.webp",
+  "ko": 101,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévation Latérale Poulie Inclinée"
+  ]
+ },
+ {
+  "fichier": "elevation-laterale-incline-haltere.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-incline-haltere.webp",
+  "ko": 68,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 378,
+  "exercices": [
+   "Élévation Latérale Inclinée Haltère"
+  ]
+ },
+ {
+  "fichier": "elevation-laterale-landmine-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-landmine-exercice-musculation.webp",
+  "ko": 79,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévation Latérale Landmine"
+  ]
+ },
+ {
+  "fichier": "elevation-laterale-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-machine.webp",
+  "ko": 138,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévations Latérales Machine"
+  ]
+ },
+ {
+  "fichier": "elevation-laterales-avec-kettlebell.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterales-avec-kettlebell.webp",
+  "ko": 89,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévations Latérales Kettlebell"
+  ]
+ },
+ {
+  "fichier": "elevations-frontales-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-frontales-exercice-musculation.webp",
+  "ko": 82,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévations Frontales"
+  ]
+ },
+ {
+  "fichier": "elevations-laterales-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-laterales-exercice-musculation.webp",
+  "ko": 85,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévations Latérales (Lateral Raise)"
+  ]
+ },
+ {
+  "fichier": "elevations-laterales-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-laterales-poulie.webp",
+  "ko": 116,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévations Latérales Câble"
+  ]
+ },
+ {
+  "fichier": "elevations-laterales-unilaterale-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-laterales-unilaterale-poulie.webp",
+  "ko": 90,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévations Latérales Unilatérale Poulie"
+  ]
+ },
+ {
+  "fichier": "elevations-mollets-assis-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-assis-barre.webp",
+  "ko": 96,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 392,
+  "exercices": [
+   "Élévations Mollets Assis"
+  ]
+ },
+ {
+  "fichier": "elevations-mollets-assis-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-assis-machine.webp",
+  "ko": 89,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 429,
+  "exercices": [
+   "Mollets Machine Assise"
+  ]
+ },
+ {
+  "fichier": "elevations-mollets-debout-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-debout-barre.webp",
+  "ko": 85,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Élévations Mollets Debout"
+  ]
+ },
+ {
+  "fichier": "elevations-mollets-debout-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-debout-machine.webp",
+  "ko": 97,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Mollets Machine Debout"
+  ]
+ },
+ {
+  "fichier": "elevations-mollets-donkey.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-donkey.webp",
+  "ko": 133,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 394,
+  "exercices": [
+   "Élévations Mollets Penché (Donkey Calf Raise)"
+  ]
+ },
+ {
+  "fichier": "elevations-mollets-presse-45.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-presse-45.webp",
+  "ko": 109,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Presse Mollets (Leg Press)"
+  ]
+ },
+ {
+  "fichier": "epaule-jete-halterophilie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/epaule-jete-halterophilie.webp",
+  "ko": 129,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Clean & Jerk"
+  ]
+ },
+ {
+  "fichier": "ergometre-de-ski.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/ergometre-de-ski.webp",
+  "ko": 160,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Ergomètre de Ski (Ski Erg)"
+  ]
+ },
+ {
+  "fichier": "exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp",
+  "ko": 71,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rotation Interne Épaule Élastique"
+  ]
+ },
+ {
+  "fichier": "extension-lombaire-a-la-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-lombaire-a-la-machine.webp",
+  "ko": 123,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Hyperextension Machine"
+  ]
+ },
+ {
+  "fichier": "extension-lombaire-au-banc-45.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-lombaire-au-banc-45.webp",
+  "ko": 108,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Hyperextension (Back Extension)"
+  ]
+ },
+ {
+  "fichier": "extension-lombaire-ballon.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-lombaire-ballon.webp",
+  "ko": 82,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 289,
+  "exercices": [
+   "Extension Lombaire sur Ballon"
+  ]
+ },
+ {
+  "fichier": "extension-nuque-haltere-assis.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-nuque-haltere-assis.webp",
+  "ko": 79,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Nuque Haltère"
+  ]
+ },
+ {
+  "fichier": "extension-nuque-poulie-haute-corde.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-nuque-poulie-haute-corde.webp",
+  "ko": 76,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 394,
+  "exercices": [
+   "Extension Nuque Poulie Haute"
+  ]
+ },
+ {
+  "fichier": "extension-quadriceps-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-quadriceps-elastique.webp",
+  "ko": 86,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Quadriceps Élastique"
+  ]
+ },
+ {
+  "fichier": "extension-quadriceps-unilaterale-machine-dips.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-quadriceps-unilaterale-machine-dips.webp",
+  "ko": 100,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Quadriceps Unilatérale Machine à Dips"
+  ]
+ },
+ {
+  "fichier": "extension-triceps-banc-incline-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-banc-incline-halteres.webp",
+  "ko": 81,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Triceps Banc Incliné Haltères"
+  ]
+ },
+ {
+  "fichier": "extension-triceps-concentree-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-concentree-poulie.webp",
+  "ko": 109,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 430,
+  "exercices": [
+   "Extension Triceps Concentrée Poulie"
+  ]
+ },
+ {
+  "fichier": "extension-triceps-couche-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-couche-halteres.webp",
+  "ko": 116,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Triceps Couché Haltères"
+  ]
+ },
+ {
+  "fichier": "extension-triceps-decline-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-decline-halteres.webp",
+  "ko": 99,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Triceps Décliné Haltères"
+  ]
+ },
+ {
+  "fichier": "extension-triceps-nuque-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-nuque-elastique.webp",
+  "ko": 78,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Triceps Nuque Élastique"
+  ]
+ },
+ {
+  "fichier": "extension-triceps-trx-allonge.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-trx-allonge.webp",
+  "ko": 71,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Triceps Allongée TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "extension-triceps-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-trx-sangles.webp",
+  "ko": 88,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Triceps TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "extension-triceps-verticale-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-verticale-elastique.webp",
+  "ko": 76,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Triceps Verticale Élastique"
+  ]
+ },
+ {
+  "fichier": "extension-triceps-verticale-haltere.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-verticale-haltere.webp",
+  "ko": 84,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Triceps"
+  ]
+ },
+ {
+  "fichier": "face-pull-couche-a-la-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/face-pull-couche-a-la-poulie.webp",
+  "ko": 104,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Face Pull Couché Poulie"
+  ]
+ },
+ {
+  "fichier": "face-pull.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/face-pull.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Visage (Face Pull)"
+  ]
+ },
+ {
+  "fichier": "fente-avant-barre-femme.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/fente-avant-barre-femme.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Fentes",
+   "Fentes"
+  ]
+ },
+ {
+  "fichier": "fentes-avant-kettlebell.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/fentes-avant-kettlebell.webp",
+  "ko": 88,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Fentes Kettlebell",
+   "Fentes Kettlebell"
+  ]
+ },
+ {
+  "fichier": "fentes-croisees-curtsy-lunge.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/fentes-croisees-curtsy-lunge.webp",
+  "ko": 70,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Fentes Croisées (Curtsy Lunge)"
+  ]
+ },
+ {
+  "fichier": "fentes-marchees-avec-sandbag.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/fentes-marchees-avec-sandbag.webp",
+  "ko": 176,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Fentes Marchées",
+   "Fentes Marchées"
+  ]
+ },
+ {
+  "fichier": "front-squat-avec-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/front-squat-avec-halteres.webp",
+  "ko": 84,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": []
+ },
+ {
+  "fichier": "glute-bridge.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/glute-bridge.webp",
+  "ko": 16,
+  "images": 1,
+  "largeur": 480,
+  "hauteur": 161,
+  "exercices": [
+   "Pont Fessier (Glute Bridge)"
+  ]
+ },
+ {
+  "fichier": "glute-ham-developer-ghd.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/glute-ham-developer-ghd.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Glute Ham Raise (GHD)"
+  ]
+ },
+ {
+  "fichier": "good-morning-exercice.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/good-morning-exercice.webp",
+  "ko": 92,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Inclinaison Lombaire (Good Morning)",
+   "Inclinaison Lombaire (Good Morning)"
+  ]
+ },
+ {
+  "fichier": "grimpeur-mountain-climber.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/grimpeur-mountain-climber.webp",
+  "ko": 158,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Grimpeur (Mountain Climber)"
+  ]
+ },
+ {
+  "fichier": "hack-squat-assis.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hack-squat-assis.webp",
+  "ko": 128,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 409,
+  "exercices": [
+   "Hack Squat Assis"
+  ]
+ },
+ {
+  "fichier": "hack-squat-inverse.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hack-squat-inverse.webp",
+  "ko": 123,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Hack Squat Inversé",
+   "Hack Squat Inversé"
+  ]
+ },
+ {
+  "fichier": "hack-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hack-squat.webp",
+  "ko": 107,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Hack (Hack Squat)",
+   "Squat Hack (Hack Squat)"
+  ]
+ },
+ {
+  "fichier": "handstand-push-up-suspendu.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/handstand-push-up-suspendu.webp",
+  "ko": 62,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Handstand Push-up Suspendu (Sangles)"
+  ]
+ },
+ {
+  "fichier": "handstand-push-up.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/handstand-push-up.webp",
+  "ko": 61,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Handstand Push-up (ATR)"
+  ]
+ },
+ {
+  "fichier": "hex-press-a-la-smith-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hex-press-a-la-smith-machine.webp",
+  "ko": 102,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Hex Press Smith Machine"
+  ]
+ },
+ {
+  "fichier": "hip-thrust-a-la-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-a-la-machine.webp",
+  "ko": 142,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 348,
+  "exercices": [
+   "Hip Thrust Machine (Poussée de Hanche)"
+  ]
+ },
+ {
+  "fichier": "hip-thrust-barre-unilateral.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-barre-unilateral.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Hip Thrust Unilatéral (Poussée de Hanche)"
+  ]
+ },
+ {
+  "fichier": "hip-thrust-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-barre.webp",
+  "ko": 110,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Hip Thrust Barre (Poussée de Hanche)"
+  ]
+ },
+ {
+  "fichier": "hip-thrust-haltere.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-haltere.webp",
+  "ko": 23,
+  "images": 2,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Hip Thrust Haltère (Poussée de Hanche)"
+  ]
+ },
+ {
+  "fichier": "hollow-hold.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hollow-hold.webp",
+  "ko": 40,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 211,
+  "exercices": [
+   "Hollow Body"
+  ]
+ },
+ {
+  "fichier": "homme-faisant-un-squat-avec-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/homme-faisant-un-squat-avec-barre.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat à la Barre",
+   "Squat à la Barre"
+  ]
+ },
+ {
+  "fichier": "hyght-dumbell-fly.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hyght-dumbell-fly.webp",
+  "ko": 107,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Écarté Hyght (Hyght Fly)"
+  ]
+ },
+ {
+  "fichier": "hyperextension-inverse-reverse-hyper.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/hyperextension-inverse-reverse-hyper.webp",
+  "ko": 124,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Hyperextension Inverse (Reverse Hyper)"
+  ]
+ },
+ {
+  "fichier": "jefferson-curl.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/jefferson-curl.webp",
+  "ko": 16,
+  "images": 2,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Jefferson Curl"
+  ]
+ },
+ {
+  "fichier": "jefferson-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/jefferson-squat.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Jefferson Squat"
+  ]
+ },
+ {
+  "fichier": "jumping-jack.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/jumping-jack.webp",
+  "ko": 80,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Jumping Jack"
+  ]
+ },
+ {
+  "fichier": "kettlebell-back-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-back-squat.webp",
+  "ko": 77,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Kettlebell",
+   "Squat Kettlebell"
+  ]
+ },
+ {
+  "fichier": "kettlebell-swing.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-swing.webp",
+  "ko": 66,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Kettlebell Swing",
+   "Kettlebell Swing"
+  ]
+ },
+ {
+  "fichier": "kickback-cable-fessiers.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/kickback-cable-fessiers.webp",
+  "ko": 12,
+  "images": 1,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Fessiers Arrière (Kickback)"
+  ]
+ },
+ {
+  "fichier": "leg-abduction-machine-v2.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-abduction-machine-v2.webp",
+  "ko": 159,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Abduction Cuisses (Leg Abduction)"
+  ]
+ },
+ {
+  "fichier": "leg-adduction-machine-v2.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-adduction-machine-v2.webp",
+  "ko": 85,
+  "images": 12,
+  "largeur": 360,
+  "hauteur": 360,
+  "exercices": [
+   "Adduction Cuisses (Leg Adduction)"
+  ]
+ },
+ {
+  "fichier": "leg-curl-allonge.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-allonge.webp",
+  "ko": 109,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Leg Curl Couché Machine"
+  ]
+ },
+ {
+  "fichier": "leg-curl-assis-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-assis-machine.webp",
+  "ko": 143,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Leg Curl Assis Machine"
+  ]
+ },
+ {
+  "fichier": "leg-curl-avec-elastique-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-avec-elastique-musculation.webp",
+  "ko": 87,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Leg Curl Élastique"
+  ]
+ },
+ {
+  "fichier": "leg-curl-decline-haltere.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-decline-haltere.webp",
+  "ko": 85,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Leg Curl Haltère"
+  ]
+ },
+ {
+  "fichier": "leg-curl-inverse-machine-tirage-vertical.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-inverse-machine-tirage-vertical.webp",
+  "ko": 120,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Leg Curl Inversé"
+  ]
+ },
+ {
+  "fichier": "leg-curl-unilateral-debout-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-unilateral-debout-machine.webp",
+  "ko": 121,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Leg Curl Unilatéral Debout"
+  ]
+ },
+ {
+  "fichier": "leg-extension-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-extension-exercice-musculation.webp",
+  "ko": 109,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Quadriceps (Leg Extension)"
+  ]
+ },
+ {
+  "fichier": "leg-extension-iso-lateral-unilateral-hammer-strenght.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.webp",
+  "ko": 131,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Quadriceps Unilatérale"
+  ]
+ },
+ {
+  "fichier": "marche-de-lours-bear-crawl.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/marche-de-lours-bear-crawl.webp",
+  "ko": 104,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 201,
+  "exercices": [
+   "Marche de l'Ours (Bear Crawl)"
+  ]
+ },
+ {
+  "fichier": "marche-du-fermier-avec-kettlebells.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/marche-du-fermier-avec-kettlebells.webp",
+  "ko": 90,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Farmer's Walk"
+  ]
+ },
+ {
+  "fichier": "montee-sur-box-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-barre.webp",
+  "ko": 84,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 479,
+  "exercices": [
+   "Montée sur Box (Step-up)",
+   "Montée sur Box (Step-up)"
+  ]
+ },
+ {
+  "fichier": "montee-sur-box-halteres-classique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-halteres-classique.webp",
+  "ko": 55,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Montée sur Box Haltères",
+   "Montée sur Box Haltères"
+  ]
+ },
+ {
+  "fichier": "montees-banc-lateral-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/montees-banc-lateral-halteres.webp",
+  "ko": 77,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": []
+ },
+ {
+  "fichier": "muscle-snatch-halterophilie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/muscle-snatch-halterophilie.webp",
+  "ko": 163,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 455,
+  "exercices": [
+   "Arraché Debout (Muscle Snatch)"
+  ]
+ },
+ {
+  "fichier": "muscle-up.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/muscle-up.webp",
+  "ko": 72,
+  "images": 19,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Muscle-up"
+  ]
+ },
+ {
+  "fichier": "musculation-pull-over-assis-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/musculation-pull-over-assis-machine.webp",
+  "ko": 137,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pullover Machine"
+  ]
+ },
+ {
+  "fichier": "oiseau-a-la-poulie-a-45.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/oiseau-a-la-poulie-a-45.webp",
+  "ko": 101,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Oiseau Poulie 45°"
+  ]
+ },
+ {
+  "fichier": "oiseau-assis-sur-banc.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/oiseau-assis-sur-banc.webp",
+  "ko": 96,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Oiseau"
+  ]
+ },
+ {
+  "fichier": "oiseau-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/oiseau-elastique.webp",
+  "ko": 112,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Oiseau Élastique"
+  ]
+ },
+ {
+  "fichier": "oiseau-inverse-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/oiseau-inverse-trx-sangles.webp",
+  "ko": 89,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Oiseau Inversé TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "overhead-shrug.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/overhead-shrug.webp",
+  "ko": 80,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Haussements d'Épaules Overhead"
+  ]
+ },
+ {
+  "fichier": "overhead-squat-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat-elastique.webp",
+  "ko": 85,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Overhead Squat Élastique"
+  ]
+ },
+ {
+  "fichier": "overhead-squat-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat-halteres.webp",
+  "ko": 74,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 467,
+  "exercices": [
+   "Overhead Squat Haltères"
+  ]
+ },
+ {
+  "fichier": "overhead-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat.webp",
+  "ko": 97,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Overhead Squat",
+   "Overhead Squat"
+  ]
+ },
+ {
+  "fichier": "passage-depaule-avec-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/passage-depaule-avec-elastique.webp",
+  "ko": 259,
+  "images": 48,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Passage d'Épaule Élastique"
+  ]
+ },
+ {
+  "fichier": "pec-deck-butterfly-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pec-deck-butterfly-exercice-musculation.webp",
+  "ko": 115,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pec Deck"
+  ]
+ },
+ {
+  "fichier": "pec-deck-inverse.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pec-deck-inverse.webp",
+  "ko": 112,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Machine Oiseau"
+  ]
+ },
+ {
+  "fichier": "pendulum-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pendulum-squat.webp",
+  "ko": 110,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 308,
+  "exercices": [
+   "Pendulum Squat",
+   "Pendulum Squat"
+  ]
+ },
+ {
+  "fichier": "pin-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pin-squat.webp",
+  "ko": 93,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pin Squat",
+   "Pin Squat"
+  ]
+ },
+ {
+  "fichier": "planche-gainage.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/planche-gainage.webp",
+  "ko": 76,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 176,
+  "exercices": [
+   "Gainage"
+  ]
+ },
+ {
+  "fichier": "planche-inversee.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/planche-inversee.webp",
+  "ko": 44,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 272,
+  "exercices": [
+   "Planche Inversée"
+  ]
+ },
+ {
+  "fichier": "planche-laterale.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/planche-laterale.webp",
+  "ko": 36,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 237,
+  "exercices": [
+   "Planche Latérale (Side Plank)"
+  ]
+ },
+ {
+  "fichier": "pompe-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pompe-musculation.webp",
+  "ko": 91,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pompes (Push-up)"
+  ]
+ },
+ {
+  "fichier": "pompes-deficit.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pompes-deficit.webp",
+  "ko": 142,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pompes Déficit (Deficit Push-up)"
+  ]
+ },
+ {
+  "fichier": "pompes-diamant.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pompes-diamant.webp",
+  "ko": 91,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pompes Diamant"
+  ]
+ },
+ {
+  "fichier": "pompes-inclinees-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pompes-inclinees-trx-sangles.webp",
+  "ko": 58,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pompes Inclinées TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "pompes-lestees.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pompes-lestees.webp",
+  "ko": 88,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pompes Lestées"
+  ]
+ },
+ {
+  "fichier": "presse-a-cuisse-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisse-exercice-musculation.webp",
+  "ko": 119,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Press Jambes 45°",
+   "Press Jambes 45°"
+  ]
+ },
+ {
+  "fichier": "presse-a-cuisse-sur-le-cote.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisse-sur-le-cote.webp",
+  "ko": 142,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 334,
+  "exercices": [
+   "Presse à Cuisses sur le Côté"
+  ]
+ },
+ {
+  "fichier": "presse-a-cuisses-inclinee.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-inclinee.webp",
+  "ko": 128,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 367,
+  "exercices": [
+   "Press Jambes Inclinée",
+   "Press Jambes Inclinée"
+  ]
+ },
+ {
+  "fichier": "presse-a-cuisses-verticale.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-verticale.webp",
+  "ko": 116,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Press Jambes Verticale",
+   "Press Jambes Verticale"
+  ]
+ },
+ {
+  "fichier": "presse-cuisse-iso-laterale-hammer-stenght.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-cuisse-iso-laterale-hammer-stenght.webp",
+  "ko": 316,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 373,
+  "exercices": [
+   "Presse à Cuisses Iso-Latérale",
+   "Presse à Cuisses Iso-Latérale"
+  ]
+ },
+ {
+  "fichier": "presse-epaule-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-epaule-exercice-musculation.webp",
+  "ko": 154,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Développé Épaules Machine"
+  ]
+ },
+ {
+  "fichier": "pull-over-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pull-over-barre.webp",
+  "ko": 86,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 327,
+  "exercices": [
+   "Pull-over Barre"
+  ]
+ },
+ {
+  "fichier": "pull-over-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pull-over-poulie.webp",
+  "ko": 97,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pull-over Poulie"
+  ]
+ },
+ {
+  "fichier": "pullover-haltere.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/pullover-haltere.webp",
+  "ko": 99,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Pull-over Haltère"
+  ]
+ },
+ {
+  "fichier": "rack-pull.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rack-pull.webp",
+  "ko": 74,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage en Rack (Rack Pull)",
+   "Tirage en Rack (Rack Pull)"
+  ]
+ },
+ {
+  "fichier": "reeves-deadlift.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/reeves-deadlift.webp",
+  "ko": 102,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Reeves Deadlift"
+  ]
+ },
+ {
+  "fichier": "releve-de-jambes-suspendu.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/releve-de-jambes-suspendu.webp",
+  "ko": 108,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Relevé de Jambes"
+  ]
+ },
+ {
+  "fichier": "renegade-row.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/renegade-row.webp",
+  "ko": 129,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 371,
+  "exercices": [
+   "Renegade Row"
+  ]
+ },
+ {
+  "fichier": "rocky-pull-up.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rocky-pull-up.webp",
+  "ko": 70,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rocky Pull-up"
+  ]
+ },
+ {
+  "fichier": "rotation-externe-de-epaule-en-abduction.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-de-epaule-en-abduction.webp",
+  "ko": 78,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rotation Externe Épaule Abduction"
+  ]
+ },
+ {
+  "fichier": "rotation-externe-epaule-exercice-renforcement-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp",
+  "ko": 72,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rotation Externe Épaule Élastique"
+  ]
+ },
+ {
+  "fichier": "rotation-externe-epaule-haltere.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-epaule-haltere.webp",
+  "ko": 89,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 315,
+  "exercices": [
+   "Rotation Externe Épaule Haltère"
+  ]
+ },
+ {
+  "fichier": "rotation-externe-epaule-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-epaule-poulie.webp",
+  "ko": 66,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rotation Externe Épaule Poulie"
+  ]
+ },
+ {
+  "fichier": "rotation-interne-a-90-a-la-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-interne-a-90-a-la-poulie.webp",
+  "ko": 126,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rotation Interne 90° Poulie"
+  ]
+ },
+ {
+  "fichier": "rotation-russe.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-russe.webp",
+  "ko": 178,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 284,
+  "exercices": [
+   "Rotation Russe (Russian Twist)"
+  ]
+ },
+ {
+  "fichier": "roue-abdominale.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/roue-abdominale.webp",
+  "ko": 60,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 241,
+  "exercices": [
+   "Roue Abdominale (Ab Wheel)"
+  ]
+ },
+ {
+  "fichier": "rowing-assis-machine-hammer-strenght.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-assis-machine-hammer-strenght.webp",
+  "ko": 113,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Hammer Strength"
+  ]
+ },
+ {
+  "fichier": "rowing-assis-machine-prise-pronation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-assis-machine-prise-pronation.webp",
+  "ko": 115,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Machine (Tirage Horizontal)"
+  ]
+ },
+ {
+  "fichier": "rowing-barre-t-landmine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-barre-t-landmine.webp",
+  "ko": 71,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Landmine (T-Bar)"
+  ]
+ },
+ {
+  "fichier": "rowing-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-barre.webp",
+  "ko": 109,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Barre (Tirage Horizontal)"
+  ]
+ },
+ {
+  "fichier": "rowing-buste-penche-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-buste-penche-elastique.webp",
+  "ko": 101,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Buste Penché Élastique"
+  ]
+ },
+ {
+  "fichier": "rowing-haltere-un-bras.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-haltere-un-bras.webp",
+  "ko": 117,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Haltère (Tirage Horizontal)"
+  ]
+ },
+ {
+  "fichier": "rowing-halteres-banc-incline-prise-neutre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-halteres-banc-incline-prise-neutre.webp",
+  "ko": 113,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Poitrine Appuyée (Chest Supported)"
+  ]
+ },
+ {
+  "fichier": "rowing-horizontal-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-horizontal-elastique.webp",
+  "ko": 86,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Horizontal Élastique"
+  ]
+ },
+ {
+  "fichier": "rowing-inverse-sous-table.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-inverse-sous-table.webp",
+  "ko": 95,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 299,
+  "exercices": [
+   "Rowing Inversé sous une Table"
+  ]
+ },
+ {
+  "fichier": "rowing-smith-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-smith-machine.webp",
+  "ko": 101,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Smith Machine"
+  ]
+ },
+ {
+  "fichier": "rowing-t-bar-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-t-bar-machine.webp",
+  "ko": 138,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing T-Bar Machine"
+  ]
+ },
+ {
+  "fichier": "rowing-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-trx-sangles.webp",
+  "ko": 97,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 459,
+  "exercices": [
+   "Rowing TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "rowing-unilateral-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-unilateral-elastique.webp",
+  "ko": 109,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Unilatéral Élastique"
+  ]
+ },
+ {
+  "fichier": "rowing-unilateral-landmine-meadows-row.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-unilateral-landmine-meadows-row.webp",
+  "ko": 68,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 276,
+  "exercices": [
+   "Meadows Row"
+  ]
+ },
+ {
+  "fichier": "rowing-yates-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-yates-barre.webp",
+  "ko": 111,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Yates (Supination)"
+  ]
+ },
+ {
+  "fichier": "russian-twist-avec-developpe-epaule.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/russian-twist-avec-developpe-epaule.webp",
+  "ko": 401,
+  "images": 48,
+  "largeur": 480,
+  "hauteur": 420,
+  "exercices": [
+   "Russian Twist Développé Épaules"
+  ]
+ },
+ {
+  "fichier": "safety-bar-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/safety-bar-squat.webp",
+  "ko": 101,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Safety Bar Squat",
+   "Safety Bar Squat"
+  ]
+ },
+ {
+  "fichier": "sauts-a-la-corde.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/sauts-a-la-corde.webp",
+  "ko": 77,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Sauts à la Corde"
+  ]
+ },
+ {
+  "fichier": "seal-row-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/seal-row-halteres.webp",
+  "ko": 121,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 387,
+  "exercices": [
+   "Seal Row"
+  ]
+ },
+ {
+  "fichier": "shoulder-press-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/shoulder-press-machine.webp",
+  "ko": 112,
+  "images": 12,
+  "largeur": 360,
+  "hauteur": 360,
+  "exercices": [
+   "Développé Épaules Assis Machine (Shoulder Press)"
+  ]
+ },
+ {
+  "fichier": "shrug-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/shrug-barre.webp",
+  "ko": 93,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Haussements d'Épaules Barre"
+  ]
+ },
+ {
+  "fichier": "shrug-machine-mollets.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/shrug-machine-mollets.webp",
+  "ko": 89,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": []
+ },
+ {
+  "fichier": "shrug-poulie-haussement-epaules.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/shrug-poulie-haussement-epaules.webp",
+  "ko": 91,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 433,
+  "exercices": [
+   "Haussements d'Épaules Câble"
+  ]
+ },
+ {
+  "fichier": "shrugs-avec-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/shrugs-avec-halteres.webp",
+  "ko": 76,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Haussements d'Épaules Haltères"
+  ]
+ },
+ {
+  "fichier": "sissy-squat-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/sissy-squat-machine.webp",
+  "ko": 79,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Sissy Squat Machine"
+  ]
+ },
+ {
+  "fichier": "sissy-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/sissy-squat.webp",
+  "ko": 80,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Sissy Squat"
+  ]
+ },
+ {
+  "fichier": "skull-crusher-barre-ez.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/skull-crusher-barre-ez.webp",
+  "ko": 17,
+  "images": 2,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Skull Crusher Barre EZ"
+  ]
+ },
+ {
+  "fichier": "sled-pull.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/sled-pull.webp",
+  "ko": 111,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 227,
+  "exercices": [
+   "Sled Pull"
+  ]
+ },
+ {
+  "fichier": "sled-push-hyrox.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/sled-push-hyrox.webp",
+  "ko": 113,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 210,
+  "exercices": [
+   "Sled Push"
+  ]
+ },
+ {
+  "fichier": "smith-machine-developpe-incline.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/smith-machine-developpe-incline.webp",
+  "ko": 121,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Smith Machine Développé Incliné"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-a-la-trap-bar.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-a-la-trap-bar.webp",
+  "ko": 102,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Trap Bar"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-avec-deficit.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-avec-deficit.webp",
+  "ko": 119,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre avec Déficit"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-avec-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-avec-machine.webp",
+  "ko": 121,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Machine"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-jambes-tendues.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-jambes-tendues.webp",
+  "ko": 94,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Jambes Tendues"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-roumain-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-barre.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 446,
+  "exercices": [
+   "Soulevé de Terre Roumain Barre",
+   "Soulevé de Terre Roumain Barre"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-roumain-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-halteres.webp",
+  "ko": 61,
+  "images": 7,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Roumain Haltères"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-roumain-kettlebell.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-kettlebell.webp",
+  "ko": 71,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Roumain Kettlebell"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-roumain-landmine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-landmine.webp",
+  "ko": 82,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Roumain Landmine"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-roumain-unilateral.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-unilateral.webp",
+  "ko": 264,
+  "images": 91,
+  "largeur": 480,
+  "hauteur": 270,
+  "exercices": [
+   "Soulevé de Terre Roumain Unilatéral"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-sumo-kettlebell.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo-kettlebell.webp",
+  "ko": 74,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Sumo Kettlebell"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-sumo-landmine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo-landmine.webp",
+  "ko": 69,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 387,
+  "exercices": [
+   "Soulevé de Terre Sumo Landmine"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-sumo.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo.webp",
+  "ko": 96,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Sumo",
+   "Soulevé de Terre Sumo"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre-valise.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-valise.webp",
+  "ko": 71,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre Valise (Suitcase)"
+  ]
+ },
+ {
+  "fichier": "souleve-de-terre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre.webp",
+  "ko": 97,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Soulevé de Terre",
+   "Soulevé de Terre",
+   "Soulevé de Terre"
+  ]
+ },
+ {
+  "fichier": "split-squat-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/split-squat-elastique.webp",
+  "ko": 88,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Split Squat Élastique (Fente Statique)"
+  ]
+ },
+ {
+  "fichier": "split-squat-smith-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/split-squat-smith-machine.webp",
+  "ko": 112,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Smith Machine Fentes",
+   "Smith Machine Fentes"
+  ]
+ },
+ {
+  "fichier": "split-squat-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/split-squat-trx-sangles.webp",
+  "ko": 95,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Split Squat TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "squat-avec-rotation-du-tronc.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-avec-rotation-du-tronc.webp",
+  "ko": 137,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat avec Rotation du Tronc"
+  ]
+ },
+ {
+  "fichier": "squat-bande-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-bande-elastique.webp",
+  "ko": 80,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Bande Élastique",
+   "Squat Bande Élastique"
+  ]
+ },
+ {
+  "fichier": "squat-barre-avec-bandes-elastiques.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-barre-avec-bandes-elastiques.webp",
+  "ko": 92,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Barre avec Bandes Élastiques"
+  ]
+ },
+ {
+  "fichier": "squat-barre-devant-front.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-barre-devant-front.webp",
+  "ko": 108,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Avant",
+   "Squat Avant"
+  ]
+ },
+ {
+  "fichier": "squat-bulgare-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-bulgare-elastique.webp",
+  "ko": 77,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Bulgare Élastique"
+  ]
+ },
+ {
+  "fichier": "squat-bulgare-halteres-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-bulgare-halteres-exercice-musculation.webp",
+  "ko": 87,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Bulgare",
+   "Squat Bulgare"
+  ]
+ },
+ {
+  "fichier": "squat-goblet-kettlebell.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-goblet-kettlebell.webp",
+  "ko": 79,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Gobelet (Goblet Squat)",
+   "Squat Gobelet (Goblet Squat)"
+  ]
+ },
+ {
+  "fichier": "squat-pistol-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-pistol-trx-sangles.webp",
+  "ko": 77,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Pistol TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "squat-pistol.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-pistol.webp",
+  "ko": 89,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Pistol",
+   "Squat Pistol"
+  ]
+ },
+ {
+  "fichier": "squat-poids-du-corps-air-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-poids-du-corps-air-squat.webp",
+  "ko": 72,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Poids du Corps (Air Squat)"
+  ]
+ },
+ {
+  "fichier": "squat-saute-jump-squat.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-saute-jump-squat.webp",
+  "ko": 71,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Sauté (Jump Squat)"
+  ]
+ },
+ {
+  "fichier": "squat-smith-machine-exercice-musculation.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-smith-machine-exercice-musculation.webp",
+  "ko": 93,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Smith Machine Squat",
+   "Smith Machine Squat"
+  ]
+ },
+ {
+  "fichier": "squat-statique-contre-mur-exercice-chaise.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-statique-contre-mur-exercice-chaise.webp",
+  "ko": 60,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Chaise (Wall Sit)"
+  ]
+ },
+ {
+  "fichier": "squat-sumo-avec-haltere.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-sumo-avec-haltere.webp",
+  "ko": 75,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat Sumo",
+   "Squat Sumo"
+  ]
+ },
+ {
+  "fichier": "squat-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-trx-sangles.webp",
+  "ko": 73,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Squat TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "superman.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/superman.webp",
+  "ko": 69,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 167,
+  "exercices": [
+   "Superman"
+  ]
+ },
+ {
+  "fichier": "suspension-passive-dead-hang.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/suspension-passive-dead-hang.webp",
+  "ko": 172,
+  "images": 24,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Suspension Passive (Dead Hang)"
+  ]
+ },
+ {
+  "fichier": "svend-press.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/svend-press.webp",
+  "ko": 74,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Svend Press (Serrage de Plaque)"
+  ]
+ },
+ {
+  "fichier": "tate-press.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tate-press.webp",
+  "ko": 101,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tate Press"
+  ]
+ },
+ {
+  "fichier": "thruster-kettlebell.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/thruster-kettlebell.webp",
+  "ko": 108,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Thruster Kettlebell"
+  ]
+ },
+ {
+  "fichier": "thruster.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/thruster.webp",
+  "ko": 131,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 464,
+  "exercices": [
+   "Thruster"
+  ]
+ },
+ {
+  "fichier": "tirage-avant-iso-laterale-hammer-strength.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-avant-iso-laterale-hammer-strength.webp",
+  "ko": 149,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Iso-Latéral Hammer Strength"
+  ]
+ },
+ {
+  "fichier": "tirage-horizontal-poulie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-horizontal-poulie.webp",
+  "ko": 103,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Rowing Câble (Tirage Horizontal)"
+  ]
+ },
+ {
+  "fichier": "tirage-horizontal-prise-large.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-horizontal-prise-large.webp",
+  "ko": 123,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Poulie Basse Prise Large"
+  ]
+ },
+ {
+  "fichier": "tirage-incline-poulie-haute.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-incline-poulie-haute.webp",
+  "ko": 92,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 461,
+  "exercices": [
+   "Tirage Incliné Poulie Haute"
+  ]
+ },
+ {
+  "fichier": "tirage-menton-avec-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-menton-avec-elastique.webp",
+  "ko": 82,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Menton Élastique"
+  ]
+ },
+ {
+  "fichier": "tirage-menton-avec-kettlebell.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-menton-avec-kettlebell.webp",
+  "ko": 74,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Menton Kettlebell"
+  ]
+ },
+ {
+  "fichier": "tirage-menton-machine-guidee.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-menton-machine-guidee.webp",
+  "ko": 83,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Menton"
+  ]
+ },
+ {
+  "fichier": "tirage-vertical-alterne-elastique.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-alterne-elastique.webp",
+  "ko": 90,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Vertical Alterné Élastique"
+  ]
+ },
+ {
+  "fichier": "tirage-vertical-poitrine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-poitrine.webp",
+  "ko": 95,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Poulie Haute (Lat Pulldown)"
+  ]
+ },
+ {
+  "fichier": "tirage-vertical-prise-inversee.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-prise-inversee.webp",
+  "ko": 113,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Poulie Haute Prise Inversée"
+  ]
+ },
+ {
+  "fichier": "tirage-vertical-prise-serree.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-prise-serree.webp",
+  "ko": 105,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tirage Poulie Haute Prise Serrée"
+  ]
+ },
+ {
+  "fichier": "traction-assistee-avec-banc.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-assistee-avec-banc.webp",
+  "ko": 87,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Traction Assistée avec Banc"
+  ]
+ },
+ {
+  "fichier": "traction-assistee-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-assistee-machine.webp",
+  "ko": 94,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Traction Assistée"
+  ]
+ },
+ {
+  "fichier": "traction-australienne-trx-sangles.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-australienne-trx-sangles.webp",
+  "ko": 67,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Traction Australienne TRX (Sangles)"
+  ]
+ },
+ {
+  "fichier": "traction-australienne.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-australienne.webp",
+  "ko": 101,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Traction Australienne (Poids du Corps)"
+  ]
+ },
+ {
+  "fichier": "traction-barre-derriere-rear-oull-up.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-barre-derriere-rear-oull-up.webp",
+  "ko": 75,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Traction Derrière la Nuque"
+  ]
+ },
+ {
+  "fichier": "traction-lestee-vraie.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-lestee-vraie.webp",
+  "ko": 109,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Traction Lestée"
+  ]
+ },
+ {
+  "fichier": "traction-musculation-dos.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-musculation-dos.webp",
+  "ko": 60,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tractions (Pull-up)"
+  ]
+ },
+ {
+  "fichier": "traction-prise-neutre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-prise-neutre.webp",
+  "ko": 113,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 455,
+  "exercices": [
+   "Traction Prise Neutre"
+  ]
+ },
+ {
+  "fichier": "traction-supination-chin-up.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-supination-chin-up.webp",
+  "ko": 61,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Traction Supination (Chin-up)"
+  ]
+ },
+ {
+  "fichier": "tractions-aux-anneaux.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/tractions-aux-anneaux.webp",
+  "ko": 58,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Tractions aux Anneaux"
+  ]
+ },
+ {
+  "fichier": "triceps-haltere-un-bras.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/triceps-haltere-un-bras.webp",
+  "ko": 78,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": []
+ },
+ {
+  "fichier": "triceps-kickback-debout-halteres.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/triceps-kickback-debout-halteres.webp",
+  "ko": 102,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Extension Triceps Arrière (Kickback)"
+  ]
+ },
+ {
+  "fichier": "triceps-machine.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/triceps-machine.webp",
+  "ko": 119,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Triceps Machine"
+  ]
+ },
+ {
+  "fichier": "triceps-poulie-basse-verticale.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/triceps-poulie-basse-verticale.webp",
+  "ko": 62,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Triceps Poulie Basse"
+  ]
+ },
+ {
+  "fichier": "triceps-poulie-haute-barre.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/triceps-poulie-haute-barre.webp",
+  "ko": 82,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Triceps Poulie"
+  ]
+ },
+ {
+  "fichier": "waiter-curl.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/waiter-curl.webp",
+  "ko": 71,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Waiter Curl"
+  ]
+ },
+ {
+  "fichier": "wall-ball.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/wall-ball.webp",
+  "ko": 75,
+  "images": 18,
+  "largeur": 480,
+  "hauteur": 480,
+  "exercices": [
+   "Wall Ball"
+  ]
+ },
+ {
+  "fichier": "zercher-deadlift.webp",
+  "url": "https://michdu75-commits.github.io/forcetracker/exercises/zercher-deadlift.webp",
+  "ko": 116,
+  "images": 12,
+  "largeur": 480,
+  "hauteur": 448,
+  "exercices": [
+   "Zercher Deadlift"
+  ]
+ }
+]
