@@ -38,7 +38,7 @@
 | 9 | **Le code orphelin** | 2 | règles R23 / R30 |
 | 10 | **Le marqueur non posé** | 2 | règle R15 |
 | 11 | **Le comportement copié hors contexte** | 2 | règle R14 |
-| 12 | **Les erreurs de MÉTHODE** (mesure fausse) | ≥ 7 | — *le plus dangereux, voir §12* |
+| 12 | **Les erreurs de MÉTHODE** (mesure fausse) | ≥ 8 | — *le plus dangereux, voir §12* |
 | 13 | **Le NOM comme clé primaire** | *racine de 6 défauts* | identifiant stable (ft-v735, **étape 1/3**) |
 | 14 | **Mesurer au lieu de supprimer** | 1 (toute la journée du 02/08) | la question des 3 réponses, voir §14 |
 
@@ -442,6 +442,22 @@ Copier du code, c'est aussi copier ses **hypothèses implicites**.
 Ce ne sont pas des bugs du produit, mais des bugs de **la façon de chercher les bugs**. Elles font
 conclure faux avec assurance.
 
+- **🎞️ JUGER UN MOUVEMENT SUR SON IMAGE D'ARRÊT** *(10/08/2026)* : pour dresser la liste des
+  exercices **unilatéraux**, j'ouvre les 15 figurines concernées une par une — la bonne méthode
+  (R31 : *ouvrir le dessin, pas la table qui nomme*). J'en classe deux « douteuses, le dessin
+  contredit son nom » : le Hip Thrust Unilatéral (les deux pieds au sol) et le Rowing Unilatéral
+  Élastique (les deux bras qui tirent). **Michel corrige de mémoire, sans ouvrir le fichier** :
+  *« tu as raison pour la 1ʳᵉ partie du gif, mais quand le gif avance il y a un pied en l'air »*.
+  **La cause : 304 figurines sur 306 sont des WebP ANIMÉS** (12 à 24 images), et l'outil de
+  lecture n'affiche que **l'image 1** — c'est-à-dire, très souvent, la **POSITION DE DÉPART**,
+  le seul instant où le mouvement n'a pas encore commencé. *J'AI ouvert le dessin ; ce que je
+  n'avais pas vu, c'est qu'il BOUGE.* ⭐ **Ce qui rend cette famille reconnaissable** : la
+  conclusion était fausse alors que **chaque étape** était juste (bon fichier, bonne image, bonne
+  observation) — c'est l'**instant** choisi qui était faux, et rien ne le signale.
+  🛡️ **Ce qui protège** : extraire **4 images réparties** (`PIL.Image.seek`) et les coller côte à
+  côte avant tout verdict sur un mouvement. Appliqué immédiatement **aux deux verdicts opposés**
+  (« bilatéral ») que j'avais rendus par la même méthode — ils tiennent, mais *une erreur de
+  méthode ne se répare pas à moitié : elle invalide tout ce qui a été produit avec elle.*
 - **Un contrôle négatif à 0 rouge** (ft-v714) : je vérifiais qu'un test échoue bien sans le
   correctif — il affichait **0 échec**. Le runner **plantait** au lieu d'échouer, et le crash
   masquait tout. *Un test qui plante n'est pas un test qui passe.*

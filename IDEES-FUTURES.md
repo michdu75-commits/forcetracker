@@ -63,10 +63,10 @@ exercice** — c'est la version à un bras du même mouvement, assis sur un banc
 | Extension Quadriceps Unilatérale Machine à Dips | debout, 1 jambe | ✅ unilatéral |
 | Leg Curl Unilatéral Debout | 1 jambe fléchit | ✅ unilatéral |
 | Soulevé de Terre Roumain Unilatéral | en équilibre sur **1 jambe**, 1 haltère | ✅ unilatéral |
-| **Tirage Iso-Latéral Hammer Strength** | **LES DEUX BRAS tirent en même temps** | ❌ **BILATÉRAL** |
-| **Presse à Cuisses Iso-Latérale** | **LES DEUX JAMBES poussent** | ❌ **BILATÉRAL** |
-| Hip Thrust Unilatéral | barre sur les hanches, **les deux pieds semblent au sol** | ⚠️ dessin peu lisible |
-| Rowing Unilatéral Élastique | penché, élastique sous les pieds, **les deux bras semblent tirer** | ⚠️ contredit son nom |
+| **Tirage Iso-Latéral Hammer Strength** | **LES DEUX BRAS tirent ensemble** (revérifié sur 4 images) | ❌ **BILATÉRAL** |
+| **Presse à Cuisses Iso-Latérale** | **LES DEUX JAMBES poussent ensemble** (revérifié sur 4 images) | ❌ **BILATÉRAL** |
+| Hip Thrust Unilatéral | image 1 = deux pieds au sol (**la mise en place**) ; **dès l'image 4 la jambe est en l'air** | ✅ unilatéral |
+| Rowing Unilatéral Élastique | **un seul bras tire**, l'autre est posé sur le genou | ✅ unilatéral |
 
 **⭐ LE RÉSULTAT QUI COMPTE — « ISO-LATÉRAL » NE VEUT PAS DIRE « UN À LA FOIS ».** C'était
 exactement mon hésitation, et le dessin la tranche : sur une machine iso-latérale, les deux bras (ou
@@ -74,9 +74,28 @@ les deux jambes) ont des **bras de levier indépendants**, mais on pousse **ense
 sont donc **bilatéraux** — les ajouter à la liste aurait **divisé les charges par deux à tort**.
 *Le nom de fichier disait le contraire du dessin.*
 
-**⚠️ Deux figurines à revoir** : le Hip Thrust Unilatéral et le Rowing Unilatéral Élastique ne
-montrent pas clairement ce que leur nom annonce. Soit le dessin est mal choisi (à remplacer), soit
-le nom est faux. À regarder avec Michel avant de trancher — dans les deux cas on ne devine pas.
+**⭐⭐ ET LA VRAIE LEÇON EST UNE LEÇON DE MÉTHODE — les figurines sont ANIMÉES.**
+J'avais d'abord classé le **Hip Thrust Unilatéral** et le **Rowing Unilatéral Élastique** comme
+« douteux, le dessin contredit le nom ». Michel a corrigé de mémoire, sans ouvrir le fichier :
+*« le premier, tu as raison pour la 1ʳᵉ partie du gif, mais quand le gif avance il y a un pied au
+sol et le 2ᵉ pied en l'air ; et le 2ᵉ non, un seul bras qui tire, le 2ᵉ est sur le genou. »*
+**Vérifié image par image : il a raison sur les deux.**
+
+**La cause** : **304 figurines sur 306 sont des WebP ANIMÉS** (12 à 24 images). Quand je les ouvre,
+je ne vois que **l'image 1** — c'est-à-dire, très souvent, la **POSITION DE DÉPART** : le moment
+précis où le mouvement n'a pas encore commencé, donc où les deux pieds sont encore au sol et où
+les deux bras pendent. **J'ai jugé 15 exercices sur leur pose d'avant l'exercice.**
+
+*C'est le cousin exact de R28/R31 — « ouvrir le dessin » — mais en plus vicieux : j'AI ouvert le
+dessin. Ce que je n'avais pas vu, c'est que le dessin BOUGE.* La règle à retenir :
+**pour juger un mouvement sur une figurine, extraire plusieurs images, jamais la première seule.**
+(Recette : `PIL.Image.seek(i)` sur 4 images réparties, collées côte à côte.)
+
+**Et j'ai refait mes 2 verdicts « bilatéral » avec cette méthode** — parce que je les avais pris
+sur l'image 1 comme les autres, et qu'une erreur de méthode ne se répare pas à moitié. Ils
+tiennent : les deux bras tirent ensemble, les deux jambes poussent ensemble.
+
+**Bilan des 15 : 13 unilatéraux · 2 bilatéraux** (les deux machines « iso-latérales »).
 
 **⚠️ ET CE BALAYAGE NE SUFFIT PAS** : il ne trouve que les figurines dont on a **pensé** à marquer le
 nom de fichier. **Curl Concentré**, **Squat Bulgare**, **Fentes**, **Kickback** sont unilatéraux et
