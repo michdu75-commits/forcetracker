@@ -138,10 +138,37 @@ tape deux fois. *L'information est dans le TYPE de l'exercice, pas dans la saisi
   un renoncement **assumé** : le cas est rare et le coût de la saisie double le serait pour tout
   le monde. À rouvrir seulement si un testeur le demande (R22).
 
-**⏭️ RESTE À TRANCHER — et c'est la même question qu'avant, mais réduite** : pour les exercices
-**bilatéraux aux haltères** (Développé Incliné Haltères…), on note **le poids d'UN haltère (30)**
-ou **le TOTAL (60)** ? La décision ci-dessus dit « le poids de l'haltère » pour l'unilatéral —
-prendre la même convention partout serait cohérent, mais Michel note 60 aujourd'hui.
+### ✅ LA CONVENTION EST TRANCHÉE — et ses deux réponses n'en font qu'une
+
+*« Pour moi en bilatéral c'est le poids total. »* (Michel, 10/08) — avec, pour l'unilatéral,
+*« mettre le poids de l'haltère et pas le doubler »*.
+
+**⭐ CE SONT DEUX FORMULATIONS DE LA MÊME RÈGLE, et c'est ça qui rend la chose codable :**
+
+> **On note le poids qui BOUGE pendant la répétition.**
+
+Vérifié sur les quatre cas qui posaient problème :
+
+| Exercice | Ce qui bouge pendant la rep | On note |
+|---|---|---|
+| Développé Incliné Haltères | les **2** haltères montent | **60** (2 × 30) |
+| Rowing Haltère | **1** haltère monte | **28** |
+| Curl Haltères (alterné) | **1** haltère monte, l'autre pend | **30** |
+| Squat Bulgare | les **2** haltères descendent avec le corps | **40** (2 × 20) |
+
+**⭐⭐ LA CONSÉQUENCE QUI SIMPLIFIE TOUT** : le marqueur « unilatéral » **ne touche plus du tout à la
+charge**. Il ne sert qu'à **doubler le volume** et à afficher « par bras / par jambe ». Il n'y a donc
+**aucune convention à retenir par exercice** — une seule phrase couvre les 355. *Deux règles qui se
+ressemblent finissent toujours par diverger ; une seule, non* (R2).
+
+**Et ça règle le cas mixte tout seul** : le Squat Bulgare prend le **total** (les deux haltères
+bougent) **et** le volume ×2 (la série se refait de l'autre côté). Les deux mécanismes sont
+indépendants, donc ils ne se contredisent jamais.
+
+**⏭️ Il ne reste plus qu'une décision, et elle porte sur le PASSÉ** : les séances déjà saisies en
+unilatéral (Rowing à 56, Curl à 60) sont fausses au regard de cette règle. On les laisse (un
+décrochage visible dans la courbe) ou on les corrige ? **À trancher avec Michel** — ne rien
+réécrire tout seul.
 
 <!-- SPEC-UNILATERAL-FIN -->
 
