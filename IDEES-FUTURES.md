@@ -48,6 +48,40 @@ calculé pareil dans les deux cas.
 `triceps-haltere-un-bras.webp` traîne d'ailleurs dans le dossier **sans être rattachée à aucun
 exercice** — c'est la version à un bras du même mouvement, assis sur un banc.)
 
+### 🔬 LES 15 FIGURINES, OUVERTES UNE PAR UNE (10/08, à la demande de Michel)
+
+| Exercice | Ce que le DESSIN montre | Verdict |
+|---|---|---|
+| Rowing Haltère (Tirage Horizontal) | genou sur le banc, **1 haltère**, 1 bras | ✅ unilatéral |
+| Curl Haltères | **2 haltères** tenus, **1 seul bras monte** | ✅ alterné |
+| Développé Couché Unilatéral Kettlebell | allongé, **1 kettlebell**, 1 bras | ✅ unilatéral |
+| Développé Épaules Unilatéral Élastique | 1 bras pousse, l'autre main à la hanche | ✅ unilatéral |
+| Élévations Latérales Unilatérale Poulie | 1 bras lève le câble | ✅ unilatéral |
+| Meadows Row | landmine, 1 bras sur le bout de la barre | ✅ unilatéral |
+| Tirage Vertical Alterné Élastique | vu de dos, **1 seul bras tire** | ✅ alterné |
+| Extension Quadriceps Unilatérale | machine assise, **1 jambe** étend | ✅ unilatéral |
+| Extension Quadriceps Unilatérale Machine à Dips | debout, 1 jambe | ✅ unilatéral |
+| Leg Curl Unilatéral Debout | 1 jambe fléchit | ✅ unilatéral |
+| Soulevé de Terre Roumain Unilatéral | en équilibre sur **1 jambe**, 1 haltère | ✅ unilatéral |
+| **Tirage Iso-Latéral Hammer Strength** | **LES DEUX BRAS tirent en même temps** | ❌ **BILATÉRAL** |
+| **Presse à Cuisses Iso-Latérale** | **LES DEUX JAMBES poussent** | ❌ **BILATÉRAL** |
+| Hip Thrust Unilatéral | barre sur les hanches, **les deux pieds semblent au sol** | ⚠️ dessin peu lisible |
+| Rowing Unilatéral Élastique | penché, élastique sous les pieds, **les deux bras semblent tirer** | ⚠️ contredit son nom |
+
+**⭐ LE RÉSULTAT QUI COMPTE — « ISO-LATÉRAL » NE VEUT PAS DIRE « UN À LA FOIS ».** C'était
+exactement mon hésitation, et le dessin la tranche : sur une machine iso-latérale, les deux bras (ou
+les deux jambes) ont des **bras de levier indépendants**, mais on pousse **ensemble**. Ces deux-là
+sont donc **bilatéraux** — les ajouter à la liste aurait **divisé les charges par deux à tort**.
+*Le nom de fichier disait le contraire du dessin.*
+
+**⚠️ Deux figurines à revoir** : le Hip Thrust Unilatéral et le Rowing Unilatéral Élastique ne
+montrent pas clairement ce que leur nom annonce. Soit le dessin est mal choisi (à remplacer), soit
+le nom est faux. À regarder avec Michel avant de trancher — dans les deux cas on ne devine pas.
+
+**⚠️ ET CE BALAYAGE NE SUFFIT PAS** : il ne trouve que les figurines dont on a **pensé** à marquer le
+nom de fichier. **Curl Concentré**, **Squat Bulgare**, **Fentes**, **Kickback** sont unilatéraux et
+n'ont **aucune** marque. La figurine **complète** la liste choisie à la main ; elle ne la remplace pas.
+
 **⚠️ Le nom de fichier est un INDICE, pas une preuve** : c'est le **dessin** qui fait foi (R31 —
 *avant de déclarer qu'une distinction est impossible, ouvrir le dessin, pas seulement la table qui
 nomme*). Les figurines des 15 restent à ouvrir une par une avant de figer quoi que ce soit.
@@ -75,8 +109,8 @@ Ils se font **des deux façons** selon la personne ou la salle. Plutôt que de c
 - ~~**Extension Nuque Haltère**~~ → **tranché par la figurine : deux mains, BILATÉRAL.**
 - **Curl Araignée (Spider Curl)** — souvent les deux bras en même temps.
 - **Rowing Landmine (T-Bar)** — deux mains sur la poignée, ou une main ?
-- **Tirage Iso-Latéral Hammer Strength** · **Presse à Cuisses Iso-Latérale** — « iso-latéral » veut
-  dire *bras/jambes indépendants*, pas forcément *un à la fois*.
+- ~~**Tirage Iso-Latéral Hammer Strength** · **Presse à Cuisses Iso-Latérale**~~ → **tranchés par le
+  dessin : BILATÉRAUX.** « Iso-latéral » = bras/jambes indépendants, mais on pousse ensemble.
 - **Presse à Cuisses sur le Côté** — une jambe ou deux ?
 - **Leg Curl Haltère** — haltère coincé entre les pieds = deux jambes, non ?
 - **Soulevé de Terre Valise (Suitcase)** — charge d'un seul côté, mais les deux jambes poussent :
