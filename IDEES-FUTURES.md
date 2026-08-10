@@ -107,6 +107,22 @@ nomme*). Les figurines des 15 restent à ouvrir une par une avant de figer quoi 
 Et à l'inverse, une figurine **sans** marque ne prouve pas que l'exercice est bilatéral : le fichier
 a pu être nommé sans y penser (ex. `curl-concentre.webp`, qui est pourtant à un bras).
 
+<!-- REVUE-UNILATERAL-DEBUT -->
+### ✔️ REVUE EN COURS — validée par Michel, figurine à l'appui (10/08/2026)
+
+> Méthode : je montre 2 figurines animées, il tranche. **16 faits sur 37.**
+> Les 15 repérées par leur nom de fichier (13 uni / 2 bi) sont déjà acquises et ne sont pas recomptées ici.
+
+**UNILATÉRAUX (12)** — Curl Concentré · Curl Araignée (Spider Curl) · Extension Triceps Concentrée Poulie · Élévation Latérale Landmine · Élévation Latérale Inclinée Haltère · Rotation Externe Épaule Poulie · Rotation Externe Épaule Haltère · Rotation Externe Épaule Élastique · Rotation Interne Épaule Élastique · Rotation Interne 90° Poulie · Rotation Externe Épaule Abduction · Renegade Row
+
+**BILATÉRAUX (4)** — Marteau · Curl Zottman · Extension Triceps Arrière (Kickback) · Rowing Landmine (T-Bar)
+
+⚠️ **Trois de mes paris étaient FAUX** et c'est Michel qui a tranché : le **Marteau** (les deux bras
+montent ensemble, *« même si c'est rare de le faire »*), l'**Extension Triceps Arrière (Kickback)**
+(deux haltères, deux bras) et le **Curl Araignée** (que je croyais à deux bras, il est à un).
+*Une liste faite de tête se serait trompée 3 fois sur 16.*
+<!-- REVUE-UNILATERAL-FIN -->
+
 ### ✅ Ceux dont je suis sûr (à confirmer quand même)
 
 | Groupe | Exercices |
