@@ -22,6 +22,38 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 **À faire quand Michel aura coché** : marquer ces exercices `uni:true` dans `EXLIB`, doubler le
 volume, afficher « par bras / par jambe » dans la séance, et le dire à Milo dans le format de séance.
 
+### ⭐⭐ LA RÉPONSE ÉTAIT DÉJÀ DANS LES FIGURINES (Michel, 10/08)
+
+*« C'est ça, normalement dans les figurines que je t'ai passées il y a marqué unilatéral. »*
+**Vérifié : il a raison, et ça change la méthode.** Le nom de fichier de la figurine porte
+l'information que le nom de l'exercice ne porte pas — c'est **R31** en action (*la figurine est le
+vocabulaire du système*), et c'est une source **vérifiable** au lieu d'une liste de mémoire.
+
+**15 figurines sur 303 portent la marque** (`unilateral` · `un-bras` · `alterne` · `iso-laterale`).
+**Trois d'entre elles sont des exercices dont le NOM ne dit rien :**
+
+| Exercice | Sa figurine | Vérifié en OUVRANT le dessin |
+|---|---|---|
+| **Rowing Haltère (Tirage Horizontal)** | `rowing-haltere-un-bras.webp` | ✅ un genou sur le banc, **un seul haltère**, un bras — le cas de départ de Michel |
+| **Curl Haltères** | `curl-halteres-**alterne**.webp` | ✅ deux haltères tenus, mais **un seul bras monte à la fois** — donc **son cas biceps est faux aussi** |
+| **Meadows Row** | `rowing-unilateral-landmine-meadows-row.webp` | (nom de fichier ; dessin non ouvert) |
+
+**⚠️ « alterné » n'est PAS « unilatéral », et la différence compte** : au curl alterné il tient
+**deux** haltères (30 dans chaque main) mais chaque biceps ne voit jamais que **30**. Au rowing il
+n'y a qu'**un seul** haltère, et la série se refait de l'autre côté. Le total à noter n'est donc pas
+calculé pareil dans les deux cas.
+
+**Et la figurine tranche déjà une de mes hésitations** : `extension-nuque-haltere-assis.webp` montre
+**deux mains sur un seul haltère** → **Extension Nuque Haltère est BILATÉRALE**. (Une image
+`triceps-haltere-un-bras.webp` traîne d'ailleurs dans le dossier **sans être rattachée à aucun
+exercice** — c'est la version à un bras du même mouvement, assis sur un banc.)
+
+**⚠️ Le nom de fichier est un INDICE, pas une preuve** : c'est le **dessin** qui fait foi (R31 —
+*avant de déclarer qu'une distinction est impossible, ouvrir le dessin, pas seulement la table qui
+nomme*). Les figurines des 15 restent à ouvrir une par une avant de figer quoi que ce soit.
+Et à l'inverse, une figurine **sans** marque ne prouve pas que l'exercice est bilatéral : le fichier
+a pu être nommé sans y penser (ex. `curl-concentre.webp`, qui est pourtant à un bras).
+
 ### ✅ Ceux dont je suis sûr (à confirmer quand même)
 
 | Groupe | Exercices |
@@ -40,7 +72,7 @@ volume, afficher « par bras / par jambe » dans la séance, et le dire à Milo 
 
 Ils se font **des deux façons** selon la personne ou la salle. Plutôt que de choisir à sa place :
 
-- **Extension Nuque Haltère** — une main ou deux mains sur le même haltère ?
+- ~~**Extension Nuque Haltère**~~ → **tranché par la figurine : deux mains, BILATÉRAL.**
 - **Curl Araignée (Spider Curl)** — souvent les deux bras en même temps.
 - **Rowing Landmine (T-Bar)** — deux mains sur la poignée, ou une main ?
 - **Tirage Iso-Latéral Hammer Strength** · **Presse à Cuisses Iso-Latérale** — « iso-latéral » veut
@@ -62,7 +94,7 @@ exercices aux haltères sont concernés, pas seulement les unilatéraux.
 |---|---|---|
 | **Développé Incliné Haltères** — les deux bras poussent **en même temps** | 60 kg (= 30 + 30) | **Non.** Ses pectoraux poussent bien 60 kg au même instant, exactement comme une barre de 60. Le chiffre est comparable. |
 | **Rowing Haltère** — un bras **à la fois** | 56 kg (= 28 × 2) | **Oui.** Son dos n'a jamais tenu 56 kg à un seul moment. **Ce chiffre n'existe pas.** |
-| **Curl Haltères** — les deux bras ensemble ou en alternance ? | 60 kg | **Ça dépend de comment il le fait.** À trancher. |
+| **Curl Haltères** — la figurine dit **alterné** (un bras à la fois) | 60 kg | **Oui, faux aussi.** Chaque biceps ne voit que 30 kg. Confirmé en ouvrant le dessin. |
 
 **Donc il y a une question de FOND, et c'est la sienne** :
 
