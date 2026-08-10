@@ -1518,6 +1518,70 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c9.close();
 }
 
+// ═══ 💬 LES FORMULES DE POLITESSE SONT TRAITÉES EN LOCAL (ft-v818) ═══════════════════════
+// Michel : « il va falloir mettre des phrases types en code pour éviter que Milo interroge
+// l'API ». Mesuré sur son export : « salut ça va » = 0,147 $, dont 0,4 % pour la réponse.
+// ⚠️ CE QUE CE TEST PROTÈGE EN PREMIER : le cas où Milo ATTEND une réponse. Un « ok merci »
+// après « tu veux qu'on prépare lundi ? » doit partir chez Milo — répondre « avec plaisir »
+// à ça laisse la personne en plan, ce qui coûte bien plus cher que 0,15 $ (R29).
+{
+  const c10=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p10=await c10.newPage();
+  await p10.goto('http://localhost:'+PORT+'/index.html'); await p10.waitForTimeout(2200);
+  const r=await p10.evaluate(()=>{
+   try{
+    const vide=()=>{ if(typeof coachHistory!=='undefined')coachHistory.length=0; };
+    const miloDit=(t)=>{ vide(); coachHistory.push({role:'user',content:'x'},{role:'assistant',content:t}); };
+
+    vide();
+    const FORMULES=["salut","bonjour","coucou","salut ça va","ça va ?","hello","yo",
+      "merci","merci beaucoup","ok merci","super merci","thanks",
+      "à demain","bonne soirée","bonne nuit","ciao","à plus"];
+    const local = FORMULES.filter(m=>_reponseLocale(m,false,{}));
+
+    // ⚠️ Les VRAIS messages : aucun ne doit être court-circuité.
+    const VRAIS=["ok","d'accord","ça marche","parfait","nickel","oui","non",
+      "merci mais je voulais dire autre chose","salut, tu peux me faire une séance ?",
+      "bonjour j'ai mal au genou","ça va pas fort aujourd'hui","à demain je fais quoi ?",
+      "bonne séance ?","je te remercie de me faire un programme sur 4 semaines"];
+    const fauxPositifs = VRAIS.filter(m=>_reponseLocale(m,false,{}));
+
+    // ⚠️⚠️ LE VERROU : Milo vient de poser une question → tout part chez lui.
+    miloDit("Voilà ta séance. Tu veux qu'on prépare lundi maintenant ?");
+    const pendantQuestion = ["merci","ok merci","salut","à demain"].filter(m=>_reponseLocale(m,false,{}));
+    // … et quand il n'attend rien, ça repasse en local
+    miloDit("Voilà ta séance de demain. Bon entraînement 💪");
+    const sansQuestion = ["merci","à demain"].filter(m=>_reponseLocale(m,false,{}));
+
+    vide();
+    return {
+      local, manques: FORMULES.filter(m=>!_reponseLocale(m,false,{})), fauxPositifs,
+      pendantQuestion, sansQuestion,
+      avecPhoto: !!_reponseLocale("merci", true, {}),
+      debriefAuto: !!_reponseLocale("merci", false, {silent:true}),
+      // la réponse varie (sinon ça sonne robot au 3ᵉ « merci »)
+      variees: new Set(Array.from({length:40},()=>_reponseLocale("merci",false,{}))).size
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ AUCUN vrai message n\'est court-circuité (« ok », « oui », « bonjour j\'ai mal au genou »…)',
+    Array.isArray(r.fauxPositifs) && r.fauxPositifs.length===0, JSON.stringify(r.fauxPositifs||r));
+  t('⭐⭐ quand Milo POSE UNE QUESTION, même « merci » repart chez lui',
+    Array.isArray(r.pendantQuestion) && r.pendantQuestion.length===0,
+    'répondu en local alors que Milo attendait : '+JSON.stringify(r.pendantQuestion||r));
+  t('⭐ … et quand il n\'attend rien, la formule est traitée en local (zéro appel)',
+    Array.isArray(r.sansQuestion) && r.sansQuestion.length===2, JSON.stringify(r.sansQuestion||r));
+  t('⭐ les 17 formules de politesse sont reconnues',
+    Array.isArray(r.manques) && r.manques.length===0, 'non reconnues : '+JSON.stringify(r.manques||r));
+  t('une PHOTO n\'est jamais court-circuitée',
+    r.avecPhoto===false, JSON.stringify(r));
+  t('un débrief automatique n\'est jamais court-circuité',
+    r.debriefAuto===false, JSON.stringify(r));
+  t('la réponse VARIE (sinon ça sonne robot au 3ᵉ « merci »)',
+    r.variees>=2, 'une seule réponse possible');
+  await c10.close();
+}
+
 // ═══ MILO PROPOSE UNE SÉANCE ALORS QU'UNE SÉANCE EST DÉJÀ EN COURS (ft-v750) ═══
 // Retour de Michel EN PLEINE SÉANCE : « je lui ai demandé de changer l'exercice, il me propose
 // bien une nouvelle séance mais ça ne met pas à jour la séance actuelle ». Le bouton ne savait

@@ -371,6 +371,91 @@ function _estHorsSujet(msg, hasImg, opts){
   }catch(e){ return false; }                                  // en cas de pépin : on LAISSE PASSER
 }
 
+// ─── 💬 LES PHRASES QUI NE MÉRITENT PAS UN APPEL (10/08/2026) ──────────────────────────
+// Michel, après avoir vu la facture de son « salut ça va » du matin : *« il va falloir mettre
+// des phrases types en code pour éviter que Milo interroge l'API »*.
+// 📏 CE QUE ÇA COÛTE, MESURÉ SUR SON EXPORT : « salut ça va » → **0,147 $**. Sa réponse à lui
+// (43 tokens) ne pèse que 0,4 % de la note ; les 99,6 % restants, c'est l'ENVOI du contexte —
+// les instructions de Milo (54 %) et le profil de la personne (30 %) partent en entier, qu'on
+// dise bonjour ou qu'on demande un programme sur 4 semaines. *On paie l'envoi, pas la réponse.*
+//
+// ⚠️⚠️ LE PIÈGE, ET C'EST LUI QUI DÉCIDE DU PÉRIMÈTRE : un message court est très souvent une
+// RÉPONSE à une question que Milo vient de poser. « Tu veux qu'on prépare la séance de lundi ? »
+// → « ok ». Répondre « avec plaisir 💪 » à ça, c'est laisser la personne en plan, et c'est
+// bien pire que de payer 0,15 $ (**R29** : le droit de deviner dépend du coût de l'erreur).
+// D'où deux verrous :
+//   ① on ne répond en local QUE si Milo n'attend rien — pas de réponses rapides affichées
+//     (`.coach-qr`, le signal existe déjà et sert déjà au quota) et pas de « ? » dans sa
+//     dernière réplique ;
+//   ② le message doit correspondre ENTIÈREMENT à une phrase de la liste. « merci » passe,
+//     « merci mais je voulais dire autre chose » non.
+//
+// ⚠️ ET CE QU'ON N'A PAS MIS, EXPRÈS : « ok », « d'accord », « ça marche », « parfait » SEULS.
+// Ils portent du sens — ils valident, ils lancent quelque chose — alors que « merci » n'en
+// porte pas. La liste ne les prend qu'accompagnés d'un remerciement (« ok merci »).
+// *Quand un mot peut vouloir dire « continue », il vaut 0,15 $.*
+const _PHRASES_LOCALES = [
+  { // bonjour
+    re: /^(salut|slt|bonjour|bonsoir|coucou|cc|hello|hey|yo)( (ça|ca) va( \?)?| tout le monde)?$|^((ça|ca) va|comment (ça|ca) va|tu vas bien)( \?)?$/i,
+    reps: [
+      "Salut 💪 On fait quoi aujourd'hui ?",
+      "Hey ! Ça roule. Tu veux qu'on regarde ta prochaine séance ?",
+      "Salut ! Dis-moi ce dont tu as besoin — séance, nutrition, récup…"
+    ]
+  },
+  { // merci
+    re: /^((ok|okay|oki|super|nickel|parfait|top|cool|g[ée]nial|impec|impeccable) )?(merci|mrc|thanks|thx)( (beaucoup|bien|mille fois|(à|a) toi))?( \!+)?$/i,
+    reps: [
+      "Avec plaisir 💪",
+      "De rien ! On se retrouve à la prochaine séance.",
+      "Quand tu veux 👊"
+    ]
+  },
+  { // au revoir
+    re: /^((à|a) (demain|plus|toute|tout(e)? (à|a) l'heure|la prochaine)|bonne (soir[ée]e|nuit|journ[ée]e|fin de journ[ée]e)|bye|ciao|see you)( \!+)?$/i,
+    reps: [
+      "À bientôt, bon entraînement 💪",
+      "Bonne soirée ! Repose-toi bien, c'est là que ça pousse.",
+      "Salut ! On se retrouve quand tu veux 👊"
+    ]
+  }
+];
+
+/**
+ * Milo attend-il une réponse ? Si oui, aucun raccourci local — même sur « ok merci ».
+ */
+function _miloAttendUneReponse(){
+  try{
+    // ① des réponses rapides sont affichées → Milo a posé une question, elle est à l'écran
+    if(typeof document!=='undefined' && document.querySelector && document.querySelector('.coach-qr'))return true;
+    // ② sa dernière réplique contient un « ? »
+    const h=(typeof coachHistory!=='undefined'&&coachHistory)?coachHistory:[];
+    for(let i=h.length-1;i>=0;i--){
+      const m=h[i]; if(!m||m.role!=='assistant')continue;
+      const t=typeof m.content==='string'?m.content
+        :(Array.isArray(m.content)?m.content.filter(c=>c&&c.type==='text').map(c=>c.text).join(' '):'');
+      return /\?/.test(String(t));
+    }
+    return false;
+  }catch(e){ return true; }                                  // en cas de pépin : on ENVOIE (on ne coupe pas)
+}
+
+/**
+ * Une réponse locale suffit-elle ? @returns {string|null} le texte, ou null = on envoie à Milo.
+ */
+function _reponseLocale(msg, hasImg, opts){
+  try{
+    if(opts && (opts.silent || opts.noQuota))return null;    // débrief auto généré par l'app
+    if(hasImg)return null;                                    // une photo relève du métier
+    const m=String(msg||'').trim().replace(/\s+/g,' ');
+    if(!m || m.length>34)return null;                         // au-delà, ce n'est plus une formule
+    const g=_PHRASES_LOCALES.find(x=>x.re.test(m));
+    if(!g)return null;
+    if(_miloAttendUneReponse())return null;                   // ⚠️ le verrou qui compte
+    return g.reps[Math.floor(Math.random()*g.reps.length)];
+  }catch(e){ return null; }                                   // en cas de pépin : on ENVOIE
+}
+
 function _ctxEntrainement(msg){
   try{
     if(msg===undefined || msg===null)return true;            // appelant sans message → tout
@@ -2582,6 +2667,21 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     renderCoachMsg('user', displayMsg || msg);
     renderCoachMsg('coach', _REPONSE_HORS_SUJET);
     return false;
+  }
+
+  // 💬 RÉPONSE LOCALE À UNE FORMULE DE POLITESSE — avant le réseau, donc à coût ZÉRO.
+  // Même placement et mêmes raisons que le refus hors-sujet ci-dessus : aucun appel, la
+  // question gratuite n'est pas consommée, et l'échange n'entre pas dans `coachHistory`
+  // (il ne porte aucune information — le repayer au tour suivant serait absurde).
+  {
+    const _rep = _reponseLocale(msg, hasImg, opts);
+    if (_rep) {
+      if (inp) inp.value = '';
+      if (coachHistory.length === 0) _showCoachChat();
+      renderCoachMsg('user', displayMsg || msg);
+      renderCoachMsg('coach', _rep);
+      return false;
+    }
   }
 
   // Capturer l'image avant de la vider
