@@ -107,6 +107,44 @@ nomme*). Les figurines des 15 restent à ouvrir une par une avant de figer quoi 
 Et à l'inverse, une figurine **sans** marque ne prouve pas que l'exercice est bilatéral : le fichier
 a pu être nommé sans y penser (ex. `curl-concentre.webp`, qui est pourtant à un bras).
 
+<!-- SPEC-UNILATERAL-DEBUT -->
+### 🛠️ COMMENT ÇA SE NOTE — la décision de Michel (10/08/2026)
+
+*« Pas possible de faire 50 séries. Il faut intégrer comme avant 3 séries × X kilos, mais dans la
+logique on sait qu'il faut faire une série à gauche et une à droite, et il faudra mettre le poids
+de l'haltère et pas le doubler. »*
+
+**C'est la règle, et elle est plus simple que tout ce qu'on avait envisagé :**
+
+| | Ce qu'on saisit | Ce que l'app en déduit |
+|---|---|---|
+| **Séries** | **3** (comme avant) | 3 à gauche **+** 3 à droite = 6 séries réellement faites |
+| **Charge** | **le poids de l'haltère** (28), **jamais le total** | c'est bien 28 kg que le muscle a tenu |
+| **Volume** | — | **×2** (les deux côtés comptent) |
+| **Record / 1RM** | — | calculé sur **28**, la vraie charge d'un côté |
+| **Affichage** | — | « 3 × 8 à 28 kg **par bras** » |
+
+**⭐ Pourquoi c'est juste** : saisir 6 lignes serait fidèle mais **insupportable à noter en salle** —
+et l'ouverture instantanée / la simplicité passent avant l'exactitude comptable (règle d'or #4,
+R24). L'app **sait** que la série se refait de l'autre côté : elle n'a pas besoin qu'on le lui
+tape deux fois. *L'information est dans le TYPE de l'exercice, pas dans la saisie.*
+
+**⚠️ Ce que ça implique, à ne pas oublier en codant :**
+- le **volume** d'une séance change (×2 sur ces exercices) → l'historique déjà saisi ne sera plus
+  comparable au nouveau, **à trancher avec Michel** (voir la section « historique déjà saisi ») ;
+- le **temps de repos** entre gauche et droite n'est pas un vrai repos — à ne pas déclencher comme
+  un repos de fin de série (à vérifier au moment de coder) ;
+- **un côté plus faible ne peut pas s'exprimer** dans ce modèle (28 à droite, 26 à gauche). C'est
+  un renoncement **assumé** : le cas est rare et le coût de la saisie double le serait pour tout
+  le monde. À rouvrir seulement si un testeur le demande (R22).
+
+**⏭️ RESTE À TRANCHER — et c'est la même question qu'avant, mais réduite** : pour les exercices
+**bilatéraux aux haltères** (Développé Incliné Haltères…), on note **le poids d'UN haltère (30)**
+ou **le TOTAL (60)** ? La décision ci-dessus dit « le poids de l'haltère » pour l'unilatéral —
+prendre la même convention partout serait cohérent, mais Michel note 60 aujourd'hui.
+
+<!-- SPEC-UNILATERAL-FIN -->
+
 <!-- REVUE-UNILATERAL-DEBUT -->
 ### ✔️ REVUE TERMINÉE — 57 exercices tranchés par Michel (10/08/2026)
 
