@@ -1582,6 +1582,61 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c10.close();
 }
 
+// ═══ 🧠 LE BLOC PERSONNEL EST STABLE — la mémoire n'est plus dedans (ft-v819) ════════════
+// L'explication qui manquait à ft-v816 : le pari du cache 1 h n'a pas échoué parce que « le
+// bloc personnel change par nature », mais parce qu'UNE LIGNE dedans changeait — la mémoire de
+// Milo, que l'app réécrit APRÈS CHAQUE MESSAGE. Un bloc caché se compare octet par octet :
+// une ligne qui bouge et c'est tout le bloc qui est réécrit (1,25×) au lieu d'être relu (0,1×).
+{
+  const c11=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p11=await c11.newPage();
+  await p11.goto('http://localhost:'+PORT+'/index.html'); await p11.waitForTimeout(2200);
+  const r=await p11.evaluate(()=>{
+   try{
+    const MK="═══ SITUATION DE L'INSTANT ═══";
+    const perso=t=>{const a=t.indexOf('PROFIL ATHLÈTE:'),b=t.indexOf(MK);return (a<0||b<0)?null:t.slice(a,b);};
+    S.name='Michel'; S.bw=84; S.age=45; S.height=178; S.gender='H'; S.goal='muscle';
+    S.sessions=[]; for(let i=0;i<12;i++)S.sessions.push({date:'2026-08-0'+((i%9)+1),vol:3200,
+      exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}]});
+    if(typeof coachHistory!=='undefined'){coachHistory.length=0;
+      coachHistory.push({role:'user',content:'a'},{role:'assistant',content:'b'},
+                        {role:'user',content:'c'},{role:'assistant',content:'d'});}
+    S.coachMemory="Michel vise la prise de muscle. Séance dos lundi.";
+    const A=buildCoachContext('fais-moi une séance jambes');
+    const B=buildCoachContext("j'ai mal dormi cette nuit");
+    S.coachMemory="Michel vise la prise de muscle. Séance dos lundi. Il a demandé un point cardio.";
+    const C=buildCoachContext('fais-moi une séance jambes');
+    return {
+      stableEntreSujets: perso(A)===perso(B),
+      stableApresMemoire: perso(A)===perso(C),
+      memoireHorsDuBloc: perso(A).indexOf('MÉMOIRE CONVERSATIONS')<0,
+      // la mémoire ne doit plus être dans le contexte du tout : le serveur l'ajoute lui-même,
+      // et l'avoir aux deux endroits la faisait lire DEUX FOIS par Milo (R2).
+      memoireAbsenteDuContexte: A.indexOf('MÉMOIRE CONVERSATIONS')<0,
+      tailleBloc: perso(A).length
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ CACHE : le bloc PERSONNEL ne bouge plus quand la mémoire de Milo est mise à jour',
+    r.stableApresMemoire===true,
+    'il change encore → il sera réécrit à chaque message au lieu d\'être relu 10× moins cher');
+  t('⭐ CACHE : … et il ne dépend toujours pas du sujet du message',
+    r.stableEntreSujets===true, JSON.stringify(r));
+  t('⭐ la mémoire de Milo est SORTIE du bloc caché',
+    r.memoireHorsDuBloc===true, JSON.stringify(r));
+  t('⭐ … et elle n\'est plus EN DOUBLE (le serveur l\'ajoute, le contexte ne la porte plus)',
+    r.memoireAbsenteDuContexte===true,
+    'elle est encore dans buildCoachContext → Milo la lit deux fois');
+  {
+    const w = fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+    t('⭐⭐ SERVEUR : la mémoire est ajoutée au bloc NON caché, pas au bloc personnel',
+      /slice\(_pi,\s*_mi\),\s*cache_control:\s*_TTL_PERSO/.test(w)
+      && /slice\(_mi\)\s*\+\s*\(memory/.test(w),
+      'la mémoire est revenue dans le bloc caché — elle le fera réécrire à chaque message');
+  }
+  await c11.close();
+}
+
 // ═══ MILO PROPOSE UNE SÉANCE ALORS QU'UNE SÉANCE EST DÉJÀ EN COURS (ft-v750) ═══
 // Retour de Michel EN PLEINE SÉANCE : « je lui ai demandé de changer l'exercice, il me propose
 // bien une nouvelle séance mais ça ne met pas à jour la séance actuelle ». Le bouton ne savait

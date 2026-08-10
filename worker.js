@@ -374,13 +374,24 @@ async function coach(body, apiKey) {
   // ⚠️ RÈGLE À RETENIR : allonger un cache ne sert que si le contenu est STABLE. Si le contenu
   // bouge, un TTL long AGGRAVE. Le bloc commun est stable (il a tenu) ; le bloc personnel, non.
   const _TTL_PERSO  = { type: 'ephemeral' };
+  // 🧠 LA MÉMOIRE DE MILO SORT DU BLOC CACHÉ (10/08/2026) — c'est ELLE qui le faisait changer.
+  // Mesuré dans l'app : le bloc personnel est identique d'un SUJET à l'autre, mais différent
+  // dès que `coachMemory` bouge — or l'app la réécrit APRÈS CHAQUE MESSAGE (le petit résumé
+  // Haiku). Un bloc mis en cache est comparé octet par octet : une mémoire qui change à chaque
+  // tour rendait le bloc entier non réutilisable, donc réécrit à 1,25× au lieu d'être relu à 0,1×.
+  // 👉 C'est l'explication qui manquait à ft-v816 : le pari du cache 1 h n'a pas échoué parce
+  //    que « le personnel change par nature », mais parce qu'UNE LIGNE dedans changeait.
+  // La mémoire part donc dans le 3ᵉ bloc (jamais caché) : elle est courte (2-3 phrases), la
+  // payer plein tarif ne coûte presque rien, et le bloc personnel redevient réutilisable.
+  // ⚠️ Elle n'est plus dans `ctx` non plus (retirée de buildCoachContext) : elle y était EN
+  //    DOUBLE — une fois dans le contexte, une fois ajoutée ici. Milo la lisait deux fois (R2).
   const _pi = String(ctx).indexOf('PROFIL ATHLÈTE:');
   let system;
   if (_mi > 1000 && _pi > 1000 && _pi < _mi) {
     system = [
       { type: 'text', text: String(ctx).slice(0, _pi), cache_control: _TTL_COMMUN },                    // commun à TOUS — 1 h
-      { type: 'text', text: String(ctx).slice(_pi, _mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : ''), cache_control: _TTL_PERSO },  // propre à la personne — 5 min (le 1 h a été essayé et perdu, voir ⛔)
-      { type: 'text', text: String(ctx).slice(_mi) }                                                    // l'instant, jamais caché
+      { type: 'text', text: String(ctx).slice(_pi, _mi), cache_control: _TTL_PERSO },                   // propre à la personne — 5 min, et STABLE depuis le 10/08 (voir 🧠 ci-dessus)
+      { type: 'text', text: String(ctx).slice(_mi) + (memory ? '\n\nMÉMOIRE CONVERSATIONS PRÉCÉDENTES:\n' + memory + '\n\n' : '') }  // l'instant + la mémoire, jamais cachés
     ];
   } else if (_mi > 1000) {
     system = [
