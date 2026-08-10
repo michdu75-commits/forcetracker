@@ -50,6 +50,38 @@ Ils se font **des deux façons** selon la personne ou la salle. Plutôt que de c
 - **Soulevé de Terre Valise (Suitcase)** — charge d'un seul côté, mais les deux jambes poussent :
   est-ce qu'on double le volume ou pas ?
 
+### 🔁 PLUS LARGE QUE L'UNILATÉRAL : le poids d'UN haltère ou le TOTAL ? (ajouté le 10/08, Michel)
+
+Michel élargit : *« il n'y aura pas que celui-ci, les biceps c'est pareil, je mettais 8 reps à
+60 kilos, comme pour le développé incliné aussi c'est 60 kilos en tout »*. Donc **tous** les
+exercices aux haltères sont concernés, pas seulement les unilatéraux.
+
+**⚠️ MAIS CE SONT DEUX PROBLÈMES DIFFÉRENTS, et un seul est une erreur :**
+
+| Cas | Ce qu'il note | Est-ce faux ? |
+|---|---|---|
+| **Développé Incliné Haltères** — les deux bras poussent **en même temps** | 60 kg (= 30 + 30) | **Non.** Ses pectoraux poussent bien 60 kg au même instant, exactement comme une barre de 60. Le chiffre est comparable. |
+| **Rowing Haltère** — un bras **à la fois** | 56 kg (= 28 × 2) | **Oui.** Son dos n'a jamais tenu 56 kg à un seul moment. **Ce chiffre n'existe pas.** |
+| **Curl Haltères** — les deux bras ensemble ou en alternance ? | 60 kg | **Ça dépend de comment il le fait.** À trancher. |
+
+**Donc il y a une question de FOND, et c'est la sienne** :
+
+> **Quand tu notes un exercice aux haltères, tu écris le poids d'UN haltère (30) ou le total (60) ?**
+
+Les deux conventions existent, aucune n'est bête :
+- **le poids d'un haltère (30)** = ce qui est **écrit sur l'haltère**, donc rien à calculer à la
+  salle, et c'est ce que disent la plupart des applis ; mais le volume total est faux si on ne
+  double pas derrière ;
+- **le total (60)** = comparable à une barre, mais il faut faire le calcul de tête à chaque série,
+  et ça ne marche plus dès que l'exercice est **unilatéral** (cas du Rowing).
+
+**Ce que ça implique quoi qu'il arrive** : Milo doit parler la **même** langue. S'il écrit
+« prends 30 kg » et que Michel note 60, ils ne parlent pas du même objet — et l'app non plus.
+
+**⚠️ Et ça touche ce qu'on vient de livrer (ft-v823)** : la montée en charge est calculée **sur la
+charge notée**. Sur un exercice unilatéral noté en total, elle raisonne sur un poids qui n'existe
+pas. Un de plus pour la liste des choses branchées sur cette donnée.
+
 ### ⚠️ Et l'historique déjà saisi
 
 Ses anciennes séances de Rowing Haltère sont notées avec la charge **des deux côtés additionnée**
