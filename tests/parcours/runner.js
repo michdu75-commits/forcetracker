@@ -1642,7 +1642,56 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     'elle est encore dans buildCoachContext → Milo la lit deux fois');
   {
     const w = fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
-    t('⭐⭐ SERVEUR : la mémoire est ajoutée au bloc NON caché, pas au bloc personnel',
+    // ⚠️⚠️ LES RENVOIS DU PROMPT DOIVENT POINTER DANS LE BON SENS (trouvé le 10/08).
+  // Le 08/08, en coupant le prompt en [commun][personnel] pour le mettre en cache, les
+  // CONSIGNES sont passées AU-DESSUS des DONNÉES. Personne n'a relu les renvois : trois
+  // d'entre eux disaient encore « ci-dessus » / « plus haut » alors que leur cible était
+  // 131 lignes PLUS BAS — dont les deux règles anti-invention (« tout ce que tu affirmes sur
+  // elle doit venir des données ci-dessus ») et la règle de sécurité sur les blessures.
+  // *Une consigne qui envoie Milo chercher au mauvais endroit est une consigne affaiblie* —
+  // c'est le miroir de R8 : un prompt qui cite une source introuvable.
+  // Ce témoin vérifie la DIRECTION de chaque renvoi nommé, pour que ça ne repasse pas.
+  {
+    const rr = await (async()=>{
+      const cxx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+      const pp=await cxx.newPage();
+      await pp.goto('http://localhost:'+PORT+'/index.html'); await pp.waitForTimeout(2000);
+      const out=await pp.evaluate(()=>{
+        S.name='Michel';S.bw=84;S.age=45;S.height=178;S.gender='H';S.goal='muscle';
+        S.healthProfile={injuries:[{zone:'epaule',side:'D'}]};   // pour que PROFIL SANTÉ existe
+        S.sessions=[];for(let i=0;i<12;i++)S.sessions.push({date:'2026-08-0'+((i%9)+1),vol:3200,
+          exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}]});
+        const L=buildCoachContext('fais-moi une séance jambes').split('\n');
+        const ou=s=>L.findIndex(l=>l.indexOf(s)>=0);
+        const CIBLES={'PROFIL ATHLÈTE':ou('PROFIL ATHLÈTE:'),'PROFIL SANTÉ':ou('⚠️ PROFIL SANTÉ'),
+                      'CALENDRIER':ou('CALENDRIER'),'PERMISSIONS BORNÉES':ou('PERMISSIONS BORNÉES')};
+        const faux=[];
+        L.forEach((l,i)=>{
+          const m=/(ci-dessus|plus haut|plus bas|ci-dessous)/i.exec(l); if(!m)return;
+          const versLeHaut = /ci-dessus|plus haut/i.test(m[1]);
+          const avant=l.slice(Math.max(0,m.index-90), m.index);
+          for(const nom in CIBLES){
+            const pos=CIBLES[nom]; if(pos<0)continue;
+            // la cible est-elle NOMMÉE juste avant le renvoi ? ⚠️ « les données ci-dessus » ne
+            // nomme rien : c'est pourtant LE cas qui a été trouvé le 10/08 (les deux règles
+            // anti-invention). On le rattache donc explicitement au PROFIL ATHLÈTE.
+            const nommee = avant.indexOf(nom)>=0
+              || (nom==='PROFIL ATHLÈTE' && /\b(les|des) donn[ée]es\s*$/i.test(avant));
+            if(!nommee)continue;
+            if(pos===i)continue;                       // le renvoi et le titre sur la même ligne
+            const ok = versLeHaut ? (pos<i) : (pos>i);
+            if(!ok) faux.push(nom+' : « '+m[1]+' » ligne '+i+' mais la cible est ligne '+pos);
+          }
+        });
+        return {faux, cibles:CIBLES};
+      });
+      await cxx.close(); return out;
+    })();
+    t('⭐⭐ PROMPT : tous les renvois « ci-dessus / plus bas » pointent dans le BON SENS',
+      Array.isArray(rr.faux) && rr.faux.length===0,
+      'renvois à l\'envers : '+JSON.stringify(rr.faux)+' · positions '+JSON.stringify(rr.cibles));
+  }
+  t('⭐⭐ SERVEUR : la mémoire est ajoutée au bloc NON caché, pas au bloc personnel',
       /slice\(_pi,\s*_mi\),\s*cache_control:\s*_TTL_PERSO/.test(w)
       && /slice\(_mi\)\s*\+\s*\(memory/.test(w),
       'la mémoire est revenue dans le bloc caché — elle le fera réécrire à chaque message');
