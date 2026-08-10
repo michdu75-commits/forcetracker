@@ -1539,3 +1539,45 @@ ici : le **domaine** (§ en-têtes `no-cache` le jour du domaine) et le **nom** 
 Tracker*, un logiciel de gestion de techniciens, et *blue force tracking*, un terme militaire —
 autres secteurs, aucun conflit). Le vrai sujet n'est pas légal, il est d'**être trouvé** : deux
 mots très courants, noyés parmi Strong / StrongLifts / RepCount.
+
+---
+
+## 💰 DÉPLACER LES CONSIGNES GÉNÉRIQUES DU PAQUET PERSO VERS LE PAQUET COMMUN (mesuré le 10/08/2026)
+
+**Ce qu'on a trouvé** (fouille demandée par Michel, mesurée dans l'app) : **1 278 tokens de
+consignes strictement génériques** sont rangés dans le bloc PERSONNEL du prompt — donc réécrits
+**pour chaque personne, chaque matin**, au lieu d'être déposés **une fois pour tout le monde**.
+
+| Morceau | car | tokens |
+|---|---|---|
+| MÉTHODE DE COACHING | 1 407 | 485 |
+| PROFIL ATHLÈTE (la consigne, pas les données) | 746 | 257 |
+| OBJECTIFS FIXÉS (la consigne) | 740 | 255 |
+| DERNIÈRES SÉANCES (la consigne) | 650 | 224 |
+| CHECK-IN · POIDS · RECORDS (consignes) | 164 | 57 |
+
+**⚠️ NE PAS LE FAIRE MAINTENANT — ce serait une PERTE.** Le bloc commun est gardé **1 h**
+(écriture à 2×), le bloc perso **5 min** (écriture à 1,25×). Tant qu'il n'y a **qu'un
+utilisateur**, déplacer coûte plus cher (0,23 $/mois contre 0,14 $).
+**Le point de bascule est à 2 utilisateurs** ; le gain devient réel à partir de 10 :
+
+| | laisser | déplacer |
+|---|---|---|
+| 1 utilisateur | **0,14 $/mois** | 0,23 $/mois |
+| 10 utilisateurs | 1,44 $/mois | **0,23 $/mois** |
+| 100 utilisateurs | 14,38 $/mois | **0,23 $/mois** |
+
+**⚠️ ET CE N'EST PAS UN COPIER-COLLER.** Ces consignes sont collées à leurs données **exprès** :
+« Aucun objectif chiffré fixé » est suivi de « quand il parle d'objectif, appuie-toi sur **ces
+cibles** ». Déplacer la consigne loin de la donnée casse le renvoi (R8 : un prompt ne compense
+jamais une donnée absente — ici c'est le miroir, une consigne qui pointe vers un vide). Il faut
+**reformuler chaque renvoi**, un par un, avec le noyau dur en vert à chaque étape.
+
+**⏭️ Déclencheur** : le jour où l'app a plus de 2 utilisateurs actifs par jour. Avant, ça coûte.
+
+**⭐ ET IL Y A PLUS GROS À CÔTÉ, non chiffré ici** : le **catalogue d'exercices** (3 183 tokens)
+est dans le bloc perso **parce qu'il est filtré par lieu d'entraînement**. On pourrait envoyer la
+liste COMPLÈTE dans le bloc commun (partagée par tous) et ne garder dans le perso qu'une ligne
+« voici les bacs qu'il peut utiliser ». ⚠️ Risque à évaluer : Milo verrait des exercices que la
+personne ne peut pas faire, et pourrait les proposer — c'est exactement ce que le filtre par lieu
+évite aujourd'hui. À ne tenter qu'avec des témoins solides.
