@@ -1674,6 +1674,64 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c12.close();
 }
 
+// ═══ 📣 LE VERDICT DE LA MONTÉE ARRIVE JUSQU'À MILO (ft-v823) ═══════════════════════════
+// Le soir du 10/08, Milo débriefe la vraie séance de Michel : « la montée en charge était propre
+// (70→100→115→130) ». L'app savait le contraire — `_monteeSuffisante` répond false sur EXACTEMENT
+// ces chiffres. Le calcul existait depuis le matin, il n'atteignait simplement pas ce qu'on envoie
+// à Milo (5ᵉ fois que R4 se répète : l'app SAIT, mais l'info reste dans le code).
+{
+  const c13=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p13=await c13.newPage();
+  await p13.goto('http://localhost:'+PORT+'/index.html'); await p13.waitForTimeout(2200);
+  const r=await p13.evaluate(()=>{
+   try{
+    const D=(d,exs)=>({date:d,vol:5000,exs:exs});
+    const S1=(kg,reps,type)=>({kg:kg,reps:reps,done:true,type:type||'N'});
+    // ① la séance RÉELLE du 10/08 : trou de 23 % entre 70 et 100, et 3 reps à 88 %
+    const michel=D('2026-08-10',[{name:'Soulevé de Terre',sets:[
+      S1(70,5,'É'),S1(100,3,'É'),S1(115,3,'É'),S1(130,3),S1(130,3),S1(130,3)]}]);
+    // ② une montée PROPRE sur la même charge → aucune remarque attendue
+    const propre=D('2026-08-09',[{name:'Squat à la Barre',sets:
+      _monteeEnCharge(130).map(x=>S1(x.kg,x.reps,'É')).concat([S1(130,3),S1(130,3)])}]);
+    // ③ AUCUN échauffement noté → on se TAIT (elle s'est peut-être échauffée sans le noter)
+    const muet=D('2026-08-08',[{name:'Développé Couché',sets:[S1(100,5),S1(100,5)]}]);
+    // ④ isolation lourde → hors périmètre (un curl n'a pas de montée en 4 paliers)
+    const iso=D('2026-08-07',[{name:'Curl Barre',sets:[S1(30,10,'É'),S1(50,10),S1(50,10)]}]);
+    const ctx=t=>{S.sessions=[t];return buildCoachContext();};
+    // ⚠️ On ne garde QUE les lignes de séances : la consigne juste en dessous CITE le marqueur
+    // (« quand une ligne porte ⚠️ montée en charge insuffisante… ») — une fenêtre trop large
+    // le trouvait donc TOUJOURS, et les 3 témoins « on se tait » passaient au vert à tort.
+    const bloc=t=>{const c=ctx(t);const i=c.indexOf('DERNIÈRES SÉANCES:');if(i<0)return '';
+      const s=c.slice(i+18); const j=s.indexOf('\n→'); return j<0?s:s.slice(0,j);};
+    return {
+      michel: /montée en charge insuffisante/.test(bloc(michel)),
+      michelDetail: (bloc(michel).match(/saut de \d+ % entre 70 et 100 kg/)||[''])[0],
+      michelReps:   /3 reps à 115 kg/.test(bloc(michel)),
+      propre: /montée en charge insuffisante/.test(bloc(propre)),
+      muet:   /montée en charge insuffisante/.test(bloc(muet)),
+      iso:    /montée en charge insuffisante/.test(bloc(iso)),
+      // la consigne qui dit à Milo quoi en faire
+      consigne: /MONTÉE EN CHARGE[\s\S]{0,400}JAMAIS écrire que la montée était propre/.test(ctx(michel))
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('⭐⭐ LA SÉANCE RÉELLE DU 10/08 est signalée à Milo (il avait écrit « montée propre »)',
+    r.michel===true, JSON.stringify(r));
+  t('⭐ … et le DÉFAUT est nommé, pas juste signalé (« saut de 23 % entre 70 et 100 kg »)',
+    r.michelDetail==='saut de 23 % entre 70 et 100 kg', 'reçu : '+JSON.stringify(r.michelDetail));
+  t('⭐ … y compris les 3 reps à 88 % de la charge (c\'est déjà une série de travail)',
+    r.michelReps===true, JSON.stringify(r));
+  t('⭐ une montée PROPRE ne reçoit AUCUNE remarque (sinon Milo commente pour rien)',
+    r.propre===false, JSON.stringify(r));
+  t('⭐⭐ AUCUN échauffement noté → l\'app se TAIT (R29 : on ne juge que ce qu\'on voit)',
+    r.muet===false, JSON.stringify(r));
+  t('⭐ un mouvement d\'ISOLATION reste hors périmètre',
+    r.iso===false, JSON.stringify(r));
+  t('⭐ la consigne dit à Milo de ne JAMAIS écrire « montée propre » sur une ligne marquée',
+    r.consigne===true, JSON.stringify(r));
+  await c13.close();
+}
+
 // ═══ 🧠 LE BLOC PERSONNEL EST STABLE — la mémoire n'est plus dedans (ft-v819) ════════════
 // L'explication qui manquait à ft-v816 : le pari du cache 1 h n'a pas échoué parce que « le
 // bloc personnel change par nature », mais parce qu'UNE LIGNE dedans changeait — la mémoire de

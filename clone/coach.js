@@ -1838,6 +1838,30 @@ function buildCoachContext(msg) {
   // semaine en arrière », alors que la mémoire longue lui donne le parcours depuis l'inscription).
   // D'où ces 2 repères, utilisés dans le prompt juste sous la liste : combien il en voit, et
   // depuis quand. Deux sources qui se contredisent → il croit toujours la plus restrictive.
+  // ⚡ LE VERDICT DE LA MONTÉE EN CHARGE (10/08/2026) — la 5ᵉ fois que R4 se répète.
+  // Le 10/08, Milo a débriefé la séance de Michel en écrivant « la montée en charge était propre
+  // (70→100→115→130) ». L'app, elle, SAVAIT le contraire : `_monteeSuffisante` répond false
+  // sur exactement ces chiffres (saut de 23 % entre 70 et 100, et 3 reps à 88 %). Le calcul
+  // existait, il n'atteignait simplement pas ce qu'on envoie à Milo — qui ne voyait que des
+  // charges brutes et n'avait aucun moyen de s'en apercevoir.
+  // ⚠️ ON NE JUGE QUE CE QU'ON VOIT : sans la moindre série d'échauffement notée, on se TAIT.
+  // Une personne qui s'échauffe sans le noter se ferait sinon reprocher un manquement imaginaire
+  // à chaque exercice lourd (R29 : le droit de deviner dépend du coût de l'erreur).
+  const _verdictMontee = (e, doneSets) => {
+    try{
+      if(typeof _monteeDefauts !== 'function') return '';
+      const ech = (doneSets||[]).filter(x => x && (x.type==='É' || x.type==='W'));
+      if(!ech.length) return '';
+      const travail = (doneSets||[]).filter(x => x && x.type!=='É' && x.type!=='W');
+      if(!travail.length) return '';
+      const kgT = travail.reduce((m,x)=>Math.max(m, +x.kg||0), 0);
+      if(!(kgT >= (typeof _MONTEE_SEUIL_KG!=='undefined' ? _MONTEE_SEUIL_KG : 40))) return '';
+      let pat=null; try{ pat=_movPattern(e.name); }catch(err){}
+      if(typeof _MOV_MONTEE!=='undefined' && _MOV_MONTEE.indexOf(pat) < 0) return '';
+      const d = _monteeDefauts(ech, kgT);
+      return d.length ? ` [⚠️ montée en charge insuffisante — ${d.join(' ; ')}]` : '';
+    }catch(err){ return ''; }
+  };
   const _NB_DETAIL = 5;
   const _sessVues = S.sessions.slice(0, _NB_DETAIL);
   const _nbTotalSess = (S.sessions||[]).length;
@@ -1848,7 +1872,7 @@ function buildCoachContext(msg) {
       const setsStr = ds.length
         ? ds.map(x => `${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(' ')
         : '—';
-      return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}`;
+      return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}${_verdictMontee(e, ds)}`;
     }).join(' · ');
     // Le CARDIO de la séance (mesuré le 02/08 : il n'était PAS transmis — Milo ignorait
     // 25 min de tapis notées après la muscu). Les deux moments sont nommés, parce qu'un
@@ -2212,6 +2236,7 @@ ${wktText}
 DERNIÈRES SÉANCES:
 ${recentSessions}
 → ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans SA MÉMOIRE LONGUE plus bas. ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
+→ ⚡ MONTÉE EN CHARGE : quand une ligne porte « ⚠️ montée en charge insuffisante », ce n'est PAS une opinion, c'est un CALCUL de l'application (paliers de 10-15 %, départ à 40-50 %, dernier palier 5-10 % sous la charge, pas plus de 2 reps au-delà de 85 %). Tu ne dois JAMAIS écrire que la montée était propre sur un exercice ainsi marqué — dis-le franchement, explique le risque en une phrase (un saut de charge trop grand, c'est là qu'on se blesse) et donne les paliers manquants pour la prochaine fois. À l'inverse, une ligne SANS ce marqueur n'appelle aucune remarque sur l'échauffement.
 → Parmi ces séances, chacune a bien été FAITE (avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si un jour COMPRIS DANS LA PÉRIODE ci-dessus n'a aucune séance listée, ce jour était un REPOS : dis-le tel quel. ⚠️ Mais ne conclus JAMAIS « repos » pour un jour PLUS ANCIEN que cette période — tu ne l'as pas sous les yeux, ce n'est pas la même chose que ne rien avoir fait. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
 ${(()=>{
   // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :
@@ -2831,7 +2856,9 @@ async function _maybeAutoDebrief(){
     +'signale un éventuel record ou une progression vs les fois précédentes, et propose UNE piste pour la prochaine fois. '
     +'⚠️ Cette piste doit aller dans le sens de MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
     +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
-    +'reflète ce que tu observes et demande-moi ma priorité. Court, direct, motivant. Ne me redemande JAMAIS mes charges.'
+    +'reflète ce que tu observes et demande-moi ma priorité. Court, direct, motivant. Ne me redemande JAMAIS mes charges. '
+    +'⚡ Et si un exercice de cette séance porte « ⚠️ montée en charge insuffisante », DIS-LE dans le débrief (c\'est un calcul de l\'app, pas un avis) : '
+    +'ce qui manquait, pourquoi c\'est un risque de blessure, et les paliers à faire la prochaine fois.'
     +_DEBRIEF_CONTINUITY+_DEBRIEF_MEM_TAIL;
   const ok = await sendToCoach(instr, null, {silent:true, noQuota:true, debriefSess: pid});
   if(!ok){ try{ localStorage.setItem('ft4_pending_debrief', pid); }catch(e){} } // échec réseau → on réarme

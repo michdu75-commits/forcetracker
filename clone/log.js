@@ -1161,19 +1161,42 @@ function _monteeEnCharge(kgTravail, pas){
  * et 100, et 3 reps à 88 % de la charge. On vérifie donc CHAQUE écart, et les reps du haut.
  */
 function _monteeSuffisante(echauffements, kgTravail){
+  return _monteeDefauts(echauffements, kgTravail).length === 0;
+}
+
+/**
+ * Les DÉFAUTS de la montée, en clair. Même règle que ci-dessus — une seule fois écrite (R2) :
+ * `_monteeSuffisante` n'est plus qu'un « aucun défaut ». Sert deux choses :
+ *   ① décider s'il faut rectifier une séance proposée (`_completerMonteeEnCharge`) ;
+ *   ② DIRE à Milo ce qui n'allait pas (coach.js) — sinon il ne voit que des charges brutes et
+ *      écrit « la montée était propre » alors que l'app sait qu'elle ne l'était pas.
+ *      C'est le motif R4 : l'app SAIT, mais l'info n'atteint jamais la donnée qu'on lui envoie.
+ * @returns {string[]} — vide si la montée est bonne
+ */
+function _monteeDefauts(echauffements, kgTravail){
   const T = +kgTravail || 0;
+  const out = [];
+  if(!(T > 0)) return out;
+  const pct = k => Math.round(100*k/T);
   const paliers = (echauffements||[]).map(s=>+s.kg||0).filter(k=>k>0).sort((a,b)=>a-b);
-  if(!paliers.length) return false;
-  if(paliers[0] > 0.55*T) return false;                    // on ne démarre pas assez bas
+  if(!paliers.length) return ['aucune montée en charge avant '+T+' kg'];
+  if(paliers[0] > 0.55*T){                                  // on ne démarre pas assez bas
+    out.push('démarrage à '+paliers[0]+' kg, soit '+pct(paliers[0])+' % de la charge (viser 40-50 %)');
+  }
   const suite = paliers.concat([T]);
   for(let i=1;i<suite.length;i++){
-    if((suite[i]-suite[i-1])/T > 0.18) return false;        // un écart de plus de 18 % = un trou
+    if((suite[i]-suite[i-1])/T > 0.18){                     // un écart de plus de 18 % = un trou
+      out.push('saut de '+pct(suite[i]-suite[i-1])+' % entre '+suite[i-1]+' et '+suite[i]+' kg (paliers de 10-15 %)');
+    }
   }
   // au-delà de 85 % de la charge, plus de 2 reps ce n'est plus un échauffement (fatigue inutile)
   for(const s of (echauffements||[])){
-    if((+s.kg||0) >= 0.85*T && (+s.reps||0) > 2) return false;
+    const k = +s.kg||0, r = +s.reps||0;
+    if(k >= 0.85*T && r > 2){
+      out.push(r+' reps à '+k+' kg = '+pct(k)+' % de la charge : c\'est déjà une série de travail');
+    }
   }
-  return true;
+  return out;
 }
 
 /**
