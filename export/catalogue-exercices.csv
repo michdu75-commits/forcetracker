@@ -1,0 +1,363 @@
+id,nom,groupe,muscles_primaires,muscles_secondaires,pattern,met,unilateral,image_url
+developpe-couche,Développé Couché,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche.webp
+developpe-couche-halteres,Développé Couché Haltères,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-halteres-exercice-musculation.webp
+developpe-incline,Développé Incliné,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-barre.webp
+developpe-incline-halteres,Développé Incliné Haltères,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-halteres-exercice-musculation.webp
+developpe-decline,Développé Décliné,Pectoraux,pec,triceps|front-delt,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-decline-barre.webp
+developpe-decline-halteres,Développé Décliné Haltères,Pectoraux,pec,triceps|front-delt,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-decline-halteres.webp
+ecarte-halteres,Écarté Haltères,Pectoraux,pec,front-delt,poussee-horizontale,4,false,
+ecarte-poulie,Écarté Poulie,Pectoraux,pec,front-delt,poussee-horizontale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp
+croise-poulie-cable-crossover,Croisé Poulie (Cable Crossover),Pectoraux,pec,front-delt,poussee-horizontale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/ecartes-poulie-vis-a-vis.webp
+pec-deck,Pec Deck,Pectoraux,pec,front-delt,poussee-horizontale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/pec-deck-butterfly-exercice-musculation.webp
+chest-press-machine-horizontale,Chest Press Machine Horizontale,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-machine-assis-pectoraux.webp
+chest-press-machine-inclinee,Chest Press Machine Inclinée,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-machine-convergente-exercice-musculation.webp
+chest-press-machine-declinee,Chest Press Machine Déclinée,Pectoraux,pec,triceps|front-delt,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chest-press-machine-declinee.webp
+dips,Dips,Pectoraux,pec|triceps,front-delt|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/dips-pectoraux.webp
+dips-paralleles,Dips Triceps (Buste Droit),Triceps,triceps,front-delt|pec|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/dips-triceps-paralleles.webp
+dips-machine-assistee,Dips Machine Assistée,Pectoraux,pec|triceps,front-delt,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/dips-assiste-machine.webp
+dips-assis-machine-seated-dip,Dips Assis Machine (Seated Dip),Pectoraux,pec|triceps,front-delt,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/dips-assis-machine-avec-poids.webp
+pompes-lestees,Pompes Lestées,Pectoraux,pec|triceps,front-delt|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pompes-lestees.webp
+pompes-deficit-deficit-push-up,Pompes Déficit (Deficit Push-up),Pectoraux,pec|triceps,front-delt|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pompes-deficit.webp
+pompes-diamant,Pompes Diamant,Pectoraux,triceps|pec,front-delt|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pompes-diamant.webp
+pompes-push-up,Pompes (Push-up),Pectoraux,pec|triceps,front-delt|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pompe-musculation.webp
+developpe-couche-avec-chaines,Développé Couché avec Chaînes,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-avec-chaines.webp
+developpe-couche-larsen-larsen-press,Développé Couché Larsen (Larsen Press),Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-larsen.webp
+developpe-couche-unilateral-kettlebell,Développé Couché Unilatéral Kettlebell,Pectoraux,pec,front-delt|triceps|obliques|abs,poussee-horizontale,5.5,true,https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-unilateral-kettlebell.webp
+developpe-incline-poulie,Développé Incliné Poulie,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-poulie.webp
+developpe-couche-au-sol-floor-press,Développé Couché au Sol (Floor Press),Pectoraux,pec|triceps,front-delt,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-au-sol-floor-press.webp
+developpe-couche-elastique,Développé Couché Élastique,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-elastique.webp
+developpe-decline-elastique,Développé Décliné Élastique,Pectoraux,pec,triceps|front-delt,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-decline-elastique.webp
+ecarte-poulie-haute-a-genoux,Écarté Poulie Haute à Genoux,Pectoraux,pec,front-delt,poussee-horizontale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/ecarte-poulie-haute-a-genoux.webp
+ecarte-elastique,Écarté Élastique,Pectoraux,pec,front-delt,poussee-horizontale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/ecarte-elastique.webp
+ecarte-trx-sangles,Écarté TRX (Sangles),Pectoraux,pec,front-delt|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/ecarte-trx-sangles.webp
+chest-press-trx-sangles,Chest Press TRX (Sangles),Pectoraux,pec,front-delt|triceps|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chest-press-trx-sangles.webp
+pompes-inclinees-trx-sangles,Pompes Inclinées TRX (Sangles),Pectoraux,pec|triceps,front-delt|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pompes-inclinees-trx-sangles.webp
+developpe-epaules-elastique,Développé Épaules Élastique,Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-elastique.webp
+developpe-epaules-assis-elastique,Développé Épaules Assis Élastique,Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-assis-elastique.webp
+developpe-epaules-unilateral-elastique,Développé Épaules Unilatéral Élastique,Épaules,front-delt,side-delt|triceps|traps|obliques|abs,poussee-verticale,5.5,true,https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-unilateral-elastique.webp
+elevations-laterales-unilaterale-poulie,Élévations Latérales Unilatérale Poulie,Épaules,side-delt,traps,elevation-epaules,4,true,https://michdu75-commits.github.io/forcetracker/exercises/elevations-laterales-unilaterale-poulie.webp
+oiseau-elastique,Oiseau Élastique,Épaules,rear-delt,side-delt|traps,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/oiseau-elastique.webp
+oiseau-inverse-trx-sangles,Oiseau Inversé TRX (Sangles),Épaules,rear-delt,side-delt|traps|abs,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/oiseau-inverse-trx-sangles.webp
+rotation-externe-epaule-poulie,Rotation Externe Épaule Poulie,Épaules,rear-delt,traps,elevation-epaules,4,true,https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-epaule-poulie.webp
+handstand-push-up-suspendu-sangles,Handstand Push-up Suspendu (Sangles),Épaules,front-delt,side-delt|triceps|traps|abs,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/handstand-push-up-suspendu.webp
+ecarte-incline-halteres,Écarté Incliné Haltères,Pectoraux,pec,front-delt,poussee-horizontale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/ecartes-incline-avec-halteres.webp
+ecarte-decline-halteres,Écarté Décliné Haltères,Pectoraux,pec,front-delt,poussee-horizontale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/ecartes-decline-avec-halteres.webp
+ecarte-hyght-hyght-fly,Écarté Hyght (Hyght Fly),Pectoraux,pec,front-delt,poussee-horizontale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/hyght-dumbell-fly.webp
+hex-press-smith-machine,Hex Press Smith Machine,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hex-press-a-la-smith-machine.webp
+chest-press-poulie-assis,Chest Press Poulie Assis,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chest-press-poulie-assis.webp
+svend-press-serrage-de-plaque,Svend Press (Serrage de Plaque),Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/svend-press.webp
+smith-machine-developpe-couche,Smith Machine Développé Couché,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-smith-machine.webp
+smith-machine-developpe-incline,Smith Machine Développé Incliné,Pectoraux,pec,front-delt|triceps,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/smith-machine-developpe-incline.webp
+souleve-de-terre,Soulevé de Terre,Dos,glutes|hamstrings|lower-back,quads|traps|forearms|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre.webp
+souleve-de-terre-sumo,Soulevé de Terre Sumo,Dos,glutes|quads|lower-back,hamstrings|traps|forearms|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo.webp
+tirage-en-rack-rack-pull,Tirage en Rack (Rack Pull),Dos,lower-back|glutes|traps,hamstrings|lats|forearms,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rack-pull.webp
+inclinaison-lombaire-good-morning,Inclinaison Lombaire (Good Morning),Fessiers,hamstrings|glutes|lower-back,abs,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/good-morning-exercice.webp
+rowing-barre-tirage-horizontal,Rowing Barre (Tirage Horizontal),Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-barre.webp
+rowing-haltere-tirage-horizontal,Rowing Haltère (Tirage Horizontal),Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,true,https://michdu75-commits.github.io/forcetracker/exercises/rowing-haltere-un-bras.webp
+rowing-cable-tirage-horizontal,Rowing Câble (Tirage Horizontal),Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-horizontal-poulie.webp
+rowing-yates-supination,Rowing Yates (Supination),Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-yates-barre.webp
+rowing-poitrine-appuyee-chest-supported,Rowing Poitrine Appuyée (Chest Supported),Dos,lats|traps,rear-delt|biceps|forearms,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-halteres-banc-incline-prise-neutre.webp
+rowing-machine-tirage-horizontal,Rowing Machine (Tirage Horizontal),Dos,lats|traps,rear-delt|biceps|forearms,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-assis-machine-prise-pronation.webp
+rowing-hammer-strength,Rowing Hammer Strength,Dos,lats|traps,rear-delt|biceps|forearms,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-assis-machine-hammer-strenght.webp
+tirage-poulie-haute-lat-pulldown,Tirage Poulie Haute (Lat Pulldown),Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-poitrine.webp
+tirage-poulie-haute-prise-serree,Tirage Poulie Haute Prise Serrée,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-prise-serree.webp
+tirage-nuque,Tirage Nuque,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,
+tirage-poulie-basse-prise-large,Tirage Poulie Basse Prise Large,Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-horizontal-prise-large.webp
+tirage-poulie-basse-prise-serree,Tirage Poulie Basse Prise Serrée,Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,
+traction-lestee,Traction Lestée,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/traction-lestee-vraie.webp
+traction-assistee,Traction Assistée,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/traction-assistee-machine.webp
+traction-prise-neutre,Traction Prise Neutre,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/traction-prise-neutre.webp
+pull-over,Pull-over,Dos,lats,pec|triceps,tirage-horizontal,5.5,false,
+pull-over-haltere,Pull-over Haltère,Dos,lats,pec|triceps,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pullover-haltere.webp
+pullover-machine,Pullover Machine,Dos,lats,pec|triceps,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/musculation-pull-over-assis-machine.webp
+pull-over-barre,Pull-over Barre,Dos,lats,pec|triceps,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pull-over-barre.webp
+pull-over-poulie,Pull-over Poulie,Dos,lats,pec|triceps,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pull-over-poulie.webp
+rowing-smith-machine,Rowing Smith Machine,Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-smith-machine.webp
+rowing-t-bar-machine,Rowing T-Bar Machine,Dos,lats|traps,rear-delt|biceps|forearms,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-t-bar-machine.webp
+rowing-landmine-t-bar,Rowing Landmine (T-Bar),Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-barre-t-landmine.webp
+rowing-halteres-buste-penche,Rowing Haltères Buste Penché,Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/bent-over-row-avec-halteres.webp
+meadows-row,Meadows Row,Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,true,https://michdu75-commits.github.io/forcetracker/exercises/rowing-unilateral-landmine-meadows-row.webp
+seal-row,Seal Row,Dos,lats|traps,rear-delt|biceps|forearms,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/seal-row-halteres.webp
+renegade-row,Renegade Row,Dos,lats|traps,rear-delt|biceps|forearms|abs|obliques,tirage-horizontal,5.5,true,https://michdu75-commits.github.io/forcetracker/exercises/renegade-row.webp
+tirage-iso-lateral-hammer-strength,Tirage Iso-Latéral Hammer Strength,Dos,lats|traps,rear-delt|biceps|forearms,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-avant-iso-laterale-hammer-strength.webp
+tirage-incline-poulie-haute,Tirage Incliné Poulie Haute,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-incline-poulie-haute.webp
+tirage-poulie-haute-prise-inversee,Tirage Poulie Haute Prise Inversée,Dos,lats|biceps,traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-prise-inversee.webp
+traction-derriere-la-nuque,Traction Derrière la Nuque,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/traction-barre-derriere-rear-oull-up.webp
+rocky-pull-up,Rocky Pull-up,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rocky-pull-up.webp
+sled-pull,Sled Pull,Dos,lats|traps,rear-delt|biceps|forearms,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/sled-pull.webp
+tractions-pull-up,Tractions (Pull-up),Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/traction-musculation-dos.webp
+traction-supination-chin-up,Traction Supination (Chin-up),Dos,lats|biceps,traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/traction-supination-chin-up.webp
+muscle-up,Muscle-up,Dos,lats|biceps,front-delt|pec|triceps|abs,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/muscle-up.webp
+tractions-aux-anneaux,Tractions aux Anneaux,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tractions-aux-anneaux.webp
+traction-australienne-poids-du-corps,Traction Australienne (Poids du Corps),Dos,lats|traps,rear-delt|biceps|forearms|abs,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/traction-australienne.webp
+traction-assistee-avec-banc,Traction Assistée avec Banc,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/traction-assistee-avec-banc.webp
+suspension-passive-dead-hang,Suspension Passive (Dead Hang),Dos,forearms,lats|traps,tirage-vertical,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/suspension-passive-dead-hang.webp
+rowing-inverse-sous-une-table,Rowing Inversé sous une Table,Dos,lats|traps,rear-delt|biceps|forearms|abs,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-inverse-sous-table.webp
+rowing-buste-penche-elastique,Rowing Buste Penché Élastique,Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-buste-penche-elastique.webp
+rowing-horizontal-elastique,Rowing Horizontal Élastique,Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-horizontal-elastique.webp
+rowing-unilateral-elastique,Rowing Unilatéral Élastique,Dos,lats|traps,rear-delt|biceps|forearms|lower-back,tirage-horizontal,5.5,true,https://michdu75-commits.github.io/forcetracker/exercises/rowing-unilateral-elastique.webp
+tirage-vertical-alterne-elastique,Tirage Vertical Alterné Élastique,Dos,lats,biceps|traps|rear-delt|forearms,tirage-vertical,5.5,true,https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-alterne-elastique.webp
+rowing-trx-sangles,Rowing TRX (Sangles),Dos,lats|traps,rear-delt|biceps|forearms|abs,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rowing-trx-sangles.webp
+traction-australienne-trx-sangles,Traction Australienne TRX (Sangles),Dos,lats|traps,rear-delt|biceps|forearms|abs,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/traction-australienne-trx-sangles.webp
+haussements-d-epaules-barre,Haussements d'Épaules Barre,Trapèzes,traps,forearms,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/shrug-barre.webp
+haussements-d-epaules-halteres,Haussements d'Épaules Haltères,Trapèzes,traps,forearms,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/shrugs-avec-halteres.webp
+haussements-d-epaules-cable,Haussements d'Épaules Câble,Trapèzes,traps,forearms,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/shrug-poulie-haussement-epaules.webp
+tirage-menton,Tirage Menton,Trapèzes,side-delt|traps,biceps|front-delt,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-menton-machine-guidee.webp
+farmer-s-walk,Farmer's Walk,Avant-bras,forearms|traps,abs|glutes|quads,porte,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/marche-du-fermier-avec-kettlebells.webp
+haussements-d-epaules-overhead,Haussements d'Épaules Overhead,Trapèzes,traps,forearms,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/overhead-shrug.webp
+developpe-militaire,Développé Militaire,Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-militaire-exercice-musculation.webp
+developpe-militaire-halteres,Développé Militaire Haltères,Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaule-halteres.webp
+developpe-halteres-assis,Développé Haltères Assis,Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-halteres-assis.webp
+developpe-arnold-arnold-press,Développé Arnold (Arnold Press),Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-arnold-exercice-musculation.webp
+developpe-epaules-machine,Développé Épaules Machine,Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/presse-epaule-exercice-musculation.webp
+smith-machine-developpe-militaire,Smith Machine Développé Militaire,Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-smith-machine.webp
+elevations-laterales-lateral-raise,Élévations Latérales (Lateral Raise),Épaules,side-delt,traps,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevations-laterales-exercice-musculation.webp
+elevations-laterales-cable,Élévations Latérales Câble,Épaules,side-delt,traps,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevations-laterales-poulie.webp
+elevations-laterales-machine,Élévations Latérales Machine,Épaules,side-delt,traps,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-machine.webp
+elevations-frontales,Élévations Frontales,Épaules,front-delt,side-delt,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevations-frontales-exercice-musculation.webp
+elevations-frontales-cable,Élévations Frontales Câble,Épaules,front-delt,side-delt,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevation-frontale-poulie-basse.webp
+elevations-frontales-machine,Élévations Frontales Machine,Épaules,front-delt,side-delt,elevation-epaules,4,false,
+oiseau,Oiseau,Épaules,rear-delt,side-delt|traps,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/oiseau-assis-sur-banc.webp
+machine-oiseau,Machine Oiseau,Épaules,rear-delt,side-delt|traps,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pec-deck-inverse.webp
+tirage-visage-face-pull,Tirage Visage (Face Pull),Épaules,rear-delt,side-delt|traps|biceps,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/face-pull.webp
+tirage-menton-kettlebell,Tirage Menton Kettlebell,Épaules,side-delt|traps,biceps|front-delt,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-menton-avec-kettlebell.webp
+y-raise-w-raise,Y Raise / W Raise,Épaules,traps|rear-delt,,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevation-en-y-a-la-poulie.webp
+developpe-nuque,Développé Nuque,Épaules,front-delt|side-delt,triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-nuque-barre-guidee.webp
+developpe-epaules-kettlebell,Développé Épaules Kettlebell,Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaule-avec-kettlebell.webp
+developpe-landmine-epaules,Développé Landmine (Épaules),Épaules,front-delt,pec|triceps|traps|abs,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/developpe-landmine.webp
+ecarte-arriere-elastique,Écarté Arrière Élastique,Épaules,rear-delt,side-delt|traps,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/ecarte-arriere-elastique.webp
+elevation-frontale-allongee-barre,Élévation Frontale Allongée Barre,Épaules,front-delt,side-delt,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevation-frontale-allongee-a-la-barre.webp
+elevation-laterale-poulie-inclinee,Élévation Latérale Poulie Inclinée,Épaules,side-delt,traps,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-a-la-poulie-en-inclinaison.webp
+elevation-laterale-landmine,Élévation Latérale Landmine,Épaules,side-delt,traps,elevation-epaules,4,true,https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-landmine-exercice-musculation.webp
+elevations-laterales-kettlebell,Élévations Latérales Kettlebell,Épaules,side-delt,traps,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterales-avec-kettlebell.webp
+rotation-interne-epaule-elastique,Rotation Interne Épaule Élastique,Épaules,front-delt,pec,elevation-epaules,4,true,https://michdu75-commits.github.io/forcetracker/exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp
+face-pull-couche-poulie,Face Pull Couché Poulie,Épaules,rear-delt,side-delt|traps|biceps,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/face-pull-couche-a-la-poulie.webp
+oiseau-poulie-45,Oiseau Poulie 45°,Épaules,rear-delt,side-delt|traps,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/oiseau-a-la-poulie-a-45.webp
+passage-d-epaule-elastique,Passage d'Épaule Élastique,Épaules,rear-delt,traps,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/passage-depaule-avec-elastique.webp
+rotation-externe-epaule-abduction,Rotation Externe Épaule Abduction,Épaules,rear-delt,traps,elevation-epaules,4,true,https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-de-epaule-en-abduction.webp
+rotation-externe-epaule-elastique,Rotation Externe Épaule Élastique,Épaules,rear-delt,traps,elevation-epaules,4,true,https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp
+rotation-interne-90-poulie,Rotation Interne 90° Poulie,Épaules,front-delt,pec,elevation-epaules,4,true,https://michdu75-commits.github.io/forcetracker/exercises/rotation-interne-a-90-a-la-poulie.webp
+elevation-frontale-banc-incline,Élévation Frontale Banc Incliné,Épaules,front-delt,side-delt,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevation-frontale-banc-incline.webp
+elevation-laterale-inclinee-haltere,Élévation Latérale Inclinée Haltère,Épaules,side-delt,traps,elevation-epaules,4,true,https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-incline-haltere.webp
+rotation-externe-epaule-haltere,Rotation Externe Épaule Haltère,Épaules,rear-delt,traps,elevation-epaules,4,true,https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-epaule-haltere.webp
+tirage-menton-elastique,Tirage Menton Élastique,Trapèzes,side-delt|traps,biceps|front-delt,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/tirage-menton-avec-elastique.webp
+thruster,Thruster,Full Body,quads|glutes|front-delt,triceps|abs|traps,poussee-verticale,8,false,https://michdu75-commits.github.io/forcetracker/exercises/thruster.webp
+thruster-kettlebell,Thruster Kettlebell,Full Body,quads|glutes|front-delt,triceps|abs|traps,poussee-verticale,8,false,https://michdu75-commits.github.io/forcetracker/exercises/thruster-kettlebell.webp
+russian-twist-developpe-epaules,Russian Twist Développé Épaules,Abdominaux,obliques|abs,front-delt|hip-flexors,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/russian-twist-avec-developpe-epaule.webp
+developpe-epaules-assis-machine-shoulder-pre,Développé Épaules Assis Machine (Shoulder Press),Épaules,front-delt,side-delt|triceps|traps,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/shoulder-press-machine.webp
+curl-barre,Curl Barre,Biceps,biceps,forearms,curl-biceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/curl-barre.webp
+curl-halteres,Curl Haltères,Biceps,biceps,forearms,curl-biceps,4,true,https://michdu75-commits.github.io/forcetracker/exercises/curl-halteres-alterne.webp
+curl-poulie,Curl Poulie,Biceps,biceps,forearms,curl-biceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/curl-poulie.webp
+curl-ez,Curl EZ,Biceps,biceps,forearms,curl-biceps,4,false,
+curl-incline,Curl Incliné,Biceps,biceps,forearms,curl-biceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/curl-haltere-incline.webp
+curl-concentre,Curl Concentré,Biceps,biceps,forearms,curl-biceps,4,true,https://michdu75-commits.github.io/forcetracker/exercises/curl-concentre.webp
+curl-araignee-spider-curl,Curl Araignée (Spider Curl),Biceps,biceps,forearms,curl-biceps,4,true,https://michdu75-commits.github.io/forcetracker/exercises/curl-araignee-spider.webp
+curl-zottman,Curl Zottman,Biceps,biceps|forearms,,curl-biceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/curl-zottman.webp
+marteau,Marteau,Biceps,biceps|forearms,,curl-biceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/curl-marteau.webp
+curl-pupitre-machine,Curl Pupitre Machine,Biceps,biceps,forearms,curl-biceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/curl-pupitre-machine.webp
+curl-pupitre-barre-ez-larry-scott,Curl Pupitre Barre EZ (Larry Scott),Biceps,biceps,forearms,curl-biceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/curl-pupitre-barre-ez-larry-scott.webp
+waiter-curl,Waiter Curl,Biceps,biceps,forearms,curl-biceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/waiter-curl.webp
+bench-dips,Bench Dips,Triceps,triceps,front-delt|pec,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/bench-dips-sur-banc.webp
+barre-au-front,Barre au Front,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/barre-au-front-triceps.webp
+skull-crusher-barre-ez,Skull Crusher Barre EZ,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/skull-crusher-barre-ez.webp
+extension-triceps,Extension Triceps,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-verticale-haltere.webp
+extension-triceps-couche-halteres,Extension Triceps Couché Haltères,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-couche-halteres.webp
+extension-nuque-haltere,Extension Nuque Haltère,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-nuque-haltere-assis.webp
+extension-nuque-poulie-haute,Extension Nuque Poulie Haute,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-nuque-poulie-haute-corde.webp
+triceps-poulie,Triceps Poulie,Triceps,triceps,,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/triceps-poulie-haute-barre.webp
+triceps-corde-poulie,Triceps Corde Poulie,Triceps,triceps,,extension-triceps,4,false,
+triceps-poulie-basse,Triceps Poulie Basse,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/triceps-poulie-basse-verticale.webp
+extension-triceps-arriere-kickback,Extension Triceps Arrière (Kickback),Triceps,triceps,rear-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/triceps-kickback-debout-halteres.webp
+triceps-machine,Triceps Machine,Triceps,triceps,,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/triceps-machine.webp
+dips-aux-anneaux,Dips aux Anneaux,Triceps,pec|triceps,front-delt|abs,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/dips-aux-anneaux.webp
+dips-entre-deux-bancs,Dips entre Deux Bancs,Triceps,triceps,front-delt|pec,poussee-horizontale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/dips-entre-deux-bancs.webp
+tate-press,Tate Press,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/tate-press.webp
+handstand-push-up-atr,Handstand Push-up (ATR),Épaules,front-delt,side-delt|triceps|traps|abs,poussee-verticale,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/handstand-push-up.webp
+extension-triceps-banc-incline-halteres,Extension Triceps Banc Incliné Haltères,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-banc-incline-halteres.webp
+extension-triceps-decline-halteres,Extension Triceps Décliné Haltères,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-decline-halteres.webp
+extension-triceps-concentree-poulie,Extension Triceps Concentrée Poulie,Triceps,triceps,,extension-triceps,4,true,https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-concentree-poulie.webp
+extension-triceps-nuque-elastique,Extension Triceps Nuque Élastique,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-nuque-elastique.webp
+extension-triceps-verticale-elastique,Extension Triceps Verticale Élastique,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-verticale-elastique.webp
+extension-triceps-trx-sangles,Extension Triceps TRX (Sangles),Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-trx-sangles.webp
+extension-triceps-allongee-trx-sangles,Extension Triceps Allongée TRX (Sangles),Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-trx-allonge.webp
+squat-a-la-barre,Squat à la Barre,Jambes,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/homme-faisant-un-squat-avec-barre.webp
+squat-avant,Squat Avant,Jambes,quads|glutes,hamstrings|calves|lower-back|abs|traps,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-barre-devant-front.webp
+squat-bulgare,Squat Bulgare,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/squat-bulgare-halteres-exercice-musculation.webp
+squat-gobelet-goblet-squat,Squat Gobelet (Goblet Squat),Jambes,quads|glutes,hamstrings|calves|lower-back|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-goblet-kettlebell.webp
+squat-sumo,Squat Sumo,Jambes,glutes|quads,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-sumo-avec-haltere.webp
+smith-machine-squat,Smith Machine Squat,Jambes,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-smith-machine-exercice-musculation.webp
+squat-hack-hack-squat,Squat Hack (Hack Squat),Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hack-squat.webp
+press-jambes-45,Press Jambes 45°,Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisse-exercice-musculation.webp
+press-jambes-horizontale,Press Jambes Horizontale,Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/machine/press-jambes-2.jpg
+press-jambes-verticale,Press Jambes Verticale,Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-verticale.webp
+press-jambes-inclinee,Press Jambes Inclinée,Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-inclinee.webp
+press-jambes-levier,Press Jambes Levier,Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/machine/press-jambes-6.jpg
+extension-quadriceps-leg-extension,Extension Quadriceps (Leg Extension),Jambes,quads,,extension-genou,4,false,https://michdu75-commits.github.io/forcetracker/exercises/leg-extension-exercice-musculation.webp
+leg-curl-couche-machine,Leg Curl Couché Machine,Fessiers,hamstrings,calves,flexion-genou,4,false,https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-allonge.webp
+leg-curl-assis-machine,Leg Curl Assis Machine,Fessiers,hamstrings,calves,flexion-genou,4,false,https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-assis-machine.webp
+leg-curl-unilateral-debout,Leg Curl Unilatéral Debout,Fessiers,hamstrings,calves,flexion-genou,4,true,https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-unilateral-debout-machine.webp
+leg-curl-haltere,Leg Curl Haltère,Fessiers,hamstrings,calves,flexion-genou,4,false,https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-decline-haltere.webp
+leg-curl-elastique,Leg Curl Élastique,Fessiers,hamstrings,calves,flexion-genou,4,false,https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-avec-elastique-musculation.webp
+leg-curl-inverse,Leg Curl Inversé,Fessiers,hamstrings,calves,flexion-genou,4,false,https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-inverse-machine-tirage-vertical.webp
+squat-pistol,Squat Pistol,Jambes,quads|glutes,hamstrings|calves|abs,squat,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/squat-pistol.webp
+squat-kettlebell,Squat Kettlebell,Jambes,quads|glutes,hamstrings|calves|lower-back|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-back-squat.webp
+fentes-kettlebell,Fentes Kettlebell,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/fentes-avant-kettlebell.webp
+fentes,Fentes,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/fente-avant-barre-femme.webp
+fentes-marchees,Fentes Marchées,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/fentes-marchees-avec-sandbag.webp
+fentes-arriere,Fentes Arrière,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,
+fentes-laterales,Fentes Latérales,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,
+smith-machine-fentes,Smith Machine Fentes,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/split-squat-smith-machine.webp
+montee-sur-box-step-up,Montée sur Box (Step-up),Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-barre.webp
+montee-sur-box-halteres,Montée sur Box Haltères,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-halteres-classique.webp
+abduction-cuisses-leg-abduction,Abduction Cuisses (Leg Abduction),Fessiers,glutes,,hanche-laterale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/leg-abduction-machine-v2.webp
+adduction-cuisses-leg-adduction,Adduction Cuisses (Leg Adduction),Jambes,glutes,quads,hanche-laterale,4,false,https://michdu75-commits.github.io/forcetracker/exercises/leg-adduction-machine-v2.webp
+extension-quadriceps-unilaterale,Extension Quadriceps Unilatérale,Jambes,quads,,extension-genou,4,true,https://michdu75-commits.github.io/forcetracker/exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.webp
+hack-squat-inverse,Hack Squat Inversé,Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hack-squat-inverse.webp
+pendulum-squat,Pendulum Squat,Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pendulum-squat.webp
+belt-squat,Belt Squat,Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/belt-squat.webp
+safety-bar-squat,Safety Bar Squat,Jambes,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/safety-bar-squat.webp
+overhead-squat,Overhead Squat,Jambes,quads|glutes,hamstrings|calves|lower-back|abs|front-delt|traps,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat.webp
+pin-squat,Pin Squat,Jambes,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pin-squat.webp
+sissy-squat,Sissy Squat,Jambes,quads,abs|calves,extension-genou,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/sissy-squat.webp
+cossack-squat,Cossack Squat,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/cossack-squat.webp
+squat-bande-elastique,Squat Bande Élastique,Jambes,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-bande-elastique.webp
+chaise-wall-sit,Chaise (Wall Sit),Jambes,quads,glutes|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-statique-contre-mur-exercice-chaise.webp
+presse-a-cuisses-iso-laterale,Presse à Cuisses Iso-Latérale,Jambes,quads|glutes,hamstrings|calves|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/presse-cuisse-iso-laterale-hammer-stenght.webp
+presse-a-cuisses-sur-le-cote,Presse à Cuisses sur le Côté,Jambes,quads|glutes,hamstrings|calves,squat,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisse-sur-le-cote.webp
+hack-squat-assis,Hack Squat Assis,Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hack-squat-assis.webp
+overhead-squat-halteres,Overhead Squat Haltères,Jambes,quads|glutes,hamstrings|calves|lower-back|abs|front-delt|traps,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat-halteres.webp
+sled-push,Sled Push,Jambes,quads|glutes,calves|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/sled-push-hyrox.webp
+croix-de-fer-halteres,Croix de Fer Haltères,Épaules,side-delt,traps,elevation-epaules,4,false,https://michdu75-commits.github.io/forcetracker/exercises/croix-de-fer-halteres.webp
+squat-poids-du-corps-air-squat,Squat Poids du Corps (Air Squat),Jambes,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-poids-du-corps-air-squat.webp
+fentes-croisees-curtsy-lunge,Fentes Croisées (Curtsy Lunge),Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/fentes-croisees-curtsy-lunge.webp
+jefferson-squat,Jefferson Squat,Jambes,quads|glutes,hamstrings|lower-back|obliques|forearms,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/jefferson-squat.webp
+souleve-de-terre-valise-suitcase,Soulevé de Terre Valise (Suitcase),Jambes,glutes|hamstrings|lower-back,quads|forearms|traps|obliques,hip-hinge,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-valise.webp
+squat-saute-jump-squat,Squat Sauté (Jump Squat),Jambes,quads|glutes,calves|hamstrings|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-saute-jump-squat.webp
+squat-avec-rotation-du-tronc,Squat avec Rotation du Tronc,Jambes,quads|glutes,hamstrings|calves|obliques|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-avec-rotation-du-tronc.webp
+sissy-squat-machine,Sissy Squat Machine,Jambes,quads,abs|calves,extension-genou,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/sissy-squat-machine.webp
+extension-quadriceps-unilaterale-machine-a-d,Extension Quadriceps Unilatérale Machine à Dips,Jambes,quads,,extension-genou,4,true,https://michdu75-commits.github.io/forcetracker/exercises/extension-quadriceps-unilaterale-machine-dips.webp
+squat-bulgare-elastique,Squat Bulgare Élastique,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/squat-bulgare-elastique.webp
+extension-quadriceps-elastique,Extension Quadriceps Élastique,Jambes,quads,,extension-genou,4,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-quadriceps-elastique.webp
+overhead-squat-elastique,Overhead Squat Élastique,Jambes,quads|glutes,hamstrings|calves|lower-back|abs|front-delt|traps,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat-elastique.webp
+split-squat-elastique-fente-statique,Split Squat Élastique (Fente Statique),Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/split-squat-elastique.webp
+squat-barre-avec-bandes-elastiques,Squat Barre avec Bandes Élastiques,Jambes,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-barre-avec-bandes-elastiques.webp
+squat-trx-sangles,Squat TRX (Sangles),Jambes,quads|glutes,hamstrings|calves|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-trx-sangles.webp
+split-squat-trx-sangles,Split Squat TRX (Sangles),Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/split-squat-trx-sangles.webp
+squat-pistol-trx-sangles,Squat Pistol TRX (Sangles),Jambes,quads|glutes,hamstrings|calves|abs,squat,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/squat-pistol-trx-sangles.webp
+hip-thrust-barre-poussee-de-hanche,Hip Thrust Barre (Poussée de Hanche),Fessiers,glutes,hamstrings|quads|lower-back,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-barre.webp
+hip-thrust-haltere-poussee-de-hanche,Hip Thrust Haltère (Poussée de Hanche),Fessiers,glutes,hamstrings|quads|lower-back,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-haltere.webp
+hip-thrust-machine-poussee-de-hanche,Hip Thrust Machine (Poussée de Hanche),Fessiers,glutes,hamstrings|quads|lower-back,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-a-la-machine.webp
+hip-thrust-unilateral-poussee-de-hanche,Hip Thrust Unilatéral (Poussée de Hanche),Fessiers,glutes,hamstrings|quads|lower-back|obliques|abs,hip-hinge,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-barre-unilateral.webp
+pont-fessier-glute-bridge,Pont Fessier (Glute Bridge),Fessiers,glutes,hamstrings|quads|lower-back,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/glute-bridge.webp
+extension-fessiers-arriere-kickback,Extension Fessiers Arrière (Kickback),Fessiers,glutes,hamstrings,hip-hinge,4,true,https://michdu75-commits.github.io/forcetracker/exercises/kickback-cable-fessiers.webp
+kickback-machine,Kickback Machine,Fessiers,glutes,hamstrings,hip-hinge,4,true,
+souleve-de-terre,Soulevé de Terre,Fessiers,glutes|hamstrings|lower-back,quads|traps|forearms|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre.webp
+souleve-de-terre-roumain-barre,Soulevé de Terre Roumain Barre,Fessiers,hamstrings|glutes|lower-back,forearms|traps|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-barre.webp
+souleve-de-terre-roumain-halteres,Soulevé de Terre Roumain Haltères,Fessiers,hamstrings|glutes|lower-back,forearms|traps|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-halteres.webp
+souleve-de-terre-roumain-unilateral,Soulevé de Terre Roumain Unilatéral,Fessiers,hamstrings|glutes|lower-back,forearms|traps|obliques|abs,hip-hinge,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-unilateral.webp
+souleve-de-terre-sumo,Soulevé de Terre Sumo,Fessiers,glutes|quads|lower-back,hamstrings|traps|forearms|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo.webp
+tirage-cable-fessiers-cable-pull-through,Tirage Cable Fessiers (Cable Pull Through),Fessiers,glutes,hamstrings|lower-back,hip-hinge,6.5,false,
+souleve-de-terre-jambes-tendues,Soulevé de Terre Jambes Tendues,Fessiers,hamstrings|glutes|lower-back,forearms|traps|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-jambes-tendues.webp
+souleve-de-terre-roumain-kettlebell,Soulevé de Terre Roumain Kettlebell,Fessiers,hamstrings|glutes|lower-back,forearms|traps|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-kettlebell.webp
+souleve-de-terre-roumain-landmine,Soulevé de Terre Roumain Landmine,Fessiers,hamstrings|glutes|lower-back,forearms|traps|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-landmine.webp
+souleve-de-terre-sumo-halteres,Soulevé de Terre Sumo Haltères,Fessiers,glutes|quads|lower-back,hamstrings|traps|forearms|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.webp
+souleve-de-terre-sumo-kettlebell,Soulevé de Terre Sumo Kettlebell,Fessiers,glutes|quads|lower-back,hamstrings|traps|forearms|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo-kettlebell.webp
+souleve-de-terre-sumo-landmine,Soulevé de Terre Sumo Landmine,Fessiers,glutes|quads|lower-back,hamstrings|traps|forearms|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo-landmine.webp
+souleve-de-terre-trap-bar,Soulevé de Terre Trap Bar,Fessiers,glutes|quads|lower-back,hamstrings|traps|forearms,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-a-la-trap-bar.webp
+souleve-de-terre-avec-deficit,Soulevé de Terre avec Déficit,Fessiers,glutes|hamstrings|lower-back,quads|forearms|traps|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-avec-deficit.webp
+souleve-de-terre-machine,Soulevé de Terre Machine,Fessiers,glutes|hamstrings|lower-back,quads|forearms|traps,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-avec-machine.webp
+zercher-deadlift,Zercher Deadlift,Fessiers,glutes|quads|lower-back,hamstrings|traps|abs|biceps,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/zercher-deadlift.webp
+reeves-deadlift,Reeves Deadlift,Fessiers,glutes|hamstrings|lower-back,forearms|traps|rear-delt|quads,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/reeves-deadlift.webp
+glute-ham-raise-ghd,Glute Ham Raise (GHD),Fessiers,hamstrings|glutes,calves|lower-back,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/glute-ham-developer-ghd.webp
+kettlebell-swing,Kettlebell Swing,Fessiers,glutes|hamstrings,lower-back|quads|abs|forearms,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-swing.webp
+squat-a-la-barre,Squat à la Barre,Fessiers,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/homme-faisant-un-squat-avec-barre.webp
+squat-avant,Squat Avant,Fessiers,quads|glutes,hamstrings|calves|lower-back|abs|traps,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-barre-devant-front.webp
+squat-bulgare,Squat Bulgare,Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/squat-bulgare-halteres-exercice-musculation.webp
+squat-gobelet-goblet-squat,Squat Gobelet (Goblet Squat),Fessiers,quads|glutes,hamstrings|calves|lower-back|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-goblet-kettlebell.webp
+squat-sumo,Squat Sumo,Fessiers,glutes|quads,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-sumo-avec-haltere.webp
+smith-machine-squat,Smith Machine Squat,Fessiers,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-smith-machine-exercice-musculation.webp
+squat-hack-hack-squat,Squat Hack (Hack Squat),Fessiers,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hack-squat.webp
+squat-pistol,Squat Pistol,Fessiers,quads|glutes,hamstrings|calves|abs,squat,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/squat-pistol.webp
+squat-kettlebell,Squat Kettlebell,Fessiers,quads|glutes,hamstrings|calves|lower-back|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-back-squat.webp
+belt-squat,Belt Squat,Fessiers,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/belt-squat.webp
+safety-bar-squat,Safety Bar Squat,Fessiers,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/safety-bar-squat.webp
+overhead-squat,Overhead Squat,Fessiers,quads|glutes,hamstrings|calves|lower-back|abs|front-delt|traps,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat.webp
+pin-squat,Pin Squat,Fessiers,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pin-squat.webp
+cossack-squat,Cossack Squat,Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/cossack-squat.webp
+squat-bande-elastique,Squat Bande Élastique,Fessiers,quads|glutes,hamstrings|calves|lower-back,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/squat-bande-elastique.webp
+pendulum-squat,Pendulum Squat,Fessiers,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/pendulum-squat.webp
+hack-squat-inverse,Hack Squat Inversé,Fessiers,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hack-squat-inverse.webp
+press-jambes-45,Press Jambes 45°,Fessiers,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisse-exercice-musculation.webp
+press-jambes-horizontale,Press Jambes Horizontale,Fessiers,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/machine/press-jambes-2.jpg
+press-jambes-verticale,Press Jambes Verticale,Fessiers,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-verticale.webp
+press-jambes-inclinee,Press Jambes Inclinée,Fessiers,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-inclinee.webp
+press-jambes-levier,Press Jambes Levier,Fessiers,quads|glutes,hamstrings|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/machine/press-jambes-6.jpg
+presse-a-cuisses-iso-laterale,Presse à Cuisses Iso-Latérale,Fessiers,quads|glutes,hamstrings|calves|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/presse-cuisse-iso-laterale-hammer-stenght.webp
+fentes,Fentes,Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/fente-avant-barre-femme.webp
+fentes-marchees,Fentes Marchées,Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/fentes-marchees-avec-sandbag.webp
+fentes-arriere,Fentes Arrière,Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,
+fentes-laterales,Fentes Latérales,Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,
+fentes-kettlebell,Fentes Kettlebell,Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/fentes-avant-kettlebell.webp
+smith-machine-fentes,Smith Machine Fentes,Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/split-squat-smith-machine.webp
+montee-sur-box-step-up,Montée sur Box (Step-up),Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-barre.webp
+montee-sur-box-halteres,Montée sur Box Haltères,Fessiers,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-halteres-classique.webp
+hyperextension-back-extension,Hyperextension (Back Extension),Lombaires,lower-back|glutes,hamstrings,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-lombaire-au-banc-45.webp
+hyperextension-inverse-reverse-hyper,Hyperextension Inverse (Reverse Hyper),Lombaires,glutes|hamstrings,lower-back,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hyperextension-inverse-reverse-hyper.webp
+hyperextension-lestee,Hyperextension Lestée,Lombaires,lower-back|glutes,hamstrings,hip-hinge,6.5,false,
+hyperextension-machine,Hyperextension Machine,Lombaires,lower-back|glutes,hamstrings,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-lombaire-a-la-machine.webp
+bird-dog,Bird Dog,Lombaires,abs|lower-back,glutes|obliques,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/bird-dog.webp
+extension-lombaire-sur-ballon,Extension Lombaire sur Ballon,Lombaires,lower-back|glutes,hamstrings,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/extension-lombaire-ballon.webp
+planche-inversee,Planche Inversée,Abdominaux,glutes|lower-back,abs|hamstrings|rear-delt,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/planche-inversee.webp
+inclinaison-lombaire-good-morning,Inclinaison Lombaire (Good Morning),Lombaires,hamstrings|glutes|lower-back,abs,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/good-morning-exercice.webp
+souleve-de-terre,Soulevé de Terre,Lombaires,glutes|hamstrings|lower-back,quads|traps|forearms|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre.webp
+souleve-de-terre-roumain-barre,Soulevé de Terre Roumain Barre,Lombaires,hamstrings|glutes|lower-back,forearms|traps|lats,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-barre.webp
+jefferson-curl,Jefferson Curl,Lombaires,lower-back|hamstrings,glutes|forearms,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/jefferson-curl.webp
+tirage-en-rack-rack-pull,Tirage en Rack (Rack Pull),Lombaires,lower-back|glutes|traps,hamstrings|lats|forearms,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rack-pull.webp
+superman,Superman,Lombaires,lower-back|glutes,hamstrings|rear-delt,gainage-abdos,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/superman.webp
+gainage,Gainage,Abdominaux,abs,obliques|front-delt|glutes|lower-back,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/planche-gainage.webp
+planche-laterale-side-plank,Planche Latérale (Side Plank),Abdominaux,obliques,abs|front-delt|glutes|lower-back,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/planche-laterale.webp
+hollow-body,Hollow Body,Abdominaux,abs,obliques|hip-flexors|front-delt,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/hollow-hold.webp
+crunch,Crunch,Abdominaux,abs,obliques,gainage-abdos,4,false,https://michdu75-commits.github.io/forcetracker/exercises/crunch-au-sol.webp
+crunch-poulie,Crunch Poulie,Abdominaux,abs,obliques,gainage-abdos,4,false,https://michdu75-commits.github.io/forcetracker/exercises/crunch-poulie-haute.webp
+crunch-machine,Crunch Machine,Abdominaux,abs,obliques,gainage-abdos,4,false,https://michdu75-commits.github.io/forcetracker/exercises/crunch-machine.webp
+rotation-machine-obliques,Rotation Machine Obliques,Abdominaux,obliques,abs,gainage-abdos,4,false,
+releve-de-jambes,Relevé de Jambes,Abdominaux,abs|hip-flexors,obliques,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/releve-de-jambes-suspendu.webp
+chaise-romaine,Chaise Romaine,Abdominaux,abs|hip-flexors,obliques,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chaise-romaine-releve-jambes.webp
+roue-abdominale-ab-wheel,Roue Abdominale (Ab Wheel),Abdominaux,abs,obliques|lats|front-delt,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/roue-abdominale.webp
+rotation-russe-russian-twist,Rotation Russe (Russian Twist),Abdominaux,obliques|abs,hip-flexors|front-delt,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/rotation-russe.webp
+drapeau-dragon-flag,Drapeau (Dragon Flag),Abdominaux,abs,obliques|hip-flexors|lats|front-delt,gainage-abdos,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/dragon-flag.webp
+grimpeur-mountain-climber,Grimpeur (Mountain Climber),Abdominaux,abs|obliques,hip-flexors|front-delt|quads,gainage-abdos,8,false,https://michdu75-commits.github.io/forcetracker/exercises/grimpeur-mountain-climber.webp
+elevations-mollets-debout,Élévations Mollets Debout,Mollets,calves,,mollets,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-debout-barre.webp
+elevations-mollets-assis,Élévations Mollets Assis,Mollets,calves,,mollets,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-assis-barre.webp
+elevations-mollets-unilateral,Élévations Mollets Unilatéral,Mollets,calves,,mollets,4,true,
+presse-mollets-leg-press,Presse Mollets (Leg Press),Mollets,calves,,mollets,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-presse-45.webp
+elevations-mollets-penche-donkey-calf-raise,Élévations Mollets Penché (Donkey Calf Raise),Mollets,calves,,mollets,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-donkey.webp
+mollets-machine-debout,Mollets Machine Debout,Mollets,calves,,mollets,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-debout-machine.webp
+mollets-machine-assise,Mollets Machine Assise,Mollets,calves,,mollets,4,false,https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-assis-machine.webp
+sauts-a-la-corde,Sauts à la Corde,Mollets,calves,quads,saut-plyo,8,false,https://michdu75-commits.github.io/forcetracker/exercises/sauts-a-la-corde.webp
+curl-poignet-barre,Curl Poignet Barre,Avant-bras,forearms,,poignet,4,false,
+extension-poignet-barre,Extension Poignet Barre,Avant-bras,forearms,,poignet,4,false,
+pronation-supination-haltere,Pronation Supination Haltère,Avant-bras,forearms,,poignet,4,false,
+planche-de-prehension,Planche de Préhension,Avant-bras,forearms,traps,gainage-abdos,4,false,
+burpees,Burpees,Full Body,quads|glutes,pec|triceps|front-delt|abs|calves,saut-plyo,8,false,https://michdu75-commits.github.io/forcetracker/exercises/burpees.webp
+kettlebell-swing,Kettlebell Swing,Full Body,glutes|hamstrings,lower-back|quads|abs|forearms,hip-hinge,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-swing.webp
+arrache-haltere-dumbbell-snatch,Arraché Haltère (Dumbbell Snatch),Full Body,glutes|hamstrings|traps,quads|front-delt|side-delt|abs|forearms,halterophilie,8,true,
+arrache-debout-muscle-snatch,Arraché Debout (Muscle Snatch),Full Body,glutes|hamstrings|traps,quads|front-delt|side-delt|abs|forearms,halterophilie,8,false,https://michdu75-commits.github.io/forcetracker/exercises/muscle-snatch-halterophilie.webp
+thrusters-halteres,Thrusters Haltères,Full Body,quads|glutes|front-delt,triceps|abs|traps,poussee-verticale,8,false,
+clean-jerk,Clean & Jerk,Full Body,glutes|quads|traps,hamstrings|front-delt|triceps|abs|forearms,halterophilie,8,false,https://michdu75-commits.github.io/forcetracker/exercises/epaule-jete-halterophilie.webp
+battle-rope,Battle Rope,Full Body,front-delt|abs,lats|biceps|triceps|forearms|quads,cardio,8,false,https://michdu75-commits.github.io/forcetracker/exercises/battle-rope.webp
+box-jump,Box Jump,Full Body,glutes|quads,calves|hamstrings|abs,saut-plyo,8,false,https://michdu75-commits.github.io/forcetracker/exercises/box-jump.webp
+assault-air-bike,Assault Air Bike,Full Body,quads|front-delt,hamstrings|glutes|lats|abs,cardio,8,false,https://michdu75-commits.github.io/forcetracker/exercises/assault-air-bike.webp
+ergometre-de-ski-ski-erg,Ergomètre de Ski (Ski Erg),Full Body,lats|abs|triceps,glutes|hamstrings|quads|forearms,cardio,8,false,https://michdu75-commits.github.io/forcetracker/exercises/ergometre-de-ski.webp
+jumping-jack,Jumping Jack,Full Body,calves|side-delt,quads|glutes|abs|front-delt,saut-plyo,8,false,https://michdu75-commits.github.io/forcetracker/exercises/jumping-jack.webp
+marche-de-l-ours-bear-crawl,Marche de l'Ours (Bear Crawl),Full Body,abs|front-delt|quads,obliques|triceps|glutes|calves,cardio,8,false,https://michdu75-commits.github.io/forcetracker/exercises/marche-de-lours-bear-crawl.webp
+wall-ball,Wall Ball,Full Body,quads|glutes|front-delt,triceps|abs|calves,saut-plyo,8,false,https://michdu75-commits.github.io/forcetracker/exercises/wall-ball.webp
+chariot-de-puissance-poussee,Chariot de Puissance — Poussée,Full Body,quads|glutes,calves|abs,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chariot-poussee.webp
+chariot-de-puissance-tirage-en-avancant,Chariot de Puissance — Tirage en Avançant,Full Body,lats|traps,rear-delt|biceps|forearms,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-avance.webp
+chariot-de-puissance-tirage-dos,Chariot de Puissance — Tirage Dos,Dos,lats|traps,rear-delt|biceps|forearms,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-dos.webp
+chariot-de-puissance-tirage-de-cote,Chariot de Puissance — Tirage de Côté,Dos,lats|traps,rear-delt|biceps|forearms|obliques,tirage-horizontal,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-de-cote.webp
+chariot-de-puissance-tirage-inverse-jambes,Chariot de Puissance — Tirage Inversé Jambes,Jambes,quads,glutes|calves,squat,6.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-inverse-jambes.webp
+chariot-de-puissance-tirage-epaules,Chariot de Puissance — Tirage Épaules,Épaules,front-delt,side-delt|traps|abs,elevation-epaules,5.5,false,https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-epaules.webp
+chariot-de-puissance-fentes-arriere,Chariot de Puissance — Fentes Arrière,Jambes,quads|glutes,hamstrings|calves|abs,fente,6.5,true,https://michdu75-commits.github.io/forcetracker/exercises/chariot-fentes-arriere.webp
+chariot-de-puissance-curl-biceps,Chariot de Puissance — Curl Biceps,Biceps,biceps,forearms,curl-biceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/chariot-curl-biceps.webp
+chariot-de-puissance-extension-triceps,Chariot de Puissance — Extension Triceps,Triceps,triceps,front-delt,extension-triceps,4,false,https://michdu75-commits.github.io/forcetracker/exercises/chariot-extension-triceps.webp

@@ -29,3 +29,32 @@
 2. **Le nom ne dit pas tout.** « Haltère » au singulier ne veut pas dire « un bras » ; « iso-latéral »
    ne veut pas dire « un à la fois ». C'est pour ça que `unilateral` est une donnée **vérifiée**,
    pas une déduction sur le nom.
+
+## 🖼️ Les figurines sont DÉJÀ EN LIGNE — aucun zip à trimballer
+
+306 fichiers, 31 Mo, déjà servis publiquement par GitHub Pages :
+
+```
+https://michdu75-commits.github.io/forcetracker/exercises/<fichier>.webp
+```
+
+Le champ `image_url` du JSON (et du CSV) donne l'adresse complète, prête à l'emploi. **Il n'y a donc
+rien à téléverser** : une autre app peut pointer dessus directement, sans stockage et sans copie.
+
+## 🔗 Et surtout : LE RAPPROCHEMENT EST DÉJÀ FAIT
+
+C'est le travail le plus long, et il est **terminé** — chaque exercice porte SA figurine, vérifiée
+sur des mois d'usage réel. `Développé Couché → developpe-couche.webp`, et les **11 variantes**
+(incliné, décliné, haltères, Larsen, au sol, chaînes, Smith, poulie, élastique…) sont distinguées
+une par une.
+
+⚠️ **Ne pas refaire ce rapprochement à partir des noms de fichiers.** C'est exactement là qu'on se
+trompe : les fichiers s'appellent `developpe-couche-halteres-exercice-musculation.webp` ou
+`rowing-haltere-un-bras.webp` — un rapprochement automatique sur le nom rate les cas simples et
+invente des liens faux. Prendre la colonne, pas la deviner.
+
+## 📊 Deux formats, même contenu
+
+- `catalogue-exercices.json` — pour lire depuis du code
+- `catalogue-exercices.csv` — pour importer directement dans une base (Supabase, Airtable…),
+  colonnes plates, listes séparées par `|`. **72 Ko pour les 362 exercices.**

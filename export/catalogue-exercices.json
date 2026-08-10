@@ -14,7 +14,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-couche.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche.webp"
  },
  {
   "id": "developpe-couche-halteres",
@@ -31,7 +32,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-couche-halteres-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-halteres-exercice-musculation.webp"
  },
  {
   "id": "developpe-incline",
@@ -48,7 +50,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-incline-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-barre.webp"
  },
  {
   "id": "developpe-incline-halteres",
@@ -65,7 +68,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-incline-halteres-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-halteres-exercice-musculation.webp"
  },
  {
   "id": "developpe-decline",
@@ -82,7 +86,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-decline-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-decline-barre.webp"
  },
  {
   "id": "developpe-decline-halteres",
@@ -99,7 +104,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-decline-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-decline-halteres.webp"
  },
  {
   "id": "ecarte-halteres",
@@ -115,7 +121,8 @@
   "met": 4,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "ecarte-poulie",
@@ -131,7 +138,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp"
  },
  {
   "id": "croise-poulie-cable-crossover",
@@ -147,7 +155,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/ecartes-poulie-vis-a-vis.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/ecartes-poulie-vis-a-vis.webp"
  },
  {
   "id": "pec-deck",
@@ -163,7 +172,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/pec-deck-butterfly-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pec-deck-butterfly-exercice-musculation.webp"
  },
  {
   "id": "chest-press-machine-horizontale",
@@ -180,7 +190,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-machine-assis-pectoraux.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-machine-assis-pectoraux.webp"
  },
  {
   "id": "chest-press-machine-inclinee",
@@ -197,7 +208,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-incline-machine-convergente-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-machine-convergente-exercice-musculation.webp"
  },
  {
   "id": "chest-press-machine-declinee",
@@ -214,7 +226,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/chest-press-machine-declinee.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chest-press-machine-declinee.webp"
  },
  {
   "id": "dips",
@@ -232,7 +245,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/dips-pectoraux.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-pectoraux.webp"
  },
  {
   "id": "dips-paralleles",
@@ -250,7 +264,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/dips-triceps-paralleles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-triceps-paralleles.webp"
  },
  {
   "id": "dips-machine-assistee",
@@ -267,7 +282,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/dips-assiste-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-assiste-machine.webp"
  },
  {
   "id": "dips-assis-machine-seated-dip",
@@ -284,7 +300,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/dips-assis-machine-avec-poids.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-assis-machine-avec-poids.webp"
  },
  {
   "id": "pompes-lestees",
@@ -302,7 +319,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/pompes-lestees.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pompes-lestees.webp"
  },
  {
   "id": "pompes-deficit-deficit-push-up",
@@ -320,7 +338,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/pompes-deficit.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pompes-deficit.webp"
  },
  {
   "id": "pompes-diamant",
@@ -338,7 +357,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/pompes-diamant.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pompes-diamant.webp"
  },
  {
   "id": "pompes-push-up",
@@ -356,7 +376,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/pompe-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pompe-musculation.webp"
  },
  {
   "id": "developpe-couche-avec-chaines",
@@ -373,7 +394,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-couche-avec-chaines.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-avec-chaines.webp"
  },
  {
   "id": "developpe-couche-larsen-larsen-press",
@@ -390,7 +412,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-couche-larsen.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-larsen.webp"
  },
  {
   "id": "developpe-couche-unilateral-kettlebell",
@@ -409,7 +432,8 @@
   "met": 5.5,
   "unilateral": true,
   "image": "exercises/developpe-couche-unilateral-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-unilateral-kettlebell.webp"
  },
  {
   "id": "developpe-incline-poulie",
@@ -426,7 +450,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-incline-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-incline-poulie.webp"
  },
  {
   "id": "developpe-couche-au-sol-floor-press",
@@ -443,7 +468,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-couche-au-sol-floor-press.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-au-sol-floor-press.webp"
  },
  {
   "id": "developpe-couche-elastique",
@@ -460,7 +486,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-couche-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-elastique.webp"
  },
  {
   "id": "developpe-decline-elastique",
@@ -477,7 +504,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-decline-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-decline-elastique.webp"
  },
  {
   "id": "ecarte-poulie-haute-a-genoux",
@@ -493,7 +521,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/ecarte-poulie-haute-a-genoux.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-poulie-haute-a-genoux.webp"
  },
  {
   "id": "ecarte-elastique",
@@ -509,7 +538,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/ecarte-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-elastique.webp"
  },
  {
   "id": "ecarte-trx-sangles",
@@ -526,7 +556,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/ecarte-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-trx-sangles.webp"
  },
  {
   "id": "chest-press-trx-sangles",
@@ -544,7 +575,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/chest-press-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chest-press-trx-sangles.webp"
  },
  {
   "id": "pompes-inclinees-trx-sangles",
@@ -562,7 +594,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/pompes-inclinees-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pompes-inclinees-trx-sangles.webp"
  },
  {
   "id": "developpe-epaules-elastique",
@@ -580,7 +613,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-epaules-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-elastique.webp"
  },
  {
   "id": "developpe-epaules-assis-elastique",
@@ -598,7 +632,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-epaules-assis-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-assis-elastique.webp"
  },
  {
   "id": "developpe-epaules-unilateral-elastique",
@@ -618,7 +653,8 @@
   "met": 5.5,
   "unilateral": true,
   "image": "exercises/developpe-epaules-unilateral-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-unilateral-elastique.webp"
  },
  {
   "id": "elevations-laterales-unilaterale-poulie",
@@ -634,7 +670,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/elevations-laterales-unilaterale-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-laterales-unilaterale-poulie.webp"
  },
  {
   "id": "oiseau-elastique",
@@ -651,7 +688,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/oiseau-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/oiseau-elastique.webp"
  },
  {
   "id": "oiseau-inverse-trx-sangles",
@@ -669,7 +707,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/oiseau-inverse-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/oiseau-inverse-trx-sangles.webp"
  },
  {
   "id": "rotation-externe-epaule-poulie",
@@ -685,7 +724,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/rotation-externe-epaule-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-epaule-poulie.webp"
  },
  {
   "id": "handstand-push-up-suspendu-sangles",
@@ -704,7 +744,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/handstand-push-up-suspendu.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/handstand-push-up-suspendu.webp"
  },
  {
   "id": "ecarte-incline-halteres",
@@ -720,7 +761,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/ecartes-incline-avec-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/ecartes-incline-avec-halteres.webp"
  },
  {
   "id": "ecarte-decline-halteres",
@@ -736,7 +778,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/ecartes-decline-avec-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/ecartes-decline-avec-halteres.webp"
  },
  {
   "id": "ecarte-hyght-hyght-fly",
@@ -752,7 +795,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/hyght-dumbell-fly.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hyght-dumbell-fly.webp"
  },
  {
   "id": "hex-press-smith-machine",
@@ -769,7 +813,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/hex-press-a-la-smith-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hex-press-a-la-smith-machine.webp"
  },
  {
   "id": "chest-press-poulie-assis",
@@ -786,7 +831,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/chest-press-poulie-assis.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chest-press-poulie-assis.webp"
  },
  {
   "id": "svend-press-serrage-de-plaque",
@@ -803,7 +849,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/svend-press.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/svend-press.webp"
  },
  {
   "id": "smith-machine-developpe-couche",
@@ -820,7 +867,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-couche-smith-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-couche-smith-machine.webp"
  },
  {
   "id": "smith-machine-developpe-incline",
@@ -837,7 +885,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/smith-machine-developpe-incline.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/smith-machine-developpe-incline.webp"
  },
  {
   "id": "souleve-de-terre",
@@ -858,7 +907,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre.webp"
  },
  {
   "id": "souleve-de-terre-sumo",
@@ -879,7 +929,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-sumo.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo.webp"
  },
  {
   "id": "tirage-en-rack-rack-pull",
@@ -899,7 +950,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/rack-pull.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rack-pull.webp"
  },
  {
   "id": "inclinaison-lombaire-good-morning",
@@ -917,7 +969,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/good-morning-exercice.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/good-morning-exercice.webp"
  },
  {
   "id": "rowing-barre-tirage-horizontal",
@@ -937,7 +990,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-barre.webp"
  },
  {
   "id": "rowing-haltere-tirage-horizontal",
@@ -957,7 +1011,8 @@
   "met": 5.5,
   "unilateral": true,
   "image": "exercises/rowing-haltere-un-bras.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-haltere-un-bras.webp"
  },
  {
   "id": "rowing-cable-tirage-horizontal",
@@ -977,7 +1032,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-horizontal-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-horizontal-poulie.webp"
  },
  {
   "id": "rowing-yates-supination",
@@ -997,7 +1053,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-yates-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-yates-barre.webp"
  },
  {
   "id": "rowing-poitrine-appuyee-chest-supported",
@@ -1016,7 +1073,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-halteres-banc-incline-prise-neutre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-halteres-banc-incline-prise-neutre.webp"
  },
  {
   "id": "rowing-machine-tirage-horizontal",
@@ -1035,7 +1093,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-assis-machine-prise-pronation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-assis-machine-prise-pronation.webp"
  },
  {
   "id": "rowing-hammer-strength",
@@ -1054,7 +1113,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-assis-machine-hammer-strenght.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-assis-machine-hammer-strenght.webp"
  },
  {
   "id": "tirage-poulie-haute-lat-pulldown",
@@ -1073,7 +1133,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-vertical-poitrine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-poitrine.webp"
  },
  {
   "id": "tirage-poulie-haute-prise-serree",
@@ -1092,7 +1153,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-vertical-prise-serree.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-prise-serree.webp"
  },
  {
   "id": "tirage-nuque",
@@ -1111,7 +1173,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "tirage-poulie-basse-prise-large",
@@ -1131,7 +1194,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-horizontal-prise-large.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-horizontal-prise-large.webp"
  },
  {
   "id": "tirage-poulie-basse-prise-serree",
@@ -1151,7 +1215,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "traction-lestee",
@@ -1170,7 +1235,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/traction-lestee-vraie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-lestee-vraie.webp"
  },
  {
   "id": "traction-assistee",
@@ -1189,7 +1255,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/traction-assistee-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-assistee-machine.webp"
  },
  {
   "id": "traction-prise-neutre",
@@ -1208,7 +1275,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/traction-prise-neutre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-prise-neutre.webp"
  },
  {
   "id": "pull-over",
@@ -1225,7 +1293,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "pull-over-haltere",
@@ -1242,7 +1311,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/pullover-haltere.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pullover-haltere.webp"
  },
  {
   "id": "pullover-machine",
@@ -1259,7 +1329,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/musculation-pull-over-assis-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/musculation-pull-over-assis-machine.webp"
  },
  {
   "id": "pull-over-barre",
@@ -1276,7 +1347,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/pull-over-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pull-over-barre.webp"
  },
  {
   "id": "pull-over-poulie",
@@ -1293,7 +1365,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/pull-over-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pull-over-poulie.webp"
  },
  {
   "id": "rowing-smith-machine",
@@ -1313,7 +1386,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-smith-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-smith-machine.webp"
  },
  {
   "id": "rowing-t-bar-machine",
@@ -1332,7 +1406,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-t-bar-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-t-bar-machine.webp"
  },
  {
   "id": "rowing-landmine-t-bar",
@@ -1352,7 +1427,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-barre-t-landmine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-barre-t-landmine.webp"
  },
  {
   "id": "rowing-halteres-buste-penche",
@@ -1372,7 +1448,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/bent-over-row-avec-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/bent-over-row-avec-halteres.webp"
  },
  {
   "id": "meadows-row",
@@ -1392,7 +1469,8 @@
   "met": 5.5,
   "unilateral": true,
   "image": "exercises/rowing-unilateral-landmine-meadows-row.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-unilateral-landmine-meadows-row.webp"
  },
  {
   "id": "seal-row",
@@ -1411,7 +1489,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/seal-row-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/seal-row-halteres.webp"
  },
  {
   "id": "renegade-row",
@@ -1432,7 +1511,8 @@
   "met": 5.5,
   "unilateral": true,
   "image": "exercises/renegade-row.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/renegade-row.webp"
  },
  {
   "id": "tirage-iso-lateral-hammer-strength",
@@ -1451,7 +1531,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-avant-iso-laterale-hammer-strength.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-avant-iso-laterale-hammer-strength.webp"
  },
  {
   "id": "tirage-incline-poulie-haute",
@@ -1470,7 +1551,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-incline-poulie-haute.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-incline-poulie-haute.webp"
  },
  {
   "id": "tirage-poulie-haute-prise-inversee",
@@ -1489,7 +1571,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-vertical-prise-inversee.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-prise-inversee.webp"
  },
  {
   "id": "traction-derriere-la-nuque",
@@ -1508,7 +1591,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/traction-barre-derriere-rear-oull-up.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-barre-derriere-rear-oull-up.webp"
  },
  {
   "id": "rocky-pull-up",
@@ -1527,7 +1611,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rocky-pull-up.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rocky-pull-up.webp"
  },
  {
   "id": "sled-pull",
@@ -1546,7 +1631,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/sled-pull.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/sled-pull.webp"
  },
  {
   "id": "tractions-pull-up",
@@ -1565,7 +1651,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/traction-musculation-dos.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-musculation-dos.webp"
  },
  {
   "id": "traction-supination-chin-up",
@@ -1584,7 +1671,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/traction-supination-chin-up.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-supination-chin-up.webp"
  },
  {
   "id": "muscle-up",
@@ -1604,7 +1692,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/muscle-up.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/muscle-up.webp"
  },
  {
   "id": "tractions-aux-anneaux",
@@ -1623,7 +1712,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tractions-aux-anneaux.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tractions-aux-anneaux.webp"
  },
  {
   "id": "traction-australienne-poids-du-corps",
@@ -1643,7 +1733,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/traction-australienne.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-australienne.webp"
  },
  {
   "id": "traction-assistee-avec-banc",
@@ -1662,7 +1753,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/traction-assistee-avec-banc.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-assistee-avec-banc.webp"
  },
  {
   "id": "suspension-passive-dead-hang",
@@ -1679,7 +1771,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/suspension-passive-dead-hang.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/suspension-passive-dead-hang.webp"
  },
  {
   "id": "rowing-inverse-sous-une-table",
@@ -1699,7 +1792,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-inverse-sous-table.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-inverse-sous-table.webp"
  },
  {
   "id": "rowing-buste-penche-elastique",
@@ -1719,7 +1813,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-buste-penche-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-buste-penche-elastique.webp"
  },
  {
   "id": "rowing-horizontal-elastique",
@@ -1739,7 +1834,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-horizontal-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-horizontal-elastique.webp"
  },
  {
   "id": "rowing-unilateral-elastique",
@@ -1759,7 +1855,8 @@
   "met": 5.5,
   "unilateral": true,
   "image": "exercises/rowing-unilateral-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-unilateral-elastique.webp"
  },
  {
   "id": "tirage-vertical-alterne-elastique",
@@ -1778,7 +1875,8 @@
   "met": 5.5,
   "unilateral": true,
   "image": "exercises/tirage-vertical-alterne-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-vertical-alterne-elastique.webp"
  },
  {
   "id": "rowing-trx-sangles",
@@ -1798,7 +1896,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rowing-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rowing-trx-sangles.webp"
  },
  {
   "id": "traction-australienne-trx-sangles",
@@ -1818,7 +1917,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/traction-australienne-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/traction-australienne-trx-sangles.webp"
  },
  {
   "id": "haussements-d-epaules-barre",
@@ -1834,7 +1934,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/shrug-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/shrug-barre.webp"
  },
  {
   "id": "haussements-d-epaules-halteres",
@@ -1850,7 +1951,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/shrugs-avec-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/shrugs-avec-halteres.webp"
  },
  {
   "id": "haussements-d-epaules-cable",
@@ -1866,7 +1968,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/shrug-poulie-haussement-epaules.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/shrug-poulie-haussement-epaules.webp"
  },
  {
   "id": "tirage-menton",
@@ -1884,7 +1987,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-menton-machine-guidee.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-menton-machine-guidee.webp"
  },
  {
   "id": "farmer-s-walk",
@@ -1903,7 +2007,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/marche-du-fermier-avec-kettlebells.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/marche-du-fermier-avec-kettlebells.webp"
  },
  {
   "id": "haussements-d-epaules-overhead",
@@ -1919,7 +2024,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/overhead-shrug.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/overhead-shrug.webp"
  },
  {
   "id": "developpe-militaire",
@@ -1937,7 +2043,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-militaire-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-militaire-exercice-musculation.webp"
  },
  {
   "id": "developpe-militaire-halteres",
@@ -1955,7 +2062,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-epaule-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaule-halteres.webp"
  },
  {
   "id": "developpe-halteres-assis",
@@ -1973,7 +2081,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-halteres-assis.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-halteres-assis.webp"
  },
  {
   "id": "developpe-arnold-arnold-press",
@@ -1991,7 +2100,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-arnold-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-arnold-exercice-musculation.webp"
  },
  {
   "id": "developpe-epaules-machine",
@@ -2009,7 +2119,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/presse-epaule-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-epaule-exercice-musculation.webp"
  },
  {
   "id": "smith-machine-developpe-militaire",
@@ -2027,7 +2138,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-epaules-smith-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaules-smith-machine.webp"
  },
  {
   "id": "elevations-laterales-lateral-raise",
@@ -2043,7 +2155,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevations-laterales-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-laterales-exercice-musculation.webp"
  },
  {
   "id": "elevations-laterales-cable",
@@ -2059,7 +2172,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevations-laterales-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-laterales-poulie.webp"
  },
  {
   "id": "elevations-laterales-machine",
@@ -2075,7 +2189,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevation-laterale-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-machine.webp"
  },
  {
   "id": "elevations-frontales",
@@ -2091,7 +2206,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevations-frontales-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-frontales-exercice-musculation.webp"
  },
  {
   "id": "elevations-frontales-cable",
@@ -2107,7 +2223,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevation-frontale-poulie-basse.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-frontale-poulie-basse.webp"
  },
  {
   "id": "elevations-frontales-machine",
@@ -2123,7 +2240,8 @@
   "met": 4,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "oiseau",
@@ -2140,7 +2258,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/oiseau-assis-sur-banc.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/oiseau-assis-sur-banc.webp"
  },
  {
   "id": "machine-oiseau",
@@ -2157,7 +2276,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/pec-deck-inverse.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pec-deck-inverse.webp"
  },
  {
   "id": "tirage-visage-face-pull",
@@ -2175,7 +2295,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/face-pull.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/face-pull.webp"
  },
  {
   "id": "tirage-menton-kettlebell",
@@ -2193,7 +2314,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-menton-avec-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-menton-avec-kettlebell.webp"
  },
  {
   "id": "y-raise-w-raise",
@@ -2208,7 +2330,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevation-en-y-a-la-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-en-y-a-la-poulie.webp"
  },
  {
   "id": "developpe-nuque",
@@ -2226,7 +2349,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-nuque-barre-guidee.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-nuque-barre-guidee.webp"
  },
  {
   "id": "developpe-epaules-kettlebell",
@@ -2244,7 +2368,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-epaule-avec-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-epaule-avec-kettlebell.webp"
  },
  {
   "id": "developpe-landmine-epaules",
@@ -2263,7 +2388,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/developpe-landmine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/developpe-landmine.webp"
  },
  {
   "id": "ecarte-arriere-elastique",
@@ -2280,7 +2406,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/ecarte-arriere-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/ecarte-arriere-elastique.webp"
  },
  {
   "id": "elevation-frontale-allongee-barre",
@@ -2296,7 +2423,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevation-frontale-allongee-a-la-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-frontale-allongee-a-la-barre.webp"
  },
  {
   "id": "elevation-laterale-poulie-inclinee",
@@ -2312,7 +2440,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevation-laterale-a-la-poulie-en-inclinaison.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-a-la-poulie-en-inclinaison.webp"
  },
  {
   "id": "elevation-laterale-landmine",
@@ -2328,7 +2457,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/elevation-laterale-landmine-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-landmine-exercice-musculation.webp"
  },
  {
   "id": "elevations-laterales-kettlebell",
@@ -2344,7 +2474,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevation-laterales-avec-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterales-avec-kettlebell.webp"
  },
  {
   "id": "rotation-interne-epaule-elastique",
@@ -2360,7 +2491,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp"
  },
  {
   "id": "face-pull-couche-poulie",
@@ -2378,7 +2510,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/face-pull-couche-a-la-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/face-pull-couche-a-la-poulie.webp"
  },
  {
   "id": "oiseau-poulie-45",
@@ -2395,7 +2528,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/oiseau-a-la-poulie-a-45.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/oiseau-a-la-poulie-a-45.webp"
  },
  {
   "id": "passage-d-epaule-elastique",
@@ -2411,7 +2545,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/passage-depaule-avec-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/passage-depaule-avec-elastique.webp"
  },
  {
   "id": "rotation-externe-epaule-abduction",
@@ -2427,7 +2562,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/rotation-externe-de-epaule-en-abduction.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-de-epaule-en-abduction.webp"
  },
  {
   "id": "rotation-externe-epaule-elastique",
@@ -2443,7 +2579,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp"
  },
  {
   "id": "rotation-interne-90-poulie",
@@ -2459,7 +2596,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/rotation-interne-a-90-a-la-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-interne-a-90-a-la-poulie.webp"
  },
  {
   "id": "elevation-frontale-banc-incline",
@@ -2475,7 +2613,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevation-frontale-banc-incline.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-frontale-banc-incline.webp"
  },
  {
   "id": "elevation-laterale-inclinee-haltere",
@@ -2491,7 +2630,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/elevation-laterale-incline-haltere.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevation-laterale-incline-haltere.webp"
  },
  {
   "id": "rotation-externe-epaule-haltere",
@@ -2507,7 +2647,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/rotation-externe-epaule-haltere.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-externe-epaule-haltere.webp"
  },
  {
   "id": "tirage-menton-elastique",
@@ -2525,7 +2666,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/tirage-menton-avec-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tirage-menton-avec-elastique.webp"
  },
  {
   "id": "thruster",
@@ -2545,7 +2687,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/thruster.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/thruster.webp"
  },
  {
   "id": "thruster-kettlebell",
@@ -2565,7 +2708,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/thruster-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/thruster-kettlebell.webp"
  },
  {
   "id": "russian-twist-developpe-epaules",
@@ -2583,7 +2727,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/russian-twist-avec-developpe-epaule.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/russian-twist-avec-developpe-epaule.webp"
  },
  {
   "id": "developpe-epaules-assis-machine-shoulder-pre",
@@ -2601,7 +2746,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/shoulder-press-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/shoulder-press-machine.webp"
  },
  {
   "id": "curl-barre",
@@ -2617,7 +2763,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/curl-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-barre.webp"
  },
  {
   "id": "curl-halteres",
@@ -2633,7 +2780,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/curl-halteres-alterne.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-halteres-alterne.webp"
  },
  {
   "id": "curl-poulie",
@@ -2649,7 +2797,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/curl-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-poulie.webp"
  },
  {
   "id": "curl-ez",
@@ -2665,7 +2814,8 @@
   "met": 4,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "curl-incline",
@@ -2681,7 +2831,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/curl-haltere-incline.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-haltere-incline.webp"
  },
  {
   "id": "curl-concentre",
@@ -2697,7 +2848,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/curl-concentre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-concentre.webp"
  },
  {
   "id": "curl-araignee-spider-curl",
@@ -2713,7 +2865,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/curl-araignee-spider.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-araignee-spider.webp"
  },
  {
   "id": "curl-zottman",
@@ -2728,7 +2881,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/curl-zottman.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-zottman.webp"
  },
  {
   "id": "marteau",
@@ -2743,7 +2897,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/curl-marteau.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-marteau.webp"
  },
  {
   "id": "curl-pupitre-machine",
@@ -2759,7 +2914,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/curl-pupitre-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-pupitre-machine.webp"
  },
  {
   "id": "curl-pupitre-barre-ez-larry-scott",
@@ -2775,7 +2931,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/curl-pupitre-barre-ez-larry-scott.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/curl-pupitre-barre-ez-larry-scott.webp"
  },
  {
   "id": "waiter-curl",
@@ -2791,7 +2948,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/waiter-curl.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/waiter-curl.webp"
  },
  {
   "id": "bench-dips",
@@ -2808,7 +2966,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/bench-dips-sur-banc.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/bench-dips-sur-banc.webp"
  },
  {
   "id": "barre-au-front",
@@ -2824,7 +2983,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/barre-au-front-triceps.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/barre-au-front-triceps.webp"
  },
  {
   "id": "skull-crusher-barre-ez",
@@ -2840,7 +3000,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/skull-crusher-barre-ez.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/skull-crusher-barre-ez.webp"
  },
  {
   "id": "extension-triceps",
@@ -2856,7 +3017,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-triceps-verticale-haltere.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-verticale-haltere.webp"
  },
  {
   "id": "extension-triceps-couche-halteres",
@@ -2872,7 +3034,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-triceps-couche-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-couche-halteres.webp"
  },
  {
   "id": "extension-nuque-haltere",
@@ -2888,7 +3051,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-nuque-haltere-assis.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-nuque-haltere-assis.webp"
  },
  {
   "id": "extension-nuque-poulie-haute",
@@ -2904,7 +3068,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-nuque-poulie-haute-corde.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-nuque-poulie-haute-corde.webp"
  },
  {
   "id": "triceps-poulie",
@@ -2918,7 +3083,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/triceps-poulie-haute-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/triceps-poulie-haute-barre.webp"
  },
  {
   "id": "triceps-corde-poulie",
@@ -2932,7 +3098,8 @@
   "met": 4,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "triceps-poulie-basse",
@@ -2948,7 +3115,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/triceps-poulie-basse-verticale.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/triceps-poulie-basse-verticale.webp"
  },
  {
   "id": "extension-triceps-arriere-kickback",
@@ -2964,7 +3132,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/triceps-kickback-debout-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/triceps-kickback-debout-halteres.webp"
  },
  {
   "id": "triceps-machine",
@@ -2978,7 +3147,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/triceps-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/triceps-machine.webp"
  },
  {
   "id": "dips-aux-anneaux",
@@ -2996,7 +3166,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/dips-aux-anneaux.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-aux-anneaux.webp"
  },
  {
   "id": "dips-entre-deux-bancs",
@@ -3013,7 +3184,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/dips-entre-deux-bancs.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/dips-entre-deux-bancs.webp"
  },
  {
   "id": "tate-press",
@@ -3029,7 +3201,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/tate-press.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/tate-press.webp"
  },
  {
   "id": "handstand-push-up-atr",
@@ -3048,7 +3221,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/handstand-push-up.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/handstand-push-up.webp"
  },
  {
   "id": "extension-triceps-banc-incline-halteres",
@@ -3064,7 +3238,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-triceps-banc-incline-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-banc-incline-halteres.webp"
  },
  {
   "id": "extension-triceps-decline-halteres",
@@ -3080,7 +3255,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-triceps-decline-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-decline-halteres.webp"
  },
  {
   "id": "extension-triceps-concentree-poulie",
@@ -3094,7 +3270,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/extension-triceps-concentree-poulie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-concentree-poulie.webp"
  },
  {
   "id": "extension-triceps-nuque-elastique",
@@ -3110,7 +3287,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-triceps-nuque-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-nuque-elastique.webp"
  },
  {
   "id": "extension-triceps-verticale-elastique",
@@ -3126,7 +3304,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-triceps-verticale-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-verticale-elastique.webp"
  },
  {
   "id": "extension-triceps-trx-sangles",
@@ -3142,7 +3321,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-triceps-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-trx-sangles.webp"
  },
  {
   "id": "extension-triceps-allongee-trx-sangles",
@@ -3158,7 +3338,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-triceps-trx-allonge.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-triceps-trx-allonge.webp"
  },
  {
   "id": "squat-a-la-barre",
@@ -3177,7 +3358,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/homme-faisant-un-squat-avec-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/homme-faisant-un-squat-avec-barre.webp"
  },
  {
   "id": "squat-avant",
@@ -3198,7 +3380,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-barre-devant-front.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-barre-devant-front.webp"
  },
  {
   "id": "squat-bulgare",
@@ -3217,7 +3400,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/squat-bulgare-halteres-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-bulgare-halteres-exercice-musculation.webp"
  },
  {
   "id": "squat-gobelet-goblet-squat",
@@ -3237,7 +3421,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-goblet-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-goblet-kettlebell.webp"
  },
  {
   "id": "squat-sumo",
@@ -3256,7 +3441,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-sumo-avec-haltere.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-sumo-avec-haltere.webp"
  },
  {
   "id": "smith-machine-squat",
@@ -3275,7 +3461,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-smith-machine-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-smith-machine-exercice-musculation.webp"
  },
  {
   "id": "squat-hack-hack-squat",
@@ -3293,7 +3480,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/hack-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hack-squat.webp"
  },
  {
   "id": "press-jambes-45",
@@ -3311,7 +3499,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/presse-a-cuisse-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisse-exercice-musculation.webp"
  },
  {
   "id": "press-jambes-horizontale",
@@ -3329,7 +3518,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "machine/press-jambes-2.jpg",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/machine/press-jambes-2.jpg"
  },
  {
   "id": "press-jambes-verticale",
@@ -3347,7 +3537,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/presse-a-cuisses-verticale.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-verticale.webp"
  },
  {
   "id": "press-jambes-inclinee",
@@ -3365,7 +3556,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/presse-a-cuisses-inclinee.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-inclinee.webp"
  },
  {
   "id": "press-jambes-levier",
@@ -3383,7 +3575,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "machine/press-jambes-6.jpg",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/machine/press-jambes-6.jpg"
  },
  {
   "id": "extension-quadriceps-leg-extension",
@@ -3397,7 +3590,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/leg-extension-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-extension-exercice-musculation.webp"
  },
  {
   "id": "leg-curl-couche-machine",
@@ -3413,7 +3607,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/leg-curl-allonge.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-allonge.webp"
  },
  {
   "id": "leg-curl-assis-machine",
@@ -3429,7 +3624,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/leg-curl-assis-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-assis-machine.webp"
  },
  {
   "id": "leg-curl-unilateral-debout",
@@ -3445,7 +3641,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/leg-curl-unilateral-debout-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-unilateral-debout-machine.webp"
  },
  {
   "id": "leg-curl-haltere",
@@ -3461,7 +3658,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/leg-curl-decline-haltere.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-decline-haltere.webp"
  },
  {
   "id": "leg-curl-elastique",
@@ -3477,7 +3675,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/leg-curl-avec-elastique-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-avec-elastique-musculation.webp"
  },
  {
   "id": "leg-curl-inverse",
@@ -3493,7 +3692,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/leg-curl-inverse-machine-tirage-vertical.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-curl-inverse-machine-tirage-vertical.webp"
  },
  {
   "id": "squat-pistol",
@@ -3512,7 +3712,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/squat-pistol.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-pistol.webp"
  },
  {
   "id": "squat-kettlebell",
@@ -3532,7 +3733,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/kettlebell-back-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-back-squat.webp"
  },
  {
   "id": "fentes-kettlebell",
@@ -3551,7 +3753,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/fentes-avant-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/fentes-avant-kettlebell.webp"
  },
  {
   "id": "fentes",
@@ -3570,7 +3773,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/fente-avant-barre-femme.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/fente-avant-barre-femme.webp"
  },
  {
   "id": "fentes-marchees",
@@ -3589,7 +3793,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/fentes-marchees-avec-sandbag.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/fentes-marchees-avec-sandbag.webp"
  },
  {
   "id": "fentes-arriere",
@@ -3608,7 +3813,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "fentes-laterales",
@@ -3627,7 +3833,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "smith-machine-fentes",
@@ -3646,7 +3853,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/split-squat-smith-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/split-squat-smith-machine.webp"
  },
  {
   "id": "montee-sur-box-step-up",
@@ -3665,7 +3873,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/montee-sur-box-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-barre.webp"
  },
  {
   "id": "montee-sur-box-halteres",
@@ -3684,7 +3893,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/montee-sur-box-halteres-classique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-halteres-classique.webp"
  },
  {
   "id": "abduction-cuisses-leg-abduction",
@@ -3698,7 +3908,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/leg-abduction-machine-v2.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-abduction-machine-v2.webp"
  },
  {
   "id": "adduction-cuisses-leg-adduction",
@@ -3714,7 +3925,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/leg-adduction-machine-v2.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-adduction-machine-v2.webp"
  },
  {
   "id": "extension-quadriceps-unilaterale",
@@ -3728,7 +3940,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.webp"
  },
  {
   "id": "hack-squat-inverse",
@@ -3746,7 +3959,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/hack-squat-inverse.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hack-squat-inverse.webp"
  },
  {
   "id": "pendulum-squat",
@@ -3764,7 +3978,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/pendulum-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pendulum-squat.webp"
  },
  {
   "id": "belt-squat",
@@ -3782,7 +3997,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/belt-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/belt-squat.webp"
  },
  {
   "id": "safety-bar-squat",
@@ -3801,7 +4017,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/safety-bar-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/safety-bar-squat.webp"
  },
  {
   "id": "overhead-squat",
@@ -3823,7 +4040,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/overhead-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat.webp"
  },
  {
   "id": "pin-squat",
@@ -3842,7 +4060,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/pin-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pin-squat.webp"
  },
  {
   "id": "sissy-squat",
@@ -3859,7 +4078,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/sissy-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/sissy-squat.webp"
  },
  {
   "id": "cossack-squat",
@@ -3878,7 +4098,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/cossack-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/cossack-squat.webp"
  },
  {
   "id": "squat-bande-elastique",
@@ -3897,7 +4118,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-bande-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-bande-elastique.webp"
  },
  {
   "id": "chaise-wall-sit",
@@ -3914,7 +4136,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-statique-contre-mur-exercice-chaise.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-statique-contre-mur-exercice-chaise.webp"
  },
  {
   "id": "presse-a-cuisses-iso-laterale",
@@ -3933,7 +4156,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/presse-cuisse-iso-laterale-hammer-stenght.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-cuisse-iso-laterale-hammer-stenght.webp"
  },
  {
   "id": "presse-a-cuisses-sur-le-cote",
@@ -3951,7 +4175,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/presse-a-cuisse-sur-le-cote.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisse-sur-le-cote.webp"
  },
  {
   "id": "hack-squat-assis",
@@ -3969,7 +4194,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/hack-squat-assis.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hack-squat-assis.webp"
  },
  {
   "id": "overhead-squat-halteres",
@@ -3991,7 +4217,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/overhead-squat-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat-halteres.webp"
  },
  {
   "id": "sled-push",
@@ -4009,7 +4236,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/sled-push-hyrox.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/sled-push-hyrox.webp"
  },
  {
   "id": "croix-de-fer-halteres",
@@ -4025,7 +4253,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/croix-de-fer-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/croix-de-fer-halteres.webp"
  },
  {
   "id": "squat-poids-du-corps-air-squat",
@@ -4043,7 +4272,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-poids-du-corps-air-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-poids-du-corps-air-squat.webp"
  },
  {
   "id": "fentes-croisees-curtsy-lunge",
@@ -4062,7 +4292,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/fentes-croisees-curtsy-lunge.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/fentes-croisees-curtsy-lunge.webp"
  },
  {
   "id": "jefferson-squat",
@@ -4082,7 +4313,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/jefferson-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/jefferson-squat.webp"
  },
  {
   "id": "souleve-de-terre-valise-suitcase",
@@ -4103,7 +4335,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/souleve-de-terre-valise.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-valise.webp"
  },
  {
   "id": "squat-saute-jump-squat",
@@ -4122,7 +4355,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-saute-jump-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-saute-jump-squat.webp"
  },
  {
   "id": "squat-avec-rotation-du-tronc",
@@ -4142,7 +4376,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-avec-rotation-du-tronc.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-avec-rotation-du-tronc.webp"
  },
  {
   "id": "sissy-squat-machine",
@@ -4159,7 +4394,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/sissy-squat-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/sissy-squat-machine.webp"
  },
  {
   "id": "extension-quadriceps-unilaterale-machine-a-d",
@@ -4173,7 +4409,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/extension-quadriceps-unilaterale-machine-dips.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-quadriceps-unilaterale-machine-dips.webp"
  },
  {
   "id": "squat-bulgare-elastique",
@@ -4192,7 +4429,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/squat-bulgare-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-bulgare-elastique.webp"
  },
  {
   "id": "extension-quadriceps-elastique",
@@ -4206,7 +4444,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/extension-quadriceps-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-quadriceps-elastique.webp"
  },
  {
   "id": "overhead-squat-elastique",
@@ -4228,7 +4467,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/overhead-squat-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat-elastique.webp"
  },
  {
   "id": "split-squat-elastique-fente-statique",
@@ -4247,7 +4487,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/split-squat-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/split-squat-elastique.webp"
  },
  {
   "id": "squat-barre-avec-bandes-elastiques",
@@ -4266,7 +4507,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-barre-avec-bandes-elastiques.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-barre-avec-bandes-elastiques.webp"
  },
  {
   "id": "squat-trx-sangles",
@@ -4285,7 +4527,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-trx-sangles.webp"
  },
  {
   "id": "split-squat-trx-sangles",
@@ -4304,7 +4547,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/split-squat-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/split-squat-trx-sangles.webp"
  },
  {
   "id": "squat-pistol-trx-sangles",
@@ -4323,7 +4567,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/squat-pistol-trx-sangles.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-pistol-trx-sangles.webp"
  },
  {
   "id": "hip-thrust-barre-poussee-de-hanche",
@@ -4341,7 +4586,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/hip-thrust-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-barre.webp"
  },
  {
   "id": "hip-thrust-haltere-poussee-de-hanche",
@@ -4359,7 +4605,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/hip-thrust-haltere.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-haltere.webp"
  },
  {
   "id": "hip-thrust-machine-poussee-de-hanche",
@@ -4377,7 +4624,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/hip-thrust-a-la-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-a-la-machine.webp"
  },
  {
   "id": "hip-thrust-unilateral-poussee-de-hanche",
@@ -4397,7 +4645,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/hip-thrust-barre-unilateral.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hip-thrust-barre-unilateral.webp"
  },
  {
   "id": "pont-fessier-glute-bridge",
@@ -4415,7 +4664,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/glute-bridge.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/glute-bridge.webp"
  },
  {
   "id": "extension-fessiers-arriere-kickback",
@@ -4431,7 +4681,8 @@
   "met": 4,
   "unilateral": true,
   "image": "exercises/kickback-cable-fessiers.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/kickback-cable-fessiers.webp"
  },
  {
   "id": "kickback-machine",
@@ -4447,7 +4698,8 @@
   "met": 4,
   "unilateral": true,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "souleve-de-terre",
@@ -4468,7 +4720,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre.webp"
  },
  {
   "id": "souleve-de-terre-roumain-barre",
@@ -4488,7 +4741,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-roumain-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-barre.webp"
  },
  {
   "id": "souleve-de-terre-roumain-halteres",
@@ -4508,7 +4762,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-roumain-halteres.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-halteres.webp"
  },
  {
   "id": "souleve-de-terre-roumain-unilateral",
@@ -4529,7 +4784,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/souleve-de-terre-roumain-unilateral.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-unilateral.webp"
  },
  {
   "id": "souleve-de-terre-sumo",
@@ -4550,7 +4806,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-sumo.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo.webp"
  },
  {
   "id": "tirage-cable-fessiers-cable-pull-through",
@@ -4567,7 +4824,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "souleve-de-terre-jambes-tendues",
@@ -4587,7 +4845,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-jambes-tendues.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-jambes-tendues.webp"
  },
  {
   "id": "souleve-de-terre-roumain-kettlebell",
@@ -4607,7 +4866,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-roumain-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-kettlebell.webp"
  },
  {
   "id": "souleve-de-terre-roumain-landmine",
@@ -4627,7 +4887,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-roumain-landmine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-landmine.webp"
  },
  {
   "id": "souleve-de-terre-sumo-halteres",
@@ -4648,7 +4909,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.webp"
  },
  {
   "id": "souleve-de-terre-sumo-kettlebell",
@@ -4669,7 +4931,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-sumo-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo-kettlebell.webp"
  },
  {
   "id": "souleve-de-terre-sumo-landmine",
@@ -4690,7 +4953,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-sumo-landmine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-sumo-landmine.webp"
  },
  {
   "id": "souleve-de-terre-trap-bar",
@@ -4710,7 +4974,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-a-la-trap-bar.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-a-la-trap-bar.webp"
  },
  {
   "id": "souleve-de-terre-avec-deficit",
@@ -4731,7 +4996,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-avec-deficit.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-avec-deficit.webp"
  },
  {
   "id": "souleve-de-terre-machine",
@@ -4751,7 +5017,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-avec-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-avec-machine.webp"
  },
  {
   "id": "zercher-deadlift",
@@ -4772,7 +5039,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/zercher-deadlift.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/zercher-deadlift.webp"
  },
  {
   "id": "reeves-deadlift",
@@ -4793,7 +5061,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/reeves-deadlift.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/reeves-deadlift.webp"
  },
  {
   "id": "glute-ham-raise-ghd",
@@ -4811,7 +5080,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/glute-ham-developer-ghd.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/glute-ham-developer-ghd.webp"
  },
  {
   "id": "kettlebell-swing",
@@ -4831,7 +5101,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/kettlebell-swing.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-swing.webp"
  },
  {
   "id": "squat-a-la-barre",
@@ -4850,7 +5121,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/homme-faisant-un-squat-avec-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/homme-faisant-un-squat-avec-barre.webp"
  },
  {
   "id": "squat-avant",
@@ -4871,7 +5143,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-barre-devant-front.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-barre-devant-front.webp"
  },
  {
   "id": "squat-bulgare",
@@ -4890,7 +5163,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/squat-bulgare-halteres-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-bulgare-halteres-exercice-musculation.webp"
  },
  {
   "id": "squat-gobelet-goblet-squat",
@@ -4910,7 +5184,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-goblet-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-goblet-kettlebell.webp"
  },
  {
   "id": "squat-sumo",
@@ -4929,7 +5204,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-sumo-avec-haltere.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-sumo-avec-haltere.webp"
  },
  {
   "id": "smith-machine-squat",
@@ -4948,7 +5224,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-smith-machine-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-smith-machine-exercice-musculation.webp"
  },
  {
   "id": "squat-hack-hack-squat",
@@ -4966,7 +5243,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/hack-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hack-squat.webp"
  },
  {
   "id": "squat-pistol",
@@ -4985,7 +5263,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/squat-pistol.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-pistol.webp"
  },
  {
   "id": "squat-kettlebell",
@@ -5005,7 +5284,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/kettlebell-back-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-back-squat.webp"
  },
  {
   "id": "belt-squat",
@@ -5023,7 +5303,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/belt-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/belt-squat.webp"
  },
  {
   "id": "safety-bar-squat",
@@ -5042,7 +5323,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/safety-bar-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/safety-bar-squat.webp"
  },
  {
   "id": "overhead-squat",
@@ -5064,7 +5346,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/overhead-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/overhead-squat.webp"
  },
  {
   "id": "pin-squat",
@@ -5083,7 +5366,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/pin-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pin-squat.webp"
  },
  {
   "id": "cossack-squat",
@@ -5102,7 +5386,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/cossack-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/cossack-squat.webp"
  },
  {
   "id": "squat-bande-elastique",
@@ -5121,7 +5406,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/squat-bande-elastique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/squat-bande-elastique.webp"
  },
  {
   "id": "pendulum-squat",
@@ -5139,7 +5425,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/pendulum-squat.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/pendulum-squat.webp"
  },
  {
   "id": "hack-squat-inverse",
@@ -5157,7 +5444,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/hack-squat-inverse.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hack-squat-inverse.webp"
  },
  {
   "id": "press-jambes-45",
@@ -5175,7 +5463,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/presse-a-cuisse-exercice-musculation.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisse-exercice-musculation.webp"
  },
  {
   "id": "press-jambes-horizontale",
@@ -5193,7 +5482,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "machine/press-jambes-2.jpg",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/machine/press-jambes-2.jpg"
  },
  {
   "id": "press-jambes-verticale",
@@ -5211,7 +5501,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/presse-a-cuisses-verticale.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-verticale.webp"
  },
  {
   "id": "press-jambes-inclinee",
@@ -5229,7 +5520,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/presse-a-cuisses-inclinee.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-a-cuisses-inclinee.webp"
  },
  {
   "id": "press-jambes-levier",
@@ -5247,7 +5539,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "machine/press-jambes-6.jpg",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/machine/press-jambes-6.jpg"
  },
  {
   "id": "presse-a-cuisses-iso-laterale",
@@ -5266,7 +5559,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/presse-cuisse-iso-laterale-hammer-stenght.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/presse-cuisse-iso-laterale-hammer-stenght.webp"
  },
  {
   "id": "fentes",
@@ -5285,7 +5579,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/fente-avant-barre-femme.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/fente-avant-barre-femme.webp"
  },
  {
   "id": "fentes-marchees",
@@ -5304,7 +5599,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/fentes-marchees-avec-sandbag.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/fentes-marchees-avec-sandbag.webp"
  },
  {
   "id": "fentes-arriere",
@@ -5323,7 +5619,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "fentes-laterales",
@@ -5342,7 +5639,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "fentes-kettlebell",
@@ -5361,7 +5659,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/fentes-avant-kettlebell.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/fentes-avant-kettlebell.webp"
  },
  {
   "id": "smith-machine-fentes",
@@ -5380,7 +5679,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/split-squat-smith-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/split-squat-smith-machine.webp"
  },
  {
   "id": "montee-sur-box-step-up",
@@ -5399,7 +5699,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/montee-sur-box-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-barre.webp"
  },
  {
   "id": "montee-sur-box-halteres",
@@ -5418,7 +5719,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/montee-sur-box-halteres-classique.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/montee-sur-box-halteres-classique.webp"
  },
  {
   "id": "hyperextension-back-extension",
@@ -5435,7 +5737,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/extension-lombaire-au-banc-45.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-lombaire-au-banc-45.webp"
  },
  {
   "id": "hyperextension-inverse-reverse-hyper",
@@ -5452,7 +5755,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/hyperextension-inverse-reverse-hyper.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hyperextension-inverse-reverse-hyper.webp"
  },
  {
   "id": "hyperextension-lestee",
@@ -5469,7 +5773,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "hyperextension-machine",
@@ -5486,7 +5791,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/extension-lombaire-a-la-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-lombaire-a-la-machine.webp"
  },
  {
   "id": "bird-dog",
@@ -5504,7 +5810,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/bird-dog.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/bird-dog.webp"
  },
  {
   "id": "extension-lombaire-sur-ballon",
@@ -5521,7 +5828,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/extension-lombaire-ballon.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/extension-lombaire-ballon.webp"
  },
  {
   "id": "planche-inversee",
@@ -5540,7 +5848,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/planche-inversee.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/planche-inversee.webp"
  },
  {
   "id": "inclinaison-lombaire-good-morning",
@@ -5558,7 +5867,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/good-morning-exercice.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/good-morning-exercice.webp"
  },
  {
   "id": "souleve-de-terre",
@@ -5579,7 +5889,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre.webp"
  },
  {
   "id": "souleve-de-terre-roumain-barre",
@@ -5599,7 +5910,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/souleve-de-terre-roumain-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/souleve-de-terre-roumain-barre.webp"
  },
  {
   "id": "jefferson-curl",
@@ -5617,7 +5929,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/jefferson-curl.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/jefferson-curl.webp"
  },
  {
   "id": "tirage-en-rack-rack-pull",
@@ -5637,7 +5950,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/rack-pull.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rack-pull.webp"
  },
  {
   "id": "superman",
@@ -5655,7 +5969,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/superman.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/superman.webp"
  },
  {
   "id": "gainage",
@@ -5674,7 +5989,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/planche-gainage.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/planche-gainage.webp"
  },
  {
   "id": "planche-laterale-side-plank",
@@ -5693,7 +6009,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/planche-laterale.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/planche-laterale.webp"
  },
  {
   "id": "hollow-body",
@@ -5711,7 +6028,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/hollow-hold.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/hollow-hold.webp"
  },
  {
   "id": "crunch",
@@ -5727,7 +6045,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/crunch-au-sol.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/crunch-au-sol.webp"
  },
  {
   "id": "crunch-poulie",
@@ -5743,7 +6062,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/crunch-poulie-haute.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/crunch-poulie-haute.webp"
  },
  {
   "id": "crunch-machine",
@@ -5759,7 +6079,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/crunch-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/crunch-machine.webp"
  },
  {
   "id": "rotation-machine-obliques",
@@ -5775,7 +6096,8 @@
   "met": 4,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "releve-de-jambes",
@@ -5792,7 +6114,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/releve-de-jambes-suspendu.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/releve-de-jambes-suspendu.webp"
  },
  {
   "id": "chaise-romaine",
@@ -5809,7 +6132,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/chaise-romaine-releve-jambes.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chaise-romaine-releve-jambes.webp"
  },
  {
   "id": "roue-abdominale-ab-wheel",
@@ -5827,7 +6151,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/roue-abdominale.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/roue-abdominale.webp"
  },
  {
   "id": "rotation-russe-russian-twist",
@@ -5845,7 +6170,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/rotation-russe.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/rotation-russe.webp"
  },
  {
   "id": "drapeau-dragon-flag",
@@ -5864,7 +6190,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/dragon-flag.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/dragon-flag.webp"
  },
  {
   "id": "grimpeur-mountain-climber",
@@ -5883,7 +6210,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/grimpeur-mountain-climber.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/grimpeur-mountain-climber.webp"
  },
  {
   "id": "elevations-mollets-debout",
@@ -5897,7 +6225,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevations-mollets-debout-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-debout-barre.webp"
  },
  {
   "id": "elevations-mollets-assis",
@@ -5911,7 +6240,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevations-mollets-assis-barre.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-assis-barre.webp"
  },
  {
   "id": "elevations-mollets-unilateral",
@@ -5925,7 +6255,8 @@
   "met": 4,
   "unilateral": true,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "presse-mollets-leg-press",
@@ -5939,7 +6270,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevations-mollets-presse-45.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-presse-45.webp"
  },
  {
   "id": "elevations-mollets-penche-donkey-calf-raise",
@@ -5953,7 +6285,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevations-mollets-donkey.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-donkey.webp"
  },
  {
   "id": "mollets-machine-debout",
@@ -5967,7 +6300,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevations-mollets-debout-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-debout-machine.webp"
  },
  {
   "id": "mollets-machine-assise",
@@ -5981,7 +6315,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/elevations-mollets-assis-machine.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/elevations-mollets-assis-machine.webp"
  },
  {
   "id": "sauts-a-la-corde",
@@ -5997,7 +6332,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/sauts-a-la-corde.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/sauts-a-la-corde.webp"
  },
  {
   "id": "curl-poignet-barre",
@@ -6011,7 +6347,8 @@
   "met": 4,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "extension-poignet-barre",
@@ -6025,7 +6362,8 @@
   "met": 4,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "pronation-supination-haltere",
@@ -6039,7 +6377,8 @@
   "met": 4,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "planche-de-prehension",
@@ -6055,7 +6394,8 @@
   "met": 4,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "burpees",
@@ -6076,7 +6416,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/burpees.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/burpees.webp"
  },
  {
   "id": "kettlebell-swing",
@@ -6096,7 +6437,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/kettlebell-swing.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/kettlebell-swing.webp"
  },
  {
   "id": "arrache-haltere-dumbbell-snatch",
@@ -6118,7 +6460,8 @@
   "met": 8,
   "unilateral": true,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "arrache-debout-muscle-snatch",
@@ -6140,7 +6483,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/muscle-snatch-halterophilie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/muscle-snatch-halterophilie.webp"
  },
  {
   "id": "thrusters-halteres",
@@ -6160,7 +6504,8 @@
   "met": 8,
   "unilateral": false,
   "image": null,
-  "youtube": null
+  "youtube": null,
+  "image_url": null
  },
  {
   "id": "clean-jerk",
@@ -6182,7 +6527,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/epaule-jete-halterophilie.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/epaule-jete-halterophilie.webp"
  },
  {
   "id": "battle-rope",
@@ -6203,7 +6549,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/battle-rope.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/battle-rope.webp"
  },
  {
   "id": "box-jump",
@@ -6222,7 +6569,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/box-jump.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/box-jump.webp"
  },
  {
   "id": "assault-air-bike",
@@ -6242,7 +6590,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/assault-air-bike.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/assault-air-bike.webp"
  },
  {
   "id": "ergometre-de-ski-ski-erg",
@@ -6263,7 +6612,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/ergometre-de-ski.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/ergometre-de-ski.webp"
  },
  {
   "id": "jumping-jack",
@@ -6283,7 +6633,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/jumping-jack.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/jumping-jack.webp"
  },
  {
   "id": "marche-de-l-ours-bear-crawl",
@@ -6304,7 +6655,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/marche-de-lours-bear-crawl.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/marche-de-lours-bear-crawl.webp"
  },
  {
   "id": "wall-ball",
@@ -6324,7 +6676,8 @@
   "met": 8,
   "unilateral": false,
   "image": "exercises/wall-ball.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/wall-ball.webp"
  },
  {
   "id": "chariot-de-puissance-poussee",
@@ -6342,7 +6695,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/chariot-poussee.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-poussee.webp"
  },
  {
   "id": "chariot-de-puissance-tirage-en-avancant",
@@ -6361,7 +6715,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/chariot-tirage-avance.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-avance.webp"
  },
  {
   "id": "chariot-de-puissance-tirage-dos",
@@ -6380,7 +6735,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/chariot-tirage-dos.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-dos.webp"
  },
  {
   "id": "chariot-de-puissance-tirage-de-cote",
@@ -6400,7 +6756,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/chariot-tirage-de-cote.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-de-cote.webp"
  },
  {
   "id": "chariot-de-puissance-tirage-inverse-jambes",
@@ -6417,7 +6774,8 @@
   "met": 6.5,
   "unilateral": false,
   "image": "exercises/chariot-tirage-inverse-jambes.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-inverse-jambes.webp"
  },
  {
   "id": "chariot-de-puissance-tirage-epaules",
@@ -6435,7 +6793,8 @@
   "met": 5.5,
   "unilateral": false,
   "image": "exercises/chariot-tirage-epaules.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-tirage-epaules.webp"
  },
  {
   "id": "chariot-de-puissance-fentes-arriere",
@@ -6454,7 +6813,8 @@
   "met": 6.5,
   "unilateral": true,
   "image": "exercises/chariot-fentes-arriere.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-fentes-arriere.webp"
  },
  {
   "id": "chariot-de-puissance-curl-biceps",
@@ -6470,7 +6830,8 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/chariot-curl-biceps.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-curl-biceps.webp"
  },
  {
   "id": "chariot-de-puissance-extension-triceps",
@@ -6486,6 +6847,7 @@
   "met": 4,
   "unilateral": false,
   "image": "exercises/chariot-extension-triceps.webp",
-  "youtube": null
+  "youtube": null,
+  "image_url": "https://michdu75-commits.github.io/forcetracker/exercises/chariot-extension-triceps.webp"
  }
 ]
