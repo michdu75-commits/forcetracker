@@ -1,135 +1,29 @@
-#!/usr/bin/env node
-/**
- * EXPORT DU CATALOGUE D'EXERCICES — pour réutilisation dans une autre application.
- *
- * Produit trois fichiers dans docs/export/ :
- *   · catalogue-exercices.json  — tout, lisible par une machine
- *   · catalogue-exercices.csv   — le même, ouvrable dans un tableur
- *   · LISEZ-MOI-EXPORT.md       — le schéma expliqué, à lire AVANT d'utiliser les données
- *
- * Les données sont LUES DANS L'APPLICATION (exécutée dans un navigateur réel), pas recopiées :
- * l'export ne peut donc pas diverger du produit.
- *
- * Lancer : node tools/export_catalogue.js
- */
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
-const http=require('http'), fs=require('fs'), path=require('path');
-const ROOT=path.resolve(__dirname,'..');
-const M={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json',
- '.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.webp':'image/webp'};
-const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]);if(p==='/')p='/index.html';
- const f=path.join(ROOT,p);
- if(!f.startsWith(ROOT)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){r.writeHead(404);return r.end('404');}
- r.writeHead(200,{'Content-Type':M[path.extname(f)]||'application/octet-stream'});fs.createReadStream(f).pipe(r);});
-
-// Libellés français des 17 codes musculaires (le code n'en contient pas de table dédiée).
-const MUSCLES={
- pec:'Pectoraux', lats:'Grand dorsal', traps:'Trapèzes',
- 'front-delt':'Deltoïde antérieur', 'side-delt':'Deltoïde moyen', 'rear-delt':'Deltoïde postérieur',
- biceps:'Biceps', triceps:'Triceps', forearms:'Avant-bras',
- quads:'Quadriceps', hamstrings:'Ischio-jambiers', glutes:'Fessiers', calves:'Mollets',
- abs:'Abdominaux', obliques:'Obliques', 'lower-back':'Lombaires', 'hip-flexors':'Fléchisseurs de hanche'
-};
-const EQUIP={barre:'Barre', libre:'Poids libre (haltères, kettlebell)', guide:'Guidé (machine, poulie)',
- corps:'Poids du corps', elast:'Élastique', trx:'Sangles / TRX', cardio:'Cardio / conditionnement',
- autre:'Polyvalent / non déterminé'};
-
+const {chromium}=require('/opt/node22/lib/node_modules/playwright');
+const fs=require('fs');
+const S=(process.env.OUT||'./export/')+'';
 (async()=>{
-await new Promise(r=>srv.listen(0,r));
-const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome'});
-const c=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
-const p=await c.newPage();
-await p.goto('http://localhost:'+srv.address().port+'/index.html');
-await p.waitForTimeout(2500);
-const brut=await p.evaluate(()=>{
-  const noms=[...new Set((EXLIB||[]).map(e=>e.n))].sort((a,b)=>a.localeCompare(b,'fr'));
-  const naz=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
-  const E=n=>({name:n,sets:[{kg:60,reps:10,done:true,type:'N'}]});
-  const N=_MEX.length;
-  const sig=r=>(r.p||[]).slice().sort().join('+')+'|'+(r.s||[]).slice().sort().join('+');
-  const patLbl={}; _MOV_PATTERNS.forEach(P=>patLbl[P.id]=P.label);
-  return {
-    patterns:_MOV_PATTERNS.map(P=>({id:P.id,label:P.label})),
-    groupes:[...new Set(EXLIB.map(e=>e.g))],
-    ex: noms.map(n=>{
-      const d=_mscScores([E(n)])||{}, sc=d.sc||{};
-      const q=naz(n); const match=[];
-      for(let k=0;k<N;k++) if(_MEX[k].re.test(q)) match.push(k);
-      const avis=[...new Set(match.map(k=>sig(_MEX[k])))].length;
-      const pat=_movPattern(n);
-      const id=(typeof exId==='function')?exId(n):null;
-      const ecrit=(typeof exMuscles==='function')?exMuscles(n):null;
-      const yt=(typeof EX_YT!=='undefined'&&EX_YT[n])||null;
-      return {nom:n, identifiant:id,
-        anciensNoms:(id&&EX_IDS[id]?EX_IDS[id].slice(1):[]),
-        groupe:(EXLIB.find(x=>x.n===n)||{}).g,
-        musclesPrincipaux:Object.keys(sc).filter(k=>sc[k]===2).sort(),
-        musclesSecondaires:Object.keys(sc).filter(k=>sc[k]===1).sort(),
-        schemaMouvement:pat||null, schemaLibelle:pat?patLbl[pat]:null,
-        materiel:_exEquip(n), met:getExerciseMET(n),
-        role:(typeof _exRole==='function')?_exRole(n):null,
-        termeAnglais:(typeof EX_EN!=='undefined'&&EX_EN[n])||null,
-        animation:(yt&&yt.img)||null,
-        musclesEcrits:!!ecrit, relueLe:(ecrit&&ecrit.vu)||null,
-        classementCertain: !!ecrit || avis<=1};
-    })};
-});
-await b.close(); srv.close();
-
-// ⚠️ On VÉRIFIE sur le disque que chaque animation annoncée existe : une correspondance
-// qui pointe un fichier absent est pire qu'une case vide — elle se découvre chez l'autre.
-// ⚠️⚠️ Le chemin est résolu DEPUIS LA RACINE, pas depuis `exercises/` : deux fiches pointent
-//      vers `machine/`. Ma première version ne regardait qu'un seul dossier et les déclarait
-//      cassées — un contrôle qui ne dit pas ce qu'il NE regarde pas (BUGS.md, famille 12).
-brut.ex.forEach(e=>{
-  e.animationExiste = e.animation ? fs.existsSync(path.join(ROOT, e.animation)) : false;
-});
-const D=new Date().toISOString().slice(0,10);
-const ex=brut.ex.map(e=>Object.assign({}, e, {
-  musclesPrincipauxFr:e.musclesPrincipaux.map(m=>MUSCLES[m]||m),
-  musclesSecondairesFr:e.musclesSecondaires.map(m=>MUSCLES[m]||m),
-  materielLibelle:EQUIP[e.materiel]||e.materiel
-}));
-const json={
-  source:'Force Tracker', exporte:D, nbExercices:ex.length,
-  avertissement:'LIRE LISEZ-MOI-EXPORT.md avant utilisation : ces données sont DÉDUITES du nom '+
-    'de chaque exercice par 69 règles, elles ne sont pas saisies à la main. Voir la section '+
-    '« Fiabilité » pour ce que le champ classementCertain signifie.',
-  vocabulaire:{muscles:MUSCLES, materiel:EQUIP, schemasMouvement:brut.patterns,
-               groupes:brut.groupes},
-  exercices:ex
-};
-fs.mkdirSync(path.join(ROOT,'docs/export'),{recursive:true});
-fs.writeFileSync(path.join(ROOT,'docs/export/catalogue-exercices.json'), JSON.stringify(json,null,1));
-
-const esc=v=>{const s=String(v==null?'':v); return /[",;\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
-const cols=['nom','identifiant','groupe','musclesPrincipauxFr','musclesSecondairesFr','schemaLibelle',
-            'materielLibelle','met','role','termeAnglais','animation','musclesEcrits','classementCertain'];
-const csv=[cols.join(';')].concat(ex.map(e=>cols.map(k=>{
-  const v=e[k]; return esc(Array.isArray(v)?v.join(' + '):v);
-}).join(';'))).join('\n');
-fs.writeFileSync(path.join(ROOT,'docs/export/catalogue-exercices.csv'), '﻿'+csv);
-
-// ─── FICHIER DÉDIÉ : la correspondance NOM EXACT ⟷ ANIMATION, et rien d'autre.
-//     C'est ce qu'on demande quand on veut réutiliser les visuels ailleurs : le fichier
-//     d'un côté, le nom qui doit s'afficher en face de l'autre.
-const colsA=['nom','identifiant','groupe','animation','animationExiste','termeAnglais'];
-const csvA=[colsA.join(';')].concat(ex.map(e=>colsA.map(k=>esc(e[k])).join(';'))).join('\n');
-fs.writeFileSync(path.join(ROOT,'docs/export/animations-exercices.csv'), '\ufeff'+csvA);
-const avecAnim=ex.filter(e=>e.animationExiste).length;
-const casses=ex.filter(e=>e.animation&&!e.animationExiste);
-const utilises=new Set(ex.filter(e=>e.animation).map(e=>e.animation));
-const orphelins=['exercises','machine'].filter(d=>fs.existsSync(path.join(ROOT,d)))
-  .flatMap(d=>fs.readdirSync(path.join(ROOT,d)).map(f=>d+'/'+f))
-  .filter(f=>/\.(webp|gif|mp4|jpg|png)$/i.test(f) && !utilises.has(f));
-
-const certains=ex.filter(e=>e.classementCertain).length;
-console.log('animations :', avecAnim+'/'+ex.length, 'exercices en ont une ·',
-  casses.length, 'pointent un fichier ABSENT ·', orphelins.length, 'fichiers non utilisés');
-if(casses.length) console.log('  ⚠️ cassées : '+casses.map(e=>e.nom+' → '+e.animation).join(', '));
-console.log('export écrit :', ex.length, 'exercices ·', certains, 'au classement certain ('
-  +Math.round(100*certains/ex.length)+' %)');
-console.log('  docs/export/catalogue-exercices.json');
-console.log('  docs/export/catalogue-exercices.csv');
-console.log('  docs/export/animations-exercices.csv');
-})().catch(e=>{console.error(e);process.exit(2);});
+  const uni=JSON.parse(fs.readFileSync((process.env.UNI||'./export/uni.json'),'utf8'));
+  const b=await chromium.launch();
+  const p=await (await b.newContext({serviceWorkers:'block'})).newPage();
+  await p.goto('http://localhost:8123/index.html'); await p.waitForTimeout(2500);
+  const data=await p.evaluate((uni)=>{
+    const U=new Set(uni), out=[];
+    for(const e of EXLIB){
+      let id=null,pat=null,met=null,mus=null,img=null,yt=null;
+      try{ id=exId(e.n); }catch(x){}
+      try{ pat=_movPattern(e.n); }catch(x){}
+      try{ met=getExerciseMET(e.n); }catch(x){}
+      try{ mus=(typeof EX_MUSCLES!=='undefined'&&id)?EX_MUSCLES[id]:null; }catch(x){}
+      try{ const y=(typeof EX_YT!=='undefined')?EX_YT[e.n]:null; if(y){img=y.img||null; yt=y.yt||y.id||null;} }catch(x){}
+      out.push({id:id,nom:e.n,groupe:e.g,
+        muscles_primaires:(mus&&mus.p)||[], muscles_secondaires:(mus&&mus.s)||[],
+        pattern:pat, met:met, unilateral:U.has(e.n), image:img, youtube:yt});
+    }
+    return out;
+  },uni);
+  fs.writeFileSync(S+'catalogue-exercices.json',JSON.stringify(data,null,1));
+  console.log('exercices',data.length,
+    '| image',data.filter(x=>x.image).length,
+    '| muscles',data.filter(x=>x.muscles_primaires.length).length,
+    '| uni',data.filter(x=>x.unilateral).length);
+})();

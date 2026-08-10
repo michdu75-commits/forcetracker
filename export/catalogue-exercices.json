@@ -1,0 +1,6491 @@
+[
+ {
+  "id": "developpe-couche",
+  "nom": "Développé Couché",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-couche.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-couche-halteres",
+  "nom": "Développé Couché Haltères",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-couche-halteres-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-incline",
+  "nom": "Développé Incliné",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-incline-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-incline-halteres",
+  "nom": "Développé Incliné Haltères",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-incline-halteres-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-decline",
+  "nom": "Développé Décliné",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "triceps",
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-decline-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-decline-halteres",
+  "nom": "Développé Décliné Haltères",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "triceps",
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-decline-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "ecarte-halteres",
+  "nom": "Écarté Haltères",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 4,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "ecarte-poulie",
+  "nom": "Écarté Poulie",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/ecarte-poulie-vis-a-vis-exercice-musculation-pectoraux.webp",
+  "youtube": null
+ },
+ {
+  "id": "croise-poulie-cable-crossover",
+  "nom": "Croisé Poulie (Cable Crossover)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/ecartes-poulie-vis-a-vis.webp",
+  "youtube": null
+ },
+ {
+  "id": "pec-deck",
+  "nom": "Pec Deck",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/pec-deck-butterfly-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "chest-press-machine-horizontale",
+  "nom": "Chest Press Machine Horizontale",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-machine-assis-pectoraux.webp",
+  "youtube": null
+ },
+ {
+  "id": "chest-press-machine-inclinee",
+  "nom": "Chest Press Machine Inclinée",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-incline-machine-convergente-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "chest-press-machine-declinee",
+  "nom": "Chest Press Machine Déclinée",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "triceps",
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/chest-press-machine-declinee.webp",
+  "youtube": null
+ },
+ {
+  "id": "dips",
+  "nom": "Dips",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/dips-pectoraux.webp",
+  "youtube": null
+ },
+ {
+  "id": "dips-paralleles",
+  "nom": "Dips Triceps (Buste Droit)",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "pec",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/dips-triceps-paralleles.webp",
+  "youtube": null
+ },
+ {
+  "id": "dips-machine-assistee",
+  "nom": "Dips Machine Assistée",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/dips-assiste-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "dips-assis-machine-seated-dip",
+  "nom": "Dips Assis Machine (Seated Dip)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/dips-assis-machine-avec-poids.webp",
+  "youtube": null
+ },
+ {
+  "id": "pompes-lestees",
+  "nom": "Pompes Lestées",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/pompes-lestees.webp",
+  "youtube": null
+ },
+ {
+  "id": "pompes-deficit-deficit-push-up",
+  "nom": "Pompes Déficit (Deficit Push-up)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/pompes-deficit.webp",
+  "youtube": null
+ },
+ {
+  "id": "pompes-diamant",
+  "nom": "Pompes Diamant",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "triceps",
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/pompes-diamant.webp",
+  "youtube": null
+ },
+ {
+  "id": "pompes-push-up",
+  "nom": "Pompes (Push-up)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/pompe-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-couche-avec-chaines",
+  "nom": "Développé Couché avec Chaînes",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-couche-avec-chaines.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-couche-larsen-larsen-press",
+  "nom": "Développé Couché Larsen (Larsen Press)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-couche-larsen.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-couche-unilateral-kettlebell",
+  "nom": "Développé Couché Unilatéral Kettlebell",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps",
+   "obliques",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": true,
+  "image": "exercises/developpe-couche-unilateral-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-incline-poulie",
+  "nom": "Développé Incliné Poulie",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-incline-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-couche-au-sol-floor-press",
+  "nom": "Développé Couché au Sol (Floor Press)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-couche-au-sol-floor-press.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-couche-elastique",
+  "nom": "Développé Couché Élastique",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-couche-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-decline-elastique",
+  "nom": "Développé Décliné Élastique",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "triceps",
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-decline-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "ecarte-poulie-haute-a-genoux",
+  "nom": "Écarté Poulie Haute à Genoux",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/ecarte-poulie-haute-a-genoux.webp",
+  "youtube": null
+ },
+ {
+  "id": "ecarte-elastique",
+  "nom": "Écarté Élastique",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/ecarte-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "ecarte-trx-sangles",
+  "nom": "Écarté TRX (Sangles)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/ecarte-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "chest-press-trx-sangles",
+  "nom": "Chest Press TRX (Sangles)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/chest-press-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "pompes-inclinees-trx-sangles",
+  "nom": "Pompes Inclinées TRX (Sangles)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/pompes-inclinees-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-epaules-elastique",
+  "nom": "Développé Épaules Élastique",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-epaules-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-epaules-assis-elastique",
+  "nom": "Développé Épaules Assis Élastique",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-epaules-assis-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-epaules-unilateral-elastique",
+  "nom": "Développé Épaules Unilatéral Élastique",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps",
+   "obliques",
+   "abs"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": true,
+  "image": "exercises/developpe-epaules-unilateral-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-laterales-unilaterale-poulie",
+  "nom": "Élévations Latérales Unilatérale Poulie",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/elevations-laterales-unilaterale-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "oiseau-elastique",
+  "nom": "Oiseau Élastique",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/oiseau-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "oiseau-inverse-trx-sangles",
+  "nom": "Oiseau Inversé TRX (Sangles)",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "traps",
+   "abs"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/oiseau-inverse-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "rotation-externe-epaule-poulie",
+  "nom": "Rotation Externe Épaule Poulie",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/rotation-externe-epaule-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "handstand-push-up-suspendu-sangles",
+  "nom": "Handstand Push-up Suspendu (Sangles)",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps",
+   "abs"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/handstand-push-up-suspendu.webp",
+  "youtube": null
+ },
+ {
+  "id": "ecarte-incline-halteres",
+  "nom": "Écarté Incliné Haltères",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/ecartes-incline-avec-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "ecarte-decline-halteres",
+  "nom": "Écarté Décliné Haltères",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/ecartes-decline-avec-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "ecarte-hyght-hyght-fly",
+  "nom": "Écarté Hyght (Hyght Fly)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/hyght-dumbell-fly.webp",
+  "youtube": null
+ },
+ {
+  "id": "hex-press-smith-machine",
+  "nom": "Hex Press Smith Machine",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/hex-press-a-la-smith-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "chest-press-poulie-assis",
+  "nom": "Chest Press Poulie Assis",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/chest-press-poulie-assis.webp",
+  "youtube": null
+ },
+ {
+  "id": "svend-press-serrage-de-plaque",
+  "nom": "Svend Press (Serrage de Plaque)",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/svend-press.webp",
+  "youtube": null
+ },
+ {
+  "id": "smith-machine-developpe-couche",
+  "nom": "Smith Machine Développé Couché",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-couche-smith-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "smith-machine-developpe-incline",
+  "nom": "Smith Machine Développé Incliné",
+  "groupe": "Pectoraux",
+  "muscles_primaires": [
+   "pec"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "triceps"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/smith-machine-developpe-incline.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre",
+  "nom": "Soulevé de Terre",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "quads",
+   "traps",
+   "forearms",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-sumo",
+  "nom": "Soulevé de Terre Sumo",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "glutes",
+   "quads",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "traps",
+   "forearms",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-sumo.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-en-rack-rack-pull",
+  "nom": "Tirage en Rack (Rack Pull)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lower-back",
+   "glutes",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "lats",
+   "forearms"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/rack-pull.webp",
+  "youtube": null
+ },
+ {
+  "id": "inclinaison-lombaire-good-morning",
+  "nom": "Inclinaison Lombaire (Good Morning)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "abs"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/good-morning-exercice.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-barre-tirage-horizontal",
+  "nom": "Rowing Barre (Tirage Horizontal)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-haltere-tirage-horizontal",
+  "nom": "Rowing Haltère (Tirage Horizontal)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": true,
+  "image": "exercises/rowing-haltere-un-bras.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-cable-tirage-horizontal",
+  "nom": "Rowing Câble (Tirage Horizontal)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-horizontal-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-yates-supination",
+  "nom": "Rowing Yates (Supination)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-yates-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-poitrine-appuyee-chest-supported",
+  "nom": "Rowing Poitrine Appuyée (Chest Supported)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-halteres-banc-incline-prise-neutre.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-machine-tirage-horizontal",
+  "nom": "Rowing Machine (Tirage Horizontal)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-assis-machine-prise-pronation.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-hammer-strength",
+  "nom": "Rowing Hammer Strength",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-assis-machine-hammer-strenght.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-poulie-haute-lat-pulldown",
+  "nom": "Tirage Poulie Haute (Lat Pulldown)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-vertical-poitrine.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-poulie-haute-prise-serree",
+  "nom": "Tirage Poulie Haute Prise Serrée",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-vertical-prise-serree.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-nuque",
+  "nom": "Tirage Nuque",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "tirage-poulie-basse-prise-large",
+  "nom": "Tirage Poulie Basse Prise Large",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-horizontal-prise-large.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-poulie-basse-prise-serree",
+  "nom": "Tirage Poulie Basse Prise Serrée",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "traction-lestee",
+  "nom": "Traction Lestée",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/traction-lestee-vraie.webp",
+  "youtube": null
+ },
+ {
+  "id": "traction-assistee",
+  "nom": "Traction Assistée",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/traction-assistee-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "traction-prise-neutre",
+  "nom": "Traction Prise Neutre",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/traction-prise-neutre.webp",
+  "youtube": null
+ },
+ {
+  "id": "pull-over",
+  "nom": "Pull-over",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "pec",
+   "triceps"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "pull-over-haltere",
+  "nom": "Pull-over Haltère",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "pec",
+   "triceps"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/pullover-haltere.webp",
+  "youtube": null
+ },
+ {
+  "id": "pullover-machine",
+  "nom": "Pullover Machine",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "pec",
+   "triceps"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/musculation-pull-over-assis-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "pull-over-barre",
+  "nom": "Pull-over Barre",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "pec",
+   "triceps"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/pull-over-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "pull-over-poulie",
+  "nom": "Pull-over Poulie",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "pec",
+   "triceps"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/pull-over-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-smith-machine",
+  "nom": "Rowing Smith Machine",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-smith-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-t-bar-machine",
+  "nom": "Rowing T-Bar Machine",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-t-bar-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-landmine-t-bar",
+  "nom": "Rowing Landmine (T-Bar)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-barre-t-landmine.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-halteres-buste-penche",
+  "nom": "Rowing Haltères Buste Penché",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/bent-over-row-avec-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "meadows-row",
+  "nom": "Meadows Row",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": true,
+  "image": "exercises/rowing-unilateral-landmine-meadows-row.webp",
+  "youtube": null
+ },
+ {
+  "id": "seal-row",
+  "nom": "Seal Row",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/seal-row-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "renegade-row",
+  "nom": "Renegade Row",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "abs",
+   "obliques"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": true,
+  "image": "exercises/renegade-row.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-iso-lateral-hammer-strength",
+  "nom": "Tirage Iso-Latéral Hammer Strength",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-avant-iso-laterale-hammer-strength.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-incline-poulie-haute",
+  "nom": "Tirage Incliné Poulie Haute",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-incline-poulie-haute.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-poulie-haute-prise-inversee",
+  "nom": "Tirage Poulie Haute Prise Inversée",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-vertical-prise-inversee.webp",
+  "youtube": null
+ },
+ {
+  "id": "traction-derriere-la-nuque",
+  "nom": "Traction Derrière la Nuque",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/traction-barre-derriere-rear-oull-up.webp",
+  "youtube": null
+ },
+ {
+  "id": "rocky-pull-up",
+  "nom": "Rocky Pull-up",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rocky-pull-up.webp",
+  "youtube": null
+ },
+ {
+  "id": "sled-pull",
+  "nom": "Sled Pull",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/sled-pull.webp",
+  "youtube": null
+ },
+ {
+  "id": "tractions-pull-up",
+  "nom": "Tractions (Pull-up)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/traction-musculation-dos.webp",
+  "youtube": null
+ },
+ {
+  "id": "traction-supination-chin-up",
+  "nom": "Traction Supination (Chin-up)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/traction-supination-chin-up.webp",
+  "youtube": null
+ },
+ {
+  "id": "muscle-up",
+  "nom": "Muscle-up",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "pec",
+   "triceps",
+   "abs"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/muscle-up.webp",
+  "youtube": null
+ },
+ {
+  "id": "tractions-aux-anneaux",
+  "nom": "Tractions aux Anneaux",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tractions-aux-anneaux.webp",
+  "youtube": null
+ },
+ {
+  "id": "traction-australienne-poids-du-corps",
+  "nom": "Traction Australienne (Poids du Corps)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "abs"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/traction-australienne.webp",
+  "youtube": null
+ },
+ {
+  "id": "traction-assistee-avec-banc",
+  "nom": "Traction Assistée avec Banc",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/traction-assistee-avec-banc.webp",
+  "youtube": null
+ },
+ {
+  "id": "suspension-passive-dead-hang",
+  "nom": "Suspension Passive (Dead Hang)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "forearms"
+  ],
+  "muscles_secondaires": [
+   "lats",
+   "traps"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/suspension-passive-dead-hang.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-inverse-sous-une-table",
+  "nom": "Rowing Inversé sous une Table",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "abs"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-inverse-sous-table.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-buste-penche-elastique",
+  "nom": "Rowing Buste Penché Élastique",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-buste-penche-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-horizontal-elastique",
+  "nom": "Rowing Horizontal Élastique",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-horizontal-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-unilateral-elastique",
+  "nom": "Rowing Unilatéral Élastique",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "lower-back"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": true,
+  "image": "exercises/rowing-unilateral-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-vertical-alterne-elastique",
+  "nom": "Tirage Vertical Alterné Élastique",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "traps",
+   "rear-delt",
+   "forearms"
+  ],
+  "pattern": "tirage-vertical",
+  "met": 5.5,
+  "unilateral": true,
+  "image": "exercises/tirage-vertical-alterne-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "rowing-trx-sangles",
+  "nom": "Rowing TRX (Sangles)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "abs"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rowing-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "traction-australienne-trx-sangles",
+  "nom": "Traction Australienne TRX (Sangles)",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "abs"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/traction-australienne-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "haussements-d-epaules-barre",
+  "nom": "Haussements d'Épaules Barre",
+  "groupe": "Trapèzes",
+  "muscles_primaires": [
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/shrug-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "haussements-d-epaules-halteres",
+  "nom": "Haussements d'Épaules Haltères",
+  "groupe": "Trapèzes",
+  "muscles_primaires": [
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/shrugs-avec-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "haussements-d-epaules-cable",
+  "nom": "Haussements d'Épaules Câble",
+  "groupe": "Trapèzes",
+  "muscles_primaires": [
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/shrug-poulie-haussement-epaules.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-menton",
+  "nom": "Tirage Menton",
+  "groupe": "Trapèzes",
+  "muscles_primaires": [
+   "side-delt",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "front-delt"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-menton-machine-guidee.webp",
+  "youtube": null
+ },
+ {
+  "id": "farmer-s-walk",
+  "nom": "Farmer's Walk",
+  "groupe": "Avant-bras",
+  "muscles_primaires": [
+   "forearms",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "abs",
+   "glutes",
+   "quads"
+  ],
+  "pattern": "porte",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/marche-du-fermier-avec-kettlebells.webp",
+  "youtube": null
+ },
+ {
+  "id": "haussements-d-epaules-overhead",
+  "nom": "Haussements d'Épaules Overhead",
+  "groupe": "Trapèzes",
+  "muscles_primaires": [
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/overhead-shrug.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-militaire",
+  "nom": "Développé Militaire",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-militaire-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-militaire-halteres",
+  "nom": "Développé Militaire Haltères",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-epaule-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-halteres-assis",
+  "nom": "Développé Haltères Assis",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-halteres-assis.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-arnold-arnold-press",
+  "nom": "Développé Arnold (Arnold Press)",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-arnold-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-epaules-machine",
+  "nom": "Développé Épaules Machine",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/presse-epaule-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "smith-machine-developpe-militaire",
+  "nom": "Smith Machine Développé Militaire",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-epaules-smith-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-laterales-lateral-raise",
+  "nom": "Élévations Latérales (Lateral Raise)",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevations-laterales-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-laterales-cable",
+  "nom": "Élévations Latérales Câble",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevations-laterales-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-laterales-machine",
+  "nom": "Élévations Latérales Machine",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevation-laterale-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-frontales",
+  "nom": "Élévations Frontales",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevations-frontales-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-frontales-cable",
+  "nom": "Élévations Frontales Câble",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevation-frontale-poulie-basse.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-frontales-machine",
+  "nom": "Élévations Frontales Machine",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "oiseau",
+  "nom": "Oiseau",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/oiseau-assis-sur-banc.webp",
+  "youtube": null
+ },
+ {
+  "id": "machine-oiseau",
+  "nom": "Machine Oiseau",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/pec-deck-inverse.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-visage-face-pull",
+  "nom": "Tirage Visage (Face Pull)",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "traps",
+   "biceps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/face-pull.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-menton-kettlebell",
+  "nom": "Tirage Menton Kettlebell",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "front-delt"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-menton-avec-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "y-raise-w-raise",
+  "nom": "Y Raise / W Raise",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "traps",
+   "rear-delt"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevation-en-y-a-la-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-nuque",
+  "nom": "Développé Nuque",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt",
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-nuque-barre-guidee.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-epaules-kettlebell",
+  "nom": "Développé Épaules Kettlebell",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-epaule-avec-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-landmine-epaules",
+  "nom": "Développé Landmine (Épaules)",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "pec",
+   "triceps",
+   "traps",
+   "abs"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/developpe-landmine.webp",
+  "youtube": null
+ },
+ {
+  "id": "ecarte-arriere-elastique",
+  "nom": "Écarté Arrière Élastique",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/ecarte-arriere-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevation-frontale-allongee-barre",
+  "nom": "Élévation Frontale Allongée Barre",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevation-frontale-allongee-a-la-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevation-laterale-poulie-inclinee",
+  "nom": "Élévation Latérale Poulie Inclinée",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevation-laterale-a-la-poulie-en-inclinaison.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevation-laterale-landmine",
+  "nom": "Élévation Latérale Landmine",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/elevation-laterale-landmine-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-laterales-kettlebell",
+  "nom": "Élévations Latérales Kettlebell",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevation-laterales-avec-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "rotation-interne-epaule-elastique",
+  "nom": "Rotation Interne Épaule Élastique",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "pec"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/exercice-rotation-interne-epaule-elastique-renforcement-coiffe-rotateurs-prevention-blessures-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "face-pull-couche-poulie",
+  "nom": "Face Pull Couché Poulie",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "traps",
+   "biceps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/face-pull-couche-a-la-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "oiseau-poulie-45",
+  "nom": "Oiseau Poulie 45°",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/oiseau-a-la-poulie-a-45.webp",
+  "youtube": null
+ },
+ {
+  "id": "passage-d-epaule-elastique",
+  "nom": "Passage d'Épaule Élastique",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/passage-depaule-avec-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "rotation-externe-epaule-abduction",
+  "nom": "Rotation Externe Épaule Abduction",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/rotation-externe-de-epaule-en-abduction.webp",
+  "youtube": null
+ },
+ {
+  "id": "rotation-externe-epaule-elastique",
+  "nom": "Rotation Externe Épaule Élastique",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/rotation-externe-epaule-exercice-renforcement-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "rotation-interne-90-poulie",
+  "nom": "Rotation Interne 90° Poulie",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "pec"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/rotation-interne-a-90-a-la-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevation-frontale-banc-incline",
+  "nom": "Élévation Frontale Banc Incliné",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevation-frontale-banc-incline.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevation-laterale-inclinee-haltere",
+  "nom": "Élévation Latérale Inclinée Haltère",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/elevation-laterale-incline-haltere.webp",
+  "youtube": null
+ },
+ {
+  "id": "rotation-externe-epaule-haltere",
+  "nom": "Rotation Externe Épaule Haltère",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "rear-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/rotation-externe-epaule-haltere.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-menton-elastique",
+  "nom": "Tirage Menton Élastique",
+  "groupe": "Trapèzes",
+  "muscles_primaires": [
+   "side-delt",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "biceps",
+   "front-delt"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/tirage-menton-avec-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "thruster",
+  "nom": "Thruster",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "quads",
+   "glutes",
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "triceps",
+   "abs",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/thruster.webp",
+  "youtube": null
+ },
+ {
+  "id": "thruster-kettlebell",
+  "nom": "Thruster Kettlebell",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "quads",
+   "glutes",
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "triceps",
+   "abs",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/thruster-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "russian-twist-developpe-epaules",
+  "nom": "Russian Twist Développé Épaules",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "obliques",
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "hip-flexors"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/russian-twist-avec-developpe-epaule.webp",
+  "youtube": null
+ },
+ {
+  "id": "developpe-epaules-assis-machine-shoulder-pre",
+  "nom": "Développé Épaules Assis Machine (Shoulder Press)",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/shoulder-press-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-barre",
+  "nom": "Curl Barre",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/curl-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-halteres",
+  "nom": "Curl Haltères",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/curl-halteres-alterne.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-poulie",
+  "nom": "Curl Poulie",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/curl-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-ez",
+  "nom": "Curl EZ",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "curl-incline",
+  "nom": "Curl Incliné",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/curl-haltere-incline.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-concentre",
+  "nom": "Curl Concentré",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/curl-concentre.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-araignee-spider-curl",
+  "nom": "Curl Araignée (Spider Curl)",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/curl-araignee-spider.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-zottman",
+  "nom": "Curl Zottman",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps",
+   "forearms"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/curl-zottman.webp",
+  "youtube": null
+ },
+ {
+  "id": "marteau",
+  "nom": "Marteau",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps",
+   "forearms"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/curl-marteau.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-pupitre-machine",
+  "nom": "Curl Pupitre Machine",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/curl-pupitre-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-pupitre-barre-ez-larry-scott",
+  "nom": "Curl Pupitre Barre EZ (Larry Scott)",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/curl-pupitre-barre-ez-larry-scott.webp",
+  "youtube": null
+ },
+ {
+  "id": "waiter-curl",
+  "nom": "Waiter Curl",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/waiter-curl.webp",
+  "youtube": null
+ },
+ {
+  "id": "bench-dips",
+  "nom": "Bench Dips",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "pec"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/bench-dips-sur-banc.webp",
+  "youtube": null
+ },
+ {
+  "id": "barre-au-front",
+  "nom": "Barre au Front",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/barre-au-front-triceps.webp",
+  "youtube": null
+ },
+ {
+  "id": "skull-crusher-barre-ez",
+  "nom": "Skull Crusher Barre EZ",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/skull-crusher-barre-ez.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps",
+  "nom": "Extension Triceps",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-triceps-verticale-haltere.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps-couche-halteres",
+  "nom": "Extension Triceps Couché Haltères",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-triceps-couche-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-nuque-haltere",
+  "nom": "Extension Nuque Haltère",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-nuque-haltere-assis.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-nuque-poulie-haute",
+  "nom": "Extension Nuque Poulie Haute",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-nuque-poulie-haute-corde.webp",
+  "youtube": null
+ },
+ {
+  "id": "triceps-poulie",
+  "nom": "Triceps Poulie",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/triceps-poulie-haute-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "triceps-corde-poulie",
+  "nom": "Triceps Corde Poulie",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "triceps-poulie-basse",
+  "nom": "Triceps Poulie Basse",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/triceps-poulie-basse-verticale.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps-arriere-kickback",
+  "nom": "Extension Triceps Arrière (Kickback)",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/triceps-kickback-debout-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "triceps-machine",
+  "nom": "Triceps Machine",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/triceps-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "dips-aux-anneaux",
+  "nom": "Dips aux Anneaux",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "pec",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "abs"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/dips-aux-anneaux.webp",
+  "youtube": null
+ },
+ {
+  "id": "dips-entre-deux-bancs",
+  "nom": "Dips entre Deux Bancs",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt",
+   "pec"
+  ],
+  "pattern": "poussee-horizontale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/dips-entre-deux-bancs.webp",
+  "youtube": null
+ },
+ {
+  "id": "tate-press",
+  "nom": "Tate Press",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/tate-press.webp",
+  "youtube": null
+ },
+ {
+  "id": "handstand-push-up-atr",
+  "nom": "Handstand Push-up (ATR)",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "triceps",
+   "traps",
+   "abs"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/handstand-push-up.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps-banc-incline-halteres",
+  "nom": "Extension Triceps Banc Incliné Haltères",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-triceps-banc-incline-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps-decline-halteres",
+  "nom": "Extension Triceps Décliné Haltères",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-triceps-decline-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps-concentree-poulie",
+  "nom": "Extension Triceps Concentrée Poulie",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/extension-triceps-concentree-poulie.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps-nuque-elastique",
+  "nom": "Extension Triceps Nuque Élastique",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-triceps-nuque-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps-verticale-elastique",
+  "nom": "Extension Triceps Verticale Élastique",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-triceps-verticale-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps-trx-sangles",
+  "nom": "Extension Triceps TRX (Sangles)",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-triceps-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-triceps-allongee-trx-sangles",
+  "nom": "Extension Triceps Allongée TRX (Sangles)",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-triceps-trx-allonge.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-a-la-barre",
+  "nom": "Squat à la Barre",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/homme-faisant-un-squat-avec-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-avant",
+  "nom": "Squat Avant",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs",
+   "traps"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-barre-devant-front.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-bulgare",
+  "nom": "Squat Bulgare",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/squat-bulgare-halteres-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-gobelet-goblet-squat",
+  "nom": "Squat Gobelet (Goblet Squat)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-goblet-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-sumo",
+  "nom": "Squat Sumo",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "glutes",
+   "quads"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-sumo-avec-haltere.webp",
+  "youtube": null
+ },
+ {
+  "id": "smith-machine-squat",
+  "nom": "Smith Machine Squat",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-smith-machine-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-hack-hack-squat",
+  "nom": "Squat Hack (Hack Squat)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/hack-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-45",
+  "nom": "Press Jambes 45°",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/presse-a-cuisse-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-horizontale",
+  "nom": "Press Jambes Horizontale",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "machine/press-jambes-2.jpg",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-verticale",
+  "nom": "Press Jambes Verticale",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/presse-a-cuisses-verticale.webp",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-inclinee",
+  "nom": "Press Jambes Inclinée",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/presse-a-cuisses-inclinee.webp",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-levier",
+  "nom": "Press Jambes Levier",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "machine/press-jambes-6.jpg",
+  "youtube": null
+ },
+ {
+  "id": "extension-quadriceps-leg-extension",
+  "nom": "Extension Quadriceps (Leg Extension)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "extension-genou",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/leg-extension-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "leg-curl-couche-machine",
+  "nom": "Leg Curl Couché Machine",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "calves"
+  ],
+  "pattern": "flexion-genou",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/leg-curl-allonge.webp",
+  "youtube": null
+ },
+ {
+  "id": "leg-curl-assis-machine",
+  "nom": "Leg Curl Assis Machine",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "calves"
+  ],
+  "pattern": "flexion-genou",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/leg-curl-assis-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "leg-curl-unilateral-debout",
+  "nom": "Leg Curl Unilatéral Debout",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "calves"
+  ],
+  "pattern": "flexion-genou",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/leg-curl-unilateral-debout-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "leg-curl-haltere",
+  "nom": "Leg Curl Haltère",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "calves"
+  ],
+  "pattern": "flexion-genou",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/leg-curl-decline-haltere.webp",
+  "youtube": null
+ },
+ {
+  "id": "leg-curl-elastique",
+  "nom": "Leg Curl Élastique",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "calves"
+  ],
+  "pattern": "flexion-genou",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/leg-curl-avec-elastique-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "leg-curl-inverse",
+  "nom": "Leg Curl Inversé",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "calves"
+  ],
+  "pattern": "flexion-genou",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/leg-curl-inverse-machine-tirage-vertical.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-pistol",
+  "nom": "Squat Pistol",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/squat-pistol.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-kettlebell",
+  "nom": "Squat Kettlebell",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/kettlebell-back-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "fentes-kettlebell",
+  "nom": "Fentes Kettlebell",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/fentes-avant-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "fentes",
+  "nom": "Fentes",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/fente-avant-barre-femme.webp",
+  "youtube": null
+ },
+ {
+  "id": "fentes-marchees",
+  "nom": "Fentes Marchées",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/fentes-marchees-avec-sandbag.webp",
+  "youtube": null
+ },
+ {
+  "id": "fentes-arriere",
+  "nom": "Fentes Arrière",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "fentes-laterales",
+  "nom": "Fentes Latérales",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "smith-machine-fentes",
+  "nom": "Smith Machine Fentes",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/split-squat-smith-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "montee-sur-box-step-up",
+  "nom": "Montée sur Box (Step-up)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/montee-sur-box-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "montee-sur-box-halteres",
+  "nom": "Montée sur Box Haltères",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/montee-sur-box-halteres-classique.webp",
+  "youtube": null
+ },
+ {
+  "id": "abduction-cuisses-leg-abduction",
+  "nom": "Abduction Cuisses (Leg Abduction)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "hanche-laterale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/leg-abduction-machine-v2.webp",
+  "youtube": null
+ },
+ {
+  "id": "adduction-cuisses-leg-adduction",
+  "nom": "Adduction Cuisses (Leg Adduction)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "quads"
+  ],
+  "pattern": "hanche-laterale",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/leg-adduction-machine-v2.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-quadriceps-unilaterale",
+  "nom": "Extension Quadriceps Unilatérale",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "extension-genou",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/leg-extension-iso-lateral-unilateral-hammer-strenght.webp",
+  "youtube": null
+ },
+ {
+  "id": "hack-squat-inverse",
+  "nom": "Hack Squat Inversé",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/hack-squat-inverse.webp",
+  "youtube": null
+ },
+ {
+  "id": "pendulum-squat",
+  "nom": "Pendulum Squat",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/pendulum-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "belt-squat",
+  "nom": "Belt Squat",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/belt-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "safety-bar-squat",
+  "nom": "Safety Bar Squat",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/safety-bar-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "overhead-squat",
+  "nom": "Overhead Squat",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs",
+   "front-delt",
+   "traps"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/overhead-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "pin-squat",
+  "nom": "Pin Squat",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/pin-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "sissy-squat",
+  "nom": "Sissy Squat",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads"
+  ],
+  "muscles_secondaires": [
+   "abs",
+   "calves"
+  ],
+  "pattern": "extension-genou",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/sissy-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "cossack-squat",
+  "nom": "Cossack Squat",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/cossack-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-bande-elastique",
+  "nom": "Squat Bande Élastique",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-bande-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "chaise-wall-sit",
+  "nom": "Chaise (Wall Sit)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads"
+  ],
+  "muscles_secondaires": [
+   "glutes",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-statique-contre-mur-exercice-chaise.webp",
+  "youtube": null
+ },
+ {
+  "id": "presse-a-cuisses-iso-laterale",
+  "nom": "Presse à Cuisses Iso-Latérale",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/presse-cuisse-iso-laterale-hammer-stenght.webp",
+  "youtube": null
+ },
+ {
+  "id": "presse-a-cuisses-sur-le-cote",
+  "nom": "Presse à Cuisses sur le Côté",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/presse-a-cuisse-sur-le-cote.webp",
+  "youtube": null
+ },
+ {
+  "id": "hack-squat-assis",
+  "nom": "Hack Squat Assis",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/hack-squat-assis.webp",
+  "youtube": null
+ },
+ {
+  "id": "overhead-squat-halteres",
+  "nom": "Overhead Squat Haltères",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs",
+   "front-delt",
+   "traps"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/overhead-squat-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "sled-push",
+  "nom": "Sled Push",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "calves",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/sled-push-hyrox.webp",
+  "youtube": null
+ },
+ {
+  "id": "croix-de-fer-halteres",
+  "nom": "Croix de Fer Haltères",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/croix-de-fer-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-poids-du-corps-air-squat",
+  "nom": "Squat Poids du Corps (Air Squat)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-poids-du-corps-air-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "fentes-croisees-curtsy-lunge",
+  "nom": "Fentes Croisées (Curtsy Lunge)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/fentes-croisees-curtsy-lunge.webp",
+  "youtube": null
+ },
+ {
+  "id": "jefferson-squat",
+  "nom": "Jefferson Squat",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "lower-back",
+   "obliques",
+   "forearms"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/jefferson-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-valise-suitcase",
+  "nom": "Soulevé de Terre Valise (Suitcase)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "quads",
+   "forearms",
+   "traps",
+   "obliques"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/souleve-de-terre-valise.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-saute-jump-squat",
+  "nom": "Squat Sauté (Jump Squat)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "calves",
+   "hamstrings",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-saute-jump-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-avec-rotation-du-tronc",
+  "nom": "Squat avec Rotation du Tronc",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "obliques",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-avec-rotation-du-tronc.webp",
+  "youtube": null
+ },
+ {
+  "id": "sissy-squat-machine",
+  "nom": "Sissy Squat Machine",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads"
+  ],
+  "muscles_secondaires": [
+   "abs",
+   "calves"
+  ],
+  "pattern": "extension-genou",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/sissy-squat-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-quadriceps-unilaterale-machine-a-d",
+  "nom": "Extension Quadriceps Unilatérale Machine à Dips",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "extension-genou",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/extension-quadriceps-unilaterale-machine-dips.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-bulgare-elastique",
+  "nom": "Squat Bulgare Élastique",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/squat-bulgare-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-quadriceps-elastique",
+  "nom": "Extension Quadriceps Élastique",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "extension-genou",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/extension-quadriceps-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "overhead-squat-elastique",
+  "nom": "Overhead Squat Élastique",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs",
+   "front-delt",
+   "traps"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/overhead-squat-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "split-squat-elastique-fente-statique",
+  "nom": "Split Squat Élastique (Fente Statique)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/split-squat-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-barre-avec-bandes-elastiques",
+  "nom": "Squat Barre avec Bandes Élastiques",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-barre-avec-bandes-elastiques.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-trx-sangles",
+  "nom": "Squat TRX (Sangles)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "split-squat-trx-sangles",
+  "nom": "Split Squat TRX (Sangles)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/split-squat-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-pistol-trx-sangles",
+  "nom": "Squat Pistol TRX (Sangles)",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/squat-pistol-trx-sangles.webp",
+  "youtube": null
+ },
+ {
+  "id": "hip-thrust-barre-poussee-de-hanche",
+  "nom": "Hip Thrust Barre (Poussée de Hanche)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "quads",
+   "lower-back"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/hip-thrust-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "hip-thrust-haltere-poussee-de-hanche",
+  "nom": "Hip Thrust Haltère (Poussée de Hanche)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "quads",
+   "lower-back"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/hip-thrust-haltere.webp",
+  "youtube": null
+ },
+ {
+  "id": "hip-thrust-machine-poussee-de-hanche",
+  "nom": "Hip Thrust Machine (Poussée de Hanche)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "quads",
+   "lower-back"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/hip-thrust-a-la-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "hip-thrust-unilateral-poussee-de-hanche",
+  "nom": "Hip Thrust Unilatéral (Poussée de Hanche)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "quads",
+   "lower-back",
+   "obliques",
+   "abs"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/hip-thrust-barre-unilateral.webp",
+  "youtube": null
+ },
+ {
+  "id": "pont-fessier-glute-bridge",
+  "nom": "Pont Fessier (Glute Bridge)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "quads",
+   "lower-back"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/glute-bridge.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-fessiers-arriere-kickback",
+  "nom": "Extension Fessiers Arrière (Kickback)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings"
+  ],
+  "pattern": "hip-hinge",
+  "met": 4,
+  "unilateral": true,
+  "image": "exercises/kickback-cable-fessiers.webp",
+  "youtube": null
+ },
+ {
+  "id": "kickback-machine",
+  "nom": "Kickback Machine",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings"
+  ],
+  "pattern": "hip-hinge",
+  "met": 4,
+  "unilateral": true,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre",
+  "nom": "Soulevé de Terre",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "quads",
+   "traps",
+   "forearms",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-roumain-barre",
+  "nom": "Soulevé de Terre Roumain Barre",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "forearms",
+   "traps",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-roumain-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-roumain-halteres",
+  "nom": "Soulevé de Terre Roumain Haltères",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "forearms",
+   "traps",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-roumain-halteres.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-roumain-unilateral",
+  "nom": "Soulevé de Terre Roumain Unilatéral",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "forearms",
+   "traps",
+   "obliques",
+   "abs"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/souleve-de-terre-roumain-unilateral.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-sumo",
+  "nom": "Soulevé de Terre Sumo",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "quads",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "traps",
+   "forearms",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-sumo.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-cable-fessiers-cable-pull-through",
+  "nom": "Tirage Cable Fessiers (Cable Pull Through)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "lower-back"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-jambes-tendues",
+  "nom": "Soulevé de Terre Jambes Tendues",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "forearms",
+   "traps",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-jambes-tendues.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-roumain-kettlebell",
+  "nom": "Soulevé de Terre Roumain Kettlebell",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "forearms",
+   "traps",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-roumain-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-roumain-landmine",
+  "nom": "Soulevé de Terre Roumain Landmine",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "forearms",
+   "traps",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-roumain-landmine.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-sumo-halteres",
+  "nom": "Soulevé de Terre Sumo Haltères",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "quads",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "traps",
+   "forearms",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/deadlift-sumo-halteres-exercice-jambes-fessiers.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-sumo-kettlebell",
+  "nom": "Soulevé de Terre Sumo Kettlebell",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "quads",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "traps",
+   "forearms",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-sumo-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-sumo-landmine",
+  "nom": "Soulevé de Terre Sumo Landmine",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "quads",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "traps",
+   "forearms",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-sumo-landmine.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-trap-bar",
+  "nom": "Soulevé de Terre Trap Bar",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "quads",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "traps",
+   "forearms"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-a-la-trap-bar.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-avec-deficit",
+  "nom": "Soulevé de Terre avec Déficit",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "quads",
+   "forearms",
+   "traps",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-avec-deficit.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-machine",
+  "nom": "Soulevé de Terre Machine",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "quads",
+   "forearms",
+   "traps"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-avec-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "zercher-deadlift",
+  "nom": "Zercher Deadlift",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "quads",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "traps",
+   "abs",
+   "biceps"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/zercher-deadlift.webp",
+  "youtube": null
+ },
+ {
+  "id": "reeves-deadlift",
+  "nom": "Reeves Deadlift",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "forearms",
+   "traps",
+   "rear-delt",
+   "quads"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/reeves-deadlift.webp",
+  "youtube": null
+ },
+ {
+  "id": "glute-ham-raise-ghd",
+  "nom": "Glute Ham Raise (GHD)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/glute-ham-developer-ghd.webp",
+  "youtube": null
+ },
+ {
+  "id": "kettlebell-swing",
+  "nom": "Kettlebell Swing",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "lower-back",
+   "quads",
+   "abs",
+   "forearms"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/kettlebell-swing.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-a-la-barre",
+  "nom": "Squat à la Barre",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/homme-faisant-un-squat-avec-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-avant",
+  "nom": "Squat Avant",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs",
+   "traps"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-barre-devant-front.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-bulgare",
+  "nom": "Squat Bulgare",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/squat-bulgare-halteres-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-gobelet-goblet-squat",
+  "nom": "Squat Gobelet (Goblet Squat)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-goblet-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-sumo",
+  "nom": "Squat Sumo",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "glutes",
+   "quads"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-sumo-avec-haltere.webp",
+  "youtube": null
+ },
+ {
+  "id": "smith-machine-squat",
+  "nom": "Smith Machine Squat",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-smith-machine-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-hack-hack-squat",
+  "nom": "Squat Hack (Hack Squat)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/hack-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-pistol",
+  "nom": "Squat Pistol",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/squat-pistol.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-kettlebell",
+  "nom": "Squat Kettlebell",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/kettlebell-back-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "belt-squat",
+  "nom": "Belt Squat",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/belt-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "safety-bar-squat",
+  "nom": "Safety Bar Squat",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/safety-bar-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "overhead-squat",
+  "nom": "Overhead Squat",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back",
+   "abs",
+   "front-delt",
+   "traps"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/overhead-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "pin-squat",
+  "nom": "Pin Squat",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/pin-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "cossack-squat",
+  "nom": "Cossack Squat",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/cossack-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "squat-bande-elastique",
+  "nom": "Squat Bande Élastique",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "lower-back"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/squat-bande-elastique.webp",
+  "youtube": null
+ },
+ {
+  "id": "pendulum-squat",
+  "nom": "Pendulum Squat",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/pendulum-squat.webp",
+  "youtube": null
+ },
+ {
+  "id": "hack-squat-inverse",
+  "nom": "Hack Squat Inversé",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/hack-squat-inverse.webp",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-45",
+  "nom": "Press Jambes 45°",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/presse-a-cuisse-exercice-musculation.webp",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-horizontale",
+  "nom": "Press Jambes Horizontale",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "machine/press-jambes-2.jpg",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-verticale",
+  "nom": "Press Jambes Verticale",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/presse-a-cuisses-verticale.webp",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-inclinee",
+  "nom": "Press Jambes Inclinée",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/presse-a-cuisses-inclinee.webp",
+  "youtube": null
+ },
+ {
+  "id": "press-jambes-levier",
+  "nom": "Press Jambes Levier",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "machine/press-jambes-6.jpg",
+  "youtube": null
+ },
+ {
+  "id": "presse-a-cuisses-iso-laterale",
+  "nom": "Presse à Cuisses Iso-Latérale",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/presse-cuisse-iso-laterale-hammer-stenght.webp",
+  "youtube": null
+ },
+ {
+  "id": "fentes",
+  "nom": "Fentes",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/fente-avant-barre-femme.webp",
+  "youtube": null
+ },
+ {
+  "id": "fentes-marchees",
+  "nom": "Fentes Marchées",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/fentes-marchees-avec-sandbag.webp",
+  "youtube": null
+ },
+ {
+  "id": "fentes-arriere",
+  "nom": "Fentes Arrière",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "fentes-laterales",
+  "nom": "Fentes Latérales",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "fentes-kettlebell",
+  "nom": "Fentes Kettlebell",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/fentes-avant-kettlebell.webp",
+  "youtube": null
+ },
+ {
+  "id": "smith-machine-fentes",
+  "nom": "Smith Machine Fentes",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/split-squat-smith-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "montee-sur-box-step-up",
+  "nom": "Montée sur Box (Step-up)",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/montee-sur-box-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "montee-sur-box-halteres",
+  "nom": "Montée sur Box Haltères",
+  "groupe": "Fessiers",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/montee-sur-box-halteres-classique.webp",
+  "youtube": null
+ },
+ {
+  "id": "hyperextension-back-extension",
+  "nom": "Hyperextension (Back Extension)",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "lower-back",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/extension-lombaire-au-banc-45.webp",
+  "youtube": null
+ },
+ {
+  "id": "hyperextension-inverse-reverse-hyper",
+  "nom": "Hyperextension Inverse (Reverse Hyper)",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "lower-back"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/hyperextension-inverse-reverse-hyper.webp",
+  "youtube": null
+ },
+ {
+  "id": "hyperextension-lestee",
+  "nom": "Hyperextension Lestée",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "lower-back",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "hyperextension-machine",
+  "nom": "Hyperextension Machine",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "lower-back",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/extension-lombaire-a-la-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "bird-dog",
+  "nom": "Bird Dog",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "abs",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "glutes",
+   "obliques"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/bird-dog.webp",
+  "youtube": null
+ },
+ {
+  "id": "extension-lombaire-sur-ballon",
+  "nom": "Extension Lombaire sur Ballon",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "lower-back",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/extension-lombaire-ballon.webp",
+  "youtube": null
+ },
+ {
+  "id": "planche-inversee",
+  "nom": "Planche Inversée",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "abs",
+   "hamstrings",
+   "rear-delt"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/planche-inversee.webp",
+  "youtube": null
+ },
+ {
+  "id": "inclinaison-lombaire-good-morning",
+  "nom": "Inclinaison Lombaire (Good Morning)",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "abs"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/good-morning-exercice.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre",
+  "nom": "Soulevé de Terre",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "quads",
+   "traps",
+   "forearms",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre.webp",
+  "youtube": null
+ },
+ {
+  "id": "souleve-de-terre-roumain-barre",
+  "nom": "Soulevé de Terre Roumain Barre",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "hamstrings",
+   "glutes",
+   "lower-back"
+  ],
+  "muscles_secondaires": [
+   "forearms",
+   "traps",
+   "lats"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/souleve-de-terre-roumain-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "jefferson-curl",
+  "nom": "Jefferson Curl",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "lower-back",
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "glutes",
+   "forearms"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/jefferson-curl.webp",
+  "youtube": null
+ },
+ {
+  "id": "tirage-en-rack-rack-pull",
+  "nom": "Tirage en Rack (Rack Pull)",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "lower-back",
+   "glutes",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "lats",
+   "forearms"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/rack-pull.webp",
+  "youtube": null
+ },
+ {
+  "id": "superman",
+  "nom": "Superman",
+  "groupe": "Lombaires",
+  "muscles_primaires": [
+   "lower-back",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "rear-delt"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/superman.webp",
+  "youtube": null
+ },
+ {
+  "id": "gainage",
+  "nom": "Gainage",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "obliques",
+   "front-delt",
+   "glutes",
+   "lower-back"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/planche-gainage.webp",
+  "youtube": null
+ },
+ {
+  "id": "planche-laterale-side-plank",
+  "nom": "Planche Latérale (Side Plank)",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "obliques"
+  ],
+  "muscles_secondaires": [
+   "abs",
+   "front-delt",
+   "glutes",
+   "lower-back"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/planche-laterale.webp",
+  "youtube": null
+ },
+ {
+  "id": "hollow-body",
+  "nom": "Hollow Body",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "obliques",
+   "hip-flexors",
+   "front-delt"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/hollow-hold.webp",
+  "youtube": null
+ },
+ {
+  "id": "crunch",
+  "nom": "Crunch",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "obliques"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/crunch-au-sol.webp",
+  "youtube": null
+ },
+ {
+  "id": "crunch-poulie",
+  "nom": "Crunch Poulie",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "obliques"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/crunch-poulie-haute.webp",
+  "youtube": null
+ },
+ {
+  "id": "crunch-machine",
+  "nom": "Crunch Machine",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "obliques"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/crunch-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "rotation-machine-obliques",
+  "nom": "Rotation Machine Obliques",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "obliques"
+  ],
+  "muscles_secondaires": [
+   "abs"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 4,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "releve-de-jambes",
+  "nom": "Relevé de Jambes",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs",
+   "hip-flexors"
+  ],
+  "muscles_secondaires": [
+   "obliques"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/releve-de-jambes-suspendu.webp",
+  "youtube": null
+ },
+ {
+  "id": "chaise-romaine",
+  "nom": "Chaise Romaine",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs",
+   "hip-flexors"
+  ],
+  "muscles_secondaires": [
+   "obliques"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/chaise-romaine-releve-jambes.webp",
+  "youtube": null
+ },
+ {
+  "id": "roue-abdominale-ab-wheel",
+  "nom": "Roue Abdominale (Ab Wheel)",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "obliques",
+   "lats",
+   "front-delt"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/roue-abdominale.webp",
+  "youtube": null
+ },
+ {
+  "id": "rotation-russe-russian-twist",
+  "nom": "Rotation Russe (Russian Twist)",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "obliques",
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "hip-flexors",
+   "front-delt"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/rotation-russe.webp",
+  "youtube": null
+ },
+ {
+  "id": "drapeau-dragon-flag",
+  "nom": "Drapeau (Dragon Flag)",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "obliques",
+   "hip-flexors",
+   "lats",
+   "front-delt"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/dragon-flag.webp",
+  "youtube": null
+ },
+ {
+  "id": "grimpeur-mountain-climber",
+  "nom": "Grimpeur (Mountain Climber)",
+  "groupe": "Abdominaux",
+  "muscles_primaires": [
+   "abs",
+   "obliques"
+  ],
+  "muscles_secondaires": [
+   "hip-flexors",
+   "front-delt",
+   "quads"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/grimpeur-mountain-climber.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-mollets-debout",
+  "nom": "Élévations Mollets Debout",
+  "groupe": "Mollets",
+  "muscles_primaires": [
+   "calves"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "mollets",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevations-mollets-debout-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-mollets-assis",
+  "nom": "Élévations Mollets Assis",
+  "groupe": "Mollets",
+  "muscles_primaires": [
+   "calves"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "mollets",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevations-mollets-assis-barre.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-mollets-unilateral",
+  "nom": "Élévations Mollets Unilatéral",
+  "groupe": "Mollets",
+  "muscles_primaires": [
+   "calves"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "mollets",
+  "met": 4,
+  "unilateral": true,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "presse-mollets-leg-press",
+  "nom": "Presse Mollets (Leg Press)",
+  "groupe": "Mollets",
+  "muscles_primaires": [
+   "calves"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "mollets",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevations-mollets-presse-45.webp",
+  "youtube": null
+ },
+ {
+  "id": "elevations-mollets-penche-donkey-calf-raise",
+  "nom": "Élévations Mollets Penché (Donkey Calf Raise)",
+  "groupe": "Mollets",
+  "muscles_primaires": [
+   "calves"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "mollets",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevations-mollets-donkey.webp",
+  "youtube": null
+ },
+ {
+  "id": "mollets-machine-debout",
+  "nom": "Mollets Machine Debout",
+  "groupe": "Mollets",
+  "muscles_primaires": [
+   "calves"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "mollets",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevations-mollets-debout-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "mollets-machine-assise",
+  "nom": "Mollets Machine Assise",
+  "groupe": "Mollets",
+  "muscles_primaires": [
+   "calves"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "mollets",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/elevations-mollets-assis-machine.webp",
+  "youtube": null
+ },
+ {
+  "id": "sauts-a-la-corde",
+  "nom": "Sauts à la Corde",
+  "groupe": "Mollets",
+  "muscles_primaires": [
+   "calves"
+  ],
+  "muscles_secondaires": [
+   "quads"
+  ],
+  "pattern": "saut-plyo",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/sauts-a-la-corde.webp",
+  "youtube": null
+ },
+ {
+  "id": "curl-poignet-barre",
+  "nom": "Curl Poignet Barre",
+  "groupe": "Avant-bras",
+  "muscles_primaires": [
+   "forearms"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "poignet",
+  "met": 4,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "extension-poignet-barre",
+  "nom": "Extension Poignet Barre",
+  "groupe": "Avant-bras",
+  "muscles_primaires": [
+   "forearms"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "poignet",
+  "met": 4,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "pronation-supination-haltere",
+  "nom": "Pronation Supination Haltère",
+  "groupe": "Avant-bras",
+  "muscles_primaires": [
+   "forearms"
+  ],
+  "muscles_secondaires": [],
+  "pattern": "poignet",
+  "met": 4,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "planche-de-prehension",
+  "nom": "Planche de Préhension",
+  "groupe": "Avant-bras",
+  "muscles_primaires": [
+   "forearms"
+  ],
+  "muscles_secondaires": [
+   "traps"
+  ],
+  "pattern": "gainage-abdos",
+  "met": 4,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "burpees",
+  "nom": "Burpees",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "pec",
+   "triceps",
+   "front-delt",
+   "abs",
+   "calves"
+  ],
+  "pattern": "saut-plyo",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/burpees.webp",
+  "youtube": null
+ },
+ {
+  "id": "kettlebell-swing",
+  "nom": "Kettlebell Swing",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings"
+  ],
+  "muscles_secondaires": [
+   "lower-back",
+   "quads",
+   "abs",
+   "forearms"
+  ],
+  "pattern": "hip-hinge",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/kettlebell-swing.webp",
+  "youtube": null
+ },
+ {
+  "id": "arrache-haltere-dumbbell-snatch",
+  "nom": "Arraché Haltère (Dumbbell Snatch)",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "quads",
+   "front-delt",
+   "side-delt",
+   "abs",
+   "forearms"
+  ],
+  "pattern": "halterophilie",
+  "met": 8,
+  "unilateral": true,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "arrache-debout-muscle-snatch",
+  "nom": "Arraché Debout (Muscle Snatch)",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "glutes",
+   "hamstrings",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "quads",
+   "front-delt",
+   "side-delt",
+   "abs",
+   "forearms"
+  ],
+  "pattern": "halterophilie",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/muscle-snatch-halterophilie.webp",
+  "youtube": null
+ },
+ {
+  "id": "thrusters-halteres",
+  "nom": "Thrusters Haltères",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "quads",
+   "glutes",
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "triceps",
+   "abs",
+   "traps"
+  ],
+  "pattern": "poussee-verticale",
+  "met": 8,
+  "unilateral": false,
+  "image": null,
+  "youtube": null
+ },
+ {
+  "id": "clean-jerk",
+  "nom": "Clean & Jerk",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "glutes",
+   "quads",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "front-delt",
+   "triceps",
+   "abs",
+   "forearms"
+  ],
+  "pattern": "halterophilie",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/epaule-jete-halterophilie.webp",
+  "youtube": null
+ },
+ {
+  "id": "battle-rope",
+  "nom": "Battle Rope",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "front-delt",
+   "abs"
+  ],
+  "muscles_secondaires": [
+   "lats",
+   "biceps",
+   "triceps",
+   "forearms",
+   "quads"
+  ],
+  "pattern": "cardio",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/battle-rope.webp",
+  "youtube": null
+ },
+ {
+  "id": "box-jump",
+  "nom": "Box Jump",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "glutes",
+   "quads"
+  ],
+  "muscles_secondaires": [
+   "calves",
+   "hamstrings",
+   "abs"
+  ],
+  "pattern": "saut-plyo",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/box-jump.webp",
+  "youtube": null
+ },
+ {
+  "id": "assault-air-bike",
+  "nom": "Assault Air Bike",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "quads",
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "glutes",
+   "lats",
+   "abs"
+  ],
+  "pattern": "cardio",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/assault-air-bike.webp",
+  "youtube": null
+ },
+ {
+  "id": "ergometre-de-ski-ski-erg",
+  "nom": "Ergomètre de Ski (Ski Erg)",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "lats",
+   "abs",
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "glutes",
+   "hamstrings",
+   "quads",
+   "forearms"
+  ],
+  "pattern": "cardio",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/ergometre-de-ski.webp",
+  "youtube": null
+ },
+ {
+  "id": "jumping-jack",
+  "nom": "Jumping Jack",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "calves",
+   "side-delt"
+  ],
+  "muscles_secondaires": [
+   "quads",
+   "glutes",
+   "abs",
+   "front-delt"
+  ],
+  "pattern": "saut-plyo",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/jumping-jack.webp",
+  "youtube": null
+ },
+ {
+  "id": "marche-de-l-ours-bear-crawl",
+  "nom": "Marche de l'Ours (Bear Crawl)",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "abs",
+   "front-delt",
+   "quads"
+  ],
+  "muscles_secondaires": [
+   "obliques",
+   "triceps",
+   "glutes",
+   "calves"
+  ],
+  "pattern": "cardio",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/marche-de-lours-bear-crawl.webp",
+  "youtube": null
+ },
+ {
+  "id": "wall-ball",
+  "nom": "Wall Ball",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "quads",
+   "glutes",
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "triceps",
+   "abs",
+   "calves"
+  ],
+  "pattern": "saut-plyo",
+  "met": 8,
+  "unilateral": false,
+  "image": "exercises/wall-ball.webp",
+  "youtube": null
+ },
+ {
+  "id": "chariot-de-puissance-poussee",
+  "nom": "Chariot de Puissance — Poussée",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "calves",
+   "abs"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/chariot-poussee.webp",
+  "youtube": null
+ },
+ {
+  "id": "chariot-de-puissance-tirage-en-avancant",
+  "nom": "Chariot de Puissance — Tirage en Avançant",
+  "groupe": "Full Body",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/chariot-tirage-avance.webp",
+  "youtube": null
+ },
+ {
+  "id": "chariot-de-puissance-tirage-dos",
+  "nom": "Chariot de Puissance — Tirage Dos",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/chariot-tirage-dos.webp",
+  "youtube": null
+ },
+ {
+  "id": "chariot-de-puissance-tirage-de-cote",
+  "nom": "Chariot de Puissance — Tirage de Côté",
+  "groupe": "Dos",
+  "muscles_primaires": [
+   "lats",
+   "traps"
+  ],
+  "muscles_secondaires": [
+   "rear-delt",
+   "biceps",
+   "forearms",
+   "obliques"
+  ],
+  "pattern": "tirage-horizontal",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/chariot-tirage-de-cote.webp",
+  "youtube": null
+ },
+ {
+  "id": "chariot-de-puissance-tirage-inverse-jambes",
+  "nom": "Chariot de Puissance — Tirage Inversé Jambes",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads"
+  ],
+  "muscles_secondaires": [
+   "glutes",
+   "calves"
+  ],
+  "pattern": "squat",
+  "met": 6.5,
+  "unilateral": false,
+  "image": "exercises/chariot-tirage-inverse-jambes.webp",
+  "youtube": null
+ },
+ {
+  "id": "chariot-de-puissance-tirage-epaules",
+  "nom": "Chariot de Puissance — Tirage Épaules",
+  "groupe": "Épaules",
+  "muscles_primaires": [
+   "front-delt"
+  ],
+  "muscles_secondaires": [
+   "side-delt",
+   "traps",
+   "abs"
+  ],
+  "pattern": "elevation-epaules",
+  "met": 5.5,
+  "unilateral": false,
+  "image": "exercises/chariot-tirage-epaules.webp",
+  "youtube": null
+ },
+ {
+  "id": "chariot-de-puissance-fentes-arriere",
+  "nom": "Chariot de Puissance — Fentes Arrière",
+  "groupe": "Jambes",
+  "muscles_primaires": [
+   "quads",
+   "glutes"
+  ],
+  "muscles_secondaires": [
+   "hamstrings",
+   "calves",
+   "abs"
+  ],
+  "pattern": "fente",
+  "met": 6.5,
+  "unilateral": true,
+  "image": "exercises/chariot-fentes-arriere.webp",
+  "youtube": null
+ },
+ {
+  "id": "chariot-de-puissance-curl-biceps",
+  "nom": "Chariot de Puissance — Curl Biceps",
+  "groupe": "Biceps",
+  "muscles_primaires": [
+   "biceps"
+  ],
+  "muscles_secondaires": [
+   "forearms"
+  ],
+  "pattern": "curl-biceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/chariot-curl-biceps.webp",
+  "youtube": null
+ },
+ {
+  "id": "chariot-de-puissance-extension-triceps",
+  "nom": "Chariot de Puissance — Extension Triceps",
+  "groupe": "Triceps",
+  "muscles_primaires": [
+   "triceps"
+  ],
+  "muscles_secondaires": [
+   "front-delt"
+  ],
+  "pattern": "extension-triceps",
+  "met": 4,
+  "unilateral": false,
+  "image": "exercises/chariot-extension-triceps.webp",
+  "youtube": null
+ }
+]
