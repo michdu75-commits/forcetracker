@@ -108,3 +108,59 @@ Les rapprocher **par `pattern` + `muscles_primaires`**, pas par ressemblance de 
 qui portent des noms proches peuvent travailler des muscles opposés — cas réel : « Élévations lat »
 tombait sur le *Lat Pulldown* (grand dorsal) au lieu des *élévations latérales* (deltoïde). En cas
 de doute, **ne rien rattacher** : un lien faux coûte plus cher qu'un lien manquant.
+
+---
+
+## 7. 🔎 SANS IA : la recherche EST la fonctionnalité
+
+*(Ajouté le 10/08/2026, quand Michel a précisé que l'application cible **n'a pas d'IA**.)*
+
+Rien de ce qui précède n'en demande — c'est de la donnée. Mais sans IA, il n'y a **plus rien** pour
+rattraper une recherche qui ne trouve pas : si quelqu'un tape « tirage horizontal » et que rien ne
+sort, l'exercice n'existe pas pour lui. Force Tracker a mis des mois à régler ça, et **c'est du code
+déterministe, réutilisable tel quel**.
+
+**Fichier** :
+`https://raw.githubusercontent.com/michdu75-commits/forcetracker/master/export/synonymes.json`
+
+- **523 équivalences** `forme tapée → nom du catalogue` : `lat pulldown` → *Tirage Poulie Haute*,
+  `ohp` → *Développé Militaire*, `sdt sumo` → *Soulevé de Terre Sumo*, `presse a cuisses` →
+  *Press Jambes 45°*, `leg curl`, `military press`, `db lunge`, `hammer curl`… Français, anglais,
+  abréviations de salle, noms de machines.
+- **70 mots vides** à ignorer dans la comparaison (`machine`, `barre`, `haltere`, `poulie`,
+  `exercice`, `musculation`, `de`, `avec`…) — c'est ce qui fait que
+  « Chest Press Evolution X900 » retrouve *Chest Press Machine Horizontale*.
+
+**La normalisation, à recopier telle quelle** (2 lignes, sans dépendance) :
+
+```js
+// minuscules, accents retirés, ponctuation → espaces
+const norm = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+                   .replace(/[^a-z0-9]/g,' ').replace(/\s+/g,' ').trim();
+// pluriel simple : « fentes » → « fente »
+const stem = t => (t.length>=4 && t.endsWith('s')) ? t.slice(0,-1) : t;
+```
+
+**L'ordre de recherche qui marche** (du plus sûr au plus permissif — s'arrêter au premier trouvé) :
+① nom **exact** normalisé → ② **synonyme** de la table → ③ **recouvrement de mots** une fois les
+mots vides retirés → ④ **faute de frappe** (distance de Levenshtein ≤ 1, seulement si le mot fait
+5 lettres ou plus).
+
+### ⚠️ Les trois pièges de la recherche, chacun payé par un vrai bug
+
+1. **Un mot vide peut être le mot qui DISTINGUE.** `machine` et `haltere` sont dans les mots vides
+   (bruit commercial) — résultat, « Rowing Machine » et « Rowing Haltère » se réduisaient tous les
+   deux à « rowing » et tombaient sur **le même exercice**. Mesuré : **17 exercices sur 77** mal
+   rattachés. Correctif : le nom **sans sa parenthèse** est accepté comme correspondance exacte,
+   et vérifié au préalable — sur les 362, **aucune collision**.
+2. **Un mot court peut écraser un mot long.** « Élévations lat » tombait sur le *Lat Pulldown* (grand
+   dorsal) au lieu des *élévations latérales* (deltoïde) : **muscles opposés**. Exiger au moins un
+   mot **cœur** commun, pas seulement un modificateur (prise, angle, matériel).
+3. **Élargir la recherche noie les vrais résultats.** Rattacher par famille de mouvement répare les
+   « aucun résultat » (« tirage horizontal » → *Rowing*), mais « squat » remontait alors **44
+   résultats dont 12 sans le mot squat**. Ne pas les retirer — les **ranger dessous**, sous un
+   intertitre « même famille de mouvement ».
+
+**Et le principe qui les résume** : quand la recherche hésite, **ne rien rattacher**. Un lien faux
+met le mauvais exercice dans la séance de quelqu'un ; un lien manquant se voit tout de suite et se
+corrige. *Le coût de l'erreur n'est pas le même dans les deux sens.*
