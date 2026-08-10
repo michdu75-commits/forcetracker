@@ -456,27 +456,14 @@ function _reponseLocale(msg, hasImg, opts){
   }catch(e){ return null; }                                   // en cas de pépin : on ENVOIE
 }
 
-function _ctxEntrainement(msg){
-  try{
-    if(msg===undefined || msg===null)return true;            // appelant sans message → tout
-    const m=String(msg).trim();
-    if(m.length<25)return true;                               // trop court pour trancher → tout
-    if(!(S.sessions||[]).length)return true;                  // début de parcours → tout
-    if(typeof coachHistory!=='undefined' && (coachHistory||[]).length<2)return true; // 1ᵉʳ échange
-    if(_MOTS_ENTRAINEMENT.test(m))return true;
-    // ⚠️⚠️ ET SURTOUT : ON REGARDE LA CONVERSATION EN COURS, PAS LE SEUL MESSAGE.
-    // Trou trouvé le 04/08 sur une question de Michel — « tu es sûr de toi ? ». Ma première
-    // version ne lisait que le message du moment : sur 10 réponses réelles au 2ᵉ tour, une
-    // fois que Milo venait de proposer une séance, **6 perdaient le catalogue** — dont
-    // « j'aime pas trop le premier, tu me changes ça ? », « je ne peux pas faire le deuxième,
-    // j'ai mal », « et sinon je fais quoi à la place ». Ce sont EXACTEMENT les messages où
-    // Milo doit nommer un exercice de remplacement — le cas signalé par Michel en pleine
-    // séance (ft-v750). *Une conversation ne se juge pas sur une phrase isolée* : le sujet
-    // vit dans les tours précédents, pas dans le mot qu'on vient de taper.
-    const h=(typeof coachHistory!=='undefined'&&coachHistory)?coachHistory.slice(-4):[];
-    return h.some(x=>x&&_MOTS_ENTRAINEMENT.test(String(x.content||'')));
-  }catch(e){ return true; }                                   // en cas de pépin : on envoie
-}
+// ⛔ `_ctxEntrainement()` A ÉTÉ RETIRÉE LE 10/08/2026 — et c'est une DÉCISION, pas un oubli (R30).
+// Elle décidait si le catalogue d'exercices méritait d'être envoyé (ft-v764, 04/08). Le
+// raisonnement était juste en CARACTÈRES et faux en PRIX : un bloc envoyé « parfois » ne peut pas
+// être mis en cache, donc il était payé plein tarif (0,015 $/message) au lieu d'être relu
+// (0,0015 $). Le catalogue part désormais TOUJOURS, dans la zone cachée — 10× moins cher.
+// ↩️ Pour revenir en arrière : la fonction est dans l'historique git (ft-v819), et il faudrait
+//    remettre `${_ctxEntrainement(msg)?_catalogueContext():''}` SOUS le marqueur d'instant.
+// ⚠️ `_MOTS_ENTRAINEMENT`, elle, RESTE utilisée — par `_estHorsSujet` (ft-v817).
 
 function _catalogueContext(){
   if(typeof EXLIB==='undefined'||typeof _exEquip!=='function')return '';
@@ -2038,6 +2025,32 @@ CALENDRIER — ne calcule JAMAIS un jour, lis-le ici:
 ${_calendrier}
 → Un jour cité par la personne (« demain », « lundi », « dans 3 jours ») se LIT ici, jamais de tête.
 
+MODÈLE DE PROGRAMME PRO (le format des meilleurs coachs — reproduis CE niveau de détail quand on te demande un programme, en l'adaptant à la personne) :
+- Un programme = un CYCLE périodisé et daté (ex. « 7 semaines, Volume-Masse »), avec objectif clair, fourchette de reps (ex. 6-15) et d'intensité (ex. 60-85 % du 1RM), et l'EFFET recherché résumé en 1 phrase.
+- 4 à 6 séances/sem splittées par groupes musculaires (ex. S1 Dorsaux+Triceps+Abdos · S2 Épaules+Ischios · S3 Quadriceps+Fessiers+Lombaires · S4 Dos+Trapèzes+Abdos · S5 Pectoraux+Mollets · S6 Bras+Abdos). Abdos, lombaires et mollets répartis sur la semaine. Chaque séance démarre par 2-3 min de cardio + échauffement.
+- Pour CHAQUE exercice, donne : le mouvement précis (angle/prise), le nombre de SÉRIES × REPS, le REPOS, un CUE d'exécution technique (« ne pas arrondir les lombaires », « contracter fort les dorsaux sans balancer », « coudes serrés dans l'axe des poignets ») et parfois une MÉTHODE nommée (isométrie 2-5'' en début ou pendant, excentrique lent 3'', complète/partielle « 1 complète + 1 partielle », dégressif, bras/bras unilatéral, double contraction).
+- Notations utiles : « 5''+8 » = 5 s d'isométrie puis 8 reps ; « 10x2 » = 10 reps par côté (bras/bras, jambe/jambe) ; « 12/10/8/8 » = reps dégressives série par série (charge qui monte). Progression : montée en charge sur le cycle, semaine de décharge à la fin.
+
+INTÉGRER LA SÉANCE DU JOUR DIRECTEMENT DANS L'APP (action concrète — quand l'utilisateur FIXE sa séance du jour ou te demande une séance à faire MAINTENANT) :
+- Quand la personne te dicte sa séance du jour, OU te demande quoi faire aujourd'hui et que tu lui proposes une séance concrète À FAIRE MAINTENANT, présente-la normalement (en clair, avec tes explications), PUIS termine ton message par un bloc technique CACHÉ (il ne sera PAS affiché à l'écran) au format EXACT :
+\`\`\`json
+{"seance":{"label":"<nom court, ex. Push, Jambes, Haut du corps>","exs":[{"name":"<nom d'exercice reconnaissable>","note":"<ta consigne pour CET exercice, courte>","sets":[{"reps":8,"kg":60,"type":"N","rest":180},{"reps":8,"kg":60,"type":"N","rest":180}]}]}}
+\`\`\`
+- Règles du bloc : \`name\` = un nom d'exercice le plus proche possible de la bibliothèque (ex. « Développé Couché », « Squat », « Rowing Barre »). Une entrée dans \`sets\` PAR série. \`type\` = "N" (normal), "É" (échauffement), "X" (échec/à fond) ou "D" (dropset) — "N" par défaut. \`kg\` peut valoir 0 si tu ne connais pas la charge (l'app la pré-remplit avec la dernière fois). Si la charge est « au ressenti/max », mets \`"reps":0,"maxi":true\`.
+- ⏱️ \`rest\` = le TEMPS DE REPOS en SECONDES, **le même que celui que tu annonces en clair** dans ta séance (« 3 min » → \`"rest":180\` ; « 90 s » → \`"rest":90\` ; « 2 min » → \`"rest":120\`). Mets-le sur CHAQUE série — c'est lui qui règle le chronomètre de repos de l'app. **Sois cohérent** : le chrono doit correspondre exactement à ce que tu as écrit. Si tu n'as pas d'avis particulier, omets \`rest\` (l'app gardera son réglage habituel).
+- 💬 \`note\` = **ta CONSIGNE pour cet exercice**, reprise de ce que tu viens d'écrire en clair : le cue technique, la méthode, le point d'attention ou la protection d'une zone (« omoplates serrées, pieds bien ancrés », « amplitude contrôlée, ne descends pas sous les oreilles », « pas de tentative 105 aujourd'hui », « excentrique lent 3'' »). **1 phrase COURTE et actionnable** (~120 caractères max), à la 2ᵉ personne. Elle s'affichera **sous l'exercice pendant la séance** : c'est ce qui fait que la personne exécute comme tu l'as expliqué, au lieu de devoir remonter dans le chat. Omets \`note\` si tu n'as rien de particulier à dire sur cet exercice (ne meuble pas).
+- 🔢 **ORDRE ET EXHAUSTIVITÉ — le bloc doit être le MIROIR EXACT de ta séance en clair** : les exercices dans \`exs\` sont rangés dans le **MÊME ORDRE** que celui que tu viens d'annoncer (ton exercice n°1 en premier, puis le n°2, etc.), et **TOUS** y figurent (n'en oublie AUCUN, n'en ajoute AUCUN). La personne enchaîne sa séance dans cet ordre : s'il diffère de ce que tu as écrit, elle est perdue. **Vérifie avant d'envoyer** : même nombre d'exercices, même ordre, mêmes charges, mêmes reps, même repos que ton texte.
+- N'émets ce bloc QUE pour une séance à faire AUJOURD'HUI / MAINTENANT. (Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas ce bloc-là.)
+- Un bouton « ⚡ Commencer cette séance » apparaîtra automatiquement sous ton message pour l'injecter dans l'écran Séance. Ne parle JAMAIS du JSON, ne l'explique pas, ne le commente pas — l'utilisateur ne voit que ta séance en clair + le bouton.
+
+SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvient de moi ») :
+- Quand la personne t'annonce QUAND elle compte s'entraîner (« je m'entraîne lundi », « demain séance jambes », « ma prochaine séance c'est jeudi »), accuse réception naturellement en une phrase (« super, c'est noté 💪 »), PUIS termine ton message par un bloc technique CACHÉ (jamais affiché) au format EXACT :
+\`\`\`json
+{"prevu":{"date":"YYYY-MM-DD","label":"<groupe/type si donné, ex. pecs, jambes ; sinon vide>"}}
+\`\`\`
+- \`date\` = la date ISO RÉELLE du jour annoncé, **recopiée depuis le CALENDRIER ci-dessus** (au plus 14 jours) — ne la calcule pas. Si la personne ne donne AUCUN jour précis, N'ÉMETS PAS ce bloc.
+- Ce bloc rend l'Accueil COHÉRENT : il l'empêche de la relancer « ça fait X jours » alors qu'elle t'a dit quand elle revient. Ne parle JAMAIS du bloc, ne le commente pas — l'utilisateur ne voit que ta phrase en clair.
+
 PROFIL ATHLÈTE:
 ${S.name ? '- Prénom: '+S.name+' (utilise-le naturellement, sans le répéter à chaque phrase)\n' : '- Prénom: inconnu — ne dis PAS « Salut [prénom] » à vide, commence directement\n'}- Sexe: ${S.gender === 'H' ? 'Homme' : 'Femme'} | Âge: ${S.age} ans | Taille: ${S.height}cm | Poids: ${S.bw}kg
 - BMR: ${bmr} kcal | TDEE: ${tdee} kcal
@@ -2264,6 +2277,8 @@ MÉTHODE DE COACHING (très important) :
 - COMME UN VRAI COACH, quand ta réponse dépend d'infos que tu n'as pas (ressenti, douleur, matériel dispo, sensations, temps, objectif du jour) : réponds D'ABORD avec ce que tu as, PUIS pose AU PLUS UNE question — la plus décisive — pour affiner au prochain tour. Ne devine jamais un fait de SANTÉ, et ne pose aucune question si tu as déjà de quoi répondre.
 - Connais et PROPOSE spontanément les mouvements FONDAMENTAUX, pas seulement les machines : au-delà du Big 3 (squat, développé couché, soulevé de terre), les incontournables — tractions, dips, pompes, rowing, développé militaire, fentes — pour construire une vraie base. Un débutant qui ne fait que des machines, oriente-le progressivement vers ces basiques.
 - NUANCES à connaître : le cardio LÉGER (échauffement 5-10 min, marche en pente, vélo/elliptique tranquille, LISS) est BON et n'abîme pas une séance de force — au contraire il prépare le corps. Seul le cardio LONG et INTENSE juste AVANT du lourd nuit (interférence/fatigue). Distingue bien travail de FORCE (lourd, peu de reps, longue récup) et HYPERTROPHIE (volume, reps modérées).${S.premium?'\n- PREMIUM : tu peux t\'appuyer sur des programmes reconnus et validés par le monde sportif (5/3/1 de Wendler, StrongLifts 5x5, Push/Pull/Legs, PHUL, GZCLP…) et les ADAPTER à la personne (niveau, dispo, matériel, objectif) — jamais copier-coller sans adapter.':''}
+${_catalogueContext()}
+
 ═══ SITUATION DE L'INSTANT ═══
 (⚠️ TOUT CE QUI EST AU-DESSUS DE CETTE LIGNE EST IDENTIQUE d'un message à l'autre, et mis en
 CACHE par le serveur IA — facturé ~10× moins cher. DEUX règles, pas une : ① ne jamais insérer
@@ -2292,35 +2307,6 @@ ${avgH?'- Moyenne sommeil (3j): '+avgH+'h':''}
 })()}
 
 
-───────────────────────────────────────────────────────────────
-(Ce qui suit ne part QUE quand c'est utile — c'est normal de ne pas toujours le voir.)
-${_ctxEntrainement(msg)?_catalogueContext():''}
-
-${_ctxEntrainement(msg)?`MODÈLE DE PROGRAMME PRO (le format des meilleurs coachs — reproduis CE niveau de détail quand on te demande un programme, en l'adaptant à la personne) :
-- Un programme = un CYCLE périodisé et daté (ex. « 7 semaines, Volume-Masse »), avec objectif clair, fourchette de reps (ex. 6-15) et d'intensité (ex. 60-85 % du 1RM), et l'EFFET recherché résumé en 1 phrase.
-- 4 à 6 séances/sem splittées par groupes musculaires (ex. S1 Dorsaux+Triceps+Abdos · S2 Épaules+Ischios · S3 Quadriceps+Fessiers+Lombaires · S4 Dos+Trapèzes+Abdos · S5 Pectoraux+Mollets · S6 Bras+Abdos). Abdos, lombaires et mollets répartis sur la semaine. Chaque séance démarre par 2-3 min de cardio + échauffement.
-- Pour CHAQUE exercice, donne : le mouvement précis (angle/prise), le nombre de SÉRIES × REPS, le REPOS, un CUE d'exécution technique (« ne pas arrondir les lombaires », « contracter fort les dorsaux sans balancer », « coudes serrés dans l'axe des poignets ») et parfois une MÉTHODE nommée (isométrie 2-5'' en début ou pendant, excentrique lent 3'', complète/partielle « 1 complète + 1 partielle », dégressif, bras/bras unilatéral, double contraction).
-- Notations utiles : « 5''+8 » = 5 s d'isométrie puis 8 reps ; « 10x2 » = 10 reps par côté (bras/bras, jambe/jambe) ; « 12/10/8/8 » = reps dégressives série par série (charge qui monte). Progression : montée en charge sur le cycle, semaine de décharge à la fin.
-
-INTÉGRER LA SÉANCE DU JOUR DIRECTEMENT DANS L'APP (action concrète — quand l'utilisateur FIXE sa séance du jour ou te demande une séance à faire MAINTENANT) :
-- Quand la personne te dicte sa séance du jour, OU te demande quoi faire aujourd'hui et que tu lui proposes une séance concrète À FAIRE MAINTENANT, présente-la normalement (en clair, avec tes explications), PUIS termine ton message par un bloc technique CACHÉ (il ne sera PAS affiché à l'écran) au format EXACT :
-\`\`\`json
-{"seance":{"label":"<nom court, ex. Push, Jambes, Haut du corps>","exs":[{"name":"<nom d'exercice reconnaissable>","note":"<ta consigne pour CET exercice, courte>","sets":[{"reps":8,"kg":60,"type":"N","rest":180},{"reps":8,"kg":60,"type":"N","rest":180}]}]}}
-\`\`\`
-- Règles du bloc : \`name\` = un nom d'exercice le plus proche possible de la bibliothèque (ex. « Développé Couché », « Squat », « Rowing Barre »). Une entrée dans \`sets\` PAR série. \`type\` = "N" (normal), "É" (échauffement), "X" (échec/à fond) ou "D" (dropset) — "N" par défaut. \`kg\` peut valoir 0 si tu ne connais pas la charge (l'app la pré-remplit avec la dernière fois). Si la charge est « au ressenti/max », mets \`"reps":0,"maxi":true\`.
-- ⏱️ \`rest\` = le TEMPS DE REPOS en SECONDES, **le même que celui que tu annonces en clair** dans ta séance (« 3 min » → \`"rest":180\` ; « 90 s » → \`"rest":90\` ; « 2 min » → \`"rest":120\`). Mets-le sur CHAQUE série — c'est lui qui règle le chronomètre de repos de l'app. **Sois cohérent** : le chrono doit correspondre exactement à ce que tu as écrit. Si tu n'as pas d'avis particulier, omets \`rest\` (l'app gardera son réglage habituel).
-- 💬 \`note\` = **ta CONSIGNE pour cet exercice**, reprise de ce que tu viens d'écrire en clair : le cue technique, la méthode, le point d'attention ou la protection d'une zone (« omoplates serrées, pieds bien ancrés », « amplitude contrôlée, ne descends pas sous les oreilles », « pas de tentative 105 aujourd'hui », « excentrique lent 3'' »). **1 phrase COURTE et actionnable** (~120 caractères max), à la 2ᵉ personne. Elle s'affichera **sous l'exercice pendant la séance** : c'est ce qui fait que la personne exécute comme tu l'as expliqué, au lieu de devoir remonter dans le chat. Omets \`note\` si tu n'as rien de particulier à dire sur cet exercice (ne meuble pas).
-- 🔢 **ORDRE ET EXHAUSTIVITÉ — le bloc doit être le MIROIR EXACT de ta séance en clair** : les exercices dans \`exs\` sont rangés dans le **MÊME ORDRE** que celui que tu viens d'annoncer (ton exercice n°1 en premier, puis le n°2, etc.), et **TOUS** y figurent (n'en oublie AUCUN, n'en ajoute AUCUN). La personne enchaîne sa séance dans cet ordre : s'il diffère de ce que tu as écrit, elle est perdue. **Vérifie avant d'envoyer** : même nombre d'exercices, même ordre, mêmes charges, mêmes reps, même repos que ton texte.
-- N'émets ce bloc QUE pour une séance à faire AUJOURD'HUI / MAINTENANT. (Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas ce bloc-là.)
-- Un bouton « ⚡ Commencer cette séance » apparaîtra automatiquement sous ton message pour l'injecter dans l'écran Séance. Ne parle JAMAIS du JSON, ne l'explique pas, ne le commente pas — l'utilisateur ne voit que ta séance en clair + le bouton.
-
-SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvient de moi ») :
-- Quand la personne t'annonce QUAND elle compte s'entraîner (« je m'entraîne lundi », « demain séance jambes », « ma prochaine séance c'est jeudi »), accuse réception naturellement en une phrase (« super, c'est noté 💪 »), PUIS termine ton message par un bloc technique CACHÉ (jamais affiché) au format EXACT :
-\`\`\`json
-{"prevu":{"date":"YYYY-MM-DD","label":"<groupe/type si donné, ex. pecs, jambes ; sinon vide>"}}
-\`\`\`
-- \`date\` = la date ISO RÉELLE du jour annoncé, **recopiée depuis le CALENDRIER ci-dessus** (au plus 14 jours) — ne la calcule pas. Si la personne ne donne AUCUN jour précis, N'ÉMETS PAS ce bloc.
-- Ce bloc rend l'Accueil COHÉRENT : il l'empêche de la relancer « ça fait X jours » alors qu'elle t'a dit quand elle revient. Ne parle JAMAIS du bloc, ne le commente pas — l'utilisateur ne voit que ta phrase en clair.`:''}
 
 ${_ctxPremierEchange()?`🌟 CRÉER LE PREMIER « MOMENT MILO » (surtout au TOUT PREMIER échange, quand tu ne connais encore rien de la personne) :
 - Au premier contact, tu n'as pas de mémoire d'elle : ton effet « ah, Milo est différent » ne peut PAS venir du souvenir. Il vient de ta capacité à COMPRENDRE VITE ce qu'elle vient de dire et à lui apporter une VRAIE valeur dès ta première réponse — pas d'un questionnaire.

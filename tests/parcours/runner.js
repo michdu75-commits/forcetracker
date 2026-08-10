@@ -913,14 +913,19 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c6.close();
 }
 
-// ═══ LE CATALOGUE N'EST ENVOYÉ QUE QUAND IL SERT (ft-v764) ═══════════════════════════════
-// Mesuré le 04/08 en exécutant l'app : le contexte fait 60 085 caractères et part EN ENTIER
-// à chaque message ; le catalogue d'exercices en pèse 9 507 (16 %), le plus gros bloc du
-// prompt. Il ne sert à rien quand la personne écrit « j'ai mal dormi ».
-// ⚠️ CE QUE CE TEST PROTÈGE, ET C'EST L'ESSENTIEL : l'erreur n'est PAS symétrique (R29).
-// Envoyer le catalogue pour rien ne coûte que des caractères ; l'OUBLIER quand Milo
-// construit une séance lui fait nommer un exercice que l'app ne reconnaît pas — le bug que
-// ft-v713 avait corrigé (R8). Donc on vérifie D'ABORD les faux négatifs, jamais l'inverse.
+// ═══ LE CATALOGUE EST TOUJOURS LÀ — ET C'EST MOINS CHER (ft-v764 → RETOURNÉ le 10/08) ════
+// ⚠️⚠️ RÈGLE RETOURNÉE, PAS SUPPRIMÉE (R30). Le 04/08 on avait décidé de n'envoyer le
+// catalogue QUE quand il pouvait servir, pour économiser 9 507 caractères. C'était juste
+// **tant qu'on raisonnait en caractères**. En prix, c'est l'inverse : un bloc envoyé
+// « parfois » ne peut pas être mis en cache (le cache exige un texte RIGOUREUSEMENT
+// identique d'un message à l'autre), donc il était payé PLEIN TARIF à chaque envoi —
+// 0,015 $ le message, soit la moitié du prix d'un message une fois le reste optimisé.
+// Envoyé TOUJOURS, il rentre dans la zone cachée et tombe à 0,0015 $ : **10× moins cher**.
+// *Ce n'est pas la quantité qui fixe le prix, c'est le fait de pouvoir réutiliser.*
+// ⚠️ CE QUE CES TÉMOINS PROTÈGENT MAINTENANT : que le catalogue soit là POUR TOUS les
+// messages — y compris « j'ai mal dormi ». L'oublier quand Milo construit une séance lui
+// fait nommer un exercice que l'app ne reconnaît pas (bug ft-v713, R8) ; les 19 messages
+// témoins ci-dessous, hérités du 04/08, gardent ce risque sous surveillance.
 {
   const c7=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const p7=await c7.newPage();
@@ -958,13 +963,17 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     coachHistory.push({role:'user',content:'fais-moi une séance jambes'},
                       {role:'assistant',content:'ok voilà'},
                       {role:'user',content:'x'},{role:'assistant',content:'y'});
-    const manquesSuite = SUITE.filter(m=>!_ctxEntrainement(m));
+    // ⚠️ On mesure désormais la PRÉSENCE RÉELLE du catalogue dans le contexte, plus le verdict
+    // d'une fonction intermédiaire : depuis le 10/08 il n'y a plus de condition, et un test qui
+    // interroge une fonction que le prompt n'appelle plus ne teste rien.
+    const _aCat = m => buildCoachContext(m).indexOf('EXERCICES DISPONIBLES')>=0;
+    const manquesSuite = SUITE.filter(m=>!_aCat(m));
     coachHistory.length=0;
     coachHistory.push({role:'user',content:'a'},{role:'assistant',content:'b'});
     return {
       manquesSuite,
-      manques: DOIT.filter(m=>!_ctxEntrainement(m)),
-      retires: HORS.filter(m=>!_ctxEntrainement(m)).length,
+      manques: DOIT.filter(m=>!_aCat(m)),
+      retires: HORS.filter(m=>!_aCat(m)).length,
       triNom: ['backup-2026-08-05.json','backup-migration-2026-06-29-2003.json','backup-2026-08-04.json']
                 .sort().slice(-1)[0],
       // ⚠️⚠️ L'INVARIANT DU CACHE DE PROMPT (05/08) — celui qui coûte le plus cher s'il casse.
@@ -1181,14 +1190,16 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     };
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
-  t('⭐ PROMPT : le catalogue est TOUJOURS envoyé dès qu\'il peut servir (10 messages témoins)',
+  t('⭐ PROMPT : le catalogue est là pour les 10 messages qui en ont besoin',
     Array.isArray(r.manques) && r.manques.length===0, JSON.stringify(r.manques||r));
-  t('⭐⭐ PROMPT : la CONVERSATION EN COURS compte, pas le seul message (« tu me changes ça ? »)',
+  t('⭐⭐ PROMPT : … y compris en pleine conversation (« tu me changes ça ? »)',
     Array.isArray(r.manquesSuite) && r.manquesSuite.length===0, JSON.stringify(r.manquesSuite||r));
-  t('PROMPT : il est retiré sur un message franchement hors sujet',
-    r.retires===2, JSON.stringify(r));
-  t('PROMPT : le gain est réel (> 5 000 caractères en moins)',
-    (r.avec-r.sans)>5000, 'avec='+r.avec+' sans='+r.sans);
+  // ⚠️ RETOURNÉ le 10/08 : il n'est PLUS retiré sur un message hors sujet — c'est ce qui
+  // permet de le mettre en cache. Le témoin vérifie donc l'inverse de ce qu'il vérifiait.
+  t('⭐⭐ PROMPT : il est là MÊME sur « j\'ai mal dormi » (c\'est ce qui le rend cachable)',
+    r.retires===0, 'il est encore retiré sur '+JSON.stringify(r.retires)+' message(s) → le cache saute');
+  t('⭐⭐ CACHE : le contexte a EXACTEMENT la même taille quel que soit le sujet',
+    r.avec===r.sans, 'avec='+r.avec+' sans='+r.sans+' → préfixe variable = cache manqué');
   t('⭐ PROMPT : un appelant SANS message reçoit le contexte COMPLET (diagnostic, laboratoire)',
     r.sansArg===r.avec, 'sansArg='+r.sansArg+' avec='+r.avec);
   // ⚠️ SÉCURITÉ (04/08) — Michel : « si c'est le cas c'est un point de sécurité ». Vérifié ce
@@ -1405,9 +1416,11 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   t('⭐⭐ CACHE : le préfixe mis en cache est IDENTIQUE quel que soit le sujet du message',
     r.cachePrefixe && r.cachePrefixe.trouve===true && r.cachePrefixe.identiques===true,
     JSON.stringify(r.cachePrefixe));
-  t('⭐⭐ PROMPT : les blocs « construire une séance » voyagent AVEC le catalogue (jamais l\'un sans l\'autre)',
+  // ⚠️ RETOURNÉ le 10/08 : les deux sont maintenant TOUJOURS présents (ils sont en cache).
+  // Ce qu'on protège n'a pas changé — ils ne doivent jamais se retrouver l'un sans l'autre.
+  t('⭐⭐ PROMPT : les blocs « construire une séance » et le catalogue sont là DANS TOUS LES CAS',
     r.coherence && r.coherence.chaud.seance===true && r.coherence.chaud.cat===true
-                && r.coherence.froid.seance===false && r.coherence.froid.cat===false,
+                && r.coherence.froid.seance===true && r.coherence.froid.cat===true,
     JSON.stringify(r.coherence));
   t('⭐ PROMPT : « le premier MOMENT MILO » ne part plus qu\'au DÉBUT de la conversation',
     r.momentMilo && r.momentMilo.debut===true && r.momentMilo.tard===false,
