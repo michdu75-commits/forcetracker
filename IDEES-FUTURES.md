@@ -1581,3 +1581,33 @@ liste COMPLÈTE dans le bloc commun (partagée par tous) et ne garder dans le pe
 « voici les bacs qu'il peut utiliser ». ⚠️ Risque à évaluer : Milo verrait des exercices que la
 personne ne peut pas faire, et pourrait les proposer — c'est exactement ce que le filtre par lieu
 évite aujourd'hui. À ne tenter qu'avec des témoins solides.
+
+---
+
+## ⛔ ÉCARTÉ le 10/08/2026 — passer Milo en Haiku pour économiser
+
+**La proposition** : Haiku coûte **3× moins cher** que Sonnet (0,005 $ le message contre 0,016 $,
+soit **~5,70 $/mois** à 10 messages/jour). Après les corrections du 10/08 (les renvois du prompt
+qui pointaient à l'envers), l'idée revient naturellement : *« s'il est plus fiable, on peut
+peut-être passer en Haiku »*.
+
+**La réponse de Michel, et c'est elle qui tranche** : *« on avait mis Sonnet pour tout le monde
+normalement, parce que justement si les gens trouvent Milo nul ils ne vont pas le prendre. »*
+
+**Décision : NON, et pour une raison PRODUIT avant d'être technique.** L'expérience **gratuite**
+est l'argument de vente : quelqu'un qui essaie Milo et le trouve moyen ne passera jamais premium.
+Économiser 5 $/mois en dégradant l'essai coûterait des abonnements à 5 €.
+
+**Et techniquement, R9 le disait déjà** : un modèle léger suit mal les consignes fines —
+l'« interrogatoire » du 26/07 résistait à **trois** durcissements du prompt, et la cause était le
+modèle. Ce qu'un modèle plus léger lâche en premier, c'est précisément ce qui fait Milo : le
+Gardien, « réponds d'abord puis AU PLUS UNE question », l'adaptation du ton, le refus d'inventer.
+
+⚠️ **Ne pas re-proposer sans un déclencheur nouveau** (par exemple : un modèle léger nettement
+plus capable, ou une mesure côte à côte sur le noyau dur qui montrerait qu'il tient). La décision
+est aussi écrite **dans `worker.js`, à côté de la ligne qu'elle protège** (R27) — c'est là qu'on
+la lira, pas ici.
+
+**⭐ Pourquoi cette entrée existe** : l'idée a été re-proposée le 10/08 par Claude, alors qu'elle
+était déjà tranchée — simplement parce qu'elle n'était **écrite nulle part**. C'est exactement
+R30 : *un retrait volontaire non écrit redevient une proposition.*

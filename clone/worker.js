@@ -425,6 +425,16 @@ async function coach(body, apiKey) {
   // ↩️ Pour revenir en arrière : remettre 'claude-opus-4-6' sur la ligne ci-dessous.
   const MODELE_MICHEL = 'claude-sonnet-4-6';
   const em = String(body.email || '').toLowerCase().trim();
+  // ⛔ SONNET POUR TOUT LE MONDE — décision produit de Michel, à ne pas re-proposer (R30).
+  // La question revient naturellement : Haiku coûte 3× moins cher (0,005 $ le message contre
+  // 0,016 $), soit ~5,70 $/mois d'écart. La réponse est NON, et la raison n'est pas technique :
+  //   « on avait mis Sonnet pour tout le monde justement, parce que si les gens trouvent Milo
+  //     nul ils ne vont pas le prendre » (Michel, 10/08/2026).
+  // L'expérience GRATUITE est l'argument de vente : économiser 5 $/mois en dégradant Milo
+  // coûterait des abonnements. Et techniquement, R9 le dit déjà — un modèle léger suit mal les
+  // consignes fines (l'« interrogatoire » du 26/07 résistait à 3 durcissements de prompt ; la
+  // cause était le modèle). Ce qu'on perdrait en premier, c'est exactement ce qui fait Milo :
+  // le Gardien, « au plus UNE question », l'adaptation du ton, le refus d'inventer.
   let model = 'claude-sonnet-4-6';
   if (em === 'michdu75@gmail.com') model = MODELE_MICHEL;
   const d = await callClaudeDiag(apiKey, { model, max_tokens: 1024, system, messages });
