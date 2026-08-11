@@ -200,6 +200,7 @@ const _HELP_DATA={
     title:'🍽️ Nutrition',
     tips:[
       {i:'⚠️',t:'Les macros s\'affichent correctement uniquement si le Profil est complet (âge, poids, taille, activité, objectif).'},
+      {i:'🔥',t:'<b>D\'où vient ton BMR</b> (métabolisme de base, ce que ton corps brûle au repos) : si tu as renseigné un <b>bilan corporel</b> ou ton <b>% de masse grasse</b>, l\'app le calcule sur ta <b>masse maigre</b> (formule de Katch-McArdle) au lieu de ton seul poids — chez quelqu\'un de musclé ça change souvent de <b>100 à 200 kcal par jour</b>, parce que le muscle consomme au repos et le gras beaucoup moins. Sinon, elle utilise la formule générique (Mifflin-St Jeor). <b>La ligne sous le chiffre dit toujours laquelle</b> : tape-la, le calcul est posé avec tes nombres. ⚠️ Un bilan de plus de 3 mois, ou un poids qui a bougé de plus de 5 % depuis, n\'est pas utilisé : on ne sait pas si les kilos sont du muscle ou du gras. Le métabolisme affiché par ta balance, lui, est enregistré mais pas utilisé dans le calcul — chaque marque a sa formule secrète, invérifiable.'},
       {i:'📈',t:'Phase Charge = surplus calorique pour prendre du muscle. Phase Décharge = déficit pour perdre du gras. Alterne selon tes cycles.'},
       {i:'💊',t:'Suppléments : créatine (phases charge/entretien) et whey dosés selon ton poids. Combinaisons Premium : 4 stacks complets (muscle, force, cardio, perte de poids).'},
       {i:'🔥',t:'Les calories brûlées au cardio (bloc cardio dans ta séance) s\'ajoutent à ton TDEE estimé du jour.'},
@@ -286,6 +287,50 @@ const _HELP_DATA={
     ]
   }
 };
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// « D'OÙ VIENT CE CHIFFRE ? » — l'explication du métabolisme de base (11/08/2026)
+// ═══════════════════════════════════════════════════════════════════════════════════
+// Elle POSE LE CALCUL avec ses vrais nombres à elle, et nomme les deux formules. C'est
+// le standard que Michel a fixé la nuit du 11/08 sur les calories : « il faut des données
+// sérieuses et scientifiquement prouvé ET prouvable ». Une explication qu'on ne peut pas
+// refaire sur un coin de table demande de faire confiance ; elle ne prouve rien.
+function openBmrHelp(){
+  const el=document.getElementById('bmr-help-body'); if(!el)return;
+  const bd=(typeof bmrDetail==='function')?bmrDetail():null;
+  const box=(bg,bd2,h)=>`<div style="background:${bg};border:1px solid ${bd2};border-radius:10px;padding:11px 13px;margin-bottom:12px;font-size:13px;color:var(--t2);line-height:1.55">${h}</div>`;
+  // Midi forcé : une date lue à minuit bascule d'un jour selon le fuseau (famille de bugs
+  // « fuseaux horaires » de BUGS.md — la sonde `tests/dates` la surveille).
+  const jolieDate=iso=>{try{return new Date(iso+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'});}catch(e){return iso;}};
+  let h='';
+  if(!bd||!bd.kcal){
+    h=box('var(--bg3)','var(--sep)','Renseigne ton poids, ta taille et ton âge dans le Profil — sans eux, aucun calcul honnête n\'est possible. L\'app préfère ne rien afficher plutôt qu\'inventer un chiffre.');
+  }else if(bd.methode==='katch'){
+    h=box('rgba(0,230,118,.07)','rgba(0,230,118,.28)',
+      `<b style="color:var(--t1)">✅ Calculé sur TA masse maigre</b><br>`
+      +`Formule de <b>Katch-McArdle</b> — publiée, et tu peux la refaire :<br>`
+      +`<span style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--t1)">370 + 21,6 × ${String(bd.lm.lm).replace('.',',')} kg = ${bd.kcal.toLocaleString('fr-FR')} kcal</span><br>`
+      +`<span style="font-size:12px">Ta masse maigre vient de ton ${bd.lm.src} du ${jolieDate(bd.lm.date)}${bd.jours!=null?' (il y a '+bd.jours+' j)':''}.</span>`)
+    + box('var(--bg3)','var(--sep)',
+      `<b style="color:var(--t1)">Pourquoi pas la formule habituelle ?</b><br>`
+      +`Mifflin-St Jeor ne connaît que ton <b>poids total</b> : elle traite 84 kg de muscle comme 84 kg de gras. Sur toi elle donnerait <b>${(bd.mifflin||0).toLocaleString('fr-FR')} kcal</b>, soit <b>${(bd.kcal-(bd.mifflin||0)>0?'+':'')}${(bd.kcal-(bd.mifflin||0)).toLocaleString('fr-FR')} kcal par jour</b> d'écart. Le muscle consomme au repos, le gras beaucoup moins — c'est tout l'intérêt de connaître ta composition.`);
+  }else{
+    h=box('rgba(255,214,0,.07)','rgba(255,214,0,.28)',
+      `<b style="color:var(--t1)">Calculé sur ton poids, ta taille et ton âge</b><br>`
+      +`Formule de <b>Mifflin-St Jeor</b> : <span style="font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--t1)">${bd.kcal.toLocaleString('fr-FR')} kcal</span>`
+      +(bd.raison?`<br><span style="font-size:12px">Raison : ${bd.raison}.</span>`:''))
+    + box('var(--bg3)','var(--sep)',
+      `<b style="color:var(--t1)">Comment le rendre plus juste</b><br>`
+      +`Note ta <b>masse maigre</b> (ou ton % de masse grasse) dans Progrès → Poids → « Bilan corporel ». L\'app passera alors sur <b>Katch-McArdle</b>, qui tient compte de ton muscle — chez quelqu\'un de musclé, ça change souvent de <b>100 à 200 kcal par jour</b>.<br>`
+      +`<span style="font-size:12px">⚠️ Un bilan de plus de 3 mois, ou un poids qui a bougé de plus de 5 % depuis, n\'est plus utilisé : on ne sait pas si les kilos sont du muscle ou du gras, et deviner ici fausserait tout le reste.</span>`);
+  }
+  h+=box('var(--bg3)','var(--sep)',
+    `<b style="color:var(--t1)">⚖️ Et le chiffre affiché par ta balance ?</b><br>`
+    +`Il est enregistré et Milo le voit, mais il n\'entre pas dans ce calcul : chaque marque a sa formule secrète, invérifiable. On préfère une formule publiée, appliquée à <b>ta</b> mesure.`);
+  el.innerHTML=h;
+  document.getElementById('ov-bmr-help').classList.add('open');
+}
+function closeBmrHelp(){document.getElementById('ov-bmr-help').classList.remove('open');}
 
 function showHelp(){
   const screen=window._curScreen==='cycle'?'home':(window._curScreen||'home');
@@ -1666,9 +1711,21 @@ function renderNutrition(){try{
   if(dVal){dVal.style.color=isPos?'var(--red)':'var(--green)';dVal.textContent=(isPos?'+':'')+currentDelta;}
   if(dLbl)dLbl.textContent=isPos?'Surplus':'Déficit';
 
-  const bmr=calcBMR(), tdee=calcTDEE();
+  const bd=(typeof bmrDetail==='function')?bmrDetail():{kcal:calcBMR(),methode:null};
+  const bmr=bd.kcal, tdee=calcTDEE();
   const hydra=fmt((S.bw*0.035)+0.5);
   document.getElementById('nu-bmr').textContent=bmr.toLocaleString('fr-FR');
+  // La provenance du chiffre, en 2 mots — tapable pour l'explication complète.
+  // ⚠️ Sur « mifflin » on n'écrit RIEN quand aucune mesure n'existe : afficher « estimé »
+  // à quelqu'un qui n'a jamais entendu parler de masse maigre l'inquiéterait sans lui
+  // donner de quoi agir (R24, informer sans encombrer). On ne le dit que si ça a BOUGÉ,
+  // ou si un bilan existe mais n'a pas pu servir — là, il y a une action possible.
+  const srcEl=document.getElementById('nu-bmr-src');
+  if(srcEl){
+    srcEl.textContent = bd.methode==='katch' ? '⚖️ selon ta masse maigre'
+      : (bd.lm ? '⚖️ bilan non utilisé ▸' : '');
+    srcEl.style.color = bd.methode==='katch' ? 'var(--green)' : 'var(--gold)';
+  }
   document.getElementById('nu-tdee').textContent=tdee.toLocaleString('fr-FR');
   const todayStr=today();
   const todaySess=S.sessions.find(s=>s.date===todayStr);

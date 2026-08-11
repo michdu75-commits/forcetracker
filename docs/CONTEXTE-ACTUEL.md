@@ -6,7 +6,29 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v832`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v833`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+
+> ## 🔥 CHANTIER EN COURS — LES CALORIES (nuit du 10 au 11/08)
+>
+> **Michel a relevé le niveau d'exigence** : *« si on veut que l'application soit sérieuse, il faut
+> des données sérieuses et scientifiquement prouvé ET prouvable »*. Contexte : *« moi je ne
+> l'utilise pas mais Tatiana est à fond dedans, et si l'appli va à des coachs faut qu'on soit
+> sérieux »*. Dossier sourcé : `docs/CALORIES-SOURCES.md` · contre-expertise GPT annotée :
+> `docs/CALORIES-SYNTHESE-GPT.md`.
+>
+> **✅ FAIT (ft-v833)** — le **métabolisme de base** tient compte de la masse maigre
+> (Katch-McArdle), avec refus explicite si le bilan est vieux ou si le poids a dérivé. C'était le
+> plus gros poste (60-70 % de la dépense) et le seul qu'on pouvait resserrer sans matériel.
+>
+> **⏭️ PROCHAINE ÉTAPE — LE CARDIO, et c'est le plus criant.** Sur une même séance, Michel a relevé :
+> tapis **101** · montre **89** · Polar **120** · **Force Tracker 57**. On est à **la moitié** des
+> autres, et c'est justement la partie où les équations sont les MIEUX établies (marche, course,
+> vélo : formules ACSM). À creuser avant la musculation.
+>
+> **Ensuite** : durée réelle mesurée + classification MET pour la musculation (le modèle actuel
+> reconstruit les temps et invente 10 min d'échauffement), et l'affichage en **fourchette** au lieu
+> d'un nombre unique. ⚠️ Point de GPT à traiter : `MET × poids × durée` contient déjà le
+> métabolisme de repos — l'ajouter au TDEE le compte **deux fois**.
 
 > ## 🔀 LIVRÉ CETTE NUIT — les exercices unilatéraux (ft-v832, 11/08)
 >

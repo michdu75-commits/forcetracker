@@ -141,6 +141,88 @@ console.log('\n═══ 2. calcBMR / calcTDEE / macros (Mifflin-St Jeor) ══
 }
 
 // ════════════════════════════════════════════════════════════════════
+// 2 bis. LE MÉTABOLISME DE BASE SELON LA MASSE MAIGRE (11/08/2026)
+// Michel : « on tient compte dans l'appli de la valeur de base du métabolisme de la
+// balance ? » — la réponse était NON : la donnée était stockée, affichée, envoyée à Milo,
+// et n'entrait dans aucun calcul (R5, la donnée morte).
+// ⚠️ CE QUE CES TÉMOINS PROTÈGENT, ce n'est pas Katch-McArdle : c'est le REFUS de l'employer
+// quand la mesure n'est plus la sienne d'aujourd'hui. Une composition corporelle de mars
+// appliquée en août produirait un chiffre FAUX présenté comme PRÉCIS — pire que l'estimation
+// grossière qu'on remplace (R29 : le droit de deviner dépend du coût de l'erreur, et ici la
+// personne règle son alimentation dessus).
+console.log('\n═══ 2 bis. BMR : Katch-McArdle quand la masse maigre est connue ═══');
+{
+  const {c,p}=await boot(null,{});
+  const r=await p.evaluate(()=>{
+   try{
+    const out={};
+    const jour=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    S.bw=80;S.height=178;S.age=30;S.gender='H';S.smoker=false;S.bodyScans=[];S.weightLog=[];
+    out.mifflin=calcBMR();                                    // 1768, aucune mesure
+
+    // ① bilan RÉCENT avec masse maigre → Katch-McArdle
+    S.bodyScans=[{date:jour(10),weight:80,leanMass:65}];
+    out.katch=calcBMR();                                      // 370 + 21.6*65 = 1774
+    out.katchAttendu=Math.round(370+21.6*65);
+    out.methode=bmrDetail().methode;
+    out.ecart=bmrDetail().kcal-bmrDetail().mifflin;
+    out.tdeeSuit=calcTDEE()===Math.round(out.katch*S.activityLevel); // le TDEE suit vraiment
+
+    // ② une masse maigre PLUS ÉLEVÉE fait monter le chiffre (le muscle consomme)
+    S.bodyScans=[{date:jour(10),weight:80,leanMass:70}];
+    out.katchPlus=calcBMR();
+    out.monteAvecMuscle=out.katchPlus>out.katch;
+
+    // ③ FUMEUR : le +7 % s'applique AUSSI à Katch (c'est un effet du tabac, pas un
+    //    correctif de formule — sinon arrêter de fumer ferait « sauter » 100 kcal
+    //    juste en changeant de source de mesure)
+    S.smoker=true; out.katchFume=calcBMR(); S.smoker=false;
+    out.fumeOk=out.katchFume===Math.round(out.katchPlus*1.07);
+
+    // ④ bilan TROP ANCIEN (> 90 j) → retour à Mifflin, avec la raison écrite
+    S.bodyScans=[{date:jour(200),weight:80,leanMass:70}];
+    out.vieux=calcBMR(); out.vieuxMethode=bmrDetail().methode; out.vieuxRaison=bmrDetail().raison;
+
+    // ⑤ le POIDS A BOUGÉ de plus de 5 % → Mifflin aussi : on ne sait pas si c'est du
+    //    muscle ou du gras, et l'inventer fausserait la seule chose qu'on mesurait
+    S.bodyScans=[{date:jour(10),weight:70,leanMass:60}];
+    out.derive=calcBMR(); out.deriveMethode=bmrDetail().methode; out.deriveRaison=bmrDetail().raison;
+
+    // ⑥ une PESÉE avec % de gras marche aussi, et la source la PLUS RÉCENTE gagne
+    S.bodyScans=[{date:jour(60),weight:80,leanMass:60}];
+    S.weightLog=[{date:jour(2),bw:80,bf:20}];                 // → masse maigre 64
+    out.viaPesee=calcBMR(); out.viaPeseeAttendu=Math.round(370+21.6*64);
+    out.sourceLaPlusRecente=bmrDetail().lm&&bmrDetail().lm.src;
+
+    // ⑦ une masse maigre ABSURDE ou absente ne casse rien
+    S.bodyScans=[{date:jour(5),weight:80,leanMass:0}]; S.weightLog=[];
+    out.zero=calcBMR(); out.zeroMethode=bmrDetail().methode;
+    S.bw=0; out.sansProfil=calcBMR(); S.bw=80;
+    S.bodyScans=[]; S.weightLog=[];
+    return out;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tb=(n,c2,x)=>t(n, !r.erreur && c2, r.erreur||x);
+  if(r.erreur) t('⛔ le bloc BMR s\'exécute (aucun témoin ci-dessous ne vaut sans ça)', false, r.erreur);
+  tb('sans aucune mesure de composition : Mifflin (1768), comme avant', r.mifflin===1768, 'reçu '+r.mifflin);
+  tb('⭐⭐ bilan récent → Katch-McArdle : 370 + 21,6 × masse maigre',
+    r.katch===r.katchAttendu&&r.methode==='katch', r.katch+' vs '+r.katchAttendu+' ('+r.methode+')');
+  tb('⭐ le TDEE suit vraiment le nouveau BMR (sinon le calcul ne sert à rien)', r.tdeeSuit===true);
+  tb('plus de masse maigre → plus de métabolisme (le muscle consomme au repos)', r.monteAvecMuscle===true);
+  tb('⭐ le +7 % fumeur s\'applique aussi à Katch (c\'est le tabac, pas la formule)', r.fumeOk===true);
+  tb('⭐⭐ bilan de plus de 90 jours → REFUSÉ, retour à Mifflin',
+    r.vieuxMethode==='mifflin'&&/ancien/.test(r.vieuxRaison||''), r.vieuxMethode+' · '+r.vieuxRaison);
+  tb('⭐⭐ poids qui a bougé de plus de 5 % → REFUSÉ aussi (muscle ou gras ? on ne sait pas)',
+    r.deriveMethode==='mifflin'&&/poids/.test(r.deriveRaison||''), r.deriveMethode+' · '+r.deriveRaison);
+  tb('une pesée avec % de gras suffit — et la mesure la PLUS RÉCENTE gagne',
+    r.viaPesee===r.viaPeseeAttendu&&r.sourceLaPlusRecente==='pesée',
+    r.viaPesee+' vs '+r.viaPeseeAttendu+' ('+r.sourceLaPlusRecente+')');
+  tb('masse maigre à 0 → Mifflin, aucun chiffre absurde', r.zeroMethode==='mifflin'&&r.zero===1768, 'reçu '+r.zero);
+  tb('profil incomplet → toujours 0 (on n\'invente pas)', r.sansProfil===0, 'reçu '+r.sansProfil);
+  await c.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ 3. Récupération — calcRecoveryDetail, horloge gelée ═══');
 {
   // Matin 08:00 — aucune donnée

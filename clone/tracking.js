@@ -1166,7 +1166,7 @@ function pasteBodyScan(){
   toast('Vérifie puis Enregistre ✅','info');
 }
 async function openBodyScanForm(idx){
-  if(!await _healthGate())return;
+  if(!await _healthGate())return;          // verrou santé (Michel, 04/08)
   _bsEditIdx=idx;
   const grid=document.getElementById('bs-grid');
   const dateEl=document.getElementById('bs-date');
@@ -1260,7 +1260,7 @@ function renderBloodCard(){
   el.innerHTML=html;
 }
 async function openBloodImport(){
-  if(!await _healthGate())return;
+  if(!await _healthGate())return;          // verrou santé (Michel, 04/08)
   const inp=document.getElementById('blood-file-input');if(inp){inp.value='';inp.click();}
 }
 async function onBloodFile(input){
@@ -1344,7 +1344,7 @@ function _saveBloodTest(d){
   openBloodTest(S.bloodTests.indexOf(obj));
 }
 async function openBloodTest(idx){
-  if(!await _healthGate())return;
+  if(!await _healthGate())return;          // verrou santé (Michel, 04/08)
   _bloodEditIdx=idx;const t=(S.bloodTests||[])[idx];if(!t)return;
   const prev=(S.bloodTests||[]).filter(x=>x!==t&&(x.date||'')<(t.date||'')).sort((a,b)=>(b.date||'').localeCompare(a.date||''))[0]||null;
   const dEl=document.getElementById('blood-test-date');if(dEl)dEl.textContent=t.date?new Date(t.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}):'';

@@ -667,6 +667,11 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
         <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">BMR</div>
           <div style="font-family:var(--font-cond);font-size:14px;font-weight:800;color:var(--t1);" id="nu-bmr">—</div>
+          <!-- ⚠️ D'OÙ VIENT LE CHIFFRE — jamais une bascule silencieuse (11/08/2026).
+               L'app peut employer deux formules ; celle qui tient compte de la masse maigre
+               donne ~180 kcal de plus chez quelqu'un de musclé. Voir un chiffre changer sans
+               savoir pourquoi coûte plus de confiance que l'imprécision qu'on corrige. -->
+          <div style="font-size:9.5px;font-weight:700;color:var(--t3);margin-top:2px;line-height:1.25;cursor:pointer;" id="nu-bmr-src" onclick="openBmrHelp()"></div>
         </div>
         <div style="flex:1;background:var(--bg3);border:1px solid var(--sep);border-radius:10px;padding:9px 4px;text-align:center;">
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--t3);margin-bottom:3px;">TDEE</div>
@@ -1814,6 +1819,19 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       </div>
     </div>
     <button class="btn btn-red" onclick="closeTypeHelp()" style="width:100%;padding:13px">OK</button>
+  </div>
+</div>
+
+<!-- MODAL: D'où vient ton métabolisme de base (BMR).
+     Ouverte en tapant la ligne sous le chiffre, écran Nutrition. Le contenu est CALCULÉ
+     (les deux formules avec ses vrais nombres) : une explication qui ne montre pas le
+     calcul demande de faire confiance, elle ne permet pas de vérifier. -->
+<div class="overlay" id="ov-bmr-help" onclick="if(event.target===this)closeBmrHelp()">
+  <div class="modal" style="max-width:390px;padding:10px 20px 20px;max-height:88vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:17px;margin-bottom:14px;text-align:center">🔥 Ton métabolisme de base</div>
+    <div id="bmr-help-body"></div>
+    <button class="btn btn-red" onclick="closeBmrHelp()" style="width:100%;padding:13px;margin-top:6px">OK</button>
   </div>
 </div>
 

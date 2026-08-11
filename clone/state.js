@@ -469,12 +469,85 @@ function plannedSession(){
 }
 
 // ─── NUTRITION CALCULATIONS ──────────────────────────────────
-function calcBMR(){
-  if(!S.bw||!S.height||!S.age) return 0;
-  const base=10*S.bw+6.25*S.height-5*S.age;
-  const bmr=Math.round(S.gender==='H'?base+5:base-161);
-  return S.smoker?Math.round(bmr*1.07):bmr;
+//
+// ═══════════════════════════════════════════════════════════════════════════════════
+// LE MÉTABOLISME DE BASE — deux formules, et on DIT laquelle on emploie (11/08/2026)
+// ═══════════════════════════════════════════════════════════════════════════════════
+// D'OÙ ÇA VIENT. Michel, après une nuit passée à chercher des sources sur les calories :
+// « on tient compte dans l'appli de la valeur de base du métabolisme de la balance ? »
+// Réponse honnête : NON. Le métabolisme lu sur sa balance à impédance était stocké,
+// affiché dans le Bilan corporel, envoyé à Milo… et n'entrait dans AUCUN calcul.
+// Une donnée gardée et jamais exploitée — exactement ce que R5 demande de chercher.
+//
+// ⚠️ POURQUOI ÇA COMPTE, et ce n'est pas un détail d'expert : Mifflin-St Jeor ne connaît
+// que le POIDS TOTAL. Il traite 84 kg de muscle comme 84 kg de gras. Sur quelqu'un de
+// musclé il SOUS-ESTIME — mesuré sur un gabarit 84 kg / 178 cm / 45 ans à 15 % de masse
+// grasse : 1732 contre 1912, soit ~180 kcal PAR JOUR. Et le métabolisme de base pèse
+// 60-70 % de la dépense totale : c'est le seul endroit où on peut gagner en précision
+// sans montre, sans ceinture et sans API.
+//
+// ⚠️ ON N'AVALE PAS LE CHIFFRE DE LA BALANCE. Il sort d'une boîte noire propre au
+// fabricant, invérifiable. On utilise à la place **KATCH-McARDLE** — formule publiée,
+// citable, qu'on peut poser sur une table : BMR = 370 + 21,6 × masse maigre (kg).
+// C'est le standard de sa question de la nuit : « scientifiquement prouvé ET prouvable ».
+// La masse maigre, elle, on l'a déjà : la balance la donne, et l'app la complète toute
+// seule depuis la correction du 30/07 (retour Eline).
+//
+// ⚠️⚠️ ET ON SE TAIT DÈS QUE LA MESURE N'EST PLUS « LA SIENNE D'AUJOURD'HUI » (R29) :
+//   · plus de 90 jours → on retombe sur Mifflin. Une composition corporelle du printemps
+//     n'est pas la sienne en août, et un chiffre faux présenté comme précis est pire
+//     qu'un chiffre approximatif présenté comme tel ;
+//   · plus de 5 % d'écart entre le poids du bilan et le poids d'aujourd'hui → Mifflin
+//     aussi. On ne sait PAS si les 4 kg pris sont du muscle ou du gras ; extrapoler
+//     reviendrait à inventer la seule chose qu'on cherchait à mesurer.
+// Dans les deux cas l'app le DIT (voir `bmrMethode`), elle ne bascule jamais en silence.
+const BMR_LM_JOURS = 90;     // fraîcheur maximale d'un bilan corporel pour servir au calcul
+const BMR_LM_ECART = 0.05;   // écart de poids toléré entre le bilan et aujourd'hui (5 %)
+
+/** La mesure de composition corporelle la PLUS RÉCENTE, d'où qu'elle vienne — ou `null`.
+ *  Deux sources possibles (bilan de balance, ou une pesée où le % de gras a été noté) :
+ *  on prend la plus récente des deux, jamais deux fois la même information (R2). */
+function leanMassRecente(){
+  const cand=[];
+  (S.bodyScans||[]).forEach(sc=>{
+    if(!sc||!sc.date)return;
+    const lm=Number(sc.leanMass);
+    if(isFinite(lm)&&lm>0)cand.push({date:sc.date,lm:lm,poids:Number(sc.weight)||null,src:'bilan corporel'});
+  });
+  (S.weightLog||[]).forEach(w=>{
+    if(!w||!w.date)return;
+    const bf=Number(w.bf),bw=Number(w.bw);
+    if(!(isFinite(bf)&&bf>0&&bf<70&&isFinite(bw)&&bw>0))return;
+    cand.push({date:w.date,lm:Math.round(bw*(1-bf/100)*10)/10,poids:bw,src:'pesée'});
+  });
+  if(!cand.length)return null;
+  cand.sort((a,b)=>b.date.localeCompare(a.date));
+  return cand[0];
 }
+
+/** Le métabolisme de base AVEC sa provenance — pour que l'app puisse l'AFFICHER.
+ *  `methode` vaut 'katch' ou 'mifflin' ; `raison` dit pourquoi quand on n'a pas pris Katch. */
+function bmrDetail(){
+  if(!S.bw||!S.height||!S.age) return {kcal:0,methode:null,raison:'profil incomplet'};
+  const base=10*S.bw+6.25*S.height-5*S.age;
+  const mifflin=Math.round(S.gender==='H'?base+5:base-161);
+  const fin=v=>S.smoker?Math.round(v*1.07):v;   // le +7 % fumeur est un effet du tabac sur le
+                                                // métabolisme, pas un correctif de formule :
+                                                // il s'applique donc AUX DEUX, sinon arrêter de
+                                                // fumer ferait « sauter » 100 kcal en changeant
+                                                // simplement de source de mesure.
+  const lm=leanMassRecente();
+  if(!lm) return {kcal:fin(mifflin),methode:'mifflin',raison:'aucune mesure de composition corporelle',mifflin:fin(mifflin)};
+  const jours=Math.round((new Date(today()+'T12:00:00')-new Date(lm.date+'T12:00:00'))/864e5);
+  if(!(jours>=0&&jours<=BMR_LM_JOURS))
+    return {kcal:fin(mifflin),methode:'mifflin',raison:'dernier bilan trop ancien ('+(isNaN(jours)?'?':jours)+' j)',mifflin:fin(mifflin),lm:lm};
+  if(lm.poids&&S.bw&&Math.abs(S.bw-lm.poids)/lm.poids>BMR_LM_ECART)
+    return {kcal:fin(mifflin),methode:'mifflin',raison:'ton poids a changé de plus de 5 % depuis ce bilan',mifflin:fin(mifflin),lm:lm};
+  const katch=Math.round(370+21.6*lm.lm);
+  return {kcal:fin(katch),methode:'katch',raison:'',mifflin:fin(mifflin),lm:lm,jours:jours};
+}
+
+function calcBMR(){ return bmrDetail().kcal; }
 function calcWorkExtra(){return{bureau:0,debout:200,actif:325,physique:450}[S.workType]||0;}
 // AUTRE SPORT déclaré (profil vivant, « vélo/course/foot… ») → la dépense DESCEND dans le chiffre
 // (audit 30/07, R4 : l'aide promettait « change tes calories » alors que rien ne bougeait).

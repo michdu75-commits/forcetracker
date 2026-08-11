@@ -3151,6 +3151,83 @@ console.log('\n═══ U. Unilatéral — 3 séries saisies, 6 réellement fai
   await cu.close();
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// V. LE MÉTABOLISME DE BASE — l'écran le DIT, et Milo le sait (11/08/2026)
+// Le calcul lui-même est figé dans tests/calculs (bloc 2 bis). ICI on protège la seule
+// chose qui fait la différence entre une amélioration et une trahison : que le chiffre
+// ne change JAMAIS en silence. Michel a passé la nuit à exiger des données « prouvées ET
+// prouvables » — un nombre qui bouge de 180 kcal sans dire pourquoi est l'inverse de ça.
+console.log('\n═══ V. Métabolisme de base — d\'où vient le chiffre ═══');
+{
+  const cv=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pv=await cv.newPage(); const ev=[]; pv.on('pageerror',e=>ev.push(e.message));
+  await pv.addInitScript(seedScript({}));
+  await pv.goto('http://localhost:'+PORT+'/index.html');
+  await pv.waitForTimeout(2200);
+  const V=await pv.evaluate(async()=>{
+   try{
+    const o={};
+    const jour=n=>{const d=new Date();d.setDate(d.getDate()-n);return d.toISOString().slice(0,10);};
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+
+    // ── ① SANS mesure : l'écran n'écrit RIEN (on n'inquiète pas pour rien, R24)
+    S.bodyScans=[]; S.weightLog=[]; renderNutrition();
+    o.sansMesureVide=(document.getElementById('nu-bmr-src').textContent||'').trim()==='';
+    o.sansMesureCtx=/ESTIMÉ sur poids\/taille\/âge/.test(buildCoachContext());
+
+    // ── ② AVEC un bilan récent : l'écran le dit, Milo le sait, et il connaît l'ÉCART
+    S.bodyScans=[{date:jour(10),weight:80,leanMass:65}]; renderNutrition();
+    o.ditMasseMaigre=/masse maigre/i.test(document.getElementById('nu-bmr-src').textContent||'');
+    o.affiche=document.getElementById('nu-bmr').textContent;
+    o.attendu=Math.round(370+21.6*65).toLocaleString('fr-FR');
+    const ctx=buildCoachContext();
+    o.ctxKatch=/CALCULÉ SUR SA MASSE MAIGRE MESURÉE/.test(ctx);
+    o.ctxFormule=/Katch-McArdle/.test(ctx);
+    o.ctxEcart=/kcal\/jour/.test(ctx);
+    o.ctxPasDeuxFois=!/ESTIMÉ sur poids\/taille\/âge/.test(ctx);   // jamais les deux à la fois
+
+    // ── ③ BILAN TROP VIEUX : l'écran signale que le bilan n'a PAS servi (il y a une action)
+    S.bodyScans=[{date:jour(200),weight:80,leanMass:65}]; renderNutrition();
+    o.ditNonUtilise=/non utilisé/i.test(document.getElementById('nu-bmr-src').textContent||'');
+    o.ctxVieux=/ESTIMÉ sur poids\/taille\/âge/.test(buildCoachContext());
+
+    // ── ④ L'AIDE POSE LE CALCUL avec ses vrais nombres (sinon elle demande de croire)
+    S.bodyScans=[{date:jour(10),weight:80,leanMass:65}]; renderNutrition();
+    openBmrHelp();
+    const m=document.getElementById('ov-bmr-help');
+    o.aideOuverte=m.classList.contains('open');
+    const txt=document.getElementById('bmr-help-body').textContent;
+    o.aideCalcul=/370 \+ 21,6 × 65 kg/.test(txt);
+    o.aideCompare=/Mifflin-St Jeor/.test(txt);
+    o.aideBalance=/formule secrète, invérifiable/.test(txt);
+    closeBmrHelp(); o.aideFermee=!m.classList.contains('open');
+    S.bodyScans=[]; S.weightLog=[]; renderNutrition();
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tv=(n,c2,x)=>t(n, !V.erreur && c2, V.erreur?'bloc en erreur':x);
+  if(V.erreur){ console.log('     ⚠️  bloc « BMR » en ERREUR : '+V.erreur);
+    t('⛔ le bloc BMR s\'exécute (aucun témoin ci-dessous ne vaut sans ça)', false, V.erreur); }
+  tv('sans aucune mesure : l\'écran n\'écrit rien (pas d\'inquiétude gratuite)', V.sansMesureVide===true);
+  tv('… mais Milo, lui, sait que le chiffre est estimé sur le poids total', V.sansMesureCtx===true);
+  tv('⭐⭐ bilan récent : l\'écran affiche « selon ta masse maigre »', V.ditMasseMaigre===true);
+  tv('… et c\'est bien le chiffre de Katch qui s\'affiche', V.affiche===V.attendu, V.affiche+' vs '+V.attendu);
+  tv('⭐⭐ Milo reçoit la méthode ET la formule nommée', V.ctxKatch===true&&V.ctxFormule===true);
+  tv('⭐ … et l\'ÉCART avec l\'autre formule (sinon il ne peut pas nuancer)', V.ctxEcart===true);
+  tv('⭐ jamais les deux versions dans le même contexte (deux sources = il croit la pire)',
+    V.ctxPasDeuxFois===true);
+  tv('⭐⭐ bilan trop vieux : l\'écran DIT qu\'il n\'a pas servi (là, il y a une action possible)',
+    V.ditNonUtilise===true);
+  tv('… et Milo repasse en « estimé »', V.ctxVieux===true);
+  tv('⭐⭐ l\'aide POSE le calcul avec ses vrais nombres', V.aideCalcul===true);
+  tv('… compare à l\'autre formule', V.aideCompare===true);
+  tv('⭐ … et dit pourquoi on n\'avale pas le chiffre de la balance', V.aideBalance===true);
+  tv('l\'aide s\'ouvre et se referme', V.aideOuverte===true&&V.aideFermee===true);
+  t('0 erreur JS sur tout le bloc BMR', ev.length===0, ev.join(' | '));
+  await cv.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

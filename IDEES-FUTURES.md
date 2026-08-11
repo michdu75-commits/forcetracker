@@ -150,6 +150,50 @@ demande au lieu de supposer.
 
 ---
 
+## 🎥 ANALYSE VIDÉO DE LA TECHNIQUE — l'idée est bonne, le mur n'est pas là où on croit (11/08, via GPT)
+
+> **Michel : « je balance et tu mets pour le suivi de ma réflexion »** — donc c'est archivé, pas
+> décidé. Rien n'est engagé ici.
+
+**Ce que propose GPT, et il a raison sur le fond** : ne PAS payer une API d'analyse à chaque vidéo.
+Utiliser un modèle de détection de squelette **qui tourne dans le téléphone** (MediaPipe Pose,
+MoveNet), en tirer les points articulaires, et écrire **nos propres règles** dessus (angle du genou,
+profondeur, inclinaison du buste, symétrie, vitesse). Le modèle est gratuit et connu ; l'intelligence
+est dans **nos** règles. Coût serveur marginal ≈ 0, et **la vidéo ne quitte pas le téléphone** —
+argument commercial ET argument RGPD, sur un chantier déjà identifié comme bloquant.
+
+**⭐ Ce que ça a de juste pour NOUS en particulier** : on a déjà 355 fiches d'exercices structurées,
+avec leurs muscles écrits. Y accrocher « angles à analyser · amplitude attendue · erreurs
+détectables » prolonge un actif existant au lieu d'en créer un nouveau (**R13**). Et ça reste
+local-first (**R16**).
+
+**⚠️ MAIS LE VRAI OBSTACLE N'EST PAS CELUI QU'IL CITE, et il faut l'écrire avant de s'emballer :**
+
+1. **Une caméra 2D ne mesure pas un angle.** La « profondeur du squat » vue de trois quarts, avec un
+   téléphone posé au hasard sur un banc, n'est pas la même que vue de profil. L'angle mesuré dépend
+   d'abord **d'où est le téléphone**, ensuite du mouvement. Annoncer « amplitude 92 % » sur une
+   mesure qui bouge de 15 % selon le cadrage, c'est **de la fausse précision** — exactement ce qu'on
+   vient de refuser sur les calories, et ce serait pire ici parce que le chiffre a l'air objectif.
+   → Toute V1 devrait commencer par **refuser d'analyser** une vidéo mal cadrée, avant de savoir
+   analyser quoi que ce soit. *Savoir s'arrêter* (Principe 18).
+2. **Le poids embarqué.** MediaPipe/TF Lite en web, c'est plusieurs Mo de WASM + modèle. L'app n'a
+   ni bundler ni build step, et la **règle d'or #4** (ouverture instantanée à la salle) interdit de
+   les charger au démarrage. C'est faisable — chargement uniquement à l'ouverture de la
+   fonctionnalité — mais c'est une architecture à poser exprès, pas un ajout.
+3. **La Constitution tranche déjà le discours** : jamais « détecte tes blessures », jamais de
+   diagnostic. GPT le dit aussi. On peut dire « voici ce que je vois de ton exécution », pas
+   « tu as un problème ».
+
+**⚠️ Et une remarque d'ensemble** : c'est GPT lui-même qui écrivait, dans sa synthèse calories du
+même jour, *« ne pas construire trop vite l'infrastructure »*. Ça vaut ici. Une analyse vidéo est
+**plus grosse** que tout ce qu'on a livré cet été.
+
+**Déclencheur pour rouvrir** : quand le RGPD/authentification sera traité (c'est le vrai bloquant
+commun), et pas avant que la question des calories soit refermée. **Le premier pas honnête, s'il
+arrive, n'est pas « analyser un squat » — c'est « dire à la personne si sa vidéo est exploitable ».**
+
+---
+
 ## ✅ EXERCICES UNILATÉRAUX — LIVRÉ le 11/08/2026 (ft-v832)
 
 > **✅ FAIT.** Les 48 exercices sont dans `EXLIB` (constante `EX_UNI`, clé = l'identifiant), le
