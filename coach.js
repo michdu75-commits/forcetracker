@@ -479,14 +479,28 @@ const _PHRASES_LOCALES = [
 /**
  * Milo attend-il une réponse ? Si oui, aucun raccourci local — même sur « ok merci ».
  */
+// ⏳ CE QUI COMPTE N'EST PAS L'HEURE, C'EST LA SESSION (ft-v829).
+// `_histAuChargement` = nombre de messages DÉJÀ là quand l'app s'est ouverte. Tout ce qui a un
+// index inférieur vient d'une conversation PRÉCÉDENTE — donc plus personne n'attend de réponse.
+// ⚠️ Une minuterie (« la question a moins de 30 min ») a été essayée et REJETÉE : quelqu'un qui
+// part faire un café et répond 40 min plus tard à une vraie question de Milo se serait fait
+// renvoyer une formule toute faite. *Le délai ne dit rien de l'intention ; la session, si.*
+let _histAuChargement = 0;
 function _miloAttendUneReponse(){
   try{
     // ① des réponses rapides sont affichées → Milo a posé une question, elle est à l'écran
     if(typeof document!=='undefined' && document.querySelector && document.querySelector('.coach-qr'))return true;
-    // ② sa dernière réplique contient un « ? »
+    // ② sa dernière réplique contient un « ? » — MAIS SEULEMENT SI ELLE EST RÉCENTE.
+    // ⚠️ BUG DU 11/08 : `coachHistory` survit à la fermeture de l'app (`ft4_coach_hist`). La
+    // question que Milo avait posée la VEILLE au soir était donc toujours la dernière ce matin —
+    // et « salut ça va » partait au serveur au lieu d'être traité en local. Michel : « j'ai
+    // marqué salut ça va » avec, en face, un vrai appel API à 0,16 $.
+    // *Le verrou était juste ; c'est sa notion de « en attente » qui n'avait pas de durée.*
     const h=(typeof coachHistory!=='undefined'&&coachHistory)?coachHistory:[];
     for(let i=h.length-1;i>=0;i--){
       const m=h[i]; if(!m||m.role!=='assistant')continue;
+      // ⚠️ Question d'une conversation PRÉCÉDENTE → plus personne n'attend (voir ci-dessus).
+      if(i < _histAuChargement) return false;
       const t=typeof m.content==='string'?m.content
         :(Array.isArray(m.content)?m.content.filter(c=>c&&c.type==='text').map(c=>c.text).join(' '):'');
       return /\?/.test(String(t));
@@ -832,6 +846,8 @@ function _loadCoachHist(){
     const raw = localStorage.getItem('ft4_coach_hist');
     if(raw){ const arr = JSON.parse(raw); if(Array.isArray(arr)) coachHistory = arr; }
   }catch(e){ coachHistory = []; }
+  // Frontière entre « la conversation d'avant » et « celle de maintenant » (ft-v829).
+  _histAuChargement = coachHistory.length;
 }
 // ─── COMBIEN DE CONVERSATION ON GARDE (ft-v656) ─────────────────────────────
 // ⚠️ AVANT : le fil était coupé à 20 messages EN DIRECT — dès le 21ᵉ, le plus ancien était

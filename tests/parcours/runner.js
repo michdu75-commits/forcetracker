@@ -1879,6 +1879,53 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c17.close();
 }
 
+// ═══ ⏳ UNE QUESTION D'HIER NE BLOQUE PLUS LE RACCOURCI LOCAL (ft-v829) ═══════════════════
+// Michel tape « salut ça va » le matin — et l'export API montre un VRAI appel à 0,16 $, alors que
+// ft-v818 devait le traiter en local, sans réseau.
+// LA CAUSE : `coachHistory` survit à la fermeture de l'app (`ft4_coach_hist`). La question posée
+// par Milo la VEILLE au soir était donc toujours la dernière — et `_miloAttendUneReponse()` la
+// prenait pour une question en attente.
+// ⚠️ UNE MINUTERIE A ÉTÉ ESSAYÉE PUIS REJETÉE (elle a fait rougir le témoin « même merci repart
+// chez lui ») : quelqu'un qui répond 40 min après une VRAIE question se serait fait renvoyer une
+// formule toute faite. Ce qui compte n'est pas l'heure, c'est la SESSION.
+{
+  const c18=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p18=await c18.newPage();
+  await p18.goto('http://localhost:'+PORT+'/index.html'); await p18.waitForTimeout(2200);
+  const r=await p18.evaluate(()=>{
+   try{
+    // ① LE CAS RÉEL : conversation d'hier rechargée, la dernière réplique de Milo est une question
+    coachHistory.length=0;
+    coachHistory.push({role:'user',content:'ok'});
+    coachHistory.push({role:'assistant',content:"Bien joué. On prépare lundi ?"});
+    _histAuChargement = coachHistory.length;          // ce que fait `_loadCoachHist` à l'ouverture
+    const hier = !!_reponseLocale('salut ca va',false,{});
+    // ② MÊME SESSION : Milo vient de poser la question → on ne coupe pas
+    coachHistory.push({role:'user',content:'salut'});
+    coachHistory.push({role:'assistant',content:"Tu veux qu'on regarde ça ?"});
+    const memeSession = !!_reponseLocale('merci',false,{});
+    // ③ les pastilles à l'écran restent prioritaires
+    const d=document.createElement('div'); d.className='coach-qr'; document.body.appendChild(d);
+    const pastilles = !!_reponseLocale('salut ca va',false,{});
+    d.remove();
+    // ④ les 8 formes de salutation restent reconnues
+    coachHistory.length=0; _histAuChargement=0;
+    const formes=['salut ca va','salut ça va','salut ça va ?','Salut ca va','salut','ca va','coucou','bonjour']
+      .map(m=>!!_reponseLocale(m,false,{}));
+    return {hier,memeSession,pastilles,formes};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('\u2B50\u2B50 une question d HIER ne bloque plus « salut ça va » (le cas réel du 11/08)',
+    r.hier===true, JSON.stringify(r));
+  t('\u2B50\u2B50 … mais une question posée DANS LA SESSION bloque toujours (même 40 min après)',
+    r.memeSession===false, JSON.stringify(r));
+  t('\u2B50 les pastilles à l écran restent PRIORITAIRES',
+    r.pastilles===false, JSON.stringify(r));
+  t('les 8 formes de salutation restent reconnues',
+    Array.isArray(r.formes) && r.formes.every(Boolean), JSON.stringify(r.formes));
+  await c18.close();
+}
+
 // ═══ 📣 LE VERDICT DE LA MONTÉE ARRIVE JUSQU'À MILO (ft-v823) ═══════════════════════════
 // Le soir du 10/08, Milo débriefe la vraie séance de Michel : « la montée en charge était propre
 // (70→100→115→130) ». L'app savait le contraire — `_monteeSuffisante` répond false sur EXACTEMENT
