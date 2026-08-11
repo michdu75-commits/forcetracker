@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Test Polar H10 — Force Tracker</title>
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+  PAGE DE TEST — ELLE NE FAIT PAS PARTIE DE L'APPLICATION (11/08/2026)
+
+  À quoi elle sert : vérifier qu'une page web peut lire la fréquence cardiaque
+  d'une ceinture Polar H10 sur iPhone, via le navigateur tiers Bluefy.
+
+  ⚠️ CE QU'ELLE PROUVE, ET CE QU'ELLE NE PROUVE PAS.
+  ✅ Elle prouve que le H10 expose bien le service BLE standard « Heart Rate »
+     et qu'on sait le lire depuis du JavaScript.
+  ⛔ Elle NE prouve PAS que Force Tracker pourra le faire : Safari n'a PAS le
+     Web Bluetooth, et on ne construira pas le produit sur un navigateur tiers
+     que les utilisateurs devraient installer.
+  ⛔ Elle NE fait PAS avancer la question des calories : il n'existe aucune
+     équation validée pour convertir une FC en dépense énergétique EN
+     MUSCULATION (voir docs/CALORIES-SOURCES.md).
+
+  👉 SON VRAI INTÉRÊT est ailleurs : le bouton « Exporter » produit un CSV de
+     toute la séance, seconde par seconde. C'est de la DONNÉE RÉELLE pour le
+     protocole de calibration — et ça, aucune autre source ne le donne.
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+<style>
+  :root{ --bg:#0B0B0F; --bg2:#15151C; --bg3:#1E1E28; --t1:#F2F2F7; --t2:#9A9AA8;
+         --red:#FF2D55; --green:#00E676; --sep:rgba(255,255,255,.08); }
+  *{box-sizing:border-box}
+  body{margin:0;padding:18px;background:var(--bg);color:var(--t1);
+       font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+       max-width:430px;margin-inline:auto;-webkit-text-size-adjust:100%}
+  h1{font-size:19px;margin:0 0 4px}
+  .sub{color:var(--t2);font-size:13px;margin-bottom:18px;line-height:1.45}
+  button{width:100%;padding:15px;border-radius:14px;border:none;background:var(--red);
+         color:#fff;font-size:16px;font-weight:800;font-family:inherit;cursor:pointer;
+         margin-bottom:10px;touch-action:manipulation}
+  button.sec{background:var(--bg3);color:var(--t1);border:1px solid var(--sep);font-weight:600}
+  button:disabled{opacity:.4}
+  .bpm{font-size:76px;font-weight:900;text-align:center;line-height:1;margin:22px 0 2px;
+       font-variant-numeric:tabular-nums}
+  .bpm small{font-size:17px;color:var(--t2);font-weight:600}
+  .stats{display:flex;gap:8px;margin:16px 0}
+  .stat{flex:1;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;
+        padding:10px;text-align:center}
+  .stat b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+  .stat span{font-size:11px;color:var(--t2)}
+  #etat{padding:11px 13px;border-radius:12px;background:var(--bg2);border:1px solid var(--sep);
+        font-size:13px;margin-bottom:14px;line-height:1.45}
+  #journal{background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:10px;
+           font-size:11px;color:var(--t2);height:130px;overflow:auto;
+           font-family:ui-monospace,Menlo,monospace;white-space:pre-wrap}
+  .note{font-size:12px;color:var(--t2);line-height:1.5;margin-top:18px;
+        border-top:1px solid var(--sep);padding-top:14px}
+  .ko{color:var(--red)} .ok{color:var(--green)}
+</style>
+</head>
+<body>
+
+<h1>🫀 Test Polar H10</h1>
+<div class="sub">Page de test — elle ne fait pas partie de Force Tracker.<br>
+À ouvrir dans <b>Bluefy</b> sur iPhone (Safari n'a pas le Bluetooth).</div>
+
+<div id="etat">Prêt. Mets la ceinture (humidifie les électrodes), puis appuie sur Connecter.</div>
+
+<button id="btn">Connecter la ceinture</button>
+
+<div class="bpm"><span id="bpm">—</span><small> bpm</small></div>
+
+<div class="stats">
+  <div class="stat"><b id="min">—</b><span>min</span></div>
+  <div class="stat"><b id="moy">—</b><span>moyenne</span></div>
+  <div class="stat"><b id="max">—</b><span>max</span></div>
+  <div class="stat"><b id="duree">0:00</b><span>durée</span></div>
+</div>
+
+<button class="sec" id="exp" disabled>⬇️ Exporter la séance (CSV)</button>
+<button class="sec" id="stop" disabled>Arrêter</button>
+
+<div id="journal"></div>
+
+<div class="note">
+  <b>Ce que ce test prouve</b> : que le H10 expose bien le service Bluetooth standard
+  « Heart Rate » et qu'on sait le lire.<br><br>
+  <b>Ce qu'il ne prouve pas</b> : que Force Tracker pourra le faire. Safari n'a pas le
+  Web Bluetooth, et on ne construira pas l'app sur un navigateur que les utilisateurs
+  devraient installer.<br><br>
+  <b>Son vrai intérêt</b> : le CSV. Une courbe de FC seconde par seconde sur une vraie
+  séance, c'est de la donnée que rien d'autre ne te donne.
+</div>
+
+<script>
+const HR_SERVICE = 0x180D;          // Heart Rate Service (standard BLE)
+const HR_MEASURE = 0x2A37;          // Heart Rate Measurement
+let device=null, mesures=[], t0=0, chrono=null;
+
+const $ = id => document.getElementById(id);
+const dire = (msg, cls) => { $('etat').innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; };
+const log = m => { const j=$('journal');
+  j.textContent += new Date().toLocaleTimeString('fr-FR') + '  ' + m + '\n';
+  j.scrollTop = j.scrollHeight; };
+
+function majStats(){
+  if(!mesures.length) return;
+  const v = mesures.map(m=>m.bpm);
+  $('min').textContent = Math.min(...v);
+  $('max').textContent = Math.max(...v);
+  $('moy').textContent = Math.round(v.reduce((a,b)=>a+b,0)/v.length);
+}
+function majChrono(){
+  const s = Math.floor((Date.now()-t0)/1000);
+  $('duree').textContent = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+}
+
+// Trame « Heart Rate Measurement » : le 1er bit du 1er octet dit si la FC est
+// codée sur 8 ou 16 bits. C'est la spec BLE standard, pas un format Polar.
+function lireFC(dv){
+  const flags = dv.getUint8(0);
+  return (flags & 0x01) ? dv.getUint16(1, true) : dv.getUint8(1);
+}
+
+$('btn').onclick = async () => {
+  if(!navigator.bluetooth){
+    dire('❌ Ce navigateur n\'a pas le Bluetooth web.<br>Sur iPhone : ouvre cette page dans <b>Bluefy</b>. Safari ne peut pas.', 'ko');
+    return;
+  }
+  try{
+    dire('Recherche de la ceinture…');
+    device = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [HR_SERVICE] }],
+      optionalServices: [HR_SERVICE]
+    });
+    log('appareil : ' + (device.name || 'sans nom'));
+    device.addEventListener('gattserverdisconnected', () => {
+      dire('⚠️ Ceinture déconnectée.', 'ko'); log('déconnexion');
+    });
+
+    const serveur = await device.gatt.connect();          log('connecté');
+    const service = await serveur.getPrimaryService(HR_SERVICE);
+    const carac   = await service.getCharacteristic(HR_MEASURE);
+    await carac.startNotifications();                     log('notifications actives');
+
+    t0 = Date.now(); mesures = [];
+    chrono = setInterval(majChrono, 1000);
+
+    carac.addEventListener('characteristicvaluechanged', e => {
+      const bpm = lireFC(e.target.value);
+      if(!bpm) return;
+      $('bpm').textContent = bpm;
+      mesures.push({ t: Math.round((Date.now()-t0)/1000), bpm, iso: new Date().toISOString() });
+      majStats();
+      $('exp').disabled = false;
+    });
+
+    dire('✅ Connecté à <b>' + (device.name||'la ceinture') + '</b>. Les mesures arrivent.', 'ok');
+    $('btn').disabled = true; $('stop').disabled = false;
+
+  }catch(err){
+    dire('❌ ' + (err && err.message ? err.message : err), 'ko');
+    log('erreur : ' + err);
+  }
+};
+
+$('stop').onclick = () => {
+  try{ device && device.gatt && device.gatt.disconnect(); }catch(e){}
+  clearInterval(chrono);
+  $('btn').disabled = false; $('stop').disabled = true;
+  dire('Arrêté. ' + mesures.length + ' mesures gardées — pense à exporter.');
+};
+
+$('exp').onclick = () => {
+  const lignes = ['seconde,bpm,horodatage']
+    .concat(mesures.map(m => m.t + ',' + m.bpm + ',' + m.iso));
+  const blob = new Blob([lignes.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fc-seance-' + new Date().toISOString().slice(0,16).replace(/[:T]/g,'-') + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  log('export : ' + mesures.length + ' mesures');
+};
+</script>
+</body>
+</html>
