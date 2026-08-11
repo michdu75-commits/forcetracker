@@ -711,9 +711,24 @@ function doPost(e) {
   // Ici le risque est inversé → repli OUVERT. Poser `FT_COUNT_TOKEN` des deux côtés
   // (Script Property + secret Cloudflare) active le plafond.
   if (body.action === 'aiCount') {
-    var _tok = PropertiesService.getScriptProperties().getProperty('FT_COUNT_TOKEN') || '';
+    // 🔐 LE SECRET NE VIT PLUS DANS UNE SCRIPT PROPERTY (11/08/2026).
+    // Michel : « tu sais très bien que ça ne marchera pas sur Google, à chaque fois c'est
+    // pareil, rien n'est enregistré ». Son expérience est réelle mais elle porte sur UNE
+    // propriété — `PREMIUM_EMAILS`, réécrite par un déclencheur fantôme (d'où
+    // `PREMIUM_HARDCODED_`). Les autres persistent : TOUS les comptes utilisateurs sont
+    // stockés en Script Properties (`u_{email}`), c'est la sauvegarde cloud elle-même.
+    // ⚠️ Mais on n'a pas besoin de trancher le débat pour avancer : on suit le motif déjà
+    // adopté ici pour le premium — **l'empreinte en dur dans le code**, hors d'atteinte de
+    // tout déclencheur. Michel n'a donc plus qu'UN endroit à remplir, et ce n'est pas Google :
+    // le secret Cloudflare `FT_COUNT_TOKEN` du Worker.
+    // 👉 L'empreinte est publique et c'est sans risque : elle ne permet pas de retrouver le
+    //    secret. Pour en changer : régénérer un secret côté Cloudflare et remplacer la ligne.
+    // ⚠️ REPLI : secret absent ou faux → `armed:false` → on COMPTE mais on ne BLOQUE PAS.
+    //    C'est voulu (règle d'or #3) : une erreur de configuration ne doit jamais couper Milo.
+    var _HASH_COUNT = 'a0b0d48e04aa9459affb2eb765f4546a0713112d9dbbecb83bc3164580ac537e';
     var _q2 = _aiQuotaBlock_(body.email);
-    var _arme = !!_tok && body.token === _tok;   // plafond actif seulement si le secret est posé DES DEUX CÔTÉS
+    var _recu = String(body.token == null ? '' : body.token).trim();
+    var _arme = _recu.length >= 12 && _sha256hex_(_recu) === _HASH_COUNT;
     return json_({status:'ok', counted:true, armed:_arme,
                   blocked: _arme && _q2.blocked, scope:_q2.scope || ''});
   }
