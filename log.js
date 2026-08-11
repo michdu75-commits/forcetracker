@@ -1140,18 +1140,29 @@ function _monteeEnCharge(kgTravail, pas){
   pas = pas || 2.5;
   const T = +kgTravail || 0;
   if(!(T >= _MONTEE_SEUIL_KG)) return [];
-  //  léger → 2 paliers · moyen → 3 · lourd → 4. Les écarts restent dans la fourchette 10-15 %.
-  const plan = T < 60  ? [[0.50,5],[0.75,3]]
-             : T < 100 ? [[0.45,5],[0.65,3],[0.85,2]]
-             :           [[0.45,5],[0.60,3],[0.75,2],[0.88,1]];
-  const out = [];
-  for(const [pct,reps] of plan){
-    const kg = Math.round(T*pct/pas)*pas;
-    if(kg <= 0 || kg >= T) continue;                      // jamais au-dessus de la charge du jour
-    if(out.length && kg <= out[out.length-1].kg) continue; // jamais deux paliers identiques
-    out.push({kg:kg, reps:reps, type:'É'});
+  // ⚠️⚠️ LE GÉNÉRATEUR PASSE SON PROPRE CONTRÔLE (corrigé le 11/08) — et c'est tout l'intérêt.
+  // La 1ʳᵉ version (10/08) portait trois plans écrits à la main : sous 60 kg elle sautait de
+  // 50 % à 75 % de la charge, soit **25 %** d'un coup, quand la règle dit 10-15 %. Autrement dit
+  // `_monteeSuffisante(_monteeEnCharge(80), 80)` répondait **false** : l'app produisait une
+  // montée qu'elle jugeait elle-même mauvaise, et depuis ft-v823 elle l'aurait REPROCHÉE à Milo.
+  // *Deux sources qui se contredisent, la famille de bugs la plus vicieuse du projet.*
+  // Le test ne l'avait pas vu parce qu'il ne vérifiait la cohérence qu'à **130 kg**, le seul
+  // poids où les plans écrits à la main tombaient juste.
+  // 👉 On ne CHOISIT plus le nombre de paliers : on prend le plus PETIT qui satisfait la règle.
+  // Une seule règle, écrite une seule fois (R2) — le barème ne peut plus diverger du contrôle.
+  const depart = T < 60 ? 0.50 : 0.45;      // 40-50 % de la charge du jour
+  const REPS = [5,3,2,1,1];                 // décroissantes
+  for(let n=2; n<=5; n++){                  // n = nombre de paliers
+    const out = [];
+    for(let k=0; k<n; k++){
+      const kg = Math.round(T*(depart + k*(1-depart)/n)/pas)*pas;
+      if(kg <= 0 || kg >= T) continue;                      // jamais au-dessus de la charge du jour
+      if(out.length && kg <= out[out.length-1].kg) continue; // jamais deux paliers identiques
+      out.push({kg:kg, reps:REPS[Math.min(k,REPS.length-1)], type:'É'});
+    }
+    if(out.length && _monteeSuffisante(out, T)) return out;
   }
-  return out;
+  return [];   // aucun découpage ne satisfait la règle → on se tait plutôt que de proposer faux
 }
 
 /**
@@ -1185,8 +1196,16 @@ function _monteeDefauts(echauffements, kgTravail){
   }
   const suite = paliers.concat([T]);
   for(let i=1;i<suite.length;i++){
-    if((suite[i]-suite[i-1])/T > 0.18){                     // un écart de plus de 18 % = un trou
-      out.push('saut de '+pct(suite[i]-suite[i-1])+' % entre '+suite[i-1]+' et '+suite[i]+' kg (paliers de 10-15 %)');
+    const dKg = suite[i]-suite[i-1];
+    // Un trou = plus de 18 % de la charge **ET** plus de 15 kg d'un coup.
+    // ⚠️ Le seuil en % vient des sources (paliers de 10-15 %) ; le plancher de 15 kg est un
+    // JUGEMENT de notre part, et il faut savoir pourquoi il est là : sans lui, la règle en %
+    // exige 4 paliers pour un mouvement à 50 kg (25 · 32,5 · 37,5 · 45), ce que personne ne
+    // fait — et ça allonge une séance dont Michel dit déjà (10/08) qu'elle ne tient pas dans
+    // l'heure. Un saut de 12 kg ne blesse pas ; un saut de 30 kg, si.
+    // Sa séance du 10/08 reste bien signalée : 70 → 100, c'est 23 % **et** 30 kg.
+    if(dKg/T > 0.18 && dKg > 15){
+      out.push('saut de '+pct(dKg)+' % entre '+suite[i-1]+' et '+suite[i]+' kg (paliers de 10-15 %)');
     }
   }
   // au-delà de 85 % de la charge, plus de 2 reps ce n'est plus un échauffement (fatigue inutile)
@@ -1200,11 +1219,50 @@ function _monteeDefauts(echauffements, kgTravail){
 }
 
 /**
- * Complète (ou rectifie) la montée en charge d'une séance proposée par Milo.
- * ⚠️ L'app le DIT — elle n'ajoute jamais des séries en douce : `ex._montee` est posé, et la
- * note de l'exercice le mentionne. Sinon la personne voit apparaître des séries que Milo n'a
- * pas annoncées, et c'est la confiance qui part (R24 : informer sans bloquer).
+ * COMPLÈTE la montée de Milo — elle ne la REMPLACE jamais.
+ *
+ * ⚠️⚠️ RÉGRESSION DU 10/08, CORRIGÉE LE 11 : la 1ʳᵉ version écrasait les séries d'échauffement
+ * de Milo par les siennes. Quand le barème de l'app en produisait MOINS (2 paliers sous 60 kg
+ * contre les 3 de Milo), la personne lisait **6 séries** dans le chat et en trouvait **5** dans
+ * l'app. Retour de Michel le soir même : *« il me donne 6 séries mais quand j'ajoute la séance
+ * il ne m'en donne que 5 »*.
+ * *Je m'étais protégé contre l'AJOUT invisible et pas contre le RETRAIT — or le retrait est pire :
+ * il fait mentir ce que la personne vient de lire, et rien ne le signale.*
+ *
+ * L'INVARIANT, tenu par un témoin permanent : **le nombre de séries ne DIMINUE jamais.**
+ * On insère les paliers manquants dans l'échelle de Milo, on n'en retire aucun.
  */
+function _monteeCompletee(echauffements, kgTravail, pas){
+  pas = pas || 2.5;
+  const T = +kgTravail || 0;
+  const src = (echauffements||[]).filter(s=>s && (+s.kg||0) > 0 && (+s.kg||0) < T);
+  if(!src.length) return _monteeEnCharge(T, pas);            // rien à préserver → barème complet
+  const out = src.slice().sort((a,b)=>(+a.kg||0)-(+b.kg||0));
+  const ARR = k => Math.round(k/pas)*pas;
+  // ⚠️ PLAFOND À 5 PALIERS : au-delà on fatigue au lieu de préparer (règle des 5 sources).
+  // Donc on ne peut pas boucher tous les trous — on bouche les PLUS GROS d'abord.
+  const MAX = 5;
+  for(let garde=0; garde<4 && out.length<MAX; garde++){
+    // ① démarrage trop haut → on prépose un palier bas
+    if((+out[0].kg||0) > 0.55*T){
+      const kg = ARR(0.45*T);
+      if(kg > 0 && kg < (+out[0].kg||0)){ out.unshift({kg:kg, reps:5, type:'É', _add:true}); continue; }
+    }
+    // ② le plus gros trou (paliers + la charge de travail en bout) au-dessus de 18 %
+    const suite = out.map(s=>+s.kg||0).concat([T]);
+    let iPire=-1, pire=0.18;
+    for(let i=1;i<suite.length;i++){
+      const e=(suite[i]-suite[i-1])/T;
+      if(e>pire){ pire=e; iPire=i; }
+    }
+    if(iPire<0) break;
+    const kg = ARR((suite[iPire]+suite[iPire-1])/2);
+    if(!(kg>suite[iPire-1] && kg<suite[iPire])) break;       // pas de place pour un palier
+    out.splice(iPire, 0, {kg:kg, reps:3, type:'É', _add:true});
+  }
+  return out;
+}
+
 function _completerMonteeEnCharge(sess){
   try{
     if(!sess || !Array.isArray(sess.exs)) return sess;
@@ -1218,11 +1276,18 @@ function _completerMonteeEnCharge(sess){
       if(_MOV_MONTEE.indexOf(pat) < 0) return;              // mouvement d'isolation → on ne touche pas
       const ech = sets.filter(s=>s && (s.type==='É'||s.type==='W'));
       if(_monteeSuffisante(ech, kgT)) return;               // sa montée est bonne → on ne touche pas
-      const montee = _monteeEnCharge(kgT);
+      const montee = _monteeCompletee(ech, kgT);
       if(!montee.length) return;
+      const ajoutes = montee.filter(s=>s._add).length;
+      // 🛡️ GARDE-FOU DUR : on ne livre JAMAIS moins de séries que ce que la personne a lu.
+      if(montee.length + travail.length < sets.length) return;
       ex.sets = montee.concat(travail);
       ex._montee = true;
-      const dit = '⚡ Montée en charge ajustée par l\'app';
+      // Dire ce qu'on a fait, et le dire JUSTE : « complétée » quand on insère dans l'échelle
+      // de Milo, « ajoutée » quand il n'en avait proposé aucune.
+      const dit = ech.length
+        ? '⚡ Montée en charge complétée par l\'app (+' + ajoutes + ' palier' + (ajoutes>1?'s':'') + ')'
+        : '⚡ Montée en charge ajoutée par l\'app';
       ex.note = ex.note ? (String(ex.note).slice(0,90) + ' · ' + dit) : dit;
     });
   }catch(e){ console.warn('[montée en charge]', e); }

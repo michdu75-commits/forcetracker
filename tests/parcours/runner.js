@@ -1674,6 +1674,71 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c12.close();
 }
 
+// ═══ 🛡️ L'APP NE RETIRE JAMAIS UNE SÉRIE QUE MILO A ANNONCÉE (ft-v824) ═════════════════
+// Régression livrée le 10/08 et trouvée par Michel LE SOIR MÊME, pendant sa séance :
+// « il me donne 6 séries mais quand j'ajoute la séance il ne m'en donne que 5 ».
+// `_completerMonteeEnCharge` REMPLAÇAIT l'échauffement de Milo par le sien ; sous 60 kg le
+// barème en produisait 2 là où Milo en avait mis 3 → une série disparaissait EN SILENCE.
+// ⚠️ Le journal de ft-v822 disait « l'app le DIT, elle n'ajoute jamais en douce » : je m'étais
+// protégé contre l'AJOUT invisible et pas contre le RETRAIT — or le retrait fait mentir ce que
+// la personne vient de lire.
+// ET, en corrigeant, un second défaut est apparu : le barème produisait des montées que le
+// contrôleur jugeait lui-même insuffisantes. Le test de ft-v822 ne vérifiait cette cohérence
+// qu'à 130 kg — le seul poids où les plans écrits à la main tombaient juste.
+{
+  const c14=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p14=await c14.newPage();
+  await p14.goto('http://localhost:'+PORT+'/index.html'); await p14.waitForTimeout(2200);
+  const r=await p14.evaluate(()=>{
+   try{
+    const pertes=[];
+    for(const kg of [40,45,50,60,70,80,100,120,130,150,180]){
+      for(const nEch of [0,1,2,3,4]){
+        for(const nTrav of [1,3,5]){
+          const sets=[];
+          for(let i=0;i<nEch;i++) sets.push({reps:5,kg:Math.round(kg*0.5),type:'É'});
+          for(let i=0;i<nTrav;i++) sets.push({reps:8,kg:kg,type:'N'});
+          const avant=sets.length;
+          const s={label:'t',exs:[{name:'Rowing Barre (Tirage Horizontal)',sets:JSON.parse(JSON.stringify(sets))}]};
+          _completerMonteeEnCharge(s);
+          const apres=s.exs[0].sets.length;
+          if(apres<avant) pertes.push(kg+'kg '+nEch+'E+'+nTrav+'N : '+avant+'->'+apres);
+          const apresKg=s.exs[0].sets.map(x=>x.kg);
+          for(const k of sets.map(x=>x.kg)) if(apresKg.indexOf(k)<0) pertes.push('charge '+k+' perdue ('+kg+'kg)');
+        }
+      }
+    }
+    const incoherents=[];
+    for(let T=40;T<=200;T+=2.5){
+      const m=_monteeEnCharge(T);
+      if(!m.length || !_monteeSuffisante(m,T)) incoherents.push(T);
+    }
+    const cas50=(()=>{const s={label:'t',exs:[{name:'Rowing Barre (Tirage Horizontal)',sets:[
+      {reps:5,kg:25,type:'É'},{reps:5,kg:25,type:'É'},{reps:5,kg:25,type:'É'},
+      {reps:8,kg:50,type:'N'},{reps:8,kg:50,type:'N'},{reps:8,kg:50,type:'N'}]}]};
+      _completerMonteeEnCharge(s); return s.exs[0].sets.length;})();
+    const note=(()=>{const s={label:'t',exs:[{name:'Rowing Barre (Tirage Horizontal)',sets:[
+      {reps:5,kg:25,type:'É'},{reps:8,kg:50,type:'N'}]}]};
+      _completerMonteeEnCharge(s); return s.exs[0].note||'';})();
+    return {pertes:pertes.slice(0,6), nbPertes:pertes.length,
+            incoherents:incoherents.slice(0,6), nbIncoherents:incoherents.length,
+            paliers:[_monteeEnCharge(50).length,_monteeEnCharge(80).length,_monteeEnCharge(130).length],
+            cas50:cas50, note:note};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('\u2B50\u2B50 INVARIANT : le nombre de séries ne DIMINUE jamais (165 combinaisons)',
+    r.nbPertes===0, r.nbPertes+' perte(s) : '+JSON.stringify(r.pertes));
+  t('\u2B50\u2B50 LE BARÈME PASSE SON PROPRE CONTRÔLE à tous les poids (40 à 200 kg)',
+    r.nbIncoherents===0, r.nbIncoherents+' poids incohérents : '+JSON.stringify(r.incoherents));
+  t('\u2B50 2 paliers à 50 kg, 3 à 80, 4 à 130 (les sources disent 2-3 léger, 4-5 lourd)',
+    JSON.stringify(r.paliers)==='[2,3,4]', JSON.stringify(r.paliers));
+  t('\u2B50\u2B50 LE CAS RÉEL DU 10/08 : 6 séries annoncées, jamais moins de 6',
+    r.cas50>=6, 'reçu '+r.cas50+' séries');
+  t('\u2B50 l app DIT ce qu elle a complété (et dit « complétée », pas « ajoutée »)',
+    /compl[ée]t[ée]e par l'app \(\+\d+ palier/.test(r.note||''), JSON.stringify(r.note));
+  await c14.close();
+}
+
 // ═══ 📣 LE VERDICT DE LA MONTÉE ARRIVE JUSQU'À MILO (ft-v823) ═══════════════════════════
 // Le soir du 10/08, Milo débriefe la vraie séance de Michel : « la montée en charge était propre
 // (70→100→115→130) ». L'app savait le contraire — `_monteeSuffisante` répond false sur EXACTEMENT
