@@ -152,6 +152,9 @@ demande au lieu de supposer.
 
 ## 🎥 ANALYSE VIDÉO DE LA TECHNIQUE — l'idée est bonne, le mur n'est pas là où on croit (11/08, via GPT)
 
+> 📄 **Dossier complet et roadmap : `docs/MOVEMENT-ANALYSIS-ROADMAP.md`** (document séparé du
+> chantier calories, exprès). Ce qui suit en est le résumé.
+
 > **Michel : « je balance et tu mets pour le suivi de ma réflexion »** — donc c'est archivé, pas
 > décidé. Rien n'est engagé ici.
 

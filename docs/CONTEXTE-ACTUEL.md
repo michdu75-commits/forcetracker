@@ -20,10 +20,21 @@
 > (Katch-McArdle), avec refus explicite si le bilan est vieux ou si le poids a dérivé. C'était le
 > plus gros poste (60-70 % de la dépense) et le seul qu'on pouvait resserrer sans matériel.
 >
-> **⏭️ PROCHAINE ÉTAPE — LE CARDIO, et c'est le plus criant.** Sur une même séance, Michel a relevé :
-> tapis **101** · montre **89** · Polar **120** · **Force Tracker 57**. On est à **la moitié** des
-> autres, et c'est justement la partie où les équations sont les MIEUX établies (marche, course,
-> vélo : formules ACSM). À creuser avant la musculation.
+> **⏭️ CARDIO — CREUSÉ le 11/08, chiffres dans `docs/CALORIES-SOURCES.md` §12. Rien n'est encore
+> modifié dans le code.** Ce qui est établi :
+> · la **formule** du cardio est juste (`MET × poids × durée`) — le défaut est dans le **choix du
+>   MET** : l'étiquette « modéré » couvre de la marche rapide (4,1 MET) à la course à 10 km/h
+>   (10,5 MET), donc elle est **jusqu'à ×1,9 trop basse** face à l'ACSM ;
+> · **🐛 BUG NET** : l'échauffement est compté **deux fois** — un forfait de 10 min (49 kcal) ajouté
+>   sans condition, **plus** le cardio d'échauffement réellement noté. 126 kcal pour 10 minutes ;
+> · **🐛** la durée de la partie muscu est **reconstruite** (24 min pour une séance qui en prend 50)
+>   alors que `sess.duration` la mesure ;
+> · **❓ il manque 4 nombres à Michel** pour refermer le cas « 57 kcal » : durée saisie · type ·
+>   intensité choisie · ce qu'affichait le tapis (vitesse/pente/distance).
+>
+> **Direction validée (GPT + mesures)** : *les paramètres physiques de la modalité d'abord*
+> (vitesse/pente → équations ACSM ; watts pour le vélo), l'étiquette d'intensité en **repli assumé**,
+> et la FC **seulement** si les 10 séances montrent qu'elle apporte quelque chose.
 >
 > **Ensuite** : durée réelle mesurée + classification MET pour la musculation (le modèle actuel
 > reconstruit les temps et invente 10 min d'échauffement), et l'affichage en **fourchette** au lieu

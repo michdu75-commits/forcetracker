@@ -384,7 +384,7 @@ exactement le mode d'échec décrit par la littérature** : une montre estime la
 son modèle, c'est la limite du principe.
 
 **La ceinture Polar H10, elle, change la donne** : elle mesure la fréquence cardiaque par **ECG**,
-pas par optique au poignet. C'est l'appareil utilisé comme **référence dans les études**. Michel
+pas par optique au poignet. C'est l'appareil utilisé dans les **études de validation**. Michel
 l'a déjà.
 
 ⚠️ **MAIS — et c'est le point à ne pas sauter — une FC parfaite ne donne pas des calories justes
@@ -423,3 +423,165 @@ comparer, et ça ne demande aucun développement.
 - **Acute Behavior of Oxygen Consumption, Lactate Concentrations, and Energy Expenditure During
   Resistance Training** — https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8714826/
 - **Web Bluetooth — support par plateforme** — https://progressier.com/pwa-capabilities/bluetooth
+
+---
+
+# 12. 🏃 LE CARDIO — le chantier prioritaire, et ce que j'ai TROUVÉ dans le code (11/08/2026)
+
+> Michel : *« creuse le cardio stp »*. Ce qui suit n'est pas une opinion : chaque chiffre a été
+> obtenu en **exécutant le code de l'application** sur un gabarit de 84 kg, ou en appliquant les
+> **équations métaboliques de l'ACSM**. Rien n'a encore été modifié.
+
+## 12.1 D'abord, la bonne nouvelle : la formule du cardio est JUSTE
+
+```js
+function calcCardioKcal(c){
+  const met = CARDIO_MET[c.type][c.intensity];
+  return Math.round(met * (S.bw||80) * (c.duration/60));   // MET × poids × heures
+}
+```
+
+C'est exactement `MET × poids × durée`, la formule de référence. **Le problème n'est pas la formule,
+il est dans le MET** — et plus précisément dans la façon dont on le choisit.
+
+## 12.2 ⭐⭐ LE VRAI DÉFAUT : trois étiquettes pour un rapport de 1 à 3
+
+L'application demande une **intensité** parmi trois mots — léger · modéré · intense — et en déduit
+un MET. Voici ce que ça donne face à l'ACSM, sur un tapis, à 84 kg (20 min) :
+
+| Ce que la personne fait vraiment | ACSM | L'app dit | Écart |
+|---|---:|---:|---:|
+| marche tranquille 5 km/h, plat | 3,4 MET · 95 kcal | « léger » 3,5 · 98 | ✅ ×0,97 |
+| marche rapide 6,5 km/h, plat | 4,1 MET · 115 kcal | « léger » 3,5 · 98 | ×1,17 |
+| **marche 6 km/h à 8 % de pente** | **8,0 MET · 223 kcal** | « modéré » 5,5 · 154 | **×1,45** |
+| **footing 8 km/h, plat** | **8,6 MET · 241 kcal** | « modéré » 5,5 · 154 | **×1,57** |
+| **marche 6 km/h à 12 % de pente** | **10,0 MET · 281 kcal** | « modéré » 5,5 · 154 | **×1,82** |
+| **course 10 km/h, plat** | **10,5 MET · 295 kcal** | « modéré » 5,5 · 154 | **×1,91** |
+| course 12 km/h, plat | 12,4 MET · 348 kcal | « intense » 9,5 · 266 | ×1,31 |
+| course 10 km/h à 5 % | 12,7 MET · 355 kcal | « intense » 9,5 · 266 | ×1,33 |
+
+**Le mot « modéré » recouvre tout, de la marche rapide (4,1) à la course à 10 km/h (10,5).** C'est un
+rapport de **1 à 2,5 à l'intérieur d'une seule étiquette**. Aucune valeur unique ne peut être juste
+là-dedans : 5,5 est correct pour une marche soutenue et **deux fois trop bas** pour un footing.
+
+*L'étiquette fait un travail que la donnée ne peut pas faire.* Et c'est **exactement le même défaut
+que le métabolisme de base corrigé cette nuit** : une valeur moyenne de population appliquée à
+quelqu'un, là où une mesure de la personne existe.
+
+**⭐ Or la mesure existe, et elle est SOUS SES YEUX** : le tapis affiche la vitesse, la pente et la
+distance. Le vélo affiche les watts. **Ce sont des variables physiques, pas des impressions.**
+
+## 12.3 🐛 UN BUG NET : l'échauffement est compté DEUX FOIS
+
+Vérifié en exécutant le code sur une séance de 7 séries (squat + développé couché), 84 kg :
+
+| | kcal |
+|---|---:|
+| les 7 séries elles-mêmes | **58** |
+| forfait « échauffement » ajouté d'office (3,5 MET × 10 min) | **49** |
+| total rendu par `calcSessionCalories` | **107** |
+| … puis `finishWorkout` ajoute le cardio d'échauffement réellement noté (10 min tapis) | **+77** |
+| **total final** | **184** |
+
+**Les mêmes 10 minutes d'échauffement sont donc payées deux fois : 49 en forfait + 77 en réel = 126
+kcal pour 10 minutes de tapis.** Le forfait est ajouté **sans condition**, y compris quand la
+personne n'a rien échauffé du tout.
+
+Et il pèse **46 % du total** de cette séance. *Le poste le plus lourd du calcul est celui qui n'a
+aucune source.*
+
+## 12.4 🐛 ET LA DURÉE EST RECONSTRUITE ALORS QU'ELLE EST MESURÉE
+
+Sur la même séance, le modèle **reconstruit** 24 minutes (7 × 30 s + les repos réglés + 10 min de
+forfait). Une séance de 7 séries lourdes en prend 45 à 60 en vrai — et **l'application connaît la
+vraie durée** : `sess.duration`, chronométrée, pauses exclues, utilisée depuis ft-v826 pour calculer
+son rythme.
+
+**MET moyen implicite du modèle actuel : 3,18.** Le Compendium donne 3,5 pour de la musculation
+classique et 5,0 pour une séance dominée par les squats et soulevés de terre. Sur 60 min réelles à
+84 kg, ça donne **294 à 420 kcal**, contre **107** aujourd'hui.
+
+## 12.5 ⚠️ Ce que je ne peux PAS conclure sans Michel
+
+Les quatre chiffres relevés (tapis 101 · montre 89 · Polar 120 · **Force Tracker 57**) ne suffisent
+pas à désigner la cause, parce qu'il **manque la durée**. En inversant la formule à 84 kg :
+
+| durée supposée | MET implicite du tapis | MET implicite de Force Tracker |
+|---|---:|---:|
+| 15 min | 4,81 | **2,71** |
+| 20 min | 3,61 | **2,04** |
+| 30 min | 2,40 | **1,36** |
+
+**Et aucune de ces valeurs n'existe dans la table de l'app** (le minimum est 3,5). Donc le 57 **ne
+peut pas** sortir de `calcCardioKcal` seul — sauf si la durée saisie était d'environ **10-12 minutes
+en « léger »** (3,5 × 84 × 0,19 ≈ 57), pendant que le tapis, lui, comptait une vraie séance.
+
+**👉 Les 4 nombres qui referment la question** (à relever une seule fois) : la **durée** saisie dans
+l'app · le **type** choisi · l'**intensité** choisie · et ce qu'affichait le **tapis** (vitesse,
+pente, distance). Avec ça, la cause est identifiée en une minute au lieu d'être supposée.
+
+## 12.6 ✅ LA DIRECTION — les paramètres physiques d'abord, la FC seulement après
+
+C'est la correction n°3 de GPT (11/08), et mes mesures y mènent indépendamment :
+
+> **Le moteur cardio doit privilégier les paramètres physiques propres à la modalité, avant
+> d'utiliser la fréquence cardiaque comme facteur de correction.**
+
+Concrètement, par ordre de solidité décroissante :
+
+1. **Tapis** — si vitesse (et pente) sont saisies : **équations ACSM**, publiées et vérifiables.
+   `marche : VO₂ = 0,1×S + 1,8×S×G + 3,5` · `course : VO₂ = 0,2×S + 0,9×S×G + 3,5` (S en m/min,
+   G en fraction), puis `MET = VO₂ / 3,5`. ⚠️ Limites à respecter : la formule de marche est validée
+   ~3-6 km/h, celle de course au-delà de ~8 km/h ; entre les deux, zone floue.
+2. **Vélo** — si les **watts** sont affichés, c'est la meilleure donnée de toutes (ACSM :
+   `VO₂ = 10,8 × W / poids + 7`). Sinon, MET par palier.
+3. **Rameur** — les watts aussi, quand l'ergomètre les donne.
+4. **Elliptique, corde, autre** — pas d'équation validée : MET par palier, **et on le dit**.
+5. **La FC** ne devient un correctif que si les 10 séances montrent qu'elle apporte quelque chose
+   que durée + paramètres physiques n'apportent pas. **Pas avant.**
+
+**⚠️ Et l'étiquette d'intensité ne disparaît pas** : c'est le repli quand la personne ne connaît ni
+sa vitesse ni sa pente — ce qui sera le cas le plus fréquent. Mais alors l'app doit **le dire**
+(estimation grossière) au lieu de rendre un nombre qui a l'air aussi précis que l'autre. *Le même
+principe que les deux formules du métabolisme de base : on n'interdit pas l'approximation, on refuse
+de la faire passer pour une mesure.*
+
+## 12.7 📋 Le protocole de relevé — DEUX tableaux séparés (correction n°5 de GPT)
+
+**Cardio** — un relevé par séance de cardio :
+
+```
+Date :            Type (tapis/vélo/rameur/elliptique) :
+Durée :           Distance :        Vitesse :      Inclinaison :
+Poids du jour :
+kcal tapis :      kcal Garmin :     kcal Polar :   kcal Force Tracker :
+FC moyenne :      FC max :
+Intensité choisie dans l'app (léger/modéré/intense) :
+```
+
+**Musculation** — un relevé par séance de muscu :
+
+```
+Date :            Type (classique / squat-SDT / supersets) :
+Durée réelle :    Nombre de séries :     Volume (kg) :
+kcal Garmin :     kcal Polar :           kcal Force Tracker :
+FC moyenne :      FC max :
+```
+
+**10 séances** (et non 3 — correction n°5 de GPT : 3 ne détectent qu'une aberration grossière).
+
+## 12.8 ⚠️ La H10 n'est pas une vérité calorique (correction n°4 de GPT)
+
+La Polar H10 est la **meilleure source de fréquence cardiaque disponible pour ces tests** — pas une
+référence de calories. **FC ≠ calories** : le chiffre de calories affiché par Polar sort de
+l'algorithme de Polar, pas du capteur. Aucune des quatre sources n'est une vérité ; le relevé sert à
+mesurer leur **dispersion** et à repérer les aberrations, pas à couronner un gagnant. Ne jamais faire
+la moyenne des quatre.
+
+## 12.9 Sources ajoutées
+
+- **ACSM's Guidelines for Exercise Testing and Prescription** — équations métaboliques (marche,
+  course, ergocycle, stepper) : https://www.acsm.org/education-resources/books/guidelines-exercise-testing-prescription
+- **ACSM Metabolic Equations (résumé et domaines de validité)** —
+  https://www.ncbi.nlm.nih.gov/books/NBK499824/
+
