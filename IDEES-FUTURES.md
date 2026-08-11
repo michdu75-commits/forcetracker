@@ -3,6 +3,46 @@
 Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'est en cours.
 
 
+
+---
+
+## 🇷🇺 LE MULTILINGUE EXISTE ET N'EST BRANCHÉ NULLE PART (trouvé le 11/08/2026)
+
+> **Michel, cette nuit** : *« continue de bosser sur l'application en russe »*. En m'y mettant,
+> j'ai trouvé autre chose.
+
+**`translations.js` n'est chargé par AUCUNE page.** Il n'est pas dans les `<script src>` de
+`index.html`, pas dans le `PRECACHE` du service worker, référencé nulle part dans le code. Le
+fichier vit dans le dépôt et **ne s'exécute jamais**.
+
+**Ce qu'il contient pourtant, et qui marche** :
+- **5 langues** — français · anglais · espagnol · grec · **russe** (`LANG_NAMES`, `LANG_FLAGS`) ;
+- **252 textes d'interface** déjà traduits dans les 4 langues ;
+- un moteur de traduction **par parcours du DOM** (`_apply`) + un `MutationObserver` qui
+  retraduit ce qui s'affiche après coup — donc **aucun câblage à faire écran par écran** ;
+- `window.t(fr)` avec repli propre sur le français.
+
+**Ce que j'ai ajouté cette nuit** : les **324 noms d'exercices en russe**. C'était le vrai trou —
+l'interface parlait russe, mais l'écran Séance, le sélecteur et l'historique restaient en français,
+c'est-à-dire **la partie qu'on lit le plus**. Vérifié : 324/324 couverts, **aucune collision** (deux
+exercices ne partagent jamais le même nom russe — deux entrées identiques dans le sélecteur seraient
+pires que le français), aucun mot français resté par mégarde.
+
+**⚠️ Ça ne change RIEN tant que le fichier n'est pas chargé** — et c'est volontaire : brancher le
+multilingue est une décision produit, pas une correction de bug. Ce qu'il faut peser :
+
+| | |
+|---|---|
+| **Pour** | l'app devient utilisable par un russophone (Tatiana), et par 4 langues de plus. Le travail est **déjà fait à 95 %**. |
+| **Contre** | +64 Ko de JS **à chaque ouverture** (règle d'or #4 : ouverture instantanée) ; un `MutationObserver` qui écoute **tout le DOM** en permanence ; et il faut un **sélecteur de langue** quelque part. |
+| **À vérifier avant** | que la traduction du DOM ne casse rien sur l'écran Séance (le plus dynamique) ; et **faire relire le russe par une personne native** — c'est moi qui l'ai écrit, pas un russophone. |
+
+**⚠️ Et une question à trancher avant tout** : ce fichier a-t-il été **retiré exprès** ou jamais
+branché ? L'historique git ne le dit pas (il n'apparaît que dans un commit de juillet, et
+`index.html` ne l'a **jamais** chargé). *Du code orphelin ne prouve rien* (**R30**) — donc on
+demande au lieu de supposer.
+
+
 ---
 
 ## 🔀 EXERCICES UNILATÉRAUX — la liste à cocher par Michel (mise de côté le 10/08/2026)
