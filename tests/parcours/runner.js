@@ -1739,6 +1739,59 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c14.close();
 }
 
+// ═══ ⏭️ PASSAGE AUTOMATIQUE À L'EXERCICE SUIVANT (ft-v825) ═══════════════════════════════
+// Retour de Michel, séance du 10/08 : « quand on finit le premier exercice ça ne bascule pas
+// automatiquement sur le deuxième ; je suis obligé de cliquer sur l'exercice suivant ».
+// ⭐ LE MÉCANISME EXISTAIT — pour les supersets, dropsets et pyramides. L'exercice ORDINAIRE,
+// le cas le plus fréquent de tous, était le seul oublié.
+// ⚠️⚠️ ET IL NE POUVAIT PAS MARCHER NON PLUS AILLEURS : les 3 endroits posaient `_restDoneCb`
+// AVANT `startRest()`, or `startRest()` appelle `stopRest()` qui le remet à null. Le passage
+// automatique après repos n'avait donc JAMAIS fonctionné, pour personne, depuis son écriture.
+// Trouvé en ajoutant la même chose pour l'exercice ordinaire.
+{
+  const c15=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p15=await c15.newPage();
+  await p15.goto('http://localhost:'+PORT+'/index.html'); await p15.waitForTimeout(2200);
+  const r=await p15.evaluate(()=>{
+   try{
+    const box=()=>{const e=document.getElementById('nb-log');if(!e)return '';const b=e.getBoundingClientRect();
+      return [Math.round(b.x),Math.round(b.y),Math.round(b.width),Math.round(b.height)].join(',');};
+    S.wkt={label:'Dos',start:Date.now(),exs:[
+      {name:'Soulevé de Terre',sets:[{kg:100,reps:5,type:'N'},{kg:100,reps:5,type:'N'}]},
+      {name:'Rowing Barre (Tirage Horizontal)',sets:[{kg:60,reps:8,type:'N'}]},
+      {name:'Curl Barre',sets:[{kg:30,reps:10,type:'N'}]}]};
+    _expandedEx=0; goScreen('s-log'); renderLog();
+    const fabAvant=box();
+    toggleSet(0,0);
+    const milieu={cb:!!_restDoneCb, exp:_expandedEx};      // série intermédiaire : rien
+    toggleSet(0,1);
+    const fin={cb:!!_restDoneCb, exp:_expandedEx,
+               lbl:(document.getElementById('rest-label')||{}).textContent||''};
+    skipRest();                                            // on écourte le repos
+    const apresSkip=_expandedEx;
+    const fabApres=box();
+    // dernier exercice : on ne doit PAS revenir en arrière
+    _expandedEx=2; S.wkt.exs[1].sets.forEach(x=>x.done=true);
+    toggleSet(2,0); const cbDernier=!!_restDoneCb;
+    return {milieu, fin, apresSkip, cbDernier,
+            fabBouge: fabAvant!==fabApres, fabAvant, fabApres};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('une série INTERMÉDIAIRE ne déclenche aucune avance',
+    r.milieu && r.milieu.cb===false && r.milieu.exp===0, JSON.stringify(r.milieu));
+  t('\u2B50\u2B50 la DERNIÈRE série d un exercice arme le passage au suivant',
+    r.fin && r.fin.cb===true, JSON.stringify(r.fin));
+  t('\u2B50 … et le repos ANNONCE ce qui vient ensuite',
+    /Ensuite\s*:/.test((r.fin&&r.fin.lbl)||''), JSON.stringify(r.fin&&r.fin.lbl));
+  t('\u2B50\u2B50 « Skip » HONORE l avance au lieu de la jeter (startRest effaçait la consigne)',
+    r.apresSkip===1, 'exercice ouvert : '+r.apresSkip);
+  t('\u2B50 au DERNIER exercice, on ne remonte pas au début',
+    r.cbDernier===false, 'une avance a été armée alors qu il n y a plus rien après');
+  t('\u2B50\u2B50 RÈGLE D OR #9 : le bouton central de la barre ne bouge PAS',
+    r.fabBouge===false, r.fabAvant+' → '+r.fabApres);
+  await c15.close();
+}
+
 // ═══ 📣 LE VERDICT DE LA MONTÉE ARRIVE JUSQU'À MILO (ft-v823) ═══════════════════════════
 // Le soir du 10/08, Milo débriefe la vraie séance de Michel : « la montée en charge était propre
 // (70→100→115→130) ». L'app savait le contraire — `_monteeSuffisante` répond false sur EXACTEMENT

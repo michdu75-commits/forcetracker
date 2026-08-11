@@ -935,8 +935,12 @@ function toggleSet(ei,si){
         _expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);return;
       }
       // Pyramide : repos + auto-avance
-      _restDoneCb=()=>{_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);};
+      // ⚠️ APRÈS `startRest`, jamais avant : `startRest()` appelle `stopRest()`, qui remet
+      // `_restDoneCb` à null. Posée avant, la consigne d'avance était effacée aussitôt —
+      // ce passage automatique n'a donc JAMAIS fonctionné (trouvé le 11/08 en l'ajoutant
+      // pour l'exercice ordinaire). Même correctif aux 3 endroits.
       startRest(sec);
+      _restDoneCb=()=>{_expandedEx=_ssNext;renderExBlocks();_scrollTo(_ssNext);};
       const lbl=document.getElementById('rest-label');
       if(lbl)lbl.textContent=groupType==='pyramid-up'?'📈 Pyramide +':'📉 Pyramide −';
       if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
@@ -955,8 +959,8 @@ function toggleSet(ei,si){
         if(navigator.vibrate)navigator.vibrate([30]);
         _expandedEx=firstIdx;renderExBlocks();
         setTimeout(()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},80);
+        startRest(sec);   // ⚠️ la consigne d'avance se pose APRÈS (startRest efface _restDoneCb)
         _restDoneCb=()=>{const el=document.getElementById('ex-block-'+firstIdx);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});};
-        startRest(sec);
         if(lbl)lbl.textContent='⚡ Tour suivant';
         if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
         if(navigator.vibrate)navigator.vibrate([50]);
@@ -964,7 +968,32 @@ function toggleSet(ei,si){
       }
       // Tous les sets du groupe terminés → repos normal sans auto-avance
     }
+    // ⏭️ PASSAGE AUTOMATIQUE À L'EXERCICE SUIVANT (ft-v825) — retour de Michel, séance du 10/08 :
+    // « quand on finit le premier exercice, ça ne bascule pas automatiquement sur le deuxième ;
+    //   là par exemple j'ai fait des soulevés de terre et à la dernière série je suis obligé de
+    //   cliquer sur l'exercice suivant ».
+    // ⚠️ Le mécanisme EXISTAIT DÉJÀ — mais seulement pour les supersets, les dropsets et les
+    // pyramides. L'exercice ordinaire, le cas le plus fréquent de tous, était le seul oublié.
+    // On réutilise `_restDoneCb`, le même chemin que la pyramide (R2/R13) plutôt que d'inventer
+    // un second mécanisme d'avance qui finirait par diverger de celui-ci.
+    // 👉 On avance À LA FIN DU REPOS, pas tout de suite : entre deux exercices on se repose
+    //    vraiment, et replier sous ses yeux la série qu'on vient de valider est déroutant.
+    const _tousFaits = S.wkt.exs[ei].sets.every(s=>s.done);
+    let _suiv=null;
+    if(_tousFaits && !S.wkt.exs[ei].group){
+      for(let k=ei+1;k<S.wkt.exs.length;k++){
+        if((S.wkt.exs[k].sets||[]).some(s=>!s.done)){ _suiv=k; break; }
+      }
+      // ⚠️ On n'enroule PAS vers le début : remonter tout seul à un exercice déjà dépassé
+      // serait plus déroutant que de ne rien faire (R29 — le coût de l'erreur décide).
+    }
     startRest(sec);
+    if(_suiv!==null){
+      _restDoneCb=()=>{_expandedEx=_suiv;renderExBlocks();_scrollTo(_suiv);};
+      const _lb=document.getElementById('rest-label');
+      const _n=String(S.wkt.exs[_suiv].name||'');
+      if(_lb&&!_lb.textContent)_lb.textContent='⏭️ Ensuite : '+(_n.length>26?_n.slice(0,25).trim()+'…':_n);
+    }
     if(!isAbdo&&[60,90,120].includes(sec))_highlightRestPreset(sec);else _highlightRestPreset(-1);
     if(navigator.vibrate)navigator.vibrate([50]);
   }
@@ -3054,7 +3083,11 @@ function addRT(s){
   restStartTs=Date.now()-(restTot-newLeft)*1000;
   updRest();
 }
-function skipRest(){stopRest();}
+// ⚠️ « Skip » doit HONORER l'avance en attente, pas la jeter (ft-v825). `stopRest()` remet
+// `_restDoneCb` à null : quelqu'un qui écourte son repos restait donc bloqué sur l'exercice
+// terminé — exactement le geste que ft-v825 vient de supprimer, et il revenait par la porte
+// de derrière. Vaut aussi pour la pyramide et le superset, qui avaient le même trou.
+function skipRest(){const cb=_restDoneCb;stopRest();if(cb)cb();}
 
 // ─── Réglage manuel du temps de repos (retour Emma, ft-v438) ──────────────────
 // Ouvre un mini-éditeur min:sec → règle la durée du repos en cours (avant, on ne pouvait
