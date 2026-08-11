@@ -376,3 +376,50 @@ confronté au terrain. *Mesurer d'abord.*
 - **How accurate are wearable fitness trackers? Less than you might think** (synthèse, UCD) —
   https://theconversation.com/how-accurate-are-wearable-fitness-trackers-less-than-you-might-think-236462
 
+### 🎽 Le matériel de Michel : une Garmin **et** une ceinture Polar H10
+
+*« Le problème de Garmin, c'est qu'il enregistre mal les mouvements. »* — **Son observation est
+exactement le mode d'échec décrit par la littérature** : une montre estime la dépense à partir du
+**mouvement du poignet**, et une série lourde n'en produit presque aucun. Ce n'est pas un défaut de
+son modèle, c'est la limite du principe.
+
+**La ceinture Polar H10, elle, change la donne** : elle mesure la fréquence cardiaque par **ECG**,
+pas par optique au poignet. C'est l'appareil utilisé comme **référence dans les études**. Michel
+l'a déjà.
+
+⚠️ **MAIS — et c'est le point à ne pas sauter — une FC parfaite ne donne pas des calories justes
+en musculation.** Deux raisons documentées :
+
+1. L'équation de référence pour convertir FC → dépense (**Keytel et al., 2005**) est calibrée sur
+   de l'exercice **sous-maximal en régime stable**, et elle **surestime** — y compris à la marche
+   et au vélo, où pourtant elle devrait être à son meilleur.
+2. En musculation, la FC monte pour des raisons **qui ne sont pas de la consommation d'oxygène** :
+   effort statique, blocage respiratoire, réponse pressive. *Le cœur accélère sans que le corps
+   brûle proportionnellement plus.*
+
+👉 **Donc la H10 est un excellent instrument de MESURE, pas une source de calories fiable en
+musculation.** Elle donne une donnée solide (la FC) sur laquelle on n'a pas encore d'équation
+solide pour ce sport-là.
+
+### ⛔ Et un blocage TECHNIQUE à connaître avant d'imaginer une intégration
+
+**Le Web Bluetooth n'existe pas sur iOS.** Ni dans Safari, ni dans aucun navigateur de l'iPhone —
+*« this API is not available in any way, shape or form on iOS »*. Force Tracker étant une **PWA**,
+elle **ne peut pas lire la H10** sur l'iPhone de Michel. Sur Android, ce serait possible.
+
+Les contournements existent (navigateurs tiers type Bluefy), mais ce ne sont pas des solutions pour
+de vrais utilisateurs. **La seule voie propre est une coque native** — ce qui est déjà le chemin
+prévu dans `docs/STRATEGIE-NATIF.md` (Capacitor, zéro réécriture), avec les objets connectés en
+**première priorité** de la liste des plugins.
+
+**Conséquence pratique immédiate** : pas d'intégration live. Pour le protocole de calibration,
+Michel porte la H10 avec **l'appli Polar**, et recopie les chiffres à la main. C'est suffisant pour
+comparer, et ça ne demande aucun développement.
+
+### Sources ajoutées
+
+- **Prediction of energy expenditure from heart rate monitoring during submaximal exercise**
+  (Keytel et al., 2005) — https://www.semanticscholar.org/paper/2f647f62e650bf7df32546e541af3cf155297749
+- **Acute Behavior of Oxygen Consumption, Lactate Concentrations, and Energy Expenditure During
+  Resistance Training** — https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8714826/
+- **Web Bluetooth — support par plateforme** — https://progressier.com/pwa-capabilities/bluetooth
