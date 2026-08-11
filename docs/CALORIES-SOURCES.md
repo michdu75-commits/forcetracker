@@ -284,3 +284,95 @@ valeurs ci-dessus viennent des **résumés de recherche**, pas des pages ouverte
 Les trois valeurs MET (3,5 · 5,8 · 6,0) et la formule sont concordantes sur plusieurs sources
 indépendantes, mais **il faut les confirmer sur le Compendium officiel** avant de coder quoi que
 ce soit. *Une source citée n'est pas une source lue.*
+
+---
+
+## 10. ✅ LES DÉCISIONS DE MICHEL (11/08/2026)
+
+| Question | Sa réponse |
+|---|---|
+| **Brut à l'écran, ACTIF dans le calcul des macros ?** | ✅ **OUI** — tranché |
+| **Afficher une fourchette plutôt qu'un chiffre ?** | ⏸️ *« mitigé, je préfère creuser encore plus avant »* |
+| **Demander l'effort ressenti après la séance ?** | ✅ **OUI, mais sans appel API** |
+| **Viser volontairement le bas de la fourchette ?** | 🔄 remplacé par : *« et si je comparais avec ma montre connectée ? »* |
+
+### Sur la question d'effort : elle ne coûtera rien, et c'est vérifiable
+
+Une question posée **à la fin de la séance** (« Comment était ta séance ? 1-10 ») est du **pur
+local** : un chiffre saisi, stocké dans la séance, utilisé par un calcul qui tourne dans le
+téléphone. **Aucun appel réseau, aucun centime.** Et si Milo doit en tenir compte, elle voyage dans
+le contexte qui part déjà de toute façon — donc gratuite aussi de ce côté.
+
+⚠️ **Le vrai coût n'est pas l'argent, c'est la FRICTION** (R24/R26) : une question de plus après
+chaque séance, quand la personne est fatiguée et veut ranger son téléphone. À concevoir comme une
+**ligne de pastilles qu'on peut ignorer**, jamais comme un passage obligé.
+
+---
+
+## 11. ⭐ LA MONTRE CONNECTÉE — l'idée de Michel, et ce qu'elle vaut vraiment
+
+*« Et si je comparais avec ma montre connectée ? »*
+
+**C'est la meilleure idée du chantier** : il a un appareil de mesure indépendant sous la main, et
+ça ne coûte rien. Mais il faut savoir ce qu'on compare.
+
+### ⚠️ Une montre n'est PAS une vérité — surtout en musculation
+
+C'est précisément le cas où les montres sont le plus mauvaises :
+
+- **erreur moyenne de 30 à 50 %** sur la dépense en musculation, et **au-delà de 100 %** sur
+  certains exercices ;
+- la raison est structurelle : l'estimation repose largement sur le **mouvement du poignet**, or
+  l'effort anaérobie d'une série lourde ne produit **presque aucun mouvement** ;
+- pour comparaison, l'erreur n'est « que » de ~31 % à la marche/course et ~52 % au vélo
+  (étude Stanford, 7 appareils).
+
+**Ce que la montre mesure BIEN**, en revanche : la **fréquence cardiaque** — erreur de l'ordre de
+**±3 %** (Garmin : −3,3 % d'erreur relative moyenne).
+
+### 👉 Donc ce qu'on peut légitimement en faire
+
+**Pas** : « la montre dit 480, donc le modèle doit dire 480. » Ce serait caler une estimation sur
+une estimation **moins fiable que la nôtre** dans ce cas précis.
+
+**Mais** : un **contrôle de cohérence**. Si le modèle annonce 250 et la montre 600, l'un des deux
+est franchement à côté et ça mérite qu'on regarde. C'est un **garde-fou d'ordre de grandeur**, pas
+un étalon.
+
+**Et surtout** : la **fréquence cardiaque moyenne** de la séance est la donnée la plus solide qu'une
+montre puisse donner. C'est elle qui pourrait, un jour, servir de base à une estimation vraiment
+personnalisée (voir « objets connectés » dans `IDEES-FUTURES.md`).
+
+### 📋 Le protocole, si Michel veut le faire
+
+Sur **3 à 5 séances**, noter à chaque fois :
+
+1. le chiffre de **l'app** ;
+2. le chiffre de la **montre** ;
+3. la **durée réelle** de la séance ;
+4. la **FC moyenne** si la montre la donne ;
+5. le **type de séance** (classique · squat/SDT dominant · supersets/circuit · vigoureuse).
+
+On compare ensuite aux quatre modèles Compendium (3,5 · 5,0 · 5,8 · 6,0). **Trois cas possibles**,
+et les trois nous apprennent quelque chose :
+
+- **la montre et un modèle convergent** → on a un point d'ancrage réel ;
+- **la montre est très au-dessus de tous les modèles** → c'est probablement elle qui exagère
+  (comportement documenté) ;
+- **les deux divergent de façon désordonnée d'une séance à l'autre** → confirmation que le chiffre
+  ne peut être qu'une fourchette, et la question §10 (« afficher une fourchette ? ») se tranche
+  toute seule.
+
+⚠️ **À décider AVANT de coder** : ce protocole donne des données réelles, propres à Michel. Les
+attendre coûte quelques jours ; coder sans elles, c'est reconstruire un modèle sans jamais l'avoir
+confronté au terrain. *Mesurer d'abord.*
+
+### Sources ajoutées
+
+- **Comparative Validity of Smartwatch-Derived Heart Rate and Energy Expenditure During Endurance
+  and Resistance Exercise** — https://www.mdpi.com/1424-8220/26/8/2526
+- **Accuracy of Wrist-Worn Activity Monitors During Common Daily Physical Activities and Types of
+  Structured Exercise** — https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6305876/
+- **How accurate are wearable fitness trackers? Less than you might think** (synthèse, UCD) —
+  https://theconversation.com/how-accurate-are-wearable-fitness-trackers-less-than-you-might-think-236462
+
