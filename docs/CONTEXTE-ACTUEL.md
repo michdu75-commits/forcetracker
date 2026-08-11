@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v796`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v830`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
 > ## 💡 IDÉE GARDÉE — « le dessin pour les muscles, la photo pour le geste » (09/08)
 >
