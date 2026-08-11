@@ -4,6 +4,69 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 
 
+
+---
+
+## 🫀 POLAR ACCESSLINK — la piste sérieuse pour les données physiologiques (11/08/2026)
+
+> Née de la question des calories (`docs/CALORIES-SOURCES.md`). Proposition de ChatGPT, vérifiée
+> et **amendée** ici. Michel possède une **ceinture Polar H10** et une **Garmin**.
+
+### ✅ Ce qui est vrai et intéressant
+
+L'**API Polar AccessLink v4** (OAuth2, officielle) permet à une application autorisée de récupérer,
+**après** la séance : durée exacte · calories calculées par Polar · FC moyenne/max · **échantillons
+de FC à la seconde** · zones de FC · et, sur les appareils qui le gèrent, un objet `completedSets`
+avec le début/fin de chaque série et sa FC moyenne/max. Plus un **profil physique** : poids, FC de
+repos, FC max, seuils aérobie/anaérobie, VO₂max.
+
+**L'intérêt réel, et il est grand** : Force Tracker connaît l'heure exacte de chaque série. Aligner
+les deux sources donnerait, pour CHAQUE série, la réponse cardiaque et la **vitesse de récupération**
+— une lecture physiologique que personne d'autre n'a, parce que personne d'autre n'a les deux moitiés.
+
+**Et l'avantage décisif sur le Bluetooth web** : ça marche sur iPhone, puisque le navigateur n'a
+rien à faire — tout passe par le serveur. Pas de Bluefy, pas de coque native.
+
+### ⚠️ Les trois questions que la proposition ne posait pas
+
+**1. La H10 seule ne crée PAS de séance dans Polar Flow.** C'est un capteur. Vérifié dans la
+documentation Polar : elle a bien une mémoire interne (1 séance, jusqu'à 30 h, 1 mesure/seconde),
+**mais il faut lancer l'enregistrement depuis l'application Polar Beat**. Sans ça, AccessLink n'a
+rien à servir.
+👉 **Conséquence concrète** : Michel devrait lancer **Polar Beat** en plus de Force Tracker à chaque
+séance. Acceptable pour lui, en test. **Impensable pour un utilisateur ordinaire.**
+
+**2. `completedSets` n'est probablement pas accessible avec une H10.** Ce champ vient de la
+fonction « musculation » des **montres** Polar, pas d'un capteur de poitrine. À vérifier avant de
+construire quoi que ce soit dessus — c'est pourtant le champ le plus séduisant de la proposition.
+
+**3. ⭐ Et surtout : ça ne résout TOUJOURS PAS la question des calories.** Une courbe de FC parfaite,
+alignée série par série, ne devient pas des kcal tant qu'aucune équation validée n'existe pour la
+musculation (`docs/CALORIES-SOURCES.md` §11 : Keytel surestime, et la FC monte en musculation pour
+des raisons qui ne sont pas de la consommation d'oxygène). Ajouter « + réponse cardiaque réelle »
+à un modèle **sans coefficient sourcé**, c'est exactement l'*« approximation sophistiquée qui donne
+l'illusion d'être scientifique »* — la mise en garde venait de ChatGPT lui-même.
+
+### 👉 Ce qu'on en retient
+
+**La bonne raison de faire AccessLink n'est PAS les calories.** C'est la **lecture physiologique** :
+récupération entre séries, réponse à l'effort, état de forme du jour. Ça, c'est solide, mesurable,
+et personne ne le fait en croisant avec les charges soulevées.
+
+**Le coût honnête** : compte développeur Polar, parcours OAuth2, stockage des jetons, écran de
+consentement, et des **données de santé** de plus — donc ça vient s'ajouter au chantier RGPD déjà
+identifié comme bloquant avant le grand public.
+
+**Déclencheur pour rouvrir le sujet** : quand la question RGPD/authentification sera traitée, ou
+si un testeur équipé Polar le demande. **Pas avant** — et surtout pas pour améliorer un chiffre de
+calories qu'aucune équation ne sait produire.
+
+### 📌 Et la seule chose utile à faire MAINTENANT
+
+Rien de tout ça n'est nécessaire pour savoir si le modèle actuel est dans le bon ordre de grandeur.
+**Trois séances, quatre chiffres notés à la main** (app · Polar · Garmin · durée). *Le carnet bat
+l'API cette semaine.*
+
 ---
 
 ## 🇷🇺 LE MULTILINGUE EXISTE ET N'EST BRANCHÉ NULLE PART (trouvé le 11/08/2026)
