@@ -1926,6 +1926,43 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c18.close();
 }
 
+// ═══ 😄 LES QUESTIONS SOCIALES POSÉES À MILO (ft-v830) ════════════════════════════════════
+// Michel : « et genre hello ça va, tu as bien dormi, des questions à la con ». Elles partaient
+// toutes au serveur à ~0,16 $ pièce pour une réponse que l'app peut donner elle-même.
+// ⚠️ LE CRITÈRE EST LE PRONOM, et c'est lui qui rend la chose sûre : « TU as bien dormi ? » est
+// une politesse adressée au logiciel et n'attend aucune information ; « J'AI mal dormi » est un
+// FAIT sur la personne et doit toujours partir — c'est même le 1ᵉʳ des messages légitimes que le
+// garde-fou de ft-v817 protège.
+{
+  const c19=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p19=await c19.newPage();
+  await p19.goto('http://localhost:'+PORT+'/index.html'); await p19.waitForTimeout(2200);
+  const r=await p19.evaluate(()=>{
+   try{
+    coachHistory.length=0; _histAuChargement=0;
+    const L=m=>!!_reponseLocale(m,false,{});
+    const SOCIAL=['hello ca va','tu as bien dormi',"t'as bien dormi ?",'bien dormi ?','ça roule',
+      'ca roule ?','ça gaze','comment tu vas','comment vas-tu ?',"t'es là ?",'tout va bien ?','et toi ?'];
+    // ⚠️ CES 12-LÀ DOIVENT TOUJOURS PARTIR — dont 4 pièges construits exprès :
+    const LEGIT=["j'ai mal dormi cette nuit et je suis vraiment épuisé","j'ai mal dormi",
+      'je suis stressé par le boulot en ce moment','je stagne depuis un mois et je ne comprends pas',
+      'mon genou me lance depuis hier soir',"je me sens nul, j'ai envie de tout arrêter",
+      'combien de protéines est-ce que je dois manger par jour ?',"je mange quoi avant d'y aller ?",
+      "tu as bien dormi mais moi non, j'ai mal au dos",   // piège : commence comme une politesse
+      'ça roule pour lundi 18h ?',                        // piège : « ça roule » + une vraie demande
+      'comment tu vas construire mon programme ?',        // piège : « comment tu vas » + la suite
+      'je pars en vacances pendant deux semaines'];
+    return {social:SOCIAL.filter(m=>!L(m)), legit:LEGIT.filter(m=>L(m)),
+            nSocial:SOCIAL.length, nLegit:LEGIT.length};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('\u2B50\u2B50 les 12 questions sociales sont traitées EN LOCAL (0 appel, 0 centime)',
+    Array.isArray(r.social) && r.social.length===0, 'pas attrapées : '+JSON.stringify(r.social));
+  t('\u2B50\u2B50 … et les 12 messages LÉGITIMES partent toujours chez Milo',
+    Array.isArray(r.legit) && r.legit.length===0, 'coupées à tort : '+JSON.stringify(r.legit));
+  await c19.close();
+}
+
 // ═══ 📣 LE VERDICT DE LA MONTÉE ARRIVE JUSQU'À MILO (ft-v823) ═══════════════════════════
 // Le soir du 10/08, Milo débriefe la vraie séance de Michel : « la montée en charge était propre
 // (70→100→115→130) ». L'app savait le contraire — `_monteeSuffisante` répond false sur EXACTEMENT

@@ -458,6 +458,21 @@ const _PHRASES_LOCALES = [
       "Salut ! Dis-moi ce dont tu as besoin — séance, nutrition, récup…"
     ]
   },
+  { // ── les questions sociales POSÉES À MILO (ft-v830) ──────────────────────────────
+    // Michel : « et genre hello ça va, tu as bien dormi, des questions à la con ». Elles
+    // partaient toutes au serveur à 0,16 $ pièce pour une réponse que l'app peut donner.
+    // ⚠️ CE QUI FAIT QU'ON PEUT RÉPONDRE SANS MILO : ces questions s'adressent à L'APP et
+    // n'attendent AUCUNE information. « Tu as bien dormi ? » posé à un logiciel n'appelle pas
+    // une vraie réponse — contrairement à « J'AI mal dormi », qui est un fait sur la personne
+    // et doit toujours partir (c'est le 1ᵉʳ des 14 messages légitimes du garde-fou ft-v817).
+    // C'est le pronom qui décide : **TU** = politesse · **JE/J'** = un fait à traiter.
+    re: /^(et )?(tu as|t'?as) bien dormi( \?)?$|^bien dormi( \?)?$|^(ça|ca) (roule|gaze|baigne|va bien)( \?)?$|^comment (tu vas|vas[- ]tu|va)( \?)?$|^(tu es|t'?es) (l[àa]|r[ée]veill[ée])( \?)?$|^tout va bien( \?)?$|^(et )?toi( \?)?$/i,
+    reps: [
+      "Impec, je ne dors jamais 😄 Et toi, cette nuit ?",
+      "Toujours d'attaque 💪 Toi, tu te sens comment aujourd'hui ?",
+      "En pleine forme — l'avantage de ne pas avoir de courbatures 😄 On attaque quoi ?"
+    ]
+  },
   { // merci
     re: /^((ok|okay|oki|super|nickel|parfait|top|cool|g[ée]nial|impec|impeccable) )?(merci|mrc|thanks|thx)( (beaucoup|bien|mille fois|(à|a) toi))?( \!+)?$/i,
     reps: [
