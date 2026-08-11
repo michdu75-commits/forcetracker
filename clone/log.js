@@ -554,7 +554,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
       +`<div class="snum">${si+1}</div>`
-      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
+      +`<div class="sprev" onclick="openSetNote(${ei},${si})" style="cursor:pointer;" title="Ajouter une note">${p?`<div>${p.reps}×${p.kg}${_prevTypeBadge(p)}</div>`:'<div>—</div>'}${_setPrevNote(set,p)}</div>`
       +`<input class="sinp" type="number" value="${set.reps||''}" placeholder="${set.maxi?'max':(p?p.reps:'')}" inputmode="numeric" step="1" enterkeyhint="next" onchange="upSet(${ei},${si},'reps',this.value)" oninput="_onRepsInput(this,${ei},${si})" onfocus="this.select();clearTimeout(_afTimer)" onkeydown="if(event.key==='Enter'){event.preventDefault();clearTimeout(_afTimer);const n=this.nextElementSibling;n.focus();n.select&&n.select();}">`
       +`<input class="sinp" type="number" value="${set.kg||''}" placeholder="${p?p.kg:''}" inputmode="decimal" step="0.5" enterkeyhint="done" onchange="upSet(${ei},${si},'kg',this.value)" oninput="updateRMLive(${ei},${si})" onfocus="this.select()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSetAndNext(${ei},${si});}">`
       +`<button class="tbtn ${set.type||'N'}" onclick="cycleType(${ei},${si})" title="${SET_TYPE_LABELS[set.type]||'Normal'}" id="tbtn-${ei}-${si}"><span style="line-height:1">${set.type&&set.type!=='N'?set.type:''}</span><span class="tbtn-rm" id="trm-${ei}-${si}">${set.done&&set.rm1?'~'+fmt(set.rm1):liveRM?'~'+liveRM:''}</span></button>`
@@ -866,6 +866,21 @@ function renderExBlocks(){
   c.querySelectorAll('textarea[id^="ex-note-"]').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
   renderLogFinish();
   _syncLogHdrBtns();
+}
+// ⚠️ LA COLONNE « PRÉCÉDENT » DISAIT « 5×70 » SANS DIRE QUE C'ÉTAIT UN ÉCHAUFFEMENT (ft-v827).
+// Retour de Michel, capture à l'appui : « là il n'y a rien de marqué, on ne sait pas si c'est de
+// l'échauffement ou un exercice normal ». Et c'est le seul repère qu'on a EN SÉANCE pour savoir
+// quoi charger : sans le type, « 5×70 » peut être une série de travail comme une mise en route,
+// et on ne peut rien en déduire.
+// ⭐ L'INFORMATION ÉTAIT DÉJÀ LÀ : `getPrev` rend les séries COMPLÈTES, avec leur `type`. Le rendu
+// n'en gardait que `reps×kg`. Encore une fois, la donnée existait et n'atteignait pas l'écran.
+// Le badge reprend la couleur du bouton Type de la même ligne, pour qu'on lise la même chose des
+// deux côtés.
+function _prevTypeBadge(p){
+  const t=p&&p.type;
+  if(!t||t==='N') return '';                                  // série normale → rien, pas de bruit
+  const col={'É':'var(--blue)','W':'var(--blue)','X':'var(--red)','E':'var(--red)','D':'#BF5AF2'}[t]||'var(--t3)';
+  return `<sup style="font-size:9px;font-weight:800;color:${col};margin-left:2px;">${t}</sup>`;
 }
 function getPrev(name){
   for(const s of S.sessions){

@@ -1841,6 +1841,44 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c16.close();
 }
 
+// ═══ 🔵 LA COLONNE « PRÉCÉDENT » DIT LE TYPE DE LA SÉRIE (ft-v827) ═══════════════════════
+// Retour de Michel, capture à l'appui : « là il n'y a rien de marqué, on ne sait pas si c'est de
+// l'échauffement ou un exercice normal ». C'est le seul repère qu'on a EN SÉANCE pour savoir quoi
+// charger — sans le type, « 5×70 » peut être une série de travail comme une mise en route.
+// ⭐ L'information était DÉJÀ récupérée (`getPrev` rend les séries complètes) : c'est le rendu qui
+// n'en gardait que reps×kg.
+{
+  const c17=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p17=await c17.newPage();
+  await p17.goto('http://localhost:'+PORT+'/index.html'); await p17.waitForTimeout(2200);
+  const r=await p17.evaluate(()=>{
+   try{
+    S.sessions=[{id:1,ts:1,date:'2026-08-10',volume:2610,duration:3600,
+      exs:[{name:'Soulevé de Terre',sets:[
+        {kg:70,reps:5,done:true,type:'É'},{kg:100,reps:3,done:true,type:'É'},
+        {kg:130,reps:3,done:true,type:'N'},{kg:130,reps:3,done:true,type:'X'}]}]}];
+    S.wkt={label:'Dos',start:Date.now(),exs:[{name:'Soulevé de Terre',sets:[
+      {kg:0,reps:0,type:'É'},{kg:0,reps:0,type:'É'},{kg:0,reps:0,type:'N'},{kg:0,reps:0,type:'N'}]}]};
+    _expandedEx=0; goScreen('s-log'); renderLog();
+    const cells=[...document.querySelectorAll('.sprev')].map(e=>e.innerText.trim());
+    return {cells,
+            badgeVide:_prevTypeBadge({type:'N'}),
+            badgeSansType:_prevTypeBadge({}),
+            badgeEch:_prevTypeBadge({type:'É'}),
+            badgeEchec:_prevTypeBadge({type:'X'})};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('\u2B50\u2B50 la colonne PRÉCÉDENT marque l échauffement (5×70 É)',
+    Array.isArray(r.cells) && /5.70/.test(r.cells[0]||'') && /É/.test(r.cells[0]||''), JSON.stringify(r.cells));
+  t('\u2B50 … et une série de TRAVAIL reste nue (pas de bruit sur le cas courant)',
+    Array.isArray(r.cells) && /3.130/.test(r.cells[2]||'') && !/[ÉXWED]/.test(r.cells[2]||''), JSON.stringify(r.cells));
+  t('\u2B50 l échec est marqué aussi, dans SA couleur',
+    /var\(--red\)/.test(r.badgeEchec||'') && /var\(--blue\)/.test(r.badgeEch||''), JSON.stringify([r.badgeEch,r.badgeEchec]));
+  t('une série sans type ne casse rien',
+    r.badgeVide==='' && r.badgeSansType==='', JSON.stringify([r.badgeVide,r.badgeSansType]));
+  await c17.close();
+}
+
 // ═══ 📣 LE VERDICT DE LA MONTÉE ARRIVE JUSQU'À MILO (ft-v823) ═══════════════════════════
 // Le soir du 10/08, Milo débriefe la vraie séance de Michel : « la montée en charge était propre
 // (70→100→115→130) ». L'app savait le contraire — `_monteeSuffisante` répond false sur EXACTEMENT
