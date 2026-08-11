@@ -80,6 +80,61 @@ function _memoireLargeOn(){
   try{ const e=((typeof S!=='undefined'&&S.email)||'').trim().toLowerCase();
     return !!e && MEMOIRE_LARGE_EMAILS.indexOf(e)>=0; }catch(e){ return false; }
 }
+// ─── ⏱️ SON RYTHME RÉEL — le temps qu'une série lui coûte VRAIMENT (ft-v826) ──────────────
+// 3ᵉ retour de la séance du 10/08 : « il ne prend pas en considération la phase de décharge et
+// de charge des poids, qui peut prendre du temps ; quand on demande une séance d'une heure,
+// j'ai 8 minutes de cardio d'échauffement et 15 à 20 minutes à la fin, ça me laisse pas
+// grand-chose pour la muscu au milieu ».
+//
+// ⚠️ LE RÉFLEXE AURAIT ÉTÉ D'ÉCRIRE UNE CONSIGNE (« pense au temps de chargement »). C'est
+// exactement ce que **R8** interdit : un prompt ne compense jamais une donnée absente. Milo
+// n'avait AUCUN moyen de savoir combien de temps coûte une série chez cette personne-là —
+// et « pense au temps » ne se calcule pas.
+//
+// 👉 L'app, elle, le SAIT : `sess.duration` enregistre la durée réelle de chaque séance, pauses
+// exclues, depuis toujours. On mesure donc son rythme au lieu de le supposer — chargement des
+// disques, mise en place, allers-retours compris, puisque tout ça est dans le chrono.
+// On retire le cardio noté : ce n'est pas de la musculation, et c'est précisément ce qui rogne
+// son heure.
+// **MÉDIANE et pas moyenne** : une séance écourtée ou un oubli de « terminer » fausserait une
+// moyenne, alors que la médiane les ignore (même raison qu'ailleurs dans le projet).
+function _rythmeSeance(){
+  try{
+    const sess=(S.sessions||[]).filter(s=>s&&+s.duration>0).slice(0,12);
+    const pts=[];
+    for(const s of sess){
+      const nSets=(s.exs||s.exercises||[]).reduce((a,e)=>a+((e.sets||[]).filter(x=>x&&x.done).length),0);
+      if(nSets<4) continue;                                   // trop court pour dire un rythme
+      const cardio=((s.cardioAvant&&+s.cardioAvant.duration)||0)+((s.cardio&&+s.cardio.duration)||0);
+      const min=(+s.duration/60)-cardio;
+      if(!(min>0)) continue;
+      const parSerie=min/nSets;
+      if(parSerie<0.5||parSerie>12) continue;                 // aberrant (chrono oublié) → écarté
+      pts.push(parSerie);
+    }
+    if(pts.length>=3){
+      pts.sort((a,b)=>a-b);
+      return {min:Math.round(pts[Math.floor(pts.length/2)]*10)/10, n:pts.length, mesure:true};
+    }
+    // ⚠️ PAS ASSEZ D'HISTORIQUE → on ne se tait pas, mais on DIT que c'est une estimation.
+    // Elle est DÉDUITE de son temps de repos réglé, pas inventée : repos + ~40 s d'exécution
+    // + ~30 s pour charger/décharger et se replacer.
+    const repos=(+S.defRest||130);
+    return {min:Math.round(((repos+70)/60)*10)/10, n:0, mesure:false};
+  }catch(e){ return null; }
+}
+function _ctxRythme(){
+  const r=_rythmeSeance(); if(!r||!(r.min>0)) return '';
+  const src=r.mesure ? ('MESURÉ sur ses '+r.n+' dernières séances') : ('ESTIMÉ depuis son temps de repos réglé — il/elle n\'a pas encore assez de séances pour le mesurer');
+  return '\n⏱️ SON RYTHME RÉEL ('+src+') : une série lui coûte environ **'+String(r.min).replace('.',',')+' min TOUT COMPRIS'
+    +'** — l\'exécution, le repos, ET le temps de charger/décharger les disques et de se replacer.'
+    +'\n→ ⚠️ ARITHMÉTIQUE OBLIGATOIRE dès qu\'il/elle demande une séance d\'une DURÉE donnée : '
+    +'(durée demandée − cardio d\'échauffement − cardio de fin) ÷ '+String(r.min).replace('.',',')+' = le nombre MAXIMUM de séries de musculation. '
+    +'Les séries d\'ÉCHAUFFEMENT comptent dedans. Si ton plan dépasse ce nombre, RETIRE des séries ou un exercice — '
+    +'ne réponds JAMAIS « ça tient en 1 h » sans avoir posé ce calcul. '
+    +'Et si la personne veut faire du cardio en plus, DIS-LUI ce que ça enlève à la musculation, en séries.'
+    +'\n→ Un chiffre vaut mieux qu\'une promesse : annonce le nombre de séries et le temps que ça fait, pour qu\'elle puisse arbitrer elle-même.\n';
+}
 function _historiqueCompact(){
   try{
     if(!_memoireLargeOn())return '';
@@ -2176,6 +2231,7 @@ ${(()=>{
 ${_coachQuizContext()}
 ${_memoireLongue()}
 ${_historiqueCompact()}
+${_ctxRythme()}
 ${(()=>{
   // REGISTRE ATHLÈTE (Dossier Athlète, brique 1 = socle) — mémoire durable.
   // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.

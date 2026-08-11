@@ -1792,6 +1792,55 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   await c15.close();
 }
 
+// ═══ ⏱️ MILO SAIT COMBIEN DE TEMPS COÛTE UNE SÉRIE, CHEZ CETTE PERSONNE (ft-v826) ═════════
+// 3ᵉ retour de la séance du 10/08 : « il ne prend pas en considération la phase de charge et de
+// décharge des poids ; sur une séance d'une heure j'ai 8 min de cardio au début et 15-20 min à
+// la fin, ça ne me laisse pas grand-chose pour la muscu ».
+// ⚠️ Écrire « pense au temps de chargement » dans le prompt aurait été R8 exactement : un prompt
+// ne compense pas une donnée absente. Milo n'avait AUCUN moyen de chiffrer. L'app, si :
+// `sess.duration` mesure la durée réelle depuis toujours.
+{
+  const c16=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p16=await c16.newPage();
+  await p16.goto('http://localhost:'+PORT+'/index.html'); await p16.waitForTimeout(2200);
+  const r=await p16.evaluate(()=>{
+   try{
+    const mk=(dureeMin,nSets,cardio)=>({date:'2026-08-05',vol:3000,duration:dureeMin*60,
+      cardioAvant:cardio?{type:'tapis',duration:cardio}:null,
+      exs:[{name:'Squat à la Barre',sets:Array.from({length:nSets},()=>({kg:100,reps:5,done:true,type:'N'}))}]});
+    S.sessions=[]; const vide=_rythmeSeance();
+    S.sessions=[mk(60,18,8),mk(62,18,8),mk(58,17,8),mk(75,22,10),mk(55,16,5)];
+    const plein=_rythmeSeance(); const txt=_ctxRythme();
+    S.sessions=[mk(60,18,8),mk(62,18,8),mk(58,17,8),mk(600,5,0)];
+    const aberrant=_rythmeSeance();
+    // le bloc doit être dans la zone PERSONNELLE, jamais dans le commun (cache partagé)
+    S.name='Michel'; S.bw=84; S.age=45; S.height=178; S.gender='H'; S.goal='muscle';
+    S.sessions=[mk(60,18,8),mk(62,18,8),mk(58,17,8)];
+    const ctx=buildCoachContext();
+    const iP=ctx.indexOf('PROFIL ATHLÈTE:'), iR=ctx.indexOf('SON RYTHME RÉEL');
+    return {vide, plein, aberrant, dansPersonnel:(iR>iP && iP>=0 && iR>=0),
+            ditEstime:/ESTIM[ÉE]/.test(txt)===false, // ici il est mesuré
+            aLArithmetique:/ARITHM[ÉE]TIQUE OBLIGATOIRE/.test(txt),
+            compteEchauffement:/s[ée]ries d.ÉCHAUFFEMENT comptent/i.test(txt),
+            ditLeCardio:/cardio d.[ée]chauffement . cardio de fin/i.test(txt)};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  t('\u2B50\u2B50 le rythme est MESURÉ sur ses vraies séances, pas supposé',
+    r.plein && r.plein.mesure===true && r.plein.min>=2 && r.plein.min<=4,
+    JSON.stringify(r.plein));
+  t('\u2B50 sans historique, on donne quand même un chiffre — en DISANT que c est une estimation',
+    r.vide && r.vide.mesure===false && r.vide.min>0, JSON.stringify(r.vide));
+  t('\u2B50\u2B50 une séance aberrante (chrono oublié) est ÉCARTÉE, pas moyennée',
+    r.aberrant && r.aberrant.n===3 && r.aberrant.min<5, JSON.stringify(r.aberrant));
+  t('\u2B50 le calcul est IMPOSÉ à Milo, pas suggéré',
+    r.aLArithmetique===true && r.compteEchauffement===true, JSON.stringify(r));
+  t('\u2B50 … et le cardio est retiré du budget (c est le cœur du retour)',
+    r.ditLeCardio===true, JSON.stringify(r));
+  t('\u2B50\u2B50 le rythme est dans le bloc PERSONNEL (sinon le cache partagé meurt)',
+    r.dansPersonnel===true, JSON.stringify(r));
+  await c16.close();
+}
+
 // ═══ 📣 LE VERDICT DE LA MONTÉE ARRIVE JUSQU'À MILO (ft-v823) ═══════════════════════════
 // Le soir du 10/08, Milo débriefe la vraie séance de Michel : « la montée en charge était propre
 // (70→100→115→130) ». L'app savait le contraire — `_monteeSuffisante` répond false sur EXACTEMENT
