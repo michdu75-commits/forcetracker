@@ -3107,6 +3107,24 @@ async function loadHealthAdmin(){
     if(ai&&ai.status==='ok'){
       const u=ai.used!==undefined?ai.used:(ai.count!==undefined?ai.count:null);
       h+=_healthRow('🤖','Consommation IA','ok', u!==null?('<b>'+u+'</b> appels comptés'+(ai.limit?' (plafond '+ai.limit+')':'')):'Compteur lu, rien d\'anormal');
+      // 🛡️ LE PLAFOND EST-IL ARMÉ ? (11/08/2026) — il ne l'est que si le secret partagé est posé
+      // côté Cloudflare. Avant cette ligne, l'information n'était affichée NULLE PART : on posait
+      // le secret sans aucun moyen de vérifier qu'il avait pris. *Un garde-fou qu'on ne peut pas
+      // voir ne rassure que celui qui l'a écrit* (leçon de la sauvegarde morte 36 jours).
+      // ⚠️ On affiche ce qui a été CONSTATÉ au dernier appel réel, avec sa date — pas une
+      // intention. Tant qu'aucun appel IA n'a eu lieu depuis, l'état est « pas encore constaté ».
+      if(ai.capKnown===false){
+        h+=_healthRow('🛡️','Plafond de dépense','warn',
+          'État <b>pas encore constaté</b> — pose une question à Milo, puis rouvre cette page.');
+      } else {
+        const _q=ai.capSeenAt?new Date(ai.capSeenAt):null;
+        const _qd=(_q&&!isNaN(_q))?(' · constaté le '+_q.toLocaleDateString('fr-FR')+' à '+_q.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})):'';
+        h+=_healthRow('🛡️','Plafond de dépense', ai.capArmed?'ok':'ko',
+          ai.capArmed
+            ? ('<b>ARMÉ</b> — au-delà du plafond, les appels sont refusés'+_qd)
+            : ('<b>DÉSARMÉ</b> — les appels sont comptés mais <b>jamais bloqués</b>'+_qd
+               +'<br>⚠️ Il manque le secret <code>FT_COUNT_TOKEN</code> dans le Worker Cloudflare.'));
+      }
     } else h+=_healthRow('🤖','Consommation IA','warn','Sonde injoignable : '+_escIdea((ai&&ai.error)||'?'));
     // ⑤ Les DÉPLOIEMENTS — le silence le plus coûteux du projet : un déploiement rouge ne
     // prévient personne. En juillet, le backend a échoué à partir depuis MI-JUILLET sans que

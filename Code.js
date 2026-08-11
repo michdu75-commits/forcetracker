@@ -491,8 +491,12 @@ function doGet(e) {
     var byEmail = q.byEmail || {};
     var top = Object.keys(byEmail).map(function(k){ return {email:k, count:byEmail[k]}; })
                     .sort(function(a,b){ return b.count - a.count; }).slice(0, 30);
+    var _seen = String(sp.getProperty('AI_CAP_SEEN') || '').split('|');
     return json_({
       status: 'ok',
+      capArmed: _seen[0] === 'armed',
+      capSeenAt: _seen[1] || null,
+      capKnown: !!_seen[0],
       date: q.date || null,
       global: q.global || 0,
       globalMax: parseInt(sp.getProperty('AI_GLOBAL_MAX'), 10) || 1500,
@@ -729,6 +733,15 @@ function doPost(e) {
     var _q2 = _aiQuotaBlock_(body.email);
     var _recu = String(body.token == null ? '' : body.token).trim();
     var _arme = _recu.length >= 12 && _sha256hex_(_recu) === _HASH_COUNT;
+    // 👁️ ON GARDE UNE TRACE DE CE QU'ON A CONSTATÉ (11/08/2026). Sans ça, l'état du plafond
+    // n'est lisible NULLE PART : Michel a posé le secret et n'avait aucun moyen de vérifier
+    // qu'il avait pris. *Un garde-fou qu'on ne peut pas voir ne rassure que celui qui l'a
+    // écrit* — c'est la leçon de la sauvegarde morte 36 jours et du compteur figé 3 semaines.
+    // On note l'état RÉEL observé lors du dernier appel du Worker, pas une intention.
+    try{
+      PropertiesService.getScriptProperties().setProperty('AI_CAP_SEEN',
+        (_arme ? 'armed' : 'off') + '|' + new Date().toISOString());
+    }catch(_e){}
     return json_({status:'ok', counted:true, armed:_arme,
                   blocked: _arme && _q2.blocked, scope:_q2.scope || ''});
   }

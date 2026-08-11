@@ -711,7 +711,11 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
       : {status:'ok',triggersInstalled:0,fileCount:12,lastFiles:['backup-2026-07-20.json']});
     if(u.includes('mailFails')) return J(nom==='ok'
       ? {status:'ok',fails:[],quotaRestant:98} : {status:'ok',fails:[{d:'a'},{d:'b'}]});
-    if(u.includes('aiUsage')) return J({status:'ok',used:127,limit:1000});
+    // ⚠️ Le plafond de dépense fait partie de la SANTÉ depuis le 11/08 : il ne sert à rien
+    //    s'il est désarmé, et cet état n'était visible nulle part (Michel a posé le secret
+    //    sans aucun moyen de vérifier qu'il avait pris).
+    if(u.includes('aiUsage')) return J({status:'ok',used:127,limit:1000,
+      capKnown:true, capArmed:(nom==='ok'), capSeenAt:'2026-08-11T14:30:00Z'});
     return J({status:'ok'});
   });
   // Les MISES EN LIGNE sont lues sur l'API publique de GitHub (dépôt public, aucun jeton).
@@ -738,7 +742,11 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   // ⚠️ ATTENTE RÉVISÉE le 02/08 (pas une régression) : la carte compte une 6ᵉ ligne,
   // « 🛡️ Historiques protégés », qui remonte les sauvegardes refusées par le garde-fou.
   t('⭐ le tableau de santé s\'affiche et tout est vert quand tout va bien',
-    hOk.verts===6&&hOk.rouges===0, JSON.stringify(hOk).slice(0,200));
+    hOk.verts===7&&hOk.rouges===0, JSON.stringify(hOk).slice(0,200));
+  t('⭐⭐ le PLAFOND DE DÉPENSE est visible, et dit ARMÉ quand il l\'est',
+    /ARM[ÉE]/.test(hOk.txt)&&!/D[ÉE]SARM/.test(hOk.txt), hOk.txt.slice(0,200));
+  t('⭐⭐ … et DÉSARMÉ en rouge quand le secret manque (le cas du 11/08)',
+    /D[ÉE]SARM[ÉE]/.test(hKo.txt)&&/FT_COUNT_TOKEN/.test(hKo.txt), hKo.txt.slice(0,240));
   t('⭐ la carte montre la ligne « Historiques protégés » (le garde-fou zéro perte)',
     /Historiques protégés/.test(hOk.txt), hOk.txt.slice(0,160));
   t('⭐ un déploiement RATÉ est visible (il ne prévient personne autrement)',
@@ -750,7 +758,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     hKo.rouges>=1&&/102 %/.test(hKo.txt)&&/ÉCRITURE IMPOSSIBLE/.test(hKo.txt),
     JSON.stringify(hKo).slice(0,200));
   t('sauvegardes arrêtées et mails en échec sont signalés en rouge',
-    hKo.rouges===4&&/AUCUNE programmation/.test(hKo.txt)&&/2 échecs/.test(hKo.txt),
+    hKo.rouges===5&&/AUCUNE programmation/.test(hKo.txt)&&/2 échecs/.test(hKo.txt),
     JSON.stringify(hKo).slice(0,220));
   t('une sauvegarde faite aujourd\'hui se lit « aujourd\'hui », pas « il y a 1 j »',
     /aujourd/.test(hOk.txt)&&!/il y a 1 j/.test(hOk.txt), hOk.txt.slice(0,160));
@@ -2697,9 +2705,19 @@ console.log('\n═══ P. Compteur IA — branché là où passent vraiment le
     /catch\(e\)\{[^}]*repli ouvert/.test(w), 'le catch de _compterIA ne dit pas son intention');
   t('le refus se lit sans appel réseau (zéro latence ajoutée)',
     /if\s*\(_plafondAtteint\(\)\)/.test(w), '_plafondAtteint non consulté avant l\'appel');
-  t('⭐⭐ le plafond reste DÉSARMÉ tant que le secret partagé n\'est pas posé des deux côtés',
-    /var _arme = !!_tok && body\.token === _tok/.test(cj) && /blocked: _arme && _q2\.blocked/.test(cj),
+  // ⚠️ TÉMOIN RETOURNÉ le 11/08 (R30), pas supprimé : le secret ne vit plus dans une Script
+  // Property mais sous forme d'EMPREINTE en dur dans Code.js. Raison : Michel s'en méfie
+  // (« sur Google rien n'est enregistré ») — son expérience porte sur `PREMIUM_EMAILS`,
+  // réécrite par un déclencheur fantôme, d'où déjà `PREMIUM_HARDCODED_`. Même motif ici.
+  // Ce que le témoin protège n'a PAS changé : le blocage ne doit jamais pouvoir être
+  // déclenché par n'importe qui, alors que l'URL Apps Script est publique.
+  t('⭐⭐ le plafond reste DÉSARMÉ tant que le bon secret n\'est pas présenté',
+    /_sha256hex_\(_recu\) === _HASH_COUNT/.test(cj) && /blocked: _arme && _q2\.blocked/.test(cj),
     'le blocage pourrait être déclenché par n\'importe qui — l\'URL Apps Script est publique');
+  t('⭐ l\'empreinte est en dur dans le code, hors d\'atteinte d\'un déclencheur fantôme',
+    /_HASH_COUNT = '[0-9a-f]{64}'/.test(cj), 'empreinte absente ou mal formée');
+  t('⭐⭐ l\'état du plafond est MÉMORISÉ pour être affichable (sinon on ne peut pas le vérifier)',
+    /AI_CAP_SEEN/.test(cj) && /capArmed:/.test(cj), 'l\'état armé/désarmé n\'est exposé nulle part');
   t('le compteur réutilise `ai_quota` (celui que lit déjà le panneau Admin), pas un second compteur',
     /action === 'aiCount'/.test(cj) && /_aiQuotaBlock_\(body\.email\)/.test(cj), 'route aiCount absente');
 }
