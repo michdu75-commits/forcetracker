@@ -6,7 +6,22 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v830`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v832`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+
+> ## 🔀 LIVRÉ CETTE NUIT — les exercices unilatéraux (ft-v832, 11/08)
+>
+> Les 48 exercices tranchés un par un avec Michel sont **dans le code**. Le critère est de lui :
+> *« met uni vu que ça doit être fait de l'autre côté aussi »*. On saisit **3 séries, pas 6**, le
+> tonnage double tout seul, et la charge obéit à **une seule phrase** pour les 355 exercices :
+> **« on note le poids qui BOUGE pendant la répétition »**.
+>
+> **⚠️ CE QU'IL FAUT SAVOIR EN REPRENANT** : l'**historique d'avant n'est pas corrigé** (marqueur
+> `sess.uniConv`) — le curl de Michel noté 60 kg (2 × 30) deviendrait **quadruple** en volume s'il
+> était recalculé. Il a dit *« laisse pour l'instant »*. Toute correction future doit être une
+> **migration explicite**, jamais un changement de `_workVol`.
+>
+> **⏭️ À vérifier à sa prochaine séance** : que la pastille 🔀 s'affiche bien sur ses exercices, et
+> qu'il pense à noter **28** et non 56 sur le rowing haltère (la pop-up v56 le lui dit).
 
 > ## 💡 IDÉE GARDÉE — « le dessin pour les muscles, la photo pour le geste » (09/08)
 >

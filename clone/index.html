@@ -1881,6 +1881,47 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   </div>
 </div>
 
+<!-- MODAL: Exercice unilatéral — ce qu'on note, et pourquoi le tonnage double.
+     Ouverte en tapant la pastille « 🔀 par bras » d'un exercice, en séance.
+     ⚠️ Pas de marqueur à poser en fermant (aucun effet de bord) — elle n'a donc pas
+     sa place dans _OVERLAY_CLOSERS (R15 ne s'applique qu'aux fermetures qui MARQUENT). -->
+<div class="overlay" id="ov-uni-help" onclick="if(event.target===this)closeUniHelp()">
+  <div class="modal" style="max-width:380px;padding:10px 20px 20px">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:17px;margin-bottom:4px;text-align:center">🔀 Exercice unilatéral</div>
+    <div id="uni-help-ex" style="font-size:13px;color:var(--t2);text-align:center;margin-bottom:16px"></div>
+
+    <div style="background:rgba(255,45,85,.07);border:1px solid rgba(255,45,85,.25);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-weight:800;font-size:14px;margin-bottom:5px">Note le poids qui BOUGE</div>
+      <div style="font-size:13px;color:var(--t2);line-height:1.55">
+        Un seul haltère monte ? Note <strong>son poids à lui</strong> (28), pas le double.<br>
+        Les deux bougent en même temps (squat bulgare, deux haltères en main) ? Note le <strong>total</strong>.
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:11px;margin-bottom:16px">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:15px;flex-shrink:0">📝</span>
+        <div style="font-size:13px;color:var(--t2);line-height:1.55">Tu saisis <strong>3 séries</strong>, comme d'habitude — pas 6. L'app sait qu'il faut refaire chaque série de l'autre côté.</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:15px;flex-shrink:0">📊</span>
+        <div style="font-size:13px;color:var(--t2);line-height:1.55">Ton <strong>tonnage compte double</strong> sur cet exercice : les deux côtés ont bien été travaillés.</div>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:15px;flex-shrink:0">🏆</span>
+        <div style="font-size:13px;color:var(--t2);line-height:1.55">Ton <strong>record est calculé sur la charge d'un côté</strong> — c'est la vraie charge que le muscle a tenue.</div>
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--t2);line-height:1.6">
+      💡 Un côté plus faible que l'autre ne peut pas se noter séparément aujourd'hui — ça doublerait la saisie pour tout le monde. Dis-le si ça te manque.
+    </div>
+
+    <button class="btn btn-red" onclick="closeUniHelp()" style="width:100%;padding:13px">OK</button>
+  </div>
+</div>
+
 <!-- MODAL: Détail / Édition séance -->
 <div class="overlay" id="ov-sess-detail" onclick="if(event.target===this)closeSessDetail()">
   <div class="modal" style="max-width:420px;max-height:92vh;display:flex;flex-direction:column;padding:0;overflow:hidden">

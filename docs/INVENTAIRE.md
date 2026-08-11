@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v813`, dernier commit 2026-08-09).
+> Généré depuis **le code** (version `ft-v832`, dernier commit 2026-08-11).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -18,10 +18,10 @@
 |---|---|---|
 | Écrans | 7 | 0 |
 | Lignes de menu | 5 | 1 |
-| Fenêtres (modales) | 56 | 8 |
+| Fenêtres (modales) | 57 | 9 |
 | Actions du serveur | 38 | 1 |
-| Fonctions JS | 520 | — |
-| Nouveautés annoncées | 52 | — |
+| Fonctions JS | 524 | — |
+| Nouveautés annoncées | 53 | — |
 
 ## 🖥️ Écrans
 
@@ -122,6 +122,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-confirm` | ✅ |
 | `ov-reco-why` | ✅ |
 | `ov-type-help` | ✅ |
+| `ov-uni-help` | ❓ |
 | `ov-sess-detail` | ✅ |
 | `ov-import-prog` | ✅ |
 | `ov-import-meal` | ✅ |
@@ -157,6 +158,7 @@ Ce qui a été **annoncé dans la pop-up « Quoi de neuf »** — donc censé ex
 
 | # | | Nouveauté |
 |---|---|---|
+| 56 | 🔀 | Les exercices « un côté à la fois » |
 | 55 | 🔒 | Protège ton compte — 2 minutes |
 | 54 | 🏷️ | Des exercices ont changé de nom |
 | 53 | 🧍 | Ta figurine passe à 41 muscles |

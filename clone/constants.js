@@ -268,6 +268,7 @@ const NEW_FEATURES=[
   {id:'milo-remplace', screen:'coach', desc:'Quand tu demandes à Milo de changer un exercice pendant une séance EN COURS, il te demande maintenant ce que tu veux faire : ➕ Ajouter à ta séance · 🔄 Remplacer les exercices · Annuler. Il t\'affiche ce qui est en jeu (combien de séries sont déjà validées) avant que tu choisisses. « Remplacer » garde ton chrono et ton cardio : tu ne recommences pas ta séance.'},
   {id:'muscles-verifies', screen:'log', desc:'Les 337 exercices du catalogue ont été relus un par un : quels muscles travaillent vraiment, lesquels ne font que stabiliser. Une centaine de fiches corrigées — le leg curl ne comptait plus les fessiers (la hanche ne bouge pas), les crunchs ne comptaient plus les fléchisseurs de hanche, les rowings à poitrine appuyée ne comptaient plus le bas du dos. Ça change ta figurine, tes calories estimées et ce que Milo sait de ta séance.'},
   {id:'groupes-complets', screen:'log', desc:'En créant ton propre exercice, tu peux enfin choisir les groupes Lombaires, Avant-bras et Full Body — ils existaient dans l\'app mais étaient absents du menu (merci Christophe pour le signalement).'},
+  {id:'unilateral', screen:'log', desc:'48 exercices sont maintenant reconnus comme UNILATÉRAUX (rowing haltère, curl haltères, fentes, squat bulgare, élévations à un bras…) : une pastille 🔀 « par bras » ou « par jambe » s\'affiche à côté de leur nom en séance. Tu saisis toujours 3 séries, pas 6 — l\'app sait qu\'elles se refont de l\'autre côté et compte ton tonnage en double. ⚠️ La charge se note comme ceci : tu notes LE POIDS QUI BOUGE pendant la répétition. Un seul haltère monte (rowing, curl alterné) → note son poids à lui (28), pas le double. Les deux bougent (squat bulgare avec 2 haltères) → note le total. Tape la pastille, tout y est expliqué.'},
   // ⚠️ `screen` doit valoir home · progress · log · nutrition · coach · setup — RIEN D'AUTRE.
   // L'onglet « Menu » est l'écran `setup` : 2 annonces écrites avec screen:'menu' (le style
   // Moniteur, la page Premium) n'ont JAMAIS été affichées, faute de correspondance. Un test
@@ -370,6 +371,12 @@ const WHATS_NEW=[
   // ⚠️ CETTE POP-UP SE MÉRITE (règle d'or #11) : elle est là parce que la personne doit FAIRE
   // quelque chose — sans code, sa sauvegarde en ligne reste en pause. On dit ce qui change pour
   // elle, pas comment c'est fait ; la pop-up ANNONCE, l'aide EXPLIQUE (R25).
+  // ⚠️ CETTE POP-UP SE MÉRITE, ELLE AUSSI — et pour la même raison : la personne doit FAIRE
+  // quelque chose de différent. Elle notait « 56 kg » à son rowing haltère (28 × 2) ; à partir
+  // de maintenant l'app attend 28. Sans l'avoir lu, ses charges seraient doublées et son
+  // tonnage quadruplé, sans que rien ne l'avertisse. C'est un repère qui BOUGE, le seul cas
+  // qui justifie d'interrompre. La pop-up ANNONCE, la pastille 🔀 EXPLIQUE (R25).
+  {v:56, ic:'🔀', t:'Les exercices « un côté à la fois »', d:'48 exercices sont maintenant reconnus comme unilatéraux — rowing haltère, curl haltères, fentes, squat bulgare, élévations à un bras… Une pastille 🔀 « par bras » ou « par jambe » apparaît à côté de leur nom en séance. 👉 CE QUI CHANGE POUR TOI : tu notes LE POIDS QUI BOUGE. Un seul haltère monte ? Note son poids à lui (28), plus le double. Les deux bougent (squat bulgare) ? Note le total. Tu saisis toujours 3 séries, pas 6 : l\'app sait qu\'elles se refont de l\'autre côté et double ton tonnage toute seule. Tes anciennes séances ne bougent pas. 💪'},
   {v:55, ic:'🔒', t:'Protège ton compte — 2 minutes', d:'Tes données en ligne ne sont plus accessibles avec ta seule adresse e-mail : il faut désormais un code perso, que toi seul connais. 👉 Tant que tu ne l\'as pas posé, ton appli marche normalement et tes séances sont enregistrées sur ton téléphone — mais ta sauvegarde en ligne reste en pause. Pour l\'activer : Profil → « Protéger mon compte avec un code ». Tu reçois un code par mail, tu choisis le tien, c\'est fini. 🔐'},
   {v:54, ic:'🏷️', t:'Des exercices ont changé de nom', d:'Après relecture du catalogue, quelques doublons ont fusionné et « Dips Parallèles » est devenu « Dips Triceps (Buste Droit) » (rangé dans les Triceps). 🛡️ Tes records ont suivi tout seuls, et la recherche comprend encore les anciens noms — tape l\'ancien, tu le trouveras. 👊'},
   {v:53, ic:'🧍', t:'Ta figurine passe à 41 muscles', d:'Le pectoral est maintenant dessiné en 3 faisceaux, la cuisse en 3, le trapèze en 3 étages — et les adducteurs, le soléaire et le trapèze inférieur existent enfin. Tape un muscle : il te dit son nom précis. Ton ventre a changé d\'aspect, c\'est normal : l\'ancien découpage était mal nommé. 💪'},
@@ -896,6 +903,77 @@ function exNom(id){ const l=id&&EX_IDS[id]; return (l&&l[0])||null; }
 /** Nom actuel correspondant à un nom éventuellement ancien — remplace la table de migration.
  *  Rend le nom inchangé si l'exercice est inconnu (exercice perso : on n'y touche pas). */
 function exNomActuel(nom){ const id=exId(nom); return id?exNom(id):nom; }
+
+// ═══════════════════════════════════════════════════════════════════════════════════
+// LES EXERCICES UNILATÉRAUX — 48 exercices tranchés UN PAR UN par Michel (10/08/2026)
+// ═══════════════════════════════════════════════════════════════════════════════════
+// ⭐ LE CRITÈRE, ET C'EST MICHEL QUI L'A DONNÉ. Sur le Soulevé de Terre Valise (la charge
+// est d'un seul côté, mais les DEUX jambes poussent) : « bah c'est entre les 2 lol… met
+// uni vu que ça doit être fait de l'autre côté aussi ». Ce qui compte n'est donc PAS
+// combien de membres travaillent — c'est SI LA SÉRIE SE REFAIT DE L'AUTRE CÔTÉ. C'est
+// exactement ce qui double le volume réellement produit.
+//
+// ⚠️ CE MARQUEUR NE TOUCHE PAS À LA CHARGE, et c'est ce qui rend la chose simple.
+// La règle de saisie est UNE SEULE PHRASE, valable pour les 355 exercices :
+//        « on note le poids qui BOUGE pendant la répétition »
+// (incliné haltères = 60, les 2 montent · rowing haltère = 28, 1 seul monte · squat
+// bulgare = 40, les 2 haltères descendent avec le corps). Deux règles qui se ressemblent
+// finissent toujours par diverger ; une seule, non (R2). Le marqueur ne sert donc qu'à
+// ① DOUBLER LE VOLUME et ② AFFICHER « par bras / par jambe ».
+//
+// ⚠️ ON SAISIT 3 SÉRIES, PAS 6 — décision de Michel : « pas possible de faire 50 séries.
+// Il faut intégrer comme avant 3 séries × X kilos, mais dans la logique on sait qu'il
+// faut faire une série à gauche et une à droite ». L'information est dans le TYPE de
+// l'exercice, pas dans la saisie (règle d'or #4 : noter en salle doit rester instantané).
+// Conséquence assumée : un côté plus faible (28 à droite, 26 à gauche) ne peut pas
+// s'exprimer. À rouvrir seulement si un testeur le demande (R22).
+//
+// ⚠️ LES 9 FAUX AMIS sont volontairement ABSENTS de cette liste (Curl Zottman, Marteau,
+// Extension Triceps Arrière, Leg Curl Haltère, Seal Row, Rowing Landmine, Élévations
+// Mollets Penché, et les deux machines « ISO-LATÉRALES » — iso-latéral = bras de levier
+// indépendants, PAS un côté à la fois). Les ranger ici aurait doublé leur volume à tort.
+// 4 des 9 venaient de MES paris, corrigés par Michel ou par le dessin animé de la
+// figurine : une liste faite de tête se serait trompée sur presque la moitié (R28).
+//
+// La clé est l'IDENTIFIANT, jamais le nom : un exercice renommé garde son id, donc son
+// marqueur (R2 — une information a un seul propriétaire).
+const EX_UNI={
+ 'arrache-haltere-dumbbell-snatch':'bras','chariot-de-puissance-fentes-arriere':'jambe',
+ 'cossack-squat':'jambe','curl-araignee-spider-curl':'bras','curl-concentre':'bras',
+ 'curl-halteres':'bras','developpe-couche-unilateral-kettlebell':'bras',
+ 'developpe-epaules-unilateral-elastique':'bras','elevation-laterale-inclinee-haltere':'bras',
+ 'elevation-laterale-landmine':'bras','elevations-laterales-unilaterale-poulie':'bras',
+ 'elevations-mollets-unilateral':'jambe','extension-fessiers-arriere-kickback':'jambe',
+ 'extension-quadriceps-unilaterale':'jambe','extension-quadriceps-unilaterale-machine-a-d':'jambe',
+ 'extension-triceps-concentree-poulie':'bras','fentes':'jambe','fentes-arriere':'jambe',
+ 'fentes-croisees-curtsy-lunge':'jambe','fentes-kettlebell':'jambe','fentes-laterales':'jambe',
+ 'fentes-marchees':'jambe','hip-thrust-unilateral-poussee-de-hanche':'jambe',
+ 'kickback-machine':'jambe','leg-curl-unilateral-debout':'jambe','meadows-row':'bras',
+ 'montee-sur-box-halteres':'jambe','montee-sur-box-step-up':'jambe',
+ 'presse-a-cuisses-sur-le-cote':'jambe','renegade-row':'bras',
+ 'rotation-externe-epaule-abduction':'bras','rotation-externe-epaule-elastique':'bras',
+ 'rotation-externe-epaule-haltere':'bras','rotation-externe-epaule-poulie':'bras',
+ 'rotation-interne-90-poulie':'bras','rotation-interne-epaule-elastique':'bras',
+ 'rowing-haltere-tirage-horizontal':'bras','rowing-unilateral-elastique':'bras',
+ 'smith-machine-fentes':'jambe','souleve-de-terre-roumain-unilateral':'jambe',
+ // ⚠️ « côté » et pas « jambe » : les DEUX jambes poussent, seule la charge est d'un côté.
+ // C'est le cas qui a fait naître le critère — dire « par jambe » serait faux.
+ 'souleve-de-terre-valise-suitcase':'cote',
+ 'split-squat-elastique-fente-statique':'jambe','split-squat-trx-sangles':'jambe',
+ 'squat-bulgare':'jambe','squat-bulgare-elastique':'jambe','squat-pistol':'jambe',
+ 'squat-pistol-trx-sangles':'jambe','tirage-vertical-alterne-elastique':'bras'
+};
+
+/** Cet exercice se refait-il de l'autre côté ? `false` pour tout exercice inconnu
+ *  (exercice perso, nom inventé) — on ne double JAMAIS un volume au hasard : se tromper
+ *  ici fausse une courbe que la personne regarde (R29, le coût de l'erreur décide). */
+function estUnilateral(nom){ const id=exId(nom); return !!(id&&EX_UNI[id]); }
+
+/** « par bras » · « par jambe » · « par côté » — ou '' si l'exercice n'est pas unilatéral. */
+function uniLabel(nom){
+  const id=exId(nom), c=id&&EX_UNI[id];
+  return c==='bras'?'par bras':c==='jambe'?'par jambe':c==='cote'?'par côté':'';
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════════
 // LES MUSCLES ÉCRITS — la donnée, pas la devinette (02/08/2026, décision Michel)

@@ -572,10 +572,22 @@ function _catalogueContext(){
   const entete = cfg
     ? `Il s'entraîne : ${cfg.lbl} → voici ce qu'il peut faire (les autres exercices de l'app ne lui servent pas ici).`
     : `Son lieu d'entraînement n'est pas renseigné → voici TOUT le catalogue. Ne suppose pas son matériel : si ça compte pour ta réponse, demande-lui.`;
+  // ⚠️ LES UNILATÉRAUX SONT LISTÉS À PART, jamais marqués d'un suffixe dans les bacs :
+  // un « Fentes (uni) » collé au nom finirait recopié tel quel par Milo, et l'app ne
+  // reconnaîtrait plus l'exercice — la consigne juste au-dessus exige le nom EXACT.
+  const uniDispo=Object.keys(bacs).reduce((a,k)=>a.concat(bacs[k]),[])
+    .filter(n=>typeof estUnilateral==='function'&&estUnilateral(n))
+    .sort((a,b)=>a.localeCompare(b,'fr'));
   return '\n🏋️ EXERCICES DISPONIBLES DANS SON APPLICATION — '+entete
     +'\n⚠️ Quand tu proposes un exercice, prends-le dans cette liste et écris son nom EXACTEMENT : c\'est ce qui permet à l\'app de le reconnaître, d\'afficher sa démonstration et de suivre ses records. Si ce dont il a besoin n\'y est pas, dis-le simplement.\n'
     +lignes.join('\n')
-    +(perso.length?`\n- SES exercices perso (créés par lui, à privilégier) : ${perso.join(' · ')}`:'');
+    +(perso.length?`\n- SES exercices perso (créés par lui, à privilégier) : ${perso.join(' · ')}`:'')
+    // R4/R8 : sans cette liste, Milo ne peut pas savoir qu'un exercice se refait de l'autre
+    // côté — et il conseillerait une charge dans une autre unité que celle notée dans l'app.
+    // Deux langues différentes pour le même objet, c'est le début de toutes les divergences.
+    +(uniDispo.length?`\n\n🔀 EXERCICES UNILATÉRAUX (la série se refait de l'autre côté) : ${uniDispo.join(' · ')}`
+      +`\n⚠️ SUR CEUX-LÀ, PARLE LA MÊME LANGUE QUE L'APP : la règle de notation est « on note le poids qui BOUGE pendant la répétition ». Un seul haltère monte (rowing haltère, curl alterné, élévation latérale à un bras) → la charge affichée est celle d'UN haltère, jamais le total. Les deux bougent (squat bulgare avec 2 haltères, cossack squat) → c'est bien le total.`
+      +`\n⚠️ ET NE COMPTE PAS LES SÉRIES EN DOUBLE : « 3 séries » veut dire 3 de chaque côté (6 réellement faites, mais 3 lignes saisies). Quand tu construis une séance, écris le nombre de séries PAR CÔTÉ, comme lui. Compte en revanche le temps réel : un unilatéral prend ~2× plus longtemps qu'un exercice classique — c'est déterminant quand il te demande de tenir dans 1 h.`:'');
 }
 function _coachQuizContext(){
   const out=[];
@@ -1958,7 +1970,11 @@ function buildCoachContext(msg) {
       const setsStr = ds.length
         ? ds.map(x => `${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(' ')
         : '—';
-      return `${e.name}: ${setsStr}${e.note?' [note: '+e.note+']':''}${_verdictMontee(e, ds)}`;
+      // 🔀 « par bras » sur la ligne elle-même : sans ça, Milo lit « 28×8 » et croit à une
+      // charge dérisoire pour un dos, alors que 28 kg d'une seule main est une vraie série.
+      // Le marqueur est SUR la donnée, pas seulement dans la consigne (R4).
+      const uni=(typeof estUnilateral==='function'&&estUnilateral(e.name))?` [${uniLabel(e.name)}, ${ds.length} série${ds.length>1?'s':''} DE CHAQUE CÔTÉ]`:'';
+      return `${e.name}: ${setsStr}${uni}${e.note?' [note: '+e.note+']':''}${_verdictMontee(e, ds)}`;
     }).join(' · ');
     // Le CARDIO de la séance (mesuré le 02/08 : il n'était PAS transmis — Milo ignorait
     // 25 min de tapis notées après la muscu). Les deux moments sont nommés, parce qu'un
@@ -1984,6 +2000,7 @@ function buildCoachContext(msg) {
       let l=`- ${e.name}${(typeof _exRole==='function')?' ['+_exRole(e.name)+']':''}`;
       if(done.length)l+=` — fait: ${_fmt(done)}`;
       if(todo.length)l+=` — à faire: ${_fmt(todo)}`;
+      if(typeof estUnilateral==='function'&&estUnilateral(e.name))l+=` [🔀 ${uniLabel(e.name)} — chaque série se refait de l'autre côté, donc ~2× plus de temps]`;
       if(e.group)l+=' [superset]';
       if(e.dropset)l+=' [dropset]';
       if(e.note)l+=` [note: ${e.note}]`;
@@ -3954,6 +3971,7 @@ const _DRAWER_CONTENT = {
         {ic:'⚡',t:'Démarrer une séance',d:'Bouton rouge central ⚡ ou "Commencer une séance" depuis l\'accueil. Ajoute tes exercices, saisis kg × reps, valide chaque série avec ✓. Le timer de repos se lance automatiquement entre les séries. Astuce : dans la recherche d\'exercices, tes FAVORIS (ceux que tu utilises le plus souvent) remontent automatiquement en tête, avec une ★ — tu retrouves tes mouvements habituels sans scroller.'},
         {ic:'🏋️',t:'Tags de série',d:'É = Échauffement (exclu du volume et des PRs) · N = Normal, par défaut, non affiché · X = Échec musculaire. Tape la pastille pour changer. Timer : É 45s · N 2:10 · X 4min.'},
         {ic:'⚡',t:'Super-séries & Pyramides',d:'Deux façons de créer un superset : 1) le bouton "⚡ Grouper" (dès 2 exercices) → sélectionne les exercices → "Lier en supersérie". 2) Plus rapide : attrape la petite poignée (6 points, à côté du ⋯) sur un exercice et glisse-le sur un autre → le superset se crée tout seul. Ça marche EN SÉANCE et dans l\'ÉDITEUR DE PROGRAMME (✏️ — glisse une carte sur une autre). Enchaînement sans repos entre eux, avance automatique + vibration entre les blocs. Pour défaire : "↩ Retirer". Sous chaque exercice : 📉 Drop set (−10% auto) · 📈 Pyramide + (+10%) · 📉 Pyramide − (−10%).'},
+        {ic:'🔀',t:'Les exercices « un côté à la fois »',d:'48 exercices de l\'app sont <b>unilatéraux</b> : la série se refait de l\'autre côté (rowing haltère, curl haltères, fentes, squat bulgare, élévations latérales à un bras, extension quadriceps unilatérale…). En séance, ils portent une pastille <b>🔀 « par bras »</b> ou <b>« par jambe »</b> à côté de leur nom — tape-la pour tout revoir. <b>QUEL POIDS NOTER</b> — une seule règle, valable partout dans l\'app : <b>tu notes le poids qui BOUGE pendant la répétition</b>. Un seul haltère monte (rowing haltère, curl alterné, élévation à un bras) → note son poids à lui, 28, jamais 56. Les deux bougent en même temps (squat bulgare avec deux haltères, développé incliné) → note le total, 60. <b>COMBIEN DE SÉRIES</b> : tu saisis <b>3</b>, comme d\'habitude — pas 6. L\'app sait qu\'il faut refaire chaque série de l\'autre côté, et <b>compte ton tonnage en double</b> toute seule. Ton <b>record</b>, lui, reste calculé sur la charge d\'un seul côté : c\'est la vraie charge que ton muscle a tenue. ⚠️ Un côté plus faible que l\'autre ne peut pas se noter séparément aujourd\'hui — ça doublerait la saisie pour tout le monde ; dis-le si ça te manque. Tes séances déjà enregistrées ne bougent pas.'},
         {ic:'📊',t:'Historique par exercice',d:'Bouton 📊 sur chaque exercice en séance → graphique du poids max sur les 5 dernières séances. Pratique pour calibrer sa charge du jour.'},
         {ic:'🧍',t:'La figurine des muscles travaillés',d:'Après ta séance (et sur chaque carte d\'historique), la figurine colore ce que tu as travaillé : ROUGE = muscle moteur, ORANGE = muscle secondaire, BLEU = sollicité indirectement, brun = pas travaillé. Depuis le 03/08 elle dessine 41 muscles au lieu de 18 zones : le pectoral en 3 faisceaux, la cuisse en 3, le trapèze en 3 étages, plus les adducteurs, le soléaire et le trapèze inférieur. Tape un muscle pour lire son nom précis. ⚠️ Plusieurs faisceaux d\'un même muscle s\'allument encore ensemble (un développé couché allume les 3 bandes du pectoral) : le dessin a pris de l\'avance sur les fiches d\'exercices, qui seront affinées ensuite.'},
         {ic:'🔬',t:'D\'où viennent les muscles affichés',d:'Chaque exercice du catalogue a ses muscles ÉCRITS à la main, pas devinés d\'après son nom. Les 337 fiches ont été relues une par une début août : environ 120 corrigées. Exemples de ce qui était faux — le leg curl comptait les fessiers alors que la hanche ne bouge pas ; les crunchs comptaient les fléchisseurs de hanche alors que le bassin reste au sol ; les rowings à poitrine appuyée comptaient le bas du dos, que ces machines servent justement à soulager. Ça compte, parce que ces muscles servent aussi à estimer tes calories et à renseigner Milo. Si tu vois une fiche qui te paraît fausse, dis-le : c\'est comme ça qu\'elles se corrigent.'},

@@ -63,6 +63,46 @@ identifié comme bloquant avant le grand public.
 si un testeur équipé Polar le demande. **Pas avant** — et surtout pas pour améliorer un chiffre de
 calories qu'aucune équation ne sait produire.
 
+### 🤖 ANDROID CHANGE LA DONNE (pour le H10 en direct) — et pas pour Michel (11/08, via GPT)
+
+**Le fait est exact, vérifié** : **Chrome sur Android supporte le Web Bluetooth**, iOS ne le supporte
+sur **aucun** navigateur (c'est le moteur de Safari qui est imposé à tous). Donc, sur un téléphone
+Android, Force Tracker pourrait lire la ceinture **en direct, depuis la page web**, sans Bluefy et
+sans coque native. C'est propre, et c'est à garder.
+
+**⚠️ MAIS ÇA NE DÉBLOQUE RIEN AUJOURD'HUI, et il faut le dire** : Michel est sur **iPhone**. Une
+fonctionnalité qui marche chez tout le monde sauf chez la personne qui la teste ne se construit pas
+en premier. Et le principe posé le 22/07 tient toujours : *« le natif ne doit apporter que ce que le
+web ne peut pas offrir »* — ici, ce serait plutôt *le web ne l'offre que sur la moitié des
+téléphones*, ce qui est le pire cas pour une PWA (deux comportements à maintenir, deux aides à
+écrire, deux sources de bugs).
+
+**Ce qui reste vrai et utile** : si un testeur Android équipé d'un cardio se présente, c'est **le**
+chemin à essayer — quelques dizaines de lignes, aucun compte développeur, aucune donnée qui sort du
+téléphone (l'argument RGPD le plus fort de tout ce dossier).
+
+### ⌚ FITBIT — un 3ᵉ avis, pas une 3ᵉ vérité (11/08, via GPT)
+
+L'API Fitbit expose bien la **FC intraday** et les **calories/MET à la minute**. C'est séduisant, et
+**le piège est là** : le MET rendu par Fitbit **n'est pas une mesure**, c'est **l'estimation de
+Fitbit** — exactement l'objet qu'on cherche à valider. *On ne calibre pas une estimation avec une
+autre estimation ; on constate juste qu'elles ne sont pas d'accord.* (GPT le dit d'ailleurs
+lui-même, honnêtement.)
+
+**Deux réserves concrètes** : ① l'API **intraday** n'est pas ouverte par défaut — il faut déclarer
+une application « personnelle » (accès à ses propres données) ou demander une autorisation à Fitbit ;
+② un bracelet au **poignet** mesure la FC par capteur optique, et c'est précisément ce qui se dégrade
+sur les mouvements de musculation (poignet plié, main serrée, vibrations) — le reproche que Michel
+faisait déjà à sa Garmin : *« le problème de Garmin c'est qu'il enregistre mal les mouvements »*.
+
+**Ce que ça vaut quand même** : une **3ᵉ estimation indépendante** dit quelque chose d'utile — la
+**dispersion**. Si l'app, la Polar, la Garmin et Fitbit donnent 255 · 310 · 420 · 380 kcal pour la
+même séance, le vrai résultat n'est pas « laquelle a raison » (personne ne le sait) mais **« aucune
+n'est fiable à ±25 %, donc on affiche une fourchette »** — et ça, c'est directement actionnable.
+
+**⛔ On n'achète rien pour ça.** Si Michel a déjà le bracelet, on note la colonne ; sinon le protocole
+ci-dessous suffit.
+
 ### 📌 Et la seule chose utile à faire MAINTENANT
 
 Rien de tout ça n'est nécessaire pour savoir si le modèle actuel est dans le bon ordre de grandeur.
@@ -110,7 +150,26 @@ demande au lieu de supposer.
 
 ---
 
-## 🔀 EXERCICES UNILATÉRAUX — la liste à cocher par Michel (mise de côté le 10/08/2026)
+## ✅ EXERCICES UNILATÉRAUX — LIVRÉ le 11/08/2026 (ft-v832)
+
+> **✅ FAIT.** Les 48 exercices sont dans `EXLIB` (constante `EX_UNI`, clé = l'identifiant), le
+> volume double, la pastille 🔀 « par bras / par jambe » s'affiche en séance avec son aide, et Milo
+> reçoit la liste + la règle du poids qui bouge + l'interdiction de compter les séries en double.
+> **22 témoins permanents**, 23 rouges au contrôle négatif. Détail : journal `ft-v832`.
+>
+> **⏭️ CE QUI RESTE OUVERT, et c'est une décision de Michel, pas un oubli :**
+> · **l'historique d'avant la bascule** n'est pas corrigé (marqueur `sess.uniConv`) — son curl noté
+>   60 kg (2 × 30) resterait juste en charge mais quadruple en volume s'il était recalculé.
+>   Michel : *« laisse pour l'instant »*. Le jour où on décidera, ce sera une **migration explicite**
+>   qui pose `uniConv:1` sur les séances reprises, jamais un changement de `_workVol` ;
+> · **un côté plus faible ne peut pas s'exprimer** (28 à droite, 26 à gauche) — renoncement assumé,
+>   à rouvrir seulement si un testeur le demande (R22) ;
+> · les **séances importées** (photo/PDF d'un ancien carnet) ne reçoivent pas `uniConv` : on ne sait
+>   pas sous quelle convention elles ont été notées, donc on ne double rien.
+
+<details><summary>📜 Le dossier complet (méthode, critère, revue des 57 exercices) — gardé pour la mémoire</summary>
+
+### La liste à cocher par Michel (ouvert le 10/08/2026)
 
 > **D'où ça vient** : Michel note son Rowing Haltère « 56 kg » alors qu'il a **28 kg dans une main**.
 > L'app n'a **aucune notion** d'unilatéral : elle compte le volume, les records et le 1RM comme si
@@ -312,6 +371,9 @@ tenus. Même chose au Cossack Squat (1 haltère à 2 mains) et à la Montée sur
 → C'est exactement pourquoi la question de la convention (**poids d'UN haltère ou TOTAL ?**) reste
 à trancher AVANT de coder : voir la section plus haut.
 <!-- REVUE-UNILATERAL-FIN -->
+
+</details>
+
 
 ### ✅ Ceux dont je suis sûr (à confirmer quand même)
 

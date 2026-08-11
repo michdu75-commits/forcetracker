@@ -450,6 +450,13 @@ details.acc[open]>summary::after{transform:rotate(45deg);}
 .ex-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--sep);background:linear-gradient(90deg,rgba(255,45,85,.08),transparent);}
 .ex-name{font-family:var(--font-cond);font-size:18px;font-weight:800;color:var(--red);letter-spacing:.3px;}
 .ex-meta{font-size:14px;color:var(--t3);margin-top:2px;font-weight:600;}
+/* Pastille « 🔀 par bras / par jambe » — exercice unilatéral (11/08/2026).
+   Discrète mais tapable : elle ouvre l'aide qui dit QUEL POIDS NOTER, la seule
+   question qui se pose en salle. Elle ne pousse rien hors de l'écran (inline). */
+.uni-tag{display:inline-block;margin-left:6px;font-family:var(--font);font-size:10.5px;
+  font-weight:700;letter-spacing:0;color:var(--gold);background:rgba(255,214,0,.09);
+  border:1px solid rgba(255,214,0,.28);border-radius:6px;padding:1px 6px;
+  vertical-align:middle;white-space:nowrap;cursor:pointer;touch-action:manipulation;}
 .ex-hdr-btns{display:flex;gap:6px;flex-shrink:0;align-items:center;}
 /* Superset par glisser-déposer : poignée + surbrillance cible + fantôme */
 .ex-grip{display:inline-flex;align-items:center;justify-content:center;padding:4px 5px;color:var(--t3);font-size:18px;line-height:1;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;}

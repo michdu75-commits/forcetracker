@@ -3017,6 +3017,140 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
     !di.erreur && di.vide===true, di.erreur?'—':('vide='+di.vide));
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// U. LES EXERCICES UNILATÉRAUX (11/08/2026) — 48 exercices tranchés un par un par Michel.
+// Le critère est de lui : « met uni vu que ça doit être fait de l'autre côté aussi ».
+// ⚠️ CE QUE CES TÉMOINS PROTÈGENT VRAIMENT, ce n'est pas le doublement du volume : c'est
+// le fait qu'il ne s'applique QUE là où il faut. Les 9 « faux amis » (Marteau, Seal Row,
+// machines iso-latérales…) verraient leurs charges doublées à tort, et 4 des 9 venaient
+// de MES paris — corrigés par Michel ou par le dessin animé de la figurine (R28).
+// ⚠️⚠️ Et le témoin qui compte le plus est celui de l'HISTORIQUE : avant la bascule, un
+// unilatéral était noté EN TOTAL (le curl de Michel à 60 = 2 × 30). Doubler ce volume-là
+// le rendrait QUADRUPLE. Michel a dit « laisse pour l'instant » — donc le passé ne bouge
+// pas, et rien ne doit le faire bouger en douce.
+console.log('\n═══ U. Unilatéral — 3 séries saisies, 6 réellement faites ═══');
+{
+  const cu=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pu=await cu.newPage(); const eu=[]; pu.on('pageerror',e=>eu.push(e.message));
+  await pu.addInitScript(seedScript({}));
+  await pu.goto('http://localhost:'+PORT+'/index.html');
+  await pu.waitForTimeout(2200);
+  const U=await pu.evaluate(async()=>{
+   try{
+    const o={};
+    // ── La classification elle-même
+    o.nbUni=Object.keys(EX_UNI).length;
+    o.rowing=estUnilateral('Rowing Haltère (Tirage Horizontal)');
+    o.bulgare=estUnilateral('Squat Bulgare');
+    o.curl=estUnilateral('Curl Haltères');
+    // les 9 FAUX AMIS — aucun ne doit être unilatéral
+    o.fauxAmis=['Curl Zottman','Marteau','Extension Triceps Arrière (Kickback)','Leg Curl Haltère',
+      'Seal Row','Rowing Landmine (T-Bar)','Presse à Cuisses Iso-Latérale',
+      'Tirage Iso-Latéral Hammer Strength','Élévations Mollets Penché (Donkey Calf Raise)']
+      .filter(n=>estUnilateral(n));
+    // un exercice inconnu ne double JAMAIS un volume au hasard (R29)
+    o.inconnu=estUnilateral('Mon Exercice Perso À Moi');
+    // les libellés
+    o.lblBras=uniLabel('Rowing Haltère (Tirage Horizontal)');
+    o.lblJambe=uniLabel('Squat Bulgare');
+    o.lblCote=uniLabel('Soulevé de Terre Valise (Suitcase)');   // 2 jambes poussent → « par côté »
+    o.lblVide=uniLabel('Développé Couché');
+    // un nom ANCIEN garde son marqueur (la clé est l'identifiant, pas le nom)
+    o.viaAlias=estUnilateral('Rowing Haltère');
+
+    // ── Le volume : 3 séries saisies, 6 réellement faites
+    S.sessions=[]; S.prs={};
+    startWorkout();
+    S.wkt.exs.push({name:'Rowing Haltère (Tirage Horizontal)',sets:[
+      {kg:28,reps:8,done:true,type:'N'},{kg:28,reps:8,done:true,type:'N'},{kg:28,reps:8,done:true,type:'N'}]});
+    S.wkt.exs.push({name:'Développé Couché',sets:[{kg:100,reps:5,done:true,type:'N'}]});
+    await finishWorkout();
+    const s=S.sessions[0];
+    o.volume=s.volume;                       // (28×8×3)×2 + 100×5 = 1344 + 500 = 1844
+    o.attendu=28*8*3*2+100*5;
+    o.marque=s.uniConv===1;
+    // le RECORD reste calculé sur la charge d'UN côté (28), jamais sur 56
+    o.pr=S.prs['Rowing Haltère (Tirage Horizontal)'];
+    o.prAttendu=bz(28,8);
+
+    // ── L'HISTORIQUE D'AVANT ne bouge pas : même séance, sans le marqueur
+    o.volAncien=_workVol({exs:[{name:'Rowing Haltère (Tirage Horizontal)',
+      sets:[{kg:28,reps:8,done:true,type:'N'},{kg:28,reps:8,done:true,type:'N'},{kg:28,reps:8,done:true,type:'N'}]}]});
+    o.volAncienAttendu=28*8*3;               // PAS doublé
+
+    // ── Ce qui atteint Milo (R4 : l'info doit descendre jusqu'à la DONNÉE)
+    const ctx=buildCoachContext();
+    o.ctxLigne=/Rowing Haltère \(Tirage Horizontal\): [^\n]*\[par bras, 3 séries DE CHAQUE CÔTÉ\]/.test(ctx);
+    o.ctxListe=/🔀 EXERCICES UNILATÉRAUX/.test(ctx);
+    o.ctxRegle=/on note le poids qui BOUGE pendant la répétition/.test(ctx);
+    o.ctxPasDouble=/N'?E COMPTE PAS LES SÉRIES EN DOUBLE|NE COMPTE PAS LES SÉRIES EN DOUBLE/.test(ctx);
+    o.ctxTemps=/2× plus longtemps|2× plus de temps/.test(ctx);
+    // ⚠️ le nom ne doit JAMAIS être suffixé dans les bacs du catalogue : Milo le recopierait
+    o.pasDeSuffixe=!/Rowing Haltère \(Tirage Horizontal\) \(uni\)/.test(ctx);
+
+    // ── L'écran Séance : la pastille est là, et le tonnage de l'exercice double aussi
+    startWorkout();
+    S.wkt.exs.push({name:'Rowing Haltère (Tirage Horizontal)',sets:[{kg:28,reps:8,done:true,type:'N'}]});
+    S.wkt.exs.push({name:'Développé Couché',sets:[{kg:100,reps:5,done:true,type:'N'}]});
+    S.expandAll=true; renderLog();
+    const el=document.getElementById('s-log');
+    o.pastille=/🔀 par bras/.test(el.innerHTML);
+    o.pastilleUneSeule=(el.innerHTML.match(/uni-tag/g)||[]).length; // le DC n'en a pas
+    o.volExo=/448kg/.test(el.textContent);   // 28×8 = 224, doublé = 448
+    // l'aide s'ouvre et nomme l'exercice
+    openUniHelp('Rowing Haltère (Tirage Horizontal)');
+    o.aideOuverte=document.getElementById('ov-uni-help').classList.contains('open');
+    o.aideNomme=/Rowing Haltère \(Tirage Horizontal\) — par bras/.test(document.getElementById('uni-help-ex').textContent);
+    o.aidePoids=/poids qui BOUGE/.test(document.getElementById('ov-uni-help').textContent);
+    closeUniHelp();
+    o.aideFermee=!document.getElementById('ov-uni-help').classList.contains('open');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  // ⚠️ FAUX-VERT ATTRAPÉ AU CONTRÔLE NÉGATIF : si le bloc plante, `U` ne contient que
+  // `erreur` — et `U.volume===U.attendu` devient `undefined===undefined`, donc VERT.
+  // Deux témoins passaient ainsi sur du code qui ne connaissait même pas l'unilatéral.
+  // Un test qui réussit parce qu'il n'a rien mesuré est pire qu'un test absent.
+  if(U.erreur){ console.log('     ⚠️  bloc « unilatéral » en ERREUR : '+U.erreur);
+    t('⛔ le bloc unilatéral s\'exécute (aucun témoin ci-dessous ne vaut sans ça)', false, U.erreur); }
+  const tu=(n,c,x)=>t(n, !U.erreur && c, U.erreur?'bloc en erreur':x);
+  tu('les 48 exercices tranchés par Michel sont bien dans le code', U.nbUni===48, 'reçu '+U.nbUni);
+  tu('⭐⭐ AUCUN des 9 « faux amis » n\'est unilatéral (leurs charges seraient doublées à tort)',
+    Array.isArray(U.fauxAmis)&&U.fauxAmis.length===0, JSON.stringify(U.fauxAmis));
+  tu('rowing haltère · squat bulgare · curl haltères = unilatéraux',
+    U.rowing===true&&U.bulgare===true&&U.curl===true, JSON.stringify(U));
+  tu('⭐ un exercice INCONNU ne double jamais un volume au hasard (R29)', U.inconnu===false);
+  tu('les libellés : par bras · par jambe · par côté, et rien pour un bilatéral',
+    U.lblBras==='par bras'&&U.lblJambe==='par jambe'&&U.lblCote==='par côté'&&U.lblVide==='',
+    JSON.stringify([U.lblBras,U.lblJambe,U.lblCote,U.lblVide]));
+  tu('⭐ un ANCIEN nom garde son marqueur (la clé est l\'identifiant, pas le nom)', U.viaAlias===true);
+  tu('⭐⭐ 3 séries saisies → volume DOUBLÉ (1344 + 500 = 1844 kg)',
+    U.volume===U.attendu, 'reçu '+U.volume+' attendu '+U.attendu);
+  tu('la séance porte le marqueur de convention (uniConv)', U.marque===true);
+  tu('⭐ le RECORD reste calculé sur la charge d\'UN côté (28 kg, jamais 56)',
+    U.pr&&U.pr.kg===28&&U.pr.rm1===U.prAttendu, JSON.stringify(U.pr));
+  tu('⭐⭐ une séance D\'AVANT la bascule n\'est PAS recalculée (le curl à 60 deviendrait quadruple)',
+    U.volAncien===U.volAncienAttendu, 'reçu '+U.volAncien+' attendu '+U.volAncienAttendu);
+  tu('⭐⭐ Milo voit « par bras » SUR LA LIGNE de la séance (R4)', U.ctxLigne===true);
+  tu('⭐ … la liste des unilatéraux disponibles', U.ctxListe===true);
+  tu('⭐⭐ … la règle « on note le poids qui BOUGE » (sinon il parle une autre langue que l\'app)',
+    U.ctxRegle===true);
+  tu('⭐ … l\'interdiction de compter les séries en double', U.ctxPasDouble===true);
+  tu('… et que ça prend 2× plus de temps (déterminant pour tenir dans 1 h)', U.ctxTemps===true);
+  tu('⭐⭐ le nom n\'est JAMAIS suffixé « (uni) » dans le catalogue (Milo le recopierait)',
+    U.pasDeSuffixe===true);
+  tu('la pastille 🔀 s\'affiche en séance…', U.pastille===true);
+  tu('… et SEULEMENT sur l\'unilatéral (le développé couché n\'en a pas)', U.pastilleUneSeule===1,
+    'reçu '+U.pastilleUneSeule);
+  tu('⭐ le tonnage de l\'EXERCICE double aussi (sinon 2 chiffres pour le même travail)',
+    U.volExo===true);
+  tu('l\'aide s\'ouvre, nomme l\'exercice et dit quel poids noter',
+    U.aideOuverte===true&&U.aideNomme===true&&U.aidePoids===true, JSON.stringify(U));
+  tu('… et se referme', U.aideFermee===true);
+  tu('0 erreur JS sur tout le bloc unilatéral', eu.length===0, eu.join(' | '));
+  await cu.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

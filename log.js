@@ -501,7 +501,13 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const exCount=S.wkt.exs.length;
   const prev=getPrev(ex.name);
   const doneSets=ex.sets.filter(s=>s.done);
-  const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0);
+  // ⚠️ Même règle que le tonnage de la séance : un unilatéral compte double (la série se
+  // refait de l'autre côté). Si ce chiffre-ci ne doublait pas, l'exercice et la séance
+  // afficheraient deux tonnages différents pour le même travail — et c'est toujours celui
+  // qu'on ne comprend pas qui fait douter du reste.
+  const _uni=(typeof estUnilateral==='function')&&estUnilateral(ex.name);
+  const vol=doneSets.reduce((a,s)=>a+(s.kg||0)*(s.reps||0),0)*(_uni?2:1);
+  const _uniTag=_uni?`<span class="uni-tag" onclick="event.stopPropagation();openUniHelp('${_escAttrJs(ex.name)}')">🔀 ${uniLabel(ex.name)}</span>`:'';
   const maxRM=doneSets.filter(s=>s.kg&&s.reps).reduce((b,s)=>Math.max(b,bz(s.kg,s.reps)),0);
   const _cThumb=_exImg(ex.name)||_exMuscleImg(ex.name); // vignette repliée : photo/gif sinon muscle deviné
   const _cReal=!!_exImg(ex.name);
@@ -526,7 +532,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       +`<div class="ex-hdr" style="pointer-events:${_groupMode||inGroup?'none':'all'};align-items:center;">`
       +_cThumbHtml
       +`<div style="flex:1;min-width:0;">`
-      +`<div class="ex-name" style="font-size:14px">${_escNote(ex.name)} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
+      +`<div class="ex-name" style="font-size:14px">${_escNote(ex.name)}${_uniTag} <span style="color:${isSelected?'var(--orange)':'var(--t3)'};font-weight:400;font-size:13px">${_groupMode?(isSelected?'✓':'○'):'▸'}</span></div>`
       +`<div class="ex-meta">${inGroup?_groupStatusMeta(ex,posInGroup,groupSize):(summary||'0 série')}</div>`
       +`</div>`
       +(!_groupMode&&!inGroup?`<div class="ex-hdr-btns" style="pointer-events:auto" onclick="event.stopPropagation()">`
@@ -621,7 +627,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
     +`<div class="ex-hdr">`
     +`<img src="${_thumbSrc}" draggable="false" onclick="toggleExGif(${ei},'${_escAttrJs(ex.name)}');event.stopPropagation()" style="width:48px;height:48px;object-fit:${hasLocalGif?'cover':'contain'};${hasLocalGif?'':'padding:3px;background:var(--bg2);'}border-radius:8px;flex-shrink:0;cursor:pointer;border:1px solid var(--sep);" loading="lazy">`
     +`<div style="flex:1;min-width:0;">`
-    +`<div class="ex-name">${_escNote(ex.name)} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
+    +`<div class="ex-name">${_escNote(ex.name)}${_uniTag} <span style="color:var(--t3);font-weight:400;font-size:13px">▾</span></div>`
     +``
     +`<div class="ex-meta">${doneSets.length}/${ex.sets.length} ${ex.dropset?'palier':'série'}${ex.sets.length>1?'s':''}${ex.dropset?' · '+(ex.dropset.direction==='down'?'⬇':'⬆')+ex.dropset.pct+'%':''}${vol>0?' · '+Math.round(vol)+'kg':''}${maxRM>0?' · 1RM ~'+fmt(maxRM)+'kg':''}</div>`
     +`</div>`
@@ -1022,6 +1028,14 @@ function cycleType(ei,si){
 }
 function openTypeHelp(){document.getElementById('ov-type-help').classList.add('open');}
 function closeTypeHelp(){document.getElementById('ov-type-help').classList.remove('open');}
+// Aide « exercice unilatéral » — ouverte en tapant la pastille 🔀 d'un exercice.
+// Elle répond à la SEULE question qui se pose en salle : quel poids je tape ?
+function openUniHelp(nom){
+  const s=document.getElementById('uni-help-ex');
+  if(s)s.textContent=nom?nom+' — '+(uniLabel(nom)||'par côté'):'';
+  document.getElementById('ov-uni-help').classList.add('open');
+}
+function closeUniHelp(){document.getElementById('ov-uni-help').classList.remove('open');}
 let _confirmCb=null,_confirmAltCb=null;
 function showConfirm(title,msg,cb,okLabel,altLabel,altCb){
   document.getElementById('confirm-title').textContent=title;
@@ -2536,11 +2550,26 @@ function _initSheetHandles(){
 }
 
 // Volume de travail : exclut É (échauffement) et W (legacy)
+//
+// ⚠️ UNILATÉRAL — le volume est DOUBLÉ (11/08/2026). On ne saisit que 3 séries alors que
+// 6 sont réellement faites (3 à gauche, 3 à droite) : le tonnage saisi vaut donc la MOITIÉ
+// du travail produit. C'est le TYPE de l'exercice qui porte l'information, pas la saisie.
+//
+// ⚠️⚠️ ET ÇA NE S'APPLIQUE QU'AUX SÉANCES ENREGISTRÉES APRÈS LA BASCULE (`uniConv`).
+// Avant, la charge d'un unilatéral était notée EN TOTAL (le Curl Haltères de Michel est à
+// 60 kg = 2 × 30). Doubler ce volume-là le rendrait QUADRUPLE de la vérité. Michel a dit
+// « laisse pour l'instant » sur la correction de l'historique : on ne réécrit donc rien,
+// et on ne recalcule pas non plus en douce ce qui a été noté sous l'ancienne convention.
+// Une courbe qui change toute seule dans le passé est pire qu'une courbe imparfaite.
+// → Le jour où on décidera de corriger l'historique, ce sera une migration explicite qui
+//   pose `uniConv:1` sur les séances reprises, pas un changement de cette fonction.
 function _workVol(sess){
   let v=0;
+  const dbl=!!(sess&&sess.uniConv);
   (sess.exs||sess.exercises||[]).forEach(ex=>{
+    const k=(dbl&&typeof estUnilateral==='function'&&estUnilateral(ex.name))?2:1;
     (ex.sets||[]).forEach(s=>{
-      if(s.done&&s.type!=='É'&&s.type!=='W'&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps;
+      if(s.done&&s.type!=='É'&&s.type!=='W'&&(s.kg||0)>0&&(s.reps||0)>0)v+=s.kg*s.reps*k;
     });
   });
   return v;
@@ -2559,9 +2588,13 @@ async function finishWorkout(){
   const hasDone=_hasExs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
   if(!hasDone&&!_hasCardio){toast('Valide une série ou ajoute un cardio !','error');_finishing=false;return;}
   const duration=Math.floor(_wktElapsedMs()/1000); // durée réelle, hors temps en pause
-  let vol=0;
-  S.wkt.exs.forEach(ex=>ex.sets.forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')vol+=(s.kg||0)*(s.reps||0);}));
-  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration,progLabel:S.wkt.progLabel||''};
+  // ⚠️ UNE SEULE règle de volume, et elle vit dans `_workVol` (R2). La copie qui était
+  // écrite ici disait exactement la même chose… jusqu'au jour où l'unilatéral est arrivé :
+  // deux calculs du même chiffre finissent toujours par diverger, la seule question est
+  // quand. `uniConv:1` = « cette séance a été notée sous la convention unilatérale »
+  // (charge par côté, volume ×2) — c'est ce qui protège l'historique d'avant.
+  const vol=_workVol({exs:S.wkt.exs,uniConv:1});
+  const sess={id:Date.now(),date:S.wkt.date||today(),exs:S.wkt.exs,volume:Math.round(vol),uniConv:1,synced:false,ts:Date.now(),startHour:S.wkt.startHour,duration,progLabel:S.wkt.progLabel||''};
   sess.exercises=sess.exs.map(ex=>({name:ex.name,sets:ex.sets}));
   // Capturer les PRs avant mise à jour pour détecter les améliorations
   const _oldPrs={};Object.keys(S.prs||{}).forEach(k=>{_oldPrs[k]={...S.prs[k]};});
