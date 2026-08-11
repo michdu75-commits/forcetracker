@@ -1793,7 +1793,10 @@ function _syncLogHdrBtns(){
      +'<button onclick="clearAllEx()" style="padding:7px 10px;border-radius:10px;border:1px solid rgba(255,45,85,.3);background:rgba(255,45,85,.08);color:var(--red);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Vider</button>'
      +'<button onclick="openProgModal()" style="padding:8px 12px;border-radius:10px;border:1px solid var(--sep);background:var(--bg3);color:var(--t2);font-size:12px;font-weight:700;font-family:var(--font);cursor:pointer;white-space:nowrap;touch-action:manipulation;">📋 Changer</button>'
     :'');
-  requestAnimationFrame(_positionFab);
+  // ⛔ `requestAnimationFrame(_positionFab)` retiré le 11/08/2026 avec la fonction elle-même :
+  //    elle repositionnait un bouton flottant `#fab-session` qui n'existe plus (docké dans la
+  //    barre depuis un redesign). Le bouton central est désormais protégé par la MESURE —
+  //    règle d'or #9, témoin permanent dans les tests de parcours. Détail dans `app.js`.
 }
 // Appui maintenu 400ms requis pour déclencher la suppression (anti-effleurement)
 let _rmHoldTimer=null;

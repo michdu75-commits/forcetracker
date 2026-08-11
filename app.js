@@ -3567,22 +3567,22 @@ function _hideInstallProgress(){
   setTimeout(()=>{el.classList.remove('show');setTimeout(()=>{if(el.parentNode)el.remove();},400);},600);
 }
 
-// ─── POSITION FAB ────────────────────────────────────────────
-function _positionFab(){
-  const seance=document.getElementById('nb-log');
-  const fab=document.getElementById('fab-session');
-  if(!seance||!fab)return;
-  const nr=seance.closest('nav').getBoundingClientRect();
-  const sr=seance.getBoundingClientRect();
-  if(!sr.width||!nr.width)return;
-  const cx=sr.left-nr.left+sr.width/2+8;
-  fab.style.left=cx+'px';
-  fab.style.transform='translateX(-50%)';
-}
-// Appels multiples pour garantir un layout stable sur iOS PWA
-document.addEventListener('DOMContentLoaded',_positionFab);
+// ─── ⛔ `_positionFab()` RETIRÉ LE 11/08/2026 (décision de Michel) ──────────────────────
+// Elle positionnait un bouton FLOTTANT `#fab-session` au-dessus de la barre, par rapport à
+// `#nb-log`, avec 4 écouteurs (DOMContentLoaded, load, load+300 ms, resize).
+// **Ce bouton n'existe plus** : il a été redessiné pour être DOCKÉ DANS la barre (voir le
+// commentaire de `style.css` : « Bouton central « + » — docké DANS la barre (fini le flottant
+// #fab-session) »). La fonction sortait donc immédiatement — elle ne faisait plus rien depuis
+// ce redesign, tout comme les 4 écouteurs et l'appel `requestAnimationFrame` de `log.js`.
+//
+// ⚠️ CE QUI LA REMPLACE, et ce n'est pas rien : le bouton central reste le repère le plus
+// sensible de l'écran Séance. La règle d'or #9 le protège toujours — mais **par la MESURE**
+// (relever `getBoundingClientRect(#nb-log)` avant/après et exiger l'égalité), avec un témoin
+// permanent dans les tests de parcours depuis ft-v825. Vérifié le 11/08 : le bouton est un
+// enfant du `<nav>`, en `position:relative`, 3ᵉ de 6, immobile au défilement.
+//
+// 👉 SI LE BOUTON FLOTTANT REVENAIT UN JOUR, il faudrait réécrire ce positionnement — mais
+// alors il faudrait surtout relire `docs/GALERES-ET-LECONS.md` : le flottant recouvrait les
+// séries et gênait le swipe. C'est une « fausse bonne idée » documentée, pas un oubli.
 window.addEventListener('load',()=>{try{if(typeof _initSheetHandles==='function')_initSheetHandles();}catch(e){}}); // poignée glissable sur les overlays de contenu (reco UX GPT, ft-v550)
-window.addEventListener('load',_positionFab);
-window.addEventListener('load',()=>{setTimeout(_positionFab,300);});
-window.addEventListener('resize',_positionFab);
 
