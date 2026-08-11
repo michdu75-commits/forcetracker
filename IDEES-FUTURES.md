@@ -33,8 +33,10 @@ rien à faire — tout passe par le serveur. Pas de Bluefy, pas de coque native.
 documentation Polar : elle a bien une mémoire interne (1 séance, jusqu'à 30 h, 1 mesure/seconde),
 **mais il faut lancer l'enregistrement depuis l'application Polar Beat**. Sans ça, AccessLink n'a
 rien à servir.
-👉 **Conséquence concrète** : Michel devrait lancer **Polar Beat** en plus de Force Tracker à chaque
-séance. Acceptable pour lui, en test. **Impensable pour un utilisateur ordinaire.**
+👉 **Michel a répondu : *« c'est moi qui la déclenche »*** — il lance donc déjà l'enregistrement à
+la main. **Ce n'est donc PAS un obstacle pour lui** : la donnée existe dès ce soir, sans une ligne
+de code. *Ça reste un obstacle pour un utilisateur ordinaire* (deux applications à lancer à chaque
+séance) — mais c'est une question de produit, pour plus tard, pas un blocage technique aujourd'hui.
 
 **2. `completedSets` n'est probablement pas accessible avec une H10.** Ce champ vient de la
 fonction « musculation » des **montres** Polar, pas d'un capteur de poitrine. À vérifier avant de
