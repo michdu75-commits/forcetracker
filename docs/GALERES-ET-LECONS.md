@@ -32,7 +32,7 @@
 | 📦 **Le précache saturait la 4G** | Le téléchargement auto des images plombait la 4G → « Load failed » | Auto-précache de 15 Mo à chaque MAJ | Précache **résumable, en arrière-plan, 1×/version** (marqueur) | v421→v436 | ✅ Résolu |
 | ⬜ **Écran blanc sur réseau faible** | L'app restait blanche en salle (sous-sol) | Polices **Google Fonts** en `@import` **bloquantes**, non mises en cache | Polices **hébergées en local** (`fonts/`) | 1 version | ✅ Résolu (v162) |
 | 📄 **Import de journal tronqué** | Gros journal (18 séances) → « JSON invalide » | Réponse IA dépassait `max_tokens` → JSON coupé | Découpage en **lots de 3 pages**, fusion | 1 version | ✅ Résolu (v167) |
-| 🔴 **Bouton FAB « + » capricieux** | Le « + » se décalait / recouvrait les séries / gênait le swipe | `position:absolute` + positionnement JS fragile | **Bouton docké dans la barre** (fini le FAB flottant) | Récurrent (règle d'or n°9) puis supprimé (v178) | ✅ Résolu |
+| 🔴 **Bouton FAB « + » capricieux** | Le « + » se décalait / recouvrait les séries / gênait le swipe | `position:absolute` + positionnement JS fragile | **Bouton docké dans la barre** (fini le FAB flottant) | Récurrent (règle d'or n°9) puis supprimé (v178) | ✅ **Résolu — revérifié par la mesure le 11/08/2026, voir ci-dessous** |
 | 👤 **Diagramme muscles faux** | Muscles mal coloriés sur les machines/imports | Reconnaissance **sensible aux accents** + vocabulaire trop court | Normalisation `_naz` (sans accents) + `_MEX` enrichi | 84/87 exos reconnus (avant 50) | ✅ Résolu (v169) |
 | ☀️ **Mode jour illisible** | Textes jaunes sur fond clair, blanc qui « pète les yeux » | Couleurs **écrites en dur** (pas de variable thème) + blanc pur | `var(--gold/--t1…)` + blanc adouci | v181→v183 | ✅ Résolu |
 | 🕵️ **Fuite d'email sur le clone (iOS)** | L'email prod apparaissait sur le clone de test | La redéfinition de `localStorage` **échoue sur Safari iOS** | Fallback : préfixe `cl_` sur `Storage.prototype` + `__FT_CLONE__` posé en premier | 1 session | ✅ Résolu |
@@ -298,3 +298,43 @@ de conception silencieuse, et elle ne coûte pas une heure : elle coûte tout ce
 *(Même famille que les 8 détecteurs trop grossiers de la même soirée, mais bien plus grave : là, c'est
 une croyance qui a orienté le produit, pas un chiffre faux dans un rapport.)*
 
+---
+
+## 🔴 Le bouton « + » de la barre — vérification de clôture (11/08/2026)
+
+**Michel** : *« confirme-moi qu'il est bien fixé à la barre en bas avec Accueil, Progrès etc. ; si
+c'est le cas ce problème est résolu. »* **Vérifié, et par la mesure — pas à l'œil :**
+
+| Ce qu'on a vérifié | Résultat |
+|---|---|
+| Le « + » appartient-il à la barre ? | ✅ **Oui** — c'est un enfant du `<nav>`, exactement comme Accueil et Progrès |
+| Est-il encore positionné en JavaScript ? | ✅ **Non** — `position: relative`, plus aucun calcul (avant : `absolute` recalculé à la main) |
+| Est-il aligné avec les autres ? | ✅ **3ᵉ de 6**, tous larges de 56 px, régulièrement espacés : `26 · 82 · 139 · 195 · 251 · 308` |
+| Déborde-t-il de la barre ? | ✅ **Non** — la barre va de 770 à 844, le bouton de 792 à 836. Entièrement dedans. |
+| Bouge-t-il quand on fait défiler l'écran ? | ✅ **Non** — `139,792,56,44` avant, `139,792,56,44` après 600 px de défilement |
+
+*(Il est 3 px plus haut que ses voisins — 792 contre 795 — parce qu'il fait 44 px de haut contre 41 :
+c'est le relief voulu, pas un décalage.)*
+
+**➡️ La galère est close pour de bon.** Les trois symptômes d'origine — il recouvre les séries, il
+gêne le swipe, il se décale — ne peuvent plus revenir : ils venaient tous du **flottement**, et il ne
+flotte plus. Un élément posé dans une rangée ne peut pas recouvrir ce qui est au-dessus de lui.
+
+### ⚠️ La vraie leçon : **la règle a survécu à son propre bug pendant des mois**
+
+Le problème a été réglé **à la racine en v178** (suppression du bouton flottant). La **règle d'or n°9**,
+elle, a continué d'exiger de vérifier `_positionFab()` — une fonction qui cherche `#fab-session`,
+un élément **qui n'existe plus**, et qui **sort donc immédiatement sans rien faire**.
+
+Pendant tout ce temps, à chaque modification de l'écran Séance, la consigne était d'aller vérifier
+**un fantôme**. Personne ne s'en est aperçu, parce qu'une règle qui ne sert à rien ne casse rien :
+elle coûte juste de l'attention, et — plus grave — elle **rassure à tort**. On croyait vérifier.
+
+*Une règle née d'un bug doit être relue le jour où le bug est supprimé à la racine* : soit elle
+disparaît avec lui, soit elle change de moyen. Ici c'est le second cas — le bouton central reste le
+repère le plus sensible de l'écran Séance — alors on garde la règle et on change **comment** on la
+vérifie : **relever la position réelle avant/après, et exiger l'égalité** (témoin permanent dans les
+tests de parcours depuis ft-v825).
+
+*(Retiré de la règle sur décision de Michel, 11/08/2026. `_positionFab()` reste dans `app.js`,
+inoffensif — le supprimer est une décision séparée.)*
