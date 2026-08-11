@@ -36,8 +36,25 @@ Ne pas copier Hevy/JEFIT. Une chose à la fois, **testée avant** de passer à l
 **8. 💾 Commit étiqueté AVANT chaque modif + tag stable APRÈS + rollback en 1 ligne.**
 Avant toute modification importante : `git add + commit` avec message explicite (quoi + version, ex. `"avant: modif profil ft-v161"`). Ne pas mélanger plusieurs changements dans un commit. Après chaque fonctionnalité qui marche : poser un tag daté (`stable-YYYY-MM-DD-sujet-ok`). À la fin de chaque tâche : fournir la commande de rollback (`git reset --hard <tag>` ou `git checkout <tag>`). Cette règle s'applique AVANT le moindre changement de fichier.
 
-**9. 🔴 FAB « + » Séance — SENSIBLE, ne pas toucher sans recalculer.**
-Le bouton FAB `#fab-session` est `position:absolute` dans la nav et positionné par `_positionFab()` (via `getBoundingClientRect(#nb-log)`). **Toute modif de l'écran Séance** (ajout d'éléments dans le header, changement de layout du DOM) **doit vérifier que le FAB reste bien positionné**. `_positionFab()` est appelé via `requestAnimationFrame` à chaque `_syncLogHdrBtns()` (déclenché à chaque `renderExBlocks()`). Si le FAB se décale : appeler `_positionFab()` manuellement après le changement. Ne jamais supprimer les appels `requestAnimationFrame(_positionFab)` de `_syncLogHdrBtns()`.
+**9. 🔴 Bouton central « + » Séance — SENSIBLE, ne pas toucher sans MESURER.**
+**Toute modif de l'écran Séance** (ajout dans l'en-tête, changement de layout, repli/dépli d'un bloc,
+avance automatique entre exercices) **doit vérifier que le bouton central de la barre ne bouge pas**.
+
+**Comment le vérifier — par la MESURE, pas à l'œil** : relever `getBoundingClientRect()` de `#nb-log`
+**avant et après** le changement, et exiger l'égalité. C'est ce que fait le témoin permanent des tests
+de parcours (`139,792,56,44` sur un écran de 390 px). *Une capture d'écran ne prouve rien : un décalage
+de 3 px se voit sur un mobile et pas sur une image qu'on survole.*
+
+⚠️ **Ce que cette règle disait AVANT, et pourquoi ça a changé (11/08/2026)** — elle imposait de vérifier
+`_positionFab()`, qui positionnait un bouton **flottant** `#fab-session` par rapport à `#nb-log`.
+**Ce bouton n'existe plus** : il a été redessiné pour être **docké DANS la barre de navigation**, et le
+CSS le dit — *« Bouton central « + » — docké DANS la barre (fini le flottant #fab-session) »*.
+`_positionFab()` cherche donc un élément absent et **sort immédiatement** : la fonction ne fait plus
+rien depuis ce redesign, et la règle demandait de vérifier quelque chose sans effet.
+Trouvé en livrant ft-v825, **retiré sur décision de Michel**. *Le fond de la règle reste entier — le
+bouton central est le repère le plus sensible de l'écran Séance — c'est le MOYEN de vérification qui
+change : on mesure la position réelle au lieu d'appeler une fonction.*
+(⏭️ `_positionFab()` est toujours dans `app.js`, inoffensif. Le retirer est une décision séparée.)
 
 **10. 🗣️ Michel n'est ni développeur ni programmeur — adapter la communication.**
 Michel conçoit l'appli avec l'aide de Claude (design/réflexion/prompts), il ne code pas lui-même. Toujours :

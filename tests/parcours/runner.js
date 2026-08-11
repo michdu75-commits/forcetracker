@@ -1787,7 +1787,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     r.apresSkip===1, 'exercice ouvert : '+r.apresSkip);
   t('\u2B50 au DERNIER exercice, on ne remonte pas au début',
     r.cbDernier===false, 'une avance a été armée alors qu il n y a plus rien après');
-  t('\u2B50\u2B50 RÈGLE D OR #9 : le bouton central de la barre ne bouge PAS',
+  t('\u2B50\u2B50 RÈGLE D OR #9 : le bouton central ne bouge PAS (mesuré, pas regardé)',
     r.fabBouge===false, r.fabAvant+' → '+r.fabApres);
   await c15.close();
 }
