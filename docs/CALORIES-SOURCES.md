@@ -471,7 +471,7 @@ quelqu'un, là où une mesure de la personne existe.
 **⭐ Or la mesure existe, et elle est SOUS SES YEUX** : le tapis affiche la vitesse, la pente et la
 distance. Le vélo affiche les watts. **Ce sont des variables physiques, pas des impressions.**
 
-## 12.3 🐛 UN BUG NET : l'échauffement est compté DEUX FOIS
+## 12.3 ✅ CORRIGÉ (ft-v834) — l'échauffement était compté DEUX FOIS
 
 Vérifié en exécutant le code sur une séance de 7 séries (squat + développé couché), 84 kg :
 
@@ -487,8 +487,14 @@ Vérifié en exécutant le code sur une séance de 7 séries (squat + développ�
 kcal pour 10 minutes de tapis.** Le forfait est ajouté **sans condition**, y compris quand la
 personne n'a rien échauffé du tout.
 
-Et il pèse **46 % du total** de cette séance. *Le poste le plus lourd du calcul est celui qui n'a
-aucune source.*
+Et il pesait **46 % du total** de cette séance. *Le poste le plus lourd du calcul était celui qui
+n'avait aucune source.*
+
+**✅ Corrigé en ft-v834** : le forfait ne couvre plus que les moments **non mesurés** (5 min avant +
+5 min après), et cède la place dès qu'un cardio réel est enregistré pour ce moment-là. La séance
+ci-dessus passe de **184 à 159 kcal**. ⚠️ Une séance **sans** cardio noté est inchangée, et les
+séances déjà enregistrées gardent leur chiffre — le reste de cette section (§12.4 et suivantes) est
+toujours **ouvert**.
 
 ## 12.4 🐛 ET LA DURÉE EST RECONSTRUITE ALORS QU'ELLE EST MESURÉE
 

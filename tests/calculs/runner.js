@@ -482,6 +482,32 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
     out.vide=calcSessionCalories({exs:[]}).total;                      // 46.67 → 47
     // le temps de repos réel de l'utilisateur est-il utilisé ? (defRest 120 vs 60)
     S.defRest=60; out.rest60=calcSessionCalories(sess).total; S.defRest=120;
+
+    // ── LE DOUBLE COMPTAGE DE L'ÉCHAUFFEMENT (bug trouvé le 11/08/2026) ────────────
+    // Le forfait de 10 min était ajouté SANS CONDITION, puis `finishWorkout` ajoutait
+    // par-dessus le cardio réellement noté → les mêmes minutes payées deux fois.
+    // Ces témoins figent la règle : une mesure chasse l'estimation du MÊME moment,
+    // et une séance SANS cardio noté ne bouge pas d'un kcal.
+    const c10={type:'tapis',intensity:'modere',duration:10};
+    const s_av={exs:sess.exs,cardioAvant:c10};
+    const s_ap={exs:sess.exs,cardio:c10};
+    const s_2 ={exs:sess.exs,cardioAvant:c10,cardio:c10};
+    out.fSans =calcSessionCalories(sess).warmupMin;   // 10 : rien de mesuré
+    out.fAvant=calcSessionCalories(s_av).warmupMin;   //  5 : l'échauffement est mesuré
+    out.fApres=calcSessionCalories(s_ap).warmupMin;   //  5 : le retour au calme est mesuré
+    out.fDeux =calcSessionCalories(s_2 ).warmupMin;   //  0 : les deux sont mesurés
+    out.tSans =calcSessionCalories(sess).total;
+    out.tAvant=calcSessionCalories(s_av).total;
+    // la séance complète telle que l'app la facture : muscu + cardio réel
+    out.reelAvant=out.tAvant+calcCardioKcal(c10);
+    // les minutes réelles du cardio entrent dans la durée (sinon noter un cardio RACCOURCIT la séance)
+    out.minSans =calcSessionCalories(sess).totalMin;
+    out.minAvant=calcSessionCalories(s_av).totalMin;
+    // une durée à 0 n'est PAS une mesure → le forfait reste entier
+    out.fZero=calcSessionCalories({exs:sess.exs,cardioAvant:{type:'tapis',intensity:'modere',duration:0}}).warmupMin;
+    // les valeurs de référence, CALCULÉES ici (jamais recopiées à la main dans les assertions)
+    out.kcalCardio10=calcCardioKcal(c10);           // le cardio réel, à la charge de finishWorkout
+    out.demiForfait =Math.round(3.5*(S.bw||80)*(5/60)); // ce que le forfait perd quand on mesure
     return out;
   });
   t('vélo modéré 60 min (80 kg) = 544 kcal (MET 6.8)', r.velo60===544, 'reçu '+r.velo60);
@@ -494,6 +520,19 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
     'écart '+(r.cd.total-r.sommeBreakdown));
   t('⚠️ QUIRK : une séance sans aucune série validée facture quand même 47 kcal d\'échauffement', r.vide===47, 'reçu '+r.vide);
   t('le temps de repos du profil (defRest) change bien le calcul', r.rest60<r.cd.total, r.rest60+' vs '+r.cd.total);
+  // ── le double comptage de l'échauffement (11/08/2026) ──
+  t('⭐ sans cardio noté, le forfait reste ENTIER (10 min) — rien ne change pour personne', r.fSans===10, 'reçu '+r.fSans);
+  t('⭐ un échauffement MESURÉ retire sa moitié du forfait (5 min)', r.fAvant===5, 'reçu '+r.fAvant);
+  t('⭐ un cardio APRÈS mesuré retire l\'autre moitié (5 min)', r.fApres===5, 'reçu '+r.fApres);
+  t('⭐⭐ les deux mesurés → plus aucun forfait (0 min)', r.fDeux===0, 'reçu '+r.fDeux);
+  // AVANT le fix, noter 10 min d'échauffement facturait `tSans + kcalCardio10` : le forfait
+  // entier ET le cardio réel. APRÈS, la moitié estimée cède la place à la mesure.
+  t('⭐⭐ LE BUG : 10 min d\'échauffement ne sont plus payées deux fois ('
+    +r.reelAvant+' kcal au lieu de '+(r.tSans+r.kcalCardio10)+')',
+    approx(r.tSans-r.tAvant, r.demiForfait, 1) && r.reelAvant===r.tAvant+r.kcalCardio10,
+    'muscu '+r.tSans+'→'+r.tAvant+' (attendu −'+r.demiForfait+'), total réel '+r.reelAvant);
+  t('⭐ noter un cardio ALLONGE la séance, ne la raccourcit pas', r.minAvant>r.minSans, r.minSans+' → '+r.minAvant+' min');
+  t('une durée à 0 n\'est pas une mesure → forfait entier', r.fZero===10, 'reçu '+r.fZero);
   await c.close();
 }
 

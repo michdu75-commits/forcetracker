@@ -244,16 +244,38 @@ function calcSessionCalories(session) {
     breakdown[ex.name] = Math.round(exCals);
   });
 
-  // Échauffement/retour au calme estimé (10 min MET 3.5)
-  const warmupCals = 3.5 * bw * (10/60);
+  // ── Échauffement / retour au calme ESTIMÉ (forfait 10 min à 3.5 MET) ──────────────
+  // ⚠️⚠️ CE FORFAIT NE S'APPLIQUE QU'AUX MOMENTS QUI N'ONT PAS ÉTÉ MESURÉS (11/08/2026).
+  // Le bug : le forfait était ajouté SANS CONDITION, puis `finishWorkout` (log.js) ajoutait
+  // par-dessus le cardio réellement noté → **les mêmes minutes étaient payées deux fois**.
+  // Mesuré à 84 kg sur une séance de 7 séries avec 10 min de tapis en échauffement :
+  // 58 (séries) + 49 (forfait) + 77 (tapis réel) = 184 kcal, dont **126 pour 10 minutes**.
+  // Le forfait couvre DEUX moments (avant + après) → on le compte 5 min par moment, et on
+  // retire la moitié correspondante dès qu'un cardio réel est enregistré pour ce moment-là.
+  // Une mesure chasse toujours une estimation, jamais l'inverse (R1 : une seule source).
+  // ⚠️ Une séance sans aucun cardio noté est INCHANGÉE (10 min, comme avant) : on corrige le
+  // double comptage, on ne touche pas au modèle de la musculation — ce chantier-là est ouvert
+  // et documenté dans `docs/CALORIES-SOURCES.md` §12, il attend les 10 séances de relevé.
+  const _duree = m => { const c = session[m]; return (c && +c.duration > 0) ? +c.duration : 0; };
+  let warmupMin = 0;
+  if (!_duree('cardioAvant')) warmupMin += 5;   // échauffement non mesuré → estimé
+  if (!_duree('cardio'))      warmupMin += 5;   // retour au calme non mesuré → estimé
+  const warmupCals = 3.5 * bw * (warmupMin/60);
   totalCals += warmupCals;
+
+  // ⚠️ Les minutes de cardio RÉELLES entrent dans la durée (leurs calories, elles, sont ajoutées
+  // par `finishWorkout`/`_saveSessEdits` via `calcCardioKcal` — ne PAS les compter ici aussi,
+  // c'est exactement le double comptage qu'on vient de supprimer). Sans cette ligne, noter un
+  // cardio RACCOURCIRAIT la séance de 5 min, ce qui n'a aucun sens.
+  const cardioMin = _duree('cardioAvant') + _duree('cardio');
 
   return {
     total: Math.round(totalCals),
     totalSets,
     activeMin: Math.round(totalActiveMin),
     restMin: Math.round(totalRestMin),
-    totalMin: Math.round(totalActiveMin + totalRestMin + 10),
+    totalMin: Math.round(totalActiveMin + totalRestMin + warmupMin + cardioMin),
+    warmupMin,
     breakdown
   };
 }
@@ -1744,6 +1766,9 @@ const APP_GUIDE_SLIDES=[
   {img:'guide/etat-du-jour.jpg',tap:[.5,.38],  t:'Comment tu te sens aujourd\'hui ?', cap:'En 1-2 taps sur l\'Accueil : ton <b>énergie</b>, ton <b>moral</b> (😔 → 😄) et une éventuelle <b>gêne/douleur</b> (tape la zone). <b>Milo</b> adapte ses conseils du jour — il protège une zone qui fait mal, et si ton moral est bas il se fait plus <b>doux</b> (jamais un psy). Optionnel, ça repart à zéro chaque jour.'},
   {img:'guide/profil.jpg',     tap:[.5,.60],   t:'Remplis bien ton profil ⭐', cap:'<b>Le plus important !</b> Plus ton profil est complet, plus <b>Milo, ton coach IA</b>, est précis et personnalisé (récup et calories aussi). Un <b>% de remplissage</b> t\'aide à ne rien oublier.'},
   {img:'guide/seance.jpg',     tap:[.875,.305],t:'Ta séance',              cap:'Note tes séries — <b>poids × reps</b> — et coche. Tes <b>records</b> se calculent tout seuls.'},
+  // ⚠️ Diapo SANS image (format `icon:`, comme les 3 premières) : il n'existe pas de capture
+  // du bloc cardio, et une diapo utile vaut mieux qu'une diapo repoussée en attendant la photo.
+  {icon:'🔥', t:'Tes calories de séance', cap:'Note ton <b>cardio</b> — 🔥 avant (l\'échauffement) et 🧊 après — et ses calories s\'ajoutent à ta séance. Si tu ne notes rien, l\'app <b>estime</b> 10 min d\'échauffement et de retour au calme ; dès que tu en <b>mesures</b> un, ta mesure remplace l\'estimation, jamais l\'inverse. ⚠️ Le compte de la partie muscu reste <b>approximatif</b> : prends-le comme un ordre de grandeur, pas comme une vérité à la calorie près.'},
   {img:'guide/programmes.jpg', tap:[.5,.42],   t:'Tes programmes',         cap:'Crée, <b>importe</b> (photo/Word/PDF) ou charge un programme en 1 tap. Le bouton <b>✏️</b> modifie un programme enregistré : reps, <b>temps de repos</b> série par série, et un <b>💬 commentaire</b> par exercice (consigne, réglage machine…). Débutant ? Un parcours guidé t\'attend.'},
   {img:'guide/progres.jpg',    tap:[.5,.32],   t:'Tes progrès',            cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs.'},
   {img:'guide/bilan.jpg',      tap:[.5,.72],   t:'Ton bilan corporel',     cap:'Balance pro (impédance) ? Enregistre tes chiffres — <b>📷 photo</b>, à la main ou code. Poids, graisse, muscle, métabolisme… Tu suis l\'<b>évolution</b> et <b>Milo s\'en sert</b>.'},
