@@ -496,16 +496,39 @@ ci-dessus passe de **184 à 159 kcal**. ⚠️ Une séance **sans** cardio noté
 séances déjà enregistrées gardent leur chiffre — le reste de cette section (§12.4 et suivantes) est
 toujours **ouvert**.
 
-## 12.4 🐛 ET LA DURÉE EST RECONSTRUITE ALORS QU'ELLE EST MESURÉE
+## 12.4 ⚠️ CORRECTION (12/08) — la durée n'est PAS le problème principal. Le RYTHME l'est.
 
-Sur la même séance, le modèle **reconstruit** 24 minutes (7 × 30 s + les repos réglés + 10 min de
-forfait). Une séance de 7 séries lourdes en prend 45 à 60 en vrai — et **l'application connaît la
-vraie durée** : `sess.duration`, chronométrée, pauses exclues, utilisée depuis ft-v826 pour calculer
-son rythme.
+> **Ce paragraphe disait d'abord** qu'une séance de 7 séries « prend 45 à 60 min en vrai », donc que
+> les 24 min reconstruites étaient deux fois trop courtes. **C'était une supposition, pas une
+> mesure — et les données de Michel la contredisent.**
 
-**MET moyen implicite du modèle actuel : 3,18.** Le Compendium donne 3,5 pour de la musculation
-classique et 5,0 pour une séance dominée par les squats et soulevés de terre. Sur 60 min réelles à
-84 kg, ça donne **294 à 420 kcal**, contre **107** aujourd'hui.
+`_rythmeSeance()` (ft-v826) a **mesuré** son rythme réel sur ses 12 dernières séances : **3,0 minutes
+par série**, médiane, cardio déduit, séances aberrantes écartées. Donc :
+
+| | séries | durée **reconstruite** par l'app | durée **déduite du rythme mesuré** |
+|---|---:|---:|---:|
+| séance courte | 7 | 24 min | **21 min** |
+| séance type | 20 | 50 min | **60 min** |
+| grosse séance | 28 | 68 min | **84 min** |
+
+La durée reconstruite est donc **correcte à ±20 %**, pas fausse d'un facteur 2. *J'avais inventé la
+durée réelle au lieu d'aller lire celle que l'app mesure depuis ft-v826 — dans un document dont le
+§12.2 reproche précisément à l'app d'employer une moyenne là où une mesure existe.*
+
+**Le vrai écart est ailleurs : dans le RYTHME de dépense.**
+
+| | kcal/min |
+|---|---:|
+| Force Tracker, sur sa propre durée (mesuré sur 3 séances types, 85 kg) | **4,15 à 4,50** |
+| article — « musculation légère, repos longs » (85 kg) | 4,25 |
+| article — « hypertrophie classique » (85 kg) | **7,44** |
+
+**⭐⭐ Force Tracker classe TOUTES les séances dans la catégorie la plus légère.** Son rythme tombe
+à 2 % de la ligne « repos longs » de l'article — ce n'est pas un calcul absurde, c'est un calcul
+**systématiquement d'un cran trop bas**. L'écart réel est donc de **~1,7×** (et non 3,4× comme
+l'estimait la version précédente de ce paragraphe, sur ma durée inventée).
+
+**MET moyen implicite du modèle actuel : 3,18.**
 
 ## 12.5 ⚠️ Ce que je ne peux PAS conclure sans Michel
 
@@ -590,4 +613,132 @@ la moyenne des quatre.
   course, ergocycle, stepper) : https://www.acsm.org/education-resources/books/guidelines-exercise-testing-prescription
 - **ACSM Metabolic Equations (résumé et domaines de validité)** —
   https://www.ncbi.nlm.nih.gov/books/NBK499824/
+
+---
+
+# 13. 📚 LA SOURCE « TOUT POUR MA SANTÉ » — et l'idée qui vaut plus que ses chiffres (12/08/2026)
+
+> Michel apporte la page, GPT la relit. **Elle entre au dossier des sources — mais comme méthode
+> À METTRE EN COMPÉTITION, pas comme nouvelle vérité.** Décision de Michel, reprise telle quelle.
+> ⚠️ Je n'ai pas pu ouvrir la page moi-même (le domaine est bloqué par le proxy réseau de
+> l'environnement) : les chiffres ci-dessous viennent de Michel et de GPT.
+
+## 13.1 Ce qu'elle donne : 4 niveaux, en kcal/minute
+
+| Type de séance | kcal/min à 80 kg | MET équivalent | à 85 kg |
+|---|---:|---:|---:|
+| musculation légère / repos longs | 4 | ≈ 3,0 | 4,25 |
+| **hypertrophie classique** | **7** | ≈ 5,25 | **7,44** |
+| musculation intense / repos courts | 10 | ≈ 7,5 | 10,63 |
+| circuit / HIIT / CrossFit | 14 | ≈ 10,5 | 14,88 |
+
+Facteurs cités : intensité · volume · poids · charge · vitesse d'exécution · niveau d'expérience ·
+**répartition effort/repos**.
+
+**Convergence avec le Compendium** (3,5 / 5,0 / 5,8 / 6,0-8,0) : les deux barèmes se recouvrent sur
+les trois premiers niveaux. Deux sources indépendantes qui tombent au même endroit valent mieux
+qu'une seule, même mieux référencée.
+
+## 13.2 ⚠️ Pourquoi elle ne devient PAS notre référence
+
+**La page ne publie pas la formule qui produit 4 / 7 / 10 / 14.** Elle invoque « des études », ce qui
+n'est pas une source qu'on peut refaire sur un coin de table — le critère que Michel a posé le 11/08
+(*« des données sérieuses et scientifiquement prouvées ET prouvables »*) et qui nous avait fait
+préférer Katch-McArdle au chiffre de la balance. L'auteur dit lui-même que ce sont des
+approximations, et qu'une mesure exacte demande la VO₂ en laboratoire.
+
+*Elle sert donc à corroborer un ordre de grandeur, pas à fixer une constante.*
+
+## 13.3 ⭐⭐ L'IDÉE QUI VAUT PLUS QUE SES CHIFFRES : elle classe la SÉANCE, pas l'exercice
+
+Repérée par GPT, et c'est la remarque la plus utile des deux relectures :
+
+> *60 minutes de musculation avec 3 minutes de repos entre les séries n'est pas comparable à
+> 60 minutes de supersets avec 30 secondes de repos.*
+
+**Et c'est structurellement l'inverse de ce que fait Force Tracker.** Notre modèle attribue un MET
+**par exercice** (6,5 bas du corps · 5,5 haut · 4,0 isolation · 8,0 haltérophilie), puis reconstruit
+le repos autour. Autrement dit : il est **précis sur ce qui compte peu** et **muet sur ce qui compte
+beaucoup**.
+
+Que ce soit « ce qui compte peu » n'est pas une opinion — c'est le §3 de ce document : *la charge
+soulevée ne change presque pas la dépense*, mesuré. La nature de l'exercice non plus, à volume égal.
+Ce qui déplace vraiment le total, c'est la **densité** de la séance.
+
+**Notre granularité est au mauvais endroit.**
+
+## 13.4 La densité — et pourquoi elle règle AUSSI l'objection de Michel
+
+Michel, le 12/08 : *« si la personne n'arrête pas sa séance les calories continuent de monter ; ça
+m'arrive de prendre plus de temps de récupération »*. C'est l'objection qui tue « MET × durée
+réelle ».
+
+**La densité y répond toute seule** :
+
+    densité = nombre de séries validées ÷ durée réelle de la séance
+
+Un repos rallongé **fait baisser la densité**, donc fait baisser le rythme de dépense — le total ne
+s'envole pas, il se **tasse**. Le modèle est auto-correcteur contre le mode de panne exact que
+Michel a identifié, là où « MET × durée » l'amplifie.
+
+Correspondance avec les 4 niveaux de l'article (à valider sur les relevés) :
+
+| minutes par série | densité | niveau probable |
+|---|---:|---|
+| > 4 min | < 0,25 | repos longs |
+| ~2,5 à 4 min | 0,25-0,40 | hypertrophie classique |
+| ~1,5 à 2,5 min | 0,40-0,65 | intense / repos courts |
+| < 1,5 min | > 0,65 | circuit / supersets |
+
+**Michel est mesuré à 3,0 min/série → 0,33 → « hypertrophie classique »**, ce qui est exactement la
+description de son entraînement. Le classement tombe juste sans qu'on ait rien à lui demander.
+
+## 13.5 ⚠️ Le préalable technique, sinon rien de tout ça ne tient
+
+La densité se calcule aujourd'hui (`séries ÷ sess.duration`), **mais elle hérite de la fragilité de
+`sess.duration`** : un « Terminer » oublié gonfle la durée, donc écrase la densité, donc sous-estime
+la séance.
+
+**Le correctif est le même que pour l'objection de Michel : horodater chaque série** (`doneAt` dans
+`toggleSet`, log.js). On calcule alors la fenêtre de la **première à la dernière série validée**, en
+**plafonnant chaque écart** — et un « Terminer » oublié n'a plus aucun effet, puisque l'horloge
+s'arrête à la dernière série et non au bouton.
+
+**Sans cet horodatage, aucune des trois approches ci-dessous n'est mesurable proprement.** C'est le
+premier geste de code du chantier, avant tout choix de barème (R8 : un modèle ne compense jamais une
+donnée absente).
+
+## 13.6 Les 3 approches à départager sur les 10 séances
+
+| | méthode | ce qu'elle vaut |
+|---|---|---|
+| **A — Compendium** | 3,5 / 5,0 / 5,8 / 6,0 MET × poids × durée | la mieux référencée · granularité par exercice, donc au mauvais endroit |
+| **B — Tout pour ma santé** | 4 / 7 / 10 / 14 kcal/min à 80 kg, par TYPE de séance | classe la séance (juste) · **formule non publiée** |
+| **C — hybride Force Tracker** | durée réelle **plafonnée** + **densité mesurée** + poids + (FC plus tard) | la seule qui n'exige rien de la personne · à valider |
+
+**L'approche C ne demande aucune saisie** : la densité se déduit des séries et du chrono, que l'app
+possède déjà. C'est ce qui la distingue de A et B, qui supposent toutes deux qu'on sache **classer**
+la séance — soit à la main, soit par une règle qu'on aurait inventée.
+
+**Le protocole ne change pas** : 10 séances relevées (§12.7), puis on regarde laquelle des trois est
+la moins aberrante. On ne choisit pas avant d'avoir mesuré.
+
+## 13.7 Ce qu'elle confirme sur le CARDIO
+
+La page emploie, pour la marche, **poids + sexe + durée + vitesse + inclinaison**, et pour la course
+sur plat **distance × poids**. C'est exactement la direction du §12.6 : *les paramètres physiques
+propres à la modalité d'abord, le MET générique en dernier recours*. Troisième source indépendante
+à y arriver.
+
+⚠️ **`distance × poids` mérite d'être notée pour ce qu'elle est** : une approximation bien connue
+(courir 1 km coûte ≈ 1 kcal par kg, quelle que soit l'allure sur le plat). Elle est **robuste** et
+demande une seule donnée — mais elle ignore la pente, là où l'équation ACSM la prend. À comparer,
+pas à substituer.
+
+## 13.8 Source
+
+- **Tout pour ma santé — Calories brûlées pendant le sport : tableau et calculateur**
+  https://toutpourmasante.fr/calories-brulees-sport/
+  *(apportée par Michel le 12/08/2026 · relue par GPT · statut : méthode en compétition, pas
+  référence)*
 

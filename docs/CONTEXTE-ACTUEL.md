@@ -32,6 +32,24 @@
 > · **❓ il manque 4 nombres à Michel** pour refermer le cas « 57 kcal » : durée saisie · type ·
 >   intensité choisie · ce qu'affichait le tapis (vitesse/pente/distance).
 >
+> **⚠️ CORRIGÉ le 12/08** : j'avais écrit que la durée de la muscu était « reconstruite à 24 min
+> pour une séance qui en prend 50 ». **C'était une supposition** — le rythme MESURÉ de Michel
+> (3,0 min/série, ft-v826) donne 21 min. La durée est correcte à ±20 %. **Le vrai écart est le
+> RYTHME** : Force Tracker tourne à 4,15-4,50 kcal/min, soit très exactement la catégorie la plus
+> LÉGÈRE des barèmes (« repos longs »), quand les séances de Michel relèvent de l'« hypertrophie
+> classique » (7,44 kcal/min à 85 kg). Écart réel ≈ **1,7×**, pas 3,4×.
+>
+> **Nouvelle source au dossier** (apportée par Michel, relue par GPT, `CALORIES-SOURCES.md` §13) :
+> 4 niveaux en kcal/min — 4 / 7 / 10 / 14 à 80 kg. **Statut : méthode en compétition, pas
+> référence** (la formule qui produit ces 4 chiffres n'est pas publiée). ⭐ **Son idée forte** :
+> elle classe la **SÉANCE**, pas l'exercice — l'inverse de ce que fait Force Tracker, qui est
+> précis sur ce qui compte peu (quel exercice) et muet sur ce qui compte beaucoup (la **densité**).
+> ⭐⭐ Et la densité règle l'objection de Michel (« si on n'arrête pas la séance, les calories
+> montent ») : un repos rallongé **fait baisser** la densité, donc le total se tasse au lieu de
+> s'envoler. **1ᵉʳ geste de code du chantier, avant tout choix de barème : horodater chaque série
+> validée** (`doneAt`) — sinon un « Terminer » oublié fausse tout, et aucune des 3 approches n'est
+> mesurable.
+>
 > **Direction validée (GPT + mesures)** : *les paramètres physiques de la modalité d'abord*
 > (vitesse/pente → équations ACSM ; watts pour le vélo), l'étiquette d'intensité en **repli assumé**,
 > et la FC **seulement** si les 10 séances montrent qu'elle apporte quelque chose.
