@@ -483,6 +483,12 @@ function plannedSession(){
 // que le POIDS TOTAL. Il traite 84 kg de muscle comme 84 kg de gras. Sur quelqu'un de
 // musclé il SOUS-ESTIME — mesuré sur un gabarit 84 kg / 178 cm / 45 ans à 15 % de masse
 // grasse : 1732 contre 1912, soit ~180 kcal PAR JOUR. Et le métabolisme de base pèse
+//   ⚠️⚠️ CE GABARIT EST UN MANNEQUIN DE CALCUL, PAS MICHEL. C'est un jeu de valeurs rondes
+//   choisi pour que l'écart entre les deux formules soit refaisable à la main par n'importe
+//   qui. Michel n'a PAS 45 ans, et son âge ne doit jamais se lire ici : il vit dans `S.age`,
+//   saisi dans son profil. Le 12/08/2026 j'ai fait exactement cette confusion en lui donnant
+//   un conseil d'entraînement « à 45 ans » — il a dû me corriger (il en a 48). Un chiffre
+//   d'exemple posé à côté d'un vrai calcul finit toujours par être pris pour une donnée.
 // 60-70 % de la dépense totale : c'est le seul endroit où on peut gagner en précision
 // sans montre, sans ceinture et sans API.
 //
