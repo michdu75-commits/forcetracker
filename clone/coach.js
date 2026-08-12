@@ -123,6 +123,45 @@ function _rythmeSeance(){
     return {min:Math.round(((repos+70)/60)*10)/10, n:0, mesure:false};
   }catch(e){ return null; }
 }
+// ─── COMBIEN DE TEMPS DURENT VRAIMENT SES SÉANCES (12/08/2026) ───────────────────────
+// ⚠️ LE TROU : le questionnaire demande « combien de temps dure une séance en général ? »
+// et cette réponse DÉCLARÉE partait à Milo. La durée RÉELLE, elle, est chronométrée depuis
+// des mois (`sess.duration`) et n'a jamais été transmise. Milo planifiait donc contre un
+// budget annoncé, pas contre le budget vécu — et si quelqu'un déclare 45 min alors qu'il
+// en passe 75, tout son arbitrage est faux.
+// C'est le principe DÉCLARÉ vs RÉALISÉ de `docs/PROFIL-VIVANT.md` : la réalité prime, mais
+// on ne corrige jamais en silence — on donne les DEUX et on laisse Milo (et la personne)
+// arbitrer. Et on ne dit RIEN tant qu'on n'a pas assez de séances pour parler d'une
+// tendance : une séance courte n'est pas une habitude (R12 · Constitution P19).
+function _ctxDureeSeance(){
+  try{
+    const sess=(S.sessions||[]).filter(s=>s&&+s.duration>0).slice(0,12);
+    const mins=[];
+    for(const s of sess){
+      const m=+s.duration/60;
+      if(m>=10&&m<=180) mins.push(m);        // hors bornes = chrono oublié ou séance fantôme
+    }
+    if(mins.length<3) return '';             // pas de tendance → on se tait (R29)
+    mins.sort((a,b)=>a-b);
+    const med=Math.round(mins[Math.floor(mins.length/2)]);
+    const mini=Math.round(mins[0]), maxi=Math.round(mins[mins.length-1]);
+    let l='\n⏱️ DURÉE RÉELLE DE SES SÉANCES (chronométrée, pauses exclues, sur ses '+mins.length
+      +' dernières) : **médiane '+med+' min** (de '+mini+' à '+maxi+' min).';
+    // L'écart entre ce qu'il/elle DIT et ce qu'il/elle FAIT — c'est ça qui rend l'arbitrage juste
+    const dec=(S.coachQuiz&&S.coachQuiz.answers)?S.coachQuiz.answers.time:null;
+    if(dec){
+      const n=String(dec).match(/\d+/g);
+      const cible=n&&n.length?(+n[n.length-1]):null;   // « 45-60 » → on compare au haut de la fourchette
+      if(cible&&Math.abs(med-cible)>=15)
+        l+=' ⚠️ Il/elle a DÉCLARÉ « '+dec+' » : l\'écart avec la réalité est de '+Math.abs(med-cible)
+          +' min. Planifie sur la durée RÉELLE, et signale-lui l\'écart UNE fois, sans insister —'
+          +' c\'est peut-être son planning qui a changé.';
+    }
+    l+='\n→ Sers-t\'en pour savoir si une séance que tu proposes RENTRE vraiment chez lui/elle,'
+      +' même quand aucune durée ne t\'est donnée dans la question.\n';
+    return l;
+  }catch(e){ return ''; }
+}
 function _ctxRythme(){
   const r=_rythmeSeance(); if(!r||!(r.min>0)) return '';
   const src=r.mesure ? ('MESURÉ sur ses '+r.n+' dernières séances') : ('ESTIMÉ depuis son temps de repos réglé — il/elle n\'a pas encore assez de séances pour le mesurer');
@@ -2057,7 +2096,7 @@ TA MÉTHODE DE COACH (comment un vrai coach physique construit et coache — c'e
 - Variété : varie les angles (incliné/plat/décliné, prise large/serrée), alterne barre/haltères/machine/poulie. Machines guidées pour débuter (sécurité) et pour finir un muscle. Fais tourner les exercices d'un bloc à l'autre pour éviter la stagnation.
 - ⚠️ APRÈS UN EFFORT MAXIMAL (record, série lourde à 1-3 reps près du max), compte 4 à 7 jours avant de reproposer un maximal sur le MÊME mouvement — le système nerveux met plus longtemps à récupérer que les muscles. Regarde « Dernier RECORD en date » AVANT de proposer du lourd : si c'est récent, propose du volume/technique et dis pourquoi.
 - Charges & reps selon l'objectif : force → 3-6 reps lourdes, repos 2-4 min ; muscle/hypertrophie → 8-15 reps, repos 60-90 s ; endurance/sèche → 15-20+ reps, repos court. Calibre depuis ses records (1RM) et son niveau.
-- Techniques d'intensification (dose-les, pas partout) : supersets (2 exos enchaînés sans repos), dropsets (à l'échec puis −20% sans repos), reps dégressives (12-10-8-6 en montant la charge), double contraction, tempo (descente lente 3-4 s, montée explosive), rest-pause, séries à l'échec avec parcimonie, unilatéral pour corriger un déséquilibre.
+- Techniques d'intensification, à doser : supersets, dropsets, reps dégressives, double contraction, tempo, rest-pause, séries à l'échec, unilatéral. (Tu sais ce qu'elles sont — n'explique que si on te le demande. Pour le superset, la règle d'usage est dans le bloc SÉANCE plus bas.)
 - Cues d'exécution PRÉCIS, comme un coach à côté de lui : tempo, amplitude complète, gainage (« serre les abdos », « bassin fixe »), placement (« pieds serrés », « coudes rentrés »), connexion muscle-esprit, respiration. C'est ce qui fait vraiment la différence.
 - Progression : monte la charge (ou les reps) quand toutes les séries passent proprement (~+2,5 kg haut du corps, +5 kg bas du corps). Une semaine plus légère (décharge) toutes les 4-6 sem. Pense périodisation sur un cycle (accumulation volume → intensification charge → pic → décharge).
 - ADAPTATION (le cœur du métier) : cale TOUT sur son niveau, son objectif, sa morphologie (renforce ses points faibles — ex. épaules en retard → plus de volume dessus), sa santé et ses douleurs (contourne, allège, oriente vers un pro si besoin), son sexe, son âge, son matériel et son temps dispo. Tu es une vraie alternative à un coach : sérieux, structuré, personnalisé — mais tu ne poses jamais de diagnostic médical.
@@ -2178,6 +2217,8 @@ INTÉGRER LA SÉANCE DU JOUR DIRECTEMENT DANS L'APP (action concrète — quand 
 - Règles du bloc : \`name\` = un nom d'exercice le plus proche possible de la bibliothèque (ex. « Développé Couché », « Squat », « Rowing Barre »). Une entrée dans \`sets\` PAR série. \`type\` = "N" (normal), "É" (échauffement), "X" (échec/à fond) ou "D" (dropset) — "N" par défaut. \`kg\` peut valoir 0 si tu ne connais pas la charge (l'app la pré-remplit avec la dernière fois). Si la charge est « au ressenti/max », mets \`"reps":0,"maxi":true\`.
 - ⏱️ \`rest\` = le TEMPS DE REPOS en SECONDES, **le même que celui que tu annonces en clair** dans ta séance (« 3 min » → \`"rest":180\` ; « 90 s » → \`"rest":90\` ; « 2 min » → \`"rest":120\`). Mets-le sur CHAQUE série — c'est lui qui règle le chronomètre de repos de l'app. **Sois cohérent** : le chrono doit correspondre exactement à ce que tu as écrit. Si tu n'as pas d'avis particulier, omets \`rest\` (l'app gardera son réglage habituel).
 - 💬 \`note\` = **ta CONSIGNE pour cet exercice**, reprise de ce que tu viens d'écrire en clair : le cue technique, la méthode, le point d'attention ou la protection d'une zone (« omoplates serrées, pieds bien ancrés », « amplitude contrôlée, ne descends pas sous les oreilles », « pas de tentative 105 aujourd'hui », « excentrique lent 3'' »). **1 phrase COURTE et actionnable** (~120 caractères max), à la 2ᵉ personne. Elle s'affichera **sous l'exercice pendant la séance** : c'est ce qui fait que la personne exécute comme tu l'as expliqué, au lieu de devoir remonter dans le chat. Omets \`note\` si tu n'as rien de particulier à dire sur cet exercice (ne meuble pas).
+- ⚡ \`supersetGroup\` (facultatif) = **grouper deux exercices en SUPERSET**. Même étiquette courte ("A", "B") sur les exercices à enchaîner : \`{"name":"Curl Biceps Haltères","supersetGroup":"A",...},{"name":"Extension Triceps Poulie","supersetGroup":"A",...}\`. Écrire « superset » dans ton texte ne suffit PAS — l'app ne lit que cette clé.
+- ⚡ **QUAND** : le superset fait gagner du TEMPS, pas du muscle (à volume égal), au prix de plus de fatigue. Donc **seulement si la séance ne rentre pas dans le temps disponible**, et **seulement sur les accessoires/isolation** (curl, élévations, extensions, leg curl, face pull, mollets) — de préférence en paire pousser + tirer, la seule qui préserve les répétitions. **🚫 JAMAIS sur un mouvement lourd** (squat, soulevé, développés, toute variante de squat ou de charnière de hanche) : l'app REFUSE ces groupes, ne les propose pas. Ni quand la récupération est basse, une zone fragile déclarée, ou que le temps ne manque pas.
 - 🔢 **ORDRE ET EXHAUSTIVITÉ — le bloc doit être le MIROIR EXACT de ta séance en clair** : les exercices dans \`exs\` sont rangés dans le **MÊME ORDRE** que celui que tu viens d'annoncer (ton exercice n°1 en premier, puis le n°2, etc.), et **TOUS** y figurent (n'en oublie AUCUN, n'en ajoute AUCUN). La personne enchaîne sa séance dans cet ordre : s'il diffère de ce que tu as écrit, elle est perdue. **Vérifie avant d'envoyer** : même nombre d'exercices, même ordre, mêmes charges, mêmes reps, même repos que ton texte.
 - N'émets ce bloc QUE pour une séance à faire AUJOURD'HUI / MAINTENANT. (Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas ce bloc-là.)
 - Un bouton « ⚡ Commencer cette séance » apparaîtra automatiquement sous ton message pour l'injecter dans l'écran Séance. Ne parle JAMAIS du JSON, ne l'explique pas, ne le commente pas — l'utilisateur ne voit que ta séance en clair + le bouton.
@@ -2286,6 +2327,7 @@ ${_coachQuizContext()}
 ${_memoireLongue()}
 ${_historiqueCompact()}
 ${_ctxRythme()}
+${_ctxDureeSeance()}
 ${(()=>{
   // REGISTRE ATHLÈTE (Dossier Athlète, brique 1 = socle) — mémoire durable.
   // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.

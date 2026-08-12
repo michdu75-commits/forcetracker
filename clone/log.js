@@ -4661,21 +4661,67 @@ function closeMiloSeance(){
   const ov=document.getElementById('ov-milo-seance'); if(ov)ov.classList.remove('open');
   _miloPendingIdx=-1; _miloPendingBtn=null;
 }
+// ─── SUPERSET : les mouvements qu'on ne groupe JAMAIS (12/08/2026) ──────────────────
+// La méta-analyse (Sports Medicine 2025, 19 études) est nette : le superset ne fait pas
+// gagner de muscle à volume égal — il fait gagner du TEMPS, au prix d'une performance
+// dégradée sur le second exercice. Sur un squat ou un soulevé lourd, cette dégradation
+// est exactement ce qu'on ne veut pas : c'est là que la charge et la technique comptent.
+// Retour de Michel (powerlifting) : « je peux en faire ou pas ? » → sur les accessoires
+// oui, sur les trois mouvements jamais.
+// ⚠️ POURQUOI LE CODE ET PAS LE PROMPT : le prompt est probabiliste, ce refus ne doit pas
+// dépendre d'un jour de fatigue du modèle (R7 — le prompt est le dernier levier). On
+// RÉUTILISE `BIG4` et `_movPattern`, on ne recrée pas une 3ᵉ liste d'exercices (R2/R13).
+function _supersetInterdit(name){
+  if(!name) return false;
+  if(typeof BIG4!=='undefined' && BIG4.indexOf(name)>=0) return true;
+  try{ const p=(typeof _movPattern==='function')?_movPattern(name):null;
+       return p==='squat'||p==='hip-hinge'; }catch(e){ return false; }
+}
+
 function _applyMiloSession(mode){
   const idx=_miloPendingIdx, btn=_miloPendingBtn;
   const data=(typeof _pendingMiloSessions!=='undefined')?_pendingMiloSessions[idx]:null;
   closeMiloSeance();
   if(!data){toast('Séance introuvable','error');return;}
   const prev=(typeof getPrev==='function')?getPrev:null;
+  // ── SUPERSETS DEMANDÉS PAR MILO ────────────────────────────────────────────────────
+  // ⚠️ LE TROU QU'ON BOUCHE ICI (constaté le 12/08) : `loadProgDay` lit déjà
+  // `supersetGroup` pour un programme importé, mais ce chemin-ci — la séance dictée dans
+  // le chat — ne lisait RIEN. Le même superset survivait à une porte et s'évaporait à
+  // l'autre. On emploie donc EXACTEMENT le même nom de champ que l'import, pour que les
+  // deux entrées de l'app parlent la même langue (R2).
+  // Les étiquettes de Milo ("A", "B"…) deviennent des identifiants uniques : sans ça,
+  // deux séances chargées à la suite auraient des groupes qui se confondent.
+  const gMap={}, gSeed=Date.now();
+  const bloque=[];
   const newExs=(data.exs||[]).map(e=>{
     const pv=prev?(prev(e.name)||[]):[];
-    return {name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
+    const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
       const pp=pv.length?(pv[i]||pv[pv.length-1]):null;
       return {kg:(s.kg>0)?s.kg:(pp?pp.kg:0),
               reps:s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10)),
               maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)};
     })};
+    const lbl=e.supersetGroup;
+    if(lbl!==undefined&&lbl!==null&&String(lbl).trim()!==''){
+      if(_supersetInterdit(e.name)) bloque.push(e.name);   // refus dur, voir plus haut
+      else{
+        const k=String(lbl).trim();
+        if(!gMap[k]) gMap[k]='ss'+gSeed+'_'+k;
+        obj.group=gMap[k]; obj.groupType='super';
+      }
+    }
+    return obj;
   });
+  // ⚠️ UN GROUPE ORPHELIN N'EST PAS UN SUPERSET. Si le garde-fou (ou Milo) laisse un seul
+  // exercice portant une étiquette, l'écran afficherait un « superset » d'un seul membre —
+  // un bloc qui promet un enchaînement qui n'existe pas. On délie ce qui reste seul.
+  const compte={};
+  newExs.forEach(o=>{ if(o.group) compte[o.group]=(compte[o.group]||0)+1; });
+  newExs.forEach(o=>{ if(o.group&&compte[o.group]<2){ delete o.group; delete o.groupType; } });
+  // On le DIT, on ne le fait pas en douce (R24 : la personne doit comprendre ce qu'elle voit)
+  if(bloque.length&&typeof toast==='function')
+    toast('Superset retiré sur '+bloque.join(', ')+' — pas sur les mouvements lourds','info');
   _appliqueMiloSession(newExs, data, mode, btn);
 }
 /** L'écriture elle-même. `mode` : 'start' (aucune séance) · 'add' · 'replace'. */

@@ -2763,8 +2763,16 @@ console.log('\n═══ Q. Le bloc commun de Milo reste partagé par tous ═�
       a.commun===b2.commun && b2.commun===c3.commun,
       'tailles : '+[a,b2,c3].map(x=>x.commun.length).join(' / ')+' — une donnée personnelle est remontée au-dessus du repère');
     // Garde-fou de taille : le bloc commun est le gros morceau, il ne doit pas dériver sans qu'on le voie.
-    t('le bloc commun garde une taille raisonnable (< 45 000 caractères)',
-      a.commun.length < 45000, a.commun.length+' caractères');
+    // ⚠️ SEUIL RELEVÉ 45 000 → 46 500 le 12/08/2026, DÉLIBÉRÉMENT et pour une seule raison :
+    // la spécification du superset (~970 caractères) est entrée dans le bloc SÉANCE. Le garde-fou
+    // a fait exactement son travail — il a refusé la livraison et m'a obligé à regarder. J'ai
+    // d'abord compressé la spec (1 806 → 970) et retiré du prompt les définitions que Milo connaît
+    // déjà (R20 : une règle entre, une règle sort), puis constaté que le reste était utile.
+    // ⚠️ Ce bloc est MIS EN CACHE (1 h) et facturé au dixième : sa taille coûte peu, mais elle
+    // dilue les règles entre elles, et c'est ÇA le vrai prix (R20 encore). À 45 651 aujourd'hui,
+    // il mérite une relecture dédiée — pas un relèvement de seuil de plus.
+    t('le bloc commun garde une taille raisonnable (< 46 500 caractères)',
+      a.commun.length < 46500, a.commun.length+' caractères');
     // Aucun prénom de test ne doit apparaître dans la partie censée être commune.
     t('⭐ aucun prénom ne fuit dans le bloc commun',
       !/Christophe|Tatiana|Paul/.test(a.commun+b2.commun+c3.commun),
@@ -3226,6 +3234,132 @@ console.log('\n═══ V. Métabolisme de base — d\'où vient le chiffre ═
   tv('l\'aide s\'ouvre et se referme', V.aideOuverte===true&&V.aideFermee===true);
   t('0 erreur JS sur tout le bloc BMR', ev.length===0, ev.join(' | '));
   await cv.close();
+}
+
+
+// ═════════════════════════════════════════════════════════════════════════════
+// VI. LE SUPERSET DE MILO — et le refus sur les mouvements lourds (12/08/2026)
+// Né de la question de Michel (powerlifting) : « je peux en faire ou pas ? ». La réponse
+// des méta-analyses : sur les accessoires oui, sur les trois mouvements jamais — le
+// superset fait gagner du TEMPS, pas du muscle, au prix de la performance du 2ᵉ exercice.
+// Le trou qu'on bouche : `loadProgDay` lisait déjà `supersetGroup` pour un programme
+// importé, la séance dictée dans le chat ne lisait RIEN. Même objet, deux portes, une
+// seule qui marchait.
+console.log('\n═══ VI. Superset dicté par Milo ═══');
+{
+  const cw=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pw=await cw.newPage(); const ew=[]; pw.on('pageerror',e=>ew.push(e.message));
+  await pw.addInitScript(seedScript({}));
+  await pw.goto('http://localhost:'+PORT+'/index.html');
+  await pw.waitForTimeout(2200);
+  const W=await pw.evaluate(async()=>{
+   try{
+    const o={};
+    document.querySelectorAll('.overlay.open').forEach(x=>x.classList.remove('open'));
+    const ob=document.getElementById('onboarding'); if(ob)ob.style.display='none';
+    const fab=()=>{const e=document.getElementById('nb-log');if(!e)return '?';
+      const b=e.getBoundingClientRect();return [Math.round(b.x),Math.round(b.y),Math.round(b.width),Math.round(b.height)].join(',');};
+    o.fabAvant=fab();
+
+    S.wkt=null;
+    _pendingMiloSessions=[{label:'Push',exs:[
+      {name:'Développé Couché',sets:[{reps:5,kg:100,type:'N'}]},
+      {name:'Squat à la Barre',supersetGroup:'A',sets:[{reps:5,kg:130,type:'N'}]},
+      {name:'Soulevé de Terre',supersetGroup:'A',sets:[{reps:5,kg:140,type:'N'}]},
+      {name:'Curl Biceps Haltères',supersetGroup:'B',sets:[{reps:12,kg:14,type:'N'}]},
+      {name:'Extension Triceps Poulie',supersetGroup:'B',sets:[{reps:12,kg:25,type:'N'}]},
+      {name:'Élévations Latérales',supersetGroup:'C',sets:[{reps:15,kg:8,type:'N'}]}]}];
+    _miloPendingIdx=0;_miloPendingBtn=null;
+    _applyMiloSession('new');
+    await new Promise(r=>setTimeout(r,600));
+    const ex=S.wkt.exs;
+    o.n         = ex.length;
+    o.sansEtiq  = ex[0].group===undefined;                       // rien demandé → rien posé
+    o.squat     = ex[1].group===undefined;                       // INTERDIT
+    o.souleve   = ex[2].group===undefined;                       // INTERDIT
+    o.lies      = !!(ex[3].group && ex[3].group===ex[4].group);  // accessoires → LIÉS
+    o.type      = ex[3].groupType;
+    o.orphelin  = ex[5].group===undefined;                       // seul de son groupe → délié
+    o.idUnique  = /^ss\d+_B$/.test(ex[3].group||'');             // identifiant, pas l'étiquette brute
+    o.fabApres  = fab();
+    await new Promise(r=>setTimeout(r,200));
+    if(typeof toggleSet==='function') toggleSet(3,0);
+    await new Promise(r=>setTimeout(r,400));
+    o.fabSerie  = fab();
+
+    // ── la spec doit être DANS le contexte, sinon Milo ne peut pas l'employer (R8)
+    const ctx=(typeof buildCoachContext==='function')?buildCoachContext(''):'';
+    o.specDite  = ctx.indexOf('supersetGroup')>=0;
+    o.regleTemps= /ne rentre pas dans le temps/i.test(ctx);
+    o.regleLourd= /JAMAIS sur un mouvement lourd/i.test(ctx) && /l'app REFUSE ces groupes/i.test(ctx);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  let okw=0,kow=0; const tw=(n,c,d)=>{ if(c){okw++;ok++;console.log('  ✅ '+n);} else {kow++;ko++;console.log('  ❌ '+n+(d?'\n       → '+d:''));} };
+  if(W.erreur){ t('⛔ le bloc superset s\'exécute (aucun témoin ne vaut sans ça)', false, W.erreur); }
+  tw('les 6 exercices de Milo arrivent bien dans la séance', W.n===6, 'reçu '+W.n);
+  tw('sans étiquette, aucun groupe n\'est posé (non-régression)', W.sansEtiq===true);
+  tw('⭐⭐ REFUS du superset sur le SQUAT (mouvement lourd)', W.squat===true);
+  tw('⭐⭐ REFUS sur le SOULEVÉ DE TERRE', W.souleve===true);
+  tw('⭐⭐ les deux ACCESSOIRES sont réellement LIÉS (curl + triceps)', W.lies===true&&W.type==='super',
+    'group '+W.lies+' · type '+W.type);
+  tw('… avec un identifiant unique, pas l\'étiquette brute de Milo', W.idUnique===true);
+  tw('⭐ un groupe resté SEUL est délié (pas de superset à un membre)', W.orphelin===true);
+  tw('⭐ RÈGLE D\'OR #9 : le bouton central ne bouge pas ('+W.fabAvant+')',
+    W.fabAvant===W.fabApres&&W.fabApres===W.fabSerie,
+    W.fabAvant+' → '+W.fabApres+' → '+W.fabSerie);
+  tw('⭐ Milo REÇOIT la clé `supersetGroup` (sinon il ne peut pas s\'en servir — R8)', W.specDite===true);
+  tw('… et la règle « seulement quand le temps manque »', W.regleTemps===true);
+  tw('… et l\'interdiction sur les mouvements lourds', W.regleLourd===true);
+  tw('0 erreur JS sur tout le bloc superset', ew.length===0, ew.join(' | '));
+  await cw.close();
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// VII. LA DURÉE RÉELLE DES SÉANCES → MILO (12/08/2026)
+// Le questionnaire demande la durée DÉCLARÉE et l'envoyait ; la durée CHRONOMÉTRÉE
+// (`sess.duration`) existait depuis des mois et ne partait pas. Milo planifiait donc
+// contre un budget annoncé au lieu du budget vécu.
+console.log('\n═══ VII. Durée réelle des séances ═══');
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const px=await cx.newPage(); const ex_=[]; px.on('pageerror',e=>ex_.push(e.message));
+  await px.addInitScript(seedScript({}));
+  await px.goto('http://localhost:'+PORT+'/index.html');
+  await px.waitForTimeout(2200);
+  const X=await px.evaluate(async()=>{
+   try{
+    const o={};
+    const mk=(d,min)=>({date:d,duration:min*60,exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}]});
+    S.sessions=[mk('2026-08-10',72),mk('2026-08-07',68),mk('2026-08-04',75),mk('2026-08-01',70),mk('2026-07-29',66)];
+    S.coachQuiz={answers:{time:'30-45 min'},done:true};
+    let c=_ctxDureeSeance();
+    o.mediane   = /médiane 70 min/.test(c);
+    o.fourchette= /de 66 à 75 min/.test(c);
+    o.ecart     = /DÉCLARÉ « 30-45 min »/.test(c) && /25 min/.test(c);
+    S.coachQuiz={answers:{time:'60-75 min'},done:true};
+    o.pasDAlerte= _ctxDureeSeance().indexOf('DÉCLARÉ')<0;       // écart faible → on n'embête pas
+    S.sessions=[mk('2026-08-10',72),mk('2026-08-07',68)];
+    o.tropPeu   = _ctxDureeSeance()==='';                        // < 3 séances → silence (R29)
+    S.sessions=[mk('2026-08-10',9),mk('2026-08-07',400),mk('2026-08-04',9)];
+    o.aberrantes= _ctxDureeSeance()==='';                        // 9 min / 6h40 → écartées
+    S.sessions=[mk('2026-08-10',72),mk('2026-08-07',68),mk('2026-08-04',75)];
+    o.dansCtx   = (typeof buildCoachContext==='function') &&
+                  buildCoachContext('').indexOf('DURÉE RÉELLE DE SES SÉANCES')>=0;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  let okx=0; const tx=(n,c,d)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(d?'\n       → '+d:''));} };
+  if(X.erreur){ t('⛔ le bloc durée s\'exécute (aucun témoin ne vaut sans ça)', false, X.erreur); }
+  tx('⭐ la MÉDIANE est envoyée (pas la moyenne : un chrono oublié la ferait exploser)', X.mediane===true);
+  tx('… avec la fourchette min-max', X.fourchette===true);
+  tx('⭐⭐ l\'écart DÉCLARÉ vs RÉEL est signalé quand il dépasse 15 min', X.ecart===true);
+  tx('… et on n\'embête PAS la personne quand l\'écart est faible', X.pasDAlerte===true);
+  tx('⭐ moins de 3 séances → SILENCE, jamais une tendance inventée (R29)', X.tropPeu===true);
+  tx('⭐ durées aberrantes (9 min, 6 h 40) écartées → silence', X.aberrantes===true);
+  tx('⭐ et ça atteint vraiment le contexte de Milo (R4)', X.dansCtx===true);
+  tx('0 erreur JS sur tout le bloc durée', ex_.length===0, ex_.join(' | '));
+  await cx.close();
 }
 
 await b.close(); srv.close();
