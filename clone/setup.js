@@ -379,7 +379,16 @@ function openSessDetail(id){
   if(db){db.textContent='🗑️ Supprimer';db.style.color='var(--red)';}
   document.getElementById('sd-title').textContent=fmtD(sess.date);
   const cals=sess.calories?` · 🔥 ${sess.calories} kcal`:'';
-  document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${cals}`;
+  // ── Temps EFFECTIF, lu sur les horodatages de séries (12/08/2026) ────────────────────
+  // Ne s'affiche que si la séance en porte (donc à partir de ft-v835) : les séances
+  // antérieures n'ont pas d'horodatage, et on préfère ne rien dire que d'inventer (R29).
+  // C'est aussi la ligne de relevé du protocole des 10 séances (CALORIES-SOURCES.md §12.7).
+  let eff='';
+  if(typeof _dureeEffective==='function'){
+    const d=_dureeEffective(sess);
+    if(d&&d.actifSec>60) eff=` · ⏱️ ${Math.round(d.actifSec/60)} min effectifs · ${String(d.densite).replace('.',',')} série/min`;
+  }
+  document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${cals}${eff}`;
 
   _updateSdMuscles(sess);
   _renderSessDetailContent();

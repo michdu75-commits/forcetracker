@@ -212,6 +212,60 @@ function getExerciseMET(name) {
   return MET_ISO;   // exercice inconnu du moteur : on n'invente pas une grosse dépense
 }
 
+// ─── TEMPS EFFECTIF D'UNE SÉANCE, lu sur les horodatages de séries (12/08/2026) ─────
+// Répond à l'objection de Michel : « si la personne n'arrête pas sa séance les calories
+// continuent de monter ; ça m'arrive de prendre plus de temps de récupération ».
+//
+// ⭐ CE QUI RÈGLE LE « TERMINER » OUBLIÉ : on ne regarde PAS le bouton. La fenêtre va de la
+// PREMIÈRE à la DERNIÈRE série validée — si on ferme l'app deux heures plus tard, ça ne change
+// rien, parce que l'horloge s'est arrêtée à la dernière série. C'est gratuit et c'est le cas
+// le plus grave, celui qui produirait un chiffre absurde.
+//
+// ⭐ CE QUI RÈGLE LE REPOS RALLONGÉ : chaque écart entre deux séries est PLAFONNÉ. Un repos de
+// 3 min compte 3 min ; un appel téléphonique de 20 min compte le plafond. On ne jette pas
+// l'écart, on le tronque — la personne était bien là, debout, en train de récupérer.
+//
+// ⚠️ LE PLAFOND EST UN JUGEMENT, et il est écrit comme tel : `max(5 min, 2× le repos réglé)`.
+// Le plancher de 5 minutes protège un vrai repos de série lourde (squat, soulevé) — quelqu'un
+// qui règle 90 s de repos par défaut fait quand même 4-5 min entre deux séries maximales, et
+// le lui tronquer serait le punir de s'entraîner lourd.
+//
+// ⚠️ CE QU'ELLE NE MESURE PAS, et il faut le savoir avant de s'en servir : l'exécution de la
+// PREMIÈRE série (l'horodatage est posé quand on coche, donc après l'effort) et tout ce qui
+// précède (mise en place, échauffement non noté). C'est volontairement conservateur : mieux
+// vaut un temps effectif un peu court qu'un temps gonflé par ce qu'on n'a pas vu.
+//
+// ⚠️ NE CHANGE AUCUN CALCUL AUJOURD'HUI. Elle sert à MESURER, pour départager les 3 approches
+// de `docs/CALORIES-SOURCES.md` §13.6 sur 10 séances. Le barème se choisit après, pas avant.
+function _dureeEffective(session){
+  try{
+    const ats=[];
+    for(const ex of (session&&(session.exs||session.exercises))||[])
+      for(const s of (ex.sets||[]))
+        if(s&&s.done&&typeof s.at==='number'&&isFinite(s.at)&&s.at>=0) ats.push(s.at);
+    if(ats.length<2) return null;          // 0 ou 1 série horodatée → on ne sait rien, on le dit
+    ats.sort((a,b)=>a-b);
+    const plafond=Math.max(300,2*(+S.defRest||130));
+    let actif=0, coupe=0;
+    for(let i=1;i<ats.length;i++){
+      const ecart=ats[i]-ats[i-1];
+      actif+=Math.min(ecart,plafond);
+      if(ecart>plafond) coupe+=ecart-plafond;
+    }
+    const span=ats[ats.length-1]-ats[0];
+    return {
+      n:ats.length,                        // séries horodatées
+      spanSec:span,                        // 1ʳᵉ → dernière série, brut
+      actifSec:actif,                      // idem, chaque écart plafonné
+      coupeSec:coupe,                      // ce que le plafond a retiré
+      plafondSec:plafond,
+      // densité = séries par minute effective. C'est l'axe qui distingue « repos longs » (< 0,25)
+      // d'un circuit (> 0,65), et il se déduit — on ne demande rien à la personne.
+      densite: actif>0 ? +(ats.length/(actif/60)).toFixed(3) : null
+    };
+  }catch(e){ return null; }
+}
+
 function calcSessionCalories(session) {
   const bw = S.bw || 80;
   const restSec = S.defRest || 120;

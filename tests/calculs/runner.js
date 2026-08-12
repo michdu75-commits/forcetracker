@@ -537,6 +537,89 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
 }
 
 // ════════════════════════════════════════════════════════════════════
+// L'HORODATAGE DES SÉRIES (12/08/2026) — né de l'objection de Michel : « si la personne
+// n'arrête pas sa séance les calories continuent de monter ; ça m'arrive de prendre plus
+// de temps de récupération ». Deux moitiés à protéger, et il faut les DEUX :
+//   · l'ÉCRITURE (toggleSet pose bien `at`, sur le chrono, pauses exclues) ;
+//   · la LECTURE (_dureeEffective plafonne, et sait dire « je ne sais pas »).
+// Un lecteur parfait sur une donnée jamais écrite ne mesure rien.
+console.log('\n═══ 6bis. Horodatage des séries + temps effectif ═══');
+{
+  const {c,p}=await boot(null,{});
+  const r=await p.evaluate(()=>{
+    const out={};
+    S.bw=85; S.defRest=130;
+
+    // ── ÉCRITURE ────────────────────────────────────────────────────────────────
+    S.wkt={date:today(),exs:[{name:'Squat à la Barre',sets:[
+      {kg:100,reps:5,done:false,type:'N'},{kg:100,reps:5,done:false,type:'N'}]}],
+      startHour:12, startTs:Date.now()-600000};          // chrono à 10 min
+    toggleSet(0,0);
+    out.ecrit   = S.wkt.exs[0].sets[0].at;               // ~600
+    toggleSet(0,0);
+    out.retire  = S.wkt.exs[0].sets[0].at;               // undefined
+    toggleSet(0,0);
+    S.wkt.pausedTotal=300000;                            // 5 min EN PAUSE
+    toggleSet(0,1);
+    out.horsPause = S.wkt.exs[0].sets[1].at;             // ~300, pas ~600
+    // aucun chrono (édition d'une séance passée, import) → on n'invente pas une mesure
+    S.wkt={exs:[{name:'X',sets:[{done:false}]}]};
+    toggleSet(0,0);
+    out.sansChrono = S.wkt.exs[0].sets[0].at;            // undefined
+    S.wkt=null;
+
+    // ── LECTURE ─────────────────────────────────────────────────────────────────
+    // ⚠️ GARDE-FOU DE TEST : si la fonction disparaît (refonte, renommage), on veut des
+    // témoins ROUGES, pas une exception qui fait sauter tout le bloc avant la 1ʳᵉ assertion.
+    // C'est le motif qui avait produit un faux-vert en ft-v832 — un bloc mort ne mesure rien.
+    const DE = (typeof _dureeEffective==='function') ? _dureeEffective : ()=>'FONCTION ABSENTE';
+    const mk=ats=>({exs:[{name:'Squat à la Barre',sets:ats.map(a=>({kg:100,reps:5,done:true,type:'N',at:a}))}]});
+    const suite=(n,pas)=>Array.from({length:n},(_,i)=>i*pas);
+    out.normal   = DE(mk(suite(20,180)));   // 20 séries, 3 min → le rythme mesuré de Michel
+    // ⭐ LE CAS QUI MOTIVE TOUT : « Terminer » oublié 2 h. Aucune série après la dernière,
+    // donc la fenêtre est IDENTIQUE — c'est ce qui rend le bouton sans effet sur la mesure.
+    out.oubli    = DE(mk(suite(20,180)));
+    // 3 vraies interruptions de 20 min, séparées
+    const av=suite(20,180); for(let i=0;i<20;i++){ if(i>=5) av[i]+=1200; if(i>=10) av[i]+=1200; if(i>=15) av[i]+=1200; }
+    out.pauses   = DE(mk(av));
+    // l'attendu se CALCULE, il ne se recopie pas : 19 écarts en tout, dont 3 plafonnés à 300 s
+    out.pausesAttendu = (19-3)*180 + 3*300;              // 3780 s = 63 min
+    out.circuit  = DE(mk(suite(30,50)));    // supersets
+    out.reposLong= DE(mk(suite(12,300)));   // 5 min entre séries
+    // une séance d'AVANT ft-v835 n'a aucun horodatage → « je ne sais pas », jamais un chiffre
+    out.ancienne = DE({exs:[{name:'Squat à la Barre',sets:[{done:true},{done:true},{done:true}]}]});
+    out.uneSeule = DE(mk([0]));
+    out.plafond  = out.normal ? out.normal : null;
+    // le calcul des calories ne doit PAS avoir bougé à cause de l'horodatage
+    out.calAvec  = calcSessionCalories(mk(suite(20,180))).total;
+    out.calSans  = calcSessionCalories({exs:[{name:'Squat à la Barre',sets:suite(20,180).map(()=>({kg:100,reps:5,done:true,type:'N'}))}]}).total;
+    return out;
+  });
+  const min=s=>Math.round(s/60);
+  t('⭐ cocher une série pose son horodatage', typeof r.ecrit==='number', 'reçu '+r.ecrit);
+  t('… lu sur le CHRONO de séance (~600 s pour 10 min)', r.ecrit>=595&&r.ecrit<=615, 'reçu '+r.ecrit);
+  t('décocher retire l\'horodatage', typeof r.ecrit==='number'&&r.retire===undefined, 'écrit='+r.ecrit+' · reste '+r.retire);
+  t('⭐ le temps EN PAUSE est exclu (300 s, pas 600)', r.horsPause>=295&&r.horsPause<=315, 'reçu '+r.horsPause);
+  t('⭐ sans chrono (séance passée éditée, import) → AUCUN horodatage inventé', typeof r.ecrit==='number'&&r.sansChrono===undefined, 'écrit='+r.ecrit+' · reçu '+r.sansChrono);
+  t('20 séries à 3 min → 57 min effectifs, densité 0,35 (« hypertrophie classique »)',
+    r.normal&&min(r.normal.actifSec)===57&&r.normal.densite>0.25&&r.normal.densite<0.40,
+    JSON.stringify(r.normal));
+  t('⭐⭐ « Terminer » oublié 2 h → la mesure NE BOUGE PAS (l\'horloge s\'arrête à la dernière série)',
+    r.oubli&&r.normal&&r.oubli.actifSec>0&&r.oubli.actifSec===r.normal.actifSec, JSON.stringify(r.oubli));
+  t('⭐⭐ 3 interruptions de 20 min : '+(r.pauses?min(r.pauses.spanSec):'?')+' min bruts → '
+    +(r.pauses?min(r.pauses.actifSec):'?')+' min effectifs (le total se TASSE, il n\'explose pas)',
+    r.pauses&&r.pauses.actifSec===r.pausesAttendu&&r.pauses.actifSec<r.pauses.spanSec&&r.pauses.densite>0.25,
+    'attendu '+r.pausesAttendu+' s · '+JSON.stringify(r.pauses));
+  t('le plafond est max(5 min, 2× le repos réglé) = 300 s', r.plafond&&r.plafond.plafondSec===300, 'reçu '+(r.plafond&&r.plafond.plafondSec));
+  t('un circuit (50 s entre séries) donne une densité > 0,65', r.circuit&&r.circuit.densite>0.65, JSON.stringify(r.circuit));
+  t('des repos longs (5 min) donnent une densité < 0,25', r.reposLong&&r.reposLong.densite<0.25, JSON.stringify(r.reposLong));
+  t('⭐ une séance SANS horodatage répond « je ne sais pas » (null), jamais un chiffre inventé', r.ancienne===null, 'reçu '+JSON.stringify(r.ancienne));
+  t('une seule série horodatée ne suffit pas à mesurer un temps', r.uneSeule===null, 'reçu '+JSON.stringify(r.uneSeule));
+  t('⭐⭐ AUCUN kcal ne change : l\'horodatage MESURE, il ne calcule rien encore', r.calAvec===r.calSans, r.calAvec+' vs '+r.calSans);
+  await c.close();
+}
+
+// ════════════════════════════════════════════════════════════════════
 console.log('\n═══ 7. Badges + streak ═══');
 {
   const {c,p}=await boot(null,{});

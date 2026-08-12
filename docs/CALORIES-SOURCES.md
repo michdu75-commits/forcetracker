@@ -708,6 +708,19 @@ s'arrête à la dernière série et non au bouton.
 premier geste de code du chantier, avant tout choix de barème (R8 : un modèle ne compense jamais une
 donnée absente).
 
+> ### ✅ FAIT — ft-v835 (12/08/2026)
+> `toggleSet` pose `at` = la lecture du chrono en secondes (pauses exclues, même horloge que
+> `sess.duration`). `_dureeEffective(session)` en tire `{n, spanSec, actifSec, coupeSec, plafondSec,
+> densite}` — fenêtre 1ʳᵉ→dernière série, chaque écart plafonné à `max(5 min, 2× le repos réglé)`.
+> **Vérifié** : un « Terminer » oublié 2 h ne change rien · 3 interruptions de 20 min ramènent
+> 117 min bruts à 63 min effectifs · une séance sans horodatage répond `null`, jamais un chiffre.
+> **Aucun calcul de calories n'a bougé** — un témoin le fige. Visible dans le détail d'une séance.
+> Coût de stockage mesuré : **+13,8 %** par séance (+283 Ko au plafond de 1500 séances).
+>
+> ⏭️ **Il faut maintenant des séances RÉELLES** : les valeurs ci-dessus sont produites sur des
+> séries simulées. Le protocole des 10 séances (§12.7) commence donc à la première séance faite
+> avec ft-v835 — les séances antérieures n'ont aucun horodatage et ne peuvent pas y participer.
+
 ## 13.6 Les 3 approches à départager sur les 10 séances
 
 | | méthode | ce qu'elle vaut |

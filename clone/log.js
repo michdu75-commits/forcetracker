@@ -899,7 +899,25 @@ function toggleSet(ei,si){
   const set=S.wkt.exs[ei].sets[si];
   const row=document.getElementById(`sr-${ei}-${si}`);
   if(row){const inps=row.querySelectorAll('.sinp');if(!set.reps&&inps[0])set.reps=parseInt(inps[0].value||inps[0].placeholder)||0;if(!set.kg&&inps[1])set.kg=parseFloat(inps[1].value||inps[1].placeholder)||0;}
-  set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);persist();
+  set.done=!set.done;if(set.kg&&set.reps)set.rm1=bz(set.kg,set.reps);
+  // ── HORODATAGE DE LA SÉRIE (12/08/2026) ────────────────────────────────────────────
+  // ⚠️ POURQUOI : jusqu'ici on écrivait `done=true` et RIEN d'autre — l'app ne savait pas
+  // QUAND une série avait été faite. Conséquence : elle ne peut pas distinguer 3 minutes de
+  // repos d'un appel téléphonique de 20 minutes, ni s'apercevoir qu'on a oublié d'appuyer
+  // sur « Terminer ». Aucune formule ne rattrape une donnée absente (R8) — d'où ce champ.
+  // ⚠️ ON STOCKE LA LECTURE DU CHRONO, PAS L'HEURE. Trois raisons, toutes vérifiées :
+  //   · `_wktElapsedMs()` retire déjà le temps EN PAUSE → c'est exactement la même horloge
+  //     que `sess.duration`, donc les deux ne peuvent pas se contredire (R1/R2) ;
+  //   · un entier de secondes (`at:1234`) pèse ~4× moins qu'un horodatage absolu — sur 1500
+  //     séances × 20 séries, ce n'est pas un détail (le stockage a déjà saturé le 29/07) ;
+  //   · aucune histoire de fuseau horaire ni d'horloge qui recule.
+  // ⚠️ Et on ne le pose QUE si un chrono tourne : l'édition d'une séance passée (setup.js) et
+  // l'import d'historique créent aussi des séries `done` — leur mettre un `at` inventerait une
+  // mesure. Pas de mesure → pas de champ, et la lecture doit savoir s'en passer.
+  if(set.done){
+    if(S.wkt&&S.wkt.startTs) set.at=Math.round(_wktElapsedMs()/1000);
+  } else delete set.at;   // dévalidée → l'horodatage n'a plus d'objet
+  persist();
   if(set.done){
     const exName=S.wkt.exs[ei].name;
     const isAbdo=EXLIB.some(e=>e.n===exName&&e.g==='Abdominaux');
