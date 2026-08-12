@@ -20,6 +20,24 @@
  * Une donnée non classée fait ÉCHOUER la livraison. On ne peut plus oublier :
  * on peut seulement décider.
  *
+ * ⚠️⚠️ CE QU'IL NE FAIT PAS — À SAVOIR AVANT DE LUI FAIRE CONFIANCE (constaté le 12/08/2026)
+ * Il vérifie que chaque donnée est CLASSÉE. Il ne vérifie PAS qu'une donnée rangée dans
+ * « transmis » atteint réellement le contexte de Milo. Autrement dit : déplacer une clé de
+ * « manquant » vers « transmis » dans le JSON suffit à faire disparaître l'alerte, MÊME SI
+ * aucune ligne de code ne l'envoie. Le compteur « 53 transmises » est donc une DÉCLARATION,
+ * pas une mesure.
+ * Constaté en comblant `exRestPref` : ce runner restait VERT sur le code d'avant, où la
+ * donnée ne partait pas — seul le bloc VIII de `tests/parcours` (qui lit le contexte
+ * produit) rougissait, 9 fois.
+ * → Conséquence pratique : ce garde-fou protège contre l'OUBLI (on ne peut plus ignorer une
+ *   donnée), pas contre une classification OPTIMISTE. Toute donnée qu'on déclare transmise
+ *   doit donc être doublée d'un témoin dans `tests/parcours` qui cherche sa trace DANS
+ *   `buildCoachContext()`. C'est ce qui a été fait pour `exRestPref` (bloc VIII).
+ * → Chantier ouvert : faire vérifier la transmission réelle ici même (construire le contexte
+ *   avec la donnée vide puis renseignée, et exiger qu'il change). Non fait : les 53 champs
+ *   n'ont pas tous une forme simple à simuler, et un test à moitié juste sur ce sujet serait
+ *   pire que l'absence — il rendrait la déclaration crédible.
+ *
  * Lancer : node tests/donnees/runner.js
  */
 const fs=require('fs'), path=require('path');

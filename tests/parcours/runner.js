@@ -3362,6 +3362,66 @@ console.log('\n═══ VII. Durée réelle des séances ═══');
   await cx.close();
 }
 
+
+// ═════════════════════════════════════════════════════════════════════════════
+// VIII. LES TEMPS DE REPOS RÉGLÉS PAR EXERCICE → MILO (12/08/2026)
+// Le DERNIER des deux trous connus du garde-fou tests/donnees (R4a), ouvert depuis qu'il
+// existe : « Tu as mis 240 s au squat, il l'ignore ». `S.exRestPref` s'écrit tout seul dès
+// qu'on règle le chrono en séance, et l'app le réapplique — c'est une décision DÉJÀ PRISE,
+// que Milo contredisait sans le savoir.
+console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
+{
+  const cy=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const py=await cy.newPage(); const ey=[]; py.on('pageerror',e=>ey.push(e.message));
+  await py.addInitScript(seedScript({}));
+  await py.goto('http://localhost:'+PORT+'/index.html');
+  await py.waitForTimeout(2200);
+  const Y=await py.evaluate(async()=>{
+   try{
+    const o={};
+    const DE=(typeof _ctxReposRegles==='function')?_ctxReposRegles:()=>'FONCTION ABSENTE';
+    S.exRestPref={};
+    o.vide = DE()==='';                                   // rien de réglé → rien à dire
+    S.exRestPref={'Squat à la Barre':240,'Développé Couché':180,'Curl Biceps Haltères':60,
+                  'Soulevé de Terre':300,'Exercice Abandonné':120};
+    S.sessions=[{date:'2026-08-10',exs:[{name:'Squat à la Barre',sets:[{done:true}]},
+                {name:'Développé Couché',sets:[{done:true}]},{name:'Curl Biceps Haltères',sets:[{done:true}]}]}];
+    const t=DE();
+    o.squat   = /Squat à la Barre → 4 min/.test(t);        // 240 s lisible en clair
+    o.curl    = /Curl Biceps Haltères → 1 min/.test(t);
+    o.consigne= /REPRENDS CES VALEURS/.test(t) && /DIS POURQUOI/.test(t);
+    o.duree   = /calcul de durée/.test(t);                 // le lien avec « ça rentre ou pas »
+    o.ordre   = t.indexOf('Squat à la Barre') < t.indexOf('Exercice Abandonné');
+    // borne de coût : ce bloc est PERSONNEL, donc payé plein tarif à chaque message
+    const gros={}; for(let i=0;i<15;i++) gros['Exo '+i]=60+i;
+    S.exRestPref=gros;
+    const g=DE();
+    o.borne   = /… et 5 autres/.test(g) && (g.match(/→/g)||[]).length<=11;
+    // et ça doit ATTEINDRE le contexte, sinon la fonction ne sert à rien (R4)
+    S.exRestPref={'Squat à la Barre':240};
+    const ctx=(typeof buildCoachContext==='function')?buildCoachContext(''):'';
+    o.dansCtx = ctx.indexOf('TEMPS DE REPOS RÉGLÉS')>=0;
+    // ⚠️ donnée PERSONNELLE : elle ne doit jamais monter dans le bloc commun (cache partagé)
+    const i=ctx.indexOf('PROFIL ATHLÈTE:');
+    o.pasCommun = i>0 && ctx.slice(0,i).indexOf('TEMPS DE REPOS RÉGLÉS')<0;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const ty=(n,c,d)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(d?'\n       → '+d:''));} };
+  if(Y.erreur){ t('⛔ le bloc repos réglés s\'exécute (aucun témoin ne vaut sans ça)', false, Y.erreur); }
+  ty('aucun réglage → SILENCE (on ne meuble pas le contexte)', Y.vide===true);
+  ty('⭐⭐ « 240 s au squat » arrive enfin chez Milo, lisible (4 min)', Y.squat===true);
+  ty('… et les valeurs courtes aussi (curl 1 min)', Y.curl===true);
+  ty('⭐ la consigne dit de les REPRENDRE, et d\'expliquer si Milo s\'en écarte', Y.consigne===true);
+  ty('⭐ … et de les compter dans la durée (un squat à 4 min coûte plus qu\'un curl)', Y.duree===true);
+  ty('les exercices RÉCENTS passent devant ceux qu\'on ne fait plus', Y.ordre===true);
+  ty('⭐ la liste est BORNÉE à 10 + « et N autres » (ce bloc est payé plein tarif)', Y.borne===true);
+  ty('⭐ et ça atteint vraiment le contexte de Milo (R4)', Y.dansCtx===true);
+  ty('⭐⭐ … dans le bloc PERSONNEL, jamais le commun (cache partagé entre tous)', Y.pasCommun===true);
+  t('0 erreur JS sur tout le bloc repos réglés', ey.length===0, ey.join(' | '));
+  await cy.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

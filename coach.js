@@ -123,6 +123,48 @@ function _rythmeSeance(){
     return {min:Math.round(((repos+70)/60)*10)/10, n:0, mesure:false};
   }catch(e){ return null; }
 }
+// ─── SES TEMPS DE REPOS RÉGLÉS, EXERCICE PAR EXERCICE (12/08/2026) ───────────────────
+// ⚠️ LE DERNIER DES DEUX TROUS CONNUS du garde-fou `tests/donnees` (R4a), ouvert depuis
+// qu'il existe : « Tu as mis 240 s au squat, il l'ignore ». `S.exRestPref` s'écrit TOUT
+// SEUL — dès qu'on règle le chronomètre pendant une séance, la valeur est retenue pour cet
+// exercice-là — et l'app la réapplique ensuite (`toggleSet`, log.js). C'est donc une
+// décision DÉJÀ PRISE par la personne, que Milo contredisait sans le savoir en écrivant
+// « repos 2 min » sur un mouvement où elle en prend 4.
+// ⚠️ Ce n'est pas un détail de confort : depuis ft-v826 Milo doit dire ce qui RENTRE dans
+// une séance. Un squat à 4 min de repos ne coûte pas le même temps qu'un curl à 60 s —
+// sans ces valeurs, son arithmétique est fausse sur les séances les plus lourdes.
+// ⚠️ BLOC PERSONNEL (donnée propre à la personne) : jamais dans le bloc commun, qui est
+// partagé entre tous et mis en cache. Un témoin le vérifie.
+function _ctxReposRegles(){
+  try{
+    const pref=S.exRestPref||{};
+    let noms=Object.keys(pref).filter(n=>n&&+pref[n]>0);
+    if(!noms.length) return '';
+    // Pertinence d'abord : ce qu'il/elle fait EN CE MOMENT. Un réglage posé sur un exercice
+    // abandonné depuis six mois encombrerait le contexte sans rien changer à la réponse.
+    const recents=new Set();
+    (S.sessions||[]).slice(0,15).forEach(s=>(s.exs||s.exercices||[]).forEach(e=>{ if(e&&e.name) recents.add(e.name); }));
+    noms.sort((a,b)=>{
+      const ra=recents.has(a)?0:1, rb=recents.has(b)?0:1;
+      if(ra!==rb) return ra-rb;              // les exercices récents devant
+      return (+pref[b])-(+pref[a]);          // puis les repos les plus longs (le signal fort)
+    });
+    const MAX=10;                            // borne le coût : ce bloc est payé plein tarif
+    const reste=noms.length-MAX;
+    const fmt=s=>{const m=Math.floor(s/60), r=s%60;
+      return m? (m+' min'+(r?' '+r+' s':'')) : (s+' s');};
+    let l='\n⏱️ SES TEMPS DE REPOS RÉGLÉS PAR EXERCICE (elle/il les a choisis DANS l\'app, en séance — '
+      +'ce ne sont pas des valeurs par défaut) : '
+      +noms.slice(0,MAX).map(n=>n+' → '+fmt(+pref[n])).join(' · ')
+      +(reste>0?(' … et '+reste+' autre'+(reste>1?'s':'')):'')+'.';
+    l+='\n→ **REPRENDS CES VALEURS** dans le champ `rest` de tes séances pour ces exercices-là. '
+      +'Si tu proposes autre chose, DIS POURQUOI en une demi-phrase — c\'est un réglage qu\'elle/il a posé exprès, '
+      +'pas un oubli. Et tiens-en compte dans ton calcul de durée : un mouvement à 4 min de repos coûte bien plus '
+      +'de temps qu\'un accessoire à 60 s.\n';
+    return l;
+  }catch(e){ return ''; }
+}
+
 // ─── COMBIEN DE TEMPS DURENT VRAIMENT SES SÉANCES (12/08/2026) ───────────────────────
 // ⚠️ LE TROU : le questionnaire demande « combien de temps dure une séance en général ? »
 // et cette réponse DÉCLARÉE partait à Milo. La durée RÉELLE, elle, est chronométrée depuis
@@ -2328,6 +2370,7 @@ ${_memoireLongue()}
 ${_historiqueCompact()}
 ${_ctxRythme()}
 ${_ctxDureeSeance()}
+${_ctxReposRegles()}
 ${(()=>{
   // REGISTRE ATHLÈTE (Dossier Athlète, brique 1 = socle) — mémoire durable.
   // Vide pour l'instant (les faits/observations arriveront aux briques 2 & 5) → rien injecté tant que vide.
