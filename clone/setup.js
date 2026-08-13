@@ -379,6 +379,16 @@ function openSessDetail(id){
   if(db){db.textContent='🗑️ Supprimer';db.style.color='var(--red)';}
   document.getElementById('sd-title').textContent=fmtD(sess.date);
   const cals=sess.calories?` · 🔥 ${sess.calories} kcal`:'';
+  /* ⏱️ LA DURÉE RÉELLE DE LA SÉANCE — elle EXISTAIT et ne remontait jamais (13/08/2026).
+     `sess.duration` est écrite à chaque fin de séance depuis toujours (chrono réel, temps
+     en pause déduit). Elle ne servait QU'À l'écran de fin, qui disparaît aussitôt : elle
+     n'apparaissait nulle part dans l'historique. Michel, en relevant ses calories : *« pas
+     de durée sur l'application »* — alors que l'app l'avait, pour chacune de ses séances.
+     C'est R4 dans sa forme la plus banale : la donnée descend jusqu'au fichier et ne
+     remonte pas jusqu'à la personne. Et c'est précisément le chiffre qu'il faut pour
+     comparer aux montres (CALORIES-SOURCES.md §14). */
+  const _dm=sess.duration?Math.max(1,Math.round(sess.duration/60)):0;
+  const duree=_dm?` · ⏱️ ${_dm>=60?Math.floor(_dm/60)+' h '+String(_dm%60).padStart(2,'0'):_dm+' min'}`:'';
   // ── Temps EFFECTIF, lu sur les horodatages de séries (12/08/2026) ────────────────────
   // Ne s'affiche que si la séance en porte (donc à partir de ft-v835) : les séances
   // antérieures n'ont pas d'horodatage, et on préfère ne rien dire que d'inventer (R29).
@@ -388,7 +398,7 @@ function openSessDetail(id){
     const d=_dureeEffective(sess);
     if(d&&d.actifSec>60) eff=` · ⏱️ ${Math.round(d.actifSec/60)} min effectifs · ${String(d.densite).replace('.',',')} série/min`;
   }
-  document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${cals}${eff}`;
+  document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${duree}${cals}${eff}`;
 
   _updateSdMuscles(sess);
   _renderSessDetailContent();
@@ -660,6 +670,11 @@ function renderSessions(){
     const parts=[];
     if(_tag)parts.push('<span class="sess-date2">'+fmtD(s.date)+'</span>');
     parts.push('<span class="sess-vol2">'+Math.round(s.volume||0)+' kg</span>');
+    // ⏱️ La durée était stockée depuis toujours et n'apparaissait NULLE PART (voir le
+    //    commentaire du détail de séance plus haut). Ici on la met dans la liste : c'est
+    //    là qu'on compare plusieurs séances d'un coup d'œil.
+    if(s.duration){const _m=Math.max(1,Math.round(s.duration/60));
+      parts.push('<span class="sess-dur2">⏱️'+(_m>=60?Math.floor(_m/60)+'h'+String(_m%60).padStart(2,'0'):_m+' min')+'</span>');}
     if(s.calories)parts.push('<span class="sess-cal2">🔥'+s.calories+' kcal</span>');
     const metaHtml=parts.join('<span style="opacity:.4">·</span>')+sync;
     // Liste d'exos repliable (retour GPT, ft-v570) : clampée à 2 lignes, dépliable inline si beaucoup d'exos.

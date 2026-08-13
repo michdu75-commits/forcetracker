@@ -3757,6 +3757,45 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     [].concat(...[OK,KO,REPL].map(x=>x.errs)).join(' | '));
 }
 
+
+/* ══ BLOC XIII — LA DURÉE DE SÉANCE REMONTE ENFIN (13/08/2026) ═════════════════════════
+   Michel, en relevant ses calories contre sa Garmin : *« pas de durée sur l'application »*.
+   Or `sess.duration` est écrite à CHAQUE fin de séance depuis toujours (chrono réel, temps
+   en pause déduit) — elle ne servait qu'à l'écran de fin, qui disparaît aussitôt. La donnée
+   descendait jusqu'au fichier et ne remontait jamais jusqu'à la personne (R4).            */
+{
+  console.log('\n── XIII. La durée de séance est visible ──');
+  const cd=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pd=await cd.newPage(); const ed=[];
+  pd.on('pageerror',e=>ed.push(String(e.message)));
+  await pd.addInitScript(seedScript({ft4_sessions:JSON.stringify([
+    {id:1,date:'2026-08-10',volume:5000,calories:248,duration:5460,exs:[{name:'Squat à la Barre',sets:[{kg:90,reps:5,done:true,type:'N'}]}]},
+    {id:2,date:'2026-08-08',volume:4800,calories:248,duration:4260,exs:[{name:'Squat à la Barre',sets:[{kg:90,reps:5,done:true,type:'N'}]}]},
+    {id:3,date:'2026-08-01',volume:4000,calories:200,exs:[{name:'Squat à la Barre',sets:[{kg:80,reps:5,done:true,type:'N'}]}]}
+  ])}));
+  await pd.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+  await pd.waitForTimeout(1200);
+  const D=await pd.evaluate(()=>{
+   try{
+    goScreen('progress'); renderSessions();
+    const liste=document.getElementById('sess-list').innerText;
+    openSessDetail(1);
+    return { liste, detail:(document.getElementById('sd-sub')||{}).textContent||'',
+             sansDuree:(liste.match(/⏱/g)||[]).length };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const td=(n,c,x)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(x?'\n       → '+x:''));} };
+  if(D.erreur){ t('⛔ l\'historique s\'affiche', false, D.erreur); }
+  td('⭐⭐ la durée apparaît dans l\'historique (1h31 et 1h11)',
+     /1h31/.test(D.liste||'')&&/1h11/.test(D.liste||''), (D.liste||'').slice(0,140));
+  td('⭐ … et dans le détail d\'une séance, à côté du volume et des calories',
+     /1 h 31/.test(D.detail||'')&&/kg total/.test(D.detail||''), D.detail);
+  td('⚠️ une séance SANS durée n\'affiche rien (aucun chiffre inventé)',
+     D.sansDuree===2, 'trouvé '+D.sansDuree+' durées pour 3 séances dont 1 sans');
+  t('0 erreur JS sur l\'historique', ed.length===0, ed.join(' | '));
+  await cd.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
