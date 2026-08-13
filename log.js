@@ -5013,21 +5013,39 @@ function printProg(idx){
     const val=reps.every(r=>r===reps[0])?reps[0]:reps.join('/');
     return s.length+' × '+val;
   };
+  // ── UNE CASE PAR SÉRIE, pas une seule colonne « Poids » (12/08/2026) ────────────────
+  // Demande de Michel : « il faut créer aussi des lignes pour l'entraînement ». Une case
+  // unique ne permet de noter qu'un chiffre, alors qu'on monte en charge série après série
+  // (70 · 100 · 115 · 130). C'est la feuille de salle classique : une colonne par série.
+  // ⚠️ BORNÉ À 6 : au-delà, les colonnes deviennent trop étroites pour qu'on écrive dedans
+  // au stylo — une case illisible ne sert à rien. Les séries au-delà se notent dans la marge.
+  const nCol=Math.min(6,Math.max(1,...days.map(d=>Math.max(1,...(d.exs||[]).map(e=>(e.sets||[]).length||1)))));
   const daysHtml=days.map(d=>{
     const exRows=(d.exs||[]).map(e=>{
       let sc=scheme(e.sets);
       if(sc&&/gainage|planche/i.test(e.name))sc=sc.replace(/(\d+)$/,'$1 s'); // gainage = secondes
-      return '<tr><td>'+esc(e.name)+'</td><td class="c">'+sc+'</td><td class="c"></td></tr>';
+      // LA CONSIGNE ÉCRITE À LA CRÉATION DU PROGRAMME S'IMPRIME (2ᵉ demande de Michel).
+      // Elle existait dans l'éditeur (`prog-note-…`) et n'atteignait pas le papier — donc
+      // elle n'existait pas là où on en a besoin : à la salle, la barre dans les mains.
+      const note=e.note?'<div class="prt-note">'+esc(e.note)+'</div>':'';
+      const n=Math.min(nCol,(e.sets||[]).length||1);
+      const cases=Array.from({length:nCol},(_,i)=>'<td class="w'+(i<n?'':' off')+'"></td>').join('');
+      return '<tr><td class="ex">'+esc(e.name)+note+'</td><td class="c">'+sc+'</td>'+cases+'</tr>';
     }).join('');
-    return '<h3>'+esc(d.label||'Séance')+'</h3><table><thead><tr><th>Exercice</th><th class="c">Séries × Reps</th><th class="c">Poids</th></tr></thead><tbody>'+exRows+'</tbody></table>';
+    const th=Array.from({length:nCol},(_,i)=>'<th class="w">'+(i+1)+'</th>').join('');
+    return '<h3>'+esc(d.label||'Séance')+'</h3><table><thead><tr><th>Exercice</th><th class="c">Séries × Reps</th>'+th+'</tr></thead><tbody>'+exRows+'</tbody></table>';
   }).join('');
+  // Les champs qu'on remplit au stylo en haut de la feuille — sans eux, deux tirages du
+  // même programme sont indiscernables une fois posés sur le banc.
+  const meta='<div class="prt-meta"><span>Date <i></i></span><span>Poids du corps <i></i> kg</span><span>Semaine <i></i></span></div>';
   const sub=p.beginner?('Parcours débutant — Étape 1'+(p.bgFreq?' · '+p.bgFreq+' séances/semaine':'')):'';
   const area=document.getElementById('print-area');if(!area)return;
   area.innerHTML='<div class="prt-doc">'+
     '<div class="prt-h"><span class="prt-logo">FORCE TRACKER</span><span class="prt-name">'+esc(p.name)+'</span></div>'+
     '<div class="prt-sub">'+(sub||'Programme d\'entraînement')+'</div>'+
+    meta+
     daysHtml+
-    '<div class="prt-foot">Note tes poids dans la colonne « Poids » à la salle. Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.</div>'+
+    '<div class="prt-foot">Une case par série : note la charge de chaque série au fur et à mesure. Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.</div>'+
     '</div>';
   window.print();
 }
@@ -5060,6 +5078,59 @@ function _loadLogoDataURL(){
 }
 // Contact affiché en pied de PDF
 const PDF_CONTACT='forcetracker.app@gmail.com · michdu75-commits.github.io/forcetracker';
+
+/* ─── IDENTITÉ DES PDF — UNE SEULE SOURCE (12/08/2026) ────────────────────────────────
+   AVANT : les 4 exports (chat de Milo, étude du corps, rapport PT-001, programme)
+   dessinaient CHACUN leur en-tête, avec les mêmes 6 lignes recopiées. Quatre copies de la
+   même chose divergent toujours — la seule question est quand (R2). Elles partagent donc
+   maintenant la palette, l'en-tête et le pied.
+   Les couleurs sont celles du MODE CLAIR de l'app (--red #D91843, --gold #CC8800), les
+   mêmes que la feuille d'impression de ft-v838 : un PDF de Force Tracker doit se
+   reconnaître, qu'il sorte de l'imprimante ou de jsPDF. */
+const PDF_COL={
+  rouge:[217,24,67],      // --red (mode clair)
+  or:[204,136,0],         // --gold
+  encre:[18,18,30],       // --t1
+  gris:[74,74,106],       // --t2
+  pale:[136,136,170],     // --t3
+  zebre:[246,246,249],    // --bg2 — fond des lignes alternées
+  filet:[220,221,228]     // --bg3 — séparateurs de tableau
+};
+/* En-tête commun. Rend le Y où le contenu peut commencer.
+   ⚠️ Le double filet (rouge épais + or fin) porte l'identité SANS aucun aplat : c'est la
+   même règle qu'en ft-v838 — une bordure s'imprime toujours, un fond peut être désactivé. */
+async function _pdfEntete(doc,{titre,sousTitre,droite,M}={}){
+  const W=doc.internal.pageSize.getWidth(); M=M||44;
+  let hx=M;
+  try{ const logo=await _loadLogoDataURL();
+       if(logo){ doc.addImage(logo,'PNG',M,22,34,34); hx=M+44; } }catch(e){}
+  doc.setFont('helvetica','bold');doc.setFontSize(12.5);doc.setTextColor(...PDF_COL.rouge);
+  doc.text('FORCE TRACKER',hx,40);
+  if(sousTitre){ doc.setFont('helvetica','normal');doc.setFontSize(9.5);doc.setTextColor(...PDF_COL.gris);
+                 doc.text(sousTitre,hx,54); }
+  if(titre){ doc.setFont('helvetica','bold');doc.setFontSize(15);doc.setTextColor(...PDF_COL.encre);
+             doc.text(titre,W-M,40,{align:'right'}); }
+  if(droite){ doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...PDF_COL.gris);
+              doc.text(droite,W-M,titre?55:40,{align:'right'}); }
+  const yF=sousTitre?64:60;
+  doc.setLineWidth(1.8);doc.setDrawColor(...PDF_COL.rouge);doc.line(M,yF,W-M,yF);
+  doc.setLineWidth(.8); doc.setDrawColor(...PDF_COL.or);   doc.line(M,yF+2.6,W-M,yF+2.6);
+  return yF+22;
+}
+/* Pied commun, posé sur TOUTES les pages — à appeler en dernier, quand leur nombre est connu. */
+function _pdfPied(doc,{M,mention}={}){
+  const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(); M=M||44;
+  const n=doc.getNumberOfPages();
+  for(let i=1;i<=n;i++){
+    doc.setPage(i);
+    doc.setLineWidth(.8);doc.setDrawColor(...PDF_COL.or);doc.line(M,H-34,W-M,H-34);
+    doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...PDF_COL.pale);
+    doc.text(PDF_CONTACT,M,H-23);
+    doc.text('Page '+i+'/'+n,W-M,H-23,{align:'right'});
+    if(mention){ doc.setFont('helvetica','italic');doc.setFontSize(7);
+                 doc.text(mention,M,H-14); }
+  }
+}
 async function exportProgPdf(idx){
   const p=(S.programmes||[])[idx];if(!p)return;
   toast('Génération du PDF…','info');
@@ -5068,49 +5139,65 @@ async function exportProgPdf(idx){
   try{
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:'pt',format:'a4'});
-    const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=40;
-    const logo=await _loadLogoDataURL();
-    let hx=M;
-    if(logo){ try{ doc.addImage(logo,'PNG',M,22,34,34); hx=M+44; }catch(e){} }
-    doc.setFont('helvetica','bold');doc.setFontSize(13);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,40);
-    doc.setFontSize(15);doc.text(p.name||'Programme',W-M,40,{align:'right'});
-    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,56,W-M,56);
+    const W=doc.internal.pageSize.getWidth(), M=40;
     const sub=p.beginner?('Parcours débutant — Étape 1'+(p.bgFreq?' · '+p.bgFreq+' séances/semaine':'')):'Programme d\'entraînement';
-    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(110);doc.text(sub,M,70);doc.setTextColor(20);
-    let y=86;
+    let y=await _pdfEntete(doc,{titre:(p.name||'Programme'),sousTitre:sub,M});
+    // Les champs à remplir au stylo — mêmes que la feuille d'impression (ft-v839).
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...PDF_COL.gris);
+    doc.text('Date',M,y); doc.text('Poids du corps',M+120,y); doc.text('Semaine',M+270,y);
+    doc.setLineWidth(.6);doc.setDrawColor(...PDF_COL.pale);
+    doc.line(M+26,y+2,M+110,y+2); doc.line(M+188,y+2,M+258,y+2); doc.line(M+318,y+2,M+392,y+2);
+    y+=18;
     const days=(p.days&&p.days.length)?p.days:[{label:p.name||'Séance',exs:p.exs||[]}];
+    // UNE COLONNE PAR SÉRIE (ft-v839) — voir la même décision dans `printProg` : on monte
+    // en charge série après série, une case unique ne permettait d'en noter qu'une.
+    const nCol=Math.min(6,Math.max(1,...days.map(d=>Math.max(1,...(d.exs||[]).map(e=>(e.sets||[]).length||1)))));
     days.forEach(d=>{
       const body=(d.exs||[]).map(e=>{
         const s=e.sets||[],reps=s.map(x=>x.reps);
         const val=reps.length?(reps.every(r=>r===reps[0])?reps[0]:reps.join('/')):'';
         let sc=s.length?(s.length+' × '+val):'';
         if(sc&&/gainage|planche/i.test(e.name))sc=String(sc).replace(/(\d+)$/,'$1 s');
-        return [e.name,sc,''];
+        // La consigne saisie dans l'éditeur de programme s'imprime SOUS le nom : elle sert
+        // à la salle, pas dans l'app (2ᵉ demande de Michel, 12/08).
+        const nom=e.note?(e.name+'\n'+e.note):e.name;
+        return [nom,sc].concat(Array.from({length:nCol},()=>''));
       });
+      const colStyles={1:{halign:'center',cellWidth:82}};
+      for(let i=0;i<nCol;i++) colStyles[2+i]={halign:'center',cellWidth:34};
       doc.autoTable({
         startY:y, margin:{left:M,right:M},
         head:[
-          [{content:(d.label||'Séance'),colSpan:3,styles:{halign:'left',fillColor:[240,240,240],textColor:20,fontStyle:'bold',fontSize:12}}],
-          ['Exercice','Séries × Reps','Poids']
+          [{content:(d.label||'Séance'),colSpan:2+nCol,styles:{halign:'left',fillColor:PDF_COL.zebre,textColor:PDF_COL.rouge,fontStyle:'bold',fontSize:11.5}}],
+          ['Exercice','Séries × Reps'].concat(Array.from({length:nCol},(_,i)=>String(i+1)))
         ],
         body,
-        styles:{fontSize:10,cellPadding:5,lineColor:[190,190,190],lineWidth:0.5,overflow:'linebreak'},
-        headStyles:{fillColor:[17,17,17],textColor:255,fontStyle:'bold'},
-        columnStyles:{1:{halign:'center',cellWidth:95},2:{halign:'center',cellWidth:75}},
-        theme:'grid'
+        styles:{fontSize:9.5,cellPadding:4.5,overflow:'linebreak',textColor:PDF_COL.encre,
+                lineColor:PDF_COL.filet,lineWidth:{bottom:0.5}},
+        headStyles:{fillColor:PDF_COL.zebre,textColor:PDF_COL.rouge,fontStyle:'bold',fontSize:8.5,
+                    lineColor:PDF_COL.rouge,lineWidth:{bottom:1.2}},
+        alternateRowStyles:{fillColor:[250,250,252]},
+        columnStyles:colStyles,
+        theme:'plain',                       // aucune cloison verticale (règle de ft-v838)
+        // La consigne, 2ᵉ ligne de la cellule, en or et en italique — comme sur la feuille.
+        didParseCell:h=>{ if(h.section==='body'&&h.column.index===0&&/\n/.test(h.cell.raw||'')) h.cell.styles.cellPadding={top:4.5,bottom:4.5,left:4.5,right:4.5}; },
+        didDrawCell:h=>{
+          if(h.section!=='body'||h.column.index<2) return;
+          // le trait pointillé où l'on écrit la charge de CETTE série
+          const ex=(d.exs||[])[h.row.index], n=ex?((ex.sets||[]).length||1):0;
+          doc.setLineWidth(.7);
+          if(h.column.index-2 < n){ doc.setDrawColor(139,141,160); doc.setLineDashPattern([1.6,1.6],0); }
+          else { doc.setDrawColor(236,236,241); doc.setLineDashPattern([],0); }
+          const yb=h.cell.y+h.cell.height-3.5;
+          doc.line(h.cell.x+3,yb,h.cell.x+h.cell.width-3,yb);
+          doc.setLineDashPattern([],0);
+        }
       });
-      y=doc.lastAutoTable.finalY+16;
+      y=doc.lastAutoTable.finalY+15;
     });
-    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(90);
-    doc.text(doc.splitTextToSize('Note tes poids dans la colonne « Poids ». Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.',W-2*M),M,y+6);
-    // Pied de page (contact) sur toutes les pages
-    const _pgs=doc.getNumberOfPages();
-    for(let i=1;i<=_pgs;i++){
-      doc.setPage(i);
-      doc.setLineWidth(.5);doc.setDrawColor(210);doc.line(M,H-30,W-M,H-30);
-      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-18);
-      doc.text('Page '+i+'/'+_pgs,W-M,H-18,{align:'right'});
-    }
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...PDF_COL.gris);
+    doc.text(doc.splitTextToSize('Une case par série : note la charge de chaque série au fur et à mesure. Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.',W-2*M),M,y+6);
+    _pdfPied(doc,{M});
     const fname=((p.name||'programme').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,''))+'.pdf';
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});

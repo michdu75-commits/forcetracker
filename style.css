@@ -1202,12 +1202,40 @@ html.ob-done #onboarding{display:none;}
   .prt-doc tbody tr:nth-child(even) td{ background:#FAFAFC; }
   .prt-doc tbody tr:last-child td{ border-bottom:none; }
   .prt-doc td.c,.prt-doc th.c{ text-align:center; white-space:nowrap; }
-  /* La colonne « Poids » se remplit au stylo à la salle : on la souligne en pointillé
-     pour qu'elle se voie comme une ligne à écrire, sans l'encadrer.
-     ⚠️ Écrite APRÈS la règle `tr:last-child` et avec la même portée, sinon la DERNIÈRE
-     ligne de chaque tableau n'avait pas de trait — vu sur le rendu : le dernier exercice
-     de chaque jour était le seul sans ligne où noter sa charge. */
-  .prt-doc tbody tr td:last-child{ border-bottom:1px dashed #A8AAB8; min-width:66px; }
+
+  /* ── LES CASES DE SÉRIE — c'est là qu'on écrit, à la salle, au stylo ────────────────
+     Une colonne par série (ft-v839) : on monte en charge série après série (70·100·115·
+     130), une case unique ne permettait d'en noter qu'une seule.
+     ⚠️ Le trait pointillé est une BORDURE : il s'imprime même quand les fonds sont coupés
+     (voir l'avertissement en tête de ce bloc). C'est lui qui dit « écris ici ». */
+  .prt-doc th.w{ text-align:center; width:36px; }
+  /* ⚠️ Portée `tbody tr td.w`, et placée APRÈS `tr:last-child{border-bottom:none}` : à
+     spécificité égale c'est la dernière règle qui gagne. Sans ça, le DERNIER exercice de
+     chaque jour n'avait aucune case où écrire — exactement le défaut déjà corrigé sur la
+     colonne « Poids » en ft-v838, revenu par une autre porte. */
+  .prt-doc tbody tr td.w{ border-bottom:1px dashed #8B8DA0; width:36px; }
+  /* Une série qui n'existe pas dans le programme n'a PAS de case : proposer d'écrire dans
+     une 5ᵉ colonne quand l'exercice n'en compte que 3 inviterait à noter n'importe quoi. */
+  .prt-doc tbody tr td.w.off{ border-bottom:1px solid #ECECF1; }
+  /* SÉPARER LES CASES ENTRE ELLES. On s'interdit les cloisons dans le corps du tableau
+     (les colonnes portent le sens), mais ici c'est l'inverse : sans séparation les traits
+     pointillés se rejoignent en UNE seule ligne continue et on ne sait plus où finit la
+     série 1. Le filet est fonctionnel, pas décoratif — et volontairement très pâle. */
+  .prt-doc th.w+.w, .prt-doc td.w+.w{ border-left:1px solid #E4E4EC; }
+  .prt-doc td.ex{ width:auto; }
+
+  /* LA CONSIGNE DU PROGRAMME, sous le nom de l'exercice — c'est ce que Michel a écrit en
+     créant le programme, et c'est à la salle qu'on en a besoin. En or : elle se distingue
+     du nom sans lui voler la vedette, et reste lisible en noir et blanc. */
+  .prt-note{ font-size:10px; font-style:italic; color:#8A6400; line-height:1.35;
+             margin-top:2px; font-weight:500; }
+
+  /* LES CHAMPS QU'ON REMPLIT EN HAUT DE FEUILLE : sans eux, deux tirages du même
+     programme sont indiscernables une fois posés sur le banc. */
+  .prt-meta{ display:flex; gap:22px; flex-wrap:wrap; font-size:11px; color:#4A4A6A;
+             margin:0 0 13px; }
+  .prt-meta span{ display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; }
+  .prt-meta i{ display:inline-block; width:74px; border-bottom:1px dashed #8B8DA0; }
 
   /* Un titre ne reste jamais seul en bas de page, un tableau ne se coupe pas au milieu. */
   .prt-doc h3{ break-after:avoid; }

@@ -1424,21 +1424,19 @@ async function exportBodyStudyPdf(){
     const dt=new Date();
     // Date affichée = celle du bilan (JJ/MM/AAAA) si connue, sinon aujourd'hui
     const dispDate=(d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date))?d.date.split('-').reverse().join('/'):dt.toLocaleDateString('fr-FR');
-    const logo=await _loadLogoDataURL();
-    let hx=M;
-    if(logo){ try{ doc.addImage(logo,'PNG',M,24,36,36); hx=M+46; }catch(e){} }
-    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,42);
-    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Étude du corps',hx,57);
-    doc.setFontSize(9);doc.text(dispDate+(S.name?(' · '+S.name):''),W-M,42,{align:'right'});
-    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,68,W-M,68);
-    let y=90;const lh=15;
+    let y=await _pdfEntete(doc,{sousTitre:'Étude du corps',
+      droite:dispDate+(S.name?(' · '+S.name):''),M});
+    const lh=15;
     const ensure=sp=>{ if(y>H-64-(sp||0)){doc.addPage();y=56;} };
     const section=(title,body)=>{
       body=_bsPdfClean(body); if(!body)return;
       ensure(34);
-      doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(20);
-      doc.text(title,M,y); y+=6+lh;
-      doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(45);
+      doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(...PDF_COL.rouge);
+      doc.text(title,M,y);
+      // filet doré sous le titre de section — le même repère que sur la feuille imprimée
+      doc.setLineWidth(1);doc.setDrawColor(...PDF_COL.or);doc.line(M,y+3.5,M+34,y+3.5);
+      y+=6+lh;
+      doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(...PDF_COL.encre);
       doc.splitTextToSize(body,W-2*M).forEach(l=>{ ensure(lh); doc.text(l,M,y); y+=lh; });
       y+=9;
     };
@@ -1462,14 +1460,7 @@ async function exportBodyStudyPdf(){
     section('Santé prise en compte',d.healthNotes);
     if(d.summary)section('En résumé',d.summary);
     // Pied de page sur toutes les pages : contact + disclaimer + numéro
-    const pages=doc.getNumberOfPages();
-    for(let i=1;i<=pages;i++){
-      doc.setPage(i);
-      doc.setLineWidth(.5);doc.setDrawColor(210);doc.line(M,H-38,W-M,H-38);
-      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-26);
-      doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(160);doc.text('Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou coach.',M,H-16);
-      doc.setTextColor(150);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('Page '+i+'/'+pages,W-M,H-16,{align:'right'});
-    }
+    _pdfPied(doc,{M,mention:'Estimation visuelle indicative — ne remplace pas l\'avis d\'un médecin ou coach.'});
     const fname='etude-du-corps-'+((d.date&&/^\d{4}-\d{2}-\d{2}$/.test(d.date))?d.date:dt.toISOString().slice(0,10))+'.pdf';
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});

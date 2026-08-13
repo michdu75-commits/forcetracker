@@ -2737,26 +2737,14 @@ async function exportCoachPdf(btn){
     const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=48;
     const coach=(typeof COACH_NAME!=='undefined'?COACH_NAME:'Milo');
     const d=new Date();
-    const logo=await _loadLogoDataURL();
-    let hx=M;
-    if(logo){ try{ doc.addImage(logo,'PNG',M,24,36,36); hx=M+46; }catch(e){} }
-    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',hx,42);
-    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(120);doc.text('Coach '+coach,hx,57);
-    doc.setFontSize(9);doc.text(d.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),W-M,42,{align:'right'});
-    doc.setLineWidth(1.2);doc.setDrawColor(20);doc.line(M,68,W-M,68);
-    doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(30);
+    let y=await _pdfEntete(doc,{sousTitre:'Coach '+coach,
+      droite:d.toLocaleDateString('fr-FR')+(S.name?(' · '+S.name):''),M});
+    doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(...PDF_COL.encre);
     const lines=doc.splitTextToSize(_coachPdfText(raw),W-2*M);
-    let y=90;const lh=16;
+    const lh=16;
     lines.forEach(line=>{ if(y>H-64){doc.addPage();y=56;} doc.text(line,M,y); y+=lh; });
     // Pied de page (sur toutes les pages) : contact + disclaimer
-    const pages=doc.getNumberOfPages();
-    for(let i=1;i<=pages;i++){
-      doc.setPage(i);
-      doc.setLineWidth(.5);doc.setDrawColor(210);doc.line(M,H-38,W-M,H-38);
-      doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-26);
-      doc.setFont('helvetica','italic');doc.setFontSize(7.5);doc.setTextColor(160);doc.text('Conseil indicatif — ne remplace pas l\'avis d\'un professionnel.',M,H-16);
-      doc.setTextColor(150);doc.setFont('helvetica','normal');doc.setFontSize(8);doc.text('Page '+i+'/'+pages,W-M,H-16,{align:'right'});
-    }
+    _pdfPied(doc,{M,mention:'Conseil indicatif — ne remplace pas l\'avis d\'un professionnel.'});
     const fname='coach-'+coach.toLowerCase()+'-'+d.toISOString().slice(0,10)+'.pdf';
     const blob=doc.output('blob');
     const file=new File([blob],fname,{type:'application/pdf'});
@@ -3342,12 +3330,9 @@ async function exportPt001Pdf(){
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF({unit:'pt',format:'a4'});
     const W=doc.internal.pageSize.getWidth(), H=doc.internal.pageSize.getHeight(), M=40;
-    let y=48;
-    if(typeof _loadLogoDataURL==='function'){ try{ const logo=await _loadLogoDataURL(); if(logo)doc.addImage(logo,'PNG',M,24,28,28); }catch(e){} }
-    doc.setFont('helvetica','bold');doc.setFontSize(14);doc.setTextColor(20);doc.text('FORCE TRACKER',M+36,44);
-    doc.setFontSize(12);doc.text('Laboratoire Milo · PT-001',W-M,44,{align:'right'});
-    doc.setLineWidth(1);doc.setDrawColor(20);doc.line(M,58,W-M,58); y=76;
-    const line=(t,b)=>{ doc.setFont('helvetica',b?'bold':'normal'); doc.setFontSize(b?11:10); doc.setTextColor(b?20:60);
+    let y=await _pdfEntete(doc,{titre:'PT-001',sousTitre:'Laboratoire Milo',M});
+    const line=(t,b)=>{ doc.setFont('helvetica',b?'bold':'normal'); doc.setFontSize(b?11:10);
+      doc.setTextColor(...(b?PDF_COL.rouge:PDF_COL.gris));
       (doc.splitTextToSize(t,W-2*M)).forEach(s=>{ if(y>H-50){doc.addPage();y=50;} doc.text(s,M,y); y+=b?15:13; }); };
     line('Date : '+R.ymd+'   ·   Séances : '+R.nSess+'   ·   Durée : '+R.totalMin+' min');
     line('Utilisateur : '+(S.email||'—')); y+=4;
@@ -3366,7 +3351,7 @@ async function exportPt001Pdf(){
     line('BRIQUE VALIDÉE / À REVOIR : ____ (à trancher après lecture — Michel + Claude)'); y+=6;
     line('PORTRAIT FINAL « Qui suis-je en tant que sportif ? »',true);
     line(R.portrait||'—');
-    doc.setFontSize(8);doc.setTextColor(150);doc.text(PDF_CONTACT,M,H-24);
+    _pdfPied(doc,{M});
     const fname='PT-001_continuite_'+R.ymd+'.pdf';
     const blob=doc.output('blob');
     try{ const file=new File([blob],fname,{type:'application/pdf'});
