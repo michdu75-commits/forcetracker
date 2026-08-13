@@ -3709,6 +3709,54 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await ca.close();
 }
 
+
+/* ══ BLOC XII — LE BOUTON « COPIER » DU PARTAGE (13/08/2026) ═══════════════════════════
+   Michel : *« seconde qui ne fonctionne pas d'ailleurs je crois »*. Vérifié : sur iOS,
+   `writeText()` est refusé dès que l'appel n'est pas jugé assez proche du geste ; il n'y
+   avait aucun `.catch()` → rien ne se passait. Et le repli `execCommand` n'était atteint
+   que si `navigator.clipboard` était ABSENT, jamais s'il ÉCHOUAIT — donc jamais sur iPhone.
+   ⚠️ Le témoin qui compte est le 2ᵉ : un bouton MUET est le vrai défaut, pas l'échec. */
+{
+  console.log('\n── XII. Le bouton « Copier » du partage ──');
+  const jouer=async(prep)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+    const pg=await cx.newPage(); const errs=[];
+    pg.on('pageerror',e=>errs.push(String(e.message)));
+    if(prep) await pg.addInitScript(prep);
+    await pg.addInitScript(seedScript());
+    await pg.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+    await pg.waitForTimeout(1100);
+    const msgs=await pg.evaluate(async()=>{
+      if(typeof copyAppLink!=='function')return ['__absente__'];
+      window.__t=[]; const vrai=window.toast; window.toast=m=>window.__t.push(String(m));
+      copyAppLink('share'); await new Promise(r=>setTimeout(r,500));
+      window.toast=vrai; return window.__t;
+    });
+    await cx.close();
+    return {msgs,errs};
+  };
+  const OK   = await jouer(null);
+  const KO   = await jouer(()=>{ Object.defineProperty(navigator,'clipboard',{configurable:true,
+                 value:{writeText:()=>Promise.reject(new Error('NotAllowedError'))}});
+                 document.execCommand=()=>false; });
+  const REPL = await jouer(()=>{ Object.defineProperty(navigator,'clipboard',{configurable:true,
+                 value:{writeText:()=>Promise.reject(new Error('NotAllowedError'))}});
+                 document.execCommand=()=>true; });
+
+  const tc=(n,c,d)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(d?'\n       → '+d:''));} };
+  tc('quand le presse-papier marche, on confirme la copie',
+     OK.msgs.some(m=>/copié/i.test(m)), JSON.stringify(OK.msgs));
+  tc('⭐⭐ quand iOS REFUSE, le bouton n\'est plus MUET',
+     KO.msgs.length>0, 'aucun message — c\'est exactement « le bouton ne fait rien »');
+  tc('… et il dit quoi faire (le lien est écrit sous le QR code)',
+     KO.msgs.some(m=>/sous le QR code/i.test(m)), JSON.stringify(KO.msgs));
+  tc('⭐ le repli execCommand est ATTEINT quand writeText échoue (il ne l\'était jamais)',
+     REPL.msgs.some(m=>/copié/i.test(m)), JSON.stringify(REPL.msgs));
+  t('0 erreur JS sur les 3 scénarios de copie',
+    [OK,KO,REPL].every(x=>x.errs.length===0),
+    [].concat(...[OK,KO,REPL].map(x=>x.errs)).join(' | '));
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

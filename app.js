@@ -1665,13 +1665,41 @@ function tryOpenChrome(){
   }
 }
 
+/* ⚠️ LE BOUTON « COPIER » NE DISAIT RIEN QUAND IL ÉCHOUAIT (13/08/2026) ────────────────
+   Michel : *« seconde qui ne fonctionne pas d'ailleurs je crois »*. Il avait raison, et le
+   défaut est le même que celui du débrief corrigé le matin même : un échec SILENCIEUX.
+   ① `writeText()` n'avait **aucun `.catch()`** — sur iOS, l'écriture dans le presse-papier
+      est refusée dès que l'appel n'est pas jugé assez proche du geste de l'utilisateur. La
+      promesse partait en erreur et il ne se passait **rien** : pas de toast, pas de repli,
+      aucun message. De l'autre côté de l'écran, ça s'appelle « le bouton ne marche pas ».
+   ② Le repli `execCommand` existait mais était **inatteignable** : il ne servait que si
+      `navigator.clipboard` était ABSENT, jamais s'il ÉCHOUAIT. Or sur iOS l'objet existe.
+      Du code de secours qui ne peut jamais s'exécuter n'est pas un secours.
+   On reprend le motif déjà en place pour la copie d'une réponse de Milo (coach.js) :
+   presse-papier → repli → et si les deux tombent, **on le DIT** (R13, R2). */
 function copyAppLink(target){
   const msg = target==='safari' ? 'Lien copié — colle-le dans Safari' : target==='chrome' ? 'Lien copié — colle-le dans Chrome' : 'Lien copié !';
+  const _secours=()=>{
+    try{
+      const t=document.createElement('textarea');
+      t.value=APP_URL; t.style.position='fixed'; t.style.opacity='0';
+      document.body.appendChild(t); t.focus(); t.select();
+      const ok=document.execCommand('copy');
+      document.body.removeChild(t);
+      if(ok){ toast(msg,'success'); return true; }
+    }catch(e){}
+    return false;
+  };
+  // Le lien est de toute façon écrit en clair sous le QR code : on renvoie la personne
+  // vers quelque chose de FAISABLE plutôt que de la laisser devant un bouton muet.
+  const _echec=()=>toast('Copie impossible — le lien est écrit sous le QR code','info');
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(APP_URL).then(()=>toast(msg,'success'));
-  } else {
-    try{const t=document.createElement('textarea');t.value=APP_URL;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);toast(msg,'success');}catch(e){}
+    navigator.clipboard.writeText(APP_URL)
+      .then(()=>toast(msg,'success'))
+      .catch(()=>{ if(!_secours()) _echec(); });
+    return;
   }
+  if(!_secours()) _echec();
 }
 
 function closeBanner(){
