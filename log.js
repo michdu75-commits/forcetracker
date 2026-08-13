@@ -2488,6 +2488,59 @@ function _mscSVG({sc,ind}){
   };
   return `<svg viewBox="-1 0 72 96" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block" stroke-linecap="round">${defs}${_FP.map(pt).join('')}${_BP.map(pt).join('')}<text x="17" y="94.5" text-anchor="middle" font-size="2.2" fill="#999" font-family="system-ui,sans-serif">VUE AVANT</text><text x="52" y="94.5" text-anchor="middle" font-size="2.2" fill="#999" font-family="system-ui,sans-serif">VUE ARRIÈRE</text></svg>`;
 }
+/* ─── FIGURINE VERSION PAPIER (13/08/2026) ────────────────────────────────────────────
+   Idée venue d'une maquette externe, et c'est une bonne idée : la figurine est la marque
+   de fabrique du produit (R31), elle dit d'un coup d'œil ce que le jour travaille — ce
+   qu'aucune liste d'exercices ne fait aussi vite.
+   ⚠️ MAIS ON NE PEUT PAS RÉUTILISER _mscSVGmini TEL QUEL, pour deux raisons :
+   ① elle ne dessine que la VUE AVANT (`_FP`) — un jour « soulevé de terre » serait donc
+      une figurine entièrement grise, c'est-à-dire un mensonge ;
+   ② ses couleurs (#FF5555 primaire, #FF9500 secondaire) ont presque la MÊME luminance :
+      86 et 88 sur 255 une fois converties en gris. Sur une imprimante noir et blanc —
+      et beaucoup le sont — les deux teintes deviennent indiscernables.
+   D'où une palette choisie sur la LUMINANCE, pas sur la teinte : rouge FT ≈ 87 · or FT
+   ≈ 141 · non sollicité ≈ 225. Trois niveaux nettement séparés, qui restent lisibles en
+   couleur ET en gris. C'est la même règle que les fonds : la couleur AJOUTE, elle ne
+   porte jamais l'information toute seule. */
+const _MSC_PRINT_COL={
+  prim:['#D91843','#8E0F2C'],   // gris ≈ 87  — muscle principal
+  sec :['#CC8800','#8A5C00'],   // gris ≈ 141 — muscle secondaire
+  ind :['#C6C8D2','#8A8D99'],   // sollicité indirectement
+  off :['#E8E8ED','#A8A8B4'],   // non sollicité — le trait garde la silhouette lisible
+  skin:['#F4F4F7','#B0B0BC']
+};
+function _mscSVGprint(o){
+  const sc=(o&&o.sc)||{}, ind=(o&&o.ind)||{}, pd={};
+  Object.entries(_MG).forEach(([g,d])=>{
+    const v=sc[g]||0, isI=ind[g]&&!v;
+    const c=v>=2?_MSC_PRINT_COL.prim:v>=1?_MSC_PRINT_COL.sec:isI?_MSC_PRINT_COL.ind:_MSC_PRINT_COL.off;
+    d.paths.forEach(id=>{pd[id]=c;});
+  });
+  const pt=([id,d])=>{
+    const c=id?(pd[id]||_MSC_PRINT_COL.off):_MSC_PRINT_COL.skin;
+    return '<path d="'+d+'" fill="'+c[0]+'" stroke="'+c[1]+'" stroke-width="'+(id?'0.3':'0.22')+'" stroke-linejoin="round"/>';
+  };
+  return '<svg viewBox="-1 0 72 94" xmlns="http://www.w3.org/2000/svg" stroke-linecap="round">'+
+         _FP.map(pt).join('')+_BP.map(pt).join('')+'</svg>';
+}
+/* Les muscles dominants d'un jour, en clair — sert la ligne « Travaille : … ».
+   ⚠️ Rend une chaîne VIDE quand rien n'est reconnu, jamais un libellé inventé (R29) :
+   un exercice créé à la main peut n'avoir aucun muscle renseigné, et annoncer un focus
+   faux serait pire que de ne rien annoncer. */
+function _mscFocus(o,max){
+  const sc=(o&&o.sc)||{};
+  return Object.keys(sc).filter(g=>sc[g]>=2&&_MG[g])
+    .sort((a,b)=>sc[b]-sc[a]).slice(0,max||3)
+    .map(g=>_MG[g].label).join(' · ');
+}
+/* Les exercices d'un jour de PROGRAMME ne sont pas « faits » : `_mscScores` exige un
+   `sets[].done`. On lui présente donc le jour comme s'il était réalisé — c'est exactement
+   ce que fait déjà la vignette du sélecteur d'exercices (log.js ~5710), on ne réinvente
+   pas une 2ᵉ façon de calculer les muscles (R2/R13). */
+function _mscScoresPlan(exs){
+  return _mscScores((exs||[]).map(e=>({name:e.name,sets:[{done:true}]})));
+}
+
 // ─── Figurine « douleur » : réutilise la vraie figurine anatomique (_mscSVG) pour
 //     SÉLECTIONNER une zone qui fait mal. Tape un muscle → il devient rouge. (retour Michel, ft-v565)
 const _GRP2PAIN={pec:'pectoraux','front-delt':'epaule','side-delt':'epaule','rear-delt':'epaule',traps:'trapeze',abs:'abdos',obliques:'abdos',biceps:'biceps',triceps:'triceps',forearms:'avantbras',lats:'dorsaux','hip-flexors':'hanche',quads:'cuisse',tibialis:'mollet','lower-back':'lombaires',glutes:'fessier',hamstrings:'ischio',calves:'mollet'};
@@ -5033,8 +5086,37 @@ function printProg(idx){
       return '<tr><td class="ex">'+esc(e.name)+note+'</td><td class="c">'+sc+'</td>'+cases+'</tr>';
     }).join('');
     const th=Array.from({length:nCol},(_,i)=>'<th class="w">'+(i+1)+'</th>').join('');
-    return '<h3>'+esc(d.label||'Séance')+'</h3><table><thead><tr><th>Exercice</th><th class="c">Séries × Reps</th>'+th+'</tr></thead><tbody>'+exRows+'</tbody></table>';
+    // ── LA FIGURINE DU JOUR — ce que ce jour travaille, vu d'un coup d'œil ────────────
+    // Le calcul est le nôtre (`_mscScores`), donc la feuille dit exactement ce que dit
+    // l'app : pas de 2ᵉ vérité sur le papier (R1).
+    // ⚠️ Silence si rien n'est reconnu : ni figurine grise, ni focus inventé (R29).
+    let fig='',focus='';
+    try{
+      const _s=_mscScoresPlan(d.exs);
+      if(Object.keys(_s.sc||{}).length){
+        fig='<figure class="prt-fig">'+_mscSVGprint(_s)+'</figure>';
+        const f=_mscFocus(_s,3);
+        if(f)focus='<span class="prt-focus">'+esc(f)+'</span>';
+      }
+    }catch(e){}
+    return '<section class="prt-day">'+
+             '<div class="prt-dayh">'+fig+'<div class="prt-dayt"><h3>'+esc(d.label||'Séance')+'</h3>'+focus+'</div></div>'+
+             '<table><thead><tr><th>Exercice</th><th class="c">Séries × Reps</th>'+th+'</tr></thead><tbody>'+exRows+'</tbody></table>'+
+           '</section>';
   }).join('');
+  // Légende du code couleur de la figurine. Elle explique la CONVENTION (principal /
+  // secondaire), pas la liste des muscles — ceux-là sont déjà nommés jour par jour.
+  /* ⚠️ LES PASTILLES SONT DES SVG, PAS DES FONDS CSS (13/08/2026).
+     Constaté en produisant le rendu fonds coupés : la figurine, elle, garde ses couleurs
+     — un `fill` SVG est du CONTENU, il s'imprime toujours. Des pastilles en `background`
+     devenaient au contraire trois anneaux vides identiques : la légende mourait alors que
+     ce qu'elle explique survivait. Elles reprennent donc exactement les couleurs de
+     `_MSC_PRINT_COL`, sans les recopier (R2). */
+  const past=c=>'<svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="'+c[0]+'" stroke="'+c[1]+'" stroke-width="1.5"/></svg>';
+  const legende='<div class="prt-leg">'+
+    '<span>'+past(_MSC_PRINT_COL.prim)+'Muscle principal</span>'+
+    '<span>'+past(_MSC_PRINT_COL.sec )+'Muscle secondaire</span>'+
+    '<span>'+past(_MSC_PRINT_COL.off )+'Non sollicité</span></div>';
   // Les champs qu'on remplit au stylo en haut de la feuille — sans eux, deux tirages du
   // même programme sont indiscernables une fois posés sur le banc.
   const meta='<div class="prt-meta"><span>Date <i></i></span><span>Poids du corps <i></i> kg</span><span>Semaine <i></i></span></div>';
@@ -5045,7 +5127,17 @@ function printProg(idx){
     '<div class="prt-sub">'+(sub||'Programme d\'entraînement')+'</div>'+
     meta+
     daysHtml+
-    '<div class="prt-foot">Une case par série : note la charge de chaque série au fur et à mesure. Progression : quand tu réussis toutes tes séries proprement, ajoute +2,5 kg (haut du corps) ou +5 kg (jambes) la fois suivante.</div>'+
+    // Les 3 blocs du bas. « Notes » manquait : à la salle on a toujours quelque chose à
+    // noter (une douleur, un réglage de machine) et on l'écrivait dans la marge.
+    '<div class="prt-bas">'+
+      '<div class="prt-bloc"><h4>Règle de progression</h4>'+
+        '<p>Quand tu réussis <b>toutes</b> tes séries proprement :</p>'+
+        '<p><b>+2,5 kg</b> haut du corps &nbsp;·&nbsp; <b>+5 kg</b> jambes</p></div>'+
+      '<div class="prt-bloc"><h4>Notes</h4><i></i><i></i><i></i></div>'+
+      '<div class="prt-bloc"><h4>Légende</h4>'+legende+'</div>'+
+    '</div>'+
+    '<div class="prt-foot"><span>Une case par série : note la charge de chaque série au fur et à mesure.</span>'+
+      '<span class="prt-contact">'+PDF_CONTACT.replace(' · ','<br>')+'</span></div>'+
     '</div>';
   window.print();
 }

@@ -1168,7 +1168,18 @@ html.ob-done #onboarding{display:none;}
    en bas de page. */
 @media print{
   @page{ margin:14mm 13mm; }
-  html,body{ background:#fff !important; }
+  /* ⚠️⚠️ height:auto ET overflow:visible SONT INDISPENSABLES (13/08/2026) ────────────────
+     La règle de base `html,body{height:100%;overflow:hidden}` (ligne ~77) sert à l'app —
+     une PWA plein écran qui ne défile pas. À l'impression elle est CATASTROPHIQUE : elle
+     enferme la feuille dans la hauteur d'UNE page, et tout ce qui dépasse est coupé et
+     PERDU. Pas de message, pas d'erreur — la feuille sort juste incomplète.
+     Trouvé en produisant un vrai PDF : les blocs du bas manquaient et tout tenait sur
+     1 page. MESURÉ sur le code d'avant, en comptant les jours réellement présents dans
+     le PDF : 3 jours ✅ · 5 jours ✅ · 8 jours → 3 PERDUS · 12 jours → 7 PERDUS. La
+     feuille s'arrêtait donc à une page, quoi qu'il arrive — sans le dire. Après le fix :
+     8 jours → 3 pages, 12 jours → 5 pages, aucun jour perdu.
+     ⚠️ Ne jamais retirer ces deux `!important`. */
+  html,body{ background:#fff !important; height:auto !important; overflow:visible !important; }
   body>*:not(#print-area){ display:none !important; }
   #print-area{ display:block !important; color:#12121E; font-family:'Manrope',system-ui,sans-serif; }
   .prt-doc{ max-width:100%; }
@@ -1180,7 +1191,7 @@ html.ob-done #onboarding{display:none;}
   .prt-logo{ font-weight:800; font-size:13px; letter-spacing:.06em; text-transform:uppercase;
              color:#D91843; white-space:nowrap; }
   .prt-name{ font-weight:800; font-size:21px; text-align:right; letter-spacing:-.01em; }
-  .prt-sub{ font-size:11.5px; color:#4A4A6A; margin:0 0 15px; padding-top:5px;
+  .prt-sub{ font-size:11.5px; color:#4A4A6A; margin:0 0 11px; padding-top:5px;
             border-top:1.5px solid #CC8800; }
 
   /* CHAQUE JOUR PORTE SON FILET DORÉ : l'œil retrouve le début d'une section sans lire
@@ -1190,9 +1201,9 @@ html.ob-done #onboarding{display:none;}
                line-height:1.25; }
 
   /* LE TABLEAU — pas de cloison verticale, lignes alternées, coins arrondis. */
-  .prt-doc table{ width:100%; border-collapse:separate; border-spacing:0; margin-bottom:6px;
+  .prt-doc table{ width:100%; border-collapse:separate; border-spacing:0; margin-bottom:4px;
                   border-radius:5px; overflow:hidden; }
-  .prt-doc th,.prt-doc td{ padding:6px 9px; font-size:12.5px; text-align:left; }
+  .prt-doc th,.prt-doc td{ padding:4px 9px; font-size:12.5px; text-align:left; }
   /* ⚠️ TEXTE ROUGE SUR FOND CLAIR, jamais l'inverse : c'est ce qui rend l'en-tête
      lisible même quand le fond n'est pas imprimé (voir l'avertissement plus haut). */
   .prt-doc th{ color:#D91843; font-weight:800; font-size:11px; letter-spacing:.05em;
@@ -1237,13 +1248,50 @@ html.ob-done #onboarding{display:none;}
   .prt-meta span{ display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; }
   .prt-meta i{ display:inline-block; width:74px; border-bottom:1px dashed #8B8DA0; }
 
+  /* ── LA FIGURINE DU JOUR (13/08/2026) ───────────────────────────────────────────────
+     Elle dit d'un coup d'œil ce que le jour travaille. Placée dans l'EN-TÊTE du jour et
+     non à côté du tableau : un tableau enfermé dans un conteneur flex ne se répartit plus
+     correctement sur plusieurs pages, et la pagination est une question de justesse, pas
+     de goût. Ici le tableau reste un bloc de premier niveau → il pagine normalement. */
+  .prt-dayh{ display:flex; align-items:center; gap:10px; margin:9px 0 4px;
+             border-left:4px solid #CC8800; padding:3px 0 3px 9px; background:#F6F6F9;
+             break-after:avoid; break-inside:avoid; }
+  .prt-fig{ margin:0; flex:0 0 58px; width:58px; }
+  .prt-fig svg{ width:58px; height:auto; display:block; }
+  .prt-dayt{ min-width:0; }
+  .prt-dayt h3{ margin:0 !important; padding:0 !important; border:none !important;
+                background:none !important; }
+  .prt-focus{ display:block; font-size:10px; color:#8A6400; font-weight:600;
+              letter-spacing:.02em; margin-top:2px; }
+
   /* Un titre ne reste jamais seul en bas de page, un tableau ne se coupe pas au milieu. */
   .prt-doc h3{ break-after:avoid; }
   .prt-doc thead{ display:table-header-group; }
   .prt-doc tr{ break-inside:avoid; }
 
-  .prt-foot{ margin-top:15px; padding-top:7px; border-top:1.5px solid #CC8800;
-             font-size:11px; color:#4A4A6A; line-height:1.5; }
+  /* ── LES 3 BLOCS DU BAS ─────────────────────────────────────────────────────────────
+     ⚠️ Encadrés par une BORDURE et non par un fond : c'est la seule façon qu'ils restent
+     délimités quand les graphiques d'arrière-plan ne sont pas imprimés. */
+  .prt-bas{ display:flex; gap:9px; margin-top:10px; break-inside:avoid; }
+  .prt-bloc{ flex:1; min-width:0; border:1px solid #DCDDE4; border-top:2.5px solid #CC8800;
+             border-radius:5px; padding:7px 9px 8px; }
+  .prt-bloc h4{ margin:0 0 5px; font-size:9.5px; font-weight:800; letter-spacing:.06em;
+                text-transform:uppercase; color:#D91843; }
+  .prt-bloc p{ margin:0 0 3px; font-size:10.5px; color:#4A4A6A; line-height:1.4; }
+  .prt-bloc p b{ color:#12121E; }
+  /* Les lignes du bloc Notes : on écrit dessus au stylo, d'où l'espacement généreux. */
+  .prt-bloc i{ display:block; border-bottom:1px dashed #8B8DA0; height:15px; }
+  .prt-leg{ display:flex; flex-direction:column; gap:4px; }
+  .prt-leg span{ display:flex; align-items:center; gap:6px; font-size:10px; color:#4A4A6A; }
+  /* Les pastilles sont des SVG (voir printProg) : un fill SVG s'imprime toujours, un
+     background non. `.prt-bloc i{display:block}` vise les lignes du bloc Notes — on remet
+     donc l'affichage en ligne ici, sinon la pastille passerait au-dessus du texte. */
+  .prt-leg svg{ flex:0 0 11px; display:block; }
+
+  .prt-foot{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+             margin-top:10px; padding-top:7px; border-top:1.5px solid #CC8800;
+             font-size:10px; color:#4A4A6A; line-height:1.5; }
+  .prt-contact{ text-align:right; color:#8888AA; white-space:nowrap; }
 }
 
 /* ─── Bandeau MODE DÉMO (admin) ──────────────────────────────── */

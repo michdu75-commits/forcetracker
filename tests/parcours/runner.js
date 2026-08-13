@@ -3422,6 +3422,132 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cy.close();
 }
 
+
+/* ══ BLOC IX — LA FEUILLE IMPRIMÉE DU PROGRAMME (13/08/2026) ═══════════════════════════
+   Trois choses à protéger, et la première a coûté cher :
+   ① `html,body{height:100%;overflow:hidden}` sert à l'app (PWA plein écran qui ne défile
+      pas) et COUPE la feuille à une page. Mesuré sur le code d'avant : 8 jours → 3 perdus,
+      12 jours → 7 perdus, en silence. C'est le témoin le plus important du bloc.
+   ② aucune information ne repose sur un FOND (case décochée par défaut à l'impression) ;
+   ③ une case par série RÉELLE — jamais une case pour une série qui n'existe pas.        */
+{
+  console.log('\n── IX. La feuille imprimée du programme ──');
+  const cz=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pz=await cz.newPage(); const ez=[];
+  pz.on('pageerror',e=>ez.push(String(e.message)));
+  await pz.addInitScript(seedScript());
+  await pz.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+  await pz.waitForTimeout(1200);
+
+  const jour=(n,ex)=>({label:'Jour '+n,exs:ex});
+  const EX=[{name:'Squat à la Barre',note:'Dos calé',sets:[{reps:5},{reps:5},{reps:5},{reps:5}]},
+            {name:'Presse à Cuisses',sets:[{reps:10},{reps:10},{reps:10}]},
+            {name:'Leg Curl Allongé',sets:[{reps:12},{reps:12},{reps:12}]}];
+
+  const Z=await pz.evaluate(async EXS=>{
+   try{
+    const o={};
+    const mk=n=>({name:'T',days:Array.from({length:n},(_,i)=>({label:'Jour '+(i+1),exs:EXS}))});
+    if(typeof printProg!=='function')return {erreur:'printProg absente'};
+    const rp=window.print; window.print=()=>{};
+    printProg.call(null,0);           // amorce (S.programmes vide → sort tout seul)
+    S.programmes=[mk(3)]; printProg(0);
+    window.print=rp;
+    const a=document.getElementById('print-area');
+
+    // ① LA FEUILLE N'EST PAS ENFERMÉE DANS UNE PAGE — on lit le CSS d'impression réel.
+    let vis=false,haut=false;
+    for(const sh of document.styleSheets){
+      let rr; try{rr=sh.cssRules;}catch(e){continue;}
+      for(const r of rr||[]){
+        if(r.type!==4||!/print/.test(r.conditionText||''))continue;
+        for(const q of r.cssRules||[]){
+          if(!/(^|,)\s*(html|body)\b/.test(q.selectorText||''))continue;
+          if(/visible/.test(q.style.overflow||''))vis=true;
+          if(/auto/.test(q.style.height||''))haut=true;
+        }
+      }
+    }
+    o.overflowVisible=vis; o.hauteurAuto=haut;
+
+    // ② AUCUN TEXTE CLAIR SUR FOND SOMBRE : c'est le défaut qui rend un bloc invisible
+    //    quand les graphiques d'arrière-plan ne sont pas imprimés.
+    const lum=c=>{const m=(c||'').match(/[\d.]+/g);return m&&m.length>=3?(+m[0]*299+ +m[1]*587+ +m[2]*114)/1000:null;};
+    const opaque=c=>{const m=(c||'').match(/[\d.]+/g);return !(m&&m.length>3&&+m[3]===0);};
+    o.blancSurSombre=[];
+    for(const el of a.querySelectorAll('*')){
+      const st=getComputedStyle(el), lt=lum(st.color), lf=lum(st.backgroundColor);
+      if(lt===null||lf===null||!opaque(st.backgroundColor))continue;
+      if((el.textContent||'').trim().length<2)continue;
+      if(lt>150&&lf<140)o.blancSurSombre.push((el.className||el.tagName)+' : '+st.color+' sur '+st.backgroundColor);
+    }
+
+    // ③ UNE CASE PAR SÉRIE RÉELLE (4 · 3 · 3), et les colonnes en trop sont neutralisées.
+    o.cases=[...a.querySelectorAll('.prt-day')][0]
+      ? [...a.querySelectorAll('.prt-day')][0].querySelectorAll('tbody tr')
+        && [...[...a.querySelectorAll('.prt-day')][0].querySelectorAll('tbody tr')]
+           .map(tr=>tr.querySelectorAll('td.w:not(.off)').length)
+      : [];
+
+    // ④ LA FIGURINE : présente, et elle DIT quelque chose (des muscles colorés, pas un
+    //    corps tout gris) — sinon elle décore au lieu d'informer.
+    const f=a.querySelector('.prt-fig svg');
+    o.figurine=!!f;
+    o.figurineParle=!!f&&/#D91843/i.test(f.outerHTML);
+    o.focus=(a.querySelector('.prt-focus')||{}).textContent||'';
+
+    // ⑤ La légende doit être en SVG : un fill s'imprime toujours, un background non.
+    o.legendeSVG=a.querySelectorAll('.prt-leg svg').length===3;
+    o.legendeFond=[...a.querySelectorAll('.prt-leg *')].some(e=>{
+      const b=getComputedStyle(e).backgroundColor;return b&&b!=='rgba(0, 0, 0, 0)'&&b!=='transparent';});
+
+    // ⑥ On PRÉPARE le gros programme ; le comptage se fait sur le PDF, pas ici —
+    //    le découpage en pages n'existe pas dans le DOM (voir plus bas).
+    S.programmes=[mk(12)]; const rp2=window.print; window.print=()=>{}; printProg(0); window.print=rp2;
+    o.jours12DOM=new Set((document.getElementById('print-area').textContent.match(/Jour \d+/g)||[])).size;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  },EX);
+
+  const tz=(n,c,d)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(d?'\n       → '+d:''));} };
+  if(Z.erreur){ t('⛔ la feuille imprimée se construit (aucun témoin ne vaut sans ça)', false, Z.erreur); }
+  tz('⭐⭐ la feuille n\'est PAS enfermée dans une page (overflow:visible)', Z.overflowVisible===true,
+     'sans ça, tout ce qui dépasse une page est coupé et perdu, en silence');
+  tz('⭐⭐ … et sa hauteur n\'est pas bloquée à 100 % (height:auto)', Z.hauteurAuto===true);
+  /* ⚠️ CE TÉMOIN A ÉTÉ REFAIT (13/08/2026) — sa 1ʳᵉ version comptait les jours dans le
+     HTML et passait au VERT sur le code bogué : le découpage en pages n'existe tout
+     simplement pas dans le DOM. Un test qui réussit parce qu'il regarde au mauvais endroit
+     est pire qu'un test absent. On produit donc le VRAI PDF et on compte dedans. */
+  await pz.emulateMedia({media:'print'});
+  const buf=await pz.pdf({format:'A4',printBackground:true,
+                          margin:{top:'14mm',bottom:'14mm',left:'13mm',right:'13mm'}});
+  const nPages=(buf.toString('latin1').match(/\/Type\s*\/Page[^s]/g)||[]).length;
+  /* ⚠️ L'ATTENDU EST CALCULÉ, PAS ÉCRIT À LA MAIN : ma 1ʳᵉ version exigeait « ≥ 4 pages »,
+     un chiffre relevé sur un programme à 4 exercices par jour alors que le test en met 3.
+     Un seuil recopié casse au premier changement de jeu d'essai et ne protège plus rien.
+     On mesure donc la hauteur réelle du document et on en déduit le minimum de pages.
+     Chrome peut en produire DAVANTAGE (un tableau ne se coupe pas n'importe où) — jamais
+     moins. Le code bogué, lui, en rend 1 quoi qu'il arrive. */
+  const hDoc=await pz.evaluate(()=>document.getElementById('print-area').scrollHeight);
+  const utile=Math.round(1122.5-2*(14/25.4*96));        // A4 96 dpi − marges 14 mm
+  const mini=Math.max(2,Math.floor(hDoc/utile));
+  tz('⭐⭐ 12 jours s\'étalent sur plusieurs pages (le PDF, pas le HTML)', nPages>=mini,
+     nPages+' page(s) pour '+hDoc+' px de contenu — il en faut au moins '+mini);
+  tz('… et les 12 jours sont bien dans le document', Z.jours12DOM===12, 'trouvé : '+Z.jours12DOM);
+  tz('⭐ aucun texte clair sur fond sombre (le défaut invisible)', (Z.blancSurSombre||[]).length===0,
+     (Z.blancSurSombre||[]).join(' | '));
+  tz('une case par série RÉELLE : 4 · 3 · 3', JSON.stringify(Z.cases)==='[4,3,3]', JSON.stringify(Z.cases));
+  tz('⭐ la figurine du jour est là', Z.figurine===true);
+  tz('⭐⭐ … et elle PARLE (muscles colorés, pas un corps tout gris)', Z.figurineParle===true);
+  tz('… et les muscles du jour sont nommés en clair', /Quadriceps|Fessiers/.test(Z.focus||''), Z.focus);
+  tz('⭐ la légende est en SVG (un fill s\'imprime, un fond non)', Z.legendeSVG===true);
+  // ⚠️ On exige que la légende EXISTE : sinon « aucun fond » est vrai pour rien — c'est
+  //    le motif de faux-vert déjà rencontré en ft-v832 et ft-v835.
+  tz('… et ne repose sur AUCUN fond', Z.legendeSVG===true&&Z.legendeFond===false);
+  t('0 erreur JS sur toute la feuille imprimée', ez.length===0, ez.join(' | '));
+  await cz.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
