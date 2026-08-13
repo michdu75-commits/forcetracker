@@ -3074,9 +3074,49 @@ function _healthRow(icone,titre,etat,detail){
 // déjà arrivé deux fois : le site bloqué plusieurs versions en arrière (ft-v600, ft-v619) et le
 // backend qui ne partait plus depuis mi-juillet (rechute worker.js, vue seulement le 21/07).
 const _DEPLOYS=[
-  {path:'.github/workflows/deploy-pages.yml',      lbl:'Le site (l\'app elle-même)'},
-  {path:'.github/workflows/deploy-appsscript.yml', lbl:'Le serveur (Milo, sync, premium)'}
+  {path:'.github/workflows/deploy-pages.yml',      lbl:'Dernière mise en ligne de l\'app'},
+  // ⚠️ Libellés au PASSÉ et explicites : ces lignes disent qu'un déploiement s'est bien
+  //    passé, PAS que le service tourne aujourd'hui. La confusion entre les deux a fait
+  //    afficher « serveur OK » pendant qu'un appel échouait (13/08). L'état du jour, c'est
+  //    la ligne « Le serveur répond » juste au-dessus.
+  {path:'.github/workflows/deploy-appsscript.yml', lbl:'Dernière mise en ligne du serveur'}
 ];
+/* ─── LE SERVEUR RÉPOND-IL MAINTENANT ? (13/08/2026) ───────────────────────────────────
+   Michel, capture à l'appui : la carte affichait « Le serveur (Milo, sync, premium) : ✅ OK
+   — 11/08 16:26 » **à la seconde même** où un appel au backend échouait sous ses yeux
+   (« Réseau injoignable » sur les exercices demandés).
+   ⚠️ LES DEUX NE DISENT PAS LA MÊME CHOSE, et c'est tout le défaut : `_healthDeploys` lit
+   l'historique GitHub — donc « le dernier DÉPLOIEMENT s'est bien passé », avant-hier. Ça ne
+   dit rien de l'état du serveur AUJOURD'HUI. *Un indicateur qui rassure sans rien mesurer est
+   pire qu'un indicateur absent* : c'est précisément ce que cette carte existe pour éviter.
+   On appelle donc `?test=1` — l'adresse prévue pour ça depuis toujours, et que la carte
+   n'appelait jamais. Elle porte sur Apps Script (sauvegarde cloud, premium, synchro) ; Milo,
+   lui, passe par le Worker Cloudflare : deux chemins, on ne prétend pas que l'un prouve
+   l'autre. */
+async function _healthServeur(){
+  const t0=Date.now();
+  try{
+    const ctl=('AbortController' in window)?new AbortController():null;
+    const to=setTimeout(()=>{try{ctl&&ctl.abort();}catch(e){}},20000);
+    const r=await fetch((S.url||DEFAULT_URL)+'?test=1',{method:'GET',redirect:'follow',...(ctl?{signal:ctl.signal}:{})});
+    clearTimeout(to);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const d=await r.json();
+    const ms=Date.now()-t0;
+    if(d&&d.status==='online'){
+      // Lent mais vivant : on le dit sans crier. Au-delà de 8 s, l'app paraît figée à l'usage.
+      return _healthRow('📡','Le serveur répond', ms>8000?'warn':'ok',
+        '<b>En ligne</b> · version '+_escIdea(String(d.version||'?'))+' · répondu en '+(ms/1000).toFixed(1)+' s'
+        +(ms>8000?'<br>⚠️ Très lent — la sauvegarde et le premium peuvent sembler bloqués.':''));
+    }
+    throw new Error('réponse inattendue');
+  }catch(e){
+    const q=(e&&e.name==='AbortError')?'trop lent (>20 s)':_escIdea(String(e&&e.message||e));
+    return _healthRow('📡','Le serveur répond','ko',
+      '<b>INJOIGNABLE</b> ('+q+')<br>⚠️ Tant que c\'est rouge : pas de sauvegarde cloud, pas de vérification premium, pas de synchro des séances. '
+      +'Tes séances restent en sécurité <b>sur le téléphone</b>.');
+  }
+}
 async function _healthDeploys(){
   try{
     const r=await fetch('https://api.github.com/repos/michdu75-commits/forcetracker/actions/runs?per_page=30&branch=master');
@@ -3212,6 +3252,8 @@ async function loadHealthAdmin(){
     // arriver en ligne. Lu via l'API PUBLIQUE de GitHub — le dépôt est public, donc aucun jeton
     // n'est nécessaire (et il ne faut JAMAIS en mettre ici). Plafond : 60 appels/h par IP,
     // largement suffisant pour un bouton qu'on presse de temps en temps.
+    // ⑤ LE SERVEUR RÉPOND-IL MAINTENANT — la question que la carte ne posait jamais.
+    h+=await _healthServeur();
     h+=await _healthDeploys();
     box.innerHTML=h+'<div style="font-size:11px;color:var(--t3);margin-top:8px;">Vérifié le '+new Date().toLocaleString('fr-FR')+'</div>';
   }catch(e){

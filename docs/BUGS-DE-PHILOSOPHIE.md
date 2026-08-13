@@ -149,3 +149,44 @@ même chose. **Un modèle privé de la règle produit un accord poli à la place
 - ⚠️ **Le signal à repérer** : un accord + une sortie inchangée. C'est plus discret qu'un refus,
   et plus dangereux.
 
+
+
+## PB-007 — MILO DIAGNOSTIQUE L'APPLICATION QU'IL NE VOIT PAS (13/08/2026, corrigé `ft-v846`)
+
+**Ce qui s'est passé.** Michel dit à Milo que le débrief d'après séance n'apparaît pas. Milo répond :
+
+> *« Ah c'est un bug d'affichage de l'app alors, pas un problème de contenu ! Je te refais le bloc
+> proprement »* — puis il produit **une séance à faire**, pas un compte-rendu.
+
+**Le raisonnement n'est pas absurde ; c'est la SORTIE qui trahit.** Milo n'a accès ni à l'écran, ni au
+code, ni au réseau de l'app. Il ne peut donc pas savoir si quelque chose s'affiche ou non. Il a pris
+une remarque et l'a transformée en **constat technique**, énoncé sans la moindre réserve.
+
+**Ce que ça a coûté, et c'est mesurable.** Cette phrase a servi de diagnostic à Michel, qui me l'a
+transmise comme telle. **J'ai cherché pendant une heure un bug d'affichage qui n'existait pas** —
+jusqu'à rejouer une vraie fin de séance et constater que le mécanisme fonctionnait parfaitement. Le
+vrai défaut était ailleurs (l'échec de l'appel était silencieux, `ft-v845`).
+*Une hypothèse de Milo présentée comme un fait a envoyé deux personnes sur une fausse piste.*
+
+**Pourquoi c'est plus grave que les cas précédents.** PB-001 à PB-006 portaient sur ce que Milo dit
+**de la personne**. Ici il parle **du produit** — un domaine où il n'a strictement aucune donnée, et
+où son assurance est prise pour de l'expertise. La Constitution dit déjà « les faits avant les
+opinions » ; il manquait de dire que **l'app elle-même est un domaine sur lequel il ne sait rien**.
+
+**Le deuxième défaut, dans la même réponse.** On lui demande un **débrief** (ce qui a été FAIT) et il
+rend un **plan** (ce qu'il y a À FAIRE). C'est la confusion **planifié / réalisé** de
+`docs/MODELE-METIER.md`. La cause est structurelle et pas morale : le prompt consacrait une quinzaine
+de lignes très précises à *comment produire une séance*, et **rien** à ce que « débriefer » veut dire
+quand c'est la personne qui le demande (les seules consignes de débrief vivaient dans le message
+automatique de l'app). Sur une demande ambiguë, le seul format bien décrit gagne. **R8 : ce n'est pas
+qu'il est mal instruit, c'est que le cas n'était pas couvert.**
+
+**Les deux règles qui en découlent** (dans le prompt, compressées pour ne pas gonfler le bloc commun) :
+- *Ne diagnostique jamais l'app* — dire qu'on n'a pas accès à l'écran, demander ce qui est affiché,
+  proposer de le signaler. Jamais « c'est un bug de… ».
+- *Débriefer ≠ proposer* — un débrief regarde en arrière, avec les charges réalisées ; il ne finit
+  jamais par une séance entière.
+
+⚠️ **Le signal à repérer** : Milo qui affirme quelque chose sur **le logiciel** (affichage,
+enregistrement, mise à jour, réseau). Il n'a aucun moyen de le savoir — c'est toujours une invention,
+même quand elle tombe juste.

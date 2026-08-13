@@ -703,6 +703,12 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     const u=route.request().url();
     const J=o=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(o)});
     const auj=aujPage;
+    /* ⚠️ LA SONDE DU JOUR (13/08/2026) — « le serveur répond-il MAINTENANT ? ». Elle
+       manquait : la carte lisait l'historique des déploiements GitHub et affichait « serveur
+       OK » (avant-hier) pendant qu'un appel échouait sous les yeux de Michel. */
+    if(u.includes('test=1')) return nom==='ok'
+      ? J({status:'online',version:'3.5'})
+      : route.fulfill({status:503,contentType:'text/plain',body:'indisponible'});
     if(u.includes('storeHealth')) return J(nom==='ok'
       ? {status:'ok',pourcentPlein:41,totalOctets:210000,nbCles:38,testEcriture:'ok'}
       : {status:'ok',pourcentPlein:102,totalOctets:524000,nbCles:44,testEcriture:'ECHEC: quota'});
@@ -742,7 +748,7 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
   // ⚠️ ATTENTE RÉVISÉE le 02/08 (pas une régression) : la carte compte une 6ᵉ ligne,
   // « 🛡️ Historiques protégés », qui remonte les sauvegardes refusées par le garde-fou.
   t('⭐ le tableau de santé s\'affiche et tout est vert quand tout va bien',
-    hOk.verts===7&&hOk.rouges===0, JSON.stringify(hOk).slice(0,200));
+    hOk.verts===8&&hOk.rouges===0, JSON.stringify(hOk).slice(0,200));
   t('⭐⭐ le PLAFOND DE DÉPENSE est visible, et dit ARMÉ quand il l\'est',
     /ARM[ÉE]/.test(hOk.txt)&&!/D[ÉE]SARM/.test(hOk.txt), hOk.txt.slice(0,200));
   t('⭐⭐ … et DÉSARMÉ en rouge quand le secret manque (le cas du 11/08)',
@@ -753,12 +759,26 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     /ÉCHEC/.test(hKo.txt)&&/tes changements ne partent pas/.test(hKo.txt),
     JSON.stringify(hKo).slice(0,240));
   t('témoin : quand les 2 déploiements passent, la ligne est verte',
-    /Le site.*OK/.test(hOk.txt)&&/Le serveur.*OK/.test(hOk.txt), hOk.txt.slice(-170));
+    /Dernière mise en ligne de l'app.*OK/.test(hOk.txt)&&/Dernière mise en ligne du serveur.*OK/.test(hOk.txt),
+    hOk.txt.slice(-190));
+  /* ── LA SONDE « LE SERVEUR RÉPOND » (13/08/2026) ─────────────────────────────────────
+     Michel, capture à l'appui : la carte disait « Le serveur (Milo, sync, premium) : ✅ OK
+     — 11/08 16:26 » à la seconde où un appel au backend échouait. Les deux ne mesurent pas
+     la même chose : GitHub dit qu'un DÉPLOIEMENT s'est bien passé, pas que le service tourne.
+     Un indicateur qui rassure sans rien mesurer est pire qu'un indicateur absent. */
+  t('⭐⭐ la carte demande VRAIMENT au serveur s\'il répond (?test=1)',
+    /Le serveur répond/.test(hOk.txt)&&/En ligne/.test(hOk.txt), hOk.txt.slice(0,240));
+  t('⭐⭐ … et le dit INJOIGNABLE quand il ne répond pas, même si le déploiement est vert',
+    /INJOIGNABLE/.test(hKo.txt), hKo.txt.slice(0,240));
+  t('… en disant ce qu\'on perd (sauvegarde, premium, synchro) et ce qui reste sauf',
+    /pas de sauvegarde cloud/.test(hKo.txt)&&/sur le téléphone/.test(hKo.txt), hKo.txt.slice(0,300));
+  t('⚠️ les libellés de déploiement ne se font plus passer pour l\'état du jour',
+    !/Le serveur \(Milo, sync, premium\)/.test(hOk.txt), hOk.txt.slice(-190));
   t('⭐ la panne du 29/07 (stockage plein, écriture impossible) serait VUE',
     hKo.rouges>=1&&/102 %/.test(hKo.txt)&&/ÉCRITURE IMPOSSIBLE/.test(hKo.txt),
     JSON.stringify(hKo).slice(0,200));
   t('sauvegardes arrêtées et mails en échec sont signalés en rouge',
-    hKo.rouges===5&&/AUCUNE programmation/.test(hKo.txt)&&/2 échecs/.test(hKo.txt),
+    hKo.rouges===6&&/AUCUNE programmation/.test(hKo.txt)&&/2 échecs/.test(hKo.txt),
     JSON.stringify(hKo).slice(0,220));
   t('une sauvegarde faite aujourd\'hui se lit « aujourd\'hui », pas « il y a 1 j »',
     /aujourd/.test(hOk.txt)&&!/il y a 1 j/.test(hOk.txt), hOk.txt.slice(0,160));
