@@ -5920,7 +5920,17 @@ const EX_YT={
   'Squat à la Barre':              {img:'exercises/homme-faisant-un-squat-avec-barre.webp'},
   'Squat Avant':                   {img:'exercises/squat-barre-devant-front.webp'}, // la vraie version BARRE (zip Michel 01/08 — avant : version haltères)
   'Squat Gobelet (Goblet Squat)':  {img:'exercises/squat-goblet-kettlebell.webp'},
-  'Squat Sumo':                    {img:'exercises/squat-sumo-avec-haltere.webp'},
+  /* ⚠️ RETRAIT VOLONTAIRE — « Squat Sumo » n'a PLUS d'illustration (13/08/2026, Michel :
+     *« je pense que je ne l'ai pas mis, retire-le stp »*). Ce n'est pas un oubli, ne pas
+     la « réparer » (R30).
+     POURQUOI : le squat sumo est un mouvement de BARRE (arbitrage Michel), or l'image
+     montrait un HALTÈRE tenu entre les jambes — c'est-à-dire le geste du « Squat Gobelet
+     (Goblet Squat) », qui existe déjà au catalogue avec sa propre photo. On affichait donc
+     la photo d'un autre exercice. *Mieux vaut aucune image qu'une image fausse* : sans
+     elle, `_exVideoHtml` retombe proprement sur le bouton « Voir le tutoriel ».
+     LE FICHIER `exercises/squat-sumo-avec-haltere.webp` EST GARDÉ dans le dépôt, mis de
+     côté : le jour où Michel trouve une figurine de squat sumo À LA BARRE, on rebranche
+     ici. (Suivi dans `A-FAIRE-SUR-PC.md`.) */
   'Fentes':                        {img:'exercises/fente-avant-barre-femme.webp'},
   'Leg Curl Couché Machine':       {img:'exercises/leg-curl-allonge.webp'},
   'Curl Ischio-jambiers (Leg Curl)':{img:'exercises/leg-curl-allonge.webp'},

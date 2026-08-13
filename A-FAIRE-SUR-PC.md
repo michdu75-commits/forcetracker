@@ -17,7 +17,20 @@
 
 ## ⏳ En attente
 
-_Rien en attente. 🎉_
+### 🖼️ Trouver une figurine de « Squat Sumo » **à la barre** (13/08/2026)
+
+L'illustration du Squat Sumo a été **retirée** ce jour-là : elle montrait un **haltère** tenu
+entre les jambes, c'est-à-dire le geste du **Squat Gobelet**, qui a déjà sa propre photo au
+catalogue. On affichait donc la photo d'un autre exercice, et le squat sumo est un mouvement
+**de barre** (arbitrage Michel).
+
+- **Ce qu'il faut** : une figurine de squat sumo **avec une barre sur les épaules**, dans le
+  même style que les autres (fond blanc, muscles sollicités en rouge).
+- **Où la brancher** : `log.js`, table `EX_YT`, entrée `'Squat Sumo'` — le commentaire de
+  retrait est juste au-dessus et explique tout.
+- **Le fichier écarté est gardé** : `exercises/squat-sumo-avec-haltere.webp` (ne pas le
+  supprimer, il pourra servir si un jour on ajoute une variante haltère).
+- En attendant, l'app affiche simplement le bouton « Voir le tutoriel » — rien n'est cassé.
 
 _Dernier déploiement backend : **historique études corporelles** (`bodyStudies`), déployé **automatiquement via la CI GitHub** le 2026-07-11 (run #22, succès, `?test=1` OK)._
 

@@ -534,6 +534,16 @@ const aud=await p.evaluate(()=>{
   o.eqZottman=_exEquip('Curl Zottman');
   o.eqConcentre=_exEquip('Curl Concentré');
   o.eqCurlIncline=_exEquip('Curl Incliné');
+  /* RETRAIT VOLONTAIRE du 13/08/2026 : le Squat Sumo n'a plus d'illustration, parce que
+     celle qu'il portait montrait le geste du Squat Gobelet (un haltère entre les jambes).
+     R30 : un retrait se fige par un test, sinon il ressemble à un oubli et le suivant le
+     « répare ». ⚠️ Le jour où une figurine de squat sumo À LA BARRE est ajoutée, ce témoin
+     doit être mis à jour EXPRÈS — pas contourné. */
+  o.sumoSansImg=!((EX_YT['Squat Sumo']||{}).img);
+  o.sumoPasGobelet=((EX_YT['Squat Sumo']||{}).img||'')!==((EX_YT['Squat Gobelet (Goblet Squat)']||{}).img||'x');
+  o.gobeletGardeSonImg=/goblet/i.test((EX_YT['Squat Gobelet (Goblet Squat)']||{}).img||'');
+  o.sumoResteBarre=_exEquip('Squat Sumo');
+  o.sumoTuto=(typeof _exVideoHtml==='function')&&/Voir le tutoriel/.test(_exVideoHtml('Squat Sumo'));
   // ⚠️ TÉMOINS DE NON-RÉGRESSION : ce qui n'est PAS dans la table doit rester aux règles.
   //    Sans eux, on pourrait « corriger » en cassant tout le reste du classement.
   o.eqRowingBarre=_exEquip('Rowing Barre (Tirage Horizontal)');
@@ -573,6 +583,13 @@ t('⭐ « Rowing Inversé sous une Table » est au POIDS DU CORPS (version maiso
 t('⭐ « Curl Zottman » est aux haltères (la rotation EST le mouvement)', aud.eqZottman==='libre', aud.eqZottman);
 t('⭐ « Curl Concentré » est aux haltères (une barre ne passe pas)', aud.eqConcentre==='libre', aud.eqConcentre);
 t('⭐ « Curl Incliné » est aux haltères (bras le long du corps sur un banc incliné)', aud.eqCurlIncline==='libre', aud.eqCurlIncline);
+/* ── LE SQUAT SUMO N'A PLUS D'IMAGE, ET C'EST VOULU (13/08/2026) ──────────────────────── */
+t('⭐ retrait volontaire : le Squat Sumo n\'a plus d\'illustration', aud.sumoSansImg===true,
+  'il en a une — soit elle est revenue par erreur, soit on a trouvé la bonne : dans ce cas mettre CE témoin à jour, cf. A-FAIRE-SUR-PC.md');
+t('… parce qu\'elle montrait le geste du Squat Gobelet, pas un squat barre', aud.sumoPasGobelet===true);
+t('… et le Squat Gobelet, lui, GARDE la sienne', aud.gobeletGardeSonImg===true);
+t('… le rangement ne bouge pas pour autant : le sumo reste à la Barre', aud.sumoResteBarre==='barre', aud.sumoResteBarre);
+t('⭐ sans image, l\'app retombe sur « Voir le tutoriel » (rien de cassé)', aud.sumoTuto===true);
 t('non-régression : le rowing BARRE reste à la barre', aud.eqRowingBarre==='barre', aud.eqRowingBarre);
 t('non-régression : le rowing HALTÈRE reste en poids libre', aud.eqRowingHalt==='libre', aud.eqRowingHalt);
 t('non-régression : le rowing MACHINE reste guidé', aud.eqRowingMach==='guide', aud.eqRowingMach);
