@@ -768,6 +768,17 @@ Première mesure du protocole §12.7, notée par Michel dans ses notes le soir m
 | **Cardio** vélo elliptique | 67 kcal | 55 kcal | *(non relevé)* | — |
 | **Musculation** | — | **346 kcal** | **245 kcal** | **−29 %** |
 
+### Points Garmin de l'historique (donnés par Michel le 13/08, à compléter)
+
+⚠️ **Demi-paires** : la valeur Force Tracker de la même séance manque encore. Un chiffre de montre
+seul ne dit rien — c'est l'ÉCART qui nous intéresse. À compléter depuis Progrès → historique (`🔥 … kcal`).
+
+| Date | Garmin | Force Tracker | Écart |
+|---|---|---|---|
+| 13/08 (muscu) | 346 | 245 | **−29 %** |
+| **10/08** | **420** | *à relever* | — |
+| **08/08** | **419** | *à relever* | — |
+
 ### Ce qu'on peut déjà en dire — et ce qu'on ne peut PAS
 
 ⚠️ **Une séance ne prouve rien.** C'est un point, pas une tendance : on ne touche à aucun barème
