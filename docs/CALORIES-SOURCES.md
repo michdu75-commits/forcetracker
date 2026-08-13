@@ -755,3 +755,53 @@ pas à substituer.
   *(apportée par Michel le 12/08/2026 · relue par GPT · statut : méthode en compétition, pas
   référence)*
 
+
+
+---
+
+## 14. 📓 LE RELEVÉ — séance 1 sur 10 (13/08/2026)
+
+Première mesure du protocole §12.7, notée par Michel dans ses notes le soir même.
+
+| | Machine | Montre (Garmin) | Force Tracker | Écart app / montre |
+|---|---|---|---|---|
+| **Cardio** vélo elliptique | 67 kcal | 55 kcal | *(non relevé)* | — |
+| **Musculation** | — | **346 kcal** | **245 kcal** | **−29 %** |
+
+### Ce qu'on peut déjà en dire — et ce qu'on ne peut PAS
+
+⚠️ **Une séance ne prouve rien.** C'est un point, pas une tendance : on ne touche à aucun barème
+avant d'en avoir dix. Noté ici pour ne pas le perdre, pas pour conclure.
+
+**Ce qui frappe quand même** : sur la **musculation**, l'app est **29 % en dessous** de la montre.
+C'est un écart nettement plus faible que celui relevé en juillet (tapis 101 · montre 89 · Polar 120 ·
+**Force Tracker 57**, soit ~50 % de moins) — mais l'entrée de juillet mélangeait cardio et muscu, et
+`ft-v834` a depuis retiré le double comptage de l'échauffement, qui faisait *monter* le total. **Les
+deux chiffres ne sont donc pas comparables** ; c'est ce relevé-ci qui fait foi désormais.
+
+**Sur le cardio, machine 67 contre montre 55** : la machine annonce **22 % de plus** que la montre.
+Rien d'anormal — les machines de salle ne connaissent ni le poids réel ni la fréquence cardiaque, et
+surestiment classiquement. À garder en tête : *la machine n'est pas une référence*, la montre l'est
+davantage (elle a la FC et le poids).
+
+### ⭐ L'occasion à ne pas rater : l'historique Garmin
+
+Michel : *« j'ai tout l'historique de Garmin »*.
+
+**C'est potentiellement bien mieux que le protocole des 10 séances.** Celui-ci demande d'attendre dix
+entraînements, à raison de quelques-uns par semaine — donc des semaines. L'historique Garmin, lui,
+contient **déjà** des dizaines de séances, avec leurs calories, leur durée et leur FC.
+
+Croisé avec les séances correspondantes de Force Tracker (mêmes dates), il donnerait **immédiatement**
+la comparaison sur un grand nombre de points, au lieu d'un par un. C'est aussi ce qui permettrait de
+départager les 3 approches du §13.6 sur des données réelles plutôt que sur une poignée.
+
+**À faire** : voir ce que Garmin Connect permet d'exporter (CSV des activités), et si le rapprochement
+par date est fiable. ⚠️ Ne rien construire avant d'avoir regardé le format réel du fichier.
+
+### ⚠️ La Polar n'est plus une référence
+
+Michel : *« ma Polar déconne »*. Elle apparaissait dans le relevé de juillet (120 kcal) comme 3ᵉ point
+de comparaison. **On la retire** : un appareil dont on soupçonne le fonctionnement ne peut pas servir
+d'étalon — il ajouterait du bruit en se faisant passer pour une mesure. La **Garmin** devient la
+référence unique côté montre.
