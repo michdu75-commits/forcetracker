@@ -1,24 +1,24 @@
-/* Polices hébergées en local (../fonts/) — 0 dépendance réseau au démarrage, fonctionne 100% hors-ligne */
+/* Polices hébergées en local (fonts/) — 0 dépendance réseau au démarrage, fonctionne 100% hors-ligne */
 @font-face {
   font-family: 'Manrope';
   font-style: normal;
   font-weight: 400 800;
   font-display: swap;
-  src: url('../fonts/manrope-variable.woff2') format('woff2');
+  src: url('fonts/manrope-variable.woff2') format('woff2');
 }
 @font-face {
   font-family: 'Space Grotesk';
   font-style: normal;
   font-weight: 500 700;
   font-display: swap;
-  src: url('../fonts/spacegrotesk-variable.woff2') format('woff2');
+  src: url('fonts/spacegrotesk-variable.woff2') format('woff2');
 }
 @font-face {
   font-family: 'Pacifico';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('../fonts/pacifico-400.woff2') format('woff2');
+  src: url('fonts/pacifico-400.woff2') format('woff2');
 }
 /* Empêche de « faire glisser » l'image fantôme (drag natif iOS) — appui long en séance
    ne déplace plus la vignette de l'exercice. Le tap et le zoom restent normaux.
@@ -1145,24 +1145,77 @@ html.ob-done #onboarding{display:none;}
 
 /* ─── Impression / export PDF d'un programme ─────────────────── */
 #print-area{ display:none; }
+/* ─── FEUILLE D'IMPRESSION — le programme qu'on emmène à la salle ─────────────────
+   Refonte du 12/08/2026, sur le modèle du générateur de PDF que Michel a écrit pour
+   l'application de Tatiana (`scripts/faire_pdf.py`). On en reprend la MISE EN PAGE,
+   pas la palette : le vin et l'or y sont l'identité de Tatiana, Force Tracker a la
+   sienne (règle d'or #7). Les couleurs ci-dessous sont celles du MODE CLAIR de l'app
+   (--red #D91843, --gold #CC8800) — celles du mode sombre ne valent rien sur papier.
+
+   ⚠️⚠️ LA CONTRAINTE QUE LE SCRIPT PYTHON N'A PAS À GÉRER, et qui décide de tout ici :
+   Playwright imprime avec `print_background=True`, donc les fonds sont garantis. Dans
+   un vrai navigateur, « Graphiques d'arrière-plan » est une CASE À COCHER, décochée par
+   défaut chez beaucoup de monde. L'ancienne feuille avait donc un défaut grave et
+   silencieux : `th { background:#111; color:#fff }` sortait en BLANC SUR BLANC — les
+   en-têtes de colonnes disparaissaient purement et simplement.
+   → RÈGLE : aucune information ne repose sur un fond. La couleur du TEXTE et les
+     BORDURES (toujours imprimées) portent le sens ; les aplats ne sont qu'un bonus.
+     Chaque règle ci-dessous est écrite pour rester lisible fond coupé.
+
+   Ce qu'on garde du modèle : filet d'accent à gauche des sections · lignes alternées ·
+   AUCUN trait vertical (ce sont les colonnes qui portent le sens, pas les cloisons) ·
+   coins arrondis · aplats francs, jamais de dégradé · un titre ne reste jamais seul
+   en bas de page. */
 @media print{
-  @page{ margin:14mm; }
+  @page{ margin:14mm 13mm; }
   html,body{ background:#fff !important; }
   body>*:not(#print-area){ display:none !important; }
-  #print-area{ display:block !important; color:#111; font-family:'Manrope',system-ui,sans-serif; }
+  #print-area{ display:block !important; color:#12121E; font-family:'Manrope',system-ui,sans-serif; }
   .prt-doc{ max-width:100%; }
-  .prt-h{ display:flex; align-items:baseline; justify-content:space-between; gap:16px; flex-wrap:wrap; border-bottom:2px solid #111; padding-bottom:8px; margin-bottom:4px; }
-  .prt-logo{ font-weight:800; font-size:15px; letter-spacing:.02em; white-space:nowrap; }
-  .prt-name{ font-weight:800; font-size:20px; text-align:right; }
-  .prt-sub{ font-size:12px; color:#555; margin-bottom:14px; }
-  .prt-doc h3{ font-size:15px; margin:16px 0 6px; padding:5px 8px; background:#f0f0f0; border-left:3px solid #111; }
-  .prt-doc table{ width:100%; border-collapse:collapse; margin-bottom:6px; }
-  .prt-doc th,.prt-doc td{ border:1px solid #bbb; padding:6px 8px; font-size:12.5px; text-align:left; }
-  .prt-doc th{ background:#111; color:#fff; font-weight:700; }
+
+  /* EN-TÊTE — le nom du programme est ce qu'on cherche en dépliant la feuille, il est
+     donc le plus gros. Le double filet (rouge épais + or fin) tient sans aucun fond. */
+  .prt-h{ display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+          flex-wrap:wrap; border-bottom:2.5px solid #D91843; padding-bottom:7px; margin-bottom:0; }
+  .prt-logo{ font-weight:800; font-size:13px; letter-spacing:.06em; text-transform:uppercase;
+             color:#D91843; white-space:nowrap; }
+  .prt-name{ font-weight:800; font-size:21px; text-align:right; letter-spacing:-.01em; }
+  .prt-sub{ font-size:11.5px; color:#4A4A6A; margin:0 0 15px; padding-top:5px;
+            border-top:1.5px solid #CC8800; }
+
+  /* CHAQUE JOUR PORTE SON FILET DORÉ : l'œil retrouve le début d'une section sans lire
+     le titre. Le filet est une BORDURE, donc il survit au fond décoché. */
+  .prt-doc h3{ font-size:14.5px; font-weight:800; color:#D91843; margin:15px 0 5px;
+               padding:5px 0 5px 9px; border-left:4px solid #CC8800; background:#F6F6F9;
+               line-height:1.25; }
+
+  /* LE TABLEAU — pas de cloison verticale, lignes alternées, coins arrondis. */
+  .prt-doc table{ width:100%; border-collapse:separate; border-spacing:0; margin-bottom:6px;
+                  border-radius:5px; overflow:hidden; }
+  .prt-doc th,.prt-doc td{ padding:6px 9px; font-size:12.5px; text-align:left; }
+  /* ⚠️ TEXTE ROUGE SUR FOND CLAIR, jamais l'inverse : c'est ce qui rend l'en-tête
+     lisible même quand le fond n'est pas imprimé (voir l'avertissement plus haut). */
+  .prt-doc th{ color:#D91843; font-weight:800; font-size:11px; letter-spacing:.05em;
+               text-transform:uppercase; background:#F6F6F9;
+               border-bottom:2px solid #D91843; }
+  .prt-doc td{ border-bottom:1px solid #DCDDE4; vertical-align:top; }
+  .prt-doc tbody tr:nth-child(even) td{ background:#FAFAFC; }
+  .prt-doc tbody tr:last-child td{ border-bottom:none; }
   .prt-doc td.c,.prt-doc th.c{ text-align:center; white-space:nowrap; }
+  /* La colonne « Poids » se remplit au stylo à la salle : on la souligne en pointillé
+     pour qu'elle se voie comme une ligne à écrire, sans l'encadrer.
+     ⚠️ Écrite APRÈS la règle `tr:last-child` et avec la même portée, sinon la DERNIÈRE
+     ligne de chaque tableau n'avait pas de trait — vu sur le rendu : le dernier exercice
+     de chaque jour était le seul sans ligne où noter sa charge. */
+  .prt-doc tbody tr td:last-child{ border-bottom:1px dashed #A8AAB8; min-width:66px; }
+
+  /* Un titre ne reste jamais seul en bas de page, un tableau ne se coupe pas au milieu. */
+  .prt-doc h3{ break-after:avoid; }
   .prt-doc thead{ display:table-header-group; }
   .prt-doc tr{ break-inside:avoid; }
-  .prt-foot{ margin-top:16px; font-size:11.5px; color:#444; border-top:1px solid #ccc; padding-top:8px; line-height:1.5; }
+
+  .prt-foot{ margin-top:15px; padding-top:7px; border-top:1.5px solid #CC8800;
+             font-size:11px; color:#4A4A6A; line-height:1.5; }
 }
 
 /* ─── Bandeau MODE DÉMO (admin) ──────────────────────────────── */
