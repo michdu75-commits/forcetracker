@@ -776,8 +776,43 @@ seul ne dit rien — c'est l'ÉCART qui nous intéresse. À compléter depuis Pr
 | Date | Garmin | Force Tracker | Écart |
 |---|---|---|---|
 | 13/08 (muscu) | 346 | 245 | **−29 %** |
-| **10/08** | **420** | *à relever* | — |
-| **08/08** | **419** | *à relever* | — |
+| **10/08** | **420** (1 h 31) | *à relever* | — |
+| **08/08** | **419** (1 h 11) | *à relever* | — |
+
+#### ⭐ Ce que les DURÉES révèlent, et c'est plus important que les totaux
+
+**Presque les mêmes calories pour 20 minutes de plus** : 419 en 1 h 11, 420 en 1 h 31. Soit **5,9**
+puis **4,6 kcal/min**. La Garmin ne fait donc pas « durée × intensité fixe » — c'est **cohérent avec un
+calcul piloté par la fréquence cardiaque** : la séance du 10 était plus longue mais moins intense.
+*Comparer deux totaux sans leurs durées ne veut rien dire.*
+
+**Et la Garmin n'est PAS gonflée**, contrairement à ce qu'on pouvait craindre. Ramenés en MET à 84 kg :
+
+- 08/08 → 419 / (84 × 1,183 h) = **4,2 MET**
+- 10/08 → 420 / (84 × 1,517 h) = **3,3 MET**
+
+Le Compendium donne 6,0 MET pour une musculation *vigoureuse* et 3,5 pour *modérée*. La Garmin est
+donc **entre léger et modéré** — plutôt conservatrice. On ne peut pas expliquer l'écart en disant
+« la montre exagère ».
+
+#### ⚠️ L'hypothèse qui en découle : ce n'est pas un coefficient, c'est le TEMPS
+
+Ses séances durent **71 et 91 minutes réelles**. Or `calcSessionCalories` **reconstruit** une durée
+depuis les séries — de l'ordre de **24 minutes pour une séance de 50** (§12). On est sur un facteur
+**≈ 3** sur le temps, pour un écart final de seulement −29 % sur le total.
+
+**Deux erreurs qui se compensent à moitié** : une durée très sous-estimée, rattrapée par un MET
+implicite trop élevé (3,18 mesuré au §12). C'est le pire des cas — ça tient « à peu près » tant que
+les séances se ressemblent, et ça dérape dès qu'une séance sort du moule (longue et tranquille, ou
+courte et intense). *Corriger par un coefficient global figerait les deux erreurs au lieu d'en
+supprimer une.*
+
+⭐ **Et on a maintenant de quoi trancher** : depuis `ft-v835`, chaque série validée porte l'heure du
+chrono, donc `_dureeEffective()` rend la durée **mesurée**. Il devient possible de comparer la durée
+réelle à celle que le calcul suppose — c'est cette comparaison-là qu'il faut faire en premier, avant
+de toucher au moindre barème.
+
+⚠️ **Trois séances. On ne conclut rien.** Hypothèse à vérifier, pas résultat.
 
 ### Ce qu'on peut déjà en dire — et ce qu'on ne peut PAS
 
