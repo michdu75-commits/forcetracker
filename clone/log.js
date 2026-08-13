@@ -2806,9 +2806,25 @@ async function _runSeDebrief(sess,prCount){
   const slot=document.getElementById('se-debrief');if(!slot)return;
   const nExs=(sess.exs||[]).length;
   let nSets=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')nSets++;}));
-  const fallback='<p>'+nExs+' exercice'+(nExs>1?'s':'')+' · '+nSets+' série'+(nSets>1?'s':'')+' · '+(sess.volume||0)+' kg de volume.'+(prCount>0?' Nouveau record 💪 bien joué !':' Séance bouclée, continue comme ça 👊')+'</p>';
-  // Pas de réseau → résumé local (le flag reste : le Coach débriefera à son ouverture)
-  if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)){ slot.innerHTML=fallback; return; }
+  /* ⚠️ QUAND MILO NE RÉPOND PAS, ON LE DIT (13/08/2026) ────────────────────────────────
+     Michel : *« le briefing d'après séance a bien disparu »*. Vérifié en rejouant une vraie
+     fin de séance : le mécanisme marche — dès que l'API répond, le texte de Milo s'affiche.
+     LE DÉFAUT EST AILLEURS : quand l'appel échoue (réseau, quota, backend), on retombait en
+     SILENCE sur ce résumé de chiffres. Rien ne distinguait « Milo a répondu court » de
+     « Milo n'a jamais répondu » — donc de l'autre côté, le débrief a « disparu » sans que
+     personne ne puisse le savoir. C'est la famille de pannes la plus coûteuse du projet
+     (la sauvegarde morte 36 jours, le déploiement rouge que personne ne voyait) : *ce qui
+     échoue en silence n'est pas rattrapable*.
+     Le résumé chiffré RESTE — il est utile — mais il est désormais suivi d'une ligne qui
+     dit ce qui s'est passé, et le jeton est toujours rendu : Milo débriefera à l'ouverture
+     du Coach. On ne perd rien, on le DIT. */
+  const chiffres='<p>'+nExs+' exercice'+(nExs>1?'s':'')+' · '+nSets+' série'+(nSets>1?'s':'')+' · '+(sess.volume||0)+' kg de volume.'+(prCount>0?' Nouveau record 💪 bien joué !':' Séance bouclée, continue comme ça 👊')+'</p>';
+  const avec=(msg,retry)=>chiffres+'<p class="se-dbf-off">'+msg
+    +(retry?' <button class="se-dbf-retry" onclick="_retrySeDebrief()">Réessayer</button>':'')+'</p>';
+  _seDbfLast={sess:sess,prCount:prCount||0};   // pour le bouton « Réessayer »
+  // Pas de réseau → on le dit, et le jeton reste posé : le Coach débriefera à son ouverture.
+  if(!S.url || (typeof navigator!=='undefined' && navigator.onLine===false)){
+    slot.innerHTML=avec('📡 Hors ligne — Milo analysera ta séance dès que tu ouvriras le Coach.',false); return; }
   // ⚠️ LE FLAG EST UN JETON : QUI LE PREND FAIT LE DÉBRIEF (ft-v786).
   // Trouvé dans l'export de conversations de Michel : Milo a débriefé DEUX FOIS la même séance,
   // avec deux objectifs mémorisés CONTRADICTOIRES — le second (faux) écrasait le premier, et
@@ -2819,7 +2835,9 @@ async function _runSeDebrief(sess,prCount){
   // On prend donc le jeton AVANT l'appel — exactement ce que fait déjà `_maybeAutoDebrief`
   // (R2 : une seule règle, appliquée pareil des deux côtés) — et on le REND si l'appel échoue.
   let _pid=null; try{ _pid=localStorage.getItem('ft4_pending_debrief'); }catch(e){}
-  if(!_pid){ slot.innerHTML=fallback; return; }   // le Coach a déjà débriefé : on ne repaie pas un appel
+  // Le Coach a déjà débriefé cette séance : on ne repaie pas un appel — mais on le DIT,
+  // sinon l'écran de fin paraît vide de l'analyse alors qu'elle existe, dans le Coach.
+  if(!_pid){ slot.innerHTML=avec('\ud83d\udcac Milo a déjà débriefé cette séance — retrouve-la dans l\'onglet Coach.',false); return; }
   try{ localStorage.removeItem('ft4_pending_debrief'); }catch(e){}
   const instr='[DÉBRIEF AUTO] Je viens de terminer ma séance (la plus récente dans mes dernières séances). '
     +'Débriefe-la MAINTENANT, directement : analyse-la (progression, stabilité, points d\'attention) '
@@ -2856,9 +2874,23 @@ async function _runSeDebrief(sess,prCount){
     }catch(e){}
   }catch(e){
     // Échec réseau → résumé local, et on REND le jeton pour que le Coach réessaie à son ouverture
+    // On REND le jeton (le Coach réessaiera à son ouverture) ET ON LE DIT. Le `catch`
+    // attrape tout — réseau coupé, HTTP 4xx/5xx, quota, réponse vide : on ne prétend pas
+    // savoir laquelle, on annonce le fait et on propose un nouvel essai.
     try{ localStorage.setItem('ft4_pending_debrief', _pid); }catch(_){}
-    slot.innerHTML=fallback;
+    slot.innerHTML=avec('\u26a0\ufe0f Milo n\'a pas pu analyser ta séance. Rien n\'est perdu : il le fera à l\'ouverture du Coach.',true);
   }
+}
+
+/* Bouton « Réessayer » du débrief : rejoue exactement le même chemin. On garde la séance
+   de côté plutôt que de la relire dans S.sessions — celle-ci pourrait avoir changé (une
+   nouvelle séance, une restauration), et on débrieferait alors la mauvaise. */
+let _seDbfLast=null;
+function _retrySeDebrief(){
+  if(!_seDbfLast)return;
+  const slot=document.getElementById('se-debrief');
+  if(slot)slot.innerHTML='<span class="se-load">Milo analyse ta séance…</span>';
+  _runSeDebrief(_seDbfLast.sess,_seDbfLast.prCount);
 }
 
 // ── Niveau évolutif (débutant → intermédiaire → confirmé) ─────────────

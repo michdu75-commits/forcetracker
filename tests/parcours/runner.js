@@ -3573,6 +3573,74 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cz.close();
 }
 
+
+/* ══ BLOC X — LE DÉBRIEF DE FIN DE SÉANCE (13/08/2026) ══════════════════════════════════
+   Michel : *« le briefing d'après séance a bien disparu »*. Vérifié en rejouant une vraie
+   fin de séance : le mécanisme MARCHE — dès que l'API répond, le texte de Milo s'affiche.
+   Le défaut était que l'ÉCHEC était SILENCIEUX : on retombait sur un résumé de chiffres,
+   et rien ne distinguait « Milo a répondu court » de « Milo n'a jamais répondu ».
+   Ce bloc fige les 4 chemins, y compris celui du silence — c'est le seul qui manquait.  */
+{
+  console.log('\n── X. Le débrief de fin de séance ──');
+  const seance=()=>{ startWorkout();
+    S.wkt.exs=[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}];
+    return finishWorkout(); };
+  const lire=()=>({txt:(document.getElementById('se-debrief')||{}).innerText||'',
+                   retry:!!document.querySelector('.se-dbf-retry'),
+                   jeton:!!localStorage.getItem('ft4_pending_debrief')});
+  // Un contexte par scénario : le jeton et l'historique ne doivent pas déborder de l'un à l'autre.
+  const jouer=async(nAbort,offline)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+    const pg=await cx.newPage(); const errs=[];
+    pg.on('pageerror',e=>errs.push(String(e.message)));
+    let n=0;
+    await pg.route(u=>String(u).indexOf('127.0.0.1:'+PORT)<0, r=>{
+      if(!/"action"\s*:\s*"coach"/.test(r.request().postData()||''))
+        return r.fulfill({status:200,contentType:'application/json',body:'{}'});
+      n++;
+      if(n<=nAbort) return r.abort();
+      r.fulfill({status:200,contentType:'application/json',
+                 body:JSON.stringify({reply:'Belle séance : 100 kg × 5, propre. Vise 102,5 kg.'})});
+    });
+    await pg.addInitScript(seedScript());
+    await pg.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+    await pg.waitForTimeout(1200);
+    if(offline) await cx.setOffline(true);
+    await pg.evaluate(seance);
+    await pg.waitForTimeout(2500);
+    const r1=await pg.evaluate(lire);
+    let r2=null;
+    if(r1.retry){ await pg.evaluate(()=>_retrySeDebrief()); await pg.waitForTimeout(2200);
+                  r2=await pg.evaluate(lire); }
+    await cx.close();
+    return {r1,r2,errs,appels:n};
+  };
+
+  const OK   = await jouer(0,false);   // Milo répond
+  const KO   = await jouer(9,false);   // toutes les tentatives échouent
+  const HORS = await jouer(0,true);    // hors ligne
+  const RATT = await jouer(2,false);   // les 2 essais auto échouent, le rattrapage réussit
+
+  const tz=(n,c,d)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(d?'\n       → '+d:''));} };
+  tz('⭐ quand Milo répond, son analyse s\'affiche', /102,5 kg/.test(OK.r1.txt), OK.r1.txt);
+  tz('… et le jeton est consommé (pas de 2ᵉ débrief de la même séance)', OK.r1.jeton===false);
+  tz('⭐⭐ quand l\'appel ÉCHOUE, l\'écran le DIT (ne fait plus semblant)',
+     /n'a pas pu analyser/.test(KO.r1.txt), KO.r1.txt);
+  tz('… les chiffres de la séance restent quand même affichés', /kg de volume/.test(KO.r1.txt));
+  tz('… le jeton est RENDU : Milo débriefera à l\'ouverture du Coach', KO.r1.jeton===true);
+  tz('… et un bouton « Réessayer » est proposé', KO.r1.retry===true);
+  tz('⭐ hors ligne : on l\'annonce, sans bouton (ça ne servirait à rien)',
+     /Hors ligne/.test(HORS.r1.txt)&&HORS.r1.retry===false, HORS.r1.txt);
+  tz('… et le jeton reste posé', HORS.r1.jeton===true);
+  tz('⭐ « Réessayer » relance vraiment et affiche l\'analyse',
+     !!RATT.r2 && /102,5 kg/.test(RATT.r2.txt), RATT.r2?RATT.r2.txt:'(pas de bouton)');
+  tz('… et le message d\'échec disparaît après le rattrapage',
+     !!RATT.r2 && RATT.r2.retry===false && RATT.r2.jeton===false);
+  t('0 erreur JS sur les 4 scénarios de débrief',
+    [OK,KO,HORS,RATT].every(x=>x.errs.length===0),
+    [].concat(...[OK,KO,HORS,RATT].map(x=>x.errs)).join(' | '));
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

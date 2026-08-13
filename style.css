@@ -277,6 +277,11 @@ html.is-clone .coach-quota{ padding:4px 10px; }                                 
 .se-debrief{font-size:14px;color:var(--t1);line-height:1.6;}
 .se-debrief .se-load{color:var(--t3);font-size:13px;font-style:italic;}
 .se-debrief p{margin:0 0 8px;}
+/* ⚠️ QUAND MILO NE RÉPOND PAS, ÇA SE VOIT (13/08/2026) — avant, l'écran retombait en
+   silence sur le résumé chiffré et rien ne distinguait « réponse courte » de « aucune
+   réponse ». Discret (c'est une info, pas une alarme) mais présent. */
+.se-debrief .se-dbf-off{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:10px 0 0;padding-top:9px;border-top:1px solid var(--sep);font-size:12.5px;color:var(--t3);line-height:1.5;}
+.se-debrief .se-dbf-retry{background:var(--bg3);color:var(--t1);border:none;box-shadow:inset 0 0 0 1px var(--sep);border-radius:8px;padding:6px 13px;font-family:var(--font);font-size:12.5px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 .se-mood{background:var(--bg2);border-radius:16px;padding:13px 14px;box-shadow:inset 0 0 0 1px var(--sep);}
 .se-mood-q{font-size:13.5px;font-weight:700;color:var(--t1);margin-bottom:10px;}
 .se-mood-row{display:flex;gap:8px;}
