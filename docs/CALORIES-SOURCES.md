@@ -799,9 +799,22 @@ départager les 3 approches du §13.6 sur des données réelles plutôt que sur 
 **À faire** : voir ce que Garmin Connect permet d'exporter (CSV des activités), et si le rapprochement
 par date est fiable. ⚠️ Ne rien construire avant d'avoir regardé le format réel du fichier.
 
-### ⚠️ La Polar n'est plus une référence
+### ⭐ La Polar : c'est la CEINTURE qui est morte, pas le capteur — et ça la rend précieuse
 
-Michel : *« ma Polar déconne »*. Elle apparaissait dans le relevé de juillet (120 kcal) comme 3ᵉ point
-de comparaison. **On la retire** : un appareil dont on soupçonne le fonctionnement ne peut pas servir
-d'étalon — il ajouterait du bruit en se faisant passer pour une mesure. La **Garmin** devient la
-référence unique côté montre.
+**⚠️ Correction d'une conclusion trop rapide.** Michel a d'abord dit *« ma Polar déconne »*, et j'en ai
+conclu que l'appareil n'était plus fiable — donc à retirer des références. **Faux.** Il a précisé :
+*« c'est la ceinture qui déconne, pas le capteur »*. Ce n'est donc pas un appareil douteux, c'est une
+**pièce d'usure** (la sangle élastique) à remplacer — quelques euros, et la mesure redevient valide.
+*Un consommable usé n'est pas un instrument défaillant* : jeter l'un pour l'autre aurait écarté la
+meilleure source qu'on ait.
+
+**Et c'est bien la MEILLEURE, pas une de plus.** Une ceinture pectorale mesure la fréquence cardiaque
+par voie **électrique** (comme un ECG) ; une montre la déduit optiquement au poignet. En musculation,
+l'optique est justement mise en défaut : serrage de la barre, flexion du poignet, contractions —
+autant de sources d'erreur *sur l'exercice qui nous intéresse le plus*, celui où le modèle actuel est
+le plus faible (−29 % sur cette séance).
+
+**Conséquence pratique** : remplacer la sangle de la Polar est probablement **l'action la plus rentable**
+de tout ce chantier. Elle donnerait une référence de FC solide là où la Garmin est la moins sûre.
+⚠️ À vérifier avant d'en dépendre : que la Polar exporte bien ses séances, et que ses horodatages
+permettent de la rapprocher des séances de Force Tracker.
