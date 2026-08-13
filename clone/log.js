@@ -3292,7 +3292,11 @@ const _EQ_ECRIT={
   // Impossible avec une barre : ce n'est pas une préférence, c'est le mouvement.
   'Curl Zottman':'libre',
   // Un seul haltère, coude calé à l'intérieur de la cuisse. Une barre ne passe pas.
-  'Curl Concentré':'libre'
+  'Curl Concentré':'libre',
+  // Sur un banc incliné, les bras pendent le long du corps : une barre ne peut pas être
+  // curlée depuis cette position (les cuisses et le banc sont dans le chemin). C'est le
+  // même critère que les trois du dessus — le mouvement n'existe qu'aux haltères.
+  'Curl Incliné':'libre'
 };
 function _exEquip(name){
   const s=_naz(name);

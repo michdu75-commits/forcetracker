@@ -533,6 +533,7 @@ const aud=await p.evaluate(()=>{
   o.eqRowingTable=_exEquip('Rowing Inversé sous une Table');
   o.eqZottman=_exEquip('Curl Zottman');
   o.eqConcentre=_exEquip('Curl Concentré');
+  o.eqCurlIncline=_exEquip('Curl Incliné');
   // ⚠️ TÉMOINS DE NON-RÉGRESSION : ce qui n'est PAS dans la table doit rester aux règles.
   //    Sans eux, on pourrait « corriger » en cassant tout le reste du classement.
   o.eqRowingBarre=_exEquip('Rowing Barre (Tirage Horizontal)');
@@ -571,6 +572,7 @@ t('⭐⭐ « Rowing Poitrine Appuyée » est aux HALTÈRES, pas à la barre', au
 t('⭐ « Rowing Inversé sous une Table » est au POIDS DU CORPS (version maison)', aud.eqRowingTable==='corps', aud.eqRowingTable);
 t('⭐ « Curl Zottman » est aux haltères (la rotation EST le mouvement)', aud.eqZottman==='libre', aud.eqZottman);
 t('⭐ « Curl Concentré » est aux haltères (une barre ne passe pas)', aud.eqConcentre==='libre', aud.eqConcentre);
+t('⭐ « Curl Incliné » est aux haltères (bras le long du corps sur un banc incliné)', aud.eqCurlIncline==='libre', aud.eqCurlIncline);
 t('non-régression : le rowing BARRE reste à la barre', aud.eqRowingBarre==='barre', aud.eqRowingBarre);
 t('non-régression : le rowing HALTÈRE reste en poids libre', aud.eqRowingHalt==='libre', aud.eqRowingHalt);
 t('non-régression : le rowing MACHINE reste guidé', aud.eqRowingMach==='guide', aud.eqRowingMach);
