@@ -4142,10 +4142,27 @@ const _DRAWER_CONTENT = {
       }
       // Remplit la taille du stockage (asynchrone)
       if(typeof _fillStorageInfo==='function')setTimeout(_fillStorageInfo,50);
+      /* ── D'OÙ L'APP EST-ELLE OUVERTE ? (13/08/2026) ────────────────────────────────────
+         Michel : *« mais sur mon appli comment je le sais ? »*. Il n'y avait AUCUN moyen —
+         une PWA installée n'a pas de barre d'adresse, et « À propos » n'affichait que la
+         version. Or l'origine n'est pas un détail : le Worker de Milo n'autorise QUE
+         `michdu75-commits.github.io` (verrou anti-abus de l'audit du 27/07). Ouverte depuis
+         une autre adresse, l'app a l'air normale — séances, historique, tout marche — mais
+         Milo répond « Accès refusé », et rien ne dit pourquoi.
+         ⚠️ On AFFICHE, on ne corrige pas : l'app ne peut pas se déplacer toute seule. */
+      const _MILO_ORIGINE='https://michdu75-commits.github.io';
+      let _orig='',_origOk=true;
+      try{ _orig=location.origin||''; _origOk=(_orig===_MILO_ORIGINE); }catch(e){ _orig=''; }
+      const _origHtml=_orig?('<div style="font-size:11px;line-height:1.5;margin:-12px 0 18px;color:'
+        +(_origOk?'var(--t3)':'var(--gold)')+';">'+(_origOk?'🌐 ':'⚠️ ')
+        +_escNote(_orig.replace(/^https?:\/\//,''))
+        +(_origOk?'':'<br>Milo ne fonctionne que depuis <b>michdu75-commits.github.io</b> — ici il répondra « Accès refusé ».')
+        +'</div>'):'';
       return`<div style="text-align:center;padding:10px 0 20px;">
       <img src="logo.png" style="width:80px;height:80px;border-radius:20px;margin-bottom:16px;">
       <div style="font-family:var(--font-cond);font-size:28px;font-weight:900;background:linear-gradient(135deg,#FF2D55,#FF6D00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;">Force Tracker</div>
       <div id="_about-ver" style="display:inline-block;background:rgba(255,45,85,.12);color:var(--red);font-family:var(--font-cond);font-size:15px;font-weight:800;padding:5px 16px;border-radius:20px;letter-spacing:.05em;border:1px solid rgba(255,45,85,.22);margin-bottom:20px;">…</div>
+      ${_origHtml}
       <div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:left;margin-bottom:12px;font-size:13px;line-height:1.7;color:var(--t2);">
         Application de suivi de musculation Progressive Web App.<br>
         Fonctionne hors connexion · Synchronisation Google Sheets<br>

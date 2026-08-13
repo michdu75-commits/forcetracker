@@ -3661,6 +3661,54 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     [].concat(...[OK,KO,HORS,RATT].map(x=>x.errs)).join(' | '));
 }
 
+
+/* ══ BLOC XI — D'OÙ L'APP EST-ELLE OUVERTE ? (13/08/2026) ══════════════════════════════
+   Michel : *« mais sur mon appli comment je le sais ? »* — une PWA installée n'a pas de
+   barre d'adresse, et « À propos » n'affichait que la version. Or le Worker de Milo
+   n'autorise QUE michdu75-commits.github.io : ouverte ailleurs, l'app a l'air normale mais
+   Milo répond « Accès refusé », sans que rien ne l'explique.                              */
+{
+  console.log('\n── XI. L\'adresse d\'ouverture est visible ──');
+  const ca=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pa=await ca.newPage(); const ea=[];
+  pa.on('pageerror',e=>ea.push(String(e.message)));
+  await pa.addInitScript(seedScript());
+  await pa.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+  await pa.waitForTimeout(1200);
+  const A=await pa.evaluate(off=>{
+   try{
+    if(typeof openDrawerContent!=='function')return {erreur:'openDrawerContent absente'};
+    openDrawerContent('about');
+    const t=(document.getElementById('drawer-cnt-body')||{}).innerText||'';
+    return { montre:t.indexOf(location.host)>=0, avertit:/Accès refusé/.test(t) };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  },'https://michdu75-commits.github.io');
+
+  const ta=(n,c,d)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(d?'\n       → '+d:''));} };
+  if(A.erreur){ t('⛔ l\'écran « À propos » s\'ouvre', false, A.erreur); }
+  ta('⭐⭐ « À propos » affiche l\'adresse d\'où l\'app est ouverte',
+     A.montre===true, JSON.stringify(A));
+  ta('⭐ … et PRÉVIENT quand ce n\'est pas l\'adresse officielle (Milo refusera)',
+     A.avertit===true, JSON.stringify(A));
+  /* ⚠️ LE TÉMOIN QUI COMPTE VRAIMENT — DEUX FICHIERS, UNE SEULE VÉRITÉ (R2).
+     L'adresse annoncée dans « À propos » et celle qu'autorise le Worker doivent être
+     IDENTIQUES. Si l'une change sans l'autre, l'avertissement se met à mentir : soit il
+     alarme sur la bonne adresse, soit il se tait sur une mauvaise. Le pire des deux
+     mondes, et parfaitement silencieux.
+     (La 1ʳᵉ version de ce témoin simulait `window.location` pour vérifier qu'on n'alarme
+     pas sur la bonne adresse — Chromium refuse de la redéfinir. Ce contrôle-ci est plus
+     fiable : il lit les deux sources au lieu de mimer un navigateur.) */
+  {
+    const _app=fs.readFileSync(path.join(ROOT,'coach.js'),'utf8').match(/_MILO_ORIGINE\s*=\s*'([^']+)'/);
+    const _wk =fs.readFileSync(path.join(ROOT,'worker.js'),'utf8').match(/ALLOWED_ORIGIN\s*=\s*'([^']+)'/);
+    ta('⭐⭐ l\'adresse annoncée est EXACTEMENT celle qu\'autorise le Worker (R2)',
+       !!_app&&!!_wk&&_app[1]===_wk[1],
+       'app: '+(_app?_app[1]:'introuvable')+' · worker: '+(_wk?_wk[1]:'introuvable'));
+  }
+  t('0 erreur JS sur l\'écran À propos', ea.length===0, ea.join(' | '));
+  await ca.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
