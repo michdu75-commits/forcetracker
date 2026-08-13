@@ -776,8 +776,34 @@ seul ne dit rien — c'est l'ÉCART qui nous intéresse. À compléter depuis Pr
 | Date | Garmin | Force Tracker | Écart |
 |---|---|---|---|
 | 13/08 (muscu) | 346 | 245 | **−29 %** |
-| **10/08** | **420** (1 h 31) | *à relever* | — |
-| **08/08** | **419** (1 h 11) | *à relever* | — |
+| **10/08** | **420** (1 h 31) | **248** | **−41 %** |
+| **08/08** | **419** (1 h 11) | **248** | **−41 %** |
+
+#### ⭐⭐ LE VRAI RÉSULTAT : l'app rend une CONSTANTE, pas une mesure
+
+C'est plus parlant que l'écart. Sur trois séances : **245 · 248 · 248**. L'app varie de **1 %**.
+La Garmin, sur les mêmes séances : **346 · 419 · 420** — elle varie de **20 %**.
+
+*L'app ne mesure pas la séance : elle produit une valeur quasi fixe.* Elle est dominée par une part
+forfaitaire et par un nombre de séries qui se ressemble d'une fois sur l'autre ; l'intensité réelle,
+la fréquence cardiaque et les vingt minutes supplémentaires du 10/08 ne l'atteignent pas.
+
+**C'est la même famille que les défauts corrigés le 13/08** (la carte Santé qui affichait « serveur
+OK » sans jamais interroger le serveur) : *un indicateur qui affiche quelque chose sans rien mesurer*.
+En pire, même : 248 kcal est un chiffre **crédible**, donc rien n'alerte.
+
+#### ⚠️ Et un COEFFICIENT ne réparera pas ça
+
+Les rapports app/montre valent **0,59 · 0,59 · 0,71**. Il n'existe pas de facteur unique. Multiplier
+la sortie par 1,7 collerait sur deux séances et raterait la troisième — en figeant au passage les deux
+erreurs qui se compensent (durée sous-estimée × MET trop élevé, voir ci-dessus).
+
+**Ce qu'il faut réparer, c'est ce qui ENTRE dans le calcul** — d'abord la durée, maintenant qu'elle est
+réellement mesurée (`ft-v835`). Ensuite seulement on regardera l'intensité.
+
+⚠️ **Trois séances.** C'est une piste solide, pas une conclusion. Et le 13/08 comportait un cardio
+enregistré, ce qui change la composition du total : les trois lignes ne sont pas strictement
+comparables entre elles.
 
 #### ⭐ Ce que les DURÉES révèlent, et c'est plus important que les totaux
 
