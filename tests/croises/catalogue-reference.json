@@ -1,5 +1,5 @@
 {
- "genere": "2026-08-09",
+ "genere": "2026-08-13",
  "total": 324,
  "nbRegles": 69,
  "fragiles": 0,
@@ -304,7 +304,7 @@
    "p": "biceps",
    "s": "forearms",
    "pat": "curl-biceps",
-   "eq": "barre",
+   "eq": "libre",
    "met": 4,
    "frag": 0
   },
@@ -368,7 +368,7 @@
    "p": "biceps,forearms",
    "s": "",
    "pat": "curl-biceps",
-   "eq": "barre",
+   "eq": "libre",
    "met": 4,
    "frag": 0
   },
@@ -1624,7 +1624,7 @@
    "p": "lats,traps",
    "s": "abs,biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
-   "eq": "barre",
+   "eq": "corps",
    "met": 5.5,
    "frag": 0
   },
@@ -1648,7 +1648,7 @@
    "p": "lats,traps",
    "s": "biceps,forearms,rear-delt",
    "pat": "tirage-horizontal",
-   "eq": "barre",
+   "eq": "libre",
    "met": 5.5,
    "frag": 0
   },

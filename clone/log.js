@@ -3266,8 +3266,38 @@ const _EQ_META={
   corps:{lbl:'Poids du corps', ic:'🤸', c:'#34D399', bg:'rgba(52,211,153,.13)'},
   autre:{lbl:'Polyvalent',     ic:'🔀', c:'#8A8F9C', bg:'rgba(255,255,255,.05)'} // ex-« À classer » : décision Michel 01/08 (« les 3 ») — les fentes se font barre, haltères OU poids du corps : pas UNE famille, un choix. Le bac est une catégorie assumée, plus un point d'interrogation.
 };
+/* ─── LE MATÉRIEL ÉCRIT PASSE AVANT LES RÈGLES (13/08/2026) ────────────────────────────
+   Signalé par Michel sur une capture : *« le rowing poitrine appuyé, haltères et pas
+   barre »*. Il avait raison, et **l'app se contredisait elle-même** — l'illustration
+   qu'elle affiche pour cet exercice est `rowing-halteres-banc-incline-prise-neutre.webp`.
+   LA CAUSE : la règle 4 traite `rowing` comme un mot de la famille BARRE, en repli. Un
+   rowing qui ne dit ni « barre » ni « haltère » tombait donc en barre par DÉFAUT — et un
+   défaut silencieux est indiscernable d'une décision.
+   LE REMÈDE est celui qu'on a déjà adopté pour les muscles (`_mscScores` lit `EX_MUSCLES`
+   avant de consulter la moindre règle) : ce qui est ÉCRIT gagne, et les règles ne servent
+   plus qu'à ce qu'on n'a pas écrit — exercices créés par l'utilisateur, noms arrivés par
+   import. Plus d'ordre de règles à se tromper (R13, et le motif « premier match gagnant »
+   de `BUGS.md`).
+   ⚠️ N'ENTRE ICI QUE CE QUI EST CERTAIN, c'est-à-dire les mouvements qui ne peuvent PAS se
+   faire autrement. Un squat sumo illustré avec un haltère reste un mouvement de barre :
+   ceux-là restent aux règles, et se tranchent avec Michel (R29). */
+const _EQ_ECRIT={
+  // Une planche inclinée soutient la poitrine, on tire deux haltères. La version machine
+  // existe, mais elle porte « machine » dans son nom et la règle 1 l'attrape déjà.
+  'Rowing Poitrine Appuyée (Chest Supported)':'libre',
+  // Suspendu SOUS une table : aucun matériel. C'est LA version « je m'entraîne à la
+  // maison » — la ranger en barre la cachait précisément à qui la cherche.
+  'Rowing Inversé sous une Table':'corps',
+  // Le mouvement est DÉFINI par la rotation poignet des haltères (supination → pronation).
+  // Impossible avec une barre : ce n'est pas une préférence, c'est le mouvement.
+  'Curl Zottman':'libre',
+  // Un seul haltère, coude calé à l'intérieur de la cuisse. Une barre ne passe pas.
+  'Curl Concentré':'libre'
+};
 function _exEquip(name){
   const s=_naz(name);
+  const ecrit=_EQ_ECRIT[name];
+  if(ecrit)return ecrit;
   // 0) MATÉRIEL ÉCRIT DANS LE NOM — doit passer AVANT tout le reste (premier match gagnant) :
   //    sans ça « Squat TRX » retombe sur la règle « squat » → 🏋️ Barre (mesuré le 02/08).
   if(/trx|sangles|suspension/.test(s)) return 'trx';

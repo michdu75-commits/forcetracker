@@ -525,6 +525,20 @@ const aud=await p.evaluate(()=>{
   o.eqCurlElast=_exEquip('Curl Élastique')||_exEquip('Écarté Élastique');
   o.eqCorde=_exEquip('Sauts à la Corde');
   o.eqSquatBarre=_exEquip('Squat à la Barre');   // témoin : un vrai squat barre reste « barre »
+  /* ②bis LE MATÉRIEL ÉCRIT (13/08/2026) — signalé par Michel sur une capture : le rowing
+     poitrine appuyée était rangé en BARRE alors qu'il se fait aux haltères, et l'app se
+     contredisait elle-même (son illustration montre des haltères). Ces 4 mouvements ne
+     PEUVENT pas se faire autrement : ils sont écrits, les règles ne les touchent plus. */
+  o.eqPoitrineAppuyee=_exEquip('Rowing Poitrine Appuyée (Chest Supported)');
+  o.eqRowingTable=_exEquip('Rowing Inversé sous une Table');
+  o.eqZottman=_exEquip('Curl Zottman');
+  o.eqConcentre=_exEquip('Curl Concentré');
+  // ⚠️ TÉMOINS DE NON-RÉGRESSION : ce qui n'est PAS dans la table doit rester aux règles.
+  //    Sans eux, on pourrait « corriger » en cassant tout le reste du classement.
+  o.eqRowingBarre=_exEquip('Rowing Barre (Tirage Horizontal)');
+  o.eqRowingHalt=_exEquip('Rowing Haltère (Tirage Horizontal)');
+  o.eqRowingMach=_exEquip('Rowing Machine (Tirage Horizontal)');
+  o.eqInconnu=_exEquip('Rowing Bidule Inventé');   // un nom inconnu suit toujours les règles
   // ③ les 3 erreurs de classement trouvées par l'audit
   o.superman=mus('Superman').sort().join(',');
   o.chaiseRom=mus('Chaise Romaine').sort().join(',');
@@ -549,6 +563,18 @@ t('⭐ TRX, élastique et cardio ont leur propre bac (avant : « Squat TRX » é
   aud.eqSquatTrx==='trx'&&aud.eqRowingTrx==='trx'&&aud.eqCurlElast==='elast'&&aud.eqCorde==='cardio',
   [aud.eqSquatTrx,aud.eqRowingTrx,aud.eqCurlElast,aud.eqCorde].join(' / '));
 t('témoin : un vrai squat à la barre reste dans « Barre »', aud.eqSquatBarre==='barre', aud.eqSquatBarre);
+/* ── LE MATÉRIEL ÉCRIT (13/08/2026, signalement de Michel) ─────────────────────────────
+   Un rowing qui ne dit ni « barre » ni « haltère » tombait en BARRE par DÉFAUT, via la
+   règle de repli. Un défaut silencieux est indiscernable d'une décision — d'où une table
+   explicite, lue AVANT les règles (même motif que `EX_MUSCLES` pour les muscles). */
+t('⭐⭐ « Rowing Poitrine Appuyée » est aux HALTÈRES, pas à la barre', aud.eqPoitrineAppuyee==='libre', aud.eqPoitrineAppuyee);
+t('⭐ « Rowing Inversé sous une Table » est au POIDS DU CORPS (version maison)', aud.eqRowingTable==='corps', aud.eqRowingTable);
+t('⭐ « Curl Zottman » est aux haltères (la rotation EST le mouvement)', aud.eqZottman==='libre', aud.eqZottman);
+t('⭐ « Curl Concentré » est aux haltères (une barre ne passe pas)', aud.eqConcentre==='libre', aud.eqConcentre);
+t('non-régression : le rowing BARRE reste à la barre', aud.eqRowingBarre==='barre', aud.eqRowingBarre);
+t('non-régression : le rowing HALTÈRE reste en poids libre', aud.eqRowingHalt==='libre', aud.eqRowingHalt);
+t('non-régression : le rowing MACHINE reste guidé', aud.eqRowingMach==='guide', aud.eqRowingMach);
+t('⚠️ un exercice ABSENT de la table suit toujours les règles', aud.eqInconnu==='barre', aud.eqInconnu);
 t('⭐ Superman = chaîne postérieure (il sortait en ABDOS)',
   aud.superman==='glutes,hamstrings,lower-back,rear-delt', aud.superman);
 t('⭐ Chaise Romaine = abdos (elle sortait en QUADRICEPS, volée par la Chaise murale)',
