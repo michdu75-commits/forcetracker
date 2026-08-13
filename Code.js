@@ -729,7 +729,14 @@ function doPost(e) {
     //    secret. Pour en changer : régénérer un secret côté Cloudflare et remplacer la ligne.
     // ⚠️ REPLI : secret absent ou faux → `armed:false` → on COMPTE mais on ne BLOQUE PAS.
     //    C'est voulu (règle d'or #3) : une erreur de configuration ne doit jamais couper Milo.
-    var _HASH_COUNT = 'a0b0d48e04aa9459affb2eb765f4546a0713112d9dbbecb83bc3164580ac537e';
+    // 🔁 EMPREINTE REGÉNÉRÉE LE 13/08/2026. Pourquoi : le 11/08 j'ai remplacé la
+    // comparaison « les deux côtés pareils » par « une valeur précise et une seule »,
+    // SANS donner à Michel la clé correspondante — sa valeur Cloudflare, qui marchait
+    // avant, ne pouvait donc plus correspondre. Le plafond est resté DÉSARMÉ deux jours.
+    // ⚠️ Une empreinte SHA-256 ne se remonte pas : si la clé Cloudflare est perdue, on ne
+    //    la retrouve NULLE PART. La seule issue est d'en régénérer une — procédure écrite
+    //    dans `A-FAIRE-SUR-PC.md`, pour ne pas avoir à rouvrir une vieille conversation.
+    var _HASH_COUNT = '8876f1898e466e84e3ec872c8234782649430274c040334ec2eccf79a6db112f';
     var _q2 = _aiQuotaBlock_(body.email);
     var _recu = String(body.token == null ? '' : body.token).trim();
     var _arme = _recu.length >= 12 && _sha256hex_(_recu) === _HASH_COUNT;

@@ -17,6 +17,31 @@
 
 ## ⏳ En attente
 
+### 🔐 Régénérer la clé du plafond de dépense (`FT_COUNT_TOKEN`) — procédure
+
+**À quoi ça sert** : sans cette clé, les appels à Milo sont **comptés mais jamais bloqués** — rien ne
+protège d'une facture qui s'emballe. L'état est visible dans **Profil → Admin → Santé du système**,
+ligne « 🛡️ Plafond de dépense ».
+
+**⚠️ Pourquoi cette procédure existe** : depuis le 11/08/2026, le contrôle compare une **empreinte
+SHA-256 figée dans `Code.js`**. Une empreinte **ne se remonte pas** : si la valeur posée chez
+Cloudflare est perdue, elle n'existe plus nulle part et **aucune vérification n'est possible**. La
+seule issue est d'en refaire une. (C'est arrivé : le 11/08 la serrure a été changée sans que la clé
+soit transmise, et le plafond est resté désarmé deux jours sans que ça se voie.)
+
+**Les 4 étapes** :
+1. Générer une clé (≥ 12 caractères, **alphanumérique uniquement** — rien à échapper chez Cloudflare)
+   et calculer son empreinte : `python3 -c "import hashlib;print(hashlib.sha256('LA_CLE'.encode()).hexdigest())"`
+2. Remplacer `_HASH_COUNT` dans `Code.js` par l'empreinte — **jamais la clé en clair**, le dépôt est public
+3. Pousser sur `master` : le backend se déploie tout seul (~1-2 min, workflow `deploy-appsscript.yml`)
+4. Coller **la clé** dans Cloudflare → le Worker de Milo → variable **`FT_COUNT_TOKEN`**
+   (⚠️ **rien à mettre dans Google** — c'était le but du changement du 11/08)
+
+**Vérifier** : poser une question à Milo, puis rouvrir Profil → Admin → « Vérifier maintenant ».
+La ligne doit passer au **vert : ARMÉ**. Si elle reste rouge alors que la clé vient d'être posée,
+le problème n'est pas la valeur mais **le nom de la variable ou le Worker sur lequel elle est posée**.
+
+
 ### 🖼️ Trouver une figurine de « Squat Sumo » **à la barre** (13/08/2026)
 
 L'illustration du Squat Sumo a été **retirée** ce jour-là : elle montrait un **haltère** tenu
