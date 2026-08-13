@@ -1247,6 +1247,11 @@ html.ob-done #onboarding{display:none;}
              margin:0 0 13px; }
   .prt-meta span{ display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap; }
   .prt-meta i{ display:inline-block; width:74px; border-bottom:1px dashed #8B8DA0; }
+  .prt-meta i.s{ width:26px; }                       /* « Semaine __ / __ » : deux petits nombres */
+  /* La période du bloc quand le programme la connaît. En or : c'est un repère de
+     planification, pas un champ à remplir — il ne doit pas se confondre avec les cases. */
+  .prt-per{ color:#8A6400; }
+  .prt-per b{ color:#12121E; font-weight:800; }
 
   /* ── LA FIGURINE DU JOUR (13/08/2026) ───────────────────────────────────────────────
      Elle dit d'un coup d'œil ce que le jour travaille. Placée dans l'EN-TÊTE du jour et

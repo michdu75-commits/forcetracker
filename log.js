@@ -4959,7 +4959,9 @@ function renderProgModal(){
       const curW=hasCycle?getProgCurrentWeek(p):0;
       const pct=hasCycle?Math.round(curW/p.weeks*100):0;
       const fmt_d=s=>s?new Date(s).toLocaleDateString('fr-FR',{day:'numeric',month:'short'}):'';
-      const endDate=p.startDate&&p.weeks?new Date(new Date(p.startDate).getTime()+p.weeks*7*86400000):null;
+      // La période vient de `progPeriode` — la même fonction que la feuille imprimée (R2).
+      const _per=progPeriode(p);
+      const endDate=_per?new Date(_per.end):null;
       const cycleHtml=hasCycle?`<div style="margin-top:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
           <span style="font-size:12px;font-weight:700;color:var(--t1);">Semaine ${curW} / ${p.weeks}</span>
@@ -5119,7 +5121,20 @@ function printProg(idx){
     '<span>'+past(_MSC_PRINT_COL.off )+'Non sollicité</span></div>';
   // Les champs qu'on remplit au stylo en haut de la feuille — sans eux, deux tirages du
   // même programme sont indiscernables une fois posés sur le banc.
-  const meta='<div class="prt-meta"><span>Date <i></i></span><span>Poids du corps <i></i> kg</span><span>Semaine <i></i></span></div>';
+  /* ── LA PÉRIODE DU PROGRAMME S'IMPRIME (13/08/2026, demande de Michel) ───────────────
+     « la date de début du programme et la date de fin avec le nombre de semaines ».
+     ⚠️ CE QUE L'APP SAIT, ELLE L'ÉCRIT ; CE QU'ELLE NE SAIT PAS, ELLE LE LAISSE EN BLANC.
+     Faire remplir au stylo une date que le programme connaît déjà serait absurde — et
+     imprimer une échéance inventée pour un programme sans dates le serait plus encore
+     (R29). Un programme sans période garde donc l'ancienne case « Semaine ___ / ___ ».
+     La case « Date » du jour reste dans les deux cas : c'est la date de LA SÉANCE qu'on
+     note (on tire la même feuille plusieurs fois), pas celle du bloc. */
+  const per=progPeriode(p);
+  const jm=s=>{const d=new Date(s);return isNaN(d)?'':d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'});};
+  const bloc=per
+    ? '<span class="prt-per"><b>Du '+jm(per.start)+' au '+jm(per.end)+'</b> · '+per.weeks+' semaine'+(per.weeks>1?'s':'')+'</span>'
+    : '<span>Semaine <i class="s"></i> / <i class="s"></i></span>';
+  const meta='<div class="prt-meta">'+bloc+'<span>Date <i></i></span><span>Poids du corps <i></i> kg</span></div>';
   const sub=p.beginner?('Parcours débutant — Étape 1'+(p.bgFreq?' · '+p.bgFreq+' séances/semaine':'')):'';
   const area=document.getElementById('print-area');if(!area)return;
   area.innerHTML='<div class="prt-doc">'+
@@ -5599,6 +5614,26 @@ function getProgCurrentWeek(prog){
   if(!prog.startDate||!prog.weeks)return 1;
   const days=Math.floor((new Date()-new Date(prog.startDate))/(86400000));
   return Math.max(1,Math.min(prog.weeks,Math.ceil((days+1)/7)));
+}
+/* ─── LA PÉRIODE D'UN PROGRAMME — UNE SEULE SOURCE (13/08/2026) ────────────────────────
+   La date de fin se déduisait « à la volée » dans la carte du programme
+   (`new Date(startDate) + weeks*7*86400000`). Au moment d'imprimer la même information
+   sur la feuille, la recopier aurait fait DEUX formules pour une seule vérité — et deux
+   copies divergent toujours, la seule question est quand (R2). Les deux lisent donc ceci.
+   ⚠️ Rend `null` quand la date ou le nombre de semaines manque : un programme sans dates
+   est parfaitement normal (on en fait souvent), et inventer une échéance serait pire que
+   de n'en afficher aucune (R29). C'est à l'appelant de prévoir le cas. */
+function progPeriode(prog){
+  if(!prog)return null;
+  const w=parseInt(prog.weeks)||0;
+  if(!prog.startDate||!w)return null;
+  const d0=new Date(prog.startDate);
+  if(isNaN(d0))return null;
+  // La fin, c'est le DERNIER JOUR de la dernière semaine, pas le lendemain : un bloc de
+  // 6 semaines commencé un lundi finit le dimanche de la 6ᵉ, donc +6×7−1 jours.
+  const d1=new Date(d0.getTime()+(w*7-1)*86400000);
+  const iso=d=>d.toISOString().split('T')[0];
+  return {weeks:w, start:iso(d0), end:iso(d1), semaine:getProgCurrentWeek(prog)};
 }
 function shiftProgStart(idx,delta){
   const prog=(S.programmes||[])[idx];if(!prog)return;

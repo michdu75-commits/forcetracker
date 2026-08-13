@@ -3501,6 +3501,19 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.legendeFond=[...a.querySelectorAll('.prt-leg *')].some(e=>{
       const b=getComputedStyle(e).backgroundColor;return b&&b!=='rgba(0, 0, 0, 0)'&&b!=='transparent';});
 
+    // ⑦ LA PÉRIODE DU PROGRAMME (13/08/2026) — ce que l'app sait, elle l'écrit ; ce
+    //    qu'elle ne sait pas, elle le laisse à remplir. Jamais une échéance inventée.
+    const dat={name:'T',startDate:'2026-08-17',weeks:6,days:[{label:'Jour 1',exs:EXS}]};
+    o.periode=(typeof progPeriode==='function')?progPeriode(dat):'progPeriode absente';
+    S.programmes=[dat]; const rp3=window.print; window.print=()=>{}; printProg(0); window.print=rp3;
+    o.enteteDatee=document.getElementById('print-area').querySelector('.prt-meta').textContent;
+    const sans={name:'T',days:[{label:'Jour 1',exs:EXS}]};
+    o.periodeSans=(typeof progPeriode==='function')?progPeriode(sans):'x';
+    S.programmes=[sans]; window.print=()=>{}; printProg(0); window.print=rp3;
+    o.enteteSans=document.getElementById('print-area').querySelector('.prt-meta').textContent;
+    // ⑧ UNE SEULE SOURCE : la carte du programme dans l'app doit lire la MÊME période.
+    o.cartePartage=/progPeriode\(p\)/.test(String(renderProgModal));
+
     // ⑥ On PRÉPARE le gros programme ; le comptage se fait sur le PDF, pas ici —
     //    le découpage en pages n'existe pas dans le DOM (voir plus bas).
     S.programmes=[mk(12)]; const rp2=window.print; window.print=()=>{}; printProg(0); window.print=rp2;
@@ -3544,6 +3557,18 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   // ⚠️ On exige que la légende EXISTE : sinon « aucun fond » est vrai pour rien — c'est
   //    le motif de faux-vert déjà rencontré en ft-v832 et ft-v835.
   tz('… et ne repose sur AUCUN fond', Z.legendeSVG===true&&Z.legendeFond===false);
+  /* ⚠️ L'ATTENDU EST CALCULÉ, PAS RECOPIÉ : 6 semaines à partir du lundi 17/08/2026 se
+     terminent le DIMANCHE 27/09 (42 jours pile), pas le lundi 28. Écrire « 27/09 » à la
+     main marcherait tant que personne ne change la date de départ du test. */
+  const d0=new Date('2026-08-17'), attFin=new Date(d0.getTime()+(6*7-1)*86400000).toISOString().split('T')[0];
+  tz('⭐ la période se calcule : début + N semaines → dernier jour, pas le lendemain',
+     Z.periode&&Z.periode.end===attFin, JSON.stringify(Z.periode)+' — attendu fin='+attFin);
+  tz('⭐⭐ … et elle est IMPRIMÉE, au lieu d\'être à remplir au stylo',
+     /Du 17\/08\/2026 au 27\/09\/2026/.test(Z.enteteDatee||'')&&/6 semaines/.test(Z.enteteDatee||''), Z.enteteDatee);
+  tz('⚠️ un programme SANS dates n\'invente rien (période = null)', Z.periodeSans===null);
+  tz('… et garde sa case « Semaine __ / __ » à remplir', /Semaine/.test(Z.enteteSans||'')&&!/Du /.test(Z.enteteSans||''), Z.enteteSans);
+  tz('⭐ la carte du programme lit la MÊME période que la feuille (R2)', Z.cartePartage===true,
+     'sinon deux formules pour une seule vérité — elles divergeront');
   t('0 erreur JS sur toute la feuille imprimée', ez.length===0, ez.join(' | '));
   await cz.close();
 }
