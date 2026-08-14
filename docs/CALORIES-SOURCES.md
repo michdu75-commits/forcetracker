@@ -792,6 +792,42 @@ la fréquence cardiaque et les vingt minutes supplémentaires du 10/08 ne l'atte
 OK » sans jamais interroger le serveur) : *un indicateur qui affiche quelque chose sans rien mesurer*.
 En pire, même : 248 kcal est un chiffre **crédible**, donc rien n'alerte.
 
+#### ⭐⭐⭐ CONFIRMÉ (14/08) : l'app CONNAÎT la durée, elle ne s'en sert pas
+
+Les durées affichées par l'app pour ces séances (visibles depuis `ft-v849`) :
+
+| Date | Garmin | App | Écart |
+|---|---|---|---|
+| 10/08 | 1 h 31 | **1 h 35** | +4 min |
+| 08/08 | 1 h 11 | **1 h 33** | +22 min |
+
+**Le 10, les deux sont d'accord à 4 minutes près.** `sess.duration` est donc juste : le chrono
+mesure correctement. Ce n'est pas un problème de collecte.
+
+**Le chiffre qui tranche** : 248 kcal pour 1 h 35 → **1,9 MET** (248 / (84 × 1,583)). C'est l'ordre de
+grandeur de quelqu'un **debout, immobile**. Pour 95 minutes de squat. La Garmin, elle, est à **3,3 MET**
+sur la même séance — et 3,3 appliqué à la durée que l'app connaît déjà donnerait **≈ 440 kcal**, soit
+le chiffre de la montre.
+
+**Conclusion : le calcul n'est pas à réinventer.** Il a la bonne durée d'un côté et une intensité
+plausible de l'autre ; il ne les multiplie simplement pas ensemble — il passe par une durée
+*reconstruite depuis les séries*, qui vaut environ trois fois moins.
+
+#### ⚠️⚠️ MAIS LE 08/08 MONTRE POURQUOI ON NE PEUT PAS BRANCHER `duration` DIRECTEMENT
+
+22 minutes d'écart ce jour-là. C'est très exactement l'objection posée par Michel **avant** qu'on
+écrive la moindre ligne : *« si la personne n'arrête pas sa séance les calories continuent de monter ;
+ça m'arrive de prendre plus de temps de récupération »*. Brancher `durée réelle × MET` gonflerait
+cette séance de ~25 %.
+
+C'est la raison d'être de `_dureeEffective()` (`ft-v835`) : fenêtre de la **première à la dernière
+série validée** (le bouton « Terminer » n'entre pas dans le calcul) et chaque temps mort **plafonné**.
+*Le 08/08 est la démonstration chiffrée que l'objection était fondée.*
+
+⚠️ **Cette durée n'existe que pour les séances à partir du 13/08** — les précédentes n'ont pas
+d'horodatage de séries, et on ne peut pas la recalculer rétroactivement. Les prochaines séances
+donneront donc les 3 chiffres d'un coup : durée brute, durée effective, et calories.
+
 #### ⚠️ Et un COEFFICIENT ne réparera pas ça
 
 Les rapports app/montre valent **0,59 · 0,59 · 0,71**. Il n'existe pas de facteur unique. Multiplier
