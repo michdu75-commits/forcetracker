@@ -3330,11 +3330,24 @@ async function loadHealthAdmin(){
       } else {
         const _q=ai.capSeenAt?new Date(ai.capSeenAt):null;
         const _qd=(_q&&!isNaN(_q))?(' · constaté le '+_q.toLocaleDateString('fr-FR')+' à '+_q.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})):'';
-        h+=_healthRow('🛡️','Plafond de dépense', ai.capArmed?'ok':'ko',
+        /* ⚠️ UN CONSTAT PÉRIMÉ NE DOIT PAS AVOIR L'AIR ACTUEL (14/08/2026) ─────────────────
+           L'état du plafond n'est relevé QUE lorsqu'un appel à Milo passe par le Worker. Sans
+           question posée, la carte réaffiche indéfiniment le DERNIER constat connu — Michel a
+           lu « DÉSARMÉ » sur une capture, alors que le constat datait de la veille et
+           n'incluait pas la clé qu'il venait de poser.
+           C'est la famille de défaut corrigée deux fois le 13/08 (la carte qui disait « serveur
+           OK » sans interroger le serveur) : *un indicateur qui a l'air actuel alors qu'il ne
+           l'est pas*. Au-delà de 6 h, on le DIT et on donne le geste qui rafraîchit. */
+        const _vieuxH=_q&&!isNaN(_q)?Math.floor((Date.now()-_q.getTime())/3600000):null;
+        const _perime=(_vieuxH!==null&&_vieuxH>=6)
+          ? '<br>⏳ Ce constat date de <b>'+(_vieuxH>=24?Math.floor(_vieuxH/24)+' j':_vieuxH+' h')
+            +'</b> — il ne se met à jour qu\'en posant une question à Milo. Fais-le, puis relance la vérification.'
+          : '';
+        h+=_healthRow('🛡️','Plafond de dépense', ai.capArmed?'ok':(_perime?'warn':'ko'),
           ai.capArmed
-            ? ('<b>ARMÉ</b> — au-delà du plafond, les appels sont refusés'+_qd)
+            ? ('<b>ARMÉ</b> — au-delà du plafond, les appels sont refusés'+_qd+_perime)
             : ('<b>DÉSARMÉ</b> — les appels sont comptés mais <b>jamais bloqués</b>'+_qd
-               +'<br>⚠️ Il manque le secret <code>FT_COUNT_TOKEN</code> dans le Worker Cloudflare.'));
+               +'<br>⚠️ Il manque le secret <code>FT_COUNT_TOKEN</code> dans le Worker Cloudflare.'+_perime));
       }
     } else h+=_healthRow('🤖','Consommation IA','warn','Sonde injoignable : '+_escIdea((ai&&ai.error)||'?'));
     // ⑤ Les DÉPLOIEMENTS — le silence le plus coûteux du projet : un déploiement rouge ne

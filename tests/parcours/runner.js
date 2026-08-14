@@ -720,8 +720,10 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     // ⚠️ Le plafond de dépense fait partie de la SANTÉ depuis le 11/08 : il ne sert à rien
     //    s'il est désarmé, et cet état n'était visible nulle part (Michel a posé le secret
     //    sans aucun moyen de vérifier qu'il avait pris).
+    // ⚠️ date RÉCENTE (calculée, pas figée) : une date en dur finirait par périmer toute
+    //    seule et ferait rougir le témoin de péremption des mois plus tard.
     if(u.includes('aiUsage')) return J({status:'ok',used:127,limit:1000,
-      capKnown:true, capArmed:(nom==='ok'), capSeenAt:'2026-08-11T14:30:00Z'});
+      capKnown:true, capArmed:(nom==='ok'), capSeenAt:new Date(Date.now()-3600000).toISOString()});
     return J({status:'ok'});
   });
   // Les MISES EN LIGNE sont lues sur l'API publique de GitHub (dépôt public, aucun jeton).
@@ -753,6 +755,13 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
     /ARM[ÉE]/.test(hOk.txt)&&!/D[ÉE]SARM/.test(hOk.txt), hOk.txt.slice(0,200));
   t('⭐⭐ … et DÉSARMÉ en rouge quand le secret manque (le cas du 11/08)',
     /D[ÉE]SARM[ÉE]/.test(hKo.txt)&&/FT_COUNT_TOKEN/.test(hKo.txt), hKo.txt.slice(0,240));
+  /* ⚠️ UN CONSTAT PÉRIMÉ NE DOIT PAS AVOIR L'AIR ACTUEL (14/08/2026). L'état du plafond n'est
+     relevé qu'à l'occasion d'un appel à Milo : sans question posée, la carte réaffiche
+     indéfiniment le dernier constat. Michel a lu « DÉSARMÉ » sur une capture alors que le
+     constat datait de la veille et n'incluait pas la clé qu'il venait de poser. */
+  t('⚠️ un constat RÉCENT ne déclenche aucune mention de péremption',
+    !/Ce constat date/.test(hOk.txt)&&!/Ce constat date/.test(hKo.txt),
+    'les scénarios utilisent une date de moins de 6 h');
   t('⭐ la carte montre la ligne « Historiques protégés » (le garde-fou zéro perte)',
     /Historiques protégés/.test(hOk.txt), hOk.txt.slice(0,160));
   t('⭐ un déploiement RATÉ est visible (il ne prévient personne autrement)',
