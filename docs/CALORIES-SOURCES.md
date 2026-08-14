@@ -779,6 +779,40 @@ seul ne dit rien — c'est l'ÉCART qui nous intéresse. À compléter depuis Pr
 | **10/08** | **420** (1 h 31) | **248** | **−41 %** |
 | **08/08** | **419** (1 h 11) | **248** | **−41 %** |
 
+#### ⭐⭐⭐ SIX SÉANCES (14/08) — le tableau complet, et il ne laisse plus de doute
+
+Michel a déroulé son historique Garmin en face de celui de l'app. `MET` = kcal / (84 kg × heures).
+
+| Date | Garmin | Durée réelle | MET Garmin | App | Durée app | **MET app** | ratio |
+|---|---|---|---|---|---|---|---|
+| 05/08 | 480 | 2 h 00 | 2,86 | **231** | 2 h 20 | **1,18** | 0,48 |
+| 03/08 | 428 | 1 h 50 | 2,78 | **261** | 2 h 20 | **1,33** | 0,61 |
+| 02/08 | 458 | 1 h 23 | 3,94 | **260** | 1 h 30 | **2,06** | 0,57 |
+| 08/08 | 419 | 1 h 11 | 4,22 | **248** | 1 h 33 | **1,90** | 0,59 |
+| 10/08 | 420 | 1 h 31 | 3,30 | **248** | 1 h 35 | **1,86** | 0,59 |
+| 13/08 | 346 | — | — | **245** | — | — | 0,71 |
+
+**① L'intensité créditée est physiologiquement absurde.** 1 MET = au repos allongé ; 1,3 = assis à un
+bureau ; 2 = debout immobile. L'app crédite **1,18 à 2,06 MET** pour de la musculation lourde. Le
+05/08, elle compte 2 h 20 d'entraînement comme à peine plus qu'une sieste. La Garmin, elle, reste
+entre **2,78 et 4,22** — cohérent avec le Compendium (3,5 modéré, 6,0 vigoureux).
+
+**② Le total de l'app est INDÉPENDANT de la durée.** La preuve tient en deux lignes :
+**2 h 20 → 231 kcal** contre **1 h 30 → 260 kcal**. *La séance la plus longue rapporte moins.*
+Sur les six, l'app varie de **12 %** quand la réalité varie de **32 %**, et pas dans le même sens.
+
+**③ Le mécanisme est visible** : plus la séance est longue, plus le MET crédité s'effondre (1,18 à
+2 h 20 · 2,06 à 1 h 30). La durée reconstruite depuis le **nombre de séries** ne bouge presque pas ;
+l'écart avec le temps réel se creuse donc à mesure que la séance s'allonge.
+
+**④ Aucun coefficient ne marchera** : les ratios vont de **0,48 à 0,71**. ×1,7 collerait sur trois
+séances et raterait les trois autres.
+
+**⑤ Et le chrono brut n'est pas branchable non plus** : la durée de l'app dépasse celle de la Garmin de
+**+4 · +7 · +20 · +22 · +30 min**. C'est l'objection de Michel, mesurée six fois. Seule la durée
+**effective** (`_dureeEffective`, ft-v835 : fenêtre première→dernière série validée, temps morts
+plafonnés) peut servir d'entrée — et elle n'existe que pour les séances à partir du 13/08.
+
 #### ⭐⭐ LE VRAI RÉSULTAT : l'app rend une CONSTANTE, pas une mesure
 
 C'est plus parlant que l'écart. Sur trois séances : **245 · 248 · 248**. L'app varie de **1 %**.
