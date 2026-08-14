@@ -779,6 +779,28 @@ seul ne dit rien — c'est l'ÉCART qui nous intéresse. À compléter depuis Pr
 | **10/08** | **420** (1 h 31) | **248** | **−41 %** |
 | **08/08** | **419** (1 h 11) | **248** | **−41 %** |
 
+#### 📏 LES REPOS RÉELS, donnés par Michel (14/08/2026) — repères métier
+
+Michel, sur le plafond de 5 minutes : *« et encore 5 minutes je pense que c'est large »*. Puis il
+donne ses repères, tirés de sa pratique :
+
+| Type de série | Repos réel |
+|---|---|
+| **Mouvement lourd** (squat, soulevé, développés) | **3 à 5 min** |
+| **Série normale** (accessoires) | **1 min 15 à 1 min 45** |
+| **Abdos** | **30 s à 1 min max** |
+
+⭐ **Ces trois lignes valent mieux qu'un plafond unique.** Le garde-fou actuel de `_dureeEffective()`
+(`max(5 min, 2× le réglage)`) est le même pour tout : il laisse passer 5 minutes après une série
+d'abdos, où le repos réel est de 30 secondes. *Un plafond calibré sur le cas le plus lourd est trop
+lâche pour tous les autres.* L'app sait pourtant distinguer les familles de mouvements (`BIG4`,
+`_movPattern`, groupes musculaires) — le plafond peut donc dépendre de l'exercice.
+
+⚠️ **Nuance sur « l'app ne peut pas mesurer le repos »** (Michel). Depuis `ft-v835`, elle **mesure**
+bien l'écart réel entre deux séries validées. Ce qu'elle ne peut pas savoir, c'est **POURQUOI** :
+récupération, machine occupée, coup de fil, discussion. La mesure existe, son interprétation non —
+et c'est exactement ce que le plafond arbitre.
+
 #### ⭐⭐⭐ SIX SÉANCES (14/08) — le tableau complet, et il ne laisse plus de doute
 
 Michel a déroulé son historique Garmin en face de celui de l'app. `MET` = kcal / (84 kg × heures).
