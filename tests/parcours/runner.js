@@ -3839,6 +3839,72 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cw.close();
 }
 
+
+/* ══ BLOC XV — LES 3 DEMANDES DE MICHEL SUR LE CHRONO (14/08/2026) ═════════════════════
+   ① le chrono démarre à la 1ʳᵉ série validée, plus à l'ouverture de l'écran ;
+   ② un rappel apparaît quand la séance est restée ouverte sans rien valider ;
+   ③ une séance importée (photo d'une feuille) peut recevoir sa durée à la main.        */
+{
+  console.log('\n── XV. Chrono : départ, oubli, saisie ──');
+  const cq=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pq=await cq.newPage(); const eq=[];
+  pq.on('pageerror',e=>eq.push(String(e.message)));
+  await pq.addInitScript(seedScript({ft4_sessions:JSON.stringify([
+    {id:1,ts:1,date:'2026-07-20',volume:4000,calories:200,importedHistory:true,duration:0,
+     exs:[{name:'Squat à la Barre',sets:[{kg:90,reps:5,done:true,type:'N'}]}]}])}));
+  await pq.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+  await pq.waitForTimeout(1200);
+  const Q=await pq.evaluate(()=>{
+   try{
+    const o={};
+    // ① le chrono ne part PAS à l'ouverture
+    startWorkout();
+    S.wkt.exs=[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:false,type:'N'},{kg:100,reps:5,done:false,type:'N'}]}];
+    o.avantValidation={chrono:_fmtElapsed(), demarre:!!S.wkt.startTs};
+    toggleSet(0,0);
+    o.apresValidation={demarre:!!S.wkt.startTs, at:S.wkt.exs[0].sets[0].at};
+    // ② le rappel d'oubli
+    const rappel=min=>{ S.wkt.startTs=Date.now()-min*60000; goScreen('home'); renderHome();
+      return /pense à/.test(document.getElementById('s-home').innerText); };
+    o.rappel20=rappel(20); o.rappel60=rappel(60); o.rappel150=rappel(150);
+    o.inactif=(S.wkt.startTs=Date.now()-150*60000, _wktInactifMin());
+    // ③ la saisie de durée sur une séance importée
+    S.wkt=null;
+    goScreen('progress'); renderSessions(); openSessDetail(1);
+    o.importAvant=document.getElementById('sd-sub').innerText;
+    window.prompt=()=>'75';
+    editSessDuree();
+    const s=S.sessions.find(x=>(x.ts||x.id)===1);
+    o.importApres={txt:document.getElementById('sd-sub').innerText, dur:s.duration, dite:!!s.durationDite};
+    // une saisie aberrante est refusée
+    window.prompt=()=>'999';
+    editSessDuree();
+    o.refuse=(S.sessions.find(x=>(x.ts||x.id)===1).duration===4500);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tq=(n,c,x)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(x?'\n       → '+x:''));} };
+  if(Q.erreur){ t('⛔ le bloc chrono s\'exécute', false, Q.erreur); }
+  else{
+    tq('⭐⭐ le chrono NE démarre PAS à l\'ouverture de l\'écran',
+       Q.avantValidation.demarre===false&&Q.avantValidation.chrono==='0:00', JSON.stringify(Q.avantValidation));
+    tq('⭐⭐ … il démarre à la 1ʳᵉ série validée (qui porte donc at=0)',
+       Q.apresValidation.demarre===true&&Q.apresValidation.at===0, JSON.stringify(Q.apresValidation));
+    tq('⭐ aucun rappel sur une séance active (20 min, 1 h)',
+       Q.rappel20===false&&Q.rappel60===false, JSON.stringify([Q.rappel20,Q.rappel60]));
+    tq('⭐⭐ rappel « pense à terminer » au-delà de 90 min sans série',
+       Q.rappel150===true&&Q.inactif>=150, 'inactif='+Q.inactif);
+    tq('⭐ une séance IMPORTÉE propose « ajouter la durée »',
+       /ajouter la durée/.test(Q.importAvant||''), Q.importAvant);
+    tq('⭐⭐ … la durée saisie est enregistrée et marquée « (saisie) »',
+       Q.importApres.dur===4500&&Q.importApres.dite===true&&/saisie/.test(Q.importApres.txt),
+       JSON.stringify(Q.importApres));
+    tq('⚠️ une durée aberrante (999 min) est refusée, l\'ancienne est gardée', Q.refuse===true);
+  }
+  t('0 erreur JS sur le bloc chrono', eq.length===0, eq.join(' | '));
+  await cq.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

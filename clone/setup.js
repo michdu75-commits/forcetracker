@@ -388,7 +388,18 @@ function openSessDetail(id){
      remonte pas jusqu'à la personne. Et c'est précisément le chiffre qu'il faut pour
      comparer aux montres (CALORIES-SOURCES.md §14). */
   const _dm=sess.duration?Math.max(1,Math.round(sess.duration/60)):0;
-  const duree=_dm?` · ⏱️ ${_dm>=60?Math.floor(_dm/60)+' h '+String(_dm%60).padStart(2,'0'):_dm+' min'}`:'';
+  const _fmtD=m=>m>=60?Math.floor(m/60)+' h '+String(m%60).padStart(2,'0'):m+' min';
+  /* ── LA DURÉE SE SAISIT À LA MAIN QUAND ELLE N'A PAS PU ÊTRE MESURÉE (14/08/2026) ────
+     Michel : *« si on veut rattraper une séance qu'on a oublié de noter, on aura pas cette
+     donnée ; l'import en photographiant une feuille sera forcément refusé puisqu'il n'y aura
+     pas de timing »*. Il a raison, et une séance rattrapée reste une VRAIE séance : la
+     refuser reviendrait à punir quelqu'un d'avoir noté sur papier.
+     ⚠️ ON NE DEVINE PAS, ON DEMANDE (R8 : une donnée absente se collecte dans l'interface,
+     elle ne se compense pas par une formule). Et on garde la distinction : `durationDite`
+     marque une durée DÉCLARÉE, jamais confondue avec une durée mesurée au chrono. */
+  const duree=_dm
+    ? ` · <span class="sd-dur" onclick="editSessDuree()">⏱️ ${_fmtD(_dm)}${sess.durationDite?' <i>(saisie)</i>':''}</span>`
+    : ` · <span class="sd-dur vide" onclick="editSessDuree()">⏱️ ajouter la durée</span>`;
   // ── Temps EFFECTIF, lu sur les horodatages de séries (12/08/2026) ────────────────────
   // Ne s'affiche que si la séance en porte (donc à partir de ft-v835) : les séances
   // antérieures n'ont pas d'horodatage, et on préfère ne rien dire que d'inventer (R29).
@@ -407,7 +418,7 @@ function openSessDetail(id){
     const e=_estimCalTempsReel(sess);
     if(e&&sess.calories) estim=` · 🔬 ~${e.kcal} kcal en comptant le temps réel`;
   }
-  document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${duree}${cals}${eff}${estim}`;
+  document.getElementById('sd-sub').innerHTML=`${Math.round(sess.volume||0)} kg total${duree}${cals}${eff}${estim}`;
 
   _updateSdMuscles(sess);
   _renderSessDetailContent();
@@ -433,6 +444,30 @@ function _updateSdMuscles(sess){
     `<div style="font-size:12px;color:var(--t2);line-height:1.4"><span style="font-weight:700;color:var(--t1)">💪 Muscles travaillés</span><br>Tape pour agrandir</div>`;
 }
 
+/* Saisie de la durée d'une séance — sert aux séances importées (photo d'une feuille) et à
+   celles d'avant les horodatages. ⚠️ Elle ne recalcule AUCUNE calorie : `sess.calories` reste
+   figé (même principe qu'`uniConv`). Elle alimente l'estimation 🔬 et les comparaisons. */
+function editSessDuree(){
+  // ⚠️ Même clé que `openSessDetail` : (ts || id), pas `id` seul — sinon on éditerait la
+  //    mauvaise séance sur les entrées où les deux diffèrent.
+  const s=(S.sessions||[]).find(x=>(x.ts||x.id)===_sessId);
+  if(!s)return;
+  const cur=s.duration?Math.round(s.duration/60):'';
+  const v=prompt('Durée de la séance, en minutes\n(laisse vide pour l\'effacer)',cur);
+  if(v===null)return;
+  const t=String(v).trim();
+  if(!t){ delete s.duration; delete s.durationDite; }
+  else{
+    const m=parseInt(t.replace(/[^0-9]/g,''),10);
+    if(!m||m<1||m>600){ toast('Durée attendue entre 1 et 600 minutes','error'); return; }
+    s.duration=m*60; s.durationDite=true;
+  }
+  persist();
+  try{ if(typeof _cloudSyncSessions==='function')_cloudSyncSessions(); }catch(e){}
+  openSessDetail(s.ts||s.id);
+  renderSessions();
+  toast(t?'Durée enregistrée ✅':'Durée effacée','success');
+}
 function _renderSessDetailContent(){
   const el=document.getElementById('sd-content');
   if(!_sessEdits||!el)return;

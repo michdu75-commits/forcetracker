@@ -568,6 +568,22 @@ function _renderHomeHero(){
   else if(score!==null&&score<80)accent='234,179,8';
   const hasPending=S.wkt&&S.wkt.exs&&S.wkt.exs.length;
   const ctaLabel=hasPending?'↩ Reprendre la séance':'Commencer une séance';
+  /* ⏰ RAPPEL « TA SÉANCE EST ENCORE OUVERTE » (14/08/2026, demande de Michel).
+     Au-delà de 90 min sans une seule série validée, ce n'est plus une séance en cours :
+     c'est une séance qu'on a oublié de terminer. ⚠️ Le seuil est un jugement, pas une
+     mesure — 90 min laisse passer une vraie longue pause (repas, appel) sans crier.
+     ⚠️ Rien n'est FAUSSÉ par l'oubli : la mesure s'arrête à la dernière série validée
+     (ft-v835). Ce rappel sert au confort, pas à la justesse — d'où un ton neutre. */
+  let oubliHtml='';
+  if(hasPending&&typeof _wktInactifMin==='function'){
+    const im=_wktInactifMin();
+    if(im!==null&&im>=90){
+      const h=Math.floor(im/60), txt=h>=1?(h+' h'+(im%60?' '+(im%60)+' min':'')):(im+' min');
+      oubliHtml='<div style="margin-top:9px;display:flex;align-items:center;gap:7px;font-size:11.5px;'
+        +'color:var(--gold);line-height:1.4;"><span>⏰</span><span>Aucune série depuis <b>'+txt
+        +'</b> — pense à <b>terminer ta séance</b> pour qu\'elle soit enregistrée.</span></div>';
+    }
+  }
   const heroLabel=score===null?'Enregistre ton sommeil':score>=80?'Prêt à performer':score>=60?'Bonne récupération':score>=40?'Récupération modérée':'Fatigué';
   const heroDesc=score===null?'Renseigne ton sommeil ce soir pour obtenir ton score de récupération.':info.rec.length>90?info.rec.substring(0,90).replace(/\s+\S*$/,'')+'…':info.rec;
   const pillHtml=score!==null?'<div style="display:flex;align-items:center;gap:6px;"><span style="width:7px;height:7px;border-radius:50%;background:'+ringColor+';box-shadow:0 0 8px '+ringColor+';"></span><span style="font-size:12px;font-weight:700;color:'+ringColor+';">Récup '+info.label+'</span></div>':'';
@@ -657,7 +673,8 @@ function _renderHomeHero(){
     +detailHtml+warnHtml
     +'<button onclick="startWorkout()" class="ft-press" style="margin-top:16px;width:100%;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--red),#EF3E57);box-shadow:0 12px 28px -10px rgba(239,62,87,.55);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;">'
     +'<svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13l0-8Z"/></svg>'
-    +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button></div>';
+    +'<span style="font-size:16px;font-weight:700;color:#fff;font-family:var(--font);">'+ctaLabel+'</span></button>'
+    +oubliHtml+'</div>';
 }
 
 // ─── « Pourquoi ce score ? » — explication claire de la récup (retour GPT, ft-v564) ──

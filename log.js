@@ -25,6 +25,23 @@ function _wktElapsedMs(){
   return Math.max(0,end-S.wkt.startTs-paused);
 }
 function _isWktPaused(){return!!(S.wkt&&S.wkt.pausedAt);}
+/* ⏰ DEPUIS COMBIEN DE TEMPS LA DERNIÈRE SÉRIE A-T-ELLE ÉTÉ VALIDÉE ? (14/08/2026)
+   Michel : *« il faut faire penser à l'utilisateur qu'il arrête absolument sa séance à la
+   fin »*. Une séance laissée ouverte ne fausse PAS la mesure — l'horloge s'arrête à la
+   dernière série validée (ft-v835) et un témoin le fige. Mais elle gêne pour de vrai :
+   le chrono tourne à l'écran, la séance suivante s'y ajoute, la synchro attend.
+   ⚠️ On mesure depuis la DERNIÈRE SÉRIE, pas depuis le début : une séance de 2 h en cours
+   n'est pas un oubli, une séance sans rien depuis 2 h en est un.
+   Rend `null` quand on ne peut pas savoir (aucune série horodatée) — jamais un faux signal. */
+function _wktInactifMin(){
+  if(!S.wkt||!S.wkt.startTs)return null;
+  let last=null;
+  for(const ex of (S.wkt.exs||[]))
+    for(const st of (ex.sets||[]))
+      if(st&&st.done&&typeof st.at==='number'&&(last===null||st.at>last)) last=st.at;
+  if(last===null)return null;
+  return Math.floor((_wktElapsedMs()/1000-last)/60);
+}
 function _fmtElapsed(){
   if(!S.wkt||!S.wkt.startTs)return'0:00';
   const sec=Math.floor(_wktElapsedMs()/1000);
@@ -94,9 +111,19 @@ document.addEventListener('visibilitychange',()=>{
   }
 });
 
+/* ⏱️ LE CHRONO DÉMARRE À LA 1ʳᵉ SÉRIE VALIDÉE, PLUS À L'OUVERTURE (14/08/2026) ──────────
+   Michel : *« quand on incorpore une séance il démarre déjà le chrono et ça c'est chiant ;
+   pour moi le chrono devrait démarrer à partir du moment où il commence sa séance, c'est-à-dire
+   à partir du moment où il a rentré sa première série »*.
+   ⚠️ CE N'EST PAS UN CONFORT, C'EST LA PLUS GROSSE SOURCE D'ERREUR MESURÉE : `startTs` était posé
+   à l'OUVERTURE de l'écran, donc il tournait pendant le chargement du programme, l'échauffement,
+   la discussion. Croisé avec la Garmin (CALORIES-SOURCES.md §15.5), sa séance du 12/07 affichait
+   **254 min pour 96 réelles**. La durée effective partait déjà de la 1ʳᵉ série ; c'est le chrono
+   AFFICHÉ et `sess.duration` qui traînaient derrière. Les trois sont maintenant alignés (R1/R2).
+   ⚠️ On ne CRÉE plus `startTs` ici — mais on le GARDE s'il existe déjà : une séance en cours au
+   moment de la mise à jour ne doit pas voir son chrono repartir de zéro. */
 function startWorkout(){
-  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[],startHour:new Date().getHours(),startTs:Date.now()};
-  if(!S.wkt.startTs)S.wkt.startTs=Date.now();
+  if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};
   persist(); goScreen('log',document.getElementById('nb-log'));
   _acquireWakeLock();
 }
@@ -915,6 +942,9 @@ function toggleSet(ei,si){
   // l'import d'historique créent aussi des séries `done` — leur mettre un `at` inventerait une
   // mesure. Pas de mesure → pas de champ, et la lecture doit savoir s'en passer.
   if(set.done){
+    // ⏱️ LA 1ʳᵉ SÉRIE VALIDÉE DÉMARRE LE CHRONO (14/08/2026, règle de Michel). Avant, il
+    //    partait à l'ouverture de l'écran — voir le commentaire de `startWorkout`.
+    if(S.wkt&&!S.wkt.startTs){ S.wkt.startTs=Date.now(); S.wkt.startHour=new Date().getHours(); }
     if(S.wkt&&S.wkt.startTs) set.at=Math.round(_wktElapsedMs()/1000);
   } else delete set.at;   // dévalidée → l'horodatage n'a plus d'objet
   persist();
@@ -4872,7 +4902,8 @@ function _appliqueMiloSession(newExs, data, mode, btn){
     if(data.label)S.wkt.progLabel=data.label;
     _expandedEx=0;
   }else{
-    S.wkt={date:today(),progLabel:data.label||'Séance de Milo',exs:newExs,startHour:new Date().getHours(),startTs:Date.now()};
+    // ⏱️ pas de startTs : le chrono démarrera à la 1ʳᵉ série validée (règle du 14/08).
+    S.wkt={date:today(),progLabel:data.label||'Séance de Milo',exs:newExs,startHour:new Date().getHours()};
     _expandedEx=0;
   }
   persist();

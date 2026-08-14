@@ -562,10 +562,22 @@ console.log('\n═══ 6bis. Horodatage des séries + temps effectif ═══
     S.wkt.pausedTotal=300000;                            // 5 min EN PAUSE
     toggleSet(0,1);
     out.horsPause = S.wkt.exs[0].sets[1].at;             // ~300, pas ~600
-    // aucun chrono (édition d'une séance passée, import) → on n'invente pas une mesure
-    S.wkt={exs:[{name:'X',sets:[{done:false}]}]};
+    /* ⚠️ CE SCÉNARIO A CHANGÉ DE SENS LE 14/08 (ft-v852), volontairement.
+       AVANT : `startWorkout` posait toujours `startTs`, donc une séance en cours SANS chrono
+       était un état artificiel, et on vérifiait qu'aucun horodatage n'y était inventé.
+       MAINTENANT : le chrono démarre à la 1ʳᵉ SÉRIE VALIDÉE (demande de Michel — il partait à
+       l'ouverture de l'écran et tournait pendant l'échauffement, jusqu'à 254 min pour 96
+       réelles). Une séance ouverte sans chrono est donc l'état NORMAL, et valider la première
+       série DOIT le démarrer. On teste maintenant ça.
+       ⚠️ Ce que l'ancien témoin protégeait n'est pas perdu : l'édition d'une séance passée et
+       l'import ne passent PAS par `toggleSet` (vérifié : il n'est appelé que depuis l'écran de
+       séance), et le témoin « une séance SANS horodatage répond null » couvre la conséquence
+       observable, plus bas dans ce même bloc. */
+    S.wkt={exs:[{name:'X',sets:[{done:false}]}]};        // séance ouverte, rien validé
+    out.avantPremiere = !!S.wkt.startTs;                 // false : le chrono ne tourne pas
     toggleSet(0,0);
-    out.sansChrono = S.wkt.exs[0].sets[0].at;            // undefined
+    out.apresPremiere = !!S.wkt.startTs;                 // true : la 1ʳᵉ série l'a démarré
+    out.sansChrono = S.wkt.exs[0].sets[0].at;            // 0 : elle est l'origine du temps
     S.wkt=null;
 
     // ── LECTURE ─────────────────────────────────────────────────────────────────
@@ -607,7 +619,9 @@ console.log('\n═══ 6bis. Horodatage des séries + temps effectif ═══
   t('… lu sur le CHRONO de séance (~600 s pour 10 min)', r.ecrit>=595&&r.ecrit<=615, 'reçu '+r.ecrit);
   t('décocher retire l\'horodatage', typeof r.ecrit==='number'&&r.retire===undefined, 'écrit='+r.ecrit+' · reste '+r.retire);
   t('⭐ le temps EN PAUSE est exclu (300 s, pas 600)', r.horsPause>=295&&r.horsPause<=315, 'reçu '+r.horsPause);
-  t('⭐ sans chrono (séance passée éditée, import) → AUCUN horodatage inventé', typeof r.ecrit==='number'&&r.sansChrono===undefined, 'écrit='+r.ecrit+' · reçu '+r.sansChrono);
+  t('⭐⭐ le chrono démarre à la 1ʳᵉ SÉRIE VALIDÉE, pas à l\'ouverture de l\'écran',
+    r.avantPremiere===false&&r.apresPremiere===true&&r.sansChrono===0,
+    JSON.stringify({avant:r.avantPremiere,apres:r.apresPremiere,at:r.sansChrono}));
   t('20 séries à 3 min → 57 min effectifs, densité 0,35 (« hypertrophie classique »)',
     r.normal&&min(r.normal.actifSec)===57&&r.normal.densite>0.25&&r.normal.densite<0.40,
     JSON.stringify(r.normal));
