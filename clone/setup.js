@@ -398,7 +398,16 @@ function openSessDetail(id){
     const d=_dureeEffective(sess);
     if(d&&d.actifSec>60) eff=` · ⏱️ ${Math.round(d.actifSec/60)} min effectifs · ${String(d.densite).replace('.',',')} série/min`;
   }
-  document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${duree}${cals}${eff}`;
+  /* 🔬 L'ESTIMATION « TEMPS RÉEL », À CÔTÉ DU CHIFFRE ACTUEL (14/08/2026).
+     Michel : *« comme ça je peux voir si je me rapproche de ma montre »*. Elle est AFFICHÉE,
+     jamais enregistrée : `sess.calories` ne bouge pas, le suivi nutrition non plus. Le jour
+     où elle colle aux montres sur plusieurs séances, on la branchera — pas avant. */
+  let estim='';
+  if(typeof _estimCalTempsReel==='function'){
+    const e=_estimCalTempsReel(sess);
+    if(e&&sess.calories) estim=` · 🔬 ~${e.kcal} kcal en comptant le temps réel`;
+  }
+  document.getElementById('sd-sub').textContent=`${Math.round(sess.volume||0)} kg total${duree}${cals}${eff}${estim}`;
 
   _updateSdMuscles(sess);
   _renderSessDetailContent();

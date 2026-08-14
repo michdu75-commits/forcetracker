@@ -237,20 +237,61 @@ function getExerciseMET(name) {
 //
 // ⚠️ NE CHANGE AUCUN CALCUL AUJOURD'HUI. Elle sert à MESURER, pour départager les 3 approches
 // de `docs/CALORIES-SOURCES.md` §13.6 sur 10 séances. Le barème se choisit après, pas avant.
+/* ── LE SCHÉMA DE SÉRIES DIT LA PHASE (14/08/2026, consigne de Michel) ─────────────────
+   *« l'app doit comprendre quand on est en cycle lourd, 3×3, 5×3 ou 5×5 »*. Ses repos réels :
+   lourd 3-5 min · série normale 1 min 15-1 min 45 · abdos 30 s-1 min.
+   ⭐ POURQUOI LE SCHÉMA ET NON L'EXERCICE : Michel l'a démontré en une phrase — *« et si on
+   fait un squat avec 2 minutes de repos ? »*. C'est alors un squat **3×10**, pas un **5×3**.
+   Même exercice, deux séances différentes : le NOM ne peut pas les distinguer, le schéma si. */
+function _classeRepos(reps){
+  const r=+reps||0;
+  if(r>0&&r<=5)  return {k:'lourd',  defaut:300}; // 3×3, 5×3, 5×5 → 3 à 5 min
+  if(r>0&&r<=12) return {k:'normal', defaut:180}; // 4×8, 3×10, 3×12 → 1 min 15 à 1 min 45
+  return          {k:'court',  defaut:120};       // 15+ et abdos → 30 s à 1 min
+}
+function _mediane(a){
+  if(!a.length)return 0;
+  const t=a.slice().sort((x,y)=>x-y), m=t.length>>1;
+  return t.length%2 ? t[m] : (t[m-1]+t[m])/2;
+}
 function _dureeEffective(session){
   try{
-    const ats=[];
+    /* ⚠️ ON GARDE LES REPS AVEC L'HEURE : le plafond dépend du type de série qu'on vient de
+       terminer, pas d'un réglage global. Sans ça, une séance qui mélange squat 5×3 et abdos
+       3×20 recevrait le même plafond partout — trop lâche pour l'un, trop serré pour l'autre. */
+    const pts=[];
     for(const ex of (session&&(session.exs||session.exercises))||[])
       for(const s of (ex.sets||[]))
-        if(s&&s.done&&typeof s.at==='number'&&isFinite(s.at)&&s.at>=0) ats.push(s.at);
-    if(ats.length<2) return null;          // 0 ou 1 série horodatée → on ne sait rien, on le dit
-    ats.sort((a,b)=>a-b);
-    const plafond=Math.max(300,2*(+S.defRest||130));
-    let actif=0, coupe=0;
-    for(let i=1;i<ats.length;i++){
-      const ecart=ats[i]-ats[i-1];
-      actif+=Math.min(ecart,plafond);
-      if(ecart>plafond) coupe+=ecart-plafond;
+        if(s&&s.done&&typeof s.at==='number'&&isFinite(s.at)&&s.at>=0) pts.push({at:s.at,reps:+s.reps||0});
+    if(pts.length<2) return null;          // 0 ou 1 série horodatée → on ne sait rien, on le dit
+    pts.sort((a,b)=>a.at-b.at);
+    const ats=pts.map(p=>p.at);
+    /* ── LE PLAFOND S'ADAPTE À CE QUI A ÉTÉ FAIT CE JOUR-LÀ ────────────────────────────
+       Objection de Michel : un plafond fixe de 5 min sur le squat, c'est son PIRE jour, pas
+       son jour normal — il laisserait passer 5 min de téléphone sur une séance faite à 2 min
+       de repos. On se cale donc sur ses écarts RÉELS, par classe de série.
+       ⚠️ MÉDIANE, PAS MOYENNE : une seule interruption démolit une moyenne (l'anomalie qu'on
+       veut écarter servirait à fixer la règle) ; la médiane ne bouge pas.
+       ⚠️ Il faut au moins 3 écarts dans la classe pour que la médiane tienne — en dessous on
+       retombe sur les repères métier de Michel. Une règle ne sert qu'à défaut de mesure. */
+    const parClasse={};
+    for(let i=1;i<pts.length;i++){
+      const c=_classeRepos(pts[i-1].reps).k;
+      (parClasse[c]=parClasse[c]||[]).push(pts[i].at-pts[i-1].at);
+    }
+    const PLAFOND_MAX=600;   // 10 min : au-delà ce ne sont plus 2 séries, ce sont 2 séances
+    const PLAFOND_MIN=60;    // en dessous, on tronquerait des repos parfaitement normaux
+    const plafondDe=reps=>{
+      const cl=_classeRepos(reps), obs=parClasse[cl.k]||[];
+      const base=obs.length>=3 ? 2*_mediane(obs) : cl.defaut;
+      return Math.max(PLAFOND_MIN,Math.min(PLAFOND_MAX,Math.round(base)));
+    };
+    let actif=0, coupe=0, plafond=0;
+    for(let i=1;i<pts.length;i++){
+      const ecart=pts[i].at-pts[i-1].at, p=plafondDe(pts[i-1].reps);
+      plafond=Math.max(plafond,p);
+      actif+=Math.min(ecart,p);
+      if(ecart>p) coupe+=ecart-p;
     }
     const span=ats[ats.length-1]-ats[0];
     return {
@@ -264,6 +305,28 @@ function _dureeEffective(session){
       densite: actif>0 ? +(ats.length/(actif/60)).toFixed(3) : null
     };
   }catch(e){ return null; }
+}
+
+/* ── L'ESTIMATION « TEMPS RÉEL » — AFFICHÉE, PAS BRANCHÉE (14/08/2026) ─────────────────
+   Michel : *« comme ça je peux voir si je me rapproche de ma montre »*. On calcule ce que
+   donnerait la séance si on comptait le TEMPS EFFECTIVEMENT PASSÉ, et on l'affiche À CÔTÉ du
+   chiffre actuel — sans rien changer à `sess.calories`, ni au suivi nutrition.
+   ⚠️ POURQUOI ON NE BRANCHE PAS TOUT DE SUITE : mesuré sur 6 séances, le calcul actuel crédite
+   1,2 à 2,1 MET pour de la musculation lourde (1 MET = au repos allongé, 2 = debout immobile),
+   et son total ne dépend PAS de la durée — 2 h 20 rendent 231 kcal quand 1 h 30 en rendent 260.
+   Le correctif fera monter les calories d'environ 70 % : autant qu'il soit juste du premier coup
+   plutôt que rectifié trois fois sur le suivi nutrition de quelqu'un.
+   LE MET : 3,5 = « resistance training, moderate effort » du Compendium 2024 — une valeur
+   PUBLIÉE et citable, pas un chiffre ajusté sur les 6 séances de Michel (ce serait se noter
+   soi-même). Ses relevés Garmin donnent 2,8 à 4,2 : 3,5 tombe au milieu, ce qui est encourageant
+   mais ne prouve rien tant qu'on ne l'a pas vérifié sur des séances horodatées.
+   ⚠️ Musculation SEULE : le cardio noté a son propre calcul et n'entre pas ici. */
+const MET_MUSCU_MODERE=3.5;
+function _estimCalTempsReel(session){
+  const d=(typeof _dureeEffective==='function')?_dureeEffective(session):null;
+  if(!d||!(d.actifSec>60))return null;
+  const bw=+S.bw||80;
+  return {kcal:Math.round(MET_MUSCU_MODERE*bw*(d.actifSec/3600)), min:Math.round(d.actifSec/60)};
 }
 
 function calcSessionCalories(session) {

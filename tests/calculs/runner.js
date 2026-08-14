@@ -583,7 +583,14 @@ console.log('\n═══ 6bis. Horodatage des séries + temps effectif ═══
     const av=suite(20,180); for(let i=0;i<20;i++){ if(i>=5) av[i]+=1200; if(i>=10) av[i]+=1200; if(i>=15) av[i]+=1200; }
     out.pauses   = DE(mk(av));
     // l'attendu se CALCULE, il ne se recopie pas : 19 écarts en tout, dont 3 plafonnés à 300 s
-    out.pausesAttendu = (19-3)*180 + 3*300;              // 3780 s = 63 min
+    /* ⚠️ ATTENDU RECALCULÉ LE 14/08 — le plafond n'est plus fixe (ft-v850).
+       Il se cale sur les écarts RÉELS de la séance : ici 16 écarts de 180 s, donc médiane
+       180 → plafond 2×180 = 360 s. Les 3 interruptions sont ramenées à 360 s au lieu de 300.
+       Ce n'est PAS un relâchement du garde-fou : sur une séance faite à 3 min de repos, 6 min
+       est le bon plafond ; l'ancien 300 s était calé sur le cas le plus lourd, donc trop
+       serré ici et trop lâche sur des abdos. Ce que le témoin protège reste identique :
+       le total se TASSE (66 min pour 117 bruts), il n'explose pas. */
+    out.pausesAttendu = (19-3)*180 + 3*360;              // 4 -> 3960 s = 66 min
     out.circuit  = DE(mk(suite(30,50)));    // supersets
     out.reposLong= DE(mk(suite(12,300)));   // 5 min entre séries
     // une séance d'AVANT ft-v835 n'a aucun horodatage → « je ne sais pas », jamais un chiffre
@@ -610,7 +617,14 @@ console.log('\n═══ 6bis. Horodatage des séries + temps effectif ═══
     +(r.pauses?min(r.pauses.actifSec):'?')+' min effectifs (le total se TASSE, il n\'explose pas)',
     r.pauses&&r.pauses.actifSec===r.pausesAttendu&&r.pauses.actifSec<r.pauses.spanSec&&r.pauses.densite>0.25,
     'attendu '+r.pausesAttendu+' s · '+JSON.stringify(r.pauses));
-  t('le plafond est max(5 min, 2× le repos réglé) = 300 s', r.plafond&&r.plafond.plafondSec===300, 'reçu '+(r.plafond&&r.plafond.plafondSec));
+  /* ⚠️ CE TÉMOIN A CHANGÉ DE SENS LE 14/08 (ft-v850), volontairement. Il figeait un plafond
+     FIXE — or Michel a montré qu'un plafond fixe est faux dans les deux sens : *« et si on
+     fait un squat avec 2 minutes de repos ? »*. Le plafond se cale désormais sur les écarts
+     réels de la séance. Ce qu'on vérifie ici, c'est qu'il reste BORNÉ des deux côtés :
+     jamais plus de 10 min (au-delà ce sont deux séances), jamais moins de 1 min (sinon on
+     tronquerait des repos normaux). */
+  t('le plafond reste borné : entre 1 et 10 min quoi qu\'il arrive',
+    r.plafond&&r.plafond.plafondSec>=60&&r.plafond.plafondSec<=600, 'reçu '+(r.plafond&&r.plafond.plafondSec));
   t('un circuit (50 s entre séries) donne une densité > 0,65', r.circuit&&r.circuit.densite>0.65, JSON.stringify(r.circuit));
   t('des repos longs (5 min) donnent une densité < 0,25', r.reposLong&&r.reposLong.densite<0.25, JSON.stringify(r.reposLong));
   t('⭐ une séance SANS horodatage répond « je ne sais pas » (null), jamais un chiffre inventé', r.ancienne===null, 'reçu '+JSON.stringify(r.ancienne));
@@ -853,7 +867,54 @@ console.log('\n═══ 9. Les repas suggérés respectent le RÉGIME (kéto, v
   await c.close();
 }
 
+/* ══ LE PLAFOND DE REPOS S'ADAPTE À LA SÉANCE (14/08/2026) ═════════════════════════════
+   Objection de Michel : *« et si on fait un squat avec 2 minutes de repos ? »* — un plafond
+   fixe de 5 min est alors son PIRE jour, pas son jour normal, et laisserait passer 5 min de
+   téléphone. Le plafond se cale donc sur ses écarts RÉELS (médiane × 2), par classe de série
+   déduite des REPS (3×3/5×3/5×5 = lourd · 4×8/3×10 = normal · 15+ = court).            */
+{
+  console.log('\n── Le plafond de repos s\'adapte ──');
+  const {c:_cR,p:_pR}=await boot('2026-08-14T09:00:00+02:00');
+  const R = await _pR.evaluate(()=>{
+   try{
+    if(typeof _dureeEffective!=='function')return {erreur:'_dureeEffective absente'};
+    const mk=(reps,ecarts)=>{let t=0;const sets=[{kg:100,reps,done:true,at:0,type:'N'}];
+      ecarts.forEach(e=>{t+=e;sets.push({kg:100,reps,done:true,at:t,type:'N'});});
+      return {exs:[{name:'Squat à la Barre',sets}]};};
+    return {
+      appel   : _dureeEffective(mk(3,[120,120,120,360])),   // 2 min de repos + appel de 6
+      lourd   : _dureeEffective(mk(3,[240,240,250,235])),   // vrai jour lourd à 4 min
+      hyper   : _dureeEffective(mk(10,[90,95,88,92])),      // 3×10 à 1 min 30
+      abdos   : _dureeEffective(mk(20,[45,50,42,48,480])),  // abdos + pause de 8 min
+      peu     : _dureeEffective(mk(3,[120,600])),           // 2 écarts → repères métier
+      enorme  : _dureeEffective(mk(8,[100,105,98,1500])),   // interruption de 25 min
+      classes : [_classeRepos(3).k,_classeRepos(5).k,_classeRepos(10).k,_classeRepos(20).k]
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(R.erreur){ t('⛔ le plafond adaptatif s\'exécute', false, R.erreur); }
+  else{
+    t('⭐⭐ squat à 2 min + appel de 6 : le plafond DESCEND à 4 min (pas 5)',
+      R.appel && R.appel.plafondSec===240 && R.appel.coupeSec===120,
+      JSON.stringify(R.appel));
+    t('⭐⭐ vrai jour lourd à 4 min de repos : RIEN n\'est tronqué',
+      R.lourd && R.lourd.coupeSec===0, JSON.stringify(R.lourd));
+    t('3×10 à 1 min 30 : rien coupé non plus', R.hyper && R.hyper.coupeSec===0, JSON.stringify(R.hyper));
+    t('⭐ abdos à 45 s : le plafond tombe à 2 min, la pause de 8 min est coupée',
+      R.abdos && R.abdos.plafondSec<=120 && R.abdos.coupeSec>=300, JSON.stringify(R.abdos));
+    t('⚠️ trop peu d\'écarts → on retombe sur les repères métier (lourd = 5 min)',
+      R.peu && R.peu.plafondSec===300, JSON.stringify(R.peu));
+    t('⚠️ une interruption de 25 min ne compte jamais en entier',
+      R.enorme && R.enorme.coupeSec>=1200, JSON.stringify(R.enorme));
+    t('les classes viennent des REPS, pas du nom de l\'exercice',
+      JSON.stringify(R.classes)===JSON.stringify(['lourd','lourd','normal','court']),
+      JSON.stringify(R.classes));
+  }
+  await _cR.close();
+}
+
 await b.close(); srv.close();
+
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');
 process.exit(ko?1:0);
 })().catch(e=>{console.error(e);process.exit(2);});
