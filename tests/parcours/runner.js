@@ -3914,6 +3914,47 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cq.close();
 }
 
+
+/* ══ BLOC XVI — MILO NE PARLE PAS DU FONCTIONNEMENT INTERNE DE L'APP (14/08/2026) ══════
+   PB-007 élargi. La règle du 13/08 couvrait les PANNES (« c'est un bug d'affichage »).
+   Le 14/08 Milo a fait autre chose : il a expliqué COMMENT l'app calcule — *« les 249 kcal,
+   c'est le calcul basé sur le volume soulevé (tonnes × distance estimée) »*. C'est FAUX :
+   `calcSessionCalories` fait MET × poids de corps × durée, le volume n'y entre jamais.
+   ⚠️ Plus dangereux que le premier cas : une explication technique inventée sonne juste, et
+   personne ne peut la vérifier. Ici elle contredisait un diagnostic établi sur 19 séances.  */
+{
+  console.log('\n── XVI. Milo n\'explique pas le fonctionnement de l\'app ──');
+  const cm=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pm=await cm.newPage(); const em=[];
+  pm.on('pageerror',e=>em.push(String(e.message)));
+  await pm.addInitScript(seedScript());
+  await pm.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+  await pm.waitForTimeout(1200);
+  const M=await pm.evaluate(()=>{
+   try{
+    if(typeof buildCoachContext!=='function')return {erreur:'buildCoachContext absente'};
+    const ctx=buildCoachContext('test');
+    return { interne:/FONCTIONNEMENT INTERNE DE L.APP/.test(ctx),
+             calcul:/comment un chiffre est obtenu/i.test(ctx),
+             exemple:/volume soulev/.test(ctx),
+             commenter:/COMMENTER un chiffre/.test(ctx),
+             pannes:/bug d.affichage/.test(ctx) };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tm=(n,c,x)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(x?'\n       → '+x:''));} };
+  if(M.erreur){ t('⛔ le contexte de Milo se construit', false, M.erreur); }
+  else{
+    tm('⭐⭐ la règle vise le FONCTIONNEMENT INTERNE, plus seulement les pannes',
+       M.interne===true&&M.calcul===true, JSON.stringify(M));
+    tm('⭐ … avec l\'exemple qui a servi (« basé sur le volume soulevé »)', M.exemple===true);
+    tm('⚠️ mais Milo garde le droit de COMMENTER un chiffre qu\'on lui donne',
+       M.commenter===true, 'sinon on l\'empêcherait de faire son métier');
+    tm('la règle d\'origine sur les pannes est conservée', M.pannes===true);
+  }
+  t('0 erreur JS sur le contexte de Milo', em.length===0, em.join(' | '));
+  await cm.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

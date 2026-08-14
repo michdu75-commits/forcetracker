@@ -190,3 +190,34 @@ qu'il est mal instruit, c'est que le cas n'était pas couvert.**
 ⚠️ **Le signal à repérer** : Milo qui affirme quelque chose sur **le logiciel** (affichage,
 enregistrement, mise à jour, réseau). Il n'a aucun moyen de le savoir — c'est toujours une invention,
 même quand elle tombe juste.
+
+
+### PB-007 bis — MILO INVENTE LE FONCTIONNEMENT DE L'APP, PAS SEULEMENT SES PANNES *(2026-08-14, corrigé `ft-v854`)*
+
+**La règle du 13/08 était trop étroite.** Elle interdisait de *diagnostiquer* l'app — « c'est un bug
+d'affichage », « ça n'a pas été enregistré ». Le lendemain, Milo a fait autre chose :
+
+> *« Les 249 kcal affichés dans l'app, c'est le calcul basé sur le volume soulevé (tonnes × distance
+> estimée). C'est une estimation mécanique pure. »*
+
+**C'est faux.** `calcSessionCalories` fait `MET × poids de corps × durée` — le volume soulevé n'entre
+**jamais** dans le calcul des calories. Vérifié dans le code avant d'affirmer quoi que ce soit.
+
+**Pourquoi c'est PIRE que le premier cas.** Une panne inventée finit par se contredire : on cherche,
+on ne trouve rien, on s'en rend compte (ça a coûté une heure le 13/08). Un **mécanisme** inventé, lui,
+ne se contredit jamais : il sonne technique, il est cohérent, et **personne ne peut le vérifier** — ni
+l'utilisateur, qui ne lit pas le code, ni Milo, qui ne le voit pas non plus.
+⚠️ Et ici l'invention **contredisait un diagnostic établi sur 19 séances** : si Michel avait cru que
+l'app calcule « par le volume », toute l'enquête sur la durée de repos aurait paru fausse.
+
+**Ce qui change dans la règle** : elle ne porte plus sur les pannes mais sur le **fonctionnement
+interne** — écran, code, calculs. Milo peut **commenter** un chiffre qu'on lui donne (c'est son
+métier) ; il ne peut jamais **expliquer d'où il sort**.
+
+⚠️ **Le signal à repérer** : une phrase de Milo qui commence par « c'est calculé sur… », « ça vient
+de… », « l'app utilise… ». Il n'a aucun moyen de le savoir.
+
+**⭐ Et la deuxième réponse, elle, était bonne** — après que Michel a précisé sa question, Milo a
+correctement identifié la montre comme la plus fiable et donné 400-550 kcal, très proche des 430-465
+calculés. *Le problème n'est pas ce qu'il raisonne, c'est ce qu'il comble quand une information
+manque.*
