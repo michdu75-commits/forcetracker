@@ -1024,3 +1024,90 @@ le plus faible (−29 % sur cette séance).
 de tout ce chantier. Elle donnerait une référence de FC solide là où la Garmin est la moins sûre.
 ⚠️ À vérifier avant d'en dépendre : que la Polar exporte bien ses séances, et que ses horodatages
 permettent de la rapprocher des séances de Force Tracker.
+
+
+---
+
+## 15. 🔬 L'ANALYSE CROISÉE (14/08/2026) — export Garmin × export de l'app
+
+Michel a fourni **19 séances Garmin** (CSV Garmin Connect) et **30 séances de l'app** (Menu → Exporter
+mes données). 18 s'apparient par date. C'est ce croisement qui a tranché le chantier.
+
+### 15.1 ⭐ La valeur du Compendium tombe juste
+
+Intensité moyenne mesurée par la Garmin sur les 19 séances : **3,48 MET** · médiane **3,54**.
+La valeur retenue *avant* d'avoir ces données, prise dans le **Compendium 2024** (« resistance
+training, moderate effort ») : **3,5**. *Elle n'a pas été ajustée sur Michel — elle tombe à 1 % de sa
+réalité.* On garde donc une référence **publiée**, ce qui vaut mieux qu'un chiffre calibré sur une
+seule personne.
+
+### 15.2 Ce qui explique réellement les calories
+
+| Variable | Corrélation avec les kcal Garmin |
+|---|---|
+| **FC × durée** | **0,93** ← ce que calcule la montre |
+| Durée seule | 0,80 |
+| FC seule | 0,21 |
+
+Et l'**intensité** (MET) est presque exactement la fréquence cardiaque : **0,95**. Sans capteur
+cardiaque on ne peut pas la capter — mais **la durée à elle seule explique 80 %**, et l'app l'a.
+⭐ Constat physiologique au passage : **MET vs durée = −0,63**. Les séances longues sont moins
+intenses en moyenne (plus de repos) : 2,5-3,0 MET à 2 h, 4,3-4,5 MET à 35-45 min.
+
+### 15.3 ⚠️⚠️ LA CAUSE EXACTE : le repos SUPPOSÉ, pas le repos RÉEL
+
+`calData` est enregistré dans chaque séance. Confronté à la durée Garmin :
+
+| Date | Actif | Repos compté | Total app | Durée RÉELLE | Repos RÉEL | Manque |
+|---|---|---|---|---|---|---|
+| 13/08 | 10 min | 30 min | 54 min | **87 min** | 77 min | **+47 min** |
+| 10/08 | 9 min | 28 min | 47 min | **91 min** | 82 min | **+54 min** |
+| 05/08 | 8 min | 24 min | 42 min | **116 min** | 108 min | **+84 min** |
+| 03/08 | 8 min | 20 min | 38 min | **111 min** | 103 min | **+83 min** |
+| 09/07 | 6 min | 18 min | 34 min | 35 min | 29 min | +11 min |
+
+**Médiane du repos manquant : +35 min par séance.**
+
+**Le temps de TRAVAIL est juste** (8-12 min pour 15-20 séries, parfaitement crédible). L'erreur est
+**entièrement dans le repos** : l'app additionne le repos **RÉGLÉ** (2-3 min/série), alors que le
+repos **PRIS** est deux à trois fois plus long — changer les disques, laisser passer quelqu'un,
+reprendre son souffle, noter sa série. *Ce n'est pas un défaut de l'utilisateur, c'est la vie en
+salle ; c'est le modèle qui est naïf.*
+
+Et ça explique la constante : le repos compté dépend du **nombre de séries**, pas du temps. Michel
+fait toujours 13-20 séries → 248 kcal quoi qu'il arrive.
+
+### 15.4 ⚠️ CE QUI A INVALIDÉ MA RECOMMANDATION DE LA VEILLE
+
+Sur les données **Garmin** seules, le modèle « densité » (séries/min) sortait en tête. Confronté aux
+données de **l'app**, il s'effondre :
+
+| Donnée que l'APP possède | Corrélation avec les kcal réelles |
+|---|---|
+| Durée Garmin (référence) | **+0,84** |
+| Durée brute de l'app | +0,46 |
+| Volume soulevé | +0,36 |
+| **Nombre de séries** | **+0,01** |
+| Répétitions | −0,19 |
+
+**Le nombre de séries n'explique RIEN (0,01).** Or c'est exactement ce sur quoi le calcul actuel
+repose. *J'avais calibré sur le compte de séries de la GARMIN, pas sur celui de l'app* — les deux
+concordent bien (écart médian −1), mais la densité qui en découle n'a aucun pouvoir prédictif ici.
+**Leçon : valider un modèle sur les données que le produit possède RÉELLEMENT, pas sur celles de la
+source de référence.**
+
+### 15.5 ⚠️ Et la durée brute de l'app n'est pas branchable telle quelle
+
+Écart app − Garmin : médiane **+10 min**, mais **min −22 · max +158** (12/07 : 254 min affichées pour
+96 réelles). Le chrono tourne quand on oublie d'arrêter. C'est exactement ce que corrige
+`_dureeEffective()` (ft-v835/850) — fenêtre première→dernière série validée, temps morts plafonnés.
+⚠️ **Non vérifiable rétroactivement** : les séances d'avant le 13/08 n'ont pas d'horodatage de séries.
+
+### 15.6 Ce qu'il reste à faire
+
+1. **Une séance horodatée** pour vérifier que la durée effective retombe près de la durée Garmin.
+2. Puis remplacer, dans `calcSessionCalories`, le **repos supposé** par le **repos mesuré**. *Rien
+   d'autre n'est à toucher* : ni les MET par exercice, ni le temps de travail, ni le cardio.
+3. Décider du sort des séances passées (Michel : *« il faut monter les anciennes valeurs »*) — le
+   facteur médian mesuré est **×1,69**, mais 19 d'entre elles ont leur **vraie** valeur Garmin, ce qui
+   vaut mieux qu'une estimation.
