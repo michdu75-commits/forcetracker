@@ -2962,13 +2962,16 @@ function _updPill(){
   const pillTime=document.getElementById('rest-pill-time');
   const pillFill=document.getElementById('rest-pill-fill');
   if(!pillTime||!pillFill)return;
-  // Disparaît quand le temps est écoulé
-  if(left<=0){pill.classList.remove('show');return;}
-  const m=Math.floor(left/60),s=left%60;
-  pillTime.textContent=`${m}:${s.toString().padStart(2,'0')}`;
-  const pct=left/restTot*100;
+  /* ⚠️ ELLE NE DISPARAÎT PLUS À ZÉRO (14/08/2026) — même raison que le chrono principal :
+     le dépassement est précisément ce qu'on veut voir. Elle s'efface au-delà de 15 min, où
+     il ne s'agit plus d'un repos mais d'une séance interrompue. */
+  if(left<=-900){pill.classList.remove('show');return;}
+  const _dep=left<0, _abs=Math.abs(left);
+  const m=Math.floor(_abs/60),s=_abs%60;
+  pillTime.textContent=(_dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`;
+  const pct=Math.max(0,Math.min(100,left/restTot*100));
   pillFill.style.width=pct+'%';
-  const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
+  const c=_dep?'var(--gold)':pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
   pillFill.style.background=c;
   pill.style.borderColor=pct>50?'rgba(52,211,153,.5)':pct>20?'rgba(255,214,0,.4)':'rgba(255,106,115,.7)';
 }
@@ -3159,18 +3162,32 @@ function startRest(sec){
   _pillIv=setInterval(_updPill,500);
 }
 
+/* ── LE CHRONO CONTINUE EN NÉGATIF (14/08/2026, idée de Michel) ────────────────────────
+   *« faudrait peut-être qu'il continue en chiffre négatif jusqu'à ce que la personne
+   appuie »*. Il s'arrêtait à 0:00 (`Math.max(0, …)`) : le dépassement était invisible.
+   ⭐ POURQUOI C'EST UTILE MAINTENANT : l'analyse croisée Garmin × app du 14/08 a montré que
+   le repos RÉELLEMENT pris vaut 2 à 3 fois le repos RÉGLÉ (+35 min par séance en médiane).
+   Le voir en direct, c'est reprendre la main dessus.
+   ⚠️ ET ÇA NE CHANGE RIEN À LA MESURE : les calories ne s'appuient pas sur ce chrono mais sur
+   l'heure de chaque série validée (`set.at`, ft-v835). C'est délibéré, et c'est Michel qui en
+   a donné la raison : *« ça peut arriver qu'on démarre une série sans appuyer sur ce fameux
+   chrono »*. Un système accroché au bouton serait à la merci de ça ; accroché à la série
+   validée, il ne l'est pas. */
 function updRest(){
   const bar=document.getElementById('rest-bar');
   const timeEl=document.getElementById('rest-time');
   const fillEl=document.getElementById('rest-fill');
   if(!timeEl||!fillEl)return;
-  const left=Math.max(0,_restLeft());
-  const m=Math.floor(left/60),s=left%60;
-  timeEl.textContent=`${m}:${s.toString().padStart(2,'0')}`;
-  const pct=left/restTot*100;
+  const reste=_restLeft();                 // peut être NÉGATIF : c'est tout l'intérêt
+  const dep=reste<0;
+  const abs=Math.abs(reste);
+  const m=Math.floor(abs/60),s=abs%60;
+  timeEl.textContent=(dep?'+':'')+`${m}:${s.toString().padStart(2,'0')}`;
+  // La barre, elle, reste bornée à 0 : une largeur négative n'a pas de sens.
+  const pct=Math.max(0,Math.min(100,reste/restTot*100));
   fillEl.style.width=pct+'%';
-  const c=pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
-  const bc=pct>50?'rgba(0,230,118,.3)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
+  const c=dep?'var(--gold)':pct>50?'var(--green)':pct>20?'var(--gold)':'var(--red)';
+  const bc=dep?'rgba(255,214,0,.45)':pct>50?'rgba(0,230,118,.3)':pct>20?'rgba(255,214,0,.3)':'rgba(255,45,85,.4)';
   timeEl.style.color=c;fillEl.style.background=c;if(bar)bar.style.borderColor=bc;
 }
 

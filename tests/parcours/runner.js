@@ -3796,6 +3796,49 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cd.close();
 }
 
+
+/* ══ BLOC XIV — LE CHRONO DE REPOS CONTINUE EN NÉGATIF (14/08/2026) ════════════════════
+   Idée de Michel : *« faudrait peut-être qu'il continue en chiffre négatif jusqu'à ce que la
+   personne appuie »*. Il s'arrêtait à 0:00, donc le dépassement était invisible — or l'analyse
+   croisée du jour montre que le repos PRIS vaut 2 à 3 fois le repos RÉGLÉ (+35 min/séance).  */
+{
+  console.log('\n── XIV. Le chrono de repos affiche le dépassement ──');
+  const cw=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const pw=await cw.newPage(); const ew=[];
+  pw.on('pageerror',e=>ew.push(String(e.message)));
+  await pw.addInitScript(seedScript());
+  await pw.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+  await pw.waitForTimeout(1200);
+  const W=await pw.evaluate(()=>{
+   try{
+    if(typeof startRest!=='function')return {erreur:'startRest absente'};
+    const lire=()=>({t:document.getElementById('rest-time').textContent,
+                     w:document.getElementById('rest-fill').style.width});
+    startWorkout(); startRest(90);
+    const o={};
+    restStartTs=Date.now()-60000;  updRest(); o.avant=lire();
+    restStartTs=Date.now()-90000;  updRest(); o.zero =lire();
+    restStartTs=Date.now()-120000; updRest(); o.dep30=lire();   // l'exemple de Michel
+    restStartTs=Date.now()-330000; updRest(); o.dep4m=lire();
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tw=(n,c,x)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(x?'\n       → '+x:''));} };
+  if(W.erreur){ t('⛔ le chrono de repos démarre', false, W.erreur); }
+  else{
+    tw('le décompte normal est inchangé (1 min écoulée sur 1 min 30 → 0:30)',
+       W.avant.t==='0:30', JSON.stringify(W.avant));
+    tw('⭐⭐ 1 min 30 réglées + 30 s de plus → « +0:30 » (l\'exemple de Michel)',
+       W.dep30.t==='+0:30', JSON.stringify(W.dep30));
+    tw('⭐ le dépassement continue de courir (+4:00)', W.dep4m.t==='+4:00', JSON.stringify(W.dep4m));
+    tw('⚠️ la barre reste bornée à 0 % (une largeur négative n\'a pas de sens)',
+       W.dep30.w==='0%'&&W.dep4m.w==='0%', JSON.stringify([W.dep30.w,W.dep4m.w]));
+    tw('pile à zéro, on affiche 0:00 sans signe', W.zero.t==='0:00', JSON.stringify(W.zero));
+  }
+  t('0 erreur JS sur le chrono de repos', ew.length===0, ew.join(' | '));
+  await cw.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
