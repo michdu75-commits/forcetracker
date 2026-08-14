@@ -779,6 +779,48 @@ seul ne dit rien — c'est l'ÉCART qui nous intéresse. À compléter depuis Pr
 | **10/08** | **420** (1 h 31) | **248** | **−41 %** |
 | **08/08** | **419** (1 h 11) | **248** | **−41 %** |
 
+#### ⭐⭐⭐ LE SCHÉMA DE SÉRIES DIT LA PHASE — consigne de Michel (14/08/2026)
+
+*« Je t'avais dit que l'app doit comprendre quand on est en cycle lourd, 3×3, 5×3 ou 5×5. »*
+
+⚠️ **Aucune trace écrite de cette consigne dans le dépôt** — ni ici, ni dans `IDEES-FUTURES.md`. Ce
+n'est pas qu'elle n'a pas été dite : c'est qu'elle n'a pas été **notée**. C'est très exactement le
+défaut que R23/R27 décrivent, et la raison d'être de ce paragraphe.
+
+**Le fond est juste, et il résout l'objection posée deux messages plus tôt.** L'app connaît déjà les
+séries et les répétitions de chaque exercice. Le schéma dit la phase :
+
+| Ce que l'app lit | Phase | Repos attendu |
+|---|---|---|
+| **3×3 · 5×3 · 5×5** (reps ≤ 5) | force pure, charges lourdes | **3 à 5 min** |
+| 4×8 · 3×10 · 3×12 | hypertrophie | **1 min 15 à 1 min 45** |
+| 3×15 et + | endurance, abdos | **30 s à 1 min** |
+
+⭐ **C'est meilleur qu'une table par EXERCICE**, et c'est Michel qui l'a démontré : *« et si on fait un
+squat avec 2 minutes de repos ? »* — c'est alors un squat **3×10**, pas un **5×3**. Même exercice, deux
+séances différentes. Le NOM ne peut pas les distinguer ; le **schéma de séries**, si. Ses deux
+objections se répondent l'une l'autre.
+
+**Et le cycle de force existe déjà dans l'app** : `S.cycle` + `getWeekPlan()` (tracking.js) donnent la
+phase de la semaine (Accumulation 4×8 → Intensification → Réalisation) avec ses pourcentages. Il
+pilote l'écran d'entraînement et **n'atteint ni le calcul des calories ni le plafond des repos** —
+encore une donnée qui existe et qui ne sert pas là où il faudrait (R4).
+
+#### 🧭 L'ORDRE DE PRIORITÉ (du plus fiable au moins fiable)
+
+1. **Ce qui a été mesuré aujourd'hui** — la **médiane** des écarts réels entre séries validées. Du réel,
+   ça prime toujours. Robuste à une interruption isolée, là où une moyenne se ferait démolir.
+2. **Le schéma de séries** — quand il n'y a pas assez d'écarts pour que la médiane tienne (début de
+   séance, exercice à 2 séries).
+3. **Le cycle de force** s'il est actif — pour confirmer ou trancher un cas ambigu.
+
+⚠️ **Jamais l'inverse : une règle n'écrase pas une mesure.** Si la personne a réellement pris 2 minutes
+sur un 5×3, ce sont 2 minutes qui comptent — pas les 4 que le barème attendait. C'est la même
+hiérarchie que « la donnée écrite passe avant les règles » (`_mscScores`, `_EQ_ECRIT`).
+
+⚠️ **Garde-fou absolu quand même** : quoi qu'il arrive, jamais plus de ~8-10 min comptées dans un seul
+trou. Au-delà, ce ne sont plus deux séries, ce sont deux séances.
+
 #### 📏 LES REPOS RÉELS, donnés par Michel (14/08/2026) — repères métier
 
 Michel, sur le plafond de 5 minutes : *« et encore 5 minutes je pense que c'est large »*. Puis il
