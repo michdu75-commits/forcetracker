@@ -1111,3 +1111,84 @@ source de référence.**
 3. Décider du sort des séances passées (Michel : *« il faut monter les anciennes valeurs »*) — le
    facteur médian mesuré est **×1,69**, mais 19 d'entre elles ont leur **vraie** valeur Garmin, ce qui
    vaut mieux qu'une estimation.
+
+---
+
+# 16. 🔬 L'EXPORT GARMIN COMPLET (15/08/2026) — 46 séances, et le diagnostic change
+
+> §15 travaillait sur **9 séances** (l'export s'était arrêté à 20 activités, dont 11 marches).
+> L'export complet en apporte **46**, de mai à août. Les conclusions changent sur un point majeur.
+
+## 16.1 Le tri : 4 séances écartées
+
+| Date | Relevé | Verdict |
+|---|---|---|
+| 28/07 | 37 kcal en **5 min** | montre arrêtée trop tôt |
+| 12/07 | 759 kcal sur **3 h 12** (2 activités) | laissée tourner |
+| 25/06 | 535 kcal, **20 min par série** | laissée tourner |
+| 07/05 | 913 kcal sur **4 h 36** | laissée tourner |
+
+**42 séances propres** retenues.
+
+## 16.2 ⭐⭐ LE MET PUBLIÉ EST VALIDÉ — et le diagnostic de §15 était mal découpé
+
+| | MET |
+|---|---|
+| **Médiane mesurée sur 42 séances** | **3,49** |
+| Moyenne · écart-type | 3,55 · 0,68 |
+| Plage | 2,38 → 5,17 |
+| **Compendium 2024** (choisi AVANT les données) | **3,5** |
+
+⚠️ **CORRECTION D'UNE AFFIRMATION DE LA JOURNÉE.** J'avais écrit que le modèle MET de l'app était
+« systématiquement 35 % bas ». **Faux.** Le MET que produit réellement le modèle par exercice a une
+médiane de **3,11** (31 séances) — l'intensité est à **12 %**, pas à 35 %.
+
+**Le trou était la DURÉE**, déduite du nombre de séries avant les horodatages : 28 min comptées pour
+une séance d'1 h 51. *Le symptôme visible n'était pas la cause.*
+
+## 16.3 Garmin n'est PAS une vérité calorique — et Michel l'avait dit avant moi
+
+Michel : *« je ne veux pas la mesure de Garmin, Garmin ne reconnaît pas forcément les mouvements et
+ne tient compte que du cœur »*. La recherche lui donne raison, plus fortement qu'il ne le pensait :
+
+- calories en **musculation** contre calorimétrie indirecte : **r = 0,10-0,34**, ICC < 0,45
+- **fréquence cardiaque** seule : r = 0,64-0,97, ICC > 0,94
+- surestimation typique **+32 %**, **> 45 %** en résistance
+
+**Mesuré sur ses 42 séances** : `r(FCmoy, kcal/min) = 0,968`, soit `kcal/min ≈ 0,0959 × FCmoy − 5,32`.
+Le chiffre de la montre est donc **presque entièrement une fonction de la fréquence cardiaque**.
+
+👉 **On prend son HORLOGE, jamais ses calories.**
+
+## 16.4 Les quatre approches de recalage, mesurées
+
+Contre 27 séances appariées :
+
+| Approche | Écart médian | À ±20 % |
+|---|---|---|
+| Ne rien faire | −35 % | 6/27 |
+| Chrono stocké × MET 3,5 | +29 % | *(une à +217 %)* |
+| MET par exercice × durée réelle | +16 % | — |
+| Durée = 3 min × nb de séries × MET 3,5 | −3 % | 14/27 |
+| **Valeur existante × 1,55** | **−2,7 %** | **18/27** |
+
+La plus simple gagne : la valeur existante encode déjà le mélange d'exercices et le volume, elle est
+seulement **mal mise à l'échelle**. Livré en ft-v867, réservé à l'admin — **1,55 est une calibration
+personnelle** (juin 1,54 · juillet 1,36 · août 1,69), pas une constante.
+
+## 16.5 Les trois causes d'une durée fausse
+
+| Cause | Symptôme | Cas |
+|---|---|---|
+| Le chrono continue | durée énorme | 12/07 — 4 h 14 / 14 séries |
+| Le chrono démarre tard | durée courte | 10/07 — 124 min affichées, 47 réelles |
+| Séance **rejouée** après une perte | durée = temps de saisie | 04/07 — 19 min / 16 séries |
+
+**Le même repère les trahit toutes : les minutes par série** (médiane 4,5 ; plage 1,2 → 18,2).
+Seuils retenus : **> 10 min/série** ou **> 3 h** (calibrés contre la montre) · **< 1,5 min/série**
+au-delà de 6 séries (**plancher physique**, transposable à tous). Livré en ft-v868/869/870.
+
+## 16.6 Le dossier autonome
+
+L'ensemble — formule, pièges, seuils, constantes, ce qu'on ne sait pas — est rassemblé pour un usage
+extérieur dans **`docs/DOSSIER-MET-MESURES.md`**, écrit pour l'application MET indépendante.
