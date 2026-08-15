@@ -4546,6 +4546,68 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* ══ BLOC XXVIII — LE BILAN DE FIN DE MOIS, ARCHIVÉ ET CONSULTABLE (15/08/2026) ══
+   Michel : « on a la pop-up en début de semaine, j'aimerais celle de fin de mois et qui est
+   archivée sur l'application quelque part et être revue ».
+   ⭐ Le bilan est RECALCULÉ depuis les séances, jamais figé : un instantané se serait mis à mentir
+   dès qu'on touche à l'historique — et c'est arrivé le soir même (recalage de 29 séances). */
+{
+  console.log('\n── XXVIII. Le bilan de fin de mois ──');
+  const B=await p.evaluate(()=>{
+   try{
+    if(typeof _bilanMois!=='function') return {erreur:'_bilanMois absente'};
+    const o={};
+    S.sessions=[
+      {date:'2026-07-05',volume:5000,calories:300,exs:[{name:'Squat à la Barre',sets:[
+        {kg:100,reps:5,done:true,type:'N'},{kg:100,reps:5,done:true,type:'N'},{kg:40,reps:5,done:true,type:'É'}]}]},
+      {date:'2026-07-20',volume:6000,calories:350,exs:[{name:'Développé Couché',sets:[{kg:85,reps:5,done:true,type:'N'}]}]},
+      {date:'2026-06-10',volume:4000,calories:200,exs:[{name:'Squat à la Barre',sets:[{kg:90,reps:5,done:true,type:'N'}]}]}];
+    S.prs={'Développé Couché':{kg:85,reps:5,rm1:95,date:'2026-07-20'}};
+    S.weightLog=[{date:'2026-07-02',bw:85},{date:'2026-07-29',bw:84}];
+    const b=_bilanMois('2026-07');
+    o.nSess=b.nSess; o.series=b.series; o.jours=b.jours; o.kcal=b.kcal;
+    o.prs=b.prs.length; o.bw=b.bw; o.comp=b.comp;
+    o.mois=_moisAvecSeances();
+    o.vide=_bilanMois('2026-05');
+    // le mois SANS précédent dans l'historique ne doit pas inventer de comparaison
+    o.compJuin=(_bilanMois('2026-06')||{}).comp;
+    // ② le bilan suit l'historique : on change une séance, le bilan change
+    S.sessions[0].calories=999;
+    o.kcalApres=_bilanMois('2026-07').kcal;
+    // ③ l'écran s'ouvre
+    openMonthReports('2026-07');
+    const ov=document.getElementById('ov-month-summary');
+    o.ouvert=!!(ov&&ov.classList.contains('open'));
+    o.contenu=(document.getElementById('month-sum-content')||{}).innerText||'';
+    o.choix=[...(document.getElementById('month-sum-pick')||{querySelectorAll:()=>[]}).querySelectorAll('button')].map(x=>x.textContent.trim());
+    if(ov)ov.classList.remove('open');
+    S.sessions=[]; S.prs={}; S.weightLog=[];
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(B.erreur){ t('⛔ le bilan mensuel existe', false, B.erreur); }
+  else{
+    t('⭐⭐ le bilan compte les séances, les jours et les séries de TRAVAIL (échauffements exclus)',
+      B.nSess===2 && B.jours===2 && B.series===3, `séances ${B.nSess} · jours ${B.jours} · séries ${B.series}`);
+    t('⭐ il compte les records du mois et la pesée début → fin',
+      B.prs===1 && B.bw && B.bw.debut===85 && B.bw.fin===84, JSON.stringify(B.bw)+' · prs '+B.prs);
+    // ⚠️ Le volume vient de `_workVol` (recalculé depuis les séries), PAS du champ `volume`
+    // stocké — même règle que le résumé hebdo. Juillet = 500+500+425 = 1 425 kg (l'échauffement
+    // 40×5 est exclu), juin = 450 kg → +217 %. Mon premier attendu lisait `s.volume` : c'est le
+    // TÉMOIN qui était faux, pas le code.
+    t('⭐⭐ il se COMPARE au mois précédent (+1 séance, +217 % de volume)',
+      B.comp && B.comp.dSess===1 && B.comp.dVol===217, JSON.stringify(B.comp));
+    t('⚠️ un mois sans précédent dans l\'historique n\'invente AUCUNE comparaison',
+      B.compJuin===null, 'reçu : '+JSON.stringify(B.compJuin));
+    t('⚠️ un mois sans séance ne rend rien', B.vide===null);
+    t('⭐⭐ le bilan SUIT l\'historique — il n\'est pas figé (300 → 999 kcal)',
+      B.kcalApres===1349, 'reçu : '+B.kcalApres);
+    t('⭐ l\'écran s\'ouvre avec le sélecteur des mois disponibles',
+      B.ouvert===true && (B.choix||[]).length===2, 'ouvert '+B.ouvert+' · mois : '+(B.choix||[]).join(', '));
+    t('⭐ … et affiche le mois en toutes lettres', /juillet 2026/i.test(B.contenu), (B.contenu||'').slice(0,60));
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

@@ -1,7 +1,7 @@
 # 📒 Inventaire — ce qui existe dans Force Tracker
 
 > ⚙️ **FICHIER GÉNÉRÉ — ne pas éditer à la main.** Régénérer avec `python3 tools/inventaire.py`.
-> Généré depuis **le code** (version `ft-v871`, dernier commit 2026-08-15).
+> Généré depuis **le code** (version `ft-v872`, dernier commit 2026-08-15).
 >
 > **À quoi il sert** : répondre à *« est-ce que c'est déjà construit ? »*. Le journal des versions
 > (`CLAUDE.md`, `docs/JOURNAL-ARCHIVE.md`) répond à *« que s'est-il passé, quand, pourquoi ? »* —
@@ -17,10 +17,10 @@
 | Élément | Nombre | Absents de la doc |
 |---|---|---|
 | Écrans | 7 | 0 |
-| Lignes de menu | 5 | 1 |
-| Fenêtres (modales) | 58 | 10 |
+| Lignes de menu | 6 | 1 |
+| Fenêtres (modales) | 59 | 11 |
 | Actions du serveur | 38 | 0 |
-| Fonctions JS | 531 | — |
+| Fonctions JS | 534 | — |
 | Nouveautés annoncées | 54 | — |
 
 ## 🖥️ Écrans
@@ -44,6 +44,7 @@
 | **Guide de l'application** | `menu-row-appguide` | `openAppGuide` | ✅ |
 | **Ce que Milo sait de toi** | `menu-row-miloknows` | `closeMenuDrawer` | ✅ |
 | **Nouveautés** | `menu-row-whatsnew` | `closeMenuDrawer` | ✅ |
+| **Guide de la muscu** | `menu-row-bilanmois` | `closeMenuDrawer` | ✅ |
 
 ## 🔌 Actions du serveur (backend)
 
@@ -150,6 +151,7 @@ Chaque action = une capacité côté serveur (IA, sauvegarde, import, premium…
 | `ov-beginner-setup` | ✅ |
 | `ov-pr-congrats` | ✅ |
 | `ov-week-summary` | ✅ |
+| `ov-month-summary` | ❓ |
 | `ov-prog-edit` | ✅ |
 | `ov-prog-analysis` | ✅ |
 

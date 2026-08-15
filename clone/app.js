@@ -2314,6 +2314,133 @@ function checkWeeklySummary(){
   setTimeout(()=>document.getElementById('ov-week-summary').classList.add('open'),1500);
 }
 
+/* 📅 LE BILAN DE FIN DE MOIS — CALCULÉ À LA VOLÉE, JAMAIS FIGÉ (15/08/2026)
+   Michel : *« on a la pop-up en début de semaine pour savoir ce que l'on a fait, j'aimerais celle
+   de fin de mois et qui est archivée sur l'application quelque part et être revue »*.
+
+   ⭐⭐ LE CHOIX QUI COMPTE : on n'ARCHIVE PAS un instantané, on RECALCULE depuis les séances.
+   Un bilan figé au 1ᵉʳ du mois se serait mis à mentir dès qu'on touche à l'historique — et ça
+   vient d'arriver le soir même : le recalage des calories (ft-v867) a changé 29 séances d'un
+   coup. Un instantané aurait gardé les anciens chiffres et se serait contredit avec l'écran
+   Progrès, sans que rien ne le signale. *Deux sources qui se contredisent, la famille de bugs la
+   plus vicieuse du projet* (R1/R2 : une information a UN propriétaire, ici `S.sessions`).
+   👉 On ne mémorise donc qu'UNE chose : le dernier mois ANNONCÉ (`S.lastMonthSummary`), pour ne
+   pas répéter la pop-up. Tout le reste se relit.
+   ⚠️ Et le mois se compare au précédent : c'est ce qu'un bilan mensuel apporte de plus que
+   l'hebdo — pas un chiffre de plus, une TENDANCE (R12 : raisonner sur des tendances). */
+const _MOIS_FR=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+function _moisLisible(ym){
+  const [a,m]=String(ym||'').split('-');
+  return (_MOIS_FR[(+m||1)-1]||'?')+' '+a;
+}
+// Le mois précédent d'un 'YYYY-MM'
+function _moisAvant(ym){
+  let [a,m]=String(ym).split('-').map(Number);
+  m--; if(m<1){m=12;a--;}
+  return a+'-'+String(m).padStart(2,'0');
+}
+// Les mois qui contiennent au moins une séance, du plus récent au plus ancien
+function _moisAvecSeances(){
+  const v={};
+  (S.sessions||[]).forEach(s=>{ if(s&&s.date) v[String(s.date).slice(0,7)]=1; });
+  return Object.keys(v).sort().reverse();
+}
+/** Le bilan d'un mois, recalculé depuis les séances. Rend null si le mois est vide. */
+function _bilanMois(ym){
+  const sess=(S.sessions||[]).filter(s=>s&&s.date&&String(s.date).slice(0,7)===ym);
+  if(!sess.length) return null;
+  const vol=sess.reduce((a,s)=>a+((typeof _workVol==='function'?_workVol(s):0)||s.volume||0),0);
+  const kcal=sess.reduce((a,s)=>a+(s.calories||0),0);
+  let series=0; sess.forEach(s=>(s.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{
+    if(x&&x.done&&x.type!=='É'&&x.type!=='W')series++; })));
+  const jours=new Set(sess.map(s=>s.date)).size;
+  // Records battus DANS le mois (la date du PR fait foi)
+  const prs=Object.entries(S.prs||{})
+    .filter(([,v])=>v&&v.date&&String(v.date).slice(0,7)===ym)
+    .map(([nom,v])=>({nom, kg:v.kg, reps:v.reps}));
+  const badges=Object.entries(S.badges||{})
+    .filter(([,v])=>v&&v.unlockedAt&&String(v.unlockedAt).slice(0,7)===ym)
+    .map(([id])=>(typeof BADGES!=='undefined'?BADGES.find(b=>b.id===id):null)).filter(Boolean);
+  // Poids de corps : première et dernière pesée du mois
+  const pesees=(S.weightLog||[]).filter(w=>w&&w.date&&String(w.date).slice(0,7)===ym)
+    .sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const bw = pesees.length ? {debut:pesees[0].bw, fin:pesees[pesees.length-1].bw} : null;
+  // ⚠️ La comparaison n'a de sens que si le mois précédent existe VRAIMENT dans l'historique.
+  // Comparer à un mois où l'app n'était pas encore installée annoncerait « −100 % » à quelqu'un
+  // qui n'a rien manqué du tout (R29 : le coût d'un chiffre faux n'est pas nul).
+  const av=(S.sessions||[]).filter(s=>s&&s.date&&String(s.date).slice(0,7)===_moisAvant(ym));
+  let comp=null;
+  if(av.length){
+    const volAv=av.reduce((a,s)=>a+((typeof _workVol==='function'?_workVol(s):0)||s.volume||0),0);
+    comp={nSess:av.length, vol:volAv,
+          dSess:sess.length-av.length,
+          dVol:volAv?Math.round((vol-volAv)/volAv*100):null};
+  }
+  return {ym, label:_moisLisible(ym), nSess:sess.length, vol:Math.round(vol), kcal, series, jours,
+          prs, badges, bw, comp};
+}
+let _moisVu='';
+function _renderBilanMois(ym){
+  const b=_bilanMois(ym); const el=document.getElementById('month-sum-content');
+  if(!el) return;
+  _moisVu=ym;
+  if(!b){ el.innerHTML='<div style="color:var(--t3);font-size:13px;">Aucune séance ce mois-là.</div>'; return; }
+  const fl=(n)=>n>0?('+'+n):String(n);
+  const ligne=(l,v)=>`<div class="week-sum-row"><span class="week-sum-lbl">${l}</span><span class="week-sum-val">${v}</span></div>`;
+  let h=`<div style="font-size:13px;color:var(--t3);font-weight:700;margin-bottom:4px;text-transform:capitalize;">${b.label}</div>`;
+  h+=ligne('🏋️ Séances', b.nSess+(b.comp?` <span style="font-size:11px;color:${b.comp.dSess>=0?'var(--green)':'var(--gold)'};">${fl(b.comp.dSess)}</span>`:''));
+  h+=ligne('📅 Jours d\'entraînement', b.jours);
+  h+=ligne('🔢 Séries de travail', b.series);
+  h+=ligne('📦 Volume', Math.round(b.vol).toLocaleString('fr-FR')+' kg'
+      +(b.comp&&b.comp.dVol!==null?` <span style="font-size:11px;color:${b.comp.dVol>=0?'var(--green)':'var(--gold)'};">${fl(b.comp.dVol)} %</span>`:''));
+  if(b.kcal) h+=ligne('🔥 Calories', b.kcal.toLocaleString('fr-FR')+' kcal');
+  if(b.bw && b.bw.debut!=null && b.bw.fin!=null && b.bw.debut!==b.bw.fin){
+    const d=Math.round((b.bw.fin-b.bw.debut)*10)/10;
+    h+=ligne('⚖️ Poids de corps', b.bw.debut+' → '+b.bw.fin+' kg <span style="font-size:11px;color:var(--t3);">('+fl(d)+')</span>');
+  }
+  if(b.prs.length){
+    h+=`<div class="week-badge-pill" style="margin-top:8px;">🏆 ${b.prs.length} record${b.prs.length>1?'s':''} — `
+      +b.prs.slice(0,3).map(p=>_escNote?_escNote(p.nom):p.nom).join(' · ')
+      +(b.prs.length>3?` +${b.prs.length-3}`:'')+`</div>`;
+  }
+  if(b.badges.length){
+    h+=`<div class="week-badge-pill">🏅 ${b.badges.map(x=>x.icon+' '+x.name).join(' · ')}</div>`;
+  }
+  if(!b.comp) h+=`<div style="font-size:11.5px;color:var(--t3);margin-top:8px;">Pas de mois précédent dans ton historique — rien à comparer pour l\'instant.</div>`;
+  el.innerHTML=h;
+  // le sélecteur de mois
+  const sel=document.getElementById('month-sum-pick');
+  if(sel){
+    const mois=_moisAvecSeances();
+    sel.innerHTML=mois.map(m=>`<button class="btn ${m===ym?'btn-red':'btn-bg2'}" style="width:auto;flex:0 0 auto;padding:7px 12px;font-size:12px;text-transform:capitalize;" onclick="_renderBilanMois('${m}')">${_moisLisible(m)}</button>`).join('');
+  }
+}
+/** Ouvre les bilans mensuels — sur le mois demandé, sinon le plus récent qui a des séances. */
+function openMonthReports(ym){
+  const mois=_moisAvecSeances();
+  if(!mois.length){ if(typeof toast==='function')toast('Aucune séance enregistrée pour l\'instant','info'); return; }
+  _renderBilanMois(ym&&mois.indexOf(ym)>=0?ym:mois[0]);
+  const ov=document.getElementById('ov-month-summary'); if(ov)ov.classList.add('open');
+}
+/** Au 1ᵉʳ passage d'un nouveau mois : on annonce le bilan du mois écoulé, UNE fois. */
+function checkMonthlySummary(){
+  try{
+    const t=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    const moisCourant=t.slice(0,7);
+    const moisEcoule=_moisAvant(moisCourant);
+    if(S.lastMonthSummary===moisEcoule) return;      // déjà annoncé
+    if(!_bilanMois(moisEcoule)) return;              // rien à raconter
+    S.lastMonthSummary=moisEcoule; persist();
+    setTimeout(()=>openMonthReports(moisEcoule), 2200);   // après le bilan hebdo, pas en même temps
+  }catch(e){ console.warn('[bilan mensuel]',e); }
+}
+function copyMonthSummary(){
+  const b=_bilanMois(_moisVu); if(!b) return;
+  const txt=`Force Tracker — ${b.label}\n🏋️ ${b.nSess} séance${b.nSess>1?'s':''}\n📦 Volume : ${Math.round(b.vol).toLocaleString('fr-FR')} kg`
+    +(b.kcal?`\n🔥 ${b.kcal.toLocaleString('fr-FR')} kcal`:'')
+    +(b.prs.length?`\n🏆 ${b.prs.length} record${b.prs.length>1?'s':''}`:'');
+  navigator.clipboard.writeText(txt).then(()=>toast('Bilan copié !','success')).catch(()=>toast('Copie impossible','error'));
+}
 function copyWeekSummary(){
   navigator.clipboard.writeText(_weekSumText).then(()=>toast('Résumé copié !','success')).catch(()=>toast('Copie impossible','error'));
   document.getElementById('ov-week-summary').classList.remove('open');
@@ -2667,6 +2794,8 @@ document.addEventListener('input',e=>{
 _updateNewBadges();
 checkBadges(true); // check silencieux au démarrage
 checkWeeklySummary(); // résumé lundi matin
+// Bilan du mois écoulé — annoncé UNE fois, au premier passage du nouveau mois (ft-v872).
+if(typeof checkMonthlySummary==='function')checkMonthlySummary();
 checkJustUpdated();   // badge « Application mise à jour » après un reboot de mise à jour
 checkSuperTesterWelcome(); // message « super testeur » une seule fois (Christophe)
 checkEmmaWelcome(); // pop perso Emma : bienvenue Espace Testeur + boîte à idées (une seule fois)

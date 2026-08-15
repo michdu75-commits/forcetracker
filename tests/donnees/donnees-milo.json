@@ -64,7 +64,6 @@
     "barW": "poids de la barre, sert au calculateur de plaques",
     "bday": "anniversaire — sert au message d'anniversaire, pas au coaching",
     "bodyScanImports": "compteur d'imports, technique",
-    "progImports": "compteur d'imports, technique",
     "bodySeries": "séries de photos — volumineux, et le résultat d'analyse (bodyStudy) est déjà transmis",
     "bodyStudies": "idem : historique des études, seul le résultat courant est transmis",
     "coachFree": "compteur de questions gratuites, technique",
@@ -83,6 +82,8 @@
     "haloDir": "réglage d'apparence",
     "hiddenFoods": "préférence d'affichage",
     "histImports": "compteur d'imports, technique",
+    "histTronque": "Drapeau technique : l'historique LOCAL a été tronqué faute de place sur le téléphone. Il protège la sauvegarde cloud (on n'envoie plus les séances tant qu'il est levé). Rien à dire à Milo : ce n'est pas une information sur la personne, et l'historique qu'il reçoit reste celui du cloud une fois restauré.",
+    "lastMonthSummary": "marqueur du dernier mois dont le bilan a été ANNONCÉ — technique, et le bilan lui-même se recalcule depuis les séances que Milo connaît déjà",
     "lastWeekSummary": "date d'affichage d'un résumé, technique",
     "leftHand": "préférence d'ergonomie (main gauche)",
     "levelAuto": "indicateur technique (le niveau, lui, est transmis)",
@@ -91,13 +92,13 @@
     "premium": "statut d'abonnement",
     "premiumExpiry": "statut d'abonnement",
     "progExos": "état d'édition d'un programme, technique",
+    "progImports": "compteur d'imports, technique",
     "reportedCustomEx": "exercices perso déjà signalés à l'équipe, sert à ne pas les renvoyer deux fois",
     "ringStyle": "réglage d'apparence",
     "savedFoods": "aliments enregistrés — volumineux, sert au journal",
     "scaleType": "réglage d'affichage",
     "seenFeatures": "nouveautés vues, technique",
     "testerIdeas": "boîte à idées, technique",
-    "url": "adresse du serveur, jamais envoyée au modèle",
-    "histTronque": "Drapeau technique : l'historique LOCAL a été tronqué faute de place sur le téléphone. Il protège la sauvegarde cloud (on n'envoie plus les séances tant qu'il est levé). Rien à dire à Milo : ce n'est pas une information sur la personne, et l'historique qu'il reçoit reste celui du cloud une fois restauré."
+    "url": "adresse du serveur, jamais envoyée au modèle"
   }
 }

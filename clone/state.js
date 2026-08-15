@@ -182,6 +182,7 @@ function load(){
     S.bodySeries=JSON.parse(localStorage.getItem('ft4_body_series')||'[]'); // séries photos (super testeur) — local uniquement (photos lourdes)
     S.bday=localStorage.getItem('ft4_bday')||'';
     S.lastWeekSummary=localStorage.getItem('ft4_lws')||'';
+    S.lastMonthSummary=localStorage.getItem('ft4_lms')||'';   // dernier mois ANNONCÉ (ft-v872)
     S.mealPlan=JSON.parse(localStorage.getItem('ft4_mealplan')||'null');
     S.foodLog=JSON.parse(localStorage.getItem('ft4_foodlog')||'[]');
     S.savedFoods=JSON.parse(localStorage.getItem('ft4_savedfoods')||'[]');
@@ -385,6 +386,7 @@ function persist(){
     localStorage.setItem('ft4_badges',JSON.stringify(S.badges||{}));
     localStorage.setItem('ft4_bday',S.bday||'');
     localStorage.setItem('ft4_lws',S.lastWeekSummary||'');
+    localStorage.setItem('ft4_lms',S.lastMonthSummary||'');
     localStorage.setItem('ft4_mealplan',JSON.stringify(S.mealPlan||null));
     localStorage.setItem('ft4_foodlog',JSON.stringify(S.foodLog||[]));
     localStorage.setItem('ft4_savedfoods',JSON.stringify(S.savedFoods||[]));
