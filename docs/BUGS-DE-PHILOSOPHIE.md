@@ -221,3 +221,27 @@ de… », « l'app utilise… ». Il n'a aucun moyen de le savoir.
 correctement identifié la montre comme la plus fiable et donné 400-550 kcal, très proche des 430-465
 calculés. *Le problème n'est pas ce qu'il raisonne, c'est ce qu'il comble quand une information
 manque.*
+
+---
+
+## PB-008 — Reprocher à la personne un choix que l'APP a fait à sa place (15/08/2026)
+
+**Le cas.** Débrief de fin de séance, développé incliné : *« la montée en charge a démarré à 36 kg
+(60 % de la charge) au lieu de ~28 kg (50 %), et le palier à 56×5 reps était déjà une série de
+travail déguisée »*. Michel : *« j'ai pas trop compris à un moment donné, je sais pas ce qu'il a
+branlé »*.
+
+**Ce que ce n'est pas.** Ce n'est **pas** une dérive du modèle. La phrase est produite mot pour mot
+par `_verdictMontee` (coach.js) et injectée dans le contexte ; Milo l'a recopiée. *Chercher la faute
+chez le modèle aurait été un 8ᵉ durcissement de prompt pour un problème de donnée* (R7).
+
+**Ce que c'est.** Cet exercice portait la note « ⚡ Montée en charge ajoutée par l'app ». L'app a
+écrit la montée, puis l'a jugée, puis l'a reprochée — sans jamais savoir qu'elle en était l'auteur.
+
+**La règle qui manquait.** *Avant de reprocher quoi que ce soit, l'app doit savoir QUI a décidé.*
+Une donnée produite par l'app n'est pas un choix de la personne, et ne peut pas lui être opposée.
+Corollaire pratique : toute donnée que l'app **fabrique** doit porter sa marque d'origine
+(ici `_montee`), sinon elle devient indiscernable d'une décision humaine dès l'écran suivant.
+
+**Le coût, et pourquoi il n'est pas symétrique** (R29) : un conseil manqué coûte un conseil ; un
+reproche injuste coûte la **confiance dans l'outil** — et se paie en doute sur une bonne séance.

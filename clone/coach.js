@@ -2079,17 +2079,32 @@ function buildCoachContext(msg) {
   // ⚠️ ON NE JUGE QUE CE QU'ON VOIT : sans la moindre série d'échauffement notée, on se TAIT.
   // Une personne qui s'échauffe sans le noter se ferait sinon reprocher un manquement imaginaire
   // à chaque exercice lourd (R29 : le droit de deviner dépend du coût de l'erreur).
+  /* ⛔ ON NE REPROCHE PAS À QUELQU'UN UNE MONTÉE QUE L'APP A ÉCRITE (15/08/2026)
+     Michel, après sa séance : *« j'ai pas trop compris à un moment donné, je sais pas ce qu'il a
+     branlé »*. Dans son débrief, Milo écrivait : « Développé Incliné : la montée en charge a
+     démarré à 36 kg (60 % de la charge) au lieu de ~28 kg ». **Or cette montée, c'est l'APP qui
+     l'avait ajoutée** — sa capture de 18:19 porte la note « ⚡ Montée en charge ajoutée par
+     l'app » sur cet exercice précis. *On lui reprochait un choix qu'on avait fait à sa place.*
+     ⚠️ Et ce n'est pas un détail de ton : ça l'a fait douter d'une bonne séance, et venir me
+     demander ce qui s'était passé. **R29** — le coût de l'erreur n'est pas symétrique : un
+     conseil manqué coûte un conseil ; un reproche injuste coûte la confiance dans l'outil.
+     ⚠️ 2ᵉ correction, et c'est une contradiction que J'AI créée deux heures plus tôt (ft-v858) :
+     ce verdict filtrait encore sur `_MOV_MONTEE`, la liste que le générateur n'utilise plus.
+     L'app aurait donc JUGÉ la montée d'un Pec Deck alors qu'elle refuse désormais d'en produire
+     une — deux sources qui se contredisent, la famille la plus vicieuse du projet (R2). Les deux
+     lisent maintenant `_exRole`. */
   const _verdictMontee = (e, doneSets) => {
     try{
       if(typeof _monteeDefauts !== 'function') return '';
+      if(e && e._montee) return '';                    // montée écrite par l'app → aucun reproche
       const ech = (doneSets||[]).filter(x => x && (x.type==='É' || x.type==='W'));
       if(!ech.length) return '';
       const travail = (doneSets||[]).filter(x => x && x.type!=='É' && x.type!=='W');
       if(!travail.length) return '';
       const kgT = travail.reduce((m,x)=>Math.max(m, +x.kg||0), 0);
       if(!(kgT >= (typeof _MONTEE_SEUIL_KG!=='undefined' ? _MONTEE_SEUIL_KG : 40))) return '';
-      let pat=null; try{ pat=_movPattern(e.name); }catch(err){}
-      if(typeof _MOV_MONTEE!=='undefined' && _MOV_MONTEE.indexOf(pat) < 0) return '';
+      let role='accessoire'; try{ role=_exRole(e.name); }catch(err){}
+      if(role !== 'ancre') return '';                  // même règle que le générateur (R2)
       const d = _monteeDefauts(ech, kgT);
       return d.length ? ` [⚠️ montée en charge insuffisante — ${d.join(' ; ')}]` : '';
     }catch(err){ return ''; }

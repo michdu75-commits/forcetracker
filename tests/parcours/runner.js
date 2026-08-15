@@ -4258,6 +4258,42 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   try{ await p.evaluate(()=>{ S.wkt=null; window._swReloadPending=false; }); }catch(e){}
 }
 
+/* ══ BLOC XXIII — L'APP NE REPROCHE PAS SA PROPRE MONTÉE EN CHARGE (15/08/2026) ══
+   Dans son débrief, Milo reprochait à Michel une montée en charge « démarrée à 36 kg au lieu de
+   28 » sur le développé incliné — montée que l'APP avait ajoutée elle-même (note « ⚡ Montée en
+   charge ajoutée par l'app » sur sa capture). Le verdict part du contexte envoyé à Milo. */
+{
+  console.log('\n── XXIII. Le reproche sur la montée en charge ──');
+  const X23=await p.evaluate(()=>{
+   try{
+    // ⚠️ on lit la LIGNE de l'exercice, pas tout le contexte : l'historique du parcours contient
+    // d'autres séances, et un reproche légitime ailleurs ferait passer le témoin au vert pour une
+    // mauvaise raison. Un test qui regarde au mauvais endroit est pire qu'un test absent.
+    const ctx=(exs,motif)=>{ S.sessions=[{date:today(),ts:Date.now(),volume:1000,exs:exs}];
+      const lignes=buildCoachContext().split('\n').filter(l=>l.indexOf(motif)>=0);
+      return lignes.join(' ¶ '); };
+    const monte=[{kg:36,reps:5,type:'É',done:true},{kg:46,reps:3,type:'É',done:true},{kg:56,reps:5,type:'É',done:true}];
+    const trav=[{kg:60,reps:8,type:'N',done:true},{kg:60,reps:8,type:'N',done:true}];
+    const o={};
+    // ① montée écrite par la PERSONNE et vraiment bancale → le verdict reste (c'est utile)
+    o.perso=/montée en charge insuffisante/.test(ctx([{name:'Développé Incliné Haltères',sets:monte.concat(trav)}],'Développé Incliné Haltères:'));
+    // ② EXACTEMENT la même, mais ajoutée par l'app → aucun reproche
+    o.parLApp=/montée en charge insuffisante/.test(ctx([{name:'Développé Incliné Haltères',_montee:true,sets:monte.concat(trav)}],'Développé Incliné Haltères:'));
+    // ③ un accessoire (Pec Deck) n'est plus jugé — même règle que le générateur (ft-v858)
+    o.pecDeck=/montée en charge insuffisante/.test(ctx([{name:'Pec Deck',sets:
+      [{kg:45,reps:5,type:'É',done:true}].concat([{kg:61,reps:12,type:'N',done:true}])}],'Pec Deck:'));
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(X23.erreur){ t('⛔ le contexte de Milo se construit', false, X23.erreur); }
+  else{
+    t('⚠️ non-régression : une montée bancale NOTÉE PAR LA PERSONNE est toujours signalée', X23.perso===true);
+    t('⭐⭐ la même montée, ajoutée par l\'app, n\'est PAS reprochée', X23.parLApp===false);
+    t('⭐ un accessoire n\'est plus jugé sur sa montée (même règle que le générateur)', X23.pecDeck===false);
+  }
+  try{ await p.evaluate(()=>{ S.sessions=[]; }); }catch(e){}
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
