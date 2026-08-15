@@ -4160,6 +4160,60 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* ══ BLOC XXI — LE DÉCOMPTE FINAL SURVIT AU GEL DES MINUTEURS (15/08/2026) ══
+   Michel : *« si je ne suis pas dans l'application… je n'ai pas le chrono final de 10 à zéro, et
+   donc je ne peux pas cliquer sur GO »*. Le décompte ne s'ouvrait que si un tick tombait EXACTEMENT
+   sur la 10ᵉ seconde ; en arrière-plan le navigateur gèle les minuteurs, on sort à 40 s et on
+   revient à 6 — la valeur 10 n'est jamais passée, et le repos se termine en silence. */
+{
+  console.log('\n── XXI. Le décompte final des 10 s quand on sort de l\'application ──');
+  const V=await p.evaluate(()=>{
+   try{
+    const vu=()=>{const o=document.getElementById('ov-rest-countdown');return !!(o&&o.style.display==='block');};
+    const num=()=>{const n=document.getElementById('rcd-num');return n?n.textContent:'';};
+    const raz=()=>{ stopRest(); if(typeof _closeRestCountdown==='function')_closeRestCountdown(); };
+    const o={};
+    if(!S.wkt)startWorkout();
+    if(!S.wkt.exs.length)S.wkt.exs.push({name:'Squat à la Barre',sets:[{kg:100,reps:5,type:'N'},{kg:100,reps:5,type:'N'}]});
+    goScreen('log');
+    // ① NON-RÉGRESSION : le tick tombe pile sur 10 → décompte, comme avant
+    raz(); startRest(130); restStartTs=Date.now()-120*1000; _restTick();
+    o.pile10=vu(); o.num10=num();
+    // ② NON-RÉGRESSION : à 40 s restantes, RIEN ne s'ouvre
+    raz(); startRest(130); restStartTs=Date.now()-90*1000; _restTick();
+    o.a40=vu();
+    // ③ LE CAS DE MICHEL : minuteurs gelés, aucun tick entre 40 s et 6 s
+    o.avant=vu();                                  // (toujours à 40 s : rien)
+    restStartTs=Date.now()-124*1000; _restTick();   // 1er tick au retour dans l'app
+    o.retour6=vu(); o.num6=num();
+    // ④ … et il va bien jusqu'au GO, donc il y a quelque chose à taper
+    restStartTs=Date.now()-131*1000; _restTick();
+    o.go=num();
+    // ⑤ un repos DÉJÀ terminé n'ouvre pas un « GO » en retard (le dépassement se lit au chrono)
+    raz(); startRest(130); restStartTs=Date.now()-200*1000; _restTick();
+    o.tropTard=vu();
+    // ⑥ le retour au premier plan resynchronise AUSSI hors de l'écran Séance (ex. discussion avec Milo)
+    raz(); goScreen('coach'); startRest(130); restStartTs=Date.now()-124*1000;
+    o.avantEvt=vu();                                // rien tant qu'aucun tick n'a eu lieu
+    document.dispatchEvent(new Event('visibilitychange'));
+    o.apresEvt=vu();                                // le retour au premier plan doit suffire
+    raz(); goScreen('home');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(V.erreur){ t('⛔ le décompte de repos se rend', false, V.erreur); }
+  else{
+    t('⚠️ non-régression : un tick pile sur 10 s ouvre le décompte', V.pile10===true && V.num10==='10', 'reçu : '+V.num10);
+    t('⚠️ non-régression : à 40 s restantes, aucun décompte', V.a40===false);
+    t('⭐⭐ minuteurs gelés (hors de l\'app) : on revient à 6 s et le décompte s\'ouvre quand même',
+      V.retour6===true && V.num6==='6', 'reçu : '+(V.retour6?V.num6:'AUCUN DÉCOMPTE'));
+    t('⭐⭐ … et il va jusqu\'au GO, donc il y a bien quelque chose à taper', V.go==='GO', 'reçu : '+V.go);
+    t('⚠️ un repos déjà fini depuis longtemps n\'affiche PAS un GO en retard', V.tropTard===false);
+    t('⭐ le retour au premier plan resynchronise aussi depuis l\'écran Coach',
+      V.avantEvt===false && V.apresEvt===true, 'avant : '+V.avantEvt+' · après : '+V.apresEvt);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

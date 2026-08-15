@@ -100,15 +100,21 @@ function toggleWktPause(){
 
 // Ré-acquérir + resync des deux chronos au retour au premier plan
 document.addEventListener('visibilitychange',()=>{
-  if(document.visibilityState==='visible'&&window._curScreen==='log'){
+  if(document.visibilityState!=='visible')return;
+  if(window._curScreen==='log'){
     _acquireWakeLock();
     // Wkt chrono : mise à jour immédiate (ne pas attendre le prochain tick)
     const chronoEl=document.getElementById('wkt-chrono');
     if(chronoEl)chronoEl.textContent=_fmtElapsed();
     _startWktChrono();
-    // Rest timer : vérification immédiate (bip + affichage)
-    if(restIv)_restTick();
   }
+  /* ⚠️ LE REPOS SE RESYNCHRONISE SUR TOUS LES ÉCRANS (15/08/2026) — ce contrôle était enfermé
+     dans le `if` de l'écran Séance, alors que le décompte final, lui, est VOLONTAIREMENT plein
+     écran et global (« le décompte manquait quand on discute avec Milo »). Donc revenir dans
+     l'app depuis l'écran Coach ou Accueil ne rattrapait rien, et il fallait attendre le tick
+     suivant — jusqu'à 250 ms de trop, mais surtout : c'est ce même chemin qui ouvre désormais
+     le décompte quand les minuteurs ont été gelés. */
+  if(restIv)_restTick();
 });
 
 /* ⏱️ LE CHRONO DÉMARRE À LA 1ʳᵉ SÉRIE VALIDÉE, PLUS À L'OUVERTURE (14/08/2026) ──────────
@@ -3066,7 +3072,21 @@ function _restTick(){
   // Overlay décompte final : 10 dernières secondes (si repos > 10s).
   // Affiché sur TOUS les écrans (retour Michel : le décompte manquait quand on discute avec Milo)
   // — l'overlay est plein écran (z-index 9999), il couvre n'importe quel écran ; tap/Passer pour fermer.
-  if(left===10&&!_cdownActive&&restTot>10)_showRestCountdown();
+  /* ⏱️ UNE FENÊTRE, PAS UNE ÉGALITÉ STRICTE (15/08/2026)
+     Michel : *« si je ne suis pas dans l'application… je n'ai pas le chrono final de 10 à zéro,
+     et donc je ne peux pas cliquer sur GO »*.
+     LA CAUSE tenait à `left===10` : le décompte ne s'ouvrait QUE si un tick tombait exactement
+     sur la 10ᵉ seconde. Dans l'app c'est garanti (le tick est à 250 ms, la valeur 10 passe quatre
+     fois) — mais dès que l'app part en arrière-plan, **le navigateur gèle les minuteurs**. On sort
+     à 40 s restantes, on revient à 6 : la valeur 10 n'est JAMAIS passée, l'overlay ne s'ouvre pas,
+     et l'écran GET/GO n'existe donc pas. *Rien ne plante : le repos se termine en silence.*
+     ⚠️ Et c'est précisément le moment où on a le plus besoin de l'écran — téléphone dans la poche
+     ou dans la main sur autre chose, c'est le seul signal qui dit « c'est reparti ».
+     LE REMÈDE : on ouvre le décompte dès qu'on se trouve DANS la fenêtre des 10 dernières
+     secondes, quel que soit le tick qui nous y amène. `_cdownActive` empêche déjà la réouverture.
+     ⚠️ On n'ouvre pas au-delà de 0 : un repos déjà terminé n'affiche pas un « GO » en retard —
+     le dépassement se lit sur le chrono en négatif (ft-v851), qui est le bon repère. */
+  if(left<=10&&left>0&&!_cdownActive&&restTot>10)_showRestCountdown();
   if(_cdownActive)_updateRestCountdown();
   // Décompte 5..1 : vibrations courtes (aucun son)
   if(left>0&&left<=5&&!_countdownSecs.has(left)){
