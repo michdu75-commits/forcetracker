@@ -1085,6 +1085,30 @@ function exporterConversationsMilo(){
   }
 }
 
+/* ⬇️ LE FIL S'OUVRE SUR LE DERNIER MESSAGE — MÊME QUAND IL EST CONSTRUIT À L'AVEUGLE (15/08/2026)
+   Michel, en partant à la salle : *« quand je vais dormir, il remonte tout en haut la discussion »*.
+   LA CAUSE, mesurée : au démarrage, `autoConnect()` appelle `updateCoachHeader()` — donc
+   `_renderCoachThread()` — alors qu'on est encore sur l'ACCUEIL. L'écran Coach est caché, sa
+   hauteur vaut 0, et `scrollTop = scrollHeight` ne fait donc… RIEN. Ensuite, ouvrir le Coach ne
+   reconstruit plus le fil (il n'est plus vide) : la discussion s'affiche au tout PREMIER message.
+   Mesuré sur 40 bulles : 5 670 px à remonter à la main pour retrouver la dernière réponse.
+   ⚠️ Le défilement ne peut donc pas être « fait et oublié » : quand il est IMPOSSIBLE, il faut
+   s'en souvenir et le refaire à l'ouverture de l'écran. C'est ce que porte `_coachFilEnBas`.
+   ⚠️ Et on ne redescend PAS de force à chaque visite : si la personne est remontée lire un vieux
+   message puis passe sur Séance et revient, elle doit retrouver SA place. On ne rattrape que le
+   défilement qui n'a jamais pu avoir lieu.
+   R2 : les 13 endroits qui descendaient le fil passent tous par ici — sinon le prochain ajout
+   de bulle réintroduirait le trou par une autre porte. */
+var _coachFilEnBas = true;
+function _coachAuBas(){
+  const msgs=document.getElementById('coach-msgs');
+  if(!msgs) return false;
+  if(!msgs.scrollHeight){ _coachFilEnBas=false; return false; }   // écran caché : à refaire plus tard
+  msgs.scrollTop=msgs.scrollHeight; _coachFilEnBas=true; return true;
+}
+// Appelée à l'ouverture de l'écran Coach — ne rattrape QUE le défilement qui n'a pas pu se faire.
+function _coachAuBasSiDu(){ if(_coachFilEnBas===false) _coachAuBas(); }
+
 // Reconstruit les bulles à l'écran depuis coachHistory (à l'ouverture de l'appli)
 function _renderCoachThread(){
   const msgs = document.getElementById('coach-msgs');
@@ -1120,7 +1144,7 @@ function _renderCoachThread(){
       break;   // seulement le DERNIER : une vieille séance ne doit pas ressurgir
     }
   }catch(e){}
-  msgs.scrollTop = msgs.scrollHeight;
+  _coachAuBas();
 }
 // ─── Historique des discussions ───────────────────────────────────
 // Le « + » ne SUPPRIME plus le fil : il le RANGE dans une liste (S.coachConversations,
@@ -1314,7 +1338,7 @@ function _appendSaveProgBtn(prog){
   wrap.className='coach-prog-save';
   wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_saveForceProgram('+idx+',this)">💾 Enregistrer ce programme ('+nDays+(nDays>1?' séances':' séance')+')</button>';
   last.appendChild(wrap);
-  msgs.scrollTop=msgs.scrollHeight;
+  _coachAuBas();
 }
 function _saveForceProgram(idx,btn){
   const prog=_pendingForceProgs[idx];
@@ -1478,7 +1502,7 @@ function _appendMemoryBtns(traits){
       +'</div></div>';
   }).join('');
   last.appendChild(wrap);
-  msgs.scrollTop=msgs.scrollHeight;
+  _coachAuBas();
 }
 function _confirmMiloMemory(idx,ok,btn){
   const t=_pendingMiloMemory[idx];
@@ -1579,7 +1603,7 @@ function _appendQuickReplies(reps){
     wrap.appendChild(b);
   });
   last.appendChild(wrap);
-  msgs.scrollTop=msgs.scrollHeight;
+  _coachAuBas();
 }
 
 // Ajoute le bouton « ⚡ Commencer cette séance » sous la dernière bulle de Milo
@@ -1601,7 +1625,7 @@ function _appendStartSessionBtn(sess){
   wrap.className='coach-prog-save';
   wrap.innerHTML='<button class="btn btn-red" style="width:100%;margin-top:10px;padding:11px;font-size:14px;border-radius:12px;" onclick="_startSessionFromMilo('+idx+',this)">'+lbl+' ('+n+(n>1?' exercices':' exercice')+')</button>';
   last.appendChild(wrap);
-  msgs.scrollTop=msgs.scrollHeight;
+  _coachAuBas();
 }
 
 function updateCoachHeader() {
@@ -2705,7 +2729,7 @@ function renderCoachMsg(role, text) {
     div.textContent = text;
   }
   msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
+  _coachAuBas();
 }
 // Nettoie le markdown pour un partage texte propre (+ sécurité : retire tout bloc technique)
 function _coachPlain(text){
@@ -2791,7 +2815,7 @@ function showTyping() {
   div.className = 'msg-typing'; div.id = 'typing-indicator';
   div.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
   msgs.appendChild(div);
-  msgs.scrollTop = msgs.scrollHeight;
+  _coachAuBas();
 }
 
 function hideTyping() {
@@ -2934,7 +2958,7 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       div.innerHTML = (msg ? '<p style="margin:0 0 6px">' + msg.replace(/</g,'&lt;') + '</p>' : '') +
         '<img src="data:' + imgType + ';base64,' + imgData + '" style="max-width:180px;border-radius:8px;display:block;">';
       msgs.appendChild(div);
-      msgs.scrollTop = msgs.scrollHeight;
+      _coachAuBas();
     }
   } else {
     renderCoachMsg('user', displayMsg || msg);
@@ -3104,7 +3128,7 @@ function _pt001Label(txt){
   const msgs=document.getElementById('coach-msgs'); if(!msgs)return;
   const d=document.createElement('div');
   d.style.cssText='align-self:center;margin:10px auto 4px;font-size:11.5px;font-weight:700;color:var(--t3);background:var(--bg3);border-radius:20px;padding:4px 12px;';
-  d.textContent=txt; msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+  d.textContent=txt; msgs.appendChild(d); _coachAuBas();
 }
 // Un appel Coach instrumenté (timing + statut + taille) — n'incrémente aucun quota.
 // ⚠️ Détecte le fallback « Désolé, réessaie. » (= le Worker a reçu un texte VIDE de l'API :
@@ -3328,7 +3352,7 @@ function _pt001ShowResultCard(){
     +'<button class="btn btn-bg2" style="flex:1;min-width:130px;padding:10px;font-size:13px" onclick="exportPt001Text()">📤 Rapport (texte)</button>'
     +'<button class="btn btn-bg2" style="flex:1;min-width:130px;padding:10px;font-size:13px" onclick="exportPt001Pdf()">📄 PDF (archive)</button>'
     +'</div>';
-  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+  msgs.appendChild(d); _coachAuBas();
 }
 // Export TEXTE (pour analyse Claude) — partage fichier si possible, sinon téléchargement
 async function exportPt001Text(){
@@ -3586,7 +3610,7 @@ function _vcShowResultCard(){
     +'<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'
     +'<button class="btn btn-bg2" style="flex:1;min-width:150px;padding:10px;font-size:13px" onclick="exportVcText()">📤 Rapport (texte)</button>'
     +'</div>';
-  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+  msgs.appendChild(d); _coachAuBas();
 }
 async function exportVcText(){
   if(!_vcReport){ toast('Aucun rapport VC','error'); return; }
@@ -3698,7 +3722,7 @@ function _vmRun(){
         +'<p style="margin:2px 0">Score : <b>'+_vmReport.pass+'/'+_vmReport.total+'</b> · moteur local, 0 appel IA</p>'
         +'<ul style="margin:6px 0;padding-left:16px;font-size:12.5px">'+li+'</ul>'
         +'<button class="btn btn-bg2" style="width:100%;padding:10px;font-size:13px;margin-top:6px" onclick="exportVmText()">📤 Rapport (texte)</button>';
-      msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+      msgs.appendChild(d); _coachAuBas();
     }
   }catch(e){}
   toast('VM : '+pass+'/'+VM_CASES.length,'info');
@@ -3838,7 +3862,7 @@ function _vmBenchRun(benchDef, compare){
         +'<button class="btn btn-bg2" style="flex:1;min-width:90px;padding:9px;font-size:12px" onclick="exportVmBenchCsv()">📊 CSV</button>'
         +'<button class="btn btn-bg2" style="flex:1;min-width:120px;padding:9px;font-size:12px" onclick="saveVmBenchBaseline()">💾 Référence</button>'
         +'</div>';
-      msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
+      msgs.appendChild(d); _coachAuBas();
     }
   }catch(e){}
   const msg='Banc VM : '+pctReconnu+'% reconnus'+(base&&regressions.length?' · 🔴 '+regressions.length+' régression'+(regressions.length>1?'s':''):'');

@@ -4003,6 +4003,60 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cs.close();
 }
 
+/* ══ BLOC XVIII — LA DISCUSSION S'OUVRE SUR LE DERNIER MESSAGE (15/08/2026) ══
+   Michel : *« quand je vais dormir, il remonte tout en haut la discussion »*. Au démarrage,
+   `autoConnect()` reconstruit le fil pendant qu'on est encore sur l'ACCUEIL : l'écran Coach est
+   caché, sa hauteur vaut 0, et le défilement vers le bas ne fait rien. On ouvre ensuite le Coach
+   sur le PREMIER message d'une conversation de 40 bulles.
+   ⚠️ Le 2ᵉ témoin est le plus important : on ne redescend PAS de force à chaque visite — qui
+   remonte lire un vieux message doit retrouver sa place en revenant.                          */
+{
+  console.log('\n── XVIII. La discussion s\'ouvre sur le dernier message, pas sur le premier ──');
+  const H=[];
+  for(let i=1;i<=20;i++){
+    H.push({role:'user',content:'Question numéro '+i+' — un texte assez long pour que la bulle occupe de la place et que le fil déborde largement de l\'écran.'});
+    H.push({role:'assistant',content:'Réponse numéro '+i+' — encore un texte long, sur plusieurs lignes, pour forcer le défilement du fil de discussion.'});
+  }
+  const cs=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const ps=await cs.newPage(); const es=[];
+  ps.on('pageerror',e=>es.push(String(e.message)));
+  await ps.addInitScript(seedScript({ft4_coach_hist:JSON.stringify(H)}));
+  await ps.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+  await ps.waitForTimeout(1200);
+  const Y=await ps.evaluate(async()=>{
+   try{
+    const msgs=document.getElementById('coach-msgs');
+    if(!msgs) return {erreur:'#coach-msgs absent'};
+    const o={ecran:window._curScreen};
+    // ① ce que fait autoConnect() au démarrage : le fil se construit ALORS QU'ON EST SUR L'ACCUEIL
+    updateCoachHeader();
+    o.bulles=msgs.children.length;
+    o.hauteurCache=msgs.scrollHeight;              // 0 : l'écran est caché, rien n'est défilable
+    // ② la personne ouvre le Coach
+    goScreen('coach'); await new Promise(r=>setTimeout(r,250));
+    o.restant=msgs.scrollHeight-msgs.clientHeight-msgs.scrollTop;   // 0 = sur le dernier message
+    o.aRemonter=msgs.scrollTop;
+    // ③ elle remonte lire un vieux message, va sur Séance, revient
+    msgs.scrollTop=1200;
+    goScreen('log'); await new Promise(r=>setTimeout(r,150));
+    goScreen('coach'); await new Promise(r=>setTimeout(r,250));
+    o.retour=msgs.scrollTop;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(Y.erreur){ t('⛔ le fil se reconstruit au démarrage', false, Y.erreur); }
+  else{
+    t('le fil est bien reconstruit au démarrage (40 bulles)', Y.bulles===40, 'reçu : '+Y.bulles);
+    t('⚠️ … et il l\'est pendant que l\'écran Coach est CACHÉ (hauteur 0)', Y.hauteurCache===0, 'reçu : '+Y.hauteurCache);
+    t('⭐⭐ à l\'ouverture, la discussion est sur le DERNIER message',
+      Y.restant<5, 'il restait '+Math.round(Y.restant)+' px à descendre (le fil s\'ouvrait '+Math.round(Y.aRemonter)+' px trop haut)');
+    t('⭐ … et on ne redescend PAS de force : la place de lecture est gardée au retour',
+      Math.abs(Y.retour-1200)<5, 'reçu : '+Y.retour+' (attendu 1200)');
+  }
+  t('0 erreur JS sur l\'ouverture du fil', es.length===0, es.join(' | '));
+  await cs.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
