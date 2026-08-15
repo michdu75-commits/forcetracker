@@ -4130,7 +4130,16 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     const nEch=e=>(e.sets||[]).filter(s=>s.type==='É'||s.type==='W').length;
     const tot=s=>s.exs.reduce((a,e)=>a+e.sets.length,0);
     const r=_completerMonteeEnCharge(push());
-    const o={ total:tot(r), incline:nEch(r.exs[1]), pecdeck:nEch(r.exs[2]), larsen:nEch(r.exs[0]) };
+    const o={ total:tot(r), incline:nEch(r.exs[1]), pecdeck:nEch(r.exs[2]), larsen:nEch(r.exs[0]),
+              epaules:nEch(r.exs[3]) };
+    // ⑤ mouvement NEUF mais corps déjà chaud → UNE série d'approche, jamais zéro (R29)
+    const jambes=_completerMonteeEnCharge({exs:[
+      {name:'Squat à la Barre',sets:[{kg:120,reps:5,type:'N'},{kg:120,reps:5,type:'N'}]},
+      {name:'Soulevé de Terre',sets:[{kg:140,reps:5,type:'N'},{kg:140,reps:5,type:'N'}]}]});
+    o.squatPlein=nEch(jambes.exs[0]);
+    const ech2=(jambes.exs[1].sets||[]).filter(x=>x.type==='É');
+    o.sdtApproche=ech2.length;
+    o.sdtEcart=ech2.length? 140-ech2[ech2.length-1].kg : null;
     // ⚠️ un accessoire placé AVANT l'ancre ne doit PAS supprimer la montée de l'ancre
     const inverse=_completerMonteeEnCharge({exs:[
       {name:'Pec Deck',sets:[{kg:61,reps:12,type:'N'}]},
@@ -4146,13 +4155,20 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   if(W.erreur){ t('⛔ la montée en charge se calcule', false, W.erreur); }
   else{
     t('⭐⭐ la séance Push de Michel ne gonfle plus de 19 à 29 séries',
-      W.total===23, 'reçu : '+W.total+' séries (19 annoncées par Milo, 29 avant le correctif)');
+      W.total===20, 'reçu : '+W.total+' séries (19 annoncées par Milo, 29 avant les correctifs)');
+    t('⭐⭐ la montée de Milo à 59 % de la charge est ACCEPTÉE telle quelle (plus de palier en trop)',
+      W.larsen===4, 'reçu : '+W.larsen+' paliers (Milo en proposait 4)');
+    t('⭐⭐ le développé épaules (4ᵉ exercice, corps chaud) reçoit UNE série d\'approche, pas 3 paliers',
+      W.epaules===1, 'reçu : '+W.epaules+' paliers');
+    t('⚠️ un mouvement neuf ne descend JAMAIS à zéro échauffement', W.sdtApproche>=1, 'reçu : '+W.sdtApproche);
+    t('⚠️ … et l\'écart avec la charge de travail reste sous la limite de l\'app (soulevé 140 kg)',
+      W.sdtEcart!==null && (W.sdtEcart<=15 || W.sdtEcart/140<=0.18), 'écart : '+W.sdtEcart+' kg');
+    t('⚠️ non-régression : le 1ᵉʳ ancre de la séance garde sa montée COMPLÈTE', W.squatPlein>=3, 'reçu : '+W.squatPlein);
     t('⭐⭐ le Pec Deck (isolation) ne reçoit AUCUNE montée en charge',
       W.pecdeck===0, 'reçu : '+W.pecdeck+' paliers');
     t('⭐ le développé incliné n\'est pas ré-échauffé (déjà chaud sur ce mouvement)',
       W.incline===0, 'reçu : '+W.incline+' paliers');
-    t('⚠️ non-régression : l\'ancre du jour garde bien sa montée complétée',
-      W.larsen===5, 'reçu : '+W.larsen+' paliers');
+
     t('⚠️ un accessoire AVANT l\'ancre ne supprime pas la montée de l\'ancre (une montée manquante coûte plus cher qu\'une de trop)',
       W.ancreApresAccessoire>=2, 'reçu : '+W.ancreApresAccessoire+' paliers');
     t('⚠️ non-régression : un squat lourd seul garde sa montée complète',

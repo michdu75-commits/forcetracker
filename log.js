@@ -1260,7 +1260,22 @@ function _movNorm(s){return _normEx(s).split(' ').filter(Boolean).map(_exStem).j
 //    · reps décroissantes (5 → 3 → 2 → 1) ;
 //    · 2-3 paliers si léger, 4-5 si lourd — au-delà de 5 on fatigue au lieu de préparer ;
 //    · au-delà de 85-90 % de la charge, ce n'est plus un échauffement mais une série de TRAVAIL.
-const _MONTEE_SEUIL_KG = 40;          // en dessous, une montée en 4 paliers n'a aucun sens
+const _MONTEE_SEUIL_KG = 40;
+/* ⚖️ LE DÉPART DE LA MONTÉE : 62 % DE LA CHARGE (relevé de 55 % le 15/08/2026)
+   Michel : *« c'est normal qu'il me chauffe sur le développé couché, mais en même temps il y a
+   beaucoup d'échauffement »*. Le seuil de 55 % était la cause d'un palier de trop : Milo proposait
+   50 → 65 → 75 → 83 pour 85 kg (une montée en 4 paliers, 11 répétitions, parfaitement dans les
+   clous de la littérature : 3 à 5 paliers, 10 à 25 répétitions). Comme 50 kg vaut **59 %** de 85,
+   l'app préposait un 5ᵉ palier à 35 kg.
+   ⚠️ AUCUNE SOURCE NE RÉCLAME UN POINT DE DÉPART PRÉCIS. Elles parlent d'écarts de 15-20 % de la
+   charge de travail entre paliers — et cet écart-là est déjà contrôlé, séparément, par la règle du
+   trou. Le départ ne sert qu'à empêcher qu'on attaque la séance à deux tiers de sa charge, articu-
+   lation froide. 62 % accepte une montée qui démarre à 59 % (celles de Milo) et refuse un
+   démarrage à 70 %. ⚠️ C'est un JUGEMENT, comme le plancher de 15 kg de la règle du trou — il est
+   écrit ici pour qu'on sache quoi rouvrir si un jour il gêne.
+   ⚠️ Une seule constante pour les DEUX usages (le reproche et l'insertion d'un palier) : ils
+   divergeraient sinon, et l'app jugerait selon une règle qu'elle n'applique pas (R2). */
+const _MONTEE_DEPART_MAX = 0.62;          // en dessous, une montée en 4 paliers n'a aucun sens
 // ⚠️ On réutilise `_movPattern` plutôt que d'écrire une seconde liste d'exercices (R2/R13) :
 // deux listes du même métier finiraient par diverger. Seuls les mouvements POLYARTICULAIRES
 // méritent une montée — un curl ou une extension de triceps, non.
@@ -1358,7 +1373,7 @@ function _monteeDefauts(echauffements, kgTravail){
   const pct = k => Math.round(100*k/T);
   const paliers = (echauffements||[]).map(s=>+s.kg||0).filter(k=>k>0).sort((a,b)=>a-b);
   if(!paliers.length) return ['aucune montée en charge avant '+T+' kg'];
-  if(paliers[0] > 0.55*T){                                  // on ne démarre pas assez bas
+  if(paliers[0] > _MONTEE_DEPART_MAX*T){                     // on ne démarre pas assez bas
     out.push('démarrage à '+paliers[0]+' kg, soit '+pct(paliers[0])+' % de la charge (viser 40-50 %)');
   }
   const suite = paliers.concat([T]);
@@ -1411,7 +1426,7 @@ function _monteeCompletee(echauffements, kgTravail, pas){
   const MAX = 5;
   for(let garde=0; garde<4 && out.length<MAX; garde++){
     // ① démarrage trop haut → on prépose un palier bas
-    if((+out[0].kg||0) > 0.55*T){
+    if((+out[0].kg||0) > _MONTEE_DEPART_MAX*T){
       const kg = ARR(0.45*T);
       if(kg > 0 && kg < (+out[0].kg||0)){ out.unshift({kg:kg, reps:5, type:'É', _add:true}); continue; }
     }
@@ -1457,6 +1472,7 @@ function _completerMonteeEnCharge(sess){
   try{
     if(!sess || !Array.isArray(sess.exs)) return sess;
     const chauffe = {};   // schémas moteurs déjà chargés lourd DANS CETTE SÉANCE
+    let dejaChauffe = false;   // un ancre lourd a-t-il déjà été fait ? (→ on est chaud)
     sess.exs.forEach(function(ex){
       const sets = Array.isArray(ex.sets) ? ex.sets : [];
       const travail = sets.filter(s=>s && s.type!=='É' && s.type!=='W');
@@ -1467,10 +1483,37 @@ function _completerMonteeEnCharge(sess){
       let role='accessoire'; try{ role=_exRole(ex.name); }catch(e){}
       if(role !== 'ancre') return;                          // isolation / accessoire → on ne touche pas
       if(pat && chauffe[pat]) return;                       // ce mouvement a déjà été chauffé plus haut
+      const premier = !dejaChauffe;                         // est-ce le PREMIER ancre lourd de la séance ?
       if(pat) chauffe[pat] = true;                          // seul un ancre lourd chauffe son schéma
+      dejaChauffe = true;
       const ech = sets.filter(s=>s && (s.type==='É'||s.type==='W'));
       if(_monteeSuffisante(ech, kgT)) return;               // sa montée est bonne → on ne touche pas
-      const montee = _monteeCompletee(ech, kgT, _pasCharge(ex.name));
+      /* 🎯 UNE MONTÉE COMPLÈTE POUR LE PREMIER ANCRE, UNE SEULE SÉRIE D'APPROCHE POUR LES SUIVANTS
+         (15/08/2026, décision de Michel après recherche)
+         Michel : *« il m'a mis l'échauffement partout presque »* — et sur sa séance Push, le
+         développé épaules (4ᵉ exercice, sur machine) recevait 3 paliers alors qu'il venait
+         d'enchaîner tout un travail de poussée.
+         ⭐ CE QUE DIT LA LITTÉRATURE : le mouvement composé déjà fait a augmenté le flux sanguin,
+         préparé le neuromusculaire et élevé la température de la zone ; sur un mouvement nouveau,
+         « quelques répétitions légères » suffisent — pas un protocole complet. Le protocole
+         complet, lui, est celui de la PREMIÈRE série lourde de la séance.
+         ⚠️ On ne descend jamais à ZÉRO palier sur un mouvement neuf : le schéma moteur change
+         (pousser au-dessus de la tête n'est pas pousser devant soi), et une série d'approche à
+         ~85 % coûte 1 minute quand une épaule coûte des mois (R29).
+         ⚠️ Et si Milo avait DÉJÀ prévu un échauffement, on n'y touche pas : le nombre de séries
+         ne diminue jamais (invariant du 11/08). */
+      let montee;
+      if(premier || ech.length){
+        montee = _monteeCompletee(ech, kgT, _pasCharge(ex.name));
+      }else{
+        // ⚠️ On reprend le DERNIER palier du générateur, pas un pourcentage inventé à côté : c'est
+        // la même règle, donc l'écart avec la charge de travail reste celui que l'app juge sûr
+        // (le contrôle du trou l'a déjà validé pour la montée complète) — R2.
+        const complet = _monteeEnCharge(kgT, _pasCharge(ex.name));
+        if(!complet.length) return;
+        const haut = complet[complet.length-1];
+        montee = [{kg:haut.kg, reps:2, type:'É', _add:true}];
+      }
       if(!montee.length) return;
       const ajoutes = montee.filter(s=>s._add).length;
       // 🛡️ GARDE-FOU DUR : on ne livre JAMAIS moins de séries que ce que la personne a lu.
