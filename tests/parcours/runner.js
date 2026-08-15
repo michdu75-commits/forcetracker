@@ -4057,6 +4057,60 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cs.close();
 }
 
+/* ══ BLOC XIX — « PRÉCÉDENT » SE LIT PAR RÔLE, PAS PAR POSITION (15/08/2026) ══
+   Capture de Michel en séance : 3 lignes de montée en charge ajoutées par l'app, et la colonne
+   Précédent y affichait ses vraies séries de TRAVAIL de la dernière fois. Pire : en insérant 3
+   lignes en haut, tout était décalé — sa 1ʳᵉ série de travail (8×58) se comparait à la 4ᵉ d'avant
+   (10×60) au lieu de la 1ʳᵉ (10×52), soit 8 kg d'écart sur le repère qui sert à charger la barre. */
+{
+  console.log('\n── XIX. La colonne « Précédent » se lit par rôle, pas par position ──');
+  const Z=await p.evaluate(()=>{
+   try{
+    const lire=()=>[...document.querySelectorAll('#s-log .set-row')].map(r=>{
+      const e=r.querySelector('.sprev'); return e?e.innerText.trim().split('\n')[0]:'?'; });
+    const monter=(nom,prevSets,sets)=>{
+      S.sessions=[{date:'2026-08-12',exs:[{name:nom,sets:prevSets.map(s=>Object.assign({done:true},s))}]}];
+      S.wkt={date:today(),exs:[{name:nom,sets:sets.map(s=>Object.assign({done:false},s))}]};
+      _expandedEx=0; goScreen('log'); renderExBlocks(); return lire();
+    };
+    const o={};
+    // ① LE CAS DE MICHEL : la dernière fois = 6 séries de travail ; aujourd'hui = 3 paliers + 3 séries
+    o.michel=monter('Développé Couché Haltères',
+      [{kg:52,reps:10,type:'N'},{kg:56,reps:10,type:'N'},{kg:60,reps:10,type:'N'},
+       {kg:60,reps:10,type:'N'},{kg:60,reps:10,type:'N'},{kg:60,reps:10,type:'N'}],
+      [{kg:27.5,reps:5,type:'É'},{kg:37.5,reps:3,type:'É'},{kg:50,reps:2,type:'É'},
+       {kg:58,reps:8,type:'N'},{kg:58,reps:8,type:'N'},{kg:60,reps:8,type:'N'}]);
+    // ② LE CAS INVERSE : la dernière fois avait des paliers, aujourd'hui non
+    o.inverse=monter('Squat à la Barre',
+      [{kg:40,reps:5,type:'É'},{kg:70,reps:3,type:'É'},{kg:100,reps:5,type:'N'},{kg:100,reps:5,type:'N'}],
+      [{kg:105,reps:5,type:'N'},{kg:105,reps:5,type:'N'}]);
+    // ③ NON-RÉGRESSION : aucun échauffement des deux côtés → rien ne doit changer
+    o.simple=monter('Rowing Barre',
+      [{kg:60,reps:10,type:'N'},{kg:65,reps:10,type:'N'}],
+      [{kg:62,reps:10,type:'N'},{kg:67,reps:10,type:'N'}]);
+    // ④ REPLI : plus de séries de travail qu'avant → on répète la DERNIÈRE série de travail
+    o.repli=monter('Soulevé de Terre',
+      [{kg:50,reps:5,type:'É'},{kg:120,reps:5,type:'N'}],
+      [{kg:130,reps:5,type:'N'},{kg:130,reps:5,type:'N'},{kg:130,reps:5,type:'N'}]);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(Z.erreur){ t('⛔ la colonne « Précédent » se rend', false, Z.erreur); }
+  else{
+    t('⭐⭐ les 3 paliers de montée ne réclament plus une série de travail passée',
+      Z.michel.slice(0,3).every(x=>x==='—'), 'reçu : '+Z.michel.slice(0,3).join(' · '));
+    t('⭐⭐ … et la 1ʳᵉ série de TRAVAIL retrouve la 1ʳᵉ série de travail d\'avant (10×52, pas 10×60)',
+      Z.michel[3]==='10×52' && Z.michel[4]==='10×56' && Z.michel[5]==='10×60',
+      'reçu : '+Z.michel.slice(3).join(' · '));
+    t('⭐ cas inverse : aujourd\'hui sans paliers → on lit le travail d\'avant, pas son échauffement',
+      Z.inverse[0]==='100×5'||Z.inverse[0]==='5×100', 'reçu : '+Z.inverse.join(' · '));
+    t('⚠️ non-régression : sans échauffement des deux côtés, rien ne change',
+      Z.simple[0]==='10×60' && Z.simple[1]==='10×65', 'reçu : '+Z.simple.join(' · '));
+    t('⚠️ repli : une série de travail en plus répète la dernière série de TRAVAIL (jamais un palier)',
+      Z.repli.every(x=>x==='5×120'), 'reçu : '+Z.repli.join(' · '));
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

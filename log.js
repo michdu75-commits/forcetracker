@@ -527,6 +527,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const ex=S.wkt.exs[ei];
   const exCount=S.wkt.exs.length;
   const prev=getPrev(ex.name);
+  const prevAl=_prevAligne(prev, ex.sets);   // rapprochement PAR RÔLE (voir _prevAligne)
   const doneSets=ex.sets.filter(s=>s.done);
   // ⚠️ Même règle que le tonnage de la séance : un unilatéral compte double (la série se
   // refait de l'autre côté). Si ce chiffre-ci ne doublait pas, l'exercice et la séance
@@ -582,7 +583,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
   const _exImgSrc=_exImg(ex.name);const hasLocalGif=!!_exImgSrc;
   const _thumbSrc=_exImgSrc||_exMuscleImg(ex.name); // toujours une vignette (photo/gif, sinon muscle deviné)
   const rows=ex.sets.map((set,si)=>{
-    const p=prev[si]||prev[Math.max(0,prev.length-1)];
+    const p=prevAl[si];
     const liveRM=set.kg&&set.reps?fmt(bz(set.kg,set.reps)):null;
     return`<div id="sr-wrap-${ei}-${si}">`
       +`<div class="set-row${set.done?' done-row':''}" id="sr-${ei}-${si}">`
@@ -607,7 +608,7 @@ function _renderExHtml(ei,inGroup,posInGroup,groupSize,blockIdx,blockCount){
       const isCur=!isDone&&si===curPi;
       const label=si===0?'Charge de départ':(isDown?`Drop −${pct}%`:`+${pct}%`);
       const isLast=si===ex.sets.length-1;
-      const p=prev[si]||prev[Math.max(0,prev.length-1)];
+      const p=prevAl[si];
       if(isCur){
         return`<div id="sr-wrap-${ei}-${si}"><div class="set-row" id="sr-${ei}-${si}" style="background:rgba(255,109,0,.06);">`
           +`<div class="snum" style="color:var(--orange);font-weight:900;">${si+1}</div>`
@@ -914,6 +915,30 @@ function _prevTypeBadge(p){
   if(!t||t==='N') return '';                                  // série normale → rien, pas de bruit
   const col={'É':'var(--blue)','W':'var(--blue)','X':'var(--red)','E':'var(--red)','D':'#BF5AF2'}[t]||'var(--t3)';
   return `<sup style="font-size:9px;font-weight:800;color:${col};margin-left:2px;">${t}</sup>`;
+}
+/* 🎯 « PRÉCÉDENT » SE LIT PAR RÔLE, PAS PAR POSITION (15/08/2026)
+   Capture de Michel, en séance : *« regarde y'a pas une couille là ? »*. Sur ses 6 lignes, les 3
+   premières sont une MONTÉE EN CHARGE que l'app venait d'ajouter (5×27,5 · 3×37,5 · 2×50), et la
+   colonne Précédent y affichait « 10×52 · 10×56 · 10×60 » — c'est-à-dire ses vraies SÉRIES DE
+   TRAVAIL de la dernière fois, collées en face d'un échauffement.
+   ⚠️ ET LE PIRE EST PLUS BAS : en insérant 3 lignes en haut, l'app décale TOUT. Sa 1ʳᵉ série de
+   travail du jour (8×58) était comparée à la 4ᵉ série d'avant (10×60) au lieu de la 1ʳᵉ (10×52) —
+   soit **8 kg d'écart sur le repère qui sert justement à décider quoi charger**.
+   *C'est l'app elle-même qui provoque le décalage, en ajoutant les paliers qu'on lui a demandé
+   d'ajouter.* R14 : un comportement juste dans un contexte (les séries se suivaient) devient faux
+   dans l'autre (on en insère au début). Le rapprochement se fait donc sur le RÔLE de la série :
+   échauffement ↔ échauffement, travail ↔ travail, chacun dans son ordre.
+   ⚠️ Et si la dernière fois ne contient aucun échauffement (le cas le plus courant — presque
+   personne ne les note), la ligne reste VIDE : mieux vaut un tiret qu'un repère faux (R29). */
+function _prevAligne(prev, sets){
+  const ech = s => !!(s && (s.type==='É' || s.type==='W'));
+  const pe=[], pt=[];
+  (prev||[]).forEach(s=>{ (ech(s)?pe:pt).push(s); });
+  let ie=0, it=0;
+  return (sets||[]).map(s=>{
+    if(ech(s)){ const p = pe[ie] || pe[pe.length-1] || null; ie++; return p; }
+    const p = pt[it] || pt[pt.length-1] || null; it++; return p;
+  });
 }
 function getPrev(name){
   for(const s of S.sessions){
@@ -1798,8 +1823,9 @@ function addSet(ei){
   const ex=S.wkt.exs[ei];
   // Nouvelle série basée sur la SÉANCE PRÉCÉDENTE (cohérent avec la colonne « Précédent »).
   const prev=getPrev(ex.name);
-  const si=ex.sets.length;
-  const p=prev.length?(prev[si]||prev[prev.length-1]):null;
+  // ⚠️ PAR RÔLE, pas par position (voir _prevAligne) : la nouvelle série est une série de
+  // TRAVAIL, elle se compare aux séries de travail d'avant — jamais à un échauffement.
+  const p=_prevAligne(prev, ex.sets.concat([{type:'N'}])).pop();
   // Repli si aucune séance précédente : copie la DERNIÈRE série de la séance en cours
   // → une nouvelle série ne repart jamais « à vide » (kg conservé).
   const last=ex.sets.length?ex.sets[ex.sets.length-1]:null;
@@ -1919,7 +1945,9 @@ function addExercise(name){
   if(!S.wkt)S.wkt={date:today(),exs:[]};
   const prev=getPrev(name);
   // Pré-remplissage PAR SÉRIE depuis la séance précédente (série i → prev[i], repli dernière série).
-  const sets=[0,1,2].map((_,i)=>{const pp=prev.length?(prev[i]||prev[prev.length-1]):null;return{kg:pp?pp.kg:0,reps:pp?pp.reps:5,type:i===0&&prev.length?'É':'N',done:false,rm1:0};});
+  const _mod=[0,1,2].map(i=>({type:i===0&&prev.length?'É':'N'}));
+  const _pa=_prevAligne(prev,_mod);   // par RÔLE : l'échauffement ne prend pas la 1ʳᵉ série de travail
+  const sets=_mod.map((m,i)=>{const pp=_pa[i];return{kg:pp?pp.kg:0,reps:pp?pp.reps:5,type:m.type,done:false,rm1:0};});
   S.wkt.exs.push({name,sets});
   _expandedEx=S.wkt.exs.length-1;
   persist();closeExPicker();renderExBlocks();
@@ -4769,8 +4797,9 @@ function _startSessionFromMilo(idx,btn){
   // (Différent d'un PROGRAMME, qui dit « 4×8 » sans charge → là, le pré-remplissage garde tout son sens.)
   const buildEx=e=>{
     const prev=(typeof getPrev==='function')?(getPrev(e.name)||[]):[];
+    const _pa=_prevAligne(prev, e.sets||[]);   // par RÔLE (voir _prevAligne)
     return {name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
-      const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
+      const pp=_pa[i];
       const kg=(s.kg>0)?s.kg:(pp?pp.kg:0);                                   // Milo d'abord, sinon la dernière fois
       const reps=s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10));               // idem (série « maxi » = vide, à saisir)
       return {kg,reps,maxi:!!s.maxi,type:s.type||'N',done:false,rm1:0,rest:_secRepos(s.rest)};
@@ -4925,8 +4954,9 @@ function loadProgDay(progIdx,dayIdx){
     const prev=getPrev(e.name);
     // Pré-remplissage PAR SÉRIE depuis la séance précédente (comme la colonne « Précédent »
     // et addSet) — série i → prev[i], repli sur la dernière série précédente, sinon valeur du programme.
+    const _pa=_prevAligne(prev, e.sets||[]);   // par RÔLE (voir _prevAligne)
     const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
-      const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
+      const pp=_pa[i];
       return {
         kg:pp?pp.kg:(s.kg||0),
         reps:s.maxi?0:(pp?pp.reps:(s.reps||10)), // série "maxi" : reps vide, elle saisit ce qu'elle a fait
@@ -5144,8 +5174,9 @@ function loadProg(idx){
       // Pré-remplissage PAR SÉRIE depuis la séance précédente (voir loadProgDay).
       // note : recopiée comme dans loadProgDay — elle manquait ICI seulement (trouvé 01/08
       // en ajoutant le champ 💬 de l'éditeur : un programme à 1 jour perdait son commentaire).
+      const _pa=_prevAligne(prev, e.sets||[]);   // par RÔLE (voir _prevAligne)
       const obj={name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
-        const pp=prev.length?(prev[i]||prev[prev.length-1]):null;
+        const pp=_pa[i];
         return {
           kg:pp?pp.kg:(s.kg||0),
           reps:s.maxi?0:(pp?pp.reps:(s.reps||5)),
