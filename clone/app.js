@@ -1930,6 +1930,25 @@ const APP_GUIDE_SLIDES=[
   // du bloc cardio, et une diapo utile vaut mieux qu'une diapo repoussée en attendant la photo.
   {icon:'⚡', t:'Quand le temps manque', cap:'Milo connaît ton <b>rythme réel</b> et la <b>durée vraie</b> de tes séances (l\'app les chronomètre). Si ce qu\'il te propose ne rentre pas, il te le <b>dit avec le calcul</b> au lieu de promettre — et il peut <b>grouper deux accessoires en superset</b> pour te rendre des minutes. 🚫 Jamais sur tes mouvements lourds : là, la fatigue coûte des kilos.'},
   {icon:'🔥', t:'Tes calories de séance', cap:'Note ton <b>cardio</b> — 🔥 avant (l\'échauffement) et 🧊 après — et ses calories s\'ajoutent à ta séance. Si tu ne notes rien, l\'app <b>estime</b> 10 min d\'échauffement et de retour au calme ; dès que tu en <b>mesures</b> un, ta mesure remplace l\'estimation, jamais l\'inverse. ⚠️ Le compte de la partie muscu reste <b>approximatif</b> : prends-le comme un ordre de grandeur, pas comme une vérité à la calorie près.'},
+  /* 🧠 LES TROIS DIAPOS « MÉTHODE » (15/08/2026) — demande de Michel : *« on sait que perdre du
+     poids ou construire de la masse musculaire ne se fait pas pendant la séance de musculation
+     mais pendant le repos, la nourriture et le sommeil, comment on pourrait informer
+     l'utilisateur sur ça »*.
+     ⭐ LE GUIDE ÉTAIT UNE VISITE GUIDÉE : 23 diapos qui disent OÙ sont les choses, et aucune qui
+     dise COMMENT ça marche. C'est le manque qu'il désigne aussi en disant que le Guide est
+     « trop simpliste ». On le comble là où la question se pose — juste après les calories de
+     séance, au moment exact où l'on se demande à quoi tout cet effort sert.
+     ⚠️⚠️ ET ON NE DIT PAS QUE LA SÉANCE NE COMPTE PAS. Le raccourci « le muscle se construit au
+     repos » est vrai à moitié, et la moitié fausse est dangereuse : sans la tension mécanique de
+     la séance, il n'y a **aucun** signal à nourrir, et en déficit on perd du muscle. La séance
+     DÉCLENCHE, le reste CONSTRUIT. Écrire l'un sans l'autre pousserait quelqu'un à s'entraîner
+     moins en croyant bien faire (R29 : le coût de l'erreur n'est pas symétrique).
+     ⚠️ Trois diapos courtes plutôt qu'une longue : la diapo ANNONCE, elle n'est pas un cours
+     (R25). Sources : revue narrative hypertrophie (PubMed 42099260) · protéines avant le sommeil
+     (Journal of Nutrition / PMC5188418) · compensation énergétique à l'exercice (PMC3696411). */
+  {icon:'🌱', t:'Le muscle se construit APRÈS', cap:'Ta séance ne fabrique pas de muscle : elle envoie le <b>signal</b>. La construction, elle, se fait dans les heures et les jours qui suivent — et elle a besoin de <b>matériaux</b> (protéines) et de <b>temps</b>. C\'est pour ça qu\'une séance parfaite suivie de trois nuits de 5 h ne donne rien.<br><br>⚠️ Mais sans la séance, il n\'y a <b>aucun signal à nourrir</b>. Les trois vont ensemble.'},
+  {icon:'🍽️', t:'Perdre du gras : l\'assiette décide', cap:'Une séance brûle <b>250 à 450 kcal</b> — l\'équivalent d\'un sandwich. Et le corps <b>compense</b> : après l\'effort on mange un peu plus, on bouge un peu moins sans s\'en rendre compte. C\'est mesuré, et c\'est pour ça que le sport <b>seul</b> fait moins maigrir qu\'on ne l\'espère.<br><br>⚠️ Ça ne veut pas dire qu\'il ne sert à rien : c\'est lui qui te fait perdre du <b>gras</b> et pas du <b>muscle</b>.'},
+  {icon:'😴', t:'Le sommeil, le levier oublié', cap:'<b>7 à 9 h</b>. Le sommeil ne fabrique pas le muscle directement, mais il installe les <b>conditions</b> — hormones, récupération nerveuse — sans lesquelles rien ne se répare. C\'est le levier le plus efficace… et le seul qui soit <b>gratuit</b>.<br><br>Note tes nuits dans l\'app : Milo en tient compte quand il juge ta récup.'},
   {img:'guide/programmes.jpg', tap:[.5,.42],   t:'Tes programmes',         cap:'Crée, <b>importe</b> (photo/Word/PDF) ou charge un programme en 1 tap. Le bouton <b>✏️</b> modifie un programme enregistré : reps, <b>temps de repos</b> série par série, et un <b>💬 commentaire</b> par exercice (consigne, réglage machine…). Débutant ? Un parcours guidé t\'attend.'},
   {img:'guide/progres.jpg',    tap:[.5,.32],   t:'Tes progrès',            cap:'Tes <b>records</b>, ton poids, ta masse grasse et tes badges — tout en graphiques clairs.'},
   {img:'guide/bilan.jpg',      tap:[.5,.72],   t:'Ton bilan corporel',     cap:'Balance pro (impédance) ? Enregistre tes chiffres — <b>📷 photo</b>, à la main ou code. Poids, graisse, muscle, métabolisme… Tu suis l\'<b>évolution</b> et <b>Milo s\'en sert</b>.'},

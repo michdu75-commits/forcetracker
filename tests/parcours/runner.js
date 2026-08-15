@@ -4608,6 +4608,50 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* ══ BLOC XXIX — LE GUIDE DIT ENFIN COMMENT ÇA MARCHE (15/08/2026) ══
+   Michel : « on sait que perdre du poids ou construire de la masse musculaire ne se fait pas
+   pendant la séance mais pendant le repos, la nourriture et le sommeil, comment on pourrait
+   informer l'utilisateur sur ça » — et « le guide est sympa mais trop simpliste ».
+   ⚠️ LE TÉMOIN LE PLUS IMPORTANT est le dernier : on NE DIT PAS que la séance ne compte pas.  */
+{
+  console.log('\n── XXIX. Le Guide explique la méthode, pas seulement les écrans ──');
+  const G=await p.evaluate(()=>{
+   try{
+    if(typeof APP_GUIDE_SLIDES==='undefined') return {erreur:'APP_GUIDE_SLIDES absente'};
+    const tous=APP_GUIDE_SLIDES.map(s=>((s.t||'')+' '+(s.cap||'')));
+    const txt=tous.join(' ');
+    const o={n:APP_GUIDE_SLIDES.length};
+    o.muscle=/signal/i.test(txt) && /protéines/i.test(txt);
+    o.gras=/compens/i.test(txt) && /assiette/i.test(txt);
+    o.sommeil=/7 à 9/i.test(txt);
+    // ⚠️ le garde-fou : la diapo « muscle » doit AUSSI dire que sans séance il n'y a pas de signal
+    const dMuscle=tous.find(x=>/construit APRÈS/i.test(x))||'';
+    o.gardeFou=/sans la séance/i.test(dMuscle);
+    // ⚠️ et la diapo « gras » ne doit pas laisser croire que la muscu ne sert à rien
+    const dGras=tous.find(x=>/assiette décide/i.test(x))||'';
+    o.grasNuance=/muscle/i.test(dGras);
+    // le guide s'ouvre et se parcourt sans erreur
+    openAppGuide();
+    const ov=document.getElementById('ov-appguide');
+    o.ouvert=!!(ov&&ov.classList.contains('open'));
+    for(let i=0;i<APP_GUIDE_SLIDES.length+1;i++){ try{ _agGo(1); }catch(e){ o.err='_agGo: '+e.message; break; } }
+    if(ov)ov.classList.remove('open');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(G.erreur){ t('⛔ le Guide existe', false, G.erreur); }
+  else{
+    t('⭐⭐ le Guide explique que le muscle se construit APRÈS (signal + protéines)', G.muscle===true);
+    t('⭐⭐ … et que pour le gras, c\'est l\'assiette qui décide (compensation mesurée)', G.gras===true);
+    t('⭐ … et que le sommeil se compte en 7 à 9 h', G.sommeil===true);
+    t('⚠️⚠️ ON NE DIT JAMAIS QUE LA SÉANCE NE COMPTE PAS — sans elle, aucun signal à nourrir',
+      G.gardeFou===true, 'la diapo doit contenir « sans la séance »');
+    t('⚠️ … et la diapo « gras » rappelle que la muscu protège le muscle', G.grasNuance===true);
+    t('⚠️ le Guide s\'ouvre et se parcourt jusqu\'au bout sans erreur',
+      G.ouvert===true && !G.err, G.err||'');
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
