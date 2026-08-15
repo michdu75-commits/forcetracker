@@ -1526,5 +1526,7 @@ html.ob-done #onboarding{display:none;}
   #rj-ecg path{ animation:none!important; stroke-dashoffset:0!important; }
 }
 
-
-
+/* ⏱️ Durée douteuse (ft-v868) — l'ancien chrono a pu continuer à tourner.
+   Doré comme tous les « à vérifier » de l'app : on signale, on ne corrige pas. */
+.sd-dur.douteuse{color:var(--gold);}
+.sess-dur2.douteuse{color:var(--gold);opacity:1;}

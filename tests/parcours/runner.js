@@ -4428,6 +4428,44 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   try{ await p.evaluate(()=>{ S.sessions=[]; try{localStorage.removeItem('ft4_admin_ok');}catch(e){} }); }catch(e){}
 }
 
+/* ══ BLOC XXVI — UNE DURÉE INVRAISEMBLABLE EST SIGNALÉE, PAS CORRIGÉE (15/08/2026) ══
+   Michel : « par contre la séance du 12 juillet, 4 h de séance lol ». 254 min stockées pour
+   14 séries validées = 18 min par série — l'ancien chrono a continué à tourner. Le seuil de
+   10 min/série est vérifié contre sa montre : il attrape le 12/07 et le 10/07, et épargne le
+   03/08 qui était réellement long.                                                            */
+{
+  console.log('\n── XXVI. Les durées invraisemblables sont signalées ──');
+  const D=await p.evaluate(()=>{
+   try{
+    if(typeof _dureeDouteuse!=='function') return {erreur:'_dureeDouteuse absente'};
+    const s=(min,nSets,dite)=>({duration:min*60, durationDite:dite||undefined,
+      exs:[{name:'Squat à la Barre',sets:Array.from({length:nSets},()=>({kg:100,reps:5,done:true}))}]});
+    return {
+      juillet12:_dureeDouteuse(s(254,14)),     // 18,2 min/série → douteuse
+      juillet10:_dureeDouteuse(s(124,12)),     // 10,3 min/série → douteuse (montre : 47 min)
+      aout03:_dureeDouteuse(s(140,15)),        //  9,3 min/série → vraie longue séance, épargnée
+      normale:_dureeDouteuse(s(66,20)),        //  3,3 min/série → rien
+      tresLongue:_dureeDouteuse(s(200,40)),    //  5 min/série mais > 3 h → douteuse
+      saisie:_dureeDouteuse(s(254,14,true)),   // durée SAISIE à la main → on lui fait confiance
+      sansDuree:_dureeDouteuse({exs:[]}),
+      sansSeries:_dureeDouteuse({duration:60*60,exs:[]})
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(D.erreur){ t('⛔ la détection existe', false, D.erreur); }
+  else{
+    t('⭐⭐ le 12/07 (4 h 14 pour 14 séries) est signalé', D.juillet12===true);
+    t('⭐ le 10/07 (124 min stockées, 47 relevées) est signalé aussi', D.juillet10===true);
+    t('⚠️⚠️ le 03/08 — vraie longue séance (140 min / 111 relevées) — n\'est PAS signalé',
+      D.aout03===false, 'un seuil trop bas l\'aurait accusée à tort');
+    t('⚠️ une séance normale n\'est jamais signalée', D.normale===false);
+    t('⚠️ au-delà de 3 h, c\'est signalé quel que soit le nombre de séries', D.tresLongue===true);
+    t('⚠️ une durée SAISIE à la main est crue sur parole', D.saisie===false);
+    t('⚠️ pas de durée, ou pas de série : aucun jugement',
+      D.sansDuree===false && D.sansSeries===false);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

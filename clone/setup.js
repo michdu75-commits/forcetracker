@@ -368,6 +368,31 @@ function _cloudSyncSessions(){_cloudSync();}
 let _syncTimer=null;
 function _cloudSyncDebounced(){clearTimeout(_syncTimer);_syncTimer=setTimeout(_cloudSync,4000);}
 
+
+/* ⏱️ UNE DURÉE INVRAISEMBLABLE EST SIGNALÉE, PAS CORRIGÉE (15/08/2026)
+   Michel, en parcourant son historique : *« par contre la séance du 12 juillet, 4 h de séance
+   lol »*. Vérifié : 254 min stockées pour **14 séries validées**, soit **18 minutes par série**.
+   C'est l'ancien chrono qui a continué à tourner — celui qui démarrait à l'ouverture de l'écran
+   et qu'on a corrigé le 14/08 (ft-v852). Sa montre dit la même chose ce jour-là : deux activités
+   laissées tourner, 3 h 12 au total.
+   ⚠️ ON NE LA CORRIGE PAS. On ne sait pas ce que la séance a réellement duré, et remplacer une
+   mesure douteuse par une estimation inventée serait pire (R29). Mais on ne l'affiche plus comme
+   un FAIT : elle est marquée, et la personne peut la corriger — l'éditeur existe déjà (ft-v852).
+   *Même choix qu'en ft-v853 pour le constat périmé de la carte Santé : on signale, on ne devine pas.*
+   ⚠️ LE SEUIL EST VÉRIFIÉ CONTRE SA MONTRE, pas choisi à vue : sa médiane est de 4,5 min par série.
+   À 10 min/série, on attrape le 12/07 (254 min stockées contre 192 relevées) ET le 10/07 (124
+   contre 47) — et on ÉPARGNE le 03/08 (140 contre 111), qui était réellement une longue séance.
+   Un seuil à 9 l'aurait signalée à tort, un seuil à 12 aurait raté le 10/07. */
+function _dureeDouteuse(sess){
+  const min=(sess&&sess.duration)?sess.duration/60:0;
+  if(!min) return false;
+  if(sess.durationDite) return false;              // durée saisie à la main : c'est elle qui sait
+  if(min>180) return true;                         // plus de 3 h : ce n'est plus une séance
+  let n=0;
+  (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(x&&x.done) n++; }));
+  return n>0 && (min/n)>10;                        // plus de 10 min par série validée
+}
+
 function openSessDetail(id){
   const sess=S.sessions.find(s=>(s.ts||s.id)===id);
   if(!sess)return;
@@ -397,8 +422,9 @@ function openSessDetail(id){
      ⚠️ ON NE DEVINE PAS, ON DEMANDE (R8 : une donnée absente se collecte dans l'interface,
      elle ne se compense pas par une formule). Et on garde la distinction : `durationDite`
      marque une durée DÉCLARÉE, jamais confondue avec une durée mesurée au chrono. */
+  const _dout=_dureeDouteuse(sess);
   const duree=_dm
-    ? ` · <span class="sd-dur" onclick="editSessDuree()">⏱️ ${_fmtD(_dm)}${sess.durationDite?' <i>(saisie)</i>':''}</span>`
+    ? ` · <span class="sd-dur${_dout?' douteuse':''}" onclick="editSessDuree()" title="${_dout?'Durée douteuse — appuie pour la corriger':'Modifier la durée'}">⏱️ ${_fmtD(_dm)}${sess.durationDite?' <i>(saisie)</i>':(_dout?' ⚠️':'')}</span>`
     : ` · <span class="sd-dur vide" onclick="editSessDuree()">⏱️ ajouter la durée</span>`;
   // ── Temps EFFECTIF, lu sur les horodatages de séries (12/08/2026) ────────────────────
   // Ne s'affiche que si la séance en porte (donc à partir de ft-v835) : les séances
@@ -718,7 +744,8 @@ function renderSessions(){
     //    commentaire du détail de séance plus haut). Ici on la met dans la liste : c'est
     //    là qu'on compare plusieurs séances d'un coup d'œil.
     if(s.duration){const _m=Math.max(1,Math.round(s.duration/60));
-      parts.push('<span class="sess-dur2">⏱️'+(_m>=60?Math.floor(_m/60)+'h'+String(_m%60).padStart(2,'0'):_m+' min')+'</span>');}
+      const _d=(typeof _dureeDouteuse==='function')&&_dureeDouteuse(s);
+      parts.push('<span class="sess-dur2'+(_d?' douteuse':'')+'">⏱️'+(_m>=60?Math.floor(_m/60)+'h'+String(_m%60).padStart(2,'0'):_m+' min')+(_d?' ⚠️':'')+'</span>');}
     if(s.calories)parts.push('<span class="sess-cal2">🔥'+s.calories+' kcal</span>');
     const metaHtml=parts.join('<span style="opacity:.4">·</span>')+sync;
     // Liste d'exos repliable (retour GPT, ft-v570) : clampée à 2 lignes, dépliable inline si beaucoup d'exos.
