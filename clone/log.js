@@ -1273,6 +1273,29 @@ const _MOV_MONTEE = ['squat','hip-hinge','poussee-horizontale','poussee-vertical
  * @param {number} [pas=2.5] — l'arrondi (2,5 kg = disques de 1,25 kg de chaque côté)
  * @returns {Array<{kg:number,reps:number,type:'É'}>} — vide si la charge est trop légère
  */
+/* ⚖️ LE PAS DE CHARGE DÉPEND DU MATÉRIEL — 27,5 kg EN HALTÈRES N'EXISTE PAS (15/08/2026)
+   Michel : *« dans certaines séries il met 82,5 ; dans une salle c'est chiant de trouver les
+   poids de 1,25, je perds du temps de fou. Ensuite les haltères : un poids de 27,5 n'existe pas
+   tout simplement. Pareil pour les machines à poulies — donc ou on choisit moins ou plus. »*
+   ⚠️ CE N'EST PAS UN DÉTAIL DE CONFORT : une charge impossible à charger, c'est du temps perdu à
+   fouiller le râtelier au milieu d'une montée en charge, ou un palier sauté. L'app proposait un
+   arrondi unique de **2,5 kg** pour tout le monde et tout le matériel.
+   ⭐ LES PAS VIENNENT DE SES PROPRES DONNÉES, pas d'une supposition : sur 31 séances, TOUTES ses
+   charges d'haltères à deux bras sont des multiples de **4** (Curl 32·40·44 · Couché 44·52·60·68 ·
+   Incliné 36·44·48·52·56·60·64) — soit 2 kg par haltère, additionnés. Ses barres tournent à **5**
+   (Squat 20·40·60·70·80·90 · SDT Roumain 40→100), ses machines à **5** aussi.
+   ⚠️ ET ON ARRONDIT VERS LE BAS. Pour un ÉCHAUFFEMENT, plus léger n'est jamais un risque, tandis
+   que plus lourd fatigue avant la série de travail (R29 : le coût de l'erreur n'est pas
+   symétrique). C'est aussi ce que Michel demande : « ou on choisit moins ou plus ».
+   ⚠️ Ne s'applique QU'AUX CHARGES QUE L'APP FABRIQUE. Une charge écrite par Milo ou saisie à la
+   main n'est jamais retouchée : ce serait décider à sa place (PB-008). */
+function _pasCharge(nom){
+  let eq='autre'; try{ eq=_exEquip(nom); }catch(e){}
+  let uni=false; try{ uni=(typeof estUnilateral==='function') && estUnilateral(nom); }catch(e){}
+  if(eq==='libre') return uni ? 2 : 4;      // haltères : 2 kg par haltère (× 2 bras)
+  if(eq==='elast'||eq==='trx'||eq==='corps') return 2.5;   // pas de disques : on reste fin
+  return 5;                                  // barre, machine, poulie : 2,5 kg par côté / cran de 5
+}
 function _monteeEnCharge(kgTravail, pas){
   pas = pas || 2.5;
   const T = +kgTravail || 0;
@@ -1292,7 +1315,14 @@ function _monteeEnCharge(kgTravail, pas){
   for(let n=2; n<=5; n++){                  // n = nombre de paliers
     const out = [];
     for(let k=0; k<n; k++){
-      const kg = Math.round(T*(depart + k*(1-depart)/n)/pas)*pas;
+      /* ⚠️ VERS LE BAS, SAUF LE DERNIER PALIER. Arrondir tout vers le bas allège chaque marche,
+         donc CREUSE l'écart avec la charge de travail — et le générateur ajoute alors un palier
+         pour le combler. Mesuré : le développé épaules à 72 kg passait de 3 à 4 paliers, soit
+         l'inverse de ce qu'on cherche. Le dernier palier a un autre rôle que les précédents : il
+         doit être PROCHE de la charge de travail (5-10 % sous), pas léger. Il s'arrondit donc au
+         plus proche ; sur 1-2 répétitions ça ne fatigue pas. */
+      const arr = (k===n-1) ? Math.round : Math.floor;
+      const kg = arr(T*(depart + k*(1-depart)/n)/pas)*pas;
       if(kg <= 0 || kg >= T) continue;                      // jamais au-dessus de la charge du jour
       if(out.length && kg <= out[out.length-1].kg) continue; // jamais deux paliers identiques
       out.push({kg:kg, reps:REPS[Math.min(k,REPS.length-1)], type:'É'});
@@ -1373,9 +1403,9 @@ function _monteeCompletee(echauffements, kgTravail, pas){
   pas = pas || 2.5;
   const T = +kgTravail || 0;
   const src = (echauffements||[]).filter(s=>s && (+s.kg||0) > 0 && (+s.kg||0) < T);
-  if(!src.length) return _monteeEnCharge(T, pas);            // rien à préserver → barème complet
+  if(!src.length) return _monteeEnCharge(T, pas);            // rien à préserver → barème complet (même pas)
   const out = src.slice().sort((a,b)=>(+a.kg||0)-(+b.kg||0));
-  const ARR = k => Math.round(k/pas)*pas;
+  const ARR = k => Math.floor(k/pas)*pas;   // vers le BAS (voir _pasCharge)
   // ⚠️ PLAFOND À 5 PALIERS : au-delà on fatigue au lieu de préparer (règle des 5 sources).
   // Donc on ne peut pas boucher tous les trous — on bouche les PLUS GROS d'abord.
   const MAX = 5;
@@ -1440,7 +1470,7 @@ function _completerMonteeEnCharge(sess){
       if(pat) chauffe[pat] = true;                          // seul un ancre lourd chauffe son schéma
       const ech = sets.filter(s=>s && (s.type==='É'||s.type==='W'));
       if(_monteeSuffisante(ech, kgT)) return;               // sa montée est bonne → on ne touche pas
-      const montee = _monteeCompletee(ech, kgT);
+      const montee = _monteeCompletee(ech, kgT, _pasCharge(ex.name));
       if(!montee.length) return;
       const ajoutes = montee.filter(s=>s._add).length;
       // 🛡️ GARDE-FOU DUR : on ne livre JAMAIS moins de séries que ce que la personne a lu.

@@ -4319,6 +4319,52 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   try{ await p.evaluate(()=>{ S.sessions=[]; }); }catch(e){}
 }
 
+/* ══ BLOC XXIV — LES CHARGES PROPOSÉES DOIVENT EXISTER DANS UNE SALLE (15/08/2026) ══
+   Michel : « il met 82,5 ; dans une salle c'est chiant de trouver les poids de 1,25, je perds du
+   temps de fou. Ensuite les haltères : 27,5 n'existe pas tout simplement. »
+   Les pas viennent de SES données : toutes ses charges d'haltères à deux bras sont des multiples
+   de 4 (2 kg par haltère), ses barres et machines tournent à 5. */
+{
+  console.log('\n── XXIV. Les charges de la montée en charge sont chargeables ──');
+  const P=await p.evaluate(()=>{
+   try{
+    if(typeof _pasCharge!=='function') return {erreur:'_pasCharge absente'};
+    const o={pas:{}, trous:[], horsPas:[], hausse:[]};
+    o.pas.barre=_pasCharge('Squat à la Barre');
+    o.pas.halteres=_pasCharge('Développé Incliné Haltères');
+    o.pas.uni=_pasCharge('Rowing Haltère (Tirage Horizontal)');
+    o.pas.machine=_pasCharge('Pec Deck');
+    for(const n of ['Squat à la Barre','Développé Incliné Haltères','Rowing Haltère (Tirage Horizontal)','Pec Deck']){
+      const pas=_pasCharge(n);
+      for(let T=40;T<=200;T+=pas){
+        const m=_monteeEnCharge(T,pas);
+        if(!m.length){ o.trous.push(n+' @'+T); continue; }
+        // toutes les charges doivent être des multiples du pas
+        if(m.some(x=>Math.abs(x.kg/pas-Math.round(x.kg/pas))>1e-9)) o.horsPas.push(n+' @'+T+' → '+m.map(x=>x.kg).join('/'));
+        // et jamais AU-DESSUS de ce que l'arrondi exact aurait donné (on arrondit vers le bas)
+        if(m.some(x=>x.kg>=T)) o.hausse.push(n+' @'+T);
+      }
+    }
+    o.exemple85=_monteeEnCharge(85,_pasCharge('Développé Couché')).map(x=>x.kg).join('/');
+    o.exempleHalt=_monteeEnCharge(60,_pasCharge('Développé Incliné Haltères')).map(x=>x.kg).join('/');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(P.erreur){ t('⛔ le pas de charge existe', false, P.erreur); }
+  else{
+    t('⭐⭐ le pas vient du MATÉRIEL : barre 5 · haltères 2 bras 4 · haltère 1 bras 2 · machine 5',
+      P.pas.barre===5 && P.pas.halteres===4 && P.pas.uni===2 && P.pas.machine===5, JSON.stringify(P.pas));
+    t('⭐⭐ aucune charge proposée n\'est impossible à charger (40 → 200 kg, 4 matériels)',
+      P.horsPas.length===0, P.horsPas.slice(0,3).join(' | '));
+    t('⚠️ non-régression : il y a toujours une montée pour chaque charge (aucun trou)',
+      P.trous.length===0, P.trous.slice(0,5).join(' | '));
+    t('⚠️ un palier ne dépasse jamais la charge de travail', P.hausse.length===0, P.hausse.slice(0,3).join(' | '));
+    t('⭐ 85 kg à la barre → que des multiples de 5', /^(\d+\/)*\d+$/.test(P.exemple85) && P.exemple85.split('/').every(v=>+v%5===0), 'reçu : '+P.exemple85);
+    t('⭐ 60 kg en haltères → que des multiples de 4 (2 kg par haltère)',
+      P.exempleHalt.split('/').every(v=>+v%4===0), 'reçu : '+P.exempleHalt);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
