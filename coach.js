@@ -1097,6 +1097,29 @@ function _renderCoachThread(){
     if(m.role === 'user') renderCoachMsg('user', t || '[photo]');
     else if(t) renderCoachMsg('coach', t);
   });
+  /* ⚡ LE BOUTON « COMMENCER CETTE SÉANCE » SURVIT À LA FERMETURE DE L'APP (14/08/2026)
+     Michel, en allant à la salle : *« je lui ai demandé de me lancer la séance, je ferme
+     l'application, et Commencer la séance a disparu »*.
+     LA CAUSE : le bouton n'était ajouté qu'à l'ARRIVÉE de la réponse (`sendToCoach`), et la
+     séance analysée vivait dans `_pendingMiloSessions`, une simple variable en mémoire. Au
+     rechargement, `_renderCoachThread` reconstruisait bien les bulles — le texte de la séance
+     était donc toujours là, sous les yeux — mais le bouton, non. *La proposition restait
+     visible et devenait inutilisable*, ce qui est pire que si elle avait disparu.
+     LE REMÈDE : on ré-analyse le DERNIER message de Milo, exactement comme à l'arrivée
+     (`_extractDaySession`, la même fonction — pas une 2ᵉ analyse, R2). Rien n'est stocké en
+     plus : le bloc technique est déjà dans le fil, il suffit de le relire. */
+  try{
+    for(let i=coachHistory.length-1;i>=0;i--){
+      const m=coachHistory[i];
+      if(!m||m.role!=='assistant')continue;
+      const txt=(typeof m.content==='string')?m.content:'';
+      if(txt&&typeof _extractDaySession==='function'){
+        const dsx=_extractDaySession(txt);
+        if(dsx&&dsx.sess&&typeof _appendStartSessionBtn==='function')_appendStartSessionBtn(dsx.sess);
+      }
+      break;   // seulement le DERNIER : une vieille séance ne doit pas ressurgir
+    }
+  }catch(e){}
   msgs.scrollTop = msgs.scrollHeight;
 }
 // ─── Historique des discussions ───────────────────────────────────

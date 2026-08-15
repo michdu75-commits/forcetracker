@@ -3955,6 +3955,54 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await cm.close();
 }
 
+
+/* ══ BLOC XVII — « COMMENCER CETTE SÉANCE » SURVIT À LA FERMETURE DE L'APP (14/08/2026) ══
+   Michel, en allant à la salle : *« je lui ai demandé de me lancer la séance, je ferme
+   l'application, et Commencer la séance a disparu »*. Le bouton n'était ajouté qu'à
+   l'ARRIVÉE de la réponse, et la séance analysée vivait dans une variable en mémoire. Au
+   rechargement, le TEXTE de la séance restait visible mais devenait inutilisable — pire que
+   s'il avait disparu.                                                                    */
+{
+  console.log('\n── XVII. Le bouton « Commencer cette séance » après rechargement ──');
+  const REP='Voilà ta séance :\n\n1. Squat à la Barre — 4×5 @ 90 kg\n2. Rowing Barre — 4×8\n\n'
+    +'```json\n{"seance":{"label":"Jambes","exs":['
+    +'{"name":"Squat à la Barre","sets":[{"reps":5,"kg":90,"type":"N"},{"reps":5,"kg":90,"type":"N"}]},'
+    +'{"name":"Rowing Barre","sets":[{"reps":8,"kg":60,"type":"N"}]}]}}\n```';
+  const cs=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const ps=await cs.newPage(); const es=[];
+  ps.on('pageerror',e=>es.push(String(e.message)));
+  await ps.addInitScript(seedScript({ft4_coach_hist:JSON.stringify(
+    [{role:'user',content:'donne-moi ma séance'},{role:'assistant',content:REP}])}));
+  await ps.goto('http://127.0.0.1:'+PORT+'/index.html',{waitUntil:'load'});
+  await ps.waitForTimeout(1200);
+  const X=await ps.evaluate(()=>{
+   try{
+    goScreen('coach');
+    if(typeof _loadCoachHist==='function')_loadCoachHist();
+    if(typeof _renderCoachThread!=='function')return {erreur:'_renderCoachThread absente'};
+    _renderCoachThread();
+    const btn=document.querySelector('.coach-prog-save button');
+    const txt=document.getElementById('coach-msgs').innerText;
+    return { bouton:btn?btn.textContent.trim():'', texte:/Squat à la Barre/.test(txt),
+             jsonCache:!/"seance"/.test(txt),
+             // le bouton doit MARCHER, pas seulement s'afficher
+             marche:(()=>{ try{ if(!btn)return false; btn.click();
+               return !!(S.wkt&&S.wkt.exs&&S.wkt.exs.length===2); }catch(e){ return String(e.message); } })() };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  const tx=(n,c,d)=>{ if(c){ok++;console.log('  ✅ '+n);} else {ko++;console.log('  ❌ '+n+(d?'\n       → '+d:''));} };
+  if(X.erreur){ t('⛔ la conversation se reconstruit', false, X.erreur); }
+  else{
+    tx('le texte de la séance est bien réaffiché', X.texte===true);
+    tx('⭐⭐ … et le bouton « Commencer cette séance » est LÀ après rechargement',
+       /Commencer cette séance|Utiliser cette séance/.test(X.bouton), 'reçu : '+(X.bouton||'(aucun bouton)'));
+    tx('⭐ … et il fonctionne vraiment (2 exercices injectés)', X.marche===true, String(X.marche));
+    tx('⚠️ le bloc technique reste caché à l\'écran', X.jsonCache===true);
+  }
+  t('0 erreur JS sur la reconstruction du fil', es.length===0, es.join(' | '));
+  await cs.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
