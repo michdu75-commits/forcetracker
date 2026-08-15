@@ -4282,6 +4282,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // ③ un accessoire (Pec Deck) n'est plus jugé — même règle que le générateur (ft-v858)
     o.pecDeck=/montée en charge insuffisante/.test(ctx([{name:'Pec Deck',sets:
       [{kg:45,reps:5,type:'É',done:true}].concat([{kg:61,reps:12,type:'N',done:true}])}],'Pec Deck:'));
+    /* 💬 LES ANNOTATIONS DE SÉRIE (15/08/2026) — Michel : « il ne lit pas les notes qu'on peut
+       faire ; sur la 4ᵉ série j'ai mis que j'avais dû poser la barre au support à la 4ᵉ rep ».
+       Sans elle, « 85×5 » se lit comme une série propre : ce n'est pas la même séance. */
+    const l=ctx([{name:'Développé Couché',sets:[
+      {kg:85,reps:5,type:'N',done:true},
+      {kg:85,reps:5,type:'N',done:true,note:'posé la barre au support à la 4e rep, repris pour la 5e'}
+    ]}],'Développé Couché:');
+    o.noteVue=/posé la barre au support/.test(l);
+    o.ligne=l.slice(0,200);
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
@@ -4290,6 +4299,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⚠️ non-régression : une montée bancale NOTÉE PAR LA PERSONNE est toujours signalée', X23.perso===true);
     t('⭐⭐ la même montée, ajoutée par l\'app, n\'est PAS reprochée', X23.parLApp===false);
     t('⭐ un accessoire n\'est plus jugé sur sa montée (même règle que le générateur)', X23.pecDeck===false);
+    t('⭐⭐ l\'annotation écrite sur une série atteint enfin Milo', X23.noteVue===true, 'ligne reçue : '+X23.ligne);
   }
   try{ await p.evaluate(()=>{ S.sessions=[]; }); }catch(e){}
 }

@@ -2116,8 +2116,25 @@ function buildCoachContext(msg) {
   const recentSessions = _sessVues.map(s => {
     const exStr = (s.exs||s.exercises||[]).map(e => {
       const ds = (e.sets||[]).filter(x => x.done);
+      /* 💬 LES ANNOTATIONS DE SÉRIE ATTEIGNENT ENFIN MILO (15/08/2026)
+         Michel : *« il ne lit pas les notes qu'on peut faire ; sur la 4ᵉ série j'ai mis une
+         annotation comme quoi j'ai été obligé de poser la barre sur le support à la 4ᵉ répétition
+         et de recommencer la cinquième »*.
+         **Il a raison, et c'était invisible** : la ligne envoyée ne portait que `kg×reps(type)`.
+         L'app collecte pourtant ces notes depuis longtemps (`openSetNote`, elles s'affichent en
+         doré sous la série) — elles n'atteignaient simplement pas le contexte. **R4**, encore, et
+         c'est le maillon RESTITUTION une fois de plus.
+         ⚠️ ET LA CONSÉQUENCE EST GRAVE POUR UN DÉBRIEF : sans elle, « 85×5 » se lit comme une
+         série propre, et Milo écrit « les 3 séries tenues à 85 kg, c'est solide ». Avec elle, on
+         sait que la 4ᵉ rep a été reposée au support — *ce n'est pas la même séance, et surtout ce
+         n'est pas le même conseil pour la suivante.*
+         ⚠️ Borné à 70 caractères par note : le bloc commun est à quelques centaines de caractères
+         de son plafond (R20), et une note de série est un repère, pas un journal. */
       const setsStr = ds.length
-        ? ds.map(x => `${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}`).join(' ')
+        ? ds.map(x => {
+            const n = (x.note ? String(x.note).replace(/\s+/g,' ').trim().slice(0,70) : '');
+            return `${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}${n?'[💬 '+n+']':''}`;
+          }).join(' ')
         : '—';
       // 🔀 « par bras » sur la ligne elle-même : sans ça, Milo lit « 28×8 » et croit à une
       // charge dérisoire pour un dos, alors que 28 kg d'une seule main est une vraie série.
