@@ -2893,6 +2893,16 @@ function closeSessionEnd(dest){
 }
 // Débrief de Milo INLINE sur l'écran de fin (local d'abord : un résumé local s'affiche toujours,
 // l'IA l'enrichit). Le débrief est POUSSÉ dans coachHistory (mémoire + visible dans le Coach).
+// Le cardio RÉELLEMENT noté sur cette séance, en clair — vide s'il n'y en a pas.
+// Même lecture que le contexte de Milo (coach.js) : deux moments, échauffement et après-séance.
+function _seCardioTxt(sess){
+  try{
+    const L=(typeof CARDIO_LABELS!=='undefined')?CARDIO_LABELS:{};
+    const un=c=>c&&c.duration?`${L[c.type]||c.type||'cardio'} ${c.duration} min${c.intensity?' ('+c.intensity+')':''}`:'';
+    const av=un(sess&&sess.cardioAvant), ap=un(sess&&sess.cardio);
+    return [av?'échauffement '+av:'', ap?'après séance '+ap:''].filter(Boolean).join(' + ');
+  }catch(e){ return ''; }
+}
 async function _runSeDebrief(sess,prCount){
   const slot=document.getElementById('se-debrief');if(!slot)return;
   const nExs=(sess.exs||[]).length;
@@ -2936,6 +2946,18 @@ async function _runSeDebrief(sess,prCount){
     +'pour la prochaine séance. ⚠️ Cette piste doit servir MON objectif : si tu connais mon objectif/mes priorités, aligne-toi dessus ; '
     +'si tu ne les connais PAS (profil pas rempli), ne me fixe pas une direction à ma place (ex. « rattrape ton haut du corps ») — '
     +'reflète ce que tu observes et demande-moi ma priorité. Court (4-6 phrases), direct, motivant. Ne me redemande JAMAIS mes charges.'
+    /* 🏃 LE CARDIO DE LA SÉANCE EST NOMMÉ DANS LA CONSIGNE (15/08/2026)
+       Michel : *« j'ai l'impression qu'il n'a pas tenu compte de mon cardio »*.
+       ⚠️ LA DONNÉE ÉTAIT BIEN LÀ — elle est transmise depuis le 02/08 (`cardio:` en fin de ligne
+       de séance). Le défaut est dans la CONSIGNE : elle dit « en t'appuyant sur mes CHARGES par
+       exercice », nomme cette source-là et aucune autre, et réclame 4-6 phrases. Sur un débrief
+       court, ce qui n'est pas nommé passe à la trappe. *C'est le miroir de R8 : d'habitude la
+       consigne nomme une source ABSENTE du contexte ; ici la source est présente et la consigne
+       ne la nomme pas.*
+       ⚠️ ET ON NE L'AJOUTE QUE S'IL Y EN A UN. Une consigne permanente « parle du cardio »
+       pousserait Milo à commenter une ABSENCE — donc à reprocher un cardio non fait, ou pire, à
+       en inventer un. On ne parle que de ce qu'on a (R29). */
+    +(_seCardioTxt(sess) ? ' J\'ai aussi fait du cardio sur cette séance ('+_seCardioTxt(sess)+') : tiens-en compte, c\'est du travail réel.' : '')
     +((typeof _DEBRIEF_CONTINUITY!=='undefined')?_DEBRIEF_CONTINUITY:'')
     +((typeof _DEBRIEF_MEM_TAIL!=='undefined')?_DEBRIEF_MEM_TAIL:'');
   try{

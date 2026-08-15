@@ -4269,7 +4269,7 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // ⚠️ on lit la LIGNE de l'exercice, pas tout le contexte : l'historique du parcours contient
     // d'autres séances, et un reproche légitime ailleurs ferait passer le témoin au vert pour une
     // mauvaise raison. Un test qui regarde au mauvais endroit est pire qu'un test absent.
-    const ctx=(exs,motif)=>{ S.sessions=[{date:today(),ts:Date.now(),volume:1000,exs:exs}];
+    const ctx=(exs,motif,extra)=>{ S.sessions=[Object.assign({date:today(),ts:Date.now(),volume:1000,exs:exs},extra||{})];
       const lignes=buildCoachContext().split('\n').filter(l=>l.indexOf(motif)>=0);
       return lignes.join(' ¶ '); };
     const monte=[{kg:36,reps:5,type:'É',done:true},{kg:46,reps:3,type:'É',done:true},{kg:56,reps:5,type:'É',done:true}];
@@ -4291,6 +4291,16 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     ]}],'Développé Couché:');
     o.noteVue=/posé la barre au support/.test(l);
     o.ligne=l.slice(0,200);
+    /* 🏃 LE CARDIO (15/08/2026) — Michel : « j'ai l'impression qu'il n'a pas tenu compte de mon
+       cardio ». La donnée est bien transmise depuis le 02/08 ; c'est la CONSIGNE du débrief qui ne
+       la nommait pas. On vérifie les deux : la ligne de séance, et le texte de la consigne. */
+    const _ex1=[{name:'Développé Couché',sets:[{kg:85,reps:5,type:'N',done:true}]}];
+    const lcSans=ctx(_ex1,'Développé Couché:');
+    const lcAvec=ctx(_ex1,'Développé Couché:',{cardioAvant:{type:'ellip',duration:8,intensity:'modere'}});
+    o.cardioLigne=/cardio/.test(lcAvec) && !/cardio/.test(lcSans);
+    o.cardioDetail=lcAvec.slice(-90);
+    o.cardioConsigne=(typeof _seCardioTxt==='function')
+      ? [_seCardioTxt({cardioAvant:{type:'ellip',duration:8}}), _seCardioTxt({})] : ['(absente)',''];
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
@@ -4300,6 +4310,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⭐⭐ la même montée, ajoutée par l\'app, n\'est PAS reprochée', X23.parLApp===false);
     t('⭐ un accessoire n\'est plus jugé sur sa montée (même règle que le générateur)', X23.pecDeck===false);
     t('⭐⭐ l\'annotation écrite sur une série atteint enfin Milo', X23.noteVue===true, 'ligne reçue : '+X23.ligne);
+    t('⚠️ non-régression : le cardio de la séance est bien dans la ligne envoyée', X23.cardioLigne===true, 'fin de ligne : '+X23.cardioDetail);
+    t('⭐⭐ la consigne du débrief NOMME le cardio quand il y en a un',
+      /8 min/.test(String(X23.cardioConsigne[0])), 'reçu : '+X23.cardioConsigne[0]);
+    t('⭐ … et ne dit RIEN quand il n\'y en a pas (jamais reprocher une absence)',
+      X23.cardioConsigne[1]==='', 'reçu : "'+X23.cardioConsigne[1]+'"');
   }
   try{ await p.evaluate(()=>{ S.sessions=[]; }); }catch(e){}
 }
