@@ -390,7 +390,20 @@ function _dureeDouteuse(sess){
   if(min>180) return true;                         // plus de 3 h : ce n'est plus une séance
   let n=0;
   (sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(x&&x.done) n++; }));
-  return n>0 && (min/n)>10;                        // plus de 10 min par série validée
+  if(!n) return false;
+  const parSerie = min/n;
+  if(parSerie>10) return true;                     // le chrono a continué à tourner
+  /* ⏱️ ET LE DÉFAUT INVERSE, trouvé par Michel dans la foulée : *« Trapèze 19 minutes lol »*.
+     Le 04/07 : 19 min stockées pour **16 séries validées**, soit 1,2 min par série — et sa montre
+     dit 31 min. On n'a pas pu faire 16 séries en 19 minutes : une série plus le repos minimal,
+     c'est au moins 1 min 30. Le chrono a démarré en retard (séance reprise, exercices ajoutés
+     après coup).
+     ⚠️ LE PLANCHER EST PHYSIQUE, pas ajusté sur ses données : il vient de ce qu'un être humain
+     peut faire, pas d'une moyenne. Vérifié quand même : sa séance la plus dense (15/08, 2,4
+     min/série) est HORODATÉE et colle à sa montre (69 min contre 64) — le plancher l'épargne.
+     ⚠️ Seulement au-delà de 6 séries : sur 2 ou 3 séries, une séance vraiment expédiée existe. */
+  if(n>=6 && parSerie<1.5) return true;
+  return false;
 }
 
 function openSessDetail(id){

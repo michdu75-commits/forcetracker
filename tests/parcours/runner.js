@@ -4448,7 +4448,11 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       tresLongue:_dureeDouteuse(s(200,40)),    //  5 min/série mais > 3 h → douteuse
       saisie:_dureeDouteuse(s(254,14,true)),   // durée SAISIE à la main → on lui fait confiance
       sansDuree:_dureeDouteuse({exs:[]}),
-      sansSeries:_dureeDouteuse({duration:60*60,exs:[]})
+      sansSeries:_dureeDouteuse({duration:60*60,exs:[]}),
+      // ⏱️ le défaut INVERSE : « Trapèze 19 minutes lol » — 16 séries en 19 min, impossible
+      juillet04:_dureeDouteuse(s(19,16)),       // 1,2 min/série → douteuse (montre : 31 min)
+      dense:_dureeDouteuse(s(69,29)),           // 2,4 min/série → sa vraie séance du 15/08, épargnée
+      expediee:_dureeDouteuse(s(4,3))           // 3 séries en 4 min → plausible, on ne juge pas
     };
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
@@ -4463,6 +4467,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('⚠️ une durée SAISIE à la main est crue sur parole', D.saisie===false);
     t('⚠️ pas de durée, ou pas de série : aucun jugement',
       D.sansDuree===false && D.sansSeries===false);
+    t('⭐⭐ le 04/07 (19 min pour 16 séries) est signalé — trop COURT pour être vrai', D.juillet04===true);
+    t('⚠️⚠️ la séance la plus dense (2,4 min/série, horodatée, conforme à la montre) est ÉPARGNÉE',
+      D.dense===false, 'le plancher ne doit pas accuser une vraie séance rapide');
+    t('⚠️ une séance de 3 séries expédiée en 4 min n\'est pas jugée', D.expediee===false);
   }
 }
 
