@@ -338,3 +338,30 @@ tests de parcours depuis ft-v825).
 
 *(Retiré de la règle sur décision de Michel, 11/08/2026. `_positionFab()` reste dans `app.js`,
 inoffensif — le supprimer est une décision séparée.)*
+
+---
+
+### ⏱️ Une séance REJOUÉE a une durée qui ne veut rien dire (confirmé le 15/08/2026)
+
+**Le cas.** Séance du 04/07 : l'app affichait **19 min pour 16 séries validées** — 1,2 minute par
+série, physiquement impossible. Sa montre, elle, avait relevé **31 min**.
+
+**La cause, donnée par Michel lui-même** : *« c'est quand j'ai perdu la séance, et j'ai
+recommencé »*. Il a **ressaisi** ses séries après coup. Le chrono a donc mesuré le temps de la
+**saisie**, pas celui de l'entraînement.
+
+**Ce qu'on en retient.** Il existe **trois** façons pour une durée d'être fausse, et elles ne se
+ressemblent pas :
+
+| Cause | Symptôme | Exemple vécu |
+|---|---|---|
+| Le chrono **continue** de tourner | durée énorme | 12/07 — 4 h 14 pour 14 séries |
+| Le chrono **démarre en retard** | durée courte | 10/07 — 124 min affichées, 47 réelles |
+| La séance est **rejouée** après une perte | durée = temps de saisie | 04/07 — 19 min pour 16 séries |
+
+**Le même repère les trahit toutes** : le **temps par série**. C'est pour ça que le garde-fou de
+ft-v868/869 est bâti dessus et pas sur la durée brute.
+
+⚠️ **Et une séance rejouée ne peut PAS être devinée** : personne ne sait ce qu'elle a duré. C'est
+exactement le cas pour lequel la **saisie manuelle de la durée** (ft-v852) avait été construite —
+on demande, on n'invente pas (R8).
