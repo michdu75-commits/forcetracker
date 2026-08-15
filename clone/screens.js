@@ -1971,8 +1971,27 @@ function renderFoodJournal(){
     html+=`<div style="background:var(--bg2);border-radius:14px;padding:16px;text-align:center;color:var(--t3);font-size:13px;box-shadow:inset 0 0 0 1px var(--sep);">Remplis ton profil (âge, taille, poids) pour comparer à tes objectifs.</div>`;
   }
 
-  // Bouton ajouter
-  html+=`<button class="btn btn-red" onclick="openAddFood()" style="width:100%;padding:14px;font-size:15px;margin-top:12px;">➕ Ajouter un aliment</button>`;
+  /* 🔍 LES TROIS FAÇONS D'AJOUTER UN ALIMENT SE VOIENT DEPUIS LE JOURNAL (15/08/2026)
+     Michel : *« il faut faire "ajouter un aliment" et je pense que cette étape est en trop,
+     personne ne verra ce qui se trouve derrière sauf s'il clique sur le bouton »*.
+     ⭐ IL A RAISON, ET C'EST MESURÉ : la modale propose QUATRE méthodes (taper le code-barres ·
+     le photographier · lire l'étiquette · estimer à l'IA) et le Journal n'en montrait AUCUNE —
+     un seul bouton gris « ➕ Ajouter un aliment ». Quelqu'un qui ne clique pas ne saura jamais
+     que l'app lit les codes-barres, c'est-à-dire la fonction la plus rapide ET la seule
+     totalement gratuite. *Une fonctionnalité qu'on ne voit pas n'existe pas* — R23, appliqué à
+     l'écran cette fois et plus à la doc.
+     ⚠️ AUCUNE ÉTAPE N'EST AJOUTÉE : les trois raccourcis ouvrent LA MÊME modale, simplement au
+     bon endroit. On ne fait que montrer ce qui existait déjà.
+     ⚠️ ET L'ORDRE N'EST PAS ESTHÉTIQUE : le code-barres est en premier et en rouge parce qu'il
+     est GRATUIT et illimité ; l'étiquette et l'estimation consomment le quota IA du freemium.
+     La porte d'entrée par défaut ne doit pas être celle qui coûte (R24 : informer sans piéger).
+     ⚠️ La saisie à la main reste offerte : gratuite, illimitée, et c'est le filet quand le
+     produit n'est dans aucune base. */
+  html+=`<div style="display:flex;gap:8px;margin-top:12px;">`
+    +`<button class="btn btn-red" onclick="addFoodVia('bc')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">📷<br>Code-barres</button>`
+    +`<button class="btn btn-bg2" onclick="addFoodVia('label')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">📸<br>Étiquette</button>`
+    +`<button class="btn btn-bg2" onclick="addFoodVia('main')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">✏️<br>À la main</button>`
+    +`</div>`;
 
   // Liste des entrées du jour
   if(entries.length){

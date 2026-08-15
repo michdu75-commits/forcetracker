@@ -255,6 +255,7 @@ const PREMIUM_PERKS=[
 ];
 
 const NEW_FEATURES=[
+  {id:'nutri-3voies', screen:'nutrition', desc:'Le Journal montre maintenant les TROIS façons d\'ajouter un aliment, au lieu d\'un seul bouton : 📷 Code-barres (gratuit et illimité — tape les chiffres ou photographie-le) · 📸 Étiquette (l\'IA lit le tableau nutritionnel) · ✏️ À la main. Rien de nouveau derrière : ces trois chemins existaient déjà, ils étaient simplement cachés derrière « Ajouter un aliment » et personne ne pouvait les deviner. Le code-barres est en premier parce que c\'est le plus rapide ET le seul qui ne consomme aucun essai IA.'},
   {id:'exos-2langues', screen:'log', desc:'Les exercices les plus répandus portent maintenant LES DEUX NOMS — celui qu\'on dit à la salle, et l\'autre langue entre parenthèses : « Rowing Barre (Tirage Horizontal) », « Tirage Poulie Haute (Lat Pulldown) », « Pompes (Push-up) », « Élévations Latérales (Lateral Raise) ». Tu les trouves donc en cherchant dans la langue que tu veux. Tes records et tes séances passées ont suivi automatiquement — rien n\'est perdu.'},
   {id:'modes-alim', screen:'nutrition', desc:'Nouveaux modes alimentaires : Cétogène · Low carb · Paléo · Méditerranéen — et le jeûne intermittent (16/8, 18/6, 20/4). Tes macros ET tes repas suggérés s\'adaptent'},
   {id:'cardio-2moments', screen:'log', desc:'Le cardio se note maintenant AVANT (échauffement) ET APRÈS ta séance — les deux séparément, avec leurs calories additionnées. Parce que 10 min de vélo pour t\'échauffer et 25 min de tapis en fin de séance, ce n\'est pas la même chose'},

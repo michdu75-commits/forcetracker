@@ -734,6 +734,21 @@ function _foodTotals(date){
   (S.foodLog||[]).forEach(e=>{if(e.date===date){t.kcal+=e.kcal||0;t.prot+=e.prot||0;t.carbs+=e.carbs||0;t.fat+=e.fat||0;}});
   return t;
 }
+/* 🔍 Les raccourcis du Journal (ft-v871) — ils ouvrent la MÊME modale, au bon endroit.
+   ⚠️ `readFoodLabel` déclenche un `input.click()` : il doit rester dans la MÊME tâche que le
+   geste de l'utilisateur, sinon iOS refuse d'ouvrir la caméra. On l'appelle donc en direct,
+   sans `setTimeout`. Les deux autres ne font que poser le curseur : là, un rAF est plus sûr
+   (le champ n'est pas encore mesurable pendant l'ouverture de la modale). */
+function addFoodVia(mode){
+  openAddFood();
+  try{
+    if(mode==='label'){ if(typeof readFoodLabel==='function')readFoodLabel(); return; }
+    const id = (mode==='bc') ? 'af-bc-manual' : 'af-desc';
+    requestAnimationFrame(()=>{ const el=document.getElementById(id); if(!el)return;
+      try{ el.scrollIntoView({block:'center',behavior:'smooth'}); }catch(e){}
+      try{ el.focus(); }catch(e){} });
+  }catch(e){}
+}
 function openAddFood(){
   const h=new Date().getHours();
   _afMeal = h<11?'petitdej' : h<15?'dejeuner' : h<18?'collation' : 'diner';

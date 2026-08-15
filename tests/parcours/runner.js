@@ -4502,6 +4502,50 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* ══ BLOC XXVII — LES FAÇONS D'AJOUTER UN ALIMENT SE VOIENT (15/08/2026) ══
+   Michel : « il faut faire "ajouter un aliment" et je pense que cette étape est en trop, personne
+   ne verra ce qui se trouve derrière sauf s'il clique sur le bouton ». La modale proposait 4
+   méthodes et le Journal n'en montrait aucune — dont le code-barres, la plus rapide ET la seule
+   totalement gratuite.                                                                          */
+{
+  console.log('\n── XXVII. Les trois façons d\'ajouter un aliment sont visibles ──');
+  const N=await p.evaluate(()=>{
+   try{
+    if(typeof addFoodVia!=='function') return {erreur:'addFoodVia absente'};
+    goScreen('nutrition');
+    try{ switchNuTab('journal', document.getElementById('ntab-journal')); }catch(e){}
+    const j=document.getElementById('nu-journal');
+    const btns=[...(j?j.querySelectorAll('button'):[])]
+      .filter(x=>x.getBoundingClientRect().height>0)
+      .map(x=>x.textContent.replace(/\s+/g,'').slice(0,20));
+    const o={boutons:btns};
+    // ① le raccourci code-barres ouvre la modale sur le bon bloc
+    addFoodVia('bc');
+    const ov=document.getElementById('ov-add-food');
+    o.ouverte=!!(ov&&ov.classList.contains('open'));
+    const bb=document.getElementById('af-barcode-block');
+    o.blocBc=bb?getComputedStyle(bb).display:'ABSENT';
+    // ② et « à la main » ouvre la même modale — aucune étape en plus
+    try{ closeAddFood(); }catch(e){ if(ov)ov.classList.remove('open'); }
+    addFoodVia('main');
+    o.ouverte2=!!(ov&&ov.classList.contains('open'));
+    try{ closeAddFood(); }catch(e){ if(ov)ov.classList.remove('open'); }
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(N.erreur){ t('⛔ les raccourcis existent', false, N.erreur); }
+  else{
+    const b=(N.boutons||[]).join(' ');
+    t('⭐⭐ le Journal montre les trois façons d\'ajouter (code-barres · étiquette · à la main)',
+      /Code-barres/.test(b) && /Étiquette/.test(b) && /Àlamain/.test(b), 'reçu : '+b);
+    t('⭐ le code-barres est le PREMIER (gratuit et illimité, il ne doit pas être caché derrière l\'IA)',
+      /Code-barres/.test((N.boutons||[])[0]||''), 'premier bouton : '+((N.boutons||[])[0]||'(aucun)'));
+    t('⭐⭐ le raccourci ouvre la MÊME modale, sur le bloc code-barres (aucune étape en plus)',
+      N.ouverte===true && N.blocBc==='block', 'ouverte : '+N.ouverte+' · bloc : '+N.blocBc);
+    t('⚠️ la saisie à la main reste offerte et ouvre la même modale', N.ouverte2===true);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
