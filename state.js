@@ -424,12 +424,9 @@ function persist(){
       try{console.warn('[FT persist] échec de sauvegarde locale :',e);}catch(_){}
     }
   }
-  // Rechargement de mise à jour reporté pendant la séance (app.js) — la séance vient de se terminer/annuler
-  if(window._swReloadPending&&!(S.wkt&&S.wkt.exs&&S.wkt.exs.length)){
-    window._swReloadPending=false;
-    try{localStorage.setItem('ft4_just_updated','1');}catch(e){} // → badge « Application mise à jour » au reboot
-    window.location.reload();
-  }
+  // Mise à jour reportée (app.js) : elle ne s'applique QUE sur l'accueil, sans séance en cours ni
+  // récapitulatif ouvert — voir `_majPeutSAppliquer`. Une seule décision, un seul endroit (R2).
+  try{ if(typeof _appliquerMaj==='function')_appliquerMaj(); }catch(e){}
   _cloudSyncDebounced();
 }
 

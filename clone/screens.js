@@ -128,6 +128,8 @@ function _applyScreen(id,btn){
   _updateScreenDots(id);
   // Pill chrono flottante : show hors log, hide sur log
   if(typeof _updPill==='function')_updPill();
+  // Retour à l'accueil = le moment neutre où une mise à jour en attente peut s'appliquer.
+  if(id==='home'){ try{ if(typeof _appliquerMaj==='function')_appliquerMaj(); }catch(e){} }
 }
 function goScreen(id,btn){
   _closeAllPanels();

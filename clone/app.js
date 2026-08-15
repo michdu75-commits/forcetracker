@@ -3702,15 +3702,45 @@ function clearErrLog(){ try{localStorage.removeItem('ft4_errlog');}catch(e){} re
 // Si une séance est en cours, on reporte le rechargement — persist() (state.js) le déclenchera
 // dès que S.wkt redevient vide (fin de séance ou annulation).
 window._swReloadPending=false;
+/* 🛑 UNE MISE À JOUR NE COUPE JAMAIS QUELQU'UN EN PLEIN TRAVAIL (15/08/2026)
+   Michel, en rentrant de la salle : *« putain la mise à jour s'est faite au moment où j'ai terminé
+   ma séance, donc j'ai pas vu mon récapitulatif »*.
+   LA CAUSE : le garde-fou existait — « ne jamais recharger EN PLEINE SÉANCE » — et il se relâchait
+   à la milliseconde exacte où `S.wkt` se vide. Or `finishWorkout()` vide la séance **puis** ouvre
+   le récapitulatif : records battus, volume, durée, calories, la question du ressenti, et le
+   débrief de Milo qui arrive quelques secondes plus tard. Le `persist()` de la fin de séance
+   déclenchait donc le rechargement **pile sur cet écran-là**.
+   ⚠️ *La séance ne se termine pas quand la donnée est écrite : elle se termine quand la personne
+   a vu ce qu'elle a fait.* Le garde-fou protégeait la SAISIE et pas la RESTITUTION — R4, encore.
+   ⚠️ Et le même défaut existait ailleurs, en silence : sans séance en cours, `_reloadForUpdate`
+   rechargeait **tout de suite**, où qu'on soit — en pleine conversation avec Milo, au milieu d'un
+   graphique, dans un formulaire de profil.
+   LA RÈGLE, une seule et vérifiable : **on n'applique la mise à jour que sur l'ACCUEIL**, sans
+   séance en cours et sans récapitulatif ouvert. L'accueil est le seul endroit où l'on n'est en
+   train de rien faire. Le reste du temps elle attend — le nouveau Service Worker est déjà
+   installé, rien n'est perdu, et elle s'applique dès le retour à l'accueil ou à la prochaine
+   ouverture de l'app. */
+function _majPeutSAppliquer(){
+  if(!window._swReloadPending) return false;
+  if(S.wkt&&S.wkt.exs&&S.wkt.exs.length) return false;                 // séance en cours
+  const ov=document.getElementById('ov-session-end');
+  if(ov&&ov.classList.contains('open')) return false;                  // récapitulatif à l'écran
+  if(window._curScreen&&window._curScreen!=='home') return false;      // la personne fait autre chose
+  return true;
+}
+function _appliquerMaj(){
+  if(!_majPeutSAppliquer()) return false;
+  window._swReloadPending=false;
+  try{localStorage.setItem('ft4_just_updated','1');}catch(e){} // → badge « Application mise à jour » au reboot
+  window.location.reload();
+  return true;
+}
 function _reloadForUpdate(){
-  const _wktActive=!!(S.wkt&&S.wkt.exs&&S.wkt.exs.length);
-  if(_wktActive){
-    window._swReloadPending=true;
-    if(typeof toast==='function')toast('Mise à jour disponible — appliquée à la fin de la séance','info');
-  }else{
-    try{localStorage.setItem('ft4_just_updated','1');}catch(e){} // → badge « Application mise à jour » au reboot
-    window.location.reload();
-  }
+  window._swReloadPending=true;
+  if(_appliquerMaj()) return;
+  // Reportée : on ne prévient que pendant une séance (le seul cas où l'attente peut durer).
+  if(S.wkt&&S.wkt.exs&&S.wkt.exs.length&&typeof toast==='function')
+    toast('Mise à jour disponible — appliquée à la fin de la séance','info');
 }
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{

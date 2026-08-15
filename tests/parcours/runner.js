@@ -4214,6 +4214,50 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* ══ BLOC XXII — UNE MISE À JOUR NE COUPE PAS LE RÉCAPITULATIF DE FIN DE SÉANCE (15/08/2026) ══
+   Michel, en rentrant de la salle : *« putain la mise à jour s'est faite au moment où j'ai terminé
+   ma séance, donc j'ai pas vu mon récapitulatif »*. Le garde-fou « ne pas recharger en pleine
+   séance » se relâchait à la milliseconde où S.wkt se vide — c'est-à-dire juste avant que l'écran
+   de fin s'ouvre. Le garde-fou protégeait la SAISIE, pas la RESTITUTION.
+   ⚠️ On teste la DÉCISION (`_majPeutSAppliquer`), pas le rechargement : recharger la page en plein
+   test ne prouverait rien et casserait le scénario. */
+{
+  console.log('\n── XXII. La mise à jour attend un moment neutre ──');
+  const U=await p.evaluate(()=>{
+   try{
+    if(typeof _majPeutSAppliquer!=='function') return {erreur:'_majPeutSAppliquer absente'};
+    const ov=document.getElementById('ov-session-end');
+    const o={};
+    window._swReloadPending=true;
+    // ① séance EN COURS → on n'interrompt pas (non-régression du garde-fou d'origine)
+    S.wkt={date:today(),exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,type:'N',done:false}]}]};
+    goScreen('home'); o.pendantSeance=_majPeutSAppliquer();
+    // ② séance terminée MAIS le récapitulatif est à l'écran → on attend
+    S.wkt=null; if(ov)ov.classList.add('open');
+    o.pendantRecap=_majPeutSAppliquer();
+    // ③ récapitulatif fermé, mais la personne est partie lire le Coach → on attend
+    if(ov)ov.classList.remove('open'); goScreen('coach');
+    o.surCoach=_majPeutSAppliquer();
+    // ④ de retour à l'accueil, rien en cours → c'est le moment
+    // ⚠️ on pose l'écran DIRECTEMENT : passer par goScreen() appliquerait vraiment la mise à jour
+    // (donc rechargerait la page en plein test). Ce qu'on veut mesurer, c'est la DÉCISION.
+    window._curScreen='home'; o.surAccueil=_majPeutSAppliquer();
+    // ⑤ et rien ne s'applique si aucune mise à jour n'attend
+    window._swReloadPending=false; o.sansMaj=_majPeutSAppliquer();
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(U.erreur){ t('⛔ la décision de mise à jour existe', false, U.erreur); }
+  else{
+    t('⚠️ non-régression : pendant une séance, aucune mise à jour', U.pendantSeance===false);
+    t('⭐⭐ le récapitulatif de fin de séance n\'est plus coupé par la mise à jour', U.pendantRecap===false);
+    t('⭐ on ne recharge pas non plus pendant qu\'on lit le Coach', U.surCoach===false);
+    t('⭐ de retour à l\'accueil, rien en cours : la mise à jour s\'applique', U.surAccueil===true);
+    t('⚠️ sans mise à jour en attente, il ne se passe rien', U.sansMaj===false);
+  }
+  try{ await p.evaluate(()=>{ S.wkt=null; window._swReloadPending=false; }); }catch(e){}
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
