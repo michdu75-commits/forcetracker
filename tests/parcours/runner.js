@@ -4111,6 +4111,55 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* ══ BLOC XX — ON NE S'ÉCHAUFFE PAS CINQ FOIS DANS LA MÊME SÉANCE (15/08/2026) ══
+   Michel : *« il me met de l'échauffement partout c'est normal ? »*. Sur sa séance Push, Milo
+   annonçait 19 séries / ~88 min ; l'app en livrait 29 (+10, ~+46 min) — elle défaisait en silence
+   la séance courte qu'il venait de demander. Un Pec Deck recevait 3 paliers de montée en charge. */
+{
+  console.log('\n── XX. La montée en charge ne s\'ajoute pas sur tous les exercices ──');
+  const W=await p.evaluate(()=>{
+   try{
+    const push=()=>({exs:[
+      {name:'Développé Couché Larsen',sets:[{kg:50,reps:5,type:'É'},{kg:65,reps:3,type:'É'},{kg:75,reps:2,type:'É'},{kg:83,reps:1,type:'É'},
+        {kg:85,reps:5,type:'N'},{kg:85,reps:5,type:'N'},{kg:85,reps:5,type:'N'}]},
+      {name:'Développé Incliné Haltères',sets:[{kg:58,reps:8,type:'N'},{kg:58,reps:8,type:'N'},{kg:60,reps:8,type:'N'}]},
+      {name:'Pec Deck',sets:[{kg:61,reps:12,type:'N'},{kg:61,reps:12,type:'N'},{kg:61,reps:12,type:'N'}]},
+      {name:'Développé Épaules Assis Machine',sets:[{kg:72,reps:10,type:'N'},{kg:72,reps:10,type:'N'},{kg:72,reps:10,type:'N'}]},
+      {name:'Tirage Visage',sets:[{kg:27.5,reps:12,type:'N'},{kg:27.5,reps:12,type:'N'},{kg:27.5,reps:12,type:'N'}]}
+    ]});
+    const nEch=e=>(e.sets||[]).filter(s=>s.type==='É'||s.type==='W').length;
+    const tot=s=>s.exs.reduce((a,e)=>a+e.sets.length,0);
+    const r=_completerMonteeEnCharge(push());
+    const o={ total:tot(r), incline:nEch(r.exs[1]), pecdeck:nEch(r.exs[2]), larsen:nEch(r.exs[0]) };
+    // ⚠️ un accessoire placé AVANT l'ancre ne doit PAS supprimer la montée de l'ancre
+    const inverse=_completerMonteeEnCharge({exs:[
+      {name:'Pec Deck',sets:[{kg:61,reps:12,type:'N'}]},
+      {name:'Développé Couché',sets:[{kg:100,reps:5,type:'N'},{kg:100,reps:5,type:'N'}]}
+    ]});
+    o.ancreApresAccessoire=nEch(inverse.exs[1]);
+    // ⚠️ non-régression : un squat lourd seul garde sa montée complète
+    const squat=_completerMonteeEnCharge({exs:[{name:'Squat à la Barre',sets:[{kg:120,reps:5,type:'N'},{kg:120,reps:5,type:'N'}]}]});
+    o.squatSeul=nEch(squat.exs[0]);
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(W.erreur){ t('⛔ la montée en charge se calcule', false, W.erreur); }
+  else{
+    t('⭐⭐ la séance Push de Michel ne gonfle plus de 19 à 29 séries',
+      W.total===23, 'reçu : '+W.total+' séries (19 annoncées par Milo, 29 avant le correctif)');
+    t('⭐⭐ le Pec Deck (isolation) ne reçoit AUCUNE montée en charge',
+      W.pecdeck===0, 'reçu : '+W.pecdeck+' paliers');
+    t('⭐ le développé incliné n\'est pas ré-échauffé (déjà chaud sur ce mouvement)',
+      W.incline===0, 'reçu : '+W.incline+' paliers');
+    t('⚠️ non-régression : l\'ancre du jour garde bien sa montée complétée',
+      W.larsen===5, 'reçu : '+W.larsen+' paliers');
+    t('⚠️ un accessoire AVANT l\'ancre ne supprime pas la montée de l\'ancre (une montée manquante coûte plus cher qu\'une de trop)',
+      W.ancreApresAccessoire>=2, 'reçu : '+W.ancreApresAccessoire+' paliers');
+    t('⚠️ non-régression : un squat lourd seul garde sa montée complète',
+      W.squatSeul>=2, 'reçu : '+W.squatSeul+' paliers');
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

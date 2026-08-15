@@ -1394,9 +1394,33 @@ function _monteeCompletee(echauffements, kgTravail, pas){
   return out;
 }
 
+/* 🔥 ON NE S'ÉCHAUFFE PAS CINQ FOIS DANS LA MÊME SÉANCE (15/08/2026)
+   Michel, devant une séance Push proposée par Milo : *« il me met de l'échauffement partout
+   c'est normal ? »*. **Non, et c'est mesurable** : sur cette séance, Milo annonçait **19 séries
+   → ~88 min** (il avait fait le calcul avec son rythme réel de 4,6 min/série, à sa demande de
+   tenir en 1 h 30). L'app en livrait **29** — soit **+10 séries, ~+46 min**. *L'app défaisait en
+   silence exactement ce qu'il venait de demander.*
+   DEUX CAUSES, et la 1ʳᵉ est une duplication (R2) :
+   ① le filtre lisait `_MOV_MONTEE`, une SECONDE liste de schémas moteurs, alors que l'app a déjà
+      `_exRole()` — le classement ancre/accessoire, qui sait précisément qu'un **Pec Deck** ou un
+      **Tirage Visage** sont des isolations rangées dans un schéma de « poussée/tirage ». Le
+      Pec Deck recevait donc 3 paliers d'échauffement (5×27,5 → 3×37,5 → 2×50) avant 3×12.
+      *Le garde-fou existait, il était écrit deux fois, et c'est la mauvaise version qui servait.*
+   ② rien ne regardait la SÉANCE, seulement l'exercice. Après un développé couché lourd (4 paliers
+      + 3×5 @ 85 kg), le développé incliné qui suit n'a pas besoin d'une 2ᵉ montée : **on est déjà
+      chaud sur ce mouvement-là**. Un exercice ne s'échauffe donc que si son schéma moteur n'a pas
+      déjà été chargé lourd dans la même séance.
+   ⚠️ SEUL UN ANCRE « CHAUFFE » SON SCHÉMA, jamais un accessoire : sinon un Pec Deck placé avant le
+   développé couché supprimerait la montée du développé. *Une montée en trop coûte du temps ; une
+   montée manquante sur une barre lourde coûte une épaule* (R29 : le droit de deviner dépend du
+   coût de l'erreur — ici il n'est pas symétrique).
+   ⚠️ RETRAIT VOLONTAIRE (R30) : `_MOV_MONTEE` n'est plus consultée. Elle contenait `fente`, que
+   `_exRole` range en accessoire — donc les fentes ne reçoivent plus de montée en charge. C'est
+   cohérent avec le vocabulaire de l'app, ce n'est pas un oubli. */
 function _completerMonteeEnCharge(sess){
   try{
     if(!sess || !Array.isArray(sess.exs)) return sess;
+    const chauffe = {};   // schémas moteurs déjà chargés lourd DANS CETTE SÉANCE
     sess.exs.forEach(function(ex){
       const sets = Array.isArray(ex.sets) ? ex.sets : [];
       const travail = sets.filter(s=>s && s.type!=='É' && s.type!=='W');
@@ -1404,7 +1428,10 @@ function _completerMonteeEnCharge(sess){
       const kgT = travail.reduce((m,s)=>Math.max(m, +s.kg||0), 0);
       if(!(kgT >= _MONTEE_SEUIL_KG)) return;
       let pat=null; try{ pat=_movPattern(ex.name); }catch(e){}
-      if(_MOV_MONTEE.indexOf(pat) < 0) return;              // mouvement d'isolation → on ne touche pas
+      let role='accessoire'; try{ role=_exRole(ex.name); }catch(e){}
+      if(role !== 'ancre') return;                          // isolation / accessoire → on ne touche pas
+      if(pat && chauffe[pat]) return;                       // ce mouvement a déjà été chauffé plus haut
+      if(pat) chauffe[pat] = true;                          // seul un ancre lourd chauffe son schéma
       const ech = sets.filter(s=>s && (s.type==='É'||s.type==='W'));
       if(_monteeSuffisante(ech, kgT)) return;               // sa montée est bonne → on ne touche pas
       const montee = _monteeCompletee(ech, kgT);
