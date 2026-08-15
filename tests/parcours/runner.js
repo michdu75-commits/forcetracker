@@ -4381,55 +4381,47 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
-/* ══ BLOC XXV — RECALAGE DES ANCIENNES SÉANCES : L'HORLOGE, PAS LES CALORIES (15/08/2026) ══
-   Michel : « NAN on corrige mes anciennes séances lol, c'est psychologique » — et, plus tôt :
-   « je ne veux pas la mesure de Garmin, Garmin ne reconnaît pas les mouvements et ne tient compte
-   que du cœur ». Les deux tiennent ensemble : on prend de la montre ce qu'elle mesure bien (le
-   TEMPS) et l'intensité vient de la valeur publiée du Compendium. Aucune calorie n'est copiée.  */
+/* ══ BLOC XXV — RECALER LES ANCIENNES SÉANCES, SANS FICHIER (15/08/2026) ══
+   Michel : « ça ne me plaît pas de mettre le csv de garmin », « je veux un truc simple et efficace
+   comme une mise à jour ». Mesuré contre ses 27 séances relevées à la montre, le simple × 1,55 bat
+   toutes les formules plus savantes : médiane −2,7 % et 18/27 à moins de 20 %, contre 6/27 avant.
+   ⚠️ Les séances qui portent l'heure de leurs séries ont une durée RÉELLE : les recaler les
+   éloignerait de la vérité (le 15/08 ne demande qu'un × 1,13). Elles ne sont pas touchées.        */
 {
-  console.log('\n── XXV. Recaler les anciennes séances sans copier les calories de la montre ──');
-  const CSV=['Type d\'activité,Date,Titre,Calories,Durée,Total séries',
-    'Musculation,2026-08-03 16:38:41,"Musculation","428","01:50:48","15"',
-    'Musculation,2026-08-02 15:55:09,"Musculation","458","01:23:55","21"',
-    'Marche à pied,2026-08-02 15:46:05,"Marche","29","00:06:43.9","--"',
-    'Musculation,2026-07-28 17:36:55,"Musculation","37","00:04:50.6","2"',
-    'Musculation,2026-07-12 15:52:54,"Musculation","428","03:12:00","10"'].join('\n');
-  const Q=await p.evaluate((CSV)=>{
+  console.log('\n── XXV. Recaler les anciennes séances (un bouton, aucun fichier) ──');
+  const Q=await p.evaluate(()=>{
    try{
-    if(typeof _garminDurees!=='function') return {erreur:'_garminDurees absente'};
-    const o={};
-    const dur=_garminDurees(CSV);
-    o.dates=Object.keys(dur).sort();
-    o.min=dur['2026-08-03'];
-    S.bw=85; try{localStorage.setItem('ft4_admin_ok','1');}catch(e){}
+    if(typeof _recalerAnciennesSeances!=='function') return {erreur:'_recalerAnciennesSeances absente'};
+    try{localStorage.setItem('ft4_admin_ok','1');}catch(e){}
     S.sessions=[
-      {date:'2026-08-03',calories:261,calData:{total:261,cardio:87},exs:[]},
-      {date:'2026-08-02',calories:260,calData:{total:260,cardio:52},exs:[]},
-      {date:'2026-07-28',calories:299,calData:{total:299,cardio:0},exs:[]},
-      {date:'2026-05-01',calories:150,calData:{total:150,cardio:0},exs:[]}];
+      // ancienne séance : durée déduite du nombre de séries → à recaler
+      {date:'2026-08-03',calories:261,calData:{total:261,cardio:87},exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true}]}]},
+      // séance HORODATÉE : durée déjà réelle → ne doit PAS bouger
+      {date:'2026-08-15',calories:310,calData:{total:310,cardio:68},exs:[{name:'Développé Couché',sets:[{kg:85,reps:5,done:true,at:0}]}]},
+      // séance sans calories → rien à faire
+      {date:'2026-07-01',exs:[]}];
     const avant=JSON.stringify(S.sessions.map(x=>({d:x.date,k:x.calories})));
-    _appliquerRecalage(dur);
-    o.apres=S.sessions.map(x=>({d:x.date,k:x.calories,src:x.calSource||null}));
-    _appliquerRecalage(dur);                       // 2ᵉ passage : la sauvegarde ne doit pas bouger
-    o.sauv=S.sessions.map(x=>x.caloriesAvant===undefined?null:x.caloriesAvant);
+    const o={};
+    _recalerAnciennesSeances();
+    o.ancienne=S.sessions[0].calories;          // (261−87)×1,55 + 87 = 357
+    o.horodatee=S.sessions[1].calories;         // inchangée
+    o.srcH=S.sessions[1].calSource||null;
+    _recalerAnciennesSeances();                 // 2ᵉ passage : ne doit pas cumuler
+    o.pasDeCumul=S.sessions[0].calories;
+    o.sauv=S.sessions[0].caloriesAvant;
     _annulerRecalageCalories();
-    o.identique = JSON.stringify(S.sessions.map(x=>({d:x.date,k:x.calories})))===avant;
-    o.residus = S.sessions.filter(x=>x.calSource!==undefined||x.caloriesAvant!==undefined).length;
+    o.identique=JSON.stringify(S.sessions.map(x=>({d:x.date,k:x.calories})))===avant;
+    o.residus=S.sessions.filter(x=>x.calSource!==undefined||x.caloriesAvant!==undefined).length;
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
-  }, CSV);
+  });
   if(Q.erreur){ t('⛔ le recalage existe', false, Q.erreur); }
   else{
-    t('⭐⭐ les séances où la montre a été oubliée sont ÉCARTÉES (5 min · 3 h 12)',
-      Q.dates.join(',')==='2026-08-02,2026-08-03', 'retenues : '+Q.dates.join(', '));
-    t('⭐ la durée lue est bien celle de la montre (1 h 50 → 111 min)', Q.min===111, 'reçu : '+Q.min);
-    t('⭐⭐ le recalage monte les calories (MET 3,5 publié × durée mesurée + cardio)',
-      Q.apres[0].k>261 && Q.apres[0].src==='duree-mesuree', JSON.stringify(Q.apres[0]));
-    t('⚠️ une séance sans mesure exploitable n\'est PAS touchée (28/07)',
-      Q.apres[2].k===299 && Q.apres[2].src===null, JSON.stringify(Q.apres[2]));
-    t('⚠️ une séance absente du fichier n\'est pas touchée non plus', Q.apres[3].k===150);
-    t('🛟 un 2ᵉ passage n\'écrase pas la sauvegarde d\'origine',
-      Q.sauv[0]===261 && Q.sauv[1]===260, JSON.stringify(Q.sauv));
+    t('⭐⭐ une ancienne séance est recalée, cardio exclu (261 → 357)', Q.ancienne===357, 'reçu : '+Q.ancienne);
+    t('⭐⭐ une séance HORODATÉE n\'est PAS touchée (sa durée est déjà réelle)',
+      Q.horodatee===310 && Q.srcH===null, 'reçu : '+Q.horodatee+' · source '+Q.srcH);
+    t('⚠️ un 2ᵉ appui ne CUMULE pas le facteur', Q.pasDeCumul===357, 'reçu : '+Q.pasDeCumul);
+    t('🛟 la valeur d\'origine est conservée', Q.sauv===261, 'reçu : '+Q.sauv);
     t('🛟⭐⭐ l\'annulation rend un historique IDENTIQUE à l\'original', Q.identique===true);
     t('🛟 … et ne laisse aucun champ résiduel', Q.residus===0, 'reçu : '+Q.residus);
   }

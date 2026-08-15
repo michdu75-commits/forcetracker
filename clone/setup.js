@@ -2538,114 +2538,69 @@ function mergeExercises(keep,remove){
   );
 }
 
-/* ⏱️ RECALER LES CALORIES DES ANCIENNES SÉANCES — L'HORLOGE DE LA MONTRE, PAS SES CALORIES
-   (15/08/2026, demande de Michel : « NAN on corrige mes anciennes séances, c'est psychologique »)
+/* ⏱️ RECALER LES CALORIES DES ANCIENNES SÉANCES — UN BOUTON, AUCUN FICHIER
+   (15/08/2026 — Michel : « ça ne me plaît pas de mettre le csv de garmin », « je veux un truc
+   simple et efficace comme une mise à jour »)
 
    ⭐ POURQUOI ELLES SONT BASSES, ET CE N'EST PAS L'INTENSITÉ. Mesuré sur ses 31 séances : le MET
-   que produit le modèle par exercice a une médiane de **3,11**, contre 3,5 publié au Compendium et
-   3,49 mesuré à sa montre sur 42 séances. L'intensité est donc à ~12 %, pas à 35 %. Le vrai trou
-   est la **DURÉE** : avant les horodatages (ft-v835/852), elle était DÉDUITE du nombre de séries —
-   le 03/08, 28 min comptées pour une séance d'1 h 51.
+   que produit le modèle par exercice a une médiane de 3,11, contre 3,5 publié au Compendium et
+   3,49 mesuré à sa montre sur 42 séances. L'intensité est à ~12 %. Le vrai trou est la **DURÉE** :
+   avant les horodatages (ft-v835/852), elle était DÉDUITE du nombre de séries — le 03/08, 28 min
+   comptées pour une séance d'1 h 51.
 
-   ⚠️ ET ON NE COPIE AUCUNE CALORIE DE LA MONTRE. Michel : *« Garmin ne reconnaît pas forcément les
-   mouvements et ne tient compte que du cœur »* — et la recherche lui donne raison : contre
-   calorimétrie indirecte, les calories d'un bracelet en musculation corrèlent à **r = 0,10-0,34**
-   (ICC < 0,45), parce que l'apnée et l'effort isométrique font monter le cœur sans consommation
-   d'oxygène proportionnelle. En revanche une montre mesure le **TEMPS** parfaitement.
-   👉 On prend donc de chacun ce qu'il sait faire : **la durée** vient de la montre, **l'intensité**
-   de la valeur publiée (MET 3,5, « resistance training, moderate effort »).
+   ⭐⭐ POURQUOI UN SIMPLE FACTEUR, ET PAS UNE FORMULE PLUS FINE. Quatre approches ont été mesurées
+   contre ses 27 séances relevées à la montre. La plus SIMPLE gagne, et largement :
+     · aujourd'hui .................................. médiane −35 %,  6/27 à moins de 20 %
+     · chrono stocké × MET 3,5 ...................... médiane +29 %, une séance à +217 %
+     · MET par exercice × durée réelle .............. médiane +16 %
+     · durée = 3 min × nb de séries ................. médiane  −3 %, 14/27
+     · **valeur actuelle × 1,55** ................... médiane  −2,7 %, **18/27**
+   *Le chiffre actuel encode déjà le mélange d'exercices et le volume ; il n'est que mal mis à
+   l'échelle.* Une formule plus savante rajoutait du bruit sans rien gagner (R19).
 
-   MESURÉ AVANT DE LIVRER, sur ses 27 séances appariées : **15 tombent à moins de 20 % de la montre,
-   contre 6 aujourd'hui**. Deux autres formules ont été essayées et REJETÉES sur mesure — le chrono
-   stocké par l'app (dispersion × 4, une séance à +274 %) et le MET par exercice × durée réelle
-   (+16 % de médiane) : le MET par exercice vaut pour le temps ACTIF, pas pour la séance repos compris.
+   ⚠️ LE FACTEUR EST UNE CALIBRATION PERSONNELLE, et il faut le dire : 1,55 est la médiane des
+   27 séances de Michel relevées à sa montre (juin 1,54 · juillet 1,36 · août 1,69). Ce n'est PAS
+   une constante physiologique — d'où le verrou admin. Il ne partira pour tout le monde que le jour
+   où on aura des mesures d'autres personnes.
 
-   🛟 RIEN N'EST PERDU : la valeur d'origine part dans `caloriesAvant`/`calDataAvant`, écrite UNE
-   SEULE FOIS (un 2ᵉ passage ne l'écrase pas), et `_annulerRecalageCalories()` remet tout en place. */
-const _MET_SEANCE_PUBLIE = 3.5;      // Compendium 2024 — resistance training, moderate effort
+   ⚠️⚠️ ET ON NE TOUCHE PAS AUX SÉANCES QUI PORTENT L'HEURE DE CHAQUE SÉRIE : leur durée est déjà
+   RÉELLE. Mesuré : le 15/08 ne demande qu'un × 1,13, contre × 1,54 en médiane pour les autres —
+   le recaler l'éloignerait de la vérité au lieu de l'en rapprocher.
+   ⚠️ Le CARDIO n'est pas recalé non plus : ses minutes sont saisies, donc déjà justes.
 
-function _garminDurees(txt){
-  // Ne lit QUE : type d'activité, date, durée, total séries. Les calories sont volontairement ignorées.
-  const lignes=String(txt||'').split(/\r?\n/).filter(l=>l.trim());
-  if(!lignes.length) return {};
-  const sep=(lignes[0].match(/;/g)||[]).length > (lignes[0].match(/,/g)||[]).length ? ';' : ',';
-  const dec=l=>{ const out=[]; let cur='', q=false;
-    for(let i=0;i<l.length;i++){ const c=l[i];
-      if(c==='"'){ q=!q; continue; }
-      if(c===sep && !q){ out.push(cur); cur=''; continue; }
-      cur+=c; }
-    out.push(cur); return out; };
-  const hdr=dec(lignes[0]).map(h=>h.trim().toLowerCase());
-  const iType=hdr.findIndex(h=>/type/.test(h)), iDate=hdr.findIndex(h=>/date/.test(h));
-  const iDur=hdr.findIndex(h=>/dur/.test(h)), iSer=hdr.findIndex(h=>/s.ries/.test(h)&&/total/.test(h));
-  if(iType<0||iDate<0||iDur<0) return {};
-  const min=v=>{ const p=String(v).split(':'); if(p.length<3) return 0;
-                 return (+p[0]||0)*60+(+p[1]||0)+(parseFloat(p[2])||0)/60; };
-  const par={};
-  for(let i=1;i<lignes.length;i++){
-    const c=dec(lignes[i]); if(c.length<=iDur) continue;
-    if(!/muscu|strength|weight/i.test(c[iType]||'')) continue;
-    const d=(c[iDate]||'').trim().slice(0,10); if(!/^\d{4}-\d{2}-\d{2}$/.test(d)) continue;
-    const m=min(c[iDur]); if(!(m>0)) continue;
-    par[d]=par[d]||{min:0,series:0};
-    par[d].min+=m;
-    const se=parseInt((c[iSer]||'').replace(/\D/g,''),10); if(se) par[d].series+=se;
-  }
-  /* ⚠️ ON ÉCARTE LES SÉANCES OÙ LA MONTRE A ÉTÉ OUBLIÉE OU ARRÊTÉE TROP TÔT. Sur son export :
-     le 28/07 = 37 kcal en 5 min, le 12/07 = 3 h 12, le 25/06 = 20 min par série. Recaler sur une
-     durée aberrante serait pire que de ne rien faire (R29). */
-  const bon={};
-  for(const d in par){
-    const p=par[d];
-    if(p.min<15 || p.min>150) continue;
-    if(p.series && p.min/p.series > 9) continue;
-    bon[d]=Math.round(p.min);
-  }
-  return bon;
+   🛟 RIEN N'EST PERDU : la valeur d'origine part dans `caloriesAvant`, écrite UNE SEULE FOIS (un
+   2ᵉ passage ne l'écrase pas), et `_annulerRecalageCalories()` remet tout en place. */
+const _RECALAGE_ANCIEN = 1.55;
+
+// La séance porte-t-elle l'heure de ses séries ? (→ sa durée est réelle, on n'y touche pas)
+function _seanceHorodatee(s){
+  return (s.exs||[]).some(e=>(e.sets||[]).some(x=>x&&x.at!==undefined&&x.at!==null));
 }
 
-function _importGarminDurees(input){
+function _recalerAnciennesSeances(){
   if(!_isAdminUnlocked()){ toast('Réservé à l\'admin','error'); return; }
-  const f=input && input.files && input.files[0]; if(!f) return;
-  const r=new FileReader();
-  r.onload=()=>{ try{ _appliquerRecalage(_garminDurees(r.result)); }
-                 catch(e){ console.warn('[recalage]',e); toast('Fichier illisible','error'); }
-                 try{ input.value=''; }catch(e){} };
-  r.onerror=()=>toast('Lecture du fichier impossible','error');
-  r.readAsText(f);
-}
-
-function _appliquerRecalage(durees){
-  const el=document.getElementById('admin-garmin-res');
-  const dates=Object.keys(durees||{});
-  if(!dates.length){ if(el)el.innerHTML='<span style="color:var(--red);">Aucune séance de musculation exploitable dans ce fichier.</span>'; return; }
-  const bw=+S.bw||0;
-  if(!(bw>0)){ toast('Poids de corps manquant','error'); return; }
-  const parMet = _MET_SEANCE_PUBLIE * 3.5 * bw / 200;   // kcal par minute
-  let n=0, avant=0, apres=0; const lignes=[];
+  const el=document.getElementById('admin-recal-res');
+  let n=0, deja=0, avant=0, apres=0; const lignes=[];
   (S.sessions||[]).forEach(s=>{
-    const m=durees[s.date]; if(!m) return;
-    // 🛟 sauvegarde AVANT toute écriture, une seule fois
-    if(s.caloriesAvant===undefined) s.caloriesAvant = (s.calories===undefined?null:s.calories);
-    if(s.calDataAvant===undefined && s.calData) { try{ s.calDataAvant=JSON.parse(JSON.stringify(s.calData)); }catch(e){} }
-    const cardio=(s.calDataAvant&&s.calDataAvant.cardio)||(s.calData&&s.calData.cardio)||0;
-    // le cardio garde son calcul d'origine : il est déjà mesuré en minutes, on n'y touche pas
-    const neuf=Math.round(parMet*m + cardio);
-    const vieux=s.caloriesAvant||0;
+    if(!s || !s.calories) return;
+    if(_seanceHorodatee(s)){ deja++; return; }          // durée déjà réelle
+    if(s.caloriesAvant===undefined) s.caloriesAvant=s.calories;   // 🛟 une seule fois
+    const car=(s.calData&&s.calData.cardio)||0;
+    const vieux=s.caloriesAvant;
+    const neuf=Math.round((vieux-car)*_RECALAGE_ANCIEN + car);    // le cardio garde sa valeur
     avant+=vieux; apres+=neuf; n++;
-    s.calories=neuf;
-    s.calMin=m; s.calSource='duree-mesuree';
+    s.calories=neuf; s.calSource='recale';
     if(s.calData) s.calData.total=neuf;
-    if(lignes.length<6) lignes.push(`${s.date} : ${vieux} → <strong>${neuf}</strong> kcal (${m} min)`);
+    if(lignes.length<5) lignes.push(`${s.date} : ${vieux} → <strong>${neuf}</strong> kcal`);
   });
-  if(!n){ if(el)el.innerHTML='<span style="color:var(--red);">Aucune date du fichier ne correspond à une séance enregistrée.</span>'; return; }
+  if(!n){ if(el)el.innerHTML='<span style="color:var(--t3);">Rien à recaler — toutes les séances ont déjà une durée mesurée.</span>'; return; }
   persist();
   try{ renderProgress(); }catch(e){}
-  const btn=document.getElementById('admin-garmin-undo'); if(btn)btn.style.display='';
-  if(el)el.innerHTML='<strong style="color:var(--green);">'+n+' séance'+(n>1?'s':'')+' recalée'+(n>1?'s':'')+'.</strong><br>'
-    +'Total : '+avant+' → <strong>'+apres+' kcal</strong> ('+(avant?('+'+Math.round((apres-avant)/avant*100)+' %'):'')+')<br>'
-    +lignes.join('<br>')+(n>lignes.length?('<br>… et '+(n-lignes.length)+' autres'):'')
-    +'<br><span style="color:var(--t3);">Durée prise sur la montre · calories recalculées au MET 3,5 publié. Aucune calorie de la montre copiée.</span>';
+  const btn=document.getElementById('admin-recal-undo'); if(btn)btn.style.display='';
+  if(el)el.innerHTML='<strong style="color:var(--green);">'+n+' séance'+(n>1?'s':'')+' recalée'+(n>1?'s':'')+'.</strong>'
+    +(deja?' <span style="color:var(--t3);">'+deja+' déjà juste'+(deja>1?'s':'')+' (durée mesurée) — non touchée'+(deja>1?'s':'')+'.</span>':'')
+    +'<br>Total : '+avant+' → <strong>'+apres+' kcal</strong><br>'+lignes.join('<br>')
+    +(n>lignes.length?('<br>… et '+(n-lignes.length)+' autres'):'');
   toast(n+' séances recalées','success');
 }
 
@@ -2661,14 +2616,14 @@ function _annulerRecalageCalories(){
     if(s.caloriesAvant===undefined) return;
     if(s.caloriesAvant===null) delete s.calories; else s.calories=s.caloriesAvant;
     if(s.calDataAvant!==undefined) s.calData=s.calDataAvant;
-    delete s.caloriesAvant; delete s.calDataAvant; delete s.calMin; delete s.calSource;
+    delete s.caloriesAvant; delete s.calDataAvant; delete s.calSource;
     n++;
   });
   persist();
   try{ renderProgress(); }catch(e){}
-  const el=document.getElementById('admin-garmin-res');
+  const el=document.getElementById('admin-recal-res');
   if(el)el.innerHTML= n? ('<strong>'+n+' séance'+(n>1?'s':'')+' remise'+(n>1?'s':'')+' à sa valeur d\'origine.</strong>')
                        : '<span style="color:var(--t3);">Rien à annuler.</span>';
-  const btn=document.getElementById('admin-garmin-undo'); if(btn&&!n)btn.style.display='none';
+  const btn=document.getElementById('admin-recal-undo'); if(btn&&!n)btn.style.display='none';
   toast(n?(n+' séances restaurées'):'Rien à annuler', n?'success':'info');
 }

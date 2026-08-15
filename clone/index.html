@@ -973,16 +973,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div style="font-weight:700;color:var(--t1);font-size:15px;">⏱️ Recaler les calories des anciennes séances</div>
       <div style="font-size:12.5px;color:var(--t2);line-height:1.5;">
         Avant le 12/08, l'app <strong>déduisait</strong> la durée d'une séance du nombre de séries — le 03/08 elle a compté
-        28 min pour une séance d'1 h 51. Les calories qui en découlent sont donc très basses.
-        <br><br>Ce bouton lit un export <strong>Garmin</strong> et n'en prend <strong>que la DURÉE</strong> — une montre mesure
-        parfaitement le temps. Les calories, elles, sont recalculées avec la valeur publiée du
-        <strong>Compendium 2024</strong> (MET 3,5) × ton poids. <strong>Aucune calorie de la montre n'est copiée.</strong>
-        <br><br>🛟 La valeur d'origine de chaque séance est <strong>conservée</strong> : tu peux tout annuler d'un bouton.
+        28 min pour une séance d'1 h 51. Les calories qui en découlent sont très basses.
+        <br><br>Ce bouton remet ces séances-là à l'échelle (<strong>× 1,55</strong>). Les séances récentes, qui portent
+        l'heure de chaque série, ont déjà une <strong>durée réelle</strong> : elles ne sont <strong>pas</strong> touchées.
+        Le cardio non plus — ses minutes sont saisies, donc déjà justes.
+        <br><br>🛟 La valeur d'origine est <strong>conservée</strong> : tu peux tout annuler d'un bouton.
       </div>
-      <input type="file" id="admin-garmin-file" accept=".csv,text/csv" style="display:none;" onchange="_importGarminDurees(this)">
-      <button class="btn btn-bg2" onclick="document.getElementById('admin-garmin-file').click()" style="padding:11px;font-size:14px;">📥 Choisir l'export Garmin (.csv)</button>
-      <button class="btn btn-bg2" id="admin-garmin-undo" onclick="_annulerRecalageCalories()" style="padding:11px;font-size:14px;color:var(--red);display:none;">↩️ Annuler le recalage</button>
-      <div id="admin-garmin-res" style="font-size:12.5px;color:var(--t2);line-height:1.55;"></div>
+      <button class="btn btn-bg2" onclick="_recalerAnciennesSeances()" style="padding:11px;font-size:14px;">⏱️ Recaler mes anciennes séances</button>
+      <button class="btn btn-bg2" id="admin-recal-undo" onclick="_annulerRecalageCalories()" style="padding:11px;font-size:14px;color:var(--red);display:none;">↩️ Annuler le recalage</button>
+      <div id="admin-recal-res" style="font-size:12.5px;color:var(--t2);line-height:1.55;"></div>
     </div>
     <!-- Réservé au CLONE de test (affiché seulement si window.__FT_CLONE__) -->
     <div class="card cp" id="admin-clone-reset-card" style="display:none;flex-direction:column;gap:10px;">
