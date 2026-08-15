@@ -492,7 +492,27 @@ function editSessDuree(){
   const s=(S.sessions||[]).find(x=>(x.ts||x.id)===_sessId);
   if(!s)return;
   const cur=s.duration?Math.round(s.duration/60):'';
-  const v=prompt('Durée de la séance, en minutes\n(laisse vide pour l\'effacer)',cur);
+  /* 💬 QUAND LA DURÉE EST DOUTEUSE, ON DIT CE QU'ON A VU ET CE QU'ON PEUT FAIRE (15/08/2026)
+     Michel, après avoir retrouvé la cause de sa séance de 19 min : *« c'est quand j'ai perdu la
+     séance et j'ai recommencé »*, puis *« une séance qui est rentrée après pour X raison, il faut
+     le prendre en compte »*.
+     ⚠️ L'app SAVAIT déjà effacer une durée (laisser le champ vide), et savait déjà la SIGNALER
+     (ft-v868/869) — mais elle ne reliait pas les deux : au moment précis où la personne tape sur
+     le ⚠️, rien ne lui disait ce qui clochait ni qu'une séance ressaisie n'a pas de durée à
+     donner. *Une capacité qu'on ne nomme pas au bon moment n'existe pas.*
+     ⚠️ ON MONTRE LE CALCUL, on n'assène pas un verdict : « 19 min pour 16 séries, soit 1,2 min par
+     série ». C'est la personne qui sait pourquoi, pas l'app (R29 : informer sans décider). */
+  let entete='Durée de la séance, en minutes\n(laisse vide pour l\'effacer)';
+  if(typeof _dureeDouteuse==='function' && _dureeDouteuse(s)){
+    let n=0; (s.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{ if(x&&x.done) n++; }));
+    const m=Math.round(s.duration/60);
+    entete='⚠️ Cette durée semble fausse : '+m+' min pour '+n+' série'+(n>1?'s':'')+' validée'+(n>1?'s':'')
+      +(n?' (soit '+(m/n).toFixed(1).replace('.',',')+' min par série)':'')+'.\n\n'
+      +'Si tu as ressaisi cette séance APRÈS coup, le chrono n\'a mesuré que ta saisie : laisse le champ '
+      +'VIDE, mieux vaut aucune durée qu\'une fausse.\n\n'
+      +'Sinon, entre la vraie durée en minutes.';
+  }
+  const v=prompt(entete,cur);
   if(v===null)return;
   const t=String(v).trim();
   if(!t){ delete s.duration; delete s.durationDite; }
@@ -505,7 +525,7 @@ function editSessDuree(){
   try{ if(typeof _cloudSyncSessions==='function')_cloudSyncSessions(); }catch(e){}
   openSessDetail(s.ts||s.id);
   renderSessions();
-  toast(t?'Durée enregistrée ✅':'Durée effacée','success');
+  toast(t?'Durée enregistrée ✅':'Durée effacée — mieux vaut rien qu\'un chiffre faux','success');
 }
 function _renderSessDetailContent(){
   const el=document.getElementById('sd-content');

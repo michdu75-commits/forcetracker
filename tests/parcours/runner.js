@@ -4472,6 +4472,34 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       D.dense===false, 'le plancher ne doit pas accuser une vraie séance rapide');
     t('⚠️ une séance de 3 séries expédiée en 4 min n\'est pas jugée', D.expediee===false);
   }
+  // 💬 le message d'édition explique CE QU'ON A VU quand la durée est douteuse
+  const E=await p.evaluate(()=>{
+   try{
+    const vus=[];
+    const vrai=window.prompt;
+    window.prompt=(txt)=>{ vus.push(String(txt)); return null; };   // on annule, on lit juste le texte
+    S.sessions=[{ts:1,id:1,date:'2026-07-04',duration:19*60,volume:6180,
+      exs:[{name:'Tirage Menton',sets:Array.from({length:16},()=>({kg:30,reps:10,done:true}))}]},
+      {ts:2,id:2,date:'2026-07-02',duration:66*60,volume:7876,
+      exs:[{name:'Squat à la Barre',sets:Array.from({length:20},()=>({kg:80,reps:8,done:true}))}]}];
+    // ⚠️ `_sessId` est un `let` de setup.js, PAS une variable de window : le poser à la main ne
+    // pilote rien (mon 1ᵉʳ témoin ouvrait donc… rien du tout, et passait au vert pour ça).
+    // On passe par la vraie porte : openSessDetail() le renseigne.
+    openSessDetail(1); editSessDuree();
+    openSessDetail(2); editSessDuree();
+    window.prompt=vrai;
+    return {douteuse:vus[0]||'', normale:vus[1]||''};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(E.erreur){ t('⛔ l\'éditeur de durée s\'ouvre', false, E.erreur); }
+  else{
+    t('⭐⭐ sur une durée douteuse, le message DIT le calcul (19 min / 16 séries)',
+      /19 min pour 16 s/.test(E.douteuse) && /1,2 min par série/.test(E.douteuse), E.douteuse.slice(0,110));
+    t('⭐⭐ … et propose de laisser VIDE si la séance a été ressaisie après coup',
+      /ressaisi/.test(E.douteuse) && /VIDE/.test(E.douteuse));
+    t('⚠️ sur une durée normale, le message reste court et neutre',
+      !/semble fausse/.test(E.normale), E.normale.slice(0,60));
+  }
 }
 
 await b.close(); srv.close();
