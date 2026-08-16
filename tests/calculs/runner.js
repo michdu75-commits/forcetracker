@@ -742,6 +742,51 @@ console.log('\n═══ 6bis. Horodatage des séries + temps effectif ═══
   t('des repos longs (5 min) donnent une densité < 0,25', r.reposLong&&r.reposLong.densite<0.25, JSON.stringify(r.reposLong));
   t('⭐ une séance SANS horodatage répond « je ne sais pas » (null), jamais un chiffre inventé', r.ancienne===null, 'reçu '+JSON.stringify(r.ancienne));
   t('une seule série horodatée ne suffit pas à mesurer un temps', r.uneSeule===null, 'reçu '+JSON.stringify(r.uneSeule));
+  /* ⏱️⏱️ LE PLAFOND NE SE CALE PLUS SUR LES ÉCHAUFFEMENTS (ft-v885). Michel, sur sa séance du
+     16/08 : « c'est quoi encore cette différence de calories ». Mesuré : l'app retenait 56,6 min
+     quand sa montre en relevait 63,8, et le plafond de 239 s avait coupé des repos de 284, 316
+     et 265 s ENTRE SES SÉRIES DE SOULEVÉ DE TERRE À 130 kg. Cause : la médiane qui fixe le
+     plafond mélangeait les paliers d'échauffement (56-83 s) et les vraies séries de travail
+     (284-316 s) — les premiers tiraient la médiane vers le bas.
+     ⚠️ Le témoin compare DEUX séances rigoureusement identiques sur leurs séries de travail :
+     l'une sans échauffement, l'autre avec. Elles doivent rendre le MÊME plafond. */
+  const D2=await p.evaluate(()=>{
+   try{
+    const mk=(sets)=>({date:'2026-08-16',exs:[{name:'Soulevé de Terre',sets}]});
+    const travail=[{kg:130,reps:3,done:true,type:'N',at:0},
+                   {kg:130,reps:3,done:true,type:'N',at:290},
+                   {kg:130,reps:3,done:true,type:'N',at:600},
+                   {kg:130,reps:3,done:true,type:'N',at:900}];
+    const ech=[{kg:60,reps:5,done:true,type:'É',at:0},{kg:80,reps:3,done:true,type:'É',at:60},
+               {kg:90,reps:3,done:true,type:'É',at:140},{kg:110,reps:1,done:true,type:'É',at:230}];
+    const sansEch=_dureeEffective(mk(travail));
+    const avecEch=_dureeEffective(mk(ech.concat(travail.map(x=>({...x,at:x.at+520})))));
+    // et le passage d'un exercice à l'autre reçoit le plafond MAXIMUM, pas celui d'un repos
+    /* ⚠️ LE TÉMOIN COMPARE LES MÊMES HORODATAGES, avec et sans frontière d'exercice. Un écart de
+       500 s au MÊME exercice est un repos anormal (on le borne) ; le même écart AU CHANGEMENT
+       d'exercice, c'est décharger la barre et traverser la salle (on le garde). */
+    const A=[{kg:130,reps:3,done:true,type:'N',at:0},{kg:130,reps:3,done:true,type:'N',at:200}];
+    const B=[{kg:60,reps:8,done:true,type:'N',at:700},{kg:60,reps:8,done:true,type:'N',at:900}];
+    const deuxExos={date:'2026-08-16',exs:[{name:'Soulevé de Terre',sets:A},
+                                           {name:'Tirage Poulie Haute (Lat Pulldown)',sets:B}]};
+    const unSeul  ={date:'2026-08-16',exs:[{name:'Soulevé de Terre',sets:A.concat(B)}]};
+    const _d2=_dureeEffective(deuxExos), _d1=_dureeEffective(unSeul);
+    return {plafondSans:sansEch&&sansEch.plafondSec, plafondAvec:avecEch&&avecEch.plafondSec,
+            coupeAvec:avecEch&&avecEch.coupeSec,
+            transDeux:_d2, transUn:_d1};
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(D2.erreur){ t('⛔ le plafond des écarts se calcule', false, D2.erreur); }
+  else{
+    t('⏱️⏱️ les paliers d\'ÉCHAUFFEMENT ne rabaissent plus le plafond des vraies séries',
+      D2.plafondSans===D2.plafondAvec,
+      'sans échauffement '+D2.plafondSans+' s · avec '+D2.plafondAvec+' s');
+    t('⏱️ … donc un repos de 5 min à 130 kg n\'est plus rogné',
+      D2.coupeAvec===0, 'coupé '+D2.coupeAvec+' s');
+    t('🔄 les MÊMES horodatages gardent plus de temps quand c\'est un CHANGEMENT d\'exercice',
+      D2.transDeux && D2.transUn && D2.transDeux.actifSec > D2.transUn.actifSec,
+      '2 exercices : '+(D2.transDeux&&D2.transDeux.actifSec)+' s · 1 seul : '+(D2.transUn&&D2.transUn.actifSec)+' s');
+  }
   t('⭐⭐ l\'horodatage ALIMENTE maintenant les calories (ft-v874) — il ne fait plus que mesurer',
     r.srcAvec==='horodatage' && r.calAvec!==r.calSans, 'source '+r.srcAvec+' · '+r.calAvec+' vs '+r.calSans);
   t('⚠️ … et l\'écart est EXACTEMENT le rapport des durées : le MET n\'est pas touché',

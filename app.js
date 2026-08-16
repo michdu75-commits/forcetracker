@@ -310,10 +310,16 @@ function _dureeEffective(session){
     /* ⚠️ ON GARDE LES REPS AVEC L'HEURE : le plafond dépend du type de série qu'on vient de
        terminer, pas d'un réglage global. Sans ça, une séance qui mélange squat 5×3 et abdos
        3×20 recevrait le même plafond partout — trop lâche pour l'un, trop serré pour l'autre. */
-    const pts=[];
-    for(const ex of (session&&(session.exs||session.exercises))||[])
+    /* ⚠️ ON GARDE AUSSI LE TYPE DE SÉRIE ET L'EXERCICE (16/08/2026, ft-v885) — voir plus bas :
+       le plafond se calait sur des repos d'ÉCHAUFFEMENT, et le passage d'un exercice à l'autre
+       était traité comme un repos entre séries. */
+    const pts=[]; let _ei=0;
+    for(const ex of (session&&(session.exs||session.exercises))||[]){
       for(const s of (ex.sets||[]))
-        if(s&&s.done&&typeof s.at==='number'&&isFinite(s.at)&&s.at>=0) pts.push({at:s.at,reps:+s.reps||0});
+        if(s&&s.done&&typeof s.at==='number'&&isFinite(s.at)&&s.at>=0)
+          pts.push({at:s.at, reps:+s.reps||0, ei:_ei, ech:(s.type==='É'||s.type==='W')});
+      _ei++;
+    }
     if(pts.length<2) return null;          // 0 ou 1 série horodatée → on ne sait rien, on le dit
     pts.sort((a,b)=>a.at-b.at);
     const ats=pts.map(p=>p.at);
@@ -325,21 +331,42 @@ function _dureeEffective(session){
        veut écarter servirait à fixer la règle) ; la médiane ne bouge pas.
        ⚠️ Il faut au moins 3 écarts dans la classe pour que la médiane tienne — en dessous on
        retombe sur les repères métier de Michel. Une règle ne sert qu'à défaut de mesure. */
+    /* ⚠️⚠️ LE PLAFOND NE SE CALE PLUS SUR LES ÉCHAUFFEMENTS (16/08/2026, ft-v885).
+       Michel, sur sa séance du 16/08 : *« c'est quoi encore cette différence de calories, je
+       trouve ça énorme »*. Mesuré : l'app retenait **56,6 min** quand sa montre en relevait
+       **63,8**. Le plafond appliqué valait **239 s**, et il a coupé des repos de **284, 316 et
+       265 s** ENTRE SES SÉRIES DE SOULEVÉ DE TERRE À 130 kg — c'est-à-dire des repos de 4 à
+       5 minutes, parfaitement normaux et même recommandés à cette charge.
+       ⭐ LA CAUSE : la médiane qui fixe le plafond était calculée sur TOUS les écarts de la
+       classe, et la classe « lourd » (≤ 5 reps) mélange les **paliers d'échauffement** — 56 s,
+       68 s, 83 s, expédiés — avec les **vraies séries de travail** — 284 s, 316 s. Les
+       échauffements tirent la médiane vers le bas, donc le plafond se referme sur les repos qui
+       comptent. *Deux animaux différents dans le même sac, depuis que l'app ajoute elle-même
+       des paliers d'échauffement (ft-v858).*
+       ⚠️ ON N'ÉLARGIT PAS LE PLAFOND, ON CORRIGE CE QU'IL MESURE : seules les séries de TRAVAIL
+       fixent la référence. Les échauffements restent plafonnés comme avant — c'est bien eux qu'on
+       veut borner, ils n'ont aucune raison de durer 5 minutes.
+       ⚠️ ET LE PASSAGE D'UN EXERCICE À L'AUTRE N'EST PAS UN REPOS (Michel, ft-v876 : *« décharger
+       la barre et aller à l'autre exercice, ça peut prendre 5 à 7 minutes, et là ce n'est pas du
+       repos »*). Il reçoit donc le plafond MAXIMUM, pas celui d'un repos entre deux séries. */
     const parClasse={};
     for(let i=1;i<pts.length;i++){
+      if(pts[i-1].ech) continue;                 // un palier d'échauffement ne fixe pas la règle
+      if(pts[i].ei!==pts[i-1].ei) continue;      // ni un changement d'exercice
       const c=_classeRepos(pts[i-1].reps).k;
       (parClasse[c]=parClasse[c]||[]).push(pts[i].at-pts[i-1].at);
     }
     const PLAFOND_MAX=600;   // 10 min : au-delà ce ne sont plus 2 séries, ce sont 2 séances
     const PLAFOND_MIN=60;    // en dessous, on tronquerait des repos parfaitement normaux
-    const plafondDe=reps=>{
+    const plafondDe=(reps,transition)=>{
+      if(transition) return PLAFOND_MAX;         // décharger, ranger, traverser : autre nature
       const cl=_classeRepos(reps), obs=parClasse[cl.k]||[];
       const base=obs.length>=3 ? 2*_mediane(obs) : cl.defaut;
       return Math.max(PLAFOND_MIN,Math.min(PLAFOND_MAX,Math.round(base)));
     };
     let actif=0, coupe=0, plafond=0;
     for(let i=1;i<pts.length;i++){
-      const ecart=pts[i].at-pts[i-1].at, p=plafondDe(pts[i-1].reps);
+      const ecart=pts[i].at-pts[i-1].at, p=plafondDe(pts[i-1].reps, pts[i].ei!==pts[i-1].ei);
       plafond=Math.max(plafond,p);
       actif+=Math.min(ecart,p);
       if(ecart>p) coupe+=ecart-p;
@@ -437,7 +464,17 @@ function _dureeSeanceMin(session, nSets, dureeFormuleMin){
   //    correction explicite de la personne, et elle sait ce que l'app ne saura jamais (R29).
   if(session && session.durationDite && +session.duration>0)
     return {min:(+session.duration)/60, src:'saisie'};
-  // ① mesuré — les horodatages de séries, la seule vraie mesure dont l'app dispose
+  /* ⚠️⚠️ J'AI ESSAYÉ DE PRENDRE LE PLUS GRAND DES DEUX, ET LA MESURE L'A REFUSÉ (16/08/2026).
+     Le raisonnement semblait imparable : les horodatages ne voient rien avant la 1ʳᵉ série ni
+     après la dernière, alors que le chrono couvre toute la séance — donc le chrono, quand il est
+     plus grand, serait « plus complet ». Sur la séance du 16/08 ça marchait (59,0 → 63,1 min,
+     montre 63,8). **Sur les 27 séances chronométrées, non** : le 13/08, le chrono dit 103 min
+     quand la montre en relève 86,6 et les horodatages 74,6. Résultat global : ±20 % 15/27 → 14/27.
+     Un chrono peut déborder sans franchir le seuil du « douteux » ; les horodatages, eux, ne
+     débordent jamais — ils ne peuvent que manquer. *Entre une mesure qui sous-estime et une qui
+     peut déborder, on garde celle qui sous-estime* (R29). L'idée est écrite ici pour qu'on ne la
+     retente pas dans six mois en croyant l'avoir trouvée.
+     ① mesuré — les horodatages de séries, la seule vraie mesure dont l'app dispose */
   try{
     const eff = (typeof _dureeEffective==='function') ? _dureeEffective(session) : null;
     if(eff && eff.actifSec > 0) return {min:borne(eff.actifSec/60), src:'horodatage'};
@@ -446,7 +483,7 @@ function _dureeSeanceMin(session, nSets, dureeFormuleMin){
   const ch = (+session.duration||0)/60;
   if(ch > 0){
     const douteuse = (typeof _dureeDouteuse==='function') ? _dureeDouteuse(session) : (nSets>=6 && (ch/nSets<1.5 || ch/nSets>MAX_PAR_SERIE)) || ch>MAX_MIN;
-    if(!douteuse) return {min:ch, src:'chrono'};
+    if(!douteuse) return {min:borne(ch), src:'chrono'};
   }
   // ③ estimation — le réglage de repos de la personne, rien d'autre
   const rest = (typeof S!=='undefined' && S.defRest) ? S.defRest : 120;
