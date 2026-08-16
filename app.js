@@ -169,7 +169,31 @@ const MET_ISO = 4.0;    // Isolation: curl, extension...
    l'installation, ni le déchargement, ni les séries longues. C'est le prochain chantier, et il
    se mesurera sur les horodatages — pas au jugé. NE PAS « corriger » ça en remontant `MET_REST`,
    ce serait remettre un chiffre faux pour compenser un autre chiffre faux. */
-const MET_REST = 1.5;   // Compendium 2024 · 07041 « debout, activité légère »
+/* 🫀 3,0 ET PLUS 1,5 — ENTRE DEUX SÉRIES LOURDES, LE CORPS NE REVIENT PAS AU REPOS (16/08/2026)
+   Michel : *« oui pour le MET »*, après qu'on ait posé le calcul ensemble.
+
+   ⭐⭐ CE QUI A CHANGÉ D'AVIS, C'EST UNE ARITHMÉTIQUE, PAS UNE INTUITION. Le 1,5 de ft-v875 était
+   correctement ancré — Compendium 07041, « debout, activité légère ». Mais il décrit **quelqu'un
+   qui ne fait rien**, et pas **quelqu'un qui récupère d'un triple à 130 kg**. Deux états
+   différents, et on avait pris le mauvais.
+   LA DÉMONSTRATION, en une ligne : le Compendium publie **3,5** pour une séance de musculation
+   modérée — et c'est une valeur de SÉANCE, repos compris. Sur la séance du 16/08, le temps actif
+   ne pèse que **19 %**, à ~5,1 MET. Pour que le total fasse 3,5 :
+       0,19 × 5,1  +  0,81 × x  =  3,5   →   **x ≈ 3,1**
+   *La valeur publiée implique donc que le temps entre les séries coûte environ 3 MET.* Décomposer
+   une valeur de séance en y remettant une posture de repos, c'est la « double dilution » — on
+   retire deux fois le même repos.
+   ⚠️ ET UNE 2ᵉ ROUTE, INDÉPENDANTE, TOMBE AU MÊME ENDROIT : la consommation d'oxygène pendant les
+   intervalles de récupération en résistance reste à ~50 % de l'écart à l'effort. Avec un exercice
+   à 5,5 MET : 1,0 + 0,5 × (5,5 − 1,0) = **3,25**. Deux raisonnements sans rapport, ~3,0-3,2.
+   ⚠️ CONSÉQUENCE ASSUMÉE : ce taux rejoint celui du temps de TRANSITION (ft-v876). Les deux états
+   coûtent désormais pareil, et la distinction ne survit que dans le RELEVÉ (`transitionMin` reste
+   mesuré à part). On garde deux constantes parce qu'elles sont ancrées sur des sources
+   différentes et peuvent diverger demain — pas pour faire joli.
+   ⛔ NE PAS remonter au-delà de 3,0 pour se rapprocher d'une montre : au-dessus, le total dépasse
+   la valeur publiée, et on aurait calé la physiologie sur un bracelet (r = 0,10-0,34 en
+   résistance). Le plafond de ce raisonnement, c'est le Compendium, pas Garmin. */
+const MET_REST = 3.0;   // récupération entre séries — voir la démonstration ci-dessus
 
 /* 🔄 LE TEMPS ENTRE DEUX EXERCICES N'EST PAS DU REPOS (16/08/2026, ft-v876)
    Michel, et c'est une vraie nuance que le modèle ne faisait pas : *« des fois entre chaque

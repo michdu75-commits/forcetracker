@@ -562,16 +562,25 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
   t('type inconnu → barème « autre » (440)', r.inconnu===440, 'reçu '+r.inconnu);
   t('cardio null → 0 (pas de plantage)', r.null_===0);
   t('séance 4 séries : total = actif + repos + échauffement ('+r.attendu+')', approx(r.cd.total,r.attendu,1), 'reçu '+r.cd.total);
-  /* 🛋️ LE MET DU REPOS EST FIGÉ ICI, AVEC SA RAISON (ft-v875). Le témoin au-dessus lit la
-     constante, donc il ne peut plus la surveiller — c'est celui-ci qui s'en charge.
-     1,5 = Compendium 2024 · 07041 « debout, activité légère », ce qu'on fait vraiment entre
-     deux séries. L'ancien 2,0 dépassait toutes les postures publiées (assis 1,0 · debout
-     tranquille 1,3) et correspondait à de la marche lente.
-     ⚠️ NE PAS LE REMONTER pour rapprocher le total d'une montre : le MET de séance produit par
-     ce modèle est trop bas (2,36 contre 3,5 publié) à cause des 30 s par série en dur, pas à
-     cause du repos. Remonter MET_REST serait compenser un chiffre faux par un autre. */
-  t('🛋️ le MET du repos vaut 1,5 (Compendium 07041 « debout, activité légère »)',
-    r.metRepos===1.5, 'reçu '+r.metRepos);
+  /* 🫀 CE TÉMOIN A CHANGÉ DE VALEUR LE 16/08 (ft-v886), et il faut lire pourquoi avant d'y
+     toucher — il a déjà bougé deux fois (2,0 → 1,5 → 3,0).
+     Le 1,5 de ft-v875 était correctement ancré (Compendium 07041, « debout, activité légère »)
+     mais il décrivait quelqu'un qui NE FAIT RIEN, pas quelqu'un qui récupère d'un triple à
+     130 kg. La démonstration tient en une ligne : le Compendium publie 3,5 pour une SÉANCE de
+     musculation modérée, repos compris. Le temps actif ne pesant que ~19 % à ~5,1 MET :
+         0,19 × 5,1 + 0,81 × x = 3,5  →  x ≈ 3,1
+     La valeur publiée IMPLIQUE donc ~3 MET entre les séries. Une 2ᵉ route indépendante tombe au
+     même endroit : la consommation d'oxygène en récupération reste à ~50 % de l'écart à l'effort,
+     soit 1,0 + 0,5 × (5,5 − 1,0) = 3,25.
+     MESURÉ sur 27 séances chronométrées : MET de séance 2,55 → 3,28 (publié 3,50), séances à
+     ±20 % 15/27 → 17/27.
+     ⛔ NE PAS REMONTER AU-DELÀ DE 3,0 pour se rapprocher d'une montre : au-dessus, le total
+     dépasse la valeur publiée, et on aurait calé la physiologie sur un bracelet (r = 0,10-0,34
+     en résistance). Le plafond de ce raisonnement est le Compendium, pas Garmin. */
+  t('🫀 le MET entre les séries vaut 3,0 (récupération, pas posture au repos)',
+    r.metRepos===3.0, 'reçu '+r.metRepos);
+  t('🫀 … et il ne dépasse jamais le MET de SÉANCE publié (3,5), sinon on calerait sur une montre',
+    r.metRepos < 3.5, 'reçu '+r.metRepos);
   /* 🔄 LE 3ᵉ ÉTAT (ft-v876). Michel : « quand je fais un soulevé de terre à 140 kg, le temps de
      décharger la barre et d'aller à l'autre exercice ça peut prendre 5 à 7 minutes, et là ce
      n'est PAS du repos ». Le modèle n'avait que deux états (série / debout à 1,5) ; il en a
