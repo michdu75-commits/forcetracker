@@ -685,6 +685,18 @@ function doPost(e) {
     return json_({status:'error', error:'JSON parse error: ' + err.message});
   }
 
+  /* ⌚ L'ACTION ET L'IDENTITÉ PEUVENT VENIR DE L'URL (16/08/2026, ft-v881).
+     Michel : *« ce qu'il me reste à faire lol »* — j'avais posé un travail de développeur sur son
+     téléphone. Le chemin le plus court passe par une app d'export qui envoie Apple Santé vers une
+     URL, mais elle envoie SON corps à elle : impossible d'y glisser `action`, `email` ou le code.
+     On les accepte donc en paramètres d'URL. ⚠️ UNIQUEMENT en complément : rien n'écrase ce que le
+     corps contient déjà, sinon un appel normal de l'app pourrait être détourné par une URL. */
+  if (e.parameter) {
+    if (!body.action   && e.parameter.action)   body.action   = e.parameter.action;
+    if (!body.email    && e.parameter.email)    body.email    = e.parameter.email;
+    if (!body.authCode && e.parameter.authCode) body.authCode = e.parameter.authCode;
+  }
+
   ensurePremiumEmails_();
 
   // ── GARDE-FOU COÛT IA ─────────────────────────────────────────────
@@ -1237,8 +1249,13 @@ function handlePushHealth_(body) {
     var data = loadUserData_(email);
     if (!data) return json_({status:'not_found'});
 
-    var recues = body.activities;
-    if (!recues || !recues.length) return json_({status:'ok', count:0, total:(data.healthInbox||[]).length});
+    /* ⚠️ ON ACCEPTE PLUSIEURS FORMES, ET C'EST LE POINT (ft-v881). Celui qui envoie n'est pas
+       forcément programmable : une app d'export publie SON format, un raccourci publie le nôtre.
+       Exiger une forme unique reviendrait à demander à la personne de fabriquer le JSON — c'est
+       exactement ce qu'on veut lui éviter. Le serveur s'adapte, pas la personne. */
+    var recues = body.activities || body.workouts
+              || (body.data && (body.data.workouts || body.data.activities)) || [];
+    if (!recues.length) return json_({status:'ok', count:0, total:(data.healthInbox||[]).length});
     if (recues.length > 200) recues = recues.slice(0, 200);      // garde-fou de taille
 
     var inbox = data.healthInbox || [];
@@ -1248,20 +1265,30 @@ function handlePushHealth_(body) {
     var ajout = 0;
     for (var j = 0; j < recues.length; j++) {
       var r = recues[j] || {};
-      var start = String(r.start || '').slice(0, 19);            // ISO, à la seconde
-      if (!start) continue;
-      var type = String(r.type || 'autre').slice(0, 40);
+      /* ⚠️ « 2026-01-21 07:00:00 +0000 » comme « 2026-01-21T07:00:00 » doivent marcher. On garde
+         l'heure TELLE QU'ÉCRITE et on jette le décalage : c'est l'heure que la personne a vue sur
+         sa montre, et c'est elle qui doit tomber sur le bon jour de séance. Convertir en UTC
+         ferait basculer une séance de fin de soirée sur la veille — invisible et faux. */
+      var start = String(r.start || r.startDate || r.date || '').trim()
+                    .replace(' ', 'T').replace(/\s*[+-]\d{2}:?\d{2}$/, '').slice(0, 19);
+      if (start.length < 16) continue;                           // pas une date exploitable
+      var type = String(r.type || r.name || 'autre').slice(0, 40);
       var cle = start + '|' + type;
       if (vus[cle]) continue;                                    // déjà reçue → on ignore
-      var min = Math.round(Number(r.min) || 0);
+      /* ⚠️ LES UNITÉS SE LISENT AU NOM DU CHAMP, JAMAIS À LA VALEUR : `min` est en minutes,
+         `duration` en SECONDES (format des apps d'export). Deviner « si c'est grand c'est des
+         secondes » se tromperait sur une marche de 40 min contre une séance de 40 s. */
+      var min = Number(r.min) > 0 ? Math.round(Number(r.min))
+              : (Number(r.duration) > 0 ? Math.round(Number(r.duration) / 60) : 0);
       if (!(min > 0) || min > 600) continue;                     // 0 ou plus de 10 h = donnée fausse
+      var _q = function(v){ return (v && typeof v === 'object') ? Number(v.qty) : Number(v); };
       vus[cle] = 1;
       inbox.push({
         start: start,
         type:  type,
         min:   min,
-        kcal:  Math.round(Number(r.kcal) || 0) || null,          // reçu et gardé, mais l'app ne s'en sert pas
-        hr:    Math.round(Number(r.hr)   || 0) || null,
+        kcal:  Math.round(_q(r.kcal != null ? r.kcal : r.activeEnergyBurned) || 0) || null,
+        hr:    Math.round(_q(r.hr   != null ? r.hr   : r.avgHeartRate)       || 0) || null,
         src:   'sante',
         recu:  new Date().toISOString().slice(0, 19)
       });
