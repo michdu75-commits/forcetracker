@@ -1255,6 +1255,13 @@ function handlePushHealth_(body) {
        exactement ce qu'on veut lui éviter. Le serveur s'adapte, pas la personne. */
     var recues = body.activities || body.workouts
               || (body.data && (body.data.workouts || body.data.activities)) || [];
+    /* ⚠️ UNE SEULE ACTIVITÉ, À PLAT, EST AUSSI ACCEPTÉE (16/08/2026, ft-v882).
+       C'est ce qui divise par trois le travail dans un raccourci iOS : construire un TABLEAU y
+       demande d'empiler dictionnaire + tableau + variable, alors qu'envoyer trois champs plats
+       DANS la boucle « Répéter chaque élément » se fait en trois taps. On appelle une fois par
+       activité au lieu d'une fois pour toutes — c'est un appel de plus, et une heure de moins
+       à expliquer. *Le coût est pour le serveur, pas pour la personne* (règle d'or #10). */
+    if (!recues.length && (body.start || body.startDate)) recues = [body];
     if (!recues.length) return json_({status:'ok', count:0, total:(data.healthInbox||[]).length});
     if (recues.length > 200) recues = recues.slice(0, 200);      // garde-fou de taille
 
