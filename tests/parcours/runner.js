@@ -4713,7 +4713,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // (9) NON-REGRESSION : le MET n'est pas touche - doubler la duree double les calories
     const base=seance(16,{s:{duration:40*60}}), lent=seance(16,{s:{duration:80*60}});
     const cA=calcSessionCalories(base), cB=calcSessionCalories(lent);
-    o.ratio=+(((cB.total-70)/(cA.total-70))).toFixed(2);   // 70 = forfait echauffement ~ constant
+    /* /!\ LE FORFAIT D'ECHAUFFEMENT SE CALCULE, IL NE SE DEVINE PAS. Ma 1re version retirait
+       « 70 » en dur : le forfait ne depend pas de la duree, donc il fausse le rapport, et il a
+       change de poids relatif des que MET_REST est passe de 2,0 a 1,5 (ft-v875). Un temoin qui
+       porte une constante recopiee rougit pour une raison qui n'est pas la sienne. */
+    const forfait = 3.5*(S.bw||80)*((cA.warmupMin||0)/60);
+    o.ratio=+(((cB.total-forfait)/(cA.total-forfait))).toFixed(2);
     o.dureeRendue=[cA.dureeMin,cB.dureeMin];
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }

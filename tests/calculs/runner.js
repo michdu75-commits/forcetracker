@@ -485,7 +485,8 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
     out.dFormule = 4*30/60 + 3*120/60;                                   // 8 min : l'ancienne durée
     out.dRetenue = (typeof _dureeSeanceMin==='function')                  // ce que l'app retient
                      ? _dureeSeanceMin(sess, 4, out.dFormule).min : out.dFormule;
-    out.attendu=Math.round((6.5*80*(4*30/3600)+2*80*(3*120/3600))*(out.dRetenue/out.dFormule)
+    out.metRepos=MET_REST;   // figé par son propre témoin, ci-dessous
+    out.attendu=Math.round((6.5*80*(4*30/3600)+MET_REST*80*(3*120/3600))*(out.dRetenue/out.dFormule)
                            +3.5*80*(10/60));
     out.sommeBreakdown=Object.values(cd.breakdown).reduce((a,b)=>a+b,0);
     // une séance VIDE facture quand même l'échauffement
@@ -526,6 +527,16 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
   t('type inconnu → barème « autre » (440)', r.inconnu===440, 'reçu '+r.inconnu);
   t('cardio null → 0 (pas de plantage)', r.null_===0);
   t('séance 4 séries : total = actif + repos + échauffement ('+r.attendu+')', approx(r.cd.total,r.attendu,1), 'reçu '+r.cd.total);
+  /* 🛋️ LE MET DU REPOS EST FIGÉ ICI, AVEC SA RAISON (ft-v875). Le témoin au-dessus lit la
+     constante, donc il ne peut plus la surveiller — c'est celui-ci qui s'en charge.
+     1,5 = Compendium 2024 · 07041 « debout, activité légère », ce qu'on fait vraiment entre
+     deux séries. L'ancien 2,0 dépassait toutes les postures publiées (assis 1,0 · debout
+     tranquille 1,3) et correspondait à de la marche lente.
+     ⚠️ NE PAS LE REMONTER pour rapprocher le total d'une montre : le MET de séance produit par
+     ce modèle est trop bas (2,36 contre 3,5 publié) à cause des 30 s par série en dur, pas à
+     cause du repos. Remonter MET_REST serait compenser un chiffre faux par un autre. */
+  t('🛋️ le MET du repos vaut 1,5 (Compendium 07041 « debout, activité légère »)',
+    r.metRepos===1.5, 'reçu '+r.metRepos);
   t('le détail par exercice colle au total (hors échauffement)', approx(r.cd.total-r.sommeBreakdown,47,2),
     'écart '+(r.cd.total-r.sommeBreakdown));
   t('⚠️ QUIRK : une séance sans aucune série validée facture quand même 47 kcal d\'échauffement', r.vide===47, 'reçu '+r.vide);

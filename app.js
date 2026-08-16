@@ -144,7 +144,32 @@ const MET_UPPER = 5.5;  // Bench, OHP, Rowing, Pull-ups
 const MET_OLYMPIC = 8.0; // Arraché, Épaulé-jeté
 const MET_CARDIO  = 8.0; // Corde à sauter, burpees, air bike… (voir CARDIO_KW plus bas)
 const MET_ISO = 4.0;    // Isolation: curl, extension...
-const MET_REST = 2.0;   // Entre les séries (position debout/assis)
+/* 🛋️ ENTRE LES SÉRIES — 1,5 ET PLUS 2,0 (16/08/2026, ft-v875)
+   Le 2,0 n'était ancré nulle part : il dépassait TOUTES les postures publiées du Compendium
+   2024 — assis 1,0 (07021) · debout tranquille 1,3 (07040) · **debout en bougeant un peu 1,5
+   (07041)**. Or entre deux séries on est exactement là : debout, on range un disque, on boit,
+   on regarde son téléphone. 2,0 correspond à de la marche lente, ce qu'on ne fait pas.
+   ⚠️⚠️ ET C'EST LE 2ᵉ TEMPS D'UNE SÉQUENCE QUI NE POUVAIT PAS S'INVERSER. Livré AVANT la durée
+   (ft-v874), ce changement aurait retiré ~23 kcal à un chiffre déjà 39 % sous la montre — on
+   aurait dégradé le résultat visible pour améliorer l'ancrage, et personne n'aurait compris.
+   Maintenant que le temps de repos est RÉEL, l'effet est presque deux fois plus fort (~43 kcal
+   médians) parce qu'il y a bien plus de minutes de repos qu'avant. *La bonne correction au
+   mauvais moment est une mauvaise correction.*
+   ⚠️ ET ON NE LE CHOISIT PAS POUR LE SCORE — il DÉGRADE le résultat visible, c'est mesuré :
+   sur 27 séances chronométrées à la montre, biais **−5,1 % → −15,8 %**, ±20 % **17 → 16**,
+   **−36 kcal** par séance en médiane. On le fait quand même parce qu'une montre n'est pas une
+   référence métabolique en résistance (r = 0,10-0,34 contre calorimétrie indirecte) alors que
+   le Compendium en est une. *La physiologie ne se règle pas sur un bracelet.*
+
+   ⏭️⏭️ MAIS ÇA REND VISIBLE LE VRAI TROU, ET IL N'EST PAS ICI. Le repos occupe ~80 % du temps,
+   donc le MET de SÉANCE que ce modèle produit vaut `0,2 × met_exercice + 0,8 × MET_REST` :
+   **2,74 avant, 2,36 après** — contre **3,5** publié pour « resistance training, moderate »
+   (Compendium 02054), qui est une valeur de séance, repos compris. On s'en éloigne donc.
+   La cause n'est PAS `MET_REST` : ce sont les **30 s par série en dur**, qui ne comptent ni
+   l'installation, ni le déchargement, ni les séries longues. C'est le prochain chantier, et il
+   se mesurera sur les horodatages — pas au jugé. NE PAS « corriger » ça en remontant `MET_REST`,
+   ce serait remettre un chiffre faux pour compenser un autre chiffre faux. */
+const MET_REST = 1.5;   // Compendium 2024 · 07041 « debout, activité légère »
 
 // ⚠️ L'INTENSITÉ SE DÉDUIT DES MUSCLES, PLUS D'UNE 2ᵉ LISTE DE MOTS-CLÉS (ft-v668).
 // Avant : `LOWER_KW`/`UPPER_KW`, une liste de 16 mots-clés **parallèle** à `_MEX` — donc
