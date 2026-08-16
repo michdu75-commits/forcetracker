@@ -98,19 +98,36 @@ function _memoireLargeOn(){
 // son heure.
 // **MÉDIANE et pas moyenne** : une séance écourtée ou un oubli de « terminer » fausserait une
 // moyenne, alors que la médiane les ignore (même raison qu'ailleurs dans le projet).
+/* ⏱️ LA DURÉE VIENT DE `_dureeSeanceMin` (app.js) DEPUIS ft-v876 — UNE SEULE SOURCE.
+   Avant, cette fonction avait **sa propre** idée de ce qu'est une durée valable : elle lisait
+   `s.duration` brut et écartait ce qui sortait de 0,5-12 min/série. `_dureeDouteuse`, lui, dit
+   1,5-10. Deux règles pour la même question, donc deux réponses — et c'est la plus laxiste qui
+   servait à Milo : la séance du 04/07 (19 min pour 16 séries, ressaisie le lendemain) passait à
+   1,2 min/série et TIRAIT LA MÉDIANE VERS LE BAS. Milo croyait donc les séries moins chères
+   qu'elles ne le sont, et en mettait trop (**R2**).
+   ⚠️ ON N'ACCEPTE QUE LES DURÉES MESURÉES : `saisie` (elle sait), `horodatage`, `chrono`. On
+   REFUSE l'estimation `estimee`, qui se déduit du temps de repos réglé — s'en servir pour
+   mesurer le rythme reviendrait à mesurer le réglage de la personne avec ce même réglage. */
 function _rythmeSeance(){
   try{
-    const sess=(S.sessions||[]).filter(s=>s&&+s.duration>0).slice(0,12);
+    const sess=(S.sessions||[]).slice(0,12);
     const pts=[];
     for(const s of sess){
       const nSets=(s.exs||s.exercises||[]).reduce((a,e)=>a+((e.sets||[]).filter(x=>x&&x.done).length),0);
       if(nSets<4) continue;                                   // trop court pour dire un rythme
-      const cardio=((s.cardioAvant&&+s.cardioAvant.duration)||0)+((s.cardio&&+s.cardio.duration)||0);
-      const min=(+s.duration/60)-cardio;
+      const d=(typeof _dureeSeanceMin==='function')?_dureeSeanceMin(s,nSets,0):null;
+      if(!d||!(d.min>0)) continue;
+      if(d.src!=='saisie'&&d.src!=='horodatage'&&d.src!=='chrono') continue;  // pas une mesure
+      /* ⚠️ ON NE RETIRE LE CARDIO QUE S'IL ÉTAIT DEDANS. Le chrono et la durée saisie couvrent
+         toute la séance, cardio compris — il faut donc l'enlever, c'est lui qui rogne l'heure.
+         Les HORODATAGES, eux, ne mesurent que l'écart entre deux séries : le cardio n'y a jamais
+         été. L'en retirer soustrairait un temps déjà absent et ferait croire à Milo que les
+         séries coûtent moins cher qu'en vrai. */
+      const cardio=(d.src==='horodatage') ? 0
+        : ((s.cardioAvant&&+s.cardioAvant.duration)||0)+((s.cardio&&+s.cardio.duration)||0);
+      const min=d.min-cardio;
       if(!(min>0)) continue;
-      const parSerie=min/nSets;
-      if(parSerie<0.5||parSerie>12) continue;                 // aberrant (chrono oublié) → écarté
-      pts.push(parSerie);
+      pts.push(min/nSets);
     }
     if(pts.length>=3){
       pts.sort((a,b)=>a-b);
@@ -214,6 +231,14 @@ function _ctxRythme(){
     +'Les séries d\'ÉCHAUFFEMENT comptent dedans. Si ton plan dépasse ce nombre, RETIRE des séries ou un exercice — '
     +'ne réponds JAMAIS « ça tient en 1 h » sans avoir posé ce calcul. '
     +'Et si la personne veut faire du cardio en plus, DIS-LUI ce que ça enlève à la musculation, en séries.'
+    +'\n→ ⚠️⚠️ ET COMPTE LES SÉRIES QUE L\'APP AJOUTE TOUTE SEULE, TU NE LES ÉCRIS PAS : sur le PREMIER '
+    +'exercice lourd de chaque schéma moteur (pousser · tirer · jambes), l\'app insère d\'office une '
+    +'montée en charge — 3 à 4 paliers pour le tout premier exercice de la séance, 1 seule série '
+    +'d\'approche pour les schémas suivants. **Mesuré : une séance de 3 exercices sur 3 schémas '
+    +'différents part de 9 séries écrites et arrive à 15.** Ces paliers sont légers et le repos y est '
+    +'court : compte **1,5 min** chacun, pas '+String(r.min).replace('.',',')+'. '
+    +'👉 RETIRE-LES DE TON BUDGET AVANT de choisir tes exercices — sinon la séance de 45 min que tu '
+    +'annonces en fera 65 sans que tu t\'en rendes compte.'
     +'\n→ Un chiffre vaut mieux qu\'une promesse : annonce le nombre de séries et le temps que ça fait, pour qu\'elle puisse arbitrer elle-même.\n';
 }
 function _historiqueCompact(){

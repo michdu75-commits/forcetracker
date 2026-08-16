@@ -171,6 +171,32 @@ const MET_ISO = 4.0;    // Isolation: curl, extension...
    ce serait remettre un chiffre faux pour compenser un autre chiffre faux. */
 const MET_REST = 1.5;   // Compendium 2024 · 07041 « debout, activité légère »
 
+/* 🔄 LE TEMPS ENTRE DEUX EXERCICES N'EST PAS DU REPOS (16/08/2026, ft-v876)
+   Michel, et c'est une vraie nuance que le modèle ne faisait pas : *« des fois entre chaque
+   série il y a 1 min 30 de repos, c'est à peine le temps pour charger une machine. Par contre
+   quand je fais un soulevé de terre à 140 kg, le temps de décharger la barre et d'aller à
+   l'autre exercice, ça peut prendre 5 à 7 minutes. Et là ce n'est PAS du repos. »*
+
+   ⭐ IL A RAISON, ET ÇA EXPLIQUE LE TROU QU'ON AVAIT LAISSÉ OUVERT EN ft-v875. Le modèle n'avait
+   que **deux** états — on soulève, ou on est debout à 1,5 MET. Or il y en a **trois** :
+     ① la série ....................... le MET de l'exercice
+     ② le repos ENTRE deux séries ..... 1,5 (debout, on souffle) — c'est bien ce qu'on fait
+     ③ le passage d'un exercice à l'autre : on décharge 140 kg de disques, on les range, on
+        traverse la salle, on recharge. **C'est du port de charge, pas du repos.**
+   Le ③ était compté comme du ② ou dilué dans la moyenne. C'est précisément pour ça que le MET de
+   séance produit tombait à 2,4 quand la valeur publiée d'une séance est 3,5 : *on créditait du
+   travail au tarif de quelqu'un qui ne fait rien.*
+
+   ⚠️ 3,0 ET PAS PLUS : c'est la famille « marche lente / porter une charge légère » du Compendium
+   2024 — au-dessus de debout (1,3-1,5), en dessous d'une série (5,5-8,0). On reste volontairement
+   au BAS de cette famille : tout ce temps n'est pas passé à porter des disques, il y a aussi les
+   files d'attente et les discussions. *Mieux vaut sous-estimer une transition que la facturer au
+   prix d'un squat.*
+   ⚠️ ET ON NE DEVINE PAS SA DURÉE : elle n'est ni saisie ni mesurable série par série. C'est le
+   RESTE — la durée réelle de la séance moins ce qu'on a modélisé. Ce reste existait déjà, il
+   était simplement réparti au prorata sur tout le monde ; il a maintenant son propre tarif. */
+const MET_TRANSITION = 3.0;   // Compendium 2024 · marche lente / port de charge légère
+
 // ⚠️ L'INTENSITÉ SE DÉDUIT DES MUSCLES, PLUS D'UNE 2ᵉ LISTE DE MOTS-CLÉS (ft-v668).
 // Avant : `LOWER_KW`/`UPPER_KW`, une liste de 16 mots-clés **parallèle** à `_MEX` — donc
 // condamnée à divergter. Mesuré le 29/07/2026 : **142 exercices sur 249 (57 %)** tombaient
@@ -427,6 +453,44 @@ function _dureeSeanceMin(session, nSets, dureeFormuleMin){
   const est = borne(nSets*(30+rest)/60);
   return {min: est || dureeFormuleMin, src: est ? 'estimee' : 'formule'};
 }
+/* ⏱️ LE TEMPS D'UNE SÉRIE — DÉDUIT DES RÉPÉTITIONS, PLUS UN FORFAIT DE 30 s (16/08/2026)
+   Michel : *« fais les 30 secondes par série maintenant »*.
+
+   ⭐ LE PROBLÈME : `30 s` était écrit EN DUR pour toutes les séries, depuis toujours. Or une
+   série de **3** répétitions lourdes et une série de **20** au curl ne durent évidemment pas
+   pareil — et l'app connaît les répétitions, elle les a sous la main. C'était **R8 à l'envers** :
+   la donnée était là, le calcul ne la regardait pas.
+   ⚠️⚠️ ET CE N'EST PAS QU'UNE QUESTION DE PRÉCISION : depuis ft-v874 le total est mis à l'échelle
+   de la durée RÉELLE, donc la part active/repos ne change plus la durée — elle change le **MET de
+   séance**, c'est-à-dire l'intensité. Une séance de powerlifting (3 reps, repos longs) et une
+   séance d'hypertrophie (12 reps, repos courts) rendaient exactement la même intensité. *Deux
+   pratiques différentes, un seul chiffre : c'est ça qu'on corrige.*
+
+   LES DEUX CONSTANTES, et d'où elles viennent :
+     · **10 s d'installation** — dégager la barre, se placer, la reposer. Ne dépend pas des reps.
+     · **3 s par répétition** — le tempo courant en musculation (~1 s concentrique + ~2 s
+       excentrique). C'est la fourchette publiée sur le temps sous tension (20-40 s pour une série
+       de 8-12), pas un chiffre ajusté sur les séances de quelqu'un.
+   ⚠️ PLAFOND À 3 MIN : une série notée à 100 répétitions (gainage compté en secondes, faute de
+   frappe) ne doit pas engloutir la séance.
+   ⚠️ SANS RÉPÉTITIONS NOTÉES ON GARDE LES 30 s : on ne devine pas, on retombe sur l'ancien
+   comportement — c'est le seul cas où l'app ne sait rien (R29).
+
+   ⛔ CE QUE ÇA NE FAIT PAS, ET IL FAUT LE DIRE : le MET de séance produit reste sous les 3,5
+   publiés (Compendium 02054). Le modèle à deux états — effort au MET de l'exercice, repos à 1,5 —
+   ne PEUT PAS reproduire une valeur de séance, parce qu'entre deux séries lourdes la
+   consommation d'oxygène reste élevée au lieu de retomber à « debout tranquille ». Ce trou-là
+   ne se bouche ni en gonflant les secondes par série, ni en remontant `MET_REST` : il demande
+   un modèle de récupération, et ça se mesure — ce n'est pas pour ce soir. */
+const SEC_INSTALLATION = 10;   // dégager/reposer la barre, se placer
+const SEC_PAR_REP      = 3;    // tempo courant ~1 s concentrique + ~2 s excentrique
+const SEC_SERIE_MAX    = 180;  // garde-fou : une série ne dure pas 10 min
+const SEC_SERIE_DEFAUT = 30;   // aucune répétition notée → l'ancien forfait, inchangé
+function _secSerie(set){
+  const r = +(set && set.reps) || 0;
+  if(!(r > 0)) return SEC_SERIE_DEFAUT;
+  return Math.min(SEC_INSTALLATION + r*SEC_PAR_REP, SEC_SERIE_MAX);
+}
 function calcSessionCalories(session) {
   const bw = S.bw || 80;
   const restSec = S.defRest || 120;
@@ -446,7 +510,8 @@ function calcSessionCalories(session) {
     const n = doneSets.length;
     totalSets += n;
 
-    const activeHours = n * 30 / 3600;        // 30s par série
+    const activeSec = doneSets.reduce((a,st)=>a+_secSerie(st), 0);   // ⏱️ voir `_secSerie`
+    const activeHours = activeSec / 3600;
     const restHours = Math.max(0,n-1) * restSec / 3600;
 
     const calsActive = met * bw * activeHours;
@@ -454,23 +519,42 @@ function calcSessionCalories(session) {
     const exCals = calsActive + calsRest;
 
     totalCals += exCals;
-    totalActiveMin += n * 30 / 60;
+    totalActiveMin += activeSec / 60;
     totalRestMin += Math.max(0,n-1) * restSec / 60;
     breakdown[ex.name] = Math.round(exCals);
   });
 
-  /* ⏱️ ON REMET LA VRAIE DURÉE (16/08/2026) — voir `_dureeSeanceMin`.
-     ⚠️ ON NE TOUCHE PAS AU MET : on met simplement le modèle à l'échelle du temps réel. C'est
-     exactement le modèle « A+ » des deux analyses croisées — même MET, même formule, même
-     répartition entre exercices ; seul le temps change. Biais mesuré : −38,9 % → −0,4 %. */
+  /* ⏱️ LA VRAIE DURÉE, ET CE QU'ON EN FAIT (16/08/2026, revu ft-v876) — voir `_dureeSeanceMin`.
+     Le modèle explique deux morceaux de la séance : le temps des SÉRIES et le repos ENTRE les
+     séries d'un même exercice. Le RESTE — décharger la barre, ranger les disques, traverser la
+     salle, attendre une machine — n'est ni l'un ni l'autre, et il est loin d'être négligeable
+     (Michel : *« 5 à 7 minutes après un soulevé de terre à 140 kg »*).
+     ⚠️ DEUX CAS, ET ILS NE SE TRAITENT PAS PAREIL :
+       · le modèle tient DANS la durée réelle → le reste est du **temps de transition**, crédité
+         à `MET_TRANSITION` (voir sa définition). C'est le cas normal.
+       · le modèle DÉPASSE la durée réelle → le réglage de repos était plus généreux que la
+         réalité ; on ramène tout à l'échelle, comme avant. On ne peut pas inventer du temps.
+     ⚠️ ET LE DÉTAIL PAR EXERCICE REÇOIT SA PART DE TRANSITION, au prorata : ces minutes-là sont
+     bien CAUSÉES par les exercices (c'est leur matériel qu'on range). Sans ça, la somme du détail
+     ne ferait plus le total affiché — deux chiffres à l'écran qui se contredisent (R2). */
   const _dFormule = totalActiveMin + totalRestMin;
   const _d = _dureeSeanceMin(session, totalSets, _dFormule);
-  let _dureeSrc = _d.src, _dureeMin = _d.min;
+  let _dureeSrc = _d.src, _dureeMin = _d.min, _transitionMin = 0;
   if(_dFormule > 0 && _dureeMin > 0){
-    const f = _dureeMin / _dFormule;
-    totalCals *= f;
-    Object.keys(breakdown).forEach(k => { breakdown[k] = Math.round(breakdown[k]*f); });
-    totalActiveMin *= f; totalRestMin *= f;
+    if(_dureeMin < _dFormule){
+      const f = _dureeMin / _dFormule;
+      totalCals *= f;
+      Object.keys(breakdown).forEach(k => { breakdown[k] = Math.round(breakdown[k]*f); });
+      totalActiveMin *= f; totalRestMin *= f;
+    }else{
+      _transitionMin = _dureeMin - _dFormule;
+      const calsTransit = MET_TRANSITION * bw * (_transitionMin/60);
+      const base = totalCals || 1;
+      Object.keys(breakdown).forEach(k => {
+        breakdown[k] = Math.round(breakdown[k] + calsTransit*(breakdown[k]/base));
+      });
+      totalCals += calsTransit;
+    }
   }
 
   // ── Échauffement / retour au calme ESTIMÉ (forfait 10 min à 3.5 MET) ──────────────
@@ -506,7 +590,8 @@ function calcSessionCalories(session) {
     totalMin: Math.round(totalActiveMin + totalRestMin + warmupMin + cardioMin),
     warmupMin,
     dureeMin: Math.round(_dureeMin),      // la durée RETENUE pour le calcul
-    dureeSrc: _dureeSrc,                  // 'horodatage' | 'chrono' | 'estimee' | 'formule'
+    dureeSrc: _dureeSrc,                  // 'saisie' | 'horodatage' | 'chrono' | 'estimee' | 'formule'
+    transitionMin: Math.round(_transitionMin),  // 🔄 décharger, ranger, traverser la salle
     breakdown
   };
 }

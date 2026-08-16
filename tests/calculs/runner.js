@@ -485,9 +485,29 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
     out.dFormule = 4*30/60 + 3*120/60;                                   // 8 min : l'ancienne durée
     out.dRetenue = (typeof _dureeSeanceMin==='function')                  // ce que l'app retient
                      ? _dureeSeanceMin(sess, 4, out.dFormule).min : out.dFormule;
-    out.metRepos=MET_REST;   // figé par son propre témoin, ci-dessous
-    out.attendu=Math.round((6.5*80*(4*30/3600)+MET_REST*80*(3*120/3600))*(out.dRetenue/out.dFormule)
-                           +3.5*80*(10/60));
+    out.metRepos=MET_REST;         // figés par leurs propres témoins, ci-dessous
+    out.metTransit=(typeof MET_TRANSITION!=='undefined')?MET_TRANSITION:null;
+    /* ⏱️ L'ATTENDU SUIT LES TROIS ÉTATS DU MODÈLE (ft-v876) : la série (temps déduit des reps),
+       le repos entre séries, et le RESTE — décharger, ranger, traverser la salle. Il se calcule
+       à partir des mêmes constantes que le code : un attendu recopié à la main devient faux au
+       premier réglage qui bouge, et c'est arrivé deux fois en deux versions. */
+    const _ss = (typeof _secSerie==='function') ? _secSerie : (()=>30);   // absent avant ft-v876
+    out.actifSec = sess.exs[0].sets.reduce((a,x)=>a+_ss(x),0);           // 4 × (10 + 8×3) = 136 s
+    out.dFormule = (out.actifSec + 3*120)/60;
+    out.dRetenue = (typeof _dureeSeanceMin==='function')
+                     ? _dureeSeanceMin(sess, 4, out.dFormule).min : out.dFormule;
+    out.transitMin = Math.max(0, out.dRetenue - out.dFormule);
+    out.attendu=Math.round(6.5*80*(out.actifSec/3600) + MET_REST*80*(3*120/3600)
+                           + (out.metTransit||0)*80*(out.transitMin/60) + 3.5*80*(10/60));
+    // une série de 3 reps et une de 12 ne durent pas pareil — et ne coûtent donc pas pareil
+    const troisReps = {exs:[{name:'Squat à la Barre',sets:[1,2,3,4,5].map(()=>({kg:140,reps:3,done:true,type:'N'}))}],duration:70*60};
+    const douzeReps = {exs:[{name:'Squat à la Barre',sets:[1,2,3,4,5].map(()=>({kg:80,reps:12,done:true,type:'N'}))}],duration:70*60};
+    out.kcal3  = calcSessionCalories(troisReps).total;
+    out.kcal12 = calcSessionCalories(douzeReps).total;
+    out.sec3   = _ss({reps:3});
+    out.sec12  = _ss({reps:12});
+    out.secVide= _ss({});          // aucune rep notée → l'ancien forfait
+    out.secFou = _ss({reps:400});  // gainage compté en secondes → plafonné
     out.sommeBreakdown=Object.values(cd.breakdown).reduce((a,b)=>a+b,0);
     // une séance VIDE facture quand même l'échauffement
     out.vide=calcSessionCalories({exs:[]}).total;                      // 46.67 → 47
@@ -537,6 +557,27 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
      cause du repos. Remonter MET_REST serait compenser un chiffre faux par un autre. */
   t('🛋️ le MET du repos vaut 1,5 (Compendium 07041 « debout, activité légère »)',
     r.metRepos===1.5, 'reçu '+r.metRepos);
+  /* 🔄 LE 3ᵉ ÉTAT (ft-v876). Michel : « quand je fais un soulevé de terre à 140 kg, le temps de
+     décharger la barre et d'aller à l'autre exercice ça peut prendre 5 à 7 minutes, et là ce
+     n'est PAS du repos ». Le modèle n'avait que deux états (série / debout à 1,5) ; il en a
+     trois. ⚠️ 3,0 = marche lente / port de charge légère — au-dessus de debout, très en dessous
+     d'une série. NE PAS le monter pour rapprocher le total d'une montre. */
+  t('🔄 le temps entre deux exercices vaut 3,0 (marche lente / port de charge)',
+    r.metTransit===3.0, 'reçu '+r.metTransit);
+  t('🔄 … et il est NOMMÉ dans le résultat, pas dilué dans une mise à l\'échelle',
+    r.cd.transitionMin>0 && Math.abs(r.cd.transitionMin-r.transitMin)<=1,
+    'transitionMin '+r.cd.transitionMin+' · attendu ~'+(r.transitMin||0).toFixed(1));
+  /* ⏱️ LE TEMPS D'UNE SÉRIE SUIT LES RÉPÉTITIONS (ft-v876) — 30 s en dur, c'était la même
+     intensité pour du powerlifting (3 reps) et du culturisme (12 reps). Michel l'a vu sur sa
+     fille et lui : « on a pratiquement la même séance d'entraînement ». */
+  t('⏱️ 3 reps = '+r.sec3+' s, 12 reps = '+r.sec12+' s (10 s d\'installation + 3 s/rep)',
+    r.sec3===19 && r.sec12===46, r.sec3+' / '+r.sec12);
+  t('⏱️ … donc la même séance en 3 reps et en 12 reps ne coûte plus pareil',
+    r.kcal12 > r.kcal3*1.1, r.kcal3+' vs '+r.kcal12+' kcal');
+  t('⚠️ aucune répétition notée → on garde le forfait de 30 s, on ne devine pas',
+    r.secVide===30, 'reçu '+r.secVide);
+  t('⚠️ 400 « reps » (gainage compté en secondes) est plafonné à 3 min',
+    r.secFou===180, 'reçu '+r.secFou);
   t('le détail par exercice colle au total (hors échauffement)', approx(r.cd.total-r.sommeBreakdown,47,2),
     'écart '+(r.cd.total-r.sommeBreakdown));
   t('⚠️ QUIRK : une séance sans aucune série validée facture quand même 47 kcal d\'échauffement', r.vide===47, 'reçu '+r.vide);

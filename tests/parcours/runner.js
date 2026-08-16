@@ -4713,12 +4713,17 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // (9) NON-REGRESSION : le MET n'est pas touche - doubler la duree double les calories
     const base=seance(16,{s:{duration:40*60}}), lent=seance(16,{s:{duration:80*60}});
     const cA=calcSessionCalories(base), cB=calcSessionCalories(lent);
-    /* /!\ LE FORFAIT D'ECHAUFFEMENT SE CALCULE, IL NE SE DEVINE PAS. Ma 1re version retirait
-       « 70 » en dur : le forfait ne depend pas de la duree, donc il fausse le rapport, et il a
-       change de poids relatif des que MET_REST est passe de 2,0 a 1,5 (ft-v875). Un temoin qui
-       porte une constante recopiee rougit pour une raison qui n'est pas la sienne. */
-    const forfait = 3.5*(S.bw||80)*((cA.warmupMin||0)/60);
-    o.ratio=+(((cB.total-forfait)/(cA.total-forfait))).toFixed(2);
+    /* /!\ CE TEMOIN A CHANGE DE FORME DEUX FOIS, ET LA 2e FOIS PARCE QUE LE MODELE A CHANGE.
+       Il verifiait « duree x2 => calories x2 ». C'etait vrai tant que tout le temps etait mis a
+       l'echelle uniformement ; depuis ft-v876 le temps EN PLUS n'est pas du temps moyen, c'est du
+       temps de TRANSITION (decharger, ranger, traverser), credite a MET_TRANSITION. Le rapport
+       n'est donc plus exactement 2 -- et elargir la fourchette pour faire passer le test aurait
+       ete ajuster le temoin sur le code au lieu de le verifier.
+       Ce qu'on verifie maintenant est PLUS FORT qu'un rapport : une IDENTITE EXACTE. Les 40 min
+       supplementaires doivent valoir tres precisement MET_TRANSITION x poids x 40/60 -- ni plus
+       (le MET des series n'a pas ete touche) ni moins (le temps n'est pas perdu). */
+    o.ecartMesure  = +(cB.total - cA.total).toFixed(1);
+    o.ecartAttendu = +(MET_TRANSITION*(S.bw||80)*(40/60)).toFixed(1);
     o.dureeRendue=[cA.dureeMin,cB.dureeMin];
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
@@ -4745,8 +4750,10 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       D.plafond3h[1]===180, JSON.stringify(D.plafond3h));
     t('**** COHERENCE : une duree affichee ⚠️ ne sert JAMAIS au calcul des calories (R2)',
       D.accord===true, 'desaccord sur : '+D.desaccord);
-    t('/!\\ NON-REGRESSION : le MET n\'est pas touche - duree x2 => calories x2',
-      D.ratio>=1.8 && D.ratio<=2.2, 'ratio '+D.ratio+' · durees '+JSON.stringify(D.dureeRendue));
+    t('/!\\ NON-REGRESSION : le MET des series n\'est pas touche - les 40 min en plus valent '
+      +'EXACTEMENT du temps de transition',
+      Math.abs(D.ecartMesure-D.ecartAttendu)<=2,
+      'mesure '+D.ecartMesure+' kcal · attendu '+D.ecartAttendu+' · durees '+JSON.stringify(D.dureeRendue));
   }
 }
 
