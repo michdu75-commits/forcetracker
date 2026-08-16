@@ -221,6 +221,38 @@ function _ctxDureeSeance(){
     return l;
   }catch(e){ return ''; }
 }
+/* 🎽 CE QUE SA DISCIPLINE IMPLIQUE — EN CHIFFRES (16/08/2026, ft-v877)
+   Michel : *« ma fille a le profil musculation et moi powerlifting et on a pratiquement la même
+   séance d'entraînement »*. Avant, la discipline tenait en **une ligne** : « adapte tes conseils
+   à cette discipline ». On demandait au modèle d'adapter sans lui dire à quoi — **R8**, la
+   consigne nommait une source qui n'était nulle part dans le contexte.
+   ⚠️ CE N'EST PAS « UN PROMPT PLUS FERME », C'EST UNE DONNÉE QUI ARRIVE : les fourchettes
+   viennent de `DISC_CADRE` (constants.js), qui porte ses sources. Un adjectif se noie dans
+   46 000 caractères ; un intervalle de répétitions ne se noie pas, il se vérifie.
+   ⚠️ ET SI AUCUNE DISCIPLINE N'EST CHOISIE, ON N'ÉCRIT RIEN — Milo demande au lieu de supposer.
+   Une fourchette par défaut serait une supposition sur la personne (R29). */
+function _ctxDiscipline(){
+  try{
+    const d=(typeof S!=='undefined'&&S.discipline)||'';
+    if(!d||typeof DISC_CADRE==='undefined'||!DISC_CADRE[d]) return '';
+    const lbl=(typeof DISC_LABELS!=='undefined'&&DISC_LABELS[d])||d, c=DISC_CADRE[d];
+    return '\n🎽 SA DISCIPLINE : **'+lbl+'**. Ce n\'est pas une étiquette, c\'est un CADRE DE TRAVAIL '
+      +'que tu appliques dès que tu proposes une séance, un exercice ou une progression :'
+      +'\n- Répétitions : '+c.reps
+      +'\n- Charge : '+c.charge
+      +'\n- Repos : '+c.repos
+      +'\n- Volume : '+c.volume
+      +'\n- Proximité de l\'échec : '+c.echec
+      +'\n- Le CŒUR de sa pratique : '+c.coeur
+      +'\n- ⛔ Ce qui n\'a pas sa place ici : '+c.evite
+      +'\n→ ⚠️ DEUX PERSONNES DE DISCIPLINES DIFFÉRENTES NE DOIVENT PAS RECEVOIR LA MÊME SÉANCE. '
+      +'Si ta proposition tiendrait telle quelle pour quelqu\'un d\'une autre discipline, c\'est '
+      +'qu\'elle n\'est adaptée à personne — refais-la.'
+      +'\n→ ⚠️ MAIS CE CADRE NE COMMANDE PAS À LA PERSONNE : si elle demande explicitement autre '
+      +'chose (« aujourd\'hui je veux du volume », « je suis cassé, allège »), tu la suis et tu dis '
+      +'simplement en quoi ça sort de son cadre habituel. Le cadre oriente, il n\'interdit pas.\n';
+  }catch(e){ return ''; }
+}
 function _ctxRythme(){
   const r=_rythmeSeance(); if(!r||!(r.min>0)) return '';
   const src=r.mesure ? ('MESURÉ sur ses '+r.n+' dernières séances') : ('ESTIMÉ depuis son temps de repos réglé — il/elle n\'a pas encore assez de séances pour le mesurer');
@@ -2386,7 +2418,7 @@ ${S.name ? '- Prénom: '+S.name+' (utilise-le naturellement, sans le répéter �
 - Tabac: ${S.smoker?'Fumeur (BMR +7%, impact cardiovasculaire — adapter l\'intensité et conseiller l\'arrêt)':'Non-fumeur'}
 - Objectif principal: ${S.goal?GOAL_LABELS[S.goal]:'NON RENSEIGNÉ — ne présume pas son objectif, observe ses séances et DEMANDE-lui ce qu\'elle vise'}${S.goal2&&GOAL_LABELS[S.goal2]?' | Priorité complémentaire (pour l\'ENTRAÎNEMENT, pas la nutrition): '+GOAL_LABELS[S.goal2]+' → équilibre tes conseils d\'entraînement entre les deux, mais la nutrition suit le principal':''} | Phase: ${S.nutritionPhase === 'charge' ? 'Charge (+100 kcal)' : 'Décharge (−100 kcal)'}
 ${(S.priorities&&S.priorities.length&&typeof _priorityLbl==='function')?`- 💪 MUSCLES PRIORITAIRES (là où il/elle veut progresser EN PRIORITÉ): ${S.priorities.map(_priorityLbl).join(', ')}. → Quand tu conseilles ou construis un programme, donne PLUS de fréquence, de volume et de variantes à ces muscles, tout en MAINTENANT le reste du corps. C'est comme un vrai coach qui programme autour des priorités de l'athlète. ⚠️ Ça ne change PAS l'objectif (qui reste le pilote) ni la nutrition — c'est juste l'emphase d'entraînement.`:''}
-- Discipline pratiquée: ${(S.discipline&&typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'non renseignée (ne présume pas — demande au besoin)'} — adapte tes conseils (exercices, répétitions, périodisation) à cette discipline
+- Discipline pratiquée: ${(S.discipline&&typeof DISC_LABELS!=='undefined'&&DISC_LABELS[S.discipline])||'non renseignée (ne présume pas — demande au besoin)'}${(S.discipline&&typeof DISC_CADRE!=='undefined'&&DISC_CADRE[S.discipline])?' — son cadre de travail CHIFFRÉ est plus bas (🎽), applique-le':''}
 ${S.level?`- Niveau: ${{debutant:'Débutant (encore récent en muscu — sois pédagogue, explique la technique, ne suppose pas les termes acquis, propose des charges prudentes)',intermediaire:'Intermédiaire (bases acquises — tu peux être plus technique et pousser la progression)',confirme:'Confirmé (expérimenté — parle-lui d\'égal à égal, techniques avancées bienvenues)'}[S.level]}`:''}
 ${(()=>{const M={cool:'Cool — décontracté et complice, comme un pote de salle ; simple, détendu.',classique:'Classique — équilibré, pro, clair et bienveillant.',dynamique:'Dynamique — énergique et motivant, punchy, tu le boostes et le pousses à se dépasser.',scientifique:'Scientifique — précis et technique, explique le POURQUOI (mécanismes, données) sans jargon inutile.'};
   if(M[S.coachTone]) return `- TON IMPOSÉ PAR L'UTILISATEUR: ${M[S.coachTone]} ⚠️ Adapte SEULEMENT ta façon de parler à ce ton ; ton CARACTÈRE (franc, bienveillant) et la QUALITÉ de tes conseils/sécurité ne changent pas.`;
@@ -2474,6 +2506,7 @@ ${(()=>{
 ${_coachQuizContext()}
 ${_memoireLongue()}
 ${_historiqueCompact()}
+${_ctxDiscipline()}
 ${_ctxRythme()}
 ${_ctxDureeSeance()}
 ${_ctxReposRegles()}

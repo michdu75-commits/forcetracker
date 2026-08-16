@@ -4757,6 +4757,89 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+
+/* == BLOC XXXI - LA DISCIPLINE DEVIENT UNE DONNEE, PLUS UN ADJECTIF (16/08/2026) ==
+   Michel : « ma fille a le profil musculation et moi powerlifting et on a pratiquement la meme
+   seance d'entrainement ». La discipline n'existait qu'a DEUX endroits : une ligne de prompt
+   (« adapte tes conseils ») et un choix d'affichage. Aucune structure - R7/R8.
+   /!\ LE TEMOIN QUI COMPTE est celui qui compare les DEUX blocs : deux disciplines doivent
+   produire des contraintes DIFFERENTES et CHIFFREES, sinon on n'a fait que reformuler. */
+{
+  console.log('\n-- XXXI. La discipline : un cadre chiffre, pas une etiquette --');
+  /* /!\ CE TEMOIN-LA TOURNE DES DEUX COTES, ET C'EST LE SEUL CONTROLE NEGATIF QUI VAUT.
+     Les autres court-circuitent sur l'ancien code (DISC_CADRE n'existe pas), donc ils ne
+     mesurent rien. Celui-ci compare ce que Milo RECOIT REELLEMENT pour deux disciplines, en
+     retirant la ligne d'etiquette : sur l'ancien code les deux contextes sont IDENTIQUES a
+     quelques caracteres pres - c'est exactement ce que Michel a observe chez sa fille et lui. */
+  const E=await p.evaluate(()=>{
+   try{
+    if(typeof buildCoachContext!=='function') return null;
+    const sans=t=>String(t||'').split('\n').filter(l=>!/Discipline pratiquée/.test(l)).join('\n');
+    S.discipline='powerlifting'; const a=sans(buildCoachContext('propose-moi une séance'));
+    S.discipline='muscu';        const b=sans(buildCoachContext('propose-moi une séance'));
+    return {ecart:Math.abs(a.length-b.length), identiques:a===b};
+   }catch(e){ return {err:String(e&&e.message||e)}; }
+  });
+  t('**** CONTROLE NEGATIF : le contexte envoye a Milo DIFFERE selon la discipline',
+    !!E && E.identiques===false && E.ecart>200,
+    E ? ('identiques : '+E.identiques+' · ecart '+E.ecart+' caracteres'+(E.err?' · '+E.err:'')) : 'buildCoachContext absente');
+  const D=await p.evaluate(()=>{
+   try{
+    if(typeof DISC_CADRE==='undefined') return {erreur:'DISC_CADRE absente'};
+    if(typeof _ctxDiscipline!=='function') return {erreur:'_ctxDiscipline absente'};
+    const o={n:Object.keys(DISC_CADRE).length};
+    const bloc=d=>{ S.discipline=d; return _ctxDiscipline(); };
+    o.power = bloc('powerlifting');
+    o.muscu = bloc('muscu');
+    o.bb    = bloc('bodybuilding');
+    o.haltero = bloc('haltero');
+    o.vide  = bloc('');
+    o.inconnue = bloc('kayak');
+    // les 5 disciplines de l'ecran ont toutes leur cadre - aucune ne tombe dans le vide
+    o.manquantes = (typeof DISC_LABELS!=='undefined')
+      ? Object.keys(DISC_LABELS).filter(k=>!DISC_CADRE[k]) : ['DISC_LABELS absente'];
+    // chaque cadre porte les 7 champs, sinon le bloc envoye serait troue
+    o.champsManquants=[];
+    Object.entries(DISC_CADRE).forEach(([k,c])=>{
+      ['reps','charge','repos','volume','echec','coeur','evite'].forEach(f=>{
+        if(!c[f]||!String(c[f]).trim()) o.champsManquants.push(k+'.'+f);
+      });
+    });
+    // et l'ecran montre le MEME cadre que Milo recoit (une source, deux lecteurs)
+    S.discipline='powerlifting';
+    try{ setDiscipline('powerlifting'); }catch(e){ o.errUI=e.message; }
+    const el=document.getElementById('disc-desc');
+    o.ecran = el ? el.textContent : null;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(D.erreur){ t('X le cadre des disciplines existe', false, D.erreur); }
+  else{
+    t('**** DEUX DISCIPLINES = DEUX CADRES DIFFERENTS (c\'est tout le sujet)',
+      D.power!==D.muscu && D.muscu!==D.bb && D.power.length>200, 'power '+D.power.length+' · muscu '+D.muscu.length);
+    t('** le powerlifting recoit 1-5 reps et 3 a 5 min de repos',
+      /1-5/.test(D.power) && /3 à 5 min/.test(D.power), D.power.slice(0,120));
+    t('** la musculation recoit 8-12 reps - pas les memes chiffres',
+      /8-12/.test(D.muscu) && !/1-5 sur les mouvements de comp/.test(D.muscu), D.muscu.slice(0,120));
+    t('** les 3 mouvements de competition sont NOMMES pour le powerlifting',
+      /SQUAT/.test(D.power) && /SOULEVÉ DE TERRE/.test(D.power), 'coeur absent');
+    t('** l\'halterophilie interdit l\'echec (une rep ratee est une rep mal apprise)',
+      /jamais/i.test(D.haltero) && /ARRACHÉ/.test(D.haltero), D.haltero.slice(0,100));
+    t('/!\\ aucune discipline choisie => AUCUNE fourchette inventee (R29)',
+      D.vide==='' && D.inconnue==='', 'vide:'+JSON.stringify(D.vide.slice(0,40))+' inconnue:'+JSON.stringify(D.inconnue.slice(0,40)));
+    t('/!\\ les 5 disciplines de l\'ecran ont toutes leur cadre',
+      D.manquantes.length===0, 'sans cadre : '+D.manquantes.join(', '));
+    t('/!\\ aucun cadre n\'a de champ vide (le bloc envoye serait troue)',
+      D.champsManquants.length===0, D.champsManquants.join(', '));
+    t('** le cadre interdit explicitement de servir la meme seance a tout le monde',
+      /NE DOIVENT PAS RECEVOIR LA MÊME SÉANCE/.test(D.power), 'consigne absente');
+    t('/!\\ ... mais il n\'interdit pas a la PERSONNE de demander autre chose',
+      /le cadre oriente, il n'interdit pas/i.test(D.power), 'garde-fou absent');
+    t('** l\'ECRAN montre le meme cadre que Milo recoit (une source, deux lecteurs)',
+      !!D.ecran && /1-5/.test(D.ecran) && /3 à 5 min/.test(D.ecran), (D.ecran||'').slice(0,140));
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

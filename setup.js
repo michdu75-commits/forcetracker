@@ -1887,8 +1887,25 @@ function setDiscipline(d){
   ['muscu','bodybuilding','powerbuilding','powerlifting','haltero'].forEach(x=>{
     const el=document.getElementById('disc-'+x);if(el)el.classList.toggle('active',x===d);
   });
+  /* 🎽 ON MONTRE LE CADRE, PAS SEULEMENT UNE PHRASE (16/08/2026, ft-v877).
+     Le choix de discipline n'affichait qu'une description d'ambiance (« priorité hypertrophie,
+     symétrie et sèche »). On ne pouvait donc pas savoir ce que ce bouton CHANGE — et Michel a
+     constaté qu'il ne changeait effectivement à peu près rien. Maintenant qu'un cadre chiffré
+     existe (`DISC_CADRE`), on l'affiche : c'est la même donnée que reçoit Milo, montrée à la
+     personne. Une seule source, deux lecteurs (R1/R2) — si le tableau évolue, l'écran suit.
+     ⚠️ ET ÇA REND LE CHOIX VÉRIFIABLE : on voit avant de choisir, et on peut contredire après.
+     C'est le comportement observable qu'une donnée doit produire (R3). */
   const el=document.getElementById('disc-desc');
-  if(el)el.textContent=DISC_DESCS[d]||'';
+  if(!el) return;
+  const c=(typeof DISC_CADRE!=='undefined')?DISC_CADRE[d]:null;
+  if(!c){ el.textContent=DISC_DESCS[d]||''; return; }
+  const li=(k,v)=>'<div style="margin-top:5px"><b style="color:var(--t2)">'+k+'</b> : '+v+'</div>';
+  el.innerHTML='<div>'+(DISC_DESCS[d]||'')+'</div>'
+    +'<div style="margin-top:9px;padding-top:8px;border-top:1px solid var(--bg4);font-size:13px">'
+    +'<div style="color:var(--t2);font-weight:600">Ce que Milo applique pour toi</div>'
+    +li('Répétitions',c.reps)+li('Repos',c.repos)+li('Le cœur',c.coeur)
+    +'<div style="margin-top:5px;color:var(--t3)"><b>⛔ Pas sa place ici</b> : '+c.evite+'</div>'
+    +'</div>';
 }
 // Niveau déclaré (évolue tout seul avec les séances — voir _checkLevelUp dans log.js)
 const LEVEL_LABELS={debutant:'Débutant',intermediaire:'Intermédiaire',confirme:'Confirmé'};

@@ -254,7 +254,87 @@ const PREMIUM_PERKS=[
   {i:'🩸', t:'<b>Analyse de prise de sang</b> — lecture IA de ton bilan, résultats expliqués et connus de Milo'},
 ];
 
+/* 🎽 LE CADRE DE CHAQUE DISCIPLINE — DES NOMBRES, PLUS UN ADJECTIF (16/08/2026, ft-v877)
+   Michel : *« ma fille a le profil musculation et moi powerlifting, et on a pratiquement la
+   même séance d'entraînement »*.
+
+   ⭐⭐ LE DIAGNOSTIC ÉTAIT NET, ET C'EST **R7/R8** DANS SA FORME LA PLUS PURE. La discipline
+   n'existait qu'à **deux** endroits dans tout le code : une ligne envoyée à Milo — *« adapte tes
+   conseils (exercices, répétitions, périodisation) à cette discipline »* — et un choix
+   d'affichage. **Aucune structure derrière.** On DEMANDAIT au modèle d'adapter sans jamais lui
+   dire à QUOI : une consigne qui nomme une source absente du contexte. Une ligne parmi 46 000
+   caractères, en concurrence avec tout le reste — le résultat était prévisible.
+   *Le correctif n'est pas de durcir la phrase, c'est de fournir la donnée qui manquait.*
+
+   ⚠️ CE QUI REND CE TABLEAU LÉGITIME : il n'est pas inventé pour l'occasion, il reprend les
+   fourchettes du **position stand de l'ACSM** (« Progression Models in Resistance Training for
+   Healthy Adults ») et des **NSCA Essentials of Strength Training** — force 1-6 répétitions au
+   -delà de 85 % avec 2 à 5 min de repos · hypertrophie 6-12 répétitions à 67-85 % avec des repos
+   plus courts · endurance musculaire 12 et plus. Les spécificités par sport (mouvements de
+   compétition, technique olympique) viennent de la programmation standard de ces disciplines.
+   ⚠️ CE SONT DES **FOURCHETTES DE TRAVAIL**, PAS DES LOIS : elles cadrent ce que Milo propose,
+   elles ne remplacent ni le ressenti ni ce que la personne demande explicitement. Si elle dit
+   « aujourd'hui je veux du volume », c'est elle qui décide (Constitution : la personne d'abord).
+   ⚠️ ET « NON RENSEIGNÉE » N'EST PAS « MUSCULATION » : sans discipline choisie, on n'injecte
+   RIEN et Milo demande. Une fourchette par défaut serait une supposition sur la personne (R29).
+
+   ⚙️ POURQUOI L'APP N'A PAS BESOIN DE CE TABLEAU POUR SES PROPRES CALCULS — vérifié avant de
+   l'écrire, pour ne pas dupliquer une information (R2) : ses couches déterministes s'adaptent
+   DÉJÀ, mais par les **répétitions** et par la **charge**, pas par l'étiquette. `_classeRepos`
+   donne 300 s de repos à une série de 3 et 120 s à une série de 15 ; `_monteeEnCharge` produit
+   plus de paliers sur une barre lourde ; et depuis ft-v876 le temps d'une série suit ses reps.
+   Un powerlifter était donc déjà traité comme tel PAR SES SÉANCES. Ce qui ne s'adaptait pas,
+   c'est la séance que Milo ÉCRIT — et c'est exactement là qu'on injecte. */
+const DISC_CADRE={
+  muscu:{
+    reps:'8-12 répétitions sur les séries de travail (5-8 possible sur un gros mouvement)',
+    charge:'65-80 % du maximum',
+    repos:'90 à 150 s entre les séries de travail',
+    volume:'10 à 20 séries de travail par groupe musculaire et par semaine',
+    echec:'garder 1 à 3 répétitions en réserve — on ne va pas à l\'échec à chaque série',
+    coeur:'un équilibre poussée / tirage / jambes, des mouvements polyarticulaires en tête de séance',
+    evite:'les singles maximaux, et les séances qui n\'attaquent que les bras et les pectoraux'
+  },
+  bodybuilding:{
+    reps:'6-12 sur les polyarticulaires, jusqu\'à 15-20 sur l\'isolation',
+    charge:'65-80 % du maximum',
+    repos:'60 à 120 s — les repos courts font partie du travail',
+    volume:'12 à 22 séries de travail par groupe musculaire et par semaine, réparties sur 2 séances',
+    echec:'0 à 2 répétitions en réserve sur les dernières séries ; techniques d\'intensification possibles',
+    coeur:'du volume par MUSCLE et non par mouvement, de l\'isolation, de la variété d\'angles, la connexion muscle-esprit',
+    evite:'les triples et les singles lourds, qui coûtent cher en fatigue pour peu d\'hypertrophie'
+  },
+  powerbuilding:{
+    reps:'3-6 sur les 2 premiers mouvements lourds, 8-12 sur tout le reste',
+    charge:'80-90 % sur les mouvements lourds, 65-75 % sur les accessoires',
+    repos:'3 à 5 min après un mouvement lourd, 90 à 120 s sur les accessoires',
+    volume:'2 à 4 séries lourdes puis 8 à 14 séries d\'accessoires par séance',
+    echec:'jamais à l\'échec sur le lourd ; 1 à 2 répétitions en réserve sur les accessoires',
+    coeur:'un mouvement de compétition en OUVERTURE, puis du volume esthétique derrière',
+    evite:'mettre l\'isolation avant le lourd — l\'ordre est le cœur de cette pratique'
+  },
+  powerlifting:{
+    reps:'1-5 sur les mouvements de compétition, 5-8 sur les accessoires',
+    charge:'80-95 % du maximum sur les mouvements de compétition',
+    repos:'3 à 5 min entre les séries lourdes — c\'est long, et c\'est nécessaire',
+    volume:'peu de séries, beaucoup de qualité : 3 à 6 séries de travail par mouvement',
+    echec:'JAMAIS à l\'échec sur un mouvement de compétition ; 1 à 3 répétitions en réserve',
+    coeur:'SQUAT · DÉVELOPPÉ COUCHÉ · SOULEVÉ DE TERRE — les 3 mouvements passent avant tout le reste, et leurs variantes proches (squat pause, soulevé déficit, développé prise serrée) avant l\'isolation',
+    evite:'une séance construite autour de machines et d\'isolation ; les séries de 12 à 15 sur les mouvements de compétition'
+  },
+  haltero:{
+    reps:'1-3 sur l\'arraché et l\'épaulé-jeté, 3-5 sur les tirages et les squats',
+    charge:'70-90 % — la technique commande, la charge suit',
+    repos:'2 à 5 min ; sur le technique, on récupère entre CHAQUE répétition si besoin',
+    volume:'beaucoup de séries très courtes plutôt que peu de séries longues',
+    echec:'jamais — une répétition ratée en haltérophilie est une répétition mal apprise',
+    coeur:'ARRACHÉ · ÉPAULÉ-JETÉ et leurs décompositions (tirages, réceptions, squats avant/nuque), la mobilité de cheville et d\'épaule',
+    evite:'les séries longues sur les mouvements olympiques (la technique se dégrade), et les programmes de type culturisme'
+  }
+};
+
 const NEW_FEATURES=[
+  {id:'discipline-cadre', screen:'setup', anchor:'menu-row-profil', desc:'Ta DISCIPLINE (Profil → Discipline) ne servait presque à rien : Milo recevait le mot, jamais ce qu\'il implique. Résultat mesuré — en retirant la ligne du nom, le texte envoyé à Milo pour un powerlifter et pour quelqu\'un en musculation était RIGOUREUSEMENT IDENTIQUE. 👉 Chaque discipline porte maintenant un vrai cadre de travail : fourchette de répétitions, charge, temps de repos, volume par semaine, proximité de l\'échec, les mouvements qui font le cœur de la pratique, et ce qui n\'y a pas sa place. Powerlifting : 1-5 reps, 3 à 5 min de repos, squat/couché/soulevé avant tout, jamais l\'échec. Musculation : 8-12 reps, 90 à 150 s. Bodybuilding : jusqu\'à 15-20 en isolation, repos courts. Haltérophilie : 1-3 reps, jamais de série ratée. Tu vois ce cadre à l\'écran quand tu choisis ta discipline — c\'est exactement ce que Milo reçoit. ⚠️ Ça oriente, ça n\'interdit pas : si tu demandes autre chose, Milo te suit.'},
   {id:'seance-3temps', screen:'log', desc:'Tes calories de séance distinguent maintenant TROIS moments au lieu de deux. ① La série elle-même — et sa durée suit tes RÉPÉTITIONS : une série de 3 reps lourdes ne dure pas comme une série de 12, l\'app comptait 30 secondes pour les deux. ② Le repos entre deux séries, où tu es debout à souffler. ③ 🔄 NOUVEAU : le passage d\'un exercice à l\'autre — décharger la barre, ranger les disques, traverser la salle. Ce temps-là n\'est PAS du repos : après un soulevé de terre lourd il peut prendre 5 à 7 minutes, et pendant ce temps tu portes de la fonte. Il est donc compté comme de la marche avec charge légère, pas comme quelqu\'un qui ne fait rien. 👉 Concrètement : deux personnes qui font les mêmes exercices pendant le même temps, l\'une en 3 répétitions et l\'autre en 12, n\'ont plus le même chiffre — et c\'est normal.'},
   {id:'milo-budget-temps', screen:'coach', desc:'Quand tu demandes à Milo une séance d\'une durée précise (« j\'ai 45 minutes »), il tient maintenant compte des séries d\'échauffement que l\'APP ajoute toute seule — la montée en charge sur le premier exercice lourd de chaque mouvement. Il ne les écrit pas, donc il ne les comptait pas : une séance de 3 exercices passe de 9 séries écrites à 15 réellement faites, et les 45 minutes annoncées en devenaient 65. Il les déduit désormais de son budget AVANT de choisir tes exercices. 👉 Et son estimation de ce que te coûte une série se base sur tes durées de séance RÉELLES, en ignorant celles que l\'app juge douteuses (le ⚠️ de ton historique).'},
   {id:'duree-seance', screen:'log', desc:'Tes calories de séance tiennent enfin compte du TEMPS que tu as réellement passé. Jusqu\'ici l\'app ne mesurait pas la durée : elle la déduisait de ton nombre de séries — une séance d\'1 h 50 pouvait être comptée 28 minutes. 👉 Elle prend maintenant, dans cet ordre : la durée que tu as corrigée toi-même · sinon l\'heure de tes séries · sinon ton chrono · sinon une estimation à partir de ton temps de repos. ⚠️ Une durée qui n\'a pas de sens (chrono oublié en marche, séance ressaisie le lendemain) est écartée du calcul ET signalée par un ⚠️ dans ton historique : tape dessus pour la corriger, les calories suivent. Tes anciennes séances ne bougent pas toutes seules. 🛋️ Au passage, le temps PASSÉ ENTRE tes séries est maintenant compté comme « debout, activité légère » (la valeur publiée) au lieu d\'une valeur trop haute qui correspondait à de la marche lente — ça retire une trentaine de calories par séance, et c\'est plus juste.'},
@@ -389,6 +469,10 @@ const WHATS_NEW=[
   // ⚠️ ELLE SE MÉRITE : ses CALORIES changent du jour au lendemain, sans qu'elle ait rien
   // touché. Un repère qui bouge tout seul sans explication, c'est précisément ce qui fait
   // douter du reste de l'app — même quand le nouveau chiffre est meilleur que l'ancien.
+  // ⚠️ ELLE SE MÉRITE : il y a quelque chose à FAIRE — aller vérifier sa discipline, que beaucoup
+  // n'ont jamais touchée parce qu'elle ne changeait rien. Et un repère bouge : la FORME des séances
+  // que Milo propose change, pas seulement un chiffre.
+  {v:59, ic:'🎽', t:'Ta discipline change enfin quelque chose', d:'Jusqu\'ici, choisir « Powerlifting » ou « Musculation » ne servait presque à rien : Milo recevait le mot, jamais ce qu\'il implique — deux personnes de disciplines différentes recevaient la même séance. 👉 Chaque discipline porte maintenant un cadre : répétitions, repos, volume, les mouvements qui comptent, et ce qui n\'y a pas sa place. Powerlifting : 1-5 reps, 3 à 5 min de repos, les 3 mouvements avant tout. Musculation : 8-12 reps, 90 à 150 s. Va voir la tienne dans Profil → Discipline : l\'écran te montre exactement ce que Milo applique pour toi. 🎽'},
   // ⚠️ ELLE SE MÉRITE, ELLE AUSSI, et pour la même raison que la v57 : le chiffre de calories
   // BOUGE TOUT SEUL d'une séance à l'autre, sans que la personne ait rien touché — et il monte souvent
   // beaucoup. Et il y a quelque chose à FAIRE : vérifier la durée, la corriger si elle est fausse.
