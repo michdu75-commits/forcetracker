@@ -4837,6 +4837,42 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       /le cadre oriente, il n'interdit pas/i.test(D.power), 'garde-fou absent');
     t('** l\'ECRAN montre le meme cadre que Milo recoit (une source, deux lecteurs)',
       !!D.ecran && /1-5/.test(D.ecran) && /3 à 5 min/.test(D.ecran), (D.ecran||'').slice(0,140));
+    /* /!\/!\ LE GARDE-FOU LE PLUS IMPORTANT DU BLOC (ft-v878). Michel s'est signale deux heures
+       apres la livraison : « moi je suis en powerlifting, attention ». Ses donnees lui donnent
+       raison - 30 % seulement de ses series sont sur les 3 mouvements, 34 % sont a 9 reps ou
+       plus. Un cadre applique a la lettre aurait fait reprocher a un powerlifter les deux tiers
+       de son entrainement, qui est parfaitement sense. C'est le defaut de ft-v861 a 3 jours
+       d'ecart : un reproche injuste coute la confiance (R29). */
+    t('/!\\/!\\ le cadre powerlifting NE CONDAMNE PAS les machines et l\'isolation en accessoire',
+      /ne le reproche jamais/i.test(D.power) && /toute leur place/i.test(D.power),
+      'le champ evite doit dire ce qui A sa place');
+    t('/!\\ aucun cadre ne condamne une pratique legitime en bloc',
+      !/programmes de type culturisme'/.test(D.haltero)
+      && !/une séance construite autour de machines/.test(D.power), 'formulation en bloc trouvee');
+  }
+  /* 📊 ET LA REPARTITION REELLE PART AVEC LE CADRE : Milo compare au lieu de presumer. */
+  const P=await p.evaluate(()=>{
+   try{
+    if(typeof _repartitionReps!=='function') return {erreur:'_repartitionReps absente'};
+    const mk=(reps,n,nom)=>({date:'2026-08-16',exs:[{name:nom,sets:Array.from({length:n},()=>({kg:100,reps,done:true,type:'N'}))}]});
+    const memo=S.sessions;
+    S.sessions=[mk(3,10,'Squat à la Barre'), mk(10,20,'Pec Deck'), mk(12,10,'Tirage Visage (Face Pull)')];
+    S.discipline='powerlifting';
+    const o={r:_repartitionReps(), bloc:_ctxDiscipline()};
+    S.sessions=[mk(5,3,'Squat à la Barre')];      // trop peu de series
+    o.trop_peu=_repartitionReps();
+    S.sessions=memo;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(P.erreur){ t('X la repartition reelle se mesure', false, P.erreur); }
+  else{
+    t('**** Milo recoit CE QUE LA PERSONNE FAIT, a cote de ce que sa discipline dit',
+      P.r && P.r.tot===40 && P.r.force===25 && P.r.hyper===75 && P.r.big3===25, JSON.stringify(P.r));
+    t('**** ... et l\'interdiction de lui reprocher l\'ecart est EXPLICITE',
+      /NE LUI REPROCHE JAMAIS L'ÉCART/.test(P.bloc), 'consigne absente du bloc');
+    t('/!\\ moins de 20 series => on ne dit RIEN plutot qu\'un pourcentage sur 3 series (R29)',
+      P.trop_peu===null, 'recu : '+JSON.stringify(P.trop_peu));
   }
 }
 

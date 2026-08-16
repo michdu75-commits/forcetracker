@@ -275,6 +275,18 @@ const PREMIUM_PERKS=[
    ⚠️ CE SONT DES **FOURCHETTES DE TRAVAIL**, PAS DES LOIS : elles cadrent ce que Milo propose,
    elles ne remplacent ni le ressenti ni ce que la personne demande explicitement. Si elle dit
    « aujourd'hui je veux du volume », c'est elle qui décide (Constitution : la personne d'abord).
+   ⚠️⚠️ UN CADRE NE DOIT JAMAIS DEVENIR UN REPROCHE — corrigé le soir même, sur les données de
+   Michel. Il s'est signalé (« moi je suis en powerlifting, attention ») et il avait raison : sur
+   ses **489 séries de travail**, seules **30 %** sont sur les 3 mouvements de compétition et
+   **34 %** sont à 9 répétitions ou plus. Ses exercices les plus fréquents après le big 3 sont un
+   Tirage Visage, un Leg Curl, une Abduction et un Pec Deck, tous entre 8 et 12. La 1ʳᵉ version
+   du champ `evite` disait « une séance construite autour de machines et d'isolation » : Milo
+   aurait donc pu reprocher à un powerlifter **exactement ce qu'il fait vraiment**, et ce qui est
+   par ailleurs recommandé (accessoires, prévention). *C'est le défaut de ft-v861, à trois jours
+   d'écart : un reproche injuste coûte la confiance dans l'outil, bien plus qu'un conseil manqué*
+   (R29). Le champ `evite` ne vise donc plus que ce qui contredit VRAIMENT l'objectif, il dit
+   explicitement ce qui a sa place, et le contexte envoyé porte la répartition RÉELLE de la
+   personne à côté du cadre — pour que Milo compare au lieu de présumer.
    ⚠️ ET « NON RENSEIGNÉE » N'EST PAS « MUSCULATION » : sans discipline choisie, on n'injecte
    RIEN et Milo demande. Une fourchette par défaut serait une supposition sur la personne (R29).
 
@@ -293,7 +305,7 @@ const DISC_CADRE={
     volume:'10 à 20 séries de travail par groupe musculaire et par semaine',
     echec:'garder 1 à 3 répétitions en réserve — on ne va pas à l\'échec à chaque série',
     coeur:'un équilibre poussée / tirage / jambes, des mouvements polyarticulaires en tête de séance',
-    evite:'les singles maximaux, et les séances qui n\'attaquent que les bras et les pectoraux'
+    evite:'les singles maximaux réguliers, et un programme qui ne travaillerait QUE les bras et les pectoraux sur la durée'
   },
   bodybuilding:{
     reps:'6-12 sur les polyarticulaires, jusqu\'à 15-20 sur l\'isolation',
@@ -302,7 +314,7 @@ const DISC_CADRE={
     volume:'12 à 22 séries de travail par groupe musculaire et par semaine, réparties sur 2 séances',
     echec:'0 à 2 répétitions en réserve sur les dernières séries ; techniques d\'intensification possibles',
     coeur:'du volume par MUSCLE et non par mouvement, de l\'isolation, de la variété d\'angles, la connexion muscle-esprit',
-    evite:'les triples et les singles lourds, qui coûtent cher en fatigue pour peu d\'hypertrophie'
+    evite:'faire de CHAQUE séance une séance de singles lourds — ça coûte cher en fatigue pour peu d\'hypertrophie. ⚠️ Du lourd ponctuel reste utile et ne se reproche pas'
   },
   powerbuilding:{
     reps:'3-6 sur les 2 premiers mouvements lourds, 8-12 sur tout le reste',
@@ -311,16 +323,16 @@ const DISC_CADRE={
     volume:'2 à 4 séries lourdes puis 8 à 14 séries d\'accessoires par séance',
     echec:'jamais à l\'échec sur le lourd ; 1 à 2 répétitions en réserve sur les accessoires',
     coeur:'un mouvement de compétition en OUVERTURE, puis du volume esthétique derrière',
-    evite:'mettre l\'isolation avant le lourd — l\'ordre est le cœur de cette pratique'
+    evite:'mettre systématiquement l\'isolation AVANT le lourd — l\'ordre est le cœur de cette pratique'
   },
   powerlifting:{
-    reps:'1-5 sur les mouvements de compétition, 5-8 sur les accessoires',
+    reps:'1-5 sur les mouvements de compétition ; 6-12 sur les accessoires, qui se travaillent en hypertrophie',
     charge:'80-95 % du maximum sur les mouvements de compétition',
     repos:'3 à 5 min entre les séries lourdes — c\'est long, et c\'est nécessaire',
     volume:'peu de séries, beaucoup de qualité : 3 à 6 séries de travail par mouvement',
     echec:'JAMAIS à l\'échec sur un mouvement de compétition ; 1 à 3 répétitions en réserve',
     coeur:'SQUAT · DÉVELOPPÉ COUCHÉ · SOULEVÉ DE TERRE — les 3 mouvements passent avant tout le reste, et leurs variantes proches (squat pause, soulevé déficit, développé prise serrée) avant l\'isolation',
-    evite:'une séance construite autour de machines et d\'isolation ; les séries de 12 à 15 sur les mouvements de compétition'
+    evite:'les séries de 12-15 SUR LES MOUVEMENTS DE COMPÉTITION, et aller à l\'échec dessus. ⚠️ En revanche machines, poulies et isolation ont toute leur place en ACCESSOIRE (dos, épaules, ischios, gainage) : c\'est du renforcement et de la prévention, pas une erreur — ne le reproche jamais'
   },
   haltero:{
     reps:'1-3 sur l\'arraché et l\'épaulé-jeté, 3-5 sur les tirages et les squats',
@@ -329,11 +341,12 @@ const DISC_CADRE={
     volume:'beaucoup de séries très courtes plutôt que peu de séries longues',
     echec:'jamais — une répétition ratée en haltérophilie est une répétition mal apprise',
     coeur:'ARRACHÉ · ÉPAULÉ-JETÉ et leurs décompositions (tirages, réceptions, squats avant/nuque), la mobilité de cheville et d\'épaule',
-    evite:'les séries longues sur les mouvements olympiques (la technique se dégrade), et les programmes de type culturisme'
+    evite:'les séries longues sur les mouvements olympiques, où la technique se dégrade. ⚠️ Le travail de force et d\'accessoires (squats, tirages, gainage) reste indispensable et ne se reproche pas'
   }
 };
 
 const NEW_FEATURES=[
+  {id:'discipline-reel', screen:'coach', desc:'Milo reçoit maintenant DEUX choses au lieu d\'une : le cadre de ta discipline (répétitions, repos, mouvements clés) ET la répartition RÉELLE de tes séries — combien tu fais à 1-5 reps, à 6-8, à 9-12, et quelle part sur les mouvements de base. 👉 Pourquoi c\'est important : un cadre décrit une DISCIPLINE, pas une PERSONNE. Beaucoup de powerlifters font l\'essentiel de leur volume en 8-12 sur des machines, et c\'est normal et utile. Milo a désormais l\'interdiction explicite de te reprocher cet écart : il s\'en sert pour te proposer des séances qui ressemblent à ce que tu fais vraiment, et n\'en parle que si tu poses la question. ⚠️ Moins de 20 séries dans ton historique ? Rien n\'est envoyé — on ne calcule pas un pourcentage sur trois séries.'},
   {id:'discipline-cadre', screen:'setup', anchor:'menu-row-profil', desc:'Ta DISCIPLINE (Profil → Discipline) ne servait presque à rien : Milo recevait le mot, jamais ce qu\'il implique. Résultat mesuré — en retirant la ligne du nom, le texte envoyé à Milo pour un powerlifter et pour quelqu\'un en musculation était RIGOUREUSEMENT IDENTIQUE. 👉 Chaque discipline porte maintenant un vrai cadre de travail : fourchette de répétitions, charge, temps de repos, volume par semaine, proximité de l\'échec, les mouvements qui font le cœur de la pratique, et ce qui n\'y a pas sa place. Powerlifting : 1-5 reps, 3 à 5 min de repos, squat/couché/soulevé avant tout, jamais l\'échec. Musculation : 8-12 reps, 90 à 150 s. Bodybuilding : jusqu\'à 15-20 en isolation, repos courts. Haltérophilie : 1-3 reps, jamais de série ratée. Tu vois ce cadre à l\'écran quand tu choisis ta discipline — c\'est exactement ce que Milo reçoit. ⚠️ Ça oriente, ça n\'interdit pas : si tu demandes autre chose, Milo te suit.'},
   {id:'seance-3temps', screen:'log', desc:'Tes calories de séance distinguent maintenant TROIS moments au lieu de deux. ① La série elle-même — et sa durée suit tes RÉPÉTITIONS : une série de 3 reps lourdes ne dure pas comme une série de 12, l\'app comptait 30 secondes pour les deux. ② Le repos entre deux séries, où tu es debout à souffler. ③ 🔄 NOUVEAU : le passage d\'un exercice à l\'autre — décharger la barre, ranger les disques, traverser la salle. Ce temps-là n\'est PAS du repos : après un soulevé de terre lourd il peut prendre 5 à 7 minutes, et pendant ce temps tu portes de la fonte. Il est donc compté comme de la marche avec charge légère, pas comme quelqu\'un qui ne fait rien. 👉 Concrètement : deux personnes qui font les mêmes exercices pendant le même temps, l\'une en 3 répétitions et l\'autre en 12, n\'ont plus le même chiffre — et c\'est normal.'},
   {id:'milo-budget-temps', screen:'coach', desc:'Quand tu demandes à Milo une séance d\'une durée précise (« j\'ai 45 minutes »), il tient maintenant compte des séries d\'échauffement que l\'APP ajoute toute seule — la montée en charge sur le premier exercice lourd de chaque mouvement. Il ne les écrit pas, donc il ne les comptait pas : une séance de 3 exercices passe de 9 séries écrites à 15 réellement faites, et les 45 minutes annoncées en devenaient 65. Il les déduit désormais de son budget AVANT de choisir tes exercices. 👉 Et son estimation de ce que te coûte une série se base sur tes durées de séance RÉELLES, en ignorant celles que l\'app juge douteuses (le ⚠️ de ton historique).'},

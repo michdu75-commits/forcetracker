@@ -231,6 +231,32 @@ function _ctxDureeSeance(){
    46 000 caractères ; un intervalle de répétitions ne se noie pas, il se vérifie.
    ⚠️ ET SI AUCUNE DISCIPLINE N'EST CHOISIE, ON N'ÉCRIT RIEN — Milo demande au lieu de supposer.
    Une fourchette par défaut serait une supposition sur la personne (R29). */
+/* 📊 CE QU'ELLE FAIT VRAIMENT, À CÔTÉ DE CE QUE SA DISCIPLINE DIT (16/08/2026, ft-v878)
+   Michel, deux heures après la livraison du cadre : *« moi je suis en powerlifting, attention »*.
+   ⭐ IL AVAIT RAISON, ET SES PROPRES DONNÉES LE PROUVENT : sur ses 489 séries de travail, **30 %**
+   seulement sont sur les 3 mouvements de compétition, et **34 %** sont à 9 répétitions ou plus.
+   Un cadre « powerlifting » appliqué à la lettre aurait donc conduit Milo à lui reprocher les
+   deux tiers de son entraînement — un entraînement parfaitement sensé (accessoires, prévention).
+   *Un cadre décrit une discipline ; il ne décrit pas la personne.* On envoie donc les deux, et
+   c'est la personne qui a le dernier mot (R29 : montrer ce qu'on voit, ne pas décider). */
+function _repartitionReps(){
+  try{
+    const S_=(typeof S!=='undefined')?S:null; if(!S_||!S_.sessions) return null;
+    let force=0, moyen=0, hypertrophie=0, longues=0, tot=0, big3=0;
+    const BIG3=/squat à la barre|développé couché|soulevé de terre/i;
+    for(const se of S_.sessions.slice(0,25))
+      for(const e of (se.exs||se.exercises||[]))
+        for(const x of (e.sets||[])){
+          if(!x||!x.done||x.type==='É'||x.type==='W'||x.type==='E') continue;
+          const r=+x.reps||0; if(!r) continue;
+          tot++; if(BIG3.test(e.name||'')) big3++;
+          if(r<=5) force++; else if(r<=8) moyen++; else if(r<=12) hypertrophie++; else longues++;
+        }
+    if(tot<20) return null;                    // trop peu pour dire quoi que ce soit
+    const pc=n=>Math.round(n/tot*100);
+    return {tot, force:pc(force), moyen:pc(moyen), hyper:pc(hypertrophie), longues:pc(longues), big3:pc(big3)};
+  }catch(e){ return null; }
+}
 function _ctxDiscipline(){
   try{
     const d=(typeof S!=='undefined'&&S.discipline)||'';
@@ -250,7 +276,21 @@ function _ctxDiscipline(){
       +'qu\'elle n\'est adaptée à personne — refais-la.'
       +'\n→ ⚠️ MAIS CE CADRE NE COMMANDE PAS À LA PERSONNE : si elle demande explicitement autre '
       +'chose (« aujourd\'hui je veux du volume », « je suis cassé, allège »), tu la suis et tu dis '
-      +'simplement en quoi ça sort de son cadre habituel. Le cadre oriente, il n\'interdit pas.\n';
+      +'simplement en quoi ça sort de son cadre habituel. Le cadre oriente, il n\'interdit pas.'
+      +(()=>{
+        const r=_repartitionReps(); if(!r) return '';
+        return '\n\n📊 ET VOICI CE QU\'ELLE FAIT RÉELLEMENT (mesuré sur ses '+r.tot+' dernières séries de travail) : '
+          +r.force+' % à 1-5 reps · '+r.moyen+' % à 6-8 · '+r.hyper+' % à 9-12 · '+r.longues+' % à 13 et plus. '
+          +r.big3+' % de ses séries sont sur squat / développé couché / soulevé de terre.'
+          +'\n→ ⛔⛔ NE LUI REPROCHE JAMAIS L\'ÉCART entre ces chiffres et le cadre ci-dessus. Le cadre '
+          +'décrit une DISCIPLINE, ces chiffres décrivent une PERSONNE — et une personne a le droit de '
+          +'faire des accessoires, de la prévention, ou simplement ce qui lui plaît. Beaucoup de '
+          +'powerlifters font l\'essentiel de leur volume en 8-12 sur des machines : c\'est normal et '
+          +'c\'est utile.'
+          +'\n→ Sers-t\'en pour PROPOSER juste (une séance qui ressemble à ce qu\'elle fait déjà), et ne '
+          +'commente cet écart QUE si elle te pose la question, ou s\'il explique une stagnation qu\'elle '
+          +'te signale.\n';
+      })();
   }catch(e){ return ''; }
 }
 function _ctxRythme(){
