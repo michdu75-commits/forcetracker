@@ -4652,6 +4652,99 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+
+/* == BLOC XXX - LA DUREE DE SEANCE EST MESUREE, PLUS FABRIQUEE (16/08/2026) ==
+   Michel : « fais la duree, par contre toujours un garde-fou sur des durees extremes ou tres
+   courtes, et celles qui n'ont pas d'horodatage on met un max estime par rapport a ma montre
+   et on extrapole pour les autres ».
+   Le probleme : la duree n'etait pas mesuree, elle etait FABRIQUEE depuis le nombre de series
+   (r = -0,105 avec la vraie duree). Mesure sur 27 seances chronometrees : -38,9 % -> -5,1 %.
+   /!\ LE TEMOIN QUI COMPTE est le dernier : `_dureeSeanceMin` et `_dureeDouteuse` doivent
+   TOUJOURS etre d'accord. Sinon l'app afficherait un warning sur une duree dont elle se sert. */
+{
+  console.log('\n-- XXX. La duree de seance : mesuree d\'abord, estimee ensuite, toujours bornee --');
+  const D=await p.evaluate(()=>{
+   try{
+    if(typeof _dureeSeanceMin!=='function') return {erreur:'_dureeSeanceMin absente'};
+    const mkSets=(n,at0,pas)=>Array.from({length:n},(_,i)=>({kg:60,reps:8,done:true,
+      at: at0==null?undefined:(at0+i*pas)}));
+    const seance=(n,opt)=>Object.assign({date:'2026-08-16',
+      exs:[{name:'Developpe Couche',sets:mkSets(n,(opt&&opt.at0),(opt&&opt.pas)||120)}]},opt&&opt.s||{});
+    const o={};
+    // (0) la duree SAISIE a la main gagne sur tout, meme sur les horodatages
+    const sSaisie=seance(10,{at0:0,pas:120,s:{duration:45*60,durationDite:true}});
+    const r0=_dureeSeanceMin(sSaisie,10,25);
+    o.saisie=[r0.src, Math.round(r0.min)];
+    // (0b) ... et elle est crue meme hors bornes (5 min pour 10 series = 0,5 min/serie)
+    const r0b=_dureeSeanceMin(seance(10,{s:{duration:5*60,durationDite:true}}),10,25);
+    o.saisieHorsBornes=[r0b.src, Math.round(r0b.min)];
+    // (1) les horodatages passent avant le chrono
+    const r1=_dureeSeanceMin(seance(10,{at0:0,pas:180,s:{duration:200*60}}),10,25);
+    o.horo=[r1.src, Math.round(r1.min)];
+    // (2) un chrono plausible est utilise tel quel
+    const r2=_dureeSeanceMin(seance(16,{s:{duration:62*60}}),16,40);
+    o.chrono=[r2.src, Math.round(r2.min)];
+    // (3) GARDE-FOU HAUT : chrono qui a continue a tourner (254 min / 14 series = 18 min/serie)
+    const r3=_dureeSeanceMin(seance(14,{s:{duration:254*60}}),14,35);
+    o.tropLong=[r3.src, Math.round(r3.min)];
+    // (4) GARDE-FOU BAS : seance RESSAISIE apres coup (19 min / 16 series = 1,2 min/serie)
+    const r4=_dureeSeanceMin(seance(16,{s:{duration:19*60}}),16,40);
+    o.tropCourt=[r4.src, Math.round(r4.min)];
+    // (5) sous 6 series on ne borne PAS par serie : une seance expediee existe
+    const r5=_dureeSeanceMin(seance(3,{s:{duration:6*60}}),3,7);
+    o.peuDeSeries=[r5.src, Math.round(r5.min)];
+    // (6) l'estimation ne lit QUE le reglage de repos de la personne
+    const memo=S.defRest; S.defRest=90;
+    const r6=_dureeSeanceMin(seance(20,{}),20,50);
+    S.defRest=memo;
+    o.estimee=[r6.src, Math.round(r6.min)];   // 20 x (30+90) / 60 = 40 min
+    // (7) plafond absolu 3 h : 40 series espacees de 15 min = 6 h 30 d'horodatage
+    const r7=_dureeSeanceMin(seance(40,{at0:0,pas:900}),40,100);
+    o.plafond3h=[r7.src, Math.round(r7.min)];
+    // (8) LA COHERENCE : jamais une duree affichee ⚠️ ne sert au calcul
+    o.accord=true; o.desaccord=null;
+    if(typeof _dureeDouteuse==='function'){
+      [[14,254],[16,19],[16,62],[20,45],[15,125],[10,600],[8,12]].forEach(([n,min])=>{
+        const s=seance(n,{s:{duration:min*60}});
+        const dt=_dureeDouteuse(s), rs=_dureeSeanceMin(s,n,n*2.5);
+        if(dt && rs.src==='chrono'){ o.accord=false; o.desaccord=n+' series / '+min+' min'; }
+      });
+    } else o.accord='_dureeDouteuse absente';
+    // (9) NON-REGRESSION : le MET n'est pas touche - doubler la duree double les calories
+    const base=seance(16,{s:{duration:40*60}}), lent=seance(16,{s:{duration:80*60}});
+    const cA=calcSessionCalories(base), cB=calcSessionCalories(lent);
+    o.ratio=+(((cB.total-70)/(cA.total-70))).toFixed(2);   // 70 = forfait echauffement ~ constant
+    o.dureeRendue=[cA.dureeMin,cB.dureeMin];
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(D.erreur){ t('X la duree de seance se calcule', false, D.erreur); }
+  else{
+    t('** une duree SAISIE a la main passe avant tout, horodatages compris',
+      D.saisie[0]==='saisie' && D.saisie[1]===45, JSON.stringify(D.saisie));
+    t('/!\\ ... et elle est crue meme hors bornes - c\'est la personne qui sait (R29)',
+      D.saisieHorsBornes[0]==='saisie' && D.saisieHorsBornes[1]===5, JSON.stringify(D.saisieHorsBornes));
+    t('** les HORODATAGES passent avant le chrono stocke',
+      D.horo[0]==='horodatage' && D.horo[1]>=25 && D.horo[1]<=30, JSON.stringify(D.horo));
+    t('un chrono plausible est utilise tel quel (62 min pour 16 series)',
+      D.chrono[0]==='chrono' && D.chrono[1]===62, JSON.stringify(D.chrono));
+    t('/!\\ GARDE-FOU HAUT : 254 min pour 14 series (18 min/serie) est ECARTE',
+      D.tropLong[0]!=='chrono', JSON.stringify(D.tropLong));
+    t('/!\\ GARDE-FOU BAS : 19 min pour 16 series (seance ressaisie) est ECARTE',
+      D.tropCourt[0]!=='chrono', JSON.stringify(D.tropCourt));
+    t('/!\\ sous 6 series on ne borne PAS par serie - une seance expediee existe',
+      D.peuDeSeries[0]==='chrono' && D.peuDeSeries[1]===6, JSON.stringify(D.peuDeSeries));
+    t('l\'estimation ne lit QUE le reglage de repos (20 series x 2 min = 40 min)',
+      D.estimee[0]==='estimee' && D.estimee[1]===40, JSON.stringify(D.estimee));
+    t('/!\\ plafond absolu : jamais plus de 3 h, meme horodatee',
+      D.plafond3h[1]===180, JSON.stringify(D.plafond3h));
+    t('**** COHERENCE : une duree affichee ⚠️ ne sert JAMAIS au calcul des calories (R2)',
+      D.accord===true, 'desaccord sur : '+D.desaccord);
+    t('/!\\ NON-REGRESSION : le MET n\'est pas touche - duree x2 => calories x2',
+      D.ratio>=1.8 && D.ratio<=2.2, 'ratio '+D.ratio+' · durees '+JSON.stringify(D.dureeRendue));
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

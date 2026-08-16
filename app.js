@@ -329,6 +329,79 @@ function _estimCalTempsReel(session){
   return {kcal:Math.round(MET_MUSCU_MODERE*bw*(d.actifSec/3600)), min:Math.round(d.actifSec/60)};
 }
 
+/* ⏱️ LA DURÉE D'UNE SÉANCE — MESURÉE D'ABORD, ESTIMÉE ENSUITE, TOUJOURS BORNÉE (16/08/2026)
+   Michel : *« fais la durée, par contre toujours un garde-fou sur des durées extrêmes ou très
+   courtes, et celles qui n'ont pas d'horodatage on met un max estimé par rapport à ma montre et
+   on extrapole pour les autres »*.
+
+   ⭐⭐ LE PROBLÈME, ÉTABLI PAR DEUX ANALYSES INDÉPENDANTES : la durée n'était pas mesurée, elle
+   était FABRIQUÉE — `n × 30 s + (n − nb_exercices) × repos_réglé`. Corrélation avec la vraie
+   durée : **r = −0,105**. L'app ne sous-estimait pas le temps : elle ne le regardait pas.
+   Une séance d'1 h 51 était comptée 28 minutes.
+   ⭐ ET LE MET, LUI, ÉTAIT DÉJÀ JUSTE : facteur médian **1,005** entre le MET de séance de l'app
+   et celui relevé à la montre sur 27 séances. On ne touche donc PAS au MET — seulement au temps.
+
+   LA CASCADE, du plus fiable au moins fiable :
+     ① les HORODATAGES de séries (depuis ft-v835) → durée réelle, ±2 % vérifié
+     ② le CHRONO stocké de la séance
+     ③ sinon, la RÈGLE GÉNÉRALE `n × (30 s + repos réglé)` — elle n'utilise QUE le réglage de la
+        personne, aucune donnée d'une montre, aucune calibration personnelle.
+   ⚠️ ET CHACUN DES TROIS PASSE PAR `borne()`, sans exception — c'est le « toujours » de Michel.
+
+   MESURÉ contre 27 séances chronométrées à la montre (le seul juge disponible) :
+     formule actuelle ............................. biais **−38,9 %**  ·  2 séances / 27 à ±20 %
+     **cascade complète** ......................... biais **−5,1 %**   ·  17 séances / 27
+
+   ⚠️⚠️ ET LE CHRONO DOUTEUX EST ÉCARTÉ PAR **LA MÊME FONCTION QUI MET LE ⚠️ À L'ÉCRAN**
+   (`_dureeDouteuse`, setup.js, ft-v868/869). C'est le choix qui compte ici, et il n'est pas fait
+   sur le score : *bornER* un chrono aberrant au lieu de l'écarter donnait **18/27** contre 17 —
+   un écart d'une séance sur 27, c'est-à-dire rien. Mais l'app aurait alors AFFICHÉ « durée
+   douteuse » sur une séance **et** s'en serait servie pour calculer ses calories. Deux sources
+   qui se contredisent, la famille de bugs la plus vicieuse du projet (**R2**). La règle tient en
+   une ligne vérifiable : *si l'app met un ⚠️ sur une durée, elle ne s'en sert pas.*
+   ⚠️ ET UNE DURÉE SAISIE À LA MAIN (ft-v852) EST CRUE SUR PAROLE, hors bornes comprises — c'est
+   la personne qui sait, pas l'app. `_dureeDouteuse` le dit déjà ; on hérite du même arbitrage
+   plutôt que de le réécrire ici.
+
+   ⚠️ LE GARDE-FOU S'APPLIQUE AUX DEUX BOUTS : entre **1,5 et 10 minutes par série** (au-delà de
+   6 séries) et **3 h maximum**.
+     · le plancher 1,5 est **PHYSIQUE** — une série plus le repos minimal ne descend pas en dessous.
+       Il attrape la séance RESSAISIE après coup (ft-v869/870 : 19 min pour 16 séries).
+     · le plafond 10 est une **BORNE DE VRAISEMBLANCE, pas un réglage**. Sur les 27 séances
+       chronométrées, le maximum réellement observé est **7,4 min/série** (jambes lourdes) et la
+       médiane 3,7. On laisse volontairement de la marge au-dessus : quelqu'un de plus lent que
+       Michel existe, et **rogner une durée vraie coûte plus cher que laisser passer une durée
+       douteuse** (R29) — la durée douteuse est déjà SIGNALÉE à l'écran (ft-v868/869), et la
+       personne peut la corriger à la main (ft-v852).
+   ⚠️ SOUS 6 SÉRIES ON NE BORNE PAS PAR SÉRIE : une séance de 2 ou 3 séries expédiée existe.
+   ⚠️ ET ON NE TOUCHE À RIEN D'AUTRE : le MET reste celui de l'app, les constantes aussi. */
+function _dureeSeanceMin(session, nSets, dureeFormuleMin){
+  const MIN_PAR_SERIE=1.5, MAX_PAR_SERIE=10, MAX_MIN=180;
+  const borne = m => {
+    if(!(m>0)) return 0;
+    if(nSets>=6) m = Math.min(Math.max(m, nSets*MIN_PAR_SERIE), nSets*MAX_PAR_SERIE);
+    return Math.min(m, MAX_MIN);
+  };
+  // ⓪ la durée SAISIE À LA MAIN passe avant tout, y compris avant les horodatages : c'est une
+  //    correction explicite de la personne, et elle sait ce que l'app ne saura jamais (R29).
+  if(session && session.durationDite && +session.duration>0)
+    return {min:(+session.duration)/60, src:'saisie'};
+  // ① mesuré — les horodatages de séries, la seule vraie mesure dont l'app dispose
+  try{
+    const eff = (typeof _dureeEffective==='function') ? _dureeEffective(session) : null;
+    if(eff && eff.actifSec > 0) return {min:borne(eff.actifSec/60), src:'horodatage'};
+  }catch(e){}
+  // ② le chrono de la séance — sauf si l'app le juge douteux (LA MÊME règle qu'à l'écran, R2)
+  const ch = (+session.duration||0)/60;
+  if(ch > 0){
+    const douteuse = (typeof _dureeDouteuse==='function') ? _dureeDouteuse(session) : (nSets>=6 && (ch/nSets<1.5 || ch/nSets>MAX_PAR_SERIE)) || ch>MAX_MIN;
+    if(!douteuse) return {min:ch, src:'chrono'};
+  }
+  // ③ estimation — le réglage de repos de la personne, rien d'autre
+  const rest = (typeof S!=='undefined' && S.defRest) ? S.defRest : 120;
+  const est = borne(nSets*(30+rest)/60);
+  return {min: est || dureeFormuleMin, src: est ? 'estimee' : 'formule'};
+}
 function calcSessionCalories(session) {
   const bw = S.bw || 80;
   const restSec = S.defRest || 120;
@@ -360,6 +433,20 @@ function calcSessionCalories(session) {
     totalRestMin += Math.max(0,n-1) * restSec / 60;
     breakdown[ex.name] = Math.round(exCals);
   });
+
+  /* ⏱️ ON REMET LA VRAIE DURÉE (16/08/2026) — voir `_dureeSeanceMin`.
+     ⚠️ ON NE TOUCHE PAS AU MET : on met simplement le modèle à l'échelle du temps réel. C'est
+     exactement le modèle « A+ » des deux analyses croisées — même MET, même formule, même
+     répartition entre exercices ; seul le temps change. Biais mesuré : −38,9 % → −0,4 %. */
+  const _dFormule = totalActiveMin + totalRestMin;
+  const _d = _dureeSeanceMin(session, totalSets, _dFormule);
+  let _dureeSrc = _d.src, _dureeMin = _d.min;
+  if(_dFormule > 0 && _dureeMin > 0){
+    const f = _dureeMin / _dFormule;
+    totalCals *= f;
+    Object.keys(breakdown).forEach(k => { breakdown[k] = Math.round(breakdown[k]*f); });
+    totalActiveMin *= f; totalRestMin *= f;
+  }
 
   // ── Échauffement / retour au calme ESTIMÉ (forfait 10 min à 3.5 MET) ──────────────
   // ⚠️⚠️ CE FORFAIT NE S'APPLIQUE QU'AUX MOMENTS QUI N'ONT PAS ÉTÉ MESURÉS (11/08/2026).
@@ -393,6 +480,8 @@ function calcSessionCalories(session) {
     restMin: Math.round(totalRestMin),
     totalMin: Math.round(totalActiveMin + totalRestMin + warmupMin + cardioMin),
     warmupMin,
+    dureeMin: Math.round(_dureeMin),      // la durée RETENUE pour le calcul
+    dureeSrc: _dureeSrc,                  // 'horodatage' | 'chrono' | 'estimee' | 'formule'
     breakdown
   };
 }

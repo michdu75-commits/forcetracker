@@ -475,8 +475,18 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
     const sess={exs:[{name:'Squat à la Barre',sets:[1,2,3,4].map(()=>({kg:100,reps:8,done:true,type:'N'}))}]};
     const cd=calcSessionCalories(sess);
     out.cd=cd;
-    // à la main : actif 6.5*80*(120/3600)=17.33 ; repos 2*80*(360/3600)=16 ; échauffement 3.5*80*(1/6)=46.67 → 80
-    out.attendu=Math.round(6.5*80*(4*30/3600)+2*80*(3*120/3600)+3.5*80*(10/60));
+    /* ⏱️ CE TÉMOIN A CHANGÉ DE VALEUR LE 16/08 (ft-v874), volontairement — pas de bug ici.
+       Avant, le total valait exactement la formule FABRIQUÉE (4×30 s + 3×120 s = 8 min).
+       Depuis, la partie musculation est MISE À L'ÉCHELLE de la durée retenue par
+       `_dureeSeanceMin` — ici l'estimation, 4 × (30 s + repos réglé). Ce que le témoin
+       protège n'a pas bougé : le MET n'est pas touché, seule l'échelle de temps l'est.
+       ⚠️ L'attendu se CALCULE, il ne se recopie pas — sinon il faudrait le réécrire à chaque
+       changement de réglage de repos. */
+    out.dFormule = 4*30/60 + 3*120/60;                                   // 8 min : l'ancienne durée
+    out.dRetenue = (typeof _dureeSeanceMin==='function')                  // ce que l'app retient
+                     ? _dureeSeanceMin(sess, 4, out.dFormule).min : out.dFormule;
+    out.attendu=Math.round((6.5*80*(4*30/3600)+2*80*(3*120/3600))*(out.dRetenue/out.dFormule)
+                           +3.5*80*(10/60));
     out.sommeBreakdown=Object.values(cd.breakdown).reduce((a,b)=>a+b,0);
     // une séance VIDE facture quand même l'échauffement
     out.vide=calcSessionCalories({exs:[]}).total;                      // 46.67 → 47
@@ -609,9 +619,21 @@ console.log('\n═══ 6bis. Horodatage des séries + temps effectif ═══
     out.ancienne = DE({exs:[{name:'Squat à la Barre',sets:[{done:true},{done:true},{done:true}]}]});
     out.uneSeule = DE(mk([0]));
     out.plafond  = out.normal ? out.normal : null;
-    // le calcul des calories ne doit PAS avoir bougé à cause de l'horodatage
-    out.calAvec  = calcSessionCalories(mk(suite(20,180))).total;
-    out.calSans  = calcSessionCalories({exs:[{name:'Squat à la Barre',sets:suite(20,180).map(()=>({kg:100,reps:5,done:true,type:'N'}))}]}).total;
+    /* ⏱️⏱️ CE TÉMOIN A ÉTÉ RETOURNÉ LE 16/08 (ft-v874) — et c'est le cœur de la livraison.
+       Il figeait un choix VOLONTAIRE de ft-v835 : « les horodatages MESURENT, ils ne calculent
+       rien encore » — on affichait la vraie durée à côté du chiffre officiel sans y toucher,
+       le temps de vérifier le modèle. La vérification a eu lieu (27 séances chronométrées à
+       la montre, biais −38,9 % → −5,1 %), donc le choix change et le témoin avec lui.
+       ⚠️ IL NE DISPARAÎT PAS, IL S'INVERSE : on vérifie maintenant que l'horodatage FAIT une
+       différence, et que cette différence est EXACTEMENT le rapport des durées — c'est ce qui
+       prouve que le MET n'a pas été touché au passage. */
+    const sAvec=mk(suite(20,180));
+    const sSans={exs:[{name:'Squat à la Barre',sets:suite(20,180).map(()=>({kg:100,reps:5,done:true,type:'N'}))}]};
+    out.calAvec  = calcSessionCalories(sAvec).total;
+    out.calSans  = calcSessionCalories(sSans).total;
+    out.srcAvec  = calcSessionCalories(sAvec).dureeSrc;
+    out.dureeAvec= calcSessionCalories(sAvec).dureeMin;
+    out.dureeSans= calcSessionCalories(sSans).dureeMin;
     return out;
   });
   const min=s=>Math.round(s/60);
@@ -643,7 +665,11 @@ console.log('\n═══ 6bis. Horodatage des séries + temps effectif ═══
   t('des repos longs (5 min) donnent une densité < 0,25', r.reposLong&&r.reposLong.densite<0.25, JSON.stringify(r.reposLong));
   t('⭐ une séance SANS horodatage répond « je ne sais pas » (null), jamais un chiffre inventé', r.ancienne===null, 'reçu '+JSON.stringify(r.ancienne));
   t('une seule série horodatée ne suffit pas à mesurer un temps', r.uneSeule===null, 'reçu '+JSON.stringify(r.uneSeule));
-  t('⭐⭐ AUCUN kcal ne change : l\'horodatage MESURE, il ne calcule rien encore', r.calAvec===r.calSans, r.calAvec+' vs '+r.calSans);
+  t('⭐⭐ l\'horodatage ALIMENTE maintenant les calories (ft-v874) — il ne fait plus que mesurer',
+    r.srcAvec==='horodatage' && r.calAvec!==r.calSans, 'source '+r.srcAvec+' · '+r.calAvec+' vs '+r.calSans);
+  t('⚠️ … et l\'écart est EXACTEMENT le rapport des durées : le MET n\'est pas touché',
+    Math.abs((r.calAvec-47)/(r.calSans-47) - r.dureeAvec/r.dureeSans) < 0.05,
+    'kcal '+r.calAvec+'/'+r.calSans+' · durées '+r.dureeAvec+'/'+r.dureeSans);
   await c.close();
 }
 
