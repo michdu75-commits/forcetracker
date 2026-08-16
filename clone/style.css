@@ -1538,3 +1538,5 @@ html.ob-done #onboarding{display:none;}
 .hi-btn{flex:0 0 auto;font-size:12px;font-weight:600;color:var(--red);background:transparent;
   border:1px solid var(--red);border-radius:8px;padding:4px 10px;cursor:pointer}
 .hi-btn:active{opacity:.6}
+.hi-pied{margin-top:8px;padding-top:7px;border-top:1px solid var(--sep);font-size:11px;color:var(--t3)}
+.hi-lien{color:var(--red);cursor:pointer;font-weight:600}

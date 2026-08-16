@@ -1272,13 +1272,21 @@ function handlePushHealth_(body) {
     var ajout = 0;
     for (var j = 0; j < recues.length; j++) {
       var r = recues[j] || {};
-      /* ⚠️ « 2026-01-21 07:00:00 +0000 » comme « 2026-01-21T07:00:00 » doivent marcher. On garde
-         l'heure TELLE QU'ÉCRITE et on jette le décalage : c'est l'heure que la personne a vue sur
-         sa montre, et c'est elle qui doit tomber sur le bon jour de séance. Convertir en UTC
-         ferait basculer une séance de fin de soirée sur la veille — invisible et faux. */
-      var start = String(r.start || r.startDate || r.date || '').trim()
-                    .replace(' ', 'T').replace(/\s*[+-]\d{2}:?\d{2}$/, '').slice(0, 19);
+      /* ⚠️⚠️ ON GARDE LE DÉCALAGE HORAIRE, ON NE LE JETTE PLUS (16/08/2026, ft-v883).
+         La 1ʳᵉ version le supprimait pour « garder l'heure telle qu'écrite ». C'était juste tant
+         que l'expéditeur envoie l'heure LOCALE (ce que fait un raccourci iOS) et **faux** dès
+         qu'il envoie de l'UTC (« +0000 »), ce que font certaines apps d'export : une séance de
+         19 h 58 à Paris devenait 17 h 58, et une séance de fin de soirée aurait basculé sur la
+         VEILLE. Le décalage est donc CONSERVÉ, et c'est l'app qui convertit en heure locale au
+         moment d'afficher — `new Date()` sait le faire, et sait aussi lire une date sans
+         décalage comme une heure locale. *Une information qu'on détruit ne se rattrape jamais ;
+         une information qu'on garde peut toujours être ignorée.* */
+      var start = String(r.start || r.startDate || r.date || '').trim().replace(' ', 'T');
+      var _off = start.match(/([+-]\d{2}:?\d{2}|Z)$/);           // décalage éventuel, mis de côté
+      start = start.replace(/\s*([+-]\d{2}:?\d{2}|Z)$/, '').slice(0, 19);
       if (start.length < 16) continue;                           // pas une date exploitable
+      if (_off) start += (_off[1] === 'Z') ? 'Z'
+                       : (_off[1].indexOf(':') > 0 ? _off[1] : _off[1].slice(0,3) + ':' + _off[1].slice(3));
       var type = String(r.type || r.name || 'autre').slice(0, 40);
       var cle = start + '|' + type;
       if (vus[cle]) continue;                                    // déjà reçue → on ignore

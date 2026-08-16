@@ -4910,7 +4910,8 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     // un jour sans activite recue n'affiche rien
     const s2={date:'2026-01-01', ts:111, volume:10, exs:[{name:'Squat à la Barre',sets:[{kg:60,reps:5,done:true,type:'N'}]}]};
     S.sessions=[s2]; openSessDetail(111);
-    o.vide = document.getElementById('sd-health').style.display==='none';
+    const _v=document.getElementById('sd-health');
+    o.videTxt = _v.textContent; o.videAffiche = _v.style.display!=='none';
     try{ document.getElementById('ov-sess-detail').classList.remove('open'); }catch(e){}
     return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
@@ -4923,10 +4924,52 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('/!\\/!\\ RIEN n\'est ecrit dans la seance tant que la personne n\'a pas choisi (R29)',
       H.cardioAvant===null && H.cardioApres===null,
       'avant '+JSON.stringify(H.cardioAvant)+' apres '+JSON.stringify(H.cardioApres));
-    t('/!\\ un jour sans activite recue n\'affiche rien du tout', H.vide===true);
+    /* /!\ CE TEMOIN A CHANGE DE SENS EN ft-v883, volontairement. Il exigeait que le bloc
+       DISPARAISSE un jour sans activite. C'etait faux : Apple Sante n'est lisible que telephone
+       deverrouille, donc le tuyau peut se taire sans erreur — et un bloc qui disparait ressemble
+       exactement a un tuyau qui marche mais n'a rien trouve. Le bloc reste donc, il DIT qu'il n'a
+       rien recu, et il donne la date du dernier import. Le cas « personne n'a rien branche »,
+       lui, reste bien invisible : c'est le temoin suivant. */
+    t('/!\\ un jour sans activite le DIT, au lieu de disparaitre en silence (R18)',
+      H.videAffiche===true && /Rien reçu pour ce jour/.test(H.videTxt), (H.videTxt||'').slice(0,80));
     t('/!\\ un type inconnu tombe sur « autre », jamais sur un type devine',
       JSON.stringify(H.types)===JSON.stringify(['marche','velo','course','natation','autre']),
       JSON.stringify(H.types));
+  }
+  /* /!\ ft-v883 : le jour se lit en LOCAL, et le silence doit se voir. */
+  const F=await p.evaluate(()=>{
+   try{
+    if(typeof _jourLocal!=='function') return {erreur:'_jourLocal absente'};
+    const o={};
+    // meme instant, trois ecritures : sans decalage (raccourci), en UTC, en heure de Paris
+    o.jours=[_jourLocal('2026-08-16T19:58:47'),
+             _jourLocal('2026-08-16T17:58:47+00:00'),
+             _jourLocal('2026-08-16T19:58:47+02:00')];
+    o.heures=[_heureLocale('2026-08-16T19:58:47'),
+              _heureLocale('2026-08-16T17:58:47+00:00')];
+    S.healthInbox=[{start:'2026-08-14T17:58:47+00:00',type:'Marche à pied',min:20,recu:'2026-08-15T21:00:00'}];
+    const s2={date:'2026-08-16', ts:222, volume:10, exs:[{name:'Squat à la Barre',sets:[{kg:60,reps:5,done:true,type:'N'}]}]};
+    S.sessions=[s2]; openSessDetail(222);
+    const el=document.getElementById('sd-health');
+    o.txtVide=el.textContent;                       // rien ce jour-la, mais la boite existe
+    o.visible=el.style.display!=='none';
+    S.healthInbox=[];                               // personne n'a rien branche
+    openSessDetail(222);
+    o.cache=document.getElementById('sd-health').style.display==='none';
+    try{ document.getElementById('ov-sess-detail').classList.remove('open'); }catch(e){}
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(F.erreur){ t('X la lecture locale des dates existe', false, F.erreur); }
+  else{
+    t('**** le MEME instant ecrit de 3 facons donne le MEME jour local (UTC compris)',
+      F.jours[0]===F.jours[1] && F.jours[1]===F.jours[2] && F.jours[0]==='2026-08-16',
+      JSON.stringify(F.jours));
+    t('** ... et la meme heure affichee', F.heures[0]===F.heures[1], JSON.stringify(F.heures));
+    t('/!\\ LE SILENCE SE VOIT : la date du dernier import est affichee, et un bouton relance',
+      F.visible===true && /Dernier import/.test(F.txtVide) && /importer maintenant/.test(F.txtVide),
+      (F.txtVide||'').slice(0,110));
+    t('/!\\ mais rien ne s\'affiche a qui n\'a jamais rien branche', F.cache===true);
   }
 }
 

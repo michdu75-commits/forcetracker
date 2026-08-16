@@ -478,22 +478,64 @@ function openSessDetail(id){
    ⚠️ LES CALORIES DE LA MONTRE SONT REÇUES MAIS JAMAIS UTILISÉES, et c'est mesuré : en résistance
    elles corrèlent à r = 0,10-0,34 contre calorimétrie indirecte. On prend son HORLOGE, pas son
    estimation. Elles restent visibles à titre indicatif, jamais reprises dans un calcul. */
+/* ⚠️ LE JOUR ET L'HEURE SE LISENT EN LOCAL, PAS EN DÉCOUPANT LA CHAÎNE (ft-v883).
+   `start` peut arriver en heure locale sans décalage (raccourci iOS) ou en UTC (app d'export).
+   Découper les caractères 0-10 donnait donc le bon jour dans un cas et le mauvais dans l'autre —
+   un décalage d'une ou deux heures qui ne se voit qu'en fin de soirée, et jamais en test.
+   `new Date()` lit les deux : une date sans décalage est comprise comme locale, une date avec
+   décalage est convertie. Une seule fonction pour le jour ET pour l'heure affichée (R2). */
+function _jourLocal(iso){
+  try{ const d=new Date(iso); return isNaN(d) ? String(iso).slice(0,10)
+    : d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  catch(e){ return String(iso).slice(0,10); }
+}
+function _heureLocale(iso){
+  try{ const d=new Date(iso); return isNaN(d) ? String(iso).slice(11,16).replace(':','h')
+    : String(d.getHours()).padStart(2,'0')+'h'+String(d.getMinutes()).padStart(2,'0'); }
+  catch(e){ return ''; }
+}
 function _renderHealthInbox(sess){
   const el=document.getElementById('sd-health');
   if(!el) return;
+  const inbox=(typeof S!=='undefined'&&S.healthInbox)||[];
   const jour=(sess&&sess.date)||'';
-  const act=((typeof S!=='undefined'&&S.healthInbox)||[]).filter(a=>a&&String(a.start).slice(0,10)===jour);
-  if(!act.length){ el.style.display='none'; el.innerHTML=''; return; }
-  const heure=a=>String(a.start).slice(11,16).replace(':','h');
+  const act=inbox.filter(a=>a&&_jourLocal(a.start)===jour);
+  // rien reçu ET jamais utilisé → on n'encombre pas l'écran de ceux qui n'ont rien branché
+  if(!act.length && !inbox.length){ el.style.display='none'; el.innerHTML=''; return; }
   el.style.display='block';
+  /* ⚠️ LE SILENCE DOIT SE VOIR (ft-v883). Apple Santé n'est lisible QUE téléphone déverrouillé :
+     une automatisation nocturne sur un iPhone posé sur la table ne remonte rien, sans la moindre
+     erreur. Sans cette ligne, le tuyau peut se taire des semaines et personne ne le sait —
+     exactement la famille du « déploiement silencieux » (R18). On affiche donc la date du dernier
+     import, et un bouton qui lance le raccourci DEPUIS l'app : l'app au premier plan, c'est un
+     téléphone déverrouillé par construction. */
+  let dernier=''; inbox.forEach(a=>{ if(a&&a.recu&&a.recu>dernier) dernier=a.recu; });
+  const pied='<div class="hi-pied">'
+    + (dernier?`Dernier import : ${_jourLocal(dernier)} à ${_heureLocale(dernier)}`:'Aucun import reçu pour l\'instant')
+    + ' · <span class="hi-lien" onclick="lancerImportMontre()">⌚ importer maintenant</span></div>';
   el.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:6px">⌚ Ta montre a enregistré ce jour-là</div>'
-    + act.map((a,i)=>{
-        const kcal=a.kcal?` · ${a.kcal} kcal`:'';
-        const hr=a.hr?` · ${a.hr} bpm`:'';
-        return `<div class="hi-row"><span class="hi-txt">${heure(a)} · <b>${a.type}</b> · ${a.min} min<span class="hi-dim">${kcal}${hr}</span></span>`
-             + `<button class="hi-btn" onclick="utiliserActiviteMontre(${i})">Utiliser</button></div>`;
-      }).join('');
+    + (act.length
+        ? act.map((a,i)=>{
+            const kcal=a.kcal?` · ${a.kcal} kcal`:'';
+            const hr=a.hr?` · ${a.hr} bpm`:'';
+            return `<div class="hi-row"><span class="hi-txt">${_heureLocale(a.start)} · <b>${a.type}</b> · ${a.min} min<span class="hi-dim">${kcal}${hr}</span></span>`
+                 + `<button class="hi-btn" onclick="utiliserActiviteMontre(${i})">Utiliser</button></div>`;
+          }).join('')
+        : '<div class="hi-txt hi-dim">Rien reçu pour ce jour-là.</div>')
+    + pied;
   el._act=act;
+}
+/* ⌚ Ouvre le raccourci iOS depuis l'app. C'est le seul chemin qui GARANTIT un téléphone
+   déverrouillé, donc une lecture de Santé qui aboutit. Le déclencheur horaire reste un bonus.
+   ⚠️ Le nom doit correspondre EXACTEMENT à celui du raccourci sur le téléphone. */
+const RACCOURCI_MONTRE='Force Tracker';
+function lancerImportMontre(){
+  try{
+    toast('Ouverture du raccourci…','info');
+    location.href='shortcuts://run-shortcut?name='+encodeURIComponent(RACCOURCI_MONTRE);
+    // ⚠️ On ne peut pas savoir si le raccourci existe : iOS ne rend pas la main. On ne prétend
+    // donc jamais que l'import a réussi — c'est la date affichée qui le dira au retour (R29).
+  }catch(e){ toast('Impossible d\'ouvrir Raccourcis','error'); }
 }
 /* Rattache une activité reçue au CARDIO de la séance ouverte. On demande AVANT ou APRÈS :
    l'app ne peut pas le savoir, et se tromper mettrait 40 min d'échauffement là où il y avait
