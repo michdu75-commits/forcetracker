@@ -99,6 +99,7 @@
     "scaleType": "réglage d'affichage",
     "seenFeatures": "nouveautés vues, technique",
     "testerIdeas": "boîte à idées, technique",
-    "url": "adresse du serveur, jamais envoyée au modèle"
+    "url": "adresse du serveur, jamais envoyée au modèle",
+    "healthInbox": "boîte de réception brute de la montre (raccourci iOS → Santé). EXCLUE VOLONTAIREMENT : la partie utile — le cardio — atteint Milo une fois RATTACHÉE à la séance, et la séance lui est déjà transmise. Envoyer la boîte brute en plus créerait une 2e source pour la même information, qui finirait par contredire la première (R2) — p. ex. une marche reçue mais volontairement non rattachée, que Milo compterait quand même. À revoir le jour où la montre servira à corriger la DURÉE des séances : là, ce sera une donnée, plus une boîte."
   }
 }

@@ -26,6 +26,7 @@ let S={
   sleepLog:[],
   weightLog:[],
   dayStateLog:[],
+  healthInbox:[],   // ⌚ activités reçues du téléphone (raccourci iOS → Santé) — voir app.js `_majHealthInbox`
   strengthGoals:{},
   name:'',
   coachFree:0,
@@ -124,6 +125,7 @@ function load(){
     S.dayState=_lsJson('ft4_daystate',null);
     // Historique du check-in du jour (brique 7 « Ton histoire sportive ») : on GARDE chaque jour renseigné (énergie/moral/douleur) au lieu de l'effacer chaque nuit. [{date,energy,mood,pains,note}]
     S.dayStateLog=_lsJson('ft4_dayslog',[]);
+    S.healthInbox=_lsJson('ft4_health',[]);
     S.levelAuto=localStorage.getItem('ft4_levelAuto')==='1'; // true si le niveau a été promu automatiquement (évite de re-fêter)
     S.beginnerJourney=_lsJson('ft4_bjourney',null); // parcours débutant : {style,freq,startDate,phase}
     S.sleepLog=_lsJson('ft4_sleep',[]);
@@ -365,6 +367,7 @@ function persist(){
     localStorage.setItem('ft4_adn',JSON.stringify(S.adn||{motivation:'',lifestyle:'',preferences:'',experience:'',fragile:''}));
     localStorage.setItem('ft4_daystate',JSON.stringify(S.dayState||null));
     localStorage.setItem('ft4_dayslog',JSON.stringify(S.dayStateLog||[]));
+    localStorage.setItem('ft4_health',JSON.stringify(S.healthInbox||[]));
     localStorage.setItem('ft4_levelAuto',S.levelAuto?'1':'0');
     localStorage.setItem('ft4_bjourney',JSON.stringify(S.beginnerJourney||null));
     localStorage.setItem('ft4_sleep',JSON.stringify(S.sleepLog||[]));

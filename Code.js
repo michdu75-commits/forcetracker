@@ -578,7 +578,8 @@ function doGet(e) {
       dayStateLog:    data.dayStateLog    || [],
       cycle:          data.cycle          || null,
       nutritionPhase: data.nutritionPhase || 'charge',
-      coachMemory:    (data.profile && data.profile.coachMemory) || ''
+      coachMemory:    (data.profile && data.profile.coachMemory) || '',
+      healthInbox:    data.healthInbox    || []
     });
   }
 
@@ -607,7 +608,8 @@ function handleLoadProfilePost_(body) {
     programmes:     data.programmes     || [],
     exRestPref:     data.exRestPref     || {},
     nutritionPhase: data.nutritionPhase || 'charge',
-    coachMemory:    (data.profile && data.profile.coachMemory) || ''
+    coachMemory:    (data.profile && data.profile.coachMemory) || '',
+    healthInbox:    data.healthInbox    || []
   });
 }
 
@@ -779,6 +781,7 @@ function doPost(e) {
   if (body.action === 'listUsers')         return handleListUsers_(body);
   if (body.action === 'setAccessCode')     return handleSetAccessCode_(body);
   if (body.action === 'authStatus')        return handleAuthStatus_(body);
+  if (body.action === 'pushHealth')        return handlePushHealth_(body);
 
   return json_({status:'error', error:'Unknown POST action: ' + body.action});
 }
@@ -1202,6 +1205,83 @@ function handleSetAccessCode_(body) {
   }
 }
 // L'app demande si un compte est protégé (aucun secret divulgué — juste un booléen).
+/* ⌚ LA MONTRE ÉCRIT DIRECTEMENT DANS LE COMPTE (16/08/2026, ft-v880)
+   Michel : *« j'aimerais que l'information arrive direct dans mon appli pour éviter de donner les
+   csv, juste le cardio »*.
+
+   ⭐ POURQUOI CETTE ROUTE EXISTE, ET POURQUOI ELLE EST SI SIMPLE : il n'y a AUCUN moyen pour une
+   PWA de lire Apple Santé — iOS l'interdit, ce n'est pas un manque d'effort. Et les deux voies
+   « officielles » sont fermées ou payantes, vérifié le 16/08 :
+     · l'API Garmin Connect demande une entité légale, et le programme est suspendu ;
+     · l'API Strava exige un abonnement Strava depuis juin 2026 pour accéder à… ses propres données.
+   La 3ᵉ voie ne demande ni approbation, ni abonnement, ni application native : **le téléphone
+   POUSSE lui-même**. Un raccourci iOS lit Santé (où Garmin écrit tout seul) et appelle cette
+   route. Le serveur ne va rien CHERCHER : il REÇOIT. C'est ce qui rend la chose faisable ce soir.
+
+   ⚠️ SÉCURITÉ : même vérification que partout ailleurs (`_authCheck_`). Un compte protégé par un
+   code perso exige ce code — le raccourci le porte, et il vit sur le téléphone de la personne.
+   ⚠️ ON NE TOUCHE À AUCUNE SÉANCE ICI. Cette route ne fait que DÉPOSER dans une boîte de
+   réception ; c'est l'app qui proposera de rattacher, et c'est la personne qui valide (R29).
+   Écrire dans les séances depuis un point d'entrée public serait la meilleure façon d'écraser une
+   saisie manuelle sans que personne ne s'en aperçoive (règle d'or #3).
+   ⚠️ ET LE RACCOURCI RENVERRA LES MÊMES ACTIVITÉS TOUS LES JOURS : la déduplication est donc
+   obligatoire, pas un confort. La clé est l'instant de DÉBUT + le type. */
+var HEALTH_MAX_   = 60;     // ce n'est pas une archive, juste de quoi rattacher
+var HEALTH_JOURS_ = 45;     // au-delà, la séance est classée depuis longtemps
+function handlePushHealth_(body) {
+  try {
+    var email = (body.email || '').toString().trim().toLowerCase();
+    if (!email) return json_({status:'error', error:'email required'});
+    var a = _authCheck_(email, body.authCode);
+    if (!a.ok) return json_({status:'error', error:'auth', blocked:a.blocked});
+    var data = loadUserData_(email);
+    if (!data) return json_({status:'not_found'});
+
+    var recues = body.activities;
+    if (!recues || !recues.length) return json_({status:'ok', count:0, total:(data.healthInbox||[]).length});
+    if (recues.length > 200) recues = recues.slice(0, 200);      // garde-fou de taille
+
+    var inbox = data.healthInbox || [];
+    var vus = {};
+    for (var i = 0; i < inbox.length; i++) vus[inbox[i].start + '|' + inbox[i].type] = 1;
+
+    var ajout = 0;
+    for (var j = 0; j < recues.length; j++) {
+      var r = recues[j] || {};
+      var start = String(r.start || '').slice(0, 19);            // ISO, à la seconde
+      if (!start) continue;
+      var type = String(r.type || 'autre').slice(0, 40);
+      var cle = start + '|' + type;
+      if (vus[cle]) continue;                                    // déjà reçue → on ignore
+      var min = Math.round(Number(r.min) || 0);
+      if (!(min > 0) || min > 600) continue;                     // 0 ou plus de 10 h = donnée fausse
+      vus[cle] = 1;
+      inbox.push({
+        start: start,
+        type:  type,
+        min:   min,
+        kcal:  Math.round(Number(r.kcal) || 0) || null,          // reçu et gardé, mais l'app ne s'en sert pas
+        hr:    Math.round(Number(r.hr)   || 0) || null,
+        src:   'sante',
+        recu:  new Date().toISOString().slice(0, 19)
+      });
+      ajout++;
+    }
+
+    // on borne dans le TEMPS puis en NOMBRE — une boîte de réception n'est pas une archive
+    var limite = new Date(Date.now() - HEALTH_JOURS_ * 86400000).toISOString().slice(0, 10);
+    inbox = inbox.filter(function(x){ return String(x.start).slice(0, 10) >= limite; });
+    inbox.sort(function(x, y){ return x.start < y.start ? 1 : -1; });
+    if (inbox.length > HEALTH_MAX_) inbox = inbox.slice(0, HEALTH_MAX_);
+
+    data.healthInbox = inbox;
+    saveUserData_(email, data);
+    return json_({status:'ok', count:ajout, total:inbox.length});
+  } catch (err) {
+    return json_({status:'error', error:'pushhealth'});
+  }
+}
+
 function handleAuthStatus_(body) {
   try {
     var email = (body.email || '').toString().trim().toLowerCase();

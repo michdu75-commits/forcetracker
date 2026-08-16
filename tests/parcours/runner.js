@@ -4876,6 +4876,60 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+
+/* == BLOC XXXII - LA MONTRE ECRIT DANS L'APP, SANS CSV (16/08/2026) ==
+   Michel : « j'aimerais que l'information arrive direct dans mon appli pour eviter de donner les
+   csv, juste le cardio ». Un raccourci iOS lit Sante (ou Garmin ecrit tout seul) et pousse vers
+   le backend ; les activites reviennent avec le profil.
+   /!\ LE TEMOIN QUI COMPTE : on PROPOSE, on n'ecrit JAMAIS tout seul dans une seance. */
+{
+  console.log('\n-- XXXII. La montre depose, la personne tranche --');
+  const H=await p.evaluate(()=>{
+   try{
+    if(typeof _renderHealthInbox!=='function') return {erreur:'_renderHealthInbox absente'};
+    const o={};
+    S.healthInbox=[
+      {start:'2026-08-16T09:12:00', type:'Marche à pied', min:12, kcal:60, hr:104, src:'sante'},
+      {start:'2026-08-16T11:40:00', type:'Indoor Cycling', min:25, kcal:210, hr:131, src:'sante'},
+      {start:'2026-08-15T18:00:00', type:'Marche à pied', min:44, kcal:227, hr:103, src:'sante'}
+    ];
+    const sess={date:'2026-08-16', ts:987654, volume:1000,
+      exs:[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}]};
+    S.sessions=[sess];
+    openSessDetail(987654);
+    const el=document.getElementById('sd-health');
+    o.visible = !!el && el.style.display!=='none';
+    o.txt = el ? el.textContent : '';
+    o.nLignes = el ? el.querySelectorAll('.hi-row').length : 0;   // seulement le JOUR de la seance
+    // /!\ rien n'a ete ecrit dans la seance tant qu'on n'a pas clique
+    o.cardioAvant = sess.cardioAvant || null;
+    o.cardioApres = sess.cardio || null;
+    // le mapping des noms d'Apple Sante vers les types de l'app
+    o.types = ['Marche à pied','Indoor Cycling','Treadmill Running','Pool Swim','Kayak']
+                .map(_typeCardioDepuisMontre);
+    // un jour sans activite recue n'affiche rien
+    const s2={date:'2026-01-01', ts:111, volume:10, exs:[{name:'Squat à la Barre',sets:[{kg:60,reps:5,done:true,type:'N'}]}]};
+    S.sessions=[s2]; openSessDetail(111);
+    o.vide = document.getElementById('sd-health').style.display==='none';
+    try{ document.getElementById('ov-sess-detail').classList.remove('open'); }catch(e){}
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(H.erreur){ t('X la boite de reception de la montre existe', false, H.erreur); }
+  else{
+    t('** les activites de la montre s\'affichent sur la seance du jour',
+      H.visible===true && H.nLignes===2, 'visible '+H.visible+' · lignes '+H.nLignes);
+    t('** ... avec l\'heure, le type et la duree', /09h12/.test(H.txt) && /12 min/.test(H.txt), H.txt.slice(0,90));
+    t('/!\\/!\\ RIEN n\'est ecrit dans la seance tant que la personne n\'a pas choisi (R29)',
+      H.cardioAvant===null && H.cardioApres===null,
+      'avant '+JSON.stringify(H.cardioAvant)+' apres '+JSON.stringify(H.cardioApres));
+    t('/!\\ un jour sans activite recue n\'affiche rien du tout', H.vide===true);
+    t('/!\\ un type inconnu tombe sur « autre », jamais sur un type devine',
+      JSON.stringify(H.types)===JSON.stringify(['marche','velo','course','natation','autre']),
+      JSON.stringify(H.types));
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

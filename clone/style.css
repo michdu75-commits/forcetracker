@@ -1530,3 +1530,11 @@ html.ob-done #onboarding{display:none;}
    Doré comme tous les « à vérifier » de l'app : on signale, on ne corrige pas. */
 .sd-dur.douteuse{color:var(--gold);}
 .sess-dur2.douteuse{color:var(--gold);opacity:1;}
+
+/* ⌚ Boîte de réception de la montre (ft-v880) — voir setup.js `_renderHealthInbox`. */
+.hi-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0}
+.hi-txt{font-size:13px;color:var(--t2);line-height:1.35}
+.hi-dim{color:var(--t3)}
+.hi-btn{flex:0 0 auto;font-size:12px;font-weight:600;color:var(--red);background:transparent;
+  border:1px solid var(--red);border-radius:8px;padding:4px 10px;cursor:pointer}
+.hi-btn:active{opacity:.6}

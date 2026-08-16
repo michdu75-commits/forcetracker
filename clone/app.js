@@ -3962,6 +3962,12 @@ window._premiumPending=!!S.email;
         S.premium=(d2.premium===true)||(typeof _isClientPremium==='function'&&_isClientPremium());
         S.premiumExpiry=d2.premiumExpiry||'';
         if(d2.profile&&d2.profile.emailVerified)S.emailVerified=true; // confirmé côté cloud
+        /* ⌚ LA BOÎTE DE RÉCEPTION DE LA MONTRE (ft-v880). Elle arrive avec le profil : aucun
+           appel réseau en plus, donc aucun risque pour l'ouverture instantanée (règle d'or #4).
+           ⚠️ ON ÉCRASE LA LOCALE SANS ÉTAT D'ÂME, et c'est volontaire : le serveur est la SEULE
+           source de cette donnée (c'est le téléphone qui l'y dépose, jamais l'app). Un local plus
+           récent n'existe pas — contrairement aux séances, où l'inverse serait une perte. */
+        if(Array.isArray(d2.healthInbox)) S.healthInbox=d2.healthInbox;
         persist();
         try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
         window._premiumPending=false;

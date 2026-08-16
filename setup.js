@@ -459,11 +459,70 @@ function openSessDetail(id){
   }
   document.getElementById('sd-sub').innerHTML=`${Math.round(sess.volume||0)} kg total${duree}${cals}${eff}${estim}`;
 
+  _renderHealthInbox(sess);
   _updateSdMuscles(sess);
   _renderSessDetailContent();
   document.getElementById('ov-sess-detail').classList.add('open');
 }
 
+/* ⌚ CE QUE TA MONTRE A ENREGISTRÉ CE JOUR-LÀ (16/08/2026, ft-v880)
+   Michel : *« j'aimerais que l'information arrive direct dans mon appli pour éviter de donner les
+   csv, juste le cardio »*. Un raccourci iOS lit Santé (où Garmin écrit tout seul) et pousse les
+   activités vers le backend ; elles reviennent avec le profil, dans `S.healthInbox`.
+
+   ⚠️⚠️ ON PROPOSE, ON N'ÉCRIT JAMAIS TOUT SEUL. Rattacher automatiquement un cardio à une séance
+   demanderait de deviner lequel des trois « Marche » de la journée était l'échauffement — et une
+   erreur écraserait une saisie manuelle. *L'app montre ce qu'elle voit, la personne tranche*
+   (R29, et c'est exactement l'arbitrage de ft-v868 sur les durées douteuses).
+   ⚠️ ET ON N'AFFICHE QUE LE JOUR DE LA SÉANCE : une activité du lendemain n'a rien à faire là.
+   ⚠️ LES CALORIES DE LA MONTRE SONT REÇUES MAIS JAMAIS UTILISÉES, et c'est mesuré : en résistance
+   elles corrèlent à r = 0,10-0,34 contre calorimétrie indirecte. On prend son HORLOGE, pas son
+   estimation. Elles restent visibles à titre indicatif, jamais reprises dans un calcul. */
+function _renderHealthInbox(sess){
+  const el=document.getElementById('sd-health');
+  if(!el) return;
+  const jour=(sess&&sess.date)||'';
+  const act=((typeof S!=='undefined'&&S.healthInbox)||[]).filter(a=>a&&String(a.start).slice(0,10)===jour);
+  if(!act.length){ el.style.display='none'; el.innerHTML=''; return; }
+  const heure=a=>String(a.start).slice(11,16).replace(':','h');
+  el.style.display='block';
+  el.innerHTML='<div style="font-size:12px;color:var(--t3);margin-bottom:6px">⌚ Ta montre a enregistré ce jour-là</div>'
+    + act.map((a,i)=>{
+        const kcal=a.kcal?` · ${a.kcal} kcal`:'';
+        const hr=a.hr?` · ${a.hr} bpm`:'';
+        return `<div class="hi-row"><span class="hi-txt">${heure(a)} · <b>${a.type}</b> · ${a.min} min<span class="hi-dim">${kcal}${hr}</span></span>`
+             + `<button class="hi-btn" onclick="utiliserActiviteMontre(${i})">Utiliser</button></div>`;
+      }).join('');
+  el._act=act;
+}
+/* Rattache une activité reçue au CARDIO de la séance ouverte. On demande AVANT ou APRÈS :
+   l'app ne peut pas le savoir, et se tromper mettrait 40 min d'échauffement là où il y avait
+   un retour au calme — donc un calcul de calories faux, sans que rien ne le signale. */
+function utiliserActiviteMontre(i){
+  const el=document.getElementById('sd-health');
+  const a=el&&el._act&&el._act[i];
+  if(!a||!_sessEdits) return;
+  const avant=confirm(`« ${a.type} » de ${a.min} min\n\nOK = échauffement (AVANT la séance)\nAnnuler = retour au calme (APRÈS)`);
+  const cible=avant?'cardioAvant':'cardio';
+  const dejaLa=_sessEdits[cible]&&+_sessEdits[cible].duration>0;
+  if(dejaLa && !confirm(`Il y a déjà ${_sessEdits[cible].duration} min de cardio ${avant?'avant':'après'}. Le remplacer ?`)) return;
+  _sessEdits[cible]={type:_typeCardioDepuisMontre(a.type), intensity:'modere', duration:a.min};
+  toast('Cardio ajouté — pense à enregistrer','success');
+  _renderSessDetailContent();
+}
+/* Le nom d'Apple Santé (« Walking », « Marche à pied », « Indoor Cycling »…) vers les types que
+   l'app connaît. ⚠️ Inconnu → « autre », jamais un type deviné : le barème calorique en dépend. */
+function _typeCardioDepuisMontre(nom){
+  const n=String(nom||'').toLowerCase();
+  if(/march|walk|randonn|hik/.test(n))            return 'marche';
+  if(/cours|run|jog|tapis|treadmill/.test(n))     return 'course';
+  if(/vélo|velo|cycl|bike|spinning/.test(n))      return 'velo';
+  if(/rameur|row/.test(n))                        return 'rameur';
+  if(/ellipt/.test(n))                            return 'elliptique';
+  if(/nat|swim/.test(n))                          return 'natation';
+  if(/corde|rope/.test(n))                        return 'corde';
+  return 'autre';
+}
 function _updateSdMuscles(sess){
   // Unifié (ft-v171) : même moteur que la grande carte et le mini-bonhomme des cartes
   // (_mscScores/_MEX) → reconnaît aussi les exercices machines/perso, pas seulement EXLIB.
