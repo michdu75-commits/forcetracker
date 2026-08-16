@@ -491,6 +491,40 @@ function _secSerie(set){
   if(!(r > 0)) return SEC_SERIE_DEFAUT;
   return Math.min(SEC_INSTALLATION + r*SEC_PAR_REP, SEC_SERIE_MAX);
 }
+/* 🏋️ LA CHARGE RELATIVE MODULE L'INTENSITÉ (16/08/2026, ft-v879)
+   Michel : *« fais le MET qui tient compte du % de la charge max »* — et il ajoute, sur ce que
+   je lui avais dit du tonnage : *« je suis moyennement d'accord »*. **Il a raison, et c'est
+   mesuré sur ses 27 séances appariées à la montre :**
+     tonnage brut ↔ calories .................... r = +0,076   (rien — la durée écrase tout)
+     **tonnage par minute ↔ calories par minute ... r = +0,537**  (un vrai signal)
+   *Le tonnage ne prédit pas le TOTAL d'une séance, mais sa DENSITÉ prédit son intensité.* Ma
+   formulation d'avant (« le tonnage ne compte pas ») était trop catégorique : elle était vraie
+   pour le total et fausse pour l'intensité.
+
+   ⚠️ POURQUOI LE % DU MAX ET PAS LE TONNAGE : un tonnage est un chiffre absolu — 3 000 kg ne
+   veulent pas dire la même chose chez Michel et chez sa fille. Le **pourcentage de SON maximum**
+   est la même échelle pour tout le monde, et c'est celle que la physiologie utilise (recrutement
+   des unités motrices, part anaérobie). L'app le connaît déjà : `S.prs[exercice].rm1`.
+
+   ⚠️ L'AMPLEUR EST BORNÉE, ET SA BORNE EST PUBLIÉE : le Compendium 2024 distingue la musculation
+   « light or moderate effort » (02052 → 3,5) de « vigorous effort » (02053 → 6,0), soit un
+   facteur **1,71**. Notre modulation va de **0,85 à 1,30**, soit 1,53 — volontairement À
+   L'INTÉRIEUR de cet écart, jamais au-delà. Le point neutre est à **72 %** du max, l'intensité
+   d'une série de travail courante : c'est là que les METs publiés ont été mesurés.
+   ⚠️ PAS DE MAXIMUM CONNU = PAS DE MODULATION. On rend 1, on ne devine pas (R29). Un exercice
+   jamais chargé, un premier passage, une machine sans repère : le calcul reste celui d'avant.
+   ⚠️ ET ÇA MARCHE DANS LES DEUX SENS : les paliers d'échauffement, légers, descendent à 0,85 —
+   ils coûtaient jusqu'ici autant qu'une série de travail. */
+const CHARGE_NEUTRE = 0.72;   // % du max où les METs publiés ont été mesurés
+const CHARGE_PENTE  = 1.07;   // pente, calée pour atteindre 1,30 à 100 % du max
+const CHARGE_MIN    = 0.85, CHARGE_MAX = 1.30;
+function _facteurCharge(kg, rm1){
+  const k=+kg||0, m=+rm1||0;
+  if(!(k>0) || !(m>0)) return 1;                       // pas de repère → aucune modulation
+  const pct = k/m;
+  if(!(pct>0) || pct>2) return 1;                      // donnée aberrante → on ne module pas
+  return Math.max(CHARGE_MIN, Math.min(CHARGE_MAX, 1 + CHARGE_PENTE*(pct-CHARGE_NEUTRE)));
+}
 function calcSessionCalories(session) {
   const bw = S.bw || 80;
   const restSec = S.defRest || 120;
@@ -514,7 +548,13 @@ function calcSessionCalories(session) {
     const activeHours = activeSec / 3600;
     const restHours = Math.max(0,n-1) * restSec / 3600;
 
-    const calsActive = met * bw * activeHours;
+    /* 🏋️ CHAQUE SÉRIE PAYE SON PROPRE TARIF — voir `_facteurCharge`. On ne peut pas appliquer un
+       facteur moyen à l'exercice : dans un même exercice, un palier d'échauffement à 40 % et une
+       série de travail à 90 % n'ont rien à voir. C'est justement ce que le forfait unique
+       masquait. Le repère est le meilleur maximum connu SUR CET EXERCICE. */
+    const _rm1 = (S.prs && S.prs[ex.name] && +S.prs[ex.name].rm1) || 0;
+    const calsActive = doneSets.reduce((a,st)=>
+      a + met * _facteurCharge(st.kg, _rm1) * bw * (_secSerie(st)/3600), 0);
     const calsRest   = MET_REST * bw * restHours;
     const exCals = calsActive + calsRest;
 

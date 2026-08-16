@@ -508,6 +508,21 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
     out.sec12  = _ss({reps:12});
     out.secVide= _ss({});          // aucune rep notée → l'ancien forfait
     out.secFou = _ss({reps:400});  // gainage compté en secondes → plafonné
+    /* 🏋️ LA CHARGE RELATIVE (ft-v879) — Michel : « fais le MET qui tient compte du % de la
+       charge max ». L'ampleur est bornée par l'écart PUBLIÉ entre effort modéré (3,5) et
+       vigoureux (6,0) du Compendium, soit 1,71 ; on reste à 1,53 (0,85 → 1,30). */
+    const _fc = (typeof _facteurCharge==='function') ? _facteurCharge : (()=>1);
+    out.fc = {p40:+_fc(40,100).toFixed(3), p72:+_fc(72,100).toFixed(3),
+              p90:+_fc(90,100).toFixed(3), p100:+_fc(100,100).toFixed(3)};
+    out.fcSansMax  = _fc(100,0);      // aucun maximum connu → aucune modulation
+    out.fcAberrant = _fc(500,100);    // 500 % du max → donnée fausse, on ne module pas
+    const memoPrs=S.prs; S.prs={'Développé Couché':{rm1:100}};
+    const mkC=kg=>({date:'2026-08-16',duration:60*60,exs:[{name:'Développé Couché',
+      sets:[1,2,3,4].map(()=>({kg,reps:5,done:true,type:'N'}))}]});
+    out.kcalLeger=calcSessionCalories(mkC(60)).total;
+    out.kcalLourd=calcSessionCalories(mkC(92)).total;
+    S.prs={}; out.kcalSansRepere=calcSessionCalories(mkC(92)).total;
+    S.prs=memoPrs;
     out.sommeBreakdown=Object.values(cd.breakdown).reduce((a,b)=>a+b,0);
     // une séance VIDE facture quand même l'échauffement
     out.vide=calcSessionCalories({exs:[]}).total;                      // 46.67 → 47
@@ -578,6 +593,16 @@ console.log('\n═══ 6. Cardio + calories de séance ═══');
     r.secVide===30, 'reçu '+r.secVide);
   t('⚠️ 400 « reps » (gainage compté en secondes) est plafonné à 3 min',
     r.secFou===180, 'reçu '+r.secFou);
+  t('🏋️ la charge relative module de 0,85 (léger) à 1,30 (maximal), neutre à 72 %',
+    r.fc.p40===0.85 && r.fc.p72===1 && r.fc.p100===1.3, JSON.stringify(r.fc));
+  t('🏋️ … et l\'amplitude (1,53) reste SOUS l\'écart publié modéré↔vigoureux (3,5→6,0 = 1,71)',
+    (r.fc.p100/r.fc.p40) < (6.0/3.5), 'amplitude '+(r.fc.p100/r.fc.p40).toFixed(2));
+  t('🏋️ une même série coûte plus cher à 92 % du max qu\'à 60 %',
+    r.kcalLourd > r.kcalLeger, r.kcalLeger+' vs '+r.kcalLourd+' kcal');
+  t('⚠️ AUCUN maximum connu sur l\'exercice → aucune modulation, on ne devine pas (R29)',
+    r.fcSansMax===1 && r.kcalSansRepere>0, 'facteur '+r.fcSansMax+' · kcal '+r.kcalSansRepere);
+  t('⚠️ une charge aberrante (500 % du max) ne module rien non plus',
+    r.fcAberrant===1, 'reçu '+r.fcAberrant);
   t('le détail par exercice colle au total (hors échauffement)', approx(r.cd.total-r.sommeBreakdown,47,2),
     'écart '+(r.cd.total-r.sommeBreakdown));
   t('⚠️ QUIRK : une séance sans aucune série validée facture quand même 47 kcal d\'échauffement', r.vide===47, 'reçu '+r.vide);
