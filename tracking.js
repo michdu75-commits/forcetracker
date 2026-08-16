@@ -2262,6 +2262,66 @@ function _sleepCurve(h){
   }
   return 70;
 }
+/* ❤️ LA FRÉQUENCE CARDIAQUE AU REPOS — LE 1ᵉʳ SIGNAL MESURÉ DU SCORE DE RÉCUP (16/08/2026)
+   Michel, devant la liste des types que Raccourcis sait lire : *« Fréquence cardiaque c'est pas
+   bon ? »*. Pour son cardio, non — un rythme ne dit pas si c'était une marche ou un vélo. Mais
+   au REPOS, si.
+
+   ⭐ CE QUE ÇA CHANGE VRAIMENT : jusqu'ici le score de récup se calculait sur du **déclaratif**
+   (sommeil noté, séance récente, âge, jours enchaînés, humeur du jour). **Aucune mesure du
+   corps.** La FC au repos est le premier signal physiologique qui y entre — et c'est le seul
+   que la voie gratuite permette, puisque les entraînements ne sont pas lisibles par Raccourcis.
+
+   ⚠️⚠️ ON COMPARE LA PERSONNE À ELLE-MÊME, JAMAIS À UNE NORME. Une FC de repos de 62 ne veut
+   rien dire dans l'absolu — chez un athlète c'est haut, chez un sédentaire c'est bas. Ce qui
+   parle, c'est l'ÉCART à SA propre base (médiane des 30 derniers jours). C'est aussi ce qui
+   rend la chose honnête : on ne classe personne, on suit une tendance (**R12**).
+   ⚠️ IL FAUT UNE BASE AVANT DE JUGER : moins de 7 jours d'historique → on ne fait RIEN. Un écart
+   calculé sur deux nuits serait du bruit présenté comme un signal (**R29**).
+   ⚠️ LA MÉDIANE, PAS LA MOYENNE : une nuit de fièvre ne doit pas déplacer la référence.
+   ⚠️ L'AJUSTEMENT EST BORNÉ À ±8 POINTS : c'est un indice parmi d'autres, pas un verdict. Une FC
+   élevée peut venir d'un rhume, d'un verre de trop ou d'une pièce trop chaude — l'app ne le sait
+   pas et ne doit surtout pas prétendre le savoir (Constitution : aucun diagnostic).
+   ⚠️ ET ELLE N'ENTRE DANS AUCUN CALCUL DE CALORIES. Michel, le même soir : *« si la fréquence
+   cardiaque pendant la séance c'est utile pour rajouter à nos affinages de calculs, je ne suis
+   pas d'accord »*. C'est la position du projet depuis le début, et elle est mesurée : r = 0,10
+   à 0,34 entre les calories d'un bracelet et la calorimétrie indirecte en résistance. */
+const RHR_JOURS_BASE = 30;   // fenêtre de référence
+const RHR_MIN_JOURS  = 7;    // en dessous, on ne se prononce pas
+const RHR_MAX_ADJ    = 8;    // borne de l'ajustement, dans les deux sens
+function _rhrEcart(){
+  try{
+    const j=(typeof S!=='undefined'&&S.healthDaily)||[];
+    if(j.length<RHR_MIN_JOURS+1) return null;
+    const auj=(typeof today==='function')?today():new Date().toISOString().slice(0,10);
+    // la valeur du jour, ou celle d'hier si la nuit n'est pas encore remontée
+    const rec=j.filter(x=>x&&x.date&&x.rhr>0).sort((a,b)=>b.date.localeCompare(a.date));
+    if(!rec.length) return null;
+    const jour=rec[0];
+    const age=(Date.parse(auj+'T12:00:00')-Date.parse(jour.date+'T12:00:00'))/86400000;
+    if(!(age>=0) || age>2) return null;                 // trop vieux → on ne dit rien (R29)
+    const base=rec.slice(1).filter(x=>{
+      const d=(Date.parse(jour.date+'T12:00:00')-Date.parse(x.date+'T12:00:00'))/86400000;
+      return d>0 && d<=RHR_JOURS_BASE;
+    }).map(x=>x.rhr);
+    if(base.length<RHR_MIN_JOURS) return null;
+    const t=base.slice().sort((a,b)=>a-b), m=t.length>>1;
+    const med=t.length%2 ? t[m] : (t[m-1]+t[m])/2;
+    return {rhr:jour.rhr, base:Math.round(med*10)/10, ecart:Math.round((jour.rhr-med)*10)/10,
+            n:base.length, date:jour.date};
+  }catch(e){ return null; }
+}
+/* La pente : neutre tant qu'on reste à ±2 bpm de sa base (variation normale d'une nuit à
+   l'autre), puis 2 points par battement, borné. Au-dessus de sa base = récupération incomplète,
+   en dessous = plutôt frais. ⚠️ Le seuil de 2 bpm n'est pas cosmétique : sans lui, l'app
+   commenterait chaque battement et le score bougerait sans raison (R12 : tendance, pas bruit). */
+function _rhrAjust(e){
+  if(!e) return 0;
+  const d=e.ecart;
+  if(Math.abs(d)<=2) return 0;
+  const brut=(d>0 ? -(d-2) : -(d+2))*2;
+  return Math.max(-RHR_MAX_ADJ, Math.min(RHR_MAX_ADJ, Math.round(brut)));
+}
 function calcRecoveryDetail(){
   // Sommeil non renseigné → base neutre « invisible » (70) : le score reste
   // fonctionnel pour tout le monde, les autres facteurs (séance, âge, cycle…)
@@ -2368,7 +2428,8 @@ function calcRecoveryDetail(){
     }
   }catch(e){}
   const base=Math.round(wScore);
-  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj+dayEnergyAdj)));
+  const rhrE=(typeof _rhrEcart==='function')?_rhrEcart():null, rhrAdj=_rhrAjust(rhrE);
+  const score=Math.max(0,Math.min(100,Math.round(wScore+sessAdj+ageAdj+cycleAdj+accumAdj+smokerAdj+energyAdj+dayEnergyAdj+rhrAdj)));
   // Détail des facteurs (pour afficher le « pourquoi » sous le score)
   // `why` = raison en clair (français simple), utilisée par l'explication « Pourquoi ce score ? ».
   const factors=[{ic:'😴',label:hasSleep?'Sommeil':'Récup de base',val:base,base:true,
@@ -2382,6 +2443,13 @@ function calcRecoveryDetail(){
   if(smokerAdj) factors.push({ic:'🚬',label:'Tabac',val:smokerAdj,why:'Le tabac freine un peu la récupération.'});
   if(energyAdj) factors.push({ic:'⚡',label:'Énergie',val:energyAdj,why:'Ton niveau d\'énergie noté au dernier check-in de séance.'});
   if(dayEnergyAdj) factors.push({ic:'🌡️',label:'Forme du jour',val:dayEnergyAdj,why:'Comment tu te sens aujourd\'hui (ton check-in du jour sur l\'Accueil).'});
+  /* ⚠️ ON MONTRE LES CHIFFRES, PAS UN VERDICT. La personne doit pouvoir contredire : sa base, sa
+     valeur du jour, l'écart. Sans ça, un score qui baisse sans explication fait douter du reste
+     de l'app — et une FC élevée a dix causes possibles que l'app ne connaît pas. */
+  if(rhrAdj) factors.push({ic:'❤️',label:'FC au repos',val:rhrAdj,
+    why:(rhrAdj<0
+      ? 'Ta fréquence cardiaque au repos est à '+rhrE.rhr+' bpm cette nuit, contre '+String(rhrE.base).replace('.',',')+' habituellement (ta moyenne sur '+rhrE.n+' jours). Quand elle monte, c\'est souvent que le corps n\'a pas fini de récupérer — mais ça peut aussi venir d\'un rhume, d\'un verre de trop ou d\'une chambre trop chaude. C\'est un indice, pas un diagnostic.'
+      : 'Ta fréquence cardiaque au repos est à '+rhrE.rhr+' bpm cette nuit, sous ta moyenne de '+String(rhrE.base).replace('.',',')+' bpm. Bon signe : ton corps est plutôt frais.')});
   // Conseils pour remonter le score (les plus pertinents)
   const tips=[];
   if(!hasSleep) tips.push('💤 Renseigne ton sommeil pour un score personnalisé et plus précis.');
@@ -2393,6 +2461,7 @@ function calcRecoveryDetail(){
   if(smokerAdj<0) tips.push('Réduire le tabac améliorerait nettement ta récupération.');
   if(energyAdj<0) tips.push('Énergie basse au dernier check-in — écoute ton corps, séance légère.');
   if(dayEnergyAdj<0) tips.push('Journée sans énergie — une séance plus courte reste bénéfique.');
+  if(rhrAdj<=-5) tips.push('Ta FC au repos est nettement au-dessus de ta normale — séance allégée, et regarde comment tu te sens.');
   if(!tips.length) tips.push(score>=80?'Tu es au top — profites-en pour une séance intensive ! 💪':'Récup correcte — séance normale, et une bonne nuit ce soir.');
   return {score,base,factors,tips:tips.slice(0,2),dayPains};
 }

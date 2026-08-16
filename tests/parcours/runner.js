@@ -4973,6 +4973,72 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+
+/* == BLOC XXXIII - LA FC AU REPOS ENTRE DANS LE SCORE DE RECUP (16/08/2026) ==
+   Michel : « Fréquence cardiaque c'est pas bon ? ». Pour son cardio non (un rythme ne dit pas
+   marche ou vélo), mais AU REPOS oui : c'est le 1er signal MESURE du score, qui jusqu'ici ne
+   reposait que sur du declaratif.
+   /!\ LES TEMOINS QUI COMPTENT : on compare la personne a ELLE-MEME, et sans historique on ne
+   dit RIEN plutot qu'un chiffre invente. */
+{
+  console.log('\n-- XXXIII. La FC au repos : compare a soi-meme, jamais a une norme --');
+  const R=await p.evaluate(()=>{
+   try{
+    if(typeof _rhrEcart!=='function') return {erreur:'_rhrEcart absente'};
+    const o={};
+    const jour=n=>{ const d=new Date(); d.setDate(d.getDate()-n);
+      return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+    const serie=(auj,base,n)=>{ const a=[{date:jour(0),rhr:auj}];
+      for(let i=1;i<=n;i++) a.push({date:jour(i),rhr:base}); return a; };
+    // (1) pas assez d'historique => on ne se prononce pas
+    S.healthDaily=serie(60,52,3); o.tropCourt=_rhrEcart();
+    // (2) base etablie, FC nettement au-dessus => malus
+    S.healthDaily=serie(60,52,20); o.haute=_rhrEcart(); o.adjHaut=_rhrAjust(o.haute);
+    // (3) FC sous sa base => petit bonus
+    S.healthDaily=serie(47,52,20); o.basse=_rhrEcart(); o.adjBas=_rhrAjust(o.basse);
+    // (4) variation normale (±2 bpm) => AUCUN effet
+    S.healthDaily=serie(54,52,20); o.adjNeutre=_rhrAjust(_rhrEcart());
+    // (5) la MEME personne avec une base HAUTE et le meme ecart => meme ajustement
+    S.healthDaily=serie(80,72,20); o.adjAthlete=_rhrAjust(_rhrEcart());
+    // (6) une valeur trop vieille ne parle plus d'aujourd'hui
+    /* /!\ MON 1er TEMOIN ETAIT FAUX ICI, pas le code : je remplacais la valeur du jour par une
+       vieille, en laissant CELLE D'HIER dans la serie — la fonction trouvait donc, a juste titre,
+       une mesure recente. Le cas a verifier est « la plus recente date de 6 jours ». */
+    S.healthDaily=[{date:jour(6),rhr:60}].concat(
+      Array.from({length:20},(_,i)=>({date:jour(7+i),rhr:52})));
+    o.vieux=_rhrEcart();
+    // (7) l'ajustement est borne
+    S.healthDaily=serie(120,52,20); o.adjExtreme=_rhrAjust(_rhrEcart());
+    // (8) il apparait dans « pourquoi ce score » avec les CHIFFRES, pas un verdict
+    S.healthDaily=serie(60,52,20);
+    const det=calcRecoveryDetail();
+    const f=(det.factors||[]).find(x=>/FC au repos/.test(x.label||''));
+    o.facteur=!!f; o.why=f?f.why:'';
+    // (9) sans aucune donnee, le score ne bouge pas
+    const avec=det.score; S.healthDaily=[]; o.sans=calcRecoveryDetail().score; o.avec=avec;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(R.erreur){ t('X la FC au repos se lit', false, R.erreur); }
+  else{
+    t('/!\\/!\\ moins de 7 jours d\'historique => AUCUN avis, pas un chiffre invente (R29)',
+      R.tropCourt===null, 'recu : '+JSON.stringify(R.tropCourt));
+    t('** FC au-dessus de sa base => malus (60 contre 52)',
+      R.haute && R.haute.ecart===8 && R.adjHaut<0, JSON.stringify(R.haute)+' adj '+R.adjHaut);
+    t('** FC sous sa base => petit bonus (47 contre 52)',
+      R.basse && R.basse.ecart===-5 && R.adjBas>0, JSON.stringify(R.basse)+' adj '+R.adjBas);
+    t('/!\\ une variation de 2 bpm ne bouge RIEN (tendance, pas bruit - R12)', R.adjNeutre===0, 'adj '+R.adjNeutre);
+    t('**** ON COMPARE A SOI-MEME : base 52 ou base 72, meme ecart => meme ajustement',
+      R.adjHaut===R.adjAthlete, R.adjHaut+' vs '+R.adjAthlete);
+    t('/!\\ une valeur vieille de 6 jours ne parle plus d\'aujourd\'hui', R.vieux===null, JSON.stringify(R.vieux));
+    t('/!\\ l\'ajustement reste borne a 8 points, quoi qu\'il arrive', Math.abs(R.adjExtreme)===8, 'adj '+R.adjExtreme);
+    t('** le « pourquoi ce score » donne les CHIFFRES et refuse le diagnostic',
+      R.facteur===true && /60 bpm/.test(R.why) && /pas un diagnostic/.test(R.why), (R.why||'').slice(0,90));
+    t('/!\\ sans aucune donnee de montre, le score est INCHANGE', R.sans!==R.avec && typeof R.sans==='number',
+      'avec '+R.avec+' · sans '+R.sans);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

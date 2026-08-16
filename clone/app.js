@@ -3968,6 +3968,7 @@ window._premiumPending=!!S.email;
            source de cette donnée (c'est le téléphone qui l'y dépose, jamais l'app). Un local plus
            récent n'existe pas — contrairement aux séances, où l'inverse serait une perte. */
         if(Array.isArray(d2.healthInbox)) S.healthInbox=d2.healthInbox;
+        if(Array.isArray(d2.healthDaily)) S.healthDaily=d2.healthDaily;
         persist();
         try{if(typeof _renderEmailVerifyCard==='function')_renderEmailVerifyCard();}catch(e){}
         window._premiumPending=false;

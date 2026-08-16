@@ -579,7 +579,8 @@ function doGet(e) {
       cycle:          data.cycle          || null,
       nutritionPhase: data.nutritionPhase || 'charge',
       coachMemory:    (data.profile && data.profile.coachMemory) || '',
-      healthInbox:    data.healthInbox    || []
+      healthInbox:    data.healthInbox    || [],
+      healthDaily:    data.healthDaily    || []
     });
   }
 
@@ -609,7 +610,8 @@ function handleLoadProfilePost_(body) {
     exRestPref:     data.exRestPref     || {},
     nutritionPhase: data.nutritionPhase || 'charge',
     coachMemory:    (data.profile && data.profile.coachMemory) || '',
-    healthInbox:    data.healthInbox    || []
+    healthInbox:    data.healthInbox    || [],
+    healthDaily:    data.healthDaily    || []
   });
 }
 
@@ -1253,6 +1255,29 @@ function handlePushHealth_(body) {
        forcément programmable : une app d'export publie SON format, un raccourci publie le nôtre.
        Exiger une forme unique reviendrait à demander à la personne de fabriquer le JSON — c'est
        exactement ce qu'on veut lui éviter. Le serveur s'adapte, pas la personne. */
+    /* ❤️ LA FRÉQUENCE CARDIAQUE AU REPOS — UNE VALEUR PAR JOUR (16/08/2026, ft-v884)
+       Michel, en voyant la liste des types lisibles par Raccourcis : *« Fréquence cardiaque
+       c'est pas bon ? »*. Pour son cardio, non — un rythme ne dit pas si c'était une marche ou
+       un vélo. Mais la **FC AU REPOS**, si : c'est un marqueur de récupération reconnu, une
+       seule valeur par jour, et surtout **Raccourcis sait la lire** — contrairement aux
+       entraînements, qui ne sont pas dans la liste des échantillons.
+       ⚠️ ELLE N'ENTRE DANS AUCUN CALCUL DE CALORIES, et Michel a insisté là-dessus le même
+       soir : *« si la fréquence cardiaque pendant la séance c'est utile pour rajouter à nos
+       affinages de calculs, je ne suis pas d'accord »*. Il a raison, et c'est mesuré : les
+       calories d'un bracelet en résistance corrèlent à r = 0,10-0,34 contre calorimétrie
+       indirecte. Cette valeur-ci sert à la RÉCUPÉRATION, jamais à l'énergie dépensée. */
+    var _rhr = Number(body.restingHr != null ? body.restingHr
+             : (body.rhr != null ? body.rhr : (body.restingHeartRate && body.restingHeartRate.qty)));
+    if (_rhr > 25 && _rhr < 130) {                              // hors de ça, ce n'est pas une FC de repos
+      var _d = String(body.date || body.start || new Date().toISOString()).slice(0, 10);
+      var daily = data.healthDaily || [];
+      daily = daily.filter(function(x){ return x && x.date !== _d; });   // un jour = une valeur
+      daily.push({date:_d, rhr:Math.round(_rhr)});
+      daily.sort(function(x, y){ return x.date < y.date ? 1 : -1; });
+      data.healthDaily = daily.slice(0, 120);                   // ~4 mois, de quoi tenir une base
+      saveUserData_(email, data);
+    }
+
     var recues = body.activities || body.workouts
               || (body.data && (body.data.workouts || body.data.activities)) || [];
     /* ⚠️ UNE SEULE ACTIVITÉ, À PLAT, EST AUSSI ACCEPTÉE (16/08/2026, ft-v882).
@@ -1262,7 +1287,8 @@ function handlePushHealth_(body) {
        activité au lieu d'une fois pour toutes — c'est un appel de plus, et une heure de moins
        à expliquer. *Le coût est pour le serveur, pas pour la personne* (règle d'or #10). */
     if (!recues.length && (body.start || body.startDate)) recues = [body];
-    if (!recues.length) return json_({status:'ok', count:0, total:(data.healthInbox||[]).length});
+    if (!recues.length) return json_({status:'ok', count:0, total:(data.healthInbox||[]).length,
+                                      rhr:(_rhr>25&&_rhr<130)?Math.round(_rhr):null});
     if (recues.length > 200) recues = recues.slice(0, 200);      // garde-fou de taille
 
     var inbox = data.healthInbox || [];
