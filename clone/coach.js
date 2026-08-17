@@ -2669,48 +2669,7 @@ ${objectivesText}
 CYCLE DE FORCE:
 ${S.cycle && S.cycle.active ? `Actif - Semaine ${curWeek}/${S.cycle.weeks} - Phase ${cyclePlan ? cyclePlan.phase : '—'} - ${cyclePlan ? cyclePlan.sets+'×'+cyclePlan.reps+' @ '+cyclePlan.pct+'%' : '—'}` : 'Aucun cycle actif'}
 
-${wktText}
-DERNIÈRES SÉANCES:
-${recentSessions}
-→ ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans SA MÉMOIRE LONGUE plus bas. ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
-→ ⚡ MONTÉE EN CHARGE : quand une ligne porte « ⚠️ montée en charge insuffisante », ce n'est PAS une opinion, c'est un CALCUL de l'application (paliers de 10-15 %, départ à 40-50 %, dernier palier 5-10 % sous la charge, pas plus de 2 reps au-delà de 85 %). Tu ne dois JAMAIS écrire que la montée était propre sur un exercice ainsi marqué — dis-le franchement, explique le risque en une phrase (un saut de charge trop grand, c'est là qu'on se blesse) et donne les paliers manquants pour la prochaine fois. À l'inverse, une ligne SANS ce marqueur n'appelle aucune remarque sur l'échauffement.
-→ Parmi ces séances, chacune a bien été FAITE (avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si un jour COMPRIS DANS LA PÉRIODE ci-dessus n'a aucune séance listée, ce jour était un REPOS : dis-le tel quel. ⚠️ Mais ne conclus JAMAIS « repos » pour un jour PLUS ANCIEN que cette période — tu ne l'as pas sous les yeux, ce n'est pas la même chose que ne rien avoir fait. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
-${(()=>{
-  // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :
-  // l'Accueil affichait « je m'en souviens » et le chat n'avait JAMAIS reçu l'info. Milo affirmait
-  // se souvenir de ce qu'il n'avait pas. Même règle que l'Accueil (plannedSession, state.js) → R2.
-  const np=(typeof plannedSession==='function')?plannedSession():null;
-  if(!np)return '';
-  const when=np.days===0?'AUJOURD\'HUI':(np.days===1?'DEMAIN':((typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date)+(np.days>1?' (dans '+np.days+' jours)':''));
-  return `
-PROCHAINE SÉANCE — il/elle TE l'a annoncée:
-- Prévue ${when}${np.label?' — « '+np.label+' »':''} (${np.date})
-→ C'est LUI/ELLE qui te l'a dit : tu t'en souviens, tu ne le redemandes pas et tu ne t'en étonnes pas.
-→ Ne relance JAMAIS « ça fait X jours que tu n'es pas venu » tant que cette séance n'est pas passée : une pause ANNONCÉE n'est pas un abandon.
-→ Tu peux t'y référer naturellement (« pour ${when.toLowerCase()} », préparer la séance, adapter la récup d'ici là) — sans le répéter à chaque message.
-`;
-})()}
-POIDS & COMPOSITION:
-${(()=>{
-  const wlog=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
-  if(wlog.length<2)return '- Suivi de poids: Pas assez de données';
-  const reg=linearRegression(wlog.map((p,i)=>({x:i,y:p.kg})));
-  const weeklyChange=Math.round(reg.slope*7*100)/100;
-  const latest=wlog[wlog.length-1];
-  const goal=S.goal||'muscle';
-  const onTrack=goal==='perte'&&weeklyChange<-0.1?true:goal==='muscle'&&weeklyChange>0.05?true:Math.abs(weeklyChange)<0.2;
-  return `- Poids actuel: ${latest.kg} kg (${wlog.length} mesures)
-- Tendance: ${weeklyChange>=0?'+':''}${weeklyChange} kg/semaine — ${onTrack?'✓ dans la bonne direction':'⚠ à ajuster selon objectif'}`;
-})()}
 
-CHECK-IN SÉANCES RÉCENTES:
-${(()=>{
-  const qE={1:'Épuisé',2:'Moyen',3:'Bien',4:'Optimal'};
-  const qS={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
-  const recent=S.sessions.filter(s=>s.checkin).slice(0,3);
-  if(!recent.length)return '- Aucun check-in enregistré pour l\'instant';
-  return recent.map(s=>`- ${s.date}: Énergie ${qE[s.checkin.energy]||'?'} · Sommeil ${qS[s.checkin.sleep]||'?'}`).join('\n');
-})()}
 
 ${(()=>{
   const sc=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
@@ -2747,6 +2706,61 @@ MÉTHODE DE COACHING (très important) :
 - NUANCES à connaître : le cardio LÉGER (échauffement 5-10 min, marche en pente, vélo/elliptique tranquille, LISS) est BON et n'abîme pas une séance de force — au contraire il prépare le corps. Seul le cardio LONG et INTENSE juste AVANT du lourd nuit (interférence/fatigue). Distingue bien travail de FORCE (lourd, peu de reps, longue récup) et HYPERTROPHIE (volume, reps modérées).${S.premium?'\n- PREMIUM : tu peux t\'appuyer sur des programmes reconnus et validés par le monde sportif (5/3/1 de Wendler, StrongLifts 5x5, Push/Pull/Legs, PHUL, GZCLP…) et les ADAPTER à la personne (niveau, dispo, matériel, objectif) — jamais copier-coller sans adapter.':''}
 ${_catalogueContext()}
 
+${/* ⚠️⚠️ CE QUI SUIT EST RANGÉ ICI EXPRÈS — NE PAS LE REMONTER (17/08/2026).
+   Le cache du prompt est un cache de PRÉFIXE : tout ce qui précède le premier caractère
+   qui change est réutilisé, tout ce qui suit est repayé. Ces trois blocs sont les seuls
+   du bloc personnel qui bougent souvent — la séance en cours change toutes les ~90 s.
+   Rangés plus haut (leur place jusqu'au 17/08), ils faisaient repayer TOUT ce qui les
+   suivait alors que rien n'y bougeait : mesuré à 12 884 caractères parfaitement stables
+   refacturés à chaque série validée, dont le catalogue d'exercices et la méthode de
+   coaching. Ils sont donc classés par mutabilité CROISSANTE, le plus volatil en dernier.
+   ⚠️ Et un commentaire JS ne peut PAS s'écrire tel quel dans un gabarit : il deviendrait
+   du texte envoyé au modèle (constaté ici même, +754 caractères). D'où ce `${…''}`.
+   Mesure de contrôle : node tools/cache-coupure.js */''}
+POIDS & COMPOSITION:
+${(()=>{
+  const wlog=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
+  if(wlog.length<2)return '- Suivi de poids: Pas assez de données';
+  const reg=linearRegression(wlog.map((p,i)=>({x:i,y:p.kg})));
+  const weeklyChange=Math.round(reg.slope*7*100)/100;
+  const latest=wlog[wlog.length-1];
+  const goal=S.goal||'muscle';
+  const onTrack=goal==='perte'&&weeklyChange<-0.1?true:goal==='muscle'&&weeklyChange>0.05?true:Math.abs(weeklyChange)<0.2;
+  return `- Poids actuel: ${latest.kg} kg (${wlog.length} mesures)
+- Tendance: ${weeklyChange>=0?'+':''}${weeklyChange} kg/semaine — ${onTrack?'✓ dans la bonne direction':'⚠ à ajuster selon objectif'}`;
+})()}
+
+CHECK-IN SÉANCES RÉCENTES:
+${(()=>{
+  const qE={1:'Épuisé',2:'Moyen',3:'Bien',4:'Optimal'};
+  const qS={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
+  const recent=S.sessions.filter(s=>s.checkin).slice(0,3);
+  if(!recent.length)return '- Aucun check-in enregistré pour l\'instant';
+  return recent.map(s=>`- ${s.date}: Énergie ${qE[s.checkin.energy]||'?'} · Sommeil ${qS[s.checkin.sleep]||'?'}`).join('\n');
+})()}
+
+DERNIÈRES SÉANCES:
+${recentSessions}
+→ ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans le bloc « SA MÉMOIRE LONGUE ». ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
+→ ⚡ MONTÉE EN CHARGE : quand une ligne porte « ⚠️ montée en charge insuffisante », ce n'est PAS une opinion, c'est un CALCUL de l'application (paliers de 10-15 %, départ à 40-50 %, dernier palier 5-10 % sous la charge, pas plus de 2 reps au-delà de 85 %). Tu ne dois JAMAIS écrire que la montée était propre sur un exercice ainsi marqué — dis-le franchement, explique le risque en une phrase (un saut de charge trop grand, c'est là qu'on se blesse) et donne les paliers manquants pour la prochaine fois. À l'inverse, une ligne SANS ce marqueur n'appelle aucune remarque sur l'échauffement.
+→ Parmi ces séances, chacune a bien été FAITE (avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si un jour COMPRIS DANS LA PÉRIODE ci-dessus n'a aucune séance listée, ce jour était un REPOS : dis-le tel quel. ⚠️ Mais ne conclus JAMAIS « repos » pour un jour PLUS ANCIEN que cette période — tu ne l'as pas sous les yeux, ce n'est pas la même chose que ne rien avoir fait. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
+${(()=>{
+  // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :
+  // l'Accueil affichait « je m'en souviens » et le chat n'avait JAMAIS reçu l'info. Milo affirmait
+  // se souvenir de ce qu'il n'avait pas. Même règle que l'Accueil (plannedSession, state.js) → R2.
+  const np=(typeof plannedSession==='function')?plannedSession():null;
+  if(!np)return '';
+  const when=np.days===0?'AUJOURD\'HUI':(np.days===1?'DEMAIN':((typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date)+(np.days>1?' (dans '+np.days+' jours)':''));
+  return `
+PROCHAINE SÉANCE — il/elle TE l'a annoncée:
+- Prévue ${when}${np.label?' — « '+np.label+' »':''} (${np.date})
+→ C'est LUI/ELLE qui te l'a dit : tu t'en souviens, tu ne le redemandes pas et tu ne t'en étonnes pas.
+→ Ne relance JAMAIS « ça fait X jours que tu n'es pas venu » tant que cette séance n'est pas passée : une pause ANNONCÉE n'est pas un abandon.
+→ Tu peux t'y référer naturellement (« pour ${when.toLowerCase()} », préparer la séance, adapter la récup d'ici là) — sans le répéter à chaque message.
+`;
+})()}
+
+${wktText}
 ═══ SITUATION DE L'INSTANT ═══
 (⚠️ TOUT CE QUI EST AU-DESSUS DE CETTE LIGNE EST IDENTIQUE d'un message à l'autre, et mis en
 CACHE par le serveur IA — facturé ~10× moins cher. DEUX règles, pas une : ① ne jamais insérer

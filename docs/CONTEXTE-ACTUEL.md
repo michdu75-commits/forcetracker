@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v894` (17/08/2026). Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v896` (17/08/2026). Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
 > ## 📍 OÙ ON EN EST — 17/08/2026 au soir (à lire en premier)
 >
@@ -47,17 +47,23 @@
 >   le **« forfait de 156 kcal »** était un artefact · la migration ×1,55 est **explicite, marquée
 >   (`calSource`) et réversible (`caloriesAvant`)**.
 >
-> ### 🧠 LE CHANTIER SUIVANT, DIAGNOSTIQUÉ ET NON COMMENCÉ — le contexte de Milo
+> ### ✅ CHANTIER ① FAIT en ft-v896 — le bloc personnel est réordonné
+> Les blocs mutables sont descendus et classés par mutabilité **croissante** (POIDS → CHECK-IN →
+> DERNIÈRES SÉANCES → SÉANCE EN COURS). Mesuré avec le nouvel outil `node tools/cache-coupure.js` :
+> **valider une série 15 253 → 20 caractères réécrits**, **noter une pesée 12 995 → 2 329**.
+> Rien n'a changé dans le texte envoyé à Milo (258 lignes des deux côtés), sauf **un renvoi de
+> position qui était FAUX** (« sa MÉMOIRE LONGUE plus bas » — elle est 6 266 car. plus HAUT) :
+> le bloc est désormais **nommé** au lieu d'être pointé par une direction.
+> ⚠️ **Ce qui n'est pas prouvé** : `tests/milo` est déterministe — il dit que rien ne manque, pas
+> que le modèle réagit pareil. L'ordre n'est pas neutre pour un modèle ; seul un A/B le dirait.
+> ⏭️ **Reste** : battre un record réécrit toujours 16 130 car. (RECORDS est haut dans le bloc) —
+> non touché **exprès**, c'est rare (quelques fois par mois contre 30-40 séries par séance).
+>
+> ### 🧠 LE CHANTIER SUIVANT — scinder le Gardien (② ci-dessous)
 > Tout est dans **`docs/AUDIT-CONTEXTE-MILO.md`**. Mesuré : **~97 000 caractères par message**,
 > identiques quelle que soit la question (voulu, R30).
 >
-> **⚠️ TROIS CHOSES À FAIRE, par ordre de rapport sur effort :**
->
-> **① RÉORDONNER le bloc personnel** (§8 bis) — le plus rentable et le moins risqué. Valider une
-> série réécrit **22 332 car. sur 45 338 (49 %)**, dont **15 183 parfaitement stables** rangés par
-> hasard *après* la séance en cours (le catalogue à lui seul : 9 401). Déplacer les 3 blocs mutables
-> à la fin ⇒ **~14 900 car. sauvés à chaque série**, sans point de cache en plus, sans retirer une
-> ligne. ⚠️ L'ordre n'est pas neutre pour un modèle : à vérifier sur `tests/milo` avant.
+> **⚠️ CE QUI RESTE À FAIRE :**
 >
 > **② SCINDER LE GARDIEN** (§3) — le bloc « commun » n'est commun que pour les gens **sans blessure**
 > (8 profils = **7 entrées de cache**). L'auditeur extérieur a montré que mon « pas de correctif
@@ -65,8 +71,7 @@
 > **1 578 car. personnels** (les zones nommées). Descendre **la donnée** et garder **la règle** en
 > tête respecte R11 et ramène 8 profils à **1 seule empreinte**.
 >
-> **③ FIXTURE `tests/parcours`** — ajouter 2 profils avec `healthProfile`. **À faire dans tous les
-> cas** : sans ça l'angle mort revient sans être vu.
+> **③ FIXTURE `tests/parcours`** — ✅ **FAIT en ft-v895** (bloc XLIV : 3 profils de santé).
 >
 > **✅ CE QUI EST VÉRIFIÉ ET NE DOIT PAS ÊTRE ROUVERT** : aucun autre chemin IA ne tourne sans cache
 > (les 10 autres appels du Worker traitent une image ou un PDF **différent** à chaque fois — un cache

@@ -5936,6 +5936,77 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC XLV - LES BLOCS QUI BOUGENT SONT RANGES EN BAS (17/08/2026) ==
+   /!\/!\ POURQUOI - le cache du prompt est un cache de PREFIXE : tout ce qui precede le
+   premier caractere qui change est reutilise, tout ce qui suit est repaye. Jusqu'au 17/08,
+   la seance EN COURS etait rangee au MILIEU du bloc personnel : valider une serie (le geste
+   le plus frequent d'une seance, toutes les ~90 s) faisait donc repayer les 12 884 caracteres
+   parfaitement STABLES ranges derriere - le catalogue d'exercices, la methode de coaching,
+   les unilateraux. Mesure : node tools/cache-coupure.js
+   /!\ CE TEMOIN NE MESURE PAS UN COUT, il mesure une POSITION : ou tombe la premiere
+   difference quand on valide une serie. C'est la seule chose qu'on maitrise en local.
+   /!\/!\ ET IL VERIFIE SURTOUT QU'ON N'A RIEN PERDU. Deplacer des blocs dans un gabarit est
+   silencieux : pendant ce chantier, le bloc POIDS a atterri DANS un commentaire /*...*\/ et
+   a disparu du prompt sans lever la moindre erreur (R4 - l'info n'atteint plus la donnee). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  const R=await pg.evaluate(()=>{
+    if(typeof buildCoachContext!=='function') return {err:'buildCoachContext absent'};
+    const j=d=>{const x=new Date();x.setDate(x.getDate()-d);return x.toISOString().slice(0,10);};
+    S.sessions=[];
+    for(let k=1;k<=12;k++){const ts=Date.now()-k*3*864e5;
+      S.sessions.push({id:ts,ts,date:j(k*3),volume:5200,calories:340,duration:3600,startHour:18,
+        checkin:{energy:3,sleep:3},
+        exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]});}
+    S.prs={'Développé Couché':{rm1:101,kg:85,reps:6,date:j(3)}};
+    S.weightLog=[{date:j(9),kg:79.4},{date:j(2),kg:80}];
+    // une seance deja en cours DES LES DEUX COTES : sinon on mesure « demarrer une seance »
+    if(!S.wkt) startWorkout();
+    S.wkt.exs=[{name:'Squat à la Barre',sets:[
+      {kg:100,reps:5,done:true,type:'N'},{kg:105,reps:5,done:false,type:'N'}]}];
+    persist();
+    const zonePerso=t=>{const a=t.indexOf('PROFIL ATHLÈTE:'),b=t.indexOf("═══ SITUATION DE L'INSTANT ═══");
+      return (a<0||b<0)?null:t.slice(a,b);};
+    const avant=zonePerso(buildCoachContext());
+    S.wkt.exs[0].sets[1].done=true; persist();
+    const apres=zonePerso(buildCoachContext());
+    if(!avant||!apres) return {err:'zone personnelle introuvable'};
+    let cut=-1; const n=Math.min(avant.length,apres.length);
+    for(let i=0;i<n;i++) if(avant[i]!==apres[i]){cut=i;break;}
+    if(cut<0 && avant.length!==apres.length) cut=n;
+    return {len:avant.length, cut, reecrit:cut<0?0:avant.length-cut,
+      // les informations qui doivent TOUTES rester presentes, ou qu'elles soient rangees
+      poids:      /POIDS & COMPOSITION:/.test(avant),
+      poidsValeur:/Poids actuel: 80 kg/.test(avant),
+      checkin:    /CHECK-IN SÉANCES RÉCENTES:/.test(avant),
+      dernieres:  /DERNIÈRES SÉANCES:/.test(avant),
+      methode:    /MÉTHODE DE COACHING/.test(avant),
+      enCours:    /SÉANCE EN COURS/.test(avant),
+      // le renvoi de position ne doit plus envoyer Milo au mauvais endroit
+      renvoiFaux: /MÉMOIRE LONGUE plus bas/.test(avant)};
+  });
+  await cx.close();
+
+  console.log('\n-- XLV. Les blocs qui bougent sont ranges en bas --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    t('⭐⭐ VALIDER UNE SERIE ne reecrit plus que la fin du bloc personnel (cache de prefixe)',
+      R.reecrit>0 && R.reecrit<1500,
+      R.reecrit+' car. reecrits sur '+R.len+' (avant le 17/08 : ~15 000)');
+    t('⭐ ... et la coupure tombe dans le DERNIER dixieme du bloc',
+      R.cut>0 && R.cut > R.len*0.9, 'coupure a '+R.cut+' / '+R.len);
+    t('/!\\/!\\ RIEN N\'A DISPARU : le bloc POIDS est toujours dans le prompt, avec sa valeur',
+      R.poids===true && R.poidsValeur===true);
+    t('/!\\ ... ni le check-in, ni les dernieres seances, ni la methode, ni la seance en cours',
+      R.checkin===true && R.dernieres===true && R.methode===true && R.enCours===true);
+    t('⭐ le renvoi « MEMOIRE LONGUE plus bas » a disparu : il pointait 6 266 car. TROP BAS',
+      R.renvoiFaux===false);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
