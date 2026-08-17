@@ -6,7 +6,10 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v896` (17/08/2026). Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v894` — c'est ce que `master` porte, donc ce que les gens ont.
+- **Sur la branche `claude/claude-md-docs-ytabnv`, PAS ENCORE DÉPLOYÉ :** `ft-v895` et `ft-v896`.
+  ⚠️ Le déploiement Pages ne se déclenche que sur `master` : tant que la branche n'est pas fusionnée,
+  ces deux versions n'existent que dans le dépôt (R18 — « j'ai poussé » ≠ « c'est en ligne »). Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
 > ## 📍 OÙ ON EN EST — 17/08/2026 au soir (à lire en premier)
 >
