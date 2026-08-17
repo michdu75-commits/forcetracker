@@ -2338,6 +2338,17 @@ const _MEX=[
   // règle de famille « ecarte » l'attrapait. « Écarté Arrière Élastique » (catalogue) avait le
   // même défaut depuis toujours. Même piège que « poigneT BARre » : un motif trop large, et la
   // règle précise placée APRÈS était morte.
+  /* ⚠️ « PEC DECK INVERSE » : PAS DE RÈGLE ICI — RETRAIT VOLONTAIRE, ÉCRIT (R30, 17/08/2026)
+     Michel : *« le inversé n'a pas de photo, il est en double avec machine oiseau »*. Le mot
+     « inverse » était bien ignoré (la règle du dessous exige « écarté » ou « fly », absents de
+     « pec deck inverse »), et j'ai commencé par ajouter un motif ici. **Le test des croisements
+     l'a refusé** : il ne matchait AUCUN des 324 exercices du catalogue — donc une règle morte.
+     👉 Et il avait raison sur le fond : ce nom-là est un **synonyme**, et les synonymes ont déjà
+     leur propriétaire — `EX_IDS` (constants.js), où « Pec deck inverse » est désormais rangé
+     derrière « Machine Oiseau ». Le nom est donc converti AVANT d'arriver ici, et un second motif
+     n'aurait fait que dupliquer la table de renommage (R2 : une information, un seul propriétaire).
+     ⚠️ Si un jour le catalogue accueille un vrai « Pec Deck Inversé » comme entrée à part, c'est
+     là qu'il faudra une règle — pas avant. */
   {re:/(ecarte|\bfly\b).*(penche|arriere|inverse|reverse)|bent ?over.*\bfly\b/i, p:['rear-delt'],                      s:['traps','side-delt']},
   // Pectoraux — écartés / fly
   {re:/ecarte incline|cable fly|\bfly\b|pec deck/i,                             p:['pec'],                              s:['front-delt']},

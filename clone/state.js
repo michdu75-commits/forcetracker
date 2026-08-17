@@ -188,6 +188,39 @@ function load(){
         S.exPhotos=renKeys(S.exPhotos);
         S.exRestPref=renKeys(S.exRestPref);
         S.exSwaps=renKeys(S.exSwaps);
+        /* 🧹 UN EXERCICE PERSO QUI PORTE UN NOM DU CATALOGUE EST UN DOUBLON (17/08/2026)
+           Michel : *« le inversé n'a pas de photo, il est en double avec machine oiseau »* — puis
+           *« comment je fais pour supprimer l'exercice, je ne peux pas »*. Il avait raison sur les
+           deux points, et le second est le plus grave.
+           ⭐ CE QU'IL A TROUVÉ : il avait créé « Butterfly » et « Pec deck inverse », qui sont les
+           noms courants du **Pec Deck** et de la **Machine Oiseau** — déjà au catalogue, avec leurs
+           photos et les bons muscles. Ses deux fiches perso, elles, portaient les muscles
+           **PERMUTÉS** (l'ouverture arrière classée en deltoïde AVANT, le pec deck en ARRIÈRE).
+           ⛔ ET AUCUN CHEMIN NE PERMETTAIT DE LES SUPPRIMER. `openEditCustomEx()` existe, complète
+           et fonctionnelle — elle n'est appelée de NULLE PART. La seule porte vers la fusion est
+           « Analyser les doublons », qui compare les noms à une lettre près : « Pec deck inverse »
+           et « Machine Oiseau » n'ont pas un mot en commun, elle ne les trouvera jamais. Un outil
+           qui existe, qui marche, et qu'on ne peut pas atteindre.
+           👉 LA RÈGLE, ET ELLE EST GÉNÉRALE : dès qu'un exercice perso porte un nom que le
+           catalogue connaît (ou un ancien nom d'un exercice du catalogue), c'est un doublon. La
+           fiche du catalogue gagne — elle a les bons muscles, sa photo et son identifiant.
+           ⚠️ RIEN N'EST PERDU : les séances, records, programmes et préférences viennent d'être
+           renommés juste au-dessus, donc ils pointent déjà sur la bonne fiche. Et la PHOTO du perso
+           est transférée si la cible n'en a pas — on n'écrase jamais celle de la cible.
+           ⚠️ UN VRAI EXERCICE PERSO N'EST JAMAIS TOUCHÉ : `exId()` rend `null` sur un nom inconnu,
+           donc « ISO latérale incline press » reste exactement où il est. */
+        if(Array.isArray(S.customExercises) && typeof exId==='function'){
+          S.customExercises=S.customExercises.filter(function(c){
+            if(!c||!c.n) return true;
+            const nom=ren(c.n);
+            if(!exId(nom)) return true;                 // inconnu du catalogue → vrai exo perso
+            if(c.img){                                  // la photo suit, sans écraser la cible
+              S.exPhotos=S.exPhotos||{};
+              if(!S.exPhotos[nom]) S.exPhotos[nom]=c.img;
+            }
+            return false;                               // le catalogue gagne
+          });
+        }
       }catch(e){console.warn('[FT renames]',e);}
     })();
     S.badges=JSON.parse(localStorage.getItem('ft4_badges')||'{}');

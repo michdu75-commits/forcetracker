@@ -5743,6 +5743,72 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await c41.close();
 }
 
+/* == BLOC XLII - UN EXO PERSO QUI PORTE UN NOM DU CATALOGUE EST UN DOUBLON (17/08/2026) ==
+   Michel : « le inversé n'a pas de photo, il est en double avec machine oiseau », puis
+   « comment je fais pour supprimer l'exercice, je ne peux pas ».
+   Il avait cree « Butterfly » et « Pec deck inverse » = les noms courants du Pec Deck et de la
+   Machine Oiseau, deja au catalogue avec leurs photos et les BONS muscles. Ses fiches perso
+   portaient les muscles PERMUTES (ouverture arriere classee en deltoide AVANT).
+   /!\/!\ ET AUCUN CHEMIN NE PERMETTAIT DE LES SUPPRIMER : `openEditCustomEx()` existe et n'est
+   appelee de NULLE PART ; « Analyser les doublons » compare les noms a une lettre pres et ne peut
+   pas rapprocher deux synonymes. Un outil qui marche et qu'on ne peut pas atteindre. */
+{
+  const c42=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p42=await c42.newPage();
+  await p42.addInitScript(seedScript({
+    ft4_cuex:JSON.stringify([
+      {n:'Butterfly',g:'Épaules',custom:true,muscles:{p:['rear-delt'],s:['triceps']}},
+      {n:'Pec deck inverse',g:'Épaules',custom:true,muscles:{p:['front-delt'],s:['traps']},img:'data:image/png;base64,AAA'},
+      {n:'ISO latérale incline press',g:'Pectoraux',custom:true,muscles:{p:['pec'],s:['triceps']}}
+    ]),
+    ft4_sessions:JSON.stringify([{date:'2026-08-05',exs:[
+      {name:'Butterfly',sets:[{kg:60,reps:12,done:true,type:'N'}]},
+      {name:'Pec deck inverse',sets:[{kg:40,reps:15,done:true,type:'N'}]}]}]),
+    ft4_prs:JSON.stringify({'Butterfly':{rm1:80,kg:60,reps:12,date:'2026-08-05'}}),
+    ft4_exRp:JSON.stringify({'Pec deck inverse':90})
+  }));
+  await p42.goto('http://localhost:'+PORT+'/index.html'); await p42.waitForTimeout(2300);
+  const X=await p42.evaluate(()=>{
+   try{
+    const noms=(S.customExercises||[]).map(e=>e.n);
+    const msc=n=>{ try{ const r=_mscScores([{name:n,sets:[{kg:20,reps:12,done:true,type:'N'}]}]);
+      return Object.keys(r.sc||{}).sort((a,b)=>r.sc[b]-r.sc[a])[0]; }catch(e){ return 'ERR'; } };
+    return {
+      persoRestants: noms,
+      seances: (S.sessions[0].exs||[]).map(e=>e.name),
+      prs: Object.keys(S.prs||{}),
+      repos: Object.keys(S.exRestPref||{}),
+      photoTransferee: !!(S.exPhotos||{})['Machine Oiseau'],
+      // les muscles VIENNENT MAINTENANT DU CATALOGUE, et ils sont dans le bon sens
+      muscleOiseau: msc('Machine Oiseau'),
+      musclePecDeck: msc('Pec Deck'),
+      // et le nom mal ecrit tombe desormais au bon endroit
+      muscleNomLibre: msc('Pec deck inverse'),
+      muscleButterfly: msc('Butterfly')
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XLII. Un exo perso qui double le catalogue disparait --');
+  if(X.erreur){ t('X la migration tourne', false, X.erreur); }
+  else{
+    t('⭐⭐ LES DEUX DOUBLONS ONT DISPARU, le vrai exo perso est intact',
+      JSON.stringify(X.persoRestants)==='["ISO latérale incline press"]', JSON.stringify(X.persoRestants));
+    t('⭐⭐ RIEN N\'EST PERDU : seances, records et repos pointent sur la fiche du catalogue',
+      JSON.stringify(X.seances)==='["Pec Deck","Machine Oiseau"]'
+      && JSON.stringify(X.prs)==='["Pec Deck"]'
+      && JSON.stringify(X.repos)==='["Machine Oiseau"]',
+      JSON.stringify(X.seances)+' · '+JSON.stringify(X.prs)+' · '+JSON.stringify(X.repos));
+    t('/!\\ la photo du perso est transferee sur la cible qui n\'en avait pas', X.photoTransferee===true);
+    t('⭐⭐ LES MUSCLES SONT REMIS A L\'ENDROIT : l\'ouverture arriere = deltoide ARRIERE',
+      X.muscleOiseau==='rear-delt' && X.musclePecDeck==='pec',
+      'Machine Oiseau -> '+X.muscleOiseau+' · Pec Deck -> '+X.musclePecDeck);
+    t('⭐ ... et « pec deck inverse » ecrit a la main tombe aussi sur l\'arriere d\'epaule',
+      X.muscleNomLibre==='rear-delt', 'recu '+X.muscleNomLibre);
+    t('/!\\ « butterfly » reste bien un mouvement de PECTORAUX', X.muscleButterfly==='pec', 'recu '+X.muscleButterfly);
+  }
+  await c42.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
