@@ -304,6 +304,95 @@ invisible aujourd'hui ; il devient visible sur la facture le jour où l'app a de
 
 ---
 
+## 8 bis. ⭐⭐ POURQUOI LE CACHE NE RAPPORTE RIEN — ce n'est pas la proportion, c'est l'ORDRE
+
+> **Mesuré le 17/08 au soir**, en réponse à l'analyse de facturation de l'auditeur extérieur. Sa
+> question était : *« quelle est la somme des sections stables contre mutables dans le bloc
+> personnel ? »* avec un seuil à 65 % pour décider d'une scission en deux points de cache.
+>
+> **La mesure montre que la question ne se pose pas dans ces termes.**
+
+### L'expérience
+
+On construit le contexte, on **valide une série** (le geste le plus fréquent d'une séance, toutes les
+~90 s), on reconstruit, et on cherche **le premier caractère qui diffère** — puisqu'un cache de
+préfixe ne conserve que ce qui précède la première différence.
+
+```
+bloc personnel : 45 338 car.
+premier caractère qui change : position 23 006
+  → survit au cache : 23 006 car.
+  → RÉÉCRIT         : 22 332 car.  (49,3 %)
+```
+
+**⚠️ Première correction à l'analyse de facturation** : elle écrit *« loguer une série pendant la
+conversation réécrit les 48 042 caractères »*. **Non — elle en réécrit 49 %.** La moitié qui précède
+la coupure survit. Le raisonnement reste juste, l'ampleur est double de la réalité.
+
+### ⭐ Ce que la mesure révèle vraiment : des blocs stables coincés derrière un bloc mutable
+
+Les sections du bloc personnel, **dans leur ordre réel** (⛔ = après la coupure) :
+
+```
+✅      0   1 634  PROFIL ATHLÈTE
+✅  2 964     421  ⚠️ PROFIL SANTÉ
+✅  3 387   3 877  📐 ÉTUDE DU CORPS
+✅ 14 808   1 973  REGISTRE ATHLÈTE
+✅ 19 161   2 486  RECORDS PERSONNELS
+✅ 22 729     294  SÉANCE EN COURS      ← la coupure est ICI
+⛔ 23 025   6 960  DERNIÈRES SÉANCES         (mutable)
+⛔ 29 987     116  POIDS & COMPOSITION       ← stable
+⛔ 30 105     152  CHECK-IN SÉANCES RÉCENTES (mutable)
+⛔ 30 260   1 049  BILAN CORPOREL            ← stable
+⛔ 31 312   1 001  BILAN SANGUIN             ← stable
+⛔ 32 315   1 406  MÉTHODE DE COACHING       ← stable
+⛔ 33 723   9 401  🏋️ EXERCICES DISPONIBLES  ← stable
+⛔ 43 126   2 210  🔀 EXERCICES UNILATÉRAUX   ← stable
+```
+
+**15 183 caractères parfaitement stables sont réécrits toutes les 90 secondes** — uniquement parce
+qu'ils sont rangés *après* le bloc de la séance en cours. Le catalogue d'exercices à lui seul pèse
+**9 401** caractères et ne change jamais d'une séance à l'autre.
+
+### Le correctif est un DÉPLACEMENT, pas une scission
+
+| | coupure | réécrit par série validée |
+|---|---|---|
+| Aujourd'hui | 23 006 | **22 332** car. (49,3 %) |
+| Les 3 blocs mutables déplacés à la fin | ≈ 37 932 | **7 406** car. (16,3 %) |
+
+**Gain : ~14 900 caractères sauvés à chaque série validée**, sans ajouter de point de cache (le
+maximum est de 4, trois sont déjà pris), **sans retirer une ligne de texte**, et sans toucher au
+contenu que Milo reçoit.
+
+**⚠️ PORTÉE HONNÊTE, et elle compte :**
+- La mesure ne couvre **qu'une seule mutation** — valider une série. C'est la plus fréquente de
+  très loin, mais pas la seule : un **nouveau record** touche `RECORDS PERSONNELS` en position
+  19 161, donc **plus haut que la coupure actuelle**. Un record par séance au maximum, contre une
+  série toutes les 90 s — mais le déplacement ne le règle pas.
+- **L'ordre du contexte n'est pas neutre pour un modèle.** Déplacer des blocs de *données* est moins
+  risqué que déplacer des *règles*, mais ça reste à vérifier sur `tests/milo` avant livraison.
+- Ce constat **ne remplace pas** la scission stable/mutable proposée par l'auditeur : il la rend
+  beaucoup moins urgente, et il coûte infiniment moins cher à implémenter.
+
+### Vérification indépendante de la facturation
+
+Sur les exports de facturation dont je dispose (jeu partiel, différent du sien), **la conclusion va
+dans le même sens et elle est même plus marquée** :
+
+| Modèle | écritures / lectures | verdict |
+|---|---|---|
+| Sonnet | **4,80 : 1** | le cache coûte **1,20 $ de plus** qu'aucun cache |
+| Opus | **11,81 : 1** | le cache coûte **3,40 $ de plus** |
+
+⚠️ Mes chiffres absolus diffèrent des siens (il annonce 3,03 : 1 et 0,41 $) — nos jeux de fichiers ne
+sont pas les mêmes et je n'ai pas son export de juillet. **Ce sont les ratios qui portent la
+conclusion, et les deux mesures indépendantes disent la même chose : aujourd'hui, le cache est à
+perte parce qu'on écrit bien plus qu'on ne lit.** Le seuil de rentabilité est de **1,4 lecture par
+écriture** ; on en est loin.
+
+---
+
 ## 9. Ce que cet audit n'a PAS mesuré
 
 | Question | Pourquoi elle reste ouverte |
