@@ -1311,6 +1311,31 @@ function _pasCharge(nom){
   if(eq==='elast'||eq==='trx'||eq==='corps') return 2.5;   // pas de disques : on reste fin
   return 5;                                  // barre, machine, poulie : 2,5 kg par côté / cran de 5
 }
+/* 🔢 LES RÉPÉTITIONS D'UN PALIER SE LISENT SUR SA CHARGE, PAS SUR SA POSITION (17/08/2026)
+   Michel, séance du 16/08, Tirage Poulie Haute : **5 · 3 · 5 · 3 · 3** répétitions en montant en
+   charge. *Plus lourd et PLUS de répétitions* : ça ne se fait nulle part, et ça se voit au premier
+   coup d'œil. La cause était un `reps:3` **en dur** sur chaque palier inséré, qui ne regardait ni
+   la charge ni ses voisins.
+   ⚠️⚠️ ET LA 1ʳᵉ CORRECTION ÉTAIT PIRE — mesurée, puis jetée (R30) : faire hériter le palier
+   inséré des répétitions de son VOISIN donnait « 70 kg × 1 » au milieu d'une montée vers 130.
+   *Un voisin n'est pas une raison ; la charge en est une.* Les sources décrivent une décroissance
+   liée à l'INTENSITÉ (5 → 3 → 2 → 1 à mesure qu'on approche de la charge du jour), pas au rang du
+   palier. Le résultat est décroissant par construction, quel que soit le nombre de paliers.
+   ⚠️ UNE SEULE ÉCHELLE POUR LES DEUX USAGES (le barème complet et le palier inséré) : deux
+   barèmes de répétitions finiraient par diverger, et l'app produirait une montée que son propre
+   contrôleur juge mauvaise — c'est déjà arrivé le 10/08 sur les charges (R2).
+   ⚠️ Le palier au-delà de 85 % rend 1 : c'est exactement ce que `_monteeDefauts` exige (« plus de
+   2 reps à 85 % de la charge, c'est déjà une série de travail ») — la règle et le contrôle disent
+   la même chose parce qu'ils sont écrits une seule fois. */
+function _repsPalier(kg, kgTravail){
+  const T = +kgTravail || 0, k = +kg || 0;
+  if(!(T > 0)) return 5;
+  const pct = k/T;
+  if(pct >= 0.85) return 1;
+  if(pct >= 0.75) return 2;
+  if(pct >= 0.60) return 3;
+  return 5;
+}
 function _monteeEnCharge(kgTravail, pas){
   pas = pas || 2.5;
   const T = +kgTravail || 0;
@@ -1326,7 +1351,6 @@ function _monteeEnCharge(kgTravail, pas){
   // 👉 On ne CHOISIT plus le nombre de paliers : on prend le plus PETIT qui satisfait la règle.
   // Une seule règle, écrite une seule fois (R2) — le barème ne peut plus diverger du contrôle.
   const depart = T < 60 ? 0.50 : 0.45;      // 40-50 % de la charge du jour
-  const REPS = [5,3,2,1,1];                 // décroissantes
   for(let n=2; n<=5; n++){                  // n = nombre de paliers
     const out = [];
     for(let k=0; k<n; k++){
@@ -1340,7 +1364,7 @@ function _monteeEnCharge(kgTravail, pas){
       const kg = arr(T*(depart + k*(1-depart)/n)/pas)*pas;
       if(kg <= 0 || kg >= T) continue;                      // jamais au-dessus de la charge du jour
       if(out.length && kg <= out[out.length-1].kg) continue; // jamais deux paliers identiques
-      out.push({kg:kg, reps:REPS[Math.min(k,REPS.length-1)], type:'É'});
+      out.push({kg:kg, reps:_repsPalier(kg, T), type:'É'});
     }
     if(out.length && _monteeSuffisante(out, T)) return out;
   }
@@ -1421,6 +1445,9 @@ function _monteeCompletee(echauffements, kgTravail, pas){
   if(!src.length) return _monteeEnCharge(T, pas);            // rien à préserver → barème complet (même pas)
   const out = src.slice().sort((a,b)=>(+a.kg||0)-(+b.kg||0));
   const ARR = k => Math.floor(k/pas)*pas;   // vers le BAS (voir _pasCharge)
+  // ⚠️ Les répétitions d'un palier inséré viennent de sa CHARGE (`_repsPalier`), jamais d'un
+  // forfait ni de ses voisins — voir la démonstration au-dessus de `_repsPalier`. Et on ne
+  // touche JAMAIS aux répétitions que Milo a écrites (PB-008 : on ne décide pas à sa place).
   // ⚠️ PLAFOND À 5 PALIERS : au-delà on fatigue au lieu de préparer (règle des 5 sources).
   // Donc on ne peut pas boucher tous les trous — on bouche les PLUS GROS d'abord.
   const MAX = 5;
@@ -1428,7 +1455,9 @@ function _monteeCompletee(echauffements, kgTravail, pas){
     // ① démarrage trop haut → on prépose un palier bas
     if((+out[0].kg||0) > _MONTEE_DEPART_MAX*T){
       const kg = ARR(0.45*T);
-      if(kg > 0 && kg < (+out[0].kg||0)){ out.unshift({kg:kg, reps:5, type:'É', _add:true}); continue; }
+      // le palier le plus bas : au moins autant de répétitions que celui qui le suit
+      const r0 = Math.max(_repsPalier(kg, T), +out[0].reps || 0);
+      if(kg > 0 && kg < (+out[0].kg||0)){ out.unshift({kg:kg, reps:r0, type:'É', _add:true}); continue; }
     }
     // ② le plus gros trou (paliers + la charge de travail en bout) au-dessus de 18 %
     const suite = out.map(s=>+s.kg||0).concat([T]);
@@ -1440,7 +1469,13 @@ function _monteeCompletee(echauffements, kgTravail, pas){
     if(iPire<0) break;
     const kg = ARR((suite[iPire]+suite[iPire-1])/2);
     if(!(kg>suite[iPire-1] && kg<suite[iPire])) break;       // pas de place pour un palier
-    out.splice(iPire, 0, {kg:kg, reps:3, type:'É', _add:true});
+    out.splice(iPire, 0, {kg:kg, reps:_repsPalier(kg, T), type:'É', _add:true});
+  }
+  /* 🛡️ FILET : la suite reste décroissante, quoi qu'ait écrit Milo — mais on ne corrige QUE nos
+     propres paliers. Si Milo lui-même a écrit 3 puis 5, c'est son choix et on ne le réécrit pas
+     (PB-008 : on ne décide pas à sa place) ; l'app se contente de ne pas EMPIRER la suite. */
+  for(let i=1;i<out.length;i++){
+    if(out[i]._add && (+out[i].reps||0) > (+out[i-1].reps||0)) out[i].reps = +out[i-1].reps || out[i].reps;
   }
   return out;
 }
@@ -1501,10 +1536,33 @@ function _completerMonteeEnCharge(sess){
          (pousser au-dessus de la tête n'est pas pousser devant soi), et une série d'approche à
          ~85 % coûte 1 minute quand une épaule coûte des mois (R29).
          ⚠️ Et si Milo avait DÉJÀ prévu un échauffement, on n'y touche pas : le nombre de séries
-         ne diminue jamais (invariant du 11/08). */
+         ne diminue jamais (invariant du 11/08).
+
+         ⭐⭐ LA RÈGLE ÉTAIT ÉCRITE ET COURT-CIRCUITÉE (corrigé le 17/08/2026)
+         Michel, séance du 16/08 : *« voir aussi pourquoi il me propose autant d'échauffement…
+         j'ai passé presque la moitié de ma séance sur des exercices d'échauffement »*. Mesuré
+         sur sa séance : le **Tirage Poulie Haute**, 2ᵉ exercice, sur machine, après un soulevé
+         de terre à 130 kg — **5 paliers** d'échauffement pour 3 séries de travail.
+         LA CAUSE tient en un `||` : la condition `premier || ech.length` fait basculer dans la
+         complétion COMPLÈTE dès que le programme contient déjà des paliers. Or c'est le cas
+         normal — Milo en propose presque toujours. *La règle « une seule série d'approche pour
+         les suivants », écrite le 15/08, ne s'appliquait donc qu'aux exercices pour lesquels
+         Milo n'avait rien prévu du tout, c'est-à-dire presque jamais.*
+         ⭐ CE QUE DIT LA LITTÉRATURE (vérifié, demande de Michel : *« voir sur internet si c'est
+         réel et prouvé surtout »*) : sur une **2ᵉ grosse barre** on est déjà chaud, 2 à 4 paliers
+         suffisent ; sur un **accessoire** 0 à 2 (souvent une seule « feeder set ») ; et sur une
+         **machine**, moins encore — elle est moins technique, elle ne demande ni équilibre ni
+         coordination. Le protocole complet est celui de la PREMIÈRE série lourde de la séance.
+         👉 Un ancre qui n'est pas le premier et qui a DÉJÀ des paliers est donc laissé tel quel.
+         On n'en retire aucun (invariant du 11/08), on n'en ajoute plus. Sa montée du 16/08 passe
+         de 5 paliers à 3 — ce que Milo avait écrit, ni plus ni moins.
+         ⚠️ Le soulevé de terre, lui, GARDE ses 4-5 paliers : c'est la première barre lourde, et
+         là les sources sont unanimes. On ne raccourcit pas ce qui est justifié. */
       let montee;
-      if(premier || ech.length){
+      if(premier){
         montee = _monteeCompletee(ech, kgT, _pasCharge(ex.name));
+      }else if(ech.length){
+        return;                                             // déjà chaud + déjà des paliers → on n'ajoute rien
       }else{
         // ⚠️ On reprend le DERNIER palier du générateur, pas un pourcentage inventé à côté : c'est
         // la même règle, donc l'écart avec la charge de travail reste celui que l'app juge sûr
@@ -2080,6 +2138,74 @@ function _replaceExInWorkout(name){
   _expandedEx=ei;
   persist();renderExBlocks();
   toast('Exercice remplacé par '+name,'success');
+  _demanderPourquoiSwap(old, name);
+}
+
+/* 🔁 « POURQUOI J'AI CHANGÉ D'EXERCICE ? » — UN QCM, ZÉRO JETON (17/08/2026)
+   Michel : *« peut-être qu'il demande par une question QCM (ça ne coûte rien en token) pourquoi
+   j'ai changé d'exercice »*. Le cas qui l'a fait naître est le sien, séance du 16/08 : il a
+   remplacé un rowing haltère par un rowing poitrine appuyée, et il avait DÉJÀ dit à Milo que
+   l'exercice ne lui convenait pas — *« je lui ai déjà dit que cet exercice ne me convient pas,
+   trop long »*. L'information avait été dite, comprise, et n'atteignait aucune DONNÉE : c'est
+   R4 dans sa forme la plus pure, la famille de bugs la plus coûteuse du projet.
+   ⚠️⚠️ ET LA DISTINCTION QUI FAIT TOUT LE TRAVAIL : « la machine était prise » n'est PAS une
+   préférence. Si on rangeait les quatre réponses dans le même panier, Milo finirait par croire
+   que la personne refuse la presse à cuisses parce qu'elle était occupée un mardi — et il
+   arrêterait de la proposer, sans que personne comprenne pourquoi. Une raison de CIRCONSTANCE
+   est comptée mais jamais transformée en goût (R29 : le coût de l'erreur n'est pas symétrique).
+   ⚠️ ON NE DEVINE RIEN : sans réponse, rien n'est écrit. « Plus tard » et la fermeture au doigt
+   sont strictement équivalents — la question n'a pas d'effet de bord, donc pas de marqueur à
+   poser (R15 ne s'applique pas ici, et c'est voulu).
+   ⚠️ ET ELLE NE SE POSE QUE PENDANT UNE SÉANCE EN COURS, une fois par exercice et par séance :
+   une question qui revient à chaque manipulation devient du bruit, et le bruit se ferme sans
+   lire (R24 : informer sans bloquer). */
+const _EX_SWAP_RAISONS=[
+  {r:'gene',  ico:'😬', txt:'Il me gêne / je le sens mal',        durable:true},
+  {r:'long',  ico:'⏳', txt:'Trop long à installer ou à faire',   durable:true},
+  {r:'pris',  ico:'🚧', txt:'Machine prise ou absente aujourd\'hui', durable:false},
+  {r:'envie', ico:'🔄', txt:'J\'avais juste envie de varier',      durable:false}
+];
+let _exSwapPaire=null;                       // {de, vers} — la question en cours
+const _exSwapDemande={};                     // déjà demandé pour cet exercice DANS cette séance
+function _demanderPourquoiSwap(de, vers){
+  try{
+    if(!de||!vers||de===vers) return;
+    if(!S.wkt) return;                                   // hors séance : on ne dérange pas
+    if(_exSwapDemande[de]) return;                       // une seule fois par exercice et par séance
+    _exSwapDemande[de]=true;
+    _exSwapPaire={de:de, vers:vers};
+    const sub=document.getElementById('ex-swap-sub');
+    if(sub) sub.textContent=de+' → '+vers;
+    const box=document.getElementById('ex-swap-btns');
+    if(box) box.innerHTML=_EX_SWAP_RAISONS.map(o=>
+      '<button class="btn btn-bg2" style="width:100%;text-align:left;padding:12px 14px;" '+
+      'onclick="repondreExSwap('+JSON.stringify(o.r)+')">'+o.ico+'&nbsp; '+o.txt+'</button>').join('');
+    const ov=document.getElementById('ov-ex-swap');
+    if(ov) setTimeout(()=>ov.classList.add('open'), 420);  // après le toast, pas par-dessus
+  }catch(e){ console.warn('[swap qcm]', e); }
+}
+function repondreExSwap(r){
+  try{
+    const paire=_exSwapPaire; _exSwapPaire=null;
+    closeExSwap();
+    if(!paire||!r) return;
+    S.exSwaps=S.exSwaps||{};
+    const av=S.exSwaps[paire.de]||{n:0};
+    S.exSwaps[paire.de]={r:r, to:paire.vers, n:(+av.n||0)+1,
+                         date:(typeof today==='function')?today():''};
+    persist();
+    const o=_EX_SWAP_RAISONS.filter(x=>x.r===r)[0];
+    // ⚠️ On dit ce qu'on a compris, et on dit surtout ce qu'on N'EN FERA PAS quand la raison est
+    // de circonstance — sinon la personne croit avoir posé une règle qui n'existe pas.
+    toast(o&&o.durable ? 'C\'est noté : Milo en tiendra compte pour tes prochaines séances'
+                       : 'C\'est noté — pour aujourd\'hui seulement, ça ne change pas tes séances',
+          'success');
+  }catch(e){ console.warn('[swap qcm]', e); }
+}
+function closeExSwap(){
+  _exSwapPaire=null;
+  const ov=document.getElementById('ov-ex-swap');
+  if(ov) ov.classList.remove('open');
 }
 // Option « tout dérouler » vs « concentration » (retour Emma) : voir toutes les séries d'un coup
 // ou un seul exercice à la fois. Persisté (ft4_expandall).

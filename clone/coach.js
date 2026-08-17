@@ -2576,6 +2576,30 @@ ${(()=>{
   return '\nADN SPORTIF (ce qui caractérise DURABLEMENT cette personne — ce qui fait qu\'elle s\'entraîne comme ELLE et pas comme une autre ; tiens-en compte dans chaque conseil):\n'+L.join('\n')+'\n';
 })()}
 ${(()=>{
+  /* 🔁 LES EXERCICES QU'ELLE REMPLACE, ET POURQUOI (ft-v888)
+     Elle l'a DIT, en répondant à un QCM après avoir changé d'exercice — ce n'est ni une
+     déduction ni une statistique. R4 : l'information doit descendre jusqu'à la donnée, sinon
+     elle n'existe pas ; c'est ici qu'elle remonte jusqu'à Milo.
+     ⚠️⚠️ ON N'ENVOIE QUE LES RAISONS DURABLES. « La machine était prise » et « j'avais envie de
+     varier » sont des circonstances : les transmettre ferait croire à Milo qu'elle refuse un
+     exercice, et il cesserait de le proposer pour un mardi où la salle était pleine (R29).
+     ⚠️ Et on lui interdit d'en faire un fait de santé : « je le sens mal » est un ressenti sur un
+     mouvement, pas une blessure — les blessures ont leur propre canal, le Profil Santé (R10). */
+  const sw=S.exSwaps||{};
+  const DUR={gene:'elle le sent mal / il la gêne', long:'trop long à installer ou à faire'};
+  const L=Object.keys(sw).filter(k=>sw[k]&&DUR[sw[k].r]).map(k=>{
+    const v=sw[k];
+    return '- '+k+' : '+DUR[v.r]+(v.to?' — elle lui préfère « '+v.to+' »':'')
+           +(v.n>1?' ('+v.n+' fois)':'')+(v.date?', dernier remplacement le '+v.date:'');
+  });
+  if(!L.length) return '';
+  return '\nEXERCICES QU\'ELLE REMPLACE, ET LA RAISON QU\'ELLE A DONNÉE (elle a répondu elle-même, ce ne sont pas des suppositions) :\n'
+    +L.join('\n')
+    +'\n→ NE LES REPROPOSE PAS par défaut : propose directement l\'exercice qu\'elle préfère, ou un autre équivalent, et dis en une phrase pourquoi tu as changé.'
+    +'\n→ Si elle te le redemande explicitement, tu le remets sans discuter — c\'est sa séance.'
+    +'\n⛔ « Il me gêne » est un ressenti sur un MOUVEMENT, pas une blessure : n\'en tire aucune conclusion médicale et ne l\'ajoute à aucun bilan de santé.\n';
+})()}
+${(()=>{
   // ÉTAT DU JOUR (Dossier Athlète, brique 3B) — ponctuel, aujourd'hui seulement. Ne définit pas la personne.
   const ds=S.dayState;const tday=(typeof today==='function')?today():null;
   if(!ds||(tday&&ds.date!==tday))return '';

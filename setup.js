@@ -336,6 +336,7 @@ function _cloudSync(){
       cycle:S.cycle||null,
       programmes:S.programmes||[],
       exRestPref:S.exRestPref||{},
+      exSwaps:S.exSwaps||{},
       healthProfile:S.healthProfile||null,
       bodyStudy:S.bodyStudy||null,
       bodyStudies:S.bodyStudies||[],   // historique des études corporelles (persistance cloud active — backend déployé via CI 2026-07-11)
@@ -2072,6 +2073,39 @@ function _renderAdnSection(){
     const el=document.getElementById('adn-'+f);
     if(el&&el.value!==(a[f]||'')){el.value=a[f]||'';el.style.height='auto';el.style.height=el.scrollHeight+'px';}
   });
+  _renderExSwaps();
+}
+
+/* 🔁 CE QUE L'APP A RETENU DE MES CHANGEMENTS D'EXERCICE (ft-v888)
+   ⚠️ CETTE LISTE N'EST PAS UN CONFORT, C'EST LA CONTREPARTIE DE LA QUESTION. On ne pose une
+   question sur quelqu'un que si la réponse est ensuite VISIBLE et EFFAÇABLE par lui — sinon on
+   accumule un dossier qu'il ne peut ni relire ni corriger (Constitution P3, `PROFIL-VIVANT.md`).
+   ⚠️ Seules les raisons DURABLES s'affichent, exactement comme pour Milo : montrer « machine
+   prise le 12 » laisserait croire qu'une circonstance est devenue une règle (R2 — une source,
+   deux lecteurs, jamais deux définitions du durable). */
+const _EX_SWAP_LBL={gene:'tu le sens mal', long:'trop long'};
+function _renderExSwaps(){
+  const box=document.getElementById('ex-swaps-box'), list=document.getElementById('ex-swaps-list');
+  if(!box||!list) return;
+  const sw=S.exSwaps||{};
+  const keys=Object.keys(sw).filter(k=>sw[k]&&_EX_SWAP_LBL[sw[k].r]);
+  if(!keys.length){ box.style.display='none'; list.innerHTML=''; return; }
+  box.style.display='';
+  list.innerHTML=keys.map(k=>{
+    const v=sw[k], esc=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:10px;padding:9px 11px;">'
+      +'<div style="flex:1;min-width:0;font-size:13px;line-height:1.4;">'
+      +'<b>'+esc(k)+'</b><div style="color:var(--t3);font-size:11.5px;">'+_EX_SWAP_LBL[v.r]
+      +(v.to?' · tu lui préfères '+esc(v.to):'')+'</div></div>'
+      +'<button class="btn btn-bg2" style="padding:6px 11px;font-size:14px;" '
+      +'onclick="oublierExSwap('+JSON.stringify(k).replace(/"/g,'&quot;')+')" aria-label="Retirer">✕</button></div>';
+  }).join('');
+}
+function oublierExSwap(nom){
+  if(!S.exSwaps||!S.exSwaps[nom]) return;
+  delete S.exSwaps[nom];
+  persist(); _renderExSwaps();
+  if(typeof toast==='function') toast('Oublié — Milo pourra te le reproposer','info');
 }
 
 let _screenHistory=['home'];
@@ -2417,6 +2451,7 @@ function _applyRestoreData(raw){
   // Programmes — local-first
   try{if(raw&&raw.programmes&&raw.programmes.length&&(!S.programmes||!S.programmes.length)){S.programmes=raw.programmes;console.log('[FT restore] programmes:',raw.programmes.length);}}catch(e){console.warn('[FT restore] programmes',e);}
   try{if(raw&&raw.exRestPref&&Object.keys(raw.exRestPref).length&&(!S.exRestPref||!Object.keys(S.exRestPref).length))S.exRestPref=raw.exRestPref;}catch(e){}
+  try{if(raw&&raw.exSwaps&&Object.keys(raw.exSwaps).length&&(!S.exSwaps||!Object.keys(S.exSwaps).length))S.exSwaps=raw.exSwaps;}catch(e){}
 
   // Premium
   try{if(raw&&raw.premium!==undefined)S.premium=(raw.premium===true)||(typeof _isClientPremium==='function'&&_isClientPremium());}catch(e){}

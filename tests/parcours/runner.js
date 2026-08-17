@@ -5039,6 +5039,215 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC XXXIV - LA MONTEE EN CHARGE : NI TROP DE PALIERS, NI DES REPS QUI REMONTENT (17/08) ==
+   Michel, seance du 16/08 : « voir aussi pourquoi il me propose autant d'echauffement... j'ai
+   passe presque la moitie de ma seance sur des exercices d'echauffement », et « je ne veux pas
+   qu'il propose a des clients des trucs bizarre qui vont les souler ».
+   DEUX DEFAUTS MESURES SUR SA SEANCE REELLE :
+   (1) le Tirage Poulie Haute (2e exercice, machine, apres un souleve de terre a 130 kg) recevait
+       5 paliers. La regle « une seule serie d'approche pour les exercices suivants » etait ecrite
+       depuis le 15/08 mais COURT-CIRCUITEE par un `||` : `premier || ech.length`.
+   (2) les repetitions REMONTAIENT en montant en charge : 5 - 3 - 5 - 3 - 3, a cause d'un
+       `reps:3` en dur sur chaque palier insere.
+   /!\ ET ON NE RACCOURCIT PAS CE QUI EST JUSTIFIE : le souleve de terre garde ses 4-5 paliers.
+   Les sources sont unanimes sur la PREMIERE barre lourde ; c'est sur les exercices SUIVANTS
+   (2e grosse barre 2-4, accessoire 0-2, machine moins encore) qu'on en fait trop. */
+{
+  const c34=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p34=await c34.newPage();
+  await p34.goto('http://localhost:'+PORT+'/index.html'); await p34.waitForTimeout(2200);
+  const W=await p34.evaluate(()=>{
+   try{
+    /* ⚠️ CE BLOC DOIT S'EXECUTER SUR L'ANCIEN CODE AUSSI, sinon le controle negatif ne mesure
+       RIEN (lecon de ft-v874). `_completerMonteeEnCharge` et `_monteeEnCharge` existent des deux
+       cotes : ce sont eux qui portent les temoins de COMPORTEMENT. Seul `_repsPalier` est neuf,
+       et il est donc appele sous garde. */
+    const o={};
+    const S1=(kg,reps,type)=>({kg:kg,reps:reps,type:type||'N'});
+    const ech=ex=>ex.sets.filter(x=>x.type==='É'||x.type==='W');
+    const decroit=a=>{ for(let i=1;i<a.length;i++) if((+a[i].reps||0) > (+a[i-1].reps||0)) return false; return true; };
+    // ---- LE CAS REEL DU 16/08 : SDT 130 puis Tirage Poulie Haute 63 ----
+    const s={label:'Pull+Jambes',exs:[
+      {name:'Soulevé de Terre',sets:[S1(60,5,'É'),S1(80,3,'É'),S1(90,3,'É'),S1(110,1,'É'),
+                                     S1(130,3),S1(130,3),S1(130,3)]},
+      {name:'Tirage Poulie Haute (Lat Pulldown)',sets:[S1(26,5,'É'),S1(45,5,'É'),S1(54,3,'É'),
+                                     S1(63,8),S1(63,8),S1(63,8)]}]};
+      const avant=s.exs.map(e=>e.sets.length);
+    _completerMonteeEnCharge(s);
+    o.sdt=ech(s.exs[0]).length; o.tirage=ech(s.exs[1]).length;
+    o.sansPerte=s.exs.every((e,i)=>e.sets.length>=avant[i]);
+    o.repsTirage=ech(s.exs[1]).map(x=>x.reps);
+    // ---- LES REPS NE REMONTENT JAMAIS, quel que soit le trou a boucher ----
+    const remontees=[];
+    for(const T of [40,50,60,70,80,100,120,130,150,180,200]){
+      const m=_monteeEnCharge(T, 5);
+      if(m.length && !decroit(m)) remontees.push('bareme '+T+' : '+m.map(x=>x.reps).join('-'));
+      // et une montee de Milo trouee, completee par l'app, sur le PREMIER exercice
+      for(const bas of [0.35,0.45,0.5]){
+        const s2={label:'t',exs:[{name:'Squat Barre',sets:[
+          S1(Math.round(T*bas/5)*5,5,'É'), S1(Math.round(T*0.85/5)*5,1,'É'),
+          S1(T,5),S1(T,5),S1(T,5)]}]};
+        _completerMonteeEnCharge(s2);
+        const e2=ech(s2.exs[0]);
+        if(!decroit(e2)) remontees.push(T+'kg depart '+bas+' : '+e2.map(x=>x.kg+'x'+x.reps).join(' '));
+      }
+    }
+    o.remontees=remontees.slice(0,5); o.nbRemontees=remontees.length;
+    // ---- 1 REP A 70 KG POUR UNE CHARGE DE 130 : l'idee JETEE (R30) ----
+    // La 1re correction faisait heriter le palier insere des reps de son VOISIN du dessus.
+    // Elle produisait « 70 kg x 1 » au milieu d'une montee vers 130. Les reps se lisent sur
+    // la CHARGE, jamais sur un voisin — ce temoin fige la demonstration.
+    o.repsCharge=(typeof _repsPalier==='function')
+      ? [ _repsPalier(60,130), _repsPalier(85,130), _repsPalier(100,130), _repsPalier(115,130) ]
+      : null;
+    // ---- LE BAREME ET SON CONTROLEUR DISENT LA MEME CHOSE (R2) ----
+    const incoh=[]; for(let T=40;T<=200;T+=2.5){ const m=_monteeEnCharge(T);
+      if(!m.length||!_monteeSuffisante(m,T)) incoh.push(T); }
+    o.nbIncoh=incoh.length;
+    // ---- UN EXERCICE SUIVANT SANS AUCUN PALIER RECOIT TOUJOURS SA SERIE D'APPROCHE ----
+    const s3={label:'t',exs:[
+      {name:'Développé Couché',sets:[S1(50,5,'É'),S1(70,3,'É'),S1(85,1,'É'),S1(100,5),S1(100,5)]},
+      {name:'Squat Barre',sets:[S1(120,5),S1(120,5)]}]};
+    _completerMonteeEnCharge(s3);
+    o.approche=ech(s3.exs[1]).length; o.approcheKg=ech(s3.exs[1]).map(x=>x.kg+'x'+x.reps).join('');
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XXXIV. La montee en charge : la bonne dose, et des reps qui descendent --');
+  if(W.erreur){ t('X la montee en charge se calcule', false, W.erreur); }
+  else{
+    t('⭐⭐ LE CAS REEL DU 16/08 : le Tirage Poulie Haute retombe a 3 paliers (il en avait 5)',
+      W.tirage===3, 'recu '+W.tirage+' paliers');
+    t('⭐⭐ ... et le SOULEVE DE TERRE garde les siens : premiere barre lourde, sources unanimes',
+      W.sdt>=4 && W.sdt<=5, 'recu '+W.sdt+' paliers');
+    t('/!\\ INVARIANT TENU : aucune serie retiree de ce que la personne a lu',
+      W.sansPerte===true);
+    t('⭐⭐ LES REPS NE REMONTENT PLUS : fini le 5-3-5-3-3 de sa seance',
+      W.nbRemontees===0, W.nbRemontees+' cas : '+JSON.stringify(W.remontees));
+    t('** ... et sur son tirage precisement', JSON.stringify(W.repsTirage)==='[5,5,3]',
+      JSON.stringify(W.repsTirage));
+    t('/!\\ IDEE JETEE (R30) : les reps se lisent sur la CHARGE, jamais sur le voisin — pas de « 70 kg x 1 » vers 130 kg',
+      JSON.stringify(W.repsCharge)==='[5,3,2,1]', JSON.stringify(W.repsCharge));
+    t('⭐ le bareme passe toujours son propre controle (40 a 200 kg)', W.nbIncoh===0, W.nbIncoh+' incoherents');
+    t('/!\\ un exercice SUIVANT sans aucun palier garde sa serie d\'approche (une epaule coute des mois - R29)',
+      W.approche===1, W.approche+' palier(s) : '+W.approcheKg);
+  }
+  await c34.close();
+}
+
+/* == BLOC XXXV - « POURQUOI J'AI CHANGE D'EXERCICE ? » : UN QCM, ZERO JETON (17/08/2026) ==
+   Michel : « peut-etre qu'il demande par une question QCM (ca ne coute rien en token) pourquoi
+   j'ai change d'exercice ». Le cas est le sien, seance du 16/08 : il avait DEJA dit a Milo que
+   l'exercice ne lui convenait pas (« trop long ») — l'info etait dite, comprise, et n'atteignait
+   AUCUNE donnee. R4 dans sa forme la plus pure.
+   /!\/!\ LE TEMOIN QUI COMPTE : une raison de CIRCONSTANCE (« machine prise ») ne devient jamais
+   une preference. Sans cette separation, Milo cesserait de proposer la presse a cuisses parce
+   qu'elle etait occupee un mardi (R29). */
+{
+  const c35=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p35=await c35.newPage();
+  await p35.goto('http://localhost:'+PORT+'/index.html'); await p35.waitForTimeout(2200);
+  const Q=await p35.evaluate(async()=>{
+   try{
+    /* ⚠️ MEME EXIGENCE QU'AU BLOC XXXIV : la question elle-meme est neuve (elle court-circuite
+       forcement sur l'ancien code), mais CE QUE MILO RECOIT se mesure des deux cotes —
+       `buildCoachContext` existe depuis toujours. C'est ce temoin-la qui prouve que
+       l'information n'atteignait AUCUNE donnee avant (R4). */
+    const neuf = (typeof _demanderPourquoiSwap==='function');
+    const o={neuf:neuf};
+    const ovOuvert=()=>{const e=document.getElementById('ov-ex-swap');return !!(e&&e.classList.contains('open'));};
+    // LE TEMOIN QUI TOURNE DES DEUX COTES : la preference est dans les donnees — Milo la voit-il ?
+    S.exSwaps={'Rowing Haltère':{r:'long',to:'Rowing Poitrine Appuyée',n:1,date:'2026-08-17'},
+               'Presse à Cuisses':{r:'pris',to:'Squat Barre',n:1,date:'2026-08-17'}};
+    const ctx0=buildCoachContext('quoi faire aujourd\'hui');
+    o.miloVoitLong = /Rowing Haltère/.test(ctx0) && /trop long/.test(ctx0);
+    o.miloVoitPrefere = /Rowing Poitrine Appuyée/.test(ctx0);
+    o.miloIgnorePris = !/Presse à Cuisses\s*:/.test(ctx0);
+    o.miloInterditMedical = /aucune conclusion médicale/.test(ctx0);
+    if(!neuf) return o;
+    S.exSwaps={}; startWorkout();
+    S.wkt.exs.push({name:'Rowing Haltère',sets:[{kg:30,reps:10,type:'N'}]});
+    // (1) hors seance : on ne derange pas
+    const wkt=S.wkt; S.wkt=null;
+    _demanderPourquoiSwap('Rowing Haltère','Rowing Poitrine Appuyée');
+    o.horsSeance=!!_exSwapPaire; S.wkt=wkt;
+    // (2) le vrai cas du 16/08 : « trop long » => preference DURABLE
+    _demanderPourquoiSwap('Rowing Haltère','Rowing Poitrine Appuyée');
+    await new Promise(r=>setTimeout(r,600));
+    o.ouvre=ovOuvert(); o.sousTitre=(document.getElementById('ex-swap-sub')||{}).textContent||'';
+    o.nbChoix=document.querySelectorAll('#ex-swap-btns button').length;
+    repondreExSwap('long');
+    o.ferme=!ovOuvert();
+    o.garde=JSON.parse(JSON.stringify(S.exSwaps['Rowing Haltère']||null));
+    // (3) une 2e fois dans la MEME seance : on ne redemande pas
+    _demanderPourquoiSwap('Rowing Haltère','Autre Chose');
+    await new Promise(r=>setTimeout(r,600));
+    o.pasDeuxFois=!ovOuvert();
+    // (4) « machine prise » : c'est une CIRCONSTANCE, jamais une preference
+    _demanderPourquoiSwap('Presse à Cuisses','Squat Barre');
+    await new Promise(r=>setTimeout(r,600));
+    repondreExSwap('pris');
+    o.pris=JSON.parse(JSON.stringify(S.exSwaps['Presse à Cuisses']||null));
+    // (6) « plus tard » n'ecrit RIEN
+    S.exSwaps={}; delete _exSwapDemande['Développé Militaire'];
+    _demanderPourquoiSwap('Développé Militaire','Développé Haltères');
+    await new Promise(r=>setTimeout(r,600));
+    closeExSwap();
+    o.plusTardVide = Object.keys(S.exSwaps).length===0 && _exSwapPaire===null;
+    // (7) la reponse est VISIBLE et EFFACABLE dans le Profil (contrepartie de la question)
+    S.exSwaps={'Rowing Haltère':{r:'long',to:'Rowing Poitrine Appuyée',n:1,date:'2026-08-17'},
+               'Presse à Cuisses':{r:'pris',to:'Squat Barre',n:1,date:'2026-08-17'}};
+    _renderExSwaps();
+    const li=document.getElementById('ex-swaps-list');
+    o.listeVisible=document.getElementById('ex-swaps-box').style.display!=='none';
+    o.listeTxt=(li.textContent||'').replace(/\s+/g,' ').trim();
+    o.listeLignes=li.querySelectorAll('button').length;
+    oublierExSwap('Rowing Haltère');
+    o.apresOubli=!S.exSwaps['Rowing Haltère'];
+    o.boiteFermee=document.getElementById('ex-swaps-box').style.display==='none';
+    // (8) ca survit au rechargement (localStorage)
+    S.exSwaps={'Rowing Haltère':{r:'long',to:'Rowing Poitrine Appuyée',n:1,date:'2026-08-17'}};
+    persist();
+    o.persiste=!!JSON.parse(localStorage.getItem('ft4_exswaps')||'{}')['Rowing Haltère'];
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XXXV. Pourquoi j\'ai change d\'exercice : un QCM, zero jeton --');
+  if(Q.erreur){ t('X le QCM de remplacement existe', false, Q.erreur); }
+  else{
+    t('\u2B50\u2B50 CE QUE MILO RECOIT (mesure des DEUX cotes) : « trop long » + l\'exercice prefere',
+      Q.miloVoitLong===true && Q.miloVoitPrefere===true);
+    t('\u2B50\u2B50 ... MAIS « machine prise » N\'ATTEINT JAMAIS Milo : une circonstance n\'est pas un gout (R29)',
+      Q.miloIgnorePris===true);
+    t('/!\\ « il me gene » reste un ressenti sur un MOUVEMENT : aucune conclusion medicale (R10)',
+      Q.miloInterditMedical===true);
+    t('** la question elle-meme existe', Q.neuf===true);
+  }
+  if(!Q.erreur && Q.neuf){
+    t('** la question s\'ouvre apres un remplacement, avec les 2 noms et 4 choix',
+      Q.ouvre===true && Q.nbChoix===4 && /Rowing Haltère.*Rowing Poitrine/.test(Q.sousTitre),
+      Q.nbChoix+' choix · '+Q.sousTitre);
+    t('⭐⭐ LE CAS DU 16/08 : « trop long » descend jusqu\'a la DONNEE (R4)',
+      !!Q.garde && Q.garde.r==='long' && Q.garde.to==='Rowing Poitrine Appuyée' && Q.ferme===true,
+      JSON.stringify(Q.garde));
+    t('/!\\ « machine prise » est bien ENREGISTREE, mais comme circonstance',
+      !!Q.pris && Q.pris.r==='pris', JSON.stringify(Q.pris));
+    t('/!\\ hors seance, on ne derange pas', Q.horsSeance===false);
+    t('/!\\ une seule fois par exercice et par seance (une question qui revient devient du bruit - R24)',
+      Q.pasDeuxFois===true);
+    t('/!\\/!\\ « PLUS TARD » N\'ECRIT RIEN : on ne devine pas une raison qu\'on n\'a pas eue',
+      Q.plusTardVide===true);
+    t('⭐ CONTREPARTIE DE LA QUESTION : la reponse est relisible dans le Profil, et effacable',
+      Q.listeVisible===true && /Rowing Haltère/.test(Q.listeTxt) && Q.listeLignes===1
+      && Q.apresOubli===true && Q.boiteFermee===true,
+      Q.listeLignes+' ligne(s) : '+(Q.listeTxt||'').slice(0,90));
+    t('/!\\ ... et la circonstance ne s\'affiche pas non plus (meme definition du durable des 2 cotes - R2)',
+      !/Presse à Cuisses/.test(Q.listeTxt||''), (Q.listeTxt||'').slice(0,90));
+    t('** la reponse survit au rechargement', Q.persiste===true);
+  }
+  await c35.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

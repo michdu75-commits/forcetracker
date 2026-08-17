@@ -1068,6 +1068,7 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
       <div class="fg"><label>💪 Ta motivation profonde</label><textarea id="adn-motivation" rows="1" oninput="saveAdn('motivation',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px';" placeholder="Pourquoi tu t'entraînes vraiment : santé, physique, performance, bien-être mental, te défouler…" style="width:100%;resize:none;overflow:hidden;font-family:inherit;font-size:14px;line-height:1.5;"></textarea></div>
       <div class="fg"><label>🗓️ Ton mode de vie</label><textarea id="adn-lifestyle" rows="1" oninput="saveAdn('lifestyle',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px';" placeholder="Ce qui cadre tes séances : temps dispo, salle ou maison, matériel, rythme de vie (travail de nuit, astreintes…)." style="width:100%;resize:none;overflow:hidden;font-family:inherit;font-size:14px;line-height:1.5;"></textarea></div>
       <div class="fg"><label>❤️ Tes préférences & ton style</label><textarea id="adn-preferences" rows="1" oninput="saveAdn('preferences',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px';" placeholder="Ce que tu aimes / détestes : exos préférés, exos que tu fuis, pousser lourd ou séries longues, séances courtes ou longues, machines ou poids libres…" style="width:100%;resize:none;overflow:hidden;font-family:inherit;font-size:14px;line-height:1.5;"></textarea></div>
+      <div id="ex-swaps-box" style="display:none;margin:2px 0 10px;"><label style="display:block;margin-bottom:5px;">🔁 Les exercices que tu remplaces</label><div id="ex-swaps-list" style="display:flex;flex-direction:column;gap:6px;"></div><div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:5px;">Tu l'as dit toi-même en changeant d'exercice. Milo évite de te les reproposer — touche ✕ pour retirer la ligne.</div></div>
       <div class="fg"><label>🎖️ Ton expérience sportive</label><textarea id="adn-experience" rows="1" oninput="saveAdn('experience',this.value);this.style.height='auto';this.style.height=this.scrollHeight+'px';" placeholder="Depuis quand tu t'entraînes, ton passé sportif (autre sport avant), ton niveau ressenti." style="width:100%;resize:none;overflow:hidden;font-family:inherit;font-size:14px;line-height:1.5;"></textarea></div>
       <div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:4px;">🩹 <b>Zones fragiles, vieilles blessures, arthrose…</b> → à renseigner dans la section <b>Santé</b> ci-dessous : c'est de là que Milo (le Gardien) veille sur ta sécurité.</div>
       <div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:4px;">🔒 Ces infos restent privées (sur ton téléphone et dans ta sauvegarde perso liée à ton email). Elles servent uniquement à améliorer ton accompagnement.</div>
@@ -2192,6 +2193,25 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div id="day-sel-prog-name" style="font-size:13px;color:var(--t2);text-align:center;margin-bottom:16px;"></div>
     <div id="day-sel-btns" style="display:flex;flex-direction:column;gap:8px;"></div>
     <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeDaySel()">Annuler</button>
+  </div>
+</div>
+
+<!-- OVERLAY: pourquoi cet exercice a-t-il été remplacé ? (ft-v888) -->
+<!-- ⚠️ QCM DÉTERMINISTE : aucun appel à l'IA, aucun jeton consommé. C'est la demande de Michel
+     (« ça ne coûte rien en token ») et c'est aussi la bonne architecture : une préférence sur un
+     exercice est un FAIT que la personne déclare, pas quelque chose à deviner (R29).
+     ⚠️ « Plus tard » n'écrit RIEN, et fermer au doigt non plus : la question ne se paie pas. -->
+<div class="overlay" id="ov-ex-swap" onclick="if(event.target===this)closeExSwap()">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:17px;text-align:center;">Pourquoi ce changement ?</div>
+    <div id="ex-swap-sub" style="font-size:13px;color:var(--t2);text-align:center;margin:6px 0 14px;"></div>
+    <div id="ex-swap-btns" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeExSwap()">Plus tard</button>
+    <div style="font-size:11px;color:var(--t2);text-align:center;margin-top:10px;line-height:1.4;">
+      Ta réponse est gardée pour cet exercice et sert à Milo quand il te propose une séance.
+      Tu peux l'effacer dans Profil.
+    </div>
   </div>
 </div>
 

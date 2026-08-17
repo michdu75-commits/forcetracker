@@ -36,6 +36,13 @@ let S={
   premium:false,
   premiumExpiry:'',
   exRestPref:{},
+  /* 🔁 POURQUOI CETTE PERSONNE REMPLACE CET EXERCICE-LÀ (17/08/2026)
+     Michel : *« peut-être qu'il demande par une question QCM (ça ne coûte rien en token) pourquoi
+     j'ai changé d'exercice »*. Rangé PAR NOM D'EXERCICE, comme `exRestPref` — c'est la même
+     nature d'information (une préférence attachée à un mouvement), et elle migre donc avec les
+     renommages du catalogue par le même chemin (R2).
+     { 'Nom de l'exercice remplacé': {r:'gene'|'long'|'pris'|'envie', to:'Nom choisi', n:2, date} } */
+  exSwaps:{},
   mealPlan:null,
   foodLog:[],
   foodAiUses:0,
@@ -152,6 +159,7 @@ function load(){
     if(typeof _isClientPremium==='function'&&_isClientPremium())S.premium=true;
     S.premiumExpiry=localStorage.getItem('ft4_premiumExp')||'';
     S.exRestPref=JSON.parse(localStorage.getItem('ft4_exRp')||'{}');
+    S.exSwaps=JSON.parse(localStorage.getItem('ft4_exswaps')||'{}');
     // Drapeau « historique local incomplet » (posé quand le stockage du téléphone a saturé).
     // Il protège la sauvegarde cloud tant qu'on n'a pas restauré : voir persist() et _cloudSync().
     S.histTronque=localStorage.getItem('ft4_hist_tronque')==='1';
@@ -179,6 +187,7 @@ function load(){
         if(S.wkt&&S.wkt.exs)S.wkt.exs.forEach(e=>{if(e&&e.name)e.name=ren(e.name);});
         S.exPhotos=renKeys(S.exPhotos);
         S.exRestPref=renKeys(S.exRestPref);
+        S.exSwaps=renKeys(S.exSwaps);
       }catch(e){console.warn('[FT renames]',e);}
     })();
     S.badges=JSON.parse(localStorage.getItem('ft4_badges')||'{}');
@@ -387,6 +396,7 @@ function persist(){
     localStorage.setItem('ft4_progimports',S.progImports||0);
     localStorage.setItem('ft4_coach_mem',S.coachMemory||'');
     localStorage.setItem('ft4_exRp',JSON.stringify(S.exRestPref||{}));
+    localStorage.setItem('ft4_exswaps',JSON.stringify(S.exSwaps||{}));
     localStorage.setItem('ft4_premium',S.premium?'1':'0');
     localStorage.setItem('ft4_premiumExp',S.premiumExpiry||'');
     localStorage.setItem('ft4_badges',JSON.stringify(S.badges||{}));

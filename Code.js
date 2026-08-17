@@ -608,6 +608,7 @@ function handleLoadProfilePost_(body) {
     cycle:          data.cycle          || null,
     programmes:     data.programmes     || [],
     exRestPref:     data.exRestPref     || {},
+    exSwaps:        data.exSwaps        || {},
     nutritionPhase: data.nutritionPhase || 'charge',
     coachMemory:    (data.profile && data.profile.coachMemory) || '',
     healthInbox:    data.healthInbox    || [],
@@ -1030,6 +1031,7 @@ function handleSaveProfile_(body) {
       } else { existing.dayStateLog = inDL; }
     }
     if (body.exRestPref !== undefined) existing.exRestPref = body.exRestPref;
+    if (body.exSwaps !== undefined) existing.exSwaps = body.exSwaps;
     if (body.cycle      !== undefined) existing.cycle      = body.cycle; // null intentionnel OK
     existing.email     = email;
     existing.updatedAt = new Date().toISOString();
