@@ -4544,18 +4544,64 @@ function _aInitZoom(){
   img.addEventListener('touchend',()=>{_aLastDist=0;if(_aZoom<1.05)_aReset();});
 }
 
+/* 📤 « EXPORTER MES DONNÉES » EXPORTAIT UN SIXIÈME DE TES DONNÉES (17/08/2026)
+   Michel : *« si j'ai mis des rapports dans l'application »* — et il avait raison. Je venais de
+   conclure, en lisant son export, qu'il n'avait importé aucun bilan corporel. **C'est l'export qui
+   ne les emportait pas.**
+   MESURÉ : cette fonction écrivait **6 blocs** (profil réduit, séances, records, pesées, sommeil,
+   badges) quand la sauvegarde cloud en porte **38**. Absents de tout export : les bilans sanguins,
+   les bilans corporels, les programmes, le profil santé — donc les BLESSURES —, la mémoire de Milo,
+   le registre, l'ADN sportif, le journal d'état du jour, le journal alimentaire, les préférences de
+   repos, le cycle de force, les exercices perso…
+   ⚠️ Ce n'était pas une perte de données : le cloud a tout, avec sa sauvegarde Drive nocturne. Mais
+   le bouton s'appelle « Exporter mes données » et en délivrait un sixième — *une promesse fausse sur
+   un bouton*, exactement la famille du « je retiens » de ce matin.
+
+   ⭐⭐ LE CHANGEMENT QUI COMPTE N'EST PAS LA LISTE, C'EST LE SENS DE LA LISTE.
+   L'ancienne version énumérait ce qu'il FALLAIT prendre. Une liste comme celle-là ne peut que
+   pourrir : chaque donnée ajoutée depuis un an (bilans, programmes, ADN, registre…) aurait dû y
+   être ajoutée à la main, et aucune ne l'a été — **sans qu'aucun test ne rougisse**, parce qu'un
+   oubli d'export ne plante pas. C'est le motif R4a, transposé : *l'oubli est silencieux*.
+   👉 On énumère désormais ce qu'on LAISSE, et on prend tout le reste. Une donnée ajoutée demain
+   part automatiquement ; l'oublier revient donc à l'inclure, et non à la perdre. **Le sens de
+   l'échec est inversé, et c'est ça le correctif** — la liste ci-dessous, elle, peut vieillir sans
+   danger.
+   ⚠️ ET LE FICHIER DIT CE QU'IL NE CONTIENT PAS (champ `_exclus`, avec la raison de chacun) : un
+   export muet sur ses trous laisse croire qu'il est complet, ce qui est précisément le défaut qu'on
+   répare (R29 — l'app dit qu'elle a coupé). */
+const EXPORT_EXCLU={
+  // — secrets et identifiants : ces fichiers se partagent (avec une IA, par mail) —
+  email:'identifiant de compte — un fichier d\'export se partage, il ne doit porter aucun identifiant',
+  url:'adresse du serveur, identique pour tout le monde',
+  // ⚠️ le code d\'accès perso ne vit PAS dans S (localStorage ft4_authcode, lu par _authCode()),
+  //    donc il ne peut pas fuiter ici. Un témoin permanent le vérifie quand même.
+  // — état d\'exécution : se reconstruit tout seul, et le réimporter serait faux —
+  connected:'état réseau du moment',
+  premium:'statut d\'abonnement — revérifié auprès du serveur à chaque ouverture',
+  premiumExpiry:'idem : c\'est le serveur qui fait foi, jamais un fichier',
+  // — volumineux : on les laisse pour que le fichier reste transmissible, et on le DIT —
+  exPhotos:'photos d\'exercices (images encodées) — rendraient le fichier énorme',
+  bodySeries:'séries de photos corporelles — idem, et elles ne quittent jamais le téléphone',
+};
 function exportData(){
   closeDrawer();
   try{
     const payload={
       exportDate:new Date().toISOString(),
-      profile:{name:S.name,age:S.age,height:S.height,bw:S.bw,gender:S.gender,goal:S.goal,contact:'forcetracker.app@gmail.com'},
-      sessions:S.sessions||[],
-      prs:S.prs||{},
-      weightLog:S.weightLog||[],
-      sleepLog:S.sleepLog||[],
-      badges:S.badges||{}
+      app:'Force Tracker',
+      version:((document.querySelector('.app-ver')||{}).textContent||'').trim(),
+      _lisezMoi:'Export COMPLET de tes données. Le champ _exclus dit ce qui n\'y est pas, et pourquoi. '
+               +'Ce fichier ne contient ni ton adresse e-mail ni ton code d\'accès.',
+      donnees:{},
+      _exclus:{}
     };
+    // On prend TOUT ce que l'app a chargé, sauf la liste ci-dessus (voir le commentaire).
+    Object.keys(S).sort().forEach(function(k){
+      if(k.charAt(0)==='_') return;                       // champs de travail internes
+      if(typeof S[k]==='function') return;
+      if(EXPORT_EXCLU[k]){ payload._exclus[k]=EXPORT_EXCLU[k]; return; }
+      payload.donnees[k]=S[k];
+    });
     const json=JSON.stringify(payload,null,2);
     const blob=new Blob([json],{type:'application/json'});
     const url=URL.createObjectURL(blob);
@@ -4563,7 +4609,8 @@ function exportData(){
     a.href=url;a.download='forcetracker_'+today()+'.json';
     document.body.appendChild(a);a.click();
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
-    toast('Données exportées en JSON ✓','success');
+    const n=Object.keys(payload.donnees).length;
+    toast(n+' catégories de données exportées ✓','success');
   }catch(e){toast('Erreur export : '+e.message,'error');}
 }
 

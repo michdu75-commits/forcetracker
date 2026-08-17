@@ -5608,6 +5608,96 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await c40.close();
 }
 
+/* == BLOC XLI - « EXPORTER MES DONNEES » EN EXPORTAIT UN SIXIEME (17/08/2026) ==
+   Michel : « si j'ai mis des rapports dans l'application ». Il avait raison — je venais de
+   conclure, en lisant son export, qu'il n'avait importe aucun bilan corporel. C'est l'EXPORT qui
+   ne les emportait pas : 6 blocs ecrits contre 38 champs sauvegardes dans le cloud.
+   /!\/!\ LE TEMOIN QUI COMPTE EST LE DERNIER : une donnee AJOUTEE DEMAIN doit partir toute seule.
+   L'ancienne version enumerait ce qu'il fallait PRENDRE — une liste comme celle-la ne peut que
+   pourrir, en silence, parce qu'un oubli d'export ne plante pas. On enumere maintenant ce qu'on
+   LAISSE. Ce test fige le SENS de la liste, pas son contenu. */
+{
+  const c41=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p41=await c41.newPage();
+  await p41.addInitScript(seedScript({ft4_email:'michel@test.z'}));
+  await p41.goto('http://localhost:'+PORT+'/index.html'); await p41.waitForTimeout(2200);
+  const E=await p41.evaluate(()=>{
+   try{
+    if(typeof exportData!=='function') return {erreur:'exportData absente'};
+    // On remplit les donnees qui manquaient a l'appel, puis on intercepte le fichier produit.
+    S.bodyScans=[{date:'2026-08-17',weight:85.2,fatMass:16.1}];
+    S.bloodTests=[{date:'2026-07-01',txt:'bilan'}];
+    S.programmes=[{name:'Push lourd',exs:[{name:'Développé Couché',sets:[]}]}];
+    S.healthProfile={conditions:[],injuries:[{zone:'shoulder',status:'active'}],notes:'épaule'};
+    S.registre={facts:['tu t\'entraînes le matin'],observations:[]};
+    S.adn={motivation:'la force',lifestyle:'',preferences:'',experience:''};
+    S.coachMemory='il prépare une compétition';
+    S.dayStateLog=[{date:'2026-08-16',energy:2}];
+    S.exRestPref={'Squat Barre':240};
+    S.exSwaps={'Rowing Haltère':{r:'long',to:'Rowing Poitrine Appuyée',n:1}};
+    S.cycle={startDate:'2026-08-01',weeks:8};
+    S.customExercises=[{n:'Mon Exercice',g:'Dos'}];
+    S.foodLog=[{date:'2026-08-16',kcal:2200}];
+    S.exPhotos={'Squat Barre':'data:image/png;base64,AAAA'};
+    let cap=null;
+    const _bl=window.Blob, _cu=URL.createObjectURL, _ru=URL.revokeObjectURL;
+    window.Blob=function(parts){ cap=String(parts&&parts[0]||''); return new _bl(parts,{type:'application/json'}); };
+    URL.createObjectURL=()=>'blob:x'; URL.revokeObjectURL=()=>{};
+    const _cl=HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click=function(){};
+    exportData();
+    window.Blob=_bl; URL.createObjectURL=_cu; URL.revokeObjectURL=_ru;
+    HTMLAnchorElement.prototype.click=_cl;
+    if(!cap) return {erreur:'aucun fichier produit'};
+    const f=JSON.parse(cap);
+    const d=f.donnees||{};
+    const attendus=['bodyScans','bloodTests','programmes','healthProfile','registre','adn',
+                    'coachMemory','dayStateLog','exRestPref','exSwaps','cycle','customExercises',
+                    'sessions','prs','weightLog','sleepLog','badges','foodLog'];
+    return {
+      nbCat:Object.keys(d).length,
+      manquants:attendus.filter(k=>!(k in d)),
+      // les secrets et identifiants ne doivent JAMAIS partir dans un fichier qu'on partage
+      fuiteEmail: JSON.stringify(f).indexOf('michel@test.z')>=0,
+      fuiteCode:  /ft4_authcode|authCode/i.test(cap),
+      fuiteUrl:   ('url' in d),
+      // le fichier DIT ce qu'il ne contient pas, avec la raison
+      exclusListes: Object.keys(f._exclus||{}).sort(),
+      raisonsEcrites: Object.values(f._exclus||{}).every(v=>String(v).trim().length>15),
+      photosDehors: !('exPhotos' in d),
+      lisezMoi: !!f._lisezMoi,
+      // ⭐ LE TEMOIN ANTI-POURRISSEMENT : une donnee inventee a l'instant part toute seule
+      auto:(()=>{ S.nouveauChampDeDemain=[{x:1}];
+        let c2=null; const B=window.Blob;
+        window.Blob=function(parts){ c2=String(parts&&parts[0]||''); return new B(parts,{type:'application/json'}); };
+        const CU=URL.createObjectURL, RU=URL.revokeObjectURL, CL=HTMLAnchorElement.prototype.click;
+        URL.createObjectURL=()=>'blob:x'; URL.revokeObjectURL=()=>{}; HTMLAnchorElement.prototype.click=function(){};
+        exportData();
+        window.Blob=B; URL.createObjectURL=CU; URL.revokeObjectURL=RU; HTMLAnchorElement.prototype.click=CL;
+        delete S.nouveauChampDeDemain;
+        try{ return 'nouveauChampDeDemain' in (JSON.parse(c2).donnees||{}); }catch(e){ return false; }
+      })()
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XLI. « Exporter mes donnees » exporte enfin TES donnees --');
+  if(E.erreur){ t('X l\'export se produit', false, E.erreur); }
+  else{
+    t('⭐⭐ LES DONNEES QUI MANQUAIENT SONT LA : bilans, programmes, sante, memoire de Milo…',
+      E.manquants.length===0, 'manquent encore : '+JSON.stringify(E.manquants));
+    t('** l\'export porte au moins 30 categories (il en portait 6)', E.nbCat>=30, E.nbCat+' categories');
+    t('/!\\/!\\ AUCUN SECRET NE PART : ni e-mail, ni code d\'acces, ni adresse serveur',
+      E.fuiteEmail===false && E.fuiteCode===false && E.fuiteUrl===false,
+      'email '+E.fuiteEmail+' · code '+E.fuiteCode+' · url '+E.fuiteUrl);
+    t('/!\\ LE FICHIER DIT CE QU\'IL NE CONTIENT PAS, avec la raison de chacun (R29)',
+      E.exclusListes.length>=5 && E.raisonsEcrites===true && E.photosDehors===true,
+      JSON.stringify(E.exclusListes));
+    t('** … et il porte une note qui explique comment le lire', E.lisezMoi===true);
+    t('⭐⭐ ANTI-POURRISSEMENT : une donnee ajoutee DEMAIN part toute seule (on liste ce qu\'on LAISSE)',
+      E.auto===true);
+  }
+  await c41.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

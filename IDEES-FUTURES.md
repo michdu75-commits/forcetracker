@@ -1462,10 +1462,11 @@ Pour chaque exercice :
 - **Utilisateur** : chaque personne doit pouvoir voir **ses propres stats** dans l'app (synthèse de sa progression, volumes, PRs…).
 - ⚠️ **RGPD / vie privée** : prévenir les utilisateurs que leurs données sont stockées, ID anonyme plutôt qu'identifiant perso, pouvoir **supprimer** les données sur demande. À faire proprement, surtout quand l'app grandit.
 
-## 📤 Export performance utilisateur + template Excel premium — à faire
+## 📤 Export performance utilisateur + template Excel premium — ✅ complétude FAITE (ft-v891), import à faire
 
-- **Export perso** : améliorer le bouton « Exporter mes données » → fichier Excel/CSV propre (séances, charges, PRs). Chaque utilisateur n'exporte que **SES** données (vie privée).
-- **Template Excel premium** (plus tard) : offrir le beau fichier de suivi (graphes, mésocycles, calculateur 1RM) en bonus **premium** — vrai argument de vente.
+- ✅ **Export COMPLET — FAIT le 17/08/2026 (ft-v891).** ⚠️ **Cette fiche disait la mauvaise chose, et ça a coûté cher.** Elle notait « améliorer le bouton → fichier Excel/CSV propre **(séances, charges, PRs)** » — c'est-à-dire le **format**, et une liste qui reprend **exactement les trois choses que l'export contenait déjà**. Le vrai problème — l'export n'emportait que **6 blocs sur 38** — n'était écrit nulle part. L'idée a donc survécu comme « le rendre plus joli » au lieu de « le rendre entier », rangée en confort à côté d'un template Excel premium. *Le quoi a été gardé, le pourquoi a été perdu* (`docs/ORIGINE-DES-REGLES.md`) — et personne ne pouvait le retrouver en relisant la fiche, moi compris : j'ai lu les exports de Michel pendant des jours sans me demander s'ils étaient complets, et j'en ai tiré une conclusion fausse sur ses bilans corporels.
+- **Template Excel premium** (plus tard, vraie idée future) : offrir le beau fichier de suivi (graphes, mésocycles, calculateur 1RM) en bonus **premium** — vrai argument de vente. ⚠️ **Ne pas re-mélanger les deux sujets** : le format est du confort, la complétude était un correctif. C'est leur confusion qui a enterré le second pendant des mois.
+- ⏭️ **Reste à faire : le bouton d'IMPORT.** L'export est complet, mais il n'existe aucun chemin pour le relire — c'est un aller simple. À construire avec les garde-fous d'usage (montrer ce que contient le fichier AVANT d'écrire, ne jamais écraser en silence, règle d'or #3).
 
 ## 📈 Historique poids au tap (écran séance) — à faire
 

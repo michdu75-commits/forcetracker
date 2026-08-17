@@ -3071,8 +3071,11 @@ stopRest();
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&restStartTs&&_restLeft()<=-5)stopRest();
 });
-// ⚠️ Élément optionnel : `app.js` est aussi chargé par `dashboard.html` (la version
-// ordinateur), qui n'a pas la barre du haut de l'app. Sans cette garde, la page lève une
+// ⚠️ Élément optionnel. ⚠️ CE COMMENTAIRE DISAIT « app.js est aussi chargé par dashboard.html » —
+// c'est FAUX depuis que le tableau de bord a retiré ce chargement (voir dashboard.html, qui écrit
+// la décision et sa raison). La garde reste utile telle quelle, mais sa justification était
+// périmée : un commentaire qu'on ne relit pas fait raisonner de travers celui qui le lit (R23).
+// La version ordinateur, elle, n'a pas la barre du haut de l'app. Sans cette garde, la page lève une
 // erreur et la fin du fichier ne s'exécute pas. Une brique partagée ne doit jamais supposer
 // que TOUS les éléments d'un écran existent (constaté le 04/08).
 { const _tbd=document.getElementById('tb-date');
