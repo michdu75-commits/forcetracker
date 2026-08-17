@@ -375,21 +375,125 @@ contenu que Milo reçoit.
 - Ce constat **ne remplace pas** la scission stable/mutable proposée par l'auditeur : il la rend
   beaucoup moins urgente, et il coûte infiniment moins cher à implémenter.
 
-### Vérification indépendante de la facturation
+### ⭐⭐ Vérification sur les VRAIS exports de facturation — et le verdict s'inverse
 
-Sur les exports de facturation dont je dispose (jeu partiel, différent du sien), **la conclusion va
-dans le même sens et elle est même plus marquée** :
+> **⚠️ CORRECTION D'UNE VERSION ANTÉRIEURE DE CETTE SECTION.** J'avais d'abord écrit « le cache est
+> à perte, et c'est même pire que ce qu'il annonce », sur la base d'un **jeu de fichiers partiel**.
+> Michel a fourni les deux exports exacts. **Ses chiffres se reproduisent parfaitement — et ma
+> conclusion était fausse.**
 
-| Modèle | écritures / lectures | verdict |
+**Ses trois totaux, reproduits au centime :**
+
+| Modèle | jours actifs | coût | part |
+|---|---|---|---|
+| `claude-opus-4-6` | 18 | **80,45 $** | **76,2 %** |
+| `claude-sonnet-4-6` | 32 | **22,03 $** | 20,9 % |
+| `claude-haiku-4-5` | 46 | **3,09 $** | 2,9 % |
+| | | **105,57 $** | |
+
+Et son ratio Sonnet : **3,03 écritures pour 1 lecture**, perte **0,41 $**. Exact.
+
+#### ❌ Son constat n°1 est faux : Opus AVAIT un cache
+
+Il écrit *« 95 % de ses tokens d'entrée payés plein tarif — aucun cache sur ce chemin »*. Les données
+disent autre chose :
+
+```
+Opus — entrée sans cache      2 995 110
+       écriture de cache 5 min 1 521 462   ← ignorés dans son calcul
+       lecture de cache          158 792
+```
+
+Son « 95 % » est `sans_cache / (sans_cache + lectures)` — il a **laissé les 1,5 million de tokens
+d'écriture hors de la fraction**. Le cache existait bel et bien sur ce chemin ; il était juste
+**encore moins relu que celui de Sonnet** (**9,58 écritures pour 1 lecture**).
+
+**Conséquence sur le diagnostic, et elle est importante** : les 80 $ ne viennent pas d'une
+optimisation oubliée. Ils viennent de **3 millions de tokens d'entrée à 15 $/million**. Sans aucun
+cache, la même charge aurait coûté 76,89 $ — le cache n'a ajouté que 3,56 $. *Opus a coûté cher
+parce que c'était Opus.* Le correctif, c'est celui qui a été appliqué le 04/08 : changer de modèle.
+
+#### ❌ Son constat n°2 est vrai sur la période — et faux sur l'architecture actuelle
+
+La perte de 0,41 $ est réelle, mais elle est **concentrée sur les deux semaines où le cache était en
+train d'être construit**. Découpé par période :
+
+| Période | ratio écritures/lectures | avec cache | sans cache | verdict |
+|---|---|---|---|---|
+| Tout (02/07 → 16/08) — *son chiffre* | 3,03 : 1 | 22,03 $ | 21,62 $ | perte 0,41 $ |
+| **Mise en place** (31/07 → 07/08) | **12,78 : 1** | 10,64 $ | 9,45 $ | perte 1,19 $ |
+| **Régime établi** (08/08 → 16/08) | **1,14 : 1** | **6,29 $** | 7,07 $ | ✅ **gain 0,78 $ (−11 %)** |
+| 5 derniers jours (12 → 16/08) | 1,26 : 1 | 2,99 $ | 3,28 $ | ✅ gain 0,29 $ |
+
+**Depuis le 08/08 — la date où les deux durées de cache ont été mises en place — le cache RAPPORTE.**
+Chaque changement de prompt pendant la construction réécrivait l'intégralité du cache sans qu'il soit
+jamais relu ; c'est ça qu'on lit dans la moyenne, pas l'état d'aujourd'hui.
+
+#### ❌ Et son seuil de rentabilité de 1,39 est mal calculé
+
+Il pose *« il faut 1,39 lecture par écriture »*. Le raisonnement compte l'écriture entière comme un
+surcoût. **Elle ne l'est pas** : sans cache, ce texte serait de toute façon payé **1×**. Le surcoût
+réel d'une écriture 5 min est **0,25×**, et chaque lecture économise **0,9×** :
+
+```
+seuil réel   écriture 5 min (1,25×) : 0,25 / 0,9 = 0,28 lecture par écriture
+             écriture 1 h  (2,00×) : 1,00 / 0,9 = 1,11 lecture par écriture
+```
+
+Son seuil est donc **4 à 5 fois trop sévère** pour le cache 5 minutes. C'est ce qui explique qu'il
+conclue « à perte » là où l'arithmétique directe donne un gain.
+
+#### ✅ Son §5 (« le ×11 de la semaine 32 ») s'explique entièrement
+
+Ce n'est pas une explosion de trafic, c'est **le cache en train d'être construit** — et les quatre
+dates sont documentées dans `worker.js` :
+
+| Date | Écritures de cache | Ce que dit le code |
 |---|---|---|
-| Sonnet | **4,80 : 1** | le cache coûte **1,20 $ de plus** qu'aucun cache |
-| Opus | **11,81 : 1** | le cache coûte **3,40 $ de plus** |
+| 31/07 | premières écritures Opus | mise en place du cache de prompt |
+| 03/08 | **740 677** (Opus) | montée en charge |
+| 04/08 | 728 830 (Sonnet) | *« Michel passe d'Opus à Sonnet »* |
+| 05/08 | **1 221 416** (Sonnet) | *« DEUXIÈME COUPURE DE CACHE — le bloc commun »* |
+| 08/08 | première écriture **1 h** (39 181) | *« DEUX DURÉES DE CACHE, PAS UNE »* |
 
-⚠️ Mes chiffres absolus diffèrent des siens (il annonce 3,03 : 1 et 0,41 $) — nos jeux de fichiers ne
-sont pas les mêmes et je n'ai pas son export de juillet. **Ce sont les ratios qui portent la
-conclusion, et les deux mesures indépendantes disent la même chose : aujourd'hui, le cache est à
-perte parce qu'on écrit bien plus qu'on ne lit.** Le seuil de rentabilité est de **1,4 lecture par
-écriture** ; on en est loin.
+Chaque modification du prompt invalide le cache et le réécrit en entier. Le pic de la semaine 32 est
+le coût du chantier, pas celui du service.
+
+---
+
+## 8 ter. ✅ AUCUN chemin IA coûteux ne tourne sans cache — la vérification
+
+> Recommandation n°1 de l'analyse de facturation : *« vérifier qu'aucun autre chemin n'appelle un
+> modèle coûteux sans `cache_control`, comme ce fut le cas d'Opus »*. Michel : *« vas-y fais la
+> vérif, mais je ne pense pas »*. **Il a raison — et voici pourquoi, chemin par chemin.**
+
+**① Où passe réellement le trafic IA.** `AI_PROXY_URL` est renseignée (`constants.js:218`) et 13
+actions y sont routées (`AI_PROXY_ACTIONS`). Les **13 handlers IA de `Code.js` correspondent tous à
+une action de cette liste** — ils sont donc un repli mort. Tout le trafic passe par `worker.js`.
+
+**② Les 11 appels du Worker.**
+
+| Appel | Modèle | Cache | Nature |
+|---|---|---|---|
+| **coach** (Milo) | Sonnet | ✅ **3 blocs** | conversation **répétée** |
+| `bodyStudy` | Sonnet | — | une photo, **une fois** |
+| `importBloodTest` | Sonnet | — | un PDF, **une fois** |
+| `importProgram` / `importHistory` | Sonnet ou Haiku | — | un document, **une fois** |
+| `foodLabel` · `readBarcode` · `estimateFood` · `morphoAnalysis` · `summarizeCoach` · `generateMealPlan` | Haiku | — | une image ou un résumé, **une fois** |
+
+**③ Le verdict, et il n'est pas « on a oublié ».** Un cache ne rapporte que si **le même préfixe
+revient**. Ces dix chemins traitent chacun une photo, un code-barres ou un PDF **différent** : leur
+préfixe ne se répète jamais. Y poser un `cache_control` coûterait **1,25×** à l'écriture pour **zéro
+lecture** — exactement le défaut mesuré sur Opus, mais volontaire cette fois.
+
+**Le seul chemin dont le préfixe se répète est la conversation avec Milo, et c'est le seul qui a un
+cache.** ✅ Rien à corriger.
+
+**⚠️ Une nuance honnête** : les prompts système de `bodyStudy` et `importBloodTest` sont fixes et
+assez gros. Si un jour plusieurs personnes importaient un bilan **dans la même fenêtre de 5
+minutes**, un cache sur cette partie fixe deviendrait rentable. Ce n'est pas le régime actuel, et ça
+se saurait par le ratio lecture/écriture — d'où l'intérêt de l'instrumenter (recommandation n°4 de
+l'analyse, la seule de sa liste qui reste entièrement valable).
 
 ---
 
