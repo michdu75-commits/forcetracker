@@ -55,14 +55,40 @@ sur six questions de nature très différente :
 payé plein tarif au lieu d'être relu à 0,1×. *Le raisonnement était juste en caractères et faux en
 prix.* Cet arbitrage tient.
 
-| Zone | Cache | Taille | Contenu |
-|---|---|---|---|
-| **COMMUN** | 1 heure | **49 220** car. | les consignes — censé être partagé par TOUS |
-| **PERSONNEL** | 5 minutes | **48 042** car. | profil, séances, records, programmes, catalogue |
-| **INSTANT** | jamais | **2 300** car. | heure, récupération du jour |
+### ⚠️ CORRECTION DU 17/08 AU SOIR — mes trois zones ne s'additionnaient pas
 
-Pour un profil **sans blessure**, le bloc commun tombe à **46 466**. L'écart de 2 754 est le bloc du
-Gardien — c'est tout le sujet du §3.
+**La première version de ce tableau annonçait 49 220 + 48 042 + 2 300 = 99 562 pour un total mesuré
+à 97 732 — soit 1 830 caractères d'incohérence.** L'auteur de l'audit extérieur l'a relevé, et il a
+raison : *j'avais pris chaque ligne dans une exécution différente.* Le bloc commun venait d'un
+lancement **sans** e-mail, le total d'un lancement **avec** — or l'e-mail change la variante (voir
+ci-dessous). *Trois chiffres justes séparément et faux ensemble : c'est exactement le défaut que je
+reprochais à leurs rapports deux heures plus tôt (comparer des mesures de périmètres différents).*
+
+Voici les mesures **issues d'une seule exécution**, donc cohérentes par construction :
+
+| Compte | COMMUN (1 h) | PERSONNEL (5 min) | INSTANT (jamais) | **total** |
+|---|---|---|---|---|
+| Michel **non-admin**, gratuit | **49 280** | 45 042 | 2 485 | **96 807** ✅ |
+| Michel **non-admin**, premium | **49 280** | 45 300 | 2 485 | **97 065** ✅ |
+| Michel **admin** (son vrai compte) | **47 375** | 48 056 | 2 485 | **97 916** ✅ |
+| Profil neutre, **aucune blessure** | **46 466** | — | — | 69 434 |
+
+**Deux choses que cette mesure propre apprend, et que la précédente masquait :**
+
+① **Le statut premium ne change PAS le bloc commun** (49 280 dans les deux cas) — seulement le bloc
+personnel, de 258 caractères. C'est sain.
+
+② **L'e-mail admin, lui, le change de −1 905 caractères**, et l'écart est entièrement dans **une
+seule section** : `TA PERSONNALITÉ` passe de **4 196 à 2 291** (le passage qui explique à Milo
+comment parler de l'offre payante disparaît). C'est la 2ᵉ variante documentée en ft-v767 — elle
+existe bien, elle est juste **beaucoup plus petite que celle du profil santé**.
+
+**⚠️ Le nombre de variantes du bloc « commun » est donc le produit des deux :**
+`(admin ou non) × (combinaison de blessures)`. Michel cumule les deux, donc son bloc n'est partagé
+avec personne.
+
+Le bloc **INSTANT** varie légèrement d'une mesure à l'autre (2 300 → 2 485) : il porte l'heure
+locale. C'est normal et sans conséquence — c'est précisément la zone qui n'est jamais mise en cache.
 
 ---
 
@@ -121,6 +147,45 @@ personnelle — **mais il perdrait sa position « à prendre en compte AVANT tou
 exactement ce que **R11** exige (la sécurité prime, les règles ne s'additionnent pas, elles se
 hiérarchisent). **En cas de conflit, la Constitution l'emporte** : la solution ne peut pas être
 « le descendre ». C'est un vrai arbitrage à poser, pas un bug à corriger en trois lignes.
+
+### ⭐⭐ SAUF QUE LE DILEMME EST FAUX — et c'est l'auditeur extérieur qui l'a vu
+
+**Mon raisonnement supposait le bloc INDIVISIBLE. Il ne l'est pas.** Sa proposition, vérifiée et
+chiffrée ici : le Gardien contient **deux natures**, et une seule est personnelle.
+
+| Nature | Taille | Contenu |
+|---|---|---|
+| **Générique** — identique pour tout le monde | **1 234** car. (4 lignes) | le titre « PRIORITÉ ABSOLUE, à prendre en compte AVANT tout le reste » · « Principe : ADAPTER, jamais interdire bêtement… » · « Tu ne juges jamais un exercice bon ou mauvais… » · « Ces points sont DURABLES… consulte un professionnel » |
+| **Personnel** — les zones nommées | **1 578** car. (4 lignes) | « • protège les cervicales… » · « • protège le genou… » · « • protège l'épaule… » · « • arthrose/arthrite… » |
+
+**Ce qui descendrait n'est donc pas une règle, c'est une DONNÉE.** La phrase qui porte la priorité de
+sécurité — *« PRIORITÉ ABSOLUE, à prendre en compte AVANT tout le reste »* — reste en tête, commune
+et partagée. **R11 est respectée, et le partage de cache est rétabli : 8 profils passeraient de 7
+empreintes à 1.**
+
+**⭐ Et l'argument est plus fort qu'ils ne le disent** : le bloc personnel contient **déjà** les mêmes
+faits, 47 000 caractères plus loin —
+
+```
+⚠️ PROFIL SANTÉ — adapter les conseils en conséquence:
+- Conditions: Arthrose/Arthrite
+- Blessures: Cou/Cervicales (ancienne/guérie), Genou D…, Genou G…, Épaule D…
+- Notes: Zones fragiles : Épaule droit (déchirure partielle du supraépineux…)
+```
+
+Les zones du Gardien ne sont pas une information de plus : c'est **la même information sous une autre
+forme** (les faits ici, l'adaptation à en tirer là-bas). Les réunir au même endroit, c'est **R2** —
+une information, un propriétaire — et ça règle le cache par la même occasion.
+
+**⚠️ CE QUI RESTE À VÉRIFIER AVANT DE LE FAIRE, et ce n'est pas une question de cache** : le modèle
+lira les *règles* d'adaptation en tête, et les *zones* auxquelles les appliquer beaucoup plus loin.
+Rien ne dit que ça se comporte pareil. **C'est mesurable** — le corpus `tests/milo` contient
+justement des scénarios blessure — et **ça doit l'être avant la livraison**, parce que le risque
+porte sur la sécurité, pas sur la facture (R29 : le coût de l'erreur décide).
+
+**⚠️ ET UN CORRECTIF À FAIRE DANS TOUS LES CAS, indépendamment de cette décision** : ajouter deux
+profils avec `healthProfile` renseigné à la fixture de `tests/parcours`. Sans ça, l'angle mort du §3
+reste ouvert et la régression reviendra sans être vue.
 
 ---
 
