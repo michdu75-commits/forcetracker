@@ -65,7 +65,16 @@
 >
 > **⚠️ CE QUI RESTE À FAIRE :**
 >
-> **② SCINDER LE GARDIEN** (§3) — le bloc « commun » n'est commun que pour les gens **sans blessure**
+> **⚠️⚠️ ② SCINDER LE GARDIEN — MESURÉ LE 17/08 AU SOIR, EN ATTENTE D'UNE DÉCISION DE MICHEL.**
+> La mesure a trouvé un étage de plus que l'audit (`docs/AUDIT-CONTEXTE-MILO.md` **§12**) : le bloc
+> contient une **note sur la séance DU JOUR**, donc pour quelqu'un de blessé l'empreinte change
+> **pendant** la séance — **46 741 car. du bloc commun refacturés** dès qu'un exercice sollicitant la
+> zone entre ou sort. Deux correctifs possibles : ① sortir la note du jour du bloc de tête (peu
+> risqué, gain énorme, la règle ET les zones restent en tête) · ② scinder pour de bon.
+> ⛔ **Rien livré exprès** : les deux changent un comportement de SÉCURITÉ, et `tests/milo` est
+> déterministe — il prouve la PRÉSENCE, pas la protection. État figé par le témoin XLVI.
+>
+> **② (description d'origine de l'audit)** (§3) — le bloc « commun » n'est commun que pour les gens **sans blessure**
 > (8 profils = **7 entrées de cache**). L'auditeur extérieur a montré que mon « pas de correctif
 > évident » était faux : le bloc contient **1 234 car. génériques** (la priorité, le principe) et
 > **1 578 car. personnels** (les zones nommées). Descendre **la donnée** et garder **la règle** en

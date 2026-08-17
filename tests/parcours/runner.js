@@ -6007,6 +6007,58 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC XLVI - LE GARDIEN CASSE LE CACHE *PENDANT* LA SEANCE (17/08/2026) ==
+   /!\/!\ ETAT CONNU, NON REPARE - voir docs/AUDIT-CONTEXTE-MILO.md §12.
+   `_gardienRules()` ne produit pas que des regles : elle ajoute une NOTE sur la seance du
+   jour (`⚠️ DANS SA SEANCE DU JOUR : … sollicite ton epaule`), en croisant S.wkt avec les
+   zones fragiles. Or ce bloc est colle en TETE du contexte, avant meme « Tu es Milo ».
+   Un cache de prefixe se coupe donc a la position ~1 487 des qu'un exercice sollicitant la
+   zone entre ou sort de la seance : mesure du 17/08 = 46 741 caracteres du bloc COMMUN
+   refactures, pendant une seance, c'est-a-dire quand la personne ecrit le plus a Milo.
+   /!\ CE TEMOIN NE REPARE RIEN. Il FIGE l'etat mesure pour que le jour ou `todayNote` sera
+   sorti du bloc de tete (ou le Gardien scinde), le changement soit VISIBLE (R30).
+   ⛔ ET IL NE FAUT PAS « REPARER » CA A LA LEGERE : deplacer les zones nommees loin de la
+   regle est un changement de comportement de SECURITE, qu'aucun test local ne sait verifier
+   (tests/milo est deterministe : il prouve la PRESENCE, pas la protection). R29. */
+{
+  const gard=async(sante, exs)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_name:'Alex',ft4_health:JSON.stringify(sante)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+    const r=await pg.evaluate((ex)=>{
+      if(typeof _gardienRules!=='function') return {err:'_gardienRules absent'};
+      if(ex){ if(!S.wkt) startWorkout();
+        S.wkt.exs=ex.map(n=>({name:n,sets:[{kg:60,reps:8,done:true,type:'N'}]})); persist(); }
+      const g=_gardienRules();
+      const ctx=buildCoachContext();
+      return {g, commun:ctx.slice(0, ctx.indexOf('PROFIL ATHLÈTE:')),
+              note:/DANS SA SÉANCE DU JOUR/.test(g)};
+    }, exs||null);
+    await cx.close(); return r;
+  };
+  const EPAULE={conditions:[],injuries:[{zone:'epaule',side:'D',status:'active'}],notes:''};
+  const neutre=await gard(EPAULE, ['Squat à la Barre','Curl Haltères']);
+  const epauleX=await gard(EPAULE, ['Développé Militaire','Développé Couché']);
+
+  console.log('\n-- XLVI. Le Gardien casse le cache PENDANT la seance (etat connu) --');
+  if(neutre.err||epauleX.err){ t('X le bloc tourne', false, neutre.err||epauleX.err); }
+  else{
+    t('/!\\ une seance qui ne touche pas la zone fragile ne declenche aucune note du jour',
+      neutre.note===false);
+    t('/!\\ une seance qui la sollicite en declenche une (c\'est le comportement VOULU)',
+      epauleX.note===true);
+    let i=0; const A=neutre.commun, B=epauleX.commun;
+    while(i<Math.min(A.length,B.length)&&A[i]===B[i]) i++;
+    t('⭐⭐ ETAT CONNU, NON REPARE : la note du jour est en TETE, donc changer d\'exercice'
+      +' refacture presque tout le bloc COMMUN. A RETOURNER le jour ou elle descendra.',
+      A!==B && i<3000,
+      'coupure a '+i+' sur '+A.length+' -> '+(A.length-i)+' car. du bloc commun refactures');
+    t('/!\\ la REGLE generique, elle, est bien la dans les deux cas (c\'est elle qui doit rester en tete)',
+      /ADAPTER, jamais interdire/.test(neutre.g) && /ADAPTER, jamais interdire/.test(epauleX.g));
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

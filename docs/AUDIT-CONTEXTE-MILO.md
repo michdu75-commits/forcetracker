@@ -714,3 +714,81 @@ message hors entraînement.**
 
 6. **Question ouverte, non tranchée ici :** le bloc admin crée une **seconde empreinte de cache**.
    Sur peu d'utilisateurs, ça peut coûter plus cher que ce qu'il économise. Mesurable.
+
+
+---
+
+## 12. ⭐⭐ LE GARDIEN CASSE LE CACHE *PENDANT* LA SÉANCE — mesuré le 17/08 au soir
+
+> **Ajouté après ft-v896.** Le §3 décrivait le Gardien comme produisant *une empreinte de cache par
+> combinaison de blessures* — une variante par PERSONNE, donc stable dans le temps. **C'est plus grave
+> que ça**, et la mesure le montre : pour quelqu'un de blessé, l'empreinte change **au cours d'une même
+> séance**, à chaque fois qu'un exercice sollicitant sa zone fragile entre ou sort de la séance du jour.
+>
+> ⚠️ *Ce n'est pas une correction du §3, c'est un étage de plus : les deux effets se multiplient.*
+
+### Ce qui a été mesuré (`_gardienRules()` exécutée pour de vrai)
+
+| Profil santé | Bloc du Gardien | Bloc « commun » |
+|---|---:|---:|
+| sans blessure | **0** (Gardien silencieux) | 46 466 |
+| épaule droite | 1 762 | 48 228 |
+| genou gauche | 1 771 | 48 237 |
+| 3 blessures + arthrose | 2 769 | 49 235 |
+
+**4 profils → 4 empreintes distinctes**, ce qui confirme le §3.
+
+### ⭐⭐ Le mécanisme que le §3 n'avait pas vu : `todayNote`
+
+`_gardienRules()` ne construit pas que des règles. Elle ajoute aussi une **note sur la séance DU JOUR** —
+elle croise les exercices de `S.wkt` avec les zones fragiles :
+
+> `⚠️ DANS SA SÉANCE DU JOUR : Développé Militaire → sollicite ton épaule. Propose d'ALLÉGER…`
+
+**Mesuré sur un même profil (épaule), deux séances différentes :**
+
+| Séance en cours | Bloc du Gardien | Note du jour |
+|---|---:|---|
+| Squat + Curl haltères | 1 762 | absente |
+| Développé militaire + DC | 1 945 | **présente** |
+
+→ **première différence à la position 1 487**, donc **46 741 caractères du bloc « commun » refacturés** —
+c'est-à-dire *la quasi-totalité de la partie censée être mise en cache 1 heure et partagée par tout le monde*.
+
+**⚠️ Et ça se produit au pire moment** : pendant une séance, quand la personne ajoute ou retire des
+exercices — c'est-à-dire exactement quand elle écrit le plus à Milo.
+
+### La part générique / la part personnelle, remesurée
+
+| | audit du 17/08 (§3) | **mesuré** |
+|---|---:|---:|
+| générique (la RÈGLE) | 1 234 | **1 235** ✅ |
+| personnel (les ZONES) | 1 578 | **1 533** (profil à 4 zones) |
+
+Le §3 était juste. ⚠️ *Nuance utile pour la suite* : avec **une seule** blessure la part personnelle
+tombe à **526 caractères** — le coût dépend fortement du profil, il ne faut pas raisonner sur un cas.
+
+### ⛔ POURQUOI RIEN N'A ÉTÉ LIVRÉ CE SOIR
+
+Le correctif est clair et il y en a même **deux**, de risques très différents :
+
+1. **Sortir `todayNote` du bloc de tête** et le ranger avec la séance en cours (tout en bas, depuis
+   ft-v896). Ce n'est pas une règle de sécurité, c'est une **observation sur la séance du jour** — sa
+   place naturelle est à côté de la séance, pas avant « Tu es Milo ». Gain : la variation *intra-séance*
+   disparaît entièrement.
+2. **Scinder le Gardien** (le §3) : la règle générique reste en tête, les zones nommées descendent
+   dans le bloc personnel, où le `⚠️ PROFIL SANTÉ` porte **déjà** les mêmes faits (R2).
+
+**Les deux touchent au comportement de sécurité, et aucun outil local ne peut le vérifier.**
+`tests/milo` est **déterministe** : il prouve que l'information est *présente*, jamais que Milo
+*protège* toujours aussi bien quand la zone fragile est nommée 47 000 caractères après la règle.
+**R29 — le droit de deviner dépend du coût de l'erreur** : ici l'erreur se paierait sur l'épaule de
+quelqu'un, pas sur une facture. Et la Constitution l'emporte sur les règles d'architecture.
+
+**👉 À trancher par Michel**, avec deux options honnêtes : livrer d'abord le point **1** seul (moins
+risqué, gain déjà énorme, la règle ET les zones restent en tête), ou faire les deux d'un coup après un
+A/B sur des cas réels de blessure.
+
+**🧊 En attendant, l'état mesuré est FIGÉ par un test** (`tests/parcours`, bloc XLVI) : le jour où l'un
+des deux correctifs sera livré, le témoin passera au rouge et forcera à relire cette page — au lieu de
+laisser le changement passer inaperçu (R30).
