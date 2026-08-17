@@ -44,6 +44,7 @@
     "neck",
     "nextPlanned",
     "nutritionPhase",
+    "programmes",
     "prs",
     "registre",
     "sessions",
@@ -56,9 +57,7 @@
     "wkt",
     "workType"
   ],
-  "manquant": {
-    "programmes": "Tes programmes enregistrés. Milo ne connaît pas ton planning quand tu lui demandes quoi faire."
-  },
+  "manquant": {},
   "exclu": {
     "a11y": "réglage d'accessibilité, aucun intérêt pour le coaching",
     "anonId": "identifiant technique",

@@ -2622,6 +2622,43 @@ ${(()=>{
   }
   return '\n📍 ÉTAT DU JOUR (AUJOURD\'HUI, ponctuel — ne définit PAS la personne, ne vaut que pour aujourd\'hui) : '+parts.join(' · ')+'.\n→ Adapte tes conseils DU JOUR : fatigue → allège/soutiens ; en forme → tu peux pousser ; une DOULEUR du jour → protège cette zone EN PRIORITÉ (le Gardien en tient déjà compte), allège ou propose une alternative. ⚠️ LE RESSENTI PRIME toujours sur les chiffres.'+acc+'\n';
 })()}
+${(()=>{
+  /* 📋 SES PROGRAMMES ENREGISTRÉS (ft-v889) — LE DERNIER TROU DU GARDE-FOU DES DONNÉES
+     `programmes` était le dernier champ classé « manquant » par `tests/donnees` : la personne
+     demande *« je fais quoi aujourd'hui ? »* et Milo, qui ne voyait pas son planning, inventait
+     une séance à côté de celle qu'elle avait justement enregistrée. R4 : l'information existe,
+     elle n'atteignait pas la donnée envoyée.
+     ⚠️⚠️ C'EST DU PLANIFIÉ, PAS DU RÉALISÉ (`docs/MODELE-METIER.md`, distinction fondatrice).
+     Un programme dit ce qui est PRÉVU ; l'historique dit ce qui a été FAIT. Sans cette phrase,
+     Milo féliciterait quelqu'un pour une séance qu'il n'a pas faite — et ce serait pire qu'un
+     silence, parce que ça se présente comme un fait.
+     ⚠️ ON N'ENFERME PERSONNE DEDANS : c'est un repère, pas un contrat. Si elle demande autre
+     chose, il suit — c'est sa séance (Constitution : la personne d'abord).
+     ⚠️ ET C'EST BORNÉ, EXPRÈS. Un programme de 12 semaines × 5 jours × 8 exercices, envoyé en
+     entier à chaque message, coûterait plus qu'il ne rapporte : 3 programmes, 6 jours, 10
+     exercices, et on DIT qu'on a coupé plutôt que de laisser croire que c'est tout (R29). */
+  const progs=(S.programmes||[]).filter(p=>p&&p.name);
+  if(!progs.length) return '';
+  const nSet=x=>{const t=(x.sets||[]).filter(z=>z&&z.type!=='É'&&z.type!=='W');
+    if(!t.length) return '';
+    const r=t[0]&&(t[0].maxi?'max':(+t[0].reps||0));
+    return ' '+t.length+'×'+r;};
+  const exList=(exs,max)=>(exs||[]).slice(0,max).map(e=>(e&&e.name?e.name+nSet(e):'')).filter(Boolean).join(' · ')
+    + (((exs||[]).length>max)?' · …+'+((exs||[]).length-max):'');
+  const L=progs.slice(-3).map(p=>{
+    if(Array.isArray(p.days)&&p.days.length){
+      const d=p.days.slice(0,6).map((j,i)=>'   · '+(j&&j.name?j.name:'Jour '+(i+1))+' : '+exList(j&&j.exs,10));
+      return '- « '+p.name+' »'+(p.weeks?' ('+p.weeks+' semaines)':'')+', '+p.days.length+' jours :\n'
+        +d.join('\n')+(p.days.length>6?'\n   · …et '+(p.days.length-6)+' autres jours':'');
+    }
+    return '- « '+p.name+' » : '+exList(p.exs,10);
+  });
+  return '\nSES PROGRAMMES ENREGISTRÉS DANS L\'APP (ce qui est PLANIFIÉ) :\n'+L.join('\n')
+    +(progs.length>3?'\n(+'+(progs.length-3)+' autre(s) programme(s) non détaillé(s))':'')
+    +'\n→ Quand elle demande QUOI FAIRE aujourd\'hui, pars de là : propose le jour qui vient, en le NOMMANT, plutôt que d\'inventer une séance à côté de son planning.'
+    +'\n⚠️ C\'est du PLANIFIÉ, pas du RÉALISÉ : ne dis JAMAIS qu\'elle a fait ces séances. Ce qu\'elle a réellement fait est dans son historique, plus haut.'
+    +'\n⚠️ Ce n\'est pas un contrat : si elle veut autre chose aujourd\'hui, tu la suis sans discuter et tu dis simplement en quoi ça sort de son programme.\n';
+})()}
 RECORDS PERSONNELS (1RM estimés):
 ${prsText}${_dernierPR}
 

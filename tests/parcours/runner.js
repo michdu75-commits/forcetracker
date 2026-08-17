@@ -5437,6 +5437,81 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await c38.close();
 }
 
+/* == BLOC XXXIX - MILO CONNAIT ENFIN TES PROGRAMMES (17/08/2026) ==
+   `programmes` etait le DERNIER champ classe « manquant » par le garde-fou des donnees, depuis
+   sa creation (28/07). La personne demande « je fais quoi aujourd'hui ? » et Milo, qui ne voyait
+   pas son planning, inventait une seance a cote de celle qu'elle avait justement enregistree.
+   /!\/!\ LE TEMOIN QUI COMPTE : c'est du PLANIFIE, pas du REALISE (docs/MODELE-METIER.md). Sans
+   cette distinction Milo feliciterait quelqu'un pour une seance qu'il n'a pas faite — et ce
+   serait pire qu'un silence, parce que ca se presente comme un fait. */
+{
+  const c39=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p39=await c39.newPage();
+  await p39.addInitScript(seedScript({}));
+  await p39.goto('http://localhost:'+PORT+'/index.html'); await p39.waitForTimeout(2200);
+  const P=await p39.evaluate(()=>{
+   try{
+    const o={};
+    const S1=(kg,reps,type)=>({kg:kg,reps:reps,type:type||'N'});
+    // (0) aucun programme => aucune ligne parasite
+    S.programmes=[]; o.vide=/PROGRAMMES ENREGISTRÉS/.test(buildCoachContext('je fais quoi ?'));
+    // (1) un programme SIMPLE (une liste d'exercices)
+    S.programmes=[{id:'p1',name:'Push lourd',exs:[
+      {name:'Développé Couché',sets:[S1(60,5,'É'),S1(100,5),S1(100,5),S1(100,5)]},
+      {name:'Développé Militaire',sets:[S1(60,8),S1(60,8)]}]}];
+    const c1=buildCoachContext('je fais quoi aujourd\'hui ?');
+    o.simple = /Push lourd/.test(c1) && /Développé Couché 3×5/.test(c1)
+            && /Développé Militaire 2×8/.test(c1);
+    o.echauffPasCompte = !/Développé Couché 4×/.test(c1);   // les paliers ne sont pas des series de travail
+    o.planifie = /PLANIFIÉ/.test(c1) && /ne dis JAMAIS qu'elle a fait ces séances/.test(c1);
+    o.pasUnContrat = /Ce n'est pas un contrat/.test(c1);
+    // (2) un programme MULTI-JOURS (import PDF)
+    S.programmes=[{id:'p2',name:'Bloc force',weeks:8,days:[
+      {name:'Lundi — Bas',exs:[{name:'Squat Barre',sets:[S1(120,3),S1(120,3)]}]},
+      {name:'Mercredi — Haut',exs:[{name:'Développé Couché',sets:[S1(100,5)]}]}]}];
+    const c2=buildCoachContext('je fais quoi ?');
+    o.jours = /Bloc force/.test(c2) && /8 semaines/.test(c2) && /2 jours/.test(c2)
+           && /Lundi — Bas/.test(c2) && /Squat Barre 2×3/.test(c2);
+    // (3) BORNE : un gros programme ne part pas en entier
+    const gros={id:'p3',name:'Gros',days:[]};
+    for(let j=0;j<12;j++){ const exs=[]; for(let e=0;e<20;e++) exs.push({name:'Ex'+e,sets:[S1(50,10)]});
+      gros.days.push({name:'J'+j,exs:exs}); }
+    S.programmes=[gros];
+    const c3=buildCoachContext('je fais quoi ?');
+    const i3=c3.indexOf('PROGRAMMES ENREGISTRÉS'), f3=c3.indexOf('RECORDS PERSONNELS');
+    o.tailleBornee=(f3>i3)?(f3-i3):99999;
+    o.ditQuIlACoupe = /…et 6 autres jours/.test(c3) && /…\+10/.test(c3);
+    // (4) au plus 3 programmes, et on le DIT
+    S.programmes=[{name:'A',exs:[]},{name:'B',exs:[]},{name:'C',exs:[]},{name:'D',exs:[]},{name:'E',exs:[]}];
+    const c4=buildCoachContext('je fais quoi ?');
+    o.troisMax = /\+2 autre\(s\) programme/.test(c4) && !/« A »/.test(c4) && /« E »/.test(c4);
+    S.programmes=[];
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XXXIX. Milo connait enfin tes programmes (le dernier trou) --');
+  if(P.erreur){ t('X le contexte se construit', false, P.erreur); }
+  else{
+    t('⭐⭐ LE DERNIER TROU EST COMBLE : le programme atteint Milo, avec ses series de travail',
+      P.simple===true);
+    t('/!\\ ... et les paliers d\'echauffement ne sont pas comptes comme des series de travail',
+      P.echauffPasCompte===true);
+    t('⭐⭐ PLANIFIE ≠ REALISE : interdiction explicite de dire qu\'elle a FAIT ces seances',
+      P.planifie===true);
+    t('/!\\ ... et ce n\'est pas un contrat : si elle veut autre chose, il la suit',
+      P.pasUnContrat===true);
+    t('** un programme MULTI-JOURS passe avec ses jours nommes', P.jours===true);
+    t('/!\\ BORNE : un programme de 12 jours × 20 exercices ne part pas en entier (< 2 500 car.)',
+      P.tailleBornee<2500, P.tailleBornee+' caracteres');
+    t('/!\\ ... et l\'app DIT qu\'elle a coupe, au lieu de laisser croire que c\'est tout (R29)',
+      P.ditQuIlACoupe===true);
+    t('/!\\ au plus 3 programmes detailles, les plus recents, et le nombre restant est annonce',
+      P.troisMax===true);
+    t('/!\\ aucun programme => aucune ligne parasite', P.vide===false);
+  }
+  await c39.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
