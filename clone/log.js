@@ -1364,7 +1364,66 @@ function _repsPalier(kg, kgTravail){
   if(pct >= 0.60) return 3;
   return 5;
 }
-function _monteeEnCharge(kgTravail, pas){
+/* 🎯 UNE CHARGE QU'ELLE A DÉJÀ CHARGÉE EXISTE FORCÉMENT (17/08/2026)
+   Michel, le 15/08 : *« dans une salle c'est chiant de trouver les poids de 1,25, je perds du
+   temps de fou »*, et le 16/08 sur son tirage à la poulie, des charges en 0,5 kg qui ne tombent
+   sur aucun cran. Le pas par MATÉRIEL (`_pasCharge`) a réglé les haltères et les barres ; il
+   suppose 5 kg pour toutes les machines, et beaucoup de piles ne sont pas sur des 5.
+   👉 CE QU'ON FAIT : quand l'app FABRIQUE un palier, elle regarde si la personne a déjà chargé
+   une valeur proche (±8 %) sur CET exercice, et prend celle-là. *Une charge qu'elle a déjà mise
+   existe forcément sur cette machine* — c'est la preuve la plus solide qu'on puisse avoir, et
+   elle ne demande aucune supposition.
+
+   ⛔⛔ L'IDÉE ÉVIDENTE A ÉTÉ CONSTRUITE, MESURÉE SUR SES 31 SÉANCES, ET JETÉE (R30).
+   Elle consistait à DÉDUIRE le cran de la machine (le plus petit écart entre deux charges déjà
+   faites, validé si toutes les charges en sont des multiples). Sur ses vraies données elle
+   répond **0,5 kg** pour le tirage poulie, **0,5** pour l'abduction, **1,0** pour le pec deck et
+   **10** pour la presse à cuisses — c'est-à-dire du bruit de saisie manuelle pris pour une
+   grille. *Une inférence fausse aurait produit des charges aussi impossibles qu'aujourd'hui,
+   mais avec l'assurance en plus* (R29 : le droit de deviner dépend du coût de l'erreur, et ici
+   l'erreur se paie devant le râtelier). On ne devine donc RIEN : on ne fait que reconnaître.
+
+   ⚠️ ET LE RECALAGE NE PASSE QUE S'IL RESTE VALIDE : la montée recalée doit toujours satisfaire
+   `_monteeSuffisante`, sinon on garde l'originale. Sans ce contrôle, un décalage de 8 % pourrait
+   creuser un trou que l'app REPROCHERAIT ensuite à Milo — l'app produirait une montée que son
+   propre contrôleur juge mauvaise, ce qui est arrivé le 10/08 (R2). */
+let _chargesVues=null, _chargesVuesN=-1;
+function _chargesDejaFaites(nom){
+  const n=(S.sessions||[]).length;
+  if(_chargesVues===null || _chargesVuesN!==n){
+    _chargesVues={}; _chargesVuesN=n;
+    (S.sessions||[]).forEach(function(se){ (se&&se.exs||[]).forEach(function(e){
+      if(!e||!e.name) return;
+      const a=_chargesVues[e.name]||(_chargesVues[e.name]=[]);
+      (e.sets||[]).forEach(function(x){ const k=+((x||{}).kg)||0; if(k>0 && a.indexOf(k)<0) a.push(k); });
+    });});
+    for(const k in _chargesVues) _chargesVues[k].sort(function(x,y){return x-y;});
+  }
+  return _chargesVues[nom]||[];
+}
+function _snapCharge(nom, kg){
+  const k=+kg||0; if(!(k>0)) return kg;
+  const vues=_chargesDejaFaites(nom);
+  if(vues.indexOf(k)>=0 || vues.length<3) return kg;
+  let best=null, d=0.08*k;
+  vues.forEach(function(c){ const e=Math.abs(c-k); if(e<=d){ d=e; best=c; } });
+  return best===null ? kg : best;
+}
+/** Recale une montée sur les charges déjà faites — et ANNULE tout si le contrôleur n'est plus content. */
+function _snapMontee(montee, nom, kgTravail){
+  if(!montee||!montee.length) return montee;
+  const out=montee.map(function(sx){
+    if(sx && sx._fixe) return sx;                       // ce que Milo a écrit ne se recale pas
+    const k=_snapCharge(nom, sx.kg);
+    return (k===sx.kg) ? sx : Object.assign({}, sx, {kg:k});
+  });
+  for(let i=0;i<out.length;i++){
+    if(!((+out[i].kg||0)>0) || (+out[i].kg||0)>=kgTravail) return montee;   // jamais au-dessus du travail
+    if(i && (+out[i].kg||0)<=(+out[i-1].kg||0)) return montee;              // toujours croissant
+  }
+  return _monteeSuffisante(out, kgTravail) ? out : montee;
+}
+function _monteeEnCharge(kgTravail, pas, nom){
   pas = pas || 2.5;
   const T = +kgTravail || 0;
   if(!(T >= _MONTEE_SEUIL_KG)) return [];
@@ -1394,7 +1453,7 @@ function _monteeEnCharge(kgTravail, pas){
       if(out.length && kg <= out[out.length-1].kg) continue; // jamais deux paliers identiques
       out.push({kg:kg, reps:_repsPalier(kg, T), type:'É'});
     }
-    if(out.length && _monteeSuffisante(out, T)) return out;
+    if(out.length && _monteeSuffisante(out, T)) return nom ? _snapMontee(out, nom, T) : out;
   }
   return [];   // aucun découpage ne satisfait la règle → on se tait plutôt que de proposer faux
 }
@@ -1466,12 +1525,13 @@ function _monteeDefauts(echauffements, kgTravail){
  * L'INVARIANT, tenu par un témoin permanent : **le nombre de séries ne DIMINUE jamais.**
  * On insère les paliers manquants dans l'échelle de Milo, on n'en retire aucun.
  */
-function _monteeCompletee(echauffements, kgTravail, pas){
+function _monteeCompletee(echauffements, kgTravail, pas, nom){
   pas = pas || 2.5;
   const T = +kgTravail || 0;
   const src = (echauffements||[]).filter(s=>s && (+s.kg||0) > 0 && (+s.kg||0) < T);
-  if(!src.length) return _monteeEnCharge(T, pas);            // rien à préserver → barème complet (même pas)
-  const out = src.slice().sort((a,b)=>(+a.kg||0)-(+b.kg||0));
+  if(!src.length) return _monteeEnCharge(T, pas, nom);       // rien à préserver → barème complet (même pas)
+  // ⚠️ Les paliers de Milo sont marqués FIXES : le recalage ne touche que ce que l'app fabrique.
+  const out = src.slice().sort((a,b)=>(+a.kg||0)-(+b.kg||0)).map(x=>Object.assign({}, x, {_fixe:true}));
   const ARR = k => Math.floor(k/pas)*pas;   // vers le BAS (voir _pasCharge)
   // ⚠️ Les répétitions d'un palier inséré viennent de sa CHARGE (`_repsPalier`), jamais d'un
   // forfait ni de ses voisins — voir la démonstration au-dessus de `_repsPalier`. Et on ne
@@ -1505,7 +1565,9 @@ function _monteeCompletee(echauffements, kgTravail, pas){
   for(let i=1;i<out.length;i++){
     if(out[i]._add && (+out[i].reps||0) > (+out[i-1].reps||0)) out[i].reps = +out[i-1].reps || out[i].reps;
   }
-  return out;
+  const fin = nom ? _snapMontee(out, nom, T) : out;
+  fin.forEach(x=>{ delete x._fixe; });
+  return fin;
 }
 
 /* 🔥 ON NE S'ÉCHAUFFE PAS CINQ FOIS DANS LA MÊME SÉANCE (15/08/2026)
@@ -1588,14 +1650,14 @@ function _completerMonteeEnCharge(sess){
          là les sources sont unanimes. On ne raccourcit pas ce qui est justifié. */
       let montee;
       if(premier){
-        montee = _monteeCompletee(ech, kgT, _pasCharge(ex.name));
+        montee = _monteeCompletee(ech, kgT, _pasCharge(ex.name), ex.name);
       }else if(ech.length){
         return;                                             // déjà chaud + déjà des paliers → on n'ajoute rien
       }else{
         // ⚠️ On reprend le DERNIER palier du générateur, pas un pourcentage inventé à côté : c'est
         // la même règle, donc l'écart avec la charge de travail reste celui que l'app juge sûr
         // (le contrôle du trou l'a déjà validé pour la montée complète) — R2.
-        const complet = _monteeEnCharge(kgT, _pasCharge(ex.name));
+        const complet = _monteeEnCharge(kgT, _pasCharge(ex.name), ex.name);
         if(!complet.length) return;
         const haut = complet[complet.length-1];
         montee = [{kg:haut.kg, reps:2, type:'É', _add:true}];

@@ -5512,6 +5512,102 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await c39.close();
 }
 
+/* == BLOC XL - UNE CHARGE QU'ELLE A DEJA CHARGEE EXISTE FORCEMENT (17/08/2026) ==
+   Michel, le 15/08 : « dans une salle c'est chiant de trouver les poids de 1,25, je perds du
+   temps de fou », et le 16/08 des charges en 0,5 kg sur son tirage a la poulie. Le pas par
+   MATERIEL suppose 5 kg pour toutes les machines ; beaucoup de piles ne sont pas sur des 5.
+   /!\/!\ ON NE DEVINE PAS LA GRILLE — l'inference a ete construite, mesuree sur ses 31 seances
+   et JETEE : elle repondait 0,5 kg pour le tirage et 10 kg pour la presse (du bruit de saisie
+   pris pour une grille). On ne fait que RECONNAITRE une charge deja mise. */
+{
+  const c40=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p40=await c40.newPage();
+  await p40.addInitScript(seedScript({}));
+  await p40.goto('http://localhost:'+PORT+'/index.html'); await p40.waitForTimeout(2200);
+  const C=await p40.evaluate(()=>{
+   try{
+    /* ⚠️ CE BLOC DOIT S'EXECUTER SUR L'ANCIEN CODE AUSSI, sinon le controle negatif ne mesure
+       RIEN. `_monteeEnCharge` existe des deux cotes (il ignore simplement le 3e argument
+       la-bas) : c'est lui qui porte le temoin de COMPORTEMENT. `_snapCharge` est neuf, il est
+       donc appele sous garde. */
+    const neuf=(typeof _snapCharge==='function');
+    const o={neuf:neuf};
+    const snap=(n,k)=>neuf?_snapCharge(n,k):k;
+    const S1=(kg,reps,type)=>({kg:kg,reps:reps,type:type||'N'});
+    const hist=(nom,charges)=>{ S.sessions=charges.map((k,i)=>({date:'2026-07-'+String(i+1).padStart(2,'0'),
+      exs:[{name:nom,sets:[{kg:k,reps:8,done:true,type:'N'}]}]})); };
+    // (1) LE CAS REEL : sa poulie haute tourne sur des demi-kilos, pas sur des 5
+    hist('Tirage Poulie Haute (Lat Pulldown)',[26,35.5,45,49.5,54,61,63.5]);
+    o.snap50=snap('Tirage Poulie Haute (Lat Pulldown)',50);   // 49,5 est a 1 %
+    o.snap45=snap('Tirage Poulie Haute (Lat Pulldown)',45);   // deja exacte
+    o.snap80=snap('Tirage Poulie Haute (Lat Pulldown)',80);   // rien de proche => inchangee
+    // (2) ON NE DEVINE PAS SUR 2 CHARGES : trop peu d'historique, aucun recalage
+    hist('Machine Inconnue',[40,60]);
+    o.peuHisto=snap('Machine Inconnue',50);
+    /* (2 bis) LE TEMOIN QUI TOURNE DES DEUX COTES : sa VRAIE poulie haute, qui tourne sur des
+       demi-kilos. L'ancien code fabrique un palier a 50 kg alors qu'il a deja charge 49,5. */
+    hist('Tirage Poulie Haute (Lat Pulldown)',[26,35.5,45,49.5,54,61,63.5]);
+    const vuesLP=[26,35.5,45,49.5,54,61,63.5];
+    const mLP=_monteeEnCharge(68,_pasCharge('Tirage Poulie Haute (Lat Pulldown)'),
+                              'Tirage Poulie Haute (Lat Pulldown)');
+    o.lp=mLP.map(x=>x.kg);
+    o.lpPropre=mLP.every(x=>vuesLP.indexOf(x.kg)>=0 || !vuesLP.some(c=>Math.abs(c-x.kg)<=0.08*x.kg));
+    // (3) UNE MONTEE ENTIERE SE RECALE... et reste valide
+    hist('Rowing Haltère (Tirage Horizontal)',[20,28,36,44,52,60,64]);
+    const m=_monteeEnCharge(64, _pasCharge('Rowing Haltère (Tirage Horizontal)'),
+                            'Rowing Haltère (Tirage Horizontal)');
+    o.montee=m.map(x=>x.kg);
+    o.monteeValide=_monteeSuffisante(m,64);
+    /* ⚠️ LE VRAI CONTRAT N'EST PAS « tout est recale » — c'est « rien n'est laisse a cote d'une
+       charge connue ». Mon 1er temoin exigeait que TOUS les paliers soient connus ; il rougissait
+       sur 40 kg, qui est a 10 % de 36 comme de 44, donc HORS tolerance. Le code avait raison de
+       ne pas y toucher : recaler de 10 % pour faire joli, ce serait deviner (R29). */
+    const vues=[20,28,36,44,52,60,64];
+    o.toutesConnues=m.every(x=>vues.indexOf(x.kg)>=0 || !vues.some(c=>Math.abs(c-x.kg)<=0.08*x.kg));
+    o.auMoinsUn=m.some(x=>vues.indexOf(x.kg)>=0);
+    // (4) SANS NOM, RIEN NE CHANGE (le bareme pur reste le bareme pur)
+    o.sansNom=_monteeEnCharge(64,4).map(x=>x.kg);
+    // (5) LE RECALAGE NE TOUCHE PAS AUX PALIERS DE MILO
+    hist('Squat Barre',[60,72,84,96,108,120]);
+    const s5={label:'t',exs:[{name:'Squat Barre',sets:[
+      S1(55,5,'É'),S1(100,1,'É'),S1(120,3),S1(120,3)]}]};
+    _completerMonteeEnCharge(s5);
+    const e5=s5.exs[0].sets.filter(x=>x.type==='É').map(x=>x.kg);
+    o.miloIntact = e5.indexOf(55)>=0 && e5.indexOf(100)>=0;
+    o.appRecale  = e5.some(k=>[72,84,96,108].indexOf(k)>=0);
+    // (6) ET IL S'ANNULE S'IL CASSE LA MONTEE : une charge « proche » au-dessus du travail
+    hist('Test Limite',[30,40,50,59.9,60,61,62]);
+    const m6=_monteeEnCharge(60,5,'Test Limite');
+    o.jamaisAuDessus = m6.every(x=>x.kg<60);
+    o.croissant = m6.every((x,i)=>i===0||x.kg>m6[i-1].kg);
+    S.sessions=[];
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XL. Une charge deja chargee existe forcement --');
+  if(C.erreur){ t('X le recalage existe', false, C.erreur); }
+  else{
+    t('⭐⭐ SA VRAIE POULIE HAUTE : aucun palier fabrique ne tombe a cote d\'une charge deja mise',
+      C.lpPropre===true, JSON.stringify(C.lp)+' (il a deja charge 26 · 35,5 · 45 · 49,5 · 54 · 61 · 63,5)');
+    t('** le recalage existe', C.neuf===true);
+    t('⭐⭐ 50 kg fabrique par l\'app devient 49,5 — une charge qu\'il a deja mise',
+      C.snap50===49.5, 'recu '+C.snap50);
+    t('** une charge deja exacte ne bouge pas', C.snap45===45, 'recu '+C.snap45);
+    t('/!\\ ... et rien de proche => on ne touche a RIEN (on ne devine pas)', C.snap80===80, 'recu '+C.snap80);
+    t('/!\\/!\\ MOINS DE 3 CHARGES CONNUES => AUCUN RECALAGE (R29)', C.peuHisto===50, 'recu '+C.peuHisto);
+    t('⭐⭐ aucun palier ne reste a cote d\'une charge deja chargee (et on ne force rien au-dela de 8 %)',
+      C.toutesConnues===true && C.auMoinsUn===true, JSON.stringify(C.montee));
+    t('/!\\/!\\ ... et elle passe TOUJOURS le controleur de l\'app (sinon on garde l\'originale - R2)',
+      C.monteeValide===true);
+    t('/!\\ sans nom d\'exercice, le bareme pur est inchange', Array.isArray(C.sansNom)&&C.sansNom.length>0);
+    t('⭐ LE RECALAGE NE TOUCHE PAS AUX PALIERS DE MILO, seulement a ceux de l\'app',
+      C.miloIntact===true && C.appRecale===true);
+    t('/!\\ jamais au-dessus de la charge de travail, toujours croissant',
+      C.jamaisAuDessus===true && C.croissant===true);
+  }
+  await c40.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
