@@ -4607,18 +4607,17 @@ function exportData(){
   const ov=document.getElementById('ov-export-choix');
   if(n>0 && ov){
     const lbl=document.getElementById('exp-conv-lbl');
-    if(lbl) lbl.textContent=n+' discussion'+(n>1?'s':'')+' avec Milo';
-    const cb=document.getElementById('exp-conv-cb'); if(cb) cb.checked=false;   // défaut : DEHORS
+    if(lbl) lbl.textContent='avec mes '+n+' discussion'+(n>1?'s':'');
     ov.classList.add('open');
     return;
   }
   _ecrireExport(false);
 }
-function lancerExport(){
-  const cb=document.getElementById('exp-conv-cb');
-  const avec=!!(cb&&cb.checked);
+/** ⚠️ Le choix est porté par le BOUTON qu'on touche, plus par un état coché quelque part :
+ *  il n'y a donc aucune façon de se tromper sur ce qui va partir. */
+function lancerExport(avecConversations){
   closeExportChoix();
-  _ecrireExport(avec);
+  _ecrireExport(!!avecConversations);
 }
 function closeExportChoix(){
   const ov=document.getElementById('ov-export-choix'); if(ov) ov.classList.remove('open');

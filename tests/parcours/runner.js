@@ -5665,10 +5665,15 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.fuiteSilencieuse = (cap!==null) && cap.indexOf(PHRASE)>=0;
     if(!neuf){ debrancher(); return o; }
     o.demande=ouvert(); o.rienEcritAvantChoix=(cap===null);
-    o.caseDecochee=!document.getElementById('exp-conv-cb').checked;
+    /* ⚠️ DEUX BOUTONS, PLUS DE CASE A COCHER (ft-v893). Michel devant l'ecran : « c'est
+       cliquable ? » — elle l'etait, mais s'il faut poser la question la reponse est deja non.
+       C'etait le SEUL input checkbox de toute l'app. Ce temoin fige le motif : ce qu'on TOUCHE
+       est ce qui se passe, il n'y a aucun etat intermediaire ou se tromper. */
+    o.deuxBoutons=document.querySelectorAll('#ov-export-choix button').length>=3;
+    o.pasDeCase=!document.getElementById('exp-conv-cb');
     o.libelle=(document.getElementById('exp-conv-lbl')||{}).textContent||'';
-    // (2) SANS COCHER : tout est la, SAUF les conversations — et le fichier le DIT
-    lancerExport(); await new Promise(r=>setTimeout(r,120));
+    // (2) LE BOUTON SIMPLE : tout est la, SAUF les conversations — et le fichier le DIT
+    lancerExport(false); await new Promise(r=>setTimeout(r,120));
     const sans=JSON.parse(cap||'{}'); const ds=sans.donnees||{};
     o.ferme=!ouvert();
     const attendus=['bodyScans','bloodTests','programmes','healthProfile','registre','adn',
@@ -5682,10 +5687,9 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     o.fuiteCode=/ft4_authcode|authCode/i.test(cap);
     o.fuiteUrl=('url' in ds);
     o.photosDehors=!('exPhotos' in ds);
-    // (3) EN COCHANT : elles partent, et le fichier AVERTIT
+    // (3) LE 2e BOUTON : elles partent, et le fichier AVERTIT
     brancher(); exportData(); await new Promise(r=>setTimeout(r,120));
-    document.getElementById('exp-conv-cb').checked=true;
-    lancerExport(); await new Promise(r=>setTimeout(r,120));
+    lancerExport(true); await new Promise(r=>setTimeout(r,120));
     const avec=JSON.parse(cap||'{}');
     o.avecConv=('coachConversations' in (avec.donnees||{})) && cap.indexOf(PHRASE)>=0;
     o.avecConvAvertit=/IL CONTIENT TES CONVERSATIONS AVEC MILO/.test(avec._lisezMoi||'');
@@ -5724,12 +5728,14 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       E.fuiteEmail===false && E.fuiteCode===false && E.fuiteUrl===false,
       'email '+E.fuiteEmail+' · code '+E.fuiteCode+' · url '+E.fuiteUrl);
     t('/!\\ les photos restent dehors pour que le fichier reste transmissible', E.photosDehors===true);
-    t('⭐⭐ L\'APP DEMANDE AVANT D\'ECRIRE, et la case part DECOCHEE (le defaut sur est « dehors »)',
-      E.demande===true && E.rienEcritAvantChoix===true && E.caseDecochee===true && /discussion/.test(E.libelle),
-      'ouvert '+E.demande+' · decochee '+E.caseDecochee+' · '+E.libelle);
-    t('⭐⭐ SANS COCHER : aucune phrase de conversation dans le fichier — et il le DIT',
+    t('⭐⭐ L\'APP DEMANDE AVANT D\'ECRIRE, et rien n\'est ecrit tant qu\'on n\'a pas choisi',
+      E.demande===true && E.rienEcritAvantChoix===true && /discussion/.test(E.libelle),
+      'ouvert '+E.demande+' · '+E.libelle);
+    t('⭐⭐ DEUX BOUTONS, PLUS DE CASE A COCHER : ce qu\'on touche est ce qui se passe (R13)',
+      E.deuxBoutons===true && E.pasDeCase===true);
+    t('⭐⭐ LE BOUTON SIMPLE : aucune phrase de conversation dans le fichier — et il le DIT',
       E.sansConv===true && E.sansConvDeclare===true && E.ferme===true);
-    t('⭐ EN COCHANT : elles partent, et le fichier AVERTIT que c\'est personnel',
+    t('⭐ LE 2e BOUTON : elles partent, et le fichier AVERTIT que c\'est personnel',
       E.avecConv===true && E.avecConvAvertit===true && E.avecConvPasDansExclus===true);
     t('/!\\ fermer au doigt = annuler : RIEN n\'est ecrit', E.annuleRienEcrit===true);
     t('/!\\ aucune conversation => on ne pose pas la question (R24)', E.pasDeQuestionSiRien===true);

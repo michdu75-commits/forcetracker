@@ -2260,9 +2260,15 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   </div>
 </div>
 
-<!-- OVERLAY: que met-on dans l'export ? (ft-v892) -->
-<!-- ⚠️ La question ne se pose QUE s'il y a des conversations à inclure, et la case part
-     DÉCOCHÉE : ces fichiers se partagent, donc le défaut sûr est « dehors » (R29). -->
+<!-- OVERLAY: que met-on dans l'export ? (ft-v892, refait en ft-v893) -->
+<!-- ⚠️ PREMIÈRE VERSION : une case à cocher. Michel, devant l'écran : « c'est cliquable ? ».
+     Elle l'était — tout le bloc gris l'était — mais *s'il faut poser la question, la réponse est
+     déjà non*. Deux causes : c'était le SEUL `input type=checkbox` de toute l'app (donc un motif
+     que personne n'a jamais appris à reconnaître ici, contre R13), et une case vide en mode sombre
+     ne se distingue pas d'un cadre décoratif.
+     👉 Deux BOUTONS à la place — le motif que l'app emploie déjà partout (sélecteur de jour, QCM de
+     remplacement). Un bouton, personne ne demande s'il est cliquable. Et il n'y a plus d'état
+     ambigu : ce qu'on touche est ce qui se passe. -->
 <div class="overlay" id="ov-export-choix" onclick="if(event.target===this)closeExportChoix()">
   <div class="modal" style="max-width:380px;">
     <div class="modal-handle"></div>
@@ -2270,18 +2276,13 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
     <div style="font-size:13px;color:var(--t2);text-align:center;margin:6px 0 14px;line-height:1.45;">
       Tout part dans le fichier : séances, records, bilans, programmes, santé, mémoire de Milo.
     </div>
-    <label style="display:flex;align-items:flex-start;gap:11px;background:var(--bg2);border-radius:12px;padding:12px 13px;cursor:pointer;">
-      <input type="checkbox" id="exp-conv-cb" style="width:20px;height:20px;flex-shrink:0;margin-top:1px;">
-      <span style="font-size:13.5px;line-height:1.45;">
-        Inclure aussi <b id="exp-conv-lbl">mes discussions avec Milo</b>
-        <span style="display:block;color:var(--t3);font-size:11.5px;margin-top:4px;">
-          ⚠️ C'est ce que l'app contient de plus personnel — tu y parles de ton corps, de ton moral,
-          de tes blessures. Ne coche que si tu sais à qui tu donnes le fichier.
-        </span>
-      </span>
-    </label>
-    <button class="btn btn-red" style="margin-top:13px;width:100%;" onclick="lancerExport()">Exporter</button>
-    <button class="btn btn-bg2" style="margin-top:8px;width:100%;" onclick="closeExportChoix()">Annuler</button>
+    <button class="btn btn-red" style="width:100%;padding:14px;" onclick="lancerExport(false)">📤&nbsp; Exporter</button>
+    <button class="btn btn-bg2" id="exp-avec-btn" style="width:100%;padding:14px;margin-top:9px;text-align:center;" onclick="lancerExport(true)">🗣️&nbsp; Exporter <b id="exp-conv-lbl">avec mes discussions</b></button>
+    <div style="font-size:11.5px;color:var(--t3);line-height:1.45;margin-top:7px;padding:0 2px;">
+      ⚠️ Tes discussions avec Milo sont ce que l'app contient de plus personnel — tu y parles de ton
+      corps, de ton moral, de tes blessures. Ne les inclus que si tu sais à qui tu donnes le fichier.
+    </div>
+    <button class="btn btn-bg2" style="margin-top:12px;width:100%;" onclick="closeExportChoix()">Annuler</button>
   </div>
 </div>
 
