@@ -2196,6 +2196,31 @@ try{if(/iP(hone|od|ad)/.test(navigator.userAgent)&&navigator.standalone===true&&
   </div>
 </div>
 
+<!-- OVERLAY: que met-on dans l'export ? (ft-v892) -->
+<!-- ⚠️ La question ne se pose QUE s'il y a des conversations à inclure, et la case part
+     DÉCOCHÉE : ces fichiers se partagent, donc le défaut sûr est « dehors » (R29). -->
+<div class="overlay" id="ov-export-choix" onclick="if(event.target===this)closeExportChoix()">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-handle"></div>
+    <div style="font-weight:800;font-size:17px;text-align:center;">Exporter mes données</div>
+    <div style="font-size:13px;color:var(--t2);text-align:center;margin:6px 0 14px;line-height:1.45;">
+      Tout part dans le fichier : séances, records, bilans, programmes, santé, mémoire de Milo.
+    </div>
+    <label style="display:flex;align-items:flex-start;gap:11px;background:var(--bg2);border-radius:12px;padding:12px 13px;cursor:pointer;">
+      <input type="checkbox" id="exp-conv-cb" style="width:20px;height:20px;flex-shrink:0;margin-top:1px;">
+      <span style="font-size:13.5px;line-height:1.45;">
+        Inclure aussi <b id="exp-conv-lbl">mes discussions avec Milo</b>
+        <span style="display:block;color:var(--t3);font-size:11.5px;margin-top:4px;">
+          ⚠️ C'est ce que l'app contient de plus personnel — tu y parles de ton corps, de ton moral,
+          de tes blessures. Ne coche que si tu sais à qui tu donnes le fichier.
+        </span>
+      </span>
+    </label>
+    <button class="btn btn-red" style="margin-top:13px;width:100%;" onclick="lancerExport()">Exporter</button>
+    <button class="btn btn-bg2" style="margin-top:8px;width:100%;" onclick="closeExportChoix()">Annuler</button>
+  </div>
+</div>
+
 <!-- OVERLAY: pourquoi cet exercice a-t-il été remplacé ? (ft-v888) -->
 <!-- ⚠️ QCM DÉTERMINISTE : aucun appel à l'IA, aucun jeton consommé. C'est la demande de Michel
      (« ça ne coûte rien en token ») et c'est aussi la bonne architecture : une préférence sur un

@@ -5608,23 +5608,25 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await c40.close();
 }
 
-/* == BLOC XLI - « EXPORTER MES DONNEES » EN EXPORTAIT UN SIXIEME (17/08/2026) ==
-   Michel : « si j'ai mis des rapports dans l'application ». Il avait raison — je venais de
-   conclure, en lisant son export, qu'il n'avait importe aucun bilan corporel. C'est l'EXPORT qui
-   ne les emportait pas : 6 blocs ecrits contre 38 champs sauvegardes dans le cloud.
-   /!\/!\ LE TEMOIN QUI COMPTE EST LE DERNIER : une donnee AJOUTEE DEMAIN doit partir toute seule.
-   L'ancienne version enumerait ce qu'il fallait PRENDRE — une liste comme celle-la ne peut que
-   pourrir, en silence, parce qu'un oubli d'export ne plante pas. On enumere maintenant ce qu'on
-   LAISSE. Ce test fige le SENS de la liste, pas son contenu. */
+/* == BLOC XLI - « EXPORTER MES DONNEES » : COMPLET, ET SUR TON CHOIX (17-18/08/2026) ==
+   ft-v891 : l'export ecrivait 6 blocs contre 38 champs sauvegardes dans le cloud. Michel : « si
+   j'ai mis des rapports dans l'application » — il avait raison, c'est l'export qui ne les emportait
+   pas, et j'en avais tire une conclusion fausse sur ses donnees.
+   /!\/!\ LE TEMOIN QUI COMPTE EST L'ANTI-POURRISSEMENT : une donnee AJOUTEE DEMAIN doit partir
+   toute seule. L'ancienne version enumerait ce qu'il fallait PRENDRE — une liste comme celle-la ne
+   peut que pourrir, en silence, parce qu'un oubli d'export ne plante pas. On enumere ce qu'on LAISSE.
+   ft-v892 : en demandant « on peut mettre les conversations avec Milo ? », Michel a revele qu'elles
+   y ETAIENT DEJA — mon export prend tout ce qui vit dans S. Ce n'est pas une fuite (c'est son
+   fichier) mais une INCLUSION SILENCIEUSE, miroir exact de l'omission qu'on venait de corriger.
+   Elles sortent par defaut et rentrent sur une case cochee. */
 {
   const c41=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const p41=await c41.newPage();
   await p41.addInitScript(seedScript({ft4_email:'michel@test.z'}));
   await p41.goto('http://localhost:'+PORT+'/index.html'); await p41.waitForTimeout(2200);
-  const E=await p41.evaluate(()=>{
+  const E=await p41.evaluate(async()=>{
    try{
     if(typeof exportData!=='function') return {erreur:'exportData absente'};
-    // On remplit les donnees qui manquaient a l'appel, puis on intercepte le fichier produit.
     S.bodyScans=[{date:'2026-08-17',weight:85.2,fatMass:16.1}];
     S.bloodTests=[{date:'2026-07-01',txt:'bilan'}];
     S.programmes=[{name:'Push lourd',exs:[{name:'Développé Couché',sets:[]}]}];
@@ -5639,61 +5641,98 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     S.customExercises=[{n:'Mon Exercice',g:'Dos'}];
     S.foodLog=[{date:'2026-08-16',kcal:2200}];
     S.exPhotos={'Squat Barre':'data:image/png;base64,AAAA'};
+    S.coachConversations=[{id:'c1',title:'Mon épaule',ts:1,messages:[
+      {role:'user',content:"j'ai mal à l'épaule depuis mon accident"},
+      {role:'assistant',content:'ok on protège'}]}];
+    // Intercepte le fichier ecrit, sans rien telecharger.
+    const B=window.Blob, CU=URL.createObjectURL, RU=URL.revokeObjectURL, CL=HTMLAnchorElement.prototype.click;
     let cap=null;
-    const _bl=window.Blob, _cu=URL.createObjectURL, _ru=URL.revokeObjectURL;
-    window.Blob=function(parts){ cap=String(parts&&parts[0]||''); return new _bl(parts,{type:'application/json'}); };
-    URL.createObjectURL=()=>'blob:x'; URL.revokeObjectURL=()=>{};
-    const _cl=HTMLAnchorElement.prototype.click; HTMLAnchorElement.prototype.click=function(){};
-    exportData();
-    window.Blob=_bl; URL.createObjectURL=_cu; URL.revokeObjectURL=_ru;
-    HTMLAnchorElement.prototype.click=_cl;
-    if(!cap) return {erreur:'aucun fichier produit'};
-    const f=JSON.parse(cap);
-    const d=f.donnees||{};
+    const brancher=()=>{ cap=null;
+      window.Blob=function(parts){ cap=String(parts&&parts[0]||''); return new B(parts,{type:'application/json'}); };
+      URL.createObjectURL=()=>'blob:x'; URL.revokeObjectURL=()=>{}; HTMLAnchorElement.prototype.click=function(){}; };
+    const debrancher=()=>{ window.Blob=B; URL.createObjectURL=CU; URL.revokeObjectURL=RU; HTMLAnchorElement.prototype.click=CL; };
+    const ouvert=()=>{const e=document.getElementById('ov-export-choix');return !!(e&&e.classList.contains('open'));};
+    const PHRASE="j'ai mal à l'épaule depuis mon accident";
+    const o={};
+    /* ⚠️ CE BLOC DOIT S'EXECUTER SUR L'ANCIEN CODE AUSSI. `exportData` existe des deux cotes :
+       c'est lui qui porte le temoin de COMPORTEMENT. Tout ce qui touche la fenetre de choix est
+       sous garde, sinon le controle negatif planterait au lieu de mesurer. */
+    const neuf=(typeof lancerExport==='function') && !!document.getElementById('ov-export-choix');
+    o.neuf=neuf;
+    // (1) LE TEMOIN QUI TOURNE DES DEUX COTES : l'export part-il en emportant les conversations
+    //     SANS RIEN DEMANDER ? Sur l'ancien code, oui — et la phrase intime ressort telle quelle.
+    brancher(); exportData(); await new Promise(r=>setTimeout(r,120));
+    o.fuiteSilencieuse = (cap!==null) && cap.indexOf(PHRASE)>=0;
+    if(!neuf){ debrancher(); return o; }
+    o.demande=ouvert(); o.rienEcritAvantChoix=(cap===null);
+    o.caseDecochee=!document.getElementById('exp-conv-cb').checked;
+    o.libelle=(document.getElementById('exp-conv-lbl')||{}).textContent||'';
+    // (2) SANS COCHER : tout est la, SAUF les conversations — et le fichier le DIT
+    lancerExport(); await new Promise(r=>setTimeout(r,120));
+    const sans=JSON.parse(cap||'{}'); const ds=sans.donnees||{};
+    o.ferme=!ouvert();
     const attendus=['bodyScans','bloodTests','programmes','healthProfile','registre','adn',
                     'coachMemory','dayStateLog','exRestPref','exSwaps','cycle','customExercises',
                     'sessions','prs','weightLog','sleepLog','badges','foodLog'];
-    return {
-      nbCat:Object.keys(d).length,
-      manquants:attendus.filter(k=>!(k in d)),
-      // les secrets et identifiants ne doivent JAMAIS partir dans un fichier qu'on partage
-      fuiteEmail: JSON.stringify(f).indexOf('michel@test.z')>=0,
-      fuiteCode:  /ft4_authcode|authCode/i.test(cap),
-      fuiteUrl:   ('url' in d),
-      // le fichier DIT ce qu'il ne contient pas, avec la raison
-      exclusListes: Object.keys(f._exclus||{}).sort(),
-      raisonsEcrites: Object.values(f._exclus||{}).every(v=>String(v).trim().length>15),
-      photosDehors: !('exPhotos' in d),
-      lisezMoi: !!f._lisezMoi,
-      // ⭐ LE TEMOIN ANTI-POURRISSEMENT : une donnee inventee a l'instant part toute seule
-      auto:(()=>{ S.nouveauChampDeDemain=[{x:1}];
-        let c2=null; const B=window.Blob;
-        window.Blob=function(parts){ c2=String(parts&&parts[0]||''); return new B(parts,{type:'application/json'}); };
-        const CU=URL.createObjectURL, RU=URL.revokeObjectURL, CL=HTMLAnchorElement.prototype.click;
-        URL.createObjectURL=()=>'blob:x'; URL.revokeObjectURL=()=>{}; HTMLAnchorElement.prototype.click=function(){};
-        exportData();
-        window.Blob=B; URL.createObjectURL=CU; URL.revokeObjectURL=RU; HTMLAnchorElement.prototype.click=CL;
-        delete S.nouveauChampDeDemain;
-        try{ return 'nouveauChampDeDemain' in (JSON.parse(c2).donnees||{}); }catch(e){ return false; }
-      })()
-    };
+    o.manquants=attendus.filter(k=>!(k in ds));
+    o.nbCat=Object.keys(ds).length;
+    o.sansConv=!('coachConversations' in ds) && cap.indexOf(PHRASE)<0;
+    o.sansConvDeclare=!!(sans._exclus||{}).coachConversations && /conversations avec Milo n'y sont PAS/.test(sans._lisezMoi||'');
+    o.fuiteEmail=JSON.stringify(sans).indexOf('michel@test.z')>=0;
+    o.fuiteCode=/ft4_authcode|authCode/i.test(cap);
+    o.fuiteUrl=('url' in ds);
+    o.photosDehors=!('exPhotos' in ds);
+    // (3) EN COCHANT : elles partent, et le fichier AVERTIT
+    brancher(); exportData(); await new Promise(r=>setTimeout(r,120));
+    document.getElementById('exp-conv-cb').checked=true;
+    lancerExport(); await new Promise(r=>setTimeout(r,120));
+    const avec=JSON.parse(cap||'{}');
+    o.avecConv=('coachConversations' in (avec.donnees||{})) && cap.indexOf(PHRASE)>=0;
+    o.avecConvAvertit=/IL CONTIENT TES CONVERSATIONS AVEC MILO/.test(avec._lisezMoi||'');
+    o.avecConvPasDansExclus=!(avec._exclus||{}).coachConversations;
+    // (4) FERMER AU DOIGT N'EXPORTE RIEN
+    brancher(); exportData(); await new Promise(r=>setTimeout(r,120));
+    closeExportChoix(); await new Promise(r=>setTimeout(r,120));
+    o.annuleRienEcrit=(cap===null);
+    // (5) AUCUNE CONVERSATION => on ne pose pas la question (R24)
+    S.coachConversations=[];
+    brancher(); exportData(); await new Promise(r=>setTimeout(r,120));
+    o.pasDeQuestionSiRien=!ouvert() && cap!==null;
+    // (6) ANTI-POURRISSEMENT : une donnee inventee a l'instant part toute seule
+    S.nouveauChampDeDemain=[{x:1}];
+    brancher(); exportData(); await new Promise(r=>setTimeout(r,120));
+    o.auto=('nouveauChampDeDemain' in (JSON.parse(cap||'{}').donnees||{}));
+    delete S.nouveauChampDeDemain;
+    debrancher();
+    return o;
    }catch(e){ return {erreur:String(e&&e.message||e)}; }
   });
-  console.log('\n-- XLI. « Exporter mes donnees » exporte enfin TES donnees --');
+  console.log('\n-- XLI. L\'export : complet, et sur ton choix --');
   if(E.erreur){ t('X l\'export se produit', false, E.erreur); }
   else{
+    t('⭐⭐ L\'EXPORT N\'EMPORTE PLUS TES CONVERSATIONS SANS RIEN DEMANDER (mesure des DEUX cotes)',
+      E.fuiteSilencieuse===false);
+    t('** la fenetre de choix existe', E.neuf===true);
+  }
+  if(!E.erreur && E.neuf){
     t('⭐⭐ LES DONNEES QUI MANQUAIENT SONT LA : bilans, programmes, sante, memoire de Milo…',
       E.manquants.length===0, 'manquent encore : '+JSON.stringify(E.manquants));
     t('** l\'export porte au moins 30 categories (il en portait 6)', E.nbCat>=30, E.nbCat+' categories');
+    t('⭐⭐ ANTI-POURRISSEMENT : une donnee ajoutee DEMAIN part toute seule (on liste ce qu\'on LAISSE)',
+      E.auto===true);
     t('/!\\/!\\ AUCUN SECRET NE PART : ni e-mail, ni code d\'acces, ni adresse serveur',
       E.fuiteEmail===false && E.fuiteCode===false && E.fuiteUrl===false,
       'email '+E.fuiteEmail+' · code '+E.fuiteCode+' · url '+E.fuiteUrl);
-    t('/!\\ LE FICHIER DIT CE QU\'IL NE CONTIENT PAS, avec la raison de chacun (R29)',
-      E.exclusListes.length>=5 && E.raisonsEcrites===true && E.photosDehors===true,
-      JSON.stringify(E.exclusListes));
-    t('** … et il porte une note qui explique comment le lire', E.lisezMoi===true);
-    t('⭐⭐ ANTI-POURRISSEMENT : une donnee ajoutee DEMAIN part toute seule (on liste ce qu\'on LAISSE)',
-      E.auto===true);
+    t('/!\\ les photos restent dehors pour que le fichier reste transmissible', E.photosDehors===true);
+    t('⭐⭐ L\'APP DEMANDE AVANT D\'ECRIRE, et la case part DECOCHEE (le defaut sur est « dehors »)',
+      E.demande===true && E.rienEcritAvantChoix===true && E.caseDecochee===true && /discussion/.test(E.libelle),
+      'ouvert '+E.demande+' · decochee '+E.caseDecochee+' · '+E.libelle);
+    t('⭐⭐ SANS COCHER : aucune phrase de conversation dans le fichier — et il le DIT',
+      E.sansConv===true && E.sansConvDeclare===true && E.ferme===true);
+    t('⭐ EN COCHANT : elles partent, et le fichier AVERTIT que c\'est personnel',
+      E.avecConv===true && E.avecConvAvertit===true && E.avecConvPasDansExclus===true);
+    t('/!\\ fermer au doigt = annuler : RIEN n\'est ecrit', E.annuleRienEcrit===true);
+    t('/!\\ aucune conversation => on ne pose pas la question (R24)', E.pasDeQuestionSiRien===true);
   }
   await c41.close();
 }

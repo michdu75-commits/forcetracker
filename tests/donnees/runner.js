@@ -46,7 +46,19 @@ const R=path.resolve(__dirname,'../..');
 const src=fs.readFileSync(path.join(R,'state.js'),'utf8');
 const i=src.indexOf('function load('); const j=src.indexOf('\nfunction ',i+10);
 if(i<0||j<0){ console.error('❌ load() introuvable dans state.js'); process.exit(1); }
-const champs=[...new Set([...src.slice(i,j).matchAll(/^\s*S\.([A-Za-z_]\w*)\s*=/gm)].map(m=>m[1]))].sort();
+/* ⚠️⚠️ LE GARDE-FOU AVAIT SA PROPRE FENÊTRE AVEUGLE (17/08/2026)
+   Le motif exigeait `S.x =` en DÉBUT de ligne. Il ratait donc tout ce qui est chargé à
+   l'intérieur d'un `try{...}` sur la même ligne — c'est-à-dire `try{S.coachConversations=...}`
+   et `try{S.priorities=...}`. **Deux données chargées au démarrage, jamais classées face à Milo**,
+   depuis la création du garde-fou. Et `priorities` EST transmise (les muscles prioritaires
+   atteignent bien le contexte) : le compteur annonçait donc 98 données quand il y en a 100.
+   ⭐ TROUVÉ EN CHERCHANT AUTRE CHOSE — Michel demandait si on pouvait mettre les conversations
+   avec Milo dans l'export. C'est le motif de ft-v888 appliqué au garde-fou lui-même : *l'oubli
+   est silencieux*, y compris pour l'outil dont c'est le seul métier.
+   👉 Le motif accepte maintenant `S.x =` précédé de n'importe quoi qui ne soit ni un point ni un
+   caractère de mot — donc `try{S.x=`, `{S.x=`, `;S.x=` — tout en refusant `autre.S.x=` et en
+   ignorant les comparaisons `S.x ==`. */
+const champs=[...new Set([...src.slice(i,j).matchAll(/(?<![.\w])S\.([A-Za-z_]\w*)\s*=(?!=)/g)].map(m=>m[1]))].sort();
 
 const inv=JSON.parse(fs.readFileSync(path.join(__dirname,'donnees-milo.json'),'utf8'));
 const transmis=new Set(inv.transmis), exclu=inv.exclu, manquant=inv.manquant;

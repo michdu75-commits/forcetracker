@@ -4582,16 +4582,58 @@ const EXPORT_EXCLU={
   // — volumineux : on les laisse pour que le fichier reste transmissible, et on le DIT —
   exPhotos:'photos d\'exercices (images encodées) — rendraient le fichier énorme',
   bodySeries:'séries de photos corporelles — idem, et elles ne quittent jamais le téléphone',
+  /* ⚠️⚠️ TES CONVERSATIONS AVEC MILO : SUR DEMANDE SEULEMENT (17/08/2026)
+     Michel : *« on ne peut pas mettre dans l'export les conversations avec Milo aussi ? »* — et en
+     vérifiant, elles y étaient DÉJÀ, depuis la version d'il y a quelques heures. Mon export prend
+     tout ce qui vit dans `S`, et les discussions rangées (`coachConversations`) y vivent. Une
+     phrase de test — « j'ai mal à l'épaule depuis mon accident » — ressortait telle quelle.
+     ⚠️ Ce n'est pas une fuite : c'est SON fichier, sur SON téléphone. Mais le fichier ne le disait
+     pas, alors que toute la version d'avant consistait à ce qu'il déclare ce qu'il contient. *Une
+     inclusion silencieuse est le miroir exact de l'omission silencieuse qu'on venait de corriger.*
+     ⚠️⚠️ ET C'EST LA DONNÉE LA PLUS SENSIBLE DE L'APP : on y parle de son corps, de son moral, de
+     ses blessures. Le code le disait déjà, le 05/08, en refusant de l'envoyer dans la sauvegarde
+     cloud. Michel partage ses exports (avec une IA, par mail) — donc le défaut sûr est DEHORS, et
+     l'inclusion est un choix explicite qu'il pose à chaque fois (R29 : le droit de décider à la
+     place de quelqu'un dépend du coût de l'erreur). */
+  coachConversations:'tes discussions avec Milo — à demander explicitement à l\'export (coche la case) : c\'est ce que l\'app contient de plus personnel',
 };
+/* Les clés que la case à cocher fait basculer d'« exclu » à « inclus ». */
+const EXPORT_OPTIONNEL={ coachConversations:true };
+/** Ouvre le choix avant d'écrire le fichier. ⚠️ La question ne se pose que s'il y a
+ *  effectivement quelque chose à inclure — sinon c'est du bruit (R24). */
 function exportData(){
   closeDrawer();
+  const n=((S.coachConversations||[]).length)||0;
+  const ov=document.getElementById('ov-export-choix');
+  if(n>0 && ov){
+    const lbl=document.getElementById('exp-conv-lbl');
+    if(lbl) lbl.textContent=n+' discussion'+(n>1?'s':'')+' avec Milo';
+    const cb=document.getElementById('exp-conv-cb'); if(cb) cb.checked=false;   // défaut : DEHORS
+    ov.classList.add('open');
+    return;
+  }
+  _ecrireExport(false);
+}
+function lancerExport(){
+  const cb=document.getElementById('exp-conv-cb');
+  const avec=!!(cb&&cb.checked);
+  closeExportChoix();
+  _ecrireExport(avec);
+}
+function closeExportChoix(){
+  const ov=document.getElementById('ov-export-choix'); if(ov) ov.classList.remove('open');
+}
+function _ecrireExport(avecConversations){
   try{
     const payload={
       exportDate:new Date().toISOString(),
       app:'Force Tracker',
       version:((document.querySelector('.app-ver')||{}).textContent||'').trim(),
       _lisezMoi:'Export COMPLET de tes données. Le champ _exclus dit ce qui n\'y est pas, et pourquoi. '
-               +'Ce fichier ne contient ni ton adresse e-mail ni ton code d\'accès.',
+               +'Ce fichier ne contient ni ton adresse e-mail ni ton code d\'accès.'
+               +(avecConversations
+                 ? ' ⚠️ IL CONTIENT TES CONVERSATIONS AVEC MILO, à ta demande : ce sont des échanges personnels (corps, moral, blessures). Ne le partage qu\'en connaissance de cause.'
+                 : ' Tes conversations avec Milo n\'y sont PAS (tu peux les inclure en cochant la case à l\'export).'),
       donnees:{},
       _exclus:{}
     };
@@ -4599,7 +4641,9 @@ function exportData(){
     Object.keys(S).sort().forEach(function(k){
       if(k.charAt(0)==='_') return;                       // champs de travail internes
       if(typeof S[k]==='function') return;
-      if(EXPORT_EXCLU[k]){ payload._exclus[k]=EXPORT_EXCLU[k]; return; }
+      if(EXPORT_EXCLU[k] && !(avecConversations && EXPORT_OPTIONNEL[k])){
+        payload._exclus[k]=EXPORT_EXCLU[k]; return;
+      }
       payload.donnees[k]=S[k];
     });
     const json=JSON.stringify(payload,null,2);
@@ -4609,8 +4653,8 @@ function exportData(){
     a.href=url;a.download='forcetracker_'+today()+'.json';
     document.body.appendChild(a);a.click();
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},500);
-    const n=Object.keys(payload.donnees).length;
-    toast(n+' catégories de données exportées ✓','success');
+    const nb=Object.keys(payload.donnees).length;
+    toast(nb+' catégories exportées'+(avecConversations?' · conversations comprises':'')+' ✓','success');
   }catch(e){toast('Erreur export : '+e.message,'error');}
 }
 

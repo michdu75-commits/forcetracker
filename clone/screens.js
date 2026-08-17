@@ -453,6 +453,7 @@ const _OVERLAY_CLOSERS={
   'ov-health-lock':'closeHealthLock',
   'ov-pesee-nav-c':'closePeseeNavC',               // annonce boîte à idées traitée (Christophe)
   'ov-pesee-nav-e':'closePeseeNavE',               // annonce boîte à idées traitée (Eline)
+  'ov-export-choix':'closeExportChoix',           // fermer au doigt = annuler, jamais exporter
   'ov-ex-swap':'closeExSwap',                      // pas de marqueur à poser, mais la paire en cours doit être oubliée
 };
 function _closeOverlayProper(ov){
