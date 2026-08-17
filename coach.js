@@ -4645,6 +4645,21 @@ function _ecrireExport(avecConversations){
       }
       payload.donnees[k]=S[k];
     });
+    /* 🖼️ LES IMAGES SORTENT DU FICHIER, LES EXERCICES RESTENT (17/08/2026).
+       `exPhotos` était déjà écarté, mais les exercices PERSO embarquent leur photo dans le même
+       objet (`img`, encodée en base64). Mesuré sur l'export du 17/08 : `customExercises` pesait
+       **146 160 caractères, 31 % du fichier entier, pour TROIS images**.
+       ⚠️ On ne retire pas le champ : les fiches perso (nom, groupe, muscles cochés) sont
+       exactement ce qu'on veut pouvoir relire et réimporter. On ne retire QUE l'image, et on le
+       DIT dans `_exclus` — un export muet sur ses trous laisse croire qu'il est complet (R29). */
+    if(Array.isArray(payload.donnees.customExercises)){
+      var _nImg=0;
+      payload.donnees.customExercises=payload.donnees.customExercises.map(function(c){
+        if(c&&c.img){ _nImg++; var o={}; for(var p in c){ if(p!=='img') o[p]=c[p]; } o._photoRetiree=true; return o; }
+        return c;
+      });
+      if(_nImg) payload._exclus.customExercises_img=_nImg+' photo(s) d\'exercice perso — retirées pour que le fichier reste transmissible ; les fiches elles-mêmes sont bien là';
+    }
     const json=JSON.stringify(payload,null,2);
     const blob=new Blob([json],{type:'application/json'});
     const url=URL.createObjectURL(blob);

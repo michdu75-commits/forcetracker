@@ -20,12 +20,23 @@
 > Les deux auditeurs extérieurs et ce dossier sont d'accord : *d'abord une chaîne de calcul
 > cohérente et rejouable, l'audit MET reprendra sur une base saine.*
 >
-> ### ⏭️ LES 3 SEULS POINTS OUVERTS SUR LES CALORIES
-> 1. Le **`breakdown` des 29 séances recalées** n'a pas suivi le `total` (état `total` v2 /
->    `breakdown` v1, réel et persistant).
-> 2. **6 séances dont le `breakdown` oublie un exercice** — dont le **13/08, une séance NATIVE**,
->    donc indépendant de la migration. **Cause non identifiée : c'est le vrai point ouvert.**
-> 3. **`engineVersion` par séance** — `calSource` en fait déjà une partie du travail.
+> ### ✅ RÉGLÉ EN ft-v895 (soirée du 17/08)
+> · **Le détail par exercice écrasait au lieu d'additionner** — un même exercice fait deux fois dans
+>   une séance perdait les calories de la 1ʳᵉ occurrence. **C'était la cause des 2 seules séances
+>   (28/06, 07/07) dont le résidu résistait**, et les 4 autres « détails incomplets » signalés par
+>   l'audit n'étaient **pas des bugs** (aucune série validée = rien à compter). 6 signalés = 2 vrais.
+> · **`engineVersion` posé sur chaque nouvelle séance** (`CAL_ENGINE = 3`).
+> · **La boîte de la montre écrivait dans la clé du profil santé** (`ft4_health`) — donc elle ne
+>   survivait à **aucune** sauvegarde : ft-v880 ne pouvait pas marcher. Clé propre `ft4_healthbox`.
+> · **L'export embarquait 146 160 car. d'images pour 3 photos** (31 % du fichier).
+> · **La fixture des tests a enfin des profils avec blessure** (bloc XLIV).
+>
+> ### ⏭️ CE QUI RESTE SUR LES CALORIES — un seul point
+> Le **`breakdown` des 29 séances recalées** n'a pas suivi le `total` (état `total` v2 /
+> `breakdown` v1). Les séances **nouvelles** sont désormais cohérentes ; c'est l'**historique migré**
+> qui reste dans un état mixte. ⚠️ Le corriger veut dire **recalculer des séances déjà enregistrées** :
+> c'est exactement le geste qui a déclenché quatre audits. À faire **explicitement**, marqué, et
+> réversible — ou pas du tout.
 >
 > ### ✅ CE QUI EST RÉGLÉ ET NE DOIT PAS ÊTRE ROUVERT
 > · Le **« forfait de 50 kcal »** n'existe pas : c'est `warmupCals = 3.5 × poids × warmupMin/60`

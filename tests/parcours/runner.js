@@ -5749,9 +5749,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
    Il avait cree « Butterfly » et « Pec deck inverse » = les noms courants du Pec Deck et de la
    Machine Oiseau, deja au catalogue avec leurs photos et les BONS muscles. Ses fiches perso
    portaient les muscles PERMUTES (ouverture arriere classee en deltoide AVANT).
-   /!\/!\ ET AUCUN CHEMIN NE PERMETTAIT DE LES SUPPRIMER : `openEditCustomEx()` existe et n'est
-   appelee de NULLE PART ; « Analyser les doublons » compare les noms a une lettre pres et ne peut
-   pas rapprocher deux synonymes. Un outil qui marche et qu'on ne peut pas atteindre. */
+   /!\ « Analyser les doublons » compare les noms a une lettre pres : elle ne peut pas rapprocher
+   deux synonymes comme « Pec deck inverse » et « Machine Oiseau ».
+   /!\ CORRECTION DU 17/08 AU SOIR : ce commentaire disait que `openEditCustomEx()` « n'est appelee
+   de NULLE PART ». C'est FAUX - elle l'est depuis longtemps, log.js:766 (« Modifier l'exercice »
+   du menu) et log.js:3865 (l'icone crayon de la liste). Conclusion tiree d'une recherche trop
+   etroite. Ce qui manque vraiment, c'est un « fusionner avec... » ou l'on CHOISIT la cible. */
 {
   const c42=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const p42=await c42.newPage();
@@ -5807,6 +5810,130 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('/!\\ « butterfly » reste bien un mouvement de PECTORAUX', X.muscleButterfly==='pec', 'recu '+X.muscleButterfly);
   }
   await c42.close();
+}
+
+/* == BLOC XLIII - CE QUE DEUX AUDITS EXTERIEURS ONT FAIT REMONTER (17/08/2026, soiree) ==
+   Trois defauts trouves en verifiant leurs chiffres, chacun invisible sans mesure :
+   (1) le DETAIL par exercice ECRASAIT au lieu d'additionner quand un exercice revient 2 fois ;
+   (2) la boite de la montre et le PROFIL SANTE partageaient la meme cle localStorage ;
+   (3) l'export embarquait 146 160 caracteres d'images pour 3 photos (31 % du fichier).
+   Et une FIXTURE qui manquait : aucun profil de test n'avait de blessure, donc le chemin du
+   Gardien - celui qui casse le partage de cache - n'etait jamais emprunte. */
+{
+  const c43=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p43=await c43.newPage();
+  await p43.addInitScript(seedScript({
+    ft4_health:JSON.stringify({conditions:['arthrose'],injuries:[{zone:'epaule',side:'D'}],notes:'epaule droite'}),
+    ft4_cuex:JSON.stringify([{n:'Machine maison',g:'Dos',custom:true,img:'data:image/png;base64,AAAA',muscles:{p:['lats'],s:[]}}])
+  }));
+  await p43.goto('http://localhost:'+PORT+'/index.html'); await p43.waitForTimeout(2300);
+  const Y=await p43.evaluate(()=>{
+   try{
+    // (1) LE DETAIL ADDITIONNE — un meme exercice deux fois dans la seance
+    const seance={date:'2026-08-17',exs:[
+      {name:'Soulevé de Terre',sets:[{kg:100,reps:5,done:true,type:'N'},{kg:100,reps:5,done:true,type:'N'}]},
+      {name:'Soulevé de Terre',sets:[{kg:120,reps:3,done:true,type:'N'}]}
+    ]};
+    const cd=calcSessionCalories(seance);
+    const somme=Object.values(cd.breakdown||{}).reduce((a,b)=>a+b,0);
+    // (2) LA BOITE DE LA MONTRE SURVIT A UNE SAUVEGARDE
+    S.healthInbox=[{start:'2026-08-17T10:00:00',type:'marche',min:12}];
+    const santeAvant=JSON.parse(JSON.stringify(S.healthProfile||null));
+    persist();
+    const brutBoite=localStorage.getItem('ft4_healthbox');
+    const brutSante=localStorage.getItem('ft4_health');
+    // (3) L'EXPORT : la fiche perso reste, sa photo part
+    let expo=null;
+    try{
+      const vraiBlob=window.Blob, vraiURL=URL.createObjectURL;
+      window.Blob=function(p){ expo=String(p&&p[0]||''); return new vraiBlob(p,{type:'text/plain'}); };
+      URL.createObjectURL=()=> 'blob:faux';
+      _ecrireExport(false);
+      window.Blob=vraiBlob; URL.createObjectURL=vraiURL;
+    }catch(e){}
+    const J=expo?JSON.parse(expo):null;
+    const cuex=J&&J.donnees&&J.donnees.customExercises||[];
+    return {
+      detailSomme:somme, nbEntrees:Object.keys(cd.breakdown||{}).length,
+      totalMoinsDetail:Math.round(cd.total-somme-(cd.cardio||0)-3.5*(S.bw||80)*((cd.warmupMin||0)/60)),
+      moteur:cd.engineVersion,
+      boiteRelue:JSON.parse(brutBoite||'null'),
+      santeIntacte:JSON.stringify(JSON.parse(brutSante||'null'))===JSON.stringify(santeAvant),
+      exportFiche:cuex.length?cuex[0].n:null,
+      exportPhoto:cuex.length?!!cuex[0].img:null,
+      exportDit:!!(J&&J._exclus&&J._exclus.customExercises_img),
+      exportPoids:expo?expo.length:0
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XLIII. Ce que deux audits exterieurs ont fait remonter --');
+  if(Y.erreur){ t('X le bloc tourne', false, Y.erreur); }
+  else{
+    t('⭐⭐ LE DETAIL ADDITIONNE au lieu d\'ecraser : un exercice fait 2 fois compte 2 fois',
+      Y.nbEntrees===1 && Y.detailSomme>0 && Y.totalMoinsDetail<=2 && Y.totalMoinsDetail>=-2,
+      'somme '+Y.detailSomme+' · total-detail-cardio-echauffement = '+Y.totalMoinsDetail);
+    t('/!\\ ... et l\'invariant tient : total = somme(detail) + cardio + echauffement',
+      Math.abs(Y.totalMoinsDetail)<=2, 'ecart '+Y.totalMoinsDetail+' kcal');
+    t('🏷️ chaque seance porte la version du moteur qui l\'a calculee', Y.moteur===3, 'recu '+Y.moteur);
+    t('⭐⭐ LA BOITE DE LA MONTRE SURVIT A UNE SAUVEGARDE (elle ecrasait le profil sante)',
+      Array.isArray(Y.boiteRelue) && Y.boiteRelue.length===1, JSON.stringify(Y.boiteRelue));
+    t('/!\\ ... et le PROFIL SANTE, lui, est intact — c\'est lui qui nourrit le Gardien',
+      Y.santeIntacte===true);
+    t('⭐ L\'EXPORT garde la fiche perso et laisse la photo dehors',
+      Y.exportFiche==='Machine maison' && Y.exportPhoto===false, Y.exportFiche+' · photo='+Y.exportPhoto);
+    t('/!\\ ... et le fichier DIT qu\'il a retire des photos (un export muet ment - R29)', Y.exportDit===true);
+  }
+  await c43.close();
+}
+
+/* == BLOC XLIV - LA FIXTURE QUI MANQUAIT : DES PROFILS AVEC BLESSURE (17/08/2026) ==
+   /!\/!\ POURQUOI - le temoin du bloc Q compare 3 profils opposes et verifie que le bloc commun
+   de Milo est IDENTIQUE. Ses 3 profils sont {nom, sexe, age, poids, objectif} : AUCUN n'a de
+   profil sante. Or `_gardienRules()` colle un bloc PERSONNALISE en tete du contexte, avant meme
+   « Tu es Milo » - donc le cache de prefixe se coupe des le premier caractere.
+   Mesure du 17/08 : 8 profils de sante produisent 7 empreintes de cache DISTINCTES.
+   Le chemin qui casse le partage n'etait jamais emprunte par les tests. Angle mort de la fixture.
+   /!\ CE BLOC NE PRETEND PAS QUE C'EST REPARE. Il fige ce qu'on sait, pour que le jour ou le
+   Gardien sera scinde (partie generique en tete + zones dans le bloc personnel), le changement
+   soit VISIBLE au lieu de passer inapercu. */
+{
+  const emp2=async(sante)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_name:'Alex',ft4_email:'z@test.z',ft4_health:JSON.stringify(sante)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+    const r=await pg.evaluate(()=>{
+      if(typeof buildCoachContext!=='function') return {err:'buildCoachContext absent'};
+      const ctx=buildCoachContext('je fais quoi comme seance ?');
+      const i=ctx.indexOf('PROFIL ATHLÈTE:');
+      const commun=ctx.slice(0,i);
+      const g=commun.indexOf('RÈGLES DU GARDIEN');
+      return {commun, gardien:g>=0, gardienEnTete:g>=0&&g<40,
+        // la part GENERIQUE du bloc : celle qui pourrait remonter dans le commun partage
+        principe: commun.indexOf('ADAPTER, jamais interdire')>=0,
+        pro: commun.indexOf('professionnel de santé')>=0};
+    });
+    await cx.close(); return r;
+  };
+  const sain =await emp2({conditions:[],injuries:[],notes:''});
+  const epaule=await emp2({conditions:[],injuries:[{zone:'epaule',side:'D'}],notes:''});
+  const genou =await emp2({conditions:[],injuries:[{zone:'genou',side:'G'}],notes:''});
+  console.log('\n-- XLIV. La fixture qui manquait : des profils avec blessure --');
+  const err=sain.err||epaule.err||genou.err;
+  if(err){ t('X le bloc tourne', false, err); }
+  else{
+    t('/!\\ un profil SANS blessure n\'a pas de bloc Gardien', sain.gardien===false);
+    t('/!\\ un profil AVEC blessure en a un, et il est EN TETE du contexte (priorite R11)',
+      epaule.gardien===true && epaule.gardienEnTete===true);
+    t('⭐⭐ ETAT CONNU, NON REPARE : deux blessures differentes = deux blocs communs DIFFERENTS'
+      +' -> autant d\'entrees de cache que de combinaisons. A RETOURNER le jour ou le Gardien sera scindé.',
+      epaule.commun!==genou.commun && epaule.commun!==sain.commun,
+      'epaule '+epaule.commun.length+' · genou '+genou.commun.length+' · sain '+sain.commun.length);
+    t('⭐ la partie GENERIQUE du Gardien est la meme pour les deux blessures (c\'est elle qui pourra remonter)',
+      epaule.principe===true && genou.principe===true && epaule.pro===true && genou.pro===true);
+    t('/!\\ aucun prenom ne fuit dans le bloc commun, meme avec une blessure declaree',
+      !/Alex/.test(epaule.commun+genou.commun));
+  }
 }
 
 await b.close(); srv.close();
