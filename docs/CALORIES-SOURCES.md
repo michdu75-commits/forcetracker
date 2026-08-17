@@ -1192,3 +1192,130 @@ au-delà de 6 séries (**plancher physique**, transposable à tous). Livré en f
 
 L'ensemble — formule, pièges, seuils, constantes, ce qu'on ne sait pas — est rassemblé pour un usage
 extérieur dans **`docs/DOSSIER-MET-MESURES.md`**, écrit pour l'application MET indépendante.
+
+---
+
+# 17. 🔍 LES QUATRE AUDITS CROISÉS (17/08/2026) — ce qui tient, ce qui tombe, et la réponse au « +50 »
+
+> **Contexte.** Michel a fait auditer son export complet par une autre instance de Claude, puis par
+> GPT. Quatre documents en une journée : un audit de l'export, un addendum « réécriture silencieuse »,
+> un audit croisé Apple Santé, et une réponse à ma vérification. Cette section garde **ce qui est
+> établi** et **pourquoi**, pour que personne ne recommence le cycle.
+>
+> ⚠️ **Leçon de méthode d'abord** : sur quatre allers-retours, les trois derniers ont surtout servi
+> à corriger les documents précédents, pas l'application. *Un audit qui passe son temps à s'auditer
+> lui-même a cessé de rapporter.* On s'arrête ici et on répare.
+
+## 17.1 ⭐⭐ LE « FORFAIT DE 50 kcal » N'EXISTE PAS — c'est l'échauffement
+
+**La question posée** (Q6 de l'auditeur) : *« existe-t-il un terme additif codé en dur dans le calcul
+du total — +50 avant ft-v867, +25 après ? »* Il avait mesuré un résidu de **50,0 ± 0,8 kcal** sur les
+anciennes séances et **25,0** sur les natives, et concluait à « deux valeurs rondes, deux régimes ».
+
+**L'observation est juste, la cause est ailleurs.** Il n'y a aucune constante en dur — il y a
+`warmupCals` (`app.js`, ligne 677) :
+
+```js
+warmupCals = 3.5 * bw * (warmupMin/60);
+totalCals += warmupCals;
+```
+
+C'est le **forfait d'échauffement et de retour au calme**, et il n'est **volontairement pas** dans le
+`breakdown` : il n'appartient à aucun exercice. `warmupMin` vaut **10 moins 5 par bloc de cardio
+réellement noté** — c'est le correctif du double comptage (ft-v826), pas un forfait aveugle.
+
+| Séances | `warmupMin` | `3,5 × 85,2 × min/60` | Ce que l'auditeur mesurait |
+|---|---|---|---|
+| Recalées (avant le 13/08) | 10 | **49,7 kcal** | « 50,0 ± 0,8 » |
+| 13/08 et 16/08 (natives) | 5 | **24,9 kcal** | « 25,0 » |
+| **15/08 (natives)** | **0** | **0 kcal** | **−1 kcal** |
+
+**Mesuré sur les 32 séances : 30 s'expliquent à moins de 2,3 kcal près** (écart médian +0,30,
+écart-type 0,80). Les anciennes séances portent toutes `warmupMin = 10` parce qu'elles ont été
+calculées **avant** que `cardioAvant` existe (02/08) — ce n'est pas un autre moteur, c'est la même
+formule avec une donnée qui n'était pas encore collectée.
+
+**⚠️ CONSÉQUENCE QUI COMPTE : le test CAL-001 n'est PAS « structurellement impossible ».**
+L'auditeur l'écrivait parce qu'il cherchait `total = Σbreakdown + cardio`. Le contrat a un
+**quatrième terme** :
+
+```
+total  =  Σ breakdown  +  cardio  +  warmupCals
+```
+
+**Et la séance du 15/08 le prouve** : ce jour-là les deux blocs de cardio étaient notés, donc
+`warmupMin = 0`, donc `warmupCals = 0` — et l'égalité tombe juste **à 1 kcal près** (arrondi).
+*Une invariante qu'on croit impossible est presque toujours une invariante à laquelle il manque un
+terme.*
+
+## 17.2 Les deux seules exceptions sont le MÊME bug
+
+Sur les 32 séances, deux résistent : le **28/06** (+59,3 kcal) et le **07/07** (+31,3 kcal). Ce sont
+exactement deux des **6 séances dont le `breakdown` oublie un exercice**. Ce n'est pas une seconde
+anomalie — c'est la première, vue par un autre bout.
+
+| Date | exercices | dans le `breakdown` | `calSource` |
+|---|---|---|---|
+| 13/08 | 6 | 5 | **native** |
+| 10/08 | 5 | 4 | recale |
+| 03/08 | 6 | 5 | recale |
+| 07/07 | 4 | 3 | recale |
+| 29/06 | 5 | 4 | recale |
+| 28/06 | 4 | 3 | recale |
+
+**Défaut indépendant de la migration** — il touche une séance native. Cause non identifiée : c'est
+le seul vrai point ouvert du dossier calories.
+
+## 17.3 Ce qui TOMBE (et pourquoi)
+
+| Accusation | Verdict | Cause de l'erreur |
+|---|---|---|
+| « Le bloc cardio est surévalué de **+38 %** » (classé P0) | **FAUX — +6 %** | Comparaison **brut / net**. `MET × poids × heures` est une dépense BRUTE (1 MET = métabolisme de repos) ; `ActiveEnergyBurned` d'Apple est NETTE. Aligné : 451 contre **427** kcal. Sur **5 séances sur 8 l'app est en dessous** d'Apple. |
+| « Le 15/08 est marqué *leger* mais tourne au régime haut » (CAL-012) | **FAUX** | Deux blocs de cardio ce jour-là (8 min avant + 4 min après) : 68 kcal couvrent **12 minutes**, pas 8. Recalculé : **4,0 MET**, exactement le barème déclaré. |
+| « Réécriture **silencieuse**, sans versionnement, valeurs **perdues** » | **FAUX** | `calSource:'recale'` marque les 29 séances et `caloriesAvant` conserve l'original — **dans le fichier même qui était analysé**. L'auditeur l'a reconnu : *« les deux champs étaient dans l'export, sur 29 sessions sur 32, et je ne les ai pas vus »*. |
+| « Le forfait de **156 kcal** est une composante du moteur » | **FAUX — artefact** | `calData.total` a été réécrit par la migration, pas le `breakdown`. Avec la valeur d'origine l'écart tombe à 50 — et §17.1 explique ces 50. |
+| « L'énergie active Garmin ne mesure pas le travail » (6 régressions) | **Conclusion juste, preuve faible** | 6 régressions sur **n = 8**, r² de 0,002 à 0,21 : commenter le signe d'une pente à r² = 0,002, c'est commenter du bruit. La bonne mesure existe et tient sur n = 46 : **r(FC moyenne, kcal/min) = 0,957-0,968** contre **r(FC, kcal total) = 0,056**. *Le chiffre de la montre est une fonction du cardio, pas du travail.* |
+
+## 17.4 Ce qui TIENT (vérifié indépendamment, chiffre par chiffre)
+
+| Constat | Mesure |
+|---|---|
+| Les séances « marche » d'Apple sont l'**échauffement elliptique** | 8/8, écart maximal **44 s** contre `cardioAvant.duration` |
+| `kcal_garmin` = énergie **active + basale** | identité exacte |
+| La basale de Garmin est un **chronomètre** | **1,4753 kcal/min**, CV **0,21 %** → TMB implicite **2 124 kcal/j** |
+| Les durées de séance étaient fausses **avant le 13/08** | écart médian **−44,1 min** ; après correctif **+1,2 min** |
+| La migration ×1,55 est **explicite, manuelle et réversible** | `nouveau = 1,55 × (ancien − cardio) + cardio` — **0 kcal d'écart sur 29/29** |
+| Bascule de balance **Feelfit → MyBodyCheck** | 15,30 % le 06/07 → **20,10 %** le 10/07, aucune valeur intermédiaire en 5 ans et demi |
+
+## 17.5 ⚠️ LE PIÈGE DE L'EXPORT APPLE — deux sources concurrentes
+
+`BasalEnergyBurned` et `ActiveEnergyBurned` sont écrits par **iPhone ET Connect**, sur les mêmes
+minutes, avec chevauchement. Les additionner sans filtrer sur `sourceName` donne **2,28 kcal/min** de
+basale et un TMB implicite de **3 287 kcal/j** — absurde, et parfaitement crédible. Filtré sur
+`Connect` : **1,4753 kcal/min**, 2 124 kcal/j.
+
+⭐ **Et le même champ `sourceName` fournit gratuitement le `deviceId` que réclame la spec BIA** — il
+n'est pas à inventer, seulement à reprendre à l'import.
+
+## 17.6 Ce qui reste à faire — et rien d'autre
+
+1. **Le `breakdown` des 29 séances recalées** n'a pas suivi le `total` : état `total` v2 /
+   `breakdown` v1, réel et persistant.
+2. **Les 6 `breakdown` incomplets** (§17.2), dont une séance native.
+3. **`engineVersion` par séance** — `calSource` en fait déjà une partie du travail.
+
+⛔ **Ce qu'il ne faut PAS faire maintenant**, et les deux auditeurs sont d'accord avec ce dossier :
+ne pas retoucher le modèle physiologique pour obtenir un meilleur chiffre. *D'abord une chaîne de
+calcul cohérente et rejouable ; l'audit MET reprendra sur une base saine.*
+
+## 17.7 La règle de méthode qui en sort
+
+**Avant de publier un rapport entre deux mesures d'origines différentes, écrire ce que chacune
+inclut.** Brut ou net · une séance ou deux blocs · temps actif ou temps total · valeur d'origine ou
+valeur réécrite.
+
+Appliquée rétrospectivement aux erreurs de la série, elle en aurait arrêté **4 sur 9** — dont les
+deux classées P0. Les autres relèvent d'un second garde-fou : **déclarer le périmètre réellement
+inventorié**. L'auditeur avait annoncé « 93 blocs, tous examinés » en n'ayant énuméré que le premier
+niveau ; `caloriesAvant` était dans le deuxième. *Un inventaire annoncé exhaustif et qui ne l'est pas
+est pire qu'un inventaire déclaré partiel — il décourage la vérification.*

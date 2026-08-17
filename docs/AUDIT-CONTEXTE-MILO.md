@@ -1,9 +1,298 @@
-# 🔬 AUDIT — le contexte envoyé à Milo
+# 🧠 Audit du contexte de Milo — ce que coûte et ce que contient chaque message
+
+> **Créé le 17/08/2026**, à la demande de Michel : *« fais le chantier du prompt de Milo, mais aucune
+> modif — qu'une analyse complète et approfondie, et pas linéaire, dans tous les sens »*.
+>
+> **Nature : analyse seule. Aucun fichier de code n'a été modifié.** Version auditée : **ft-v894**.
+>
+> **Pourquoi ce document existe.** Le prompt de Milo est le seul gros morceau du projet que personne
+> n'avait jamais mesuré. Un garde-fou surveillait une moitié ; l'autre avait grossi jusqu'à la
+> dépasser sans que rien ne regarde. *Une chose surveillée, sa jumelle pas du tout* — la famille de
+> défauts la plus fréquente de ce projet.
+
+---
+
+## 1. La méthode — et pourquoi elle compte
+
+Toutes les mesures viennent de **l'exécution du code réel** : un serveur statique sert le dépôt à un
+Chromium sans tête, l'état `S` est injecté, `buildCoachContext(msg)` est appelée telle quelle. Les
+frontières de cache sont relevées avec **les mêmes marqueurs que le Worker** (`indexOf('PROFIL
+ATHLÈTE:')`, `indexOf("═══ SITUATION DE L'INSTANT ═══")`). L'historique passe par `git worktree`.
+
+⚠️ **Ce que je n'ai pas mesuré, et il faut le lire comme tel** : les **tokens**. Aucune clé API dans
+l'environnement, donc `count_tokens` n'a pas tourné. Les tokens et les coûts utilisent le ratio
+**2,34 car./token** — le chiffre du projet lui-même (`worker.js` : « ~37 000 car., ~15 800 tokens »).
+**Les caractères sont mesurés, les tokens sont dérivés.**
+
+⚠️ **Et deux affirmations que j'avais faites AVANT de mesurer étaient fausses**, toutes deux pour la
+même raison : j'avais lu un commentaire au lieu d'exécuter le code.
+
+| Ce que j'avais dit | La mesure |
+|---|---|
+| « le catalogue fait 13 912 car. **non cachés** » | **9 400** car., dans la zone cachée 5 min depuis le 10/08 — un retrait de filtrage **volontaire et documenté** (R30), justement pour qu'il soit cachable |
+| « 50 357 car. ne sont pas mis en cache » | la zone jamais cachée fait **2 300** car. |
+
+*L'architecture de cache est nettement meilleure que ce que je décrivais.*
+
+---
+
+## 2. La mesure de base
+
+Contexte construit pour le compte réel de Michel (32 séances, ~50 records, profil santé renseigné),
+sur six questions de nature très différente :
+
+```
+« fais moi une séance de haut du corps »        97 732 car.
+« je dors mal en ce moment »                    97 732 car.
+« je mange quoi ce soir ? »                     97 732 car.
+« j'ai mal à l'épaule droite depuis 3 jours »   97 732 car.
+« salut »                                       97 732 car.
+« c'est quoi mon record au développé couché ? » 97 732 car.
+```
+
+**Identique au caractère près — et c'est VOULU.** `_ctxEntrainement()` a été **retirée le 10/08**
+(R30, écrit dans le code) : un bloc envoyé « parfois » ne peut pas être mis en cache, donc il serait
+payé plein tarif au lieu d'être relu à 0,1×. *Le raisonnement était juste en caractères et faux en
+prix.* Cet arbitrage tient.
+
+| Zone | Cache | Taille | Contenu |
+|---|---|---|---|
+| **COMMUN** | 1 heure | **49 220** car. | les consignes — censé être partagé par TOUS |
+| **PERSONNEL** | 5 minutes | **48 042** car. | profil, séances, records, programmes, catalogue |
+| **INSTANT** | jamais | **2 300** car. | heure, récupération du jour |
+
+Pour un profil **sans blessure**, le bloc commun tombe à **46 466**. L'écart de 2 754 est le bloc du
+Gardien — c'est tout le sujet du §3.
+
+---
+
+## 3. ⭐⭐ LE CONSTAT PRINCIPAL — le bloc « commun » n'est commun que pour les gens en bonne santé
+
+Le cache de prompt est un **cache de PRÉFIXE** : deux requêtes partagent une entrée seulement tant
+que leurs octets sont identiques **depuis le tout premier**. La première différence coupe tout ce
+qui suit.
+
+Or le contexte se construit ainsi (`coach.js:2275`) :
+
+```js
+return _gardienRules() + `Tu es Milo, le coach personnel de cet athlète ...`
+```
+
+`_gardienRules()` rend une chaîne **vide** quand rien n'est déclaré, et un bloc **personnalisé**
+sinon — il nomme les zones fragiles une par une (« protège les cervicales… », « protège le genou… »).
+Ce bloc est donc placé **avant la première ligne du prompt**.
+
+**La mesure, huit profils de santé, même personne par ailleurs :**
+
+| Profil santé | bloc commun | empreinte |
+|---|---|---|
+| aucune blessure | 46 466 | `8b7fc12be0` |
+| épaule droite | 48 199 | `09318bd918` |
+| épaule gauche | 48 199 | `09318bd918` |
+| genou droit | 48 208 | `d4a1c58f75` |
+| lombaires | 48 146 | `66b98412ba` |
+| épaule D + genou D | 48 705 | `ab92a1a888` |
+| épaule D + lombaires | 48 643 | `0bfe4fd883` |
+| poignet gauche | 48 027 | `4390d6f760` |
+
+**8 profils → 7 entrées de cache distinctes.** Seuls la gauche et la droite d'une même zone se
+rejoignent (texte identique). Le Gardien nomme **20 zones** et **5 conditions** : le nombre de blocs
+« communs » possibles n'est pas 2, c'est le nombre de **combinaisons de blessures**.
+
+### ⚠️ Pourquoi le garde-fou ne peut pas le voir
+
+Le témoin de `tests/parcours` (bloc Q) est **excellent** et fait quatre choses justes : il compare le
+bloc commun de **3 profils opposés**, vérifie qu'il reste sous **46 500** caractères, qu'aucun prénom
+n'y fuit, et qu'il **ne dépend pas de l'heure** (trouvé grâce à une remarque de GPT le 08/08).
+
+Mais ses trois profils sont `{name, gender, age, bw, goal, email}` — **aucun n'a de profil santé**.
+Le chemin qui casse le partage n'est jamais emprunté. *C'est un angle mort de la fixture, pas du
+témoin.*
+
+Le commentaire du témoin dit « Vérifié le 08/08 : 2 empreintes seulement (admin / non-admin) ». La
+vérification était **manuelle**, et sa conclusion est fausse aujourd'hui : la deuxième variante n'est
+pas l'admin, c'est **le profil santé**. *Une vérification manuelle non figée par un test se périme
+sans prévenir.*
+
+### ⚠️⚠️ Et il n'y a PAS de correctif évident
+
+Descendre le Gardien sous le repère `PROFIL ATHLÈTE:` le rendrait cachable comme donnée
+personnelle — **mais il perdrait sa position « à prendre en compte AVANT tout le reste »**, qui est
+exactement ce que **R11** exige (la sécurité prime, les règles ne s'additionnent pas, elles se
+hiérarchisent). **En cas de conflit, la Constitution l'emporte** : la solution ne peut pas être
+« le descendre ». C'est un vrai arbitrage à poser, pas un bug à corriger en trois lignes.
+
+---
+
+## 4. Le bloc PERSONNEL est plus gros que celui qu'on plafonne — et il n'a aucun plafond
+
+| | Taille (compte réel) | Plafond | Testé par |
+|---|---|---|---|
+| Bloc COMMUN | 46 466 – 49 220 | **46 500** | 3 profils, sans blessure |
+| Bloc PERSONNEL | **48 042** | **aucun** | aucun test de taille |
+
+Le garde-fou de taille a été construit en août sur le bloc commun, à l'époque le gros morceau, et il
+a **fait son travail** — il a refusé une livraison le 12/08 et une autre le 15/08. Pendant ce temps
+la moitié personnelle a grossi jusqu'à le dépasser, sans que rien ne regarde.
+
+### Est-il borné ?
+
+| Jeu de données | bloc personnel | verdict |
+|---|---|---|
+| 32 séances (le compte réel) | 45 042 | — |
+| 96 séances (×3) | 45 038 | **borné ✅** |
+| 320 séances (×10) | 45 041 | **borné ✅** |
+| 320 séances + 40 records | **46 671** | **NON borné ❌** (+1 629) |
+
+**L'historique est correctement borné** — 10× plus de séances ne changent pas un caractère. C'est le
+point qui aurait pu coûter le plus cher, et il est tenu.
+
+En revanche `RECORDS PERSONNELS` est construit par `Object.entries(S.prs).map(…).join(', ')` —
+**sans découpe ni plafond**. ~41 caractères par record, linéaire, à vie. Quelqu'un qui suit 200
+exercices ajoute ~8 000 caractères à chacun de ses messages.
+
+⚠️ **Ce n'est pas un appel à couper.** Les records sont exactement le genre d'information qui doit
+atteindre Milo (**R4**), et une coupe mal faite lui ferait oublier un record réel — ce qui coûte plus
+cher que les caractères (**R29** : le droit de deviner dépend du coût de l'erreur). Le constat est
+qu'il n'y a **ni borne ni mesure**, pas qu'il faut trancher.
+
+---
+
+## 5. La croissance, mesurée
+
+Contexte reconstruit sur quatre révisions datées, **même profil neutre** à chaque fois :
+
+| Date | total | bloc commun | personnel + instant |
+|---|---|---|---|
+| 5 août | 60 102 | 37 239 | 22 863 |
+| 10 août | 62 224 | 44 684 | 17 540 |
+| 14 août | 67 523 | 46 462 | 21 061 |
+| 17 août | 69 434 | **46 466** | 22 968 |
+
+**+25 % de bloc commun en 12 jours**, puis un plateau net à 46 462 → 46 466. Ce plateau n'est pas un
+hasard : **c'est le plafond qui mord**. *Le garde-fou fonctionne, et on le voit dans les chiffres.*
+
+⭐ La mesure du 5 août recoupe **au caractère près** le commentaire écrit dans `worker.js` ce jour-là
+(37 261 annoncés, 37 239 mesurés) : deux méthodes indépendantes, même résultat.
+
+---
+
+## 6. ✅ Ce qui est SAIN — et qui doit être dit
+
+| Vérification | Résultat |
+|---|---|
+| **R8 — le prompt cite-t-il des sources absentes du contexte ?** 16 sources nommées (catalogue, records, programmes, calendrier, registre, ADN, profil santé, questionnaire, état du jour, bilans sanguin et corporel, étude du corps, rythme mesuré, discipline, mémoire longue, raisons de remplacement) | **16/16 présentes. Zéro trou.** C'est le résultat direct de la discipline R8 tenue depuis juillet |
+| **R2 — duplication entre bloc commun et bloc personnel** (phrases > 60 car.) | **0 phrase en double** |
+| **Bornage de l'historique** | 10× les séances → **0 caractère** de plus |
+| **Couverture du témoin existant** | identité entre profils · plafond · fuite de prénom · **indépendance à l'heure** : les quatre testés en permanence |
+
+Seule duplication trouvée : **interne au bloc du Gardien** — deux phrases d'alternatives se répètent
+quand deux zones voisines sont déclarées (~180 car.). Effet de gabarit par zone, sans gravité.
+
+---
+
+## 7. ❓ La densité d'insistance — question ouverte, PAS une recommandation
+
+Marqueurs d'autorité dans le bloc commun : **JAMAIS ×47** · **⛔ ×17** · **TOUJOURS ×9** ·
+**INTERDIT ×4** · **ABSOLUE ×2** · **INTERDICTION ×1**.
+
+Chacun a une histoire, et la plupart sont nés d'un vrai bug de comportement — les retirer à l'aveugle
+serait exactement l'erreur que **R30** décrit. Deux choses méritent quand même d'être posées :
+
+① **Quand tout est critique, plus rien ne l'est.** 47 interdits absolus dans un même bloc se
+concurrencent — c'est la thèse de **R11** (les règles se hiérarchisent) et de **R20** (chaque règle
+ajoutée dilue les autres).
+
+② **Le niveau de modèle a changé sous le prompt.** Beaucoup de ces formulations datent de l'époque
+Haiku, où Milo sous-appliquait les consignes ; le défaut est Sonnet depuis le 26/07 (**R9**). Une
+consigne écrite pour forcer la main d'un modèle léger devient, sur un modèle qui suit bien, une
+consigne **sur-appliquée**. *Ce n'est pas une hypothèse générale : c'est le motif déjà vécu ici,
+quand trois durcissements de prompt n'ont rien corrigé et que la vraie variable était le modèle.*
+
+⚠️ **C'est le seul point de cet audit sans mesure.** On ne peut pas mesurer l'effet d'un « JAMAIS »
+sans faire tourner le modèle. À trancher par des essais A/B sur le corpus de tests, **jamais au
+jugement**.
+
+---
+
+## 8. Le coût — ordres de grandeur
+
+Modèle en production : `claude-sonnet-4-6` (en dur dans `worker.js`, ligne 438) — 3 $/million de
+tokens en entrée. Lecture de cache ≈ 0,1× · écriture 5 min ≈ 1,25× · écriture 1 h ≈ 2×.
+Contexte ≈ **42 500 tokens** par message (dérivé, voir §1).
+
+| Situation | Coût d'entrée / message |
+|---|---|
+| Aucun cache (référence) | 0,128 $ |
+| Les deux caches lus — le cas normal en conversation | **0,015 $** |
+| 1ᵉʳ message d'une fenêtre : écriture commun 1 h + perso 5 min | 0,206 $ |
+
+**Le cache marche très bien à l'intérieur d'une conversation**, y compris pour une personne blessée :
+elle relit sa propre entrée. **Le constat du §3 ne coûte donc rien à une personne seule — il coûte à
+mesure que les utilisateurs se multiplient.** Le bloc commun a été conçu (le 05/08) pour être **une
+seule entrée partagée par tout le monde** ; il devient une entrée par combinaison de blessures.
+
+⚠️ **Honnêteté sur la portée** : c'est exactement la logique déjà écrite dans `worker.js` — *« le gain
+est proportionnel à l'USAGE, nul avec un seul utilisateur par jour »*. Le défaut est structurel et
+invisible aujourd'hui ; il devient visible sur la facture le jour où l'app a des utilisateurs.
+**C'est précisément le moment où on ne veut pas le découvrir.**
+
+---
+
+## 9. Ce que cet audit n'a PAS mesuré
+
+| Question | Pourquoi elle reste ouverte |
+|---|---|
+| Les tokens réels | Pas de clé API — `count_tokens` n'a pas tourné. Tout chiffre en tokens est dérivé. |
+| L'effet du contexte sur la **qualité** des réponses | Demande de faire tourner le modèle avec et sans. **Aucun résultat ici n'autorise à dire qu'une section « sert » ou « ne sert pas ».** |
+| Le taux de lecture de cache réel en production | Se lit dans les exports de facturation, pas dans le code. |
+| Les autres appels IA | Seule la conversation est auditée. Les tâches utilitaires (étiquette, code-barres, résumés) tournent sur Haiku, ailleurs. |
+| Le poids des consignes les unes sur les autres | Voir §7 — non mesurable sans expérimentation. |
+
+---
+
+## 10. Les quatre questions à trancher
+
+| # | Point | Ce qui reste à décider |
+|---|---|---|
+| 1 | **Le Gardien en tête de contexte** | Le descendre le rendrait cachable, mais lui ferait perdre sa priorité de sécurité. **R11 et la Constitution interdisent ce chemin.** Quelle autre voie ? |
+| 2 | **Plafonner le bloc personnel** | Un plafond sur des données personnelles n'a pas le même sens qu'un plafond sur des consignes : dépasser signifierait **couper de l'information vraie sur la personne**. Faut-il un plafond, ou seulement une **mesure visible** ? |
+| 3 | **Les records non bornés** | Couper les plus anciens ? Les plus légers ? Ne rien couper et mesurer ? **R29** : l'erreur ici, c'est Milo qui oublie un record réel. |
+| 4 | **La densité d'insistance** | Testable seulement par A/B sur le corpus. Personne ne devrait trancher ça au jugement. |
+
+---
+
+*Scripts de mesure conservés hors dépôt (espace de travail temporaire) : contexte par type de
+question · comparaison entre profils · empreintes par profil santé · croissance par révision git ·
+bornage du bloc personnel. Sources lues : `coach.js` (422 456 car.), `worker.js`,
+`tests/parcours/runner.js`, `tests/milo/runner.js`. **Aucun fichier du dépôt n'a été modifié.***
+
+
+---
+
+# 11. 📜 L'AUDIT PRÉCÉDENT — 9 août 2026, conservé tel quel
+
+> **⚠️ POURQUOI CETTE SECTION EXISTE — et c'est une erreur de ma part, rattrapée.**
+> Un audit du même contexte avait déjà été écrit le **9 août**, dans **ce fichier**. En rédigeant
+> celui du 17 août, je l'ai **écrasé** — exactement le geste qui a coûté 297 entrées de journal le
+> 04/08. `git` l'a rendu, et il est remis ici **intégralement**. *Une archive s'ajoute, elle ne se
+> réécrit jamais* — et un fichier de doc au même nom est une archive comme une autre.
+>
+> **⚠️ SES CHIFFRES NE SONT PLUS VALABLES, ET C'EST TOUT SON INTÉRÊT.** Il mesure **60 775 car.**
+> sur un message d'entraînement et **45 996** sinon — parce qu'à cette date `_ctxEntrainement()`
+> **conditionnait** encore le catalogue au message. Cette fonction a été **retirée le 10/08** (R30,
+> écrit dans `coach.js`) : le raisonnement était juste en caractères et faux en prix (un bloc envoyé
+> « parfois » ne peut pas être mis en cache). D'où les 97 732 car. constants du §2.
+>
+> ⭐ **Et il avait déjà vu l'essentiel** — sa conclusion n°1 (*« le vrai sujet n'est pas la
+> longueur, c'est la POSITION »*) est exactement ce que le §3 démontre huit jours plus tard sur le
+> Gardien. Sa question ouverte n°6 (*« le bloc admin crée une seconde empreinte de cache »*) posait
+> déjà le bon problème — avec la mauvaise cause : ce n'est pas l'admin, c'est le **profil santé**.
 
 > **Aucune modification de code.** Analyse seule, demandée par Michel le 09/08/2026.
 > Tout ce qui suit est **mesuré en exécutant l'application**, jamais déduit du code à l'œil.
 
-## Méthode
+### Méthode
 
 Le contexte est construit par `buildCoachContext(msg)` (`coach.js:1597`), qui rend
 `_gardienRules()` + un gabarit unique. Trois mesures ont été faites dans un vrai navigateur,
@@ -22,7 +311,7 @@ sur un profil réaliste (40 séances, records, poids, sommeil, premium) :
 
 ---
 
-## Les 3 zones de facturation
+### Les 3 zones de facturation
 
 Le worker Cloudflare coupe le prompt en trois au marqueur `═══ SITUATION DE L'INSTANT ═══`
 (`worker.js:314`) :
@@ -41,7 +330,7 @@ les instructions.**
 
 ---
 
-## Tableau d'audit
+### Tableau d'audit
 
 Colonnes : **T** = taille · **Chaque msg ?** = indispensable à chaque message · **Code ?** =
 calculable par le code · **Déplaçable ?** = peut passer dans une zone cachée · **Gain** = gain
@@ -98,7 +387,7 @@ que le code ne les envoie pas.** Non démontrable autrement sans un profil réel
 
 ---
 
-## Ce que le conditionnement fait DÉJÀ (mesuré)
+### Ce que le conditionnement fait DÉJÀ (mesuré)
 
 | Message | Taille | Catalogue |
 |---|---:|:--:|
@@ -113,7 +402,7 @@ message hors entraînement.**
 
 ---
 
-## Classement demandé
+### Classement demandé
 
 **A — CERTAIN (démontré par la mesure)**
 - Le prompt fait **60 775 car.** sur un message d'entraînement, **45 996** sinon.
@@ -143,7 +432,7 @@ message hors entraînement.**
 
 ---
 
-## Conclusions
+### Conclusions
 
 1. **Le vrai sujet n'est pas la longueur, c'est la POSITION.** ~6 500 caractères parfaitement
    fixes vivent après le marqueur de cache et sont donc payés **plein tarif** à chaque message,

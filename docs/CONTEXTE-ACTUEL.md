@@ -6,9 +6,50 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v833`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v894` (17/08/2026). Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
-> ## 🔥 CHANTIER EN COURS — LES CALORIES (nuit du 10 au 11/08)
+> ## 📍 OÙ ON EN EST — 17/08/2026 au soir (à lire en premier)
+>
+> **Journée d'AUDIT, pas de développement.** Quatre allers-retours avec une autre instance de Claude
+> et avec GPT sur l'export complet de Michel. **Tout est écrit** dans `docs/AUDIT-CONTEXTE-MILO.md`
+> (nouveau) et `docs/CALORIES-SOURCES.md` **§17**. Michel a posé le cadre lui-même :
+> *« on creuse tellement, j'espère qu'on va pas se perdre »* → on écrit d'abord, on répare ensuite.
+>
+> ### ⛔ CE QU'IL NE FAUT PAS FAIRE MAINTENANT
+> **Ne pas retoucher le modèle physiologique des calories pour obtenir un meilleur chiffre.**
+> Les deux auditeurs extérieurs et ce dossier sont d'accord : *d'abord une chaîne de calcul
+> cohérente et rejouable, l'audit MET reprendra sur une base saine.*
+>
+> ### ⏭️ LES 3 SEULS POINTS OUVERTS SUR LES CALORIES
+> 1. Le **`breakdown` des 29 séances recalées** n'a pas suivi le `total` (état `total` v2 /
+>    `breakdown` v1, réel et persistant).
+> 2. **6 séances dont le `breakdown` oublie un exercice** — dont le **13/08, une séance NATIVE**,
+>    donc indépendant de la migration. **Cause non identifiée : c'est le vrai point ouvert.**
+> 3. **`engineVersion` par séance** — `calSource` en fait déjà une partie du travail.
+>
+> ### ✅ CE QUI EST RÉGLÉ ET NE DOIT PAS ÊTRE ROUVERT
+> · Le **« forfait de 50 kcal »** n'existe pas : c'est `warmupCals = 3.5 × poids × warmupMin/60`
+>   (`app.js:677`), volontairement hors `breakdown`. **30 séances sur 32 s'expliquent à ±2,3 kcal.**
+>   Le contrat est `total = Σbreakdown + cardio + warmup`, et la séance du **15/08** le prouve
+>   (`warmupMin = 0` ce jour-là → égalité juste à 1 kcal près).
+> · Le **« +38 % cardio »** est **+6 %** (comparaison brut/net) · **CAL-012** est sans objet ·
+>   le **« forfait de 156 kcal »** était un artefact · la migration ×1,55 est **explicite, marquée
+>   (`calSource`) et réversible (`caloriesAvant`)**.
+>
+> ### 🧠 LE CHANTIER SUIVANT, DIAGNOSTIQUÉ ET NON COMMENCÉ — le contexte de Milo
+> Mesuré : **97 732 caractères par message**, identiques quelle que soit la question (voulu, R30).
+> **Le bloc « commun » n'est commun que pour les gens SANS blessure** : le Gardien personnalisé est
+> collé en tête, et le cache est un cache de **préfixe** → **8 profils de santé = 7 entrées de cache**.
+> Le témoin ne peut pas le voir (ses 3 profils n'ont aucune blessure).
+> **⚠️ Aucun correctif évident** : descendre le Gardien lui ferait perdre sa priorité de sécurité,
+> que **R11 et la Constitution** exigent. **4 questions à trancher** dans `AUDIT-CONTEXTE-MILO.md` §10.
+>
+> ### 🔒 EN ATTENTE D'UNE DÉCISION DE MICHEL
+> **Sécurité — Option 1** (secret d'appareil + récupération par e-mail). Il l'avait choisie, puis :
+> *« avant de le faire j'ai fait une petite trouvaille pas top lol donc mets-toi en attente »*.
+> C'est le seul chantier de la file **sans filet de tests**.
+
+> ## 🔥 CHANTIER — LES CALORIES : l'état du 10-11/08 (⚠️ largement DÉPASSÉ, voir le bloc du 17/08 ci-dessus)
 >
 > **Michel a relevé le niveau d'exigence** : *« si on veut que l'application soit sérieuse, il faut
 > des données sérieuses et scientifiquement prouvé ET prouvable »*. Contexte : *« moi je ne
