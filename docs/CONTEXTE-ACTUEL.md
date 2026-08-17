@@ -37,12 +37,31 @@
 >   (`calSource`) et réversible (`caloriesAvant`)**.
 >
 > ### 🧠 LE CHANTIER SUIVANT, DIAGNOSTIQUÉ ET NON COMMENCÉ — le contexte de Milo
-> Mesuré : **97 732 caractères par message**, identiques quelle que soit la question (voulu, R30).
-> **Le bloc « commun » n'est commun que pour les gens SANS blessure** : le Gardien personnalisé est
-> collé en tête, et le cache est un cache de **préfixe** → **8 profils de santé = 7 entrées de cache**.
-> Le témoin ne peut pas le voir (ses 3 profils n'ont aucune blessure).
-> **⚠️ Aucun correctif évident** : descendre le Gardien lui ferait perdre sa priorité de sécurité,
-> que **R11 et la Constitution** exigent. **4 questions à trancher** dans `AUDIT-CONTEXTE-MILO.md` §10.
+> Tout est dans **`docs/AUDIT-CONTEXTE-MILO.md`**. Mesuré : **~97 000 caractères par message**,
+> identiques quelle que soit la question (voulu, R30).
+>
+> **⚠️ TROIS CHOSES À FAIRE, par ordre de rapport sur effort :**
+>
+> **① RÉORDONNER le bloc personnel** (§8 bis) — le plus rentable et le moins risqué. Valider une
+> série réécrit **22 332 car. sur 45 338 (49 %)**, dont **15 183 parfaitement stables** rangés par
+> hasard *après* la séance en cours (le catalogue à lui seul : 9 401). Déplacer les 3 blocs mutables
+> à la fin ⇒ **~14 900 car. sauvés à chaque série**, sans point de cache en plus, sans retirer une
+> ligne. ⚠️ L'ordre n'est pas neutre pour un modèle : à vérifier sur `tests/milo` avant.
+>
+> **② SCINDER LE GARDIEN** (§3) — le bloc « commun » n'est commun que pour les gens **sans blessure**
+> (8 profils = **7 entrées de cache**). L'auditeur extérieur a montré que mon « pas de correctif
+> évident » était faux : le bloc contient **1 234 car. génériques** (la priorité, le principe) et
+> **1 578 car. personnels** (les zones nommées). Descendre **la donnée** et garder **la règle** en
+> tête respecte R11 et ramène 8 profils à **1 seule empreinte**.
+>
+> **③ FIXTURE `tests/parcours`** — ajouter 2 profils avec `healthProfile`. **À faire dans tous les
+> cas** : sans ça l'angle mort revient sans être vu.
+>
+> **✅ CE QUI EST VÉRIFIÉ ET NE DOIT PAS ÊTRE ROUVERT** : aucun autre chemin IA ne tourne sans cache
+> (les 10 autres appels du Worker traitent une image ou un PDF **différent** à chaque fois — un cache
+> y coûterait 1,25× pour zéro lecture) · et **le cache RAPPORTE depuis le 08/08** (ratio 1,14 : 1,
+> gain 11 %). La « perte » mesurée par l'audit extérieur est le coût des deux semaines de
+> construction, pas celui du service.
 >
 > ### 🔒 EN ATTENTE D'UNE DÉCISION DE MICHEL
 > **Sécurité — Option 1** (secret d'appareil + récupération par e-mail). Il l'avait choisie, puis :
