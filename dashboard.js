@@ -253,7 +253,15 @@ function _dBas(){
     if(c&&typeof c==='object'&&+c.min)cardio+=+c.min; else if(+c)cardio+=+c;}));
   let kcal=null;
   if(typeof calcSessionCalories==='function'){
-    try{ kcal=sa.reduce((a,s)=>{const c=calcSessionCalories(s); return a+(+c||0);},0); }catch(e){ kcal=null; }
+    /* ⚠️ `calcSessionCalories` rend un OBJET ({total, breakdown, dureeMin…}), pas un nombre.
+       `+objet` vaut NaN, donc la somme valait NaN, donc `kcal>0` était faux, donc la tuile
+       « Calories » de l'année ne s'est JAMAIS affichée — depuis toujours, sans aucune erreur.
+       ⭐ Le repli « on préfère 4 chiffres justes à 5 dont un inventé » (juste au-dessus) est ce qui
+       a rendu la panne invisible : le code de secours a fait exactement son travail, et personne
+       n'a pu voir que le chemin normal était mort. *Un repli silencieux cache la panne qu'il
+       compense* — c'est la famille du garde-fou branché sur un chemin mort (04/08). */
+    try{ kcal=sa.reduce((a,s)=>{const c=calcSessionCalories(s);
+      return a+(+(c&&typeof c==='object'?c.total:c)||0);},0); }catch(e){ kcal=null; }
   }
   const A=[['Séances',sa.length],['Temps',Math.round(min/60)+' h'],
            ['Volume',(volAn/1000).toFixed(1)+' T']];

@@ -5248,6 +5248,195 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   await c35.close();
 }
 
+/* == BLOC XXXVI - LES DEUX DEFAUTS DE COMPORTEMENT DE MILO (17/08/2026) ==
+   Michel a partage une reponse de Milo (sa seance du 16/08). Deux defauts dans le meme message :
+   (1) « Tu as raison, c'est incoherent. J'ai melange les schemas moteurs » — puis il donne l'ordre
+       « correct »... QUI EST EXACTEMENT CELUI DE LA SEANCE QU'IL AVAIT LIVREE. Il s'est excuse
+       d'une erreur qu'il n'avait pas faite. S'excuser a tort n'est pas de la politesse, c'est une
+       information FAUSSE : la personne repart en croyant qu'un probleme existait.
+   (2) « Je retiens pour la prochaine fois » — RIEN n'etait enregistre. La memoire ne s'ecrit que
+       par le bloc cache {"retiens":[...]} valide par la personne, ou par le resume automatique.
+   /!\ LE 2e SE MESURE (motif detectable) : le Gardien de sortie le signale. Le 1er est semantique,
+   il reste au prompt (Etage 2 = futur) — donc on verifie que la REGLE est bien dans le contexte. */
+{
+  const c36=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p36=await c36.newPage();
+  await p36.goto('http://localhost:'+PORT+'/index.html'); await p36.waitForTimeout(2200);
+  const G=await p36.evaluate(()=>{
+   try{
+    const o={};
+    // --- LE GARDIEN DE SORTIE : deterministe, mesurable des deux cotes ---
+    const f=t=>(_gardienSortie(t).flags||[]).map(x=>x.code);
+    o.vraiCas = f('Les charges etaient bonnes, c\'est juste l\'ordre. Je retiens pour la prochaine fois 💪');
+    o.avecBloc = f('Ok, note pour la suite.\n```json\n{"retiens":["tu preferes le rowing poitrine appuyee"]}\n```');
+    o.jeNote   = f('Tres bien, je note ça.');
+    o.souviens = f('Pas de souci, je m\'en souviendrai.');
+    // ... et il ne crie pas pour rien : une reponse normale ne declenche RIEN
+    o.normal   = f('On part sur 3 series de 8 a 63 kg. Repos 2 min entre les series.');
+    o.pasFaux  = f('Ta seance est notee dans l\'app, tu peux la retrouver dans Progres.');
+    // --- LES DEUX REGLES SONT-ELLES DANS LE CONTEXTE ENVOYE A MILO ? ---
+    const ctx=buildCoachContext('tu t\'es trompe dans l\'ordre des exercices');
+    o.regleComplaisance = /NE DONNE JAMAIS RAISON POUR FAIRE PLAISIR/.test(ctx)
+                       && /RELIS-le plus bas dans ce contexte AVANT de répondre/.test(ctx)
+                       && /sans t'excuser/.test(ctx);
+    o.regleVerifiable   = /Tu ne peux pas vérifier . tu le dis, tu ne tranches pas/.test(ctx);
+    o.reglePromesse     = /NE PROMETS JAMAIS DE MÉMOIRE EN TOUTES LETTRES/.test(ctx)
+                       && /promesse fausse/i.test(ctx);
+    /* R20 : DEUX REGLES SONT ENTREES, IL FALLAIT QUE QUELQUE CHOSE SORTE. Le garde-fou de
+       taille du bloc commun a refuse la livraison (48 128 > 46 500) et m'a oblige a regarder :
+       j'ai compresse mes deux ajouts, retire UNE VRAIE DUPLICATION (la regle « accident de
+       moto » etait ecrite deux fois, dans la section honnetete ET dans la section memoire) et
+       raccourci deux EXEMPLES (pas deux regles). Resultat : 46 466, soit la taille d'avant.
+       /!\ ET LA COMPRESSION DE « Batir une seance » A GAGNE CE QUI MANQUAIT : la dose de
+       paliers depend de la PLACE dans la seance — c'est tout le sujet du 16/08 (ft-v887), et le
+       prompt ne le disait pas, seul le code le savait. Ce temoin fige les deux. */
+    o.doseEchauffement = /4-5 paliers sur le PREMIER/.test(ctx) && /2-4 sur une 2/.test(ctx)
+                      && /0-2 sur un accessoire ou une machine/.test(ctx);
+    o.pasDeDoublon     = ctx.split('\n').filter(l=>/accident de moto/.test(l)).length===1;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XXXVI. Milo : ne pas donner raison pour faire plaisir, ne pas promettre dans le vide --');
+  if(G.erreur){ t('X le gardien de sortie repond', false, G.erreur); }
+  else{
+    t('⭐⭐ LE VRAI CAS DU 16/08 : « je retiens pour la prochaine fois » sans rien enregistrer est SIGNALE',
+      (G.vraiCas||[]).indexOf('promesse_vide')>=0, JSON.stringify(G.vraiCas));
+    t('⭐⭐ ... mais la MEME promesse AVEC le bloc de memoire ne l\'est pas (c\'est alors une promesse VRAIE)',
+      (G.avecBloc||[]).indexOf('promesse_vide')<0, JSON.stringify(G.avecBloc));
+    t('** « je note ça » et « je m\'en souviendrai » aussi',
+      (G.jeNote||[]).indexOf('promesse_vide')>=0 && (G.souviens||[]).indexOf('promesse_vide')>=0,
+      JSON.stringify(G.jeNote)+' / '+JSON.stringify(G.souviens));
+    t('/!\\ ET IL NE CRIE PAS POUR RIEN : une reponse normale ne declenche aucun signalement',
+      (G.normal||[]).length===0 && (G.pasFaux||[]).length===0,
+      JSON.stringify(G.normal)+' / '+JSON.stringify(G.pasFaux));
+    t('⭐⭐ LA REGLE ANTI-COMPLAISANCE ATTEINT MILO : relire le contexte AVANT de donner raison',
+      G.regleComplaisance===true);
+    t('/!\\ ... et le 3e cas est prevu : s\'il ne peut pas verifier, il le DIT au lieu de trancher',
+      G.regleVerifiable===true);
+    t('⭐⭐ LA REGLE ANTI-PROMESSE VIDE ATTEINT MILO', G.reglePromesse===true);
+    t('⭐⭐ R20 — CE QUI EST ENTRE A ETE PAYE : la dose de paliers depend enfin de la PLACE dans la seance',
+      G.doseEchauffement===true);
+    t('/!\\ ... et la regle « accident de moto » n\'est plus ecrite DEUX fois (R2 applique au prompt)',
+      G.pasDeDoublon===true);
+  }
+  await c36.close();
+}
+
+/* == BLOC XXXVII - LE REPOS REGARDE CE QUI VIENT APRES (17/08/2026) ==
+   Michel, pendant sa seance du 16/08 : « si je supprime un echauffement, le temps de repos ne
+   sera pas bon entre les deux ». Il a raison, et c'est structurel : le repos se lisait sur le
+   type de la serie qu'on vient de VALIDER — un palier d'echauffement donne 45 s. Des que le
+   dernier palier est suivi de la premiere SERIE DE TRAVAIL, on enchainait 130 kg 45 secondes
+   apres un palier a 110.
+   /!\ ET ON NE RACCOURCIT JAMAIS : on prend le plus long des deux. */
+{
+  const c37=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p37=await c37.newPage();
+  await p37.addInitScript(seedScript({}));
+  await p37.goto('http://localhost:'+PORT+'/index.html'); await p37.waitForTimeout(2200);
+  const R=await p37.evaluate(()=>{
+   try{
+    const o={}; const S1=(kg,reps,type)=>({kg:kg,reps:reps,type:type||'N'});
+    const pose=(sets)=>{ startWorkout(); S.wkt.exs=[{name:'Soulevé de Terre',sets:sets}]; };
+    const valide=(si)=>{ toggleSet(0,si); return restTot; };
+    // (1) LE CAS DE MICHEL : le dernier palier est suivi de la serie de TRAVAIL
+    pose([S1(60,5,'É'),S1(110,1,'É'),S1(130,3),S1(130,3)]);
+    o.avantTravail=valide(1);
+    // (2) entre DEUX paliers d'echauffement, 45 s restent justes (on est leger, on monte vite)
+    pose([S1(60,5,'É'),S1(90,3,'É'),S1(110,1,'É'),S1(130,3)]);
+    o.entrePaliers=valide(0);
+    // (3) une serie de TRAVAIL suivie d'une autre : inchange (le repos de l'exercice)
+    pose([S1(60,5,'É'),S1(130,3),S1(130,3)]);
+    o.travailTravail=valide(1);
+    // (4) un repos ECRIT EXPRES sur la serie gagne toujours (decision explicite - R29)
+    pose([Object.assign(S1(60,5,'É'),{rest:20}),S1(130,3)]);
+    o.restExplicite=valide(0);
+    // (5) ON NE RACCOURCIT JAMAIS : recup a l'echec (240 s) avant une serie de travail
+    pose([S1(120,8,'X'),S1(130,3)]);
+    o.pasRaccourci=valide(0);
+    // (6) le DERNIER palier de l'exercice (rien apres) garde son repos d'echauffement
+    pose([S1(60,5,'É'),S1(110,1,'É')]);
+    o.dernier=valide(1);
+    o.defRest=S.defRest;
+    /* (7) LE REGLAGE « REPOS PAR DEFAUT » SERT ENFIN A QUELQUE CHOSE (R3).
+       Le repli etait 90 s EN DUR : quelqu'un qui reglait 180 s voyait toujours 90 s. Et le
+       calcul des calories comme le rythme envoye a Milo lisaient, EUX, le vrai reglage — deux
+       sources pour la meme information, qui se contredisaient (R2). */
+    S.defRest=180;
+    pose([S1(130,3),S1(130,3)]);
+    o.regle180=valide(0);
+    S.exRestPref={'Soulevé de Terre':240};
+    pose([S1(130,3),S1(130,3)]);
+    o.prefGagne=valide(0);
+    S.exRestPref={};
+    S.defRest=120;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XXXVII. Le repos regarde ce qui vient APRES --');
+  if(R.erreur){ t('X le repos se calcule', false, R.erreur); }
+  else{
+    t('⭐⭐ LE CAS DE MICHEL : avant la 1re SERIE DE TRAVAIL, c\'est le repos de travail — plus 45 s',
+      R.avantTravail===R.defRest, R.avantTravail+' s (repos de travail : '+R.defRest+' s)');
+    t('⭐⭐ LE REGLAGE « repos par defaut » SERT ENFIN (il valait 90 s en dur - R3)',
+      R.regle180===180, R.regle180+' s pour un reglage a 180 s');
+    t('/!\\ ... et une preference posee sur CET exercice reste prioritaire (plus precise)',
+      R.prefGagne===240, R.prefGagne+' s');
+    t('/!\\ mais entre DEUX paliers d\'echauffement, 45 s restent justes',
+      R.entrePaliers===45, R.entrePaliers+' s');
+    t('** entre deux series de travail : inchange', R.travailTravail===R.defRest, R.travailTravail+' s');
+    t('/!\\ un repos ECRIT sur la serie gagne toujours (decision explicite - R29)',
+      R.restExplicite===20, R.restExplicite+' s');
+    t('/!\\/!\\ ON NE RACCOURCIT JAMAIS : une recup a l\'echec garde ses 240 s',
+      R.pasRaccourci===240, R.pasRaccourci+' s');
+    t('/!\\ le dernier palier, sans rien apres, garde son repos d\'echauffement',
+      R.dernier===45, R.dernier+' s');
+  }
+  await c37.close();
+}
+
+/* == BLOC XXXVIII - LA TUILE « CALORIES » DE L'ANNEE (17/08/2026) ==
+   `calcSessionCalories` rend un OBJET ({total, breakdown, dureeMin...}), pas un nombre. `+objet`
+   vaut NaN, donc la somme valait NaN, donc `kcal>0` etait faux : la tuile ne pouvait PAS s'afficher.
+   /!\/!\ MAIS CE N'ETAIT PAS LA SEULE CAUSE, ET LA 2e EST VOLONTAIRE (R30) : `app.js` n'est pas
+   charge par `dashboard.html` — c'est ecrit noir sur blanc dans le fichier, avec sa raison (il
+   porte le DEMARRAGE de l'app et leve des erreurs en cascade sur cette page). Donc la fonction
+   n'existe meme pas la-bas. *J'allais « reparer » un symptome d'une decision assumee.*
+   👉 CE QUI EST FAIT : la SOMME est corrigee (elle etait fausse dans tous les cas). La tuile
+   restera absente tant que les fonctions de calcul ne seront pas separees du demarrage — c'est
+   le vrai chantier, et il ne se fait pas en passant. Ce temoin verifie donc la seule chose qu'on
+   maitrise : que la somme sait lire l'objet. */
+{
+  const c38=await b.newContext({serviceWorkers:'block',viewport:{width:1280,height:900}});
+  const p38=await c38.newPage();
+  await p38.addInitScript(seedScript({}));
+  await p38.goto('http://localhost:'+PORT+'/dashboard.html'); await p38.waitForTimeout(2500);
+  const D=await p38.evaluate(()=>{
+   try{
+    if(typeof _dBas!=='function') return {erreur:'_dBas absente (tableau de bord non charge)'};
+    const an=new Date().getFullYear();
+    S.sessions=[{date:an+'-03-04',duration:3600,volume:8000,exs:[
+      {name:'Squat Barre',sets:[{kg:100,reps:5,done:true,type:'N'},{kg:100,reps:5,done:true,type:'N'}]}]}];
+    const o={absente: (typeof calcSessionCalories==='undefined')};
+    // On FOURNIT la fonction telle qu'elle est vraiment (elle rend un OBJET) et on verifie la somme.
+    window.calcSessionCalories=()=>({total:412, breakdown:{}, dureeMin:60});
+    o.html=_dBas().replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+    delete window.calcSessionCalories;
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XXXVIII. La tuile « Calories » de l\'annee --');
+  if(D.erreur){ t('X le tableau de bord se rend', false, D.erreur); }
+  else{
+    t('⭐⭐ LA SOMME SAIT LIRE L\'OBJET : la tuile affiche un nombre, plus NaN',
+      /Calories/.test(D.html) && /412\s*kcal/.test(D.html) && !/NaN/.test(D.html),
+      (D.html||'').slice(-120));
+    t('/!\\ ET LE VRAI BLOCAGE EST ECRIT : `calcSessionCalories` n\'est PAS chargee ici (retrait volontaire, R30)',
+      D.absente===true);
+  }
+  await c38.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

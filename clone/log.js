@@ -983,7 +983,18 @@ function toggleSet(ei,si){
     const exName=S.wkt.exs[ei].name;
     const isAbdo=EXLIB.some(e=>e.n===exName&&e.g==='Abdominaux');
     const savedPref=(S.exRestPref||{})[exName];
-    const defForEx=isAbdo?30:(savedPref||90);
+    /* ⚠️⚠️ LE RÉGLAGE « REPOS PAR DÉFAUT » NE SERVAIT À RIEN (trouvé le 17/08/2026)
+       Le repli était **90 s EN DUR**, alors que la personne règle son repos par défaut dans son
+       Profil (`S.defRest`, 130 s à l'installation). Quelqu'un qui met 180 s voyait donc toujours
+       90 s au chrono — *un réglage qui ne produit aucun comportement observable* (R3).
+       ⚠️⚠️ ET C'ÉTAIT PIRE QUE ÇA : `S.defRest` est bel et bien lu ailleurs — par le calcul des
+       CALORIES (`calcSessionCalories`, app.js) et par le rythme de séance envoyé à MILO
+       (`_rythmeSeance`, coach.js). Donc l'app comptait ses calories et construisait ses séances
+       en croyant un repos que le chrono n'appliquait pas. *Deux sources pour la même information,
+       qui se contredisent* — la famille de bugs la plus vicieuse du projet (R2).
+       ⚠️ L'ORDRE COMPTE : une préférence posée sur CET exercice gagne (elle est plus précise),
+       puis le réglage de la personne, puis 90 s seulement si elle n'a jamais rien réglé. */
+    const defForEx=isAbdo?30:(savedPref||S.defRest||90);
     const restByType={N:defForEx,É:45,X:240,W:45,E:240};
     const restLabels={É:'Échauffement',X:'Récup. à l\'échec',W:'Échauffement',E:'Récup. à l\'échec'};
     const lbl=document.getElementById('rest-label');
@@ -992,7 +1003,24 @@ function toggleSet(ei,si){
     _restEx=isAbdo?null:exName;
     const mb=document.getElementById('rest-btn-minus');const pb=document.getElementById('rest-btn-plus');
     if(mb)mb.textContent=`−${_restStep}s`;if(pb)pb.textContent=`+${_restStep}s`;
-    const sec=(set.rest>0?set.rest:(restByType[set.type]||defForEx));
+    /* ⏱️ LE REPOS REGARDE CE QUI VIENT APRÈS, PAS SEULEMENT CE QU'ON VIENT DE FAIRE (17/08/2026)
+       Michel, pendant sa séance du 16/08 : *« si je supprime un échauffement, le temps de repos ne
+       sera pas bon entre les deux »*. Il a raison, et c'est structurel : le repos se lisait sur le
+       type de la série qu'on vient de VALIDER — un palier d'échauffement donne 45 s. Or dès que le
+       dernier palier est suivi de la première SÉRIE DE TRAVAIL (parce qu'on en a supprimé un, ou
+       parce que la montée n'en comptait qu'un), ces 45 s tombent juste avant la série la plus
+       lourde de l'exercice. *On enchaîne 130 kg 45 secondes après un palier à 110.*
+       👉 Entre deux paliers d'échauffement, 45 s restent justes — on est léger, on veut monter vite.
+       Avant une série de TRAVAIL, c'est le repos de travail qui s'applique, quel que soit le type
+       de la série qu'on vient de faire.
+       ⚠️ On ne touche à rien d'autre : un repos écrit EXPRÈS sur la série (`set.rest`) gagne
+       toujours — c'est une décision explicite, elle passe avant toute déduction (R29). Et on ne
+       RACCOURCIT jamais : on prend le plus long des deux, donc une récup à l'échec (240 s) suivie
+       d'une série de travail garde ses 240 s. */
+    const _suite=(S.wkt.exs[ei].sets||[]).slice(si+1).filter(x=>x&&!x.done)[0];
+    const _versTravail=!!(_suite && _suite.type!=='É' && _suite.type!=='W');
+    const _base=(restByType[set.type]||defForEx);
+    const sec=(set.rest>0?set.rest:(_versTravail?Math.max(_base,defForEx):_base));
     // ─── Dropset : avance entre paliers ─────────────────────────────────────
     if(S.wkt.exs[ei].dropset){
       const ds=S.wkt.exs[ei].dropset;
