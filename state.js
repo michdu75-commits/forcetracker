@@ -796,9 +796,11 @@ const _DIET_SWAPS=[
   // ⚠️ « Œufs brouillés » d'abord, sinon seul « Œufs » est remplacé et « brouillés » reste
   //    derrière : « Tofu brouillé brouillés » (vu au test croisé kéto + végan du 02/08).
   ['vegan',/Œufs brouillés/gi,'Tofu brouillé'],['vegan',/Œufs entiers|Œufs/gi,'Tofu'],['vegan',/Poulet\/thon|Poulet|Dinde/gi,'Tempeh'],
-  ['vegan',/Saumon\/bœuf|Bœuf|Saumon|Poisson maigre|Poisson/gi,'Pois chiches'],
+  ['vegan',/Saumon\/bœuf|Bœuf|Saumon|Poisson maigre|Poisson|Thon/gi,'Pois chiches'],
   ['vegan',/Whey|whey/gi,'protéine de pois'],['vegan',/Yaourt grec|Fromage blanc 0%|Fromage blanc/gi,'Yaourt de soja'],
   ['vegan',/lait entier/gi,'lait de soja'],
+  // le miel est un produit animal : on le remplace par un sucre deja connu des tables
+  ['vegan',/\bmiel\b/gi,'dattes'],
   // Les aliments du plan KÉTO (fromage, beurre, crème) : sans eux, le cas croisé kéto + végan
   // laissait passer « Amandes + fromage à pâte dure » — trouvé par le test croisé, pas à l'œil.
   ['vegan',/fromage à pâte dure/gi,'noix de cajou'],['vegan',/au beurre/gi,"à l'huile de coco"],
@@ -806,7 +808,7 @@ const _DIET_SWAPS=[
   ['sanslactose',/fromage à pâte dure/gi,'fromage affiné (sans lactose)'],
   ['sanslactose',/au beurre/gi,"à l'huile d'olive"],['sanslactose',/à la crème(?! de coco)/gi,'à la crème de coco'],
   // Végétarien : ni viande ni poisson, mais œufs et laitages restent
-  ['vegetarien',/Poulet\/thon|Poulet|Dinde/gi,'Tofu'],['vegetarien',/Saumon\/bœuf|Bœuf|Saumon|Poisson maigre|Poisson/gi,'Œufs'],
+  ['vegetarien',/Poulet\/thon|Poulet|Dinde/gi,'Tofu'],['vegetarien',/Saumon\/bœuf|Bœuf|Saumon|Poisson maigre|Poisson|Thon/gi,'Œufs'],
   // Pescétarien : plus de viande, le poisson reste
   ['pescetarien',/Poulet\/thon|Poulet|Dinde/gi,'Poisson blanc'],['pescetarien',/Saumon\/bœuf|Bœuf/gi,'Saumon'],
   // Restrictions
@@ -1002,43 +1004,128 @@ function _portionner(desc, kcalRepas){
   });
   return out.join(' + ')+(suffixe?' —'+suffixe:'');
 }
-function getMeals(macros,phase){
+/* ═══ LE PLAN CHANGE TOUS LES JOURS (18/08/2026, demande de Michel).
+
+   ⚠️⚠️ AUCUN APPEL IA, et c'est un choix : ce bloc est calculé par l'app, HORS LIGNE et
+   gratuitement. Le faire générer coûterait à chaque jour et ne marcherait plus à la salle
+   sans réseau (règle d'or #4). Le « Plan de repas IA » existe déjà, séparément, pour ça.
+
+   ⚠️⚠️ LES VARIANTES N'UTILISENT QUE DES ALIMENTS DÉJÀ PRÉSENTS DANS LES PLANS. C'est LA
+   règle de sécurité de cette brique : chaque aliment doit être connu des tables de
+   substitution (`_DIET_SWAPS`) ET d'allergènes (`_ALLERGENES`), sinon un végan voit de la
+   viande ou quelqu'un qui a déclaré « fruits à coque » voit des amandes — c'est le bug
+   d'Emma du 02/08. En n'introduisant AUCUN mot nouveau, le risque est nul par construction.
+   ⛔ Deux pièges relevés en écrivant : « Thon » SEUL n'est couvert par aucune substitution
+   (seul « Poulet/thon » l'est), et « Porridge » n'a pas d'équivalent sans gluten. Ne pas
+   les employer dans une variante.
+
+   La variante du jour est choisie par la DATE : elle change chaque jour, mais elle est
+   stable toute la journée — sinon le plan changerait à chaque affichage. */
+function _jourPlan(d){
+  try{
+    const s=d||((typeof today==='function')?today():new Date().toISOString().slice(0,10));
+    const t=new Date(s+'T12:00:00');
+    return Math.floor((t-new Date(t.getFullYear(),0,0))/864e5);   // quantième de l'année
+  }catch(e){ return 0; }
+}
+/* Un repas peut porter UNE description (comportement d'origine) ou PLUSIEURS : on prend
+   celle du jour. Les deux formes cohabitent — inutile de convertir tous les plans. */
+function _varianteDuJour(desc, jour){
+  if(!Array.isArray(desc)) return desc;
+  if(!desc.length) return '';
+  return desc[((jour%desc.length)+desc.length)%desc.length];
+}
+/* @param jourForce — n'existe QUE pour les tests : il leur permet de parcourir TOUTES les
+   variantes. Sans lui, un test de régime ne vérifierait que la variante du jour où il
+   tourne, et une variante dangereuse ne sortirait que certains jours. */
+function getMeals(macros,phase,jourForce){
   const goal=S.goal||'muscle';
+  const _jour=(jourForce==null)?_jourPlan():jourForce;
   const plans={
     muscle:[
-      [0.20,'🌅 Petit-déjeuner','Avoine + œufs + fruit — Glucides complexes'],
-      [0.10,'🍎 Collation matin','Yaourt grec + noix — Protéines rapides'],
-      [0.25,'🍽️ Déjeuner','Riz + poulet + légumes — Repas complet'],
-      [0.15,'⚡ Pré-entraînement',"Banane + flocons d'avoine — Énergie maximale"],
-      [0.20,'💪 Post-entraînement','Whey + riz + banane — Récupération anabolique'],
-      [0.10,'🌙 Dîner','Saumon/bœuf + légumes + patate douce'],
+      [0.20,'🌅 Petit-déjeuner',['Avoine + œufs + fruit — Glucides complexes',
+        'Pain complet + œufs + banane — Départ rapide',
+        'Yaourt grec + avoine + fruit — Frais et protéiné']],
+      [0.10,'🍎 Collation matin',['Yaourt grec + noix — Protéines rapides',
+        'Fromage blanc 0% + amandes — Satiété longue',
+        'Whey + banane — Le plus rapide']],
+      [0.25,'🍽️ Déjeuner',['Riz + poulet + légumes — Repas complet',
+        'Pâtes + bœuf + légumes vapeur — Plus dense',
+        'Quinoa + saumon + brocolis — Oméga 3']],
+      [0.15,'⚡ Pré-entraînement',['Banane + flocons d\'avoine — Énergie maximale',
+        'Pain complet + miel — Sucre disponible vite',
+        'Riz blanc + dattes — Charge glycogène']],
+      [0.20,'💪 Post-entraînement',['Whey + riz + banane — Récupération anabolique',
+        'Poulet + patate douce + légumes — Vrai repas de récup',
+        'Yaourt grec + fruit + miel — Léger et efficace']],
+      [0.10,'🌙 Dîner',['Saumon/bœuf + légumes + patate douce',
+        'Poisson maigre + haricots verts + quinoa',
+        'Œufs + épinards + riz complet']],
     ],
     perte:[
-      [0.25,'🌅 Petit-déjeuner','Œufs entiers + épinards + pain complet — Rassasiant, riche en protéines'],
-      [0.10,'🍎 Collation','Fromage blanc 0% + concombre — Volume sans calories'],
-      [0.30,'🍽️ Déjeuner','Poulet/thon + légumes vapeur + légumineuses — Satiété maximale'],
-      [0.10,'🍎 Collation 2','Amandes (20g) + whey shake — Anti-fringales'],
-      [0.25,'🌙 Dîner','Poisson maigre + légumes rôtis + quinoa — Faible IG'],
+      [0.25,'🌅 Petit-déjeuner',['Œufs entiers + épinards + pain complet — Rassasiant, riche en protéines',
+        'Fromage blanc 0% + fruit + avoine — Volume et satiété',
+        'Œufs + légumes + pain complet — Salé, tient au corps']],
+      [0.10,'🍎 Collation',['Fromage blanc 0% + concombre — Volume sans calories',
+        'Yaourt grec + fruit — Frais et léger',
+        'Whey + concombre — Protéines pures']],
+      [0.30,'🍽️ Déjeuner',['Poulet/thon + légumes vapeur + légumineuses — Satiété maximale',
+        'Dinde + brocolis + quinoa — Léger et complet',
+        'Poisson maigre + légumes + lentilles — Faible densité']],
+      [0.10,'🍎 Collation 2',['Amandes (20g) + whey shake — Anti-fringales',
+        'Yaourt grec + noix — Coupe-faim gras/protéines',
+        'Fromage blanc 0% + fruit — Sucré sans excès']],
+      [0.25,'🌙 Dîner',['Poisson maigre + légumes rôtis + quinoa — Faible IG',
+        'Œufs + épinards + patate douce — Réconfortant',
+        'Poulet + haricots verts + lentilles — Protéines et fibres']],
     ],
     force:[
-      [0.20,'🌅 Petit-déjeuner','Avoine + œufs + lait entier — Base énergétique dense'],
-      [0.15,'⚡ Pré-entraînement','Riz blanc + bœuf + banane — Charge glycogène maximale'],
-      [0.25,'🍽️ Déjeuner','Pâtes + poulet + huile olive — Carburant pour les charges lourdes'],
-      [0.25,'💪 Post-entraînement','Whey + riz blanc + dattes — Récupération rapide'],
-      [0.15,'🌙 Dîner','Œufs + patate douce + légumes — Récupération nocturne'],
+      [0.20,'🌅 Petit-déjeuner',['Avoine + œufs + lait entier — Base énergétique dense',
+        'Œufs + pain complet + lait entier — Simple et lourd',
+        'Avoine + whey + banane — Rapide avant une grosse journée']],
+      [0.15,'⚡ Pré-entraînement',['Riz blanc + bœuf + banane — Charge glycogène maximale',
+        'Pâtes + poulet + miel — Carburant classique',
+        'Riz blanc + dattes + whey — Léger sur l\'estomac']],
+      [0.25,'🍽️ Déjeuner',['Pâtes + poulet + huile olive — Carburant pour les charges lourdes',
+        'Riz + bœuf + légumes — Dense en protéines',
+        'Patate douce + saumon + épinards — Récup et micronutriments']],
+      [0.25,'💪 Post-entraînement',['Whey + riz blanc + dattes — Récupération rapide',
+        'Poulet + riz + fruit — Vrai repas de récup',
+        'Yaourt grec + avoine + miel — Facile à avaler']],
+      [0.15,'🌙 Dîner',['Œufs + patate douce + légumes — Récupération nocturne',
+        'Saumon/bœuf + quinoa + brocolis',
+        'Dinde + riz + haricots verts']],
     ],
     equilibre:[
-      [0.25,'🌅 Petit-déjeuner','Œufs + avoine + fruits — Équilibre parfait macro/micro'],
-      [0.30,'🍽️ Déjeuner','Protéine + céréale complète + légumes variés — Coloré et complet'],
-      [0.15,'🍎 Collation','Yaourt grec + noix ou fruit de saison'],
-      [0.30,'🌙 Dîner','Poisson + légumes + riz complet ou lentilles'],
+      [0.25,'🌅 Petit-déjeuner',['Œufs + avoine + fruits — Équilibre parfait macro/micro',
+        'Yaourt grec + pain complet + fruit — Léger et complet',
+        'Œufs + épinards + avoine — Salé, riche en fibres']],
+      [0.30,'🍽️ Déjeuner',['Protéine + céréale complète + légumes variés — Coloré et complet',
+        'Poulet + quinoa + légumes vapeur — Simple et net',
+        'Poisson maigre + riz + brocolis — Digeste']],
+      [0.15,'🍎 Collation',['Yaourt grec + noix ou fruit de saison',
+        'Fromage blanc 0% + fruit',
+        'Amandes (20g) + banane']],
+      [0.30,'🌙 Dîner',['Poisson + légumes + riz complet ou lentilles',
+        'Œufs + légumes rôtis + patate douce',
+        'Dinde + haricots verts + quinoa']],
     ],
     endurance:[
-      [0.25,'🌅 Petit-déjeuner','Porridge + miel + banane + fruit sec — Réserve glycogène'],
-      [0.15,'⚡ Pré-entraînement','Barre céréale maison + jus de fruit — Énergie rapide'],
-      [0.25,'🍽️ Déjeuner','Pâtes complètes + thon + légumes — Glucides dominants'],
-      [0.20,'💪 Post-entraînement','Boisson récup + banane + pain complet — Réhydratation'],
-      [0.15,'🌙 Dîner','Riz + poulet + légumes — Reconstruction musculaire nocturne'],
+      [0.25,'🌅 Petit-déjeuner',['Porridge + miel + banane + fruit sec — Réserve glycogène',
+        'Avoine + lait entier + fruit sec — Même but, autre texture',
+        'Pain complet + miel + banane — Rapide avant de partir']],
+      [0.15,'⚡ Pré-entraînement',['Barre céréale maison + jus de fruit — Énergie rapide',
+        'Banane + dattes — Le plus simple',
+        'Pain complet + miel — Sucre disponible vite']],
+      [0.25,'🍽️ Déjeuner',['Pâtes complètes + thon + légumes — Glucides dominants',
+        'Riz + poulet + légumes vapeur — Digeste avant l\'effort',
+        'Quinoa + saumon + épinards — Plus de micronutriments']],
+      [0.20,'💪 Post-entraînement',['Boisson récup + banane + pain complet — Réhydratation',
+        'Whey + riz + fruit — Reconstruction',
+        'Yaourt grec + avoine + miel — Sucres et protéines']],
+      [0.15,'🌙 Dîner',['Riz + poulet + légumes — Reconstruction musculaire nocturne',
+        'Poisson maigre + patate douce + haricots verts',
+        'Œufs + quinoa + légumes rôtis']],
     ],
   };
   // Le KÉTO prime sur l'objectif : sa structure de repas est dictée par les macros (5/15/80),
@@ -1060,7 +1147,8 @@ function getMeals(macros,phase){
       plan2=restants.map(([p,nom,d],i)=>[p+bonus, (i===0?'⏳ Rupture du jeûne'+(FEN?' ('+FEN.split('→')[0].trim()+')':''):nom), d]);
     }
   }
-  return plan2.map(([pct,name,desc0])=>{
+  return plan2.map(([pct,name,descBrut])=>{
+    const desc0=_varianteDuJour(descBrut,_jour);
     const kcal=Math.round(macros.calories*pct);
     // ⚠️ ORDRE OBLIGATOIRE : on ADAPTE au régime, PUIS on quantifie. L'inverse collerait les
     // grammes sur l'aliment d'origine, et la substitution laisserait une quantité qui ne
