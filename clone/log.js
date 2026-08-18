@@ -5256,7 +5256,12 @@ function _startSessionFromMilo(idx,btn){
   const buildEx=e=>{
     const prev=(typeof getPrev==='function')?(getPrev(e.name)||[]):[];
     const _pa=_prevAligne(prev, e.sets||[]);   // par RÔLE (voir _prevAligne)
-    return {name:e.name,note:e.note||'',sets:(e.sets||[]).map((s,i)=>{
+    /* 🏷️ ON GARDE L'AUTEUR DE LA SÉANCE (18/08/2026) — `_milo:true` dit « ces charges viennent
+       d'une prescription de Milo, pas d'un choix de la personne ». Sans ce marqueur, le débrief
+       lui reproche une montée en charge trop courte qu'il a lui-même écrite (arrivé le 18/08,
+       après le même incident le 15/08 côté app). Il suit la séance jusque dans l'historique,
+       puisque `sess.exs` est copié depuis `S.wkt.exs`. Lu par `_verdictMontee` (coach.js). */
+    return {name:e.name,note:e.note||'',_milo:true,sets:(e.sets||[]).map((s,i)=>{
       const pp=_pa[i];
       const kg=(s.kg>0)?s.kg:(pp?pp.kg:0);                                   // Milo d'abord, sinon la dernière fois
       const reps=s.maxi?0:((s.reps>0)?s.reps:(pp?pp.reps:10));               // idem (série « maxi » = vide, à saisir)

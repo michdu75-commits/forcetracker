@@ -2232,6 +2232,32 @@ function buildCoachContext(msg) {
     try{
       if(typeof _monteeDefauts !== 'function') return '';
       if(e && e._montee) return '';                    // montée écrite par l'app → aucun reproche
+      /* ⛔⛔ ET PAS DAVANTAGE UNE MONTÉE QUE **MILO** A PRESCRITE (18/08/2026) — la jumelle
+         manquante du garde-fou du 15/08, et elle a coûté exactement le même incident.
+         Michel, capture à l'appui : Milo lui reproche d'avoir démarré le Développé Incliné à
+         48 kg « soit 80 % de la charge de travail »… alors que **c'est Milo qui avait prescrit
+         ce palier**. Michel a dû le reprendre (*« c'est toi qui m'a dit de prendre ces charges
+         là »*), et Milo a rectifié : *« c'était ma prescription »*.
+         ⚠️ Le garde-fou du 15/08 ne couvrait que « montée écrite par l'APP ». On avait corrigé
+         un seul des deux auteurs possibles — R8 dit pourtant de chercher les jumelles dès qu'on
+         trouve un manque, et il y en avait une.
+         👉 On ne se TAIT pas pour autant : la montée est bel et bien trop courte, et c'est utile
+         pour la prochaine fois. On dit seulement **de qui elle vient**, pour que la correction
+         parte sur la prescription au lieu de tomber sur la personne (R29 : un reproche injuste
+         coûte la confiance dans l'outil, un conseil manqué ne coûte qu'un conseil).
+         ⚠️ PORTÉE HONNÊTE : ce marqueur n'existe que si la séance a été chargée DEPUIS le chat
+         (`_startSessionFromMilo`). Une séance passée par un PROGRAMME enregistré a perdu son
+         auteur en route — là, seule la consigne du prompt peut rattraper. */
+      if(e && e._milo) {
+        const ech0 = (doneSets||[]).filter(x => x && (x.type==='É' || x.type==='W'));
+        const trav0 = (doneSets||[]).filter(x => x && x.type!=='É' && x.type!=='W');
+        if(ech0.length && trav0.length){
+          const kg0 = trav0.reduce((m,x)=>Math.max(m, +x.kg||0), 0);
+          const d0 = _monteeDefauts(ech0, kg0);
+          if(d0.length) return ` [⚠️ montée en charge insuffisante — ${d0.join(' ; ')} · ⛔ CES PALIERS VIENNENT DE TA PROPRE PRESCRIPTION : corrige-les pour la prochaine fois, ne les reproche PAS à la personne]`;
+        }
+        return '';
+      }
       const ech = (doneSets||[]).filter(x => x && (x.type==='É' || x.type==='W'));
       if(!ech.length) return '';
       const travail = (doneSets||[]).filter(x => x && x.type!=='É' && x.type!=='W');
@@ -2265,11 +2291,27 @@ function buildCoachContext(msg) {
          n'est pas le même conseil pour la suivante.*
          ⚠️ Borné à 70 caractères par note : le bloc commun est à quelques centaines de caractères
          de son plafond (R20), et une note de série est un repère, pas un journal. */
+      /* 🔢 LES SÉRIES DE TRAVAIL SONT NUMÉROTÉES (18/08/2026) — retour de Michel, capture à l'appui :
+         il avait noté « barre raque à la 4ème » sur sa **2ᵉ** série de Larsen, et Milo a débriefé
+         la **3ᵉ**. Michel a dû le reprendre (*« c'est sur la deuxième série où j'ai posé la barre »*),
+         et Milo a reconnu : *« c'est moi qui ai mal lu »*.
+         ⚠️ IL NE POUVAIT PAS BIEN LIRE : la ligne envoyée était une SUITE non numérotée où les
+         paliers d'échauffement et les séries de travail se ressemblent —
+         `40×5(É) 55×3(É) 70×2(É) 75×1(É) 85×5 85×5[💬 …] 85×5`. Pour dire « 2ᵉ série », il fallait
+         compter en écartant les É au passage. On demandait au modèle un travail d'index que le
+         code fait sans se tromper. **R4/R8** : quand la lecture est fausse, se demander d'abord si
+         l'information était LISIBLE — et ici l'app connaissait le numéro, elle ne l'écrivait pas.
+         ⚠️ Seules les séries de TRAVAIL sont numérotées : c'est d'elles qu'on parle quand on dit
+         « ta 2ᵉ série ». Un palier reste marqué (É), sans numéro — sinon on recrée la confusion
+         qu'on vient de retirer. */
+      let _nT = 0;
       const setsStr = ds.length
         ? ds.map(x => {
             const n = (x.note ? String(x.note).replace(/\s+/g,' ').trim().slice(0,70) : '');
-            return `${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N')?'('+x.type+')':''}${n?'[💬 '+n+']':''}`;
-          }).join(' ')
+            const ech = (x.type==='É' || x.type==='W');
+            const num = ech ? (x.type+' ') : ('S'+(++_nT)+' ');
+            return `${num}${x.kg||'?'}×${x.reps||'?'}${(x.type&&x.type!=='N'&&!ech)?'('+x.type+')':''}${n?'[💬 '+n+']':''}`;
+          }).join(' · ')
         : '—';
       // 🔀 « par bras » sur la ligne elle-même : sans ça, Milo lit « 28×8 » et croit à une
       // charge dérisoire pour un dos, alors que 28 kg d'une seule main est une vraie série.
@@ -2780,7 +2822,7 @@ ${(()=>{
 DERNIÈRES SÉANCES:
 ${recentSessions}
 → ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans le bloc « SA MÉMOIRE LONGUE ». ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
-→ ⚡ MONTÉE EN CHARGE : quand une ligne porte « ⚠️ montée en charge insuffisante », ce n'est PAS une opinion, c'est un CALCUL de l'application (paliers de 10-15 %, départ à 40-50 %, dernier palier 5-10 % sous la charge, pas plus de 2 reps au-delà de 85 %). Tu ne dois JAMAIS écrire que la montée était propre sur un exercice ainsi marqué — dis-le franchement, explique le risque en une phrase (un saut de charge trop grand, c'est là qu'on se blesse) et donne les paliers manquants pour la prochaine fois. À l'inverse, une ligne SANS ce marqueur n'appelle aucune remarque sur l'échauffement.
+→ ⚡ MONTÉE EN CHARGE : quand une ligne porte « ⚠️ montée en charge insuffisante », ce n'est PAS une opinion, c'est un CALCUL de l'application (paliers de 10-15 %, départ à 40-50 %, dernier palier 5-10 % sous la charge, pas plus de 2 reps au-delà de 85 %). Tu ne dois JAMAIS écrire que la montée était propre sur un exercice ainsi marqué — dis-le franchement, explique le risque en une phrase (un saut de charge trop grand, c'est là qu'on se blesse) et donne les paliers manquants pour la prochaine fois. ⛔ MAIS AVANT DE LE DIRE, REGARDE QUI A CHOISI CES CHARGES : si elles viennent d'une séance que TU as prescrite (le marqueur te le dit, ou tu la retrouves dans votre échange), la correction porte sur TA prescription — « je t'avais donné ce palier, je le corrige » — jamais sur la personne, qui n'a fait qu'appliquer. À l'inverse, une ligne SANS ce marqueur n'appelle aucune remarque sur l'échauffement.
 → Parmi ces séances, chacune a bien été FAITE (avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si un jour COMPRIS DANS LA PÉRIODE ci-dessus n'a aucune séance listée, ce jour était un REPOS : dis-le tel quel. ⚠️ Mais ne conclus JAMAIS « repos » pour un jour PLUS ANCIEN que cette période — tu ne l'as pas sous les yeux, ce n'est pas la même chose que ne rien avoir fait. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
 ${(()=>{
   // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :

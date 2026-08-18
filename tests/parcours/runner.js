@@ -6382,6 +6382,61 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     JSON.stringify(R.travailRestant));
 }
 
+/* == BLOC LII - LE DEBRIEF NE SE TROMPE PLUS DE SERIE, NI D'AUTEUR (18/08/2026) ==
+   Deux erreurs de Milo relevees par Michel sur captures, le meme jour :
+   ① il a attribue la note « barre raque a la 4eme » a la 3e serie au lieu de la 2e
+      → la ligne envoyee etait une SUITE NON NUMEROTEE ou paliers et series de travail
+        se ressemblent : on lui demandait un travail d'index que le code fait sans erreur ;
+   ② il a reproche une montee en charge trop courte sur le Developpe Incline… qu'il avait
+      LUI-MEME prescrite (« c'est toi qui m'a dit de prendre ces charges la »).
+      Le garde-fou du 15/08 ne couvrait que « montee ecrite par l'APP » — la jumelle manquait. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    const j=n=>{const x=new Date();x.setDate(x.getDate()-n);return x.toISOString().slice(0,10);};
+    // la vraie seance du 18/08 : 4 paliers, puis 3 series de travail, note sur la 2e
+    const larsen={name:'Développé Couché Larsen (Larsen Press)',sets:[
+      {kg:40,reps:5,type:'É',done:true},{kg:55,reps:3,type:'É',done:true},
+      {kg:70,reps:2,type:'É',done:true},{kg:75,reps:1,type:'É',done:true},
+      {kg:85,reps:5,type:'N',done:true},
+      {kg:85,reps:5,type:'N',done:true,note:'barre raque à la 4eme'},
+      {kg:85,reps:5,type:'N',done:true}]};
+    // montee trop courte PRESCRITE PAR MILO : 48 kg de depart pour 60 kg de travail
+    const incline={name:'Développé Couché',_milo:true,sets:[
+      {kg:48,reps:3,type:'É',done:true},
+      {kg:60,reps:8,type:'N',done:true},{kg:60,reps:8,type:'N',done:true}]};
+    // la meme, SANS marqueur d'auteur → le reproche normal doit rester
+    const inclineAnon=JSON.parse(JSON.stringify(incline)); delete inclineAnon._milo;
+    const mk=exs=>({id:Date.now(),ts:Date.now(),date:j(1),volume:5000,duration:3600,startHour:12,exs});
+    S.sessions=[mk([larsen,incline])]; persist();
+    let ctx=buildCoachContext();
+    o.numerote = /S2 85×5\[💬 barre raque/.test(ctx);
+    o.paliersNonNumerotes = /É 40×5/.test(ctx) && !/S1 40×5/.test(ctx);
+    o.miloPrescrit = /CES PALIERS VIENNENT DE TA PROPRE PRESCRIPTION/.test(ctx);
+    S.sessions=[mk([larsen,inclineAnon])]; persist();
+    ctx=buildCoachContext();
+    o.anonReproche = /montée en charge insuffisante/.test(ctx) && !/PROPRE PRESCRIPTION/.test(ctx);
+    S.sessions=[]; persist();
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- LII. Le debrief ne se trompe plus de serie, ni d\'auteur --');
+  t('⭐⭐ LA NOTE EST SUR LA SERIE 2, ET LE CONTEXTE LE DIT (« S2 … [💬 barre raque] »)',
+    R.numerote===true, 'numerote='+R.numerote);
+  t('/!\\ les paliers d\'echauffement ne sont PAS numerotes (sinon on recree la confusion)',
+    R.paliersNonNumerotes===true, 'ok='+R.paliersNonNumerotes);
+  t('⭐⭐ UNE MONTEE PRESCRITE PAR MILO : le contexte lui dit que c\'est SA prescription',
+    R.miloPrescrit===true, 'ok='+R.miloPrescrit);
+  t('/!\\ sans marqueur d\'auteur, le reproche normal reste (on ne desactive rien)',
+    R.anonReproche===true, 'ok='+R.anonReproche);
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
