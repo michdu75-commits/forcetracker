@@ -6437,6 +6437,73 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     R.anonReproche===true, 'ok='+R.anonReproche);
 }
 
+/* == BLOC LIII - « OU TU EN ES » : UNE SEMAINE INCOMPLETE DIT LA VERITE (18/08/2026) ==
+   Michel, sur sa propre app : « meme moi ca me saoule d'utiliser la nutrition, c'est assez mal
+   fait » · « ce n'est pas intuitif, je veux voir OU J'EN SUIS ». L'ecran repondait a « combien
+   il te reste a manger », une question qui n'a de sens qu'apres avoir tout note.
+   /!\ CE QUE CE BLOC PROTEGE VRAIMENT : la moyenne se calcule sur les jours REELLEMENT notes,
+   jamais sur 7. Diviser par 7 quand 3 jours sont notes affiche une sous-alimentation qui
+   n'existe pas — et c'est exactement le chiffre faux qui fait abandonner un suivi (P21). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_goal:'recomp'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    const el=()=>document.getElementById('nu-ou-en-es');
+    if(!el()) return {err:'carte absente de index.html'};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+    const T=()=>el().textContent.replace(/\s+/g,' ').trim();
+    // ── ① rien de note : une invitation, PAS un « 0 / 2600 » ──────────────────
+    S.foodLog=[]; persist(); renderNutrition();
+    o.vide=T();
+    // ── ② 3 jours notes sur 7 (900 + 1500 + 1900 = 4300) ──────────────────────
+    S.foodLog=[
+      {date:j(0),meal:'dejeuner',name:'A',kcal:900,prot:80,carbs:90,fat:22,ts:Date.now()},
+      {date:j(1),meal:'dejeuner',name:'B',kcal:1500,prot:120,carbs:150,fat:30,ts:Date.now()},
+      {date:j(3),meal:'diner', name:'C',kcal:1900,prot:140,carbs:160,fat:55,ts:Date.now()}];
+    persist(); renderNutrition();
+    o.trois=T();
+    /* /!\ ON COMPARE DES CHIFFRES NUS, PAS DU TEXTE FORMATE : `toLocaleString` produit une
+       espace insecable etroite (U+202F) dans le navigateur et une autre espace dans Node — le
+       temoin rougissait sur la SEPARATION DES MILLIERS alors que l'app affichait le bon nombre.
+       Un test qui echoue sur un caractere d'espacement ne mesure pas ce qu'il annonce. */
+    o.moy3=Math.round(4300/3);      // ce qu'il FAUT afficher
+    o.moy7=Math.round(4300/7);      // le piege : diviser par 7
+    // ── ③ aujourd'hui non note (les 3 jours sont dans le passe) ───────────────
+    S.foodLog=[
+      {date:j(1),meal:'dejeuner',name:'B',kcal:1500,prot:120,carbs:150,fat:30,ts:Date.now()},
+      {date:j(3),meal:'diner', name:'C',kcal:1900,prot:140,carbs:160,fat:55,ts:Date.now()}];
+    persist(); renderNutrition();
+    o.sansAuj=T();
+    S.foodLog=[]; persist();
+    return o;
+  });
+  await cx.close();
+
+  /* Retire TOUTES les espaces, y compris l'insecable etroite (U+202F) que `toLocaleString`
+     insere dans les milliers. Sans ca le temoin rougit sur un caractere d'espacement. */
+  const _sansEspaces=x=>String(x||'').replace(/[\s\u202f\u00a0]/g,'');
+  console.log('\n-- LIII. « Ou tu en es » : la semaine incomplete dit la verite --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    t('⭐ rien de note : on INVITE, on n\'affiche pas un faux « 0 / cible »',
+      /Note un repas/.test(R.vide) && !/0 \//.test(R.vide), R.vide.slice(0,90));
+    t('⭐⭐ LA MOYENNE PORTE SUR LES JOURS NOTES (4300/3 = '+R.moy3+'), PAS SUR 7 ('+R.moy7+')',
+      _sansEspaces(R.trois).includes(String(R.moy3)) && !_sansEspaces(R.trois).includes(String(R.moy7)),
+      R.trois.slice(0,140));
+    t('⭐⭐ ... et l\'ecran DIT sur combien de jours elle porte',
+      /3 jours notés sur 7/.test(R.trois), R.trois.slice(0,60));
+    t('/!\\ aujourd\'hui non note : on le dit, on n\'invente pas un zero',
+      /Rien de noté/.test(R.sansAuj), R.sansAuj.slice(0,90));
+    t('/!\\ ... et la moyenne reste calculee sur les 2 jours reellement notes',
+      /2 jours notés sur 7/.test(R.sansAuj), R.sansAuj.slice(0,60));
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

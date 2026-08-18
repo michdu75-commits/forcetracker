@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v908` — fusionnée sur `master` le 18/08.
+- **Version en ligne (live) :** `ft-v909` — fusionnée sur `master` le 18/08.
 - **Rien en attente sur la branche.** Tout ce qui a été livré le 18/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
@@ -55,7 +55,7 @@
 > | 0 | **Provenance figée** dans `S.foodLog` | `saisie · origine · q · u · etat · sourceId · per100 · modifie · v` | ✅ **ft-v907** |
 > | 0-bis | Planchers santé | calorique + protéines kéto | ✅ **ft-v906** |
 > | 1 | Base d'aliments locale | CIQUAL 2025 (3 484 aliments), curation par code de confiance A/B | ⏭️ |
-> | 2 | **L'écran « où tu en es »** | répondre à la vraie question, pas à « combien il me reste » | ⏭️ **LA PROCHAINE** |
+> | 2 | **L'écran « où tu en es »** | répondre à la vraie question, pas à « combien il me reste » | ✅ **ft-v909** |
 > | 3 | Générateur de repas | filtre `composable` en premier · test du **profil vide** · hachage au lieu de `jour*7` | ⏭️ |
 > | 4 | Les 4 niveaux de précision | sortie en rôles/portions aux niveaux 1-2 | ⏭️ |
 > | 7 | Adhérence | le plan doit être **reproductible** (fonction pure) | ⏭️ |
@@ -97,6 +97,36 @@
 > Nouveau réflexe n° 10 : quand une remarque revient sur un comportement déjà corrigé, **ne pas
 > réécrire la règle — aller relire sa définition**.
 >
+>
+>
+> ### 🌙 TROUVÉ PAR LE CONTRE-AUDIT v1.3 (18/08, soir) — vérifié, et une de ses conclusions corrigée
+> **La journée est coupée à MINUIT, sans exception** (`today()`, state.js:517). Un repas pris à 3 h
+> pendant une nuit de travail est rangé au jour **suivant** : la journée alimentaire réelle est
+> scindée en deux, et les deux moitiés sont fausses. ⚠️ **Michel travaille de nuit et d'astreinte**,
+> donc ça le touche personnellement — mais c'est général (infirmiers, intermittents…).
+>
+> **⭐ SA CONCLUSION « IRRATTRAPABLE » EST FAUSSE, ET C'EST VÉRIFIÉ** : chaque entrée du journal
+> porte déjà `ts: Date.now()`, et `dayOfTs()` existe depuis longtemps dans `state.js`. **La journée
+> logique est donc RECALCULABLE rétroactivement** pour n'importe quelle heure de coupure. Rien
+> n'est perdu — ce n'est **pas** de la famille de la brique 0, et ça ne doit **pas** passer devant
+> le reste. *(Nuance honnête : `ts` est l'heure de SAISIE, pas celle du repas — mais le champ
+> `date` actuel a exactement la même limite, donc on ne perd rien par rapport à aujourd'hui.)*
+>
+> **⏭️ Ce qu'il restera à faire, sans urgence** : une coupure **décalable** (défaut minuit, donc
+> aucun changement pour personne) appliquée **au journal alimentaire seulement**.
+> ⛔ **Ne PAS toucher à `today()` globalement** : il date les séances, les pesées, le sommeil, les
+> badges et les séries — le coût d'une erreur y est sans commune mesure (R29).
+> ⛔ **Et ne PAS inventer un facteur « travail de nuit » dans le TDEE** : les effets du travail
+> posté sont documentés, mais pas sous une forme qui donne un nombre de kcal utilisable. Déclarer
+> le type de journée suffit. **Les catégories doivent venir de l'utilisateur** (repos/astreinte/nuit
+> sont celles de Michel, pas un mécanisme universel).
+>
+> **⭐ Et son autre apport, à garder** : la fourchette « déficit de 10-20 % du TDEE » que je
+> bloquais **n'existe pas** — il l'a cherchée et le dit. La littérature emploie deux autres cadres :
+> la **disponibilité énergétique** (kcal/kg de masse maigre, seuils 45 / 30 — consensus CIO RED-S
+> 2018) et le **taux de perte hebdomadaire** (0,5-1 kg/sem). ⚠️ Le seuil de 30 vient
+> majoritairement d'études sur des **femmes** ; chez l'homme il est moins établi. À présenter
+> comme un repère, jamais comme un couperet, et **du côté du Gardien, pas du moteur**.
 >
 > ### 💊 CE QUI ATTEND UNE DÉCISION DE MICHEL — volet suppléments (contre-audit v1.2)
 > Trois points **vérifiés dans le code**, non livrés parce qu'ils changent ce que l'app **recommande
