@@ -1721,6 +1721,94 @@ function resetKcalAuto(){
   toast('Calories remises en automatique','info');
 }
 function closeKcalEdit(){const o=document.getElementById('ov-kcal-edit');if(o)o.classList.remove('open');}
+/* ═══ « OÙ TU EN ES » — LA PREMIÈRE CHOSE QU'ON VOIT EN ARRIVANT (18/08/2026) ══════════════
+   Michel, en expliquant pourquoi il n'utilise pas la nutrition de sa propre app : *« même moi
+   ça me saoule de l'utiliser, c'est assez mal fait »* · *« ce n'est pas intuitif, je veux
+   commencer la semaine prochaine pour voir où j'en suis, comment ça fonctionne »*.
+
+   ⭐ LE DIAGNOSTIC N'EST PAS UN BUG, C'EST UNE QUESTION MAL POSÉE. L'écran répondait à
+   « combien il te reste à manger aujourd'hui » — une question qui n'a de sens que si on a déjà
+   tout noté. La vraie question en ouvrant l'app, c'est **« où j'en suis »**.
+
+   ⚠️⚠️ LA RÈGLE QUI TIENT TOUT : **UNE SEMAINE INCOMPLÈTE PRODUIT UNE MOYENNE HONNÊTE.**
+   On divise par le nombre de jours RÉELLEMENT notés, jamais par 7 — et on écrit combien il y en
+   a. Diviser par 7 quand 3 jours sont notés affiche une sous-alimentation qui n'existe pas, et
+   c'est exactement le genre de chiffre faux qui fait abandonner un suivi (P21 : la nutrition ne
+   doit jamais devenir une source de stress).
+   ⚠️ ET ON N'AFFICHE RIEN QUAND ON NE SAIT RIEN : zéro jour noté → une invitation, pas un
+   « 0 / 2 600 kcal » qui ressemble à un reproche (R29 — on ne fait pas dire à une absence de
+   donnée ce qu'elle ne dit pas). */
+function _nutriJoursNotes(n){
+  const jours=[], vus={};
+  (S.foodLog||[]).forEach(e=>{ if(e&&e.date) vus[e.date]=1; });
+  const d0=new Date();
+  for(let i=0;i<n;i++){
+    const d=new Date(d0.getTime()-i*864e5);
+    const k=new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];
+    if(vus[k]) jours.push(k);
+  }
+  return jours;
+}
+function _renderOuTuEnEs(macros){
+  const el=document.getElementById('nu-ou-en-es'); if(!el) return;
+  const cible=macros.calories||0, cibleP=macros.prot_g||0;
+  const auj=(typeof _foodTotals==='function')?_foodTotals(today()):{kcal:0,prot:0};
+  const jours=_nutriJoursNotes(7);
+  const notesAuj=(S.foodLog||[]).some(e=>e&&e.date===today());
+
+  // ── Personne n'a rien noté : on invite, on ne juge pas ──────────────────────────────
+  if(!jours.length){
+    el.innerHTML='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:16px;">'
+      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Où tu en es</div>'
+      +'<div style="font-size:13px;color:var(--t2);line-height:1.45;margin-top:6px;">Note un repas et cette carte te dira où tu en es — aujourd\'hui et sur la semaine. Pas besoin de tout peser : ce qui compte, c\'est la tendance.</div>'
+      +'<button class="btn btn-red" style="width:100%;margin-top:12px;padding:11px;font-size:14px;border-radius:12px;" onclick="switchNuTab(\'journal\',document.getElementById(\'ntab-journal\'));setTimeout(()=>{if(typeof openAddFood===\'function\')openAddFood();},120)">➕ Noter mon premier repas</button>'
+      +'</div>';
+    return;
+  }
+
+  // ── La semaine : moyenne sur les jours NOTÉS, jamais sur 7 ──────────────────────────
+  let sk=0, sp=0;
+  jours.forEach(d=>{ const t=_foodTotals(d); sk+=t.kcal; sp+=t.prot; });
+  const moyK=Math.round(sk/jours.length), moyP=Math.round(sp/jours.length);
+  const ecart=cible?Math.round(moyK-cible):0;
+  const pctP=cibleP?Math.min(100,Math.round(moyP/cibleP*100)):0;
+
+  const barre=(pct,col)=>'<div style="height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;margin-top:5px;">'
+    +'<div style="height:100%;width:'+Math.min(100,pct)+'%;background:'+col+';border-radius:4px;"></div></div>';
+
+  // Aujourd'hui — seulement si la journée a commencé à être notée (sinon c'est un faux zéro)
+  const bloc1=notesAuj
+    ? '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">Aujourd\'hui</div>'
+      +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:var(--t1);margin-top:2px;">'+Math.round(auj.kcal).toLocaleString('fr-FR')+' <span style="font-size:12px;font-weight:700;color:var(--t3);">/ '+cible.toLocaleString('fr-FR')+' kcal</span></div>'
+      +barre(cible?auj.kcal/cible*100:0,'var(--orange)')
+      +'<div style="font-size:11.5px;color:var(--t2);margin-top:6px;">Protéines '+Math.round(auj.prot)+' / '+cibleP+' g</div>'
+      +barre(cibleP?auj.prot/cibleP*100:0,'var(--blue)')+'</div>'
+    : '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">Aujourd\'hui</div>'
+      +'<div style="font-size:13px;color:var(--t2);line-height:1.4;margin-top:4px;">Rien de noté pour l\'instant.</div></div>';
+
+  /* ⚠️ LE TEXTE DE LA SEMAINE DIT SUR COMBIEN DE JOURS IL PORTE. « Moyenne sur 3 jours notés »
+     est une information ; « moyenne de la semaine » calculée sur 3 jours est un mensonge. */
+  const sJours=jours.length+' jour'+(jours.length>1?'s':'')+' noté'+(jours.length>1?'s':'');
+  const sEcart=!cible?'' : (Math.abs(ecart)<=100
+    ? '<span style="color:var(--green);font-weight:700;">dans ta cible</span>'
+    : (ecart<0 ? '<span style="color:var(--orange);font-weight:700;">'+Math.abs(ecart)+' kcal sous ta cible</span>'
+               : '<span style="color:var(--orange);font-weight:700;">'+ecart+' kcal au-dessus</span>'));
+
+  el.innerHTML='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:16px;">'
+    +'<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px;">'
+      +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Où tu en es</div>'
+      +'<div style="font-size:11px;color:var(--t3);">'+sJours+' sur 7</div></div>'
+    +'<div style="display:flex;gap:16px;align-items:flex-start;">'+bloc1
+      +'<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">En moyenne</div>'
+      +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:var(--t1);margin-top:2px;">'+moyK.toLocaleString('fr-FR')+' <span style="font-size:12px;font-weight:700;color:var(--t3);">kcal/j</span></div>'
+      +'<div style="font-size:11.5px;color:var(--t2);margin-top:4px;">'+sEcart+'</div>'
+      +'<div style="font-size:11.5px;color:var(--t2);margin-top:6px;">Protéines '+moyP+' g/j · '+pctP+' % de ta cible</div>'
+      +barre(pctP,'var(--blue)')+'</div>'
+    +'</div>'
+    +(jours.length<3?'<div style="font-size:11.5px;color:var(--t3);line-height:1.4;margin-top:11px;">Encore quelques jours notés et la moyenne deviendra un vrai repère — c\'est elle qui compte, pas une journée isolée.</div>':'')
+    +'</div>';
+}
+
 function renderNutrition(){try{
   renderSupplements();
   // Phase buttons
@@ -1793,6 +1881,7 @@ function renderNutrition(){try{
   }
 
   const macros=calcMacros(S.nutritionPhase);
+  try{ _renderOuTuEnEs(macros); }catch(e){ /* jamais bloquant : la carte est un ajout, pas un pré-requis */ }
   document.getElementById('m-kcal').textContent=macros.calories.toLocaleString('fr-FR');
   // Bloc réglage manuel (sous l'anneau) : état auto vs manuel + bouton d'ajustement — RÉSERVÉ AUX TESTEURS
   const _nutriBeta=(typeof _isNutriBeta==='function')&&_isNutriBeta();

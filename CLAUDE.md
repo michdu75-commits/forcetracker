@@ -397,7 +397,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v908`** (prochaine : `ft-v909`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v909`** (prochaine : `ft-v910`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -407,6 +407,17 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v909 — 🥗 « OÙ TU EN ES » — L'ÉCRAN NUTRITION RÉPOND ENFIN À LA VRAIE QUESTION** — Michel, sur sa propre application : *« même moi ça me saoule de l'utiliser, c'est assez mal fait »* · *« ce n'est pas intuitif ; je veux commencer la semaine prochaine pour voir **où j'en suis** »*.
+
+**⭐ LE DIAGNOSTIC N'EST PAS UN BUG, C'EST UNE QUESTION MAL POSÉE.** L'écran répondait à *« combien il te reste à manger aujourd'hui »* — une question qui n'a de sens **que si on a déjà tout noté**. Celui qui ouvre l'app veut savoir où il en est, pas ce qu'il lui reste à faire pour valider une journée parfaite. La carte est donc **la première chose affichée**, avant l'anneau des macros.
+
+**⚠️⚠️ LA RÈGLE QUI TIENT TOUT LE RESTE : UNE SEMAINE INCOMPLÈTE PRODUIT UNE MOYENNE HONNÊTE.** On divise par le nombre de jours **réellement notés**, jamais par 7, et **on écrit combien il y en a** (« 3 jours notés sur 7 »). *Diviser par 7 quand 3 jours sont notés affiche une sous-alimentation qui n'existe pas* — et c'est exactement le genre de chiffre faux qui fait abandonner un suivi au bout d'une semaine (P21 : la nutrition ne doit jamais devenir une source de stress). Le témoin vérifie les deux : que **1 433** apparaît (4 300 / 3) et que **614** (4 300 / 7) n'apparaît **pas**.
+
+**⚠️ ET ON N'AFFICHE RIEN QUAND ON NE SAIT RIEN** : zéro jour noté → une invitation à noter un premier repas, pas un « 0 / 2 600 kcal » qui se lit comme un reproche. Aujourd'hui non noté alors que la semaine l'est → *« Rien de noté pour l'instant »*, et la moyenne continue de porter sur les jours réels. **On ne fait pas dire à une absence de donnée ce qu'elle ne dit pas** (R29).
+
+**⚠️ Et la carte ne peut pas casser l'écran** : elle est appelée dans un `try` — c'est un ajout, pas un pré-requis. Si elle échoue, la nutrition s'affiche comme avant.
+Tests : **parcours 744/744** (+5, bloc LIII), calculs 230/230, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. ⚠️ Le témoin a d'abord rougi **à tort** : il comparait du texte formaté, et `toLocaleString` insère une espace insécable étroite (U+202F) différente entre Node et le navigateur — *un test qui échoue sur un caractère d'espacement ne mesure pas ce qu'il annonce*. Fichiers : `screens.js`, `index.html`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v909. |
 
 **ft-v908 — 💊 L'APP AFFIRMAIT QUELQUE CHOSE DE FAUX, ET TAISAIT CE QUI RELÈVE VRAIMENT DE LA SÉCURITÉ** — contre-audit **v1.2**, le premier écrit **avec accès au dépôt** : chaque constat porte son fichier et sa ligne, et **les cinq ont été revérifiés ici avant correction**.
 
@@ -664,8 +675,6 @@ Tests : **parcours 702/702** (+12, blocs XLIII et XLIV), calculs 179/179, muscle
 **⚠️ ET UNE RÈGLE DE CLASSEMENT A ÉTÉ RETIRÉE, ÉCRITE (R30).** J'avais ajouté un motif pour que « pec deck inverse » tombe sur le deltoïde arrière. **Le test des croisements l'a refusé** : il ne matchait **aucun** des 324 exercices du catalogue — donc une règle morte. *Et il avait raison sur le fond* : ce nom est un **synonyme**, et les synonymes ont déjà leur propriétaire, `EX_IDS` (R2 — une information, un seul propriétaire). Le témoin qui vérifie le résultat passe toujours, et il prouve maintenant le bon chemin : c'est la table de renommage qui convertit le nom **avant** le classement.
 **⏭️ RESTE À FAIRE, et c'est écrit** : un « fusionner avec… » qui laisse **choisir** la cible au lieu de dépendre d'une détection de fautes de frappe. **⚠️ CORRECTION DU 17/08 AU SOIR — j'avais écrit ici qu'il fallait « brancher `openEditCustomEx()` sur le sélecteur ». C'EST FAUX : elle l'était déjà**, depuis au moins six commits, à deux endroits (`log.js:766`, la ligne « ✏️ Modifier l'exercice » du menu, et `log.js:3865`, l'icône ✎ de la liste). J'avais conclu « appelée de nulle part » sur une recherche trop étroite. *Une tâche écrite au futur alors qu'elle est faite envoie le suivant reconstruire ce qui existe* — c'est R23 dans l'autre sens, et c'est la 4ᵉ fois de la journée que je me corrige pour avoir lu au lieu de vérifier.
 Tests : **parcours 690/690** (+6, bloc XLII), calculs 179/179, muscles 232/232, **croisés 50/50** (rouge d'abord, c'est lui qui a tranché), dates 7/7, milo 10/10, données 100 classées. Fichiers : `constants.js`, `state.js`, `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v894. |
-
-**ft-v893 — 👆 « C'EST CLIQUABLE ? » — la réponse était OUI, et c'est justement pour ça que c'était raté** — Michel, devant la fenêtre d'export livrée une heure plus tôt, capture à l'appui. **La case à cocher l'était** — et pas seulement le petit carré : tout le bloc gris l'était, parce qu'elle était dans un `<label>`. *Mais s'il faut poser la question, la réponse est déjà non.*
 
 **⭐ DEUX CAUSES, ET LA PREMIÈRE EST UNE RÈGLE DU PROJET QUE J'AVAIS ENFREINTE.** C'était **le seul `input type=checkbox` de TOUTE l'app** — donc un motif que personne n'a jamais appris à reconnaître ici, alors que R13 dit d'enrichir l'existant plutôt que d'inventer. Et une case vide en mode sombre ne se distingue pas d'un cadre décoratif : rien ne dit qu'on peut appuyer dessus.
 **👉 DEUX BOUTONS à la place** — « Exporter » et « Exporter avec mes N discussions » — c'est-à-dire le motif que l'app emploie déjà partout (le sélecteur de jour, le QCM de remplacement de ft-v887). *Personne ne demande si un bouton est cliquable.* Et il n'y a plus d'état intermédiaire où se tromper : **ce qu'on touche est ce qui se passe**, l'avertissement reste attaché au bouton qui le mérite.
