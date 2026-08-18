@@ -6158,6 +6158,65 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC XLVIII - LE CHECK-IN SE REPLIE QUAND ON A ENREGISTRE (18/08/2026) ==
+   Retour de Michel : « le check-in du jour ne se ferme pas quand on a enregistre ».
+   Le bouton « Enregistrer » du sommeil est le DERNIER element de la carte : une fois
+   touche, on a fini de la remplir.
+   /!\ CE TEMOIN CLIQUE VRAIMENT SUR LE BOUTON. La 1re version du correctif a ete ECRITE
+   puis SUPPOSEE bonne — c'est Michel qui a demande « le check se replie a quel moment
+   pour toi ? », et je ne l'avais jamais vu tourner.
+   /!\ Et il verifie AUSSI que rien d'autre ne la ferme : l'energie et le moral sont des
+   boutons a un appui, on peut vouloir en toucher plusieurs a la suite. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    if(typeof toggleCheckin!=='function') return {err:'toggleCheckin absente'};
+    if(typeof closeCheckin!=='function')  return {err:'closeCheckin absente'};
+    const ouvert=()=>(typeof _checkinOpen!=='undefined')?!!_checkinOpen:null;
+    const sommeilVisible=()=>{const sl=document.getElementById('log-sleep');
+      return !!(sl && sl.style.display!=='none');};
+    const o={};
+    o.depart=ouvert();
+    toggleCheckin(); await new Promise(r=>setTimeout(r,220));
+    o.apresOuverture=ouvert(); o.sommeilVisible=sommeilVisible();
+    // on remplit et on clique, comme un doigt
+    const h=document.getElementById('sleep-hours');
+    if(!h) return {err:'champ sommeil introuvable (carte non depliee ?)'};
+    h.value='7.5'; h.dispatchEvent(new Event('input',{bubbles:true}));
+    const btn=document.getElementById('sleep-save-btn');
+    if(!btn) return {err:'bouton Enregistrer introuvable'};
+    o.boutonVisible=btn.style.display!=='none';
+    btn.click(); await new Promise(r=>setTimeout(r,320));
+    o.apresEnregistrer=ouvert(); o.sommeilCache=!sommeilVisible();
+    o.sommeilEnregistre=(S.sleepLog||[]).some(e=>e&&+e.hours===7.5);
+    // ... et l'energie NE la ferme PAS
+    toggleCheckin(); await new Promise(r=>setTimeout(r,220));
+    if(typeof setDayEnergy==='function'){ setDayEnergy(3); await new Promise(r=>setTimeout(r,220)); }
+    o.apresEnergie=ouvert();
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- XLVIII. Le check-in se replie quand on a enregistre --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    t('/!\\ la carte s\'ouvre et fait apparaitre le bloc sommeil',
+      R.apresOuverture===true && R.sommeilVisible===true);
+    t('⭐⭐ APRES « ENREGISTRER », LA CARTE SE REPLIE (retour Michel du 18/08)',
+      R.apresEnregistrer===false, 'ouvert='+R.apresEnregistrer);
+    t('/!\\ ... et le bloc sommeil est bien masque avec elle',
+      R.sommeilCache===true);
+    t('/!\\ ... sans rien perdre : le sommeil est enregistre',
+      R.sommeilEnregistre===true);
+    t('⭐ l\'ENERGIE, elle, ne la ferme PAS (bouton a un appui, on peut en toucher plusieurs)',
+      R.apresEnergie===true, 'ouvert='+R.apresEnergie);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
