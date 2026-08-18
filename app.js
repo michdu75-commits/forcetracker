@@ -926,6 +926,60 @@ function closeFoodWall(){const el=document.getElementById('ov-food-wall');if(el)
 
 // ─── SCAN CODE-BARRES (ZXing local + Open Food Facts) ─────────
 let _bcNutr=null; // {name, kcal100, prot100, carbs100, fat100}
+
+/* ═══ BRIQUE 0 — LA PROVENANCE DE CHAQUE LIGNE DU JOURNAL (18/08/2026) ══════════════════════
+   Jusqu'ici une entrée du journal alimentaire s'écrivait :
+       { date, meal, name, kcal, prot, carbs, fat, ts }
+   — soit un RÉSULTAT sans aucune trace de son origine. Ni la quantité mangée, ni la source du
+   chiffre, ni la façon dont il a été saisi, ni l'état de l'aliment (cru/cuit).
+
+   ⚠️⚠️ POURQUOI C'EST LA PREMIÈRE BRIQUE ET PAS UNE AUTRE : c'est la seule qui ne se rattrape
+   JAMAIS. Tout le reste (base d'aliments, générateur, niveaux de précision) peut se construire
+   dans six mois sur les données existantes. Une entrée écrite sans ces champs, elle, ne les
+   retrouvera pas — chaque jour qui passe en fabrique d'autres.
+
+   ⚠️ ET LE CHAMP LE PLUS COÛTEUX N'EST PAS LA SOURCE, C'EST LA QUANTITÉ. Aujourd'hui une ligne
+   dit « 380 kcal » sans dire « 250 g de X » : même en connaissant plus tard la bonne valeur au
+   100 g, on ne peut RIEN recalculer. Le scan et l'étiquette CONNAISSENT le poids (champ
+   `af-bc-grams`) — ils ne l'enregistraient simplement pas.
+
+   ⚠️ DEUX AXES, PAS UN (corrigé par le contre-audit du 18/08) : `saisie` dit COMMENT c'est
+   entré, `origine` dit D'OÙ VIENT LE CHIFFRE. Les confondre perd l'information dans les deux
+   sens — « manuel » finirait par désigner deux choses différentes selon le contexte.
+       code-barres scanné   → saisie:'scan'      origine:'off'
+       aliment tapé à la main → saisie:'manuel'  origine:'utilisateur'
+       photo d'étiquette    → saisie:'photo-ia'  origine:'etiquette'
+       phrase estimée par l'IA → saisie:'ia-texte' origine:'ia'
+
+   ⚠️ ON N'INVENTE RIEN : ce qu'on ne sait pas reste `null`. Un `etat` (cru/cuit) ne pourra être
+   rempli qu'à partir de la base d'aliments (brique 1) — le champ existe dès maintenant pour que
+   les entrées de demain puissent le porter, pas pour être deviné aujourd'hui (R29).
+   ⚠️ RÉTROCOMPATIBLE : une entrée sans `v` est une entrée d'avant. On ne la réécrit pas et on
+   ne lui suppose aucune provenance — on saura simplement qu'on ne sait pas. */
+const FOOD_LOG_V=1;
+let _afSrc=null;   // provenance de ce qui remplit ACTUELLEMENT le formulaire (null = saisie main)
+function _afSetSrc(o){ _afSrc=o||null; }
+/* Construit le bloc de provenance au moment de l'enregistrement.
+   ⚠️ `modifie` compare les macros FINALES à celles que la source avait produites : si la personne
+   a retouché les chiffres, la source n'explique plus le résultat, et le dire est plus honnête que
+   de laisser croire qu'il vient d'Open Food Facts. Comparaison déterministe, aucun écouteur. */
+function _provFood(vals){
+  const p={v:FOOD_LOG_V, saisie:'manuel', origine:'utilisateur',
+           q:null, u:null, etat:null, sourceId:null, per100:null, modifie:false};
+  if(_afSrc){
+    p.saisie=_afSrc.saisie||'manuel';
+    p.origine=_afSrc.origine||'utilisateur';
+    if(_afSrc.sourceId)p.sourceId=String(_afSrc.sourceId).slice(0,32);
+    if(_afSrc.per100)p.per100=_afSrc.per100;
+    const a=_afSrc.attendu;
+    if(a&&vals) p.modifie=['kcal','prot','carbs','fat'].some(k=>(+a[k]||0)!==(+vals[k]||0));
+  }
+  // La quantité n'existe que si le champ grammes est réellement affiché (scan / étiquette).
+  const row=document.getElementById('af-bc-row');
+  const g=parseFloat((document.getElementById('af-bc-grams')||{}).value)||0;
+  if(row&&row.style.display!=='none'&&g>0){ p.q=g; p.u='g'; }
+  return p;
+}
 function _loadZXing(){
   return new Promise((res,rej)=>{
     if(window.ZXing&&window.ZXing.BrowserMultiFormatReader){res();return;}
@@ -1083,9 +1137,21 @@ async function _lookupBarcode(ean){
   const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
   document.getElementById('af-desc').value=_bcNutr.name;
   _bcApplyGrams();
+  // ⚠️ Les valeurs d'Open Food Facts sont « TELLES QUE VENDUES » : un paquet de pâtes scanné
+  //    donne les valeurs SÈCHES. On enregistre donc `per100` et l'`origine` — c'est ce qui
+  //    permettra, quand la base d'aliments existera, de rattraper l'état sans re-demander.
+  _afSetSrc({saisie:'scan',origine:'off',sourceId:(typeof ean!=='undefined'?ean:null),
+    per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+    attendu:_afLuFormulaire()});
   // Score santé indicatif (Nutri-Score + NOVA + additifs) — module food-health.js
   try{ if(window.FoodHealth)FoodHealth.renderCard(p,'#af-health-card'); }catch(e){}
   toast('Produit trouvé ✅ — ajuste la quantité','success');
+}
+// Lit les 4 macros telles qu'elles sont dans le formulaire À CET INSTANT (pour détecter, à
+// l'enregistrement, si la personne les a retouchées après un remplissage automatique).
+function _afLuFormulaire(){
+  const g=id=>parseInt((document.getElementById(id)||{}).value)||0;
+  return {kcal:g('af-kcal'),prot:g('af-prot'),carbs:g('af-carbs'),fat:g('af-fat')};
 }
 function _bcApplyGrams(){
   if(!_bcNutr)return;
@@ -1121,6 +1187,11 @@ function openAddFood(){
   _afMeal = h<11?'petitdej' : h<15?'dejeuner' : h<18?'collation' : 'diner';
   ['af-desc','af-kcal','af-prot','af-carbs','af-fat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   _bcNutr=null;
+  /* ⚠️ REMISE À ZÉRO DE LA PROVENANCE À CHAQUE OUVERTURE — sans ça, un scan d'Open Food Facts
+     laisserait sa provenance sur la saisie MANUELLE suivante, et le journal affirmerait une
+     source qui n'a rien à voir. Une provenance fausse est pire que pas de provenance : elle se
+     présente comme un fait vérifiable. */
+  _afSetSrc(null);
   const bcRow=document.getElementById('af-bc-row');if(bcRow)bcRow.style.display='none';
   const hc=document.getElementById('af-health-card');if(hc)hc.innerHTML='';
   // Code-barres + score santé : GRATUIT pour tout le monde (client-side, 0 token).
@@ -1197,7 +1268,13 @@ function quickFillFood(i){
 function quickAddFood(i){
   const it=_afQuickItems[i]; if(!it)return;
   if(!S.foodLog)S.foodLog=[];
-  S.foodLog.push({date:today(),meal:_afMeal,name:(it.name||'').slice(0,80),kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0,ts:Date.now()});
+  /* ⚠️ AJOUT DEPUIS LA LISTE (favori / récent) : la ligne est REPRISE d'une entrée précédente.
+     `origine:'reprise'` le dit — ce n'est ni une mesure, ni une saisie fraîche, et surtout ça ne
+     ment pas en héritant de la source d'origine, qu'on n'a pas conservée sur les favoris. */
+  const _vals={kcal:it.kcal||0,prot:it.prot||0,carbs:it.carbs||0,fat:it.fat||0};
+  _afSetSrc({saisie:'liste',origine:'reprise'});
+  S.foodLog.push(Object.assign({date:today(),meal:_afMeal,name:(it.name||'').slice(0,80),ts:Date.now()},_vals,_provFood(_vals)));
+  _afSetSrc(null);
   _unhideFood(it.name);
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeAddFood(); renderFoodJournal();
@@ -1274,6 +1351,9 @@ async function onFoodLabelFile(input){
     const row=document.getElementById('af-bc-row');if(row)row.style.display='block';
     document.getElementById('af-desc').value=_bcNutr.name;
     _bcApplyGrams();
+    _afSetSrc({saisie:'photo-ia',origine:'etiquette',
+      per100:{kcal:_bcNutr.kcal100,prot:_bcNutr.prot100,carbs:_bcNutr.carbs100,fat:_bcNutr.fat100},
+      attendu:_afLuFormulaire()});
     if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();if(typeof _renderAfAiNote==='function')_renderAfAiNote();}
     toast('Étiquette lue ✅ — ajuste la quantité','success');
   }catch(e){toast('Erreur : '+(e.message||e),'error');}
@@ -1327,6 +1407,10 @@ async function estimateFoodAI(){
     document.getElementById('af-carbs').value=d.carbs||0;
     document.getElementById('af-fat').value=d.fat||0;
     if(d.name)document.getElementById('af-desc').value=d.name;
+    // ⚠️ L'IA ne donne PAS de valeur au 100 g ni de quantité : elle rend un total estimé pour la
+    //    phrase. On enregistre donc l'origine et rien d'autre — inventer un `per100` ici ferait
+    //    passer une estimation pour une mesure (R29).
+    _afSetSrc({saisie:'ia-texte',origine:'ia',attendu:_afLuFormulaire()});
     if(!S.premium){S.foodAiUses=(S.foodAiUses||0)+1;persist();if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();}
     _renderAfAiNote();
     toast('Estimé ✅ — ajuste si besoin','success');
@@ -1342,7 +1426,9 @@ function addFoodEntry(){
   if(!name){toast('Donne un nom à l\'aliment','error');return;}
   if(!kcal&&!prot&&!carbs&&!fat){toast('Renseigne au moins les calories','error');return;}
   if(!S.foodLog)S.foodLog=[];
-  S.foodLog.push({date:today(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()});
+  S.foodLog.push(Object.assign({date:today(),meal:_afMeal,name:name.slice(0,80),kcal,prot,carbs,fat,ts:Date.now()},
+    _provFood({kcal,prot,carbs,fat})));
+  _afSetSrc(null);   // la provenance ne survit pas à l'enregistrement (R15 : le marqueur se pose et se rend)
   _unhideFood(name);
   persist();
   closeAddFood();

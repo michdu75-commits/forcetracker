@@ -397,7 +397,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v906`** (prochaine : `ft-v907`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v907`** (prochaine : `ft-v908`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -407,6 +407,23 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v907 — 🧾 BRIQUE 0 : CHAQUE LIGNE DU JOURNAL PORTE ENFIN SA PROVENANCE** — Michel : *« fais tout ce que tu peux faire »*. Première brique du chantier nutrition, et **la seule qui ne se rattrape jamais**.
+
+**CE QU'UNE ENTRÉE ÉTAIT** : `{date, meal, name, kcal, prot, carbs, fat, ts}` — un **résultat** sans aucune trace de son origine. Ni la quantité mangée, ni la source du chiffre, ni la façon dont il a été saisi, ni l'état de l'aliment.
+
+**⚠️⚠️ POURQUOI CELLE-CI D'ABORD** : tout le reste (base d'aliments, générateur, niveaux de précision) peut se construire dans six mois **sur les données existantes**. Une entrée écrite sans ces champs, elle, ne les retrouvera pas — et chaque jour qui passe en fabrique d'autres. *Le retard est le seul du chantier à être définitif.*
+
+**⚠️ ET LE CHAMP LE PLUS COÛTEUX N'EST PAS LA SOURCE, C'EST LA QUANTITÉ.** Une ligne disait « 380 kcal » sans dire « 250 g de X » : même en connaissant plus tard la bonne valeur au 100 g, **on ne pouvait rien recalculer**. Or le scan et la photo d'étiquette **connaissaient le poids** (champ `af-bc-grams`) — ils ne l'enregistraient simplement pas. C'est **R4** : l'information existait et n'atteignait pas la donnée.
+
+**⭐ DEUX AXES, PAS UN — correction apportée par le contre-audit extérieur** : `saisie` dit **comment** c'est entré (manuel · scan · photo-ia · ia-texte · liste), `origine` dit **d'où vient le chiffre** (utilisateur · off · étiquette · ia · reprise). Les fusionner perdrait l'information dans les deux sens, et « manuel » finirait par désigner deux choses différentes selon le contexte. S'y ajoutent `per100` (les valeurs au 100 g quand la source les donne — c'est ce qui permettra de recalculer) et **`modifie`**, qui dit si la personne a retouché les macros après un remplissage automatique : *une source ne peut plus expliquer un chiffre qu'on a changé à la main.*
+
+**⚠️ ON N'INVENTE RIEN (R29)** : `etat` (cru/cuit) et `q` restent **`null`** quand on ne sait pas. L'état viendra de la base d'aliments (brique 1) — le champ existe dès maintenant pour que les entrées de demain puissent le porter, **pas pour être deviné aujourd'hui**.
+
+**⚠️ ET LA PROVENANCE NE SURVIT PAS D'UNE SAISIE À L'AUTRE** : elle est remise à zéro à l'ouverture du formulaire **et** après l'enregistrement (R15 — le marqueur se pose et se rend). Sans ça, un scan laisserait sa source sur la saisie manuelle suivante : *une provenance fausse est pire que pas de provenance, parce qu'elle se présente comme un fait vérifiable.*
+
+**⚠️ RÉTROCOMPATIBLE** : une entrée sans `v` est une entrée d'avant. On ne la réécrit pas et on ne lui suppose aucune provenance — on saura simplement qu'on ne sait pas.
+Tests : parcours 739/739, **calculs 223/223** (+8, bloc 12), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 7 rouges**, et la sortie montre exactement l'ancienne forme. ⚠️ Le témoin a dû être réécrit : il sortait d'abord sur `_provFood absente`, rendant **un** rouge au lieu de mesurer les huit comportements (6ᵉ fois — ft-v887, 890, 892, 901, 905, 906). Il passe maintenant par `openAddFood`/`addFoodEntry`, présents des deux côtés. Fichiers : `app.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v907. |
 
 **ft-v906 — 🛡️ L'APP PRESCRIVAIT UNE CIBLE QU'ELLE AURAIT SIGNALÉE SI ON L'AVAIT MANGÉE** — trouvé par un **contre-audit extérieur** (une autre instance de Claude, sans aucun accès au code, à partir des seuls `docs/NUTRITION-MOTEUR.md` et `NUTRITION-PHILOSOPHIE.md`), puis **vérifié ici dans le code avant d'y toucher**.
 
@@ -652,8 +669,6 @@ Tests : **parcours 684/684** (+1), calculs 179/179, muscles 232/232, croisés 50
 **⭐⭐ ET LE GARDE-FOU DES DONNÉES AVAIT SA PROPRE FENÊTRE AVEUGLE.** Son motif exigeait `S.x =` **en début de ligne** — il ratait donc tout ce qui est chargé à l'intérieur d'un `try{…}` sur la même ligne. **Deux données chargées au démarrage, jamais classées face à Milo depuis la création du garde-fou le 28/07** : `coachConversations` et `priorities` — et **`priorities` EST transmise** (les muscles prioritaires atteignent bien le contexte). Le compteur annonçait **98** données quand il y en a **100**. *C'est le motif de ft-v888 appliqué à l'outil dont c'est le seul métier : l'oubli est silencieux, y compris pour le garde-fou.* Motif corrigé, les deux classées → **100 données · 56 transmises · 44 exclues · 0 trou**.
 **⚠️ La raison écrite pour `coachConversations` compte** : le fil EN COURS parvient déjà à Milo par le paramètre `history`, un canal séparé et borné ; renvoyer les 30 discussions archivées à chaque message coûterait cher et ferait **ressurgir des échanges que la personne a justement rangés**. Ce qui doit durer a son propre chemin, validé par elle : la mémoire et le registre (Constitution P3).
 Tests : **parcours 683/683** (+6 sur le bloc XLI réécrit), calculs 179/179, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, **données 100 classées**. **VÉRIFIÉ CONTRE L'ANCIEN CODE : 2 rouges** — et le bloc a dû être **réécrit** pour ça, parce qu'il plantait sur un `checked` de `null` au lieu de mesurer. Il s'exécute maintenant des deux côtés via `exportData`, et le rouge qui compte est concret : sur l'ancien code, la phrase de test *« j'ai mal à l'épaule depuis mon accident »* **ressort dans le fichier sans que rien ne soit demandé**. Le garde-fou des données rougit lui aussi, comme attendu (les deux classifications manquent). Fichiers : `coach.js`, `screens.js`, `index.html`, `tests/donnees/runner.js`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v892. |
-
-**ft-v891 — 📤 « EXPORTER MES DONNÉES » EN EXPORTAIT UN SIXIÈME — et le correctif n'est pas la liste, c'est son SENS** — Michel, après que je lui aie annoncé qu'il n'avait importé aucun bilan corporel : *« si j'ai mis des rapports dans l'application »*. **Il avait raison, et c'est l'export qui ne les emportait pas.** J'avais lu un fichier qui ne pouvait pas les contenir, et j'en avais tiré une conclusion fausse — sur ses données, devant lui.
 
 **LA MESURE** : la fonction écrivait **6 blocs** (profil réduit, séances, records, pesées, sommeil, badges) quand la sauvegarde cloud en porte **38**. Absents de **tout** export : les bilans sanguins · les bilans corporels · les programmes · le **profil santé, donc les BLESSURES** · la mémoire de Milo · le registre · l'ADN sportif · le journal d'état du jour · le journal alimentaire · les préférences de repos · le cycle de force · les exercices perso. **⚠️ Ce n'était pas une perte de données** — le cloud a tout, avec sa sauvegarde Drive nocturne. C'était **une promesse fausse sur un bouton**, exactement la famille du *« je retiens »* de ft-v888, à quelques heures d'écart.
 

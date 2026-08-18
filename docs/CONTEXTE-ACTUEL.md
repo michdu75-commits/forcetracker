@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v906` — fusionnée sur `master` le 18/08, run Pages vert sur `0f695f8`.
+- **Version en ligne (live) :** `ft-v907` — fusionnée sur `master` le 18/08.
 - **Rien en attente sur la branche.** Tout ce qui a été livré le 18/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
@@ -52,10 +52,10 @@
 >
 > | # | Brique | Contenu | État |
 > |---|---|---|---|
-> | 0 | **Provenance figée** dans `S.foodLog` | `saisie · origine · quantite · unite · etat · sourceId · version` | ⏭️ **à faire en premier** |
+> | 0 | **Provenance figée** dans `S.foodLog` | `saisie · origine · q · u · etat · sourceId · per100 · modifie · v` | ✅ **ft-v907** |
 > | 0-bis | Planchers santé | calorique + protéines kéto | ✅ **ft-v906** |
 > | 1 | Base d'aliments locale | CIQUAL 2025 (3 484 aliments), curation par code de confiance A/B | ⏭️ |
-> | 2 | **L'écran « où tu en es »** | répondre à la vraie question, pas à « combien il me reste » | ⏭️ **remonté exprès** |
+> | 2 | **L'écran « où tu en es »** | répondre à la vraie question, pas à « combien il me reste » | ⏭️ **LA PROCHAINE** |
 > | 3 | Générateur de repas | filtre `composable` en premier · test du **profil vide** · hachage au lieu de `jour*7` | ⏭️ |
 > | 4 | Les 4 niveaux de précision | sortie en rôles/portions aux niveaux 1-2 | ⏭️ |
 > | 7 | Adhérence | le plan doit être **reproductible** (fonction pure) | ⏭️ |
