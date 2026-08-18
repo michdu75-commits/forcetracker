@@ -6328,6 +6328,60 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC LI - L'EXERCICE SUIVANT S'OUVRE QUAND ON A FINI LE PRECEDENT (18/08/2026) ==
+   Michel : « je finis ma derniere de developpe couche et apres je fais les epaules ; quand
+   je valide ma derniere serie, ca devrait se reduire et l'exercice d'epaule s'ouvrir en
+   grand » — et « je n'ai pas vu le message » (le « Ensuite : ... » du chrono de repos).
+   /!\ LA CAUSE : « termine » se lisait « TOUTES les lignes cochees ». Les paliers
+   d'ECHAUFFEMENT que l'app ajoute elle-meme depuis ft-v887 restent souvent vides — donc
+   l'exercice n'etait jamais considere comme fini. C'est l'app qui cree les lignes qui
+   l'empechent ensuite de conclure.
+   /!\ LE TEMOIN JOUE LES DEUX CAS : tout coche (marchait deja) ET paliers laisses vides
+   (le sien). Sans le 1er, on ne verrait pas si le correctif casse le cas qui marchait. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    const W=(kg,reps)=>({kg,reps,done:false,type:'N'});
+    const E=(kg,reps)=>({kg,reps,done:false,type:'É'});
+    const seance=()=>[{name:'Développé Couché',sets:[E(40,5),E(60,3),W(80,8),W(80,8)]},
+                      {name:'Développé Militaire',sets:[W(40,10),W(40,10)]}];
+    const joue=async(indices)=>{
+      S.wkt=null; startWorkout(); S.wkt.exs=seance(); _expandedEx=0; persist(); renderExBlocks();
+      for(const i of indices) toggleSet(0,i);
+      await new Promise(r=>setTimeout(r,150));
+      const res={label:(document.getElementById('rest-label')||{}).textContent,
+                 cb:(typeof _restDoneCb!=='undefined')&&!!_restDoneCb};
+      if(typeof skipRest==='function') skipRest();     // on ecourte le repos, comme dans la vraie vie
+      await new Promise(r=>setTimeout(r,150));
+      res.ouvert=_expandedEx;
+      return res;
+    };
+    o.toutCoche = await joue([0,1,2,3]);
+    o.echVides  = await joue([2,3]);                   // ⭐ le cas de Michel
+    // une SERIE DE TRAVAIL non faite doit, elle, continuer de bloquer
+    o.travailRestant = await joue([0,1,2]);
+    S.wkt=null; persist();
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- LI. L\'exercice suivant s\'ouvre quand le precedent est fini --');
+  t('tout coche : le message « Ensuite » s\'affiche et le suivant s\'ouvre',
+    /Ensuite/.test(R.toutCoche.label||'') && R.toutCoche.ouvert===1,
+    JSON.stringify(R.toutCoche));
+  t('⭐⭐ PALIERS D\'ECHAUFFEMENT LAISSES VIDES : ca bascule quand meme (retour Michel du 18/08)',
+    /Ensuite/.test(R.echVides.label||'') && R.echVides.ouvert===1,
+    JSON.stringify(R.echVides));
+  t('/!\\ une SERIE DE TRAVAIL non faite bloque toujours (elle peut encore etre faite)',
+    !/Ensuite/.test(R.travailRestant.label||'') && R.travailRestant.ouvert===0,
+    JSON.stringify(R.travailRestant));
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

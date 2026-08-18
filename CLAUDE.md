@@ -397,7 +397,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v903`** (prochaine : `ft-v904`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v904`** (prochaine : `ft-v905`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -407,6 +407,17 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v904 — ⏭️ L'EXERCICE SUIVANT S'OUVRE ENFIN — c'est l'app qui créait les lignes qui l'empêchaient de conclure** — Michel, en décrivant précisément ce qu'il attend : *« je finis ma dernière de développé couché et après je fais les épaules, et quand je valide ma dernière série de couché ça se réduit et l'exercice d'épaule s'ouvre en grand »* — plus, dans le même message, *« j'ai fini ma séance et je n'ai pas vu le message »*. **Ses deux remarques n'en font qu'une** : le message « ⏭️ Ensuite : … » et la bascule sont posés par le **même** morceau de code, donc ils manquent toujours ensemble.
+
+**⭐ REPRODUIT AVANT DE TOUCHER À QUOI QUE CE SOIT**, et c'est ce qui a évité de réparer au hasard : en cochant **toutes** les lignes, ça marche déjà (message + ouverture du suivant) ; en laissant **les paliers d'échauffement non cochés**, il ne se passe **rien du tout**.
+
+**⚠️⚠️ LA CAUSE : « TERMINÉ » SE LISAIT « TOUTES LES LIGNES COCHÉES »** (`every(s=>s.done)`). Or **depuis ft-v887, c'est l'app qui AJOUTE elle-même les paliers d'échauffement**. Quelqu'un qui attaque directement à sa charge de travail — ou qui s'échauffe sans le noter — laisse donc forcément des lignes vides, et son exercice n'est **jamais** considéré comme fini. *L'app crée les lignes qui l'empêchent ensuite de conclure* : le correctif de ft-v887 a fabriqué, sans qu'on le voie, la condition d'échec de ft-v825.
+
+**👉 ON REGARDE LES SÉRIES DE TRAVAIL, PAS LES LIGNES.** L'exercice est fini quand il n'en reste aucune à faire — c'est déjà la définition que le reste de l'app emploie : `finishWorkout` exclut É et W du décompte des séries **comme des records**. On ne change donc pas la règle, on cesse d'en avoir deux (R2).
+
+**⚠️ ET ON NE BASCULE PAS TROP TÔT POUR AUTANT** : une **série de travail** non cochée bloque toujours (elle peut encore être faite), et un exercice qui n'aurait **que** des paliers n'avance pas non plus — sans série de travail validée, rien ne dit qu'on en a fini avec lui (R29 : le coût de l'erreur décide, et ici basculer à tort ferait perdre la série suivante de vue).
+Tests : **parcours 735/735** (+3, bloc LI), calculs 206/206, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 1 rouge**, exactement le sien — paliers laissés vides → `label:""`, aucune bascule. ⚠️ Les deux autres témoins sont verts des deux côtés, et c'est voulu : l'un fige le cas qui marchait déjà (pour que le correctif ne le casse pas), l'autre l'interdiction de basculer trop tôt. Fichiers : `log.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v904. |
 
 **ft-v903 — 🛑 UNE MISE À JOUR NE TOMBE PLUS PENDANT UNE SÉANCE QUI COMMENCE PAR DU CARDIO — et c'est la DEUXIÈME fois qu'il le signale** — Michel, en séance : *« putain faut éviter de faire une mise à jour quand je suis en séance, ça me nique mon bilan de fin de séance »*. **La première fois, c'était le 15/08 — et elle avait créé ce garde-fou.** Il revient donc sur une règle qui existe et qui n'a pas tenu : *quand la même remarque revient, ce n'est pas la règle qu'il faut réécrire, c'est sa DÉFINITION qu'il faut aller regarder* (`docs/ORIGINE-DES-REGLES.md`).
 
@@ -648,8 +659,6 @@ Tests : **parcours 671/671** (+11, bloc XL), calculs 179/179, muscles 232/232, c
 **⚠️ ET CE N'EST PAS UN CONTRAT** : si elle veut autre chose aujourd'hui, il la suit sans discuter et dit simplement en quoi ça sort de son programme. Un planning est un repère, pas une laisse (Constitution : la personne d'abord).
 **⚠️ BORNÉ EXPRÈS, ET L'APP DIT QU'ELLE A COUPÉ** : 3 programmes, 6 jours, 10 exercices par jour. Un bloc de 12 semaines × 5 jours × 8 exercices envoyé **en entier à chaque message** coûterait plus qu'il ne rapporte — mais laisser croire que c'est tout serait pire que couper (R29), donc le nombre restant est annoncé (« …et 6 autres jours », « +2 autre(s) programme(s) »). **⚠️ Et les paliers d'échauffement ne sont pas comptés comme des séries de travail** : « 3×5 », pas « 4×5 ».
 Tests : **parcours 660/660** (+9, bloc XXXIX), calculs 179/179, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, **données : 0 trou**. Bloc commun de Milo **inchangé à 46 466** — les programmes sont personnels, ils vivent après le repère, donc ils ne touchent pas au cache partagé. Fichiers : `coach.js`, `tests/donnees/donnees-milo.json`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v889. |
-
-**ft-v888 — 🧭 LES REPÈRES QUI MENTAIENT — Milo qui s'excuse à tort, une promesse de mémoire vide, et un réglage de repos qui ne servait à rien** — Michel : *« fais tout ce que tu peux seul »*. Cinq corrections, et deux d'entre elles n'étaient pas au programme.
 
 **⭐⭐ ① MILO NE DONNE PLUS RAISON POUR FAIRE PLAISIR.** Le cas est dans le partage qu'il m'a envoyé : *« Tu as raison, c'est incohérent. J'ai mélangé les schémas moteurs »* — puis Milo écrit l'ordre « correct »… **qui est EXACTEMENT celui de la séance qu'il avait livrée** (SDT → Tirage → Rowing → Leg Curl → Abduction). Il s'est excusé d'une erreur qu'il n'avait pas faite. *S'excuser à tort n'est pas de la politesse, c'est une information FAUSSE* : la personne repart en croyant qu'un problème existait, et le vrai problème — s'il y en a un — reste entier. La règle lui dit maintenant de **RELIRE le contexte avant de répondre**, et prévoit les trois cas : elle a raison → on corrige · c'était déjà bon → on le dit calmement, **sans s'excuser**, en citant ce qu'on voit · on ne peut pas vérifier → **on le dit, on ne tranche pas**.
 
