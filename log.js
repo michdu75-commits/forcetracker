@@ -6,12 +6,41 @@
  */
 // ─── WORKOUT ─────────────────────────────────────────────────
 let _wakeLock=null;
+/* 🔆 L'ÉCRAN RESTE ALLUMÉ TANT QU'UNE SÉANCE TOURNE — PAS TANT QU'ON REGARDE L'ÉCRAN SÉANCE
+   (18/08/2026). Michel, en pleine séance : *« l'écran s'éteint pendant la séance »*.
+   ⚠️⚠️ LA CAUSE N'EST PAS LE VERROU, C'EST CE À QUOI IL ÉTAIT ATTACHÉ : `goScreen` le relâchait
+   pour TOUT écran autre que `log`. Or pendant une séance on va justement ailleurs — parler à
+   **Milo**, regarder ses records, noter une pesée. On revenait donc à un écran éteint au milieu
+   d'un repos, exactement quand on a les mains occupées.
+   👉 Le verrou appartient à l'ÉTAT « une séance est en cours », pas à l'écran affiché (R2 : une
+   information, un propriétaire — et ici l'information est « je m'entraîne », pas « je regarde »).
+   ⚠️ ET IL SE RELÂCHE QUAND LA SÉANCE EST EN PAUSE : une séance en pause n'est pas un
+   entraînement, et laisser l'écran d'un téléphone allumé sans raison se paie en batterie. */
+function _wktEnCours(){
+  if(typeof S==='undefined'||!S.wkt)return false;
+  if(S.wkt.pausedAt)return false;                      // en pause → ce n'est plus un entraînement
+  return !!(S.wkt.startTs || (S.wkt.exs&&S.wkt.exs.length) || _cardioNoteMin()>0);
+}
 async function _acquireWakeLock(){
   if(!('wakeLock' in navigator))return;
-  try{_wakeLock=await navigator.wakeLock.request('screen');}catch(e){}
+  if(_wakeLock)return;                                 // déjà tenu : ne pas en empiler un 2ᵉ
+  try{
+    _wakeLock=await navigator.wakeLock.request('screen');
+    /* ⚠️ LE SYSTÈME LE REPREND SANS PRÉVENIR (écran verrouillé, appli en arrière-plan) et il ne
+       revient JAMAIS tout seul. Sans ce marqueur, `_wakeLock` resterait un objet mort et le
+       garde ci-dessus empêcherait toute reprise — l'écran s'éteindrait pour de bon au 1ᵉʳ
+       passage en arrière-plan. */
+    _wakeLock.addEventListener('release',()=>{_wakeLock=null;});
+  }catch(e){}
 }
 function _releaseWakeLock(){
-  if(_wakeLock){_wakeLock.release();_wakeLock=null;}
+  if(_wakeLock){try{_wakeLock.release();}catch(e){} _wakeLock=null;}
+}
+// Le seul point de décision : on tient l'écran si — et seulement si — une séance tourne,
+// ou si on est en train de regarder l'écran Séance.
+function _syncWakeLock(){
+  if(_wktEnCours()||window._curScreen==='log') _acquireWakeLock();
+  else _releaseWakeLock();
 }
 
 // ─── CHRONO DURÉE SÉANCE ─────────────────────────────────────
@@ -101,6 +130,7 @@ function toggleWktPause(){
     persist();
     _startWktChrono();
     _syncWktPauseUI();
+    _syncWakeLock();                 // on reprend l'entraînement → on retient l'écran
     toast('Séance reprise','info');
   }else{
     // Pause : fige le chrono + coupe un éventuel repos en cours
@@ -109,6 +139,7 @@ function toggleWktPause(){
     if(typeof stopRest==='function')stopRest();
     persist();
     _syncWktPauseUI();
+    _syncWakeLock();                 // en pause, on n'a plus de raison de tenir l'écran allumé
     toast('Séance en pause ⏸','info');
   }
 }
@@ -116,8 +147,8 @@ function toggleWktPause(){
 // Ré-acquérir + resync des deux chronos au retour au premier plan
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState!=='visible')return;
+  _syncWakeLock();   // le système reprend TOUJOURS le verrou en arrière-plan : on le redemande ici
   if(window._curScreen==='log'){
-    _acquireWakeLock();
     // Wkt chrono : mise à jour immédiate (ne pas attendre le prochain tick)
     const chronoEl=document.getElementById('wkt-chrono');
     if(chronoEl)chronoEl.textContent=_fmtElapsed();
@@ -146,7 +177,7 @@ document.addEventListener('visibilitychange',()=>{
 function startWorkout(){
   if(!S.wkt||!S.wkt.exs||!S.wkt.exs.length) S.wkt={date:today(),exs:[],startHour:new Date().getHours()};
   persist(); goScreen('log',document.getElementById('nb-log'));
-  _acquireWakeLock();
+  _syncWakeLock();
 }
 function _fmtWktDate(d){
   const dt=new Date(d+'T12:00:00');
@@ -2122,6 +2153,7 @@ function clearWkt(){
     S.wkt=null;
     try{localStorage.setItem('ft4_wkt','null');localStorage.removeItem('ft4_wkt_draft');}catch(e){}
     persist();
+    _syncWakeLock();          // plus de séance → on rend l'écran (R15 : tout chemin de fermeture)
     renderLog();
     toast('Séance annulée','info');
   });
@@ -3056,7 +3088,6 @@ let _finishing=false;
 async function finishWorkout(){
   if(_finishing)return;
   _finishing=true;
-  _releaseWakeLock();
   _stopWktChrono();
   if(!S.wkt){_finishing=false;return;}
   const _hasCardio=!!((S.wkt.cardio&&S.wkt.cardio.duration)||(S.wkt.cardioAvant&&S.wkt.cardioAvant.duration));  // un échauffement SEUL suffit aussi à valider (02/08)
@@ -3064,6 +3095,10 @@ async function finishWorkout(){
   if(!_hasExs&&!_hasCardio){toast('Ajoute un exercice ou un cardio !','error');_finishing=false;return;}
   const hasDone=_hasExs&&S.wkt.exs.some(ex=>ex.sets.some(s=>s.done));
   if(!hasDone&&!_hasCardio){toast('Valide une série ou ajoute un cardio !','error');_finishing=false;return;}
+  /* 🔆 LE VERROU D'ÉCRAN SE REND ICI, APRÈS LES CONTRÔLES — pas avant (18/08). Il était relâché
+     dès l'entrée dans la fonction : appuyer sur « Terminer » avec une séance vide affichait le
+     message d'erreur ET laissait l'écran s'éteindre, alors que la séance continuait. */
+  _releaseWakeLock();
   const duration=Math.floor(_wktElapsedMs()/1000); // durée réelle, hors temps en pause
   // ⚠️ UNE SEULE règle de volume, et elle vit dans `_workVol` (R2). La copie qui était
   // écrite ici disait exactement la même chose… jusqu'au jour où l'unilatéral est arrivé :

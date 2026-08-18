@@ -6217,6 +6217,63 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC XLIX - L'ECRAN NE S'ETEINT PLUS QUAND ON VA PARLER A MILO (18/08/2026) ==
+   Michel, en pleine seance : « l'ecran s'eteint pendant la seance ».
+   /!\ LA CAUSE N'ETAIT PAS LE VERROU MAIS CE A QUOI IL ETAIT ATTACHE : `goScreen` le
+   relachait pour TOUT ecran autre que Seance — or pendant une seance on va justement
+   parler a Milo. Le verrou appartient a l'ETAT « une seance tourne », pas a l'ecran affiche.
+   /!\ CE TEMOIN POSE UN FAUX `navigator.wakeLock` : l'API n'existe pas en navigateur de test,
+   donc sans ce doublon il ne mesurerait RIEN et serait vert des deux cotes (le piege des
+   temoins qui « passent » sans rien verifier, paye 4 fois : ft-v887, 890, 892, 901). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    // ── faux verrou d'ecran, qui COMPTE ce que l'app lui demande ──────────────────
+    let tenu=false;
+    const faux={released:false,release(){tenu=false;this.released=true;return Promise.resolve();},
+                addEventListener(){}};
+    try{
+      Object.defineProperty(navigator,'wakeLock',{configurable:true,
+        value:{request:async()=>{tenu=true;faux.released=false;return faux;}}});
+    }catch(e){ return {err:'stub impossible: '+e.message}; }
+    o.stub=('wakeLock' in navigator);
+    if(typeof startWorkout!=='function') return {err:'startWorkout absente'};
+    // ── une vraie seance en cours ────────────────────────────────────────────────
+    startWorkout();
+    S.wkt.exs=[{name:'Developpe Couche',sets:[{kg:80,reps:8,done:false,type:'N'}]}];
+    persist();
+    goScreen('log',null); await new Promise(r=>setTimeout(r,260));
+    o.surSeance=tenu;
+    // ── on part parler a Milo, la seance tourne toujours ─────────────────────────
+    goScreen('coach',null); await new Promise(r=>setTimeout(r,260));
+    o.surMilo=tenu;
+    // ── seance terminee (ici : annulee) → l'ecran est rendu ──────────────────────
+    S.wkt=null; persist();
+    if(typeof _syncWakeLock==='function') _syncWakeLock();
+    else if(typeof _releaseWakeLock==='function') _releaseWakeLock();
+    await new Promise(r=>setTimeout(r,120));
+    o.sansSeance=tenu;
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- XLIX. L\'ecran reste allume tant que la seance tourne --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    t('/!\\ le faux verrou est bien en place (sinon ce bloc ne mesure rien)', R.stub===true);
+    t('sur l\'ecran Seance, l\'ecran est tenu allume', R.surSeance===true, 'tenu='+R.surSeance);
+    t('⭐⭐ ON VA PARLER A MILO : l\'ecran reste allume (retour Michel du 18/08)',
+      R.surMilo===true, 'tenu='+R.surMilo);
+    t('/!\\ plus de seance en cours → le verrou est RENDU (pas de batterie pour rien)',
+      R.sansSeance===false, 'tenu='+R.sansSeance);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

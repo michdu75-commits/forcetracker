@@ -116,7 +116,10 @@ function _applyScreen(id,btn){
   document.getElementById('root').classList.toggle('on-home',id==='home');
   document.getElementById('root').classList.toggle('on-log',id==='log');
   document.getElementById('root').classList.toggle('on-setup',id==='setup');
-  if(id!=='log')_releaseWakeLock();
+  /* 🔆 On ne relâche plus le verrou d'écran en quittant l'écran Séance : pendant une séance on
+     va justement parler à Milo ou regarder ses records (18/08). `_syncWakeLock` (log.js) tient
+     l'écran tant qu'une séance TOURNE, et le rend dès qu'elle est finie ou en pause. */
+  if(typeof _syncWakeLock==='function')_syncWakeLock(); else if(id!=='log')_releaseWakeLock();
   if(id==='home')renderHome();
   if(id==='log')renderLog();
   if(id==='progress')renderProgress();
