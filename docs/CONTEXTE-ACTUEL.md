@@ -6,10 +6,78 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v897` — fusionné sur `master` le 18/08, déploiement Pages vérifié
-  (run vert sur `ac9db51`).
-- **Sur la branche, PAS ENCORE fusionné :** `ft-v898`.
+- **Version en ligne (live) :** `ft-v902` — fusionnée sur `master` le 18/08, run Pages vert sur `1f9ab30`.
+- **Sur la branche, PAS ENCORE fusionné : `ft-v903`** (commit `8196faf`).
+  ⛔ **RETENU EXPRÈS** — Michel était **en séance** et l'a demandé (voir le bloc du 18/08 ci-dessous).
+  **À fusionner dès qu'il dit que sa séance est finie**, avec `git merge --no-ff` sur `master`.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
+
+> ## 📍 OÙ ON EN EST — 18/08/2026 (à lire en premier, remplace le bloc du 17/08 plus bas)
+>
+> ### ⛔ LA RÈGLE DU JOUR, ET ELLE EST DE MICHEL
+> **NE PAS DÉPLOYER PENDANT QU'IL S'ENTRAÎNE.** *« Faut éviter de faire une mise à jour quand je suis
+> en séance, ça me nique mon bilan de fin de séance »* — et c'est la **2ᵉ fois** qu'il le dit (la 1ʳᵉ,
+> le 15/08, avait créé le garde-fou `_majPeutSAppliquer`). Avant de fusionner sur `master`, **vérifier
+> qu'il n'est pas à la salle**. Le correctif de fond est livré (ft-v903), mais la règle humaine reste :
+> *un garde-fou n'est pas une autorisation de déployer n'importe quand.*
+>
+> ### ✅ LIVRÉ AUJOURD'HUI (5 versions)
+> | | Quoi | État |
+> |---|---|---|
+> | `ft-v899` | Le plan alimentaire donne ses **portions** (« Avoine 80 g ») · le **check-in se replie** après « Enregistrer » | en ligne |
+> | `ft-v900` | Le plan alimentaire **change tous les jours** (3 variantes, choisies par la date, **sans IA**) — et le garde-fou a trouvé **2 bugs de régime pré-existants** (le « Thon » seul, le miel non végan) | en ligne |
+> | `ft-v901` | Le **cardio d'avant compte dans la durée** de la séance (`_dureeTotaleMin`) · une séance de **cardio seul** affiche enfin une durée · `_rythmeSeance` soustrayait un cardio absent du chrono depuis le 14/08 | en ligne |
+> | `ft-v902` | **L'écran ne s'éteint plus** : le verrou suivait l'écran affiché, pas la séance (`_wktEnCours`) | en ligne |
+> | `ft-v903` | **La mise à jour attend** aussi quand la séance n'a que du cardio (`_seanceOuverte`) | ⛔ **retenu** |
+>
+> ### ❓ DEUX RETOURS DE MICHEL **NON ÉLUCIDÉS** — à lui demander avant de coder
+> Dictés en séance, je n'ai pas su les interpréter et **je n'ai rien touché** (l'écran Séance est la
+> zone la plus sensible du projet, règle d'or #9 — se tromper de diagnostic coûterait cher) :
+> 1. *« à la fin d'un mouvement quand je fais avec Milo **ne se dit pas** »* — hypothèses : le
+>    « ⏭️ Ensuite : X » du timer de repos ne s'affiche pas · l'exercice suivant ne s'ouvre pas à la
+>    fin du repos (`_restDoneCb`, log.js ~1135) · autre chose.
+> 2. *« la séance d'avant **ne s'agrandit pas** »* — hypothèses : la colonne « Précédent » d'un
+>    exercice · une carte d'historique qui doit s'ouvrir sur appui (`openSessDetail`).
+> ⚠️ **Ne pas deviner** (BUGS.md famille 12ter : la fausse panne — j'ai déjà failli « réparer » deux
+> renvois corrects le 18/08 au matin). **Poser la question, avec des options concrètes.**
+>
+> ### 🩺 UN POINT QUE JE NE PEUX PAS TRANCHER D'ICI
+> Michel dit que l'écran s'éteint **sans quitter l'écran Séance**. ft-v902 couvre les deux chemins
+> connus (retour sur l'écran Séance sans re-demander le verrou · passage par Milo). **S'il le
+> reconstate après ft-v902, la cause est côté iOS** (mode économie d'énergie, qui reprend le verrou
+> quoi qu'on fasse) — et là il n'y a rien à corriger dans l'app.
+>
+> ### 🍽️ LE CHANTIER ACTIF : LA NUTRITION (Michel commence à s'en servir **la semaine prochaine**)
+> Son constat, et c'est le point de départ : *« même moi ça me saoule d'utiliser la nutrition, c'est
+> assez mal fait »* · *« ce n'est pas intuitif »*. Tout le dossier est dans **`docs/NUTRITION-MOTEUR.md`**
+> (le *comment*) et `docs/NUTRITION-PHILOSOPHIE.md` (le *pourquoi*).
+> **⭐ LE DIAGNOSTIC** : l'app n'implémente que les **niveaux 3 et 4** des 4 niveaux de précision que
+> Michel a lui-même définis, et le Journal répond à *« combien il me reste à manger »* quand la
+> question est *« où j'en suis »*.
+> **⚠️ ET LE PIÈGE À NE PAS REFAIRE** : j'avais conçu toute la brique sur **son** profil alimentaire
+> (répétitif). Lui : *« ça c'est moi qui le fais, les autres peut-être pas »* — il y a ceux qui mangent
+> des pizzas et ceux qui suivent une diète stricte. `docs/PERSONAS-FONDATEURS.md` : **Tatiana = absence
+> de présupposés.**
+> **⏭️ ORDRE CONVENU** : ① l'écran qui répond « **où tu en es** » · ② **ajouter un repas en un appui**
+> (niveau 2 = portions) · ③ une semaine incomplète produit quand même une moyenne honnête ·
+> ④ la plomberie : **provenance figée** dans `S.foodLog` (aucune entrée ne stocke aujourd'hui ni sa
+> source ni sa version → un chiffre n'est ni comparable ni rejouable).
+> **RÈGLE ÉTABLIE** : *l'IA lit la phrase, elle ne produit JAMAIS les nombres* — les chiffres viennent
+> de CIQUAL / Open Food Facts, ce qui rend une saisie reproductible.
+> **DÉCISION PRISE, PAS ENCORE CODÉE** : le **cru/cuit** devient un **défaut par catégorie d'aliment**
+> (protéine animale → cru, féculent → cuit), modifiable ligne par ligne, **jamais converti**.
+> Michel doit **peser son riz cru une fois** pour avoir son ratio perso.
+>
+> ### 📄 LIVRABLE DU JOUR, hors dépôt
+> La note **« Peser cru ou cuit »** pour Tatiana (objective, les deux méthodes défendues) :
+> https://claude.ai/code/artifact/242d0ca3-3eb8-42d7-a407-099264f56a9c — privée tant qu'il ne la
+> partage pas. Source : `scratchpad/cru-cuit.html`.
+>
+> ### 📝 NOTÉ POUR PLUS TARD (rien à faire maintenant)
+> **`IDEES-FUTURES.md`** porte désormais le dossier **« Échauffement & mobilité »** (demande de Michel,
+> 18/08). ⚠️ Sa 1ʳᵉ ligne dit l'essentiel : **ne pas confondre avec la montée en charge**, déjà
+> construite (ft-v887/890). Le vrai sujet sera *« qu'est-ce qui devient une DONNÉE ? »* — aujourd'hui
+> la consigne d'échauffement n'existe **que dans le texte du prompt**, rien ne la collecte (R4).
 
 > ## 📍 OÙ ON EN EST — 17/08/2026 au soir (à lire en premier)
 >
@@ -401,7 +469,10 @@
 - **🔭 TOUR DE TABLE IA EXTÉRIEURES (20/07) — décisions d'archi VM prises** (détail : CLAUDE.md, méthode : `docs/PROCESSUS-DEVELOPPEMENT.md`) : avis croisés GPT + Gemini + Mistral sur le chantier VM. **Méthode adoptée** : convergence de regards indépendants = décision d'archi ; divergence = débat. **2 décisions** : ① couche machine = **user-fed d'abord** (le risque = les médias, pas le code) ; ② graphe **simple & dérivé** (14 schémas, pas de parsing exhaustif). **+ Principe** : palier « confirm » de l'import = **un TAP, pas un formulaire**. **Prématuré → IDEES-FUTURES** : matériel connecté (montre), modèle éco approfondi, export JSON/CSV. **Prochaine brique quand on construira = la couche machine.**
   - **🏛️ FRONTIÈRE VM / GARDIEN actée** (dernier doc GPT) : *le moteur VM identifie/structure les MOUVEMENTS ; le Gardien décide quoi FAIRE de cette connaissance* (remplacements, contre-indications, adaptations douleurs = métier du Gardien, pas du parsing). ✅ **Ratifiée par Michel → Constitution v1.5, Principe 15 « Le moteur comprend, le Gardien décide » (20/07)**.
   - **🏗️ CHANGEMENT DE PHASE — GO donné par GPT (20/07) → en attente GO Michel** : fin de la phase « grandes idées », début de l'**industrialisation**. **Ordre convenu (GPT + Claude)** : ① **finaliser VM** (câbler import historique) → ② **construire Confirm** (validation reconnaissance en un geste) → ③ **couche machine (MVP user-fed)** → ④ **tester avec de vrais programmes variés** → ⑤ **enrichir EXLIB uniquement à partir des cas réels**. Nuance actée : **Confirm AVANT Machine** (le confirm de reconnaissance ✓/✕ se construit d'abord, la photo machine s'y greffe ensuite). Conseil GPT : « ne plus chercher de grandes idées — le moteur doit apprendre du réel ». Les 4 IA (GPT/Gemini/Mistral/Claude) alignées sur « construire ».
-- **Branche de travail :** `claude/claude-md-docs-ytabnv` — **publiée aussi sur `master`** (donc live = ft-v670). *(session Claude Code web)*
+- **Branche de travail :** `claude/claude-md-docs-ytabnv` — fusionnée sur `master` à chaque livraison.
+  ⚠️ *(La version live se lit **en haut de ce fichier**, pas ici : cette ligne annonçait encore
+  « live = ft-v670 » le 18/08, soit 230 versions de retard. Un état écrit à deux endroits diverge
+  toujours — R2.)* *(session Claude Code web)*
 - **Dernier point de sauvegarde :** ⭐ `backup-2026-07-20-pt001-valide-ft-v504` (milestone à jour)
   *(voir la table complète dans `DOSSIER-ATHLETE-SUIVI.md`)*
 
