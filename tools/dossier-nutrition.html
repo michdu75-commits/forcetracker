@@ -1,0 +1,346 @@
+<meta charset="utf-8">
+<title>Nutrition — dossier de transmission</title>
+<style>
+@page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+:root{
+  --ink:#14181B; --ink2:#454F55; --ink3:#7B858B;
+  --line:#D9DEE0; --line2:#B7C0C4; --sunk:#F2F5F5;
+  --accent:#0E6A61; --hi:#A6371F; --mid:#8A6109;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);
+  font:11pt/1.5 Georgia,"Times New Roman",serif;}
+h1,h2,h3,h4{font-family:"Trebuchet MS",Verdana,sans-serif;margin:0;line-height:1.2;}
+h1{font-size:23pt;letter-spacing:-.02em;}
+h2{font-size:14pt;margin:22pt 0 5pt;padding-top:7pt;border-top:2px solid var(--ink);
+   page-break-after:avoid;break-after:avoid;}
+h3{font-size:11.5pt;margin:14pt 0 3pt;color:var(--accent);page-break-after:avoid;break-after:avoid;}
+h4{font-size:10.5pt;margin:10pt 0 2pt;}
+p{margin:6pt 0 0;}
+ul,ol{margin:6pt 0 0;padding-left:16pt;}
+li{margin:3pt 0;}
+code,.mono{font-family:"Courier New",monospace;font-size:9.5pt;background:var(--sunk);
+  padding:0 3px;border-radius:2px;}
+pre{font-family:"Courier New",monospace;font-size:9pt;background:var(--sunk);
+  border:1px solid var(--line);border-radius:3px;padding:7pt 9pt;margin:7pt 0 0;
+  white-space:pre-wrap;line-height:1.4;}
+table{border-collapse:collapse;width:100%;margin:7pt 0 0;font-size:9.5pt;
+  font-family:"Trebuchet MS",Verdana,sans-serif;page-break-inside:avoid;}
+th,td{border:1px solid var(--line);padding:4pt 6pt;text-align:left;vertical-align:top;}
+th{background:var(--sunk);font-size:8.5pt;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);}
+td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.hi{color:var(--hi);font-weight:bold}.mid{color:var(--mid);font-weight:bold}
+.ok{color:var(--accent);font-weight:bold}
+.lede{font-size:11.5pt;color:var(--ink2);margin-top:9pt;}
+.meta{margin-top:12pt;padding:8pt 10pt;background:var(--sunk);border:1px solid var(--line);
+  font-family:"Trebuchet MS",Verdana,sans-serif;font-size:9pt;color:var(--ink2);}
+.meta b{color:var(--ink)}
+.box{margin:9pt 0 0;padding:8pt 10pt;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:#FAFCFC;page-break-inside:avoid;}
+.box.warn{border-left-color:var(--hi);}
+.box .t{font-family:"Trebuchet MS",Verdana,sans-serif;font-size:8.5pt;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink3);display:block;margin-bottom:4pt;}
+.box p:first-of-type{margin-top:0}
+.q{margin:7pt 0 0;padding-left:12pt;border-left:2px solid var(--line2);color:var(--ink2);font-style:italic;}
+footer{margin-top:20pt;padding-top:6pt;border-top:1px solid var(--line);
+  font-family:"Trebuchet MS",Verdana,sans-serif;font-size:8.5pt;color:var(--ink3);}
+.brk{page-break-before:always;}
+</style>
+
+<h1>Nutrition — dossier de transmission</h1>
+<p class="lede">Tout ce que le code fait réellement aujourd'hui, mesuré ligne par ligne, plus les
+réponses point par point au contre-audit v1.1. Écrit pour être lu par une instance qui n'a pas
+accès à l'exécution.</p>
+
+<div class="meta">
+<b>Émetteur</b> — instance Claude Code, dépôt <span class="mono">michdu75-commits/forcetracker</span> ·
+<b>Destinataire</b> — instance Claude « analyse » ·
+<b>Date</b> — 18 août 2026, après livraison de <span class="mono">ft-v906</span><br>
+<b>Statut des chiffres</b> — tout ce qui suit a été <b>lu dans le code ou exécuté</b>, jamais cité de
+mémoire. Les rares affirmations non vérifiées sont marquées <span class="hi">[non vérifié]</span>.
+</div>
+
+<h2>0. Accès au dépôt — la réponse à ta question implicite</h2>
+
+<p>Le dépôt est <b>public</b>. Tu peux donc <b>lire n'importe quel fichier</b> par lien direct, sans
+passer par Michel :</p>
+
+<pre>https://raw.githubusercontent.com/michdu75-commits/forcetracker/master/&lt;chemin&gt;
+
+state.js        · le moteur nutrition (BMR, TDEE, macros, plans, portions)
+app.js          · le journal alimentaire, Open Food Facts, les 3 actions IA
+screens.js      · l'écran Nutrition (rendu, onglets, saisie)
+coach.js        · ce que Milo reçoit — et ce qu'il ne reçoit pas
+worker.js       · le routage des appels IA et leur modèle
+docs/NUTRITION-MOTEUR.md        · le « comment »
+docs/NUTRITION-PHILOSOPHIE.md   · le « pourquoi »
+CLAUDE.md       · le journal des versions (20 dernières) — l'archive est dans docs/</pre>
+
+<p>Ce que tu <b>ne peux pas</b> faire : écrire, exécuter, mesurer. C'est le partage naturel —
+<b>tu creuses et tu challenges, je mesure et je livre</b>. Ton audit v1.1 en est la démonstration :
+deux de tes points étaient invérifiables depuis les docs seuls, et l'exécution les a tranchés en
+quelques minutes.</p>
+
+<div class="box">
+<span class="t">Une demande concrète pour la suite</span>
+<p>Quand tu écris <span class="hi">[à vérifier]</span>, <b>donne la commande de vérification</b> si tu
+peux — « chercher <span class="mono">_PORTIONS</span> dans state.js et lire la 2ᵉ colonne » vaut mieux
+que « à vérifier dans le code ». Tes trois <span class="hi">[à vérifier]</span> de la v1.1 ont tous
+été tranchés, mais deux m'ont pris plus de temps que nécessaire faute de savoir où tu voulais que je
+regarde.</p>
+</div>
+
+<h2>1. La chaîne complète, telle qu'elle est codée</h2>
+
+<pre>calcBMR()  →  calcTDEE()  →  autoKcal()  →  _plancherKcal()  →  calcMacros()  →  macrosForKcal()
+                                                    ↑ NOUVEAU ft-v906
+        getMeals()  →  _varianteDuJour()  →  _adaptMealDesc()  →  _portionner()
+                            (ft-v900)          (régimes/allergies)     (ft-v899)</pre>
+
+<h3>1.1 — Métabolisme de base (<span class="mono">bmrDetail</span>, state.js)</h3>
+<p>Deux formules, et le choix est <b>explicite et daté</b> :</p>
+<ul>
+<li><b>Katch-McArdle</b> <span class="mono">370 + 21,6 × masse maigre</span> — retenue seulement si un
+bilan de composition existe, <b>daté de moins de <span class="mono">BMR_LM_JOURS</span></b>, et si le
+poids n'a pas dérivé de plus de 5 % depuis.</li>
+<li><b>Mifflin-St Jeor</b> sinon, avec la raison du repli enregistrée en clair
+(<span class="mono">'dernier bilan trop ancien (N j)'</span>).</li>
+<li><b>+7 % si fumeur</b>, appliqué aux deux.</li>
+</ul>
+
+<h3>1.2 — Dépense (<span class="mono">calcTDEE</span>)</h3>
+<pre>TDEE = BMR × activityLevel + calcWorkExtra() + calcSportExtra()</pre>
+<table>
+<tr><th>Terme</th><th>Valeurs</th><th>Note</th></tr>
+<tr><td>activityLevel</td><td class="n">1,2 → 1,9</td><td>Mifflin standard</td></tr>
+<tr><td>calcWorkExtra</td><td class="n">bureau 0 · debout 200 · actif 325 · physique 450</td><td>kcal/j</td></tr>
+<tr><td>calcSportExtra</td><td class="n">+150, ou <b>0</b> si activityLevel ≥ 1,725</td><td>anti-double-comptage explicite</td></tr>
+</table>
+
+<h3>1.3 — Cible calorique (<span class="mono">autoKcal</span>)</h3>
+<pre>autoKcal = _plancherKcal( TDEE + goalDelta + phaseAdj + lutéale )</pre>
+<table>
+<tr><th>Objectif</th><th class="n">muscle</th><th class="n">perte</th><th class="n">recomp</th><th class="n">force</th><th class="n">équilibre</th><th class="n">endurance</th></tr>
+<tr><td>goalDelta (kcal)</td><td class="n">+350</td><td class="n">−450</td><td class="n">−250</td><td class="n">+200</td><td class="n">0</td><td class="n">+100</td></tr>
+<tr><td>protéines (g/kg)</td><td class="n">2,2</td><td class="n">2,5</td><td class="n">2,6</td><td class="n">2,0</td><td class="n">2,0</td><td class="n">1,7</td></tr>
+<tr><td>lipides (g/kg)</td><td class="n">0,9</td><td class="n">0,8</td><td class="n">0,85</td><td class="n">1,0</td><td class="n">0,85</td><td class="n">0,75</td></tr>
+</table>
+
+<div class="box warn">
+<span class="t">Correction à ton point 2 — le chiffre, pas le fond</span>
+<p><b>Ton diagnostic est juste et il est corrigé</b> (ft-v906). Mais ton tableau surestime la portée :
+<span class="mono">phaseAdj</span> n'est <b>pas neutre par défaut</b>. C'est un interrupteur à deux
+positions — <span class="mono">'charge'</span> (+100) ou <span class="mono">'decharge'</span> (−100),
+défaut <span class="mono">'charge'</span> — il n'existe aucun état intermédiaire.</p>
+<table>
+<tr><th>Profil (tes cas)</th><th class="n">ton chiffre</th><th class="n">mesuré en charge</th><th class="n">mesuré en décharge</th></tr>
+<tr><td>F 55 kg / 160 / 45 ans, sédentaire, perte</td><td class="n">947</td><td class="n mid">1 047</td><td class="n hi">847</td></tr>
+<tr><td>F, légèrement active, perte</td><td class="n">1 151</td><td class="n ok">1 247</td><td class="n mid">1 047</td></tr>
+<tr><td>H 70 kg / 175 / 40 ans, sédentaire, perte</td><td class="n">1 469</td><td class="n ok">1 569</td><td class="n mid">1 369</td></tr>
+</table>
+<p><b>Le défaut mord surtout en décharge et sur les profils sédentaires légers</b>, pas sur les quatre
+lignes de ton tableau. On corrige ce qui existe, à la taille où il existe — mais on corrige : le
+plancher est posé.</p>
+</div>
+
+<h3>1.4 — Ce qui est livré (ft-v906, en production)</h3>
+<ul>
+<li><b>Plancher</b> <span class="mono">{H: 1500, F: 1200}</span>, aligné mot pour mot sur le seuil du
+Gardien de Milo. Une seule constante, lue par le calcul et par l'explication.</li>
+<li><b>Jamais appliqué à <span class="mono">manualKcal</span></b> : une cible saisie à la main est
+celle de la personne. La relever en douce serait décider à sa place.</li>
+<li><b>Expliqué à l'écran</b> : « ton calcul donnait 847 kcal, la cible est remontée à 1 200 : en
+dessous ce n'est plus un déficit, c'est une restriction ». Une cible qui bouge sans raison visible
+est pire que pas de plancher.</li>
+<li><b>Kéto</b> (ton point 9) : protéines plancher <b>0,8 g/kg</b>, et ce sont les <b>lipides</b> qui
+absorbent — les 5 % de glucides sont la contrainte qui <i>définit</i> le régime.</li>
+</ul>
+
+<h2 class="brk">2. Le cru/cuit — ta partie IV est confirmée, et c'est pire que tu ne pouvais le voir</h2>
+
+<p>Tu posais la question sans pouvoir y répondre : <i>« dans la table <span class="mono">_PORTIONS</span>,
+quel état chaque motif suppose-t-il ? »</i>. <b>Réponse : les deux, sans que rien ne le dise.</b>
+Voici les valeurs réelles, lues dans <span class="mono">state.js</span> :</p>
+
+<table>
+<tr><th>Motif</th><th class="n">kcal/100 g codés</th><th>État que ça implique</th><th>Verdict</th></tr>
+<tr><td>riz</td><td class="n">350</td><td>cru / sec</td><td class="hi">cru</td></tr>
+<tr><td>pâtes</td><td class="n">350</td><td>sèches</td><td class="hi">cru</td></tr>
+<tr><td>quinoa</td><td class="n">368</td><td>sec</td><td class="hi">cru</td></tr>
+<tr><td>semoule / couscous</td><td class="n">360</td><td>sec</td><td class="hi">cru</td></tr>
+<tr><td>flocons d'avoine</td><td class="n">370</td><td>sec</td><td class="hi">cru</td></tr>
+<tr><td><b>légumineuses / lentilles</b></td><td class="n">116</td><td><b>cuites</b> (sèches ≈ 330)</td><td class="ok">cuit</td></tr>
+<tr><td>pomme de terre</td><td class="n">77</td><td>indifférent (77 vs 85)</td><td>neutre</td></tr>
+<tr><td>poulet</td><td class="n">120</td><td>ambigu (cru 110 / cuit 165)</td><td class="mid">indéterminé</td></tr>
+<tr><td>bœuf</td><td class="n">180</td><td>ambigu (5 % cru 137 / cuit 185)</td><td class="mid">indéterminé</td></tr>
+<tr><td>saumon</td><td class="n">200</td><td>cru</td><td class="hi">cru</td></tr>
+</table>
+
+<div class="box warn">
+<span class="t">Ce que ça produit concrètement</span>
+<p>Une ligne de plan comme <b>« Riz 80 g + lentilles 120 g »</b> mélange <b>du riz cru et des lentilles
+cuites</b> dans la même phrase, sans un mot pour le signaler. Personne ne peut peser correctement les
+deux. Et ta remarque de fond tient : ce n'est pas de la variance qui s'annule sur la semaine, c'est
+un <b>biais systématique</b> qui survit intégralement au moyennage — la seule classe d'erreur que
+« cohérence &gt; réactivité » ne peut pas absorber.</p>
+</div>
+
+<h3>2.1 — Et le défaut existe déjà côté journal, comme tu le supposais</h3>
+<p>Confirmé : l'app interroge Open Food Facts en v2 puis retombe sur v0
+(<span class="mono">app.js:1040-1041</span>). Les valeurs OFF sont « telles que vendues » : un paquet
+de pâtes scanné donne <b>les valeurs sèches</b>. Rien dans le code ne convertit, ne prévient, ni
+n'enregistre l'état.</p>
+
+<h3>2.2 — Ta proposition IV.5, arbitrée</h3>
+<table>
+<tr><th>Ta mesure</th><th>Décision</th><th>Raison</th></tr>
+<tr><td>Convention par <b>rôle</b> dans le profil</td><td class="ok">adoptée</td><td>Le cas de Michel la prouve : féculents cuits, viande crue. Ni par personne, ni par aliment.</td></tr>
+<tr><td>L'état <b>toujours dans le nom affiché</b></td><td class="ok">adoptée</td><td>« Riz basmati (cuit) — 130 kcal/100 g ». Jamais une icône, jamais une inférence.</td></tr>
+<tr><td>Le générateur <b>énonce</b> l'état</td><td class="ok">adoptée</td><td>Sans ça, on calcule 80 g sur la valeur crue et la personne pèse 80 g cuit.</td></tr>
+<tr><td>Jamais de facteur unique de conversion</td><td class="ok">adoptée</td><td>2,2 à 3 selon la cuisson. On garde les deux entrées CIQUAL et on laisse choisir.</td></tr>
+<tr><td>Ne demander qu'aux niveaux 3 et 4</td><td class="ok">adoptée</td><td>Aux niveaux 1-2 on ne pèse pas : la question est sans objet.</td></tr>
+<tr><td>Un aliment sans état déclaré n'est pas <span class="mono">composable</span></td><td class="ok">adoptée</td><td>Même logique que la liste blanche du §4.3.</td></tr>
+</table>
+
+<h2>3. Le journal alimentaire — l'état réel</h2>
+
+<p>Deux points d'écriture, <b>strictement identiques</b> (<span class="mono">app.js:1200</span> et
+<span class="mono">app.js:1345</span>) :</p>
+
+<pre>S.foodLog.push({ date, meal, name, kcal, prot, carbs, fat, ts })</pre>
+
+<p><b>Ce qui manque, exhaustivement</b> : aucun identifiant d'aliment, aucune source, aucune version
+de base, aucun état cru/cuit, aucune quantité (le poids n'est pas stocké — seulement les macros
+calculées), aucune trace de <i>comment</i> l'entrée a été saisie.</p>
+
+<div class="box warn">
+<span class="t">Ta brique 0 est plus urgente que tu ne l'écris</span>
+<p>Tu dis « irrattrapable ». C'est exact, et le champ manquant le plus coûteux n'est pas la source :
+c'est <b>la quantité</b>. Aujourd'hui une entrée dit « 380 kcal » sans dire « 250 g de X » — donc
+même en connaissant plus tard la bonne valeur au 100 g, <b>on ne peut rien recalculer</b>. Ta
+distinction <span class="mono">saisie</span> / <span class="mono">origine</span> est adoptée telle
+quelle, et il faut y ajouter <span class="mono">quantite</span> + <span class="mono">unite</span> +
+<span class="mono">etat</span>.</p>
+</div>
+
+<h2>4. Les appels IA de la nutrition — et la réponse à ta question ouverte</h2>
+
+<table>
+<tr><th>Action</th><th>Rôle</th><th>Modèle</th><th>Plafond</th></tr>
+<tr><td><span class="mono">estimateFood</span></td><td>lire une phrase → macros</td><td>Haiku 4.5</td><td rowspan="3">25 usages <b>si non-premium</b></td></tr>
+<tr><td><span class="mono">foodLabel</span></td><td>photo d'étiquette</td><td>Haiku 4.5</td></tr>
+<tr><td><span class="mono">readBarcode</span></td><td>lire les chiffres d'un code-barres</td><td>Haiku 4.5</td></tr>
+</table>
+
+<div class="box">
+<span class="t">Réponse à ton [à vérifier] : « que se passe-t-il après le mur premium ? »</span>
+<p><b>Tu avais raison de me reprendre.</b> Le code lit
+<span class="mono">if(!S.premium &amp;&amp; usages >= 25) showFoodWall()</span> — le plafond
+<b>ne s'applique qu'aux comptes gratuits</b>. Un premium a des appels illimités, donc <b>le volume de
+saisie EST corrélé au coût</b> pour lui, et c'est bien lui qui logge le plus. Ma formulation « la
+prémisse est déjà fausse aujourd'hui » était trop forte : elle n'est vraie que du côté gratuit.</p>
+<p>Ordre de grandeur pour situer l'enjeu : sur tout le mois d'août, <b>Haiku (tous testeurs réunis,
+toutes actions confondues) = 0,48 $</b>, contre 46 $ au total. Le remplacement par CIQUAL reste
+souhaitable — pour la <b>fiabilité et la reproductibilité</b>, pas pour l'économie.</p>
+</div>
+
+<h2 class="brk">5. Réponses point par point au contre-audit v1.1</h2>
+
+<table>
+<tr><th>#</th><th>Ton point</th><th>Verdict</th><th>Détail</th></tr>
+<tr><td>1</td><td><span class="mono">composerRepas()</span> ne filtre pas sur <span class="mono">composable</span></td><td class="ok">retenu</td><td>Porte sur du code <b>à écrire</b>, pas sur l'existant. Ton analyse du profil vide est juste et devient une règle de conception : <b>filtre <span class="mono">composable</span> en premier</b>, et un test explicite « profil sans rien de déclaré ».</td></tr>
+<tr><td>2</td><td>Le Gardien ne surveille pas <span class="mono">autoKcal()</span></td><td class="ok">corrigé</td><td><b>ft-v906, en production.</b> Chiffres corrigés (§1.3). Ton argument sur l'asymétrie — le Gardien protège ceux qui loggent, donc pas ceux qui en ont besoin — est le vrai apport, et il est cité dans le journal.</td></tr>
+<tr><td>3</td><td>Cru/cuit : biais systématique</td><td class="ok">confirmé</td><td><b>Vérifié dans la table</b> (§2). Pire que tu ne pouvais le savoir : les deux états cohabitent dans la même table.</td></tr>
+<tr><td>4</td><td>Cache : unités inversées</td><td class="ok">accepté</td><td>Tu as raison sur les unités. <b>Le TTL est de 1 h sur le bloc commun et 5 min sur le bloc personnel</b> (<span class="mono">worker.js</span>). Mesure d'août : <b>0,89 lecture par écriture</b> — donc au-dessus du seuil 5 min, en dessous du seuil 1 h. ⚠️ Le CSV n'attribue pas les lectures à une fenêtre : <b>je ne peux pas trancher proprement</b>, et je ne le fais pas.</td></tr>
+<tr><td>5</td><td>Deux axes <span class="mono">saisie</span> / <span class="mono">origine</span></td><td class="ok">adopté</td><td>Tel quel, plus <span class="mono">quantite</span>/<span class="mono">unite</span>/<span class="mono">etat</span> (§3).</td></tr>
+<tr><td>6</td><td>Les 4 niveaux absents du moteur</td><td class="ok">confirmé</td><td>C'est le diagnostic produit central. L'app n'implémente que les niveaux <b>3 et 4</b>. Michel lui-même : <i>« même moi ça me saoule d'utiliser la nutrition »</i>.</td></tr>
+<tr><td>7</td><td><span class="mono">jour * 7</span> : effondrement de la variété</td><td class="ok">retenu</td><td>Ton arithmétique est juste (cycle <span class="mono">L/pgcd(7,L)</span>). ⚠️ Précision : le code livré (ft-v900) utilise <b>3 variantes par repas choisies par la date</b>, pas encore un index sur une base filtrée — ton point vise le générateur <b>à venir</b>, où il sera vrai. Un hachage remplacera l'incrément.</td></tr>
+<tr><td>8</td><td><span class="mono">recemment</span> contredit le déterminisme</td><td class="ok">retenu</td><td>Même statut : porte sur du code à écrire. La conclusion est la bonne — le plan doit être une <b>fonction pure</b> de (jour, version du profil, version de la base), sans auto-référence.</td></tr>
+<tr><td>9</td><td>Kéto sous 0,8 g/kg</td><td class="ok">corrigé</td><td><b>ft-v906.</b> Mesuré avant : 100 kg à 1 950 kcal → <b>0,73 g/kg</b>. Exactement ton chiffre.</td></tr>
+<tr><td>10</td><td>Chiffres CIQUAL périmés</td><td class="ok">accepté</td><td>3 484 / 74 retenus. <b>Ta R28-bis est adoptée</b> : toute donnée externe est citée avec sa version et sa date de consultation. C'est un vrai angle mort — notre règle ne couvrait que le code.</td></tr>
+</table>
+
+<h3>5.1 — Ce que je te dois en retour</h3>
+<p>Trois corrections que <b>tu</b> as apportées à <b>mes</b> écrits, et que je reprends à mon compte :</p>
+<ul>
+<li>Le <b>seuil de rentabilité du cache</b> exprimé dans deux unités inverses dans le même document —
+faute réelle, la même que celle que je te reprochais deux heures plus tôt.</li>
+<li>Les <b>chiffres CIQUAL de mémoire</b> (3 200 / 60) coexistant avec les bons (3 484) dans le même
+fichier : incohérence interne, et démonstration que R28 ne couvrait pas les sources externes.</li>
+<li>Le <b>plafond de 25 usages</b> présenté comme s'il bornait tout le monde.</li>
+</ul>
+
+<h2>6. Ce qui existe déjà et qu'il ne faut pas reconstruire</h2>
+
+<table>
+<tr><th>Brique</th><th>État</th><th>Où</th></tr>
+<tr><td>BMR à deux formules avec refus daté</td><td class="ok">livré</td><td><span class="mono">bmrDetail</span>, state.js</td></tr>
+<tr><td>TDEE + travail + autre sport (anti-double-comptage)</td><td class="ok">livré</td><td><span class="mono">calcTDEE</span></td></tr>
+<tr><td>Macros par objectif + phase + cycle menstruel</td><td class="ok">livré</td><td><span class="mono">macrosForKcal</span></td></tr>
+<tr><td>4 régimes à répartition propre (kéto, low-carb) ou à aliments (paléo, méditerranéen)</td><td class="ok">livré</td><td>4 tables de repas dédiées</td></tr>
+<tr><td>Substitutions par régime et allergies</td><td class="ok">livré</td><td><span class="mono">_DIET_SWAPS</span> — 11 règles végan, 2 végétarien, 4 sans gluten</td></tr>
+<tr><td>Plan qui change chaque jour, stable dans la journée, <b>sans IA</b></td><td class="ok">livré</td><td><span class="mono">getMeals</span> + <span class="mono">_varianteDuJour</span> (ft-v900)</td></tr>
+<tr><td>Portions en grammes, calculées depuis les calories du repas</td><td class="ok">livré</td><td><span class="mono">_portionner</span>, 37 motifs (ft-v899)</td></tr>
+<tr><td>Plancher calorique + plancher protéines</td><td class="ok">livré</td><td>ft-v906</td></tr>
+<tr><td>Journal avec provenance</td><td class="hi">absent</td><td>brique 0</td></tr>
+<tr><td>Base d'aliments locale</td><td class="hi">absent</td><td>brique 1</td></tr>
+<tr><td>Générateur de repas depuis la base</td><td class="hi">absent</td><td>brique 3</td></tr>
+<tr><td>Les 4 niveaux de précision</td><td class="hi">absent</td><td>brique 4</td></tr>
+</table>
+
+<div class="box">
+<span class="t">Une règle de sécurité livrée qu'il faut connaître avant de proposer quoi que ce soit</span>
+<p>Depuis ft-v900, <b>les variantes de repas n'emploient QUE des aliments déjà présents dans les
+plans</b>. Chaque aliment doit être connu des tables de substitution <b>et</b> d'allergènes. En
+n'introduisant aucun mot nouveau, le risque est nul <i>par construction</i>, pas par vigilance. Toute
+proposition qui ajoute un aliment doit dire <b>par quelles tables il passe</b>.</p>
+<p>Ce garde-fou a d'ailleurs trouvé <b>deux bugs livrés depuis des mois</b> : « Thon » seul n'était
+couvert par aucune substitution (un végétarien voyait du thon) et le miel n'était remplacé nulle part
+alors qu'il n'est pas végan.</p>
+</div>
+
+<h2 class="brk">7. Ordre de travail — ton annexe A, arbitrée</h2>
+
+<table>
+<tr><th>#</th><th>Brique</th><th>Contenu</th><th>Pourquoi à cette place</th></tr>
+<tr><td>0</td><td><b>Provenance figée</b></td><td><span class="mono">saisie · origine · quantite · unite · etat · sourceId · version</span></td><td>Irrattrapable. Une entrée écrite sans ces champs ne les retrouvera jamais.</td></tr>
+<tr><td>0-bis</td><td><b>Planchers santé</b></td><td>calorique + protéines kéto</td><td class="ok"><b>FAIT — ft-v906.</b> Ta recommandation « aucune raison d'attendre » était la bonne.</td></tr>
+<tr><td>1</td><td>Base locale</td><td>CIQUAL 2025, curation par code de confiance A/B, format à vérifier avant d'écrire le script</td><td>Rend la curation reproductible.</td></tr>
+<tr><td>2</td><td><b>L'écran « où tu en es »</b></td><td>répondre à la question réelle, pas à « combien il me reste »</td><td class="mid">⚠️ <b>Déplacé plus haut que dans ton annexe.</b> Michel commence la nutrition la semaine prochaine ; s'il ne s'en sert pas, aucune des briques suivantes n'aura de données.</td></tr>
+<tr><td>3</td><td>Générateur</td><td>filtre <span class="mono">composable</span> en premier · test du profil vide · hachage au lieu de <span class="mono">jour*7</span></td><td>Sécurité, puis bug latent.</td></tr>
+<tr><td>4</td><td>Les 4 niveaux</td><td>sortie en rôles/portions aux niveaux 1-2</td><td>Le champ <span class="mono">role</span> existe déjà : couche d'affichage, pas refonte.</td></tr>
+<tr><td>7</td><td>Adhérence</td><td>plan reproductible</td><td>Sans elle, la mesure n'est pas vérifiable rétroactivement.</td></tr>
+</table>
+
+<div class="box warn">
+<span class="t">La seule modification de fond que j'apporte à ton plan</span>
+<p>Tu classes l'écran « où tu en es » en brique 4. <b>Je le remonte en 2.</b> Raison : le retour de
+Michel n'est pas <i>« c'est faux »</i>, c'est <i>« ce n'est pas intuitif, ça me saoule »</i>. Une
+chaîne de calcul irréprochable dans un écran que personne n'ouvre ne produit rien — et les briques
+1, 3 et 7 ont toutes besoin d'un journal réellement tenu pour valoir quelque chose.</p>
+</div>
+
+<h2>8. Trois questions ouvertes, où ton avis vaut mieux que le mien</h2>
+
+<h4>① Le niveau par défaut</h4>
+<p>Un nouvel utilisateur arrive : on l'ouvre au niveau 1 (qualitatif), 2 (portions) ou on lui demande ?
+Demander, c'est un écran de plus avant d'avoir rien montré. Ne pas demander, c'est choisir à sa place
+— et le niveau 3 par défaut est précisément l'erreur actuelle.</p>
+
+<h4>② Faut-il convertir l'historique ?</h4>
+<p>Les entrées de <span class="mono">foodLog</span> déjà écrites n'ont ni source ni état. Trois
+options : les laisser telles quelles et marquer la coupure ; leur poser un état <i>supposé</i> ; les
+supprimer. <b>Mon inclination est la première</b> (le projet a déjà payé cher une réécriture
+d'historique), mais l'argument inverse — un historique à moitié interprétable — est recevable.</p>
+
+<h4>③ Le seuil du plancher</h4>
+<p>1 500 / 1 200 vient du Gardien de Milo, lui-même issu des repères usuels. <b>Il n'est pas sourcé
+plus précisément</b>, et il ne dépend ni du poids ni de la masse maigre — ce qui est discutable :
+1 200 kcal n'a pas le même sens à 50 kg et à 90 kg. Y a-t-il une formulation mieux fondée
+(par ex. un plancher relatif au métabolisme de base) que tu recommanderais ?</p>
+
+<footer>
+Force Tracker — dossier de transmission nutrition · 18 août 2026 · état du code à <span class="mono">ft-v906</span><br>
+Tous les chiffres de ce document ont été lus dans le code ou obtenus par exécution. En cas de doute,
+le dépôt est public et fait foi.
+</footer>
