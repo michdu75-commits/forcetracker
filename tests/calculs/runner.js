@@ -1021,8 +1021,74 @@ console.log('\n═══ 9. Les repas suggérés respectent le RÉGIME (kéto, v
   t('kéto + sans lactose : beurre et crème remplacés',
     /huile d'olive \+ avocat/.test(cr.ketoLactose)&&/crème de coco/.test(cr.ketoLactose),
     (cr.ketoLactose||'').slice(0,110));
+  // ⚠️ La tolérance «\u00a0 ?(\\d+ g)?\u00a0» a été ajoutée le 18/08 quand le plan a reçu ses PORTIONS
+  // (« Œufs brouillés 200 g au beurre »). Elle n'affaiblit PAS le témoin : il exige toujours
+  // « Œufs brouillés » ET « au beurre » COLLÉS l'un à l'autre — c'est bien l'absence de
+  // substitution qu'on vérifie, pas l'absence de grammes.
+// ─── LES PORTIONS DU PLAN DE REPAS (18/08/2026) ───────────────────────────────────
+// Michel : « dans nutrition le plan alimentaire du jour il n'y a pas les proportions ».
+// /!\ Ce bloc verifie surtout ce qui peut RENDRE FAUX : une quantite collee au mauvais
+// aliment, une unite prise dans le texte au lieu de la table, une quantite inventee sur
+// un aliment inconnu, ou une quantite ajoutee par-dessus une quantite deja ecrite.
+{
+  const po=await p.evaluate(()=>{
+   try{
+    if(typeof _portionner!=='function') return {erreur:'_portionner absente'};
+    const o={};
+    o.simple   =_portionner('Avoine + œufs + fruit — Glucides complexes',560);
+    o.prepa    =_portionner("Œufs brouillés à l'huile d'olive + avocat — Sans glucides",560);
+    o.deja     =_portionner('Amandes (20g) + whey shake — Anti-fringales',200);
+    o.inconnu  =_portionner('Protéine + céréale complète + légumes variés — Coloré',600);
+    o.liquide  =_portionner('Avoine + lait entier — Base',400);
+    o.substitue=_portionner('Avoine + Tofu + fruit — Glucides complexes',560);
+    o.rien     =_portionner('Repas libre du dimanche',600);
+    o.choix    =_portionner('Saumon/bœuf + légumes + patate douce',320);
+    o.boeuf    =_portionner('Bœuf + riz blanc + banane — Charge',600);
+    // cohérence : la somme des portions doit rester proche des calories annoncees
+    S.keto=false;S.diet='';S.dietRestrictions=[];S.dietNotes='';S.fasting='';S.foodMode='';
+    S.bw=80;S.age=35;S.height=178;S.activityLevel=1.55;
+    const ecarts={};
+    for(const g of ['muscle','perte','force','equilibre','endurance']){
+      S.goal=g; const mm=calcMacros('normal'); const meals=getMeals(mm,'normal');
+      // chaque repas doit porter au moins une quantite
+      ecarts[g]=meals.filter(m=>!/\d+ (g|ml)\b/.test(m.desc)).map(m=>m.desc);
+    }
+    o.sansQuantite=ecarts;
+    S.goal='muscle';
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(po.erreur){ t('X les portions', false, po.erreur); }
+  else{
+    t('⭐⭐ chaque aliment connu recoit une portion EN GRAMMES',
+      /Avoine \d+ g \+ œufs \d+ g \+ fruit \d+ g/.test(po.simple), po.simple);
+    t('/!\\/!\\ la quantite se pose APRES l\'aliment, pas a la fin du morceau'
+      +' (« a l\'huile d\'olive 200 g » = 200 g d\'HUILE)',
+      /Œufs brouillés \d+ g à l'huile d'olive/.test(po.prepa), po.prepa);
+    t('/!\\ ... et l\'unite vient de la TABLE, pas d\'une relecture du texte (« huile » y apparait)',
+      !/Œufs brouillés \d+ ml/.test(po.prepa), po.prepa);
+    t('/!\\ une quantite DEJA ECRITE dans le plan n\'est pas doublee (R30)',
+      /Amandes \(20g\) \+/.test(po.deja) && !/Amandes \(20g\) \d/.test(po.deja), po.deja);
+    t('/!\\/!\\ un aliment INCONNU ne recoit AUCUNE quantite inventee (R29)',
+      /^Protéine \+/.test(po.inconnu), po.inconnu);
+    t('/!\\ un liquide se lit en ml',
+      /lait entier \d+ ml/.test(po.liquide), po.liquide);
+    t('⭐ la portion suit l\'aliment REELLEMENT affiche apres substitution (Tofu, pas œufs)',
+      /Tofu \d+ g/.test(po.substitue), po.substitue);
+    t('/!\\ une description qui n\'est pas une liste d\'aliments est laissee intacte',
+      po.rien==='Repas libre du dimanche', po.rien);
+    t('/!\\ « Saumon/bœuf » propose un CHOIX : la quantite va AU BOUT, pas au milieu',
+      /Saumon\/bœuf \d+ g/.test(po.choix), po.choix);
+    t('/!\\/!\\ le motif du BŒUF matche vraiment (« b[œo]euf » ne matchait JAMAIS « bœuf »)',
+      /^Bœuf \d+ g/.test(po.boeuf), po.boeuf);
+    const vides=Object.entries(po.sansQuantite||{}).filter(([,v])=>v.length);
+    t('⭐ TOUS les objectifs produisent des repas chiffres',
+      vides.length===0, vides.map(([g,v])=>g+' : '+v.join(' / ')).join(' | '));
+  }
+}
+
   t('TÉMOIN : kéto seul garde bien œufs, beurre et fromage',
-    /Œufs brouillés au beurre/.test(cr.ketoSeul)&&/fromage à pâte dure/.test(cr.ketoSeul),
+    /Œufs brouillés( \d+ (g|ml))? au beurre/.test(cr.ketoSeul)&&/fromage à pâte dure/.test(cr.ketoSeul),
     (cr.ketoSeul||'').slice(0,80));
   await c.close();
 }

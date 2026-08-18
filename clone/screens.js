@@ -1000,6 +1000,14 @@ function setDayPainSide(z,side){const d=_dayState();const p=(d.pains||[]).find(x
 // ⚠️ On regroupe l'AFFICHAGE, pas les logiques : le sommeil nourrit le score de récup, l'énergie/moral/douleur NON (ft-v472/473).
 let _checkinOpen=false; // par session (non persisté)
 function toggleCheckin(){_checkinOpen=!_checkinOpen;_renderDayStateCard();try{if(typeof renderLogSleep==='function')renderLogSleep();}catch(e){}}
+/* ⤴️ REPLIER LE CHECK-IN APRÈS AVOIR ENREGISTRÉ (18/08/2026, retour Michel : « le check-in du
+   jour ne se ferme pas quand on a enregistré »). Le bouton « Enregistrer » du sommeil est le
+   DERNIER élément de la carte : une fois qu'on l'a touché, on a fini de la remplir. Elle se
+   replie donc sur son résumé, comme si on avait tapé le chevron.
+   ⚠️ Rien d'autre ne ferme la carte : l'énergie, le moral et les douleurs sont des boutons à
+   un appui (aucun « enregistrer »), et on peut vouloir en toucher plusieurs à la suite. */
+function closeCheckin(){ if(!_checkinOpen)return; _checkinOpen=false; _renderDayStateCard();
+  try{ if(typeof renderLogSleep==='function')renderLogSleep(); }catch(e){} }
 function _checkinSummary(){
   const d=_dayState();
   const ts=(S.sleepLog||[]).find(e=>e.date===today());

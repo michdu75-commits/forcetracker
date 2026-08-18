@@ -889,6 +889,119 @@ function _adaptMealDesc(desc){
   }
   return out;
 }
+/* ═══ LES PORTIONS DU PLAN DE REPAS (18/08/2026, retour Michel : « dans nutrition le plan
+   alimentaire du jour il n'y a pas les proportions »).
+
+   ⚠️⚠️ TOUT EN GRAMMES, JAMAIS EN NOMBRE DE PIÈCES — et ce n'est pas une préférence de style.
+   Les descriptions passent par `_adaptMealDesc()`, qui REMPLACE des aliments (végan, sans
+   gluten, allergies). « Œufs (3) » deviendrait « Tofu (3) » : trois tofus. Une quantité en
+   grammes, elle, survit à la substitution ; c'est pourquoi les portions sont calculées
+   APRÈS l'adaptation, sur l'aliment RÉELLEMENT affiché.
+
+   ⚠️ ON N'INVENTE RIEN : un aliment absent de la table ne reçoit AUCUNE quantité (R29). Mieux
+   vaut « + légumes » que « + légumes 137 g » sorti de nulle part. Et les bornes évitent
+   l'absurde (« Avoine 12 g », « Riz 940 g ») quand les calories du repas sont extrêmes.
+
+   Les grammes sont une SUGGESTION ; la ligne « P / G / L » du repas reste la référence. */
+const _PORTIONS=[
+  // [ motif , kcal/100 g , poids relatif , pas , mini , maxi , PORTION FIXE , liquide ]
+  // ⚠️ La 7ᵉ colonne existe parce que répartir les calories AU PRORATA gonfle absurdement les
+  //    aliments peu caloriques : un fruit à 60 kcal/100 g devait peser 280 g pour « prendre sa
+  //    part » d'un petit-déjeuner. Les légumes et les fruits ont une portion STANDARD, et ce
+  //    sont les aliments denses qui portent l'énergie du repas. (Mesuré, pas supposé.)
+  // — féculents / céréales
+  [/flocons de sarrasin|porridge|avoine/i,          370, 1.0, 10,  30, 150],
+  [/p[âa]tes de riz|p[âa]tes compl[èe]tes|p[âa]tes/i,350, 1.1, 10,  40, 200],
+  [/riz basmati|riz complet|riz blanc|riz/i,        350, 1.1, 10,  40, 200],
+  [/quinoa/i,                                       368, 1.0, 10,  30, 150],
+  [/semoule|couscous/i,                             360, 1.0, 10,  30, 150],
+  [/pain sans gluten|pain complet|pain/i,           250, 0.8, 10,  30, 120],
+  [/patate douce/i,                                  86, 1.2, 10,  80, 350],
+  [/pomme de terre/i,                                77, 1.2, 10,  80, 350],
+  [/l[ée]gumineuses|lentilles|pois chiches|haricots rouges/i, 116, 1.0, 10, 50, 250],
+  [/barre c[ée]r[ée]ale maison|c[ée]r[ée]ale compl[èe]te/i, 350, 0.7, 10, 25, 120],
+  // — protéines animales
+  [/blanc de dinde|dinde/i,                         110, 1.0, 10,  80, 250],
+  [/poulet\/thon|poulet/i,                          120, 1.0, 10,  80, 250],
+  [/b(œ|oe)uf/i,                                    180, 0.9, 10,  70, 220],   // ⚠️ « bœuf » = b+œ+u+f : `b[œo]euf` ne matchait JAMAIS
+  [/saumon/i,                                       200, 0.9, 10,  70, 200],
+  [/poisson blanc|poisson maigre|poisson|cabillaud|thon/i, 105, 1.0, 10, 80, 250],
+  [/jambon/i,                                       120, 0.7, 10,  40, 150],
+  [/[œo]ufs? brouill[ée]s?|[œo]ufs? entiers?|[œo]ufs?/i,143, 0.9, 10, 50, 200],
+  // — protéines végétales / substituts
+  [/tofu brouill[ée]|tofu/i,                        145, 0.9, 10,  60, 250],
+  [/seitan/i,                                       140, 0.9, 10,  60, 200],
+  [/tempeh/i,                                       190, 0.9, 10,  50, 180],
+  // — laitages et poudres
+  [/yaourt de soja|yaourt grec|yaourt/i,             90, 0.9, 10,  80, 300],
+  [/fromage blanc 0%|fromage blanc/i,                75, 0.9, 10,  80, 350],
+  [/fromage affin[ée][^,+]*|fromage [àa] p[âa]te dure|fromage/i, 380, 0.5, 5, 20, 80],
+  [/prot[ée]ine de pois|whey shake|whey/i,          390, 0.6,  5,  15,  60],
+  [/lait sans lactose|lait de soja|lait entier|lait/i, 62, 0.8, 10, 100, 400, 0, 1],
+  // — lipides
+  [/huile d'olive|huile de coco|huile olive|huile/i, 890, 0.25, 5,  5,  30, 0, 1],
+  [/graines de courge|graines de tournesol/i,       560, 0.35, 5,  10,  50],
+  [/noix de cajou|amandes?|noisettes?|\bnoix\b/i,   600, 0.35, 5,  10,  50],
+  [/olives/i,                                       150, 0.4,  5,  20,  80],
+  // — fruits et légumes
+  [/banane/i,                                        90, 0.8, 10,  60, 250, 120],
+  [/dattes/i,                                       280, 0.4,  5,  15,  80],
+  [/fruits? secs?/i,                                300, 0.4,  5,  15,  80],
+  [/jus de fruit/i,                                  45, 0.6, 10, 100, 400, 200, 1],
+  [/miel/i,                                         320, 0.3,  5,  10,  50],
+  [/fruits?/i,                                       60, 0.8, 10,  80, 300, 150],
+  [/[ée]pinards|brocolis|haricots verts|concombre/i, 30, 0.7, 10, 100, 300, 150],
+  [/l[ée]gumes? r[ôo]tis|l[ée]gumes? vapeur|l[ée]gumes? vari[ée]s|l[ée]gumes?/i, 35, 0.7, 10, 100, 350, 150],
+];
+/* Rend la description AVEC les portions. `desc` est déjà ADAPTÉE au régime : on quantifie
+   donc ce que la personne verra vraiment, jamais l'aliment d'origine. */
+function _portionner(desc, kcalRepas){
+  if(!desc || !kcalRepas || kcalRepas<=0) return desc;
+  const coupe=String(desc).split('—');
+  const gauche=coupe[0], suffixe=coupe.slice(1).join('—');
+  const items=gauche.split('+').map(x=>x.trim()).filter(Boolean);
+  if(items.length<2) return desc;                     // une phrase, pas une liste d'aliments
+  // on ne quantifie que ce qu'on CONNAÎT ; le reste passe tel quel
+  const arrondi=(g,pas)=>Math.max(pas,Math.round(g/pas)*pas);
+  const connus=items.map(txt=>{
+    // ⚠️ Une quantité DÉJÀ ÉCRITE dans le plan a été posée exprès (« Amandes (20g) ») :
+    //    on n'en superpose pas une seconde, on respecte la décision d'origine (R30).
+    if(/\d\s*(g|ml|cl)\b|\(\s*\d/.test(txt)) return {txt,poids:0,fixe:0,dejaChiffre:true};
+    const p=_PORTIONS.find(([rx])=>rx.test(txt));
+    if(!p) return {txt,poids:0,fixe:0};
+    const m=txt.match(p[0]);
+    // ⚠️ « Saumon/bœuf » propose un CHOIX entre deux aliments : la quantité vaut pour les
+    //    deux, elle se met donc AU BOUT (« Saumon/bœuf 70 g ») et jamais au milieu.
+    const fin=/\//.test(txt) ? txt.length : m.index+m[0].length;
+    return {txt,kcal100:p[1],poids:p[2],pas:p[3],min:p[4],max:p[5],fixe:p[6]||0,
+            fin, liquide:!!p[7]};
+  });
+  // les portions STANDARD (légumes, fruits) sont posées d'abord ; elles ne se disputent pas
+  // les calories du repas, ce sont les aliments denses qui les portent
+  let reste=kcalRepas;
+  connus.forEach(c=>{ if(c.fixe){ c.g=c.fixe; reste-=c.fixe/100*c.kcal100; } });
+  const total=connus.reduce((a,c)=>a+((c.fixe||c.dejaChiffre)?0:(c.poids||0)),0);
+  if(!total && !connus.some(c=>c.g)) return desc;     // aucun aliment reconnu → on n'invente pas
+  if(total>0){
+    const dispo=Math.max(reste, kcalRepas*0.25);      // jamais moins d'un quart : sinon portions ridicules
+    connus.forEach(c=>{
+      if(c.fixe||c.dejaChiffre||!c.poids) return;
+      const part=dispo*(c.poids/total);
+      c.g=Math.min(c.max, Math.max(c.min, arrondi(part/c.kcal100*100, c.pas)));
+    });
+  }
+  const out=connus.map(c=>{
+    if(!c.g) return c.txt;                            // inconnu ou déjà chiffré : on laisse tel quel
+    /* ⚠️ LA QUANTITÉ SE POSE JUSTE APRÈS L'ALIMENT, PAS À LA FIN DU MORCEAU. « Œufs brouillés
+       à l'huile d'olive » est une PRÉPARATION : mettre « 200 g » au bout donnerait « …à
+       l'huile d'olive 200 g », soit 200 g d'huile. Trouvé par le test croisé kéto + sans
+       lactose, pas à l'œil. Et l'unité vient de la TABLE, jamais d'une relecture du texte :
+       le mot « huile » apparaît dans cette phrase alors que l'aliment mesuré est l'œuf. */
+    const unite=c.liquide?' ml':' g';
+    return c.txt.slice(0,c.fin)+' '+c.g+unite+c.txt.slice(c.fin);
+  });
+  return out.join(' + ')+(suffixe?' —'+suffixe:'');
+}
 function getMeals(macros,phase){
   const goal=S.goal||'muscle';
   const plans={
@@ -948,8 +1061,11 @@ function getMeals(macros,phase){
     }
   }
   return plan2.map(([pct,name,desc0])=>{
-    const desc=_adaptMealDesc(desc0);
     const kcal=Math.round(macros.calories*pct);
+    // ⚠️ ORDRE OBLIGATOIRE : on ADAPTE au régime, PUIS on quantifie. L'inverse collerait les
+    // grammes sur l'aliment d'origine, et la substitution laisserait une quantité qui ne
+    // correspond plus à ce qui est affiché.
+    const desc=_portionner(_adaptMealDesc(desc0), kcal);
     const prot=Math.round(macros.prot_g*pct);
     const carbs=Math.round(macros.carbs_g*pct);
     const fat=Math.round(macros.fat_g*pct);

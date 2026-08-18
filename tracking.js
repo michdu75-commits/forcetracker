@@ -2536,6 +2536,8 @@ function saveSleepEntry(){
   renderLogSleep();renderRecoveryCard();
   // Le sommeil est maintenant sur l'Accueil → rafraîchir le score de récup visible juste au-dessus
   try{if(typeof _renderHomeHero==='function')_renderHomeHero();}catch(e){}
+  // la carte du check-in se replie : c'était le dernier champ à remplir (retour Michel 18/08)
+  try{if(typeof closeCheckin==='function')closeCheckin();}catch(e){}
   toast(forPast?'Sommeil du '+dateStr.split('-').reverse().slice(0,2).join('/')+' enregistré !':'Sommeil enregistré !','success');
 }
 
