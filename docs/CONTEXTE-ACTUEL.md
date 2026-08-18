@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v907` — fusionnée sur `master` le 18/08.
+- **Version en ligne (live) :** `ft-v908` — fusionnée sur `master` le 18/08.
 - **Rien en attente sur la branche.** Tout ce qui a été livré le 18/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
@@ -96,6 +96,45 @@
 > définition** qui est trop serré. *Le signe le plus sûr : Michel signale DEUX FOIS la même chose.*
 > Nouveau réflexe n° 10 : quand une remarque revient sur un comportement déjà corrigé, **ne pas
 > réécrire la règle — aller relire sa définition**.
+>
+>
+> ### 💊 CE QUI ATTEND UNE DÉCISION DE MICHEL — volet suppléments (contre-audit v1.2)
+> Trois points **vérifiés dans le code**, non livrés parce qu'ils changent ce que l'app **recommande
+> à tout le monde** — ce n'est pas une correction, c'est un arbitrage produit :
+> 1. **La dose de créatine.** `0,05 g/kg plafonné à 5 g` n'a **aucune source**. Les deux repères
+>    réels : **3 000 mg/j** (dose journalière maximale française, arrêté du 26/09/2016) et
+>    **3-5 g/j** (ISSN). Faut-il passer la valeur par défaut à 3 g ? *(ft-v908 affiche déjà le
+>    repère réglementaire sans changer le chiffre.)*
+> 2. **La phase de charge.** Elle n'a jamais fait **mieux** que la dose simple, seulement **plus
+>    vite** (Hultman 1996 : 20 g/6 j = 3 g/28 j, même +20 %). Elle est pourtant présentée en
+>    permanence, à égalité avec l'entretien — alors qu'elle n'a de sens **qu'une fois, au début**.
+>    Une seule question (« tu en prends depuis plus d'un mois ? ») suffirait à masquer le bouton.
+>    ⚠️ Incohérence d'unité au passage : l'entretien est proportionnel au poids, la charge est fixe
+>    à 20 g (soit 0,33 g/kg à 60 kg et 0,18 à 110 kg).
+> 3. **La contradiction protéique** : la fiche whey dit **1,6-2 g/kg**, le moteur calcule
+>    **2,0 à 2,6**. ⭐ Ce n'est probablement **pas** un chiffre à trancher : les deux fourchettes
+>    existent, pour des conditions différentes (maintien vs déficit chez un sportif entraîné). Le
+>    correctif est de **dire à quelle condition chacune s'applique** — mais les références citées
+>    par l'audit sont **de mémoire** et doivent être contrôlées avant d'être écrites.
+>
+> ### 🔬 CE QUE L'AUDIT v1.2 A APPORTÉ EN PLUS, ET QUI N'EST PAS ENCORE TRAITÉ
+> · **`protMPS`** — le collagène (10-15 g recommandés par Milo, coach.js) apparaît comme
+>   **15 g de protéines** dans Open Food Facts alors qu'il **ne soutient pas la synthèse
+>   musculaire** (pauvre en leucine, sans tryptophane). ~8 % d'une cible qu'on croit atteinte.
+>   *Même classe d'erreur que le cru/cuit : systématique, quotidienne, invisible.* Et il touche la
+>   **brique 0** — c'est une propriété de la SOURCE, elle doit être figée à la saisie.
+> · **`goalDelta` est ABSOLU** (−450 kcal pour tout le monde) : soit **−32 %** chez une femme de
+>   55 kg sédentaire et **−14 %** chez un homme de 90 kg actif. *La prescription est absolue, la
+>   surveillance est relative* (le Gardien alerte sur « perte > 1 %/semaine »). Le plancher de
+>   ft-v906 est un bon filet, mais il traite le symptôme.
+> · **`Math.max(PLANCHER_KCAL, BMR)`** serait mieux fondé qu'un seuil fixe : 1 200 kcal, c'est
+>   **101 %** du métabolisme de base d'une femme de 50 kg et **76 %** de celui d'une femme de 90 kg.
+> · **Cache** : le commentaire de `worker.js` applique le mauvais comparatif (1 h contre *pas de
+>   cache*, au lieu de 1 h contre 5 min — le vrai seuil est « éliminer plus de 40 % des écritures »),
+>   et les gardes `_mi > 1000` / `_pi > 1000` comptent des **caractères** quand le minimum cacheable
+>   de l'API est en **tokens** (2 048 pour Sonnet). ⚠️ Sans effet aujourd'hui (les blocs font ~46 000
+>   caractères), mais c'est un piège latent. **[à mesurer]** : lire
+>   `usage.cache_creation.ephemeral_1h_input_tokens` sur une vraie requête.
 >
 > ### 🍽️ LE CHANTIER ACTIF : LA NUTRITION (Michel commence à s'en servir **la semaine prochaine**)
 > Son constat, et c'est le point de départ : *« même moi ça me saoule d'utiliser la nutrition, c'est
