@@ -42,8 +42,23 @@ function _wktInactifMin(){
   if(last===null)return null;
   return Math.floor((_wktElapsedMs()/1000-last)/60);
 }
+/* ⏱️ CE QUE LE CHRONO AFFICHE **AVANT** LA 1ʳᵉ SÉRIE (18/08/2026)
+   Michel : *« je viens de commencer la séance mais la séance n'a pas commencé »* — il était sur
+   son cardio d'avant, et l'écran lui montrait `0:00`, ce qui se lit comme une panne.
+   ⚠️ ON NE FAIT PAS DÉMARRER LE CHRONO POUR AUTANT : la règle du 14/08 (il part à la 1ʳᵉ série
+   validée) a corrigé la plus grosse erreur de durée du projet, et noter « 20 min » n'est pas la
+   preuve qu'on vient de les faire — on peut le saisir avant comme après (R29 : on ne devine pas
+   ce qu'on ne mesure pas). On AFFICHE donc ce qui est déjà acquis, et le chrono prend le relais.
+   Ces minutes-là sont bien comptées à l'arrivée, par `_dureeTotaleMin` (app.js). */
+function _cardioNoteMin(){
+  if(!S.wkt)return 0;
+  return (+S.wkt.cardioAvant?.duration||0)+(+S.wkt.cardio?.duration||0);
+}
 function _fmtElapsed(){
-  if(!S.wkt||!S.wkt.startTs)return'0:00';
+  if(!S.wkt||!S.wkt.startTs){
+    const c=_cardioNoteMin();
+    return c>0 ? '🚴 '+c+' min' : '0:00';
+  }
   const sec=Math.floor(_wktElapsedMs()/1000);
   const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
   if(h>0)return h+':'+(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
@@ -3159,12 +3174,20 @@ function _showSessionEnd(sess,bestPr,prCount){
 function _renderSeStats(sess,prCount){
   const el=document.getElementById('se-stats');if(!el)return;
   let nSets=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(s=>{if(s.done&&s.type!=='É'&&s.type!=='W')nSets++;}));
-  const dur=sess.duration?Math.max(1,Math.round(sess.duration/60)):null;
+  /* ⏱️➕ LA TUILE « DURÉE » COMPTE LE CARDIO (18/08/2026) — une seule source, `_dureeTotaleMin`
+     (app.js), qui sait ce qui est déjà dans le chrono et ce qui ne l'est pas. Le chrono démarre
+     à la 1ʳᵉ série depuis le 14/08 : sans ça, une séance qui commence par 20 min de vélo affiche
+     une durée amputée de ces 20 minutes — et une séance de cardio SEUL n'affichait aucune durée. */
+  let dur=sess.duration?Math.max(1,Math.round(sess.duration/60)):null, durSub='Durée';
+  if(typeof _dureeTotaleMin==='function'){
+    const _t=_dureeTotaleMin(sess,nSets,0);
+    if(_t&&_t.cardioMin>0){ dur=Math.max(1,Math.round(_t.min)); durSub='Durée · dont '+_t.cardioMin+' min cardio'; }
+  }
   const tiles=[];
   if(prCount>0)tiles.push('<div class="se-stat pr" style="grid-column:1/3;"><div class="se-stat-v">🏆 '+prCount+' record'+(prCount>1?'s':'')+' battu'+(prCount>1?'s':'')+' !</div><div class="se-stat-l">nouveau max</div></div>');
   tiles.push('<div class="se-stat"><div class="se-stat-v">'+(sess.volume||0)+' kg</div><div class="se-stat-l">Volume</div></div>');
   tiles.push('<div class="se-stat"><div class="se-stat-v">'+nSets+'</div><div class="se-stat-l">Séries</div></div>');
-  if(dur)tiles.push('<div class="se-stat"><div class="se-stat-v">'+dur+' min</div><div class="se-stat-l">Durée</div></div>');
+  if(dur)tiles.push('<div class="se-stat"><div class="se-stat-v">'+dur+' min</div><div class="se-stat-l">'+durSub+'</div></div>');
   if(sess.calories)tiles.push('<div class="se-stat"><div class="se-stat-v">'+sess.calories+'</div><div class="se-stat-l">kcal brûlées</div></div>');
   el.innerHTML=tiles.join('');
 }

@@ -118,12 +118,23 @@ function _rythmeSeance(){
       const d=(typeof _dureeSeanceMin==='function')?_dureeSeanceMin(s,nSets,0):null;
       if(!d||!(d.min>0)) continue;
       if(d.src!=='saisie'&&d.src!=='horodatage'&&d.src!=='chrono') continue;  // pas une mesure
-      /* ⚠️ ON NE RETIRE LE CARDIO QUE S'IL ÉTAIT DEDANS. Le chrono et la durée saisie couvrent
-         toute la séance, cardio compris — il faut donc l'enlever, c'est lui qui rogne l'heure.
-         Les HORODATAGES, eux, ne mesurent que l'écart entre deux séries : le cardio n'y a jamais
-         été. L'en retirer soustrairait un temps déjà absent et ferait croire à Milo que les
-         séries coûtent moins cher qu'en vrai. */
+      /* ⚠️ ON NE RETIRE LE CARDIO QUE S'IL ÉTAIT DEDANS. La durée SAISIE couvre toute la séance,
+         cardio compris — il faut donc l'enlever, c'est lui qui rogne l'heure. Les HORODATAGES,
+         eux, ne mesurent que l'écart entre deux séries : le cardio n'y a jamais été. L'en retirer
+         soustrairait un temps déjà absent et ferait croire à Milo que les séries coûtent moins
+         cher qu'en vrai.
+         ⚠️⚠️ ET LE CHRONO A CHANGÉ DE PÉRIMÈTRE SANS QUE CETTE LIGNE SUIVE (corrigé le 18/08).
+         Écrite le 16/08, elle disait « le chrono couvre toute la séance » — c'était vrai jusqu'au
+         **14/08**, jour où le chrono a été reculé au démarrage de la 1ʳᵉ SÉRIE VALIDÉE (log.js).
+         Depuis, le cardio d'AVANT n'y est plus : on le soustrayait donc une 2ᵉ fois, alors qu'il
+         n'y avait jamais été. Effet exact : le rythme paraissait plus RAPIDE qu'en vrai, donc
+         Milo mettait TROP d'exercices dans une heure — pile le bug que cette fonction répare.
+         *Même famille que les renvois de position du prompt (ft-v898) : une phrase juste le jour
+         où on l'écrit, rendue fausse par un changement ailleurs, et rien ne le signale.*
+         Le partage « ce qui est dedans / ce qui ne l'est pas » vit maintenant dans UNE seule
+         fonction, `_dureeTotaleMin` (app.js) — ici on ne fait que l'appliquer à l'envers (R2). */
       const cardio=(d.src==='horodatage') ? 0
+        : (d.src==='chrono') ? ((s.cardio&&+s.cardio.duration)||0)
         : ((s.cardioAvant&&+s.cardioAvant.duration)||0)+((s.cardio&&+s.cardio.duration)||0);
       const min=d.min-cardio;
       if(!(min>0)) continue;

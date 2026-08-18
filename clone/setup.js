@@ -437,8 +437,24 @@ function openSessDetail(id){
      elle ne se compense pas par une formule). Et on garde la distinction : `durationDite`
      marque une durée DÉCLARÉE, jamais confondue avec une durée mesurée au chrono. */
   const _dout=_dureeDouteuse(sess);
-  const duree=_dm
-    ? ` · <span class="sd-dur${_dout?' douteuse':''}" onclick="editSessDuree()" title="${_dout?'Durée douteuse — appuie pour la corriger':'Modifier la durée'}">⏱️ ${_fmtD(_dm)}${sess.durationDite?' <i>(saisie)</i>':(_dout?' ⚠️':'')}</span>`
+  /* ⏱️➕ LE CARDIO D'AVANT COMPTE DANS LE TOTAL (18/08/2026) — voir `_dureeTotaleMin` (app.js).
+     `sess.duration` est le chrono de la MUSCULATION : depuis le 14/08 il démarre à la 1ʳᵉ série
+     validée, donc un cardio fait AVANT n'y est pas. On affiche donc le total, et on DIT d'où
+     viennent les minutes ajoutées — un chiffre qui gonfle sans explication est pire que le trou
+     qu'il comble (R29). Le clic reste sur la même modification : c'est bien la durée de muscu
+     que la personne corrige, pas le cardio (qui a son propre champ, juste en dessous). */
+  /* ⚠️ ET ON LE CALCULE MÊME QUAND LE CHRONO EST À ZÉRO : une séance de CARDIO SEUL est valide
+     depuis le 02/08 (`finishWorkout` l'accepte explicitement) — mais comme le chrono ne démarre
+     qu'à la 1ʳᵉ série de muscu, elle arrivait ici avec `duration = 0` et affichait « ajouter la
+     durée » alors que la personne venait de faire 30 minutes de vélo. */
+  let _dtot=_dm, _cardioTxt='';
+  if(typeof _dureeTotaleMin==='function'){
+    let _ns=0;(sess.exs||[]).forEach(e=>(e.sets||[]).forEach(x=>{if(x&&x.done)_ns++;}));
+    const _t=_dureeTotaleMin(sess,_ns,0);
+    if(_t&&_t.cardioMin>0){ _dtot=Math.max(1,Math.round(_t.min)); _cardioTxt=` <i>(dont ${_t.cardioMin} min de cardio)</i>`; }
+  }
+  const duree=_dtot
+    ? ` · <span class="sd-dur${_dout?' douteuse':''}" onclick="editSessDuree()" title="${_dout?'Durée douteuse — appuie pour la corriger':'Modifier la durée'}">⏱️ ${_fmtD(_dtot)}${sess.durationDite?' <i>(saisie)</i>':(_dout?' ⚠️':'')}${_cardioTxt}</span>`
     : ` · <span class="sd-dur vide" onclick="editSessDuree()">⏱️ ajouter la durée</span>`;
   // ── Temps EFFECTIF, lu sur les horodatages de séries (12/08/2026) ────────────────────
   // Ne s'affiche que si la séance en porte (donc à partir de ft-v835) : les séances
