@@ -18,6 +18,7 @@ let S={
   sessions:[],prs:{},wkt:null,programmes:[],progExos:null,seenFeatures:[],reportedCustomEx:[],
   url:DEFAULT_URL,email:'',connected:false,
   nutritionPhase:'charge',
+  creatDose:null,        // dose de créatine réglée à la main (null = suggestion de l'app)
   customExercises:[],exPhotos:{},
   neck:0,waist:0,hip:0,
   goal:'muscle',
@@ -109,6 +110,7 @@ function load(){
     S.connected=localStorage.getItem('ft4_ok')==='1';
     S.cycle=_lsJson('ft4_cycle',null);
     S.nutritionPhase=localStorage.getItem('ft4_nphase')||'charge';
+    S.creatDose=parseFloat(localStorage.getItem('ft4_creatdose'))||null;
     S.customExercises=_lsJson('ft4_cuex',[]);
     S.exPhotos=_lsJson('ft4_exphotos',{});
     S.neck=parseFloat(localStorage.getItem('ft4_neck')||'0')||0;
@@ -408,6 +410,7 @@ function persist(){
     // Flag "l'utilisateur a eu des données" — survit aux purges partielles
     if(S.sessions&&S.sessions.length>0){try{localStorage.setItem('ft4_had_data','1');}catch(e){}}
     localStorage.setItem('ft4_nphase',S.nutritionPhase);
+    if(S.creatDose)localStorage.setItem('ft4_creatdose',String(S.creatDose));else localStorage.removeItem('ft4_creatdose');
     localStorage.setItem('ft4_work',S.workType);
     localStorage.setItem('ft4_halo',S.halo);
     localStorage.setItem('ft4_haloColor',S.haloColor);
