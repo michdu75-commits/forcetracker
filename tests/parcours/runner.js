@@ -6007,19 +6007,18 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
-/* == BLOC XLVI - LE GARDIEN CASSE LE CACHE *PENDANT* LA SEANCE (17/08/2026) ==
-   /!\/!\ ETAT CONNU, NON REPARE - voir docs/AUDIT-CONTEXTE-MILO.md §12.
-   `_gardienRules()` ne produit pas que des regles : elle ajoute une NOTE sur la seance du
-   jour (`⚠️ DANS SA SEANCE DU JOUR : … sollicite ton epaule`), en croisant S.wkt avec les
-   zones fragiles. Or ce bloc est colle en TETE du contexte, avant meme « Tu es Milo ».
-   Un cache de prefixe se coupe donc a la position ~1 487 des qu'un exercice sollicitant la
-   zone entre ou sort de la seance : mesure du 17/08 = 46 741 caracteres du bloc COMMUN
-   refactures, pendant une seance, c'est-a-dire quand la personne ecrit le plus a Milo.
-   /!\ CE TEMOIN NE REPARE RIEN. Il FIGE l'etat mesure pour que le jour ou `todayNote` sera
-   sorti du bloc de tete (ou le Gardien scinde), le changement soit VISIBLE (R30).
-   ⛔ ET IL NE FAUT PAS « REPARER » CA A LA LEGERE : deplacer les zones nommees loin de la
-   regle est un changement de comportement de SECURITE, qu'aucun test local ne sait verifier
-   (tests/milo est deterministe : il prouve la PRESENCE, pas la protection). R29. */
+/* == BLOC XLVI - LE GARDIEN NE CASSE PLUS LE CACHE PENDANT LA SEANCE (18/08/2026) ==
+   /!\/!\ CE BLOC A CHANGE DE SENS, ET C'EST VOULU. Ecrit le 17/08 pour FIGER un etat casse
+   (docs/AUDIT-CONTEXTE-MILO.md §12), il verifie depuis le 18/08 l'etat REPARE.
+   Le probleme : `_gardienRules()` ajoutait une NOTE sur la seance du jour, en croisant S.wkt
+   avec les zones fragiles. Ce bloc etant colle en TETE du contexte, changer d'exercice
+   coupait le cache de prefixe a la position ~1 487 et refacturait 46 741 caracteres du bloc
+   COMMUN — pendant la seance, quand la personne ecrit le plus a Milo.
+   Le correctif (option 1, choisie par Michel) sort la NOTE du bloc de tete et la range avec
+   la seance en cours, tout en bas. Empreintes mesurees : 9/16 -> 5/16.
+   /!\/!\ CE QUI N'A PAS BOUGE, ET QUI EST TESTE EN PREMIER : la REGLE (« ADAPTER, jamais
+   interdire ») et les ZONES fragiles nommees restent EN TETE, avec leur priorite absolue
+   (R11). On n'a pas achete du cache avec de la securite. */
 {
   const gard=async(sante, exs)=>{
     const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
@@ -6030,32 +6029,38 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
       if(typeof _gardienRules!=='function') return {err:'_gardienRules absent'};
       if(ex){ if(!S.wkt) startWorkout();
         S.wkt.exs=ex.map(n=>({name:n,sets:[{kg:60,reps:8,done:true,type:'N'}]})); persist(); }
-      const g=_gardienRules();
       const ctx=buildCoachContext();
-      return {g, commun:ctx.slice(0, ctx.indexOf('PROFIL ATHLÈTE:')),
-              note:/DANS SA SÉANCE DU JOUR/.test(g)};
+      const iPerso=ctx.indexOf('PROFIL ATHLÈTE:');
+      const commun=ctx.slice(0,iPerso);
+      return {commun,
+        note:  ctx.indexOf('DANS SA SÉANCE DU JOUR'),
+        seance:ctx.indexOf('SÉANCE EN COURS'),
+        regle: ctx.indexOf('ADAPTER, jamais interdire'),
+        zonesEnTete: /épaule/.test(commun)};
     }, exs||null);
     await cx.close(); return r;
   };
   const EPAULE={conditions:[],injuries:[{zone:'epaule',side:'D',status:'active'}],notes:''};
-  const neutre=await gard(EPAULE, ['Squat à la Barre','Curl Haltères']);
+  const neutre =await gard(EPAULE, ['Squat à la Barre','Curl Haltères']);
   const epauleX=await gard(EPAULE, ['Développé Militaire','Développé Couché']);
 
-  console.log('\n-- XLVI. Le Gardien casse le cache PENDANT la seance (etat connu) --');
+  console.log('\n-- XLVI. Le Gardien ne casse plus le cache pendant la seance --');
   if(neutre.err||epauleX.err){ t('X le bloc tourne', false, neutre.err||epauleX.err); }
   else{
-    t('/!\\ une seance qui ne touche pas la zone fragile ne declenche aucune note du jour',
-      neutre.note===false);
-    t('/!\\ une seance qui la sollicite en declenche une (c\'est le comportement VOULU)',
-      epauleX.note===true);
-    let i=0; const A=neutre.commun, B=epauleX.commun;
-    while(i<Math.min(A.length,B.length)&&A[i]===B[i]) i++;
-    t('⭐⭐ ETAT CONNU, NON REPARE : la note du jour est en TETE, donc changer d\'exercice'
-      +' refacture presque tout le bloc COMMUN. A RETOURNER le jour ou elle descendra.',
-      A!==B && i<3000,
-      'coupure a '+i+' sur '+A.length+' -> '+(A.length-i)+' car. du bloc commun refactures');
-    t('/!\\ la REGLE generique, elle, est bien la dans les deux cas (c\'est elle qui doit rester en tete)',
-      /ADAPTER, jamais interdire/.test(neutre.g) && /ADAPTER, jamais interdire/.test(epauleX.g));
+    t('/!\\/!\\ LA REGLE DE SECURITE EST TOUJOURS EN TETE (priorite absolue, R11)',
+      epauleX.regle>=0 && epauleX.regle<1600, 'position '+epauleX.regle);
+    t('/!\\/!\\ ... et les ZONES fragiles nommees aussi : on n\'a pas achete du cache avec de la securite',
+      epauleX.zonesEnTete===true && neutre.zonesEnTete===true);
+    t('/!\\ LA NOTE DU JOUR N\'A PAS DISPARU : elle est toujours envoyee quand la seance sollicite la zone',
+      epauleX.note>=0);
+    t('⭐ ... et elle est desormais RANGEE AVEC la seance en cours, pas en tete',
+      epauleX.seance>=0 && epauleX.note>epauleX.seance,
+      'seance a '+epauleX.seance+', note a '+epauleX.note);
+    t('⭐⭐ DEUX SEANCES DIFFERENTES, MEME BLOC COMMUN : le cache de prefixe survit a la seance',
+      neutre.commun===epauleX.commun,
+      neutre.commun===epauleX.commun?'':'toujours '+neutre.commun.length+' vs '+epauleX.commun.length);
+    t('/!\\ une seance qui ne touche pas la zone fragile ne declenche aucune note',
+      neutre.note<0);
   }
 }
 

@@ -1992,23 +1992,60 @@ function _gardienZonesFromText(t){
   if(/avant.?bras|forearm/.test(s))out.push('avantbras');
   return out;
 }
+/* Les ZONES FRAGILES de la personne — une seule fonction, DEUX lecteurs : le bloc de
+   règles du Gardien (en tête du contexte) et la note sur la séance du jour (rangée en
+   bas depuis le 18/08). Les faire calculer deux fois, c'est se garantir qu'ils
+   finiront par diverger (R2 — une information, un seul propriétaire). */
+function _gardienZones(){
+  const zones={}; // key -> {active, durable, injury, today, todaySide}
+  try{
+      const hp=S.healthProfile||{};
+      // 1) Blessures structurées (zone + statut)
+      (hp.injuries||[]).forEach(inj=>{
+        const k=_gardienZoneKey(inj&&inj.zone); if(!k)return;
+        zones[k]=zones[k]||{}; if((inj.status||'')==='active')zones[k].active=true; zones[k].injury=true;
+      });
+      // 2) Zones fragiles mentionnées dans les NOTES du Profil Santé (texte libre) — l'ADN ne porte plus la santé
+      if(hp.notes){_gardienZonesFromText(hp.notes).forEach(k=>{zones[k]=zones[k]||{};zones[k].durable=true;});}
+      // 4) DOULEUR DU JOUR (état du jour, brique 3B) — priorité absolue, tag AUJOURD'HUI
+      try{const ds=S.dayState;const tday=(typeof today==='function')?today():null;
+        if(ds&&(!tday||ds.date===tday)&&Array.isArray(ds.pains)){ds.pains.forEach(pn=>{const k=pn&&pn.zone;if(_GARDIEN_ZONE[k]){zones[k]=zones[k]||{};zones[k].today=true;if(pn.side==='L'||pn.side==='R')zones[k].todaySide=pn.side;}});}
+      }catch(e){}
+  }catch(e){}
+  return zones;
+}
+
+/* ⚠️⚠️ LA NOTE SUR LA SÉANCE DU JOUR — RANGÉE EN BAS, PAS EN TÊTE (18/08/2026).
+   Elle vivait dans `_gardienRules()`, donc collée en TÊTE du contexte, avant même
+   « Tu es Milo ». Or ce n'est PAS une règle de sécurité : c'est une OBSERVATION sur les
+   exercices d'aujourd'hui, qui change dès qu'on en ajoute ou qu'on en retire un.
+   Mesuré le 17/08 : pour quelqu'un de blessé, changer d'exercice coupait le cache de
+   préfixe à la position 1 487 et refacturait 46 741 caractères du bloc « commun » —
+   pendant la séance, c'est-à-dire quand la personne écrit le plus à Milo.
+   ⚠️ CE QUI N'A PAS BOUGÉ, ET NE DOIT PAS : la RÈGLE (« ADAPTER, jamais interdire ») et
+   les ZONES fragiles nommées restent en tête, avec leur priorité absolue (R11).
+   Seule l'observation du jour descend — auprès de la séance qu'elle commente.
+   Mesure : node tools/cache-coupure.js · empreintes : 9/16 → 5/16. */
+function _gardienNoteDuJour(){
+  const zones=_gardienZones();
+  if(!Object.keys(zones).length) return '';
+  let todayNote='';
+  try{
+    const wkt=((S.wkt&&S.wkt.exs)||[]).map(e=>e&&e.name).filter(Boolean);
+    const flagged={}; // zone -> Set(noms)
+    wkt.forEach(name=>{const nz=_gzNaz(name);_GARDIEN_CONSTRAINTS.forEach(c=>{if(c.rx.test(nz))c.zones.forEach(z=>{if(zones[z]){(flagged[z]=flagged[z]||[]);if(flagged[z].indexOf(name)<0)flagged[z].push(name);}});});});
+    const parts=Object.keys(flagged).map(z=>flagged[z].join(', ')+' → sollicite ton '+(_GARDIEN_ZLABEL[z]||z));
+    if(parts.length)todayNote='⚠️ DANS SA SÉANCE DU JOUR : '+parts.join(' · ')+'. Propose d\'ALLÉGER la charge/réduire l\'amplitude, ou une alternative plus douce — sans lui interdire la séance.\n';
+  }catch(e){}
+  return todayNote?('\n'+todayNote):'';
+}
+
 function _gardienRules(){
   try{
-    const zones={}; // key -> {active:bool, durable:bool}
+    const zones=_gardienZones();
     const hp=S.healthProfile||{};
-    // 1) Blessures structurées (zone + statut)
-    (hp.injuries||[]).forEach(inj=>{
-      const k=_gardienZoneKey(inj&&inj.zone); if(!k)return;
-      zones[k]=zones[k]||{}; if((inj.status||'')==='active')zones[k].active=true; zones[k].injury=true;
-    });
-    // 2) Zones fragiles mentionnées dans les NOTES du Profil Santé (texte libre) — l'ADN ne porte plus la santé
-    if(hp.notes){_gardienZonesFromText(hp.notes).forEach(k=>{zones[k]=zones[k]||{};zones[k].durable=true;});}
     // 3) Conditions santé pertinentes
     const conds=(hp.conditions||[]).filter(c=>_GARDIEN_COND[c]);
-    // 4) DOULEUR DU JOUR (état du jour, brique 3B) — priorité absolue, tag AUJOURD'HUI
-    try{const ds=S.dayState;const tday=(typeof today==='function')?today():null;
-      if(ds&&(!tday||ds.date===tday)&&Array.isArray(ds.pains)){ds.pains.forEach(pn=>{const k=pn&&pn.zone;if(_GARDIEN_ZONE[k]){zones[k]=zones[k]||{};zones[k].today=true;if(pn.side==='L'||pn.side==='R')zones[k].todaySide=pn.side;}});}
-    }catch(e){}
     // 5) SEUILS ABSOLUS DE SÉCURITÉ (croisement GPT/Gemini/Mistral) — s'allument TOUJOURS,
     //    indépendamment de la pertinence contextuelle. Ils imposent une VIGILANCE, jamais un
     //    diagnostic. Volontairement COURTS et sérieux (pas de bruit) : IMC ≥ 40 · tour de taille > 120 cm.
@@ -2038,15 +2075,6 @@ function _gardienRules(){
       lines.push('• '+rule+tag+extra);
     });
     conds.forEach(c=>lines.push('• '+_GARDIEN_COND[c]));
-    // 6B — signale les exercices de la SÉANCE EN COURS qui sollicitent une zone fragile (précis + contextuel)
-    let todayNote='';
-    try{
-      const wkt=((S.wkt&&S.wkt.exs)||[]).map(e=>e&&e.name).filter(Boolean);
-      const flagged={}; // zone -> Set(noms)
-      wkt.forEach(name=>{const nz=_gzNaz(name);_GARDIEN_CONSTRAINTS.forEach(c=>{if(c.rx.test(nz))c.zones.forEach(z=>{if(zones[z]){(flagged[z]=flagged[z]||[]);if(flagged[z].indexOf(name)<0)flagged[z].push(name);}});});});
-      const parts=Object.keys(flagged).map(z=>flagged[z].join(', ')+' → sollicite ton '+(_GARDIEN_ZLABEL[z]||z));
-      if(parts.length)todayNote='⚠️ DANS SA SÉANCE DU JOUR : '+parts.join(' · ')+'. Propose d\'ALLÉGER la charge/réduire l\'amplitude, ou une alternative plus douce — sans lui interdire la séance.\n';
-    }catch(e){}
     let _g='🛡️ RÈGLES DU GARDIEN — SÉCURITÉ, PRIORITÉ ABSOLUE (à prendre en compte AVANT tout le reste) :\n';
     if(vigil.length){
       _g+='❗ SEUILS ABSOLUS DE VIGILANCE (s\'appliquent TOUJOURS, quel que soit le profil ou la pertinence contextuelle — ils imposent une VIGILANCE, pas un diagnostic ; parles-en avec tact, sans jamais alarmer) :\n'
@@ -2056,7 +2084,6 @@ function _gardienRules(){
       _g+='Principe : ADAPTER, jamais interdire bêtement. Ta 1re question est « comment lui permettre de continuer de la manière la plus SÛRE et la plus adaptée ? ». Cherche TOUJOURS l\'adaptation la MOINS restrictive qui permet de continuer à progresser en sécurité (charge, amplitude, choix d\'exercice, alternative, tempo, repos, protéger la zone en poursuivant le reste). La plupart de ces sollicitations ne posent problème qu\'à CHARGE LOURDE — ton PREMIER réflexe est de réduire la charge/les reps avant de changer d\'exercice. Tiens compte de ce que la personne veut faire AUJOURD\'HUI (performance, entretien, reprise, défoulement). L\'arrêt total est l\'EXCEPTION.\n'
         +'Tu ne juges jamais un exercice « bon » ou « mauvais » — tu regardes seulement ce qu\'il SOLLICITE et si c\'est adapté à cette personne aujourd\'hui. Ces repères sont CONTEXTUELS, pas des interdictions rigides.\n'
         +lines.join('\n')+'\n'
-        +todayNote
         +'⚠️ Ces points sont DURABLES (≠ une douleur passagère du jour). Devant une douleur du jour FORTE, aiguë ou inhabituelle : conseille le repos et un professionnel de santé (tu ne poses jamais de diagnostic). Propose TOUJOURS une alternative pour progresser sur le reste du corps.\n';
     }
     return _g+'\n';
@@ -2760,7 +2787,7 @@ PROCHAINE SÉANCE — il/elle TE l'a annoncée:
 `;
 })()}
 
-${wktText}
+${wktText}${_gardienNoteDuJour()}
 ═══ SITUATION DE L'INSTANT ═══
 (⚠️ TOUT CE QUI EST AU-DESSUS DE CETTE LIGNE EST IDENTIQUE d'un message à l'autre, et mis en
 CACHE par le serveur IA — facturé ~10× moins cher. DEUX règles, pas une : ① ne jamais insérer

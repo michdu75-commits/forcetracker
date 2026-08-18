@@ -792,3 +792,27 @@ A/B sur des cas réels de blessure.
 **🧊 En attendant, l'état mesuré est FIGÉ par un test** (`tests/parcours`, bloc XLVI) : le jour où l'un
 des deux correctifs sera livré, le témoin passera au rouge et forcera à relire cette page — au lieu de
 laisser le changement passer inaperçu (R30).
+
+
+### ✅ SUITE DU §12 — l'option 1 est LIVRÉE (ft-v897, 18/08/2026)
+
+Michel a tranché : *« Bah le 1 »*, après avoir demandé **ce que le 2 apporterait de plus**. Les deux
+options ont donc été reconstruites et comptées sur **8 profils de santé × 2 séances = 16 situations** :
+
+| | Empreintes distinctes du bloc « commun » |
+|---|---:|
+| avant | **9** / 16 |
+| **option 1** — la note du jour descend | **5** / 16 |
+| option 2 — le Gardien est scindé | **2** / 16 |
+
+*L'option 1 supprime la variation **pendant** la séance. L'option 2 supprimerait en plus la variation
+**d'une personne à l'autre**.* ⚠️ Elle tombe à 2 et non à 1 : une personne sans blessure n'a aucun
+bloc Gardien, il restera toujours la forme « avec règle » et « sans règle ».
+
+**Livré** : la note du jour est sortie de `_gardienRules()` et rangée avec la séance en cours (bas du
+bloc personnel). La **règle** et les **zones nommées** n'ont pas bougé — priorité absolue conservée
+(R11). Le calcul des zones vit désormais dans `_gardienZones()`, lue par les deux (R2).
+Vérifié hors tests : **266 lignes de contexte des deux côtés, zéro perdue**.
+
+⏭️ **L'option 2 reste entière**, avec son gain chiffré (5 → 2). Elle déplace les zones nommées loin de
+la règle : c'est un changement de comportement de **sécurité** qu'aucun test local ne sait vérifier.
