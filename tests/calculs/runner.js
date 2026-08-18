@@ -1025,6 +1025,82 @@ console.log('\n═══ 9. Les repas suggérés respectent le RÉGIME (kéto, v
   // (« Œufs brouillés 200 g au beurre »). Elle n'affaiblit PAS le témoin : il exige toujours
   // « Œufs brouillés » ET « au beurre » COLLÉS l'un à l'autre — c'est bien l'absence de
   // substitution qu'on vérifie, pas l'absence de grammes.
+// ─── LE PLAN CHANGE TOUS LES JOURS — ET CHAQUE VARIANTE EST SURE (18/08/2026) ──────
+// /!\/!\ CE BLOC EST LE GARDE-FOU DE LA BRIQUE. Sans lui, un test de regime ne verifierait
+// que la variante du JOUR OU IL TOURNE : une variante dangereuse (viande chez un vegan,
+// amandes chez quelqu'un qui a declare « fruits a coque ») ne sortirait que certains jours,
+// et personne ne la verrait avant qu'un utilisateur la mange. C'est le bug d'Emma du 02/08,
+// avec un calendrier par-dessus. On parcourt donc TOUTES les variantes de TOUS les plans.
+{
+  const rot=await p.evaluate(()=>{
+   try{
+    if(typeof getMeals!=='function') return {erreur:'getMeals absente'};
+    if(typeof _varianteDuJour!=='function') return {erreur:'_varianteDuJour absente'};
+    const VIANDE=/poulet|b(œ|oe)uf|thon|saumon|poisson|dinde|jambon/i;
+    const ANIMAL=/(œ|oe)uf|yaourt(?! de soja)|fromage(?! blanc sans)|whey|lait(?! de soja| sans lactose)|poulet|b(œ|oe)uf|thon|saumon|poisson|dinde|miel/i;
+    const o={variantes:0, jours:0};
+    const fautes={vegan:[], vegetarien:[], allergie:[]};
+    const vus=new Set();
+    // 40 jours d'affilee : assez pour epuiser toutes les rotations (2 a 3 variantes)
+    for(let j=0;j<40;j++){
+      for(const g of ['muscle','perte','force','equilibre','endurance','recomp']){
+        // vegan
+        S.keto=false;S.foodMode='';S.fasting='';S.dietNotes='';S.dietRestrictions=[];
+        S.goal=g;S.diet='vegan';S.bw=75;S.age=35;S.height=178;S.activityLevel=1.55;
+        getMeals(calcMacros('normal'),'normal',j).forEach(m=>{
+          vus.add(m.desc);
+          if(ANIMAL.test(m.desc)) fautes.vegan.push(g+' j'+j+' : '+m.desc);
+        });
+        // vegetarien
+        S.diet='vegetarien';
+        getMeals(calcMacros('normal'),'normal',j).forEach(m=>{
+          if(VIANDE.test(m.desc)) fautes.vegetarien.push(g+' j'+j+' : '+m.desc);
+        });
+        // allergie declaree aux fruits a coque
+        S.diet='';S.dietNotes='fruits à coque';
+        getMeals(calcMacros('normal'),'normal',j).forEach(m=>{
+          if(/amande|noix|noisette|macadamia|cajou|pistache/i.test(m.desc)
+             && (typeof mealAlertes!=='function' || !mealAlertes(m.desc).length))
+            fautes.allergie.push(g+' j'+j+' : '+m.desc);
+        });
+      }
+      o.jours=j+1;
+    }
+    o.variantes=vus.size;
+    o.fautes=fautes;
+    // la variante doit CHANGER d'un jour a l'autre, et etre STABLE dans la journee
+    S.diet='';S.dietNotes='';S.goal='muscle';
+    const m0=calcMacros('normal');
+    const a=getMeals(m0,'normal',10).map(m=>m.desc).join('|');
+    const b=getMeals(m0,'normal',10).map(m=>m.desc).join('|');
+    const c=getMeals(m0,'normal',11).map(m=>m.desc).join('|');
+    o.stableDansLaJournee=(a===b);
+    o.changeLeLendemain=(a!==c);
+    // un plan qui n'a QU'UNE description continue de marcher (les deux formes cohabitent)
+    o.chaineSimple=_varianteDuJour('Repas unique',7)==='Repas unique';
+    o.tableau=_varianteDuJour(['A','B','C'],7)==='B';
+    return o;
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  if(rot.erreur){ t('X la rotation', false, rot.erreur); }
+  else{
+    t('⭐⭐ LE PLAN CHANGE D\'UN JOUR A L\'AUTRE',
+      rot.changeLeLendemain===true);
+    t('/!\\ ... et reste STABLE dans la journee (sinon il changerait a chaque affichage)',
+      rot.stableDansLaJournee===true);
+    t('⭐⭐ AUCUNE variante ne sert de produit animal a un VEGAN — sur '+rot.jours+' jours x 6 objectifs',
+      (rot.fautes.vegan||[]).length===0, (rot.fautes.vegan||[]).slice(0,3).join(' | '));
+    t('⭐⭐ ... ni de viande a un VEGETARIEN',
+      (rot.fautes.vegetarien||[]).length===0, (rot.fautes.vegetarien||[]).slice(0,3).join(' | '));
+    t('⭐⭐ ... ni de fruits a coque a qui en a declare l\'allergie (sans alerte)',
+      (rot.fautes.allergie||[]).length===0, (rot.fautes.allergie||[]).slice(0,3).join(' | '));
+    t('/!\\ le parcours a bien vu PLUSIEURS variantes distinctes (sinon il ne verifie rien)',
+      rot.variantes>=40, rot.variantes+' descriptions distinctes');
+    t('/!\\ les deux formes cohabitent : une description simple marche toujours',
+      rot.chaineSimple===true && rot.tableau===true);
+  }
+}
+
 // ─── LES PORTIONS DU PLAN DE REPAS (18/08/2026) ───────────────────────────────────
 // Michel : « dans nutrition le plan alimentaire du jour il n'y a pas les proportions ».
 // /!\ Ce bloc verifie surtout ce qui peut RENDRE FAUX : une quantite collee au mauvais
