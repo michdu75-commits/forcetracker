@@ -6,9 +6,8 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v903` — fusionnée sur `master` le 18/08 (run vert sur `cc6a7f6`),
-  après que Michel ait confirmé la fin de sa séance.
-- **Sur la branche, PAS ENCORE fusionné : `ft-v904`** (la bascule vers l'exercice suivant).
+- **Version en ligne (live) :** `ft-v906` — fusionnée sur `master` le 18/08, run Pages vert sur `0f695f8`.
+- **Rien en attente sur la branche.** Tout ce qui a été livré le 18/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
 > ## 📍 OÙ ON EN EST — 18/08/2026 (à lire en premier, remplace le bloc du 17/08 plus bas)
@@ -28,7 +27,9 @@
 > | `ft-v901` | Le **cardio d'avant compte dans la durée** de la séance (`_dureeTotaleMin`) · une séance de **cardio seul** affiche enfin une durée · `_rythmeSeance` soustrayait un cardio absent du chrono depuis le 14/08 | en ligne |
 > | `ft-v902` | **L'écran ne s'éteint plus** : le verrou suivait l'écran affiché, pas la séance (`_wktEnCours`) | en ligne |
 > | `ft-v903` | **La mise à jour attend** aussi quand la séance n'a que du cardio (`_seanceOuverte`) | en ligne |
-> | `ft-v904` | **L'exercice suivant s'ouvre** quand le précédent est fini — les paliers d'échauffement laissés vides ne bloquent plus | sur la branche |
+> | `ft-v904` | **L'exercice suivant s'ouvre** quand le précédent est fini — les paliers d'échauffement laissés vides ne bloquent plus | en ligne |
+> | `ft-v905` | **Les 2 erreurs de Milo** : séries de travail numérotées (`S1·S2·S3`) · une montée prescrite par Milo ne se reproche plus à la personne | en ligne |
+> | `ft-v906` | **Plancher calorique** 1500 H / 1200 F sur `autoKcal()` + **plancher protéines kéto** 0,8 g/kg | en ligne |
 >
 > ### ✅ LES DEUX RETOURS « NON ÉLUCIDÉS » N'EN FAISAIENT QU'UN — réglé en `ft-v904`
 > *« la séance d'avant ne s'agrandit pas »* + *« je n'ai pas vu le message »* = **le même code** :
@@ -43,6 +44,58 @@
 > connus (retour sur l'écran Séance sans re-demander le verrou · passage par Milo). **S'il le
 > reconstate après ft-v902, la cause est côté iOS** (mode économie d'énergie, qui reprend le verrou
 > quoi qu'on fasse) — et là il n'y a rien à corriger dans l'app.
+>
+
+> ### 🌅 POUR REPRENDRE DEMAIN — la nutrition, et rien d'autre
+> **Le cap est posé et il ne bouge plus** : on construit la nutrition, dans cet ordre. Le reste
+> (échauffement/mobilité, sécurité option 1, breakdown des séances recalées) attend son tour.
+>
+> | # | Brique | Contenu | État |
+> |---|---|---|---|
+> | 0 | **Provenance figée** dans `S.foodLog` | `saisie · origine · quantite · unite · etat · sourceId · version` | ⏭️ **à faire en premier** |
+> | 0-bis | Planchers santé | calorique + protéines kéto | ✅ **ft-v906** |
+> | 1 | Base d'aliments locale | CIQUAL 2025 (3 484 aliments), curation par code de confiance A/B | ⏭️ |
+> | 2 | **L'écran « où tu en es »** | répondre à la vraie question, pas à « combien il me reste » | ⏭️ **remonté exprès** |
+> | 3 | Générateur de repas | filtre `composable` en premier · test du **profil vide** · hachage au lieu de `jour*7` | ⏭️ |
+> | 4 | Les 4 niveaux de précision | sortie en rôles/portions aux niveaux 1-2 | ⏭️ |
+> | 7 | Adhérence | le plan doit être **reproductible** (fonction pure) | ⏭️ |
+>
+> **⚠️⚠️ LE DÉFAUT MESURÉ LE 18/08, ET QUI N'EST PAS ENCORE CORRIGÉ** : la table `_PORTIONS`
+> (`state.js`, 37 motifs) **mélange le cru et le cuit sans le dire**. Riz **350** kcal/100 g (cru),
+> pâtes **350** (sèches), quinoa **368** (sec) — mais légumineuses **116** (**cuites**). Une ligne de
+> plan « Riz 80 g + lentilles 120 g » demande donc de peser l'un cru et l'autre cuit, sans un mot.
+> Et le même défaut existe **déjà côté journal** : Open Food Facts donne les valeurs « telles que
+> vendues », donc un paquet de pâtes scanné puis pesé cuit compte **×2,7**.
+> ⭐ Ce n'est pas de la variance qui s'annule sur la semaine : c'est un **biais systématique** qui
+> survit au moyennage — la seule classe d'erreur que « cohérence > réactivité » ne peut pas absorber.
+> **Décision prise** : convention **par RÔLE** (protéine animale → cru, féculent → cuit), l'état
+> **toujours écrit dans le nom affiché**, jamais de conversion automatique, et la question n'est
+> posée qu'aux niveaux 3 et 4.
+>
+> ### 🤝 LE TRAVAIL À DEUX INSTANCES — comment ça marche vraiment
+> Michel : *« ça fait beaucoup de trucs à gérer en même temps, c'est pour ça que j'ai envie que
+> l'autre Claude bosse de son côté »*. C'est en place et ça a produit un vrai résultat le 18/08.
+> - **Le dépôt est PUBLIC** → l'instance « analyse » peut **lire n'importe quel fichier** par
+>   `https://raw.githubusercontent.com/michdu75-commits/forcetracker/master/<chemin>`. Elle ne peut
+>   ni écrire, ni exécuter, ni mesurer.
+> - **Le partage qui marche** : *elle creuse et challenge, Claude Code mesure et livre.* Son
+>   contre-audit v1.1 a produit **2 correctifs de santé livrés le jour même** (ft-v906) et
+>   **confirmé le défaut cru/cuit** que personne n'avait vu.
+> - ⚠️ **Et la vérification marche dans les deux sens** : sur 10 points, 2 de ses chiffres étaient
+>   faux (947 kcal au lieu de 1 047 — il avait oublié le +100 de la phase de charge) et 3 des miens
+>   l'étaient aussi (seuils de cache en unités inverses, chiffres CIQUAL de mémoire, plafond IA
+>   présenté comme s'il bornait tout le monde). **Aucun des deux ne fait autorité seul.**
+> - 📄 **Le dossier de transmission** (9 pages, tous les chiffres lus dans le code) est régénérable :
+>   `scratchpad/dossier-nutrition.html` → PDF. Il porte l'état du moteur, les réponses point par
+>   point à son audit, et **3 questions ouvertes** qu'on lui pose (niveau par défaut · faut-il
+>   convertir l'historique · le seuil du plancher devrait-il dépendre du poids).
+>
+> ### 🧭 UNE FAMILLE DE BUGS DE PLUS, ÉCRITE LE 18/08 — `BUGS.md` §15
+> **« La règle juste, définie trop étroit »** : les trois bugs de la journée avaient la même forme —
+> la règle existe, elle est écrite, elle est testée, elle passe au vert, et c'est **un mot de sa
+> définition** qui est trop serré. *Le signe le plus sûr : Michel signale DEUX FOIS la même chose.*
+> Nouveau réflexe n° 10 : quand une remarque revient sur un comportement déjà corrigé, **ne pas
+> réécrire la règle — aller relire sa définition**.
 >
 > ### 🍽️ LE CHANTIER ACTIF : LA NUTRITION (Michel commence à s'en servir **la semaine prochaine**)
 > Son constat, et c'est le point de départ : *« même moi ça me saoule d'utiliser la nutrition, c'est
