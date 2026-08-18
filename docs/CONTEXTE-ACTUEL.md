@@ -6,9 +6,101 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v833`. Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v894` — c'est ce que `master` porte, donc ce que les gens ont.
+- **Sur la branche `claude/claude-md-docs-ytabnv`, PAS ENCORE DÉPLOYÉ :** `ft-v895`, `ft-v896` et `ft-v897`.
+  ⚠️ Le déploiement Pages ne se déclenche que sur `master` : tant que la branche n'est pas fusionnée,
+  ces deux versions n'existent que dans le dépôt (R18 — « j'ai poussé » ≠ « c'est en ligne »). Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
 
-> ## 🔥 CHANTIER EN COURS — LES CALORIES (nuit du 10 au 11/08)
+> ## 📍 OÙ ON EN EST — 17/08/2026 au soir (à lire en premier)
+>
+> **Journée d'AUDIT, pas de développement.** Quatre allers-retours avec une autre instance de Claude
+> et avec GPT sur l'export complet de Michel. **Tout est écrit** dans `docs/AUDIT-CONTEXTE-MILO.md`
+> (nouveau) et `docs/CALORIES-SOURCES.md` **§17**. Michel a posé le cadre lui-même :
+> *« on creuse tellement, j'espère qu'on va pas se perdre »* → on écrit d'abord, on répare ensuite.
+>
+> ### ⛔ CE QU'IL NE FAUT PAS FAIRE MAINTENANT
+> **Ne pas retoucher le modèle physiologique des calories pour obtenir un meilleur chiffre.**
+> Les deux auditeurs extérieurs et ce dossier sont d'accord : *d'abord une chaîne de calcul
+> cohérente et rejouable, l'audit MET reprendra sur une base saine.*
+>
+> ### ✅ RÉGLÉ EN ft-v895 (soirée du 17/08)
+> · **Le détail par exercice écrasait au lieu d'additionner** — un même exercice fait deux fois dans
+>   une séance perdait les calories de la 1ʳᵉ occurrence. **C'était la cause des 2 seules séances
+>   (28/06, 07/07) dont le résidu résistait**, et les 4 autres « détails incomplets » signalés par
+>   l'audit n'étaient **pas des bugs** (aucune série validée = rien à compter). 6 signalés = 2 vrais.
+> · **`engineVersion` posé sur chaque nouvelle séance** (`CAL_ENGINE = 3`).
+> · **La boîte de la montre écrivait dans la clé du profil santé** (`ft4_health`) — donc elle ne
+>   survivait à **aucune** sauvegarde : ft-v880 ne pouvait pas marcher. Clé propre `ft4_healthbox`.
+> · **L'export embarquait 146 160 car. d'images pour 3 photos** (31 % du fichier).
+> · **La fixture des tests a enfin des profils avec blessure** (bloc XLIV).
+>
+> ### ⏭️ CE QUI RESTE SUR LES CALORIES — un seul point
+> Le **`breakdown` des 29 séances recalées** n'a pas suivi le `total` (état `total` v2 /
+> `breakdown` v1). Les séances **nouvelles** sont désormais cohérentes ; c'est l'**historique migré**
+> qui reste dans un état mixte. ⚠️ Le corriger veut dire **recalculer des séances déjà enregistrées** :
+> c'est exactement le geste qui a déclenché quatre audits. À faire **explicitement**, marqué, et
+> réversible — ou pas du tout.
+>
+> ### ✅ CE QUI EST RÉGLÉ ET NE DOIT PAS ÊTRE ROUVERT
+> · Le **« forfait de 50 kcal »** n'existe pas : c'est `warmupCals = 3.5 × poids × warmupMin/60`
+>   (`app.js:677`), volontairement hors `breakdown`. **30 séances sur 32 s'expliquent à ±2,3 kcal.**
+>   Le contrat est `total = Σbreakdown + cardio + warmup`, et la séance du **15/08** le prouve
+>   (`warmupMin = 0` ce jour-là → égalité juste à 1 kcal près).
+> · Le **« +38 % cardio »** est **+6 %** (comparaison brut/net) · **CAL-012** est sans objet ·
+>   le **« forfait de 156 kcal »** était un artefact · la migration ×1,55 est **explicite, marquée
+>   (`calSource`) et réversible (`caloriesAvant`)**.
+>
+> ### ✅ CHANTIER ① FAIT en ft-v896 — le bloc personnel est réordonné
+> Les blocs mutables sont descendus et classés par mutabilité **croissante** (POIDS → CHECK-IN →
+> DERNIÈRES SÉANCES → SÉANCE EN COURS). Mesuré avec le nouvel outil `node tools/cache-coupure.js` :
+> **valider une série 15 253 → 20 caractères réécrits**, **noter une pesée 12 995 → 2 329**.
+> Rien n'a changé dans le texte envoyé à Milo (258 lignes des deux côtés), sauf **un renvoi de
+> position qui était FAUX** (« sa MÉMOIRE LONGUE plus bas » — elle est 6 266 car. plus HAUT) :
+> le bloc est désormais **nommé** au lieu d'être pointé par une direction.
+> ⚠️ **Ce qui n'est pas prouvé** : `tests/milo` est déterministe — il dit que rien ne manque, pas
+> que le modèle réagit pareil. L'ordre n'est pas neutre pour un modèle ; seul un A/B le dirait.
+> ⏭️ **Reste** : battre un record réécrit toujours 16 130 car. (RECORDS est haut dans le bloc) —
+> non touché **exprès**, c'est rare (quelques fois par mois contre 30-40 séries par séance).
+>
+> ### 🧠 LE CHANTIER SUIVANT — scinder le Gardien (② ci-dessous)
+> Tout est dans **`docs/AUDIT-CONTEXTE-MILO.md`**. Mesuré : **~97 000 caractères par message**,
+> identiques quelle que soit la question (voulu, R30).
+>
+> **⚠️ CE QUI RESTE À FAIRE :**
+>
+> **✅ ② OPTION 1 LIVRÉE en ft-v897** — la note du jour est descendue, empreintes **9/16 → 5/16**.
+> La règle et les zones nommées n'ont pas bougé (R11). ⏭️ **L'option 2 reste ouverte** (5 → 2), et
+> c'est elle qui déplacerait les zones loin de la règle — décision de sécurité, non prise.
+>
+> **② (contexte de la mesure du 17/08)**
+> La mesure a trouvé un étage de plus que l'audit (`docs/AUDIT-CONTEXTE-MILO.md` **§12**) : le bloc
+> contient une **note sur la séance DU JOUR**, donc pour quelqu'un de blessé l'empreinte change
+> **pendant** la séance — **46 741 car. du bloc commun refacturés** dès qu'un exercice sollicitant la
+> zone entre ou sort. Deux correctifs possibles : ① sortir la note du jour du bloc de tête (peu
+> risqué, gain énorme, la règle ET les zones restent en tête) · ② scinder pour de bon.
+> ⛔ **Rien livré exprès** : les deux changent un comportement de SÉCURITÉ, et `tests/milo` est
+> déterministe — il prouve la PRÉSENCE, pas la protection. État figé par le témoin XLVI.
+>
+> **② (description d'origine de l'audit)** (§3) — le bloc « commun » n'est commun que pour les gens **sans blessure**
+> (8 profils = **7 entrées de cache**). L'auditeur extérieur a montré que mon « pas de correctif
+> évident » était faux : le bloc contient **1 234 car. génériques** (la priorité, le principe) et
+> **1 578 car. personnels** (les zones nommées). Descendre **la donnée** et garder **la règle** en
+> tête respecte R11 et ramène 8 profils à **1 seule empreinte**.
+>
+> **③ FIXTURE `tests/parcours`** — ✅ **FAIT en ft-v895** (bloc XLIV : 3 profils de santé).
+>
+> **✅ CE QUI EST VÉRIFIÉ ET NE DOIT PAS ÊTRE ROUVERT** : aucun autre chemin IA ne tourne sans cache
+> (les 10 autres appels du Worker traitent une image ou un PDF **différent** à chaque fois — un cache
+> y coûterait 1,25× pour zéro lecture) · et **le cache RAPPORTE depuis le 08/08** (ratio 1,14 : 1,
+> gain 11 %). La « perte » mesurée par l'audit extérieur est le coût des deux semaines de
+> construction, pas celui du service.
+>
+> ### 🔒 EN ATTENTE D'UNE DÉCISION DE MICHEL
+> **Sécurité — Option 1** (secret d'appareil + récupération par e-mail). Il l'avait choisie, puis :
+> *« avant de le faire j'ai fait une petite trouvaille pas top lol donc mets-toi en attente »*.
+> C'est le seul chantier de la file **sans filet de tests**.
+
+> ## 🔥 CHANTIER — LES CALORIES : l'état du 10-11/08 (⚠️ largement DÉPASSÉ, voir le bloc du 17/08 ci-dessus)
 >
 > **Michel a relevé le niveau d'exigence** : *« si on veut que l'application soit sérieuse, il faut
 > des données sérieuses et scientifiquement prouvé ET prouvable »*. Contexte : *« moi je ne

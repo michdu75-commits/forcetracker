@@ -5749,9 +5749,12 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
    Il avait cree « Butterfly » et « Pec deck inverse » = les noms courants du Pec Deck et de la
    Machine Oiseau, deja au catalogue avec leurs photos et les BONS muscles. Ses fiches perso
    portaient les muscles PERMUTES (ouverture arriere classee en deltoide AVANT).
-   /!\/!\ ET AUCUN CHEMIN NE PERMETTAIT DE LES SUPPRIMER : `openEditCustomEx()` existe et n'est
-   appelee de NULLE PART ; « Analyser les doublons » compare les noms a une lettre pres et ne peut
-   pas rapprocher deux synonymes. Un outil qui marche et qu'on ne peut pas atteindre. */
+   /!\ « Analyser les doublons » compare les noms a une lettre pres : elle ne peut pas rapprocher
+   deux synonymes comme « Pec deck inverse » et « Machine Oiseau ».
+   /!\ CORRECTION DU 17/08 AU SOIR : ce commentaire disait que `openEditCustomEx()` « n'est appelee
+   de NULLE PART ». C'est FAUX - elle l'est depuis longtemps, log.js:766 (« Modifier l'exercice »
+   du menu) et log.js:3865 (l'icone crayon de la liste). Conclusion tiree d'une recherche trop
+   etroite. Ce qui manque vraiment, c'est un « fusionner avec... » ou l'on CHOISIT la cible. */
 {
   const c42=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
   const p42=await c42.newPage();
@@ -5807,6 +5810,258 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     t('/!\\ « butterfly » reste bien un mouvement de PECTORAUX', X.muscleButterfly==='pec', 'recu '+X.muscleButterfly);
   }
   await c42.close();
+}
+
+/* == BLOC XLIII - CE QUE DEUX AUDITS EXTERIEURS ONT FAIT REMONTER (17/08/2026, soiree) ==
+   Trois defauts trouves en verifiant leurs chiffres, chacun invisible sans mesure :
+   (1) le DETAIL par exercice ECRASAIT au lieu d'additionner quand un exercice revient 2 fois ;
+   (2) la boite de la montre et le PROFIL SANTE partageaient la meme cle localStorage ;
+   (3) l'export embarquait 146 160 caracteres d'images pour 3 photos (31 % du fichier).
+   Et une FIXTURE qui manquait : aucun profil de test n'avait de blessure, donc le chemin du
+   Gardien - celui qui casse le partage de cache - n'etait jamais emprunte. */
+{
+  const c43=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844}});
+  const p43=await c43.newPage();
+  await p43.addInitScript(seedScript({
+    ft4_health:JSON.stringify({conditions:['arthrose'],injuries:[{zone:'epaule',side:'D'}],notes:'epaule droite'}),
+    ft4_cuex:JSON.stringify([{n:'Machine maison',g:'Dos',custom:true,img:'data:image/png;base64,AAAA',muscles:{p:['lats'],s:[]}}])
+  }));
+  await p43.goto('http://localhost:'+PORT+'/index.html'); await p43.waitForTimeout(2300);
+  const Y=await p43.evaluate(()=>{
+   try{
+    // (1) LE DETAIL ADDITIONNE — un meme exercice deux fois dans la seance
+    const seance={date:'2026-08-17',exs:[
+      {name:'Soulevé de Terre',sets:[{kg:100,reps:5,done:true,type:'N'},{kg:100,reps:5,done:true,type:'N'}]},
+      {name:'Soulevé de Terre',sets:[{kg:120,reps:3,done:true,type:'N'}]}
+    ]};
+    const cd=calcSessionCalories(seance);
+    const somme=Object.values(cd.breakdown||{}).reduce((a,b)=>a+b,0);
+    // (2) LA BOITE DE LA MONTRE SURVIT A UNE SAUVEGARDE
+    S.healthInbox=[{start:'2026-08-17T10:00:00',type:'marche',min:12}];
+    const santeAvant=JSON.parse(JSON.stringify(S.healthProfile||null));
+    persist();
+    const brutBoite=localStorage.getItem('ft4_healthbox');
+    const brutSante=localStorage.getItem('ft4_health');
+    // (3) L'EXPORT : la fiche perso reste, sa photo part
+    let expo=null;
+    try{
+      const vraiBlob=window.Blob, vraiURL=URL.createObjectURL;
+      window.Blob=function(p){ expo=String(p&&p[0]||''); return new vraiBlob(p,{type:'text/plain'}); };
+      URL.createObjectURL=()=> 'blob:faux';
+      _ecrireExport(false);
+      window.Blob=vraiBlob; URL.createObjectURL=vraiURL;
+    }catch(e){}
+    const J=expo?JSON.parse(expo):null;
+    const cuex=J&&J.donnees&&J.donnees.customExercises||[];
+    return {
+      detailSomme:somme, nbEntrees:Object.keys(cd.breakdown||{}).length,
+      totalMoinsDetail:Math.round(cd.total-somme-(cd.cardio||0)-3.5*(S.bw||80)*((cd.warmupMin||0)/60)),
+      moteur:cd.engineVersion,
+      boiteRelue:JSON.parse(brutBoite||'null'),
+      santeIntacte:JSON.stringify(JSON.parse(brutSante||'null'))===JSON.stringify(santeAvant),
+      exportFiche:cuex.length?cuex[0].n:null,
+      exportPhoto:cuex.length?!!cuex[0].img:null,
+      exportDit:!!(J&&J._exclus&&J._exclus.customExercises_img),
+      exportPoids:expo?expo.length:0
+    };
+   }catch(e){ return {erreur:String(e&&e.message||e)}; }
+  });
+  console.log('\n-- XLIII. Ce que deux audits exterieurs ont fait remonter --');
+  if(Y.erreur){ t('X le bloc tourne', false, Y.erreur); }
+  else{
+    t('⭐⭐ LE DETAIL ADDITIONNE au lieu d\'ecraser : un exercice fait 2 fois compte 2 fois',
+      Y.nbEntrees===1 && Y.detailSomme>0 && Y.totalMoinsDetail<=2 && Y.totalMoinsDetail>=-2,
+      'somme '+Y.detailSomme+' · total-detail-cardio-echauffement = '+Y.totalMoinsDetail);
+    t('/!\\ ... et l\'invariant tient : total = somme(detail) + cardio + echauffement',
+      Math.abs(Y.totalMoinsDetail)<=2, 'ecart '+Y.totalMoinsDetail+' kcal');
+    t('🏷️ chaque seance porte la version du moteur qui l\'a calculee', Y.moteur===3, 'recu '+Y.moteur);
+    t('⭐⭐ LA BOITE DE LA MONTRE SURVIT A UNE SAUVEGARDE (elle ecrasait le profil sante)',
+      Array.isArray(Y.boiteRelue) && Y.boiteRelue.length===1, JSON.stringify(Y.boiteRelue));
+    t('/!\\ ... et le PROFIL SANTE, lui, est intact — c\'est lui qui nourrit le Gardien',
+      Y.santeIntacte===true);
+    t('⭐ L\'EXPORT garde la fiche perso et laisse la photo dehors',
+      Y.exportFiche==='Machine maison' && Y.exportPhoto===false, Y.exportFiche+' · photo='+Y.exportPhoto);
+    t('/!\\ ... et le fichier DIT qu\'il a retire des photos (un export muet ment - R29)', Y.exportDit===true);
+  }
+  await c43.close();
+}
+
+/* == BLOC XLIV - LA FIXTURE QUI MANQUAIT : DES PROFILS AVEC BLESSURE (17/08/2026) ==
+   /!\/!\ POURQUOI - le temoin du bloc Q compare 3 profils opposes et verifie que le bloc commun
+   de Milo est IDENTIQUE. Ses 3 profils sont {nom, sexe, age, poids, objectif} : AUCUN n'a de
+   profil sante. Or `_gardienRules()` colle un bloc PERSONNALISE en tete du contexte, avant meme
+   « Tu es Milo » - donc le cache de prefixe se coupe des le premier caractere.
+   Mesure du 17/08 : 8 profils de sante produisent 7 empreintes de cache DISTINCTES.
+   Le chemin qui casse le partage n'etait jamais emprunte par les tests. Angle mort de la fixture.
+   /!\ CE BLOC NE PRETEND PAS QUE C'EST REPARE. Il fige ce qu'on sait, pour que le jour ou le
+   Gardien sera scinde (partie generique en tete + zones dans le bloc personnel), le changement
+   soit VISIBLE au lieu de passer inapercu. */
+{
+  const emp2=async(sante)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_name:'Alex',ft4_email:'z@test.z',ft4_health:JSON.stringify(sante)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+    const r=await pg.evaluate(()=>{
+      if(typeof buildCoachContext!=='function') return {err:'buildCoachContext absent'};
+      const ctx=buildCoachContext('je fais quoi comme seance ?');
+      const i=ctx.indexOf('PROFIL ATHLÈTE:');
+      const commun=ctx.slice(0,i);
+      const g=commun.indexOf('RÈGLES DU GARDIEN');
+      return {commun, gardien:g>=0, gardienEnTete:g>=0&&g<40,
+        // la part GENERIQUE du bloc : celle qui pourrait remonter dans le commun partage
+        principe: commun.indexOf('ADAPTER, jamais interdire')>=0,
+        pro: commun.indexOf('professionnel de santé')>=0};
+    });
+    await cx.close(); return r;
+  };
+  const sain =await emp2({conditions:[],injuries:[],notes:''});
+  const epaule=await emp2({conditions:[],injuries:[{zone:'epaule',side:'D'}],notes:''});
+  const genou =await emp2({conditions:[],injuries:[{zone:'genou',side:'G'}],notes:''});
+  console.log('\n-- XLIV. La fixture qui manquait : des profils avec blessure --');
+  const err=sain.err||epaule.err||genou.err;
+  if(err){ t('X le bloc tourne', false, err); }
+  else{
+    t('/!\\ un profil SANS blessure n\'a pas de bloc Gardien', sain.gardien===false);
+    t('/!\\ un profil AVEC blessure en a un, et il est EN TETE du contexte (priorite R11)',
+      epaule.gardien===true && epaule.gardienEnTete===true);
+    t('⭐⭐ ETAT CONNU, NON REPARE : deux blessures differentes = deux blocs communs DIFFERENTS'
+      +' -> autant d\'entrees de cache que de combinaisons. A RETOURNER le jour ou le Gardien sera scindé.',
+      epaule.commun!==genou.commun && epaule.commun!==sain.commun,
+      'epaule '+epaule.commun.length+' · genou '+genou.commun.length+' · sain '+sain.commun.length);
+    t('⭐ la partie GENERIQUE du Gardien est la meme pour les deux blessures (c\'est elle qui pourra remonter)',
+      epaule.principe===true && genou.principe===true && epaule.pro===true && genou.pro===true);
+    t('/!\\ aucun prenom ne fuit dans le bloc commun, meme avec une blessure declaree',
+      !/Alex/.test(epaule.commun+genou.commun));
+  }
+}
+
+/* == BLOC XLV - LES BLOCS QUI BOUGENT SONT RANGES EN BAS (17/08/2026) ==
+   /!\/!\ POURQUOI - le cache du prompt est un cache de PREFIXE : tout ce qui precede le
+   premier caractere qui change est reutilise, tout ce qui suit est repaye. Jusqu'au 17/08,
+   la seance EN COURS etait rangee au MILIEU du bloc personnel : valider une serie (le geste
+   le plus frequent d'une seance, toutes les ~90 s) faisait donc repayer les 12 884 caracteres
+   parfaitement STABLES ranges derriere - le catalogue d'exercices, la methode de coaching,
+   les unilateraux. Mesure : node tools/cache-coupure.js
+   /!\ CE TEMOIN NE MESURE PAS UN COUT, il mesure une POSITION : ou tombe la premiere
+   difference quand on valide une serie. C'est la seule chose qu'on maitrise en local.
+   /!\/!\ ET IL VERIFIE SURTOUT QU'ON N'A RIEN PERDU. Deplacer des blocs dans un gabarit est
+   silencieux : pendant ce chantier, le bloc POIDS a atterri DANS un commentaire /*...*\/ et
+   a disparu du prompt sans lever la moindre erreur (R4 - l'info n'atteint plus la donnee). */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  const R=await pg.evaluate(()=>{
+    if(typeof buildCoachContext!=='function') return {err:'buildCoachContext absent'};
+    const j=d=>{const x=new Date();x.setDate(x.getDate()-d);return x.toISOString().slice(0,10);};
+    S.sessions=[];
+    for(let k=1;k<=12;k++){const ts=Date.now()-k*3*864e5;
+      S.sessions.push({id:ts,ts,date:j(k*3),volume:5200,calories:340,duration:3600,startHour:18,
+        checkin:{energy:3,sleep:3},
+        exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]});}
+    S.prs={'Développé Couché':{rm1:101,kg:85,reps:6,date:j(3)}};
+    S.weightLog=[{date:j(9),kg:79.4},{date:j(2),kg:80}];
+    // une seance deja en cours DES LES DEUX COTES : sinon on mesure « demarrer une seance »
+    if(!S.wkt) startWorkout();
+    S.wkt.exs=[{name:'Squat à la Barre',sets:[
+      {kg:100,reps:5,done:true,type:'N'},{kg:105,reps:5,done:false,type:'N'}]}];
+    persist();
+    const zonePerso=t=>{const a=t.indexOf('PROFIL ATHLÈTE:'),b=t.indexOf("═══ SITUATION DE L'INSTANT ═══");
+      return (a<0||b<0)?null:t.slice(a,b);};
+    const avant=zonePerso(buildCoachContext());
+    S.wkt.exs[0].sets[1].done=true; persist();
+    const apres=zonePerso(buildCoachContext());
+    if(!avant||!apres) return {err:'zone personnelle introuvable'};
+    let cut=-1; const n=Math.min(avant.length,apres.length);
+    for(let i=0;i<n;i++) if(avant[i]!==apres[i]){cut=i;break;}
+    if(cut<0 && avant.length!==apres.length) cut=n;
+    return {len:avant.length, cut, reecrit:cut<0?0:avant.length-cut,
+      // les informations qui doivent TOUTES rester presentes, ou qu'elles soient rangees
+      poids:      /POIDS & COMPOSITION:/.test(avant),
+      poidsValeur:/Poids actuel: 80 kg/.test(avant),
+      checkin:    /CHECK-IN SÉANCES RÉCENTES:/.test(avant),
+      dernieres:  /DERNIÈRES SÉANCES:/.test(avant),
+      methode:    /MÉTHODE DE COACHING/.test(avant),
+      enCours:    /SÉANCE EN COURS/.test(avant),
+      // le renvoi de position ne doit plus envoyer Milo au mauvais endroit
+      renvoiFaux: /MÉMOIRE LONGUE plus bas/.test(avant)};
+  });
+  await cx.close();
+
+  console.log('\n-- XLV. Les blocs qui bougent sont ranges en bas --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    t('⭐⭐ VALIDER UNE SERIE ne reecrit plus que la fin du bloc personnel (cache de prefixe)',
+      R.reecrit>0 && R.reecrit<1500,
+      R.reecrit+' car. reecrits sur '+R.len+' (avant le 17/08 : ~15 000)');
+    t('⭐ ... et la coupure tombe dans le DERNIER dixieme du bloc',
+      R.cut>0 && R.cut > R.len*0.9, 'coupure a '+R.cut+' / '+R.len);
+    t('/!\\/!\\ RIEN N\'A DISPARU : le bloc POIDS est toujours dans le prompt, avec sa valeur',
+      R.poids===true && R.poidsValeur===true);
+    t('/!\\ ... ni le check-in, ni les dernieres seances, ni la methode, ni la seance en cours',
+      R.checkin===true && R.dernieres===true && R.methode===true && R.enCours===true);
+    t('⭐ le renvoi « MEMOIRE LONGUE plus bas » a disparu : il pointait 6 266 car. TROP BAS',
+      R.renvoiFaux===false);
+  }
+}
+
+/* == BLOC XLVI - LE GARDIEN NE CASSE PLUS LE CACHE PENDANT LA SEANCE (18/08/2026) ==
+   /!\/!\ CE BLOC A CHANGE DE SENS, ET C'EST VOULU. Ecrit le 17/08 pour FIGER un etat casse
+   (docs/AUDIT-CONTEXTE-MILO.md §12), il verifie depuis le 18/08 l'etat REPARE.
+   Le probleme : `_gardienRules()` ajoutait une NOTE sur la seance du jour, en croisant S.wkt
+   avec les zones fragiles. Ce bloc etant colle en TETE du contexte, changer d'exercice
+   coupait le cache de prefixe a la position ~1 487 et refacturait 46 741 caracteres du bloc
+   COMMUN — pendant la seance, quand la personne ecrit le plus a Milo.
+   Le correctif (option 1, choisie par Michel) sort la NOTE du bloc de tete et la range avec
+   la seance en cours, tout en bas. Empreintes mesurees : 9/16 -> 5/16.
+   /!\/!\ CE QUI N'A PAS BOUGE, ET QUI EST TESTE EN PREMIER : la REGLE (« ADAPTER, jamais
+   interdire ») et les ZONES fragiles nommees restent EN TETE, avec leur priorite absolue
+   (R11). On n'a pas achete du cache avec de la securite. */
+{
+  const gard=async(sante, exs)=>{
+    const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+    const pg=await cx.newPage();
+    await pg.addInitScript(seedScript({ft4_name:'Alex',ft4_health:JSON.stringify(sante)}));
+    await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+    const r=await pg.evaluate((ex)=>{
+      if(typeof _gardienRules!=='function') return {err:'_gardienRules absent'};
+      if(ex){ if(!S.wkt) startWorkout();
+        S.wkt.exs=ex.map(n=>({name:n,sets:[{kg:60,reps:8,done:true,type:'N'}]})); persist(); }
+      const ctx=buildCoachContext();
+      const iPerso=ctx.indexOf('PROFIL ATHLÈTE:');
+      const commun=ctx.slice(0,iPerso);
+      return {commun,
+        note:  ctx.indexOf('DANS SA SÉANCE DU JOUR'),
+        seance:ctx.indexOf('SÉANCE EN COURS'),
+        regle: ctx.indexOf('ADAPTER, jamais interdire'),
+        zonesEnTete: /épaule/.test(commun)};
+    }, exs||null);
+    await cx.close(); return r;
+  };
+  const EPAULE={conditions:[],injuries:[{zone:'epaule',side:'D',status:'active'}],notes:''};
+  const neutre =await gard(EPAULE, ['Squat à la Barre','Curl Haltères']);
+  const epauleX=await gard(EPAULE, ['Développé Militaire','Développé Couché']);
+
+  console.log('\n-- XLVI. Le Gardien ne casse plus le cache pendant la seance --');
+  if(neutre.err||epauleX.err){ t('X le bloc tourne', false, neutre.err||epauleX.err); }
+  else{
+    t('/!\\/!\\ LA REGLE DE SECURITE EST TOUJOURS EN TETE (priorite absolue, R11)',
+      epauleX.regle>=0 && epauleX.regle<1600, 'position '+epauleX.regle);
+    t('/!\\/!\\ ... et les ZONES fragiles nommees aussi : on n\'a pas achete du cache avec de la securite',
+      epauleX.zonesEnTete===true && neutre.zonesEnTete===true);
+    t('/!\\ LA NOTE DU JOUR N\'A PAS DISPARU : elle est toujours envoyee quand la seance sollicite la zone',
+      epauleX.note>=0);
+    t('⭐ ... et elle est desormais RANGEE AVEC la seance en cours, pas en tete',
+      epauleX.seance>=0 && epauleX.note>epauleX.seance,
+      'seance a '+epauleX.seance+', note a '+epauleX.note);
+    t('⭐⭐ DEUX SEANCES DIFFERENTES, MEME BLOC COMMUN : le cache de prefixe survit a la seance',
+      neutre.commun===epauleX.commun,
+      neutre.commun===epauleX.commun?'':'toujours '+neutre.commun.length+' vs '+epauleX.commun.length);
+    t('/!\\ une seance qui ne touche pas la zone fragile ne declenche aucune note',
+      neutre.note<0);
+  }
 }
 
 await b.close(); srv.close();

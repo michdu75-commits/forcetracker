@@ -1992,23 +1992,60 @@ function _gardienZonesFromText(t){
   if(/avant.?bras|forearm/.test(s))out.push('avantbras');
   return out;
 }
+/* Les ZONES FRAGILES de la personne — une seule fonction, DEUX lecteurs : le bloc de
+   règles du Gardien (en tête du contexte) et la note sur la séance du jour (rangée en
+   bas depuis le 18/08). Les faire calculer deux fois, c'est se garantir qu'ils
+   finiront par diverger (R2 — une information, un seul propriétaire). */
+function _gardienZones(){
+  const zones={}; // key -> {active, durable, injury, today, todaySide}
+  try{
+      const hp=S.healthProfile||{};
+      // 1) Blessures structurées (zone + statut)
+      (hp.injuries||[]).forEach(inj=>{
+        const k=_gardienZoneKey(inj&&inj.zone); if(!k)return;
+        zones[k]=zones[k]||{}; if((inj.status||'')==='active')zones[k].active=true; zones[k].injury=true;
+      });
+      // 2) Zones fragiles mentionnées dans les NOTES du Profil Santé (texte libre) — l'ADN ne porte plus la santé
+      if(hp.notes){_gardienZonesFromText(hp.notes).forEach(k=>{zones[k]=zones[k]||{};zones[k].durable=true;});}
+      // 4) DOULEUR DU JOUR (état du jour, brique 3B) — priorité absolue, tag AUJOURD'HUI
+      try{const ds=S.dayState;const tday=(typeof today==='function')?today():null;
+        if(ds&&(!tday||ds.date===tday)&&Array.isArray(ds.pains)){ds.pains.forEach(pn=>{const k=pn&&pn.zone;if(_GARDIEN_ZONE[k]){zones[k]=zones[k]||{};zones[k].today=true;if(pn.side==='L'||pn.side==='R')zones[k].todaySide=pn.side;}});}
+      }catch(e){}
+  }catch(e){}
+  return zones;
+}
+
+/* ⚠️⚠️ LA NOTE SUR LA SÉANCE DU JOUR — RANGÉE EN BAS, PAS EN TÊTE (18/08/2026).
+   Elle vivait dans `_gardienRules()`, donc collée en TÊTE du contexte, avant même
+   « Tu es Milo ». Or ce n'est PAS une règle de sécurité : c'est une OBSERVATION sur les
+   exercices d'aujourd'hui, qui change dès qu'on en ajoute ou qu'on en retire un.
+   Mesuré le 17/08 : pour quelqu'un de blessé, changer d'exercice coupait le cache de
+   préfixe à la position 1 487 et refacturait 46 741 caractères du bloc « commun » —
+   pendant la séance, c'est-à-dire quand la personne écrit le plus à Milo.
+   ⚠️ CE QUI N'A PAS BOUGÉ, ET NE DOIT PAS : la RÈGLE (« ADAPTER, jamais interdire ») et
+   les ZONES fragiles nommées restent en tête, avec leur priorité absolue (R11).
+   Seule l'observation du jour descend — auprès de la séance qu'elle commente.
+   Mesure : node tools/cache-coupure.js · empreintes : 9/16 → 5/16. */
+function _gardienNoteDuJour(){
+  const zones=_gardienZones();
+  if(!Object.keys(zones).length) return '';
+  let todayNote='';
+  try{
+    const wkt=((S.wkt&&S.wkt.exs)||[]).map(e=>e&&e.name).filter(Boolean);
+    const flagged={}; // zone -> Set(noms)
+    wkt.forEach(name=>{const nz=_gzNaz(name);_GARDIEN_CONSTRAINTS.forEach(c=>{if(c.rx.test(nz))c.zones.forEach(z=>{if(zones[z]){(flagged[z]=flagged[z]||[]);if(flagged[z].indexOf(name)<0)flagged[z].push(name);}});});});
+    const parts=Object.keys(flagged).map(z=>flagged[z].join(', ')+' → sollicite ton '+(_GARDIEN_ZLABEL[z]||z));
+    if(parts.length)todayNote='⚠️ DANS SA SÉANCE DU JOUR : '+parts.join(' · ')+'. Propose d\'ALLÉGER la charge/réduire l\'amplitude, ou une alternative plus douce — sans lui interdire la séance.\n';
+  }catch(e){}
+  return todayNote?('\n'+todayNote):'';
+}
+
 function _gardienRules(){
   try{
-    const zones={}; // key -> {active:bool, durable:bool}
+    const zones=_gardienZones();
     const hp=S.healthProfile||{};
-    // 1) Blessures structurées (zone + statut)
-    (hp.injuries||[]).forEach(inj=>{
-      const k=_gardienZoneKey(inj&&inj.zone); if(!k)return;
-      zones[k]=zones[k]||{}; if((inj.status||'')==='active')zones[k].active=true; zones[k].injury=true;
-    });
-    // 2) Zones fragiles mentionnées dans les NOTES du Profil Santé (texte libre) — l'ADN ne porte plus la santé
-    if(hp.notes){_gardienZonesFromText(hp.notes).forEach(k=>{zones[k]=zones[k]||{};zones[k].durable=true;});}
     // 3) Conditions santé pertinentes
     const conds=(hp.conditions||[]).filter(c=>_GARDIEN_COND[c]);
-    // 4) DOULEUR DU JOUR (état du jour, brique 3B) — priorité absolue, tag AUJOURD'HUI
-    try{const ds=S.dayState;const tday=(typeof today==='function')?today():null;
-      if(ds&&(!tday||ds.date===tday)&&Array.isArray(ds.pains)){ds.pains.forEach(pn=>{const k=pn&&pn.zone;if(_GARDIEN_ZONE[k]){zones[k]=zones[k]||{};zones[k].today=true;if(pn.side==='L'||pn.side==='R')zones[k].todaySide=pn.side;}});}
-    }catch(e){}
     // 5) SEUILS ABSOLUS DE SÉCURITÉ (croisement GPT/Gemini/Mistral) — s'allument TOUJOURS,
     //    indépendamment de la pertinence contextuelle. Ils imposent une VIGILANCE, jamais un
     //    diagnostic. Volontairement COURTS et sérieux (pas de bruit) : IMC ≥ 40 · tour de taille > 120 cm.
@@ -2038,15 +2075,6 @@ function _gardienRules(){
       lines.push('• '+rule+tag+extra);
     });
     conds.forEach(c=>lines.push('• '+_GARDIEN_COND[c]));
-    // 6B — signale les exercices de la SÉANCE EN COURS qui sollicitent une zone fragile (précis + contextuel)
-    let todayNote='';
-    try{
-      const wkt=((S.wkt&&S.wkt.exs)||[]).map(e=>e&&e.name).filter(Boolean);
-      const flagged={}; // zone -> Set(noms)
-      wkt.forEach(name=>{const nz=_gzNaz(name);_GARDIEN_CONSTRAINTS.forEach(c=>{if(c.rx.test(nz))c.zones.forEach(z=>{if(zones[z]){(flagged[z]=flagged[z]||[]);if(flagged[z].indexOf(name)<0)flagged[z].push(name);}});});});
-      const parts=Object.keys(flagged).map(z=>flagged[z].join(', ')+' → sollicite ton '+(_GARDIEN_ZLABEL[z]||z));
-      if(parts.length)todayNote='⚠️ DANS SA SÉANCE DU JOUR : '+parts.join(' · ')+'. Propose d\'ALLÉGER la charge/réduire l\'amplitude, ou une alternative plus douce — sans lui interdire la séance.\n';
-    }catch(e){}
     let _g='🛡️ RÈGLES DU GARDIEN — SÉCURITÉ, PRIORITÉ ABSOLUE (à prendre en compte AVANT tout le reste) :\n';
     if(vigil.length){
       _g+='❗ SEUILS ABSOLUS DE VIGILANCE (s\'appliquent TOUJOURS, quel que soit le profil ou la pertinence contextuelle — ils imposent une VIGILANCE, pas un diagnostic ; parles-en avec tact, sans jamais alarmer) :\n'
@@ -2056,7 +2084,6 @@ function _gardienRules(){
       _g+='Principe : ADAPTER, jamais interdire bêtement. Ta 1re question est « comment lui permettre de continuer de la manière la plus SÛRE et la plus adaptée ? ». Cherche TOUJOURS l\'adaptation la MOINS restrictive qui permet de continuer à progresser en sécurité (charge, amplitude, choix d\'exercice, alternative, tempo, repos, protéger la zone en poursuivant le reste). La plupart de ces sollicitations ne posent problème qu\'à CHARGE LOURDE — ton PREMIER réflexe est de réduire la charge/les reps avant de changer d\'exercice. Tiens compte de ce que la personne veut faire AUJOURD\'HUI (performance, entretien, reprise, défoulement). L\'arrêt total est l\'EXCEPTION.\n'
         +'Tu ne juges jamais un exercice « bon » ou « mauvais » — tu regardes seulement ce qu\'il SOLLICITE et si c\'est adapté à cette personne aujourd\'hui. Ces repères sont CONTEXTUELS, pas des interdictions rigides.\n'
         +lines.join('\n')+'\n'
-        +todayNote
         +'⚠️ Ces points sont DURABLES (≠ une douleur passagère du jour). Devant une douleur du jour FORTE, aiguë ou inhabituelle : conseille le repos et un professionnel de santé (tu ne poses jamais de diagnostic). Propose TOUJOURS une alternative pour progresser sur le reste du corps.\n';
     }
     return _g+'\n';
@@ -2669,48 +2696,7 @@ ${objectivesText}
 CYCLE DE FORCE:
 ${S.cycle && S.cycle.active ? `Actif - Semaine ${curWeek}/${S.cycle.weeks} - Phase ${cyclePlan ? cyclePlan.phase : '—'} - ${cyclePlan ? cyclePlan.sets+'×'+cyclePlan.reps+' @ '+cyclePlan.pct+'%' : '—'}` : 'Aucun cycle actif'}
 
-${wktText}
-DERNIÈRES SÉANCES:
-${recentSessions}
-→ ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans SA MÉMOIRE LONGUE plus bas. ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
-→ ⚡ MONTÉE EN CHARGE : quand une ligne porte « ⚠️ montée en charge insuffisante », ce n'est PAS une opinion, c'est un CALCUL de l'application (paliers de 10-15 %, départ à 40-50 %, dernier palier 5-10 % sous la charge, pas plus de 2 reps au-delà de 85 %). Tu ne dois JAMAIS écrire que la montée était propre sur un exercice ainsi marqué — dis-le franchement, explique le risque en une phrase (un saut de charge trop grand, c'est là qu'on se blesse) et donne les paliers manquants pour la prochaine fois. À l'inverse, une ligne SANS ce marqueur n'appelle aucune remarque sur l'échauffement.
-→ Parmi ces séances, chacune a bien été FAITE (avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si un jour COMPRIS DANS LA PÉRIODE ci-dessus n'a aucune séance listée, ce jour était un REPOS : dis-le tel quel. ⚠️ Mais ne conclus JAMAIS « repos » pour un jour PLUS ANCIEN que cette période — tu ne l'as pas sous les yeux, ce n'est pas la même chose que ne rien avoir fait. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
-${(()=>{
-  // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :
-  // l'Accueil affichait « je m'en souviens » et le chat n'avait JAMAIS reçu l'info. Milo affirmait
-  // se souvenir de ce qu'il n'avait pas. Même règle que l'Accueil (plannedSession, state.js) → R2.
-  const np=(typeof plannedSession==='function')?plannedSession():null;
-  if(!np)return '';
-  const when=np.days===0?'AUJOURD\'HUI':(np.days===1?'DEMAIN':((typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date)+(np.days>1?' (dans '+np.days+' jours)':''));
-  return `
-PROCHAINE SÉANCE — il/elle TE l'a annoncée:
-- Prévue ${when}${np.label?' — « '+np.label+' »':''} (${np.date})
-→ C'est LUI/ELLE qui te l'a dit : tu t'en souviens, tu ne le redemandes pas et tu ne t'en étonnes pas.
-→ Ne relance JAMAIS « ça fait X jours que tu n'es pas venu » tant que cette séance n'est pas passée : une pause ANNONCÉE n'est pas un abandon.
-→ Tu peux t'y référer naturellement (« pour ${when.toLowerCase()} », préparer la séance, adapter la récup d'ici là) — sans le répéter à chaque message.
-`;
-})()}
-POIDS & COMPOSITION:
-${(()=>{
-  const wlog=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
-  if(wlog.length<2)return '- Suivi de poids: Pas assez de données';
-  const reg=linearRegression(wlog.map((p,i)=>({x:i,y:p.kg})));
-  const weeklyChange=Math.round(reg.slope*7*100)/100;
-  const latest=wlog[wlog.length-1];
-  const goal=S.goal||'muscle';
-  const onTrack=goal==='perte'&&weeklyChange<-0.1?true:goal==='muscle'&&weeklyChange>0.05?true:Math.abs(weeklyChange)<0.2;
-  return `- Poids actuel: ${latest.kg} kg (${wlog.length} mesures)
-- Tendance: ${weeklyChange>=0?'+':''}${weeklyChange} kg/semaine — ${onTrack?'✓ dans la bonne direction':'⚠ à ajuster selon objectif'}`;
-})()}
 
-CHECK-IN SÉANCES RÉCENTES:
-${(()=>{
-  const qE={1:'Épuisé',2:'Moyen',3:'Bien',4:'Optimal'};
-  const qS={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
-  const recent=S.sessions.filter(s=>s.checkin).slice(0,3);
-  if(!recent.length)return '- Aucun check-in enregistré pour l\'instant';
-  return recent.map(s=>`- ${s.date}: Énergie ${qE[s.checkin.energy]||'?'} · Sommeil ${qS[s.checkin.sleep]||'?'}`).join('\n');
-})()}
 
 ${(()=>{
   const sc=(S.bodyScans||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
@@ -2747,6 +2733,61 @@ MÉTHODE DE COACHING (très important) :
 - NUANCES à connaître : le cardio LÉGER (échauffement 5-10 min, marche en pente, vélo/elliptique tranquille, LISS) est BON et n'abîme pas une séance de force — au contraire il prépare le corps. Seul le cardio LONG et INTENSE juste AVANT du lourd nuit (interférence/fatigue). Distingue bien travail de FORCE (lourd, peu de reps, longue récup) et HYPERTROPHIE (volume, reps modérées).${S.premium?'\n- PREMIUM : tu peux t\'appuyer sur des programmes reconnus et validés par le monde sportif (5/3/1 de Wendler, StrongLifts 5x5, Push/Pull/Legs, PHUL, GZCLP…) et les ADAPTER à la personne (niveau, dispo, matériel, objectif) — jamais copier-coller sans adapter.':''}
 ${_catalogueContext()}
 
+${/* ⚠️⚠️ CE QUI SUIT EST RANGÉ ICI EXPRÈS — NE PAS LE REMONTER (17/08/2026).
+   Le cache du prompt est un cache de PRÉFIXE : tout ce qui précède le premier caractère
+   qui change est réutilisé, tout ce qui suit est repayé. Ces trois blocs sont les seuls
+   du bloc personnel qui bougent souvent — la séance en cours change toutes les ~90 s.
+   Rangés plus haut (leur place jusqu'au 17/08), ils faisaient repayer TOUT ce qui les
+   suivait alors que rien n'y bougeait : mesuré à 12 884 caractères parfaitement stables
+   refacturés à chaque série validée, dont le catalogue d'exercices et la méthode de
+   coaching. Ils sont donc classés par mutabilité CROISSANTE, le plus volatil en dernier.
+   ⚠️ Et un commentaire JS ne peut PAS s'écrire tel quel dans un gabarit : il deviendrait
+   du texte envoyé au modèle (constaté ici même, +754 caractères). D'où ce `${…''}`.
+   Mesure de contrôle : node tools/cache-coupure.js */''}
+POIDS & COMPOSITION:
+${(()=>{
+  const wlog=S.weightLog?S.weightLog.slice().sort((a,b)=>a.date.localeCompare(b.date)):[];
+  if(wlog.length<2)return '- Suivi de poids: Pas assez de données';
+  const reg=linearRegression(wlog.map((p,i)=>({x:i,y:p.kg})));
+  const weeklyChange=Math.round(reg.slope*7*100)/100;
+  const latest=wlog[wlog.length-1];
+  const goal=S.goal||'muscle';
+  const onTrack=goal==='perte'&&weeklyChange<-0.1?true:goal==='muscle'&&weeklyChange>0.05?true:Math.abs(weeklyChange)<0.2;
+  return `- Poids actuel: ${latest.kg} kg (${wlog.length} mesures)
+- Tendance: ${weeklyChange>=0?'+':''}${weeklyChange} kg/semaine — ${onTrack?'✓ dans la bonne direction':'⚠ à ajuster selon objectif'}`;
+})()}
+
+CHECK-IN SÉANCES RÉCENTES:
+${(()=>{
+  const qE={1:'Épuisé',2:'Moyen',3:'Bien',4:'Optimal'};
+  const qS={1:'Mauvais',2:'Moyen',3:'Bon',4:'Excellent'};
+  const recent=S.sessions.filter(s=>s.checkin).slice(0,3);
+  if(!recent.length)return '- Aucun check-in enregistré pour l\'instant';
+  return recent.map(s=>`- ${s.date}: Énergie ${qE[s.checkin.energy]||'?'} · Sommeil ${qS[s.checkin.sleep]||'?'}`).join('\n');
+})()}
+
+DERNIÈRES SÉANCES:
+${recentSessions}
+→ ⚠️ CE QUE TU VOIS ICI EST LE DÉTAIL DES ${_sessVues.length} SÉANCES LES PLUS RÉCENTES${_depuisQuand?' (depuis le '+_depuisQuand+')':''}, PAS SON HISTORIQUE. ${_nbTotalSess>_sessVues.length?'Il/elle a fait '+_nbTotalSess+' séances au total : son parcours complet est dans le bloc « SA MÉMOIRE LONGUE ». ':''}Ne dis JAMAIS que tu ne vois qu'une semaine ou que tu ne connais que ses dernières séances : tu connais tout son parcours, c'est seulement le détail série par série qui s'arrête ici.
+→ ⚡ MONTÉE EN CHARGE : quand une ligne porte « ⚠️ montée en charge insuffisante », ce n'est PAS une opinion, c'est un CALCUL de l'application (paliers de 10-15 %, départ à 40-50 %, dernier palier 5-10 % sous la charge, pas plus de 2 reps au-delà de 85 %). Tu ne dois JAMAIS écrire que la montée était propre sur un exercice ainsi marqué — dis-le franchement, explique le risque en une phrase (un saut de charge trop grand, c'est là qu'on se blesse) et donne les paliers manquants pour la prochaine fois. À l'inverse, une ligne SANS ce marqueur n'appelle aucune remarque sur l'échauffement.
+→ Parmi ces séances, chacune a bien été FAITE (avec son jour). Une séance seulement PRÉPARÉE ou DISCUTÉE en conversation n'a JAMAIS été faite : ne l'appelle pas « ta séance d'hier/de lundi… » — dis « la séance qu'on a préparée ». Si un jour COMPRIS DANS LA PÉRIODE ci-dessus n'a aucune séance listée, ce jour était un REPOS : dis-le tel quel. ⚠️ Mais ne conclus JAMAIS « repos » pour un jour PLUS ANCIEN que cette période — tu ne l'as pas sous les yeux, ce n'est pas la même chose que ne rien avoir fait. (Bug réel du 30/07 : « Ta séance d'hier, pour rappel » pour une séance juste préparée la veille — la personne a dû corriger.)
+${(()=>{
+  // PROCHAINE SÉANCE ANNONCÉE (ft-v654) — le trou le plus gênant du garde-fou des données :
+  // l'Accueil affichait « je m'en souviens » et le chat n'avait JAMAIS reçu l'info. Milo affirmait
+  // se souvenir de ce qu'il n'avait pas. Même règle que l'Accueil (plannedSession, state.js) → R2.
+  const np=(typeof plannedSession==='function')?plannedSession():null;
+  if(!np)return '';
+  const when=np.days===0?'AUJOURD\'HUI':(np.days===1?'DEMAIN':((typeof _frDayLabel==='function')?_frDayLabel(np.date):np.date)+(np.days>1?' (dans '+np.days+' jours)':''));
+  return `
+PROCHAINE SÉANCE — il/elle TE l'a annoncée:
+- Prévue ${when}${np.label?' — « '+np.label+' »':''} (${np.date})
+→ C'est LUI/ELLE qui te l'a dit : tu t'en souviens, tu ne le redemandes pas et tu ne t'en étonnes pas.
+→ Ne relance JAMAIS « ça fait X jours que tu n'es pas venu » tant que cette séance n'est pas passée : une pause ANNONCÉE n'est pas un abandon.
+→ Tu peux t'y référer naturellement (« pour ${when.toLowerCase()} », préparer la séance, adapter la récup d'ici là) — sans le répéter à chaque message.
+`;
+})()}
+
+${wktText}${_gardienNoteDuJour()}
 ═══ SITUATION DE L'INSTANT ═══
 (⚠️ TOUT CE QUI EST AU-DESSUS DE CETTE LIGNE EST IDENTIQUE d'un message à l'autre, et mis en
 CACHE par le serveur IA — facturé ~10× moins cher. DEUX règles, pas une : ① ne jamais insérer
@@ -4645,6 +4686,21 @@ function _ecrireExport(avecConversations){
       }
       payload.donnees[k]=S[k];
     });
+    /* 🖼️ LES IMAGES SORTENT DU FICHIER, LES EXERCICES RESTENT (17/08/2026).
+       `exPhotos` était déjà écarté, mais les exercices PERSO embarquent leur photo dans le même
+       objet (`img`, encodée en base64). Mesuré sur l'export du 17/08 : `customExercises` pesait
+       **146 160 caractères, 31 % du fichier entier, pour TROIS images**.
+       ⚠️ On ne retire pas le champ : les fiches perso (nom, groupe, muscles cochés) sont
+       exactement ce qu'on veut pouvoir relire et réimporter. On ne retire QUE l'image, et on le
+       DIT dans `_exclus` — un export muet sur ses trous laisse croire qu'il est complet (R29). */
+    if(Array.isArray(payload.donnees.customExercises)){
+      var _nImg=0;
+      payload.donnees.customExercises=payload.donnees.customExercises.map(function(c){
+        if(c&&c.img){ _nImg++; var o={}; for(var p in c){ if(p!=='img') o[p]=c[p]; } o._photoRetiree=true; return o; }
+        return c;
+      });
+      if(_nImg) payload._exclus.customExercises_img=_nImg+' photo(s) d\'exercice perso — retirées pour que le fichier reste transmissible ; les fiches elles-mêmes sont bien là';
+    }
     const json=JSON.stringify(payload,null,2);
     const blob=new Blob([json],{type:'application/json'});
     const url=URL.createObjectURL(blob);

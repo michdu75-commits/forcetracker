@@ -221,6 +221,22 @@ const MET_REST = 3.0;   // récupération entre séries — voir la démonstrati
    était simplement réparti au prorata sur tout le monde ; il a maintenant son propre tarif. */
 const MET_TRANSITION = 3.0;   // Compendium 2024 · marche lente / port de charge légère
 
+/* 🏷️ LA VERSION DU MOTEUR DE CALORIES, STOCKÉE SUR CHAQUE SÉANCE (17/08/2026).
+   ⚠️ POURQUOI — deux audits extérieurs ont passé une journée à démontrer que l'historique avait
+   « changé sous l'analyse », et ils avaient raison sur le fait : les séances d'avant le 13/08 ont
+   été recalculées le 12/08 (bouton « Recaler mes anciennes séances », marqué `calSource:'recale'`).
+   Rien n'était FAUX — la valeur d'origine est conservée dans `caloriesAvant`, le geste était
+   explicite et réversible — mais **rien ne disait avec quel modèle un chiffre avait été produit**.
+   Un chiffre sans version ne peut pas être comparé à un autre chiffre, ni rejoué.
+   ⚠️ À N'INCRÉMENTER QUE QUAND LE MODÈLE CHANGE, jamais à chaque release (ce serait `sw.js`).
+     1 — avant ft-v874 : durée FABRIQUÉE (n × 30 s + repos réglé), MET_REST 2,0
+     2 — ft-v874→885   : durée mesurée (horodatage/chrono), 3 temps, MET_REST 1,5 puis 3,0
+     3 — depuis ft-v886 : + facteur de charge par série, MET_REST 3,0, plafond des écarts revu
+   ⚠️ Les séances DÉJÀ enregistrées n'en portent pas : on ne réécrit pas l'historique pour poser
+   une étiquette (c'est précisément ce qu'on nous reprochait). Leur version se lit autrement —
+   `calSource:'recale'` pour les migrées, la présence de `warmupMin` pour les natives de la v2+. */
+const CAL_ENGINE = 3;
+
 // ⚠️ L'INTENSITÉ SE DÉDUIT DES MUSCLES, PLUS D'UNE 2ᵉ LISTE DE MOTS-CLÉS (ft-v668).
 // Avant : `LOWER_KW`/`UPPER_KW`, une liste de 16 mots-clés **parallèle** à `_MEX` — donc
 // condamnée à divergter. Mesuré le 29/07/2026 : **142 exercices sur 249 (57 %)** tombaient
@@ -622,7 +638,18 @@ function calcSessionCalories(session) {
     totalCals += exCals;
     totalActiveMin += activeSec / 60;
     totalRestMin += Math.max(0,n-1) * restSec / 60;
-    breakdown[ex.name] = Math.round(exCals);
+    /* 🔁 ON ADDITIONNE, ON N'ÉCRASE PAS (17/08/2026) — le détail est rangé par NOM d'exercice, et
+       un même exercice peut apparaître DEUX FOIS dans une séance (un 2ᵉ bloc plus tard, un ajout
+       après coup). Avec une affectation simple, la 2ᵉ occurrence effaçait la 1ʳᵉ : `totalCals`
+       restait juste, mais le détail perdait des calories réellement dépensées.
+       ⚠️ MESURÉ sur l'historique de Michel, c'est exactement l'écart que deux audits extérieurs
+       n'arrivaient pas à expliquer : le 28/06 « Soulevé de Terre » ×2 (7 puis 3 séries) n'affichait
+       que 23 kcal — les 3 dernières — d'où +59 kcal manquants ; le 07/07 « Leg Curl Unilatéral
+       Debout » ×2 (4 et 4) en affichait 32, d'où +31. Ce sont les 2 seules séances sur 32 dont
+       le résidu ne s'expliquait pas par le forfait d'échauffement.
+       ⚠️ Ce correctif ne change AUCUN total : `totalCals` accumulait déjà correctement. Il ne
+       répare que le détail — donc l'invariant `total = Σdétail + cardio + échauffement`. */
+    breakdown[ex.name] = (breakdown[ex.name] || 0) + Math.round(exCals);
   });
 
   /* ⏱️ LA VRAIE DURÉE, ET CE QU'ON EN FAIT (16/08/2026, revu ft-v876) — voir `_dureeSeanceMin`.
@@ -692,6 +719,7 @@ function calcSessionCalories(session) {
     warmupMin,
     dureeMin: Math.round(_dureeMin),      // la durée RETENUE pour le calcul
     dureeSrc: _dureeSrc,                  // 'saisie' | 'horodatage' | 'chrono' | 'estimee' | 'formule'
+    engineVersion: CAL_ENGINE,            // 🏷️ avec quel modèle ce chiffre a été produit — voir CAL_ENGINE
     transitionMin: Math.round(_transitionMin),  // 🔄 décharger, ranger, traverser la salle
     breakdown
   };

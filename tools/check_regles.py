@@ -9,6 +9,14 @@ surveille — d'où ce script. Trois contrôles :
   2. chaque ligne courte renvoie bien vers le fichier long ;
   3. le journal récent de CLAUDE.md ne dépasse pas le seuil (sinon : archiver).
   4. AUCUNE entrée de docs/JOURNAL-ARCHIVE.md n'a disparu.
+  5. AUCUN document .md ne s'est fait écraser (contrôle 4 généralisé aux 54 autres).
+
+⚠️ PORTÉE HONNÊTE DU CONTRÔLE 5 : il compare l'état du dossier au DERNIER COMMIT,
+donc il attrape l'écrasement AVANT qu'il parte — ce qui est le bon moment, puisque
+ce script tourne à chaque livraison (règle d'or #12). Il ne remonte PAS 20 commits
+en arrière comme le contrôle 4 : sur 54 documents, une perte volontaire d'il y a
+trois jours rougirait pour toujours, et *un garde-fou qui crie pour rien se fait
+désactiver*. Le contrôle 4 garde la mémoire longue ; le 5 garde le geste du jour.
 
 ⚠️ POURQUOI LE CONTRÔLE 4 EXISTE (06/08/2026) — le 04/08, à la livraison de ft-v766,
 un script d'archivage a ÉCRIT le fichier au lieu d'y AJOUTER : 890 956 caractères et
@@ -82,6 +90,64 @@ if git_ok and perdues:
           "Récupérer : git show <commit>:" + ARCHIVE
     )
 
+# ── 5. AUCUN document ne se fait ÉCRASER ────────────────────────────────────
+# ⚠️ POURQUOI CE CONTRÔLE EXISTE (17/08/2026) — le contrôle 4 ci-dessus a été écrit
+# après la perte du 04/08… et il ne surveille QU'UN SEUL FICHIER. Le 17/08, en
+# rédigeant un audit, j'ai ouvert `docs/AUDIT-CONTEXTE-MILO.md` en écriture sans
+# vérifier qu'il existait : un document du 09/08 a été remplacé, 138 lignes perdues.
+# git l'a rendu — mais rien ne l'avait signalé. *Deuxième fois, même famille.*
+#
+# C'est exactement le motif trouvé le même jour sur le prompt de Milo : UNE CHOSE
+# SURVEILLÉE, SA JUMELLE PAS DU TOUT. Le contrôle 4 gardait la pièce qu'on avait déjà
+# perdue ; les 40 autres documents n'étaient gardés par personne.
+#
+# ⚠️ CE QU'IL NE FAIT PAS, VOLONTAIREMENT (R19 — la gouvernance sert le produit) :
+# il ne bloque pas une réécriture normale. Une ligne qui DÉMÉNAGE dans un autre
+# document est retrouvée et acceptée (c'est le geste légitime : journal → archive).
+# Il ne se déclenche que si un document perd une grosse part de sa substance ET que
+# ce qui manque n'est nulle part ailleurs. Un garde-fou qui crie pour rien se fait
+# désactiver, et on revient au point de départ.
+PART_MINI  = 0.25          # il faut perdre au moins un quart du fichier…
+LIGNES_MINI = 15           # …ET au moins 15 lignes de fond (les deux, pas l'un ou l'autre)
+# Fichiers RÉGÉNÉRÉS depuis le code : les réécrire EST leur mode de fonctionnement.
+GENERES = {"docs/INVENTAIRE.md", "docs/FIGURINES.html"}
+
+def _fond(t):
+    """Les lignes qui portent du sens — on ignore le décor (vides, ---, titres seuls)."""
+    return {l.strip() for l in t.split("\n")
+            if len(l.strip()) > 40 and not set(l.strip()) <= set("-=_#>| ")}
+
+ecrases = []
+if git_ok:
+    try:
+        suivis = [f for f in _git("ls-files", "*.md").split("\n")
+                  if f and f not in GENERES]
+        # Tout ce que le dépôt contient AUJOURD'HUI, tous documents confondus :
+        # une ligne déplacée d'un fichier à l'autre doit être retrouvée ici.
+        partout = set()
+        for f in suivis:
+            p = racine / f
+            if p.exists():
+                partout |= _fond(p.read_text(encoding="utf-8", errors="replace"))
+        for f in suivis:
+            avant = _fond(_git("show", f"HEAD:{f}"))
+            if not avant:
+                continue                       # fichier nouveau : rien à perdre
+            p = racine / f
+            apres = _fond(p.read_text(encoding="utf-8", errors="replace")) if p.exists() else set()
+            disparues = avant - apres - partout   # ni ici, ni ailleurs → vraiment perdues
+            if len(disparues) >= LIGNES_MINI and len(disparues) / len(avant) >= PART_MINI:
+                ecrases.append((f, len(disparues), len(avant)))
+    except Exception:
+        pass                                   # jamais bloquer sur un pépin d'outillage
+
+for f, n, tot in ecrases:
+    erreurs.append(
+        f"{f} a PERDU {n} lignes de fond sur {tot} ({100*n/tot:.0f} %), introuvables "
+        f"ailleurs dans le dépôt — un document s'AJOUTE ou se DÉPLACE, il ne s'écrase pas. "
+        f"Vérifier avec : git diff {f}  ·  récupérer : git show HEAD:{f}"
+    )
+
 if erreurs:
     print("❌ Fichiers de règles désynchronisés :")
     for e in erreurs:
@@ -92,3 +158,6 @@ print(f"✅ {len(n_court)} règles d'or cohérentes · journal récent : {len(en
       f"(seuil {SEUIL_JOURNAL}) · CLAUDE.md {len(court.split())} mots")
 print(f"✅ archive : {len(maintenant)} entrées, 0 perdue"
       + ("" if git_ok else " (⚠️ git indisponible — contrôle non effectué)"))
+print(f"✅ documents : aucun écrasement"
+      + (f" ({len(suivis)} fichiers .md surveillés)" if git_ok and 'suivis' in dir() else
+         " (⚠️ git indisponible — contrôle non effectué)"))
