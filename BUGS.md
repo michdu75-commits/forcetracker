@@ -598,6 +598,49 @@ raison, et l'écart entre les deux lectures tient à une seule chose : je regard
 
 ---
 
+## 12ter. 🔧 LA FAUSSE PANNE — quand c'est l'OUTIL DE MESURE qui se trompe *(18/08/2026)*
+
+> **Michel, après l'audit des renvois du prompt** : *« fais gaffe de ne pas réparer des trucs qui ne
+> doivent pas être réparés »*. Il a raison, et j'ai frôlé la faute deux fois **dans le même audit**.
+
+**Le cas.** En vérifiant que chaque renvoi de position du prompt (« sa MÉMOIRE LONGUE plus bas »,
+« voir le Gardien plus haut ») pointe au bon endroit, l'outil a signalé **deux cibles introuvables**.
+Les deux étaient des **défauts de la recherche**, pas du prompt :
+
+| Fausse alerte | Cause réelle |
+|---|---|
+| « le PROFIL SANTÉ **plus bas** » → cible à 3 caractères | la recherche partait du **début du texte**, elle trouvait donc la phrase du renvoi **elle-même** (qui contient les mots « PROFIL SANTÉ ») |
+| « n'ajoute jamais un détail **plus haut** » → introuvable | **la casse** : la règle existe bien, 12 000 car. plus haut, écrite `⛔ N'AJOUTE JAMAIS un DÉTAIL` |
+
+**Sans vérification, les deux « correctifs » auraient été des dégradations** : réécrire une consigne
+juste, ou pire, ajouter une règle qui existait déjà — c'est-à-dire la dupliquer (R2).
+
+### 🔎 Comment le reconnaître
+
+- L'outil signale un problème **là où le code n'a pas changé récemment**. Un défaut qui apparaît sans
+  qu'on ait rien touché est d'abord une suspicion sur la **mesure**.
+- Le résultat est **trop propre** : « 0 caractère réécrit », « cible introuvable », « aucune donnée ».
+  Un zéro parfait est plus souvent un chemin non emprunté qu'un succès. *(Le 17/08, un `0` a d'abord
+  été pris pour une réussite : c'était le bloc POIDS tombé dans un commentaire et disparu du prompt.)*
+- La cible est **trouvée collée au renvoi** (quelques caractères d'écart) : l'outil s'est trouvé
+  lui-même.
+
+### 🛡️ Ce qui protège
+
+1. **Avant de corriger, ouvrir la chose incriminée** et la lire. Pas le rapport : la chose.
+   C'est R28 appliqué à ses propres outils.
+2. **Chercher la formulation, pas la chaîne** : insensible à la casse, plusieurs variantes.
+3. **Une recherche « ce qui suit » doit commencer APRÈS la phrase qui pose la question**, sinon elle
+   se mord la queue.
+4. **Écrire les pièges DANS l'outil**, pas dans un compte rendu qu'on ne relira pas — les deux
+   ci-dessus sont en commentaire dans `tests/parcours` (bloc XLVII).
+
+*Voisine de la famille **9** (le code orphelin : avant de « réparer », chercher la décision) et de la
+**12** (les erreurs de méthode). La différence : ici ce n'est ni le code ni la décision qui manque,
+c'est l'instrument qui ment.*
+
+---
+
 ## 13. 🔑 Le NOM comme clé primaire — *la racine commune*
 
 **Ce n'est pas un bug, c'est ce qui en produit.** Sur les 19 défauts trouvés le 02/08, **6
@@ -683,7 +726,7 @@ devinette baisse quand le catalogue se stabilise, **alors que le coût de la sur
 
 ---
 
-## 🧭 Les 9 réflexes qui sortent de tout ça
+## 🧭 Les 10 réflexes qui sortent de tout ça
 
 1. **Avant de dire qu'une chose manque** → la chercher dans le code et dans `docs/INVENTAIRE.md`.
 2. **Avant de « réparer » du code orphelin** → chercher la décision. Sinon, demander.
@@ -700,8 +743,11 @@ devinette baisse quand le catalogue se stabilise, **alors que le coût de la sur
    ou d'entrée de calcul. Voir la famille 13.
 9. **Avant d'ajouter une couche** (une règle, un test, un indicateur) → se demander si on peut en
    **RETIRER** une. Mesurer un problème qu'on aurait pu supprimer, c'est le rendre permanent.
+10. **Quand un outil signale un défaut là où RIEN n'a changé** → suspecter l'outil avant le code, et
+   ouvrir la chose incriminée pour la lire. Deux fausses alertes sur deux dans l'audit du 18/08 :
+   une recherche qui se trouvait elle-même, et une différence de CASSE. Voir la famille 12ter.
 
 ---
 
-*Dernière mise à jour : 02/08/2026 (soir, après ft-v735). À compléter à chaque nouveau bug — symptôme, cause, famille,
+*Dernière mise à jour : 18/08/2026 (famille 12ter — la fausse panne). À compléter à chaque nouveau bug — symptôme, cause, famille,
 et ce qui le protège désormais.*
