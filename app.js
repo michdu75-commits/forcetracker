@@ -1637,7 +1637,19 @@ function renderCreatine() {
   if (creatPhase === 'charge') {
     el.innerHTML = '<div class="dose-row"><span class="dose-label">Dose quotidienne</span><span class="dose-val" style="color:var(--blue);">20g / jour</span></div><div class="dose-row"><span class="dose-label">Prises</span><span class="dose-val">4 × 5g</span></div><div class="dose-row"><span class="dose-label">Durée</span><span class="dose-val">5 à 7 jours</span></div><div class="tip-box">💡 Prends <strong>5g</strong> avec chaque repas principal. Après 5-7j passe en maintenance.</div>'+_creatContreIndic();
   } else {
-    const dose = Math.min(5, Math.max(3, Math.round(bw * 0.05)));
+    /* 💊 LA DOSE EST LIBRE, ET L'AVERTISSEMENT REMPLACE LE PLAFOND (18/08/2026, décision Michel :
+       *« pour moi on laisse le champ libre et il n'y a pas de taux légal en France ; mais avec un
+       avertissement au-delà de 3-5 grammes »*).
+       ⚠️⚠️ ET IL A RAISON SUR LE FOND, J'AVAIS ÉCRIT FAUX : l'arrêté du 26/09/2016 fixe une dose
+       journalière maximale de 3 g **pour les compléments alimentaires VENDUS en France** — ça
+       engage le FABRICANT (ce qu'il a le droit de commercialiser et d'étiqueter), **pas le
+       consommateur**. Personne n'est hors la loi en prenant 5 g. Parler de « maximum légal » pour
+       la personne était une erreur de ma part, et elle aurait fait passer un repère de
+       commercialisation pour une interdiction.
+       👉 Donc : suggestion calculée, **champ modifiable**, et un repère factuel au-delà de 5 g —
+       jamais un blocage (Constitution : on adapte, on n'interdit pas · P21 : pas de stress). */
+    const _suggere = Math.min(5, Math.max(3, Math.round(bw * 0.05)));
+    const dose = (typeof S.creatDose==='number' && S.creatDose>0) ? S.creatDose : _suggere;
     /* ⚠️ CE QUE L'APP AFFICHE DÉPASSE LA DOSE JOURNALIÈRE MAXIMALE FRANÇAISE (18/08/2026).
        La formule `0,05 g/kg plafonnée à 5 g` **n'apparaît dans aucune source** : c'est une
        troisième règle, inventée entre deux référentiels qui existent —
@@ -1650,8 +1662,16 @@ function renderCreatine() {
        pas à une correction de nuit (R29 + Constitution : on informe, on ne décide pas à sa place).
        👉 En attendant, on AFFICHE le repère réglementaire au lieu de le taire. Un chiffre sans son
        cadre laisse croire qu'il en est un. */
-    const _reg = dose>3 ? '<div class="tip-box" style="margin-top:6px;">📋 Repère : la dose journalière maximale en France est de <strong>3 g</strong> (arrêté du 26/09/2016, avis ANSES 2023-SA-0216). Les sociétés savantes décrivent 3 à 5 g/j. Au-delà de 3 g, l\'ANSES indique ne pas pouvoir se prononcer faute d\'évaluation — ce n\'est pas un risque démontré.</div>' : '';
-    el.innerHTML = '<div class="dose-row"><span class="dose-label">Dose quotidienne</span><span class="dose-val" style="color:var(--green);">'+dose+'g / jour</span></div><div class="dose-row"><span class="dose-label">Moment idéal</span><span class="dose-val">Post-workout</span></div><div class="tip-box">✅ Prends <strong>'+dose+'g</strong> chaque jour même sans entraînement. Constance = résultats.</div>'+_reg+_creatContreIndic();
+    /* ⚠️ DEUX SEUILS, DEUX TONS — ne pas les confondre (R11) :
+         · au-dessus de 3 g  → simple REPÈRE, ton neutre : c'est une limite de commercialisation.
+         · au-dessus de 5 g  → AVERTISSEMENT : on sort de ce que les sociétés savantes décrivent,
+                               et les données au long cours y sont limitées. */
+    const _reg = dose>5
+      ? '<div class="tip-box" style="margin-top:6px;border-left:3px solid var(--orange);">⚠️ Au-delà de <strong>5 g/j</strong>, tu sors de ce que décrivent les sociétés savantes (3 à 5 g/j en entretien — ISSN). Les doses plus élevées documentées portent surtout sur des <strong>phases de charge</strong> ou des périodes définies de 4 à 12 semaines ; en entretien au long cours, les preuves directes sont limitées. Rien n\'indique un danger — c\'est une zone peu étudiée, pas un risque démontré.</div>'
+      : (dose>3 ? '<div class="tip-box" style="margin-top:6px;">📋 Repère : les compléments vendus en France sont limités à <strong>3 g/j</strong> (arrêté du 26/09/2016) — c\'est une règle de commercialisation, pas une limite pour toi. Les sociétés savantes décrivent <strong>3 à 5 g/j</strong>.</div>' : '');
+    el.innerHTML = '<div class="dose-row"><span class="dose-label">Dose quotidienne</span><span class="dose-val" style="color:var(--green);cursor:pointer;text-decoration:underline dotted;" onclick="openCreatDose()">'+dose+'g / jour</span></div>'
+      + (S.creatDose ? '<div class="dose-row"><span class="dose-label" style="font-size:11px;">Tu l\'as réglée toi-même</span><span class="dose-val" style="font-size:11px;color:var(--t3);cursor:pointer;" onclick="setCreatDose(0)">revenir à '+_suggere+' g</span></div>' : '')
+      + '<div class="dose-row"><span class="dose-label">Moment idéal</span><span class="dose-val">Post-workout</span></div><div class="tip-box">✅ Prends <strong>'+dose+'g</strong> chaque jour même sans entraînement. Constance = résultats.</div>'+_reg+_creatContreIndic();
   }
 }
 
@@ -1663,6 +1683,24 @@ function renderWhey() {
   el.innerHTML = '<div class="dose-row"><span class="dose-label">Dose post-workout</span><span class="dose-val" style="color:var(--orange);">'+dose+'g</span></div><div class="dose-row"><span class="dose-label">Fenêtre</span><span class="dose-val">0-60 min</span></div><div class="tip-box">🥤 <strong>'+dose+'g de whey</strong> dans 300ml eau ou lait, 0-60 min après ta séance.</div>';
 }
 
+/* Réglage libre de la dose (décision Michel du 18/08). `0` ou vide = on revient à la suggestion.
+   ⚠️ Bornes VOLONTAIREMENT LARGES (0,5 à 30 g) : elles n'existent que pour attraper une faute de
+   frappe, pas pour brider un choix. 30 g/j sur 5 ans est une dose documentée comme tolérée chez
+   des sujets sains (Kreider 2017) — l'app n'a pas à décider en dessous. */
+function openCreatDose(){
+  const cur=(typeof S.creatDose==='number'&&S.creatDose>0)?S.creatDose:'';
+  const v=prompt('Ta dose quotidienne de créatine, en grammes ?\n\n(laisse vide pour revenir à la suggestion de l\'app)', cur);
+  if(v===null)return;                                  // annulé : on ne touche à rien
+  const n=parseFloat(String(v).replace(',','.'));
+  if(!v.trim()||!(n>0)) return setCreatDose(0);
+  setCreatDose(Math.min(30, Math.max(0.5, n)));
+}
+function setCreatDose(g){
+  S.creatDose = (g>0) ? g : null;
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  renderCreatine();
+}
 function setCreatPhase(phase, btn) {
   creatPhase = phase;
   document.querySelectorAll('.phase-toggle-small .ptbtn').forEach(b => b.classList.remove('active'));

@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v909` — fusionnée sur `master` le 18/08.
+- **Version en ligne (live) :** `ft-v910` — fusionnée sur `master` le 18/08.
 - **Rien en attente sur la branche.** Tout ce qui a été livré le 18/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
@@ -131,10 +131,13 @@
 > ### 💊 CE QUI ATTEND UNE DÉCISION DE MICHEL — volet suppléments (contre-audit v1.2)
 > Trois points **vérifiés dans le code**, non livrés parce qu'ils changent ce que l'app **recommande
 > à tout le monde** — ce n'est pas une correction, c'est un arbitrage produit :
-> 1. **La dose de créatine.** `0,05 g/kg plafonné à 5 g` n'a **aucune source**. Les deux repères
->    réels : **3 000 mg/j** (dose journalière maximale française, arrêté du 26/09/2016) et
->    **3-5 g/j** (ISSN). Faut-il passer la valeur par défaut à 3 g ? *(ft-v908 affiche déjà le
->    repère réglementaire sans changer le chiffre.)*
+> 1. ~~**La dose de créatine.**~~ ✅ **TRANCHÉ par Michel le 18/08, livré en ft-v910** :
+>    *« on laisse le champ libre et il n'y a pas de taux légal en France, mais avec un
+>    avertissement au-delà de 3-5 g »*. ⚠️ **Et il avait raison contre moi** : l'arrêté du
+>    26/09/2016 engage le **fabricant** (ce qui peut être vendu et étiqueté en France), **pas le
+>    consommateur**. Parler de « maximum légal » faisait passer un repère de commercialisation
+>    pour une interdiction. La dose est modifiable, deux seuils avec deux tons (repère à 3 g,
+>    avertissement à 5 g), et bornes larges (0,5-30 g) qui n'attrapent qu'une faute de frappe.
 > 2. **La phase de charge — ⚠️ de CRÉATINE, pas de protéines** (question de Michel, 18/08 : *« protéine
 >    ou créatine ? parce que si c'est protéine y'a pas de phase de charge »* — il a raison, ça
 >    n'existe pas pour les protéines, ni dans l'app ni dans la littérature).

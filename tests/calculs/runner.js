@@ -1488,6 +1488,20 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
     o.barreManuelle=(document.getElementById('prot-remaining')||{}).textContent;
     if(inp) inp.value='';
     S.foodLog=[]; persist();
+    // ── ⭐ la dose est LIBRE, et l'avertissement suit le chiffre (decision Michel 18/08) ──
+    if(typeof setCreatDose==='function'){
+      setCreatDose(0);   S.bw=85; renderCreatine();
+      o.auto=(el.textContent.match(/(\d+)g \/ jour/)||[])[1];
+      setCreatDose(8);   renderCreatine();
+      o.libre8=(el.textContent.match(/([\d.]+)g \/ jour/)||[])[1];
+      o.avert8=el.textContent;
+      setCreatDose(4);   renderCreatine();
+      o.avert4=el.textContent;
+      setCreatDose(3);   renderCreatine();
+      o.avert3=el.textContent;
+      setCreatDose(0);   renderCreatine();
+      o.retour=(el.textContent.match(/(\d+)g \/ jour/)||[])[1];
+    }
     // ── la phrase caféine, dans les combos premium ───────────────────────────
     S.premium=true; renderSupplCombos();
     const cb=document.getElementById('suppl-combos');
@@ -1503,8 +1517,13 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
       S13.txt.slice(0,120));
     t('⭐ le repere REGLEMENTAIRE (3 g, arrete 2016) est affiche des que la dose le depasse',
       +S13.dose<=3 || /3 g/.test(S13.txt), 'dose='+S13.dose);
-    t('/!\\ ... et il n\'est PAS presente comme un danger (« pas un risque démontré »)',
-      +S13.dose<=3 || /pas un risque démontré/.test(S13.txt));
+    /* ⚠️ TEMOIN AJUSTE LE 18/08 AU SOIR, et la raison compte : la formule « pas un risque
+       demontre » a DEMENAGE. Elle accompagne desormais l'avertissement au-dela de 5 g ; entre
+       3 et 5 g, le texte dit autre chose et de mieux fonde — que c'est une regle de
+       COMMERCIALISATION, pas une limite pour la personne (decision Michel). Ce qu'on protege
+       n'a pas change : ce repere ne doit pas etre dramatise. */
+    t('/!\\ ... et le repere n\'est jamais dramatise (aucun « danger », aucun « attention »)',
+      +S13.dose<=3 || (!/danger/i.test(S13.txt) && !/⚠️ Attention/i.test(S13.txt)));
     t('⭐⭐ LA PHRASE FAUSSE A DISPARU : la cafeine ne « reduit pas l\'absorption »',
       !/réduire l'absorption/.test(S13.combos) && !/Espace-les de 2h/.test(S13.combos));
     t('⭐ ... remplacee par ce qui est MESURE, et par ce qui n\'a pas ete teste',
@@ -1515,6 +1534,16 @@ console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═�
     t('/!\\ une saisie MANUELLE reste prioritaire sur le journal (on ne l\'ecrase pas)',
       S13.barreManuelle===String(Math.max(0,parseInt(S13.cible)-150))+'g',
       'reste='+S13.barreManuelle);
+    t('⭐⭐ LA DOSE EST LIBRE : 8 g reglés a la main sont bien affiches (aucun plafond)',
+      S13.libre8==='8', 'affiche='+S13.libre8);
+    t('⭐⭐ ... et au-dela de 5 g l\'AVERTISSEMENT apparait (zone peu etudiee, pas un danger)',
+      /Au-delà de/.test(S13.avert8||'') && /pas un risque démontré/.test(S13.avert8||''));
+    t('/!\\ entre 3 et 5 g : un simple REPERE, et il dit que c\'est une regle de COMMERCIALISATION',
+      /commercialisation/.test(S13.avert4||'') && !/Au-delà de/.test(S13.avert4||''));
+    t('/!\\ a 3 g ou moins : ni repere ni avertissement (on n\'encombre pas pour rien)',
+      !/commercialisation/.test(S13.avert3||'') && !/Au-delà de/.test(S13.avert3||''));
+    t('/!\\ on peut revenir a la suggestion de l\'app en un geste',
+      S13.retour===S13.auto, 'auto='+S13.auto+' retour='+S13.retour);
   }
 }
 
