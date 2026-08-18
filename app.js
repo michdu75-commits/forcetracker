@@ -530,6 +530,45 @@ function _dureeSeanceMin(session, nSets, dureeFormuleMin){
   const est = borne(nSets*(30+rest)/60);
   return {min: est || dureeFormuleMin, src: est ? 'estimee' : 'formule'};
 }
+
+/* ⏱️➕ LA DURÉE **TOTALE** — LA MUSCU MESURÉE, PLUS LE CARDIO QUI N'Y ÉTAIT PAS (18/08/2026)
+   Michel, en pleine séance : *« je viens de commencer la séance mais la séance n'a pas commencé.
+   Je n'ai rentré aucune valeur de musculation mais je fais du cardio avant, il faut que ce soit
+   pris en compte dans la durée totale »*. Il a raison, et le trou est réel : ses 20 minutes de
+   vélo n'apparaissaient **nulle part** dans la durée de sa séance.
+
+   ⚠️⚠️ LE POURQUOI, ET IL EST ENTIÈREMENT DANS UNE DÉCISION ANTÉRIEURE : depuis le 14/08, le
+   chrono démarre à la **1ʳᵉ SÉRIE VALIDÉE**, plus à l'ouverture de l'écran (log.js). C'était une
+   très bonne décision — elle a corrigé la plus grosse erreur mesurée du projet (254 min stockées
+   pour 96 réelles) — mais elle a un effet de bord que personne n'avait suivi jusqu'ici : **tout
+   ce qui se passe AVANT la 1ʳᵉ série est désormais hors du chrono**, y compris un vrai cardio.
+
+   👉 ON NE TOUCHE PAS AU CHRONO — c'est la MESURE de la musculation, et le moteur de calories
+   s'appuie dessus. On ajoute par-dessus les minutes de cardio **DÉCLARÉES**, et seulement celles
+   qui ne sont pas déjà dedans. Une durée, un propriétaire (R2) : `sess.duration` reste la muscu,
+   cette fonction est la seule à dire le total, et tout ce qui l'affiche passe par elle.
+
+   ⚠️ CE QUI EST DÉJÀ DEDANS DÉPEND DE LA SOURCE — c'est tout le raisonnement :
+     · `saisie`      → la personne a donné SA durée, elle sait ce qu'elle y a mis. On n'ajoute RIEN
+                       (R29 : on ne corrige pas quelqu'un qui a saisi son propre chiffre).
+     · `horodatage`  → l'écart entre deux séries validées. Ni l'avant ni l'après n'y ont jamais
+                       été → on ajoute les deux.
+     · `chrono`      → démarre à la 1ʳᵉ série et court jusqu'à « Terminer » : le cardio d'APRÈS
+                       est dedans (on le note en revenant du tapis, avant de terminer), celui
+                       d'AVANT n'y est pas → on n'ajoute que l'avant.
+     · `estimee` / `formule` → déduites des séries seules → on ajoute les deux.
+   ⚠️ SI LA RÈGLE DU CHRONO CHANGE (retour à un démarrage à l'ouverture), la ligne `chrono`
+   ci-dessous devient FAUSSE et compte le cardio d'avant deux fois. Elle est testée pour ça. */
+function _dureeTotaleMin(session, nSets, dureeFormuleMin){
+  const base = _dureeSeanceMin(session, nSets, dureeFormuleMin);
+  const min0 = +session?.cardioAvant?.duration || 0;
+  const min1 = +session?.cardio?.duration || 0;
+  let ajout = 0;
+  if(base.src==='chrono') ajout = min0;
+  else if(base.src!=='saisie') ajout = min0 + min1;
+  return {min: base.min + ajout, muscuMin: base.min, cardioMin: ajout, src: base.src};
+}
+
 /* ⏱️ LE TEMPS D'UNE SÉRIE — DÉDUIT DES RÉPÉTITIONS, PLUS UN FORFAIT DE 30 s (16/08/2026)
    Michel : *« fais les 30 secondes par série maintenant »*.
 

@@ -1226,6 +1226,90 @@ console.log('\n═══ 9. Les repas suggérés respectent le RÉGIME (kéto, v
   await _cR.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+// LE CARDIO D'AVANT COMPTE DANS LA DURÉE TOTALE (18/08/2026) — Michel, en pleine séance :
+// « je fais du cardio avant, il faut que ce soit pris en compte dans la durée totale ».
+// ⚠️ CE QUE CE BLOC PROTÈGE VRAIMENT, ce n'est pas une addition — c'est la question « qu'est-ce
+// qui est DÉJÀ dans la mesure ? », qui dépend entièrement d'une décision prise ailleurs (le
+// chrono démarre à la 1ʳᵉ série validée, log.js, 14/08). Le jour où cette décision changera,
+// c'est ici que ça doit rougir — sinon on comptera le même cardio deux fois, sans erreur ni
+// symptôme visible. C'est exactement ce qui était arrivé à `_rythmeSeance` (coach.js), écrite
+// deux jours APRÈS le changement de chrono et qui soustrayait encore un cardio absent.
+console.log('\n═══ 10. Durée totale : la muscu mesurée + le cardio qui n\'y était pas ═══');
+{
+  const {c:_cD,p:_pD}=await boot(null,{});
+  /* ⚠️⚠️ CE BLOC DOIT S'EXÉCUTER DES DEUX CÔTÉS, c'est la seule façon qu'il ait de prouver
+     quelque chose. Premier jet : il appelait `_dureeTotaleMin` directement → sur l'ancien code
+     il levait `ReferenceError` et le contrôle négatif s'ARRÊTAIT au lieu de rougir. Un témoin
+     qui plante ne mesure rien (même erreur qu'en ft-v887/890/892). Il passe donc par ce que
+     l'écran AFFICHE — `_renderSeStats`, qui existe des deux côtés — et n'appelle la fonction
+     neuve que derrière un garde qui rend `null`, donc qui FAIT ÉCHOUER le témoin au lieu de
+     le sauter. */
+  const D=await _pD.evaluate(()=>{
+    const out={}; S.bw=80; S.defRest=120;
+    const _dt=(s,n)=>(typeof _dureeTotaleMin==='function')?_dureeTotaleMin(s,n,0):null;
+    const sets=n=>[...Array(n)].map((_,i)=>({kg:100,reps:5,done:true,type:'N',at:i*180}));
+    const base=()=>({date:today(),exs:[{name:'Squat à la Barre',sets:sets(8)}]});
+    const nS=8;
+    // ① horodatage (le cas normal) : ni l'avant ni l'après n'ont jamais été dans la mesure
+    const s1=base(); s1.cardioAvant={type:'velo',intensity:'modere',duration:20};
+    out.horo=_dt(s1,nS);
+    /* ⭐ LE TÉMOIN DE COMPORTEMENT — ce que la personne LIT sur son écran de fin de séance.
+       `_renderSeStats` existe des deux côtés : sur l'ancien code la tuile annonce la durée du
+       chrono seul, sur le nouveau elle annonce le total et nomme le cardio. */
+    try{
+      const el=document.getElementById('se-stats');
+      if(el){ _renderSeStats(s1,0); out.tuileHoro=el.textContent.replace(/\s+/g,' ').trim(); }
+    }catch(e){ out.tuileHoro='ERREUR: '+e.message; }
+    // ② chrono : il court de la 1ʳᵉ série à « Terminer » → l'APRÈS est dedans, l'AVANT non
+    const s2={date:today(),duration:60*60,exs:[{name:'Squat à la Barre',
+      sets:[...Array(8)].map(()=>({kg:100,reps:5,done:true,type:'N'}))}]};   // aucun `at`
+    s2.cardioAvant={type:'velo',intensity:'modere',duration:20};
+    s2.cardio={type:'tapis',intensity:'modere',duration:15};
+    out.chrono=_dt(s2,nS);
+    // ③ durée SAISIE à la main : c'est SON chiffre, on n'y touche pas
+    const s3={...s2, durationDite:true};
+    out.saisie=_dt(s3,nS);
+    // ④ séance de CARDIO SEUL (valide depuis le 02/08) : le chrono n'a jamais démarré
+    const s4={date:today(),exs:[],duration:0,cardioAvant:{type:'velo',intensity:'modere',duration:30}};
+    out.cardioSeul=_dt(s4,0);
+    try{
+      const el=document.getElementById('se-stats');
+      if(el){ _renderSeStats(s4,0); out.tuileCardioSeul=el.textContent.replace(/\s+/g,' ').trim(); }
+    }catch(e){ out.tuileCardioSeul='ERREUR: '+e.message; }
+    // ⑤ aucune séance de cardio : le total ne bouge pas d'une minute
+    out.sansCardio=_dt(base(),nS);
+    // ⑥ ce que voit l'écran de séance AVANT la 1ʳᵉ série (le « 0:00 » qui inquiétait Michel)
+    S.wkt={date:today(),exs:[],cardioAvant:{type:'velo',intensity:'modere',duration:20}};
+    out.avantChrono=_fmtElapsed();
+    S.wkt.startTs=Date.now()-300000;
+    out.apresChrono=_fmtElapsed();
+    S.wkt=null;
+    return out;
+  });
+  t('⭐⭐ horodatage : les 20 min de cardio d\'AVANT s\'ajoutent à la muscu mesurée',
+    !!D.horo && D.horo.cardioMin===20 && Math.round(D.horo.min)===Math.round(D.horo.muscuMin)+20,
+    JSON.stringify(D.horo));
+  t('⭐⭐ CE QUE L\'ÉCRAN AFFICHE : la tuile Durée nomme les minutes de cardio',
+    /cardio/i.test(D.tuileHoro||''), D.tuileHoro);
+  t('⭐⭐ chrono : on n\'ajoute QUE l\'avant — l\'après y est déjà (sinon compté 2 fois)',
+    !!D.chrono && D.chrono.src==='chrono' && D.chrono.cardioMin===20, JSON.stringify(D.chrono));
+  t('⚠️ durée SAISIE à la main : on n\'ajoute RIEN, c\'est son chiffre',
+    !!D.saisie && D.saisie.src==='saisie' && D.saisie.cardioMin===0, JSON.stringify(D.saisie));
+  t('⭐ cardio SEUL : la séance dure ses 30 min, alors que le chrono n\'a jamais tourné',
+    !!D.cardioSeul && Math.round(D.cardioSeul.min)===30, JSON.stringify(D.cardioSeul));
+  t('⭐⭐ ... et la tuile Durée EXISTE sur une séance de cardio seul (elle manquait)',
+    /30 min/.test(D.tuileCardioSeul||''), D.tuileCardioSeul);
+  t('⚠️ sans cardio noté, la durée totale = la durée de muscu, à la minute près',
+    !!D.sansCardio && D.sansCardio.cardioMin===0 && D.sansCardio.min===D.sansCardio.muscuMin,
+    JSON.stringify(D.sansCardio));
+  t('⭐ avant la 1ʳᵉ série, l\'écran annonce le cardio noté au lieu d\'un « 0:00 » muet',
+    /20 min/.test(D.avantChrono), D.avantChrono);
+  t('⚠️ et dès que le chrono tourne, c\'est LUI qui s\'affiche (pas le cardio)',
+    /^\d+:\d\d$/.test(D.apresChrono), D.apresChrono);
+  await _cD.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');
