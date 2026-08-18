@@ -7,6 +7,58 @@ Fichier de notes : bugs à corriger, fonctionnalités à explorer. Rien ici n'es
 
 ---
 
+## 🤸‍♂️ ÉCHAUFFEMENT & MOBILITÉ — le dossier à construire (Michel, 18/08/2026)
+
+> Michel, entre deux sujets nutrition : *« l'échauffement avant une séance de muscu et la mobilité,
+> un dossier qu'il faudra construire aussi »*. **Noté ici pour ne plus avoir à y penser** — on reste
+> sur la nutrition. Rien à faire maintenant.
+
+**⚠️⚠️ NE PAS CONFONDRE AVEC LA MONTÉE EN CHARGE — c'est le premier piège de ce dossier.**
+Ce qui est **déjà construit** (ft-v887, ft-v890, `_completerMonteeEnCharge` / `_repsPalier` dans
+`log.js`), ce sont les **paliers d'échauffement d'un exercice** : 60 → 90 → 110 avant 130 kg, avec
+la dose qui dépend de la place dans la séance et les répétitions qui décroissent. C'est de
+l'**échauffement SPÉCIFIQUE**, sous forme de séries, dans la séance.
+Ce que Michel demande ici est **l'autre échauffement** : les **5-10 minutes AVANT de toucher une
+barre** — élever la température, faire circuler, ouvrir les épaules et les hanches — et la
+**mobilité** comme pratique à part entière (avant, après, ou un jour à elle).
+
+**⭐ LE CONSTAT QUI JUSTIFIE LE DOSSIER, vérifié dans le code (18/08)** : la consigne existe, mais
+**seulement dans le TEXTE**. `coach.js` dit à Milo *« Bâtir une séance : échauffement 5-10 min
+OBLIGATOIRE (mobilité) »* — et **rien, nulle part, ne le collecte, ne le mesure ni ne l'affiche**.
+Pas de champ, pas d'écran, pas de trace dans l'historique. Milo le recommande, l'app l'ignore :
+c'est **R4 dans sa définition même** (l'information ne descend jamais jusqu'à la donnée) et **R3**
+(aucun comportement observable). Et c'est **exactement le motif qui a produit le bug du 10/08** :
+la même phrase disait « mobilité + 1-2 séries légères », le modèle a suivi la lettre, et il a fallu
+sortir le calcul du prompt pour le mettre dans le code.
+👉 **Donc le vrai sujet de ce dossier n'est pas d'écrire une liste d'étirements : c'est de décider
+ce qui devient une DONNÉE.**
+
+**Les questions à trancher le jour où on le construira** (aucune n'est tranchée aujourd'hui) :
+- **Est-ce que ça se logge ?** Une case « échauffement fait », une durée, des mouvements nommés ?
+  Ou rien du tout — et alors Milo n'a pas le droit d'en parler comme d'un fait (R29).
+- **Est-ce que ça s'adapte à la séance ?** L'app connaît déjà les **régions travaillées** du jour
+  (`_mscScores`, R31) : un échauffement d'épaules avant un développé, de hanches avant un squat,
+  se **déduit** — il n'a pas à être demandé.
+- **Zones fragiles.** Quelqu'un qui a déclaré une épaule sensible n'a pas le même échauffement.
+  ⚠️ Le **Gardien** est déjà propriétaire de cette information (`_gardienZones`) — on la lit, on
+  ne la re-demande pas et on n'en fait pas une 2ᵉ copie (**R2**).
+- **La frontière médicale.** Échauffement et mobilité ≠ rééducation. La Constitution s'applique :
+  adapter, jamais prescrire un soin, et renvoyer au professionnel de santé sur une douleur.
+- **Le coût en temps.** Le reproche du 16/08 (*« j'ai passé presque la moitié de ma séance sur des
+  exercices d'échauffement »*) vaut d'avance ici : une routine longue ne sera pas faite. Court,
+  ciblé, ou rien.
+
+**🔗 Où ça se rattache** : la **mobilité** a déjà sa place dans la vision *« Les PRATIQUES
+d'entraînement »* (plus bas dans ce fichier, 27/07) — cardio · mobilité · pilates · yoga · préhab.
+**Ne pas créer un module « mobilité » séparé** le jour venu : c'est une *pratique* parmi les autres,
+et l'audit d'architecture de cette section-là a déjà conclu qu'aucune refonte n'est nécessaire.
+L'**échauffement**, lui, est plus proche de la séance elle-même — il est probablement le premier
+morceau à construire, parce qu'il est **déductible** de ce que l'app sait déjà.
+
+*Priorité : après la nutrition. Ne ralentit rien.*
+
+---
+
 ## 🫀 POLAR ACCESSLINK — la piste sérieuse pour les données physiologiques (11/08/2026)
 
 > Née de la question des calories (`docs/CALORIES-SOURCES.md`). Proposition de ChatGPT, vérifiée
