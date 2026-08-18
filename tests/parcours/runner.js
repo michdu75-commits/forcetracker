@@ -6274,6 +6274,60 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC L - UNE MISE A JOUR NE TOMBE PAS PENDANT UNE SEANCE (18/08/2026) ==
+   Michel, pour la 2e fois : « faut eviter de faire une mise a jour quand je suis en seance,
+   ca me nique mon bilan de fin de seance ». La 1re fois (15/08) avait cree le garde-fou.
+   /!\ LE TROU : « seance en cours » se mesurait au nombre d'EXERCICES. Une seance commencee
+   par du CARDIO, sans exercice encore saisi — sa seance de ce matin — ne comptait pas.
+   /!\ Et une seance EN PAUSE compte aussi : en pause n'est pas terminee. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    if(typeof _majPeutSAppliquer!=='function') return {err:'_majPeutSAppliquer absente'};
+    const o={};
+    // on se met dans les conditions les plus permissives : accueil, mise a jour en attente
+    goScreen('home',null); await new Promise(r=>setTimeout(r,200));
+    window._swReloadPending=true;
+    S.wkt=null;                     o.sansSeance      = _majPeutSAppliquer();
+    S.wkt={date:today(),exs:[]};    o.ecranVideOuvert = _majPeutSAppliquer();
+    // ⭐ le cas de Michel : 20 min de velo, aucun exercice saisi
+    S.wkt={date:today(),exs:[],cardioAvant:{type:'velo',intensity:'modere',duration:20}};
+    o.cardioSeul = _majPeutSAppliquer();
+    // seance demarree (chrono), toujours aucun exercice
+    S.wkt={date:today(),exs:[],startTs:Date.now()-60000};
+    o.demarree = _majPeutSAppliquer();
+    // seance classique, puis EN PAUSE
+    S.wkt={date:today(),exs:[{name:'Squat a la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}],startTs:Date.now()-60000};
+    o.avecExos = _majPeutSAppliquer();
+    S.wkt.pausedAt=Date.now();
+    o.enPause = _majPeutSAppliquer();
+    S.wkt=null; window._swReloadPending=false;
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- L. Une mise a jour ne tombe pas pendant une seance --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    t('sans aucune seance, sur l\'accueil : la mise a jour PEUT s\'appliquer',
+      R.sansSeance===true, 'peut='+R.sansSeance);
+    t('un ecran Seance ouvert mais VIDE ne bloque pas (ce n\'est pas une seance)',
+      R.ecranVideOuvert===true, 'peut='+R.ecranVideOuvert);
+    t('⭐⭐ 20 MIN DE CARDIO SANS EXERCICE : la mise a jour ATTEND (retour Michel du 18/08)',
+      R.cardioSeul===false, 'peut='+R.cardioSeul);
+    t('⭐ chrono demarre sans exercice saisi : elle attend aussi',
+      R.demarree===false, 'peut='+R.demarree);
+    t('seance avec exercices : elle attend (comportement du 15/08, intact)',
+      R.avecExos===false, 'peut='+R.avecExos);
+    t('/!\\ seance EN PAUSE : elle attend — en pause n\'est pas terminee',
+      R.enPause===false, 'peut='+R.enPause);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

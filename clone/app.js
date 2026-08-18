@@ -4260,9 +4260,21 @@ window._swReloadPending=false;
    train de rien faire. Le reste du temps elle attend — le nouveau Service Worker est déjà
    installé, rien n'est perdu, et elle s'applique dès le retour à l'accueil ou à la prochaine
    ouverture de l'app. */
+/* ⚠️⚠️ « SÉANCE EN COURS » NE SE MESURE PLUS AU NOMBRE D'EXERCICES (18/08/2026).
+   Michel : *« faut éviter de faire une mise à jour quand je suis en séance, ça me nique mon bilan
+   de fin de séance »* — la 2ᵉ fois qu'il le dit (la 1ʳᵉ, le 15/08, a créé ce garde-fou).
+   LE TROU : la condition lisait `S.wkt.exs.length`. Une séance **commencée mais sans exercice
+   encore saisi** — typiquement 20 min de vélo AVANT la musculation, exactement sa séance de ce
+   matin — ne comptait donc pas comme une séance. Le seul rempart restant était « on n'applique
+   que sur l'Accueil » : un aller-retour par l'accueil pendant le cardio, et la mise à jour
+   tombait au milieu.
+   👉 On lit maintenant `_seanceOuverte()` (log.js), la MÊME définition que le verrou d'écran —
+   démarrée, ou avec des exercices, ou avec un cardio noté. Et **pause comprise** : une séance en
+   pause n'est pas une séance finie. */
 function _majPeutSAppliquer(){
   if(!window._swReloadPending) return false;
-  if(S.wkt&&S.wkt.exs&&S.wkt.exs.length) return false;                 // séance en cours
+  if(typeof _seanceOuverte==='function' ? _seanceOuverte()
+     : (S.wkt&&S.wkt.exs&&S.wkt.exs.length)) return false;             // séance non terminée
   const ov=document.getElementById('ov-session-end');
   if(ov&&ov.classList.contains('open')) return false;                  // récapitulatif à l'écran
   if(window._curScreen&&window._curScreen!=='home') return false;      // la personne fait autre chose
@@ -4279,7 +4291,8 @@ function _reloadForUpdate(){
   window._swReloadPending=true;
   if(_appliquerMaj()) return;
   // Reportée : on ne prévient que pendant une séance (le seul cas où l'attente peut durer).
-  if(S.wkt&&S.wkt.exs&&S.wkt.exs.length&&typeof toast==='function')
+  // Même définition que ci-dessus — sinon la séance qui commence par du cardio ne dirait rien.
+  if((typeof _seanceOuverte==='function'?_seanceOuverte():(S.wkt&&S.wkt.exs&&S.wkt.exs.length))&&typeof toast==='function')
     toast('Mise à jour disponible — appliquée à la fin de la séance','info');
 }
 if('serviceWorker' in navigator){

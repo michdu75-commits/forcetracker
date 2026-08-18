@@ -16,10 +16,22 @@ let _wakeLock=null;
    information, un propriétaire — et ici l'information est « je m'entraîne », pas « je regarde »).
    ⚠️ ET IL SE RELÂCHE QUAND LA SÉANCE EST EN PAUSE : une séance en pause n'est pas un
    entraînement, et laisser l'écran d'un téléphone allumé sans raison se paie en batterie. */
-function _wktEnCours(){
+/* ⚠️⚠️ DEUX QUESTIONS VOISINES, ET IL NE FAUT PAS LES CONFONDRE (18/08/2026) :
+     · `_seanceOuverte()` → « y a-t-il une séance NON TERMINÉE ? » — pause comprise. C'est ce
+       qui doit retenir une **mise à jour** : une séance en pause est une séance qu'on n'a pas
+       finie, et la recharger coûterait le récapitulatif de fin.
+     · `_wktEnCours()`    → « est-ce que je m'entraîne LÀ, maintenant ? » — pause exclue. C'est
+       ce qui doit tenir l'**écran allumé** : en pause, on n'a aucune raison de brûler la
+       batterie.
+   ⚠️ ET « OUVERTE » NE VEUT PAS DIRE « `S.wkt` EXISTE » : `renderLog()` crée un objet vide dès
+   qu'on affiche l'écran Séance. Une vraie séance a démarré (`startTs`), porte des exercices, ou
+   porte un cardio noté — c'est cette définition-là, et une seule, que tout le monde lit (R2). */
+function _seanceOuverte(){
   if(typeof S==='undefined'||!S.wkt)return false;
-  if(S.wkt.pausedAt)return false;                      // en pause → ce n'est plus un entraînement
   return !!(S.wkt.startTs || (S.wkt.exs&&S.wkt.exs.length) || _cardioNoteMin()>0);
+}
+function _wktEnCours(){
+  return _seanceOuverte() && !S.wkt.pausedAt;          // en pause → ce n'est plus un entraînement
 }
 async function _acquireWakeLock(){
   if(!('wakeLock' in navigator))return;
