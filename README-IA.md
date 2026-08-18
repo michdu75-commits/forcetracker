@@ -34,6 +34,42 @@
 ## 🧭 La règle qui fait que ça marche
 **Chaque** décision, idée abandonnée, feature livrée, retour testeur → **GRAVÉ dans le bon fichier, en temps réel** (règle d'or #12 de `CLAUDE.md`). C'est ça, la mémoire partagée : on n'oublie rien, et personne n'a besoin de répéter le contexte.
 
+## 🔬 UN AUDIT EXTÉRIEUR SE VÉRIFIE — TOUJOURS, ET DANS LES DEUX SENS (18/08/2026)
+
+> Michel, quand on a mis en place le travail à deux instances : *« ouais mais moi je veux que tu
+> vérifies ce qu'il dit »*. **C'est la règle, et elle n'est pas négociable.**
+
+**Rien de ce qu'une IA extérieure affirme n'entre dans le code sans avoir été RE-MESURÉ ici.** Pas
+par méfiance : parce qu'une instance qui n'exécute rien raisonne sur les documents, et **les
+documents décrivent l'intention, le code décrit le comportement**. Les deux divergent toujours un
+peu — c'est même exactement ce qu'un audit sert à trouver.
+
+**Le cas qui a produit cette règle** — contre-audit nutrition v1.1, 10 points :
+
+| | Résultat après vérification dans le code |
+|---|---|
+| **Confirmés et livrés le jour même** | le plancher calorique manquant (ft-v906) · le plancher protéines du kéto |
+| **Confirmé, et PIRE que décrit** | le mélange cru/cuit — il ne pouvait pas voir que les deux états cohabitent dans la même table |
+| **Ses chiffres corrigés** | 947 kcal annoncés → **1 047** mesurés (il avait oublié le +100 de la phase de charge) ; sa liste de 4 profils touchés se réduit à 2 |
+| **MES chiffres corrigés par lui** | seuils de cache exprimés dans deux unités inverses **dans le même document** · chiffres CIQUAL cités de mémoire · plafond IA présenté comme s'il bornait tout le monde |
+
+**⭐ La leçon tient en une ligne : aucun des deux ne fait autorité seul.** Il a trouvé trois erreurs
+chez moi, j'en ai trouvé deux chez lui, et le résultat combiné vaut mieux que ce que l'un ou l'autre
+aurait produit. **La vérification n'est pas un contrôle hiérarchique, c'est le mécanisme.**
+
+**Comment ça se passe concrètement :**
+1. L'audit arrive (PDF, message, peu importe).
+2. **Chaque affirmation vérifiable est classée** : confirmée par la mesure · corrigée avec le bon
+   chiffre · non vérifiable, et alors on le DIT plutôt que de trancher.
+3. Ce qui est confirmé et touche à la **santé ou à la sécurité** passe devant le reste.
+4. La réponse lui est renvoyée **point par point**, y compris mes propres erreurs — sinon il
+   raisonnera la fois d'après sur les mêmes chiffres faux.
+
+**⚠️ Et le piège symétrique, déjà payé** : ne pas *deviner* ce qu'un audit veut dire. Le 18/08,
+j'ai cru identifier deux erreurs de Milo à partir des données — plausibles, vérifiables… et fausses.
+Ce sont les captures de Michel qui ont donné les vraies. *Réparer ce qui n'est pas cassé coûte
+autant que ne pas réparer* (`BUGS.md` famille 12ter).
+
 ## 🎨 Demander une MAQUETTE à une IA externe (Gemini, ChatGPT, un outil de design)
 **Une seule chose à faire : coller le bloc de `docs/DESIGN-KIT.md`** en tête de la demande.
 Il est **autosuffisant** — contraintes, couleurs réelles, composants existants, et surtout les
