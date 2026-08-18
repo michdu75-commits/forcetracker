@@ -41,6 +41,7 @@
 | 12 | **Les erreurs de MÉTHODE** (mesure fausse) | ≥ 8 | — *le plus dangereux, voir §12* |
 | 13 | **Le NOM comme clé primaire** | *racine de 6 défauts* | identifiant stable (ft-v735, **étape 1/3**) |
 | 14 | **Mesurer au lieu de supprimer** | 1 (toute la journée du 02/08) | la question des 3 réponses, voir §14 |
+| 15 | **La règle juste, définie trop étroit** | 3 (la même journée) | définitions **nommées** (`_seanceOuverte`…) + témoins sur le cas LIMITE |
 
 ---
 
@@ -726,7 +727,47 @@ devinette baisse quand le catalogue se stabilise, **alors que le coût de la sur
 
 ---
 
-## 🧭 Les 10 réflexes qui sortent de tout ça
+## 15. 📏 LA RÈGLE JUSTE, DÉFINIE TROP ÉTROIT — *les trois bugs du 18/08* 
+
+**La famille la plus discrète du projet, et elle a frappé trois fois dans la même journée.**
+Ce n'est ni un oubli, ni une règle absente : la règle **existe**, elle est **écrite**, elle est
+**testée**, et elle passe au vert. Ce qui cloche, c'est **UN MOT dans sa définition** — trop
+serré d'un cran. Le comportement observé est donc « la règle ne s'applique pas », alors que le
+code fait exactement ce qui est écrit.
+
+| La règle existait… | …et sa définition était trop étroite | Livré |
+|---|---|---|
+| « ne jamais recharger l'app en pleine séance » (15/08) | *séance en cours* = `S.wkt.exs.length` → une séance qui commence par **20 min de cardio** ne comptait pas | ft-v903 |
+| « ouvrir l'exercice suivant quand le précédent est fini » (ft-v825) | *terminé* = **toutes les lignes cochées** → les paliers d'échauffement que l'app ajoute elle-même bloquaient la bascule | ft-v904 |
+| « ne pas reprocher une montée en charge qu'on a écrite » (15/08) | *on* = **l'app seulement** → une montée prescrite par **Milo** n'était pas couverte | ft-v905 |
+
+### 🔎 Comment la reconnaître
+- **Le signe le plus sûr : la personne signale DEUX FOIS la même chose.** Les trois cas ci-dessus
+  sont des retours de Michel sur un comportement déjà « corrigé ». *Quand la même remarque revient,
+  ce n'est pas la règle qu'il faut réécrire — c'est sa DÉFINITION qu'il faut aller relire.*
+- Le test de la règle est **vert**, et il a raison de l'être : il teste le cas pour lequel la
+  définition a été écrite. Il ne peut pas voir le cas qu'elle exclut.
+- La règle emploie un mot du métier (« séance », « terminé », « on ») qui a **plusieurs sens
+  possibles**, et le code n'en a retenu qu'un — souvent celui du jour où elle a été écrite.
+- ⚠️ **Souvent, c'est un correctif ANTÉRIEUR qui a fabriqué le cas d'échec** : ft-v887 a fait
+  ajouter des paliers d'échauffement par l'app, ce qui a créé la condition qui bloquait ft-v825.
+  *Personne n'a rien cassé ; le monde autour de la règle a bougé.*
+
+### 🛡️ Ce qui protège
+- **Nommer la définition dans une fonction, jamais l'écrire en ligne** : `_seanceOuverte()`,
+  `_wktEnCours()`, `_estEch()`. Une définition qui a un nom se relit, se teste et se corrige **en
+  un seul endroit** (R2). Une condition écrite à la volée dans un `if` se duplique et diverge.
+- **Écrire à côté ce que la définition EXCLUT**, pas seulement ce qu'elle inclut — c'est
+  l'exclusion qui devient fausse avec le temps.
+- **Le témoin doit jouer le cas limite**, pas le cas nominal : paliers laissés vides, séance de
+  cardio seul, séance en pause. Les blocs L, LI et LII de `tests/parcours/` sont écrits comme ça.
+- ⚠️ **Et le réflexe qui vaut pour toute la famille** : quand on corrige un auteur, une source ou
+  un chemin, **chercher sa jumelle immédiatement** (réflexe 5, R8). Le 15/08 on a couvert « écrite
+  par l'app » et pas « prescrite par Milo » — trois jours et un incident identique plus tard.
+
+---
+
+## 🧭 Les 11 réflexes qui sortent de tout ça
 
 1. **Avant de dire qu'une chose manque** → la chercher dans le code et dans `docs/INVENTAIRE.md`.
 2. **Avant de « réparer » du code orphelin** → chercher la décision. Sinon, demander.
@@ -743,11 +784,13 @@ devinette baisse quand le catalogue se stabilise, **alors que le coût de la sur
    ou d'entrée de calcul. Voir la famille 13.
 9. **Avant d'ajouter une couche** (une règle, un test, un indicateur) → se demander si on peut en
    **RETIRER** une. Mesurer un problème qu'on aurait pu supprimer, c'est le rendre permanent.
-10. **Quand un outil signale un défaut là où RIEN n'a changé** → suspecter l'outil avant le code, et
+10. **Quand la même remarque revient une 2ᵉ fois sur un comportement déjà corrigé** → ne pas
+   réécrire la règle : aller relire **sa définition**. Trois fois le 18/08. Voir la famille 15.
+11. **Quand un outil signale un défaut là où RIEN n'a changé** → suspecter l'outil avant le code, et
    ouvrir la chose incriminée pour la lire. Deux fausses alertes sur deux dans l'audit du 18/08 :
    une recherche qui se trouvait elle-même, et une différence de CASSE. Voir la famille 12ter.
 
 ---
 
-*Dernière mise à jour : 18/08/2026 (famille 12ter — la fausse panne). À compléter à chaque nouveau bug — symptôme, cause, famille,
+*Dernière mise à jour : 18/08/2026 (familles 12ter — la fausse panne — et 15 — la règle définie trop étroit). À compléter à chaque nouveau bug — symptôme, cause, famille,
 et ce qui le protège désormais.*
