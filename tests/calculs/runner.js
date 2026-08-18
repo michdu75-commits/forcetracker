@@ -1310,6 +1310,75 @@ console.log('\n═══ 10. Durée totale : la muscu mesurée + le cardio qui n
   await _cD.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+// LE PLANCHER CALORIQUE (18/08/2026) — trouvé par un contre-audit exterieur, VERIFIE ici dans
+// le code : `autoKcal` etait une addition sans plancher, alors que le Gardien de Milo alerte
+// sous 1500 kcal (H) / 1200 (F). L'app prescrivait une cible qu'elle aurait signalee si la
+// personne l'avait mangee — et le Gardien ne s'allume que si elle tient son journal, donc il
+// protegeait exactement la population qui en avait le moins besoin.
+console.log('\n═══ 11. Plancher calorique + plancher proteines keto ═══');
+{
+  const {c:_cP,p:_pP}=await boot(null,{});
+  const P=await _pP.evaluate(()=>{
+    const out={};
+    /* /!\ `nutritionPhase` ne vaut QUE 'charge' ou 'decharge' — c'est un interrupteur a deux
+       positions, sans etat neutre (state.js, defaut 'charge'). Mon 1er jet passait '' : une
+       valeur qui n'existe pas, et qui tombait donc dans la branche 'decharge' (-100 kcal).
+       Un temoin qui emploie une entree impossible mesure autre chose que ce qu'il annonce. */
+    const pose=(g,bw,ht,age,act,goal,phase)=>{
+      const ph=phase||'charge';
+      S.gender=g;S.bw=bw;S.height=ht;S.age=age;S.activityLevel=act;S.goal=goal;
+      S.foodMode='';S.keto=false;S.manualKcal=0;S.nutritionPhase=ph;
+      return calcMacros(ph);
+    };
+    // ⭐ les 3 profils du contre-audit, refaits avec nos propres regles
+    out.femmeSed   = pose('F',55,160,45,1.2,'perte').calories;
+    out.femmeDech  = pose('F',55,160,45,1.2,'perte','decharge').calories;
+    out.femmeActive= pose('F',55,160,45,1.375,'perte').calories;
+    out.homme      = pose('H',70,175,40,1.2,'perte').calories;
+    // le plancher DIT qu'il a mordu
+    /* /!\ CE BLOC DOIT TOURNER DES DEUX COTES : appeler directement la fonction neuve faisait
+       PLANTER le controle negatif au lieu de le faire rougir (5e fois — ft-v887, 890, 892, 901,
+       905). Le garde rend `null`, ce qui FAIT ECHOUER le temoin ; les autres mesures passent
+       par `calcMacros`, presente des deux cotes. */
+    const _plF=(typeof plancherKcalActif==='function')?plancherKcalActif:(()=>null);
+    pose('F',55,160,45,1.2,'perte');
+    const pl=_plF('charge');
+    out.expliqueBrut=pl?pl.brut:null; out.expliquePlancher=pl?pl.plancher:null;
+    // /!\ un profil normal n'est PAS touche
+    out.hommeMuscle=pose('H',85,180,48,1.55,'muscle').calories;
+    pose('H',85,180,48,1.55,'muscle'); out.pasDePlancher=_plF('charge')===null;
+    // /!\ une cible SAISIE A LA MAIN reste celle de la personne
+    S.gender='F';S.bw=55;S.height=160;S.age=45;S.activityLevel=1.2;S.goal='perte';S.manualKcal=900;S.nutritionPhase='charge';
+    out.manuel=calcMacros('charge').calories;
+    S.manualKcal=0;
+    // ⭐ keto : 15 % de proteines passe sous 0,8 g/kg chez quelqu'un de lourd
+    S.gender='H';S.bw=100;S.height=180;S.age=40;S.activityLevel=1.2;S.goal='perte';S.foodMode='keto';
+    const k=macrosForKcal(1950);
+    out.ketoProt=k.prot_g; out.ketoRatio=+(k.prot_g/100).toFixed(2);
+    out.ketoKcal=k.prot_g*4+k.carbs_g*4+k.fat_g*9;
+    S.foodMode='';
+    return out;
+  });
+  t('⭐⭐ FEMME SEDENTAIRE EN PERTE : plus jamais 947 kcal (plancher 1200)',
+    P.femmeSed>=1200, P.femmeSed+' kcal');
+  t('⭐⭐ ... meme en phase de decharge (c\'etait 847 kcal)',
+    P.femmeDech>=1200, P.femmeDech+' kcal');
+  t('femme legerement active en perte : au moins 1200', P.femmeActive>=1200, P.femmeActive+' kcal');
+  t('homme sedentaire en perte : au moins 1500', P.homme>=1500, P.homme+' kcal');
+  t('⭐ le plancher DIT de combien il a releve la cible (jamais en silence)',
+    P.expliqueBrut>0 && P.expliqueBrut<P.expliquePlancher, JSON.stringify([P.expliqueBrut,P.expliquePlancher]));
+  t('/!\\ un profil ordinaire n\'est PAS touche par le plancher',
+    P.hommeMuscle>2000 && P.pasDePlancher===true, P.hommeMuscle+' kcal');
+  t('/!\\ une cible SAISIE A LA MAIN reste celle de la personne (on ne decide pas a sa place)',
+    P.manuel===900, P.manuel+' kcal');
+  t('⭐⭐ KETO : les proteines ne descendent plus sous 0,8 g/kg',
+    P.ketoRatio>=0.8, P.ketoProt+' g = '+P.ketoRatio+' g/kg');
+  t('/!\\ ... et le total calorique du keto reste juste (les lipides absorbent)',
+    Math.abs(P.ketoKcal-1950)<=20, P.ketoKcal+' kcal');
+  await _cP.close();
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');

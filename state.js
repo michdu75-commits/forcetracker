@@ -694,8 +694,17 @@ function macrosForKcal(kcal){
   // — 5% glucides / 15% protéines / 80% lipides (standard keto, celui de sa nutritionniste).
   if(S.foodMode==='keto'||S.keto){
     const carbs_g=Math.max(0,Math.round(kcal*0.05/4));
-    const prot_g =Math.max(0,Math.round(kcal*0.15/4));
-    const fat_g  =Math.max(0,Math.round(kcal*0.80/9));
+    /* 🛡️ 15 % DE PROTÉINES PASSE SOUS LE SEUIL DU GARDIEN CHEZ QUELQU'UN DE LOURD (18/08/2026).
+       Même défaut que le plancher calorique, sur un autre levier : le Gardien alerte sous
+       **0,8 g/kg**, et une répartition kéto à 15 % descend en dessous dès que le poids est élevé
+       par rapport aux calories — 100 kg à 1 950 kcal donne 73 g, soit 0,73 g/kg. *L'app générait
+       la répartition qui déclenche sa propre alerte.* On remonte au plancher, et les LIPIDES
+       absorbent la différence : ce sont eux la variable d'ajustement d'un régime cétogène, pas
+       les glucides (5 % est la contrainte qui définit le régime, on n'y touche pas). */
+    const protMini=Math.round((S.bw||0)*0.8);
+    const prot_g =Math.max(0,Math.round(kcal*0.15/4),protMini);
+    const reste  =kcal-prot_g*4-carbs_g*4;
+    const fat_g  =Math.max(0,Math.round(reste/9));
     return{prot_g,fat_g,carbs_g};
   }
   // LOW CARB : glucides réduits SANS viser la cétose — 25 % glucides / 30 % protéines / 45 % lipides.
@@ -720,7 +729,11 @@ function macrosForKcal(kcal){
   return{prot_g,fat_g,carbs_g};
 }
 // Objectif calorique auto (TDEE + objectif + phase + cycle). Isolé pour l'aperçu « auto ».
-function autoKcal(phase){
+// ⚠️ `autoKcal` = la cible RETENUE (plancher compris). `_autoKcalBrut` = le calcul nu, qui
+//    n'existe que pour pouvoir DIRE de combien le plancher a relevé la cible. Une seule table
+//    d'objectifs, lue par les deux — la recopier serait R2 dans sa forme la plus banale.
+function autoKcal(phase){ return _plancherKcal(_autoKcalBrut(phase)); }
+function _autoKcalBrut(phase){
   const tdee=calcTDEE();
   const goal=S.goal||'muscle';
   const cp=getMensCyclePhase();
@@ -730,6 +743,33 @@ function autoKcal(phase){
   const goalDelta={muscle:350,perte:-450,recomp:-250,force:200,equilibre:0,endurance:100}[goal]||350;
   const phaseAdj=phase==='charge'?100:-100;
   return tdee+goalDelta+phaseAdj+lutealBonus;
+}
+/* 🛡️ L'APP NE PRESCRIT PLUS UNE CIBLE QU'ELLE QUALIFIERAIT D'ALERTE (18/08/2026)
+   Trouvé par un contre-audit extérieur, **vérifié ici dans le code** : `autoKcal` était une
+   addition sans plancher (TDEE + objectif + phase + cycle). Le Gardien de Milo, lui, alerte
+   sous **1500 kcal/j chez un homme et 1200 chez une femme** (coach.js, GARDE-FOUS SANTÉ).
+   Les deux ne se parlaient pas. Refait avec nos propres règles :
+     · femme 55 kg / 160 cm / 45 ans, sédentaire, objectif perte → **947 kcal** affichés ;
+     · la même en phase de décharge → **847 kcal**.
+   *L'application prescrivait une cible qu'elle aurait signalée si la personne l'avait mangée.*
+   ⚠️⚠️ ET L'ASYMÉTRIE EST PIRE QUE ÇA : le Gardien ne s'allume que si la personne TIENT son
+   journal. Or le principe 4 assume qu'une bonne partie ne le tiendra pas — ceux-là voyaient la
+   cible et n'avaient **aucun** garde-fou. Le Gardien protégeait la population qui en avait le
+   moins besoin. C'est **R2** (deux sources pour la même règle de sécurité) doublé de **R4**.
+   ⚠️ LE PLANCHER NE S'APPLIQUE QU'À CE QUE L'APP CALCULE, JAMAIS À `manualKcal` : un chiffre
+   saisi à la main est celui de la personne, et le lui relever en douce serait décider à sa
+   place (R29 + Constitution — on adapte, on n'interdit pas). Il est en revanche EXPLIQUÉ à
+   l'écran, parce qu'une cible qui bouge sans raison visible est pire que pas de plancher. */
+const PLANCHER_KCAL={H:1500,F:1200};
+function _plancherKcal(k){
+  const p=PLANCHER_KCAL[(S.gender==='F')?'F':'H'];
+  return Math.max(Math.round(k), p);
+}
+// Le plancher a-t-il mordu ? (pour l'expliquer à l'écran — jamais un relèvement silencieux)
+function plancherKcalActif(phase){
+  const brut=_autoKcalBrut(phase);
+  const p=PLANCHER_KCAL[(S.gender==='F')?'F':'H'];
+  return brut<p?{brut:Math.round(brut),plancher:p}:null;
 }
 function calcMacros(phase){
   const auto=autoKcal(phase);

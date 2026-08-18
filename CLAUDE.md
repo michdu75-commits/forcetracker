@@ -397,7 +397,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v905`** (prochaine : `ft-v906`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v906`** (prochaine : `ft-v907`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -407,6 +407,21 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v906 — 🛡️ L'APP PRESCRIVAIT UNE CIBLE QU'ELLE AURAIT SIGNALÉE SI ON L'AVAIT MANGÉE** — trouvé par un **contre-audit extérieur** (une autre instance de Claude, sans aucun accès au code, à partir des seuls `docs/NUTRITION-MOTEUR.md` et `NUTRITION-PHILOSOPHIE.md`), puis **vérifié ici dans le code avant d'y toucher**.
+
+**LE DÉFAUT** : `autoKcal()` était une addition sans plancher — TDEE + objectif + phase + cycle. Le **Gardien** de Milo, lui, alerte sous **1 500 kcal/j chez un homme et 1 200 chez une femme** (`coach.js`, GARDE-FOUS SANTÉ). *Les deux ne se parlaient pas* : c'est **R2** — deux sources pour la même règle — sur un sujet de **santé**.
+
+**⚠️ ET LA MESURE CORRIGE L'AUDIT AU PASSAGE** : il annonçait 947 kcal pour une femme de 55 kg sédentaire en perte ; refait avec nos règles, c'est **1 047** — il avait oublié le **+100 de la phase de charge**. En **décharge**, en revanche, on tombe bien à **847**. *Le défaut est réel, mais plus étroit que décrit* — il mord surtout en décharge et sur les profils sédentaires légers, pas sur les quatre cas de son tableau. On corrige ce qui existe, à la taille où il existe.
+
+**⚠️⚠️ ET L'ASYMÉTRIE EST PIRE QUE LE CHIFFRE, c'est le vrai apport de l'audit** : le Gardien ne s'allume que si la personne **tient son journal**. Or le principe 4 de la philosophie assume qu'une bonne partie ne le tiendra pas. Ceux-là voyaient la cible et n'avaient **aucun** garde-fou. *Le Gardien protégeait exactement la population qui en avait le moins besoin.*
+
+**⚠️ LE PLANCHER NE TOUCHE PAS `manualKcal`** : une cible saisie à la main est celle de la personne, et la lui relever en douce serait décider à sa place (R29 + Constitution : on adapte, on n'interdit pas). Il est en revanche **expliqué à l'écran** — *« ton calcul donnait 847 kcal, la cible est remontée à 1 200 : en dessous ce n'est plus un déficit, c'est une restriction »* — parce qu'une cible qui bouge sans raison visible est pire que pas de plancher (P21 : la nutrition ne doit jamais devenir une source de stress).
+
+**⭐ ET LE MÊME DÉFAUT SUR UN AUTRE LEVIER — LE KÉTO GÉNÉRAIT SA PROPRE ALERTE** : 15 % de protéines passe sous **0,8 g/kg** dès que le poids est élevé par rapport aux calories (100 kg à 1 950 kcal → **0,73 g/kg**). Plancher posé, et ce sont les **lipides** qui absorbent : les 5 % de glucides sont la contrainte qui *définit* le régime, on n'y touche pas.
+
+**⚠️ ET UNE ERREUR DE MON TÉMOIN, gardée écrite** : mon premier jet passait `phase=''` — **une valeur qui n'existe pas** (`nutritionPhase` est un interrupteur à deux positions, 'charge' ou 'decharge', jamais neutre). Il tombait donc dans la branche décharge et mesurait autre chose que ce qu'il annonçait. *Un témoin qui emploie une entrée impossible ne teste pas le produit, il teste une fiction.*
+Tests : parcours 739/739, **calculs 215/215** (+9, bloc 11), muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 4 rouges** — 1 047 et 847 kcal prescrits, aucune explication possible, et le kéto à 0,73 g/kg. ⚠️ Le témoin a dû être réécrit **deux fois** : il plantait d'abord sur `plancherKcalActif is not defined` au lieu de rougir (5ᵉ fois — ft-v887, 890, 892, 901, 905). Fichiers : `state.js`, `screens.js`, `tests/calculs/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v906. |
 
 **ft-v905 — 🎯 LES DEUX ERREURS DE MILO AVAIENT UNE CAUSE DANS LE CODE — et la 2ᵉ était la JUMELLE d'un garde-fou déjà posé** — Michel, captures à l'appui : *« Milo a fait 2 erreurs »*, et il a dû le reprendre **deux fois** dans la même conversation. ⚠️ **J'avais d'abord deviné deux AUTRES erreurs** (un bilan périmé, un record de variante) — plausibles, vérifiables… et fausses. C'est en demandant, puis en lisant ses captures, que les vraies sont apparues. *Deviner ce qu'un utilisateur a vu, c'est réparer ce qui n'est pas cassé* (BUGS.md 12ter).
 
@@ -650,8 +665,6 @@ Tests : **parcours 683/683** (+6 sur le bloc XLI réécrit), calculs 179/179, mu
 **⏭️ RESTE À FAIRE, et c'est écrit** : le bouton d'**import** n'existe pas — l'export est un aller simple. Il vient ensuite, avec ses garde-fous (montrer ce que contient le fichier AVANT d'écrire, ne jamais écraser en silence — règle d'or #3).
 **🧹 Au passage** : un commentaire d'`app.js` affirmait que le fichier est chargé par `dashboard.html`. C'est faux depuis que le tableau de bord a retiré ce chargement. Corrigé — *deuxième fois aujourd'hui qu'un commentaire périmé me fait raisonner de travers* (R23).
 Tests : **parcours 677/677** (+6, bloc XLI), calculs 179/179, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 0 trou. Fichiers : `coach.js`, `app.js`, `IDEES-FUTURES.md`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v891. |
-
-**ft-v890 — 🎯 UNE CHARGE QU'ELLE A DÉJÀ CHARGÉE EXISTE FORCÉMENT — et l'idée « intelligente » a été jetée après mesure** — Michel, le 15/08 : *« dans une salle c'est chiant de trouver les poids de 1,25, je perds du temps de fou »*, et sur sa séance du 16/08 des charges en **0,5 kg** sur son tirage à la poulie. Le pas par **matériel** (ft-v879) a réglé les haltères et les barres ; il suppose **5 kg pour toutes les machines**, et beaucoup de piles ne sont pas sur des 5.
 
 **⛔⛔ L'IDÉE ÉVIDENTE A ÉTÉ CONSTRUITE, MESURÉE SUR SES 31 SÉANCES, ET JETÉE — c'est la partie la plus utile de cette version (R30).** Elle consistait à **DÉDUIRE le cran de la machine** : le plus petit écart entre deux charges déjà faites, validé si toutes les charges en sont des multiples. Élégant, entièrement basé sur ses données, et **faux** : sur ses vraies séances il répond **0,5 kg** pour le tirage poulie, **0,5** pour l'abduction, **1,0** pour le pec deck et **10** pour la presse à cuisses. *C'est du bruit de saisie manuelle pris pour une grille.* **Une inférence fausse aurait produit des charges aussi impossibles qu'aujourd'hui, mais avec l'assurance en plus** — et ici l'erreur se paie devant le râtelier (R29 : le droit de deviner dépend du coût de l'erreur).
 

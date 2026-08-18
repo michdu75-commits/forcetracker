@@ -1805,7 +1805,15 @@ function renderNutrition(){try{
         +'<span style="font-size:12.5px;color:var(--t2);flex:1;line-height:1.35;">🎯 <b style="color:var(--t1);">Objectif manuel</b> — '+macros.calories.toLocaleString('fr-FR')+' kcal <span style="color:var(--t3);white-space:nowrap;">(auto : '+macros.autoCalories.toLocaleString('fr-FR')+')</span></span>'
         +'<button onclick="openKcalEdit()" class="btn" style="width:auto;flex:none;padding:7px 12px;font-size:12.5px;background:var(--bg3);color:var(--t1);border:1px solid var(--sep);">Modifier</button></div>';
     } else {
-      adj.innerHTML='<button onclick="openKcalEdit()" class="btn" style="width:100%;padding:11px;font-size:13.5px;background:var(--bg2);color:var(--t2);border:1px solid var(--sep);font-weight:700;">✎ Ajuster mes calories à la main</button>';
+      /* 🛡️ SI LE PLANCHER A RELEVÉ LA CIBLE, ON LE DIT (18/08/2026) — voir `_plancherKcal`
+         (state.js). Une cible qui ne correspond pas au calcul annoncé (« TDEE − 450 ») et qui
+         change sans explication est pire que pas de plancher du tout : la personne croit à un
+         bug, ou pire, cherche à le contourner. On explique en une phrase, et on ne moralise pas
+         (Constitution P21 : la nutrition ne doit jamais devenir une source de stress). */
+      const _pl=(typeof plancherKcalActif==='function')?plancherKcalActif(S.nutritionPhase):null;
+      adj.innerHTML=(_pl?'<div style="display:flex;gap:8px;background:var(--bg2);border:1px solid var(--sep);border-radius:12px;padding:9px 12px;margin-bottom:8px;">'
+          +'<span style="font-size:12.5px;color:var(--t2);line-height:1.4;">🛡️ Ton calcul donnait <b>'+_pl.brut.toLocaleString('fr-FR')+' kcal</b>. La cible est remontée à <b style="color:var(--t1);">'+_pl.plancher.toLocaleString('fr-FR')+' kcal</b> : en dessous, ce n\'est plus un déficit, c\'est une restriction — et on y perd du muscle avant du gras. Tu peux la fixer toi-même si tu suis un protocole encadré.</span></div>':'')
+        +'<button onclick="openKcalEdit()" class="btn" style="width:100%;padding:11px;font-size:13.5px;background:var(--bg2);color:var(--t2);border:1px solid var(--sep);font-weight:700;">✎ Ajuster mes calories à la main</button>';
     }
   }
   document.getElementById('m-prot').textContent=macros.prot_g;
