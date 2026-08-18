@@ -1529,7 +1529,20 @@ function renderSupplCombos() {
         {name:'BCAA (ratio 2:1:1)', dose:'5–10 g inter-séance', info:'Utile si séance > 90 min à jeun. Limite le catabolisme musculaire. Superflu si apport protéique total suffisant.'},
         {name:'Magnésium glycinate', dose:'300–400 mg le soir', info:'Favorise la récupération musculaire, réduit les crampes et améliore la qualité du sommeil. Forme glycinate = meilleure absorption.'},
       ],
-      warn:'⚠️ Évite de prendre créatine et caféine en même temps : la caféine peut réduire l\'absorption de la créatine. Espace-les de 2h minimum.'
+      /* 🔬 CETTE PHRASE ÉTAIT FAUSSE, ET ELLE IMPOSAIT UNE CONTRAINTE POUR RIEN (18/08/2026).
+         Elle disait « la caféine réduit l'absorption de la créatine, espace-les de 2 h ».
+         ⛔ L'absorption n'est PAS en cause : la caféine ne modifie ni la captation musculaire de
+            créatine ni sa pharmacocinétique (Vandenberghe 1996 · Vanakoski 1998).
+         ⚠️ Un antagonisme existe, mais ailleurs — sur le temps de relaxation musculaire (Hespel
+            2002), et les travaux sont DISCORDANTS sur la perte de bénéfice (pour : Vandenberghe
+            1996, Hespel 2002 ; contre : Doherty 2002, Trexler 2016).
+         ⛔ Et l'espacement de 2 h n'a **jamais été testé** : les protocoles portent sur plusieurs
+            jours de caféine quotidienne, pas sur un intervalle dans la journée. La demi-vie de la
+            caféine est d'environ 5 h — décaler de 2 h ne change rien de toute façon.
+         👉 On dit ce qui est mesuré, on dit ce qui est débattu, et on dit ce qui n'a pas été testé.
+         *« Personne n'a mesuré ça » est une information* — c'est ce qui distingue l'app de celles
+         qui comblent le vide par du plausible. Trouvé par le contre-audit v1.2, sources vérifiées. */
+      warn:'☕ Créatine et caféine : l\'absorption n\'est pas en cause — la caféine ne modifie pas la captation musculaire de créatine. Un antagonisme a été mesuré sur la relaxation musculaire, mais les travaux divergent sur la perte de bénéfice. Espacer les prises dans la journée n\'a jamais été testé.'
     },
     {
       id:'force', icon:'🏋️', title:'Force maximale',
@@ -1597,15 +1610,48 @@ function toggleComboCard(id) {
   if (chev) chev.classList.toggle('open', !isOpen);
 }
 
+/* 🩺 LES CONTRE-INDICATIONS N'ÉTAIENT AFFICHÉES NULLE PART (18/08/2026, contre-audit v1.2).
+   C'est le seul point de tout ce dossier qui relève vraiment de la SÉCURITÉ — et donc le seul
+   qui mérite d'être signalé fermement. À distinguer du dépassement des 3 g, qui est
+   **réglementaire** et appelle un ton neutre : mélanger les deux registres les affaiblit tous
+   les deux (R11 — la hiérarchie compte plus que la présence).
+   ⚠️ ON N'INTERDIT PAS, ON RENVOIE AU MÉDECIN : c'est la Constitution (aucun diagnostic, jamais
+   de substitution à un professionnel de santé). Et ce n'est pas affiché en rouge : la nutrition
+   ne doit jamais devenir une source de stress (P21).
+   Sources : ANSES, avis 2023-SA-0216 (pathologies rénales) · avis 2016 sur les compléments pour
+   sportifs, renouvelé en 2024 (risque cardiovasculaire, cardiopathie, atteinte hépatique,
+   troubles neuropsychiatriques, mineurs, grossesse et allaitement). */
+function _creatContreIndic(){
+  return '<div class="tip-box" style="margin-top:6px;border-left:3px solid var(--gold);">'
+    + '\u2695\uFE0F <strong>Avant d\'en prendre</strong> — l\'ANSES déconseille la créatine en cas de maladie rénale, '
+    + 'de facteurs de risque cardiovasculaire, de cardiopathie, d\'atteinte du foie ou de troubles '
+    + 'neuropsychiatriques, ainsi qu\'aux mineurs et aux femmes enceintes ou allaitantes. '
+    + 'Elle recommande aussi de <strong>ne pas cumuler plusieurs sources de créatine</strong> et de choisir des '
+    + 'produits conformes à la norme NF V 94-001 ou EN 17444:2021 (garantie sans substance dopante). '
+    + 'Un doute sur ta situation : parles-en à ton médecin.</div>';
+}
 function renderCreatine() {
   const el = document.getElementById('creat-content');
   if (!el) return;
   const bw = S.bw || 80;
   if (creatPhase === 'charge') {
-    el.innerHTML = '<div class="dose-row"><span class="dose-label">Dose quotidienne</span><span class="dose-val" style="color:var(--blue);">20g / jour</span></div><div class="dose-row"><span class="dose-label">Prises</span><span class="dose-val">4 × 5g</span></div><div class="dose-row"><span class="dose-label">Durée</span><span class="dose-val">5 à 7 jours</span></div><div class="tip-box">💡 Prends <strong>5g</strong> avec chaque repas principal. Après 5-7j passe en maintenance.</div>';
+    el.innerHTML = '<div class="dose-row"><span class="dose-label">Dose quotidienne</span><span class="dose-val" style="color:var(--blue);">20g / jour</span></div><div class="dose-row"><span class="dose-label">Prises</span><span class="dose-val">4 × 5g</span></div><div class="dose-row"><span class="dose-label">Durée</span><span class="dose-val">5 à 7 jours</span></div><div class="tip-box">💡 Prends <strong>5g</strong> avec chaque repas principal. Après 5-7j passe en maintenance.</div>'+_creatContreIndic();
   } else {
     const dose = Math.min(5, Math.max(3, Math.round(bw * 0.05)));
-    el.innerHTML = '<div class="dose-row"><span class="dose-label">Dose quotidienne</span><span class="dose-val" style="color:var(--green);">'+dose+'g / jour</span></div><div class="dose-row"><span class="dose-label">Moment idéal</span><span class="dose-val">Post-workout</span></div><div class="tip-box">✅ Prends <strong>'+dose+'g</strong> chaque jour même sans entraînement. Constance = résultats.</div>';
+    /* ⚠️ CE QUE L'APP AFFICHE DÉPASSE LA DOSE JOURNALIÈRE MAXIMALE FRANÇAISE (18/08/2026).
+       La formule `0,05 g/kg plafonnée à 5 g` **n'apparaît dans aucune source** : c'est une
+       troisième règle, inventée entre deux référentiels qui existent —
+         · **3 000 mg/j** : dose journalière maximale en France (arrêté du 26/09/2016 ; ANSES,
+           avis 2023-SA-0216). L'ANSES précise qu'au-delà, faute d'évaluation des risques, elle ne
+           peut pas se prononcer : *c'est une évaluation absente, pas un risque démontré.*
+         · **3 à 5 g/j** : dosages décrits par l'ISSN (Buford 2007 · Kreider 2017 · Antonio 2021).
+       ⛔ LE CHIFFRE AFFICHÉ N'EST PAS CHANGÉ ICI, ET C'EST DÉLIBÉRÉ : baisser la recommandation
+       par défaut de tout le monde est une décision produit ET de santé — elle appartient à Michel,
+       pas à une correction de nuit (R29 + Constitution : on informe, on ne décide pas à sa place).
+       👉 En attendant, on AFFICHE le repère réglementaire au lieu de le taire. Un chiffre sans son
+       cadre laisse croire qu'il en est un. */
+    const _reg = dose>3 ? '<div class="tip-box" style="margin-top:6px;">📋 Repère : la dose journalière maximale en France est de <strong>3 g</strong> (arrêté du 26/09/2016, avis ANSES 2023-SA-0216). Les sociétés savantes décrivent 3 à 5 g/j. Au-delà de 3 g, l\'ANSES indique ne pas pouvoir se prononcer faute d\'évaluation — ce n\'est pas un risque démontré.</div>' : '';
+    el.innerHTML = '<div class="dose-row"><span class="dose-label">Dose quotidienne</span><span class="dose-val" style="color:var(--green);">'+dose+'g / jour</span></div><div class="dose-row"><span class="dose-label">Moment idéal</span><span class="dose-val">Post-workout</span></div><div class="tip-box">✅ Prends <strong>'+dose+'g</strong> chaque jour même sans entraînement. Constance = résultats.</div>'+_reg+_creatContreIndic();
   }
 }
 
@@ -1627,7 +1673,17 @@ function setCreatPhase(phase, btn) {
 function updateProteinBar() {
   const macros = calcMacros ? calcMacros(S.nutritionPhase || 'charge') : {prot_g: 0};
   const target = macros.prot_g || 0;
-  const eaten = parseFloat(document.getElementById('prot-eaten')?.value) || 0;
+  /* 🍽️ LA BARRE LIT LE JOURNAL (18/08/2026) — jusqu'ici `prot-eaten` était une saisie
+     MANUELLE que RIEN n'alimentait : quelqu'un qui tient son journal devait retaper son total
+     ailleurs pour voir la barre bouger. Deux systèmes de suivi protéique dans la même app, dont
+     un qui ignorait l'autre — **R2**, et **R4** (la donnée existait, elle n'atteignait pas
+     l'écran). Trouvé par le contre-audit v1.2.
+     ⚠️ LA SAISIE MANUELLE RESTE PRIORITAIRE quand elle est remplie : quelqu'un qui ne tient pas
+     son journal doit pouvoir donner son chiffre, et on ne l'écrase pas (R29 — c'est le même
+     arbitrage que `manualKcal`). Le journal ne sert que si le champ est vide. */
+  const _saisi = document.getElementById('prot-eaten')?.value;
+  const _duJournal = (typeof _foodTotals==='function') ? (_foodTotals(today()).prot||0) : 0;
+  const eaten = (_saisi!==''&&_saisi!=null) ? (parseFloat(_saisi)||0) : _duJournal;
   const pct = target > 0 ? Math.min(100, Math.round(eaten / target * 100)) : 0;
   const remaining = Math.max(0, target - eaten);
   const bar = document.getElementById('prot-bar');

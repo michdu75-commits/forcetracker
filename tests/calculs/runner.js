@@ -1460,6 +1460,64 @@ console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne
   }
 }
 
+// ════════════════════════════════════════════════════════════════════
+// SUPPLÉMENTS — contre-audit v1.2 (18/08/2026). Trois constats VÉRIFIÉS dans le code avant
+// correction : une phrase FAUSSE affichée aux utilisateurs, des contre-indications ANSES
+// absentes, et une barre de protéines qu'aucune donnée n'alimentait.
+console.log('\n═══ 13. Supplements : ce qui est affiche est-il vrai ? ═══');
+{
+  const {c:_cS,p:_pS}=await boot(null,{});
+  const S13=await _pS.evaluate(()=>{
+    const o={}; S.bw=85; S.gender='H'; S.foodLog=[];
+    // ── la fiche creatine, en entretien ──────────────────────────────────────
+    if(typeof creatPhase!=='undefined') creatPhase='maintenance';
+    const el=document.getElementById('creat-content');
+    if(!el) return {err:'creat-content absent'};
+    renderCreatine();
+    o.txt=el.textContent||'';
+    o.dose=(o.txt.match(/(\d+)g \/ jour/)||[])[1];
+    // ── la barre de proteines lit-elle le journal ? ──────────────────────────
+    const inp=document.getElementById('prot-eaten');
+    if(inp) inp.value='';
+    S.foodLog=[{date:today(),meal:'dejeuner',name:'Steak',kcal:400,prot:60,carbs:0,fat:18,ts:Date.now()}];
+    persist(); updateProteinBar();
+    o.barre=(document.getElementById('prot-remaining')||{}).textContent;
+    o.cible=(document.getElementById('prot-target-disp')||{}).textContent;
+    // ... et une saisie MANUELLE reste prioritaire
+    if(inp){ inp.value='150'; updateProteinBar(); }
+    o.barreManuelle=(document.getElementById('prot-remaining')||{}).textContent;
+    if(inp) inp.value='';
+    S.foodLog=[]; persist();
+    // ── la phrase caféine, dans les combos premium ───────────────────────────
+    S.premium=true; renderSupplCombos();
+    const cb=document.getElementById('suppl-combos');
+    o.combos=cb?(cb.textContent||''):'';
+    return o;
+  });
+  await _cS.close();
+
+  if(S13.err){ t('X le bloc tourne', false, S13.err); }
+  else{
+    t('⭐⭐ CONTRE-INDICATIONS ANSES affichees sur la fiche creatine (elles ne l\'etaient nulle part)',
+      /ANSES/.test(S13.txt) && /rénale/.test(S13.txt) && /médecin/.test(S13.txt),
+      S13.txt.slice(0,120));
+    t('⭐ le repere REGLEMENTAIRE (3 g, arrete 2016) est affiche des que la dose le depasse',
+      +S13.dose<=3 || /3 g/.test(S13.txt), 'dose='+S13.dose);
+    t('/!\\ ... et il n\'est PAS presente comme un danger (« pas un risque démontré »)',
+      +S13.dose<=3 || /pas un risque démontré/.test(S13.txt));
+    t('⭐⭐ LA PHRASE FAUSSE A DISPARU : la cafeine ne « reduit pas l\'absorption »',
+      !/réduire l'absorption/.test(S13.combos) && !/Espace-les de 2h/.test(S13.combos));
+    t('⭐ ... remplacee par ce qui est MESURE, et par ce qui n\'a pas ete teste',
+      /absorption n'est pas en cause/.test(S13.combos) && /jamais été testé/.test(S13.combos));
+    t('⭐⭐ LA BARRE PROTEINES LIT LE JOURNAL (60 g manges → il en reste cible-60)',
+      S13.barre===String(Math.max(0,parseInt(S13.cible)-60))+'g',
+      'reste='+S13.barre+' cible='+S13.cible);
+    t('/!\\ une saisie MANUELLE reste prioritaire sur le journal (on ne l\'ecrase pas)',
+      S13.barreManuelle===String(Math.max(0,parseInt(S13.cible)-150))+'g',
+      'reste='+S13.barreManuelle);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');
