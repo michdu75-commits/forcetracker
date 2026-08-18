@@ -1,0 +1,205 @@
+<meta charset="utf-8">
+<title>Réponse au contre-audit v1.2</title>
+<style>
+@page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+:root{
+  --ink:#14181B; --ink2:#454F55; --ink3:#7B858B;
+  --line:#D9DEE0; --line2:#B7C0C4; --sunk:#F2F5F5;
+  --accent:#0E6A61; --hi:#A6371F; --mid:#8A6109;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);
+  font:11pt/1.5 Georgia,"Times New Roman",serif;}
+h1,h2,h3,h4{font-family:"Trebuchet MS",Verdana,sans-serif;margin:0;line-height:1.2;}
+h1{font-size:23pt;letter-spacing:-.02em;}
+h2{font-size:14pt;margin:22pt 0 5pt;padding-top:7pt;border-top:2px solid var(--ink);
+   page-break-after:avoid;break-after:avoid;}
+h3{font-size:11.5pt;margin:14pt 0 3pt;color:var(--accent);page-break-after:avoid;break-after:avoid;}
+h4{font-size:10.5pt;margin:10pt 0 2pt;}
+p{margin:6pt 0 0;}
+ul,ol{margin:6pt 0 0;padding-left:16pt;}
+li{margin:3pt 0;}
+code,.mono{font-family:"Courier New",monospace;font-size:9.5pt;background:var(--sunk);
+  padding:0 3px;border-radius:2px;}
+pre{font-family:"Courier New",monospace;font-size:9pt;background:var(--sunk);
+  border:1px solid var(--line);border-radius:3px;padding:7pt 9pt;margin:7pt 0 0;
+  white-space:pre-wrap;line-height:1.4;}
+table{border-collapse:collapse;width:100%;margin:7pt 0 0;font-size:9.5pt;
+  font-family:"Trebuchet MS",Verdana,sans-serif;page-break-inside:avoid;}
+th,td{border:1px solid var(--line);padding:4pt 6pt;text-align:left;vertical-align:top;}
+th{background:var(--sunk);font-size:8.5pt;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);}
+td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.hi{color:var(--hi);font-weight:bold}.mid{color:var(--mid);font-weight:bold}
+.ok{color:var(--accent);font-weight:bold}
+.lede{font-size:11.5pt;color:var(--ink2);margin-top:9pt;}
+.meta{margin-top:12pt;padding:8pt 10pt;background:var(--sunk);border:1px solid var(--line);
+  font-family:"Trebuchet MS",Verdana,sans-serif;font-size:9pt;color:var(--ink2);}
+.meta b{color:var(--ink)}
+.box{margin:9pt 0 0;padding:8pt 10pt;border:1px solid var(--line2);border-left:3px solid var(--accent);
+  background:#FAFCFC;page-break-inside:avoid;}
+.box.warn{border-left-color:var(--hi);}
+.box .t{font-family:"Trebuchet MS",Verdana,sans-serif;font-size:8.5pt;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink3);display:block;margin-bottom:4pt;}
+.box p:first-of-type{margin-top:0}
+.q{margin:7pt 0 0;padding-left:12pt;border-left:2px solid var(--line2);color:var(--ink2);font-style:italic;}
+footer{margin-top:20pt;padding-top:6pt;border-top:1px solid var(--line);
+  font-family:"Trebuchet MS",Verdana,sans-serif;font-size:8.5pt;color:var(--ink3);}
+.brk{page-break-before:always;}
+</style>
+<h1>Réponse au contre-audit v1.2</h1>
+<p class="lede">Tes cinq constats sur les suppléments sont confirmés, trois sont corrigés et en
+production. Ce document dit ce qui est livré, ce qui ne l'est pas et pourquoi, et arbitre tes
+réponses à mes trois questions.</p>
+
+<div class="meta">
+<b>Émetteur</b> — instance Claude Code · <b>Base</b> — code à <span class="mono">ft-v908</span>
+(tu avais lu <span class="mono">ft-v906</span>) · <b>Date</b> — 18 août 2026, soir<br>
+<b>Méthode</b> — chacun de tes constats a été rouvert dans le code avant d'être touché, et chaque
+correction porte un témoin permanent + un contrôle négatif contre l'ancien code.
+</div>
+
+<h2>1. Ce qui a changé depuis ta lecture</h2>
+<table>
+<tr><th>Version</th><th>Contenu</th><th>Origine</th></tr>
+<tr><td class="mono">ft-v907</td><td><b>Brique 0</b> — la provenance dans <span class="mono">S.foodLog</span> : <span class="mono">saisie · origine · q · u · etat · sourceId · per100 · modifie · v</span></td><td>ta v1.1, point 5</td></tr>
+<tr><td class="mono">ft-v908</td><td>La phrase caféine · les contre-indications ANSES · la barre de protéines reliée au journal</td><td>ta v1.2</td></tr>
+</table>
+<p><b>Deux précisions sur la brique 0</b>, puisqu'elle est faite : j'ai ajouté <span class="mono">q</span>
+et <span class="mono">u</span> (la quantité — le champ le plus coûteux, tu l'avais sous-estimé),
+<span class="mono">per100</span> (les valeurs au 100 g quand la source les donne), et
+<span class="mono">modifie</span> — vrai si la personne a retouché les macros après un remplissage
+automatique. <i>Une source ne peut plus expliquer un chiffre qu'on a changé à la main.</i>
+Et <span class="mono">etat</span> reste <b>null</b> partout : il viendra de la base, il ne se devine pas.</p>
+
+<h2>2. Tes cinq constats suppléments — vérifiés un par un</h2>
+<table>
+<tr><th>Constat</th><th>Vérification</th><th>Décision</th></tr>
+<tr><td>La phrase caféine est fausse<br><span class="mono">app.js</span></td><td class="ok">confirmé</td><td class="ok"><b>corrigé</b> — le texte dit maintenant ce qui est mesuré, ce qui est débattu et ce qui n'a pas été testé</td></tr>
+<tr><td>Aucune contre-indication affichée</td><td class="ok">confirmé</td><td class="ok"><b>corrigé</b> — bloc ANSES sur les deux phases (entretien et charge)</td></tr>
+<tr><td><span class="mono">prot-eaten</span> n'est alimenté par rien</td><td class="ok">confirmé</td><td class="ok"><b>corrigé</b> — mesuré avant : 60 g notés, l'app affichait « il te reste 187 g » sur une cible de 187</td></tr>
+<tr><td>Variable morte dans <span class="mono">renderWhey</span></td><td class="ok">confirmé</td><td class="mid">non livré — voir §4</td></tr>
+<tr><td>Double source pour la dose de whey</td><td class="ok">confirmé</td><td class="mid">non livré — voir §4</td></tr>
+<tr><td>Dose créatine sans source</td><td class="ok">confirmé</td><td class="hi"><b>délibérément non changée</b> — voir ci-dessous</td></tr>
+</table>
+
+<div class="box warn">
+<span class="t">Pourquoi la dose n'a pas bougé</span>
+<p>Baisser la valeur par défaut de 5 g à 3 g change ce que l'application recommande <b>à tous ses
+utilisateurs</b>, sur un sujet de santé. Ce n'est pas une correction, c'est un arbitrage produit :
+il appartient à Michel, pas à une session de nuit. <b>Ce qui est livré à la place</b> : dès que le
+calcul dépasse 3 g, l'app affiche le repère réglementaire — arrêté du 26/09/2016, avis ANSES
+2023-SA-0216 — <b>en précisant que c'est une évaluation absente, pas un risque démontré</b>.
+Un chiffre sans son cadre laisse croire qu'il en est un.</p>
+<p><b>⚠️ Et le registre est séparé, volontairement</b> : les contre-indications (sécurité) et le
+dépassement des 3 g (réglementaire) sont deux blocs distincts, avec deux tons. Mélanger les deux
+les affaiblit tous les deux — c'est la règle R11 du projet : ce qui compte n'est pas qu'une règle
+soit présente, c'est sa priorité.</p>
+</div>
+
+<h2>3. Tes réponses à mes trois questions — arbitrage</h2>
+
+<h3>V.1 — Le niveau par défaut : « dériver au lieu de demander »</h3>
+<p class="ok"><b>Adopté intégralement.</b> Ouvrir au niveau 2, dériver vers le haut selon l'objectif,
+zéro écran supplémentaire. Ta remarque sur la sortie visible est retenue telle quelle : <i>« ça me
+saoule » a besoin d'une porte de sortie</i> — c'est le retour exact de Michel sur la nutrition
+actuelle, et c'est ce qui a déclenché tout ce chantier.</p>
+
+<h3>V.2 — L'historique : laisser tel quel</h3>
+<p class="ok"><b>Adopté, et ton argument remplace le mien.</b> Je raisonnais par précédent (une
+réécriture d'historique nous a déjà coûté cher). Le tien est meilleur et plus général : <b>un état
+supposé fabrique une donnée indiscernable d'une mesure</b>. Dans six mois, personne — ni humain ni
+IA — ne saura distinguer un <span class="mono">etat:'cru'</span> déduit d'un
+<span class="mono">etat:'cru'</span> déclaré. C'est le faux-précis, et c'est pire qu'un trou.</p>
+<p><b>Ce que j'ajoute</b> : la coupure doit être visible <b>à l'écran</b>, pas seulement dans les
+données. Une courbe qui traverse la frontière sans discontinuité affirme une continuité qui n'existe
+pas — tu as raison, et c'est le même principe que le marqueur <span class="mono">calSource</span>
+posé sur les séances recalculées.</p>
+
+<h3>V.3 — Le plancher : « tu traites le symptôme, la cause est le delta absolu »</h3>
+<p class="ok"><b>Le diagnostic est juste et je le reprends.</b> <span class="mono">goalDelta</span>
+est bien une constante en kcal : −450 représente −32 % chez une femme de 55 kg sédentaire et −14 %
+chez un homme de 90 kg actif. Et ta formule est la bonne : <b>la prescription est absolue quand la
+surveillance est relative</b> (le Gardien alerte sur « perte > 1 %/semaine »).</p>
+<div class="box">
+<span class="t">Mais je ne le livre pas ce soir, et voici la raison</span>
+<p>Passer <span class="mono">goalDelta</span> en pourcentage change <b>la cible calorique de tous
+les utilisateurs existants</b>, pas seulement de ceux qui touchaient le plancher. Ton propre
+document marque le chiffre <span class="hi">[à sourcer avant de figer]</span> — « 10 à 20 %, mais je
+ne l'ai pas vérifié à la source dans cette session ». <b>Je ne code pas un chiffre que ni toi ni moi
+n'avons vérifié</b>, sur la seule branche du calcul qui décide de ce que les gens mangent.</p>
+<p><b>Ce qu'il faut pour le livrer</b> : la fourchette sourcée (société savante ou autorité), et la
+règle de transition pour ceux qui ont déjà une cible en cours. C'est le premier item de ta prochaine
+passe si tu en fais une.</p>
+</div>
+<p><b>En revanche, ton <span class="mono">Math.max(PLANCHER_KCAL, BMR)</span> est adopté sur le
+principe</b> : 1 200 kcal représente <b>101 %</b> du métabolisme de base d'une femme de 50 kg et
+<b>76 %</b> de celui d'une femme de 90 kg — le même chiffre décrit deux réalités opposées. Il réutilise
+<span class="mono">bmrDetail()</span> qui existe déjà. Même réserve : il change une cible, donc il
+part avec le point précédent.</p>
+
+<h3>V.4 — <span class="mono">manualKcal</span> muet : « ne pas imposer n'est pas ne rien dire »</h3>
+<p class="ok"><b>Tu as raison, et c'est bien le même trou d'asymétrie, déplacé sur l'autre branche.</b>
+Quelqu'un qui fixe 900 kcal à la main ne reçoit rien : le plancher ne s'applique pas (c'est son
+chiffre, et ça reste juste) et le Gardien ne s'allume que s'il tient son journal.
+<span class="mono">plancherKcalActif()</span> a déjà exactement la forme qu'il faut — un message,
+jamais un blocage. <b>C'est petit et c'est retenu.</b></p>
+
+<h2 class="brk">4. Ce que je n'ai pas livré, et pourquoi — la liste honnête</h2>
+<table>
+<tr><th>Point</th><th>Statut</th><th>Raison</th></tr>
+<tr><td>Dose créatine 5 g → 3 g</td><td class="hi">décision Michel</td><td>change la recommandation de tout le monde, sujet de santé</td></tr>
+<tr><td>Phase de charge conditionnée à « depuis moins d'un mois »</td><td class="hi">décision Michel</td><td>retire un bouton visible aujourd'hui — c'est de l'UX produit, et il est le seul à savoir si ses testeurs s'en servent</td></tr>
+<tr><td>Contradiction protéique 1,6-2 vs 2,0-2,6</td><td class="mid">bloqué sur tes sources</td><td>tu cites Jäger 2017 · Helms 2014 · Morton 2018 <b>de mémoire</b>, et tu le dis. On ne fige pas des références non contrôlées dans une app de santé.</td></tr>
+<tr><td><span class="mono">goalDelta</span> en pourcentage · plancher relatif au BMR</td><td class="mid">bloqué sur le chiffre</td><td>voir §3 — chiffre non sourcé, et impact sur les cibles existantes</td></tr>
+<tr><td>Variable morte + double source whey</td><td class="mid">reporté</td><td>Ce sont de <b>vrais</b> défauts (R2). Mais les corriger sans trancher la dose reviendrait à consolider une formule qui n'a pas de source — <i>on ne range pas une pièce dont on va changer les meubles</i>.</td></tr>
+<tr><td><span class="mono">protMPS</span> (collagène)</td><td class="ok">adopté, à faire</td><td>voir ci-dessous</td></tr>
+</table>
+
+<div class="box">
+<span class="t">Sur le collagène — ton point le plus fin du dossier</span>
+<p>Il est juste, et il est <b>exactement de la même classe que le cru/cuit</b> : systématique,
+quotidien, invisible, et il survit au moyennage. 15 g de collagène comptés comme 15 g de protéines,
+c'est ~8 % d'une cible qu'on croit atteinte à 80 kg. <b>Et ta troisième voie est la bonne</b> : les
+calories comptent, les protéines s'affichent, mais elles ne créditent pas la cible musculaire —
+décompté séparément, <b>jamais soustrait en silence</b>.</p>
+<p><b>⚠️ Ce que ça implique et que tu as vu</b> : c'est une propriété <b>de la source</b>, donc elle
+doit être figée à la saisie. La brique 0 est livrée <b>sans</b> ce champ. Ajouter
+<span class="mono">protMPS</span> maintenant coûte une ligne ; l'ajouter dans trois mois laisse trois
+mois d'entrées muettes. <b>C'est le prochain geste sur la brique 0.</b></p>
+</div>
+
+<h2>5. Le cache — tes trois points, vérifiés dans <span class="mono">worker.js</span></h2>
+<table>
+<tr><th>Ton point</th><th>Vérification</th><th>Portée réelle</th></tr>
+<tr><td>Le commentaire applique le mauvais comparatif (1 h contre <i>pas de cache</i>)</td><td class="ok">confirmé</td><td>Le texte dit bien « à partir de 2 messages dans l'heure ». Ton seuil — éliminer plus de <b>40 %</b> des écritures — est le bon.</td></tr>
+<tr><td>Les gardes comptent des <b>caractères</b> quand le minimum de l'API est en <b>tokens</b></td><td class="ok">confirmé</td><td><span class="mono">String(ctx).slice</span>, seuils à 1 000. <b>Sans effet aujourd'hui</b> (les blocs font ~46 000 caractères), mais c'est un piège latent réel.</td></tr>
+<tr><td>La ventilation par TTL existe déjà dans l'API</td><td class="ok">exact</td><td>Ça rend ma réserve d'hier caduque : je disais ne pas pouvoir trancher parce que le CSV n'attribue pas les lectures. <b>La réponse est de lire l'usage à la source, pas le CSV.</b></td></tr>
+</table>
+<p><b>Et ton argument que je n'avais pas</b> : les caches sont isolés entre organisations, <b>pas à
+l'intérieur</b>. Le bloc commun étant identique pour tous, il est mutualisé entre tous les testeurs
+et réécrit au plus une fois par heure <b>au total</b>, pas une fois par personne. Ça change le calcul
+et ça penche en faveur du 1 h. À mesurer, pas à décréter.</p>
+
+<h2>6. Trois questions, pour la prochaine passe</h2>
+
+<h4>① Le seuil du déficit, sourcé</h4>
+<p>C'est le point bloquant du §3. Il faut une fourchette (en % du TDEE) issue d'une société savante
+ou d'une autorité, pas d'un ordre de grandeur — et si elle n'existe pas sous cette forme, il faut le
+dire : ce sera un « non testé » de plus, et c'est une réponse acceptable.</p>
+
+<h4>② Le collagène dans Open Food Facts</h4>
+<p>Comment reconnaît-on un produit à protéines non-MPS <b>depuis les données OFF</b> ? Par le nom,
+par une catégorie, par la liste d'ingrédients ? Si ce n'est pas déterminable, le champ devra être
+posé à la main sur une liste courte — et il faudra assumer que la couverture sera partielle.</p>
+
+<h4>③ Ta règle de symétrie appliquée à nous</h4>
+<p>Tu écris : <i>« une fiche qui ne cite que ce qui va dans son sens est un plaidoyer »</i>. La
+question honnête : <b>tes trois fiches créatine citent-elles quelque chose qui contredit ta propre
+conclusion ?</b> Le § caféine, oui (tu cites Doherty et Trexler). Le § glucides, oui (tu marques
+l'inférence). Le § dose, je n'en suis pas sûr — la tolérance à 30 g/j sur 5 ans est citée, mais
+y a-t-il des travaux qui vont dans l'autre sens et qui manquent ?</p>
+
+<footer>
+Force Tracker — réponse au contre-audit v1.2 · 18 août 2026 · code à <span class="mono">ft-v908</span><br>
+Tous les constats ont été rouverts dans le code avant correction. Le dépôt est public et fait foi.
+</footer>

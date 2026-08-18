@@ -105,13 +105,16 @@
 >    réels : **3 000 mg/j** (dose journalière maximale française, arrêté du 26/09/2016) et
 >    **3-5 g/j** (ISSN). Faut-il passer la valeur par défaut à 3 g ? *(ft-v908 affiche déjà le
 >    repère réglementaire sans changer le chiffre.)*
-> 2. **La phase de charge.** Elle n'a jamais fait **mieux** que la dose simple, seulement **plus
+> 2. **La phase de charge — ⚠️ de CRÉATINE, pas de protéines** (question de Michel, 18/08 : *« protéine
+>    ou créatine ? parce que si c'est protéine y'a pas de phase de charge »* — il a raison, ça
+>    n'existe pas pour les protéines, ni dans l'app ni dans la littérature).
+>    Elle n'a jamais fait **mieux** que la dose simple, seulement **plus
 >    vite** (Hultman 1996 : 20 g/6 j = 3 g/28 j, même +20 %). Elle est pourtant présentée en
 >    permanence, à égalité avec l'entretien — alors qu'elle n'a de sens **qu'une fois, au début**.
 >    Une seule question (« tu en prends depuis plus d'un mois ? ») suffirait à masquer le bouton.
 >    ⚠️ Incohérence d'unité au passage : l'entretien est proportionnel au poids, la charge est fixe
 >    à 20 g (soit 0,33 g/kg à 60 kg et 0,18 à 110 kg).
-> 3. **La contradiction protéique** : la fiche whey dit **1,6-2 g/kg**, le moteur calcule
+> 3. **La contradiction protéique — sujet SÉPARÉ du précédent** : la fiche whey dit **1,6-2 g/kg**, le moteur calcule
 >    **2,0 à 2,6**. ⭐ Ce n'est probablement **pas** un chiffre à trancher : les deux fourchettes
 >    existent, pour des conditions différentes (maintien vs déficit chez un sportif entraîné). Le
 >    correctif est de **dire à quelle condition chacune s'applique** — mais les références citées
