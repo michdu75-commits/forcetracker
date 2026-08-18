@@ -816,3 +816,55 @@ Vérifié hors tests : **266 lignes de contexte des deux côtés, zéro perdue**
 
 ⏭️ **L'option 2 reste entière**, avec son gain chiffré (5 → 2). Elle déplace les zones nommées loin de
 la règle : c'est un changement de comportement de **sécurité** qu'aucun test local ne sait vérifier.
+
+
+---
+
+## 13. ⛔ OPTION 2 (scinder le Gardien) — **ÉCARTÉE, PAS ABANDONNÉE**
+
+> **Décision de Michel, 18/08/2026** : *« fais ce qu'il faut du moment que Milo assure toujours »*,
+> puis *« écris-le comme quoi on a écarté cette option mais il faut la garder sous le coude au cas où »*.
+>
+> ⚠️ **Cette section existe pour une raison précise (R30)** : un retrait volontaire qui n'est pas écrit
+> ne laisse qu'un **code orphelin** — et c'est exactement à quoi ressemble un oubli. Sans cette page,
+> quelqu'un rouvrira le chantier dans six mois en croyant l'avoir trouvé, et refera la mesure.
+
+### Ce que c'était
+
+Sortir les **zones fragiles nommées** (« protège son épaule droite ») du bloc de tête, pour les ranger
+dans le bloc personnel où le `⚠️ PROFIL SANTÉ` porte déjà les mêmes faits. La **règle** générique
+(« ADAPTER, jamais interdire ») serait restée en tête.
+
+### Ce que ça rapportait — chiffré, pas estimé
+
+| | Empreintes distinctes du bloc « commun » (8 profils × 2 séances) |
+|---|---:|
+| avant ft-v897 | 9 / 16 |
+| **ft-v897, option 1 — livrée** | **5 / 16** |
+| option 2 | **2 / 16** |
+
+Gain restant : **5 → 2**. Réel, mais c'est **de l'argent, pas du service**.
+
+### ⛔ Pourquoi on l'écarte
+
+**Elle éloigne les zones de blessure de la règle qui dit quoi en faire** — de ~47 000 caractères. Rien
+ne garantit que Milo protège aussi bien dans cette configuration, et **aucun outil local ne sait le
+vérifier** : `tests/milo` est déterministe, il prouve qu'une information est *présente*, jamais qu'elle
+est *suivie*.
+
+**R29 — le droit de deviner dépend du coût de l'erreur.** Ici l'erreur se paierait sur l'épaule de
+quelqu'un, pas sur une facture. Et la Constitution l'emporte sur les règles d'architecture.
+La consigne de Michel est sans ambiguïté : *du moment que Milo assure toujours.*
+
+### 🔖 Ce qu'il faudrait pour la ressortir
+
+Elle redevient discutable **si et seulement si** l'un de ces deux points est réglé :
+
+1. **Un A/B sur le vrai modèle**, sur des cas réels de blessure — comparer les réponses avec les zones
+   en tête et les zones en bas. C'est la seule mesure qui réponde à la vraie question. Elle coûte des
+   appels API, donc elle se décide.
+2. **Ou un signal de coût qui la rende nécessaire** : si le ratio lecture/écriture du cache se dégrade
+   nettement (aujourd'hui il *rapporte* depuis le 08/08, ratio 1,14 : 1), l'arbitrage change.
+
+**En attendant : on n'y touche pas.** Le témoin XLVI (`tests/parcours`) garde l'état actuel ; le jour
+où quelqu'un déplacera les zones, il rougira et renverra à cette page.

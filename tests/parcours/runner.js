@@ -6064,6 +6064,77 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC XLVII - LES RENVOIS DE POSITION DU PROMPT SONT-ILS VRAIS ? (18/08/2026) ==
+   /!\/!\ POURQUOI - le prompt dit a Milo ou trouver les choses : « son cadre CHIFFRE est
+   plus bas », « les consignes du Gardien plus haut », « son historique, plus haut ».
+   Chacune de ces phrases est une AFFIRMATION verifiable. Un renvoi faux envoie Milo
+   chercher au mauvais endroit — et ne leve evidemment aucune erreur.
+   DEUX ONT ETE TROUVES FAUX EN DEUX JOURS, tous deux silencieux :
+     · « sa MEMOIRE LONGUE plus bas » — elle est 6 266 car. plus HAUT (ft-v896) ;
+     · « son historique, plus haut » — casse par MOI en descendant DERNIERES SEANCES
+       (ft-v896), et c'est la phrase qui empeche Milo de feliciter quelqu'un pour une
+       seance qu'il n'a jamais faite (PLANIFIE vs REALISE, docs/MODELE-METIER.md).
+   /!\ LE CORRECTIF N'EST PAS D'ECRIRE LA BONNE DIRECTION, C'EST DE NOMMER LE BLOC :
+   une position ecrite en toutes lettres se perime au premier deplacement, et personne
+   ne va la relire. Ce temoin garde les renvois qui restent directionnels. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_discipline:'powerlifting',
+    ft4_health:JSON.stringify({conditions:[],injuries:[{zone:'epaule',side:'D',status:'active'}],notes:''})}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  const R=await pg.evaluate(()=>{
+    if(typeof buildCoachContext!=='function') return {err:'buildCoachContext absent'};
+    const j=d=>{const x=new Date();x.setDate(x.getDate()-d);return x.toISOString().slice(0,10);};
+    S.sessions=[];
+    for(let k=1;k<=20;k++){const ts=Date.now()-k*3*864e5;
+      S.sessions.push({id:ts,ts,date:j(k*3),volume:5200,calories:340,duration:3600,startHour:18,
+        exs:[{name:'Développé Couché',sets:[{kg:80,reps:8,done:true,type:'N'}]}]});}
+    S.prs={'Développé Couché':{rm1:101,kg:85,reps:6,date:j(3)}};
+    S.programmes=[{name:'Full body',date:j(20),
+      exs:[{name:'Squat à la Barre',sets:[{reps:5},{reps:5},{reps:5}]}]}];
+    if(!S.wkt) startWorkout();
+    S.wkt.exs=[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}];
+    persist();
+    const ctx=buildCoachContext();
+    // [ phrase qui contient le renvoi , bloc designe , sens attendu ]
+    const R=[
+      ['la règle d\'usage est dans le bloc SÉANCE', 'SÉANCE EN COURS',   'bas' ],
+      ['son cadre de travail CHIFFRÉ est plus bas', '🎽',                'bas' ],
+      ['voir les consignes du Gardien plus haut',   'RÈGLES DU GARDIEN', 'haut'],
+    ];
+    const out=R.map(([ph,cible,sens])=>{
+      const a=ctx.indexOf(ph), b=ctx.indexOf(cible);
+      return {ph, a, b, ok: a<0 ? null : (b<0 ? false : (sens==='bas' ? b>a : b<a))};
+    });
+    return {out,
+      // les deux renvois reperes FAUX ont ete convertis en NOMS de bloc : ils ne doivent
+      // plus jamais reapparaitre sous forme directionnelle
+      vieuxRenvoi1: /MÉMOIRE LONGUE plus bas/.test(ctx),
+      vieuxRenvoi2: /historique, plus haut/.test(ctx),
+      nomme1: ctx.indexOf('le bloc « SA MÉMOIRE LONGUE »')>=0,
+      nomme2: ctx.indexOf('le bloc « DERNIÈRES SÉANCES »')>=0};
+  });
+  await cx.close();
+
+  console.log('\n-- XLVII. Les renvois de position du prompt sont-ils vrais ? --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    const faux=R.out.filter(o=>o.ok===false);
+    t('⭐⭐ TOUS LES RENVOIS DIRECTIONNELS DU PROMPT POINTENT AU BON ENDROIT',
+      faux.length===0,
+      faux.map(o=>o.ph.slice(0,44)+' (renvoi '+o.a+' -> cible '+o.b+')').join(' | '));
+    t('/!\\ ... et aucun n\'est absent du contexte de test (sinon il n\'est pas verifie)',
+      R.out.every(o=>o.ok!==null),
+      R.out.filter(o=>o.ok===null).map(o=>o.ph.slice(0,44)).join(' | '));
+    t('⭐ le renvoi « MEMOIRE LONGUE plus bas » (faux) est bien remplace par un NOM de bloc',
+      R.vieuxRenvoi1===false && R.nomme1===true);
+    t('⭐ le renvoi « historique, plus haut » (casse par ft-v896) aussi — c\'est la phrase'
+      +' PLANIFIE vs REALISE, celle qui empeche Milo de feliciter une seance jamais faite',
+      R.vieuxRenvoi2===false && R.nomme2===true);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

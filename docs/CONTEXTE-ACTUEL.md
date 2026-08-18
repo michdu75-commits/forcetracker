@@ -6,10 +6,10 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v894` — c'est ce que `master` porte, donc ce que les gens ont.
-- **Sur la branche `claude/claude-md-docs-ytabnv`, PAS ENCORE DÉPLOYÉ :** `ft-v895`, `ft-v896` et `ft-v897`.
-  ⚠️ Le déploiement Pages ne se déclenche que sur `master` : tant que la branche n'est pas fusionnée,
-  ces deux versions n'existent que dans le dépôt (R18 — « j'ai poussé » ≠ « c'est en ligne »). Déploiement Pages via GitHub Actions (`.github/workflows/deploy-pages.yml`) — fiable + relançable à la main.
+- **Version en ligne (live) :** `ft-v897` — fusionné sur `master` le 18/08, déploiement Pages vérifié
+  (run vert sur `ac9db51`).
+- **Sur la branche, PAS ENCORE fusionné :** `ft-v898`.
+  ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
 > ## 📍 OÙ ON EN EST — 17/08/2026 au soir (à lire en premier)
 >
@@ -69,8 +69,10 @@
 > **⚠️ CE QUI RESTE À FAIRE :**
 >
 > **✅ ② OPTION 1 LIVRÉE en ft-v897** — la note du jour est descendue, empreintes **9/16 → 5/16**.
-> La règle et les zones nommées n'ont pas bougé (R11). ⏭️ **L'option 2 reste ouverte** (5 → 2), et
-> c'est elle qui déplacerait les zones loin de la règle — décision de sécurité, non prise.
+> La règle et les zones nommées n'ont pas bougé (R11).
+> **⛔ L'OPTION 2 est ÉCARTÉE, PAS ABANDONNÉE** (décision Michel, 18/08 : *« du moment que Milo
+> assure toujours »*). Gain restant 5 → 2, raison du refus et conditions pour la ressortir :
+> `docs/AUDIT-CONTEXTE-MILO.md` **§13**. Ne pas rouvrir sans lire cette page.
 >
 > **② (contexte de la mesure du 17/08)**
 > La mesure a trouvé un étage de plus que l'audit (`docs/AUDIT-CONTEXTE-MILO.md` **§12**) : le bloc

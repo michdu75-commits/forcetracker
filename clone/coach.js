@@ -2683,7 +2683,7 @@ ${(()=>{
   return '\nSES PROGRAMMES ENREGISTRÉS DANS L\'APP (ce qui est PLANIFIÉ) :\n'+L.join('\n')
     +(progs.length>3?'\n(+'+(progs.length-3)+' autre(s) programme(s) non détaillé(s))':'')
     +'\n→ Quand elle demande QUOI FAIRE aujourd\'hui, pars de là : propose le jour qui vient, en le NOMMANT, plutôt que d\'inventer une séance à côté de son planning.'
-    +'\n⚠️ C\'est du PLANIFIÉ, pas du RÉALISÉ : ne dis JAMAIS qu\'elle a fait ces séances. Ce qu\'elle a réellement fait est dans son historique, plus haut.'
+    +'\n⚠️ C\'est du PLANIFIÉ, pas du RÉALISÉ : ne dis JAMAIS qu\'elle a fait ces séances. Ce qu\'elle a réellement fait est dans le bloc « DERNIÈRES SÉANCES ».'
     +'\n⚠️ Ce n\'est pas un contrat : si elle veut autre chose aujourd\'hui, tu la suis sans discuter et tu dis simplement en quoi ça sort de son programme.\n';
 })()}
 RECORDS PERSONNELS (1RM estimés):
