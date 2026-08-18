@@ -1379,6 +1379,87 @@ console.log('\n═══ 11. Plancher calorique + plancher proteines keto ══
   await _cP.close();
 }
 
+// ════════════════════════════════════════════════════════════════════
+// BRIQUE 0 — LA PROVENANCE DE CHAQUE LIGNE DU JOURNAL (18/08/2026)
+// Une entree du journal s'ecrivait { date, meal, name, kcal, prot, carbs, fat, ts } : un RESULTAT
+// sans trace de son origine. C'est la seule brique nutrition qu'on ne peut pas rattraper apres
+// coup — chaque jour qui passe fabrique des entrees definitivement muettes.
+// /!\ CE BLOC PROTEGE SURTOUT DEUX CHOSES QU'ON NE VOIT PAS A L'ECRAN :
+//   · la provenance NE SURVIT PAS d'une saisie a l'autre (sinon le journal affirme une source
+//     qui n'a rien a voir — une provenance fausse est pire que pas de provenance) ;
+//   · ce qu'on ne sait pas reste `null` : aucun etat cru/cuit devine, aucune quantite inventee.
+console.log('\n═══ 12. Journal alimentaire : la provenance de chaque ligne ═══');
+{
+  const {c:_cJ,p:_pJ}=await boot(null,{});
+  const J=await _pJ.evaluate(async()=>{
+    /* /!\ CE BLOC S'EXECUTE DES DEUX COTES : il passe par `openAddFood` + `addFoodEntry`, qui
+       existent depuis toujours, et il INSPECTE L'ENTREE ECRITE. Un 1er jet sortait sur
+       `_provFood absente` : il rendait UN rouge au lieu de mesurer les huit comportements, et
+       ne prouvait donc pas que le temoin attrape la regression (meme defaut qu'en ft-v887/890/
+       892/901/905/906). Seuls les appels a `_afSetSrc` sont gardes — sur l'ancien code le
+       scenario du scan retombe sur une saisie manuelle, et les assertions rougissent. */
+    const o={};
+    const src=(x)=>{ if(typeof _afSetSrc==='function') _afSetSrc(x); };
+    S.foodLog=[]; persist();
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
+    const bcRow=()=>document.getElementById('af-bc-row');
+    // ── ① saisie 100 % MANUELLE ────────────────────────────────────────────────
+    openAddFood();
+    set('af-desc','Poulet maison'); set('af-kcal',300); set('af-prot',40); set('af-carbs',0); set('af-fat',12);
+    addFoodEntry();
+    o.manuel=S.foodLog[S.foodLog.length-1];
+    // ── ② SCAN Open Food Facts, quantite connue, valeurs non retouchees ────────
+    openAddFood();
+    src({saisie:'scan',origine:'off',sourceId:'3017620422003',
+      per100:{kcal:539,prot:6.3,carbs:57.5,fat:30.9},attendu:{kcal:135,prot:2,carbs:14,fat:8}});
+    if(bcRow())bcRow().style.display='block';
+    set('af-bc-grams',25);
+    set('af-desc','Pate a tartiner'); set('af-kcal',135); set('af-prot',2); set('af-carbs',14); set('af-fat',8);
+    addFoodEntry();
+    o.scan=S.foodLog[S.foodLog.length-1];
+    // ── ③ SCAN puis la personne RETOUCHE les macros a la main ──────────────────
+    openAddFood();
+    src({saisie:'scan',origine:'off',sourceId:'3017620422003',
+      per100:{kcal:539},attendu:{kcal:135,prot:2,carbs:14,fat:8}});
+    if(bcRow())bcRow().style.display='block';
+    set('af-bc-grams',25);
+    set('af-desc','Pate a tartiner'); set('af-kcal',200); set('af-prot',2); set('af-carbs',14); set('af-fat',8);
+    addFoodEntry();
+    o.retouche=S.foodLog[S.foodLog.length-1];
+    // ── ④ la saisie SUIVANTE ne doit PAS heriter de la provenance precedente ───
+    openAddFood();
+    set('af-desc','Pomme'); set('af-kcal',80); set('af-prot',0); set('af-carbs',20); set('af-fat',0);
+    addFoodEntry();
+    o.apresScan=S.foodLog[S.foodLog.length-1];
+    o.n=S.foodLog.length;
+    S.foodLog=[]; persist();
+    return o;
+  });
+  await _cJ.close();
+
+  if(J.err){ t('X le bloc tourne', false, J.err); }
+  else{
+    const E=x=>x||{};
+    t('⭐⭐ SAISIE MANUELLE : origine « utilisateur », et AUCUNE quantite inventee',
+      E(J.manuel).v===1 && E(J.manuel).saisie==='manuel' && E(J.manuel).origine==='utilisateur'
+      && E(J.manuel).q===null && E(J.manuel).etat===null, JSON.stringify(J.manuel));
+    t('⭐⭐ SCAN : la QUANTITE est enfin enregistree (25 g), avec la source et son identifiant',
+      E(J.scan).q===25 && E(J.scan).u==='g' && E(J.scan).origine==='off' && E(J.scan).sourceId==='3017620422003',
+      JSON.stringify(J.scan));
+    t('⭐ ... et les valeurs au 100 g sont gardees (c\'est ce qui permettra de recalculer)',
+      !!(E(J.scan).per100 && E(J.scan).per100.kcal===539), JSON.stringify(E(J.scan).per100));
+    t('/!\\ valeurs NON retouchees → modifie = false', E(J.scan).modifie===false, 'modifie='+E(J.scan).modifie);
+    t('⭐⭐ VALEURS RETOUCHEES A LA MAIN : `modifie` le dit (la source n\'explique plus le chiffre)',
+      E(J.retouche).modifie===true, 'modifie='+E(J.retouche).modifie);
+    t('⭐⭐ LA PROVENANCE NE SURVIT PAS A LA SAISIE SUIVANTE (sinon le journal ment)',
+      E(J.apresScan).origine==='utilisateur' && E(J.apresScan).q===null && !E(J.apresScan).sourceId,
+      JSON.stringify(J.apresScan));
+    t('/!\\ l\'etat cru/cuit reste `null` partout : il viendra de la base, il ne se devine pas',
+      [J.manuel,J.scan,J.retouche,J.apresScan].every(e=>e.etat===null));
+    t('les 4 entrees sont bien enregistrees', J.n===4, 'n='+J.n);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL LINÉAIRE : '+ok+' ✅ · '+ko+' ❌ ════');
