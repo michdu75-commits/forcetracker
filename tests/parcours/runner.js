@@ -6093,19 +6093,42 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
     S.prs={'Développé Couché':{rm1:101,kg:85,reps:6,date:j(3)}};
     S.programmes=[{name:'Full body',date:j(20),
       exs:[{name:'Squat à la Barre',sets:[{reps:5},{reps:5},{reps:5}]}]}];
+    S.weightLog=[{date:j(9),kg:79.4},{date:j(2),kg:80}];
+    S.bodyScans=[{date:j(12),weight:80,bf:15,fatMass:12,muscle:64,leanMass:68}];
     if(!S.wkt) startWorkout();
     S.wkt.exs=[{name:'Squat à la Barre',sets:[{kg:100,reps:5,done:true,type:'N'}]}];
     persist();
     const ctx=buildCoachContext();
     // [ phrase qui contient le renvoi , bloc designe , sens attendu ]
+    /* Les renvois VERIFIABLES du prompt. Les autres emplois de « au-dessus » sont
+       anatomiques (« developpe au-dessus de la tete ») ou hierarchiques (« jamais
+       au-dessus de la SECURITE ») : ils n'affirment aucune position. Audit complet du
+       18/08 : 24 renvois dans le prompt, 10 verifiables, tous justes.
+       /!\ DEUX PIEGES DE MESURE, payes tous les deux :
+         1. chercher la cible A PARTIR DU DEBUT trouve la phrase du renvoi ELLE-MEME
+            (« le PROFIL SANTE plus bas » contient « PROFIL SANTE ») -> faux positif ;
+         2. la casse compte : la regle citee « n'ajoute jamais un detail » est ecrite
+            « N'AJOUTE JAMAIS un DETAIL » -> faux negatif, et j'ai failli « reparer »
+            un renvoi parfaitement juste. */
     const R=[
-      ['la règle d\'usage est dans le bloc SÉANCE', 'SÉANCE EN COURS',   'bas' ],
-      ['son cadre de travail CHIFFRÉ est plus bas', '🎽',                'bas' ],
-      ['voir les consignes du Gardien plus haut',   'RÈGLES DU GARDIEN', 'haut'],
+      ["la règle d'usage est dans le bloc SÉANCE plus bas", 'SÉANCE EN COURS',     'bas' ],
+      ["voir les consignes du Gardien plus haut",           'RÈGLES DU GARDIEN',   'haut'],
+      ["le PROFIL SANTÉ plus bas",                          'PROFIL SANTÉ',        'bas' ],
+      ["« PERMISSIONS BORNÉES » plus haut",                 'PERMISSIONS BORNÉES', 'haut'],
+      ["règle cardinale ci-dessus",                         'règle cardinale',     'haut'],
+      ["« n'ajoute jamais un détail » plus haut",           "n'ajoute jamais un détail", 'haut'],
+      ["Les réponses rapides ci-dessous",                   'RÉPONSES RAPIDES',    'bas' ],
+      ["recopiée depuis le CALENDRIER ci-dessus",           'CALENDRIER',          'haut'],
+      ["son cadre de travail CHIFFRÉ est plus bas",         '🎽',                  'bas' ],
     ];
+    const bas=ctx.toLowerCase();
     const out=R.map(([ph,cible,sens])=>{
-      const a=ctx.indexOf(ph), b=ctx.indexOf(cible);
-      return {ph, a, b, ok: a<0 ? null : (b<0 ? false : (sens==='bas' ? b>a : b<a))};
+      const a=bas.indexOf(ph.toLowerCase());
+      if(a<0) return {ph, a:-1, b:-1, ok:null};
+      const c=cible.toLowerCase();
+      // sens 'bas' : on cherche APRES la phrase du renvoi, jamais dedans
+      const b = sens==='bas' ? bas.indexOf(c, a+ph.length) : bas.slice(0,a).lastIndexOf(c);
+      return {ph, a, b, ok: b>=0};
     });
     return {out,
       // les deux renvois reperes FAUX ont ete convertis en NOMS de bloc : ils ne doivent
