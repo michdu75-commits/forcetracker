@@ -397,7 +397,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v902`** (prochaine : `ft-v903`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v903`** (prochaine : `ft-v904`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -407,6 +407,17 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v903 — 🛑 UNE MISE À JOUR NE TOMBE PLUS PENDANT UNE SÉANCE QUI COMMENCE PAR DU CARDIO — et c'est la DEUXIÈME fois qu'il le signale** — Michel, en séance : *« putain faut éviter de faire une mise à jour quand je suis en séance, ça me nique mon bilan de fin de séance »*. **La première fois, c'était le 15/08 — et elle avait créé ce garde-fou.** Il revient donc sur une règle qui existe et qui n'a pas tenu : *quand la même remarque revient, ce n'est pas la règle qu'il faut réécrire, c'est sa DÉFINITION qu'il faut aller regarder* (`docs/ORIGINE-DES-REGLES.md`).
+
+**⚠️⚠️ LE TROU : « séance en cours » SE MESURAIT AU NOMBRE D'EXERCICES.** La condition lisait `S.wkt.exs.length`. Une séance **commencée mais sans exercice encore saisi** — typiquement **20 minutes de vélo AVANT la musculation, exactement sa séance de ce matin** (ft-v901) — ne comptait donc pas comme une séance. Le seul rempart qui restait était *« on n'applique la mise à jour que sur l'Accueil »* : un simple aller-retour par l'accueil pendant le cardio, et le rechargement tombait au milieu.
+
+**👉 UNE SEULE DÉFINITION, LUE PAR TOUT LE MONDE (R2)** : `_seanceOuverte()` (log.js) — **démarrée** (`startTs`), **ou** avec des exercices, **ou** avec un cardio noté. **⚠️ Pause comprise** : une séance en pause n'est pas une séance finie, et la recharger coûterait exactement ce qu'il décrit — le récapitulatif de fin.
+
+**⚠️ ET ELLE NE SE CONFOND PAS AVEC SA VOISINE, c'est écrit à côté des deux** : `_seanceOuverte()` répond à *« y a-t-il une séance non terminée ? »* (pause **comprise** → retient la mise à jour) ; `_wktEnCours()` répond à *« est-ce que je m'entraîne LÀ, maintenant ? »* (pause **exclue** → tient l'écran allumé, ft-v902). Deux questions voisines, deux réponses différentes, **une seule base** — les fusionner ferait éteindre l'écran d'une séance en pause *ou* recharger l'app pendant qu'elle est en pause, selon le côté choisi.
+
+**⚠️ ET « OUVERTE » N'EST PAS « `S.wkt` EXISTE »** : `renderLog()` crée un objet de séance vide dès qu'on **affiche** l'écran Séance. Sans cette nuance, la mise à jour serait bloquée pour toujours dès que quelqu'un a jeté un œil à l'onglet Séance — un garde-fou qui ne se relâche jamais finit par être désactivé (R19).
+Tests : **parcours 732/732** (+6, bloc L), calculs 206/206, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF CONTRE L'ANCIEN CODE : 2 rouges**, et ce sont précisément les deux siens — *« 20 min de cardio sans exercice »* et *« chrono démarré sans exercice saisi »* laissaient tous deux passer la mise à jour. Fichiers : `log.js`, `app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v903. |
 
 **ft-v902 — 🔆 L'ÉCRAN NE S'ÉTEINT PLUS QUAND ON VA PARLER À MILO — le verrou était accroché à l'ÉCRAN AFFICHÉ, pas à la séance** — Michel, en séance : *« l'écran s'éteint pendant la séance »*.
 
@@ -654,8 +665,6 @@ Tests : **parcours 660/660** (+9, bloc XXXIX), calculs 179/179, muscles 232/232,
 
 **⚠️ Et une correction sur moi-même** : j'ai annoncé à Michel que la faille de la boîte à idées restait ouverte, en me fiant à une ligne **périmée** de `CLAUDE.md`. **Elle est fermée depuis le 07/08** (ft-v787). La ligne est corrigée. *Un document d'état qu'on ne met pas à jour fait dire des bêtises à celui qui le lit* (R23) — et cette fois le lecteur trompé, c'était moi.
 Tests : **parcours 651/651** (+20, blocs XXXVI · XXXVII · XXXVIII), calculs 179/179, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données vertes. **CONTRÔLE NÉGATIF** : rouges de comportement sur le repos et sur la promesse vide. Fichiers : `coach.js`, `log.js`, `dashboard.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v888. |
-
-**ft-v887 — 🔥 « JE NE VEUX PAS QU'IL PROPOSE À DES CLIENTS DES TRUCS BIZARRE QUI VONT LES SOÛLER » — l'échauffement revient à la bonne dose, et un QCM demande enfin POURQUOI on change d'exercice** — deux demandes dans le même message, et la même cause profonde derrière : *« peut-être qu'il demande par une question QCM (ça ne coûte rien en token) pourquoi j'ai changé d'exercice »* et *« règle le souci bizarre de l'échauffement, vois aussi pourquoi il me propose autant d'échauffement… j'ai passé presque la moitié de ma séance sur des exercices d'échauffement, voir sur internet si c'est réel et prouvé surtout »*.
 
 **⭐⭐ ① L'ÉCHAUFFEMENT — LA RÈGLE ÉTAIT ÉCRITE, ET COURT-CIRCUITÉE PAR UN `||`.** Mesuré sur sa séance du 16/08 : le **Tirage Poulie Haute**, 2ᵉ exercice, sur **machine**, après un soulevé de terre à 130 kg → **5 paliers d'échauffement pour 3 séries de travail**. La règle *« une montée complète pour le premier ancre, une seule série d'approche pour les suivants »* existait depuis le 15/08 ; la condition `premier || ech.length` la faisait basculer dans la complétion **complète** dès que le programme contenait déjà des paliers — c'est-à-dire **presque toujours**, puisque Milo en propose quasi systématiquement. *La règle ne s'appliquait donc qu'aux cas où elle ne servait à rien.*
 
