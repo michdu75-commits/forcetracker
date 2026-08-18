@@ -6,10 +6,9 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v902` — fusionnée sur `master` le 18/08, run Pages vert sur `1f9ab30`.
-- **Sur la branche, PAS ENCORE fusionné : `ft-v903`** (commit `8196faf`).
-  ⛔ **RETENU EXPRÈS** — Michel était **en séance** et l'a demandé (voir le bloc du 18/08 ci-dessous).
-  **À fusionner dès qu'il dit que sa séance est finie**, avec `git merge --no-ff` sur `master`.
+- **Version en ligne (live) :** `ft-v903` — fusionnée sur `master` le 18/08 (run vert sur `cc6a7f6`),
+  après que Michel ait confirmé la fin de sa séance.
+- **Sur la branche, PAS ENCORE fusionné : `ft-v904`** (la bascule vers l'exercice suivant).
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
 > ## 📍 OÙ ON EN EST — 18/08/2026 (à lire en premier, remplace le bloc du 17/08 plus bas)
@@ -28,18 +27,16 @@
 > | `ft-v900` | Le plan alimentaire **change tous les jours** (3 variantes, choisies par la date, **sans IA**) — et le garde-fou a trouvé **2 bugs de régime pré-existants** (le « Thon » seul, le miel non végan) | en ligne |
 > | `ft-v901` | Le **cardio d'avant compte dans la durée** de la séance (`_dureeTotaleMin`) · une séance de **cardio seul** affiche enfin une durée · `_rythmeSeance` soustrayait un cardio absent du chrono depuis le 14/08 | en ligne |
 > | `ft-v902` | **L'écran ne s'éteint plus** : le verrou suivait l'écran affiché, pas la séance (`_wktEnCours`) | en ligne |
-> | `ft-v903` | **La mise à jour attend** aussi quand la séance n'a que du cardio (`_seanceOuverte`) | ⛔ **retenu** |
+> | `ft-v903` | **La mise à jour attend** aussi quand la séance n'a que du cardio (`_seanceOuverte`) | en ligne |
+> | `ft-v904` | **L'exercice suivant s'ouvre** quand le précédent est fini — les paliers d'échauffement laissés vides ne bloquent plus | sur la branche |
 >
-> ### ❓ DEUX RETOURS DE MICHEL **NON ÉLUCIDÉS** — à lui demander avant de coder
-> Dictés en séance, je n'ai pas su les interpréter et **je n'ai rien touché** (l'écran Séance est la
-> zone la plus sensible du projet, règle d'or #9 — se tromper de diagnostic coûterait cher) :
-> 1. *« à la fin d'un mouvement quand je fais avec Milo **ne se dit pas** »* — hypothèses : le
->    « ⏭️ Ensuite : X » du timer de repos ne s'affiche pas · l'exercice suivant ne s'ouvre pas à la
->    fin du repos (`_restDoneCb`, log.js ~1135) · autre chose.
-> 2. *« la séance d'avant **ne s'agrandit pas** »* — hypothèses : la colonne « Précédent » d'un
->    exercice · une carte d'historique qui doit s'ouvrir sur appui (`openSessDetail`).
-> ⚠️ **Ne pas deviner** (BUGS.md famille 12ter : la fausse panne — j'ai déjà failli « réparer » deux
-> renvois corrects le 18/08 au matin). **Poser la question, avec des options concrètes.**
+> ### ✅ LES DEUX RETOURS « NON ÉLUCIDÉS » N'EN FAISAIENT QU'UN — réglé en `ft-v904`
+> *« la séance d'avant ne s'agrandit pas »* + *« je n'ai pas vu le message »* = **le même code** :
+> l'exercice suivant ne s'ouvrait pas et le « ⏭️ Ensuite : … » ne s'affichait pas, parce que
+> « terminé » se lisait **« toutes les lignes cochées »** — or l'app ajoute elle-même des paliers
+> d'échauffement, qui restent vides. On compte désormais les **séries de travail**.
+> ⭐ **La méthode qui a marché** : avoir **reproduit** les deux cas (tout coché / paliers vides)
+> AVANT de toucher au code, au lieu de deviner (BUGS.md famille 12ter — la fausse panne).
 >
 > ### 🩺 UN POINT QUE JE NE PEUX PAS TRANCHER D'ICI
 > Michel dit que l'écran s'éteint **sans quitter l'écran Séance**. ft-v902 couvre les deux chemins

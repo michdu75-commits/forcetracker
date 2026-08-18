@@ -1164,7 +1164,26 @@ function toggleSet(ei,si){
     // un second mécanisme d'avance qui finirait par diverger de celui-ci.
     // 👉 On avance À LA FIN DU REPOS, pas tout de suite : entre deux exercices on se repose
     //    vraiment, et replier sous ses yeux la série qu'on vient de valider est déroutant.
-    const _tousFaits = S.wkt.exs[ei].sets.every(s=>s.done);
+    /* ⚠️⚠️ « TERMINÉ » NE VEUT PAS DIRE « TOUTES LES LIGNES COCHÉES » (18/08/2026).
+       Michel : *« quand je valide ma dernière série de couché, ça devrait se réduire et
+       l'exercice d'épaules s'ouvrir en grand »* — et *« je n'ai pas vu le message »* non plus.
+       ⭐ REPRODUIT AVANT DE TOUCHER À QUOI QUE CE SOIT : avec toutes les lignes cochées, ça
+       marche (message + ouverture du suivant) ; en laissant **les paliers d'ÉCHAUFFEMENT non
+       cochés**, `every(s=>s.done)` est faux → aucun message, aucune avance. Or depuis ft-v887
+       l'app AJOUTE elle-même ces paliers : quelqu'un qui attaque directement à sa charge de
+       travail, ou qui échauffe sans le noter, laisse forcément des lignes vides.
+       *C'est l'app qui crée les lignes qui l'empêchent ensuite de conclure.*
+       👉 On regarde donc les SÉRIES DE TRAVAIL, pas les lignes : l'exercice est fini quand il
+       n'en reste aucune à faire. C'est déjà la définition que le reste de l'app emploie —
+       `finishWorkout` exclut É et W du décompte comme des records.
+       ⚠️ UNE SÉRIE DE TRAVAIL non cochée bloque toujours (elle peut encore être faite), et un
+       exercice qui n'aurait QUE des paliers n'avance pas non plus : sans série de travail
+       validée, rien ne dit qu'on en a fini avec lui (R29 — le coût de l'erreur décide). */
+    const _estEch = s => !!(s && (s.type==='É' || s.type==='W'));
+    const _sets = S.wkt.exs[ei].sets || [];
+    const _travailRestant = _sets.some(s => !s.done && !_estEch(s));
+    const _travailFait     = _sets.some(s =>  s.done && !_estEch(s));
+    const _tousFaits = !_travailRestant && _travailFait;
     let _suiv=null;
     if(_tousFaits && !S.wkt.exs[ei].group){
       for(let k=ei+1;k<S.wkt.exs.length;k++){
