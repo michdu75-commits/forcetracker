@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v910` — fusionnée sur `master` le 18/08.
+- **Version en ligne (live) :** `ft-v911` — fusionnée sur `master` le 18/08.
 - **Rien en attente sur la branche.** Tout ce qui a été livré le 18/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
@@ -56,6 +56,7 @@
 > | 0-bis | Planchers santé | calorique + protéines kéto | ✅ **ft-v906** |
 > | 1 | Base d'aliments locale | CIQUAL 2025 (3 484 aliments), curation par code de confiance A/B | ⏭️ |
 > | 2 | **L'écran « où tu en es »** | répondre à la vraie question, pas à « combien il me reste » | ✅ **ft-v909** |
+> | 2b | **Un repas en un appui** | « tes repas habituels », observés dans le journal, rejoués d'un geste | ✅ **ft-v911** |
 > | 3 | Générateur de repas | filtre `composable` en premier · test du **profil vide** · hachage au lieu de `jour*7` | ⏭️ |
 > | 4 | Les 4 niveaux de précision | sortie en rôles/portions aux niveaux 1-2 | ⏭️ |
 > | 7 | Adhérence | le plan doit être **reproductible** (fonction pure) | ⏭️ |
@@ -138,7 +139,11 @@
 >    consommateur**. Parler de « maximum légal » faisait passer un repère de commercialisation
 >    pour une interdiction. La dose est modifiable, deux seuils avec deux tons (repère à 3 g,
 >    avertissement à 5 g), et bornes larges (0,5-30 g) qui n'attrapent qu'une faute de frappe.
-> 2. **La phase de charge — ⚠️ de CRÉATINE, pas de protéines** (question de Michel, 18/08 : *« protéine
+> 2. ~~**La phase de charge**~~ ⛔ **ÉCARTÉE par Michel le 18/08** : *« sincèrement pour moi la
+>    charge en créatine c'est pas très important »*. On ne la conditionne pas, on ne la masque
+>    pas, on n'y touche pas. **Écrit comme décision, pas comme oubli** (R30) — le constat de
+>    l'audit reste valable si quelqu'un veut rouvrir le sujet un jour.
+>    *(constat d'origine)* **⚠️ de CRÉATINE, pas de protéines** (question de Michel, 18/08 : *« protéine
 >    ou créatine ? parce que si c'est protéine y'a pas de phase de charge »* — il a raison, ça
 >    n'existe pas pour les protéines, ni dans l'app ni dans la littérature).
 >    Elle n'a jamais fait **mieux** que la dose simple, seulement **plus

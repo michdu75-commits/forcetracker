@@ -1162,6 +1162,63 @@ function _bcApplyGrams(){
   document.getElementById('af-carbs').value=Math.round(_bcNutr.carbs100*f);
   document.getElementById('af-fat').value=Math.round(_bcNutr.fat100*f);
 }
+/* ═══ « TES REPAS HABITUELS » — UN APPUI, ZÉRO FORMULAIRE (18/08/2026) ═════════════════════
+   Michel, en décrivant sa vraie journée : *« le matin je prends mon shaker de prot, je prends une
+   banane ; le midi deux steaks hachés 5 %, 300 g de viande rouge, 200 g de riz et de la
+   ratatouille ; le soir à peu près la même chose »*.
+   ⭐ Quelqu'un qui mange ça tous les jours n'a pas besoin d'un formulaire à cinq champs, trois
+   fois par jour. Il a besoin de **retrouver ce qu'il a déjà noté** et d'appuyer une fois.
+   ⚠️ ET ÇA N'INVENTE AUCUNE DONNÉE : un « repas habituel » n'est pas déclaré, il est **observé**
+   dans le journal — les aliments notés ensemble, le même jour, sur le même repas. Rien de neuf
+   n'est stocké : ni liste à gérer, ni bouton « enregistrer ce repas » de plus.
+   ⚠️ **AU MOINS DEUX FOIS** pour être proposé : une fois, c'est un repas ; deux fois, c'est une
+   habitude. Proposer dès la première ferait de l'écran une liste de tout ce qu'on a mangé (R24).
+   ⚠️ Michel a lui-même posé la limite de cette lecture : *« ça c'est moi qui le fais, les autres
+   peut-être pas »*. D'où le repli silencieux — quelqu'un qui mange différemment chaque jour ne
+   voit **rien du tout**, pas une section vide. */
+function _repasHabituels(){
+  const par={}, norm=n=>String(n||'').toLowerCase().trim();
+  (S.foodLog||[]).forEach(e=>{
+    if(!e||!e.date||!e.name)return;
+    const k=e.date+'|'+(e.meal||'');
+    (par[k]=par[k]||[]).push(e);
+  });
+  const sigs={};
+  Object.keys(par).forEach(k=>{
+    const [date,meal]=k.split('|');
+    const items=par[k];
+    const sig=meal+'::'+items.map(e=>norm(e.name)).sort().join('+');
+    const s=sigs[sig]=sigs[sig]||{sig,meal,n:0,dernier:'',items:null};
+    s.n++;
+    if(date>s.dernier){ s.dernier=date; s.items=items; }   // la version la plus RÉCENTE fait foi
+  });
+  const td=today();
+  return Object.values(sigs)
+    .filter(s=>s.n>=2 && s.dernier!==td && s.items && s.items.length)
+    .sort((a,b)=>(b.n-a.n)||b.dernier.localeCompare(a.dernier))
+    .slice(0,3);
+}
+/* Rejoue un repas : ses aliments sont ajoutés à AUJOURD'HUI, sur le même moment de la journée.
+   ⚠️ La provenance dit « reprise » (brique 0) — ce n'est ni une mesure fraîche ni une saisie
+   manuelle, et l'écrire évite qu'un chiffre repris passe un jour pour une mesure. */
+function rejouerRepas(sig){
+  const r=_repasHabituels().find(x=>x.sig===sig);
+  if(!r){toast('Repas introuvable','error');return;}
+  if(!S.foodLog)S.foodLog=[];
+  const av=(typeof _afSrc!=='undefined')?_afSrc:null;
+  if(typeof _afSetSrc==='function')_afSetSrc({saisie:'liste',origine:'reprise'});
+  r.items.forEach(e=>{
+    const vals={kcal:e.kcal||0,prot:e.prot||0,carbs:e.carbs||0,fat:e.fat||0};
+    const prov=(typeof _provFood==='function')?_provFood(vals):{};
+    S.foodLog.push(Object.assign({date:today(),meal:r.meal,name:e.name,ts:Date.now()},vals,prov,{q:null,u:null}));
+  });
+  if(typeof _afSetSrc==='function')_afSetSrc(av);   // on rend le marqueur (R15)
+  persist();
+  if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
+  renderFoodJournal();
+  try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
+  toast(r.items.length+' aliment'+(r.items.length>1?'s':'')+' ajouté'+(r.items.length>1?'s':'')+' 🍽️','success');
+}
 function _foodTotals(date){
   const t={kcal:0,prot:0,carbs:0,fat:0};
   (S.foodLog||[]).forEach(e=>{if(e.date===date){t.kcal+=e.kcal||0;t.prot+=e.prot||0;t.carbs+=e.carbs||0;t.fat+=e.fat||0;}});
