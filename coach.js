@@ -1605,6 +1605,71 @@ function _extractDaySession(reply){
     return {sess:_montee(sess),clean};
   }catch(e){console.warn('[milo séance] parse',e);return null;}
 }
+// ─── 🫀 LE CERVELET : MILO PARLE, LE CERVELET TRADUIT (19/08/2026) ────────────
+// 1ʳᵉ brique de docs/ARCHITECTURE-CERVEAU-CERVELET.md, sur une idée de Michel.
+//
+// CE QUI CHANGE. Milo n'a plus la spécification du bloc JSON dans son prompt (~3 700
+// caractères, envoyés à TOUT LE MONDE et à CHAQUE conversation — y compris à quelqu'un
+// qui parle nutrition). Il écrit sa séance en français ; une 2ᵉ IA, qui ne sait RIEN de
+// la personne, la convertit en données. ⚠️ Elle n'existe pas pour l'utilisateur (R6).
+//
+// ⚠️ ET CE N'EST PAS QU'UN GAIN DE PLACE. Aujourd'hui Milo devait produire EN MÊME TEMPS
+// une réponse lisible ET un JSON valide ; quand le JSON sortait mal formé, la séance ne
+// se chargeait pas. Un convertisseur qui n'a qu'un seul métier se trompe moins.
+//
+// ⚠️⚠️ LA CASCADE EST À TROIS ÉTAGES, ET L'ORDRE COMPTE :
+//   ① le bloc caché s'il est là — RÉTROCOMPATIBLE : le prompt commun est mis en cache 1 h,
+//      donc pendant une heure après la livraison, Milo peut encore l'émettre. Gratuit.
+//   ② sinon le CERVELET traduit le texte (un appel Haiku, seulement quand ça ressemble
+//      vraiment à une séance).
+//   ③ s'il échoue — réseau, JSON illisible, plafond IA — la LECTURE DÉTERMINISTE du texte
+//      (`_seanceDepuisTexte`, écrite le 04/08) reste le filet. Elle est plus pauvre (ni
+//      repos, ni consigne, ni type de série) mais elle est gratuite et hors ligne.
+// *On ne remplace jamais un chemin qui marche : on en ajoute un meilleur devant.*
+
+// Détecteur DÉTERMINISTE, gratuit : « ce message ressemble-t-il à une séance ? ».
+// ⚠️ VOLONTAIREMENT PLUS PERMISSIF que `_seanceDepuisTexte`, et ce n'est pas un oubli.
+// Celle-là CONSTRUIT la séance : elle doit être stricte (une ligne mal lue ferait
+// travailler la personne sur autre chose). Celle-ci ne fait qu'AIGUILLER : au pire elle
+// déclenche une traduction pour rien, et le cervelet répond « ce n'est pas une séance ».
+// Les deux coûts ne sont pas du même ordre (R29) — d'où deux seuils, pas un seul.
+// ⚠️ L'ancre de fin de ligne est retirée exprès : « Développé couché 4×8 à 60 kg, repos
+// 3 min » est une vraie ligne de séance, et l'ancre la rejetait.
+function _ressembleASeance(txt){
+  try{
+    if(!txt)return false;
+    const RE=/(?:^|[\s:–—-])(\d{1,2})\s*(?:[x×*]\s*|s[ée]ries?\s+de\s+)(\d{1,3})\b/i;
+    let n=0;
+    String(txt).split(/\n+/).forEach(l=>{
+      const t=l.replace(/\*\*/g,'').trim();
+      if(!t||t.length>140)return;
+      const m=t.match(RE); if(!m)return;
+      const nb=+m[1], reps=+m[2];
+      if(!(nb>=1&&nb<=12)||!(reps>=1&&reps<=100))return;
+      // Il faut aussi un NOM devant : une ligne « 4×8 » toute seule ne dit pas quoi faire.
+      if(!/[a-zà-ÿ]{3}/i.test(t.slice(0, t.indexOf(m[0])+1)))return;
+      n++;
+    });
+    return n>=2;                    // une seule ligne ≠ une séance (même règle qu'au 04/08)
+  }catch(e){ return false; }
+}
+
+// Envoie le texte au cervelet. ⚠️ IL NE PART QUE LE TEXTE — ni profil, ni records, ni
+// historique, ni email : ce service n'a aucune raison de savoir qui est la personne, et
+// ne pas le lui donner est la garantie la plus simple qu'il ne s'en servira pas.
+async function _cerveletSeance(txt){
+  try{
+    const r=await fetch(_aiUrl('seanceJson'),{method:'POST',redirect:'follow',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'seanceJson',texte:String(txt||'').slice(0,8000)})});
+    if(!r.ok)return null;
+    const d=await r.json();
+    const s=d&&d.seance;
+    if(!s||!Array.isArray(s.exs)||!s.exs.length)return null;
+    return s;
+  }catch(e){ console.warn('[cervelet séance]',e); return null; }
+}
+
 // ─── MÉMOIRE DURABLE (profil conversationnel, étape 2 — demande Michel) ────────
 // Milo peut terminer par un bloc caché {"retiens":["...","..."]} (retiré par _stripCoachTech).
 // On le propose à la VALIDATION (rien mémorisé sans accord, Principe 3). Validé → stocké comme
@@ -1750,14 +1815,33 @@ function _appendQuickReplies(reps){
 }
 
 // Ajoute le bouton « ⚡ Commencer cette séance » sous la dernière bulle de Milo
-function _appendStartSessionBtn(sess){
-  if(typeof _normalizeMiloSession!=='function')return;
+// La dernière bulle de Milo au moment où on la demande (capturée pour le cervelet).
+function _derniereBulleCoach(){
+  try{
+    const msgs=document.getElementById('coach-msgs'); if(!msgs)return null;
+    const b=msgs.querySelectorAll('.msg-coach');
+    return b[b.length-1]||null;
+  }catch(e){ return null; }
+}
+// ⚠️ `cible` (facultatif) = la bulle SOUS LAQUELLE poser le bouton. Elle existe pour le
+// cervelet : sa traduction revient une seconde APRÈS l'affichage, et d'ici là la personne
+// a pu envoyer un autre message — « la dernière bulle » ne serait alors plus la bonne, et
+// le bouton se collerait sous une réponse qui n'a rien à voir. On capture donc la bulle au
+// moment du rendu. Sans `cible`, comportement inchangé : la dernière.
+function _appendStartSessionBtn(sess, cible){
+  if(!sess||typeof _normalizeMiloSession!=='function')return;
   const norm=_normalizeMiloSession(sess);
   if(!norm||!norm.exs||!norm.exs.length)return;
   const idx=_pendingMiloSessions.push(norm)-1;
   const msgs=document.getElementById('coach-msgs');if(!msgs)return;
-  const bubbles=msgs.querySelectorAll('.msg-coach');
-  const last=bubbles[bubbles.length-1];if(!last)return;
+  let last=cible||null;
+  if(last&&!msgs.contains(last))last=null;          // bulle disparue (fil vidé) → on renonce
+  if(last&&last.querySelector('.coach-prog-save'))return;   // déjà un bouton dessous
+  if(!last){
+    const bubbles=msgs.querySelectorAll('.msg-coach');
+    last=bubbles[bubbles.length-1];
+  }
+  if(!last)return;
   const n=norm.exs.length;
   // ⚠️ Le libellé dit ce qui va VRAIMENT se passer (ft-v750) : tant qu'une séance est en cours,
   // le bouton ne « commence » rien — il ouvre la question « ajouter ou remplacer ? ». Avant, il
@@ -2544,20 +2628,13 @@ MODÈLE DE PROGRAMME PRO (le format des meilleurs coachs — reproduis CE niveau
 - Pour CHAQUE exercice, donne : le mouvement précis (angle/prise), le nombre de SÉRIES × REPS, le REPOS, un CUE d'exécution technique (« ne pas arrondir les lombaires », « contracter fort les dorsaux sans balancer », « coudes serrés dans l'axe des poignets ») et parfois une MÉTHODE nommée (isométrie 2-5'' en début ou pendant, excentrique lent 3'', complète/partielle « 1 complète + 1 partielle », dégressif, bras/bras unilatéral, double contraction).
 - Notations utiles : « 5''+8 » = 5 s d'isométrie puis 8 reps ; « 10x2 » = 10 reps par côté (bras/bras, jambe/jambe) ; « 12/10/8/8 » = reps dégressives série par série (charge qui monte). Progression : montée en charge sur le cycle, semaine de décharge à la fin.
 
-INTÉGRER LA SÉANCE DU JOUR DIRECTEMENT DANS L'APP (action concrète — quand l'utilisateur FIXE sa séance du jour ou te demande une séance à faire MAINTENANT) :
-- Quand la personne te dicte sa séance du jour, OU te demande quoi faire aujourd'hui et que tu lui proposes une séance concrète À FAIRE MAINTENANT, présente-la normalement (en clair, avec tes explications), PUIS termine ton message par un bloc technique CACHÉ (il ne sera PAS affiché à l'écran) au format EXACT :
-\`\`\`json
-{"seance":{"label":"<nom court, ex. Push, Jambes, Haut du corps>","exs":[{"name":"<nom d'exercice reconnaissable>","note":"<ta consigne pour CET exercice, courte>","sets":[{"reps":8,"kg":60,"type":"N","rest":180},{"reps":8,"kg":60,"type":"N","rest":180}]}]}}
-\`\`\`
-- Règles du bloc : \`name\` = un nom d'exercice le plus proche possible de la bibliothèque (ex. « Développé Couché », « Squat », « Rowing Barre »). Une entrée dans \`sets\` PAR série. \`type\` = "N" (normal), "É" (échauffement), "X" (échec/à fond) ou "D" (dropset) — "N" par défaut. \`kg\` peut valoir 0 si tu ne connais pas la charge (l'app la pré-remplit avec la dernière fois). Si la charge est « au ressenti/max », mets \`"reps":0,"maxi":true\`.
-- ⏱️ \`rest\` = le TEMPS DE REPOS en SECONDES, **le même que celui que tu annonces en clair** dans ta séance (« 3 min » → \`"rest":180\` ; « 90 s » → \`"rest":90\` ; « 2 min » → \`"rest":120\`). Mets-le sur CHAQUE série — c'est lui qui règle le chronomètre de repos de l'app. **Sois cohérent** : le chrono doit correspondre exactement à ce que tu as écrit. Si tu n'as pas d'avis particulier, omets \`rest\` (l'app gardera son réglage habituel).
-- 💬 \`note\` = **ta CONSIGNE pour cet exercice**, reprise de ce que tu viens d'écrire en clair : le cue technique, la méthode, le point d'attention ou la protection d'une zone (« omoplates serrées, pieds bien ancrés », « amplitude contrôlée, ne descends pas sous les oreilles », « pas de tentative 105 aujourd'hui », « excentrique lent 3'' »). **1 phrase COURTE et actionnable** (~120 caractères max), à la 2ᵉ personne. Elle s'affichera **sous l'exercice pendant la séance** : c'est ce qui fait que la personne exécute comme tu l'as expliqué, au lieu de devoir remonter dans le chat. Omets \`note\` si tu n'as rien de particulier à dire sur cet exercice (ne meuble pas).
-- ⚡ \`supersetGroup\` (facultatif) = **grouper deux exercices en SUPERSET**. Même étiquette courte ("A", "B") sur les exercices à enchaîner : \`{"name":"Curl Biceps Haltères","supersetGroup":"A",...},{"name":"Extension Triceps Poulie","supersetGroup":"A",...}\`. Écrire « superset » dans ton texte ne suffit PAS — l'app ne lit que cette clé.
-- ⚡ **QUAND** : le superset fait gagner du TEMPS, pas du muscle. Donc **seulement si la séance ne rentre pas dans le temps disponible**, et **seulement sur les accessoires/isolation** (curl, élévations, extensions, leg curl, face pull, mollets) — de préférence en paire pousser + tirer. **🚫 JAMAIS sur un mouvement lourd** (squat, soulevé, développés, charnière de hanche) : l'app REFUSE ces groupes. Ni quand la récupération est basse, une zone fragile déclarée, ou que le temps ne manque pas.
-- 🔢 **ORDRE ET EXHAUSTIVITÉ — le bloc doit être le MIROIR EXACT de ta séance en clair** : les exercices dans \`exs\` sont rangés dans le **MÊME ORDRE** que celui que tu viens d'annoncer (ton exercice n°1 en premier, puis le n°2, etc.), et **TOUS** y figurent (n'en oublie AUCUN, n'en ajoute AUCUN). La personne enchaîne sa séance dans cet ordre : s'il diffère de ce que tu as écrit, elle est perdue. **Vérifie avant d'envoyer** : même nombre d'exercices, même ordre, mêmes charges, mêmes reps, même repos que ton texte.
-- ⛔ **DÉBRIEFER ≠ PROPOSER.** Un débrief/bilan regarde EN ARRIÈRE : les charges et reps RÉALISÉS (tu les as), ce qui a progressé, un record, puis UNE piste. N'émets alors NI ce bloc NI un plan (« échauffement 40×5 → travail 3×8 » est une séance à FAIRE, pas un compte-rendu). Aucune séance récente à débriefer ? Dis-le, n'invente pas.
-- N'émets ce bloc QUE pour une séance à faire AUJOURD'HUI / MAINTENANT. (Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas ce bloc-là.)
-- Un bouton « ⚡ Commencer cette séance » apparaîtra automatiquement sous ton message pour l'injecter dans l'écran Séance. Ne parle JAMAIS du JSON, ne l'explique pas, ne le commente pas — l'utilisateur ne voit que ta séance en clair + le bouton.
+SÉANCE À FAIRE MAINTENANT — TU L'ÉCRIS EN CLAIR, L'APP S'OCCUPE DU RESTE (quand l'utilisateur FIXE sa séance du jour ou te demande une séance à faire MAINTENANT) :
+- Présente-la NORMALEMENT, en français, comme un coach : UN EXERCICE PAR LIGNE, avec ses séries × reps, la charge en kg, le REPOS et ta consigne technique. Un bouton « ⚡ Commencer cette séance » apparaîtra tout seul sous ton message pour l'injecter dans l'écran Séance. Tu n'as RIEN à formater ni à annoncer : ne parle jamais de ce bouton, ne le commente pas.
+- ⭐ CE QUE TU N'ÉCRIS PAS EN CLAIR N'EXISTERA PAS dans sa séance. Écris donc toujours : le REPOS (« repos 3 min », « 90 s »), la CHARGE (ou « au ressenti » si tu ne la connais pas), les séries d'ÉCHAUFFEMENT s'il y en a, et pour chaque exercice ta CONSIGNE courte — elle s'affichera sous l'exercice pendant la séance, c'est ce qui lui évite de remonter dans le chat pour se rappeler comment tu voulais qu'elle l'exécute.
+- 🔢 L'ORDRE de ta liste est celui dans lequel elle enchaînera sa séance : range les exercices dans l'ordre où tu veux qu'ils soient faits.
+- ⚡ SUPERSET : il fait gagner du TEMPS, pas du muscle. Donc **seulement si la séance ne rentre pas dans le temps disponible**, et **seulement sur les accessoires/isolation** (curl, élévations, extensions, leg curl, face pull, mollets) — de préférence en paire pousser + tirer. **🚫 JAMAIS sur un mouvement lourd** (squat, soulevé, développés, charnière de hanche) : l'app REFUSE ces groupes. Ni quand la récupération est basse, une zone fragile déclarée, ou que le temps ne manque pas. Quand tu en fais un, dis-le en clair (« en superset avec … »).
+- ⛔ DÉBRIEFER ≠ PROPOSER. Un débrief/bilan regarde EN ARRIÈRE : les charges et reps RÉALISÉS (tu les as), ce qui a progressé, un record, puis UNE piste. N'écris alors PAS un plan (« échauffement 40×5 → travail 3×8 » est une séance à FAIRE, pas un compte-rendu). Aucune séance récente à débriefer ? Dis-le, n'invente pas.
+- Pour un programme sur PLUSIEURS jours à conserver, ce n'est pas de ça qu'il s'agit.
 
 SE SOUVENIR DE LA PROCHAINE SÉANCE ANNONCÉE (cohérence — « Milo se souvient de moi ») :
 - Quand la personne t'annonce QUAND elle compte s'entraîner (« je m'entraîne lundi », « demain séance jambes », « ma prochaine séance c'est jeudi »), accuse réception naturellement en une phrase (« super, c'est noté 💪 »), PUIS termine ton message par un bloc technique CACHÉ (jamais affiché) au format EXACT :
@@ -3374,8 +3451,21 @@ async function sendToCoach(customMsg, displayMsg, opts) {
       if (ext && ext.prog) { _fp = ext.prog; if (ext.clean) _disp = ext.clean; }
     }
     // Séance du jour : Milo peut l'injecter directement dans l'écran Séance (demande Michel).
-    // Distinct du programme force (clé "seance" ≠ "days"/"exs") → ne se déclenche que si Milo l'émet.
-    if (!_fp) { const dsx = _extractDaySession(reply); if (dsx && dsx.sess) { _ds = dsx.sess; if (dsx.clean) _disp = dsx.clean; } }
+    // ⚠️ CASCADE À 3 ÉTAGES depuis le 19/08 (voir « LE CERVELET » plus haut) :
+    // ① le bloc caché s'il est encore là (rétrocompatible, gratuit) → ② le cervelet traduit
+    // le texte → ③ la lecture déterministe reste le filet si le cervelet échoue.
+    let _dsFilet = null, _dsCervelet = false;
+    if (!_fp) {
+      const dsx = _extractDaySession(reply);
+      if (dsx && dsx.sess) {
+        if (dsx.fromText) _dsFilet = dsx.sess;                        // ③
+        else { _ds = dsx.sess; if (dsx.clean) _disp = dsx.clean; }    // ①
+      }
+      // ② On n'appelle le cervelet que si le texte RESSEMBLE à une séance : sur une simple
+      //    discussion, il n'y a rien à traduire et l'appel serait dépensé pour rien.
+      if (!_ds && !opts.silent && !opts.debriefSess && typeof _ressembleASeance === 'function'
+          && _ressembleASeance(reply)) _dsCervelet = true;
+    }
     // Mémoire durable : Milo peut proposer de retenir un trait durable (avec validation, Principe 3)
     const _mem = _extractMemory(reply);
     // Question guidée : Milo peut proposer des réponses rapides à taper (facultatif, une question à la fois)
@@ -3386,6 +3476,17 @@ async function sendToCoach(customMsg, displayMsg, opts) {
     renderCoachMsg('coach', _disp);
     if (_fp) _appendSaveProgBtn(_fp);
     if (_ds) _appendStartSessionBtn(_ds);
+    else if (_dsCervelet) {
+      // ⚠️ VOLONTAIREMENT PAS ATTENDU (aucun `await`) : la réponse de Milo est déjà à
+      // l'écran, le bouton arrive une seconde après. Une traduction lente — ou en panne —
+      // ne doit JAMAIS retarder ni bloquer ce que la personne est venue lire (règle d'or #3).
+      const _bulle = _derniereBulleCoach();
+      const _filet = _dsFilet;
+      _cerveletSeance(reply)
+        .then(s => _appendStartSessionBtn(_montee(s) || _filet, _bulle))
+        .catch(() => _appendStartSessionBtn(_filet, _bulle));
+    }
+    else if (_dsFilet) _appendStartSessionBtn(_dsFilet);
     if (_mem) _appendMemoryBtns(_mem);
     if (_qr) _appendQuickReplies(_qr);
     // Étape 2 — débrief auto : on enregistre la mémoire durable (objectif/décision/tendances)

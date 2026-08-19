@@ -1045,7 +1045,12 @@ t('stockage local raisonnable (< 2 Mo pour 200 séances)', C.lsKo<2048, C.lsKo+'
         const froid=buildCoachContext("j'ai très mal dormi cette nuit et je suis à plat");
         const chaud=buildCoachContext("fais-moi une séance jambes pour ce soir stp");
         coachHistory.length=0; av.forEach(x=>coachHistory.push(x));
-        const a=t=>({seance:/INTÉGRER LA SÉANCE DU JOUR/.test(t), cat:/EXERCICES DISPONIBLES/.test(t)});
+        // ⚠️ REPÈRE CHANGÉ le 19/08 (cervelet) : le bloc s'appelait « INTÉGRER LA SÉANCE DU
+        // JOUR » quand il portait la spécification JSON. Il s'appelle maintenant « SÉANCE À
+        // FAIRE MAINTENANT » — le bloc EXISTE toujours, il ne dit plus comment formater mais
+        // quoi écrire en clair. Ce que ce témoin protège n'a pas bougé : la séance et le
+        // catalogue ne doivent jamais se retrouver l'un sans l'autre.
+        const a=t=>({seance:/SÉANCE À FAIRE MAINTENANT/.test(t), cat:/EXERCICES DISPONIBLES/.test(t)});
         return {froid:a(froid), chaud:a(chaud), gain:chaud.length-froid.length}; })(),
       // « CRÉER LE PREMIER MOMENT MILO » dit lui-même « au TOUT PREMIER échange » : il ne doit
       // plus partir au 10ᵉ tour. 972 caractères sur la première impression, envoyés pour toujours.
@@ -2726,8 +2731,17 @@ console.log('\n═══ P. Compteur IA — branché là où passent vraiment le
   const comptees= lst((w.match(/_ACTIONS_IA\s*=\s*new Set\(\[([\s\S]*?)\]\)/)||[,''])[1]);
   const manquantes = [...proxy].filter(a=>!comptees.has(a));
 
+  // ⚠️ Le nombre est ÉPINGLÉ exprès : ajouter une action doit obliger à repasser ici, sinon
+  // les trois listes (constants / worker / Code.js) s'éloignent en silence — la dérive du 13/07.
+  // 13 → 14 le 19/08 : `seanceJson`, le cervelet (docs/ARCHITECTURE-CERVEAU-CERVELET.md).
+  const comptCode = lst((cj.match(/AI_ACTIONS_\s*=\s*\[([^\]]*)\]/)||[,''])[1]);
+  const horsCompteur = [...proxy].filter(a=>!comptCode.has(a));
   t('⭐⭐ TOUTE action IA qui part vers le Worker y est comptée (la dérive du 13/07 ne peut plus revenir)',
-    proxy.size===13 && manquantes.length===0, 'non comptées : '+(manquantes.join(', ')||'aucune'));
+    proxy.size===14 && manquantes.length===0, 'non comptées : '+(manquantes.join(', ')||'aucune'));
+  // ⚠️ Le compteur du jour vit dans Apps Script (le worker lui envoie le coup) : une action
+  // absente de SA liste part bien, mais n'est comptée nulle part — panne silencieuse.
+  t('⭐ … et la liste d\'Apps Script, qui tient réellement le compteur, ne l\'a pas oubliée',
+    horsCompteur.length===0, 'absentes de AI_ACTIONS_ (Code.js) : '+(horsCompteur.join(', ')||'aucune'));
   t('⭐ le comptage ne retarde JAMAIS la réponse de Milo (waitUntil, règle d\'or #4)',
     /ctx\.waitUntil\(\s*_compterIA\(/.test(w), 'waitUntil absent');
   t('⭐⭐ REPLI OUVERT : une panne du compteur ne coupe pas Milo (règle d\'or #3)',
@@ -3319,6 +3333,7 @@ console.log('\n═══ VI. Superset dicté par Milo ═══');
     // ── la spec doit être DANS le contexte, sinon Milo ne peut pas l'employer (R8)
     const ctx=(typeof buildCoachContext==='function')?buildCoachContext(''):'';
     o.specDite  = ctx.indexOf('supersetGroup')>=0;
+    o.diteEnClair= /en superset avec/i.test(ctx);
     o.regleTemps= /ne rentre pas dans le temps/i.test(ctx);
     o.regleLourd= /JAMAIS sur un mouvement lourd/i.test(ctx) && /l'app REFUSE ces groupes/i.test(ctx);
     return o;
@@ -3337,7 +3352,20 @@ console.log('\n═══ VI. Superset dicté par Milo ═══');
   tw('⭐ RÈGLE D\'OR #9 : le bouton central ne bouge pas ('+W.fabAvant+')',
     W.fabAvant===W.fabApres&&W.fabApres===W.fabSerie,
     W.fabAvant+' → '+W.fabApres+' → '+W.fabSerie);
-  tw('⭐ Milo REÇOIT la clé `supersetGroup` (sinon il ne peut pas s\'en servir — R8)', W.specDite===true);
+  /* ⚠️⚠️ TÉMOIN RETOURNÉ le 19/08 (cervelet). Il disait : « Milo REÇOIT la clé
+     `supersetGroup`, sinon il ne peut pas s'en servir (R8) ». C'était juste tant que Milo
+     FORMATAIT lui-même le bloc JSON. Depuis, il écrit sa séance en français et une 2ᵉ IA la
+     traduit : la clé n'a plus rien à faire dans SON prompt, elle doit être dans celui du
+     CONVERTISSEUR. R8 n'est pas abandonné — il change de destinataire : la spécification doit
+     atteindre celui qui l'emploie. Les trois témoins couvrent les trois maillons ; s'il en
+     manquait un, le superset disparaîtrait sans qu'aucune erreur ne le signale. */
+  const WSRC = fs.readFileSync(path.join(ROOT,'worker.js'),'utf8');
+  tw('⭐⭐ la clé `supersetGroup` a QUITTÉ le prompt de Milo (c\'est le cervelet qui traduit)',
+    W.specDite===false, 'elle est encore dans le contexte commun');
+  tw('⭐⭐ … et Milo garde la consigne de le dire EN CLAIR (sinon il n\'y a rien à traduire — R4)',
+    W.diteEnClair===true, '« en superset avec … » a disparu du prompt');
+  tw('⭐⭐ … et le CONVERTISSEUR, lui, connaît la clé (R8 change de destinataire)',
+    /supersetGroup/.test(WSRC) && /seanceJson/.test(WSRC), 'worker.js ne porte pas la spec');
   tw('… et la règle « seulement quand le temps manque »', W.regleTemps===true);
   tw('… et l\'interdiction sur les mouvements lourds', W.regleLourd===true);
   tw('0 erreur JS sur tout le bloc superset', ew.length===0, ew.join(' | '));
@@ -6797,6 +6825,128 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   t('/!\\ ... et il NE crie PAS sur une vraie source citee sans lien (anti-faux-positif)',
     !/source_fabriquee/.test(R.vraieSrc) && !/source_fabriquee/.test(R.normal),
     'nutriscore=['+R.vraieSrc+'] normal=['+R.normal+']');
+  await cx.close();
+}
+
+/* == BLOC LIX - LE CERVELET : MILO PARLE, LE CERVELET TRADUIT (19/08/2026) ==
+   1re brique de docs/ARCHITECTURE-CERVEAU-CERVELET.md. Milo n'a plus la specification du
+   bloc JSON dans son prompt : il ecrit sa seance en francais, une 2e IA la convertit.
+   ⚠️ CE QUI EST SURVEILLE ICI n'est pas « le cervelet marche » (ca demande le vrai modele),
+   mais les QUATRE choses qu'un test local peut prouver et qui cassent en silence :
+     · la specification a bien QUITTE le prompt commun (le gain), et Milo garde la consigne
+       d'ecrire en clair ce qui compte (sinon on a retire l'info sans la remplacer — R4) ;
+     · l'aiguillage reconnait une seance ecrite en clair, et NE se declenche PAS sur une
+       discussion (une erreur d'aiguillage est SILENCIEUSE : elle coute un appel, ou le bouton) ;
+     · le cervelet ne recoit QUE du texte — ni profil, ni email (le critere qui le definit) ;
+     · le bouton se pose sous LA BULLE CAPTUREE, pas « la derniere » — sa reponse arrive en
+       differe, et d'ici la la personne a pu ecrire autre chose. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    o.ctx=(typeof buildCoachContext==='function')?(buildCoachContext()||''):'';
+
+    /* Une vraie seance ecrite comme un coach l'ecrit : du texte APRES les series.
+       ⚠️ C'est precisement ce que `_seanceDepuisTexte` rejette (son motif est ancre en fin
+       de ligne) — donc si l'aiguillage se contentait de l'appeler, il ne verrait rien. */
+    const seanceRiche = "Voila ta seance du jour :\n"
+      + "- Developpe Couche : 4 series de 8 a 60 kg, repos 3 min, omoplates serrees\n"
+      + "- Rowing Barre : 4x10 a 50 kg, repos 2 min, ne balance pas le buste\n"
+      + "- Curl Biceps Halteres : 3x12 a 12 kg, repos 90 s\n";
+    const seanceStricte = "Seance du jour :\nDeveloppe Couche 4x8\nRowing Barre 4x10\n";
+    const discussion = "Bonne question. La creatine se prend tous les jours, 3 a 5 g, "
+      + "et le moment de la journee n'a pas d'importance demontree. Tu peux la prendre le matin.";
+
+    o.detRiche   = (typeof _ressembleASeance==='function') ? _ressembleASeance(seanceRiche) : 'ABSENTE';
+    o.detDiscu   = (typeof _ressembleASeance==='function') ? _ressembleASeance(discussion)  : 'ABSENTE';
+    /* Le filet deterministe doit rester VIVANT : c'est lui qui reprend si le cervelet tombe. */
+    o.filet = (typeof _seanceDepuisTexte==='function' && _seanceDepuisTexte(seanceStricte))
+      ? _seanceDepuisTexte(seanceStricte).exs.length : 0;
+    /* Retrocompatible : le prompt commun est en cache 1 h, Milo peut encore emettre le bloc. */
+    const avecBloc = 'Voila ta seance.\n```json\n{"seance":{"label":"Push","exs":['
+      + '{"name":"Developpe Couche","sets":[{"reps":8,"kg":60,"type":"N"}]},'
+      + '{"name":"Dips","sets":[{"reps":10,"kg":0,"type":"N"}]}]}}\n```';
+    const dsx = (typeof _extractDaySession==='function') ? _extractDaySession(avecBloc) : null;
+    o.blocEncoreLu = !!(dsx && dsx.sess && dsx.sess.exs && dsx.sess.exs.length>=2) && !dsx.fromText;
+
+    /* --- Ce qui PART au cervelet : on intercepte l'appel reseau. --- */
+    o.envoye=null; o.url=null;
+    const vrai = window.fetch;
+    window.fetch = async (u, opt) => {
+      o.url = String(u);
+      try { o.envoye = JSON.parse((opt&&opt.body)||'{}'); } catch(e) { o.envoye = {erreur:'illisible'}; }
+      return { ok:true, json: async () => ({ status:'ok', seance:{ label:'Push', exs:[
+        {name:'Developpe Couche', note:'omoplates serrees', sets:[{reps:8,kg:60,type:'N',rest:180}]},
+        {name:'Rowing Barre', sets:[{reps:10,kg:50,type:'N',rest:120}]}]}}) };
+    };
+    o.recu = (typeof _cerveletSeance==='function') ? await _cerveletSeance(seanceRiche) : null;
+    window.fetch = vrai;
+    o.repos = (o.recu && o.recu.exs && o.recu.exs[0] && o.recu.exs[0].sets[0]) ? o.recu.exs[0].sets[0].rest : null;
+    o.note  = (o.recu && o.recu.exs && o.recu.exs[0]) ? (o.recu.exs[0].note||'') : '';
+
+    /* --- Le bouton se pose sous LA BULLE CAPTUREE, pas sous la derniere. ---
+       ⚠️ On emploie une seance ECRITE ICI, pas `o.recu` : sur l'ancien code `_cerveletSeance`
+       n'existe pas, `o.recu` vaudrait null et le temoin rougirait pour la mauvaise raison
+       (rien a poser) au lieu de mesurer ce qu'il annonce (le bouton se trompe de bulle). */
+    const sessTest={label:'Push',exs:[
+      {name:'Developpe Couche',sets:[{reps:8,kg:60,type:'N'}]},
+      {name:'Rowing Barre',sets:[{reps:10,kg:50,type:'N'}]}]};
+    const msgs=document.getElementById('coach-msgs');
+    o.dom='pas de #coach-msgs';
+    if(msgs){
+      msgs.innerHTML='';
+      const b1=document.createElement('div'); b1.className='msg msg-coach'; b1.textContent='la seance';
+      const b2=document.createElement('div'); b2.className='msg msg-coach'; b2.textContent='autre chose';
+      msgs.appendChild(b1); msgs.appendChild(b2);
+      /* try/catch : un temoin qui PLANTE ne prouve rien — il doit rougir (leçon ft-v901/907). */
+      try{ if(typeof _appendStartSessionBtn==='function') _appendStartSessionBtn(sessTest, b1); }
+      catch(e){ o.domErr=String(e&&e.message||e); }
+      o.dom = (b1.querySelector('.coach-prog-save')?'bulle1':'') + (b2.querySelector('.coach-prog-save')?'bulle2':'');
+    }
+    return o;
+  });
+  const C=R.ctx;
+  console.log('\n-- LIX. Le cervelet : Milo parle, le cervelet traduit --');
+  /* ⚠️ On cherche des marqueurs de la SPECIFICATION, pas le mot « seance » (qui reste
+     partout, legitimement) : la cle `supersetGroup` et le squelette `"exs":[{"name"`. */
+  t('⭐⭐ LA SPECIFICATION DU BLOC JSON A QUITTE LE PROMPT COMMUN (le gain)',
+    !/supersetGroup/.test(C) && !/"exs":\s*\[\{"name"/.test(C),
+    (C.match(/.{0,60}supersetGroup.{0,60}/)||C.match(/.{0,60}"exs":\s*\[\{"name".{0,60}/)||[''])[0]);
+  /* ⚠️ ET LE TEMOIN JUMEAU, sans lequel le premier serait dangereux : on a retire un FORMAT,
+     pas l'information. Si Milo cesse d'ecrire le repos et la consigne EN CLAIR, le cervelet
+     n'a plus rien a traduire — on aurait juste deplace la perte (R4). */
+  t('⭐⭐ ... et Milo garde la consigne d\'ecrire EN CLAIR ce qui doit atteindre la seance',
+    /N'[EÉ]CRIS PAS EN CLAIR N'EXISTERA PAS/.test(C) && /repos 3 min/.test(C),
+    'la consigne « ce que tu n\'ecris pas en clair n\'existera pas » a disparu du prompt');
+  t('⭐⭐ L\'AIGUILLAGE reconnait une seance ecrite en clair (avec du texte apres les series)',
+    R.detRiche===true, 'detecte='+R.detRiche);
+  /* Faux positif = un appel Haiku depense pour rien, sur CHAQUE reponse de ce genre. */
+  t('/!\\ ... et il ne se declenche PAS sur une simple discussion (anti-faux-positif)',
+    R.detDiscu===false, 'detecte='+R.detDiscu);
+  t('⭐ LE FILET DETERMINISTE reste vivant (il reprend si le cervelet tombe)',
+    R.filet>=2, R.filet+' exercices lus dans le texte');
+  t('⭐ LE BLOC CACHE reste accepte (le prompt commun est en cache 1 h apres la livraison)',
+    R.blocEncoreLu===true, 'bloc relu='+R.blocEncoreLu);
+  /* ⭐⭐ LE TEMOIN LE PLUS IMPORTANT DE L'ARCHITECTURE : le critere qui definit le cervelet
+     est « ca n'a pas besoin de savoir QUI est la personne ». Ne pas le lui donner est la
+     garantie la plus simple qu'il ne s'en servira pas. */
+  t('⭐⭐ LE CERVELET NE RECOIT QUE DU TEXTE — ni email, ni profil, ni historique',
+    !!R.envoye && R.envoye.action==='seanceJson' && typeof R.envoye.texte==='string'
+      && Object.keys(R.envoye).length===2,
+    'envoye = '+JSON.stringify(Object.keys(R.envoye||{})));
+  /* Sans ca l'appel partirait sur Apps Script, qui ne connait pas cette action. */
+  t('⭐ ... et il part bien vers le Worker (l\'action est dans AI_PROXY_ACTIONS)',
+    /workers\.dev/.test(R.url||''), 'url='+R.url);
+  t('⭐ Il rapporte ce que le texte seul perdait : le REPOS et la CONSIGNE',
+    R.repos===180 && /omoplates/.test(R.note), 'rest='+R.repos+' note='+R.note);
+  /* ⚠️ LE BUG LATENT DU DIFFERE : la traduction revient une seconde apres l'affichage. Si le
+     bouton visait « la derniere bulle », il se collerait sous le message suivant. */
+  t('⭐⭐ LE BOUTON SE POSE SOUS LA BULLE CAPTUREE, pas sous la derniere',
+    R.dom==='bulle1', 'pose sur : ['+R.dom+']'+(R.domErr?' · erreur : '+R.domErr:''));
   await cx.close();
 }
 

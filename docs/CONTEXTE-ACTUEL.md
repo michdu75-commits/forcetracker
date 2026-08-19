@@ -6,7 +6,18 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v915` — fusionnée sur `master` le 19/08.
+- **Version en ligne (live) :** `ft-v919` — fusionnée sur `master` le 19/08.
+- **🫀 CHANTIER EN COURS — l'architecture CERVEAU / CERVELET** (`docs/ARCHITECTURE-CERVEAU-CERVELET.md`,
+  idée de Michel : *« dans une entreprise il y a le boss et la secrétaire »*). Milo garde le jugement,
+  une 2ᵉ IA fait le mécanique — **et elle n'existe pas pour l'utilisateur** (R6, une seule voix).
+  **Brique 1 LIVRÉE (ft-v919)** : la conversion séance→JSON est sortie du prompt (46 485 → 44 157 car.).
+  **Ce qui reste à décharger**, par ordre de poids : les *réponses rapides* (~1 655 car.) · la
+  *prochaine séance annoncée* (~825) · la **nutrition-outil** (~2 126 + les briques 1/3/4 à venir).
+  ⛔ **Ce qui NE part PAS au cervelet, et c'est décidé** : la **composition d'un plan alimentaire**
+  sous contraintes de régime/allergies — une erreur y est une erreur de **sécurité** (le bug d'Emma
+  du 02/08), donc ça reste en **code déterministe**, sur liste blanche relue à la main. Et *dire si
+  la personne mange assez* reste chez Milo : ça croise séances, sommeil et apports.
+  ⏭️ **À faire avant la vraie mise en place de la nutrition** (condition posée par Michel le 19/08).
 - **Rien en attente sur la branche.** Tout ce qui a été livré les 18 et 19/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
