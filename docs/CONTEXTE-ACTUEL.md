@@ -112,6 +112,54 @@
 > 2ᵉ défaut, structurel : *« toutes les ancres d'abord »* fabriquait des **zigzags de salle**.
 > On groupe par zone, sans toucher à « l'ancre la plus lourde reste 1ʳᵉ » ni au superset.
 >
+> ## 🧠 19/08 (soir) — L'ORCHESTRATION « CERVEAU / CERVELET » : L'IDÉE EXISTAIT, LA PREUVE MANQUAIT
+>
+> Michel, en relisant le prompt règle par règle : *« pourquoi tout part d'un seul bloc ? dans une
+> entreprise il y a le boss et la secrétaire »* — puis, en nommant sa propre idée : **« le cerveau
+> et le cervelet »**.
+>
+> ### ⚠️ ELLE ÉTAIT DÉJÀ ÉCRITE — DEUX FOIS, ET JAMAIS CONSTRUITE
+> · Ce document la listait déjà comme *« archi cerveau/cervelet — **pas encore envoyé** »* à
+>   Gemini/Mistral pour challenge. Le cross-review n'est jamais parti.
+> · Et l'**architecture hybride** actée le 20/07 la contient, nommée : le **niveau ③ Orchestration**
+>   — *« décide quel composant intervient, dans quel ordre, avec quelles données »*, explicitement
+>   marqué **« couche encore IMPLICITE aujourd'hui : routage + assemblage du contexte »**.
+> **Le « cervelet » de Michel = rendre le niveau ③ explicite.** Pas une idée neuve : la pièce
+> manquante d'une architecture déjà décidée.
+>
+> ### ⭐ CE QUI CHANGE CE SOIR : LA MESURE
+> Jusqu'ici, bonne idée sans urgence. Maintenant on a les chiffres : **140 règles**, **46 485
+> caractères**, **15 de marge**, et **aucun moyen local de savoir si Milo les suit** (`tests/milo`
+> est déterministe — il prouve la PRÉSENCE, jamais l'OBÉISSANCE).
+> **Et le dégraissage plafonne** : mesuré ce soir, ce qui peut réellement sortir du prompt parce que
+> le code le garantit fait **~3-4 %**. L'orchestration s'attaque à la cause, pas au symptôme.
+>
+> ### 🍽️ LE CAS QUI LA REND NÉCESSAIRE : LA NUTRITION
+> Elle ne pèse aujourd'hui que **2 126 caractères (4,6 %)**. Mais les briques **1, 3 et 4** restent
+> à construire et chacune voudra ses règles. **Avec le routage, elles ne partent que quand on parle
+> de nutrition** — donc aussi détaillées qu'il faut, sans encombrer quelqu'un qui demande combien de
+> séries au développé. *Le gain n'est pas 3 % grattés : c'est la fin du plafond.*
+>
+> ### ⚠️ LES TROIS CONTRAINTES TROUVÉES CE SOIR — à ne pas redécouvrir
+> **① LE CACHE.** Le bloc commun est identique pour tous → caché 1 h, facturé ~10× moins. Un
+> contexte **différent à chaque message** ferait sauter le cache : plein tarif à chaque question.
+> ⭐ **Mais un petit nombre de variantes FIXES marche** : 4 configurations = 4 caches chauds. Ce qui
+> tue le cache, c'est la variation continue, pas la pluralité.
+> **② L'ERREUR D'AIGUILLAGE EST SILENCIEUSE.** Un message d'entraînement classé « nutrition » et
+> Milo répond sans les règles qu'il lui faut — aucune erreur, aucun test rouge, juste une réponse
+> moins bonne. C'est la famille de bugs que ce projet collectionne.
+> **③ UN NOYAU NE SE CONDITIONNE JAMAIS** : sécurité, zones fragiles déclarées, « n'invente rien »,
+> identité et ton. Ils partent toujours. Seuls les modules spécialisés tournent.
+>
+> ### ⏭️ LE PRÉREQUIS, ET IL N'EST PAS UN DÉTAIL
+> **Est-ce que Milo suit ses 140 règles aujourd'hui ?** Si oui, l'orchestration est une
+> optimisation. Si non, elle est urgente. **On ne peut pas trancher localement** — il faut des cas
+> réels sur le vrai modèle.
+>
+> ### 📎 L'inventaire des 140 règles
+> Document de travail publié (carte des poids + texte exact de chaque règle, groupée par famille) :
+> c'est lui qui rend l'arbitrage possible. Régénérable depuis `buildCoachContext()`.
+
 > ### 🧹 LE PROMPT — DÉBLOQUÉ D'UN CRAN (ft-v917), PAS RÉGLÉ
 > **46 465 → 46 259 caractères, marge 35 → 241.** De quoi faire entrer la prochaine règle, pas dix.
 > ⭐ **La méthode sûre, et le critère qui en sort** : on retire du prompt ce que le code garantit
