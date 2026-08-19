@@ -6574,6 +6574,61 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC LV - LE PARCOURS REEL : « note ton premier repas » → et apres ? (18/08/2026) ==
+   Question de Michel devant l'ecran : « il y a marque note ton premier repas, et par la suite
+   ca engendre quoi ? ». En jouant le parcours pour lui repondre, un BUG est apparu : on note
+   son repas, on revient sur Macros… et la carte dit toujours « note ton premier repas ».
+   /!\ CAUSE : `switchNuTab` re-rendait le Journal et les Supplements, jamais les Macros — cet
+   onglet ne contenait, jusqu'a ft-v909, que des chiffres qui ne bougent pas dans la journee.
+   *La donnee avait change, l'ecran ne le savait pas.* */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({ft4_goal:'recomp'}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  await pg.evaluate(()=>{S.foodLog=[];persist();goScreen('nutrition',null);});
+  await pg.waitForTimeout(300);
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    const carte=()=>document.getElementById('nu-ou-en-es').textContent.replace(/\s+/g,' ').trim();
+    o.depart=carte();
+    // on APPUIE vraiment sur le bouton, comme un doigt
+    const btn=document.querySelector('#nu-ou-en-es button');
+    if(!btn) return {err:'bouton absent'};
+    o.libelle=btn.textContent;
+    btn.click();
+    await new Promise(r=>setTimeout(r,400));
+    o.ongletApres=[...document.querySelectorAll('.nu-tab')].find(b=>b.classList.contains('active'))?.textContent;
+    o.modale=!!document.getElementById('ov-add-food')?.classList.contains('open');
+    // on note un aliment
+    document.getElementById('af-desc').value='Shaker protéine';
+    document.getElementById('af-kcal').value=180;
+    document.getElementById('af-prot').value=35;
+    addFoodEntry();
+    await new Promise(r=>setTimeout(r,300));
+    switchNuTab('macros',document.getElementById('ntab-macros'));
+    await new Promise(r=>setTimeout(r,200));
+    o.apres=carte();
+    S.foodLog=[]; persist();
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- LV. Le parcours reel : « note ton premier repas » → et apres ? --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    t('le bouton d\'invitation est bien la', /premier repas/.test(R.libelle||''), R.libelle);
+    t('⭐ il emmene sur le JOURNAL et ouvre la saisie (pas juste un changement d\'onglet)',
+      /Journal/.test(R.ongletApres||'') && R.modale===true,
+      'onglet='+R.ongletApres+' modale='+R.modale);
+    t('⭐⭐ APRES AVOIR NOTE, LA CARTE MONTRE LES CHIFFRES (elle restait figee sur l\'invitation)',
+      /180/.test(R.apres) && !/premier repas/.test(R.apres), R.apres.slice(0,110));
+    t('/!\\ ... et elle dit qu\'un seul jour est note (pas de fausse moyenne de semaine)',
+      /1 jour noté sur 7/.test(R.apres));
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');

@@ -908,6 +908,13 @@ function switchNuTab(tab, btn) {
   if (btn) btn.classList.add('active');
   if (tab === 'suppl') renderSupplements();
   if (tab === 'journal') renderFoodJournal();
+  /* ⚠️ L'ONGLET MACROS SE RE-RENDU AUSSI (18/08/2026) — sinon la carte « Où tu en es » reste
+     figée sur l'état qu'elle avait en arrivant. Constaté en jouant le vrai parcours : on appuie
+     sur « Noter mon premier repas », on note son shaker, on revient sur Macros… et la carte dit
+     toujours « note ton premier repas ». *La donnée avait changé, l'écran ne le savait pas.*
+     Les deux autres onglets se re-rendaient déjà ; celui-là avait été oublié parce qu'il ne
+     contenait, jusqu'à ft-v909, que des chiffres qui ne bougent pas dans la journée. */
+  if (tab === 'macros' && typeof renderNutrition === 'function') { try{ renderNutrition(); }catch(e){} }
 }
 
 // ─── JOURNAL ALIMENTAIRE ──────────────────────────────────────
@@ -1335,6 +1342,7 @@ function quickAddFood(i){
   _unhideFood(it.name);
   persist(); if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   closeAddFood(); renderFoodJournal();
+  try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}
   toast('Ajouté au journal 🍽️','success');
 }
 function toggleFavFood(i){
@@ -1490,6 +1498,7 @@ function addFoodEntry(){
   persist();
   closeAddFood();
   renderFoodJournal();
+  try{ if(typeof renderNutrition==='function')renderNutrition(); }catch(e){}   // la carte « Où tu en es » suit
   if(typeof _cloudSyncDebounced==='function')_cloudSyncDebounced();
   toast('Ajouté au journal 🍽️','success');
 }
