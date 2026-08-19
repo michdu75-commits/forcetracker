@@ -18,6 +18,15 @@
   du 02/08), donc ça reste en **code déterministe**, sur liste blanche relue à la main. Et *dire si
   la personne mange assez* reste chez Milo : ça croise séances, sommeil et apports.
   ⏭️ **À faire avant la vraie mise en place de la nutrition** (condition posée par Michel le 19/08).
+- 📋 **`docs/BRIEF-NUTRITION.md`** — le **point d'entrée** à donner à une autre instance qui reprend la
+  nutrition. Il parle **d'abord de la 2ᵉ IA et du chantier en cours**, l'historique vient après.
+  Porte aussi **§4 la recette exacte** pour ajouter une tâche au cervelet : **4 endroits** à tenir
+  alignés (`worker.js` route + `_ACTIONS_IA` · `constants.js` `AI_PROXY_ACTIONS` · `Code.js`
+  `AI_ACTIONS_`), et un test **épingle leur nombre** pour qu'on ne puisse pas en oublier un.
+- 🚪 **`tools/check_regles.py` a une PORTE ÉTROITE** depuis le 19/08 : une **réécriture volontaire**
+  se déclare **dans le document**, en une ligne datée avec sa raison
+  (`<!-- RÉÉCRITURE VOLONTAIRE aaaa-mm-jj : … -->`). Le seuil n'a **pas** été baissé, et la
+  réécriture est **affichée**, jamais silencieuse.
 - **Rien en attente sur la branche.** Tout ce qui a été livré les 18 et 19/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
