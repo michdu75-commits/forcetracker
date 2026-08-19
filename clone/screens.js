@@ -1738,14 +1738,19 @@ function closeKcalEdit(){const o=document.getElementById('ov-kcal-edit');if(o)o.
    ⚠️ ET ON N'AFFICHE RIEN QUAND ON NE SAIT RIEN : zéro jour noté → une invitation, pas un
    « 0 / 2 600 kcal » qui ressemble à un reproche (R29 — on ne fait pas dire à une absence de
    donnée ce qu'elle ne dit pas). */
-function _nutriJoursNotes(n){
-  const jours=[], vus={};
+/* ⚠️ `sansAujourdhui` : la journée EN COURS n'entre pas dans la moyenne (19/08/2026).
+   Trouvé par les deux relectures extérieures, et c'est le même défaut que le « /7 » corrigé la
+   veille, simplement déplacé d'un cran : une journée où l'on n'a noté que le petit-déjeuner
+   compte comme une journée entière et tire la moyenne vers le bas. Aujourd'hui est, par
+   construction, une journée incomplète — la compter garantit un chiffre faux tous les matins. */
+function _nutriJoursNotes(n, sansAujourdhui){
+  const jours=[], vus={}, td=today();
   (S.foodLog||[]).forEach(e=>{ if(e&&e.date) vus[e.date]=1; });
   const d0=new Date();
   for(let i=0;i<n;i++){
     const d=new Date(d0.getTime()-i*864e5);
     const k=new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];
-    if(vus[k]) jours.push(k);
+    if(vus[k] && !(sansAujourdhui && k===td)) jours.push(k);
   }
   return jours;
 }
@@ -1753,11 +1758,12 @@ function _renderOuTuEnEs(macros){
   const el=document.getElementById('nu-ou-en-es'); if(!el) return;
   const cible=macros.calories||0, cibleP=macros.prot_g||0;
   const auj=(typeof _foodTotals==='function')?_foodTotals(today()):{kcal:0,prot:0};
-  const jours=_nutriJoursNotes(7);
+  const joursTous=_nutriJoursNotes(7);          // pour savoir s'il y a quoi que ce soit
+  const jours=_nutriJoursNotes(7,true);         // pour la MOYENNE : jours terminés seulement
   const notesAuj=(S.foodLog||[]).some(e=>e&&e.date===today());
 
   // ── Personne n'a rien noté : on invite, on ne juge pas ──────────────────────────────
-  if(!jours.length){
+  if(!joursTous.length){
     el.innerHTML='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:16px;">'
       +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Où tu en es</div>'
       +'<div style="font-size:13px;color:var(--t2);line-height:1.45;margin-top:6px;">Note un repas et cette carte te dira où tu en es — aujourd\'hui et sur la semaine. Pas besoin de tout peser : ce qui compte, c\'est la tendance.</div>'
@@ -1771,7 +1777,11 @@ function _renderOuTuEnEs(macros){
   jours.forEach(d=>{ const t=_foodTotals(d); sk+=t.kcal; sp+=t.prot; });
   const moyK=Math.round(sk/jours.length), moyP=Math.round(sp/jours.length);
   const ecart=cible?Math.round(moyK-cible):0;
-  const pctP=cibleP?Math.min(100,Math.round(moyP/cibleP*100)):0;
+  /* ⚠️ LE POURCENTAGE N'EST PLUS PLAFONNÉ À 100 (19/08) — le plafond a du sens sur une BARRE
+     (elle ne peut pas déborder), aucun sur un nombre affiché : quelqu'un qui mange 50 % de trop
+     lisait « 100 % » et se croyait pile à sa cible. Le cas le pire est le kéto, précisément le
+     régime où les protéines sont contraintes et où le dépassement EST l'information. */
+  const pctP=cibleP?Math.round(moyP/cibleP*100):0;
 
   const barre=(pct,col)=>'<div style="height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;margin-top:5px;">'
     +'<div style="height:100%;width:'+Math.min(100,pct)+'%;background:'+col+';border-radius:4px;"></div></div>';
@@ -1788,22 +1798,32 @@ function _renderOuTuEnEs(macros){
 
   /* ⚠️ LE TEXTE DE LA SEMAINE DIT SUR COMBIEN DE JOURS IL PORTE. « Moyenne sur 3 jours notés »
      est une information ; « moyenne de la semaine » calculée sur 3 jours est un mensonge. */
+  /* ⚠️ « Moyenne des N jours notés », jamais « en moyenne » tout court : les deux relectures
+     extérieures ont pointé la même ambiguïté — « en moyenne » se lit comme « sur la semaine ». */
   const sJours=jours.length+' jour'+(jours.length>1?'s':'')+' noté'+(jours.length>1?'s':'');
-  const sEcart=!cible?'' : (Math.abs(ecart)<=100
+  /* ⚠️⚠️ ON NE JUGE PAS UN ÉCART TANT QU'ON N'A PAS DE QUOI (19/08) : avec un seul jour terminé,
+     « 2 367 kcal sous ta cible » n'est pas une information, c'est un constat d'échec adressé à
+     quelqu'un qui vient de faire son premier geste. C'est exactement le reproche qu'on croyait
+     avoir supprimé avec le « 0 / 2 547 » — déplacé sur la moyenne. Il faut AU MOINS 3 jours
+     terminés pour qu'un écart veuille dire quelque chose. */
+  const sEcart=(!cible||jours.length<3) ? '' : (Math.abs(ecart)<=100
     ? '<span style="color:var(--green);font-weight:700;">dans ta cible</span>'
-    : (ecart<0 ? '<span style="color:var(--orange);font-weight:700;">'+Math.abs(ecart)+' kcal sous ta cible</span>'
-               : '<span style="color:var(--orange);font-weight:700;">'+ecart+' kcal au-dessus</span>'));
+    : (ecart<0 ? '<span style="color:var(--t2);font-weight:700;">'+Math.abs(ecart)+' kcal sous ta cible</span>'
+               : '<span style="color:var(--t2);font-weight:700;">'+ecart+' kcal au-dessus</span>'));
 
   el.innerHTML='<div style="background:var(--bg2);border:1px solid var(--sep);border-radius:16px;padding:16px;">'
     +'<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:12px;">'
       +'<div style="font-family:var(--font-cond);font-size:17px;font-weight:800;color:var(--t1);">Où tu en es</div>'
-      +'<div style="font-size:11px;color:var(--t3);">'+sJours+' sur 7</div></div>'
+      +'<div style="font-size:11px;color:var(--t3);">'+(jours.length?sJours+' sur 7':'journée en cours')+'</div></div>'
     +'<div style="display:flex;gap:16px;align-items:flex-start;">'+bloc1
-      +'<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">En moyenne</div>'
-      +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:var(--t1);margin-top:2px;">'+moyK.toLocaleString('fr-FR')+' <span style="font-size:12px;font-weight:700;color:var(--t3);">kcal/j</span></div>'
-      +'<div style="font-size:11.5px;color:var(--t2);margin-top:4px;">'+sEcart+'</div>'
-      +'<div style="font-size:11.5px;color:var(--t2);margin-top:6px;">Protéines '+moyP+' g/j · '+pctP+' % de ta cible</div>'
-      +barre(pctP,'var(--blue)')+'</div>'
+      +(jours.length
+        ? '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">Moyenne des '+sJours+'</div>'
+          +'<div style="font-family:var(--font-cond);font-size:22px;font-weight:900;color:var(--t1);margin-top:2px;">'+moyK.toLocaleString('fr-FR')+' <span style="font-size:12px;font-weight:700;color:var(--t3);">kcal/j</span></div>'
+          +(sEcart?'<div style="font-size:11.5px;margin-top:4px;">'+sEcart+'</div>':'')
+          +'<div style="font-size:11.5px;color:var(--t2);margin-top:6px;">Protéines '+moyP+' g/j · '+pctP+' % de ta cible</div>'
+          +barre(Math.min(100,pctP),'var(--blue)')+'</div>'
+        : '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);">Ta moyenne</div>'
+          +'<div style="font-size:13px;color:var(--t2);line-height:1.4;margin-top:4px;">Elle apparaîtra dès qu\'une journée entière sera derrière toi.</div></div>')
     +'</div>'
     +(jours.length<3?'<div style="font-size:11.5px;color:var(--t3);line-height:1.4;margin-top:11px;">Encore quelques jours notés et la moyenne deviendra un vrai repère — c\'est elle qui compte, pas une journée isolée.</div>':'')
     +'</div>';
