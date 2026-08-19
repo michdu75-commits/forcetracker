@@ -10,6 +10,63 @@
 - **Rien en attente sur la branche.** Tout ce qui a été livré les 18 et 19/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 
+> ## 😴 19/08 — LE SOMMEIL DÉCLARÉ APLATIT LES MAUVAISES SEMAINES (mesuré, non corrigé)
+>
+> Comparaison **app ↔ Garmin** sur les **10 semaines** où les deux existent (14/06 → 18/08/2026),
+> à partir de l'export Garmin de Michel et de son `sleepLog` (60 nuits notées).
+>
+> ### ⭐⭐ LE RÉSULTAT, ET IL EST NET
+> **En moyenne, la saisie est bonne : +12 min** (2,5 % au-dessus de la mesure), et **sans biais de
+> direction**. Ce n'est donc pas « il exagère ».
+> **Mais l'erreur dépend du sommeil réel, très fortement** :
+>
+> | Sommeil MESURÉ | Écart de la saisie |
+> |---|---|
+> | < 7 h (mauvaises semaines) | **+47 min** |
+> | ≥ 7 h (bonnes semaines) | **0 min** |
+>
+> **`r(sommeil mesuré, erreur de saisie) = −0,96`** sur les semaines complètes (n=6), −0,91 sur
+> celles à ≥ 5 nuits (n=8). Cas le plus net : semaine du 6-12 août, **Garmin 5 h 38 / app 6 h 43**.
+>
+> ### ⚠️ POURQUOI C'EST UN DÉFAUT PRODUIT, PAS UNE CURIOSITÉ
+> Ce n'est pas de la mauvaise foi — c'est un phénomène connu du déclaratif : *le souvenir se
+> rapproche de la normale*. Mais **`S.sleepLog` part dans le contexte de Milo**. Donc Milo
+> sous-estime la dette de récupération **exactement les semaines où elle compte**, et il ne peut
+> pas le savoir. Même famille que R4 : la donnée arrive, elle est simplement fausse là où elle
+> devrait alerter.
+>
+> ### ⛔ CE QUI N'EST PAS FAIT, ET POURQUOI (R30)
+> Rien n'est corrigé. Deux options existent et **aucune n'est un correctif de nuit** :
+> ① importer la mesure ; ② dire à Milo que le déclaré est optimiste sur les mauvaises nuits.
+> La ② est tentante et **dangereuse** : corriger un chiffre déclaré par un coefficient tiré d'UN
+> utilisateur, c'est inventer une donnée (R29). Elle ne vaudrait que si la même pente se retrouvait
+> chez plusieurs personnes — **1 cas ne fait pas une règle** (R22).
+>
+> ### 🌉 LES TROIS ÉTAGES POUR IMPORTER LA MESURE
+> | | Ce que ça donne | Coût | Pour qui |
+> |---|---|---|---|
+> | **Raccourci iOS** (Shortcuts) : lit Apple Santé + POST quotidien | automatique, nuit par nuit | ~0 dev, réglage manuel sur le téléphone | Michel + testeurs |
+> | **App-pont existante** (type Health Auto Export → webhook) | automatique | quelques € , 0 dev | idem |
+> | **Coque native + HealthKit** | automatique, transparent | le chantier natif | **tout le monde** |
+>
+> ⚠️ **Une PWA ne peut PAS lire Apple Santé** — aucune API web pour HealthKit, c'est une limite de
+> plateforme, pas un manque de notre côté. ⭐ **C'est le meilleur argument existant pour la coque
+> native**, et il est meilleur que les notifications : `docs/STRATEGIE-NATIF.md` classait déjà les
+> objets connectés en priorité n°1, on a maintenant **la démonstration chiffrée**.
+> ⚠️ Et le natif passerait par **Apple Santé**, pas par l'API Garmin (dont Michel pense qu'elle est
+> fermée — non vérifié, et **sans importance** : ce chemin ne la traverse pas, et il marcherait avec
+> n'importe quelle montre).
+>
+> ### 🔧 CE QU'IL FAUDRAIT CÔTÉ SERVEUR, LE JOUR OÙ
+> Une action `logSleep` dans `Code.js`, **idempotente** (la même nuit envoyée deux fois n'en crée
+> pas deux) et **authentifiée** par le code d'accès. Petite, mais à écrire correctement.
+> ⚠️ Et à documenter comme **outil de testeur, pas fonctionnalité produit** : Tatiana ne
+> configurera jamais un Raccourci (`PERSONAS-FONDATEURS.md`).
+>
+> ### ⏭️ PRIORITÉ
+> **Après** deux semaines d'usage réel de la nutrition. La saisie de Michel est bonne à 12 min près
+> en moyenne — le trou n'est que sur les mauvaises semaines. C'est important, ce n'est pas urgent.
+
 > ## ⚖️ 19/08 (nuit) — ft-v915 : LE CRU/CUIT, DERNIÈRE BRIQUE AVANT L'USAGE RÉEL
 >
 > Michel commence à s'en servir **lundi**. C'était le dernier défaut qui fausse un chiffre au
