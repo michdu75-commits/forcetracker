@@ -2097,6 +2097,31 @@ function renderFoodJournal(){
      La porte d'entrée par défaut ne doit pas être celle qui coûte (R24 : informer sans piéger).
      ⚠️ La saisie à la main reste offerte : gratuite, illimitée, et c'est le filet quand le
      produit n'est dans aucune base. */
+  /* ⚡ TES REPAS HABITUELS — un appui, avant même les boutons d'ajout (18/08/2026).
+     Voir `_repasHabituels` (app.js) : ce sont les aliments déjà notés ENSEMBLE au moins deux
+     fois. Rien n'est déclaré ni stocké en plus — c'est de l'observation, pas une liste à gérer.
+     ⚠️ Si la personne mange différemment chaque jour, cette section n'apparaît PAS du tout :
+     un bloc vide serait un reproche déguisé (R24). */
+  try{
+    const habitudes=(typeof _repasHabituels==='function')?_repasHabituels():[];
+    if(habitudes.length){
+      html+=`<div style="margin-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:7px;">Tes repas habituels — un appui</div>`
+        +`<div style="display:flex;flex-direction:column;gap:6px;">`;
+      habitudes.forEach(r=>{
+        const mi=(typeof _foodMealInfo==='function')?_foodMealInfo(r.meal):{ic:'🍽️',lbl:''};
+        const k=r.items.reduce((a,e)=>a+(e.kcal||0),0);
+        const p=r.items.reduce((a,e)=>a+(e.prot||0),0);
+        const noms=r.items.map(e=>e.name).join(' + ');
+        html+=`<button onclick="rejouerRepas('${String(r.sig).replace(/'/g,"\\'")}')" class="btn btn-bg2" style="display:flex;align-items:center;gap:10px;text-align:left;padding:11px 12px;width:100%;">`
+          +`<span style="font-size:18px;flex:none;">${mi.ic}</span>`
+          +`<span style="flex:1;min-width:0;"><span style="display:block;font-size:13.5px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_escNote?_escNote(noms):noms}</span>`
+          +`<span style="display:block;font-size:11.5px;color:var(--t3);margin-top:1px;">${mi.lbl||''} · ${k} kcal · ${p} g de protéines · noté ${r.n} fois</span></span>`
+          +`<span style="flex:none;color:var(--red);font-size:19px;font-weight:800;">+</span></button>`;
+      });
+      html+=`</div></div>`;
+    }
+  }catch(e){ /* jamais bloquant : c'est un raccourci, pas un pré-requis */ }
+
   html+=`<div style="display:flex;gap:8px;margin-top:12px;">`
     +`<button class="btn btn-red" onclick="addFoodVia('bc')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">📷<br>Code-barres</button>`
     +`<button class="btn btn-bg2" onclick="addFoodVia('label')" style="flex:1;padding:12px 6px;font-size:13px;line-height:1.25;">📸<br>Étiquette</button>`

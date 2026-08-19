@@ -6504,6 +6504,76 @@ console.log('\n═══ VIII. Temps de repos réglés par exercice ═══');
   }
 }
 
+/* == BLOC LIV - « TES REPAS HABITUELS » : UN APPUI, ZERO FORMULAIRE (18/08/2026) ==
+   Michel decrit sa vraie journee : shaker + banane le matin, steak-riz midi et soir, tous les
+   jours. Trois fois par jour un formulaire a cinq champs, personne ne tient.
+   /!\ CE QUI EST PROTEGE ICI : on n'invente RIEN. Un « repas habituel » est OBSERVE dans le
+   journal (les aliments notes ensemble, au moins DEUX fois) — aucune liste declaree, aucun
+   bouton « enregistrer ce repas » de plus.
+   /!\ Et quelqu'un qui mange differemment chaque jour ne doit voir AUCUNE section : un bloc
+   vide serait un reproche deguise. */
+{
+  const cx=await b.newContext({serviceWorkers:'block',viewport:{width:390,height:844},timezoneId:'Europe/Paris'});
+  const pg=await cx.newPage();
+  await pg.addInitScript(seedScript({}));
+  await pg.goto('http://localhost:'+PORT+'/index.html'); await pg.waitForTimeout(2300);
+  await pg.evaluate(()=>document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')));
+  const R=await pg.evaluate(async()=>{
+    const o={};
+    if(typeof _repasHabituels!=='function') return {err:'_repasHabituels absente'};
+    const j=n=>{const d=new Date(Date.now()-n*864e5);
+      return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().split('T')[0];};
+    const mk=(d,meal,name,kcal,prot)=>({date:d,meal,name,kcal,prot,carbs:0,fat:0,ts:Date.now()+Math.random()*1e3});
+    S.foodLog=[
+      mk(j(1),'petitdej','Shaker protéine',180,35), mk(j(1),'petitdej','Banane',90,1),
+      mk(j(2),'petitdej','Shaker protéine',180,35), mk(j(2),'petitdej','Banane',90,1),
+      mk(j(1),'dejeuner','Steak 300g',420,75),      mk(j(1),'dejeuner','Riz 200g',260,5),
+      mk(j(2),'dejeuner','Steak 300g',420,75),      mk(j(2),'dejeuner','Riz 200g',260,5),
+      mk(j(4),'diner','Poulet curry',500,60)];      // UNE seule fois → jamais propose
+    persist();
+    const h=_repasHabituels();
+    o.n=h.length;
+    o.noms=h.map(x=>x.items.map(i=>i.name).join('+'));
+    o.pasLeSolo=!h.some(x=>x.items.some(i=>/Poulet curry/.test(i.name)));
+    // ── un appui ────────────────────────────────────────────────────────────
+    rejouerRepas(h[0].sig);
+    const t=_foodTotals(today());
+    o.kcal=t.kcal; o.prot=t.prot;
+    const auj=(S.foodLog||[]).filter(e=>e.date===today());
+    o.lignes=auj.length;
+    o.prov=auj.every(e=>e.origine==='reprise'&&e.saisie==='liste');
+    o.memeRepas=auj.every(e=>e.meal==='petitdej');
+    // ── un repas deja rejoue aujourd'hui ne se re-propose pas ──────────────
+    o.apres=_repasHabituels().length;
+    // ── quelqu'un qui mange different chaque jour ne voit RIEN ─────────────
+    S.foodLog=[mk(j(1),'dejeuner','Pizza',900,30), mk(j(2),'dejeuner','Kebab',1100,45),
+               mk(j(3),'dejeuner','Sushi',700,40)];
+    persist();
+    o.varie=_repasHabituels().length;
+    S.foodLog=[]; persist();
+    return o;
+  });
+  await cx.close();
+
+  console.log('\n-- LIV. « Tes repas habituels » : un appui, zero formulaire --');
+  if(R.err){ t('X le bloc tourne', false, R.err); }
+  else{
+    t('⭐⭐ LES REPAS NOTES AU MOINS 2 FOIS SONT RECONNUS (petit-dej + dejeuner)',
+      R.n===2, 'trouves='+R.n+' '+JSON.stringify(R.noms));
+    t('/!\\ un repas note UNE SEULE fois n\'est PAS propose (c\'est un repas, pas une habitude)',
+      R.pasLeSolo===true);
+    t('⭐⭐ UN APPUI AJOUTE TOUT LE REPAS (2 aliments, 270 kcal, 36 g de proteines)',
+      R.lignes===2 && R.kcal===270 && R.prot===36,
+      R.lignes+' lignes · '+R.kcal+' kcal · '+R.prot+' g');
+    t('/!\\ ... sur le BON moment de la journee', R.memeRepas===true);
+    t('⭐ ... et la provenance dit « reprise » (brique 0 : ni mesure, ni saisie fraiche)',
+      R.prov===true);
+    t('/!\\ un repas deja rejoue aujourd\'hui ne se re-propose pas', R.apres===1, 'restants='+R.apres);
+    t('⭐⭐ QUI MANGE DIFFEREMMENT CHAQUE JOUR NE VOIT RIEN (pas de section vide)',
+      R.varie===0, 'proposes='+R.varie);
+  }
+}
+
 await b.close(); srv.close();
 
 console.log('\n════ TOTAL CROISÉ : '+ok+' ✅ · '+ko+' ❌ ════');
