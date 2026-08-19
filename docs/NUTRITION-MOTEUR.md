@@ -439,9 +439,14 @@ On adapte, on **ne reproche jamais** l'écart.
 
 ## 7. Plan de livraison — par briques, testables une par une
 
+> ⚠️ **Ce tableau a vieilli — l'état à jour est dans `docs/BRIEF-NUTRITION.md`** (créé le 19/08 pour
+> une instance qui reprend le chantier). La brique **0 est livrée**, six versions sont passées depuis
+> l'écriture de ce document, et la frontière **cerveau/cervelet** a été décidée entre-temps : elle
+> change qui a le droit de composer une assiette.
+
 | # | Brique | Contenu | Dépend de |
 |---|---|---|---|
-| **0** | **La provenance figée** | `S.foodLog` porte `source` / `sourceId` / `sourceVersion` / `quantite` / `unite` ; les macros deviennent un **cache**, jamais la vérité. ⚠️ **À faire AVANT la base** : chaque jour qui passe ajoute des entrées sans provenance, et on ne pourra pas les reconstruire. | — |
+| **0** | ✅ **FAITE — ft-v907 (18/08/2026).** La provenance figée | `S.foodLog` porte `source` / `sourceId` / `sourceVersion` / `quantite` / `unite` ; les macros deviennent un **cache**, jamais la vérité. ⚠️ **À faire AVANT la base** : chaque jour qui passe ajoute des entrées sans provenance, et on ne pourra pas les reconstruire. | — |
 | **1** | **La base d'aliments** | `tools/aliments.py` (extraction CIQUAL) + `aliments.js` (3 484 aliments, dont ~300 marqués `composable` avec leurs champs de sécurité) + le test de compatibilité sur la base **entière** | 0 |
 | **2** | **La recherche** | index inversé + **fréquence d'usage personnelle d'abord** (le plus rentable, note v1.0 §7) | 1 |
 | **3** | **Le générateur** | `composerRepas()` + les modèles de repas ; branché **derrière** l'existant (on compare les deux sorties avant de basculer) | 1 |
