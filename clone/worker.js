@@ -651,6 +651,13 @@ async function seanceJson(body, apiKey) {
     + '- type = "N" (série normale), "É" (échauffement / montée en charge), "X" (à l\'échec, au max), "D" (dropset / dégressif). "N" par défaut.\n'
     + '- kg = la charge en kg. Mets 0 si le coach ne la donne pas (l\'app la pré-remplira avec la dernière fois). Si c\'est « au ressenti » ou « au max », mets {"reps":0,"maxi":true}.\n'
     + '- rest = le repos en SECONDES, repris de ce que le coach a écrit (« 3 min » → 180, « 90 s » → 90). Omets rest s\'il n\'en parle pas — n\'invente pas une valeur.\n'
+    // ⚠️ LA FOURCHETTE (19/08/2026) — trouvée par une relecture extérieure. « 4 séries de 8 à 12 »
+    // est une consigne d'entraînement parfaitement normale, et l'app ne sait stocker QU'UN entier.
+    // Avant cette règle, le modèle tranchait EN SILENCE, et rien ne disait ce qu'il avait choisi.
+    // On tranche donc ici, déterministe : la BORNE BASSE (se tromper vers le haut fait rater des
+    // reps, se tromper vers le bas ne coûte rien — la personne en fait plus si elle peut), ET la
+    // fourchette part dans `note`, donc RIEN N'EST PERDU : elle reste sous les yeux pendant la série.
+    + '- ⚠️ FOURCHETTE DE REPS (« 8 à 12 », « 8-12 ») : mets la borne BASSE dans reps, et écris la fourchette dans note (ex. "vise 8 à 12 reps"). Ne choisis jamais en silence.\n'
     + '- note = la consigne technique que le coach a écrite POUR CET EXERCICE, recopiée en une phrase courte (~120 caractères max). Omets note s\'il n\'a rien dit de particulier — ne meuble pas.\n'
     + '- supersetGroup = seulement si le coach dit explicitement que deux exercices s\'enchaînent en superset : même étiquette ("A", "B") sur les deux. Sinon, omets la clé.\n\n'
     + '⚠️ FIDÉLITÉ ABSOLUE — c\'est ta seule qualité :\n'

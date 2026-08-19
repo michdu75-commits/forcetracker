@@ -2732,16 +2732,33 @@ console.log('\n═══ P. Compteur IA — branché là où passent vraiment le
   const manquantes = [...proxy].filter(a=>!comptees.has(a));
 
   // ⚠️ Le nombre est ÉPINGLÉ exprès : ajouter une action doit obliger à repasser ici, sinon
-  // les trois listes (constants / worker / Code.js) s'éloignent en silence — la dérive du 13/07.
+  // les listes s'éloignent en silence — la dérive du 13/07.
   // 13 → 14 le 19/08 : `seanceJson`, le cervelet (docs/ARCHITECTURE-CERVEAU-CERVELET.md).
-  const comptCode = lst((cj.match(/AI_ACTIONS_\s*=\s*\[([^\]]*)\]/)||[,''])[1]);
-  const horsCompteur = [...proxy].filter(a=>!comptCode.has(a));
   t('⭐⭐ TOUTE action IA qui part vers le Worker y est comptée (la dérive du 13/07 ne peut plus revenir)',
     proxy.size===14 && manquantes.length===0, 'non comptées : '+(manquantes.join(', ')||'aucune'));
-  // ⚠️ Le compteur du jour vit dans Apps Script (le worker lui envoie le coup) : une action
-  // absente de SA liste part bien, mais n'est comptée nulle part — panne silencieuse.
-  t('⭐ … et la liste d\'Apps Script, qui tient réellement le compteur, ne l\'a pas oubliée',
-    horsCompteur.length===0, 'absentes de AI_ACTIONS_ (Code.js) : '+(horsCompteur.join(', ')||'aucune'));
+
+  /* ⭐⭐ LE COMPTAGE NE SUFFIT PAS — renforcé le 19/08 sur une relecture extérieure, et elle a
+     raison : « le test épingle un NOMBRE, pas une COHÉRENCE. Si quelqu'un ajoute une action dans
+     trois listes sur quatre et en retire une autre ailleurs, le compte reste à 14 et l'incohérence
+     passe. » Vérifié : c'était exactement le trou — on comparait `proxy ⊆ worker` et
+     `proxy ⊆ Code.js`, jamais le sens inverse, et **jamais les ROUTES du worker**, qui sont
+     pourtant l'endroit où l'action est réellement exécutée.
+     👉 On compare désormais les QUATRE listes comme des ENSEMBLES, dans les deux sens. Le message
+     d'erreur NOMME l'action fautive au lieu d'annoncer « 15 au lieu de 14 » — c'est ce qui fait la
+     différence entre un test qui bloque et un test qui aide. */
+  const listes = {
+    'constants.js AI_PROXY_ACTIONS' : proxy,
+    'worker.js _ACTIONS_IA (compteur)' : comptees,
+    'worker.js routes (exécution)' : new Set([...w.matchAll(/body\.action === '([a-zA-Z]+)'/g)].map(m=>m[1])),
+    'Code.js AI_ACTIONS_ (compteur du jour)' : lst((cj.match(/AI_ACTIONS_\s*=\s*\[([^\]]*)\]/)||[,''])[1]),
+  };
+  const ecarts = [];
+  for (const [nomA, a] of Object.entries(listes))
+    for (const [nomB, b] of Object.entries(listes))
+      if (nomA !== nomB)
+        for (const act of a) if (!b.has(act)) ecarts.push(act+' : dans « '+nomA+' », absente de « '+nomB+' »');
+  t('⭐⭐ les QUATRE listes d\'actions portent EXACTEMENT les mêmes clés (ensembles, pas comptage)',
+    ecarts.length===0, ecarts.slice(0,6).join('\n       → '));
   t('⭐ le comptage ne retarde JAMAIS la réponse de Milo (waitUntil, règle d\'or #4)',
     /ctx\.waitUntil\(\s*_compterIA\(/.test(w), 'waitUntil absent');
   t('⭐⭐ REPLI OUVERT : une panne du compteur ne coupe pas Milo (règle d\'or #3)',
