@@ -6,7 +6,7 @@
 
 ---
 
-- **Version en ligne (live) :** `ft-v911` — fusionnée sur `master` le 18/08.
+- **Version en ligne (live) :** `ft-v912` — fusionnée sur `master` le 18/08.
 - **Rien en attente sur la branche.** Tout ce qui a été livré le 18/08 est en production.
   ⚠️ R18 — « j'ai poussé » ne veut pas dire « c'est en ligne » : le déploiement ne part que sur `master`.
 

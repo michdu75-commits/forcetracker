@@ -397,7 +397,7 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 
 ## 🗓️ Journal des versions — récent (ft-v575 → ft-v590 + gouvernance récente)
 
-> **Version actuelle : `ft-v911`** (prochaine : `ft-v912`). Historique complet (ft-v128→574 + gouvernance
+> **Version actuelle : `ft-v912`** (prochaine : `ft-v913`). Historique complet (ft-v128→574 + gouvernance
 > antérieure, **+ ft-v575→632 déménagées le 28/07**) → **`docs/JOURNAL-ARCHIVE.md`**. Le n° de cache se lit dans `sw.js` (`const CACHE='ft-vNN'`).
 > **Entretien** : ajouter chaque nouvelle version ICI (règle d'or #12). Quand ce journal récent dépasse
 > **20** entrées, déménager les plus anciennes dans `docs/JOURNAL-ARCHIVE.md` (couper/coller, rien
@@ -407,6 +407,15 @@ Ne pas bumper si la modif ne concerne que `Code.js` (backend Apps Script uniquem
 > la surveillait). Le même `check_regles.py` refuse désormais toute entrée disparue. **Toujours
 > AJOUTER à la fin, jamais ouvrir le fichier en écriture**, et lire le diff avant de committer :
 > un `-1793` dans le numstat n'est pas un détail.
+
+**ft-v912 — 🔄 LA CARTE « OÙ TU EN ES » RESTAIT FIGÉE SUR SON INVITATION** — question de Michel devant l'écran : *« il y a marqué "note ton premier repas", et par la suite ça engendre quoi ? »*.
+
+**⭐ C'EST EN JOUANT LE PARCOURS POUR LUI RÉPONDRE QUE LE BUG EST APPARU** — pas en le décrivant. On appuie sur le bouton (il emmène bien au Journal et ouvre la saisie), on note son shaker, on revient sur Macros… **et la carte dit toujours « note ton premier repas »**. *Un écran se juge le doigt dessus.*
+
+**⚠️ LA CAUSE** : `switchNuTab` re-rendait le **Journal** et les **Suppléments**, jamais les **Macros**. Ce n'était pas un oubli à l'époque — jusqu'à ft-v909, cet onglet ne contenait que des chiffres qui ne bougent pas dans la journée (BMR, TDEE, cible). La carte a changé ça **la veille**, et personne n'a suivi. *La donnée avait changé, l'écran ne le savait pas.*
+
+**👉 Deux chemins corrigés** : revenir sur l'onglet Macros le re-rend, et **noter un aliment rafraîchit la carte immédiatement**, sans même changer d'onglet.
+Tests : **parcours 755/755** (+4, bloc LV), calculs 235/235, muscles 232/232, croisés 50/50, dates 7/7, milo 10/10, données 100 classées 0 trou. **CONTRÔLE NÉGATIF : 2 rouges**, et la sortie montre exactement ce qu'il aurait vu — la carte encore sur *« Note un repas et cette carte te dira où tu en es »* après avoir noté. Fichiers : `app.js`, `tests/parcours/runner.js`, `sw.js`, `clone/*`, `CLAUDE.md`. sw.js ft-v912. |
 
 **ft-v911 — ⚡ « TES REPAS HABITUELS » — UN APPUI, ZÉRO FORMULAIRE** — Michel, en décrivant sa vraie journée : *« le matin je prends mon shaker de prot, je prends une banane ; le midi deux steaks hachés 5 %, 300 g de viande rouge, 200 g de riz et de la ratatouille ; le soir à peu près la même chose »*.
 
@@ -652,8 +661,6 @@ Tests : **parcours 702/702** (+12, blocs XLIII et XLIV), calculs 179/179, muscle
 **⭐⭐ ET LE HARNAIS A TROUVÉ QUATRE ERREURS DANS MES PROPRES DONNÉES DE TEST — chacune produisait un écran parfaitement crédible et faux** : `sess.calories` traité comme un objet → **« [object Object] kcal »** à l'écran (c'est un NOMBRE, `log.js` : `sess.calories=calData.total`) · une pesée rangée sous `bw` au lieu de `kg` → **« undefined kg »** · `duration` en minutes au lieu de **secondes** → « 1 min » sur une séance d'une heure · et des noms d'exercices approximatifs (« Squat » au lieu de « Squat à la Barre ») → **« Aucune donnée » sur tous les graphiques et zéro muscle colorié**. *Un jeu de données de test qui ne respecte pas les formes réelles ne teste rien : il rend un écran plausible.* Les quatre pièges sont écrits en tête du fichier, avec les trois autres déjà payés (`goScreen('home')` et non `'s-home'` · poser `ft4_ob2`/`ft4_guide_shown`/`ft4_wn_seen` sinon on ne capture que l'écran d'installation · retirer le `display:none` en ligne avant d'ouvrir une modale).
 
 ⏭️ **Ce qui n'est PAS dans le dépôt, volontairement** : le site promotionnel lui-même (publié en Artifact) et le dossier envoyé à ChatGPT — ce sont des livrables, pas du code. Le script, lui, est l'outil : c'est lui qui doit survivre. **Aucun fichier de l'application touché, pas de bump `sw.js`.** Fichiers : `tools/captures.js` (nouveau), `CLAUDE.md`. |
-
-**GOUVERNANCE — 🧠 `docs/AUDIT-CONTEXTE-MILO.md` + `CALORIES-SOURCES.md` §17 : QUATRE AUDITS CROISÉS, et le seul endroit du projet que personne n'avait mesuré (17/08/2026, doc-only)** — Michel, après quatre allers-retours d'audit avec une autre instance de Claude et avec GPT : *« on ne va jamais en finir lol »*, puis *« on creuse tellement, j'espère qu'on va pas se perdre »*. **Sa crainte porte un nom dans ce projet : c'est R27** — *on s'applique à nous-mêmes ce qu'on promet à l'utilisateur.* On promet au sportif qu'il ne repart jamais de zéro ; à ce moment-là, quatre audits avaient produit des chiffres et **rien n'était écrit dans le dépôt**. C'est ça, se perdre — pas creuser. D'où ces deux documents, écrits AVANT toute correction de code, exactement dans cet ordre.
 
 **⚠️ CORRECTION SUR MES PROPRES CHIFFRES, relevée par l'auditeur extérieur** : mon tableau des trois zones annonçait **49 220 + 48 042 + 2 300 = 99 562** pour un total mesuré à **97 732** — **1 830 caractères d'incohérence**, parce que j'avais pris chaque ligne dans une **exécution différente** (le bloc commun sans e-mail, le total avec — or l'e-mail admin change la variante). *Trois chiffres justes séparément et faux ensemble : exactement ce que je reprochais à leurs rapports deux heures plus tôt.* **Les mesures d'une seule exécution, cohérentes** : Michel non-admin **49 280 + 45 042 + 2 485 = 96 807** · Michel admin **47 375 + 48 056 + 2 485 = 97 916**. ⭐ **Et cette mesure propre apprend deux choses** : le **premium ne change PAS le bloc commun** (seulement 258 car. dans le personnel, c'est sain) ; l'**e-mail admin** le change de **−1 905**, entièrement dans `TA PERSONNALITÉ` (4 196 → 2 291 : le passage sur l'offre payante disparaît). **Le nombre de variantes du bloc « commun » est donc le PRODUIT des deux** : `(admin ou non) × (combinaison de blessures)`.
 
