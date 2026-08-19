@@ -42,26 +42,36 @@
 > utilisateur, c'est inventer une donnée (R29). Elle ne vaudrait que si la même pente se retrouvait
 > chez plusieurs personnes — **1 cas ne fait pas une règle** (R22).
 >
-> ### 🌉 LES TROIS ÉTAGES POUR IMPORTER LA MESURE
-> | | Ce que ça donne | Coût | Pour qui |
-> |---|---|---|---|
-> | **Raccourci iOS** (Shortcuts) : lit Apple Santé + POST quotidien | automatique, nuit par nuit | ~0 dev, réglage manuel sur le téléphone | Michel + testeurs |
-> | **App-pont existante** (type Health Auto Export → webhook) | automatique | quelques € , 0 dev | idem |
-> | **Coque native + HealthKit** | automatique, transparent | le chantier natif | **tout le monde** |
+> ### 🌉 LE PONT EXISTE DÉJÀ — IL LUI MANQUE JUSTE LE SOMMEIL
+> ⛔⛔ **CORRECTION DE MOI-MÊME, ET C'EST R23 UNE 2ᵉ FOIS** (après la prise de sang du 27/07) :
+> j'ai proposé à Michel de « construire un pont » avec un raccourci iOS. **Il existe depuis le
+> 16/08** (ft-v880 à ft-v884), c'est lui qui l'avait demandé, il tourne chez lui **tous les soirs
+> à 21 h** — et j'ai fallu qu'il me dise *« on a déjà créé un raccourci lol »* pour que je regarde.
+> *Une fonctionnalité que je n'ai pas lue est une fonctionnalité que je re-propose.*
+>
+> **Ce qui existe** — route `pushHealth` (`Code.js` @1224), **authentifiée** (`_authCheck_`),
+> **dédupliquée** (début + type), et qui **accepte plusieurs formats** exprès : un raccourci iOS
+> *ou* une app d'export publiant le sien. Elle reçoit :
+> · les **activités** → `healthInbox`, une boîte de réception (l'app propose, la personne valide — R29) ;
+> · la **FC au repos** → `healthDaily` (`{date, rhr}`, 120 jours).
+>
+> **Ce qui manque : le sommeil.** Zéro occurrence dans la route.
+> **👉 Le delta est donc PETIT** : `healthDaily` est déjà la bonne maison (une valeur par jour,
+> déjà dédupliquée par date) — il s'agit d'ajouter un champ à côté de `rhr`, pas d'une brique.
+> ⚠️ **Et côté raccourci, la date est le piège** : à 21 h le soir du jour D, la nuit disponible est
+> celle qui s'est TERMINÉE le matin de D. Elle se date donc D (jour du réveil), et les échantillons
+> HealthKit d'une nuit chevauchent deux dates civiles.
+> ⚠️ Reste un **outil de testeur, pas une fonctionnalité produit** : Tatiana ne configurera jamais
+> un raccourci (`PERSONAS-FONDATEURS.md`). Le chemin grand public reste la coque native.
 >
 > ⚠️ **Une PWA ne peut PAS lire Apple Santé** — aucune API web pour HealthKit, c'est une limite de
-> plateforme, pas un manque de notre côté. ⭐ **C'est le meilleur argument existant pour la coque
-> native**, et il est meilleur que les notifications : `docs/STRATEGIE-NATIF.md` classait déjà les
-> objets connectés en priorité n°1, on a maintenant **la démonstration chiffrée**.
-> ⚠️ Et le natif passerait par **Apple Santé**, pas par l'API Garmin (dont Michel pense qu'elle est
-> fermée — non vérifié, et **sans importance** : ce chemin ne la traverse pas, et il marcherait avec
-> n'importe quelle montre).
->
-> ### 🔧 CE QU'IL FAUDRAIT CÔTÉ SERVEUR, LE JOUR OÙ
-> Une action `logSleep` dans `Code.js`, **idempotente** (la même nuit envoyée deux fois n'en crée
-> pas deux) et **authentifiée** par le code d'accès. Petite, mais à écrire correctement.
-> ⚠️ Et à documenter comme **outil de testeur, pas fonctionnalité produit** : Tatiana ne
-> configurera jamais un Raccourci (`PERSONAS-FONDATEURS.md`).
+> plateforme. ⭐ **C'est le meilleur argument existant pour la coque native**, meilleur que les
+> notifications : `docs/STRATEGIE-NATIF.md` classait déjà les objets connectés en priorité n°1, on a
+> maintenant **la démonstration chiffrée**.
+> ✅ **Et les deux API sont bien fermées — VÉRIFIÉ le 16/08 et écrit dans `Code.js`** : l'API Garmin
+> Connect exige une entité légale et son programme est suspendu ; l'API Strava est passée payante en
+> juin 2026. Michel avait raison, et c'était déjà documenté — je l'ai redemandé pour rien.
+> C'est précisément pourquoi la 3ᵉ voie a été choisie : **le téléphone POUSSE, le serveur REÇOIT.**
 >
 > ### ⏭️ PRIORITÉ
 > **Après** deux semaines d'usage réel de la nutrition. La saisie de Michel est bonne à 12 min près
