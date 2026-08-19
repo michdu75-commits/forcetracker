@@ -23,6 +23,14 @@
   Porte aussi **§4 la recette exacte** pour ajouter une tâche au cervelet : **4 endroits** à tenir
   alignés (`worker.js` route + `_ACTIONS_IA` · `constants.js` `AI_PROXY_ACTIONS` · `Code.js`
   `AI_ACTIONS_`), et un test **épingle leur nombre** pour qu'on ne puisse pas en oublier un.
+- 📐 **MESURÉ le 19/08 — décharger ≠ diluer moins.** Sur les **44 157** caractères du bloc commun,
+  **84 % sont des règles de COMPORTEMENT** et **~5 % seulement** encore déchargeables. Le
+  déménagement technique touche à sa fin **sans avoir retiré une seule règle de comportement**.
+  ⏭️ **Les 6 autres leviers** (rappel ciblé dans la queue non cachée · Gardien de SORTIE · hiérarchie
+  énoncée une fois · conditionner un bloc · **le benchmark** · le cervelet remplacé par du code)
+  sont au **§9 de `docs/ARCHITECTURE-CERVEAU-CERVELET.md`** — *un menu, pas un plan.*
+  ⚠️ Et la **raison** du cervelet a été corrigée : *transformer et juger sont deux métiers
+  différents* — le plafond était le **déclencheur**, pas la raison (sinon le périmètre est élastique).
 - 🚪 **`tools/check_regles.py` a une PORTE ÉTROITE** depuis le 19/08 : une **réécriture volontaire**
   se déclare **dans le document**, en une ligne datée avec sa raison
   (`<!-- RÉÉCRITURE VOLONTAIRE aaaa-mm-jj : … -->`). Le seuil n'a **pas** été baissé, et la

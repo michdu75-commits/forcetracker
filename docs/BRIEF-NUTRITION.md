@@ -24,7 +24,22 @@ existe pour une seule raison, écrite dans le code : **la taille DILUE les règl
 Le dégraissage classique (retirer du prompt ce que le code garantit déjà) a été appliqué. Il
 **plafonne à 3-4 %**. La méthode marche, elle ne résout pas le problème.
 
-Michel a alors posé l'architecture, et il l'a nommée lui-même :
+**⚠️ ET LA RAISON N'EST PAS LE PLAFOND — corrigé le 19/08 après une relecture extérieure.** Le
+plafond a été le **déclencheur**, pas la raison :
+
+> **Le cervelet existe parce que TRANSFORMER et JUGER sont deux métiers différents.**
+
+C'est important pour toi, concrètement : *justifier l'architecture par la contrainte rend le
+périmètre ÉLASTIQUE* — si le prompt se remplit à nouveau, on sera tenté de déménager davantage, et
+c'est exactement la dérive du §5.4. Justifiée par la **conception**, la frontière ne bouge plus : le
+critère 2 (transformation vs jugement) ne dépend pas de la place disponible.
+
+⚠️ **Et une mesure à connaître avant de te lancer** : sur les 44 157 caractères actuels, **84 % sont
+des règles de COMPORTEMENT** et seulement ~5 % encore déchargeables. *Le déménagement technique est
+presque fini, et il n'a retiré aucune règle de comportement.* Le détail et les autres leviers sont
+au §9 de `docs/ARCHITECTURE-CERVEAU-CERVELET.md`.
+
+Michel a posé l'architecture, et il l'a nommée lui-même :
 
 > *« Pourquoi tout part d'un seul bloc ? Dans une entreprise il y a le boss et la secrétaire. »*
 > puis : **« le cerveau et le cervelet »**.
